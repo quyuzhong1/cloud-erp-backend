@@ -599,6 +599,7 @@ public interface PlmTaskFeign {
     @PostMapping("feign/product/uploadSkuImage")
     void uploadSkuImage(@RequestBody UploadSkuDTO dto);
 
+    
     /**
      * 试产量产  审核 通过
      *

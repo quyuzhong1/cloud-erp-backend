@@ -7373,7 +7373,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     public void fetchOrderFail(SoB2cEntity soB2cEntity){
         //生成异常信息
         String soB2cId = soB2cEntity.getId();
-        String type = SoB2cErrorTypeEnum.ORDER_FETCH_FAIL.getCode();
+        String type = SoB2cErrorTypeEnum.ORDER_FETCH.getCode();
         String paramJson = JSONUtil.toJsonStr(soB2cEntity);
         log.error("订单拉取失败,soB2cId:{},paramJson:{} 错误信息:{}", soB2cId, paramJson, ApiError.ERROR_SO_B2C_DELIVERY_FETCH.msg);
         SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO();
@@ -7391,7 +7391,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     @Override
     public void fetchOrderSuccess(SoB2cEntity soB2cEntity) {
         //清除异常信息
-        soB2cErrorService.removeErrorOrder(soB2cEntity.getId(), SoB2cErrorTypeEnum.ORDER_FETCH_FAIL.getCode());
+        soB2cErrorService.removeErrorOrder(soB2cEntity.getId(), SoB2cErrorTypeEnum.ORDER_FETCH.getCode());
         //审核通过
         //检查是否存在流程
         ApproveOneDTO dto = new ApproveOneDTO(soB2cEntity.getId(), ApproveTypeEnum.PASS.getStatus(), "", Boolean.FALSE);
@@ -8145,9 +8145,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             soOutstockEntityList.addAll(FeignQuery.create(SoOutstockEntity.class).in(SoOutstockEntity::getSoId,v).select(SoOutstockEntity::getSoId,SoOutstockEntity::getBillDate).list());
         });
         List<String> ids = records.stream().map(SoB2cDTO.ExcelExportDTO::getId).collect(Collectors.toList());
-        List<SoB2cRefEntity> soB2cRefList = soB2cRefService.listBySourceIdOrTargetId(ids);
-        List<String> detailIds = records.stream().map(SoB2cDTO.ExcelExportDTO::getDetailId).distinct().collect(Collectors.toList());
-        List<SoB2cDetailEntity> soB2cDetailEntityList = soB2cDetailService.listByIds(detailIds);
         List<SoB2cDeliveryEntity> soB2cDeliveryEntities = soB2cDeliveryFeign.listBySourceId(ids);
 
         for (SoB2cDTO.ExcelExportDTO exportDTO : records) {
@@ -8225,12 +8222,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 exportDTO.setFinishPrintTime(collect.get(0).getFinishPrintTime());
                 exportDTO.setCreateDeliveryTime(collect.get(0).getCreateTime());
             }
-            SoB2cDeliveryEntity soB2cDeliveryEntity = soB2cDeliveryEntities.stream().filter(e -> Objects.nonNull(e) && Objects.equals(e.getSourceId(), exportDTO.getId())).findFirst().orElse(null);
-            //标签汇总
-            exportDTO.setLabelOrderList(getLabelOrderList(exportDTO,soB2cRefList,childList,soB2cDeliveryEntity));
-            SoB2cDetailEntity soB2cDetail = soB2cDetailEntityList.stream().filter(e -> Objects.equals(exportDTO.getDetailId(), e.getId())).findFirst().orElse(null);
-            SoB2cDetailDTO.ListDTO detailDTO = BeanUtil.copyProperties(soB2cDetail,SoB2cDetailDTO.ListDTO.class);
-            exportDTO.setLabelDetailList(getLabelDetailList(exportDTO,skuVOMap,bomChildrenList,inventoryList,ignoreInventorySkuIds,detailDTO,virtualInventoryList,virtualWarehouseList));
             //销售套装bom
             if (CollectionUtils.isNotEmpty(childList)) {
                 List<Integer> qtyList = new ArrayList<>();

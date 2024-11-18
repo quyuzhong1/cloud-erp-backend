@@ -1002,4 +1002,9 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * @param ids
      */
     List<BatchResultDTO> fetchOrder(List<String> ids);
+
+
+    void fetchOrderFail(SoB2cEntity soB2cEntity);
+
+    void fetchOrderSuccess(SoB2cEntity soB2cEntity);
 }
