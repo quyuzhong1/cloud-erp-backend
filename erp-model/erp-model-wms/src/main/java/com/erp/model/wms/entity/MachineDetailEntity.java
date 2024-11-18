@@ -80,7 +80,7 @@ public class MachineDetailEntity extends BaseEntity<MachineDetailEntity> {
     private String bomHistoryId;
 
     /**
-     * 来源明细Id
+     * 来源明细id
      */
     @TableField("source_detail_id")
     private String sourceDetailId;
