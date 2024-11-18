@@ -54,15 +54,15 @@
           AND dci.is_deleted = FALSE
           AND dbs.is_deleted = FALSE
           AND dci.bill_type IN
-          <foreach collection="billTypeList" item="t" open="(" close=")">
+          <foreach collection="billTypeList" item="t" open="(" separator="," close=")">
               #{t}
           </foreach>
           AND dcid.next_level_id IN
-          <foreach collection="nextLevelIdList" item="nextLevelId" open="(" close=")">
+          <foreach collection="nextLevelIdList" item="nextLevelId" open="(" separator="," close=")">
               #{nextLevelId}
           </foreach>
           AND dbs.code ILIKE ANY ( ARRAY
-                <foreach collection="systemCodeList" item="systemCode" open="[" close="]">
+                <foreach collection="systemCodeList" item="systemCode" open="[" separator="," close="]">
                     #{systemCode}
                 </foreach>
           )
