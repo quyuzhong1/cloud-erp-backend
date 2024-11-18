@@ -669,7 +669,6 @@ public class SoDeliveryNoticeChangeServiceImpl extends SuperServiceImpl<SoDelive
            return;
         }
         List<String> soDetailIds = list.stream().map(v->v.getSoDetailId()).collect(Collectors.toList());
-        List<String> sourceDetails = list.stream().map(v->v.getSourceDetailId()).collect(Collectors.toList());
         List<SoDetailEntity> soDetailEntityList = FeignQuery.getByIds(SoDetailEntity.class,soDetailIds);
         List<SoDeliveryNoticeDetailEntity> soDeliveryNoticeDetailEntityList = soDeliveryNoticeDetailService.listDetailBySourceDetailIds(soDetailIds);
         List<String> ids = list.stream().map(SoDeliveryNoticeChangeDTO.ListDTO::getId).collect(Collectors.toList());
@@ -682,7 +681,7 @@ public class SoDeliveryNoticeChangeServiceImpl extends SuperServiceImpl<SoDelive
             listApiResult = workflowFeign.curApprover(dtoList);
             Integer code = listApiResult.getCode();
             if (200 != code) {
-                throw new ServiceException(new ApiResult(ApiError.Default.code, listApiResult.getMsg()));
+                throw new ServiceException(listApiResult.getMsg());
             }
         }
         // 属性赋值
