@@ -9020,21 +9020,29 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
      * @param ids
      */
     @Override
-    public boolean fetchOrder(List<String> ids) {
+    public List<BatchResultDTO> fetchOrder(List<String> ids) {
+        ids = ids.stream().filter(StrUtil::isNotBlank).distinct().collect(Collectors.toList());
         if (CollectionUtils.isEmpty(ids)) {
-            return false;
+            throw new ServiceException("ids不能为空");
         }
-
+        if(ids.size() > 50){
+            throw new ServiceException("批量刷新限制50条");
+        }
         // 查询实体列表
         List<SoB2cEntity> soB2cEntities = this.listByIds(ids);
         if (CollectionUtils.isEmpty(soB2cEntities)) {
-            return false;
+            throw new ServiceException("未查询到订单数据");
+        }
+        List<BatchResultDTO> resultDTOS = new ArrayList<>();
+        List<SoB2cEntity> selfAddList = soB2cEntities.stream().filter(v -> v.getSourceType().equals(SourceTypeEnum.SELF_ADD.getCode())).collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(selfAddList)) {
+            selfAddList.forEach(r -> {
+                BatchResultDTO result = BatchResultDTO.fail(r.getId(), r.getCode(), "请勿选择手工订单");
+                resultDTOS.add(result);
+            });
         }
 
         soB2cEntities = soB2cEntities.stream().filter(v -> !v.getSourceType().equals(SourceTypeEnum.SELF_ADD.getCode())).collect(Collectors.toList());
-        if (CollectionUtils.isEmpty(soB2cEntities)) {
-            return false;
-        }
         // 构建 DTO 列表
         List<DmpInoutDTO.CreateInputDTO> createDTOList = soB2cEntities.stream()
                 .collect(Collectors.groupingBy(SoB2cEntity::getShopId)) // 按 shopId 分组
@@ -9043,7 +9051,18 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 .collect(Collectors.toList());
 
         // 调用远程任务接口
-        return dmpInoutTaskFeign.doInputTask(createDTOList);
+        if(Boolean.TRUE.equals(dmpInoutTaskFeign.doInputTask(createDTOList))){
+            soB2cEntities.forEach(r -> {
+                BatchResultDTO result = BatchResultDTO.success(r.getId(), r.getCode(), "创建任务成功");
+                resultDTOS.add(result);
+            });
+        }else {
+            soB2cEntities.forEach(r -> {
+                BatchResultDTO result = BatchResultDTO.fail(r.getId(), r.getCode(), "创建任务失败");
+                resultDTOS.add(result);
+            });
+        }
+        return resultDTOS;
     }
 
     // 辅助方法：根据 shopId 和分组数据构建 DTO
