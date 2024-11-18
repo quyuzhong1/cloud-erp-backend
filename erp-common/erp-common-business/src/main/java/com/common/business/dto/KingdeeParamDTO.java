@@ -39,7 +39,7 @@ public class KingdeeParamDTO {
         /**
          * 是否验证所有的基础资料有效性，布尔类，默认false（非必录）
          */
-//        private  Boolean IsVerifyBaseDataField = true;
+        private  Boolean IsVerifyBaseDataField = true;
 
 
         public SaveParamDTO(JSONObject Model) {

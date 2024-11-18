@@ -95,18 +95,18 @@ public class TikTokSdkClientService {
     public static void main(String[] args) {
 
         //标记发货
-        /*TikTokSdkClientService sdkClientService = new TikTokSdkClientService();
+        TikTokSdkClientService sdkClientService = new TikTokSdkClientService();
         TikTokShopInfoDTO tikTokShopInfoDTO = new TikTokShopInfoDTO();
         tikTokShopInfoDTO.setClientSecret("8ff628de24faf70c24855de4d967fb6a17a47e3f");
         tikTokShopInfoDTO.setClientId("6buinkjt3hmld");
-        tikTokShopInfoDTO.setAccessToken("ROW_U5iaMgAAAACj-JAAAriAWjVtF2MrUIFdi7m7AlAtQ6bl6gtVzPM0tTp3IflyK3ZHQk8ZtOa7XO9zFLKnlImAtqdJwcUXfb-yZzbQT5nsA9mvY0FRDmO3S2efX1Q1QLvHUCCS0TfBXkYHYtiTcIi6QO-VPRM69RI9ZSXvMk8rZ1cSj5IJfOA5Xw");
+        tikTokShopInfoDTO.setAccessToken("ROW_78TplgAAAACj-JAAAriAWjVtF2MrUIFdiwpvtmvHXedAYA9cevCkZepCOiMyd4q0eyFfSnzeQNSPiYsbBmXgfkz3-MVFEcyD6QqmkIhMBjdTRnBo-Bw7DBh-IQ3fvUL_tZGR6DNSekM6IpAJl62sJ5g-cybpZ0kx7WxSxGZu6gHpcqOOBRmzGg");
         tikTokShopInfoDTO.setShopCipher("TTP_pEhpJwAAAADvOkDJ2jIoaS9Uak191t0d");
 
         ShipOrderUSParam param = new ShipOrderUSParam();
         param.setTrackingNumber("9214490357610601379030");
         param.setShippingProviderId("7117858858072016686");
-        param.setOrderLineItemIds(Arrays.asList("576649523604459563"));
-        sdkClientService.sendTikTokShipOrderUS(tikTokShopInfoDTO, "576649523604197419", param);*/
+        param.setOrderLineItemIds(Arrays.asList("576778267501892253"));
+        sdkClientService.sendTikTokShipOrderUS(tikTokShopInfoDTO, "576649523604197419", param);
 
         //产品信息查询
 /*        TikTokSdkClientService sdkClientService = new TikTokSdkClientService();
