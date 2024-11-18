@@ -488,7 +488,7 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
             sendPushTask(Collections.singletonList(entity),SyncOperateEnum.OPERATE_APPROVE.getCode());
             if(isPushWdt){
                 //推送旺店通
-                if(entity.getInventoryDirection().equalsIgnoreCase("ordinary")){
+                if("ordinary".equalsIgnoreCase(entity.getInventoryDirection())){
                     syncApproveInfoToWdt(entity, SyncOperateEnum.OPERATE_APPROVE);
                 }else {
                     syncDisApproveInfoToWdt(entity, SyncOperateEnum.OPERATE_APPROVE);
@@ -533,7 +533,7 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
 
         if(isPushWdt){
             //发送旺店通
-            if(entity.getInventoryDirection().equalsIgnoreCase("ordinary")){
+            if("ordinary".equalsIgnoreCase(entity.getInventoryDirection())){
                 syncDisApproveInfoToWdt(entity, SyncOperateEnum.OPERATE_DISAPPROVE);
             }else {
                 syncApproveInfoToWdt(entity, SyncOperateEnum.OPERATE_DISAPPROVE);

@@ -196,7 +196,7 @@ public class SyncSoReturnServiceImpl implements SyncSoReturnService {
 
         List<SoReturnInstockEntity> soReturnInstockEntities = soReturnInstockService.listByCode(Collections.singletonList(kingdeeReturnOrderEntity.getFBillNo()));
         List<String> ids = soReturnInstockEntities.stream().filter(req -> ApproveStatusEnum.APPROVE.getStatus().equals(req.getApproveStatus())).map(SoReturnInstockEntity::getId).collect(Collectors.toList());
-        if (kingdeeReturnOrderEntity.getFDocumentStatus().equals("C")) {
+        if ("C".equals(kingdeeReturnOrderEntity.getFDocumentStatus())) {
             soReturnInstockService.saveKingdeeSoReturn(instockEntity, detailEntityList, ids);
             //更新库存
             inventoryTransCore(Collections.singletonList(instockEntity));

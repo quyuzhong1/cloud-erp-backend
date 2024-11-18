@@ -88,7 +88,7 @@ public class SoReturnReceiveDetailServiceImpl extends SuperServiceImpl<SoReturnR
                 detailEntity.setSourceDetailId(detailDto.getSourceDetailId());
                 detailEntity.setNoticeDetailId(detailDto.getNoticeDetailId());
                 Integer returnQty = soReturnDetailEntities.stream().filter(req -> req.getId().equals(detailDto.getSourceDetailId())).map(SoReturnDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
-                if(dto.getType().equals("B2C")){
+                if("B2C".equals(dto.getType())){
                     returnQty = soB2cReturnDetailEntityList.stream().filter(v->v.getId().equals(detailDto.getSourceDetailId())).map(SoB2cReturnDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
                 }
                 //此单历史签收数量
@@ -96,7 +96,7 @@ public class SoReturnReceiveDetailServiceImpl extends SuperServiceImpl<SoReturnR
                 if (detailDto.getReceiveQty() + historyReceiveQty > returnQty) {
                     throw new ServiceException(ApiError.ERROR_92020);
                 }
-                if(dto.getType().equals("B2C")){
+                if("B2C".equals(dto.getType())){
                     if(Objects.nonNull(soB2cReturnEntity)){
                         detailEntity.setReturnTypeDict(soB2cReturnEntity.getType());
                         detailEntity.setReturnReasonDict(soB2cReturnEntity.getReason());

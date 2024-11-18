@@ -823,8 +823,8 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
                     dto.setWarehouseLocation(viewGenerateMachineInfo.getWarehouseLocation());
                     //查询是否包含了子sku
                     List<TransferApplicationDTO.ViewGenerateMachineInfo> infoList = list.stream().filter(req -> viewGenerateMachineInfo.getSourceId().equals(sourceId)
-                            && req.getIsCombination() != Boolean.TRUE
-                            && req.getIsBody() != Boolean.TRUE).collect(Collectors.toList());
+                            && req.getIsCombination().equals(Boolean.TRUE)
+                            && req.getIsBody().equals(Boolean.TRUE)).collect(Collectors.toList());
                     for (TransferApplicationDTO.ViewGenerateMachineInfo info : infoList) {
                         MachineSubComponentsDTO.AddDTO componentsDTO = new MachineSubComponentsDTO.AddDTO();
                         componentsDTO.setIsChild(Boolean.TRUE);

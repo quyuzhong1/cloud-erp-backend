@@ -240,7 +240,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                 if(CharSequenceUtil.isNotBlank(customerInfoEntity.getName())){
                     obj.setCustomerName(customerInfoEntity.getName());
                 }
-                if(obj.getType().equals("B2C")){
+                if("B2C".equals(obj.getType())){
                     SoB2cEntity soB2cEntity = soB2cEntityList.stream().filter(v->v.getId().equals(obj.getSoId())).findFirst().orElse(new SoB2cEntity());
                     List<SoB2cDetailEntity> soB2cDetailEntity = soB2cDetailEntityList.stream().filter(detail -> detail.getMainId().equals(soB2cEntity.getId()) && detail.getSkuId().equals(obj.getSkuId())).collect(Collectors.toList());
                     obj.setSalesQty(soB2cDetailEntity.stream().mapToInt(SoB2cDetailEntity::getQty).sum());
@@ -318,7 +318,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         String soReturnId = dto.getSoReturnId();
         //当退货单不为空的时候
         if (CharSequenceUtil.isNotBlank(soReturnId)) {
-            if(dto.getType().equals("B2C")){
+            if("B2C".equals(dto.getType())){
                 SoB2cReturnEntity soB2cReturnEntity = FeignQuery.getById(SoB2cReturnEntity.class,dto.getSoReturnId());
                 //获取销售单信息
                 SoB2cEntity soB2cEntity = FeignQuery.getById(SoB2cEntity.class,soB2cReturnEntity.getSoId());
@@ -524,7 +524,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                 detailView.setWarehouseId(viewDTO.getWarehouseId());
                 detailView.setWarehouseName(viewDTO.getWarehouseName());
             }
-            if(entity.getType().equals("B2C")){
+            if("B2C".equals(entity.getType())){
                 SoB2cReturnDetailEntity soB2cReturnDetailEntity = returnB2cDetailEntityList.stream().filter(v->v.getId().equals(detailEntity.getSoReturnDetailId())).findFirst().orElse(new SoB2cReturnDetailEntity());
                 detailView.setSalesQty(soB2cReturnDetailEntity.getSaleQty());
                 Integer actualQty = soOutstockDetailEntities.stream().filter(detail -> detail.getSkuId().equals(detailEntity.getSkuId()) && detail.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())).map(SoOutstockDetailEntity::getActualQty).reduce(MathUtil.ZERO, Integer::sum);

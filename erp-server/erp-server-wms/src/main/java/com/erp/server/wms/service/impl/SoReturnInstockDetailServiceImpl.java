@@ -127,7 +127,7 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
                 if (receiveQty < detailDto.getRealQty() + realQty) {
                     throw new ServiceException(ApiError.ERROR_92045, skuVO.getSkuNo());
                 }
-                if(dto.getType().equals("B2C")){
+                if("B2C".equals(dto.getType())){
                     if(Objects.nonNull(soB2cReturnEntity)){
                         detailEntity.setReturnTypeDict(soB2cReturnEntity.getType());
                         detailEntity.setReturnReasonDict(soB2cReturnEntity.getReason());
