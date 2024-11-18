@@ -13,6 +13,7 @@ import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -116,7 +117,10 @@ public class PurchaseSuggestMergeDTO implements Serializable {
          * 创建类型名称
          */
         private String dataTypeName;
-
+        /**
+         * 是否组合品，true是，false否
+         */
+        private Boolean isCombination;
         /**
          * 状态
          */
@@ -131,6 +135,20 @@ public class PurchaseSuggestMergeDTO implements Serializable {
          * 作废状态
          */
         private Boolean invalidStatus;
+
+        /**
+         * 作废时间
+         */
+        private LocalDateTime invalidTime;
+        /**
+         * 作废人名称
+         */
+        private String invalidUserName;
+
+        /**
+         * 作废备注
+         */
+        private String invalidRemark;
 
         /**
          * 建议采购量
@@ -251,6 +269,11 @@ public class PurchaseSuggestMergeDTO implements Serializable {
          * 来源id，备货建议id
          */
         private String sourceId;
+
+        /**
+         * bom版本
+         */
+        private String bomVersion;
     }
 
 
@@ -586,6 +609,11 @@ public class PurchaseSuggestMergeDTO implements Serializable {
         */
         @NotBlank(message = "采购建议id集合不能为空")
         private String purchaseSuggestIdJson;
+
+        /**
+         * bom版本
+         */
+        private String bomVersion;
     }
 
     /**

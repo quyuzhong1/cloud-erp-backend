@@ -41,6 +41,11 @@ public interface ExportMrpFeign {
      */
     @PostMapping("/feign/export/pagingPurchaseSuggestion")
     PagingVO<PurchaseSuggestDTO.ListDTO> pagingPurchaseSuggestion(PagingDTO<PurchaseSuggestDTO.PagingParamDTO> dto);
+    /**
+     * 导出采购建议（合并）
+     */
+    @PostMapping("/feign/export/pagingPurchaseSuggestionMerge")
+    PagingVO<PurchaseSuggestMergeDTO.ListDTO> pagingPurchaseSuggestionMerge(PagingDTO<PurchaseSuggestMergeDTO.PagingParamDTO> dto);
 
     /**
      * fba每日库存

@@ -22,6 +22,31 @@ import java.util.List;
  */
 public interface DeliverySuggestService extends SuperService<DeliverySuggestEntity> {
 
+    /**
+    * 新增
+    * @author will
+    * @date: 2024-08-27
+    * @param dto
+    * @return
+    */
+    BaseResultDTO.AddDTO add(DeliverySuggestDTO.AddDTO dto);
+
+    /**
+     * 添加发货建议（系统）
+     * @author will
+     * @date 2024/11/12 10:41
+     * @param deliverySuggestEntity
+     */
+    void addDeliverySuggestSys (DeliverySuggestEntity deliverySuggestEntity);
+
+    /**
+    * 修改
+    * @author will
+    * @date: 2024-08-27
+    * @param dto
+    * @return
+    */
+    Boolean update(DeliverySuggestDTO.UpdateDTO dto);
 
     /**
      * 分页查询
@@ -136,4 +161,18 @@ public interface DeliverySuggestService extends SuperService<DeliverySuggestEnti
      * @return Boolean
      */
     Boolean importUpdate(DeliverySuggestDTO.ImportUpdateDTO updateDTO);
+    /**
+     * 补货计划作废
+     * @author will
+     * @date 2024/11/12 10:54
+     */
+    void deliverySuggestInvalid();
+    /**
+     * 查询海外仓
+     * @author will
+     * @date 2024/11/13 12:05
+     * @param ids
+     * @return List<DeliverySuggestWarehouseDTO>
+     */
+    List<DeliverySuggestDTO.DeliverySuggestWarehouseDTO> listOverseasWarehouse(List<String> ids);
 }

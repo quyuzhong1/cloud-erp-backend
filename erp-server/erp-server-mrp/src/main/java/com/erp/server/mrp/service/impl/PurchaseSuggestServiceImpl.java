@@ -19,6 +19,8 @@ import com.common.business.enums.FileTaskEventEnum;
 import com.common.business.enums.OperationTypeEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
+import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.dto.FileExcelDTO;
@@ -64,6 +66,7 @@ import java.util.List;
 import java.util.Optional;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -129,12 +132,22 @@ public class PurchaseSuggestServiceImpl extends SuperServiceImpl<PurchaseSuggest
             throw new ServiceException("建议采购保存失败");
         }
         //保存系统值
+        addPurchaseSuggestSys(purchaseSuggestEntity);
+
+        // 操作日志
+        String msg = StrUtil.format("新建了采购建议【编号：{}】",code);
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.PURCHASE_SUGGEST.getCode(), purchaseSuggestEntity.getId(), "");
+        return new BaseResultDTO.AddDTO(purchaseSuggestEntity.getId(), code);
+    }
+
+
+    @Override
+    public void addPurchaseSuggestSys (PurchaseSuggestEntity purchaseSuggestEntity) {
         PurchaseSuggestSysDTO.AddDTO dto = new PurchaseSuggestSysDTO.AddDTO();
         BeanMapperUtils.copy(purchaseSuggestEntity,dto);
         dto.setSourceId(purchaseSuggestEntity.getId());
         dto.setSourceType(SourceTypeEnum.PURCHASE_SUGGESTION.getCode());
         purchaseSuggestSysService.addOrUpdate(dto);
-        return new BaseResultDTO.AddDTO(purchaseSuggestEntity.getId(), code);
     }
 
     /**
@@ -279,9 +292,14 @@ public class PurchaseSuggestServiceImpl extends SuperServiceImpl<PurchaseSuggest
         if (viewDTO.getIsSplit()) {
             throw new ServiceException("已开启集中采购策略，不支持作废");
         }
+        //创建人
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
         //更新成作废状态
         old.setInvalidStatus(Boolean.TRUE);
         old.setInvalidRemark(remark);
+        old.setInvalidTime(LocalDateTime.now());
+        old.setInvalidUserId(userInfo.getUid());
+        old.setInvalidUserName(userInfo.getUserName());
         this.updateById(old);
 
         // 操作日志
@@ -427,18 +445,29 @@ public class PurchaseSuggestServiceImpl extends SuperServiceImpl<PurchaseSuggest
         if (CollectionUtils.isEmpty(successList)) {
             return;
         }
-        //发货计划
+        //采购建议
         List<String> codeList = successList.stream().map(PurchaseSuggestImportExcelDTO::getCode).distinct().collect(Collectors.toList());
         List<PurchaseSuggestEntity> purchaseSuggestList = this.listByCodeList(codeList);
 
         //记录错误数据
         List<PurchaseSuggestImportExcelDTO>  wrongList = new ArrayList<>();
+        //已存在的数据
+        List<String> hasList = new ArrayList<>();
         for (PurchaseSuggestImportExcelDTO excelDTO : successList) {
             List<String> errorMsgList = new ArrayList<>();
-            //发货计划
+            //采购建议
             PurchaseSuggestEntity purchaseSuggestEntity = purchaseSuggestList.stream().filter(obj -> StrUtil.equals(obj.getCode(), excelDTO.getCode())).findFirst().orElse(null);
             if (ObjectUtil.isEmpty(purchaseSuggestEntity)) {
-                errorMsgList.add("未找到采购计划");
+                errorMsgList.add("未找到采购建议");
+            }
+            if (!StrUtil.equals(purchaseSuggestEntity.getStatus(),SuggestStatusEnum.WAIT_CONFIRM.getCode())) {
+                errorMsgList.add("仅待确认数据支持导入");
+            }
+            if (purchaseSuggestEntity.getInvalidStatus()) {
+                errorMsgList.add("已作废数据不支持导入");
+            }
+            if (hasList.contains(purchaseSuggestEntity.getId())) {
+                errorMsgList.add("建议编码已导入，请勿重复导入");
             }
             if (CollectionUtils.isNotEmpty(errorMsgList)) {
                 //错误数据
@@ -452,6 +481,7 @@ public class PurchaseSuggestServiceImpl extends SuperServiceImpl<PurchaseSuggest
             updateDTO.setPlanPurchaseQty(Integer.valueOf(excelDTO.getPlanPurchaseQty()));
             updateDTO.setPurchaseStockUpQty(Integer.valueOf(excelDTO.getPurchaseStockUpQty()));
             updateDTO.setRemark(excelDTO.getRemark());
+            hasList.add(updateDTO.getId());
             this.importUpdate(updateDTO);
         }
         successList.removeAll(wrongList);

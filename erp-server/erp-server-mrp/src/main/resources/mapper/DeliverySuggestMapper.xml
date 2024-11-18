@@ -26,6 +26,44 @@
        <result column="source_type" property="sourceType" />
     </resultMap>
 
+
+    <!-- 通用查询结果列 -->
+    <sql id="Delivery_Suggest_Column_List">
+        ds.id,
+        ds.create_user_id as createUserId,
+        ds.create_user_name as createUserName,
+        ds.create_time as createTime,
+        ds.update_user_id as updateUserId,
+        ds.update_user_name as updateUserName,
+        ds.update_time as updateTime,
+        ds.code,
+        ds.data_type as dataType,
+        ds.suggest_delivery_qty as suggestDeliveryQty,
+        ds.suggest_delivery_date as suggestDeliveryDate,
+        ds.logistics_method as logisticsMethod,
+        ds.logistics_days as logisticsDays,
+        ds.estimate_sales_date as estimateSalesDate,
+        ds.logistics_cost as logisticsCost,
+        ds.invalid_status as invalidStatus,
+        ds.invalid_remark as invalidRemark,
+        ds.invalid_time as invalidTime,
+        ds.invalid_user_id as invalidUserId,
+        ds.invalid_user_name as invalidUserName,
+        ds.source_id as sourceId,
+        ds.source_type as sourceType,
+        ds.status,
+        ds.currency,
+        ds.platform_type as platformType,
+        ds.platform,
+        ds.shop_id as shopId,
+        ds.country,
+        ds.sku_id as skuId,
+        ds.plan_delivery_qty as planDeliveryQty,
+        ds.actual_delivery_qty as actualDeliveryQty,
+        ds.delivery_stock_up_qty as deliveryStockUpQty,
+        ds.remark
+    </sql>
+
     <!-- 通用查询结果列 -->
     <sql id="Base_Column_List">
         ds.id,
@@ -51,6 +89,9 @@
         dss.logistics_cost as sysLogisticsCost,
         ds.invalid_status as invalidStatus,
         ds.invalid_remark as invalidRemark,
+        ds.invalid_time as invalidTime,
+        ds.invalid_user_id as invalidUserId,
+        ds.invalid_user_name as invalidUserName,
         ds.source_id as sourceId,
         ds.source_type as sourceType,
         ds.status,
@@ -82,8 +123,8 @@
     <!-- 分页查询 -->
     <select id="paging" resultType="com.erp.model.mrp.dto.DeliverySuggestDTO$ListDTO">
         select
-            <include refid="Base_Column_List"/>
-            ,pd.sku_no,pd.name as productName,pd.images_url as imagesUrl
+        <include refid="Base_Column_List"/>
+        ,pd.sku_no,pd.name as productName,pd.images_url as imagesUrl
         from delivery_suggest ds
         left join delivery_suggest_sys dss on ds.id = dss.source_id and dss.is_deleted = false
         left join product_detail pd on ds.sku_id = pd.id and pd.is_deleted = false
@@ -94,7 +135,7 @@
                 ${params.permissionSql}
             </if>
             <if test="params.platformType != null and params.platformType != ''">
-               and ds.platform_type = #{params.platformType}
+                and ds.platform_type = #{params.platformType}
             </if>
         </where>
         ORDER BY
@@ -109,8 +150,8 @@
     <select id="pagingExportDeliverySuggestion"
             resultType="com.erp.model.mrp.dto.ReplenishmentSuggestionDTO$DeliverySuggestionDTO">
         select
-            <include refid="Base_Column_List"/>
-            ,pd.sku_no,pd.name as productName,pd.images_url as imagesUrl
+        <include refid="Base_Column_List"/>
+        ,pd.sku_no,pd.name as productName,pd.images_url as imagesUrl
         from delivery_suggest ds
         inner join replenishment_suggestion rs on ds.source_id = rs.id and rs.is_deleted = false
         left join delivery_suggest_sys dss on ds.id = dss.source_id and dss.is_deleted = false
@@ -132,6 +173,16 @@
             </foreach>
         </if>
         ds.id asc
+    </select>
+
+    <!-- 查询已完成30天的数据 -->
+    <select id="listFinishDeliverySuggest" resultType="com.erp.model.mrp.entity.DeliverySuggestEntity">
+        select
+               <include refid="Delivery_Suggest_Column_List" />
+        from delivery_suggest ds
+        <where>
+            ds.is_deleted = false and ds.invalid_status = false and #{finishDate} > ds.finish_date ;
+        </where>
     </select>
 
 

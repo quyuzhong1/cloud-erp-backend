@@ -277,6 +277,11 @@ public class WmsDeliveryPlanDTO implements Serializable {
         private JSONArray sourceJson;
 
         /**
+         * 来源类型，deliverySuggestion发货建议
+         */
+        private String sourceType;
+
+        /**
          * 来源编码
          */
         private String sourceCodes;
@@ -439,7 +444,7 @@ public class WmsDeliveryPlanDTO implements Serializable {
         /**
          * 期望发货时间
          */
-        private String expectDeliveryDate;
+        private LocalDate expectDeliveryDate;
 
         /**
          * 期望物流方式
@@ -792,7 +797,7 @@ public class WmsDeliveryPlanDTO implements Serializable {
          */
         private Integer deliveryPlanQty;
         /**
-         * 计划数量
+         * 发货数量
          */
         private Integer hasDeliveryPlanQty;
 

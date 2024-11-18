@@ -2,6 +2,7 @@ package com.erp.model.mrp.dto;
 
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -9,6 +10,7 @@ import javax.validation.constraints.*;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -287,6 +289,23 @@ public class DeliverySuggestDTO implements Serializable {
          * 来源类型
          */
         private String sourceType;
+
+        /**
+         * 作废原因
+         */
+        private String invalidRemal;
+        /**
+         * 作废时间
+         */
+        private LocalDateTime invalidTime;
+        /**
+         * 作废人id
+         */
+        private String invalidUserId;
+        /**
+         * 作废人名称
+         */
+        private String invalidUserName;
     }
 
 
@@ -542,6 +561,10 @@ public class DeliverySuggestDTO implements Serializable {
          */
         private String type;
         /**
+         * 单据类型名称
+         */
+        private String typeName;
+        /**
          * 店铺id
          */
         private String shopId;
@@ -597,6 +620,10 @@ public class DeliverySuggestDTO implements Serializable {
          */
         private List<DeliverySuggestInfoDTO> deliverySuggestList;
         /**
+         * 主键id（用skuId,前端用于合并）
+         */
+        private String id;
+        /**
          * skuId
          */
         private String skuId;
@@ -615,7 +642,7 @@ public class DeliverySuggestDTO implements Serializable {
         private Integer deliveryStockUpQty;
 
         /**
-         * 计划发货量（计划修正值）
+         * 计划发货量
          */
         private Integer planDeliveryQty;
         /**
@@ -697,6 +724,12 @@ public class DeliverySuggestDTO implements Serializable {
         private String remark;
 
         /**
+         * 类型
+         */
+        @NotBlank(message = "类型不能为空")
+        private String type;
+
+        /**
          * 明细
          */
         @NotEmpty(message = "明细不能为空")
@@ -743,5 +776,70 @@ public class DeliverySuggestDTO implements Serializable {
          * 平台产品名称
          */
         private String platformSkuName;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class PurchaseSuggestBomDTO {
+        /**
+         * 补货建议id
+         */
+        private String sourceId;
+        /**
+         * 采购建议编码
+         */
+        private String code;
+        /**
+         * 父级SKU
+         */
+        private String parentSkuNo;
+        /**
+         * 子级SKU
+         */
+        private String skuNo;
+        /**
+         * 系统建议值
+         */
+        private Integer suggestPurchaseQty;
+        /**
+         * 采购备货数
+         */
+        private Integer purchaseStockUpQty;
+        /**
+         * 建议值说明
+         */
+        private List<BomDetailDTO> bomList;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class BomDetailDTO {
+        /**
+         * 父级sku
+         */
+        private String parentSkuNo;
+        /**
+         * 子级sku
+         */
+        private String skuNo;
+        /**
+         * 用量
+         */
+        private Integer quantity;
+    }
+
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class DeliverySuggestWarehouseDTO {
+        /**
+         * 仓库Id
+         */
+        private String warehouseId;
+        /**
+         * 仓库名称
+         */
+        private String warehouseName;
     }
 }

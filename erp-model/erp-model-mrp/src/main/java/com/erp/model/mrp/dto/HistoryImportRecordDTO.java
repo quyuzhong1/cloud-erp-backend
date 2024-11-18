@@ -81,7 +81,7 @@ public class HistoryImportRecordDTO implements Serializable {
         private String type;
 
         /**
-         * 模块类型，取sourceType,replenishmentSuggestion补货建议,deliverySuggestion发货建议,purchaseSuggestion采购建议
+         * 模块类型，取sourceType,replenishmentSuggestion补货建议,deliverySuggestion发货建议,purchaseSuggestion采购建议,purchaseSuggestionMerge采购建议（合并）
          */
         private String module;
 

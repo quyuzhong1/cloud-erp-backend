@@ -63,7 +63,7 @@ public class WmsDeliveryPlanQueryHandler extends AbstractQueryHandler {
         }
         if("sourceCode".equals(field)){
             return "EXISTS (select source_code ,id from  (select json_array_elements(source_json::json) ->> 'sourceCode' as source_code,id from wms_delivery_plan_detail where is_deleted = false \n" +
-                    "and id = odp.id ) mdpde.code " + compareCodeSplicingValueSql + ")";
+                    "and id = odpd.id ) as sj where sj.source_code " + compareCodeSplicingValueSql + ")";
         }
         return null;
     }

@@ -127,4 +127,12 @@ public interface PurchaseSuggestMergeService extends SuperService<PurchaseSugges
      * @return List<PurchaseSuggestMergeEntity>
      */
     List<PurchaseSuggestMergeEntity> listByPlatformListAndSkuIdList(List<String> platformTypeList, List<String> platformList, List<String> skuIdList);
+    /**
+     * 查询采购bom信息
+     * @author will
+     * @date 2024/11/12 16:52
+     * @param id
+     * @return List<PurchaseSuggestBomDTO>
+     */
+    List<DeliverySuggestDTO.PurchaseSuggestBomDTO> listPurchaseSuggestBom(String id);
 }

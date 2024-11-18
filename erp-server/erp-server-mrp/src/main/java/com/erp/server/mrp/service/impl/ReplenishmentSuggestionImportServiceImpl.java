@@ -274,7 +274,11 @@ public class ReplenishmentSuggestionImportServiceImpl implements ReplenishmentSu
             //补货建议主表信息
             ReplenishmentSuggestionEntity entity = replenishmentSuggestionList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSkuId(), skuId) && CharSequenceUtil.equals(obj.getShopId(), shopId) && CharSequenceUtil.equals(platformCode, obj.getPlatform())).findFirst().orElse(null);
             if (ObjectUtil.isEmpty(entity)) {
-                errorMsgList.add(CharSequenceUtil.format(SALE_ERROR_MSG,excelDTO.getPlatform(),excelDTO.getShopName(),excelDTO.getSkuNo()));
+                errorMsgList.add(CharSequenceUtil.format("平台【{}】、店铺【{}】、SKU【{}】未找到对应的补货建议数据",excelDTO.getPlatform(),excelDTO.getShopName(),excelDTO.getSkuNo()));
+            } else {
+                if (!CharSequenceUtil.equals(entity.getPlatformType(),platformType)) {
+                    errorMsgList.add(CharSequenceUtil.format("【{}】平台不支持导入其他平台数据",CfgRulePlatformTypeEnum.getName(platformType)));
+                }
             }
             if (CollectionUtils.isNotEmpty(errorMsgList)) {
                 //错误数据
@@ -1194,9 +1198,10 @@ public class ReplenishmentSuggestionImportServiceImpl implements ReplenishmentSu
         jsonObject.set("*平台","platform");
         jsonObject.set("*SKU","skuNo");
         jsonObject.set("*店铺","shopName");
-        jsonObject.set(now.format(DateTimeFormatter.ofPattern(dateFormat)),"currentMonthSalesQty");
-        jsonObject.set(now.plusMonths(1L).format(DateTimeFormatter.ofPattern(dateFormat)),"nextMonthSales");
-        jsonObject.set(now.plusMonths(2L).format(DateTimeFormatter.ofPattern(dateFormat)),"followingMonthSales");
+        jsonObject.set(now.format(DateTimeFormatter.ofPattern("yyyy年MM月")),"currentMonthSalesQty");
+        jsonObject.set(now.plusMonths(1L).format(DateTimeFormatter.ofPattern("yyyy年MM月")),"nextMonthSales");
+        jsonObject.set(now.plusMonths(2L).format(DateTimeFormatter.ofPattern("yyyy年MM月")),"followingMonthSales");
+        jsonObject.set("6","错误信息");
         return jsonObject;
     }
 

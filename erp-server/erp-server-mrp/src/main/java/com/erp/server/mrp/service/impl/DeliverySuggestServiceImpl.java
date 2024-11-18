@@ -21,6 +21,8 @@ import com.common.business.enums.FileTaskEventEnum;
 import com.common.business.enums.OperationTypeEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
+import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.dto.FileExcelDTO;
@@ -33,17 +35,12 @@ import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.FieldValidUtil;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
-import com.erp.model.mrp.dto.DeliverySuggestDTO;
-import com.erp.model.mrp.dto.DeliverySuggestSysDTO;
-import com.erp.model.mrp.dto.HistoryImportRecordDTO;
-import com.erp.model.mrp.dto.ReplenishmentSuggestionDTO;
+import com.erp.model.mrp.dto.*;
 import com.erp.model.mrp.dto.excel.DeliverySuggestImportExcelDTO;
+import com.erp.model.mrp.entity.CfgRuleWarehouseEntity;
 import com.erp.model.mrp.entity.DeliverySuggestEntity;
 import com.erp.model.mrp.entity.ReplenishmentSuggestionEntity;
-import com.erp.model.mrp.enums.CfgRulePlatformTypeEnum;
-import com.erp.model.mrp.enums.CreateTypeEnum;
-import com.erp.model.mrp.enums.HistoryImportRecordTypeEnum;
-import com.erp.model.mrp.enums.SuggestStatusEnum;
+import com.erp.model.mrp.enums.*;
 import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.oms.entity.ListingInfoEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
@@ -58,6 +55,7 @@ import com.erp.model.wms.dto.WmsDeliveryPlanDetailDTO;
 import com.erp.model.wms.entity.WmsDeliveryPlanDetailEntity;
 import com.erp.model.wms.enums.DeliveryPlanTypeEnum;
 import com.erp.model.wms.enums.LogisticsMethodEnum;
+import com.erp.model.wms.enums.VitualWarehouseChannelTypeEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
@@ -78,6 +76,8 @@ import java.util.List;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -118,6 +118,12 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
     @Resource
     private SysUserFeign sysUserFeign;
 
+    @Autowired
+    private CfgRuleWarehouseService cfgRuleWarehouseService;
+
+    @Autowired
+    private CfgRuleWarehouseDetailService cfgRuleWarehouseDetailService;
+
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -136,12 +142,22 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
             throw new ServiceException("补货计划保存失败");
         }
         //保存系统值
+        addDeliverySuggestSys (deliverySuggestEntity);
+
+        // 操作日志
+        String msg = StrUtil.format("新建了补货计划【编号：{}】",code);
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.DELIVERY_SUGGEST.getCode(), deliverySuggestEntity.getId(), "");
+        return new BaseResultDTO.AddDTO(deliverySuggestEntity.getId(), code);
+    }
+
+    @Override
+    public void addDeliverySuggestSys (DeliverySuggestEntity deliverySuggestEntity) {
+        //保存系统值
         DeliverySuggestSysDTO.AddDTO dto = new DeliverySuggestSysDTO.AddDTO();
         BeanMapperUtils.copy(deliverySuggestEntity,dto);
         dto.setSourceId(deliverySuggestEntity.getId());
         dto.setSourceType(SourceTypeEnum.DELIVERY_SUGGESTION.getCode());
         deliverySuggestSysService.add(dto);
-        return new BaseResultDTO.AddDTO(deliverySuggestEntity.getId(), code);
     }
 
     /**
@@ -186,6 +202,84 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
         //操作日志
         operateLogService.addModuleOperateLogByObj(old, deliverySuggestEntity, ModuleTypeEnum.DELIVERY_SUGGEST.getCode(), deliverySuggestEntity.getId(), "", "");
         return Boolean.TRUE;
+    }
+
+    @Override
+    public void deliverySuggestInvalid() {
+       LocalDate now = LocalDate.now();
+       List<DeliverySuggestEntity> list =  baseMapper.listFinishDeliverySuggest(now.minusDays(30L));
+       if (CollectionUtils.isEmpty(list)) {
+           return;
+       }
+        //补货计划
+        List<String> ids = list.stream().map(DeliverySuggestEntity::getId).collect(Collectors.toList());
+        List<WmsDeliveryPlanDetailEntity> deliveryPlanDetailList = deliveryPlanFeign.listBySourceIdList(ids);
+        List<String> idList = new ArrayList<>();
+        for (DeliverySuggestEntity entity :list) {
+            //补货计划
+            WmsDeliveryPlanDetailEntity wmsDeliveryPlanDetailEntity = deliveryPlanDetailList.stream().filter(obj -> {
+                    long count = BeanUtil.copyToList(JSONUtil.parseArray(obj.getSourceJson()), WmsDeliveryPlanDetailDTO.SourceJsonDTO.class).stream().filter(e -> StrUtil.equals(e.getSourceId(), entity.getId())).count();
+                    if (count > 0) {
+                        return Boolean.TRUE;
+                    }
+                    return Boolean.FALSE;
+            }).findFirst().orElse(null);
+            //以下推的发货建议数据直接跳过
+            if (ObjectUtil.isNotEmpty(wmsDeliveryPlanDetailEntity)) {
+                continue;
+            }
+            idList.add(entity.getId());
+        }
+        if (CollectionUtils.isEmpty(idList)) {
+            return;
+        }
+        idList.stream().forEach(obj -> this.invalid(obj,"超期自动作废"));
+    }
+
+    @Override
+    public List<DeliverySuggestDTO.DeliverySuggestWarehouseDTO> listOverseasWarehouse(List<String> ids) {
+        List<DeliverySuggestEntity> deliverySuggestList = this.listByIds(ids);
+        if (CollectionUtils.isEmpty(deliverySuggestList)) {
+            throw new ServiceException(ApiError.NOT_EXIST_BILL, "补货计划");
+        }
+        //非海外平台直接返回空
+        long count = deliverySuggestList.stream().filter(obj -> !StrUtil.equals(obj.getPlatformType(), CfgRulePlatformTypeEnum.OVERSEAS.getCode())).count();
+        if (count > MathUtil.ZERO) {
+            return Collections.EMPTY_LIST;
+        }
+        CfgRuleWarehouseEntity  ruleWarehouseEntity = cfgRuleWarehouseService.getByPlatformType(CfgRulePlatformTypeEnum.OVERSEAS.getCode());
+        if (ObjectUtil.isEmpty(ruleWarehouseEntity)) {
+            return Collections.EMPTY_LIST;
+        }
+        List<String> shopIdList = deliverySuggestList.stream().map(DeliverySuggestEntity::getShopId).distinct().collect(Collectors.toList());
+
+        List<ShopInfoEntity> shopList = FeignQuery.getByIds(ShopInfoEntity.class, shopIdList);
+        List<String> dictPlatformList = shopList.stream().map(ShopInfoEntity::getDictPlatform).distinct().collect(Collectors.toList());
+        List<CfgRuleWarehouseDetailDTO.ViewDTO> viewList = cfgRuleWarehouseDetailService.listViewByMainIdList(Arrays.asList(ruleWarehouseEntity.getId()));
+        if (CollectionUtils.isEmpty(viewList)) {
+            return Collections.EMPTY_LIST;
+        }
+        List<DeliverySuggestDTO.DeliverySuggestWarehouseDTO> resultList = new ArrayList<>();
+        for (CfgRuleWarehouseDetailDTO.ViewDTO viewDTO : viewList) {
+            if (!StrUtil.equals(CfgRuleWarehouseTypeEnum.OVERSEAS.getCode(),viewDTO.getWarehouseType())) {
+                continue;
+            }
+
+            //按店铺
+            if (StrUtil.equals(viewDTO.getChannelType(), VitualWarehouseChannelTypeEnum.SHOP.getCode())) {
+                long shopCont = viewDTO.getChannelIdList().stream().filter(obj -> shopList.contains(obj)).count();
+                if (shopCont > 0) {
+                    resultList.add(new DeliverySuggestDTO.DeliverySuggestWarehouseDTO(viewDTO.getWarehouseId(),viewDTO.getWarehouseName()));
+                }
+                continue;
+            }
+            //按平台
+            long platformCont = viewDTO.getChannelIdList().stream().filter(obj -> dictPlatformList.contains(obj)).count();
+            if (platformCont > 0) {
+                resultList.add(new DeliverySuggestDTO.DeliverySuggestWarehouseDTO(viewDTO.getWarehouseId(),viewDTO.getWarehouseName()));
+            }
+        }
+        return resultList;
     }
 
     @Override
@@ -256,6 +350,7 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
         }
         //更新成完成状态
         old.setStatus(SuggestStatusEnum.FINISH.getCode());
+        old.setFinishDate(LocalDate.now());
         this.updateById(old);
 
         // 操作日志
@@ -271,15 +366,20 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
         Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "补货计划"));
         Boolean isPush = isPushDeliveryPlan(id);
         if (isPush) {
-            throw new ServiceException(ApiError.ERROR_SUGGEST_INVALID);
+            return BatchResultDTO.fail(old.getId(),old.getCode(),ApiError.ERROR_SUGGEST_INVALID.msg);
         }
 
         if (old.getInvalidStatus()) {
-            throw new ServiceException(ApiError.ERROR_98012);
+            return BatchResultDTO.fail(old.getId(),old.getCode(),ApiError.ERROR_98012.msg);
         }
+        //创建人
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
         //更新成作废状态
         old.setInvalidStatus(Boolean.TRUE);
         old.setInvalidRemark(remark);
+        old.setInvalidTime(LocalDateTime.now());
+        old.setInvalidUserId(userInfo.getUid());
+        old.setInvalidUserName(userInfo.getUserName());
         this.updateById(old);
 
         // 操作日志
@@ -296,12 +396,16 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
         switch (CfgRulePlatformTypeEnum.getEnum(platformType)){
             case AMAZON:
                 fileName = "补货计划_本地发FBA";
+                break;
             case OVERSEAS:
                 fileName = "补货计划_本地发海外仓";
+                break;
             case INTERNAL:
                 fileName = "补货计划_本地备货";
+                break;
             case B2B:
                 fileName = "补货计划_B2B本地备货";
+                break;
             default:
                 ;
         }
@@ -315,9 +419,15 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
         if (CollectionUtils.isEmpty(deliverySuggestList)) {
             throw new ServiceException(ApiError.ERROR_98004);
         }
-        String codes = deliverySuggestList.stream().filter(obj -> !StrUtil.equals(obj.getStatus(), SuggestStatusEnum.FINISH.getCode())).map(DeliverySuggestEntity::getCode).collect(Collectors.joining(","));
+        String codes = deliverySuggestList.stream().filter(obj -> !StrUtil.equals(obj.getStatus(), SuggestStatusEnum.FINISH.getCode()))
+                .map(DeliverySuggestEntity::getCode).collect(Collectors.joining(","));
         if (StrUtil.isNotBlank(codes)) {
             throw new ServiceException(ApiError.ERROR_DELIVERY_SUGGEST_PUSH,codes);
+        }
+        String invalidCodes = deliverySuggestList.stream().filter(obj -> obj.getInvalidStatus().equals(Boolean.TRUE))
+                .map(DeliverySuggestEntity::getCode).collect(Collectors.joining(","));
+        if (StrUtil.isNotBlank(invalidCodes)) {
+            throw new ServiceException(ApiError.ERROR_DELIVERY_SUGGEST_PUSH_INVALID,codes);
         }
 
         DeliverySuggestDTO.ViewPushDeliveryPlanDTO viewPushDeliveryPlanDTO = new DeliverySuggestDTO.ViewPushDeliveryPlanDTO();
@@ -339,6 +449,9 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
         //产品信息
         List<ProductDetailEntity> skuList = FeignQuery.getByIds(ProductDetailEntity.class, skuIdList);
 
+        //补货计划
+        List<WmsDeliveryPlanDetailEntity> deliveryPlanDetailList = deliveryPlanFeign.listBySourceIdList(ids);
+
         long count = deliverySuggestList.stream().map(DeliverySuggestEntity::getShopId).distinct().count();
         //校验
         if (count > MathUtil.ONE) {
@@ -346,19 +459,15 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
         }
         DeliverySuggestEntity entity = deliverySuggestList.get(0);
         viewPushDeliveryPlanDTO.setShopId(entity.getShopId());
-        viewPushDeliveryPlanDTO.setType(DeliveryPlanTypeEnum.FBA.getCode());
-        viewPushDeliveryPlanDTO.setDeliveryDate(entity.getSuggestDeliveryDate());
-        viewPushDeliveryPlanDTO.setLogisticsMethod(entity.getLogisticsMethod());
-        viewPushDeliveryPlanDTO.setLogisticsMethodName(LogisticsMethodEnum.getName(entity.getLogisticsMethod()));
-        //店铺信息
-        ShopInfoEntity shopInfoEntity = shopInfoList.stream().filter(obj -> StrUtil.equals(obj.getId(), entity.getShopId())).findFirst().orElse(null);
-        if (ObjectUtil.isNotEmpty(shopInfoEntity)) {
-            viewPushDeliveryPlanDTO.setShopName(shopInfoEntity.getName());
-            viewPushDeliveryPlanDTO.setCountry(shopInfoEntity.getDictCountryCode());
-            viewPushDeliveryPlanDTO.setCountryName(shopInfoEntity.getCountryName());
-            viewPushDeliveryPlanDTO.setWarehouseId(shopInfoEntity.getWarehouseId());
-            viewPushDeliveryPlanDTO.setWarehouseName(shopInfoEntity.getWarehouseName());
+        boolean isOverseas = StrUtil.equals(deliverySuggestList.get(0).getPlatformType(), CfgRulePlatformTypeEnum.OVERSEAS.getCode());
+        if (isOverseas) {
+            //海外平台
+            handleOverseas (viewPushDeliveryPlanDTO,entity);
+        } else {
+            //亚马逊平台数据处理
+            handleAmazon (viewPushDeliveryPlanDTO,entity,shopInfoList);
         }
+
         List<DeliverySuggestDTO.ViewPushDeliveryPlanDetailDTO> detailList = new ArrayList<>();
 
         Map<String, List<DeliverySuggestEntity>> map = deliverySuggestList.stream().collect(Collectors.groupingBy(DeliverySuggestEntity::getSkuId));
@@ -375,27 +484,43 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
             //补货计划
             List<DeliverySuggestDTO.DeliverySuggestInfoDTO> suggestInfoList = new ArrayList<>();
             for (DeliverySuggestEntity deliverySuggestEntity : value) {
+                //补货计划
+                WmsDeliveryPlanDetailEntity deliveryPlanDetail = deliveryPlanDetailList.stream().filter(obj -> {
+                    long planCount = BeanUtil.copyToList(JSONUtil.parseArray(obj.getSourceJson()), WmsDeliveryPlanDetailDTO.SourceJsonDTO.class).stream().filter(e -> StrUtil.equals(e.getSourceId(),deliverySuggestEntity.getId())).count();
+                    if (planCount > 0) {
+                        return Boolean.TRUE;
+                    }
+                    return Boolean.FALSE;
+                }).findFirst().orElse(null);
+                if (ObjectUtil.isNotEmpty(deliveryPlanDetail)) {
+                    throw new ServiceException(StrUtil.format("发货建议【{}】已下推发货计划【{}】，不支持再次下推",deliverySuggestEntity.getCode(),deliveryPlanDetail.getCode()));
+                }
                 DeliverySuggestDTO.DeliverySuggestInfoDTO deliverySuggestInfoDTO = new DeliverySuggestDTO.DeliverySuggestInfoDTO();
                 deliverySuggestInfoDTO.setSourceId(deliverySuggestEntity.getId());
                 deliverySuggestInfoDTO.setSourceCode(deliverySuggestEntity.getCode());
-                deliverySuggestInfoDTO.setPlanDeliveryQty(deliverySuggestEntity.getSuggestDeliveryQty());
+                deliverySuggestInfoDTO.setPlanDeliveryQty(deliverySuggestEntity.getDeliveryStockUpQty());
                 suggestInfoList.add(deliverySuggestInfoDTO);
             }
             detailDTO.setDeliverySuggestList(suggestInfoList);
 
             //sku映射表
-            SkuMappingEntity skuMappingEntity = list.stream().filter(obj -> StrUtil.equals(obj.getProductSkuId(), suggestEntity.getShopId())).findFirst().orElse(null);
-            if (ObjectUtil.isNotEmpty(skuMappingEntity)) {
-                //listing信息
-                List<ListingInfoEntity> detailListingList = listingList.stream().filter(obj -> StrUtil.equals(skuMappingEntity.getListingId(), obj.getId())).collect(Collectors.toList());
-                for (ListingInfoEntity listingInfoEntity : detailListingList) {
-                    DeliverySuggestDTO.ViewPushDeliveryPlanDetailDTO newDTO = new DeliverySuggestDTO.ViewPushDeliveryPlanDetailDTO();
-                    BeanMapperUtils.copy(detailDTO,newDTO);
-                    newDTO.setMSKu(listingInfoEntity.getPlatformSkuNo());
-                    newDTO.setFnSku(listingInfoEntity.getPlatformFnSku());
-                    newDTO.setAsin(listingInfoEntity.getPlatformSpuNo());
-                    newDTO.setPlatformSkuName(listingInfoEntity.getPlatformSkuName());
-                    detailList.add(newDTO);
+            List<SkuMappingEntity> skuMappingList = list.stream().filter(obj -> StrUtil.equals(obj.getProductSkuId(), suggestEntity.getSkuId())).collect(Collectors.toList());
+            if (CollectionUtils.isNotEmpty(skuMappingList)) {
+                for (SkuMappingEntity skuMappingEntity : skuMappingList) {
+                    //listing信息
+                    List<ListingInfoEntity> detailListingList = listingList.stream().filter(obj -> StrUtil.equals(skuMappingEntity.getListingId(), obj.getId())).collect(Collectors.toList());
+                    for (ListingInfoEntity listingInfoEntity : detailListingList) {
+                        DeliverySuggestDTO.ViewPushDeliveryPlanDetailDTO newDTO = new DeliverySuggestDTO.ViewPushDeliveryPlanDetailDTO();
+                        BeanMapperUtils.copy(detailDTO,newDTO);
+                        newDTO.setId(suggestEntity.getSkuId());
+                        newDTO.setMSKu(listingInfoEntity.getPlatformSkuNo());
+                        newDTO.setFnSku(listingInfoEntity.getPlatformFnSku());
+                        newDTO.setAsin(listingInfoEntity.getPlatformSpuNo());
+                        newDTO.setPlatformSkuName(listingInfoEntity.getPlatformSkuName());
+                        //清空计划发货数量，前端填写
+                        newDTO.setPlanDeliveryQty(null);
+                        detailList.add(newDTO);
+                    }
                 }
             } else {
                 detailList.add(detailDTO);
@@ -405,16 +530,63 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
         return viewPushDeliveryPlanDTO;
     }
 
+    /**
+     * 海外平台
+     * @author will
+     * @date 2024/11/14 9:50
+     * @param viewPushDeliveryPlanDTO
+     * @param entity
+     */
+    private void handleOverseas (DeliverySuggestDTO.ViewPushDeliveryPlanDTO viewPushDeliveryPlanDTO, DeliverySuggestEntity entity) {
+            viewPushDeliveryPlanDTO.setType(DeliveryPlanTypeEnum.THIRD_WAREHOUSE.getCode() );
+            viewPushDeliveryPlanDTO.setTypeName( DeliveryPlanTypeEnum.THIRD_WAREHOUSE.getName());
+            viewPushDeliveryPlanDTO.setDeliveryDate(entity.getSuggestDeliveryDate());
+            viewPushDeliveryPlanDTO.setLogisticsMethod(entity.getLogisticsMethod());
+            viewPushDeliveryPlanDTO.setLogisticsMethodName(LogisticsMethodEnum.getName(entity.getLogisticsMethod()));
+    }
+
+    /**
+     * 处理亚马逊数据
+     * @author will
+     * @date 2024/11/14 9:45
+     * @param viewPushDeliveryPlanDTO
+     * @param entity
+     * @param shopInfoList
+     */
+    private void handleAmazon (DeliverySuggestDTO.ViewPushDeliveryPlanDTO viewPushDeliveryPlanDTO, DeliverySuggestEntity entity,
+                               List<ShopInfoEntity> shopInfoList) {
+        viewPushDeliveryPlanDTO.setType(DeliveryPlanTypeEnum.FBA.getCode() );
+        viewPushDeliveryPlanDTO.setTypeName( DeliveryPlanTypeEnum.FBA.getName());
+        viewPushDeliveryPlanDTO.setDeliveryDate(entity.getSuggestDeliveryDate());
+        viewPushDeliveryPlanDTO.setLogisticsMethod(entity.getLogisticsMethod());
+        viewPushDeliveryPlanDTO.setLogisticsMethodName(LogisticsMethodEnum.getName(entity.getLogisticsMethod()));
+        //店铺信息
+        ShopInfoEntity shopInfoEntity = shopInfoList.stream().filter(obj -> StrUtil.equals(obj.getId(), entity.getShopId())).findFirst().orElse(null);
+        if (ObjectUtil.isNotEmpty(shopInfoEntity)) {
+            viewPushDeliveryPlanDTO.setShopName(shopInfoEntity.getName());
+            viewPushDeliveryPlanDTO.setCountry(shopInfoEntity.getDictCountryCode());
+            viewPushDeliveryPlanDTO.setCountryName(shopInfoEntity.getCountryName());
+            viewPushDeliveryPlanDTO.setWarehouseId(shopInfoEntity.getWarehouseId());
+            viewPushDeliveryPlanDTO.setWarehouseName(shopInfoEntity.getWarehouseName());
+        }
+    }
+
     @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public Boolean pushDeliveryPlan(DeliverySuggestDTO.AddPushDeliveryPlanDTO deliveryPlanDTO) {
         WmsDeliveryPlanDTO.AddDTO addDTO = new WmsDeliveryPlanDTO.AddDTO();
         addDTO.setShopId(deliveryPlanDTO.getShopId());
-        addDTO.setType(DeliveryPlanTypeEnum.FBA.getCode());
+        addDTO.setType(deliveryPlanDTO.getType());
         addDTO.setPlanDeliveryDate(deliveryPlanDTO.getDeliveryDate());
         addDTO.setToWarehouseId(deliveryPlanDTO.getWarehouseId());
         addDTO.setExpectLogisticsMethod(deliveryPlanDTO.getLogisticsMethod());
+        addDTO.setExpectDeliveryDate(deliveryPlanDTO.getDeliveryDate());
         addDTO.setSourceType(SourceTypeEnum.DELIVERY_SUGGESTION.getCode());
+        addDTO.setRemark(deliveryPlanDTO.getRemark());
         List<WmsDeliveryPlanDetailDTO.AddDTO> detailList =  new ArrayList<>();
+        //建议
+        List<DeliverySuggestDTO.DeliverySuggestInfoDTO> deliverySuggestList = new ArrayList<>();
         for (DeliverySuggestDTO.PushDeliveryPlanDetailDTO detailDTO: deliveryPlanDTO.getDetailList()) {
             WmsDeliveryPlanDetailDTO.AddDTO addDetailDTO = new WmsDeliveryPlanDetailDTO.AddDTO();
             addDetailDTO.setMSKU(detailDTO.getMSKu());
@@ -424,13 +596,28 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
             addDetailDTO.setPlatformSku(detailDTO.getMSKu());
             addDetailDTO.setSkuId(detailDTO.getSkuId());
             addDetailDTO.setQty(detailDTO.getPlanDeliveryQty());
+            if (StrUtil.isBlank(detailDTO.getMSKu()) || StrUtil.isBlank(detailDTO.getFnSku())) {
+                continue;
+            }
             //来源信息
             List<WmsDeliveryPlanDetailDTO.SourceJsonDTO> sourceJsonDTOList = BeanMapperUtils.copyList(WmsDeliveryPlanDetailDTO.SourceJsonDTO.class, detailDTO.getDeliverySuggestList());
             addDetailDTO.setSourceJsonList(sourceJsonDTOList);
             detailList.add(addDetailDTO);
+            deliverySuggestList.addAll(detailDTO.getDeliverySuggestList());
+        }
+        //无明细数据则直接跳过
+        if (CollectionUtils.isEmpty(detailList)) {
+            throw new ServiceException("未找到可新增的数据");
         }
         addDTO.setDetailList(detailList);
-        deliveryPlanFeign.addDeliveryPlan(addDTO);
+        BaseResultDTO.AddDTO addReturnDTO = deliveryPlanFeign.addDeliveryPlan(addDTO);
+
+        //超期提醒
+        deliverySuggestList.stream().distinct().forEach(obj -> {
+            // 操作日志
+            String msg = StrUtil.format("补货计划【编号:{}】,下推生成发货计划【发货计划编号:{}】",obj.getSourceCode(),addReturnDTO.getCode());
+            operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.DELIVERY_SUGGEST.getCode(), obj.getSourceId(), "下推");
+        });
         return Boolean.TRUE;
     }
 
@@ -480,10 +667,11 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
         //导入文件名称
         String originalFilename = excelFile.getOriginalFilename();
         //上传正确数据
-        upLoadSuccessExcel (originalFilename,successList);
+        upLoadSuccessExcel (originalFilename,successList,platformType);
         //导出错误数据
         exportErrorExcel (response,errorList);
     }
+
 
     /**
      * 上传正确数据
@@ -492,7 +680,7 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
      * @param originalFilename
      * @param successList
      */
-    private void upLoadSuccessExcel (String originalFilename, List<DeliverySuggestImportExcelDTO> successList) {
+    private void upLoadSuccessExcel (String originalFilename, List<DeliverySuggestImportExcelDTO> successList,String platformType) {
         //全部为空则无需处理
         if (CollectionUtils.isEmpty(successList) ) {
             return;
@@ -510,6 +698,7 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
         HistoryImportRecordDTO.AddDTO dto = new HistoryImportRecordDTO.AddDTO();
         dto.setName(fileName);
         dto.setModule(SourceTypeEnum.DELIVERY_SUGGESTION.getCode());
+        dto.setPlatformType(platformType);
         dto.setType(HistoryImportRecordTypeEnum.DELIVERY_SUGGESTION_CONFIRM.getCode());
         dto.setExportFileDTO(exportFileDTO);
         historyImportRecordService.add(dto);
@@ -553,21 +742,32 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
         if (CollectionUtils.isEmpty(successList)) {
             return;
         }
-        //补货计划
+        //发货建议
         List<String> codeList = successList.stream().map(DeliverySuggestImportExcelDTO::getCode).distinct().collect(Collectors.toList());
         List<DeliverySuggestEntity> deliverySuggestList = this.listByCodeList(codeList);
 
         //记录错误数据
         List<DeliverySuggestImportExcelDTO>  wrongList = new ArrayList<>();
+        //已存在的数据
+        List<String> hasList = new ArrayList<>();
         for (DeliverySuggestImportExcelDTO excelDTO : successList) {
             List<String> errorMsgList = new ArrayList<>();
-            //补货计划
+            //发货建议
             DeliverySuggestEntity deliverySuggestEntity = deliverySuggestList.stream().filter(obj -> StrUtil.equals(obj.getCode(), excelDTO.getCode())).findFirst().orElse(null);
             if (ObjectUtil.isEmpty(deliverySuggestEntity)) {
-                errorMsgList.add("未找到补货计划");
+                errorMsgList.add("未找到发货建议");
             } else {
                 if (!StrUtil.equals(platformType,deliverySuggestEntity.getPlatformType())) {
-                    errorMsgList.add(StrUtil.format("【{}】平台类型是{},不支持导入",CfgRulePlatformTypeEnum.getName(platformType)));
+                    errorMsgList.add("发货建议数据不支持跨平台类型导入");
+                }
+                if (!StrUtil.equals(deliverySuggestEntity.getStatus(),SuggestStatusEnum.WAIT_CONFIRM.getCode())) {
+                    errorMsgList.add("仅待确认数据支持导入");
+                }
+                if (deliverySuggestEntity.getInvalidStatus()) {
+                    errorMsgList.add("已作废数据不支持导入");
+                }
+                if (hasList.contains(deliverySuggestEntity.getId())) {
+                    errorMsgList.add("建议编码已导入，请勿重复导入");
                 }
             }
             if (CollectionUtils.isNotEmpty(errorMsgList)) {
@@ -596,6 +796,7 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
                 errorList.add(excelDTO);
                 continue;
             }
+            hasList.add(updateDTO.getId());
         }
         successList.removeAll(wrongList);
     }

@@ -12,6 +12,7 @@ import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -266,6 +267,22 @@ public class PurchaseSuggestDTO implements Serializable {
          * 来源类型
          */
         private String sourceType;
+        /**
+         * 作废原因
+         */
+        private String invalidRemark;
+        /**
+         * 作废时间
+         */
+        private LocalDateTime invalidTime;
+        /**
+         * 作废人id
+         */
+        private String invalidUserId;
+        /**
+         * 作废人名称
+         */
+        private String invalidUserName;
     }
 
     /**

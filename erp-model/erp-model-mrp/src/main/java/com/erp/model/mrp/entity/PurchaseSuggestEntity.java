@@ -10,6 +10,7 @@ import lombok.experimental.Accessors;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 
 /**
@@ -144,6 +145,28 @@ public class PurchaseSuggestEntity extends BaseEntity<PurchaseSuggestEntity> {
      */
     @TableField("remark")
     private String remark;
+    /**
+     * 作废时间
+     */
+    @TableField("invalid_time")
+    private LocalDateTime invalidTime;
+    /**
+     * 作废人id
+     */
+    @TableField("invalid_user_id")
+    private String invalidUserId;
+    /**
+     * 作废人名称
+     */
+    @TableField("invalid_user_name")
+    private String invalidUserName;
+
+
+    /**
+     * bom版本
+     */
+    @TableField(exist = false)
+    private String bomVersion;
 
     public static final String CODE = "code";
 

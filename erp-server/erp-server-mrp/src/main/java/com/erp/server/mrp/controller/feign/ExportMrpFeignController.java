@@ -1,18 +1,14 @@
 package com.erp.server.mrp.controller.feign;
 
-import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.DynamicExcelDTO;
 import com.common.business.dto.base.PagingDTO;
-import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
+import com.erp.model.mrp.dto.*;
 import com.erp.model.mrp.dto.*;
 import com.erp.model.wms.dto.FbaInventoryDTO;
 import com.erp.server.mrp.handler.ReplenishmentSuggestionQueryHandler;
-import com.erp.server.mrp.service.DeliverySuggestService;
-import com.erp.server.mrp.service.FbaHistoryInventoryService;
-import com.erp.server.mrp.service.PurchaseSuggestService;
-import com.erp.server.mrp.service.ReplenishmentSuggestionService;
+import com.erp.server.mrp.service.*;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -30,6 +26,8 @@ public class ExportMrpFeignController {
     @Resource
     private PurchaseSuggestService purchaseSuggestService;
 
+    @Resource
+    private PurchaseSuggestMergeService purchaseSuggestMergeService;
 
     @Resource
     private DeliverySuggestService deliverySuggestService;
@@ -99,6 +97,19 @@ public class ExportMrpFeignController {
     @WebAdvanceQuery
     public PagingVO<PurchaseSuggestDTO.ListDTO> pagingPurchaseSuggestion(@RequestBody PagingDTO<PurchaseSuggestDTO.PagingParamDTO> dto) {
         return purchaseSuggestService.paging(dto);
+    }
+
+    /**
+     * 采购建议(合并)导出数据查询
+     * @author will
+     * @date 2024/10/17 10:41
+     * @param dto
+     * @return PagingVO<ListDTO>
+     */
+    @PostMapping("/pagingPurchaseSuggestionMerge")
+    @WebAdvanceQuery
+    public PagingVO<PurchaseSuggestMergeDTO.ListDTO> pagingPurchaseSuggestionMerge(@RequestBody PagingDTO<PurchaseSuggestMergeDTO.PagingParamDTO> dto) {
+        return purchaseSuggestMergeService.paging(dto);
     }
 
     /**

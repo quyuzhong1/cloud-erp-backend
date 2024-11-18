@@ -170,6 +170,8 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
     @Resource
     private OutStockHistorySalesEsService outStockHistorySalesEsService;
     @Resource
+    private PurchaseSuggestMergeService purchaseSuggestMergeService;
+    @Resource
     private ThreadPoolTaskExecutor threadPoolTaskExecutor;
 
 
@@ -975,12 +977,19 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
                     .map(ReplenishmentResultDTO.DeliverySuggestDTO::buildDeliverySuggest)
                     .collect(Collectors.toList());
             deliverySuggestService.saveBatch(deliverySuggests);
+            for (DeliverySuggestEntity deliverySuggest : deliverySuggests) {
+                deliverySuggestService.addDeliverySuggestSys(deliverySuggest);
+            }
         }
         if (CollectionUtils.isNotEmpty(replenishmentResult.getPurchaseSuggests())) {
             List<PurchaseSuggestEntity> purchaseSuggests = replenishmentResult.getPurchaseSuggests().stream()
                     .map(ReplenishmentResultDTO.PurchaseSuggestDTO::buildPurchaseSuggest)
                     .collect(Collectors.toList());
             purchaseSuggestService.saveBatch(purchaseSuggests);
+            for (PurchaseSuggestEntity purchaseSuggest : purchaseSuggests) {
+                purchaseSuggestService.addPurchaseSuggestSys(purchaseSuggest);
+            }
+            purchaseSuggestMergeService.generatePurchaseSuggestMerge();
         }
         if (CollectionUtils.isNotEmpty(replenishmentResult.getRecentSuggestions())) {
             List<RecentSuggestionDetailEntity> recentSuggestionDetails = replenishmentResult.getRecentSuggestions().stream()

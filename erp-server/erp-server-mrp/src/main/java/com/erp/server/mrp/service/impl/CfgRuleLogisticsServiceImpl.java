@@ -2,6 +2,7 @@ package com.erp.server.mrp.service.impl;
 
 
 import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
@@ -109,7 +110,7 @@ public class CfgRuleLogisticsServiceImpl extends SuperServiceImpl<CfgRuleLogisti
         List<ShopInfoEntity> shopInfoList = isOverseas ? new ArrayList<>() :  FeignQuery.list(ShopInfoEntity.class);
 
         //仓库
-        List<String> warehouseIdList = list.stream().flatMap(obj -> Stream.of(obj.getDetailList().stream().filter(e -> StrUtil.isNotBlank(e.getWarehouseId()))
+        List<String> warehouseIdList = list.stream().filter(obj -> CollUtil.isNotEmpty(obj.getDetailList())).flatMap(obj -> Stream.of(obj.getDetailList().stream().filter(e -> StrUtil.isNotBlank(e.getWarehouseId()))
                 .map(CfgRuleLogisticsDetailDTO.UpdateDTO::getWarehouseId).toArray(String[]::new))).distinct().collect(Collectors.toList());
         List<WarehouseEntity> warehouseList = CollectionUtils.isEmpty(warehouseIdList) ? new ArrayList<>() : FeignQuery.getByIds(WarehouseEntity.class, warehouseIdList);
 

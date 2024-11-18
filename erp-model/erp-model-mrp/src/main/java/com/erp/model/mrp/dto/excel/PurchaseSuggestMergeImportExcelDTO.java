@@ -41,7 +41,7 @@ public class PurchaseSuggestMergeImportExcelDTO implements Serializable {
      * 备注
      */
     @ExcelProperty(value = "备注", index = 3)
-    @FieldValid(fieldName = "备注", maxLength = 255)
+    @FieldValid(fieldName = "备注", maxLength = 100)
     private String remark;
 
     /**

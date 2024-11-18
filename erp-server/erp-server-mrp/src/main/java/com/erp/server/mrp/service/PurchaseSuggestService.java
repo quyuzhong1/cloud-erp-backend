@@ -41,6 +41,14 @@ public interface PurchaseSuggestService extends SuperService<PurchaseSuggestEnti
     BaseResultDTO.AddDTO add(PurchaseSuggestDTO.AddDTO dto);
 
     /**
+     * 添加采购建议（系统）
+     * @author will
+     * @date 2024/11/12 10:42
+     * @param purchaseSuggestEntity
+     */
+    void addPurchaseSuggestSys (PurchaseSuggestEntity purchaseSuggestEntity);
+
+    /**
     * 修改
     * @author will
     * @date: 2024-08-29

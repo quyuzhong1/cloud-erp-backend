@@ -62,6 +62,9 @@
         psm.purchase_cost as purchaseCost,
         psm.invalid_status as invalidStatus,
         psm.invalid_remark as invalidRemark,
+        psm.invalid_time as invalidTime,
+        psm.invalid_user_id as invalidUserId,
+        psm.invalid_user_name as invalidUserName,
         psm.source_id_json as sourceIdJson,
         psm.source_type as sourceType,
         psm.currency,
@@ -72,7 +75,8 @@
         psm.status,
         psm.plan_purchase_qty as planPurchaseQty,
         psm.purchase_stock_up_qty as purchaseStockUpQty,
-        psm.remark
+        psm.remark,
+        psm.bom_version
     </sql>
 
     <!-- 分页查询 -->
