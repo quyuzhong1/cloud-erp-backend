@@ -3,13 +3,13 @@ package com.erp.model.sys.entity;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
-
-import java.io.Serializable;
-import java.time.LocalDate;
-import java.util.Date;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
+
+import java.io.Serializable;
+import java.time.LocalDate;
 
 /**
  * <p>
@@ -23,6 +23,7 @@ import lombok.experimental.Accessors;
 @Setter
 @Accessors(chain = true)
 @TableName("sys_calendar")
+@EqualsAndHashCode
 public class SysCalendarEntity extends BaseEntity<SysCalendarEntity> {
 
     /**
@@ -59,7 +60,7 @@ public class SysCalendarEntity extends BaseEntity<SysCalendarEntity> {
 
     public static final String IS_MANUAL_SET = "is_manual_set";
 
-    public static final String REMARK = "remark";
+    public static final String FIELD_REMARK = "remark";
 
     @Override
     public Serializable pkVal() {

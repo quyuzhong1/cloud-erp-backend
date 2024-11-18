@@ -17,11 +17,11 @@ import com.erp.model.tms.dto.ShippingTemplateOtherCostDTO;
 import com.erp.model.tms.entity.ShippingTemplateEntity;
 import com.erp.server.tms.service.ShippingTemplateService;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -39,7 +39,7 @@ import java.util.List;
 @RequestMapping("/shippingTemplate")
 public class ShippingTemplateController extends BaseController {
 
-    @Autowired
+    @Resource
     private ShippingTemplateService shippingTemplateService;
 
 
@@ -107,7 +107,7 @@ public class ShippingTemplateController extends BaseController {
         menuCode = "tms:shippingTemplate:update",
         serviceClass = ShippingTemplateService.class,
         keyIdName = "id")
-    public ApiResult update(@RequestBody @Validated ShippingTemplateDTO.UpdateDTO dto) {
+    public ApiResult<Object>update(@RequestBody @Validated ShippingTemplateDTO.UpdateDTO dto) {
         shippingTemplateService.update(dto);
         return success();
     }
@@ -140,7 +140,7 @@ public class ShippingTemplateController extends BaseController {
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "下载运费模板")
     @GetMapping("/downloadTemplate")
-    public ApiResult downloadTemplate(HttpServletResponse response, @RequestParam(value = "billingMethod") String billingMethod, @RequestParam(value = "type") String type) {
+    public ApiResult<Object>downloadTemplate(HttpServletResponse response, @RequestParam(value = "billingMethod") String billingMethod, @RequestParam(value = "type") String type) {
         shippingTemplateService.downloadTemplate(response,billingMethod,type);
         return success();
     }
@@ -157,7 +157,7 @@ public class ShippingTemplateController extends BaseController {
      */
     @LogAction(value = LogActionEnum.IMPORT, desc = "导入运费模板")
     @PostMapping("/import")
-    public ApiResult importFile(@RequestParam(value = "billingMethod") String billingMethod,@RequestParam(value = "type") String type,@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
+    public ApiResult<Object>importFile(@RequestParam(value = "billingMethod") String billingMethod,@RequestParam(value = "type") String type,@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
         Boolean result = shippingTemplateService.importFile(billingMethod,type,excelFile, response);
         return result ? success() : failure();
     }
@@ -171,7 +171,7 @@ public class ShippingTemplateController extends BaseController {
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出运费模板")
     @PostMapping(value = "/exportExcel")
-    public ApiResult exportExcel(@RequestBody ShippingTemplateDTO.ExportExcelParamDTO dto) {
+    public ApiResult<Object>exportExcel(@RequestBody ShippingTemplateDTO.ExportExcelParamDTO dto) {
         Boolean flag = shippingTemplateService.exportExcel(dto);
         return flag == true ? success() : failure();
     }
@@ -209,7 +209,7 @@ public class ShippingTemplateController extends BaseController {
             menuCode = "tms:shippingTemplate:updateChannel",
             serviceClass = ShippingTemplateService.class,
             keyIdName = "id")
-    public ApiResult updateChannel(@RequestBody @Validated ShippingTemplateDTO.ChannelParamDTO dto) {
+    public ApiResult<Object>updateChannel(@RequestBody @Validated ShippingTemplateDTO.ChannelParamDTO dto) {
          shippingTemplateService.updateChannel(dto);
         return success();
     }

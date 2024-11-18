@@ -1,5 +1,6 @@
 package com.erp.server.wms.service.impl;
 
+import cn.hutool.core.text.CharSequenceUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
@@ -249,7 +250,7 @@ public class WaveListPdaServiceImpl extends SuperServiceImpl<WaveListPdaMapper, 
 //            PickingCartTypeEntity pickingCartType = pickingCartTypeList.stream().filter(item -> item.getId().equals(pickingCart.getTypeId())).findFirst().orElse(new PickingCartTypeEntity());
 //            view.setPickingCartTypeName(pickingCartType.getName());
 
-            if(com.baomidou.mybatisplus.core.toolkit.StringUtils.isBlank(waveEntity.getPickingCartCode())){
+            if(CharSequenceUtil.isBlank(waveEntity.getPickingCartCode())){
                 List<WaveListCartTypeEntity> entityList = cartTypeMap.get(waveEntity.getId());
                 if(entityList != null && !entityList.isEmpty()){
                     List<String> typeIds = entityList.stream().map(WaveListCartTypeEntity::getPickingCartTypeId).collect(Collectors.toList());

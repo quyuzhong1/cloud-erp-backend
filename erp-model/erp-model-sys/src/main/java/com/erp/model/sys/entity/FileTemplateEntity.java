@@ -1,16 +1,15 @@
 package com.erp.model.sys.entity;
 
-import cn.hutool.core.util.StrUtil;
+import cn.hutool.core.text.CharSequenceUtil;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
-import com.baomidou.mybatisplus.annotation.TableField;
-import java.io.Serializable;
-
 import com.common.core.utils.FastDFSClientUtil;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
-import com.common.business.enums.ApproveStatusEnum;
+
+import java.io.Serializable;
 
 
 /**
@@ -51,9 +50,9 @@ public class FileTemplateEntity extends BaseEntity<FileTemplateEntity> {
 
     public static final String SOURCE_TYPE = "source_type";
 
-    public static final String NAME = "name";
+    public static final String FIELD_NAME = "name";
 
-    public static final String URL = "url";
+    public static final String FIELD_URL = "url";
 
     public static final String FILE_TYPE = "file_type";
 
@@ -67,7 +66,7 @@ public class FileTemplateEntity extends BaseEntity<FileTemplateEntity> {
      * 获取fastdf全url
      */
     public String getFastdfsUrl () {
-        return StrUtil.format("{}{}",FastDFSClientUtil.publicUrl,this.url);
+        return CharSequenceUtil.format("{}{}",FastDFSClientUtil.publicUrl,this.url);
     }
 
 }

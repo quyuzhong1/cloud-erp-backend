@@ -10,7 +10,7 @@ import java.util.stream.Stream;
 /**
  * @author Lambda
  * @Classname DeliverTypeEnum
- * @Description TODO
+ * @Description 发货类型枚举
  * @Date 2023-12-29 10:30
  * @Created by yl
  */

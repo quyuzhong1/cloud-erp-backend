@@ -2,8 +2,10 @@ package com.erp.server.wms.service.impl;
 
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
+import cn.hutool.core.text.CharSequenceUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,6 +25,9 @@ import com.erp.server.wms.service.WmsDataCompareTempService;
 import cn.hutool.core.util.StrUtil;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
+
+import javax.annotation.Resource;
+
 /**
  * <p>
  * 数据对比对比加工临时表 服务实现类
@@ -34,7 +39,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @Service
 public class WmsDataCompareTempServiceImpl extends SuperServiceImpl<WmsDataCompareTempMapper, WmsDataCompareTempEntity> implements WmsDataCompareTempService {
-    @Autowired
+    @Resource
     private OperateLogService operateLogService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
@@ -54,7 +59,7 @@ public class WmsDataCompareTempServiceImpl extends SuperServiceImpl<WmsDataCompa
         }
 
         // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "数据对比对比加工临时单" , wmsDataCompareTempEntity.getId());
+        String msg = CharSequenceUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "数据对比对比加工临时单" , wmsDataCompareTempEntity.getId());
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLog(msg, null, wmsDataCompareTempEntity.getId(), "新增操作");
         // TODO 新增明细（如果有明细的话）
@@ -69,7 +74,9 @@ public class WmsDataCompareTempServiceImpl extends SuperServiceImpl<WmsDataCompa
     @Override
     public Boolean update(WmsDataCompareTempDTO.UpdateDTO updateDTO) {
         WmsDataCompareTempEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "数据对比对比加工临时单"));
+        if (Objects.isNull(old)){
+            throw new ServiceException(ApiError.NOT_EXIST_BILL, "数据对比对比加工临时单");
+        }
         WmsDataCompareTempEntity wmsDataCompareTempEntity =  BeanMapperUtils.map(WmsDataCompareTempEntity.class, updateDTO);
 
         // 数据处理
@@ -83,7 +90,7 @@ public class WmsDataCompareTempServiceImpl extends SuperServiceImpl<WmsDataCompa
 
         // 记录主单操作日志
             log.info("编辑 开始记录数据对比对比加工临时单日志数据，id：【{}】", wmsDataCompareTempEntity.getId());
-            String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), wmsDataCompareTempEntity.getId(), "数据对比对比加工临时单");
+            String msg = CharSequenceUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), wmsDataCompareTempEntity.getId(), "数据对比对比加工临时单");
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLogByObj(old, wmsDataCompareTempEntity, null, wmsDataCompareTempEntity.getId(), msg);
         return Boolean.TRUE;

@@ -2,12 +2,13 @@ package com.common.core.utils;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.bean.copier.CopyOptions;
-import cn.hutool.core.util.StrUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.TypeReference;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
+import lombok.extern.slf4j.Slf4j;
 
 import java.beans.PropertyDescriptor;
 import java.lang.reflect.Field;
@@ -20,7 +21,11 @@ import java.util.*;
  * @description: 对象Map互转
  * @date 2022/12/1 19:52
  */
+@Slf4j
 public class BeanMapUtil {
+
+    private BeanMapUtil() {
+    }
 
     // 为保证可见性和有序性，防止出现半初始化
     private static volatile BeanMapUtil INSTANCE;
@@ -32,7 +37,7 @@ public class BeanMapUtil {
     public static BeanMapUtil getInstance() {
         if (INSTANCE == null) {
             synchronized (BeanMapUtil.class) {
-                if (INSTANCE == null) {
+                if (null == INSTANCE) {
                     INSTANCE = new BeanMapUtil();
                     return INSTANCE;
                 }
@@ -47,11 +52,10 @@ public class BeanMapUtil {
      * @param object
      * @return Map
      */
-    public static Map objToMap(Object object)  {
+    public static Map<String, Object> objToMap(Object object)  {
         JSON bean = (JSON)JSON.toJSON(object);
         //bean  to Map
-        Map<String, JSONObject> tempMap = JSON.toJavaObject( bean, Map.class);
-        return tempMap;
+        return JSON.toJavaObject(bean, Map.class);
     }
 
     /**
@@ -60,8 +64,8 @@ public class BeanMapUtil {
      * @return
      * @throws IllegalAccessException
      */
-    public static Map beanToMap(Object object) throws IllegalAccessException {
-        Map<String, Object> map = new HashMap<String, Object>();
+    public static Map<String, Object> beanToMap(Object object) throws IllegalAccessException {
+        Map<String, Object> map = new HashMap<>();
         Field[] fields = object.getClass().getDeclaredFields();
         for (Field field : fields) {
             field.setAccessible(true);
@@ -73,7 +77,7 @@ public class BeanMapUtil {
     public static <T> List<Map<String, Object>> beanToMapList(List<T> objects) {
         List<Map<String, Object>> result = new ArrayList<>();
         for (Object object : objects) {
-            Map<String, Object> map = JSONObject.parseObject(JSONObject.toJSONString(object), new TypeReference<Map<String, Object>>(){});
+            Map<String, Object> map = JSON.parseObject(JSON.toJSONString(object), new TypeReference<Map<String, Object>>(){});
             result.add(map);
         }
         return result;
@@ -87,7 +91,7 @@ public class BeanMapUtil {
      * @return
      * @throws Exception
      */
-    public static <T> T mapToBean(Map map, Class<T> beanClass) throws Exception {
+    public static <T> T mapToBean(Map<String, Object> map, Class<T> beanClass) throws InstantiationException, IllegalAccessException {
         T object = beanClass.newInstance();
         Field[] fields = object.getClass().getDeclaredFields();
         for (Field field : fields) {
@@ -119,7 +123,7 @@ public class BeanMapUtil {
             return result;
 
         } else {
-            return null;
+            return Collections.emptyMap();
         }
     }
 
@@ -143,7 +147,7 @@ public class BeanMapUtil {
             return result;
 
         } else {
-            return null;
+            return Collections.emptyMap();
         }
     }
 
@@ -163,10 +167,10 @@ public class BeanMapUtil {
 
     // 缓存CopyOptions（注意这个是HuTool的类，不是Cglib的）
 
-    private Map<Class, CopyOptions> cacheMap = new HashMap<>();
+    private Map<Class<?>, CopyOptions> cacheMap = new HashMap<>();
 
 
-    private CopyOptions getCopyOptions(Class source) {
+    private CopyOptions getCopyOptions(Class<?> source) {
         CopyOptions options = cacheMap.get(source);
         if (options == null) {
             // 不加锁，我们认为重复执行不会比并发加锁带来的开销大
@@ -180,16 +184,16 @@ public class BeanMapUtil {
      * @param source
      * @return
      */
-    private Map<String, String> buildFieldMapper(Class source) {
+    private Map<String, String> buildFieldMapper(Class<?> source) {
         PropertyDescriptor[] properties = org.springframework.cglib.core.ReflectUtils.getBeanProperties(source);
         Map<String, String> map = new HashMap<>();
         for (PropertyDescriptor target : properties) {
             String name = target.getName();
-            String camel = StrUtil.toCamelCase(name);
+            String camel = CharSequenceUtil.toCamelCase(name);
             if (!name.equalsIgnoreCase(camel)) {
                 map.put(name, camel);
             }
-            String under = StrUtil.toUnderlineCase(name);
+            String under = CharSequenceUtil.toUnderlineCase(name);
             if (!name.equalsIgnoreCase(under)) {
                 map.put(name, under);
             }

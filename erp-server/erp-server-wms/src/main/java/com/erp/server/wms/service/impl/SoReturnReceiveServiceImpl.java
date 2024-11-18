@@ -1,6 +1,7 @@
 package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -18,6 +19,7 @@ import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.business.wrapper.FeignQuery;
+import com.common.core.entity.BaseEntity;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
@@ -182,15 +184,15 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
             SoReturnReceiveDTO.StatusCountDTO resultDTO = new SoReturnReceiveDTO.StatusCountDTO();
             Integer count = MathUtil.ZERO;
             if (SoReturnChangeListTypeEnum.TO_BE_APPROVE.getCode().equals(item.getCode())) {
-                pagingParam.setApproveStatusList(Arrays.asList(ApproveStatusEnum.APPROVE_ING.getStatus()));
+                pagingParam.setApproveStatusList(Collections.singletonList(ApproveStatusEnum.APPROVE_ING.getStatus()));
                 count = this.baseMapper.listCount(pagingParam);
             }
             if (SoReturnChangeListTypeEnum.APPROVE.getCode().equals(item.getCode())) {
-                pagingParam.setApproveStatusList(Arrays.asList(ApproveStatusEnum.APPROVE.getStatus()));
+                pagingParam.setApproveStatusList(Collections.singletonList(ApproveStatusEnum.APPROVE.getStatus()));
                 count = this.baseMapper.listCount(pagingParam);
             }
             if (SoReturnChangeListTypeEnum.REJECT.getCode().equals(item.getCode())) {
-                pagingParam.setApproveStatusList(Arrays.asList(ApproveStatusEnum.REJECT.getStatus()));
+                pagingParam.setApproveStatusList(Collections.singletonList(ApproveStatusEnum.REJECT.getStatus()));
                 count = this.baseMapper.listCount(pagingParam);
             }
             resultDTO.setCount(ObjectUtils.isEmpty(count) ? MathUtil.ZERO : count);
@@ -207,13 +209,13 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
 //        String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.THQS, BusinessNoTypeEnum.CODE_THQS.getCode()));
         String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_THQS);
         //获取组织信息
-        List<BaseIdDTO.CodeDTO> orgList = sysUserFeign.getAccountingCompanyList(Arrays.asList(dto.getSalesOrgId()));
+        List<BaseIdDTO.CodeDTO> orgList = sysUserFeign.getAccountingCompanyList(Collections.singletonList(dto.getSalesOrgId()));
         //获取用户信息
         List<FindUserDTO> userList = sysUserFeign.getUserListByUserIds(Arrays.asList(dto.getSellerId(), dto.getWarehouseKeeperId()));
         //获取客户信息
-        List<CustomerInfoEntity> customerInfoEntities = customerFeign.listCustomerByIds(Arrays.asList(dto.getCustomerId()));
+        List<CustomerInfoEntity> customerInfoEntities = customerFeign.listCustomerByIds(Collections.singletonList(dto.getCustomerId()));
         //获取部门信息
-        List<SysDepartmentEntity> departmentList = sysUserFeign.listDeptByIds(Arrays.asList(dto.getSalesDeptId()));
+        List<SysDepartmentEntity> departmentList = sysUserFeign.listDeptByIds(Collections.singletonList(dto.getSalesDeptId()));
         //获取核算公司
         SysAccountingCompanyEntity sysAccountingCompanyEntity = sysUserFeign.getCompanyById(dto.getInventoryOrgId());
 
@@ -227,7 +229,7 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
         entity.setSalesDeptName(deptName);
         entity.setSellerId(dto.getSellerId());
         String userName = userList.stream().filter(d -> d.getUserId().equals(dto.getSellerId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getUserName())).orElse("");
-        if(StringUtils.isNotBlank(dto.getSellerName())){
+        if(CharSequenceUtil.isNotBlank(dto.getSellerName())){
             entity.setSellerName(dto.getSellerName());
         }else{
             entity.setSellerName(userName);
@@ -238,7 +240,7 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
         entity.setReturnDate(dto.getReturnDate());
         entity.setReturnLogisticCode(dto.getReturnLogisticCode());
         //如果有退货订单号
-        if (StringUtils.isNotBlank(dto.getSourceId())) {
+        if (CharSequenceUtil.isNotBlank(dto.getSourceId())) {
             if(entity.getType().equals("B2C")){
                 SoB2cReturnEntity soB2cReturnEntity = FeignQuery.getById(SoB2cReturnEntity.class,dto.getSourceId());
                 if(Objects.nonNull(soB2cReturnEntity)){
@@ -261,7 +263,7 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
         }
 
         //获取仓库信息
-        List<WarehouseDTO.UpdateDTO> warehouseList = warehouseService.listWarehouseByIds(Arrays.asList(dto.getWarehouseId()));
+        List<WarehouseDTO.UpdateDTO> warehouseList = warehouseService.listWarehouseByIds(Collections.singletonList(dto.getWarehouseId()));
         if (CollectionUtils.isNotEmpty(warehouseList)) {
             entity.setWarehouseId(warehouseList.get(MathUtil.ZERO).getId());
             entity.setWarehouseName(warehouseList.get(MathUtil.ZERO).getName());
@@ -290,7 +292,7 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
 
         SoReturnReceiveEntity entity = this.getById(dto.getId());
         if(!entity.getReturnLogisticCode().equals(dto.getReturnLogisticCode())){
-            operateLogService.addModuleOperateLog(StrUtil.format("退货物流单号从{}修改为{}",entity.getReturnLogisticCode(),dto.getReturnLogisticCode()), ModuleTypeEnum.SO_RETURN_RECEIVE.getCode(), entity.getId(), "编辑");
+            operateLogService.addModuleOperateLog(CharSequenceUtil.format("退货物流单号从{}修改为{}",entity.getReturnLogisticCode(),dto.getReturnLogisticCode()), ModuleTypeEnum.SO_RETURN_RECEIVE.getCode(), entity.getId(), "编辑");
         }
         BeanUtil.copyProperties(dto,entity);
 
@@ -317,7 +319,7 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
         //根据ids查询sku信息
         List<SkuVO> skuInfoByIds = plmTaskFeign.listSkuProductByIds(skuIdList);
         //退货单详情
-        List<SoReturnDetailEntity> returnDetailEntityList = soReturnFeign.listDetailByMainIds(Arrays.asList(entity.getSourceId()));
+        List<SoReturnDetailEntity> returnDetailEntityList = soReturnFeign.listDetailByMainIds(Collections.singletonList(entity.getSourceId()));
         List<String> sourceDetailIds = detailEntityList.stream().map(SoReturnReceiveDetailEntity::getSourceDetailId).collect(Collectors.toList());
         List<SoB2cReturnDetailEntity> soB2cReturnDetailEntityList = FeignQuery.getByIds(SoB2cReturnDetailEntity.class,sourceDetailIds);
         SoB2cReturnEntity soB2cReturnEntity = FeignQuery.getById(SoB2cReturnEntity.class,entity.getSourceId());
@@ -349,17 +351,17 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
                 SoDetailEntity soDetailEntity = soDetailEntities.stream().filter(detail -> detail.getId().equals(soReturnDetailEntity.getSourceDetailId())).findFirst().orElse(new SoDetailEntity());
                 detailView.setSalesQty(soDetailEntity.getQty());
 
-                if (StringUtils.isNotBlank(detailEntity.getReturnTypeDict())) {
+                if (CharSequenceUtil.isNotBlank(detailEntity.getReturnTypeDict())) {
                     detailView.setReturnTypeDictName(ReturnTypeEnum.getName(detailEntity.getReturnTypeDict()));
                 } else {
-                    if (StringUtils.isNotBlank(soReturnDetailEntity.getReturnTypeDict())) {
+                    if (CharSequenceUtil.isNotBlank(soReturnDetailEntity.getReturnTypeDict())) {
                         detailView.setReturnTypeDictName(ReturnTypeEnum.getName(soReturnDetailEntity.getReturnTypeDict()));
                     }
                 }
-                if (StringUtils.isNotBlank(detailEntity.getReturnReasonDict())) {
+                if (CharSequenceUtil.isNotBlank(detailEntity.getReturnReasonDict())) {
                     detailView.setReturnReasonDictName(ReturnReasonEnum.getName(detailEntity.getReturnReasonDict()));
                 } else {
-                    if (StringUtils.isNotBlank(soReturnDetailEntity.getReturnReasonDict())) {
+                    if (CharSequenceUtil.isNotBlank(soReturnDetailEntity.getReturnReasonDict())) {
                         detailView.setReturnReasonDictName(ReturnReasonEnum.getName(soReturnDetailEntity.getReturnReasonDict()));
                     }
                 }
@@ -404,10 +406,10 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
     @Override
     public Boolean addAndSubmit(SoReturnReceiveDTO.Add dto) {
         String id = this.add(dto);
-        if (StringUtils.isBlank(id)) {
+        if (CharSequenceUtil.isBlank(id)) {
             throw new ServiceException(ApiError.ERROR_1019);
         }
-        return this.submit(Arrays.asList(id));
+        return this.submit(Collections.singletonList(id));
     }
 
     @Override
@@ -416,7 +418,7 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
         if (!update) {
             throw new ServiceException(ApiError.ERROR_1020);
         }
-        return this.submit(Arrays.asList(dto.getId()));
+        return this.submit(Collections.singletonList(dto.getId()));
     }
 
     @Override
@@ -447,7 +449,7 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
                     .update();
         }
         //操作日志
-        operateLogService.addModuleOperateLog(String.format("审核【%s】了一个销售退货通知单【%s】", ApproveTypeEnum.getName(type),entity.getCode()).concat(com.baomidou.mybatisplus.core.toolkit.StringUtils.isNotBlank(comment) ? String.format(",意见：%s", comment) : ""), ModuleTypeEnum.SO_RETURN_RECEIVE.getCode(), entity.getId(), "审核操作");
+        operateLogService.addModuleOperateLog(String.format("审核【%s】了一个销售退货通知单【%s】", ApproveTypeEnum.getName(type),entity.getCode()).concat(CharSequenceUtil.isNotBlank(comment) ? String.format(",意见：%s", comment) : ""), ModuleTypeEnum.SO_RETURN_RECEIVE.getCode(), entity.getId(), "审核操作");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), "操作成功");
     }
 
@@ -500,13 +502,13 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
 
         for (QcInfoDTO.SoReturnReceiveToQcDTO newItem : qcList) {
             //为空所有的加，等级为空用销售方式，销售方式为空用等级
-            if ((StringUtils.isNotBlank(newProductGrade) && StringUtils.isNotBlank(newSaleMethod))) {
+            if ((CharSequenceUtil.isNotBlank(newProductGrade) && CharSequenceUtil.isNotBlank(newSaleMethod))) {
                 QcInfoDTO.SoReturnReceiveToQcDTO newQc = new QcInfoDTO.SoReturnReceiveToQcDTO();
                 BeanMapper.copy(newItem, newQc);
                 newQc.setQcType(returnQc);
                 addList.add(newQc);
-            } else if (StringUtils.isBlank(newProductGrade)) {
-                if (StringUtils.isNotBlank(newItem.getSaleMethod())) {
+            } else if (CharSequenceUtil.isBlank(newProductGrade)) {
+                if (CharSequenceUtil.isNotBlank(newItem.getSaleMethod())) {
                     String[] split = newItem.getSaleMethod().split(",");
                     for (String s : split) {
                         if (newSaleMethod.contains(s)) {
@@ -519,8 +521,8 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
                     }
                 }
 
-            } else if (StringUtils.isBlank(newSaleMethod)) {
-                if (StringUtils.isNotBlank(newItem.getProductGrade())) {
+            } else if (CharSequenceUtil.isBlank(newSaleMethod)) {
+                if (CharSequenceUtil.isNotBlank(newItem.getProductGrade())) {
                     String[] split = newItem.getProductGrade().split(",");
                     for (String s : split) {
                         if (newProductGrade.contains(s)) {
@@ -697,7 +699,7 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
             }
             dto.setDetailList(detailList);
             String noticeId = this.add(dto);
-            if (StringUtils.isBlank(noticeId)) {
+            if (CharSequenceUtil.isBlank(noticeId)) {
                 flag = Boolean.FALSE;
             }
         }
@@ -761,10 +763,10 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
         //根据销售单获取出库单
         List<SoOutstockDetailEntity> soOutstockDetailEntities = soOutstockDetailService.listDetailBySoIds(soIds);
         for (SoReturnReceiveDTO.ReceiveGenerateSoReturnInstockView view : list) {
-            if (StringUtils.isNotBlank(view.getReturnTypeDict())) {
+            if (CharSequenceUtil.isNotBlank(view.getReturnTypeDict())) {
                 view.setReturnTypeDictName(ReturnTypeEnum.getName(view.getReturnTypeDict()));
             }
-            if (StringUtils.isNotBlank(view.getReturnReasonDict())) {
+            if (CharSequenceUtil.isNotBlank(view.getReturnReasonDict())) {
                 view.setReturnReasonDictName(ReturnReasonEnum.getName(view.getReturnReasonDict()));
             }
             CustomerInfoEntity customerInfoEntity = customerInfoEntities.stream().filter(req -> req.getId().equals(view.getCustomerId())).findFirst().orElse(new CustomerInfoEntity());
@@ -919,7 +921,7 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
                 count = this.baseMapper.listCount(pagingParamDTO);
             }
             if (PdaTabFlagEnum.APPROVE_ING.getCode().equals(item.getCode())) {
-                pagingParamDTO.setApproveStatusList(Arrays.asList(ApproveStatusEnum.APPROVE_ING.getStatus()));
+                pagingParamDTO.setApproveStatusList(Collections.singletonList(ApproveStatusEnum.APPROVE_ING.getStatus()));
                 count = this.baseMapper.listCount(pagingParamDTO);
             }
             if (PdaTabFlagEnum.APPROVE.getCode().equals(item.getCode())) {
@@ -927,7 +929,7 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
                 dateList.add(startDate);
                 dateList.add(endDate);
                 pagingParamDTO.setBillDateList(dateList);
-                pagingParamDTO.setApproveStatusList(Arrays.asList(ApproveStatusEnum.APPROVE.getStatus()));
+                pagingParamDTO.setApproveStatusList(Collections.singletonList(ApproveStatusEnum.APPROVE.getStatus()));
                 count = this.baseMapper.listCount(pagingParamDTO);
             }
             resultDTO.setCount(ObjectUtils.isEmpty(count) ? MathUtil.ZERO : count);
@@ -944,14 +946,14 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
         if (CollectionUtils.isEmpty(list)) {
             return new ArrayList<>();
         }
-        List<String> srrId = list.stream().map(req -> req.getId()).collect(Collectors.toList());
+        List<String> srrId = list.stream().map(SoReturnReceiveDTO.PdaSoReceive::getId).collect(Collectors.toList());
         List<SoReturnReceiveDetailEntity> detailEntityList = soReturnReceiveDetailService.listDetailByMainIds(srrId);
-        List<String> detailIds = detailEntityList.stream().map(req -> req.getId()).collect(Collectors.toList());
+        List<String> detailIds = detailEntityList.stream().map(BaseEntity::getId).collect(Collectors.toList());
         List<SoReturnInstockDetailEntity> returnInstockDetailEntities = soReturnInstockDetailService.listDetailBySourceDetailIds(detailIds);
         //获取未全部入库的销售退货签收单详情id
         List<String> soReturnReceiveDetailIds = new ArrayList<>();
 
-        returnInstockDetailEntities.stream().collect(Collectors.groupingBy(n -> n.getSourceDetailId(), Collectors.collectingAndThen(Collectors.toList(), m -> {
+        Map<String, List<SoReturnInstockDetailEntity>> collect1 = returnInstockDetailEntities.stream().collect(Collectors.groupingBy(SoReturnInstockDetailEntity::getSourceDetailId, Collectors.collectingAndThen(Collectors.toList(), m -> {
             int realQty = m.stream().mapToInt(SoReturnInstockDetailEntity::getRealQty).sum();
             SoReturnReceiveDetailEntity detailEntity = detailEntityList.stream().filter(req -> req.getId().equals(m.get(MathUtil.ZERO).getSourceDetailId())).findFirst().orElse(null);
             if (ObjectUtil.isNotEmpty(detailEntity)) {
@@ -961,7 +963,7 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
             }
             return m;
         })));
-        List<String> collect = returnInstockDetailEntities.stream().map(req -> req.getSourceDetailId()).distinct().collect(Collectors.toList());
+        List<String> collect = returnInstockDetailEntities.stream().map(SoReturnInstockDetailEntity::getSourceDetailId).distinct().collect(Collectors.toList());
         List<String> ids = detailIds.stream().filter(poid -> !collect.contains(poid)).collect(Collectors.toList());
         soReturnReceiveDetailIds.addAll(ids);
 

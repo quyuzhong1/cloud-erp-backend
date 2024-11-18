@@ -149,7 +149,7 @@ public class SyncKingdeeWarehouseServiceImpl implements SyncKingdeeWarehouseServ
             return resultMap;
         }
 
-        List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(Arrays.asList(entity.getOrgId()));
+        List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(Collections.singletonList(entity.getOrgId()));
         if (CollectionUtils.isNotEmpty(accountingCompanyList)) {
             String orgCode = accountingCompanyList.stream().filter(obj -> obj.getId().equals(entity.getOrgId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getCode())).orElse("");
             String orgKingdeeId = accountingCompanyList.stream().filter(obj -> obj.getId().equals(entity.getOrgId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getFlagId())).orElse("");
@@ -187,16 +187,16 @@ public class SyncKingdeeWarehouseServiceImpl implements SyncKingdeeWarehouseServ
             resultMap.put("chargeCode",findUserDTO.getCode());
         }
         //查询仓位
-        List<WarehouseLocationEntity> warehouseLocationList = warehouseLocationService.listByWarehouseIds(Arrays.asList(entity.getId()));
+        List<WarehouseLocationEntity> warehouseLocationList = warehouseLocationService.listByWarehouseIds(Collections.singletonList(entity.getId()));
         if (CollectionUtils.isNotEmpty(warehouseLocationList) && entity.getIsEnableLocation()) {
             //区域
-            List<WarehouseLocationEntity> areaList = warehouseLocationList.stream().filter(obj -> obj.getWarehouseId().equals(obj.getWarehouseId()) && WarehouseLocationTypeEnum.AREA.getCode().equals(obj.getType())).collect(Collectors.toList());
+            List<WarehouseLocationEntity> areaList = warehouseLocationList.stream().filter(obj -> Objects.equals(entity.getId(),obj.getWarehouseId()) && WarehouseLocationTypeEnum.AREA.getCode().equals(obj.getType())).collect(Collectors.toList());
             if (CollectionUtils.isEmpty(areaList)) {
                 log.error("仓库对应区域未找到，code = {},name = {}",entity.getKingdeeWarehouseCode(),entity.getName());
                 throw new ServiceException("仓库对应区域未找到");
             }
             //仓位
-            List<WarehouseLocationEntity> locationList = warehouseLocationList.stream().filter(obj -> obj.getWarehouseId().equals(obj.getWarehouseId()) && WarehouseLocationTypeEnum.LOCATION.getCode().equals(obj.getType())).collect(Collectors.toList());
+            List<WarehouseLocationEntity> locationList = warehouseLocationList.stream().filter(obj -> Objects.equals(entity.getId(),obj.getWarehouseId()) && WarehouseLocationTypeEnum.LOCATION.getCode().equals(obj.getType())).collect(Collectors.toList());
             if (CollectionUtils.isEmpty(locationList)) {
                 log.error("仓库对应仓位未找到，code = {},name = {}",entity.getKingdeeWarehouseCode(),entity.getName());
                 throw new ServiceException("仓库对应仓位未找到");

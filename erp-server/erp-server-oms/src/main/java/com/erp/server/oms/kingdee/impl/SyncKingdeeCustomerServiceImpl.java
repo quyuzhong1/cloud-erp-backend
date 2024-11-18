@@ -11,6 +11,7 @@ import java.util.stream.Collectors;
 
 import javax.annotation.Resource;
 
+import cn.hutool.core.text.CharSequenceUtil;
 import com.common.core.exception.ServiceException;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
@@ -310,7 +311,7 @@ public class SyncKingdeeCustomerServiceImpl implements SyncKingdeeCustomerServic
         }
         resultMap.put("platformType", platformTypeKingdeeCode);
         String regionCode = countryEntity.getRegionCode();
-        if (StrUtil.isNotBlank(regionCode)) {
+        if (CharSequenceUtil.isNotBlank(regionCode)) {
             DictGlobalAreaEntity globalAreaEntity = sysUserFeign.getGlobalAreaById(regionCode);
             if (ObjectUtil.isNotEmpty(globalAreaEntity)) {
                 resultMap.put("globalAreaCode", globalAreaEntity.getKingdeeCode());

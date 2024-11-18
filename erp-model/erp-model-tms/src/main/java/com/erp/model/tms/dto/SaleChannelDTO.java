@@ -7,7 +7,7 @@ import java.io.Serializable;
 /**
  * @author zdy
  * @ClassName SaleChannelDTO
- * @description: TODO
+
  * @date 2023年11月15日
  * @version: 1.0
  */

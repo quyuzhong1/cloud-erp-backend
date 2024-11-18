@@ -1,8 +1,8 @@
 package com.erp.server.srm.service.impl;
 
 
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.dto.base.BatchResultDTO;
@@ -37,9 +37,7 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Optional;
 
-import static com.common.business.enums.FileTaskEventEnum.EXPORT_SRM_PO_RECONCILIATION;
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_SRM_PO_RECONCILIATION_EXPORT;
 
 /**
@@ -77,7 +75,9 @@ public class PoReconciliationServiceImpl extends SuperServiceImpl<PoReconciliati
     @Override
     public Boolean update(PoReconciliationDTO.UpdateDTO updateDTO) {
         PoReconciliationEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "采购对账单"));
+        if(null == old){
+            throw new ServiceException(ApiError.NOT_EXIST_BILL, "采购对账单");
+        }
         //添加上传附件url
         addMultipartFileUrl(updateDTO);
         //更新明细
@@ -159,7 +159,7 @@ public class PoReconciliationServiceImpl extends SuperServiceImpl<PoReconciliati
                 .set(PoReconciliationEntity::getSupplierConfirmUserName, userInfo.getUserName())
                 .update();
         log.info("确认 开始记录对账单日志数据，id：【{}】", id);
-        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据确认 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "对账单");
+        String msg =  CharSequenceUtil.format("用户【{}】单号为【{}】的【{}】单据确认 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "对账单");
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.PO_RECONCILIATION.getCode(), entity.getId(), "确认操作");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.CONFIRM);
     }
@@ -183,7 +183,7 @@ public class PoReconciliationServiceImpl extends SuperServiceImpl<PoReconciliati
                 .update();
         // 记录操作日志
         log.info("提交 开始记录对账单日志数据，id：【{}】", id);
-        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据取消确认 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "对账单");
+        String msg =  CharSequenceUtil.format("用户【{}】单号为【{}】的【{}】单据取消确认 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "对账单");
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.PO_RECONCILIATION.getCode(), entity.getId(), "取消确认操作");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.CANCEL_CONFIRM);
     }
@@ -197,9 +197,7 @@ public class PoReconciliationServiceImpl extends SuperServiceImpl<PoReconciliati
      * @param updateDTO
      */
     private void addMultipartFileUrl (PoReconciliationDTO.UpdateDTO updateDTO) {
-        if (CollectionUtils.isEmpty(updateDTO.getAttachUrlList()) || CollectionUtils.isEmpty(updateDTO.getAttachUrlList())) {
-            return;
-        }
+        if (CollectionUtils.isEmpty(updateDTO.getAttachUrlList())) return;
         Class<PoReconciliationEntity> uploadClass = PoReconciliationEntity.class;
         TableName tableName = uploadClass.getDeclaredAnnotation(TableName.class);
         //获取到表名

@@ -1,6 +1,6 @@
 package com.cloud.erp.gateway.component;
 
-import com.alibaba.fastjson.JSONObject;
+import com.alibaba.fastjson.JSON;
 import com.cloud.erp.gateway.utils.ServletUtils;
 import com.cloud.erp.gateway.web.server.TokenService;
 import com.common.business.constant.AuthPassPath;
@@ -18,6 +18,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
+import javax.annotation.Resource;
 import java.io.UnsupportedEncodingException;
 import java.lang.annotation.Annotation;
 import java.net.URLEncoder;
@@ -48,7 +49,7 @@ public class AuthGatewayFilter implements GlobalFilter, Order {
      */
     private static final String OPEN_API_URL = "/open/api/";
 
-    @Autowired
+    @Resource
     private TokenService tokenService;
 
 
@@ -99,7 +100,7 @@ public class AuthGatewayFilter implements GlobalFilter, Order {
                 return unauthorizedResponse(exchange, ApiError.ERROR_403.msg, ApiError.ERROR_403.code);
             }
             loginUser.setAccessToken(token);
-            request.mutate().header("tokenUserInfo", URLEncoder.encode(JSONObject.toJSONString(loginUser), "UTF-8")).build();
+            request.mutate().header("tokenUserInfo", URLEncoder.encode(JSON.toJSONString(loginUser), "UTF-8")).build();
         } catch (UnsupportedEncodingException e) {
             e.printStackTrace();
         }

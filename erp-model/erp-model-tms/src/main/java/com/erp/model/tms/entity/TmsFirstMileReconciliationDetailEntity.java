@@ -10,7 +10,6 @@ import lombok.experimental.Accessors;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.Date;
 import java.util.List;
 
 
@@ -251,7 +250,7 @@ public class TmsFirstMileReconciliationDetailEntity extends BaseEntity<TmsFirstM
 
     public static final String FEE_RULE_NAME = "fee_rule_name";
 
-    public static final String TYPE = "type";
+    public static final String FIELD_TYPE = "type";
 
     public static final String TOTAL_LOGISTICS_COST = "total_logistics_cost";
 
@@ -273,9 +272,9 @@ public class TmsFirstMileReconciliationDetailEntity extends BaseEntity<TmsFirstM
 
     public static final String ACTUAL_OTHER_COST = "actual_other_cost";
 
-    public static final String REMARK = "remark";
+    public static final String FIELD_REMARK = "remark";
 
-    public static final String STATUS = "status";
+    public static final String FIELD_STATUS = "status";
 
     public static final String CONFIRM_DATE = "confirm_date";
 

@@ -251,7 +251,7 @@ public class ExcelUtil {
                     //自定义注解
                     .doWrite(list2);
         } catch (Exception e) {
-          throw new ServiceException(ApiError.Default);
+          throw new ServiceException(ApiError.DEFAULT);
         }
     }
 
@@ -299,7 +299,7 @@ public class ExcelUtil {
                     //自定义注解
                     .doWrite(list2);
         } catch (Exception e) {
-            throw new ServiceException(ApiError.Default);
+            throw new ServiceException(ApiError.DEFAULT);
         }
     }
 
@@ -338,7 +338,7 @@ public class ExcelUtil {
                     .doWrite(list2);
 
         } catch (Exception e) {
-            throw new ServiceException(ApiError.Default);
+            throw new ServiceException(ApiError.DEFAULT);
         }
     }
 
@@ -370,9 +370,10 @@ public class ExcelUtil {
                     .doWrite(list2);
             return outputStream.toByteArray();
         } catch (Exception e) {
-            throw new ServiceException(ApiError.Default);
+            throw new ServiceException(ApiError.DEFAULT);
         }
     }
+
 
     /**
      * 返回文件
@@ -605,7 +606,7 @@ public class ExcelUtil {
             response.reset();
             // 设置文件头
             response.setHeader("Content-Disposition",
-                    "attchement;filename=" + new String(excelName.getBytes("gb2312"), "ISO8859-1"));
+                    "attchement;filename=" + new String(excelName.getBytes("gb2312"), StandardCharsets.ISO_8859_1));
             response.setContentType("application/msexcel");
             wb.write(output);
         } catch (Exception e) {
@@ -630,7 +631,7 @@ public class ExcelUtil {
                 cell.setCellValue(headerName.get(i)); // 写入名称
                 // 自适应列宽
                 // 计算内容宽度并设置单元格宽度
-                int contentWidth = headerName.get(i).getBytes(StandardCharsets.UTF_8).length * 256; // 中文字符宽度按照字节数计算
+                int contentWidth = headerName.get(i).getBytes(StandardCharsets.UTF_8).length * 400; // 中文字符宽度按照字节数计算
                 sheet.setColumnWidth(i, contentWidth); // 设置列宽度
             }
             // 输出Excel文件
@@ -638,7 +639,7 @@ public class ExcelUtil {
             response.reset();
             // 设置文件头
             response.setHeader("Content-Disposition",
-                    "attchement;filename=" + new String(configExcelName.getBytes("gb2312"), "ISO8859-1"));
+                    "attchement;filename=" + new String(configExcelName.getBytes("gb2312"), StandardCharsets.ISO_8859_1));
             response.setContentType("application/msexcel");
             wb.write(output);
         } catch (Exception e) {

@@ -20,13 +20,10 @@ import com.erp.server.scm.service.PurchasePriceDetailService;
 import com.erp.server.scm.service.PurchasePriceService;
 import com.google.common.collect.Lists;
 import lombok.extern.slf4j.Slf4j;
-import org.jfree.util.Log;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeFormatterBuilder;
-import java.time.temporal.ChronoField;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -320,7 +317,7 @@ public class PurchasePriceExcelListener extends AnalysisEventListener<ImportPurc
                         int[] existRange = {price.getMinQty(), price.getMaxQty()};
                         // 相同的SKU区间需要更新，区间一样可以更新，不算做区间交叉
                         if(detailDTO.getMinQty().intValue() != price.getMinQty().intValue()
-                                || price.getMaxQty().intValue() != price.getMaxQty().intValue()) {
+                                || detailDTO.getMaxQty().intValue() != price.getMaxQty().intValue()) {
                             if(NO_CROSS_STATUS_LIST.contains(price.getApproveStatus())) {
                                 boolean isCross = checkCross(addRange, existRange);
                                 if(isCross) {

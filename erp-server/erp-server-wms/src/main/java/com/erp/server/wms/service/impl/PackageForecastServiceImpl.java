@@ -3,6 +3,7 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.date.DateTime;
 import cn.hutool.core.date.DateUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -102,37 +103,37 @@ import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_PACKAGE_FOR
 @Slf4j
 @Service
 public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecastMapper, PackageForecastEntity> implements PackageForecastService {
-    @Autowired
+    @Resource
     private OperateLogService operateLogService;
 
-    @Autowired
+    @Resource
     private DocNoGenHelper docNoGenHelper;
 
-    @Autowired
+    @Resource
     private PackageForecastDetailService packageForecastDetailService;
 
-    @Autowired
+    @Resource
     private ForecastFeign forecastFeign;
 
-    @Autowired
+    @Resource
     private LogisticsFeign logisticsFeign;
 
-    @Autowired
+    @Resource
     private LogisticsAuthFeign logisticsAuthFeign;
 
-    @Autowired
+    @Resource
     private TransferDeclareFeign transferDeclareFeign;
 
-    @Autowired
+    @Resource
     private SoB2cFeign soB2cFeign;
 
-    @Autowired
+    @Resource
     private DmpTaskFeign dmpTaskFeign;
 
-    @Autowired
+    @Resource
     private ShopInfoFeign shopInfoFeign;
 
-    @Autowired
+    @Resource
     private AliExpressHandoverService aliExpressHandoverService;
 
     @Resource
@@ -162,7 +163,7 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
         }
         String id = packageForecastEntity.getId();
         // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "组包预报单", packageForecastEntity.getCode());
+        String msg = CharSequenceUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "组包预报单", packageForecastEntity.getCode());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.PACKAGE_FORECAST.getCode(), id, "新增操作");
         packageForecastDetailService.add(id, addDTO.getDetailList());
 
@@ -176,7 +177,9 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
     @Override
     public Boolean update(PackageForecastDTO.UpdateDTO updateDTO) {
         PackageForecastEntity entity = super.getById(updateDTO.getId());
-        Optional.ofNullable(entity).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "组包预报单"));
+        if (Objects.isNull(entity)){
+            throw new ServiceException(ApiError.NOT_EXIST_BILL, "组包预报单");
+        }
         entity.setBillDate(updateDTO.getBillDate());
         packageForecastDetailService.update(entity, updateDTO.getDetailIdList());
         boolean save = super.updateById(entity);
@@ -283,7 +286,7 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
                 //跟踪单号
                 String trackNo = detail.getTrackNo();
                 String minPackageTransportNo = detail.getMinPackageTransportNo();
-                if (StringUtils.isBlank(trackNo)) {
+                if (CharSequenceUtil.isBlank(trackNo)) {
                     trackNo = minPackageTransportNo;
                 }
                 String subHandoverStatus = detail.getMinPackageHandoverStatus();
@@ -335,7 +338,7 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
         String handoverNo = packageForecast.getHandoverNo();
         String platformPackageNo = packageForecast.getPlatformPackageNo();
         String platformNo="";
-        if (StringUtils.isNotBlank(handoverNo) || StringUtils.isNotBlank(platformPackageNo)) {
+        if (CharSequenceUtil.isNotBlank(handoverNo) || CharSequenceUtil.isNotBlank(platformPackageNo)) {
             platformNo=handoverNo+"/"+platformPackageNo;
         }
         viewDTO.setPlatformNo(platformNo);
@@ -643,7 +646,7 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
         } catch (Exception e) {
             log.error("打印失败>>>>>>>{}", e);
         }
-        if (StringUtils.isNotBlank(base64)) {
+        if (CharSequenceUtil.isNotBlank(base64)) {
             entity.setPrintStatus(PackagePrintStatusEnum.CANCEL.getCode());
             this.updateById(entity);
         } else {
@@ -795,7 +798,7 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
 //        List<SoB2cEntity> soB2cEntityList = soB2cFeign.listByIds(soIdList);
 //        List<String> alreadyTransferList = soB2cEntityList.stream().filter(v->TransferStatusEnum.ALREADY.getCode().equals(v.getTransferStatus())).map(SoB2cEntity::getCode).collect(Collectors.toList());
 //        if(CollectionUtils.isNotEmpty(alreadyTransferList)){
-//            return BatchResultDTO.fail(entity.getId(), entity.getCode(), StrUtil.format("{}已中转不可重复中转",alreadyTransferList));
+//            return BatchResultDTO.fail(entity.getId(), entity.getCode(), CharSequenceUtil.format("{}已中转不可重复中转",alreadyTransferList));
 //        }
 
         TransferDeclareDTO.AddDTO addDTO = new TransferDeclareDTO.AddDTO();
@@ -832,7 +835,7 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
                 batchResultDTOList.add(BatchResultDTO.fail(packageForecastEntity.getId(), packageForecastEntity.getCode(), "只有无需上传和上传成功的组包 才能入库预报"));
                 continue;
             }
-            if (StringUtils.isBlank(packageForecastEntity.getLogisticsSupplierId())) {
+            if (CharSequenceUtil.isBlank(packageForecastEntity.getLogisticsSupplierId())) {
                 batchResultDTOList.add(BatchResultDTO.fail(packageForecastEntity.getId(), packageForecastEntity.getCode(), "物流商为空"));
                 continue;
             }
@@ -847,26 +850,26 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
             //校验中转物流商和中转渠道
             for (PackageForecastDetailEntity detail : detailList) {
                 SoB2cLogisticsEntity soB2cLogisticsEntities = allSoB2cLogisticsEntities.stream().filter(v->v.getMainId().equals(detail.getSoId())).findFirst().orElse(new SoB2cLogisticsEntity());
-                if(StringUtils.isBlank(soB2cLogisticsEntities.getTransferLogisticsChannelId()) || StringUtils.isBlank(soB2cLogisticsEntities.getTransferLogisticsChannelId())){
+                if(CharSequenceUtil.isBlank(soB2cLogisticsEntities.getTransferLogisticsChannelId())){
                     errorSoList.add(detail.getSoCode());
                 }
             }
             if(CollectionUtils.isNotEmpty(errorSoList)){
-                batchResultDTOList.add(BatchResultDTO.fail(packageForecastEntity.getId(), packageForecastEntity.getCode(), StrUtil.format("中转物流商和中转渠道为空,销售订单:{}", errorSoList)));
+                batchResultDTOList.add(BatchResultDTO.fail(packageForecastEntity.getId(), packageForecastEntity.getCode(), CharSequenceUtil.format("中转物流商和中转渠道为空,销售订单:{}", errorSoList)));
                 continue;
             }
             //是否有销售订单已生成中转报关详情
             List<String> soCodes = detailList.stream().map(PackageForecastDetailEntity::getSoCode).collect(Collectors.toList());
             List<TransferDeclareDetailEntity> transferDeclareDetailEntityList = allTransferDeclareDetailEntityList.stream().filter(v->soCodes.contains(v.getSoCode())).collect(Collectors.toList());
             if(CollectionUtils.isNotEmpty(transferDeclareDetailEntityList)){
-                batchResultDTOList.add(BatchResultDTO.fail(packageForecastEntity.getId(), packageForecastEntity.getCode(), StrUtil.format("销售订单已生成中转报关详情,销售订单:{}", transferDeclareDetailEntityList.stream().map(TransferDeclareDetailEntity::getSoCode).collect(Collectors.toList()))));
+                batchResultDTOList.add(BatchResultDTO.fail(packageForecastEntity.getId(), packageForecastEntity.getCode(), CharSequenceUtil.format("销售订单已生成中转报关详情,销售订单:{}", transferDeclareDetailEntityList.stream().map(TransferDeclareDetailEntity::getSoCode).collect(Collectors.toList()))));
                 continue;
             }
             //校验销售订单是否已成功预报
             List<String> passTransferStatus = Arrays.asList(TransferStatusEnum.NOT.getCode(),TransferStatusEnum.SUCCESS.getCode());
             List<SoB2cEntity> notPassSoB2cList = allSoB2cEntityList.stream().filter(v->soIds.contains(v.getId()) && !passTransferStatus.contains(v.getTransferStatus())).collect(Collectors.toList());
             if (CollectionUtils.isNotEmpty(notPassSoB2cList)){
-                batchResultDTOList.add(BatchResultDTO.fail(packageForecastEntity.getId(), packageForecastEntity.getCode(), StrUtil.format("销售订单未成功预报,销售订单:{}", notPassSoB2cList.stream().map(SoB2cEntity::getCode).collect(Collectors.toList()))));
+                batchResultDTOList.add(BatchResultDTO.fail(packageForecastEntity.getId(), packageForecastEntity.getCode(), CharSequenceUtil.format("销售订单未成功预报,销售订单:{}", notPassSoB2cList.stream().map(SoB2cEntity::getCode).collect(Collectors.toList()))));
                 continue;
             }
 
@@ -918,7 +921,7 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
             //跟踪单号
             String trackNo = item.getTrackNo();
             String minPackageTransportNo = item.getMinPackageTransportNo();
-            if (StringUtils.isBlank(trackNo)) {
+            if (CharSequenceUtil.isBlank(trackNo)) {
                 trackNo = minPackageTransportNo;
             }
             String handoverStatus = item.getHandoverStatus();
@@ -942,7 +945,7 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
             item.setTotalPackageWeightStr(totalPackageWeightStr);
             BigDecimal weight = item.getWeight();
             String weightUnit = item.getWeightUnit();
-            if (Objects.nonNull(weight) && StrUtil.isNotBlank(weightUnit)){
+            if (Objects.nonNull(weight) && CharSequenceUtil.isNotBlank(weightUnit)){
                 String weightStr = weight + weightUnit;
                 item.setWeightStr(weightStr);
             }else {
@@ -989,13 +992,13 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
             throw new ServiceException("发货单更新失败");
         }
 
-        String msg = StrUtil.format("用户【{}】通过【{}】触发单据编号【{}】的自动发货功能", UserContext.getDefaultLoginUser().getUserName(), "组包称重", deliveryEntity.getCode());
+        String msg = CharSequenceUtil.format("用户【{}】通过【{}】触发单据编号【{}】的自动发货功能", UserContext.getDefaultLoginUser().getUserName(), "组包称重", deliveryEntity.getCode());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C_DELIVERY.getCode(), deliveryEntity.getId(), "组包称重");
 
         //修改订单状态已发货
         SoB2cDTO.UpdateDeliveryTimeDTO updateDeliveryTimeDTO = new SoB2cDTO.UpdateDeliveryTimeDTO();
-        updateDeliveryTimeDTO.setSoB2cIds(Arrays.asList(soId));
-        updateDeliveryTimeDTO.setSoDeliveryDTOList(Arrays.asList(new SoB2cDTO.SoDeliveryDTO(soId, deliveryEntity.getCode())));
+        updateDeliveryTimeDTO.setSoB2cIds(Collections.singletonList(soId));
+        updateDeliveryTimeDTO.setSoDeliveryDTOList(Collections.singletonList(new SoB2cDTO.SoDeliveryDTO(soId, deliveryEntity.getCode())));
         updateDeliveryTimeDTO.setStatus(SoB2cBillStatusEnum.ENUM_SHIPPED.getCode());
         updateDeliveryTimeDTO.setDeliveryTime(deliveryTime);
         deliveryEntity.setShipmentMark(ShipmentMarkTypeEnum.AUTO.getCode());

@@ -1,15 +1,14 @@
 package com.erp.server.oms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.common.business.constant.SearchType;
 import com.common.business.dto.AdvanceQueryContainer;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.BatchResultDTO;
@@ -38,6 +37,7 @@ import com.erp.model.oms.entity.OmsPushMsgEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.entity.SkuMappingEntity;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
+import com.erp.model.oms.enums.ListingMatchResultEnum;
 import com.erp.model.oms.enums.RuleTypeEnum;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
@@ -53,7 +53,6 @@ import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.wms.feign.WmsOverseasWarehouseFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.rpc.wms.feign.WmsWarehouseFeign;
-import com.erp.server.oms.constant.OmsConstant;
 import com.erp.server.oms.listener.SkuMappingExcelListener;
 import com.erp.server.oms.listener.SkuMappingWarehouseExcelListener;
 import com.erp.server.oms.mapper.SkuMappingMapper;
@@ -61,6 +60,7 @@ import com.erp.server.oms.service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.poi.ss.formula.functions.T;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.ResourceLoader;
@@ -73,6 +73,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.math.BigDecimal;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.function.Function;
@@ -152,7 +153,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
             response.reset();
             // 设置文件头
             response.setHeader("Content-Disposition",
-                    "attchement;filename=" + new String(excelName.getBytes("gb2312"), "ISO8859-1"));
+                    "attchement;filename=" + new String(excelName.getBytes("gb2312"), StandardCharsets.ISO_8859_1));
             response.setContentType("application/msexcel");
             wb.write(output);
             wb.close();
@@ -250,17 +251,9 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
     public PagingVO<SkuMappingDTO.PagingViewDTO> paging(PagingDTO<SkuMappingDTO.PagingParamDTO> dto) {
         SkuMappingDTO.PagingParamDTO params = dto.getParams();
         params.setPermissionSql(dto.getPermissionSql());
-        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
-        String tabFlag = params.getTabFlag();
-        Boolean matchResult = null;
-        if (OmsConstant.ALREADY.equals(tabFlag)) {
-            matchResult = Boolean.TRUE;
-        }
-        if (OmsConstant.NOT.equals(tabFlag)) {
-            matchResult = Boolean.FALSE;
-        }
+        Page<T> query = new Page<>(dto.getCurrPage(), dto.getPageSize());
         params.setType(RuleTypeEnum.PLATFORM.getCode());
-        IPage pageData = baseMapper.paging(query, params, matchResult);
+        IPage pageData = baseMapper.paging(query, params);
         List<SkuMappingDTO.PagingViewDTO> list = pageData.getRecords();
         if (CollectionUtils.isEmpty(list)) {
             return new PagingVO<>(pageData);
@@ -300,23 +293,36 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         SkuMappingDTO.TabListDTO all = new SkuMappingDTO.TabListDTO();
         int allCount = matchCountList.stream().mapToInt(SkuMappingDTO.MatchCountDTO::getCount).sum();
         all.setCount(allCount);
-        all.setTabFlag(SearchType.ALL);
+        all.setTabFlag("");
+        all.setTabFlagName("全部");
         resultList.add(all);
         //未匹配
         SkuMappingDTO.TabListDTO not = new SkuMappingDTO.TabListDTO();
-        int notCount = matchCountList.stream().filter(m -> !m.getMatchResult()).findFirst().
+        int notCount = matchCountList.stream().filter(m -> ListingMatchResultEnum.FALSE.getCode().equals(m.getMatchResult())).findFirst().
                 map(SkuMappingDTO.MatchCountDTO::getCount).orElse(0);
         not.setCount(notCount);
-        not.setTabFlag(OmsConstant.NOT);
+        not.setTabFlag(ListingMatchResultEnum.FALSE.getCode());
+        not.setTabFlagName(ListingMatchResultEnum.FALSE.getName());
         resultList.add(not);
 
         //已匹配
         SkuMappingDTO.TabListDTO already = new SkuMappingDTO.TabListDTO();
-        int alreadyCount = matchCountList.stream().filter(m -> m.getMatchResult()).findFirst().
+        int alreadyCount = matchCountList.stream().filter(m -> ListingMatchResultEnum.TRUE.getCode().equals(m.getMatchResult())).findFirst().
                 map(SkuMappingDTO.MatchCountDTO::getCount).orElse(0);
         already.setCount(alreadyCount);
-        already.setTabFlag(OmsConstant.ALREADY);
+        already.setTabFlag(ListingMatchResultEnum.TRUE.getCode());
+        already.setTabFlagName(ListingMatchResultEnum.TRUE.getName());
         resultList.add(already);
+
+        //无需匹配
+        SkuMappingDTO.TabListDTO notNeed = new SkuMappingDTO.TabListDTO();
+        int notNeedCount = matchCountList.stream().filter(m -> ListingMatchResultEnum.NOT.getCode().equals(m.getMatchResult())).findFirst().
+                map(SkuMappingDTO.MatchCountDTO::getCount).orElse(0);
+        notNeed.setCount(notNeedCount);
+        notNeed.setTabFlag(ListingMatchResultEnum.NOT.getCode());
+        notNeed.setTabFlagName(ListingMatchResultEnum.NOT.getName());
+        resultList.add(notNeed);
+
         return resultList;
     }
 
@@ -376,7 +382,8 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
             listing.setPlatformSkuName(dto.getPlatformProductName());
         }
         // listing 更新匹配关系
-        listing.setMatchResult(true);
+        listing.setMatchResult(ListingMatchResultEnum.TRUE.getCode());
+        listing.setRemark("");
         if (!listingInfoService.updateById(listing)) {
             throw new ServiceException("[listing] 更新失败");
         }
@@ -436,9 +443,9 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
 
 
         // 操作日志
-//        String msg = StrUtil.format("用户【{}】新增【{}】id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "sku映射表", addSkuMaping.getId());
+//        String msg =  CharSequenceUtil.format("用户【{}】新增【{}】id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "sku映射表", addSkuMaping.getId());
 //        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SKU_MAPPING.getCode(), addSkuMaping.getId(), "新增操作");
-        operateLogService.addModuleOperateLogByObj(skuMaping, addSkuMaping, ModuleTypeEnum.LISTING_INFO.getCode(), addSkuMaping.getListingId(), StrUtil.format("用户【{}】编辑sku映射表",UserContext.getDefaultLoginUser().getUserName()));
+        operateLogService.addModuleOperateLogByObj(skuMaping, addSkuMaping, ModuleTypeEnum.LISTING_INFO.getCode(), addSkuMaping.getListingId(),  CharSequenceUtil.format("用户【{}】编辑sku映射表",UserContext.getDefaultLoginUser().getUserName()));
         return addSkuMaping.getId();
     }
 
@@ -455,7 +462,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
     public PagingVO<SkuMappingDTO.ProductSkuInfoDTO> listPaging(PagingDTO<SkuMappingDTO.ListParamDTO> dto) {
         SkuMappingDTO.ListParamDTO params = dto.getParams();
         params.setPermissionSql(dto.getPermissionSql());
-        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+        Page<T> query = new Page<>(dto.getCurrPage(), dto.getPageSize());
         IPage pageData = baseMapper.listPaging(query, params);
         List<SkuMappingDTO.ProductSkuInfoDTO> list = pageData.getRecords();
         if (CollectionUtils.isEmpty(list)) {
@@ -531,7 +538,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         skuMappingEntity.setExpireTime(effectiveTime.plusYears(MathUtil.NUMBER_100));
         if (this.save(skuMappingEntity)) {
             // 操作日志
-            String msg = StrUtil.format("用户【{}】新增【{}】id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "sku映射表", skuMappingEntity.getId());
+            String msg =  CharSequenceUtil.format("用户【{}】新增【{}】id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "sku映射表", skuMappingEntity.getId());
             operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.LISTING_INFO.getCode(), listingId, "新增操作");
             return skuMappingEntity.getId();
         }
@@ -596,7 +603,8 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         if (Objects.nonNull(listingInfo)) {
             listingId = listingInfo.getId();
             // listing 更新匹配关系
-            listingInfo.setMatchResult(true);
+            listingInfo.setMatchResult(ListingMatchResultEnum.TRUE.getCode());
+            listingInfo.setRemark("");
             if (!listingInfoService.updateById(listingInfo)) {
                 throw new ServiceException("[listing] 更新失败");
             }
@@ -643,7 +651,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
             throw new ServiceException("[SkuMapping] 数据新增失败");
         }
         // 操作日志
-//        String msg = StrUtil.format("用户【{}】新增【{}】id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "sku映射表", addSkuMapping.getId());
+//        String msg =  CharSequenceUtil.format("用户【{}】新增【{}】id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "sku映射表", addSkuMapping.getId());
 //        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SKU_MAPPING.getCode(), addSkuMapping.getId(), "新增操作");
         operateLogService.addModuleOperateLogByObj(skuMapping, addSkuMapping, ModuleTypeEnum.LISTING_INFO.getCode(), addSkuMapping.getListingId(), "编辑sku映射表");
         return addSkuMapping.getId();
@@ -848,17 +856,9 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
     public PagingVO<SkuMappingDTO.WarehousePagingViewDTO> warehousePaging(PagingDTO<SkuMappingDTO.WarehousePagingParamDTO> dto) {
         SkuMappingDTO.WarehousePagingParamDTO params = dto.getParams();
         params.setPermissionSql(dto.getPermissionSql());
-        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
-        String tabFlag = params.getTabFlag();
-        Boolean matchResult = null;
-        if (OmsConstant.ALREADY.equals(tabFlag)) {
-            matchResult = Boolean.TRUE;
-        }
-        if (OmsConstant.NOT.equals(tabFlag)) {
-            matchResult = Boolean.FALSE;
-        }
+        Page<T> query = new Page<>(dto.getCurrPage(), dto.getPageSize());
         params.setType(RuleTypeEnum.WAREHOUSE.getCode());
-        IPage pageData = baseMapper.warehousePaging(query, params, matchResult);
+        IPage pageData = baseMapper.warehousePaging(query, params);
         List<SkuMappingDTO.WarehousePagingViewDTO> list = pageData.getRecords();
         if (CollectionUtils.isEmpty(list)) {
             return new PagingVO<>(pageData);
@@ -880,12 +880,11 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         List<String> skuIdList = list.stream().map(SkuMappingDTO.WarehousePagingViewDTO::getProductSkuId).collect(Collectors.toList());
         List<SkuVO> skuList = plmTaskFeign.listSkuProductByIds(skuIdList);
         for (SkuMappingDTO.WarehousePagingViewDTO item : list) {
-            boolean matchResult = item.getMatchResult() != null && item.getMatchResult();
             String skuId = item.getProductSkuId();
             String skuName = skuList.stream().filter(s -> s.getSkuId().equals(skuId)).
                     findFirst().map(SkuVO::getSkuName).orElse("");
             item.setProductName(skuName);
-            item.setMatchResultStr(matchResult ? "已匹配" : "未匹配");
+            item.setMatchResultStr(ListingMatchResultEnum.getName(item.getMatchResult()));
             item.setHasMappingAllStr(item.getHasMappingAll() ? "是" : "否");
         }
 
@@ -956,12 +955,11 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         List<BomChildrenSkuDTO> bomChildrenSkuList = plmTaskFeign.listBomChildBySkuIds(skuIdList);
 
         for (SkuMappingDTO.PagingViewDTO item : list) {
-            Boolean matchResult = item.getMatchResult();
             String skuId = item.getProductSkuId();
             String skuName = skuList.stream().filter(s -> s.getSkuId().equals(skuId)).
                     findFirst().map(SkuVO::getSkuName).orElse("");
             item.setProductName(skuName);
-            item.setMatchResultStr(Boolean.TRUE.equals(matchResult) ? "已匹配" : "未匹配");
+            item.setMatchResultStr(ListingMatchResultEnum.getName(item.getMatchResult()));
             //查询sku是否存在子SKU
             List<BomChildrenSkuDTO> sonSkuList = bomChildrenSkuList.stream()
                     .filter(req -> req.getParentSkuId().equals(item.getProductSkuId()) && BomTypeEnum.COMBINATION.getType().equalsIgnoreCase(req.getType()))
@@ -1290,16 +1288,8 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
 
     @Override
     public PagingVO<SkuMappingDTO.PagingViewDTO> exportPlatformSku(PagingDTO<SkuMappingDTO.ExportDTO> dto) {
-        String tabFlag = dto.getParams().getTabFlag();
-        Boolean matchResult = null;
-        if (OmsConstant.ALREADY.equals(tabFlag)) {
-            matchResult = Boolean.TRUE;
-        }
-        if (OmsConstant.NOT.equals(tabFlag)) {
-            matchResult = Boolean.FALSE;
-        }
         dto.getParams().setType(RuleTypeEnum.PLATFORM.getCode());
-        Page<SkuMappingDTO.PagingViewDTO> page = baseMapper.listExport(new Page<>(dto.getCurrPage(), dto.getPageSize()), dto.getParams(), matchResult);
+        Page<SkuMappingDTO.PagingViewDTO> page = baseMapper.listExport(new Page<>(dto.getCurrPage(), dto.getPageSize()), dto.getParams());
 
         fillDb(page.getRecords());
         return new PagingVO<>(page);
@@ -1307,16 +1297,8 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
 
     @Override
     public PagingVO<SkuMappingDTO.WarehousePagingViewDTO> exportWarehouseSku(PagingDTO<SkuMappingDTO.ExportWarehouseSkuDTO> dto) {
-        String tabFlag =  dto.getParams().getTabFlag();
-        Boolean matchResult = null;
-        if (OmsConstant.ALREADY.equals(tabFlag)) {
-            matchResult = Boolean.TRUE;
-        }
-        if (OmsConstant.NOT.equals(tabFlag)) {
-            matchResult = Boolean.FALSE;
-        }
         dto.getParams().setType(RuleTypeEnum.WAREHOUSE.getCode());
-        Page<SkuMappingDTO.WarehousePagingViewDTO> page = baseMapper.listWarehouseExport(new Page<>(dto.getCurrPage(), dto.getPageSize()), dto.getParams(), matchResult);
+        Page<SkuMappingDTO.WarehousePagingViewDTO> page = baseMapper.listWarehouseExport(new Page<>(dto.getCurrPage(), dto.getPageSize()), dto.getParams());
         fillWarehouseDb(page.getRecords());
         return new PagingVO<>(page);
     }
@@ -1372,12 +1354,11 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         ){
             paramDTO.setPlatformSpuNoList(platformSpuList);
         }
-        paramDTO.setMatchResult(true);
+        paramDTO.setMatchResult(ListingMatchResultEnum.TRUE.getCode());
         paramDTO.setLastExpireDate(platformOrderCreateTime);
         paramDTO.setIsExpire(isExpire);
         return paramDTO;
     }
-
 
 	@Override
 	public List<OmsPushMsgEntity> syncDataToSdy(LocalDateTime startTime, LocalDateTime endTime) {
@@ -1425,4 +1406,23 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
 		}
 		return resultMap;
 	}
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void updateNotMatch(SkuMappingDTO.UpdateNotMatchDTO dto) {
+        List<ListingInfoEntity> listingInfoEntityList = listingInfoService.listByIds(dto.getListingIds());
+        if (CollectionUtils.isEmpty(listingInfoEntityList)){
+            throw new ServiceException("listing不存在");
+        }
+        if(listingInfoEntityList.stream().anyMatch(v->ListingMatchResultEnum.TRUE.getCode().equals(v.getMatchResult()))
+        || listingInfoEntityList.stream().anyMatch(v->ListingMatchResultEnum.NOT.getCode().equals(v.getMatchResult()))){
+            throw new ServiceException("只有未匹配的数据可以操作无需匹配");
+        }
+        listingInfoEntityList.forEach(v->{
+            v.setMatchResult(ListingMatchResultEnum.NOT.getCode());
+            v.setRemark(dto.getRemark());
+            String msg =  CharSequenceUtil.format("用户【{}】更新状态为无需匹配", UserContext.getDefaultLoginUser().getUserName());
+            operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.LISTING_INFO.getCode(), v.getId(), "状态变更");
+        });
+        listingInfoService.updateBatchById(listingInfoEntityList);
+    }
 }

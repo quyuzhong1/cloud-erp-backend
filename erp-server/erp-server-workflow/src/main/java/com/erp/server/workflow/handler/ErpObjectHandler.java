@@ -3,9 +3,7 @@ package com.erp.server.workflow.handler;
 import com.baomidou.mybatisplus.core.handlers.MetaObjectHandler;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
-import com.erp.server.workflow.service.CommonService;
 import org.apache.ibatis.reflection.MetaObject;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;

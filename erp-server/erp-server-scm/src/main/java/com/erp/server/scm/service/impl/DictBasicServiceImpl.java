@@ -38,8 +38,7 @@ public class DictBasicServiceImpl extends SuperServiceImpl<DictBasicMapper, Dict
         if (CollectionUtils.isEmpty(list)) {
             return true;
         }
-        List<DictBasicEntity> addList = new ArrayList<>(list.size());
-        addList = BeanMapper.copyList(list, DictBasicEntity.class);
+        List<DictBasicEntity> addList = BeanMapper.copyList(list, DictBasicEntity.class);
         return this.saveOrUpdateBatch(addList);
     }
 

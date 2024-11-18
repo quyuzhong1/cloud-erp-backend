@@ -176,8 +176,7 @@ public class JSONValidator {
         int start = this.col - 1;
         if ("\\\"/bfnrtu".indexOf(this.c) < 0)
             return error("escape sequence \\\",\\\\,\\/,\\b,\\f,\\n,\\r,\\t or \\uxxxx", start);
-        if (this.c == 'u' && (
-                !ishex(nextCharacter()) || !ishex(nextCharacter()) || !ishex(nextCharacter()) || !ishex(nextCharacter())))
+        if (this.c == 'u' && (!ishex(nextCharacter())))
             return error("unicode escape sequence \\uxxxx", start);
         return true;
     }

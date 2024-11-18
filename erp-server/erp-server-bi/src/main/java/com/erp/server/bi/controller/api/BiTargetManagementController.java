@@ -1,6 +1,6 @@
 package com.erp.server.bi.controller.api;
 
-import com.alibaba.excel.EasyExcel;
+import static com.alibaba.excel.EasyExcel.read;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.enums.LogActionEnum;
@@ -34,6 +34,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.List;
 
@@ -84,7 +85,7 @@ public class BiTargetManagementController extends BaseController {
      */
     @PostMapping("/delete")
     @LogAction(value = LogActionEnum.DELETE, desc = "删除目标管理")
-    public ApiResult delete(@RequestParam("id") String id) {
+    public ApiResult<Void> delete(@RequestParam("id") String id) {
         biTargetManagementService.removeById(id);
         return success();
     }
@@ -99,13 +100,13 @@ public class BiTargetManagementController extends BaseController {
      */
     @LogAction(value = LogActionEnum.IMPORT, desc = "导入目标管理")
     @PostMapping("/importOrderFile")
-    public ApiResult importOrderFile(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
-        BiTargetManagementExcelListener excelListenerUtil = new BiTargetManagementExcelListener(biTargetManagementService, plmTaskFeign, sysUserFeign);
+    public ApiResult<Void> importOrderFile(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
+        BiTargetManagementExcelListener excelListenerUtil = new BiTargetManagementExcelListener(biTargetManagementService, plmTaskFeign);
         try {
-            EasyExcel.read(excelFile.getInputStream(), BiTargetManagementImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
+            read(excelFile.getInputStream(), BiTargetManagementImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
             List<BiTargetManagementImportExcelDTO> list = excelListenerUtil.getDateList();
-            if (list.size() > 0) {
-                StringBuffer sb = new StringBuffer();
+            if (!list.isEmpty()) {
+                StringBuilder sb = new StringBuilder();
                 String excelPath = "excel/biTargetManagement.xlsx";
                 String name = "biTargetManagement";
                 String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
@@ -115,7 +116,7 @@ public class BiTargetManagementController extends BaseController {
                 return failure();
             }
         } catch (IOException e) {
-            throw new ServiceException(ApiError.Default);
+            throw new ServiceException(ApiError.DEFAULT);
         }
         return success();
     }
@@ -130,7 +131,7 @@ public class BiTargetManagementController extends BaseController {
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "目标管理下载模板")
     @GetMapping("/exportTemplate")
-    public ApiResult exportTemplate(HttpServletRequest request, HttpServletResponse response) {
+    public ApiResult<Void> exportTemplate(HttpServletRequest request, HttpServletResponse response) {
         String path = "classpath:excel/biTargetManagementTemplate.xlsx";
         String excelName = "template.xlsx";
         ResourceLoader resourceLoader = new DefaultResourceLoader();
@@ -142,12 +143,12 @@ public class BiTargetManagementController extends BaseController {
             response.reset();
             // 设置文件头
             response.setHeader("Content-Disposition",
-                    "attchement;filename=" + new String(excelName.getBytes("gb2312"), "ISO8859-1"));
+                    "attchement;filename=" + new String(excelName.getBytes("gb2312"), StandardCharsets.ISO_8859_1));
             response.setContentType("application/msexcel");
             wb.write(output);
             wb.close();
         } catch (Exception e) {
-            throw new ServiceException(ApiError.Default);
+            throw new ServiceException(ApiError.DEFAULT);
         }
         return success();
     }

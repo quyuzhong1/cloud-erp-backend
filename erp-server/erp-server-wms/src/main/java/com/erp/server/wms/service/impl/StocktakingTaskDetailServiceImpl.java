@@ -39,6 +39,7 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -103,7 +104,7 @@ public class StocktakingTaskDetailServiceImpl extends SuperServiceImpl<Stocktaki
             throw new ServiceException("只有复盘中,未开始的盘点任务才能修改盘点库存");
         }
 
-        List<StocktakingTaskDetailEntity> taskDetailList = this.listBaseByMainIds(Arrays.asList(mainId));
+        List<StocktakingTaskDetailEntity> taskDetailList = this.listBaseByMainIds(Collections.singletonList(mainId));
         List<WarehouseEntity> warehouseList = warehouseService.list();
         StocktakingTaskDetailExcelListener excelListener = new StocktakingTaskDetailExcelListener(this, task.getCode(), taskDetailList, warehouseList, operateLogService);
         try {
@@ -233,7 +234,7 @@ public class StocktakingTaskDetailServiceImpl extends SuperServiceImpl<Stocktaki
      */
     @Override
     public List<StocktakingTaskDetailDTO.ViewDTO> listByMainId(String mainId) {
-        List<StocktakingTaskDetailEntity> dbList = this.listBaseByMainIds(Arrays.asList(mainId));
+        List<StocktakingTaskDetailEntity> dbList = this.listBaseByMainIds(Collections.singletonList(mainId));
         List<StocktakingTaskDetailDTO.ViewDTO> resultList = BeanMapper.copyList(dbList, StocktakingTaskDetailDTO.ViewDTO.class);
         List<String> skuIdList = resultList.stream().map(StocktakingTaskDetailDTO.ViewDTO::getSkuId).collect(Collectors.toList());
         List<ProductDetailEntity> skuList = productDetailService.listProductDetailByIds(skuIdList);
@@ -272,7 +273,7 @@ public class StocktakingTaskDetailServiceImpl extends SuperServiceImpl<Stocktaki
             response.reset();
             // 设置文件头
             response.setHeader("Content-Disposition",
-                    "attchement;filename=" + new String(excelName.getBytes("gb2312"), "ISO8859-1"));
+                    "attchement;filename=" + new String(excelName.getBytes("gb2312"), StandardCharsets.ISO_8859_1));
             response.setContentType("application/msexcel");
             wb.write(output);
             wb.close();
@@ -354,7 +355,7 @@ public class StocktakingTaskDetailServiceImpl extends SuperServiceImpl<Stocktaki
         //是否盲盘
         Boolean isBlindCount = StocktakingModeEnum.BLIND_COUNT.equals(stocktakingMode);
         //盘点人信息
-        List<StocktakingTaskUserEntity> taskUserList = stocktakingTaskUserService.listBaseBySourceIdList(Arrays.asList(mainId));
+        List<StocktakingTaskUserEntity> taskUserList = stocktakingTaskUserService.listBaseBySourceIdList(Collections.singletonList(mainId));
         String stocktakingUserName = taskUserList.stream().
                 map(StocktakingTaskUserEntity::getUserName).collect(Collectors.joining(","));
         List<StocktakingTaskDetailDTO.ExportDTO> exportList = baseMapper.listExportByMainId(mainId);

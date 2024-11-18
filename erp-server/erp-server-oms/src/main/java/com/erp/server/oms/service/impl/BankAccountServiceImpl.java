@@ -1,29 +1,28 @@
 package com.erp.server.oms.service.impl;
 
-import com.alibaba.excel.EasyExcel;
+import com.alibaba.excel.EasyExcelFactory;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
+import com.common.core.constant.SqlConstants;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.ExcelUtil;
 import com.erp.model.oms.dto.BankAccountDTO;
-import com.erp.model.oms.dto.CustomerB2CDTO;
 import com.erp.model.oms.dto.excel.KingdeeBankAccountExcelDTO;
 import com.erp.model.oms.entity.BankAccountEntity;
-import com.erp.model.oms.entity.KingdeeReceiptConditionEntity;
 import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.oms.listener.KingdeeBankAccountListener;
 import com.erp.server.oms.mapper.BankAccountMapper;
 import com.erp.server.oms.service.BankAccountService;
-import com.common.business.service.impl.SuperServiceImpl;
-import org.apache.commons.collections4.CollectionUtils;
-import org.springframework.stereotype.Service;
-
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.poi.ss.formula.functions.T;
+import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -51,7 +50,7 @@ public class BankAccountServiceImpl extends SuperServiceImpl<BankAccountMapper, 
 
     @Override
     public BankAccountEntity findByAccountNo(String bankAccountNo) {
-        return lambdaQuery().eq(BankAccountEntity::getBankAccountNo, bankAccountNo).last("limit 1").one();
+        return lambdaQuery().eq(BankAccountEntity::getBankAccountNo, bankAccountNo).last( SqlConstants.LIMIT_1).one();
     }
 
     @Override
@@ -74,7 +73,7 @@ public class BankAccountServiceImpl extends SuperServiceImpl<BankAccountMapper, 
     @Override
     public BankAccountEntity findByOrgIdAndAccountName(String orgId, String accountName) {
         return lambdaQuery().eq(BankAccountEntity::getOrgId, orgId).eq(BankAccountEntity::getAccountName, accountName).
-                last("LIMIT 1").one();
+                last( SqlConstants.LIMIT_1).one();
 
     }
 
@@ -93,13 +92,13 @@ public class BankAccountServiceImpl extends SuperServiceImpl<BankAccountMapper, 
         List<BaseIdDTO.CodeDTO> sysAccountingCompanyList = sysUserFeign.getAccountingCompanyList(Collections.emptyList());
         KingdeeBankAccountListener excelListener = new KingdeeBankAccountListener(this, sysAccountingCompanyList);
         try {
-            EasyExcel.read(excelFile.getInputStream(), KingdeeBankAccountExcelDTO.class, excelListener).sheet(0).doRead();
+            EasyExcelFactory.read(excelFile.getInputStream(), KingdeeBankAccountExcelDTO.class, excelListener).sheet(0).doRead();
         } catch (Exception e) {
             log.error("金蝶银行账号导入错误！>>>", e);
             return Boolean.FALSE;
         }
         List<KingdeeBankAccountExcelDTO> errorList = excelListener.getErrorList();
-        if (errorList.size() > 0) {
+        if (!errorList.isEmpty()) {
             String fileName = "金蝶银行账号错误信息";
             ExcelUtil.export(fileName, "BankAccountError", errorList, KingdeeBankAccountExcelDTO.class, response);
             return Boolean.FALSE;
@@ -119,13 +118,13 @@ public class BankAccountServiceImpl extends SuperServiceImpl<BankAccountMapper, 
 
     @Override
     public PagingVO<BankAccountDTO.PagingViewDTO> paging(PagingDTO<BankAccountDTO.PagingParamDTO> dto) {
-        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+        Page<T> query = new Page<>(dto.getCurrPage(), dto.getPageSize());
         BankAccountDTO.PagingParamDTO params = dto.getParams();
-        IPage pageData = baseMapper.paging(query, params);
+        IPage<BankAccountDTO.PagingViewDTO> pageData = baseMapper.paging(query, params);
         List<BankAccountDTO.PagingViewDTO> list = pageData.getRecords();
         for (BankAccountDTO.PagingViewDTO item : list) {
             Boolean disabled = item.getDisabled();
-            String disabledName = disabled ? "禁用" : "启用";
+            String disabledName = Boolean.TRUE.equals(disabled) ? "禁用" : "启用";
             item.setDisabledName(disabledName);
         }
         return new PagingVO<>(pageData);
@@ -140,7 +139,7 @@ public class BankAccountServiceImpl extends SuperServiceImpl<BankAccountMapper, 
         BankAccountDTO.ViewDTO viewDTO = new BankAccountDTO.ViewDTO();
         BeanMapper.copy(bankAccount, viewDTO);
         Boolean disabled = viewDTO.getDisabled();
-        String disabledName = disabled ? "禁用" : "启用";
+        String disabledName = Boolean.TRUE.equals(disabled) ? "禁用" : "启用";
         viewDTO.setDisabledName(disabledName);
         return viewDTO;
     }

@@ -28,7 +28,7 @@ import java.util.List;
 @Ignore
 public class MessagingApiTest {
 
-    private final MessagingApi api = null;
+    private final MessagingApi api = new MessagingApi(null);
 
     
     /**

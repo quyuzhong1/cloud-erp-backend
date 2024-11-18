@@ -444,7 +444,7 @@ public class Track123LogisticsHandlerImpl extends AbstractLogisticsHandler {
      * @return
      */
     @Override
-    public ApiResult authorization(Map<String, String> authMap){
+    public ApiResult<Object>authorization(Map<String, String> authMap){
         try {
             TrackResponse trackResponse = trackShipperService.getCourierList(authMap.get("clientSecret"));
             if (!"00000".equalsIgnoreCase(trackResponse.getCode()))  {

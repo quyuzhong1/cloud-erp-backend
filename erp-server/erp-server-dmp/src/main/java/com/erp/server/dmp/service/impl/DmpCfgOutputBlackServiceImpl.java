@@ -68,7 +68,7 @@ public class DmpCfgOutputBlackServiceImpl extends SuperServiceImpl<DmpCfgOutputB
     @Override
     public Boolean update(DmpCfgOutputBlackDTO.UpdateDTO updateDTO) {
         DmpCfgOutputBlackEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "输出黑名单"));
+        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "输出黑名单"));
         DmpCfgOutputBlackEntity dmpCfgOutputBlackEntity =  BeanMapperUtils.map(DmpCfgOutputBlackEntity.class, updateDTO);
 
         // 数据处理

@@ -42,7 +42,7 @@ public class DmpInputAmzReportDownloadDmpHandler extends DmpInputDoChildDmpHandl
         Map<String, String> billNoIdMap = new HashMap<>();
         if (CollUtil.isNotEmpty(listMaps)) {
             for (Map<String, Object> listMap : listMaps) {
-                billNoIdMap.put(listMap.get("report_id").toString(), listMap.get(BaseEntity.ID).toString());
+                billNoIdMap.put(listMap.get("report_id").toString(), listMap.get(BaseEntity.FIELD_ID).toString());
             }
         }
         for (Map<String, Object> dmpInputMongoChildEntity : dmpInputMongoChildEntityList) {

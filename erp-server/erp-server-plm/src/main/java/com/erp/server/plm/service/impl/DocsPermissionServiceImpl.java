@@ -57,20 +57,6 @@ public class DocsPermissionServiceImpl extends ServiceImpl<DocsPermissionEntityM
     }
 
 
-    /**
-     * 根据产品id 获取 文档权限
-     *
-     * @param productId
-     * @return java.util.List<com.erp.model.plm.entity.DocsPermissionEntity>
-     * @author yl
-     * @date 2022-10-31 9:53
-     */
-    @Override
-    public List<DocsPermissionEntity> getDocsPermissionByProductId(String productId) {
-        LambdaQueryWrapper<DocsPermissionEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(DocsPermissionEntity::getProductId, productId);
-        return this.list(queryWrapper);
-    }
 
     @Override
     public List<String> getDocsIdsByProductId(String productId) {
@@ -141,10 +127,8 @@ public class DocsPermissionServiceImpl extends ServiceImpl<DocsPermissionEntityM
         SetDocsPowerDTO power = new SetDocsPowerDTO();
         power.setId(deliveryDocsId);
         List<String> roleIdList = new ArrayList<>();
-        if (CollectionUtils.isNotEmpty(list)) {
-            if (StringUtils.isNotBlank(list.get(0).getQueryRoleId())) {
+        if (CollectionUtils.isNotEmpty(list) && StringUtils.isNotBlank(list.get(0).getQueryRoleId())) {
                 roleIdList = list.stream().map(DocsPermissionEntity::getQueryRoleId).collect(Collectors.toList());
-            }
         }
         power.setRoleIdList(roleIdList);
         return power;

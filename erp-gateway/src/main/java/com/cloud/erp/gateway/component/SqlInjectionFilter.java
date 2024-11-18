@@ -26,6 +26,7 @@ import java.util.List;
 
 /**
  * 防sql注入
+ *
  * @author GitEgg
  */
 @Log4j2
@@ -49,47 +50,51 @@ public class SqlInjectionFilter implements GlobalFilter, Ordered {
 
         String scheme = requestURI.getScheme();
 
-        GatewayContext gatewayContext = exchange.getAttribute(GatewayContext.CACHE_GATEWAY_CONTEXT);
+        GatewayContext<?> gatewayContext = exchange.getAttribute(GatewayContext.CACHE_GATEWAY_CONTEXT);
 
         /*
          * not http or https scheme
          */
-        if ((!HTTP_SCHEME.equalsIgnoreCase(scheme) && !HTTPS_SCHEME.equals(scheme)) || !gatewayContext.getReadRequestData()){
+        if ((!HTTP_SCHEME.equalsIgnoreCase(scheme) && !HTTPS_SCHEME.equals(scheme))
+                || (null != gatewayContext && !gatewayContext.getReadRequestData())) {
             return chain.filter(exchange);
         }
 
         // 当返回参数为true时，记录请求参数和返回参数
-        if (shouldSqlInjection(exchange))
-        {
+        if (shouldSqlInjection(exchange)) {
             MultiValueMap<String, String> queryParams = request.getQueryParams();
             boolean chkRetGetParams = SqlInjectionRuleUtils.mapRequestSqlKeyWordsCheck(queryParams);
-
-            boolean chkRetJson = false;
-            boolean chkRetFormData = false;
 
             HttpHeaders headers = request.getHeaders();
             MediaType contentType = headers.getContentType();
             long length = headers.getContentLength();
 
-            if(length > 0 && null != contentType && (contentType.includes(MediaType.APPLICATION_JSON)
-                    ||contentType.includes(MediaType.APPLICATION_JSON_UTF8))){
-                chkRetJson = SqlInjectionRuleUtils.jsonRequestSqlKeyWordsCheck(gatewayContext.getRequestBody());
-            }
+            boolean chkRetJson = isChkRetJson(length, contentType, gatewayContext);
 
-            if(length > 0 && null != contentType  && contentType.includes(MediaType.APPLICATION_FORM_URLENCODED)){
-                log.debug("[RequestLogFilter](Request)FormData:{}",gatewayContext.getFormData());
-                chkRetFormData = SqlInjectionRuleUtils.mapRequestSqlKeyWordsCheck(gatewayContext.getFormData());
-            }
+            boolean chkRetFormData = isChkRetFormData(length, contentType, gatewayContext);
 
-            if (chkRetGetParams || chkRetJson || chkRetFormData)
-            {
+            if (chkRetGetParams || chkRetJson || chkRetFormData) {
                 return WebfluxResponseUtils.responseWrite(exchange, "参数中不允许存在sql关键字");
             }
-            return chain.filter(exchange);
         }
-        else {
-            return chain.filter(exchange);
+        return chain.filter(exchange);
+    }
+
+    private static boolean isChkRetFormData(long length, MediaType contentType, GatewayContext<?> gatewayContext) {
+        boolean chkRetFormData = false;
+        if (length > 0 && null != contentType && contentType.includes(MediaType.APPLICATION_FORM_URLENCODED)) {
+            log.debug("[RequestLogFilter](Request)FormData:{}", null == gatewayContext ? null : gatewayContext.getFormData());
+            chkRetFormData = SqlInjectionRuleUtils.mapRequestSqlKeyWordsCheck(null == gatewayContext ? null : gatewayContext.getFormData());
         }
+        return chkRetFormData;
+    }
+
+    private static boolean isChkRetJson(long length, MediaType contentType, GatewayContext<?> gatewayContext) {
+        boolean chkRetJson = false;
+        if (length > 0 && null != contentType && (contentType.includes(MediaType.APPLICATION_JSON))) {
+            chkRetJson = SqlInjectionRuleUtils.jsonRequestSqlKeyWordsCheck(null == gatewayContext ? null : gatewayContext.getRequestBody());
+        }
+        return chkRetJson;
     }
 
     @Override
@@ -99,14 +104,15 @@ public class SqlInjectionFilter implements GlobalFilter, Ordered {
 
     /**
      * 因为加入了SQL注入拦截，这里单独判断
+     *
      * @return boolean
      */
-    private boolean shouldSqlInjection(ServerWebExchange exchange){
+    private boolean shouldSqlInjection(ServerWebExchange exchange) {
 
-        if((gatewayPluginProperties.getSqlInjection().getEnable()
+        if ((gatewayPluginProperties.getSqlInjection().getEnable()
                 && CollectionUtils.isEmpty(gatewayPluginProperties.getSqlInjection().getServiceIdList())
                 && CollectionUtils.isEmpty(gatewayPluginProperties.getSqlInjection().getPathList()))
-        ){
+        ) {
             log.debug("[GatewayContext]Properties Set Read All Request Data");
             return true;
         }
@@ -119,12 +125,12 @@ public class SqlInjectionFilter implements GlobalFilter, Ordered {
         List<String> readRequestDataPathList = gatewayPluginProperties.getSqlInjection().getPathList();
 
         // 因为请求的路径太多，防注入采取白名单模式，如果配置了地址，那么就放过，所以不需要进行参数解析
-        if(!CollectionUtils.isEmpty(readRequestDataPathList)){
+        if (!CollectionUtils.isEmpty(readRequestDataPathList)) {
             String requestPath = exchange.getRequest().getPath().pathWithinApplication().value();
-            for(String path : readRequestDataPathList){
-                if(ANT_PATH_MATCHER.match(path,requestPath)){
+            for (String path : readRequestDataPathList) {
+                if (ANT_PATH_MATCHER.match(path, requestPath)) {
                     log.debug("[GatewayContext]Properties Set Not Read Specific Request Data With Request Path:{},Math Pattern:{}", requestPath, path);
-                    pathFlag =  true;
+                    pathFlag = true;
                     break;
                 }
             }
@@ -134,19 +140,13 @@ public class SqlInjectionFilter implements GlobalFilter, Ordered {
         URI routeUri = route.getUri();
 
         String routeServiceId = routeUri.getHost().toLowerCase();
-        if(!CollectionUtils.isEmpty(readRequestDataServiceIdList)){
-            if(readRequestDataServiceIdList.contains(routeServiceId)){
-                log.debug("[GatewayContext]Properties Set Not Read Specific Request Data With ServiceId:{}",routeServiceId);
-                serviceFlag =  true;
-            }
+        if (!CollectionUtils.isEmpty(readRequestDataServiceIdList) && readRequestDataServiceIdList.contains(routeServiceId)) {
+            log.debug("[GatewayContext]Properties Set Not Read Specific Request Data With ServiceId:{}", routeServiceId);
+            serviceFlag = true;
         }
 
-        if (serviceFlag && pathFlag)
-        {
-            return false;
-        }
 
-        return true;
+        return !serviceFlag || !pathFlag;
     }
 
 }

@@ -216,6 +216,16 @@ public class CustomerDTO implements Serializable {
          */
          @Dict(enumClass = CustomerInfoCheckTypeEnum.class)
          private String checkType;
+         /**
+         * 国家id
+         */
+        private String countryId;
+
+        /**
+         * 国家名称
+         */
+        private String countryName;
+
     }
 
     @Data
@@ -233,6 +243,18 @@ public class CustomerDTO implements Serializable {
          * 名称
          */
         private String code;
+        /**
+         * 简称
+         */
+        private String shortName;
+        /**
+         * 简称
+         */
+        private String approveStatus;
+        /**
+         *
+         */
+        private Boolean disabled;
     }
     /**
      * 远程搜索
@@ -941,6 +963,10 @@ public class CustomerDTO implements Serializable {
          * name
          */
         private String name;
+        /**
+         * 简称
+         */
+        private String shortName;
 
         private ApproveStatusEnum approveStatus;
 
@@ -1084,6 +1110,16 @@ public class CustomerDTO implements Serializable {
         private String countryName;
 
         private String receiveConditionName;
+
+        //----销售组织信息----
+        /**
+         * 销售部门id
+         */
+        private String salesDeptId;
+        /**
+         * 销售部门名称
+         */
+        private String salesDeptName;
 
 
     }

@@ -1,5 +1,7 @@
 package com.common.business.utils;
 
+import lombok.extern.slf4j.Slf4j;
+
 import java.io.Serializable;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -13,6 +15,7 @@ import java.lang.reflect.Method;
 /**
  * Java8通过Function函数获取字段名称(获取实体类的字段名称)
  */
+@Slf4j
 public class FunctionUtil {
 
     /**
@@ -161,21 +164,18 @@ public class FunctionUtil {
     public static void main(String[] args) {
 
         //实体类原字段名称返回
-        System.out.println();
-        System.out.println("实体类原字段名称返回");
-        System.out.println("字段名：" + getFieldName(TestUserDemo::getName));
-        System.out.println("字段名：" + getFieldName(TestUserDemo::getNickName));
-        System.out.println("字段名：" + getFieldName(TestUserDemo::getCompanySimpleName));
+        log.info("实体类原字段名称返回");
+        log.info("字段名：" + getFieldName(TestUserDemo::getName));
+        log.info("字段名：" + getFieldName(TestUserDemo::getNickName));
+        log.info("字段名：" + getFieldName(TestUserDemo::getCompanySimpleName));
 
-        System.out.println();
-        System.out.println("实体类字段名称增加分隔符");
-        System.out.println("字段名：" + getFieldName(TestUserDemo::getCompanySimpleName, "_"));
+        log.info("实体类字段名称增加分隔符");
+        log.info("字段名：" + getFieldName(TestUserDemo::getCompanySimpleName, "_"));
 
-        System.out.println();
-        System.out.println("实体类字段名称增加分隔符 + 大小写");
-        System.out.println("字段名：" + getFieldName(TestUserDemo::getCompanySimpleName, "_", 0));
-        System.out.println("字段名：" + getFieldName(TestUserDemo::getCompanySimpleName, "_", 1));
-        System.out.println("字段名：" + getFieldName(TestUserDemo::getCompanySimpleName, "_", 2));
+        log.info("实体类字段名称增加分隔符 + 大小写");
+        log.info("字段名：" + getFieldName(TestUserDemo::getCompanySimpleName, "_", 0));
+        log.info("字段名：" + getFieldName(TestUserDemo::getCompanySimpleName, "_", 1));
+        log.info("字段名：" + getFieldName(TestUserDemo::getCompanySimpleName, "_", 2));
 
 
     }

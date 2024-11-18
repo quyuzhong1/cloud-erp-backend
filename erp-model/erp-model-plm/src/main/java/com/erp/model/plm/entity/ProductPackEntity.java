@@ -15,7 +15,7 @@ import java.math.BigDecimal;
  **/
 @TableName(value ="product_pack")
 @Data
-public class ProductPackEntity extends BaseEntity implements Serializable {
+public class ProductPackEntity extends BaseEntity<ProductPackEntity> implements Serializable {
 
     /**
      * 产品sku表id
@@ -38,9 +38,6 @@ public class ProductPackEntity extends BaseEntity implements Serializable {
     @TableField(value = "product_height")
     private BigDecimal productHeight;
 
-    @TableField(value = "product_size")
-    @Deprecated
-    private String productSize;
     /**
      * 毛重
      */

@@ -2,6 +2,7 @@ package com.erp.server.srm.service.impl;
 
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -183,7 +184,7 @@ public class PoReconciliationDetailScmServiceImpl extends SuperServiceImpl<PoRec
         if (CollectionUtils.isEmpty(poReconciliationDetailList)) {
             throw new ServiceException(ApiError.ERROR_PO_RECONCILIATION_DETAIL_NOT_EXIST);
         }
-        String confirmSourceCodes = poReconciliationDetailList.stream().filter(obj -> !StrUtil.equals(obj.getBusinessStatus(), ConfirmStatusEnum.CONFIRM.getCode()))
+        String confirmSourceCodes = poReconciliationDetailList.stream().filter(obj -> !CharSequenceUtil.equals(obj.getBusinessStatus(), ConfirmStatusEnum.CONFIRM.getCode()))
                 .map(PoReconciliationDetailEntity::getSourceCode).collect(Collectors.joining(","));
         if (StrUtil.isNotBlank(confirmSourceCodes)) {
             throw new ServiceException(ApiError.ERROR_PO_RECONCILIATION_NOT_GENERATE,confirmSourceCodes);
@@ -211,7 +212,7 @@ public class PoReconciliationDetailScmServiceImpl extends SuperServiceImpl<PoRec
     @Override
     public List<PoReconciliationDetailEntity> listMainIdList(List<String> mainIdList) {
         if (CollectionUtils.isEmpty(mainIdList)) {
-            return Collections.EMPTY_LIST;
+            return Collections.emptyList();
         }
         return lambdaQuery().in(PoReconciliationDetailEntity::getMainId,mainIdList).list();
     }
@@ -261,7 +262,7 @@ public class PoReconciliationDetailScmServiceImpl extends SuperServiceImpl<PoRec
     public List<PoReconciliationDetailDTO.ViewDTO> viewDetail(PoReconciliationDetailDTO.PagingParamDTO dto) {
         List<PoReconciliationDetailDTO.ListDTO> list = this.baseMapper.listDetail(dto);
         if (CollectionUtils.isEmpty(list)) {
-            return Collections.EMPTY_LIST;
+            return Collections.emptyList();
         }
         //数据处理
         fillList(list);
@@ -298,20 +299,20 @@ public class PoReconciliationDetailScmServiceImpl extends SuperServiceImpl<PoRec
             listDTO.setSourceTypeName(SourceTypeEnum.PO_RETURN.getCode().equals(listDTO.getSourceType()) ? ReturnOrderSourceEnum.getName(listDTO.getReturnSourceType()) : SourceTypeEnum.getName(listDTO.getSourceType()));
             listDTO.setBusinessStatusName(ConfirmStatusEnum.getNameByCode(listDTO.getBusinessStatus()));
             listDTO.setTaxRate(MathUtil.multiply(listDTO.getTaxRate(),MathUtil.BigDecimal_100));
-            listDTO.setTaxRateStr(StrUtil.format("{}%",listDTO.getTaxRate().stripTrailingZeros().toPlainString()));
+            listDTO.setTaxRateStr( CharSequenceUtil.format("{}%",listDTO.getTaxRate().stripTrailingZeros().toPlainString()));
             listDTO.setIsAddAccountStr(listDTO.getIsAddAccount() ? BooleanEnum.TRUE.getName() : BooleanEnum.FALSE.getName());
             //产品名称
-            String productName = skuList.stream().filter(obj -> StrUtil.equals(obj.getSkuId(), listDTO.getSkuId())).findFirst()
+            String productName = skuList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSkuId(), listDTO.getSkuId())).findFirst()
                     .flatMap(obj -> Optional.ofNullable(obj.getSkuName())).orElse("");
             listDTO.setProductName(productName);
 
             //结算方式
-            String settleDictName = settleDictList.stream().filter(obj -> StrUtil.equals(obj.getValue(), listDTO.getSettleDict())).findFirst()
+            String settleDictName = settleDictList.stream().filter(obj -> CharSequenceUtil.equals(obj.getValue(), listDTO.getSettleDict())).findFirst()
                     .flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
             listDTO.setSettleDictName(settleDictName);
 
             //付款条件名称
-            String paymentConditionName = paymentConditionList.stream().filter(obj -> StrUtil.equals(obj.getCode(), listDTO.getPaymentCondition())).findFirst()
+            String paymentConditionName = paymentConditionList.stream().filter(obj -> CharSequenceUtil.equals(obj.getCode(), listDTO.getPaymentCondition())).findFirst()
                     .flatMap(obj -> Optional.ofNullable(obj.getValue())).orElse("");
             listDTO.setPaymentConditionName(paymentConditionName);
 
@@ -322,7 +323,7 @@ public class PoReconciliationDetailScmServiceImpl extends SuperServiceImpl<PoRec
             listDTO.setUnitName("Pcs");
             listDTO.setQty(SourceTypeEnum.PO_RETURN.getCode().equals(listDTO.getSourceType()) ? listDTO.getReceiveQty() : listDTO.getDeliveryQty());
             //备注
-            listDTO.setRemark(StrUtil.format("供方备注：{},采方备注：{}",listDTO.getSupplierRemark(),listDTO.getPurchaseRemark()));
+            listDTO.setRemark( CharSequenceUtil.format("供方备注：{},采方备注：{}",listDTO.getSupplierRemark(),listDTO.getPurchaseRemark()));
             listDTO.setIndex(index);
             index++;
         }
@@ -331,7 +332,7 @@ public class PoReconciliationDetailScmServiceImpl extends SuperServiceImpl<PoRec
     @Override
     public List<PoReconciliationDetailEntity> listDetailBySourceDetailIdList(List<String> sourceDetailIdList) {
         if (CollectionUtils.isEmpty(sourceDetailIdList)) {
-            return Collections.EMPTY_LIST;
+            return Collections.emptyList();
         }
         return lambdaQuery().in(PoReconciliationDetailEntity::getSourceDetailId,sourceDetailIdList).list();
     }
@@ -454,15 +455,15 @@ public class PoReconciliationDetailScmServiceImpl extends SuperServiceImpl<PoRec
             throw new ServiceException(ApiError.ERROR_PO_RECONCILIATION_NOT_EXIST);
         }
         //校验
-        long count = poReconciliationDetailList.stream().filter(obj -> !StrUtil.equals(obj.getSupplierId(),poReconciliationEntity.getSupplierId())
-                        || !StrUtil.equals(obj.getSettleOrgId(),poReconciliationEntity.getSettleOrgId()))
+        long count = poReconciliationDetailList.stream().filter(obj -> !CharSequenceUtil.equals(obj.getSupplierId(),poReconciliationEntity.getSupplierId())
+                        || !CharSequenceUtil.equals(obj.getSettleOrgId(),poReconciliationEntity.getSettleOrgId()))
                 .map(PoReconciliationDetailEntity::getSupplierId).distinct().count();
 
         if (count > MathUtil.ZERO) {
-            String codes = poReconciliationDetailList.stream().filter(obj -> !StrUtil.equals(obj.getSupplierId(), poReconciliationEntity.getSupplierId())
-                            || !StrUtil.equals(obj.getSettleOrgId(), poReconciliationEntity.getSettleOrgId()))
+            String codes = poReconciliationDetailList.stream().filter(obj -> !CharSequenceUtil.equals(obj.getSupplierId(), poReconciliationEntity.getSupplierId())
+                            || !CharSequenceUtil.equals(obj.getSettleOrgId(), poReconciliationEntity.getSettleOrgId()))
                     .map(PoReconciliationDetailEntity::getSourceCode).collect(Collectors.joining(","));
-            throw new ServiceException(StrUtil.format("单据单号【{}】与选择对账单供应商或结算组织不一致",codes));
+            throw new ServiceException( CharSequenceUtil.format("单据单号【{}】与选择对账单供应商或结算组织不一致",codes));
         }
         //更新对账明细
         poReconciliationDetailList.stream().forEach(obj ->{
@@ -526,7 +527,7 @@ public class PoReconciliationDetailScmServiceImpl extends SuperServiceImpl<PoRec
         List<PurchasePriceDTO.SupplierSkuPrice> purchasePriceList = scmTaskFeign.listAllSupplierSkuPrice(supplierIdList);
 
         //采购退货信息
-        List<String> poReturnIdList = poReconciliationDetailList.stream().filter(obj -> StrUtil.equals(obj.getSourceType(), SourceTypeEnum.PO_RETURN.getCode()))
+        List<String> poReturnIdList = poReconciliationDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSourceType(), SourceTypeEnum.PO_RETURN.getCode()))
                 .map(PoReconciliationDetailEntity::getSourceId).distinct().collect(Collectors.toList());
         List<PoReturnEntity> poReturnList = wmsTaskFeign.listPoReturnByIdList(poReturnIdList);
 
@@ -535,7 +536,7 @@ public class PoReconciliationDetailScmServiceImpl extends SuperServiceImpl<PoRec
 
         for (PoReconciliationDetailEntity detailEntity : poReconciliationDetailList) {
 
-            SupplierEntity entity = supplierList.stream().filter(obj -> StrUtil.equals(detailEntity.getSupplierId(), obj.getId())).findFirst().orElse(null);
+            SupplierEntity entity = supplierList.stream().filter(obj -> CharSequenceUtil.equals(detailEntity.getSupplierId(), obj.getId())).findFirst().orElse(null);
             if (ObjectUtil.isEmpty(entity)) {
                 throw new ServiceException(ApiError.ERROR_SUPPLIER_ABSENCE);
             }
@@ -554,31 +555,31 @@ public class PoReconciliationDetailScmServiceImpl extends SuperServiceImpl<PoRec
             //付款条件
             detailEntity.setPaymentCondition(poSupplierEntity.getPaymentCondition());
             //结算方式
-            String settleDict = dictBasicList.stream().filter(obj -> StrUtil.equals(obj.getId(), poSupplierEntity.getPayMethodId()))
+            String settleDict = dictBasicList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), poSupplierEntity.getPayMethodId()))
                     .map(DictBasicEntity::getValue).findFirst().orElse("");
             detailEntity.setSettleDict(settleDict);
             /**
              * 当结算方式为月结/空时候，显示为是
              * 当结算方式为现结/预付：显示为否
              */
-            if (StrUtil.isBlank(settleDict) || StrUtil.equals(SettleEnum.MONTHLY.getCode(),settleDict)) {
+            if (StrUtil.isBlank(settleDict) || CharSequenceUtil.equals(SettleEnum.MONTHLY.getCode(),settleDict)) {
                 detailEntity.setIsAddAccount(Boolean.TRUE);
             }
             //组织名称
-            String orgName = accountingCompanyList.stream().filter(obj -> StrUtil.equals(obj.getId(), detailEntity.getSettleOrgId()))
+            String orgName = accountingCompanyList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), detailEntity.getSettleOrgId()))
                     .findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
             detailEntity.setSettleOrgName(orgName);
             if (SourceTypeEnum.PO_RETURN.getCode().equals(detailEntity.getSourceType())) {
                 //采购组织
-                String purchaseOrgId = poReturnList.stream().filter(obj -> StrUtil.equals(obj.getId(), detailEntity.getSourceId()))
+                String purchaseOrgId = poReturnList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), detailEntity.getSourceId()))
                         .map(PoReturnEntity::getPurchaseOrgId).findFirst().orElse("");
 
                 //报价信息单价
                 PurchasePriceDTO.SupplierSkuPrice supplierSkuPrice = purchasePriceList.stream().filter(obj ->
-                        StrUtil.equals(obj.getSkuId(), detailEntity.getSkuId())
-                                && StrUtil.equals(obj.getSupplierId(), detailEntity.getSupplierId())
+                        CharSequenceUtil.equals(obj.getSkuId(), detailEntity.getSkuId())
+                                && CharSequenceUtil.equals(obj.getSupplierId(), detailEntity.getSupplierId())
                                 && Math.abs(detailEntity.getReceiveQty())  > obj.getMinQty()
-                                && StrUtil.equals(obj.getPurchaseOrgId(), purchaseOrgId)
+                                && CharSequenceUtil.equals(obj.getPurchaseOrgId(), purchaseOrgId)
                                 && obj.getMaxQty() >= Math.abs(detailEntity.getReceiveQty())
                 ).findFirst().orElse(null);
                 if (ObjectUtils.isNotEmpty(supplierSkuPrice)) {
@@ -586,7 +587,7 @@ public class PoReconciliationDetailScmServiceImpl extends SuperServiceImpl<PoRec
                 }
                 detailEntity.setTaxAmount(MathUtil.multiply(detailEntity.getTaxPrice(),detailEntity.getReceiveQty()));
             } else {
-                PurchaseOrderDetailEntity poDetailEntity = purchaseOrderDetailList.stream().filter(obj -> StrUtil.equals(obj.getId(), detailEntity.getPoDetailId())).findFirst().orElse(null);
+                PurchaseOrderDetailEntity poDetailEntity = purchaseOrderDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), detailEntity.getPoDetailId())).findFirst().orElse(null);
                 if (ObjectUtils.isNotEmpty(poDetailEntity)) {
                     detailEntity.setTaxPrice(poDetailEntity.getTaxPrice());
                     detailEntity.setTaxRate(poDetailEntity.getTaxRate());
@@ -626,13 +627,13 @@ public class PoReconciliationDetailScmServiceImpl extends SuperServiceImpl<PoRec
         }
         for (PoReconciliationDetailEntity entity : list) {
             //添加日志
-            PoReconciliationDetailEntity old = poReconciliationDetailList.stream().filter(obj -> StrUtil.equals(obj.getId(), entity.getId())).findFirst().orElse(null);
+            PoReconciliationDetailEntity old = poReconciliationDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), entity.getId())).findFirst().orElse(null);
             if (ObjectUtils.isEmpty(old)) {
                 throw new ServiceException(ApiError.ERROR_PO_RECONCILIATION_DETAIL_NOT_EXIST);
             }
             //供应商、结算组织验证
-            if (!StrUtil.equals(poReconciliationEntity.getSupplierId(),old.getSupplierId())
-                    || !StrUtil.equals(poReconciliationEntity.getSettleOrgId(),old.getSettleOrgId())) {
+            if (!CharSequenceUtil.equals(poReconciliationEntity.getSupplierId(),old.getSupplierId())
+                    || !CharSequenceUtil.equals(poReconciliationEntity.getSettleOrgId(),old.getSettleOrgId())) {
                 throw new ServiceException(ApiError.ERROR_PO_RECONCILIATION_ADD_DETAIL,poReconciliationEntity.getCode(),poReconciliationEntity.getSupplierName(),poReconciliationEntity.getSettleOrgName());
             }
             entity.setMainId(mainId);

@@ -15,6 +15,7 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.dmp.dto.ThirdMappingDTO;
+import com.erp.model.dmp.dto.ThirdMappingDTO.ThirdAddDTO;
 import com.erp.model.dmp.entity.ThirdMappingEntity;
 import com.erp.model.dmp.entity.ThirdShopEntity;
 import com.erp.model.dmp.entity.ThirdWarehouseEntity;
@@ -391,7 +392,7 @@ public class ThirdMappingServiceImpl extends SuperServiceImpl<ThirdMappingMapper
      * @param type
      */
     private static void checkSysTypeBind(List<ThirdMappingDTO.ThirdAddDTO> thirdList, String type) {
-        thirdList.stream().collect(groupingBy(ThirdMappingDTO.ThirdAddDTO::getSysType,
+        Map<String, List<ThirdAddDTO>> result = thirdList.stream().collect(groupingBy(ThirdMappingDTO.ThirdAddDTO::getSysType,
                 collectingAndThen(Collectors.toList(), list -> {
                             if (list.size() > 1) {
                                 throw new ServiceException(ApiError.ERROR_THIRD_SYS_TYPE_BINDING, ThirdSysTypeEnum.getNameByCode(type));
@@ -400,6 +401,7 @@ public class ThirdMappingServiceImpl extends SuperServiceImpl<ThirdMappingMapper
                         }
                 )
         ));
+        log.debug("校验结果：{}" , result);
     }
 
     //    @Override

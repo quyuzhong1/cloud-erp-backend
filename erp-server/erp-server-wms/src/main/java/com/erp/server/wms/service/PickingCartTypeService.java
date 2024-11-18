@@ -24,7 +24,7 @@ public interface PickingCartTypeService extends SuperService<PickingCartTypeEnti
      * @param list
      * @return Boolean
      */
-    Boolean batchUpdate(List<PickingCartTypeDTO.batchUpdateDTO> list);
+    Boolean batchUpdate(List<PickingCartTypeDTO.BatchUpdateDTO> list);
     /**
      * 拣货车类型查询
      * @author will

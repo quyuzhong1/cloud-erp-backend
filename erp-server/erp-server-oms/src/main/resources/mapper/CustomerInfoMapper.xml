@@ -20,7 +20,8 @@
         business_mode,
         transactional_mode,
         period_setting,
-        check_type
+        check_type,
+        ci.country_id
         FROM customer_info ci
         WHERE
 
@@ -50,7 +51,8 @@
         business_mode,
         transactional_mode,
         period_setting,
-        check_type
+        check_type,
+        ci.country_id
         FROM customer_info ci
         WHERE
 
@@ -103,18 +105,20 @@
         ORDER BY ca.is_default desc limit 1
     </select>
     <select id="pageSelect" resultType="com.erp.model.oms.dto.CustomerDTO$PageSelectDTO">
-        select id, name,code from (
+        select id, name,short_name,code , approve_status ,disabled from (
         select
         ci.id,
         ci.code,
-        ci.name
+        ci.short_name,
+        ci.name,
+        ci.approve_status,
+        ci.disabled
         from customer_info ci
         where  ci.is_deleted = FALSE
-        <if test="params.disabled != null">
-            and ci.disabled=#{params.disabled}
-        </if>
+        and ci.approve_status = 'approve'
+        and ci.disabled = FALSE
         <if test="params.searchKeyword != null and params.searchKeyword != ''">
-            and  ((ci.id=#{params.searchKeyword} or ci.code = #{params.searchKeyword}) or ci.name ilike concat('%', #{params.searchKeyword}::text ,'%'))
+            and  ((ci.id=#{params.searchKeyword} or ci.code = #{params.searchKeyword}) or ci.name ilike concat('%', #{params.searchKeyword}::text ,'%') or ci.short_name ilike concat('%', #{params.searchKeyword}::text ,'%'))
         </if>
         order by
         <if test="params.searchKeyword != null and params.searchKeyword != ''">

@@ -38,8 +38,8 @@ public class BiCostBenefitAnalysisController extends BaseController {
 //            menuCode = "bi:module:content",,
 //            tableAlias = "bdsc"
 //    )
-    public ApiResult<List<SeriesVO>> getDeptProfitChart(@RequestBody BiFilterDTO dto) {
-        List<SeriesVO> vo = biDataSourceCostService.getDeptCostProfit(dto);
+    public ApiResult<List<SeriesVO<String>>> getDeptProfitChart(@RequestBody BiFilterDTO dto) {
+        List<SeriesVO<String>> vo = biDataSourceCostService.getDeptCostProfit(dto);
         return success(vo);
     }
 
@@ -52,8 +52,8 @@ public class BiCostBenefitAnalysisController extends BaseController {
 //            menuCode = "bi:module:content",,
 //            tableAlias = "bdsc"
 //    )
-    public ApiResult<List<SeriesVO>> getShopProfitChart(@RequestBody BiFilterDTO dto) {
-        List<SeriesVO> vo = biDataSourceCostService.getShopCostProfit(dto);
+    public ApiResult<List<SeriesVO<String>>> getShopProfitChart(@RequestBody BiFilterDTO dto) {
+        List<SeriesVO<String>> vo = biDataSourceCostService.getShopCostProfit(dto);
         return success(vo);
     }
     /**
@@ -65,8 +65,8 @@ public class BiCostBenefitAnalysisController extends BaseController {
 //            menuCode = "bi:module:content",,
 //            tableAlias = "bdsc"
 //    )
-    public ApiResult<List<SeriesVO>> getMonthProfitChart(@RequestBody BiFilterDTO dto) {
-        List<SeriesVO> vo = biDataSourceCostService.getMonthCostProfit(dto);
+    public ApiResult<List<SeriesVO<String>>> getMonthProfitChart(@RequestBody BiFilterDTO dto) {
+        List<SeriesVO<String>> vo = biDataSourceCostService.getMonthCostProfit(dto);
         return success(vo);
     }
     /**
@@ -78,8 +78,8 @@ public class BiCostBenefitAnalysisController extends BaseController {
 //            menuCode = "bi:module:content",,
 //            tableAlias = "bdsc"
 //    )
-    public ApiResult<List<SeriesVO>> getQuarterProfitChart(@RequestBody BiFilterDTO dto) {
-        List<SeriesVO> vo = biDataSourceCostService.getQuarterCostProfit(dto);
+    public ApiResult<List<SeriesVO<String>>> getQuarterProfitChart(@RequestBody BiFilterDTO dto) {
+        List<SeriesVO<String>> vo = biDataSourceCostService.getQuarterCostProfit(dto);
         return success(vo);
     }
     /**
@@ -91,8 +91,8 @@ public class BiCostBenefitAnalysisController extends BaseController {
 //            menuCode = "bi:module:content",,
 //            tableAlias = "bdsc"
 //    )
-    public ApiResult<List<SeriesVO>> getYearProfitChart(@RequestBody BiFilterDTO dto) {
-        List<SeriesVO> vo = biDataSourceCostService.getYearCostProfit(dto);
+    public ApiResult<List<SeriesVO<String>>> getYearProfitChart(@RequestBody BiFilterDTO dto) {
+        List<SeriesVO<String>> vo = biDataSourceCostService.getYearCostProfit(dto);
         return success(vo);
     }
     /**
@@ -117,8 +117,8 @@ public class BiCostBenefitAnalysisController extends BaseController {
 //            menuCode = "bi:module:content",,
 //            tableAlias = "bdsc"
 //    )
-    public ApiResult<List<SeriesVO>> getPlatformProfitChart(@RequestBody BiFilterDTO dto) {
-        List<SeriesVO> vo = biDataSourceCostService.getPlatformCostProfit(dto);
+    public ApiResult<List<SeriesVO<String>>> getPlatformProfitChart(@RequestBody BiFilterDTO dto) {
+        List<SeriesVO<String>> vo = biDataSourceCostService.getPlatformCostProfit(dto);
         return success(vo);
     }
 

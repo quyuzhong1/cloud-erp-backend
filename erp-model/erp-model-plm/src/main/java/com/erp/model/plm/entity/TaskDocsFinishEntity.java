@@ -27,7 +27,7 @@ import lombok.EqualsAndHashCode;
 @Data
 @EqualsAndHashCode(callSuper = false)
 @TableName("task_finish_docs")
-public class TaskDocsFinishEntity extends BaseEntity implements Serializable {
+public class TaskDocsFinishEntity extends BaseEntity<TaskDocsFinishEntity> implements Serializable {
 
     private static final long serialVersionUID = 1L;
 

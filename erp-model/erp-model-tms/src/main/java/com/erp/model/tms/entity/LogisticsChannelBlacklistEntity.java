@@ -1,13 +1,13 @@
 package com.erp.model.tms.entity;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
-import com.baomidou.mybatisplus.annotation.TableField;
-import java.io.Serializable;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
-import com.common.business.enums.ApproveStatusEnum;
+
+import java.io.Serializable;
 
 
 /**
@@ -75,13 +75,13 @@ public class LogisticsChannelBlacklistEntity extends BaseEntity<LogisticsChannel
 
     public static final String LOGISTICS_CHANNEL_ID = "logistics_channel_id";
 
-    public static final String COUNTRY = "country";
+    public static final String FIELD_COUNTRY = "country";
 
-    public static final String PROVINCE = "province";
+    public static final String FIELD_PROVINCE = "province";
 
-    public static final String CITY = "city";
+    public static final String FIELD_CITY = "city";
 
-    public static final String DISTRICT  = "district ";
+    public static final String FIELD_DISTRICT  = "district ";
 
     @Override
     public Serializable pkVal() {

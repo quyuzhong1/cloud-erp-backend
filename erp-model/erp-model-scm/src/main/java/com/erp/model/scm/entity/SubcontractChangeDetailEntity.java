@@ -205,11 +205,11 @@ public class SubcontractChangeDetailEntity extends BaseEntity<SubcontractChangeD
 
     public static final String OPT_TYPE = "opt_type";
 
-    public static final String QTY = "qty";
+    public static final String FIELD_QTY = "qty";
 
-    public static final String PRICE = "price";
+    public static final String FIELD_PRICE = "price";
 
-    public static final String CURRENCY = "currency";
+    public static final String FIELD_CURRENCY = "currency";
 
     public static final String CURRENCY_SYMBOL = "currency_symbol";
 
@@ -221,7 +221,7 @@ public class SubcontractChangeDetailEntity extends BaseEntity<SubcontractChangeD
 
     public static final String OLD_PRICE = "old_price";
 
-    public static final String AMOUNT = "amount";
+    public static final String FIELD_AMOUNT = "amount";
 
     public static final String OLD_AMOUNT = "old_amount";
 
@@ -233,7 +233,7 @@ public class SubcontractChangeDetailEntity extends BaseEntity<SubcontractChangeD
 
     public static final String BOM_VERSION = "bom_version";
 
-    public static final String REMARK = "remark";
+    public static final String FIELD_REMARK = "remark";
 
     public static final String SOURCE_DETAIL_ID = "source_detail_id";
 

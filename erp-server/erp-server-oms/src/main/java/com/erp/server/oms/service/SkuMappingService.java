@@ -288,4 +288,6 @@ public interface SkuMappingService extends SuperService<SkuMappingEntity> {
     List<OmsPushMsgEntity> syncDataToSdy(LocalDateTime startTime , LocalDateTime endTime);
     
     Map<String, Object> newSyncDataToSdy(SkuMappingEntity entity, String operate);
+
+    void updateNotMatch(SkuMappingDTO.UpdateNotMatchDTO dto);
 }

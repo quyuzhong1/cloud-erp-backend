@@ -15,10 +15,10 @@ import com.erp.model.tms.dto.LogisticsChannelDTO;
 import com.erp.model.tms.entity.LogisticsChannelEntity;
 import com.erp.server.tms.service.LogisticsChannelService;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -34,7 +34,7 @@ import java.util.List;
 @RequestMapping("/logisticsChannel")
 public class LogisticsChannelController extends BaseController {
 
-    @Autowired
+    @Resource
     private LogisticsChannelService logisticsChannelService;
 
     /**
@@ -61,7 +61,7 @@ public class LogisticsChannelController extends BaseController {
      */
     @PostMapping("/copy")
     @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "物流渠道复制id={id}")
-    public ApiResult copy(@RequestBody @Validated BaseIdDTO dto) {
+    public ApiResult<Object>copy(@RequestBody @Validated BaseIdDTO dto) {
         Boolean result = logisticsChannelService.copy(dto.getId());
         return result ? success() : failure();
     }
@@ -100,7 +100,7 @@ public class LogisticsChannelController extends BaseController {
             menuCode = "tms:logisticsChannel:update",
             serviceClass = LogisticsChannelService.class,
             keyIdName = "id")
-    public ApiResult update(@RequestBody @Validated LogisticsChannelDTO.UpdateDTO dto) {
+    public ApiResult<Object>update(@RequestBody @Validated LogisticsChannelDTO.UpdateDTO dto) {
         logisticsChannelService.update(dto);
         return success();
     }
@@ -238,7 +238,7 @@ public class LogisticsChannelController extends BaseController {
      * @date: 2023-11-02
      */
     @PostMapping("/deliverySetting")
-    public ApiResult deliverySetting(@RequestBody @Validated LogisticsChannelDTO.DeliveryDTO dto) {
+    public ApiResult<Object>deliverySetting(@RequestBody @Validated LogisticsChannelDTO.DeliveryDTO dto) {
         logisticsChannelService.deliverySetting(dto);
         return success();
     }

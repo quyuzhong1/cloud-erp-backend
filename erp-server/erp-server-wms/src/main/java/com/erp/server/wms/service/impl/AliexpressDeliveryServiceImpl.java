@@ -64,9 +64,6 @@ public class AliexpressDeliveryServiceImpl extends SuperServiceImpl<AliexpressDe
         if (ObjectUtil.isNotEmpty(entity)) {
             aliexpressDeliveryEntity.setId(entity.getId());
         }
-        // 数据处理
-        handleData(aliexpressDeliveryEntity);
-
         log.info("开始新增速卖通发货单");
         boolean save = super.saveOrUpdate(aliexpressDeliveryEntity);
         if(!save) {
@@ -80,12 +77,12 @@ public class AliexpressDeliveryServiceImpl extends SuperServiceImpl<AliexpressDe
     @Override
     public PagingVO<AliexpressDeliveryDTO.ListDTO> paging(PagingDTO<AliexpressDeliveryDTO.SearchParamDTO> dto) {
         dto.getParams().setPermissionSql(dto.getPermissionSql());
-        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+        Page<AliexpressDeliveryDTO.ListDTO> query = new Page<>(dto.getCurrPage(), dto.getPageSize());
         IPage<AliexpressDeliveryDTO.ListDTO> pageData = this.baseMapper.paging(query, dto.getParams());
         if (CollUtil.isEmpty(pageData.getRecords())) {
-            return new PagingVO(pageData);
+            return new PagingVO<>(pageData);
         }
-        return new PagingVO(pageData);
+        return new PagingVO<>(pageData);
     }
 
     @Override
@@ -99,8 +96,7 @@ public class AliexpressDeliveryServiceImpl extends SuperServiceImpl<AliexpressDe
         ShopSysUserAuthDTO.UserAuthShopParamDTO dto = new ShopSysUserAuthDTO.UserAuthShopParamDTO();
         dto.setUserId(UserContext.getDefaultLoginUser().getUid());
         dto.setDictPlatform(PlatformDictEnum.ALI_EXPRESS.getCode());
-        List<ShopSysUserAuthDTO.ViewShopDTO> viewShopDTOList = shopSysUserAuthFeign.listUserAuthShop(dto);
-        return viewShopDTOList;
+        return shopSysUserAuthFeign.listUserAuthShop(dto);
     }
 
     @Override
@@ -111,12 +107,5 @@ public class AliexpressDeliveryServiceImpl extends SuperServiceImpl<AliexpressDe
 
     public AliexpressDeliveryEntity getBySoId(String soId) {
         return lambdaQuery().eq(AliexpressDeliveryEntity::getSoId, soId).last("LIMIT 1").one();
-    }
-
-    /**
-    * 新增修改处理数据
-    */
-    private void handleData(AliexpressDeliveryEntity aliexpressDeliveryEntity) {
-
     }
 }

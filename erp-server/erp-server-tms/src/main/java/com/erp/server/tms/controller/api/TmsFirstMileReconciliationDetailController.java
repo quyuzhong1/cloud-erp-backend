@@ -97,7 +97,7 @@ public class TmsFirstMileReconciliationDetailController extends BaseController {
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "下载头程对账单模板")
     @GetMapping("/downloadTemplate")
-    public ApiResult<?> exportTemplate(@ModelAttribute @Validated TmsFirstMileReconciliationDetailDTO.ExcelDownloadTemplateDTO dto, HttpServletRequest request, HttpServletResponse response) {
+    public ApiResult<Object> exportTemplate(@ModelAttribute @Validated TmsFirstMileReconciliationDetailDTO.ExcelDownloadTemplateDTO dto, HttpServletRequest request, HttpServletResponse response) {
         switch (dto.getTypeEnum()) {
             case STANDARD:
                 String standardPath = "classpath:excel/firstMileReconciliationDetailTemplate.xlsx";
@@ -193,7 +193,7 @@ public class TmsFirstMileReconciliationDetailController extends BaseController {
      * @return
      */
     @PostMapping("/initTotalLogisticsCost")
-    public ApiResult initTotalLogisticsCost(@RequestBody List<String> codeList){
+    public ApiResult<Object>initTotalLogisticsCost(@RequestBody List<String> codeList){
         tmsFirstMileReconciliationDetailService.initTotalLogisticsCost(codeList);
         return ApiResult.success();
     }

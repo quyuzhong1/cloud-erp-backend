@@ -3,8 +3,8 @@ package com.erp.server.tms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseResultDTO;
@@ -24,16 +24,18 @@ import com.erp.model.tms.entity.TmsCfgSailingEntity;
 import com.erp.model.tms.enums.DictBasicEnum;
 import com.erp.model.tms.enums.TmsCfgSailingDateTypeEnum;
 import com.erp.server.tms.mapper.TmsCfgSailingMapper;
-import com.erp.server.tms.service.*;
+import com.erp.server.tms.service.DictBasicService;
+import com.erp.server.tms.service.LogisticsChannelService;
+import com.erp.server.tms.service.LogisticsSupplierService;
+import com.erp.server.tms.service.TmsCfgSailingService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.Resource;
 import java.time.DayOfWeek;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.temporal.TemporalAdjusters;
@@ -55,13 +57,13 @@ import java.util.stream.Collectors;
 @Service
 public class TmsCfgSailingServiceImpl extends SuperServiceImpl<TmsCfgSailingMapper, TmsCfgSailingEntity> implements TmsCfgSailingService {
 
-    @Autowired
+    @Resource
     private LogisticsChannelService logisticsChannelService;
 
-    @Autowired
+    @Resource
     private DictBasicService dictBasicService;
 
-    @Autowired
+    @Resource
     private LogisticsSupplierService logisticsSupplierService;
 
 
@@ -246,11 +248,11 @@ public class TmsCfgSailingServiceImpl extends SuperServiceImpl<TmsCfgSailingMapp
         for (String  logisticsChannelId : logisticsChannelIdList) {
             TmsCfgSailingEntity entity = new TmsCfgSailingEntity();
             BeanMapperUtils.copy(tmsCfgSailingEntity,entity);
-            LogisticsChannelEntity channelEntity = logisticsChannelList.stream().filter(obj -> StrUtil.equals(logisticsChannelId, obj.getId())).findFirst().orElse(new LogisticsChannelEntity());
+            LogisticsChannelEntity channelEntity = logisticsChannelList.stream().filter(obj -> CharSequenceUtil.equals(logisticsChannelId, obj.getId())).findFirst().orElse(new LogisticsChannelEntity());
             entity.setLogisticsSupplierId(channelEntity.getMainId());
             entity.setLogisticsChannelId(logisticsChannelId);
             //新增校验是否重复
-            TmsCfgSailingEntity old = oldList.stream().filter(obj -> StrUtil.equals(obj.getLogisticsChannelId(), logisticsChannelId)).findFirst().orElse(null);
+            TmsCfgSailingEntity old = oldList.stream().filter(obj -> CharSequenceUtil.equals(obj.getLogisticsChannelId(), logisticsChannelId)).findFirst().orElse(null);
             if (isAdd && ObjectUtil.isNotEmpty(old)) {
                 throw new ServiceException(ApiError.ERROR_CFG_SAILING_EXIST,channelEntity.getName());
             }
@@ -278,20 +280,20 @@ public class TmsCfgSailingServiceImpl extends SuperServiceImpl<TmsCfgSailingMapp
         for (TmsCfgSailingDTO.ListDTO listDTO : list) {
 
            //物流商名称
-           String supplierName = logisticsSupplierList.stream().filter(obj -> StrUtil.equals(obj.getId(), listDTO.getLogisticsSupplierId()))
+           String supplierName = logisticsSupplierList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), listDTO.getLogisticsSupplierId()))
                    .findFirst().flatMap(obj -> Optional.ofNullable(obj.getSupplierName())).orElse("");
            listDTO.setLogisticsSupplierName(supplierName);
            //物流渠道
-           String logisticsChannelName = logisticsChannelList.stream().filter(obj -> StrUtil.equals(obj.getId(), listDTO.getLogisticsChannelId()))
+           String logisticsChannelName = logisticsChannelList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), listDTO.getLogisticsChannelId()))
                    .findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
            listDTO.setLogisticsChannelName(logisticsChannelName);
 
            //开船日期
-            String startDateName = dictList.stream().filter(obj -> StrUtil.equals(obj.getType(), listDTO.getDateType()) && StrUtil.equals(obj.getCode(), listDTO.getStartDate().toString()))
+            String startDateName = dictList.stream().filter(obj -> CharSequenceUtil.equals(obj.getType(), listDTO.getDateType()) && CharSequenceUtil.equals(obj.getCode(), listDTO.getStartDate().toString()))
                     .findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
             listDTO.setStartDateName(startDateName);
             //截单日期
-            String endDateName = dictList.stream().filter(obj -> StrUtil.equals(obj.getType(), listDTO.getDateType()) && StrUtil.equals(obj.getCode(), listDTO.getEndDate().toString()))
+            String endDateName = dictList.stream().filter(obj -> CharSequenceUtil.equals(obj.getType(), listDTO.getDateType()) && CharSequenceUtil.equals(obj.getCode(), listDTO.getEndDate().toString()))
                     .findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
             listDTO.setEndDateName(endDateName);
        }

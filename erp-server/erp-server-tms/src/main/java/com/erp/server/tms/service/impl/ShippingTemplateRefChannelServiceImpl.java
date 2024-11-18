@@ -100,6 +100,6 @@ public class ShippingTemplateRefChannelServiceImpl extends SuperServiceImpl<Ship
      * 新增修改处理数据
      */
     private void handleData(ShippingTemplateRefChannelEntity shippingTemplateRefChannelEntity) {
-        // TODO 验证数据 & 数据赋值
+        
     }
 }

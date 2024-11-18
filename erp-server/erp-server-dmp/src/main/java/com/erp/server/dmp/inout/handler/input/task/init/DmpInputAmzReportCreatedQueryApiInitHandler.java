@@ -60,7 +60,7 @@ public class DmpInputAmzReportCreatedQueryApiInitHandler extends DmpInputInitHan
         }
         String reportType = extendObj.getString("reportType");
         // 店铺信息
-        AmazonShopInfoDTO shopInfoDTO = cfgAppClientService.cacheAndFindShopAuth(dmpCfgInputDetailEntity.getNextLevelId());
+        AmazonShopInfoDTO shopInfoDTO = cfgAppClientService.cacheAndFindShopAuth(dmpInputTaskEntity.getNextLevelId());
         // 市场信息
         AmazonMarketplaceEnum marketplaceEnum = AmazonMarketplaceEnum.getByCountryCode(shopInfoDTO.getDictCountryCode());
 

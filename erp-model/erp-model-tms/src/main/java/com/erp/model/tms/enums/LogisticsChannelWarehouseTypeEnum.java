@@ -1,6 +1,6 @@
 package com.erp.model.tms.enums;
 
-import cn.hutool.core.util.StrUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import com.erp.model.oms.enums.FmDeliveryLogisticsStatusEnum;
 
 /**
@@ -36,7 +36,7 @@ public enum LogisticsChannelWarehouseTypeEnum {
 
     public static String getName(String code) {
         for (FmDeliveryLogisticsStatusEnum statusEnum : FmDeliveryLogisticsStatusEnum.values()) {
-            if (StrUtil.equals(statusEnum.getCode(),code)) {
+            if (CharSequenceUtil.equals(statusEnum.getCode(),code)) {
                 return statusEnum.getName();
             }
         }

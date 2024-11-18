@@ -1,6 +1,7 @@
 package com.erp.server.oms.controller.api;
 
 
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
@@ -244,7 +245,7 @@ public class ShopInfoController extends BaseController {
                         if (Objects.nonNull(disabled) && !Objects.equals(disabled, shop.getDisabled()) && Objects.equals(disabled, true)) {
                             Boolean flag = checkDmpThirdMapping(id);
                             if (!flag) {
-                                submit = BatchResultDTO.fail(id, shop.getName(), StrUtil.format(ApiError.EXIST_THIRD_SHOP_MAPPING.msg,shop.getName()));
+                                submit = BatchResultDTO.fail(id, shop.getName(), CharSequenceUtil.format(ApiError.EXIST_THIRD_SHOP_MAPPING.msg,shop.getName()));
                             }else{
                                 flagCode = shop.getName();
                                 submit = shopInfoService.updateStatus(shop, disabled);
@@ -263,6 +264,7 @@ public class ShopInfoController extends BaseController {
         }
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
+
 
     /**
      * 店铺批量费用设置
@@ -489,6 +491,35 @@ public class ShopInfoController extends BaseController {
         shopInfoService.saveCustom(shopInfoEntity);
         return null != shopInfoEntity ? success() : failure();
     }
+
+    /**
+     * 区域远程分页下拉查询
+     * @author will
+     * @date 2024/8/28 16:50
+     * @param dto
+     * @return ApiResult<PagingVO<ListDTO>>
+     */
+    @PostMapping("/pagingSelectArea")
+    public ApiResult<PagingVO<ShopDTO.AreaDTO>> pagingSelectArea(@RequestBody PagingDTO<ShopDTO.AreaParamDTO> dto) {
+        PagingVO<ShopDTO.AreaDTO> pagingVO = shopInfoService.pagingSelectArea(dto);
+        return success(pagingVO);
+    }
+
+    /**
+     * 店铺下拉查询
+     * @author will
+     * @date 2024/8/28 16:50
+     * @param dto
+     * @return ApiResult<PagingVO<ListDTO>>
+     */
+    @PostMapping("/listSelect")
+    public ApiResult<List<ShopDTO.ListDTO>> listSelect(@RequestBody ShopDTO.SelectDTO dto) {
+        List<ShopDTO.ListDTO> list = shopInfoService.listSelect(dto);
+        return success(list);
+    }
+
+
+
 
     private Boolean checkDmpThirdMapping(String shopId) {
         ThirdMappingDTO.ViewParamDTO viewParamDTO=new ThirdMappingDTO.ViewParamDTO();

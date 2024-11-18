@@ -1,8 +1,6 @@
 package com.erp.model.tms.vo.response;
 
-import cn.hutool.core.util.StrUtil;
-import com.common.core.enums.ApiError;
-import com.common.core.utils.StrUtils;
+import cn.hutool.core.text.CharSequenceUtil;
 import com.erp.model.tms.enums.LogisticsPlatformResultEnum;
 import lombok.Data;
 import lombok.ToString;
@@ -27,6 +25,6 @@ public class LogisticsBaseResponseVO implements Serializable {
 
     public void failure(String platform,String orderCode,String failureMessage){
         this.code = LogisticsPlatformResultEnum.FAILURE.getCode();
-        this.message = StrUtil.format(LogisticsPlatformResultEnum.FAILURE.getDesc(), platform,orderCode,failureMessage);
+        this.message = CharSequenceUtil.format(LogisticsPlatformResultEnum.FAILURE.getDesc(), platform,orderCode,failureMessage);
     }
 }

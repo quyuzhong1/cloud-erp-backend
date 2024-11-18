@@ -7,12 +7,9 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
-import com.common.business.interceptor.CommonInterceptor;
-import com.common.business.vo.LoginUser;
 import com.erp.model.plm.dto.ProductVariantDTO;
 import com.erp.model.plm.dto.ProductVariantPropertyDTO;
 import com.erp.model.plm.entity.ProductVariantEntity;
-import com.erp.model.plm.entity.ProductVariantOptionEntity;
 import com.erp.model.plm.entity.ProductVariantPropertyEntity;
 import com.erp.server.plm.mapper.ProductVariantMapper;
 import com.erp.server.plm.service.ProductVariantService;
@@ -21,7 +18,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.TreeSet;
 import java.util.stream.Collectors;
 
 /**
@@ -130,7 +130,7 @@ public class ProductVariantServiceImpl extends ServiceImpl<ProductVariantMapper,
         if (entity.getOccupyStatus()) {
             throw new ServiceException(ApiError.ERROR_95167);
         }
-        LambdaQueryWrapper<ProductVariantEntity> queryWrapper = new LambdaQueryWrapper();
+        LambdaQueryWrapper<ProductVariantEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(ProductVariantEntity::getId, variantId);
         return this.remove(queryWrapper);
     }

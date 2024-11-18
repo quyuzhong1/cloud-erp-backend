@@ -1,7 +1,6 @@
 package com.erp.server.plm.controller.api;
 
 
-import com.alibaba.excel.EasyExcel;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.BaseIdDTO;
@@ -45,7 +44,10 @@ import javax.validation.constraints.NotEmpty;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
+
+import static com.alibaba.excel.EasyExcelFactory.read;
 
 /**
  * 产品开发管理
@@ -98,8 +100,8 @@ public class ProjectTaskController extends BaseController {
             menuCode = "plm:task:paging",
             tableAlias = "pt"
     )
-    public ApiResult<PagingVO<List<TaskPagingShowDTO>>> paging(@RequestBody @Validated PagingDTO<TaskPagingDTO> dto) {
-        PagingVO<List<TaskPagingShowDTO>> pagingVO = projectTaskService.paging(dto);
+    public ApiResult<PagingVO<TaskPagingShowDTO>> paging(@RequestBody @Validated PagingDTO<TaskPagingDTO> dto) {
+        PagingVO<TaskPagingShowDTO> pagingVO = projectTaskService.paging(dto);
         return success(pagingVO);
     }
 
@@ -113,7 +115,7 @@ public class ProjectTaskController extends BaseController {
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出任务")
     @PostMapping("/exportTask")
-    public ApiResult exportTask(@RequestBody @Validated TaskPagingDTO.ExportDTO dto) {
+    public ApiResult<Object> exportTask(@RequestBody @Validated TaskPagingDTO.ExportDTO dto) {
         Boolean result =taskService.exportTask(dto);
         return result ? success() : failure();
 
@@ -127,7 +129,7 @@ public class ProjectTaskController extends BaseController {
      */
     @LogAction(value = LogActionEnum.INSERT, desc = "项目任务-新建任务")
     @PostMapping("/save")
-    public ApiResult save(@RequestBody @Validated ProjectTaskDTO dto) {
+    public ApiResult<Object> save(@RequestBody @Validated ProjectTaskDTO dto) {
         Boolean flag = projectTaskService.save(dto);
         return flag ? success() : failure();
     }
@@ -146,7 +148,7 @@ public class ProjectTaskController extends BaseController {
             serviceClass = ProjectTaskService.class,
             keyIdName = "id"
     )
-    public ApiResult update(@RequestBody @Validated ProjectTaskDTO dto) {
+    public ApiResult<Object> update(@RequestBody @Validated ProjectTaskDTO dto) {
         Boolean flag = projectTaskService.updateTask(dto);
         return flag == true ? success() : failure();
     }
@@ -154,7 +156,7 @@ public class ProjectTaskController extends BaseController {
 
     @LogAction(value = LogActionEnum.INSERT, desc = "项目任务-保存子任务")
     @PostMapping("/saveSonTask")
-    public ApiResult saveSonTask(@RequestBody @Validated ProjectTaskDTO dto) {
+    public ApiResult<Object> saveSonTask(@RequestBody @Validated ProjectTaskDTO dto) {
         Boolean flag = projectTaskService.save(dto);
         return flag == true ? success() : failure();
     }
@@ -166,7 +168,7 @@ public class ProjectTaskController extends BaseController {
      * @return
      */
     @GetMapping("/list")
-    public ApiResult list(String productId) {
+    public ApiResult<Object> list(String productId) {
         List<Map<String, Object>> list = projectTaskService.getTaskListByProductId(productId);
         return success(list);
     }
@@ -203,7 +205,7 @@ public class ProjectTaskController extends BaseController {
             serviceClass = ProjectTaskService.class,
             keyIdName = "id"
     )
-    public ApiResult remove(@RequestBody @Validated BaseIdDTO dto) {
+    public ApiResult<Object> remove(@RequestBody @Validated BaseIdDTO dto) {
         Boolean flag = projectTaskService.removeTask(dto.getId());
         return flag == true ? success() : failure();
     }
@@ -217,7 +219,7 @@ public class ProjectTaskController extends BaseController {
      */
     @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = "更新前置任务列表:id={id}")
     @PostMapping("/update/pre/task")
-    public ApiResult setPreTask(@RequestBody @Validated @NotEmpty(message = "参数列表不能为空") List<PreTaskUpdateDTO> dto) {
+    public ApiResult<Object> setPreTask(@RequestBody @Validated @NotEmpty(message = "参数列表不能为空") List<PreTaskUpdateDTO> dto) {
         Boolean flag = preTaskService.updatePreTask(dto);
         return flag == true ? success() : failure();
     }
@@ -242,7 +244,7 @@ public class ProjectTaskController extends BaseController {
      */
     @LogAction(value = LogActionEnum.DELETE, desc = "项目任务-任务详情-移除前置任务")
     @PostMapping("/removePreTask")
-    public ApiResult removePreTask(@RequestBody @Validated SetPreTaskDTO dto) {
+    public ApiResult<Object> removePreTask(@RequestBody @Validated SetPreTaskDTO dto) {
         Boolean flag = preTaskService.removePreTask(dto);
         return flag == true ? success() : failure();
     }
@@ -318,7 +320,7 @@ public class ProjectTaskController extends BaseController {
             serviceClass = ProjectTaskService.class,
             keyIdName = "taskId"
     )
-    public ApiResult updateTask(@RequestBody @Validated UpdateTaskDTO dto, HttpServletRequest request) {
+    public ApiResult<Object> updateTask(@RequestBody @Validated UpdateTaskDTO dto, HttpServletRequest request) {
         Boolean result = projectTaskService.updateBaseTask(dto);
         return result == true ? success() : failure();
     }
@@ -336,7 +338,7 @@ public class ProjectTaskController extends BaseController {
             serviceClass = ProjectTaskService.class,
             keyIdName = "taskIdList"
     )
-    public ApiResult publishTask(@RequestBody @Validated OperateBaseTaskDTO dto) {
+    public ApiResult<Object> publishTask(@RequestBody @Validated OperateBaseTaskDTO dto) {
         Boolean result = projectTaskService.publishTask(dto);
         return result == true ? success() : failure();
     }
@@ -354,7 +356,7 @@ public class ProjectTaskController extends BaseController {
             serviceClass = ProjectTaskService.class,
             keyIdName = "taskIdList"
     )
-    public ApiResult cancelPublishTask(@RequestBody OperateBaseTaskDTO dto) {
+    public ApiResult<Object> cancelPublishTask(@RequestBody OperateBaseTaskDTO dto) {
         Boolean result = projectTaskService.cancelPublishTask(dto);
         return result == true ? success() : failure();
     }
@@ -372,7 +374,7 @@ public class ProjectTaskController extends BaseController {
             serviceClass = ProjectTaskService.class,
             keyIdName = "taskIdList"
     )
-    public ApiResult startTask(@RequestBody OperateBaseTaskDTO dto) {
+    public ApiResult<Object> startTask(@RequestBody OperateBaseTaskDTO dto) {
         Boolean result = projectTaskService.startTask(dto);
         return result == true ? success() : failure();
     }
@@ -390,7 +392,7 @@ public class ProjectTaskController extends BaseController {
             serviceClass = ProjectTaskService.class,
             keyIdName = "taskIdList"
     )
-    public ApiResult closeTask(@RequestBody OperateBaseTaskDTO dto) {
+    public ApiResult<Object> closeTask(@RequestBody OperateBaseTaskDTO dto) {
         Boolean result = projectTaskService.closeTask(dto);
         return result == true ? success() : failure();
     }
@@ -409,7 +411,7 @@ public class ProjectTaskController extends BaseController {
             serviceClass = ProjectTaskService.class,
             keyIdName = "taskIdList"
     )
-    public ApiResult finishTask(@RequestBody OperateBaseTaskDTO dto) {
+    public ApiResult<Object> finishTask(@RequestBody OperateBaseTaskDTO dto) {
         Boolean result = projectTaskService.finishTask(dto);
         return result == true ? success() : failure();
     }
@@ -427,7 +429,7 @@ public class ProjectTaskController extends BaseController {
             serviceClass = ProjectTaskService.class,
             keyIdName = "taskIdList"
     )
-    public ApiResult approvalPass(@RequestBody @Validated TaskOperateDTO dto) {
+    public ApiResult<Object> approvalPass(@RequestBody @Validated TaskOperateDTO dto) {
         Boolean result = projectTaskService.approvalPass(dto);
         return result == true ? success() : failure();
     }
@@ -445,7 +447,7 @@ public class ProjectTaskController extends BaseController {
             serviceClass = ProjectTaskService.class,
             keyIdName = "taskIdList"
     )
-    public ApiResult approvalNoPass(@RequestBody @Validated TaskOperateDTO dto) {
+    public ApiResult<Object> approvalNoPass(@RequestBody @Validated TaskOperateDTO dto) {
         Boolean result = projectTaskService.approvalReject(dto);
         return result == true ? success() : failure();
     }
@@ -457,7 +459,7 @@ public class ProjectTaskController extends BaseController {
      */
     @LogAction(value = LogActionEnum.CANCEL, desc = "撤销项目任务")
     @PostMapping("/cancelProcess")
-    public ApiResult cancelProcess(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+    public ApiResult<Object> cancelProcess(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         Boolean result = projectTaskService.cancelProcess(dto.getIds());
         return result ? success() : failure();
     }
@@ -478,7 +480,7 @@ public class ProjectTaskController extends BaseController {
             serviceClass = ProjectTaskService.class,
             keyIdName = "taskIdList"
     )
-    public ApiResult restartTask(@RequestBody @Validated OperateBaseTaskDTO dto) {
+    public ApiResult<Object> restartTask(@RequestBody @Validated OperateBaseTaskDTO dto) {
         Boolean result = projectTaskService.restartTask(dto);
         return result == true ? success() : failure();
     }
@@ -514,7 +516,7 @@ public class ProjectTaskController extends BaseController {
      * @return
      */
     @PostMapping("/workflow/pass")
-    public ApiResult processPass(String processId) {
+    public ApiResult<Object> processPass(String processId) {
         projectTaskService.approvalTaskPass(processId);
         return success();
     }
@@ -579,8 +581,8 @@ public class ProjectTaskController extends BaseController {
             tableAlias = "pt"
     )
     @PostMapping("/all/paging")
-    public ApiResult<PagingVO<List<TaskPagingShowDTO>>> expertPaging(@Validated @RequestBody PagingDTO<TaskSearchParamDTO> searchParamDTO) {
-        PagingVO<List<TaskPagingShowDTO>> pagingVO = projectTaskService.expertPaging(searchParamDTO);
+    public ApiResult<PagingVO<TaskPagingShowDTO>> expertPaging(@Validated @RequestBody PagingDTO<TaskSearchParamDTO> searchParamDTO) {
+        PagingVO<TaskPagingShowDTO> pagingVO = projectTaskService.expertPaging(searchParamDTO);
         return success(pagingVO);
     }
 
@@ -596,8 +598,8 @@ public class ProjectTaskController extends BaseController {
             tableAlias = "pt"
     )
     @PostMapping("/assignToMe/paging")
-    public ApiResult<PagingVO<List<TaskPagingShowDTO>>> assignToMePaging(@Validated @RequestBody PagingDTO<TaskSearchParamDTO> searchParamDTO) {
-        PagingVO<List<TaskPagingShowDTO>> pagingVO = projectTaskService.assignToMePaging(searchParamDTO);
+    public ApiResult<PagingVO<TaskPagingShowDTO>> assignToMePaging(@Validated @RequestBody PagingDTO<TaskSearchParamDTO> searchParamDTO) {
+        PagingVO<TaskPagingShowDTO> pagingVO = projectTaskService.assignToMePaging(searchParamDTO);
         return success(pagingVO);
     }
 
@@ -612,8 +614,8 @@ public class ProjectTaskController extends BaseController {
             tableAlias = "pt"
     )
     @PostMapping("/assignToMe/waitFinish/paging")
-    public ApiResult<PagingVO<List<TaskPagingShowDTO>>> assignToMeWaitFinishPaging(@Validated @RequestBody PagingDTO<TaskSearchParamDTO> searchParamDTO) {
-        PagingVO<List<TaskPagingShowDTO>> pagingVO = projectTaskService.assignToMePaging(searchParamDTO);
+    public ApiResult<PagingVO<TaskPagingShowDTO>> assignToMeWaitFinishPaging(@Validated @RequestBody PagingDTO<TaskSearchParamDTO> searchParamDTO) {
+        PagingVO<TaskPagingShowDTO> pagingVO = projectTaskService.assignToMePaging(searchParamDTO);
         return success(pagingVO);
     }
 
@@ -623,8 +625,8 @@ public class ProjectTaskController extends BaseController {
      * @return
      */
     @PostMapping("/assignToMe/waitAudit/paging")
-    public ApiResult<PagingVO<List<TaskPagingShowDTO>>> assignToMeWaitAuditPaging(@Validated @RequestBody PagingDTO<TaskSearchParamDTO> searchParamDTO) {
-        PagingVO<List<TaskPagingShowDTO>> pagingVO = projectTaskService.assignToMeWaitAuditPaging(searchParamDTO);
+    public ApiResult<PagingVO<TaskPagingShowDTO>> assignToMeWaitAuditPaging(@Validated @RequestBody PagingDTO<TaskSearchParamDTO> searchParamDTO) {
+        PagingVO<TaskPagingShowDTO> pagingVO = projectTaskService.assignToMeWaitAuditPaging(searchParamDTO);
         return success(pagingVO);
     }
 
@@ -639,8 +641,8 @@ public class ProjectTaskController extends BaseController {
             tableAlias = "pt"
     )
     @PostMapping("/myCreate/paging")
-    public ApiResult<PagingVO<List<TaskPagingShowDTO>>> myCreatePaging(@Validated @RequestBody PagingDTO<TaskSearchParamDTO> searchParamDTO) {
-        PagingVO<List<TaskPagingShowDTO>> pagingVO = projectTaskService.myCreatePaging(searchParamDTO);
+    public ApiResult<PagingVO<TaskPagingShowDTO>> myCreatePaging(@Validated @RequestBody PagingDTO<TaskSearchParamDTO> searchParamDTO) {
+        PagingVO<TaskPagingShowDTO> pagingVO = projectTaskService.myCreatePaging(searchParamDTO);
         return success(pagingVO);
     }
 
@@ -704,7 +706,7 @@ public class ProjectTaskController extends BaseController {
      * @date 2022-11-29 14:42
      */
     @PostMapping(value = "/finishSku")
-    public ApiResult finishSku(@RequestBody @Validated TaskFinishSkuDTO dto) {
+    public ApiResult<Object> finishSku(@RequestBody @Validated TaskFinishSkuDTO dto) {
         projectTaskService.taskFinishSku(dto);
         return success();
     }
@@ -719,7 +721,7 @@ public class ProjectTaskController extends BaseController {
      */
     @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "配置表单输出物是否对sku更改:id={id},模板状态={state}(1=启用,0=未启用)")
     @PostMapping(value = "/skuChangeResult")
-    public ApiResult skuChangeResult(@RequestBody @Validated StateDTO dto) {
+    public ApiResult<Object> skuChangeResult(@RequestBody @Validated StateDTO dto) {
         projectTaskService.skuChangeResult(dto);
         return success();
     }
@@ -734,7 +736,7 @@ public class ProjectTaskController extends BaseController {
      */
     @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "飞书提醒:用户ids={userIds}")
     @PostMapping(value = "/flyingBookReminder")
-    public ApiResult flyingBookReminder(@RequestBody @Validated FlyingBookReminderDTO dto) {
+    public ApiResult<Object> flyingBookReminder(@RequestBody @Validated FlyingBookReminderDTO dto) {
         projectTaskService.flyingBookReminder(dto);
         return success();
     }
@@ -762,7 +764,7 @@ public class ProjectTaskController extends BaseController {
      **/
     @LogAction(value = LogActionEnum.INSERT, desc = "模板引入任务")
     @PostMapping(value = "/templateCiteTask")
-    public ApiResult templateCiteTask(@RequestBody @Validated TemplateCiteTaskDTO dto) {
+    public ApiResult<Object> templateCiteTask(@RequestBody @Validated TemplateCiteTaskDTO dto) {
         return success(templateTaskService.templateCiteTask(dto));
     }
 
@@ -782,7 +784,7 @@ public class ProjectTaskController extends BaseController {
             serviceClass = ProjectTaskService.class,
             keyIdName = "ids"
     )
-    public ApiResult removeBatch(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+    public ApiResult<Object> removeBatch(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         Boolean flag = projectTaskService.removeBatch(dto.getIds());
         return flag == true ? success() : failure();
     }
@@ -798,10 +800,10 @@ public class ProjectTaskController extends BaseController {
      **/
     @LogAction(value = LogActionEnum.EXPORT, desc = "导入产品任务")
     @PostMapping("/importProjectTaskFile")
-    public ApiResult importProjectTaskFile(@RequestParam(value = "excelFile") MultipartFile excelFile, @RequestParam(value = "productId") String productId, HttpServletResponse response) {
+    public ApiResult<Object> importProjectTaskFile(@RequestParam(value = "excelFile") MultipartFile excelFile, @RequestParam(value = "productId") String productId, HttpServletResponse response) {
         ProjectTaskExcelListener excelListenerUtil = new ProjectTaskExcelListener(productId, projectTaskService, productInfoService, sysUserFeign, projectPhaseService, taskDocsNameService, taskChargeDistributionService);
         try {
-            EasyExcel.read(excelFile.getInputStream(), ProjectTaskExcelDTO.class, excelListenerUtil).sheet(0).doRead();
+            read(excelFile.getInputStream(), ProjectTaskExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (IOException e) {
             throw new ServiceException(ApiError.ERROR_95124);
         }
@@ -811,7 +813,7 @@ public class ProjectTaskController extends BaseController {
         }
         List<ProjectTaskExcelDTO> list = excelListenerUtil.getDateList();
         if (list.size() > 0) {
-            StringBuffer sb = new StringBuffer();
+            StringBuilder sb = new StringBuilder();
             String excelPath = "excel/productTaskTemplateError.xlsx";
             String name = "productTaskTemplate";
             String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
@@ -851,7 +853,7 @@ public class ProjectTaskController extends BaseController {
             response.reset();
             // 设置文件头
             response.setHeader("Content-Disposition",
-                    "attchement;filename=" + new String(excelName.getBytes("gb2312"), "ISO8859-1"));
+                    "attchement;filename=" + new String(excelName.getBytes("gb2312"), StandardCharsets.ISO_8859_1));
             response.setContentType("application/msexcel");
             wb.write(output);
             wb.close();

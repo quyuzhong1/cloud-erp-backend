@@ -4,6 +4,7 @@ import java.util.concurrent.TimeUnit;
 
 import javax.annotation.Resource;
 
+import com.common.core.exception.ServiceException;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.rocketmq.spring.core.RocketMQListener;
 import org.slf4j.MDC;
@@ -55,18 +56,9 @@ public abstract class AbstractNewPlatformConsumerHandler implements RocketMQList
         }
         
         int count = 1;
-        if(StringUtils.isNotBlank(dmpOutputTaskRecordDataId)) {
-        	String redisKey = "dmp:output:record:" + dmpOutputTaskRecordDataId;
-            while(!redisTemplate.opsForValue().setIfAbsent(redisKey, DateUtil.now(), 30, TimeUnit.SECONDS)) {
-            	log.warn("同步输出任务正在执行中：{}，重试获取锁次数：{}" , redisKey , count);
-            	count = count + 1;
-            	try {
-    				Thread.sleep(1000);
-    			} catch (InterruptedException e) {
-    			}
-            }
-        }
-        
+        // 检查和等待
+        checkAndWait(dmpOutputTaskRecordDataId, count);
+
         try {
         	 this.handle(data);
         } catch (Throwable e) {
@@ -84,7 +76,7 @@ public abstract class AbstractNewPlatformConsumerHandler implements RocketMQList
 			} catch (Exception e) {
 				log.error("输出回调错误，id={}，回调信息={}" , dmpOutputTaskRecordId , JSON.toJSONString(updateDTO) , e);
 			}
-        	if(result != null && result.getData() != null && result.getData()) {
+        	if(result != null && result.getData() != null && Boolean.TRUE.equals(result.getData())) {
         		break;
         	}else {
         		count = count + 1;
@@ -92,7 +84,23 @@ public abstract class AbstractNewPlatformConsumerHandler implements RocketMQList
         	}
         }
     }
-    
+
+    private void checkAndWait(String dmpOutputTaskRecordDataId, int count) {
+        if(StringUtils.isNotBlank(dmpOutputTaskRecordDataId)) {
+        	String redisKey = "dmp:output:record:" + dmpOutputTaskRecordDataId;
+            while(!redisTemplate.opsForValue().setIfAbsent(redisKey, DateUtil.now(), 30, TimeUnit.SECONDS)) {
+            	log.warn("同步输出任务正在执行中：{}，重试获取锁次数：{}" , redisKey , count);
+            	count = count + 1;
+            	try {
+    				Thread.sleep(1000);
+    			} catch (InterruptedException e) {
+                    log.error( "线程睡眠阻塞: Interrupted!:{}", e.getMessage());
+                    Thread.currentThread().interrupt();
+    			}
+            }
+        }
+    }
+
     /**
      * 获取业务类型
      * @return
@@ -101,7 +109,6 @@ public abstract class AbstractNewPlatformConsumerHandler implements RocketMQList
     
     /**
      * 处理平台数据
-     * @param ext
      */
     public abstract void handle(String data);
 }

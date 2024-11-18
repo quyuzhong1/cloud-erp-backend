@@ -1,6 +1,6 @@
 package com.common.business.service.impl;
 
-import cn.hutool.core.util.StrUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.OrderItem;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -43,7 +43,7 @@ public class SuperServiceImpl<M extends BaseMapper<T>, T extends BaseEntity<T>> 
 
     @Override
     public List<T> listByIdsSql(String idsSql) {
-        return query().inSql(T.ID, idsSql).list();
+        return query().inSql(T.FIELD_ID, idsSql).list();
     }
 
     @Override
@@ -75,7 +75,7 @@ public class SuperServiceImpl<M extends BaseMapper<T>, T extends BaseEntity<T>> 
                     .set(T.UPDATE_TIME, LocalDateTime.now())
                     .set(T.UPDATE_USER_ID, loginUser.getUid())
                     .set(T.UPDATE_USER_NAME, loginUser.getUserName())
-                    .in(T.ID, ids)
+                    .in(T.FIELD_ID, ids)
                     .update();
         }
         return true;
@@ -90,9 +90,9 @@ public class SuperServiceImpl<M extends BaseMapper<T>, T extends BaseEntity<T>> 
                 .set(T.UPDATE_TIME, LocalDateTime.now())
                 .set(T.UPDATE_USER_ID, loginUser.getUid())
                 .set(T.UPDATE_USER_NAME, loginUser.getUserName())
-                .setSql(version != null, StrUtil.format("{}={}+1", T.VERSION, T.VERSION))
-                .eq(T.ID, id)
-                .eq(version != null, T.VERSION, version)
+                .setSql(version != null, CharSequenceUtil.format("{}={}+1", T.FIELD_VERSION, T.FIELD_VERSION))
+                .eq(T.FIELD_ID, id)
+                .eq(version != null, T.FIELD_VERSION, version)
                 .update();
     }
 
@@ -104,11 +104,7 @@ public class SuperServiceImpl<M extends BaseMapper<T>, T extends BaseEntity<T>> 
         sortList.stream().forEach(sortParamDTO -> {
             OrderItem orderItem = new OrderItem();
             orderItem.setColumn(sortParamDTO.getField());
-            if (sortParamDTO.getSort().equals("ASC")){
-                orderItem.setAsc(true);
-            }else {
-                orderItem.setAsc(false);
-            }
+            orderItem.setAsc(sortParamDTO.getSort().equals("ASC"));
             orderItems.add(orderItem);
         });
         return orderItems;

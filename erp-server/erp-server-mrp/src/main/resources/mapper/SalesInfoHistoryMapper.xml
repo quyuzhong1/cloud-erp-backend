@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.mrp.mapper.SalesInfoHistoryMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.mrp.entity.SalesInfoHistoryEntity">
+        <result column="id" property="id" />
+        <result column="create_user_id" property="createUserId" />
+        <result column="create_user_name" property="createUserName" />
+        <result column="create_time" property="createTime" />
+        <result column="update_user_id" property="updateUserId" />
+        <result column="update_user_name" property="updateUserName" />
+        <result column="update_time" property="updateTime" />
+        <result column="version" property="version" />
+        <result column="is_deleted" property="isDeleted" />
+        <result column="replenishment_detail_id" property="replenishmentDetailId" />
+        <result column="date" property="date" />
+        <result column="sales_qty" property="salesQty" />
+        <result column="is_ignore_out_of_stock" property="isIgnoreOutOfStock" />
+        <result column="sales_qty_type" property="salesQtyType" />
+        <result column="original_sales_qty" property="originalSalesQty" />
+        <result column="original_inventory_qty" property="originalInventoryQty" />
+        <result column="calc_version" property="calcVersion" />
+    </resultMap>
+
+</mapper>

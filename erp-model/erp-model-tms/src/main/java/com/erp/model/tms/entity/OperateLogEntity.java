@@ -3,6 +3,7 @@ package com.erp.model.tms.entity;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
@@ -21,6 +22,7 @@ import java.io.Serializable;
 @Setter
 @Accessors(chain = true)
 @TableName("operate_log")
+@EqualsAndHashCode
 public class OperateLogEntity extends BaseEntity<OperateLogEntity> {
 
     /**
@@ -82,11 +84,11 @@ public class OperateLogEntity extends BaseEntity<OperateLogEntity> {
 
     public static final String NEW_VALUE = "new_value";
 
-    public static final String CONTENT = "content";
+    public static final String FIELD_CONTENT = "content";
 
-    public static final String OPERATION = "operation";
+    public static final String FIELD_OPERATION = "operation";
 
-    public static final String PID = "pid";
+    public static final String FIELD_PID = "pid";
 
     @Override
     public Serializable pkVal() {

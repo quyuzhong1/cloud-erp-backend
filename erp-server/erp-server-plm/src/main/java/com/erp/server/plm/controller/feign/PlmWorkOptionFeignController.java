@@ -153,16 +153,4 @@ public class PlmWorkOptionFeignController {
         PilotApplicationDTO.ApproveDTO approveDTO = new PilotApplicationDTO.ApproveDTO();
         pilotApplicationService.approve(dto,approveDTO);
     }
-
-    /**
-     * 试产量产  审核 不通过
-     *
-     * @param
-     * @return 新增结果
-     */
-    @PostMapping("/pilotApprovalNoPass")
-    public void pilotApprovalNoPass(@RequestBody @Validated ApproveOneDTO dto) {
-        PilotApplicationDTO.ApproveDTO approveDTO = new PilotApplicationDTO.ApproveDTO();
-        pilotApplicationService.approve(dto,approveDTO);
-    }
 }

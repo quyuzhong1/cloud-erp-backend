@@ -1,8 +1,8 @@
 package com.erp.server.oms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -27,7 +27,6 @@ import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.ExcelUtil;
-import com.common.core.utils.ReflectUtils;
 import com.common.core.utils.StrUtils;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.oms.dto.DictBasicDTO;
@@ -52,6 +51,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
+import org.apache.poi.ss.formula.functions.T;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.xssf.usermodel.XSSFRow;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
@@ -359,7 +359,7 @@ public class CustomerB2cServiceImpl extends SuperServiceImpl<CustomerB2cMapper, 
             approveList.add(ApproveStatusEnum.REJECT.getStatus());
         }
 
-        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+        Page<T> query = new Page<>(dto.getCurrPage(), dto.getPageSize());
         IPage pageData = baseMapper.paging(query, params, approveList);
         List<CustomerB2CDTO.PagingViewDTO> list = pageData.getRecords();
         if (CollectionUtils.isEmpty(list)) {
@@ -377,7 +377,7 @@ public class CustomerB2cServiceImpl extends SuperServiceImpl<CustomerB2cMapper, 
             listApiResult = workflowFeign.curApprover(dtoList);
             Integer code = listApiResult.getCode();
             if (200 != code) {
-                throw new ServiceException(new ApiResult(ApiError.Default.code,listApiResult.getMsg()));
+                throw new ServiceException(new ApiResult(ApiError.DEFAULT.code,listApiResult.getMsg()));
             }
         }
 
@@ -1151,7 +1151,7 @@ public class CustomerB2cServiceImpl extends SuperServiceImpl<CustomerB2cMapper, 
 //            customerInfoEntity.setUseOrgName(useOrgName);
             // 使用组织id需根据名称获取
 //            if (!accountCompanyNameMap.containsKey(useOrgName)) {
-//                throw new ServiceException(StrUtil.format("第【{}】行未找到组织【{}】", noticeRow, useOrgName));
+//                throw new ServiceException( CharSequenceUtil.format("第【{}】行未找到组织【{}】", noticeRow, useOrgName));
 //            }
             // 名称不会重复
 //            if (Objects.nonNull(accountCompanyNameMap.get(useOrgName))) {
@@ -1169,7 +1169,7 @@ public class CustomerB2cServiceImpl extends SuperServiceImpl<CustomerB2cMapper, 
             // 国家
             String countryName = ExcelUtil.convertCellValueToString(row.getCell(4));
             if (!countryNameMap.containsKey(countryName)) {
-                throw new ServiceException(StrUtil.format("第【{}】行未找到国家【{}】", noticeRow, countryName));
+                throw new ServiceException( CharSequenceUtil.format("第【{}】行未找到国家【{}】", noticeRow, countryName));
             }
             // 国家id需根据国家名称获取
             customerInfoEntity.setCountryId("");
@@ -1217,7 +1217,7 @@ public class CustomerB2cServiceImpl extends SuperServiceImpl<CustomerB2cMapper, 
             // 平台类型
             String platformTypeName = ExcelUtil.convertCellValueToString(row.getCell(10));
             if (!platformNameMap.containsKey(platformTypeName)) {
-                throw new ServiceException(StrUtil.format("第【{}】行未找到平台类型【{}】", noticeRow, platformTypeName));
+                throw new ServiceException( CharSequenceUtil.format("第【{}】行未找到平台类型【{}】", noticeRow, platformTypeName));
             }
             customerInfoEntity.setPlatformType(platformNameMap.get(platformTypeName).getValue());
             // 公司类别
@@ -1239,7 +1239,7 @@ public class CustomerB2cServiceImpl extends SuperServiceImpl<CustomerB2cMapper, 
             // 结算币别
             String currencyName = ExcelUtil.convertCellValueToString(row.getCell(15));
             if (StrUtils.isEmpty(currencyName) || !currencyNameMap.containsKey(currencyName)) {
-                throw new ServiceException(StrUtil.format("第【{}】行币别为空或未找到结算币别【{}】", noticeRow, currencyName));
+                throw new ServiceException( CharSequenceUtil.format("第【{}】行币别为空或未找到结算币别【{}】", noticeRow, currencyName));
             }
             customerInfoEntity.setCurrency(currencyNameMap.get(currencyName).getId());
             // 收款条件
@@ -1472,7 +1472,7 @@ public class CustomerB2cServiceImpl extends SuperServiceImpl<CustomerB2cMapper, 
         buildCustomerDTO(pageData.getRecords());
         CustomerB2CDTO.DropPagingDTO<CustomerB2CDTO.DropListDTO> result = new CustomerB2CDTO.DropPagingDTO<>(pageData);
         if (CollectionUtils.isNotEmpty(pageData.getRecords()))  {
-            long count = pageData.getRecords().stream().filter(obj -> StrUtil.equals(obj.getCustomerName(), pagingDTO.getParams().getCustomerName())).count();
+            long count = pageData.getRecords().stream().filter(obj -> CharSequenceUtil.equals(obj.getCustomerName(), pagingDTO.getParams().getCustomerName())).count();
             if (count > 0) {
                 result.setIsExist(Boolean.TRUE);
             }
@@ -1704,7 +1704,7 @@ public class CustomerB2cServiceImpl extends SuperServiceImpl<CustomerB2cMapper, 
 //            return;
 //        }
 //        if (StrUtils.isNotEmpty(deptName) && !deptNameMap.containsKey(deptName)) {
-//            throw new ServiceException(StrUtil.format("第【{}】行未找到销售部门【{}】", noticeRow, deptName));
+//            throw new ServiceException( CharSequenceUtil.format("第【{}】行未找到销售部门【{}】", noticeRow, deptName));
 //        }
 //        // 销售员信息
 //        CustomerB2cSellerEntity customerB2cSellerEntity = new CustomerB2cSellerEntity();
@@ -1716,7 +1716,7 @@ public class CustomerB2cServiceImpl extends SuperServiceImpl<CustomerB2cMapper, 
 //        // 销售员
 //        String sellerName = ExcelUtil.convertCellValueToString(row.getCell(41));
 //        if (StrUtils.isNotEmpty(sellerName) && !userNameMap.containsKey(sellerName)) {
-//            throw new ServiceException(StrUtil.format("第【{}】行未找到销售员【{}】", noticeRow, sellerName));
+//            throw new ServiceException( CharSequenceUtil.format("第【{}】行未找到销售员【{}】", noticeRow, sellerName));
 //        }
 //        customerB2cSellerEntity.setSellerName(sellerName);
 //        // 需转换成销售员id

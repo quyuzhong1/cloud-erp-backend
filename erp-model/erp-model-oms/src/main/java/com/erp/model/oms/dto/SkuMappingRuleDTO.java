@@ -177,6 +177,16 @@ public class SkuMappingRuleDTO implements Serializable {
          */
         private String validEndSymbolPosition;
 
+        /**
+         * 子件组合拆分符号
+         */
+        private String childCombineSplitSymbol;
+
+        /**
+         * 子件数量拆分符号
+         */
+        private String childQtySplitSymbol;
+
     }
     /**
      * 扩展规则条件
@@ -331,6 +341,22 @@ public class SkuMappingRuleDTO implements Serializable {
     }
 
 
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class SplitSkuDTO {
+
+        private String sku;
+        private Integer qty;
+
+        public String desc(){
+            return sku + "数量" + qty;
+        }
+        public String matchStr(){
+            return sku +"*"  + qty +"丨";
+        }
+    }
 
     @Data
     @NoArgsConstructor

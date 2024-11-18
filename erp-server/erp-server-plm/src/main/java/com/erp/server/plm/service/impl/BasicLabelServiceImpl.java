@@ -145,12 +145,12 @@ public class BasicLabelServiceImpl extends SuperServiceImpl<BasicLabelMapper, Ba
     @Transactional(rollbackFor = Exception.class)
     public Boolean update(BasicLabelDTO.UpdateDTO updateDTO) {
         BasicLabelEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST, "基础标签单"));
+        BasicLabelEntity oldEntity = Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST, "基础标签单"));
         BasicLabelEntity basicLabelEntity = BeanMapperUtils.map(BasicLabelEntity.class, updateDTO);
 
         // 数据处理
         handleData(basicLabelEntity);
-        log.info("编辑 开始修改基础标签单数据，id：【{}】", old.getId());
+        log.info("编辑 开始修改基础标签单数据，id：【{}】", oldEntity.getId());
         boolean save = updateBasicLabel(basicLabelEntity);
         if (!save) {
             throw new ServiceException("基础标签单保存失败");
@@ -161,10 +161,10 @@ public class BasicLabelServiceImpl extends SuperServiceImpl<BasicLabelMapper, Ba
     @Override
     public void removeBasicLabelById(String id) {
         BasicLabelEntity basicLabelEntity = this.getById(id);
-        Optional.ofNullable(basicLabelEntity).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST, "基础标签单"));
+        BasicLabelEntity oldBasicLabelEntity = Optional.ofNullable(basicLabelEntity).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST, "基础标签单"));
         LoginUser user = UserContext.getDefaultLoginUser();
-        Optional.ofNullable(user).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST, "当前登录用户"));
-        if (!StringUtils.equalsIgnoreCase(basicLabelEntity.getCreateUserId(), user.getUid())){
+        LoginUser loginUser = Optional.ofNullable(user).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST, "当前登录用户"));
+        if (!StringUtils.equalsIgnoreCase(oldBasicLabelEntity.getCreateUserId(), loginUser.getUid())){
             throw new ServiceException("只能删除自己创建的标签");
         }
         int count = productRefLabelMapper.countByLabelId(id);
@@ -214,7 +214,7 @@ public class BasicLabelServiceImpl extends SuperServiceImpl<BasicLabelMapper, Ba
     }
 
     private int getMaxIndex() {
-        LambdaQueryWrapper<BasicLabelEntity> queryWrapper = new LambdaQueryWrapper();
+        LambdaQueryWrapper<BasicLabelEntity> queryWrapper = new LambdaQueryWrapper<BasicLabelEntity>();
         queryWrapper.orderByDesc(BasicLabelEntity::getIndex);
         queryWrapper.last("limit 1");
         BasicLabelEntity basicLabelEntity = baseMapper.selectOne(queryWrapper);

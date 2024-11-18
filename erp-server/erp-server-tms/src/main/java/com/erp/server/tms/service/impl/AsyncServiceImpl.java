@@ -22,13 +22,13 @@ import java.util.Objects;
 /**
  * @author zdy
  * @ClassName AsyncServiceImpl
- * @description: TODO
  * @date 2023年12月14日
  * @version: 1.0
  */
 @Slf4j
 @Service
 public class AsyncServiceImpl implements AsyncService {
+    public static final String LOGISTICS_PLATFORM = "logisticsPlatform";
     @Resource
     private LogisticsRegistry logisticsRegistry;
     @Lazy
@@ -44,10 +44,10 @@ public class AsyncServiceImpl implements AsyncService {
     @Override
     public void asyncUpdateSaleChannel(Map<String, String> authMap) {
         if (Objects.isNull(authMap)) {return;}
-        if (StringUtils.isBlank(authMap.get("logisticsPlatform"))) {return;}
+        if (StringUtils.isBlank(authMap.get(LOGISTICS_PLATFORM))) {return;}
         try {
-            LogisticsService service = logisticsRegistry.getHandler(authMap.get("logisticsPlatform"));
-            String logisticsPlatform = authMap.get("logisticsPlatform");
+            LogisticsService service = logisticsRegistry.getHandler(authMap.get(LOGISTICS_PLATFORM));
+            String logisticsPlatform = authMap.get(LOGISTICS_PLATFORM);
             //虾皮的授权 调整
             ChanelQueryVO chanelQueryVO = new ChanelQueryVO();
             chanelQueryVO.setAuthMap(authMap);

@@ -1,5 +1,6 @@
 package com.erp.server.oms.listener;
 
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.excel.context.AnalysisContext;
 import com.alibaba.excel.event.AnalysisEventListener;
@@ -16,6 +17,7 @@ import com.erp.model.oms.dto.excel.SkuMappingImportExcelDTO;
 import com.erp.model.oms.entity.ListingInfoEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.entity.SkuMappingEntity;
+import com.erp.model.oms.enums.ListingMatchResultEnum;
 import com.erp.model.oms.enums.RuleTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
@@ -187,7 +189,7 @@ public class SkuMappingExcelListener extends AnalysisEventListener<SkuMappingImp
 
         // 已存在
         if (isApiPlatform){
-            if( mappingDto.getMatchResult()){
+            if( ListingMatchResultEnum.TRUE.getCode().equals(mappingDto.getMatchResult())){
                 errorMsgList.add("该店铺平台sku已存在匹配关系");
                 skuMappingImportExcelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
                 errorList.add(skuMappingImportExcelDTO);
@@ -200,7 +202,7 @@ public class SkuMappingExcelListener extends AnalysisEventListener<SkuMappingImp
         // 校验不允许重复历史
         long historyCount = listDto.stream().filter(e -> e.getProductSkuNo().equals(skuNo)).count();
         if (0 < historyCount){
-            errorMsgList.add(StrUtil.format("当前映射关系在【{}】已存在过，无法修改", skuNo));
+            errorMsgList.add( CharSequenceUtil.format("当前映射关系在【{}】已存在过，无法修改", skuNo));
             skuMappingImportExcelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
             errorList.add(skuMappingImportExcelDTO);
             return;
@@ -282,7 +284,7 @@ public class SkuMappingExcelListener extends AnalysisEventListener<SkuMappingImp
                     Pair<String, String> pair = new Pair<>(addSkuMapping.getListingId(),content);
                     updateLogPairList.add(pair);
                 }
-                listingInfoEntity.setMatchResult(true);
+                listingInfoEntity.setMatchResult(ListingMatchResultEnum.TRUE.getCode());
                 updateListingInfoList.add(listingInfoEntity);
                 return;
             }
@@ -313,7 +315,7 @@ public class SkuMappingExcelListener extends AnalysisEventListener<SkuMappingImp
             addListingInfoEntity.setType(RuleTypeEnum.PLATFORM.getCode());
             addListingInfoEntity.setPlatformSkuNo(platformSkuNo);
             addListingInfoEntity.setPlatformSkuName(platformProductName);
-            addListingInfoEntity.setMatchResult(Boolean.TRUE);
+            addListingInfoEntity.setMatchResult(ListingMatchResultEnum.TRUE.getCode());
             addListingInfoEntity.setPlatform(dictPlatform);
             addListingInfoEntityList.add(addListingInfoEntity);
         }
@@ -360,10 +362,10 @@ public class SkuMappingExcelListener extends AnalysisEventListener<SkuMappingImp
             skuMappingService.removeByIds(removeIds);
         }
         if (CollectionUtils.isNotEmpty(addLogPairList)) {
-            operateLogService.batchAddModuleOperateLog(StrUtil.format("用户【{}】新增了sku映射表", UserContext.getDefaultLoginUser().getUserName())+"id为【%s】", ModuleTypeEnum.LISTING_INFO.getCode(), addLogPairList,"新增操作");
+            operateLogService.batchAddModuleOperateLog( CharSequenceUtil.format("用户【{}】新增了sku映射表", UserContext.getDefaultLoginUser().getUserName())+"id为【%s】", ModuleTypeEnum.LISTING_INFO.getCode(), addLogPairList,"新增操作");
         }
         if (CollectionUtils.isNotEmpty(updateLogPairList)) {
-            operateLogService.batchAddModuleOperateLog(StrUtil.format("用户【{}】编辑sku映射表",UserContext.getDefaultLoginUser().getUserName())+"，【%s】", ModuleTypeEnum.LISTING_INFO.getCode(), updateLogPairList,"编辑操作");
+            operateLogService.batchAddModuleOperateLog( CharSequenceUtil.format("用户【{}】编辑sku映射表",UserContext.getDefaultLoginUser().getUserName())+"，【%s】", ModuleTypeEnum.LISTING_INFO.getCode(), updateLogPairList,"编辑操作");
         }
     }
 

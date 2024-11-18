@@ -182,7 +182,7 @@ public class SoUtils {
 
             //折扣额=折扣总额*含税金额（折扣前）/总的价税合计（折前）
             BigDecimal detailDiscountAmount = BigDecimal.ZERO;
-            if (Objects.nonNull(discountAmount) && totalTaxAmountBefore.compareTo(BigDecimal.ZERO) == 1) {
+            if (Objects.nonNull(discountAmount) && totalTaxAmountBefore.compareTo(BigDecimal.ZERO) > 0) {
                 BigDecimal discountFlag = MathUtil.multiply(discountAmount, taxAmount);
                 detailDiscountAmount = MathUtil.divide(discountFlag, totalTaxAmountBefore, 2, BigDecimal.ROUND_DOWN);
                 log.warn("销售订单明细第【{}】条数据，价税合计（折扣前）比例【{}】，折扣额【{}】", (i + 1), detailDiscountAmount);
@@ -193,7 +193,7 @@ public class SoUtils {
             if (i == lastNoGiftIndex) {
                 log.warn("销售订单明细汇总折扣额【{}】，总折扣额【{}】", totalDiscountAmount, discountAmount);
                 //折扣总额大于 折扣相加的和
-                if (discountAmount.compareTo(totalDiscountAmount) == 1) {
+                if (discountAmount.compareTo(totalDiscountAmount) > 0) {
                     BigDecimal diff = MathUtil.subtract(discountAmount, totalDiscountAmount);
                     detailDiscountAmount = MathUtil.add(detailDiscountAmount, diff);
                 }
@@ -215,12 +215,12 @@ public class SoUtils {
             amount = MathUtil.subtract(taxAmountBefore, subNumber);
             item.setAmount(amount);
             // 折扣金额不可大于价税合计（折扣前）
-            if (Objects.nonNull(detailDiscountAmount) && detailDiscountAmount.compareTo(item.getTaxAmountBefore()) == 1) {
+            if (Objects.nonNull(detailDiscountAmount) && detailDiscountAmount.compareTo(item.getTaxAmountBefore()) > 0) {
                 log.warn("销售订单第【{}】行明细价税合计（折扣前）【{}】，折扣额【{}】", (i + 1), item.getTaxAmountBefore(), detailDiscountAmount);
             }
         }
         // 折扣金额不可大于价税合计（折扣前）
-        if (Objects.nonNull(discountAmount) && discountAmount.compareTo(totalTaxAmountBefore) == 1) {
+        if (Objects.nonNull(discountAmount) && discountAmount.compareTo(totalTaxAmountBefore) > 0) {
             log.warn("销售订单明细汇总价税合计（折扣前）【{}】，总折扣额【{}】", totalTaxAmountBefore, discountAmount);
             throw new ServiceException("折扣金额不可大于价税合计（折前）");
         }

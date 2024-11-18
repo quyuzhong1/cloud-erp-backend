@@ -15,7 +15,15 @@ import org.slf4j.LoggerFactory;
  */
 public class IPUtils {
 
+	private IPUtils() {
+		
+	}
+	
     private static Logger logger = LoggerFactory.getLogger(IPUtils.class);
+    
+    private static final String UNKNOWN = "unknown";
+    
+    private static final String CODE = ",";
 
     /**
      * 获取IP地址
@@ -27,19 +35,19 @@ public class IPUtils {
         String ip = null;
         try {
             ip = request.getHeader("x-forwarded-for");
-            if (StringUtils.isBlank(ip) || "unknown".equalsIgnoreCase(ip)) {
+            if (StringUtils.isBlank(ip) || UNKNOWN.equalsIgnoreCase(ip)) {
                 ip = request.getHeader("Proxy-Client-IP");
             }
-            if (StringUtils.isBlank(ip) || ip.length() == 0 || "unknown".equalsIgnoreCase(ip)) {
+            if (StringUtils.isBlank(ip) || ip.length() == 0 || UNKNOWN.equalsIgnoreCase(ip)) {
                 ip = request.getHeader("WL-Proxy-Client-IP");
             }
-            if (StringUtils.isBlank(ip) || "unknown".equalsIgnoreCase(ip)) {
+            if (StringUtils.isBlank(ip) || UNKNOWN.equalsIgnoreCase(ip)) {
                 ip = request.getHeader("HTTP_CLIENT_IP");
             }
-            if (StringUtils.isBlank(ip) || "unknown".equalsIgnoreCase(ip)) {
+            if (StringUtils.isBlank(ip) || UNKNOWN.equalsIgnoreCase(ip)) {
                 ip = request.getHeader("HTTP_X_FORWARDED_FOR");
             }
-            if (StringUtils.isBlank(ip) || "unknown".equalsIgnoreCase(ip)) {
+            if (StringUtils.isBlank(ip) || UNKNOWN.equalsIgnoreCase(ip)) {
                 ip = request.getRemoteAddr();
             }
         } catch (Exception e) {
@@ -47,14 +55,12 @@ public class IPUtils {
         }
 
 //        //使用代理，则获取第一个IP地址
-        if (StringUtils.isNotBlank(ip) && ip.length() > 15) {
-            if (ip.indexOf(",") > 0) {
-                ip = ip.substring(0, ip.indexOf(","));
-            }
+        if (StringUtils.isNotBlank(ip) && ip.length() > 15 && ip.indexOf(CODE) >= 0) {
+            ip = ip.substring(0, ip.indexOf(CODE));
         }
 
         if ("0:0:0:0:0:0:0:1".equals(ip)) {
-            ip = "127.0.0.1";
+            ip = "127.0" + ".0.1";
         }
 
         return ip;

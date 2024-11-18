@@ -1,6 +1,8 @@
 package com.erp.server.wms.service.impl;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
@@ -61,7 +63,7 @@ public class AntuHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         //中转代发并且自发头程，默认物流产品
         if(AntuEnums.TransitTypeEnum.TRANSFER.getCode().equals(antuCreateInboundReq.getReceivingType()) &&
                 AntuEnums.IncomeTypeEnum.SELF_DELIVERY.getCode().equals(antuCreateInboundReq.getIncomeType()) &&
-            StringUtils.isBlank(antuCreateInboundReq.getSmCode())){
+            CharSequenceUtil.isBlank(antuCreateInboundReq.getSmCode())){
             antuCreateInboundReq.setSmCode("TCHY");
         }
         log.warn("安兔创建入库单json :{}", JSONUtil.toJsonStr(antuCreateInboundReq));
@@ -76,7 +78,7 @@ public class AntuHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         //中转代发并且自发头程，默认物流产品
         if(AntuEnums.TransitTypeEnum.TRANSFER.getCode().equals(antuCreateInboundReq.getReceivingType()) &&
                 AntuEnums.IncomeTypeEnum.SELF_DELIVERY.getCode().equals(antuCreateInboundReq.getIncomeType()) &&
-                StringUtils.isBlank(antuCreateInboundReq.getSmCode())){
+                CharSequenceUtil.isBlank(antuCreateInboundReq.getSmCode())){
             antuCreateInboundReq.setSmCode("TCHY");
         }
         // 修改入库单
@@ -135,22 +137,22 @@ public class AntuHandlerServiceImpl extends AbstractThirdWarehouseHandler {
 
     private void handleData(AntuCreateOutboundReq antuCreateOutboundReq) {
         //处理地址1
-        if(StringUtils.isBlank(antuCreateOutboundReq.getAddress1())){
-            antuCreateOutboundReq.setAddress1(StringUtils.isNotBlank(antuCreateOutboundReq.getAddress2())?antuCreateOutboundReq.getAddress2():antuCreateOutboundReq.getAddress3());
+        if(CharSequenceUtil.isBlank(antuCreateOutboundReq.getAddress1())){
+            antuCreateOutboundReq.setAddress1(CharSequenceUtil.isNotBlank(antuCreateOutboundReq.getAddress2())?antuCreateOutboundReq.getAddress2():antuCreateOutboundReq.getAddress3());
         }
         //处理邮编
-        if(StringUtils.isNotBlank(antuCreateOutboundReq.getZipcode())){
+        if(CharSequenceUtil.isNotBlank(antuCreateOutboundReq.getZipcode())){
             antuCreateOutboundReq.setZipcode(antuCreateOutboundReq.getZipcode().replace("-",""));
         }
         //处理省份
-        if(StringUtils.isNotBlank(antuCreateOutboundReq.getProvince())){
+        if(CharSequenceUtil.isNotBlank(antuCreateOutboundReq.getProvince())){
             if(antuCreateOutboundReq.getProvince().length() != 2){
                 List<DictCityEntity> dictCityEntityList = FeignQuery.create(DictCityEntity.class)
                         .eq(DictCityEntity::getCountryCode,antuCreateOutboundReq.getCountryCode())
                         .eq(DictCityEntity::getType,"province")
-                        .last(StrUtil.format("and (code_en = '{}'  or code_pt = '{}')",antuCreateOutboundReq.getProvince(),antuCreateOutboundReq.getProvince()))
+                        .last(CharSequenceUtil.format("and (code_en = '{}'  or code_pt = '{}')",antuCreateOutboundReq.getProvince(),antuCreateOutboundReq.getProvince()))
                         .list();
-                if(CollectionUtil.isEmpty(dictCityEntityList)){
+                if(CollUtil.isEmpty(dictCityEntityList)){
                     throw new ServiceException("安兔不支持该省份下单");
                 }
                 antuCreateOutboundReq.setProvince(dictCityEntityList.get(0).getCodeTwo());

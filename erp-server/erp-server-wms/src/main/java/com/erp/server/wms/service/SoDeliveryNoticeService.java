@@ -279,4 +279,12 @@ public interface SoDeliveryNoticeService extends SuperService<SoDeliveryNoticeEn
 
     PagingVO<SoDeliveryNoticeDTO.PagingView> exportSoDeliveryNotice(PagingDTO<SoDeliveryNoticeDTO.PagingParam> dto);
 
+
+    /**
+     * 更新中转仓库配置
+     * @param entity
+     * @param changeIds
+     * @return
+     */
+    BatchResultDTO updateTransferWarehouse(SoDeliveryNoticeEntity entity, List<String> changeIds);
 }

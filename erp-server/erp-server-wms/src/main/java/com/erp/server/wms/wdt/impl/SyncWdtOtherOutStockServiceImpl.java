@@ -1,5 +1,6 @@
 package com.erp.server.wms.wdt.impl;
 
+import cn.hutool.core.text.CharSequenceUtil;
 import org.apache.commons.math3.util.Pair;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.json.JSONUtil;
@@ -73,7 +74,7 @@ public class SyncWdtOtherOutStockServiceImpl extends AbstractWdtService implemen
             if(goods.getPositionNo().equals("TC-JHZC") || goods.getPositionNo().equals("B2B-JHZC")){
                 goods.setPositionNo(goods.getPositionNo() + "1");
             }
-            if(StringUtils.isBlank(goods.getPositionNo())){
+            if(CharSequenceUtil.isBlank(goods.getPositionNo())){
                 goods.setPositionNo("空仓位");
             }
         }

@@ -33,7 +33,7 @@ public class BusinessProcessServiceImpl extends ServiceImpl<BusinessProcessMappe
      */
     @Override
     public List<BusinessProcessInfoDTO> getProcessList(String businessType) {
-        LambdaQueryWrapper<BusinessProcessEntity> queryWrapper = new LambdaQueryWrapper();
+        LambdaQueryWrapper<BusinessProcessEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(BusinessProcessEntity::getBusinessType, businessType);
         queryWrapper.orderByAsc(BusinessProcessEntity::getId);
         List<BusinessProcessEntity> list = this.list(queryWrapper);
@@ -70,7 +70,7 @@ public class BusinessProcessServiceImpl extends ServiceImpl<BusinessProcessMappe
      */
     @Override
     public BusinessProcessEntity getProcessByBusinessKey(String businessType) {
-        LambdaQueryWrapper<BusinessProcessEntity> queryWrapper = new LambdaQueryWrapper();
+        LambdaQueryWrapper<BusinessProcessEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(BusinessProcessEntity::getBusinessKey, businessType);
         queryWrapper.last("LIMIT 1");
         return this.getOne(queryWrapper);

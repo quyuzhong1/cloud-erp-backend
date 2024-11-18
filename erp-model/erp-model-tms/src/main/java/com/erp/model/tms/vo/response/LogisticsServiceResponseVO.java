@@ -8,7 +8,6 @@ import java.io.Serializable;
  * 物流服务响应实体
  * @author Lambda
  * @Classname LogisticsServiceResponseVO
- * @Description TODO
  * @Date 2024-03-04 15:13
  * @Created by yl
  */

@@ -8,7 +8,7 @@ package com.erp.server.bi.enums;
  */
 public enum OrderStateEnum {
 
-        distribution(2, "配货中"),
+        DISTRIBUTION(2, "配货中"),
         SHIPPED(3,"已发货"),
         COMPLETED(4, "已完成"),
         VOIDED(5, "已作废"),

@@ -164,7 +164,12 @@ public class FirstMileDeliveryEntity extends BaseEntity<FirstMileDeliveryEntity>
     @TableField("declare_status")
     private WmsDeclareStatusEnum declareStatus;
 
-    public static final String CODE = "code";
+    /**
+     * 中转仓库 以,分割记录
+     */
+    @TableField("transfer_warehouse_ids")
+    private String transferWarehouseIds;
+
 
     public static final String APPROVE_STATUS = "approve_status";
 
@@ -202,7 +207,6 @@ public class FirstMileDeliveryEntity extends BaseEntity<FirstMileDeliveryEntity>
 
     public static final String DEST_WAREHOUSE_NAME = "dest_warehouse_name";
 
-    public static final String REMARK = "remark";
 
     public static final String FULFILLMENT_CENTER = "fulfillment_center";
 

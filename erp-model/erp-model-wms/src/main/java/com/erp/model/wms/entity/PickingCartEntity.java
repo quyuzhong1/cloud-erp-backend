@@ -1,13 +1,13 @@
 package com.erp.model.wms.entity;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
-import com.baomidou.mybatisplus.annotation.TableField;
-import java.io.Serializable;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
-import com.common.business.enums.ApproveStatusEnum;
+
+import java.io.Serializable;
 
 
 /**
@@ -40,12 +40,7 @@ public class PickingCartEntity extends BaseEntity<PickingCartEntity> {
     @TableField("disabled")
     private Boolean disabled;
 
-
-    public static final String CODE = "code";
-
     public static final String TYPE_ID = "type_id";
-
-    public static final String DISABLED = "disabled";
 
     @Override
     public Serializable pkVal() {

@@ -3,6 +3,7 @@ package com.erp.server.wms.query;
 import cn.hutool.core.date.CalendarUtil;
 import cn.hutool.core.date.DateTime;
 import cn.hutool.core.date.DateUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.QueryConditionEnum;
@@ -26,7 +27,7 @@ import java.util.Date;
 public class WarehouseLocationInfoQueryHandler extends AbstractQueryHandler {
     @Override
     protected String handleSqlLogic(String field, Object value, String compareCodeSplicingValueSql) {
-        if ("wl.status".equals(field) && StringUtils.isNotBlank((String) value)) {
+        if ("wl.status".equals(field) && CharSequenceUtil.isNotBlank((String) value)) {
             return getTabSql(value);
         }
         /*if("wl.update_time".equals(field)) {

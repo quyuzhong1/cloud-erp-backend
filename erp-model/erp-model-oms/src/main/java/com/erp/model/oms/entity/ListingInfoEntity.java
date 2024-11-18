@@ -67,7 +67,7 @@ public class ListingInfoEntity extends BaseEntity<ListingInfoEntity> {
      * 匹配结果吧true 已匹配 false 未匹配
      */
     @TableField("match_result")
-    private Boolean matchResult;
+    private String matchResult;
 
     /**
      * 产品图片 url
@@ -116,6 +116,12 @@ public class ListingInfoEntity extends BaseEntity<ListingInfoEntity> {
      */
     @TableField("auth_id")
     private String authId;
+
+    /**
+     * 备注
+     */
+    @TableField("remark")
+    private String remark;
 
     public static final String SKU_NO = "sku_no";
 

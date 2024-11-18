@@ -1,12 +1,12 @@
 package com.erp.rpc.dmp.feign;
 
-import com.erp.model.dmp.dto.DmpPushWdtDTO;
+import java.util.List;
+
 import org.springframework.cloud.openfeign.FeignClient;
-import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
-import java.util.List;
+import com.erp.model.dmp.dto.DmpPushWdtDTO;
 
 /**
  * 推送旺店通中间表Feign

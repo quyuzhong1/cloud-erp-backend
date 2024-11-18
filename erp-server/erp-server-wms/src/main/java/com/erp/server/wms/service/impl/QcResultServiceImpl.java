@@ -41,7 +41,6 @@ import com.erp.rpc.sys.feign.MessageUserReadFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.constant.WmsConstant;
 import com.erp.server.wms.mapper.QcResultMapper;
-import com.erp.server.wms.service.CommonService;
 import com.erp.server.wms.service.DictBasicService;
 import com.erp.server.wms.service.QcResultService;
 import com.erp.server.wms.service.WmsAttachmentService;
@@ -51,7 +50,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.rocketmq.client.producer.SendResult;
 import org.apache.rocketmq.client.producer.SendStatus;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -92,7 +90,7 @@ public class QcResultServiceImpl extends SuperServiceImpl<QcResultMapper, QcResu
     @Resource
     private ScmTaskFeign scmTaskFeign;
 
-    @Autowired
+    @Resource
     private MQProducerService<NoticeMsgInfoDTO> mqProducerService;
 
     @Resource
@@ -114,7 +112,7 @@ public class QcResultServiceImpl extends SuperServiceImpl<QcResultMapper, QcResu
     public void add(String billId, QcResultDTO.AddDTO qcInfo) {
         QcResultEntity qcResultEntity = new QcResultEntity();
         String id = qcInfo.getId();
-        if (StringUtils.isBlank(id)) {
+        if (CharSequenceUtil.isBlank(id)) {
             id = IdWorker.getIdStr();
         }
 
@@ -190,7 +188,7 @@ public class QcResultServiceImpl extends SuperServiceImpl<QcResultMapper, QcResu
         QcResultEntity qcInfo = this.getByBillId(billId);
         if (qcInfo != null) {
             BeanMapper.copy(qcInfo, qcInfoView);
-            List<WmsAttachmentDTO.UpdateDTO> attachmentList = wmsAttachmentService.getByBusinessIds(Arrays.asList(qcInfo.getId()));
+            List<WmsAttachmentDTO.UpdateDTO> attachmentList = wmsAttachmentService.getByBusinessIds(Collections.singletonList(qcInfo.getId()));
             List<String> imageUrlList = attachmentList.stream().filter(a->WmsConstant.BAD.equals(a.getType())).map(WmsAttachmentDTO.UpdateDTO::getAttachUrl).collect(Collectors.toList());
             List<String> nameList = attachmentList.stream().filter(a->WmsConstant.BAD.equals(a.getType())).map(WmsAttachmentDTO.UpdateDTO::getAttachName).collect(Collectors.toList());
             qcInfoView.setBadImageNameList(nameList);
@@ -378,7 +376,7 @@ public class QcResultServiceImpl extends SuperServiceImpl<QcResultMapper, QcResu
         if (CollectionUtils.isEmpty(list)) {
             return;
         }
-        List<DictBasicEntity> dictList = dictBasicService.getByKeyList(Arrays.asList(DictBasicEnum.HANDLE_MODE_TYPE.getKey()));
+        List<DictBasicEntity> dictList = dictBasicService.getByKeyList(Collections.singletonList(DictBasicEnum.HANDLE_MODE_TYPE.getKey()));
         List<String> skuIdList = list.stream().map(QcResultDTO.QcNoticeDTO::getSkuId).collect(Collectors.toList());
         List<SkuVO> skuVOList = plmTaskFeign.listSkuProductByIds(skuIdList);
         //采购订单id
@@ -456,7 +454,7 @@ public class QcResultServiceImpl extends SuperServiceImpl<QcResultMapper, QcResu
             noticeMsgInfoDTO.setTitle(NoticeMsgConstant.QC_BACK_FILL_PACK_HEAD);
             String productSize = CharSequenceUtil.format("{}X{}X{}", productPackDTO.getProductLength(), productPackDTO.getProductWidth(), productPackDTO.getProductHeight());
             String boxSize = CharSequenceUtil.format("{}X{}X{}", productPackDTO.getBoxLength(), productPackDTO.getBoxWeight(), productPackDTO.getBoxHeight());
-            String msgContent = StrUtil.format(NoticeMsgConstant.QC_BACK_FILL_PACK_CONTENT, productPackDTO.getSkuNo(), productSize,
+            String msgContent = CharSequenceUtil.format(NoticeMsgConstant.QC_BACK_FILL_PACK_CONTENT, productPackDTO.getSkuNo(), productSize,
                     boxSize, productPackDTO.getNetWeight(), productPackDTO.getBoxQty(), LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
             noticeMsgInfoDTO.setContent(msgContent);
             noticeMsgInfoDTO.setNoticeTypeEnum(NoticeTypeEnum.WMS_TASK);
@@ -545,7 +543,7 @@ public class QcResultServiceImpl extends SuperServiceImpl<QcResultMapper, QcResu
                     userIdList.addAll(people.getProductChargeIdList());
                 }
             }
-            userIdList = userIdList.stream().filter(u -> StringUtils.isNotBlank(u)).collect(Collectors.toList());
+            userIdList = userIdList.stream().filter(u -> CharSequenceUtil.isNotBlank(u)).collect(Collectors.toList());
             NoticeMsgInfoDTO noticeMsgInfoDTO = new NoticeMsgInfoDTO();
             noticeMsgInfoDTO.setReceiverUserIds(userIdList);
             noticeMsgInfoDTO.setTitle(msgHead);
@@ -572,7 +570,7 @@ public class QcResultServiceImpl extends SuperServiceImpl<QcResultMapper, QcResu
      */
     private List<ProductInfoDTO.ProductRolePeopleDTO> listSendUser (List<String> skuIdList,List<NoticeReceiverDTO.InfoDTO> receiverList,List<String> userIdList) {
         if (CollectionUtils.isEmpty(receiverList)) {
-            return Collections.EMPTY_LIST;
+            return Collections.emptyList();
         }
         //根据sku 获取角色的
         List<ProductInfoDTO.ProductRolePeopleDTO> rolePeopleList = new ArrayList<>();
@@ -598,7 +596,7 @@ public class QcResultServiceImpl extends SuperServiceImpl<QcResultMapper, QcResu
 
     private void addPdaMessage(List<String> userIdList, QcResultDTO.QcNoticeDTO item) {
         MessageEntity messageEntity = new MessageEntity();
-        messageEntity.setType(MessageTypeEnum.qc.getCode());
+        messageEntity.setType(MessageTypeEnum.QC.getCode());
         LinkedHashMap<String, Object> map = new LinkedHashMap();
         map.put("code", item.getCode());
         map.put("status", item.getQcStatus());

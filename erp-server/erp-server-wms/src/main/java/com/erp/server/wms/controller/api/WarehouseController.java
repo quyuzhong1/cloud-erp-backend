@@ -1,6 +1,7 @@
 package com.erp.server.wms.controller.api;
 
 
+import cn.hutool.core.text.CharSequenceUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.*;
@@ -80,7 +81,7 @@ public class WarehouseController extends BaseController {
             keyIdName = "id")
     public ApiResult add(@RequestBody @Validated WarehouseDTO.AddDTO dto) {
         String id = warehouseService.add(dto);
-        return StringUtils.isNotBlank(id) ? success() : failure();
+        return CharSequenceUtil.isNotBlank(id) ? success() : failure();
     }
 
     /**
@@ -149,7 +150,7 @@ public class WarehouseController extends BaseController {
             keyIdName = "id")
     public ApiResult update(@RequestBody @Validated WarehouseDTO.UpdateDTO dto) {
         String id  = warehouseService.updateWarehouse(dto);
-        return StringUtils.isNotBlank(id) ? success() : failure();
+        return CharSequenceUtil.isNotBlank(id) ? success() : failure();
     }
 
 

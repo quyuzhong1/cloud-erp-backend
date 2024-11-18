@@ -266,4 +266,12 @@ public interface TransferInfoService extends SuperService<TransferInfoEntity> {
     List<TransferInfoEntity> listBySourceId(String sourceId);
 
     PagingVO<TransferInfoDTO.ListDTO> exportTransferInfo(PagingDTO<TransferInfoDTO.SearchParamDTO> dto);
+
+    /**
+     * 批量修改调拨日期
+     * @param entity
+     * @param billDate
+     * @return
+     */
+    BatchResultDTO updateBillDate(TransferInfoEntity entity, LocalDate billDate);
 }
