@@ -1,17 +1,15 @@
 package com.erp.model.mrp.entity;
 
-import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
-import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
-
-import java.io.Serializable;
-import java.util.Date;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
+
+import java.io.Serializable;
+import java.time.LocalDate;
 
 /**
  * <p>
@@ -87,7 +85,7 @@ public class LocalHistoryInventoryEntity extends BaseEntity<LocalHistoryInventor
      * 单据日期
      */
     @TableField("bill_date")
-    private Date billDate;
+    private LocalDate billDate;
 
 
     public static final String WAREHOUSE_ID = "warehouse_id";

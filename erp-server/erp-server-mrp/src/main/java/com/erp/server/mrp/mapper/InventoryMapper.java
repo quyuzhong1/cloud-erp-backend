@@ -1,12 +1,12 @@
 package com.erp.server.mrp.mapper;
 
-import cn.hutool.json.JSONArray;
 import com.erp.model.mrp.dto.LocalInventoryDTO;
 import com.erp.model.mrp.dto.ReplenishmentResultDTO;
 import com.erp.model.scm.dto.PurchaseApplicationRefPoDTO;
 import com.erp.model.scm.entity.SubcontractOrderDetailEntity;
 import com.erp.model.tms.entity.LogisticsBillEntity;
 import com.erp.model.wms.dto.FirstMileDeliveryDTO;
+import com.erp.model.wms.dto.inventory.InventoryReportDTO;
 import com.erp.model.wms.entity.FbaInventoryEntity;
 import com.erp.model.wms.entity.InventoryEntity;
 import com.erp.model.wms.entity.OverseasInventoryEntity;
@@ -136,4 +136,10 @@ public interface InventoryMapper {
     List<ReplenishmentResultDTO.OverseasInTransitDetailDTO> getOverseasDelivery(@Param("result") ReplenishmentResultDTO replenishmentResultDTO, @Param("tableName") String tableName,
                                                                                 @Param("tableDetailName") String tableDetailName, @Param("otherTableName") String otherTableName,
                                                                                 @Param("otherTableDetailName") String otherTableDetailName);
+
+    /**
+     * 查询在途库存
+     */
+    List<InventoryReportDTO.TransportPagingDTO> listLocalInTransit(@Param("tableName") String tableName);
+
 }
