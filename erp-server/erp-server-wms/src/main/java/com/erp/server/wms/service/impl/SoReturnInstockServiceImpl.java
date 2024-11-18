@@ -213,8 +213,8 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         List<String> returnDetailIds = records.stream().map(SoReturnInstockDTO.PagingView::getSoReturnDetailId).distinct().collect(Collectors.toList());
         //退货单
         List<SoReturnDetailEntity> returnDetailEntityList = soReturnFeign.listDetailByMainIds(returnMainIds);
-        List<SoB2cReturnEntity> soB2cReturnEntityList = FeignQuery.getByIds(SoB2cReturnEntity.class,returnMainIds);
-        List<SoB2cReturnDetailEntity> soB2cReturnDetailEntityList = FeignQuery.getByIds(SoB2cReturnDetailEntity.class,returnDetailIds);
+//        List<SoB2cReturnEntity> soB2cReturnEntityList = FeignQuery.getByIds(SoB2cReturnEntity.class,returnMainIds);
+//        List<SoB2cReturnDetailEntity> soB2cReturnDetailEntityList = FeignQuery.getByIds(SoB2cReturnDetailEntity.class,returnDetailIds);
         //销售单详情id集合
         List<String> detailIds = returnDetailEntityList.stream().map(SoReturnDetailEntity::getSourceDetailId).collect(Collectors.toList());
         //获取销售单详情信息
@@ -227,11 +227,13 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         //根据销售单获取出库单
         List<SoOutstockDetailEntity> soOutstockDetailEntities = soOutstockDetailService.listDetailBySoIds(soIds);
         List<SoB2cEntity> soB2cEntityList = soB2cFeign.listByIds(soIds);
+        Map<String, String> soIdPlatFormCodeMap = soB2cFeign.listByIds(b2cSoIds).stream().collect(Collectors.toMap(SoB2cEntity::getId, SoB2cEntity::getPlatformCode));
         List<SoB2cDetailEntity> soB2cDetailEntityList = soB2cFeign.listDetailByMainIds(soIds);
         List<CustomerInfoEntity> customerInfoEntities = customerFeign.listCustomer();
         if (CollectionUtils.isNotEmpty(records)) {
             List<String> list = new ArrayList<>();
             records.forEach(obj -> {
+            	obj.setPlatformOrderCode(soIdPlatFormCodeMap.get(obj.getSoId()));
                 obj.setApproveStatusName(ApproveStatusEnum.getName(obj.getApproveStatus()));
                 obj.setInvalidStatusName(InvalidStatusEnum.getName(obj.getInvalidStatus()));
                 ProductDetailEntity productDetailEntity = detailEntityList.stream().filter(entityClass -> entityClass.getId().equals(obj.getSkuId())).findFirst().orElse(new ProductDetailEntity());
