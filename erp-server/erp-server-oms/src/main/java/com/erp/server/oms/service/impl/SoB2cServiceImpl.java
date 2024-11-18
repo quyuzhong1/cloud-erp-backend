@@ -5992,6 +5992,26 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     }
 
     @Override
+    public Boolean updateSoB2cStatus(List<String> ids, String status, Boolean isManualDelivery) {
+        if (CollectionUtils.isEmpty(ids)) {
+            return Boolean.FALSE;
+        }
+        Boolean updateResult = lambdaUpdate().in(SoB2cEntity::getId, ids)
+                .set(StrUtil.isNotBlank(status), SoB2cEntity::getBillStatus, status)
+                .set(Objects.nonNull(isManualDelivery), SoB2cEntity::getIsManualDelivery, isManualDelivery)
+                .update();
+        if (StrUtil.isBlank(status)){
+            return updateResult;
+        }
+        String statusName = SoB2cBillStatusEnum.getName(status);
+        String msg = "销售订单状态变更为:" + statusName;
+        for (String id : ids) {
+            operateLogService.addModuleOperateLog(StrUtil.format(msg, id), ModuleTypeEnum.SO_B2C.getCode(), id, "已发货");
+        }
+        return updateResult;
+    }
+
+    @Override
     public SoB2cEntity getByCode(String soCode) {
         return this.lambdaQuery().eq(SoB2cEntity::getCode, soCode).last( SqlConstants.LIMIT_1).one();
     }
@@ -6101,22 +6121,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         }
         this.updateById(entity);
         return isRuleMatch;
-    }
-
-    @Override
-    public Boolean updateSoB2cStatus(List<String> ids, String status) {
-        if (CollectionUtils.isEmpty(ids)) {
-            return Boolean.FALSE;
-        }
-        Boolean updateResult = lambdaUpdate().in(SoB2cEntity::getId, ids)
-                .set(SoB2cEntity::getBillStatus, status)
-                .update();
-        String statusName = SoB2cBillStatusEnum.getName(status);
-        String msg = "销售订单状态变更为:" + statusName;
-        for (String id : ids) {
-            operateLogService.addModuleOperateLog( CharSequenceUtil.format(msg, id), ModuleTypeEnum.SO_B2C.getCode(), id, "已发货");
-        }
-        return updateResult;
     }
 
     /**
@@ -7318,6 +7322,72 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     }
 
     @Override
+    public List<SoB2cDTO.ChangeDeliverySkuViewDTO> changeDeliverySkuView(List<String> ids) {
+        List<SoB2cEntity> soB2cEntityList = listByIds(ids);
+        //订单更换发货SKU操作只能在待提交和审核不通过状态操作
+        List<SoB2cEntity> notChangeList = soB2cEntityList.stream().filter(e -> !(ApproveStatusEnum.WAIT_SUBMIT.equals(e.getApproveStatus()) || ApproveStatusEnum.REJECT.equals(e.getApproveStatus()))).collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(notChangeList)){
+            List<String> codeList = notChangeList.stream().map(SoB2cEntity::getCode).distinct().collect(Collectors.toList());
+            throw new ServiceException(ApiError.ERROR_92154, String.join(",",codeList));
+        }
+        List<SoB2cDTO.ChangeDeliverySkuViewDTO> changeDeliverySkuViewDTOS = baseMapper.listChangeDeliverySkuView(ids);
+        List<String> skuIds = changeDeliverySkuViewDTOS.stream().map(SoB2cDTO.ChangeDeliverySkuViewDTO::getSkuId).distinct().collect(Collectors.toList());
+        List<SkuVO> skuVOList = plmTaskFeign.listSkuProductByIds(skuIds);
+        changeDeliverySkuViewDTOS.forEach(e ->{
+            if (StrUtil.isNotBlank(e.getSkuId())){
+                SkuVO skuVO = skuVOList.stream().filter(f -> Objects.equals(f.getSkuId(), e.getSkuId())).findFirst().orElse(new SkuVO());
+                e.setProductName(skuVO.getSkuName());
+                e.setSpuName(skuVO.getSpuName());
+                e.setSpuNo(skuVO.getSpuNo());
+            }
+        });
+        return changeDeliverySkuViewDTOS;
+    }
+
+    @Override
+    public void updateIsChangeSku(List<String> ids, Boolean isChangeSku) {
+        if (CollectionUtils.isEmpty(ids)){
+            return;
+        }
+        this.lambdaUpdate()
+                .in(SoB2cEntity::getId, ids).ne(SoB2cEntity::getIsChangeSku,isChangeSku)
+                .set(SoB2cEntity::getIsChangeSku,isChangeSku).update();
+    }
+
+    /**
+     * 拉取订单失败
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void fetchOrderFail(SoB2cEntity soB2cEntity){
+        //生成异常信息
+        String soB2cId = soB2cEntity.getId();
+        String type = SoB2cErrorTypeEnum.ORDER_FETCH_FAIL.getCode();
+        String paramJson = JSONUtil.toJsonStr(soB2cEntity);
+        log.error("订单拉取失败,soB2cId:{},paramJson:{} 错误信息:{}", soB2cId, paramJson, ApiError.ERROR_SO_B2C_DELIVERY_FETCH.msg);
+        SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO();
+        addError.setType(type);
+        addError.setMainId(soB2cId);
+        addError.setMessage(ApiError.ERROR_SO_B2C_DELIVERY_FETCH.msg);
+        addError.setParamJson(paramJson);
+        soB2cErrorService.add(addError);
+        //审核不通过
+        //检查是否存在流程
+        ApproveOneDTO dto = new ApproveOneDTO(soB2cEntity.getId(), ApproveTypeEnum.REJECT.getStatus(), "", Boolean.FALSE);
+        this.approve(dto, null, "");
+    }
+
+    @Override
+    public void fetchOrderSuccess(SoB2cEntity soB2cEntity) {
+        //清除异常信息
+        soB2cErrorService.removeErrorOrder(soB2cEntity.getId(), SoB2cErrorTypeEnum.ORDER_FETCH_FAIL.getCode());
+        //审核通过
+        //检查是否存在流程
+        ApproveOneDTO dto = new ApproveOneDTO(soB2cEntity.getId(), ApproveTypeEnum.PASS.getStatus(), "", Boolean.FALSE);
+        this.approve(dto, null, "");
+    }
+
+    @Override
     public SoB2cDTO.SoB2cDataDTO listSoB2cData(SoB2cDTO.SoB2cDataParamDTO paramDTO) {
         //校验必填
         if(CollectionUtils.isEmpty(paramDTO.getB2cSoIdList()) && CollectionUtils.isEmpty(paramDTO.getB2cSoCodeList())) {
@@ -7330,7 +7400,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         //数据id集合
         List<String> b2cSoIdList = paramDTO.getB2cSoIdList();
         //主表信息
-        List<SoB2cEntity> list = new ArrayList<>();
+        List<SoB2cEntity> list;
         //只有编号，没有id
         if (CollectionUtils.isEmpty(b2cSoIdList) && CollectionUtils.isNotEmpty(paramDTO.getB2cSoCodeList())) {
              list = this.listBySoCodeList(b2cSoIdList);

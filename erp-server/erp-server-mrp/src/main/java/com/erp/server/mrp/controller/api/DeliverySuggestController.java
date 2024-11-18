@@ -91,9 +91,9 @@ public class DeliverySuggestController extends BaseController {
      */
     @PostMapping("/update")
     @LogAction(value = LogActionEnum.UPDATE, desc = "更新")
-    public ApiResult<?> update(@RequestBody @Validated DeliverySuggestDTO.UpdateDTO updateDTO) {
+    public ApiResult<String> update(@RequestBody @Validated DeliverySuggestDTO.UpdateDTO updateDTO) {
         Boolean flag = deliverySuggestService.update(updateDTO);
-        return flag ? success() : failure();
+        return Boolean.TRUE.equals(flag) ? success() : failure();
     }
 
 
@@ -105,7 +105,7 @@ public class DeliverySuggestController extends BaseController {
      * @return ApiResult<?>
      */
     @GetMapping("/downloadTemplate")
-    public ApiResult<?> downloadTemplate(HttpServletResponse response) {
+    public ApiResult<String> downloadTemplate(HttpServletResponse response) {
         deliverySuggestService.downloadTemplate(response);
         return success();
     }
@@ -136,7 +136,7 @@ public class DeliverySuggestController extends BaseController {
      */
     @PostMapping("/locking")
     @LogAction(value = LogActionEnum.UPDATE, desc = "锁定")
-    public ApiResult<?> locking(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+    public ApiResult<List<BatchResultDTO>> locking(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {
             BatchResultDTO resultDTO;
@@ -166,7 +166,7 @@ public class DeliverySuggestController extends BaseController {
      */
     @PostMapping("/confirm")
     @LogAction(value = LogActionEnum.CONFIRM, desc = "确认")
-    public ApiResult<?> confirm(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+    public ApiResult<List<BatchResultDTO>> confirm(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {
             BatchResultDTO resultDTO;
@@ -196,7 +196,7 @@ public class DeliverySuggestController extends BaseController {
      */
     @PostMapping("/invalid")
     @LogAction(value = LogActionEnum.INVALID, desc = "作废")
-    public ApiResult<?> invalid(@RequestBody @Validated BaseIdsDTO.RemarkDTO dto) {
+    public ApiResult<List<BatchResultDTO>> invalid(@RequestBody @Validated BaseIdsDTO.RemarkDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {
             BatchResultDTO resultDTO;
@@ -226,7 +226,7 @@ public class DeliverySuggestController extends BaseController {
      */
     @PostMapping("/updateRemark")
     @LogAction(value = LogActionEnum.UPDATE, desc = "更新备注")
-    public ApiResult<?> updateRemark(@RequestBody @Validated BaseIdsDTO.RemarkDTO dto) {
+    public ApiResult<List<BatchResultDTO>> updateRemark(@RequestBody @Validated BaseIdsDTO.RemarkDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {
             BatchResultDTO resultDTO;
@@ -257,9 +257,9 @@ public class DeliverySuggestController extends BaseController {
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出发货建议")
     @PostMapping(value = "/export")
     @WebAdvanceQuery(handler = ReplenishmentSuggestionQueryHandler.class)
-    public ApiResult export(@RequestBody DeliverySuggestDTO.PagingParamDTO pagingParamDTO) {
+    public ApiResult<String> export(@RequestBody DeliverySuggestDTO.PagingParamDTO pagingParamDTO) {
         Boolean flag = deliverySuggestService.export(pagingParamDTO);
-        return flag == true ? success() : failure();
+        return Boolean.TRUE.equals(flag) ? success() : failure();
     }
 
     /**
@@ -283,9 +283,9 @@ public class DeliverySuggestController extends BaseController {
      * @return ApiResult<ViewPushDeliveryPlanDTO>
      */
     @PostMapping(value = "/pushDeliveryPlan")
-    public ApiResult pushDeliveryPlan(@RequestBody DeliverySuggestDTO.AddPushDeliveryPlanDTO deliveryPlanDTO) {
+    public ApiResult<String> pushDeliveryPlan(@RequestBody DeliverySuggestDTO.AddPushDeliveryPlanDTO deliveryPlanDTO) {
         Boolean flag = deliverySuggestService.pushDeliveryPlan(deliveryPlanDTO);
-        return flag == true ? success() : failure();
+        return Boolean.TRUE.equals(flag) ? success() : failure();
     }
 
 
