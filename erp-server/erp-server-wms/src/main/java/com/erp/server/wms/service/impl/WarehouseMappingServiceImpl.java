@@ -1,6 +1,7 @@
 package com.erp.server.wms.service.impl;
 
 
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.common.business.dto.base.BaseIdDTO;
@@ -22,6 +23,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.Resource;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -38,7 +40,7 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 public class WarehouseMappingServiceImpl extends SuperServiceImpl<WarehouseMappingMapper, WarehouseMappingEntity> implements WarehouseMappingService {
-    @Autowired
+    @Resource
     private SysUserFeign sysUserFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class)
@@ -120,7 +122,7 @@ public class WarehouseMappingServiceImpl extends SuperServiceImpl<WarehouseMappi
             return null;
         }
         //组织信息
-        List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(Arrays.asList(mappingViewByDictPlatform.getWarehouseOrgId()));
+        List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(Collections.singletonList(mappingViewByDictPlatform.getWarehouseOrgId()));
         BaseIdDTO.CodeDTO codeDTO = accountingCompanyList.stream().filter(req -> mappingViewByDictPlatform.getWarehouseOrgId().equals(req.getId())).findFirst().orElse(null);
         if (ObjectUtil.isNotEmpty(codeDTO)) {
             mappingViewByDictPlatform.setWarehouseOrgName(codeDTO.getName());
@@ -130,7 +132,7 @@ public class WarehouseMappingServiceImpl extends SuperServiceImpl<WarehouseMappi
 
     @Override
     public WarehouseMappingEntity checkThirdWarehouseNameExist(String thirdWarehouseName, String dictPlatform) {
-        if (StringUtils.isBlank(thirdWarehouseName)) {
+        if (CharSequenceUtil.isBlank(thirdWarehouseName)) {
             return null;
         }
         WarehouseMappingEntity entity = lambdaQuery()

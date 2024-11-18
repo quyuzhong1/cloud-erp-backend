@@ -1,6 +1,7 @@
 package com.erp.server.wms.service.impl;
 
 
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseResultDTO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
@@ -26,6 +27,9 @@ import java.util.stream.Collectors;
 
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
+
+import javax.annotation.Resource;
+
 /**
  * <p>
  * 装箱任务明细表 服务实现类
@@ -37,7 +41,7 @@ import com.common.core.enums.ApiError;
 @Slf4j
 @Service
 public class PackingTaskDetailServiceImpl extends SuperServiceImpl<PackingTaskDetailMapper, PackingTaskDetailEntity> implements PackingTaskDetailService {
-    @Autowired
+    @Resource
     private OperateLogService operateLogService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
@@ -57,7 +61,7 @@ public class PackingTaskDetailServiceImpl extends SuperServiceImpl<PackingTaskDe
         }
 
         // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "装箱任务明细单" , packingTaskDetailEntity.getId());
+        String msg = CharSequenceUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "装箱任务明细单" , packingTaskDetailEntity.getId());
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLog(msg, null, packingTaskDetailEntity.getId(), "新增操作");
         // TODO 新增明细（如果有明细的话）
@@ -72,7 +76,9 @@ public class PackingTaskDetailServiceImpl extends SuperServiceImpl<PackingTaskDe
     @Override
     public Boolean update(PackingTaskDetailDTO.UpdateDTO updateDTO) {
         PackingTaskDetailEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "装箱任务明细单"));
+        if (Objects.isNull(old)){
+            throw new ServiceException(ApiError.NOT_EXIST_BILL, "装箱任务明细单");
+        }
         PackingTaskDetailEntity packingTaskDetailEntity =  BeanMapperUtils.map(PackingTaskDetailEntity.class, updateDTO);
 
         // 数据处理
@@ -86,7 +92,7 @@ public class PackingTaskDetailServiceImpl extends SuperServiceImpl<PackingTaskDe
 
         // 记录主单操作日志
             log.info("编辑 开始记录装箱任务明细单日志数据，id：【{}】", packingTaskDetailEntity.getId());
-            String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), packingTaskDetailEntity.getId(), "装箱任务明细单");
+            String msg = CharSequenceUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), packingTaskDetailEntity.getId(), "装箱任务明细单");
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLogByObj(old, packingTaskDetailEntity, null, packingTaskDetailEntity.getId(), msg);
         return Boolean.TRUE;
@@ -102,7 +108,7 @@ public class PackingTaskDetailServiceImpl extends SuperServiceImpl<PackingTaskDe
 
     @Override
     public void removeByMainId(String mainId) {
-        if (StrUtil.isNotBlank(mainId)){
+        if (CharSequenceUtil.isNotBlank(mainId)){
             lambdaUpdate().eq(PackingTaskDetailEntity::getMainId, mainId).remove();
         }
     }
@@ -121,7 +127,7 @@ public class PackingTaskDetailServiceImpl extends SuperServiceImpl<PackingTaskDe
 
     @Override
     public Integer countDeliveryQty(String id) {
-        if (StrUtil.isNotBlank(id)){
+        if (CharSequenceUtil.isNotBlank(id)){
             return baseMapper.countDeliveryQty(id);
         }
         return 0;
@@ -134,7 +140,7 @@ public class PackingTaskDetailServiceImpl extends SuperServiceImpl<PackingTaskDe
      */
     @Override
     public List<PackingTaskDetailDTO.ViewDTO> searchProductBySearchKey(String taskId, String searchKey) {
-        if (StrUtil.isBlank(searchKey)){
+        if (CharSequenceUtil.isBlank(searchKey)){
             return Collections.emptyList();
         }
         return baseMapper.searchProductBySearchKey(taskId, searchKey);

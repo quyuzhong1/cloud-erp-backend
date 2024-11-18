@@ -10,9 +10,8 @@ import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
 
 /**
- * <p>
+ *
  * 本地推送消息表请求响应实体
- * </p>
  *
  * @author shukai
  * @since 2024-08-29

@@ -3,7 +3,7 @@ package com.erp.server.plm.controller.api;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.plm.dto.ProductMilepostShowDTO;
-import com.erp.model.plm.dto.productProgressShowDTO;
+import com.erp.model.plm.dto.ProductProgressShowDTO;
 import com.erp.server.plm.service.ProjectTaskProgressService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -45,8 +45,8 @@ public class ProjectTaskProgressController extends BaseController {
      * @return ApiResult<productProgressShowDTO>
      */
     @GetMapping("/getFinishProgressList")
-    public ApiResult<productProgressShowDTO> getFinishProgressList(@RequestParam("productId") String productId) {
-        productProgressShowDTO dto = projectTaskProgressService.getFinishProgressList(productId);
+    public ApiResult<ProductProgressShowDTO> getFinishProgressList(@RequestParam("productId") String productId) {
+        ProductProgressShowDTO dto = projectTaskProgressService.getFinishProgressList(productId);
         return success(dto);
     }
 

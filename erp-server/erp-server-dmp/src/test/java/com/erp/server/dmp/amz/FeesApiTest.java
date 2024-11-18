@@ -26,7 +26,7 @@ import org.junit.Test;
 @Ignore
 public class FeesApiTest {
 
-    private final FeesApi api = null;
+    private final FeesApi api = new FeesApi(null);
 
     
     /**

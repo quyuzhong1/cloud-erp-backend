@@ -3,7 +3,6 @@ package com.erp.model.sys.enums;
 /**
  * @author Lambda
  * @Classname DictValueEnum
- * @Description TODO
  * @Date 2023-09-05 16:58
  * @Created by yl
  */

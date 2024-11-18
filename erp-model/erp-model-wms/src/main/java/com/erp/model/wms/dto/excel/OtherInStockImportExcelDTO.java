@@ -2,7 +2,6 @@ package com.erp.model.wms.dto.excel;
 
 import com.alibaba.excel.annotation.ExcelIgnore;
 import com.alibaba.excel.annotation.ExcelProperty;
-import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.core.anno.FieldValid;
 import com.common.core.enums.FieldFormatPatternTypeEnum;
 import com.erp.model.wms.enums.InstockTypeEnum;
@@ -10,7 +9,6 @@ import com.erp.model.wms.enums.InventoryDirectionEnum;
 import lombok.Data;
 
 import java.io.Serializable;
-import java.time.LocalDate;
 
 /**
  * 其他出库单导入

@@ -4,12 +4,12 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.erp.model.oms.dto.CfgRuleOrderHandleDTO;
 import com.erp.model.oms.entity.CfgOperateLogFieldEntity;
-import com.erp.model.oms.entity.ListingInfoEntity;
-import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.server.oms.mapper.CfgOperateLogFieldMapper;
 import com.erp.server.oms.service.CfgOperateLogFieldService;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.Resource;
 import java.util.Arrays;
 import java.util.List;
 
@@ -24,6 +24,9 @@ import java.util.List;
 @Service
 public class CfgOperateLogFieldServiceImpl extends SuperServiceImpl<CfgOperateLogFieldMapper, CfgOperateLogFieldEntity> implements CfgOperateLogFieldService {
 
+    @Lazy
+    @Resource
+    private CfgOperateLogFieldService cfgOperateLogFieldService;
 
     @Override
     public List<CfgOperateLogFieldEntity> listByClassPaths(List<String> classPaths) {
@@ -43,7 +46,7 @@ public class CfgOperateLogFieldServiceImpl extends SuperServiceImpl<CfgOperateLo
                 new CfgOperateLogFieldEntity().setField("receiveFillText").setFieldName("收货人为空填充文本").setClassPath(classPath).setType(0) .setEnumClass(""),
                 new CfgOperateLogFieldEntity().setField("filterReceiveTextList").setFieldName("收货人过滤特殊符号").setClassPath(classPath).setType(0) .setEnumClass("")
         );
-        return this.saveBatch(logFields);
+        return cfgOperateLogFieldService.saveBatch(logFields);
 
     }
 }

@@ -14,7 +14,7 @@ import java.util.Date;
  */
 @Data
 @TableName(value ="template_role_ref_members")
-public class TemplateRoleRefMembersEntity extends BaseEntity implements Serializable {
+public class TemplateRoleRefMembersEntity extends BaseEntity<TemplateRoleRefMembersEntity> implements Serializable {
     /**
      * 成员表id
      */

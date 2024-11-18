@@ -1,12 +1,19 @@
 package com.erp.server.dmp.inout.handler.input.task.init.api.antu;
 
-import cn.hutool.core.collection.CollUtil;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
+import javax.annotation.Resource;
+
+import org.springframework.context.annotation.Scope;
+import org.springframework.stereotype.Service;
+
 import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.TypeReference;
-import com.common.business.enums.OmsPlatformEnum;
-import com.common.business.enums.OverseasInstockStatusEnum;
 import com.common.business.threadlocal.ThirdWarehouseContext;
-import com.common.core.utils.MathUtil;
 import com.erp.model.dmp.entity.DmpCfgApiEntity;
 import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
 import com.erp.model.wms.entity.OverseasProviderEntity;
@@ -15,25 +22,12 @@ import com.erp.server.dmp.inout.dto.base.DmpInputTaskInitDTO;
 import com.erp.server.dmp.inout.dto.request.DmpInputInitRequest;
 import com.erp.server.dmp.inout.dto.response.DmpInputTaskResponse;
 import com.erp.server.dmp.inout.handler.input.task.init.DmpInputInitHandler;
-import com.erp.server.dmp.inout.utils.DmpHandlerCache;
-import com.sdk.wms.antu.dto.request.AntuGetOutboundReq;
-import com.sdk.wms.antu.dto.request.AntuGetReceiptReq;
 import com.sdk.wms.antu.dto.request.AntuGetReturnReq;
-import com.sdk.wms.antu.dto.response.AntuReceiptResp;
 import com.sdk.wms.antu.dto.response.AntuResponse;
-import com.sdk.wms.antu.enums.AntuEnums;
 import com.sdk.wms.antu.utils.AntuUtils;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Service;
 
-import javax.annotation.Resource;
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import cn.hutool.core.collection.CollUtil;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * dmp输入init任务基础处理器下的安兔api获取数据方式
@@ -44,10 +38,6 @@ import java.util.List;
 @Service
 @Scope("prototype")
 public class AntuReturnInstockInitHandler extends DmpInputInitHandler {
-
-
-    @Resource
-    private DmpHandlerCache dmpHandlerCache;
 
     @Resource
     private WmsOverseasWarehouseFeign overseasWarehouseFeign;

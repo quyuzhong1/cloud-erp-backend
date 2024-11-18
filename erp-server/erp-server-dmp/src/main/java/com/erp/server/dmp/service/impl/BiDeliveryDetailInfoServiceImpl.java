@@ -141,7 +141,8 @@ public class BiDeliveryDetailInfoServiceImpl extends ServiceImpl<BiDeliveryDetai
             return deliveryDetailId;
         }
         String orderId = deliveryDetailId;
-        itemList.stream().peek(entity -> entity.setDeliveryDetailId(orderId)).collect(Collectors.toList());
+        List<BiDeliveryDetailItemEntity> biDeliveryDetailItemEntityList = itemList.stream().peek(entity -> entity.setDeliveryDetailId(orderId)).collect(Collectors.toList());
+        log.debug("发货明细：{}" , JSON.toJSONString(biDeliveryDetailItemEntityList));
         biDeliveryDetailItemService.deleteDeliveryDetailItemByDetailId(deliveryDetailId);
 
         biDeliveryDetailItemService.batchAdd(itemList, biDeliveryDetailInfoEntity.getPlatformSign());

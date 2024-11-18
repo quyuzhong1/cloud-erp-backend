@@ -3,6 +3,7 @@ package com.erp.model.mrp.entity;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
@@ -23,8 +24,10 @@ import java.util.Date;
 @Setter
 @Accessors(chain = true)
 @TableName("sales_estimate_history")
+@EqualsAndHashCode(callSuper = true)
 public class SalesEstimateHistoryEntity extends BaseEntity<SalesEstimateHistoryEntity> {
 
+    private static final long serialVersionUID = 6812665112796899079L;
     /**
      * 补货建议id
      */

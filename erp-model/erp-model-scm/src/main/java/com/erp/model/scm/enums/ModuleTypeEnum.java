@@ -115,6 +115,9 @@ public enum ModuleTypeEnum {
     DELIVERY_NOTICE_CHANGE("98", "发货通知变更单"),
     SO_B2C_RETURN("98", "b2c退货单"),
     REFUND_ORDER("99", "退款单"),
+    DICT_RULE_CONDITION("110", "条件字典单"),
+    RULE_CONDITION("111", "规则条件单"),
+    CFG_RULE_VIRTUAL_TRANS("112", "虚拟库存交易规则设置"),
     ;
 
 

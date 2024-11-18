@@ -1,5 +1,6 @@
 package com.erp.server.wms.schedule;
 
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson2.JSONArray;
@@ -58,7 +59,7 @@ public class KingdeeExtensionJob {
         }
         // 请求获取最新库存组织关账时间列表
         String jsonArray = KingdeeExtensionUtils.queryStkClosedList();
-        if (StringUtils.isBlank(jsonArray)) {
+        if (CharSequenceUtil.isBlank(jsonArray)) {
             XxlJobHelper.log("[拉取【关账时间】(金蝶->WMS)]：列表响应为空");
             log.error("[拉取金蝶库存组织关账时间列表任务]：列表响应为空");
             return ReturnT.FAIL;
@@ -85,7 +86,7 @@ public class KingdeeExtensionJob {
             return ReturnT.SUCCESS;
         }
         //现只取STK信息
-        newEntityList = newEntityList.stream().filter(obj -> StrUtil.equals(obj.getCategory(), InventoryClosedRecordEnum.STK.getCode())).collect(Collectors.toList());
+        newEntityList = newEntityList.stream().filter(obj -> CharSequenceUtil.equals(obj.getCategory(), InventoryClosedRecordEnum.STK.getCode())).collect(Collectors.toList());
         if (CollectionUtils.isEmpty(newEntityList)) {
             XxlJobHelper.log("拉取【STK关账时间】(金蝶->WMS)]：执行结束-无需要金蝶最新库存组织关账时间保存记录");
             return ReturnT.SUCCESS;

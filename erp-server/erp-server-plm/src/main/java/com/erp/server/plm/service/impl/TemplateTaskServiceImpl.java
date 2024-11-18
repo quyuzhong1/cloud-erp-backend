@@ -1,6 +1,6 @@
 package com.erp.server.plm.service.impl;
 
-import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.collection.CollUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -22,7 +22,6 @@ import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.*;
 import com.erp.model.plm.enums.DistributionTypeEnum;
 import com.erp.model.plm.enums.RelatedSkuTypeEnum;
-import com.erp.model.plm.enums.TaskTypeEnum;
 import com.erp.model.plm.vo.PreTaskVO;
 import com.erp.model.plm.vo.TemplateTaskVO;
 import com.erp.model.sys.dto.UserSuperiorDTO;
@@ -217,8 +216,6 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
         if (CollectionUtils.isEmpty(list)) {
             throw new ServiceException(ApiError.ERROR_95058);
         }
-        TemplateTaskEntity entity = list.stream().findFirst().orElse(null);
-        Integer IsFixed = entity.getIsFixed();
         //判断是否是子任务
         checkTaskIfExistPid(id, templateId);
         //删除任务交付文档数据
@@ -345,7 +342,7 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
         }
         List<PreTaskVO> preTaskList = templatePreTaskService.getTemplatePreTaskIdList(dto.getId(), dto.getTemplateId());
         List<String> pretaskIdList = Collections.emptyList();
-        if (CollectionUtil.isNotEmpty(preTaskList)) {
+        if (CollUtil.isNotEmpty(preTaskList)) {
             pretaskIdList = preTaskList.stream().map(PreTaskVO::getPreTaskId).collect(Collectors.toList());
         }
         resultVO.setPreTaskIdList(pretaskIdList);
@@ -406,11 +403,6 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
                 taskEntity.setProjectId(projectId);
                 taskEntity.setId(taskId);
                 String chargeId = item.getChargeId();
-                List<String> chargeIdList = new ArrayList<>();
-                if (StringUtils.isNotBlank(chargeId)) {
-                    chargeIdList = Arrays.asList(chargeId.split(","));
-                }
-
                 source.setNewCreateId(taskId);
                 source.setDataId(item.getId());
                 CopySourceDTO phase = phaseSourceList.stream().filter(p -> p.getDataId()
@@ -478,7 +470,7 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
 
     @Override
     public PagingVO<TemplateTaskShowDTO> paging(PagingDTO<TemplateSearchDTO> dto) {
-        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+        Page<TemplateSearchDTO> query = new Page(dto.getCurrPage(), dto.getPageSize());
         TemplateSearchDTO params = dto.getParams();
         IPage<TemplateTaskShowDTO> paging = baseMapper.paging(query, params);
         return new PagingVO(paging);
@@ -499,31 +491,11 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
         String notRelated = RelatedSkuTypeEnum.NOT_RELATED.getCode();
 
         boolean isNotRelated = notRelated.equalsIgnoreCase(dto.getRelatedSkuType());
-        //配置表单属性
-        String fieldConfigType = dto.getFieldConfigType();
-        //生成sku
-        String createSku = TaskConstant.CREATE_SKU;
-        //填写sku
-        String fillProductInfo = TaskConstant.FILL_PRODUCT_INFO;
-        //配置表单属性
-        String fieldJson = dto.getFieldJson();
-        //第一种 sku不等于空并且大于0  并且  表单属性不为空且为填写
-        Boolean needCheckFirst = (StringUtils.isNotBlank(fieldConfigType) && fillProductInfo.equals(fieldConfigType) && StringUtils.isNotBlank(fieldJson));
 
-        //第二种 sku 没有  并且 表单属性不为空 且为生成
-        Boolean needCheckSecond = (StringUtils.isNotBlank(fieldConfigType) && (createSku.equals(fieldConfigType) || (StringUtils.isNotBlank(dto.getFieldJson()) && RelatedSkuTypeEnum.ALL_RELATED.getCode().equals(dto.getRelatedSkuType()))));
-        Integer type = dto.getType();
-        Integer generalTask = TaskTypeEnum.GENERAL_TASK.getCode();
+
         List<TaskChargeDistributionDTO> approvalList = dto.getApprovalList();
         //TODO 2023-03-30 暂时取消审核流程
-        //如果配置表单 一般任务 一定要走流程,自定义审核人，存在多级审核及会签，暂时用两层list接收，之后公共审核模块可添加审核人表储存
-/*        if (needCheckFirst || needCheckSecond) {
-            if (generalTask.equals(type)) {
-                if (CollectionUtils.isEmpty(approvalList)) {
-                    throw new ServiceException(ApiError.ERROR_95078);
-                }
-            }
-        }*/
+
         String uid = loginUser.getUid();
         String userName = loginUser.getUserName();
         if (StringUtils.isBlank(dto.getId())) {
@@ -778,7 +750,7 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
     @Override
     public PagingVO<TemplateTaskShowDTO> templateTaskList(PagingDTO<TemplateTaskSearchDTO> dto) {
         String docsNameStr = null;
-                Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+                Page<TemplateTaskSearchDTO> query = new Page<>(dto.getCurrPage(), dto.getPageSize());
         TemplateTaskSearchDTO params = dto.getParams();
         if (StringUtils.isBlank(params.getTemplateId())) {
             throw new ServiceException(ApiError.ERROR_95157);
@@ -796,7 +768,7 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
 
         }
         IPage<TemplateTaskShowDTO> paging = baseMapper.templateTaskList(query, params, chargeNameStr, docsNameStr);
-        return new PagingVO(paging);
+        return new PagingVO<>(paging);
     }
 
     /**
@@ -862,16 +834,6 @@ public class TemplateTaskServiceImpl extends ServiceImpl<TemplateTaskMapper, Tem
          * 当项目经理不为空的时候保经理
          */
         if (StringUtils.isNotBlank(productInfoEntity.getProjectChargeId())) {
-/*                roleName = "项目经理";
-                memberList = projectMembersService.listByRoleNames(null, productId, roleName);
-                List<String> projectChargeIds = new ArrayList<>();
-                if (CollectionUtils.isNotEmpty(memberList)) {
-                    projectChargeIds = memberList.stream().map(MemberPagingShowDTO::getMemberName).collect(Collectors.toList());
-                } else {
-                    projectChargeIds = Arrays.asList(productInfoEntity.getProjectChargeId().split(","));
-                }
-                //新增或修改项目经理角色和对应成员
-                projectMembersService.saveByRoleAndMembers(productId, null, "项目经理", projectChargeIds);*/
             projectMembersService.saveByRoleAndMembers(productId, null, "项目经理", Arrays.asList(productInfoEntity.getProjectChargeId()));
         }
 

@@ -22,5 +22,5 @@ public interface BomOperateLogService  extends IService<BomOperateLogEntity> {
 
     List<BomOperateVO> getOperateLog(String id);
 
-    PagingVO<List<BomOperateVO>> paging(PagingDTO<BaseIdDTO> dto);
+    PagingVO<BomOperateVO> paging(PagingDTO<BaseIdDTO> dto);
 }

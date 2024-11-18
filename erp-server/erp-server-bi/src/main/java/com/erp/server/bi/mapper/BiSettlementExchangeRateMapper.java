@@ -27,7 +27,7 @@ public interface BiSettlementExchangeRateMapper extends BaseMapper<BiSettlementE
      * @param params
      * @return IPage<ListDTO>
      */
-    IPage<BiSettlementExchangeRateDTO.ListDTO> paging(Page query,@Param("params") BiSettlementExchangeRateDTO.SearchParamDTO params);
+    IPage<BiSettlementExchangeRateDTO.ListDTO> paging(Page<Object> query,@Param("params") BiSettlementExchangeRateDTO.SearchParamDTO params);
     /**
      * @description: 根据币制和日期查询汇率信息
      * @author Will

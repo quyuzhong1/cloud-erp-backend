@@ -42,7 +42,7 @@ public class CommonController extends BaseController {
      **/
     @LogAction(value = LogActionEnum.UPLOAD, desc = "上传图片:文件名={name}")
     @PostMapping("/upload")
-    public ApiResult upload(@RequestParam("multipartFile") MultipartFile[] multipartFile, HttpServletRequest request) {
+    public ApiResult<List<String>> upload(@RequestParam("multipartFile") MultipartFile[] multipartFile, HttpServletRequest request) {
         List<String> list = new ArrayList<>();
         for (MultipartFile file : multipartFile) {
             String filePath = FastDFSClientUtil.uploadFile(file);

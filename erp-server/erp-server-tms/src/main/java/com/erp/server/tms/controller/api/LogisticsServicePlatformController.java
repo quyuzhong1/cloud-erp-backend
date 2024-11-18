@@ -59,7 +59,7 @@ public class LogisticsServicePlatformController extends BaseController {
     */
     @PostMapping("/update")
     @LogAction(value = LogActionEnum.UPDATE, desc = "物流平台服务表修改")
-    public ApiResult<?> update(@RequestBody @Validated LogisticsServicePlatformDTO.UpdateDTO dto) {
+    public ApiResult<Object> update(@RequestBody @Validated LogisticsServicePlatformDTO.UpdateDTO dto) {
         logisticsServicePlatformService.update(dto);
         return success();
     }

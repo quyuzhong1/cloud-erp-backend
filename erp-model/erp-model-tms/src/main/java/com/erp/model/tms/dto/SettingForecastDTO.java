@@ -1,6 +1,5 @@
 package com.erp.model.tms.dto;
 
-import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -15,7 +14,6 @@ import java.util.List;
 /**
  * @author Lambda
  * @Classname SettingForecastDTO
- * @Description TODO
  * @Date 2024-01-18 14:53
  * @Created by yl
  */

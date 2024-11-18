@@ -1,6 +1,6 @@
 package com.erp.model.mrp.enums;
 
-import cn.hutool.core.util.StrUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import com.common.core.constant.EnumMessage;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -42,7 +42,7 @@ public enum CfgRulePlatformTypeEnum implements EnumMessage {
             return "";
         }
         for (CfgRulePlatformTypeEnum statusEnum : CfgRulePlatformTypeEnum.values()) {
-            if (StrUtil.equals(code,statusEnum.getCode())) {
+            if (CharSequenceUtil.equals(code,statusEnum.getCode())) {
                 return statusEnum.getName();
             }
         }

@@ -65,7 +65,7 @@ public class DmpSoRefundInfoServiceImpl extends SuperServiceImpl<DmpSoRefundInfo
     @Override
     public Boolean update(DmpSoRefundInfoDTO.UpdateDTO updateDTO) {
         DmpSoRefundInfoEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "中台销售退款单主单"));
+        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "中台销售退款单主单"));
         DmpSoRefundInfoEntity dmpSoRefundInfoEntity =  BeanMapperUtils.map(DmpSoRefundInfoEntity.class, updateDTO);
 
         // 数据处理

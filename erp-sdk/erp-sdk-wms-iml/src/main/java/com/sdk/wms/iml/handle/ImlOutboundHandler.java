@@ -21,6 +21,7 @@ import com.sdk.wms.iml.enums.ImlEnums;
 import com.sdk.wms.iml.service.ImlService;
 import io.seata.common.util.StringUtils;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.poi.ss.formula.functions.T;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
@@ -43,7 +44,7 @@ public class ImlOutboundHandler extends AbstractPullThirdWarehouseHandler<ImlOut
     private ImlService imlService;
 
     @Resource
-    private MQProducerService mqProducerService;
+    private MQProducerService<T> mqProducerService;
 
     private final String failureMsgHead = "调用艾姆勒获取出库数据接口异常";
 
@@ -115,9 +116,6 @@ public class ImlOutboundHandler extends AbstractPullThirdWarehouseHandler<ImlOut
     @Override
     public String getTargetPlatform() {
         return PlatformEnum.ERP_WMS.getDesc();
-    }
-    private PlatformDictEnum getPlatformDictEnum(){
-        return PlatformDictEnum.IML;
     }
     public boolean isSuccess(String ask){
         return "Success".equals(ask);

@@ -108,36 +108,6 @@ public class CfgConditionEntity extends BaseEntity<CfgConditionEntity> {
      */
     @TableField("rule_type")
     private String ruleType;
-
-
-    public static final String CONDITION_FIELD = "condition_field";
-
-    public static final String LOGIC = "logic";
-
-    public static final String CONTROLS = "controls";
-
-    public static final String API_URL = "api_url";
-
-    public static final String CONDITION_FIELD_NAME = "condition_field_name";
-
-    public static final String REQUEST_METHOD = "request_method";
-
-    public static final String PARAM = "param";
-
-    public static final String LABEL = "label";
-
-    public static final String VALUE = "value";
-
-    public static final String INDEX = "index";
-
-    public static final String SEARCH_KEY = "search_key";
-
-    public static final String REMOTE_LABEL = "remote_label";
-
-    public static final String VALUE_TYPE = "value_type";
-
-    public static final String RULE_TYPE = "rule_type";
-
     @Override
     public Serializable pkVal() {
         return null;

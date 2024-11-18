@@ -1,7 +1,7 @@
 package com.erp.server.plm.service.impl;
 
-import cn.hutool.core.collection.CollectionUtil;
-import cn.hutool.core.util.ArrayUtil;
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.PrimitiveArrayUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -298,8 +298,6 @@ public class BasicCategoryServiceImpl extends ServiceImpl<BasicCategoryMapper, B
     @Override
     public List<BasicCategoryDTO> getListTree(String type) {
         List<BasicCategoryEntity> list = this.list();
-        //产品开发
-        String productDevelop = ProductConstant.PRODUCT_DEVELOPMENT;
         //产品
         String product = ProductConstant.product;
         //产品归档
@@ -461,7 +459,7 @@ public class BasicCategoryServiceImpl extends ServiceImpl<BasicCategoryMapper, B
                 .ne(2 == grade, BasicCategoryEntity::getPid,"0")
                 .eq(1 == grade, BasicCategoryEntity::getPid,"0")
                 .list();
-        if(CollectionUtil.isEmpty(list)){
+        if(CollUtil.isEmpty(list)){
             return Collections.emptyList();
         }
         List<CategoryControllerDTO.CategoryDropDownDTO> result = list.stream()
@@ -583,7 +581,7 @@ public class BasicCategoryServiceImpl extends ServiceImpl<BasicCategoryMapper, B
      * @date 2022-09-13 12:17
      */
     private void checkCategoryName(String categoryName, String id) {
-        LambdaQueryWrapper<BasicCategoryEntity> queryWrapper = new LambdaQueryWrapper();
+        LambdaQueryWrapper<BasicCategoryEntity> queryWrapper = new LambdaQueryWrapper<BasicCategoryEntity>();
         queryWrapper.eq(BasicCategoryEntity::getName, categoryName);
         queryWrapper.last("LIMIT 1");
         BasicCategoryEntity entity = this.getOne(queryWrapper);
@@ -603,16 +601,12 @@ public class BasicCategoryServiceImpl extends ServiceImpl<BasicCategoryMapper, B
     private void checkCategoryCode(String code, String pid, String id) {
         BasicCategoryEntity parent = this.getById(pid);
         //一二级分类必须填写代号
-        if ("0".equals(pid) || (ObjectUtils.isNotEmpty(parent) && "0".equals(parent.getPid()))) {
-            if (StringUtils.isBlank(code)) {
-                throw new ServiceException(ApiError.ERROR_95069);
-            }
+        if (("0".equals(pid) || (ObjectUtils.isNotEmpty(parent) && "0".equals(parent.getPid()))) && StringUtils.isBlank(code)) {
+             throw new ServiceException(ApiError.ERROR_95069);
         }
-        if (!"0".equals(pid) && StringUtils.isNotBlank(code)) {
+        if ((!"0".equals(pid) && StringUtils.isNotBlank(code)) && (ObjectUtils.isNotEmpty(parent) && !"0".equals(parent.getPid()))) {
             //判断是否是二级分类，非一、二级分类无需添加代号
-            if (ObjectUtils.isNotEmpty(parent) && !"0".equals(parent.getPid())) {
-                throw new ServiceException(ApiError.ERROR_95093);
-            }
+             throw new ServiceException(ApiError.ERROR_95093);
         }
         //分类必须要填分类代码，并且当前分类级别的分类代码不能重复，只有一二级存在代号
         if (StringUtils.isBlank(code)) {
@@ -627,7 +621,7 @@ public class BasicCategoryServiceImpl extends ServiceImpl<BasicCategoryMapper, B
         }
         Boolean isError = false;
         for (char num : chars) {
-            if (!ArrayUtil.contains(numbers,num)) {
+            if (!PrimitiveArrayUtil.contains(numbers,num)) {
                 isError = true;
             }
         }
@@ -653,7 +647,7 @@ public class BasicCategoryServiceImpl extends ServiceImpl<BasicCategoryMapper, B
      **/
     @Override
     public BasicCategoryEntity getCategoryByName(String categoryName, Boolean isMainCategory) {
-        LambdaQueryWrapper<BasicCategoryEntity> queryWrapper = new LambdaQueryWrapper();
+        LambdaQueryWrapper<BasicCategoryEntity> queryWrapper = new LambdaQueryWrapper<BasicCategoryEntity>();
         queryWrapper.eq(BasicCategoryEntity::getName, categoryName);
         if (isMainCategory) {
             queryWrapper.eq(BasicCategoryEntity::getPid, "0");

@@ -1,5 +1,6 @@
 package com.erp.server.wms.service.impl;
 
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.annotation.TableName;
@@ -162,7 +163,7 @@ public class WmsAttachmentServiceImpl extends SuperServiceImpl<WmsAttachmentMapp
     public void removeAttachment(AttachmentDTO.DeleteDTO dto) {
         LambdaQueryWrapper<WmsAttachmentEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(WmsAttachmentEntity::getAttachUrl, dto.getAttachUrl());
-        if (StringUtils.isNotBlank(dto.getBusinessId())) {
+        if (CharSequenceUtil.isNotBlank(dto.getBusinessId())) {
             queryWrapper.eq(WmsAttachmentEntity::getBusinessId, dto.getBusinessId());
 
         }
@@ -173,14 +174,14 @@ public class WmsAttachmentServiceImpl extends SuperServiceImpl<WmsAttachmentMapp
     public void addByWarehouseEquipment(WmsAttachmentDTO.AddDTO dto) {
         String fileName = dto.getFileName();
         String url = dto.getUrl();
-        if(StringUtils.isBlank(fileName) || StringUtils.isBlank(url)){
+        if(CharSequenceUtil.isBlank(fileName) || CharSequenceUtil.isBlank(url)){
             return;
         }
         //去掉文件后缀名
         fileName = FileUtil.removeExtension(fileName);
         String[] fileNameArr = fileName.split("-");
         String code = fileNameArr[0];
-        if(StringUtils.isBlank(code)){
+        if(CharSequenceUtil.isBlank(code)){
             return;
         }
         WmsAttachmentEntity entity = new WmsAttachmentEntity();

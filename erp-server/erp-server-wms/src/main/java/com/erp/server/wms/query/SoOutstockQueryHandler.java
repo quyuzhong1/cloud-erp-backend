@@ -44,21 +44,6 @@ public class SoOutstockQueryHandler extends AbstractQueryHandler {
             List<String> customerIds = customerList.stream().map(v->v.getId()).collect(Collectors.toList());
             super.buildDefaultDTO("so.customer_id", customerIds);
         }
-//        if("so.track_no".equals(field)){
-//            AdvanceQueryContainer advanceQueryContainer = AdvanceQueryContainer.builder()
-//                    .advanceQueryDTOList(Arrays.asList(AdvanceQueryDTO.builder()
-//                                    .field("lbd.track_no")
-//                                    .value(value)
-//                                    .compare(AdvanceQueryContext.getCompareCode().getCompareCode())
-//                                    .dataType(QueryDataTypeEnum.STRING.getCode())
-//                            .build()))
-//                    .build();
-//            List<String> ids = logisticsBillFeign.listSoOutIdByQuery(advanceQueryContainer);
-//            if(CollectionUtils.isEmpty(ids)){
-//                return getQueryEmptySql();
-//            }
-//            super.buildDefaultDTO("so.id", ids);
-//        }
         if("so.tab".equals(field)){
             String searchType = value.toString();
             if ("all".equals(searchType)) {

@@ -1,5 +1,6 @@
 package com.erp.server.wms.controller.feign;
 
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
 import com.common.business.dto.PlatformFbaShipmentDTO;
@@ -41,7 +42,7 @@ public class ShipmentFeignController extends BaseController {
      * @author Jim
      */
     @PostMapping("/consumer")
-    public ApiResult<?> consumerPullShipment(@RequestBody PlatformFbaShipmentDTO platformFbaShipmentDTO){
+    public ApiResult consumerPullShipment(@RequestBody PlatformFbaShipmentDTO platformFbaShipmentDTO){
         return platformFbaShipmentConsumerService.handle(new JSONObject(platformFbaShipmentDTO));
     }
 
@@ -57,7 +58,7 @@ public class ShipmentFeignController extends BaseController {
             return true;
         }
         List<FbaShipmentReceiveEntity> receiveEntityList = FbaShipmentReceiveConverter.INSTANCE.sourceListToEntityList(groupEntity.getDetailList());
-        Map<String, List<FbaShipmentReceiveEntity>> groupMap = receiveEntityList.stream().collect(Collectors.groupingBy(e -> StrUtil.format("{}_{}", e.getFbaShipmentId(), e.getReceiveDate())));
+        Map<String, List<FbaShipmentReceiveEntity>> groupMap = receiveEntityList.stream().collect(Collectors.groupingBy(e -> CharSequenceUtil.format("{}_{}", e.getFbaShipmentId(), e.getReceiveDate())));
 //        groupMap.forEach((key, value) -> fbaShipmentReceiveService.saveAndCheckTransfer(value, entity));
         for (Map.Entry<String, List<FbaShipmentReceiveEntity>> entry : groupMap.entrySet()) {
             fbaShipmentReceiveService.saveAndCheckTransfer(entry.getValue(), entity);

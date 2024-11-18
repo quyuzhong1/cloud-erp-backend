@@ -1,6 +1,7 @@
 package com.erp.server.oms.controller.api;
 
 
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
@@ -237,7 +238,7 @@ public class ShopInfoController extends BaseController {
                     if (Objects.nonNull(disabled) && !Objects.equals(disabled, shop.getDisabled()) && Objects.equals(disabled, true)) {
                         Boolean flag = checkDmpThirdMapping(id);
                         if (!flag) {
-                            submit = BatchResultDTO.fail(id, shop.getName(), StrUtil.format(ApiError.EXIST_THIRD_SHOP_MAPPING.msg,shop.getName()));
+                            submit = BatchResultDTO.fail(id, shop.getName(),  CharSequenceUtil.format(ApiError.EXIST_THIRD_SHOP_MAPPING.msg,shop.getName()));
                         }else{
                             flagCode = shop.getName();
                             submit = shopInfoService.updateStatus(shop, disabled);

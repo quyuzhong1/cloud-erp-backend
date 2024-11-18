@@ -1,7 +1,9 @@
 package com.sdk.tms.shopee.service;
 
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.common.core.exception.ServiceException;
 import com.sdk.tms.shopee.constant.PathConstants;
@@ -17,6 +19,7 @@ import com.sdk.tms.shopee.model.logistics.response.TrackNumber;
 import com.sdk.tms.shopee.model.logistics.response.TrackResponse;
 import com.sdk.tms.shopee.utils.ShopeeApiUtils;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
 
 import java.io.File;
@@ -35,23 +38,19 @@ import java.util.Objects;
 @Slf4j
 @Component
 public class ShopeeLogisticsService {
-    public static void main(String[] args) {
-        String shop_access_token = "6e41797262594e465057794861595653";
-        long partner_id = 1070627;
-        String tmp_partner_key = "5975757847654870727869546f436e696f4b454d466a74586f46696555466348";
-        long shop_id = 94349;
-        ShopeeLogisticsService service = new ShopeeLogisticsService();
-        BaseRequest baseRequest = BaseRequest.builder()
-                .accessToken(shop_access_token)
-                .partnerId(partner_id)
-                .partnerKey(tmp_partner_key)
-                .shopId(shop_id)
-                .build();
-        BaseResponse channelList = service.getChannelList(baseRequest);
-        System.out.println(channelList);
-    }
 
+    private static String ERR_MSG = "虾皮获取跟踪号列表请求异常:{}";
 
+    private static String ERR_MSG_GET = "虾皮【{}】获取标发参数异常请求异常:{}";
+
+    private static String ERR_BF = "获取标发参数异常：{}";
+    
+    private static String ERR_NAME = "error";
+    
+    private static String ORDER_LIST = "order_list";
+    
+    private static String RESULT_LIST= "result_list";
+    
     /**
      * 获取渠道列表
      *
@@ -80,17 +79,17 @@ public class ShopeeLogisticsService {
         paramMap.put("order_sn", orderSn);
         BaseResponse baseResponse = ShopeeApiUtils.sendGet(baseRequest.getHost() + baseRequest.getPath(), paramMap);
         if (Objects.isNull(baseResponse) || Objects.isNull(baseResponse.getResponse())) {
-            throw new ServiceException(StrUtil.format("虾皮获取【{}】物流单请求异常:{}",orderSn,baseResponse));
+            throw new ServiceException(CharSequenceUtil.format("虾皮获取【{}】物流单请求异常:{}",orderSn,baseResponse));
         }
         JSONObject response = baseResponse.getResponse();
-        String error = response.getString("error");
-        if (StrUtil.isNotEmpty(error)) {
+        String error = response.getString(ERR_NAME);
+        if (StringUtils.isNotEmpty(error)) {
             log.error("获取追踪号异常：{}", error);
-            throw new ServiceException(StrUtil.format("虾皮获取【{}】物流单接口异常:{}",orderSn,error));
+            throw new ServiceException(CharSequenceUtil.format("虾皮获取【{}】物流单接口异常:{}",orderSn,error));
         }
-        TrackResponse trackResponse = JSONObject.parseObject(response.toJSONString(), TrackResponse.class);
-        if (Objects.isNull(trackResponse) || StrUtil.isBlank(trackResponse.getTrackingNumber())){
-            throw new ServiceException(StrUtil.format("虾皮获取【{}】物流单接口参数异常:{}",orderSn,trackResponse));
+        TrackResponse trackResponse = JSON.parseObject(response.toJSONString(), TrackResponse.class);
+        if (Objects.isNull(trackResponse) || StringUtils.isBlank(trackResponse.getTrackingNumber())){
+            throw new ServiceException(CharSequenceUtil.format("虾皮获取【{}】物流单接口参数异常:{}",orderSn,trackResponse));
         }
         return trackResponse;
     }
@@ -120,16 +119,16 @@ public class ShopeeLogisticsService {
         paramMap.put("cursor", trackRequest.getCursor());
         BaseResponse baseResponse = ShopeeApiUtils.sendGet(baseRequest.getHost() + baseRequest.getPath(), paramMap);
         if (Objects.isNull(baseResponse) || Objects.isNull(baseResponse.getResponse())) {
-            throw new ServiceException(StrUtil.format("虾皮获取跟踪号列表请求异常:{}",trackRequest));
+            throw new ServiceException(CharSequenceUtil.format(ERR_MSG,trackRequest));
         }
         JSONObject response = baseResponse.getResponse();
-        String error = response.getString("error");
-        if (StrUtil.isNotEmpty(error)) {
+        String error = response.getString(ERR_NAME);
+        if (StringUtils.isNotEmpty(error)) {
             log.error("获取追踪号异常：{}", error);
-            throw new ServiceException(StrUtil.format("虾皮获取跟踪号列表接口异常:{}",error));
+            throw new ServiceException(CharSequenceUtil.format("虾皮获取跟踪号列表接口异常:{}",error));
         }
         //追踪号列表
-        return JSONObject.parseObject(response.toJSONString(), TrackNumber.class);
+        return JSON.parseObject(response.toJSONString(), TrackNumber.class);
     }
 
     /**
@@ -144,19 +143,19 @@ public class ShopeeLogisticsService {
         baseRequest.setTimestamp(timestamp);
         HashMap<String, Object> urlParams = getOrderCommonParam(baseRequest);
         JSONObject jsonObject = new JSONObject();
-        jsonObject.put("order_list",orderRequestList);
+        jsonObject.put(ORDER_LIST,orderRequestList);
         BaseResponse baseResponse = ShopeeApiUtils.sendPost(baseRequest.getHost() + baseRequest.getPath(), urlParams, jsonObject.toJSONString());
         if (Objects.isNull(baseResponse) || Objects.isNull(baseResponse.getResponse())) {
-            throw new ServiceException(StrUtil.format("虾皮获取跟踪号列表请求异常:{}",orderRequestList));
+            throw new ServiceException(CharSequenceUtil.format(ERR_MSG,orderRequestList));
         }
         JSONObject response = baseResponse.getResponse();
-        String error = response.getString("error");
-        if (StrUtil.isNotEmpty(error)) {
+        String error = response.getString(ERR_NAME);
+        if (StringUtils.isNotEmpty(error)) {
             log.error("获取面单打印参数异常：{}", error);
-            throw new ServiceException(StrUtil.format("虾皮获取跟踪号列表请求异常:{}",error));
+            throw new ServiceException(CharSequenceUtil.format(ERR_MSG,error));
         }
         //打印列表
-        return JSONObject.parseArray(response.getString("result_list"), ShippingDocumentParameterResponse.class);
+        return JSON.parseArray(response.getString(RESULT_LIST), ShippingDocumentParameterResponse.class);
     }
     /**
      * 创建面单打印
@@ -170,19 +169,19 @@ public class ShopeeLogisticsService {
         baseRequest.setTimestamp(timestamp);
         HashMap<String, Object> urlParams = getOrderCommonParam(baseRequest);
         JSONObject jsonObject = new JSONObject();
-        jsonObject.put("order_list",orderRequestList);
+        jsonObject.put(ORDER_LIST,orderRequestList);
         BaseResponse baseResponse = ShopeeApiUtils.sendPost(baseRequest.getHost() + baseRequest.getPath(), urlParams, jsonObject.toJSONString());
         if (Objects.isNull(baseResponse) || Objects.isNull(baseResponse.getResponse())) {
-            throw new ServiceException(StrUtil.format("虾皮创建面单打印请求异常:{}",baseResponse));
+            throw new ServiceException(CharSequenceUtil.format("虾皮创建面单打印请求异常:{}",baseResponse));
         }
         JSONObject response = baseResponse.getResponse();
-        String error = response.getString("error");
-        if (StrUtil.isNotEmpty(error)) {
+        String error = response.getString(ERR_NAME);
+        if (StringUtils.isNotEmpty(error)) {
             log.error("创建面单打印异常：{}", error);
-            throw new ServiceException(StrUtil.format("虾皮创建面单打印请求异常:{}",error));
+            throw new ServiceException(CharSequenceUtil.format("虾皮创建面单打印请求异常:{}",error));
         }
         //打印列表
-        return JSONObject.parseArray(response.getString("result_list"), ShippingDocumentParameterResponse.class);
+        return JSON.parseArray(response.getString(RESULT_LIST), ShippingDocumentParameterResponse.class);
     }
 
     /**
@@ -197,19 +196,19 @@ public class ShopeeLogisticsService {
         baseRequest.setTimestamp(timestamp);
         HashMap<String, Object> urlParams = getOrderCommonParam(baseRequest);
         JSONObject jsonObject = new JSONObject();
-        jsonObject.put("order_list",orderRequestList);
+        jsonObject.put(ORDER_LIST,orderRequestList);
         BaseResponse baseResponse = ShopeeApiUtils.sendPost(baseRequest.getHost() + baseRequest.getPath(), urlParams, jsonObject.toJSONString());
         if (Objects.isNull(baseResponse) || Objects.isNull(baseResponse.getResponse())) {
-            throw new ServiceException(StrUtil.format("虾皮获取创建发货面单结果请求异常:{}",orderRequestList));
+            throw new ServiceException(CharSequenceUtil.format("虾皮获取创建发货面单结果请求异常:{}",orderRequestList));
         }
         JSONObject response = baseResponse.getResponse();
-        String error = response.getString("error");
-        if (StrUtil.isNotEmpty(error)) {
+        String error = response.getString(ERR_NAME);
+        if (StringUtils.isNotEmpty(error)) {
             log.error("获取创建发货面单异常：{}", error);
-            throw new ServiceException(StrUtil.format("虾皮获取创建发货面单结果请求异常:{}",error));
+            throw new ServiceException(CharSequenceUtil.format("虾皮获取创建发货面单结果请求异常:{}",error));
         }
         //打印列表
-        return JSONObject.parseArray(response.getString("result_list"), ShippingDocumentParameterResponse.class);
+        return JSON.parseArray(response.getString(RESULT_LIST), ShippingDocumentParameterResponse.class);
     }
 
     /**
@@ -226,7 +225,7 @@ public class ShopeeLogisticsService {
         HashMap<String, Object> urlParams = getOrderCommonParam(baseRequest);
         JSONObject jsonObject = new JSONObject();
         jsonObject.put("shipping_document_type",shippingDocumentType);
-        jsonObject.put("order_list",orderRequestList);
+        jsonObject.put(ORDER_LIST,orderRequestList);
         return ShopeeApiUtils.sendPostBase64(baseRequest.getHost() + baseRequest.getPath(), urlParams, jsonObject.toJSONString());
     }
 
@@ -243,28 +242,28 @@ public class ShopeeLogisticsService {
         HashMap<String, Object> paramMap = getOrderCommonParam(baseRequest);
         //请求参数
         paramMap.put("order_sn", orderSn);
-        if (StrUtil.isNotBlank(packageNumber)){
+        if (StringUtils.isNotBlank(packageNumber)){
             paramMap.put("package_number", packageNumber);
         }
         BaseResponse baseResponse = ShopeeApiUtils.sendGet(baseRequest.getHost() + path, paramMap);
         if (Objects.isNull(baseResponse) || Objects.isNull(baseResponse.getResponse())) {
-            log.error("获取标发参数异常：{}", baseResponse);
-            throw new ServiceException(StrUtil.format("虾皮【{}】获取标发参数异常请求异常:{}",orderSn,baseResponse));
+            log.error(ERR_BF, baseResponse);
+            throw new ServiceException(CharSequenceUtil.format(ERR_MSG_GET,orderSn,baseResponse));
         }
         JSONObject response = baseResponse.getResponse();
-        String error = response.getString("error");
-        if (StrUtil.isNotEmpty(error)) {
-            log.error("获取标发参数异常：{}", error);
-            throw new ServiceException(StrUtil.format("虾皮【{}】获取标发参数异常请求异常:{}",orderSn,error));
+        String error = response.getString(ERR_NAME);
+        if (StringUtils.isNotEmpty(error)) {
+            log.error(ERR_BF, error);
+            throw new ServiceException(CharSequenceUtil.format(ERR_MSG_GET,orderSn,error));
         }
-        ShipDetailResponse shipDetailResponse = JSONObject.parseObject(response.toJSONString(), ShipDetailResponse.class);
+        ShipDetailResponse shipDetailResponse = JSON.parseObject(response.toJSONString(), ShipDetailResponse.class);
         if (Objects.isNull(shipDetailResponse)){
-            throw new ServiceException(StrUtil.format("虾皮【{}】获取标发参数接口异常:{}",orderSn,response));
+            throw new ServiceException(CharSequenceUtil.format("虾皮【{}】获取标发参数接口异常:{}",orderSn,response));
         }
         return shipDetailResponse;
     }
     public BaseResponse shippingOrder(BaseRequest baseRequest, ShipOrderRequest shipOrderRequest) {
-//        String path = "/api/v2/logistics/ship_order";
+
         String path = PathConstants.POST_SHIPPING_ORDER;
         baseRequest.setPath(path);
         long timestamp = System.currentTimeMillis() / 1000L;
@@ -272,13 +271,13 @@ public class ShopeeLogisticsService {
         HashMap<String, Object> paramMap = getOrderCommonParam(baseRequest);
         BaseResponse baseResponse = ShopeeApiUtils.sendPost(baseRequest.getHost() + path, paramMap, JSONUtil.toJsonStr(shipOrderRequest));
         if (Objects.isNull(baseResponse)) {
-            log.error("获取标发参数异常：{}", baseResponse);
-            throw new ServiceException(StrUtil.format("虾皮【{}】获取标发参数异常请求异常",shipOrderRequest.getOrderSn()));
+            log.error(ERR_BF, baseResponse);
+            throw new ServiceException(CharSequenceUtil.format("虾皮【{}】获取标发参数异常请求异常",shipOrderRequest.getOrderSn()));
         }
         String error = baseResponse.getError();
-        if (StrUtil.isNotEmpty(error)) {
-            log.error("获取标发参数异常：{}", error);
-            throw new ServiceException(StrUtil.format("虾皮【{}】获取标发参数异常请求异常:{}",shipOrderRequest.getOrderSn(),error));
+        if (StringUtils.isNotEmpty(error)) {
+            log.error(ERR_BF, error);
+            throw new ServiceException(CharSequenceUtil.format(ERR_MSG_GET,shipOrderRequest.getOrderSn(),error));
         }
         return baseResponse;
     }

@@ -10,7 +10,7 @@ import com.common.core.controller.vo.ApiResult;
 import com.erp.model.oms.dto.RuleLogisticsDTO;
 import com.erp.server.oms.service.RuleLogisticsService;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
+import javax.annotation.Resource;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -25,7 +25,7 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/ruleLogistics")
 public class RuleLogisticsController extends BaseController {
 
-    @Autowired
+    @Resource
     private RuleLogisticsService ruleLogisticsService;
 
 

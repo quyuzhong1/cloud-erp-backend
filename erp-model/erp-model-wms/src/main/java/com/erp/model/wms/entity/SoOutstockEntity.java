@@ -295,11 +295,11 @@ public class SoOutstockEntity extends BaseEntity<SoOutstockEntity> {
     @TableField(exist = false)
     private List<SoOutstockDetailEntity> detailList;
 
-    public static final String CODE = "code";
+    
 
     public static final String APPROVE_STATUS = "approve_status";
 
-    public static final String TYPE = "type";
+    
 
     public static final String SO_ID = "so_id";
 

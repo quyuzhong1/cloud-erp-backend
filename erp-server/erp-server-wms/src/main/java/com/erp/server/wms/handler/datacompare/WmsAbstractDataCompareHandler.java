@@ -28,12 +28,14 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.lang.Pair;
 import cn.hutool.core.lang.UUID;
 
+import javax.annotation.Resource;
+
 @Service
 public abstract class WmsAbstractDataCompareHandler implements WmsDataCompareBillService{
 	
 	private String billType;
 	
-	@Autowired
+	@Resource
 	private WmsDataCompareImportService wmsDataCompareImportService;
 	
 	@Override

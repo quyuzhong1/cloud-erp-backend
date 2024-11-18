@@ -1,7 +1,12 @@
 package com.erp.model.msg.enums;
 
+import cn.hutool.core.collection.CollUtil;
+
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * @Classname: MessageChannelEnum
@@ -17,6 +22,13 @@ public enum MessageChannelEnum {
     private String code;
 
     private String name;
+
+    public static List<MessageChannelEnum> getByCodes(List<String> channelCodes) {
+        if (CollUtil.isEmpty(channelCodes)){
+            return Collections.emptyList();
+        }
+        return Arrays.stream(MessageChannelEnum.values()).filter(r -> channelCodes.contains(r.getCode())).collect(Collectors.toList());
+    }
 
 
     public String getCode() {

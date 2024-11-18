@@ -1,7 +1,9 @@
 package com.erp.server.wms.service.impl;
 
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -34,6 +36,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -55,25 +58,25 @@ import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_REPORT_ORDE
 @Slf4j
 @Service
 public class ReportOrderDemandServiceImpl extends SuperServiceImpl<ReportOrderDemandMapper, ReportOrderDemandEntity> implements ReportOrderDemandService {
-    @Autowired
+    @Resource
     private DownloadTaskFeign downloadTaskFeign;
 
-    @Autowired
+    @Resource
     private InventoryService inventoryService;
 
-    @Autowired
+    @Resource
     private VirtualInventoryService virtualInventoryService;
 
-    @Autowired
+    @Resource
     private VirtualWarehouseRelationService virtualWarehouseRelationService;
 
-    @Autowired
+    @Resource
     private VirtualWarehouseService virtualWarehouseService;
 
-    @Autowired
+    @Resource
     private VirtualWarehouseAllocationService virtualWarehouseAllocationService;
 
-    @Autowired
+    @Resource
     private ReportOrderSalesService reportOrderSalesService;
 
 
@@ -137,8 +140,8 @@ public class ReportOrderDemandServiceImpl extends SuperServiceImpl<ReportOrderDe
         }
 
         //虚拟仓调拨
-        List<VirtualWarehouseRelationEntity> list = virtualWarehouseRelationService.getByWarehouseId(Arrays.asList(resultDTO.getWarehouseId()));
-        if (CollectionUtil.isEmpty(list)) {
+        List<VirtualWarehouseRelationEntity> list = virtualWarehouseRelationService.getByWarehouseId(Collections.singletonList(resultDTO.getWarehouseId()));
+        if (CollUtil.isEmpty(list)) {
             return resultDTO;
         }
         //虚拟仓
@@ -147,8 +150,8 @@ public class ReportOrderDemandServiceImpl extends SuperServiceImpl<ReportOrderDe
 
         //可用库存
         VirtualInventoryDTO.VirtualInventoryParamDTO paramDTO = new VirtualInventoryDTO.VirtualInventoryParamDTO();
-        paramDTO.setSkuIdList(Arrays.asList(resultDTO.getSkuId()));
-        paramDTO.setWarehouseIdList(Arrays.asList(resultDTO.getWarehouseId()));
+        paramDTO.setSkuIdList(Collections.singletonList(resultDTO.getSkuId()));
+        paramDTO.setWarehouseIdList(Collections.singletonList(resultDTO.getWarehouseId()));
         paramDTO.setVirtualWarehouseIdList(virtualWarehouseIdList);
         List<VirtualInventoryDTO.VirtualInventoryQtyDTO> virtualInventoryList = virtualInventoryService.listInventoryQty(paramDTO);
 
@@ -156,19 +159,19 @@ public class ReportOrderDemandServiceImpl extends SuperServiceImpl<ReportOrderDe
         for (VirtualWarehouseRelationEntity relationEntity : list) {
 
             //数据虚拟仓和调入虚拟仓一致则跳过
-            if (StrUtil.equals(dto.getVirtualWarehouseId(),relationEntity.getVirtualWarehouseId())) {
+            if (CharSequenceUtil.equals(dto.getVirtualWarehouseId(),relationEntity.getVirtualWarehouseId())) {
                 continue;
             }
             ReportOrderDemandDTO.VirtualTransferViewDTO transferViewDTO = new ReportOrderDemandDTO.VirtualTransferViewDTO();
             transferViewDTO.setVirtualWarehouseId(relationEntity.getVirtualWarehouseId());
             //虚拟仓名称
-            String virtualWarehouseName = virtualWarehouseList.stream().filter(obj -> StrUtil.equals(obj.getId(), relationEntity.getVirtualWarehouseId()))
+            String virtualWarehouseName = virtualWarehouseList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), relationEntity.getVirtualWarehouseId()))
                     .map(VirtualWarehouseEntity::getName).findFirst().orElse("");
             transferViewDTO.setVirtualWarehouseName(virtualWarehouseName);
 
             //虚拟仓可用
-            Integer virtualUsableQty = virtualInventoryList.stream().filter(obj -> StrUtil.equals(InventoryStatusEnum.USABLE.getCode(), obj.getDictInventoryStatus())
-                            && StrUtil.equals(obj.getVirtualWarehouseId(),transferViewDTO.getVirtualWarehouseId()))
+            Integer virtualUsableQty = virtualInventoryList.stream().filter(obj -> CharSequenceUtil.equals(InventoryStatusEnum.USABLE.getCode(), obj.getDictInventoryStatus())
+                            && CharSequenceUtil.equals(obj.getVirtualWarehouseId(),transferViewDTO.getVirtualWarehouseId()))
                     .map(VirtualInventoryDTO.VirtualInventoryQtyDTO::getInventoryQty).reduce(MathUtil.ZERO, Integer::sum);
             transferViewDTO.setVirtualUsableQty(virtualUsableQty);
             //小于等于0则跳过
@@ -186,7 +189,7 @@ public class ReportOrderDemandServiceImpl extends SuperServiceImpl<ReportOrderDe
     public Boolean addAllocation(ReportOrderDemandDTO.AddVirtualAllocationDTO dto) {
         ReportOrderDemandDTO.AddAllocationDTO addAllocationDTO = dto.getAddAllocationDTO();
 
-        if (ObjectUtil.isEmpty(addAllocationDTO) && CollectionUtil.isEmpty(dto.getVirtualTransferList())) {
+        if (ObjectUtil.isEmpty(addAllocationDTO) && CollUtil.isEmpty(dto.getVirtualTransferList())) {
             throw new ServiceException("新增分货和虚拟仓调拨未填写数据不支持分货");
         }
         //新增分货
@@ -195,7 +198,7 @@ public class ReportOrderDemandServiceImpl extends SuperServiceImpl<ReportOrderDe
         }
 
         //虚拟仓调拨
-        if (CollectionUtil.isNotEmpty(dto.getVirtualTransferList())) {
+        if (CollUtil.isNotEmpty(dto.getVirtualTransferList())) {
             addVirtualTransfer(dto.getVirtualTransferList(),dto.getSkuId());
         }
         return Boolean.TRUE;
@@ -205,7 +208,7 @@ public class ReportOrderDemandServiceImpl extends SuperServiceImpl<ReportOrderDe
 
     @Override
     public List<ReportOrderDemandDTO.BatchViewVirtualAllocationDTO> batchViewAllocation(ValidList<ReportOrderDemandDTO.ViewVirtualAllocationParamDTO> list) {
-        if (CollectionUtil.isEmpty(list) || CollectionUtil.isEmpty(list.getList())) {
+        if (CollUtil.isEmpty(list) || CollUtil.isEmpty(list.getList())) {
             throw new ServiceException("选择数据不能为空");
         }
         List<ReportOrderDemandDTO.ViewVirtualAllocationParamDTO> paramList = list.getList();
@@ -231,8 +234,8 @@ public class ReportOrderDemandServiceImpl extends SuperServiceImpl<ReportOrderDe
         List<VirtualWarehouseRelationEntity> relationList = virtualWarehouseRelationService.getByWarehouseId(warehouseIdList);
         List<String> newVirtualWarehouseIdList = relationList.stream().map(VirtualWarehouseRelationEntity::getVirtualWarehouseId).distinct().collect(Collectors.toList());
 
-        if (CollectionUtil.isEmpty(newVirtualWarehouseIdList)) {
-            return Collections.EMPTY_LIST;
+        if (CollUtil.isEmpty(newVirtualWarehouseIdList)) {
+            return Collections.emptyList();
         }
         //虚拟仓
         List<VirtualWarehouseEntity> virtualWarehouseList = virtualWarehouseService.listByIds(newVirtualWarehouseIdList);
@@ -246,9 +249,9 @@ public class ReportOrderDemandServiceImpl extends SuperServiceImpl<ReportOrderDe
 
         for (ReportOrderDemandDTO.ViewVirtualAllocationParamDTO paramDTO : paramList) {
 
-            ReportOrderDemandDTO.ViewDTO oldDTO = virtualAllocationList.stream().filter(obj -> StrUtil.equals(obj.getSkuId(), paramDTO.getSkuId())
-                            && StrUtil.equals(obj.getWarehouseId(), paramDTO.getWarehouseId())
-                            && StrUtil.equals(obj.getVirtualWarehouseId(), paramDTO.getVirtualWarehouseId()))
+            ReportOrderDemandDTO.ViewDTO oldDTO = virtualAllocationList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSkuId(), paramDTO.getSkuId())
+                            && CharSequenceUtil.equals(obj.getWarehouseId(), paramDTO.getWarehouseId())
+                            && CharSequenceUtil.equals(obj.getVirtualWarehouseId(), paramDTO.getVirtualWarehouseId()))
                     .findFirst().orElse(null);
             if (ObjectUtil.isEmpty(oldDTO)) {
                 continue;
@@ -256,8 +259,8 @@ public class ReportOrderDemandServiceImpl extends SuperServiceImpl<ReportOrderDe
             //新增分货数据
             batchViewVirtualAllocation(oldDTO,skuInventoryStatusList,virtualInventoryList,resultList);
 
-            List<VirtualWarehouseRelationEntity> newRelationList = relationList.stream().filter(obj -> StrUtil.equals(obj.getWarehouseId(),paramDTO.getWarehouseId()) && !StrUtil.equals(obj.getVirtualWarehouseId(), paramDTO.getVirtualWarehouseId())).collect(Collectors.toList());
-            if (CollectionUtil.isNotEmpty(newRelationList)) {
+            List<VirtualWarehouseRelationEntity> newRelationList = relationList.stream().filter(obj -> CharSequenceUtil.equals(obj.getWarehouseId(),paramDTO.getWarehouseId()) && !CharSequenceUtil.equals(obj.getVirtualWarehouseId(), paramDTO.getVirtualWarehouseId())).collect(Collectors.toList());
+            if (CollUtil.isNotEmpty(newRelationList)) {
                 //虚拟仓调拨数据
                 batchViewVirtualTransfer(oldDTO,newRelationList,virtualInventoryList,resultList,virtualWarehouseList);
             }
@@ -277,7 +280,7 @@ public class ReportOrderDemandServiceImpl extends SuperServiceImpl<ReportOrderDe
     private void batchViewVirtualTransfer (ReportOrderDemandDTO.ViewDTO oldDTO,List<VirtualWarehouseRelationEntity> relationList,
                                              List<VirtualInventoryDTO.VirtualInventoryQtyDTO> virtualInventoryList,List<ReportOrderDemandDTO.BatchViewVirtualAllocationDTO> resultList,
                                            List<VirtualWarehouseEntity> virtualWarehouseList) {
-        if (CollectionUtil.isEmpty(relationList)) {
+        if (CollUtil.isEmpty(relationList)) {
             return;
         }
         for (VirtualWarehouseRelationEntity relationEntity : relationList) {
@@ -291,13 +294,13 @@ public class ReportOrderDemandServiceImpl extends SuperServiceImpl<ReportOrderDe
             viewVirtualAllocationDTO.setVirtualScarceTotalQty(oldDTO.getVirtualScarceQty());
             viewVirtualAllocationDTO.setVirtualUsableTotalQty(oldDTO.getVirtualUsableQty());
             //名称
-            String virtualWarehouseName = virtualWarehouseList.stream().filter(obj -> StrUtil.equals(obj.getId(), relationEntity.getVirtualWarehouseId())).map(VirtualWarehouseEntity::getName).findFirst().orElse("");
+            String virtualWarehouseName = virtualWarehouseList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), relationEntity.getVirtualWarehouseId())).map(VirtualWarehouseEntity::getName).findFirst().orElse("");
             viewVirtualAllocationDTO.setOutWarehouseName(virtualWarehouseName);
             //虚拟仓实际数量
-            Integer realVirtualTotalQty = virtualInventoryList.stream().filter(obj -> StrUtil.equals(obj.getSkuId(), viewVirtualAllocationDTO.getSkuId())
-                            && StrUtil.equals(obj.getWarehouseId(), viewVirtualAllocationDTO.getWarehouseId())
-                            && StrUtil.equals(obj.getVirtualWarehouseId(), relationEntity.getVirtualWarehouseId())
-                            && StrUtil.equals(obj.getDictInventoryStatus(),InventoryStatusEnum.USABLE.getCode()))
+            Integer realVirtualTotalQty = virtualInventoryList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSkuId(), viewVirtualAllocationDTO.getSkuId())
+                            && CharSequenceUtil.equals(obj.getWarehouseId(), viewVirtualAllocationDTO.getWarehouseId())
+                            && CharSequenceUtil.equals(obj.getVirtualWarehouseId(), relationEntity.getVirtualWarehouseId())
+                            && CharSequenceUtil.equals(obj.getDictInventoryStatus(),InventoryStatusEnum.USABLE.getCode()))
                     .map(VirtualInventoryDTO.VirtualInventoryQtyDTO::getInventoryQty)
                     .reduce(MathUtil.ZERO, Integer::sum);
             viewVirtualAllocationDTO.setUnDistributionQty(realVirtualTotalQty);
@@ -329,13 +332,13 @@ public class ReportOrderDemandServiceImpl extends SuperServiceImpl<ReportOrderDe
         viewVirtualAllocationDTO.setVirtualUsableTotalQty(oldDTO.getVirtualUsableQty());
         viewVirtualAllocationDTO.setVirtualScarceTotalQty(oldDTO.getVirtualScarceQty());
         //实体仓实际库存
-        Integer realTotalQty = skuInventoryStatusList.stream().filter(obj -> StrUtil.equals(obj.getSkuId(), viewVirtualAllocationDTO.getSkuId())
-                        && StrUtil.equals(obj.getWarehouseId(), viewVirtualAllocationDTO.getOutWarehouseId()))
+        Integer realTotalQty = skuInventoryStatusList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSkuId(), viewVirtualAllocationDTO.getSkuId())
+                        && CharSequenceUtil.equals(obj.getWarehouseId(), viewVirtualAllocationDTO.getOutWarehouseId()))
                 .map(InventoryQtyDTO.SkuInventoryStatusTotalDTO::getInventoryTotal)
                 .reduce(MathUtil.ZERO, Integer::sum);
         //虚拟仓实际库存
-        Integer virtualRealTotalQty = virtualInventoryList.stream().filter(obj -> StrUtil.equals(obj.getSkuId(), viewVirtualAllocationDTO.getSkuId())
-                        && StrUtil.equals(obj.getWarehouseId(), viewVirtualAllocationDTO.getOutWarehouseId()))
+        Integer virtualRealTotalQty = virtualInventoryList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSkuId(), viewVirtualAllocationDTO.getSkuId())
+                        && CharSequenceUtil.equals(obj.getWarehouseId(), viewVirtualAllocationDTO.getOutWarehouseId()))
                 .map(VirtualInventoryDTO.VirtualInventoryQtyDTO::getInventoryQty)
                 .reduce(MathUtil.ZERO, Integer::sum);
         viewVirtualAllocationDTO.setUnDistributionQty(realTotalQty - virtualRealTotalQty);
@@ -350,19 +353,19 @@ public class ReportOrderDemandServiceImpl extends SuperServiceImpl<ReportOrderDe
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean batchAddAllocation(ValidList<ReportOrderDemandDTO.BatchAddVirtualAllocationDTO> list) {
-        if (CollectionUtil.isEmpty(list) || CollectionUtil.isEmpty(list.getList())) {
+        if (CollUtil.isEmpty(list) || CollUtil.isEmpty(list.getList())) {
             throw new ServiceException("选择数据不能为空");
         }
         List<ReportOrderDemandDTO.BatchAddVirtualAllocationDTO> addVirtualAllocationList = list.getList();
 
         //新增分货
-        List<ReportOrderDemandDTO.BatchAddVirtualAllocationDTO> virtualAllocationList = addVirtualAllocationList.stream().filter(obj -> StrUtil.equals(obj.getType(), VirtualWarehouseAllocationTypeEnum.ALLOCATION.getCode())).collect(Collectors.toList());
+        List<ReportOrderDemandDTO.BatchAddVirtualAllocationDTO> virtualAllocationList = addVirtualAllocationList.stream().filter(obj -> CharSequenceUtil.equals(obj.getType(), VirtualWarehouseAllocationTypeEnum.ALLOCATION.getCode())).collect(Collectors.toList());
         if (ObjectUtil.isNotEmpty(virtualAllocationList)) {
             batchAddVirtualAllocation(virtualAllocationList);
         }
         //调拨分货
-        List<ReportOrderDemandDTO.BatchAddVirtualAllocationDTO> virtualTransferList = addVirtualAllocationList.stream().filter(obj -> StrUtil.equals(obj.getType(), VirtualWarehouseAllocationTypeEnum.TRANSFER.getCode())).collect(Collectors.toList());
-        if (CollectionUtil.isNotEmpty(virtualTransferList)) {
+        List<ReportOrderDemandDTO.BatchAddVirtualAllocationDTO> virtualTransferList = addVirtualAllocationList.stream().filter(obj -> CharSequenceUtil.equals(obj.getType(), VirtualWarehouseAllocationTypeEnum.TRANSFER.getCode())).collect(Collectors.toList());
+        if (CollUtil.isNotEmpty(virtualTransferList)) {
             batchAddVirtualTransfer(virtualTransferList);
         }
         return Boolean.TRUE;
@@ -475,7 +478,7 @@ public class ReportOrderDemandServiceImpl extends SuperServiceImpl<ReportOrderDe
         List<ReportOrderDemandDTO.ViewDTO> resultList = new ArrayList<>();
         if (VirtualReportTypeEnum.SALES_DASHBOARD.getCode().equals(type)) {
             List<ReportOrderSalesEntity> list = reportOrderSalesService.listByUnique(skuIdList, warehouseIdList, virtualWarehouseIdList);
-            if (CollectionUtil.isEmpty(list)) {
+            if (CollUtil.isEmpty(list)) {
                 throw new ServiceException("未找到销售看板数据");
             }
             resultList = BeanMapperUtils.copyList(ReportOrderDemandDTO.ViewDTO.class, list);
@@ -484,7 +487,7 @@ public class ReportOrderDemandServiceImpl extends SuperServiceImpl<ReportOrderDe
                     .in(ReportOrderDemandEntity::getWarehouseId, warehouseIdList)
                     .in(ReportOrderDemandEntity::getVirtualWarehouseId, virtualWarehouseIdList)
                     .list();
-            if (CollectionUtil.isEmpty(list)) {
+            if (CollUtil.isEmpty(list)) {
                 throw new ServiceException("未找到缺货统计数据");
             }
             resultList = BeanMapperUtils.copyList(ReportOrderDemandDTO.ViewDTO.class, list);
@@ -510,7 +513,7 @@ public class ReportOrderDemandServiceImpl extends SuperServiceImpl<ReportOrderDe
         detailDto.setWarehouseId(addAllocationDTO.getWarehouseId());
         detailDto.setToVirtualWarehouseId(addAllocationDTO.getVirtualWarehouseId());
         detailDto.setQty(addAllocationDTO.getQty());
-        addDTO.setDetailList(Arrays.asList(detailDto));
+        addDTO.setDetailList(Collections.singletonList(detailDto));
         virtualWarehouseAllocationService.add(addDTO);
     }
 
@@ -548,7 +551,7 @@ public class ReportOrderDemandServiceImpl extends SuperServiceImpl<ReportOrderDe
      * @param list
      */
     private void fillPageData (List<ReportOrderDemandDTO.ListDTO> list) {
-        if (CollectionUtil.isEmpty(list)) {
+        if (CollUtil.isEmpty(list)) {
             return;
         }
         for (ReportOrderDemandDTO.ListDTO listDTO : list) {

@@ -50,7 +50,7 @@ public class AttachmentEntity extends BaseEntity<AttachmentEntity> {
 
     static final String BUSINESS_ID = "business_id";
 
-    public static final String TYPE = "type";
+    public static final String FIELD_TYPE = "type";
 
     @Override
     public Serializable pkVal() {

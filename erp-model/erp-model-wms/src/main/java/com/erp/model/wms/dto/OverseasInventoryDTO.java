@@ -7,7 +7,6 @@ import com.common.business.dto.base.SortDTO;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
 import java.io.Serializable;
 import java.util.List;
 import javax.validation.constraints.NotNull;

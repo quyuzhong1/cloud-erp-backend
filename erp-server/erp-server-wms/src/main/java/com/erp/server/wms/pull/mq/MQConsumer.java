@@ -14,6 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.Resource;
 import java.util.List;
 
 /**
@@ -24,13 +25,13 @@ import java.util.List;
 @Component
 public class MQConsumer {
 
-    @Autowired
+    @Resource
     private ProductDetailService productDetailService;
 
-    @Autowired
+    @Resource
     private ProductSaleService productSaleService;
 
-    @Autowired
+    @Resource
     private ProductInfoService productInfoService;
 
     /**

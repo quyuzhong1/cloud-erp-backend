@@ -53,10 +53,10 @@ public class ModuleOperateLogServiceImpl extends SuperServiceImpl<ModuleOperateL
 
     @Override
     public PagingVO<OperateLogDTO.ListDTO> paging(PagingDTO<OperateLogDTO.SearchDTO> dto) {
-        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+        Page<OperateLogDTO.SearchDTO> query = new Page<>(dto.getCurrPage(), dto.getPageSize());
         OperateLogDTO.SearchDTO params = dto.getParams();
-        IPage pageData = baseMapper.paging(query, params);
-        return new PagingVO(pageData);
+        IPage<OperateLogDTO.ListDTO> pageData = baseMapper.paging(query, params);
+        return new PagingVO<>(pageData);
     }
 
 
@@ -82,25 +82,26 @@ public class ModuleOperateLogServiceImpl extends SuperServiceImpl<ModuleOperateL
             //Pair<旧值, 新值>
             Pair<String, String> valuePair = entry.getValue();
             CfgModuleOperateLogFieldEntity fieldEntity = fieldList.stream().filter(obj -> obj.getField().equals(field) && obj.getClassPath().equals(fieldClass)).findAny().orElse(null);
-            if (ObjectUtils.isEmpty(fieldEntity)) {
+            if (org.springframework.util.ObjectUtils.isEmpty(fieldEntity)) {
                 continue;
             }
             String fieldName = fieldEntity.getFieldName();
             Integer type = fieldEntity.getType();
-            if (ModuleOperateLogFieldTypeEnum.TYPE_YES_NO.getCode().equals(type)) {
-                valuePair = setBooleanValue(fieldEntity, valuePair);
-            }
-            //枚举
-            if (ModuleOperateLogFieldTypeEnum.TYPE_ENUM.getCode().equals(type)) {
-                valuePair = setEnumValue(fieldEntity,valuePair);
-            }
-            //字典
-            if (ModuleOperateLogFieldTypeEnum.TYPE_DIST.getCode().equals(type)) {
-                valuePair = setDistValue(valuePair);
-            }
-            //人员
-            if (ModuleOperateLogFieldTypeEnum.TYPE_USER.getCode().equals(type)) {
-                valuePair = setUserValue(valuePair);
+            switch (ModuleOperateLogFieldTypeEnum.getEnumByCode(type)) {
+                case TYPE_YES_NO :
+                    valuePair = setBooleanValue(fieldEntity, valuePair);
+                    break;
+                case TYPE_ENUM :
+                    valuePair = setEnumValue(fieldEntity,valuePair);
+                    break;
+                case TYPE_DIST :
+                    valuePair = setDistValue(valuePair);
+                    break;
+                case TYPE_USER :
+                    valuePair = setUserValue(valuePair);
+                    break;
+                default:
+                    break;
             }
             String oldValue = String.valueOf(valuePair.getKey());
             String newValue = String.valueOf(valuePair.getValue());

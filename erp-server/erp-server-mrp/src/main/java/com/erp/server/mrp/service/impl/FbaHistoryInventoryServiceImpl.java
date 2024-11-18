@@ -1,6 +1,7 @@
 package com.erp.server.mrp.service.impl;
 
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
+import com.common.business.utils.ApplicationContextUtils;
 import com.erp.model.mrp.entity.FbaHistoryInventoryEntity;
 import com.erp.model.wms.entity.FbaInventoryEntity;
 import com.erp.server.mrp.mapper.FbaHistoryInventoryMapper;
@@ -42,7 +43,7 @@ public class FbaHistoryInventoryServiceImpl extends SuperServiceImpl<FbaHistoryI
                     inventory.setId(inventory.getId());
                     return inventory;
                 }).collect(Collectors.toList());
-        saveOrUpdateBatch(entities);
+        ApplicationContextUtils.getBean(FbaHistoryInventoryServiceImpl.class).saveOrUpdateBatch(entities);
     }
 
     @Override

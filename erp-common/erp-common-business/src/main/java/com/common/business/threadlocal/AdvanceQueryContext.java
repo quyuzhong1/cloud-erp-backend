@@ -4,15 +4,16 @@ import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.enums.QueryConditionEnum;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
  * @author liuruipeng
  * 高级查询上下文
  */
 public class AdvanceQueryContext {
+
+    private AdvanceQueryContext() {
+    }
 
     /**
      * 存放调用第三方接口返回JSON

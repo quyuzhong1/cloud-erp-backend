@@ -420,10 +420,6 @@ public interface PurchaseOrderService extends SuperService<PurchaseOrderEntity> 
     PurchaseStatisticsDTO.StatusDTO statisticsExecutionStatus(PurchaseStatisticsDTO.RequestDTO requestDTO);
 
     /**
-     * 同步已审核 已确认订单到srm
-     */
-    void syncConfirmOrder();
-    /**
      * 导入结束交货
      * @author Will
      * @date: 2024/3/5 11:12

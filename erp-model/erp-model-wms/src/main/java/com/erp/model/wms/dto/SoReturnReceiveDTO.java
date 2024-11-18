@@ -2,7 +2,6 @@ package com.erp.model.wms.dto;
 
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
-import com.common.business.validator.AddGroup;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -13,6 +12,9 @@ import java.util.List;
 import java.util.Map;
 
 public class SoReturnReceiveDTO {
+    private SoReturnReceiveDTO() {
+        throw new IllegalStateException("Utility SoReturnReceiveDTO class");
+    }
     /**
      * 分页参数
      */

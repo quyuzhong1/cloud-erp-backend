@@ -1,13 +1,11 @@
 package com.erp.model.plm.entity;
 
-import com.baomidou.mybatisplus.annotation.*;
+import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
 import java.io.Serializable;
-import java.time.LocalDateTime;
-import java.util.Date;
 
 /**
  * 变更管理变更实体的信息表(ProductChangeDetails)实体类
@@ -18,7 +16,7 @@ import java.util.Date;
 @Data
 @EqualsAndHashCode(callSuper = false)
 @TableName("product_change_details")
-public class ProductChangeDetailsEntity extends BaseEntity implements Serializable {
+public class ProductChangeDetailsEntity extends BaseEntity<ProductChangeDetailsEntity> implements Serializable {
     private static final long serialVersionUID = -76172530084005528L;
 
     /**

@@ -1,7 +1,6 @@
 package com.erp.server.file.core;
 
 
-import com.alibaba.excel.converters.Converter;
 import com.alibaba.excel.write.handler.WriteHandler;
 import com.common.business.enums.FileTaskEventEnum;
 import com.erp.server.file.entity.FileTask;
@@ -29,10 +28,6 @@ public interface FileEventHandler {
     FileTaskEventEnum getEvent();
 
     default List<WriteHandler> getWriteHandler() {
-        return Collections.emptyList();
-    }
-
-    default List<Converter<?>> getConverter() {
         return Collections.emptyList();
     }
 

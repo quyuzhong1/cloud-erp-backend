@@ -1,6 +1,6 @@
 package com.common.business.config;
 
-import cn.hutool.core.util.StrUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import com.common.business.constant.BusinessCommonConstants;
 import com.common.business.constant.LuaScript;
 import com.common.business.enums.BusinessNoTypeEnum;
@@ -36,7 +36,7 @@ public class DocNoGenHelper implements InitializingBean {
     /**
      * 单位秒
      */
-    public static long ONE_DAY_CACHE_TIME = 24 * 60 * 60;
+    public static long ONE_DAY_CACHE_TIME = 24 * 60 * 60L;
 
     @Resource
     private RedisTemplate<String,Object> redisTemplate;
@@ -65,7 +65,7 @@ public class DocNoGenHelper implements InitializingBean {
             fillZeroDigit = fillZeroDigit +1;
         }
         // 单据前缀+6位日期+5位顺序位
-        String docNo = StrUtil.format("{}{}{}",StrUtils.null2EmptyWithTrim(businessNoTypeEnum.getPrefix()), currentDateStr, StrUtils.leftPadding(String.valueOf(currentIndex),fillZeroDigit,"0"));
+        String docNo = CharSequenceUtil.format("{}{}{}",StrUtils.null2EmptyWithTrim(businessNoTypeEnum.getPrefix()), currentDateStr, StrUtils.leftPadding(String.valueOf(currentIndex),fillZeroDigit,"0"));
         log.info("单据类型：【{}】生成的单号为【{}】", businessNoTypeEnum.getName(), docNo);
         return docNo;
     }
@@ -87,7 +87,7 @@ public class DocNoGenHelper implements InitializingBean {
             fillZeroDigit = fillZeroDigit +1;
         }
         // 单据前缀+6位日期+5位顺序位
-        String docNo = StrUtil.format("{}{}{}",StrUtils.null2EmptyWithTrim(businessNoTypeEnum.getPrefix()), currentDateStr, StrUtils.leftPadding(String.valueOf(currentIndex),fillZeroDigit,"0"));
+        String docNo = CharSequenceUtil.format("{}{}{}",StrUtils.null2EmptyWithTrim(businessNoTypeEnum.getPrefix()), currentDateStr, StrUtils.leftPadding(String.valueOf(currentIndex),fillZeroDigit,"0"));
         log.info("单据类型：【{}】生成的单号为【{}】", businessNoTypeEnum.getName(), docNo);
         return docNo;
     }

@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
 /**
  * @author Lambda
  * @Classname OperateLogDTO
- * @Description TODO
+ * @Description 操作日志
  * @Date 2023-08-21 18:15
  * @Created by yl
  */

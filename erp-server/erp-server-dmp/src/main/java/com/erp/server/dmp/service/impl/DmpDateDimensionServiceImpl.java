@@ -69,7 +69,7 @@ public class DmpDateDimensionServiceImpl extends SuperServiceImpl<DmpDateDimensi
     @Override
     public Boolean update(DmpDateDimensionDTO.UpdateDTO updateDTO) {
         DmpDateDimensionEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "时间维度单"));
+        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "时间维度单"));
         DmpDateDimensionEntity dmpDateDimensionEntity =  BeanMapperUtils.map(DmpDateDimensionEntity.class, updateDTO);
 
         // 数据处理

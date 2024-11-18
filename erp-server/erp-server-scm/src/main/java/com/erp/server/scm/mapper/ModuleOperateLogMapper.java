@@ -25,5 +25,5 @@ public interface ModuleOperateLogMapper extends BaseMapper<ModuleOperateLogEntit
      * @param params
      * @return IPage<listDTO>
      */
-    IPage<OperateLogDTO.ListDTO> paging(Page query, OperateLogDTO.SearchDTO params);
+    IPage<OperateLogDTO.ListDTO> paging(Page<OperateLogDTO.SearchDTO> query, OperateLogDTO.SearchDTO params);
 }

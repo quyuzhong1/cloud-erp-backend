@@ -65,7 +65,7 @@ public class DmpPushMsgServiceImpl extends SuperServiceImpl<DmpPushMsgMapper, Dm
     @Override
     public Boolean update(DmpPushMsgDTO.UpdateDTO updateDTO) {
         DmpPushMsgEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "本地消息单"));
+        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "本地消息单"));
         DmpPushMsgEntity dmpPushMsgEntity =  BeanMapperUtils.map(DmpPushMsgEntity.class, updateDTO);
 
         // 数据处理

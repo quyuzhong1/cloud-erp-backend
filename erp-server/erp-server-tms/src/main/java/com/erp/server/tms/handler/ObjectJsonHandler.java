@@ -15,7 +15,6 @@ import java.sql.SQLException;
 /**
  * @author zdy
  * @ClassName ObjectJsonHandler
- * @description: TODO
  * @date 2024年01月12日
  * @version: 1.0
  */

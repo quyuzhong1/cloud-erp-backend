@@ -3,12 +3,11 @@ package com.erp.model.workflow.entity;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.Accessors;
-
-import java.io.Serializable;
 
 /**
  * <p>
@@ -22,6 +21,7 @@ import java.io.Serializable;
 @Setter
 @Accessors(chain = true)
 @TableName("dict_basic")
+@EqualsAndHashCode(callSuper = true)
 @NoArgsConstructor
 public class DictBasicEntity extends BaseEntity<DictBasicEntity> {
 
@@ -62,21 +62,16 @@ public class DictBasicEntity extends BaseEntity<DictBasicEntity> {
     private Integer sort;
 
 
-    public static final String REMARK = "remark";
+    public static final String FIELD_REMARK = "remark";
 
-    public static final String VALUE = "value";
+    public static final String FIELD_VALUE = "value";
 
-    public static final String TYPE = "type";
+    public static final String FIELD_TYPE = "type";
 
-    public static final String NAME = "name";
+    public static final String FIELD_NAME = "name";
 
-    public static final String STATUS = "status";
+    public static final String FIELD_STATUS = "status";
 
-    public static final String SORT = "sort";
-
-    @Override
-    public Serializable pkVal() {
-        return null;
-    }
+    public static final String FIELD_SORT = "sort";
 
 }

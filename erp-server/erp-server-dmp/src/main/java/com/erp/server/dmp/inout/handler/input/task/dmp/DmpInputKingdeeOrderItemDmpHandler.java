@@ -49,7 +49,7 @@ public class DmpInputKingdeeOrderItemDmpHandler extends DmpInputDoChildDmpHandle
 		Map<String, String> billNoIdMap = new HashMap<>();
 		if(CollUtil.isNotEmpty(listMaps)) {
 			for(Map<String, Object> listMap : listMaps) {
-				billNoIdMap.put(listMap.get(StrUtils.underlineByhump(mainConvertId.getUniqueFieldName())).toString(), listMap.get(BaseEntity.ID).toString());
+				billNoIdMap.put(listMap.get(StrUtils.underlineByhump(mainConvertId.getUniqueFieldName())).toString(), listMap.get(BaseEntity.FIELD_ID).toString());
 			}
 		}
 		for(Map<String, Object> dmpInputMongoChildEntity : dmpInputMongoChildEntityList) {

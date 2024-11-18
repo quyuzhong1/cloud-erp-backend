@@ -15,7 +15,6 @@ import java.sql.SQLException;
 /**
  * @author zdy
  * @ClassName ObjectJsonHandler
- * @description: TODO
  * @date 2024年01月12日
  * @version: 1.0
  */
@@ -38,7 +37,7 @@ public class ObjectJsonHandler extends BaseTypeHandler<JSONObject> {
         if (null != sqlJson) {
             return JSONUtil.parseObj(sqlJson);
         }
-        return null;
+        return new JSONObject();
     }
 
     //根据列索引，获取可以为空的结果
@@ -48,7 +47,7 @@ public class ObjectJsonHandler extends BaseTypeHandler<JSONObject> {
         if (null != sqlJson) {
             return JSONUtil.parseObj(sqlJson);
         }
-        return null;
+        return new JSONObject();
     }
 
     @Override
@@ -57,6 +56,6 @@ public class ObjectJsonHandler extends BaseTypeHandler<JSONObject> {
         if (null != sqlJson) {
             return JSONUtil.parseObj(sqlJson);
         }
-        return null;
+        return new JSONObject();
     }
 }

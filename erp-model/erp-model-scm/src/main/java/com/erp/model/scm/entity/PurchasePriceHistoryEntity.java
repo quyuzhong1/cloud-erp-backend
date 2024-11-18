@@ -131,7 +131,7 @@ public class PurchasePriceHistoryEntity extends BaseEntity<PurchasePriceHistoryE
 
     public static final String MAX_QTY = "max_qty";
 
-    public static final String CURRENCY = "currency";
+    public static final String FIELD_CURRENCY = "currency";
 
     public static final String TAX_PRICE = "tax_price";
 

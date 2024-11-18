@@ -63,6 +63,11 @@ public enum SettingEnum {
 
     //支持推送仓位的金蝶仓库
     PUSH_KINGDEE_WAREHOUSE_LOCATION_LIST("push_kingdee_warehouse_location",SettingEnum.PUSH_KINGDEE_WAREHOUSE_LOCATION,"支持推送仓位的金蝶仓库"),
+
+
+    //oms_shopify_hmac
+    OMS_SHOPIFY_SECRET_KEY("secretKey","oms_shopify_hmac","HmacSHA256"),
+    OMS_SHOPIFY_CLIENT_SECRET("clientSecret","oms_shopify_hmac","DfFGCAXMY7pptKfhz7IkWEa0zC0xddhY"),
     ;
 
     @EnumValue

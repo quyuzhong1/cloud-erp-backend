@@ -1,8 +1,8 @@
 package com.erp.server.tms.service.impl;
 
 
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -12,17 +12,15 @@ import com.erp.model.tms.dto.SettingForecastChannelDTO;
 import com.erp.model.tms.entity.LogisticsChannelEntity;
 import com.erp.model.tms.entity.SettingForecastChannelEntity;
 import com.erp.server.tms.mapper.SettingForecastChannelMapper;
-import com.erp.server.tms.service.CommonService;
 import com.erp.server.tms.service.LogisticsChannelService;
-import com.erp.server.tms.service.OperateLogService;
 import com.erp.server.tms.service.SettingForecastChannelService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -40,7 +38,7 @@ import java.util.stream.Stream;
 @Slf4j
 @Service
 public class SettingForecastChannelServiceImpl extends SuperServiceImpl<SettingForecastChannelMapper, SettingForecastChannelEntity> implements SettingForecastChannelService {
-    @Autowired
+    @Resource
     private LogisticsChannelService logisticsChannelService;
 
 
@@ -142,17 +140,17 @@ public class SettingForecastChannelServiceImpl extends SuperServiceImpl<SettingF
             }
             for (String logisticsChannelId : logisticsChannelIdList) {
                 SettingForecastChannelEntity entity = new SettingForecastChannelEntity();
-                String logisticsChannelName = logisticsChannelList.stream().filter(obj -> StrUtil.equals(logisticsChannelId, obj.getId())).map(LogisticsChannelEntity::getName).findFirst().orElse(null);
-                if (StrUtil.isBlank(logisticsChannelName)) {
+                String logisticsChannelName = logisticsChannelList.stream().filter(obj -> CharSequenceUtil.equals(logisticsChannelId, obj.getId())).map(LogisticsChannelEntity::getName).findFirst().orElse(null);
+                if (CharSequenceUtil.isBlank(logisticsChannelName)) {
                     log.error("物流渠道不存在，logisticsChannelId={}",logisticsChannelId);
                     throw new ServiceException("选择物流渠道不存在");
                 }
-                long count = oldList.stream().filter(obj -> StrUtil.equals(obj.getLogisticsChannelId(), logisticsChannelId)).count();
+                long count = oldList.stream().filter(obj -> CharSequenceUtil.equals(obj.getLogisticsChannelId(), logisticsChannelId)).count();
                 if (count > 1) {
                     throw new ServiceException(ApiError.ERROR_LOGISTICS_CHANNEL_EXIST,logisticsChannelName);
                 }
                 if (ObjectUtil.isNotEmpty(exist.get(logisticsChannelId))) {
-                    throw new ServiceException(StrUtil.format("物流渠道【{}】不可重复选择，请选择其他物流渠道",logisticsChannelName));
+                    throw new ServiceException(CharSequenceUtil.format("物流渠道【{}】不可重复选择，请选择其他物流渠道",logisticsChannelName));
                 }
                 entity.setLogisticsChannelName(logisticsChannelName);
                 entity.setLogisticsChannelId(logisticsChannelId);

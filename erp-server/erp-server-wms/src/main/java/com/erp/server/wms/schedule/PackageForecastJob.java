@@ -1,10 +1,8 @@
 package com.erp.server.wms.schedule;
 
-import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.DateTime;
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.text.CharSequenceUtil;
-import cn.hutool.core.util.StrUtil;
 import com.common.core.utils.StrUtils;
 import com.erp.model.wms.entity.PackageForecastEntity;
 import com.erp.server.wms.service.PackageForecastDetailService;
@@ -53,7 +51,7 @@ public class PackageForecastJob {
         }
         handoverStatusList.add(CharSequenceUtil.EMPTY);
         List<PackageForecastEntity> orders = packageForecastService.lambdaQuery()
-                .ne(PackageForecastEntity::getHandoverNo, StrUtil.EMPTY)
+                .ne(PackageForecastEntity::getHandoverNo, CharSequenceUtil.EMPTY)
                 .in(PackageForecastEntity::getHandoverStatus,handoverStatusList)
                 .gt(PackageForecastEntity::getBillDate, dateTime)
                 .list();

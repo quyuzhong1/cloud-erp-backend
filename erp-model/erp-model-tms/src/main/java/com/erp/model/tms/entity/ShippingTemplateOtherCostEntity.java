@@ -1,20 +1,16 @@
 package com.erp.model.tms.entity;
 
-import java.math.BigDecimal;
-
-import com.baomidou.mybatisplus.annotation.FieldFill;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
-import com.baomidou.mybatisplus.annotation.TableField;
-import java.io.Serializable;
-import java.util.List;
-
 import com.erp.model.tms.dto.ExtendJsonDTO;
-import com.erp.model.tms.dto.ShippingTemplateCostSettingDTO;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
-import com.common.business.enums.ApproveStatusEnum;
+
+import java.io.Serializable;
+import java.math.BigDecimal;
+import java.util.List;
 
 
 /**
@@ -105,7 +101,7 @@ public class ShippingTemplateOtherCostEntity extends BaseEntity<ShippingTemplate
 
     public static final String EXTEND_JSON = "extend_json";
 
-    public static final String REMARK = "remark";
+    public static final String FIELD_REMARK = "remark";
 
     @Override
     public Serializable pkVal() {

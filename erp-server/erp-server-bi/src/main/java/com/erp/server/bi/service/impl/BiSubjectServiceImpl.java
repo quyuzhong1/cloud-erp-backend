@@ -1,6 +1,6 @@
 package com.erp.server.bi.service.impl;
 
-import cn.hutool.core.util.StrUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
@@ -79,11 +79,11 @@ public class BiSubjectServiceImpl extends ServiceImpl<BiSubjectMapper, BiSubject
      */
     @Override
     public PagingVO<SubjectPagingDTO> queryByPage(PagingDTO<BaseSearchDTO> dto) {
-        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+        Page<Object> query = new Page<>(dto.getCurrPage(), dto.getPageSize());
         BaseSearchDTO params = dto.getParams();
         params.setPermissionSql(dto.getPermissionSql());
 
-        IPage pageData = baseMapper.paging(query, params);
+        IPage<SubjectPagingDTO> pageData = baseMapper.paging(query, params);
         List<SubjectPagingDTO> list = pageData.getRecords();
         for (SubjectPagingDTO item : list) {
             String categoryName = item.getCategoryName();
@@ -96,7 +96,7 @@ public class BiSubjectServiceImpl extends ServiceImpl<BiSubjectMapper, BiSubject
         // 设置权限信息
         list.forEach(e-> e.checkAndSetShareFlagIdList(shareMap.get(e.getId())));
 
-        return new PagingVO(pageData);
+        return new PagingVO<>(pageData);
     }
 
 
@@ -271,7 +271,7 @@ public class BiSubjectServiceImpl extends ServiceImpl<BiSubjectMapper, BiSubject
         //检查名字是否重复
         checkName(null, name);
         BiDictEntity dict;
-        if (StrUtil.isNotBlank(dto.getCategoryId())) {
+        if (CharSequenceUtil.isNotBlank(dto.getCategoryId())) {
             dict = dictService.getById(categoryId);
         } else {
             dict = dictService.getByTypeName("subjectCategory", "销售专题");
@@ -317,7 +317,7 @@ public class BiSubjectServiceImpl extends ServiceImpl<BiSubjectMapper, BiSubject
         String userId = UserContext.getDefaultLoginUser().getUid();
         checkCanHandle(subject, userId);
         Boolean stateFlag = dto.getState();
-        if (stateFlag) {
+        if (Boolean.TRUE.equals(stateFlag)) {
             subject.setState(BaseStateConstants.OPEN_STATE);
         } else {
             subject.setState(BaseStateConstants.CLOSE_STATE);
@@ -530,7 +530,6 @@ public class BiSubjectServiceImpl extends ServiceImpl<BiSubjectMapper, BiSubject
         String type = DictEnum.DASHBOARD.getType();
         List<BiDictEntity> dictList = dictService.getByType(type);
         //查询到用户可见的专题
-//        List<String> subjectIdList = baseMapper.getUserVisibleSubjectId(userId);
         List<String> roleIdList = sysUserFeign.getRoleIdList(userId);
         List<String> subjectIdList = subjectShareService.findSubjectId(userId, roleIdList);
         // 查询自己创建
@@ -541,7 +540,6 @@ public class BiSubjectServiceImpl extends ServiceImpl<BiSubjectMapper, BiSubject
         if (CollectionUtils.isNotEmpty(mySubjectList)){
             List<String> mySubjectIds = mySubjectList.stream().map(BiSubjectEntity::getId).collect(Collectors.toList());
             subjectIdList.addAll(mySubjectIds);
-//            subjectIdList = subjectIdList.stream().distinct().collect(Collectors.toList());
         }
         List<SubjectDTO> subjectList = baseMapper.getByIds(subjectIdList, searchKeyword);
 

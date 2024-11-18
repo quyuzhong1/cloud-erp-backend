@@ -2,16 +2,13 @@ package com.erp.server.tms.service.impl;
 
 
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
-import com.common.business.dto.base.BaseDropDownDTO;
-import com.common.business.enums.PlatformDictEnum;
 import com.common.business.service.impl.SuperServiceImpl;
-import com.common.core.entity.BaseEntity;
+import com.common.core.constant.SqlConstants;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.tms.dto.LogisticsMappingDTO;
 import com.erp.model.tms.entity.LogisticsMappingEntity;
 import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
-import com.erp.model.tms.entity.TmsCarrierEntity;
 import com.erp.server.tms.mapper.LogisticsMappingMapper;
 import com.erp.server.tms.service.LogisticsMappingService;
 import com.erp.server.tms.service.LogisticsSaleChannelService;
@@ -25,9 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -149,7 +144,7 @@ public class LogisticsMappingServiceImpl extends SuperServiceImpl<LogisticsMappi
         return lambdaQuery().eq(LogisticsMappingEntity::getSalesPlatform,paramDTO.getSalesPlatform())
                 .eq(LogisticsMappingEntity::getLogisticsChannelId,paramDTO.getLogisticsChannelId())
                 .eq(LogisticsMappingEntity::getLogisticsSaleChannelId,paramDTO.getLogisticsSaleChannelId())
-                .last("limit 1")
+                .last(SqlConstants.LIMIT_1)
                 .one();
     }
     @Override

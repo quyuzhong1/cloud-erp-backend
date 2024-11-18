@@ -452,7 +452,7 @@ public class WarehouseDTO implements Serializable {
         /**
          * 创建人
          */
-        private String CreateUserName;
+        private String createUserName;
 
         /**
          * 是否启用仓位

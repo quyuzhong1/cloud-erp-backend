@@ -72,7 +72,7 @@ public interface ProjectPlanService  extends IService<ProjectPlanEntity> {
      * @param dto
      * @return com.erp.common.vo.PagingVO<java.util.List<com.erp.model.plm.vo.SchedulePagingVO>>
      */
-    PagingVO<List<SchedulePagingVO>> paging(PagingDTO<SearchPagingDTO> dto);
+    PagingVO<SchedulePagingVO> paging(PagingDTO<SearchPagingDTO> dto);
 
     /**
      * 最终审核通过

@@ -1,6 +1,7 @@
 package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
@@ -558,7 +559,7 @@ public class InventoryTransCoreServiceImpl implements InventoryTransCoreService 
         if(locationEntity != null) {
             return locationEntity.getName();
         }
-        warehouseName = StrUtil.isNotBlank(warehouseLocation) ? warehouseName : "空仓位";
+        warehouseName = CharSequenceUtil.isNotBlank(warehouseLocation) ? warehouseName : "空仓位";
         log.error("库位信息不存在,仓库id：{}，仓库名称:{},仓位编号:{}",warehouseId, warehouseName,warehouseLocation);
         throw new ServiceException(ApiError.ERROR_WAREHOUSE_LOCATION_NOT_FOUND,warehouseName, warehouseLocation);
     }

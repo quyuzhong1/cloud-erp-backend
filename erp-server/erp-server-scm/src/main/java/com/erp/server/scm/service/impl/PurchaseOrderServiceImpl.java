@@ -1311,7 +1311,8 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
                     && e.getWarehouseId().equals(item.getDeliveryWarehouseId())).findFirst().orElse(new WarehouseLocationEntity());
             item.setWarehouseLocationName(warehouseLocationEntity.getName());
             //相同采购单号清空后面数据的采购单号和供应商
-            boolean contains = list.contains(item.getPurchaseOrderId());
+            List<String> poIds = list.stream().map(PurchaseReturnOrderDTO.ViewGeneratePurchaseReturnOrderDTO::getPurchaseOrderId).collect(Collectors.toList());
+            boolean contains = poIds.contains(item.getPurchaseOrderId());
             if (contains) {
                 item.setPurchaseOrderCode(null);
                 item.setSupplierName(null);
@@ -1370,7 +1371,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             listApiResult = workflowFeign.curApprover(dtoList);
             Integer code = listApiResult.getCode();
             if (200 != code) {
-                throw new ServiceException(new ApiResult(ApiError.Default.code,listApiResult.getMsg()));
+                throw new ServiceException(new ApiResult(ApiError.DEFAULT.code,listApiResult.getMsg()));
             }
         }
 
@@ -2026,18 +2027,26 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         //获取未全部到货的采购详情id
         List<String> purchaseOrderDetailIds = new ArrayList<>();
         List<PoReturnDetailEntity> returnDetailEntityList = wmsTaskFeign.listReturnOrderDetailByPodIds(podIds);
-        receiveDetailEntities.stream().collect(Collectors.groupingBy(n -> n.getPurchaseOrderDetailId(), Collectors.collectingAndThen(Collectors.toList(), m -> {
+        //根据采购订单明细id分组
+        Map<String, List<WarehouseReceiveDetailEntity>> map = receiveDetailEntities.stream().collect(Collectors.groupingBy(n -> n.getPurchaseOrderDetailId()));
+        for (Map.Entry<String, List<WarehouseReceiveDetailEntity>> entry : map.entrySet()) {
+            List<WarehouseReceiveDetailEntity> m = entry.getValue();
             int receiveQty = m.stream().mapToInt(WarehouseReceiveDetailEntity::getReceiveQty).sum();
             PurchaseOrderDetailEntity detailEntity = detailEntityList.stream().filter(req -> req.getId().equals(m.get(MathUtil.ZERO).getPurchaseOrderDetailId())).findFirst().orElse(null);
-            if (ObjectUtil.isNotEmpty(detailEntity)) {
-                //退货补货数量
-                Integer returnQty = returnDetailEntityList.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(detailEntity.getId()) && obj.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus()) && obj.getReturnMode().equals(ReturnModeEnum.REPLENISHMENT.getCode())).map(PoReturnDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
-                if (receiveQty < detailEntity.getPurchaseQty() + returnQty) {
-                    purchaseOrderDetailIds.add(m.get(MathUtil.ZERO).getPurchaseOrderDetailId());
-                }
+            if (ObjectUtil.isEmpty(detailEntity)) {
+               continue;
             }
-            return m;
-        })));
+            //退货补货数量
+            Integer returnQty = returnDetailEntityList.stream().filter(obj ->
+                            obj.getPurchaseOrderDetailId().equals(detailEntity.getId())
+                            && obj.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())
+                            && obj.getReturnMode().equals(ReturnModeEnum.REPLENISHMENT.getCode())
+                    )
+                    .map(PoReturnDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
+            if (receiveQty < detailEntity.getPurchaseQty() + returnQty) {
+                purchaseOrderDetailIds.add(m.get(MathUtil.ZERO).getPurchaseOrderDetailId());
+            }
+        }
         List<String> collect = receiveDetailEntities.stream().map(req -> req.getPurchaseOrderDetailId()).distinct().collect(Collectors.toList());
         List<String> ids = podIds.stream().filter(poid -> !collect.contains(poid)).collect(Collectors.toList());
         purchaseOrderDetailIds.addAll(ids);
@@ -2540,27 +2549,6 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
     }
 
     @Override
-    public void syncConfirmOrder() {
-        List<PurchaseOrderDetailDTO.PurchaseOrderConfirmDTO> list = baseMapper.getSrmPurchaseOrder();
-        if (CollectionUtils.isEmpty(list)){
-            return;
-        }
-        Map<String, List<PurchaseOrderDetailDTO.PurchaseOrderConfirmDTO>> collect = list.stream().collect(Collectors.groupingBy(PurchaseOrderDetailDTO.PurchaseOrderConfirmDTO::getId));
-        for (String id:collect.keySet()) {
-            List<PurchaseOrderDetailDTO.PurchaseOrderConfirmDTO> list1 = collect.get(id);
-            List<String> detailIdList = list1.stream().map(PurchaseOrderDetailDTO.PurchaseOrderConfirmDTO::getDetailId).collect(Collectors.toList());
-//            if (CollectionUtils.isNotEmpty(detailIdList)){
-//                JSONObject jsonObject = new JSONObject();
-//                jsonObject.putOpt("id",id);
-//                jsonObject.putOpt("detailIds",detailIdList);
-//                jsonObject.putOpt("executionStatus",ExecutionStatusEnum.CONFIRM.getCode());
-//                //同步scm 确认订单 到 srm
-//                mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_SCM_TO_SRM_PURCHASE_ORDER_DETAIL_TOPIC, RocketMqTagEnum.SYNC_SRM_PURCHASE_ORDER_DETAIL_TAG.getName(),jsonObject, IdUtil.simpleUUID());
-//            }
-        }
-    }
-
-    @Override
     public Boolean importEndReceiveFile(MultipartFile excelFile, HttpServletResponse response) {
 
         PurchaseEndReceiveExcelListener excelListenerUtil = new PurchaseEndReceiveExcelListener();
@@ -2753,7 +2741,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             listApiResult = workflowFeign.curApprover(dtoList);
             Integer code = listApiResult.getCode();
             if (200 != code) {
-                throw new ServiceException(new ApiResult(ApiError.Default.code,listApiResult.getMsg()));
+                throw new ServiceException(new ApiResult(ApiError.DEFAULT.code,listApiResult.getMsg()));
             }
         }
 

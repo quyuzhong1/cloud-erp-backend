@@ -1,28 +1,31 @@
 package com.erp.server.dmp.push.consumer.erp;
 
-import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.json.JSONUtil;
-import com.alibaba.fastjson.JSON;
-import com.common.business.dto.DmpSyncMqDTO;
-import com.common.business.dto.DmpSyncTaskIdDTO;
-import com.common.business.enums.SyncOperateEnum;
-import com.common.business.enums.SyncStatusEnum;
-import com.common.core.controller.vo.ApiResult;
-import com.common.message.constant.RocketMqConsumerGroup;
-import com.common.message.constant.RocketMqTopic;
-import com.common.message.handler.AbstractPlatformConsumerHandler;
-import com.erp.model.dmp.entity.BiReturnOrderInfoEntity;
-import com.erp.server.dmp.service.DmpPushTaskService;
-import com.erp.server.dmp.service.BiReturnOrderInfoService;
-import lombok.extern.slf4j.Slf4j;
+import java.util.Collections;
+import java.util.Map;
+import java.util.Objects;
+
+import javax.annotation.Resource;
+
 import org.apache.rocketmq.spring.annotation.ConsumeMode;
 import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
 import org.springframework.stereotype.Service;
 
-import javax.annotation.Resource;
-import java.util.Collections;
-import java.util.Map;
-import java.util.Objects;
+import com.alibaba.fastjson.JSON;
+import com.common.business.dto.DmpSyncMqDTO;
+import com.common.business.dto.DmpSyncTaskIdDTO;
+import com.common.business.enums.SyncOperateEnum;
+import com.common.core.controller.vo.ApiResult;
+import com.common.core.exception.ServiceException;
+import com.common.message.constant.RocketMqConsumerGroup;
+import com.common.message.constant.RocketMqTopic;
+import com.common.message.handler.AbstractPlatformConsumerHandler;
+import com.erp.model.dmp.entity.BiReturnOrderInfoEntity;
+import com.erp.server.dmp.service.BiReturnOrderInfoService;
+import com.erp.server.dmp.service.DmpPushTaskService;
+
+import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.json.JSONUtil;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * 退货入库单同步到中台
@@ -74,7 +77,7 @@ public class B2bSoReturnToDmpConsumer<T extends DmpSyncTaskIdDTO> extends Abstra
      */
     private void cleanOrderField(BiReturnOrderInfoEntity biReturnOrderInfoEntity, String operate) {
         if (ObjectUtil.isEmpty(biReturnOrderInfoEntity)) {
-            throw new RuntimeException("存储的对象dmpReturnOrderInfoEntity不能为空！");
+            throw new ServiceException("存储的对象dmpReturnOrderInfoEntity不能为空！");
         }
         //根据操作类型进行操作
         if (Objects.equals(operate, SyncOperateEnum.OPERATE_APPROVE.getCode()) || Objects.equals(operate, SyncOperateEnum.OPERATE_UPDATE.getCode())) {

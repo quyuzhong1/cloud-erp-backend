@@ -1,6 +1,7 @@
 package com.erp.server.oms.controller.api;
 
 
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.BatchResultDTO;
@@ -60,7 +61,7 @@ public class SoB2cErrorController extends BaseController {
                 resultDTOS.add(resultDTO);
             } catch (Exception e) {
                 log.error("重新标记发货失败", e);
-                resultDTOS.add(BatchResultDTO.fail(id, id, StrUtil.format("标记发货失败：{}", e.getMessage())));
+                resultDTOS.add(BatchResultDTO.fail(id, id,  CharSequenceUtil.format("标记发货失败：{}", e.getMessage())));
             }
         }
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);

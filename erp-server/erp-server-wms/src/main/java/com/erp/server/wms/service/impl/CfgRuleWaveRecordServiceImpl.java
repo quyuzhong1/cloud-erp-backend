@@ -17,6 +17,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.Resource;
+import java.util.Objects;
 import java.util.Optional;
 /**
  * <p>
@@ -29,7 +31,7 @@ import java.util.Optional;
 @Slf4j
 @Service
 public class CfgRuleWaveRecordServiceImpl extends SuperServiceImpl<CfgRuleWaveRecordMapper, CfgRuleWaveRecordEntity> implements CfgRuleWaveRecordService {
-    @Autowired
+    @Resource
     private OperateLogService operateLogService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
@@ -38,10 +40,6 @@ public class CfgRuleWaveRecordServiceImpl extends SuperServiceImpl<CfgRuleWaveRe
     public BaseResultDTO.AddDTO add(CfgRuleWaveRecordDTO.AddDTO addDTO) {
         CfgRuleWaveRecordEntity cfgRuleWaveRecordEntity = new CfgRuleWaveRecordEntity();
         BeanMapperUtils.copy(addDTO, cfgRuleWaveRecordEntity);
-
-        // 数据处理
-        handleData(cfgRuleWaveRecordEntity);
-
         log.info("开始新增波次规则执行记录单");
         boolean save = super.save(cfgRuleWaveRecordEntity);
         if(!save) {
@@ -58,24 +56,15 @@ public class CfgRuleWaveRecordServiceImpl extends SuperServiceImpl<CfgRuleWaveRe
     @Override
     public Boolean update(CfgRuleWaveRecordDTO.UpdateDTO updateDTO) {
         CfgRuleWaveRecordEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "波次规则执行记录单"));
+        if (Objects.isNull(old)){
+            throw new ServiceException(ApiError.NOT_EXIST_BILL, "波次规则执行记录单");
+        }
         CfgRuleWaveRecordEntity cfgRuleWaveRecordEntity =  BeanMapperUtils.map(CfgRuleWaveRecordEntity.class, updateDTO);
-
-        // 数据处理
-        handleData(cfgRuleWaveRecordEntity);
         log.info("编辑 开始修改波次规则执行记录单数据，id：【{}】", old.getId());
         boolean save = super.updateById(cfgRuleWaveRecordEntity);
         if(!save) {
             throw new ServiceException("波次规则执行记录单保存失败");
         }
         return Boolean.TRUE;
-    }
-
-
-    /**
-    * 新增修改处理数据
-    */
-    private void handleData(CfgRuleWaveRecordEntity cfgRuleWaveRecordEntity) {
-    // TODO 验证数据 & 数据赋值
     }
 }

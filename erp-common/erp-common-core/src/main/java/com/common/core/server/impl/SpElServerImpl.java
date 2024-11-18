@@ -750,11 +750,6 @@ public class SpElServerImpl implements SpElServer {
        // list1.add(new BigDecimal("2.100000"));
         map.put("packageWeightList",list1);
         Boolean result1=spElServer. matchExpression(conditionExpression, map);
-        System.out.println(result1);
-
-
-//        Boolean result= spElServer.matchExpressionByConditionList(conditionList,map);
-//        System.out.println(result);
     }
 
 

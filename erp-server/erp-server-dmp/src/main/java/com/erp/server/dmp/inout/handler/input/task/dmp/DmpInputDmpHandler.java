@@ -8,10 +8,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import cn.hutool.core.collection.CollectionUtil;
-import cn.hutool.core.util.ObjectUtil;
-import com.common.core.utils.ObjectUtils;
 import com.erp.model.dmp.dto.DmpCfgInputConvertValueDTO;
-import com.erp.sdk.oms.amz.spapi.client.StringUtil;
 import com.erp.server.dmp.inout.utils.DmpHandlerUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,7 +41,6 @@ import com.erp.server.dmp.inout.handler.input.task.mongo.DmpInputMongoHandler;
 import com.erp.server.dmp.service.DmpInputMongoDmpRelationService;
 import com.google.common.collect.Lists;
 
-import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.crypto.digest.MD5;
@@ -235,13 +231,13 @@ public abstract class DmpInputDmpHandler extends DmpInputTaskHandler{
 					this.afterDmpInputDmpEntity(beanDmpInputDmpEntity);
 					
 					String id = DmpHandlerUtils.getId();
-					beanDmpInputDmpEntity.put(BaseEntity.ID, id);
+					beanDmpInputDmpEntity.put(BaseEntity.FIELD_ID, id);
 					String digestHex = md5.digestHex(uniqueFieldMd5Sb.toString());
 					beanDmpInputDmpEntity.put(UNIQUE_ENCRYPT, digestHex);
 					beanDmpInputDmpEntity.put(DATA_ENCRYPT, md5.digestHex(dataMd5Sb.toString()));
 					Map<String, Object> map = beanDmpInputDmpEntityMaps.get(digestHex);
 					if(map != null) {
-						dmpInputDataDmpRelationEntityList.removeIf(d -> map.get(BaseEntity.ID).equals(d.getDmpId()));
+						dmpInputDataDmpRelationEntityList.removeIf(d -> map.get(BaseEntity.FIELD_ID).equals(d.getDmpId()));
 					}
 					beanDmpInputDmpEntityMaps.put(digestHex, beanDmpInputDmpEntity);
 					
@@ -282,9 +278,9 @@ public abstract class DmpInputDmpHandler extends DmpInputTaskHandler{
 					Map<String, Object> findEntity = uniqueMaps.get(key);
 					Map<String, Object> waitEntity = beanDmpInputDmpEntityMap.getValue();
 					if(findEntity != null) {
-						String dmpId = findEntity.get(BaseEntity.ID).toString();
-						String waitDmpId = waitEntity.get(BaseEntity.ID).toString();
-						waitEntity.put(BaseEntity.ID, dmpId);
+						String dmpId = findEntity.get(BaseEntity.FIELD_ID).toString();
+						String waitDmpId = waitEntity.get(BaseEntity.FIELD_ID).toString();
+						waitEntity.put(BaseEntity.FIELD_ID, dmpId);
 						dmpInputDataDmpRelationEntityList.forEach(d -> {
 							if(waitDmpId.equals(d.getDmpId())) {
 								d.setDmpId(dmpId);

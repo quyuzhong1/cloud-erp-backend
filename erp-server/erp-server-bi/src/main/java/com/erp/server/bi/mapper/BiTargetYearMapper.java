@@ -25,7 +25,7 @@ public interface BiTargetYearMapper extends BaseMapper<BiTargetYearEntity> {
      * @param year
      * @return
      */
-    List<BiTargetYearDTO.YearMonthValueDTO> AllTargetValue(@Param("year") Integer year, @Param("metrics")String  metrics,@Param("metricsName") String metricsName);
+    List<BiTargetYearDTO.YearMonthValueDTO> allTargetValue(@Param("year") Integer year, @Param("metrics")String  metrics,@Param("metricsName") String metricsName);
 
     
     /**
@@ -37,7 +37,7 @@ public interface BiTargetYearMapper extends BaseMapper<BiTargetYearEntity> {
      * @param deptIdList
      * @return java.util.List<com.erp.model.bi.dto.BiTargetYearDTO.YearMonthValueDTO>
      */
-    List<BiTargetYearDTO.YearMonthValueDTO> ListDeptTargetValue(@Param("year")Integer year,@Param("metrics") String metrics,@Param("metricsName") String metricsName,@Param("deptIdList") List<String> deptIdList);
+    List<BiTargetYearDTO.YearMonthValueDTO> listDeptTargetValue(@Param("year")Integer year,@Param("metrics") String metrics,@Param("metricsName") String metricsName,@Param("deptIdList") List<String> deptIdList);
 
 
     /**
@@ -47,7 +47,7 @@ public interface BiTargetYearMapper extends BaseMapper<BiTargetYearEntity> {
      * @param staffIdList
      * @return
      */
-    List<BiTargetYearDTO.YearMonthValueDTO> ListStaffTargetValue(@Param("year")Integer year, @Param("metrics")String metrics,@Param("metricsName") String metricsName,@Param("staffIdList") List<String> staffIdList);
+    List<BiTargetYearDTO.YearMonthValueDTO> listStaffTargetValue(@Param("year")Integer year, @Param("metrics")String metrics,@Param("metricsName") String metricsName,@Param("staffIdList") List<String> staffIdList);
 
     /**
      * 获取店铺 目标值
@@ -56,5 +56,5 @@ public interface BiTargetYearMapper extends BaseMapper<BiTargetYearEntity> {
      * @param shopIdList
      * @return
      */
-    List<BiTargetYearDTO.YearMonthValueDTO> ListShopTargetValue(@Param("year")Integer year, @Param("metrics")String metrics,@Param("metricsName") String metricsName,@Param("shopIdList") List<String> shopIdList);
+    List<BiTargetYearDTO.YearMonthValueDTO> listShopTargetValue(@Param("year")Integer year, @Param("metrics")String metrics,@Param("metricsName") String metricsName,@Param("shopIdList") List<String> shopIdList);
 }

@@ -1,8 +1,7 @@
 package com.erp.server.plm.service.impl;
 
-import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
-import com.alibaba.fastjson.JSONObject;
+import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
@@ -72,6 +71,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static com.alibaba.excel.EasyExcelFactory.read;
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_PLM_BOM;
 
 /**
@@ -168,11 +168,6 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
         if (saveResult) {
             //保存历史bom信息
             //TODO 2020330暂时取消审核流程，只修改状态
-/*            //但是待审核的时候
-            if (isSubmitAudit) {
-                //这里要发起一个bom流程
-                startBomProcess(bomId, dto.getSkuList());
-            }*/
             //添加 bom 与sku 关系
             bomSkuService.saveBomSku(bomId, bomSkuList);
             //添加 bom的操作日志
@@ -211,7 +206,7 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
     public Boolean importFile(MultipartFile excelFile, HttpServletResponse response) {
         BomInfoExcelListener excelListenerUtil = new BomInfoExcelListener();
         try {
-            EasyExcel.read(excelFile.getInputStream(), BomInfoExcelDTO.class, excelListenerUtil).sheet(0).doRead();
+            read(excelFile.getInputStream(), BomInfoExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (IOException e) {
             log.error("导入错误！",e);
             throw new ServiceException(ApiError.ERROR_95124);
@@ -231,7 +226,7 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
         handleImportSuccessList(successList,errorList);
 
         if (errorList.size() > 0) {
-            StringBuffer sb = new StringBuffer();
+            StringBuilder sb = new StringBuilder();
             String excelPath = "excel/bomInfoError.xlsx";
             String name = "bomInfo";
             String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
@@ -257,14 +252,14 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
     }
 
     @Override
-    public PagingVO<List<BomSkuPageDTO.ListDTO>> skuPaging(PagingDTO<BomSkuPageDTO.PagingParamDTO> dto) {
+    public PagingVO<BomSkuPageDTO.ListDTO> skuPaging(PagingDTO<BomSkuPageDTO.PagingParamDTO> dto) {
         BomSkuPageDTO.PagingParamDTO params = dto.getParams();
         params.setPermissionSql(dto.getPermissionSql());
-        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+        Page<BomSkuPageDTO.PagingParamDTO> query = new Page<>(dto.getCurrPage(), dto.getPageSize());
         IPage<BomSkuPageDTO.ListDTO> pageData = baseMapper.skuPaging(query, params);
         List<BomSkuPageDTO.ListDTO> records = pageData.getRecords();
         if (CollectionUtils.isEmpty(records)) {
-            return new PagingVO(pageData);
+            return new PagingVO<>();
         }
         List<String> bomIds = records.stream().map(BomSkuPageDTO.ListDTO::getBomId).collect(Collectors.toList());
         List<BomSkuPageDTO.ChildDTO> childList = baseMapper.listBomSkuByBomIds(bomIds);
@@ -277,14 +272,27 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
         if (CollectionUtils.isNotEmpty(supplierIds)) {
             supplierList = scmTaskFeign.getSupplierByIdList(supplierIds);
         }
+        //分页数据处理
+        handleBomPaging(records,supplierList,childList);
+
+        return new PagingVO<>(pageData);
+    }
+
+    /**
+     * 分页数据处理
+     * @author will
+     * @date 2024/11/15 15:25
+     * @param records
+     * @param supplierList
+     * @param childList
+     */
+    private void handleBomPaging (List<BomSkuPageDTO.ListDTO> records,List<SupplierEntity> supplierList,List<BomSkuPageDTO.ChildDTO> childList) {
 
         Integer index = MathUtil.ONE;
         for (BomSkuPageDTO.ListDTO listDTO : records) {
             //付款条件
-            if (CollectionUtils.isNotEmpty(supplierList)) {
-                String paymentCondition = supplierList.stream().filter(obj -> obj.getId().equals(listDTO.getSupplierId()) && StringUtils.isNotBlank(obj.getPaymentCondition())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getPaymentCondition())).orElse("");
-                listDTO.setPaymentCondition(paymentCondition);
-            }
+            String paymentCondition = supplierList.stream().filter(obj -> obj.getId().equals(listDTO.getSupplierId()) && StringUtils.isNotBlank(obj.getPaymentCondition())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getPaymentCondition())).orElse("");
+            listDTO.setPaymentCondition(paymentCondition);
             //状态名称
             listDTO.setStatusName(ProductDetailStatusEnum.getName(listDTO.getStatus()));
             listDTO.setIndex(index);
@@ -294,10 +302,8 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
             if (CollectionUtils.isNotEmpty(childDTOList)) {
                 for (BomSkuPageDTO.ChildDTO childDTO: childDTOList) {
                     //付款条件
-                    if (CollectionUtils.isNotEmpty(supplierList)) {
-                        String paymentCondition = supplierList.stream().filter(obj -> obj.getId().equals(childDTO.getSupplierId()) && StringUtils.isNotBlank(obj.getPaymentCondition())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getPaymentCondition())).orElse("");
-                        childDTO.setPaymentCondition(paymentCondition);
-                    }
+                    String childPaymentCondition = supplierList.stream().filter(obj -> obj.getId().equals(childDTO.getSupplierId()) && StringUtils.isNotBlank(obj.getPaymentCondition())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getPaymentCondition())).orElse("");
+                    childDTO.setPaymentCondition(childPaymentCondition);
                     if (ObjectUtils.isNotEmpty(childDTO.getStatus())) {
                         //状态名称
                         childDTO.setStatusName(ProductDetailStatusEnum.getName(childDTO.getStatus()));
@@ -308,8 +314,6 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
             }
             listDTO.setChildList(childDTOList);
         }
-
-        return new PagingVO(pageData);
     }
 
     @Override
@@ -377,79 +381,6 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
         }
     }
 
-
-    /**
-     * 启动一个流程
-     *
-     * @param
-     * @return void
-     * @author yl
-     * @date 2023-01-31 14:44
-     */
-    //TODO 2020330暂时取消审核流程，只修改状态
-    /*public void startBomProcess(String bomId, List<BomSkuDTO> skuList) {
-        FindProcessDTO findProcess = new FindProcessDTO();
-        String userId = UserContext.getDefaultLoginUser().getUid();
-        String businessType = WorkflowBusinessEnum.BOM_AUDIT.getBusinessType();
-        String platform = WorkflowBusinessEnum.BOM_AUDIT.getPlatform();
-        findProcess.setBusinessType(businessType);
-        findProcess.setPlatform(platform);
-        //获取到业务的信息
-        BusinessInfoDTO business = workflowFeign.getBusiness(findProcess);
-        if (business != null) {
-            StartProcessDTO startProcess = new StartProcessDTO();
-            startProcess.setUserId(userId);
-            startProcess.setProcessDefinitionKey(business.getProcessDefinitionKey());
-            startProcess.setBusinessKey(business.getBusinessKey());
-            Map<String, Object> parameterMap = new HashMap<>();
-
-            //skuId
-            List<String> skuIdList = getSkuIdList(skuList);
-
-            //产品经理
-            //Arrays.asList("1")
-            List<String> productManagerList = productDetailService.getManagerBySkuIds(skuIdList);
-            if (CollectionUtils.isEmpty(productManagerList)) {
-                throw new ServiceException(ApiError.ERROR_9030);
-            }
-            //产品经理
-            parameterMap.put("productManagerList", productManagerList);
-            //Arrays.asList("2");
-            List<String> productManagerSupervisorList = productDetailService.getApproveLead(SkuApproveConfigureEnum.SECOND_APPROVE.getDesc());
-            if (CollectionUtils.isEmpty(productManagerSupervisorList)) {
-                throw new ServiceException(ApiError.ERROR_9031);
-            }
-            //产品经理上级
-            parameterMap.put("productManagerSupervisorList", productManagerSupervisorList);
-            //Arrays.asList("3");
-            List<String> departmentHeadList = productDetailService.getApproveLead(SkuApproveConfigureEnum.FIVE_APPROVE.getDesc());
-            //
-            if (CollectionUtils.isEmpty(departmentHeadList)) {
-                throw new ServiceException(ApiError.ERROR_9032);
-            }
-            //产品部负责人
-            parameterMap.put("departmentHead", departmentHeadList.get(0));
-            startProcess.setParameterMap(parameterMap);
-            //启动流程
-            ProcessNodeDTO processResult = workflowFeign.startProcess(startProcess);
-            //流程id
-            String processId = processResult.getProcessId();
-            if (StringUtils.isNotBlank(processId)) {
-                WorkflowBusinessProcessDTO businessProcess = new WorkflowBusinessProcessDTO();
-                businessProcess.setBusinessId(business.getId());
-                businessProcess.setCreateTime(LocalDateTime.now());
-                businessProcess.setBusinessTableId(bomId);
-                businessProcess.setCreateUserId(userId);
-                businessProcess.setProcessId(processId);
-                //保存业务与流程的信息
-                workflowFeign.saveBusinessProcess(businessProcess);
-            }
-
-        }
-
-    }*/
-
-
     /**
      * 检查审核人不能为空
      *
@@ -461,23 +392,6 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
     @Override
     public void checkAuditor(List<BomSkuDTO> skuList) {
         //TODO 暂时取消流程
-/*        //skuId
-        List<String> skuIdList = getSkuIdList(skuList);
-        //产品经理
-        List<String> productManagerList = productDetailService.getManagerBySkuIds(skuIdList);
-        if (CollectionUtils.isEmpty(productManagerList)) {
-            throw new ServiceException(ApiError.ERROR_9030);
-        }
-        //产品部负责人
-        List<String> productManagerSupervisorList = productDetailService.getApproveLead(SkuApproveConfigureEnum.SECOND_APPROVE.getDesc());
-        if (CollectionUtils.isEmpty(productManagerSupervisorList)) {
-            throw new ServiceException(ApiError.ERROR_9031);
-        }
-        //研发中心负责人
-        List<String> departmentHeadList = productDetailService.getApproveLead(SkuApproveConfigureEnum.FIVE_APPROVE.getDesc());
-        if (CollectionUtils.isEmpty(departmentHeadList)) {
-            throw new ServiceException(ApiError.ERROR_9032);
-        }*/
     }
 
     /**
@@ -489,25 +403,25 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
      * @date 2023-01-10 17:30
      */
     @Override
-    public PagingVO<List<BomPagingVO>> paging(PagingDTO<SearchPagingDTO> dto) {
+    public PagingVO<BomPagingVO> paging(PagingDTO<SearchPagingDTO> dto) {
         SearchPagingDTO params = dto.getParams();
         params.setPermissionSql(dto.getPermissionSql());
         String searchKeyword = params.getSearchKeyword();
-        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+        Page<SearchPagingDTO> query = new Page<SearchPagingDTO>(dto.getCurrPage(), dto.getPageSize());
         List<String> bomIdList = new ArrayList<>();
         //当这个不为空的时候 表示可能要搜索 sku 或者 sku名称 或者bom 编号
         List<String> skuIdList = new ArrayList<>();
         if (StringUtils.isNotBlank(searchKeyword)) {
             skuIdList = productChangeService.getChangeSearchCondition(searchKeyword);
             if (CollectionUtils.isEmpty(skuIdList)) {
-                IPage pageData = new Page();
-                return new PagingVO(pageData);
+                IPage<BomPagingVO> pageData = new Page<BomPagingVO>();
+                return new PagingVO<BomPagingVO>(pageData);
             }
         }
-        IPage pageData = baseMapper.paging(query, params, bomIdList, skuIdList);
+        IPage<BomPagingVO> pageData = baseMapper.paging(query, params, bomIdList, skuIdList);
         List<BomPagingVO> list = pageData.getRecords();
         if (CollectionUtils.isEmpty(list)) {
-            return new PagingVO(pageData);
+            return new PagingVO<BomPagingVO>();
         }
         List<String> bomIds = list.stream().map(BomPagingVO::getId).collect(Collectors.toList());
 
@@ -542,7 +456,7 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
                 item.setParentSkuName(parentSkuVO.getSkuName());
             }
         }
-        return new PagingVO(pageData);
+        return new PagingVO<>(pageData);
     }
 
     @Override
@@ -761,7 +675,6 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
             bomOperateLogService.saveOperate(bomId, BomOperationTypeEnum.STATE_CHANGE.getType(), operateContent);
             //发起bom 流程
             //TODO 2020330暂时取消审核流程，只修改状态
-            /*startBomProcess(bomId, skuList);*/
         }
         return result;
     }
@@ -800,7 +713,6 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
 
             //发起bom 流程
             //TODO 2020330暂时取消审核流程，只修改状态
-            /*startBomProcess(bomId, list);*/
         }
         return result;
 
@@ -994,8 +906,6 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
         //委外加工单
         List<SubcontractOrderDTO.ListDTO> subcontractList = scmTaskFeign.listByBomSku(parentSkuId);
         if (CollectionUtils.isNotEmpty(subcontractList)) {
-            String code = subcontractList.stream().map(SubcontractOrderDTO.ListDTO::getCode).distinct()
-                    .collect(Collectors.joining(","));
             throw new ServiceException("该bom已被委外订单引用,无法解除归档");
         }
     }
@@ -1024,7 +934,7 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
         if (CollectionUtils.isNotEmpty(changeIngSourceIds)) {
             throw new ServiceException(ApiError.ERROR_95113);
         }
-        BomDTO bom = JSONObject.parseObject(detailsJson, BomDTO.class);
+        BomDTO bom = JSON.parseObject(detailsJson, BomDTO.class);
         UpdateBomDTO updateBom = new UpdateBomDTO();
         updateBom.setId(bom.getId());
         updateBom.setSkuList(bom.getSkuList());
@@ -1045,7 +955,7 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
      */
     @Override
     public void updateState(String sourceId, Integer state) {
-        LambdaUpdateWrapper<BomInfoEntity> updateWrapper = new LambdaUpdateWrapper();
+        LambdaUpdateWrapper<BomInfoEntity> updateWrapper = new LambdaUpdateWrapper<BomInfoEntity>();
         updateWrapper.set(BomInfoEntity::getState, state);
         updateWrapper.eq(BomInfoEntity::getId, sourceId);
         this.update(updateWrapper);
@@ -1091,27 +1001,6 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
         Boolean result = this.updateById(bom);
 
         //TODO 2020330暂时取消审核流程，只修改状态
-/*        String userId = UserContext.getDefaultLoginUser().getUid();
-        BusinessTableDTO tableDTO = new BusinessTableDTO();
-        tableDTO.setBusinessTableId(bom.getId());
-        tableDTO.setUserId(userId);
-        //获取到用户该业务表的待办任务
-        MyToDoTaskVO processTask = workflowFeign.getByBusinessTableId(tableDTO);
-        if (Objects.isNull(processTask)) {
-            throw new ServiceException(ApiError.ERROR_94005);
-        }
-
-        //审核
-        ApproveProcessDTO approveProcess = new ApproveProcessDTO();
-        approveProcess.setTaskId(processTask.getTaskId());
-        approveProcess.setProcessInstanceId(processTask.getProcessInstanceId());
-        approveProcess.setUserId(userId);
-        approveProcess.setComment(comment);
-        Map<String, Object> parameterMap = new HashMap<>();
-        parameterMap.put("agree", true);
-        approveProcess.setParameterMap(parameterMap);
-        ProcessNodeDTO node = workflowFeign.taskPass(approveProcess);*/
-//        if (node != null) {
         if (result && isFirstAudit) {
             String operateContent = String.format(BomOperateContent.STATE_CHANGE, BomStateEnum.WAIT_AUDIT.getName(), BomStateEnum.AUDIT_PASS.getName() + "  审核意见：" + comment);
             //操作记录
@@ -1234,24 +1123,9 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
         tableDTO.setUserId(userId);
         //获取到用户该业务表的待办任务
         //TODO 2020330暂时取消审核流程，只修改状态
-/*        MyToDoTaskVO processTask = workflowFeign.getByBusinessTableId(tableDTO);
-        if (Objects.isNull(processTask)) {
-            throw new ServiceException(ApiError.ERROR_94005);
-        }*/
 
         //流程需要关闭吗
         Boolean result = this.updateById(bom);
-
-       /* ApproveProcessDTO process = new ApproveProcessDTO();
-        process.setComment(dto.getComment());
-        process.setProcessInstanceId(processTask.getProcessInstanceId());
-        process.setUserId(userId);
-        process.setTaskId(processTask.getTaskId());
-
-        Map<String, Object> parameterMap = new HashMap<>();
-        parameterMap.put("agree", false);
-        process.setParameterMap(parameterMap);
-        workflowFeign.taskNoPass(process);*/
 
         if (result) {
             String statusName = BomStateEnum.AUDIT_ING.getName();
@@ -1288,7 +1162,7 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
         }
         AddChangeDTO change = new AddChangeDTO();
         change.setSourceId(dto.getId());
-        change.setDetailsJson(JSONObject.toJSONString(dto.getSkuList()));
+        change.setDetailsJson(JSON.toJSONString(dto.getSkuList()));
         Boolean changeResult = productChangeService.add(change);
         //当成功后改变bom 的状态为待审核
         if (changeResult) {
@@ -1433,30 +1307,8 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
             List<BomInfoExcelDTO> value = entry.getValue();
             Boolean isError = Boolean.FALSE;
             for (BomInfoExcelDTO addDTO : value) {
-                List<String> errorMsgList = new ArrayList<>();
+                List<String> errorMsgList = checkImport(addDTO, skuList, bomInfoList);
 
-                if (StringUtils.equals(addDTO.getParentSku(),addDTO.getChildSku())) {
-                    errorMsgList.add("父级sku和子级sku不能重复");
-                }
-                //父级sku是否审核
-                SkuVO parentSkuVO = skuList.stream().filter(obj -> obj.getSkuNo().equals(addDTO.getParentSku())).findFirst().orElse(null);
-                if (ObjectUtils.isEmpty(parentSkuVO)) {
-                    errorMsgList.add(ApiError.ERROR_95152.msg);
-                }
-                //子级sku是否审核
-                SkuVO childSkuVO = skuList.stream().filter(obj -> obj.getSkuNo().equals(addDTO.getChildSku())).findFirst().orElse(null);
-                if (ObjectUtils.isEmpty(childSkuVO)) {
-                    errorMsgList.add(ApiError.ERROR_95153.msg);
-                }
-                //仅待提交或者审核不通过数据修改
-                if (CollectionUtils.isNotEmpty(bomInfoList)) {
-                    BomInfoEntity bomInfoEntity = bomInfoList.stream().filter(obj -> obj.getParentSkuId().equals(parentSkuVO.getSkuId())).findFirst().orElse(null);
-                    if (ObjectUtils.isNotEmpty(bomInfoEntity)) {
-                        if (!BomStateEnum.WAIT_SUBMIT_AUDIT.getState().equals(bomInfoEntity.getState()) && !BomStateEnum.AUDIT_NO_PASS.getState().equals(bomInfoEntity.getState())) {
-                            errorMsgList.add("仅待提交审核和审核不通过BOM支持更新");
-                        }
-                    }
-                }
                 //存在错误信息则
                 if (CollectionUtils.isNotEmpty(errorMsgList)) {
                     isError = Boolean.TRUE;
@@ -1473,11 +1325,11 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
             String key = entry.getKey();
             //父级SKU
             SkuVO parentSkuVO = skuList.stream().filter(obj -> obj.getSkuNo().equals(key)).findFirst().orElse(null);
-            if (ObjectUtils.isEmpty(parentSkuVO)) {
+            if (parentSkuVO == null) {
                 throw new ServiceException(ApiError.ERROR_95166);
             }
             BomInfoEntity bomInfoEntity = bomInfoList.stream().filter(obj -> obj.getParentSkuId().equals(parentSkuVO.getSkuId())).findFirst().orElse(null);
-            if (ObjectUtils.isEmpty(bomInfoEntity)) {
+            if (bomInfoEntity == null) {
                 //新增
                 AddBomDTO addBomDTO = new AddBomDTO();
                 BomInfoExcelDTO excelDTO = value.get(0);
@@ -1498,6 +1350,32 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
                 this.edit(updateBomDTO);
             }
         }
+    }
+
+    private List<String> checkImport (BomInfoExcelDTO addDTO,List<SkuVO> skuList,List<BomInfoEntity> bomInfoList) {
+        List<String> errorMsgList = new ArrayList<>();
+
+        if (StringUtils.equals(addDTO.getParentSku(),addDTO.getChildSku())) {
+            errorMsgList.add("父级sku和子级sku不能重复");
+        }
+        //父级sku是否审核
+        SkuVO parentSkuVO = skuList.stream().filter(obj -> obj.getSkuNo().equals(addDTO.getParentSku())).findFirst().orElse(null);
+        if (ObjectUtils.isEmpty(parentSkuVO)) {
+            errorMsgList.add(ApiError.ERROR_95152.msg);
+        }
+        //子级sku是否审核
+        SkuVO childSkuVO = skuList.stream().filter(obj -> obj.getSkuNo().equals(addDTO.getChildSku())).findFirst().orElse(null);
+        if (ObjectUtils.isEmpty(childSkuVO)) {
+            errorMsgList.add(ApiError.ERROR_95153.msg);
+        }
+        //仅待提交或者审核不通过数据修改
+        if (CollectionUtils.isNotEmpty(bomInfoList)) {
+            BomInfoEntity bomInfoEntity = bomInfoList.stream().filter(obj -> obj.getParentSkuId().equals(parentSkuVO.getSkuId())).findFirst().orElse(null);
+            if (bomInfoEntity != null && (!BomStateEnum.WAIT_SUBMIT_AUDIT.getState().equals(bomInfoEntity.getState()) && !BomStateEnum.AUDIT_NO_PASS.getState().equals(bomInfoEntity.getState()))) {
+                errorMsgList.add("仅待提交审核和审核不通过BOM支持更新");
+            }
+        }
+       return errorMsgList;
     }
 
     /**
@@ -1521,7 +1399,7 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
             BomChildrenSkuDTO childDTO = new BomChildrenSkuDTO();
             //子级SKU
             SkuVO childSkuVO = skuList.stream().filter(obj -> obj.getSkuNo().equals(bomInfoExcelDTO.getChildSku())).findFirst().orElse(null);
-            if (ObjectUtils.isEmpty(childSkuVO)) {
+            if (childSkuVO == null) {
                 throw new ServiceException(ApiError.ERROR_95166);
             }
             childDTO.setSkuId(childSkuVO.getSkuId());

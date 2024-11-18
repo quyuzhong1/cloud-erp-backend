@@ -100,7 +100,7 @@ public class PoInstockDetailEntity extends BaseEntity<PoInstockDetailEntity> {
      * 金蝶明细id
      */
     @TableField("kingdee_detail_id")
-    private String KingdeeDetailId;
+    private String kingdeeDetailId;
 
     /**
      * 含税单价

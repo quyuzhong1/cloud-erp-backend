@@ -250,7 +250,7 @@ public class PurchaseOrderDetailEntity extends BaseEntity<PurchaseOrderDetailEnt
 
     public static final String TAX_PRICE = "tax_price";
 
-    public static final String CURRENCY = "currency";
+    public static final String FIELD_CURRENCY = "currency";
 
     public static final String PURCHASE_QTY = "purchase_qty";
 
@@ -264,7 +264,7 @@ public class PurchaseOrderDetailEntity extends BaseEntity<PurchaseOrderDetailEnt
 
     public static final String IS_GIFT = "is_gift";
 
-    public static final String REMARK = "remark";
+    public static final String FIELD_REMARK = "remark";
 
     public static final String ARRIVAL_STATUS = "arrival_status";
 

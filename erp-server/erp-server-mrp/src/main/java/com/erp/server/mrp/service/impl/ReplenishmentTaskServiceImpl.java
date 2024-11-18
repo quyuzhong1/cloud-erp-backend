@@ -3,6 +3,7 @@ package com.erp.server.mrp.service.impl;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.common.business.enums.SyncStatusEnum;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.utils.ApplicationContextUtils;
 import com.erp.model.mrp.entity.ReplenishmentTaskEntity;
 import com.erp.server.mrp.mapper.ReplenishmentTaskMapper;
 import com.erp.server.mrp.service.ReplenishmentTaskService;
@@ -39,7 +40,7 @@ public class ReplenishmentTaskServiceImpl extends SuperServiceImpl<Replenishment
                     entity.setStatus(SyncStatusEnum.TO_BE_SYNC.getCode());
                     return entity;
                 }).collect(Collectors.toList());
-        saveOrUpdateBatch(list);
+        ApplicationContextUtils.getBean(ReplenishmentTaskServiceImpl.class).saveOrUpdateBatch(list);
     }
 
     @Override

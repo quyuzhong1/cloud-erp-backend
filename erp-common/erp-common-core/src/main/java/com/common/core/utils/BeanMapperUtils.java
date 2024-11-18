@@ -32,7 +32,7 @@ public class BeanMapperUtils {
     /**
      * 默认字段实例集合
      */
-    private static Map<String, MapperFacade> CACHE_MAPPER_FACADE_MAP = new ConcurrentHashMap<>();
+    private static final Map<String, MapperFacade> CACHE_MAPPER_FACADE_MAP = new ConcurrentHashMap<>();
 
     /**
      * 映射实体（默认字段）

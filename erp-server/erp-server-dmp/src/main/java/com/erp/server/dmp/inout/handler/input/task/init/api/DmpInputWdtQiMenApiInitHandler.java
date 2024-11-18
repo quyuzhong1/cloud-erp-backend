@@ -159,6 +159,8 @@ public class DmpInputWdtQiMenApiInitHandler implements DmpInputApiInitHandler{
 			}
 		}catch (ServiceException e) {
 			throw e;
+		}catch (InterruptedException e) {
+			Thread.currentThread().interrupt();
 		}catch (Exception e) {
 			throw new ServiceException("调用旺店通奇门" + apiType + "接口报错，错误原因：" + ExceptionUtil.stacktraceToOneLineString(e));
 		}

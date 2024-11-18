@@ -3,11 +3,9 @@ package com.erp.model.wms.entity;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
 import com.baomidou.mybatisplus.annotation.TableField;
-import java.io.Serializable;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
-import com.common.business.enums.ApproveStatusEnum;
 
 
 /**
@@ -69,8 +67,6 @@ public class OverseasTransferWarehouseEntity extends BaseEntity<OverseasTransfer
     public static final String DICT_PLATFORM = "dict_platform";
 
     public static final String PLATFORM_WAREHOUSE_CODE = "platform_warehouse_code";
-
-    public static final String NAME = "name";
 
     public static final String PLATFORM_STATUS = "platform_status";
 

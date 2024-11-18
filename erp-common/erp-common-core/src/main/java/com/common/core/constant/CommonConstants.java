@@ -8,6 +8,9 @@ package com.common.core.constant;
  */
 public class CommonConstants {
 
+    private CommonConstants() {
+    }
+
     /**
      * UTF-8 字符集
      */

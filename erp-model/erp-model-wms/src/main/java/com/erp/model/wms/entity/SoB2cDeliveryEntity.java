@@ -214,9 +214,9 @@ public class SoB2cDeliveryEntity extends BaseEntity<SoB2cDeliveryEntity> {
     private String sameWaveStr;
 
 
-    public static final String CODE = "code";
+    
 
-    public static final String STATUS = "status";
+    
 
     public static final String SO_CODE = "so_code";
 
@@ -245,8 +245,6 @@ public class SoB2cDeliveryEntity extends BaseEntity<SoB2cDeliveryEntity> {
     public static final String LOGISTICS_CHANNEL_NAME = "logistics_channel_name";
 
     public static final String TRANSPORT_NO = "transport_no";
-
-    public static final String WEIGHT = "weight";
 
     public static final String WEIGHT_UNIT = "weight_unit";
 

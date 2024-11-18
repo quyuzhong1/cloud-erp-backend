@@ -17,7 +17,7 @@ public enum SettleMethodEnum {
     ORIGINAL_CURRENCY(2, "原币种", "不适用汇率", "");
 
 
-    private int code;
+    private Integer code;
 
     private String name;
 
@@ -25,7 +25,7 @@ public enum SettleMethodEnum {
 
     private String field;
 
-    public int getCode() {
+    public Integer getCode() {
         return code;
     }
 
@@ -54,7 +54,7 @@ public enum SettleMethodEnum {
         }
         SettleMethodEnum[] values = values();
         for (SettleMethodEnum value : values) {
-            if (value.code == code) {
+            if (value.code.equals(code)) {
                 return value;
             }
         }

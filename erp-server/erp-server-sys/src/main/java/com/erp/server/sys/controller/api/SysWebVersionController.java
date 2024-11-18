@@ -1,33 +1,26 @@
 package com.erp.server.sys.controller.api;
 
-import java.time.Duration;
-import java.util.Collection;
-import java.util.List;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
-
-import org.apache.commons.lang.StringUtils;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.CommandLineRunner;
-import org.springframework.http.codec.ServerSentEvent;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
-
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.RandomUtil;
 import com.common.business.constant.RedisCacheConstants;
 import com.common.business.utils.RedisUtil;
 import com.common.core.controller.BaseController;
 import com.erp.model.sys.entity.DictBasicEntity;
 import com.erp.server.sys.service.DictBasicService;
-
-import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.util.RandomUtil;
 import lombok.extern.slf4j.Slf4j;
-import reactor.core.publisher.Flux;
+import org.apache.commons.lang.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.CommandLineRunner;
 import org.springframework.http.MediaType;
+import org.springframework.http.codec.ServerSentEvent;
+import org.springframework.web.bind.annotation.*;
+import reactor.core.publisher.Flux;
+
+import java.time.Duration;
+import java.util.Collection;
+import java.util.List;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 
 @Slf4j
@@ -125,7 +118,7 @@ public class SysWebVersionController extends BaseController implements CommandLi
         			dictBasicEntity.setValue(version.toString());
         			dictBasicService.save(dictBasicEntity);
         		}
-        		redisUtil.set(WEB_VERSION_REDISKEY, version.toString() , 120 + randomNumber);
+        		redisUtil.set(WEB_VERSION_REDISKEY, version.toString() , 120L + randomNumber);
         	}
         	webVersion = version.toString();
     	}

@@ -34,6 +34,7 @@ public class SpringAsyncConfig {
 	@Value("${openApi.download.pool.poolName}")
 	private String poolName = "";
 
+	private final static long period = 300l;
 	@Bean("wmsErpExecutor")
 	public ThreadPoolTaskExecutor asyncServiceErpExecutor() {
 		ThreadPoolTaskExecutor executor = createExecutor();
@@ -75,7 +76,7 @@ public class SpringAsyncConfig {
 			log.info("Number of Tasks : {}", threadPool.getThreadPoolExecutor().getTaskCount());
 			log.info("Number of Tasks in Queue: {}", threadPool.getThreadPoolExecutor().getQueue().size());
 			log.info("=========================");
-		}, 0, 5*60, TimeUnit.SECONDS);
+		}, 0, period, TimeUnit.SECONDS);
 	}
 
 }

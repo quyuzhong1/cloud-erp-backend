@@ -1,15 +1,15 @@
 package com.erp.server.mrp.service.impl;
 
-import cn.hutool.core.util.StrUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
-import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.ModuleOperateLogFieldTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.utils.ApplicationContextUtils;
 import com.common.business.utils.OperationLogUtil;
 import com.common.business.vo.PagingVO;
 import com.common.core.constant.EnumMessage;
@@ -30,6 +30,7 @@ import com.erp.server.mrp.service.OperateLogService;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
 import org.springframework.stereotype.Service;
+import org.springframework.util.ObjectUtils;
 
 import javax.annotation.Resource;
 import java.util.*;
@@ -61,10 +62,10 @@ public class OperateLogServiceImpl extends SuperServiceImpl<OperateLogMapper, Op
 
     @Override
     public PagingVO<OperateLogDTO.ListDTO> paging(PagingDTO<OperateLogDTO.SearchDTO> dto) {
-        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+        Page<OperateLogDTO.ListDTO> query = new Page<>(dto.getCurrPage(), dto.getPageSize());
         OperateLogDTO.SearchDTO params = dto.getParams();
-        IPage pageData = baseMapper.paging(query, params);
-        return new PagingVO(pageData);
+        IPage<OperateLogDTO.ListDTO> pageData = baseMapper.paging(query, params);
+        return new PagingVO<>(pageData);
     }
 
 
@@ -90,8 +91,10 @@ public class OperateLogServiceImpl extends SuperServiceImpl<OperateLogMapper, Op
             String fieldClass = keyPair.getValue();
             //Pair<旧值, 新值>
             Pair<String, String> valuePair = entry.getValue();
+            String oldValue = String.valueOf(valuePair.getKey());
+            String newValue = String.valueOf(valuePair.getValue());
             CfgOperateLogFieldEntity fieldEntity = fieldList.stream().filter(obj -> obj.getField().equals(field) && obj.getClassPath().equals(fieldClass)).findAny().orElse(null);
-            if (ObjectUtils.isEmpty(fieldEntity)) {
+            if (ObjectUtils.isEmpty(fieldEntity) || oldValue.equals(newValue)) {
                 continue;
             }
             String fieldName = fieldEntity.getFieldName();
@@ -115,12 +118,6 @@ public class OperateLogServiceImpl extends SuperServiceImpl<OperateLogMapper, Op
             if (ModuleOperateLogFieldTypeEnum.TYPE_COUNTRY.getCode().equals(type)) {
                 valuePair = setCountryValue(valuePair);
             }
-            String oldValue = String.valueOf(valuePair.getKey());
-            String newValue = String.valueOf(valuePair.getValue());
-
-            if (oldValue.equals(newValue)) {
-                continue;
-            }
             String content;
             String concat = msg.concat("编辑了【").concat(fieldName).concat("】");
             if (StringUtils.isBlank(valuePair.getKey())) {
@@ -140,7 +137,7 @@ public class OperateLogServiceImpl extends SuperServiceImpl<OperateLogMapper, Op
                     .setOperation("编辑信息");
             list.add(entity);
         }
-        return this.saveBatch(list);
+        return ApplicationContextUtils.getBean(OperateLogServiceImpl.class).saveBatch(list);
     }
 
     @Override
@@ -175,7 +172,7 @@ public class OperateLogServiceImpl extends SuperServiceImpl<OperateLogMapper, Op
                     .setOperation(operation);
             list.add(entity);
         }
-        return this.saveBatch(list);
+        return ApplicationContextUtils.getBean(OperateLogServiceImpl.class).saveBatch(list);
     }
 
     @Override
@@ -283,20 +280,20 @@ public class OperateLogServiceImpl extends SuperServiceImpl<OperateLogMapper, Op
      * @return String
      */
     private String handleEnumVale (String object,Class<?> aClass) {
-        if (StrUtil.isBlank(object)) {
+        if (CharSequenceUtil.isBlank(object)) {
             return "";
         }
         List<String> resultList = new ArrayList<>();
         String[] split = object.split(",");
        for (String value : split) {
            EnumMessage enumObject = EnumsUtil.getEnumObject(value, aClass);
-           if (ObjectUtils.isNotEmpty(enumObject)) {
+           if (!ObjectUtils.isEmpty(enumObject)) {
                resultList.add(enumObject.getName());
            }
        }
        if (CollectionUtils.isEmpty(resultList)) {
            return "";
        }
-       return resultList.stream().collect(Collectors.joining(","));
+       return String.join(",", resultList);
     }
 }

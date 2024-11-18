@@ -1,6 +1,7 @@
 package com.erp.server.wms.service.impl;
 
 
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.common.business.enums.UnitEnum;
@@ -46,13 +47,13 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 public class WmsCartonSpecServiceImpl extends SuperServiceImpl<WmsCartonSpecMapper, WmsCartonSpecEntity> implements WmsCartonSpecService {
-    @Autowired
+    @Resource
     private OperateLogService operateLogService;
-    @Autowired
+    @Resource
     private WmsCartonDetailService wmsCartonDetailService;
-    @Autowired
+    @Resource
     private WmsCartonService wmsCartonService;
-    @Autowired
+    @Resource
     private PlmTaskFeign plmTaskFeign;
     @Resource
     private PackingTaskDetailService packingTaskDetailService;
@@ -68,10 +69,10 @@ public class WmsCartonSpecServiceImpl extends SuperServiceImpl<WmsCartonSpecMapp
         WmsCartonSpecEntity wmsCartonSpecEntity = new WmsCartonSpecEntity();
         BeanMapperUtils.copy(addDTO, wmsCartonSpecEntity);
         //检查数据是否存在
-        if (StrUtil.isNotBlank(addDTO.getSpecId())){
+        if (CharSequenceUtil.isNotBlank(addDTO.getSpecId())){
             WmsCartonSpecEntity old = this.getById(addDTO.getSpecId());
             wmsCartonSpecEntity.setId(Objects.isNull(old)? null: old.getId());
-        }else if (StrUtil.isNotBlank(addDTO.getCartonId())){
+        }else if (CharSequenceUtil.isNotBlank(addDTO.getCartonId())){
             WmsCartonEntity wmsCarton = wmsCartonService.getById(addDTO.getCartonId());
             wmsCartonSpecEntity.setId(Objects.nonNull(wmsCarton) ? wmsCarton.getSpecId() : null);
         }
@@ -83,7 +84,7 @@ public class WmsCartonSpecServiceImpl extends SuperServiceImpl<WmsCartonSpecMapp
         if (!save) {
             throw new ServiceException("发货单箱规信息保存失败");
         }
-        String msg = StrUtil.format("【{}】新增【{}】箱规号为【{}】", addDTO.getContent(),"装箱箱规", wmsCartonSpecEntity.getBoxSpecNo());
+        String msg = CharSequenceUtil.format("【{}】新增【{}】箱规号为【{}】", addDTO.getContent(),"装箱箱规", wmsCartonSpecEntity.getBoxSpecNo());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.CARTON_SPC.getCode(), addDTO.getTaskId(), addDTO.getOperation());
         //新增箱子信息
         wmsCartonService.add(addDTO, wmsCartonSpecEntity);
@@ -111,7 +112,7 @@ public class WmsCartonSpecServiceImpl extends SuperServiceImpl<WmsCartonSpecMapp
     }
     @Override
     public List<WmsCartonSpecDTO.PackDateDTO> listPackDateByPackingTaskId(String packingTaskId) {
-        if (StringUtils.isBlank(packingTaskId)) {
+        if (CharSequenceUtil.isBlank(packingTaskId)) {
             return Collections.emptyList();
         }
         return baseMapper.listPackDateByMainId(packingTaskId);
@@ -145,7 +146,6 @@ public class WmsCartonSpecServiceImpl extends SuperServiceImpl<WmsCartonSpecMapp
         for (WmsCartonSpecDTO.ViewDTO viewDTO : wmsCartonSpecList) {
             WmsCartonEntity cartonEntity = cartonEntityList.stream().filter(e -> e.getSpecId().equals(viewDTO.getId())).findFirst().orElse(new WmsCartonEntity());
             List<WmsCartonDetailEntity> detailEntityList = wmsCartonDetailService.listByMainIds(Collections.singletonList(cartonEntity.getId()));
-//            List<WmsCartonSpecDTO.PackDateDTO> packDateDTOList = packDateDTOS.stream().filter(req -> req.getBoxSpecNo().equals(viewDTO.getBoxSpecNo())).collect(Collectors.toList());
             List<WmsCartonDetailDTO.ViewDTO> detailList = BeanMapper.copyList(detailEntityList, WmsCartonDetailDTO.ViewDTO.class);
             for (WmsCartonDetailDTO.ViewDTO dto : detailList) {
                 int deliveryQty = taskDetailEntityList.stream().filter(req -> dto.getSkuId().equals(req.getSkuId()) && dto.getFnSku().equals(req.getFnSku())).mapToInt(PackingTaskDetailEntity::getDeliveryQty).reduce(MathUtil.ZERO, Integer::sum);
@@ -198,13 +198,13 @@ public class WmsCartonSpecServiceImpl extends SuperServiceImpl<WmsCartonSpecMapp
         //小于最小限制
         if (Objects.nonNull(dto.getMinWeight()) && grossWeight.compareTo(dto.getMinWeight()) < 0){
             BigDecimal subtract = dto.getMinWeight().subtract(grossWeight);
-            warnMsg = StrUtil.format("预警提示：重量低于最低重量：{}KG，本次装箱预计已低{}KG！", grossWeight, subtract);
+            warnMsg = CharSequenceUtil.format("预警提示：重量低于最低重量：{}KG，本次装箱预计已低{}KG！", grossWeight, subtract);
 
         }
         //大于最大限制
         if (Objects.nonNull(dto.getMaxWeight()) && grossWeight.compareTo(dto.getMaxWeight()) > 0){
             BigDecimal subtract = grossWeight.subtract(dto.getMaxWeight());
-            warnMsg = StrUtil.format("预警提示：超重值：{}KG，本次装箱预计已超重{}KG！", grossWeight, subtract);
+            warnMsg = CharSequenceUtil.format("预警提示：超重值：{}KG，本次装箱预计已超重{}KG！", grossWeight, subtract);
         }
         weightRuleDTO.setWarnMsg(warnMsg);
         return weightRuleDTO;
@@ -212,7 +212,7 @@ public class WmsCartonSpecServiceImpl extends SuperServiceImpl<WmsCartonSpecMapp
 
     @Override
     public void checkProductPropertyIds(String sourceType, List<String> skuIds) {
-        if (CollectionUtils.isEmpty(skuIds) || StrUtil.isBlank(sourceType)){
+        if (CollectionUtils.isEmpty(skuIds) || CharSequenceUtil.isBlank(sourceType)){
             return;
         }
         List<CfgRuleOutDTO.CfgProductPackingDetail> productRuleList = cfgRuleOutService.getCfgProductPackingDetailByType(sourceType);
@@ -224,7 +224,7 @@ public class WmsCartonSpecServiceImpl extends SuperServiceImpl<WmsCartonSpecMapp
         Set<String> propertyIds = new HashSet<>();
         skuVOList.forEach(skuVO -> {
             String productPropertyId = skuVO.getProductPropertyId();
-            if (StrUtil.isNotBlank(productPropertyId)){
+            if (CharSequenceUtil.isNotBlank(productPropertyId)){
                 String[] split = productPropertyId.split(",");
                 propertyIds.addAll(Arrays.asList(split));
             }
@@ -235,7 +235,7 @@ public class WmsCartonSpecServiceImpl extends SuperServiceImpl<WmsCartonSpecMapp
         for (CfgRuleOutDTO.CfgProductPackingDetail productRule : productRuleList) {
             List<String> cannotPackingPropertyIds = productRule.getCannotPackingPropertyIds();
             List<String> canPackingPropertyIds = productRule.getCanPackingPropertyIds();
-            if (CollectionUtils.isEmpty(canPackingPropertyIds) || CollectionUtils.isEmpty(canPackingPropertyIds)){
+            if (CollectionUtils.isEmpty(canPackingPropertyIds) || CollectionUtils.isEmpty(cannotPackingPropertyIds)){
                 continue;
             }
             List<String> containIds1 = cannotPackingPropertyIds.stream().filter(propertyIds::contains).collect(Collectors.toList());
@@ -246,18 +246,18 @@ public class WmsCartonSpecServiceImpl extends SuperServiceImpl<WmsCartonSpecMapp
                 List<String> canPackList = new ArrayList<>();
                 containIds2.forEach(propertyId -> {
                     String name = dictMap.get(propertyId);
-                    if (StrUtil.isNotBlank(name)){
+                    if (CharSequenceUtil.isNotBlank(name)){
                         canPackList.add(name);
                     }
                 });
                 List<String> cannotPackList = new ArrayList<>();
                 containIds1.forEach(propertyId -> {
                     String name = dictMap.get(propertyId);
-                    if (StrUtil.isNotBlank(name)){
+                    if (CharSequenceUtil.isNotBlank(name)){
                         cannotPackList.add(name);
                     }
                 });
-                String msg = StrUtil.format("分类【{}】装入【{}】不可装入【{}】", PickingSourceTypeEnum.getName(sourceType), String.join("," ,canPackList), String.join(",",cannotPackList));
+                String msg = CharSequenceUtil.format("分类【{}】装入【{}】不可装入【{}】", PickingSourceTypeEnum.getName(sourceType), String.join("," ,canPackList), String.join(",",cannotPackList));
                 throw new ServiceException(msg);
             }
         }
@@ -302,7 +302,7 @@ public class WmsCartonSpecServiceImpl extends SuperServiceImpl<WmsCartonSpecMapp
 
     @Override
     public WmsCartonSpecEntity getByTaskIdAndBoxNo(String packingTaskId, String boxNo) {
-        if(com.baomidou.mybatisplus.core.toolkit.StringUtils.isBlank(packingTaskId) || com.baomidou.mybatisplus.core.toolkit.StringUtils.isBlank(boxNo)){
+        if(CharSequenceUtil.isBlank(packingTaskId) || CharSequenceUtil.isBlank(boxNo)){
             return null;
         }
         return lambdaQuery().eq(WmsCartonSpecEntity::getMainId,packingTaskId).eq(WmsCartonSpecEntity::getBoxSpecNo,boxNo).last("limit 1").one();
@@ -310,7 +310,7 @@ public class WmsCartonSpecServiceImpl extends SuperServiceImpl<WmsCartonSpecMapp
 
     @Override
     public void updateSizeDataEmpty(WmsCartonSpecEntity cartonSpecEntity) {
-        if (Objects.isNull(cartonSpecEntity) || StrUtil.isBlank(cartonSpecEntity.getId())){
+        if (Objects.isNull(cartonSpecEntity) || CharSequenceUtil.isBlank(cartonSpecEntity.getId())){
             return;
         }
         this.lambdaUpdate().eq(WmsCartonSpecEntity::getId, cartonSpecEntity.getId())
@@ -329,7 +329,7 @@ public class WmsCartonSpecServiceImpl extends SuperServiceImpl<WmsCartonSpecMapp
     @Override
     public void checkAndRemoveCartonInfo(WmsCartonSpecDTO.WmsCartonAdd dto,  Boolean isAddCarton) {
         String taskId = dto.getTaskId();
-        if (StrUtil.isBlank(taskId)){
+        if (CharSequenceUtil.isBlank(taskId)){
             return;
         }
         //已绑定货件不能操作
@@ -357,7 +357,7 @@ public class WmsCartonSpecServiceImpl extends SuperServiceImpl<WmsCartonSpecMapp
             List<String> deleteFbaCartonIds = cartonIds.stream().filter(needDeleteCartonIds::contains).collect(Collectors.toList());
             if (CollectionUtils.isNotEmpty(deleteFbaCartonIds)){
                 List<String> boxNoList = oldCartonEntityList.stream().filter(e -> deleteFbaCartonIds.contains(e.getId())).map(e -> String.valueOf(e.getBoxNo())).distinct().collect(Collectors.toList());
-                throw new ServiceException(StrUtil.format("已下推的箱号【{}】不允许再修改", String.join(",",boxNoList)));
+                throw new ServiceException(CharSequenceUtil.format("已下推的箱号【{}】不允许再修改", String.join(",",boxNoList)));
             }
             List<WmsCartonEntity> cartonEntityList = oldCartonEntityList.stream().filter(e -> cartonIds.contains(e.getId())).collect(Collectors.toList());
             if (cartonIds.size() != cartonEntityList.size()){
@@ -371,7 +371,7 @@ public class WmsCartonSpecServiceImpl extends SuperServiceImpl<WmsCartonSpecMapp
             List<WmsCartonEntity> notExistList = lastCartionList.stream().filter(e -> !newCartonIds.contains(e.getId())).collect(Collectors.toList());
             if (CollectionUtils.isNotEmpty(notExistList)){
                 List<String> boxNoList = notExistList.stream().filter(e -> Objects.nonNull(e.getBoxNo())).map(e -> String.valueOf(e.getBoxNo())).distinct().collect(Collectors.toList());
-                throw new ServiceException(StrUtil.format("已下推的箱号【{}】前箱号【{}】不允许再修改", maxWmsCartonEntity.getBoxNo(),String.join(",",boxNoList)));
+                throw new ServiceException(CharSequenceUtil.format("已下推的箱号【{}】前箱号【{}】不允许再修改", maxWmsCartonEntity.getBoxNo(),String.join(",",boxNoList)));
             }
             List<WmsCartonSpecEntity> cartonSpecEntityList = this.listByMainIds(Collections.singletonList(taskId));
             //比较明细
@@ -384,7 +384,7 @@ public class WmsCartonSpecServiceImpl extends SuperServiceImpl<WmsCartonSpecMapp
                 if (Objects.isNull(wmsCartonEntity)){
                     throw new ServiceException("已下推的装箱不允许再删除");
                 }
-                WmsCartonSpecEntity specEntity = cartonSpecEntityList.stream().filter(e -> Objects.nonNull(e) && StrUtil.isNotBlank(wmsCartonEntity.getSpecId()) && e.getId().equals(wmsCartonEntity.getSpecId())).findFirst().orElse(null);
+                WmsCartonSpecEntity specEntity = cartonSpecEntityList.stream().filter(e -> Objects.nonNull(e) && CharSequenceUtil.isNotBlank(wmsCartonEntity.getSpecId()) && e.getId().equals(wmsCartonEntity.getSpecId())).findFirst().orElse(null);
                 if (Objects.isNull(specEntity)){
                     throw new ServiceException("已下推的箱规不允许再删除");
                 }
@@ -444,12 +444,12 @@ public class WmsCartonSpecServiceImpl extends SuperServiceImpl<WmsCartonSpecMapp
         for (WmsCartonDetailEntity wmsCartonDetailEntity : cartonDetailEntityList) {
             WmsCartonDetailDTO.AddDTO addDTO = detailList.stream().filter(e -> Objects.equals(wmsCartonDetailEntity.getId(), e.getId())).findFirst().orElse(null);
             if (Objects.isNull(addDTO)){
-                throw new ServiceException(StrUtil.format("已下推的装箱明细SKU【{}】FNSKU【{}】不允许再修改", wmsCartonDetailEntity.getSkuNo(),wmsCartonDetailEntity.getFnSku()));
+                throw new ServiceException(CharSequenceUtil.format("已下推的装箱明细SKU【{}】FNSKU【{}】不允许再修改", wmsCartonDetailEntity.getSkuNo(),wmsCartonDetailEntity.getFnSku()));
             }
             int hash1 = getCartonDetailHash(wmsCartonDetailEntity.getSkuId(),wmsCartonDetailEntity.getSkuNo(),wmsCartonDetailEntity.getFnSku(),wmsCartonDetailEntity.getPackQty());
             int hash2 = getCartonDetailHash(addDTO.getSkuId(),addDTO.getSkuNo(),addDTO.getFnSku(),addDTO.getPackQty());
             if (hash1 != hash2){
-                throw new ServiceException(StrUtil.format("已下推的装箱明细不允许再修改，修改前【{}】修改后【{}】",
+                throw new ServiceException(CharSequenceUtil.format("已下推的装箱明细不允许再修改，修改前【{}】修改后【{}】",
                         wmsCartonDetailEntity.getSkuNo() + "|" + wmsCartonDetailEntity.getFnSku() + "|" + wmsCartonDetailEntity.getPackQty()
                         ,addDTO.getSkuNo() + "|" + addDTO.getFnSku() + "|" + addDTO.getPackQty()));
             }
@@ -463,7 +463,7 @@ public class WmsCartonSpecServiceImpl extends SuperServiceImpl<WmsCartonSpecMapp
 
     private void compareCarton(WmsCartonEntity wmsCartonEntity, WmsCartonSpecDTO.AddDTO addDTO) {
         if (!Objects.equals(wmsCartonEntity.getBoxNo(), addDTO.getBoxNo())){
-            throw new ServiceException(StrUtil.format("已下推的箱号不允许再修改,箱号修改前【{}】修改后【{}】",wmsCartonEntity.getBoxNo(),addDTO.getBoxNo()));
+            throw new ServiceException(CharSequenceUtil.format("已下推的箱号不允许再修改,箱号修改前【{}】修改后【{}】",wmsCartonEntity.getBoxNo(),addDTO.getBoxNo()));
         }
     }
 
@@ -471,7 +471,7 @@ public class WmsCartonSpecServiceImpl extends SuperServiceImpl<WmsCartonSpecMapp
         int hash1 = getSpecHash(specEntity.getBoxLength(), specEntity.getBoxWidth(), specEntity.getBoxHeight(),specEntity.getPackageWeight());
         int hash2 = getSpecHash(addDTO.getBoxLength(), addDTO.getBoxWidth(), addDTO.getBoxHeight(),addDTO.getPackageWeight());
         if (hash1 != hash2){
-            throw new ServiceException(StrUtil.format("已下推的箱号不允许再修改，箱规修改前【{}】修改后【{}】",
+            throw new ServiceException(CharSequenceUtil.format("已下推的箱号不允许再修改，箱规修改前【{}】修改后【{}】",
                     String.valueOf(specEntity.getBoxLength()) + "-" + specEntity.getBoxWidth() + "-" + specEntity.getBoxHeight() + "-" + specEntity.getPackageWeight()
                     ,String.valueOf(addDTO.getBoxLength()) + "-" + addDTO.getBoxWidth() + "-" + addDTO.getBoxHeight() + "-" + addDTO.getPackageWeight()));
         }
@@ -490,7 +490,7 @@ public class WmsCartonSpecServiceImpl extends SuperServiceImpl<WmsCartonSpecMapp
     */
     private void handleData(WmsCartonSpecEntity wmsCartonSpecEntity, String taskId) {
         wmsCartonSpecEntity.setMainId(taskId);
-        if (StringUtils.isBlank(wmsCartonSpecEntity.getMeasureSource())){
+        if (CharSequenceUtil.isBlank(wmsCartonSpecEntity.getMeasureSource())){
             wmsCartonSpecEntity.setMeasureSource(MeasureSourceEnum.MANUAL.getCode());
         }
         if (Objects.isNull(wmsCartonSpecEntity.getBoxQty())){

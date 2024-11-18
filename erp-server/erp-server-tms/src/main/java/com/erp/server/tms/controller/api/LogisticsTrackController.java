@@ -63,7 +63,7 @@ public class LogisticsTrackController extends BaseController {
         menuCode = "tms:logisticsTrack:update",
         serviceClass = LogisticsTrackService.class,
         keyIdName = "id")
-    public ApiResult update(@RequestBody @Validated LogisticsTrackDTO.UpdateDTO dto) {
+    public ApiResult<Object>update(@RequestBody @Validated LogisticsTrackDTO.UpdateDTO dto) {
         logisticsTrackService.update(dto);
         return success();
     }
@@ -74,7 +74,7 @@ public class LogisticsTrackController extends BaseController {
      * @return
      */
     @PostMapping("/webhookByTrack123")
-    public ApiResult webhookByTrack123(@RequestBody LogisticsTrackDTO.TrackWebHookDTO dto){
+    public ApiResult<Object>webhookByTrack123(@RequestBody LogisticsTrackDTO.TrackWebHookDTO dto){
         logisticsTrackService.webhookByTrack123(dto);
         return success();
     }

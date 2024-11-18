@@ -1,7 +1,7 @@
 package com.erp.server.mrp.service.impl;
 
 
-import cn.hutool.core.util.StrUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -20,10 +20,10 @@ import com.erp.server.mrp.service.OperateLogService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.Resource;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
@@ -39,11 +39,13 @@ import java.util.Optional;
 @Slf4j
 @Service
 public class CfgPlatformMappingServiceImpl extends SuperServiceImpl<CfgPlatformMappingMapper, CfgPlatformMappingEntity> implements CfgPlatformMappingService {
-    @Autowired
+    @Resource
     private OperateLogService operateLogService;
 
-    @Autowired
+    @Resource
     private CustomerFeign customerFeign;
+
+    private static final String DOCUMENTS_NAM = "平台映射单";
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -62,7 +64,7 @@ public class CfgPlatformMappingServiceImpl extends SuperServiceImpl<CfgPlatformM
         }
 
         // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "平台映射单" , cfgPlatformMappingEntity.getId());
+        String msg = CharSequenceUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), DOCUMENTS_NAM , cfgPlatformMappingEntity.getId());
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLog(msg, null, cfgPlatformMappingEntity.getId(), "新增操作");
         // TODO 新增明细（如果有明细的话）
@@ -77,7 +79,7 @@ public class CfgPlatformMappingServiceImpl extends SuperServiceImpl<CfgPlatformM
     @Override
     public Boolean update(CfgPlatformMappingDTO.UpdateDTO updateDTO) {
         CfgPlatformMappingEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "平台映射单"));
+        old = Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, DOCUMENTS_NAM));
         CfgPlatformMappingEntity cfgPlatformMappingEntity =  BeanMapperUtils.map(CfgPlatformMappingEntity.class, updateDTO);
 
         // 数据处理
@@ -91,7 +93,7 @@ public class CfgPlatformMappingServiceImpl extends SuperServiceImpl<CfgPlatformM
 
         // 记录主单操作日志
             log.info("编辑 开始记录平台映射单日志数据，id：【{}】", cfgPlatformMappingEntity.getId());
-            String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), cfgPlatformMappingEntity.getId(), "平台映射单");
+            String msg = CharSequenceUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), cfgPlatformMappingEntity.getId(), DOCUMENTS_NAM);
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLogByObj(old, cfgPlatformMappingEntity, null, cfgPlatformMappingEntity.getId(), msg);
         return Boolean.TRUE;
@@ -114,11 +116,10 @@ public class CfgPlatformMappingServiceImpl extends SuperServiceImpl<CfgPlatformM
 
     @Override
     public List<CfgPlatformMappingEntity> listByPlatformType(String platformType) {
-        List<CfgPlatformMappingEntity> list = lambdaQuery().eq(CfgPlatformMappingEntity::getDisabled, false)
+        return lambdaQuery().eq(CfgPlatformMappingEntity::getDisabled, false)
                 .le(CfgPlatformMappingEntity::getEffectiveDate, LocalDate.now())
                 .eq(CfgPlatformMappingEntity::getType, platformType)
                 .list();
-        return list;
     }
 
 
@@ -141,7 +142,7 @@ public class CfgPlatformMappingServiceImpl extends SuperServiceImpl<CfgPlatformM
 
        for (CfgPlatformMappingDTO.ListDTO listDTO : records) {
             //平台名称
-           String platformName = platformViewList.stream().filter(obj -> StrUtil.equals(listDTO.getPlatform(), obj.getValue())).map(DictBasicDTO.ViewDTO::getName).findFirst().orElse("");
+           String platformName = platformViewList.stream().filter(obj -> CharSequenceUtil.equals(listDTO.getPlatform(), obj.getValue())).map(DictBasicDTO.ViewDTO::getName).findFirst().orElse("");
             listDTO.setPlatformName(platformName);
        }
     }

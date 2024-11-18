@@ -22,6 +22,8 @@ import java.util.Map;
  */
 public class JwtUtils {
 
+    private JwtUtils() {
+    }
 
     /**
      * 私钥加密token

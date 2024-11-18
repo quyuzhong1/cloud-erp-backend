@@ -3,12 +3,10 @@ package com.erp.rpc.wms.feign;
 import com.common.business.dto.PlatformFbaShipmentDTO;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.dmp.lingxing.FbaReceiveGroupEntity;
-import com.erp.model.wms.entity.FbaShipmentReceiveEntity;
+import org.apache.poi.ss.formula.functions.T;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-
-import java.util.List;
 
 @FeignClient(name = "erp-wms", contextId = "shipmentFeign")
 public interface WmsShipmentFeign {
@@ -19,7 +17,7 @@ public interface WmsShipmentFeign {
      * @author Jim
      */
     @PostMapping("/feign/shipment/consumer")
-    ApiResult<?> consumerPullShipment(@RequestBody PlatformFbaShipmentDTO platformFbaShipmentDTO);
+    ApiResult<T> consumerPullShipment(@RequestBody PlatformFbaShipmentDTO platformFbaShipmentDTO);
 
 
     /**

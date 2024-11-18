@@ -30,7 +30,7 @@ public interface PurchaseSuggestMapper extends BaseMapper<PurchaseSuggestEntity>
      * @param params
      * @return Page<PurchaseSuggestionDTO>
      */
-    Page<ReplenishmentSuggestionDTO.PurchaseSuggestionDTO> pagingExportPurchaseSuggestion(Page page, @Param("params") ReplenishmentSuggestionDTO.PagingParamDTO params);
+    Page<ReplenishmentSuggestionDTO.PurchaseSuggestionDTO> pagingExportPurchaseSuggestion(Page<ReplenishmentSuggestionDTO.PurchaseSuggestionDTO> page, @Param("params") ReplenishmentSuggestionDTO.PagingParamDTO params);
     /**
      * 列表查询
      * @author will

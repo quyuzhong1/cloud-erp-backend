@@ -1,10 +1,11 @@
 package com.erp.server.mrp.service.impl;
 
 
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.utils.ApplicationContextUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
@@ -16,17 +17,19 @@ import com.erp.model.mrp.entity.CfgRuleStockingRatioEntity;
 import com.erp.model.mrp.enums.CfgRuleStockingRatioTypeEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.server.mrp.mapper.CfgRuleStockUpMapper;
-import com.erp.server.mrp.service.*;
+import com.erp.server.mrp.service.CfgRuleLogisticsService;
+import com.erp.server.mrp.service.CfgRuleStockUpService;
+import com.erp.server.mrp.service.CfgRuleStockingRatioService;
+import com.erp.server.mrp.service.OperateLogService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.Resource;
 import java.math.BigDecimal;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -43,17 +46,15 @@ import java.util.stream.Collectors;
 @Service
 public class CfgRuleStockUpServiceImpl extends SuperServiceImpl<CfgRuleStockUpMapper, CfgRuleStockUpEntity> implements CfgRuleStockUpService {
 
-    @Autowired
+    @Resource
     private OperateLogService operateLogService;
 
-    @Autowired
+    @Resource
     private CfgRuleLogisticsService cfgRuleLogisticsService;
 
-    @Autowired
+    @Resource
     private CfgRuleStockingRatioService cfgRuleStockingRatioService;
 
-    @Autowired
-    private CfgRuleLogisticsDetailService cfgRuleLogisticsDetailService;
 
     /**
     * 修改
@@ -85,7 +86,7 @@ public class CfgRuleStockUpServiceImpl extends SuperServiceImpl<CfgRuleStockUpMa
 
         // 记录主单操作日志
         log.info("编辑 开始记录备货（规则设置）日志数据，id：【{}】", cfgRuleStockUpEntity.getId());
-        operateLogService.addModuleOperateLogByObj(old, cfgRuleStockUpEntity, ModuleTypeEnum.REPLENISHMENT_SUGGESTION.getCode(),StrUtil.blankToDefault(cfgRuleStockUpEntity.getRefId(),cfgRuleStockUpEntity.getId()), "");
+        operateLogService.addModuleOperateLogByObj(old, cfgRuleStockUpEntity, ModuleTypeEnum.REPLENISHMENT_SUGGESTION.getCode(), CharSequenceUtil.blankToDefault(cfgRuleStockUpEntity.getRefId(),cfgRuleStockUpEntity.getId()), "");
         return Boolean.TRUE;
     }
 
@@ -99,19 +100,19 @@ public class CfgRuleStockUpServiceImpl extends SuperServiceImpl<CfgRuleStockUpMa
         BeanMapperUtils.copy(oldEntity,viewDTO);
 
         //物流配置信息
-        List<CfgRuleLogisticsDTO.ViewDTO> logisticsViewList = cfgRuleLogisticsService.listViewByStockUpIdList(Arrays.asList(oldEntity.getId()));
+        List<CfgRuleLogisticsDTO.ViewDTO> logisticsViewList = cfgRuleLogisticsService.listViewByStockUpIdList(Collections.singletonList(oldEntity.getId()));
         if (CollectionUtils.isNotEmpty(logisticsViewList)) {
             viewDTO.setCfgLogisticsList(logisticsViewList);
         }
-        List<CfgRuleStockingRatioEntity> stockingRatioList = cfgRuleStockingRatioService.listByStockUpIdList(Arrays.asList(oldEntity.getId()));
+        List<CfgRuleStockingRatioEntity> stockingRatioList = cfgRuleStockingRatioService.listByStockUpIdList(Collections.singletonList(oldEntity.getId()));
         //常规品
-        List<CfgRuleStockingRatioEntity> oldList = stockingRatioList.stream().filter(obj -> StrUtil.equals(obj.getType(), CfgRuleStockingRatioTypeEnum.CONVENTIONAL.getCode())).collect(Collectors.toList());
+        List<CfgRuleStockingRatioEntity> oldList = stockingRatioList.stream().filter(obj -> CharSequenceUtil.equals(obj.getType(), CfgRuleStockingRatioTypeEnum.CONVENTIONAL.getCode())).collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(oldList)) {
             List<CfgRuleStockingRatioDTO.ViewDTO> oldStockingRatioList = BeanMapperUtils.copyList(CfgRuleStockingRatioDTO.ViewDTO.class, oldList);
             viewDTO.setStockingRatioList(oldStockingRatioList);
         }
         //新品
-        List<CfgRuleStockingRatioEntity> newList = stockingRatioList.stream().filter(obj -> StrUtil.equals(obj.getType(), CfgRuleStockingRatioTypeEnum.NEW.getCode())).collect(Collectors.toList());
+        List<CfgRuleStockingRatioEntity> newList = stockingRatioList.stream().filter(obj -> CharSequenceUtil.equals(obj.getType(), CfgRuleStockingRatioTypeEnum.NEW.getCode())).collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(newList)) {
             List<CfgRuleStockingRatioDTO.ViewDTO> oldStockingRatioList = BeanMapperUtils.copyList(CfgRuleStockingRatioDTO.ViewDTO.class, newList);
             viewDTO.setNewStockingRatioList(oldStockingRatioList);
@@ -126,7 +127,7 @@ public class CfgRuleStockUpServiceImpl extends SuperServiceImpl<CfgRuleStockUpMa
         if (ObjectUtil.isEmpty(cfgRuleStockUpEntity)) {
             return;
         }
-        this.removeById(cfgRuleStockUpEntity.getId());
+        ApplicationContextUtils.getBean(CfgRuleStockUpServiceImpl.class).removeById(cfgRuleStockUpEntity.getId());
 
         //删除物流信息配置
         cfgRuleLogisticsService.deleteByStockUpId(cfgRuleStockUpEntity.getId());
@@ -138,7 +139,7 @@ public class CfgRuleStockUpServiceImpl extends SuperServiceImpl<CfgRuleStockUpMa
     @Override
     public void customUpdate(CfgRuleStockUpDTO.CustomUpdateDTO stockUpUpdateDTO) {
         CfgRuleStockUpDTO.UpdateDTO updateDTO = BeanMapperUtils.map(CfgRuleStockUpDTO.UpdateDTO.class, stockUpUpdateDTO);
-        this.update(updateDTO);
+        ApplicationContextUtils.getBean(CfgRuleStockUpServiceImpl.class).update(updateDTO);
     }
 
     /**
@@ -156,7 +157,7 @@ public class CfgRuleStockUpServiceImpl extends SuperServiceImpl<CfgRuleStockUpMa
     @Override
     public List<CfgRuleStockUpEntity> listByRefIdList(List<String> refIdList) {
         if (CollectionUtils.isEmpty(refIdList)) {
-            return Collections.EMPTY_LIST;
+            return Collections.emptyList();
         }
         return lambdaQuery().in(CfgRuleStockUpEntity::getRefId,refIdList).list();
     }
@@ -186,8 +187,8 @@ public class CfgRuleStockUpServiceImpl extends SuperServiceImpl<CfgRuleStockUpMa
      */
     private CfgRuleStockUpEntity getDefaultByPlatformType (String platformType,String refId) {
         return lambdaQuery().eq(CfgRuleStockUpEntity::getPlatformType,platformType)
-                .eq(StrUtil.isNotBlank(refId),CfgRuleStockUpEntity::getRefId,refId)
-                .eq(StrUtil.isBlank(refId),CfgRuleStockUpEntity::getRefId,"")
+                .eq(CharSequenceUtil.isNotBlank(refId),CfgRuleStockUpEntity::getRefId,refId)
+                .eq(CharSequenceUtil.isBlank(refId),CfgRuleStockUpEntity::getRefId,"")
                 .last("limit 1")
                 .one();
     }
@@ -212,16 +213,9 @@ public class CfgRuleStockUpServiceImpl extends SuperServiceImpl<CfgRuleStockUpMa
     * 新增修改处理数据
     */
     private void handleData(CfgRuleStockUpEntity cfgRuleStockUpEntity,CfgRuleStockUpEntity old,Boolean isCustom) {
-        if (MathUtil.compareTo(cfgRuleStockUpEntity.getStockingRatio(),new BigDecimal(99)) > MathUtil.ZERO ||
-                MathUtil.compareTo(cfgRuleStockUpEntity.getStockingRatio(),MathUtil.ZERO) < MathUtil.ZERO) {
-            throw new ServiceException("常规品备货系数必须大于等于0，并且小于等于99");
-        }
-        if (MathUtil.compareTo(cfgRuleStockUpEntity.getNewStockingRatio(),new BigDecimal(99)) > MathUtil.ZERO ||
-                MathUtil.compareTo(cfgRuleStockUpEntity.getNewStockingRatio(),MathUtil.ZERO) < MathUtil.ZERO) {
-            throw new ServiceException("新品备货系数必须大于等于0，并且小于等于99");
-        }
+        checkStockingRation(cfgRuleStockUpEntity);
         //自定义的需要赋值，避免生成变更日志
-        if (isCustom && ObjectUtil.isNotEmpty(old)) {
+        if (Boolean.TRUE.equals(isCustom) && ObjectUtil.isNotEmpty(old)) {
             if (ObjectUtil.isEmpty(cfgRuleStockUpEntity.getPurchaseApproveDays())) {
                 cfgRuleStockUpEntity.setPurchaseApproveDays(old.getPurchaseApproveDays());
             }
@@ -251,5 +245,21 @@ public class CfgRuleStockUpServiceImpl extends SuperServiceImpl<CfgRuleStockUpMa
             }
         }
 
+    }
+
+
+    /**
+     * 校验系数
+     * @param cfgRuleStockUpEntity 备货系数
+     */
+    private static void checkStockingRation(CfgRuleStockUpEntity cfgRuleStockUpEntity) {
+        if (MathUtil.compareTo(cfgRuleStockUpEntity.getStockingRatio(),new BigDecimal(99)) > MathUtil.ZERO ||
+                MathUtil.compareTo(cfgRuleStockUpEntity.getStockingRatio(),MathUtil.ZERO) < MathUtil.ZERO) {
+            throw new ServiceException("常规品备货系数必须大于等于0，并且小于等于99");
+        }
+        if (MathUtil.compareTo(cfgRuleStockUpEntity.getNewStockingRatio(),new BigDecimal(99)) > MathUtil.ZERO ||
+                MathUtil.compareTo(cfgRuleStockUpEntity.getNewStockingRatio(),MathUtil.ZERO) < MathUtil.ZERO) {
+            throw new ServiceException("新品备货系数必须大于等于0，并且小于等于99");
+        }
     }
 }

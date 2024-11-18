@@ -333,7 +333,7 @@ public class AliExpressOrderService {
         Boolean success = jsonObject.getBool("result_success", Boolean.FALSE);
         if (!success) {
             String msg = jsonObject.getOrDefault("result_error_desc", "").toString();
-            throw new ServiceException(ApiError.Default, msg);
+            throw new ServiceException(ApiError.DEFAULT, msg);
         }
 
     }

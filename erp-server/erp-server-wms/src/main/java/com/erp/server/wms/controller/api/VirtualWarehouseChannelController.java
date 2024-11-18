@@ -83,7 +83,7 @@ public class VirtualWarehouseChannelController extends BaseController {
             menuCode = "wms:virtualWarehouseChannel:update",
             serviceClass = VirtualWarehouseChannelService.class,
             keyIdName = "id")
-    public ApiResult<?> update(@RequestBody @Validated VirtualWarehouseChannelDTO.UpdateDTO dto) {
+    public ApiResult update(@RequestBody @Validated VirtualWarehouseChannelDTO.UpdateDTO dto) {
         virtualWarehouseChannelService.update(dto);
         return success();
     }

@@ -1,6 +1,7 @@
 package com.common.message.enums;
 
 import cn.hutool.core.collection.CollectionUtil;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.Arrays;
 import java.util.List;
@@ -14,6 +15,7 @@ import java.util.stream.Collectors;
  * @Author Cloud
  * @Date 2023/2/6 10:32
  **/
+@Slf4j
 public enum RocketMqTagEnum {
 
     //---------------------------------中台数据抓取从1开始------------------------------------------------------------------------------------------
@@ -632,15 +634,17 @@ public enum RocketMqTagEnum {
     }
 
     public static List<RocketMqTagEnum> listByType(String type) {
-        List<RocketMqTagEnum> collect = Arrays.stream(values()).filter(value -> value.getType().equals(type))
+        return Arrays.stream(values()).filter(value -> value.getType().equals(type))
                 .collect(Collectors.toList());
-        return collect;
     }
 
     public static RocketMqTagEnum getByCode(Integer code) {
-        return Arrays.stream(values()).filter(value -> value.getCode().equals(code))
-                .findFirst().orElseGet(null);
+        return Arrays.stream(values())
+                .filter(value -> value.getCode().equals(code))
+                .findFirst()
+                .orElse(null);
     }
+
     public static String getTagStrByType(String type){
         List<RocketMqTagEnum> tagList = listByType(type);
         if (CollectionUtil.isEmpty(tagList)){
@@ -651,7 +655,8 @@ public enum RocketMqTagEnum {
 
     public static void main(String[] args) {
         String tagStrByType = getTagStrByType(SKU_INFO);
-        System.out.println("tagStrByType = " + tagStrByType);
+
+        log.info("tagStrByType = " + tagStrByType);
     }
 
 

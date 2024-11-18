@@ -191,7 +191,7 @@ public interface OverseasWarehouseInboundService extends SuperService<OverseasWa
             List<FirstMileDeliveryDetailEntity> deliveryDetailEntityList,
             String verityCode);
 
-    ApiResult<?> handlePlatformMessage(PlatformInboundDTO dto);
+    ApiResult handlePlatformMessage(PlatformInboundDTO dto);
 
     /**
      * 汇总 亚马逊签收报告/第三方仓签收报告签收数量

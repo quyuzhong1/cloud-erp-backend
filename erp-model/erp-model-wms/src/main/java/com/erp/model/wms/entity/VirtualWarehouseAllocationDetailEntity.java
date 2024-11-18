@@ -121,7 +121,7 @@ public class VirtualWarehouseAllocationDetailEntity extends BaseEntity<VirtualWa
     @TableField("detail_remark")
     private String detailRemark;
 
-    public static final String DISABLED = "disabled";
+    
 
     public static final String MAIN_ID = "main_id";
 
@@ -139,7 +139,7 @@ public class VirtualWarehouseAllocationDetailEntity extends BaseEntity<VirtualWa
 
     public static final String FROM_VIRTUAL_WAREHOUSE_NAME = "from_virtual_warehouse_name";
 
-    public static final String QTY = "qty";
+    
 
     public static final String TO_VIRTUAL_WAREHOUSE_ID = "to_virtual_warehouse_id";
 
