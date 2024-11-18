@@ -1497,8 +1497,8 @@ public class SoB2cController extends BaseController {
      * @return
      */
     @PostMapping("/refreshOrderByIds")
-    public ApiResult<Object> refreshOrderByIds(@RequestBody @Validated BaseIdsDTO.IdsDTO idDTO) {
-        List<String> ids = idDTO.getIds().stream().filter(StrUtil::isNotBlank).distinct().collect(Collectors.toList());
-        return soB2cService.fetchOrder(ids) ? success() : failure();
+    public ApiResult<List<BatchResultDTO>> refreshOrderByIds(@RequestBody @Validated BaseIdsDTO.IdsDTO idDTO) {
+        List<BatchResultDTO> resultDTOS = soB2cService.fetchOrder(idDTO.getIds());
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success() : failure(resultDTOS);
     }
 }

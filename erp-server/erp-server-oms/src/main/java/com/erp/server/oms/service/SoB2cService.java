@@ -999,5 +999,5 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * @author jack
      * @param ids
      */
-    boolean fetchOrder(List<String> ids);
+    List<BatchResultDTO> fetchOrder(List<String> ids);
 }
