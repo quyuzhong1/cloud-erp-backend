@@ -13,6 +13,9 @@ import java.util.List;
 import java.util.Map;
 
 public class SoReturnInstockDTO {
+    private SoReturnInstockDTO() {
+        throw new IllegalStateException("Utility SoReturnInstockDTO class");
+    }
     /**
      * 分页参数
      */

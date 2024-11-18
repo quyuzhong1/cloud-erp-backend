@@ -94,6 +94,10 @@ public class DmpInputAmzReportParseApiInitHandler extends DmpInputAmzCommonInitH
         String filePath = checkAndGetMongoValue(reportDocumentMongoObjectMap, "filePath");
         // 从FastDFS下载后解析
         JSONArray jsonArray = AmazonSpApiReportUtils.downloadFromFastDFSAndParse(filePath, columnMap, reportType);
+        // 兼容报告内容为空
+        if (CollectionUtils.isEmpty(jsonArray)){
+            return Collections.emptyList();
+        }
 
         // 补充请求店铺ID和账号站点
         jsonArray.forEach(obj->{

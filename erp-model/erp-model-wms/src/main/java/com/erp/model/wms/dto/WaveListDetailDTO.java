@@ -2,7 +2,6 @@ package com.erp.model.wms.dto;
 
 import com.common.business.annotation.Dict;
 import com.erp.model.wms.enums.WavePickingTypeEnum;
-import com.erp.model.wms.enums.WaveStatusEnum;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -93,7 +92,6 @@ public class WaveListDetailDTO implements Serializable {
         /**
          * 波次ID
          */
-        @Deprecated
         private String waveId;
 
         /**
@@ -185,11 +183,6 @@ public class WaveListDetailDTO implements Serializable {
          * 已拣数量汇总
          */
         private Integer pickedSumQty;
-
-        /**
-         * 拣货仓位信息
-         */
-//        private List<WaveListDetailDTO.PickingLocationInfoDTO> pickingLocationInfoList;
     }
 
     @Data

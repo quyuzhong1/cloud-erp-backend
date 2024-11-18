@@ -1,8 +1,8 @@
 package com.erp.server.tms.service.impl;
 
 
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
@@ -26,10 +26,10 @@ import com.erp.server.tms.service.DictBasicService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -45,7 +45,7 @@ import java.util.Optional;
 @Slf4j
 @Service
 public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, CfgSettingEntity> implements CfgSettingService {
-    @Autowired
+    @Resource
     private DictBasicService dictBasicService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
@@ -240,7 +240,7 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Cf
                 break;
         }
         //查询是否是修改
-        String id = cfgSettingList.stream().filter(obj -> StrUtil.equals(obj.getKey(),viewDTO.getCode())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getId())).orElse("");
+        String id = cfgSettingList.stream().filter(obj -> CharSequenceUtil.equals(obj.getKey(),viewDTO.getCode())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getId())).orElse("");
         entity.setId(id);
         entity.setIndex(viewDTO.getIndex());
         entity.setKey(viewDTO.getCode());

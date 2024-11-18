@@ -50,7 +50,7 @@ public class CfgRuleWarehouseController extends BaseController {
     * @return ApiResult
     */
     @PostMapping("/update")
-    public ApiResult<?> update(@RequestBody @Validated CfgRuleWarehouseDTO.UpdateDTO dto) {
+    public ApiResult<String> update(@RequestBody @Validated CfgRuleWarehouseDTO.UpdateDTO dto) {
         cfgRuleWarehouseService.update(dto);
         return success();
     }
@@ -76,7 +76,7 @@ public class CfgRuleWarehouseController extends BaseController {
      * @return ApiResult<ViewDTO>
      */
     @PostMapping("/refreshVirtual")
-    public ApiResult<?> refreshVirtual(@RequestBody @Validated CfgRuleWarehouseDTO.ParamDTO dto) {
+    public ApiResult<String> refreshVirtual(@RequestBody @Validated CfgRuleWarehouseDTO.ParamDTO dto) {
         cfgRuleWarehouseService.refreshVirtual(dto.getPlatformType());
         return success();
     }
@@ -89,7 +89,7 @@ public class CfgRuleWarehouseController extends BaseController {
      * @return ApiResult<?>
      */
     @GetMapping("/getIsEnableOverseas")
-    public ApiResult<?> getIsEnableOverseas(@RequestParam("platformType") String platformType) {
+    public ApiResult<Boolean> getIsEnableOverseas(@RequestParam("platformType") String platformType) {
         Boolean isEnableOverseas = cfgRuleWarehouseService.getIsEnableOverseas(platformType);
         return success(isEnableOverseas);
     }

@@ -2,6 +2,7 @@ package com.sdk.oms.mercado.service;
 
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.exceptions.ExceptionUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
@@ -65,16 +66,41 @@ public class MercadoSdkClientService {
         HashMap<String, Object> orderParams = new HashMap<>(1);
 
         //设置请求头
-        Map<String, String> orderHeaderMap = new HashMap<>(1);
-        orderHeaderMap.put("Authorization", "Bearer APP_USR-3457166802805723-082902-95af1fbcbc57490cafb6081deaca410e-1509269799");
+        Map<String, String> headerMap = new HashMap<>(1);
+        headerMap.put("Authorization", "Bearer APP_USR-3457166802805723-102918-a4b8cdec2a33e72d1249640c9af074c3-1509269799");
 
-        //拉取数据
-        ApiResult orderResult = HttpCommonUtil.sendOkHttpApiResult(orderUrl, JSONUtil.toJsonStr(orderParams), null, orderHeaderMap, RequestMethod.GET);
-        if (!Objects.equals(orderResult.getCode(), 200) && !Objects.equals(orderResult.getCode(), 201)) {
-            log.error("调用url={},入参params={}, 美客多marketplace/orders数据失败，返回值 responseMap={}", orderUrl, orderParams.toString(), JSONUtil.toJsonStr(orderResult));
-            throw new RuntimeException(StrUtil.format("调用url={},入参params={}, 数据解析失败，返回值 responseMap={}",
-                    orderUrl, orderParams.toString(), JSONUtil.toJsonStr(orderResult)));
+
+
+        List<ListingViewDTO> resultsBeanList = new ArrayList<>();
+
+        //每次最多获取200条
+        Integer pageSize = 50;
+        //当前页数
+        Integer pageNo = 0;
+        //总页数
+        Integer pageCount = 1;
+
+        Boolean nexflag = true;
+        String baseUrl = "https://api.mercadolibre.com/marketplace/claims/search";
+        while (nexflag) {
+            int offset = pageSize * pageNo;
+//user_id=1509269799
+            //入参
+            HashMap<String, Object> params = new HashMap<>();
+            params.put("user_id", 1512693686);
+            params.put("site_id", "MLM");
+            //拉取数据
+            ApiResult apiResult = HttpCommonUtil.sendOkHttpApiResult(baseUrl, JSONUtil.toJsonStr(params), null, headerMap, RequestMethod.GET);
+            if (!Objects.equals(apiResult.getCode(), 200)) {
+                nexflag = false;
+                log.error("调用url={},入参params={}, 美客多items/search数据失败，返回值 responseMap={}", baseUrl, params.toString(), JSONUtil.toJsonStr(apiResult));
+                throw new RuntimeException(StrUtil.format("调用url={},入参params={}, 美客多items/search数据失败，返回值 responseMap={}",
+                        baseUrl, params.toString(), JSONUtil.toJsonStr(apiResult)));
+            }
+
+
         }
+
     }
 
 
@@ -404,7 +430,9 @@ public class MercadoSdkClientService {
                             }
                             try {
                                 Thread.sleep(sleepTime);
-                            } catch (InterruptedException e) {}
+                            } catch (InterruptedException e) {
+                                Thread.currentThread().interrupt();
+                            }
                             sleepTime = sleepTime + 1000;
                             count = count + 1;
                         }
@@ -412,9 +440,9 @@ public class MercadoSdkClientService {
                     }
 
                     if (!Objects.equals(orderDetailApiResult.getCode(), 200) && !Objects.equals(orderDetailApiResult.getCode(), 201)) {
-                        orderDetailApiResult.getMsg().equalsIgnoreCase("Read timed out");
+                        boolean b = orderDetailApiResult.getMsg().equalsIgnoreCase("Read timed out");
                         log.error("调用url={},入参params={}, 美客多marketplace/orders数据失败，返回值 responseMap={}", orderUrl, orderParams.toString(), JSONUtil.toJsonStr(orderDetailApiResult));
-                        throw new RuntimeException(StrUtil.format("调用url={},入参params={}, 数据解析失败，返回值 responseMap={}",
+                        throw new RuntimeException(CharSequenceUtil.format("调用url={},入参params={}, 数据解析失败，返回值 responseMap={}",
                                 orderUrl, orderParams.toString(), JSONUtil.toJsonStr(orderDetailApiResult)));
                     }
 
@@ -477,7 +505,9 @@ public class MercadoSdkClientService {
                 }
                 try {
                     Thread.sleep(sleepTime);
-                } catch (InterruptedException e) {}
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
                 sleepTime = sleepTime + 1000;
                 count = count + 1;
             }
@@ -534,7 +564,9 @@ public class MercadoSdkClientService {
                 }
                 try {
                     Thread.sleep(sleepTime);
-                } catch (InterruptedException e) {}
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
                 sleepTime = sleepTime + 1000;
                 count = count + 1;
             }

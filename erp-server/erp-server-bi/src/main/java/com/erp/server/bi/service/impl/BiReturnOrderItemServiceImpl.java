@@ -22,7 +22,7 @@ public class BiReturnOrderItemServiceImpl extends ServiceImpl<BiReturnOrderItemM
 
     @Override
     public BigDecimal sumReturnAmountBySKu(BiFilterDTO dto) {
-        if (!BiFilterDTO.validOriginalCurrency(dto) && SettleMethodEnum.ORIGINAL_CURRENCY.equals(dto.getSettleMethod())) {
+        if (Boolean.TRUE.equals(!BiFilterDTO.validOriginalCurrency(dto)) && SettleMethodEnum.ORIGINAL_CURRENCY.getCode().equals(dto.getSettleMethod())) {
             return BigDecimal.ZERO;
         }
         BigDecimal amount = baseMapper.sumReturnAmountBySku(dto.getSku(), dto.getSettleMethod());

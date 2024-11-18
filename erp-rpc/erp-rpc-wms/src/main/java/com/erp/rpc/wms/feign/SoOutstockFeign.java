@@ -1,8 +1,6 @@
 package com.erp.rpc.wms.feign;
 
 import com.common.business.dto.AdvanceQueryContainer;
-import com.common.business.dto.PlatformDeliveryDetailDTO;
-import com.common.business.dto.base.BatchResultDTO;
 import com.erp.model.oms.dto.PlatformGenerateSoOutstockDTO;
 import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.model.tms.dto.TmsDeclareBillDTO;

@@ -69,9 +69,9 @@ public class LogisticsSupplierEntity extends BaseEntity<LogisticsSupplierEntity>
 
     public static final String SUPPLIER_NAME = "supplier_name";
 
-    public static final String TYPE = "type";
+    public static final String FIELD_TYPE = "type";
 
-    public static final String DISABLED = "disabled";
+    public static final String FIELD_DISABLED = "disabled";
 
     public static final String AUTH_STATUS = "auth_status";
 

@@ -29,6 +29,7 @@ import java.util.List;
 @TableName("cfg_rule_sales_formula")
 public class CfgRuleSalesFormulaEntity extends BaseEntity<CfgRuleSalesFormulaEntity> {
 
+    private static final long serialVersionUID = 1180647803561727055L;
     /**
     * 销量类型：default=默认，dynamic=动态、fixed=固定  枚举：CfgRuleSalesFormulaTypeEnum
     */

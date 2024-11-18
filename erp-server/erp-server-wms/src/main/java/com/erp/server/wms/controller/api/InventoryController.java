@@ -16,6 +16,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -32,10 +33,10 @@ import java.util.List;
 @RequestMapping(value = "/inventory")
 public class InventoryController extends BaseController {
 
-    @Autowired
+    @Resource
     private InventoryService inventoryService;
 
-    @Autowired
+    @Resource
     private TransactionFlowService transactionFlowService;
 
     /**
@@ -267,16 +268,16 @@ public class InventoryController extends BaseController {
      * 查询Tab
      */
     @GetMapping("/tabList")
-    public ApiResult<List<InventoryDTO.tabDto>> tabList(){
-        List<InventoryDTO.tabDto> list = new ArrayList<>(3);
+    public ApiResult<List<InventoryDTO.TabDto>> tabList(){
+        List<InventoryDTO.TabDto> list = new ArrayList<>(3);
 
         long countWarehouse = inventoryService.countByWarehouse();
         long countArea = inventoryService.countByArea();
         long countLocation = inventoryService.countByLocation();
 
-        list.add(new InventoryDTO.tabDto("warehouse", countWarehouse));
-        list.add(new InventoryDTO.tabDto("warehouseArea", countArea));
-        list.add(new InventoryDTO.tabDto("warehouseLocation", countLocation));
+        list.add(new InventoryDTO.TabDto("warehouse", countWarehouse));
+        list.add(new InventoryDTO.TabDto("warehouseArea", countArea));
+        list.add(new InventoryDTO.TabDto("warehouseLocation", countLocation));
 
         return ApiResult.success(list);
     }

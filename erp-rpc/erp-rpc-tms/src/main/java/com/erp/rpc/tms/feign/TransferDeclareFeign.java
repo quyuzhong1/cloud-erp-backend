@@ -1,12 +1,9 @@
 package com.erp.rpc.tms.feign;
 
 import com.common.business.dto.base.BaseResultDTO;
-import com.common.business.dto.base.BatchResultDTO;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.tms.dto.TransferDeclareDTO;
-import com.erp.model.tms.dto.transfer.TransferCancelOrderReq;
 import com.erp.model.tms.entity.TransferDeclareDetailEntity;
-import com.erp.model.tms.entity.TransferDeclareEntity;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -37,17 +34,6 @@ public interface TransferDeclareFeign {
      */
     @GetMapping("/feign/transferDeclare/getBySoId")
     TransferDeclareDetailEntity  getBySoId(@RequestParam("soId") String soId);
-
-    /**
-     * 修改出库状态
-     * @Author Luo_WG
-     * @Date 2024/2/1 18:39
-     * @param dto
-     * @return java.lang.Boolean
-     **/
-//    @PostMapping("/feign/transferDeclare/updateOutstockStatus")
-//    Boolean updateOutstockStatus(@RequestBody TransferDeclareDTO.UpdateOutstockStatusDTO dto);
-
 
     /**
      * @description: 根据销售订单id

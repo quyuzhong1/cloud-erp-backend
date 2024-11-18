@@ -55,7 +55,7 @@ public class ShippingCalculationController extends BaseController {
      * @date: 2023/11/10 17:36
      */
     @PostMapping(value = "/exportExcel")
-    public ApiResult exportExcel(@RequestBody ShippingCalculationDTO.PagingParamDTO dto) {
+    public ApiResult<Object>exportExcel(@RequestBody ShippingCalculationDTO.PagingParamDTO dto) {
         Boolean flag = shippingCalculationService.exportExcel(dto);
         return flag == true ? success() : failure();
     }

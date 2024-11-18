@@ -16,7 +16,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class ApplicationContextUtils implements ApplicationContextAware {
 
-    private static ApplicationContext applicationContext;
+    private static ApplicationContext applicationContext = null;
 
     //方式二:传bean对象
     //已经new出来的对象进行注入

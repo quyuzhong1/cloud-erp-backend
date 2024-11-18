@@ -55,7 +55,7 @@ public class ProjectTaskTimeRecordController extends BaseController {
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出工时统计")
     @PostMapping(value = "/export")
-    public ApiResult exportTaskTime(@RequestBody ProjectTaskTimeRecordDTO.PageRecordDto dto) {
+    public ApiResult<Object> exportTaskTime(@RequestBody ProjectTaskTimeRecordDTO.PageRecordDto dto) {
         Boolean flag = projectTaskTimeRecordService.exportTaskTimeList(dto);
         return flag == true ? success() : failure();
     }

@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import javax.annotation.Resource;
 import javax.validation.Valid;
 import java.time.LocalDate;
 import java.util.List;
@@ -24,7 +25,7 @@ import java.util.Map;
 @RequestMapping("/feign/inventoryClosedRecord")
 public class InventoryCloseRecordFeignController extends BaseController {
 
-    @Autowired
+    @Resource
     private InventoryClosedRecordService inventoryClosedRecordService;
 
 

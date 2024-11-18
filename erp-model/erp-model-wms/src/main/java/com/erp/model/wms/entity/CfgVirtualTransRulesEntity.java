@@ -7,7 +7,6 @@ import java.io.Serializable;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
-import com.common.business.enums.ApproveStatusEnum;
 
 
 /**
@@ -58,8 +57,6 @@ public class CfgVirtualTransRulesEntity extends BaseEntity<CfgVirtualTransRulesE
     public static final String INVENTORY_STATUS = "inventory_status";
 
     public static final String TRANSACTION_MODE = "transaction_mode";
-
-    public static final String REMARK = "remark";
 
     @Override
     public Serializable pkVal() {

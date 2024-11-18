@@ -2,14 +2,6 @@ package com.erp.sdk.oms.amz.spapi.documents;// DownloadExample.java
 // This example is for use with the Selling Partner API for Reports, Version: 2021-06-30
 // and the Selling Partner API for Feeds, Version: 2021-06-30
 
-import java.io.*;
-
-import java.nio.charset.Charset;
-import java.rmi.ServerException;
-import java.util.*;
-import java.util.stream.Collectors;
-import java.util.zip.GZIPInputStream;
-
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONArray;
@@ -25,6 +17,15 @@ import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.http.MediaType;
 import org.springframework.util.CollectionUtils;
+
+import java.io.*;
+import java.nio.charset.Charset;
+import java.rmi.ServerException;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Set;
+import java.util.zip.GZIPInputStream;
 
 /**
  * Example that downloads a document.
@@ -226,22 +227,38 @@ public class DownloadHandler {
         return jl;
     }
 
-
     private static LinkedHashMap<String, Integer> getReportTitle(String title) {
         if (ObjectUtils.isEmpty(title)) {
             return null;
         }
+
+        // 分割字符串
         String[] str = title.split("\t");
+
+        // 如果字符串数组长度小于2，返回 null
         if (str.length < 2) {
             return null;
         }
+
         LinkedHashMap<String, Integer> p = new LinkedHashMap<>();
+
         for (int k = 0; k < str.length; k++) {
-            // 移除字段首尾"", 移除零宽不断空格（ZWNBSP）字符（Unicode U+FEFF）
-            String currentStr = str[k].replaceAll("^\"|\"$", "").replaceAll("\uFEFF", "");
+            // 使用正则移除首尾引号和零宽断空格（ZWNBSP）
+            String currentStr = removeQuotesAndBOM(str[k]);
             p.put(currentStr, k);
         }
         return p;
+    }
+
+    /**
+     * 使用正则去除首尾引号和 BOM（U+FEFF）字符
+     */
+    private static String removeQuotesAndBOM(String value) {
+        if (value == null) {
+            return "";
+        }
+        // 使用正则去除零宽断空格（BOM）字符和首尾的双引号
+        return value.replaceAll("(^\uFEFF*)|(^\"|\"$)", "");
     }
 
     /**
@@ -439,10 +456,6 @@ public class DownloadHandler {
     }
 
     public static String checkStr(String val) {
-        if (StringUtils.isEmpty(val)) {
-            return "";
-        }
-        // 移除首尾""
-        return val.replaceAll("^\"|\"$", "");
+        return StringUtils.stripToEmpty(val).replaceAll("^\"|\"$", "");
     }
 }

@@ -48,5 +48,5 @@ public interface DeliverySuggestMapper extends BaseMapper<DeliverySuggestEntity>
      * @param params
      * @return Page<DeliverySuggestionDTO>
      */
-    Page<ReplenishmentSuggestionDTO.DeliverySuggestionDTO> pagingExportDeliverySuggestion(Page page, @Param("params") ReplenishmentSuggestionDTO.PagingParamDTO params);
+    Page<ReplenishmentSuggestionDTO.DeliverySuggestionDTO> pagingExportDeliverySuggestion(Page<ReplenishmentSuggestionDTO.DeliverySuggestionDTO> page, @Param("params") ReplenishmentSuggestionDTO.PagingParamDTO params);
 }

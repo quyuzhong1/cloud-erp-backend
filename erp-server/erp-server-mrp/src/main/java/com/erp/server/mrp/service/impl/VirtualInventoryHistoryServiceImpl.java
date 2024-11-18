@@ -14,6 +14,7 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.erp.model.mrp.dto.VirtualInventoryHistoryDTO;
+import com.common.business.utils.ApplicationContextUtils;
 import com.erp.model.mrp.entity.VirtualInventoryHistoryEntity;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.wms.dto.VirtualInventoryDTO;
@@ -75,7 +76,7 @@ public class VirtualInventoryHistoryServiceImpl extends SuperServiceImpl<Virtual
                     inventory.setId(inventory.getId());
                     return inventory;
                 }).collect(Collectors.toList());
-        saveOrUpdateBatch(entities);
+        ApplicationContextUtils.getBean(VirtualInventoryHistoryServiceImpl.class).saveOrUpdateBatch(entities);
     }
 
     @Override

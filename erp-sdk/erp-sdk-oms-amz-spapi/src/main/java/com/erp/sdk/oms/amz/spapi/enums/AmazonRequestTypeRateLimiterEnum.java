@@ -44,6 +44,8 @@ public enum AmazonRequestTypeRateLimiterEnum {
     REPORTS_QUERY("2", "15","reports_query","根据ID查询报告"),
     REPORTS_DOCUMENT_QUERY("2", "15","reports_query","根据报告文档ID查询报告文档"),
 
+    // 财务相关
+    FINANCIAL_EVENTS("0.5", "30","financial_events","财务事件"),
     ;
 
 

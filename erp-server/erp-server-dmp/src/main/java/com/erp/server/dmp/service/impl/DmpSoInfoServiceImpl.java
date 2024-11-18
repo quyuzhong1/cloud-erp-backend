@@ -63,7 +63,7 @@ public class DmpSoInfoServiceImpl extends SuperServiceImpl<DmpSoInfoMapper, DmpS
     @Override
     public Boolean update(DmpSoInfoDTO.UpdateDTO updateDTO) {
         DmpSoInfoEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "中台销售订单表"));
+        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "中台销售订单表"));
         DmpSoInfoEntity dmpSoInfoEntity =  BeanMapperUtils.map(DmpSoInfoEntity.class, updateDTO);
 
         // 数据处理

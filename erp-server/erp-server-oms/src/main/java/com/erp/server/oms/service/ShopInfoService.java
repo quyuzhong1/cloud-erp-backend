@@ -334,12 +334,6 @@ public interface ShopInfoService extends SuperService<ShopInfoEntity> {
      * 导出店铺
      */
     PagingVO<ShopDTO.PagingViewDTO> exportShop(PagingDTO<ShopDTO.ExportDTO> dto);
-    void saveCustom(ShopInfoEntity shopInfoEntity);
-
-    /**
-     * 检查和更新亚马逊同账号店铺授权
-     */
-    Boolean checkAndSaveAllAmazonToken(AmazonTokenUpdateDTO updateDTO);
 
     PagingVO<SkuMappingDTO.SyncPlatformProductView> pageAuthShop(PagingDTO<AdvanceQueryContainer> advanceQueryDTO, List<String> shopIds);
     /**
@@ -364,4 +358,10 @@ public interface ShopInfoService extends SuperService<ShopInfoEntity> {
      * @param platform 平台
      */
     List<String> listShopInfoByPlatform(String platform);
+    void saveCustom(ShopInfoEntity shopInfoEntity);
+
+    /**
+     * 检查和更新亚马逊同账号店铺授权
+     */
+    Boolean checkAndSaveAllAmazonToken(AmazonTokenUpdateDTO updateDTO);
 }

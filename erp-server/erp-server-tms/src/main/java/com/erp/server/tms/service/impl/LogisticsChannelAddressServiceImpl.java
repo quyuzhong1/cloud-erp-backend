@@ -105,7 +105,7 @@ public class LogisticsChannelAddressServiceImpl extends SuperServiceImpl<Logisti
      * 新增修改处理数据
      */
     private void handleData(List<LogisticsChannelAddressEntity> list) {
-        // TODO 验证数据 & 数据赋值
+        
         List<String> shopIdList = list.stream().map(LogisticsChannelAddressEntity::getShopId).collect(Collectors.toList());
     }
 }

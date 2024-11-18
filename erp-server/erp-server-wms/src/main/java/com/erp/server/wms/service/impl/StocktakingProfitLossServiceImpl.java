@@ -1,7 +1,9 @@
 package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
@@ -108,7 +110,7 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
     @Resource
     private WorkflowFeign workflowFeign;
 
-    @Autowired
+    @Resource
     private OperateLogService operateLogService;
 
     @Resource
@@ -234,7 +236,7 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
                 map(FindUserDTO::getUserName).collect(Collectors.joining(","));
         view.setStocktakingUserName(stocktakingUserName);
 
-        List<StocktakingProfitLossDetailDTO.ViewDTO> detailDbList = stocktakingProfitLossDetailService.listByMainIds(Arrays.asList(id));
+        List<StocktakingProfitLossDetailDTO.ViewDTO> detailDbList = stocktakingProfitLossDetailService.listByMainIds(Collections.singletonList(id));
         view.setDetailList(detailDbList);
         return view;
     }
@@ -283,7 +285,7 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
 
         // 操作日志
         List<Pair<String, String>> pairList = Lists.newArrayList(new Pair<>(entity.getId(), entity.getCode()));
-        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据提交审核 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "盘点计划");
+        String msg = CharSequenceUtil.format("用户【{}】单号为【{}】的【{}】单据提交审核 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "盘点计划");
         operateLogService.batchAddModuleOperateLog(msg, ModuleTypeEnum.STOCKTAKING_PROFIT_LOSS.getCode(), pairList, "提交审核");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.SUBMIT);
 
@@ -317,8 +319,8 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
             throw new ServiceException(ApiError.ERROR_98006);
         }
         // 盘点仓库，库区，仓位禁用时禁止审核
-        List<StocktakingProfitLossDetailDTO.ViewDTO> detailList = stocktakingProfitLossDetailService.listByMainIds(Arrays.asList(entity.getId()));
-        if(CollectionUtil.isEmpty(detailList)){
+        List<StocktakingProfitLossDetailDTO.ViewDTO> detailList = stocktakingProfitLossDetailService.listByMainIds(Collections.singletonList(entity.getId()));
+        if(CollUtil.isEmpty(detailList)){
             throw new ServiceException("未找到盘盈盘亏单详情");
         }
         List<WarehouseDTO.WarehouseDisabledAssertDTO> assertList = detailList.stream().map(WarehouseDTO.WarehouseDisabledAssertDTO::new).collect(Collectors.toList());
@@ -327,7 +329,7 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
         approveProcess(entity, dto);
         // 操作日志
         List<Pair<String, String>> pairList = Lists.newArrayList(new Pair<>(entity.getId(), entity.getCode()));
-        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据审核操作:【{}】 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), ModuleTypeEnum.STOCKTAKING_PROFIT_LOSS.getName(),approveType.getName());
+        String msg = CharSequenceUtil.format("用户【{}】单号为【{}】的【{}】单据审核操作:【{}】 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), ModuleTypeEnum.STOCKTAKING_PROFIT_LOSS.getName(),approveType.getName());
         operateLogService.batchAddModuleOperateLog(String.format(msg, approveType.getName()).concat("【%s】").concat(StringUtils.isNotEmpty(dto.getComment()) ? String.format("，意见：%s", dto.getComment()) : ""),
                 ModuleTypeEnum.STOCKTAKING_PROFIT_LOSS.getCode(), pairList, "审核操作");
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(approveType);
@@ -367,8 +369,8 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
             entity.setApproveStatus(waitSubmitStatus);
             Boolean result = this.updateById(entity);
             if (result) {
-                List<Pair<String, String>> pairList = Arrays.asList(entity).stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
-                String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据 取消流程操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), ModuleTypeEnum.STOCKTAKING_PROFIT_LOSS.getName());
+                List<Pair<String, String>> pairList = Collections.singletonList(entity).stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
+                String msg = CharSequenceUtil.format("用户【{}】单号为【{}】的【{}】单据 取消流程操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), ModuleTypeEnum.STOCKTAKING_PROFIT_LOSS.getName());
                 operateLogService.batchAddModuleOperateLog(msg, ModuleTypeEnum.STOCKTAKING_PROFIT_LOSS.getCode(), pairList, "取消流程操作");
             }
         }
@@ -390,7 +392,7 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
     public Boolean updateSyncKingdeeId(String id, String syncKingdeeId) {
         return this.lambdaUpdate()
                 .eq(StocktakingProfitLossEntity::getId, id)
-                .set(StringUtils.isNotBlank(syncKingdeeId), StocktakingProfitLossEntity::getSyncKingdeeId, syncKingdeeId)
+                .set(CharSequenceUtil.isNotBlank(syncKingdeeId), StocktakingProfitLossEntity::getSyncKingdeeId, syncKingdeeId)
                 .update();
     }
 
@@ -453,7 +455,7 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
                 if (isLoss) {
                     inventoryInOutStockDTO.setBusinessType(InventoryBusinessTypeEnum.STOCKTAKING_LOSS.getCode());
                 }
-                List<InOutStockDTO> members = baseMapper.listInventoryInOut(Arrays.asList(entity.getId()));
+                List<InOutStockDTO> members = baseMapper.listInventoryInOut(Collections.singletonList(entity.getId()));
                 InventoryStatusEnum inventoryStatus = InventoryStatusEnum.USABLE;
                 for (InOutStockDTO member : members) {
                     member.setSourceType(InventorySourceTypeEnum.STOCKTAKING_PROFIT_LOSS);
@@ -533,7 +535,7 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
                 CreateOtherStockoutRequest.GoodsList outGoods = new CreateOtherStockoutRequest.GoodsList();
                 outGoods.setSpecNo(viewDTO.getSkuNo());
                 outGoods.setNum(BigDecimal.valueOf(Math.abs(viewDTO.getDiffQty())));
-                outGoods.setPositionNo(StringUtils.isNotBlank(viewDTO.getWarehouseLocation()) ? viewDTO.getWarehouseLocation() : "");
+                outGoods.setPositionNo(CharSequenceUtil.isNotBlank(viewDTO.getWarehouseLocation()) ? viewDTO.getWarehouseLocation() : "");
                 outGoods.setWarehouseId(warehouseId);
                 outGoodsList.add(outGoods);
             }
@@ -575,7 +577,7 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
                 CreateOtherStockinRequest.GoodsList inGoods = new CreateOtherStockinRequest.GoodsList();
                 inGoods.setSpecNo(viewDTO.getSkuNo());
                 inGoods.setNum(BigDecimal.valueOf(Math.abs(viewDTO.getDiffQty())));
-                inGoods.setPositionNo(StringUtils.isNotBlank(viewDTO.getWarehouseLocation()) ? viewDTO.getWarehouseLocation() : "");
+                inGoods.setPositionNo(CharSequenceUtil.isNotBlank(viewDTO.getWarehouseLocation()) ? viewDTO.getWarehouseLocation() : "");
                 inGoods.setWarehouseId(warehouseId);
                 inGoodsList.add(inGoods);
             }
@@ -665,7 +667,9 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
     @Transactional(rollbackFor = Exception.class)
     public String update(StocktakingProfitLossDTO.UpdateDTO dto) {
         StocktakingProfitLossEntity old = super.getById(dto.getId());
-        Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "盘盈盘亏单"));
+        if (Objects.isNull(old)){
+            throw new ServiceException(ApiError.NOT_EXIST_BILL, "盘盈盘亏单");
+        }
         // 待提交和审核不通过允许修改
         if (!ApproveStatusEnum.allowUpdateStatus(old.getApproveStatus())) {
             throw new ServiceException(ApiError.ERROR_1029);
@@ -699,7 +703,7 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
     private void handleDb(List<StocktakingProfitLossDetailDTO.AddDTO> detailList, StocktakingProfitLossEntity entity) {
         //库存组织id
         String inventoryOrgId = entity.getInventoryOrgId();
-        List<BaseIdDTO.CodeDTO> orgList = sysUserFeign.getAccountingCompanyList(Arrays.asList(inventoryOrgId));
+        List<BaseIdDTO.CodeDTO> orgList = sysUserFeign.getAccountingCompanyList(Collections.singletonList(inventoryOrgId));
         if (CollectionUtils.isEmpty(orgList)) {
             throw new ServiceException(ApiError.ERROR_INVENTORY_ORG_NOT_FOUND);
         }
@@ -725,7 +729,7 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
         List<String> warehouseLocationList = detailList.stream().map(StocktakingProfitLossDetailDTO.AddDTO::getWarehouseLocation).collect(Collectors.toList());
 
         //组织
-        List<String> orgIdList = Arrays.asList(inventoryOrgId);
+        List<String> orgIdList = Collections.singletonList(inventoryOrgId);
         InventoryDTO.ParamDTO param = new InventoryDTO.ParamDTO();
         param.setOrgIdList(orgIdList);
         param.setSkuIdList(skuIdList);
@@ -744,7 +748,7 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
             StringBuffer sb = new StringBuffer();
             sb.append(skuId);
             sb.append(warehouseId);
-            sb.append(StringUtils.isNotBlank(warehouseLocation) ? warehouseLocation : "");
+            sb.append(CharSequenceUtil.isNotBlank(warehouseLocation) ? warehouseLocation : "");
             String mapKey = sb.toString();
             //表示有这个key
             if (map.containsKey(mapKey)) {
@@ -797,7 +801,7 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
     public void handleUpdateDb(List<StocktakingProfitLossDetailDTO.UpdateDTO> detailList, StocktakingProfitLossEntity entity) {
         //库存组织id
         String inventoryOrgId = entity.getInventoryOrgId();
-        List<BaseIdDTO.CodeDTO> orgList = sysUserFeign.getAccountingCompanyList(Arrays.asList(inventoryOrgId));
+        List<BaseIdDTO.CodeDTO> orgList = sysUserFeign.getAccountingCompanyList(Collections.singletonList(inventoryOrgId));
         if (CollectionUtils.isEmpty(orgList)) {
             throw new ServiceException(ApiError.ERROR_INVENTORY_ORG_NOT_FOUND);
         }
@@ -823,7 +827,7 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
         List<String> warehouseLocationList = detailList.stream().map(StocktakingProfitLossDetailDTO.UpdateDTO::getWarehouseLocation).collect(Collectors.toList());
 
         //组织
-        List<String> orgIdList = Arrays.asList(inventoryOrgId);
+        List<String> orgIdList = Collections.singletonList(inventoryOrgId);
         InventoryDTO.ParamDTO param = new InventoryDTO.ParamDTO();
         param.setOrgIdList(orgIdList);
         param.setSkuIdList(skuIdList);
@@ -844,7 +848,7 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
             StringBuffer sb = new StringBuffer();
             sb.append(skuId);
             sb.append(warehouseId);
-            sb.append(StringUtils.isNotBlank(warehouseLocation) ? warehouseLocation : "");
+            sb.append(CharSequenceUtil.isNotBlank(warehouseLocation) ? warehouseLocation : "");
             String mapKey = sb.toString();
             //表示有这个key
             if (map.containsKey(mapKey)) {
@@ -894,7 +898,7 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
     @GlobalTransactional(rollbackFor = Exception.class)
     public void addAndSubmit(StocktakingProfitLossDTO.AddDTO dto) {
         String id = this.add(dto);
-        if (StringUtils.isBlank(id)) {
+        if (CharSequenceUtil.isBlank(id)) {
             throw new ServiceException(ApiError.ERROR_1019);
         }
         this.submit(id);
@@ -992,8 +996,8 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
         // 删除盘点人
         stocktakingTaskUserService.removeBySourceId(id);
         //删除操作日志
-        String msg = StrUtil.format("用户【{}】删除了单据编号为【{}】的盘盈盘亏", UserContext.getDefaultLoginUser().getUserName(), entity.getCode());
-        List<StocktakingProfitLossEntity> list = Arrays.asList(entity);
+        String msg = CharSequenceUtil.format("用户【{}】删除了单据编号为【{}】的盘盈盘亏", UserContext.getDefaultLoginUser().getUserName(), entity.getCode());
+        List<StocktakingProfitLossEntity> list = Collections.singletonList(entity);
         List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
         operateLogService.batchAddModuleOperateLog(msg, ModuleTypeEnum.STOCKTAKING_PROFIT_LOSS.getCode(), pairList, "删除操作");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DELETE);
@@ -1141,7 +1145,7 @@ public class StocktakingProfitLossServiceImpl extends SuperServiceImpl<Stocktaki
         for (StocktakingProfitLossDTO.PagingViewDTO item : list) {
             sourceIdList.add(item.getId());
             String sourceId = item.getSourceId();
-            if (StringUtils.isNotBlank(sourceId)) {
+            if (CharSequenceUtil.isNotBlank(sourceId)) {
                 sourceIdList.add(sourceId);
             }
         }

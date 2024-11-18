@@ -1,11 +1,10 @@
 package com.erp.server.dmp.service;
 
+import java.util.List;
+
 import com.erp.model.dmp.entity.PlatformApiTaskEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
-import com.erp.oms.aliexpress.dto.PlatformAliExpressListingDTO;
 import com.erp.oms.aliexpress.dto.PlatformAliExpressOrderDTO;
-
-import java.util.List;
 
 /**
  * 速卖通下载服务

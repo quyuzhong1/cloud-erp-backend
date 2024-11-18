@@ -1,17 +1,15 @@
 package com.erp.model.tms.dto;
 
-import java.math.BigDecimal;
-import java.time.LocalDate;
-
 import com.common.business.dto.base.SortDTO;
-import com.common.business.validator.AddGroup;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
+
+import javax.validation.constraints.*;
 import java.io.Serializable;
+import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
-import javax.validation.constraints.*;
 
 /**
  * <p>

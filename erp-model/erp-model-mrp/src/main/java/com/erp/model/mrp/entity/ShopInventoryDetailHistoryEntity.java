@@ -3,6 +3,7 @@ package com.erp.model.mrp.entity;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
@@ -22,8 +23,10 @@ import java.math.BigDecimal;
 @Setter
 @Accessors(chain = true)
 @TableName("shop_inventory_detail_history")
+@EqualsAndHashCode(callSuper = true)
 public class ShopInventoryDetailHistoryEntity extends BaseEntity<ShopInventoryDetailHistoryEntity> {
 
+    private static final long serialVersionUID = 2339261456645235000L;
     /**
      * 补货建议库存明细id
      */

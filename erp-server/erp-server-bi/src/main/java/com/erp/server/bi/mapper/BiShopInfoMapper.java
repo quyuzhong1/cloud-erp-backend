@@ -28,7 +28,7 @@ public interface BiShopInfoMapper extends BaseMapper<BiShopInfoEntity> {
      * @param params
      * @return IPage<DmpShopInfoDTO>
      */
-    IPage<DmpShopInfoShowDTO> paging(Page query, @Param("params") DmpShopInfoSearchDTO params);
+    IPage<DmpShopInfoShowDTO> paging(Page<Object> query, @Param("params") DmpShopInfoSearchDTO params);
     /**
      * @description: 查询所有店铺数据导出
      * @author Will

@@ -49,7 +49,10 @@ public class FastDFSClientUtil {
 		FastDFSClientUtil.publicUrl = publicUrl;
 	}
 
-	// 初始化FastDFS Client
+
+	/**
+	 * 初始化FastDFS Client
+	 */
 	public static StorageClient1 getStorageClient() {
 		if (storageClient1 == null) {
 			synchronized (FastDFSClientUtil.class) {

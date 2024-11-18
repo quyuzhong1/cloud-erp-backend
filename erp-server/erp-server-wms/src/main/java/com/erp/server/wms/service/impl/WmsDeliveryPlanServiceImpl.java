@@ -3,6 +3,7 @@ package com.erp.server.wms.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONArray;
@@ -83,33 +84,35 @@ import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_OVERSEAS_DE
 @Slf4j
 @Service
 public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlanMapper, WmsDeliveryPlanEntity> implements WmsDeliveryPlanService {
-    @Autowired
+    @Resource
     private OperateLogService operateLogService;
-    @Autowired
+    @Resource
     private DocNoGenHelper docNoGenHelper;
-    @Autowired
+    @Resource
     private WorkflowFeign workflowFeign;
-    @Autowired
+    @Resource
     private WmsDeliveryPlanDetailService wmsDeliveryPlanDetailService;
-    @Autowired
+    @Resource
     private OverseasProviderWarehouseService overseasProviderWarehouseService;
-    @Autowired
+    @Resource
     private WarehouseService warehouseService;
-    @Autowired
+    @Resource
     private PlmTaskFeign plmTaskFeign;
-    @Autowired
+    @Resource
     private FirstMileDeliveryService firstMileDeliveryService;
-    @Autowired
+    @Resource
     private RequisitionApplicationService requisitionApplicationService;
-    @Autowired
+    @Resource
+    private RequisitionApplicationDetailService requisitionApplicationDetailService;
+    @Resource
     private SkuMappingFeign skuMappingFeign;
-    @Autowired
+    @Resource
     private FirstMileDeliveryDetailService firstMileDeliveryDetailService;
 
     @Resource
     private ThirdWarehouseRegistry thirdWarehouseRegistry;
 
-    @Autowired
+    @Resource
     private ShopInfoFeign shopInfoFeign;
 
     @Resource
@@ -143,7 +146,7 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
         }
 
         // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】",  UserContext.getDefaultLoginUser().getUserName(), "发货计划" , wmsDeliveryPlanEntity.getCode());
+        String msg = CharSequenceUtil.format("用户【{}】新增【{}】单据单号为【{}】",  UserContext.getDefaultLoginUser().getUserName(), "发货计划" , wmsDeliveryPlanEntity.getCode());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.DELIVERY_PLAN.getCode(), wmsDeliveryPlanEntity.getId(), "新增操作");
         // 新增明细
         wmsDeliveryPlanDetailService.add(addDTO, wmsDeliveryPlanEntity.getId());
@@ -157,7 +160,9 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
     @Override
     public Boolean update(WmsDeliveryPlanDTO.UpdateDTO updateDTO) {
         WmsDeliveryPlanEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "发货计划"));
+        if (Objects.isNull(old)){
+            throw new ServiceException(ApiError.NOT_EXIST_BILL, "发货计划");
+        }
         // 待提交和审核不通过允许修改
         if (!ApproveStatusEnum.allowUpdateStatus(old.getApproveStatus())) {
             throw new ServiceException(ApiError.ERROR_1029);
@@ -179,7 +184,7 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
         wmsDeliveryPlanDetailService.update(updateDTO, wmsDeliveryPlanEntity.getId());
         // 记录主单操作日志
         log.info("编辑 开始记录发货计划日志数据，单号：【{}】", wmsDeliveryPlanEntity.getCode());
-        String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), wmsDeliveryPlanEntity.getCode(), "发货计划");
+        String msg = CharSequenceUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), wmsDeliveryPlanEntity.getCode(), "发货计划");
         operateLogService.addModuleOperateLogByObj(old, wmsDeliveryPlanEntity, ModuleTypeEnum.DELIVERY_PLAN.getCode(), wmsDeliveryPlanEntity.getId(), msg);
         return Boolean.TRUE;
     }
@@ -238,7 +243,7 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
         startProcess(entity);
         // 记录操作日志
         log.info("提交 开始记录发货计划日志数据，id：【{}】", id);
-        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据提交审核 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "发货计划");
+        String msg = CharSequenceUtil.format("用户【{}】单号为【{}】的【{}】单据提交审核 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "发货计划");
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.DELIVERY_PLAN.getCode(), entity.getId(), "提交操作");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.SUBMIT);
     }
@@ -280,7 +285,7 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
         // 调用流程审核
         approveProcess(entity, dto);
         // 操作日志
-        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据审核操作  审核结果：【{}】 审核意见 ：【{}】", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "发货计划", approveType.getName(), dto.getComment());
+        String msg = CharSequenceUtil.format("用户【{}】单号为【{}】的【{}】单据审核操作  审核结果：【{}】 审核意见 ：【{}】", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "发货计划", approveType.getName(), dto.getComment());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.DELIVERY_PLAN.getCode(), entity.getId(), "审核操作");
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(approveType);
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.approveStatus(approveStatus));
@@ -321,11 +326,11 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
         validateDisApprove(entity);
 
         // 检查是否有下推单据
-        List<FirstMileDeliveryEntity> deliveryEntities = firstMileDeliveryService.listBySourceIds(Arrays.asList(id));
+        List<FirstMileDeliveryEntity> deliveryEntities = firstMileDeliveryService.listBySourceIds(Collections.singletonList(id));
         if (CollectionUtils.isNotEmpty(deliveryEntities)) {
             throw new ServiceException(ApiError.EXIST_FBA_DELIVERY_DETAIL_NOT_DISAPPROVE);
         }
-        List<RequisitionApplicationEntity> requisitionApplicationEntities = requisitionApplicationService.listBySourceIds(Arrays.asList(id));
+        List<RequisitionApplicationEntity> requisitionApplicationEntities = requisitionApplicationService.listBySourceIds(Collections.singletonList(id));
         if (CollectionUtils.isNotEmpty(requisitionApplicationEntities)) {
             throw new ServiceException(ApiError.EXIST_REQUISITION_APPLICATION_NOT_DISAPPROVE);
         }
@@ -334,7 +339,7 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
         updateForDisApprove(id, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
 
         // 操作日志
-        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据反审核操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "发货计划");
+        String msg = CharSequenceUtil.format("用户【{}】单号为【{}】的【{}】单据反审核操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "发货计划");
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.DELIVERY_PLAN.getCode(), entity.getId(), "反审核操作");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DISAPPROVE);
     }
@@ -357,13 +362,13 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
             throw new ServiceException(ApiError.SUBMIT_IS_DELETE);
         }
         // 删除明细数据
-        wmsDeliveryPlanDetailService.removeByMainIds(Arrays.asList(id));
+        wmsDeliveryPlanDetailService.removeByMainIds(Collections.singletonList(id));
         // 删除主单数据
         log.info("删除 开始删除发货计划主单数据，id：【{}】", id);
         super.removeById(id);
         // 删除日志数据
         log.info("删除 开始删除发货计划日志数据，id：【{}】", id);
-        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据删除操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "发货计划");
+        String msg = CharSequenceUtil.format("用户【{}】单号为【{}】的【{}】单据删除操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "发货计划");
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.DELIVERY_PLAN.getCode(), entity.getCode(), "删除发货计划数据");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DELETE);
     }
@@ -375,7 +380,7 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
     public BatchResultDTO invalid(String id, String remark) {
         WmsDeliveryPlanEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到发货计划数据"));
         // 待提交或审核不通过并且未作废允许作废
-        if ((!ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(entity.getApproveStatus()) && !ApproveStatusEnum.REJECT.getStatus().equals(entity.getApproveStatus())) || !InvalidStatusEnum.NOT_VOIDED.getStatus().equals(entity.getInvalidStatus())) {
+        if ((!ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(entity.getApproveStatus().getStatus()) && !ApproveStatusEnum.REJECT.getStatus().equals(entity.getApproveStatus().getStatus())) || !String.valueOf(InvalidStatusEnum.NOT_VOIDED.getStatus()).equals(entity.getInvalidStatus())) {
            throw new ServiceException(ApiError.ERROR_98005);
         }
         log.info("作废 开始修改发货计划状态数据，id：【{}】", id);
@@ -385,7 +390,7 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
             .update();
 
         log.info("作废 开始记录操作日志，id：【{}】", id);
-        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据作废操作 作废原因：【{}】", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "发货计划", remark);
+        String msg = CharSequenceUtil.format("用户【{}】单号为【{}】的【{}】单据作废操作 作废原因：【{}】", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "发货计划", remark);
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.DELIVERY_PLAN.getCode(), entity.getId(), "作废操作");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.INVALID);
      }
@@ -410,7 +415,7 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
 
         //操作日志
         log.info("撤销 开始记录操作日志，id：【{}】", id);
-        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据撤销流程操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "发货计划");
+        String msg = CharSequenceUtil.format("用户【{}】单号为【{}】的【{}】单据撤销流程操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "发货计划");
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.DELIVERY_PLAN.getCode(), entity.getId(), "取消流程操作");
         ProcessManagementDTO.RevokeDTO revokeDTO = new ProcessManagementDTO.RevokeDTO();
         revokeDTO.setBusinessId(entity.getId());
@@ -437,7 +442,7 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
         WmsDeliveryPlanDTO.ViewDTO data = BeanMapperUtils.map(WmsDeliveryPlanDTO.ViewDTO.class, wmsDeliveryPlanEntity);
 
         //发货计划详情
-        List<WmsDeliveryPlanDetailEntity> detailEntityList = wmsDeliveryPlanDetailService.listByMainIds(Arrays.asList(id));
+        List<WmsDeliveryPlanDetailEntity> detailEntityList = wmsDeliveryPlanDetailService.listByMainIds(Collections.singletonList(id));
 
         // 数据填充处理
         fillOne(data, detailEntityList);
@@ -473,7 +478,7 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
         List<SkuVO> skuVOList = plmTaskFeign.listSkuProductByIds(skuIdList);
 
         //查询第三方仓SKU信息
-//        List<OverseasProviderWarehouseDTO.ViewDTO> viewDTOList = overseasProviderWarehouseService.listByWarehouseIdList(Arrays.asList(data.getToWarehouseId()));
+//        List<OverseasProviderWarehouseDTO.ViewDTO> viewDTOList = overseasProviderWarehouseService.listByWarehouseIdList(Collections.singletonList(data.getToWarehouseId()));
 //        String provideCode;
 //        if(CollectionUtils.isNotEmpty(viewDTOList)){
 //            provideCode = viewDTOList.get(0).getProviderCode();
@@ -567,22 +572,24 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
     @Override
     public List<FirstMileDeliveryDTO.DeliverRecordView> listDeliverRecord(String id) {
         List<FirstMileDeliveryDTO.DeliverRecordView> deliverRecordViews;
-        List<String> ids = requisitionApplicationService.listBySourceIds(Arrays.asList(id)).stream().map(v->v.getId()).collect(Collectors.toList());
+        List<String> ids = requisitionApplicationService.listBySourceIds(Collections.singletonList(id)).stream().map(v->v.getId()).collect(Collectors.toList());
         ids.add(id);
         deliverRecordViews = firstMileDeliveryService.listDeliveryRecordBySourceIds(ids, null);
         return deliverRecordViews;
     }
 
     @Override
-    public List<WmsDeliveryPlanDTO.GenerateRequisitionApplicationViewDTO> generateRequisitionApplicationView(List<String> ids) {
-        List<WmsDeliveryPlanDTO.GenerateRequisitionApplicationViewDTO> list = baseMapper.generateRequisitionApplicationView(ids);
+    public List<WmsDeliveryPlanDTO.GenerateRequisitionApplicationViewDTO> generateRequisitionApplicationView(List<String> detailIds) {
+        List<WmsDeliveryPlanDTO.GenerateRequisitionApplicationViewDTO> list = baseMapper.generateRequisitionApplicationView(detailIds);
 
         //审核通过才能下推
         long count = list.stream().filter(req -> !ApproveStatusEnum.APPROVE.getStatus().equals(req.getApproveStatus())).count();
         if (count > 0) {
             throw new ServiceException(ApiError.ERROR_98063);
         }
-
+        //已下推的要货申请， 已审核的要货申请，sku数量超过或等于未下推计划数量就不展示
+        List<RequisitionApplicationDetailEntity> requisitionApplicationDetailEntities = requisitionApplicationDetailService.listBySourceDetailIds(detailIds);
+        list = list.stream().filter(e -> hasQtyCanPush(e,requisitionApplicationDetailEntities)).collect(Collectors.toList());
         //根据skuId查询拥有的子sku
         List<String> skuIds = list.stream().map(req -> req.getSkuId()).distinct().collect(Collectors.toList());
         List<BomChildrenSkuDTO> bomChildrenSkuDTOS = plmTaskFeign.listBomChildBySkuIds(skuIds);
@@ -623,8 +630,29 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
         return list;
     }
 
+    /**
+     * 校验是否存在可以下推的数量
+     * @param dto
+     * @param requisitionApplicationDetailEntities
+     * @return
+     */
+    private boolean hasQtyCanPush(WmsDeliveryPlanDTO.GenerateRequisitionApplicationViewDTO dto, List<RequisitionApplicationDetailEntity> requisitionApplicationDetailEntities) {
+        if (CollectionUtils.isEmpty(requisitionApplicationDetailEntities)){
+            return Boolean.TRUE;
+        }
+        //已下推要货数量
+        int requisitionQty = requisitionApplicationDetailEntities.stream().filter(e -> Objects.equals(dto.getSourceDetailId(), e.getSourceDetailId())).mapToInt(RequisitionApplicationDetailEntity::getRequisitionQty).reduce(MathUtil.ZERO, Integer::sum);
+        if (dto.getPlanQty() > requisitionQty){
+            return Boolean.TRUE;
+        }
+        return Boolean.FALSE;
+    }
+
     @Override
     public Boolean generateRequisitionApplicationSave(List<WmsDeliveryPlanDTO.GenerateRequisitionApplicationViewDTO> list) {
+        if (CollectionUtils.isEmpty(list)){
+            throw new ServiceException("明细数据不能为空");
+        }
         return generateRequisitionApplication(list, Boolean.FALSE);
     }
 
@@ -684,7 +712,7 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
 
         List<String> fbaTypeCodes = list.stream().filter(v->v.getType().equals(DeliveryPlanTypeEnum.FBA.getCode())).map(WmsDeliveryPlanDTO.GenerateDeliverViewDTO::getSourceCode).collect(Collectors.toList());
         if(CollectionUtils.isNotEmpty(fbaTypeCodes)){
-            throw new ServiceException(StrUtil.format("【{}】为FBA发货计划，发货单需要从FBA货件下推",fbaTypeCodes));
+            throw new ServiceException(CharSequenceUtil.format("【{}】为FBA发货计划，发货单需要从FBA货件下推",fbaTypeCodes));
         }
 
         //审核通过才能下推
@@ -733,7 +761,7 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
     @Override
     public ListingInfoDTO.ImportDTO importFile(MultipartFile excelFile, List<String> thirdSkuNoList, String warehouseId, String shopId, HttpServletResponse response) {
 
-        if(StringUtils.isBlank(warehouseId)&& StringUtils.isBlank(shopId)){
+        if(CharSequenceUtil.isBlank(warehouseId)&& CharSequenceUtil.isBlank(shopId)){
             throw new ServiceException("仓库id不能为空");
         }
 
@@ -741,10 +769,10 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
         List<ListingInfoWithSkuMappingDTO> listingWithSkuMappingDTOList;
 
         //店铺不为空代表是fba ，否则是第三方仓
-        if(StringUtils.isNotBlank(shopId)){
+        if(CharSequenceUtil.isNotBlank(shopId)){
             listingWithSkuMappingDTOList = skuMappingFeign.listByErpSkuIdAndType(new ArrayList<>(),"","",shopId);
         }else{
-            List<OverseasProviderWarehouseDTO.ViewDTO> viewDTOList = overseasProviderWarehouseService.listByWarehouseIdList(Arrays.asList(warehouseId));
+            List<OverseasProviderWarehouseDTO.ViewDTO> viewDTOList = overseasProviderWarehouseService.listByWarehouseIdList(Collections.singletonList(warehouseId));
             String provideCode = "";
             if(CollectionUtils.isNotEmpty(viewDTOList)){
                 provideCode = viewDTOList.get(0).getProviderCode();
@@ -752,7 +780,7 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
             listingWithSkuMappingDTOList = skuMappingFeign.listByErpSkuIdAndType(new ArrayList<>(),provideCode,warehouseId,"");
         }
 
-        DeliveryPlanDetailExcelListener excelListenerUtil = new DeliveryPlanDetailExcelListener(thirdSkuNoList,listingWithSkuMappingDTOList,warehouseId,StringUtils.isNotBlank(shopId));
+        DeliveryPlanDetailExcelListener excelListenerUtil = new DeliveryPlanDetailExcelListener(thirdSkuNoList,listingWithSkuMappingDTOList,warehouseId,CharSequenceUtil.isNotBlank(shopId));
         try {
             EasyExcel.read(excelFile.getInputStream(), DeliveryPlanDetailExportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (IOException e) {
@@ -885,7 +913,7 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
             List<FirstMileDeliveryDetailDTO.AddDTO> detailAddList = new ArrayList<>();
             for (WmsDeliveryPlanDTO.GenerateDeliverViewDTO viewDTO : value) {
                 if(DeliveryPlanTypeEnum.FBA.getCode().equals(viewDTO.getType())){
-                    throw new ServiceException(StrUtil.format("【{}】为FBA发货计划，发货单需要从FBA货件下推",viewDTO.getSourceCode()));
+                    throw new ServiceException(CharSequenceUtil.format("【{}】为FBA发货计划，发货单需要从FBA货件下推",viewDTO.getSourceCode()));
                 }
                 //发货仓库中文
                 WarehouseDTO.UpdateDTO updateDTO = warehouseList.stream().filter(w -> w.getId().equals(viewDTO.getDeliveryWarehouseId())).findFirst().orElse(new WarehouseDTO.UpdateDTO());
@@ -938,6 +966,7 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
         //根据来源id查询发货单
         List<RequisitionApplicationEntity> requisitionApplicationEntityList = requisitionApplicationService.listBySourceIds(ids);
         List<String> requisitionIds = requisitionApplicationEntityList.stream().map(v->v.getId()).collect(Collectors.toList());
+        List<RequisitionApplicationDetailEntity> requisitionApplicationDetailEntities = requisitionApplicationDetailService.listByMainIds(requisitionIds);
         List<FirstMileDeliveryEntity> firstMileDeliveryEntities = firstMileDeliveryService.listBySourceIds(new ArrayList<>(CollectionUtil.union(ids,requisitionIds)));
         List<String> allDeliveryIds = firstMileDeliveryEntities.stream().map(v->v.getId()).collect(Collectors.toList());
         //根据来源详情id查询发货详情
@@ -966,7 +995,7 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
                 List<RequisitionApplicationEntity> requisitionApplicationList = requisitionApplicationEntityList.stream().filter(req -> req.getSourceId().equals(data.getId())).collect(Collectors.toList());
                 List<String> requisitionIdList = requisitionApplicationList.stream().map(v->v.getId()).collect(Collectors.toList());
                 List<FirstMileDeliveryEntity> deliveryEntities = firstMileDeliveryEntities.stream().filter(v->requisitionIdList.contains(v.getSourceId()) || v.getSourceId().equals(data.getId())).sorted(Comparator.comparing(FirstMileDeliveryEntity::getCreateTime).reversed()).collect(Collectors.toList());
-                List<String> deliveryIds = deliveryEntities.stream().map(v->v.getId()).collect(Collectors.toList());
+                List<String> deliveryIds = deliveryEntities.stream().filter(e ->Objects.equals(e.getApproveStatus(),ApproveStatusEnum.APPROVE.getStatus())).map(BaseEntity::getId).collect(Collectors.toList());
                 List<FirstMileDeliveryDetailEntity> deliveryDetailEntities = fbaDeliveryDetailEntities.stream().filter(req -> deliveryIds.contains(req.getMainId())).collect(Collectors.toList());
                 if (CollectionUtils.isNotEmpty(deliveryEntities)) {
                     data.setDeliveryCode(deliveryEntities.get(MathUtil.ZERO).getCode());
@@ -977,14 +1006,17 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
                 }
             }else{
                 List<RequisitionApplicationEntity> requisitionApplicationList = requisitionApplicationEntityList.stream().filter(req -> req.getSourceId().equals(data.getId())).collect(Collectors.toList());
-                List<String> requisitionIdList = requisitionApplicationList.stream().map(v->v.getId()).collect(Collectors.toList());
-
+                List<String> requisitionIdList = requisitionApplicationList.stream().map(BaseEntity::getId).collect(Collectors.toList());
+                List<RequisitionApplicationDetailEntity> requisitionApplicationDetailEntityList = requisitionApplicationDetailEntities.stream()
+                        .filter(e -> requisitionIdList.contains(e.getMainId()) && Objects.equals(data.getDetailId(), e.getSourceDetailId())).collect(Collectors.toList());
+                List<String> requisitionDetailIds = requisitionApplicationDetailEntityList.stream().map(RequisitionApplicationDetailEntity::getId).collect(Collectors.toList());
                 List<FirstMileDeliveryEntity> deliveryEntities = firstMileDeliveryEntities.stream().filter(req -> req.getSourceId().equals(data.getId()) || requisitionIdList.contains(req.getSourceId())).sorted(Comparator.comparing(FirstMileDeliveryEntity::getCreateTime).reversed()).collect(Collectors.toList());
                 if (CollectionUtils.isNotEmpty(deliveryEntities)) {
                     data.setDeliveryCode(deliveryEntities.get(MathUtil.ZERO).getCode());
                 }
+                List<String> deliveryIds = deliveryEntities.stream().filter(e ->Objects.equals(e.getApproveStatus(),ApproveStatusEnum.APPROVE.getStatus())).map(FirstMileDeliveryEntity::getId).collect(Collectors.toList());
                 //发货数量 关联的发货单中SKU的发货数量，多个发货单汇总
-                Integer deliveryQty = fbaDeliveryDetailEntities.stream().filter(req -> req.getSourceDetailId().equals(data.getDetailId())).mapToInt(FirstMileDeliveryDetailEntity::getDeliveryQty).sum();
+                Integer deliveryQty = fbaDeliveryDetailEntities.stream().filter(req -> requisitionDetailIds.contains(req.getSourceDetailId()) && CollectionUtils.isNotEmpty(deliveryIds) && deliveryIds.contains(req.getMainId())).mapToInt(FirstMileDeliveryDetailEntity::getDeliveryQty).sum();
                 data.setDeliveryQty(deliveryQty);
 
             }
@@ -1033,14 +1065,14 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
     private void handleData(WmsDeliveryPlanEntity wmsDeliveryPlanEntity, List<? extends WmsDeliveryPlanDetailDTO.CommonDTO> detailList) {
 
         //设置仓库中文名
-        List<WarehouseDTO.UpdateDTO> warehouseList = warehouseService.listWarehouseByIds(Arrays.asList(wmsDeliveryPlanEntity.getToWarehouseId()));
+        List<WarehouseDTO.UpdateDTO> warehouseList = warehouseService.listWarehouseByIds(Collections.singletonList(wmsDeliveryPlanEntity.getToWarehouseId()));
         WarehouseDTO.UpdateDTO updateDTO = warehouseList.stream().filter(w -> w.getId().equals(wmsDeliveryPlanEntity.getToWarehouseId())).findFirst().orElse(null);
         if (ObjectUtil.isNotEmpty(updateDTO)) {
             wmsDeliveryPlanEntity.setToWarehouseName(updateDTO.getName());
         }
 
         if(DeliveryPlanTypeEnum.FBA.getCode().equals(wmsDeliveryPlanEntity.getType())){
-            if(StringUtils.isBlank(wmsDeliveryPlanEntity.getShopId())){
+            if(CharSequenceUtil.isBlank(wmsDeliveryPlanEntity.getShopId())){
                 throw new ServiceException("店铺不能为空");
             }
             ShopInfoEntity shopInfoEntity = shopInfoFeign.getShopInfoById(wmsDeliveryPlanEntity.getShopId());
@@ -1078,7 +1110,7 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
                     }
                 }
                 if(CollectionUtils.isNotEmpty(errorSkuList)){
-                    throw new ServiceException(StrUtil.format("{}不可出口到{}所在的国家,请先在第三方系统维护商品进口国清关信息",errorSkuList,Objects.isNull(updateDTO)?"":updateDTO.getName()));
+                    throw new ServiceException(CharSequenceUtil.format("{}不可出口到{}所在的国家,请先在第三方系统维护商品进口国清关信息",errorSkuList,Objects.isNull(updateDTO)?"":updateDTO.getName()));
                 }
             }
         }else{

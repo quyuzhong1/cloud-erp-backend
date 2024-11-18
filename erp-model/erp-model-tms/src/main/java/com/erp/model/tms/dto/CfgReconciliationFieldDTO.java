@@ -1,8 +1,7 @@
 package com.erp.model.tms.dto;
 
-import cn.hutool.core.util.StrUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import com.common.business.dto.AdvanceQueryDTO;
-import com.common.business.dto.base.BaseDropDownDTO;
 import com.common.business.dto.base.SortDTO;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -28,6 +27,8 @@ import java.util.Map;
 @NoArgsConstructor
 public class CfgReconciliationFieldDTO implements Serializable {
 
+
+    public static final String FORMAT = "{}_{}";
 
     /**
      * 详情
@@ -323,11 +324,11 @@ public class CfgReconciliationFieldDTO implements Serializable {
         private String sourceCodeValue;
 
         public String combineUniqueCode(){
-            return StrUtil.format("{}_{}", this.sourceType, this.sourceId);
+            return CharSequenceUtil.format(FORMAT, this.sourceType, this.sourceId);
         }
 
         public static String convertUniqueCode(String sourceType, String sourceId){
-            return StrUtil.format("{}_{}", sourceType, sourceId);
+            return CharSequenceUtil.format(FORMAT, sourceType, sourceId);
         }
 
     }
@@ -386,11 +387,11 @@ public class CfgReconciliationFieldDTO implements Serializable {
         private String dictCostCategory;
 
         public String combineUniqueCode(){
-            return StrUtil.format("{}_{}", this.sourceType, this.sourceId);
+            return CharSequenceUtil.format(FORMAT, this.sourceType, this.sourceId);
         }
 
         public static String convertUniqueCode(String sourceType, String sourceId){
-            return StrUtil.format("{}_{}", sourceType, sourceId);
+            return CharSequenceUtil.format(FORMAT, sourceType, sourceId);
         }
 
     }

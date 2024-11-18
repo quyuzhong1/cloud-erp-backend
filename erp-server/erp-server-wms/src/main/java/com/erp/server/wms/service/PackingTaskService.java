@@ -253,9 +253,9 @@ public interface PackingTaskService extends SuperService<PackingTaskEntity> {
     /**
      * 更新任务状态
      * @param groupSkuDTOS
-     * @param taskId
+     * @param packingTaskEntity
      */
-    void updatePackingStatus(List<WmsCartonSpecDTO.GroupSkuDTO> groupSkuDTOS, String taskId);
+    void updatePackingStatus(List<WmsCartonSpecDTO.GroupSkuDTO> groupSkuDTOS, PackingTaskEntity packingTaskEntity);
 
     void updateWeightStatus(PackingTaskEntity packingTaskEntity);
 

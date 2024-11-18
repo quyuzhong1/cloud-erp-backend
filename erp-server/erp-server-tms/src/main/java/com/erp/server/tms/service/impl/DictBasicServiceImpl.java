@@ -1,10 +1,11 @@
 package com.erp.server.tms.service.impl;
 
 
-import cn.hutool.core.util.StrUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
+import com.common.core.constant.SqlConstants;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
@@ -16,10 +17,10 @@ import com.erp.server.tms.service.DictBasicService;
 import com.erp.server.tms.service.OperateLogService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -34,9 +35,11 @@ import java.util.Optional;
 @Slf4j
 @Service
 public class DictBasicServiceImpl extends SuperServiceImpl<DictBasicMapper, DictBasicEntity> implements DictBasicService {
-    @Autowired
+    @Resource
     private OperateLogService operateLogService;
 
+    @Resource
+    private DictBasicServiceImpl dictBasicService;
 
 
     /**
@@ -56,12 +59,11 @@ public class DictBasicServiceImpl extends SuperServiceImpl<DictBasicMapper, Dict
         if(!save) {
             throw new ServiceException("字典单保存失败");
         }
-        // TODO 修改明细数据（包含增删改）（如果有明细的话）
 
         // 记录主单操作日志
             log.info("编辑 开始记录字典单日志数据，单号：【{}】", dictBasicEntity.getCode());
-            String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), dictBasicEntity.getCode(), "字典单");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
+            String msg = CharSequenceUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), dictBasicEntity.getCode(), "字典单");
+
         operateLogService.addModuleOperateLogByObj(old, dictBasicEntity, null, dictBasicEntity.getId(), msg);
         return Boolean.TRUE;
     }
@@ -73,7 +75,7 @@ public class DictBasicServiceImpl extends SuperServiceImpl<DictBasicMapper, Dict
             return true;
         }
         List<DictBasicEntity> addList = BeanMapper.copyList(list, DictBasicEntity.class);
-        return this.saveOrUpdateBatch(addList);
+        return dictBasicService.saveOrUpdateBatch(addList);
     }
 
 
@@ -126,7 +128,7 @@ public class DictBasicServiceImpl extends SuperServiceImpl<DictBasicMapper, Dict
         LambdaQueryWrapper<DictBasicEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(DictBasicEntity::getType, type);
         queryWrapper.eq(DictBasicEntity::getCode, value);
-        queryWrapper.last("LIMIT 1");
+        queryWrapper.last(SqlConstants.LIMIT_1);
         return this.getOne(queryWrapper);
     }
 

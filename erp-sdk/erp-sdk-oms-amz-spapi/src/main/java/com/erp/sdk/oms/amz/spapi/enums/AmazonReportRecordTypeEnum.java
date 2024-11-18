@@ -9,6 +9,7 @@ import com.fasterxml.jackson.annotation.JsonValue;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -47,7 +48,11 @@ public enum AmazonReportRecordTypeEnum {
     GET_FBA_INVENTORY_PLANNING_DATA("GET_FBA_INVENTORY_PLANNING_DATA", "亚马逊物流管理库存状况报告", false, AmazonReportMongoInfoEnum.FBA_INVENTORY_PLANNING_DATA_MONGO_INFO),
     GET_LEDGER_DETAIL_VIEW_DATA("GET_LEDGER_DETAIL_VIEW_DATA", "亚马逊物流库存账本详情报告", false, AmazonReportMongoInfoEnum.LEDGER_DETAIL_VIEW_DATA_MONGO_INFO),
 
-    GET_AMAZON_FULFILLED_SHIPMENTS_DATA_GENERAL("GET_AMAZON_FULFILLED_SHIPMENTS_DATA_GENERAL","亚马逊物流销售报告",true, AmazonReportMongoInfoEnum.AMAZON_FULFILLED_SHIPMENTS_DATA_GENERAL_MONGO_INFO)
+    GET_AMAZON_FULFILLED_SHIPMENTS_DATA_GENERAL("GET_AMAZON_FULFILLED_SHIPMENTS_DATA_GENERAL","亚马逊物流销售报告",true, AmazonReportMongoInfoEnum.AMAZON_FULFILLED_SHIPMENTS_DATA_GENERAL_MONGO_INFO),
+
+    // 亚马逊售后
+    GET_FLAT_FILE_RETURNS_DATA_BY_RETURN_DATE("GET_FLAT_FILE_RETURNS_DATA_BY_RETURN_DATE","亚马逊退货报告_根据退货时间",true, null),
+    GET_FBA_FULFILLMENT_CUSTOMER_SHIPMENT_REPLACEMENT_DATA("GET_FBA_FULFILLMENT_CUSTOMER_SHIPMENT_REPLACEMENT_DATA","亚马逊FBA物流换货报告",true, null),
     ;
 
     /**

@@ -22,7 +22,7 @@ public class SupplierAccountDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
-    public static class AddDTO {
+    public static class AddDTO implements Serializable{
 
 
         /**

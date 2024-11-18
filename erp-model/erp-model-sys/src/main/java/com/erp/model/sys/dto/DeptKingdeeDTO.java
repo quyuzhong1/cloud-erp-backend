@@ -13,6 +13,8 @@ import javax.validation.constraints.NotBlank;
  */
 public class DeptKingdeeDTO {
 
+    private DeptKingdeeDTO() {
+    }
 
     @Data
     @NoArgsConstructor

@@ -3,6 +3,7 @@ package com.erp.model.tms.entity;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
@@ -21,6 +22,7 @@ import java.io.Serializable;
 @Setter
 @Accessors(chain = true)
 @TableName("cfg_operate_log_field")
+@EqualsAndHashCode
 public class CfgOperateLogFieldEntity extends BaseEntity<CfgOperateLogFieldEntity> {
 
     /**
@@ -60,13 +62,13 @@ public class CfgOperateLogFieldEntity extends BaseEntity<CfgOperateLogFieldEntit
     private String booleanValue;
 
 
-    public static final String FIELD = "field";
+    public static final String FIELD_STR = "field";
 
     public static final String FIELD_NAME = "field_name";
 
     public static final String CLASS_PATH = "class_path";
 
-    public static final String TYPE = "type";
+    public static final String FIELD_TYPE = "type";
 
     public static final String ENUM_CLASS = "enum_class";
 

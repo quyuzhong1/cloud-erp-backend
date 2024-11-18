@@ -125,7 +125,7 @@ public interface LogisticsAuthService extends SuperService<LogisticsAuthEntity> 
      * @param authConfig
      * @return
      */
-    ApiResult authLogistics(String logisticsPlatform,Map<String, String> authConfig);
+    ApiResult<Object>authLogistics(String logisticsPlatform,Map<String, String> authConfig);
 
     /**
      *

@@ -10,6 +10,7 @@ import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
 import com.erp.model.mrp.dto.FbaHistoryInventoryDTO;
 import com.erp.model.mrp.dto.OverseasHistoryInventoryDTO;
+import com.common.business.utils.ApplicationContextUtils;
 import com.erp.model.mrp.entity.OverseasHistoryInventoryEntity;
 import com.erp.model.oms.dto.ListingInfoParamDTO;
 import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
@@ -75,7 +76,7 @@ public class OverseasHistoryInventoryServiceImpl extends SuperServiceImpl<Overse
                     inventory.setId(inventory.getId());
                     return inventory;
                 }).collect(Collectors.toList());
-        saveOrUpdateBatch(entities);
+        ApplicationContextUtils.getBean(OverseasHistoryInventoryServiceImpl.class).saveOrUpdateBatch(entities);
     }
 
     @Override

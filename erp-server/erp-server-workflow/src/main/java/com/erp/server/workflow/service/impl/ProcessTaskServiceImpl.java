@@ -1,7 +1,7 @@
 package com.erp.server.workflow.service.impl;
 
 
-import cn.hutool.core.util.StrUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import com.alibaba.excel.util.DateUtils;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.enums.BaseStatusEnum;
@@ -22,7 +22,7 @@ import org.camunda.bpm.engine.TaskService;
 import org.camunda.bpm.engine.history.HistoricTaskInstance;
 import org.camunda.bpm.engine.task.Comment;
 import org.camunda.bpm.engine.task.Task;
-import org.springframework.beans.factory.annotation.Autowired;
+import javax.annotation.Resource;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -39,22 +39,22 @@ import java.util.stream.Collectors;
 public class ProcessTaskServiceImpl implements ProcessTaskService {
 
 
-    @Autowired
+    @Resource
     private TaskService taskService;
 
-    @Autowired
+    @Resource
     private HistoryService historyService;
 
-    @Autowired
+    @Resource
     private ActHistoryActivityService actHistoryActivityService;
 
-    @Autowired
+    @Resource
     private WorkflowBusinessProcessService businessProcessService;
 
-    @Autowired
+    @Resource
     private SysUserFeign sysUserFeign;
 
-    @Autowired
+    @Resource
     private WorkflowService workflowService;
 
 
@@ -177,12 +177,12 @@ public class ProcessTaskServiceImpl implements ProcessTaskService {
     @Override
     public List<ApproveNodeRecordVO> getHistoryTaskByBusinessTableId(String businessTableId) {
         List<WorkflowBusinessProcessDTO> list = businessProcessService.getProcessByTables(Arrays.asList(businessTableId));
-        if (CollectionUtils.isNotEmpty(list)) {
+        if (!CollectionUtils.isEmpty(list)) {
             WorkflowBusinessProcessDTO dto = list.get(0);
             List<AuditorHandleDTO> auditorHandleList = this.getHistoryTaskByProcessId(dto.getProcessId());
             List<FindUserDTO> userList = sysUserFeign.getUserList();
             for (AuditorHandleDTO item : auditorHandleList) {
-                FindUserDTO findUser = userList.stream().filter(u -> StrUtil.equals(item.getHandleUserId(),u.getUserId())).findFirst().orElse(null);
+                FindUserDTO findUser = userList.stream().filter(u -> CharSequenceUtil.equals(item.getHandleUserId(),u.getUserId())).findFirst().orElse(null);
                 if (findUser != null) {
                     item.setHandleUserName(findUser.getUserName());
                 } else {
@@ -331,7 +331,7 @@ public class ProcessTaskServiceImpl implements ProcessTaskService {
                     auditorHandleDTO.setHandContent("completed".equals(item.getDeleteReason()) ? "审核通过" : "待审核");
                 }
             }
-            FindUserDTO findUser = userList.stream().filter(u -> StrUtil.equals(item.getAssignee(),u.getUserId())).findFirst().orElse(null);
+            FindUserDTO findUser = userList.stream().filter(u -> CharSequenceUtil.equals(item.getAssignee(),u.getUserId())).findFirst().orElse(null);
             auditorHandleDTO.setHandleUserName(null != findUser ? findUser.getUserName() : "");
             auditorHandleDTO.setActivityName(item.getName());
             auditorHandleDTO.setStartTime(DateUtils.format(item.getStartTime(), DateUtils.DATE_FORMAT_19));

@@ -9,6 +9,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.Valid;
+import javax.validation.constraints.Min;
 import javax.validation.constraints.NotBlank;
 import java.io.Serializable;
 import java.time.LocalDate;
@@ -27,7 +28,7 @@ import java.util.Map;
 @Data
 @NoArgsConstructor
 public class WmsDeliveryPlanDTO implements Serializable {
-
+    private static final long serialVersionUID = 1905122041950251207L;
 
      /**
      * 状态统计
@@ -578,6 +579,8 @@ public class WmsDeliveryPlanDTO implements Serializable {
         /**
          * 要货数量
          */
+        @NotNull(message = "要货数量不能为空")
+        @Min(value = 1, message = "要货数量不能小于1")
         private Integer requisitionQty;
 
         /**

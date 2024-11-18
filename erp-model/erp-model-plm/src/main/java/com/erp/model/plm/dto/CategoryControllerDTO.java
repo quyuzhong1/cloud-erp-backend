@@ -5,13 +5,15 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.io.Serializable;
+
 /**
  * @Description 产品分类DTO
  *
  * @Author Cloud
  * @Date 2023/4/18 18:28
  **/
-public class CategoryControllerDTO {
+public class CategoryControllerDTO implements Serializable {
 
     @Data
     @AllArgsConstructor

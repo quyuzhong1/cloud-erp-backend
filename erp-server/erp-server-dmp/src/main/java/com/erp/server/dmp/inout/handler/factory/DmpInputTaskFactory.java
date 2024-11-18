@@ -5,6 +5,7 @@ import java.util.concurrent.TimeUnit;
 
 import javax.annotation.Resource;
 
+import cn.hutool.core.exceptions.ExceptionUtil;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -103,7 +104,7 @@ public class DmpInputTaskFactory{
 			bean.addDmpHandler(dmpInputTaskStatusHandler);
 			bean.doDmpHandler(dmpInputFinishRequest, dmpResponse);
 		} catch (Exception e) {
-			log.error("{}任务执行报错，执行状态{}" , inputTaskId , code, e);
+			log.error("{}任务执行报错，执行状态{}, 异常类型={}" , inputTaskId , code, ExceptionUtil.stacktraceToString(e));
 			Integer maxRetryCount = 3;
 			DmpCfgInputDetailEntity dmpCfgInputDetailEntity = dmpResponse.getDmpCfgInputDetailEntity();
 			if(dmpCfgInputDetailEntity != null) {
@@ -117,7 +118,7 @@ public class DmpInputTaskFactory{
 				dmpInputTaskEntity = dmpInputTaskService.getById(inputTaskId);
 			}
 			Integer errorCount = dmpInputTaskEntity.getErrorCount() + 1;
-			boolean errorFlag = errorCount == maxRetryCount;
+			boolean errorFlag = errorCount.equals(maxRetryCount);
 			if(maxRetryCount < 0) {
 				errorFlag = false;
 			}

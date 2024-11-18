@@ -1,13 +1,13 @@
 package com.erp.model.plm.entity;
 
-import com.baomidou.mybatisplus.annotation.*;
+import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
 import lombok.Data;
+
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.util.Date;
 
 /**
  * @Description 产品采购信息表
@@ -16,7 +16,7 @@ import java.util.Date;
  **/
 @TableName(value ="product_purchase")
 @Data
-public class ProductPurchaseEntity extends BaseEntity implements Serializable {
+public class ProductPurchaseEntity extends BaseEntity<ProductPurchaseEntity> implements Serializable {
 
     /**
      * 产品sku表id

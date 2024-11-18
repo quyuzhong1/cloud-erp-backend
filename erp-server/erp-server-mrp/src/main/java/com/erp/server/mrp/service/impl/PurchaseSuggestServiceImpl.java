@@ -7,6 +7,7 @@ import cn.hutool.core.util.StrUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import cn.hutool.core.text.CharSequenceUtil;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
@@ -53,11 +54,14 @@ import com.erp.server.mrp.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.annotation.Resource;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.*;
@@ -74,29 +78,29 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 public class PurchaseSuggestServiceImpl extends SuperServiceImpl<PurchaseSuggestMapper, PurchaseSuggestEntity> implements PurchaseSuggestService {
-    @Autowired
+    @Resource
     private OperateLogService operateLogService;
-    @Autowired
+    @Resource
     private DocNoGenHelper docNoGenHelper;
-    @Autowired
+    @Resource
     private DownloadTaskFeign f;
 
-    @Autowired
+    @Resource
     private DownloadTaskFeign downloadTaskFeign;
 
-    @Autowired
+    @Resource
     private PurchaseSuggestSysService purchaseSuggestSysService;
 
-    @Autowired
+    @Resource
     private HistoryImportRecordService historyImportRecordService;
 
-    @Autowired
+    @Resource
     private ReplenishmentSuggestionService replenishmentSuggestionService;
 
-    @Autowired
+    @Resource
     private SysUserFeign sysUserFeign;
 
-    @Autowired
+    @Resource
     private CfgRuleOrderStrategyService cfgRuleOrderStrategyService;
 
     @Override
@@ -139,8 +143,7 @@ public class PurchaseSuggestServiceImpl extends SuperServiceImpl<PurchaseSuggest
     @Transactional(rollbackFor = Exception.class)
     @Override
     public Boolean update(PurchaseSuggestDTO.UpdateDTO updateDTO) {
-        PurchaseSuggestEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "建议采购"));
+        PurchaseSuggestEntity old = Optional.ofNullable(super.getById(updateDTO.getId())).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "建议采购"));
         PurchaseSuggestEntity purchaseSuggestEntity =  BeanMapperUtils.map(PurchaseSuggestEntity.class, updateDTO);
         //查询配置
         CfgRuleOrderStrategyDTO.ViewDTO viewDTO = cfgRuleOrderStrategyService.view();
@@ -487,7 +490,7 @@ public class PurchaseSuggestServiceImpl extends SuperServiceImpl<PurchaseSuggest
 
         //平台信息
         List<String> platformList = list.stream().map(ReplenishmentSuggestionDTO.PurchaseSuggestionDTO::getPlatform).distinct().collect(Collectors.toList());
-        List<DictBasicEntity> dictBasicList = CollectionUtils.isEmpty(platformList) ? Collections.EMPTY_LIST : FeignQuery.create(DictBasicEntity.class).eq(DictBasicEntity::getType, DictBasicTypeEnum.SALES_PLATFORM.getType()).list();
+        List<DictBasicEntity> dictBasicList = CollectionUtils.isEmpty(platformList) ? Collections.emptyList() : FeignQuery.create(DictBasicEntity.class).eq(DictBasicEntity::getType, DictBasicTypeEnum.SALES_PLATFORM.getType()).list();
 
         for (ReplenishmentSuggestionDTO.PurchaseSuggestionDTO purchaseSuggestionDTO : list) {
 
@@ -498,15 +501,15 @@ public class PurchaseSuggestServiceImpl extends SuperServiceImpl<PurchaseSuggest
             purchaseSuggestionDTO.setLogisticsMethodName(LogisticsMethodEnum.getName(purchaseSuggestionDTO.getLogisticsMethod()));
 
             //平台名称
-            String platformName = dictBasicList.stream().filter(obj -> StrUtil.equals(obj.getValue(),purchaseSuggestionDTO.getPlatform())).map(DictBasicEntity::getName).findFirst().orElse("");
+            String platformName = dictBasicList.stream().filter(obj -> CharSequenceUtil.equals(obj.getValue(),purchaseSuggestionDTO.getPlatform())).map(DictBasicEntity::getName).findFirst().orElse("");
             purchaseSuggestionDTO.setPlatformName(platformName);
 
             //店铺名称
-            String shopName = shopInfoList.stream().filter(obj -> StrUtil.equals(obj.getId(), purchaseSuggestionDTO.getShopId())).map(ShopInfoEntity::getName).findFirst().orElse("");
+            String shopName = shopInfoList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), purchaseSuggestionDTO.getShopId())).map(ShopInfoEntity::getName).findFirst().orElse("");
             purchaseSuggestionDTO.setShopName(shopName);
 
             //产品名称
-            String productName = productDetailList.stream().filter(obj -> StrUtil.equals(obj.getId(), purchaseSuggestionDTO.getSkuId())).map(ProductDetailEntity::getName).findFirst().orElse("");
+            String productName = productDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), purchaseSuggestionDTO.getSkuId())).map(ProductDetailEntity::getName).findFirst().orElse("");
             purchaseSuggestionDTO.setProductName(productName);
             //创建名称
             purchaseSuggestionDTO.setCreateTypeName(CreateTypeEnum.getNameByCode(purchaseSuggestionDTO.getCreateType()));

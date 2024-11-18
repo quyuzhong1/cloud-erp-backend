@@ -3,6 +3,7 @@ package com.erp.model.sys.entity;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
@@ -21,6 +22,7 @@ import java.io.Serializable;
 @Setter
 @Accessors(chain = true)
 @TableName("cfg_node_member")
+@EqualsAndHashCode
 public class CfgNodeMemberEntity extends BaseEntity<CfgNodeMemberEntity> {
 
     /**
@@ -80,11 +82,11 @@ public class CfgNodeMemberEntity extends BaseEntity<CfgNodeMemberEntity> {
 
     public static final String NODE_KEY = "node_key";
 
-    public static final String TYPE = "type";
+    public static final String FIELD_TYPE = "type";
 
     public static final String TYPE_NAME = "type_name";
 
-    public static final String URL = "url";
+    public static final String FIELD_URL = "url";
 
     public static final String REQUEST_METHOD = "request_method";
 

@@ -43,6 +43,7 @@ import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -81,6 +82,23 @@ public class PurchaseOrderController extends BaseController {
     @WebAdvanceQuery(handler = PurchaseOrderQueryHandler.class)
     public ApiResult<PagingVO<PurchaseOrderDTO.ListDTO>> queryByPage(@RequestBody @Validated PagingDTO<PurchaseOrderDTO.SearchParamDTO> dto) {
         PagingVO<PurchaseOrderDTO.ListDTO> pagingVO = purchaseOrderService.paging(dto);
+        return success(pagingVO);
+    }
+
+    /**
+     * 采购单号分页查询
+     * @author will
+     * @date 2024/11/11 11:46
+     * @param dto
+     * @return ApiResult<PagingVO<SourceCodeDTO>>
+     */
+    @PostMapping("/purchaseCodePaging")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "purchase_user_id",
+            menuCode = "scm:purchaseOrder:paging",
+            tableAlias = "po")
+    public ApiResult<PagingVO<PurchaseOrderDTO.SourceCodeDTO>> purchaseCodePaging(@RequestBody @Validated PagingDTO<PurchaseOrderDTO.SourceCodeParamDTO> dto) {
+        PagingVO<PurchaseOrderDTO.SourceCodeDTO> pagingVO = purchaseOrderService.purchaseCodePaging(dto);
         return success(pagingVO);
     }
 
@@ -513,7 +531,7 @@ public class PurchaseOrderController extends BaseController {
             response.reset();
             // 设置文件头
             response.setHeader("Content-Disposition",
-                    "attchement;filename=" + new String(excelName.getBytes("gb2312"), "ISO8859-1"));
+                    "attchement;filename=" + new String(excelName.getBytes("gb2312"), StandardCharsets.ISO_8859_1));
             response.setContentType("application/msexcel");
             wb.write(output);
             wb.close();
@@ -672,7 +690,7 @@ public class PurchaseOrderController extends BaseController {
             response.reset();
             // 设置文件头
             response.setHeader("Content-Disposition",
-                    "attchement;filename=" + new String(excelName.getBytes("gb2312"), "ISO8859-1"));
+                    "attchement;filename=" + new String(excelName.getBytes("gb2312"), StandardCharsets.ISO_8859_1));
             response.setContentType("application/msexcel");
             wb.write(output);
             wb.close();

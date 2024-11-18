@@ -575,4 +575,21 @@ public class SoReturnDTO {
          */
         private String code;
     }
+
+    @Data
+    @NoArgsConstructor
+    public static class PlatformSkuDTO {
+        /**
+         * 平台sku
+         */
+        private List<String> platformSkuNoList;
+        /**
+         * 退货销售单id
+         */
+        private String id;
+        /**
+         * 客户id
+         */
+        private String customerId;
+    }
 }

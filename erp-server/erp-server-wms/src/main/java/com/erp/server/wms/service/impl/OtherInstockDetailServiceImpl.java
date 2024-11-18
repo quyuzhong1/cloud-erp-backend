@@ -1,5 +1,6 @@
 package com.erp.server.wms.service.impl;
 
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
@@ -130,7 +131,7 @@ public class OtherInstockDetailServiceImpl extends SuperServiceImpl<OtherInstock
      * 查询需要删除的数据
      */
     private List<String> getDeleteIds(List<OtherInstockDetailDTO.UpdateDTO> newList, List<OtherInstockDetailEntity> oldList) {
-        List<String> newIds = newList.stream().filter(g -> StringUtils.isNotBlank(g.getId())).
+        List<String> newIds = newList.stream().filter(g -> CharSequenceUtil.isNotBlank(g.getId())).
                 map(OtherInstockDetailDTO.UpdateDTO::getId).collect(Collectors.toList());
         List<String> oldIds = oldList.stream().map(OtherInstockDetailEntity
                 ::getId).collect(Collectors.toList());
@@ -143,10 +144,10 @@ public class OtherInstockDetailServiceImpl extends SuperServiceImpl<OtherInstock
     private void doOpHandleDetails (List<OtherInstockDetailEntity> newList, String mainId, Boolean isUpdate) {
 
         //需要新增的数据
-        List<OtherInstockDetailEntity> addList = newList.stream().filter(c -> StringUtils.isBlank(c.getId())).collect(Collectors.toList());
+        List<OtherInstockDetailEntity> addList = newList.stream().filter(c -> CharSequenceUtil.isBlank(c.getId())).collect(Collectors.toList());
 
         //需要修改的数据
-        List<String> ids = newList.stream().filter(obj -> StringUtils.isNotBlank(obj.getId())).map(OtherInstockDetailEntity::getId).collect(Collectors.toList());
+        List<String> ids = newList.stream().filter(obj -> CharSequenceUtil.isNotBlank(obj.getId())).map(OtherInstockDetailEntity::getId).collect(Collectors.toList());
         List<OtherInstockDetailEntity> list = new ArrayList<>();
         if (CollectionUtils.isNotEmpty(ids)) {
             list = this.listByIds(ids);
@@ -173,11 +174,11 @@ public class OtherInstockDetailServiceImpl extends SuperServiceImpl<OtherInstock
 
         for (OtherInstockDetailEntity detail:newList) {
             //单位
-            String unit = skuList.stream().filter(obj -> obj.getSkuId().equals(detail.getSkuId()) && StringUtils.isNotBlank(obj.getUnitName())).map(SkuVO::getUnitName).findFirst().orElse("");
+            String unit = skuList.stream().filter(obj -> obj.getSkuId().equals(detail.getSkuId()) && CharSequenceUtil.isNotBlank(obj.getUnitName())).map(SkuVO::getUnitName).findFirst().orElse("");
             detail.setUnit(unit);
             detail.setMainId(mainId);
             //修改操作日志
-            if (StringUtils.isNotBlank(detail.getId())) {
+            if (CharSequenceUtil.isNotBlank(detail.getId())) {
                 if (CollectionUtils.isEmpty(list)) {
                     throw new ServiceException(ApiError.ERROR_99044);
                 }
@@ -211,7 +212,7 @@ public class OtherInstockDetailServiceImpl extends SuperServiceImpl<OtherInstock
             CfgApiAuthDTO.WarehouseLocationValidateDTO warehouseLocationValidateDTO = JSONUtil.toBean(cfgApiAuthEntity.getValue(), CfgApiAuthDTO.WarehouseLocationValidateDTO.class);
             warehouseIdList = Arrays.stream(warehouseLocationValidateDTO.getWarehouseIds().split(",")).collect(Collectors.toList());
         }
-        long count = list.stream().filter(obj -> StrUtil.isBlank(obj.getWarehouseLocation())).count();
+        long count = list.stream().filter(obj -> CharSequenceUtil.isBlank(obj.getWarehouseLocation())).count();
         //判断仓位是否需要必填
         if (warehouseIdList.contains(warehouseEntity.getId()) && count > 0) {
             throw new ServiceException(ApiError.ERROR_WAREHOUSE_LOCATION_NOT_NULL,warehouseEntity.getName());

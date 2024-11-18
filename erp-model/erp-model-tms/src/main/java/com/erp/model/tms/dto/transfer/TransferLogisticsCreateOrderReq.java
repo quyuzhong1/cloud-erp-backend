@@ -7,7 +7,6 @@ import lombok.Data;
 import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
-import javax.xml.bind.annotation.XmlElement;
 import java.math.BigDecimal;
 import java.util.List;
 

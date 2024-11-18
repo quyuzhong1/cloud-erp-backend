@@ -2,15 +2,12 @@ package com.erp.server.tms.schedule;
 
 import cn.hutool.core.collection.ListUtil;
 import cn.hutool.json.JSONUtil;
-import com.alibaba.fastjson.JSONObject;
+import com.alibaba.fastjson.JSON;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.enums.LogisticsPlatformEnum;
 import com.common.business.enums.LogisticsTransportTypeEnum;
-import com.common.business.vo.PagingVO;
 import com.common.core.utils.MathUtil;
 import com.erp.model.tms.dto.LogisticsBillDetailQueryDTO;
-import com.erp.model.tms.dto.LogisticsTrackDTO;
-import com.erp.model.tms.entity.LogisticsBillDetailEntity;
 import com.erp.model.tms.dto.LogisticsTrackDTO;
 import com.erp.rpc.dmp.feign.DmpMongoDbFeign;
 import com.erp.server.tms.service.LogisticsBaseService;
@@ -18,7 +15,6 @@ import com.erp.server.tms.service.LogisticsBillDetailService;
 import com.xxl.job.core.biz.model.ReturnT;
 import com.xxl.job.core.context.XxlJobHelper;
 import com.xxl.job.core.handler.annotation.XxlJob;
-import io.seata.common.util.CollectionUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.scheduling.annotation.EnableScheduling;
@@ -29,9 +25,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import static com.rtfparserkit.rtf.Command.li;
-import static com.rtfparserkit.rtf.Command.page;
 
 /**
  * @author zdy
@@ -224,7 +217,7 @@ public class LogisticsChannelJob {
     }
 
     private void getTrackData(LogisticsBillDetailQueryDTO query) {
-        XxlJobHelper.log("获取列表请求参数：{}", JSONObject.toJSONString(query));
+        XxlJobHelper.log("获取列表请求参数：{}", JSON.toJSONString(query));
         //列表查询
         List<LogisticsTrackDTO.UpdateTrackDTO> list = logisticsBillDetailService.listTrackDto(query);
         XxlJobHelper.log("获取列表数：{}", list.size());
@@ -237,7 +230,7 @@ public class LogisticsChannelJob {
     }
 
     private void getRegisterData(LogisticsBillDetailQueryDTO query) {
-        XxlJobHelper.log("获取列表请求参数：{}", JSONObject.toJSONString(query));
+        XxlJobHelper.log("获取列表请求参数：{}", JSON.toJSONString(query));
         List<LogisticsTrackDTO.UpdateTrackDTO> list = logisticsBillDetailService.listTrackDto(query);
         XxlJobHelper.log("获取列表数：{}", list.size());
         if (list.size() > MathUtil.NUMBER_100){
@@ -273,7 +266,7 @@ public class LogisticsChannelJob {
     }
 
     private void getMongoTrackData(LogisticsBillDetailQueryDTO query) {
-        XxlJobHelper.log("获取列表请求参数：{}", JSONObject.toJSONString(query));
+        XxlJobHelper.log("获取列表请求参数：{}", JSON.toJSONString(query));
         //列表查询
         List<LogisticsTrackDTO.UpdateTrackDTO> list = logisticsBillDetailService.listTrackDto(query);
         XxlJobHelper.log("获取列表数：{}", list.size());

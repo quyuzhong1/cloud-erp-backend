@@ -194,6 +194,14 @@ public class CustomerDTO implements Serializable {
          * 简称
          */
         private String shortName;
+        /**
+         * 简称
+         */
+        private String approveStatus;
+        /**
+         *
+         */
+        private Boolean disabled;
     }
     /**
      * 远程搜索
@@ -931,6 +939,16 @@ public class CustomerDTO implements Serializable {
         private String countryName;
 
         private String receiveConditionName;
+
+        //----销售组织信息----
+        /**
+         * 销售部门id
+         */
+        private String salesDeptId;
+        /**
+         * 销售部门名称
+         */
+        private String salesDeptName;
 
 
     }

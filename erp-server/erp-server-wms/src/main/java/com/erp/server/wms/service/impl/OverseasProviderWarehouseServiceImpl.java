@@ -2,6 +2,7 @@ package com.erp.server.wms.service.impl;
 
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
@@ -53,9 +54,9 @@ import javax.annotation.Resource;
 @Slf4j
 @Service
 public class OverseasProviderWarehouseServiceImpl extends SuperServiceImpl<OverseasProviderWarehouseMapper, OverseasProviderWarehouseEntity> implements OverseasProviderWarehouseService {
-    @Autowired
+    @Resource
     private OperateLogService operateLogService;
-    @Autowired
+    @Resource
     private WarehouseService warehouseService;
 
     @Resource
@@ -95,7 +96,7 @@ public class OverseasProviderWarehouseServiceImpl extends SuperServiceImpl<Overs
         ThirdMappingDTO.FeignMappingDTO feignMappingDTO = new ThirdMappingDTO.FeignMappingDTO();
         List<ThirdMappingDTO.ThirdAddDTO> addDTOList = new ArrayList<>();
         list.forEach(item -> {
-            if (StringUtils.isNotBlank(item.getWarehouseId()) && Objects.equals(item.getDisabled(), false)) {
+            if (CharSequenceUtil.isNotBlank(item.getWarehouseId()) && Objects.equals(item.getDisabled(), false)) {
                 //绑定第三方配置关系
                 ThirdMappingDTO.ThirdAddDTO addDTO = new ThirdMappingDTO.ThirdAddDTO();
                 addDTO.setType(ThirdSysTypeEnum.WAREHOUSE.getCode());
@@ -179,7 +180,7 @@ public class OverseasProviderWarehouseServiceImpl extends SuperServiceImpl<Overs
 
     @Override
     public OverseasProviderEntity findPlatformByWarehouseId(String warehouseId) {
-        List<OverseasProviderWarehouseEntity> entityList = listByWarehouseIds(Arrays.asList(warehouseId));
+        List<OverseasProviderWarehouseEntity> entityList = listByWarehouseIds(Collections.singletonList(warehouseId));
         if (CollectionUtils.isEmpty(entityList)) {
             return null;
         }
@@ -203,7 +204,7 @@ public class OverseasProviderWarehouseServiceImpl extends SuperServiceImpl<Overs
      * 新增修改处理数据
      */
     private void handleData(List<OverseasProviderWarehouseEntity> list, String mainId) {
-        List<OverseasProviderWarehouseEntity> oldList = this.listByMainIds(Arrays.asList(mainId));
+        List<OverseasProviderWarehouseEntity> oldList = this.listByMainIds(Collections.singletonList(mainId));
         List<String> warehouseIds = list.stream().map(req -> req.getWarehouseId()).distinct().collect(Collectors.toList());
         List<WarehouseDTO.UpdateDTO> warehouseDtoList = warehouseService.listWarehouseByIds(warehouseIds);
 
@@ -216,7 +217,7 @@ public class OverseasProviderWarehouseServiceImpl extends SuperServiceImpl<Overs
 
             //如果启用，校验仓库是否绑定
             if (!detailEntity.getDisabled()) {
-                if (StringUtils.isBlank(detailEntity.getWarehouseId())) {
+                if (CharSequenceUtil.isBlank(detailEntity.getWarehouseId())) {
                     throw new ServiceException(ApiError.ERROR_NOT_WAREHOUSE);
                 }
 
@@ -239,7 +240,7 @@ public class OverseasProviderWarehouseServiceImpl extends SuperServiceImpl<Overs
             detailEntity.setWarehouseName(updateDTO.getName());
 
             //校验是否是修改，如果是就新增修改日志
-            if (StringUtils.isNotBlank(detailEntity.getId())) {
+            if (CharSequenceUtil.isNotBlank(detailEntity.getId())) {
                 OverseasProviderWarehouseEntity old = oldList.stream().filter(obj -> obj.getId().equals(detailEntity.getId())).findFirst().orElse(null);
                 if (ObjectUtils.isEmpty(old)) {
                     throw new ServiceException(ApiError.ERROR_NOT_FBA_DELIVERY_DETAIL);
@@ -285,7 +286,7 @@ public class OverseasProviderWarehouseServiceImpl extends SuperServiceImpl<Overs
 
     @Override
     public Boolean isApiWarehouse(String destWarehouseId) {
-        if(StringUtils.isBlank(destWarehouseId)){
+        if(CharSequenceUtil.isBlank(destWarehouseId)){
             return false;
         }
         OverseasProviderWarehouseEntity entity = getByWarehouseId(destWarehouseId);

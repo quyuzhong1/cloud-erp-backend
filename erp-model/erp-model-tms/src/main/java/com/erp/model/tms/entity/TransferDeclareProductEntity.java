@@ -1,14 +1,14 @@
 package com.erp.model.tms.entity;
 
-import java.math.BigDecimal;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
-import com.baomidou.mybatisplus.annotation.TableField;
-import java.io.Serializable;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
-import com.common.business.enums.ApproveStatusEnum;
+
+import java.io.Serializable;
+import java.math.BigDecimal;
 
 
 /**
@@ -90,7 +90,7 @@ public class TransferDeclareProductEntity extends BaseEntity<TransferDeclareProd
 
     public static final String SKU_NO = "sku_no";
 
-    public static final String QTY = "qty";
+    public static final String FIELD_QTY = "qty";
 
     public static final String DECLARE_CHINESE_NAME = "declare_chinese_name";
 

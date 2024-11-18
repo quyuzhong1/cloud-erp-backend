@@ -1,17 +1,18 @@
 package com.erp.rpc.dmp.feign;
 
 
-import com.common.business.config.FeignErrorDecoder;
-import com.common.business.dto.DmpPushTaskFeignDTO;
-import com.common.business.dto.DmpSyncTaskDTO;
-import com.common.business.dto.base.BaseIdsDTO;
-import com.erp.model.dmp.entity.DmpPushTaskEntity;
+import java.util.List;
+
+import javax.validation.Valid;
+
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
-import javax.validation.Valid;
-import java.util.List;
+import com.common.business.config.FeignErrorDecoder;
+import com.common.business.dto.DmpPushTaskFeignDTO;
+import com.common.business.dto.DmpSyncTaskDTO;
+import com.erp.model.dmp.entity.DmpPushTaskEntity;
 
 /**
  * @author Will

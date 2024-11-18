@@ -1,6 +1,7 @@
 package com.erp.server.oms.controller.api;
 
 
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.common.business.annotation.DataPermission;
@@ -797,7 +798,7 @@ public class SoInfoController extends BaseController {
                     resultDTOS.add(resultDTO);
                     continue;
                 }
-                resultDTO = BatchResultDTO.fail(entity.getId(), StrUtil.format("【{}】{}",soInfoEntity.getCode(),entity.getSkuNo()), e.getMessage());
+                resultDTO = BatchResultDTO.fail(entity.getId(),  CharSequenceUtil.format("【{}】{}",soInfoEntity.getCode(),entity.getSkuNo()), e.getMessage());
             }
             resultDTOS.add(resultDTO);
         }

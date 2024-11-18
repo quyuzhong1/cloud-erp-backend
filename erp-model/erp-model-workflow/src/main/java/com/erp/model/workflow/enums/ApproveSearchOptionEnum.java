@@ -4,7 +4,9 @@ import com.baomidou.mybatisplus.annotation.EnumValue;
 import com.fasterxml.jackson.annotation.JsonValue;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * 工作台下拉查询选项
@@ -46,10 +48,6 @@ public enum ApproveSearchOptionEnum {
     }
 
     public static List<ApproveSearchOptionEnum> getAll() {
-        List<ApproveSearchOptionEnum> resultList = new ArrayList<>();
-        for (ApproveSearchOptionEnum optionEnum : ApproveSearchOptionEnum.values()) {
-            resultList.add(optionEnum);
-        }
-        return resultList;
+        return Arrays.stream(ApproveSearchOptionEnum.values()).collect(Collectors.toList());
     }
 }

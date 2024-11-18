@@ -108,7 +108,7 @@ public class WmsDeliveryPlanDetailEntity extends BaseEntity<WmsDeliveryPlanDetai
 
     public static final String SKU_NO = "sku_no";
 
-    public static final String QTY = "qty";
+    
 
     public static final String IS_COMBINATION = "is_combination";
 

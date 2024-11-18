@@ -5,6 +5,10 @@ import com.common.core.anno.Panno;
 import com.common.core.anno.ParamData;
 import com.common.core.enums.PannoEnum;
 import com.common.core.utils.MapUtil;
+
+import cn.hutool.core.collection.CollUtil;
+
+import org.jfree.util.Log;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.util.ObjectUtils;
 
@@ -28,7 +32,13 @@ public class MongoUtil {
 		Criteria criteria = new Criteria();
 		Map<String, List<ParamData>> filterParam = new HashMap<>();
 		for(ParamData paramData : paramDataList) {
-			filterParam.put(paramData.getColum_name(), Arrays.asList(paramData));
+			String colum_name = paramData.getColum_name();
+			List<ParamData> list = filterParam.get(colum_name);
+			if(CollUtil.isEmpty(list)) {
+				list = new ArrayList<>();
+			}
+			list.add(paramData);
+			filterParam.put(colum_name, list);
 		}
 		return createCriteriaByMap(criteria, filterParam);
 	}
@@ -42,7 +52,7 @@ public class MongoUtil {
 	private static Map<String, List<ParamData>> getFilterParam(Object obj){
 		Class<? extends Object> classType=obj.getClass();
 		List<Field> fields = new ArrayList<>() ;
-		while(classType !=null && !classType.getSimpleName().toLowerCase().equals("object")) {
+		while(classType !=null && !(classType instanceof Object)) {
 			fields.addAll(Arrays.asList(classType .getDeclaredFields()));
 			classType = classType.getSuperclass();
 		}
@@ -169,7 +179,7 @@ public class MongoUtil {
 		Criteria criteria = new Criteria();
 		Class<? extends Object> classType=obj.getClass();
 		List<Field> fields = new ArrayList<>() ;
-		while(classType !=null && !classType.getSimpleName().toLowerCase().equals("object")) {
+		while(classType !=null && !(classType instanceof Object)) {
 			fields.addAll(Arrays.asList(classType .getDeclaredFields()));
 			classType = classType.getSuperclass();
 		}
@@ -269,7 +279,7 @@ public class MongoUtil {
 		MapUtil params = new MapUtil();
 		Class<? extends Object> classType=obj.getClass();
 		List<Field> fields = new ArrayList<>() ;
-		while(classType !=null && !classType.getSimpleName().toLowerCase().equals("object")) {
+		while(classType !=null && !(classType instanceof Object)) {
 			fields.addAll(Arrays.asList(classType .getDeclaredFields()));
 			classType = classType.getSuperclass();
 		}
@@ -427,8 +437,7 @@ public class MongoUtil {
              }
              return (T)obj;
          } catch (Exception e) {
-             // TODO Auto-generated catch block
-             e.printStackTrace();
+        	 Log.error("getBean错误" , e);
          }
           
          return null;

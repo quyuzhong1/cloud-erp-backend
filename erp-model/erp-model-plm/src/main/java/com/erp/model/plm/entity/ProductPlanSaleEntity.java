@@ -17,7 +17,7 @@ import java.math.BigDecimal;
 @TableName(value ="product_plan_sale")
 @Data
 @NoArgsConstructor
-public class ProductPlanSaleEntity extends BaseEntity {
+public class ProductPlanSaleEntity extends BaseEntity<ProductPlanSaleEntity> {
 
     /**
      * 产品规划ID

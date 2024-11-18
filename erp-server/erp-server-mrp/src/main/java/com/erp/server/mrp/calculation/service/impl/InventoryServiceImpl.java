@@ -348,6 +348,7 @@ public class InventoryServiceImpl implements InventoryService {
 
 
     @Override
+    @SuppressWarnings("all")
     public int getLocalUsable(ReplenishmentResultDTO replenishmentResultDTO, Set<String> codes, CfgRuleStrategyDTO cfgRuleStrategyDTO) {
         CfgRuleWarehouseDTO.StrategyResultDTO warehouseResult = cfgRuleStrategyDTO.getWarehouseResult();
         String calcDate = replenishmentResultDTO.getReplenishmentDetail().getCalcDate();
@@ -671,6 +672,17 @@ public class InventoryServiceImpl implements InventoryService {
                     .collect(Collectors.toList());
             warehouseList = warehouseResult.getLocalWarehouseList();
         }
+        return getInventory(replenishmentResultDTO, invetoryList, warehouseList);
+    }
+
+    /**
+     * 分摊
+     *
+     * @param replenishmentResultDTO 参数
+     * @param invetoryList           库存
+     * @param warehouseList          仓库
+     */
+    private int getInventory(ReplenishmentResultDTO replenishmentResultDTO, List<LocalInventoryDTO> invetoryList, List<CfgRuleWarehouseDTO.StrategyDetailResultDTO> warehouseList) {
         int inventory = 0;
         if (!CollectionUtils.isEmpty(invetoryList)) {
             for (LocalInventoryDTO dto : invetoryList) {

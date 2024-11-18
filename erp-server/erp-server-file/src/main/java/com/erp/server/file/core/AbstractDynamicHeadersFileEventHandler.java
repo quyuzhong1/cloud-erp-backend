@@ -29,7 +29,7 @@ public abstract class AbstractDynamicHeadersFileEventHandler<P> implements FileE
         DynamicExcelDTO excelDTO = getData(fileTask);
         LinkedHashMap<String, String> headers = excelDTO.getHeaders();
         List<List<String>> header = convertHeadList(headers.values());
-        List<List<Object>> data = convertDataList(excelDTO.getData(), headers);
+        List<List<Object>> data = convertDataList(excelDTO.getData());
         fileTask.setCount(excelDTO.getData().size());
         StringBuilder sb = new StringBuilder();
         String name = fileTask.getFileName();
@@ -104,7 +104,7 @@ public abstract class AbstractDynamicHeadersFileEventHandler<P> implements FileE
         return 1000;
     }
 
-    private List<List<Object>> convertDataList(List<LinkedHashMap<String, Object>> data, LinkedHashMap<String, String> headers) {
+    private List<List<Object>> convertDataList(List<LinkedHashMap<String, Object>> data) {
         List<List<Object>> result = new ArrayList<>();
         for (LinkedHashMap<String, Object> map : data) {
             result.add((new ArrayList<>(map.values())));

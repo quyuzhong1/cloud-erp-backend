@@ -25,7 +25,7 @@ public interface ProductDetailMapper extends BaseMapper<ProductDetailEntity> {
      * @param productSkuDTO:查询参数
      * @return java.util.List<com.erp.model.plm.dto.ProductDetailShowDTO>
      **/
-    IPage<ProductDetailShowDTO> paging(Page query, @Param("params") ProductSkuDTO productSkuDTO);
+    IPage<ProductDetailShowDTO> paging(Page<ProductSkuDTO> query, @Param("params") ProductSkuDTO productSkuDTO);
 
     /**
      * @Description 条件查询产品信息
@@ -222,7 +222,7 @@ public interface ProductDetailMapper extends BaseMapper<ProductDetailEntity> {
      * @param fieldList
      * @return
      */
-    IPage<LogisticsProductDTO.UpdatePagingDTO> logisticsProductUpdatePaging(Page query,@Param("params") LogisticsProductDTO.UpdatePagingParamDTO params,@Param("approveStatus") Integer approvalStatus,@Param("fieldList") List<String> fieldList);
+    IPage<LogisticsProductDTO.UpdatePagingDTO> logisticsProductUpdatePaging(Page<LogisticsProductDTO.UpdatePagingParamDTO> query,@Param("params") LogisticsProductDTO.UpdatePagingParamDTO params,@Param("approveStatus") Integer approvalStatus,@Param("fieldList") List<String> fieldList);
 
     Integer logisticsProductUpdateCount(@Param("approveStatus")Integer approvalStatus,@Param("fieldList") List<String> fieldList,@Param("permissionSql")String permissionSql);
 
@@ -248,7 +248,7 @@ public interface ProductDetailMapper extends BaseMapper<ProductDetailEntity> {
      * @param params
      * @return
      */
-    IPage<ProductDetailDTO.SkuDTO> listSku(Page query, @Param("params") ProductSkuDTO params);
+    IPage<ProductDetailDTO.SkuDTO> listSku(Page<ProductDetailDTO.SkuDTO> query, @Param("params") ProductSkuDTO params);
 
     /**
      * 根据SkuIds获取SKU简单信息
@@ -340,7 +340,7 @@ public interface ProductDetailMapper extends BaseMapper<ProductDetailEntity> {
      * @return
      */
     List<ProductDetailEntity> getProductDetailByDestDeclarePrice();
-    IPage<SkuVO> pagingSelect(Page query, @Param("params")SkuVO.SelectDTO params);
+    IPage<SkuVO> pagingSelect(Page<SkuVO.SelectDTO> query, @Param("params")SkuVO.SelectDTO params);
 
     List<SkuVO.ProductChargeInfoDTO> listProductChargeInfoByIds(@Param("skuIds")List<String> skuIds);
     List<SkuVO> listApproveAndListingSku();

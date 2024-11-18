@@ -18,7 +18,7 @@ import java.util.Date;
 @TableName(value ="project_role")
 @Data
 @EqualsAndHashCode(callSuper = false)
-public class ProjectRoleEntity extends BaseEntity implements Serializable {
+public class ProjectRoleEntity extends BaseEntity<ProjectRoleEntity> implements Serializable {
 
     /**
      * 角色名

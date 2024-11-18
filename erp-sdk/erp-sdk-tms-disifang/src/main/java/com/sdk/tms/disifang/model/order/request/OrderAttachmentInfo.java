@@ -4,7 +4,6 @@ import com.alibaba.fastjson.annotation.JSONField;
 import lombok.Data;
 
 import java.io.Serializable;
-import java.math.BigDecimal;
 
 /**
  * @author zdy

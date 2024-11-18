@@ -2,7 +2,7 @@ package com.erp.server.tms.service.impl;
 
 
 import cn.hutool.core.collection.CollectionUtil;
-import cn.hutool.core.util.StrUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.enums.LogisticsPlatformEnum;
@@ -10,6 +10,7 @@ import com.common.business.enums.OmsPlatformEnum;
 import com.common.business.enums.OperationTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
+import com.common.core.constant.SqlConstants;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -35,7 +36,6 @@ import com.erp.server.tms.service.*;
 import io.seata.common.util.CollectionUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -55,17 +55,17 @@ import java.util.*;
 @Slf4j
 @Service
 public class LogisticsAuthServiceImpl extends SuperServiceImpl<LogisticsAuthMapper, LogisticsAuthEntity> implements LogisticsAuthService {
-    @Autowired
+    @Resource
     private OperateLogService operateLogService;
     @Resource
     private LogisticsRegistry logisticsRegistry;
-    @Autowired
+    @Resource
     private LogisticsSupplierService logisticsSupplierService;
 
-    @Autowired
+    @Resource
     private LogisticsChannelService logisticsChannelService;
 
-    @Autowired
+    @Resource
     private LogisticsAuthFieldService logisticsAuthFieldService;
 
     @Lazy
@@ -99,7 +99,7 @@ public class LogisticsAuthServiceImpl extends SuperServiceImpl<LogisticsAuthMapp
         //保存或者修改授权字段
         logisticsAuthFieldService.saveOrUpdateAuthField(logisticsAuthEntity.getId(), addDTO.getFieldMap());
         // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "物流授权单", logisticsAuthEntity.getId());
+        String msg = CharSequenceUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "物流授权单", logisticsAuthEntity.getId());
         operateLogService.addModuleOperateLog(msg, null, logisticsAuthEntity.getId(), "新增操作");
 
         return new BaseResultDTO.AddDTO(logisticsAuthEntity.getId(), logisticsAuthEntity.getId());
@@ -153,7 +153,7 @@ public class LogisticsAuthServiceImpl extends SuperServiceImpl<LogisticsAuthMapp
 
     @Override
     public LogisticsAuthEntity getByMainId(String id, String mainId) {
-        return this.lambdaQuery().ne(StringUtils.isNotBlank(id), LogisticsAuthEntity::getId, id).eq(LogisticsAuthEntity::getMainId, mainId).last("LIMIT 1").one();
+        return this.lambdaQuery().ne(StringUtils.isNotBlank(id), LogisticsAuthEntity::getId, id).eq(LogisticsAuthEntity::getMainId, mainId).last(SqlConstants.LIMIT_1).one();
     }
 
     @Override
@@ -177,7 +177,7 @@ public class LogisticsAuthServiceImpl extends SuperServiceImpl<LogisticsAuthMapp
     }
 
     @Override
-    public ApiResult authLogistics(String logisticsPlatform, Map<String, String> authConfig) {
+    public ApiResult<Object>authLogistics(String logisticsPlatform, Map<String, String> authConfig) {
         LogisticsService service = logisticsRegistry.getHandler(logisticsPlatform);
         if (Objects.isNull(service)){
             return ApiResult.error(-1,"功能未开发");
@@ -244,7 +244,7 @@ public class LogisticsAuthServiceImpl extends SuperServiceImpl<LogisticsAuthMapp
     }
 
     public LogisticsAuthEntity getDbByMainId(String mainId){
-        return this.lambdaQuery().eq(LogisticsAuthEntity::getMainId, mainId).last("LIMIT 1").one();
+        return this.lambdaQuery().eq(LogisticsAuthEntity::getMainId, mainId).last(SqlConstants.LIMIT_1).one();
     }
 
     @Override
@@ -286,7 +286,7 @@ public class LogisticsAuthServiceImpl extends SuperServiceImpl<LogisticsAuthMapp
      * 新增修改处理数据
      */
     private void handleData(LogisticsAuthEntity logisticsAuthEntity) {
-        // TODO 验证数据 & 数据赋值
+        
         String mainId = logisticsAuthEntity.getMainId();
         LogisticsSupplierEntity logisticsSupplier = logisticsSupplierService.getById(mainId);
         LogisticsAuthEntity authEntity = this.getByMainId(logisticsAuthEntity.getId(), mainId);
@@ -310,7 +310,7 @@ public class LogisticsAuthServiceImpl extends SuperServiceImpl<LogisticsAuthMapp
         return this.lambdaQuery().ne(StringUtils.isNotBlank(id), LogisticsAuthEntity::getId, id).
                 eq(LogisticsAuthEntity::getMainId, mainId).
                 eq(LogisticsAuthEntity::getLogisticsPlatform, logisticsPlatform).
-                last("LIMIT 1").one();
+                last(SqlConstants.LIMIT_1).one();
     }
 
     @Override

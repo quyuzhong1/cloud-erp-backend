@@ -4,6 +4,7 @@ import cn.hutool.json.JSONArray;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
@@ -23,8 +24,10 @@ import java.io.Serializable;
 @Setter
 @Accessors(chain = true)
 @TableName("replenishment_inventory_detail")
+@EqualsAndHashCode(callSuper = true)
 public class ReplenishmentInventoryDetailEntity extends BaseEntity<ReplenishmentInventoryDetailEntity> {
 
+    private static final long serialVersionUID = 2929090292707795838L;
     /**
      * 补货建议id
      */

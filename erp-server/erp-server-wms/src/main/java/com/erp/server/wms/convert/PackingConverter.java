@@ -1,5 +1,6 @@
 package com.erp.server.wms.convert;
 
+import cn.hutool.core.text.CharSequenceUtil;
 import com.common.business.utils.MD5Util;
 import com.common.business.utils.StringUtil;
 import com.erp.model.wms.dto.*;
@@ -185,10 +186,10 @@ public interface PackingConverter {
     List<PackingTaskDetailEntity> requisitionDetailToPackingTaskDetail(List<RequisitionApplicationDetailEntity> detailEntityList);
 
     static String getFnSkuByReqDetail(RequisitionApplicationDetailEntity detailEntity){
-        return StringUtils.isBlank(detailEntity.getPlatformFnSku())?detailEntity.getPlatformSku():detailEntity.getPlatformFnSku();
+        return CharSequenceUtil.isBlank(detailEntity.getPlatformFnSku())?detailEntity.getPlatformSku():detailEntity.getPlatformFnSku();
     }
     static String getFnSkuByDeliveryDetail(FirstMileDeliveryDetailEntity detailEntity){
-        return StringUtils.isBlank(detailEntity.getFnSku())?detailEntity.getPlatformSkuNo():detailEntity.getFnSku();
+        return CharSequenceUtil.isBlank(detailEntity.getFnSku())?detailEntity.getPlatformSkuNo():detailEntity.getFnSku();
     }
 
 }

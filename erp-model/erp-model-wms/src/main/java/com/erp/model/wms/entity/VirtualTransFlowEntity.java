@@ -1,15 +1,15 @@
 package com.erp.model.wms.entity;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import com.baomidou.mybatisplus.annotation.TableField;
-import java.io.Serializable;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
-import com.common.business.enums.ApproveStatusEnum;
+
+import java.io.Serializable;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 
 /**
@@ -163,7 +163,7 @@ public class VirtualTransFlowEntity extends BaseEntity<VirtualTransFlowEntity> {
 
     public static final String TRADE_TIME = "trade_time";
 
-    public static final String QTY = "qty";
+    
 
     public static final String CUR_INVENTORY_QTY = "cur_inventory_qty";
 

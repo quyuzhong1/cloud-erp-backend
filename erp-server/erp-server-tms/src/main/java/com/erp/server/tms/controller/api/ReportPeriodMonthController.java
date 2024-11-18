@@ -65,7 +65,7 @@ public class ReportPeriodMonthController extends BaseController {
         menuCode = "tms:reportPeriodMonth:update",
         serviceClass = ReportPeriodMonthService.class,
         keyIdName = "id")
-    public ApiResult<?> update(@RequestBody @Validated ReportPeriodMonthDTO.UpdateDTO dto) {
+    public ApiResult<Object> update(@RequestBody @Validated ReportPeriodMonthDTO.UpdateDTO dto) {
         reportPeriodMonthService.update(dto);
         return success();
     }

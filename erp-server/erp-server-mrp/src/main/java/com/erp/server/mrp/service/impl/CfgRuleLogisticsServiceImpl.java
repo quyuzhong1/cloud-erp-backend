@@ -1,6 +1,7 @@
 package com.erp.server.mrp.service.impl;
 
 
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
@@ -29,12 +30,13 @@ import com.erp.server.mrp.service.OperateLogService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.ObjectUtils;
 
+import javax.annotation.Resource;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -50,13 +52,13 @@ import java.util.stream.Stream;
 @Slf4j
 @Service
 public class CfgRuleLogisticsServiceImpl extends SuperServiceImpl<CfgRuleLogisticsMapper, CfgRuleLogisticsEntity> implements CfgRuleLogisticsService {
-    @Autowired
+    @Resource
     private OperateLogService operateLogService;
 
-    @Autowired
+    @Resource
     private CfgRuleLogisticsDetailService cfgRuleLogisticsDetailService;
 
-    @Autowired
+    @Resource
     private CfgRuleStockUpService cfgRuleStockUpService;
     /**
     * 修改
@@ -66,13 +68,13 @@ public class CfgRuleLogisticsServiceImpl extends SuperServiceImpl<CfgRuleLogisti
     @CacheEvict(cacheNames = "cache:mrp:logistics:listByStockUpIdList", allEntries = true, beforeInvocation = true)
     public Boolean update(List<CfgRuleLogisticsDTO.UpdateDTO> logisticsList,String stockUpId,Boolean isCustom) {
         if (CollectionUtils.isEmpty(logisticsList)) {
-            logisticsList = Collections.EMPTY_LIST;
+            logisticsList = Collections.emptyList();
         }
         List<CfgRuleLogisticsEntity> list = BeanMapperUtils.copyList(CfgRuleLogisticsEntity.class, logisticsList);
         //原物流信息
-        List<CfgRuleLogisticsEntity> oldList = listByStockUpIdList(Arrays.asList(stockUpId));
+        List<CfgRuleLogisticsEntity> oldList = listByStockUpIdList(Collections.singletonList(stockUpId));
         //自定义更新无需删除
-        if (!isCustom) {
+        if (Boolean.FALSE.equals(isCustom)) {
             //删除明细
             List<String> deleteIds = getDeleteIds(list, oldList);
             if (CollectionUtils.isNotEmpty(deleteIds)) {
@@ -101,7 +103,7 @@ public class CfgRuleLogisticsServiceImpl extends SuperServiceImpl<CfgRuleLogisti
             throw new ServiceException(ApiError.NOT_EXIST_BILL,"规则设置（备货）");
         }
         //是否海外
-        boolean isOverseas = StrUtil.equals(stockUpEntity.getPlatformType(), CfgRulePlatformTypeEnum.OVERSEAS.getCode());
+        boolean isOverseas = CharSequenceUtil.equals(stockUpEntity.getPlatformType(), CfgRulePlatformTypeEnum.OVERSEAS.getCode());
 
         //店铺
         List<ShopInfoEntity> shopInfoList = isOverseas ? new ArrayList<>() :  FeignQuery.list(ShopInfoEntity.class);
@@ -112,42 +114,59 @@ public class CfgRuleLogisticsServiceImpl extends SuperServiceImpl<CfgRuleLogisti
         List<WarehouseEntity> warehouseList = CollectionUtils.isEmpty(warehouseIdList) ? new ArrayList<>() : FeignQuery.getByIds(WarehouseEntity.class, warehouseIdList);
 
         //日志
-        StringBuffer msg = new StringBuffer();
+        StringBuilder msg = getMsg(list, shopInfoList, isOverseas, warehouseList, stockUpEntity);
+        operateLogService.addModuleOperateLog(msg.toString(), ModuleTypeEnum.REPLENISHMENT_SUGGESTION.getCode(), CharSequenceUtil.blankToDefault(stockUpEntity.getRefId(),stockUpEntity.getId()) , "备货");
+        return Boolean.TRUE;
+    }
+
+    /**
+     * 获取日志
+     * @param list 参数
+     * @param shopInfoList 参数
+     */
+    private static StringBuilder getMsg(List<CfgRuleLogisticsEntity> list, List<ShopInfoEntity> shopInfoList,
+                                        boolean isOverseas, List<WarehouseEntity> warehouseList, CfgRuleStockUpEntity stockUpEntity) {
+        StringBuilder msg = new StringBuilder();
+        //日志
         String title = "本地发FBA：";
         if (isOverseas) {
             title = "本地发海外：";
         }
         msg.append( StrUtil.format("{}<br>",title));
+
         for (CfgRuleLogisticsEntity logisticsEntity : list) {
-            String parentMsg = StrUtil.format("物流方式【{}】、物流时效【{}】、发货频率【{}】<br>",LogisticsMethodEnum.getName(logisticsEntity.getLogisticsMethod()),logisticsEntity.getLogisticsDays(),logisticsEntity.getLogisticsCycleDays());
+            String parentMsg = CharSequenceUtil.format("物流方式【{}】、物流时效【{}】、发货频率【{}】<br>",LogisticsMethodEnum.getName(logisticsEntity.getLogisticsMethod()),logisticsEntity.getLogisticsDays(),logisticsEntity.getLogisticsCycleDays());
             msg.append(parentMsg);
             List<CfgRuleLogisticsDetailDTO.UpdateDTO> detailList = logisticsEntity.getDetailList();
             if (CollectionUtils.isEmpty(detailList)) {
                 continue;
             }
             for (CfgRuleLogisticsDetailDTO.UpdateDTO updateDTO : detailList) {
-                if (!StrUtil.equals(stockUpEntity.getPlatformType(), CfgRulePlatformTypeEnum.OVERSEAS.getCode())) {
+                if (!CharSequenceUtil.equals(stockUpEntity.getPlatformType(), CfgRulePlatformTypeEnum.OVERSEAS.getCode())) {
                     //非海外仓
                     String shopNames = CollectionUtils.isEmpty(updateDTO.getShopIdList()) ? "" : shopInfoList.stream().filter(obj -> updateDTO.getShopIdList().contains(obj.getId())).map(ShopInfoEntity::getName).distinct().collect(Collectors.joining(","));
-                    String childMsg = StrUtil.format("•区域【{}】、店铺【{}】、时效【{}】<br>", updateDTO.getArea(),StrUtil.equals(ShopAuthTypeEnum.ENUM_ALL.getCode(),updateDTO.getType()) ? "全部店铺": shopNames, updateDTO.getLogisticsDays());
+                    String childMsg = CharSequenceUtil.format("•区域【{}】、店铺【{}】、时效【{}】<br>", updateDTO.getArea(),StrUtil.equals(ShopAuthTypeEnum.ENUM_ALL.getCode(),updateDTO.getType()) ? "全部店铺": shopNames, updateDTO.getLogisticsDays());
                     msg.append(childMsg);
                 } else {
-                    String warehouseName = warehouseList.stream().filter(obj -> StrUtil.equals(obj.getId(), updateDTO.getWarehouseId())).map(WarehouseEntity::getName).findFirst().orElse("");
+                    String warehouseName = warehouseList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), updateDTO.getWarehouseId())).map(WarehouseEntity::getName).findFirst().orElse("");
                     //海外仓
-                    String childMsg = StrUtil.format("•海外仓【{}】、时效【{}】<br>",warehouseName, updateDTO.getLogisticsDays());
+                    String childMsg = CharSequenceUtil.format("•海外仓【{}】、时效【{}】<br>",warehouseName, updateDTO.getLogisticsDays());
                     msg.append(childMsg);
                 }
+
+                String shopNames = CollectionUtils.isEmpty(shopInfoList) ? "" : shopInfoList.stream().filter(obj -> updateDTO.getShopIdList().contains(obj.getId())).map(ShopInfoEntity::getName).distinct().collect(Collectors.joining(","));
+                String childMsg = CharSequenceUtil.format("•区域【{}】、店铺【{}】、时效【{}】<br>", updateDTO.getArea(), CharSequenceUtil.equals(ShopAuthTypeEnum.ENUM_ALL.getCode(),updateDTO.getType()) ? "全部店铺": shopNames, updateDTO.getLogisticsDays());
+                msg.append(childMsg);
             }
         }
-        operateLogService.addModuleOperateLog(msg.toString(), ModuleTypeEnum.REPLENISHMENT_SUGGESTION.getCode(), StrUtil.blankToDefault(stockUpEntity.getRefId(),stockUpEntity.getId()) , "备货");
-        return Boolean.TRUE;
+        return msg;
     }
 
     @Override
     @Cacheable(cacheNames = "cache:mrp:logistics:listByStockUpIdList",keyGenerator = "myKeyGenerator")
     public List<CfgRuleLogisticsEntity> listByStockUpIdList (List<String> stockUpIdList) {
         if (CollectionUtils.isEmpty(stockUpIdList)) {
-            return Collections.EMPTY_LIST;
+            return Collections.emptyList();
         }
        return lambdaQuery().in(CfgRuleLogisticsEntity::getStockUpId,stockUpIdList).orderByAsc(CfgRuleLogisticsEntity::getIndex).list();
     }
@@ -155,24 +174,24 @@ public class CfgRuleLogisticsServiceImpl extends SuperServiceImpl<CfgRuleLogisti
     @Override
     public List<CfgRuleLogisticsDTO.ViewDTO> listViewByStockUpIdList (List<String> stockUpIdList) {
         if (CollectionUtils.isEmpty(stockUpIdList)) {
-            return Collections.EMPTY_LIST;
+            return Collections.emptyList();
         }
         List<CfgRuleLogisticsEntity> list = lambdaQuery().in(CfgRuleLogisticsEntity::getStockUpId, stockUpIdList).orderByAsc(CfgRuleLogisticsEntity::getIndex).list();
         if (CollectionUtils.isEmpty(list)) {
-            return Collections.EMPTY_LIST;
+            return Collections.emptyList();
         }
         List<CfgRuleLogisticsDTO.ViewDTO> cfgLogisticsViewList = BeanMapperUtils.copyList(CfgRuleLogisticsDTO.ViewDTO.class, list);
         //物流配置明细
         List<String> mainIdList = cfgLogisticsViewList.stream().map(CfgRuleLogisticsDTO.ViewDTO::getId).distinct().collect(Collectors.toList());
         List<CfgRuleLogisticsDetailEntity> cfgRuleLogisticsDetailList = cfgRuleLogisticsDetailService.listByMainIdList(mainIdList);
         for (CfgRuleLogisticsDTO.ViewDTO viewDTO : cfgLogisticsViewList) {
-            List<CfgRuleLogisticsDetailEntity> detailList = cfgRuleLogisticsDetailList.stream().filter(obj -> StrUtil.equals(obj.getMainId(), viewDTO.getId())).collect(Collectors.toList());
+            List<CfgRuleLogisticsDetailEntity> detailList = cfgRuleLogisticsDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getMainId(), viewDTO.getId())).collect(Collectors.toList());
             viewDTO.setLogisticsMethodName(LogisticsMethodEnum.getName(viewDTO.getLogisticsMethod()));
             if (CollectionUtils.isNotEmpty(detailList)) {
                 List<CfgRuleLogisticsDetailDTO.ViewDTO> cfgLogisticsDetailViewList = BeanMapperUtils.copyList(CfgRuleLogisticsDetailDTO.ViewDTO.class, detailList);
                 for (CfgRuleLogisticsDetailDTO.ViewDTO detailViewDTO : cfgLogisticsDetailViewList) {
-                    List<String> shopIdList = JSONUtil.parseArray(detailViewDTO.getShopIdJson()).stream().filter(obj -> ObjectUtil.isNotEmpty(obj))
-                            .map(obj -> obj.toString()).collect(Collectors.toList());
+                    List<String> shopIdList = JSONUtil.parseArray(detailViewDTO.getShopIdJson()).stream().filter(ObjectUtil::isNotEmpty)
+                            .map(Object::toString).collect(Collectors.toList());
                     detailViewDTO.setShopIdList(shopIdList);
                 }
                 viewDTO.setDetailList(cfgLogisticsDetailViewList);
@@ -184,7 +203,7 @@ public class CfgRuleLogisticsServiceImpl extends SuperServiceImpl<CfgRuleLogisti
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void deleteByStockUpId(String stockUpId) {
-        List<CfgRuleLogisticsEntity> cfgRuleLogisticsList = listByStockUpIdList(Arrays.asList(stockUpId));
+        List<CfgRuleLogisticsEntity> cfgRuleLogisticsList = listByStockUpIdList(Collections.singletonList(stockUpId));
         if (CollectionUtils.isEmpty(cfgRuleLogisticsList)) {
             return;
         }
@@ -251,13 +270,13 @@ public class CfgRuleLogisticsServiceImpl extends SuperServiceImpl<CfgRuleLogisti
         if (CollectionUtils.isEmpty(list)) {
             return;
         }
-        String names = list.stream().collect(Collectors.groupingBy(CfgRuleLogisticsEntity::getLogisticsMethod)).entrySet().stream().filter(obj -> obj.getValue().size() > MathUtil.ONE).map(obj -> obj.getKey()).distinct().collect(Collectors.joining(","));
-        if (StrUtil.isNotBlank(names)) {
+        String names = list.stream().collect(Collectors.groupingBy(CfgRuleLogisticsEntity::getLogisticsMethod)).entrySet().stream().filter(obj -> obj.getValue().size() > MathUtil.ONE).map(Map.Entry::getKey).distinct().collect(Collectors.joining(","));
+        if (CharSequenceUtil.isNotBlank(names)) {
             throw new ServiceException("物流方式【{}】唯一不能添加重复数据",names);
         }
         //排序
-        Integer maxIndex = MathUtil.ZERO;
-        if (isCustom) {
+        int maxIndex = MathUtil.ZERO;
+        if (Boolean.TRUE.equals(isCustom)) {
             maxIndex = oldList.stream().max(Comparator.comparingInt(CfgRuleLogisticsEntity::getIndex)).map(CfgRuleLogisticsEntity::getIndex).orElse(MathUtil.ZERO);
         }
         for (CfgRuleLogisticsEntity  logisticsEntity: list) {
@@ -268,12 +287,12 @@ public class CfgRuleLogisticsServiceImpl extends SuperServiceImpl<CfgRuleLogisti
             //备货主表id
             logisticsEntity.setStockUpId(stockUpId);
             //相同物流方式赋值id
-            CfgRuleLogisticsEntity entity = oldList.stream().filter(obj -> StrUtil.equals(obj.getLogisticsMethod(), logisticsEntity.getLogisticsMethod())).findFirst().orElse(null);
-            if (ObjectUtil.isNotEmpty(entity)) {
+            CfgRuleLogisticsEntity entity = oldList.stream().filter(obj -> CharSequenceUtil.equals(obj.getLogisticsMethod(), logisticsEntity.getLogisticsMethod())).findFirst().orElse(null);
+            if (!ObjectUtils.isEmpty(entity)) {
                 logisticsEntity.setId(entity.getId());
                 //自定义添加的需要保持原有序号
                 if (ObjectUtil.isEmpty(logisticsEntity.getIndex())) {
-                    logisticsEntity.setIndex(isCustom ? entity.getIndex() : logisticsEntity.getIndex());
+                    logisticsEntity.setIndex(Boolean.TRUE.equals(isCustom) ? entity.getIndex() : logisticsEntity.getIndex());
                 }
             }
             maxIndex ++;

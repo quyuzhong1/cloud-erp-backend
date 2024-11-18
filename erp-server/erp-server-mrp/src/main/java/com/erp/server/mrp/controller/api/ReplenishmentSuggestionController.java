@@ -47,11 +47,10 @@ public class ReplenishmentSuggestionController extends BaseController {
 
     @Resource
     private ReplenishmentSuggestionImportService replenishmentSuggestionImportService;
-
-    @Resource
-    private BasicReplenishmentDataService basicReplenishmentDataService;
     @Resource
     private DataArchivingService dataArchivingService;
+    @Resource
+    private BasicReplenishmentDataService basicReplenishmentDataService;
 
 
     /**
@@ -213,7 +212,7 @@ public class ReplenishmentSuggestionController extends BaseController {
      */
     @PostMapping("/notRestockingReplenishment")
     @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "补货建议暂不补货")
-    public ApiResult<?> notRestockingReplenishment(@RequestBody @Validated ReplenishmentSuggestionDTO.ReplenishmentDTO dto) {
+    public ApiResult<List<BatchResultDTO>> notRestockingReplenishment(@RequestBody @Validated ReplenishmentSuggestionDTO.ReplenishmentDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {
             BatchResultDTO resultDTO;
@@ -243,7 +242,7 @@ public class ReplenishmentSuggestionController extends BaseController {
      */
     @PostMapping("/restoreReplenishment")
     @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "补货建议恢复补货")
-    public ApiResult<?> restoreReplenishment(@RequestBody @Validated ReplenishmentSuggestionDTO.ReplenishmentDTO dto) {
+    public ApiResult<List<BatchResultDTO>> restoreReplenishment(@RequestBody @Validated ReplenishmentSuggestionDTO.ReplenishmentDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {
             BatchResultDTO resultDTO;
@@ -274,7 +273,7 @@ public class ReplenishmentSuggestionController extends BaseController {
      */
     @PostMapping("/batchUpdateRule")
     @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "补货建议批量设置规则")
-    public ApiResult<?> batchUpdateRule(@RequestBody @Validated ReplenishmentSuggestionDTO.BatchUpdateRuleDTO dto) {
+    public ApiResult<List<BatchResultDTO>> batchUpdateRule(@RequestBody @Validated ReplenishmentSuggestionDTO.BatchUpdateRuleDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {
             BatchResultDTO resultDTO;
@@ -304,7 +303,7 @@ public class ReplenishmentSuggestionController extends BaseController {
      */
     @PostMapping("/restoreRule")
     @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "补货建议恢复规则设置")
-    public ApiResult<?> restoreRule(@RequestBody @Validated ReplenishmentSuggestionDTO.RestoreRuleDTO dto) {
+    public ApiResult<List<BatchResultDTO>> restoreRule(@RequestBody @Validated ReplenishmentSuggestionDTO.RestoreRuleDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {
             BatchResultDTO resultDTO;
@@ -334,7 +333,7 @@ public class ReplenishmentSuggestionController extends BaseController {
      */
     @PostMapping("/favorite")
     @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "关注补货建议")
-    public ApiResult<?> favorite(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+    public ApiResult<List<BatchResultDTO>> favorite(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {
             BatchResultDTO resultDTO;
@@ -364,7 +363,7 @@ public class ReplenishmentSuggestionController extends BaseController {
      */
     @PostMapping("/cancelFavorite")
     @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "补货建议取消关注")
-    public ApiResult<?> cancelFavorite(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+    public ApiResult<List<BatchResultDTO>> cancelFavorite(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {
             BatchResultDTO resultDTO;
@@ -420,7 +419,7 @@ public class ReplenishmentSuggestionController extends BaseController {
      */
     @PostMapping("/updateLabel")
     @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "补货建议添加标签")
-    public ApiResult<?> updateLabel(@RequestBody @Validated ReplenishmentSuggestionDTO.UpdateLabelDTO updateLabelDTO) {
+    public ApiResult<String> updateLabel(@RequestBody @Validated ReplenishmentSuggestionDTO.UpdateLabelDTO updateLabelDTO) {
         replenishmentSuggestionService.updateLabel(updateLabelDTO);
         return success();
     }
@@ -434,7 +433,7 @@ public class ReplenishmentSuggestionController extends BaseController {
      */
     @PostMapping("/batchAddLabel")
     @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "补货建议批量添加标签")
-    public ApiResult<?> batchAddLabel(@RequestBody @Validated ReplenishmentSuggestionDTO.BatchSaveLabelDTO dto) {
+    public ApiResult<List<BatchResultDTO>> batchAddLabel(@RequestBody @Validated ReplenishmentSuggestionDTO.BatchSaveLabelDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {
             BatchResultDTO resultDTO;
@@ -464,7 +463,7 @@ public class ReplenishmentSuggestionController extends BaseController {
      */
     @PostMapping("/cancelLabel")
     @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "补货建议取消标签")
-    public ApiResult<?> cancelLabel(@RequestBody @Validated ReplenishmentSuggestionDTO.BatchSaveLabelDTO dto) {
+    public ApiResult<List<BatchResultDTO>> cancelLabel(@RequestBody @Validated ReplenishmentSuggestionDTO.BatchSaveLabelDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {
             BatchResultDTO resultDTO;
@@ -493,7 +492,7 @@ public class ReplenishmentSuggestionController extends BaseController {
      * @return ApiResult<?>
      */
     @GetMapping("/downloadRuleTemplate")
-    public ApiResult<?> downloadRuleTemplate(HttpServletResponse response) {
+    public ApiResult<String> downloadRuleTemplate(HttpServletResponse response) {
         replenishmentSuggestionImportService.downloadRuleTemplate(response);
         return success();
     }
@@ -509,7 +508,7 @@ public class ReplenishmentSuggestionController extends BaseController {
      */
     @LogAction(value = LogActionEnum.IMPORT, desc = "导入补货规则")
     @PostMapping("/importRule")
-    public ApiResult<?> importRule(@RequestParam(value = "excelFile") MultipartFile excelFile,@RequestParam(value = "platformType") String platformType, HttpServletResponse response) {
+    public ApiResult<String> importRule(@RequestParam(value = "excelFile") MultipartFile excelFile,@RequestParam(value = "platformType") String platformType, HttpServletResponse response) {
         replenishmentSuggestionImportService.importRule(excelFile,platformType, response);
         return success();
     }
@@ -523,7 +522,7 @@ public class ReplenishmentSuggestionController extends BaseController {
      * @return ApiResult<?>
      */
     @GetMapping("/downloadSalesEstimateTemplate")
-    public ApiResult<?> downloadSalesEstimateTemplate(HttpServletResponse response) {
+    public ApiResult<String> downloadSalesEstimateTemplate(HttpServletResponse response) {
         replenishmentSuggestionImportService.downloadSalesEstimateTemplate(response);
         return success();
     }
@@ -538,7 +537,7 @@ public class ReplenishmentSuggestionController extends BaseController {
      */
     @LogAction(value = LogActionEnum.IMPORT, desc = "导入运营预估月销")
     @PostMapping("/importSalesEstimate")
-    public ApiResult<?> importSalesEstimate(@RequestParam(value = "excelFile") MultipartFile excelFile,@RequestParam(value = "platformType") String platformType, HttpServletResponse response) {
+    public ApiResult<String> importSalesEstimate(@RequestParam(value = "excelFile") MultipartFile excelFile,@RequestParam(value = "platformType") String platformType, HttpServletResponse response) {
         replenishmentSuggestionImportService.importSalesEstimate(excelFile,platformType, response);
         return success();
     }
@@ -552,7 +551,7 @@ public class ReplenishmentSuggestionController extends BaseController {
      */
     @PostMapping("/updateRemark")
     @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "编辑备注")
-    public ApiResult<?> updateRemark(@RequestBody @Validated BaseIdsDTO.BlankRemarkDTO dto) {
+    public ApiResult<List<BatchResultDTO>> updateRemark(@RequestBody @Validated BaseIdsDTO.BlankRemarkDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {
             BatchResultDTO resultDTO;
@@ -583,9 +582,9 @@ public class ReplenishmentSuggestionController extends BaseController {
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出补货规则")
     @PostMapping(value = "/exportReplenishmentRule")
     @WebAdvanceQuery(handler = ReplenishmentSuggestionQueryHandler.class)
-    public ApiResult exportExcel(@RequestBody ReplenishmentSuggestionDTO.PagingParamDTO pagingParamDTO) {
+    public ApiResult<String> exportExcel(@RequestBody ReplenishmentSuggestionDTO.PagingParamDTO pagingParamDTO) {
         Boolean flag = replenishmentSuggestionService.exportReplenishmentRule(pagingParamDTO);
-        return flag == true ? success() : failure();
+        return Boolean.TRUE.equals(flag) ? success() : failure();
     }
 
     /**
@@ -598,9 +597,9 @@ public class ReplenishmentSuggestionController extends BaseController {
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出历史销量")
     @PostMapping(value = "/exportHistorySalesQty")
     @WebAdvanceQuery(handler = ReplenishmentSuggestionQueryHandler.class)
-    public ApiResult exportHistorySalesQty(@RequestBody ReplenishmentSuggestionDTO.PagingParamDTO pagingParamDTO) {
+    public ApiResult<String> exportHistorySalesQty(@RequestBody ReplenishmentSuggestionDTO.PagingParamDTO pagingParamDTO) {
         Boolean flag = replenishmentSuggestionService.exportHistorySalesQty(pagingParamDTO);
-        return flag == true ? success() : failure();
+        return Boolean.TRUE.equals(flag) ? success() : failure();
     }
 
     /**
@@ -613,9 +612,9 @@ public class ReplenishmentSuggestionController extends BaseController {
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出补货计划_采购建议")
     @PostMapping(value = "/exportPurchaseSuggestion")
     @WebAdvanceQuery(handler = ReplenishmentSuggestionQueryHandler.class)
-    public ApiResult exportPurchaseSuggestion(@RequestBody ReplenishmentSuggestionDTO.PagingParamDTO pagingParamDTO) {
+    public ApiResult<String> exportPurchaseSuggestion(@RequestBody ReplenishmentSuggestionDTO.PagingParamDTO pagingParamDTO) {
         Boolean flag = replenishmentSuggestionService.exportPurchaseSuggestion(pagingParamDTO);
-        return flag == true ? success() : failure();
+        return Boolean.TRUE.equals(flag) ? success() : failure();
     }
 
 
@@ -629,9 +628,9 @@ public class ReplenishmentSuggestionController extends BaseController {
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出补货计划_建议发货")
     @PostMapping(value = "/exportDeliverySuggest")
     @WebAdvanceQuery(handler = ReplenishmentSuggestionQueryHandler.class)
-    public ApiResult exportDeliverySuggest(@RequestBody ReplenishmentSuggestionDTO.PagingParamDTO pagingParamDTO) {
+    public ApiResult<String> exportDeliverySuggest(@RequestBody ReplenishmentSuggestionDTO.PagingParamDTO pagingParamDTO) {
         Boolean flag = replenishmentSuggestionService.exportDeliverySuggest(pagingParamDTO);
-        return flag == true ? success() : failure();
+        return Boolean.TRUE.equals(flag) ? success() : failure();
     }
 
     /**

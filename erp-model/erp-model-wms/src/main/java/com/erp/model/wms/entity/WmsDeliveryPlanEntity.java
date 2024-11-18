@@ -163,13 +163,11 @@ public class WmsDeliveryPlanEntity extends BaseEntity<WmsDeliveryPlanEntity> {
 
     public static final String TO_WAREHOUSE_NAME = "to_warehouse_name";
 
-    public static final String COUNTRY = "country";
-
     public static final String COUNTRY_NAME = "country_name";
 
     public static final String PLAN_DELIVERY_DATE = "plan_delivery_date";
 
-    public static final String REMARK = "remark";
+
 
     @Override
     public Serializable pkVal() {

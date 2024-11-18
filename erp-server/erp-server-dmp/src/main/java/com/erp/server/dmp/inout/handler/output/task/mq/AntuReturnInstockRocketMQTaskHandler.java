@@ -1,25 +1,33 @@
 package com.erp.server.dmp.inout.handler.output.task.mq;
 
-import cn.hutool.core.bean.BeanUtil;
-import cn.hutool.core.collection.CollUtil;
-import cn.hutool.json.JSONUtil;
-import com.alibaba.fastjson.JSON;
-import com.common.business.dto.PlatformOutboundDTO;
-import com.common.business.dto.PlatformReturnInstockDTO;
-import com.common.core.entity.BaseEntity;
-import com.erp.model.dmp.entity.*;
-import com.erp.server.dmp.inout.dto.request.DmpOutputTaskRequest;
-import com.erp.server.dmp.inout.dto.response.DmpOutputTaskResponse;
-import com.sdk.wms.antu.enums.AntuEnums;
-import com.sdk.wms.goodcang.enums.GoodCangEnums;
-import io.seata.common.util.StringUtils;
-import lombok.extern.slf4j.Slf4j;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
+
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
-import java.util.*;
-import java.util.stream.Collectors;
+import com.alibaba.fastjson.JSON;
+import com.common.business.dto.PlatformReturnInstockDTO;
+import com.common.core.entity.BaseEntity;
+import com.erp.model.dmp.entity.DmpCfgInputConvertEntity;
+import com.erp.model.dmp.entity.DmpThirdReturnInboundDetailEntity;
+import com.erp.model.dmp.entity.DmpThirdReturnInboundEntity;
+import com.erp.server.dmp.inout.dto.request.DmpOutputTaskRequest;
+import com.erp.server.dmp.inout.dto.response.DmpOutputTaskResponse;
+import com.sdk.wms.antu.enums.AntuEnums;
+
+import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.json.JSONUtil;
+import io.seata.common.util.StringUtils;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Service

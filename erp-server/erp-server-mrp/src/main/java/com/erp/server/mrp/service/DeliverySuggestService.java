@@ -22,23 +22,6 @@ import java.util.List;
  */
 public interface DeliverySuggestService extends SuperService<DeliverySuggestEntity> {
 
-    /**
-    * 新增
-    * @author will
-    * @date: 2024-08-27
-    * @param dto
-    * @return
-    */
-    BaseResultDTO.AddDTO add(DeliverySuggestDTO.AddDTO dto);
-
-    /**
-    * 修改
-    * @author will
-    * @date: 2024-08-27
-    * @param dto
-    * @return
-    */
-    Boolean update(DeliverySuggestDTO.UpdateDTO dto);
 
     /**
      * 分页查询

@@ -39,8 +39,8 @@ public class BomOperateLogController extends BaseController {
      * @return 新增结果
      */
     @PostMapping("/log")
-    public ApiResult<PagingVO<List<BomOperateVO>>> getOperateLog(@RequestBody @Validated PagingDTO<BaseIdDTO> dto) {
-        PagingVO<List<BomOperateVO>> pagingVO = bomOperateLogService.paging(dto);
+    public ApiResult<PagingVO<BomOperateVO>> getOperateLog(@RequestBody @Validated PagingDTO<BaseIdDTO> dto) {
+        PagingVO<BomOperateVO> pagingVO = bomOperateLogService.paging(dto);
         return success(pagingVO);
     }
 

@@ -9,6 +9,7 @@ import cn.hutool.json.JSONUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import cn.hutool.core.text.CharSequenceUtil;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
@@ -63,15 +64,18 @@ import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.DeliveryPlanFeign;
 import com.erp.server.mrp.listener.DeliverySuggestImportExcelListener;
 import com.erp.server.mrp.mapper.DeliverySuggestMapper;
+import com.erp.server.mrp.service.DeliverySuggestService;
 import com.erp.server.mrp.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.Collections;
+import java.util.List;
+import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.*;
@@ -88,30 +92,30 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggestMapper, DeliverySuggestEntity> implements DeliverySuggestService {
-    @Autowired
+    @Resource
     private OperateLogService operateLogService;
-    @Autowired
+    @Resource
     private DocNoGenHelper docNoGenHelper;
 
-    @Autowired
+    @Resource
     private DownloadTaskFeign downloadTaskFeign;
 
-    @Autowired
+    @Resource
     private DeliveryPlanFeign deliveryPlanFeign;
 
-    @Autowired
+    @Resource
     private DeliverySuggestSysService deliverySuggestSysService;
 
-    @Autowired
+    @Resource
     private HistoryImportRecordService historyImportRecordService;
 
-    @Autowired
+    @Resource
     private ReplenishmentSuggestionService replenishmentSuggestionService;
 
-    @Autowired
+    @Resource
     private SysDictFeign sysDictFeign;
 
-    @Autowired
+    @Resource
     private SysUserFeign sysUserFeign;
 
 
@@ -122,8 +126,6 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
         DeliverySuggestEntity deliverySuggestEntity = new DeliverySuggestEntity();
         BeanMapperUtils.copy(addDTO, deliverySuggestEntity);
 
-        // 数据处理
-        handleData(deliverySuggestEntity);
 
         log.info("开始新增补货计划");
         // 生成单号
@@ -645,7 +647,7 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
 
         //平台信息
         List<String> platformList = list.stream().map(ReplenishmentSuggestionDTO.DeliverySuggestionDTO::getPlatform).distinct().collect(Collectors.toList());
-        List<DictBasicEntity> dictBasicList = CollectionUtils.isEmpty(platformList) ? Collections.EMPTY_LIST : FeignQuery.create(DictBasicEntity.class).eq(DictBasicEntity::getType, DictBasicTypeEnum.SALES_PLATFORM.getType()).list();
+        List<DictBasicEntity> dictBasicList = CollectionUtils.isEmpty(platformList) ? Collections.emptyList() : FeignQuery.create(DictBasicEntity.class).eq(DictBasicEntity::getType, DictBasicTypeEnum.SALES_PLATFORM.getType()).list();
 
         for (ReplenishmentSuggestionDTO.DeliverySuggestionDTO deliverySuggestionDTO : list) {
 
@@ -656,13 +658,16 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
             deliverySuggestionDTO.setLogisticsMethodName(LogisticsMethodEnum.getName(deliverySuggestionDTO.getLogisticsMethod()));
 
             //平台名称
-            String platformName = dictBasicList.stream().filter(obj -> StrUtil.equals(obj.getValue(),deliverySuggestionDTO.getPlatform())).map(DictBasicEntity::getName).findFirst().orElse("");
+            String platformName = dictBasicList.stream().filter(obj -> CharSequenceUtil.equals(obj.getValue(),deliverySuggestionDTO.getPlatform())).map(DictBasicEntity::getName).findFirst().orElse("");
             deliverySuggestionDTO.setPlatformName(platformName);
 
             //店铺名称
-            String shopName = shopInfoList.stream().filter(obj -> StrUtil.equals(obj.getId(), deliverySuggestionDTO.getShopId())).map(ShopInfoEntity::getName).findFirst().orElse("");
+            String shopName = shopInfoList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), deliverySuggestionDTO.getShopId())).map(ShopInfoEntity::getName).findFirst().orElse("");
             deliverySuggestionDTO.setShopName(shopName);
 
+            //产品名称
+            String productName = productDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), deliverySuggestionDTO.getSkuId())).map(ProductDetailEntity::getName).findFirst().orElse("");
+            deliverySuggestionDTO.setProductName(productName);
             //创建名称
             deliverySuggestionDTO.setCreateTypeName(CreateTypeEnum.getNameByCode(deliverySuggestionDTO.getCreateType()));
         }

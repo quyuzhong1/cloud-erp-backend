@@ -1,7 +1,6 @@
 package com.erp.server.plm.service.impl;
 
-import cn.hutool.core.collection.CollectionUtil;
-import cn.hutool.core.util.StrUtil;
+import cn.hutool.core.collection.CollUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.utils.BeanMapper;
@@ -19,6 +18,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+
+import static cn.hutool.core.util.StrUtil.isNotBlank;
 
 /**
  * <p>
@@ -115,9 +116,9 @@ public class BasicDictServiceImpl extends ServiceImpl<BasicDictMapper, BasicDict
     @Cacheable(cacheNames = "cache:plm:listDictDropDown",keyGenerator = "myKeyGenerator")
     public List<DictControllerDTO.DictDropDownDTO> listDictDropDown(String code) {
         List<BasicDictEntity> list = this.lambdaQuery()
-                .eq(StrUtil.isNotBlank(code), BasicDictEntity::getType, code)
+                .eq(isNotBlank(code), BasicDictEntity::getType, code)
                 .list();
-        if(CollectionUtil.isEmpty(list)){
+        if(CollUtil.isEmpty(list)){
             return Collections.emptyList();
         }
         List<DictControllerDTO.DictDropDownDTO> result = list.stream()

@@ -1,6 +1,7 @@
 package com.erp.server.wms.handler;
 
 import cn.hutool.core.exceptions.ExceptionUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.common.business.enums.ErpServerModuleEnum;
@@ -28,6 +29,7 @@ import com.erp.server.wms.service.ThirdWarehouseService;
 import io.seata.common.util.CollectionUtils;
 import io.seata.common.util.StringUtils;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.poi.ss.formula.functions.T;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -48,7 +50,7 @@ public abstract class AbstractThirdWarehouseHandler extends BaseController imple
     private DmpTaskFeign dmpTaskFeign;
 
     @Resource
-    private MQProducerService mqProducerService;
+    private MQProducerService<T> mqProducerService;
 
     public void handleAuthInfo(String id) {
         OverseasProviderEntity authEntity = getAuthEntity(id);
@@ -91,7 +93,7 @@ public abstract class AbstractThirdWarehouseHandler extends BaseController imple
 
     @Override
     public ApiResult<String> editInboundBill(ThirdWarehouseCreateInboundReq createInboundReq, String authId) {
-        if(StringUtils.isBlank(createInboundReq.getReceivingCode())){
+        if(CharSequenceUtil.isBlank(createInboundReq.getReceivingCode())){
             return failure("第三方入库单号不能为空");
         }
         return handleAndRemoveContext(() -> editInboundBill(createInboundReq), authId,SourceTypeEnum.THIRD_WAREHOUSE_EDIT_INBOUND_BILL,createInboundReq.getReceivingCode());
@@ -201,7 +203,7 @@ public abstract class AbstractThirdWarehouseHandler extends BaseController imple
         WarnMsgInfoDTO warnMsgInfo = new WarnMsgInfoDTO();
         warnMsgInfo.setBizName(SourceTypeEnum.getName(entity.getSourceType()));
         warnMsgInfo.setErpServerModuleEnum(ErpServerModuleEnum.ERP_SERVER_WMS);
-        warnMsgInfo.setTitle(StrUtil.format("第三方仓【{}】从{}推送至{}失败", entity.getSourceCode(), entity.getSourcePlatformName(), entity.getTargetPlatformName()));
+        warnMsgInfo.setTitle(CharSequenceUtil.format("第三方仓【{}】从{}推送至{}失败", entity.getSourceCode(), entity.getSourcePlatformName(), entity.getTargetPlatformName()));
         warnMsgInfo.setTableName(SourceTypeEnum.getTableName(entity.getSourceType()));
         warnMsgInfo.setTableId(entity.getSourceId());
         warnMsgInfo.setKeyInfo(StringUtil.isEmpty(ThirdWarehouseContext.getMsg())?"":ThirdWarehouseContext.getMsg());

@@ -38,7 +38,7 @@ public class CfgPlatformMappingController extends BaseController {
     * @return ApiResult
     */
     @PostMapping("/update")
-    public ApiResult<?> update(@RequestBody @Validated ValidList<CfgPlatformMappingDTO.UpdateDTO> updateList) {
+    public ApiResult<String> update(@RequestBody @Validated ValidList<CfgPlatformMappingDTO.UpdateDTO> updateList) {
         cfgPlatformMappingService.update(updateList);
         return success();
     }

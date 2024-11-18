@@ -81,6 +81,7 @@ public enum SourceTypeEnum {
     SO_RETURN("soReturn", "销售退货订单","so_return"),
     SO_B2C_RETURN("soB2cReturn", "B2c销售退货订单","so_return"),
     SO_INFO("soInfo", "B2B销售订单","so_info"),
+    SO_INFO_TRANSFER_INFP("soInfoTransferInfo", "B2B销售订单(中转调拨)","so_info"),
     SO_CHANGE("soChange", "销售变更单","so_change"),
     CUSTOMER_INFO( "customerInfo", "客户表","customer_info"),
     CUSTOMER_B2B_CHANGE_SELLER( "customerB2bChangeSeller", "B2B客户表变更销售员","customer_b2b_seller_change"),

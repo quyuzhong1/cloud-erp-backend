@@ -6,18 +6,17 @@ import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.FileTaskEventEnum;
+import com.common.business.utils.ApplicationContextUtils;
+import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
 import com.erp.model.mrp.dto.FbaHistoryInventoryDTO;
 import com.erp.model.mrp.entity.FbaHistoryInventoryEntity;
 import com.erp.model.plm.vo.SkuVO;
-import com.erp.model.wms.dto.FbaInventoryDTO;
 import com.erp.model.wms.entity.FbaInventoryEntity;
-import com.erp.model.wms.enums.DeliveryChannelsEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.mrp.mapper.FbaHistoryInventoryMapper;
 import com.erp.server.mrp.service.FbaHistoryInventoryService;
-import com.common.business.service.impl.SuperServiceImpl;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 
@@ -60,7 +59,7 @@ public class FbaHistoryInventoryServiceImpl extends SuperServiceImpl<FbaHistoryI
                     inventory.setId(inventory.getId());
                     return inventory;
                 }).collect(Collectors.toList());
-        saveOrUpdateBatch(entities);
+        ApplicationContextUtils.getBean(FbaHistoryInventoryServiceImpl.class).saveOrUpdateBatch(entities);
     }
 
     @Override

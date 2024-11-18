@@ -20,7 +20,7 @@ import lombok.NoArgsConstructor;
 @TableName(value ="pre_task")
 @Data
 @NoArgsConstructor
-public class PreTaskEntity extends BaseEntity implements Serializable {
+public class PreTaskEntity extends BaseEntity<PreTaskEntity> implements Serializable {
 
     /**
      * 任务id

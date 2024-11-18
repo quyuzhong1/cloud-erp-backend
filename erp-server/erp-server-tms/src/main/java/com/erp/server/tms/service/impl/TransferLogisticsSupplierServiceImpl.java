@@ -1,8 +1,8 @@
 package com.erp.server.tms.service.impl;
 
 
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.*;
@@ -12,13 +12,13 @@ import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
-import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
-import com.common.core.utils.date.DateUtil;
 import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
-import com.erp.model.tms.dto.*;
+import com.erp.model.tms.dto.DictBasicDTO;
+import com.erp.model.tms.dto.TransferLogisticsChannelDTO;
+import com.erp.model.tms.dto.TransferLogisticsSupplierDTO;
 import com.erp.model.tms.entity.TransferLogisticsAuthEntity;
 import com.erp.model.tms.entity.TransferLogisticsChannelEntity;
 import com.erp.model.tms.entity.TransferLogisticsSupplierEntity;
@@ -35,12 +35,11 @@ import com.erp.server.tms.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -57,28 +56,32 @@ import static com.common.business.enums.FileTaskEventEnum.EXPORT_TMS_TRANSFER_LO
 @Slf4j
 @Service
 public class TransferLogisticsSupplierServiceImpl extends SuperServiceImpl<TransferLogisticsSupplierMapper, TransferLogisticsSupplierEntity> implements TransferLogisticsSupplierService {
-    @Autowired
+    @Resource
     private OperateLogService operateLogService;
 
-    @Autowired
+    @Resource
     private ScmTaskFeign scmTaskFeign;
 
-    @Autowired
+    @Resource
     private DictBasicService dictBasicService;
 
-    @Autowired
+    @Resource
     private TransferLogisticsChannelService transferLogisticsChannelService;
 
-    @Autowired
+    @Resource
     private TransferLogisticsAuthService transferLogisticsAuthService;
 
-    @Autowired
+    @Resource
     private TransferLogisticsRegistry transferLogisticsRegistry;
 
-    @Autowired
+    @Resource
     private TransferDeclareService transferDeclareService;
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
+
+    @Resource
+    @Lazy
+    private TransferLogisticsSupplierServiceImpl supplierService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -95,7 +98,7 @@ public class TransferLogisticsSupplierServiceImpl extends SuperServiceImpl<Trans
             throw new ServiceException("物流商保存失败");
         }
         // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "物理商单", logisticsSupplierEntity.getId());
+        String msg = CharSequenceUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "物理商单", logisticsSupplierEntity.getId());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.TRANSFER_LOGISTICS_SUPPLIER.getCode(), logisticsSupplierEntity.getId(), "新增操作");
         return new BaseResultDTO.AddDTO(logisticsSupplierEntity.getId(), logisticsSupplierEntity.getId());
     }
@@ -117,7 +120,7 @@ public class TransferLogisticsSupplierServiceImpl extends SuperServiceImpl<Trans
         if (!save) {
             throw new ServiceException("物流商单保存失败");
         }
-        String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), logisticsSupplierEntity.getId(), "物理商单");
+        String msg = CharSequenceUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), logisticsSupplierEntity.getId(), "物理商单");
         operateLogService.addModuleOperateLogByObj(old, logisticsSupplierEntity, ModuleTypeEnum.TRANSFER_LOGISTICS_SUPPLIER.getCode(), logisticsSupplierEntity.getId(), msg);
         return Boolean.TRUE;
     }
@@ -144,8 +147,8 @@ public class TransferLogisticsSupplierServiceImpl extends SuperServiceImpl<Trans
     public PagingVO<TransferLogisticsSupplierDTO.PagingViewDTO> paging(PagingDTO<TransferLogisticsSupplierDTO.PagingParamDTO> dto) {
         TransferLogisticsSupplierDTO.PagingParamDTO params = dto.getParams();
         params.setPermissionSql(dto.getPermissionSql());
-        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
-        IPage pageData = baseMapper.paging(query, params);
+        Page<TransferLogisticsSupplierDTO.PagingViewDTO> query = new Page<>(dto.getCurrPage(), dto.getPageSize());
+        IPage<TransferLogisticsSupplierDTO.PagingViewDTO> pageData = baseMapper.paging(query, params);
         List<TransferLogisticsSupplierDTO.PagingViewDTO> list = pageData.getRecords();
         fillPagingData(list);
         return new PagingVO<>(pageData);
@@ -178,10 +181,13 @@ public class TransferLogisticsSupplierServiceImpl extends SuperServiceImpl<Trans
             throw new ServiceException(ApiError.EXIST_TRANSFER_LOGISTICS_SUPPLIER_NOT_DELETE);
         }
 
-        this.removeById(id);
+        supplierService.removeById(id);
 
         //删除渠道根据来源id
         transferLogisticsChannelService.removeByMainIdList(Arrays.asList(id));
+        if(Objects.isNull(entity)){
+            throw new ServiceException(ApiError.NOT_EXIST_BILL, "物流商");
+        }
         return BatchResultDTO.success(entity.getId(), entity.getSupplierName(), OperationTypeEnum.DELETE);
 
     }

@@ -2,7 +2,7 @@ package com.erp.server.tms.service.impl;
 
 
 import cn.hutool.core.bean.BeanUtil;
-import cn.hutool.core.util.StrUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
@@ -19,10 +19,10 @@ import com.erp.server.tms.service.TransferDeclareProductService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.Resource;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -38,9 +38,9 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 public class TransferDeclareProductServiceImpl extends SuperServiceImpl<TransferDeclareProductMapper, TransferDeclareProductEntity> implements TransferDeclareProductService {
-    @Autowired
+    @Resource
     private OperateLogService operateLogService;
-    @Autowired
+    @Resource
     private SoB2cFeign soB2cFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class)
@@ -60,10 +60,10 @@ public class TransferDeclareProductServiceImpl extends SuperServiceImpl<Transfer
         }
 
         // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "中转报关产品" , transferDeclareProductEntity.getId());
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
+        String msg = CharSequenceUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "中转报关产品" , transferDeclareProductEntity.getId());
+        
         operateLogService.addModuleOperateLog(msg, null, transferDeclareProductEntity.getId(), "新增操作");
-        // TODO 新增明细（如果有明细的话）
+        
 
         return new BaseResultDTO.AddDTO(transferDeclareProductEntity.getId(), transferDeclareProductEntity.getId());
     }
@@ -85,12 +85,12 @@ public class TransferDeclareProductServiceImpl extends SuperServiceImpl<Transfer
         if(!save) {
             throw new ServiceException("中转报关产品保存失败");
         }
-        // TODO 修改明细数据（包含增删改）（如果有明细的话）
+        
 
         // 记录主单操作日志
             log.info("编辑 开始记录中转报关产品日志数据，id：【{}】", transferDeclareProductEntity.getId());
-            String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), transferDeclareProductEntity.getId(), "中转报关产品");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
+            String msg = CharSequenceUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), transferDeclareProductEntity.getId(), "中转报关产品");
+        
         operateLogService.addModuleOperateLogByObj(old, transferDeclareProductEntity, null, transferDeclareProductEntity.getId(), msg);
         return Boolean.TRUE;
     }
@@ -147,8 +147,8 @@ public class TransferDeclareProductServiceImpl extends SuperServiceImpl<Transfer
 
     private void saveOrUpdateProduct(TransferDeclareProductEntity entity) {
         //检查数据是否已存在
-        if (StrUtil.isNotEmpty(entity.getDeclareId()) && StrUtil.isNotEmpty(entity.getDeclareDetailId())
-                && StrUtil.isNotEmpty(entity.getSoDetailId()) && StrUtil.isNotEmpty(entity.getSkuNo())){
+        if (CharSequenceUtil.isNotEmpty(entity.getDeclareId()) && CharSequenceUtil.isNotEmpty(entity.getDeclareDetailId())
+                && CharSequenceUtil.isNotEmpty(entity.getSoDetailId()) && CharSequenceUtil.isNotEmpty(entity.getSkuNo())){
             List<TransferDeclareProductEntity> list = lambdaQuery().eq(TransferDeclareProductEntity::getDeclareId, entity.getDeclareId())
                     .eq(TransferDeclareProductEntity::getDeclareDetailId, entity.getDeclareDetailId())
                     .eq(TransferDeclareProductEntity::getSoDetailId, entity.getSoDetailId())
@@ -164,6 +164,6 @@ public class TransferDeclareProductServiceImpl extends SuperServiceImpl<Transfer
     * 新增修改处理数据
     */
     private void handleData(TransferDeclareProductEntity transferDeclareProductEntity) {
-    // TODO 验证数据 & 数据赋值
+    
     }
 }

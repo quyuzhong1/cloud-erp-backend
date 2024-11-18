@@ -66,7 +66,7 @@ public class DmpCfgInputConvertValueServiceImpl extends SuperServiceImpl<DmpCfgI
     @Override
     public Boolean update(DmpCfgInputConvertValueDTO.UpdateDTO updateDTO) {
         DmpCfgInputConvertValueEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, ""));
+        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, ""));
         DmpCfgInputConvertValueEntity dmpCfgInputConvertValueEntity =  BeanMapperUtils.map(DmpCfgInputConvertValueEntity.class, updateDTO);
 
         // 数据处理

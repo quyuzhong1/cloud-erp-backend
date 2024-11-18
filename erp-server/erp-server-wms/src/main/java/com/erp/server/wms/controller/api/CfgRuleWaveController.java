@@ -73,7 +73,7 @@ public class CfgRuleWaveController extends BaseController {
     */
     @PostMapping("/update")
     @LogAction(value = LogActionEnum.UPDATE, desc = "波次规则修改")
-    public ApiResult<?> update(@RequestBody @Validated CfgRuleWaveDTO.UpdateDTO dto) {
+    public ApiResult update(@RequestBody @Validated CfgRuleWaveDTO.UpdateDTO dto) {
         cfgRuleWaveService.update(dto);
         return success();
     }
@@ -160,7 +160,7 @@ public class CfgRuleWaveController extends BaseController {
      */
     @PostMapping("/executeRule")
     @LogAction(value = LogActionEnum.EXECUTE, desc = "执行规则")
-    public ApiResult<?> executeRule(@RequestBody @Validated BaseIdDTO dto) {
+    public ApiResult executeRule(@RequestBody @Validated BaseIdDTO dto) {
         cfgRuleWaveService.executeRule(dto.getId());
         return success();
     }

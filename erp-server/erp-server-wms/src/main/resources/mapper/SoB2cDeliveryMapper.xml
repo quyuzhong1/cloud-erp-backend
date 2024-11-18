@@ -103,7 +103,7 @@
         <include refid="pageSql"/>
     </select>
     <select id="countShipmentMark" resultType="java.lang.Integer">
-        select count(*) from so_b2c_delivery where
+        select count(*) from so_b2c_delivery sbd where
         is_deleted=FALSE
         and shipment_mark = 'manual'
         <!--数据权限-->

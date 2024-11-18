@@ -44,6 +44,7 @@ import lombok.extern.slf4j.Slf4j;
 @Service
 @Slf4j
 public class DictCore {
+	public static final String JAVA_LANG_STRING = "java.lang.String";
 	@Value("${spring.application.name}")
 	private String serviceName;
 	
@@ -255,8 +256,8 @@ public class DictCore {
     		Dict dictAnnotation = field.getAnnotation(Dict.class);
             if (dictAnnotation != null) {
             	Class<?> declaringClass = field.getType();
-            	if(!"java.lang.String".equals(declaringClass.getName()) && !declaringClass.isEnum()) {
-            		if(!declaringClass.getName().equals(clazz.getName())) {
+            	if(!JAVA_LANG_STRING.equals(declaringClass.getName()) && !declaringClass.isEnum()) {
+            		if(!declaringClass.isAssignableFrom(clazz)) {
             			getDictDtoList(declaringClass , dictDtoList);
                 	}
             		continue;

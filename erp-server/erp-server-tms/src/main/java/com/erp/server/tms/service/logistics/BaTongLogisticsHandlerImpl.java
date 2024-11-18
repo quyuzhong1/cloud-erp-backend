@@ -33,8 +33,6 @@ import com.erp.tms.batong.model.order.request.*;
 import com.erp.tms.batong.model.order.response.OrderResponse;
 import com.erp.tms.batong.model.order.response.TrackBase;
 import com.erp.tms.batong.service.BaTongService;
-import com.sdk.tms.tongyou.dto.request.TongYouUpdateWeightRequest;
-import com.sdk.tms.tongyou.dto.response.TongYouResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Component;
@@ -96,7 +94,7 @@ public class BaTongLogisticsHandlerImpl extends AbstractLogisticsHandler {
         List<CargoVolume> cargoVolumeList = Arrays.asList(cargoVolume);
         orderRequest.setCargoVolumeList(cargoVolumeList);
         try {
-            BaseResult result = baTongService.createOrder(logisticsOrder.getAuthMap(), orderRequest);
+            BaseResult<Void> result = baTongService.createOrder(logisticsOrder.getAuthMap(), orderRequest);
 
             Integer createOrderSuccess = result.getSuccess();
             //表示成功
@@ -185,7 +183,7 @@ public class BaTongLogisticsHandlerImpl extends AbstractLogisticsHandler {
         for (LogisticsCancelOrderVO item : logisticsCancelOrderList) {
             try {
                 responseVO.setDeliveryNo(item.getDeliveryNo());
-                BaseResult cancelResult = baTongService.deleteOrder(authMap, item.getDeliveryNo());
+                BaseResult<String> cancelResult = baTongService.deleteOrder(authMap, item.getDeliveryNo());
                 if (!BaTongConstants.SUCCESS.equals(cancelResult.getSuccess())) {
                     isSuccess = false;
                     responseVO.failure(getPlatForm().getName(),item.getDeliveryNo(),cancelResult.getCnMessage());
@@ -227,7 +225,7 @@ public class BaTongLogisticsHandlerImpl extends AbstractLogisticsHandler {
                     .orderWeight(logisticsUpdateWeightVO.getWeight().divide(new BigDecimal(1000),4, RoundingMode.HALF_UP).toString())
                     .build();
             ValidatorUtil.validateEntity(request);
-            BaseResult response = baTongService.updateWeight(logisticsUpdateWeightVO.getAuthMap(), request);
+            BaseResult<String> response = baTongService.updateWeight(logisticsUpdateWeightVO.getAuthMap(), request);
 
             if (!BaTongConstants.SUCCESS.equals(response.getSuccess())) {
                 logisticsOperateService.pushOperateLog(logisticsUpdateWeightVO.getOrderId(),
@@ -298,7 +296,7 @@ public class BaTongLogisticsHandlerImpl extends AbstractLogisticsHandler {
                 LabelRequest labelRequest = LabelRequest.builder().
                         configInfo(configInfo).
                         orderList(Arrays.asList(listOrder)).build();
-                BaseResult result = baTongService.getLabel(authMap, labelRequest);
+                BaseResult<String> result = baTongService.getLabel(authMap, labelRequest);
                 //表示失败
                 if (!BaTongConstants.SUCCESS.equals(result.getSuccess())) {
                     LogisticsPrintLabelResponse response = new LogisticsPrintLabelResponse();
@@ -412,7 +410,7 @@ public class BaTongLogisticsHandlerImpl extends AbstractLogisticsHandler {
      * @return
      */
     @Override
-    public ApiResult authorization(Map<String, String> authMap) {
+    public ApiResult<Object>authorization(Map<String, String> authMap) {
         try {
             baTongService.listShippingMethod(authMap);
             return success();

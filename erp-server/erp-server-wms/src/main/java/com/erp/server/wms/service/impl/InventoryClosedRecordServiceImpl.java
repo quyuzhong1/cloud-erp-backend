@@ -1,6 +1,7 @@
 package com.erp.server.wms.service.impl;
 
 
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseIdDTO;
@@ -73,7 +74,7 @@ public class InventoryClosedRecordServiceImpl extends SuperServiceImpl<Inventory
     public void actionBatch(List<InventoryClosedRecordEntity> newEntityList, List<InventoryClosedRecordEntity> oldEntityList) {
         // 1: 新增列表
         List<InventoryClosedRecordEntity> saveEntityList = newEntityList.stream()
-                .filter(e -> oldEntityList.stream().noneMatch(o -> StrUtil.equals(o.getCategory(),e.getCategory()) && o.getInventoryOrgId().equalsIgnoreCase(e.getInventoryOrgId())))
+                .filter(e -> oldEntityList.stream().noneMatch(o -> CharSequenceUtil.equals(o.getCategory(),e.getCategory()) && o.getInventoryOrgId().equalsIgnoreCase(e.getInventoryOrgId())))
                 .collect(Collectors.toList());
         if (!CollectionUtils.isEmpty(saveEntityList)) {
             boolean result = this.saveBatch(saveEntityList);
@@ -84,7 +85,7 @@ public class InventoryClosedRecordServiceImpl extends SuperServiceImpl<Inventory
 
         // 2: 删除不存在的列表
         List<InventoryClosedRecordEntity> deleteEntityList = oldEntityList.stream()
-                .filter(e -> newEntityList.stream().noneMatch(o -> StrUtil.equals(o.getCategory(),e.getCategory()) && o.getInventoryOrgId().equalsIgnoreCase(e.getInventoryOrgId())))
+                .filter(e -> newEntityList.stream().noneMatch(o -> CharSequenceUtil.equals(o.getCategory(),e.getCategory()) && o.getInventoryOrgId().equalsIgnoreCase(e.getInventoryOrgId())))
                 .collect(Collectors.toList());
         if (!CollectionUtils.isEmpty(deleteEntityList)) {
             List<String> entityIds = deleteEntityList.stream().map(InventoryClosedRecordEntity::getId).collect(Collectors.toList());
@@ -124,8 +125,8 @@ public class InventoryClosedRecordServiceImpl extends SuperServiceImpl<Inventory
             }
             LocalDate date = closedParamDTO.getBillDate();
             if (date.isBefore(localDate) || localDate.isEqual(date)) {
-                String orgName = accountingCompanyList.stream().filter(obj -> StrUtil.equals(obj.getId(), closedParamDTO.getOrgId())).map(BaseIdDTO.CodeDTO::getName).findFirst().orElse("");
-                throw new ServiceException(StrUtil.format("组织【{}】已于{}关账",orgName,localDate));
+                String orgName = accountingCompanyList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), closedParamDTO.getOrgId())).map(BaseIdDTO.CodeDTO::getName).findFirst().orElse("");
+                throw new ServiceException(CharSequenceUtil.format("组织【{}】已于{}关账",orgName,localDate));
             }
         }
     }

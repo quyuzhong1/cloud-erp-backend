@@ -257,6 +257,7 @@ public interface ReplenishmentSuggestionService extends SuperService<Replenishme
      */
     PagingVO<ReplenishmentSuggestionDTO.ReplenishmentRuleExportDTO> listReplenishmentRule(PagingDTO<ReplenishmentSuggestionDTO.PagingParamDTO> dto);
 
+
     /**
      * 根据店铺id查询销量
      *

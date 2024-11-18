@@ -161,7 +161,8 @@
             pbi.type,
             pbsl.sku_id as skuId,
             pbsl.sku_no as skuNo,
-            pbsl.quantity as qty
+            pbsl.quantity as qty,
+        pbi.state
         from product_bom_info pbi
         inner join product_bom_sku pbs on pbi.id = pbs.bom_id and pbs.is_deleted = false
         inner join product_bom_sku pbsl on pbs.bom_id = pbsl.bom_id and pbsl.is_deleted = false

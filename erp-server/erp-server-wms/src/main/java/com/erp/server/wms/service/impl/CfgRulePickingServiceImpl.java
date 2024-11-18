@@ -93,7 +93,7 @@ public class CfgRulePickingServiceImpl extends SuperServiceImpl<CfgRulePickingMa
         CfgRulePickingEntity old = getById(dto.getId());
         CfgRulePickingEntity entity = BeanMapperUtils.map(CfgRulePickingEntity.class, dto);
         updateById(entity);
-        String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), dto.getId(), "拣货策略规则");
+        String msg = CharSequenceUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), dto.getId(), "拣货策略规则");
         operateLogService.addModuleOperateLogByObj(old, entity, ModuleTypeEnum.PICKING_STRATEGY.getCode(), dto.getId(), msg);
         cfgRuleConditionService.updateRuleCondition(dto.getId(), dto.getConditionList(), ModuleTypeEnum.PICKING_STRATEGY.getCode(), RuleTypeEnum.PICKING_STRATEGY.getCode());
         cfgRulePackingActionService.updateRuleAction(dto.getId(), dto.getActions());
@@ -144,7 +144,6 @@ public class CfgRulePickingServiceImpl extends SuperServiceImpl<CfgRulePickingMa
         String content = "启用状态由[%s]变更为" + (Boolean.TRUE.equals(dto.getDisabled()) ? "停用" : "启用");
         operateLogService.batchAddModuleOperateLog(content, ModuleTypeEnum.PICKING_STRATEGY.getCode(), pairs, "状态变更");
     }
-
     /**
      * 根据单据相关信息匹配出拣货规则===> 仓位分配规则 ===> 对应仓位 ===> 根据sku加仓位获取对应库位库存
      * 库存不满足sku对应数量   循环库位 ===> 循环库区 ===>循环仓库 ===> 循环规则
@@ -153,10 +152,6 @@ public class CfgRulePickingServiceImpl extends SuperServiceImpl<CfgRulePickingMa
     public Pair<List<LocationInventoryResultDTO>, Map<String, Integer>> getRuleOrderMatchResult(PickingListsDTO.AddDTO dto) {
         CfgRulePickingDTO.CfgExecutionDataDTO executionData = this.getRuleExecutionData(dto);
         Pair<List<LocationInventoryResultDTO>, Map<String, Integer>> result = getSoB2CRuleOrderMatchResult(executionData);
-//        if (!CollectionUtils.isEmpty(result.getSecond())) {
-//            String message = result.getSecond().entrySet().stream().map(v -> String.format("</br>{sku:%s,缺货数量:%s}", v.getKey(), v.getValue())).collect(Collectors.joining(","));
-//            throw new ServiceException(ApiError.SKU_INVENTORY_SHORTAGE, message);
-//        }
         return result;
     }
 

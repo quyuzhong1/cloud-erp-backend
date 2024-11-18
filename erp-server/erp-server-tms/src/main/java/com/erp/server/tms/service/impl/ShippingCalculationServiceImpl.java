@@ -1,7 +1,7 @@
 package com.erp.server.tms.service.impl;
 
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -115,7 +115,7 @@ public class ShippingCalculationServiceImpl implements ShippingCalculationServic
             listDTO.setToCountry(toCountryName);
 
             //有效期
-            String effectivePeriod = StrUtil.format("{}至{}", listDTO.getEffectiveDate(), ObjectUtil.isEmpty(listDTO.getExpireDate()) ? "无期限" : listDTO.getExpireDate());
+            String effectivePeriod = CharSequenceUtil.format("{}至{}", listDTO.getEffectiveDate(), ObjectUtil.isEmpty(listDTO.getExpireDate()) ? "无期限" : listDTO.getExpireDate());
             listDTO.setEffectivePeriod(effectivePeriod);
 
             /**
@@ -127,13 +127,13 @@ public class ShippingCalculationServiceImpl implements ShippingCalculationServic
 
             //重量单位比例
             BigDecimal ratio = BigDecimal.ONE;
-            if (!StrUtil.equals(params.getWeightUnit(), listDTO.getWeightUnit())) {
+            if (!CharSequenceUtil.equals(params.getWeightUnit(), listDTO.getWeightUnit())) {
                 if ("kg".equals(params.getWeightUnit())) {
                     //kg
                     ratio = new BigDecimal(1000);
                 } else {
                     //g
-                    ratio = new BigDecimal(0.001);
+                    ratio = new BigDecimal("0.001");
                 }
             }
             //体积重转换比例（体积重固定千克单位）
@@ -535,13 +535,13 @@ public class ShippingCalculationServiceImpl implements ShippingCalculationServic
 
             //重量单位比例
             BigDecimal ratio = BigDecimal.ONE;
-            if (!StrUtil.equals(weightUnit, item.getWeightUnit())) {
+            if (!CharSequenceUtil.equals(weightUnit, item.getWeightUnit())) {
                 if ("kg".equals(params.getWeightUnit())) {
                     //kg
                     ratio = new BigDecimal(1000);
                 } else {
                     //g
-                    ratio = new BigDecimal(0.001);
+                    ratio = new BigDecimal("0.001");
                 }
             }
             //体积重转换比例（体积重固定千克单位）
@@ -624,7 +624,7 @@ public class ShippingCalculationServiceImpl implements ShippingCalculationServic
             }
             if (MathUtil.compareTo(decimalPart, 0) > MathUtil.ZERO && MathUtil.compareTo(decimalPart, 0.5) < MathUtil.ZERO) {
                 //未到0.5，进0.5
-                cost = MathUtil.add(integerPart, new BigDecimal(0.5));
+                cost = MathUtil.add(integerPart, new BigDecimal("0.5"));
             }
         }
         //向上取整，小数进1

@@ -48,7 +48,7 @@ public enum MabangOriginalOrderStatusEnum implements EnumMessage {
             return "";
         }
         for (MabangOriginalOrderStatusEnum statusEnum : MabangOriginalOrderStatusEnum.values()) {
-            if (code.equals(statusEnum.getCode())) {
+            if (code.equals(statusEnum.getCode().toString())) {
                 return statusEnum.getName();
             }
         }

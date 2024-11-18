@@ -14,7 +14,7 @@ import java.util.Date;
  */
 @TableName(value ="user_add_product")
 @Data
-public class UserAddProductEntity extends BaseEntity implements Serializable {
+public class UserAddProductEntity extends BaseEntity<UserAddProductEntity> implements Serializable {
 
     /**
      * 产品id

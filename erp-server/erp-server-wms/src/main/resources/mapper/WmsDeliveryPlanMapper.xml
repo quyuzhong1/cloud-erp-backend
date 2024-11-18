@@ -180,12 +180,13 @@
         FROM wms_delivery_plan_detail odpd
         INNER JOIN wms_delivery_plan odp ON odp.id = odpd.main_id AND odpd.is_deleted = FALSE
         WHERE odp.is_deleted = FALSE
-        <if test="ids!=null and ids.size>0 ">
-            AND odp.id IN
-            <foreach collection="ids" item="id" open="(" separator="," close=")">
-                #{id}
+        <if test="detailIds!=null and detailIds.size>0 ">
+            AND odpd.id IN
+            <foreach collection="detailIds" item="detailId" open="(" separator="," close=")">
+                #{detailId}
             </foreach>
         </if>
+        order by odp.id
     </select>
 
     <!--下推发货单列表查询-->

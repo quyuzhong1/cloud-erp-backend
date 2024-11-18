@@ -49,7 +49,7 @@ public class WeighingOutboundController extends BaseController {
      */
     @GetMapping("/reset")
     @LogAction(value = LogActionEnum.UPDATE, desc = "重置")
-    public ApiResult<?> reset(@RequestParam(value = "id") @NotBlank(message = "ID不能为空") String id) {
+    public ApiResult reset(@RequestParam(value = "id") @NotBlank(message = "ID不能为空") String id) {
         weightingOutboundService.reset(id);
         return success();
     }

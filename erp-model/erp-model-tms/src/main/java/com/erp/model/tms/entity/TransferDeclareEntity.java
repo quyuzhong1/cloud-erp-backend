@@ -114,7 +114,7 @@ public class TransferDeclareEntity extends BaseEntity<TransferDeclareEntity> {
     @TableField("instock_ref_code")
     private String instockRefCode;
 
-    public static final String CODE = "code";
+    public static final String FIELD_CODE = "code";
 
     public static final String PLAN_TRANSFER_DATE = "plan_transfer_date";
 

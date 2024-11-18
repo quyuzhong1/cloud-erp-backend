@@ -1,5 +1,6 @@
 package com.erp.server.wms.kingdee.impl;
 
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.json.JSONObject;
@@ -163,7 +164,7 @@ public class SyncKingdeeStocktakingProfitServiceImpl implements SyncKingdeeStock
         resultMap.put("billDate", billDateStr);
 
 
-        List<StocktakingProfitLossDetailDTO.ViewDTO> detailDbList = stocktakingProfitLossDetailService.listByMainIds(Arrays.asList(entity.getId()));
+        List<StocktakingProfitLossDetailDTO.ViewDTO> detailDbList = stocktakingProfitLossDetailService.listByMainIds(Collections.singletonList(entity.getId()));
         if (CollectionUtils.isEmpty(detailDbList)) {
             throw new ServiceException("盘盈盘亏单明细不能为空");
         }
@@ -176,7 +177,7 @@ public class SyncKingdeeStocktakingProfitServiceImpl implements SyncKingdeeStock
         if (CollectionUtils.isNotEmpty(warehouseList)) {
             String orgId=warehouseList.get(0).getOrgId();
             //组织信息
-            List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(Arrays.asList(orgId));
+            List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(Collections.singletonList(orgId));
             if (CollectionUtils.isNotEmpty(accountingCompanyList)) {
                 warehouseOrgCode = accountingCompanyList.get(0).getCode();
             }
@@ -192,7 +193,7 @@ public class SyncKingdeeStocktakingProfitServiceImpl implements SyncKingdeeStock
             JSONObject jsonObject = new JSONObject();
             jsonObject.set("skuNo", item.getSkuNo());
             String unit = item.getUnit();
-            jsonObject.set("unit", StringUtils.isNotBlank(unit) ? unit : "Pcs");
+            jsonObject.set("unit", CharSequenceUtil.isNotBlank(unit) ? unit : "Pcs");
             jsonObject.set("qty", item.getQty());
             String kingdeeWarehouseCode =warehouseList.stream().filter(w->w.getId().equals(item.getWarehouseId())).
                     map(WarehouseEntity::getKingdeeWarehouseCode).findFirst().orElse("");
@@ -200,7 +201,7 @@ public class SyncKingdeeStocktakingProfitServiceImpl implements SyncKingdeeStock
             Integer inventoryQty = item.getFrozenQty() + item.getUsableQty();
             jsonObject.set("inventoryQty", inventoryQty);
             //是否下推仓位
-            Boolean isPush = pushKingdeeList.stream().filter(obj -> StrUtil.equals(obj.getWarehouseId(), item.getWarehouseId()))
+            Boolean isPush = pushKingdeeList.stream().filter(obj -> CharSequenceUtil.equals(obj.getWarehouseId(), item.getWarehouseId()))
                     .map(CfgSettingDTO.WarehouseLocationSettingDTO::getIsPush).findFirst().orElse(Boolean.FALSE);
             if (isPush) {
                 //仓位

@@ -84,27 +84,6 @@ public class CfgRuleConditionEntity extends BaseEntity<CfgRuleConditionEntity> {
      */
     @TableField("source_type")
     private String sourceType;
-
-    public static final String LEFT_BRACKET = "left_bracket";
-
-    public static final String FIELD = "field";
-
-    public static final String COMPARE = "compare";
-
-    public static final String VALUE = "value";
-
-    public static final String RIGHT_BRACKET = "right_bracket";
-
-    public static final String LOGIC = "logic";
-
-    public static final String RULE_ID = "rule_id";
-
-    public static final String INDEX = "index";
-
-    public static final String NAME = "name";
-
-    public static final String SOURCE_TYPE = "source_type";
-
     @Override
     public Serializable pkVal() {
         return null;

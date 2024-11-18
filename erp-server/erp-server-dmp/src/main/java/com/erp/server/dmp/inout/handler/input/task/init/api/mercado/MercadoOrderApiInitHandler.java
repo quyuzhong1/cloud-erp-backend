@@ -1,6 +1,5 @@
 package com.erp.server.dmp.inout.handler.input.task.init.api.mercado;
 
-import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
@@ -8,24 +7,15 @@ import com.alibaba.fastjson.JSONArray;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.HttpCommonUtil;
-import com.erp.model.dmp.entity.DmpCfgApiEntity;
 import com.erp.server.dmp.inout.dto.base.DmpInputTaskInitDTO;
 import com.erp.server.dmp.inout.dto.request.DmpInputApiInitRequest;
-import com.erp.server.dmp.inout.dto.request.DmpInputTikTokApiInitRequest;
 import com.erp.server.dmp.inout.handler.input.task.init.api.DmpInputApiInitHandler;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sdk.oms.mercado.constant.MercadoConstant;
 import com.sdk.oms.mercado.dto.MercadoShopInfoDTO;
 import com.sdk.oms.mercado.dto.mercado.order.OrderDTO;
-import com.sdk.oms.mercado.dto.mercado.order.OrderViewDTO;
 import com.sdk.oms.mercado.service.MercadoSdkClientService;
-import com.sdk.oms.tiktok.constant.TikTokConstant;
-import com.sdk.oms.tiktok.dto.TikTokShopInfoDTO;
-import com.sdk.oms.tiktok.dto.tiktok.order.view.OrdersBean;
-import com.sdk.oms.tiktok.service.TikTokSdkClientService;
-import com.sdk.oms.tiktok.util.EncryptionUtils;
-import jodd.util.StringUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
@@ -104,7 +94,9 @@ public class MercadoOrderApiInitHandler implements DmpInputApiInitHandler {
                     }
                     try {
                         Thread.sleep(sleepTime);
-                    } catch (InterruptedException e) {}
+                    } catch (InterruptedException e) {
+                    	Thread.currentThread().interrupt();
+                    }
                     sleepTime = sleepTime + 1000;
                     count = count + 1;
                 }
@@ -118,7 +110,7 @@ public class MercadoOrderApiInitHandler implements DmpInputApiInitHandler {
                         sb.toString(), params.toString(), JSONUtil.toJsonStr(apiResult)));
             }
             ObjectMapper objectMapper = new ObjectMapper();
-            com.sdk.oms.mercado.dto.mercado.order.OrderDTO orderDTO = null;
+            OrderDTO orderDTO = null;
             try {
                 orderDTO = objectMapper.readValue(JSONUtil.toJsonStr(apiResult.getData()), OrderDTO.class);
             } catch (JsonProcessingException e) {

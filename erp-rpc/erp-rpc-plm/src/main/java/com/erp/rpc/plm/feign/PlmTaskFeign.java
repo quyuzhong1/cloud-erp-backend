@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -327,7 +328,7 @@ public interface PlmTaskFeign {
     List<SkuVO> getNoInventorySku();
 
     @PostMapping("feign/product/listByCreateTimeList")
-    List<ProductDetailEntity> listByCreateTimeList(@Param("createTimeList") List skuCreateTimeList);
+    List<ProductDetailEntity> listByCreateTimeList(@Param("createTimeList") List<LocalDateTime> skuCreateTimeList);
 
     /**
      * 获取到父级的分类id
@@ -465,7 +466,7 @@ public interface PlmTaskFeign {
      * @return java.util.List<com.erp.model.plm.dto.ProductBomInfoDTO.skuBomVersion>
      **/
     @PostMapping("feign/bom/listBomVersionBySkuNos")
-    List<ProductBomInfoDTO.skuBomVersion> listBomVersionBySkuNos(@RequestBody List<String> skuNos);
+    List<ProductBomInfoDTO.SkuBomVersion> listBomVersionBySkuNos(@RequestBody List<String> skuNos);
 
     /**
      * @description: 根据skuId集合信息查询（只查了spu、sku表）
@@ -514,27 +515,6 @@ public interface PlmTaskFeign {
      */
     @PostMapping("feign/product/getSimpleSkuInfoByIds")
     List<SkuInfoSimpleVO> getSimpleSkuInfoByIds(@RequestBody List<String> skuIds);
-
-    /**
-     * 根据skuid 集合获取到sku信息 （走redis缓存审核sku时刷新缓存）
-     *
-     * 根据skuId集合获取到sku信息,推荐按需使用
-     * listSkuProductByIds  基础信息+产品信息
-     * listSkuCostByIds     基础信息+成本信息
-     * listSkuPackByIds     基础信息+产品信息+包装信息
-     * listSkuSaleByIds     基础信息+产品信息+销售信息
-     * listSkuLogisticsByIds基础信息+产品信息+物流信息
-     * listSkuCategoryByIds 基础信息+产品信息+分类信息
-     * listSkuPurchaseByIds 基础信息+产品信息+采购信息
-     *
-     * @param skuIds
-     * @return java.util.List<com.erp.model.plm.vo.SkuVO>
-     * @author zdy
-     * @date 2024-04-25 12:06
-     */
-    @Deprecated
-    @PostMapping("feign/product/listSkuAllAttributeByIds")
-    List<SkuVO> listSkuAllAttributeByIds(@RequestBody List<String> skuIds);
 
     /**
      * 根据skuid 集合获取到sku产品信息（基础信息+产品信息)
@@ -625,21 +605,13 @@ public interface PlmTaskFeign {
     void pilotApprovalPass(@RequestBody @Validated ApproveOneDTO approveOneDTO);
 
     /**
-     * 试产量产  审核 不通过
-     *
-     * @param
-     * @return 新增结果
-     */
-    @PostMapping("feign/plmWorkOption/pilotApprovalNoPass")
-    void pilotApprovalNoPass(@RequestBody @Validated ApproveOneDTO approveOneDTO);
-
-    /**
      * 查询bom (可以查询全部)
      * @return
      */
     @PostMapping("feign/bom/listAllBom")
     List<BomDTO.BomSku> listAllBom(@RequestBody List<String> childSkuIdList);
-
+    @PostMapping("feign/plmWorkOption/pilotApprovalNoPass")
+    void pilotApprovalNoPass(@RequestBody @Validated ApproveOneDTO approveOneDTO);
     /**
      * 获取已审核且已上市sku
      * @return List<SkuVO>

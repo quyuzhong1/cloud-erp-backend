@@ -62,7 +62,7 @@ public class PickingDetailServiceImpl extends SuperServiceImpl<PickingDetailMapp
                 .in(CollectionUtils.isNotEmpty(dto.getSkuNoList()), PickingDetailEntity::getSkuNo, dto.getSkuNoList())
                 .list();
         if (CollectionUtils.isEmpty(list)) {
-            return Collections.EMPTY_LIST;
+            return Collections.emptyList();
         }
         List<PickingDetailDTO.ListDTO> resultList = BeanMapperUtils.copyList(PickingDetailDTO.ListDTO.class, list);
         List<String> skuIds = resultList.stream().map(PickingDetailDTO.ListDTO::getSkuId).collect(Collectors.toList());

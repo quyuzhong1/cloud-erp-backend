@@ -6,7 +6,6 @@ import lombok.Getter;
 /**
  * @author Lambda
  * @Classname AppClientEnum
- * @Description TODO
  * @Date 2023-08-29 10:35
  * @Created by yl
  */

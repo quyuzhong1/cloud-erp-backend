@@ -3,6 +3,9 @@ package com.erp.server.dmp.pull.service.gyy;
 import com.alibaba.fastjson.JSONObject;
 import com.kingdee.bos.webapi.entity.QueryParam;
 import com.kingdee.bos.webapi.sdk.K3CloudApi;
+
+import lombok.extern.slf4j.Slf4j;
+
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.ContentType;
@@ -16,6 +19,7 @@ import java.security.MessageDigest;
 import java.util.LinkedList;
 import java.util.List;
 
+@Slf4j
 public class test {
 
     public static void main(String[] args) throws Exception {
@@ -112,7 +116,7 @@ public class test {
                 sign.append(hex.toUpperCase());
             }
         } catch (Exception e) {
-            e.printStackTrace();
+        	log.error("MD5错误" , e);
         }
         return sign.toString();
     }
@@ -139,7 +143,7 @@ public class test {
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+        	log.error("POST错误" , e);
         }
 
     }

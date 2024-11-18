@@ -169,14 +169,19 @@ public class TransferInfoEntity extends BaseEntity<TransferInfoEntity> {
      */
     @TableField("batch_no")
     private String batchNo;
+    /**
+     * 中转排序（反审使用）
+     */
+    @TableField("index")
+    private Integer index;
 
-    public static final String CODE = "code";
+    
 
     public static final String APPROVE_STATUS = "approve_status";
 
     public static final String BILL_DATE = "bill_date";
 
-    public static final String TYPE = "type";
+    
 
     public static final String IN_WAREHOUSE_ID = "in_warehouse_id";
 
@@ -210,7 +215,7 @@ public class TransferInfoEntity extends BaseEntity<TransferInfoEntity> {
 
     public static final String APPROVE_USER_ID = "approve_user_id";
 
-    public static final String REMARK = "remark";
+    
 
     public static final String SOURCE_ID = "source_id";
 

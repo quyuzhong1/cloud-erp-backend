@@ -90,11 +90,14 @@ public enum BusinessNoTypeEnum {
     CODE_SCLC(69, "SCLC","试产量产单",BusinessNoConstant.SCLC),
     THD(70, "THD","B2C退货单",BusinessNoConstant.THD),
 
+    CODE_TLD(67, "TLD","委外发退料单",BusinessNoConstant.TLD),
     CODE_JSRQ(70, "JSRQ","计算日期",BusinessNoConstant.JSRQ),
     CODE_S(71, "S","发货建议",BusinessNoConstant.S),
     CODE_P(72, "P","采购建议",BusinessNoConstant.P),
     CODE_PP(73, "PP","采购建议",BusinessNoConstant.PP),
-    CODE_TLD(67, "tld","委外发退料单",BusinessNoConstant.TLD),
+    CODE_FHJY(71, "FHJY","发货建议",BusinessNoConstant.FHJY),
+    CODE_CGJY(72, "CGJY","采购建议",BusinessNoConstant.CGJY),
+
     CODE_TKD(71, "TKD","退款单",BusinessNoConstant.TKD),
     CODE_XLSS(80, "XLSS","销量试算",BusinessNoConstant.XLSS),
     ;
@@ -152,7 +155,7 @@ public enum BusinessNoTypeEnum {
     public static BusinessNoTypeEnum getEnumByType(String code) {
         BusinessNoTypeEnum[] businessNoTypeEnums = values();
         for (BusinessNoTypeEnum businessNoTypeEnum : businessNoTypeEnums) {
-            if (businessNoTypeEnum.getCode().equals(code)) {
+            if (businessNoTypeEnum.getCode().toString().equals(code)) {
                 return businessNoTypeEnum;
             }
         }

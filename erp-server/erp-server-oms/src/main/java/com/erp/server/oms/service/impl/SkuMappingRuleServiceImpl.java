@@ -2,14 +2,10 @@ package com.erp.server.oms.service.impl;
 
 
 import cn.hutool.core.bean.BeanUtil;
-import cn.hutool.core.util.StrUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.TypeReference;
 import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.erp.model.oms.enums.ListingMatchResultEnum;
-import com.erp.model.plm.dto.BomDTO;
-import com.erp.model.plm.enums.BomTypeEnum;
-import org.apache.commons.lang3.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -26,18 +22,25 @@ import com.erp.model.oms.dto.SkuMappingRuleDTO;
 import com.erp.model.oms.entity.ListingInfoEntity;
 import com.erp.model.oms.entity.SkuMappingEntity;
 import com.erp.model.oms.entity.SkuMappingRuleEntity;
+import com.erp.model.oms.enums.ListingMatchResultEnum;
 import com.erp.model.oms.enums.SkuMappingRuleEnum;
+import com.erp.model.plm.dto.BomDTO;
+import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.oms.convert.SkuMappingConverter;
 import com.erp.server.oms.convert.SkuMappingRuleConverter;
 import com.erp.server.oms.mapper.SkuMappingRuleMapper;
-import com.erp.server.oms.service.*;
+import com.erp.server.oms.service.ListingInfoService;
+import com.erp.server.oms.service.OperateLogService;
+import com.erp.server.oms.service.SkuMappingRuleService;
+import com.erp.server.oms.service.SkuMappingService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.poi.ss.formula.functions.T;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -57,7 +60,7 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 public class SkuMappingRuleServiceImpl extends SuperServiceImpl<SkuMappingRuleMapper, SkuMappingRuleEntity> implements SkuMappingRuleService {
-    @Autowired
+    @Resource
     private OperateLogService operateLogService;
 
     @Resource
@@ -84,7 +87,7 @@ public class SkuMappingRuleServiceImpl extends SuperServiceImpl<SkuMappingRuleMa
         }
 
         // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "sku对照表匹配规则" , skuMappingRuleEntity.getId());
+        String msg =  CharSequenceUtil.format("用户【{}】新增【{}】id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "sku对照表匹配规则" , skuMappingRuleEntity.getId());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SKU_MAPPING_RULE.getCode(), skuMappingRuleEntity.getId(), "新增操作");
 
         return new BaseResultDTO.AddDTO(skuMappingRuleEntity.getId(), skuMappingRuleEntity.getId());
@@ -97,7 +100,7 @@ public class SkuMappingRuleServiceImpl extends SuperServiceImpl<SkuMappingRuleMa
     @Override
     public Boolean update(SkuMappingRuleDTO.UpdateDTO updateDTO) {
         SkuMappingRuleEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "sku对照表匹配规则"));
+        isExist(old);
         if(!old.getRuleType().equals(updateDTO.getRuleType())){
             throw new ServiceException("不能更改规则类型");
         }
@@ -112,12 +115,18 @@ public class SkuMappingRuleServiceImpl extends SuperServiceImpl<SkuMappingRuleMa
         }
         // 记录主单操作日志
         log.info("编辑 开始记录sku对照表匹配规则日志数据，id：【{}】", skuMappingRuleEntity.getId());
-        String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), skuMappingRuleEntity.getId(), "sku对照表匹配规则");
+        String msg =  CharSequenceUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), skuMappingRuleEntity.getId(), "sku对照表匹配规则");
         SkuMappingRuleDTO.LogDTO oldView = this.buildLogDTO(old);
         skuMappingRuleEntity.setDisabled(old.getDisabled());
         SkuMappingRuleDTO.LogDTO newView = this.buildLogDTO(skuMappingRuleEntity);
         operateLogService.addModuleOperateLogByObj(oldView, newView, ModuleTypeEnum.SKU_MAPPING_RULE.getCode(), skuMappingRuleEntity.getId(), msg);
         return Boolean.TRUE;
+    }
+
+    private static void isExist(SkuMappingRuleEntity old) {
+        if(null == old){
+            throw new ServiceException(ApiError.NOT_EXIST_BILL, "sku对照表匹配规则");
+        }
     }
 
     @Override
@@ -130,14 +139,14 @@ public class SkuMappingRuleServiceImpl extends SuperServiceImpl<SkuMappingRuleMa
         SkuMappingRuleEntity old = super.getById(dto.getId());
         SkuMappingRuleDTO.LogDTO oldView = this.buildLogDTO(old);
         oldView.setDisabled(old.getDisabled());
-        Optional.of(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "sku对照表匹配规则"));
+        isExist(old);
         old.setDisabled(dto.getDisabled());
         boolean save = super.updateById(old);
         if(!save) {
             throw new ServiceException("sku对照表匹配规则保存失败");
         }
         SkuMappingRuleDTO.LogDTO newView = this.buildLogDTO(old);
-        String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), old.getId(), "sku对照表匹配规则");
+        String msg =  CharSequenceUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), old.getId(), "sku对照表匹配规则");
         operateLogService.addModuleOperateLogByObj(oldView, newView, ModuleTypeEnum.SKU_MAPPING_RULE.getCode(), old.getId(), msg);
         return Boolean.TRUE;
     }
@@ -204,7 +213,7 @@ public class SkuMappingRuleServiceImpl extends SuperServiceImpl<SkuMappingRuleMa
             if(StringUtils.isEmpty(ruleConditionsDTO.getChildCombineSplitSymbol()) || StringUtils.isEmpty(ruleConditionsDTO.getChildQtySplitSymbol())){
                 throw new ServiceException("拆分符号不能为空");
             }
-            List<String> splitList = Arrays.asList(result.split("\\"+ruleConditionsDTO.getChildCombineSplitSymbol()));
+            List<String> splitList = this.splitWithoutDelimiter(result,ruleConditionsDTO.getChildCombineSplitSymbol());
             String desc = "";
             for (String childrenSku : splitList) {
                 SkuMappingRuleDTO.SplitSkuDTO splitSkuDTO = this.splitByLastSymbol(childrenSku,ruleConditionsDTO.getChildQtySplitSymbol());
@@ -395,7 +404,7 @@ public class SkuMappingRuleServiceImpl extends SuperServiceImpl<SkuMappingRuleMa
                     JSONObject jsonObject = new JSONObject(skuMappingRuleEntity.getRuleContent());
                     SkuMappingRuleDTO.RuleDTO ruleDTO = JSONObject.parseObject(jsonObject.toJSONString(),new TypeReference<SkuMappingRuleDTO.RuleDTO>() {}.getType());
                     SkuMappingRuleDTO.RuleConditionsDTO ruleConditionsDTO = ruleDTO.getRuleContentList().get(0);
-                    List<String> splitList = Arrays.asList(handlePlatformSkuNo.split("\\"+ruleConditionsDTO.getChildCombineSplitSymbol()));
+                    List<String> splitList = this.splitWithoutDelimiter(handlePlatformSkuNo,ruleConditionsDTO.getChildCombineSplitSymbol());
                     StringBuilder matchStr = new StringBuilder();
                     for (String childrenSku : splitList) {
                         SkuMappingRuleDTO.SplitSkuDTO splitSkuDTO = this.splitByLastSymbol(childrenSku,ruleConditionsDTO.getChildQtySplitSymbol());
@@ -464,8 +473,9 @@ public class SkuMappingRuleServiceImpl extends SuperServiceImpl<SkuMappingRuleMa
                 oldLogEntity.setProductSkuId(listingInfoWithSkuMappingDTO.getProductSkuId());
                 oldLogEntity.setProductSkuNo(listingInfoWithSkuMappingDTO.getProductSkuNo());
                 oldLogEntity.setProductName(listingInfoWithSkuMappingDTO.getProductName());
-                operateLogService.addModuleOperateLogByObj(oldLogEntity, skuMappingEntitity, ModuleTypeEnum.SKU_MAPPING.getCode(),skuMappingEntitity.getListingId() , "自动匹配sku对照表");
-            }
+                String msg =  CharSequenceUtil.format("用户【{}】执行自动匹配规则，匹配前sku【{}】,匹配后sku【{}】", UserContext.getDefaultLoginUser().getUserName(),oldLogEntity.getProductSkuNo() , skuMappingEntitity.getProductSkuNo());
+                operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.LISTING_INFO.getCode(), skuMappingEntitity.getListingId(), "自动匹配");
+             }
         }
         if(CollectionUtils.isNotEmpty(updateListingList)){
             listingInfoService.updateBatchById(updateListingList,2000);
@@ -474,7 +484,7 @@ public class SkuMappingRuleServiceImpl extends SuperServiceImpl<SkuMappingRuleMa
 
     @Override
     public PagingVO<SkuMappingRuleDTO.ListDTO> paging(PagingDTO<SkuMappingRuleDTO.ParamsDTO> dto) {
-        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+        Page<T> query = new Page<>(dto.getCurrPage(), dto.getPageSize());
         IPage<SkuMappingRuleDTO.ListDTO> pageData = baseMapper.paging(query, dto.getParams());
         pageData.getRecords().forEach(v->{
             v.setRuleTypeName(EnumMessage.getNameByCode(SkuMappingRuleEnum.class,v.getRuleType()));
@@ -507,12 +517,12 @@ public class SkuMappingRuleServiceImpl extends SuperServiceImpl<SkuMappingRuleMa
     }
     public boolean compareSplitStrings(String a, String b) {
         // 分割字符串 a
-        String[] partsA = a.split("丨", 2);
+        String[] partsA = a.split("丨");
         // 分割字符串 b
-        String[] partsB = b.split("丨", 2);
+        String[] partsB = b.split("丨");
 
         // 检查分割后的部分是否相等，顺序可以不一致
-        if (partsA.length == 2 && partsB.length == 2) {
+        if (partsA.length == partsB.length) {
             Set<String> setA = new HashSet<>(Arrays.asList(partsA));
             Set<String> setB = new HashSet<>(Arrays.asList(partsB));
 
@@ -522,4 +532,62 @@ public class SkuMappingRuleServiceImpl extends SuperServiceImpl<SkuMappingRuleMa
         // 如果任何一个字符串没有被正确分割成两部分，返回 false
         return false;
     }
+
+
+    /**
+     * 按照给定的分隔符拆分字符串，特殊处理连续分隔符和末尾分隔符的情况。
+     *
+     * @param input 待拆分的字符串
+     * @param delimiter 分隔符
+     * @return 拆分后的字符串列表
+     */
+    public List<String> splitWithoutDelimiter(String input, String delimiter) {
+        if(StringUtils.isBlank(input)){
+            return new ArrayList<>();
+        }
+        if(StringUtils.isBlank(delimiter)){
+            return Collections.singletonList(input);
+        }
+
+        List<String> result = new ArrayList<>();
+        int start = 0;
+        int delimiterLength = delimiter.length();
+
+        int index = input.indexOf(delimiter, start);
+        while (index >= 0) {
+            // 添加当前分隔符之前的子字符串
+            String addStr = "";
+            if (index > start) {
+                addStr = input.substring(start, index);
+            }
+            // 记录分隔符的起始位置
+            int delimiterStart = index;
+            // 跳过分隔符，处理连续分隔符
+            index += delimiterLength;
+            while (index <= input.length() - delimiterLength && input.substring(index, index + delimiterLength).equals(delimiter)) {
+                index += delimiterLength;
+            }
+            // 更新 start 为最后一个分隔符之后的位置
+            start = index;
+            // 处理连续分隔符的特殊情况
+            if (start > delimiterStart + delimiterLength) {
+                addStr = addStr + input.substring(delimiterStart, start-1);
+            }
+            // 查找下一个分隔符
+            index = input.indexOf(delimiter, start);
+            result.add(addStr);
+        }
+        // 处理最后一个子字符串
+        if (start < input.length()) {
+            result.add(input.substring(start));
+        }
+        if (input.endsWith(delimiter)) {
+            String lastStr = result.get(result.size() - 1);
+            result.remove(result.size() - 1);
+            result.add(lastStr + input.substring(start-delimiter.length()));
+        }
+
+        return result;
+    }
+
 }

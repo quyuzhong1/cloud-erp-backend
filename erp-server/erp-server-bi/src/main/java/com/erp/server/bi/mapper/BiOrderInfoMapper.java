@@ -31,7 +31,7 @@ public interface BiOrderInfoMapper extends BaseMapper<BiOrderInfoEntity> {
      * @author Will
      * @date: 2022/12/13 15:50
      */
-    IPage<DmpOrderInfoDTO> paging(Page query, @Param("params") DmpOrderInfoSearchDTO params);
+    IPage<DmpOrderInfoDTO> paging(Page<Object> query, @Param("params") DmpOrderInfoSearchDTO params);
 
     /**
      * @param params

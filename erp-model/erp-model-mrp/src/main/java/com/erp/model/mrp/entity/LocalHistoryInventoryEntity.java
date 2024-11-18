@@ -8,6 +8,7 @@ import com.common.core.entity.BaseEntity;
 
 import java.io.Serializable;
 import java.util.Date;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
@@ -24,7 +25,15 @@ import lombok.experimental.Accessors;
 @Setter
 @Accessors(chain = true)
 @TableName("local_history_inventory")
+@EqualsAndHashCode(callSuper = true)
 public class LocalHistoryInventoryEntity extends BaseEntity<LocalHistoryInventoryEntity> {
+
+    private static final long serialVersionUID = 5962157482578744006L;
+    /**
+     * 组织id
+     */
+    @TableField("org_id")
+    private String orgId;
 
     /**
      * 仓库id

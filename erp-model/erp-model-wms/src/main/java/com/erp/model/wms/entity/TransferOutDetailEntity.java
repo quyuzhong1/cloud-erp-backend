@@ -78,13 +78,13 @@ public class TransferOutDetailEntity extends BaseEntity<TransferOutDetailEntity>
 
     public static final String SKU_NO = "sku_no";
 
-    public static final String QTY = "qty";
+    
 
     public static final String OUT_WAREHOUSE_LOCATION = "out_warehouse_location";
 
-    public static final String REMARK = "remark";
+    
 
-    public static final String UNIT = "unit";
+    
 
     @Override
     public Serializable pkVal() {

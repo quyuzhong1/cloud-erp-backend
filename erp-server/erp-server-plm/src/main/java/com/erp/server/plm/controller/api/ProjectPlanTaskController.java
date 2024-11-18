@@ -69,7 +69,7 @@ public class ProjectPlanTaskController extends BaseController {
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出数据")
     @PostMapping("/exportExcel")
-    public ApiResult export(@RequestBody @Validated ProjectPlanTaskConditionDTO dto) {
+    public ApiResult<Object> export(@RequestBody @Validated ProjectPlanTaskConditionDTO dto) {
        Boolean result= projectPlanTaskService.exportExcel(dto);
         return result?success():failure();
     }
@@ -79,7 +79,7 @@ public class ProjectPlanTaskController extends BaseController {
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出模板")
     @GetMapping("/exportTemplate")
-    public ApiResult exportScheduleTemplate(HttpServletRequest request, HttpServletResponse response) {
+    public ApiResult<Object> exportScheduleTemplate(HttpServletRequest request, HttpServletResponse response) {
         projectPlanTaskService.exportScheduleTemplate(request, response);
         return success();
     }
@@ -90,7 +90,7 @@ public class ProjectPlanTaskController extends BaseController {
      */
     @LogAction(value = LogActionEnum.CANCEL, desc = "取消排期", keyIdName = "productId")
     @PostMapping("/cancel")
-    public ApiResult cancelSchedule(@RequestBody @Validated HandleTaskScheduleDTO dto) {
+    public ApiResult<Object> cancelSchedule(@RequestBody @Validated HandleTaskScheduleDTO dto) {
         Boolean result = projectPlanTaskService.cancelSchedule(dto);
         return result == true ? success() : failure();
     }
@@ -100,7 +100,7 @@ public class ProjectPlanTaskController extends BaseController {
      */
     @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "重启排期:产品id={productId},任务id={taskIdList}")
     @PostMapping("/restart")
-    public ApiResult restartSchedule(@RequestBody @Validated HandleTaskScheduleDTO dto) {
+    public ApiResult<Object> restartSchedule(@RequestBody @Validated HandleTaskScheduleDTO dto) {
         Boolean result = projectPlanTaskService.restartSchedule(dto);
         return result == true ? success() : failure();
     }
@@ -110,7 +110,7 @@ public class ProjectPlanTaskController extends BaseController {
      */
     @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "变更排期:产品id={productId}")
     @PostMapping("/change")
-    public ApiResult changeSchedule(@RequestBody @Validated ChangeScheduleDTO dto) {
+    public ApiResult<Object> changeSchedule(@RequestBody @Validated ChangeScheduleDTO dto) {
         Boolean result = projectPlanTaskService.changeSchedule(dto);
         return result == true ? success() : failure();
     }
@@ -120,7 +120,7 @@ public class ProjectPlanTaskController extends BaseController {
      */
     @LogAction(value = LogActionEnum.IMPORT, desc = "导入数据")
     @PostMapping("/import")
-    public ApiResult importTaskSchedule(@RequestParam(value = "excelFile") MultipartFile excelFile,@RequestParam(value = "productId") String  productId, HttpServletResponse response) {
+    public ApiResult<Object> importTaskSchedule(@RequestParam(value = "excelFile") MultipartFile excelFile,@RequestParam(value = "productId") String  productId, HttpServletResponse response) {
         Boolean result = projectPlanTaskService.importTaskSchedule(excelFile,productId, response);
         return result == true ? success() : failure();
     }
@@ -132,7 +132,7 @@ public class ProjectPlanTaskController extends BaseController {
      */
     @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "批量更新:产品ID={productId},任务ids={taskIdList}")
     @PostMapping("/batchUpdate")
-    public ApiResult batchUpdate(@RequestBody @Validated BatchScheduleTaskDTO dto) {
+    public ApiResult<Object> batchUpdate(@RequestBody @Validated BatchScheduleTaskDTO dto) {
         Boolean result = projectTaskService.batchUpdate(dto);
         return result == true ? success() : failure();
     }
@@ -153,7 +153,7 @@ public class ProjectPlanTaskController extends BaseController {
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出变更排期数据")
     @PostMapping("/exportChangeSchedule")
-    public ApiResult exportChangeSchedule(@RequestBody @Validated HandleTaskScheduleDTO dto, HttpServletResponse response) {
+    public ApiResult<Object> exportChangeSchedule(@RequestBody @Validated HandleTaskScheduleDTO dto, HttpServletResponse response) {
         projectPlanTaskService.exportChangeSchedule(dto, response);
         return success();
     }
