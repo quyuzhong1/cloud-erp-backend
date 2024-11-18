@@ -86,6 +86,9 @@ public class SyncKingdeeProductDetailServiceImpl implements SyncKingdeeProductDe
     
     @Resource
     private PlmPushMsgService plmPushMsgService;
+    
+    @Resource
+    private ProductDetailService productDetailService;
 
     /**
      * 组装数据发送到金蝶
@@ -320,13 +323,14 @@ public class SyncKingdeeProductDetailServiceImpl implements SyncKingdeeProductDe
 
 	@Override
 	public void syncDataToSdy(ProductDetailEntity entity, String operate) {
+		String id = entity.getId();
 		PlmPushMsgEntity plmPushMsgEntity = new PlmPushMsgEntity();
         plmPushMsgEntity.setTargetPlatform(DmpBasicSystemCodeEnum.SDY.getCode());
         plmPushMsgEntity.setSourceType(SourceTypeEnum.SDY_PRODUCT_DETAIL.getCode());
-        plmPushMsgEntity.setSourceId(entity.getId());
+		plmPushMsgEntity.setSourceId(id);
         plmPushMsgEntity.setSourceCode(entity.getSkuNo());
         plmPushMsgEntity.setSyncOperate(operate);
-        plmPushMsgEntity.setPushData(JSON.toJSONString(this.newSyncDataToSdy(entity, operate)));
+        plmPushMsgEntity.setPushData(JSON.toJSONString(this.newSyncDataToSdy(productDetailService.getById(id), operate)));
         
         plmPushMsgService.save(plmPushMsgEntity);
 	}

@@ -216,7 +216,7 @@ public class WarehouseExcelListener extends AnalysisEventListener<WarehouseExcel
             if(CollUtil.isEmpty(channelAffiliationList)) {
             	errorMsgList.add("所属渠道不存在");
             }
-            addDTO.setChannelAffiliation(channelAffiliationList.get(0).getId());	
+            addDTO.setChannelAffiliation(channelAffiliationList.get(0).getValue());	
         }
         
         //发货组织
@@ -241,7 +241,7 @@ public class WarehouseExcelListener extends AnalysisEventListener<WarehouseExcel
         if(StringUtils.isNotBlank(openTimeStr)) {
         	LocalDateTime openTime = this.getDateValue(openTimeStr);
             if(openTime == null) {
-            	errorMsgList.add("启用日期格式错误");
+            	errorMsgList.add("启用时间格式错误");
             }
             addDTO.setOpenTime(openTime);
         }

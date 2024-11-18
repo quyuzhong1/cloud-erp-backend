@@ -37,6 +37,8 @@ import com.erp.server.wms.service.WmsPushMsgService;
 
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
+
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -259,7 +261,11 @@ public class SyncKingdeeWarehouseServiceImpl implements SyncKingdeeWarehouseServ
 		resultMap.put("inventory_org_name", idCodeMap.get(orgId));
 		resultMap.put("warehouse_code", entity.getKingdeeWarehouseCode());
 		resultMap.put("warehouse_name", entity.getName());
-		resultMap.put("channel_affiliation",  FeignQuery.getById(com.erp.model.oms.entity.DictBasicEntity.class, entity.getChannelAffiliation()).getName());
+		String channelAffiliation = entity.getChannelAffiliation();
+		if(StringUtils.isNotBlank(channelAffiliation)) {
+			com.erp.model.oms.entity.DictBasicEntity dictBasicEntity = FeignQuery.getById(com.erp.model.oms.entity.DictBasicEntity.class, channelAffiliation);
+			resultMap.put("channel_affiliation",  dictBasicEntity.getName());
+		}
 		resultMap.put("shipping_organization", idCodeMap.get(shippingOrganization));
 		resultMap.put("financial_organization", idCodeMap.get(financialOrganization));
 		resultMap.put("warehouse_type", dictBasicService.getById(entity.getTypeId()).getName());

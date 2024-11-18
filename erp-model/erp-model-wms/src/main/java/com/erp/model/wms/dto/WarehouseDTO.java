@@ -539,7 +539,7 @@ public class WarehouseDTO implements Serializable {
         /**
          * 所属渠道，名称为字段后面加Name
          */
-        @Dict(serviceCode = ServiceCodeNameEnum.OMS , queryFieldName = "id")
+        @Dict(serviceCode = ServiceCodeNameEnum.OMS , queryTypeField = "salesPlatform")
         private String channelAffiliation;
         
         /**
