@@ -29,6 +29,7 @@ import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.FileUtil;
 import com.common.core.utils.MathUtil;
+import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
 import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoB2cLogisticsEntity;
@@ -43,7 +44,10 @@ import com.erp.model.tms.vo.response.InterceptResponseVO;
 import com.erp.model.tms.vo.response.LogisticsOrderResponseVO;
 import com.erp.model.tms.vo.response.LogisticsPrintLabelResponse;
 import com.erp.model.wms.dto.FirstMileDeliveryDTO;
+import com.erp.model.wms.dto.ShudiyunB2cOrderDTO;
+import com.erp.model.wms.entity.SoOutstockDetailEntity;
 import com.erp.model.wms.entity.SoOutstockEntity;
+import com.erp.model.wms.entity.WmsPushMsgEntity;
 import com.erp.model.wms.enums.B2cDeliveryLogisticTypeEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.oms.feign.CfgRuleFeign;
@@ -60,6 +64,7 @@ import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -140,6 +145,8 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
     private DownloadTaskFeign downloadTaskFeign;
     @Resource
     private WmsFirstMileDeliveryFeign wmsFirstMileDeliveryFeign;
+    @Resource
+    private LogisticsSupplierService logisticsSupplierService;
 
     @Resource
     private TmsPushMsgService tmsPushMsgService;
@@ -158,6 +165,8 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
 
         logisticsBillDetailService.add(logisticsBillEntity, addDTO.getDetailList(),true);
 
+        //同步速递云运单
+        pushSdyFieldHandler(logisticsBillEntity,SyncOperateEnum.OPERATE_APPROVE.getCode());
         return save;
     }
 
@@ -182,6 +191,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         // 记录主单操作日志
         String msg = CharSequenceUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), logisticsBillEntity.getId(), "物流单");
         operateLogService.addModuleOperateLogByObj(old, logisticsBillEntity, null, logisticsBillEntity.getId(), msg);
+
         return Boolean.TRUE;
     }
 
@@ -196,9 +206,14 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         List<LogisticsBillEntity> billEntityList = listByOutstockIds(outstockIdList);
         if (CollectionUtils.isNotEmpty(billEntityList)) {
             List<String> ids = billEntityList.stream().map(LogisticsBillEntity::getId).collect(Collectors.toList());
+            List<LogisticsBillEntity> logisticsBillEntityList = this.listByIds(ids);
+            //同步速递云运单
+            logisticsBillEntityList.forEach(req -> pushSdyFieldHandler(req, SyncOperateEnum.OPERATE_DELETE.getCode()));
+
             logisticsBillDetailService.removeByMainIds(ids,true);
             return this.removeByIds(ids);
         }
+
         return Boolean.FALSE;
     }
 
@@ -263,6 +278,9 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
             logisticsBillDetailService.saveOrUpdateBatch(detailEntityList);
             //新增物流费用单
             addLogisticsBillCost(saveEntity,detailEntityList);
+
+            //同步速递云运单
+            pushSdyFieldHandler(saveEntity, SyncOperateEnum.OPERATE_APPROVE.getCode());
         }
         return Boolean.TRUE;
     }
@@ -1254,5 +1272,61 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
                 this.lambdaUpdate().eq(LogisticsBillEntity::getId, entity.getId()).set(LogisticsBillEntity::getBusinessCode, businessCode).update();
             }
         }
+    }
+
+    /**
+     * 同步速递云销售出库单
+     * @param entity
+     * @param operateEnum
+     */
+    public Boolean pushSdyFieldHandler(LogisticsBillEntity entity, String operateEnum) {
+        List<ShudiyunB2cOrderDTO> shudiyunB2cOrderDTOList = new ArrayList<>();
+
+        List<LogisticsBillDetailEntity> detailEntityList = logisticsBillDetailService.listByMainIds(Arrays.asList(entity.getId()));
+                LogisticsChannelEntity channelEntity = logisticsChannelService.getById(entity.getChannelId());
+
+        String supplierName = "";
+        if(Objects.nonNull(channelEntity)){
+            LogisticsSupplierEntity supplierEntity = logisticsSupplierService.getById(channelEntity.getMainId());
+            supplierName = supplierEntity.getSupplierName();
+        }
+
+        for (int i = 0; i < detailEntityList.size(); i++) {
+            LogisticsBillDetailEntity logisticsBillDetailEntity = detailEntityList.get(i);
+
+            ShudiyunB2cOrderDTO shudiyunB2cOrderDTO = new ShudiyunB2cOrderDTO();
+
+            shudiyunB2cOrderDTO.setTransaction_unique_key(entity.getId()+logisticsBillDetailEntity.getId());
+            shudiyunB2cOrderDTO.setBiz_no(entity.getTransportNo());
+            shudiyunB2cOrderDTO.setBiz_time(entity.getDeliveryTime());
+            //默认运单
+            shudiyunB2cOrderDTO.setTransaction_type("200.20");
+
+            shudiyunB2cOrderDTO.setTransaction_sub_type("200.20.01");
+            shudiyunB2cOrderDTO.setBiz_status(operateEnum);
+
+            shudiyunB2cOrderDTO.setDelivery_time(entity.getDeliveryTime());
+            shudiyunB2cOrderDTO.setLogistics_delivery_time(logisticsBillDetailEntity.getSignTime());
+            shudiyunB2cOrderDTO.setDelivery_number(entity.getOutstockCode());
+            shudiyunB2cOrderDTO.setLogistic_company(supplierName);
+            shudiyunB2cOrderDTO.setLogistic_company_code(channelEntity.getMainId());
+            shudiyunB2cOrderDTO.setWaybill_number(entity.getTransportNo());
+            shudiyunB2cOrderDTO.setForeign_waybill_number(logisticsBillDetailEntity.getTrackNo());
+            shudiyunB2cOrderDTO.setSource_system("SDC");
+            shudiyunB2cOrderDTO.setRoot_node_no_initial(logisticsBillDetailEntity.getTrackNo());
+
+            shudiyunB2cOrderDTOList.add(shudiyunB2cOrderDTO);
+
+        }
+
+        TmsPushMsgEntity tmsPushMsgEntity = new TmsPushMsgEntity();
+        tmsPushMsgEntity.setTargetPlatform(DmpBasicSystemCodeEnum.SDY.getCode());
+        tmsPushMsgEntity.setSourceType(SourceTypeEnum.SDY_SO_OUTSTOCK.getCode());
+        tmsPushMsgEntity.setSourceId(entity.getId());
+        tmsPushMsgEntity.setSourceCode(entity.getTransportNo());
+        tmsPushMsgEntity.setSyncOperate(operateEnum);
+        tmsPushMsgEntity.setPushData(JSON.toJSONString(shudiyunB2cOrderDTOList));
+        //同步运单
+        return tmsPushMsgService.save(tmsPushMsgEntity);
     }
 }

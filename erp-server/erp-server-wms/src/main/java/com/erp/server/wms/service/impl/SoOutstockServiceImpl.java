@@ -783,6 +783,8 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             sendPushTask(Collections.singletonList(entity),SyncOperateEnum.OPERATE_APPROVE.getCode());
             //推送旺店通
             this.syncToWdt(entity,SyncOperateEnum.OPERATE_APPROVE);
+            //推送数帝云
+            sdyFieldHandler(entity,SyncOperateEnum.OPERATE_APPROVE.getCode());
 
         }
         if (!SourceTypeEnum.SAL_OUTSTOCK.getCode().equals(entity.getSourceType())) {
@@ -1157,6 +1159,9 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             }
             //推送旺店通
             this.syncToWdt(entity,SyncOperateEnum.OPERATE_DISAPPROVE);
+
+            //推送数帝云
+            sdyFieldHandler(entity,SyncOperateEnum.OPERATE_DISAPPROVE.getCode());
         }
         return BatchResultDTO.success(entity.getId(),entity.getCode(), "反审核成功");
     }
@@ -1224,6 +1229,9 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
 
             //B2B发送金蝶
             sendPushTask(list,SyncOperateEnum.OPERATE_DELETE.getCode());
+
+            //推送数帝云
+            list.forEach(req -> sdyFieldHandler(req,SyncOperateEnum.OPERATE_DISAPPROVE.getCode()));
         }
         return result;
     }
