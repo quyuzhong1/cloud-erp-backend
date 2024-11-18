@@ -296,8 +296,18 @@ public class TikTokOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHandler
 
         // 来源明细id
         detailDTO.setSourceDetailId(sourceDetailId);
+
+        List<String> thirdDetailIdList = soDetailEntityList.stream()
+                .map(DmpSoDetailEntity::getThirdDetailId)
+                .sorted()
+                .collect(Collectors.toList());
+
+        // 平台明细行
+        detailDTO.setPlatformLineNumber(String.join(",", thirdDetailIdList));
+
         // 标签json
         detailDTO.setLabelJson("");
+
         // 库存组织id
         detailDTO.setWarehouseOrgId("");
         // 库存组织名称
