@@ -6,7 +6,6 @@ import com.common.business.enums.ApproveStatusEnum;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.SoB2cCategoryTypeEnum;
 import com.erp.model.oms.enums.SoB2cOptionTypeEnum;
-import jnr.ffi.annotations.In;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -1056,12 +1055,6 @@ public class SoB2cDTO implements Serializable {
          * SoB2cOptionTypeEnum枚举（拆分、合并）
          */
         private SoB2cOptionTypeEnum operateType;
-
-        /**
-         * 合并--所有子订单的平台订单编号合并，使用逗号隔开
-         * 其余情况--为空
-         */
-        private String mergePlatformCode;
     }
 
 
