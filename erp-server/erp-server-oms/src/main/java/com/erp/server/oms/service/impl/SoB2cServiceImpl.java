@@ -125,6 +125,7 @@ import org.apache.commons.math3.util.Pair;
 import org.apache.poi.ss.formula.functions.T;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
@@ -477,50 +478,31 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
 
     @Override
+    @Cacheable(cacheNames = "cache:oms:soB2cTabList",keyGenerator = "myKeyGenerator")
     public List<SoB2cDTO.TabListDTO> tabList(PermissionsDTO param) {
         SoB2cTabEnum[] values = SoB2cTabEnum.values();
-        List<Future<TabListDTO>> futureList = new ArrayList<>();
         List<SoB2cDTO.TabListDTO> list = new ArrayList<>();
         SoB2cDTO.ShopAuthResultDTO shopAuthResultDTO = handleShopSysUserAuth();
+        List<Map<String, String>> maps = new ArrayList<>(values.length);
         for (SoB2cTabEnum item : values) {
-            Future<TabListDTO> submit = soB2cTabExecutorPool.submit(() -> {
-            	SoB2cDTO.PagingParamDTO searchParamDTO = new SoB2cDTO.PagingParamDTO();
-                searchParamDTO.setPermissionSql(param.getPermissionSql());
+            String tabSql = soB2cQueryHandler.getTabSql(item.getCode());
+            HashMap<String, String> map = new HashMap<>();
+            map.put("tabFlag", item.getCode());
+            map.put("tabFlagName", item.getName());
+            map.put("sql", tabSql);
+            maps.add(map);
+            if (Objects.isNull(shopAuthResultDTO)) {
                 SoB2cDTO.TabListDTO resultDTO = new SoB2cDTO.TabListDTO();
-                String tabSql = soB2cQueryHandler.getTabSql(item.getCode());
-                HashMap<String,String> map = new HashMap<>();
-                map.put("default",tabSql);
-                searchParamDTO.setSqlMap(map);
-                //查询店铺设置权限
-                Integer count = MathUtil.ZERO;
-                if (ObjectUtil.isEmpty(shopAuthResultDTO)) {
-                    count = MathUtil.ZERO;
-                } else {
-                    count = this.baseMapper.listCount(searchParamDTO, shopAuthResultDTO);
-                }
-                resultDTO.setCount(ObjectUtils.isEmpty(count) ? MathUtil.ZERO : count);
+                resultDTO.setCount(MathUtil.ZERO);
                 resultDTO.setTabFlag(item.getCode());
                 resultDTO.setTabFlagName(item.getName());
-                return resultDTO;
-            });
-            futureList.add(submit);
-        }
-        for(Future<TabListDTO> f : futureList) {
-        	try {
-				list.add(f.get());
-			} catch (InterruptedException e) {
-                // 恢复线程的中断状态，确保中断标志不会被忽略
-                Thread.currentThread().interrupt();
-                log.error("线程被中断", e);
-                throw new ServiceException("线程被中断", e);
-            } catch (ExecutionException e) {
-                log.error("线程任务执行异常", e);
-                throw new ServiceException("线程任务执行异常", e.getCause());
-            } catch (ThreadDeath td) {
-                log.error("捕获到 ThreadDeath，线程终止", td);
-                throw td; // 重新抛出以允许线程正常终止
+                list.add(resultDTO);
             }
         }
+        if (Objects.isNull(shopAuthResultDTO)) {
+            return list;
+        }
+        list = this.baseMapper.listCountUnionAll(maps, shopAuthResultDTO);
         return list;
     }
 
@@ -8321,7 +8303,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             labelDetailStr.append(CollectionUtils.isNotEmpty(labelJsonDTO.getTagList()) && labelJsonDTO.getTagList().contains("leadTimeTag#10") ? "十日达," : "");
             labelDetailStr.append(CollectionUtils.isNotEmpty(labelJsonDTO.getTagList()) && labelJsonDTO.getTagList().contains("leadTimeTag#12") ? "12日达," : "");
             labelDetailStr.append(CollectionUtils.isNotEmpty(labelJsonDTO.getTagList()) && labelJsonDTO.getTagList().contains("leadTimeTag#15") ? "15日达," : "");
-            labelDetailStr.append(Objects.nonNull(labelJsonDTO.getIsRefunded()) && labelJsonDTO.getIsRefunded() ? "退款订单" : "");
+            labelDetailStr.append(Objects.nonNull(labelJsonDTO.getIsRefunded()) && labelJsonDTO.getIsRefunded() ? "退款订单," : "");
         }
         //存在仓库则需要判断是否缺货
         if (StrUtil.isNotBlank(exportDTO.getWarehouseId())) {
@@ -8361,8 +8343,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 detailLabelDTO.setIsOutStock(Boolean.FALSE);
             }
         }
-        labelDetailStr.append(Objects.nonNull(detailLabelDTO.getIsOutStock()) && detailLabelDTO.getIsOutStock() ? "缺货订单" : "");
-        labelDetailStr.append(Objects.nonNull(detailLabelDTO.getIsVirtualOutStock()) && detailLabelDTO.getIsVirtualOutStock() ? "缺货订单(X缺)" : "");
+        labelDetailStr.append(Objects.nonNull(detailLabelDTO.getIsOutStock()) && detailLabelDTO.getIsOutStock() ? "缺货订单," : "");
+        labelDetailStr.append(Objects.nonNull(detailLabelDTO.getIsVirtualOutStock()) && detailLabelDTO.getIsVirtualOutStock() ? "缺货订单(X缺)," : "");
         String labelDetail = labelDetailStr.toString();
         //移除字符串最后一个字符
         return StrUtil.isNotBlank(labelDetail) ? labelDetail.substring(0,labelDetail.length() - 1) : "";

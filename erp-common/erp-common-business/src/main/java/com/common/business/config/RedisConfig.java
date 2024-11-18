@@ -153,6 +153,7 @@ public class RedisConfig {
         Map<String, RedisCacheConfiguration> cacheConfigurations = new HashMap<>();
         cacheConfigurations.put("cache:wms:", redisCacheConfiguration.entryTtl(Duration.ofHours(2)));
         cacheConfigurations.put("cache:sys", redisCacheConfiguration.entryTtl(Duration.ofHours(2)));
+        cacheConfigurations.put("cache:oms", redisCacheConfiguration.entryTtl(Duration.ofMillis(30)));
 
 
         return RedisCacheManager
