@@ -52,7 +52,7 @@ public class MongoUtil {
 	private static Map<String, List<ParamData>> getFilterParam(Object obj){
 		Class<? extends Object> classType=obj.getClass();
 		List<Field> fields = new ArrayList<>() ;
-		while(classType !=null && !(classType instanceof Object)) {
+		while(classType !=null && !classType.getSimpleName().toLowerCase().equals("object")) {
 			fields.addAll(Arrays.asList(classType .getDeclaredFields()));
 			classType = classType.getSuperclass();
 		}
