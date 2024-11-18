@@ -47,6 +47,7 @@ import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.dto.CfgAppClientDTO;
+import com.erp.model.dmp.dto.DmpInoutDTO;
 import com.erp.model.dmp.entity.CfgAppClientEntity;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.dmp.enums.AppClientEnum;
@@ -95,6 +96,7 @@ import com.erp.oms.aliexpress.dto.response.*;
 import com.erp.oms.aliexpress.service.AliExpressDliveryOrderService;
 import com.erp.oms.aliexpress.service.AliExpressOrderService;
 import com.erp.oms.aliexpress.util.ApiException;
+import com.erp.rpc.dmp.feign.DmpInoutTaskFeign;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
@@ -359,7 +361,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     @Resource
     private WmsWarehouseFeign wmsWarehouseFeign;
     @Resource
-    private TransferInfoFeign transferInfoFeign;
+    private TransferInfoFeign transferInfoFeign;    
+    @Resource
+    private DmpInoutTaskFeign dmpInoutTaskFeign;
 
     @Resource
     @Qualifier("soB2cTabExecutorPool")
@@ -936,7 +940,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (ObjectUtil.isEmpty(entity)) {
             throw new ServiceException("未找到B2C销售订单表数据");
         }
-        SoB2cErrorEntity error = soB2cErrorService.getByMainIdAndType(id, SoB2cErrorTypeEnum.ORDER_FETCH_FAIL.getCode());
+        SoB2cErrorEntity error = soB2cErrorService.getByMainIdAndType(id, SoB2cErrorTypeEnum.ORDER_FETCH.getCode());
         if(null != error){
             throw new ServiceException("订单拉取失败，请手动重试刷新订单后操作");
         }
@@ -9164,40 +9168,53 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     }
 
     /**
-     * 拉取订单失败
+     * 拉取订单 -- dmp创建任务拉取
+     * @author jack
+     * @param ids
      */
     @Override
-    @Transactional(rollbackFor = Exception.class)
-    public void fetchOrderFail(SoB2cEntity soB2cEntity){
-        //生成异常信息
-        String soB2cId = soB2cEntity.getId();
-        String type = SoB2cErrorTypeEnum.ORDER_FETCH_FAIL.getCode();
-        String paramJson = JSONUtil.toJsonStr(soB2cEntity);
-        log.error("订单拉取失败,soB2cId:{},paramJson:{} 错误信息:{}", soB2cId, paramJson, ApiError.ERROR_SO_B2C_DELIVERY_FETCH.msg);
-        SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO();
-        addError.setType(type);
-        addError.setMainId(soB2cId);
-        addError.setMessage(ApiError.ERROR_SO_B2C_DELIVERY_FETCH.msg);
-        addError.setParamJson(paramJson);
-        soB2cErrorService.add(addError);
-        //审核不通过
-        //检查是否存在流程
-        ApproveOneDTO dto = new ApproveOneDTO(soB2cEntity.getId(), ApproveTypeEnum.REJECT.getStatus(), "", Boolean.FALSE);
-        this.approve(dto, null, "");
+    public boolean fetchOrder(List<String> ids) {
+        if (CollectionUtils.isEmpty(ids)) {
+            return false;
+        }
+
+        // 查询实体列表
+        List<SoB2cEntity> soB2cEntities = this.listByIds(ids);
+        if (CollectionUtils.isEmpty(soB2cEntities)) {
+            return false;
+        }
+
+        soB2cEntities = soB2cEntities.stream().filter(v -> !v.getSourceType().equals(SourceTypeEnum.SELF_ADD.getCode())).collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(soB2cEntities)) {
+            return false;
+        }
+        // 构建 DTO 列表
+        List<DmpInoutDTO.CreateInputDTO> createDTOList = soB2cEntities.stream()
+                .collect(Collectors.groupingBy(SoB2cEntity::getShopId)) // 按 shopId 分组
+                .entrySet().stream()
+                .map(entry -> createInputDTO(entry.getKey(), entry.getValue()))
+                .collect(Collectors.toList());
+
+        // 调用远程任务接口
+        return dmpInoutTaskFeign.doInputTask(createDTOList);
     }
 
-    /**
-     * 拉取订单成功
-     */
-    @Override
-    @Transactional(rollbackFor = Exception.class)
-    public void fetchOrderSuccess(SoB2cEntity soB2cEntity){
-        //清除异常信息
-        soB2cErrorService.removeErrorOrder(soB2cEntity.getId(), SoB2cErrorTypeEnum.ORDER_FETCH_FAIL.getCode());
-        //审核通过
-        //检查是否存在流程
-        ApproveOneDTO dto = new ApproveOneDTO(soB2cEntity.getId(), ApproveTypeEnum.PASS.getStatus(), "", Boolean.FALSE);
-        this.approve(dto, null, "");
+    // 辅助方法：根据 shopId 和分组数据构建 DTO
+    private DmpInoutDTO.CreateInputDTO createInputDTO(String shopId, List<SoB2cEntity> groupedEntities) {
+        DmpInoutDTO.CreateInputDTO dto = new DmpInoutDTO.CreateInputDTO();
+        dto.setNextLevelId(shopId);
+        dto.setSystemCode(groupedEntities.get(0).getDictPlatform()); // 默认取第一个的 dictPlatform
+        dto.setBillType(BusinessTypeEnum.ORDER.getCode());
+
+        // 构建 orderIdList 并封装为 JSON
+        Map<String, List<String>> map = Collections.singletonMap(
+                "orderIdList",
+                groupedEntities.stream()
+                        .map(SoB2cEntity::getPlatformCode)
+                        .collect(Collectors.toList())
+        );
+        dto.setDetailExtendJson(JSON.toJSONString(map));
+        return dto;
     }
 
 }

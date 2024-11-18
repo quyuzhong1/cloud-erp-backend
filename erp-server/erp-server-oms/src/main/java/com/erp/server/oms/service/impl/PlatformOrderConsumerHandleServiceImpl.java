@@ -7,22 +7,23 @@ import com.common.business.dto.PlatformOrderDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.enums.SyncOperateEnum;
-import com.common.business.wrapper.FeignQuery;
+import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.LengthConverterUtil;
 import com.common.core.utils.MathUtil;
 import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
 import com.erp.model.oms.dto.SoB2cDTO;
+import com.erp.model.oms.dto.SoB2cErrorDTO;
 import com.erp.model.oms.dto.SplitSkuDTO;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.CalculateSizeEnum;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
+import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
 import com.erp.model.oms.enums.SoB2cPayStatusEnum;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.plm.vo.SkuInfoSimpleVO;
 import com.erp.model.sys.entity.DictCountryEntity;
-import com.erp.model.sys.entity.SysRefererConfigEntity;
 import com.erp.rpc.dmp.feign.DmpMongoDbFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysDictFeign;
@@ -95,6 +96,8 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
     @Resource
     private PlatformOrderConsumerHandleService platformOrderConsumerHandleService;
 
+    @Resource
+    private SoB2cErrorService soB2cErrorService;
 
 
 
@@ -110,14 +113,6 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
 //            log.warn("已存在对应销售出库单不新增：单号={}", dto.getPlatformCode());
 //            return;
 //        }
-        // 跳过未作废的自发货无地址的订单
-        if ( notPlatformOrderNotExistAddress(dto)
-                && null != dto.getInvalidStatus()
-                && !dto.getInvalidStatus()
-        ) {
-            log.warn("卖家自发货订单无地址暂不新增：单号={}", dto.getPlatformCode());
-            return;
-        }
 
         SoB2cDTO.PullOrderResultDTO resultDTO = platformOrderConsumerHandleService.checkAndSaveAll(dto);
         SoB2cEntity mainEntity = resultDTO.getSoB2cEntity();
@@ -135,11 +130,42 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
               soB2cDetailService.updateWarehouseIdByMainId(mainEntity.getId(),warehouseId,true);
             }
         }
+
+        Boolean retryFlag = false;
+        // 跳过未作废的自发货无地址的订单
+        if ( notPlatformOrderNotExistAddress(dto)
+                && null != dto.getInvalidStatus()
+                && !dto.getInvalidStatus()) {
+            log.warn("卖家自发货订单无地址暂不新增：单号={}", dto.getPlatformCode());
+
+            SoB2cErrorEntity soB2cError = soB2cErrorService.getByMainIdAndType(mainEntity.getId(), SoB2cErrorTypeEnum.ORDER_FETCH.getCode());
+            if(null == soB2cError){
+                //记录异常
+                SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO();
+                addError.setType(SoB2cErrorTypeEnum.ORDER_FETCH.getCode());
+                addError.setMainId(mainEntity.getId());
+                addError.setMessage(ApiError.ERROR_SO_B2C_ORDER_FETCH.msg);
+                soB2cErrorService.add(addError);
+
+                //更新主表error标识
+                soB2cService.lambdaUpdate()
+                        .set(SoB2cEntity::getSignOrderError, SoB2cErrorTypeEnum.ORDER_FETCH.getCode())
+                        .eq(SoB2cEntity::getId, mainEntity.getId())
+                        .update();
+            }
+        }else{
+            //拉取成功后清除订单异常信息，并自动触发订单审核和配货规则
+            SoB2cErrorEntity soB2cError = soB2cErrorService.getByMainIdAndType(mainEntity.getId(), SoB2cErrorTypeEnum.ORDER_FETCH.getCode());
+            if(null != soB2cError){
+                soB2cErrorService.removeErrorOrder(mainEntity.getId(), SoB2cErrorTypeEnum.ORDER_FETCH.getCode());
+                retryFlag = true;
+            }
+        }
         // 平台仓订单不走任何规则
         // 取消订单不走规则
-        if (!mainEntity.hasPlatformWarehouseOrder()
+        if ( (!mainEntity.hasPlatformWarehouseOrder()
                 && !mainEntity.getIsCancel()
-                && !ApproveStatusEnum.REJECT.equals(mainEntity.getApproveStatus())
+                && !ApproveStatusEnum.REJECT.equals(mainEntity.getApproveStatus())) || Boolean.TRUE.equals(retryFlag)
         ) {
             // 已审核过的订单不走规则
             Integer count = operateLogService.lambdaQuery()

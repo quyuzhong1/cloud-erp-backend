@@ -1497,4 +1497,14 @@ public class SoB2cController extends BaseController {
         }
         return success(resultDTOS);
     }
+
+    /**
+     * 刷新订单
+     * @return
+     */
+    @PostMapping("/refreshOrderByIds")
+    public ApiResult<Object> refreshOrderByIds(@RequestBody @Validated BaseIdsDTO.IdsDTO idDTO) {
+        List<String> ids = idDTO.getIds().stream().filter(StrUtil::isNotBlank).distinct().collect(Collectors.toList());
+        return soB2cService.fetchOrder(ids) ? success() : failure();
+    }
 }
