@@ -248,7 +248,7 @@ public class WarehouseExcelListener extends AnalysisEventListener<WarehouseExcel
         
         WarehouseEntity warehouse = new WarehouseEntity();
         BeanMapper.copy(addDTO, warehouse);
-        if(warehouseService.checkOpenCloseTime(warehouseEntity)) {
+        if(warehouseService.checkOpenCloseTime(warehouse)) {
         	errorMsgList.add(ApiError.OPEN_STATUS_OPEN_TIME_NOT_NULL.msg);
         }
         

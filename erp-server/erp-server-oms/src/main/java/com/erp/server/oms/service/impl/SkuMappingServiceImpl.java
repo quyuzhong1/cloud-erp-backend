@@ -1388,6 +1388,11 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
 
 	@Override
 	public Map<String, Object> newSyncDataToSdy(SkuMappingEntity entity, String operate) {
+		List<SkuVO> skuList = plmTaskFeign.listSkuProductByIds(Arrays.asList(entity.getProductSkuId()));
+		String productName = "";
+		if(CollUtil.isNotEmpty(skuList)) {
+			productName = skuList.get(0).getSkuName();
+		}
 		ListingInfoEntity listingInfoEntity = listingInfoService.getById(entity.getListingId());
 		Map<String, Object> resultMap = new HashMap<>();
 		resultMap.put("biz_uni_key", entity.getId());
@@ -1397,7 +1402,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
 		resultMap.put("map_product_name", listingInfoEntity.getPlatformSkuName());
 		resultMap.put("mdm_system", "SDC");
 		resultMap.put("product_code", entity.getProductSkuNo());
-		resultMap.put("product_name", entity.getProductName());
+		resultMap.put("product_name", productName);
 		
 		if(SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
 			resultMap.put("status", "未匹配");

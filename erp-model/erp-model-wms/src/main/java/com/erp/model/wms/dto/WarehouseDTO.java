@@ -155,7 +155,7 @@ public class WarehouseDTO implements Serializable {
         /**
          * 所属渠道 来源 http://172.16.100.11:3002/project/110/interface/api/13435 type=salesPlatform  详情显示名称字段加name
          */
-        @Dict(serviceCode = ServiceCodeNameEnum.OMS , queryFieldName = "id")
+        @Dict(serviceCode = ServiceCodeNameEnum.OMS , queryTypeField = "salesPlatform")
         private String channelAffiliation;
         
         /**

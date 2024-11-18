@@ -2569,8 +2569,9 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 .setBusinessId(entity.getId()).setOperation("状态变更").setContent("反审核SKU[" + entity.getSkuNo() + "],操作[" + statusName + "]为[" + ProductDetailStatusEnum.APPROVAL_ING.getName() + "]"));
 
         //发送金蝶
+        boolean updateById = this.updateById(entity);
         sendPushTask(Arrays.asList(entity),SyncOperateEnum.OPERATE_DISAPPROVE.getCode());
-        return this.updateById(entity);
+		return updateById;
     }
 
     @Override

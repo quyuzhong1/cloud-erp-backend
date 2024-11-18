@@ -332,7 +332,7 @@ public class SyncKingdeeProductDetailServiceImpl implements SyncKingdeeProductDe
 		plmPushMsgEntity.setSourceId(id);
         plmPushMsgEntity.setSourceCode(entity.getSkuNo());
         plmPushMsgEntity.setSyncOperate(operate);
-        plmPushMsgEntity.setPushData(JSON.toJSONString(this.newSyncDataToSdy(entity, operate)));
+        plmPushMsgEntity.setPushData(JSON.toJSONString(this.newSyncDataToSdy(productDetailService.getById(id), operate)));
         
         plmPushMsgService.save(plmPushMsgEntity);
 	}

@@ -245,8 +245,8 @@ public class SyncKingdeeBomInfoServiceImpl implements SyncKingdeeBomInfoService 
 		resultMap.put("product_code", entity.getSkuNo());
 		resultMap.put("product_name", productIdNameMap.get(entity.getSkuId()));
 		resultMap.put("product_quota", entity.getQuantity());
-		resultMap.put("create_time", bomInfoEntity.getCreateTime());
-		resultMap.put("owner", bomInfoEntity.getCreateUserName());
+		resultMap.put("create_time", entity.getCreateTime());
+		resultMap.put("owner", entity.getCreateUserName());
 		resultMap.put("version", bomInfoEntity.getBomVersion());
 		
 		if(SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
