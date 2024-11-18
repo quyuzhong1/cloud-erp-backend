@@ -2123,6 +2123,9 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     @CacheEvict(cacheNames = RedisKeyConstant.CACHE_SKU_NO_INVENTORY, allEntries = true)
     public Boolean approvalPass(ProductDetailOperateDTO dto, Boolean isCheck) {
         ProductDetailEntity entity = this.getById(dto.getId());
+        if(entity.getEnableTime() != null) {
+        	entity.setEnableTime(LocalDateTime.now());
+        }
 
         //只有待审核和审核中数据可以审核
         if (!ProductDetailStatusEnum.WAIT_CONFIRM.getCode().equals(entity.getStatus()) && !ProductDetailStatusEnum.APPROVAL_ING.getCode().equals(entity.getStatus())) {
@@ -4867,6 +4870,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     private void sendSinglePushTask (ProductDetailEntity entity, String operate) {
         //审核通过发送金蝶
         DmpPushTaskEntity pushTaskEntity = syncKingdeeProductDetailService.syncDataToKingdee(entity, operate);
+        syncKingdeeProductDetailService.syncDataToSdy(entity, operate);
         //推送金蝶
         TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
             @Override

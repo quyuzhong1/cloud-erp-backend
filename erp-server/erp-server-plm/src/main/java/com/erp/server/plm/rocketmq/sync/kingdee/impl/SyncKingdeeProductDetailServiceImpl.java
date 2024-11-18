@@ -38,6 +38,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -330,7 +332,7 @@ public class SyncKingdeeProductDetailServiceImpl implements SyncKingdeeProductDe
 		plmPushMsgEntity.setSourceId(id);
         plmPushMsgEntity.setSourceCode(entity.getSkuNo());
         plmPushMsgEntity.setSyncOperate(operate);
-        plmPushMsgEntity.setPushData(JSON.toJSONString(this.newSyncDataToSdy(productDetailService.getById(id), operate)));
+        plmPushMsgEntity.setPushData(JSON.toJSONString(this.newSyncDataToSdy(entity, operate)));
         
         plmPushMsgService.save(plmPushMsgEntity);
 	}
@@ -345,11 +347,13 @@ public class SyncKingdeeProductDetailServiceImpl implements SyncKingdeeProductDe
 		resultMap.put("biz_uni_key", entity.getId());
 		resultMap.put("goods_code", entity.getSkuNo());
 		resultMap.put("goods_name", entity.getName());
-		resultMap.put("uni_retail_price", productCostEntity.getRetailPrice());
+		if(productCostEntity != null) {
+			resultMap.put("uni_retail_price", productCostEntity.getRetailPrice());
+		}
 		resultMap.put("main_unit", entity.getUnitName());
 		resultMap.put("created_time", entity.getCreateTime());
-		resultMap.put("latest_update_time", entity.getUpdateTime());
-		resultMap.put("enable_time", entity.getUpdateTime());
+		resultMap.put("latest_update_time", LocalDateTime.now());
+		resultMap.put("enable_time", entity.getEnableTime());
 		resultMap.put("out_system_code", "SDC");
 		
 		if(SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {

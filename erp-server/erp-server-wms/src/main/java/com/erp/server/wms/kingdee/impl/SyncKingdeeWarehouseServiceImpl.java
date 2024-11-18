@@ -263,8 +263,11 @@ public class SyncKingdeeWarehouseServiceImpl implements SyncKingdeeWarehouseServ
 		resultMap.put("warehouse_name", entity.getName());
 		String channelAffiliation = entity.getChannelAffiliation();
 		if(StringUtils.isNotBlank(channelAffiliation)) {
-			com.erp.model.oms.entity.DictBasicEntity dictBasicEntity = FeignQuery.getById(com.erp.model.oms.entity.DictBasicEntity.class, channelAffiliation);
-			resultMap.put("channel_affiliation",  dictBasicEntity.getName());
+			List<com.erp.model.oms.entity.DictBasicEntity> dictBasicEntityList = FeignQuery.create(com.erp.model.oms.entity.DictBasicEntity.class)
+					.eq(com.erp.model.oms.entity.DictBasicEntity::getValue, channelAffiliation)
+					.eq(com.erp.model.oms.entity.DictBasicEntity::getType, "salesPlatform")
+					.list();
+			resultMap.put("channel_affiliation",  dictBasicEntityList.get(0).getName());
 		}
 		resultMap.put("shipping_organization", idCodeMap.get(shippingOrganization));
 		resultMap.put("financial_organization", idCodeMap.get(financialOrganization));
