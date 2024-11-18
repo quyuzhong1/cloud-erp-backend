@@ -32,12 +32,14 @@ spec:
             limits:
               cpu: "2"
               memory: "2Gi"
+          envFrom:
+            - configMapRef:
+                name: erp-config-${ENV}  # 通过环境变量来选择不同的 ConfigMap
           env:
-            - name: SPRING_PROFILES_ACTIVE
+            - name: ENV
               valueFrom:
-                configMapKeyRef:
-                  name: springenv-config
-                  key: SPRING_PROFILES_ACTIVE
+                fieldRef:
+                  fieldPath: metadata.labels['env']
           ports:
             - containerPort: 8080
               name: server
