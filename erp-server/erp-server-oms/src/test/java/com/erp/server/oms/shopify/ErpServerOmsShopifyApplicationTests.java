@@ -25,6 +25,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.python.antlr.ast.Str;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Profile;
 import org.springframework.test.context.junit4.SpringRunner;
@@ -93,6 +94,18 @@ public class ErpServerOmsShopifyApplicationTests {
 
         System.out.println("订单结果：\n" + JSONUtil.toJsonStr(orders));
     }
+
+    @Test
+    public void shopifyOrdersByIds() {
+        String accessToken = "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";
+        String shopifyShopDomain = "luna-shop-test.myshopify.com";
+        List<String> orderIds = Arrays.asList("5604730831040","5604730962112");
+        ShopifyPage<ShopifyOrder> orders = shopifyRestClientService.getShopifyRestClient(shopifyShopDomain, accessToken).getOrderByIds(orderIds);
+        String nextPageInfo = orders.getNextPageInfo();
+        System.out.println("有分页=" + nextPageInfo);
+        System.out.println("订单结果：\n" + JSONUtil.toJsonStr(orders));
+    }
+
 
     @Test
     public void filterShopifyOrders() {
