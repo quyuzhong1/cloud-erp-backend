@@ -32,9 +32,12 @@ import com.erp.model.oms.dto.*;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.*;
 import com.erp.model.sys.entity.DictCountryEntity;
+import com.erp.model.sys.entity.DictCurrencyEntity;
+import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.sys.enums.DictValueEnum;
 import com.erp.model.tms.dto.LogisticsBillCostDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
+import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.sys.feign.SysDictFeign;
@@ -534,6 +537,10 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         shopInfo.setChargeId(dto.getChargeId());
         shopInfo.setIossTaxNo(dto.getIossTaxNo());
         shopInfo.setVoecTaxNo(dto.getVoecTaxNo());
+        shopInfo.setSettlementCurrency(dto.getSettlementCurrency());
+        shopInfo.setTradeCurrency(dto.getTradeCurrency());
+        shopInfo.setEnableTime(dto.getEnableTime());
+        shopInfo.setReturnWarehouse(dto.getReturnWarehouse());
         String warehouseId = dto.getWarehouseId();
         if (StringUtils.isNotBlank(warehouseId)) {
             List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listWarehouseByIds(Arrays.asList(warehouseId));
@@ -675,6 +682,13 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
     private void fillDb(List<ShopDTO.PagingViewDTO> list) {
         String key = DictBasicTypeEnum.SALES_PLATFORM.getType();
         List<DictBasicEntity> dictList = dictBasicService.getByKeyList(Arrays.asList(key));
+        Map<String, String> wareIdNameMap = FeignQuery.getByIds(WarehouseEntity.class, 
+        		list.stream().map(ShopDTO.PagingViewDTO::getReturnWarehouse).collect(Collectors.toList()))
+        		.stream().collect(Collectors.toMap(WarehouseEntity::getId, WarehouseEntity::getName));
+        List<String> currIds = list.stream().map(ShopDTO.PagingViewDTO::getSettlementCurrency).collect(Collectors.toList());
+        currIds.addAll(list.stream().map(ShopDTO.PagingViewDTO::getTradeCurrency).collect(Collectors.toList()));
+		Map<String, String> currIdNameMap = FeignQuery.getByIds(DictCurrencyEntity.class, currIds)
+        		.stream().collect(Collectors.toMap(DictCurrencyEntity::getId, DictCurrencyEntity::getName));
         for (ShopDTO.PagingViewDTO item : list) {
             //平台
             String dictPlatform = item.getDictPlatform();
@@ -700,6 +714,9 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
             if (Objects.nonNull(customerInfoEntity)) {
                 item.setCustomerName(customerInfoEntity.getName());
             }
+            item.setSettlementCurrency(currIdNameMap.get(item.getSettlementCurrency()));
+            item.setTradeCurrency(item.getTradeCurrency());
+            item.setReturnWarehouse(wareIdNameMap.get(item.getReturnWarehouse()));
         }
 
     }

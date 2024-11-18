@@ -149,10 +149,10 @@ public class WarehouseExportExcelDTO implements Serializable {
     private String financialOrganizationName;
 
     @ColumnWidth(20)
-    @ExcelProperty(value = "启用日期", index = 20,converter= LocalDateStringConverter.class)
+    @ExcelProperty(value = "启用时间", index = 20,converter= LocalDateStringConverter.class)
     private LocalDateTime openTime;
     
     @ColumnWidth(20)
-    @ExcelProperty(value = "停用日期", index = 21,converter= LocalDateStringConverter.class)
+    @ExcelProperty(value = "停用时间", index = 21,converter= LocalDateStringConverter.class)
     private LocalDateTime closeTime;
 }

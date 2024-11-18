@@ -487,8 +487,10 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
             orgIdList.addAll(page.getRecords().stream().map(WarehouseDTO.PagingViewDTO::getFinancialOrganization).collect(Collectors.toList()));
             List<BaseIdDTO.CodeDTO> orgList = sysUserFeign.getAccountingCompanyList(orgIdList);
             
-            List<com.erp.model.oms.entity.DictBasicEntity> channelAffiliationList = FeignQuery.getByIds(com.erp.model.oms.entity.DictBasicEntity.class, 
-            		page.getRecords().stream().map(WarehouseDTO.PagingViewDTO::getChannelAffiliation).collect(Collectors.toList()));
+            List<com.erp.model.oms.entity.DictBasicEntity> channelAffiliationList = FeignQuery.create(com.erp.model.oms.entity.DictBasicEntity.class)
+            		.in(com.erp.model.oms.entity.DictBasicEntity::getValue, page.getRecords().stream().map(WarehouseDTO.PagingViewDTO::getChannelAffiliation).collect(Collectors.toList()))
+            		.in(com.erp.model.oms.entity.DictBasicEntity::getType, "salesPlatform")
+            		.list();
 
             List<String> warehouseIds = page.getRecords().stream().map(WarehouseDTO.PagingViewDTO::getId).distinct().collect(Collectors.toList());
             List<WarehouseMappingDTO.MappingViewDTO> mappingViewDTOS = warehouseMappingService.listMappingViewByWarehouseIds(warehouseIds);
@@ -537,11 +539,11 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
                 excelDTO.setGeographyLocationName(geographyLocationName);
 
                 
-                excelDTO.setChannelAffiliationName(channelAffiliationList.stream().filter(o -> item.getChannelAffiliation().equals(o.getId())).findFirst().
+                excelDTO.setChannelAffiliationName(channelAffiliationList.stream().filter(o -> o.getValue().equals(item.getChannelAffiliation())).findFirst().
                         flatMap(obj -> Optional.ofNullable(obj.getName())).orElse(""));
-                excelDTO.setShippingOrganizationName(orgList.stream().filter(o -> item.getShippingOrganization().equals(o.getId())).findFirst().
+                excelDTO.setShippingOrganizationName(orgList.stream().filter(o -> o.getId().equals(item.getShippingOrganization())).findFirst().
                         flatMap(obj -> Optional.ofNullable(obj.getName())).orElse(""));
-                excelDTO.setFinancialOrganizationName(orgList.stream().filter(o -> item.getFinancialOrganization().equals(o.getId())).findFirst().
+                excelDTO.setFinancialOrganizationName(orgList.stream().filter(o -> o.getId().equals(item.getFinancialOrganization())).findFirst().
                         flatMap(obj -> Optional.ofNullable(obj.getName())).orElse(""));
                 
                 resultList.add(excelDTO);
@@ -697,7 +699,9 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
             }
             warehouse.setOnwayWarehouseName(entity.getName());
         }
-
+        if(dto.getChannelAffiliation() == null) {
+        	warehouse.setChannelAffiliation("");
+        }
         Boolean result = this.updateById(warehouse);
         if (result) {
             //如果设置了第三方仓绑定
