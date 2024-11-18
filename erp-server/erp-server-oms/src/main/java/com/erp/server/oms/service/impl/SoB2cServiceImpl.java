@@ -136,10 +136,7 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.time.Duration;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
+import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
@@ -8989,11 +8986,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         }
 
         // 构建 DTO 列表
-        List<DmpInoutDTO.CreateInputDTO> createDTOList = soB2cEntities.stream()
-                .collect(Collectors.groupingBy(SoB2cEntity::getShopId)) // 按 shopId 分组
-                .entrySet().stream()
-                .map(entry -> createInputDTO(entry.getKey(), entry.getValue()))
-                .collect(Collectors.toList());
+        List<DmpInoutDTO.CreateInputDTO> createDTOList = convertCreateInputDTOList(soB2cEntities);
 
         // 调用远程任务接口
         if(Boolean.TRUE.equals(dmpInoutTaskFeign.doInputTask(createDTOList))){
@@ -9010,12 +9003,15 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         return resultDTOS;
     }
 
+
     // 辅助方法：根据 shopId 和分组数据构建 DTO
     private DmpInoutDTO.CreateInputDTO createInputDTO(String shopId, List<SoB2cEntity> groupedEntities) {
         DmpInoutDTO.CreateInputDTO dto = new DmpInoutDTO.CreateInputDTO();
         dto.setNextLevelId(shopId);
         dto.setSystemCode(groupedEntities.get(0).getDictPlatform()); // 默认取第一个的 dictPlatform
         dto.setBillType(BusinessTypeEnum.ORDER.getCode());
+        //  DmpInputTaskTaskTypeEnum	NORMAL("normal", "正常任务"),
+        dto.setTaskType("normal");
 
         // 构建 orderIdList 并封装为 JSON
         Map<String, List<String>> map = Collections.singletonMap(
@@ -9028,4 +9024,66 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         return dto;
     }
 
+    /**
+     * 转换速卖通订单拉取任务
+     */
+    private DmpInoutDTO.CreateInputDTO createAliExpressInputDTO(SoB2cEntity e) {
+        DmpInoutDTO.CreateInputDTO dto = new DmpInoutDTO.CreateInputDTO();
+        dto.setNextLevelId(e.getShopId());
+        dto.setSystemCode(e.getDictPlatform());
+        dto.setBillType(BusinessTypeEnum.ORDER.getCode());
+        //  DmpInputTaskTaskTypeEnum	HISTORY("history", "历史任务"),
+        dto.setTaskType("history");
+
+        // 速卖通GMT时区转北京时区
+        LocalDateTime targetOrderCreateTime = DateUtil.convertZoneTime(e.getPlatformOrderCreateTime(),
+                ZoneId.of("America/Los_Angeles"),
+                ZoneId.of("Asia/Shanghai"));
+        LocalDateTime startTime = targetOrderCreateTime.minusSeconds(1);
+        LocalDateTime endTime = targetOrderCreateTime.plusSeconds(1);
+        dto.setStartTime(startTime);
+        dto.setEndTime(endTime);
+
+        // 构建 orderIdList 并封装为 JSON
+        Map<String, List<String>> map = Collections.singletonMap(
+                "orderIdList",
+                Collections.singletonList(e.getPlatformCode())
+        );
+        dto.setDetailExtendJson(JSON.toJSONString(map));
+        return dto;
+    }
+
+    /**
+     * 转换拉取参数
+     */
+    private List<DmpInoutDTO.CreateInputDTO> convertCreateInputDTOList(List<SoB2cEntity> soB2cEntities) {
+        if(CollectionUtils.isEmpty(soB2cEntities)){
+            return Collections.emptyList();
+        }
+        List<DmpInoutDTO.CreateInputDTO> resultList = new LinkedList<>();
+        // 根据速卖通平台分组
+        Map<Boolean, List<SoB2cEntity>> groupList = soB2cEntities.stream()
+                .collect(Collectors.groupingBy(e -> PlatformDictEnum.ALI_EXPRESS.getCode().equalsIgnoreCase(e.getDictPlatform())));
+
+        // 速卖通每个订单独立请求
+        List<SoB2cEntity> aliExpressSoB2cEntityList = groupList.get(true);
+        if (CollectionUtils.isNotEmpty(aliExpressSoB2cEntityList)){
+            List<DmpInoutDTO.CreateInputDTO> aliExpressDTOList =  aliExpressSoB2cEntityList.stream()
+                    .map(this::createAliExpressInputDTO)
+                    .collect(Collectors.toList());
+            resultList.addAll(aliExpressDTOList);
+        }
+
+        List<SoB2cEntity> otherSoB2cEntityList = groupList.get(false);
+        if (CollectionUtils.isNotEmpty(otherSoB2cEntityList)){
+            // 其他平台订单IDS请求
+            List<DmpInoutDTO.CreateInputDTO> otherList = otherSoB2cEntityList.stream()
+                    .collect(Collectors.groupingBy(SoB2cEntity::getShopId)) // 按 shopId 分组
+                    .entrySet().stream()
+                    .map(entry -> createInputDTO(entry.getKey(), entry.getValue()))
+                    .collect(Collectors.toList());
+            resultList.addAll(otherList);
+        }
+        return resultList;
+    }
 }
