@@ -1,5 +1,6 @@
 package com.erp.server.dmp.push.service.business.impl;
 
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
@@ -15,12 +16,14 @@ import com.erp.model.dmp.entity.PlatformEntity;
 import com.erp.model.dmp.enums.KingdeeDocStatusEnum;
 import com.erp.model.dmp.enums.KingdeePushModuleEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
+import com.erp.model.dmp.enums.SettingEnum;
 import com.erp.model.msg.dto.WarnMsgInfoDTO;
 import com.erp.model.msg.enums.WarnMsgTypeEnum;
 import com.erp.sdk.third.kingdee.utils.KingdeeApiUtils;
 import com.erp.sdk.third.kingdee.utils.KingdeeUtils;
 import com.erp.server.dmp.push.service.business.KingdeeSoConsumerService;
 import com.erp.server.dmp.push.service.kingdee.KingdeeCommonService;
+import com.erp.server.dmp.service.CfgSettingService;
 import com.kingdee.bos.webapi.entity.RepoResult;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -48,6 +51,10 @@ public class KingdeeSoConsumerServiceImpl implements KingdeeSoConsumerService {
 
     @Resource
     private MQProducerService mqProducerService;
+
+    @Resource
+    private CfgSettingService cfgSettingService;
+
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -137,6 +144,12 @@ public class KingdeeSoConsumerServiceImpl implements KingdeeSoConsumerService {
             JSONObject firstJson = json;
             firstJson.set("FSaleOrderFinance.FAllDisCount", BigDecimal.ZERO);
             KingdeeParamDTO.SaveParamDTO paramFirst = new KingdeeParamDTO.SaveParamDTO(firstJson);
+            //是否进行基础性校验
+            String value = cfgSettingService.getValue(SettingEnum.KINGDEE_BASE_CHECK_KEY);
+            if (StrUtil.isNotBlank(value)) {
+                Boolean isCheck = Boolean.valueOf(value);
+                paramFirst.setIsVerifyBaseDataField(isCheck);
+            }
             RepoResult save = apiUtils.saveKingDee(paramFirst);
             //新增成功后编辑折扣额
             String id = save.getId();
