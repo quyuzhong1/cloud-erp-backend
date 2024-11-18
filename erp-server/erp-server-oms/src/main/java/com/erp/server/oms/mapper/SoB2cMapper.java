@@ -11,6 +11,7 @@ import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * <p>
@@ -212,4 +213,12 @@ public interface SoB2cMapper extends BaseMapper<SoB2cEntity> {
      * @return
      */
     List<SoB2cDTO.ChangeDeliverySkuViewDTO> listChangeDeliverySkuView(@Param("ids") List<String> ids);
+
+    /**
+     * 关联查询统计销售订单
+     * @param maps
+     * @param shopAuthResultDTO
+     * @return
+     */
+    List<SoB2cDTO.TabListDTO> listCountUnionAll(@Param("maps") List<Map<String, String>> maps, @Param("shopAuthResultDTO") SoB2cDTO.ShopAuthResultDTO shopAuthResultDTO);
 }
