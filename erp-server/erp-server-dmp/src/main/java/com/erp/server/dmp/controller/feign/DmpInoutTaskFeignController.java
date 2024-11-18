@@ -1,6 +1,5 @@
 package com.erp.server.dmp.controller.feign;
 
-import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.common.business.dto.DmpSyncTaskDTO;
 import com.common.core.controller.vo.ApiResult;
@@ -8,6 +7,7 @@ import com.common.core.exception.ServiceException;
 import com.erp.model.dmp.dto.DmpInoutDTO;
 import com.erp.model.dmp.dto.DmpOutputTaskRecordDTO;
 import com.erp.model.dmp.dto.DmpPushTaskDTO;
+import com.erp.model.dmp.enums.DmpInputTaskTaskTypeEnum;
 import com.erp.server.dmp.inout.dto.request.DmpInputHotfixCreateRequest;
 import com.erp.server.dmp.inout.handler.factory.DmpInputCreateFactory;
 import com.erp.server.dmp.inout.utils.DmpOutputUtils;
@@ -87,15 +87,16 @@ public class DmpInoutTaskFeignController{
 			if (null == listDTO){
 				ServiceException.runError("任务不存在:{}", JSONUtil.toJsonStr(createDTO));
 			}
-			// 创建新中台hotfix任务
-			DmpInputHotfixCreateRequest dmpInputHotfixCreateRequest = new DmpInputHotfixCreateRequest();
-			dmpInputHotfixCreateRequest.setCfgInputDetailIdList(Collections.singletonList(listDTO.getDetailId()));
-			dmpInputHotfixCreateRequest.setCfgInputId(listDTO.getCfgInputId());
-			dmpInputHotfixCreateRequest.setDetailExtendJson(createDTO.getDetailExtendJson());
+			// 创建新中台
+			DmpInputHotfixCreateRequest dmpInputCreateRequest = new DmpInputHotfixCreateRequest();
+			dmpInputCreateRequest.setCfgInputDetailIdList(Collections.singletonList(listDTO.getDetailId()));
+			dmpInputCreateRequest.setCfgInputId(listDTO.getCfgInputId());
+			dmpInputCreateRequest.setDetailExtendJson(createDTO.getDetailExtendJson());
 			// 拉取时间
-			dmpInputHotfixCreateRequest.setStartTime(createDTO.checkAndGetStartTime());
-			dmpInputHotfixCreateRequest.setEndTime(createDTO.checkAndGetEndTime());
-			dmpInputCreateFactory.doHotfixInputTask(dmpInputHotfixCreateRequest);
+			dmpInputCreateRequest.setStartTime(createDTO.checkAndGetStartTime());
+			dmpInputCreateRequest.setEndTime(createDTO.checkAndGetEndTime());
+			dmpInputCreateRequest.setTaskType(DmpInputTaskTaskTypeEnum.NORMAL.getCode());
+			dmpInputCreateFactory.createHotfixInputTask(dmpInputCreateRequest);
 		}
 		return true;
 	}
