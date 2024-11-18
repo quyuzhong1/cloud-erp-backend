@@ -99,6 +99,7 @@
         vmad.sys_type_name,
         vma.remark,
         vmad.detail_remark detailRemark,
+        vma.is_statistics
         COALESCE(iv.realQty,0) - COALESCE(vi.distributionQty,0) as unDistributionQty,
         case when  vmad.to_virtual_warehouse_id = '' then null else COALESCE(vit.toVirtualUsableQty,0) end as toVirtualWarehouseUsableQty,
         case when  vmad.from_virtual_warehouse_id = '' then null else COALESCE(vif.fromVirtualUsableQty,0) end as fromVirtualWarehouseUsableQty,

@@ -60,6 +60,12 @@ public class VirtualWarehouseAllocationEntity extends BaseEntity<VirtualWarehous
     @TableField("invalid_description")
     private String invalidDescription;
 
+    /**
+     * 是否计入统计，true是，false否
+     */
+    @TableField("is_statistics")
+    private Boolean isStatistics;
+
     public static final String INVALID_DESCRIPTION = "invalid_description";
 
     @Override
