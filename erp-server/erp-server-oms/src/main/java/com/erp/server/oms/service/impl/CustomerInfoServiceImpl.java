@@ -1972,13 +1972,6 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         String type = DictBasicTypeEnum.SALES_PLATFORM.getType();
         List<DictBasicDTO.ViewDTO> dictList = dictBasicService.getByKey(type);
 
-        // 国家
-        List<DictCountryDTO.ListDTO> countryList = sysUserFeign.countryList();
-        Map<String,String> countryMap = new HashMap<>();
-        if(CollectionUtils.isNotEmpty(countryList)){
-            countryMap = countryList.stream().collect(Collectors.toMap(DictCountryDTO.ListDTO::getId, DictCountryDTO.ListDTO::getNameCn));
-        }
-
         ValidList<ProcessManagementDTO.HistoryActivityDTO> dtoList = new ValidList<>();
         List<String> ids = page.getRecords().stream().map(CustomerDTO.PagingViewDTO::getId).collect(Collectors.toList());
         ids.forEach(obj -> dtoList.add(new ProcessManagementDTO.HistoryActivityDTO(SourceTypeEnum.CUSTOMER_INFO.getCode(), obj)));

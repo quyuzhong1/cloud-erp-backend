@@ -1326,7 +1326,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         listingInfoEntityList.forEach(v->{
             v.setMatchResult(ListingMatchResultEnum.NOT.getCode());
             v.setRemark(dto.getRemark());
-            String msg = StrUtil.format("用户【{}】更新状态为无需匹配", UserContext.getDefaultLoginUser().getUserName());
+            String msg = CharSequenceUtil.format("用户【{}】更新状态为无需匹配", UserContext.getDefaultLoginUser().getUserName());
             operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.LISTING_INFO.getCode(), v.getId(), "状态变更");
         });
         listingInfoService.updateBatchById(listingInfoEntityList);
