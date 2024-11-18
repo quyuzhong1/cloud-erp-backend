@@ -2,11 +2,15 @@ package com.erp.server.oms.controller.api;
 
 
 import cn.hutool.core.util.ObjectUtil;
+import com.common.business.annotation.DataPermission;
+import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.dto.AdvanceQueryContainer;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.DataAttributeEnum;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
@@ -16,6 +20,7 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.oms.dto.SkuMappingDTO;
 import com.erp.model.oms.entity.SkuMappingEntity;
+import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.scm.dto.OperateLogDTO;
 import com.erp.server.oms.service.SkuMappingRuleService;
 import com.erp.server.oms.service.SkuMappingService;
@@ -291,5 +296,58 @@ public class SkuMappingController extends BaseController {
     public ApiResult<Boolean> updateNotMatch(@RequestBody @Validated SkuMappingDTO.UpdateNotMatchDTO dto){
         skuMappingService.updateNotMatch(dto);
         return success();
+    }
+
+    /**
+     * 平台同步平台商品view
+     * @return
+     */
+    @PostMapping("/syncPlatformProductView")
+    @WebAdvanceQuery
+    public ApiResult<PagingVO<SkuMappingDTO.SyncPlatformProductView>> syncPlatformProductView(@RequestBody PagingDTO<AdvanceQueryContainer> advanceQueryDTO){
+        return success(skuMappingService.syncPlatformProductView(advanceQueryDTO));
+    }
+
+    /**
+     * 仓库同步平台商品view
+     * @return
+     */
+    @PostMapping("/syncWarehouseProductView")
+    @WebAdvanceQuery
+    public ApiResult<PagingVO<SkuMappingDTO.SyncWarehouseProductView>> syncWarehouseProductView(@RequestBody PagingDTO<AdvanceQueryContainer> advanceQueryDTO){
+        return success(skuMappingService.syncWarehouseProductView(advanceQueryDTO));
+    }
+
+    /**
+     * 平台同步平台商品
+     * @return
+     */
+    @PostMapping("/syncPlatformProduct")
+    public ApiResult<Boolean> syncPlatformProduct(@RequestBody @Validated BaseIdsDTO.IdsDTO dto){
+        skuMappingService.syncPlatformProduct(dto.getIds());
+        return success();
+    }
+
+    /**
+     * 仓库同步平台商品
+     * @return
+     */
+    @PostMapping("/syncWarehouseProduct")
+    public ApiResult<Boolean> syncWarehouseProduct(@RequestBody @Validated BaseIdsDTO.IdsDTO dto){
+        skuMappingService.syncWarehouseProduct(dto.getIds());
+        return success();
+    }
+
+
+    /**
+     * 根据customerId和skuno 关联查询平台sku
+     * @author jack
+     * @date: 2024-11-07
+     * @param skuParamDTO
+     * @return ApiResult<List<ProductDetailShowDTO>>
+     */
+    @PostMapping("/listSkuBySkuNos")
+    public ApiResult<List<SkuMappingDTO.ProductSkuInfoDTO>> listSkuBySkuNos(@RequestBody SkuMappingDTO.SkuParamDTO skuParamDTO) {
+        return this.success(skuMappingService.listSkuBySkuNos(skuParamDTO));
     }
 }

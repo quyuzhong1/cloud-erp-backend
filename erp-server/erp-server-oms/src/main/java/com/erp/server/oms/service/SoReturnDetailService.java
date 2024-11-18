@@ -103,6 +103,21 @@ public interface SoReturnDetailService extends SuperService<SoReturnDetailEntity
 
     List<SoReturnDetailEntity> listDetailByReturnType(List<String> returnType);
     /**
+     * 已客户为维度新增
+     * @Author jack
+     * @Date 2024-11-06
+     * @param dto, id
+     **/
+    Boolean addByCutomer(SoReturnDTO.Add dto, String id);
+
+    /**
+     * 已客户为维度更新
+     * @Author jack
+     * @Date 2024-11-06
+     * @param dto, id
+     **/
+    Boolean updateByCutomer(SoReturnDTO.Update dto);
+    /**
      * 快粘贴查询, 需要区分是否拆分套装BOM
      * @param dto dto
      * @return com.common.core.controller.vo.ApiResult<java.util.List < com.erp.model.oms.dto.SoDetailDTO.AddDetailView>>
@@ -111,5 +126,4 @@ public interface SoReturnDetailService extends SuperService<SoReturnDetailEntity
      **/
 
     SoDetailDTO.ListAddDetailNoBomViewDTO listAddDetailWithNoBomView(SoReturnDTO.PlatformSkuDTO dto);
-
 }

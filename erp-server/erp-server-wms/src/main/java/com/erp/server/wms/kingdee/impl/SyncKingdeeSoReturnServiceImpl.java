@@ -13,7 +13,6 @@ import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.dto.DmpPushTaskFeignDTO;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseIdDTO;
-import com.common.business.enums.OrderTypeEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.SyncOperateEnum;
 import com.common.business.wrapper.FeignQuery;
@@ -223,6 +222,11 @@ public class SyncKingdeeSoReturnServiceImpl implements SyncKingdeeSoReturnServic
             soId = entity.getSoId();
         } else if (SourceTypeEnum.SO_INFO.getCode().equals(entity.getSourceType())) {
             soId = entity.getSoId();
+        }else if (SourceTypeEnum.SO_RETURN_INSTOCK.getCode().equals(entity.getSourceType())){
+            //金蝶订单编号
+            resultMap.put("platformOrderCode",entity.getPlatformOrderCode());
+            //金蝶第三方单据编号
+            resultMap.put("thirdCode",entity.getThirdCode());
         }
 
         //销售单

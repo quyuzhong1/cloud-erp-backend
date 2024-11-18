@@ -1,5 +1,6 @@
 package com.erp.model.oms.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -40,6 +41,30 @@ public class SoReturnDetailDTO {
          * 销售单明细表id
          */
         private String sourceDetailId;
+
+        /**
+         * skuId
+         */
+        private String skuId;
+        /**
+         * skuNo
+         */
+        private String skuNo;
+        /**
+         * listing_id
+         */
+        @TableField("listing_id")
+        private String listingId;
+        /**
+         * 平台sku
+         */
+        @TableField("platform_sku_no")
+        private String platformSkuNo;
+        /**
+         * 平台sku名称
+         */
+        @TableField("platform_sku_name")
+        private String platformSkuName;
     }
 
     /**
@@ -80,13 +105,33 @@ public class SoReturnDetailDTO {
          */
         private String remark;
         /**
-         * sku
-         */
-        private String skuNo;
-        /**
          * 销售单明细表id
          */
         private String sourceDetailId;
+
+        /**
+         * skuId
+         */
+        private String skuId;
+        /**
+         * skuNo
+         */
+        private String skuNo;
+        /**
+         * listing_id
+         */
+        @TableField("listing_id")
+        private String listingId;
+        /**
+         * 平台sku
+         */
+        @TableField("platform_sku_no")
+        private String platformSkuNo;
+        /**
+         * 平台sku名称
+         */
+        @TableField("platform_sku_name")
+        private String platformSkuName;
     }
 
     /**

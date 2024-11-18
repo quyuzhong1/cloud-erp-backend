@@ -9,6 +9,7 @@ import com.erp.model.plm.entity.*;
 import com.erp.model.plm.vo.*;
 import com.erp.model.sys.dto.SysUserInfoDTO;
 import com.erp.model.sys.openapi.DimensionalWeightDTO;
+import com.erp.model.sys.openapi.UploadSkuDTO;
 import com.erp.model.workflow.dto.WorkOptionDTO;
 import org.apache.ibatis.annotations.Param;
 import org.springframework.cloud.openfeign.FeignClient;
@@ -608,6 +609,9 @@ public interface PlmTaskFeign {
     @GetMapping("/feign/product/getBrandByQuerySql")
     List<String> getBrandByQuerySql(@RequestParam String compareCodeSplicingValueSql);
 
+    @PostMapping("feign/product/uploadSkuImage")
+    void uploadSkuImage(@RequestBody UploadSkuDTO dto);
+
     /**
      * 试产量产  审核 通过
      *
@@ -616,6 +620,13 @@ public interface PlmTaskFeign {
      */
     @PostMapping("feign/plmWorkOption/pilotApprovalPass")
     void pilotApprovalPass(@RequestBody @Validated ApproveOneDTO approveOneDTO);
+
+    /**
+     * 查询bom (可以查询全部)
+     * @return
+     */
+    @PostMapping("feign/plmWorkOption/pilotApprovalNoPass")
+    void pilotApprovalNoPass(@RequestBody @Validated ApproveOneDTO approveOneDTO);
 
     /**
      * 查询bom (可以查询全部)

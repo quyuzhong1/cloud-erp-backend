@@ -107,5 +107,7 @@ public interface BomRefSkuMapper extends BaseMapper<BomSkuEntity> {
      * @return List<ListAllSkuDTO>
      */
     List<BomSkuPageDTO.ListSkuLevelDTO> listAllChildSku(@Param("params") BomSkuPageDTO.AllSkuParamDTO params);
+
+    List<BomChildrenSkuDTO> checkExistAndListCombinationSku(@Param("parentSkuNos") List<String> parentSkuNos);
 }
 

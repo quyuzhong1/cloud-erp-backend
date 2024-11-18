@@ -324,6 +324,8 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                 SoB2cEntity soB2cEntity = FeignQuery.getById(SoB2cEntity.class,soB2cReturnEntity.getSoId());
                 ShopInfoEntity shopInfoEntity = FeignQuery.getById(ShopInfoEntity.class,soB2cReturnEntity.getShopId());
                 if(Objects.nonNull(soB2cEntity)){
+                    dto.setPlatformOrderCode(soB2cEntity.getPlatformCode());
+
                     SoOutstockEntity soOutstock = soOutstockService.getBySoId(soB2cEntity.getId());
                     if(Objects.nonNull(soOutstock)){
                         dto.setSellerId(soOutstock.getSellerId());
@@ -404,6 +406,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         entity.setReturnLogisticCode(dto.getReturnLogisticCode());
         entity.setSoReturnId(dto.getSoReturnId());
         entity.setSoReturnCode(dto.getSoReturnCode());
+        entity.setPlatformOrderCode(dto.getPlatformOrderCode());
         entity.setSourceCode(dto.getSourceCode());
         entity.setSourceType(dto.getSourceType());
         entity.setSourceId(dto.getSourceId());

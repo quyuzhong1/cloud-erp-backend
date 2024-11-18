@@ -437,13 +437,15 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
 
     /**
      * 修改b2c销售单状态
-     * @Author Luo_WG
-     * @Date 2023/12/27 20:19
+     *
      * @param soB2cIds
      * @param status
+     * @param isManualDelivery
      * @return java.lang.Boolean
+     * @Author Luo_WG
+     * @Date 2023/12/27 20:19
      **/
-    Boolean updateSoB2cStatus(List<String> soB2cIds, String status);
+    Boolean updateSoB2cStatus(List<String> soB2cIds, String status, Boolean isManualDelivery);
 
     /**
      * 修改b2c销售单状态发货时间
@@ -979,4 +981,24 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
     Boolean generateSoB2cReturn(List<SoB2cDTO.GenerateSoB2cReturnViewDTO> list);
 
     List<SoB2cEntity> getByPlatformCode(String platformCode);
+
+    /**
+     * 更换发货sku预览
+     * @param ids
+     * @return
+     */
+    List<SoB2cDTO.ChangeDeliverySkuViewDTO> changeDeliverySkuView(List<String> ids);
+
+    /**
+     * 更新是否更换sku状态
+     *
+     * @param ids
+     * @param isChangeSku
+     */
+    void updateIsChangeSku(List<String> ids, Boolean isChangeSku);
+
+
+    void fetchOrderFail(SoB2cEntity soB2cEntity);
+
+    void fetchOrderSuccess(SoB2cEntity soB2cEntity);
 }

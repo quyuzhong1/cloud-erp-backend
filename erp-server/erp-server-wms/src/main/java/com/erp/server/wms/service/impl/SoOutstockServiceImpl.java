@@ -1556,8 +1556,14 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         } else {
             soOutstockDetailService.checkB2cOrderQty(dto.getWarehouseId(), dto.getSoId(), dto.getSourceId(), sourceType, detailList);
         }
-
-
+        //待提交状态
+        if(soOutstock.getApproveStatus().getCode().equals(ApproveStatusEnum.WAIT_SUBMIT.getCode())){
+            String tradeLabel = dto.getTradeLabel();
+            String oldTradeLabel = soOutstock.getTradeLabel();
+            if(!tradeLabel.equals(oldTradeLabel)){
+                throw new ServiceException("订单标签只有提交状态下可编辑");
+            }
+        }
         String code = soOutstock.getCode();
         LocalDate billDate = dto.getBillDate();
         //旧的
@@ -2422,6 +2428,11 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 List<TransferInfoEntity> entities = transferInfoService.listBySourceId(notCancelBySoId.getId());
                 generateB2cDTO.setSourceId(notCancelBySoId.getId());
                 generateB2cDTO.setSourceCode(notCancelBySoId.getCode());
+                if(notCancelBySoId.getDeliveryTime() == null){
+                   throw new ServiceException("发货单发货时间不能为空");
+                }
+                //重试时需要按照发货单发货时间扣减
+                generateB2cDTO.setBillDate(notCancelBySoId.getDeliveryTime().toLocalDate());
                 List<SoB2cDeliveryDetailEntity> deliveryDetailList = soB2cDeliveryDetailService.listByMainIds(Collections.singletonList(notCancelBySoId.getId()));
                 List<PickingListsDTO.SourceView> views = pickingListsService.listBySourceIds(Collections.singletonList(notCancelBySoId.getId()));
                 List<SoOutstockDetailDTO.AddDTO> detailList = generateB2cDTO.getDetailList();
