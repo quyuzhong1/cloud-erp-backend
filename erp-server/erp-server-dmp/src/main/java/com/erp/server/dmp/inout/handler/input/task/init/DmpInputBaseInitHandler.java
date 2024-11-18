@@ -68,7 +68,7 @@ public class DmpInputBaseInitHandler extends DmpInputInitHandler{
 			String parentStorageName = "";
 			
 			String extendJson = dmpCfgInputEntity.getExtendJson();
-			
+
 			dmpInputApiInitHandler = ApplicationContextUtils.getBean(DmpHandlerUtils.dealBeanClass(apiClass), DmpInputApiInitHandler.class);
 			if(DmpBasicSystemCodeEnum.KINGDEE.getCode().equals(dmpBasicSystemEntity.getCode())) {
 				DmpInputKingdeeApiInitRequest dmpInputKingdeeApiInitRequest = new DmpInputKingdeeApiInitRequest();
@@ -127,6 +127,7 @@ public class DmpInputBaseInitHandler extends DmpInputInitHandler{
 			
 			dmpInputApiInitRequest.setStartTime(startTime);
 			dmpInputApiInitRequest.setEndTime(endTime);
+			dmpInputApiInitRequest.setTaskExtendJson(null == dmpInputTaskEntity ? "" : dmpInputTaskEntity.getExtendJson());
 			
 			return dmpInputApiInitHandler.getApiData(dmpInputApiInitRequest);
 		}else if(DmpCfgInputTypeEnum.DB.getCode().equals(type)) {
