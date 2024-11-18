@@ -1,7 +1,7 @@
 package com.erp.server.tms.service.impl;
 
 
-import cn.hutool.core.util.StrUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
@@ -15,10 +15,10 @@ import com.erp.server.tms.service.LogisticsServicePlatformService;
 import com.erp.server.tms.service.OperateLogService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -34,7 +34,7 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 public class LogisticsServicePlatformServiceImpl extends SuperServiceImpl<LogisticsServicePlatformMapper, LogisticsServicePlatformEntity> implements LogisticsServicePlatformService {
-    @Autowired
+    @Resource
     private OperateLogService operateLogService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
@@ -54,7 +54,7 @@ public class LogisticsServicePlatformServiceImpl extends SuperServiceImpl<Logist
         }
 
         // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "物流平台服务单" , logisticsServicePlatformEntity.getId());
+        String msg = CharSequenceUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "物流平台服务单" , logisticsServicePlatformEntity.getId());
         operateLogService.addModuleOperateLog(msg, null, logisticsServicePlatformEntity.getId(), "新增操作");
 
         return new BaseResultDTO.AddDTO(logisticsServicePlatformEntity.getId(), logisticsServicePlatformEntity.getId());
@@ -81,8 +81,8 @@ public class LogisticsServicePlatformServiceImpl extends SuperServiceImpl<Logist
 
         // 记录主单操作日志
             log.info("编辑 开始记录物流平台服务单日志数据，id：【{}】", logisticsServicePlatformEntity.getId());
-            String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), logisticsServicePlatformEntity.getId(), "物流平台服务单");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
+            String msg = CharSequenceUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), logisticsServicePlatformEntity.getId(), "物流平台服务单");
+        
         operateLogService.addModuleOperateLogByObj(old, logisticsServicePlatformEntity, null, logisticsServicePlatformEntity.getId(), msg);
         return Boolean.TRUE;
     }

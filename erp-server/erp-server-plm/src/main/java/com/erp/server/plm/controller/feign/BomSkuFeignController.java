@@ -1,6 +1,7 @@
 package com.erp.server.plm.controller.feign;
 
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
+import com.erp.model.plm.dto.BomDTO;
 import com.erp.model.plm.dto.ProductBomInfoDTO;
 import com.erp.model.plm.dto.BomSkuPageDTO;
 import com.erp.model.plm.entity.BomInfoEntity;
@@ -120,7 +121,7 @@ public class BomSkuFeignController {
      * @return java.util.List<com.erp.model.plm.dto.ProductBomInfoDTO.skuBomVersion>
      **/
     @PostMapping("/listBomVersionBySkuNos")
-    public List<ProductBomInfoDTO.skuBomVersion> listBomVersionBySkuNos(@RequestBody List<String> skuNos) {
+    public List<ProductBomInfoDTO.SkuBomVersion> listBomVersionBySkuNos(@RequestBody List<String> skuNos) {
         return bomSkuService.listBomVersionBySkuNos(skuNos);
     }
 
@@ -134,5 +135,14 @@ public class BomSkuFeignController {
     @PostMapping("/listAllLevelSku")
     public BomSkuPageDTO.ListAllSkuDTO listAllLevelSku(@RequestBody BomSkuPageDTO.AllSkuParamDTO params) {
         return bomSkuService.listAllLevelSku(params);
+    }
+
+    /**
+     * 查询bom (可以查询全部)
+     * @return
+     */
+    @PostMapping("/listAllBom")
+    public List<BomDTO.BomSku> listAllBom(@RequestBody List<String> childSkuIdList){
+        return bomSkuService.listAllBom(childSkuIdList);
     }
 }

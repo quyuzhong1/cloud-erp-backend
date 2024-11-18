@@ -28,7 +28,6 @@ import com.erp.server.oms.service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -49,7 +48,7 @@ import java.util.stream.Collectors;
 @Validated
 public class SoB2cController extends BaseController {
 
-    @Autowired
+    @Resource
     private SoB2cService soB2cService;
     @Resource
     private SoB2cErrorService soB2cErrorService;
@@ -151,7 +150,7 @@ public class SoB2cController extends BaseController {
                     //申报信息规则
                     soB2cService.declareRule(id, new HashMap<>(), Boolean.FALSE, false);
                 }
-                if (Objects.nonNull(autoGetTrackNo) && autoGetTrackNo) {
+                if (Objects.nonNull(autoGetTrackNo) && Boolean.TRUE.equals(autoGetTrackNo)) {
                     soB2cService.getLogisticsCode(id, autoGetTrackNo);
                 }
             }
@@ -1285,10 +1284,11 @@ public class SoB2cController extends BaseController {
     @PostMapping("/cancelLogistic")
     @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "取消物流单：ids={ids}")
     public ApiResult<List<BatchResultDTO>> cancelLogistic(@RequestBody @Validated BaseIdsDTO.IdsDTO idDTO) {
-        List<BatchResultDTO> resultDTOS = new ArrayList<>(idDTO.getIds().size());
-        List<SoB2cEntity> soB2cEntityList = soB2cService.listByIds(idDTO.getIds());
-        List<SoB2cLogisticsEntity> soB2cLogisticsEntityList = soB2cLogisticsService.listByMainIds(idDTO.getIds());
-        for (String id : idDTO.getIds()) {
+        List<String> ids = idDTO.getIds().stream().distinct().collect(Collectors.toList());
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
+        List<SoB2cEntity> soB2cEntityList = soB2cService.listByIds(ids);
+        List<SoB2cLogisticsEntity> soB2cLogisticsEntityList = soB2cLogisticsService.listByMainIds(ids);
+        for (String id : ids) {
             BatchResultDTO result;
             try {
                 result = soB2cLogisticsService.cancelLogistic(id,soB2cEntityList,soB2cLogisticsEntityList, true);

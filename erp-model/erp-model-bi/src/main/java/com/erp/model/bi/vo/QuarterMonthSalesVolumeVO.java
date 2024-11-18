@@ -60,4 +60,7 @@ public class QuarterMonthSalesVolumeVO {
                 .stripTrailingZeros();
     }
 
+
+    public static final String TARGET_SALES_AMOUNT = "目标销售额";
+
 }

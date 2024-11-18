@@ -109,7 +109,7 @@ public class BiSubjectController extends BaseController {
      */
     @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "编辑数据:id={id}, 专题名={name}")
     @PostMapping("/update")
-    public ApiResult edit(@RequestBody @Validated(value = {UpdateGroup.class}) SubjectDTO biSubject) {
+    public ApiResult<String> edit(@RequestBody @Validated(value = {UpdateGroup.class}) SubjectDTO biSubject) {
         String id = this.biSubjectService.update(biSubject);
         if (StringUtils.isNotBlank(id)) {
             return success(id);
@@ -124,7 +124,7 @@ public class BiSubjectController extends BaseController {
      */
     @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "设置仪表盘的分享:id={id},名称={name}")
     @PostMapping("/setShare")
-    public ApiResult setShare(@RequestBody @Validated UpdateSubjectShareDTO dto) {
+    public ApiResult<String> setShare(@RequestBody @Validated UpdateSubjectShareDTO dto) {
         String id = biSubjectShareService.setShare(dto);
         if (StringUtils.isBlank(id)) {
             return failure();
@@ -139,9 +139,9 @@ public class BiSubjectController extends BaseController {
      */
     @LogAction(value = LogActionEnum.DELETE, desc = "删除专题")
     @PostMapping("/delete")
-    public ApiResult deleteById(@RequestBody @Validated BaseIdDTO dto) {
-        Boolean flag = this.biSubjectService.deleteById(dto.getId());
-        return flag == true ? success() : failure();
+    public ApiResult<Object> deleteById(@RequestBody @Validated BaseIdDTO dto) {
+        boolean flag = this.biSubjectService.deleteById(dto.getId());
+        return flag ? success() : failure();
     }
 
     /**
@@ -156,9 +156,9 @@ public class BiSubjectController extends BaseController {
             menuCode = "bi:subject:updateState",
             serviceClass = BiSubjectService.class
     )
-    public ApiResult updateState(@RequestBody @Validated UpdateStateDTO dto) {
-        Boolean flag = this.biSubjectService.updateState(dto);
-        return flag == true ? success() : failure();
+    public ApiResult<Object> updateState(@RequestBody @Validated UpdateStateDTO dto) {
+        boolean flag = this.biSubjectService.updateState(dto);
+        return flag ? success() : failure();
     }
 
 
@@ -179,7 +179,7 @@ public class BiSubjectController extends BaseController {
      */
     @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "复制专题:专题id={subjectId}")
     @PostMapping("/copy")
-    public ApiResult copy(@RequestBody @Validated CopySubjectDTO dto) {
+    public ApiResult<String> copy(@RequestBody @Validated CopySubjectDTO dto) {
         String copySubjectId = biSubjectService.copy(dto);
         if (StringUtils.isBlank(copySubjectId)) {
             return failure();

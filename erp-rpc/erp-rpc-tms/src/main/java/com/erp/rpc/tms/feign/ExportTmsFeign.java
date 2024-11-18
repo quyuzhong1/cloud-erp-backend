@@ -1,10 +1,8 @@
 package com.erp.rpc.tms.feign;
 
-import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.config.ExportFeignConfig;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
-import com.common.core.controller.vo.ApiResult;
 import com.erp.model.tms.dto.*;
 import com.erp.model.tms.dto.excel.CfgReconciliationFieldExportExcelDTO;
 import org.springframework.cloud.openfeign.FeignClient;

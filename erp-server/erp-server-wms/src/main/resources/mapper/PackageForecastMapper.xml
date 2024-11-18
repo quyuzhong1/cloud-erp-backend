@@ -138,7 +138,7 @@
             pf.transport_no AS transportNo,
             pf.handover_status AS handoverStatus
         from package_forecast pf
-        where pf.handover_no != '' and pf.handover_status not in ('signed_normal','closed','signed_failed','awaiting_pickup')
+        where pf.handover_no != '' and pf.handover_status not in ('','signed_normal','closed','signed_failed')
         and pf.bill_date > #{dateTime}
     </select>
 

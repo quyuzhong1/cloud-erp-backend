@@ -29,16 +29,17 @@ public abstract class AbstractDynamicHeadersFileEventHandler<P> implements FileE
         DynamicExcelDTO excelDTO = getData(fileTask);
         LinkedHashMap<String, String> headers = excelDTO.getHeaders();
         List<List<String>> header = convertHeadList(headers.values());
-        List<List<Object>> data = convertDataList(excelDTO.getData(), headers);
+        List<List<Object>> data = convertDataList(excelDTO.getData());
         fileTask.setCount(excelDTO.getData().size());
         StringBuilder sb = new StringBuilder();
         String name = fileTask.getFileName();
         String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
         sb.append(date);
         sb.append(name);
+        sb.append(".xlsx");
         try {
             byte[] bytes = new ExcelPrintUtils().exportDynamicHeadersExcel(name, header, data);
-            String s = FastDFSClientUtil.uploadFile(bytes, sb.toString() + ".xlsx", null);
+            String s = FastDFSClientUtil.uploadFile(bytes, sb + ".xlsx", null);
             fileTask.setFileUrl(s);
         } catch (Exception e) {
             log.error("上传文件失败{}", e.getMessage(), e);
@@ -102,7 +103,7 @@ public abstract class AbstractDynamicHeadersFileEventHandler<P> implements FileE
         return 1000;
     }
 
-    private List<List<Object>> convertDataList(List<LinkedHashMap<String, Object>> data, LinkedHashMap<String, String> headers) {
+    private List<List<Object>> convertDataList(List<LinkedHashMap<String, Object>> data) {
         List<List<Object>> result = new ArrayList<>();
         for (LinkedHashMap<String, Object> map : data) {
             result.add((new ArrayList<>(map.values())));

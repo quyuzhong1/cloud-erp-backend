@@ -69,13 +69,13 @@ public class TmsCostDetailEntity extends BaseEntity<TmsCostDetailEntity> {
 
     public static final String COST_VALUE = "cost_value";
 
-    public static final String CURRENCY = "currency";
+    public static final String FIELD_CURRENCY = "currency";
 
     public static final String EXCHANGE_RATE = "exchange_rate";
 
     public static final String CFG_COST_ID = "cfg_cost_id";
 
-    public static final String TYPE = "type";
+    public static final String FIELD_TYPE = "type";
 
     public static final String SOURCE_TYPE = "source_type";
 

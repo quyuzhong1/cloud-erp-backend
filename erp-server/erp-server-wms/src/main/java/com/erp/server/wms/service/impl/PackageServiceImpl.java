@@ -2,6 +2,7 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.map.MapUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
@@ -90,7 +91,7 @@ public class PackageServiceImpl implements PackageService {
     @Lazy
     @Resource
     private AsyncService asyncService;
-    @Autowired
+    @Resource
     private SoB2cDeliveryInterceptService soB2cDeliveryInterceptService;
 
     @Override
@@ -138,7 +139,7 @@ public class PackageServiceImpl implements PackageService {
             //校验订单状态中转状态为待中转/上传失败，扫描识别后非成功状态若勾选则取消勾选并禁用，若未勾选则直接禁用
             throw new ServiceException(ApiError.TRANSFER_FAILURE_NOT_PACKAGE);
         }
-        if (StringUtils.isBlank(scanResult.getTransferLogisticsSupplierId()) && !TransferStatusEnum.NOT.getCode().equals(entity.getTransferStatus())) {
+        if (CharSequenceUtil.isBlank(scanResult.getTransferLogisticsSupplierId()) && !TransferStatusEnum.NOT.getCode().equals(entity.getTransferStatus())) {
             throw new ServiceException(ApiError.TRANSFER_LOGISTICS_SUPPLIER_IS_NULL_NOT_PACKAGE);
         }
 
@@ -161,7 +162,7 @@ public class PackageServiceImpl implements PackageService {
             if(scanDTO.getWeight().compareTo(BigDecimal.ZERO) <= 0){
                 throw new ServiceException("重量必须大于0");
             }
-            if(com.baomidou.mybatisplus.core.toolkit.StringUtils.isBlank(scanDTO.getWeightUnit())){
+            if(CharSequenceUtil.isBlank(scanDTO.getWeightUnit())){
                 throw new ServiceException("重量单位不能为空");
             }
             if(!UnitEnum.WeightUnitEnum.G.getCode().equals(scanDTO.getWeightUnit()) && !UnitEnum.WeightUnitEnum.KG.getCode().equals(scanDTO.getWeightUnit())){
@@ -177,7 +178,7 @@ public class PackageServiceImpl implements PackageService {
                 throw new ServiceException("超过1000KG，重量异常请核对");
             }
             // 更新订单重量
-            if(StringUtils.isNotBlank(scanResult.getLogisticsId())){
+            if(CharSequenceUtil.isNotBlank(scanResult.getLogisticsId())){
                 soB2cFeign.updateWeight(scanResult.getSoId(),scanResult.getLogisticsId(),weightByG);
             }
             //查询订单物流信息获取跟踪号
@@ -196,7 +197,7 @@ public class PackageServiceImpl implements PackageService {
             scanResult.setWeight(weightByG);
 
             //更新物流商重量
-            if(StringUtils.isNotBlank(soB2cLogisticsEntity.getCode()) && StringUtils.isNotBlank(soB2cLogisticsEntity.getLogisticsChannelId())){
+            if(CharSequenceUtil.isNotBlank(soB2cLogisticsEntity.getCode()) && CharSequenceUtil.isNotBlank(soB2cLogisticsEntity.getLogisticsChannelId())){
                 LogisticsBillDTO.UpdateWeight updateWeight = LogisticsBillDTO.UpdateWeight.builder()
                         .soB2cEntity(entity)
                         .soB2cLogisticsEntity(soB2cLogisticsEntity)
@@ -206,7 +207,7 @@ public class PackageServiceImpl implements PackageService {
         }
 
         //查询发货单
-        List<SoB2cDeliveryEntity> soB2cDeliveryEntityList = soB2cDeliveryService.listBySourceIds(Arrays.asList(scanResult.getSoId()));
+        List<SoB2cDeliveryEntity> soB2cDeliveryEntityList = soB2cDeliveryService.listBySourceIds(Collections.singletonList(scanResult.getSoId()));
         SoB2cDeliveryEntity deliveryEntity = soB2cDeliveryEntityList.stream().filter(v->!v.getStatus().equals(SoB2cDeliveryStatusEnum.CANCEL_DELIVERY.getCode())).findFirst().orElse(null);
         if(Objects.nonNull(deliveryEntity)){
             scanResult.setWeightStatus(deliveryEntity.getIsWeigh()?"已称重":"未称重");
@@ -215,7 +216,7 @@ public class PackageServiceImpl implements PackageService {
         scanResult.setWeightUnit(UnitEnum.WeightUnitEnum.G.getCode());
         //物流渠道id
         String logisticsChannelId = scanResult.getLogisticsChannelId();
-        if (com.baomidou.mybatisplus.core.toolkit.StringUtils.isNotBlank(logisticsChannelId)) {
+        if (CharSequenceUtil.isNotBlank(logisticsChannelId)) {
             LogisticsChannelDTO.BaseDTO baseDTO = logisticsFeign.getChannelInfoById(logisticsChannelId);
             if (Objects.nonNull(baseDTO)) {
                 scanResult.setLogisticsChannelName(baseDTO.getName());
@@ -239,7 +240,7 @@ public class PackageServiceImpl implements PackageService {
             }
 
             //查询中转服务商对应的渠道
-            List<TransferLogisticsChannelEntity> logisticsChannelEntityList = transferLogisticsFeign.listLogisticsChannelByMainId(Arrays.asList(scanResult.getTransferLogisticsSupplierId()));
+            List<TransferLogisticsChannelEntity> logisticsChannelEntityList = transferLogisticsFeign.listLogisticsChannelByMainId(Collections.singletonList(scanResult.getTransferLogisticsSupplierId()));
             if (CollectionUtils.isNotEmpty(logisticsChannelEntityList)) {
                 TransferLogisticsChannelEntity transferLogisticsChannelEntity = logisticsChannelEntityList.stream().filter(req -> scanResult.getTransferLogisticsChannelId().equals(req.getId())).findFirst().orElse(null);
                 if (ObjectUtil.isNotEmpty(transferLogisticsChannelEntity)) {
@@ -292,25 +293,25 @@ public class PackageServiceImpl implements PackageService {
         for (PackageForecastDTO.AddDTO item : addList) {
             List<PackageForecastDetailDTO.AddDTO> detailList = item.getDetailList();
             //有拦截单的订单返回错误
-            Map<String, String> hasDeliveryInterceptMap = detailList.stream().filter(PackageForecastDetailDTO.AddDTO::isHasDeliveryIntercept).collect(Collectors.toMap(PackageForecastDetailDTO.CommonDTO::getSoCode, v -> StrUtil.format("{}/{}/{}", v.getSoCode(), v.getTransportNo(), v.getTrackNo()), (v1, v2) -> v1));
+            Map<String, String> hasDeliveryInterceptMap = detailList.stream().filter(PackageForecastDetailDTO.AddDTO::isHasDeliveryIntercept).collect(Collectors.toMap(PackageForecastDetailDTO.CommonDTO::getSoCode, v -> CharSequenceUtil.format("{}/{}/{}", v.getSoCode(), v.getTransportNo(), v.getTrackNo()), (v1, v2) -> v1));
             if (MapUtil.isEmpty(hasDeliveryInterceptMap)) {
                 try {
                     packageForecastService.add(item);
                 } catch (Exception e) {
                     log.error("添加组包预报异常 {}", e.getMessage());
-                    item.getDetailList().forEach(v -> resultDTOList.add(BatchResultDTO.fail(item.getLogisticsSupplierId(), v.getSoCode(), StrUtil.format("添加组包预报异常 {}", ExceptionUtil.getSimpleMessage(e)))));
+                    item.getDetailList().forEach(v -> resultDTOList.add(BatchResultDTO.fail(item.getLogisticsSupplierId(), v.getSoCode(), CharSequenceUtil.format("添加组包预报异常 {}", ExceptionUtil.getSimpleMessage(e)))));
                 }
                 //自动发货
                 if (dto.getIsAutoOut()) {
                     List<String> soIdList = item.getDetailList().stream().filter(v -> !SoB2cBillStatusEnum.ENUM_SHIPPED.getCode().equals(v.getBillStatus())).map(PackageForecastDetailDTO.AddDTO::getSoId).collect(Collectors.toList());
                     // 异步推送到MQ
-                    soIdList.stream().peek(soId -> {
+                    soIdList.forEach(soId -> {
                         SendResult sendResult = mqProducerService.syncClassMsg(RocketMqTopic.ASYNC_MERGE_PACKAGE_DELIVERY_TOPIC, RocketMqTagEnum.ASYNC_MERGE_PACKAGE_DELIVERY_TAG.getName(),
                                 soId, soId);
                         if (!SendStatus.SEND_OK.equals(sendResult.getSendStatus())) {
-                            throw new RuntimeException(StrUtil.format("发送MQ数据异常，{}", JSONUtil.toJsonStr(sendResult)));
+                            throw new RuntimeException(CharSequenceUtil.format("发送MQ数据异常，{}", JSONUtil.toJsonStr(sendResult)));
                         }
-                    }).collect(Collectors.toList());
+                    });
                 }
             } else {
                 hasDeliveryInterceptMap.forEach((key, val) -> {
@@ -333,7 +334,7 @@ public class PackageServiceImpl implements PackageService {
         if (ObjectUtil.isEmpty(scanResult)) {
             return weightDTO;
         }
-        List<SoB2cDeliveryEntity> soB2cDeliveryList = soB2cDeliveryService.listBySourceIds(Arrays.asList(scanResult.getSoId()),SoB2cDeliveryStatusEnum.CANCEL_DELIVERY.getCode());
+        List<SoB2cDeliveryEntity> soB2cDeliveryList = soB2cDeliveryService.listBySourceIds(Collections.singletonList(scanResult.getSoId()),SoB2cDeliveryStatusEnum.CANCEL_DELIVERY.getCode());
         if (CollectionUtils.isEmpty(soB2cDeliveryList)) {
             return  weightDTO;
         }
@@ -355,7 +356,7 @@ public class PackageServiceImpl implements PackageService {
             return Collections.emptyList();
         }
         List<PackageDTO.ScanResultDTO> list = soB2cFeign.listMergePackageBySoIds(ids);
-        List<String> logisticsChannelIdList = list.stream().filter(a -> StringUtils.isNotBlank(a.getLogisticsChannelId())).
+        List<String> logisticsChannelIdList = list.stream().filter(a -> CharSequenceUtil.isNotBlank(a.getLogisticsChannelId())).
                 map(PackageDTO.ScanResultDTO::getLogisticsChannelId).distinct().collect(Collectors.toList());
         List<SoB2cDeliveryInterceptEntity> soB2cDeliveryInterceptEntityList = soB2cDeliveryInterceptService.listBySourceIds(ids).stream().filter(v->!v.getHandleStatus().equals(SoB2cDeliveryInterceptStatusEnum.CANCEL.getStatus())).collect(Collectors.toList());
 
@@ -375,7 +376,7 @@ public class PackageServiceImpl implements PackageService {
             item.setUniqueId(getPackageUniqueId(item.getIsPackageSupplier(),item.getLogisticsSupplierId(),item.getTransferLogisticsChannelId(),item.getTransferLogisticsSupplierId(), item.getShopId()));
         }
 
-        Map<String, List<PackageDTO.ScanResultDTO>> map = list.stream().filter(s -> StringUtils.isNotBlank(s.getLogisticsSupplierId())).
+        Map<String, List<PackageDTO.ScanResultDTO>> map = list.stream().filter(s -> CharSequenceUtil.isNotBlank(s.getLogisticsSupplierId())).
                 collect(Collectors.groupingBy(PackageDTO.ScanResultDTO::getUniqueId));
 
         LocalDate nowDate = LocalDate.now();

@@ -68,7 +68,7 @@ public class ObjUtils {
             // 设置字段可访问
             field.setAccessible(true);
             return field.get(obj);
-        } catch (Throwable t) {
+        } catch (Exception t) {
             logger.error("get object field value fail." + clazz.getName() + "#" + fieldName, t);
         }
 
@@ -100,7 +100,7 @@ public class ObjUtils {
     }
 
     public static Map<String, Object> obj2Map(Object obj, boolean expandMapField) {
-        Map<String, Object> map = new HashMap<String, Object>();
+        Map<String, Object> map = new HashMap<>();
 
         return obj2Map(obj, expandMapField, map);
     }
@@ -127,30 +127,34 @@ public class ObjUtils {
 
         AccessibleObject.setAccessible(fields, true);
         for (final Field field : fields) {
-            try {
-                //忽略表静态字段
-                if (!isCanReflect(field))
-                    continue;
+        	getObjValue(field , obj , expandMapField , map);
+        }
+    }
+    
+    private static void getObjValue(Field field , Object obj , boolean expandMapField , Map<String, Object> map) {
+        try {
+            //忽略表静态字段
+            if (!isCanReflect(field))
+                return;
 
-                final String fieldName = field.getName();
-                Object value = field.get(obj);
-                if (value != null) {
-                    if (value instanceof Map && expandMapField) {
-                        Map mpObj = (Map) value;
-                        Iterator it = mpObj.entrySet().iterator();
-                        while (it.hasNext()) {
-                            Map.Entry entry = (Map.Entry) it.next();
-                            if (entry.getKey() != null) {
-                                map.put(entry.getKey().toString(), entry.getValue());
-                            }
+            final String fieldName = field.getName();
+            Object value = field.get(obj);
+            if (value != null) {
+                if (value instanceof Map && expandMapField) {
+                    Map mpObj = (Map) value;
+                    Iterator it = mpObj.entrySet().iterator();
+                    while (it.hasNext()) {
+                        Map.Entry entry = (Map.Entry) it.next();
+                        if (entry.getKey() != null) {
+                            map.put(entry.getKey().toString(), entry.getValue());
                         }
-                    } else {
-                        map.put(fieldName, value);
                     }
+                } else {
+                    map.put(fieldName, value);
                 }
-            } catch (Throwable e) {
-                logger.debug("object fields reflect to  map fail", e);
             }
+        } catch (Exception e) {
+            logger.debug("object fields reflect to  map fail", e);
         }
     }
 
@@ -171,12 +175,8 @@ public class ObjUtils {
             return false;
         }
 
-        if (Modifier.isStatic(field.getModifiers())) {
-            // Reject static fields.
-            return false;
-        }
+        return !Modifier.isStatic(field.getModifiers());
 
-        return true;
     }
 
     // 测试main
@@ -212,29 +212,5 @@ public class ObjUtils {
 
         }
 
-        class Test {
-            private String listid;
-            private String spid;
-            private MyInput ad;
-
-            public Test(String a1, String a2) {
-                listid = a1;
-                spid = a2;
-                ad = new MyInput();
-                ad.setA("a1");
-                ad.setB("a2");
-            }
-        }
-
-//		Map<String, String> mp = new HashMap<String, String>();
-//		mp.put("ts12", "d3we");
-//		mp.put("we12", "rrrd3we");
-//		System.out.println(ObjUtils.obj2String(mp));
-//
-//		MyInput input = new MyInput();
-//		input.setA("b");
-//		input.setB("1");
-//
-//		System.out.println(ObjUtils.obj2String(input));
     }
 }

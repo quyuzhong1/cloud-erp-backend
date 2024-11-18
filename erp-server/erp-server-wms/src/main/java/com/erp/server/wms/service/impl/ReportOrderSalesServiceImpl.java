@@ -1,7 +1,9 @@
 package com.erp.server.wms.service.impl;
 
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -32,6 +34,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -51,19 +54,19 @@ import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_REPORT_ORDE
 @Slf4j
 @Service
 public class ReportOrderSalesServiceImpl extends SuperServiceImpl<ReportOrderSalesMapper, ReportOrderSalesEntity> implements ReportOrderSalesService {
-    @Autowired
+    @Resource
     private WarehouseService warehouseService;
 
-    @Autowired
+    @Resource
     private VirtualWarehouseService virtualWarehouseService;
 
-    @Autowired
+    @Resource
     private DownloadTaskFeign downloadTaskFeign;
 
-    @Autowired
+    @Resource
     private VirtualWarehouseAllocationDetailService virtualWarehouseAllocationDetailService;
 
-    @Autowired
+    @Resource
     private CfgSettingVirtualService cfgSettingVirtualService;
 
     @Transactional(rollbackFor = Exception.class)
@@ -165,7 +168,7 @@ public class ReportOrderSalesServiceImpl extends SuperServiceImpl<ReportOrderSal
      * @param list
      */
     private void handlePage (List<ReportOrderSalesDTO.ListDTO> list) {
-        if (CollectionUtil.isEmpty(list)) {
+        if (CollUtil.isEmpty(list)) {
             return;
         }
         //sku
@@ -185,34 +188,34 @@ public class ReportOrderSalesServiceImpl extends SuperServiceImpl<ReportOrderSal
              */
             //新增分货数量
             Integer addQty = allocationDataList.stream().filter(obj ->
-                    StrUtil.equals(obj.getType(), VirtualWarehouseAllocationTypeEnum.ALLOCATION.getCode())
-                            && StrUtil.equals(obj.getSkuId(), listDTO.getSkuId())
-                            && StrUtil.equals(obj.getWarehouseId(), listDTO.getWarehouseId())
-                            && StrUtil.equals(obj.getToVirtualWarehouseId(), listDTO.getVirtualWarehouseId())
+                    CharSequenceUtil.equals(obj.getType(), VirtualWarehouseAllocationTypeEnum.ALLOCATION.getCode())
+                            && CharSequenceUtil.equals(obj.getSkuId(), listDTO.getSkuId())
+                            && CharSequenceUtil.equals(obj.getWarehouseId(), listDTO.getWarehouseId())
+                            && CharSequenceUtil.equals(obj.getToVirtualWarehouseId(), listDTO.getVirtualWarehouseId())
             ).map(VirtualWarehouseAllocationDetailDTO.AllocationDataDTO::getQty).reduce(MathUtil.ZERO, Integer::sum);
 
             //调入分货数量
             Integer toTransferQty = allocationDataList.stream().filter(obj ->
-                    StrUtil.equals(obj.getType(), VirtualWarehouseAllocationTypeEnum.TRANSFER.getCode())
-                            && StrUtil.equals(obj.getSkuId(), listDTO.getSkuId())
-                            && StrUtil.equals(obj.getWarehouseId(), listDTO.getWarehouseId())
-                            && StrUtil.equals(obj.getToVirtualWarehouseId(), listDTO.getVirtualWarehouseId())
+                    CharSequenceUtil.equals(obj.getType(), VirtualWarehouseAllocationTypeEnum.TRANSFER.getCode())
+                            && CharSequenceUtil.equals(obj.getSkuId(), listDTO.getSkuId())
+                            && CharSequenceUtil.equals(obj.getWarehouseId(), listDTO.getWarehouseId())
+                            && CharSequenceUtil.equals(obj.getToVirtualWarehouseId(), listDTO.getVirtualWarehouseId())
             ).map(VirtualWarehouseAllocationDetailDTO.AllocationDataDTO::getQty).reduce(MathUtil.ZERO, Integer::sum);
 
             //调出分货数量
             Integer fromTransferQty = allocationDataList.stream().filter(obj ->
-                    StrUtil.equals(obj.getType(), VirtualWarehouseAllocationTypeEnum.TRANSFER.getCode())
-                            && StrUtil.equals(obj.getSkuId(), listDTO.getSkuId())
-                            && StrUtil.equals(obj.getWarehouseId(), listDTO.getWarehouseId())
-                            && StrUtil.equals(obj.getFromVirtualWarehouseId(), listDTO.getVirtualWarehouseId())
+                    CharSequenceUtil.equals(obj.getType(), VirtualWarehouseAllocationTypeEnum.TRANSFER.getCode())
+                            && CharSequenceUtil.equals(obj.getSkuId(), listDTO.getSkuId())
+                            && CharSequenceUtil.equals(obj.getWarehouseId(), listDTO.getWarehouseId())
+                            && CharSequenceUtil.equals(obj.getFromVirtualWarehouseId(), listDTO.getVirtualWarehouseId())
             ).map(VirtualWarehouseAllocationDetailDTO.AllocationDataDTO::getQty).reduce(MathUtil.ZERO, Integer::sum);
 
             //取消分货数量
             Integer cancelQty = allocationDataList.stream().filter(obj ->
-                    StrUtil.equals(obj.getType(), VirtualWarehouseAllocationTypeEnum.CANCEL.getCode())
-                            && StrUtil.equals(obj.getSkuId(), listDTO.getSkuId())
-                            && StrUtil.equals(obj.getWarehouseId(), listDTO.getWarehouseId())
-                            && StrUtil.equals(obj.getFromVirtualWarehouseId(), listDTO.getVirtualWarehouseId())
+                    CharSequenceUtil.equals(obj.getType(), VirtualWarehouseAllocationTypeEnum.CANCEL.getCode())
+                            && CharSequenceUtil.equals(obj.getSkuId(), listDTO.getSkuId())
+                            && CharSequenceUtil.equals(obj.getWarehouseId(), listDTO.getWarehouseId())
+                            && CharSequenceUtil.equals(obj.getFromVirtualWarehouseId(), listDTO.getVirtualWarehouseId())
             ).map(VirtualWarehouseAllocationDetailDTO.AllocationDataDTO::getQty).reduce(MathUtil.ZERO, Integer::sum);
             //分配数量
             Integer distributionQty = addQty + toTransferQty - fromTransferQty - cancelQty;
@@ -325,7 +328,7 @@ public class ReportOrderSalesServiceImpl extends SuperServiceImpl<ReportOrderSal
     * 新增修改处理数据
     */
     private void handleData(List<ReportOrderSalesEntity> list) {
-        if (CollectionUtil.isEmpty(list)) {
+        if (CollUtil.isEmpty(list)) {
             return;
         }
         //SKU
@@ -342,17 +345,17 @@ public class ReportOrderSalesServiceImpl extends SuperServiceImpl<ReportOrderSal
 
         for (ReportOrderSalesEntity entity : list) {
             //产品信息
-            ProductDetailEntity productDetailEntity = skuList.stream().filter(obj -> StrUtil.equals(obj.getId(), entity.getSkuId())).findFirst().orElse(null);
+            ProductDetailEntity productDetailEntity = skuList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), entity.getSkuId())).findFirst().orElse(null);
             if (ObjectUtil.isNotEmpty(productDetailEntity)) {
                 entity.setSkuNo(productDetailEntity.getSkuNo());
                 entity.setProductName(productDetailEntity.getName());
             }
             //仓库
-            String warehouseName = warehouseList.stream().filter(obj -> StrUtil.equals(obj.getId(), entity.getWarehouseId())).map(WarehouseEntity::getName).findFirst().orElse("");
+            String warehouseName = warehouseList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), entity.getWarehouseId())).map(WarehouseEntity::getName).findFirst().orElse("");
             entity.setWarehouseName(warehouseName);
 
             //虚拟仓
-            String virtualWarehouseName = virtualWarehouseList.stream().filter(obj -> StrUtil.equals(obj.getId(), entity.getVirtualWarehouseId())).map(VirtualWarehouseEntity::getName).findFirst().orElse("");
+            String virtualWarehouseName = virtualWarehouseList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), entity.getVirtualWarehouseId())).map(VirtualWarehouseEntity::getName).findFirst().orElse("");
             entity.setVirtualWarehouseName(virtualWarehouseName);
         }
     }

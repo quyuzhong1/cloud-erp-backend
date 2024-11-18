@@ -1,5 +1,6 @@
 package com.erp.server.wms.service.impl;
 
+import cn.hutool.core.text.CharSequenceUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.enums.ApiError;
@@ -136,9 +137,9 @@ public class TransferInDetailServiceImpl extends SuperServiceImpl<TransferInDeta
         }
         List<TransferInDetailEntity> saveOrUpdateList = new ArrayList<>(detailList.size());
         //这是修改的
-        List<TransferInDetailDTO.UpdateDTO> updateList = detailList.stream().filter(c -> StringUtils.isNotBlank(c.getId())).collect(Collectors.toList());
+        List<TransferInDetailDTO.UpdateDTO> updateList = detailList.stream().filter(c -> CharSequenceUtil.isNotBlank(c.getId())).collect(Collectors.toList());
         //这是要添加的
-        List<TransferInDetailDTO.UpdateDTO> addList = detailList.stream().filter(c -> StringUtils.isBlank(c.getId())).collect(Collectors.toList());
+        List<TransferInDetailDTO.UpdateDTO> addList = detailList.stream().filter(c -> CharSequenceUtil.isBlank(c.getId())).collect(Collectors.toList());
         //这个是要修改的实体
         List<TransferInDetailEntity> updateEntityList = BeanMapper.copyList(updateList, TransferInDetailEntity.class);
         //这个是要添加的
@@ -165,10 +166,10 @@ public class TransferInDetailServiceImpl extends SuperServiceImpl<TransferInDeta
         List<Pair<String, String>> removePairList = removeList.stream().map(obj -> new Pair<>(mainId, obj.getSkuNo())).collect(Collectors.toList());
         operateLogService.batchAddModuleOperateLog("删除了一个分布式调入产品【%s】", ModuleTypeEnum.TRANSFER_IN.getCode(), removePairList, "编辑操作");
         //这是添加
-        List<Pair<String, String>> addPairList = saveOrUpdateList.stream().filter(s -> StringUtils.isBlank(s.getId())).map(obj -> new Pair<>(mainId, obj.getSkuNo())).collect(Collectors.toList());
+        List<Pair<String, String>> addPairList = saveOrUpdateList.stream().filter(s -> CharSequenceUtil.isBlank(s.getId())).map(obj -> new Pair<>(mainId, obj.getSkuNo())).collect(Collectors.toList());
         operateLogService.batchAddModuleOperateLog("添加了一个分布式调入产品【%s】", ModuleTypeEnum.TRANSFER_IN.getCode(), addPairList, "编辑操作");
         //修改的
-        updateEntityList = saveOrUpdateList.stream().filter(s -> StringUtils.isNotBlank(s.getId())).collect(Collectors.toList());
+        updateEntityList = saveOrUpdateList.stream().filter(s -> CharSequenceUtil.isNotBlank(s.getId())).collect(Collectors.toList());
         for (TransferInDetailEntity update : updateEntityList) {
             String id = update.getId();
             TransferInDetailEntity old = dbList.stream().filter(d -> d.getId().equals(id)).findFirst().orElse(null);
@@ -236,7 +237,7 @@ public class TransferInDetailServiceImpl extends SuperServiceImpl<TransferInDeta
      * @date 2023-05-25 12:07
      */
     private List<String> getDeleteIds(List<Pair<String, String>> pairList, List<TransferInDetailEntity> dbList) {
-        List<String> ids = pairList.stream().filter(g -> StringUtils.isNotBlank(g.getKey())).
+        List<String> ids = pairList.stream().filter(g -> CharSequenceUtil.isNotBlank(g.getKey())).
                 map(obj -> obj.getKey()).collect(Collectors.toList());
         List<String> dbIds = dbList.stream().map(TransferInDetailEntity::getId).collect(Collectors.toList());
         return dbIds.stream().filter(s -> !ids.contains(s)).collect(Collectors.toList());

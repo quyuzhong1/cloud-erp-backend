@@ -102,7 +102,7 @@ public class SupplierCredentialDTO  implements Serializable {
 
     @Data
     @NoArgsConstructor
-    public  static class UpdateDTO {
+    public  static class UpdateDTO implements Serializable{
 
         /**
          * 主表id

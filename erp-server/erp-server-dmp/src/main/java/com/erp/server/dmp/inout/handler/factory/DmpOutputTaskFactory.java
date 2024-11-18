@@ -97,7 +97,7 @@ public class DmpOutputTaskFactory{
 					if(CollUtil.isNotEmpty(beforeDmpOutputTaskEntityList)) {
 						DmpOutputTaskEntity dmpInputTaskEntity = beforeDmpOutputTaskEntityList.get(0);
 						Integer errorCount = dmpInputTaskEntity.getErrorCount() + 1;
-						boolean errorFlag = errorCount == maxRetryCount;
+						boolean errorFlag = errorCount.equals(maxRetryCount);
 						dmpOutputTaskService.updateErrorStatus(dmpInputTaskEntity.getId(), errorFlag, errorCount, e);
 					}
 					throw e;

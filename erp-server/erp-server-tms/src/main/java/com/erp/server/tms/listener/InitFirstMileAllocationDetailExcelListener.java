@@ -1,13 +1,12 @@
 package com.erp.server.tms.listener;
 
-import cn.hutool.core.util.StrUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.extra.spring.SpringUtil;
 import com.alibaba.excel.context.AnalysisContext;
 import com.alibaba.excel.event.AnalysisEventListener;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.common.business.enums.UnitEnum;
 import com.common.core.enums.CurrencyEnum;
-import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.FieldValidUtil;
 import com.erp.model.tms.dto.InitFirstMileAllocationDetailDTO;
 import com.erp.model.tms.dto.excel.InitFirstMileAllocationDetailExcelDTO;
@@ -75,36 +74,36 @@ public class InitFirstMileAllocationDetailExcelListener extends AnalysisEventLis
             InitFirstMileAllocationDetailDTO.AddDTO addDTO1 = detailList.stream().filter(e -> (Objects.equals(e.getBusinessCode(), excelDTO.getBusinessCode()) || Objects.equals(e.getSourceCode(), excelDTO.getSourceCode()))
                     && Objects.equals(e.getSkuNo(), excelDTO.getSkuNo())).findFirst().orElse(null);
             if (Objects.nonNull(addDTO1)){
-                errorMsgList.add(StrUtil.format("发货单【{}】业务单号【{}】SKU【{}】已存在", addDTO1.getSourceCode(),addDTO1.getBusinessCode(),addDTO1.getSkuNo()));
+                errorMsgList.add(CharSequenceUtil.format("发货单【{}】业务单号【{}】SKU【{}】已存在", addDTO1.getSourceCode(),addDTO1.getBusinessCode(),addDTO1.getSkuNo()));
             }
         }
         //发货单和业务单好不能同时为空
-        if (StrUtil.isBlank(excelDTO.getBusinessCode()) && StrUtil.isBlank(excelDTO.getSourceCode())){
+        if (CharSequenceUtil.isBlank(excelDTO.getBusinessCode()) && CharSequenceUtil.isBlank(excelDTO.getSourceCode())){
             errorMsgList.add("发货单和业务单好不能同时为空");
         }
         if (CollectionUtils.isEmpty(errorMsgList)){
             addDTO = InitFirstMileAllocationConverter.INSTANCE.excelToAddDTO(excelDTO);
             //补充明细数据
-            if (StrUtil.isNotBlank(excelDTO.getSourceCode())){
+            if (CharSequenceUtil.isNotBlank(excelDTO.getSourceCode())){
                 List<FirstMileDeliveryDTO.ListFirstMileDTO> firstMileDTOS = wmsFirstMileDeliveryFeign.listDetailByCodes(Collections.singletonList(excelDTO.getSourceCode()));
                 if (CollectionUtils.isEmpty(firstMileDTOS)){
-                    errorMsgList.add(StrUtil.format("发货单【{}】未审核或不存在",excelDTO.getSourceCode()));
+                    errorMsgList.add(CharSequenceUtil.format("发货单【{}】未审核或不存在",excelDTO.getSourceCode()));
                 }
-                FirstMileDeliveryDTO.ListFirstMileDTO firstMileDTO = firstMileDTOS.stream().filter(e -> StrUtil.isNotBlank(e.getSkuNo()) && e.getSkuNo().equals(excelDTO.getSkuNo()) && StrUtil.isNotBlank(e.getPlatformSkuNo()) && e.getPlatformSkuNo().equals(excelDTO.getPlatformSkuNo())).findFirst().orElse(null);
+                FirstMileDeliveryDTO.ListFirstMileDTO firstMileDTO = firstMileDTOS.stream().filter(e -> CharSequenceUtil.isNotBlank(e.getSkuNo()) && e.getSkuNo().equals(excelDTO.getSkuNo()) && CharSequenceUtil.isNotBlank(e.getPlatformSkuNo()) && e.getPlatformSkuNo().equals(excelDTO.getPlatformSkuNo())).findFirst().orElse(null);
                 if (Objects.isNull(firstMileDTO)){
-                    errorMsgList.add(StrUtil.format("发货单【{}】明细中SKU【{}】平台SKU【{}】不存在",excelDTO.getSourceCode(), excelDTO.getSkuNo(), excelDTO.getPlatformSkuNo()));
+                    errorMsgList.add(CharSequenceUtil.format("发货单【{}】明细中SKU【{}】平台SKU【{}】不存在",excelDTO.getSourceCode(), excelDTO.getSkuNo(), excelDTO.getPlatformSkuNo()));
                 }else {
                     initExcel(firstMileDTO,addDTO);
                 }
-            }else if (StrUtil.isNotBlank(excelDTO.getBusinessCode())){
+            }else if (CharSequenceUtil.isNotBlank(excelDTO.getBusinessCode())){
                 //根据业务单号进行查询发货单
                 List<FirstMileDeliveryDTO.ListFirstMileDTO> firstMileDTOS = wmsFirstMileDeliveryFeign.listDetailBySourceCodes(Collections.singletonList(excelDTO.getBusinessCode()));
                 if (CollectionUtils.isEmpty(firstMileDTOS)){
-                    errorMsgList.add(StrUtil.format("业务单号【{}】关联的发货单未审核或不存在",excelDTO.getBusinessCode()));
+                    errorMsgList.add(CharSequenceUtil.format("业务单号【{}】关联的发货单未审核或不存在",excelDTO.getBusinessCode()));
                 }
-                FirstMileDeliveryDTO.ListFirstMileDTO firstMileDTO = firstMileDTOS.stream().filter(e -> StrUtil.isNotBlank(e.getSkuNo()) && e.getSkuNo().equals(excelDTO.getSkuNo()) && StrUtil.isNotBlank(e.getPlatformSkuNo()) && e.getPlatformSkuNo().equals(excelDTO.getPlatformSkuNo())).findFirst().orElse(null);
+                FirstMileDeliveryDTO.ListFirstMileDTO firstMileDTO = firstMileDTOS.stream().filter(e -> CharSequenceUtil.isNotBlank(e.getSkuNo()) && e.getSkuNo().equals(excelDTO.getSkuNo()) && CharSequenceUtil.isNotBlank(e.getPlatformSkuNo()) && e.getPlatformSkuNo().equals(excelDTO.getPlatformSkuNo())).findFirst().orElse(null);
                 if (Objects.isNull(firstMileDTO)){
-                    errorMsgList.add(StrUtil.format("发货单【{}】明细中SKU【{}】平台SKU【{}】不存在",excelDTO.getSourceCode(), excelDTO.getSkuNo(), excelDTO.getPlatformSkuNo()));
+                    errorMsgList.add(CharSequenceUtil.format("发货单【{}】明细中SKU【{}】平台SKU【{}】不存在",excelDTO.getSourceCode(), excelDTO.getSkuNo(), excelDTO.getPlatformSkuNo()));
                 }else {
                     initExcel(firstMileDTO,addDTO);
                 }
@@ -128,23 +127,23 @@ public class InitFirstMileAllocationDetailExcelListener extends AnalysisEventLis
         addDTO.setBusinessCode(firstMileDTO.getBusinessCode());
         addDTO.setBusinessType(firstMileDTO.getBusinessType());
         addDTO.setShopId(firstMileDTO.getShopId());
-        if (StrUtil.isBlank(addDTO.getShopName())){
+        if (CharSequenceUtil.isBlank(addDTO.getShopName())){
             addDTO.setShopName(firstMileDTO.getShopName());
         }
         addDTO.setWarehouseId(firstMileDTO.getWarehouseId());
-        if (StrUtil.isBlank(addDTO.getWarehouseName())){
+        if (CharSequenceUtil.isBlank(addDTO.getWarehouseName())){
             addDTO.setWarehouseName(firstMileDTO.getWarehouseName());
         }
         addDTO.setSkuId(firstMileDTO.getSkuId());
-        if (StrUtil.isBlank(addDTO.getProductName())){
+        if (CharSequenceUtil.isBlank(addDTO.getProductName())){
             addDTO.setProductName(firstMileDTO.getProductName());
         }
-        if (StrUtil.isBlank(addDTO.getCurrency())){
+        if (CharSequenceUtil.isBlank(addDTO.getCurrency())){
             addDTO.setCurrency(CurrencyEnum.CNY.getCurrencyCode());
             addDTO.setCurrencySymbol(CurrencyEnum.CNY.getCurrencySymbol());
             addDTO.setExchangeRate(BigDecimal.ONE);
         }
-        if (StrUtil.isBlank(addDTO.getWeightUnit())){
+        if (CharSequenceUtil.isBlank(addDTO.getWeightUnit())){
             addDTO.setWeightUnit(UnitEnum.WeightUnitEnum.KG.code);
         }
     }

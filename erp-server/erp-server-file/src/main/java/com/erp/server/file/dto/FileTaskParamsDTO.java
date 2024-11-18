@@ -14,6 +14,7 @@ import java.util.Map;
 @EqualsAndHashCode(callSuper = false)
 public class FileTaskParamsDTO extends SortDTO {
 
+    private static final long serialVersionUID = 6092242010755733893L;
     /**
      * 页面高级查询
      */

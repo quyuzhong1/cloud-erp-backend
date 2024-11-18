@@ -14,7 +14,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
-import javax.validation.constraints.NotBlank;
 
 /**
  * 飞书提醒控制器
@@ -38,7 +37,7 @@ public class LarkMessageController  extends BaseController {
      */
     @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "飞书催办消息：催办业务ID={businessId}，催办业务类型={businessType}")
     @PostMapping(value = "/press")
-    public ApiResult larkPress(@RequestBody @Validated LarkPressMessageDTO dto) {
+    public ApiResult<Object> larkPress(@RequestBody @Validated LarkPressMessageDTO dto) {
         Boolean result = larkMessageService.press(dto);
         return success(result);
     }
@@ -50,7 +49,7 @@ public class LarkMessageController  extends BaseController {
      */
     @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "飞书批量催办消息：催办业务ids={businessIdList}，催办业务类型={businessType}")
     @PostMapping(value = "/batchPress")
-    public ApiResult batchPress(@RequestBody @Validated LarkPressMessageDTO.BatchLarkPressMessageDTO dto) {
+    public ApiResult<Object> batchPress(@RequestBody @Validated LarkPressMessageDTO.BatchLarkPressMessageDTO dto) {
         Boolean result = larkMessageService.batchPress(dto);
         return success(result);
     }

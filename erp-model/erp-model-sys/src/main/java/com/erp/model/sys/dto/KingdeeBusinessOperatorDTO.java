@@ -11,6 +11,9 @@ import lombok.NoArgsConstructor;
  */
 public class KingdeeBusinessOperatorDTO  {
 
+    private KingdeeBusinessOperatorDTO() {
+    }
+
     @Data
     @NoArgsConstructor
     public static class ListBusinessOperatorDTO{

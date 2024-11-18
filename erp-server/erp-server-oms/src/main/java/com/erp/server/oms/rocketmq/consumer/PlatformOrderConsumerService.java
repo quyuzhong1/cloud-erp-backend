@@ -1,5 +1,6 @@
 package com.erp.server.oms.rocketmq.consumer;
 
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.common.business.dto.DmpSyncMqDTO;
@@ -93,7 +94,7 @@ public class PlatformOrderConsumerService<T extends DmpSyncTaskIdDTO> extends Ab
      * @return
      */
     private String getTableName(String platform){
-        return StrUtil.format("{}_{}_{}", PlatformCategoryEnum.THIRD_SYSTEM.getCode(),
+        return  CharSequenceUtil.format("{}_{}_{}", PlatformCategoryEnum.THIRD_SYSTEM.getCode(),
                 platform, BusinessTypeEnum.ORDER.getCode());
     }
 }

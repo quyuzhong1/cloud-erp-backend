@@ -19,5 +19,5 @@ import java.util.List;
  */
 @Mapper
 public interface ProjectPlanMapper extends BaseMapper<ProjectPlanEntity> {
-    IPage<SchedulePagingVO> paging(Page query, @Param("params")SearchPagingDTO params,@Param("idList") List<String> idList, @Param("statusList")List<String> statusList);
+    IPage<SchedulePagingVO> paging(Page<SearchPagingDTO> query, @Param("params")SearchPagingDTO params,@Param("idList") List<String> idList, @Param("statusList")List<String> statusList);
 }

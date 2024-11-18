@@ -1,43 +1,5 @@
 package com.erp.server.dmp.service.impl;
 
-import cn.hutool.core.collection.CollectionUtil;
-import cn.hutool.core.exceptions.ExceptionUtil;
-import cn.hutool.core.util.StrUtil;
-import cn.hutool.json.JSONUtil;
-import com.alibaba.fastjson.JSONObject;
-import com.common.business.constant.MongoTableNameContant;
-import com.common.business.constant.RedisCacheConstants;
-import com.common.business.dto.PlatformOrderDTO;
-import com.common.business.dto.PlatformProductDTO;
-import com.common.business.enums.BusinessTypeEnum;
-import com.common.core.enums.ApiError;
-import com.common.core.exception.ServiceException;
-import com.erp.model.dmp.dto.AmazonShopInfoDTO;
-import com.erp.model.dmp.entity.PlatformApiTaskEntity;
-import com.erp.model.oms.entity.ShopInfoEntity;
-import com.erp.model.wms.entity.FbaInventoryEntity;
-import com.erp.oms.aliexpress.dto.AliExpressShopInfoDTO;
-import com.erp.oms.aliexpress.dto.PlatformAliExpressListingDTO;
-import com.erp.oms.aliexpress.dto.PlatformAliExpressOrderDTO;
-import com.erp.oms.aliexpress.handler.AliExpressOrderHandler;
-import com.erp.oms.aliexpress.service.AliExpressOrderService;
-import com.erp.sdk.oms.amz.spapi.dto.PlatformAmazonListingDTO;
-import com.erp.sdk.oms.amz.spapi.enums.AmazonMarketplaceEnum;
-import com.erp.sdk.oms.amz.spapi.enums.AmazonRequestTypeRateLimiterEnum;
-import com.erp.server.dmp.enums.DownloadStatusEnum;
-import com.erp.server.dmp.service.AliExpressDownloadService;
-import com.erp.server.dmp.service.DmpPushTaskService;
-import com.xxl.job.core.context.XxlJobHelper;
-import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.collections4.CollectionUtils;
-import org.springframework.context.annotation.Lazy;
-import org.springframework.data.mongodb.core.MongoTemplate;
-import org.springframework.data.mongodb.core.query.Criteria;
-import org.springframework.data.mongodb.core.query.Query;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import javax.annotation.Resource;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.ArrayList;
@@ -45,6 +7,36 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+
+import javax.annotation.Resource;
+
+import org.apache.commons.collections4.CollectionUtils;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.stereotype.Service;
+
+import com.common.business.constant.MongoTableNameContant;
+import com.common.business.dto.PlatformOrderDTO;
+import com.common.business.enums.BusinessTypeEnum;
+import com.common.core.exception.ServiceException;
+import com.erp.model.dmp.entity.PlatformApiTaskEntity;
+import com.erp.model.oms.entity.ShopInfoEntity;
+import com.erp.oms.aliexpress.dto.AliExpressShopInfoDTO;
+import com.erp.oms.aliexpress.dto.PlatformAliExpressOrderDTO;
+import com.erp.oms.aliexpress.handler.AliExpressOrderHandler;
+import com.erp.oms.aliexpress.service.AliExpressOrderService;
+import com.erp.server.dmp.enums.DownloadStatusEnum;
+import com.erp.server.dmp.service.AliExpressDownloadService;
+import com.erp.server.dmp.service.DmpPushTaskService;
+import com.xxl.job.core.context.XxlJobHelper;
+
+import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.exceptions.ExceptionUtil;
+import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONUtil;
+import lombok.extern.slf4j.Slf4j;
 
 
 /**

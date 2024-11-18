@@ -131,16 +131,6 @@ public class CfgSettingValueDTO implements Serializable {
          */
         private Integer firstMileAllocationDate;
 
-//        /**
-//         * 小包分摊类型，/wms/dict/drop/down?type=reconciliationType
-//         */
-//        @NotBlank(message = "小包报关对账类型不能为空")
-//        private String packageAllocationType;
-//
-//        /**
-//         * 小包分摊日期
-//         */
-//        private Integer packageAllocationDate;
     }
 
     /**

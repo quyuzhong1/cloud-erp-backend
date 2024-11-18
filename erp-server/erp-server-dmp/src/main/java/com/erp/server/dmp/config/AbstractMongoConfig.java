@@ -23,5 +23,5 @@ public abstract class AbstractMongoConfig {
      * Factory method to create the MongoTemplate
      *
      **/
-    abstract public MongoTemplate getMongoTemplate();
+	public abstract MongoTemplate getMongoTemplate();
 }

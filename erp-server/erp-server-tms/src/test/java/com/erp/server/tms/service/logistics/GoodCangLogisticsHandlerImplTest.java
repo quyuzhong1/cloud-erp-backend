@@ -46,7 +46,7 @@ public class GoodCangLogisticsHandlerImplTest {
         Map<String,String> authMap = new HashMap<>();
         authMap.put("appToken","7013991264f611e98ea200e01b680258");
         authMap.put("appKey","6ff50abf64f611e98ea200e01b680258");
-        ApiResult result = goodCangLogisticsHandler.authorization(authMap);
+        ApiResult<Object>result = goodCangLogisticsHandler.authorization(authMap);
         System.out.println(result);
     }
 }

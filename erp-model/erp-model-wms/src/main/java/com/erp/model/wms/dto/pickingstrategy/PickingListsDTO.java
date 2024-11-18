@@ -7,7 +7,6 @@ import com.erp.model.wms.entity.PickingDetailEntity;
 import com.erp.model.wms.entity.PickingListsEntity;
 import com.erp.model.wms.enums.PickingBillTypeEnum;
 import com.fasterxml.jackson.annotation.JsonFormat;
-import jnr.ffi.annotations.In;
 import lombok.Data;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -21,7 +20,9 @@ import java.util.Map;
 @Getter
 @Setter
 public class PickingListsDTO {
-
+    private PickingListsDTO() {
+        throw new IllegalStateException("Utility PickingListsDTO class");
+    }
 
     @Getter
     @Setter
@@ -215,7 +216,7 @@ public class PickingListsDTO {
         @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
         private LocalDateTime printTime;
         /**
-         * 打印人
+         * 打单人
          */
         private String printUserName;
         /**
@@ -223,12 +224,12 @@ public class PickingListsDTO {
          */
         private String handlingUserName;
         /**
-         * 打印明细
+         * 拣货清单
          */
         private List<PrintDetailView> printDetailViews;
 
         /**
-         * 组合品打印明细
+         * 发货清单
          */
         private List<CombinationPrintDetailView> combinationPrintDetailView;
     }
@@ -238,12 +239,16 @@ public class PickingListsDTO {
     public static class CombinationPrintDetailView {
 
         /**
-         * 父级sku
+         * 是否是捆绑商品:true=是，false=否
+         */
+        private Boolean isCombination;
+        /**
+         * sku
          */
         private String parentSku;
 
         /**
-         * 父级sku数量
+         * 发货数量
          */
         private Integer parentSkuQty;
 

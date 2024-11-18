@@ -1,7 +1,6 @@
 package com.erp.model.wms.dto;
 
 import com.common.core.anno.StateEnumValue;
-import com.erp.model.wms.entity.WmsCartonDetailEntity;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -21,6 +20,9 @@ import java.util.List;
  * @version: 1.0
  */
 public class WmsCartonDTO {
+    private WmsCartonDTO() {
+        throw new IllegalStateException("Utility WmsCartonDTO class");
+    }
     /**
      * 调整装箱扫码
      */

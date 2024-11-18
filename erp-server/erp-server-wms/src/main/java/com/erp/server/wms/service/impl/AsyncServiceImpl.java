@@ -1,6 +1,7 @@
 package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.exceptions.ExceptionUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
@@ -48,6 +49,7 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -94,11 +96,11 @@ public class AsyncServiceImpl implements AsyncService {
         if (orderGroupMap.isEmpty()){
             return;
         }
-        orderGroupMap.entrySet().parallelStream().peek(e->{
+        orderGroupMap.entrySet().parallelStream().forEach(e -> {
             String dictPlatform = e.getKey();
             List<PlatformOrderQueryDTO> curOrderList = e.getValue();
             PlatformSaveHandler.batchQueryAndUpdateOrderStatus(dictPlatform, curOrderList);
-        }).collect(Collectors.toList());
+        });
     }
 
     @Override
@@ -185,8 +187,8 @@ public class AsyncServiceImpl implements AsyncService {
             declareDetailEntity = new TransferDeclareDetailEntity();
         }
         //如果是待上传或上传失败则直接返回
-        if (StrUtil.equals(soB2cEntity.getTransferStatus(), TransferStatusEnum.WAIT.getCode()) || StrUtil.equals(declareDetailEntity.getOrderUploadStatus(), TransferDeclareUploadStatusEnum.WAIT_UPLOAD.getCode()) ||
-                StrUtil.equals(declareDetailEntity.getOrderUploadStatus(),TransferDeclareUploadStatusEnum.UPLOAD_FAILURE.getCode())) {
+        if (CharSequenceUtil.equals(soB2cEntity.getTransferStatus(), TransferStatusEnum.WAIT.getCode()) || CharSequenceUtil.equals(declareDetailEntity.getOrderUploadStatus(), TransferDeclareUploadStatusEnum.WAIT_UPLOAD.getCode()) ||
+                CharSequenceUtil.equals(declareDetailEntity.getOrderUploadStatus(),TransferDeclareUploadStatusEnum.UPLOAD_FAILURE.getCode())) {
             return;
         }
         //获取一个当前时间当作发货时间
@@ -194,19 +196,19 @@ public class AsyncServiceImpl implements AsyncService {
 
         //修改订单状态待发货
         SoB2cDTO.UpdateDeliveryTimeDTO updateDeliveryTimeDTO = new SoB2cDTO.UpdateDeliveryTimeDTO();
-        updateDeliveryTimeDTO.setSoB2cIds(Arrays.asList(entity.getSourceId()));
+        updateDeliveryTimeDTO.setSoB2cIds(Collections.singletonList(entity.getSourceId()));
         updateDeliveryTimeDTO.setStatus(SoB2cBillStatusEnum.ENUM_SHIPPED.getCode());
         updateDeliveryTimeDTO.setDeliveryTime(LocalDateTime.now());
-        updateDeliveryTimeDTO.setSoDeliveryDTOList(Arrays.asList(new SoB2cDTO.SoDeliveryDTO(entity.getSourceId(),entity.getCode())));
+        updateDeliveryTimeDTO.setSoDeliveryDTOList(Collections.singletonList(new SoB2cDTO.SoDeliveryDTO(entity.getSourceId(),entity.getCode())));
         soB2cFeign.updateSoB2cStatusAndDeliveryTime(updateDeliveryTimeDTO);
 
-        String msg = StrUtil.format("用户【{}】通过【{}】触发单据编号【{}】的自动发货功能", UserContext.getDefaultLoginUser().getUserName(), "流水线称重", entity.getCode());
+        String msg = CharSequenceUtil.format("用户【{}】通过【{}】触发单据编号【{}】的自动发货功能", UserContext.getDefaultLoginUser().getUserName(), "流水线称重", entity.getCode());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C_DELIVERY.getCode(), entity.getId(), "流水线称重");
 
         if (soB2cFeign.checkPlatformShipOrder(entity.getSourceId())) {
             // 调用第三方平台SDK标记发货(独立事务)
             String businessDesc = "包装验货";
-            this.asyncShipOrder(soB2cEntity.getId(),
+            asyncService.asyncShipOrder(soB2cEntity.getId(),
                     soB2cEntity.getCode(),
                     soB2cEntity.getDictPlatform(),
                     soB2cEntity.convertSubmitPlatformUniqueKey(),

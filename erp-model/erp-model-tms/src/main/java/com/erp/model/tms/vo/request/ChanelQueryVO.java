@@ -1,6 +1,5 @@
 package com.erp.model.tms.vo.request;
 
-import com.erp.model.tms.entity.LogisticsAuthEntity;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -12,7 +11,7 @@ import java.util.Map;
 /**
  * @author zdy
  * @ClassName ChanelQueryVO
- * @description: TODO
+
  * @date 2023年11月08日
  * @version: 1.0
  */
@@ -28,7 +27,7 @@ public class ChanelQueryVO implements Serializable {
     /**
      * 授权信息
      */
-    Map<String, String> authMap;
+    private Map<String, String> authMap;
     /**
      * 订单id
      */

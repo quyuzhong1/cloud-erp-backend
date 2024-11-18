@@ -1,6 +1,7 @@
 package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -193,15 +194,15 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
             SoReturnNoticeDTO.StatusCountDTO resultDTO = new SoReturnNoticeDTO.StatusCountDTO();
             Integer count = MathUtil.ZERO;
             if (SoReturnChangeListTypeEnum.TO_BE_APPROVE.getCode().equals(item.getCode())) {
-                pagingParam.setApproveStatusList(Arrays.asList(ApproveStatusEnum.APPROVE_ING.getStatus()));
+                pagingParam.setApproveStatusList(Collections.singletonList(ApproveStatusEnum.APPROVE_ING.getStatus()));
                 count = this.baseMapper.listCount(pagingParam);
             }
             if (SoReturnChangeListTypeEnum.APPROVE.getCode().equals(item.getCode())) {
-                pagingParam.setApproveStatusList(Arrays.asList(ApproveStatusEnum.APPROVE.getStatus()));
+                pagingParam.setApproveStatusList(Collections.singletonList(ApproveStatusEnum.APPROVE.getStatus()));
                 count = this.baseMapper.listCount(pagingParam);
             }
             if (SoReturnChangeListTypeEnum.REJECT.getCode().equals(item.getCode())) {
-                pagingParam.setApproveStatusList(Arrays.asList(ApproveStatusEnum.REJECT.getStatus()));
+                pagingParam.setApproveStatusList(Collections.singletonList(ApproveStatusEnum.REJECT.getStatus()));
                 count = this.baseMapper.listCount(pagingParam);
             }
             resultDTO.setCount(ObjectUtils.isEmpty(count) ? MathUtil.ZERO : count);
@@ -225,7 +226,7 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
         entity.setSoCode(soInfoEntity.getCode());
         entity.setReturnLogisticCode(dto.getReturnLogisticCode());
         //获取用户信息
-        if (StringUtils.isNotBlank(dto.getWarehouseKeeperId())) {
+        if (CharSequenceUtil.isNotBlank(dto.getWarehouseKeeperId())) {
             FindUserDTO userDTO = sysUserFeign.getUserByUserId(dto.getWarehouseKeeperId());
             entity.setWarehouseKeeperId(userDTO.getUserId());
             entity.setWarehouseKeeperName(userDTO.getUserName());
@@ -236,7 +237,7 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
         entity.setSalesOrgId(soInfoEntity.getSalesOrgId());
         entity.setSalesOrgName(soInfoEntity.getSalesOrgName());
         entity.setSalesDeptId(soInfoEntity.getSalesDeptId());
-        if (StringUtils.isNotBlank(soInfoEntity.getSalesDeptId())) {
+        if (CharSequenceUtil.isNotBlank(soInfoEntity.getSalesDeptId())) {
             SysDepartmentDTO dept = sysUserFeign.getUserDeptById(soInfoEntity.getSalesDeptId());
             if (dept != null) {
                 entity.setSalesDeptName(dept.getName());
@@ -249,7 +250,7 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
         List<CustomerInfoEntity> customerInfoEntities = customerFeign.listCustomer();
         CustomerInfoEntity customerInfoEntity = customerInfoEntities.stream().filter(req -> req.getId().equals(soInfoEntity.getCustomerId())).findFirst().orElse(new CustomerInfoEntity());
         entity.setCustomerName(customerInfoEntity.getName());
-        List<WarehouseDTO.UpdateDTO> warehouseList = warehouseService.listWarehouseByIds(Arrays.asList(soInfoEntity.getWarehouseId()));
+        List<WarehouseDTO.UpdateDTO> warehouseList = warehouseService.listWarehouseByIds(Collections.singletonList(soInfoEntity.getWarehouseId()));
         if (CollectionUtils.isNotEmpty(warehouseList)) {
             entity.setWarehouseName(warehouseList.get(MathUtil.ZERO).getName());
         }
@@ -265,7 +266,7 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
         if (ObjectUtils.isNotEmpty(sysAccountingCompanyEntity)) {
             entity.setInventoryOrgName(sysAccountingCompanyEntity.getCompanyName());
         }
-        if (StringUtils.isNotBlank(dto.getWarehouseKeeperId())) {
+        if (CharSequenceUtil.isNotBlank(dto.getWarehouseKeeperId())) {
             //获取用户信息
             FindUserDTO userDTO = sysUserFeign.getUserByUserId(dto.getWarehouseKeeperId());
             entity.setWarehouseKeeperId(dto.getWarehouseKeeperId());
@@ -323,7 +324,7 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
                 entity.setCustomerName(customerInfo.getName());
             }
         }
-        if (StringUtils.isNotBlank(entity.getSalesDeptId())) {
+        if (CharSequenceUtil.isNotBlank(entity.getSalesDeptId())) {
             SysDepartmentDTO dept = sysUserFeign.getUserDeptById(entity.getSalesDeptId());
             if (dept != null) {
                 entity.setSalesDeptName(dept.getName());
@@ -331,7 +332,7 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
         }
         entity.setReturnLogisticCode(dto.getReturnLogisticCode());
         //获取用户信息
-        if (StringUtils.isNotBlank(dto.getWarehouseKeeperId())) {
+        if (CharSequenceUtil.isNotBlank(dto.getWarehouseKeeperId())) {
             FindUserDTO userDTO = sysUserFeign.getUserByUserId(dto.getWarehouseKeeperId());
             if(Objects.nonNull(userDTO)){
                 entity.setWarehouseKeeperId(userDTO.getUserId());
@@ -367,7 +368,7 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
         //获取核算公司
         SoReturnNoticeEntity entity = this.getById(dto.getId());
         if(!entity.getReturnLogisticCode().equals(dto.getReturnLogisticCode())){
-            operateLogService.addModuleOperateLog(StrUtil.format("退货物流单号从{}修改为{}",entity.getReturnLogisticCode(),dto.getReturnLogisticCode()), ModuleTypeEnum.SO_RETURN_NOTICE.getCode(), entity.getId(), "编辑");
+            operateLogService.addModuleOperateLog(CharSequenceUtil.format("退货物流单号从{}修改为{}",entity.getReturnLogisticCode(),dto.getReturnLogisticCode()), ModuleTypeEnum.SO_RETURN_NOTICE.getCode(), entity.getId(), "编辑");
         }
         BeanUtil.copyProperties(dto,entity);
         //操作日志
@@ -401,18 +402,18 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
         CustomerInfoEntity customerInfoEntity = customerInfoEntities.stream().filter(req -> req.getId().equals(entity.getCustomerId())).findFirst().orElse(new CustomerInfoEntity());
         viewDTO.setCustomerName(customerInfoEntity.getName());
 
-        List<WarehouseDTO.UpdateDTO> warehouseList = warehouseService.listWarehouseByIds(Arrays.asList(entity.getWarehouseId()));
+        List<WarehouseDTO.UpdateDTO> warehouseList = warehouseService.listWarehouseByIds(Collections.singletonList(entity.getWarehouseId()));
         if (CollectionUtils.isNotEmpty(warehouseList)) {
             viewDTO.setWarehouseName(warehouseList.get(MathUtil.ZERO).getName());
         }
         //退货单
-        List<SoReturnDetailEntity> returnDetailEntityList = soReturnFeign.listDetailByMainIds(Arrays.asList(entity.getSourceId()));
+        List<SoReturnDetailEntity> returnDetailEntityList = soReturnFeign.listDetailByMainIds(Collections.singletonList(entity.getSourceId()));
         //销售单详情id集合
         List<String> detailIds = returnDetailEntityList.stream().map(SoReturnDetailEntity::getSourceDetailId).collect(Collectors.toList());
         //获取销售单详情信息
         List<SoDetailEntity> soDetailEntities = soInfoFeign.listSoDetailByIds(detailIds);
         //获取退货单id
-        List<SoReturnEntity> returnEntities = soReturnFeign.listByIds(Arrays.asList(entity.getSourceId()));
+        List<SoReturnEntity> returnEntities = soReturnFeign.listByIds(Collections.singletonList(entity.getSourceId()));
 
         //b2c退货单
         SoB2cReturnEntity soB2cReturnEntity = FeignQuery.getById(SoB2cReturnEntity.class,entity.getSourceId());
@@ -447,10 +448,10 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
                 detailView.setSalesQty(soDetailEntity.getQty());
                 Integer actualQty = soOutstockDetailEntities.stream().filter(detail -> soDetailEntity.getMainId().equals(detail.getSoId()) && detail.getSkuId().equals(detailEntity.getSkuId()) && detail.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())).map(SoOutstockDetailEntity::getActualQty).reduce(MathUtil.ZERO, Integer::sum);
                 detailView.setDeliveryQty(actualQty);
-                if (StringUtils.isNotBlank(soReturnDetailEntity.getReturnTypeDict())) {
+                if (CharSequenceUtil.isNotBlank(soReturnDetailEntity.getReturnTypeDict())) {
                     detailView.setReturnTypeDictName(ReturnTypeEnum.getName(soReturnDetailEntity.getReturnTypeDict()));
                 }
-                if (StringUtils.isNotBlank(soReturnDetailEntity.getReturnReasonDict())) {
+                if (CharSequenceUtil.isNotBlank(soReturnDetailEntity.getReturnReasonDict())) {
                     detailView.setReturnReasonDictName(ReturnReasonEnum.getName(soReturnDetailEntity.getReturnReasonDict()));
                 }
             }
@@ -495,10 +496,10 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
     @Override
     public Boolean addAndSubmit(SoReturnNoticeDTO.Add dto) {
         String id = this.add(dto);
-        if (StringUtils.isBlank(id)) {
+        if (CharSequenceUtil.isBlank(id)) {
             throw new ServiceException(ApiError.ERROR_1019);
         }
-        return this.submit(Arrays.asList(id));
+        return this.submit(Collections.singletonList(id));
     }
 
     @Override
@@ -507,7 +508,7 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
         if (!update) {
             throw new ServiceException(ApiError.ERROR_1020);
         }
-        return this.submit(Arrays.asList(dto.getId()));
+        return this.submit(Collections.singletonList(dto.getId()));
     }
 
     @Override
@@ -535,7 +536,7 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
                     .update();
         }
         //操作日志
-        operateLogService.addModuleOperateLog(String.format("审核【%s】了一个销售退货通知单【%s】", ApproveTypeEnum.getName(type),entity.getCode()).concat(StringUtils.isNotBlank(comment) ? String.format(",意见：%s", comment) : ""), ModuleTypeEnum.SO_DELIVERY_NOTICE.getCode(), entity.getId(), "审核操作");
+        operateLogService.addModuleOperateLog(String.format("审核【%s】了一个销售退货通知单【%s】", ApproveTypeEnum.getName(type),entity.getCode()).concat(CharSequenceUtil.isNotBlank(comment) ? String.format(",意见：%s", comment) : ""), ModuleTypeEnum.SO_DELIVERY_NOTICE.getCode(), entity.getId(), "审核操作");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), "操作成功");
     }
 
@@ -680,7 +681,7 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
             }
             dto.setDetailList(detailList);
             String noticeId = this.add(dto);
-            if (StringUtils.isBlank(noticeId)) {
+            if (CharSequenceUtil.isBlank(noticeId)) {
                 flag = Boolean.FALSE;
             }
         }
@@ -730,10 +731,10 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
                 //销售单信息
                 SoDetailEntity soDetailEntity = soDetailEntities.stream().filter(detail -> detail.getId().equals(soReturnDetailEntity.getSourceDetailId())).findFirst().orElse(new SoDetailEntity());
                 view.setSalesQty(soDetailEntity.getQty());
-                if (StringUtils.isNotBlank(soReturnDetailEntity.getReturnTypeDict())) {
+                if (CharSequenceUtil.isNotBlank(soReturnDetailEntity.getReturnTypeDict())) {
                     view.setReturnTypeDictName(ReturnTypeEnum.getName(soReturnDetailEntity.getReturnTypeDict()));
                 }
-                if (StringUtils.isNotBlank(soReturnDetailEntity.getReturnReasonDict())) {
+                if (CharSequenceUtil.isNotBlank(soReturnDetailEntity.getReturnReasonDict())) {
                     view.setReturnReasonDictName(ReturnReasonEnum.getName(soReturnDetailEntity.getReturnReasonDict()));
                 }
             }

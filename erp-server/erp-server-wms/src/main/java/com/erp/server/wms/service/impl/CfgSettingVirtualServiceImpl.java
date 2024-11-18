@@ -1,6 +1,7 @@
 package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
@@ -135,7 +136,7 @@ public class CfgSettingVirtualServiceImpl implements CfgSettingVirtualService {
             return null;
         }
         //查询是否是修改
-        String id = cfgSettingList.stream().filter(obj -> StrUtil.equals(obj.getKey(),listDTO.getValue())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getId())).orElse("");
+        String id = cfgSettingList.stream().filter(obj -> CharSequenceUtil.equals(obj.getKey(),listDTO.getValue())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getId())).orElse("");
         entity.setId(id);
         entity.setIndex(listDTO.getSort());
         entity.setKey(listDTO.getValue());

@@ -127,7 +127,7 @@ public class DmpOutputTaskRecordServiceImpl extends SuperServiceImpl<DmpOutputTa
     @Override
     public Boolean update(DmpOutputTaskRecordDTO.UpdateDTO updateDTO) {
         DmpOutputTaskRecordEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "推送任务记录"));
+        old = Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "推送任务记录"));
         DmpOutputTaskRecordEntity dmpOutputTaskRecordEntity = BeanMapperUtils.map(DmpOutputTaskRecordEntity.class, updateDTO);
 
         // 数据处理

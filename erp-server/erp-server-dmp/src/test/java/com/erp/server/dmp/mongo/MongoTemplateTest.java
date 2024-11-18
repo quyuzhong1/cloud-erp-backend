@@ -12,15 +12,15 @@
 
 package com.erp.server.dmp.mongo;
 
-import cn.hutool.json.JSONNull;
 import cn.hutool.json.JSONUtil;
-import com.amazonaws.util.json.Jackson;
 import com.common.business.constant.MongoTableNameContant;
-import com.erp.sdk.oms.amz.spapi.dto.PlatformAmazonFulfilledShipmentsDTO;
+import com.common.business.dto.UniqueDto;
+import com.erp.sdk.oms.amz.spapi.dto.PlatformAmazonOrderDTO;
 import com.erp.sdk.oms.amz.spapi.dto.ReportFulfilledShipmentsMongoDTO;
 import com.erp.server.dmp.ErpServerDmpApplication;
-
+import com.erp.server.dmp.pull.mongo.MongoService;
 import org.apache.commons.lang3.StringUtils;
+import org.bson.types.ObjectId;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -31,7 +31,6 @@ import org.springframework.data.mongodb.core.aggregation.*;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.test.context.junit4.SpringRunner;
-import org.bson.types.ObjectId;
 
 import javax.annotation.Resource;
 import java.util.List;
@@ -46,6 +45,16 @@ public class MongoTemplateTest {
 
     @Resource
     private MongoTemplate mongoTemplate;
+    @Resource
+    private MongoService mongoService;
+
+    @Test
+    public void testUniqueDto(){
+        UniqueDto uniqueDto = UniqueDto.getUniqId("406-6530151-6664341_1734478618727288834");
+        List<?> mongoData = mongoService.findMongoData(uniqueDto, 0, 0, "third_system_Amazon_order", PlatformAmazonOrderDTO.class);
+        System.out.println(mongoData.size());
+    }
+
 
     @Test
     public void joinQuery() {

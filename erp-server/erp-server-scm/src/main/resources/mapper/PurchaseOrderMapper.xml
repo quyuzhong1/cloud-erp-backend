@@ -738,4 +738,18 @@
     <select id="srmWaitDeliveryList" resultType="com.erp.model.scm.dto.PurchaseOrderDTO$ListDTO">
         <include refid="waitDeliverySql"/>
     </select>
+
+    <!-- 采购编码分页 -->
+    <select id="purchaseCodePaging" resultType="com.erp.model.scm.dto.PurchaseOrderDTO$SourceCodeDTO">
+        select
+            po.id,
+            po.code
+        from purchase_order po
+        <where>
+            po.is_deleted = false
+            <if test="params.searchKeyword != null and params.searchKeyword != ''">
+                and (po.id = #{params.searchKeyword} or po.code  ilike concat('%',#{params.searchKeyword}::text,'%'))
+            </if>
+        </where>
+    </select>
 </mapper>

@@ -132,14 +132,14 @@ public class SyncExchangeRateServiceImpl implements SyncExchangeRateService {
     private void submitAndApprove(String id) {
         //提交
         Boolean submit = biSettlementExchangeRateService.submit(Arrays.asList(id));
-        if (!submit) {
+        if (Boolean.TRUE.equals(submit)) {//审核
+            BaseApproveParamDTO paramDTO = new BaseApproveParamDTO();
+            paramDTO.setIds(Arrays.asList(id));
+            paramDTO.setType(ApproveType.PASS);
+            biSettlementExchangeRateService.approve(paramDTO);
+        } else {
             throw new ServiceException(ApiError.ERROR_1042);
         }
-        //审核
-        BaseApproveParamDTO paramDTO = new BaseApproveParamDTO();
-        paramDTO.setIds(Arrays.asList(id));
-        paramDTO.setType(ApproveType.PASS);
-        biSettlementExchangeRateService.approve(paramDTO);
     }
 
 }

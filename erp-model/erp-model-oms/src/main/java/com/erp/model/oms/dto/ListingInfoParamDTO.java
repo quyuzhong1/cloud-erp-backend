@@ -1,6 +1,7 @@
 package com.erp.model.oms.dto;
 
 import com.common.business.enums.PlatformDictEnum;
+import com.erp.model.oms.enums.ListingMatchResultEnum;
 import com.erp.model.oms.enums.RuleTypeEnum;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -8,7 +9,6 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 
 
@@ -22,6 +22,10 @@ import java.util.List;
 @NoArgsConstructor
 public class ListingInfoParamDTO {
 
+    /**
+     * skuMapping 表id
+     */
+    private List<String> skuMappingIds;
     /**
      * 平台sku no 列表
      */
@@ -54,7 +58,7 @@ public class ListingInfoParamDTO {
     /**
      * 匹配结果吧true 已匹配 false 未匹配
      */
-    private Boolean matchResult;
+    private String matchResult;
 
     /**
      * 类型: warehouse,platform
@@ -92,7 +96,7 @@ public class ListingInfoParamDTO {
         paramDTO.setShopIdList(new ArrayList<>(shopIds));
         paramDTO.setPlatformSkuNoList(new ArrayList<>(sellerSkuList));
         paramDTO.setType(RuleTypeEnum.PLATFORM.getCode());
-        paramDTO.setMatchResult(true);
+        paramDTO.setMatchResult(ListingMatchResultEnum.TRUE.getCode());
         paramDTO.setIsExpire(false);
         return paramDTO;
     }

@@ -2,9 +2,22 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
+import com.common.business.validator.ValidList;
+import com.erp.model.dmp.dto.DmpPushWdtDTO;
+import com.erp.model.dmp.dto.DmpPushWdtDetailDTO;
+import com.erp.model.dmp.dto.ThirdMappingDTO;
+import com.erp.model.oms.entity.SoB2cDetailEntity;
+import com.erp.model.oms.entity.SoB2cEntity;
+import com.erp.model.workflow.dto.ProcessManagementDTO;
+import com.erp.rpc.dmp.feign.DmpThirdMappingFeign;
+import com.erp.rpc.oms.feign.SoB2cFeign;
+import com.sdk.wangdian.sdk.api.wms.stockin.dto.CreateOtherStockinRequest;
+import com.sdk.wangdian.sdk.api.wms.stockout.dto.CommonCreateBillGoodsReq;
+import com.sdk.wangdian.sdk.api.wms.stockout.dto.CreateOtherStockoutRequest;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
@@ -55,7 +68,6 @@ import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.model.wms.enums.inventory.VirtualInventoryBusinessTypeEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
-import com.erp.rpc.dmp.feign.DmpThirdMappingFeign;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
@@ -76,6 +88,7 @@ import org.apache.commons.math3.util.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.context.config.annotation.RefreshScope;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronizationAdapter;
@@ -133,25 +146,28 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
     @Resource
     private SyncKingdeeTransferInfoService syncKingdeeTransferInfoService;
 
-    @Autowired
+    @Resource
     private SyncMabangTransferService syncMabangTransferService;
 
     @Value("${transfer-sync-to-mb: true}")
     private Boolean transferSyncToMb;
 
-    @Autowired
+    @Resource
     private WarehouseLocationService warehouseLocationService;
 
-    @Autowired
+    @Resource
     private DocNoGenHelper docNoGenHelper;
 
-    @Autowired
+    @Resource
     private DmpMqFeign dmpMqFeign;
 
     @Resource
     private DmpThirdMappingFeign dmpThirdMappingFeign;
     @Resource
     private AbstractWdtService abstractWdtService;
+    @Lazy
+    @Resource
+    private SoOutstockService soOutstockService;
 
     @Resource
     private VirtualInventoryTransCoreService virtualInventoryTransCoreService;
@@ -172,6 +188,14 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
     private SoDeliveryNoticeService soDeliveryNoticeService;
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
+    @Resource
+    private SoB2cFeign soB2cFeign;
+    @Resource
+    private SoB2cDeliveryService soB2cDeliveryService;
+    @Resource
+    private SoB2cDeliveryDetailService soB2cDeliveryDetailService;
+    @Resource
+    private PickingListsService pickingListsService;
 
     @Resource
     private SoB2cDeliveryDetailService soB2cDeliveryDetailService;
@@ -208,19 +232,19 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
             TransferInfoDTO.ListStatusCountDTO resultDTO = new TransferInfoDTO.ListStatusCountDTO();
             Integer count = MathUtil.ZERO;
             if (PageListTypeEnum.WAIT_SUBMIT.getCode().equals(item.getCode())) {
-                searchParamDTO.setApproveStatusList(Arrays.asList(ApproveStatusEnum.WAIT_SUBMIT.getStatus()));
+                searchParamDTO.setApproveStatusList(Collections.singletonList(ApproveStatusEnum.WAIT_SUBMIT.getStatus()));
                 count = this.baseMapper.listCount(searchParamDTO);
             }
             if (PageListTypeEnum.TO_BE_APPROVE.getCode().equals(item.getCode())) {
-                searchParamDTO.setApproveStatusList(Arrays.asList(ApproveStatusEnum.APPROVE_ING.getStatus()));
+                searchParamDTO.setApproveStatusList(Collections.singletonList(ApproveStatusEnum.APPROVE_ING.getStatus()));
                 count = this.baseMapper.listCount(searchParamDTO);
             }
             if (PageListTypeEnum.APPROVE.getCode().equals(item.getCode())) {
-                searchParamDTO.setApproveStatusList(Arrays.asList(ApproveStatusEnum.APPROVE.getStatus()));
+                searchParamDTO.setApproveStatusList(Collections.singletonList(ApproveStatusEnum.APPROVE.getStatus()));
                 count = this.baseMapper.listCount(searchParamDTO);
             }
             if (PageListTypeEnum.REJECT.getCode().equals(item.getCode())) {
-                searchParamDTO.setApproveStatusList(Arrays.asList(ApproveStatusEnum.REJECT.getStatus()));
+                searchParamDTO.setApproveStatusList(Collections.singletonList(ApproveStatusEnum.REJECT.getStatus()));
                 count = this.baseMapper.listCount(searchParamDTO);
             }
             resultDTO.setCount(ObjectUtils.isEmpty(count) ? MathUtil.ZERO : count);
@@ -251,7 +275,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         //处理数据id
         doOpHandleDataId(entity);
         log.info("直接调拨单新增");
-        if (StringUtils.isBlank(dto.getCode())) {
+        if (CharSequenceUtil.isBlank(dto.getCode())) {
             // 生成单号
             String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_ZJDB);
             entity.setCode(code);
@@ -273,11 +297,11 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
     public String addAndSubmit(TransferInfoDTO.AddDTO dto) {
         //新增
         String id = this.add(dto);
-        if (StringUtils.isBlank(id)) {
+        if (CharSequenceUtil.isBlank(id)) {
             throw new ServiceException(ApiError.ERROR_1019);
         }
         //提交
-        this.submit(Arrays.asList(id), Boolean.FALSE);
+        this.submit(Collections.singletonList(id), Boolean.FALSE);
         return id;
     }
 
@@ -287,11 +311,11 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
     public String addAndApprove(TransferInfoDTO.AddDTO dto) {
         //新增
         String id = this.add(dto);
-        if (StringUtils.isBlank(id)) {
+        if (CharSequenceUtil.isBlank(id)) {
             throw new ServiceException(ApiError.ERROR_1019);
         }
         //提交
-        this.submit(Arrays.asList(id), Boolean.FALSE);
+        this.submit(Collections.singletonList(id), Boolean.FALSE);
         //审核
         TransferInfoEntity entity = this.getById(id);
         if (Objects.nonNull(entity)){
@@ -307,6 +331,9 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         TransferInfoEntity old = this.getById(dto.getId());
         if (ObjectUtils.isEmpty(old)) {
             throw new ServiceException(ApiError.ERROR_99047);
+        }
+        if (CharSequenceUtil.isNotBlank(old.getBatchNo())){
+            throw new ServiceException(ApiError.ERROR_92248);
         }
         if (!ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(old.getApproveStatus()) && !ApproveStatusEnum.REJECT.getStatus().equals(old.getApproveStatus())) {
             throw new ServiceException(ApiError.ERROR_1029);
@@ -339,7 +366,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         //修改
         this.update(dto);
         //提交
-        return this.submit(Arrays.asList(dto.getId()), Boolean.TRUE);
+        return this.submit(Collections.singletonList(dto.getId()), Boolean.TRUE);
     }
 
     @Override
@@ -426,11 +453,6 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
                 viewDetailDTO.setSpuNo(skuVO.getSpuNo());
                 viewDetailDTO.setVariantProperty(skuVO.getVariantProperty());
             }
-            //根据组织、仓库、sku查询可用库存
-            /*
-            Integer curInventoryQty = inventoryService.getUsableInventoryTotal(viewDetailDTO.getOutWarehouseId(), viewDetailDTO.getSkuId(),viewDetailDTO.getOutWarehouseLocation());
-            viewDetailDTO.setCurInventoryQty(curInventoryQty);
-             */
             //即时库存
             Integer curInventoryQty = skuInventoryList.stream().filter(r ->Objects.equals(r.getSkuId(), viewDetailDTO.getSkuId())
                     && Objects.equals(r.getWarehouseId(), viewDetailDTO.getOutWarehouseId())
@@ -464,7 +486,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         }
         String codes = list.stream().filter(obj -> ThirdPartySystemEnum.ENUM_MB.getCode().equals(obj.getCode())).map(TransferInfoEntity::getCode).collect(Collectors.joining(","));
         //马帮直接调拨单不允许删除 TODO
-        if (StringUtils.isNotBlank(codes)) {
+        if (CharSequenceUtil.isNotBlank(codes)) {
             throw new ServiceException(ApiError.ERROR_TRANSFER_MB_UPDATE,codes);
         }
 
@@ -472,7 +494,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         //删除明细数据
         transferInfoDetailService.removeByMainIds(ids);
         //删除操作日志
-        String msg = StrUtil.format("用户【{}】删除了单据编号为【{}】的直接调拨单", UserContext.getDefaultLoginUser().getUserName(), list.stream().map(TransferInfoEntity::getCode).collect(Collectors.joining(",")));
+        String msg = CharSequenceUtil.format("用户【{}】删除了单据编号为【{}】的直接调拨单", UserContext.getDefaultLoginUser().getUserName(), list.stream().map(TransferInfoEntity::getCode).collect(Collectors.joining(",")));
         List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
         operateLogService.batchAddModuleOperateLog(msg, ModuleTypeEnum.TRANSFER_INFO.getCode(), pairList, "删除操作");
         //删除发送金蝶
@@ -532,7 +554,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         approveProcess(entity, type, comment, isSyncKingDee);
 
         //操作日志
-        operateLogService.addModuleOperateLog(String.format("审核【%s】了一个调拨申请单【%s】", ApproveTypeEnum.getName(type),entity.getCode()).concat(StringUtils.isNotBlank(comment) ? String.format(",意见：%s", comment) : ""), ModuleTypeEnum.TRANSFER_APPLICATION.getCode(), entity.getId(), "审核操作");
+        operateLogService.addModuleOperateLog(String.format("审核【%s】了一个调拨申请单【%s】", ApproveTypeEnum.getName(type),entity.getCode()).concat(CharSequenceUtil.isNotBlank(comment) ? String.format(",意见：%s", comment) : ""), ModuleTypeEnum.TRANSFER_APPLICATION.getCode(), entity.getId(), "审核操作");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), "操作成功");
     }
 
@@ -543,7 +565,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         if (!ApproveStatusEnum.APPROVE_ING.getStatus().equals(entity.getApproveStatus())) {
             return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_98006.msg);
         }
-        List<TransferInfoEntity> list = Arrays.asList(entity);
+        List<TransferInfoEntity> list = Collections.singletonList(entity);
         log.info("直接调拨单【{}】，id=【{}】", ApproveTypeEnum.getName(type), entity.getId());
         //审核通过
         if (ApproveTypeEnum.PASS.getStatus().equals(type)) {
@@ -586,7 +608,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
             updateApproveStatusForApprove(entity.getId(), ApproveStatusEnum.REJECT.getStatus());
         }
         //操作日志
-        operateLogService.addModuleOperateLog(String.format("审核【%s】了一个直接调拨单【%s】", ApproveTypeEnum.getName(type),entity.getCode()).concat(StringUtils.isNotBlank(comment) ? String.format(",意见：%s", comment) : ""), ModuleTypeEnum.TRANSFER_INFO.getCode(), entity.getId(), "审核操作");
+        operateLogService.addModuleOperateLog(String.format("审核【%s】了一个直接调拨单【%s】", ApproveTypeEnum.getName(type),entity.getCode()).concat(CharSequenceUtil.isNotBlank(comment) ? String.format(",意见：%s", comment) : ""), ModuleTypeEnum.TRANSFER_INFO.getCode(), entity.getId(), "审核操作");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), "操作成功");
     }
 
@@ -627,7 +649,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
             return Boolean.TRUE;
         }
 
-        List<TransferInfoEntity> list = Arrays.asList(entity);
+        List<TransferInfoEntity> list = Collections.singletonList(entity);
         log.info("直接调拨单【{}】，id=【{}】", ApproveTypeEnum.getName(type), entity.getId());
         //审核通过
         if (ApproveTypeEnum.PASS.getStatus().equals(type)) {
@@ -669,7 +691,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
             updateApproveStatusForApprove(entity.getId(), ApproveStatusEnum.REJECT.getStatus());
         }
         //操作日志
-        operateLogService.addModuleOperateLog(String.format("审核【%s】了一个直接调拨单【%s】", ApproveTypeEnum.getName(type),entity.getCode()).concat(StringUtils.isNotBlank(comment) ? String.format(",意见：%s", comment) : ""), ModuleTypeEnum.TRANSFER_INFO.getCode(), entity.getId(), "审核操作");
+        operateLogService.addModuleOperateLog(String.format("审核【%s】了一个直接调拨单【%s】", ApproveTypeEnum.getName(type),entity.getCode()).concat(CharSequenceUtil.isNotBlank(comment) ? String.format(",意见：%s", comment) : ""), ModuleTypeEnum.TRANSFER_INFO.getCode(), entity.getId(), "审核操作");
         return Boolean.TRUE;
     }
 
@@ -685,21 +707,33 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
     @Override
     public void updateVirtualInventoryTransCore (List<TransferInfoEntity> list,List<TransferInfoDetailEntity> detailList) {
 
-        List<TransferInfoEntity> pushList = list.stream().filter(obj -> StrUtil.equals(SourceTypeEnum.REQUISITION_APPLICATION_HANDLE.getCode(), obj.getSourceType())
-                        || StrUtil.equals(SourceTypeEnum.REQUISITION_APPLICATION_FINISH.getCode(), obj.getSourceType()))
+        List<TransferInfoEntity> pushList = list.stream().filter(obj -> CharSequenceUtil.equals(SourceTypeEnum.REQUISITION_APPLICATION_HANDLE.getCode(), obj.getSourceType())
+                        || CharSequenceUtil.equals(SourceTypeEnum.REQUISITION_APPLICATION_FINISH.getCode(), obj.getSourceType()))
                 .distinct().collect(Collectors.toList());
         //要货申请来源扣减冻结库存
         updateRequistionApplicationInventory(pushList,detailList);
 
         //头程发货单下推直接调拨单库存调整
-        List<TransferInfoEntity> pushFirstMileDeliveryList = list.stream().filter(obj -> StrUtil.equals(SourceTypeEnum.FIRST_MILE_DELIVERY_TO_ULANZI.getCode(), obj.getSourceType())
-                        || StrUtil.equals(SourceTypeEnum.FIRST_MILE_DELIVERY.getCode(), obj.getSourceType()))
+        List<TransferInfoEntity> pushFirstMileDeliveryList = list.stream().filter(obj -> CharSequenceUtil.equals(SourceTypeEnum.FIRST_MILE_DELIVERY_TO_ULANZI.getCode(), obj.getSourceType())
+                        || CharSequenceUtil.equals(SourceTypeEnum.FIRST_MILE_DELIVERY.getCode(), obj.getSourceType()))
                 .distinct().collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(pushFirstMileDeliveryList)){
+            List<String> sourceIds = pushFirstMileDeliveryList.stream().map(TransferInfoEntity::getSourceId).distinct().collect(Collectors.toList());
+            List<FirstMileDeliveryEntity> firstMileDeliveryEntityList = firstMileDeliveryService.listByIds(sourceIds);
+            pushFirstMileDeliveryList = pushFirstMileDeliveryList.stream().filter(e -> hasSameWarehouseByFirstMile(e, detailList,firstMileDeliveryEntityList)).collect(Collectors.toList());
+
+        }
         updateFirstMileDeliveryInventory(pushFirstMileDeliveryList,detailList);
 
         //来源发货通知单
-        List<TransferInfoEntity> transferInfoList = list.stream().filter(obj -> StrUtil.equals(SourceTypeEnum.SO_DELIVERY_NOTICE.getCode(), obj.getSourceType()))
+        List<TransferInfoEntity> transferInfoList = list.stream().filter(obj -> CharSequenceUtil.equals(SourceTypeEnum.SO_DELIVERY_NOTICE.getCode(), obj.getSourceType()))
                 .distinct().collect(Collectors.toList());
+        //过滤来源单发货仓库和调拨单出库仓库不一致数据
+        if (CollectionUtils.isNotEmpty(transferInfoList)){
+            List<String> sourceIds = transferInfoList.stream().map(TransferInfoEntity::getSourceId).distinct().collect(Collectors.toList());
+            List<SoDeliveryNoticeEntity> soDeliveryNoticeEntities = soDeliveryNoticeService.listByIds(sourceIds);
+            transferInfoList = transferInfoList.stream().filter(e -> hasSameWarehouseByDeliveryNotice(e, detailList,soDeliveryNoticeEntities)).collect(Collectors.toList());
+        }
         updateSoDeliveryNoticeInventory(transferInfoList,detailList);
 
         //来源B2C发货单
@@ -804,16 +838,16 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
 
         for (TransferInfoDetailEntity transferInfoDetailEntity : pushDetailList) {
             //直接调拨单
-            TransferInfoEntity transferInfoEntity = transferInfoList.stream().filter(obj -> StrUtil.equals(obj.getId(), transferInfoDetailEntity.getMainId())).findFirst().orElse(null);
+            TransferInfoEntity transferInfoEntity = transferInfoList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), transferInfoDetailEntity.getMainId())).findFirst().orElse(null);
             if (ObjectUtil.isEmpty(transferInfoEntity)) {
                 throw new ServiceException("直接调拨单未找到");
             }
             //发货通知单明细
-            SoDeliveryNoticeEntity soDeliveryNoticeEntity = soDeliveryNoticeList.stream().filter(obj -> StrUtil.equals(obj.getId(), transferInfoEntity.getSourceId())).findFirst().orElse(null);
+            SoDeliveryNoticeEntity soDeliveryNoticeEntity = soDeliveryNoticeList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), transferInfoEntity.getSourceId())).findFirst().orElse(null);
             if (ObjectUtil.isEmpty(soDeliveryNoticeEntity)) {
-                throw new ServiceException(StrUtil.format("直接调拨单【{}】未找到发货通知单",transferInfoEntity.getCode(),transferInfoDetailEntity.getSkuNo()));
+                throw new ServiceException(CharSequenceUtil.format("直接调拨单【{}】未找到发货通知单",transferInfoEntity.getCode(),transferInfoDetailEntity.getSkuNo()));
             }
-            if (StrUtil.isBlank(soDeliveryNoticeEntity.getVirtualWarehouseId())) {
+            if (CharSequenceUtil.isBlank(soDeliveryNoticeEntity.getVirtualWarehouseId())) {
                 continue;
             }
             VirtualInventoryStockDTO.OutInStockDTO outInStockDTO = new VirtualInventoryStockDTO.OutInStockDTO();
@@ -877,12 +911,12 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
 
         for (TransferInfoDetailEntity transferInfoDetailEntity : pushDetailList) {
             //直接调拨单
-            TransferInfoEntity transferInfoEntity = pushFirstMileDeliveryList.stream().filter(obj -> StrUtil.equals(obj.getId(), transferInfoDetailEntity.getMainId())).findFirst().orElse(null);
+            TransferInfoEntity transferInfoEntity = pushFirstMileDeliveryList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), transferInfoDetailEntity.getMainId())).findFirst().orElse(null);
             if (ObjectUtil.isEmpty(transferInfoEntity)) {
                 throw new ServiceException("直接调拨单未找到");
             }
 
-            FirstMileDeliveryDetailEntity firstMileDeliveryDetailEntity = firstMileDeliveryDetailList.stream().filter(obj -> StrUtil.equals(obj.getId(), transferInfoDetailEntity.getSourceDetailId())).findFirst().orElse(null);
+            FirstMileDeliveryDetailEntity firstMileDeliveryDetailEntity = firstMileDeliveryDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), transferInfoDetailEntity.getSourceDetailId())).findFirst().orElse(null);
             if (ObjectUtil.isEmpty(firstMileDeliveryDetailEntity)) {
                 throw new ServiceException("未找到头程发货单明细");
             }
@@ -890,7 +924,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
             if (ObjectUtil.isEmpty(applicationDetailEntity)) {
                 throw new ServiceException("未找到要货申请明细");
             }
-            RequisitionApplicationEntity applicationEntity = requisitionApplicationList.stream().filter(obj -> StrUtil.equals(obj.getId(), applicationDetailEntity.getMainId())).findFirst().orElse(null);
+            RequisitionApplicationEntity applicationEntity = requisitionApplicationList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), applicationDetailEntity.getMainId())).findFirst().orElse(null);
             if (ObjectUtil.isEmpty(applicationEntity)) {
                 throw new ServiceException("未找到直接调拨单对应的要货申请信息");
             }
@@ -904,7 +938,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
             outInStockDTO.setSkuId(applicationDetailEntity.getSkuId());
             outInStockDTO.setSkuNo(applicationDetailEntity.getSkuNo());
             outInStockDTO.setWarehouseId(applicationDetailEntity.getFromWarehouseId());
-            if (StrUtil.isBlank(applicationDetailEntity.getFromVirtualWarehouseId())) {
+            if (CharSequenceUtil.isBlank(applicationDetailEntity.getFromVirtualWarehouseId())) {
                 continue;
             }
             outInStockDTO.setVirtualWarehouseId(applicationDetailEntity.getFromVirtualWarehouseId());
@@ -951,12 +985,12 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
             }
             //要货申请明细数据
             RequisitionApplicationDetailEntity applicationDetailEntity = requisitionApplicationDetailList.stream()
-                    .filter(obj -> StrUtil.equals(obj.getId(), detailEntity.getSourceDetailId())).findFirst().orElse(null);
+                    .filter(obj -> CharSequenceUtil.equals(obj.getId(), detailEntity.getSourceDetailId())).findFirst().orElse(null);
             if (ObjectUtil.isEmpty(applicationDetailEntity)) {
                 throw new ServiceException("要货申请不能为空");
             }
             //虚拟仓库存随调出仓出
-            if (!StrUtil.equals(applicationDetailEntity.getFromWarehouseId(),detailEntity.getOutWarehouseId())) {
+            if (!CharSequenceUtil.equals(applicationDetailEntity.getFromWarehouseId(),detailEntity.getOutWarehouseId())) {
                 continue;
             }
             //调拨操作请求实体
@@ -970,7 +1004,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
             outInStockDTO.setSkuNo(detailEntity.getSkuNo());
             outInStockDTO.setQty(detailEntity.getQty());
             outInStockDTO.setWarehouseId(applicationDetailEntity.getFromWarehouseId());
-            if (StrUtil.isBlank(applicationDetailEntity.getFromVirtualWarehouseId())) {
+            if (CharSequenceUtil.isBlank(applicationDetailEntity.getFromVirtualWarehouseId())) {
                 continue;
             }
             outInStockDTO.setVirtualWarehouseId(applicationDetailEntity.getFromVirtualWarehouseId());
@@ -1014,7 +1048,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
                 CreateOtherStockoutRequest.GoodsList outGoods = new CreateOtherStockoutRequest.GoodsList();
                 outGoods.setSpecNo(detailEntity.getSkuNo());
                 outGoods.setNum(BigDecimal.valueOf(detailEntity.getQty()));
-                outGoods.setPositionNo(StringUtils.isNotBlank(detailEntity.getOutWarehouseLocation()) ? detailEntity.getOutWarehouseLocation() : "");
+                outGoods.setPositionNo(CharSequenceUtil.isNotBlank(detailEntity.getOutWarehouseLocation()) ? detailEntity.getOutWarehouseLocation() : "");
                 outGoods.setWarehouseId(warehouseId);
                 outGoodsList.add(outGoods);
             }
@@ -1029,7 +1063,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
                 CreateOtherStockinRequest.GoodsList inGoods = new CreateOtherStockinRequest.GoodsList();
                 inGoods.setSpecNo(detailEntity.getSkuNo());
                 inGoods.setNum(BigDecimal.valueOf(detailEntity.getQty()));
-                inGoods.setPositionNo(StringUtils.isNotBlank(detailEntity.getInWarehouseLocation()) ? detailEntity.getInWarehouseLocation() : "");
+                inGoods.setPositionNo(CharSequenceUtil.isNotBlank(detailEntity.getInWarehouseLocation()) ? detailEntity.getInWarehouseLocation() : "");
                 inGoods.setWarehouseId(warehouseId);
                 inGoodsList.add(inGoods);
             }
@@ -1069,7 +1103,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
                 CreateOtherStockoutRequest.GoodsList outGoods = new CreateOtherStockoutRequest.GoodsList();
                 outGoods.setSpecNo(detailEntity.getSkuNo());
                 outGoods.setNum(BigDecimal.valueOf(detailEntity.getQty()));
-                outGoods.setPositionNo(StringUtils.isNotBlank(detailEntity.getInWarehouseLocation()) ? detailEntity.getInWarehouseLocation() : "");
+                outGoods.setPositionNo(CharSequenceUtil.isNotBlank(detailEntity.getInWarehouseLocation()) ? detailEntity.getInWarehouseLocation() : "");
                 outGoods.setWarehouseId(warehouseId);
                 outGoodsList.add(outGoods);
             }
@@ -1085,7 +1119,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
                 CreateOtherStockinRequest.GoodsList inGoods = new CreateOtherStockinRequest.GoodsList();
                 inGoods.setSpecNo(detailEntity.getSkuNo());
                 inGoods.setNum(BigDecimal.valueOf(detailEntity.getQty()));
-                inGoods.setPositionNo(StringUtils.isNotBlank(detailEntity.getOutWarehouseLocation()) ? detailEntity.getOutWarehouseLocation() : "");
+                inGoods.setPositionNo(CharSequenceUtil.isNotBlank(detailEntity.getOutWarehouseLocation()) ? detailEntity.getOutWarehouseLocation() : "");
                 inGoods.setWarehouseId(warehouseId);
                 inGoodsList.add(inGoods);
             }
@@ -1101,15 +1135,15 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         if (!ApproveStatusEnum.APPROVE.getStatus().equals(entity.getApproveStatus())) {
             return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_98014.msg);
         }
-        List<TransferInfoEntity> list = Arrays.asList(entity);
+        List<TransferInfoEntity> list = Collections.singletonList(entity);
         log.info("直接调拨单反审核，id=【{}】", entity.getId());
         //发货单来源和发货通知单来源的直接调拨单不允许手动反审核
         if (isManual) {
-            String codeList = list.stream().filter(obj -> StrUtil.equals(obj.getSourceType(), SourceTypeEnum.SO_B2C_DELIVERY.getCode())
-                            || StrUtil.equals(obj.getSourceType(), SourceTypeEnum.SO_DELIVERY_NOTICE.getCode()))
+            String codeList = list.stream().filter(obj -> CharSequenceUtil.equals(obj.getSourceType(), SourceTypeEnum.SO_B2C_DELIVERY.getCode())
+                            || CharSequenceUtil.equals(obj.getSourceType(), SourceTypeEnum.SO_DELIVERY_NOTICE.getCode()))
                     .map(TransferInfoEntity::getCode).collect(Collectors.joining(","));
-            if (StrUtil.isNotBlank(codeList)) {
-                throw new ServiceException(StrUtil.format("直接调拨单【{}】不支持手动反审核",codeList));
+            if (CharSequenceUtil.isNotBlank(codeList)) {
+                throw new ServiceException(CharSequenceUtil.format("直接调拨单【{}】不支持手动反审核",codeList));
             }
         }
 
@@ -1197,7 +1231,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         return  this.lambdaUpdate()
                 .eq(TransferInfoEntity::getId,id)
                 .ne(TransferInfoEntity::getThirdPartySystem,ThirdPartySystemEnum.ENUM_MB.getCode())
-                .set(StringUtils.isNotBlank(syncKingdeeId),TransferInfoEntity::getSyncKingdeeId,syncKingdeeId)
+                .set(CharSequenceUtil.isNotBlank(syncKingdeeId),TransferInfoEntity::getSyncKingdeeId,syncKingdeeId)
                 .update();
     }
 
@@ -1258,10 +1292,10 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
             Boolean isScarce = curInventoryQty < sumQty;
             if(isScarce && !ignoreInventorySkuIds.contains(skuId)) {
                 WarehouseDTO.UpdateDTO warehouseDetail = warehouseMap.computeIfAbsent(warehouseId, (v) -> warehouseService.detailWithCache(v));
-                String warehouseName = Objects.nonNull(warehouseDetail) && StrUtil.isNotEmpty(warehouseDetail.getId()) ? warehouseDetail.getName() : "";
-                WarehouseLocationEntity warehouseLocationEntity = warehouseLocationList.stream().filter(req -> req.getWarehouseId().equals(warehouseId) && req.getCode().equals(warehouseLocation)).findFirst().orElse(new WarehouseLocationEntity());
-
-                String msg = StrUtil.format("仓库【{}】仓位【{}】SKU【{}】【缺货：{}个】", warehouseName, warehouseLocationEntity.getName(), skuNo, (sumQty - curInventoryQty));
+                String warehouseName = Objects.nonNull(warehouseDetail) && CharSequenceUtil.isNotEmpty(warehouseDetail.getId()) ? warehouseDetail.getName() : "";
+                WarehouseLocationEntity warehouseLocationEntity = warehouseLocationList.stream().filter(req -> req.getWarehouseId().equals(warehouseId) && req.getCode().equals(warehouseLocation)).findFirst().orElse(null);
+                String warehouseLocationName = ObjectUtil.isNotEmpty(warehouseLocationEntity) ? warehouseLocationEntity.getName() : "空仓位";
+                String msg = CharSequenceUtil.format("仓库【{}】仓位【{}】SKU【{}】【缺货：{}个】", warehouseName, warehouseLocationName, skuNo, (sumQty - curInventoryQty));
                 errmsg.append(msg).append("</br>");
             }
         });
@@ -1297,6 +1331,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         List<TransferDTO>  deliveryTransferList = new ArrayList<>();
         List<TransferDTO>  deliveryNoticeTransferList = new ArrayList<>();
         List<TransferDTO>  soInfoTransferList = new ArrayList<>();
+        List<TransferDTO>  soInfoTransferInfoList = new ArrayList<>();
         List<TransferDTO>  requisitionTransferList = new ArrayList<>();
         List<TransferDTO>  firstMileTransferList = new ArrayList<>();
         List<TransferDTO>  TransferToUlanziList = new ArrayList<>();
@@ -1331,6 +1366,8 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
                 deliveryNoticeTransferList.add(transferDTO);
             } else if (SourceTypeEnum.SO_INFO.getCode().equals(transferInfoEntity.getSourceType())){
                 soInfoTransferList.add(transferDTO);
+            }else if (SourceTypeEnum.SO_INFO_TRANSFER_INFP.getCode().equals(transferInfoEntity.getSourceType())){
+                soInfoTransferInfoList.add(transferDTO);
             }else if (SourceTypeEnum.FIRST_MILE_DELIVERY_TO_ULANZI.getCode().equals(transferInfoEntity.getSourceType())){
                 TransferToUlanziList.add(transferDTO);
             } else if (SourceTypeEnum.FIRST_MILE_DELIVERY_FROM_ULANZI.getCode().equals(transferInfoEntity.getSourceType())){
@@ -1379,6 +1416,13 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
             InventoryTransferDTO inventoryTransferDTO = new InventoryTransferDTO();
             inventoryTransferDTO.setParamList(soInfoTransferList);
             inventoryTransferDTO.setBusinessType(InventoryBusinessTypeEnum.SO_INFO_PUSH_TRANSFER.getCode());
+            //更新库存
+            inventoryTransCoreService.approveByType(inventoryTransferDTO);
+        }
+        if (CollectionUtils.isNotEmpty(soInfoTransferInfoList)) {
+            InventoryTransferDTO inventoryTransferDTO = new InventoryTransferDTO();
+            inventoryTransferDTO.setParamList(soInfoTransferInfoList);
+            inventoryTransferDTO.setBusinessType(InventoryBusinessTypeEnum.SO_INFO_PUSH_TRANSFER_INFO.getCode());
             //更新库存
             inventoryTransCoreService.approveByType(inventoryTransferDTO);
         }
@@ -1448,7 +1492,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         for (TransferInfoDTO.ListDTO obj : records) {
             //产品名称
             String productName = productDetailList.stream().filter(e -> e.getId().equals(obj.getSkuId())).map(ProductDetailEntity::getName).findFirst().orElse(null);
-            if (StringUtils.isBlank(productName)) {
+            if (CharSequenceUtil.isBlank(productName)) {
                 throw new ServiceException(ApiError.ERROR_95084);
             }
             obj.setProductName(productName);
@@ -1457,7 +1501,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
 
             //调拨方向名称
             String transferDirectionName = transferDirectionList.stream().filter(e -> e.getValue().equals(obj.getTransferDirection())).map(DictBasicDTO.ListDTO::getName).findFirst().orElse("");
-            if (StringUtils.isBlank(transferDirectionName)) {
+            if (CharSequenceUtil.isBlank(transferDirectionName)) {
                 throw new ServiceException(ApiError.ERROR_99049);
             }
             obj.setTransferDirectionName(transferDirectionName);
@@ -1465,7 +1509,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
             obj.setApproveStatusName(ApproveStatusEnum.getName(obj.getApproveStatus()));
             obj.setInvalidStatusName(InvalidStatusEnum.getName(obj.getInvalidStatus()));
             String approveUserName = curApproveUserNameMap.get(obj.getId());
-            if(StrUtil.isNotBlank(approveUserName)){
+            if(CharSequenceUtil.isNotBlank(approveUserName)){
                 obj.setApproveUserName(approveUserName);
             }
             //仓位名称
@@ -1493,7 +1537,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
             ApiResult<List<ProcessManagementDTO.CurApproveInfoDTO>> listApiResult = workflowFeign.curApprover(dtoList);
             if (ObjectUtil.isNotEmpty(listApiResult) && 200 == listApiResult.getCode() && CollUtil.isNotEmpty(listApiResult.getData())) {
                 curApproveUserNameMap = listApiResult.getData().stream()
-                        .filter(req -> StringUtils.isNotBlank(req.getCurApproveId()) && StringUtils.isNotBlank(req.getCurApproveName()))
+                        .filter(req -> CharSequenceUtil.isNotBlank(req.getCurApproveId()) && CharSequenceUtil.isNotBlank(req.getCurApproveName()))
                         .collect(Collectors.toMap(
                                 ProcessManagementDTO.CurApproveInfoDTO::getBusinessId,
                                 ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName,
@@ -1510,7 +1554,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
     private void doOpHandleDataId( TransferInfoEntity entity) {
 
         //申请人
-        if (StringUtils.isNotBlank(entity.getWarehouseKeeperId())) {
+        if (CharSequenceUtil.isNotBlank(entity.getWarehouseKeeperId())) {
             FindUserDTO userDTO = sysUserFeign.getUserByUserId(entity.getWarehouseKeeperId());
             if (ObjectUtils.isNotEmpty(userDTO)) {
                 entity.setWarehouseKeeperName(userDTO.getUserName());
@@ -1535,6 +1579,9 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
             entity.setType(TransferTypeEnum.IN_ORG.getCode());
         } else {
             entity.setType(TransferTypeEnum.CROSS_ORG.getCode());
+        }
+        if (Objects.isNull(entity.getIndex())){
+            entity.setIndex(MathUtil.ZERO);
         }
     }
 
@@ -1639,7 +1686,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
                 count = this.baseMapper.listCount(pagingParamDTO);
             }
             if (PdaTabFlagEnum.APPROVE_ING.getCode().equals(item.getCode())) {
-                pagingParamDTO.setApproveStatusList(Arrays.asList(ApproveStatusEnum.APPROVE_ING.getStatus()));
+                pagingParamDTO.setApproveStatusList(Collections.singletonList(ApproveStatusEnum.APPROVE_ING.getStatus()));
                 count = this.baseMapper.listCount(pagingParamDTO);
             }
             if (PdaTabFlagEnum.APPROVE.getCode().equals(item.getCode())) {
@@ -1647,7 +1694,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
                 dateList.add(startDate);
                 dateList.add(endDate);
                 pagingParamDTO.setBillDateList(dateList);
-                pagingParamDTO.setApproveStatusList(Arrays.asList(ApproveStatusEnum.APPROVE.getStatus()));
+                pagingParamDTO.setApproveStatusList(Collections.singletonList(ApproveStatusEnum.APPROVE.getStatus()));
                 count = this.baseMapper.listCount(pagingParamDTO);
             }
             resultDTO.setCount(ObjectUtils.isEmpty(count) ? MathUtil.ZERO : count);
@@ -1666,7 +1713,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
                 .filter(req -> req.getId().equals(mainEntity.getToWarehouseId())).findFirst().orElse(new WarehouseDTO.UpdateDTO());
 
         //如果目的仓没有配置在途归属仓，需要提示：目的仓没有配置在途归属仓库，请在【仓库列表】配置后再审核
-        if (org.apache.commons.lang3.StringUtils.isBlank(destWarehouse.getOnwayWarehouseId())) {
+        if (CharSequenceUtil.isBlank(destWarehouse.getOnwayWarehouseId())) {
             throw new ServiceException(ApiError.ONWAY_WAREHOUSE_NOT_EXIST);
         }
 
@@ -1745,14 +1792,14 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
             //如果是审核中，撤销
             if (ApproveStatusEnum.APPROVE_ING.getStatus().equals(entity.getApproveStatus())) {
                 try {
-                    this.cancelProcess(Arrays.asList(entity.getId()));
+                    this.cancelProcess(Collections.singletonList(entity.getId()));
                 } catch (Exception e) {
                     throw new ServiceException(ApiError.TRANSFER_INFO_CANCEL_PROCESS_ERROR, entity.getCode());
                 }
             }
 
             //删除
-            this.requisitionApplicationDelete(Arrays.asList(entity.getId()));
+            this.requisitionApplicationDelete(Collections.singletonList(entity.getId()));
         }
 
     }
@@ -1770,7 +1817,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         }
         String codes = list.stream().filter(obj -> ThirdPartySystemEnum.ENUM_MB.getCode().equals(obj.getCode())).map(TransferInfoEntity::getCode).collect(Collectors.joining(","));
         //马帮直接调拨单不允许删除 TODO
-        if (StringUtils.isNotBlank(codes)) {
+        if (CharSequenceUtil.isNotBlank(codes)) {
             throw new ServiceException(ApiError.ERROR_TRANSFER_MB_UPDATE,codes);
         }
 
@@ -1778,7 +1825,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         //删除明细数据
         transferInfoDetailService.removeByMainIds(ids);
         //删除操作日志
-        String msg = StrUtil.format("用户【{}】删除了单据编号为【{}】的直接调拨单", UserContext.getDefaultLoginUser().getUserName(), list.stream().map(TransferInfoEntity::getCode).collect(Collectors.joining(",")));
+        String msg = CharSequenceUtil.format("用户【{}】删除了单据编号为【{}】的直接调拨单", UserContext.getDefaultLoginUser().getUserName(), list.stream().map(TransferInfoEntity::getCode).collect(Collectors.joining(",")));
         List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
         operateLogService.batchAddModuleOperateLog(msg, ModuleTypeEnum.TRANSFER_INFO.getCode(), pairList, "删除操作");
         //删除发送金蝶
@@ -1826,9 +1873,9 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
     @Override
     public List<TransferInfoEntity> listByBatchNoList(List<String> batchNoList) {
         if (CollectionUtils.isEmpty(batchNoList)) {
-            return Collections.EMPTY_LIST;
+            return Collections.emptyList();
         }
-        return lambdaQuery().in(TransferInfoEntity::getBatchNo,batchNoList).list();
+        return lambdaQuery().in(TransferInfoEntity::getBatchNo,batchNoList).orderByDesc(TransferInfoEntity::getIndex).list();
     }
 
     @Override
@@ -1843,6 +1890,39 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
             doOpHandleData(page.getRecords());
         }
         return new PagingVO<>(page);
+    }
+
+    @Override
+    public BatchResultDTO updateBillDate(TransferInfoEntity entity, LocalDate billDate) {
+        //已审核不允许修改
+        if (ApproveStatusEnum.APPROVE.getStatus().equals(entity.getApproveStatus())) {
+            return BatchResultDTO.fail(entity.getId(),entity.getCode(),"直接调拨单已审核不能修改调拨日期");
+        }
+        //校验下游单据是否已审核
+        if (CharSequenceUtil.isNotBlank(entity.getSourceId())){
+            List<SoOutstockEntity> soOutstockEntityList = soOutstockService.listBySourceId(Collections.singletonList(entity.getSourceId()));
+            if (CollectionUtils.isNotEmpty(soOutstockEntityList) && SourceTypeEnum.SO_DELIVERY_NOTICE.getCode().equals(entity.getSourceType())){
+                List<SoOutstockEntity> collect = soOutstockEntityList.stream().filter(e -> Objects.nonNull(e)
+                        && ApproveStatusEnum.APPROVE.equals(e.getApproveStatus())
+                        && CharSequenceUtil.isNotEmpty(e.getBatchNo()) && CharSequenceUtil.isNotEmpty(entity.getBatchNo()) && e.getBatchNo().equals(entity.getBatchNo())
+                ).collect(Collectors.toList());
+                if (CollectionUtils.isNotEmpty(collect)){
+                    return BatchResultDTO.fail(entity.getId(),entity.getCode(),"存在下游已审核出库单，不能修改调拨日期");
+                }
+            }else if (CollectionUtils.isNotEmpty(soOutstockEntityList)){
+                List<SoOutstockEntity> collect = soOutstockEntityList.stream().filter(e -> Objects.nonNull(e)
+                        && ApproveStatusEnum.APPROVE.equals(e.getApproveStatus())).collect(Collectors.toList());
+                if (CollectionUtils.isNotEmpty(collect)){
+                    return BatchResultDTO.fail(entity.getId(),entity.getCode(),"存在下游已审核出库单，不能修改调拨日期");
+                }
+            }
+        }
+        //校验是否有关联的中转调拨单
+
+        this.lambdaUpdate().eq(TransferInfoEntity::getId, entity.getId()).set(TransferInfoEntity::getBillDate, billDate).update();
+        String msg = "【{}】更新了调拨日期由【{}】改为【{}】";
+        operateLogService.addModuleOperateLog(CharSequenceUtil.format(msg, UserContext.getLoginUser().getUserName(),entity.getBillDate(),billDate), ModuleTypeEnum.TRANSFER_INFO.getCode(), entity.getId(), "批量修改调拨日期");
+        return BatchResultDTO.success(entity.getId(),entity.getCode(),"修改调拨日期成功");
     }
 
     /**

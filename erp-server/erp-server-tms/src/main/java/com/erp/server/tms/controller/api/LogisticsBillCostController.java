@@ -21,11 +21,11 @@ import com.erp.model.tms.enums.DictCostAttributionEnum;
 import com.erp.server.tms.query.LogisticsBillCostQueryHandler;
 import com.erp.server.tms.service.LogisticsBillCostService;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
 import java.util.List;
@@ -42,7 +42,7 @@ import java.util.List;
 @RequestMapping("/logisticsBillCost")
 public class LogisticsBillCostController extends BaseController {
 
-    @Autowired
+    @Resource
     private LogisticsBillCostService logisticsBillCostService;
 
 
@@ -97,7 +97,7 @@ public class LogisticsBillCostController extends BaseController {
         menuCode = "tms:logisticsBillCost:update",
         serviceClass = LogisticsBillCostService.class,
         keyIdName = "id")
-    public ApiResult update(@RequestBody @Validated LogisticsBillCostDTO.UpdateDTO dto) {
+    public ApiResult<Object>update(@RequestBody @Validated LogisticsBillCostDTO.UpdateDTO dto) {
         logisticsBillCostService.update(dto,Boolean.FALSE);
         return success();
     }
@@ -159,7 +159,7 @@ public class LogisticsBillCostController extends BaseController {
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "下载自发货费用模板")
     @GetMapping("/downloadTemplate")
-    public ApiResult downloadTemplate(HttpServletResponse response) {
+    public ApiResult<Object>downloadTemplate(HttpServletResponse response) {
         logisticsBillCostService.downloadTemplate(response);
         return success();
     }
@@ -174,7 +174,7 @@ public class LogisticsBillCostController extends BaseController {
      */
     @LogAction(value = LogActionEnum.IMPORT, desc = "导入自发货费用模板")
     @PostMapping("/import")
-    public ApiResult importFile(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
+    public ApiResult<Object>importFile(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
         Boolean result = logisticsBillCostService.importFile(excelFile, response);
         return result ? success() : failure();
     }
@@ -188,7 +188,7 @@ public class LogisticsBillCostController extends BaseController {
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出自发货费用模板")
     @PostMapping(value = "/exportExcel")
-    public ApiResult exportExcel(@RequestBody LogisticsBillCostDTO.PagingParamDTO dto) {
+    public ApiResult<Object>exportExcel(@RequestBody LogisticsBillCostDTO.PagingParamDTO dto) {
         Boolean flag = logisticsBillCostService.exportExcel(dto);
         return flag == true ? success() : failure();
     }

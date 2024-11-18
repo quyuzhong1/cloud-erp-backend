@@ -1,14 +1,15 @@
 package com.erp.model.wms.dto;
 
-import com.baomidou.mybatisplus.annotation.TableField;
-import com.common.core.anno.StateEnumValue;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.Valid;
-import javax.validation.constraints.*;
+import javax.validation.constraints.Digits;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.List;
@@ -305,11 +306,6 @@ public class WmsCartonSpecDTO implements Serializable {
         private String id;
 
         /**
-         * 箱子id
-         */
-//        private String cartonId;
-
-        /**
          * 箱数
          */
         private Integer boxQty;
@@ -515,14 +511,6 @@ public class WmsCartonSpecDTO implements Serializable {
          * 重量单位（kg） 页面展示kg，数据库存储kg
          */
         private String packWeightUnit;
-//        /**
-//         * 预计毛重(本箱已装-预计毛重)
-//         */
-//        private BigDecimal grossWeight;
-//        /**
-//         * 重量单位（kg） 页面展示kg，数据库存储kg
-//         */
-//        private String weightUnit;
         /**
          * 装箱信息-箱规
          */

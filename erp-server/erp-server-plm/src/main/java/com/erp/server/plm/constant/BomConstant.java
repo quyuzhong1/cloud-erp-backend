@@ -1,47 +1,49 @@
 package com.erp.server.plm.constant;
 
+import java.io.Serializable;
+
 /**
  * @Classname BomConstant
 
  * @Date 2023-01-09 15:17
  * @Created by yl
  */
-public interface BomConstant {
+public class BomConstant implements Serializable {
 
     /**
      * 提交审核
      */
-    String SUBMIT_AUDIT = "submitAudit";
+    public static final String SUBMIT_AUDIT = "submitAudit";
 
     /**
      * 创建
      */
-    String CREATE = "create";
+    public static final String CREATE = "create";
 
 
-    String BOM = "BOM";
+    public static final String BOM = "BOM";
 
 
     /**
      * 编辑
      */
-    String EDIT = "edit";
+    public static final String EDIT = "edit";
 
     /**
      * 变更
      */
-    String CHANGE_REQUEST = "changeRequest";
+    public static final String CHANGE_REQUEST = "changeRequest";
 
 
     /**
      *sku
      */
-    String CHANGE_SKU="sku";
+    public static final String CHANGE_SKU="sku";
 
     /**
      *bom
      */
-    String CHANGE_BOM="bom";
+    public static final String CHANGE_BOM="bom";
 
 
 }

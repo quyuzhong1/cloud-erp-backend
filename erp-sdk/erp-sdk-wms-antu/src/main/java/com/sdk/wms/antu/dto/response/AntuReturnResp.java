@@ -7,7 +7,6 @@ import lombok.*;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
-import java.util.Date;
 import java.util.List;
 
 @EqualsAndHashCode(callSuper = true)
@@ -60,7 +59,7 @@ public class AntuReturnResp extends CleanBaseDTO implements Serializable {
 
     @Data
     @ToString
-    public static class Detail {
+    public static class Detail implements Serializable{
 
         //SKU
         @JSONField(name = "product_barcode")

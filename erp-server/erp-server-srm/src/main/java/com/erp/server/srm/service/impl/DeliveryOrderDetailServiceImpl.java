@@ -2,12 +2,13 @@ package com.erp.server.srm.service.impl;
 
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
+import com.common.business.utils.ApplicationContextUtils;
 import com.common.core.entity.BaseEntity;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
@@ -34,7 +35,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -54,7 +54,7 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 public class DeliveryOrderDetailServiceImpl extends SuperServiceImpl<DeliveryOrderDetailMapper, DeliveryOrderDetailEntity> implements DeliveryOrderDetailService {
-    @Autowired
+    @Resource
     private OperateLogService operateLogService;
 
     @Resource
@@ -75,8 +75,8 @@ public class DeliveryOrderDetailServiceImpl extends SuperServiceImpl<DeliveryOrd
 
         //处理明细数据
         handleData(list,mainId);
-
-        this.saveBatch(list);
+        DeliveryOrderDetailServiceImpl bean = ApplicationContextUtils.getBean(DeliveryOrderDetailServiceImpl.class);
+        bean.saveBatch(list);
     }
 
     @Override
@@ -107,7 +107,7 @@ public class DeliveryOrderDetailServiceImpl extends SuperServiceImpl<DeliveryOrd
         List<DeliveryOrderDetailEntity> needDeleteDetailList = oldDetailList.stream().filter(v->!existDetailIds.contains(v.getId())).collect(Collectors.toList());
         if(CollectionUtils.isNotEmpty(needDeleteDetailList)){
             needDeleteDetailList.forEach(v->{
-                String msg = StrUtil.format("用户【{}】删除sku为【{}】的送货单明细 ", UserContext.getDefaultLoginUser().getUserName(), v.getSkuNo());
+                String msg =  CharSequenceUtil.format("用户【{}】删除sku为【{}】的送货单明细 ", UserContext.getDefaultLoginUser().getUserName(), v.getSkuNo());
                 operateLogService.addModuleOperateLog(msg,ModuleTypeEnum.DELIVERY_ORDER.getCode(),v.getMainId(),"删除操作");
             });
             if(!this.removeByIds(needDeleteDetailList.stream().map(BaseEntity::getId).collect(Collectors.toList()))){
@@ -121,11 +121,12 @@ public class DeliveryOrderDetailServiceImpl extends SuperServiceImpl<DeliveryOrd
             DeliveryOrderDetailEntity old =  DeliveryOrderConverter.INSTANCE.detailConvert(deliveryOrderDetailEntity);
             DeliveryOrderDetailDTO.UpdateDTO updateDTO = updateDTOMap.get(deliveryOrderDetailEntity.getId());
             BeanUtil.copyProperties(updateDTO,deliveryOrderDetailEntity);
-            String msg = StrUtil.format("用户【{}】修改sku为【{}】的送货单明细 ", UserContext.getDefaultLoginUser().getUserName(), deliveryOrderDetailEntity.getSkuNo());
+            String msg =  CharSequenceUtil.format("用户【{}】修改sku为【{}】的送货单明细 ", UserContext.getDefaultLoginUser().getUserName(), deliveryOrderDetailEntity.getSkuNo());
             operateLogService.addModuleOperateLogByObj(old, deliveryOrderDetailEntity, ModuleTypeEnum.DELIVERY_ORDER.getCode(), deliveryOrderDetailEntity.getMainId(), msg);
         }
         if(CollectionUtils.isNotEmpty(needUpdateDetailList)){
-            if(!this.updateBatchById(needUpdateDetailList)){
+            DeliveryOrderDetailServiceImpl bean = ApplicationContextUtils.getBean(DeliveryOrderDetailServiceImpl.class);
+            if(!bean.updateBatchById(needUpdateDetailList)){
                 throw new ServiceException("送货单明细更新失败");
             }
         }
@@ -260,31 +261,12 @@ public class DeliveryOrderDetailServiceImpl extends SuperServiceImpl<DeliveryOrd
         detailList.forEach(v->v.setMainId(mainId));
         //添加操作日志
         if (CollectionUtils.isNotEmpty(detailList)) {
-            String msg = StrUtil.format("用户【{}】新增sku为【%s】的送货单明细 ", UserContext.getDefaultLoginUser().getUserName());
+            String msg =  CharSequenceUtil.format("用户【{}】新增sku为【%s】的送货单明细 ", UserContext.getDefaultLoginUser().getUserName());
             List<Pair<String, String>> addPairList = detailList.stream().map(obj -> new Pair<>(mainId, obj.getSkuNo())).collect(Collectors.toList());
             operateLogService.batchAddModuleOperateLog(msg, ModuleTypeEnum.DELIVERY_ORDER.getCode(), addPairList, "编辑操作");
         }
     }
 
-    /**
-     * 校验送货数量是否超过可送货数量
-     * @return true:通过
-     */
-    private void checkDelivery(String sourceDetailId,String detailId,Integer deliveryQty,Integer orderQty){
-        List<DeliveryOrderDetailEntity> sameSourceDetailList = this.listDetailByDetailSourceIds(Collections.singletonList(sourceDetailId));
-        if(CollectionUtils.isEmpty(sameSourceDetailList)){
-            if(orderQty < deliveryQty){
-                throw new ServiceException("送货数量不可超过【采购数量-累计已送货数量】");
-            }
-        }
-        if(StringUtils.isNotBlank(detailId)){
-            sameSourceDetailList = sameSourceDetailList.stream().filter(v->!v.getId().equals(detailId)).collect(Collectors.toList());
-        }
-        Integer nowDeliveryQty = sameSourceDetailList.stream().mapToInt(DeliveryOrderDetailEntity::getDeliveryQty).sum();
-        if(orderQty < deliveryQty + nowDeliveryQty){
-            throw new ServiceException("送货数量不可超过【采购数量-累计已送货数量】");
-        }
-    }
     /**
      * 数据校验
      * @author will
@@ -354,7 +336,7 @@ public class DeliveryOrderDetailServiceImpl extends SuperServiceImpl<DeliveryOrd
             }
             //已送货数量
             if (CollectionUtils.isNotEmpty(deliveryOrderDetailList)) {
-                deliveryQty = deliveryOrderDetailList.stream().filter(e -> !StrUtil.equals(updateDTO.getDetailId(),e.getDetailId()) && e.getSourceDetailId().equals(updateDTO.getSourceDetailId()))
+                deliveryQty = deliveryOrderDetailList.stream().filter(e -> !CharSequenceUtil.equals(updateDTO.getDetailId(),e.getDetailId()) && e.getSourceDetailId().equals(updateDTO.getSourceDetailId()))
                         .map(DeliveryOrderDetailDTO.ListDTO::getDeliveryQty).reduce(MathUtil.ZERO, Integer::sum);
                 //收发差异
                 //发货数量 - 已审核收货数量
@@ -367,7 +349,7 @@ public class DeliveryOrderDetailServiceImpl extends SuperServiceImpl<DeliveryOrd
             //待送货数量
             Integer unDeliveryQty = updateDTO.getOrderQty() - deliveryQty - unDeliveryReceiveQty - unReceiveInstockQty + diffSendAndReceive + returnQty;
             if (updateDTO.getDeliveryQty() > unDeliveryQty) {
-                throw new ServiceException(StrUtil.format("送货数量不能超过【{}】",unDeliveryQty));
+                throw new ServiceException( CharSequenceUtil.format("送货数量不能超过【{}】",unDeliveryQty));
             }
         }
     }

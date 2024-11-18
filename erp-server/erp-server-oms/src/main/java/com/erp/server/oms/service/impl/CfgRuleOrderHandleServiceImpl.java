@@ -2,8 +2,9 @@ package com.erp.server.oms.service.impl;
 
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.TypeReference;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -27,7 +28,6 @@ import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.oms.dto.CfgRuleOrderHandleDTO;
 import com.erp.model.oms.dto.RuleConditionDTO;
-import com.erp.model.oms.dto.SkuMappingRuleDTO;
 import com.erp.model.oms.entity.CfgRuleOrderHandleEntity;
 import com.erp.model.oms.entity.RuleConditionEntity;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
@@ -35,20 +35,21 @@ import com.erp.model.oms.enums.RuleOrderHandleEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.tms.vo.request.LogisticsOrderRuleVO;
 import com.erp.model.tms.vo.request.LogisticsOrderVO;
-import com.erp.model.tms.vo.request.ReceiverInfoVO;
 import com.erp.model.wms.dto.third.ThirdWarehouseCreateOutboundReq;
 import com.erp.server.oms.mapper.CfgRuleOrderHandleMapper;
 import com.erp.server.oms.service.CfgRuleOrderHandleService;
 import com.erp.server.oms.service.OperateLogService;
 import com.erp.server.oms.service.RuleConditionService;
-import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.apache.poi.ss.formula.functions.T;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.lang.reflect.Field;
-import java.util.*;
+import javax.annotation.Resource;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
@@ -62,13 +63,13 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 public class CfgRuleOrderHandleServiceImpl extends SuperServiceImpl<CfgRuleOrderHandleMapper, CfgRuleOrderHandleEntity> implements CfgRuleOrderHandleService {
-    @Autowired
+    @Resource
     private OperateLogService operateLogService;
 
-    @Autowired
+    @Resource
     private RuleConditionService ruleConditionService;
 
-    @Autowired
+    @Resource
     private SpElServer spElServer;
 
     @Transactional(rollbackFor = Exception.class)
@@ -97,7 +98,7 @@ public class CfgRuleOrderHandleServiceImpl extends SuperServiceImpl<CfgRuleOrder
         ruleConditionService.saveRuleCondition(cfgRuleOrderHandleEntity.getId(), conditionList);
 
         // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "订单处理规则单" , cfgRuleOrderHandleEntity.getId());
+        String msg =  CharSequenceUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "订单处理规则单" , cfgRuleOrderHandleEntity.getId());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.CFG_RULE_ORDER_HANDLE.getCode(), cfgRuleOrderHandleEntity.getId(), "新增操作");
 
         return new BaseResultDTO.AddDTO(cfgRuleOrderHandleEntity.getId(), cfgRuleOrderHandleEntity.getId());
@@ -110,7 +111,9 @@ public class CfgRuleOrderHandleServiceImpl extends SuperServiceImpl<CfgRuleOrder
     @Override
     public Boolean update(CfgRuleOrderHandleDTO.UpdateDTO updateDTO) {
         CfgRuleOrderHandleEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "订单处理规则单"));
+        if(null == old){
+            throw new ServiceException(ApiError.NOT_EXIST_BILL, "订单处理规则单");
+        }
         CfgRuleOrderHandleEntity cfgRuleOrderHandleEntity =  BeanMapperUtils.map(CfgRuleOrderHandleEntity.class, updateDTO);
         Map<String, Object> ruleMap = BeanUtil.beanToMap(updateDTO.getRuleContent());
         cfgRuleOrderHandleEntity.setRuleContent(ruleMap);
@@ -132,7 +135,7 @@ public class CfgRuleOrderHandleServiceImpl extends SuperServiceImpl<CfgRuleOrder
 
         // 记录主单操作日志
         log.info("编辑 开始记录订单处理规则单日志数据，id：【{}】", cfgRuleOrderHandleEntity.getId());
-        String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), cfgRuleOrderHandleEntity.getId(), "订单处理规则单");
+        String msg =  CharSequenceUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), cfgRuleOrderHandleEntity.getId(), "订单处理规则单");
         CfgRuleOrderHandleDTO.LogDTO oldView = this.buildLogDTO(old);
         CfgRuleOrderHandleDTO.LogDTO newView = this.buildLogDTO(cfgRuleOrderHandleEntity);
         operateLogService.addModuleOperateLogByObj(oldView, newView, ModuleTypeEnum.CFG_RULE_ORDER_HANDLE.getCode(), cfgRuleOrderHandleEntity.getId(), msg);
@@ -142,7 +145,7 @@ public class CfgRuleOrderHandleServiceImpl extends SuperServiceImpl<CfgRuleOrder
     private CfgRuleOrderHandleDTO.LogDTO buildLogDTO(CfgRuleOrderHandleEntity old) {
         CfgRuleOrderHandleDTO.LogDTO logDTO = BeanUtil.copyProperties(old,CfgRuleOrderHandleDTO.LogDTO.class,"ruleContent");
         JSONObject jsonObject = new JSONObject(old.getRuleContent());
-        CfgRuleOrderHandleDTO.RuleContent ruleDTO = JSONObject.parseObject(jsonObject.toJSONString(),new TypeReference<CfgRuleOrderHandleDTO.RuleContent>() {}.getType());
+        CfgRuleOrderHandleDTO.RuleContent ruleDTO = JSON.parseObject(jsonObject.toJSONString(),new TypeReference<CfgRuleOrderHandleDTO.RuleContent>() {}.getType());
         logDTO.setReceiveHandleContent(ruleDTO.getReceiveHandleContent());
         logDTO.setAddressHandlerContent(ruleDTO.getAddressHandlerContent());
         logDTO.setPhoneHandleContent(ruleDTO.getPhoneHandleContent());
@@ -175,19 +178,21 @@ public class CfgRuleOrderHandleServiceImpl extends SuperServiceImpl<CfgRuleOrder
     public PagingVO<CfgRuleOrderHandleDTO.ListDTO> paging(PagingDTO<CfgRuleOrderHandleDTO.PagingParamDTO> dto) {
         CfgRuleOrderHandleDTO.PagingParamDTO params = dto.getParams();
         params.setPermissionSql(dto.getPermissionSql());
-        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
-        IPage pageData = baseMapper.paging(query, params);
+        Page<T> query = new Page<>(dto.getCurrPage(), dto.getPageSize());
+        IPage<CfgRuleOrderHandleDTO.ListDTO> pageData = baseMapper.paging(query, params);
         return new PagingVO<>(pageData);
     }
 
     @Override
     public CfgRuleOrderHandleDTO.ViewDTO view(String id) {
         CfgRuleOrderHandleEntity ruleOrderHandle = this.getById(id);
-        Optional.ofNullable(ruleOrderHandle).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "订单处理规则"));
+        if(null == ruleOrderHandle){
+            throw new ServiceException(ApiError.NOT_EXIST_BILL, "订单处理规则");
+        }
         CfgRuleOrderHandleDTO.ViewDTO view = new CfgRuleOrderHandleDTO.ViewDTO();
         BeanMapper.copy(ruleOrderHandle, view);
         JSONObject jsonObject = new JSONObject(ruleOrderHandle.getRuleContent());
-        CfgRuleOrderHandleDTO.RuleContent ruleDTO = JSONObject.parseObject(jsonObject.toJSONString(),new TypeReference<CfgRuleOrderHandleDTO.RuleContent>() {}.getType());
+        CfgRuleOrderHandleDTO.RuleContent ruleDTO = JSON.parseObject(jsonObject.toJSONString(),new TypeReference<CfgRuleOrderHandleDTO.RuleContent>() {}.getType());
         ruleDTO.getAddressHandlerContent().setFilterAddress1TextNameList(EnumMessage.listNameByCodes(RuleOrderHandleEnum.Address1FilterEnum.class,ruleDTO.getAddressHandlerContent().getFilterAddress1TextList()));
         ruleDTO.getPhoneHandleContent().setFilterPhoneTextNameList(EnumMessage.listNameByCodes(RuleOrderHandleEnum.PhoneFilterEnum.class,ruleDTO.getPhoneHandleContent().getFilterPhoneTextList()));
         ruleDTO.getReceiveHandleContent().setFilterReceiveTextNameList(EnumMessage.listNameByCodes(RuleOrderHandleEnum.ReceiveFilterEnum.class,ruleDTO.getReceiveHandleContent().getFilterReceiveTextList()));
@@ -203,12 +208,14 @@ public class CfgRuleOrderHandleServiceImpl extends SuperServiceImpl<CfgRuleOrder
     @Override
     public Boolean updateStatus(UpdateStateDTO dto) {
         CfgRuleOrderHandleEntity ruleOrderHandle = this.getById(dto.getId());
-        Optional.ofNullable(ruleOrderHandle).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "物流规则单"));
+        if(null == ruleOrderHandle){
+            throw new ServiceException(ApiError.NOT_EXIST_BILL, "物流规则单");
+        }
         Boolean disabled = ruleOrderHandle.getDisabled();
         if (disabled.equals(dto.getState())) {
             throw new ServiceException(ApiError.ERROR_98027);
         }
-        String content = String.format("启用状态[%s]变更为[%s]", disabled ? "启用" : "停用", disabled ? "停用" : "启用");
+        String content = String.format("启用状态[%s]变更为[%s]", Boolean.TRUE.equals(disabled) ? "启用" : "停用", Boolean.TRUE.equals(disabled) ? "停用" : "启用");
         ruleOrderHandle.setDisabled(dto.getState());
         operateLogService.addModuleOperateLog(content, ModuleTypeEnum.CFG_RULE_ORDER_HANDLE.getCode(), dto.getId(), "状态更新");
         return this.updateById(ruleOrderHandle);
@@ -235,11 +242,11 @@ public class CfgRuleOrderHandleServiceImpl extends SuperServiceImpl<CfgRuleOrder
             List<ConditionElement> conditionElementList = BeanMapper.copyList(ruleConditionList, ConditionElement.class);
             //获取到表达式
             Boolean matchResult = spElServer.matchExpressionByConditionList(conditionElementList, map);
-            if (matchResult) {
+            if (Boolean.TRUE.equals(matchResult)) {
                 ruleMatch.setApproveSuccess(Boolean.TRUE);
                 ruleMatch.setRuleName(item.getName());
                 JSONObject jsonObject = new JSONObject(item.getRuleContent());
-                CfgRuleOrderHandleDTO.RuleContent ruleDTO = JSONObject.parseObject(jsonObject.toJSONString(),new TypeReference<CfgRuleOrderHandleDTO.RuleContent>() {}.getType());
+                CfgRuleOrderHandleDTO.RuleContent ruleDTO = JSON.parseObject(jsonObject.toJSONString(),new TypeReference<CfgRuleOrderHandleDTO.RuleContent>() {}.getType());
                 ruleMatch.setRuleContent(ruleDTO);
                 return ruleMatch;
             }
@@ -251,7 +258,7 @@ public class CfgRuleOrderHandleServiceImpl extends SuperServiceImpl<CfgRuleOrder
     public LogisticsOrderVO handleRuleOrderLogistic(LogisticsOrderRuleVO logisticsOrderRuleVO) {
         CfgRuleOrderHandleDTO.RuleMatchDTO ruleMatchDTO = this.getRuleOrderHandleMatchResult(logisticsOrderRuleVO.getMap());
         LogisticsOrderVO logisticsOrderVO = logisticsOrderRuleVO.getLogisticsOrderVO();
-        if(ruleMatchDTO.getApproveSuccess()){
+        if(Boolean.TRUE.equals(ruleMatchDTO.getApproveSuccess())){
             //处理地址
             this.handleAddressRule(logisticsOrderVO.getReceiverInfoVO(),ruleMatchDTO.getRuleContent());
             //处理电话
@@ -267,7 +274,7 @@ public class CfgRuleOrderHandleServiceImpl extends SuperServiceImpl<CfgRuleOrder
     @Override
     public ThirdWarehouseCreateOutboundReq handleRuleOrderThirdWarehouse(ThirdWarehouseCreateOutboundReq createOutboundReq, Map<String, Object> map) {
         CfgRuleOrderHandleDTO.RuleMatchDTO ruleMatchDTO = this.getRuleOrderHandleMatchResult(map);
-        if(ruleMatchDTO.getApproveSuccess()){
+        if(Boolean.TRUE.equals(ruleMatchDTO.getApproveSuccess())){
             //处理地址
             this.handleAddressRule(createOutboundReq.getReceiverInfo(),ruleMatchDTO.getRuleContent());
             //处理电话
@@ -298,14 +305,14 @@ public class CfgRuleOrderHandleServiceImpl extends SuperServiceImpl<CfgRuleOrder
     private void checkData(CfgRuleOrderHandleEntity cfgRuleOrderHandleEntity,List<ConditionElement> conditionElementList) {
         //校验名称是否存在
         CfgRuleOrderHandleEntity old = this.getByName(cfgRuleOrderHandleEntity.getName());
-        if (ObjectUtil.isNotEmpty(old) && !StrUtil.equals(cfgRuleOrderHandleEntity.getId(),old.getId())) {
+        if (ObjectUtil.isNotEmpty(old) && !CharSequenceUtil.equals(cfgRuleOrderHandleEntity.getId(),old.getId())) {
             throw new ServiceException(ApiError.ERROR_NAME_EXIST,cfgRuleOrderHandleEntity.getName());
         }
         //校验规则表达式是否有效
         SpElExpressionDTO sqElDTO = spElServer.getConditionExpression(conditionElementList, Map.class);
         String expression = sqElDTO.getExpression();
         Boolean checkResult = spElServer.checkExpressionIsEnabled(expression);
-        if (!checkResult) {
+        if (Boolean.FALSE.equals(checkResult)) {
             throw new ServiceException(ApiError.ERROR_RULE_EXPRESSION_ERROR);
         }
     }
@@ -376,18 +383,16 @@ public class CfgRuleOrderHandleServiceImpl extends SuperServiceImpl<CfgRuleOrder
                 }
             }
         }
-        if(addressHandleContent.isAddress1FilterSwitch()){
-            if(StringUtils.isNotBlank(receiverInfoVO.getAddressFirst()) && CollectionUtils.isNotEmpty((addressHandleContent.getFilterAddress1TextList()))){
+        if(addressHandleContent.isAddress1FilterSwitch() && StringUtils.isNotBlank(receiverInfoVO.getAddressFirst()) && CollectionUtils.isNotEmpty((addressHandleContent.getFilterAddress1TextList()))){
                 for (String filterStr : addressHandleContent.getFilterAddress1TextList()) {
                     receiverInfoVO.setAddressFirst(receiverInfoVO.getAddressFirst().replace(filterStr, ""));
                 }
             }
-        }
-        if(addressHandleContent.isAddress1ReplaceSwitch()){
-            if(StringUtils.isNotBlank(receiverInfoVO.getAddressFirst()) && StringUtils.isNotBlank(addressHandleContent.getAddress1WaitReplaceText())&& StringUtils.isNotBlank(addressHandleContent.getAddress1ReplaceText())){
+
+        if(addressHandleContent.isAddress1ReplaceSwitch() && StringUtils.isNotBlank(receiverInfoVO.getAddressFirst()) && StringUtils.isNotBlank(addressHandleContent.getAddress1WaitReplaceText())&& StringUtils.isNotBlank(addressHandleContent.getAddress1ReplaceText())){
                 receiverInfoVO.setAddressFirst(receiverInfoVO.getAddressFirst().replace(addressHandleContent.getAddress1WaitReplaceText(), addressHandleContent.getAddress1ReplaceText()));
             }
-        }
+
     }
 
     /**
@@ -401,13 +406,12 @@ public class CfgRuleOrderHandleServiceImpl extends SuperServiceImpl<CfgRuleOrder
             return;
         }
         //过滤指定字符
-        if(phoneHandleContent.isPhoneFilterSwitch()){
-            if(StringUtils.isNotBlank(receiverInfoVO.getTelNumber()) && CollectionUtils.isNotEmpty(phoneHandleContent.getFilterPhoneTextList())){
+        if(phoneHandleContent.isPhoneFilterSwitch() && StringUtils.isNotBlank(receiverInfoVO.getTelNumber()) && CollectionUtils.isNotEmpty(phoneHandleContent.getFilterPhoneTextList())){
                 for (String filterStr : phoneHandleContent.getFilterPhoneTextList()) {
                     receiverInfoVO.setTelNumber(receiverInfoVO.getTelNumber().replace(filterStr, ""));
                 }
             }
-        }
+
         //截取
         if(phoneHandleContent.isPhoneInterceptSwitch()){
             Integer startIndex = phoneHandleContent.getPhoneInterceptStartIndex();
@@ -420,11 +424,10 @@ public class CfgRuleOrderHandleServiceImpl extends SuperServiceImpl<CfgRuleOrder
 
         }
         //为空填充
-        if(phoneHandleContent.isPhoneEmptyFillSwitch()){
-            if(StringUtils.isBlank(receiverInfoVO.getTelNumber())){
+        if(phoneHandleContent.isPhoneEmptyFillSwitch() && StringUtils.isBlank(receiverInfoVO.getTelNumber())){
                 receiverInfoVO.setTelNumber(phoneHandleContent.getPhoneEmptyFillText());
             }
-        }
+
     }
 
     /**
@@ -438,19 +441,17 @@ public class CfgRuleOrderHandleServiceImpl extends SuperServiceImpl<CfgRuleOrder
             return;
         }
         //过滤特殊字符
-        if(zipCodeHandleContent.isZipCodeFilterSwitch()){
-            if(StringUtils.isNotBlank(receiverInfoVO.getZipCode()) && CollectionUtils.isNotEmpty(zipCodeHandleContent.getFilterZipCodeTextList())){
+        if(zipCodeHandleContent.isZipCodeFilterSwitch() && StringUtils.isNotBlank(receiverInfoVO.getZipCode()) && CollectionUtils.isNotEmpty(zipCodeHandleContent.getFilterZipCodeTextList())){
                 for (String filterStr : zipCodeHandleContent.getFilterZipCodeTextList()) {
                     receiverInfoVO.setZipCode(receiverInfoVO.getZipCode().replace(filterStr, ""));
                 }
             }
-        }
+
         //为空填充
-        if(zipCodeHandleContent.isZipCodeEmptyFillSwitch()){
-            if(StringUtils.isBlank(receiverInfoVO.getZipCode())){
+        if(zipCodeHandleContent.isZipCodeEmptyFillSwitch() && StringUtils.isBlank(receiverInfoVO.getZipCode())){
                 receiverInfoVO.setZipCode(zipCodeHandleContent.getZipCodeEmptyFillText());
             }
-        }
+
     }
     /**
      * 收货人处理
@@ -479,12 +480,11 @@ public class CfgRuleOrderHandleServiceImpl extends SuperServiceImpl<CfgRuleOrder
             }
         }
         //过滤特殊符号
-        if(receiveHandleContent.isReceiveFilterSwitch()){
-            if(StringUtils.isNotBlank(receiverInfoVO.getContact()) && CollectionUtils.isNotEmpty(receiveHandleContent.getFilterReceiveTextList())){
+        if(receiveHandleContent.isReceiveFilterSwitch() && StringUtils.isNotBlank(receiverInfoVO.getContact()) && CollectionUtils.isNotEmpty(receiveHandleContent.getFilterReceiveTextList())){
                 for (String filterStr : receiveHandleContent.getFilterReceiveTextList()) {
                     receiverInfoVO.setContact(receiverInfoVO.getContact().replace(filterStr, ""));
                 }
             }
-        }
+
     }
 }

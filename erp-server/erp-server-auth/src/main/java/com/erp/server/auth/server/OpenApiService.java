@@ -35,8 +35,8 @@ public class OpenApiService {
     @Resource
     private AttachmentFeign attachmentFeign;
     
-    public ApiResult<?> unitPlatformService(OpenApiInputDTO input) {
-    	ApiResult<?> response = null;
+    public ApiResult<Object> unitPlatformService(OpenApiInputDTO input) {
+    	ApiResult<Object> response = null;
     	String method = input.getMethod();
         String signType = input.getSignType();
         if (!SignUtil.equalsAny(input.getVersion(), "1.0.0") || !StringUtils.equalsIgnoreCase("UTF-8", input.getCharset())){
@@ -78,7 +78,7 @@ public class OpenApiService {
     }
 
 
-    private ApiResult<?> gatewayMethod(String serviceName, String bizContent) throws InvocationTargetException, IllegalAccessException, InstantiationException {
+    private ApiResult<Object> gatewayMethod(String serviceName, String bizContent) throws InvocationTargetException, IllegalAccessException, InstantiationException {
     	ApiResult<Object> response = ApiResult.success();
     	InitOpenApiBeanUtil.GatewayBaseInfo gatewayBaseInfo = initGateWayBeanUtil.getGatewayMap().get(serviceName);
         if (null == gatewayBaseInfo){

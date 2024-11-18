@@ -22,8 +22,13 @@ import java.util.List;
 public interface BiModuleMapper extends BaseMapper<BiModuleEntity> {
 
 
-    IPage<ModulePagingDTO> paging(Page query, @Param("params") BaseSearchDTO params);
+    IPage<ModulePagingDTO> paging(Page<?> query, @Param("params") BaseSearchDTO params);
 
+    /**
+     * @deprecated
+     * This method is deprecated and will be removed in future versions.
+     * Please use {@link #getUserVisibleModuleIdsNew(String)} instead.
+     */
     @Deprecated
     List<String> getUserVisibleModuleIds(@Param("userId") String userId);
 

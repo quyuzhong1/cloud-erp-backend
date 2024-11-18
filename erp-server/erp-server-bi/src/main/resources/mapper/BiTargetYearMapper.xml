@@ -33,7 +33,7 @@
         is_deleted,
         year, currency, currency_symbol, dept_id, dept_name
     </sql>
-    <select id="AllTargetValue" resultType="com.erp.model.bi.dto.BiTargetYearDTO$YearMonthValueDTO">
+    <select id="allTargetValue" resultType="com.erp.model.bi.dto.BiTargetYearDTO$YearMonthValueDTO">
         SELECT
             month,
             SUM (value) AS metricsValue,
@@ -89,7 +89,7 @@
         GROUP BY temp.month
     </select>
 
-    <select id="ListDeptTargetValue" resultType="com.erp.model.bi.dto.BiTargetYearDTO$YearMonthValueDTO">
+    <select id="listDeptTargetValue" resultType="com.erp.model.bi.dto.BiTargetYearDTO$YearMonthValueDTO">
         SELECT
             month ,SUM(value) AS metricsValue, '${year}' AS year, '${metricsName}' AS metricsName
         FROM bi_target_staff_setting tss
@@ -106,7 +106,7 @@
         GROUP BY month
     </select>
 
-    <select id="ListStaffTargetValue" resultType="com.erp.model.bi.dto.BiTargetYearDTO$YearMonthValueDTO">
+    <select id="listStaffTargetValue" resultType="com.erp.model.bi.dto.BiTargetYearDTO$YearMonthValueDTO">
         SELECT
         month, SUM (value) AS metricsValue, '${year}' AS year, '${metricsName}' AS metricsName
         FROM bi_target_staff_setting tss
@@ -124,7 +124,7 @@
         GROUP BY month
     </select>
 
-    <select id="ListShopTargetValue" resultType="com.erp.model.bi.dto.BiTargetYearDTO$YearMonthValueDTO">
+    <select id="listShopTargetValue" resultType="com.erp.model.bi.dto.BiTargetYearDTO$YearMonthValueDTO">
         SELECT
         month ,SUM(value) AS metricsValue, '${year}' AS year, '${metricsName}' AS metricsName
         FROM bi_target_shop_setting tss

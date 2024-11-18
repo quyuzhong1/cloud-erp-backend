@@ -1,8 +1,6 @@
 package com.erp.model.wms.entity;
 
-import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
-import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
 
@@ -104,9 +102,6 @@ public class InitStockEntity extends BaseEntity<InitStockEntity> {
      */
     @TableField("invalid_status")
     private Boolean invalidStatus;
-
-
-    public static final String CODE = "code";
 
     public static final String BILL_DATE = "bill_date";
 

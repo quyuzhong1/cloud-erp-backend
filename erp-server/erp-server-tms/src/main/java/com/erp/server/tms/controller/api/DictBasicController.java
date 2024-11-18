@@ -1,24 +1,19 @@
 package com.erp.server.tms.controller.api;
 
 
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.*;
-import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
-import com.common.core.anno.LogViewService;
-import com.common.core.enums.LogActionEnum;
-import com.common.business.dto.base.*;
+import com.common.core.controller.BaseController;
+import com.common.core.controller.vo.ApiResult;
+import com.erp.model.tms.dto.DictBasicDTO;
+import com.erp.server.tms.service.DictBasicService;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.common.core.controller.BaseController;
-import com.erp.server.tms.service.DictBasicService;
-import com.common.core.controller.vo.ApiResult;
-import com.common.business.annotation.DataPermission;
-import com.common.business.enums.DataAttributeEnum;
-import com.erp.model.tms.dto.DictBasicDTO;
-
+import javax.annotation.Resource;
 import java.util.List;
 
 /**
@@ -33,7 +28,7 @@ import java.util.List;
 @RequestMapping("/dictBasic")
 public class DictBasicController extends BaseController {
 
-    @Autowired
+    @Resource
     private DictBasicService dictBasicService;
 
 
@@ -44,7 +39,7 @@ public class DictBasicController extends BaseController {
      * @return
      */
     @PostMapping("/saveOrUpdateBatch")
-    public ApiResult saveOrUpdate(@RequestBody @Validated List<DictBasicDTO.AddOrUpdateDTO> dto) {
+    public ApiResult<Object>saveOrUpdate(@RequestBody @Validated List<DictBasicDTO.AddOrUpdateDTO> dto) {
         Boolean result = dictBasicService.saveOrUpdateDict(dto);
         return result == true ? success() : failure();
     }

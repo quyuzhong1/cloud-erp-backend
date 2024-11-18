@@ -46,7 +46,7 @@ public class ProjectInfoController extends BaseController {
      */
     @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "项目列表-启动项目:负责人id={chargeId},产品id={productId},项目id={projectId}")
     @PostMapping("/startProject")
-    public ApiResult startProject(@RequestBody @Validated StartProjectDTO dto) {
+    public ApiResult<Object> startProject(@RequestBody @Validated StartProjectDTO dto) {
         Boolean flag = projectInfoService.startProject(dto);
         return flag == true ? success() : failure();
     }
@@ -60,7 +60,7 @@ public class ProjectInfoController extends BaseController {
      */
     @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "项目列表-批量启动项目:负责人id={chargeId},项目ids={projectIdList}")
     @PostMapping("/batchStartProject")
-    public ApiResult batchStartProject(@RequestBody @Validated StartProjectDTO.BatchStartProjectDTO dto) {
+    public ApiResult<Object> batchStartProject(@RequestBody @Validated StartProjectDTO.BatchStartProjectDTO dto) {
         Boolean flag = projectInfoService.batchStartProject(dto);
         return flag ? success() : failure();
     }
@@ -71,7 +71,7 @@ public class ProjectInfoController extends BaseController {
      * @return
      */
     @GetMapping("/startItemList")
-    public ApiResult getList() {
+    public ApiResult<Object> getList() {
         return success();
     }
 
@@ -102,7 +102,7 @@ public class ProjectInfoController extends BaseController {
     @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "项目列表-项目归档：产品id={productId}")
     @PostMapping("/archive")
     //@RequestPermissions("plm:project:archive")
-    public ApiResult archive(@RequestParam(value = "productId") String productId) {
+    public ApiResult<Object> archive(@RequestParam(value = "productId") String productId) {
         boolean flag = projectInfoService.archive(productId);
         return flag == true ? success() : failure();
     }
@@ -137,7 +137,7 @@ public class ProjectInfoController extends BaseController {
      **/
     @PostMapping("/projectReportForms")
     //@RequestPermissions("plm:project:archive")
-    public ApiResult projectReportForms(@RequestParam(value = "productId") String productId) {
+    public ApiResult<Object> projectReportForms(@RequestParam(value = "productId") String productId) {
         boolean flag = projectInfoService.archive(productId);
         return flag == true ? success() : failure();
     }
@@ -150,7 +150,7 @@ public class ProjectInfoController extends BaseController {
      */
     @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "项目列表-重新启动项目:ids={ids}")
     @PostMapping("/restart")
-    public ApiResult restart(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
+    public ApiResult<Object> restart(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
         Boolean flag = projectInfoService.restart(dto.getIds());
         return flag ? success() : failure();
     }
@@ -163,7 +163,7 @@ public class ProjectInfoController extends BaseController {
      */
     @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "项目列表-暂停项目:ids={ids}")
     @PostMapping("/suspend")
-    public ApiResult suspend(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
+    public ApiResult<Object> suspend(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
         Boolean flag = projectInfoService.suspend(dto.getIds());
         return flag ? success() : failure();
     }
@@ -175,7 +175,7 @@ public class ProjectInfoController extends BaseController {
      */
     @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "项目列表-终止项目:ids={ids}")
     @PostMapping("/stop")
-    public ApiResult terminate(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
+    public ApiResult<Object> terminate(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
         Boolean flag = projectInfoService.terminate(dto.getIds());
         return flag ? success() : failure();
     }
@@ -187,7 +187,7 @@ public class ProjectInfoController extends BaseController {
      */
     @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "项目列表-项目结项:ids={ids}")
     @PostMapping("/finish")
-    public ApiResult finish(@RequestBody @Valid ProductInfoDTO.IdsDateDto dto) {
+    public ApiResult<Object> finish(@RequestBody @Valid ProductInfoDTO.IdsDateDto dto) {
         Boolean flag = projectInfoService.finish(dto);
         return flag ? success() : failure();
     }
@@ -202,7 +202,7 @@ public class ProjectInfoController extends BaseController {
      */
     @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "项目列表-批量项目归档:ids={ids}")
     @PostMapping("/batchArchive")
-    public ApiResult batchArchive(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
+    public ApiResult<Object> batchArchive(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
         boolean flag = projectInfoService.batchArchive(dto.getIds());
         return flag ? success() : failure();
     }

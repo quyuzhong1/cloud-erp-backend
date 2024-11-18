@@ -72,7 +72,7 @@ public class DmpBasicSystemServiceImpl extends SuperServiceImpl<DmpBasicSystemMa
     @Override
     public Boolean update(DmpBasicSystemDTO.UpdateDTO updateDTO) {
         DmpBasicSystemEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "外部系统"));
+        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "外部系统"));
         DmpBasicSystemEntity dmpBasicSystemEntity =  BeanMapperUtils.map(DmpBasicSystemEntity.class, updateDTO);
 
         // 数据处理

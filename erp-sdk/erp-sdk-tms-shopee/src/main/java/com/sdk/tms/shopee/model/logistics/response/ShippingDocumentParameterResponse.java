@@ -9,7 +9,7 @@ import java.util.List;
 /**
  * @author zdy
  * @ClassName ShippingDocumentParameterResponse
- * @description: TODO
+
  * @date 2024年10月30日
  * @version: 1.0
  */

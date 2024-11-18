@@ -41,6 +41,12 @@ public class SoDeliveryNoticeDetailEntity extends BaseEntity<SoDeliveryNoticeDet
     @TableField("sku_no")
     private String skuNo;
     /**
+     * bom版本
+     */
+    @TableField("bom_version")
+    private String bomVersion;
+
+    /**
      * 客户sku
      */
     @TableField("platform_sku_no")
@@ -114,7 +120,7 @@ public class SoDeliveryNoticeDetailEntity extends BaseEntity<SoDeliveryNoticeDet
 
     public static final String IS_CLOSE = "is_close";
 
-    public static final String REMARK = "remark";
+    
 
     public static final String SOURCE_DETAIL_ID = "source_detail_id";
 

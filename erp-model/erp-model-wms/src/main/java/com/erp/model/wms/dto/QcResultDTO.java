@@ -11,6 +11,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.*;
+import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -23,16 +24,18 @@ import java.util.List;
  * @Created by yl
  */
 @Data
-@NoArgsConstructor
 public class QcResultDTO {
-
+    private QcResultDTO() {
+        throw new IllegalStateException("Utility QcResultDTO class");
+    }
 
     /**
      * 暂存 质检信息
      */
     @Data
     @NoArgsConstructor
-    public static class AddDTO {
+    public static class AddDTO implements Serializable {
+        private static final long serialVersionUID = 1905122041950251207L;
 
         private String id;
         /**
@@ -153,7 +156,8 @@ public class QcResultDTO {
      */
     @Data
     @NoArgsConstructor
-    public static class ViewDTO {
+    public static class ViewDTO implements Serializable{
+        private static final long serialVersionUID = 1905122041950251207L;
 
         private String id;
 

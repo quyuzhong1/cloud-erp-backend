@@ -193,15 +193,15 @@ public class TmsB2cDeclareReconciliationDetailEntity extends BaseEntity<TmsB2cDe
 
     public static final String SO_CODE = "so_code";
 
-    public static final String DATE = "date";
+    public static final String FIELD_DATE = "date";
 
-    public static final String COUNTRY = "country";
+    public static final String FIELD_COUNTRY = "country";
 
     public static final String LOGISTICS_CHANNEL_ID = "logistics_channel_id";
 
     public static final String LOGISTICS_CHANNEL_NAME = "logistics_channel_name";
 
-    public static final String QTY = "qty";
+    public static final String FIELD_QTY = "qty";
 
     public static final String ESTIMATE_WEIGHT = "estimate_weight";
 
@@ -219,9 +219,9 @@ public class TmsB2cDeclareReconciliationDetailEntity extends BaseEntity<TmsB2cDe
 
     public static final String ACTUAL_OTHER_COST = "actual_other_cost";
 
-    public static final String REMARK = "remark";
+    public static final String FIELD_REMARK = "remark";
 
-    public static final String STATUS = "status";
+    public static final String FIELD_STATUS = "status";
 
     public static final String CONFIRM_DATE = "confirm_date";
 

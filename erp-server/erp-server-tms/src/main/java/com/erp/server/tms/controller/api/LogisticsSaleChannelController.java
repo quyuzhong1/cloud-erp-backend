@@ -34,7 +34,7 @@ import java.util.List;
 @RequestMapping("/logisticsSaleChannel")
 public class LogisticsSaleChannelController extends BaseController {
 
-    @Autowired
+    @Resource
     private LogisticsSaleChannelService logisticsSaleChannelService;
     @Resource
     private TmsCarrierService tmsCarrierService;
@@ -66,7 +66,7 @@ public class LogisticsSaleChannelController extends BaseController {
         menuCode = "tms:logisticsSaleChannel:update",
         serviceClass = LogisticsSaleChannelService.class,
         keyIdName = "id")
-    public ApiResult update(@RequestBody @Validated LogisticsSaleChannelDTO.UpdateDTO dto) {
+    public ApiResult<Object>update(@RequestBody @Validated LogisticsSaleChannelDTO.UpdateDTO dto) {
         logisticsSaleChannelService.update(dto);
         return success();
     }

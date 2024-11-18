@@ -875,6 +875,10 @@ public class TmsFirstMileLogisticDTO implements Serializable {
          */
         @ExcelProperty(value = "签收时间")
         private LocalDateTime signTime;
+        /**
+         * 开船时间
+         */
+        private LocalDateTime shipTime;
 
         /**
          * 预计时效(天)

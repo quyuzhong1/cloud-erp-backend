@@ -65,7 +65,7 @@ public class DmpSkuInfoServiceImpl extends SuperServiceImpl<DmpSkuInfoMapper, Dm
     @Override
     public Boolean update(DmpSkuInfoDTO.UpdateDTO updateDTO) {
         DmpSkuInfoEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "中台产品单"));
+        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "中台产品单"));
         DmpSkuInfoEntity dmpSkuInfoEntity =  BeanMapperUtils.map(DmpSkuInfoEntity.class, updateDTO);
 
         // 数据处理

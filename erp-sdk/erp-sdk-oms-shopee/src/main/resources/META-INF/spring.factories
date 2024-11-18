@@ -4,5 +4,6 @@ org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
    com.sdk.oms.shopee.service.ShopeeMerchantService,\
    com.sdk.oms.shopee.service.ShopeeShopService,\
    com.sdk.oms.shopee.service.ShopeeOrderService,\
+   com.sdk.oms.shopee.service.ShopeeReturnService,\
    com.sdk.oms.shopee.handler.ShopeeListingHandler,\
    com.sdk.oms.shopee.handler.ShopeeOrderHandler

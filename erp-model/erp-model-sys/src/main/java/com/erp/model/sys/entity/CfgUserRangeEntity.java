@@ -54,9 +54,9 @@ public class CfgUserRangeEntity extends BaseEntity<CfgUserRangeEntity> {
     @TableField("user_id")
     private String userId;
 
-    public static final String NAME = "name";
+    public static final String FIELD_NAME = "name";
 
-    public static final String TYPE = "type";
+    public static final String FIELD_TYPE = "type";
 
     public static final String START_VALUE = "start_value";
 

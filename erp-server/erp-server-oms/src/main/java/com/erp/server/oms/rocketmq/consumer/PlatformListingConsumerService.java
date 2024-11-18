@@ -1,5 +1,6 @@
 package com.erp.server.oms.rocketmq.consumer;
 
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.common.business.dto.DmpSyncMqDTO;
@@ -150,6 +151,9 @@ public class PlatformListingConsumerService<T extends DmpSyncTaskIdDTO> extends 
             }
 
             // 转换
+            if(dto.getMatchResult() != null){
+                dto.setMatchResultStr(String.valueOf(dto.getMatchResult()));
+            }
             ListingInfoEntity entity = OmsListingConverter.INSTANCE.listingDtoToEntity(dto);
 
             if (null == oldEntity) {
@@ -164,7 +168,7 @@ public class PlatformListingConsumerService<T extends DmpSyncTaskIdDTO> extends 
                 if (!skuMappingService.save(skuMappingEntity)) {
                     throw new ServiceException("【listing消费】SkuMapping保存失败");
                 }
-                String msg = StrUtil.format("拉取第三方产品新增【{}】，平台sku为【{}】", "平台sku表",entity.getPlatformSkuNo());
+                String msg =  CharSequenceUtil.format("拉取第三方产品新增【{}】，平台sku为【{}】", "平台sku表",entity.getPlatformSkuNo());
                 operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.LISTING_INFO.getCode(), entity.getId(), "新增操作");
             } else {
                 // 是否修改
@@ -194,7 +198,7 @@ public class PlatformListingConsumerService<T extends DmpSyncTaskIdDTO> extends 
 //                        throw new ServiceException("Listing 产品更新失败");
 //                    }
                     //记录更新日志
-                    String msg = StrUtil.format("拉取第三方产品更新【{}】 ", "平台sku表");
+                    String msg =  CharSequenceUtil.format("拉取第三方产品更新【{}】 ", "平台sku表");
                     operateLogService.addModuleOperateLogByObj(oldLogInfo, oldEntity, ModuleTypeEnum.LISTING_INFO.getCode(), oldEntity.getId(), msg);
                 }
 
@@ -219,14 +223,14 @@ public class PlatformListingConsumerService<T extends DmpSyncTaskIdDTO> extends 
      * @return
      */
     private String getTableName(String platform){
-        return StrUtil.format("{}_{}_{}", PlatformCategoryEnum.THIRD_SYSTEM.getCode(),
+        return  CharSequenceUtil.format("{}_{}_{}", PlatformCategoryEnum.THIRD_SYSTEM.getCode(),
                 platform, BusinessTypeEnum.PRODUCT.getCode());
     }
     private WarnMsgInfoDTO buildWarnMsgInfoDTO(DmpPullTaskEntity dmpPullTaskEntity, String msg) {
         WarnMsgInfoDTO warnMsgInfo = new WarnMsgInfoDTO();
         warnMsgInfo.setBizName(SourceTypeEnum.getName(dmpPullTaskEntity.getSourceType()));
         warnMsgInfo.setErpServerModuleEnum(ErpServerModuleEnum.ERP_SERVER_OMS);
-        warnMsgInfo.setTitle(StrUtil.format("平台产品消息消费失败，来源平台:{},目标平台:{}", dmpPullTaskEntity.getSourcePlatformName(), dmpPullTaskEntity.getTargetPlatformName()));
+        warnMsgInfo.setTitle( CharSequenceUtil.format("平台产品消息消费失败，来源平台:{},目标平台:{}", dmpPullTaskEntity.getSourcePlatformName(), dmpPullTaskEntity.getTargetPlatformName()));
         warnMsgInfo.setTableName(SourceTypeEnum.THIRD_WAREHOUSE_GET_SKU.getTableName());
         warnMsgInfo.setTableId(dmpPullTaskEntity.getId());
         warnMsgInfo.setKeyInfo(StringUtils.isBlank(msg) ? "" : msg);

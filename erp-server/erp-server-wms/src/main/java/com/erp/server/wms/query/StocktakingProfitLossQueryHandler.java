@@ -12,10 +12,7 @@ import com.erp.server.wms.service.StocktakingTaskUserService;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Component
@@ -33,7 +30,7 @@ public class StocktakingProfitLossQueryHandler extends AbstractQueryHandler {
             if (ObjUtil.isNotEmpty(value)) {
                 List<String> stringList = new ArrayList<>();
                 if (value instanceof String) {
-                    stringList = Arrays.asList(value.toString());
+                    stringList = Collections.singletonList(value.toString());
                 } else if (value instanceof List) {
                     Collection<String> collection = (Collection<String>) value;
                      stringList = new ArrayList<>(collection);

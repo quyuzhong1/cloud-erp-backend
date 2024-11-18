@@ -22,102 +22,71 @@ public class HyperlinkWriteHandler extends AbstractCellWriteHandler {
 
     @Override
     public void afterCellDispose(WriteSheetHolder writeSheetHolder, WriteTableHolder writeTableHolder, List<CellData> cellDataList, Cell cell, Head head, Integer relativeRowIndex, Boolean isHead) {
-        if (Boolean.TRUE.equals(isHead)) {
-            return; // 跳过表头
+        if (Boolean.TRUE.equals(isHead) || cell == null) {
+            return; // 跳过表头和空单元格
         }
-        if (cell != null && 25 == cell.getColumnIndex()) {
-            // 获取对应行的数据对象
-            String rowData = cellDataList.get(0).getStringValue();
-            if (ObjectUtil.isNotEmpty(rowData)) {
-                String[] split = rowData.split(",");
-                if (split.length > 1) {
-                    Workbook workbook = cell.getSheet().getWorkbook();
-                    CreationHelper creationHelper = workbook.getCreationHelper();
-                    Hyperlink hyperlink = creationHelper.createHyperlink(HyperlinkType.URL);
-                    hyperlink.setAddress(FastDFSClientUtil.publicUrl + split[1]);
-                    cell.setHyperlink(hyperlink);
-                    cell.setCellStyle(getCellStyle(workbook));
-                    cell.setCellValue(split[0]);
-                }
-            }
+        String rowData = cellDataList.get(0).getStringValue();
+        if (ObjectUtil.isEmpty(rowData)) {
+            return; // 如果数据为空，不做处理
         }
-        if (cell != null && 4 == cell.getColumnIndex()) {
-            // 获取对应行的数据对象
-            String rowData = cellDataList.get(0).getStringValue();
-            if (ObjectUtil.isNotEmpty(rowData)) {
-                try {
-                    Workbook workbook = cell.getSheet().getWorkbook();
-                    // 暂只取一张图片
-                    InputStream inputStream = FastDFSClientUtil.getInputStream(rowData);
-                    byte[] imageBytes = IOUtils.toByteArray(inputStream);
-                    int pictureIdx = workbook.addPicture(imageBytes, Workbook.PICTURE_TYPE_PNG);
-                    Drawing<?> drawingPatriarch = writeSheetHolder.getSheet().createDrawingPatriarch();
-                    CreationHelper helper = workbook.getCreationHelper();
-                    // 创建锚点并指定图片插入的单元格位置
-                    ClientAnchor anchor = getClientAnchor(helper, 4, relativeRowIndex);
-                    // 插入图片
-                    Picture pict = drawingPatriarch.createPicture(anchor, pictureIdx);
-                    pict.resize(); // 自动调整图片大小
-                } catch (Exception e) {
-                    log.error("写入图片失败", e);
-                }
-            }
-        }
+        switch (cell.getColumnIndex()) {
+            case 25:
+                handleHyperlink(cell, rowData);
+                break;
 
-        if (cell != null && 5 == cell.getColumnIndex()) {
-            // 获取对应行的数据对象
-            String rowData = cellDataList.get(0).getStringValue();
-            if (ObjectUtil.isNotEmpty(rowData)) {
-                try {
-                    Workbook workbook = cell.getSheet().getWorkbook();
-                    // 暂只取一张图片
-                    InputStream inputStream = FastDFSClientUtil.getInputStream(rowData);
-                    byte[] imageBytes = IOUtils.toByteArray(inputStream);
-                    int pictureIdx = workbook.addPicture(imageBytes, Workbook.PICTURE_TYPE_PNG);
-                    Drawing<?> drawingPatriarch = writeSheetHolder.getSheet().createDrawingPatriarch();
-                    CreationHelper helper = workbook.getCreationHelper();
-                    // 创建锚点并指定图片插入的单元格位置
-                    ClientAnchor anchor = getClientAnchor(helper, 5, relativeRowIndex);
-                    // 插入图片
-                    Picture pict = drawingPatriarch.createPicture(anchor, pictureIdx);
-                    pict.resize(); // 自动调整图片大小
-                } catch (Exception e) {
-                    log.error("写入图片失败", e);
-                }
-            }
+            case 4:
+            case 5:
+            case 16:
+                handleImageOrHyperlink(cell, rowData, writeSheetHolder, relativeRowIndex);
+                break;
+
+            default:
+                break;
         }
-        if (cell != null && 16 == cell.getColumnIndex()) {
-            // 获取对应行的数据对象
-            String rowData = cellDataList.get(0).getStringValue();
-            if (ObjectUtil.isNotEmpty(rowData)) {
-                String[] split = rowData.split(",");
-                if (split.length == 1) {
-                    try {
-                        Workbook workbook = cell.getSheet().getWorkbook();
-                        // 暂只取一张图片
-                        InputStream inputStream = FastDFSClientUtil.getInputStream(split[0]);
-                        byte[] imageBytes = IOUtils.toByteArray(inputStream);
-                        int pictureIdx = workbook.addPicture(imageBytes, Workbook.PICTURE_TYPE_PNG);
-                        Drawing<?> drawingPatriarch = writeSheetHolder.getSheet().createDrawingPatriarch();
-                        CreationHelper helper = workbook.getCreationHelper();
-                        // 创建锚点并指定图片插入的单元格位置
-                        ClientAnchor anchor = getClientAnchor(helper, 16, relativeRowIndex);
-                        // 插入图片
-                        Picture pict = drawingPatriarch.createPicture(anchor, pictureIdx);
-                        pict.resize(); // 自动调整图片大小
-                    } catch (Exception e) {
-                        log.error("写入图片失败", e);
-                    }
-                } else if (split.length == 2) {
-                    Workbook workbook = cell.getSheet().getWorkbook();
-                    CreationHelper creationHelper = workbook.getCreationHelper();
-                    Hyperlink hyperlink = creationHelper.createHyperlink(HyperlinkType.URL);
-                    hyperlink.setAddress(FastDFSClientUtil.publicUrl + split[1]);
-                    cell.setHyperlink(hyperlink);
-                    cell.setCellStyle(getCellStyle(workbook));
-                    cell.setCellValue(split[0]);
-                }
-            }
+    }
+
+    private void handleHyperlink(Cell cell, String rowData) {
+        String[] split = rowData.split(",");
+        if (split.length > 1) {
+            Workbook workbook = cell.getSheet().getWorkbook();
+            CreationHelper creationHelper = workbook.getCreationHelper();
+            Hyperlink hyperlink = creationHelper.createHyperlink(HyperlinkType.URL);
+            hyperlink.setAddress(FastDFSClientUtil.publicUrl + split[1]);
+            cell.setHyperlink(hyperlink);
+            cell.setCellStyle(getCellStyle(workbook));
+            cell.setCellValue(split[0]);
+        }
+    }
+
+    private void handleImageOrHyperlink(Cell cell, String rowData, WriteSheetHolder writeSheetHolder, Integer relativeRowIndex) {
+        String[] split = rowData.split(",");
+
+        // 处理图片插入
+        if (split.length == 1) {
+            insertImage(cell, split[0], writeSheetHolder, relativeRowIndex);
+        }
+        // 处理超链接
+        else if (split.length == 2) {
+            handleHyperlink(cell, rowData);
+        }
+    }
+
+    private void insertImage(Cell cell, String imageUrl, WriteSheetHolder writeSheetHolder, Integer relativeRowIndex) {
+        try {
+            Workbook workbook = cell.getSheet().getWorkbook();
+            InputStream inputStream = FastDFSClientUtil.getInputStream(imageUrl);
+            assert inputStream != null;
+            byte[] imageBytes = IOUtils.toByteArray(inputStream);
+            int pictureIdx = workbook.addPicture(imageBytes, Workbook.PICTURE_TYPE_PNG);
+
+            Drawing<?> drawingPatriarch = writeSheetHolder.getSheet().createDrawingPatriarch();
+            CreationHelper helper = workbook.getCreationHelper();
+            ClientAnchor anchor = getClientAnchor(helper, cell.getColumnIndex(), relativeRowIndex);
+
+            Picture picture = drawingPatriarch.createPicture(anchor, pictureIdx);
+            picture.resize(); // 自动调整图片大小
+        } catch (Exception e) {
+            log.error("写入图片失败", e);
         }
     }
 

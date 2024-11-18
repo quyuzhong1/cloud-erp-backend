@@ -62,7 +62,7 @@ public class PurchaseOrderDetailController extends BaseController {
         menuCode = "srm:purchaseOrderDetail:update",
         serviceClass = PurchaseOrderDetailService.class,
         keyIdName = "id")
-    public ApiResult<?> update(@RequestBody @Validated PurchaseOrderDetailDTO.UpdateDTO dto) {
+    public ApiResult<Object> update(@RequestBody @Validated PurchaseOrderDetailDTO.UpdateDTO dto) {
         purchaseOrderDetailService.update(dto);
         return success();
     }

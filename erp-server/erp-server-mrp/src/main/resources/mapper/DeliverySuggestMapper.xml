@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.mrp.mapper.DeliverySuggestMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.mrp.entity.DeliverySuggestEntity">
+       <result column="id" property="id" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_time" property="createTime" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_time" property="updateTime" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="code" property="code" />
+       <result column="create_type" property="createType" />
+       <result column="suggest_delivery_qty" property="suggestDeliveryQty" />
+       <result column="suggest_delivery_date" property="suggestDeliveryDate" />
+       <result column="logistics_method" property="logisticsMethod" />
+       <result column="logistics_days" property="logisticsDays" />
+       <result column="estimate_sales_date" property="estimateSalesDate" />
+       <result column="logistics_cost" property="logisticsCost" />
+       <result column="invalid_status" property="invalidStatus" />
+       <result column="invalid_remark" property="invalidRemark" />
+       <result column="source_id" property="sourceId" />
+       <result column="source_type" property="sourceType" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        ds.id,
+        ds.create_user_id,
+        ds.create_user_name,
+        ds.create_time,
+        ds.update_user_id,
+        ds.update_user_name,
+        ds.update_time,
+        ds.version,
+        ds.is_deleted,
+        ds.code,
+        ds.create_type,
+        ds.suggest_delivery_qty,
+        ds.suggest_delivery_date,
+        ds.logistics_method,
+        ds.logistics_days,
+        ds.estimate_sales_date,
+        ds.logistics_cost,
+        ds.invalid_status,
+        ds.invalid_remark,
+        ds.source_id,
+        ds.source_type
+    </sql>
+
+    <!-- 列表查询 -->
+    <select id="list" resultType="com.erp.model.mrp.dto.DeliverySuggestDTO$ListDTO">
+        select
+        <include refid="Base_Column_List"/>
+        from delivery_suggest ds
+        <where>
+            ds.is_deleted = false and ds.source_id = #{params.sourceId}
+        </where>
+    </select>
+
+    <!-- 查询发货建议导出数据 -->
+    <select id="pagingExportDeliverySuggestion"
+            resultType="com.erp.model.mrp.dto.ReplenishmentSuggestionDTO$DeliverySuggestionDTO">
+        select
+            <include refid="Base_Column_List"/>
+        ,rs.platform_type,rs.sku_id,rs.sku_id,rs.sku_no,rs.platform,rs.shop_id
+        from delivery_suggest ds
+        inner join replenishment_suggestion_detail rsd on ds.source_id = rsd.id and rsd.is_deleted = false
+        inner join replenishment_suggestion rs on rsd.main_id = rs.id and rs.is_deleted = false
+        <where>
+            ${params.sqlMap.default}
+            and ds.is_deleted = false
+        </where>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        ds.id asc
+    </select>
+
+
+</mapper>

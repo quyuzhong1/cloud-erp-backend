@@ -13,6 +13,9 @@ import java.util.List;
 import java.util.Map;
 
 public class SoReturnInstockDTO {
+    private SoReturnInstockDTO() {
+        throw new IllegalStateException("Utility SoReturnInstockDTO class");
+    }
     /**
      * 分页参数
      */
@@ -251,6 +254,18 @@ public class SoReturnInstockDTO {
          * 退货物流单号
          */
         private String returnLogisticCode;
+        /**
+         *仓库id
+         */
+        private String warehouseId;
+        /**
+         *仓库名称
+         */
+        private String warehouseName;
+        /**
+         *仓位
+         */
+        private String warehouseLocation;
     }
 
     /**

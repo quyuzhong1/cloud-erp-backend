@@ -4,7 +4,6 @@ import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.core.entity.BaseEntity;
-import jnr.ffi.annotations.In;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;

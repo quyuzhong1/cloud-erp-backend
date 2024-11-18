@@ -3,25 +3,19 @@ package com.erp.model.workflow.dto;
 import com.alibaba.excel.annotation.ExcelIgnore;
 import com.alibaba.excel.annotation.ExcelProperty;
 import com.alibaba.excel.annotation.write.style.ColumnWidth;
-import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.enums.ApproveStatusEnum;
 import com.erp.model.workflow.entity.ProcessDefinitionEntity;
 import com.erp.model.workflow.enums.DictBasicEnum;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import javax.servlet.annotation.HandlesTypes;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 /**
  * @Classname 流程定义参数

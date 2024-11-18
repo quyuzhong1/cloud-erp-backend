@@ -9,13 +9,12 @@ import org.apache.commons.lang3.StringUtils;
  * 纸张大小枚举
  * @author Lambda
  * @Classname PaperSizeEnum
- * @Description TODO
  * @Date 2023-11-13 14:42
  * @Created by yl
  */
 public enum PaperSizeEnum implements EnumMessage {
-    multiply_100_100("100*100","100mm*100mm",100,100),
-    multiply_100_150("100*150","100mm*100mm",150,100),
+    MULTIPLY_100_100("100*100","100mm*100mm",100,100),
+    MULTIPLY_100_150("100*150","100mm*100mm",150,100),
     A4("A4","A4",297,210)
     ;
 

@@ -1,13 +1,13 @@
 package com.erp.model.wms.entity;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
-import com.baomidou.mybatisplus.annotation.TableField;
-import java.io.Serializable;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
-import com.common.business.enums.ApproveStatusEnum;
+
+import java.io.Serializable;
 
 
 /**
@@ -131,7 +131,7 @@ public class SubcontractIssueDetailEntity extends BaseEntity<SubcontractIssueDet
 
     public static final String BOM_VERSION = "bom_version";
 
-    public static final String QUANTITY = "quantity";
+
 
     public static final String RECEIVE_QTY = "receive_qty";
 
@@ -141,7 +141,7 @@ public class SubcontractIssueDetailEntity extends BaseEntity<SubcontractIssueDet
 
     public static final String WAREHOUSE_NAME = "warehouse_name";
 
-    public static final String REMARK = "remark";
+    
 
     public static final String SOURCE_DETAIL_ID = "source_detail_id";
 

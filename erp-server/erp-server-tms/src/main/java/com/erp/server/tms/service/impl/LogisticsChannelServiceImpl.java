@@ -2,8 +2,8 @@ package com.erp.server.tms.service.impl;
 
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -34,7 +34,6 @@ import com.erp.server.tms.service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -54,34 +53,34 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChannelMapper, LogisticsChannelEntity> implements LogisticsChannelService {
-    @Autowired
+    @Resource
     private OperateLogService operateLogService;
 
-    @Autowired
+    @Resource
     private LogisticsSupplierService logisticsSupplierService;
 
-    @Autowired
+    @Resource
     private LogisticsMappingService logisticsMappingService;
 
-    @Autowired
+    @Resource
     private LogisticsPrintTypeService logisticsPrintTypeService;
 
-    @Autowired
+    @Resource
     private LogisticsChannelAddressService logisticsChannelAddressService;
 
-    @Autowired
+    @Resource
     private LogisticsChannelBlacklistService logisticsChannelBlacklistService;
 
-    @Autowired
+    @Resource
     private LogisticsSaleChannelService logisticsSaleChannelService;
 
-    @Autowired
+    @Resource
     private ShippingTemplateRefChannelService shippingTemplateRefChannelService;
 
-    @Autowired
+    @Resource
     private LogisticsAuthService logisticsAuthService;
 
-    @Autowired
+    @Resource
     private SoB2cFeign soB2cFeign;
 
     @Resource
@@ -121,7 +120,7 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
         //仓库设置
         logisticsChannelWarehouseService.batchUpdate(channelId, addDTO.getWarehouseDTO());
         // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "物流渠道单", logisticsChannelEntity.getCode());
+        String msg = CharSequenceUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "物流渠道单", logisticsChannelEntity.getCode());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.LOGISTICS_CHANNEL.getCode(), logisticsChannelEntity.getId(), "新增操作");
         return new BaseResultDTO.AddDTO(logisticsChannelEntity.getId(), logisticsChannelEntity.getCode());
     }
@@ -157,7 +156,7 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
         logisticsChannelWarehouseService.batchUpdate(channelId, updateDTO.getWarehouseDTO());
 
         // 记录主单操作日志
-        String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), logisticsChannelEntity.getCode(), "物流渠道单");
+        String msg = CharSequenceUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), logisticsChannelEntity.getCode(), "物流渠道单");
         operateLogService.addModuleOperateLogByObj(old, logisticsChannelEntity, ModuleTypeEnum.LOGISTICS_CHANNEL.getCode(), logisticsChannelEntity.getId(), msg);
         return Boolean.TRUE;
     }
@@ -217,7 +216,7 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
     public LogisticsChannelDTO.ViewDTO view(String id) {
         LogisticsChannelEntity channelEntity = this.getById(id);
         if (Objects.isNull(channelEntity)) {
-            new ServiceException(ApiError.NOT_EXIST_BILL, "物流渠道");
+            throw new ServiceException(ApiError.NOT_EXIST_BILL, "物流渠道");
         }
         LogisticsChannelDTO.ViewDTO view = new LogisticsChannelDTO.ViewDTO();
         BeanMapperUtils.copy(channelEntity, view);
@@ -296,7 +295,7 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
         if(CollectionUtils.isNotEmpty(b2cLogisticsList)){
             return BatchResultDTO.fail(id,entity.getCode(), ApiError.ERROR_CHANNEL_QUOTE.msg);
         }
-        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据删除操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "盘点计划");
+        String msg = CharSequenceUtil.format("用户【{}】单号为【{}】的【{}】单据删除操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "盘点计划");
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.LOGISTICS_CHANNEL.getCode(), entity.getId(), "删除盘点计划单数据");
         removeById(id);
         List<String> channelIdList = Arrays.asList(id);
@@ -318,7 +317,7 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
     public BatchResultDTO updateStatus(String id, Boolean disabled) {
         LogisticsChannelEntity entity = this.getById(id);
         if (Objects.isNull(entity)) {
-            new ServiceException(ApiError.NOT_EXIST_BILL, "物流渠道");
+            throw new ServiceException(ApiError.NOT_EXIST_BILL, "物流渠道");
         }
         Boolean dbDisabled = entity.getDisabled();
         if (dbDisabled.equals(disabled)) {
@@ -326,7 +325,7 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
         }
         entity.setDisabled(disabled);
         this.updateById(entity);
-        String msg = StrUtil.format("用户【{}】运费模板【{}】的【{}】单据{}操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getName(), "物流渠道", disabled ? "停用" : "启用");
+        String msg = CharSequenceUtil.format("用户【{}】运费模板【{}】的【{}】单据{}操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getName(), "物流渠道", disabled ? "停用" : "启用");
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.LOGISTICS_CHANNEL.getCode(), entity.getId(), "启用/停用");
         return BatchResultDTO.success(entity.getId(), entity.getName(), OperationTypeEnum.DISABLED);
 
@@ -356,7 +355,7 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
     public Boolean copy(String id) {
         LogisticsChannelEntity channel = this.getById(id);
         if (Objects.isNull(channel)) {
-            new ServiceException(ApiError.NOT_EXIST_BILL, "物流渠道");
+            throw new ServiceException(ApiError.NOT_EXIST_BILL, "物流渠道");
         }
         String addChannelId = IdWorker.getIdStr();
         channel.setId(addChannelId);
@@ -448,7 +447,7 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
     public List<LogisticsChannelDTO.BaseDTO> listChannelInfoById(List<String> channelIds) {
         List<LogisticsChannelEntity> logisticsChannelEntities = this.listByIds(channelIds);
         if (CollectionUtils.isEmpty(logisticsChannelEntities)) {
-            new ServiceException(ApiError.NOT_EXIST_BILL, "物流渠道");
+            throw new ServiceException(ApiError.NOT_EXIST_BILL, "物流渠道");
         }
         List<LogisticsChannelDTO.BaseDTO> baseDTOS = BeanMapper.copyList(logisticsChannelEntities, LogisticsChannelDTO.BaseDTO.class);
         List<String> mainIds = baseDTOS.stream().map(req -> req.getMainId()).collect(Collectors.toList());
@@ -735,7 +734,7 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
                 .set(LogisticsChannelEntity::getUndeliverableDecision, dto.getUndeliverableDecision()).update();
         String msgFormat = "由【%s】改为【%s】";
         // 操作日志
-        String msg = StrUtil.format("用户【{}】修改渠道【{}】发货方式【{}】不可达处理【{}】", UserContext.getDefaultLoginUser().getUserName(),old.getCode(),
+        String msg = CharSequenceUtil.format("用户【{}】修改渠道【{}】发货方式【{}】不可达处理【{}】", UserContext.getDefaultLoginUser().getUserName(),old.getCode(),
                 String.format(msgFormat,DeliveryTypeEnum.getName(old.getDeliveryType()), DeliveryTypeEnum.getName(dto.getDeliveryType())),
                 String.format(msgFormat, UnDeliverableDecisionEnum.getName(old.getUndeliverableDecision()), UnDeliverableDecisionEnum.getName(dto.getUndeliverableDecision())));
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.LOGISTICS_CHANNEL.getCode(), old.getId(), "发货配置");

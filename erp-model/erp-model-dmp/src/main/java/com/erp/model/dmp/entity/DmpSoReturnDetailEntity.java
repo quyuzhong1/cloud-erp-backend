@@ -108,6 +108,60 @@ public class DmpSoReturnDetailEntity extends BaseEntity<DmpSoReturnDetailEntity>
      */
      @TableField("so_entry_id")
      private String soEntryId = "";
+     
+    /**
+     * 明细状态
+     */
+	@TableField("detail_status")
+	private String detailStatus = "";
+	
+	/**
+	 * 退货物流公司
+	 */
+	@TableField("return_logistics_company")
+	private String returnLogisticsCompany = "";
+	
+	/**
+	 * 退货物流单号
+	 */
+	@TableField("return_logistics_no")
+	private String returnLogisticsNo = "";
+	
+	/**
+	 * 退货运费金额
+	 */
+	@TableField("logistics_fee_amount")
+	private BigDecimal logisticsFeeAmount;
+	
+	/**
+	 * 退货运费币种
+	 */
+	@TableField("logistics_fee_currency")
+	private String logisticsFeeCurrency = "";
+	
+	/**
+	 * 退货运费承担方
+	 */
+	@TableField("logistics_fee_role")
+	private String logisticsFeeRole = "";
+	
+	/**
+	 * 币别
+	 */
+	@TableField("currency")
+	private String currency = "";
+	
+	/**
+	 * 方案类型：退款refund、退货退款return_and_refund
+	 */
+	@TableField("solution_type")
+	private String solutionType = "";
+	
+	/**
+	 * 是否收到货：true/false
+	*/
+    @TableField("receive_goods")
+    private Boolean receiveGoods;
     
     /**
     * 输入任务id

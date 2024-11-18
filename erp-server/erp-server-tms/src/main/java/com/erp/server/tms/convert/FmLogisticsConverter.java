@@ -46,6 +46,7 @@ public interface FmLogisticsConverter {
             @Mapping(target = "sourceCode", source = "deliveryDTO.sourceCode"),
             @Mapping(target = "outstockId", source = "deliveryDTO.outstockId"),
             @Mapping(target = "outstockCode", source = "deliveryDTO.outstockCode"),
+            @Mapping(target = "businessCode", source = "deliveryDTO.businessCode"),
             @Mapping(target = "channelId", source = "addDTO.logisticsChannelId"),
 //            @Mapping(target = "orderTime", source = "addDTO.logisticsOrderTime"),
             @Mapping(target = "deliveryTime", source = "deliveryDTO.approveTime"),

@@ -8,7 +8,6 @@ import lombok.NoArgsConstructor;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -240,7 +239,8 @@ public class AliexpressDeliveryDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
-    public static class SearchParamDTO extends SortDTO {
+    public static class SearchParamDTO extends SortDTO implements Serializable{
+        private static final long serialVersionUID = 1905122041950251207L;
         /**
          * 页面高级查询
          */

@@ -1,15 +1,11 @@
 package com.erp.server.workflow.service;
 
-import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
-import com.common.core.controller.vo.ApiResult;
 import com.erp.model.workflow.dto.ApproveParamDTO;
 import com.erp.model.workflow.dto.WorkOptionDTO;
 import com.erp.model.workflow.entity.WorkOptionEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
 
 import java.util.List;
 
@@ -109,7 +105,7 @@ public interface WorkOptionService extends SuperService<WorkOptionEntity> {
      * @param dto dto
      * @return java.util.List<com.erp.model.workflow.dto.WorkOptionDTO.ApproveViewDTO>
      **/
-    PagingVO<List<WorkOptionDTO.ApproveViewDTO>> approveView(PagingDTO<WorkOptionDTO.ApproveViewParamDTO> dto);
+    PagingVO<WorkOptionDTO.ApproveViewDTO> approveView(PagingDTO<WorkOptionDTO.ApproveViewParamDTO> dto);
 
     /**
      * 审核

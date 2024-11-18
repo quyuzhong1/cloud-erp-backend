@@ -198,4 +198,13 @@ public class ShopInfoFeignController extends BaseController {
     public Boolean checkAndSaveAllAmazonToken(@RequestBody @Validated AmazonTokenUpdateDTO updateDTO){
         return shopInfoService.checkAndSaveAllAmazonToken(updateDTO);
     }
+
+    /**
+     * 根据平台获取店铺
+     * @param platform 平台
+     */
+    @GetMapping("/listShopInfoByPlatform")
+    public List<String> listShopInfoByPlatform(@RequestParam String platform){
+        return shopInfoService.listShopInfoByPlatform(platform);
+    }
 }

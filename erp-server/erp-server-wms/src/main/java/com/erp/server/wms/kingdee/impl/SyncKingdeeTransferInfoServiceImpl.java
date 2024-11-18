@@ -2,6 +2,7 @@ package com.erp.server.wms.kingdee.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.LocalDateTimeUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
@@ -163,7 +164,7 @@ public class SyncKingdeeTransferInfoServiceImpl implements SyncKingdeeTransferIn
         //备注
         resultMap.put("remark", entity.getRemark());
 
-        if (StringUtils.isNotBlank(entity.getWarehouseKeeperId())) {
+        if (CharSequenceUtil.isNotBlank(entity.getWarehouseKeeperId())) {
             //仓管员编码
             FindUserDTO findUserDTO = sysUserFeign.getUserByUserId(entity.getWarehouseKeeperId());
             if (ObjectUtils.isNotEmpty(findUserDTO)) {
@@ -238,14 +239,14 @@ public class SyncKingdeeTransferInfoServiceImpl implements SyncKingdeeTransferIn
                 jsonObject.set("outWarehouseCode", outWarehouseCode);
             }
             //是否下推调入仓位
-            Boolean isPushIn = pushKingdeeList.stream().filter(obj -> StrUtil.equals(obj.getWarehouseId(), detail.getInWarehouseId()))
+            Boolean isPushIn = pushKingdeeList.stream().filter(obj -> CharSequenceUtil.equals(obj.getWarehouseId(), detail.getInWarehouseId()))
                     .map(CfgSettingDTO.WarehouseLocationSettingDTO::getIsPush).findFirst().orElse(Boolean.FALSE);
             if (isPushIn) {
                 //调入仓位
                 jsonObject.set("inWarehouseLocation", detail.getInWarehouseLocation());
             }
             //是否下推调出仓位
-            Boolean isPushOut = pushKingdeeList.stream().filter(obj -> StrUtil.equals(obj.getWarehouseId(), detail.getOutWarehouseId()))
+            Boolean isPushOut = pushKingdeeList.stream().filter(obj -> CharSequenceUtil.equals(obj.getWarehouseId(), detail.getOutWarehouseId()))
                     .map(CfgSettingDTO.WarehouseLocationSettingDTO::getIsPush).findFirst().orElse(Boolean.FALSE);
             if (isPushOut) {
                 //调出仓位

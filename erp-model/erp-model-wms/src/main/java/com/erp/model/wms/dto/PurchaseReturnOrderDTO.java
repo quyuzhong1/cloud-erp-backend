@@ -21,9 +21,10 @@ import java.util.Map;
  * @Date 2023/4/7 10:52
  **/
 @Data
-@NoArgsConstructor
 public class PurchaseReturnOrderDTO {
-
+    private PurchaseReturnOrderDTO() {
+        throw new IllegalStateException("Utility PurchaseReturnOrderDTO class");
+    }
     /**
      * 添加
      */

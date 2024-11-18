@@ -1,7 +1,7 @@
 package com.erp.server.oms.service;
 
-import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.BaseDropDownDTO;
+import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.SuperService;
@@ -331,6 +331,28 @@ public interface ShopInfoService extends SuperService<ShopInfoEntity> {
      * 导出店铺
      */
     PagingVO<ShopDTO.PagingViewDTO> exportShop(PagingDTO<ShopDTO.ExportDTO> dto);
+    /**
+     * 区域远程搜索
+     * @author will
+     * @date 2024/8/28 17:15
+     * @param dto
+     * @return PagingVO<AreaDTO>
+     */
+    PagingVO<ShopDTO.AreaDTO> pagingSelectArea(PagingDTO<ShopDTO.AreaParamDTO> dto);
+    /**
+     * 店铺下拉
+     * @author will
+     * @date 2024/8/28 18:28
+     * @param dto
+     * @return List<ListDTO>
+     */
+    List<ShopDTO.ListDTO> listSelect(ShopDTO.SelectDTO dto);
+
+    /**
+     * 根据平台获取店铺
+     * @param platform 平台
+     */
+    List<String> listShopInfoByPlatform(String platform);
     void saveCustom(ShopInfoEntity shopInfoEntity);
 
     /**

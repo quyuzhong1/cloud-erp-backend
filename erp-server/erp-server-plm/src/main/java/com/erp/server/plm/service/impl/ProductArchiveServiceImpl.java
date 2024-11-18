@@ -46,11 +46,11 @@ public class ProductArchiveServiceImpl extends ServiceImpl<ProductArchiveMapper,
     private ProductInfoService productInfoService;
 
     @Override
-    public PagingVO paging(PagingDTO<ProductSearchDTO.PagingParamDTO> dto) {
+    public PagingVO<ProductArchiveDTO> paging(PagingDTO<ProductSearchDTO.PagingParamDTO> dto) {
         dto.getParams().setPermissionSql(dto.getPermissionSql());
-        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+        Page<ProductSearchDTO.PagingParamDTO> query = new Page<>(dto.getCurrPage(), dto.getPageSize());
         ProductSearchDTO.PagingParamDTO params = dto.getParams();
-        IPage pageData = baseMapper.paging(query, params);
+        IPage<ProductArchiveDTO> pageData = baseMapper.paging(query, params);
         List<ProductArchiveDTO> list = pageData.getRecords();
         if (CollectionUtils.isNotEmpty(list)) {
             //根据产品id 获取到对应的要交付的文档数
@@ -88,7 +88,7 @@ public class ProductArchiveServiceImpl extends ServiceImpl<ProductArchiveMapper,
             }
 
         }
-        return new PagingVO(pageData);
+        return new PagingVO<>(pageData);
 
     }
 
@@ -102,14 +102,14 @@ public class ProductArchiveServiceImpl extends ServiceImpl<ProductArchiveMapper,
      */
     @Override
     public boolean activate(String productId) {
-        LambdaQueryWrapper<ProductArchiveEntity> queryWrapper = new LambdaQueryWrapper();
+        LambdaQueryWrapper<ProductArchiveEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(ProductArchiveEntity::getProductId, productId);
         return this.remove(queryWrapper);
     }
 
 
     public ProductArchiveEntity getByProductId(String productId) {
-        LambdaQueryWrapper<ProductArchiveEntity> queryWrapper = new LambdaQueryWrapper();
+        LambdaQueryWrapper<ProductArchiveEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(ProductArchiveEntity::getProductId, productId);
         return baseMapper.selectOne(queryWrapper);
     }

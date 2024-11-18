@@ -1,20 +1,19 @@
 package com.erp.model.dmp.entity;
 
-import com.baomidou.mybatisplus.annotation.TableName;
-import com.common.core.entity.BaseEntity;
-import com.baomidou.mybatisplus.annotation.TableField;
-
-import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.apache.commons.lang3.StringUtils;
+
+import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.annotation.TableName;
+import com.common.core.entity.BaseEntity;
+
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
-import com.common.business.enums.ApproveStatusEnum;
-import org.apache.commons.lang3.StringUtils;
 
 
 /**

@@ -1,6 +1,7 @@
 package com.erp.server.workflow.service.impl;
 
-import cn.hutool.core.util.StrUtil;
+import cn.hutool.core.text.CharSequenceUtil;
+import com.common.core.constant.SqlConstants;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.erp.model.workflow.dto.ProcessDefinitionDTO;
@@ -25,39 +26,35 @@ public class ProcessBusinessServiceImpl extends SuperServiceImpl<ProcessBusiness
 
     @Override
     public ProcessBusinessEntity getByDefinitionId(String definitionId) {
-        ProcessBusinessEntity entity = lambdaQuery()
+        return lambdaQuery()
                 .eq(ProcessBusinessEntity::getDisabled, Boolean.FALSE)
                 .eq(ProcessBusinessEntity::getProcessDefinitionId, definitionId)
-                .last("limit 1")
+                .last(SqlConstants.LIMIT_1)
                 .one();
-        return entity;
     }
 
     @Override
     public List<ProcessBusinessEntity> getByDefinitionIds(List<String> definitionIds) {
-        List<ProcessBusinessEntity> list = lambdaQuery()
+        return lambdaQuery()
                 .in(ProcessBusinessEntity::getProcessDefinitionId, definitionIds)
                 .list();
-        return list;
     }
 
     @Override
     public ProcessBusinessEntity getProcessBusiness(String businessKey, String condition, Boolean disabled) {
-        ProcessBusinessEntity processBusiness = lambdaQuery()
+        return lambdaQuery()
                 .eq(ProcessBusinessEntity::getBusinessKey, businessKey)
                 .eq(null != condition, ProcessBusinessEntity::getStartCondition, condition)
                 .eq(null != disabled, ProcessBusinessEntity::getDisabled, disabled)
                 .orderByDesc(ProcessBusinessEntity::getUpdateTime)
-                .last("limit 1")
+                .last(SqlConstants.LIMIT_1)
                 .one();
-        return processBusiness;
     }
 
     @Override
     public void addOrUpdate(ProcessDefinitionDTO.AddOrUpdateDTO dto, Boolean isSave) {
-//        ProcessBusinessEntity oldBusinessEntity = getByDefinitionId(dto.getId());
 
-        ProcessBusinessEntity entity = StrUtil.isNotBlank(dto.getBusinessId()) ? getById(dto.getBusinessId()) : null;
+        ProcessBusinessEntity entity = CharSequenceUtil.isNotBlank(dto.getBusinessId()) ? getById(dto.getBusinessId()) : null;
         ProcessBusinessEntity oldBusinessEntity = getProcessBusiness(dto.getBusinessKey(),"", null);
         if(null != entity){
             if(null != oldBusinessEntity && !oldBusinessEntity.getId().equals(entity.getId())) {

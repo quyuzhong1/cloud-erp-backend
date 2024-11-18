@@ -3,6 +3,7 @@ package com.erp.model.sys.entity;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
@@ -21,6 +22,7 @@ import java.io.Serializable;
 @Setter
 @Accessors(chain = true)
 @TableName("dict_country")
+@EqualsAndHashCode
 public class DictCountryEntity extends BaseEntity<DictCountryEntity> {
 
     /**
@@ -130,7 +132,7 @@ public class DictCountryEntity extends BaseEntity<DictCountryEntity> {
 
     public static final String CALLING_CODE = "calling_code";
 
-    public static final String LANGUAGES = "languages";
+    public static final String FIELD_LANGUAGES = "languages";
 
     public static final String SUBREGION_CODE = "subregion_code";
 
@@ -138,9 +140,9 @@ public class DictCountryEntity extends BaseEntity<DictCountryEntity> {
 
     public static final String FLAG_URL = "flag_url";
 
-    public static final String INDEX = "index";
+    public static final String FIELD_INDEX = "index";
 
-    public static final String DISABLED = "disabled";
+    public static final String FIELD_DISABLED = "disabled";
 
     public static final String CURRENCY_CODE = "currency_code";
 

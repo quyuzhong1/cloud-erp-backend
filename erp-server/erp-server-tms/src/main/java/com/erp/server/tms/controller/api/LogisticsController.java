@@ -61,7 +61,7 @@ public class LogisticsController extends BaseController {
      * @return
      */
     @PostMapping("/getChannel")
-    public ApiResult getChannel(@RequestParam(value = "platform") String platform) {
+    public ApiResult<Object>getChannel(@RequestParam(value = "platform") String platform) {
         List<BatchResultDTO> batchResultDTOS = logisticsBaseService.syncLogisticsChannel(platform);
         return success(batchResultDTOS);
     }

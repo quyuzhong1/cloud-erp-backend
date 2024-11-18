@@ -7,6 +7,7 @@ import com.erp.server.plm.service.BasicCategoryService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -39,4 +40,13 @@ public class BasicCategoryFeignController extends BaseController {
     public List<BasicCategoryEntity> getCategoryList() {
         return categoryService.getCategoryList();
     }
+
+    /**
+     * 根据父id查询子id
+     */
+    @GetMapping("/getCategoryByPid")
+    public List<BasicCategoryDTO> getCategoryByPid(@RequestParam String pid){
+        return categoryService.getCategoryByPid(pid);
+    }
+
 }

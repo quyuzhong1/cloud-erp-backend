@@ -1,6 +1,5 @@
 package com.erp.model.tms.dto;
 
-import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.base.SortDTO;
 import com.erp.model.tms.entity.ShippingTemplateEntity;
 import com.erp.model.tms.entity.ShippingTemplateRuleEntity;
@@ -8,7 +7,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -23,6 +21,8 @@ import java.util.List;
 @Data
 public class ShippingCalculationDTO {
 
+    private ShippingCalculationDTO() {
+    }
 
     /**
      * 查询条件
@@ -372,16 +372,6 @@ public class ShippingCalculationDTO {
          * 最终运费（运费试算）
          */
         private BigDecimal totalTrialShippingCost;
-//        /**
-//         * 报关费用  新增字段，目前无计算规则取值显示为0
-//         */
-//        private BigDecimal declareCost;
-//
-//        /**
-//         * 其他费用
-//         * 新增字段，按照计算模板计算类型【超尺寸附加费+签名费+燃油附加费+保险费】【若有折扣则按照折扣计算】
-//         */
-//        private BigDecimal otherCost;
     }
 
     /**

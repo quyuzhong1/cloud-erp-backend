@@ -17,7 +17,7 @@ import java.time.LocalDateTime;
 @TableName(value ="project_status_time")
 @Data
 @NoArgsConstructor
-public class ProjectStatusTimeEntity extends BaseEntity {
+public class ProjectStatusTimeEntity extends BaseEntity<ProjectStatusTimeEntity> {
 
     /**
      * 项目ID

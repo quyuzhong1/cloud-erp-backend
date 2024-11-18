@@ -1,10 +1,11 @@
 package com.erp.server.wms.convert;
 
 import com.erp.model.wms.dto.PackingTaskDetailDTO;
-import com.erp.model.wms.dto.WmsCartonDTO;
 import com.erp.model.wms.dto.WmsCartonDetailDTO;
 import com.erp.model.wms.dto.WmsCartonSpecDTO;
-import com.erp.model.wms.entity.*;
+import com.erp.model.wms.entity.WmsCartonDetailEntity;
+import com.erp.model.wms.entity.WmsCartonEntity;
+import com.erp.model.wms.entity.WmsCartonSpecEntity;
 import com.erp.server.wms.convert.tool.TypeConversionWorker;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;

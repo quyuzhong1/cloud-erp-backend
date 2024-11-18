@@ -15,7 +15,9 @@ import java.util.List;
 import java.util.Map;
 
 public class SoDeliveryNoticeDTO {
-
+    private SoDeliveryNoticeDTO() {
+        throw new IllegalStateException("Utility SoDeliveryNoticeDTO class");
+    }
     /**
      * 分页参数
      */
@@ -332,6 +334,10 @@ public class SoDeliveryNoticeDTO {
          */
         private String receiveAddress;
         /**
+         * 中转仓库集合
+         */
+        private List<String> transferWarehouseIdList;
+        /**
          * 明细信息
          */
         private List<SoDeliveryNoticeDetailDTO.Update> detailList;
@@ -497,6 +503,11 @@ public class SoDeliveryNoticeDTO {
          * 作废描述
          */
         private String invalidRemark;
+        /**
+         * 中转仓库集合
+         */
+        private List<String> transferWarehouseIdList;
+
         /**
          * 明细信息
          */

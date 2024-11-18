@@ -85,21 +85,21 @@ public class WarehouseLocationEntity extends BaseEntity<WarehouseLocationEntity>
     @TableField("occupy_status")
     private Boolean occupyStatus;
 
-    public static final String TYPE = "type";
+    
 
-    public static final String CODE = "code";
+    
 
-    public static final String NAME = "name";
+    
 
     public static final String WAREHOUSE_ID = "warehouse_id";
 
-    public static final String STATUS = "status";
+    
 
     public static final String PARENT_ID = "parent_id";
 
-    public static final String DISABLED = "disabled";
+    
 
-    public static final String REMARK = "remark";
+    
 
     @Override
     public Serializable pkVal() {

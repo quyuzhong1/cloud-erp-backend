@@ -32,14 +32,14 @@ public class ShopeeAuth implements Serializable {
      */
     @JSONField(name = "merchant_id_list")
     @Singular
-    protected List<Long> merchantIdList;
+    private List<Long> merchantIdList;
 
     /**
      * List of images URLs of the shop.
      */
     @JSONField(name = "shop_id_list")
     @Singular
-    protected List<Long> shopIdList;
+    private List<Long> shopIdList;
     /**
      * Allow negotiations or not, 1: don't allow, 0: allow.
      */

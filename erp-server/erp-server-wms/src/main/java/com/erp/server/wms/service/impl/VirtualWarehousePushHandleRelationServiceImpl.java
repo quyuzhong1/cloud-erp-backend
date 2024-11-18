@@ -1,6 +1,7 @@
 package com.erp.server.wms.service.impl;
 
 
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.threadlocal.UserContext;
@@ -19,6 +20,9 @@ import com.erp.model.wms.dto.VirtualWarehousePushHandleRelationDTO;
 import java.util.*;
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
+
+import javax.annotation.Resource;
+
 /**
  * <p>
  * 分货单拆单关联关系表 服务实现类
@@ -30,7 +34,7 @@ import com.common.core.enums.ApiError;
 @Slf4j
 @Service
 public class VirtualWarehousePushHandleRelationServiceImpl extends SuperServiceImpl<VirtualWarehousePushHandleRelationMapper, VirtualWarehousePushHandleRelationEntity> implements VirtualWarehousePushHandleRelationService {
-    @Autowired
+    @Resource
     private OperateLogService operateLogService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
@@ -50,7 +54,7 @@ public class VirtualWarehousePushHandleRelationServiceImpl extends SuperServiceI
         }
 
         // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "分货单拆单关联关系单" , virtualWarehousePushHandleRelationEntity.getId());
+        String msg = CharSequenceUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "分货单拆单关联关系单" , virtualWarehousePushHandleRelationEntity.getId());
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLog(msg, null, virtualWarehousePushHandleRelationEntity.getId(), "新增操作");
         // TODO 新增明细（如果有明细的话）
@@ -65,7 +69,9 @@ public class VirtualWarehousePushHandleRelationServiceImpl extends SuperServiceI
     @Override
     public Boolean update(VirtualWarehousePushHandleRelationDTO.UpdateDTO updateDTO) {
         VirtualWarehousePushHandleRelationEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "分货单拆单关联关系单"));
+        if (Objects.isNull(old)){
+            throw new ServiceException(ApiError.NOT_EXIST_BILL, "分货单拆单关联关系单");
+        }
         VirtualWarehousePushHandleRelationEntity virtualWarehousePushHandleRelationEntity =  BeanMapperUtils.map(VirtualWarehousePushHandleRelationEntity.class, updateDTO);
 
         // 数据处理
@@ -79,7 +85,7 @@ public class VirtualWarehousePushHandleRelationServiceImpl extends SuperServiceI
 
         // 记录主单操作日志
             log.info("编辑 开始记录分货单拆单关联关系单日志数据，id：【{}】", virtualWarehousePushHandleRelationEntity.getId());
-            String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), virtualWarehousePushHandleRelationEntity.getId(), "分货单拆单关联关系单");
+            String msg = CharSequenceUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), virtualWarehousePushHandleRelationEntity.getId(), "分货单拆单关联关系单");
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLogByObj(old, virtualWarehousePushHandleRelationEntity, null, virtualWarehousePushHandleRelationEntity.getId(), msg);
         return Boolean.TRUE;

@@ -89,7 +89,7 @@ public class TmsCfgSailingController extends BaseController {
         menuCode = "tms:tmsCfgSailing:update",
         serviceClass = TmsCfgSailingService.class,
         keyIdName = "id")
-    public ApiResult<?> update(@RequestBody @Validated TmsCfgSailingDTO.UpdateDTO dto) {
+    public ApiResult<Object> update(@RequestBody @Validated TmsCfgSailingDTO.UpdateDTO dto) {
         tmsCfgSailingService.update(dto);
         return success();
     }

@@ -125,6 +125,10 @@ public class SoB2cDeliveryDTO implements Serializable {
          * 高
          */
         private BigDecimal height;
+        /**
+         * 中转仓库集合
+         */
+        private List<String> transferWarehouseIdList;
 
         /**
          * 详情
@@ -937,6 +941,11 @@ public class SoB2cDeliveryDTO implements Serializable {
          */
         @NotBlank(message = "拣货车类型不能为空")
         private String pickingCartTypeId;
+        /**
+         * 拣货车类型
+         */
+        @NotBlank(message = "波次类型不能为空")
+        private String waveType;
         /**
          * 发货单号
          */

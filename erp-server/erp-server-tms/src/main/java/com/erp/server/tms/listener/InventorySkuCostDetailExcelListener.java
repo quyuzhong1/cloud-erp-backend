@@ -1,11 +1,10 @@
 package com.erp.server.tms.listener;
 
-import cn.hutool.core.util.StrUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.extra.spring.SpringUtil;
 import com.alibaba.excel.context.AnalysisContext;
 import com.alibaba.excel.event.AnalysisEventListener;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
-import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.FieldValidUtil;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.vo.SkuVO;
@@ -67,42 +66,42 @@ public class InventorySkuCostDetailExcelListener extends AnalysisEventListener<I
         if (CollectionUtils.isNotEmpty(dataList)){
             InventorySkuCostDetailExcelDTO addDTO1 = dataList.stream().filter(e -> Objects.equals(e.getSkuNo(), excelDTO.getSkuNo())).findFirst().orElse(null);
             if (Objects.nonNull(addDTO1)){
-                errorMsgList.add(StrUtil.format("SKU【{}】已存在",addDTO1.getSkuNo()));
+                errorMsgList.add(CharSequenceUtil.format("SKU【{}】已存在",addDTO1.getSkuNo()));
             }
         }
         if (CollectionUtils.isNotEmpty(detailList)){
             InventorySkuCostDetailDTO.AddDTO addDTO1 = detailList.stream().filter(e -> Objects.equals(e.getSkuNo(), excelDTO.getSkuNo())).findFirst().orElse(null);
             if (Objects.nonNull(addDTO1)){
-                errorMsgList.add(StrUtil.format("SKU【{}】已存在",addDTO1.getSkuNo()));
+                errorMsgList.add(CharSequenceUtil.format("SKU【{}】已存在",addDTO1.getSkuNo()));
             }
         }
         if (CollectionUtils.isEmpty(errorMsgList)){
             //数据copy
             addDTO = InventorySkuCostConverter.INSTANCE.excelToAddDTO(excelDTO);
-            if (StrUtil.isNotBlank(addDTO.getSkuNo())){
+            if (CharSequenceUtil.isNotBlank(addDTO.getSkuNo())){
                 List<ProductDetailEntity> productDetailEntityList = plmTaskFeign.listBySkuNos(Collections.singletonList(addDTO.getSkuNo()));
                 if (CollectionUtils.isEmpty(productDetailEntityList)){
-                    errorMsgList.add(StrUtil.format("SKU【{}】不存在",addDTO.getSkuNo()));
+                    errorMsgList.add(CharSequenceUtil.format("SKU【{}】不存在",addDTO.getSkuNo()));
                 }else {
                     addDTO.setSkuId(productDetailEntityList.get(0).getId());
                     addDTO.setProductName(productDetailEntityList.get(0).getName());
                     addDTO.setUnit(productDetailEntityList.get(0).getUnitName());
                 }
             }
-            if (StrUtil.isNotBlank(addDTO.getSkuId())){
+            if (CharSequenceUtil.isNotBlank(addDTO.getSkuId())){
                 List<SkuVO> skuVOList = plmTaskFeign.listSkuProductByIds(Collections.singletonList(addDTO.getSkuId()));
                 if (CollectionUtils.isEmpty(skuVOList)){
-                    errorMsgList.add(StrUtil.format("SKU【{}】产品名称不存在",addDTO.getSkuNo()));
+                    errorMsgList.add(CharSequenceUtil.format("SKU【{}】产品名称不存在",addDTO.getSkuNo()));
                 }else {
-                    if (StrUtil.isBlank(addDTO.getProductName()) || !Objects.equals(addDTO.getProductName(), skuVOList.get(0).getSkuName())){
+                    if (CharSequenceUtil.isBlank(addDTO.getProductName()) || !Objects.equals(addDTO.getProductName(), skuVOList.get(0).getSkuName())){
                         addDTO.setProductName(skuVOList.get(0).getSkuName());
                     }
-                    if (StrUtil.isBlank(addDTO.getUnit()) || !Objects.equals(addDTO.getUnit(), skuVOList.get(0).getUnitName())){
+                    if (CharSequenceUtil.isBlank(addDTO.getUnit()) || !Objects.equals(addDTO.getUnit(), skuVOList.get(0).getUnitName())){
                         addDTO.setUnit(skuVOList.get(0).getUnitName());
                     }
                 }
             }
-            if (StrUtil.isBlank(addDTO.getUnit())){
+            if (CharSequenceUtil.isBlank(addDTO.getUnit())){
                 addDTO.setUnit("Pcs");
             }
         }

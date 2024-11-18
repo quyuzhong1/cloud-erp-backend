@@ -1,6 +1,7 @@
 package com.erp.server.wms.controller.api;
 
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.CollectionUtil;
 import com.common.business.annotation.DataIdempotent;
 import com.common.business.annotation.DataPermission;
@@ -21,9 +22,14 @@ import com.common.core.exception.ServiceException;
 import com.erp.model.wms.dto.PackingTaskDTO;
 import com.erp.model.wms.dto.WmsCartonSpecDTO;
 import com.erp.model.wms.entity.PackingTaskEntity;
+import com.erp.model.wms.entity.RequisitionApplicationEntity;
+import com.erp.model.wms.enums.CfgSettingEnum;
+import com.erp.model.wms.enums.PackingTaskStatusEnum;
+import com.erp.model.wms.enums.PackingWeightStatusEnum;
 import com.erp.server.wms.query.FirstMileDeliveryQueryHandler;
 import com.erp.server.wms.query.PackingTaskQueryHandler;
 import com.erp.server.wms.service.PackingTaskService;
+import com.erp.server.wms.service.RequisitionApplicationService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -31,10 +37,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 /**
  * 装箱任务表
@@ -50,6 +53,9 @@ public class PackingTaskController extends BaseController {
 
     @Resource
     private PackingTaskService packingTaskService;
+
+    @Resource
+    private RequisitionApplicationService requisitionApplicationService;
     /**
      * 获取状态统计
      *
@@ -103,7 +109,7 @@ public class PackingTaskController extends BaseController {
     @GetMapping("/packingViewBySourceCode")
     public ApiResult<WmsCartonSpecDTO.WmsCartonSpecView> packingViewBySourceCode(@RequestParam("sourceCode") String sourceCode) {
         List<PackingTaskEntity> taskEntityList = packingTaskService.listBySourceCodes(Collections.singletonList(sourceCode));
-        if (CollectionUtil.isEmpty(taskEntityList)){
+        if (CollUtil.isEmpty(taskEntityList)){
             throw new ServiceException(ApiError.ERROR_92141);
         }
         WmsCartonSpecDTO.WmsCartonSpecView wmsCartonSpecView = packingTaskService.packingView(taskEntityList.get(0).getId());

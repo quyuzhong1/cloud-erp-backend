@@ -1,12 +1,11 @@
 package com.erp.model.plm.entity;
 
-import com.baomidou.mybatisplus.annotation.*;
+import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
 import lombok.Data;
 
 import java.io.Serializable;
-import java.time.LocalDateTime;
-import java.util.Date;
 
 /**
  * 产品变体类型属性表
@@ -14,7 +13,7 @@ import java.util.Date;
  */
 @TableName(value ="product_variant")
 @Data
-public class ProductVariantEntity extends BaseEntity implements Serializable {
+public class ProductVariantEntity extends BaseEntity<ProductVariantEntity> implements Serializable {
 
     /**
      * 变体属性类型

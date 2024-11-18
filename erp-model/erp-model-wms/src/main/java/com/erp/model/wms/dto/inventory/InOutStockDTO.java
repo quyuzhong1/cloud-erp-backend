@@ -1,6 +1,8 @@
 package com.erp.model.wms.dto.inventory;
 
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
+import com.common.business.validator.ValidGroup;
 import com.erp.model.wms.entity.PoReturnDetailEntity;
 import com.erp.model.wms.entity.PoReturnEntity;
 import com.erp.model.wms.entity.SoOutstockDetailEntity;
@@ -25,38 +27,38 @@ public class InOutStockDTO extends InventoryStockBaseDTO implements Serializable
         /**
          * 单据类型
          */
-        @NotNull(message = "单据类型不能为空")
+        @NotNull(message = "单据类型不能为空", groups = {ValidGroup.Update.class})
         private InventorySourceTypeEnum sourceType;
 
         /**
          * 单据id
          */
-        @NotEmpty(message = "单据id不能为空")
+        @NotEmpty(message = "单据id不能为空", groups = {ValidGroup.Update.class})
         private String sourceId;
 
         /**
          * 单据编号
          */
-        @NotEmpty(message = "单据编号不能为空")
+        @NotEmpty(message = "单据编号不能为空", groups = {ValidGroup.Update.class})
         private String sourceCode;
 
         /**
          * 单据日期
          */
-        @NotNull(message = "单据日期不能为空")
+        @NotNull(message = "单据日期不能为空", groups = {ValidGroup.Update.class})
         private LocalDate billDate;
 
         /**
          * 原单明细id
          */
-        @NotEmpty(message = "原单明细id不能为空")
+        @NotEmpty(message = "原单明细id不能为空", groups = {ValidGroup.Update.class})
         private String sourceDetailId;
 
         /**
          * 库存变更数量
          * 增加或减少库存都传正数，程序判断正数或负数
          */
-        @NotNull(message = "库存变更数量不能为空")
+        @NotNull(message = "库存变更数量不能为空", groups = {ValidGroup.Update.class})
         // @Min(value = 1,message = "库存变更数量不能小于1")
         private Integer qty;
 
@@ -96,7 +98,7 @@ public class InOutStockDTO extends InventoryStockBaseDTO implements Serializable
                 stockDTO.setSourceDetailId(sourceDetailId);
                 stockDTO.setSkuId(skuId);
                 stockDTO.setSkuNo(skuNo);
-                stockDTO.setWarehouseLocation(StrUtil.isNotBlank(entity.getBatchNo()) ? "" : warehouseLocation);
+                stockDTO.setWarehouseLocation(CharSequenceUtil.isNotBlank(entity.getBatchNo()) ? "" : warehouseLocation);
                 stockDTO.setQty(qty);
                 stockDTO.setBillDate(entity.getBillDate());
                 return stockDTO;

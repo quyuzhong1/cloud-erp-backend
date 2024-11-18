@@ -37,5 +37,5 @@ public class StartItemSourceDTO implements Serializable {
     private String flagId;
 
     @JsonInclude(value= JsonInclude.Include.NON_EMPTY)
-    List<StartItemSourceDTO> childrenList;
+    private List<StartItemSourceDTO> childrenList;
 }

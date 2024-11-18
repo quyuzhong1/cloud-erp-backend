@@ -17,6 +17,7 @@ import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.Size;
+import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -29,7 +30,7 @@ import java.util.List;
  */
 @Data
 @NoArgsConstructor
-public class LogisticsProductDTO {
+public class LogisticsProductDTO implements Serializable {
 
 
     @Data
@@ -1064,8 +1065,6 @@ public class LogisticsProductDTO {
         private Long childOrderId;
 
         private String imagesUrl;
-
-//       private BigDecimal price;
 
         private BigDecimal amount;
 

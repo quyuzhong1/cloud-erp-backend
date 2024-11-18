@@ -79,7 +79,7 @@ public class DmpInputAmzReportDirectQueryApiInitHandler extends DmpInputInitHand
         // 指定报告ID
         String reportId = "";
 
-        String detailExtendJson = dmpCfgInputDetailEntity.getExtendJson();
+        String detailExtendJson = dmpInputTaskEntity.getExtendJson();
         if (StringUtils.isNotBlank(detailExtendJson)) {
             JSONObject detailExtendObj = JSONObject.parseObject(detailExtendJson);
             reportId = detailExtendObj.getString("reportId");
@@ -88,7 +88,7 @@ public class DmpInputAmzReportDirectQueryApiInitHandler extends DmpInputInitHand
         }
 
         // 店铺信息
-        AmazonShopInfoDTO shopInfoDTO = cfgAppClientService.cacheAndFindShopAuth(dmpCfgInputDetailEntity.getNextLevelId());
+        AmazonShopInfoDTO shopInfoDTO = cfgAppClientService.cacheAndFindShopAuth(dmpInputTaskEntity.getNextLevelId());
         // 市场信息
         AmazonMarketplaceEnum marketplaceEnum = AmazonMarketplaceEnum.getByCountryCode(shopInfoDTO.getDictCountryCode());
 

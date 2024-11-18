@@ -1,6 +1,7 @@
 package com.erp.server.wms.service.impl;
 
 
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -15,6 +16,7 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.oms.dto.ListingInfoParamDTO;
 import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
+import com.erp.model.oms.enums.ListingMatchResultEnum;
 import com.erp.model.oms.enums.RuleTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.wms.dto.OverseasInventoryDTO;
@@ -35,10 +37,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -82,7 +81,7 @@ public class OverseasInventoryServiceImpl extends SuperServiceImpl<OverseasInven
         }
 
         // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "海外仓库存" , overseasInventoryEntity.getId());
+        String msg = CharSequenceUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "海外仓库存" , overseasInventoryEntity.getId());
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLog(msg, null, overseasInventoryEntity.getId(), "新增操作");
         // TODO 新增明细（如果有明细的话）
@@ -97,7 +96,9 @@ public class OverseasInventoryServiceImpl extends SuperServiceImpl<OverseasInven
     @Override
     public Boolean update(OverseasInventoryDTO.UpdateDTO updateDTO) {
         OverseasInventoryEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "海外仓库存"));
+        if (Objects.isNull(old)){
+            throw new ServiceException(ApiError.NOT_EXIST_BILL, "海外仓库存");
+        }
         OverseasInventoryEntity overseasInventoryEntity =  BeanMapperUtils.map(OverseasInventoryEntity.class, updateDTO);
 
         // 数据处理
@@ -111,7 +112,7 @@ public class OverseasInventoryServiceImpl extends SuperServiceImpl<OverseasInven
 
         // 记录主单操作日志
             log.info("编辑 开始记录海外仓库存日志数据，id：【{}】", overseasInventoryEntity.getId());
-            String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), overseasInventoryEntity.getId(), "海外仓库存");
+            String msg = CharSequenceUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), overseasInventoryEntity.getId(), "海外仓库存");
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLogByObj(old, overseasInventoryEntity, null, overseasInventoryEntity.getId(), msg);
         return Boolean.TRUE;
@@ -183,7 +184,7 @@ public class OverseasInventoryServiceImpl extends SuperServiceImpl<OverseasInven
         List<SkuVO> skuVOList = plmTaskFeign.listSkuProductByIds(skuIdList);
         Map<String, SkuVO> skuVOMap = skuVOList.stream().collect(Collectors.toMap(SkuVO::getSkuId, Function.identity()));
         for (OverseasInventoryDTO.ListDTO data : list) {
-            if (StringUtils.isNotBlank(data.getSkuId())){
+            if (CharSequenceUtil.isNotBlank(data.getSkuId())){
                 SkuVO skuVO = skuVOMap.get(data.getSkuId());
                 if (null != skuVO){
                     data.setProductName(skuVO.getSkuName());
@@ -259,7 +260,7 @@ public class OverseasInventoryServiceImpl extends SuperServiceImpl<OverseasInven
         paramDTO.setPlatform(platform);
         paramDTO.setPlatformSkuNoList(notMappingEntityList.stream().map(OverseasInventoryEntity::getPlatformSku).distinct().collect(Collectors.toList()));
         paramDTO.setType(RuleTypeEnum.WAREHOUSE.getCode());
-        paramDTO.setMatchResult(true);
+        paramDTO.setMatchResult(ListingMatchResultEnum.TRUE.getCode());
         paramDTO.setIsExpire(false);
 
         // 查询ListingInfo和skuMapping的关系

@@ -52,17 +52,6 @@ public class CfgSettingEntity extends BaseEntity<CfgSettingEntity> {
     @TableField("remark")
     private String remark;
 
-
-    public static final String KEY = "key";
-
-    public static final String DATA_JSON = "data_json";
-
-    public static final String DISABLED = "disabled";
-
-    public static final String INDEX = "index";
-
-    public static final String REMARK = "remark";
-
     @Override
     public Serializable pkVal() {
         return null;

@@ -47,6 +47,7 @@
             track_status = #{trackStatus},
             is_api_update = #{aTrue},
             track_time = #{trackTime},
+            track_content = #{content},
             <if test="signTime != null">
                 sign_time = #{signTime},
             </if>

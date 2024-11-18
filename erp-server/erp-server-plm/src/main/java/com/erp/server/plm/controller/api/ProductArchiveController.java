@@ -44,8 +44,8 @@ public class ProductArchiveController extends BaseController {
      */
     @PostMapping("/paging")
     @DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "plm:product:archive:paging", tableAlias = "pt")
-    public ApiResult<PagingVO<List<ProductArchiveDTO>>> paging(@RequestBody @Validated PagingDTO<ProductSearchDTO.PagingParamDTO> dto) {
-        PagingVO<List<ProductArchiveDTO>> pagingVO = productArchiveService.paging(dto);
+    public ApiResult<PagingVO<ProductArchiveDTO>> paging(@RequestBody @Validated PagingDTO<ProductSearchDTO.PagingParamDTO> dto) {
+        PagingVO<ProductArchiveDTO> pagingVO = productArchiveService.paging(dto);
 
         return success(pagingVO);
     }
@@ -55,8 +55,7 @@ public class ProductArchiveController extends BaseController {
      */
     @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "重新激活：id={productId}")
     @PostMapping("/activate")
-    //@RequestPermissions("plm:product:archive:activate")
-    public ApiResult activate(String productId) {
+    public ApiResult<Object> activate(String productId) {
         boolean flag = productArchiveService.activate(productId);
         return flag==true?success():failure("激活失败");
     }
