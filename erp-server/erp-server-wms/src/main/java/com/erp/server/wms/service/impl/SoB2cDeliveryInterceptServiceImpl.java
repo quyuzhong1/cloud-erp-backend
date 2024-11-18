@@ -39,7 +39,10 @@ import com.erp.model.tms.dto.LogisticsSupplierDTO;
 import com.erp.model.tms.dto.TransferLogisticsChannelDTO;
 import com.erp.model.tms.vo.response.CancelResponseVO;
 import com.erp.model.tms.vo.response.InterceptResponseVO;
-import com.erp.model.wms.dto.*;
+import com.erp.model.wms.dto.SoB2cDeliveryInterceptDTO;
+import com.erp.model.wms.dto.SoB2cDeliveryInterceptDetailDTO;
+import com.erp.model.wms.dto.TransferInfoDTO;
+import com.erp.model.wms.dto.TransferInfoDetailDTO;
 import com.erp.model.wms.dto.inventory.InventoryTransferDTO;
 import com.erp.model.wms.dto.inventory.TransferDTO;
 import com.erp.model.wms.entity.*;
@@ -478,8 +481,6 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
                     interceptUpdateOrderDTO.setAbnormalType(SoB2cAbnormalTypeEnum.INTERCEPT_FAILURE_REJECT.getCode());
                     soB2cFeign.updateIntercept(interceptUpdateOrderDTO);
 
-                    //扣减冻结库存
-                    soB2cDeliveryService.outFreezeVirtualInventory(soB2cDelivery);
                     //生成直接调拨单
                     Boolean isPush = soB2cDeliveryService.pushTransferInfo(soB2cDelivery);
                     if (isPush) {
@@ -752,8 +753,6 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
             soB2cFeign.updateIntercept(interceptUpdateOrderDTO);
 
             SoB2cEntity soB2cEntity = soB2cFeign.getById(entity.getSoId());
-            //扣减冻结库存
-            soB2cDeliveryService.outFreezeVirtualInventory(soB2cDelivery);
             //生成直接调拨单
             Boolean isPush = soB2cDeliveryService.pushTransferInfo(soB2cDelivery);
             if (isPush) {

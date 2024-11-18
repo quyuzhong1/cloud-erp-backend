@@ -1,26 +1,25 @@
 package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.text.CharSequenceUtil;
-import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
-import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.FindUserDTO;
-import com.common.business.dto.base.*;
+import com.common.business.dto.base.BaseIdDTO;
+import com.common.business.dto.base.BatchResultDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.constant.EnumMessage;
 import com.common.core.enums.ApiError;
-import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
-import com.common.core.utils.date.DateUtil;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
@@ -32,7 +31,6 @@ import com.erp.model.scm.enums.PageListTypeEnum;
 import com.erp.model.wms.dto.MachineDetailDTO;
 import com.erp.model.wms.dto.MachineInfoDTO;
 import com.erp.model.wms.dto.MachineSubComponentsDTO;
-import com.erp.model.wms.dto.inventory.*;
 import com.erp.model.wms.dto.WarehouseLocationDTO;
 import com.erp.model.wms.dto.inventory.*;
 import com.erp.model.wms.entity.*;
@@ -41,6 +39,7 @@ import com.erp.model.wms.enums.WorkTypeEnum;
 import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
 import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
+import com.erp.model.wms.enums.inventory.VirtualInventoryBusinessTypeEnum;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
@@ -55,14 +54,13 @@ import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.math3.util.Pair;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronizationAdapter;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import javax.annotation.Resource;
-import java.io.IOException;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -132,13 +130,26 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
     private MachineInfoQueryHandler machineInfoQueryHandler;
 
     @Resource
+    private FirstMileDeliveryDetailService firstMileDeliveryDetailService;
+
+    @Resource
+    private RequisitionApplicationDetailService requisitionApplicationDetailService;
+
+    @Resource
     private DmpMqFeign dmpMqFeign;
+
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
+
     @Resource
     private WarehouseLocationService warehouseLocationService;
+
     @Resource
     private SoDeliveryNoticeService soDeliveryNoticeService;
+
+    @Resource
+    private VirtualInventoryTransCoreService virtualInventoryTransCoreService;
+
     @Override
     public PagingVO<MachineInfoDTO.ListDTO> paging(PagingDTO<MachineInfoDTO.SearchParamDTO> pagingDTO) {
         pagingDTO.getParams().setPermissionSql(pagingDTO.getPermissionSql());
@@ -578,7 +589,7 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
             //更新单据(后面有流程了调用监听可删)
             updateApproveStatusForApprove(Collections.singletonList(entity.getId()), ApproveStatusEnum.APPROVE.getStatus());
             //更新库存
-            updateInventoryTransCore(Collections.singletonList(entity));
+            updateInventoryTransCore(entity);
             //审核发送金蝶
             sendPushTask(Collections.singletonList(entity),SyncOperateEnum.OPERATE_APPROVE.getCode());
             // 发送马帮
@@ -624,6 +635,9 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
         InventoryUnApproveDTO inventoryUnApproveDTO = new InventoryUnApproveDTO(InventorySourceTypeEnum.MACHINE_INFO,entity.getId());
         inventoryTransCoreService.unApprove(inventoryUnApproveDTO);
 
+        //虚拟仓回退库存
+        virtualInventoryTransCoreService.unApprove(inventoryUnApproveDTO);
+
         //反审核发送金蝶
         sendPushTask(Collections.singletonList(entity),SyncOperateEnum.OPERATE_DISAPPROVE.getCode());
         // 发送马帮
@@ -668,12 +682,11 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
      * @description: 更新加工单库存
      * @author Will
      * @date: 2023/5/18 12:11
-     * @param list
+     * @param entity
      */
-    private void updateInventoryTransCore (List<MachineInfoEntity> list) {
-        List<String> ids = list.stream().map(MachineInfoEntity::getId).collect(Collectors.toList());
+    private void updateInventoryTransCore (MachineInfoEntity entity) {
         //加工明细
-        List<MachineDetailEntity> detailList = machineDetailService.listByMainIds(ids);
+        List<MachineDetailEntity> detailList = machineDetailService.listByMainIds(Collections.singletonList(entity.getId()));
         if (CollectionUtils.isEmpty(detailList)) {
             throw new ServiceException(ApiError.ERROR_99053);
         }
@@ -683,18 +696,79 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
         if (CollectionUtils.isEmpty(machineSubComponentsList)) {
             throw new ServiceException(ApiError.ERROR_99056);
         }
-        for (MachineInfoEntity entity : list) {
-            //加工明细
-            List<MachineDetailEntity> resultDetails = detailList.stream().filter(obj -> obj.getMainId().equals(entity.getId())).collect(Collectors.toList());
-            if (CollectionUtils.isEmpty(resultDetails)) {
-                throw new ServiceException(ApiError.ERROR_99053);
-            }
-            //父级SKU库存更新
-            updateInventoryForMachineDetail(entity,resultDetails);
+        //父级SKU库存更新
+        updateInventoryForMachineDetail(entity,detailList);
 
-            //子件SKU库存更新
-            updateInventoryForMachineSubComponents(entity,resultDetails,machineSubComponentsList);
+        //子件SKU库存更新
+        updateInventoryForMachineSubComponents(entity,machineSubComponentsList);
+
+        //头程发货单下推子件虚拟仓出库
+        updateFirstMileVirtualInventory(entity,detailList,machineSubComponentsList);
+    }
+
+    /**
+     * 头程发货单下推子件虚拟仓出库
+     * @author will
+     * @date 2024/11/18 14:11
+     * @param entity
+     * @param detailList
+     * @param machineSubComponentsList
+     */
+    private void updateFirstMileVirtualInventory (MachineInfoEntity entity,List<MachineDetailEntity> detailList,List<MachineSubComponentsEntity> machineSubComponentsList) {
+        //头程发货单下推数据扣减虚拟仓库存
+        if (!CharSequenceUtil.equals(entity.getSourceType(),SourceTypeEnum.FIRST_MILE_DELIVERY.getCode())) {
+            return;
         }
+        List<String> detailIdList = detailList.stream().map(MachineDetailEntity::getId).distinct().collect(Collectors.toList());
+        List<MachineRefSoEntity> machineList = machineRefSoService.listByMachineDetailIdList(detailIdList);
+        if (CollectionUtils.isEmpty(machineList)) {
+            return;
+        }
+        //头程单据
+        List<String> sourceDetailIds = machineList.stream().map(MachineRefSoEntity::getSoDetailId).distinct().collect(Collectors.toList());
+        List<FirstMileDeliveryDetailEntity> firstMileDeliveryDetailList = firstMileDeliveryDetailService.listBySourceDetailIds(sourceDetailIds);
+        if (CollectionUtils.isEmpty(firstMileDeliveryDetailList)) {
+            return;
+        }
+        //要货申请
+        List<String> applicationDetailIdList = firstMileDeliveryDetailList.stream().map(FirstMileDeliveryDetailEntity::getSourceDetailId).distinct().collect(Collectors.toList());
+        List<RequisitionApplicationDetailEntity> requisitionApplicationDetailList = requisitionApplicationDetailService.listByIds(applicationDetailIdList);
+        if (CollectionUtils.isEmpty(requisitionApplicationDetailList)) {
+            return;
+        }
+        List<VirtualInventoryStockDTO.OutInStockDTO>  outInStockList = new ArrayList<>();
+        for (MachineSubComponentsEntity detailEntity : machineSubComponentsList) {
+            //直接调拨单明细
+            String detailId = detailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), detailEntity.getDetailId()))
+                    .map(MachineDetailEntity::getId).findFirst().orElse("");
+            //头程发货单明细id
+            String refDetailId = machineList.stream().filter(obj -> CharSequenceUtil.equals(obj.getMachineDetailId(), detailId))
+                    .map(MachineRefSoEntity::getSoDetailId).findFirst().orElse("");
+            //要货申请明细虚拟仓id
+            String virtualWarehouseId = requisitionApplicationDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), refDetailId))
+                    .map(RequisitionApplicationDetailEntity::getFromVirtualWarehouseId).findFirst().orElse("");
+            if (CharSequenceUtil.isBlank(virtualWarehouseId)) {
+                continue;
+            }
+            //操作请求实体
+            VirtualInventoryStockDTO.OutInStockDTO outInStockDTO = new VirtualInventoryStockDTO.OutInStockDTO();
+            outInStockDTO.setSkuId(detailEntity.getSkuId());
+            outInStockDTO.setSkuNo(detailEntity.getSkuNo());
+            outInStockDTO.setWarehouseId(detailEntity.getWarehouseId());
+            outInStockDTO.setVirtualWarehouseId(virtualWarehouseId);
+            outInStockDTO.setBillDate(LocalDate.now());
+            outInStockDTO.setQty(detailEntity.getQty());
+            outInStockDTO.setSourceId(entity.getId());
+            outInStockDTO.setSourceCode(entity.getCode());
+            outInStockDTO.setSourceType(InventorySourceTypeEnum.MACHINE_INFO);
+            outInStockDTO.setSourceDetailId(detailEntity.getId());
+            outInStockList.add(outInStockDTO);
+        }
+        //库存扣减
+        VirtualInventoryStockDTO.StockParamDTO stockParamDTO = new VirtualInventoryStockDTO.StockParamDTO();
+        stockParamDTO.setParamList(outInStockList);
+        stockParamDTO.setBusinessType(VirtualInventoryBusinessTypeEnum.MACHINE_INFO_CHILD_OUT.getCode());
+        virtualInventoryTransCoreService.approve(stockParamDTO);
     }
 
     /**
@@ -742,20 +816,13 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
      * @author Will
      * @date: 2023/5/18 12:10
      * @param entity
-     * @param resultDetails
      * @param machineSubComponentsList
      */
-    private void updateInventoryForMachineSubComponents (MachineInfoEntity entity ,List<MachineDetailEntity> resultDetails,List<MachineSubComponentsEntity> machineSubComponentsList) {
+    private void updateInventoryForMachineSubComponents (MachineInfoEntity entity ,List<MachineSubComponentsEntity> machineSubComponentsList) {
 
-        //子件SKU库存更新
-        List<String> resultDetailIds = resultDetails.stream().map(MachineDetailEntity::getId).collect(Collectors.toList());
-        List<MachineSubComponentsEntity> resultMachineSubComponents = machineSubComponentsList.stream().filter(obj -> resultDetailIds.contains(obj.getDetailId())).collect(Collectors.toList());
-        if (CollectionUtils.isEmpty(resultMachineSubComponents)) {
-            throw new ServiceException(ApiError.ERROR_99053);
-        }
         //父级SKU库存更新
         List<InOutStockDTO>  inOutStockList = new ArrayList<>();
-        for (MachineSubComponentsEntity detailEntity : resultMachineSubComponents) {
+        for (MachineSubComponentsEntity detailEntity : machineSubComponentsList) {
             //操作请求实体
             InOutStockDTO inOutStockDTO = new InOutStockDTO();
             inOutStockDTO.setSourceType(InventorySourceTypeEnum.MACHINE_INFO);

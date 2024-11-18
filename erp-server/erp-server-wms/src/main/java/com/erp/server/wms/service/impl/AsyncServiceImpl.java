@@ -28,7 +28,6 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.tms.dto.LogisticsBillDTO;
 import com.erp.model.tms.entity.TransferDeclareDetailEntity;
 import com.erp.model.tms.enums.TransferDeclareUploadStatusEnum;
-import com.erp.model.wms.entity.CfgAmzFulfillmentCenterEntity;
 import com.erp.model.wms.entity.SoB2cDeliveryEntity;
 import com.erp.model.wms.enums.ShipmentMarkTypeEnum;
 import com.erp.model.wms.enums.SoB2cDeliveryStatusEnum;
@@ -242,15 +241,11 @@ public class AsyncServiceImpl implements AsyncService {
             return;
         }
         asyncService.soB2cDeliveryAutoOut(soB2cEntity,entity);
-        //扣减冻结库存
-        Boolean isOut = soB2cDeliveryService.generateOutFreezeError(entity);
-        if (isOut) {
-            //生成直接调拨单
-            Boolean isPush = soB2cDeliveryService.pushTransferInfoError(entity);
-            if (isPush) {
-                //出库
-                soB2cDeliveryService.generateB2cSoOutstock(entity);
-            }
+        //生成直接调拨单
+        Boolean isPush = soB2cDeliveryService.pushTransferInfoError(entity);
+        if (isPush) {
+            //出库
+            soB2cDeliveryService.generateB2cSoOutstock(entity);
         }
     }
     /**
@@ -259,15 +254,11 @@ public class AsyncServiceImpl implements AsyncService {
     @Override
     @Async("wmsErpExecutor")
     public void syncAutoOut(SoB2cDeliveryEntity entity) {
-        //扣减冻结库存
-        Boolean isOut = soB2cDeliveryService.generateOutFreezeError(entity);
-        if (isOut) {
-            //生成直接调拨单
-            Boolean isPush = soB2cDeliveryService.pushTransferInfoError(entity);
-            if (isPush) {
-                //出库
-                soB2cDeliveryService.generateB2cSoOutstock(entity);
-            }
+        //生成直接调拨单
+        Boolean isPush = soB2cDeliveryService.pushTransferInfoError(entity);
+        if (isPush) {
+            //出库
+            soB2cDeliveryService.generateB2cSoOutstock(entity);
         }
     }
 
