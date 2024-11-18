@@ -126,5 +126,4 @@ public interface SoReturnDetailService extends SuperService<SoReturnDetailEntity
      **/
 
     SoDetailDTO.ListAddDetailNoBomViewDTO listAddDetailWithNoBomView(SoReturnDTO.PlatformSkuDTO dto);
-
 }

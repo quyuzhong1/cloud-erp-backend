@@ -996,9 +996,10 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * @param isChangeSku
      */
     void updateIsChangeSku(List<String> ids, Boolean isChangeSku);
-
-
-    void fetchOrderFail(SoB2cEntity soB2cEntity);
-
-    void fetchOrderSuccess(SoB2cEntity soB2cEntity);
+    /**
+     * 拉取订单 -- dmp创建任务拉取
+     * @author jack
+     * @param ids
+     */
+    List<BatchResultDTO> fetchOrder(List<String> ids);
 }

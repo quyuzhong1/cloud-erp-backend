@@ -81,4 +81,13 @@ public interface VirtualTransFlowService extends SuperService<VirtualTransFlowEn
     Boolean exportExcel(VirtualTransFlowDTO.SearchParamDTO dto);
 
     PagingVO<VirtualTransFlowDTO.ListDTO> exportVirtualTransFlow(PagingDTO<VirtualTransFlowDTO.SearchParamDTO> dto);
+    /**
+     * 查询历史流水
+     * @author will
+     * @date 2024/11/8 16:11
+     * @param sourceDetailIdList
+     * @param sourceType
+     * @return List<VirtualTransFlowEntity>
+     */
+    List<VirtualTransFlowEntity> listHistoryFlow(List<String> sourceDetailIdList,String sourceType);
 }

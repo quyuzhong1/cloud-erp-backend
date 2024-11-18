@@ -384,7 +384,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
 
         //获取一个当前时间当作发货时间
         LocalDateTime deliveryTime = LocalDateTime.now();
-
+        entity.setDeliveryTime(deliveryTime);
         //修改发货状态
         lambdaUpdate()
                 .set(SoB2cDeliveryEntity::getStatus, SoB2cDeliveryStatusEnum.SHIPPED.getCode())
@@ -403,9 +403,6 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         // 操作日志
         String msg = CharSequenceUtil.format("用户【{}】手动发货单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "b2c发货单", entity.getCode());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C_DELIVERY.getCode(), entity.getId(), "手动发货");
-
-        //扣减冻结库存
-        outFreezeVirtualInventory(entity);
 
         return BatchResultDTO.success(entity.getId(), entity.getCode(), "手动发货");
 
@@ -2069,7 +2066,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
             TransferInfoDetailDTO.AddDTO detailAddDTO = new TransferInfoDetailDTO.AddDTO();
             detailAddDTO.setSkuId(sourceView.getSkuId());
             detailAddDTO.setSkuNo(sourceView.getSkuNo());
-            detailAddDTO.setSourceDetailId(sourceView.getId());
+            detailAddDTO.setSourceDetailId(sourceView.getDetailId());
             detailAddDTO.setQty(sourceView.getQty());
             detailAddDTO.setOutWarehouseId(fromWarehouseId);
             if (isFirst){

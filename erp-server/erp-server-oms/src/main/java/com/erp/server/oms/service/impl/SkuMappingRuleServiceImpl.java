@@ -6,10 +6,6 @@ import cn.hutool.core.text.CharSequenceUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.TypeReference;
 import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.erp.model.oms.enums.ListingMatchResultEnum;
-import com.erp.model.plm.dto.BomDTO;
-import com.erp.model.plm.enums.BomTypeEnum;
-import org.apache.commons.lang3.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -519,4 +515,79 @@ public class SkuMappingRuleServiceImpl extends SuperServiceImpl<SkuMappingRuleMa
         // 不符合拆分条件的情况
         return  new SkuMappingRuleDTO.SplitSkuDTO(input, 1);
     }
+    public boolean compareSplitStrings(String a, String b) {
+        // 分割字符串 a
+        String[] partsA = a.split("丨");
+        // 分割字符串 b
+        String[] partsB = b.split("丨");
+
+        // 检查分割后的部分是否相等，顺序可以不一致
+        if (partsA.length == partsB.length) {
+            Set<String> setA = new HashSet<>(Arrays.asList(partsA));
+            Set<String> setB = new HashSet<>(Arrays.asList(partsB));
+
+            return setA.equals(setB);
+        }
+
+        // 如果任何一个字符串没有被正确分割成两部分，返回 false
+        return false;
+    }
+
+
+    /**
+     * 按照给定的分隔符拆分字符串，特殊处理连续分隔符和末尾分隔符的情况。
+     *
+     * @param input 待拆分的字符串
+     * @param delimiter 分隔符
+     * @return 拆分后的字符串列表
+     */
+    public List<String> splitWithoutDelimiter(String input, String delimiter) {
+        if(StringUtils.isBlank(input)){
+            return new ArrayList<>();
+        }
+        if(StringUtils.isBlank(delimiter)){
+            return Collections.singletonList(input);
+        }
+
+        List<String> result = new ArrayList<>();
+        int start = 0;
+        int delimiterLength = delimiter.length();
+
+        int index = input.indexOf(delimiter, start);
+        while (index >= 0) {
+            // 添加当前分隔符之前的子字符串
+            String addStr = "";
+            if (index > start) {
+                addStr = input.substring(start, index);
+            }
+            // 记录分隔符的起始位置
+            int delimiterStart = index;
+            // 跳过分隔符，处理连续分隔符
+            index += delimiterLength;
+            while (index <= input.length() - delimiterLength && input.substring(index, index + delimiterLength).equals(delimiter)) {
+                index += delimiterLength;
+            }
+            // 更新 start 为最后一个分隔符之后的位置
+            start = index;
+            // 处理连续分隔符的特殊情况
+            if (start > delimiterStart + delimiterLength) {
+                addStr = addStr + input.substring(delimiterStart, start-1);
+            }
+            // 查找下一个分隔符
+            index = input.indexOf(delimiter, start);
+            result.add(addStr);
+        }
+        // 处理最后一个子字符串
+        if (start < input.length()) {
+            result.add(input.substring(start));
+        }
+        if (input.endsWith(delimiter)) {
+            String lastStr = result.get(result.size() - 1);
+            result.remove(result.size() - 1);
+            result.add(lastStr + input.substring(start-delimiter.length()));
+        }
+
+        return result;
+    }
+
 }

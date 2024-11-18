@@ -96,13 +96,10 @@ public class MergePackageDeliveryConsumer implements RocketMQListener<String> {
         } else {
             redisUtil.set(retryCountKey, 1, 86400);
         }
-        Boolean isOutVirtual = Boolean.TRUE;
         // 去重判断
         if(!SoB2cDeliveryStatusEnum.SHIPPED.getCode().equalsIgnoreCase(curDeliveryEntity.getStatus())){
             //处理其他d单据状态(独立事务)
             packageForecastService.handleMergePackageDeliveryOther(soId, curDeliveryEntity);
-            //扣减冻结库存
-            isOutVirtual = soB2cDeliveryService.generateOutFreezeError(curDeliveryEntity);
         }
 
         // 判断当前单据平台标记发货是否有正在处理
@@ -173,13 +170,10 @@ public class MergePackageDeliveryConsumer implements RocketMQListener<String> {
         log.debug("【组包预报】销售单【{}】生成销售出库单开始", curDeliveryEntity.getSoCode());
         //出库
         try {
-            //虚拟仓库存扣减无异常则调拨
-            if (isOutVirtual) {
-                //生成直接调拨单
-                Boolean isPush = soB2cDeliveryService.pushTransferInfoError(curDeliveryEntity);
-                if (isPush) {
-                    soB2cDeliveryService.generateB2cSoOutstock(curDeliveryEntity);
-                }
+            //生成直接调拨单
+            Boolean isPush = soB2cDeliveryService.pushTransferInfoError(curDeliveryEntity);
+            if (isPush) {
+                soB2cDeliveryService.generateB2cSoOutstock(curDeliveryEntity);
             }
         } finally {
             if (CollectionUtils.isNotEmpty(soOutStockKeyList)) {
