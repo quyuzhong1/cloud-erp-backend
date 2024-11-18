@@ -117,25 +117,25 @@ public class WarehouseLocationReplenishServiceImpl extends SuperServiceImpl<Ware
 
             //取货库区名称
             WarehouseLocationEntity fromAreaEntity = list.stream()
-                    .filter(item -> item.getType().equals("area") && item.getCode().equals(entity.getFromWarehouseArea()))
+                    .filter(item -> "area".equals(item.getType()) && item.getCode().equals(entity.getFromWarehouseArea()))
                     .findFirst().orElse(new WarehouseLocationEntity());
             dto.setFromWarehouseAreaName(fromAreaEntity.getName());
 
             //取货仓位名称
             WarehouseLocationEntity fromLocationEntity = list.stream()
-                    .filter(item -> item.getType().equals("location") && item.getCode().equals(entity.getFromWarehouseLocation()))
+                    .filter(item -> "location".equals(item.getType()) && item.getCode().equals(entity.getFromWarehouseLocation()))
                     .findFirst().orElse(new WarehouseLocationEntity());
             dto.setFromWarehouseLocationName(fromLocationEntity.getName());
 
             //补货库区名称
             WarehouseLocationEntity toAreaEntity = list.stream()
-                    .filter(item -> item.getType().equals("area") && item.getCode().equals(entity.getToWarehouseArea()))
+                    .filter(item -> "area".equals(item.getType()) && item.getCode().equals(entity.getToWarehouseArea()))
                     .findFirst().orElse(new WarehouseLocationEntity());
             dto.setToWarehouseAreaName(toAreaEntity.getName());
 
             //补货仓位名称
             WarehouseLocationEntity toLocationEntity = list.stream()
-                    .filter(item -> item.getType().equals("location") && item.getCode().equals(entity.getToWarehouseLocation()))
+                    .filter(item -> "location".equals(item.getType()) && item.getCode().equals(entity.getToWarehouseLocation()))
                     .findFirst().orElse(new WarehouseLocationEntity());
             dto.setToWarehouseLocationName(toLocationEntity.getName());
 
@@ -655,7 +655,7 @@ public class WarehouseLocationReplenishServiceImpl extends SuperServiceImpl<Ware
                 .map(WarehouseLocationReplenishDTO.ViewDTO::getId)
                 .collect(Collectors.toList());
         //只有勾选导出的才更新状态：处理中
-        boolean isExportById = dto.getParams().getAdvanceQueryDTOList().stream().anyMatch(item -> item.getField().equals("id"));
+        boolean isExportById = dto.getParams().getAdvanceQueryDTOList().stream().anyMatch(item -> "id".equals(item.getField()));
         if (isExportById && !waitHandleIds.isEmpty()) {
             this.update(new UpdateWrapper<WarehouseLocationReplenishEntity>()
                     .set("status", ReplenishBillStatusEnum.HANDLE_ING.getCode())

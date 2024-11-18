@@ -117,7 +117,7 @@ public class ShopifyShipOrder extends AbstractShipOrder {
             }
             // 未签收的单
             fulfillmentOrdersFromOrderList = fulfillmentOrdersFromOrderList.stream()
-                    .filter(e -> e.getStatus().equalsIgnoreCase("open") || "in_progress".equalsIgnoreCase(e.getStatus()) )
+                    .filter(e -> "open".equalsIgnoreCase(e.getStatus()) || "in_progress".equalsIgnoreCase(e.getStatus()) )
                     .collect(Collectors.toList());
             if (CollectionUtils.isEmpty(fulfillmentOrdersFromOrderList)) {
                 log.warn("Shopify 忽略表发货, 订单已标记, platformCode={}, fulfillment={}", platformOrderId, JSONUtil.toJsonStr(fulfillmentOrdersFromOrderList));

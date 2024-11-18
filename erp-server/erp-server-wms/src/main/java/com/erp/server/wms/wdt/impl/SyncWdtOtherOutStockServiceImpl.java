@@ -71,7 +71,7 @@ public class SyncWdtOtherOutStockServiceImpl extends AbstractWdtService implemen
 
         //临时转换仓位
         for (CreateOtherStockoutRequest.GoodsList goods : goodsList) {
-            if(goods.getPositionNo().equals("TC-JHZC") || goods.getPositionNo().equals("B2B-JHZC")){
+            if("TC-JHZC".equals(goods.getPositionNo()) || "B2B-JHZC".equals(goods.getPositionNo())){
                 goods.setPositionNo(goods.getPositionNo() + "1");
             }
             if(CharSequenceUtil.isBlank(goods.getPositionNo())){

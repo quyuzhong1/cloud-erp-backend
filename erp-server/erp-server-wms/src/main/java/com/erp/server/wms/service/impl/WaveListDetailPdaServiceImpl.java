@@ -185,7 +185,7 @@ public class WaveListDetailPdaServiceImpl extends SuperServiceImpl<WaveListDetai
             for (String skuId : skuSet) {
                 WaveListDetailPdaDTO.PickingLocationDTO card = new WaveListDetailPdaDTO.PickingLocationDTO();
                 card.setWarehouseLocation(location);
-                WarehouseLocationEntity locationEntity = warehouseLocationList.stream().filter(item -> item.getType().equals("location") && item.getCode().equals(location)).findFirst().orElse(new WarehouseLocationEntity());
+                WarehouseLocationEntity locationEntity = warehouseLocationList.stream().filter(item -> "location".equals(item.getType()) && item.getCode().equals(location)).findFirst().orElse(new WarehouseLocationEntity());
                 card.setWarehouseLocationName(locationEntity.getName());
                 card.setSkuId(skuId);
                 card.setSkuNo(skuMap.get(skuId));

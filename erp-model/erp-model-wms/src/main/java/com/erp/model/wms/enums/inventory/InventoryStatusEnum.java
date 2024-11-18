@@ -47,10 +47,12 @@ public enum InventoryStatusEnum  implements EnumMessage {
         this.controlLocation = controlLocation;
     }
 
+    @Override
     public String getCode() {
         return code;
     }
 
+    @Override
     public String getName() {
         return name;
     }

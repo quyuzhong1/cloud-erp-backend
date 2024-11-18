@@ -422,10 +422,10 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         if (CollectionUtils.isNotEmpty(dto.getRoleIdList())) {
             List<String> collect = sysPostFeign.listById(dto.getRoleIdList()).stream().map(SysPostEntity::getPostName).collect(Collectors.toList());
             for (String s : collect) {
-                if (s.equals("创建人")) {
+                if ("创建人".equals(s)) {
                     noticeUserIdList.add(createUserId);
                 }
-                if (s.equals("处理人")) {
+                if ("处理人".equals(s)) {
                     noticeUserIdList.add(loginUser.getUid());
                 }
             }

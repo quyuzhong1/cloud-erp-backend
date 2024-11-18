@@ -90,6 +90,7 @@ public abstract class AbstractInventoryServiceImpl implements InventoryStockServ
      */
     protected final List<InventorySourceTypeEnum> allowNegativeQtyBusinessList = Lists.newArrayList(InventorySourceTypeEnum.INIT_STOCK);
 
+    @Override
     @Transactional(rollbackFor = Exception.class)
     public <T extends InventoryStockBaseDTO> void approve(List<T> paramList, List<TransactionRuleDTO> ruleList, InventoryBusinessTypeEnum businessType, Boolean byType) {
         Stopwatch stopwatch = Stopwatch.createStarted();
@@ -144,6 +145,7 @@ public abstract class AbstractInventoryServiceImpl implements InventoryStockServ
     abstract <T extends InventoryStockBaseDTO> void singleHandler(T baseParam, InventoryBusinessTypeEnum businessType, List<TransactionRuleDTO> transactionRuleParams,
                                                                   String transactionNo);
 
+    @Override
     @Transactional(rollbackFor = Exception.class)
     @SneakyThrows
     public void unApprove(InventoryUnApproveDTO dto) {

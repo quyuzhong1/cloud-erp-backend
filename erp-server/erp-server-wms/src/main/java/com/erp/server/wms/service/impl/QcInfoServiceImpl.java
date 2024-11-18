@@ -1699,6 +1699,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
      * @param dto
      * @return java.lang.Boolean
      **/
+    @Override
     public Boolean autoSoReturnReceiveToQcDTO(List<QcInfoDTO.SoReturnReceiveToQcDTO>  dto) {
         if (CollectionUtils.isEmpty(dto)) {
             return Boolean.TRUE;
