@@ -1396,6 +1396,7 @@ public enum ApiError implements Serializable {
     ERROR_92159(92159,"单据不存在"),
     ERROR_92160(92160,"本地推送消息单"),
     ERROR_92161(92161,"退款订单明细"),
+    ERROR_92162(92162,"合并后的平台订单后过长"),
     /**
      * TMS 错误
      * 从94000 开始

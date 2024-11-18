@@ -299,13 +299,6 @@ public class SoB2cEntity extends BaseEntity<SoB2cEntity> {
     private String frozenType;
 
     /**
-     * 合并--所有子订单的平台订单编号合并，使用逗号隔开
-     * 其余情况--为空
-     */
-    @TableField("merge_platform_code")
-    private String mergePlatformCode;
-
-    /**
      * 是否更换发货sku（默认false）
      */
     @TableField("is_change_sku")
