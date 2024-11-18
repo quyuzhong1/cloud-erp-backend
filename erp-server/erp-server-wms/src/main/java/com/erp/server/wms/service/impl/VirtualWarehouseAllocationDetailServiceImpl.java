@@ -1,6 +1,7 @@
 package com.erp.server.wms.service.impl;
 
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -510,6 +511,14 @@ public class VirtualWarehouseAllocationDetailServiceImpl extends SuperServiceImp
     @Override
     public List<VirtualWarehouseAllocationDetailDTO.AllocationDataDTO> listAllocationData(List<String> skuIdList, List<String> warehouseIdList, List<String> virtualWarehouseIdList) {
         return baseMapper.listAllocationData(skuIdList,warehouseIdList,virtualWarehouseIdList);
+    }
+
+    @Override
+    public List<VirtualWarehouseAllocationDetailEntity> listByMainIdList(List<String> mainIdList) {
+        if(CollUtil.isEmpty(mainIdList)) {
+            return Collections.emptyList();
+        }
+        return  lambdaQuery().in(VirtualWarehouseAllocationDetailEntity::getMainId,mainIdList).list();
     }
 
     /**

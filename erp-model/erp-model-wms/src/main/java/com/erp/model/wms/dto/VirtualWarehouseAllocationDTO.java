@@ -1,5 +1,6 @@
 package com.erp.model.wms.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import com.erp.model.wms.dto.excel.VwAllocationAllocationExcelDTO;
@@ -159,6 +160,10 @@ public class VirtualWarehouseAllocationDTO implements Serializable {
          * 作废说明
          */
         private String invalidDescription;
+        /**
+         * 是否计入统计，true是，false否
+         */
+        private Boolean isStatistics;
 
         /**
          * 附件名集合
@@ -229,7 +234,11 @@ public class VirtualWarehouseAllocationDTO implements Serializable {
 //        @Size(max = 255, message = "作废说明最大长度不能超过255位")
         private String invalidDescription;
 
-
+        /**
+         * 是否计入统计，true是，false否
+         */
+        @NotBlank(message = "是否统计不能为空")
+        private Boolean isStatistics;
     }
 
     /**
@@ -354,6 +363,11 @@ public class VirtualWarehouseAllocationDTO implements Serializable {
         private Boolean isVirtualScarce;
 
         /**
+         * 缺货数量
+         */
+        private Integer virtualScarceQty;
+
+        /**
          * 调出数量/调拨数量
          */
         private Integer qty;
@@ -401,6 +415,10 @@ public class VirtualWarehouseAllocationDTO implements Serializable {
          * 同步平台单号（字符串）
          */
         private String thirdCode;
+        /**
+         * 是否计入统计，true是，false否
+         */
+        private Boolean isStatistics;
         /**
          * 附件名集合
          */
