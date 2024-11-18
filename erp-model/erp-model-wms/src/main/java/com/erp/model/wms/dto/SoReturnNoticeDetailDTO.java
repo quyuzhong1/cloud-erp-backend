@@ -42,6 +42,14 @@ public class SoReturnNoticeDetailDTO {
          */
         private String skuId;
         /**
+         * 退货类型
+         */
+        private String returnTypeDict;
+        /**
+         * 退货原因
+         */
+        private String returnReasonDict;
+        /**
          * 是否子sku
          */
         private Boolean isChildSkuNo;
