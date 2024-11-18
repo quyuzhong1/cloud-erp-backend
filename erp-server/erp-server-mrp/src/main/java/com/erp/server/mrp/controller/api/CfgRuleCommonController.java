@@ -39,7 +39,7 @@ public class CfgRuleCommonController extends BaseController {
     * @return ApiResult
     */
     @PostMapping("/update")
-    public ApiResult<?> update(@RequestBody @Validated List<CfgRuleCommonDTO.UpdateDTO> updateList) {
+    public ApiResult<String> update(@RequestBody @Validated List<CfgRuleCommonDTO.UpdateDTO> updateList) {
         cfgRuleCommonService.update(updateList);
         return success();
     }

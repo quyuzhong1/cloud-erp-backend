@@ -1,25 +1,22 @@
 package com.erp.server.mrp.service.impl;
 
 
-import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.exception.ServiceException;
 import com.erp.model.mrp.dto.LabelInfoDTO;
 import com.erp.model.mrp.dto.ReplenishmentRefLabelDTO;
 import com.erp.model.mrp.entity.ReplenishmentRefLabelEntity;
 import com.erp.server.mrp.mapper.ReplenishmentRefLabelMapper;
-import com.erp.server.mrp.service.OperateLogService;
 import com.erp.server.mrp.service.ReplenishmentRefLabelService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.ObjectUtils;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -35,8 +32,6 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 public class ReplenishmentRefLabelServiceImpl extends SuperServiceImpl<ReplenishmentRefLabelMapper, ReplenishmentRefLabelEntity> implements ReplenishmentRefLabelService {
-    @Autowired
-    private OperateLogService operateLogService;
 
     /**
     * 修改
@@ -47,9 +42,9 @@ public class ReplenishmentRefLabelServiceImpl extends SuperServiceImpl<Replenish
         // 数据处理
         List<ReplenishmentRefLabelEntity> list = handleData(updateDTO, refId);
 
-        List<ReplenishmentRefLabelEntity> oldList = listByRefIdList(Arrays.asList(refId));
+        List<ReplenishmentRefLabelEntity> oldList = listByRefIdList(Collections.singletonList(refId));
 
-        if (!updateDTO.getIsIncrement()) {
+        if (Boolean.FALSE.equals(updateDTO.getIsIncrement())) {
             //删除明细
             List<String> deleteIds = getDeleteIds(list, oldList);
             if (CollectionUtils.isNotEmpty(deleteIds)) {
@@ -96,7 +91,7 @@ public class ReplenishmentRefLabelServiceImpl extends SuperServiceImpl<Replenish
      */
     private List<ReplenishmentRefLabelEntity> listByRefIdList(List<String> refIdList) {
         if (CollectionUtils.isEmpty(refIdList)) {
-            return Collections.EMPTY_LIST;
+            return Collections.emptyList();
         }
         return lambdaQuery().in(ReplenishmentRefLabelEntity::getRefId,refIdList).list();
     }
@@ -106,8 +101,8 @@ public class ReplenishmentRefLabelServiceImpl extends SuperServiceImpl<Replenish
      * 查询需要删除的数据
      */
     private List<String> getDeleteIds(List<ReplenishmentRefLabelEntity> newList, List<ReplenishmentRefLabelEntity> oldList) {
-        List<String> newIds = newList.stream().filter(g -> StringUtils.isNotBlank(g.getId())).
-                map(ReplenishmentRefLabelEntity::getId).collect(Collectors.toList());
+        List<String> newIds = newList.stream().map(ReplenishmentRefLabelEntity::getId).
+                filter(StringUtils::isNotBlank).collect(Collectors.toList());
         List<String> oldIds = oldList.stream().map(ReplenishmentRefLabelEntity::getId).collect(Collectors.toList());
         return oldIds.stream().filter(s -> !newIds.contains(s)).collect(Collectors.toList());
     }
@@ -121,14 +116,14 @@ public class ReplenishmentRefLabelServiceImpl extends SuperServiceImpl<Replenish
                 return resultList;
             }
             //标签数据
-            List<ReplenishmentRefLabelEntity> replenishmentRefLabelList = listByLabelIdListAndRefIdList(updateDTO.getLabelIdList(), Arrays.asList(refId));
+            List<ReplenishmentRefLabelEntity> replenishmentRefLabelList = listByLabelIdListAndRefIdList(updateDTO.getLabelIdList(), Collections.singletonList(refId));
             for (String labelId : updateDTO.getLabelIdList()) {
                 ReplenishmentRefLabelEntity resultEntity = new ReplenishmentRefLabelEntity();
                 resultEntity.setRefId(refId);
                 resultEntity.setLabelId(labelId);
                 resultEntity.setType(updateDTO.getType());
-                ReplenishmentRefLabelEntity entity = replenishmentRefLabelList.stream().filter(obj -> StrUtil.equals(obj.getLabelId(), labelId) && StrUtil.equals(refId, obj.getRefId())).findFirst().orElse(null);
-                if (ObjectUtil.isNotEmpty(entity)) {
+                ReplenishmentRefLabelEntity entity = replenishmentRefLabelList.stream().filter(obj -> CharSequenceUtil.equals(obj.getLabelId(), labelId) && CharSequenceUtil.equals(refId, obj.getRefId())).findFirst().orElse(null);
+                if (!ObjectUtils.isEmpty(entity)) {
                     resultEntity.setId(entity.getId());
                 }
                 resultList.add(resultEntity);

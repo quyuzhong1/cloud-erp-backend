@@ -1,5 +1,6 @@
 package com.erp.server.wms.controller.api;
 
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.common.business.annotation.DataPermission;
@@ -40,7 +41,7 @@ import java.util.List;
 @RequestMapping("/stocktakingPlan")
 public class StocktakingPlanController extends BaseController {
 
-    @Autowired
+    @Resource
     private StocktakingPlanService stocktakingPlanService;
     @Resource
     private RedisUtil redisUtil;
@@ -216,7 +217,7 @@ public class StocktakingPlanController extends BaseController {
                 }
                 approveResult = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
                 // 删除盘点锁定的库存
-                redisUtil.keys(StrUtil.format(RedisKeyConstant.INVENTORY_LOCK_CODE, entity.getCode()))
+                redisUtil.keys(CharSequenceUtil.format(RedisKeyConstant.INVENTORY_LOCK_CODE, entity.getCode()))
                         .forEach(key -> redisUtil.del(key));
             }
             resultDTOS.add(approveResult);
@@ -246,7 +247,7 @@ public class StocktakingPlanController extends BaseController {
             try {
                 disApproveResult = stocktakingPlanService.disApprove(id);
                 // 删除盘点锁定的库存
-                redisUtil.keys(StrUtil.format(RedisKeyConstant.INVENTORY_LOCK_CODE, entity.getCode()))
+                redisUtil.keys(CharSequenceUtil.format(RedisKeyConstant.INVENTORY_LOCK_CODE, entity.getCode()))
                         .forEach(key -> redisUtil.del(key));
             }catch (Exception e){
                 log.error("盘点计划反审核失败",e);

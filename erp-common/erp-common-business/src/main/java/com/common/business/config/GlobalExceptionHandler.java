@@ -1,6 +1,6 @@
 package com.common.business.config;
 
-import cn.hutool.core.util.StrUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import com.alibaba.excel.util.StringUtils;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
@@ -159,7 +159,7 @@ public class GlobalExceptionHandler {
         if (e.getMessage().contains("value too long")) {
             return ApiResult.error(ApiError.ERROR_1025);
         } else {
-            return ApiResult.error(ApiError.Default);
+            return ApiResult.error(ApiError.DEFAULT);
         }
     }
 
@@ -176,7 +176,7 @@ public class GlobalExceptionHandler {
         if (!StringUtils.isEmpty(e.getMessage()) && e.getMessage().contains("No instances available for")) {
             return ApiResult.error(ApiError.ERROR_1023);
         } else {
-            return ApiResult.error(ApiError.Default);
+            return ApiResult.error(ApiError.DEFAULT);
         }
     }
 
@@ -192,7 +192,7 @@ public class GlobalExceptionHandler {
         if (!StringUtils.isEmpty(e.getMessage()) && e.getMessage().contains("Duplicate entry")
                 && e.getMessage().contains("for key")) {
             String duplicateKey = e.getMessage().substring(e.getMessage().indexOf("Duplicate entry") + 15, e.getMessage().indexOf("for key"));
-            return ApiResult.error(ApiError.ERROR_1024.code, StrUtil.format("数据【{}】重复，请修改后再提交", duplicateKey));
+            return ApiResult.error(ApiError.ERROR_1024.code, CharSequenceUtil.format("数据【{}】重复，请修改后再提交", duplicateKey));
         } else {
             return ApiResult.error(ApiError.ERROR_1024);
         }
@@ -204,14 +204,14 @@ public class GlobalExceptionHandler {
         if (StrUtils.isNotEmpty(ex.getMessage()) && ex.getMessage().contains("attempt to unlock lock, not locked by current thread by node id")) {
             return ApiResult.error(ApiError.ERROR_1026);
         } else {
-            return ApiResult.error(ApiError.Default);
+            return ApiResult.error(ApiError.DEFAULT);
         }
     }
 
     @ExceptionHandler(value = NullPointerException.class)
     public ApiResult resolveException(NullPointerException ex) {
         log.error("系统异常:", ex);
-        return ApiResult.error(ApiError.Default);
+        return ApiResult.error(ApiError.DEFAULT);
     }
 
     @ExceptionHandler(value = ClientException.class)

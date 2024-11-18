@@ -3,12 +3,8 @@ package com.erp.server.dmp.inout.handler.input.task.dmp;
 import cn.hutool.core.collection.CollUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.common.core.anno.ParamData;
 import com.common.core.entity.BaseEntity;
-import com.common.core.enums.PannoEnum;
 import com.erp.model.dmp.entity.DmpCfgInputConvertEntity;
-import com.erp.model.dmp.entity.DmpInputTaskEntity;
-import com.erp.server.dmp.inout.handler.input.task.mongo.DmpInputMongoHandler;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
@@ -51,7 +47,7 @@ public class DmpInputAmzProductDetailDmpHandler extends DmpInputDoChildDmpHandle
         Map<String, String> billNoIdMap = new HashMap<>();
         if (CollUtil.isNotEmpty(listMaps)) {
             for (Map<String, Object> listMap : listMaps) {
-                billNoIdMap.put(listMap.get("reportId").toString(), listMap.get(BaseEntity.ID).toString());
+                billNoIdMap.put(listMap.get("reportId").toString(), listMap.get(BaseEntity.FIELD_ID).toString());
             }
         }
         for (Map<String, Object> dmpInputMongoChildEntity : dmpInputMongoChildEntityList) {

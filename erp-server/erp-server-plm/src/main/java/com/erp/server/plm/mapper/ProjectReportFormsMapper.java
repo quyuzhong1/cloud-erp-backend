@@ -20,7 +20,7 @@ public interface ProjectReportFormsMapper extends BaseMapper<ProductInfoEntity> 
      * @param param
      * @return com.baomidou.mybatisplus.core.metadata.IPage<com.erp.model.plm.dto.ProjectReportFormsDTO.PagingView>
      **/
-    IPage<ProjectReportFormsDTO.PagingView> projectReportFormsPaging(Page query, @Param("params") ProjectReportFormsDTO.PagingParam param);
+    IPage<ProjectReportFormsDTO.PagingView> projectReportFormsPaging(Page<ProjectReportFormsDTO.PagingParam> query, @Param("params") ProjectReportFormsDTO.PagingParam param);
 
     /**
      * 项目报表-导出excel

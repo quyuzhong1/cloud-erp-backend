@@ -64,7 +64,7 @@ public class CfgPlatformMappingController extends BaseController {
         menuCode = "mrp:cfgPlatformMapping:update",
         serviceClass = CfgPlatformMappingService.class,
         keyIdName = "id")
-    public ApiResult<?> update(@RequestBody @Validated CfgPlatformMappingDTO.UpdateDTO dto) {
+    public ApiResult<String> update(@RequestBody @Validated CfgPlatformMappingDTO.UpdateDTO dto) {
         cfgPlatformMappingService.update(dto);
         return success();
     }

@@ -20,7 +20,7 @@ public interface TransferLogisticsService {
     /**
      * 服务商授权
      */
-    ApiResult authorization(Map<String, String> authConfig);
+    ApiResult<Object>authorization(Map<String, String> authConfig);
 
     /**
      * 获取物流产品

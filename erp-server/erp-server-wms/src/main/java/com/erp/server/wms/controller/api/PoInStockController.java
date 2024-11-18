@@ -1,6 +1,7 @@
 package com.erp.server.wms.controller.api;
 
 
+import cn.hutool.core.text.CharSequenceUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.*;
@@ -51,7 +52,7 @@ public class PoInStockController extends BaseController {
     private PoInstockService poInstockService;
     @Resource
     private PoReturnService poReturnService;
-    @Autowired
+    @Resource
     private SubcontractIssueService subcontractIssueService;
     /**
      * 列表查询
@@ -124,7 +125,7 @@ public class PoInStockController extends BaseController {
             keyIdName = "id")
     public ApiResult add(@RequestBody @Validated PoInstockDTO.AddDTO dto) {
         String id = poInstockService.add(dto,Boolean.FALSE);
-        return StringUtils.isNotBlank(id) ? success() : failure();
+        return CharSequenceUtil.isNotBlank(id) ? success() : failure();
     }
 
    /**
@@ -143,7 +144,7 @@ public class PoInStockController extends BaseController {
             keyIdName = "id")
     public ApiResult addAndSubmit(@RequestBody @Validated PoInstockDTO.AddDTO dto) {
         String id = poInstockService.addAndSubmit(dto);
-        return StringUtils.isNotBlank(id) ? success() : failure();
+        return CharSequenceUtil.isNotBlank(id) ? success() : failure();
     }
     
     /**
@@ -319,8 +320,8 @@ public class PoInStockController extends BaseController {
                 resultDTOS.add(BatchResultDTO.fail(id,id,"采购入库单记录不存在"));
                 continue;
             }
-            List<PoReturnEntity> returnEntityList = purchaseReturnOrderList.stream().filter(e -> StringUtils.isNotBlank(e.getSourceId()) && e.getSourceId().equals(id)).collect(Collectors.toList());
-            List<SubcontractIssueEntity> issueEntityList = subcontractIssueList.stream().filter(e -> StringUtils.isNotBlank(e.getSourceId()) && e.getSourceId().equals(id)).collect(Collectors.toList());
+            List<PoReturnEntity> returnEntityList = purchaseReturnOrderList.stream().filter(e -> CharSequenceUtil.isNotBlank(e.getSourceId()) && e.getSourceId().equals(id)).collect(Collectors.toList());
+            List<SubcontractIssueEntity> issueEntityList = subcontractIssueList.stream().filter(e -> CharSequenceUtil.isNotBlank(e.getSourceId()) && e.getSourceId().equals(id)).collect(Collectors.toList());
             try {
                 resultDTOS.add(poInstockService.disApprove(entity,returnEntityList, issueEntityList));
             }catch (Exception e){

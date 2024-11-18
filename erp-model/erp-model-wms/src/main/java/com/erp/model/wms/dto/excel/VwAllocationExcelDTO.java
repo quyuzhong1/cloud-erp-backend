@@ -1,8 +1,5 @@
 package com.erp.model.wms.dto.excel;
 
-import com.alibaba.excel.annotation.ExcelProperty;
-import com.alibaba.excel.annotation.write.style.ColumnWidth;
-import com.common.core.anno.FieldValid;
 import lombok.Data;
 
 import java.io.Serializable;

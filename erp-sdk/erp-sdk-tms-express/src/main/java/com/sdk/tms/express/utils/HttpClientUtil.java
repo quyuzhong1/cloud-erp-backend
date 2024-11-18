@@ -31,13 +31,15 @@ import org.slf4j.LoggerFactory;
 /**
  * @author zdy
  * @ClassName HttpClientUtil
- * @description: TODO
+
  * @date 2023年10月30日
  * @version: 1.0
  */
 public class HttpClientUtil {
     private static Logger logger = LoggerFactory.getLogger(HttpClientUtil.class);
-
+    
+    private static final String ERROR_MSG = "String literals should not be duplicated";
+    private static final String UTF = "UTF-8";
     public String post(String url, StringEntity entity) {
         CloseableHttpClient httpClient = HttpClients.createDefault();
         HttpPost post = postForm(url, entity);
@@ -46,7 +48,7 @@ public class HttpClientUtil {
         try {
             httpClient.close();
         } catch (IOException e) {
-            logger.error("HttpClientService post error", e);
+            logger.error(ERROR_MSG, e);
         }
         return body;
     }
@@ -55,13 +57,13 @@ public class HttpClientUtil {
         CloseableHttpClient httpClient = HttpClients.createDefault();
         List<NameValuePair> parameters = new ArrayList<NameValuePair>();
         parameters.add(new BasicNameValuePair("content", value));
-        HttpPost post = postForm(url, (StringEntity)new UrlEncodedFormEntity(parameters, Charset.forName("UTF-8")));
+        HttpPost post = postForm(url, (StringEntity)new UrlEncodedFormEntity(parameters, Charset.forName(UTF)));
         String body = "";
         body = invoke(httpClient, (HttpUriRequest)post);
         try {
             httpClient.close();
         } catch (IOException e) {
-            logger.error("HttpClientService post error", e);
+            logger.error(ERROR_MSG, e);
         }
         return body;
     }
@@ -71,13 +73,13 @@ public class HttpClientUtil {
         List<NameValuePair> parameters = new ArrayList<NameValuePair>();
         parameters.add(new BasicNameValuePair("xml", xml));
         parameters.add(new BasicNameValuePair("verifyCode", verifyCode));
-        HttpPost post = postForm(url, (StringEntity)new UrlEncodedFormEntity(parameters, Charset.forName("UTF-8")));
+        HttpPost post = postForm(url, (StringEntity)new UrlEncodedFormEntity(parameters, Charset.forName(UTF)));
         String body = "";
         body = invoke(httpClient, (HttpUriRequest)post);
         try {
             httpClient.close();
         } catch (IOException e) {
-            logger.error("HttpClientService post error", e);
+            logger.error(ERROR_MSG, e);
         }
         return body;
     }
@@ -90,7 +92,7 @@ public class HttpClientUtil {
         try {
             httpClient.close();
         } catch (IOException e) {
-            logger.error("HttpClientService get error", e);
+            logger.error(ERROR_MSG, e);
         }
         return body;
     }
@@ -103,13 +105,16 @@ public class HttpClientUtil {
         try {
             httpClient.close();
         } catch (IOException e) {
-            logger.error("HttpClientService get error", e);
+            logger.error(ERROR_MSG, e);
         }
         return body;
     }
 
     public static String invoke(CloseableHttpClient httpclient, HttpUriRequest httpost) {
         HttpResponse response = sendRequest(httpclient, httpost);
+        if(response == null){
+            return "";
+        }
         String body = "";
         int statusCode = response.getStatusLine().getStatusCode();
         if (statusCode == 200)
@@ -124,7 +129,7 @@ public class HttpClientUtil {
             if (entity != null)
                 body = EntityUtils.toString(entity);
         } catch (ParseException e) {
-            logger.error("HttpClientService paseResponse error", (Throwable)e);
+            logger.error(ERROR_MSG, (Throwable)e);
         } catch (IOException e) {
             logger.error("HttpClientService paseResponse error", e);
         }
@@ -133,7 +138,6 @@ public class HttpClientUtil {
 
     private static HttpResponse sendRequest(CloseableHttpClient httpclient, HttpUriRequest httpost) {
         CloseableHttpResponse closeableHttpResponse = null;
-        HttpResponse response = null;
         try {
             closeableHttpResponse = httpclient.execute(httpost);
         } catch (ClientProtocolException e) {
@@ -151,28 +155,25 @@ public class HttpClientUtil {
     }
 
     public static String post(String url, Map<String, String> params) throws UnsupportedEncodingException {
-        CloseableHttpClient httpClient = HttpClients.createDefault();
-        RequestConfig requestConfig = RequestConfig.custom()
-                .setConnectionRequestTimeout(5000).setConnectTimeout(5000)
-
-                .setSocketTimeout(60000).build();
-        HttpPost httpPost = new HttpPost(url);
-        httpPost.setConfig(requestConfig);
-        httpPost.addHeader("appCode", params.get("partnerID"));
-        httpPost.addHeader("timestamp", getFormatTimeString());
-        httpPost.addHeader("Content-Type", "application/x-www-form-urlencoded;charset=UTF-8");
-        List<NameValuePair> paramsList = new ArrayList<NameValuePair>();
-        for (Map.Entry<String, String> entry : params.entrySet())
-            paramsList.add(new BasicNameValuePair(entry.getKey(), entry.getValue()));
-        UrlEncodedFormEntity urlEncodedFormEntity = new UrlEncodedFormEntity(paramsList, "UTF-8");
-        httpPost.setEntity((HttpEntity)urlEncodedFormEntity);
-        String body = invoke(httpClient, (HttpUriRequest)httpPost);
-        try {
-            httpClient.close();
+        try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
+            RequestConfig requestConfig = RequestConfig.custom()
+                    .setConnectionRequestTimeout(5000).setConnectTimeout(5000)
+                    .setSocketTimeout(60000).build();
+            HttpPost httpPost = new HttpPost(url);
+            httpPost.setConfig(requestConfig);
+            httpPost.addHeader("appCode", params.get("partnerID"));
+            httpPost.addHeader("timestamp", getFormatTimeString());
+            httpPost.addHeader("Content-Type", "application/x-www-form-urlencoded;charset=UTF-8");
+            List<NameValuePair> paramsList = new ArrayList<NameValuePair>();
+            for (Map.Entry<String, String> entry : params.entrySet())
+                paramsList.add(new BasicNameValuePair(entry.getKey(), entry.getValue()));
+            UrlEncodedFormEntity urlEncodedFormEntity = new UrlEncodedFormEntity(paramsList, UTF);
+            httpPost.setEntity((HttpEntity)urlEncodedFormEntity);
+            return invoke(httpClient, (HttpUriRequest)httpPost);
         } catch (IOException e) {
             logger.error("HttpClientService post error", e);
+            return null;
         }
-        return body;
     }
 
     public static String getFormatTimeString() {

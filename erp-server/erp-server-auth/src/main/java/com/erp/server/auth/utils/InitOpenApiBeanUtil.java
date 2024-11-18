@@ -2,6 +2,7 @@ package com.erp.server.auth.utils;
 
 import java.lang.reflect.Method;
 import java.util.Collection;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.commons.lang3.StringUtils;
@@ -45,13 +46,13 @@ public class InitOpenApiBeanUtil implements ApplicationListener<ContextRefreshed
                 // 只对当前类bean处理，父类忽略
                 Method[] methodArr=userType.getDeclaredMethods();
                 for(Method method : methodArr){
-                    OpenApi OpenApi = AnnotationUtils.findAnnotation(method, OpenApi.class);
-                    if (OpenApi!=null && StringUtils.isNoneBlank(OpenApi.value())){
-                        GatewayBaseInfo value =gatewayMap.get(OpenApi.value());
+                    OpenApi openApi = AnnotationUtils.findAnnotation(method, OpenApi.class);
+                    if (openApi!=null && StringUtils.isNoneBlank(openApi.value())){
+                        GatewayBaseInfo value =gatewayMap.get(openApi.value());
                         if (null == value){
                             // 避免检查
                             method.setAccessible(true);
-                            gatewayMap.put(OpenApi.value(), new GatewayBaseInfo(method, object));
+                            gatewayMap.put(openApi.value(), new GatewayBaseInfo(method, object));
                         }
                     }
                 }
@@ -61,7 +62,7 @@ public class InitOpenApiBeanUtil implements ApplicationListener<ContextRefreshed
         }
     }
 
-    public ConcurrentHashMap<String, GatewayBaseInfo> getGatewayMap() {
+    public Map<String, GatewayBaseInfo> getGatewayMap() {
         return gatewayMap;
     }
 

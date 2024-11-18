@@ -1,6 +1,7 @@
 package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.enums.ApiError;
@@ -50,7 +51,7 @@ public class SoReturnNoticeDetailServiceImpl extends SuperServiceImpl<SoReturnNo
     @Resource
     private OperateLogService operateLogService;
 
-    @Autowired
+    @Resource
     private PlmTaskFeign plmTaskFeign;
 
     @Override
@@ -147,7 +148,7 @@ public class SoReturnNoticeDetailServiceImpl extends SuperServiceImpl<SoReturnNo
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean update(SoReturnNoticeEntity entity,SoReturnNoticeDTO.Update dto) {
-        List<String> addList = dto.getDetailList().stream().filter(c -> StringUtils.isBlank(c.getId())).map(SoReturnNoticeDetailDTO.Update::getId).collect(Collectors.toList());
+        List<String> addList = dto.getDetailList().stream().filter(c -> CharSequenceUtil.isBlank(c.getId())).map(SoReturnNoticeDetailDTO.Update::getId).collect(Collectors.toList());
         //获取退货单详情表id
         List<String> returnDetailIds = dto.getDetailList().stream().map(SoReturnNoticeDetailDTO.Update::getSourceDetailId).collect(Collectors.toList());
         List<SoReturnDetailEntity> soReturnDetailEntities = soReturnFeign.listDetailByIds(returnDetailIds);
@@ -169,7 +170,7 @@ public class SoReturnNoticeDetailServiceImpl extends SuperServiceImpl<SoReturnNo
             SoReturnNoticeDetailEntity detailEntity = new SoReturnNoticeDetailEntity();
             //退货通知单数量
             Integer returnNoticeQty = noticeDetailEntities.stream().filter(req -> req.getSourceDetailId().equals(detailDto.getSourceDetailId())).map(SoReturnNoticeDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
-            if (StringUtils.isNotBlank(detailDto.getId())) {
+            if (CharSequenceUtil.isNotBlank(detailDto.getId())) {
                 detailEntity.setId(detailDto.getId());
                 returnNoticeQty = noticeDetailEntities.stream().filter(req -> req.getSourceDetailId().equals(detailDto.getSourceDetailId()) && !req.getId().equals(detailDto.getId())).map(SoReturnNoticeDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
             }
@@ -205,7 +206,7 @@ public class SoReturnNoticeDetailServiceImpl extends SuperServiceImpl<SoReturnNo
             detailEntity.setSourceDetailId(detailDto.getSourceDetailId());
             list.add(detailEntity);
             //修改操作日志
-            if (StringUtils.isNotBlank(detailEntity.getId())) {
+            if (CharSequenceUtil.isNotBlank(detailEntity.getId())) {
                 SoReturnNoticeDetailEntity old = this.getById(detailEntity.getId());
                 operateLogService.addModuleOperateLogByObj(old, detailEntity, ModuleTypeEnum.SO_RETURN_NOTICE.getCode(), dto.getId(), "", String.format("【%s】", old.getSkuNo()));
             }
@@ -220,7 +221,7 @@ public class SoReturnNoticeDetailServiceImpl extends SuperServiceImpl<SoReturnNo
     }
 
     private List<String> getDeleteIds(List<SoReturnNoticeDetailDTO.Update> newList, List<SoReturnNoticeDetailEntity> oldList) {
-        List<String> newIds = newList.stream().filter(g -> StringUtils.isNotBlank(g.getId())).
+        List<String> newIds = newList.stream().filter(g -> CharSequenceUtil.isNotBlank(g.getId())).
                 map(SoReturnNoticeDetailDTO.Update::getId).collect(Collectors.toList());
         List<String> oldIds = oldList.stream().map(SoReturnNoticeDetailEntity
                 ::getId).collect(Collectors.toList());

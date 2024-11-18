@@ -11,9 +11,9 @@ import com.erp.model.plm.entity.ProjectTaskEntity;
 import com.erp.model.plm.vo.ScheduleTaskExportErrorExcelVO;
 import com.erp.server.plm.service.ProjectTaskService;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.util.ObjectUtils;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Date;
@@ -100,7 +100,7 @@ public class ProjectPlanTaskExcelListener extends AnalysisEventListener<Schedule
             task=projectTaskList.stream().filter(t -> t.getName().equals(taskName) &&
                     t.getProductId().equals(productId)).findFirst().orElse(null);
         }
-        if (Objects.isNull(task)) {
+        if (ObjectUtils.isEmpty(task)) {
             errorMsgList.add("任务不存在");
         }
         FindUserDTO user = null;
@@ -125,10 +125,8 @@ public class ProjectPlanTaskExcelListener extends AnalysisEventListener<Schedule
         if (StringUtils.isNotBlank(vo.getPlanStartTime()) && StringUtils.isNotBlank(vo.getPlanEndTime())) {
             Date startTime = DateUtil.strToDate(vo.getPlanStartTime(), DateUtil.fmt_year_month);
             Date endTime = DateUtil.strToDate(vo.getPlanEndTime(), DateUtil.fmt_year_month);
-            if (startTime != null && endTime != null) {
-                if (endTime.compareTo(startTime) < 0) {
-                    errorMsgList.add("结束时间必须大于开始时间");
-                }
+            if (startTime != null && endTime != null && endTime.compareTo(startTime) < 0) {
+                  errorMsgList.add("结束时间必须大于开始时间");
             }
 
         }
@@ -154,13 +152,9 @@ public class ProjectPlanTaskExcelListener extends AnalysisEventListener<Schedule
 
         String dbChargeName = task.getChargeName();
         //当两个名字不一样 就要更改
-        if (!chargeName.equals(dbChargeName)) {
-            if (user != null) {
-                if (StringUtils.isNotBlank(user.getUserId())) {
-                    task.setChargeName(chargeName);
-                    task.setChargeId(user.getUserId());
-                }
-            }
+        if (!chargeName.equals(dbChargeName) && user != null && StringUtils.isNotBlank(user.getUserId())) {
+            task.setChargeName(chargeName);
+            task.setChargeId(user.getUserId());
         }
 
         taskIdList.add(task.getId());
@@ -184,10 +178,6 @@ public class ProjectPlanTaskExcelListener extends AnalysisEventListener<Schedule
 
     @Override
     public void doAfterAllAnalysed(AnalysisContext analysisContext) {
-//        //提交排期
-//        HandleTaskScheduleDTO dto = new HandleTaskScheduleDTO();
-//        dto.setProductId(productId);
-//        dto.setTaskIdList(taskIdList);
-//        projectPlanService.submitSchedule(dto);
+        return;
     }
 }

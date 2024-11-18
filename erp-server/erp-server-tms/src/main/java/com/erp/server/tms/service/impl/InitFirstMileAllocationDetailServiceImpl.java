@@ -1,32 +1,34 @@
 package com.erp.server.tms.service.impl;
 
 
-import cn.hutool.core.util.StrUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.UnitEnum;
+import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
+import com.common.core.enums.ApiError;
 import com.common.core.enums.CurrencyEnum;
+import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapperUtils;
+import com.erp.model.tms.dto.InitFirstMileAllocationDetailDTO;
 import com.erp.model.tms.entity.InitFirstMileAllocationDetailEntity;
 import com.erp.server.tms.mapper.InitFirstMileAllocationDetailMapper;
 import com.erp.server.tms.service.InitFirstMileAllocationDetailService;
-import com.common.business.service.impl.SuperServiceImpl;
-import com.common.business.threadlocal.UserContext;
 import com.erp.server.tms.service.OperateLogService;
-import com.common.core.exception.ServiceException;
-import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Transactional;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
-import com.erp.model.tms.dto.InitFirstMileAllocationDetailDTO;
-
-import java.math.BigDecimal;
-import java.util.*;
-import java.util.stream.Collectors;
-
-import com.common.core.utils.*;
-import com.common.core.enums.ApiError;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
+
+import javax.annotation.Resource;
+import java.math.BigDecimal;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -39,7 +41,7 @@ import org.springframework.util.CollectionUtils;
 @Slf4j
 @Service
 public class InitFirstMileAllocationDetailServiceImpl extends SuperServiceImpl<InitFirstMileAllocationDetailMapper, InitFirstMileAllocationDetailEntity> implements InitFirstMileAllocationDetailService {
-    @Autowired
+    @Resource
     private OperateLogService operateLogService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
@@ -59,10 +61,10 @@ public class InitFirstMileAllocationDetailServiceImpl extends SuperServiceImpl<I
         }
 
         // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "期初头程分摊明细", initFirstMileAllocationDetailEntity.getId());
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
+        String msg = CharSequenceUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "期初头程分摊明细", initFirstMileAllocationDetailEntity.getId());
+        
         operateLogService.addModuleOperateLog(msg, null, initFirstMileAllocationDetailEntity.getId(), "新增操作");
-        // TODO 新增明细（如果有明细的话）
+        
 
         return new BaseResultDTO.AddDTO(initFirstMileAllocationDetailEntity.getId(), initFirstMileAllocationDetailEntity.getId());
     }
@@ -84,12 +86,12 @@ public class InitFirstMileAllocationDetailServiceImpl extends SuperServiceImpl<I
         if (!save) {
             throw new ServiceException("期初头程分摊明细保存失败");
         }
-        // TODO 修改明细数据（包含增删改）（如果有明细的话）
+        
 
         // 记录主单操作日志
         log.info("编辑 开始记录期初头程分摊明细日志数据，id：【{}】", initFirstMileAllocationDetailEntity.getId());
-        String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), initFirstMileAllocationDetailEntity.getId(), "期初头程分摊明细");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
+        String msg = CharSequenceUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), initFirstMileAllocationDetailEntity.getId(), "期初头程分摊明细");
+        
         operateLogService.addModuleOperateLogByObj(old, initFirstMileAllocationDetailEntity, null, initFirstMileAllocationDetailEntity.getId(), msg);
         return Boolean.TRUE;
     }
@@ -102,7 +104,7 @@ public class InitFirstMileAllocationDetailServiceImpl extends SuperServiceImpl<I
             lambdaUpdate().eq(InitFirstMileAllocationDetailEntity::getMainId, id).remove();
             return;
         }
-        List<String> newDetailIds = detailEntityList.stream().filter(e -> Objects.nonNull(e) && StrUtil.isNotBlank(e.getId())).map(InitFirstMileAllocationDetailEntity::getId).distinct().collect(Collectors.toList());
+        List<String> newDetailIds = detailEntityList.stream().filter(e -> Objects.nonNull(e) && CharSequenceUtil.isNotBlank(e.getId())).map(InitFirstMileAllocationDetailEntity::getId).distinct().collect(Collectors.toList());
         if (CollectionUtils.isEmpty(newDetailIds)) {
             //明细为空则清空
             lambdaUpdate().eq(InitFirstMileAllocationDetailEntity::getMainId, id).remove();
@@ -118,7 +120,7 @@ public class InitFirstMileAllocationDetailServiceImpl extends SuperServiceImpl<I
                         && Objects.equals(e.getSourceDetailId(), detailEntity.getSourceDetailId())
                         && Objects.equals(e.getSkuId(), detailEntity.getSkuId())).findFirst().orElse(null);
                 if (Objects.nonNull(entity)){
-                    throw new ServiceException(StrUtil.format("发货单【{}】SKU【{}】已存在", entity.getSourceCode(),entity.getSkuNo()));
+                    throw new ServiceException(CharSequenceUtil.format("发货单【{}】SKU【{}】已存在", entity.getSourceCode(),entity.getSkuNo()));
                 }
             }
         });
@@ -135,14 +137,14 @@ public class InitFirstMileAllocationDetailServiceImpl extends SuperServiceImpl<I
             if (Objects.isNull(detailEntity.getExchangeRate())){
                 detailEntity.setExchangeRate(BigDecimal.ONE);
             }
-            if (StrUtil.isBlank(detailEntity.getCurrency())){
+            if (CharSequenceUtil.isBlank(detailEntity.getCurrency())){
                 detailEntity.setCurrency(CurrencyEnum.CNY.getCurrencyCode());
                 detailEntity.setCurrencySymbol(CurrencyEnum.CNY.getCurrencySymbol());
             }
-            if (StrUtil.isBlank(detailEntity.getWeightUnit())){
+            if (CharSequenceUtil.isBlank(detailEntity.getWeightUnit())){
                 detailEntity.setWeightUnit(UnitEnum.WeightUnitEnum.KG.code);
             }
-            if (StrUtil.isBlank(detailEntity.getSourceType())){
+            if (CharSequenceUtil.isBlank(detailEntity.getSourceType())){
                 detailEntity.setSourceType(SourceTypeEnum.FIRST_MILE_DELIVERY.getCode());
             }
         });
@@ -150,7 +152,7 @@ public class InitFirstMileAllocationDetailServiceImpl extends SuperServiceImpl<I
     }
     @Override
     public List<InitFirstMileAllocationDetailEntity> listBySourceIds(List<String> sourceIds, String status) {
-        if (CollectionUtils.isEmpty(sourceIds) && StrUtil.isBlank(status)){
+        if (CollectionUtils.isEmpty(sourceIds) && CharSequenceUtil.isBlank(status)){
             return Collections.emptyList();
         }
         return baseMapper.listBySourceIds(sourceIds,status);
@@ -172,7 +174,7 @@ public class InitFirstMileAllocationDetailServiceImpl extends SuperServiceImpl<I
 
     @Override
     public void removeByMainId(String id) {
-        if (!StrUtil.isBlank(id)) {
+        if (!CharSequenceUtil.isBlank(id)) {
             this.lambdaUpdate().eq(InitFirstMileAllocationDetailEntity::getMainId, id).remove();
         }
     }
@@ -182,6 +184,6 @@ public class InitFirstMileAllocationDetailServiceImpl extends SuperServiceImpl<I
      * 新增修改处理数据
      */
     private void handleData(InitFirstMileAllocationDetailEntity initFirstMileAllocationDetailEntity) {
-        // TODO 验证数据 & 数据赋值
+        
     }
 }

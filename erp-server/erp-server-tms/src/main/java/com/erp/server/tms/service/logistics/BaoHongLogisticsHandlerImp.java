@@ -178,7 +178,7 @@ public class BaoHongLogisticsHandlerImp extends AbstractLogisticsHandler {
     }
 
     @Override
-    public ApiResult authorization(Map<String, String> authMap) {
+    public ApiResult<Object>authorization(Map<String, String> authMap) {
         try {
             TransferLogisticsContext.setAuthMap(authMap);
 

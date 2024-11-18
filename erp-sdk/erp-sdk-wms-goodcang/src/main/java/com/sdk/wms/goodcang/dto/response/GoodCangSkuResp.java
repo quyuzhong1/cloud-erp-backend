@@ -123,8 +123,8 @@ public class GoodCangSkuResp extends CleanBaseDTO implements Serializable {
 
     @Data
     @ToString
-    public static class TaxInfo {
-
+    public static class TaxInfo implements Serializable{
+        private static final long serialVersionUID = 2405172041950251807L;
         //可发国家/地区
         @JSONField(name = "exportable_country")
         private String exportableCountry;
@@ -172,7 +172,8 @@ public class GoodCangSkuResp extends CleanBaseDTO implements Serializable {
 
     @Data
     @ToString
-    public static class ExportCountry {
+    public static class ExportCountry implements Serializable{
+        private static final long serialVersionUID = 2405172041950251807L;
 
         //国家/地区简称
         @JSONField(name = "country_code")
@@ -189,7 +190,8 @@ public class GoodCangSkuResp extends CleanBaseDTO implements Serializable {
 
     @Data
     @ToString
-    public static class ImportCountry {
+    public static class ImportCountry implements Serializable{
+        private static final long serialVersionUID = 2405172041950251807L;
 
         //国家/地区简称
         @JSONField(name = "country_code")
@@ -246,7 +248,8 @@ public class GoodCangSkuResp extends CleanBaseDTO implements Serializable {
 
     @Data
     @ToString
-    public static class BatteryInfo {
+    public static class BatteryInfo implements Serializable{
+        private static final long serialVersionUID = 2405172041950251807L;
 
         //电池型号
         @JSONField(name = "battery_model")

@@ -1,12 +1,13 @@
 package com.erp.server.tms.service.impl;
 
 
-import cn.hutool.core.util.StrUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -15,15 +16,26 @@ import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.ApproveTypeEnum;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.TabApproveStatusEnum;
+import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
+import com.common.core.enums.ApiError;
 import com.common.core.enums.CurrencyEnum;
+import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.ExcelUtil;
+import com.common.core.utils.FastDFSClientUtil;
+import com.common.core.utils.MathUtil;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.entity.DictCurrencyEntity;
 import com.erp.model.sys.entity.SysAccountingCompanyEntity;
+import com.erp.model.tms.dto.InventorySkuCostDTO;
 import com.erp.model.tms.dto.InventorySkuCostDetailDTO;
 import com.erp.model.tms.dto.excel.InventorySkuCostDetailExcelDTO;
-import com.erp.model.tms.entity.*;
+import com.erp.model.tms.entity.FirstMileSkuCostRefEntity;
+import com.erp.model.tms.entity.InventorySkuCostDetailEntity;
+import com.erp.model.tms.entity.InventorySkuCostEntity;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
@@ -32,38 +44,29 @@ import com.erp.server.tms.convert.InventorySkuCostConverter;
 import com.erp.server.tms.listener.InventorySkuCostDetailExcelListener;
 import com.erp.server.tms.mapper.InventorySkuCostMapper;
 import com.erp.server.tms.service.*;
-import com.common.business.service.impl.SuperServiceImpl;
-import com.common.business.threadlocal.UserContext;
-import com.common.core.exception.ServiceException;
-import com.common.business.config.DocNoGenHelper;
+import io.seata.spring.annotation.GlobalTransactional;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
-import io.seata.spring.annotation.GlobalTransactional;
-import lombok.extern.slf4j.Slf4j;
-import com.erp.model.tms.dto.InventorySkuCostDTO;
-
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.math.BigDecimal;
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
-import java.util.*;
-import java.util.stream.Collectors;
-
-import com.common.core.utils.*;
-import com.common.core.enums.ApiError;
 import org.springframework.util.CollectionUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.math.BigDecimal;
+import java.nio.charset.StandardCharsets;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_TMS_INVENTORY_SKU_COST;
 
@@ -78,9 +81,9 @@ import static com.common.business.enums.FileTaskEventEnum.EXPORT_TMS_INVENTORY_S
 @Slf4j
 @Service
 public class InventorySkuCostServiceImpl extends SuperServiceImpl<InventorySkuCostMapper, InventorySkuCostEntity> implements InventorySkuCostService {
-    @Autowired
+    @Resource
     private OperateLogService operateLogService;
-    @Autowired
+    @Resource
     private DocNoGenHelper docNoGenHelper;
     @Resource
     private InventorySkuCostDetailService inventorySkuCostDetailService;
@@ -114,7 +117,7 @@ public class InventorySkuCostServiceImpl extends SuperServiceImpl<InventorySkuCo
             throw new ServiceException("SKU成本保存失败");
         }
         // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "SKU成本", inventorySkuCostEntity.getCode());
+        String msg = CharSequenceUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "SKU成本", inventorySkuCostEntity.getCode());
         //  此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.INVENTORY_SKU_COST.getCode(), inventorySkuCostEntity.getId(), "新增操作");
         // 新增明细
@@ -152,7 +155,7 @@ public class InventorySkuCostServiceImpl extends SuperServiceImpl<InventorySkuCo
         }
         // 记录主单操作日志
         log.info("编辑 开始记录SKU成本日志数据，单号：【{}】", inventorySkuCostEntity.getCode());
-        String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), inventorySkuCostEntity.getCode(), "SKU成本");
+        String msg = CharSequenceUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), inventorySkuCostEntity.getCode(), "SKU成本");
         //此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLogByObj(old, inventorySkuCostEntity, ModuleTypeEnum.INVENTORY_SKU_COST.getCode(), inventorySkuCostEntity.getId(), msg);
         return Boolean.TRUE;
@@ -304,12 +307,11 @@ public class InventorySkuCostServiceImpl extends SuperServiceImpl<InventorySkuCo
             response.reset();
             // 设置文件头
             response.setHeader("Content-Disposition",
-                    "attchement;filename=" + new String(excelName.getBytes("gb2312"), "ISO8859-1"));
+                    "attchement;filename=" + new String(excelName.getBytes("gb2312"), StandardCharsets.ISO_8859_1));
             response.setContentType("application/msexcel");
             wb.write(output);
             wb.close();
         } catch (Exception e) {
-            e.printStackTrace();
             throw new ServiceException(ApiError.ERROR_95131);
         }
     }
@@ -373,7 +375,7 @@ public class InventorySkuCostServiceImpl extends SuperServiceImpl<InventorySkuCo
 
     @Override
     public List<InventorySkuCostDTO.PagingVO> listDetailByOrgIdAndSkuIds(String orgId, List<String> skuIds, String status, LocalDate month) {
-        if (StrUtil.isBlank(orgId) && StrUtil.isBlank(status) && CollectionUtils.isEmpty(skuIds) && Objects.isNull(month)){
+        if (CharSequenceUtil.isBlank(orgId) && CharSequenceUtil.isBlank(status) && CollectionUtils.isEmpty(skuIds) && Objects.isNull(month)){
             return Collections.emptyList();
         }
         return baseMapper.listDetailByOrgIdAndSkuIds(orgId,skuIds,status,month);
@@ -385,14 +387,14 @@ public class InventorySkuCostServiceImpl extends SuperServiceImpl<InventorySkuCo
      */
     private void handleData(InventorySkuCostEntity inventorySkuCostEntity) {
         // 生成单号
-        if (StrUtil.isBlank(inventorySkuCostEntity.getCode())) {
+        if (CharSequenceUtil.isBlank(inventorySkuCostEntity.getCode())) {
             String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_CHCB);
             inventorySkuCostEntity.setCode(code);
         }
-        if (StrUtil.isBlank(inventorySkuCostEntity.getStatus())) {
+        if (CharSequenceUtil.isBlank(inventorySkuCostEntity.getStatus())) {
             inventorySkuCostEntity.setStatus(ApproveStatusEnum.WAIT_SUBMIT.getCode());
         }
-        if (StrUtil.isBlank(inventorySkuCostEntity.getCurrency())){
+        if (CharSequenceUtil.isBlank(inventorySkuCostEntity.getCurrency())){
             inventorySkuCostEntity.setCurrency(CurrencyEnum.CNY.getCurrencyCode());
             inventorySkuCostEntity.setCurrencySymbol(CurrencyEnum.CNY.getCurrencySymbol());
         }else {
@@ -416,7 +418,7 @@ public class InventorySkuCostServiceImpl extends SuperServiceImpl<InventorySkuCo
                 inventorySkuCostEntity.setExchangeRate(rate);
             }
         }
-        if (StrUtil.isNotBlank(inventorySkuCostEntity.getCompanyId())){
+        if (CharSequenceUtil.isNotBlank(inventorySkuCostEntity.getCompanyId())){
             SysAccountingCompanyEntity company = sysUserFeign.getCompanyById(inventorySkuCostEntity.getCompanyId());
             if (Objects.nonNull(company)){
                 inventorySkuCostEntity.setCompanyName(company.getCompanyName());

@@ -4,12 +4,15 @@ import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
+
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.common.business.annotation.SaveData;
 import com.common.business.constant.MongoTableNameContant;
 import com.common.business.dto.RequestDTO;
 import com.common.business.enums.PlatformApiEnum;
 import com.common.business.service.IReportSaveService;
+import com.common.core.exception.ServiceException;
 import com.common.core.utils.MapUtil;
 import com.common.core.utils.date.DateUtil;
 import com.common.core.utils.date.LocalDateUtil;
@@ -102,19 +105,20 @@ public class MabangHistoryOrderInfoServiceImpl implements IReportSaveService<Ord
                 .collect(Collectors.toList());
         Map<String, OrderEntity> orderEntityMap = pushToMqList.stream().collect(Collectors.toMap(OrderEntity::getPlatformOrderId, e -> e));
         // 异步推送到MQ
-        entityToMqlist.stream().peek(msg ->{
+        List<BiOrderInfoEntity> biOrderInfoEntityList = entityToMqlist.stream().peek(msg ->{
             SendResult result = mqProducerService.syncClassMsg(RocketMqTopic.DMP_ERP_ORDER_TOPIC, RocketMqTagEnum.MABANG_SALE_ORDER_TAG.getName(),
                     msg, StrUtil.format("{}_{}", msg.getPlatformOrderId(), msg.getSalesRecordNumber()));
             if (!SendStatus.SEND_OK.equals(result.getSendStatus())){
-                throw new RuntimeException(StrUtil.format("发送马帮订单MQ数据异常，{}", JSONUtil.toJsonStr(result)));
+                throw new ServiceException(StrUtil.format("发送马帮订单MQ数据异常，{}", JSONUtil.toJsonStr(result)));
             }
             BiDeliveryDetailInfoEntity deliveryDetailInfo = MabangDeliveryDetailServiceImpl.initOrderInfoEntity(orderEntityMap.get(msg.getPlatformOrderId()));
             SendResult cleanResult = mqProducerService.syncClassMsgByDelayLevel(RocketMqTopic.DMP_ERP_ORDER_TOPIC, RocketMqTagEnum.MABANG_DELIVERY_ORDER_TAG.getName(),
                     deliveryDetailInfo, StrUtil.format("{}_{}", deliveryDetailInfo.getPlatformOrderId(), deliveryDetailInfo.getBillNo()));
             if (!SendStatus.SEND_OK.equals(cleanResult.getSendStatus())){
-                throw new RuntimeException(StrUtil.format("发送马帮发货单MQ数据异常，{}", JSONUtil.toJsonStr(result)));
+                throw new ServiceException(StrUtil.format("发送马帮发货单MQ数据异常，{}", JSONUtil.toJsonStr(result)));
             }
         }).collect(Collectors.toList());
+        log.debug("马帮历史订单数据为：{}" , JSON.toJSONString(biOrderInfoEntityList));
     }
 
     @Override

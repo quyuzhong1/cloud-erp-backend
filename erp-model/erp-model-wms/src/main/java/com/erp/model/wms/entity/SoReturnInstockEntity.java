@@ -222,9 +222,9 @@ public class SoReturnInstockEntity extends BaseEntity<SoReturnInstockEntity> {
 
     public static final String APPROVE_STATUS = "approve_status";
 
-    public static final String CODE = "code";
+    
 
-    public static final String TYPE = "type";
+    
 
     public static final String SALES_ORG_ID = "sales_org_id";
 

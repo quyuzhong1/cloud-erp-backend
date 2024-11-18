@@ -1,8 +1,8 @@
 package com.erp.server.mrp.service.impl;
 
 import cn.hutool.core.date.LocalDateTimeUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.TypeReference;
@@ -145,8 +145,6 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
     private ReplenishmentSuggestionDetailService replenishmentSuggestionDetailService;
     @Resource
     private PurchaseSuggestService purchaseSuggestService;
-    @Resource
-    private CfgRuleWarehouseService cfgRuleWarehouseService;
 
     @Resource
     private SalesEstimateHandler salesEstimateHandler;
@@ -296,7 +294,7 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
     @Override
     public SalesAnalysisVO salesAnalysis(SalesAnalysisDTO dto) {
         LocalDate startDate = dto.getStartDate().minusDays(1);
-        LocalDate endDate = LocalDate.now().plusDays(TimePeriodEstimateEnum.of(dto.getTimePeriod()).getDays() - 1);
+        LocalDate endDate = LocalDate.now().plusDays(TimePeriodEstimateEnum.of(dto.getTimePeriod()).getDays() - 1L);
         SalesAnalysisVO salesAnalysisVO = new SalesAnalysisVO();
         List<SalesInfoEntity> list = salesInfoService.list(Wrappers.<SalesInfoEntity>lambdaQuery()
                 .eq(SalesInfoEntity::getReplenishmentDetailId, dto.getDetailId())
@@ -418,14 +416,14 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
     @Override
     @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO notRestockingReplenishment(String id, String replenishmentRemark) {
-        ReplenishmentSuggestionEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到补货建议数据"));
+        ReplenishmentSuggestionEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException(ApiError.ERROR_REPLENISHMENT_NOT_EXIST));
         if (!ReplenishmentTypeEnum.NORMAL.getCode().equals(entity.getReplenishmentType())) {
             throw new ServiceException(ApiError.ERROR_NOT_RESTOCKING_REPLENISHMENT);
         }
         updateIsReplenishment(id, replenishmentRemark, ReplenishmentTypeEnum.NOT_RESTOCKING.getCode());
 
         // 操作日志
-        String msg = StrUtil.format("操作了暂不补货，原因：【{}】 ",replenishmentRemark);
+        String msg = CharSequenceUtil.format("操作了暂不补货，原因：【{}】 ",replenishmentRemark);
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.REPLENISHMENT_SUGGESTION.getCode(), entity.getId(), "暂不补货");
         return BatchResultDTO.success(entity.getId(), entity.getSkuNo(), OperationTypeEnum.UPDATE);
     }
@@ -450,13 +448,13 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
     @Override
     @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO restoreReplenishment(String id, String replenishmentRemark) {
-        ReplenishmentSuggestionEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到补货建议数据"));
+        ReplenishmentSuggestionEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException(ApiError.ERROR_REPLENISHMENT_NOT_EXIST));
         if (!ReplenishmentTypeEnum.NOT_RESTOCKING.getCode().equals(entity.getReplenishmentType())) {
             throw new ServiceException(ApiError.ERROR_RESTORE_REPLENISHMENT);
         }
         updateIsReplenishment(id, replenishmentRemark, ReplenishmentTypeEnum.NORMAL.getCode());
         // 操作日志
-        String msg = StrUtil.format("操作了恢复补货，原因：【{}】 ",replenishmentRemark);
+        String msg = CharSequenceUtil.format("操作了恢复补货，原因：【{}】 ",replenishmentRemark);
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.REPLENISHMENT_SUGGESTION.getCode(), entity.getId(), "恢复补货");
         return BatchResultDTO.success(entity.getId(), entity.getSkuNo(), OperationTypeEnum.UPDATE);
     }
@@ -467,7 +465,7 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
         if (ObjectUtil.isEmpty(stockUpUpdateDTO) && ObjectUtil.isEmpty(salesQtyUpdateDTO)) {
             throw new ServiceException("备货、销量设置不能全部为空！");
         }
-        ReplenishmentSuggestionEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到补货建议数据"));
+        ReplenishmentSuggestionEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException(ApiError.ERROR_REPLENISHMENT_NOT_EXIST));
         if (ObjectUtil.isEmpty(entity)) {
             throw new ServiceException(ApiError.NOT_EXIST_BILL,"补货建议");
         }
@@ -487,82 +485,12 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
         }
         return BatchResultDTO.success(entity.getId(), entity.getSkuNo(), OperationTypeEnum.UPDATE);
     }
-    /**
-     * 销量添加默认设置
-     * @author will
-     * @date 2024/9/10 18:23
-     * @param entity
-     * @param updateDetailDTO
-     */
-    private void formatSalesQtyDefaultData (ReplenishmentSuggestionEntity entity,CfgRuleSalesQtyDTO.UpdateDetailDTO updateDetailDTO) {
-//        List<ReplenishmentSuggestionDetailEntity> detailList = replenishmentSuggestionDetailService.listByMainIdList(Arrays.asList(entity.getId()));
-//        if (CollectionUtils.isEmpty(detailList)) {
-//            return;
-//        }
-//        String skuType = detailList.get(0).getSkuType();
-//        CfgRuleSalesQtyDTO.StrategyResultDTO defaultCfgRuleSalesQty = cfgRuleSalesQtyService.getDefaultCfgRuleSalesQty(entity.getPlatformType(), skuType);
-//        if (ObjectUtil.isEmpty(defaultCfgRuleSalesQty) || CollectionUtils.isEmpty(defaultCfgRuleSalesQty.getFormulaResults())) {
-//            return;
-//        }
-//        CfgRuleSalesQtyDTO.StrategyFormulaResultDTO strategyFormulaResultDTO = defaultCfgRuleSalesQty.getFormulaResults().stream().filter(obj -> StrUtil.equals(obj.getType(), CfgRuleSalesFormulaTypeEnum.DEFAULT.getCode())).findFirst().orElse(null);
-//        if (ObjectUtil.isEmpty(strategyFormulaResultDTO)) {
-//            return;
-//        }
-//        CfgRuleSalesFormulaDTO.DefaultUpdateDTO defaultUpdateDTO = BeanMapperUtils.map(CfgRuleSalesFormulaDTO.DefaultUpdateDTO.class, strategyFormulaResultDTO);
-//        defaultUpdateDTO.setId(null);
-//        CfgRuleSalesFormulaDTO.PercentJsonDTO percentJsonDTO = JSONUtil.toBean(strategyFormulaResultDTO.getPercentJson(), CfgRuleSalesFormulaDTO.PercentJsonDTO.class);
-//        defaultUpdateDTO.setPercentJsonDTO(percentJsonDTO);
-//        updateDetailDTO.setDefaultSalesQtyDTO(defaultUpdateDTO);
-    }
 
-
-    /**
-     * 备货设置添加默认信息
-     * @author will
-     * @date 2024/9/10 17:59
-     * @param entity
-     * @param stockUpUpdateDTO
-     */
-    private void formatStockUpDefaultData (ReplenishmentSuggestionEntity entity,CfgRuleStockUpDTO.CustomUpdateDTO stockUpUpdateDTO) {
-        CfgRuleStockUpEntity defaultCfgRuleStockUp = cfgRuleStockUpService.getDefaultCfgRuleStockUp(entity.getPlatformType());
-        if (ObjectUtil.isEmpty(defaultCfgRuleStockUp)) {
-            return;
-        }
-        //采购审批
-        Integer purchaseApproveDays = ObjectUtil.isEmpty(stockUpUpdateDTO.getPurchaseApproveDays()) ? defaultCfgRuleStockUp.getPurchaseApproveDays() : null;
-        stockUpUpdateDTO.setPurchaseApproveDays(purchaseApproveDays);
-        //生产周期
-        Integer productionDays = ObjectUtil.isEmpty(stockUpUpdateDTO.getProductionDays()) ? defaultCfgRuleStockUp.getProductionDays() : null;
-        stockUpUpdateDTO.setProductionDays(productionDays);
-        //供应商发货
-        Integer supplierDeliveryDays = ObjectUtil.isEmpty(stockUpUpdateDTO.getSupplierDeliveryDays()) ? defaultCfgRuleStockUp.getSupplierDeliveryDays() : null;
-        stockUpUpdateDTO.setSupplierDeliveryDays(supplierDeliveryDays);
-        //质检入库
-        Integer qcDays = ObjectUtil.isEmpty(stockUpUpdateDTO.getQcDays()) ? defaultCfgRuleStockUp.getQcDays() : null;
-        stockUpUpdateDTO.setQcDays(qcDays);
-        //采购频率
-        Integer purchaseCycleDays = ObjectUtil.isEmpty(stockUpUpdateDTO.getPurchaseCycleDays()) ? defaultCfgRuleStockUp.getPurchaseCycleDays() : null;
-        stockUpUpdateDTO.setPurchaseCycleDays(purchaseCycleDays);
-        //FBA安全天数
-        Integer safeDays = ObjectUtil.isEmpty(stockUpUpdateDTO.getSafeDays()) ? defaultCfgRuleStockUp.getSafeDays() : null;
-        stockUpUpdateDTO.setSafeDays(safeDays);
-        //默认备货系数
-        BigDecimal stockingRatio = ObjectUtil.isEmpty(stockUpUpdateDTO.getStockingRatio()) ? defaultCfgRuleStockUp.getStockingRatio() : null;
-        stockUpUpdateDTO.setStockingRatio(stockingRatio);
-
-        //默认物流信息
-        List<CfgRuleLogisticsEntity> cfgRuleLogisticsList = cfgRuleLogisticsService.listByStockUpIdList(Arrays.asList(defaultCfgRuleStockUp.getId()));
-        if (CollectionUtils.isNotEmpty(cfgRuleLogisticsList)) {
-            List<CfgRuleLogisticsDTO.UpdateDTO> cfgLogisticsList = BeanMapperUtils.copyList(CfgRuleLogisticsDTO.UpdateDTO.class,cfgRuleLogisticsList);
-            cfgLogisticsList.stream().forEach(obj -> obj.setId(null));
-            stockUpUpdateDTO.setCfgLogisticsList(cfgLogisticsList);
-        }
-    }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO restoreRule(String id, List<String> ruleTypeList) {
-        ReplenishmentSuggestionEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到补货建议数据"));
+        ReplenishmentSuggestionEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException(ApiError.ERROR_REPLENISHMENT_NOT_EXIST));
         if (CollectionUtils.isEmpty(ruleTypeList)) {
             ruleTypeList = Arrays.asList(ReplenishmentRuleTypeEnum.STOCK_UP.getCode(),ReplenishmentRuleTypeEnum.SALES.getCode());
         }
@@ -580,12 +508,12 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
     @Override
     @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO favorite(String id) {
-        ReplenishmentSuggestionEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到补货建议数据"));
+        ReplenishmentSuggestionEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException(ApiError.ERROR_REPLENISHMENT_NOT_EXIST));
 
         //当前登陆人
         LoginUser userInfo = UserContext.getDefaultLoginUser();
         Boolean isFavorite = replenishmentSuggestionFavoriteService.isFavorite(userInfo.getUid(), entity.getId());
-        if (isFavorite) {
+        if (Boolean.TRUE.equals(isFavorite)) {
             return BatchResultDTO.success(entity.getId(), entity.getSkuNo(), "补货建议已关注，无需再次关注");
         }
 
@@ -595,7 +523,7 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
         replenishmentSuggestionFavoriteService.add(dto);
 
         // 操作日志
-        String msg = StrUtil.format("设置了关注");
+        String msg = CharSequenceUtil.format("设置了关注");
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.REPLENISHMENT_SUGGESTION.getCode(), entity.getId(), "关注");
         return BatchResultDTO.success(entity.getId(), entity.getSkuNo(), OperationTypeEnum.UPDATE);
     }
@@ -603,17 +531,17 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
     @Override
     @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO cancelFavorite(String id) {
-        ReplenishmentSuggestionEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到补货建议数据"));
+        ReplenishmentSuggestionEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException(ApiError.ERROR_REPLENISHMENT_NOT_EXIST));
         //当前登陆人
         LoginUser userInfo = UserContext.getDefaultLoginUser();
         Boolean isFavorite = replenishmentSuggestionFavoriteService.isFavorite(userInfo.getUid(), entity.getId());
-        if (!isFavorite) {
+        if (Boolean.FALSE.equals(isFavorite)) {
             return BatchResultDTO.success(entity.getId(), entity.getSkuNo(), "补货建议未关注，无需取消关注");
         }
         replenishmentSuggestionFavoriteService.cancelFavorite(userInfo.getUid(),entity.getId());
 
         // 操作日志
-        String msg = StrUtil.format("设置了取消关注");
+        String msg = CharSequenceUtil.format("设置了取消关注");
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.REPLENISHMENT_SUGGESTION.getCode(), entity.getId(), "取消关注");
         return BatchResultDTO.success(entity.getId(), entity.getSkuNo(), OperationTypeEnum.UPDATE);
     }
@@ -621,7 +549,7 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
     @Override
     @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO updateLabel(ReplenishmentSuggestionDTO.UpdateLabelDTO updateLabelDTO) {
-        ReplenishmentSuggestionEntity entity = super.getByIdOpt(updateLabelDTO.getId()).orElseThrow(() -> new ServiceException("未找到补货建议数据"));
+        ReplenishmentSuggestionEntity entity = super.getByIdOpt(updateLabelDTO.getId()).orElseThrow(() -> new ServiceException(ApiError.ERROR_REPLENISHMENT_NOT_EXIST));
 
         //原标签
         List<LabelInfoDTO.ViewDTO> oldList = replenishmentRefLabelService.listLabelInfoByRefId(updateLabelDTO.getId());
@@ -634,10 +562,10 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
         replenishmentRefLabelService.update(dto,entity.getId());
 
         //现标签
-        List<LabelInfoEntity> labelInfoList = CollectionUtils.isEmpty(updateLabelDTO.getLabelIdList()) ? Collections.EMPTY_LIST : labelInfoService.listByIds(updateLabelDTO.getLabelIdList());
+        List<LabelInfoEntity> labelInfoList = CollectionUtils.isEmpty(updateLabelDTO.getLabelIdList()) ? Collections.emptyList() : labelInfoService.listByIds(updateLabelDTO.getLabelIdList());
         String labelNames = labelInfoList.stream().map(LabelInfoEntity::getName).collect(Collectors.joining(","));
         // 操作日志
-        String msg = StrUtil.format("设置了标签：从【{}】修改为【{}】",oldLabelNames,labelNames);
+        String msg = CharSequenceUtil.format("设置了标签：从【{}】修改为【{}】",oldLabelNames,labelNames);
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.REPLENISHMENT_SUGGESTION.getCode(), entity.getId(), "设置标签");
         return BatchResultDTO.success(entity.getId(), entity.getSkuNo(), OperationTypeEnum.UPDATE);
     }
@@ -645,7 +573,7 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
     @Override
     @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO batchAddLabel(String id, List<String> labelIdList) {
-        ReplenishmentSuggestionEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到补货建议数据"));
+        ReplenishmentSuggestionEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException(ApiError.ERROR_REPLENISHMENT_NOT_EXIST));
         if (CollectionUtils.isEmpty(labelIdList)) {
             return BatchResultDTO.success(entity.getId(), entity.getSkuNo(), OperationTypeEnum.UPDATE);
         }
@@ -656,9 +584,9 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
         dto.setIsIncrement(Boolean.TRUE);
         replenishmentRefLabelService.update(dto,entity.getId());
         // 操作日志
-        List<LabelInfoEntity> labelInfoList = CollectionUtils.isEmpty(labelIdList) ? Collections.EMPTY_LIST : labelInfoService.listByIds(labelIdList);
+        List<LabelInfoEntity> labelInfoList = CollectionUtils.isEmpty(labelIdList) ? Collections.emptyList() : labelInfoService.listByIds(labelIdList);
         String labelNames = labelInfoList.stream().map(LabelInfoEntity::getName).collect(Collectors.joining(","));
-        String msg = StrUtil.format("添加了标签【{}】",labelNames);
+        String msg = CharSequenceUtil.format("添加了标签【{}】",labelNames);
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.REPLENISHMENT_SUGGESTION.getCode(), entity.getId(), "添加标签");
         return BatchResultDTO.success(entity.getId(), entity.getSkuNo(), OperationTypeEnum.UPDATE);
     }
@@ -666,16 +594,16 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
     @Override
     @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO cancelLabel(String id, List<String> labelIdList) {
-        ReplenishmentSuggestionEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到补货建议数据"));
+        ReplenishmentSuggestionEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException(ApiError.ERROR_REPLENISHMENT_NOT_EXIST));
         if (CollectionUtils.isEmpty(labelIdList)) {
             return BatchResultDTO.success(entity.getId(), entity.getSkuNo(), OperationTypeEnum.DELETE);
         }
         //取消标签
         replenishmentRefLabelService.deleteLabel(labelIdList,entity.getId());
 
-        List<LabelInfoEntity> labelInfoList = CollectionUtils.isEmpty(labelIdList) ? Collections.EMPTY_LIST : labelInfoService.listByIds(labelIdList);
+        List<LabelInfoEntity> labelInfoList = CollectionUtils.isEmpty(labelIdList) ? Collections.emptyList() : labelInfoService.listByIds(labelIdList);
         String labelNames = labelInfoList.stream().map(LabelInfoEntity::getName).collect(Collectors.joining(","));
-        String msg = StrUtil.format("删除了标签【{}】",labelNames);
+        String msg = CharSequenceUtil.format("删除了标签【{}】",labelNames);
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.REPLENISHMENT_SUGGESTION.getCode(), entity.getId(), "删除标签");
         return BatchResultDTO.success(entity.getId(), entity.getSkuNo(), OperationTypeEnum.DELETE);
     }
@@ -708,7 +636,7 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
     @Override
     public List<ReplenishmentSuggestionEntity> listByUnique(List<String> platformCodeList, List<String> shopIdList, List<String> skuIdList) {
         if (CollectionUtils.isEmpty(platformCodeList) || CollectionUtils.isEmpty(shopIdList) || CollectionUtils.isEmpty(skuIdList)) {
-            return Collections.EMPTY_LIST;
+            return Collections.emptyList();
         }
         return baseMapper.listByUnique(platformCodeList,shopIdList,skuIdList);
     }
@@ -732,22 +660,22 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
     public List<String> listLabelIdById(String id) {
         List<LabelInfoDTO.ViewDTO> list = replenishmentRefLabelService.listLabelInfoByRefId(id);
         if (CollectionUtils.isEmpty(list)) {
-            return  Collections.EMPTY_LIST;
+            return  Collections.emptyList();
         }
-        return list.stream().filter(obj -> StrUtil.isNotBlank(obj.getId())).map(LabelInfoDTO.ViewDTO::getId).distinct().collect(Collectors.toList());
+        return list.stream().filter(obj -> CharSequenceUtil.isNotBlank(obj.getId())).map(LabelInfoDTO.ViewDTO::getId).distinct().collect(Collectors.toList());
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO updateRemark(String id, String remark) {
-        ReplenishmentSuggestionEntity old = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到补货建议数据"));
+        ReplenishmentSuggestionEntity old = super.getByIdOpt(id).orElseThrow(() -> new ServiceException(ApiError.ERROR_REPLENISHMENT_NOT_EXIST));
         //新建对象
         ReplenishmentSuggestionEntity entity = new ReplenishmentSuggestionEntity();
         BeanMapperUtils.copy(old,entity);
         entity.setRemark(remark);
         this.updateById(entity);
         // 操作日志
-        String msg = StrUtil.format("编辑了备注：从【{}】修改为【{}】",old.getRemark(),remark);
+        String msg = CharSequenceUtil.format("编辑了备注：从【{}】修改为【{}】",old.getRemark(),remark);
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.REPLENISHMENT_SUGGESTION.getCode(), old.getId(), "编辑备货");
         return BatchResultDTO.success(entity.getId(), entity.getSkuNo(), OperationTypeEnum.UPDATE);
     }
@@ -777,6 +705,7 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
     }
 
     @Override
+    @SuppressWarnings("all")
     public PagingVO<DynamicExcelDTO> listHistorySalesQty(PagingDTO<ReplenishmentSuggestionDTO.PagingParamDTO> params) {
         LoginUser user = UserContext.getDefaultLoginUser();
         Page<ReplenishmentSuggestionVO.PagingView> pagingVO = baseMapper.paging(new Page<>(params.getCurrPage(), params.getPageSize()), params.getParams(),user.getUid());
@@ -795,7 +724,7 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
         excelDTO.setHeaders(headMap);
         excelDTO.setData(convertDataList);
         excelDTO.setSheetName("销售订单");
-        return new PagingVO(Collections.singletonList(excelDTO), (int) pagingVO.getTotal(),(int) pagingVO.getSize(), (int)pagingVO.getCurrent());
+        return new PagingVO<>(Collections.singletonList(excelDTO), (int) pagingVO.getTotal(),(int) pagingVO.getSize(), (int)pagingVO.getCurrent());
     }
 
     /**
@@ -805,6 +734,7 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
      * @param list
      * @return List<LinkedHashMap>
      */
+    @SuppressWarnings("all")
     private List<LinkedHashMap> handleHistorySalesQty (List<ReplenishmentSuggestionVO.PagingView> list) {
         List<LinkedHashMap> resultList = Lists.newArrayList();
         LinkedHashMap<String, Object> resultMap = Maps.newLinkedHashMap();
@@ -825,10 +755,10 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
         List<String> detailIdList = list.stream().map(ReplenishmentSuggestionVO.PagingView::getDetailId).distinct().collect(Collectors.toList());
         List<SalesInfoEntity> salesInfoList = salesInfoService.listHistorySalesInfo(detailIdList);
         if (CollectionUtils.isEmpty(salesInfoList)) {
-            return Collections.EMPTY_LIST;
+            return Collections.emptyList();
         }
         // 动态字段标题
-        salesInfoList.stream().forEach(obj ->{
+        salesInfoList.forEach(obj ->{
             headMap.put(obj.getDate().toString(),LocalDateTimeUtil.format(obj.getDate(), DateTimeFormatter.ofPattern("yyyy年MM月dd")));
             dyHeadMap.put(obj.getDate().toString(),LocalDateTimeUtil.format(obj.getDate(), DateTimeFormatter.ofPattern("yyyy年MM月dd")));
         });
@@ -847,13 +777,13 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
         for (ReplenishmentSuggestionVO.PagingView pagingView : list) {
             LinkedHashMap<String, Object> convertMap = new LinkedHashMap<>();
             //店铺名称
-            String shopName = shopInfoList.stream().filter(obj -> StrUtil.equals(obj.getId(), pagingView.getShopId())).map(ShopInfoEntity::getName).findFirst().orElse("");
+            String shopName = shopInfoList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), pagingView.getShopId())).map(ShopInfoEntity::getName).findFirst().orElse("");
             //平台名称
-            String platformName = platformViewList.stream().filter(obj -> StrUtil.equals(obj.getValue(), pagingView.getPlatform())).map(DictBasicDTO.ViewDTO::getName).findFirst().orElse("");
+            String platformName = platformViewList.stream().filter(obj -> CharSequenceUtil.equals(obj.getValue(), pagingView.getPlatform())).map(DictBasicDTO.ViewDTO::getName).findFirst().orElse("");
             //产品名称
-            String productName = skuList.stream().filter(obj -> StrUtil.equals(obj.getId(), pagingView.getSkuId())).map(ProductDetailEntity::getName).findFirst().orElse("");
+            String productName = skuList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), pagingView.getSkuId())).map(ProductDetailEntity::getName).findFirst().orElse("");
 
-            List<SalesInfoEntity> salesList = salesInfoList.stream().filter(obj -> StrUtil.equals(obj.getReplenishmentDetailId(), pagingView.getDetailId())).collect(Collectors.toList());
+            List<SalesInfoEntity> salesList = salesInfoList.stream().filter(obj -> CharSequenceUtil.equals(obj.getReplenishmentDetailId(), pagingView.getDetailId())).collect(Collectors.toList());
             if (CollectionUtils.isEmpty(salesList)) {
                 continue;
             }
@@ -864,15 +794,15 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
             convertMap.put("productName",productName);
             convertMap.put("typeName","FBA");
             //历史销量
-            dyHeadMap.keySet().stream().forEach(obj ->{
-                SalesInfoEntity salesInfoEntity = salesList.stream().filter(e -> StrUtil.equals(e.getDate().toString(), obj.toString())).findFirst().orElse(null);
-                BigDecimal salesQty = ObjectUtil.isNotEmpty(salesInfoEntity) ? salesInfoEntity.getSalesQty() : BigDecimal.ZERO;
+            dyHeadMap.keySet().forEach(obj ->{
+                SalesInfoEntity salesInfoEntity = salesList.stream().filter(e -> CharSequenceUtil.equals(e.getDate().toString(), obj.toString())).findFirst().orElse(null);
+                BigDecimal salesQty = !ObjectUtils.isEmpty(salesInfoEntity) ? salesInfoEntity.getSalesQty() : BigDecimal.ZERO;
                 convertMap.put(obj.toString(),salesQty);
             });
             convertDataList.add(convertMap);
         }
         if (CollectionUtils.isEmpty(convertDataList)) {
-            return Collections.EMPTY_LIST;
+            return Collections.emptyList();
         }
         resultMap.put("head", headMap);
         resultMap.put("data", convertDataList);
@@ -888,12 +818,7 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
             return new PagingVO<>();
         }
         List<ReplenishmentSuggestionDTO.ReplenishmentRuleExportDTO> exportPagingVO = handleExport(pagingVO.getRecords());
-        return new PagingVO(exportPagingVO,(int)pagingVO.getTotal(),(int)pagingVO.getSize(),(int)pagingVO.getCurrent());
-    }
-
-    @Override
-    public List<ReplenishmentSuggestionDTO.SalesDTO> listSalesBySkuId(String skuId) {
-        return null;
+        return new PagingVO<>(exportPagingVO,(int)pagingVO.getTotal(),(int)pagingVO.getSize(),(int)pagingVO.getCurrent());
     }
 
     @Override
@@ -904,9 +829,11 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void saveReplenishment(CfgRuleStrategyDTO cfgRuleStrategy, ReplenishmentResultDTO replenishmentResult) {
-        ReplenishmentSuggestionDetailEntity entity = ReplenishmentResultDTO.DetailDTO.buildReplenishmentSuggestionDetail(replenishmentResult.getReplenishmentDetail(), cfgRuleStrategy,
-                replenishmentResult.getTimePeriodSalesEstimates(), replenishmentResult.getAvgTimePeriodSalesEstimates(), replenishmentResult.getTimePeriodSales(),
-                replenishmentResult.getAvgTimePeriodSales(), replenishmentResult.getPurchasePrice(), replenishmentResult.getSalesPrice());
+        ReplenishmentSuggestionDetailEntity entity = new ReplenishmentSuggestionDetailEntity();
+        ReplenishmentResultDTO.DetailDTO.setBasicAttributes(entity, replenishmentResult.getReplenishmentDetail());
+        ReplenishmentResultDTO.DetailDTO.setJsonAttributes(entity, replenishmentResult.getReplenishmentDetail(), replenishmentResult.getTimePeriodSalesEstimates(), replenishmentResult.getAvgTimePeriodSalesEstimates(), replenishmentResult.getTimePeriodSales(),
+                replenishmentResult.getAvgTimePeriodSales());
+        ReplenishmentResultDTO.DetailDTO.setOtherAttributes(entity, replenishmentResult.getReplenishmentDetail(), cfgRuleStrategy,replenishmentResult.getPurchasePrice(), replenishmentResult.getSalesPrice());
         if (CollectionUtils.isNotEmpty(replenishmentResult.getFbaInTransitDetails())) {
             List<FbaInTransitDetailEntity> fbaInTransitDetailEntities = replenishmentResult.getFbaInTransitDetails().stream()
                     .map(v -> ReplenishmentResultDTO.FbaInTransitDetailDTO.buildFbaInTransitDetail(v, replenishmentResult.getReplenishmentDetail().getDetailId(), replenishmentResult.getReplenishmentDetail().getCalcVersion()))
@@ -1258,7 +1185,7 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
         List<CfgRuleSalesQtyDTO.StrategyFormulaResultDTO> defaultFormulaResults = cfgRuleSalesFormulaService.listFormulaBySalesId(cfgRuleSalesQty.getId());
         List<LocalDate> dates = new ArrayList<>();
         LocalDate startDate = dto.getStartDate().minusDays(1);
-        LocalDate endDate = LocalDate.now().plusDays(TimePeriodEstimateEnum.of(dto.getTimePeriod()).getDays() - 1);
+        LocalDate endDate = LocalDate.now().plusDays(TimePeriodEstimateEnum.of(dto.getTimePeriod()).getDays() - 1L);
         while (startDate.isBefore(endDate)) {
             dates.add(startDate);
             startDate = startDate.plusDays(1);
@@ -1568,16 +1495,16 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
              ReplenishmentSuggestionDTO.ReplenishmentRuleExportDTO exportDTO = new ReplenishmentSuggestionDTO.ReplenishmentRuleExportDTO();
 
             //备货主表
-            List<CfgRuleStockUpEntity> thisStockUpList = cfgRuleStockUpList.stream().filter(obj ->StrUtil.equals(obj.getRefId(),pagingView.getId())).collect(Collectors.toList());
+            List<CfgRuleStockUpEntity> thisStockUpList = cfgRuleStockUpList.stream().filter(obj ->CharSequenceUtil.equals(obj.getRefId(),pagingView.getId())).collect(Collectors.toList());
 
             //销量主表
-            List<CfgRuleSalesQtyEntity> thisSalesQtyList = cfgRuleSalesQtyList.stream().filter(obj ->StrUtil.equals(obj.getRefId(),pagingView.getId())).collect(Collectors.toList());
+            List<CfgRuleSalesQtyEntity> thisSalesQtyList = cfgRuleSalesQtyList.stream().filter(obj ->CharSequenceUtil.equals(obj.getRefId(),pagingView.getId())).collect(Collectors.toList());
 
             //店铺名称
-            String shopName = shopInfoList.stream().filter(obj -> StrUtil.equals(obj.getId(), pagingView.getShopId())).map(ShopInfoEntity::getName).findFirst().orElse("");
+            String shopName = shopInfoList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), pagingView.getShopId())).map(ShopInfoEntity::getName).findFirst().orElse("");
 
             //平台名称
-            String platformName = platformViewList.stream().filter(obj -> StrUtil.equals(obj.getValue(), pagingView.getPlatform())).map(DictBasicDTO.ViewDTO::getName).findFirst().orElse("");
+            String platformName = platformViewList.stream().filter(obj -> CharSequenceUtil.equals(obj.getValue(), pagingView.getPlatform())).map(DictBasicDTO.ViewDTO::getName).findFirst().orElse("");
 
             List<CfgRuleStockUpDTO.StockUpExportDTO> stockUpExportList = formatExportStockUp(pagingView, thisStockUpList, cfgRuleLogisticList, shopName, platformName);
             exportDTO.setStockUpExportList(stockUpExportList);
@@ -1589,7 +1516,7 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
             exportDTO.setDynamicSalesQtyExportList(dynamicSalesQtyExportList);
             List<CfgRuleSalesFormulaDTO.SalesFormulaExportDTO> fixedSalesQtyExportList = formatFixedSalesQty(pagingView,thisSalesQtyList, salesFormulaList, shopName, platformName);
             exportDTO.setFixedSalesQtyExportList(fixedSalesQtyExportList);
-            List<CfgRuleSalesDenoisingDTO.salesDenoisingExportDTO> salesDenoisingExportList = formatSalesDenoising(pagingView,thisSalesQtyList,  cfgRuleSalesDenoisingList, shopName, platformName);
+            List<CfgRuleSalesDenoisingDTO.SalesDenoisingExportDTO> salesDenoisingExportList = formatSalesDenoising(pagingView,thisSalesQtyList,  cfgRuleSalesDenoisingList, shopName, platformName);
             exportDTO.setSalesDenoisingExportList(salesDenoisingExportList);
             exportList.add(exportDTO);
         }
@@ -1612,37 +1539,37 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
             stockUpExportDTO.setSkuNo(pagingView.getSkuNo());
             stockUpExportDTO.setShopName(shopName);
             //空运
-            CfgRuleLogisticsEntity oneLogisticsEntity = cfgRuleLogisticList.stream().filter(obj -> StrUtil.equals(obj.getStockUpId(), stockUpEntity.getId()) && StrUtil.equals(obj.getLogisticsMethod(), LogisticsMethodEnum.AIRFREIGHT.getCode())).findFirst().orElse(new CfgRuleLogisticsEntity());
+            CfgRuleLogisticsEntity oneLogisticsEntity = cfgRuleLogisticList.stream().filter(obj -> CharSequenceUtil.equals(obj.getStockUpId(), stockUpEntity.getId()) && CharSequenceUtil.equals(obj.getLogisticsMethod(), LogisticsMethodEnum.AIRFREIGHT.getCode())).findFirst().orElse(new CfgRuleLogisticsEntity());
             stockUpExportDTO.setOneLogisticsCycleDays(oneLogisticsEntity.getLogisticsCycleDays());
             stockUpExportDTO.setOneLogisticsDays(oneLogisticsEntity.getLogisticsDays());
             stockUpExportDTO.setOneIndex(oneLogisticsEntity.getIndex());
 
             //快递
-            CfgRuleLogisticsEntity twoLogisticsEntity = cfgRuleLogisticList.stream().filter(obj -> StrUtil.equals(obj.getStockUpId(), stockUpEntity.getId()) && StrUtil.equals(obj.getLogisticsMethod(), LogisticsMethodEnum.EXPRESS.getCode())).findFirst().orElse(new CfgRuleLogisticsEntity());
+            CfgRuleLogisticsEntity twoLogisticsEntity = cfgRuleLogisticList.stream().filter(obj -> CharSequenceUtil.equals(obj.getStockUpId(), stockUpEntity.getId()) && CharSequenceUtil.equals(obj.getLogisticsMethod(), LogisticsMethodEnum.EXPRESS.getCode())).findFirst().orElse(new CfgRuleLogisticsEntity());
             stockUpExportDTO.setTwoLogisticsCycleDays(twoLogisticsEntity.getLogisticsCycleDays());
             stockUpExportDTO.setTwoLogisticsDays(twoLogisticsEntity.getLogisticsDays());
             stockUpExportDTO.setTwoIndex(twoLogisticsEntity.getIndex());
 
             //海运散装
-            CfgRuleLogisticsEntity threeLogisticsEntity = cfgRuleLogisticList.stream().filter(obj -> StrUtil.equals(obj.getStockUpId(), stockUpEntity.getId()) && StrUtil.equals(obj.getLogisticsMethod(), LogisticsMethodEnum.OCEAN_FREIGHT_BULK.getCode())).findFirst().orElse(new CfgRuleLogisticsEntity());
+            CfgRuleLogisticsEntity threeLogisticsEntity = cfgRuleLogisticList.stream().filter(obj -> CharSequenceUtil.equals(obj.getStockUpId(), stockUpEntity.getId()) && CharSequenceUtil.equals(obj.getLogisticsMethod(), LogisticsMethodEnum.OCEAN_FREIGHT_BULK.getCode())).findFirst().orElse(new CfgRuleLogisticsEntity());
             stockUpExportDTO.setThreeLogisticsCycleDays(threeLogisticsEntity.getLogisticsCycleDays());
             stockUpExportDTO.setThreeLogisticsDays(threeLogisticsEntity.getLogisticsDays());
             stockUpExportDTO.setThreeIndex(threeLogisticsEntity.getIndex());
 
             //海运整柜
-            CfgRuleLogisticsEntity fourLogisticsEntity = cfgRuleLogisticList.stream().filter(obj -> StrUtil.equals(obj.getStockUpId(), stockUpEntity.getId()) && StrUtil.equals(obj.getLogisticsMethod(), LogisticsMethodEnum.OCEAN_FREIGHT_FCL.getCode())).findFirst().orElse(new CfgRuleLogisticsEntity());
+            CfgRuleLogisticsEntity fourLogisticsEntity = cfgRuleLogisticList.stream().filter(obj -> CharSequenceUtil.equals(obj.getStockUpId(), stockUpEntity.getId()) && CharSequenceUtil.equals(obj.getLogisticsMethod(), LogisticsMethodEnum.OCEAN_FREIGHT_FCL.getCode())).findFirst().orElse(new CfgRuleLogisticsEntity());
             stockUpExportDTO.setFourLogisticsCycleDays(fourLogisticsEntity.getLogisticsCycleDays());
             stockUpExportDTO.setFourLogisticsDays(fourLogisticsEntity.getLogisticsDays());
             stockUpExportDTO.setFourIndex(fourLogisticsEntity.getIndex());
 
             //铁运散装
-            CfgRuleLogisticsEntity fiveLogisticsEntity = cfgRuleLogisticList.stream().filter(obj -> StrUtil.equals(obj.getStockUpId(), stockUpEntity.getId()) && StrUtil.equals(obj.getLogisticsMethod(), LogisticsMethodEnum.RAILWAY_TRANSPORTATION_BULK.getCode())).findFirst().orElse(new CfgRuleLogisticsEntity());
+            CfgRuleLogisticsEntity fiveLogisticsEntity = cfgRuleLogisticList.stream().filter(obj -> CharSequenceUtil.equals(obj.getStockUpId(), stockUpEntity.getId()) && CharSequenceUtil.equals(obj.getLogisticsMethod(), LogisticsMethodEnum.RAILWAY_TRANSPORTATION_BULK.getCode())).findFirst().orElse(new CfgRuleLogisticsEntity());
             stockUpExportDTO.setFiveLogisticsCycleDays(fiveLogisticsEntity.getLogisticsCycleDays());
             stockUpExportDTO.setFiveLogisticsDays(fiveLogisticsEntity.getLogisticsDays());
             stockUpExportDTO.setFiveIndex(fiveLogisticsEntity.getIndex());
 
             //铁运整柜
-            CfgRuleLogisticsEntity sixLogisticsEntity = cfgRuleLogisticList.stream().filter(obj -> StrUtil.equals(obj.getStockUpId(), stockUpEntity.getId()) && StrUtil.equals(obj.getLogisticsMethod(), LogisticsMethodEnum.RAILWAY_TRANSPORTATION_FCL.getCode())).findFirst().orElse(new CfgRuleLogisticsEntity());
+            CfgRuleLogisticsEntity sixLogisticsEntity = cfgRuleLogisticList.stream().filter(obj -> CharSequenceUtil.equals(obj.getStockUpId(), stockUpEntity.getId()) && CharSequenceUtil.equals(obj.getLogisticsMethod(), LogisticsMethodEnum.RAILWAY_TRANSPORTATION_FCL.getCode())).findFirst().orElse(new CfgRuleLogisticsEntity());
             stockUpExportDTO.setSixLogisticsCycleDays(sixLogisticsEntity.getLogisticsCycleDays());
             stockUpExportDTO.setSixLogisticsDays(sixLogisticsEntity.getLogisticsDays());
             stockUpExportDTO.setSixIndex(sixLogisticsEntity.getIndex());
@@ -1659,7 +1586,7 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
         if (CollectionUtils.isEmpty(cfgRuleStockingRatioList)) {
             return resultList;
         }
-        List<String> stockUpIdList = cfgRuleStockUpList.stream().filter(obj -> StrUtil.equals(obj.getRefId(), pagingView.getId())).map(CfgRuleStockUpEntity::getId).distinct().collect(Collectors.toList());
+        List<String> stockUpIdList = cfgRuleStockUpList.stream().filter(obj -> CharSequenceUtil.equals(obj.getRefId(), pagingView.getId())).map(CfgRuleStockUpEntity::getId).distinct().collect(Collectors.toList());
         if (CollectionUtils.isEmpty(stockUpIdList)) {
             return resultList;
         }
@@ -1687,7 +1614,7 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
         List<String> salesQtyIdList = cfgRuleSalesQtyList.stream().map(CfgRuleSalesQtyEntity::getId).collect(Collectors.toList());
 
         //默认销量
-        List<CfgRuleSalesFormulaEntity> defaultList = salesFormulaList.stream().filter(obj -> salesQtyIdList.contains(obj.getSalesQtyId()) && StrUtil.equals(obj.getType(), CfgRuleSalesFormulaTypeEnum.DEFAULT.getCode())).collect(Collectors.toList());
+        List<CfgRuleSalesFormulaEntity> defaultList = salesFormulaList.stream().filter(obj -> salesQtyIdList.contains(obj.getSalesQtyId()) && CharSequenceUtil.equals(obj.getType(), CfgRuleSalesFormulaTypeEnum.DEFAULT.getCode())).collect(Collectors.toList());
         if (CollectionUtils.isEmpty(defaultList)) {
             return resultList;
         }
@@ -1716,7 +1643,7 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
         List<String> salesQtyIdList = cfgRuleSalesQtyList.stream().map(CfgRuleSalesQtyEntity::getId).collect(Collectors.toList());
 
         //默认销量
-        List<CfgRuleSalesFormulaEntity> dynamicList = salesFormulaList.stream().filter(obj -> salesQtyIdList.contains(obj.getSalesQtyId()) &&  StrUtil.equals(obj.getType(), CfgRuleSalesFormulaTypeEnum.DYNAMIC.getCode())).collect(Collectors.toList());
+        List<CfgRuleSalesFormulaEntity> dynamicList = salesFormulaList.stream().filter(obj -> salesQtyIdList.contains(obj.getSalesQtyId()) &&  CharSequenceUtil.equals(obj.getType(), CfgRuleSalesFormulaTypeEnum.DYNAMIC.getCode())).collect(Collectors.toList());
         if (CollectionUtils.isEmpty(dynamicList)) {
             return resultList;
         }
@@ -1744,7 +1671,7 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
         }
         List<String> salesQtyIdList = cfgRuleSalesQtyList.stream().map(CfgRuleSalesQtyEntity::getId).collect(Collectors.toList());
         //默认销量
-        List<CfgRuleSalesFormulaEntity> fixedList = salesFormulaList.stream().filter(obj -> salesQtyIdList.contains(obj.getSalesQtyId()) &&  StrUtil.equals(obj.getType(), CfgRuleSalesFormulaTypeEnum.FIXED.getCode())).collect(Collectors.toList());
+        List<CfgRuleSalesFormulaEntity> fixedList = salesFormulaList.stream().filter(obj -> salesQtyIdList.contains(obj.getSalesQtyId()) &&  CharSequenceUtil.equals(obj.getType(), CfgRuleSalesFormulaTypeEnum.FIXED.getCode())).collect(Collectors.toList());
         if (CollectionUtils.isEmpty(fixedList)) {
             return resultList;
         }
@@ -1765,8 +1692,8 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
     /**
      * 销量去噪
      */
-    private List<CfgRuleSalesDenoisingDTO.salesDenoisingExportDTO> formatSalesDenoising (ReplenishmentSuggestionVO.PagingView pagingView,List<CfgRuleSalesQtyEntity> cfgRuleSalesQtyList,List<CfgRuleSalesDenoisingEntity> cfgRuleSalesDenoisingList, String shopName, String platformName) {
-        List<CfgRuleSalesDenoisingDTO.salesDenoisingExportDTO> resultList = new ArrayList<>();
+    private List<CfgRuleSalesDenoisingDTO.SalesDenoisingExportDTO> formatSalesDenoising (ReplenishmentSuggestionVO.PagingView pagingView, List<CfgRuleSalesQtyEntity> cfgRuleSalesQtyList, List<CfgRuleSalesDenoisingEntity> cfgRuleSalesDenoisingList, String shopName, String platformName) {
+        List<CfgRuleSalesDenoisingDTO.SalesDenoisingExportDTO> resultList = new ArrayList<>();
         if (CollectionUtils.isEmpty(cfgRuleSalesDenoisingList)) {
             return resultList;
         }
@@ -1776,7 +1703,7 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
             return resultList;
         }
         for (CfgRuleSalesDenoisingEntity salesDenoisingEntity : salesDenoisingList) {
-            CfgRuleSalesDenoisingDTO.salesDenoisingExportDTO  exportDTO = new CfgRuleSalesDenoisingDTO.salesDenoisingExportDTO();
+            CfgRuleSalesDenoisingDTO.SalesDenoisingExportDTO exportDTO = new CfgRuleSalesDenoisingDTO.SalesDenoisingExportDTO();
             exportDTO.setPlatform(platformName);
             exportDTO.setSkuNo(pagingView.getSkuNo());
             exportDTO.setShopName(shopName);
@@ -1785,11 +1712,11 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
             exportDTO.setEndDate(salesDenoisingEntity.getEndDate());
             exportDTO.setDenoisingTypeName(CfgRuleSalesDenoisingDenoisingTypeEnum.getName(salesDenoisingEntity.getDenoisingType()));
             //百分比去噪
-            if (StrUtil.equals(CfgRuleSalesDenoisingDenoisingTypeEnum.PERCENTAGE.getCode(),salesDenoisingEntity.getDenoisingType())) {
+            if (CharSequenceUtil.equals(CfgRuleSalesDenoisingDenoisingTypeEnum.PERCENTAGE.getCode(),salesDenoisingEntity.getDenoisingType())) {
                 exportDTO.setPercentageValue(salesDenoisingEntity.getEffectiveValue());
             }
             //固定值去噪
-            if (StrUtil.equals(CfgRuleSalesDenoisingDenoisingTypeEnum.FIXED_VALUE.getCode(),salesDenoisingEntity.getDenoisingType())) {
+            if (CharSequenceUtil.equals(CfgRuleSalesDenoisingDenoisingTypeEnum.FIXED_VALUE.getCode(),salesDenoisingEntity.getDenoisingType())) {
                 exportDTO.setFixedValue(salesDenoisingEntity.getEffectiveValue());
             }
             resultList.add(exportDTO);

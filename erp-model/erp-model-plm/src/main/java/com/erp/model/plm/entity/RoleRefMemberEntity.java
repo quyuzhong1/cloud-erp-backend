@@ -16,7 +16,7 @@ import java.util.Date;
 @TableName(value ="role_ref_members")
 @Data
 @Accessors(chain = true)
-public class RoleRefMemberEntity extends BaseEntity implements Serializable {
+public class RoleRefMemberEntity extends BaseEntity<RoleRefMemberEntity> implements Serializable {
 
     /**
      * 成员表id

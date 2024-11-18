@@ -28,7 +28,7 @@ import java.util.List;
 @Ignore
 public class SolicitationsApiTest {
 
-    private final SolicitationsApi api = null;
+    private final SolicitationsApi api = new SolicitationsApi(null);
 
     
     /**

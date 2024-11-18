@@ -14,7 +14,6 @@ import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.*;
 import java.io.Serializable;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -443,8 +442,8 @@ public class FbaShipmentDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
-    public static class PagingParamDTO extends SortDTO {
-
+    public static class PagingParamDTO extends SortDTO implements Serializable{
+        private static final long serialVersionUID = 1905122041950251207L;
         /**
          * 页面高级查询
          */

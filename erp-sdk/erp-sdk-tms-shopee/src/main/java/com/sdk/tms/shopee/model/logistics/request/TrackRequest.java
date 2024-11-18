@@ -1,9 +1,7 @@
 package com.sdk.tms.shopee.model.logistics.request;
 
-import com.sdk.tms.shopee.model.base.BaseRequest;
 import lombok.Builder;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
@@ -12,7 +10,7 @@ import java.io.Serializable;
 /**
  * @author zdy
  * @ClassName TrackRequest
- * @description: TODO
+
  * @date 2023年10月30日
  * @version: 1.0
  */

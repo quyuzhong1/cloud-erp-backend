@@ -1,12 +1,14 @@
 package com.erp.server.plm.constant;
 
+import java.io.Serializable;
+
 /**
  * @Classname 启动项目来源
 
  * @Date 2022-09-20 17:18
  * @Created by yl
  */
-public interface SourceType {
+public class SourceType implements Serializable {
 
 
     public static final Integer NEW = 0;

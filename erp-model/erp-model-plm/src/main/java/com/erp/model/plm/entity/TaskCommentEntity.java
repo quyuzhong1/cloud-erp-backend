@@ -1,13 +1,11 @@
 package com.erp.model.plm.entity;
 
-import com.baomidou.mybatisplus.annotation.*;
-
-import java.io.Serializable;
-import java.time.LocalDateTime;
-import java.util.Date;
-
+import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
 import lombok.Data;
+
+import java.io.Serializable;
 
 /**
  * 任务评论表
@@ -15,7 +13,7 @@ import lombok.Data;
  */
 @TableName(value ="task_comment")
 @Data
-public class TaskCommentEntity extends BaseEntity implements Serializable {
+public class TaskCommentEntity extends BaseEntity<TaskCommentEntity> implements Serializable {
 
     /**
      * 

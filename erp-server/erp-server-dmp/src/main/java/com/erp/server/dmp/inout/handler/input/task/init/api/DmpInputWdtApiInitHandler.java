@@ -72,7 +72,9 @@ public class DmpInputWdtApiInitHandler implements DmpInputApiInitHandler{
         	if(status != 0) {
         		String message = jsonObject.getString("message");
         		if("sid 'wjkj03' is not found".equals(message)) {
-					try {Thread.sleep(30000);} catch (InterruptedException e) {}
+					try {Thread.sleep(30000);} catch (InterruptedException e) {
+						Thread.currentThread().interrupt();
+					}
 				}
 				throw new ServiceException("调用旺店通" + apiType + "接口报错，错误原因：" + message);
         	}

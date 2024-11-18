@@ -10,10 +10,12 @@ import com.erp.model.wms.entity.CfgRulePackingActionEntity;
 import com.erp.model.wms.entity.CfgRulePickingEntity;
 import com.erp.server.wms.mapper.CfgRulePackingActionMapper;
 import com.erp.server.wms.service.CfgRulePackingActionService;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
+import javax.annotation.Resource;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -30,6 +32,9 @@ import java.util.stream.Collectors;
 @Service
 public class CfgRulePackingActionServiceImpl extends SuperServiceImpl<CfgRulePackingActionMapper, CfgRulePackingActionEntity> implements CfgRulePackingActionService {
 
+    @Lazy
+    @Resource
+    private CfgRulePackingActionService service;
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void removeByRuleIds(List<String> ids) {
@@ -47,7 +52,7 @@ public class CfgRulePackingActionServiceImpl extends SuperServiceImpl<CfgRulePac
                     entity.setIndex(index.incrementAndGet());
                     return entity;
                 }).collect(Collectors.toList());
-        saveBatch(actionEntities);
+        service.saveBatch(actionEntities);
     }
 
     @Override
@@ -75,7 +80,7 @@ public class CfgRulePackingActionServiceImpl extends SuperServiceImpl<CfgRulePac
                     entity.setIndex(index.incrementAndGet());
                     return entity;
                 }).collect(Collectors.toList());
-        saveOrUpdateBatch(actions);
+        service.saveOrUpdateBatch(actions);
     }
 
     @Override

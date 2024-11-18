@@ -90,7 +90,7 @@ public class TmsWarehouseMappingController extends BaseController {
         menuCode = "tms:tmsWarehouseMapping:update",
         serviceClass = TmsWarehouseMappingService.class,
         keyIdName = "id")
-    public ApiResult<?> update(@RequestBody @Validated TmsWarehouseMappingDTO.UpdateDTO dto) {
+    public ApiResult<Object> update(@RequestBody @Validated TmsWarehouseMappingDTO.UpdateDTO dto) {
         tmsWarehouseMappingService.update(dto);
         return success();
     }
@@ -152,7 +152,7 @@ public class TmsWarehouseMappingController extends BaseController {
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "下载仓库匹配模板")
     @GetMapping("/downloadTemplate")
-    public ApiResult downloadTemplate(HttpServletResponse response) {
+    public ApiResult<Object>downloadTemplate(HttpServletResponse response) {
         tmsWarehouseMappingService.downloadTemplate(response);
         return success();
     }
@@ -167,7 +167,7 @@ public class TmsWarehouseMappingController extends BaseController {
      */
     @LogAction(value = LogActionEnum.IMPORT, desc = "导入仓库匹配")
     @PostMapping("/import")
-    public ApiResult exportWarehouse(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
+    public ApiResult<Object>exportWarehouse(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
         Boolean result = tmsWarehouseMappingService.importFile(excelFile, response);
         return result ? success() : failure();
     }
@@ -182,7 +182,7 @@ public class TmsWarehouseMappingController extends BaseController {
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出仓库匹配")
     @PostMapping(value = "/exportExcel")
-    public ApiResult exportExcel(@RequestBody TmsWarehouseMappingDTO.PagingParamDTO dto) {
+    public ApiResult<Object>exportExcel(@RequestBody TmsWarehouseMappingDTO.PagingParamDTO dto) {
         Boolean flag = tmsWarehouseMappingService.exportExcel(dto);
         return flag == true ? success() : failure();
     }

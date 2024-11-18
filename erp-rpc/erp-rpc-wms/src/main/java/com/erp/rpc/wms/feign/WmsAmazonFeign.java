@@ -4,6 +4,7 @@ import com.common.business.dto.PlatformOtherOutStockDTO;
 import com.common.business.dto.PlatformSoOutStockDTO;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.wms.entity.CfgAmzFulfillmentCenterEntity;
+import org.apache.poi.ss.formula.functions.T;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -20,7 +21,7 @@ public interface WmsAmazonFeign {
      * @author Jim
      */
     @PostMapping("/feign/amz/soOutStock/consumer")
-    ApiResult<?> consumerSoOutStock(@RequestBody PlatformSoOutStockDTO currentDTO);
+    ApiResult<T> consumerSoOutStock(@RequestBody PlatformSoOutStockDTO currentDTO);
 
 
     /**
@@ -28,12 +29,12 @@ public interface WmsAmazonFeign {
      * @author Jim
      */
     @PostMapping("/feign/amz/otherOutStock/consumer")
-    ApiResult<?> consumerOtherSoOutStock(@RequestBody PlatformOtherOutStockDTO msg);
+    ApiResult<T> consumerOtherSoOutStock(@RequestBody PlatformOtherOutStockDTO msg);
 
 
     /**
      * 批量新增未知国家仓库中心代号记录
      */
     @PostMapping("/feign/amz/CfgAmzFulfillmentCenter/batchInsert")
-    ApiResult<?> addCfgAmzFulfillmentCenterList(@RequestBody List<CfgAmzFulfillmentCenterEntity> newCenterList);
+    ApiResult<T> addCfgAmzFulfillmentCenterList(@RequestBody List<CfgAmzFulfillmentCenterEntity> newCenterList);
 }

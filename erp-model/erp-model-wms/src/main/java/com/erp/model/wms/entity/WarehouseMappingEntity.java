@@ -49,11 +49,11 @@ public class WarehouseMappingEntity extends BaseEntity<WarehouseMappingEntity> {
 
     public static final String WAREHOUSE_ID = "warehouse_id";
 
-    public static final String NAME = "name";
+    
 
     public static final String DICT_PLATFORM = "dict_platform";
 
-    public static final String REMARK = "remark";
+    
 
     @Override
     public Serializable pkVal() {

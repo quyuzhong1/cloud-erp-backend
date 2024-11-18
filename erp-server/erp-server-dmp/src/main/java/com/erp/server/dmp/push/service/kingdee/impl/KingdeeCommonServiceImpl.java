@@ -626,7 +626,7 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
     public String addKingdeeRecord(String orderNo, KingdeeApiUtils apiUtils, Integer modelType, String platformCode, Map<String, Object> dataMap) {
         PlatformEntity platformEntity = platformService.getByName(platformCode);
         if (ObjectUtils.isEmpty(platformEntity)) {
-            throw new ServiceException(ApiError.Default);
+            throw new ServiceException(ApiError.DEFAULT);
         }
         CfgApiFieldMapDTO dto = new CfgApiFieldMapDTO(platformEntity.getId(), modelType);
         List<CfgApiFieldMapDTO> mapList = cfgApiFieldMapService.getByParams(dto);

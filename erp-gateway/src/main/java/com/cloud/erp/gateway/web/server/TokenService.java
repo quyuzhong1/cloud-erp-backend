@@ -1,6 +1,6 @@
 package com.cloud.erp.gateway.web.server;
 
-import com.alibaba.fastjson.JSONObject;
+import com.alibaba.fastjson.JSON;
 import com.cloud.erp.gateway.config.JwtProperties;
 import com.common.business.constant.RedisCacheConstants;
 import com.common.business.service.impl.RedisService;
@@ -10,7 +10,6 @@ import com.erp.model.sys.dto.SysUserDTO;
 import com.erp.model.sys.utils.JwtUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
@@ -29,11 +28,11 @@ public class TokenService {
     @Resource
     private JwtProperties jwtProperties;
 
-    @Autowired
+    @Resource
     private RedisService redisService;
 
 
-    private final static long expireTime = RedisCacheConstants.EXPIRATION;
+    private static final long EXPIRE_TIME = RedisCacheConstants.EXPIRATION;
 
 
     /**
@@ -42,7 +41,7 @@ public class TokenService {
     public void refreshToken(SysUserDTO info, Long expireTime) {
         //放入缓存
         String userKey = getTokenKey(info.getToken());
-        redisService.setCacheObject(userKey, JSONObject.toJSONString(info) , expireTime, TimeUnit.DAYS);
+        redisService.setCacheObject(userKey, JSON.toJSONString(info) , expireTime, TimeUnit.DAYS);
     }
 
     /**
@@ -58,9 +57,8 @@ public class TokenService {
         //先生成一个token
         String token = IdUtils.fastUUID();
         info.setToken(token);
-        refreshToken(info, expireTime);
-        String accessToken = JwtUtils.generateToken(info, jwtProperties.getSecret(), jwtProperties.getExpire());
-        return accessToken;
+        refreshToken(info, EXPIRE_TIME);
+        return JwtUtils.generateToken(info, jwtProperties.getSecret(), jwtProperties.getExpire());
 
     }
 
@@ -80,7 +78,7 @@ public class TokenService {
             if (StringUtils.isNotBlank(accessToken)) {
                 String userKey = JwtUtils.getUserKey(accessToken, jwtProperties.getSecret());
                 String userJson = redisService.getCacheObject(getTokenKey(userKey));
-                user = JSONObject.parseObject(userJson, LoginUser.class);
+                user = JSON.parseObject(userJson, LoginUser.class);
             }
         } catch (Exception e) {
             log.error("出错了==",e);

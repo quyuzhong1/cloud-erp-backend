@@ -3,10 +3,11 @@ package com.erp.server.msg.service.impl;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.date.LocalDateTimeUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.extra.spring.SpringUtil;
 import cn.hutool.json.JSONUtil;
-import com.alibaba.fastjson.JSONObject;
+import com.alibaba.fastjson.JSON;
 import com.common.business.enums.ErpServerModuleEnum;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -30,8 +31,8 @@ import com.erp.server.msg.utils.MsgConvertUtil;
 import lombok.extern.slf4j.Slf4j;
 import okhttp3.*;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.poi.ss.formula.functions.T;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -39,6 +40,8 @@ import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
+
+import static com.erp.server.msg.enums.FeishuMessageTypeEnum.INTERACTIVE;
 
 /**
  * @Classname: FeishuServiceImpl
@@ -50,7 +53,10 @@ import java.util.stream.Collectors;
 @Service
 public class FeishuSendServiceImpl extends BaseMessageSendService {
 
-    @Autowired
+    public static final String MSG_TYPE = "msg_type";
+    public static final String AUTHORIZATION = "Authorization";
+    public static final String CONTENT_TYPE = "Content-Type";
+    @Resource
     private FsProperties fsProperties;
 
     @Resource
@@ -88,7 +94,7 @@ public class FeishuSendServiceImpl extends BaseMessageSendService {
 
         String bodyStr = OkHttpUtils.doPost(FeishuConstant.FS_TENANT_ACCESS_TOKEN, paramsMap, null);
         if (StringUtils.isNotBlank(bodyStr)) {
-            Map<String, Object> tokenMap = JSONObject.parseObject(bodyStr, Map.class);
+            Map<String, Object> tokenMap = JSON.parseObject(bodyStr, Map.class);
             if (tokenMap.containsKey("code") && Integer.valueOf(StrUtils.null2EmptyWithTrim(tokenMap.get("code"))) == 0) {
                 return StrUtils.null2EmptyWithTrim(tokenMap.get("tenant_access_token"));
             }
@@ -108,7 +114,7 @@ public class FeishuSendServiceImpl extends BaseMessageSendService {
             return null;
         }
 
-        MsgResultVO msgResult;
+        MsgResultVO<T> msgResult;
         List<String> receiverUserIds = noticeMsgWrapInfoDTO.getReceiverUserIds();
         noticeMsgWrapInfoDTO.setReceiverUserIds(receiverUserIds.stream().distinct().collect(Collectors.toList()));
         Boolean isBatch = noticeMsgWrapInfoDTO.getReceiverUserIds().size() >  1;
@@ -129,12 +135,12 @@ public class FeishuSendServiceImpl extends BaseMessageSendService {
      * 发送单条消息
      * @return
      */
-    private MsgResultVO sendSingleMsg(MsgSendChannelWrapParam noticeMsgInfo) {
+    private MsgResultVO<T> sendSingleMsg(MsgSendChannelWrapParam noticeMsgInfo) {
         //获取飞书的应用token
         MessageChannelAppEnum messageChannelAppEnum = noticeMsgInfo.getChannelApp();
         String msgChannelAppCode = Objects.isNull(messageChannelAppEnum) ? "" : messageChannelAppEnum.getCode();
         String tenantAccessToken = getFsTenantAccessToken(msgChannelAppCode);
-        MsgResultVO msgResult = new MsgResultVO();
+        MsgResultVO<T> msgResult = new MsgResultVO<T>();
         if(Objects.isNull(tenantAccessToken)) {
             msgResult.setCode(ApiError.ERROR_LARK_TOKEN_IS_NULL.code);
             msgResult.setMsg(ApiError.ERROR_LARK_TOKEN_IS_NULL.msg);
@@ -166,13 +172,12 @@ public class FeishuSendServiceImpl extends BaseMessageSendService {
         // 消息类型，文本或卡片
         NoticeMessageTypeEnum msgTypeEnum = noticeMsgWrapInfoDTO.getNoticeMessageTypeEnum();
         // 平台在外面判断，否则不可能进来
-        Map<String, String> headerMap = new HashMap<String, String>(){{
-            put("Authorization", FeishuConstant.FS_AUTHORIZATION + tenantAccessToken);
-            put("Content-Type", FeishuConstant.CONTENT_TYPE);
-        }};
+        Map<String, String> headerMap = new HashMap<>();
+        headerMap.put(AUTHORIZATION, FeishuConstant.FS_AUTHORIZATION + tenantAccessToken);
+        headerMap.put(CONTENT_TYPE, FeishuConstant.CONTENT_TYPE);
         Map<String, Object> bodyMap = new HashMap<>();
         FeishuMessageTypeEnum feishuMessageTypeEnum = ChannelSendMsgTypeEnum.getByCode(msgTypeEnum.getCode()).getFeishuMsgType();
-        bodyMap.put("msg_type", feishuMessageTypeEnum.getCode());
+        bodyMap.put(MSG_TYPE, feishuMessageTypeEnum.getCode());
         //用户的unionIds
         bodyMap.put("receive_id", unionId);
         FeiShuSendBaseParam param = wrapParam(noticeMsgWrapInfoDTO, feishuMessageTypeEnum);
@@ -181,7 +186,7 @@ public class FeishuSendServiceImpl extends BaseMessageSendService {
         msgResult.setRequestBody(JSONUtil.toJsonStr(bodyMap));
         String resultStr = OkHttpUtils.doPostJson(FeishuConstant.LARK_SEND_MESSAGE_URL, bodyMap, headerMap);
         log.info("结束发送飞书消息，请求内容体参数=【{}】，响应内容=【{}】", JSONUtil.toJsonStr(bodyMap), resultStr);
-        LarkResultVO result = JSONObject.parseObject(resultStr, LarkResultVO.class);
+        LarkResultVO<T> result = JSON.parseObject(resultStr, LarkResultVO.class);
 
         if(null == result || 0 != result.getCode()){
             log.error("发送飞书消息失败，请求内容体参数=【{}】，响应内容=【{}】", JSONUtil.toJsonStr(bodyMap), JSONUtil.toJsonStr(result));
@@ -195,7 +200,7 @@ public class FeishuSendServiceImpl extends BaseMessageSendService {
             warnMsgInfoDTO.setBizName("飞书发送消息通知");
             warnMsgInfoDTO.setTableName("");
             warnMsgInfoDTO.setTableId("");
-            warnMsgInfoDTO.setKeyInfo(StrUtil.format("飞书响应结果【{}】", JSONObject.toJSONString(result)));
+            warnMsgInfoDTO.setKeyInfo(CharSequenceUtil.format("飞书响应结果【{}】", JSON.toJSONString(result)));
             warnMsgInfoDTO.setHappenTime(LocalDateTime.now());
             sendWebhookMessage(warnMsgInfoDTO);
             return msgResult;
@@ -204,10 +209,10 @@ public class FeishuSendServiceImpl extends BaseMessageSendService {
             msgResult.setMsg("发送成功");
         }
         if(Objects.equals(noticeMsgWrapInfoDTO.getUrgent(),Boolean.TRUE)) {
-            FeishuSingleMsgResultVO singleMsgResultVO = JSONObject.parseObject(StrUtils.null2EmptyWithTrim(result.getData()), FeishuSingleMsgResultVO.class);
-            LarkResultVO larkResultVO = pressMessage(singleMsgResultVO.getMessage_id(), CollUtil.newArrayList(unionId),msgChannelAppCode);
+            FeishuSingleMsgResultVO singleMsgResultVO = JSON.parseObject(StrUtils.null2EmptyWithTrim(result.getData()), FeishuSingleMsgResultVO.class);
+            LarkResultVO<T> larkResultVO = pressMessage(singleMsgResultVO.getMessageId(), CollUtil.newArrayList(unionId),msgChannelAppCode);
             if(null == larkResultVO || 0 != larkResultVO.getCode()) {
-                log.error("发送飞书加急消息失败，消息id:{}",singleMsgResultVO.getMessage_id());
+                log.error("发送飞书加急消息失败，消息id:{}",singleMsgResultVO.getMessageId());
             }
         }
         return msgResult;
@@ -218,12 +223,12 @@ public class FeishuSendServiceImpl extends BaseMessageSendService {
      * @param noticeMsgInfo
      * @return
      */
-    private MsgResultVO sendBatchMsg(MsgSendChannelWrapParam noticeMsgInfo) {
+    private MsgResultVO<T> sendBatchMsg(MsgSendChannelWrapParam noticeMsgInfo) {
         //获取飞书的应用token
         MessageChannelAppEnum messageChannelAppEnum = noticeMsgInfo.getChannelApp();
         String msgChannelAppCode = Objects.isNull(messageChannelAppEnum) ? "" : messageChannelAppEnum.getCode();
         String tenantAccessToken = getFsTenantAccessToken(msgChannelAppCode);
-        MsgResultVO msgResult = new MsgResultVO();
+        MsgResultVO<T> msgResult = new MsgResultVO<T>();
         if(Objects.isNull(tenantAccessToken)) {
             msgResult.setCode(ApiError.ERROR_LARK_TOKEN_IS_NULL.code);
             msgResult.setMsg(ApiError.ERROR_LARK_TOKEN_IS_NULL.msg);
@@ -240,20 +245,10 @@ public class FeishuSendServiceImpl extends BaseMessageSendService {
         NoticeMsgWrapInfoDTO noticeMsgWrapInfoDTO = noticeMsgInfo.getNoticeMsgWrapInfoDTO();
         List<ThirdUnionDTO> thirdUnionDTOs = sysUserFeign.getThirdUnionIdsByUserIds(ThirdPlatformEnums.FS.code, noticeMsgWrapInfoDTO.getReceiverUserIds());
         if(CollUtil.isEmpty(thirdUnionDTOs)) {
-            log.warn("批量发送消息用户【{}】未绑定飞书信息", JSONObject.toJSONString(thirdUnionDTOs));
+            log.warn("批量发送消息用户【{}】未绑定飞书信息", JSON.toJSONString(thirdUnionDTOs));
             msgResult.setCode(ApiError.ERROR_LARK_TOKEN_IS_NULL.code);
             msgResult.setMsg(ApiError.ERROR_LARK_TOKEN_IS_NULL.msg);
             msgResult.setNeedReSend(false);
-
-//            WarnMsgInfoDTO warnMsgInfoDTO = new WarnMsgInfoDTO();
-//            warnMsgInfoDTO.setTitle("消息通知发送失败");
-//            warnMsgInfoDTO.setErpServerModuleEnum(ErpServerModuleEnum.ERP_SERVER_MSG);
-//            warnMsgInfoDTO.setBizName("飞书发送批量消息通知");
-//            warnMsgInfoDTO.setTableName("");
-//            warnMsgInfoDTO.setTableId("");
-//            warnMsgInfoDTO.setKeyInfo(StrUtil.format("用户【{}】未绑定飞书信息", JSONObject.toJSONString(noticeMsgWrapInfoDTO.getReceiverUserIds())));
-//            warnMsgInfoDTO.setHappenTime(LocalDateTime.now());
-//            sendWebhookMessage(warnMsgInfoDTO);
             return msgResult;
         }
         List<String> unionIds = thirdUnionDTOs.stream().map(ThirdUnionDTO::getThirdUnionId).collect(Collectors.toList());
@@ -262,12 +257,12 @@ public class FeishuSendServiceImpl extends BaseMessageSendService {
 
         Map<String, String> headerMap = new HashMap<>();
         String authorization = FeishuConstant.FS_AUTHORIZATION + tenantAccessToken;
-        headerMap.put("Authorization", authorization);
-        headerMap.put("Content-Type", FeishuConstant.CONTENT_TYPE);
+        headerMap.put(AUTHORIZATION, authorization);
+        headerMap.put(CONTENT_TYPE, FeishuConstant.CONTENT_TYPE);
 
         Map<String, Object> bodyMap = new HashMap<>();
         FeishuMessageTypeEnum feishuMessageTypeEnum = ChannelSendMsgTypeEnum.getByCode(msgTypeEnum.getCode()).getFeishuMsgType();
-        bodyMap.put("msg_type", feishuMessageTypeEnum.getCode());
+        bodyMap.put(MSG_TYPE, feishuMessageTypeEnum.getCode());
         //用户的unionIds
         bodyMap.put("union_ids", unionIds);
         FeiShuSendBaseParam param = wrapParam(noticeMsgWrapInfoDTO, feishuMessageTypeEnum);
@@ -277,7 +272,7 @@ public class FeishuSendServiceImpl extends BaseMessageSendService {
         msgResult.setRequestBody(JSONUtil.toJsonStr(bodyMap));
         String resultStr = OkHttpUtils.doPostJson(FeishuConstant.FS_BATCH_SEND_MESSAGE_URL, bodyMap, headerMap);
         log.info("结束批量发送飞书消息，请求内容体参数=【{}】，响应内容=【{}】", JSONUtil.toJsonStr(bodyMap), resultStr);
-        LarkResultVO result = JSONObject.parseObject(resultStr, LarkResultVO.class);
+        LarkResultVO<T> result = JSON.parseObject(resultStr, LarkResultVO.class);
         if(null == result || 0 != result.getCode()){
             log.error("批量发送飞书消息失败，请求内容体参数=【{}】，响应内容=【{}】", JSONUtil.toJsonStr(bodyMap), JSONUtil.toJsonStr(result));
             msgResult.setCode(ApiError.ERROR_LARK_SEND_MSG_FAIL.code);
@@ -290,7 +285,7 @@ public class FeishuSendServiceImpl extends BaseMessageSendService {
             warnMsgInfoDTO.setBizName("飞书发送批量消息通知");
             warnMsgInfoDTO.setTableName("");
             warnMsgInfoDTO.setTableId("");
-            warnMsgInfoDTO.setKeyInfo(StrUtil.format("飞书响应结果【{}】", JSONObject.toJSONString(result)));
+            warnMsgInfoDTO.setKeyInfo(CharSequenceUtil.format("飞书响应结果【{}】", JSON.toJSONString(result)));
             warnMsgInfoDTO.setHappenTime(LocalDateTime.now());
             sendWebhookMessage(warnMsgInfoDTO);
             return msgResult;
@@ -307,8 +302,8 @@ public class FeishuSendServiceImpl extends BaseMessageSendService {
      * @param unionIds
      * @return
      */
-    private LarkResultVO pressMessage(String messageId, List<String> unionIds,String channelAppCode) {
-        if(StrUtil.isBlank(messageId) || CollectionUtil.isEmpty(unionIds)){
+    private LarkResultVO<T> pressMessage(String messageId, List<String> unionIds,String channelAppCode) {
+        if(CharSequenceUtil.isBlank(messageId) || CollUtil.isEmpty(unionIds)){
             throw new ServiceException(ApiError.ERROR_MSG_ID_OR_UNION_ID_IS_NULL);
         }
         //获取飞书的应用token
@@ -327,19 +322,19 @@ public class FeishuSendServiceImpl extends BaseMessageSendService {
         log.info("开始发送飞书加急消息，请求内容体参数=【{}】", JSONUtil.toJsonStr(paramMap));
         RequestBody body = RequestBody.create(mediaType, JSONUtil.toJsonStr(paramMap));
         Request request = new Request.Builder()
-                .url(StrUtil.format(FeishuConstant.LARK_PRESS_URL,messageId))
+                .url(CharSequenceUtil.format(FeishuConstant.LARK_PRESS_URL,messageId))
                 .method("PATCH", body)
-                .addHeader("Content-Type", FeishuConstant.CONTENT_TYPE)
-                .addHeader("Authorization", authorization)
+                .addHeader(CONTENT_TYPE, FeishuConstant.CONTENT_TYPE)
+                .addHeader(AUTHORIZATION, authorization)
                 .build();
-        LarkResultVO result = null;
+        LarkResultVO<T> result = null;
         try {
             Response response = client.newCall(request).execute();
             String resultStr = response.body().string();
-            result = JSONObject.parseObject(resultStr, LarkResultVO.class);
+            result = JSON.parseObject(resultStr, LarkResultVO.class);
             log.info("结束发送飞书加急消息，请求内容体参数=【{}】，响应内容=【{}】", JSONUtil.toJsonStr(paramMap), resultStr);
             if(null == result || 0 != result.getCode()){
-                log.error(StrUtil.format("发送应用内加急失败！param={}, messageId={},返回数据larkResultDTO={}",JSONUtil.toJsonStr(paramMap), messageId, JSONUtil.toJsonStr(result)));
+                log.error(CharSequenceUtil.format("发送应用内加急失败！param={}, messageId={},返回数据larkResultDTO={}",JSONUtil.toJsonStr(paramMap), messageId, JSONUtil.toJsonStr(result)));
             }
         } catch (IOException e) {
             log.error("发送飞书加急消息失败，消息id=【{}】，请求内容体参数=【{}】，响应内容=【{}】", messageId, JSONUtil.toJsonStr(paramMap), JSONUtil.toJsonStr(result));
@@ -351,13 +346,11 @@ public class FeishuSendServiceImpl extends BaseMessageSendService {
         FeiShuSendBaseParam feiShuSendSingleParam = new FeiShuSendBaseParam();
 
         FeiShuSendBaseParam.ContentDTO contentDTO;
-        switch (feishuMessageTypeEnum) {
-            case INTERACTIVE: // 卡片
-                contentDTO = MsgConvertUtil.wrapTypicalCard(noticeMsgInfo);
-                break;
-            default: // 默认文本
-                contentDTO = new  FeiShuSendBaseParam.ContentDTO();
-                contentDTO.setText(noticeMsgInfo.getContent());
+        if (feishuMessageTypeEnum.equals(INTERACTIVE)) {
+            contentDTO = MsgConvertUtil.wrapTypicalCard(noticeMsgInfo);
+        }else {
+            contentDTO = new  FeiShuSendBaseParam.ContentDTO();
+            contentDTO.setText(noticeMsgInfo.getContent());
         }
         feiShuSendSingleParam.setContent(contentDTO);
         return feiShuSendSingleParam;
@@ -367,9 +360,9 @@ public class FeishuSendServiceImpl extends BaseMessageSendService {
      * 发送系统异常信息至飞书群
      */
     public void sendWebhookMessage(WarnMsgInfoDTO warnMsgInfo) {
-        log.info("接收到系统异常预警消息：【{}】",JSONObject.toJSONString(warnMsgInfo));
+        log.info("接收到系统异常预警消息：【{}】",JSON.toJSONString(warnMsgInfo));
         Boolean warnSend = fsProperties.getWarnSend();
-        if(!warnSend) {
+        if(Objects.isNull(warnSend) || !warnSend) {
             log.error("nacos配置飞书预警关闭，不发送预警通知");
             return;
         }
@@ -385,17 +378,17 @@ public class FeishuSendServiceImpl extends BaseMessageSendService {
             String activeProfile = SpringUtil.getActiveProfile();
             warnMsgContentDTO.setTitle(activeProfile + "-" + warnMsgTypeEnum.getName() + "：" + warnMsgInfo.getTitle());
             // 组装预警内容
-            String msgContent = StrUtil.format("所属项目：{}\n业务名称：{}\n异常日志表名及表id：{} {}\n关键信息：{}\n发生时间：{}",
+            String msgContent = CharSequenceUtil.format("所属项目：{}\n业务名称：{}\n异常日志表名及表id：{} {}\n关键信息：{}\n发生时间：{}",
                     warnMsgInfo.getErpServerModuleEnum().getCode(), StrUtils.null2EmptyWithTrim(warnMsgInfo.getBizName()),
                     StrUtils.null2EmptyWithTrim(warnMsgInfo.getTableName()), StrUtils.null2EmptyWithTrim(warnMsgInfo.getTableId()),
                     StrUtils.null2EmptyWithTrim(warnMsgInfo.getKeyInfo()), LocalDateTimeUtil.format(warnMsgInfo.getHappenTime(), "yyyy-MM-dd HH:mm:ss"));
             warnMsgContentDTO.setContent(msgContent);
 
             String fsToken = warns.get(warnMsgTypeEnum.getCode());
-            String requestUrl = StrUtil.format(FeishuConstant.FS_WARN_HOOK_URL, fsToken);
+            String requestUrl = CharSequenceUtil.format(FeishuConstant.FS_WARN_HOOK_URL, fsToken);
             FeiShuSendBaseParam.ContentDTO param = MsgConvertUtil.wrapTypicalCard(warnMsgContentDTO);
             Map<String, Object> bodyMap = new HashMap<>();
-            bodyMap.put("msg_type", FeishuMessageTypeEnum.INTERACTIVE.getCode());
+            bodyMap.put(MSG_TYPE, INTERACTIVE.getCode());
             bodyMap.put("card", param);
             log.info("开始发送飞书预警消息，请求内容体参数=【{}】", JSONUtil.toJsonStr(bodyMap));
             String resultStr = OkHttpUtils.doPostJson(requestUrl, bodyMap, null);

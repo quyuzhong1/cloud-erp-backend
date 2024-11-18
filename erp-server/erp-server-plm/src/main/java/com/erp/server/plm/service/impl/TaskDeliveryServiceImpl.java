@@ -1,5 +1,6 @@
 package com.erp.server.plm.service.impl;
 
+import cn.hutool.core.text.CharSequenceUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
@@ -325,8 +326,12 @@ public class TaskDeliveryServiceImpl extends ServiceImpl<TaskDocsMapper, TaskDel
             List<TaskDeliveryDocsEntity> existDocsList = getExistDocs(taskId);
             List<String> existDocsIds = existDocsList.stream().map(TaskDeliveryDocsEntity::getId).collect(Collectors.toList());
             List<String> parameterIds = docsList.stream().map(DocsDTO::getId).collect(Collectors.toList());
+            //排序比较
+            String sortDocsIds = existDocsIds.stream().sorted().collect(Collectors.joining(","));
+            String sortParameterIds = parameterIds.stream().sorted().collect(Collectors.joining(","));
+
             //如果是一样 没有改变文档 返回
-            if (existDocsIds.size() == parameterIds.size() && existDocsIds.contains(parameterIds) && parameterIds.contains(existDocsIds)) {
+            if (existDocsIds.size() == parameterIds.size() && CharSequenceUtil.equals(sortDocsIds,sortParameterIds)) {
                 return;
             }
             //先删除文档

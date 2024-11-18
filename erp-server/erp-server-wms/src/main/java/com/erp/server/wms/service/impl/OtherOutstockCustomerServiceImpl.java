@@ -1,5 +1,6 @@
 package com.erp.server.wms.service.impl;
 
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -81,7 +82,7 @@ public class OtherOutstockCustomerServiceImpl extends SuperServiceImpl<OtherOuts
      * @param entity
      */
     private void handleData (OtherOutstockCustomerEntity entity) {
-        if (StrUtil.isBlank(entity.getCustomerId())) {
+        if (CharSequenceUtil.isBlank(entity.getCustomerId())) {
             return;
         }
         CustomerInfoEntity customerInfoEntity = customerFeign.getCustomerById(entity.getCustomerId());

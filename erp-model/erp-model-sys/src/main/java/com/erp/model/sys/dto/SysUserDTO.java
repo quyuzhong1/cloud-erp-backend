@@ -1,7 +1,6 @@
 package com.erp.model.sys.dto;
 
 
-import com.baomidou.mybatisplus.annotation.TableField;
 import com.erp.model.sys.vo.SysMenuVO;
 import lombok.Data;
 import lombok.NoArgsConstructor;

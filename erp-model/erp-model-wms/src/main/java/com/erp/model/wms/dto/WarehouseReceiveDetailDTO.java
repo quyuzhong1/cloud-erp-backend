@@ -1,14 +1,13 @@
 package com.erp.model.wms.dto;
 
-import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
+import java.io.Serializable;
 import java.time.LocalDate;
-import java.util.Date;
 
 /**
  * 收货明细DTO
@@ -16,16 +15,17 @@ import java.util.Date;
  * @Date 2023/4/6 17:18
  **/
 @Data
-@NoArgsConstructor
 public class WarehouseReceiveDetailDTO {
-
+    private WarehouseReceiveDetailDTO() {
+        throw new IllegalStateException("Utility WarehouseReceiveDetailDTO class");
+    }
     /**
      * 添加
      */
     @Data
     @NoArgsConstructor
-    public static class AddDTO {
-
+    public static class AddDTO implements Serializable {
+        private static final long serialVersionUID = 1905122041950251207L;
         /**
          * sku编号
          */

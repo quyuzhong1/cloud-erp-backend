@@ -2,6 +2,7 @@ package com.erp.server.wms.schedule;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.StopWatch;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
@@ -60,7 +61,7 @@ public class InventoryFlowRecalculateJob {
         String inventoryId;
         String inventoryOrgId = null;
         Boolean fromTable = Boolean.FALSE;
-        if (StrUtil.isNotBlank(jobParam)) {
+        if (CharSequenceUtil.isNotBlank(jobParam)) {
             JSONObject jsonParam = JSONUtil.parseObj(jobParam);
             startTime = jsonParam.getLocalDateTime("startTime", LocalDateTime.parse("2023-07-06T00:00:00"));
             inventoryId = jsonParam.getStr("inventoryId");
@@ -69,7 +70,7 @@ public class InventoryFlowRecalculateJob {
         } else {
             inventoryId = null;
         }
-        if(StrUtil.isNotBlank(inventoryId)){
+        if(CharSequenceUtil.isNotBlank(inventoryId)){
             InventoryEntity inventory = inventoryService.getById(inventoryId);
             if (null != inventory) {
                 inventoryOrgId = inventory.getOrgId();
@@ -122,7 +123,7 @@ public class InventoryFlowRecalculateJob {
                                 transactionFlowService.overrideInventoryFlow(startDate, invId, orgName))
                         ).toArray(CompletableFuture[]::new));
                 allOf.thenRun(() -> log.info("###TransactionFlowServiceImpl:::overrideInventoryFlow 库存流水重算，所有任务执行完毕 组织:{}, 库存id:{}, 开始时间:{}", orgName, inventoryId, startDate)).join();
-                if(StrUtil.isEmpty(inventoryId) && ObjectUtil.isNotEmpty(inventoryOrgId)){
+                if(CharSequenceUtil.isEmpty(inventoryId) && ObjectUtil.isNotEmpty(inventoryOrgId)){
                     inventoryFlowOverrideRecordService.save(new InventoryFlowOverrideRecordEntity(LocalDateTime.of(startDate, LocalTime.MIN),LocalDateTime.now(), orgStartTimeMap.getKey(),orgName, InventoryFlowOverrideRecordTypeEnum.AUTO));
                 }
 
@@ -170,7 +171,7 @@ public class InventoryFlowRecalculateJob {
                 .filter(entry -> !closedDateMap.containsKey(entry.getKey()))
                 .forEach(entry -> startTimeMap.put(entry.getKey(), entry.getValue().toLocalDate()));
         // 指定组织
-        if(StrUtil.isNotBlank(inventoryOrgId)){
+        if(CharSequenceUtil.isNotBlank(inventoryOrgId)){
             Map<String, LocalDate> result = startTimeMap.entrySet().stream()
                     .filter(entry -> inventoryOrgId.equals(entry.getKey()))
                     .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));

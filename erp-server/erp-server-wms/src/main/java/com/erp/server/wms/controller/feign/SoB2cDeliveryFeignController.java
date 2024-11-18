@@ -1,6 +1,7 @@
 package com.erp.server.wms.controller.feign;
 
 
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import com.common.business.annotation.DataIdempotent;
 import com.common.business.annotation.DistributeLocker;
@@ -145,7 +146,7 @@ public class SoB2cDeliveryFeignController extends BaseController {
             return result;
         }catch (Exception e){
             log.error("流水线称重异常",e);
-            return ApiResult.error(StrUtil.format("系统异常:{}",e.getMessage()), CfgRuleOutEnum.EquipmentSortingPortEnum.NINE.getCode());
+            return ApiResult.error(CharSequenceUtil.format("系统异常:{}",e.getMessage()), CfgRuleOutEnum.EquipmentSortingPortEnum.NINE.getCode());
         }
     }
 

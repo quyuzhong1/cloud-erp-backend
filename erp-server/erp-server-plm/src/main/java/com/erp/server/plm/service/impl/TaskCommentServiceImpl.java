@@ -125,7 +125,7 @@ public class TaskCommentServiceImpl extends ServiceImpl<TaskCommentMapper, TaskC
                 List<String> attachUrlList = item.getAttachUrlList();
                 //附件名
                 List<String> attachNameList = item.getAttachNameList();
-                if (CollectionUtils.isNotEmpty(attachUrlList) && attachNameList.size() == attachNameList.size()) {
+                if (CollectionUtils.isNotEmpty(attachUrlList) && attachUrlList.size() == attachNameList.size()) {
                     for (int i = 0; i < attachUrlList.size(); i++) {
                         PlmAttachmentEntity attachment = new PlmAttachmentEntity();
                         attachment.setAttachUrl(attachUrlList.get(i));

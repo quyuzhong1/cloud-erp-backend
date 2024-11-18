@@ -2,6 +2,7 @@ package com.erp.server.tms.service.impl;
 
 
 import cn.hutool.core.lang.Pair;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
@@ -46,7 +47,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
@@ -59,6 +59,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.math.BigDecimal;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -77,7 +78,7 @@ import static com.common.business.enums.FileTaskEventEnum.EXPORT_TMS_SHIPPING_TE
 @Service
 public class ShippingTemplateServiceImpl extends SuperServiceImpl<ShippingTemplateMapper, ShippingTemplateEntity> implements ShippingTemplateService {
 
-    @Autowired
+    @Resource
     private OperateLogService operateLogService;
 
     @Resource
@@ -158,7 +159,7 @@ public class ShippingTemplateServiceImpl extends SuperServiceImpl<ShippingTempla
         shippingTemplateOtherCostService.add(addDTO.getOtherCostList(),shippingTemplateEntity.getId());
 
         // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据名称为【{}】", UserContext.getDefaultLoginUser().getUserName(), "运费模板" , shippingTemplateEntity.getName());
+        String msg = CharSequenceUtil.format("用户【{}】新增【{}】单据名称为【{}】", UserContext.getDefaultLoginUser().getUserName(), "运费模板" , shippingTemplateEntity.getName());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SHIPPING_TEMPLATE.getCode(), shippingTemplateEntity.getId(), "新增操作");
 
         return new BaseResultDTO.AddDTO(shippingTemplateEntity.getId(), shippingTemplateEntity.getId());
@@ -188,7 +189,7 @@ public class ShippingTemplateServiceImpl extends SuperServiceImpl<ShippingTempla
 
         // 记录主单操作日志
         log.info("编辑 开始记录运费模板日志数据，id：【{}】", shippingTemplateEntity.getId());
-        String msg = StrUtil.format("用户【{}】编辑名称为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), shippingTemplateEntity.getName(), "运费模板");
+        String msg = CharSequenceUtil.format("用户【{}】编辑名称为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), shippingTemplateEntity.getName(), "运费模板");
 
         operateLogService.addModuleOperateLogByObj(old, shippingTemplateEntity, ModuleTypeEnum.SHIPPING_TEMPLATE.getCode(), shippingTemplateEntity.getId(), msg);
         return Boolean.TRUE;
@@ -260,7 +261,7 @@ public class ShippingTemplateServiceImpl extends SuperServiceImpl<ShippingTempla
             channelNames = channelList.stream().map(LogisticsChannelEntity::getName).collect(Collectors.joining(","));
         }
         //添加日志
-        String msg = StrUtil.format("用户【{}】应用渠道【{}】", UserContext.getDefaultLoginUser().getUserName(),  channelNames);
+        String msg = CharSequenceUtil.format("用户【{}】应用渠道【{}】", UserContext.getDefaultLoginUser().getUserName(),  channelNames);
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SHIPPING_TEMPLATE.getCode(), entity.getId(), "应用渠道操作");
         return Boolean.TRUE;
     }
@@ -282,7 +283,7 @@ public class ShippingTemplateServiceImpl extends SuperServiceImpl<ShippingTempla
 
         // 启用/停用日志数据
         log.info("启用/停用 开始启用/停用运费模板单日志数据，id集合：【{}】", id);
-        String msg = StrUtil.format("用户【{}】运费模板【{}】的【{}】单据{}操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getName(), "运费模板",disabled ? "停用" : "启用");
+        String msg = CharSequenceUtil.format("用户【{}】运费模板【{}】的【{}】单据{}操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getName(), "运费模板",disabled ? "停用" : "启用");
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SHIPPING_TEMPLATE.getCode(), entity.getId(), "启用/停用");
         return BatchResultDTO.success(entity.getId(), entity.getName(), OperationTypeEnum.DISABLED);
     }
@@ -306,7 +307,7 @@ public class ShippingTemplateServiceImpl extends SuperServiceImpl<ShippingTempla
         removeById(id);
         // 删除日志数据
         log.info("删除 开始删除运费模板单日志数据，id集合：【{}】", id);
-        String msg = StrUtil.format("用户【{}】名称【{}】的【{}】单据删除操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getName(), "运费模板");
+        String msg = CharSequenceUtil.format("用户【{}】名称【{}】的【{}】单据删除操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getName(), "运费模板");
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SHIPPING_TEMPLATE.getCode(), entity.getId(), "删除运费模板单数据");
         return BatchResultDTO.success(entity.getId(), entity.getName(), OperationTypeEnum.DELETE);
     }
@@ -325,7 +326,7 @@ public class ShippingTemplateServiceImpl extends SuperServiceImpl<ShippingTempla
             response.reset();
             // 设置文件头
             response.setHeader("Content-Disposition",
-                    "attchement;filename=" + new String(excelName.getBytes("gb2312"), "ISO8859-1"));
+                    "attchement;filename=" + new String(excelName.getBytes("gb2312"), StandardCharsets.ISO_8859_1));
             response.setContentType("application/msexcel");
             wb.write(output);
             wb.close();
@@ -499,7 +500,7 @@ public class ShippingTemplateServiceImpl extends SuperServiceImpl<ShippingTempla
                 String fromCountry = dictCountryList.stream().filter(obj -> obj.getNameCn().equals(excelDTO.getFromCountry())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getId())).orElse("");
                 ruleAddDTO.setFromCountry(fromCountry);
                 //目的国
-                if (StrUtil.isNotBlank(excelDTO.getToCountry())) {
+                if (CharSequenceUtil.isNotBlank(excelDTO.getToCountry())) {
                     String toCountry = dictCountryList.stream().filter(obj -> obj.getNameCn().equals(excelDTO.getToCountry())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getId())).orElse("");
                     ruleAddDTO.setToCountry(toCountry);
                 }
@@ -837,7 +838,7 @@ public class ShippingTemplateServiceImpl extends SuperServiceImpl<ShippingTempla
         }
 
         String fromCountry = dictCountryList.stream().filter(obj -> obj.getNameCn().equals(addDTO.getFromCountry())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getId())).orElse("");
-        if (StrUtil.isBlank(fromCountry)) {
+        if (CharSequenceUtil.isBlank(fromCountry)) {
             errorMsgList.add("系统中未找起始国家");
         }
 
@@ -845,9 +846,9 @@ public class ShippingTemplateServiceImpl extends SuperServiceImpl<ShippingTempla
             if (ObjectUtil.isEmpty(addDTO.getToCountry())) {
                 errorMsgList.add("目的地不能为空");
             }
-            if (StrUtil.isNotBlank(addDTO.getToCountry())) {
+            if (CharSequenceUtil.isNotBlank(addDTO.getToCountry())) {
                 String toCountry = dictCountryList.stream().filter(obj -> obj.getNameCn().equals(addDTO.getToCountry())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getId())).orElse("");
-                if (StrUtil.isBlank(toCountry)) {
+                if (CharSequenceUtil.isBlank(toCountry)) {
                     errorMsgList.add("系统中未找目的地");
                 }
             }
@@ -964,7 +965,7 @@ public class ShippingTemplateServiceImpl extends SuperServiceImpl<ShippingTempla
     private void handleData(ShippingTemplateEntity shippingTemplateEntity) {
 
         ShippingTemplateEntity entity = this.listByName(shippingTemplateEntity.getName());
-        if (ObjectUtil.isNotEmpty(entity) && !StrUtil.equals(entity.getId(),shippingTemplateEntity.getId())) {
+        if (ObjectUtil.isNotEmpty(entity) && !CharSequenceUtil.equals(entity.getId(),shippingTemplateEntity.getId())) {
             throw new ServiceException(ApiError.ERROR_SHIPPING_TEMPLATE_EXIST);
         }
         //验证是否能停用

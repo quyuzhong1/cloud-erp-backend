@@ -1,12 +1,10 @@
 package com.erp.model.plm.entity;
 
-import com.baomidou.mybatisplus.annotation.*;
+import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
 import lombok.Data;
 
 import java.io.Serializable;
-import java.time.LocalDateTime;
-import java.util.Date;
 
 /**
  * @Classname UserCancelNoticeEntity
@@ -16,7 +14,7 @@ import java.util.Date;
  */
 @TableName(value = "user_cancel_notice")
 @Data
-public class UserCancelNoticeEntity extends BaseEntity implements Serializable {
+public class UserCancelNoticeEntity extends BaseEntity<UserCancelNoticeEntity> implements Serializable {
 
     /**
      * 用户id

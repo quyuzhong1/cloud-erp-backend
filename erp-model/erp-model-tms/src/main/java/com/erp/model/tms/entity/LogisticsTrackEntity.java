@@ -72,9 +72,9 @@ public class LogisticsTrackEntity extends BaseEntity<LogisticsTrackEntity> {
 
     public static final String TRACK_TIME = "track_time";
 
-    public static final String STATUS = "status";
+    public static final String FIELD_STATUS = "status";
 
-    public static final String CONTENT = "content";
+    public static final String FIELD_CONTENT = "content";
 
     @Override
     public Serializable pkVal() {

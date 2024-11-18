@@ -17,6 +17,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import javax.annotation.Resource;
+
 /**
  * FBA库存
  *
@@ -29,7 +31,7 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/fbaInventory")
 public class FbaInventoryController extends BaseController {
 
-    @Autowired
+    @Resource
     private FbaInventoryService fbaInventoryService;
 
     /**

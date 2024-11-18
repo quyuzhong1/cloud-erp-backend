@@ -1,13 +1,13 @@
 package com.erp.model.wms.entity;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
-import com.baomidou.mybatisplus.annotation.TableField;
-import java.io.Serializable;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
-import com.common.business.enums.ApproveStatusEnum;
+
+import java.io.Serializable;
 
 
 /**
@@ -112,13 +112,13 @@ public class WmsDataCompareTaskEntity extends BaseEntity<WmsDataCompareTaskEntit
     private String compareType;
 
 
-    public static final String CODE = "code";
+    
 
-    public static final String NAME = "name";
+    
 
     public static final String BILL_TYPE = "bill_type";
 
-    public static final String STATUS = "status";
+    
 
     public static final String SUB_STATUS = "sub_status";
 

@@ -1,5 +1,6 @@
 package com.erp.server.oms.listener;
 
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.excel.context.AnalysisContext;
 import com.alibaba.excel.event.AnalysisEventListener;
@@ -201,7 +202,7 @@ public class SkuMappingExcelListener extends AnalysisEventListener<SkuMappingImp
         // 校验不允许重复历史
         long historyCount = listDto.stream().filter(e -> e.getProductSkuNo().equals(skuNo)).count();
         if (0 < historyCount){
-            errorMsgList.add(StrUtil.format("当前映射关系在【{}】已存在过，无法修改", skuNo));
+            errorMsgList.add( CharSequenceUtil.format("当前映射关系在【{}】已存在过，无法修改", skuNo));
             skuMappingImportExcelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
             errorList.add(skuMappingImportExcelDTO);
             return;
@@ -361,10 +362,10 @@ public class SkuMappingExcelListener extends AnalysisEventListener<SkuMappingImp
             skuMappingService.removeByIds(removeIds);
         }
         if (CollectionUtils.isNotEmpty(addLogPairList)) {
-            operateLogService.batchAddModuleOperateLog(StrUtil.format("用户【{}】新增了sku映射表", UserContext.getDefaultLoginUser().getUserName())+"id为【%s】", ModuleTypeEnum.LISTING_INFO.getCode(), addLogPairList,"新增操作");
+            operateLogService.batchAddModuleOperateLog( CharSequenceUtil.format("用户【{}】新增了sku映射表", UserContext.getDefaultLoginUser().getUserName())+"id为【%s】", ModuleTypeEnum.LISTING_INFO.getCode(), addLogPairList,"新增操作");
         }
         if (CollectionUtils.isNotEmpty(updateLogPairList)) {
-            operateLogService.batchAddModuleOperateLog(StrUtil.format("用户【{}】编辑sku映射表",UserContext.getDefaultLoginUser().getUserName())+"，【%s】", ModuleTypeEnum.LISTING_INFO.getCode(), updateLogPairList,"编辑操作");
+            operateLogService.batchAddModuleOperateLog( CharSequenceUtil.format("用户【{}】编辑sku映射表",UserContext.getDefaultLoginUser().getUserName())+"，【%s】", ModuleTypeEnum.LISTING_INFO.getCode(), updateLogPairList,"编辑操作");
         }
     }
 

@@ -1,6 +1,6 @@
 package com.common.core.utils;
 
-import cn.hutool.core.util.StrUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.http.HttpUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
@@ -98,9 +98,9 @@ public class HolidayUtils {
     private static LinkedHashMap getJjr(int year, int month) {
         String url = "http://timor.tech/api/holiday/year/";
         if(year > 0 && month > 0){
-            url = StrUtil.format("{}{}-{}", url, year, month);
+            url = CharSequenceUtil.format("{}{}-{}", url, year, month);
         }else if(year > 0){
-            url = StrUtil.format("{}{}",url, year);
+            url = CharSequenceUtil.format("{}{}",url, year);
         }
 
         //解密数据

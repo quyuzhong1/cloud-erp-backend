@@ -18,7 +18,7 @@ public enum ApiError implements Serializable {
     /**
      * 服务调用异常
      */
-    Default(9999, "系统异常，请联系【实施人员】协调开发人员排查"),
+    DEFAULT(9999, "系统异常，请联系【实施人员】协调开发人员排查"),
     WARNING(8888, "系统警告..."),
 
     ERROR_5000(5000, "存在越权访问URL"),
@@ -398,7 +398,6 @@ public enum ApiError implements Serializable {
     ERROR_95152(95152, "请录入已审核的父级SKU"),
     ERROR_95153(95153, "请录入已审核的子级SKU"),
     ERROR_95154(95154, "产品信息未发现已审核SKU"),
-    ERROR_95155(95155, "文档不存在"),
     ERROR_95156(95156, "该文档已被引用状态不能关闭"),
     ERROR_95157(95157, "请选择模板"),
     ERROR_MSG_IS_NOT_NULL(95158, "消息模板不能为空"),
@@ -417,7 +416,6 @@ public enum ApiError implements Serializable {
     ERROR_BUSINESS_NOT_EXIT(95162, "业务类型不存在，请检查"),
     ERROR_95163(95163, "未找到选择的BOM信息"),
     ERROR_95164(95164, "不可新增相同EAN码"),
-    ERROR_DOCS_NO(95165,"文档不存在"),
     ERROR_95166(95166, "未找到BOM子件"),
     ERROR_95167(95167,"变体类型已被关联，不可删除"),
     ERROR_95168(95168,"变体值已被关联，不可删除"),
@@ -1329,8 +1327,8 @@ public enum ApiError implements Serializable {
     ERROR_SO_B2C_DISTRIBUTION_NOT_NULL(92115,"手动配货仓库和渠道不能全部为空"),
     ERROR_SKU_MAPPING_RULE_NULL(92115,"sku匹配规则详情不能为空"),
     PLATFORM_WAREHOUSE_ORDER_NOT_INTERCEPT(92116,"平台仓订单不支持拦截"),
-    ERROR_SO_B2C_Operate_NOT_SPLIT(92117,"B2C销售订单【{}】已合并或拆分不支持拆分"),
-    ERROR_SO_B2C_Operate_NOT_MERGE(92118,"B2C销售订单【{}】已合并或拆分不支持合并"),
+    ERROR_SO_B2C_OPERATE_NOT_SPLIT(92117,"B2C销售订单【{}】已合并或拆分不支持拆分"),
+    ERROR_SO_B2C_OPERATE_NOT_MERGE(92118,"B2C销售订单【{}】已合并或拆分不支持合并"),
     NOT_DELIVERY_NOT_INTERCEPT(92119,"只有待发货订单可以发起拦截"),
     IS_EXIST_NOT_INTERCEPT(92120,"订单取消，发货被拦截"),
     CANCEL_LOGISTICS_ID_NOT_EXIST(92121,"取消物流单的渠道不能为空"),
@@ -1388,6 +1386,14 @@ public enum ApiError implements Serializable {
     ERROR_92151(92151,"启用日期不能大于上个映射关系的开始时间【{}】"),
     ERROR_92152(92152,"销售订单【{}】明细中sku不能全部为空"),
     ERROR_SO_B2C_LOGISTICS_MAPPING_NOT_NULL(92153,"【{}】所属的平台【{}】没有配置【{}】的标发信息，不允许提交发货"),
+    ADMIN(92154,"admin"),
+    ERROR_92155(92155,"b2b客户销售员变更单" ),
+    ERROR_92156(92156,"状态由[%s]变更为[%s]"),
+    ERROR_92157(92157,"查询不到销售员"),
+    ERROR_92158(92158,"变更后的销售员id不能为空"),
+    ERROR_92159(92159,"单据不存在"),
+    ERROR_92160(92160,"本地推送消息单"),
+    ERROR_92161(92161,"退款订单明细"),
     /**
      * TMS 错误
      * 从94000 开始
@@ -1486,6 +1492,10 @@ public enum ApiError implements Serializable {
     ERROR_DELIVERY_ORDER_DETAIL_NOT_EXIST(96015,"送货单明细不存在"),
     ERROR_PO_RECONCILIATION_DETAIL_HAS_GENERATE(96016,"单据单号【{}】已生成对账明细"),
     ERROR_PO_RECEIVE_DISAPPROVE_FAILURE(96017,"单据单号【{}】已关联对账，无法反审核"),
+    CONTENT_96018(96018,"系统配置管理"),
+
+
+
     ERROR_CANNOT_SAME_POSITION(94100,"取货和上架仓位不能是同一个仓位"),
     ERROR_OUT_WAREHOUSELOCATION_NOT_FOUND(94101,"取货仓位不存在"),
     ERROR_IN_WAREHOUSELOCATION_NOT_FOUND(94102,"上架仓位不存在"),
@@ -1514,6 +1524,7 @@ public enum ApiError implements Serializable {
     ERROR_LOGISTICS_NOT_EXIST(97013,"物流配置不存在"),
     ERROR_TABLE_NOT_EXIST(97014,"表{}不存在"),
     ERROR_TIME_FRAME_NOT_EXIST(97015,"*建议时间范围规则配置不存在"),
+    ERROR_REPLENISHMENT_NOT_EXIST(97016,"未找到补货建议数据"),
 
 
 
@@ -1533,7 +1544,7 @@ public enum ApiError implements Serializable {
 
     ERROR_99998(99998,"采购申请单【{}】下级SKU【{}】采购数量不能大于待申请数量"),
     ERROR_99999(99999, "参数错误"),
-    ERROR_end(1000000, "系统错误"),
+    ERROR_END(1000000, "系统错误"),
     ;
 
     public Integer code;

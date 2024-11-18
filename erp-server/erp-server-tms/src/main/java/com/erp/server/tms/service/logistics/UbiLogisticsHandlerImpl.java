@@ -6,6 +6,7 @@ import com.common.business.annotation.LogisticsPlatformType;
 import com.common.business.enums.LogisticsPlatformEnum;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.ValidatorUtil;
 import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
@@ -39,7 +40,6 @@ import java.util.stream.Collectors;
 /**
  * @author zdy
  * @ClassName UbiLogisticsHandlerImpl
- * @description: TODO
  * @date 2023年11月09日
  * @version: 1.0
  */
@@ -153,6 +153,9 @@ public class UbiLogisticsHandlerImpl extends AbstractLogisticsHandler {
                 .build();
         ValidatorUtil.validateEntity(holdRequest);
         try {
+            if(Objects.isNull(logisticsInterceptOrderVO)){
+                throw new ServiceException("拦截订单信息不能为空");
+            }
             List<OrderResponse> orderResponses = ubiShipperService.interceptOrder(logisticsInterceptOrderVO.getAuthMap(), holdRequest);
             logisticsOperateService.pushOperateLog(logisticsInterceptOrderVO.getOrderId(),
                     logisticsInterceptOrderVO.getDeliveryNo(), BusinessTypeEnum.INTERCEPT_ORDER.getCode(), LogisticsPlatformEnum.UBI.getCode(),
@@ -194,6 +197,9 @@ public class UbiLogisticsHandlerImpl extends AbstractLogisticsHandler {
     public ApiResult<List<LogisticsOrderResponseVO>> queryOrderList(List<LogisticsQueryBaseVO> logisticsQueryVOList) {
         LogisticsQueryBaseVO logisticsQueryBaseVO = logisticsQueryVOList.stream().filter(e -> Objects.nonNull(e.getAuthMap())).findFirst().orElse(null);
         try {
+            if(logisticsQueryBaseVO == null){
+                throw new ServiceException("参数异常");
+            }
             List<TrackBase> trackNumber = ubiShipperService.getTrackNumber(logisticsQueryBaseVO.getAuthMap(), logisticsQueryVOList.stream().map(LogisticsQueryBaseVO::getDeliveryNo).collect(Collectors.toList()));
 
             logisticsOperateService.pullOperateLog(logisticsQueryBaseVO.getOrderId(),
@@ -274,40 +280,10 @@ public class UbiLogisticsHandlerImpl extends AbstractLogisticsHandler {
             serviceCataLogList.forEach(serviceCataLog -> {
                 List<String> serviceOptions = serviceCataLog.getServiceOptions();
                 if (CollectionUtils.isNotEmpty(serviceOptions)) {
-                    serviceOptions.forEach(serviceOption -> {
-                        //产品确认只拉取该类型渠道数据
-                        if (serviceOption.contains("E-Parcel")) {
-                            //快递类型
-                            List<Origin> destinations = serviceCataLog.getDestinations();
-                            if (CollectionUtils.isNotEmpty(destinations)) {
-                                destinations.forEach(destination -> {
-                                    List<Origin> origins = serviceCataLog.getOrigins();
-                                    if (CollectionUtils.isNotEmpty(origins)) {
-                                        origins.forEach(origin -> {
-                                            //发货国
-                                            LogisticsSaleChannelEntity entity = new LogisticsSaleChannelEntity()
-                                                    .setCode(serviceCataLog.getServiceCode())
-                                                    .setCnName(serviceCataLog.getServiceName())
-                                                    .setEnName(serviceCataLog.getNativeName())
-                                                    .setSupplierCode(serviceCataLog.getServiceProviderCode())
-                                                    .setSupplierName(serviceCataLog.getServiceProvider())
-                                                    .setLogisticsPlatform(LogisticsPlatformEnum.UBI.getCode())
-                                                    .setChannelStatus(MathUtil.ZERO)
-                                                    .setDestinationCountry(destination.getCountry())
-                                                    .setOriginCountry(origin.getCountry())
-                                                    .setShipmentMethod(serviceOption);
-                                            list.add(entity);
-                                        });
-                                    }
-                                });
-                            }
-                        }
-
-                    });
+                    handleData(serviceCataLog, serviceOptions, list);
                 }
             });
 
-//            List<LogisticsSaleChannelEntity> list = LogisticsChannelConverter.INSTANCE.channelConvertByUBI(serviceCataLogList);
             logisticsOperateService.pullOperateLog(chanelQueryVO.getOrderId(),
                     chanelQueryVO.getTransportMode(), BusinessTypeEnum.GET_CHANEL_LIST.getCode(), LogisticsPlatformEnum.UBI.getCode(),
                     RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(chanelQueryVO), JSONUtil.toJsonStr(serviceCataLogList));
@@ -320,13 +296,47 @@ public class UbiLogisticsHandlerImpl extends AbstractLogisticsHandler {
         }
 
     }
+
+    private static void handleData(ServiceCataLog serviceCataLog, List<String> serviceOptions, List<LogisticsSaleChannelEntity> list) {
+        serviceOptions.forEach(serviceOption -> {
+            //产品确认只拉取该类型渠道数据
+            if (serviceOption.contains("E-Parcel")) {
+                //快递类型
+                List<Origin> destinations = serviceCataLog.getDestinations();
+                if (CollectionUtils.isNotEmpty(destinations)) {
+                    destinations.forEach(destination -> {
+                        List<Origin> origins = serviceCataLog.getOrigins();
+                        if (CollectionUtils.isNotEmpty(origins)) {
+                            origins.forEach(origin -> {
+                                //发货国
+                                LogisticsSaleChannelEntity entity = new LogisticsSaleChannelEntity()
+                                        .setCode(serviceCataLog.getServiceCode())
+                                        .setCnName(serviceCataLog.getServiceName())
+                                        .setEnName(serviceCataLog.getNativeName())
+                                        .setSupplierCode(serviceCataLog.getServiceProviderCode())
+                                        .setSupplierName(serviceCataLog.getServiceProvider())
+                                        .setLogisticsPlatform(LogisticsPlatformEnum.UBI.getCode())
+                                        .setChannelStatus(MathUtil.ZERO)
+                                        .setDestinationCountry(destination.getCountry())
+                                        .setOriginCountry(origin.getCountry())
+                                        .setShipmentMethod(serviceOption);
+                                list.add(entity);
+                            });
+                        }
+                    });
+                }
+            }
+
+        });
+    }
+
     /**
      * 授权判断
      * @param authMap
      * @return
      */
     @Override
-    public ApiResult authorization(Map<String, String> authMap){
+    public ApiResult<Object>authorization(Map<String, String> authMap){
         try {
             ubiShipperService.getServiceCatalog(authMap);
             return success("授权成功");

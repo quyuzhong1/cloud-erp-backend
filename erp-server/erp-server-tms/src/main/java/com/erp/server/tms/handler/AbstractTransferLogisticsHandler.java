@@ -1,8 +1,8 @@
 package com.erp.server.tms.handler;
 
 import cn.hutool.core.exceptions.ExceptionUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.common.business.enums.ErpServerModuleEnum;
 import com.common.business.enums.SourceTypeEnum;
@@ -22,7 +22,6 @@ import com.erp.model.tms.dto.transfer.*;
 import com.erp.model.tms.entity.ProductRegistrationEntity;
 import com.erp.model.tms.entity.TransferLogisticsAuthEntity;
 import com.erp.model.tms.entity.TransferLogisticsChannelEntity;
-import com.erp.model.wms.dto.third.ThirdWarehouseCreateOutboundReq;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.server.tms.service.TransferLogisticsAuthService;
 import com.erp.server.tms.service.TransferLogisticsService;
@@ -34,7 +33,10 @@ import org.springframework.validation.annotation.Validated;
 
 import javax.annotation.Resource;
 import javax.validation.Valid;
-import java.util.*;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -49,7 +51,7 @@ public abstract class AbstractTransferLogisticsHandler extends BaseController im
     private DmpTaskFeign dmpTaskFeign;
 
     @Resource
-    private MQProducerService mqProducerService;
+    private MQProducerService<WarnMsgInfoDTO> mqProducerService;
 
     public void handleAuthInfo(String id) {
         TransferLogisticsAuthEntity authEntity = getAuthEntity(id);
@@ -64,7 +66,7 @@ public abstract class AbstractTransferLogisticsHandler extends BaseController im
     }
 
     @Override
-    public ApiResult authorization(Map<String, String> authConfig) {
+    public ApiResult<Object>authorization(Map<String, String> authConfig) {
         try {
             TransferLogisticsContext.setAuthMap(authConfig);
             ApiResult<List<TransferLogisticsChannelEntity>>  result = this.getShippingMethodList();
@@ -254,7 +256,7 @@ public abstract class AbstractTransferLogisticsHandler extends BaseController im
         WarnMsgInfoDTO warnMsgInfo = new WarnMsgInfoDTO();
         warnMsgInfo.setBizName(SourceTypeEnum.getName(entity.getSourceType()));
         warnMsgInfo.setErpServerModuleEnum(ErpServerModuleEnum.ERP_SERVER_TMS);
-        warnMsgInfo.setTitle(StrUtil.format("ERP拉取物流报关商【{}】数据从{}拉取至{}失败", entity.getSourceCode(),  entity.getTargetPlatformName(),entity.getSourcePlatformName()));
+        warnMsgInfo.setTitle(CharSequenceUtil.format("ERP拉取物流报关商【{}】数据从{}拉取至{}失败", entity.getSourceCode(),  entity.getTargetPlatformName(),entity.getSourcePlatformName()));
         warnMsgInfo.setTableName(SourceTypeEnum.getTableName(entity.getSourceType()));
         warnMsgInfo.setTableId(entity.getSourceId());
         warnMsgInfo.setKeyInfo(StringUtils.isEmpty(TransferLogisticsContext.getMsg())?"":TransferLogisticsContext.getMsg());
@@ -266,7 +268,7 @@ public abstract class AbstractTransferLogisticsHandler extends BaseController im
         WarnMsgInfoDTO warnMsgInfo = new WarnMsgInfoDTO();
         warnMsgInfo.setBizName(SourceTypeEnum.getName(entity.getSourceType()));
         warnMsgInfo.setErpServerModuleEnum(ErpServerModuleEnum.ERP_SERVER_TMS);
-        warnMsgInfo.setTitle(StrUtil.format("物流报关商【{}】从{}推送至{}失败", entity.getSourceCode(), entity.getSourcePlatformName(), entity.getTargetPlatformName()));
+        warnMsgInfo.setTitle(CharSequenceUtil.format("物流报关商【{}】从{}推送至{}失败", entity.getSourceCode(), entity.getSourcePlatformName(), entity.getTargetPlatformName()));
         warnMsgInfo.setTableName(SourceTypeEnum.getTableName(entity.getSourceType()));
         warnMsgInfo.setTableId(entity.getSourceId());
         warnMsgInfo.setKeyInfo(StringUtils.isEmpty(TransferLogisticsContext.getMsg())?"":TransferLogisticsContext.getMsg());

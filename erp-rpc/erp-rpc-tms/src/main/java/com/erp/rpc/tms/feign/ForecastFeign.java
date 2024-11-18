@@ -17,7 +17,6 @@ import java.util.List;
 /**
  * @author Lambda
  * @Classname ForecastFeign
- * @Description TODO
  * @Date 2024-01-19 17:16
  * @Created by yl
  */

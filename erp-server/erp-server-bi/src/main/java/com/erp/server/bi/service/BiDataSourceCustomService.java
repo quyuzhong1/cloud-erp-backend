@@ -3,6 +3,7 @@ package com.erp.server.bi.service;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
+import com.erp.model.bi.dto.BiDataSourceCustomGraphicalDTO;
 import com.erp.model.bi.dto.BiDataSourceCustomSearchDTO;
 import com.erp.model.bi.dto.BiDataSourceCustomTableDTO;
 import com.erp.model.bi.dto.BiTargetTypeDTO;
@@ -77,7 +78,7 @@ public interface BiDataSourceCustomService  extends IService<BiDataSourceCustomE
      * @param year
      * @return ChartVO
      */
-    ChartVO listGraphicalData(String moduleName, Integer year);
+    ChartVO<BiDataSourceCustomGraphicalDTO> listGraphicalData(String moduleName, Integer year);
 
     /**
      * @description: 根据类型、数据类型、指标名称、年份查询

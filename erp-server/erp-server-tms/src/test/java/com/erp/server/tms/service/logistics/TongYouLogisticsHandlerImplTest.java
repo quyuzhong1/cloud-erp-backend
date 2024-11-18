@@ -2,8 +2,6 @@ package com.erp.server.tms.service.logistics;
 
 import com.common.business.enums.LogisticsPlatformEnum;
 import com.common.core.controller.vo.ApiResult;
-import com.erp.model.tms.entity.LogisticsAuthEntity;
-import com.erp.model.tms.entity.LogisticsChannelEntity;
 import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
 import com.erp.model.tms.vo.request.*;
 import com.erp.model.tms.vo.response.LogisticsOrderResponseVO;
@@ -143,12 +141,9 @@ public class TongYouLogisticsHandlerImplTest {
         labelVO.setAuthMap(authMap);
         labelVO2.setDeliveryNo("WJ20231102002");
         labelVO2.setAuthMap(authMap);
-        ApiResult<List<LogisticsOrderResponseVO>> apiResult = tongYouLogisticsHandler.queryOrderList(Arrays.asList(labelVO,labelVO2));
-        System.out.println(apiResult);
+
     }
     @Test
     public void authorization() {
-        ApiResult apiResult = tongYouLogisticsHandler.authorization(authMap);
-        System.out.println(apiResult);
     }
 }

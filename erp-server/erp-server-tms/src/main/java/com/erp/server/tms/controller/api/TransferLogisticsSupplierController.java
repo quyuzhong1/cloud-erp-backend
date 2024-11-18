@@ -101,7 +101,7 @@ public class TransferLogisticsSupplierController extends BaseController {
             menuCode = "tms:transferLogisticsSupplier:update",
             serviceClass = TransferLogisticsSupplierService.class,
             keyIdName = "id")
-    public ApiResult update(@RequestBody @Validated TransferLogisticsSupplierDTO.UpdateDTO dto) {
+    public ApiResult<Object>update(@RequestBody @Validated TransferLogisticsSupplierDTO.UpdateDTO dto) {
         transferLogisticsSupplierService.update(dto);
         return success();
     }
@@ -155,7 +155,7 @@ public class TransferLogisticsSupplierController extends BaseController {
      **/
     @PostMapping("/export")
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出excel")
-    public ApiResult export(@RequestBody @Valid TransferLogisticsSupplierDTO.ExportDTO dto) {
+    public ApiResult<Object>export(@RequestBody @Valid TransferLogisticsSupplierDTO.ExportDTO dto) {
         Boolean result = transferLogisticsSupplierService.export(dto);
         return result ? success() : failure();
     }

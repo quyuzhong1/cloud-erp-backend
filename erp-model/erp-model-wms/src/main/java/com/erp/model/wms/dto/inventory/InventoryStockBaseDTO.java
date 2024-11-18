@@ -5,7 +5,6 @@ import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import lombok.Data;
 
 import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotEmpty;
 import java.io.Serializable;
 
 /**

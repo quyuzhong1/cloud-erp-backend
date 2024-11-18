@@ -176,9 +176,6 @@ public class MachineInfoEntity extends BaseEntity<MachineInfoEntity> {
     @TableField(exist= false)
     private String warehouseCode;
 
-
-    public static final String CODE = "code";
-
     public static final String APPROVE_STATUS = "approve_status";
 
     public static final String BILL_DATE = "bill_date";
@@ -204,8 +201,6 @@ public class MachineInfoEntity extends BaseEntity<MachineInfoEntity> {
     public static final String RECEIVE_ORG_ID = "receive_org_id";
 
     public static final String RECEIVE_ORG_NAME = "receive_org_name";
-
-    public static final String TYPE = "type";
 
     public static final String INVALID_STATUS = "invalid_status";
 

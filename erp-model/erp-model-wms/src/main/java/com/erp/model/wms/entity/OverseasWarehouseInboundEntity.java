@@ -269,9 +269,6 @@ public class OverseasWarehouseInboundEntity extends BaseEntity<OverseasWarehouse
     @TableField(exist = false)
     private Integer count;
 
-
-    public static final String CODE = "code";
-
     public static final String DICT_PLATFORM = "dict_platform";
 
     public static final String SOURCE_CODE = "source_code";
@@ -297,8 +294,6 @@ public class OverseasWarehouseInboundEntity extends BaseEntity<OverseasWarehouse
     public static final String TO_WAREHOUSE_ID = "to_warehouse_id";
 
     public static final String LOGISTICS_METHOD = "logistics_method";
-
-    public static final String REMARK = "remark";
 
     public static final String RECEIVE_TIME = "receive_time";
 

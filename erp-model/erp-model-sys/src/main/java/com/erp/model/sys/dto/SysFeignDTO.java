@@ -2,7 +2,6 @@ package com.erp.model.sys.dto;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.NonNull;
 
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
@@ -16,6 +15,8 @@ import java.util.List;
  **/
 public class SysFeignDTO {
 
+    private SysFeignDTO() {
+    }
 
     @Data
     @NoArgsConstructor

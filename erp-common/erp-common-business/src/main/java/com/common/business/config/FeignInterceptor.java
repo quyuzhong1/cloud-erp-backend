@@ -13,6 +13,8 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * <p>
@@ -27,20 +29,22 @@ import java.util.*;
 public class FeignInterceptor implements RequestInterceptor {
 
     // 需要转发的请求头
-    private static List<String> forwardHeaderNames = new ArrayList<String>() {
-        {
-            add("tokenuserinfo");// 用户信息
-            add("user-agent");
-            add("x-real-ip");
-            add("authorization");// token信息
-        }
-    };
+    private static final List<String> forwardHeaderNames =
+            Arrays.asList(
+                    "tokenuserinfo",
+                    "user-agent",
+                    "x-real-ip",
+                    "authorization"
+            );
+
 
     // 请求头会自动转换成了小写，此处做映射
-    private static Map<String, String>  HEADER_NAME_MAPPING = new HashMap<String, String>(){{
-        put("tokenuserinfo", "tokenUserInfo");
-        put("authorization", "Authorization");
-    }};
+    private static final Map<String, String> HEADER_NAME_MAPPING = Stream.of(
+                    new AbstractMap.SimpleEntry<>("tokenuserinfo", "tokenUserInfo"),
+                    new AbstractMap.SimpleEntry<>("authorization", "Authorization"))
+            .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+
+
 
     @Override
     public void apply(RequestTemplate requestTemplate) {
@@ -55,11 +59,11 @@ public class FeignInterceptor implements RequestInterceptor {
             while (headerNames.hasMoreElements()) {
                 String name = headerNames.nextElement();
                 headNameList.add(name);
-                if(forwardHeaderNames.contains(name)){
+                if (forwardHeaderNames.contains(name)) {
                     Enumeration<String> values = request.getHeaders(name);
                     while (values.hasMoreElements()) {
                         String value = values.nextElement();
-                        if(HEADER_NAME_MAPPING.containsKey(name)) {
+                        if (HEADER_NAME_MAPPING.containsKey(name)) {
                             requestTemplate.header(HEADER_NAME_MAPPING.get(name), value);
                         } else {
                             requestTemplate.header(name, value);
@@ -71,9 +75,9 @@ public class FeignInterceptor implements RequestInterceptor {
 
         // seata分布式事务XID，防止事务无法回滚
         String xid = RootContext.getXID();
-        if((null != xid && xid.trim().length() > 0)) {
-            log.info("分布式事务seata,feign传递的xid:{}",xid);
-            requestTemplate.header(RootContext.KEY_XID,xid);
+        if ((null != xid && xid.trim().length() > 0)) {
+            log.info("分布式事务seata,feign传递的xid:{}", xid);
+            requestTemplate.header(RootContext.KEY_XID, xid);
         }
 
     }

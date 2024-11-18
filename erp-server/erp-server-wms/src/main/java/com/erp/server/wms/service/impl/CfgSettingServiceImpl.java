@@ -2,6 +2,7 @@ package com.erp.server.wms.service.impl;
 
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
@@ -28,6 +29,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -44,7 +46,7 @@ import java.util.Optional;
 @Service
 public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, CfgSettingEntity> implements CfgSettingService {
 
-    @Autowired
+    @Resource
     private DictBasicService dictBasicService;
 
 
@@ -84,11 +86,10 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Cf
 
     @Override
     public CfgSettingEntity getByKey(String key) {
-        if (StringUtils.isBlank(key)) {
+        if (CharSequenceUtil.isBlank(key)) {
             return null;
         }
-        CfgSettingEntity entity = baseMapper.getByKey(key);
-        return entity;
+        return baseMapper.getByKey(key);
     }
 
     @Override
@@ -97,13 +98,12 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Cf
         if (ObjectUtil.isEmpty(entity) || ObjectUtil.isEmpty(entity.getDataJson())) {
             return new CfgSettingValueDTO.PoReturnSettingDTO();
         }
-        CfgSettingValueDTO.PoReturnSettingDTO dto = BeanUtil.toBean(entity.getDataJson(), CfgSettingValueDTO.PoReturnSettingDTO.class);
-        return dto;
+        return BeanUtil.toBean(entity.getDataJson(), CfgSettingValueDTO.PoReturnSettingDTO.class);
     }
 
     @Override
     public Boolean getPackageSupplierSetting(String logisticsSupplierId) {
-        if (StringUtils.isBlank(logisticsSupplierId)){
+        if (CharSequenceUtil.isBlank(logisticsSupplierId)){
             return Boolean.FALSE;
         }
         CfgSettingEntity entity = baseMapper.getByKey(CfgSettingEnum.PACKAGE_SETTING.getCode());
@@ -147,7 +147,7 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Cf
             return "semiAuto";
         }
         CfgSettingValueDTO.SubcontractInStock dto = BeanUtil.toBean(entity.getDataJson(), CfgSettingValueDTO.SubcontractInStock.class);
-        if(Objects.isNull(dto) || StrUtil.isBlank(dto.getAutoInStockSetting())){
+        if(Objects.isNull(dto) || CharSequenceUtil.isBlank(dto.getAutoInStockSetting())){
             return "semiAuto";
         }
         return dto.getAutoInStockSetting();
@@ -239,7 +239,7 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Cf
                 break;
         }
         //查询是否是修改
-        String id = cfgSettingList.stream().filter(obj -> StrUtil.equals(obj.getKey(),listDTO.getValue())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getId())).orElse("");
+        String id = cfgSettingList.stream().filter(obj -> CharSequenceUtil.equals(obj.getKey(),listDTO.getValue())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getId())).orElse("");
         entity.setId(id);
         entity.setIndex(listDTO.getSort());
         entity.setKey(listDTO.getValue());
@@ -256,7 +256,7 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Cf
      */
     private void handlePoReconciliationSetting (CfgSettingValueDTO.PoReconciliationSettingDTO poReconciliationSettingDTO) {
         //设置时间为空
-        if (StrUtil.equals(ReconciliationTypeEnum.CREAT_BY_MONTH.getCode(),poReconciliationSettingDTO.getReconciliationType())) {
+        if (CharSequenceUtil.equals(ReconciliationTypeEnum.CREAT_BY_MONTH.getCode(),poReconciliationSettingDTO.getReconciliationType())) {
             poReconciliationSettingDTO.setEndDate(null);
         }
     }
@@ -345,7 +345,6 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Cf
      */
     @Override
     public List<CfgSettingEntity> listCfgSetting () {
-        List<CfgSettingEntity> list = baseMapper.listCfgSetting();
-        return list;
+        return baseMapper.listCfgSetting();
     }
 }

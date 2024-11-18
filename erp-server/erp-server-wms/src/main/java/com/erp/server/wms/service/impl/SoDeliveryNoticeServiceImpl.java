@@ -2,6 +2,7 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
@@ -186,7 +187,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         Map<String,Integer> qtyMap = new HashMap<>();
         if (CollectionUtils.isNotEmpty(records)) {
             records.forEach(obj -> {
-                if (StringUtils.isNotBlank(obj.getPackingStatus())) {
+                if (CharSequenceUtil.isNotBlank(obj.getPackingStatus())) {
                     obj.setPackingStatusName(PackingTaskStatusEnum.getName(obj.getPackingStatus()));
                 }else{
                     obj.setPackingStatus(PackingTaskStatusEnum.WAIT.getCode());
@@ -239,24 +240,24 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
             SoDeliveryNoticeDTO.StatusCountDTO resultDTO = new SoDeliveryNoticeDTO.StatusCountDTO();
             Integer count = MathUtil.ZERO;
             if (OsDeliveryChangeListTypeEnum.WAIT_SUBMIT.getCode().equals(item.getCode())) {
-                pagingParam.setApproveStatusList(Arrays.asList(ApproveStatusEnum.WAIT_SUBMIT.getStatus()));
+                pagingParam.setApproveStatusList(Collections.singletonList(ApproveStatusEnum.WAIT_SUBMIT.getStatus()));
                 count = this.baseMapper.listCount(pagingParam);
             }
             if (OsDeliveryChangeListTypeEnum.TO_BE_APPROVE.getCode().equals(item.getCode())) {
-                pagingParam.setApproveStatusList(Arrays.asList(ApproveStatusEnum.APPROVE_ING.getStatus()));
+                pagingParam.setApproveStatusList(Collections.singletonList(ApproveStatusEnum.APPROVE_ING.getStatus()));
                 count = this.baseMapper.listCount(pagingParam);
             }
             if (OsDeliveryChangeListTypeEnum.TO_BE_APPROVE.getCode().equals(item.getCode())) {
-                pagingParam.setApproveStatusList(Arrays.asList(ApproveStatusEnum.APPROVE_ING.getStatus()));
+                pagingParam.setApproveStatusList(Collections.singletonList(ApproveStatusEnum.APPROVE_ING.getStatus()));
                 count = this.baseMapper.listCount(pagingParam);
             }
             if (OsDeliveryChangeListTypeEnum.UN_SHIPPED.getCode().equals(item.getCode())) {
                 pagingParam.setDeliveryStatus(Boolean.FALSE);
-                pagingParam.setApproveStatusList(Arrays.asList(ApproveStatusEnum.APPROVE.getStatus()));
+                pagingParam.setApproveStatusList(Collections.singletonList(ApproveStatusEnum.APPROVE.getStatus()));
                 count = this.baseMapper.listCount(pagingParam);
             }
             if (OsDeliveryChangeListTypeEnum.REJECT.getCode().equals(item.getCode())) {
-                pagingParam.setApproveStatusList(Arrays.asList(ApproveStatusEnum.REJECT.getStatus()));
+                pagingParam.setApproveStatusList(Collections.singletonList(ApproveStatusEnum.REJECT.getStatus()));
                 count = this.baseMapper.listCount(pagingParam);
             }
             if (OsDeliveryChangeListTypeEnum.COMPLETE_SHIPMENT.getCode().equals(item.getCode())) {
@@ -283,7 +284,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         soDeliveryNoticeEntity.setSalesOrgId(soInfoEntity.getSalesOrgId());
         soDeliveryNoticeEntity.setSalesOrgName(soInfoEntity.getSalesOrgName());
         soDeliveryNoticeEntity.setSalesDeptId(soInfoEntity.getSalesDeptId());
-        if (StringUtils.isNotBlank(soInfoEntity.getSalesDeptId())) {
+        if (CharSequenceUtil.isNotBlank(soInfoEntity.getSalesDeptId())) {
             SysDepartmentDTO dept = sysUserFeign.getUserDeptById(soInfoEntity.getSalesDeptId());
             if (dept != null) {
                 soDeliveryNoticeEntity.setSalesDeptName(dept.getName());
@@ -313,7 +314,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
             soDeliveryNoticeEntity.setPlanDeliveryDate(dto.getPlanDeliveryDate());
         }
         soDeliveryNoticeEntity.setTrackNo(dto.getTrackNo());
-        if (StringUtils.isNotBlank(dto.getCarrierId())) {
+        if (CharSequenceUtil.isNotBlank(dto.getCarrierId())) {
             //获取采购单供应商信息
             SupplierEntity supplierById = scmTaskFeign.getSupplierById(dto.getCarrierId());
             soDeliveryNoticeEntity.setCarrierId(dto.getCarrierId());
@@ -337,7 +338,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
     }
 
     private void matchTransferRule(SoDeliveryNoticeEntity soDeliveryNoticeEntity, SoInfoEntity soInfoEntity) {
-        soDeliveryNoticeEntity.setTransferWarehouseIds(StrUtil.EMPTY);
+        soDeliveryNoticeEntity.setTransferWarehouseIds(CharSequenceUtil.EMPTY);
         List<SoInfoDTO.CustomerDTO> customerDTOS = soInfoFeign.listSoCustomer(Collections.singletonList(soDeliveryNoticeEntity.getSourceId()));
         SoInfoDTO.CustomerDTO customerDTO = customerDTOS.stream().filter(v -> v.getCustomerId().equals(soInfoEntity.getCustomerId())).findFirst().orElse(new SoInfoDTO.CustomerDTO());
         //是否中转
@@ -369,7 +370,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         soDeliveryNoticeEntity.setSalesOrgId(soInfoEntity.getSalesOrgId());
         soDeliveryNoticeEntity.setSalesOrgName(soInfoEntity.getSalesOrgName());
         soDeliveryNoticeEntity.setSalesDeptId(soInfoEntity.getSalesDeptId());
-        if (StringUtils.isNotBlank(soInfoEntity.getSalesDeptId())) {
+        if (CharSequenceUtil.isNotBlank(soInfoEntity.getSalesDeptId())) {
             SysDepartmentDTO dept = sysUserFeign.getUserDeptById(soInfoEntity.getSalesDeptId());
             if (dept != null) {
                 soDeliveryNoticeEntity.setSalesDeptName(dept.getName());
@@ -394,7 +395,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         soDeliveryNoticeEntity.setSourceId(dto.getSourceId());
         soDeliveryNoticeEntity.setSourceCode(soInfoEntity.getCode());
         soDeliveryNoticeEntity.setTrackNo(dto.getTrackNo());
-        if (StringUtils.isNotBlank(dto.getCarrierId())) {
+        if (CharSequenceUtil.isNotBlank(dto.getCarrierId())) {
             //获取采购单供应商信息
             SupplierEntity supplierById = scmTaskFeign.getSupplierById(dto.getCarrierId());
             soDeliveryNoticeEntity.setCarrierId(dto.getCarrierId());
@@ -409,7 +410,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         if (CollUtil.isNotEmpty(dto.getTransferWarehouseIdList())){
             soDeliveryNoticeEntity.setTransferWarehouseIds(String.join(",",dto.getTransferWarehouseIdList()));
         }else {
-            soDeliveryNoticeEntity.setTransferWarehouseIds(StrUtil.EMPTY);
+            soDeliveryNoticeEntity.setTransferWarehouseIds(CharSequenceUtil.EMPTY);
         }
         boolean flag = this.updateById(soDeliveryNoticeEntity);
         //操作日志
@@ -453,11 +454,11 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         }
 
         viewDTO.setDeliveryModeDictName(DeliveryModeEnum.getName(soInfoEntity.getDeliveryMode()));
-        if (StrUtil.isNotBlank(soDeliveryNoticeEntity.getTransferWarehouseIds())){
+        if (CharSequenceUtil.isNotBlank(soDeliveryNoticeEntity.getTransferWarehouseIds())){
             List<String> split = StrUtil.split(soDeliveryNoticeEntity.getTransferWarehouseIds(), ",");
             viewDTO.setTransferWarehouseIdList(split);
         }
-        List<CustomerAddressEntity> customerAddressEntities = customerFeign.listCustomerAddressByIds(Arrays.asList(soInfoEntity.getReceiveAddressId()));
+        List<CustomerAddressEntity> customerAddressEntities = customerFeign.listCustomerAddressByIds(Collections.singletonList(soInfoEntity.getReceiveAddressId()));
         CustomerAddressEntity customerAddressEntity = customerAddressEntities.stream().filter(req -> req.getId().equals(soInfoEntity.getReceiveAddressId())).findFirst().orElse(new CustomerAddressEntity());
         viewDTO.setReceiveAddress(customerAddressEntity.getAddress());
         for (SoDeliveryNoticeDetailEntity deliveryNoticeDetailEntity : detailEntityList) {
@@ -473,7 +474,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
             SoDetailEntity soDetailEntity = soDetailEntities.stream().filter(detail -> detail.getId().equals(deliveryNoticeDetailEntity.getSourceDetailId())).findFirst().orElse(new SoDetailEntity());
             detailView.setSalesQty(soDetailEntity.getQty());
 
-            List<WmsAttachmentDTO.UpdateDTO> attachmentList = wmsAttachmentService.getByBusinessIds(Arrays.asList(deliveryNoticeDetailEntity.getId()));
+            List<WmsAttachmentDTO.UpdateDTO> attachmentList = wmsAttachmentService.getByBusinessIds(Collections.singletonList(deliveryNoticeDetailEntity.getId()));
             List<String> attachmentUrlList = attachmentList.stream().
                     map(WmsAttachmentDTO.UpdateDTO::getAttachUrl).
                     collect(Collectors.toList());
@@ -521,10 +522,10 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
     @Override
     public Boolean addAndSubmit(SoDeliveryNoticeDTO.Add dto) {
         String id = this.add(dto);
-        if (StringUtils.isBlank(id)) {
+        if (CharSequenceUtil.isBlank(id)) {
             throw new ServiceException(ApiError.ERROR_1019);
         }
-        return this.submit(Arrays.asList(id));
+        return this.submit(Collections.singletonList(id));
     }
 
     @Override
@@ -533,7 +534,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         if (!update) {
             throw new ServiceException(ApiError.ERROR_1020);
         }
-        return this.submit(Arrays.asList(dto.getId()));
+        return this.submit(Collections.singletonList(dto.getId()));
     }
 
     @Override
@@ -567,7 +568,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
                     .update();
 
             //销售通知明细信息
-            List<SoDeliveryNoticeDetailEntity> detailList = soDeliveryNoticeDetailService.listDetailByMainIds(Arrays.asList(entity.getId()));
+            List<SoDeliveryNoticeDetailEntity> detailList = soDeliveryNoticeDetailService.listDetailByMainIds(Collections.singletonList(entity.getId()));
             if (CollectionUtils.isEmpty(detailList)) {
                 throw new ServiceException(ApiError.ERROR_99044);
             }
@@ -581,7 +582,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
                     .update();
         }
         //操作日志
-        operateLogService.addModuleOperateLog(String.format("审核【%s】了一个发货通知单【%s】", ApproveTypeEnum.getName(type),entity.getCode()).concat(com.baomidou.mybatisplus.core.toolkit.StringUtils.isNotBlank(comment) ? String.format(",意见：%s", comment) : ""), ModuleTypeEnum.SO_DELIVERY_NOTICE.getCode(), entity.getId(), "审核操作");
+        operateLogService.addModuleOperateLog(String.format("审核【%s】了一个发货通知单【%s】", ApproveTypeEnum.getName(type),entity.getCode()).concat(CharSequenceUtil.isNotBlank(comment) ? String.format(",意见：%s", comment) : ""), ModuleTypeEnum.SO_DELIVERY_NOTICE.getCode(), entity.getId(), "审核操作");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), "操作成功");
     }
 
@@ -777,7 +778,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         SoOutstockDTO.AddDTO addDTO = new SoOutstockDTO.AddDTO();
         String batchNo = "";
         String warehouseId;
-        if (StrUtil.isNotBlank(entity.getTransferWarehouseIds())) {
+        if (CharSequenceUtil.isNotBlank(entity.getTransferWarehouseIds())) {
             List<String> split = StrUtil.split(entity.getTransferWarehouseIds(), ",");
             batchNo = IdUtil.getSnowflake().nextIdStr();
             if (Boolean.FALSE.equals(allNoInventorySku)) {
@@ -809,7 +810,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
             detail.setSkuId(item.getSkuId());
             detail.setSkuNo(item.getSkuNo());
             detail.setWarehouseId(warehouseId);
-            if (StrUtil.isNotBlank(entity.getTransferWarehouseIds())) {
+            if (CharSequenceUtil.isNotBlank(entity.getTransferWarehouseIds())) {
                 detail.setWarehouseLocation("");
             }else {
                 detail.setAttachUrlList(attachmentUrlList);
@@ -850,10 +851,10 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
      * @return
      */
     private void generateTransferInfo(String batchNo, SoDeliveryNoticeEntity entity, List<SoDeliveryNoticeDetailEntity> entityList, List<CfgRulePickingStagingEntity> warehouseStagingList, List<String> noInventorySkuIds, List<String> transferWarehouseIdList) {
-        if (CollectionUtil.isEmpty(transferWarehouseIdList)){
+        if (CollUtil.isEmpty(transferWarehouseIdList)){
             throw new ServiceException(ApiError.ERROR_92134);
         }
-        if (StrUtil.isBlank(entity.getWarehouseId())){
+        if (CharSequenceUtil.isBlank(entity.getWarehouseId())){
             throw new ServiceException(ApiError.ERROR_92136, entity.getCode());
         }
         //订单调出仓和第一个中转仓一致时从第二个中转仓开始
@@ -1052,14 +1053,14 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         if (CollectionUtils.isEmpty(list)) {
             return new ArrayList<>();
         }
-        List<String> dnIds = list.stream().map(req -> req.getId()).collect(Collectors.toList());
+        List<String> dnIds = list.stream().map(SoDeliveryNoticeDTO.PdaSoDeliveryNotice::getId).collect(Collectors.toList());
         List<SoDeliveryNoticeDetailEntity> noticeDetailEntities = soDeliveryNoticeDetailService.listDetailByMainIds(dnIds);
-        List<String> dndIds = noticeDetailEntities.stream().map(req -> req.getId()).collect(Collectors.toList());
+        List<String> dndIds = noticeDetailEntities.stream().map(BaseEntity::getId).collect(Collectors.toList());
 
         List<SoOutstockDetailEntity> soOutstockDetailEntities = soOutstockDetailService.listDetailBySourceDetailId(dndIds);
         //获取未全部入库的采购收货详情id
         List<String> receiveDetailIds = new ArrayList<>();
-        soOutstockDetailEntities.stream().collect(Collectors.groupingBy(n -> n.getSourceDetailId(), Collectors.collectingAndThen(Collectors.toList(), m -> {
+        Map<String, List<SoOutstockDetailEntity>> collect1 = soOutstockDetailEntities.stream().collect(Collectors.groupingBy(SoOutstockDetailEntity::getSourceDetailId, Collectors.collectingAndThen(Collectors.toList(), m -> {
             int stockInQty = m.stream().mapToInt(SoOutstockDetailEntity::getActualQty).sum();
             SoDeliveryNoticeDetailEntity soDeliveryNoticeDetailEntity = noticeDetailEntities.stream().filter(req -> req.getId().equals(m.get(MathUtil.ZERO).getSourceDetailId())).findFirst().orElse(new SoDeliveryNoticeDetailEntity());
             if (stockInQty < soDeliveryNoticeDetailEntity.getDeliveryQty()) {
@@ -1068,8 +1069,8 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
             return m;
         })));
 
-        List<String> collect = soOutstockDetailEntities.stream().map(req -> req.getSourceDetailId()).distinct().collect(Collectors.toList());
-        List<String> ids = dndIds.stream().filter(poid -> !collect.contains(poid)).collect(Collectors.toList());
+        List<String> collect = soOutstockDetailEntities.stream().map(SoOutstockDetailEntity::getSourceDetailId).distinct().collect(Collectors.toList());
+        List<String> ids = dndIds.stream().filter(e -> !collect.contains(e)).collect(Collectors.toList());
         receiveDetailIds.addAll(ids);
 
         if (CollectionUtils.isEmpty(receiveDetailIds)) {
@@ -1118,7 +1119,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         }
         //获取到销售退货单 下推列表
         String soDeliveryNotice = SourceTypeEnum.SO_DELIVERY_NOTICE.getCode();
-        List<SoOutstockDTO.GenerateSoOutstockViewDTO> resultList = baseMapper.listGenerateSoOutstockView(Arrays.asList(id), soDeliveryNotice);
+        List<SoOutstockDTO.GenerateSoOutstockViewDTO> resultList = baseMapper.listGenerateSoOutstockView(Collections.singletonList(id), soDeliveryNotice);
         long closeCount = resultList.stream().filter(s -> s.getIsClose()).count();
         if (closeCount > 0) {
             throw new ServiceException(ApiError.ERROR_98068);
@@ -1127,7 +1128,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         //详情id s
         List<String> detailIds = resultList.stream().map(SoOutstockDTO.GenerateSoOutstockViewDTO::getSourceDetailId).distinct().collect(Collectors.toList());
 
-        List<WarehouseLocationEntity> warehouseLocationEntities = warehouseLocationService.listByWarehouseIds(Arrays.asList(entity.getWarehouseId()));
+        List<WarehouseLocationEntity> warehouseLocationEntities = warehouseLocationService.listByWarehouseIds(Collections.singletonList(entity.getWarehouseId()));
         //附件信息
         List<WmsAttachmentDTO.UpdateDTO> attachmentDbList = wmsAttachmentService.getByBusinessIds(detailIds);
         List<String> skuIds = resultList.stream().map(req -> req.getSkuId()).distinct().collect(Collectors.toList());
@@ -1308,7 +1309,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
 
     @Override
     public SoDeliveryNoticeEntity getByCode(String code) {
-        if (StringUtils.isBlank(code)){
+        if (CharSequenceUtil.isBlank(code)){
             return null;
         }
         return this.lambdaQuery().eq(SoDeliveryNoticeEntity::getCode, code).last("limit 1").one();
@@ -1329,21 +1330,21 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         if (ObjectUtil.isEmpty(entity)) {
             return BatchResultDTO.fail(id, "", "未找到发货通知单");
         }
-        List<SoDeliveryNoticeDetailEntity> detailList = soDeliveryNoticeDetailService.listDetailByMainIds(Arrays.asList(id));
+        List<SoDeliveryNoticeDetailEntity> detailList = soDeliveryNoticeDetailService.listDetailByMainIds(Collections.singletonList(id));
         if (CollectionUtils.isEmpty(detailList)) {
             return BatchResultDTO.fail(id, entity.getCode(), "未找到发货通知单明细");
         }
         if (entity.getInvalidStatus()) {
             return BatchResultDTO.fail(id, entity.getCode(), "发货通知单已作废");
         }
-        if (StrUtil.isBlank(entity.getVirtualWarehouseId())) {
+        if (CharSequenceUtil.isBlank(entity.getVirtualWarehouseId())) {
             return BatchResultDTO.fail(id, entity.getCode(), "发货通知单无虚拟仓");
         }
         //未审核数据
         /**
          * 1、按现有逻辑进行冻结数量转移
          */
-        if (!StrUtil.equals(entity.getApproveStatus(),ApproveStatusEnum.APPROVE.getCode())) {
+        if (!CharSequenceUtil.equals(entity.getApproveStatus(),ApproveStatusEnum.APPROVE.getCode())) {
             //虚拟库存扣减
             soDeliveryNoticeDetailService.handleVirtualInventory(id,detailList);
 
@@ -1417,10 +1418,10 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         handleApproveVirtualInventoryQty(entity);
 
         //判断是否存在直接调拨单（中转的情况会存在直接调拨单）
-        List<TransferInfoEntity> transferInfoList = transferInfoService.listBySourceIds(Arrays.asList(id));
+        List<TransferInfoEntity> transferInfoList = transferInfoService.listBySourceIds(Collections.singletonList(id));
         if (CollectionUtils.isNotEmpty(transferInfoList)) {
             //审核通过的直接调拨单
-            transferInfoList = transferInfoList.stream().filter(obj -> StrUtil.equals(obj.getApproveStatus(),ApproveStatusEnum.APPROVE.getCode())).collect(Collectors.toList());
+            transferInfoList = transferInfoList.stream().filter(obj -> CharSequenceUtil.equals(obj.getApproveStatus(),ApproveStatusEnum.APPROVE.getCode())).collect(Collectors.toList());
 
             if (CollectionUtils.isNotEmpty(transferInfoList)) {
                 List<String> mainIdList = transferInfoList.stream().map(TransferInfoEntity::getId).distinct().collect(Collectors.toList());
@@ -1438,11 +1439,11 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         }
 
         //根据销售出库单出库
-        List<SoOutstockEntity> soOutstockList = soOutstockService.listBySourceId(Arrays.asList(id));
+        List<SoOutstockEntity> soOutstockList = soOutstockService.listBySourceId(Collections.singletonList(id));
         if (CollectionUtils.isNotEmpty(soOutstockList)) {
 
             //审核通过的直接调拨单
-            soOutstockList = soOutstockList.stream().filter(obj -> StrUtil.equals(obj.getApproveStatus().getCode(),ApproveStatusEnum.APPROVE.getCode())).collect(Collectors.toList());
+            soOutstockList = soOutstockList.stream().filter(obj -> CharSequenceUtil.equals(obj.getApproveStatus().getCode(),ApproveStatusEnum.APPROVE.getCode())).collect(Collectors.toList());
             //无数据则直接返回
             if (CollectionUtils.isEmpty(soOutstockList)) {
                 lambdaUpdate().set(SoDeliveryNoticeEntity::getInvalidRemark,"数据处理")
@@ -1460,12 +1461,12 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
             //减少可用添加冻结
             List<VirtualInventoryStockDTO.OutInStockDTO> outList = new ArrayList<>();
             for (SoOutstockDetailEntity outstockDetailEntity : soOutstockDetailList) {
-                SoOutstockEntity outstockEntity = soOutstockList.stream().filter(obj -> StrUtil.equals(obj.getId(), outstockDetailEntity.getMainId())).findFirst().orElse(null);
+                SoOutstockEntity outstockEntity = soOutstockList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), outstockDetailEntity.getMainId())).findFirst().orElse(null);
                 if (ObjectUtil.isEmpty(outstockEntity)) {
                     throw new ServiceException("销售出库单未找到");
                 }
                 //虚拟仓为空或者中转过来的出库单不生成流水
-                if (StrUtil.isBlank(outstockDetailEntity.getVirtualWarehouseId()) || StrUtil.isNotBlank(outstockEntity.getBatchNo())) {
+                if (CharSequenceUtil.isBlank(outstockDetailEntity.getVirtualWarehouseId()) || CharSequenceUtil.isNotBlank(outstockEntity.getBatchNo())) {
                     continue;
                 }
                 VirtualInventoryStockDTO.OutInStockDTO outInStockDTO = new VirtualInventoryStockDTO.OutInStockDTO();
@@ -1504,7 +1505,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
      */
     private void handleApproveVirtualInventoryQty (SoDeliveryNoticeEntity entity) {
         //无虚拟仓则不需要库存扣减
-        if (StrUtil.isBlank(entity.getVirtualWarehouseId())) {
+        if (CharSequenceUtil.isBlank(entity.getVirtualWarehouseId())) {
             return;
         }
 
@@ -1536,7 +1537,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
             //上次发货数量
             Integer lastPickingQty = detailEntity.getLastPickingQty();
             if (pickingQty > deliveryQty) {
-                throw new ServiceException(StrUtil.format("发货通知单【{}】SKU【{}】拣货数量【{}】不能大于发货数量【{}】",entity.getCode(),detailEntity.getSkuNo(),pickingQty,deliveryQty));
+                throw new ServiceException(CharSequenceUtil.format("发货通知单【{}】SKU【{}】拣货数量【{}】不能大于发货数量【{}】",entity.getCode(),detailEntity.getSkuNo(),pickingQty,deliveryQty));
             }
             //数量
             Integer qty = pickingQty - lastPickingQty;
@@ -1585,7 +1586,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         for (SoDeliveryNoticeDetailEntity detailEntity : detailList) {
 
             //发货通知单主表信息
-            SoDeliveryNoticeEntity soDeliveryNoticeEntity = deliveryNoticeEntityList.stream().filter(obj -> StrUtil.equals(obj.getId(), detailEntity.getMainId())).findFirst().orElse(null);
+            SoDeliveryNoticeEntity soDeliveryNoticeEntity = deliveryNoticeEntityList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), detailEntity.getMainId())).findFirst().orElse(null);
             if (ObjectUtil.isEmpty(soDeliveryNoticeEntity)) {
                 throw new ServiceException(ApiError.ERROR_SO_DELIVERY_NOTICE_NOT_EXIST);
             }
@@ -1614,7 +1615,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
     private void handleSoDeliveryNoticeParam (SoDeliveryNoticeDetailEntity detailEntity,SoDeliveryNoticeEntity soDeliveryNoticeEntity
             ,List<VirtualInventoryStockDTO.OutInStockDTO> paramList) {
         //无虚拟仓不扣库存
-        if (StrUtil.isBlank(soDeliveryNoticeEntity.getVirtualWarehouseId())) {
+        if (CharSequenceUtil.isBlank(soDeliveryNoticeEntity.getVirtualWarehouseId())) {
             return;
         }
         //拣货数据已被删无需退回库存
@@ -1686,7 +1687,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         }
         this.lambdaUpdate().eq(SoDeliveryNoticeEntity::getId, entity.getId()).set(SoDeliveryNoticeEntity::getTransferWarehouseIds, transferWarehouseIdList).update();
         String msg = "【{}】更新了中转仓配置由【{}】改为【{}】";
-        operateLogService.addModuleOperateLog(StrUtil.format(msg, UserContext.getLoginUser().getUserName(),entity.getTransferWarehouseIds(),transferWarehouseIdList), ModuleTypeEnum.SO_DELIVERY_NOTICE.getCode(), entity.getId(), "批量修改中转仓配置");
+        operateLogService.addModuleOperateLog(CharSequenceUtil.format(msg, UserContext.getLoginUser().getUserName(),entity.getTransferWarehouseIds(),transferWarehouseIdList), ModuleTypeEnum.SO_DELIVERY_NOTICE.getCode(), entity.getId(), "批量修改中转仓配置");
         return BatchResultDTO.success(entity.getId(),entity.getCode(),"修改中转仓配置成功");
     }
 }

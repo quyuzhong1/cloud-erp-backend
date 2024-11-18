@@ -39,14 +39,14 @@ public enum SaleMethodEnum implements EnumMessage {
     public static String getNameByCode(Integer code) {
         SaleMethodEnum[] saleMethodEnums = values();
         for (SaleMethodEnum saleMethodEnum : saleMethodEnums) {
-            if (saleMethodEnum.getCode() == code) {
+            if (saleMethodEnum.getCode().equals(code)) {
                 return saleMethodEnum.getName();
             }
         }
         return null;
     }
 
-    public static SaleMethodEnum getEnumByType(String code){
+    public static SaleMethodEnum getEnumByType(Integer code){
         SaleMethodEnum[] saleMethodEnums = values();
         for (SaleMethodEnum saleMethodEnum : saleMethodEnums) {
             if (saleMethodEnum.getCode().equals(code)) {

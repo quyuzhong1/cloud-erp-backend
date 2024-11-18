@@ -1,7 +1,7 @@
 package com.erp.server.srm.service.impl;
 
 
-import cn.hutool.core.util.StrUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
@@ -35,7 +35,10 @@ import com.erp.rpc.scm.feign.SupplierFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.srm.convert.PurchaseOrderConverter;
 import com.erp.server.srm.mapper.PurchaseOrderDetailMapper;
-import com.erp.server.srm.service.*;
+import com.erp.server.srm.service.DeliveryOrderDetailService;
+import com.erp.server.srm.service.DeliveryOrderService;
+import com.erp.server.srm.service.OperateLogService;
+import com.erp.server.srm.service.PurchaseOrderDetailService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -48,7 +51,6 @@ import javax.annotation.Resource;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
@@ -98,7 +100,7 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
         }
 
         // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "采购订单明细表（已确认）", purchaseOrderDetailEntity.getCode());
+        String msg =  CharSequenceUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "采购订单明细表（已确认）", purchaseOrderDetailEntity.getCode());
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLog(msg, null, purchaseOrderDetailEntity.getId(), "新增操作");
         // TODO 新增明细（如果有明细的话）
@@ -113,7 +115,9 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
     @Override
     public Boolean update(PurchaseOrderDetailDTO.UpdateDTO updateDTO) {
         PurchaseOrderDetailEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "采购订单明细表（已确认）"));
+        if(null == old){
+            throw  new ServiceException(ApiError.NOT_EXIST_BILL, "采购订单明细表（已确认）");
+        }
         PurchaseOrderDetailEntity purchaseOrderDetailEntity = BeanMapperUtils.map(PurchaseOrderDetailEntity.class, updateDTO);
 
         // 数据处理
@@ -127,7 +131,7 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
 
         // 记录主单操作日志
         log.info("编辑 开始记录采购订单明细表（已确认）日志数据，单号：【{}】", purchaseOrderDetailEntity.getCode());
-        String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), purchaseOrderDetailEntity.getCode(), "采购订单明细表（已确认）");
+        String msg =  CharSequenceUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), purchaseOrderDetailEntity.getCode(), "采购订单明细表（已确认）");
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLogByObj(old, purchaseOrderDetailEntity, null, purchaseOrderDetailEntity.getId(), msg);
         return Boolean.TRUE;

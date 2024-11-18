@@ -2,6 +2,7 @@ package com.erp.server.wms.kingdee.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.LocalDateTimeUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
@@ -157,20 +158,20 @@ public class SyncKingdeeSubcontractIssueServiceImpl implements SyncKingdeeSubcon
         resultMap.put("date", LocalDateTimeUtil.format(entity.getDate(), DateTimeFormatter.ofPattern("yyyy-MM-dd")));
 
         //委外发料明细
-        List<SubcontractIssueDetailEntity> detailList = subcontractIssueDetailService.listByMainIds(Arrays.asList(entity.getId()));
+        List<SubcontractIssueDetailEntity> detailList = subcontractIssueDetailService.listByMainIds(Collections.singletonList(entity.getId()));
         if (CollectionUtils.isEmpty(detailList)) {
             throw new ServiceException(ApiError.ERROR_SUBCONTRACT_ISSUE_NOT_EXIST);
         }
         //委外订单
-        List<SubcontractOrderEntity> subcontractOrderList = scmTaskFeign.listSubcontractOrderByIds(Arrays.asList(entity.getSubcontractOrderId()));
+        List<SubcontractOrderEntity> subcontractOrderList = scmTaskFeign.listSubcontractOrderByIds(Collections.singletonList(entity.getSubcontractOrderId()));
         if (CollectionUtils.isEmpty(subcontractOrderList)) {
             throw new ServiceException(ApiError.ERROR_98073);
         }
         //委外订单明细
-        List<SubcontractOrderDetailEntity> subcontractOrderDetailList = scmTaskFeign.listSubcontractDetailByMainIds(Arrays.asList(entity.getSourceId()));
+        List<SubcontractOrderDetailEntity> subcontractOrderDetailList = scmTaskFeign.listSubcontractDetailByMainIds(Collections.singletonList(entity.getSourceId()));
 
         //委外组织
-        List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(Arrays.asList(subcontractOrderList.get(0).getSubcontractOrgId()));
+        List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(Collections.singletonList(subcontractOrderList.get(0).getSubcontractOrgId()));
         if (CollectionUtils.isEmpty(accountingCompanyList)) {
            throw new ServiceException(ApiError.ERROR_RECEIVE_ORG_NOT_FOUND);
         }
@@ -205,7 +206,7 @@ public class SyncKingdeeSubcontractIssueServiceImpl implements SyncKingdeeSubcon
             //组织
             jsonObject.put("orgCode", accountingCompanyList.get(0).getCode());
             //是否下推仓位
-            Boolean isPush = pushKingdeeList.stream().filter(obj -> StrUtil.equals(obj.getWarehouseId(), detail.getWarehouseId()))
+            Boolean isPush = pushKingdeeList.stream().filter(obj -> CharSequenceUtil.equals(obj.getWarehouseId(), detail.getWarehouseId()))
                     .map(CfgSettingDTO.WarehouseLocationSettingDTO::getIsPush).findFirst().orElse(Boolean.FALSE);
             if (isPush) {
                 //仓位
@@ -217,8 +218,8 @@ public class SyncKingdeeSubcontractIssueServiceImpl implements SyncKingdeeSubcon
             //委外主表金蝶id
             jsonObject.set("subKingdeeId", subcontractOrderList.get(0).getSyncKingdeeId());
             //委外明细金蝶id
-            String parentId = subcontractOrderDetailList.stream().filter(obj -> StrUtil.equals(obj.getId(), detail.getSourceDetailId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getParentId())).orElse("");
-            String subKingdeeDetailId = subcontractOrderDetailList.stream().filter(obj -> StrUtil.equals(obj.getId(), parentId)).findFirst().flatMap(obj -> Optional.ofNullable(obj.getKingdeeDetailId())).orElse("");
+            String parentId = subcontractOrderDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), detail.getSourceDetailId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getParentId())).orElse("");
+            String subKingdeeDetailId = subcontractOrderDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), parentId)).findFirst().flatMap(obj -> Optional.ofNullable(obj.getKingdeeDetailId())).orElse("");
             jsonObject.set("subKingdeeDetailId", subKingdeeDetailId);
             list.add(jsonObject);
         }

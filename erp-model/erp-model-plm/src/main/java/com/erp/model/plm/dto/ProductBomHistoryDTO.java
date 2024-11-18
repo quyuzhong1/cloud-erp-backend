@@ -5,6 +5,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotBlank;
+import java.io.Serializable;
 
 /**
  * @author Will
@@ -14,7 +15,7 @@ import javax.validation.constraints.NotBlank;
  */
 @Data
 @NoArgsConstructor
-public class ProductBomHistoryDTO {
+public class ProductBomHistoryDTO implements Serializable {
 
     @Data
     @NoArgsConstructor

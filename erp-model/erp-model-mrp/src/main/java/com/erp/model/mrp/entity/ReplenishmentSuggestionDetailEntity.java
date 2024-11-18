@@ -4,6 +4,7 @@ import cn.hutool.json.JSONArray;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
@@ -24,8 +25,10 @@ import java.math.BigDecimal;
 @Setter
 @Accessors(chain = true)
 @TableName("replenishment_suggestion_detail")
+@EqualsAndHashCode(callSuper = true)
 public class ReplenishmentSuggestionDetailEntity extends BaseEntity<ReplenishmentSuggestionDetailEntity> {
 
+    private static final long serialVersionUID = -4268687576542033723L;
     /**
      * 主表id
      */
