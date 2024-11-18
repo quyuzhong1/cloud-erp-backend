@@ -66,7 +66,7 @@ public abstract class DmpInputMongoHandler extends DmpInputTaskHandler{
 	protected static final String MONGO_BASE_UNIQUEENCRYPT = "uniqueEncrypt";
 	protected static final String MONGO_BASE_DATAENCRYPT = "dataEncrypt";
 	protected static final String MONGO_BASE_MONGOCREATETIME = "mongoCreateTime";
-	protected static final String MONGO_BASE_MONGOUPDATETIME = "mongoUpdateTime";
+	public static final String MONGO_BASE_MONGOUPDATETIME = "mongoUpdateTime";
 	
 	public static List<String> mongoBaseFiledList = new ArrayList<>();
 	static {

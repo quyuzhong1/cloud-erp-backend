@@ -61,7 +61,7 @@ public class DmpInputDoNextDmpHandler extends DmpInputDbConvertDmpHandler{
 					keySb.append(listMap.get(parentUniqueField).toString());
 					keySb.append("_");
 				}
-				uniqueFieldIdMap.put(keySb.toString(), listMap.get(BaseEntity.ID).toString());
+				uniqueFieldIdMap.put(keySb.toString(), listMap.get(BaseEntity.FIELD_ID).toString());
 			}
 		}
 		

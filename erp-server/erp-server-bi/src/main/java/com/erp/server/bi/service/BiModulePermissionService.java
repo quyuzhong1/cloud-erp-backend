@@ -23,6 +23,11 @@ public interface BiModulePermissionService  extends IService<BiModulePermissionE
 
     List<String> getByModuleId(String moduleId);
 
+    /**
+     * @deprecated
+     * This method is deprecated and will be removed in future versions.
+     * Please use {@link #getUserVisibleModuleIdsNew(String)} instead.
+     */
     @Deprecated
     List<String> getModuleIdsByUserId(String userId);
 

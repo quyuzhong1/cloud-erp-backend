@@ -1,6 +1,7 @@
 package com.erp.server.wms.controller.api;
 
 
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.common.business.annotation.DataPermission;
@@ -183,7 +184,7 @@ public class StocktakingTaskController extends BaseController {
                     // 删除缓存
                     List<StocktakingTaskDetailDTO.ViewDTO> detailList = stocktakingTaskDetailService.listByMainId(id);
                     detailList.forEach(detail -> {
-                        String key = StrUtil.format(RedisKeyConstant.INVENTORY_LOCK, entity.getSourceCode(), "*",
+                        String key = CharSequenceUtil.format(RedisKeyConstant.INVENTORY_LOCK, entity.getSourceCode(), "*",
                                 detail.getWarehouseId(), detail.getWarehouseLocation(), detail.getSkuId(), "*");
                         redisUtil.keys(key).forEach(item -> redisUtil.del(item));
                     });
@@ -197,7 +198,7 @@ public class StocktakingTaskController extends BaseController {
                     continue;
                 }
                 String message = e.getMessage();
-//                if(StrUtil.isBlank(message) && ObjectUtil.isNotEmpty(((UndeclaredThrowableException) e).getUndeclaredThrowable())){
+//                if(CharSequenceUtil.isBlank(message) && ObjectUtil.isNotEmpty(((UndeclaredThrowableException) e).getUndeclaredThrowable())){
 //                    message = ((UndeclaredThrowableException) e).getUndeclaredThrowable().getMessage();
 //                }
                 submit = BatchResultDTO.fail(entity.getId(), entity.getCode(), message);

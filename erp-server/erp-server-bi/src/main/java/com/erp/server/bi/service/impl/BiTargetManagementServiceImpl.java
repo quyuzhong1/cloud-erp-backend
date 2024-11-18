@@ -1,6 +1,6 @@
 package com.erp.server.bi.service.impl;
 
-import cn.hutool.core.util.StrUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -34,11 +34,11 @@ public class BiTargetManagementServiceImpl extends ServiceImpl<BiTargetManagemen
 
     @Override
     public PagingVO<BiTargetManagementShowDTO> paging(PagingDTO<AdvanceSearchDTO> dto) {
-        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+        Page<Object> query = new Page<>(dto.getCurrPage(), dto.getPageSize());
         AdvanceSearchDTO params = dto.getParams();
         params.setPermissionSql(dto.getPermissionSql());
         IPage<BiTargetManagementShowDTO> pageData = baseMapper.paging(query, params);
-        return new PagingVO(pageData);
+        return new PagingVO<>(pageData);
     }
 
     @Override
@@ -55,9 +55,8 @@ public class BiTargetManagementServiceImpl extends ServiceImpl<BiTargetManagemen
         qw.select("id","platform_name","category","target_type","product_type","product_position",
                 "sku_no","product_name","sale_price",addStr);
         qw.eq("year", start.getYear());
-        qw.last(StrUtil.isNotBlank(param), param);
-        List<BiTargetManagementEntity> entityList = baseMapper.selectList(qw);
-        return entityList;
+        qw.last(CharSequenceUtil.isNotBlank(param), param);
+        return baseMapper.selectList(qw);
     }
 
     @Override
@@ -84,8 +83,7 @@ public class BiTargetManagementServiceImpl extends ServiceImpl<BiTargetManagemen
                 "sum(september) as september","sum(october) as october","sum(november) as november","sum(december) as december");
         qw.eq(null != targetType,"target_type",  targetType);
         qw.eq("year", start.getYear());
-        qw.last(StrUtil.isNotBlank(param), param);
-        BiTargetManagementEntity entity = baseMapper.selectOne(qw);
-        return entity;
+        qw.last(CharSequenceUtil.isNotBlank(param), param);
+        return baseMapper.selectOne(qw);
     }
 }

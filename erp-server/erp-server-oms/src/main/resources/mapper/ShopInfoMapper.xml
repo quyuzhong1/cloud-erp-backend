@@ -134,6 +134,9 @@
         <if test="params.searchKeyword != null and params.searchKeyword != ''">
             and ((si.account = #{params.searchKeyword}) or (si.id = #{params.searchKeyword})  or si.name ilike concat('%', #{params.searchKeyword}::text ,'%'))
         </if>
+        <if test="params.dictAreaCode != null and params.dictAreaCode != ''">
+            and si.dict_area_code = #{params.dictAreaCode}
+        </if>
         <if test="params.dictPlatform != null and params.dictPlatform != ''">
             and si.dict_platform = #{params.dictPlatform}
         </if>
@@ -152,6 +155,23 @@
         </if>
         si.disabled asc
         ) shop
+    </select>
+
+    <!-- 区域分页查询 -->
+    <select id="pagingSelectArea" resultType="com.erp.model.oms.dto.ShopDTO$AreaDTO">
+        select
+            dict_area_code
+        from shop_info si
+        <where>
+            si.is_deleted = false
+            <if test="params.searchKeyword != null and params.searchKeyword != ''">
+                and si.dict_area_code = #{params.searchKeyword}
+            </if>
+            <if test="params.dictPlatform != null and params.dictPlatform != ''">
+                and si.dict_platform = #{params.dictPlatform}
+            </if>
+            group by dict_area_code  order by dict_area_code desc
+        </where>
     </select>
     <select id="pageAuthShop" resultType="com.erp.model.oms.dto.SkuMappingDTO$SyncPlatformProductView">
         select si.id as shopId ,

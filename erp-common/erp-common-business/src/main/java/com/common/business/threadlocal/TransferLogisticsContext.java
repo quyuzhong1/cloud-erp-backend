@@ -10,6 +10,9 @@ import java.util.Map;
  */
 public class TransferLogisticsContext {
 
+    private TransferLogisticsContext() {
+    }
+
     /**
      * 存放调用第三方接口返回JSON
      */

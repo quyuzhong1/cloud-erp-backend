@@ -1,13 +1,27 @@
 package com.erp.server.dmp.service.impl;
 
 
-import cn.hutool.core.collection.CollectionUtil;
-import cn.hutool.core.exceptions.ExceptionUtil;
-import cn.hutool.core.util.ReflectUtil;
-import cn.hutool.core.util.StrUtil;
-import cn.hutool.crypto.digest.DigestUtil;
-import cn.hutool.json.JSONArray;
-import cn.hutool.json.JSONUtil;
+import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
+import javax.annotation.Resource;
+
+import org.apache.commons.lang3.StringUtils;
+import org.apache.rocketmq.client.producer.SendResult;
+import org.apache.rocketmq.client.producer.SendStatus;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.alibaba.fastjson.JSONObject;
 import com.common.business.annotation.DataIdempotent;
 import com.common.business.constant.BusinessCommonConstants;
@@ -21,23 +35,21 @@ import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.utils.RedisUtil;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.MapUtil;
-import com.common.core.utils.ReflectUtils;
 import com.common.message.constant.RedisKeyConstant;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.dto.AmazonCreateReportResultDTO;
-import com.erp.model.dmp.entity.DmpAmzReportInfoEntity;
 import com.erp.model.dmp.entity.AmzReportScheduleEntity;
 import com.erp.model.dmp.entity.AmzReportTaskEntity;
 import com.erp.model.dmp.entity.CfgAmzReportTypeEntity;
+import com.erp.model.dmp.entity.DmpAmzReportInfoEntity;
 import com.erp.model.dmp.enums.AmzReportCreatedMethodEnum;
 import com.erp.model.dmp.enums.AmzReportTaskStatusEnum;
 import com.erp.model.dmp.enums.SettingEnum;
 import com.erp.model.msg.dto.WarnMsgInfoDTO;
 import com.erp.model.msg.enums.WarnMsgTypeEnum;
 import com.erp.model.oms.entity.ShopInfoEntity;
-import com.erp.sdk.oms.amz.spapi.dto.ReportListingMongoDTO;
 import com.erp.sdk.oms.amz.spapi.dto.ReportSuperMongoDTO;
 import com.erp.sdk.oms.amz.spapi.enums.AmazonReportRecordTypeEnum;
 import com.erp.sdk.oms.amz.spapi.model.reports.CreateReportScheduleSpecification;
@@ -48,30 +60,24 @@ import com.erp.sdk.oms.amz.spapi.utils.AmazonSpApiReportUtils;
 import com.erp.server.dmp.convert.DmpReportConverter;
 import com.erp.server.dmp.mapper.AmzReportTaskMapper;
 import com.erp.server.dmp.pull.mongo.MongoService;
-import com.erp.server.dmp.service.*;
+import com.erp.server.dmp.service.AmzReportHandleService;
+import com.erp.server.dmp.service.AmzReportScheduleService;
+import com.erp.server.dmp.service.AmzReportTaskService;
+import com.erp.server.dmp.service.CfgAmzReportFieldService;
+import com.erp.server.dmp.service.CfgAmzReportTypeService;
+import com.erp.server.dmp.service.CfgSettingService;
+import com.erp.server.dmp.service.DmpAmzReportInfoService;
+import com.erp.server.dmp.service.PlatformApiTaskService;
 import com.google.common.collect.Lists;
 import com.xxl.job.core.context.XxlJobHelper;
+
+import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.exceptions.ExceptionUtil;
+import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONArray;
+import cn.hutool.json.JSONUtil;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.rocketmq.client.producer.SendResult;
-import org.apache.rocketmq.client.producer.SendStatus;
-import org.springframework.beans.BeanUtils;
-import org.springframework.context.annotation.Lazy;
-import org.springframework.data.mongodb.core.MongoTemplate;
-import org.springframework.data.mongodb.core.query.Criteria;
-import org.springframework.data.mongodb.core.query.Query;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import javax.annotation.Resource;
-import java.time.LocalDateTime;
-import java.time.OffsetDateTime;
-import java.time.ZoneId;
-import java.time.ZoneOffset;
-import java.util.*;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 /**
  * <p>
@@ -180,17 +186,15 @@ public class AmzReportTaskServiceImpl extends SuperServiceImpl<AmzReportTaskMapp
         // 查询上一次记录
         AmzReportTaskEntity taskEntity = this.findLastTask(reportSchedule);
         // 是否是检查上一次执行任务
-        if (reportTypeConfig.getHasPreTask() && null != taskEntity) {
-            if (!AmzReportTaskStatusEnum.FINISH.getCode().equalsIgnoreCase(taskEntity.getStatus())
-                    && !AmzReportTaskStatusEnum.STOP.getCode().equalsIgnoreCase(taskEntity.getStatus())
-                    && !AmzReportTaskStatusEnum.CANCELLED.getCode().equalsIgnoreCase(taskEntity.getStatus())
-            ) {
-                // 上次任务未完成
-                log.info("[创建【亚马逊报告】亚马逊-ERP] 当前线程任务结束, 存在上一次未完成任务: group={}, shopId={}, reportType={}", groupId, reportSchedule.getShopId(), reportSchedule.getReportType());
-                XxlJobHelper.log("[创建【亚马逊报告】亚马逊-ERP] 当前线程任务结束, 存在上一次未完成任务: group={}, shopId={}, reportType={}",
-                        groupId, reportSchedule.getShopId(), reportSchedule.getReportType());
-                return;
-            }
+        if (reportTypeConfig.getHasPreTask() && null != taskEntity && !AmzReportTaskStatusEnum.FINISH.getCode().equalsIgnoreCase(taskEntity.getStatus())
+                && !AmzReportTaskStatusEnum.STOP.getCode().equalsIgnoreCase(taskEntity.getStatus())
+                && !AmzReportTaskStatusEnum.CANCELLED.getCode().equalsIgnoreCase(taskEntity.getStatus())
+        ) {
+            // 上次任务未完成
+            log.info("[创建【亚马逊报告】亚马逊-ERP] 当前线程任务结束, 存在上一次未完成任务: group={}, shopId={}, reportType={}", groupId, reportSchedule.getShopId(), reportSchedule.getReportType());
+            XxlJobHelper.log("[创建【亚马逊报告】亚马逊-ERP] 当前线程任务结束, 存在上一次未完成任务: group={}, shopId={}, reportType={}",
+                    groupId, reportSchedule.getShopId(), reportSchedule.getReportType());
+            return;
         }
         // 数据开始时间
         OffsetDateTime dataOffsetDateTime = reportSchedule.getDataStartTime().atOffset(BusinessCommonConstants.systemZoneOffset);
@@ -222,7 +226,7 @@ public class AmzReportTaskServiceImpl extends SuperServiceImpl<AmzReportTaskMapp
                 StrUtil.format("{}_{}", newTaskEntity.getId(), newTaskEntity.getStatus()),
                 reportTypeConfig.getCreatedDelayLevel());
         if (!SendStatus.SEND_OK.equals(result.getSendStatus())) {
-            throw new RuntimeException(StrUtil.format("发送创建报告待请求记录MQ数据异常，{}", JSONUtil.toJsonStr(result)));
+            throw new ServiceException(StrUtil.format("发送创建报告待请求记录MQ数据异常，{}", JSONUtil.toJsonStr(result)));
         }
     }
 
@@ -287,7 +291,7 @@ public class AmzReportTaskServiceImpl extends SuperServiceImpl<AmzReportTaskMapp
                     StrUtil.format("{}_{}", entity.getId(), entity.getStatus()),
                     recordTypeConfig.getQueryDelayLevel());
             if (!SendStatus.SEND_OK.equals(result.getSendStatus())) {
-                throw new RuntimeException(StrUtil.format("发送查询报告待请求记录MQ数据异常，{}", JSONUtil.toJsonStr(result)));
+                throw new ServiceException(StrUtil.format("发送查询报告待请求记录MQ数据异常，{}", JSONUtil.toJsonStr(result)));
             }
             return;
         }
@@ -334,7 +338,7 @@ public class AmzReportTaskServiceImpl extends SuperServiceImpl<AmzReportTaskMapp
                     StrUtil.format("{}_{}", newEntity.getId(), newEntity.getStatus()),
                     recordTypeConfig.getCreatedDelayLevel());
             if (!SendStatus.SEND_OK.equals(result.getSendStatus())) {
-                throw new RuntimeException(StrUtil.format("发送查询报告待请求记录MQ数据异常，{}", JSONUtil.toJsonStr(result)));
+                throw new ServiceException(StrUtil.format("发送查询报告待请求记录MQ数据异常，{}", JSONUtil.toJsonStr(result)));
             }
             return;
         }
@@ -351,7 +355,7 @@ public class AmzReportTaskServiceImpl extends SuperServiceImpl<AmzReportTaskMapp
                     StrUtil.format("{}_{}", newEntity.getId(), newEntity.getStatus()),
                     recordTypeConfig.getDownloadDelayLevel());
             if (!SendStatus.SEND_OK.equals(result.getSendStatus())) {
-                throw new RuntimeException(StrUtil.format("发送报告下载MQ数据异常，{}", JSONUtil.toJsonStr(result)));
+                throw new ServiceException(StrUtil.format("发送报告下载MQ数据异常，{}", JSONUtil.toJsonStr(result)));
             }
         }
     }
@@ -413,7 +417,7 @@ public class AmzReportTaskServiceImpl extends SuperServiceImpl<AmzReportTaskMapp
                     mqProducerService.convertSecondsToDelayLevel(resultDTO.getEstimatedWaitSecond())
             );
             if (!SendStatus.SEND_OK.equals(result.getSendStatus())) {
-                throw new RuntimeException(StrUtil.format("发送创建报告待请求记录MQ数据异常，{}", JSONUtil.toJsonStr(result)));
+                throw new ServiceException(StrUtil.format("发送创建报告待请求记录MQ数据异常，{}", JSONUtil.toJsonStr(result)));
             }
             return;
         }
@@ -437,7 +441,7 @@ public class AmzReportTaskServiceImpl extends SuperServiceImpl<AmzReportTaskMapp
                 StrUtil.format("{}_{}", newEntity.getId(), newEntity.getStatus()),
                 config.getQueryDelayLevel());
         if (!SendStatus.SEND_OK.equals(result.getSendStatus())) {
-            throw new RuntimeException(StrUtil.format("发送查询报告待请求记录MQ数据异常，{}", JSONUtil.toJsonStr(result)));
+            throw new ServiceException(StrUtil.format("发送查询报告待请求记录MQ数据异常，{}", JSONUtil.toJsonStr(result)));
         }
     }
 
@@ -496,7 +500,7 @@ public class AmzReportTaskServiceImpl extends SuperServiceImpl<AmzReportTaskMapp
                 StrUtil.format("{}_{}", newEntity.getId(), newEntity.getStatus()),
                 config.getParseDelayLevel());
         if (!SendStatus.SEND_OK.equals(result.getSendStatus())) {
-            throw new RuntimeException(StrUtil.format("发送报告解析MQ数据异常，{}", JSONUtil.toJsonStr(result)));
+            throw new ServiceException(StrUtil.format("发送报告解析MQ数据异常，{}", JSONUtil.toJsonStr(result)));
         }
         result.getMsgId();
     }
@@ -648,7 +652,7 @@ public class AmzReportTaskServiceImpl extends SuperServiceImpl<AmzReportTaskMapp
                 StrUtil.format("{}_{}", newEntity.getId(), newEntity.getStatus()),
                 recordTypeConfig.getDownloadDelayLevel());
         if (!SendStatus.SEND_OK.equals(result.getSendStatus())) {
-            throw new RuntimeException(StrUtil.format("直接查询发送报告下载MQ数据异常，{}", JSONUtil.toJsonStr(result)));
+            throw new ServiceException(StrUtil.format("直接查询发送报告下载MQ数据异常，{}", JSONUtil.toJsonStr(result)));
         }
     }
 
@@ -800,14 +804,12 @@ public class AmzReportTaskServiceImpl extends SuperServiceImpl<AmzReportTaskMapp
         // 查询上一次记录
         AmzReportTaskEntity taskEntity = this.findLastTask(reportSchedule);
         // 是否是检查上一次执行任务
-        if (reportTypeConfig.getHasPreTask() && null != taskEntity) {
-            if (!AmzReportTaskStatusEnum.FINISH.getCode().equalsIgnoreCase(taskEntity.getStatus()) && !AmzReportTaskStatusEnum.STOP.getCode().equalsIgnoreCase(taskEntity.getStatus())) {
-                // 上次任务未完成
-                log.info("[检查最新【亚马逊报告】亚马逊-ERP] 当前线程任务结束, 存在上一次未完成任务: group={}, shopId={}, reportType={}", groupId, reportSchedule.getShopId(), reportSchedule.getReportType());
-                XxlJobHelper.log("[检查最新【亚马逊报告】亚马逊-ERP] 当前线程任务结束, 存在上一次未完成任务: group={}, shopId={}, reportType={}",
-                        groupId, reportSchedule.getShopId(), reportSchedule.getReportType());
-                return;
-            }
+        if (reportTypeConfig.getHasPreTask() && null != taskEntity && !AmzReportTaskStatusEnum.FINISH.getCode().equalsIgnoreCase(taskEntity.getStatus()) && !AmzReportTaskStatusEnum.STOP.getCode().equalsIgnoreCase(taskEntity.getStatus())) {
+        	// 上次任务未完成
+            log.info("[检查最新【亚马逊报告】亚马逊-ERP] 当前线程任务结束, 存在上一次未完成任务: group={}, shopId={}, reportType={}", groupId, reportSchedule.getShopId(), reportSchedule.getReportType());
+            XxlJobHelper.log("[检查最新【亚马逊报告】亚马逊-ERP] 当前线程任务结束, 存在上一次未完成任务: group={}, shopId={}, reportType={}",
+                    groupId, reportSchedule.getShopId(), reportSchedule.getReportType());
+            return;
         }
         // 是否是增量报告(取上一次执行任务的时间)
         if (!reportTypeConfig.getIsFullUpdate() && null != taskEntity) {
@@ -842,7 +844,7 @@ public class AmzReportTaskServiceImpl extends SuperServiceImpl<AmzReportTaskMapp
                 StrUtil.format("{}_{}", newTaskEntity.getId(), newTaskEntity.getStatus()),
                 reportTypeConfig.getDirectQueryDelayLevel());
         if (!SendStatus.SEND_OK.equals(result.getSendStatus())) {
-            throw new RuntimeException(StrUtil.format("发送报告直接查询MQ数据异常，{}", JSONUtil.toJsonStr(result)));
+            throw new ServiceException(StrUtil.format("发送报告直接查询MQ数据异常，{}", JSONUtil.toJsonStr(result)));
         }
     }
 

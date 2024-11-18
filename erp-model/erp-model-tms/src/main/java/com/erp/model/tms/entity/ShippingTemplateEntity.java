@@ -1,15 +1,15 @@
 package com.erp.model.tms.entity;
 
 import com.baomidou.mybatisplus.annotation.FieldFill;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
-import java.time.LocalDate;
-import com.baomidou.mybatisplus.annotation.TableField;
-import java.io.Serializable;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
-import com.common.business.enums.ApproveStatusEnum;
+
+import java.io.Serializable;
+import java.time.LocalDate;
 
 
 /**
@@ -83,11 +83,11 @@ public class ShippingTemplateEntity extends BaseEntity<ShippingTemplateEntity> {
     private String logisticsChannelId;
 
 
-    public static final String NAME = "name";
+    public static final String FIELD_NAME = "name";
 
     public static final String BILLING_METHOD = "billing_method";
 
-    public static final String CURRENCY = "currency";
+    public static final String FIELD_CURRENCY = "currency";
 
     public static final String WEIGHT_UNIT = "weight_unit";
 
@@ -99,9 +99,9 @@ public class ShippingTemplateEntity extends BaseEntity<ShippingTemplateEntity> {
 
     public static final String EXPIRE_DATE = "expire_date";
 
-    public static final String DISABLED = "disabled";
+    public static final String FIELD_DISABLED = "disabled";
 
-    public static final String TYPE = "type";
+    public static final String FIELD_TYPE = "type";
 
     @Override
     public Serializable pkVal() {

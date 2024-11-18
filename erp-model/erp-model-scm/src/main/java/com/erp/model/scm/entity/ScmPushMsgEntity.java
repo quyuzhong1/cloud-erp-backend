@@ -85,7 +85,7 @@ public class ScmPushMsgEntity extends BaseEntity<ScmPushMsgEntity> {
 
     public static final String PUSH_DATA = "push_data";
 
-    public static final String REMARK = "remark";
+    public static final String FIELD_REMARK = "remark";
 
     public static final String PARENT_ID = "parent_id";
 

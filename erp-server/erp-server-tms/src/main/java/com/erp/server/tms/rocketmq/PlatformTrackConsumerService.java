@@ -1,6 +1,6 @@
 package com.erp.server.tms.rocketmq;
 
-import cn.hutool.core.util.StrUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.json.JSONUtil;
 import com.common.business.dto.DmpSyncMqDTO;
 import com.common.business.dto.DmpSyncTaskIdDTO;
@@ -11,11 +11,8 @@ import com.common.core.exception.ServiceException;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.handler.AbstractPlatformConsumerHandler;
 import com.erp.model.dmp.dto.MongoDBUpdateDTO;
-import com.erp.model.tms.entity.LogisticsTrackEntity;
-import com.erp.model.tms.enums.LogisticTrackStatusEnum;
 import com.erp.rpc.dmp.feign.DmpMongoDbFeign;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
-import com.erp.server.tms.convert.TrackDataConverter;
 import com.erp.server.tms.service.LogisticsBillDetailService;
 import com.erp.server.tms.service.LogisticsTrackService;
 import com.sdk.tms.track123.dto.PlatformTrackDTO;
@@ -28,11 +25,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
 
 /**
  * 下载FBA货件消费服务
@@ -83,10 +76,10 @@ public class PlatformTrackConsumerService<T extends DmpSyncTaskIdDTO> extends Ab
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public ApiResult<?> handle(Object ext) {
+    public ApiResult<Object> handle(Object ext) {
         PlatformTrackDTO dto = JSONUtil.toBean(ext.toString(), PlatformTrackDTO.class);
         //根据trackNo拉取轨迹数据
-        if (Objects.isNull(dto) || StrUtil.isBlank(dto.getTrackNo()) ||CollectionUtils.isEmpty(dto.getDetails())) {
+        if (Objects.isNull(dto) || CharSequenceUtil.isBlank(dto.getTrackNo()) ||CollectionUtils.isEmpty(dto.getDetails())) {
             return ApiResult.success();
         }
         //处理物流轨迹数据
@@ -99,7 +92,7 @@ public class PlatformTrackConsumerService<T extends DmpSyncTaskIdDTO> extends Ab
      * @return
      */
     private String getTableName(String platform){
-        return StrUtil.format("{}_{}_{}", PlatformCategoryEnum.THIRD_SYSTEM.getCode(),
+        return CharSequenceUtil.format("{}_{}_{}", PlatformCategoryEnum.THIRD_SYSTEM.getCode(),
                 platform, BusinessTypeEnum.GET_TRACK.getCode());
     }
 }

@@ -1,9 +1,10 @@
 package com.erp.server.oms.service.impl;
 
 
-import cn.hutool.core.util.StrUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -11,16 +12,26 @@ import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.OrderTypeEnum;
 import com.common.business.enums.PlatformDictEnum;
+import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.entity.BaseEntity;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.MathUtil;
 import com.erp.model.oms.dto.SoB2cDTO;
+import com.erp.model.oms.dto.SoB2cReturnDTO;
 import com.erp.model.oms.dto.SoB2cReturnDetailDTO;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoB2cReturnDetailEntity;
 import com.erp.model.oms.entity.SoB2cReturnEntity;
-import com.erp.model.oms.enums.*;
+import com.erp.model.oms.enums.SoB2cReturnReasonEnum;
+import com.erp.model.oms.enums.SoB2cReturnSourceTypeEnum;
+import com.erp.model.oms.enums.SoB2cReturnStatusEnum;
+import com.erp.model.oms.enums.SoB2cReturnTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.SoReturnInstockDetailDTO;
@@ -36,28 +47,18 @@ import com.erp.rpc.wms.feign.SoReturnInstockFeign;
 import com.erp.rpc.wms.feign.SoReturnNoticeFeign;
 import com.erp.server.oms.mapper.SoB2cReturnMapper;
 import com.erp.server.oms.service.*;
-import com.common.business.service.impl.SuperServiceImpl;
-import com.common.business.threadlocal.UserContext;
-import com.common.core.exception.ServiceException;
-import com.common.business.config.DocNoGenHelper;
 import jodd.util.StringUtil;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
-import lombok.extern.slf4j.Slf4j;
-import com.erp.model.oms.dto.SoB2cReturnDTO;
 
+import javax.annotation.Resource;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
-
-import com.common.core.utils.*;
-import com.common.core.enums.ApiError;
-
-import javax.annotation.Resource;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_OMS_SO_B2C_RETURN;
 
@@ -72,9 +73,9 @@ import static com.common.business.enums.FileTaskEventEnum.EXPORT_OMS_SO_B2C_RETU
 @Slf4j
 @Service
 public class SoB2cReturnServiceImpl extends SuperServiceImpl<SoB2cReturnMapper, SoB2cReturnEntity> implements SoB2cReturnService {
-    @Autowired
+    @Resource
     private OperateLogService operateLogService;
-    @Autowired
+    @Resource
     private DocNoGenHelper docNoGenHelper;
 
     @Resource
@@ -122,7 +123,7 @@ public class SoB2cReturnServiceImpl extends SuperServiceImpl<SoB2cReturnMapper, 
         }
 
         // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "b2c退货订单" , soB2cReturnEntity.getCode());
+        String msg =  CharSequenceUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "b2c退货订单" , soB2cReturnEntity.getCode());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C_RETURN.getCode(), soB2cReturnEntity.getId(), "新增操作");
         soB2cReturnDetailService.add(addDTO.getDetailList(), soB2cReturnEntity.getId());
 
@@ -136,7 +137,9 @@ public class SoB2cReturnServiceImpl extends SuperServiceImpl<SoB2cReturnMapper, 
     @Override
     public Boolean update(SoB2cReturnDTO.UpdateDTO updateDTO) {
         SoB2cReturnEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "b2c退货订单"));
+        if(null == old){
+            throw new ServiceException(ApiError.NOT_EXIST_BILL, "b2c退货订单");
+        }
         SoB2cReturnEntity soB2cReturnEntity =  BeanMapperUtils.map(SoB2cReturnEntity.class, updateDTO);
 
         // 数据处理
@@ -150,7 +153,7 @@ public class SoB2cReturnServiceImpl extends SuperServiceImpl<SoB2cReturnMapper, 
 
         // 记录主单操作日志
             log.info("编辑 开始记录b2c退货订单日志数据，单号：【{}】", soB2cReturnEntity.getCode());
-            String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), soB2cReturnEntity.getCode(), "b2c退货订单");
+            String msg =  CharSequenceUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), soB2cReturnEntity.getCode(), "b2c退货订单");
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLogByObj(old, soB2cReturnEntity, null, soB2cReturnEntity.getId(), msg);
         return Boolean.TRUE;

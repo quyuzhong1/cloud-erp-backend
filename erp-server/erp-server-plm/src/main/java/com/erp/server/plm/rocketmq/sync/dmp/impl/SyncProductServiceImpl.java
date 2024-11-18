@@ -80,7 +80,7 @@ public class SyncProductServiceImpl implements SyncProductService {
         map.put("listingNotNullList", listingNotNullList);
         listingNotNullList.forEach(req -> {
             if (ObjectUtil.isNotEmpty(redisUtil.hget(RedisKeyConstant.SKU_LISTING_TIME, req.getSkuNo()))) {
-                redisUtil.hset(RedisKeyConstant.SKU_LISTING_TIME, req.getSkuNo(), req.getNewListingTime(), 30 * 24 * 3600);
+                redisUtil.hset(RedisKeyConstant.SKU_LISTING_TIME, req.getSkuNo(), req.getNewListingTime(), 30 * 24 * 3600L);
             }
         });
         // 异步推送到MQ

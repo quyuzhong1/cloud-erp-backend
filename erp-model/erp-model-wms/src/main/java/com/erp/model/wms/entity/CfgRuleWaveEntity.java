@@ -96,33 +96,6 @@ public class CfgRuleWaveEntity extends BaseEntity<CfgRuleWaveEntity> {
      */
     @TableField(exist = false)
     private String pickingCartTypeJsonName;
-
-    public static final String NAME = "name";
-
-    public static final String WAVE_TYPE = "wave_type";
-
-    public static final String PRIORITY = "priority";
-
-    public static final String PICKING_CART_TYPE_ID = "picking_cart_type_id";
-
-    public static final String MIN_ORDER_QTY = "min_order_qty";
-
-    public static final String MAX_ORDER_QTY = "max_order_qty";
-
-    public static final String MIN_QTY = "min_qty";
-
-    public static final String MAX_QTY = "max_qty";
-
-    public static final String DISABLED = "disabled";
-
-    public static final String EXECUTION_TIME_JSON = "execution_time_json";
-
-    public static final String EXECUTION_TYPE = "execution_type";
-
-    public static final String PICKING_TYPE = "picking_type";
-
-    public static final String REMARK = "remark";
-
     @Override
     public Serializable pkVal() {
         return null;

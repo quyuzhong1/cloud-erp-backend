@@ -10,7 +10,6 @@ import lombok.experimental.Accessors;
 import java.io.Serializable;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.Date;
 
 /**
  * <p>
@@ -97,9 +96,6 @@ public class InstockForcastEntity extends BaseEntity<InstockForcastEntity> {
      */
     @TableField("purchase_order_code")
     private String purchaseOrderCode;
-
-
-    public static final String CODE = "code";
 
     public static final String PURCHASE_ORDER_ID = "purchase_order_id";
 

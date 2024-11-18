@@ -62,7 +62,7 @@ public class DmpCfgMqServiceImpl extends SuperServiceImpl<DmpCfgMqMapper, DmpCfg
     @Override
     public Boolean update(DmpCfgMqDTO.UpdateDTO updateDTO) {
         DmpCfgMqEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "输入输出mq信息"));
+        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "输入输出mq信息"));
         DmpCfgMqEntity dmpCfgMqEntity =  BeanMapperUtils.map(DmpCfgMqEntity.class, updateDTO);
 
         // 数据处理

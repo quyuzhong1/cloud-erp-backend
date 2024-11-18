@@ -17,7 +17,7 @@ import java.time.LocalDate;
 @TableName(value ="product_plan")
 @Data
 @NoArgsConstructor
-public class ProductPlanEntity extends BaseEntity {
+public class ProductPlanEntity extends BaseEntity<ProductPlanEntity> {
 
     /**
      * 年份

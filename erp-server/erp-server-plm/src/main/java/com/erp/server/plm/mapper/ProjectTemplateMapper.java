@@ -33,7 +33,7 @@ public interface ProjectTemplateMapper extends BaseMapper<ProjectTemplateEntity>
      * @param params
      * @return IPage<ProjectTemplateDTO>
      */
-    IPage<ProjectTemplateDTO> paging(Page query, @Param("params") BaseSearchDTO params);
+    IPage<ProjectTemplateDTO> paging(Page<BaseSearchDTO> query, @Param("params") BaseSearchDTO params);
 
     /**
      * 获取立项模板产品属性

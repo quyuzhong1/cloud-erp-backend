@@ -1,14 +1,14 @@
 package com.erp.model.tms.entity;
 
-import java.math.BigDecimal;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
-import com.baomidou.mybatisplus.annotation.TableField;
-import java.io.Serializable;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
-import com.common.business.enums.ApproveStatusEnum;
+
+import java.io.Serializable;
+import java.math.BigDecimal;
 
 
 /**
@@ -94,7 +94,7 @@ public class LogisticsChannelConstraintEntity extends BaseEntity<LogisticsChanne
 
     public static final String CHANNEL_ID = "channel_id";
 
-    public static final String COUNTRY = "country";
+    public static final String FIELD_COUNTRY = "country";
 
     public static final String COUNTRY_NAME = "country_name";
 

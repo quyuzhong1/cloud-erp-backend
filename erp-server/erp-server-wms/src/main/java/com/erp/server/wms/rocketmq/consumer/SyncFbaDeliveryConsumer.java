@@ -1,5 +1,6 @@
 package com.erp.server.wms.rocketmq.consumer;
 
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
@@ -23,6 +24,7 @@ import org.apache.rocketmq.spring.core.RocketMQListener;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.Resource;
 import java.util.Objects;
 
 /**
@@ -35,13 +37,13 @@ import java.util.Objects;
 @RocketMQMessageListener(topic = RocketMqTopic.DMP_SYNC_TASK_TOPIC, selectorExpression = "sync_mabang_fba_delivery_to_wms_tag", consumerGroup = RocketMqConsumerGroup.SYNC_MABANG_FBA_DELIVERY_TO_WMS)
 public class SyncFbaDeliveryConsumer implements RocketMQListener<Object> {
 
-    @Autowired
+    @Resource
     private SyncFbaDeliveryService syncFbaDeliveryService;
 
-    @Autowired
+    @Resource
     private MQProducerService mqProducerService;
 
-    @Autowired
+    @Resource
     private DmpTaskFeign dmpTaskFeign;
 
     @Override
@@ -69,7 +71,7 @@ public class SyncFbaDeliveryConsumer implements RocketMQListener<Object> {
             dmpTaskFeign.sendWarnMsg(dmpSyncTaskId);
             // 发送消息通知
             this.sendTaskNotice(dmpSyncTaskId,
-                    StrUtil.format("FBA发货单生成ERP加工单异常，同步任务id：{}，异常原因：{}", paramDTO.getDmpSyncTaskId(), e.getMessage()));
+                    CharSequenceUtil.format("FBA发货单生成ERP加工单异常，同步任务id：{}，异常原因：{}", paramDTO.getDmpSyncTaskId(), e.getMessage()));
         }
 
         // 同步任务状态回调

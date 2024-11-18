@@ -1,6 +1,7 @@
 package com.erp.server.wms.service.impl;
 
 
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -92,7 +93,7 @@ public class VirtualWarehousePushHandleDetailServiceImpl extends SuperServiceImp
         }
 
         // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "分货单合单明细单", virtualWarehousePushHandleDetailEntity.getCode());
+        String msg = CharSequenceUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "分货单合单明细单", virtualWarehousePushHandleDetailEntity.getCode());
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLog(msg, null, virtualWarehousePushHandleDetailEntity.getId(), "新增操作");
         // TODO 新增明细（如果有明细的话）
@@ -107,7 +108,9 @@ public class VirtualWarehousePushHandleDetailServiceImpl extends SuperServiceImp
     @Override
     public Boolean update(VirtualWarehousePushHandleDetailDTO.UpdateDTO updateDTO) {
         VirtualWarehousePushHandleDetailEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "分货单合单明细单"));
+        if (Objects.isNull(old)){
+            throw new ServiceException(ApiError.NOT_EXIST_BILL, "分货单合单明细单");
+        }
         VirtualWarehousePushHandleDetailEntity virtualWarehousePushHandleDetailEntity = BeanMapperUtils.map(VirtualWarehousePushHandleDetailEntity.class, updateDTO);
 
         // 数据处理
@@ -121,7 +124,7 @@ public class VirtualWarehousePushHandleDetailServiceImpl extends SuperServiceImp
 
         // 记录主单操作日志
         log.info("编辑 开始记录分货单合单明细单日志数据，单号：【{}】", virtualWarehousePushHandleDetailEntity.getCode());
-        String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), virtualWarehousePushHandleDetailEntity.getCode(), "分货单合单明细单");
+        String msg = CharSequenceUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), virtualWarehousePushHandleDetailEntity.getCode(), "分货单合单明细单");
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLogByObj(old, virtualWarehousePushHandleDetailEntity, null, virtualWarehousePushHandleDetailEntity.getId(), msg);
         return Boolean.TRUE;
@@ -238,7 +241,7 @@ public class VirtualWarehousePushHandleDetailServiceImpl extends SuperServiceImp
                         //发送mq
                         Boolean result = dmpMqFeign.sendTask(dmpPushTaskEntityList);
                         if (Objects.isNull(result) || !result) {
-                            throw new RuntimeException(StrUtil.format("发送MQ数据异常，{}", JSONUtil.toJsonStr(result)));
+                            throw new RuntimeException(CharSequenceUtil.format("发送MQ数据异常，{}", JSONUtil.toJsonStr(result)));
                         }
                     }
                 });

@@ -1,5 +1,6 @@
 package com.erp.server.wms.service.impl;
 
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
@@ -145,7 +146,7 @@ public class WarehouseReceiveDetailServiceImpl extends SuperServiceImpl<Warehous
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean update(WarehouseReceiveDTO.UpdateDTO dto) {
-        List<String> addList = dto.getWarehouseReceiveDetailList().stream().filter(c -> StringUtils.isBlank(c.getId())).map(WarehouseReceiveDetailDTO.UpdateDTO::getId).collect(Collectors.toList());
+        List<String> addList = dto.getWarehouseReceiveDetailList().stream().filter(c -> CharSequenceUtil.isBlank(c.getId())).map(WarehouseReceiveDetailDTO.UpdateDTO::getId).collect(Collectors.toList());
 
         //创建保存详情的集合
         List<WarehouseReceiveDetailEntity> listDetail = new ArrayList<>();
@@ -160,7 +161,7 @@ public class WarehouseReceiveDetailServiceImpl extends SuperServiceImpl<Warehous
         List<PoReturnDetailEntity> returnDetailEntityList = poReturnDetailService.listReturnOrderDetailByPodIds(orderDetailIds);
 
         //原明细数据
-        List<WarehouseReceiveDetailEntity> oldList = this.listDetailByMainIds(Arrays.asList(dto.getId()));
+        List<WarehouseReceiveDetailEntity> oldList = this.listDetailByMainIds(Collections.singletonList(dto.getId()));
         List<String> deleteIds = getDeleteIds(dto.getWarehouseReceiveDetailList(), oldList);
         if (CollectionUtils.isNotEmpty(deleteIds)) {
             List<WarehouseReceiveDetailEntity> removeList = oldList.stream().filter(obj -> deleteIds.contains(obj.getId())).collect(Collectors.toList());
@@ -183,7 +184,7 @@ public class WarehouseReceiveDetailServiceImpl extends SuperServiceImpl<Warehous
             //采购数量
             Integer purchaseQty = purchaseOrderDetailEntity.getPurchaseQty();
 
-            if (StringUtils.isNotBlank(updateDTO.getId())) {
+            if (CharSequenceUtil.isNotBlank(updateDTO.getId())) {
                 Integer receive = detailEntityList.stream().filter(obj -> !deleteIds.contains(obj.getId()) && obj.getSkuId().equals(warehouseReceiveDetailEntity.getSkuId()) && obj.getPurchaseOrderDetailId().equals(updateDTO.getPurchaseOrderDetailId()) && !obj.getId().equals(updateDTO.getId())).map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
                 if (receive + updateDTO.getReceiveQty() > purchaseQty + returnQty) {
                     throw new ServiceException(ApiError.ERROR_99025.code, String.format(ApiError.ERROR_99025.msg, purchaseOrderDetailEntity.getSkuNo()));
@@ -200,7 +201,7 @@ public class WarehouseReceiveDetailServiceImpl extends SuperServiceImpl<Warehous
             warehouseReceiveDetailEntity.setPurchaseOrderDetailId(updateDTO.getPurchaseOrderDetailId());
             listDetail.add(warehouseReceiveDetailEntity);
             //修改操作日志
-/*            if (StringUtils.isNotBlank(warehouseReceiveDetailEntity.getId())) {
+/*            if (CharSequenceUtil.isNotBlank(warehouseReceiveDetailEntity.getId())) {
                 WarehouseReceiveDetailEntity old = this.getById(warehouseReceiveDetailEntity.getId());
                 operateLogService.addModuleOperateLogByObj(old,warehouseReceiveDetailEntity, ModuleTypeEnum.WAREHOUSE_RECEIVE.getCode(),dto.getId(),"",String.format("【%s】",old.getSkuNo()));
             }*/
@@ -216,7 +217,7 @@ public class WarehouseReceiveDetailServiceImpl extends SuperServiceImpl<Warehous
     }
 
     private List<String> getDeleteIds(List<WarehouseReceiveDetailDTO.UpdateDTO> newList, List<WarehouseReceiveDetailEntity> oldList) {
-        List<String> newIds = newList.stream().filter(g -> StringUtils.isNotBlank(g.getId())).
+        List<String> newIds = newList.stream().filter(g -> CharSequenceUtil.isNotBlank(g.getId())).
                 map(WarehouseReceiveDetailDTO.UpdateDTO::getId).collect(Collectors.toList());
         List<String> oldIds = oldList.stream().map(WarehouseReceiveDetailEntity
                 ::getId).collect(Collectors.toList());
@@ -279,7 +280,7 @@ public class WarehouseReceiveDetailServiceImpl extends SuperServiceImpl<Warehous
     @Override
     public List<WarehouseReceiveDetailEntity> listWarehouseReceiveByPodIds(List<String> purchaseDetailIds) {
         if (CollectionUtils.isEmpty(purchaseDetailIds)) {
-            return Collections.EMPTY_LIST;
+            return Collections.emptyList();
         }
         return baseMapper.listWarehouseReceiveByPodIds(purchaseDetailIds);
     }

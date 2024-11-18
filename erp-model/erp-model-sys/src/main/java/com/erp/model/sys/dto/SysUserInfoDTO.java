@@ -3,8 +3,6 @@ package com.erp.model.sys.dto;
 
 import com.common.core.anno.RegularValid;
 import com.common.core.enums.FieldFormatPatternTypeEnum;
-import com.erp.model.sys.validator.AddGroup;
-import com.erp.model.sys.validator.UpdateGroup;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 

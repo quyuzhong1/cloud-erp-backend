@@ -262,7 +262,7 @@ public class SkuVO implements Serializable {
 
     @Data
     @NoArgsConstructor
-    public static class PropertyDTO {
+    public static class PropertyDTO implements Serializable{
         /**
          * 是否带电
          */

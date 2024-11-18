@@ -266,15 +266,22 @@ public class SoB2cQueryHandler extends AbstractQueryHandler {
         }
         //待提审  显示订单审核状态为待提交、审核不通过，订单状态非冻结的订单，订单非作废
         if (SoB2cTabEnum.ENUM_PENDING.getCode().equals(value)) {
-            return "sb2c.approve_status in ('waitSubmit','reject')";
+            payStatusList.add(SoB2cPayStatusEnum.ENUM_PAID.getCode());
+            approveStatusList.add(ApproveStatusEnum.WAIT_SUBMIT.getStatus());
+            approveStatusList.add(ApproveStatusEnum.REJECT.getStatus());
+            super.buildSplicingSQLDTO("sb2c.invalid_status", QueryConditionEnum.EQ,false, QueryDataTypeEnum.BOOLEAN);
+            super.buildSplicingSQLDTO("sb2c.is_frozen", QueryConditionEnum.EQ,false, QueryDataTypeEnum.BOOLEAN);
         }
-        //审核中
+        //待审核
         if (SoB2cTabEnum.ENUM_APPROVE_ING.getCode().equals(value)) {
+            payStatusList.add(SoB2cPayStatusEnum.ENUM_PAID.getCode());
             approveStatusList.add(ApproveStatusEnum.APPROVE_ING.getStatus());
             super.buildSplicingSQLDTO("sb2c.invalid_status", QueryConditionEnum.EQ,false, QueryDataTypeEnum.BOOLEAN);
+            super.buildSplicingSQLDTO("sb2c.is_frozen", QueryConditionEnum.EQ,false, QueryDataTypeEnum.BOOLEAN);
         }
         //配货中
         if (SoB2cTabEnum.ENUM_IN_DISTRIBUTION.getCode().equals(value)) {
+            payStatusList.add(SoB2cPayStatusEnum.ENUM_PAID.getCode());
             approveStatusList.add(ApproveStatusEnum.APPROVE.getStatus());
             billStatusList.add(SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode());
             billStatusList.add(SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION.getCode());
@@ -282,27 +289,32 @@ public class SoB2cQueryHandler extends AbstractQueryHandler {
         }
         //待发货
         if (SoB2cTabEnum.ENUM_WAIT_SHIPPED.getCode().equals(value)) {
+            payStatusList.add(SoB2cPayStatusEnum.ENUM_PAID.getCode());
             approveStatusList.add(ApproveStatusEnum.APPROVE.getStatus());
             billStatusList.add(SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode());
             super.buildSplicingSQLDTO("sb2c.invalid_status", QueryConditionEnum.EQ,false, QueryDataTypeEnum.BOOLEAN);
         }
         //已发货
         if (SoB2cTabEnum.ENUM_SHIPPED.getCode().equals(value)) {
+            payStatusList.add(SoB2cPayStatusEnum.ENUM_PAID.getCode());
             approveStatusList.add(ApproveStatusEnum.APPROVE.getStatus());
             billStatusList.add(SoB2cBillStatusEnum.ENUM_SHIPPED.getCode());
             super.buildSplicingSQLDTO("sb2c.invalid_status", QueryConditionEnum.EQ,false, QueryDataTypeEnum.BOOLEAN);
         }
         //冻结中
         if (SoB2cTabEnum.ENUM_FROZEN.getCode().equals(value)) {
+            payStatusList.add(SoB2cPayStatusEnum.ENUM_PAID.getCode());
             billStatusList.add(SoB2cBillStatusEnum.ENUM_FROZEN.getCode());
             super.buildSplicingSQLDTO("sb2c.invalid_status", QueryConditionEnum.EQ,false, QueryDataTypeEnum.BOOLEAN);
         }
         //已作废
         if (SoB2cTabEnum.ENUM_INVALID.getCode().equals(value)) {
+            payStatusList.add(SoB2cPayStatusEnum.ENUM_PAID.getCode());
             super.buildSplicingSQLDTO("sb2c.invalid_status", QueryConditionEnum.EQ,true, QueryDataTypeEnum.BOOLEAN);
         }
         //订单异常
         if (SoB2cTabEnum.ENUM_ORDER_ERROR.getCode().equals(value)) {
+            payStatusList.add(SoB2cPayStatusEnum.ENUM_PAID.getCode());
             super.buildSplicingSQLDTO("sb2c.sign_order_error", QueryConditionEnum.NE,"", QueryDataTypeEnum.STRING);
             super.buildSplicingSQLDTO("sb2c.invalid_status", QueryConditionEnum.EQ,false, QueryDataTypeEnum.BOOLEAN);
         }

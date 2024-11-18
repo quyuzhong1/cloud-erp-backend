@@ -1,7 +1,6 @@
 package com.erp.server.plm.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.utils.BeanMapper;
 import com.erp.model.plm.dto.ProductAccessoriesDTO;
@@ -13,6 +12,7 @@ import com.erp.server.plm.service.ProductDetailService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.util.ObjectUtils;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
@@ -108,7 +108,7 @@ public class ProductAccessoriesServiceImpl extends ServiceImpl<ProductAccessorie
             listDTO.setQuantity(productAccessoriesEntity.getQuantity());
             if (CollectionUtils.isNotEmpty(skuList)) {
                 SkuVO skuVO = skuList.stream().filter(obj -> obj.getSkuId().equals(listDTO.getSkuId())).findFirst().orElse(null);
-                if (ObjectUtils.isNotEmpty(skuVO)) {
+                if (!ObjectUtils.isEmpty(skuVO)) {
                     listDTO.setSkuNo(skuVO.getSkuNo());
                     listDTO.setSkuName(skuVO.getSkuName());
                     listDTO.setSkuContent(skuVO.getSkuNo().concat("【").concat(skuVO.getSkuName()).concat("】"));

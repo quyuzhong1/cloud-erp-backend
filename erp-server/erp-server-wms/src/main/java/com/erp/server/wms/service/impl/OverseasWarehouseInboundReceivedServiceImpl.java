@@ -1,6 +1,7 @@
 package com.erp.server.wms.service.impl;
 
 
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -19,7 +20,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.Resource;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 /**
  * <p>
@@ -32,7 +35,7 @@ import java.util.Optional;
 @Slf4j
 @Service
 public class OverseasWarehouseInboundReceivedServiceImpl extends SuperServiceImpl<OverseasWarehouseInboundReceivedMapper, OverseasWarehouseInboundReceivedEntity> implements OverseasWarehouseInboundReceivedService {
-    @Autowired
+    @Resource
     private OperateLogService operateLogService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
@@ -52,7 +55,7 @@ public class OverseasWarehouseInboundReceivedServiceImpl extends SuperServiceImp
         }
 
         // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "海外仓签收记录" , overseasWarehouseInboundReceivedEntity.getId());
+        String msg = CharSequenceUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "海外仓签收记录" , overseasWarehouseInboundReceivedEntity.getId());
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLog(msg, null, overseasWarehouseInboundReceivedEntity.getId(), "新增操作");
         // TODO 新增明细（如果有明细的话）
@@ -67,7 +70,9 @@ public class OverseasWarehouseInboundReceivedServiceImpl extends SuperServiceImp
     @Override
     public Boolean update(OverseasWarehouseInboundReceivedDTO.UpdateDTO updateDTO) {
         OverseasWarehouseInboundReceivedEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "海外仓签收记录"));
+        if (Objects.isNull(old)){
+            throw new ServiceException(ApiError.NOT_EXIST_BILL, "海外仓签收记录");
+        }
         OverseasWarehouseInboundReceivedEntity overseasWarehouseInboundReceivedEntity =  BeanMapperUtils.map(OverseasWarehouseInboundReceivedEntity.class, updateDTO);
 
         // 数据处理
@@ -81,7 +86,7 @@ public class OverseasWarehouseInboundReceivedServiceImpl extends SuperServiceImp
 
         // 记录主单操作日志
             log.info("编辑 开始记录海外仓签收记录日志数据，id：【{}】", overseasWarehouseInboundReceivedEntity.getId());
-            String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), overseasWarehouseInboundReceivedEntity.getId(), "海外仓签收记录");
+            String msg = CharSequenceUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), overseasWarehouseInboundReceivedEntity.getId(), "海外仓签收记录");
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLogByObj(old, overseasWarehouseInboundReceivedEntity, null, overseasWarehouseInboundReceivedEntity.getId(), msg);
         return Boolean.TRUE;

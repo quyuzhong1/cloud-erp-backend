@@ -1,7 +1,7 @@
 package com.common.core.utils.date;
 
 import cn.hutool.core.collection.CollectionUtil;
-import cn.hutool.core.util.StrUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 
@@ -391,7 +391,7 @@ public class LocalDateUtil {
     }
 
     public static LocalDateTime strToLocalDateTime(String timeStr) {
-        if (StrUtil.isBlank(timeStr)) {
+        if (CharSequenceUtil.isBlank(timeStr)) {
             return null;
         }
         if(timeStr.contains("T")){
@@ -410,7 +410,7 @@ public class LocalDateUtil {
     }
 
     public static LocalDateTime plusHours(LocalDateTime startTime, String hourStr) {
-        if (StrUtil.isBlank(hourStr)){
+        if (CharSequenceUtil.isBlank(hourStr)){
             return startTime;
         }
         BigDecimal hour = new BigDecimal(hourStr);
@@ -491,6 +491,31 @@ public class LocalDateUtil {
     public static LocalDateTime getEndDateTimeOfYear(int year) {
         LocalDateTime endDateTime = LocalDateTime.of(year, Month.DECEMBER, 31, 23, 59, 59);
         return endDateTime.withNano(999_999_999); // Adjust nanoseconds to the maximum value
+    }
+
+    /**
+     * 获取日期范围的每一天
+     * @Author Luo_WG
+     * @Date 2024/10/29 17:46
+     * @param startTime
+     * @param endTime
+     * @return java.util.List<java.lang.String>
+     **/
+    public static List<String> getDateDayList(LocalDateTime startTime, LocalDateTime endTime) {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+        List<String> dateList = new ArrayList<>();
+
+        LocalDateTime startDate = startTime.toLocalDate().atStartOfDay();
+        LocalDateTime endDate = endTime.toLocalDate().atStartOfDay();
+
+        LocalDateTime currentDate = startDate;
+
+        while (currentDate.isBefore(endDate) || currentDate.isEqual(endDate)) {
+            dateList.add(currentDate.format(formatter));
+            currentDate = currentDate.plusDays(1);
+        }
+
+        return dateList;
     }
 }
 

@@ -281,5 +281,20 @@ public interface SkuMappingService extends SuperService<SkuMappingEntity> {
 
     void syncWarehouseProduct(List<String> ids);
 
-//    List<BomChildrenSkuDTO> checkBomByPlatformSkuNos(SkuMappingDTO.SkuParamDTO skuParamDTO);
+    /**
+     * 构建查询映射关系参数DTO
+     * @param platformSkuList 平台sku列表
+     * @param platformSpuList 平台spu列表
+     * @param dictPlatform 销售平台
+     * @param shopIdList   店铺ID列表
+     * @param platformOrderCreateTime 平台订单创建时间=映射生效日期(空=按最新映射关系)
+     * @param isExpire 映射是否已过期
+     * @return 请求参数DTO
+     */
+    ListingInfoParamDTO constructDto(List<String> platformSkuList,
+                                     List<String> platformSpuList,
+                                     String dictPlatform,
+                                     List<String> shopIdList,
+                                     LocalDateTime platformOrderCreateTime,
+                                     Boolean isExpire);
 }

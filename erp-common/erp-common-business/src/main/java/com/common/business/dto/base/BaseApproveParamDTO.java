@@ -1,7 +1,5 @@
 package com.common.business.dto.base;
 
-import com.common.business.enums.ApproveStatusEnum;
-import com.common.business.enums.ApproveTypeEnum;
 import com.common.core.anno.StateEnumValue;
 import lombok.AllArgsConstructor;
 import lombok.Data;

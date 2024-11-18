@@ -1,13 +1,13 @@
 package com.erp.model.sys.entity;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
-import com.baomidou.mybatisplus.annotation.TableField;
-import java.io.Serializable;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
-import com.common.business.enums.ApproveStatusEnum;
+
+import java.io.Serializable;
 
 
 /**
@@ -85,7 +85,7 @@ public class SysPushMsgEntity extends BaseEntity<SysPushMsgEntity> {
 
     public static final String PUSH_DATA = "push_data";
 
-    public static final String REMARK = "remark";
+    public static final String FIELD_REMARK = "remark";
 
     public static final String PARENT_ID = "parent_id";
 

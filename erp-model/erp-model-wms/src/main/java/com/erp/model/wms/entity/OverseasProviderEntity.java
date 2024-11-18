@@ -74,10 +74,6 @@ public class OverseasProviderEntity extends BaseEntity<OverseasProviderEntity> {
     @TableField("enable_date")
     private LocalDate enableDate;
 
-    public static final String CODE = "code";
-
-    public static final String NAME = "name";
-
     public static final String AUTH_STATUS = "auth_status";
 
     public static final String AUTH_TIME = "auth_time";

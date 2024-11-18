@@ -10,10 +10,11 @@ import com.erp.server.oms.service.OperateLogService;
 import com.erp.server.oms.service.SoB2cLabelService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
-import org.springframework.beans.factory.annotation.Autowired;
+import javax.annotation.Resource;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.Resource;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -29,7 +30,7 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 public class SoB2cLabelServiceImpl extends SuperServiceImpl<SoB2cLabelMapper, SoB2cLabelEntity> implements SoB2cLabelService {
-    @Autowired
+    @Resource
     private OperateLogService operateLogService;
 
     @Override

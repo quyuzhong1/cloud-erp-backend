@@ -62,8 +62,8 @@ public class ProjectScheduleController extends BaseController {
             menuCode = "plm:product:schedule:paging",
             tableAlias = "pp"
     )
-    public ApiResult<PagingVO<List<SchedulePagingVO>>> queryByPage(@RequestBody @Validated PagingDTO<SearchPagingDTO> dto) {
-        PagingVO<List<SchedulePagingVO>> pagingVO = projectPlanService.paging(dto);
+    public ApiResult<PagingVO<SchedulePagingVO>> queryByPage(@RequestBody @Validated PagingDTO<SearchPagingDTO> dto) {
+        PagingVO<SchedulePagingVO> pagingVO = projectPlanService.paging(dto);
         return success(pagingVO);
     }
 
@@ -74,7 +74,7 @@ public class ProjectScheduleController extends BaseController {
      */
     @LogAction(value = LogActionEnum.SUBMIT, desc = "提交排期", keyIdName = "productId")
     @PostMapping("/submit")
-    public ApiResult submitSchedule(@RequestBody @Validated HandleTaskScheduleDTO dto) {
+    public ApiResult<Object> submitSchedule(@RequestBody @Validated HandleTaskScheduleDTO dto) {
         Boolean result = projectPlanService.submitSchedule(dto);
         return result == true ? success() : failure();
     }
@@ -86,7 +86,7 @@ public class ProjectScheduleController extends BaseController {
      * @return
      */
     @GetMapping("/scheduleStatus")
-    public ApiResult submitSchedule() {
+    public ApiResult<Object> submitSchedule() {
         List<Map<String,Object>> list=projectPlanService.getSubmitSchedule();
         return success(list);
     }
@@ -97,7 +97,7 @@ public class ProjectScheduleController extends BaseController {
      */
     @LogAction(value = LogActionEnum.CANCEL, desc = "取消排期")
     @PostMapping("/cancel")
-    public ApiResult cancelSchedule(@RequestBody @Validated BaseIdDTO dto) {
+    public ApiResult<Object> cancelSchedule(@RequestBody @Validated BaseIdDTO dto) {
         Boolean result = projectPlanService.cancelSchedule(Arrays.asList(dto.getId()));
         return result == true ? success() : failure();
     }
@@ -107,7 +107,7 @@ public class ProjectScheduleController extends BaseController {
      */
     @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "重启排期：id={id}")
     @PostMapping("/restart")
-    public ApiResult restartSchedule(@RequestBody @Validated BaseIdDTO dto) {
+    public ApiResult<Object> restartSchedule(@RequestBody @Validated BaseIdDTO dto) {
         Boolean result = projectPlanService.restartSchedule(dto.getId());
         return result == true ? success() : failure();
     }
@@ -131,7 +131,7 @@ public class ProjectScheduleController extends BaseController {
      */
     @LogAction(value = LogActionEnum.APPROVE, desc = "排期审核通过")
     @PostMapping("/approvalPass")
-    public ApiResult approvalPass(@RequestBody @Validated AuditParamDTO dto) {
+    public ApiResult<Object> approvalPass(@RequestBody @Validated AuditParamDTO dto) {
        Boolean flag= projectPlanService.approvalPass(dto);
         return flag==true?success():failure();
     }
@@ -145,7 +145,7 @@ public class ProjectScheduleController extends BaseController {
      */
     @LogAction(value = LogActionEnum.APPROVE, desc = "排期审核不通过")
     @PostMapping("/approvalNoPass")
-    public ApiResult approvalNoPass(@RequestBody @Validated AuditParamDTO dto) {
+    public ApiResult<Object> approvalNoPass(@RequestBody @Validated AuditParamDTO dto) {
         Boolean flag= projectPlanService.approvalNoPass(dto);
         return flag==true?success():failure();
     }
@@ -156,7 +156,7 @@ public class ProjectScheduleController extends BaseController {
      */
     @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "排期审核通过后改变状态:流程id={processId},具体业务表id={businessTableId}")
     @PostMapping("/workflow/pass")
-    public ApiResult processPass(@RequestBody ProcessPassDTO dto) {
+    public ApiResult<Object> processPass(@RequestBody ProcessPassDTO dto) {
         projectPlanService.processPass(dto);
         return success();
     }
@@ -167,7 +167,7 @@ public class ProjectScheduleController extends BaseController {
      * @return
      */
     @PostMapping("/auditInfo")
-    public ApiResult auditInfo(@RequestBody @Validated BaseIdDTO dto) {
+    public ApiResult<Object> auditInfo(@RequestBody @Validated BaseIdDTO dto) {
         List<ApproveNodeRecordVO> list=  projectPlanService.auditInfo(dto.getId());
         return success(list);
     }
@@ -194,7 +194,7 @@ public class ProjectScheduleController extends BaseController {
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "导入project文件")
     @PostMapping(value = "/importProjectSchedule")
-    public ApiResult importProjectSchedule(@RequestParam("excelFile") MultipartFile excelFile, @RequestParam(value = "productId") String  productId) {
+    public ApiResult<Object> importProjectSchedule(@RequestParam("excelFile") MultipartFile excelFile, @RequestParam(value = "productId") String  productId) {
         Boolean flag = projectPlanService.importProjectSchedule(excelFile,productId);
         return flag == true ? success() : failure();
     }

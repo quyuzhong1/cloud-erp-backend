@@ -104,7 +104,7 @@ public class PushSelfRequest
 		@SerializedName("warehouse_no")
 		private String warehouseNo;
 		@SerializedName("goods_count")
-		private BigDecimal goodsCount = new BigDecimal(0.0000D);
+		private BigDecimal goodsCount = BigDecimal.valueOf(0.0000D);
 		@SerializedName("order_count")
 		private Integer orderCount = 0;
 		@SerializedName("trade_time")

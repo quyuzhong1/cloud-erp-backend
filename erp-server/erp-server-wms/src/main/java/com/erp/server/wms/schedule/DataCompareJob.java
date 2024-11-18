@@ -1,25 +1,23 @@
 package com.erp.server.wms.schedule;
 
-import java.util.List;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
-
+import cn.hutool.core.collection.CollUtil;
 import com.erp.model.wms.entity.WmsDataCompareTaskEntity;
 import com.erp.model.wms.enums.WmsDataCompareTaskStatusEnum;
 import com.erp.server.wms.service.WmsDataCompareTaskService;
 import com.xxl.job.core.biz.model.ReturnT;
 import com.xxl.job.core.handler.annotation.XxlJob;
-
-import cn.hutool.core.collection.CollUtil;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Component;
+
+import javax.annotation.Resource;
+import java.util.List;
 
 
 @Component
 @Slf4j
 public class DataCompareJob {
 
-    @Autowired
+    @Resource
     private WmsDataCompareTaskService wmsDataCompareTaskService;
 
     /**

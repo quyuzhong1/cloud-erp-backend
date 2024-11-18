@@ -87,7 +87,6 @@ public class DataIdempotentAspect {
                 RLock clientLock = redissonClient.getLock(submitKey);
 
                 //不设置 lockTime watch dog会 默认 锁定30s 10s重试
-//                boolean locked = clientLock.tryLock(waitTime, leaseTime, TimeUnit.SECONDS);
                 boolean locked = clientLock.tryLock(waitTime, TimeUnit.SECONDS);
                 if (!locked) {
                     log.error("{}上锁失败", submitKey);
@@ -139,14 +138,12 @@ public class DataIdempotentAspect {
         String methodName = joinPoint.getSignature().getName();
         //获取目标类的所有方法，找到当前要执行的方法
         Method[] methods = joinPoint.getTarget().getClass().getMethods();
-        Method resultMethod = null;
         for (Method method : methods) {
             if (method.getName().equals(methodName)) {
-                resultMethod = method;
-                break;
+                return method;
             }
         }
-        return resultMethod;
+        return null;
     }
 
     private void handleData() {
@@ -169,7 +166,7 @@ public class DataIdempotentAspect {
         }
     }
 
-    private Object getNestedField(Object obj, String fieldName) throws Exception {
+    private Object getNestedField(Object obj, String fieldName) {
         String[] fieldNames = fieldName.split("\\.");
         try {
             Object value = "";

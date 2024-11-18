@@ -78,7 +78,7 @@
                 ${item.field} ${item.sort}
             </foreach>
         </if>
-            sod.id DESC
+        sod.id DESC
     </select>
 
     <select id="listExport" resultType="com.erp.model.wms.dto.SoOutstockDTO$PagingViewDTO">
@@ -147,7 +147,7 @@
                 ${item.field} ${item.sort}
             </foreach>
         </if>
-            sod.id DESC
+        sod.id DESC
     </select>
 
 

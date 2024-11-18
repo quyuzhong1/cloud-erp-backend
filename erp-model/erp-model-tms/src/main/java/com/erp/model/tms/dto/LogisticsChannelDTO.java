@@ -1,6 +1,5 @@
 package com.erp.model.tms.dto;
 
-import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.enums.UnitEnum;
 import com.common.core.enums.CurrencyEnum;
 import com.common.core.exception.ServiceException;
@@ -9,7 +8,10 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 
-import javax.validation.constraints.*;
+import javax.validation.constraints.Digits;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.List;
@@ -154,12 +156,12 @@ public class LogisticsChannelDTO implements Serializable {
         /**
          * 最低报关币种
          */
-        private String minCustomsCurrency = CurrencyEnum.USD.getCurrencyCode();;
+        private String minCustomsCurrency = CurrencyEnum.USD.getCurrencyCode();
 
         /**
          * 重量上限
          */
-        private BigDecimal maxWeight = BigDecimal.ZERO;;
+        private BigDecimal maxWeight = BigDecimal.ZERO;
 
         /**
          * 重量单位

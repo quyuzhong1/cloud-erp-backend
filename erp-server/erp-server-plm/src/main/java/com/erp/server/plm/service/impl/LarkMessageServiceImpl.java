@@ -1,8 +1,6 @@
 package com.erp.server.plm.service.impl;
 
 import cn.hutool.core.date.LocalDateTimeUtil;
-import cn.hutool.core.util.StrUtil;
-import com.alibaba.fastjson.JSONObject;
 import com.common.business.constant.ThirdConstants;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.BaseStatusEnum;
@@ -21,9 +19,7 @@ import com.erp.model.plm.enums.NoticeEnum;
 import com.erp.model.plm.enums.TaskStateEnum;
 import com.erp.model.sys.vo.ThirdUnionDTO;
 import com.erp.model.workflow.dto.AuditorHandleDTO;
-import com.erp.model.workflow.dto.ProcessTaskManagementDTO;
 import com.erp.model.workflow.entity.ProcessTaskManagementEntity;
-import com.erp.model.workflow.vo.ProcessCurrentAuditorVO;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.sdk.fs.dto.LarkResultDTO;
@@ -33,16 +29,18 @@ import com.erp.server.plm.constant.NoticeMessageConstant;
 import com.erp.server.plm.service.*;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.poi.ss.formula.functions.T;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
-import java.text.SimpleDateFormat;
-import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
-import static com.erp.server.plm.service.impl.NoticeMessageServiceImpl.taskCharge;
+import static cn.hutool.core.util.StrUtil.format;
+import static cn.hutool.core.util.StrUtil.isNotBlank;
+import static com.alibaba.fastjson.JSON.parseObject;
+import static com.erp.server.plm.service.impl.NoticeMessageServiceImpl.TASK_CHARGE;
 
 /**
  * 飞书消息实现类
@@ -154,7 +152,7 @@ public class LarkMessageServiceImpl implements LarkMessageService {
                 dto.setBusinessName(task.getName());
                 processId = task.getProcessId();
                 titleContent = String.format(NoticeMessageConstant.TASK_CHARGE_PRESS, "加急");
-                textContent = String.format(NoticeMessageConstant.TASK_PROJECT_CONTENT, task.getName(), productInfo.getName(), LocalDateTimeUtil.format(task.getPlanEndTime(), DateUtil.fmt_day), taskCharge, task.getChargeName());
+                textContent = String.format(NoticeMessageConstant.TASK_PROJECT_CONTENT, task.getName(), productInfo.getName(), LocalDateTimeUtil.format(task.getPlanEndTime(), DateUtil.fmt_day), TASK_CHARGE, task.getChargeName());
                 //当没有流程就要给任务负责人发消息
                 if (StringUtils.isEmpty(processId)) {
                     //任务负责人
@@ -208,6 +206,7 @@ public class LarkMessageServiceImpl implements LarkMessageService {
             return result;
         }
         String redisBaseKey = RedisKeyConstant.PRESS;
+        String msg = "试产量产";
         for (LarkPressMessageDTO dto : list) {
             String titleContent = null;
             String textContent = null;
@@ -220,9 +219,8 @@ public class LarkMessageServiceImpl implements LarkMessageService {
             PilotApplicationDTO.ApprovePilotNoticeDTO entity = pilotApplicationService.getPilotApplicationNoticeData(dto.getBusinessId());
             if(null != entity) {
                 if (!entity.getApproveStatus().getCode().equals(ApproveStatusEnum.APPROVE_ING.getCode())) {
-                    result.add("试产量产【"+entity.getCode()+"】"+ApiError.ERROR_95273.msg);
+                    result.add(msg + "【"+entity.getCode()+"】"+ApiError.ERROR_95273.msg);
                     continue;
-//                        throw new ServiceException(ApiError.ERROR_95273);
                 }
                 //是否存在
                 String redisValue = redisService.getCacheObject(redisKey);
@@ -251,9 +249,8 @@ public class LarkMessageServiceImpl implements LarkMessageService {
                 //根据节点标示获取到通知消息实体
                 NoticeMessageEntity notice = noticeMessageService.getByNodeFlag(noticeFlag);
                 if (Objects.isNull(notice)) {
-                    result.add("试产量产【"+entity.getCode()+"】"+ApiError.ERROR_MSG_IS_NOT_NULL.msg);
+                    result.add(msg + "【"+entity.getCode()+"】"+ApiError.ERROR_MSG_IS_NOT_NULL.msg);
                     continue;
-//                        throw new ServiceException(ApiError.ERROR_MSG_IS_NOT_NULL);
                 }
                 //根据单据id查询审核流程
                 List<ProcessTaskManagementEntity> processTaskManagementList = workflowFeign.listProcessByBusinessId(Collections.singletonList(dto.getBusinessId()));
@@ -279,7 +276,7 @@ public class LarkMessageServiceImpl implements LarkMessageService {
                 // 发送飞书加急消息
                 sendMessage(pressUserList, titleContent, textContent, noticeFlag, ThirdConstants.FS_MESSAGE_INTERACTIVE, Boolean.TRUE);
                 redisService.setCacheObject(redisKey, dto.getBusinessName(), 30L, TimeUnit.MINUTES);
-                result.add("试产量产【"+entity.getCode()+"】发送成功");
+                result.add(msg +"【"+entity.getCode()+"】发送成功");
             }
         }
         return result;
@@ -316,15 +313,15 @@ public class LarkMessageServiceImpl implements LarkMessageService {
         //发送消息的结果
         for (String unionId : unionIds) {
             String userName = unionIdUserNameMap.get(unionId);
-            if (StrUtil.isNotBlank(userName)) {
-                titleContent = StrUtil.format(titleContent, userName);
+            if (isNotBlank(userName)) {
+                titleContent = format(titleContent, userName);
             }
-            LarkResultDTO larkResult = fsService.sendMessage(unionId, titleContent, textContent, msgType);
+            LarkResultDTO<T> larkResult = fsService.sendMessage(unionId, titleContent, textContent, msgType);
             // 催办
             if (isPress) {
-                SingleResultDTO resultDTO = JSONObject.parseObject(larkResult.getData().toString(), SingleResultDTO.class);
+                SingleResultDTO resultDTO = parseObject(larkResult.getData().toString(), SingleResultDTO.class);
                 String messageId = resultDTO.getMessage_id();
-                LarkResultDTO larkResultDTO = fsService.pressMessage(messageId, Collections.singletonList(unionId));
+                fsService.pressMessage(messageId, Collections.singletonList(unionId));
             }
         }
 
@@ -371,7 +368,7 @@ public class LarkMessageServiceImpl implements LarkMessageService {
         //针对试产量产类型做特殊处理
         if(CollectionUtils.isNotEmpty(pilotList)){
             List<String> pilotListPress = this.pilotListPress(pilotList);
-            StringBuffer sb = new StringBuffer();
+            StringBuilder sb = new StringBuilder();
             boolean b = pilotListPress.stream().allMatch(s -> s.contains("成功"));
             if(!b){
                 if (CollectionUtils.isNotEmpty(pilotListPress)) {

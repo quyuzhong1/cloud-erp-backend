@@ -12,7 +12,9 @@ import java.util.Objects;
  * @Author: zhangchunlin
  */
 public class MailSendUtil {
-
+    private MailSendUtil() {
+        throw new IllegalStateException("Utility MailSendUtil class");
+    }
     /**
      * 填充邮件发送帐号信息
      * @param mailConfigParam

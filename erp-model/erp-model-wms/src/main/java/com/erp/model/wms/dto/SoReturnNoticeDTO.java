@@ -1,15 +1,11 @@
 package com.erp.model.wms.dto;
 
-import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
-import com.common.business.enums.ApproveStatusEnum;
-import com.erp.model.wms.enums.ReturnTypeEnum;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.DecimalMin;
-import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -17,6 +13,9 @@ import java.util.List;
 import java.util.Map;
 
 public class SoReturnNoticeDTO {
+    private SoReturnNoticeDTO() {
+        throw new IllegalStateException("Utility SoReturnNoticeDTO class");
+    }
     /**
      * 分页参数
      */

@@ -25,7 +25,7 @@ public interface BiReturnOrderInfoMapper extends BaseMapper<BiReturnOrderInfoEnt
      * @param params
      * @return IPage<DmpReturnOrderInfoDTO>
      */
-    IPage<DmpReturnOrderInfoDTO> paging(Page query,@Param("params") DmpReturnOrderInfoSearchDTO params);
+    IPage<DmpReturnOrderInfoDTO> paging(Page<Object> query,@Param("params") DmpReturnOrderInfoSearchDTO params);
     /**
      * @description: 查询退货数据
      * @author Will

@@ -3,6 +3,7 @@ package com.erp.sdk.oms.amz.spapi.documents;
 import com.erp.sdk.oms.amz.spapi.documents.exception.CryptoException;
 import com.erp.sdk.oms.amz.spapi.documents.exception.MissingCharsetException;
 import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 import okhttp3.MediaType;
 import org.apache.commons.io.IOUtils;
 
@@ -20,6 +21,7 @@ import java.util.zip.GZIPInputStream;
  * called the behavior of any open streams or readers from this instance will be unspecified as the underlying
  * temporary file will be deleted.
  */
+@Slf4j
 public class DownloadBundle implements AutoCloseable {
     private final CompressionAlgorithm compressionAlgorithm;
     @Getter
@@ -136,6 +138,9 @@ public class DownloadBundle implements AutoCloseable {
      * Closes this {@link DownloadBundle}, deleting the temporary file containing the encrypted document contents.
      */
     public void close() {
-        document.delete();
+        boolean delete = document.delete();
+        if (!delete){
+            log.warn("document.delete error");
+        }
     }
 }

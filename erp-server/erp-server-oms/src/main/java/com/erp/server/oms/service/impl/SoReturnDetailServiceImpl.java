@@ -7,7 +7,6 @@ import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import com.common.core.utils.BeanMapper;
 import com.common.core.utils.MathUtil;
 import com.erp.model.oms.dto.*;
 import com.erp.model.oms.entity.SoDetailEntity;
@@ -15,7 +14,6 @@ import com.erp.model.oms.entity.SoReturnDetailEntity;
 import com.erp.model.oms.entity.SoReturnEntity;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
-import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
@@ -26,13 +24,8 @@ import com.erp.model.wms.enums.ReturnTypeEnum;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.rpc.plm.feign.BomSkuFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
-import com.erp.rpc.scm.feign.*;
 import com.erp.rpc.sys.feign.SysUserFeign;
-import com.erp.rpc.wms.feign.InventoryFeign;
-import com.erp.rpc.wms.feign.SoDeliveryNoticeFeign;
-import com.erp.rpc.wms.feign.SoOutstockFeign;
-import com.erp.rpc.wms.feign.SoReturnReceiveFeign;
-import com.erp.rpc.wms.feign.WmsTaskFeign;
+import com.erp.rpc.wms.feign.*;
 import com.erp.server.oms.mapper.SoReturnDetailMapper;
 import com.erp.server.oms.service.*;
 import lombok.extern.slf4j.Slf4j;
@@ -45,8 +38,6 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.annotation.Resource;
 import java.util.*;
 import java.util.stream.Collectors;
-
-import static com.rtfparserkit.rtf.Command.list;
 
 /**
  * <p>
@@ -626,5 +617,34 @@ public class SoReturnDetailServiceImpl extends SuperServiceImpl<SoReturnDetailMa
     @Override
     public List<SoReturnDetailEntity> listDetailByReturnType(List<String> returnType) {
         return lambdaQuery().in(SoReturnDetailEntity::getReturnTypeDict, returnType).list();
+    }
+
+    @Override
+    public SoDetailDTO.ListAddDetailNoBomViewDTO listAddDetailWithNoBomView(SoReturnDTO.PlatformSkuDTO dto) {
+        return generateAddDetailBySoReturn(dto);
+    }
+
+
+    //快粘贴 -- 根据销售退货单id生成
+    private SoDetailDTO.ListAddDetailNoBomViewDTO generateAddDetailBySoReturn (SoReturnDTO.PlatformSkuDTO dto){
+        SoDetailDTO.ListAddDetailNoBomViewDTO view = new  SoDetailDTO.ListAddDetailNoBomViewDTO();
+        List<SoDetailDTO.AddDetailView> bomList = new ArrayList<>();
+        List<SoDetailDTO.AddDetailView> noBomList = new ArrayList<>();
+        List<String> parentSkuNoList = new ArrayList<>();
+        //获取sku产品明细
+        listAddDetailViewDTO viewDTO = new listAddDetailViewDTO();
+        viewDTO.setId(dto.getId());
+        List<SoDetailDTO.AddDetailView> addDetailViews = listAddDetailView(viewDTO);
+        //过滤对应的平台sku
+        addDetailViews.stream().forEach(r ->{
+            boolean isPresent = dto.getPlatformSkuNoList().stream().anyMatch(v -> v.equals(r.getPlatformSkuNo()));
+            if(isPresent){
+                noBomList.add(r);
+            }
+        });
+        view.setNobomList(noBomList);
+        view.setBomList(bomList);
+        view.setParentSkuNoList(parentSkuNoList);
+        return view;
     }
 }

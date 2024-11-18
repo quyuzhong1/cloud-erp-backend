@@ -55,11 +55,11 @@ public class DmpInputAmzFbaInventoryApiInitHandler extends DmpInputInitHandler {
 
     @Override
     public List<DmpInputTaskInitDTO> getInitData(DmpInputInitRequest dmpRequest, DmpInputTaskResponse dmpResponse) {
-        String shopId = dmpCfgInputDetailEntity.getNextLevelId();
+        String shopId = dmpInputTaskEntity.getNextLevelId();
         AmazonShopInfoDTO shopInfoDTO = cfgAppClientService.cacheAndFindShopAuth(shopId);
         AmazonMarketplaceEnum marketplaceEnum = AmazonMarketplaceEnum.getByCountryCode(shopInfoDTO.getDictCountryCode());
         // 根据明细类型扩展
-        String extendJson = dmpCfgInputDetailEntity.getExtendJson();
+        String extendJson = dmpInputTaskEntity.getExtendJson();
         // 查询所有
         boolean hasAll = false;
         if(StringUtils.isNotBlank(extendJson)) {

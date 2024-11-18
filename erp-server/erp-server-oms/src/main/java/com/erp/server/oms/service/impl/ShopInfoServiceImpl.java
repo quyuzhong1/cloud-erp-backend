@@ -1,11 +1,13 @@
 package com.erp.server.oms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.AdvanceQueryContainer;
 import com.common.business.dto.FindUserDTO;
@@ -15,17 +17,18 @@ import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
+import com.common.business.wrapper.FeignQuery;
 import com.common.core.entity.BaseEntity;
 import com.common.core.enums.ApiError;
-import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
-import com.common.core.utils.date.DateUtil;
 import com.erp.model.dmp.dto.CfgAppClientDTO;
 import com.erp.model.dmp.dto.DmpInoutDTO;
 import com.erp.model.dmp.dto.PlatformTaskDTO;
 import com.erp.model.dmp.entity.CfgAppClientEntity;
+import com.erp.model.dmp.entity.CfgSettingEntity;
 import com.erp.model.dmp.enums.AppClientEnum;
+import com.erp.model.dmp.enums.SettingEnum;
 import com.erp.model.oms.dto.*;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.*;
@@ -40,7 +43,6 @@ import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.tms.feign.LogisticsBillCostFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
-import com.erp.sdk.oms.amz.spapi.dto.AmazonTokenDTO;
 import com.erp.server.oms.convert.ShopInfoConverter;
 import com.erp.server.oms.mapper.ShopInfoMapper;
 import com.erp.server.oms.service.*;
@@ -65,6 +67,7 @@ import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.poi.ss.formula.functions.T;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -75,7 +78,6 @@ import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
@@ -96,8 +98,6 @@ import static com.common.business.enums.FileTaskEventEnum.EXPORT_OMS_SHOP;
 @Slf4j
 @Service
 public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopInfoEntity> implements ShopInfoService {
-
-    private static final String CLIENT_SECRET = "DfFGCAXMY7pptKfhz7IkWEa0zC0xddhY";
 
     @Resource
     private SysDictFeign sysDictFeign;
@@ -518,7 +518,7 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         }
 
         //负责人变更则更新物流单店铺负责人
-        if (!StrUtil.equals(oldChargeId, dto.getChargeId())) {
+        if (!CharSequenceUtil.equals(oldChargeId, dto.getChargeId())) {
             logisticsBillCostFeign.updateShopCharge(new LogisticsBillCostDTO.UpdateShopChargeDTO(shopInfo.getId(), dto.getChargeId()));
         }
         return shopInfo;
@@ -569,7 +569,7 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         }
 
         //负责人变更则更新物流单店铺负责人
-        if (!StrUtil.equals(oldChargeId, dto.getChargeId())) {
+        if (!CharSequenceUtil.equals(oldChargeId, dto.getChargeId())) {
             logisticsBillCostFeign.updateShopCharge(new LogisticsBillCostDTO.UpdateShopChargeDTO(shopInfo.getId(), dto.getChargeId()));
         }
         return shopInfo;
@@ -620,7 +620,7 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
     public PagingVO<ShopDTO.PagingViewDTO> paging(PagingDTO<ShopDTO.PagingParamDTO> dto) {
         ShopDTO.PagingParamDTO params = dto.getParams();
         params.setPermissionSql(dto.getPermissionSql());
-        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+        Page<T> query = new Page<>(dto.getCurrPage(), dto.getPageSize());
         IPage pageData = baseMapper.paging(query, params);
         List<ShopDTO.PagingViewDTO> list = pageData.getRecords();
         if (CollectionUtils.isEmpty(list)) {
@@ -1437,7 +1437,7 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
             }
             params.setShopIdList(shopIdList);
         }
-        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+        Page<T> query = new Page<>(dto.getCurrPage(), dto.getPageSize());
         IPage<ShopDTO.ListDTO> pagResult = baseMapper.pagingSelect(query, params);
         List<ShopDTO.ListDTO> records = pagResult.getRecords();
         //排序
@@ -1453,6 +1453,32 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
             fillDb(page.getRecords());
         }
         return new PagingVO<>(page);
+    }
+
+    @Override
+    public PagingVO<ShopDTO.AreaDTO> pagingSelectArea(PagingDTO<ShopDTO.AreaParamDTO> dto) {
+        ShopDTO.AreaParamDTO params = dto.getParams();
+        Page<T> query = new Page<>(dto.getCurrPage(), dto.getPageSize());
+        IPage<ShopDTO.AreaDTO> pagResult = baseMapper.pagingSelectArea(query, params);
+        return new PagingVO<>(pagResult);
+    }
+
+    @Override
+    public List<ShopDTO.ListDTO> listSelect(ShopDTO.SelectDTO dto) {
+        PagingDTO<ShopDTO.SelectDTO> pagingParamDTO = new PagingDTO<>();
+        pagingParamDTO.setParams(dto);
+        pagingParamDTO.setPageSize(-1);
+        PagingVO<ShopDTO.ListDTO> resultList = this.pagingSelect(pagingParamDTO);
+        List<ShopDTO.ListDTO> list = (List<ShopDTO.ListDTO>) resultList.getList();
+        return list;
+    }
+
+    @Override
+    public List<String> listShopInfoByPlatform(String platform) {
+        List<ShopInfoEntity> list = list(Wrappers.<ShopInfoEntity>lambdaQuery()
+                .eq(ShopInfoEntity::getDictPlatform, platform)
+                .eq(ShopInfoEntity::getDisabled, false));
+        return list.stream().map(ShopInfoEntity::getId).collect(Collectors.toList());
     }
 
     @Override
@@ -1505,8 +1531,10 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
 
     private boolean verifyHmac(String data, String hmacHeader) {
         try {
-            Mac sha256Hmac = Mac.getInstance("HmacSHA256");
-            SecretKeySpec secretKey = new SecretKeySpec(CLIENT_SECRET.getBytes(), "HmacSHA256");
+            CfgSettingEntity secret = getCfgSettingEntity(SettingEnum.OMS_SHOPIFY_SECRET_KEY);
+            CfgSettingEntity clientSecret = getCfgSettingEntity(SettingEnum.OMS_SHOPIFY_CLIENT_SECRET);
+            Mac sha256Hmac = Mac.getInstance(secret.getValue());
+            SecretKeySpec secretKey = new SecretKeySpec(clientSecret.getValue().getBytes(), secret.getValue());
             sha256Hmac.init(secretKey);
             byte[] calculatedHmac = sha256Hmac.doFinal(data.getBytes());
             String calculatedHmacBase64 = Base64.getEncoder().encodeToString(calculatedHmac);
@@ -1521,12 +1549,25 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         }
     }
 
+    private static CfgSettingEntity getCfgSettingEntity(SettingEnum settingEnum) {
+
+        List<CfgSettingEntity> list = FeignQuery.create(CfgSettingEntity.class)
+                .eq(CfgSettingEntity::getKey, settingEnum.getKey())
+                .eq(CfgSettingEntity::getType, settingEnum.getType())
+                .eq(CfgSettingEntity::getType, settingEnum.getValue())
+                .list();
+        CfgSettingEntity cfgSettingEntity = list.get(0);
+        return cfgSettingEntity;
+    }
+
 
     // 验证Webhook
     private static boolean verifyWebhook(String data, String hmacHeader) throws NoSuchAlgorithmException, InvalidKeyException {
         // 使用HMAC-SHA256算法计算HMAC
-        Mac sha256Hmac = Mac.getInstance("HmacSHA256");
-        SecretKeySpec secretKey = new SecretKeySpec(CLIENT_SECRET.getBytes(StandardCharsets.UTF_8), "HmacSHA256");
+        CfgSettingEntity secret = getCfgSettingEntity(SettingEnum.OMS_SHOPIFY_SECRET_KEY);
+        CfgSettingEntity clientSecret = getCfgSettingEntity(SettingEnum.OMS_SHOPIFY_CLIENT_SECRET);
+        Mac sha256Hmac = Mac.getInstance(secret.getValue());
+        SecretKeySpec secretKey = new SecretKeySpec(clientSecret.getValue().getBytes(StandardCharsets.UTF_8), secret.getValue());
         sha256Hmac.init(secretKey);
         byte[] hmacBytes = sha256Hmac.doFinal(data.getBytes(StandardCharsets.UTF_8));
         String calculatedHmac = Base64.getEncoder().encodeToString(hmacBytes);

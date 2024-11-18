@@ -10,7 +10,6 @@ import lombok.NoArgsConstructor;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
@@ -357,5 +356,32 @@ public class VirtualWarehouseDTO implements Serializable {
         private String name;
         private String code;
         private Boolean disabled;
+    }
+
+
+    @Data
+    @NoArgsConstructor
+    public static class CfgRuleVirtualWarehouseDTO {
+        /**
+         * 仓库id
+         */
+        private String warehouseId;
+        /**
+         * 虚拟仓id
+         */
+        private String virtualWarehouseId;
+        /**
+         * 类型
+         */
+        private String type;
+        /**
+         * 平台
+         */
+        private String dictPlatform;
+        /**
+         * 关联id集合
+         */
+        private List<String> relationIdList;
+
     }
 }

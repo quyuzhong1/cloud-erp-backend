@@ -7,7 +7,6 @@ import com.fasterxml.jackson.annotation.JsonValue;
 /**
  * @author zdy
  * @Classname SkuTypeEnum
- * @Description TODO
  * @Date 2023-09-19 9:25
  * @Created by yl
  */
@@ -27,11 +26,11 @@ public enum UserTypeEnum implements EnumMessage {
      */
     @EnumValue
     @JsonValue
-    public String code;
+    public final String code;
     /**
      * 名称
      */
-    private String name;
+    private final String name;
 
 
     @Override

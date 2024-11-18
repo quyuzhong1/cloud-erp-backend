@@ -62,29 +62,29 @@ public class DmpHandlerCache implements CommandLineRunner{
 	
 	private String namespace = SpringUtil.getProperty("spring.cloud.nacos.discovery.namespace");
 	
-	private volatile List<DmpBasicSystemEntity> dmpBasicSystemCache;
+	private List<DmpBasicSystemEntity> dmpBasicSystemCache;
 	
-	private volatile List<DmpCfgInputEntity> dmpCfgInputCache;
+	private List<DmpCfgInputEntity> dmpCfgInputCache;
 	
-	private volatile List<DmpCfgInputDetailEntity> dmpCfgInputDetailCache;
+	private List<DmpCfgInputDetailEntity> dmpCfgInputDetailCache;
 	
-	private volatile List<DmpCfgInputConvertEntity> dmpCfgInputConvertCache;
+	private List<DmpCfgInputConvertEntity> dmpCfgInputConvertCache;
 	
-	private volatile List<DmpCfgInputConvertMappingEntity> dmpCfgInputConvertMappingCache;
-	private volatile Map<String, Map<String, List<String>>> convertMappingCache;
+	private List<DmpCfgInputConvertMappingEntity> dmpCfgInputConvertMappingCache;
+	private Map<String, Map<String, List<String>>> convertMappingCache;
 
-	private volatile List<DmpCfgInputConvertValueDTO.MappingAndValueDTO> dmpCfgInputConvertValueCache;
-	private volatile Map<String, List<DmpCfgInputConvertValueDTO.MappingAndValueDTO>> convertValueCache;
+	private List<DmpCfgInputConvertValueDTO.MappingAndValueDTO> dmpCfgInputConvertValueCache;
+	private Map<String, List<DmpCfgInputConvertValueDTO.MappingAndValueDTO>> convertValueCache;
 
-	private volatile Map<String , RocketMQTemplate> rocketMQTemplateMap;
+	private Map<String , RocketMQTemplate> rocketMQTemplateMap;
 	
-	private volatile Map<String , DmpCfgMqEntity> rocketMQDmpCfgMqCache;
+	private Map<String , DmpCfgMqEntity> rocketMQDmpCfgMqCache;
 	
-	private volatile List<DmpCfgOutputBlackEntity> dmpCfgOutputBlackCache;
+	private List<DmpCfgOutputBlackEntity> dmpCfgOutputBlackCache;
 	
-	private volatile List<OverseasProviderEntity> overseasProviderEntityCache;
+	private List<OverseasProviderEntity> overseasProviderEntityCache;
 	
-	private volatile List<DmpCfgApiEntity> dmpCfgApiEntityCache;
+	private List<DmpCfgApiEntity> dmpCfgApiEntityCache;
 
 	@Autowired
 	private DmpBasicSystemService dmpBasicSystemService;
@@ -200,7 +200,9 @@ public class DmpHandlerCache implements CommandLineRunner{
 			} catch (Exception e) {
 				Throwable cause = e.getCause();
 				if(cause instanceof ClientException && i < 3) {
-					try {Thread.sleep(10000);} catch (InterruptedException e1) {}
+					try {Thread.sleep(10000);} catch (InterruptedException e1) {
+						Thread.currentThread().interrupt();
+					}
 				}else {
 					throw e;
 				}

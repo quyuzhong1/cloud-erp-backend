@@ -1,7 +1,9 @@
 package com.sdk.wms.iml.constants;
 
 public class ImlConstants {
-
+    private ImlConstants() {
+        throw new IllegalStateException("Utility ImlConstants class");
+    }
     public static final String METHOD_GET_PRODUCT_LIST = "getProductList";
 
     public static final String METHOD_GET_WAREHOUSE = "getWarehouse";

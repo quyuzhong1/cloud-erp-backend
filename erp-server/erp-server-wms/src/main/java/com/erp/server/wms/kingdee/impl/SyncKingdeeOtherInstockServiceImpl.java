@@ -2,6 +2,7 @@ package com.erp.server.wms.kingdee.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.LocalDateTimeUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
@@ -154,12 +155,12 @@ public class SyncKingdeeOtherInstockServiceImpl implements SyncKingdeeOtherInsto
         //出库日期
         resultMap.put("billDate", LocalDateTimeUtil.format(entity.getBillDate(), DateTimeFormatter.ofPattern("yyyy-MM-dd")) );
         //仓库
-        List<WarehouseEntity> warehouseList = warehouseService.listByIds(Arrays.asList(entity.getWarehouseId()));
+        List<WarehouseEntity> warehouseList = warehouseService.listByIds(Collections.singletonList(entity.getWarehouseId()));
 
         //员工岗位
-        List<KingdeePostDTO.UserKingdeePostInfoDTO> userKingdeePostInfoList = sysUserFeign.listUserKingdeePostByUserIds(Arrays.asList(entity.getReceiverId()));
+        List<KingdeePostDTO.UserKingdeePostInfoDTO> userKingdeePostInfoList = sysUserFeign.listUserKingdeePostByUserIds(Collections.singletonList(entity.getReceiverId()));
 
-        if (StringUtils.isNotBlank(entity.getWarehouseKeeperId())) {
+        if (CharSequenceUtil.isNotBlank(entity.getWarehouseKeeperId())) {
             //仓管员编码
             FindUserDTO findUserDTO = sysUserFeign.getUserByUserId(entity.getWarehouseKeeperId());
             if (ObjectUtils.isNotEmpty(findUserDTO)) {
@@ -178,7 +179,7 @@ public class SyncKingdeeOtherInstockServiceImpl implements SyncKingdeeOtherInsto
         resultMap.put("inventoryDirection", entity.getInventoryDirection());
 
         //组织机构编码
-        List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(Arrays.asList(entity.getOrgId()));
+        List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(Collections.singletonList(entity.getOrgId()));
         if (CollectionUtils.isNotEmpty(accountingCompanyList)) {
             //库存组织编码
             String orgCode = accountingCompanyList.stream().filter(obj -> obj.getId().equals(entity.getOrgId()))
@@ -187,7 +188,7 @@ public class SyncKingdeeOtherInstockServiceImpl implements SyncKingdeeOtherInsto
         }
 
         //部门
-        if  (StringUtils.isNotBlank(entity.getDeptId())) {
+        if  (CharSequenceUtil.isNotBlank(entity.getDeptId())) {
             DeptKingdeeDTO.FindDeptKingdeeDTO dto = new DeptKingdeeDTO.FindDeptKingdeeDTO();
             dto.setDeptId(entity.getDeptId());
             dto.setOrgId(entity.getOrgId());
@@ -204,7 +205,7 @@ public class SyncKingdeeOtherInstockServiceImpl implements SyncKingdeeOtherInsto
         }
 
         //是否支持下推仓位
-        List<CfgSettingDTO.WarehouseLocationSettingDTO> pushKingdeeList = dmpTaskFeign.isPushKingdeeWarehouseLocation(Arrays.asList(entity.getWarehouseId()));
+        List<CfgSettingDTO.WarehouseLocationSettingDTO> pushKingdeeList = dmpTaskFeign.isPushKingdeeWarehouseLocation(Collections.singletonList(entity.getWarehouseId()));
 
         List<JSONObject> list = new ArrayList<>();
         for (OtherInstockDetailEntity detail : detailList) {
@@ -230,7 +231,7 @@ public class SyncKingdeeOtherInstockServiceImpl implements SyncKingdeeOtherInsto
                 jsonObject.set("orgCode", orgCode);
             }
             //是否下推仓位
-            Boolean isPush = pushKingdeeList.stream().filter(obj -> StrUtil.equals(obj.getWarehouseId(), entity.getWarehouseId()))
+            Boolean isPush = pushKingdeeList.stream().filter(obj -> CharSequenceUtil.equals(obj.getWarehouseId(), entity.getWarehouseId()))
                     .map(CfgSettingDTO.WarehouseLocationSettingDTO::getIsPush).findFirst().orElse(Boolean.FALSE);
             if (isPush) {
                 //仓位

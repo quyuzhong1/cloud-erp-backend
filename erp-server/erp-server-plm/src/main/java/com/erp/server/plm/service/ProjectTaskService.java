@@ -45,7 +45,7 @@ public interface ProjectTaskService extends IService<ProjectTaskEntity> {
     Pair<List<String>, List<ProjectTaskEntity>> copyTaskBySys(String productId, String projectId);
 
 
-    PagingVO<List<TaskPagingShowDTO>> paging(PagingDTO<TaskPagingDTO> dto);
+    PagingVO<TaskPagingShowDTO> paging(PagingDTO<TaskPagingDTO> dto);
 
     Boolean save(ProjectTaskDTO dto);
 
@@ -117,7 +117,7 @@ public interface ProjectTaskService extends IService<ProjectTaskEntity> {
 
     List<TaskGroupResultDTO> getGroupCondition(TaskGroupParamDTO dto);
 
-    PagingVO<List<TaskPagingShowDTO>> expertPaging(PagingDTO<TaskSearchParamDTO> searchParamDTO);
+    PagingVO<TaskPagingShowDTO> expertPaging(PagingDTO<TaskSearchParamDTO> searchParamDTO);
 
     List<Map<String, Object>> operateMoreList(String taskId);
 
@@ -125,9 +125,9 @@ public interface ProjectTaskService extends IService<ProjectTaskEntity> {
 
     Boolean restartTask(OperateBaseTaskDTO dto);
 
-    PagingVO<List<TaskPagingShowDTO>> assignToMePaging(PagingDTO<TaskSearchParamDTO> searchParamDTO);
+    PagingVO<TaskPagingShowDTO> assignToMePaging(PagingDTO<TaskSearchParamDTO> searchParamDTO);
 
-    PagingVO<List<TaskPagingShowDTO>> myCreatePaging(PagingDTO<TaskSearchParamDTO> searchParamDTO);
+    PagingVO<TaskPagingShowDTO> myCreatePaging(PagingDTO<TaskSearchParamDTO> searchParamDTO);
 
     void taskFinishSku(TaskFinishSkuDTO dto);
 
@@ -177,7 +177,7 @@ public interface ProjectTaskService extends IService<ProjectTaskEntity> {
      * @param searchParamDTO
      * @return com.erp.common.vo.PagingVO<java.util.List<com.erp.model.plm.dto.TaskPagingShowDTO>>
      */
-    PagingVO<List<TaskPagingShowDTO>> assignToMeWaitAuditPaging(PagingDTO<TaskSearchParamDTO> searchParamDTO);
+    PagingVO<TaskPagingShowDTO> assignToMeWaitAuditPaging(PagingDTO<TaskSearchParamDTO> searchParamDTO);
     /**
      * @description: 查询各个分类任务的数量
      * @author Will

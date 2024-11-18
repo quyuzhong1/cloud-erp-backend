@@ -25,6 +25,7 @@ import java.util.Map;
 @NoArgsConstructor
 public class ProjectTaskDTO  implements Serializable {
 
+    private static final long serialVersionUID = 2405172041950251807L;
 
     /**
      * 任务id

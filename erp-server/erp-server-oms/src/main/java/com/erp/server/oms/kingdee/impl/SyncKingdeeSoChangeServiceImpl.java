@@ -124,7 +124,7 @@ public class SyncKingdeeSoChangeServiceImpl implements SyncKingdeeSoChangeServic
         //订单详情的ids
         List<String> soDetailIdList = details.stream().map(SoChangeDetailEntity::getSoDetailId).collect(Collectors.toList());
         List<SoDetailEntity> soDetailList = soDetailService.listByIdsSeq(soDetailIdList);
-        List<String> soKingdeeDetailIds = soDetailList.stream().map(SoDetailEntity::getKingdeeDetailId).collect(Collectors.toList());
+        List<String> soKingdeeDetailIds = soDetailList.stream().map(SoDetailEntity::getKingdeeDetailId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
         //表示是新增加审核
         if (StringUtils.isEmpty(entity.getSyncKingdeeId())) {
             Map<String, Object> map = new HashMap<>();

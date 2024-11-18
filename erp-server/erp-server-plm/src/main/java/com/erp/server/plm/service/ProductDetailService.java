@@ -457,14 +457,6 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
     List<SkuVO> searchSkuInfo(ProductDetailDTO.SearchDTO dto);
 
     /**
-     * 获取所有明细信息包括删除，用来同步到DMP
-     * @Author Luo_WG
-     * @Date 2023/4/19 16:12
-     * @return java.util.List<com.erp.model.plm.entity.ProductDetailEntity>
-     **/
-    List<ProductDetailEntity> getProductDetailAll();
-
-    /**
      * 更改产品状态
      * @author yl
      * @date 2023-06-14 11:12
@@ -693,8 +685,6 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
      */
     List<SkuVO> accessoriesSku(String searchKeyword);
 
-    List<ProductDetailExcelDTO> getProductDetailExportData(String metaInfo);
-
     /**
      * 获取已审核sku 未计算目的国申报价数据
      * @return
@@ -706,8 +696,6 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
      * @param details
      */
     void recalDestDeclarePrice(List<ProductDetailEntity> details);
-
-    void initProductSizeAndBoxSize();
 
     /**
      * 历史数据sku 增加默认值 并且把已存在目的国海关编码值移到custom中
@@ -816,6 +804,21 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
      * @date 2024-09-20
      */
     List<SkuVO.ProductChargeInfoDTO> listProductChargeInfoByIds(List<String> skuIds);
+
+    /**
+     * 获取已审核，已上市数据
+     */
+    List<SkuVO> listApproveAndListingSku();
+
+    /**
+     * 获取skuId
+     */
+    List<String> getCategoryByQuerySql(String compareCodeSplicingValueSql);
+    /**
+     * 获取skuId
+     */
+    List<String> getBrandByQuerySql(String compareCodeSplicingValueSql);
+
 
     /**
      * 打印EAN

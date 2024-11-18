@@ -30,9 +30,6 @@ public class ProductCertificateExcelListener extends AnalysisEventListener<Produ
      */
     private List<ProductCertificateExcelDTO> successList = new ArrayList<>();
 
-    public ProductCertificateExcelListener() {
-
-    }
    /**
     * @description: 每解析一行数据回调一遍
     * @author Will
@@ -107,7 +104,7 @@ public class ProductCertificateExcelListener extends AnalysisEventListener<Produ
      */
     @Override
     public void doAfterAllAnalysed(AnalysisContext analysisContext) {
-
+        return;
     }
 
 

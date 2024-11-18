@@ -1,6 +1,7 @@
 package com.erp.server.wms.service.impl;
 
 
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -131,12 +132,12 @@ public class VirtualWarehouseChannelServiceImpl extends SuperServiceImpl<Virtual
                     .distinct().collect(Collectors.joining(",")) ;
             String msg;
             //平台名称
-            String platformName = platformList.stream().filter(obj -> StrUtil.equals(obj.getValue(), channelAddDT.getDictPlatform())).map(DictBasicDTO.ViewDTO::getName).findFirst().orElse("");
+            String platformName = platformList.stream().filter(obj -> CharSequenceUtil.equals(obj.getValue(), channelAddDT.getDictPlatform())).map(DictBasicDTO.ViewDTO::getName).findFirst().orElse("");
 
-            if (StrUtil.isBlank(shopName)) {
-                msg = StrUtil.format("{},{}", platformName, "按"+ VitualWarehouseChannelTypeEnum.getName(channelAddDT.getType()));
+            if (CharSequenceUtil.isBlank(shopName)) {
+                msg = CharSequenceUtil.format("{},{}", platformName, "按"+ VitualWarehouseChannelTypeEnum.getName(channelAddDT.getType()));
             } else {
-                msg = StrUtil.format("{},{}({})", platformName, "按"+ VitualWarehouseChannelTypeEnum.getName(channelAddDT.getType()), shopName);
+                msg = CharSequenceUtil.format("{},{}({})", platformName, "按"+ VitualWarehouseChannelTypeEnum.getName(channelAddDT.getType()), shopName);
             }
             oldChannelMsg.add(msg);
         }
@@ -149,12 +150,12 @@ public class VirtualWarehouseChannelServiceImpl extends SuperServiceImpl<Virtual
                     .distinct().collect(Collectors.joining(",")) ;
             String msg ;
             //平台名称
-            String platformName = platformList.stream().filter(obj -> StrUtil.equals(obj.getValue(), value.get(0).getDictPlatform())).map(DictBasicDTO.ViewDTO::getName).findFirst().orElse("");
+            String platformName = platformList.stream().filter(obj -> CharSequenceUtil.equals(obj.getValue(), value.get(0).getDictPlatform())).map(DictBasicDTO.ViewDTO::getName).findFirst().orElse("");
 
-            if (StrUtil.isBlank(shopName)) {
-                msg = StrUtil.format("{},{}", platformName, "按"+ VitualWarehouseChannelTypeEnum.getName(value.get(0).getType()));
+            if (CharSequenceUtil.isBlank(shopName)) {
+                msg = CharSequenceUtil.format("{},{}", platformName, "按"+ VitualWarehouseChannelTypeEnum.getName(value.get(0).getType()));
             } else {
-                msg = StrUtil.format("{},{}({})", platformName, "按"+ VitualWarehouseChannelTypeEnum.getName(value.get(0).getType()), shopName);
+                msg = CharSequenceUtil.format("{},{}({})", platformName, "按"+ VitualWarehouseChannelTypeEnum.getName(value.get(0).getType()), shopName);
             }
             newChannelMsg.add(msg);
             if (!oldChannelMsg.contains(msg)) {
@@ -164,7 +165,7 @@ public class VirtualWarehouseChannelServiceImpl extends SuperServiceImpl<Virtual
         //size不一致或者有变更
         if (oldChannelMsg.size() != newChannelMsg.size() || isChange) {
             // 操作日志
-            String msg = StrUtil.format("关联渠道：从【{}】修改为【{}】",StrUtil.join(";",newChannelMsg),StrUtil.join(";",oldChannelMsg));
+            String msg = CharSequenceUtil.format("关联渠道：从【{}】修改为【{}】",StrUtil.join(";",newChannelMsg),StrUtil.join(";",oldChannelMsg));
             operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.VIRTUAL_WAREHOUSE.getCode(), batchAddDTO.getVirtualWarehouseId(), "编辑信息");
         }
     }
@@ -207,7 +208,9 @@ public class VirtualWarehouseChannelServiceImpl extends SuperServiceImpl<Virtual
     @Override
     public Boolean update(VirtualWarehouseChannelDTO.UpdateDTO updateDTO) {
         VirtualWarehouseChannelEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "虚拟仓渠道"));
+        if (Objects.isNull(old)){
+            throw new ServiceException(ApiError.NOT_EXIST_BILL, "虚拟仓渠道");
+        }
         VirtualWarehouseChannelEntity virtualWarehouseChannelEntity = BeanMapperUtils.map(VirtualWarehouseChannelEntity.class, updateDTO);
 
         // 数据处理
@@ -221,7 +224,7 @@ public class VirtualWarehouseChannelServiceImpl extends SuperServiceImpl<Virtual
 
         // 记录主单操作日志
         log.info("编辑 开始记录虚拟仓渠道日志数据，id：【{}】", virtualWarehouseChannelEntity.getId());
-        String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), virtualWarehouseChannelEntity.getId(), "虚拟仓渠道");
+        String msg = CharSequenceUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), virtualWarehouseChannelEntity.getId(), "虚拟仓渠道");
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLogByObj(old, virtualWarehouseChannelEntity, null, virtualWarehouseChannelEntity.getId(), msg);
         return Boolean.TRUE;
@@ -269,11 +272,11 @@ public class VirtualWarehouseChannelServiceImpl extends SuperServiceImpl<Virtual
     public List<VirtualWarehouseRelationEntity> getVirtualWarehouse(VirtualWarehouseChannelDTO.PlatformDTO platformDTO) {
         VirtualWarehouseChannelEntity channelEntity = this.getByPlatform(platformDTO);
         if (ObjectUtil.isEmpty(channelEntity)) {
-            return Collections.EMPTY_LIST;
+            return Collections.emptyList();
         }
-        List<VirtualWarehouseRelationEntity> warehouseEntityList = virtualWarehouseRelationService.listByWarehouseIdList(platformDTO.getWarehouseIdList(), Arrays.asList(channelEntity.getVirtualWarehouseId()));
+        List<VirtualWarehouseRelationEntity> warehouseEntityList = virtualWarehouseRelationService.listByWarehouseIdList(platformDTO.getWarehouseIdList(), Collections.singletonList(channelEntity.getVirtualWarehouseId()));
         if (ObjectUtil.isEmpty(warehouseEntityList)) {
-            return Collections.EMPTY_LIST;
+            return Collections.emptyList();
         }
         return warehouseEntityList;
     }
@@ -282,22 +285,22 @@ public class VirtualWarehouseChannelServiceImpl extends SuperServiceImpl<Virtual
     public List<VirtualWarehouseRelationDTO.ListPlatformDTO> listVirtualWarehouseByPlatform(VirtualWarehouseChannelDTO.ListPlatformDTO listPlatformDTO) {
         List<VirtualWarehouseChannelEntity> channelEntityList = baseMapper.listVirtualWarehouseByPlatform(listPlatformDTO);
         if (CollectionUtils.isEmpty(channelEntityList)) {
-            return Collections.EMPTY_LIST;
+            return Collections.emptyList();
         }
         List<String> virtualWarehouseIdList = channelEntityList.stream().map(VirtualWarehouseChannelEntity::getVirtualWarehouseId).distinct().collect(Collectors.toList());
         List<VirtualWarehouseRelationEntity> warehouseEntityList = virtualWarehouseRelationService.listByWarehouseIdList(listPlatformDTO.getWarehouseIdList(), virtualWarehouseIdList);
         if (ObjectUtil.isEmpty(warehouseEntityList)) {
-            return Collections.EMPTY_LIST;
+            return Collections.emptyList();
         }
         List<VirtualWarehouseRelationDTO.ListPlatformDTO> resultList = new ArrayList<>();
         for (VirtualWarehouseRelationEntity entity : warehouseEntityList) {
             VirtualWarehouseRelationDTO.ListPlatformDTO platformDTO = new VirtualWarehouseRelationDTO.ListPlatformDTO();
             platformDTO.setVirtualWarehouseId(entity.getVirtualWarehouseId());
             platformDTO.setWarehouseId(entity.getWarehouseId());
-            String dictPlatform = channelEntityList.stream().filter(obj -> StrUtil.equals(obj.getVirtualWarehouseId(), entity.getVirtualWarehouseId()))
+            String dictPlatform = channelEntityList.stream().filter(obj -> CharSequenceUtil.equals(obj.getVirtualWarehouseId(), entity.getVirtualWarehouseId()))
                     .map(VirtualWarehouseChannelEntity::getDictPlatform).findFirst().orElse("");
             platformDTO.setDictPlatform(dictPlatform);
-            List<String> relationIdList = channelEntityList.stream().filter(obj -> StrUtil.isNotBlank(obj.getRelationId()) && StrUtil.equals(obj.getVirtualWarehouseId(), entity.getVirtualWarehouseId()))
+            List<String> relationIdList = channelEntityList.stream().filter(obj -> CharSequenceUtil.isNotBlank(obj.getRelationId()) && CharSequenceUtil.equals(obj.getVirtualWarehouseId(), entity.getVirtualWarehouseId()))
                     .map(VirtualWarehouseChannelEntity::getRelationId).collect(Collectors.toList());
             platformDTO.setRelationIdList(relationIdList);
             resultList.add(platformDTO);
@@ -308,6 +311,49 @@ public class VirtualWarehouseChannelServiceImpl extends SuperServiceImpl<Virtual
     @Override
     public List<VirtualWarehouseDTO.BindChannelDto> getByParams(VirtualWarehouseChannelDTO.ChannelAddDTO newChannel) {
         return baseMapper.getByParams(newChannel);
+    }
+
+    @Override
+    public List<VirtualWarehouseDTO.CfgRuleVirtualWarehouseDTO> listCfgRuleVirtualWarehouse(List<String> platformList) {
+        List<VirtualWarehouseDTO.CfgRuleVirtualWarehouseDTO> resultList = new ArrayList<>();
+        if (CollectionUtils.isEmpty(platformList)) {
+            return resultList;
+        }
+        //根据平台查询
+        VirtualWarehouseChannelDTO.ListPlatformDTO listPlatformDTO = new VirtualWarehouseChannelDTO.ListPlatformDTO();
+        listPlatformDTO.setDictPlatformList(platformList);
+        List<VirtualWarehouseChannelEntity> virtualWarehouseChannelList = baseMapper.listVirtualWarehouseByPlatform(listPlatformDTO);
+        if (CollectionUtils.isEmpty(virtualWarehouseChannelList)) {
+            return resultList;
+        }
+        List<String> virtualWarehouseIdList = virtualWarehouseChannelList.stream().map(VirtualWarehouseChannelEntity::getVirtualWarehouseId).distinct().collect(Collectors.toList());
+        List<VirtualWarehouseRelationEntity> virtualWarehouseRelationList = virtualWarehouseRelationService.listByVirtualWarehouseIdList(virtualWarehouseIdList);
+        if (CollectionUtils.isEmpty(virtualWarehouseRelationList)) {
+            return resultList;
+        }
+        Map<String, List<VirtualWarehouseChannelEntity>> map = virtualWarehouseChannelList.stream().collect(Collectors.groupingBy(obj -> obj.getVirtualWarehouseId().concat(obj.getRelationId())));
+        for (Map.Entry<String, List<VirtualWarehouseChannelEntity>> entry : map.entrySet()) {
+            List<VirtualWarehouseChannelEntity> value = entry.getValue();
+            //实体仓库
+            List<String> warehouseIdList = virtualWarehouseRelationList.stream().filter(obj -> CharSequenceUtil.equals(obj.getVirtualWarehouseId(), value.get(0).getVirtualWarehouseId())).map(VirtualWarehouseRelationEntity::getWarehouseId).collect(Collectors.toList());
+            if (CollectionUtils.isEmpty(warehouseIdList)) {
+                continue;
+            }
+            for (String warehouseId : warehouseIdList) {
+                VirtualWarehouseDTO.CfgRuleVirtualWarehouseDTO resultDTO = new VirtualWarehouseDTO.CfgRuleVirtualWarehouseDTO();
+                resultDTO.setWarehouseId(warehouseId);
+                resultDTO.setVirtualWarehouseId(value.get(0).getVirtualWarehouseId());
+                resultDTO.setDictPlatform(value.get(0).getDictPlatform());
+                resultDTO.setType(value.get(0).getType());
+                //店铺id
+                if (CharSequenceUtil.equals(VitualWarehouseChannelTypeEnum.SHOP.getCode(),value.get(0).getType())) {
+                    List<String> relationIdList = value.stream().map(VirtualWarehouseChannelEntity::getRelationId).distinct().collect(Collectors.toList());
+                    resultDTO.setRelationIdList(relationIdList);
+                }
+                resultList.add(resultDTO);
+            }
+        }
+        return resultList;
     }
 
     /**

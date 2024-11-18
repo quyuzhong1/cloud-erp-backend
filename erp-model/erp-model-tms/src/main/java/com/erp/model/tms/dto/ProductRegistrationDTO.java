@@ -1,7 +1,5 @@
 package com.erp.model.tms.dto;
 
-import java.math.BigDecimal;
-
 import com.alibaba.excel.annotation.ExcelIgnore;
 import com.alibaba.excel.annotation.ExcelProperty;
 import com.alibaba.excel.annotation.write.style.ColumnWidth;
@@ -9,15 +7,15 @@ import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
+
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.Size;
-import javax.validation.constraints.Digits;
 
 /**
  * <p>

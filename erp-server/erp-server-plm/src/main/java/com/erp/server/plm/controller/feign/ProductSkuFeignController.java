@@ -1,7 +1,6 @@
 package com.erp.server.plm.controller.feign;
 
 import cn.hutool.core.date.LocalDateTimeUtil;
-import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.AdvanceQueryContainer;
@@ -22,7 +21,6 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.function.Function;
@@ -486,17 +484,6 @@ public class ProductSkuFeignController {
     }
 
     /**
-     * 缓存sku信息接口（基础信息+产品信息+包装信息+销售信息+物流信息+采购信息+成本信息+产品分类）
-     * @param skuIds
-     * @return
-     */
-    @PostMapping("/listSkuAllAttributeByIds")
-    List<SkuVO> listSkuAllAttributeByIds(@RequestBody List<String> skuIds){
-        List<SkuVO> skuList = productDetailService.listSkuAllAttributeByIds(skuIds);
-        return skuList;
-    }
-
-    /**
      * 根据skuid 集合获取到sku包装信息 （基础信息+产品信息+包装信息）
      *
      * @param skuIds
@@ -580,6 +567,20 @@ public class ProductSkuFeignController {
         return productDetailService.dimensionalWeightMeasure(dto);
     }
 
+    @GetMapping("/listApproveAndListingSku")
+    List<SkuVO> listApproveAndListingSku(){
+        return productDetailService.listApproveAndListingSku();
+    }
+
+    @GetMapping("/getCategoryByQuerySql")
+    List<String> getCategoryByQuerySql(@RequestParam String compareCodeSplicingValueSql){
+        return productDetailService.getCategoryByQuerySql(compareCodeSplicingValueSql);
+    }
+
+    @GetMapping("/getBrandByQuerySql")
+    List<String> getBrandByQuerySql(@RequestParam String compareCodeSplicingValueSql){
+        return productDetailService.getBrandByQuerySql(compareCodeSplicingValueSql);
+    }
     /**
      *  sku图片上传
      *

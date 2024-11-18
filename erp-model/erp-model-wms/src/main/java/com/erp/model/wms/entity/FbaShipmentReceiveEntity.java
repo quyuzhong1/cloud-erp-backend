@@ -130,7 +130,6 @@ public class FbaShipmentReceiveEntity extends BaseEntity<FbaShipmentReceiveEntit
 
     public static final String FBA_SHIPMENT_ID = "fba_shipment_id";
 
-    public static final String ASIN = "asin";
 
     public static final String M_SKU = "m_sku";
 

@@ -7,6 +7,7 @@ import com.erp.server.wms.service.InventoryService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import javax.annotation.Resource;
 import javax.validation.Valid;
 import java.util.List;
 
@@ -20,7 +21,7 @@ import java.util.List;
 @RequestMapping("/feign/inventory")
 public class InventoryFeignController extends BaseController {
 
-    @Autowired
+    @Resource
     private InventoryService inventoryService;
 
     /**

@@ -67,19 +67,6 @@ public class DictBasicEntity extends BaseEntity<DictBasicEntity> {
     @TableField("sort")
     private Integer sort;
 
-
-    public static final String KEY = "key";
-
-    public static final String VALUE = "value";
-
-    public static final String TYPE = "type";
-
-    public static final String NAME = "name";
-
-    public static final String STATUS = "status";
-
-    public static final String SORT = "sort";
-
     @Override
     public Serializable pkVal() {
         return null;

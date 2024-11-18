@@ -74,7 +74,7 @@ public class DmpCfgInputServiceImpl extends SuperServiceImpl<DmpCfgInputMapper, 
     @Override
     public Boolean update(DmpCfgInputDTO.UpdateDTO updateDTO) {
         DmpCfgInputEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "输入信息"));
+        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "输入信息"));
         DmpCfgInputEntity dmpCfgInputEntity =  BeanMapperUtils.map(DmpCfgInputEntity.class, updateDTO);
 
         // 数据处理

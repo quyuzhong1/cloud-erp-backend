@@ -28,11 +28,11 @@ public interface TemplateTaskMapper  extends BaseMapper<TemplateTaskEntity> {
      * @param params
      * @return IPage<TemplateTaskShowDTO>
      */
-    IPage<TemplateTaskShowDTO> paging(Page query, @Param("params") TemplateSearchDTO params);
+    IPage<TemplateTaskShowDTO> paging(Page<TemplateSearchDTO> query, @Param("params") TemplateSearchDTO params);
 
     List<TemplateTaskEntity> listByRoleId( @Param("roleId")String roleId);
 
-    IPage<TemplateTaskShowDTO> templateTaskList(Page query, @Param("params") TemplateTaskSearchDTO params, @Param("chargeNameStr")String chargeNameStr, @Param("docsNameStr")String docsNameStr);
+    IPage<TemplateTaskShowDTO> templateTaskList(Page<TemplateTaskSearchDTO> query, @Param("params") TemplateTaskSearchDTO params, @Param("chargeNameStr")String chargeNameStr, @Param("docsNameStr")String docsNameStr);
 
     List<TemplateTaskEntity> getByTemplateId(@Param("templateId") String templateId, @Param("tastIdList") List<String> tastIdList);
 

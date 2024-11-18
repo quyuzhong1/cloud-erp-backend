@@ -44,11 +44,11 @@ public class DmpInputLxFbaShipmentReceivedApiInitHandler extends DmpInputInitHan
 
     @Override
     public List<DmpInputTaskInitDTO> getInitData(DmpInputInitRequest dmpRequest, DmpInputTaskResponse dmpResponse) {
-        String shopId = dmpCfgInputDetailEntity.getNextLevelId();
+        String shopId = dmpInputTaskEntity.getNextLevelId();
         if (StringUtils.isBlank(shopId)) {
             ServiceException.runError("拉取领星货件签收明细异常:shopId为空");
         }
-        LocalDate requestTime = dmpCfgInputDetailEntity.getLastTime().toLocalDate();
+        LocalDate requestTime = dmpInputTaskEntity.getStartTime().toLocalDate();
         // 查询映射关系
         ShopInfoMappingEntity mappingEntity = shopInfoMappingService.getByShopIdAndType(shopId, PlatformEnum.LINGXING.getName());
         if (null == mappingEntity) {
@@ -108,6 +108,7 @@ public class DmpInputLxFbaShipmentReceivedApiInitHandler extends DmpInputInitHan
                     Thread.sleep(sleepTime);
                 } catch (InterruptedException e) {
                     log.error("拉取领星货件签收明细数据睡眠异常:e={}", ExceptionUtil.stacktraceToString(e));
+                    Thread.currentThread().interrupt();
                 }
                 sleepTime = sleepTime + 1000;
                 count = count + 1;
@@ -119,6 +120,7 @@ public class DmpInputLxFbaShipmentReceivedApiInitHandler extends DmpInputInitHan
             Thread.sleep(2000);
         } catch (InterruptedException e) {
             log.error("拉取领星货件签收明细数据睡眠异常:e={}", ExceptionUtil.stacktraceToString(e));
+            Thread.currentThread().interrupt();
         }
         return resultData;
     }

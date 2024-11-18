@@ -1,6 +1,8 @@
 package com.erp.server.wms.service.impl;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
@@ -71,6 +73,8 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.math.BigDecimal;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -102,7 +106,7 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
     @Resource
     private SyncKingdeeWarehouseService syncKingdeeWarehouseService;
 
-    @Autowired
+    @Resource
     private RedisService redisService;
     @Resource
     private WarehouseLocationService warehouseLocationService;
@@ -237,7 +241,7 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
             List<WarehouseDTO.WarehouseInventoryQtyDTO> warehouseInventoryQtyList = new ArrayList<>();
 
             //虚拟仓
-            String virtualWarehouseId = virtualWarehouseList.stream().filter(obj -> StrUtil.equals(obj.getDictPlatform(), paramDTO.getDictPlatform())
+            String virtualWarehouseId = virtualWarehouseList.stream().filter(obj -> CharSequenceUtil.equals(obj.getDictPlatform(), paramDTO.getDictPlatform())
                     && (CollectionUtils.isEmpty(obj.getRelationIdList()) || ObjectUtil.isEmpty(paramDTO.getRelationId()) || obj.getRelationIdList().contains(paramDTO.getRelationId())))
                     .map(VirtualWarehouseRelationDTO.ListPlatformDTO::getVirtualWarehouseId).findFirst().orElse("");
 
@@ -255,14 +259,14 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
                         .reduce(MathUtil.ZERO,Integer::sum);
                 warehouseInventoryQtyDTO.setInventoryQty(curInventoryQty);
                 //无虚拟仓或者无库存数据
-                if (CollectionUtils.isEmpty(virtualUsableQtyList) || StrUtil.isBlank(virtualWarehouseId)) {
+                if (CollectionUtils.isEmpty(virtualUsableQtyList) || CharSequenceUtil.isBlank(virtualWarehouseId)) {
                     warehouseInventoryQtyList.add(warehouseInventoryQtyDTO);
                     continue;
                 }
                 //实体仓下可用虚拟库存
-                Integer virtualInventoryQty = virtualUsableQtyList.stream().filter(obj -> StrUtil.equals(obj.getWarehouseId(), listDTO.getId())
-                                && StrUtil.equals(obj.getSkuId(),paramDTO.getSkuId())
-                                && StrUtil.equals(obj.getToVirtualWarehouseId(),virtualWarehouseId))
+                Integer virtualInventoryQty = virtualUsableQtyList.stream().filter(obj -> CharSequenceUtil.equals(obj.getWarehouseId(), listDTO.getId())
+                                && CharSequenceUtil.equals(obj.getSkuId(),paramDTO.getSkuId())
+                                && CharSequenceUtil.equals(obj.getToVirtualWarehouseId(),virtualWarehouseId))
                         .map(VirtualInventoryDTO.ViewQtyDTO::getToVirtualWarehouseUsableQty).findFirst().orElse(MathUtil.ZERO);
                 warehouseInventoryQtyDTO.setVirtualInventoryQty(virtualInventoryQty);
                 //非bom则直接返回
@@ -274,14 +278,14 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
                  List<Integer> parentUsableQtyList = new ArrayList<>();
                 for (BomChildrenSkuDTO bomChildrenSkuDTO : childList) {
                     //虚拟仓是否缺货
-                    Integer childVirtualUsableQty = virtualUsableQtyList.stream().filter(obj -> StrUtil.equals(obj.getSkuId(), bomChildrenSkuDTO.getSkuId())
-                                    && StrUtil.equals(obj.getToVirtualWarehouseId(), virtualWarehouseId)
-                                    && StrUtil.equals(obj.getWarehouseId(), listDTO.getId())
+                    Integer childVirtualUsableQty = virtualUsableQtyList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSkuId(), bomChildrenSkuDTO.getSkuId())
+                                    && CharSequenceUtil.equals(obj.getToVirtualWarehouseId(), virtualWarehouseId)
+                                    && CharSequenceUtil.equals(obj.getWarehouseId(), listDTO.getId())
                             ).map(VirtualInventoryDTO.ViewQtyDTO::getToVirtualWarehouseUsableQty)
                             .findFirst().orElse(MathUtil.ZERO);
                     //针对父级可用数量
-                    double floor = Math.floor(childVirtualUsableQty / bomChildrenSkuDTO.getQuantity());
-                    Integer parentUsableQty = Integer.valueOf((int) floor);
+                    BigDecimal divide = MathUtil.divide(new BigDecimal(childVirtualUsableQty), new BigDecimal(bomChildrenSkuDTO.getQuantity()));
+                    Integer parentUsableQty = divide.intValue();
                     parentUsableQtyList.add(parentUsableQty);
                 }
                 Integer parentUsableQty = parentUsableQtyList.stream().min(Comparator.comparing(obj -> obj)).get();
@@ -341,13 +345,13 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
 
     @Override
     public void assertDisabled(List<WarehouseDTO.WarehouseDisabledAssertDTO> assertList) {
-        if (CollectionUtil.isEmpty(assertList)) {
+        if (CollUtil.isEmpty(assertList)) {
             return;
         }
         List<WarehouseDTO.WarehouseDisabledAssertDTO> invalidList = new ArrayList<>();
         assertList.stream().forEach(item -> {
             // 仓库禁用/未审核
-            if (StrUtil.isBlank(item.getWarehouseId())) {
+            if (CharSequenceUtil.isBlank(item.getWarehouseId())) {
                 throw new ServiceException("仓库id不能为空");
             }
             WarehouseDTO.UpdateDTO warehouse = detailWithCache(item.getWarehouseId());
@@ -359,7 +363,7 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
                 return;
             }
             // 库区禁用/未审核
-            if (StrUtil.isNotBlank(item.getWarehouseArea())) {
+            if (CharSequenceUtil.isNotBlank(item.getWarehouseArea())) {
                 WarehouseLocationEntity area = warehouseLocationService.findArea(item.getWarehouseId(), item.getWarehouseArea());
                 if (ObjectUtil.isEmpty(area) || area.getDisabled()) {
                     invalidList.add(item);
@@ -367,20 +371,20 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
                 }
             }
             // 仓位禁用/未审核
-            if (StrUtil.isNotBlank(item.getWarehouseLocation())) {
+            if (CharSequenceUtil.isNotBlank(item.getWarehouseLocation())) {
                 WarehouseLocationEntity location = warehouseLocationService.findByWarehouseIdAndCode(item.getWarehouseId(), item.getWarehouseLocation());
                 if (ObjectUtil.isEmpty(location) || location.getDisabled()) {
                     invalidList.add(item);
                 }
             }
         });
-        if (CollectionUtil.isNotEmpty(invalidList)) {
+        if (CollUtil.isNotEmpty(invalidList)) {
             List<String> warehouseNameList = invalidList.stream().map(WarehouseDTO.WarehouseDisabledAssertDTO::getWarehouseName).distinct().collect(Collectors.toList());
             List<String> warehoseAreaList = invalidList.stream().map(WarehouseDTO.WarehouseDisabledAssertDTO::getWarehouseArea).distinct().collect(Collectors.toList());
             List<String> warehosueLocationList = invalidList.stream().map(WarehouseDTO.WarehouseDisabledAssertDTO::getWarehouseArea).distinct().collect(Collectors.toList());
-            warehouseNameList = CollectionUtil.isNotEmpty(warehouseNameList) ? warehouseNameList : Collections.EMPTY_LIST;
-            warehoseAreaList = CollectionUtil.isNotEmpty(warehoseAreaList) ? warehoseAreaList : Collections.EMPTY_LIST;
-            warehosueLocationList = CollectionUtil.isNotEmpty(warehosueLocationList) ? warehosueLocationList : Collections.EMPTY_LIST;
+            warehouseNameList = CollUtil.isNotEmpty(warehouseNameList) ? warehouseNameList : Collections.emptyList();
+            warehoseAreaList = CollUtil.isNotEmpty(warehoseAreaList) ? warehoseAreaList : Collections.emptyList();
+            warehosueLocationList = CollUtil.isNotEmpty(warehosueLocationList) ? warehosueLocationList : Collections.emptyList();
             throw new ServiceException(ApiError.WAREHOUSE_AREA_LOCATION_DISABLED, JSONUtil.toJsonStr(warehouseNameList), JSONUtil.toJsonStr(warehoseAreaList), JSONUtil.toJsonStr(warehosueLocationList));
         }
     }
@@ -607,7 +611,7 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
         BeanMapper.copy(dto, warehouse);
 
         //如果设置了在途仓，获取匹配在途仓名称
-        if (StringUtils.isNotBlank(dto.getOnwayWarehouseId())) {
+        if (CharSequenceUtil.isNotBlank(dto.getOnwayWarehouseId())) {
             WarehouseEntity entity = this.getById(dto.getOnwayWarehouseId());
             if (ObjectUtil.isEmpty(entity)) {
                 throw new ServiceException(ApiError.ERROR_ONWAY_WAREHOUSE_NOT_EXIST);
@@ -619,7 +623,7 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
         if (result) {
 
             //如果设置了第三方仓绑定
-            if (StringUtils.isNotBlank(dto.getThirdWarehouseName())) {
+            if (CharSequenceUtil.isNotBlank(dto.getThirdWarehouseName())) {
                 WarehouseMappingEntity checkThirdWarehouseNameExist = warehouseMappingService.checkThirdWarehouseNameExist(dto.getThirdWarehouseName(), PlatformDictEnum.ALI_EXPRESS.getCode());
                 if (ObjectUtil.isNotEmpty(checkThirdWarehouseNameExist)) {
                     WarehouseEntity entity = this.getById(checkThirdWarehouseNameExist.getWarehouseId());
@@ -669,7 +673,7 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
         BeanMapper.copy(dto, warehouse);
 
         //如果设置了在途仓，获取匹配在途仓名称
-        if (StringUtils.isNotBlank(dto.getOnwayWarehouseId())) {
+        if (CharSequenceUtil.isNotBlank(dto.getOnwayWarehouseId())) {
             WarehouseEntity entity = this.getById(dto.getOnwayWarehouseId());
             if (ObjectUtil.isEmpty(entity)) {
                 throw new ServiceException(ApiError.ERROR_ONWAY_WAREHOUSE_NOT_EXIST);
@@ -718,10 +722,10 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
     @Transactional(rollbackFor = Exception.class)
     public Boolean addAndSubmit(WarehouseDTO.AddDTO dto) {
         String warehouseId = this.add(dto);
-        if (StringUtils.isBlank(warehouseId)) {
+        if (CharSequenceUtil.isBlank(warehouseId)) {
             throw new ServiceException(ApiError.ERROR_1019);
         }
-        Boolean result = this.submit(Arrays.asList(warehouseId));
+        Boolean result = this.submit(Collections.singletonList(warehouseId));
         return result;
     }
 
@@ -796,14 +800,14 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
         String operate = SyncOperateEnum.OPERATE_ENABLE.getCode();
         if (dto.getState()) {
             //Delete by Edison.qu 2024-07-23 去除不必要的限制:仓库绑定店铺，不允许禁用
-//            List<ShopInfoEntity> shopInfoEntities = shopInfoFeign.listShopInfoByWarehouseIds(Arrays.asList(dto.getId()));
+//            List<ShopInfoEntity> shopInfoEntities = shopInfoFeign.listShopInfoByWarehouseIds(Collections.singletonList(dto.getId()));
 //            if (CollectionUtils.isNotEmpty(shopInfoEntities)) {
 //                throw new ServiceException(ApiError.SHOP_INFO_EXIST_WAREHOUSE_NOT_DISABLE, shopInfoEntities.get(MathUtil.ZERO).getName());
 //            }
             operate = SyncOperateEnum.OPERATE_DISABLE.getCode();
         }
         //审核通过后发送金蝶
-        sendPushTask(Arrays.asList(warehouse),operate);
+        sendPushTask(Collections.singletonList(warehouse),operate);
         return Boolean.TRUE;
     }
 
@@ -853,7 +857,7 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
         if (!ApproveStatusEnum.APPROVE.getStatus().equals(entity.getApproveStatus().getStatus())) {
             return BatchResultDTO.fail(entity.getId(),entity.getName(),ApiError.ERROR_99003.msg);
         }
-        List<WarehouseEntity> list = Arrays.asList(entity);
+        List<WarehouseEntity> list = Collections.singletonList(entity);
         //仓库已绑定店铺不允许反审核
         List<ShopInfoEntity> shopInfoEntities = shopInfoFeign.listShopInfoByWarehouseIds(Collections.singletonList(entity.getId()));
         ShopInfoEntity shopInfoEntity = shopInfoEntities.stream().filter(req -> req.getWarehouseId().equals(entity.getId())).distinct().findFirst().orElse(null);
@@ -1040,7 +1044,7 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
             response.reset();
             // 设置文件头
             response.setHeader("Content-Disposition",
-                    "attchement;filename=" + new String(excelName.getBytes("gb2312"), "ISO8859-1"));
+                    "attchement;filename=" + new String(excelName.getBytes("gb2312"), StandardCharsets.ISO_8859_1));
             response.setContentType("application/msexcel");
             wb.write(output);
             wb.close();
@@ -1105,10 +1109,10 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
     @Transactional(rollbackFor = Exception.class)
     public Boolean updateAndSubmit(WarehouseDTO.UpdateDTO dto) {
         String id = this.updateWarehouse(dto);
-        if (StringUtils.isBlank(id)) {
+        if (CharSequenceUtil.isBlank(id)) {
             throw new ServiceException(ApiError.ERROR_1020);
         }
-        return this.submit(Arrays.asList(id));
+        return this.submit(Collections.singletonList(id));
 
     }
 
@@ -1116,7 +1120,7 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
     public Boolean updateSyncKingdeeId(String id, String syncKingdeeId) {
         return this.lambdaUpdate()
                 .eq(WarehouseEntity::getId, id)
-                .set(StringUtils.isNotBlank(syncKingdeeId), WarehouseEntity::getSyncKingdeeId, syncKingdeeId)
+                .set(CharSequenceUtil.isNotBlank(syncKingdeeId), WarehouseEntity::getSyncKingdeeId, syncKingdeeId)
                 .update();
     }
 
@@ -1172,7 +1176,7 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
     @Override
     public List<WarehouseDTO.ListDTO> listWarehouseByParams(WarehouseDTO.ListParamDTO dto) {
         List<WarehouseEntity> list = lambdaQuery()
-                .eq(StringUtils.isNotBlank(dto.getWarehouseName()), WarehouseEntity::getName, dto.getWarehouseName())
+                .eq(CharSequenceUtil.isNotBlank(dto.getWarehouseName()), WarehouseEntity::getName, dto.getWarehouseName())
                 .in(CollectionUtils.isNotEmpty(dto.getOrgIdList()), WarehouseEntity::getOrgId, dto.getOrgIdList())
                 .in(CollectionUtils.isNotEmpty(dto.getWarehouseIdList()), WarehouseEntity::getId, dto.getWarehouseIdList())
                 .list();
@@ -1187,8 +1191,8 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
         this.fillListData(resultList, warehouseBindMap);
 
         return resultList.stream()
-                .filter(e -> StringUtils.isBlank(dto.getDictPlatform()) ||
-                        (StringUtils.isNotBlank(dto.getDictPlatform()) && e.getDictPlatform().equalsIgnoreCase(dto.getDictPlatform()))
+                .filter(e -> CharSequenceUtil.isBlank(dto.getDictPlatform()) ||
+                        (CharSequenceUtil.isNotBlank(dto.getDictPlatform()) && e.getDictPlatform().equalsIgnoreCase(dto.getDictPlatform()))
                 )
                 .filter(e -> ObjectUtil.isEmpty(dto.getIsSupplier()) || (Boolean.TRUE.equals(dto.getIsSupplier()) && e.getTypeId().equals(basic.getId())))
                 .sorted(Comparator.comparing(WarehouseDTO.ListDTO::getDisabled))
@@ -1238,14 +1242,13 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
         //获取组织信息
         List<String> orgIdList = list.stream().map(WarehouseDTO.PagingProductViewDTO::getOrgId).collect(Collectors.toList());
         List<BaseIdDTO.CodeDTO> orgList = sysUserFeign.getAccountingCompanyList(orgIdList);
-        list.stream().map(item -> {
+        list.forEach(item -> {
             //组织id
             String orgId = item.getOrgId();
             String orgName = orgList.stream().filter(o -> orgId.equals(o.getId())).findFirst().
                     flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
             item.setOrgName(orgName);
-            return item;
-        }).collect(Collectors.toList());
+        });
         return new PagingVO<>(pageData);
     }
 
@@ -1278,7 +1281,7 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
      */
     private void checkKingdeeWarehouseCode(String id, String kingdeeWarehouseCode) {
         LambdaQueryWrapper<WarehouseEntity> queryWrapper = new LambdaQueryWrapper<>();
-        if (StringUtils.isNotBlank(id)) {
+        if (CharSequenceUtil.isNotBlank(id)) {
             queryWrapper.ne(WarehouseEntity::getId, id);
         }
         queryWrapper.eq(WarehouseEntity::getKingdeeWarehouseCode, kingdeeWarehouseCode);
@@ -1301,7 +1304,7 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
      */
     private void checkName(String id, String name) {
         LambdaQueryWrapper<WarehouseEntity> queryWrapper = new LambdaQueryWrapper<>();
-        if (StringUtils.isNotBlank(id)) {
+        if (CharSequenceUtil.isNotBlank(id)) {
             queryWrapper.ne(WarehouseEntity::getId, id);
         }
         queryWrapper.eq(WarehouseEntity::getName, name);

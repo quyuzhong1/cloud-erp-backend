@@ -15,11 +15,13 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.enums.LogActionEnum;
 import com.common.core.exception.ServiceException;
-import com.erp.model.scm.dto.*;
+import com.erp.model.scm.dto.ExcelImportDTO;
+import com.erp.model.scm.dto.ListStatusCountDTO;
+import com.erp.model.scm.dto.PurchaseApplicationDTO;
+import com.erp.model.scm.dto.PurchaseApplicationDetailDTO;
 import com.erp.model.scm.entity.PurchaseApplicationDetailEntity;
 import com.erp.model.scm.entity.PurchaseApplicationEntity;
 import com.erp.model.scm.entity.SubcontractOrderEntity;
-import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.scm.enums.CreatePoTypeEnum;
 import com.erp.server.scm.query.PurchaseApplicationQueryHandler;
 import com.erp.server.scm.service.PurchaseApplicationDetailService;
@@ -38,6 +40,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -127,7 +130,7 @@ public class PurchaseApplicationController extends BaseController {
             menuCode = "scm:purchaseApplication:cancelProcess",
             serviceClass = PurchaseApplicationService.class,
             keyIdName = "id")
-    public ApiResult add(@RequestBody @Validated PurchaseApplicationDTO.AddDTO dto) {
+    public ApiResult<Object> add(@RequestBody @Validated PurchaseApplicationDTO.AddDTO dto) {
         purchaseApplicationService.add(dto);
         return success();
     }
@@ -146,7 +149,7 @@ public class PurchaseApplicationController extends BaseController {
             menuCode = "scm:purchaseApplication:update",
             serviceClass = PurchaseApplicationService.class,
             keyIdName = "id")
-    public ApiResult update(@RequestBody @Validated PurchaseApplicationDTO.UpdateDTO dto) {
+    public ApiResult<Object> update(@RequestBody @Validated PurchaseApplicationDTO.UpdateDTO dto) {
         Boolean flag = purchaseApplicationService.update(dto);
         return flag == true ? success() : failure();
     }
@@ -165,7 +168,7 @@ public class PurchaseApplicationController extends BaseController {
             menuCode = "scm:purchaseApplication:add",
             serviceClass = PurchaseApplicationService.class,
             keyIdName = "id")
-    public ApiResult addAndSubmit(@RequestBody @Validated PurchaseApplicationDTO.AddDTO dto) {
+    public ApiResult<Object> addAndSubmit(@RequestBody @Validated PurchaseApplicationDTO.AddDTO dto) {
         Boolean flag = purchaseApplicationService.addAndSubmit(dto);
         return flag == true ? success() : failure();
     }
@@ -184,7 +187,7 @@ public class PurchaseApplicationController extends BaseController {
             menuCode = "scm:purchaseApplication:update",
             serviceClass = PurchaseApplicationService.class,
             keyIdName = "id")
-    public ApiResult updateAndSubmit(@RequestBody @Validated PurchaseApplicationDTO.UpdateDTO dto) {
+    public ApiResult<Object> updateAndSubmit(@RequestBody @Validated PurchaseApplicationDTO.UpdateDTO dto) {
         Boolean flag = purchaseApplicationService.updateAndSubmit(dto);
         return flag == true ? success() : failure();
     }
@@ -222,7 +225,7 @@ public class PurchaseApplicationController extends BaseController {
             menuCode = "scm:purchaseApplication:submit",
             serviceClass = PurchaseApplicationService.class,
             keyIdName = "ids")
-    public ApiResult submit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+    public ApiResult<Object> submit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         Boolean flag = purchaseApplicationService.submit(dto.getIds());
         return flag == true ? success() : failure();
     }
@@ -326,7 +329,7 @@ public class PurchaseApplicationController extends BaseController {
             menuCode = "scm:purchaseApplication:delete",
             serviceClass = PurchaseApplicationService.class,
             keyIdName = "ids")
-    public ApiResult delete(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+    public ApiResult<Object> delete(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         Boolean flag = purchaseApplicationService.delete(dto.getIds());
         return flag == true ? success() : failure();
     }
@@ -344,7 +347,7 @@ public class PurchaseApplicationController extends BaseController {
             menuCode = "scm:purchaseApplication:delete",
             serviceClass = PurchaseApplicationService.class,
             keyIdName = "ids")
-    public ApiResult close(@RequestBody @Validated PurchaseApplicationDTO.CloseDTO dto) {
+    public ApiResult<Object> close(@RequestBody @Validated PurchaseApplicationDTO.CloseDTO dto) {
         Boolean flag = purchaseApplicationService.close(dto);
         return flag == true ? success() : failure();
     }
@@ -375,7 +378,7 @@ public class PurchaseApplicationController extends BaseController {
      */
     @LogAction(value = LogActionEnum.INSERT, desc = "生成采购单")
     @PostMapping("/generatePurchaseOrder")
-    public ApiResult generatePurchaseOrder(@RequestBody @Validated PurchaseApplicationDTO.ListGeneratePurchaseOrderDTO dto) {
+    public ApiResult<Object> generatePurchaseOrder(@RequestBody @Validated PurchaseApplicationDTO.ListGeneratePurchaseOrderDTO dto) {
         Boolean flag = purchaseApplicationService.generatePurchaseOrder(dto);
         return flag == true ? success() : failure();
     }
@@ -394,7 +397,7 @@ public class PurchaseApplicationController extends BaseController {
             menuCode = "scm:purchaseApplication:cancelProcess",
             serviceClass = PurchaseApplicationService.class,
             keyIdName = "ids")
-    public ApiResult cancelProcess(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+    public ApiResult<Object> cancelProcess(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         Boolean result = purchaseApplicationService.cancelProcess(dto.getIds());
         return result == true ? success() : failure();
     }
@@ -424,7 +427,7 @@ public class PurchaseApplicationController extends BaseController {
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "下载采购单模板")
     @GetMapping("/exportTemplate")
-    public ApiResult exportTemplate(HttpServletRequest request, HttpServletResponse response) {
+    public ApiResult<Object> exportTemplate(HttpServletRequest request, HttpServletResponse response) {
         String path = "classpath:excel/purchaseApplicationTemplate.xlsx";
         String excelName = "template.xlsx";
         ResourceLoader resourceLoader = new DefaultResourceLoader();
@@ -436,7 +439,7 @@ public class PurchaseApplicationController extends BaseController {
             response.reset();
             // 设置文件头
             response.setHeader("Content-Disposition",
-                    "attchement;filename=" + new String(excelName.getBytes("gb2312"), "ISO8859-1"));
+                    "attchement;filename=" + new String(excelName.getBytes("gb2312"), StandardCharsets.ISO_8859_1));
             response.setContentType("application/msexcel");
             wb.write(output);
             wb.close();
@@ -455,7 +458,7 @@ public class PurchaseApplicationController extends BaseController {
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出采购单")
     @PostMapping(value = "/exportExcel")
-    public ApiResult exportExcel(@RequestBody PurchaseApplicationDTO.SearchParamDTO dto) {
+    public ApiResult<Object> exportExcel(@RequestBody PurchaseApplicationDTO.SearchParamDTO dto) {
         Boolean flag = purchaseApplicationService.exportExcel(dto);
         return flag == true ? success() : failure();
     }

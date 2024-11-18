@@ -17,11 +17,10 @@ import com.erp.model.tms.entity.LogisticsSupplierEntity;
 import com.erp.server.tms.query.LogisticsSupplierQueryHandler;
 import com.erp.server.tms.service.LogisticsSupplierService;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
-import javax.servlet.http.HttpServletResponse;
+import javax.annotation.Resource;
 import javax.validation.Valid;
 import java.util.ArrayList;
 import java.util.List;
@@ -38,7 +37,7 @@ import java.util.List;
 @RequestMapping("/logisticsSupplier")
 public class LogisticsSupplierController extends BaseController {
 
-    @Autowired
+    @Resource
     private LogisticsSupplierService logisticsSupplierService;
 
 
@@ -116,7 +115,7 @@ public class LogisticsSupplierController extends BaseController {
         menuCode = "tms:logisticsSupplier:update",
         serviceClass = LogisticsSupplierService.class,
         keyIdName = "id")
-    public ApiResult update(@RequestBody @Validated LogisticsSupplierDTO.UpdateDTO dto) {
+    public ApiResult<Object>update(@RequestBody @Validated LogisticsSupplierDTO.UpdateDTO dto) {
         logisticsSupplierService.update(dto);
         return success();
     }
@@ -160,7 +159,7 @@ public class LogisticsSupplierController extends BaseController {
      */
     @PostMapping("/export")
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出excel")
-    public ApiResult export(@RequestBody @Valid LogisticsSupplierDTO.ExportDTO dto) {
+    public ApiResult<Object>export(@RequestBody @Valid LogisticsSupplierDTO.ExportDTO dto) {
         Boolean result = logisticsSupplierService.export(dto);
         return result ? success() : failure();
     }

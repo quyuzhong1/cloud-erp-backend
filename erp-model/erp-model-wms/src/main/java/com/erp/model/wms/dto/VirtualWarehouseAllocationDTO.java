@@ -461,12 +461,6 @@ public class VirtualWarehouseAllocationDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class ManualFinishDto {
-
-        /**
-         * 主键id
-         */
-//        @NotBlank(message = "主键id不能为空")
-//        private String id;
         /**
          * 明细id
          */

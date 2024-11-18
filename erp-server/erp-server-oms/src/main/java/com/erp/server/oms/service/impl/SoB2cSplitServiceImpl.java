@@ -1,5 +1,6 @@
 package com.erp.server.oms.service.impl;
 
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.StrUtil;
@@ -278,7 +279,7 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
                 addAllDetailList.addAll(addDetailList);
             }
             // 操作日志
-            String msg = StrUtil.format("用户【{}】操作捆绑拆分", UserContext.getDefaultLoginUser().getUserName());
+            String msg =  CharSequenceUtil.format("用户【{}】操作捆绑拆分", UserContext.getDefaultLoginUser().getUserName());
             operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C.getCode(), soB2cEntity.getId(), "捆绑拆分");
         }
         service.batchHandleTransaction(removeDetailIds,addAllDetailList,new ArrayList<>());
@@ -336,7 +337,7 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
                 for (SoB2cEntity notPassMain : notPassMainList) {
                     List<SoB2cDetailEntity> notPassDetailList = otherDetailList.stream().filter(v->v.getMainId().equals(notPassMain.getId())).collect(Collectors.toList());
                     for(SoB2cDetailEntity soB2cDetailEntity : notPassDetailList){
-                        sb.append(StrUtil.format("捆绑子件{}数量{}关联的销售订单{}状态为{}，不允许还原捆绑",soB2cDetailEntity.getSkuNo(),soB2cDetailEntity.getQty(),notPassMain.getCode(),notPassMain.getIsFrozen()?"已冻结":notPassMain.getInvalidStatus()?"已作废":SoB2cBillStatusEnum.getName(notPassMain.getBillStatus())));
+                        sb.append( CharSequenceUtil.format("捆绑子件{}数量{}关联的销售订单{}状态为{}，不允许还原捆绑",soB2cDetailEntity.getSkuNo(),soB2cDetailEntity.getQty(),notPassMain.getCode(),notPassMain.getIsFrozen()?"已冻结":notPassMain.getInvalidStatus()?"已作废":SoB2cBillStatusEnum.getName(notPassMain.getBillStatus())));
                     }
                 }
                 batchResultDTOList.add(BatchResultDTO.fail(soB2cEntity.getId(),soB2cEntity.getCode(),sb.toString()));
@@ -367,7 +368,7 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
             List<String> initSkuList = originDetailList.stream().map(SoB2cDetailEntity::getInitSkuId).filter(StrUtil::isNotBlank).collect(Collectors.toList());
             resetIsChangeSkuFlag(initSkuList,soB2cEntity);
             // 操作日志
-            String msg = StrUtil.format("用户【{}】操作还原捆绑拆分", UserContext.getDefaultLoginUser().getUserName());
+            String msg =  CharSequenceUtil.format("用户【{}】操作还原捆绑拆分", UserContext.getDefaultLoginUser().getUserName());
             operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C.getCode(), soB2cEntity.getId(), "还原捆绑拆分");
         }
         service.batchHandleTransaction(removeDetailIds,addDetailList,revertDetailIds);
@@ -477,7 +478,7 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
             for (SoB2cEntity notPassMain : notPassMainList) {
                 List<SoB2cDetailEntity> notPassDetailList = sameSplitDetailList.stream().filter(v->v.getMainId().equals(notPassMain.getId())).collect(Collectors.toList());
                 for(SoB2cDetailEntity soB2cDetailEntity : notPassDetailList){
-                    sb.append(StrUtil.format("捆绑子件{}数量{}关联的销售订单{}状态为{}，不允许还原捆绑",soB2cDetailEntity.getSkuNo(),soB2cDetailEntity.getQty(),notPassMain.getCode(),notPassMain.getIsFrozen()?"已冻结":notPassMain.getInvalidStatus()?"已作废":SoB2cBillStatusEnum.getName(notPassMain.getBillStatus())));
+                    sb.append( CharSequenceUtil.format("捆绑子件{}数量{}关联的销售订单{}状态为{}，不允许还原捆绑",soB2cDetailEntity.getSkuNo(),soB2cDetailEntity.getQty(),notPassMain.getCode(),notPassMain.getIsFrozen()?"已冻结":notPassMain.getInvalidStatus()?"已作废":SoB2cBillStatusEnum.getName(notPassMain.getBillStatus())));
                 }
             }
             throw new ServiceException(sb.toString());
@@ -751,13 +752,13 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
             logisticsAddDTO.setWeight(null);
             logisticsAddDTO.setLogisticsChannelId("");
             addDTO.setLogisticsDTO(logisticsAddDTO);
-            addDTO.setRemark(StrUtil.format("【{}】拆分订单", entity.getCode()));
+            addDTO.setRemark( CharSequenceUtil.format("【{}】拆分订单", entity.getCode()));
 
             //操作信息
             addDTO.setOperateType(SoB2cOptionTypeEnum.ENUM_SPLIT);
 
             //新增拆分后订单
-            String code = StrUtil.format("{}_{}", entity.getCode(), flag);
+            String code =  CharSequenceUtil.format("{}_{}", entity.getCode(), flag);
             SoB2cEntity add = soB2cService.add(addDTO, code);
             soIdList.add(add.getId());
             soCodeList.add(add.getCode());
@@ -787,11 +788,11 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
             flag++;
         }
         tikTokPramDTO.setSplittableGroups(splittableGroups);
-        soB2cService.invalid(entity.getId(), StrUtil.format("【{}】被拆分作废", entity.getCode()), SoB2cInvalidTypeEnum.ENUM_AUTOMATIC);
+        soB2cService.invalid(entity.getId(),  CharSequenceUtil.format("【{}】被拆分作废", entity.getCode()), SoB2cInvalidTypeEnum.ENUM_AUTOMATIC);
 
         //操作日志
         String msg = "从【{}】拆分出新订单";
-        operateLogService.addModuleOperateLog(StrUtil.format(msg, entity.getCode()), ModuleTypeEnum.SO_B2C.getCode(), entity.getId(), "拆分订单");
+        operateLogService.addModuleOperateLog( CharSequenceUtil.format(msg, entity.getCode()), ModuleTypeEnum.SO_B2C.getCode(), entity.getId(), "拆分订单");
         SoB2cDTO.SplitSaveResultDTO splitSaveResultDTO = new SoB2cDTO.SplitSaveResultDTO();
         splitSaveResultDTO.setSoB2cIds(soIdList);
         splitSaveResultDTO.setSoCodeList(soCodeList);
@@ -856,7 +857,7 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
         }
 
         //查询订单是否是合并订单
-        List<SoB2cRefEntity> thisRefList = soB2cRefList.stream().filter(obj -> StrUtil.equals(obj.getTargetId(), entity.getId())).collect(Collectors.toList());
+        List<SoB2cRefEntity> thisRefList = soB2cRefList.stream().filter(obj -> CharSequenceUtil.equals(obj.getTargetId(), entity.getId())).collect(Collectors.toList());
         if (CollectionUtils.isEmpty(thisRefList)) {
             return;
         }
@@ -896,7 +897,7 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
             viewSplitDTO.setId(entity.getId());
             viewSplitDTO.setCode(entity.getCode());
             //销售订单下对应明细
-            List<SoB2cDetailEntity> detailList = soB2cDetailList.stream().filter(obj -> StrUtil.equals(obj.getMainId(), entity.getId())).collect(Collectors.toList());
+            List<SoB2cDetailEntity> detailList = soB2cDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getMainId(), entity.getId())).collect(Collectors.toList());
             List<SoB2cDTO.ViewSplitDetailDTO> viewSplitDetailList = new ArrayList<>();
             for (SoB2cDetailEntity detailEntity : detailList) {
                 SoB2cDTO.ViewSplitDetailDTO viewSplitDetailDTO = new SoB2cDTO.ViewSplitDetailDTO();
@@ -995,7 +996,7 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
                 List<String> otherSplitIds = otherB2cSplitRefList.stream().filter(v->v.getSourceId().equals(soB2cEntity.getId())).map(SoB2cRefEntity::getTargetId).collect(Collectors.toList());
                 List<String> otherSplitCodes = otherB2cSplitList.stream().filter(v->otherSplitIds.contains(v.getId())).map(SoB2cEntity::getCode).collect(Collectors.toList());
                 if(CollectionUtils.isNotEmpty(otherSplitCodes)){
-                    String msg = StrUtil.format("{}存在下游拆分子订单【{}】，请先还原子订单拆分后操作", soB2cEntity.getCode(), otherSplitCodes);
+                    String msg =  CharSequenceUtil.format("{}存在下游拆分子订单【{}】，请先还原子订单拆分后操作", soB2cEntity.getCode(), otherSplitCodes);
                     sb.append(msg);
                 }
             }
@@ -1007,19 +1008,19 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
 
         String invalidCodes = sameTargetList.stream().filter(obj -> obj.getInvalidStatus() ||  obj.getBillStatus().equals(SoB2cBillStatusEnum.ENUM_FROZEN.getCode()) || obj.getBillStatus().equals(SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode()) || obj.getBillStatus().equals(SoB2cBillStatusEnum.ENUM_SHIPPED.getCode())).map(SoB2cEntity::getCode).collect(Collectors.joining(","));
         if (StringUtils.isNotBlank(invalidCodes)) {
-            throw new ServiceException(StrUtil.format("{} 已作废，已冻结，待发货，已发货不允许还原拆分",invalidCodes));
+            throw new ServiceException( CharSequenceUtil.format("{} 已作废，已冻结，待发货，已发货不允许还原拆分",invalidCodes));
         }
 
         log.info("删除B2C销售订单数据，ids = {}", targetIdList);
         //删除拆分后的数据
-        soB2cService.deleteById(targetIdList);
+        soB2cService.deleteById(targetIdList,entity.getCode());
         //反作废合并前的数据
         log.info("反作废原B2C销售订单数据，id = {}", entity.getId());
         soB2cService.unInvalid(soB2cRefList.get(0).getSourceId(), SoB2cInvalidTypeEnum.ENUM_AUTOMATIC);
         //操作日志
         String msg = "从【{}】取消拆分";
-        operateLogService.addModuleOperateLog(StrUtil.format(msg, entity.getCode()), ModuleTypeEnum.SO_B2C.getCode(), entity.getId(), "取消拆分");
-        operateLogService.addModuleOperateLog(StrUtil.format("订单取消拆分"), ModuleTypeEnum.SO_B2C.getCode(), soB2cRefList.get(0).getSourceId(), "取消拆分");
+        operateLogService.addModuleOperateLog( CharSequenceUtil.format(msg, entity.getCode()), ModuleTypeEnum.SO_B2C.getCode(), entity.getId(), "取消拆分");
+        operateLogService.addModuleOperateLog( CharSequenceUtil.format("订单取消拆分"), ModuleTypeEnum.SO_B2C.getCode(), soB2cRefList.get(0).getSourceId(), "取消拆分");
         //删除原单备注
         this.lambdaUpdate().eq(SoB2cEntity::getId,soB2cRefList.get(0).getSourceId()).set(SoB2cEntity::getRemark,"").update();
         return BatchResultDTO.success(entity.getId(), entity.getCode(), "取消拆分");

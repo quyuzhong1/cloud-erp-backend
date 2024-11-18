@@ -1,24 +1,21 @@
 package com.erp.server.plm.service.impl;
 
 
-import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.service.impl.SuperServiceImpl;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapperUtils;
+import com.erp.model.plm.dto.PilotApplicationDetailDTO;
 import com.erp.model.plm.entity.PilotApplicationDetailEntity;
 import com.erp.server.plm.mapper.PilotApplicationDetailMapper;
 import com.erp.server.plm.service.PilotApplicationDetailService;
-import com.common.business.service.impl.SuperServiceImpl;
-import com.common.business.threadlocal.UserContext;
-import com.erp.server.plm.service.CommonService;
-import com.common.core.exception.ServiceException;
-import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Transactional;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
-import com.erp.model.plm.dto.PilotApplicationDetailDTO;
-import java.util.*;
-import com.common.core.utils.*;
-import com.common.core.enums.ApiError;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Optional;
 /**
  * <p>
  * 试产/量产 明细 服务实现类
@@ -37,9 +34,6 @@ public class PilotApplicationDetailServiceImpl extends SuperServiceImpl<PilotApp
     public BaseResultDTO.AddDTO add(PilotApplicationDetailDTO.AddDTO addDTO) {
         PilotApplicationDetailEntity pilotApplicationDetailEntity = new PilotApplicationDetailEntity();
         BeanMapperUtils.copy(addDTO, pilotApplicationDetailEntity);
-
-        // 数据处理
-        handleData(pilotApplicationDetailEntity);
 
         log.info("开始新增试产/量产 明细");
         boolean save = super.save(pilotApplicationDetailEntity);
@@ -60,12 +54,10 @@ public class PilotApplicationDetailServiceImpl extends SuperServiceImpl<PilotApp
     @Override
     public Boolean update(PilotApplicationDetailDTO.UpdateDTO updateDTO) {
         PilotApplicationDetailEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "试产/量产 明细"));
+        PilotApplicationDetailEntity oldEntity = Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "试产/量产 明细"));
         PilotApplicationDetailEntity pilotApplicationDetailEntity =  BeanMapperUtils.map(PilotApplicationDetailEntity.class, updateDTO);
 
-        // 数据处理
-        handleData(pilotApplicationDetailEntity);
-        log.info("编辑 开始修改试产/量产 明细数据，id：【{}】", old.getId());
+        log.info("编辑 开始修改试产/量产 明细数据，id：【{}】", oldEntity.getId());
         boolean save = super.updateById(pilotApplicationDetailEntity);
         if(!save) {
             throw new ServiceException("试产/量产 明细保存失败");
@@ -74,13 +66,5 @@ public class PilotApplicationDetailServiceImpl extends SuperServiceImpl<PilotApp
 
         // 记录主单操作日志
         return Boolean.TRUE;
-    }
-
-
-    /**
-    * 新增修改处理数据
-    */
-    private void handleData(PilotApplicationDetailEntity pilotApplicationDetailEntity) {
-    // TODO 验证数据 & 数据赋值
     }
 }

@@ -1,23 +1,21 @@
 package com.erp.model.wms.dto;
 
-import java.time.LocalDate;
-import java.time.LocalDateTime;
+import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
-
-import java.util.Date;
-import java.util.List;
-
 import com.common.business.enums.ApproveStatusEnum;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
-import java.io.Serializable;
+
 import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
 import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.Size;
 import javax.validation.constraints.NotEmpty;
-import com.common.business.dto.AdvanceQueryDTO;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
+import java.io.Serializable;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Map;
 
 /**

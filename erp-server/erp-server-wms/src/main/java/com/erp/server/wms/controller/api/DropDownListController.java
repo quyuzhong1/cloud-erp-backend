@@ -33,7 +33,7 @@ public class DropDownListController extends BaseController {
     @Resource
     private QcRuleService qcRuleService;
 
-    @Autowired
+    @Resource
     private ProductInfoService productInfoService;
     @Resource
     private WarehouseLocationService warehouseLocationService;

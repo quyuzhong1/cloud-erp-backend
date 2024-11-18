@@ -1,7 +1,7 @@
 package com.common.business.aspect;
 
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.enums.QueryConditionEnum;
@@ -93,7 +93,7 @@ public class WebAdvanceQueryAspect {
                 if (condEnum == null) {
                     throw new ServiceException(ApiError.QUERY_ILLEGAL_COND);
                 }
-                if(!QueryConditionEnum.SET_NO_VAL.contains(condEnum) && (ObjectUtil.isEmpty(dto.getValue()) || (StrUtil.isEmpty(dto.getValue().toString())))){
+                if(!QueryConditionEnum.SET_NO_VAL.contains(condEnum) && (ObjectUtil.isEmpty(dto.getValue()) || (CharSequenceUtil.isEmpty(dto.getValue().toString())))){
                     stringBuilder.append(" 1 = 1 ").append(dto.getCompareSymbol()).append(" ");
                     continue;
                 }

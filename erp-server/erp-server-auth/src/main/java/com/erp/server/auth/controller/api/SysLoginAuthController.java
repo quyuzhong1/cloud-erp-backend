@@ -1,8 +1,21 @@
 package com.erp.server.auth.controller.api;
 
 
+import java.util.Date;
+import java.util.Objects;
+
+import javax.annotation.Resource;
+import javax.servlet.http.HttpServletRequest;
+
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
 import com.common.business.constant.TokenConstants;
-import com.common.business.enums.UserTypeEnum;
 import com.common.business.vo.LoginUser;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
@@ -20,18 +33,6 @@ import com.erp.model.sys.vo.SysLoginUserVO;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.auth.server.AuthTokenService;
 import com.erp.server.auth.server.LoginAuthService;
-import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-
-import javax.annotation.Resource;
-import javax.servlet.http.HttpServletRequest;
-import java.util.Date;
-import java.util.Objects;
 
 
 /**
@@ -104,7 +105,7 @@ public class SysLoginAuthController extends BaseController {
      */
     @LogAction(value = LogActionEnum.LOGOUT, desc = "退出登录")
     @RequestMapping("/logout")
-    public ApiResult Logout(HttpServletRequest request) {
+    public ApiResult logout(HttpServletRequest request) {
         String accountToken = request.getHeader(TokenConstants.AUTHENTICATION);
         authTokenService.removeToken(accountToken);
         return success();

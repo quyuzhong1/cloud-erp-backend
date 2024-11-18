@@ -5,7 +5,6 @@ import com.common.core.enums.CurrencyEnum;
 import com.erp.model.tms.entity.LogisticsChannelConstraintEntity;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.springframework.validation.annotation.Validated;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
@@ -226,12 +225,12 @@ public class LogisticsChannelConstraintDTO implements Serializable {
         /**
         * 最低报关币种
         */
-        private String minCustomsCurrency = CurrencyEnum.USD.getCurrencyCode();;
+        private String minCustomsCurrency = CurrencyEnum.USD.getCurrencyCode();
 
         /**
         * 重量上限
         */
-        private BigDecimal maxWeight = BigDecimal.ZERO;;
+        private BigDecimal maxWeight = BigDecimal.ZERO;
 
         /**
         * 重量单位

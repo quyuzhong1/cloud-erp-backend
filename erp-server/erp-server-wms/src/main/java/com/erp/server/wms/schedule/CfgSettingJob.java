@@ -1,6 +1,7 @@
 package com.erp.server.wms.schedule;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
@@ -124,14 +125,14 @@ public class CfgSettingJob {
         //质检单总计
         Integer totalCount = list.stream().map(QcEffectivenessDTO.ViewQcOverviewDetailDTO::getCount).reduce(MathUtil.ZERO,Integer::sum);
         //已质检数量
-        Integer hasQcCount = list.stream().filter(obj -> StrUtil.equals(obj.getType(), QcBillStatusEnum.FINISH_QC.getCode())
-                || StrUtil.equals(obj.getType(), QcBillStatusEnum.EXEMPTION.getCode()))
+        Integer hasQcCount = list.stream().filter(obj -> CharSequenceUtil.equals(obj.getType(), QcBillStatusEnum.FINISH_QC.getCode())
+                || CharSequenceUtil.equals(obj.getType(), QcBillStatusEnum.EXEMPTION.getCode()))
                 .map(QcEffectivenessDTO.ViewQcOverviewDetailDTO::getCount)
                 .reduce(MathUtil.ZERO,Integer::sum);
         //未质检数量
-        Integer notQcCount = list.stream().filter(obj -> StrUtil.equals(obj.getType(), QcBillStatusEnum.DRAFT.getCode())
-                ||  StrUtil.equals(obj.getType(), QcBillStatusEnum.WAIT_QC.getCode())
-                ||  StrUtil.equals(obj.getType(), QcBillStatusEnum.WAIT_RE_QC.getCode()))
+        Integer notQcCount = list.stream().filter(obj -> CharSequenceUtil.equals(obj.getType(), QcBillStatusEnum.DRAFT.getCode())
+                ||  CharSequenceUtil.equals(obj.getType(), QcBillStatusEnum.WAIT_QC.getCode())
+                ||  CharSequenceUtil.equals(obj.getType(), QcBillStatusEnum.WAIT_RE_QC.getCode()))
                 .map(QcEffectivenessDTO.ViewQcOverviewDetailDTO::getCount)
                 .reduce(MathUtil.ZERO,Integer::sum);
         //累计未质检
@@ -147,10 +148,10 @@ public class CfgSettingJob {
         String rate = MathUtil.divide(new BigDecimal(hasQcCount), new BigDecimal(totalCount)).multiply(MathUtil.BigDecimal_100).stripTrailingZeros().toPlainString() + "%";
 
         //消息头
-        String title = StrUtil.format(NoticeMsgConstant.FS_QC_SETTING_HEAD,totalCount,hasQcCount,rate,notQcCount,notQcTotalCount,timeOutTotalCount);
+        String title = CharSequenceUtil.format(NoticeMsgConstant.FS_QC_SETTING_HEAD,totalCount,hasQcCount,rate,notQcCount,notQcTotalCount,timeOutTotalCount);
         noticeMsgInfoDTO.setTitle(title);
         //消息体
-        String msgContent = StrUtil.format(NoticeMsgConstant.FS_QC_SETTING_CONTENT,"质检通知", LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+        String msgContent = CharSequenceUtil.format(NoticeMsgConstant.FS_QC_SETTING_CONTENT,"质检通知", LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
         noticeMsgInfoDTO.setContent(msgContent);
         noticeMsgInfoDTO.setNoticeTypeEnum(NoticeTypeEnum.WMS_TASK);
         SendResult result = mqProducerService.syncClassMsg(RocketMqTopic.NOTICE_MSG_TOPIC, tagName,

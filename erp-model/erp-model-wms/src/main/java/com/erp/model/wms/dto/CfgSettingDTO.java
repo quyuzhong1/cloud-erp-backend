@@ -107,6 +107,23 @@ public class CfgSettingDTO implements Serializable {
         private CfgSettingValueDTO.SubcontractInStock subcontractInStock;
 
         /**
+         * 飞书要货申请待处理配置
+         */
+        private CfgSettingValueDTO.FsRequisitionNoticeDTO fsRequisitionWaitHandleDTO;
+        /**
+         * 飞书要货申请处理中配置
+         */
+        private CfgSettingValueDTO.FsRequisitionNoticeDTO fsRequisitionHandleIngNoticeDTO;
+        /**
+         * 飞书要货申请已装箱配置
+         */
+        private CfgSettingValueDTO.FsRequisitionNoticeDTO fsRequisitionPackingNoticeDTO;
+        /**
+         * 飞书头程发货单待处理配置
+         */
+        private CfgSettingValueDTO.FsRequisitionNoticeDTO fsFirstMileDeliveryWaitHandleNoticeDTO;
+
+        /**
          * 飞书仓位补货通知配置
          */
         private CfgSettingValueDTO.FsQcNoticeDTO fsWlrNoticeDTO;

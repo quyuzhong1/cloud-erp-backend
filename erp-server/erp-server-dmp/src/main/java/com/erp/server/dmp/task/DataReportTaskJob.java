@@ -79,7 +79,6 @@ public class DataReportTaskJob {
             }
         } catch (SQLException e) {
             XxlJobHelper.log("DmpOrderCreateTimeToPhysical error");
-            e.printStackTrace();
         }
         XxlJobHelper.log("DmpOrderCreateTimeToPhysical end :" + LocalDateTime.now());
     }
@@ -101,7 +100,6 @@ public class DataReportTaskJob {
             }
         } catch (SQLException e) {
             XxlJobHelper.log("DmpOrderDeliveryTimeToPhysical error");
-            e.printStackTrace();
         }
         XxlJobHelper.log("DmpOrderDeliveryTimeToPhysical end :" + LocalDateTime.now());
     }

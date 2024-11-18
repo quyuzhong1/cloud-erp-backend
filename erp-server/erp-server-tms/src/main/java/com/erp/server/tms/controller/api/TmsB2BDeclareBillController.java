@@ -129,7 +129,7 @@ public class TmsB2BDeclareBillController extends BaseController {
         menuCode = "tms:tmsB2BDeclareBill:update",
         serviceClass = TmsDeclareBillService.class,
         keyIdName = "id")
-    public ApiResult<?> update(@RequestBody @Validated TmsDeclareBillDTO.UpdateDTO dto) {
+    public ApiResult<Object> update(@RequestBody @Validated TmsDeclareBillDTO.UpdateDTO dto) {
         tmsDeclareBillService.update(dto,SourceTypeEnum.B2B_DECLARE_BILL);
         return success();
     }
@@ -256,7 +256,7 @@ public class TmsB2BDeclareBillController extends BaseController {
     @PostMapping("/export")
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出B2B报关单列表")
     @WebAdvanceQuery(handler = TmsB2BDeclareQueryHandler.class)
-    public ApiResult export(@RequestBody @Valid TmsDeclareBillDTO.PagingParamDTO pagingParamDTO) {
+    public ApiResult<Object>export(@RequestBody @Valid TmsDeclareBillDTO.PagingParamDTO pagingParamDTO) {
         downloadTaskFeign.saveDownloadTask("B2B报关单列表", EXPORT_TMS_TMS_B2B_DECLARE_BILL.getCode(), pagingParamDTO);
         return success();
     }
@@ -267,7 +267,7 @@ public class TmsB2BDeclareBillController extends BaseController {
     @PostMapping("/exportDeclare")
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出B2B报关单报关信息")
     @WebAdvanceQuery(handler = TmsB2BDeclareQueryHandler.class)
-    public ApiResult exportDeclare(@RequestBody @Valid TmsDeclareBillDTO.PagingParamDTO pagingParamDTO, HttpServletResponse response) throws IOException {
+    public ApiResult<Object>exportDeclare(@RequestBody @Valid TmsDeclareBillDTO.PagingParamDTO pagingParamDTO, HttpServletResponse response) throws IOException {
         pagingParamDTO.setType(SourceTypeEnum.B2B_DECLARE_BILL.getCode());
         tmsDeclareBillService.exportDeclare(pagingParamDTO,response);
         return success();

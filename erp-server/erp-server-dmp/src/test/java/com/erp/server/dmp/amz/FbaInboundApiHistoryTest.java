@@ -147,7 +147,7 @@ public class FbaInboundApiHistoryTest {
      */
     @Test
     public void getAllShipmentsTest() throws ApiException {
-        FbaInboundApi api = null;
+        FbaInboundApi api = new FbaInboundApi(null);
         String queryType = "DATE_RANGE";
         String marketplaceId = "ATVPDKIKX0DER";
         List<String> shipmentStatusList = AmazonFbaShipmentStatusEnum.getAllStatus();

@@ -21,11 +21,11 @@ import com.erp.server.tms.query.LogisticsLastMileCostQueryHandler;
 import com.erp.server.tms.service.LogisticsBillCostService;
 import com.erp.server.tms.service.LogisticsLastMileCostService;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
 import java.util.List;
@@ -42,10 +42,10 @@ import java.util.List;
 @RequestMapping("/logisticsLastMileCost")
 public class LogisticsLastMileCostController extends BaseController {
 
-    @Autowired
+    @Resource
     private LogisticsBillCostService logisticsBillCostService;
 
-    @Autowired
+    @Resource
     private LogisticsLastMileCostService logisticsLastMileCostService;
 
 
@@ -100,7 +100,7 @@ public class LogisticsLastMileCostController extends BaseController {
         menuCode = "tms:logisticsLastMileCost:update",
         serviceClass = LogisticsBillCostService.class,
         keyIdName = "id")
-    public ApiResult update(@RequestBody @Validated LogisticsBillCostDTO.UpdateDTO dto) {
+    public ApiResult<Object>update(@RequestBody @Validated LogisticsBillCostDTO.UpdateDTO dto) {
         logisticsLastMileCostService.update(dto,Boolean.FALSE);
         return success();
     }
@@ -162,7 +162,7 @@ public class LogisticsLastMileCostController extends BaseController {
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "下载自发货费用模板")
     @GetMapping("/downloadTemplate")
-    public ApiResult downloadTemplate(HttpServletResponse response) {
+    public ApiResult<Object>downloadTemplate(HttpServletResponse response) {
         Boolean result = logisticsLastMileCostService.downloadTemplate(response);
         return result ? success() : failure();
     }
@@ -177,7 +177,7 @@ public class LogisticsLastMileCostController extends BaseController {
      */
     @LogAction(value = LogActionEnum.IMPORT, desc = "导入自发货费用模板")
     @PostMapping("/import")
-    public ApiResult exportWarehouse(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
+    public ApiResult<Object>exportWarehouse(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
         Boolean result = logisticsLastMileCostService.importFile(excelFile, response);
         return result ? success() : failure();
     }
@@ -191,7 +191,7 @@ public class LogisticsLastMileCostController extends BaseController {
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出自发货费用模板")
     @PostMapping(value = "/exportExcel")
-    public ApiResult exportExcel(@RequestBody LogisticsBillCostDTO.PagingParamDTO dto) {
+    public ApiResult<Object>exportExcel(@RequestBody LogisticsBillCostDTO.PagingParamDTO dto) {
         Boolean flag = logisticsLastMileCostService.exportExcel(dto);
         return flag == true ? success() : failure();
     }

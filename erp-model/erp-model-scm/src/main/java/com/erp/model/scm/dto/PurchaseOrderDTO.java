@@ -1,6 +1,5 @@
 package com.erp.model.scm.dto;
 
-import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.SortDTO;
@@ -1439,10 +1438,7 @@ public class PurchaseOrderDTO implements Serializable {
          * 采购组织名称
          */
         private String purchaseOrgName;
-        /**
-         * 商品信息
-         */
-//        private List<PurchaseOrderDetailDTO.PdaPurchaseOrderDetail> itemList;
+
     }
 
     /**
@@ -1649,5 +1645,28 @@ public class PurchaseOrderDTO implements Serializable {
          * 批量校验结果
          */
         private List<BatchResultDTO> batchResultDTOList;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class SourceCodeParamDTO extends SortDTO{
+
+        /**
+         * 关键词
+         */
+        private String searchKeyword;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class SourceCodeDTO {
+        /**
+         * 主键id
+         */
+        private String id;
+        /**
+         * 编码
+         */
+        private String code;
     }
 }

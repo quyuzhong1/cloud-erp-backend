@@ -1,9 +1,7 @@
 package com.erp.model.workflow.dto;
 
-import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.ApproveTypeEnum;
 import com.erp.model.workflow.entity.ProcessManagementEntity;
-import com.erp.model.workflow.entity.ProcessTaskManagementEntity;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 

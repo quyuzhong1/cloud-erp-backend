@@ -1,7 +1,9 @@
 package com.erp.server.wms.service.impl;
 
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -71,7 +73,7 @@ public class VirtualWarehouseRelationServiceImpl extends SuperServiceImpl<Virtua
         }
 
         // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "虚拟仓实体仓关联关系", virtualWarehouseRelationEntity.getId());
+        String msg = CharSequenceUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "虚拟仓实体仓关联关系", virtualWarehouseRelationEntity.getId());
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLog(msg, null, virtualWarehouseRelationEntity.getId(), "新增操作");
         // TODO 新增明细（如果有明细的话）
@@ -86,7 +88,9 @@ public class VirtualWarehouseRelationServiceImpl extends SuperServiceImpl<Virtua
     @Override
     public Boolean update(VirtualWarehouseRelationDTO.UpdateDTO updateDTO) {
         VirtualWarehouseRelationEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "虚拟仓实体仓关联关系"));
+        if (Objects.isNull(old)){
+            throw new ServiceException(ApiError.NOT_EXIST_BILL, "虚拟仓实体仓关联关系");
+        }
         VirtualWarehouseRelationEntity virtualWarehouseRelationEntity = BeanMapperUtils.map(VirtualWarehouseRelationEntity.class, updateDTO);
 
         // 数据处理
@@ -100,7 +104,7 @@ public class VirtualWarehouseRelationServiceImpl extends SuperServiceImpl<Virtua
 
         // 记录主单操作日志
         log.info("编辑 开始记录虚拟仓实体仓关联关系日志数据，id：【{}】", virtualWarehouseRelationEntity.getId());
-        String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), virtualWarehouseRelationEntity.getId(), "虚拟仓实体仓关联关系");
+        String msg = CharSequenceUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), virtualWarehouseRelationEntity.getId(), "虚拟仓实体仓关联关系");
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLogByObj(old, virtualWarehouseRelationEntity, null, virtualWarehouseRelationEntity.getId(), msg);
         return Boolean.TRUE;
@@ -195,11 +199,11 @@ public class VirtualWarehouseRelationServiceImpl extends SuperServiceImpl<Virtua
 
         String oldWarehouseMsg = warehouseList.stream().filter(obj -> warehouseIdList.contains(obj.getId()))
                 .map(WarehouseEntity::getName).distinct().collect(Collectors.joining(","));
-        if (StrUtil.equals(oldWarehouseMsg,newWarehouseMsg)) {
+        if (CharSequenceUtil.equals(oldWarehouseMsg,newWarehouseMsg)) {
             return;
         }
         // 操作日志
-        String msg = StrUtil.format("关联仓库：从【{}】修改为【{}】",oldWarehouseMsg,newWarehouseMsg );
+        String msg = CharSequenceUtil.format("关联仓库：从【{}】修改为【{}】",oldWarehouseMsg,newWarehouseMsg );
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.VIRTUAL_WAREHOUSE.getCode(), batchAddDTO.getVirtualWarehouseId(), "编辑信息");
     }
 
@@ -224,8 +228,8 @@ public class VirtualWarehouseRelationServiceImpl extends SuperServiceImpl<Virtua
 
     @Override
     public List<VirtualWarehouseRelationEntity> listByWarehouseIdList(List<String> warehouseIdList,List<String> virtualWarehouseIdList) {
-        if (CollectionUtil.isEmpty(warehouseIdList)) {
-            return Collections.EMPTY_LIST;
+        if (CollUtil.isEmpty(warehouseIdList)) {
+            return Collections.emptyList();
         }
         List<VirtualWarehouseRelationEntity> list = lambdaQuery()
                 .in(VirtualWarehouseRelationEntity::getWarehouseId, warehouseIdList)
@@ -242,7 +246,7 @@ public class VirtualWarehouseRelationServiceImpl extends SuperServiceImpl<Virtua
         List<VirtualWarehouseRelationDTO.SelectResultDTO> list = baseMapper.listWarehouseIdList(warehouseIdList,shopIdList);
 
         //平台下店铺
-        List<String> platformList = list.stream().filter(obj -> StrUtil.isNotBlank(obj.getDictPlatform())).map(VirtualWarehouseRelationDTO.SelectResultDTO::getDictPlatform).distinct().collect(Collectors.toList());
+        List<String> platformList = list.stream().filter(obj -> CharSequenceUtil.isNotBlank(obj.getDictPlatform())).map(VirtualWarehouseRelationDTO.SelectResultDTO::getDictPlatform).distinct().collect(Collectors.toList());
         List<ShopInfoEntity> shopList = CollectionUtils.isEmpty(platformList) ? new ArrayList<>() : FeignQuery.create(ShopInfoEntity.class)
                 .in(ShopInfoEntity::getDictPlatform, platformList)
                 .eq(ShopInfoEntity::getDisabled,Boolean.FALSE)
@@ -255,7 +259,7 @@ public class VirtualWarehouseRelationServiceImpl extends SuperServiceImpl<Virtua
             isExistVirtualResultDTO.setWarehouseId(dto.getWarehouseId());
             isExistVirtualResultDTO.setRelationId(dto.getRelationId());
 
-            List<VirtualWarehouseRelationDTO.SelectResultDTO> selectResultList = list.stream().filter(obj -> StrUtil.equals(obj.getWarehouseId(), dto.getWarehouseId())).collect(Collectors.toList());
+            List<VirtualWarehouseRelationDTO.SelectResultDTO> selectResultList = list.stream().filter(obj -> CharSequenceUtil.equals(obj.getWarehouseId(), dto.getWarehouseId())).collect(Collectors.toList());
             //无虚拟仓数据则直接返回
             if (CollectionUtils.isEmpty(selectResultList)) {
                 isExistVirtualResultDTO.setIsExistVirtual(Boolean.FALSE);
@@ -263,34 +267,42 @@ public class VirtualWarehouseRelationServiceImpl extends SuperServiceImpl<Virtua
                 continue;
             }
             //未传关联id则直接返回
-            if (StrUtil.isBlank(dto.getRelationId())) {
+            if (CharSequenceUtil.isBlank(dto.getRelationId())) {
                 isExistVirtualResultDTO.setIsExistVirtual(Boolean.TRUE);
                 resultDTOList.add(isExistVirtualResultDTO);
                 continue;
             }
             //平台
-            String platform = shopList.stream().filter(obj -> StrUtil.equals(obj.getId(), dto.getRelationId())).map(ShopInfoEntity::getDictPlatform).findFirst().orElse("");
+            String platform = shopList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), dto.getRelationId())).map(ShopInfoEntity::getDictPlatform).findFirst().orElse("");
 
             //关联仓库按平台
             String type = selectResultList.get(0).getType();
             if (VitualWarehouseChannelTypeEnum.PLATFORM.getCode().equals(type)) {
-                List<ShopInfoEntity> platformShopList = shopList.stream().filter(obj -> StrUtil.equals(obj.getDictPlatform(), platform)).collect(Collectors.toList());
+                List<ShopInfoEntity> platformShopList = shopList.stream().filter(obj -> CharSequenceUtil.equals(obj.getDictPlatform(), platform)).collect(Collectors.toList());
                 if (CollectionUtils.isEmpty(platformShopList)) {
                     isExistVirtualResultDTO.setIsExistVirtual(Boolean.FALSE);
                     resultDTOList.add(isExistVirtualResultDTO);
                     continue;
                 }
-                long count = platformShopList.stream().filter(obj -> StrUtil.equals(obj.getId(), dto.getRelationId())).count();
+                long count = platformShopList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), dto.getRelationId())).count();
                 isExistVirtualResultDTO.setIsExistVirtual(count > 0 ? Boolean.TRUE : Boolean.FALSE);
                 resultDTOList.add(isExistVirtualResultDTO);
             } else {
                 //按店铺
-                long count = selectResultList.stream().filter(obj -> StrUtil.equals(obj.getRelationId(), dto.getRelationId())).count();
+                long count = selectResultList.stream().filter(obj -> CharSequenceUtil.equals(obj.getRelationId(), dto.getRelationId())).count();
                 isExistVirtualResultDTO.setIsExistVirtual(count > 0 ? Boolean.TRUE : Boolean.FALSE);
                 resultDTOList.add(isExistVirtualResultDTO);
             }
         }
         return resultDTOList;
+    }
+
+    @Override
+    public List<VirtualWarehouseRelationEntity> listByVirtualWarehouseIdList(List<String> virtualWarehouseIdList) {
+        if (CollectionUtils.isEmpty(virtualWarehouseIdList)) {
+            return Collections.emptyList();
+        }
+        return lambdaQuery().in(VirtualWarehouseRelationEntity::getVirtualWarehouseId,virtualWarehouseIdList).list();
     }
 
 }

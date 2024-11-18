@@ -3,8 +3,6 @@ package com.erp.model.tms.dto.excel;
 import com.alibaba.excel.annotation.ExcelProperty;
 import com.common.business.utils.LocalDateStringConverter;
 import com.common.core.anno.FieldValid;
-import com.common.core.enums.CurrencyEnum;
-import com.erp.model.plm.enums.ProductDetailStateEnum;
 import com.erp.model.tms.enums.FmLogisticTrackStatusEnum;
 import com.erp.model.wms.enums.LogisticsMethodEnum;
 import lombok.Data;

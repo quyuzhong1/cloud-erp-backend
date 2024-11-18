@@ -1,6 +1,7 @@
 package com.erp.server.wms.controller.api;
 
 
+import cn.hutool.core.text.CharSequenceUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
@@ -73,7 +74,7 @@ public class QcRuleController extends BaseController {
             keyIdName = "id")
     public ApiResult add(@RequestBody @Validated QcRuleDTO.AddDTO dto) {
         String id = qcRuleService.add(dto);
-        return StringUtils.isNotBlank(id) ? success() : failure();
+        return CharSequenceUtil.isNotBlank(id) ? success() : failure();
     }
 
     /**
@@ -140,7 +141,7 @@ public class QcRuleController extends BaseController {
             keyIdName = "id")
     public ApiResult update(@RequestBody @Validated QcRuleDTO.UpdateDTO dto) {
         String id = qcRuleService.updateQcRule(dto);
-        return StringUtils.isNotBlank(id) ? success() : failure();
+        return CharSequenceUtil.isNotBlank(id) ? success() : failure();
     }
 
     /**

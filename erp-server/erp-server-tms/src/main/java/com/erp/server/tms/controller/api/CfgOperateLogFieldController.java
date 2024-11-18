@@ -30,7 +30,7 @@ public class CfgOperateLogFieldController extends BaseController {
      * @return ApiResult
      */
     @PostMapping("/saveBatchSysLogField")
-    public ApiResult saveBatchSysLogField() {
+    public ApiResult<String> saveBatchSysLogField() {
         Boolean flag = cfgOperateLogFieldService.saveBatchSysLogField();
         return flag == true ? success() : failure();
     }

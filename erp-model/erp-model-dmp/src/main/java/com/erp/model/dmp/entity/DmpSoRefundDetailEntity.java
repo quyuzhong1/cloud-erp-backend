@@ -97,6 +97,26 @@ public class DmpSoRefundDetailEntity extends BaseEntity<DmpSoRefundDetailEntity>
      */
     @TableField("tax_amount")
     private BigDecimal taxAmount;
+    /**
+     * 拓展字段
+     */
+    @TableField("extend_data")
+    private String extendData = "{}";
+    /**
+     * 第三方平台订单编号
+     */
+    @TableField("third_order_code")
+    private String thirdOrderCode = "";
+    /**
+     * 销售平台原始订单编号
+     */
+    @TableField("platform_order_code")
+    private String platformOrderCode = "";
+    /**
+     * 来源订单明细id
+     */
+    @TableField("src_order_detail_id")
+    private String srcOrderDetailId = "";
 
 
     public static final String MAIN_ID = "main_id";

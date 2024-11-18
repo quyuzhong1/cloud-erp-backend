@@ -1,8 +1,7 @@
 package com.erp.server.oms.service.impl;
 
-import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -49,13 +48,8 @@ import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
-import com.erp.rpc.scm.feign.*;
 import com.erp.rpc.sys.feign.SysUserFeign;
-import com.erp.rpc.wms.feign.SoOutstockFeign;
-import com.erp.rpc.wms.feign.SoReturnInstockFeign;
-import com.erp.rpc.wms.feign.SoReturnNoticeFeign;
-import com.erp.rpc.wms.feign.SoReturnReceiveFeign;
-import com.erp.rpc.wms.feign.WmsTaskFeign;
+import com.erp.rpc.wms.feign.*;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.oms.convert.SoReturnConverter;
 import com.erp.server.oms.mapper.SoReturnMapper;
@@ -777,7 +771,7 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
             }
             if (Objects.nonNull(soInfoEntity) && com.alibaba.nacos.common.utils.StringUtils.isNotEmpty(soInfoEntity.getId())) {
                 List<SoDetailEntity> soDetailEntities = soDetailService.listSoDetailByMainId(soInfoEntity.getId());
-                if (CollectionUtil.isNotEmpty(soDetailEntities)) {
+                if (CollUtil.isNotEmpty(soDetailEntities)) {
                     soDetailEntityMap = soDetailEntities.stream().collect(Collectors.toMap(SoDetailEntity::getId, Function.identity()));
                     SoDetailEntity detailEntity = soDetailEntities.stream().filter(soDetailEntity -> Objects.nonNull(soDetailEntity.getExchangeRate())).findFirst().orElse(null);
                     BigDecimal exchangeRate;
@@ -827,7 +821,7 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
         //退货单详情
         List<SoReturnDetailEntity> details = soReturnDetailService.listDetailByMainId(soReturnEntity.getId());
         //明细字段转换
-        if (CollectionUtil.isNotEmpty(details)) {
+        if (CollUtil.isNotEmpty(details)) {
             //订单明细
             List<BiReturnOrderItemEntity> orderItemEntities = new ArrayList<>(details.size());
 
@@ -1158,15 +1152,23 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
         List<SoReturnReceiveDetailEntity> soReturnReceiveDetailEntities = soReturnReceiveFeign.listDetailBySourceDetailIds(srdIds);
 
         //获取未全部到货的退货单详情id
-        List<String> soReturnDetailIds = new ArrayList<>();
-        soReturnReceiveDetailEntities.stream().collect(Collectors.groupingBy(n -> n.getSourceDetailId(), Collectors.collectingAndThen(Collectors.toList(), m -> {
-            SoReturnDetailEntity detailEntity = soReturnDetailEntityList.stream().filter(req -> req.getId().equals(m.get(MathUtil.ZERO).getSourceDetailId())).findFirst().orElse(new SoReturnDetailEntity());
-            int receiveQty = m.stream().mapToInt(SoReturnReceiveDetailEntity::getReceiveQty).sum();
-            if (receiveQty < detailEntity.getReturnQty()) {
-                soReturnDetailIds.add(m.get(MathUtil.ZERO).getSourceDetailId());
-            }
-            return m;
-        })));
+        // 转换 soReturnDetailEntityList 为 Map
+        Map<String, SoReturnDetailEntity> detailEntityMap = soReturnDetailEntityList.stream()
+                .collect(Collectors.toMap(SoReturnDetailEntity::getId, entity -> entity));
+
+        // 获取未全部到货的退货单详情 ID
+        List<String> soReturnDetailIds = soReturnReceiveDetailEntities.stream()
+                .collect(Collectors.groupingBy(SoReturnReceiveDetailEntity::getSourceDetailId))
+                .entrySet().stream()
+                .filter(entry -> {
+                    String sourceDetailId = entry.getKey();
+                    List<SoReturnReceiveDetailEntity> receiveDetails = entry.getValue();
+                    int receiveQty = receiveDetails.stream().mapToInt(SoReturnReceiveDetailEntity::getReceiveQty).sum();
+                    SoReturnDetailEntity detailEntity = detailEntityMap.getOrDefault(sourceDetailId, new SoReturnDetailEntity());
+                    return receiveQty < detailEntity.getReturnQty();
+                })
+                .map(Map.Entry::getKey)
+                .collect(Collectors.toList());
 
         List<String> collect = soReturnReceiveDetailEntities.stream().map(req -> req.getSourceDetailId()).distinct().collect(Collectors.toList());
         List<String> ids = srdIds.stream().filter(poid -> !collect.contains(poid)).collect(Collectors.toList());

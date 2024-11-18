@@ -31,7 +31,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 @Profile("dev")
 public class AuthorizationApiTest {
 
-    private final AuthorizationApi api = null;
+    private final AuthorizationApi api = new AuthorizationApi(null);
 
     
     /**

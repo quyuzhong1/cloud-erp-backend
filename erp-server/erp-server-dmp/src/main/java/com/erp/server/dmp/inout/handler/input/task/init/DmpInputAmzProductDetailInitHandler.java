@@ -48,8 +48,8 @@ public class DmpInputAmzProductDetailInitHandler extends DmpInputInitHandler {
     @Override
     public List<DmpInputTaskInitDTO> getInitData(DmpInputInitRequest dmpRequest, DmpInputTaskResponse dmpResponse) {
         // 当前任务
-        String shopId = dmpCfgInputDetailEntity.getNextLevelId();
-        String extendJson = dmpCfgInputDetailEntity.getExtendJson();
+        String shopId = dmpInputTaskEntity.getNextLevelId();
+        String extendJson = dmpInputTaskEntity.getExtendJson();
         String lasMongoId = "";
         int size = 20;
         if (StringUtils.isNotBlank(extendJson)) {

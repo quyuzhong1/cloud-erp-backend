@@ -102,7 +102,7 @@ public class LogisticsBillController extends BaseController {
      * @date 2023-11-09 10:54
      */
     @PostMapping("/export")
-    public ApiResult exportExcel(@RequestBody @Valid LogisticsBillDTO.PagingParamDTO dto) {
+    public ApiResult<Object>exportExcel(@RequestBody @Valid LogisticsBillDTO.PagingParamDTO dto) {
         Boolean result = logisticsBillService.exportExcel(dto);
         return result ? success() : failure();
     }
@@ -167,14 +167,12 @@ public class LogisticsBillController extends BaseController {
     }
 
     /**
-     * 初始化历史物流单手机号数据
-     *
+     * 初始化头程发货单业务单号
      * @return
      */
-    @PostMapping("/initLogisticsBillPhone")
-    public ApiResult<LogisticsTrackDTO.ViewDTO> initLogisticsBillPhone(@RequestBody LogisticsBillDTO.BillPhoneDTO dto) {
-        logisticsBillService.initLogisticsBillPhone(dto);
+    @PostMapping("/initLogisticsBillBusinessCode")
+    public ApiResult<Object>initLogisticsBillBusinessCode(){
+        logisticsBillService.initLogisticsBillBusinessCode();
         return success();
-
     }
 }

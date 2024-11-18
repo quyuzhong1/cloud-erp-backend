@@ -48,17 +48,6 @@ public class CfgRulePackingActionEntity extends BaseEntity<CfgRulePackingActionE
     @TableField("index")
     private Integer index;
 
-
-    public static final String RULE_ID = "rule_id";
-
-    public static final String WAREHOUSE_ID = "warehouse_id";
-
-    public static final String WAREHOUSE_AREA_ID = "warehouse_area_id";
-
-    public static final String OUT_STOCK_MODE = "out_stock_mode";
-
-    public static final String INDEX = "index";
-
     @Override
     public Serializable pkVal() {
         return null;

@@ -238,7 +238,7 @@ public class SubcontractChangeServiceImpl extends SuperServiceImpl<SubcontractCh
     @Override
     public void update(SubcontractChangeDTO.UpdateDTO updateDTO) {
         SubcontractChangeEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(()->new ServiceException("未找到委外变更单"));
+        SubcontractChangeEntity oldEntity = Optional.ofNullable(old).orElseThrow(() -> new ServiceException("未找到委外变更单"));
         // 待提交和审核不通过允许修改
         if (!ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(old.getApproveStatus()) && !ApproveStatusEnum.REJECT.getStatus().equals(old.getApproveStatus())) {
             throw new ServiceException(ApiError.ERROR_1029);
@@ -249,7 +249,7 @@ public class SubcontractChangeServiceImpl extends SuperServiceImpl<SubcontractCh
         // 数据处理
         handleData(subcontractChangeEntity);
 
-        log.info("编辑 开始修改委外变更单数据，单号：【{}】", old.getCode());
+        log.info("编辑 开始修改委外变更单数据，单号：【{}】", oldEntity.getCode());
         boolean save = super.updateById(subcontractChangeEntity);
         if(!save) {
            throw new ServiceException("委外变更单保存失败");
