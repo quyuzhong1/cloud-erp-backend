@@ -116,7 +116,12 @@
         is_virtual AS isVirtual,
         approve_status AS approveStatus,
         is_enable_location AS isEnableLocation,
-        onway_warehouse_name AS onwayWarehouseName
+        onway_warehouse_name AS onwayWarehouseName,
+         channel_affiliation channelAffiliation,
+         shipping_organization shippingOrganization,
+         financial_organization financialOrganization,
+         open_time openTime,
+         close_time closeTime
 
         FROM warehouse WHERE is_deleted=false
       <choose>

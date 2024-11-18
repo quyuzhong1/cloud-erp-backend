@@ -714,9 +714,9 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
             if (Objects.nonNull(customerInfoEntity)) {
                 item.setCustomerName(customerInfoEntity.getName());
             }
-            item.setSettlementCurrency(currIdNameMap.get(item.getSettlementCurrency()));
-            item.setTradeCurrency(item.getTradeCurrency());
-            item.setReturnWarehouse(wareIdNameMap.get(item.getReturnWarehouse()));
+            item.setSettlementCurrencyName(currIdNameMap.get(item.getSettlementCurrency()));
+            item.setTradeCurrencyName(currIdNameMap.get(item.getTradeCurrency()));
+            item.setReturnWarehouseName(wareIdNameMap.get(item.getReturnWarehouse()));
         }
 
     }

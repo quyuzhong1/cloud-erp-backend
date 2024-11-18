@@ -182,13 +182,13 @@ public class ShopDTO implements Serializable {
         /**
          * 结算币别
          */
-        @Dict(serviceCode = ServiceCodeNameEnum.SYS , queryFieldName = "id" , returnFieldName = "name" , tableName = "dict_currency")
          private String settlementCurrency;
+        private String settlementCurrencyName;
          /**
          * 交易币别
          */
-        @Dict(serviceCode = ServiceCodeNameEnum.SYS , queryFieldName = "id" , returnFieldName = "name" , tableName = "dict_currency")
          private String tradeCurrency;
+        private String tradeCurrencyName;
          /**
          * 启用时间
          */
@@ -200,8 +200,8 @@ public class ShopDTO implements Serializable {
          /**
          * 店铺退货仓库：名称字段为returnWarehouseName
          */
-         @Dict(serviceCode = ServiceCodeNameEnum.WMS , queryFieldName = "id" , returnFieldName = "name" , tableName = "warehouse")
          private String returnWarehouse;
+         private String returnWarehouseName;
     }
 
 
