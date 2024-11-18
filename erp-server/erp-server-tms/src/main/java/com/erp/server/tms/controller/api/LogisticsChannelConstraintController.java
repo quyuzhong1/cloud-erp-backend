@@ -63,7 +63,7 @@ public class LogisticsChannelConstraintController extends BaseController {
      * @return
      */
     @GetMapping("/downloadTemplate")
-    public ApiResult downloadTemplate(HttpServletResponse response) {
+    public ApiResult<Object>downloadTemplate(HttpServletResponse response) {
         logisticsChannelConstraintService.downloadTemplate(response);
         return success();
     }
@@ -75,7 +75,7 @@ public class LogisticsChannelConstraintController extends BaseController {
      * @return
      */
     @PostMapping("/import")
-    public ApiResult importExcel(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
+    public ApiResult<Object>importExcel(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
         Boolean result = logisticsChannelConstraintService.importExcel(excelFile, response);
         return result ? success() : failure();
     }

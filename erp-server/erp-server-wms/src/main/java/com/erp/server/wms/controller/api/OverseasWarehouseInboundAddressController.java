@@ -47,7 +47,7 @@ public class OverseasWarehouseInboundAddressController extends BaseController {
             menuCode = "wms:overseasWarehouseInboundAddress:update",
             serviceClass = OverseasWarehouseInboundAddressService.class,
             keyIdName = "owia")
-    public ApiResult<?> add(@RequestBody @Validated OverseasWarehouseInboundAddressDTO.AddDTO dto) {
+    public ApiResult add(@RequestBody @Validated OverseasWarehouseInboundAddressDTO.AddDTO dto) {
         overseasWarehouseInboundAddressService.add(dto);
         return success();
     }
@@ -67,7 +67,7 @@ public class OverseasWarehouseInboundAddressController extends BaseController {
             menuCode = "wms:overseasWarehouseInboundAddress:update",
             serviceClass = OverseasWarehouseInboundService.class,
             keyIdName = "owi")
-    public ApiResult<?> update(@RequestBody @Validated OverseasWarehouseInboundAddressDTO.UpdateDTO dto) {
+    public ApiResult update(@RequestBody @Validated OverseasWarehouseInboundAddressDTO.UpdateDTO dto) {
         overseasWarehouseInboundAddressService.update(dto);
         return success();
     }
@@ -84,7 +84,7 @@ public class OverseasWarehouseInboundAddressController extends BaseController {
             serviceClass = OverseasWarehouseInboundAddressService.class,
             keyIdName = "owia")
     @GetMapping("/list")
-    public ApiResult<?> addressList() {
+    public ApiResult addressList() {
         List<OverseasWarehouseInboundAddressDTO.ListDTO> resultList = overseasWarehouseInboundAddressService.addressList();
         return success(resultList);
     }
@@ -103,7 +103,7 @@ public class OverseasWarehouseInboundAddressController extends BaseController {
             serviceClass = OverseasWarehouseInboundAddressService.class,
             keyIdName = "owia")
     @PostMapping("/delete")
-    public ApiResult<?> delete(@RequestBody @Validated BaseIdDTO dto) {
+    public ApiResult delete(@RequestBody @Validated BaseIdDTO dto) {
         Boolean flag = overseasWarehouseInboundAddressService.deleteById(dto.getId());
         return flag ? success() : failure();
     }

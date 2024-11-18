@@ -7,7 +7,6 @@ import com.erp.model.wms.entity.PickingDetailEntity;
 import com.erp.model.wms.entity.PickingListsEntity;
 import com.erp.model.wms.enums.PickingBillTypeEnum;
 import com.fasterxml.jackson.annotation.JsonFormat;
-import jnr.ffi.annotations.In;
 import lombok.Data;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -21,7 +20,9 @@ import java.util.Map;
 @Getter
 @Setter
 public class PickingListsDTO {
-
+    private PickingListsDTO() {
+        throw new IllegalStateException("Utility PickingListsDTO class");
+    }
 
     @Getter
     @Setter

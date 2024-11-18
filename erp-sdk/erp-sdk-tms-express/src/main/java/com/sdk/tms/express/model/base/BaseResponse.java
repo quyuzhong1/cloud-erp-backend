@@ -8,7 +8,7 @@ import java.io.Serializable;
 /**
  * @author zdy
  * @ClassName BaseResponse
- * @description: TODO
+
  * @date 2023年10月31日
  * @version: 1.0
  */

@@ -16,27 +16,27 @@ import java.util.List;
 @NoArgsConstructor
 public class FeishuSingleMsgResultVO implements Serializable {
 
-    private String message_id;
+    private String messageId;
 
-    private String root_id;
+    private String rootId;
 
-    private String parent_id;
+    private String parentId;
 
-    private String msg_type;
+    private String msgType;
 
-    private String create_time;
+    private String createTime;
 
-    private String update_time;
+    private String updateTime;
 
 
     private Boolean deleted;
 
     private Boolean updated;
 
-    private String chat_id;
+    private String chatId;
 
 
-    private String upper_message_id;
+    private String upperMessageId;
 
     private LarkSender sender;
 
@@ -46,29 +46,32 @@ public class FeishuSingleMsgResultVO implements Serializable {
 
     @Data
     @NoArgsConstructor
-    public static class LarkSender{
+    public static class LarkSender implements Serializable{
+        private static final long serialVersionUID = 1905122041950251207L;
         private String id;
 
-        private String id_type;
+        private String idType;
 
-        private String sender_type;
+        private String senderType;
 
-        private String tenant_key;
+        private String tenantKey;
     }
     @Data
     @NoArgsConstructor
-    public static class LarkBody{
+    public static class LarkBody implements Serializable{
+        private static final long serialVersionUID = 1905122041950251207L;
         private String content;
     }
 
     @Data
     @NoArgsConstructor
-    public static class LarkMentions{
+    public static class LarkMentions implements Serializable{
+        private static final long serialVersionUID = 1905122041950251207L;
         private String key;
         private String id;
         private String name;
 
-        private String tenant_key;
+        private String tenantKey;
     }
 
 }

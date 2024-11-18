@@ -262,7 +262,7 @@
         where wc.is_deleted = FALSE
         ORDER BY taskId
     </select>
-    <select id="selectProductNumByIds" resultType="com.erp.model.wms.dto.PackingTaskDTO$ProductNum">
+    <select id="selectProductNumByIds" resultType="com.erp.model.wms.dto.PackingTaskDTO$ProductDTO">
         SELECT
             ptd.main_id AS taskId,
             COUNT ( DISTINCT ptd.sku_id ) AS productNum

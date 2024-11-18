@@ -1,6 +1,7 @@
 package com.erp.server.wms.controller.feign;
 
 
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.common.core.anno.LogSystemModule;
@@ -39,8 +40,8 @@ public class PackingTaskFeignController extends BaseController {
         try {
             return packingTaskService.dimensionalWeight(dto);
         }catch (Exception e){
-            log.error(StrUtil.format("大货称重异常,json:{}", JSONUtil.toJsonStr(dto)),e);
-            return ApiResult.error(StrUtil.format("系统异常:{}", e.getMessage()));
+            log.error(CharSequenceUtil.format("大货称重异常,json:{}", JSONUtil.toJsonStr(dto)),e);
+            return ApiResult.error(CharSequenceUtil.format("系统异常:{}", e.getMessage()));
         }
     }
 

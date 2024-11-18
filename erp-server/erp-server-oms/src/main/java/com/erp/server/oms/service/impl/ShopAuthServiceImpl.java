@@ -1,7 +1,7 @@
 package com.erp.server.oms.service.impl;
 
 
-import cn.hutool.core.util.StrUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
@@ -14,29 +14,26 @@ import com.erp.model.dmp.enums.AppClientEnum;
 import com.erp.model.oms.dto.ShopAuthDTO;
 import com.erp.model.oms.dto.ShopAuthorizeUrlDTO;
 import com.erp.model.oms.entity.ShopAuthEntity;
-import com.erp.model.oms.entity.ShopInfoEntity;
-import com.erp.model.oms.enums.AuthStatusEnum;
 import com.erp.model.oms.enums.AuthTypeEnum;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.server.oms.mapper.ShopAuthMapper;
 import com.erp.server.oms.service.OperateLogService;
 import com.erp.server.oms.service.ShopAuthService;
 import com.sdk.oms.shopee.dto.base.request.AuthRequest;
-import com.sdk.oms.shopee.dto.product.request.ProductRequest;
-import com.sdk.oms.shopee.dto.product.response.ItemInfo;
 import com.sdk.oms.shopee.service.ShopeeAuthService;
 import com.sdk.oms.shopee.service.ShopeeProductService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
 
 /**
  * <p>
@@ -49,7 +46,7 @@ import java.util.*;
 @Slf4j
 @Service
 public class ShopAuthServiceImpl extends SuperServiceImpl<ShopAuthMapper, ShopAuthEntity> implements ShopAuthService {
-    @Autowired
+    @Resource
     private OperateLogService operateLogService;
     @Resource
     private ShopeeAuthService shopeeAuthService;
@@ -76,7 +73,7 @@ public class ShopAuthServiceImpl extends SuperServiceImpl<ShopAuthMapper, ShopAu
         }
 
         // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "店铺授权单", shopAuthEntity.getId());
+        String msg =  CharSequenceUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "店铺授权单", shopAuthEntity.getId());
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLog(msg, null, shopAuthEntity.getId(), "新增操作");
         // TODO 新增明细（如果有明细的话）
@@ -90,7 +87,7 @@ public class ShopAuthServiceImpl extends SuperServiceImpl<ShopAuthMapper, ShopAu
     @Override
     public Boolean update(ShopAuthDTO.UpdateDTO updateDTO) {
         ShopAuthEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "店铺授权单"));
+        isExist(old);
         ShopAuthEntity shopAuthEntity = BeanMapperUtils.map(ShopAuthEntity.class, updateDTO);
 
         // 数据处理
@@ -104,10 +101,19 @@ public class ShopAuthServiceImpl extends SuperServiceImpl<ShopAuthMapper, ShopAu
 
         // 记录主单操作日志
         log.info("编辑 开始记录店铺授权单日志数据，id：【{}】", shopAuthEntity.getId());
-        String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), shopAuthEntity.getId(), "店铺授权单");
+        String msg =  CharSequenceUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), shopAuthEntity.getId(), "店铺授权单");
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLogByObj(old, shopAuthEntity, null, shopAuthEntity.getId(), msg);
         return Boolean.TRUE;
+    }
+
+    private static void isExist(ShopAuthEntity old) {
+        if(null == old){
+            throw new ServiceException(ApiError.NOT_EXIST_BILL, "店铺授权单") ;
+        }
+        if(StringUtils.isBlank(old.getShopeeId())){
+            throw new ServiceException("店铺id不能为空");
+        }
     }
 
     /**
@@ -204,7 +210,7 @@ public class ShopAuthServiceImpl extends SuperServiceImpl<ShopAuthMapper, ShopAu
 
     @Override
     public void updateShopeeToken(ShopAuthEntity shopAuthEntity) {
-        Optional.ofNullable(shopAuthEntity.getShopeeId()).orElseThrow(() -> new ServiceException("店铺id不能为空"));
+        isExist(shopAuthEntity);
         CfgAppClientDTO.FindDTO findDTO = new CfgAppClientDTO.FindDTO();
         AppClientEnum appClientEnum = AppClientEnum.SHOPEE_ACCESS_TOKEN;
         findDTO.setBusinessType(appClientEnum.getBusinessType());

@@ -21,6 +21,7 @@ import com.erp.server.wms.service.CfgConditionService;
 import com.erp.server.wms.service.CfgRuleConditionService;
 import com.erp.server.wms.service.OperateLogService;
 import org.apache.commons.math3.util.Pair;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
@@ -51,7 +52,9 @@ public class CfgRuleConditionServiceImpl extends SuperServiceImpl<CfgRuleConditi
     private OperateLogService operateLogService;
     @Resource
     private CfgConditionService cfgConditionService;
-
+    @Lazy
+    @Resource
+    private CfgRuleConditionService service;
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void removeByRuleIds(List<String> ids) {
@@ -72,7 +75,7 @@ public class CfgRuleConditionServiceImpl extends SuperServiceImpl<CfgRuleConditi
                     return entity;
                 }).collect(Collectors.toList());
         handleDataList(ruleConditionEntities);
-        saveBatch(ruleConditionEntities);
+        service.saveBatch(ruleConditionEntities);
     }
 
     /**
@@ -145,7 +148,7 @@ public class CfgRuleConditionServiceImpl extends SuperServiceImpl<CfgRuleConditi
                 old.setFieldName(cfgConditionMap.get(old.getField()));
                 updateItem.setFieldName(cfgConditionMap.get(updateItem.getField()));
                 //值没有的时候名称置空
-                if (StrUtil.isBlank(updateItem.getValue())) {
+                if (CharSequenceUtil.isBlank(updateItem.getValue())) {
                     updateItem.setName("");
                 }
                 operateLogService.addModuleOperateLogByObj(old, updateItem, moduleType, ruleId, CharSequenceUtil.format("修改了第【{}】条订单规则", updateItem.getIndex()));

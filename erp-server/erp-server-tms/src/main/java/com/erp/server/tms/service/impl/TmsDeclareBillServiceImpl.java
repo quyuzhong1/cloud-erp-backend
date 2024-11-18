@@ -4,7 +4,7 @@ package com.erp.server.tms.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.bean.copier.CopyOptions;
 import cn.hutool.core.collection.CollectionUtil;
-import cn.hutool.core.util.StrUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.constant.RedisCacheConstants;
@@ -23,7 +23,6 @@ import com.common.core.enums.CurrencyEnum;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
-import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.plm.entity.BasicDictEntity;
 import com.erp.model.sys.entity.DictCountryEntity;
@@ -54,7 +53,6 @@ import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -80,7 +78,7 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMapper, TmsDeclareBillEntity> implements TmsDeclareBillService {
-    @Autowired
+    @Resource
     private OperateLogService operateLogService;
 
     /**
@@ -189,14 +187,14 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
             throw new ServiceException("报关单保存失败");
         }
         // 操作日志
-        String msg = StrUtil.format("用户【{}】【{}】【{}】合同号为【{}】", UserContext.getDefaultLoginUser().getUserName(),isMerged?"合并":"新增", "报关单" , tmsDeclareBillEntity.getCode());
+        String msg = CharSequenceUtil.format("用户【{}】【{}】【{}】合同号为【{}】", UserContext.getDefaultLoginUser().getUserName(),isMerged?"合并":"新增", "报关单" , tmsDeclareBillEntity.getCode());
         operateLogService.addModuleOperateLog(msg, sourceTypeEnum.getCode(), tmsDeclareBillEntity.getId(), "新增操作");
         detailService.add(tmsDeclareBillEntity,detailEntityList);
         return new BaseResultDTO.AddDTO(tmsDeclareBillEntity.getId(), tmsDeclareBillEntity.getCode());
     }
 
     private String generateContractCode(SourceTypeEnum sourceTypeEnum) {
-        String key = StrUtil.format(RedisCacheConstants.TMS_DECLARE_CODE,sourceTypeEnum.getCode(), DateUtil.currentYMD());
+        String key = CharSequenceUtil.format(RedisCacheConstants.TMS_DECLARE_CODE,sourceTypeEnum.getCode(), DateUtil.currentYMD());
         Object value = redisUtil.get(key);
         int number;
         if(value == null) {
@@ -206,7 +204,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
             number++;
         }
         redisUtil.set(key,number,86400);
-        return StrUtil.format("{}{}{}", "HT", DateUtil.currentYMD(), StringUtil.leftPad(String.valueOf(number), 3, "0"));
+        return CharSequenceUtil.format("{}{}{}", "HT", DateUtil.currentYMD(), StringUtil.leftPad(String.valueOf(number), 3, "0"));
     }
     /**
     * 修改
@@ -234,7 +232,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
             throw new ServiceException("报关单保存失败");
         }
         log.info("编辑 开始记录报关单日志数据，单号：【{}】", tmsDeclareBillEntity.getCode());
-        String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), tmsDeclareBillEntity.getCode(), "报关单");
+        String msg = CharSequenceUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), tmsDeclareBillEntity.getCode(), "报关单");
         operateLogService.addModuleOperateLogByObj(old, tmsDeclareBillEntity, sourceTypeEnum.getCode(), tmsDeclareBillEntity.getId(), msg);
         return Boolean.TRUE;
     }
@@ -497,7 +495,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
                     continue;
                 }
                 if(!soOutstockEntity.getApproveStatus().equals(ApproveStatusEnum.APPROVE)){
-                    resultList.add(BatchResultDTO.fail(entity.getId(),entity.getCode(),StrUtil.format("关联单据{}尚未审核通过无法报关",soOutstockEntity.getCode())));
+                    resultList.add(BatchResultDTO.fail(entity.getId(),entity.getCode(),CharSequenceUtil.format("关联单据{}尚未审核通过无法报关",soOutstockEntity.getCode())));
                     continue;
                 }
             }else if (sourceTypeEnum == SourceTypeEnum.FM_DECLARE_BILL){
@@ -507,7 +505,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
                     continue;
                 }
                 if(!firstMileDeliveryEntity.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())){
-                    resultList.add(BatchResultDTO.fail(entity.getId(),entity.getCode(),StrUtil.format("关联单据{}尚未审核通过无法报关",firstMileDeliveryEntity.getCode())));
+                    resultList.add(BatchResultDTO.fail(entity.getId(),entity.getCode(),CharSequenceUtil.format("关联单据{}尚未审核通过无法报关",firstMileDeliveryEntity.getCode())));
                     continue;
                 }
             }
@@ -589,7 +587,7 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
                 ))
                 .values());
         if(mergedDetails.size()>limitSkuNo){
-            throw new ServiceException(StrUtil.format("合并后SKU数量超过限制，最多合并{}个SKU",limitSkuNo));
+            throw new ServiceException(CharSequenceUtil.format("合并后SKU数量超过限制，最多合并{}个SKU",limitSkuNo));
         }
         mergedEntity.setNetWeight(entityList.stream().map(TmsDeclareBillEntity::getNetWeight).reduce(BigDecimal.ZERO,BigDecimal::add));
         mergedEntity.setGrossWeight(entityList.stream().map(TmsDeclareBillEntity::getGrossWeight).reduce(BigDecimal.ZERO,BigDecimal::add));

@@ -14,7 +14,7 @@ import java.io.Serializable;
  */
 @TableName("business_process")
 @Data
-public class BusinessProcessEntity extends BaseEntity implements Serializable {
+public class BusinessProcessEntity extends BaseEntity<BusinessProcessEntity> implements Serializable {
 
     /**
      * 业务流程的key

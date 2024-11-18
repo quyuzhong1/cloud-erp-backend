@@ -28,7 +28,7 @@ public interface BiDataSourceCustomMapper extends BaseMapper<BiDataSourceCustomE
      * @param params
      * @return IPage<LinkedHashMap<String,Object>>
      */
-    IPage<LinkedHashMap<String,Object>> paging(Page query, @Param("params") BiDataSourceCustomSearchDTO params);
+    IPage<LinkedHashMap<String,Object>> paging(Page<Object> query, @Param("params") BiDataSourceCustomSearchDTO params);
     /**
      * @description: 查询所有数据
      * @author Will

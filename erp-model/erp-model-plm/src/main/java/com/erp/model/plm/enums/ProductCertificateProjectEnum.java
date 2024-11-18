@@ -11,7 +11,7 @@ public enum ProductCertificateProjectEnum implements EnumMessage {
 
 
     CE("CE", "CE"),
-    RoHS("RoHS", "RoHS"),
+    ROHS("RoHS", "RoHS"),
     FCC("FCC", "FCC"),
     FCC_ID("FCC ID", "FCC ID"),
     PSE("PSE", "PSE"),

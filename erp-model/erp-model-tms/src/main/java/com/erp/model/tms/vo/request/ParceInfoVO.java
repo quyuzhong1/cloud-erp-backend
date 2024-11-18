@@ -1,13 +1,11 @@
 package com.erp.model.tms.vo.request;
 
-import com.alibaba.fastjson.annotation.JSONField;
-import com.common.core.anno.StateEnumValue;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import javax.validation.constraints.NotNull;
+import java.io.Serializable;
 import java.math.BigDecimal;
 
 /**
@@ -17,12 +15,11 @@ import java.math.BigDecimal;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class ParceInfoVO {
+public class ParceInfoVO implements Serializable {
 
     //是否带电 1:是 0:否
     private Boolean hasBattery;
 
-    //币种代码传 USD,EUR,GBP,CNY,AUD,CAD;
     private String currency;
 
     //申报总价值

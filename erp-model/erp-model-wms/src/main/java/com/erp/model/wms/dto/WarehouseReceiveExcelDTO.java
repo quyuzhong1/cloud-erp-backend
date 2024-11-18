@@ -1,8 +1,6 @@
 package com.erp.model.wms.dto;
 
 
-import com.alibaba.excel.annotation.ExcelProperty;
-import com.alibaba.excel.annotation.write.style.ColumnWidth;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 

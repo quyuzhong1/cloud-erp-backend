@@ -15,7 +15,9 @@ import java.util.List;
 import java.util.Map;
 
 public class SoDeliveryNoticeDTO {
-
+    private SoDeliveryNoticeDTO() {
+        throw new IllegalStateException("Utility SoDeliveryNoticeDTO class");
+    }
     /**
      * 分页参数
      */

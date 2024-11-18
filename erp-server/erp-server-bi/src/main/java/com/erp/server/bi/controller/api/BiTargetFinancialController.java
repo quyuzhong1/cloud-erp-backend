@@ -39,7 +39,7 @@ public class BiTargetFinancialController extends BaseController {
 //            menuCode = "bi:module:content",
 //            tableAlias = "bi_data_source_cost"
 //    )
-    public ApiResult countSales(@RequestBody BiFilterDTO dto){
+    public ApiResult<TargetSaleSumVO> countSales(@RequestBody BiFilterDTO dto){
         TargetSaleSumVO vo = biDataSourceCostService.sumSalesProfit(dto);
         return success(vo);
     }
@@ -58,7 +58,7 @@ public class BiTargetFinancialController extends BaseController {
 //            menuCode = "bi:module:content",
 //            tableAlias = "bi_data_source_cost"
 //    )
-    public ApiResult countMainRevenue(@RequestBody BiFilterDTO dto){
+    public ApiResult<TargetSaleSumVO> countMainRevenue(@RequestBody BiFilterDTO dto){
         TargetSaleSumVO vo = biDataSourceCostService.sumMainRevenue(dto);
         return success(vo);
     }
@@ -75,7 +75,7 @@ public class BiTargetFinancialController extends BaseController {
 //            menuCode = "bi:module:content",
 //            tableAlias = "bi_data_source_cost"
 //    )
-    public ApiResult countSalesCost(@RequestBody BiFilterDTO dto){
+    public ApiResult<TargetSaleSumVO> countSalesCost(@RequestBody BiFilterDTO dto){
         TargetSaleSumVO vo = biDataSourceCostService.sumSalesCost(dto);
         return success(vo);
     }
@@ -93,7 +93,7 @@ public class BiTargetFinancialController extends BaseController {
 //            menuCode = "bi:module:content",
 //            tableAlias = "bi_data_source_cost"
 //    )
-    public ApiResult count(@RequestBody BiFilterDTO dto){
+    public ApiResult<TargetSaleSumVO> count(@RequestBody BiFilterDTO dto){
         TargetSaleSumVO vo = biDataSourceCostService.sumSalesRatio(dto);
         return success(vo);
     }

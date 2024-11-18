@@ -140,7 +140,7 @@ public interface LogisticsService {
      *
      * @return
      */
-    ApiResult authorization(Map<String, String> authMap);
+    ApiResult<Object>authorization(Map<String, String> authMap);
     /**
      * 获取平台标识
      *

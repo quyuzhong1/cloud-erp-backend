@@ -3,7 +3,6 @@ package com.erp.model.wms.enums;
 import com.baomidou.mybatisplus.annotation.EnumValue;
 import com.common.core.constant.EnumMessage;
 import com.fasterxml.jackson.annotation.JsonValue;
-import org.apache.commons.lang3.StringUtils;
 
 public enum ThirdWarehouseCancelResultEnum implements EnumMessage {
     INTERCEPTION_SUCCESSFUL("interceptionSuccessful", "拦截成功"),

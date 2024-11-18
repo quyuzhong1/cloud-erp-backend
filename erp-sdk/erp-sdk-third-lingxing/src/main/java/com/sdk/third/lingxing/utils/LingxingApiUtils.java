@@ -203,7 +203,7 @@ public class LingxingApiUtils {
             String expiresIn = jsonObject.getStr("expires_in");
             String accessToken = jsonObject.getStr("access_token");
             // 缓存到redis
-            redisUtil.set(tokenKey, accessToken, Integer.parseInt(expiresIn) - 1);
+            redisUtil.set(tokenKey, accessToken, Long.parseLong(expiresIn) - 1L);
             return accessToken;
         } catch (Exception e) {
             log.error("请求领星授权接口失败: error={}", ExceptionUtil.stacktraceToString(e, 2000));
@@ -212,7 +212,7 @@ public class LingxingApiUtils {
     }
 
     private static void checkConfig() {
-        if (StringUtils.isBlank(ENDPOINT) || StringUtils.isBlank(ENDPOINT) || StringUtils.isBlank(ENDPOINT)) {
+        if (StringUtils.isBlank(ENDPOINT)) {
             throw new ServiceException("领星配置参数为空");
         }
     }
@@ -254,6 +254,7 @@ public class LingxingApiUtils {
                 Thread.sleep(1000);
             } catch (InterruptedException e) {
                 log.error("拉取领星货件签收明细数据睡眠异常:e={}", ExceptionUtil.stacktraceToString(e));
+                Thread.currentThread().interrupt();
             }
             FbaReceiveReqDTO currentReceivedDTO = new FbaReceiveReqDTO(sid, receivedDate, offset);
             Result<List<Object>> currentResult = getReceivedInventory(currentReceivedDTO);

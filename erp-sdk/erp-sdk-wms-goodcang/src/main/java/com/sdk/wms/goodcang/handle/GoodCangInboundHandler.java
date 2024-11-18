@@ -20,6 +20,7 @@ import com.sdk.wms.goodcang.dto.response.GoodCangResponse;
 import com.sdk.wms.goodcang.service.GoodCangService;
 import io.seata.common.util.CollectionUtils;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.poi.ss.formula.functions.T;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
@@ -46,7 +47,7 @@ public class GoodCangInboundHandler extends AbstractPullThirdWarehouseHandler<Go
     private WmsOverseasWarehouseFeign overseasWarehouseFeign;
 
     @Resource
-    private MQProducerService mqProducerService;
+    private MQProducerService<T> mqProducerService;
 
     private final String failureMsgHead = "调用谷仓获取入库数据接口异常";
 

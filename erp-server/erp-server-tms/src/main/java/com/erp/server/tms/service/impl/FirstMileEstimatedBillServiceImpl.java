@@ -1,9 +1,9 @@
 package com.erp.server.tms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
-import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -47,7 +47,6 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static com.common.business.enums.FileTaskEventEnum.EXPORT_TMS_FIRST_MILE_COST_ALLOCATION;
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_TMS_FM_ESTIMATED_BILL;
 
 /**
@@ -330,14 +329,14 @@ public class FirstMileEstimatedBillServiceImpl extends SuperServiceImpl<FirstMil
 
     @Override
     public void removeByLogisticsBillId(String logisticsBillId) {
-        if (StrUtil.isNotBlank(logisticsBillId)){
+        if (CharSequenceUtil.isNotBlank(logisticsBillId)){
             this.lambdaUpdate().eq(FirstMileEstimatedBillEntity::getLogisticsBillId,logisticsBillId).remove();
         }
     }
 
     @Override
     public List<FirstMileEstimatedBillDTO.View> listByLogisticsBillIds(List<String> ids, String status) {
-        if(ids.isEmpty() && StrUtil.isBlank(status)){
+        if(ids.isEmpty() && CharSequenceUtil.isBlank(status)){
             return Collections.emptyList();
         }
         List<FirstMileEstimatedBillDTO.View> list = baseMapper.listByLogisticsBillIds(ids, status);

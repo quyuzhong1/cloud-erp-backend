@@ -22,6 +22,7 @@ import com.sdk.wms.goodcang.dto.response.GoodCangInventoryResp;
 import com.sdk.wms.goodcang.dto.response.GoodCangResponse;
 import com.sdk.wms.goodcang.service.GoodCangService;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.poi.ss.formula.functions.T;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
@@ -42,7 +43,7 @@ public class GoodCangInventoryHandler extends AbstractPullThirdWarehouseHandler<
     private GoodCangService goodCangService;
 
     @Resource
-    private MQProducerService mqProducerService;
+    private MQProducerService<T> mqProducerService;
 
     private final String failureMsgHead = "调用谷仓库存数据接口异常";
 

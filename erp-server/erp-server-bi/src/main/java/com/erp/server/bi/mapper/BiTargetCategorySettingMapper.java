@@ -31,7 +31,7 @@ public interface BiTargetCategorySettingMapper extends BaseMapper<BiTargetCatego
      * @param params
      * @return
      */
-    IPage<BiTargetCategorySettingDTO.PagingViewDTO> paging(Page query, @Param("params")BiTargetYearDTO.PagingParamDTO params,@Param("multiplyNum") BigDecimal multiplyNum);
+    IPage<BiTargetCategorySettingDTO.PagingViewDTO> paging(Page<Object> query, @Param("params")BiTargetYearDTO.PagingParamDTO params,@Param("multiplyNum") BigDecimal multiplyNum);
     /**
      * @description: 根据指标查询品类目标值
      * @author Will

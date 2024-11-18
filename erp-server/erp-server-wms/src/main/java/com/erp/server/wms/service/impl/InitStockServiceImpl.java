@@ -1,6 +1,7 @@
 package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.fastjson.JSONObject;
@@ -64,6 +65,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.File;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.function.Function;
@@ -83,28 +85,28 @@ import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_INIT_STOCK;
 @Service
 public class InitStockServiceImpl extends SuperServiceImpl<InitStockMapper, InitStockEntity> implements InitStockService {
 
-    @Autowired
+    @Resource
     private InitStockDetailService initStockDetailService;
 
-    @Autowired
+    @Resource
     private WarehouseService warehouseService;
 
-    @Autowired
+    @Resource
     private SysUserFeign sysUserFeign;
 
-    @Autowired
+    @Resource
     private PlmTaskFeign plmTaskFeign;
 
-    @Autowired
+    @Resource
     private OperateLogService operateLogService;
 
-    @Autowired
+    @Resource
     private InventoryTransCoreService inventoryTransCoreService;
 
-    @Autowired
+    @Resource
     private WorkflowFeign workflowFeign;
 
-    @Autowired
+    @Resource
     private WarehouseLocationService warehouseLocationService;
 
     @Resource
@@ -140,7 +142,7 @@ public class InitStockServiceImpl extends SuperServiceImpl<InitStockMapper, Init
         // 仓库
         if(StrUtils.isEmpty(viewDTO.getWarehouseName())) {
             WarehouseDTO.UpdateDTO warehouseDetail = warehouseService.detailWithCache(viewDTO.getWarehouseId());
-            if(Objects.nonNull(warehouseDetail) && StrUtil.isNotEmpty(warehouseDetail.getId())) {
+            if(Objects.nonNull(warehouseDetail) && CharSequenceUtil.isNotEmpty(warehouseDetail.getId())) {
                 viewDTO.setWarehouseName(warehouseDetail.getName());
             }
         }
@@ -237,7 +239,9 @@ public class InitStockServiceImpl extends SuperServiceImpl<InitStockMapper, Init
     public void update(InitStockDTO.UpdateDTO dto) {
         // 判断数据是否存在
         InitStockEntity originInitStock = super.getById(dto.getId());
-        Optional.ofNullable(originInitStock).orElseThrow(()->new ServiceException("期初库存数据不存在"));
+        if (Objects.isNull(originInitStock)){
+            throw new ServiceException("期初库存数据不存在");
+        }
         checkUpdateRepeateSku(dto, dto.getDetails(), dto.getId());
         // 判断状态是否允许操作（只有待提交且未作废的的才允许修改）
         ValidatorUtil.isTrue((Objects.equals(originInitStock.getApproveStatus(), ApproveStatusEnum.WAIT_SUBMIT.getStatus()) || Objects.equals(originInitStock.getApproveStatus(), ApproveStatusEnum.REJECT.getStatus()) )
@@ -330,7 +334,7 @@ public class InitStockServiceImpl extends SuperServiceImpl<InitStockMapper, Init
         updateForApprove(Collections.singletonList(entity.getId()), approveStatus.getStatus()); // 修改单据状态
         //操作日志
         log.info("审核 开始修改期初库存日志数据，id集合：【{}】", entity.getId());
-        operateLogService.addModuleOperateLog(String.format("审核【%s】了一个期初库存【%s】", ApproveTypeEnum.getName(type),entity.getCode()).concat(com.baomidou.mybatisplus.core.toolkit.StringUtils.isNotBlank(comment) ? String.format(",意见：%s", comment) : ""), ModuleTypeEnum.INIT_STOCK.getCode(), entity.getId(), "审核操作");
+        operateLogService.addModuleOperateLog(String.format("审核【%s】了一个期初库存【%s】", ApproveTypeEnum.getName(type),entity.getCode()).concat(CharSequenceUtil.isNotBlank(comment) ? String.format(",意见：%s", comment) : ""), ModuleTypeEnum.INIT_STOCK.getCode(), entity.getId(), "审核操作");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), "操作成功");
     }
 
@@ -347,7 +351,7 @@ public class InitStockServiceImpl extends SuperServiceImpl<InitStockMapper, Init
         });
         // 删除期初库存日志数据
         log.info("删除 开始删除期初库存日志数据，id集合：【{}】", JSONObject.toJSONString(ids));
-        String msg = StrUtil.format("用户【{}】删除了单据编号为【{}】的期初库存", UserContext.getDefaultLoginUser().getUserName(), list.stream().map(InitStockEntity::getCode).collect(Collectors.joining(",")));
+        String msg = CharSequenceUtil.format("用户【{}】删除了单据编号为【{}】的期初库存", UserContext.getDefaultLoginUser().getUserName(), list.stream().map(InitStockEntity::getCode).collect(Collectors.joining(",")));
         List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
         operateLogService.batchAddModuleOperateLog(msg, ModuleTypeEnum.INIT_STOCK.getCode(), pairList, "删除操作");
 
@@ -442,7 +446,7 @@ public class InitStockServiceImpl extends SuperServiceImpl<InitStockMapper, Init
             response.reset();
             // 设置文件头
             response.setHeader("Content-Disposition",
-                    "attchement;filename=" + new String(excelName.getBytes("gb2312"), "ISO8859-1"));
+                    "attchement;filename=" + new String(excelName.getBytes("gb2312"), StandardCharsets.ISO_8859_1));
             response.setContentType("application/msexcel");
             wb.write(output);
             wb.close();
@@ -538,7 +542,7 @@ public class InitStockServiceImpl extends SuperServiceImpl<InitStockMapper, Init
             String skuWareLocation = addDTO.getSkuId() + "-" + StrUtils.null2EmptyWithTrim(addDTO.getWarehouseLocation());
             if(skuWareLocationSet.contains(skuWareLocation)) {
                 // 临时注释打开，不做验证 by zhangchunlin at 2023-07-17
-                // throw new ServiceException(StrUtil.format("sku编码【{}】仓位【{}】不允许重复", addDTO.getSkuNo(),  StrUtils.null2EmptyWithTrim(addDTO.getWarehouseLocation())));
+                // throw new ServiceException(CharSequenceUtil.format("sku编码【{}】仓位【{}】不允许重复", addDTO.getSkuNo(),  StrUtils.null2EmptyWithTrim(addDTO.getWarehouseLocation())));
             } else {
                 skuWareLocationSet.add(skuWareLocation);
             }
@@ -553,11 +557,11 @@ public class InitStockServiceImpl extends SuperServiceImpl<InitStockMapper, Init
             /*
             Integer checkCnt = initStockDetailService.countCondition(mainDTO.getWarehouseId(), warehouseLocationCode, skuId, null);
             if(checkCnt > 0) {
-                throw new ServiceException(StrUtil.format("sku编码【{}】在仓库【{}】仓位【{}】中已经存在", addDTO.getSkuNo(), warehouseDTO.getName(), warehouseLocationCode));
+                throw new ServiceException(CharSequenceUtil.format("sku编码【{}】在仓库【{}】仓位【{}】中已经存在", addDTO.getSkuNo(), warehouseDTO.getName(), warehouseLocationCode));
             }
              */
             if(0 == addDTO.getQty().intValue()) {
-                throw new ServiceException(StrUtil.format("sku编码【{}】期初数量不能为0", addDTO.getSkuNo()));
+                throw new ServiceException(CharSequenceUtil.format("sku编码【{}】期初数量不能为0", addDTO.getSkuNo()));
             }
         }
     }
@@ -573,7 +577,7 @@ public class InitStockServiceImpl extends SuperServiceImpl<InitStockMapper, Init
             String skuWareLocation = updateDTO.getSkuId() + "-" + StrUtils.null2EmptyWithTrim(updateDTO.getWarehouseLocation());
             if(skuWareLocationSet.contains(skuWareLocation)) {
                 // 临时注释打开，不做验证 by zhangchunlin at 2023-07-17
-                // throw new ServiceException(StrUtil.format("sku编码【{}】仓位【{}】不允许重复", updateDTO.getSkuNo(),  StrUtils.null2EmptyWithTrim(updateDTO.getWarehouseLocation())));
+                // throw new ServiceException(CharSequenceUtil.format("sku编码【{}】仓位【{}】不允许重复", updateDTO.getSkuNo(),  StrUtils.null2EmptyWithTrim(updateDTO.getWarehouseLocation())));
             } else {
                 skuWareLocationSet.add(skuWareLocation);
             }
@@ -584,7 +588,7 @@ public class InitStockServiceImpl extends SuperServiceImpl<InitStockMapper, Init
             if(CollUtil.isNotEmpty(detailEntities)) {
                 for(InitStockDetailEntity initStockDetailEntity : detailEntities) {
                     if(!Objects.equals(initStockDetailEntity.getId(), updateDTO.getId()) && Objects.equals(initStockDetailEntity.getWarehouseLocation(), StrUtils.null2EmptyWithTrim(updateDTO.getWarehouseLocation()))) {
-                        throw new ServiceException(StrUtil.format("sku编码【{}】在仓库中已存在", updateDTO.getSkuNo()));
+                        throw new ServiceException(CharSequenceUtil.format("sku编码【{}】在仓库中已存在", updateDTO.getSkuNo()));
                     }
                 }
             }
@@ -600,11 +604,11 @@ public class InitStockServiceImpl extends SuperServiceImpl<InitStockMapper, Init
             /*
             Integer checkCnt = initStockDetailService.countCondition(mainDTO.getWarehouseId(), warehouseLocationCode, skuId, mainId);
             if(checkCnt > 0) {
-                throw new ServiceException(StrUtil.format("sku编码【{}】在仓库【{}】库位【{}】中已经存在", updateDTO.getSkuNo(), warehouseDTO.getName(), warehouseLocationCode));
+                throw new ServiceException(CharSequenceUtil.format("sku编码【{}】在仓库【{}】库位【{}】中已经存在", updateDTO.getSkuNo(), warehouseDTO.getName(), warehouseLocationCode));
             }
              */
             if(0 == updateDTO.getQty().intValue()) {
-                throw new ServiceException(StrUtil.format("sku编码【{}】期初数量不能为0", updateDTO.getSkuNo()));
+                throw new ServiceException(CharSequenceUtil.format("sku编码【{}】期初数量不能为0", updateDTO.getSkuNo()));
             }
         }
     }
@@ -617,8 +621,9 @@ public class InitStockServiceImpl extends SuperServiceImpl<InitStockMapper, Init
         initStockEntity.setDictTradeType(InventoryBusinessTypeEnum.INVENTORY_INIT.getCode());
         if(StrUtils.isNotEmpty(warehouseId)) {
             WarehouseDTO.UpdateDTO warehouseDetail = warehouseService.detailWithCache(warehouseId);
-            ValidatorUtil.isTrue(Objects.nonNull(warehouseDetail) && StrUtils.isNotEmpty(warehouseDetail.getId()),
-                    ()->new ServiceException(ApiError.ERROR_99002));
+            if (Objects.isNull(warehouseDetail) || CharSequenceUtil.isBlank(warehouseDetail.getId())){
+                throw new ServiceException(ApiError.ERROR_99002);
+            }
             initStockEntity.setWarehouseId(warehouseId);
             initStockEntity.setOrgId(warehouseDetail.getOrgId());
             initStockEntity.setWarehouseName(warehouseDetail.getName());
@@ -646,7 +651,7 @@ public class InitStockServiceImpl extends SuperServiceImpl<InitStockMapper, Init
             // 仓库名称赋值
             if(StrUtils.isEmpty(data.getWarehouseName())) {
                 WarehouseDTO.UpdateDTO warehouseDetail = warehouseMap.computeIfAbsent(data.getWarehouseId(),(v)->warehouseService.detailWithCache(v));
-                if(Objects.nonNull(warehouseDetail) && StrUtil.isNotEmpty(warehouseDetail.getId())) {
+                if(Objects.nonNull(warehouseDetail) && CharSequenceUtil.isNotEmpty(warehouseDetail.getId())) {
                     data.setWarehouseName(warehouseDetail.getName());
                 }
             }

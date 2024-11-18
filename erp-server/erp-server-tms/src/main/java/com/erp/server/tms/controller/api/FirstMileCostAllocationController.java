@@ -1,10 +1,19 @@
 package com.erp.server.tms.controller.api;
 
 
-import cn.hutool.core.util.StrUtil;
+import cn.hutool.core.text.CharSequenceUtil;
+import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.dto.base.BaseIdsDTO;
+import com.common.business.dto.base.BatchResultDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
+import com.common.core.controller.BaseController;
+import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.srm.enums.ConfirmStatusEnum;
 import com.erp.model.tms.dto.FirstMileCostAllocationDTO;
@@ -15,25 +24,18 @@ import com.erp.model.wms.entity.FirstMileDeliveryDetailEntity;
 import com.erp.model.wms.entity.FirstMileDeliveryEntity;
 import com.erp.rpc.wms.feign.WmsFirstMileDeliveryFeign;
 import com.erp.server.tms.query.FirstMileCostAllocationQueryHandler;
+import com.erp.server.tms.service.FirstMileCostAllocationService;
 import com.erp.server.tms.service.FirstMileWeightAllocationService;
 import com.erp.server.tms.service.ReportPeriodMonthService;
 import lombok.extern.slf4j.Slf4j;
-import javax.annotation.Resource;
-import javax.servlet.http.HttpServletResponse;
-import javax.validation.Valid;
-
 import org.springframework.util.CollectionUtils;
-import org.springframework.web.bind.annotation.*;
-import com.common.core.anno.LogSystemModule;
-import com.common.business.dto.base.*;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.common.core.controller.BaseController;
-import com.erp.server.tms.service.FirstMileCostAllocationService;
-import com.common.core.controller.vo.ApiResult;
-import com.common.business.annotation.DataPermission;
-import com.common.business.enums.DataAttributeEnum;
-
+import javax.annotation.Resource;
+import javax.validation.Valid;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -52,6 +54,8 @@ import java.util.stream.Collectors;
 @RequestMapping("/firstMileCostAllocation")
 public class FirstMileCostAllocationController extends BaseController {
 
+    public static final String MSG = "费用分摊记录不存在";
+    public static final String ERROR_MSG = "费用分摊记录删除失败";
     @Resource
     private FirstMileCostAllocationService firstMileCostAllocationService;
     @Resource
@@ -114,7 +118,7 @@ public class FirstMileCostAllocationController extends BaseController {
         for (String id : ids) {
             FirstMileCostAllocationEntity entity = entityList.stream().filter(v->v.getId().equals(id)).findFirst().orElse(null);
             if(Objects.isNull(entity)){
-                resultDTOS.add(BatchResultDTO.fail(id,id,"费用分摊记录不存在"));
+                resultDTOS.add(BatchResultDTO.fail(id,id, MSG));
                 continue;
             }
             try {
@@ -143,13 +147,13 @@ public class FirstMileCostAllocationController extends BaseController {
         for (String id : ids) {
             FirstMileCostAllocationEntity entity = entityList.stream().filter(v->v.getId().equals(id)).findFirst().orElse(null);
             if(Objects.isNull(entity)){
-                resultDTOS.add(BatchResultDTO.fail(id,id,"费用分摊记录不存在"));
+                resultDTOS.add(BatchResultDTO.fail(id,id, MSG));
                 continue;
             }
             try {
                 resultDTOS.add(firstMileCostAllocationService.delete(entity));
             }catch (Exception e){
-                log.error("费用分摊记录删除失败",e);
+                log.error(ERROR_MSG,e);
                 resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getSourceCode(), e.getMessage()));
             }
         }
@@ -185,7 +189,7 @@ public class FirstMileCostAllocationController extends BaseController {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
         List<FirstMileCostAllocationEntity> entityList = firstMileCostAllocationService.listByIds(ids);
         if (CollectionUtils.isEmpty(entityList)){
-            resultDTOS.add(BatchResultDTO.fail(String.join(",",ids),"","费用分摊记录不存在"));
+            resultDTOS.add(BatchResultDTO.fail(String.join(",",ids),"", MSG));
             return failure(resultDTOS);
         }
         List<String> sourceIds = entityList.stream().filter(e -> ConfirmStatusEnum.WAIT_CONFIRM.getCode().equals(e.getStatus())).map(FirstMileCostAllocationEntity::getSourceId).distinct().collect(Collectors.toList());
@@ -210,7 +214,7 @@ public class FirstMileCostAllocationController extends BaseController {
             try {
                 resultDTOS.add(firstMileCostAllocationService.calcAllocatedCost(entity,firstMileDeliveryEntity, firstMileDeliveryDetailEntityList));
             }catch (Exception e){
-                log.error("费用分摊记录删除失败",e);
+                log.error(ERROR_MSG,e);
                 resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getSourceCode(), e.getMessage()));
             }
         }
@@ -257,7 +261,7 @@ public class FirstMileCostAllocationController extends BaseController {
                         && ConfirmStatusEnum.CONFIRM.getCode().equals(e.getStatus()) && Objects.equals(e.getSourceId(), sourceId))
                         .max(Comparator.comparing(FirstMileCostAllocationEntity::getReportPeriodMonth)).orElse(null);
                 if (Objects.nonNull(entity) && !reportPeriodMonth.getMonth().isAfter(entity.getReportPeriodMonth())){
-                    resultDTOS.add(BatchResultDTO.fail(sourceId,sourceId, StrUtil.format("已存在核算区间【{}】不能下推发货单【{}】的核算区间【{}】", entity.getReportPeriodMonth(),entity.getSourceCode(),reportPeriodMonth.getMonth())));
+                    resultDTOS.add(BatchResultDTO.fail(sourceId,sourceId, CharSequenceUtil.format("已存在核算区间【{}】不能下推发货单【{}】的核算区间【{}】", entity.getReportPeriodMonth(),entity.getSourceCode(),reportPeriodMonth.getMonth())));
                     continue;
                 }
             }
@@ -267,7 +271,7 @@ public class FirstMileCostAllocationController extends BaseController {
             try {
                 resultDTOS.add(firstMileCostAllocationService.calcAllocatedCost(entity,firstMileDeliveryEntity, firstMileDeliveryDetailEntityList));
             }catch (Exception e){
-                log.error("费用分摊记录删除失败",e);
+                log.error(ERROR_MSG,e);
                 resultDTOS.add(BatchResultDTO.fail(sourceId, sourceId, e.getMessage()));
             }
         }

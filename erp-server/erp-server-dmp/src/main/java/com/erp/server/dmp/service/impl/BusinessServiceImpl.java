@@ -233,7 +233,8 @@ public class BusinessServiceImpl {
         for (T item : sourceData) {
 //            OrderMongoDTO orderMongoDTO =  OrderMongoDTO.getUniqId(item.getUniqueId());
             UniqueDto uniqueDto = UniqueDto.getUniqId(item.getUniqueId());
-            List<T> mongoData = mongoService.findMongoData(uniqueDto, 0, 0, tableName, tClass);
+            // 指定数量理论返回
+            List<T> mongoData = mongoService.findMongoData(uniqueDto, 0, 100, tableName, tClass);
             item.setIsClean(CleanStatusEnum.UNCLEAN.getCode());
             item.setDownloadTime(LocalDateTime.now().toString());
             if(CollectionUtil.isEmpty(mongoData)){

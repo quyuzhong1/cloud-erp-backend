@@ -17,7 +17,7 @@ import java.io.Serializable;
 @Data
 @EqualsAndHashCode(callSuper = false)
 @TableName("product_bom_info")
-public class BomInfoEntity extends BaseEntity implements Serializable {
+public class BomInfoEntity extends BaseEntity<BomInfoEntity> implements Serializable {
     private static final long serialVersionUID = 458249379651802162L;
 
     /**

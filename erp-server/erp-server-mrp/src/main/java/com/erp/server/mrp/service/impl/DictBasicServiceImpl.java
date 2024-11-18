@@ -1,11 +1,12 @@
 package com.erp.server.mrp.service.impl;
 
 
-import cn.hutool.core.util.StrUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
+import com.common.business.utils.ApplicationContextUtils;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
@@ -17,11 +18,11 @@ import com.erp.server.mrp.service.DictBasicService;
 import com.erp.server.mrp.service.OperateLogService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.ObjectUtils;
 
+import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -38,7 +39,7 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 public class DictBasicServiceImpl extends SuperServiceImpl<DictBasicMapper, DictBasicEntity> implements DictBasicService {
-    @Autowired
+    @Resource
     private OperateLogService operateLogService;
 
 
@@ -49,8 +50,7 @@ public class DictBasicServiceImpl extends SuperServiceImpl<DictBasicMapper, Dict
     @Transactional(rollbackFor = Exception.class)
     @Override
     public Boolean update(DictBasicDTO.UpdateDTO updateDTO) {
-        DictBasicEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "字典单"));
+        DictBasicEntity old = Optional.ofNullable(super.getById(updateDTO.getId())).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "字典单"));
         DictBasicEntity dictBasicEntity =  BeanMapperUtils.map(DictBasicEntity.class, updateDTO);
 
         // 数据处理
@@ -64,7 +64,7 @@ public class DictBasicServiceImpl extends SuperServiceImpl<DictBasicMapper, Dict
 
         // 记录主单操作日志
             log.info("编辑 开始记录字典单日志数据，单号：【{}】", dictBasicEntity.getCode());
-            String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), dictBasicEntity.getCode(), "字典单");
+            String msg = CharSequenceUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), dictBasicEntity.getCode(), "字典单");
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLogByObj(old, dictBasicEntity, null, dictBasicEntity.getId(), msg);
         return Boolean.TRUE;
@@ -77,7 +77,7 @@ public class DictBasicServiceImpl extends SuperServiceImpl<DictBasicMapper, Dict
             return true;
         }
         List<DictBasicEntity> addList = BeanMapper.copyList(list, DictBasicEntity.class);
-        return this.saveOrUpdateBatch(addList);
+        return ApplicationContextUtils.getBean(DictBasicServiceImpl.class).saveOrUpdateBatch(addList);
     }
 
 
@@ -92,8 +92,7 @@ public class DictBasicServiceImpl extends SuperServiceImpl<DictBasicMapper, Dict
     @Override
     public List<DictBasicDTO.ViewDTO> getByKey(String key) {
         List<DictBasicEntity> list = listByKey(key);
-        List<DictBasicDTO.ViewDTO> resultList = BeanMapper.copyList(list, DictBasicDTO.ViewDTO.class);
-        return resultList;
+        return BeanMapper.copyList(list, DictBasicDTO.ViewDTO.class);
     }
 
 

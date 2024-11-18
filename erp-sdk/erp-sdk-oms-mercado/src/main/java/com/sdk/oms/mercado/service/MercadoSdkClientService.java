@@ -2,6 +2,7 @@ package com.sdk.oms.mercado.service;
 
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.exceptions.ExceptionUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
@@ -14,7 +15,6 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.HttpCommonUtil;
 import com.common.core.utils.OkHttpUtils;
-import com.common.core.utils.date.DateUtil;
 import com.erp.model.dmp.dto.CfgAppClientDTO;
 import com.erp.model.dmp.entity.CfgAppClientEntity;
 import com.erp.model.dmp.enums.AppClientEnum;
@@ -47,8 +47,6 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.thymeleaf.util.StringUtils;
 
 import javax.annotation.Resource;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -432,7 +430,9 @@ public class MercadoSdkClientService {
                             }
                             try {
                                 Thread.sleep(sleepTime);
-                            } catch (InterruptedException e) {}
+                            } catch (InterruptedException e) {
+                                Thread.currentThread().interrupt();
+                            }
                             sleepTime = sleepTime + 1000;
                             count = count + 1;
                         }
@@ -440,9 +440,9 @@ public class MercadoSdkClientService {
                     }
 
                     if (!Objects.equals(orderDetailApiResult.getCode(), 200) && !Objects.equals(orderDetailApiResult.getCode(), 201)) {
-                        orderDetailApiResult.getMsg().equalsIgnoreCase("Read timed out");
+                        boolean b = orderDetailApiResult.getMsg().equalsIgnoreCase("Read timed out");
                         log.error("调用url={},入参params={}, 美客多marketplace/orders数据失败，返回值 responseMap={}", orderUrl, orderParams.toString(), JSONUtil.toJsonStr(orderDetailApiResult));
-                        throw new RuntimeException(StrUtil.format("调用url={},入参params={}, 数据解析失败，返回值 responseMap={}",
+                        throw new RuntimeException(CharSequenceUtil.format("调用url={},入参params={}, 数据解析失败，返回值 responseMap={}",
                                 orderUrl, orderParams.toString(), JSONUtil.toJsonStr(orderDetailApiResult)));
                     }
 
@@ -505,7 +505,9 @@ public class MercadoSdkClientService {
                 }
                 try {
                     Thread.sleep(sleepTime);
-                } catch (InterruptedException e) {}
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
                 sleepTime = sleepTime + 1000;
                 count = count + 1;
             }
@@ -562,7 +564,9 @@ public class MercadoSdkClientService {
                 }
                 try {
                     Thread.sleep(sleepTime);
-                } catch (InterruptedException e) {}
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
                 sleepTime = sleepTime + 1000;
                 count = count + 1;
             }

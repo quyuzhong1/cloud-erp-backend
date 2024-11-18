@@ -55,12 +55,4 @@ public class AliexpressDeliveryDetailServiceImpl extends SuperServiceImpl<Aliexp
     public boolean removeByMainId(String mainId){
         return this.lambdaUpdate().eq(AliexpressDeliveryDetailEntity::getMainId, mainId).remove();
     }
-
-
-    /**
-    * 新增修改处理数据
-    */
-    private void handleData(AliexpressDeliveryDetailEntity aliexpressDeliveryDetailEntity) {
-    // TODO 验证数据 & 数据赋值
-    }
 }

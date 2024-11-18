@@ -48,10 +48,10 @@ import java.util.stream.Collectors;
 @RequestMapping("/fbaDelivery")
 public class FirstMileDeliveryController extends BaseController {
 
-    @Autowired
+    @Resource
     private FirstMileDeliveryService firstMileDeliveryService;
 
-    @Autowired
+    @Resource
     private FirstMileDeliveryDetailService firstMileDeliveryDetailService;
 
     @Resource

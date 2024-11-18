@@ -75,7 +75,7 @@ public class InventorySkuCostController extends BaseController {
         menuCode = "tms:inventorySkuCost:update",
         serviceClass = InventorySkuCostService.class,
         keyIdName = "id")
-    public ApiResult<?> update(@RequestBody @Validated InventorySkuCostDTO.UpdateDTO dto) {
+    public ApiResult<Object> update(@RequestBody @Validated InventorySkuCostDTO.UpdateDTO dto) {
         inventorySkuCostService.update(dto);
         return success();
     }
@@ -296,7 +296,7 @@ public class InventorySkuCostController extends BaseController {
      */
     @PostMapping("/exportExcel")
     @WebAdvanceQuery(handler = InventorySkuCostQueryHandler.class)
-    public ApiResult<?> exportExcel(@RequestBody @Valid InventorySkuCostDTO.PagingParamDTO dto) {
+    public ApiResult<Object> exportExcel(@RequestBody @Valid InventorySkuCostDTO.PagingParamDTO dto) {
         inventorySkuCostService.exportExcel(dto);
         return success(Boolean.TRUE);
     }
@@ -307,7 +307,7 @@ public class InventorySkuCostController extends BaseController {
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "下载SKU成本导入模板")
     @GetMapping("/downloadTemplate")
-    public ApiResult<?> downloadTemplate(HttpServletResponse response) {
+    public ApiResult<Object> downloadTemplate(HttpServletResponse response) {
         inventorySkuCostService.downloadTemplate(response);
         return success();
     }

@@ -1,8 +1,6 @@
 package com.erp.server.plm.service.impl;
 
-import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.map.MapUtil;
-import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.enums.ApiError;
@@ -27,6 +25,11 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
 import java.util.stream.Collectors;
+
+import static cn.hutool.core.collection.CollUtil.isEmpty;
+import static cn.hutool.core.collection.CollUtil.isNotEmpty;
+import static cn.hutool.core.text.CharSequenceUtil.format;
+import static cn.hutool.core.text.CharSequenceUtil.isBlank;
 
 
 /**
@@ -64,15 +67,15 @@ public class PreTaskServiceImpl extends ServiceImpl<PreTaskMapper, PreTaskEntity
         List<PreTaskEntity> oldTaskEntityList = lambdaQuery().eq(PreTaskEntity::getTaskId, taskId)
                 .list();
         Map<String, PreTaskEntity> oldTaskPreMap = new HashMap<>();
-        if (CollectionUtil.isNotEmpty(oldTaskEntityList)) {
+        if (isNotEmpty(oldTaskEntityList)) {
             //先删除前置任务
-            removePreTaskByTaskId(taskId, preTaskList);
+            removePreTaskByTaskId(taskId);
             oldTaskPreMap = oldTaskEntityList.stream()
-                    .collect(Collectors.toMap(task -> StrUtil.format("{}_{}", task.getTaskId(), task.getPreTaskId()), e -> e));
+                    .collect(Collectors.toMap(task -> format("{}_{}", task.getTaskId(), task.getPreTaskId()), e -> e));
         }
         Map<String, PreTaskEntity> finalOldTaskPreMap = oldTaskPreMap;
         List<PreTaskEntity> addList = preTaskList.stream()
-                .map(preTask -> new PreTaskEntity(preTask, taskId, productId, finalOldTaskPreMap.get(StrUtil.format("{}_{}", taskId, preTask))))
+                .map(preTask -> new PreTaskEntity(preTask, taskId, productId, finalOldTaskPreMap.get(format("{}_{}", taskId, preTask))))
                 .collect(Collectors.toList());
         this.saveBatch(addList);
     }
@@ -82,12 +85,11 @@ public class PreTaskServiceImpl extends ServiceImpl<PreTaskMapper, PreTaskEntity
      * 删除前置任务
      *
      * @param taskId
-     * @param preTaskIdList
      * @return void
      * @author yl
      * @date 2022-10-13 9:39
      */
-    private void removePreTaskByTaskId(String taskId, List<String> preTaskIdList) {
+    private void removePreTaskByTaskId(String taskId) {
         LambdaQueryWrapper<PreTaskEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(PreTaskEntity::getTaskId, taskId);
         this.remove(queryWrapper);
@@ -142,7 +144,7 @@ public class PreTaskServiceImpl extends ServiceImpl<PreTaskMapper, PreTaskEntity
         queryWrapper.select(PreTaskEntity::getPreTaskId, PreTaskEntity::getRelationship,
                 PreTaskEntity::getIntervalWorkPeriod, PreTaskEntity::getId, PreTaskEntity::getTaskId);
         List<PreTaskEntity> entityList = this.list(queryWrapper);
-        if (CollectionUtil.isEmpty(entityList)) {
+        if (isEmpty(entityList)) {
             return Collections.emptyList();
         }
         return entityList.stream().map(PreTaskVO::new).collect(Collectors.toList());
@@ -321,12 +323,12 @@ public class PreTaskServiceImpl extends ServiceImpl<PreTaskMapper, PreTaskEntity
 
     @Override
     public Map<String, List<PreTaskVO>> listByTaskIds(List<String> taskIds) {
-        if (CollectionUtil.isEmpty(taskIds)){
+        if (isEmpty(taskIds)){
             return MapUtil.empty();
         }
         List<PreTaskEntity> entityList = lambdaQuery().in(PreTaskEntity::getTaskId, taskIds)
                 .list();
-        if(CollectionUtil.isEmpty(entityList)){
+        if(isEmpty(entityList)){
             return MapUtil.empty();
         }
         Map<String, List<PreTaskVO>> groupByTaskIdMap = entityList.stream()
@@ -339,7 +341,7 @@ public class PreTaskServiceImpl extends ServiceImpl<PreTaskMapper, PreTaskEntity
     public List<PreTaskListVO> ListPreTaskByTaskId(String taskId) {
         List<PreTaskEntity> entityList = lambdaQuery().eq(PreTaskEntity::getTaskId, taskId)
                 .list();
-        if(CollectionUtil.isEmpty(entityList)){
+        if(isEmpty(entityList)){
             return Collections.emptyList();
         }
         List<String> preTaskIds = entityList.stream().map(PreTaskEntity::getPreTaskId).distinct().collect(Collectors.toList());
@@ -351,7 +353,7 @@ public class PreTaskServiceImpl extends ServiceImpl<PreTaskMapper, PreTaskEntity
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean updatePreTask(List<PreTaskUpdateDTO> dto) {
-        if (CollectionUtil.isEmpty(dto)) {
+        if (isEmpty(dto)) {
             return false;
         }
         List<PreTaskEntity> updateList = dto.stream().map(PreTaskEntity::new).collect(Collectors.toList());
@@ -360,7 +362,7 @@ public class PreTaskServiceImpl extends ServiceImpl<PreTaskMapper, PreTaskEntity
 
     @Override
     public List<ProjectChildTaskDTO> listChildrenTaskOneByTaskId(String taskId) {
-        if (StrUtil.isBlank(taskId)) {
+        if (isBlank(taskId)) {
             return Collections.emptyList();
         }
         List<PreTaskEntity> preTaskList = lambdaQuery()
@@ -384,7 +386,7 @@ public class PreTaskServiceImpl extends ServiceImpl<PreTaskMapper, PreTaskEntity
     public List<PreTaskListVO> ListSysPreTaskByTaskId(String taskId) {
         List<PreTaskEntity> entityList = lambdaQuery().eq(PreTaskEntity::getTaskId, taskId)
                 .list();
-        if(CollectionUtil.isEmpty(entityList)){
+        if(isEmpty(entityList)){
             return Collections.emptyList();
         }
         List<String> preTaskIds = entityList.stream().map(PreTaskEntity::getPreTaskId).distinct().collect(Collectors.toList());

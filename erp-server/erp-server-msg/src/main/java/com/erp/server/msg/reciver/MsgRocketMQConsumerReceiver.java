@@ -1,5 +1,6 @@
 package com.erp.server.msg.reciver;
 
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.common.core.utils.IdUtils;
 import com.common.core.utils.MathUtil;
@@ -45,7 +46,7 @@ public class MsgRocketMQConsumerReceiver {
     public class ConsumerNoticeMsg implements RocketMQListener<NoticeMsgInfoDTO> {
         @Override
         public void onMessage(NoticeMsgInfoDTO msgInfoDTO) {
-            log.info("监听到消息发送消息通知，请求内容：{}", JSONObject.toJSONString(msgInfoDTO));
+            log.info("监听到消息发送消息通知，请求内容：{}", JSON.toJSONString(msgInfoDTO));
             // 此处需注意，如果内部抛异常可能会导致某个渠道发送正常重新发送
             msgContext.routeSend(msgInfoDTO);
         }
@@ -58,20 +59,9 @@ public class MsgRocketMQConsumerReceiver {
     public class ConsumerWarnMsg implements RocketMQListener<WarnMsgInfoDTO> {
         @Override
         public void onMessage(WarnMsgInfoDTO warnMsgInfo) {
-            log.info("监听到消息发送预警消息通知，请求内容：{}", JSONObject.toJSONString(warnMsgInfo));
+            log.info("监听到消息发送预警消息通知，请求内容：{}", JSON.toJSONString(warnMsgInfo));
             //判断是否开启消息异步管理
-//            if (Objects.isNull(useJob) || !useJob){
-                msgContext.routeSendWarnMsg(warnMsgInfo);
-//            }else {
-//                //记录异常消息 然后使用定时任务进行推送
-//                if (StringUtils.isBlank(warnMsgInfo.getMsgId())){
-//                    warnMsgInfo.setMsgId(IdUtils.fastUUID());
-//                }
-//                if (Objects.isNull(warnMsgInfo.getIsSend())){
-//                    warnMsgInfo.setIsSend(MathUtil.ZERO);
-//                }
-//                mongoTemplate.insert(warnMsgInfo, MongoTableConstant.FEISHU_WARN_MSG);
-//            }
+            msgContext.routeSendWarnMsg(warnMsgInfo);
         }
     }
 

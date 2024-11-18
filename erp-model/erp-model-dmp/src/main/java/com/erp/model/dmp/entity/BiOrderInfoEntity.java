@@ -52,17 +52,6 @@ public class BiOrderInfoEntity implements Serializable {
     @TableField(value = "buyer_name")
     private String buyerName;
 
-//    /**
-//     * 客户名称
-//     */
-//    @TableField(value = "customer_name")
-//    private String customerName;
-//
-//    /**
-//     * 客户编号
-//     */
-//    @TableField(value = "customer_code")
-//    private String customerCode;
     /**
      * 店铺编号
      */
@@ -392,6 +381,11 @@ public class BiOrderInfoEntity implements Serializable {
         this.cnySettleRate = exchangeRate;
     }
 
+    public static final String PLATFORM_CREATE_TIME = "platform_create_time";
+
+    public static final String PLATFORM_UPDATE_TIME = "platform_update_time";
+
+    public static final String DELIVERY_TIME = "delivery_time";
 
     @Override
     public String toString() {

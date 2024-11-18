@@ -1,5 +1,6 @@
 package com.erp.server.wms.convert;
 
+import cn.hutool.core.text.CharSequenceUtil;
 import com.common.business.mapper.DateMapperWork;
 import com.erp.model.oms.dto.SkuMappingDTO;
 import com.erp.model.wms.dto.OverseasWarehouseInboundDTO;
@@ -43,7 +44,7 @@ public interface OverseasWarehouseInboundConverter {
 
 
     @Mappings({
-            @Mapping(target = "imagesUrl", expression = "java(org.apache.commons.lang3.StringUtils.isBlank(imageUrl)? \"\" : imageUrl)"),
+            @Mapping(target = "imagesUrl", expression = "java(cn.hutool.core.text.CharSequenceUtil.isBlank(imageUrl)? \"\" : imageUrl)"),
     })
     OverseasWarehouseInboundDetailDTO.ViewDTO detailEntityToViewDTO(OverseasWarehouseInboundDetailEntity entity, String imageUrl);
 
@@ -157,7 +158,7 @@ public interface OverseasWarehouseInboundConverter {
 
     static String getImlSmCode(ThirdWarehouseCreateInboundReq data){
         if(OverseasInstockTypeEnum.TRANSFER_AGENT.getCode().equals(data.getReceivingType())){
-            return StringUtils.isBlank(data.getSmCode()) ? "PHLY1" : data.getSmCode();
+            return CharSequenceUtil.isBlank(data.getSmCode()) ? "PHLY1" : data.getSmCode();
         }
         return null;
     }

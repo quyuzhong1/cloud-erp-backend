@@ -30,7 +30,7 @@ public interface ProjectTaskTimeRecordMapper extends BaseMapper<ProjectTaskTimeR
      * @param param
      * @return
      */
-    IPage<ProjectTaskTimeRecordPageVO> pageTaskTimeRecord(Page<ProjectTaskTimeRecordPageVO> page, @Param("params") ProjectTaskTimeRecordDTO.PageRecordDto dto, @Param("param") String param);
+    IPage<ProjectTaskTimeRecordPageVO> pageTaskTimeRecord(Page<ProjectTaskTimeRecordDTO.PageRecordDto> page, @Param("params") ProjectTaskTimeRecordDTO.PageRecordDto dto, @Param("param") String param);
 
     List<ProjectTaskTimeRecordPageVO> pageTaskTimeRecord(@Param("params") ProjectTaskTimeRecordDTO.PageRecordDto dto, @Param("param") String param);
 

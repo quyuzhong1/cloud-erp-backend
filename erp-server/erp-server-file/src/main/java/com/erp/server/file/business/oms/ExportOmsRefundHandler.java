@@ -4,7 +4,6 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.FileTaskEventEnum;
 import com.common.business.vo.PagingVO;
 import com.erp.model.oms.dto.RefundOrderDTO;
-import com.erp.model.oms.dto.ShopDTO;
 import com.erp.rpc.oms.feign.ExportOmsFeign;
 import com.erp.server.file.core.AbstractPageFileEventHandler;
 import com.erp.server.file.entity.FileTask;
@@ -16,7 +15,6 @@ import javax.annotation.Resource;
 import java.util.List;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_BI_RETURN_INFO;
-import static com.common.business.enums.FileTaskEventEnum.EXPORT_OMS_SHOP;
 
 @Component
 @Slf4j

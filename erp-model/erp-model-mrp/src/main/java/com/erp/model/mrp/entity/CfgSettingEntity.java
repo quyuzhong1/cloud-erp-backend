@@ -3,6 +3,7 @@ package com.erp.model.mrp.entity;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
@@ -21,8 +22,10 @@ import java.io.Serializable;
 @Setter
 @Accessors(chain = true)
 @TableName("cfg_setting")
+@EqualsAndHashCode(callSuper = true)
 public class CfgSettingEntity extends BaseEntity<CfgSettingEntity> {
 
+    private static final long serialVersionUID = -4162656980460609031L;
     /**
      * Key值
      */

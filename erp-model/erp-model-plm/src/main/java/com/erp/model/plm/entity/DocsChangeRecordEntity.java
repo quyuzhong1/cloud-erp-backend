@@ -15,7 +15,7 @@ import lombok.Data;
  */
 @TableName(value ="docs_change_log")
 @Data
-public class DocsChangeRecordEntity extends BaseEntity implements Serializable {
+public class DocsChangeRecordEntity extends BaseEntity<DocsChangeRecordEntity> implements Serializable {
     /**
      * 任务id
      */

@@ -29,6 +29,8 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
+import static cn.hutool.core.text.CharSequenceUtil.format;
+
 /**
  * <p>
  * 服务实现类
@@ -59,7 +61,7 @@ public class SupplierRefUserServiceImpl extends SuperServiceImpl<SupplierRefUser
             throw new ServiceException("保存失败");
         }
         // 操作日志
-        String msg = StrUtil.format("供应商协同用户【{}】新增【{}】关系id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "", supplierRefUserEntity.getId());
+        String msg = format("供应商协同用户【{}】新增【{}】关系id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "", supplierRefUserEntity.getId());
         moduleOperateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SUPPLIER_REF_USER.getCode(), supplierRefUserEntity.getId(), "新增操作");
         return new BaseResultDTO.AddDTO(supplierRefUserEntity.getId(), supplierRefUserEntity.getId());
     }
@@ -71,22 +73,20 @@ public class SupplierRefUserServiceImpl extends SuperServiceImpl<SupplierRefUser
     @Override
     public Boolean update(SupplierRefUserDTO.UpdateDTO updateDTO) {
         SupplierRefUserEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, ""));
+        SupplierRefUserEntity oldEntity = Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, ""));
         SupplierRefUserEntity supplierRefUserEntity = BeanMapperUtils.map(SupplierRefUserEntity.class, updateDTO);
 
         // 数据处理
         handleData(supplierRefUserEntity);
-        log.info("编辑 开始修改数据，id：【{}】", old.getId());
+        log.info("编辑 开始修改数据，id：【{}】", oldEntity.getId());
         boolean save = super.updateById(supplierRefUserEntity);
         if (!save) {
             throw new ServiceException("保存失败");
         }
-        // TODO 修改明细数据（包含增删改）（如果有明细的话）
 
         // 记录主单操作日志
         log.info("编辑 开始记录日志数据，id：【{}】", supplierRefUserEntity.getId());
-        String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), supplierRefUserEntity.getId(), "");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
+        String msg = format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), supplierRefUserEntity.getId(), "");
         moduleOperateLogService.addModuleOperateLogByObj(old, supplierRefUserEntity, ModuleTypeEnum.SUPPLIER_REF_USER.getCode(), supplierRefUserEntity.getId(), "", msg);
         return Boolean.TRUE;
     }

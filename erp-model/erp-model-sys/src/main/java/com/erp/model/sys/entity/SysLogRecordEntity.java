@@ -1,16 +1,14 @@
 package com.erp.model.sys.entity;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
-import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.core.enums.LogActionEnum;
 import com.common.core.enums.LogStatusEnum;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
-
-import javax.validation.constraints.NotBlank;
 
 
 /**
@@ -123,11 +121,11 @@ public class SysLogRecordEntity extends BaseEntity<SysLogRecordEntity> {
 
     public static final String SYSTEM_MODULE = "system_module";
 
-    public static final String ACTION = "action";
+    public static final String FIELD_ACTION = "action";
 
-    public static final String DESCRIPTION = "description";
+    public static final String FIELD_DESCRIPTION = "description";
 
-    public static final String IP = "ip";
+    public static final String FIELD_IP = "ip";
 
     public static final String REQUEST_PARAMS = "request_params";
 

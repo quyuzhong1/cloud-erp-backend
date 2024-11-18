@@ -1,6 +1,6 @@
 package com.common.business.handler;
 
-import cn.hutool.core.util.StrUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import com.common.business.annotation.PlatformShipOrderAnno;
 import com.common.business.config.AbstractSparrowAnnotationBeanMap;
 import com.common.business.dto.PlatformDeliveryInterceptDTO;

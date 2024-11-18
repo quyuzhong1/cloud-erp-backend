@@ -8,6 +8,9 @@ import com.sdk.wms.antu.soap.Ec_Service;
 import jodd.util.StringUtil;
 
 public class AntuUtils {
+    private AntuUtils() {
+        throw new IllegalStateException("Utility AntuUtils class");
+    }
     public static String callService(String service, Object obj){
         Ec_Service ecService = new Ec_Service();
         Ec ec = ecService.getEcSOAP();

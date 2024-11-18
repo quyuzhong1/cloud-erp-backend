@@ -1,11 +1,12 @@
 package com.erp.server.bi.listener;/**
  * @author Lambda
  * @Classname BiTargetStaffSettingExcelListener
- * @Description TODO
+ * @Description
  * @Date 2023-09-15 15:27
  * @Created by yl
  */
 
+import cn.hutool.core.util.ObjectUtil;
 import com.alibaba.excel.context.AnalysisContext;
 import com.alibaba.excel.event.AnalysisEventListener;
 import com.common.business.dto.FindUserDTO;
@@ -17,10 +18,9 @@ import org.apache.commons.collections4.CollectionUtils;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
 /**
- * @Description TODO
+ * @Description
  * @Author yl
  * @Date 2023-09-15 15:27
  */
@@ -62,7 +62,7 @@ public class BiTargetStaffSettingExcelListener extends AnalysisEventListener<Tar
         FindUserDTO user = userList.stream().
                 filter(u -> u.getUserName().equals(staffName)).
                 findFirst().orElse(null);
-        if (Objects.isNull(user)) {
+        if (ObjectUtil.isEmpty(user) || user == null) {
             errorMsgList.add("人员不存在");
         }
         //添加错误数据
@@ -76,6 +76,9 @@ public class BiTargetStaffSettingExcelListener extends AnalysisEventListener<Tar
         addDTO.setMetrics(metricsEnum);
         addDTO.setMetricsName(metricsName);
         //人
+        if (user == null) {
+            return;
+        }
         addDTO.setStaffId(user.getUserId());
         addDTO.setStaffName(user.getUserName());
         //一月
@@ -97,7 +100,7 @@ public class BiTargetStaffSettingExcelListener extends AnalysisEventListener<Tar
 
     @Override
     public void doAfterAllAnalysed(AnalysisContext analysisContext) {
-
+        // document why this method is empty
     }
 
     public List<TargetStaffSettingImportExcelDTO> getErrorList() {

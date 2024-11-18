@@ -322,6 +322,10 @@ public class TransferInfoDTO implements Serializable {
          * 批次号，发货单下推时生成
          */
         private String batchNo;
+        /**
+         * 排序
+         */
+        private Integer index;
     }
 
     @Data

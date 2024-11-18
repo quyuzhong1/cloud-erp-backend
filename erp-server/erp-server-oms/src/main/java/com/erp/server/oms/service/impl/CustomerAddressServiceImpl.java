@@ -2,7 +2,6 @@ package com.erp.server.oms.service.impl;
 
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.config.DocNoGenHelper;
-import com.common.business.constant.BusinessNoConstant;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.enums.ApiError;
@@ -12,7 +11,6 @@ import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.oms.dto.CustomerAddressDTO;
 import com.erp.model.oms.entity.CustomerAddressEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
-import com.erp.model.sys.dto.SysCodeDTO;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.oms.mapper.CustomerAddressMapper;
 import com.erp.server.oms.service.CustomerAddressService;
@@ -54,6 +52,8 @@ public class CustomerAddressServiceImpl extends SuperServiceImpl<CustomerAddress
 
     @Resource
     private DocNoGenHelper docNoGenHelper;
+    @Resource
+    private CustomerAddressService customerAddressService;
 
     /**
      * 检查默认地址是否存在多个
@@ -94,11 +94,10 @@ public class CustomerAddressServiceImpl extends SuperServiceImpl<CustomerAddress
         for (CustomerAddressEntity addDTO : addList) {
             addDTO.setMainId(mainId);
             //生成单号
-//            String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.KHDZ, BusinessNoTypeEnum.CODE_KHDZ.getCode()));
             String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_KHDZ);
             addDTO.setCode(code);
         }
-        this.saveBatch(addList);
+        customerAddressService.saveBatch(addList);
     }
 
 
@@ -116,8 +115,7 @@ public class CustomerAddressServiceImpl extends SuperServiceImpl<CustomerAddress
         if (CollectionUtils.isEmpty(dbList)) {
             return Collections.emptyList();
         }
-        List<CustomerAddressDTO.ViewDTO> resultList = BeanMapper.copyList(dbList, CustomerAddressDTO.ViewDTO.class);
-        return resultList;
+        return BeanMapper.copyList(dbList, CustomerAddressDTO.ViewDTO.class);
     }
 
 
@@ -140,7 +138,6 @@ public class CustomerAddressServiceImpl extends SuperServiceImpl<CustomerAddress
         List<CustomerAddressDTO.ViewDTO> addList = addressList.stream().filter(c -> StringUtils.isBlank(c.getId())).collect(Collectors.toList());
         for (CustomerAddressDTO.ViewDTO viewDTO : addList) {
             //生成单号
-//            String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.KHDZ, BusinessNoTypeEnum.CODE_KHDZ.getCode()));
             String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_KHDZ);
             viewDTO.setCode(code);
         }
@@ -179,7 +176,7 @@ public class CustomerAddressServiceImpl extends SuperServiceImpl<CustomerAddress
             }
         }
         if (CollectionUtils.isNotEmpty(saveOrUpdateList)) {
-            this.saveOrUpdateBatch(saveOrUpdateList);
+            customerAddressService.saveOrUpdateBatch(saveOrUpdateList);
         }
 
     }
@@ -190,8 +187,7 @@ public class CustomerAddressServiceImpl extends SuperServiceImpl<CustomerAddress
         if (ObjectUtils.isEmpty(entity)) {
             return new CustomerAddressDTO.ViewDTO();
         }
-        CustomerAddressDTO.ViewDTO viewDTO = BeanMapperUtils.map(CustomerAddressDTO.ViewDTO.class, entity);
-        return viewDTO;
+        return BeanMapperUtils.map(CustomerAddressDTO.ViewDTO.class, entity);
     }
 
     @Override

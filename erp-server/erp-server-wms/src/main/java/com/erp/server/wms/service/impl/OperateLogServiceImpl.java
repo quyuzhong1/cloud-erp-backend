@@ -1,5 +1,6 @@
 package com.erp.server.wms.service.impl;
 
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
@@ -113,10 +114,10 @@ public class OperateLogServiceImpl extends SuperServiceImpl<OperateLogMapper, Op
                 continue;
             }
             String content;
-            newValue = StrUtil.isBlank(newValue) ? "空值" : newValue;
-            oldValue = StrUtil.isBlank(oldValue) ? "空值" : oldValue;
-            String concat = (StringUtils.isBlank(msg) ? "" : msg).concat("编辑了[").concat(fieldName).concat("]");
-            if (StringUtils.isBlank(valuePair.getKey())) {
+            newValue = CharSequenceUtil.isBlank(newValue) ? "空值" : newValue;
+            oldValue = CharSequenceUtil.isBlank(oldValue) ? "空值" : oldValue;
+            String concat = (CharSequenceUtil.isBlank(msg) ? "" : msg).concat("编辑了[").concat(fieldName).concat("]");
+            if (CharSequenceUtil.isBlank(valuePair.getKey())) {
                 content = concat.concat("由空值变更为[").concat(newValue).concat("]");
             } else {
                 content = concat.concat("由[").concat(oldValue).concat("]").concat("变更为[").concat(newValue).concat("]");
@@ -210,7 +211,7 @@ public class OperateLogServiceImpl extends SuperServiceImpl<OperateLogMapper, Op
         String trueValue = "是";
         String falseValue = "否";
         String booleanValue = fieldEntity.getBooleanValue();
-        if (StringUtils.isNotBlank(booleanValue)) {
+        if (CharSequenceUtil.isNotBlank(booleanValue)) {
             String[] booleanValues = booleanValue.split("\\|");
             trueValue = booleanValues[0];
             falseValue = booleanValues[1];
@@ -228,11 +229,11 @@ public class OperateLogServiceImpl extends SuperServiceImpl<OperateLogMapper, Op
     private Pair<String, String> setDistValue(Pair<String, String> valuePair) {
         String oldValue = "";
         String newValue = "";
-        List<DictBasicEntity> oldList = dictBasicService.listByIds(Arrays.asList(valuePair.getKey().split(",")));
+        List<DictBasicEntity> oldList = dictBasicService.listByIds(Collections.singletonList(valuePair.getKey().split(",")));
         if (CollectionUtils.isNotEmpty(oldList)) {
             oldValue = oldList.stream().map(DictBasicEntity::getName).distinct().collect(Collectors.joining(","));
         }
-        List<DictBasicEntity> newList = dictBasicService.listByIds(Arrays.asList(valuePair.getValue().split(",")));
+        List<DictBasicEntity> newList = dictBasicService.listByIds(Collections.singletonList(valuePair.getValue().split(",")));
         if (CollectionUtils.isNotEmpty(newList)) {
             newValue = newList.stream().map(DictBasicEntity::getName).distinct().collect(Collectors.joining(","));
         }
@@ -260,7 +261,7 @@ public class OperateLogServiceImpl extends SuperServiceImpl<OperateLogMapper, Op
      * 设置枚举值
      */
     private Pair<String, String> setEnumValue(CfgOperateLogFieldEntity fieldEntity, Pair<String, String> valuePair) {
-        if (StringUtils.isBlank(fieldEntity.getEnumClass())) {
+        if (CharSequenceUtil.isBlank(fieldEntity.getEnumClass())) {
             throw new ServiceException(ApiError.ERROR_9028);
         }
         String oldValue = "";
@@ -275,7 +276,7 @@ public class OperateLogServiceImpl extends SuperServiceImpl<OperateLogMapper, Op
         if (!anEnum) {
             throw new ServiceException(ApiError.ERROR_9028);
         }
-        if (StringUtils.isNotBlank(valuePair.getKey())) {
+        if (CharSequenceUtil.isNotBlank(valuePair.getKey())) {
             EnumMessage enumObject = EnumsUtil.getEnumObject(valuePair.getKey(), aClass);
             if (ObjectUtils.isNotEmpty(enumObject)) {
                 oldValue = enumObject.getName();
@@ -283,7 +284,7 @@ public class OperateLogServiceImpl extends SuperServiceImpl<OperateLogMapper, Op
                 oldValue = "";
             }
         }
-        if (StringUtils.isNotBlank(valuePair.getValue())) {
+        if (CharSequenceUtil.isNotBlank(valuePair.getValue())) {
             EnumMessage enumObject = EnumsUtil.getEnumObject(valuePair.getValue(), aClass);
             if (ObjectUtils.isNotEmpty(enumObject)) {
                 newValue = enumObject.getName();

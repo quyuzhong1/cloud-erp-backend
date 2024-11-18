@@ -217,7 +217,7 @@ public class PoInstockEntity extends BaseEntity<PoInstockEntity> {
     @TableField("is_auto_instock")
     private Boolean isAutoInstock;
 
-    public static final String CODE = "code";
+    
 
     public static final String APPROVE_STATUS = "approve_status";
 

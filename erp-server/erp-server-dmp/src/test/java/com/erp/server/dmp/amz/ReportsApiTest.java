@@ -495,10 +495,11 @@ public class ReportsApiTest {
 //        String filePath = "group1/M00/00/57/rBBkDGWwwAGAKM66AAA9CK6hNZY.T1RW0R";
 //        String filePath = "group1/M00/00/57/rBBkDGWwx-SAN72WAAAa60JmTIA.TJTK0A";
 //        String filePath = "group1/M00/00/61/rBBkDGXmdr2AQduGAAM1_TuUdzs.T11BXP";
-        String filePath = "group1/M00/0B/B1/rBBkDGa0h_mAdN3IAAB34hBrWYc.T3U2NV";
+        String filePath = "group1/M00/56/65/rBBkDGc0VmmAC7jMAAKFNrrAk80.TT1GCO";
 //        AmazonReportRecordTypeEnum recordTypeEnum = AmazonReportRecordTypeEnum.GET_MERCHANT_LISTINGS_DATA;
 //        AmazonReportRecordTypeEnum recordTypeEnum = AmazonReportRecordTypeEnum.GET_MERCHANT_LISTINGS_ALL_DATA;
-        String recordType = "GET_FBA_MYI_UNSUPPRESSED_INVENTORY_DATA";
+//        String recordType = "GET_FBA_MYI_UNSUPPRESSED_INVENTORY_DATA";
+        String recordType = "GET_MERCHANT_LISTINGS_ALL_DATA";
         // GET_LEDGER_DETAIL_VIEW_DATA
 //        String filePath = "group1/M00/00/56/rBBkDGWwhqKAEXEzAAAsztgMvt42.84700";
 //        AmazonReportRecordTypeEnum recordTypeEnum = AmazonReportRecordTypeEnum.GET_LEDGER_DETAIL_VIEW_DATA;

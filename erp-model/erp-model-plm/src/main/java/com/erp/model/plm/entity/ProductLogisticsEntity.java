@@ -18,7 +18,7 @@ import java.time.LocalDateTime;
  **/
 @TableName(value ="product_logistics")
 @Data
-public class ProductLogisticsEntity extends BaseEntity implements Serializable {
+public class ProductLogisticsEntity extends BaseEntity<ProductLogisticsEntity> implements Serializable {
 
     /**
      * 产品sku表id

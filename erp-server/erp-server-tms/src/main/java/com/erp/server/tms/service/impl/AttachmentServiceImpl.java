@@ -13,8 +13,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.Resource;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -28,7 +28,8 @@ import java.util.stream.Collectors;
  */
 @Service
 public class AttachmentServiceImpl extends SuperServiceImpl<AttachmentMapper, AttachmentEntity> implements AttachmentService {
-
+    @Resource
+    private AttachmentService attachmentService;
 
     /**
      * 根据业务表id获取附件信息
@@ -89,7 +90,7 @@ public class AttachmentServiceImpl extends SuperServiceImpl<AttachmentMapper, At
                 entity.setBusinessId(businessId);
                 addList.add(entity);
             }
-            this.saveBatch(addList);
+            attachmentService.saveBatch(addList);
         }
 
     }
@@ -109,7 +110,7 @@ public class AttachmentServiceImpl extends SuperServiceImpl<AttachmentMapper, At
         queryWrapper.eq(AttachmentEntity::getBusinessId, businessId);
         List<AttachmentEntity> list = this.list(queryWrapper);
         if (CollectionUtils.isEmpty(list)) {
-            return Collections.EMPTY_LIST;
+            return new ArrayList<>();
         }
         return BeanMapper.copyList(list, AttachmentDTO.UpdateDTO.class);
     }

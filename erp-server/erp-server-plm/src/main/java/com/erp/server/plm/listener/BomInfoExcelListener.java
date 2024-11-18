@@ -5,7 +5,6 @@ import com.alibaba.excel.event.AnalysisEventListener;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.common.core.utils.FieldValidUtil;
 import com.erp.model.plm.dto.excel.BomInfoExcelDTO;
-import com.erp.model.plm.entity.BomSkuEntity;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
@@ -27,10 +26,6 @@ public class BomInfoExcelListener extends AnalysisEventListener<BomInfoExcelDTO>
      */
     private List<BomInfoExcelDTO> successList = new ArrayList<>();
 
-    public BomInfoExcelListener() {
-
-    }
-
    /**
     * @description: 每解析一行数据回调一遍
     * @author Will
@@ -42,7 +37,6 @@ public class BomInfoExcelListener extends AnalysisEventListener<BomInfoExcelDTO>
     @Transactional(rollbackFor = Exception.class)
     public void invoke(BomInfoExcelDTO bomInfoExcelDTO, AnalysisContext analysisContext) {
         List<String> errorMsgList = new ArrayList<>();
-        BomSkuEntity bomSkuEntity = new BomSkuEntity();
 
         //基础验证
         List<String> msgList = FieldValidUtil.fieldValid(bomInfoExcelDTO);
@@ -81,6 +75,6 @@ public class BomInfoExcelListener extends AnalysisEventListener<BomInfoExcelDTO>
      */
     @Override
     public void doAfterAllAnalysed(AnalysisContext analysisContext) {
-
+        return;
     }
 }

@@ -1,5 +1,6 @@
 package com.erp.server.wms.controller.api;
 
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
@@ -101,7 +102,7 @@ public class SoDeliveryNoticeController extends BaseController {
     @PostMapping("/add")
     public ApiResult add(@RequestBody @Validated SoDeliveryNoticeDTO.Add dto) {
         String id = soDeliveryNoticeService.add(dto);
-        return StringUtils.isNotBlank(id) == true ? success() : failure();
+        return CharSequenceUtil.isNotBlank(id) == true ? success() : failure();
     }
 
     /**

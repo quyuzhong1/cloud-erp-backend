@@ -1,15 +1,15 @@
 package com.erp.server.tms.service.impl;
 
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.enums.LogisticsPlatformEnum;
 import com.common.business.enums.LogisticsTransportTypeEnum;
 import com.common.business.enums.TrackQueryTypeEnum;
 import com.common.core.controller.vo.ApiResult;
-import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.MathUtil;
 import com.erp.model.oms.entity.ShopAuthEntity;
@@ -31,8 +31,6 @@ import com.erp.rpc.dmp.feign.DmpMongoDbFeign;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.oms.feign.ShopeeFeign;
 import com.erp.server.tms.convert.LogisticsAddressConverter;
-import com.erp.server.tms.convert.LogisticsChannelConverter;
-import com.erp.server.tms.convert.TrackDataConverter;
 import com.erp.server.tms.handler.LogisticsRegistry;
 import com.erp.server.tms.rocketmq.PlatformTrackConsumerService;
 import com.erp.server.tms.service.*;
@@ -62,7 +60,6 @@ import java.util.stream.Collectors;
 /**
  * @author zdy
  * @ClassName LogisticsBaseServiceImpl
- * @description: TODO
  * @date 2023年11月15日
  * @version: 1.0
  */
@@ -146,7 +143,7 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
         }
         //跟据类型判断走小包、海运
         ApiResult<List<LogisticsTrackEntity>> track;
-        if (StrUtil.equals(LogisticsTransportTypeEnum.EXPRESS_DELIVERY.getCode(),transportType)) {
+        if (CharSequenceUtil.equals(LogisticsTransportTypeEnum.EXPRESS_DELIVERY.getCode(),transportType)) {
             track = processTrackExpressDeliveryData(mapList, records, service);
         } else {
             track = processTrackOceanData(mapList,records,service);
@@ -161,11 +158,11 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
             //根据记录进行更新物流信息
             for (LogisticsTrackDTO.UpdateTrackDTO record : records) {
                 BatchResultDTO dto = new BatchResultDTO();
-                String trackNo = TrackQueryTypeEnum.TRACK_NO.getCode().equals(record.getTrackQueryType()) && StrUtil.isNotBlank(record.getTrackNo()) ? record.getTrackNo() : record.getTransportNo();
-                if (StrUtil.isBlank(trackNo) && StrUtil.isNotBlank(record.getTrackNo())){
+                String trackNo = TrackQueryTypeEnum.TRACK_NO.getCode().equals(record.getTrackQueryType()) && CharSequenceUtil.isNotBlank(record.getTrackNo()) ? record.getTrackNo() : record.getTransportNo();
+                if (CharSequenceUtil.isBlank(trackNo) && CharSequenceUtil.isNotBlank(record.getTrackNo())){
                     trackNo = record.getTrackNo();
                 }
-                if (StrUtil.isBlank(trackNo)){
+                if (CharSequenceUtil.isBlank(trackNo)){
                     continue;
                 }
                 //获取对应编号的轨迹
@@ -187,8 +184,8 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
             records.forEach(record -> {
                 BatchResultDTO dto = new BatchResultDTO();
                 dto.setId(record.getId());
-                String trackNo = TrackQueryTypeEnum.TRACK_NO.getCode().equals(record.getTrackQueryType()) && StrUtil.isNotBlank(record.getTrackNo()) ? record.getTrackNo() : record.getTransportNo();
-                if (StrUtil.isBlank(trackNo) && StrUtil.isNotBlank(record.getTrackNo())){
+                String trackNo = TrackQueryTypeEnum.TRACK_NO.getCode().equals(record.getTrackQueryType()) && CharSequenceUtil.isNotBlank(record.getTrackNo()) ? record.getTrackNo() : record.getTransportNo();
+                if (CharSequenceUtil.isBlank(trackNo) && CharSequenceUtil.isNotBlank(record.getTrackNo())){
                     trackNo = record.getTrackNo();
                 }
                 dto.setCode(trackNo);
@@ -216,11 +213,11 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
         List<LogisticsRegisterVO> logisticsRegisterVOS = new ArrayList<>();
         //根据配置进行组装注册数据
         for (LogisticsTrackDTO.UpdateTrackDTO record : records) {
-            String trackNo = TrackQueryTypeEnum.TRACK_NO.getCode().equals(record.getTrackQueryType()) && StrUtil.isNotBlank(record.getTrackNo()) ? record.getTrackNo() : record.getTransportNo();
-            if (StrUtil.isBlank(trackNo) && StrUtil.isNotBlank(record.getTrackNo())){
+            String trackNo = TrackQueryTypeEnum.TRACK_NO.getCode().equals(record.getTrackQueryType()) && CharSequenceUtil.isNotBlank(record.getTrackNo()) ? record.getTrackNo() : record.getTransportNo();
+            if (CharSequenceUtil.isBlank(trackNo) && CharSequenceUtil.isNotBlank(record.getTrackNo())){
                 trackNo = record.getTrackNo();
             }
-            if (StrUtil.isBlank(trackNo)){
+            if (CharSequenceUtil.isBlank(trackNo)){
                 continue;
             }
             logisticsRegisterVOS.add(LogisticsRegisterVO.builder()
@@ -254,8 +251,8 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
         List<LogisticsBillDetailEntity> logisticsBillDetailList = logisticsBillDetailService.listByIds(ids);
 
         for (LogisticsTrackDTO.UpdateTrackDTO updateTrackDTO :records) {
-            String orderNo = logisticsBillDetailList.stream().filter(obj -> StrUtil.equals(obj.getId(), updateTrackDTO.getId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getPlatformOrderNo())).orElse("");
-            if (StrUtil.isBlank(orderNo)) {
+            String orderNo = logisticsBillDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), updateTrackDTO.getId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getPlatformOrderNo())).orElse("");
+            if (CharSequenceUtil.isBlank(orderNo)) {
                return new ApiResult<>(10000,"未发现跟踪单对应平台订单");
             }
             LogisticsTrackBaseDTO.OceanTrackRequestDTO oceanTrackRequestDTO = LogisticsTrackBaseDTO.OceanTrackRequestDTO.builder()
@@ -288,7 +285,7 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
         }
         //跟据类型判断走小包、海运
         ApiResult<List<RegisterResponseVO>> listApiResult;
-        if (StrUtil.equals(LogisticsTransportTypeEnum.EXPRESS_DELIVERY.getCode(),transportType)) {
+        if (CharSequenceUtil.equals(LogisticsTransportTypeEnum.EXPRESS_DELIVERY.getCode(),transportType)) {
             listApiResult = processRegisterExpressDeliveryData(mapList, records, service);
         } else {
             listApiResult = processRegisterOceanData(mapList,records,service);
@@ -300,11 +297,11 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
                 errorIds.add(record.getId());
                 continue;
             }
-            String trackNo = TrackQueryTypeEnum.TRACK_NO.getCode().equals(record.getTrackQueryType()) && StrUtil.isNotBlank(record.getTrackNo()) ? record.getTrackNo() : record.getTransportNo();
-            if (StrUtil.isBlank(trackNo) && StrUtil.isNotBlank(record.getTrackNo())){
+            String trackNo = TrackQueryTypeEnum.TRACK_NO.getCode().equals(record.getTrackQueryType()) && CharSequenceUtil.isNotBlank(record.getTrackNo()) ? record.getTrackNo() : record.getTransportNo();
+            if (CharSequenceUtil.isBlank(trackNo) && CharSequenceUtil.isNotBlank(record.getTrackNo())){
                 trackNo = record.getTrackNo();
             }
-            if (StrUtil.isBlank(trackNo)){
+            if (CharSequenceUtil.isBlank(trackNo)){
                 errorIds.add(record.getId());
                 continue;
             }
@@ -340,11 +337,11 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
         List<LogisticsRegisterVO> logisticsRegisterVOS = new ArrayList<>();
         //根据配置进行组装注册数据
         for (LogisticsTrackDTO.UpdateTrackDTO record : records) {
-            String trackNo = TrackQueryTypeEnum.TRACK_NO.getCode().equals(record.getTrackQueryType()) && StrUtil.isNotBlank(record.getTrackNo()) ? record.getTrackNo() : record.getTransportNo();
-            if (StrUtil.isBlank(trackNo) && StrUtil.isNotBlank(record.getTrackNo())){
+            String trackNo = TrackQueryTypeEnum.TRACK_NO.getCode().equals(record.getTrackQueryType()) && CharSequenceUtil.isNotBlank(record.getTrackNo()) ? record.getTrackNo() : record.getTransportNo();
+            if (CharSequenceUtil.isBlank(trackNo) && CharSequenceUtil.isNotBlank(record.getTrackNo())){
                 trackNo = record.getTrackNo();
             }
-            if (StrUtil.isBlank(trackNo)){
+            if (CharSequenceUtil.isBlank(trackNo)){
                 continue;
             }
             logisticsRegisterVOS.add(LogisticsRegisterVO.builder()
@@ -597,7 +594,7 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
             XxlJobHelper.log("获取店铺:{}物流地址异常：{}", authMap.get("shopId"), e.getMessage());
             return;
         }
-        SellerResponse responseMsg = JSONObject.parseObject(sellerInfo.getBody(), SellerResponse.class);
+        SellerResponse responseMsg = JSON.parseObject(sellerInfo.getBody(), SellerResponse.class);
         List<Address> senders = responseMsg.getSenders();
         List<Address> pickups = responseMsg.getPickups();
         List<Address> refunds = responseMsg.getRefunds();
@@ -638,7 +635,7 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
     public void processMongoTrackData(String platformType, List<LogisticsTrackDTO.UpdateTrackDTO> records, String transportType) {
         List<String> trackNoList = records.stream().map(LogisticsTrackDTO.UpdateTrackDTO::getTrackNo).distinct().collect(Collectors.toList());
         String result = dmpMongoDbFeign.listMongoTractDataByTrackNoList(trackNoList);
-        if (StrUtil.isBlank(result)){
+        if (CharSequenceUtil.isBlank(result)){
             return;
         }
         List<TrackDetail> trackDetails = JSONUtil.toList(result, TrackDetail.class);

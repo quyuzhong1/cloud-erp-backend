@@ -5,7 +5,6 @@ import com.erp.model.mrp.dto.CfgRuleStrategyDTO;
 import com.erp.model.mrp.dto.ReplenishmentResultDTO;
 import com.erp.model.mrp.enums.CfgRuleCommonTypeEnum;
 import com.erp.model.mrp.enums.CfgRuleInventoryNodeEnum;
-import com.erp.model.mrp.enums.CfgRulePlatformTypeEnum;
 import com.erp.model.mrp.enums.RecentTimePeriodEnum;
 import com.erp.server.mrp.service.CfgRuleCommonService;
 import org.springframework.stereotype.Component;
@@ -16,6 +15,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.List;
 import java.util.Set;
+import java.util.function.IntConsumer;
 
 @Component
 public class SellableDaysHandler extends AbstractSkuCalculationHandler {
@@ -40,6 +40,7 @@ public class SellableDaysHandler extends AbstractSkuCalculationHandler {
         List<ReplenishmentResultDTO.TimePeriodSalesEstimateDTO> estimates = replenishmentResultDTO.getAvgTimePeriodSalesEstimates();
         String baseKey = CfgRuleCommonTypeEnum.getBaseInventoryRedisKey(replenishmentResultDTO.getReplenishment().getPlatformType());
         List<CfgRuleCommonDTO.StrategyResultDTO> inventoryResult = cfgRuleStrategyDTO.getInventoryResult();
+
         ReplenishmentResultDTO.TimePeriodSalesEstimateDTO salesEstimate = estimates.stream()
                 .filter(v -> v.getCode().equals(RecentTimePeriodEnum.STOCKING_DATE))
                 .findFirst().orElse(null);
@@ -49,27 +50,32 @@ public class SellableDaysHandler extends AbstractSkuCalculationHandler {
         BigDecimal estimateQty = (salesEstimate.getQty().compareTo(BigDecimal.ZERO) == 0) ? BigDecimal.ONE : salesEstimate.getQty();
         //FBA可售天数 FBA可用 / 备货期日均销量
         if (!ObjectUtils.isEmpty(detail.getFbaUsableQty())) {
-            replenishmentResultDTO.getReplenishmentDetail().setFbaSellableDays(new BigDecimal(detail.getFbaUsableQty())
-                    .divide(estimateQty, 0, RoundingMode.FLOOR).intValue());
+            setSellableDays(detail.getFbaUsableQty(), estimateQty, replenishmentResultDTO.getReplenishmentDetail()::setFbaSellableDays);
         }
         //海外仓可售天数 海外仓总库存 / 备货期日均销量
         if (Boolean.TRUE.equals(cfgRuleStrategyDTO.getWarehouseResult().getIsEnableOverseas())) {
             Set<String> overseasResult = cfgRuleCommonService.findByKey(baseKey, inventoryResult, baseKey + ":" + CfgRuleInventoryNodeEnum.getTotalOverseasInventory());
             int totalOverseasQty = 0;
-            for (String code : overseasResult) {
-                if (CfgRuleInventoryNodeEnum.TOTAL_OVERSEAS_USABLE.getCode().equals(code)) {
-                    totalOverseasQty += ObjectUtils.isEmpty(detail.getOverseasUsableQty()) ? 0 : detail.getOverseasUsableQty();
-                } else if (CfgRuleInventoryNodeEnum.TOTAL_OVERSEAS_IN_TRANSIT.getCode().equals(code)) {
-                    totalOverseasQty += ObjectUtils.isEmpty(detail.getOverseasInTransitQty()) ? 0 : detail.getOverseasUsableQty();
-                } else if (CfgRuleInventoryNodeEnum.TOTAL_OVERSEAS_ESTIMATED_DELIVERY.getCode().equals(code)) {
-                    totalOverseasQty += ObjectUtils.isEmpty(detail.getOverseasPlanDeliveryQty()) ? 0 : detail.getOverseasUsableQty();
-                }
-            }
-            replenishmentResultDTO.getReplenishmentDetail().setOverseasSellableDays(new BigDecimal(totalOverseasQty)
-                    .divide(estimateQty, 0, RoundingMode.FLOOR).intValue());
+            totalOverseasQty = getTotalOverseasQty(overseasResult, totalOverseasQty, detail);
+            setSellableDays(totalOverseasQty, estimateQty, replenishmentResultDTO.getReplenishmentDetail()::setOverseasSellableDays);
         }
         int totalLocalQty = 0;
         Set<String> localResult = cfgRuleCommonService.findByKey(baseKey, inventoryResult, baseKey + ":" + CfgRuleInventoryNodeEnum.getTotalLocalInventory());
+        totalLocalQty = getTotalLocalQty(localResult, totalLocalQty, detail);
+        setSellableDays(totalLocalQty, estimateQty, replenishmentResultDTO.getReplenishmentDetail()::setLocalSellableDays);
+        //总库存可售天数 总库存 / 备货期日均销量
+        if (!ObjectUtils.isEmpty(detail.getTotalInventoryQty())) {
+            setSellableDays(detail.getTotalInventoryQty(), estimateQty, replenishmentResultDTO.getReplenishmentDetail()::setTotalSellableDays);
+        }
+    }
+
+    /**
+     * 获取本地仓总数量
+     * @param localResult 配置
+     * @param totalLocalQty 总数量
+     * @param detail 参数
+     */
+    private static int getTotalLocalQty(Set<String> localResult, int totalLocalQty, ReplenishmentResultDTO.DetailDTO detail) {
         for (String code : localResult) {
             if (CfgRuleInventoryNodeEnum.TOTAL_LOCAL_USABLE.getCode().equals(code)) {
                 totalLocalQty += ObjectUtils.isEmpty(detail.getLocalUsableQty()) ? 0 : detail.getLocalUsableQty();
@@ -79,12 +85,30 @@ public class SellableDaysHandler extends AbstractSkuCalculationHandler {
                 totalLocalQty += ObjectUtils.isEmpty(detail.getLocalPlanPurchaseQty()) ? 0 : detail.getLocalPlanPurchaseQty();
             }
         }
-        replenishmentResultDTO.getReplenishmentDetail().setLocalSellableDays(new BigDecimal(totalLocalQty)
-                .divide(estimateQty, 0, RoundingMode.FLOOR).intValue());
-        //总库存可售天数 总库存 / 备货期日均销量
-        if (!ObjectUtils.isEmpty(detail.getTotalInventoryQty())) {
-            replenishmentResultDTO.getReplenishmentDetail().setTotalSellableDays(new BigDecimal(detail.getTotalInventoryQty())
-                    .divide(estimateQty, 0, RoundingMode.FLOOR).intValue());
-        }
+        return totalLocalQty;
     }
+
+    /**
+     * 获取海外总数量
+     * @param overseasResult 配置
+     * @param totalOverseasQty 总数量
+     * @param detail 参数
+     */
+    private static int getTotalOverseasQty(Set<String> overseasResult, int totalOverseasQty, ReplenishmentResultDTO.DetailDTO detail) {
+        for (String code : overseasResult) {
+            if (CfgRuleInventoryNodeEnum.TOTAL_OVERSEAS_USABLE.getCode().equals(code)) {
+                totalOverseasQty += ObjectUtils.isEmpty(detail.getOverseasUsableQty()) ? 0 : detail.getOverseasUsableQty();
+            } else if (CfgRuleInventoryNodeEnum.TOTAL_OVERSEAS_IN_TRANSIT.getCode().equals(code)) {
+                totalOverseasQty += ObjectUtils.isEmpty(detail.getOverseasInTransitQty()) ? 0 : detail.getOverseasUsableQty();
+            } else if (CfgRuleInventoryNodeEnum.TOTAL_OVERSEAS_ESTIMATED_DELIVERY.getCode().equals(code)) {
+                totalOverseasQty += ObjectUtils.isEmpty(detail.getOverseasPlanDeliveryQty()) ? 0 : detail.getOverseasUsableQty();
+            }
+        }
+        return totalOverseasQty;
+    }
+
+    private void setSellableDays(int totalQty, BigDecimal estimateQty, IntConsumer setSellableDaysMethod) {
+        setSellableDaysMethod.accept(new BigDecimal(totalQty).divide(estimateQty, 0, RoundingMode.FLOOR).intValue());
+    }
+
 }
