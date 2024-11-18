@@ -2696,11 +2696,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         LocalDateTime payTime = list.stream().map(SoB2cEntity::getPayTime).min((x, y) -> x.compareTo(y)).orElse(null);
         addDTO.setPayTime(payTime);
         addDTO.setSourceType(SourceTypeEnum.SELF_ADD.getCode());
-        //平台订单号
-//        String platformCode = list.stream().filter(obj -> CharSequenceUtil.isNotBlank(obj.getPlatformCode())).map(SoB2cEntity::getPlatformCode).collect(Collectors.joining("*"));
-//        addDTO.setPlatformCode(platformCode);
-        // 合并订单无平台订单号(防止合并字段过长)
-        addDTO.setPlatformCode("");
+
         //物流信息
         SoB2cLogisticsDTO.AddDTO logisticsAddDTO = new SoB2cLogisticsDTO.AddDTO();
         BeanMapperUtils.copy(soB2cLogisticsList.get(0), logisticsAddDTO);
@@ -2775,6 +2771,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 .filter(StringUtils::isNotBlank)
                 .distinct()
                 .collect(Collectors.joining(","));
+        if(StringUtils.isNotBlank(platformCodeListStr) && platformCodeListStr.length() > 1024 ){
+            throw new ServiceException(ApiError.ERROR_92162);
+        }
+
         String remark;
         if (StringUtils.isBlank(platformCodeListStr)){
             remark =  CharSequenceUtil.format("订单【{}】合并新订单", codes);
@@ -2782,7 +2782,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             remark =  CharSequenceUtil.format("订单【{}】合并新订单,平台订单号【{}】 ", codes, platformCodeListStr);
         }
         addDTO.setRemark(remark);
-        addDTO.setMergePlatformCode(platformCodeListStr);
+        //合并后的平台订单号
+        addDTO.setPlatformCode(platformCodeListStr);
         addDTO.setDetailList(detailList);
         log.info("新增合并后的B2C销售订单，addDTO = {}", addDTO);
         //新增数据
