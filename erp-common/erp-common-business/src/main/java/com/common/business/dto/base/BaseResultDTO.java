@@ -1,5 +1,6 @@
 package com.common.business.dto.base;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

@@ -13,7 +13,7 @@
        <result column="version" property="version" />
        <result column="is_deleted" property="isDeleted" />
        <result column="code" property="code" />
-       <result column="create_type" property="createType" />
+       <result column="data_type" property="dataType" />
        <result column="suggest_purchase_qty" property="suggestPurchaseQty" />
        <result column="suggest_purchase_date" property="suggestPurchaseDate" />
        <result column="logistics_method" property="logisticsMethod" />
@@ -30,16 +30,45 @@
     <!-- 通用查询结果列 -->
     <sql id="Base_Column_List">
         ps.id,
-        ps.create_user_id,
-        ps.create_user_name,
-        ps.create_time,
-        ps.update_user_id,
-        ps.update_user_name,
-        ps.update_time,
-        ps.version,
-        ps.is_deleted,
-        ps.code, ps.create_type, ps.suggest_purchase_qty, ps.suggest_purchase_date, ps.logistics_method, ps.logistics_days, ps.estimate_instock_date, ps.estimate_sales_date, ps.purchase_cost, ps.invalid_status, ps.invalid_remark, ps.source_id, ps.source_type
-
+        ps.create_user_id as createUserId,
+        ps.create_user_name as createUserName,
+        ps.create_time as createTime,
+        ps.update_user_id as updateUserId,
+        ps.update_user_name as updateUserName,
+        ps.update_time as updateTime,
+        ps.code,
+        ps.data_type as dataType,
+        ps.suggest_purchase_qty as suggestPurchaseQty,
+        pss.suggest_purchase_qty as sysSuggestPurchaseQty,
+        ps.suggest_purchase_date as suggestPurchaseDate,
+        pss.suggest_purchase_date as sysSuggestPurchaseDate,
+        pss.suggest_purchase_qty as sysSuggestPurchaseDate,
+        ps.logistics_method as logisticsMethod,
+        pss.logistics_method as sysLogisticsMethod,
+        ps.logistics_days as logisticsDays,
+        pss.logistics_days as sysLogisticsDays,
+        ps.estimate_instock_date as estimateInstockDate,
+        pss.estimate_instock_date as sysEstimateInstockDate,
+        ps.estimate_sales_date as estimateSalesDate,
+        pss.estimate_sales_date as sysEstimateSalesDate,
+        ps.purchase_cost as purchaseCost,
+        pss.purchase_cost as sysPurchaseCost,
+        ps.invalid_status as invalidStatus,
+        ps.invalid_remark as invalidRemark,
+        ps.invalid_time as invalidTime,
+        ps.invalid_user_id as invalidUserId,
+        ps.invalid_user_name as invalidUserName,
+        ps.source_id as sourceId,
+        ps.source_type as sourceType,
+        ps.status,
+        ps.currency,
+        ps.platform_type as platformType,
+        ps.platform,
+        ps.shop_id as shopId,
+        ps.sku_id as skuId,
+        ps.plan_purchase_qty as planPurchaseQty,
+        ps.purchase_stock_up_qty as purchaseStockUpQty,
+        ps.remark
     </sql>
 
     <!-- 采购建议导出分页 -->
@@ -47,10 +76,11 @@
             resultType="com.erp.model.mrp.dto.ReplenishmentSuggestionDTO$PurchaseSuggestionDTO">
         select
             <include refid="Base_Column_List"/>
-            ,rs.platform_type,rs.sku_id,rs.sku_id,rs.sku_no,rs.platform,rs.shop_id
+            ,pd.sku_no,pd.name as productName,pd.images_url as imagesUrl
         from purchase_suggest ps
-        inner join replenishment_suggestion_detail rsd on ps.source_id = rsd.id and rsd.is_deleted = false
-        inner join replenishment_suggestion rs on rsd.main_id = rs.id and rs.is_deleted = false
+        inner join replenishment_suggestion rs on ps.source_id = rs.id and rs.is_deleted = false
+        left join purchase_suggest_sys pss on ps.id = pss.source_id and pss.is_deleted = false
+        left join product_detail pd on ps.sku_id = pd.id and pd.is_deleted = false
         <where>
             ${params.sqlMap.default}
             and ps.is_deleted = false
@@ -68,9 +98,53 @@
     <select id="list" resultType="com.erp.model.mrp.dto.PurchaseSuggestDTO$ListDTO">
         select
             <include refid="Base_Column_List"/>
+            ,pd.sku_no,pd.name as productName,pd.images_url as imagesUrl
         from purchase_suggest ps
+        left join purchase_suggest_sys pss on ps.id = pss.source_id and pss.is_deleted = false
+        left join product_detail pd on ps.sku_id = pd.id and pd.is_deleted = false
         <where>
-            ps.is_deleted = false and source_id = #{params.sourceId}
+            ps.is_deleted = false and ps.status = 'draft' and ps.source_id = #{params.sourceId}
+        </where>
+    </select>
+
+    <!-- 分页查询 -->
+    <select id="paging" resultType="com.erp.model.mrp.dto.PurchaseSuggestDTO$ListDTO">
+        select
+            <include refid="Base_Column_List"/>
+            ,pd.sku_no,pd.name as productName,pd.images_url as imagesUrl
+        from purchase_suggest ps
+        left join purchase_suggest_sys pss on ps.id = pss.source_id and pss.is_deleted = false
+        left join product_detail pd on ps.sku_id = pd.id and pd.is_deleted = false
+        <where>
+            ${params.sqlMap.default}
+            and ps.is_deleted = false
+            <if test="params.permissionSql != null and params.permissionSql != ''">
+                ${params.permissionSql}
+            </if>
+        </where>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        ps.id desc
+    </select>
+
+    <!-- 查询可生成采购建议合并的数据 -->
+    <select id="listGeneratePurchaseSuggestMerge" resultType="com.erp.model.mrp.entity.PurchaseSuggestEntity">
+        select
+            <include refid="Base_Column_List"/>
+        from purchase_suggest ps
+        left join purchase_suggest_sys pss on ps.id = pss.source_id and pss.is_deleted = false
+        <where>
+            ps.is_deleted = false and ps.status = 'draft' and ps.invalid_status = false
+            AND NOT EXISTS (
+                SELECT 1
+                FROM purchase_suggest_merge psm
+                WHERE psm.is_deleted = FALSE
+                AND ps.id = ANY (SELECT jsonb_array_elements_text(psm.source_id_json)::text)
+            );
         </where>
     </select>
 

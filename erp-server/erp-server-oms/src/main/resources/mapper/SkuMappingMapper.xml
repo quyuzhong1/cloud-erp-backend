@@ -108,10 +108,7 @@
         li.platform_fn_sku,
         li.platform_update_time,
         sm.create_user_name,
-        sm.create_time,
-        sm.expire_time,
-        sm.effective_time,
-        ci.seller_name
+        sm.create_time
         FROM sku_mapping sm
         LEFT JOIN shop_info si
         ON sm.shop_id=si.id AND si.is_deleted=FALSE
@@ -121,6 +118,7 @@
         WHERE
         ${params.sqlMap.default}
         and sm.is_deleted=FALSE
+        AND sm.is_expire = FALSE
         <if test="params.type !=null and params.type!=''">
             AND sm.type =#{params.type}
         </if>
@@ -233,9 +231,7 @@
         sm.create_time,
         sm.platform_name,
         sm.has_mapping_all,
-        op.short_name,
-        sm.effective_time,
-        sm.expire_time
+        op.short_name
         FROM sku_mapping sm
         LEFT JOIN listing_info li
         ON sm.listing_id=li.id AND li.is_deleted=FALSE

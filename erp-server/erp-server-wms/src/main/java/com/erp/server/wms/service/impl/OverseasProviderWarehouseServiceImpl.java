@@ -7,6 +7,7 @@ import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
@@ -299,5 +300,11 @@ public class OverseasProviderWarehouseServiceImpl extends SuperServiceImpl<Overs
         }
 
         return true;
+    }
+
+    @Override
+    public List<String> listProviderWarehouseBySql(String compareCodeSplicingValueSql) {
+        List<OverseasProviderWarehouseEntity> list = list(Wrappers.<OverseasProviderWarehouseEntity>lambdaQuery().last(compareCodeSplicingValueSql));
+        return list.stream().map(OverseasProviderWarehouseEntity::getWarehouseCode).collect(Collectors.toList());
     }
 }

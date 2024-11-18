@@ -368,7 +368,7 @@ public class CfgRuleStockUpDTO implements Serializable {
         /**
          * 海外仓id
          */
-        private String warehouseId;
+        private List<String> warehouseId;
         /**
          * 默认备货配置
          */
@@ -386,18 +386,20 @@ public class CfgRuleStockUpDTO implements Serializable {
          */
         private List<CfgRuleLogisticsDetailEntity> logisticsDetails;
 
-        public static StrategyDTO buildStrategyDTO(ReplenishmentResultDTO.BasicDTO entity, String skuType, CfgRuleStockUpEntity defaultStockUp, List<CfgRuleStockingRatioEntity> defaultStockingRatio,
+        public static StrategyDTO buildStrategyDTO(ReplenishmentResultDTO resultDTO, CfgRuleStockUpEntity defaultStockUp, List<CfgRuleStockingRatioEntity> defaultStockingRatio,
                                                    List<CfgRuleLogisticsEntity> defaultLogistics, List<CfgRuleLogisticsDetailEntity> logisticsDetails) {
+            ReplenishmentResultDTO.BasicDTO entity = resultDTO.getReplenishment();
             StrategyDTO dto = new StrategyDTO();
             dto.setRefId(entity.getId());
             dto.setPlatformType(entity.getPlatformType());
-            dto.setSkuType(skuType);
+            dto.setSkuType(resultDTO.getReplenishmentDetail().getSkuType());
             dto.setArea(entity.getArea());
             dto.setShopId(entity.getShopId());
             dto.setDefaultStockUp(defaultStockUp);
             dto.setDefaultStockingRatio(defaultStockingRatio);
             dto.setDefaultLogistics(defaultLogistics);
             dto.setLogisticsDetails(logisticsDetails);
+            dto.setWarehouseId(resultDTO.getOverseasWarehouseId());
             return dto;
         }
 

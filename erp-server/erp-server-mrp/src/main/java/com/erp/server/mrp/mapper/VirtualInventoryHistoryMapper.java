@@ -1,8 +1,13 @@
 package com.erp.server.mrp.mapper;
 
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.erp.model.mrp.dto.VirtualInventoryHistoryDTO;
 import com.erp.model.mrp.entity.VirtualInventoryHistoryEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Mapper;
+
+import java.util.List;
 
 /**
  * <p>
@@ -14,5 +19,18 @@ import org.apache.ibatis.annotations.Mapper;
  */
 @Mapper
 public interface VirtualInventoryHistoryMapper extends BaseMapper<VirtualInventoryHistoryEntity> {
+    /**
+     * 根据SKU和虚拟仓库查询
+     *
+     * @param skuIdList              查询条件
+     * @param virtualWarehouseIdList 参数
+     */
+    List<VirtualInventoryHistoryDTO.ListInventoryDTO> listVirtualWarehouseIdListAndSkuIdList(List<String> skuIdList, List<String> virtualWarehouseIdList);
 
+    /**
+     * 库存分页
+     * @param query  查询
+     * @param params 参数
+     */
+    IPage<VirtualInventoryHistoryDTO.ListDTO> paging(Page<VirtualInventoryHistoryDTO.ListDTO> query, VirtualInventoryHistoryDTO.SearchParamDTO params);
 }

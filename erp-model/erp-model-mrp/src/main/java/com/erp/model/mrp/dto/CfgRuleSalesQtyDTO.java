@@ -216,9 +216,9 @@ public class CfgRuleSalesQtyDTO implements Serializable {
         private String salesQtyType;
 
         /**
-        * 订单类型，all:全部，fba:FBA,fbm:FBM
+        * 订单类型，订单类型，亚马逊取FbaOrderTypeEnum，海外取OverseasOrderTypeEnum
         */
-        @Size(max = 32,message = "订单类型，all:全部，fba:FBA,fbm:FBM最大长度不能超过32位")
+        @Size(max = 32,message = "订单类型，最大长度不能超过32位")
         private String orderType;
 
         /**

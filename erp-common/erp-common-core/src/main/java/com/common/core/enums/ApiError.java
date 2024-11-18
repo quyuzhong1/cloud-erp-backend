@@ -1530,6 +1530,13 @@ public enum ApiError implements Serializable {
     ERROR_TABLE_NOT_EXIST(97014,"表{}不存在"),
     ERROR_TIME_FRAME_NOT_EXIST(97015,"*建议时间范围规则配置不存在"),
     ERROR_REPLENISHMENT_NOT_EXIST(97016,"未找到补货建议数据"),
+    ERROR_SUGGEST_CONFIRM(97016,"仅待确认数据支持确认操作"),
+    ERROR_SUGGEST_LOCKING(97017,"仅草稿数据支持锁定操作"),
+    ERROR_SUGGEST_INVALID(97018,"已下推数据不支持作废操作"),
+    ERROR_SUGGEST_UPDATE_REMARK(97019,"仅未作废的草稿和待确认数据支持更新备注操作"),
+    ERROR_SUGGEST_UPDATE(97020,"仅未作废的草稿和待确认数据支持更新备货操作"),
+    ERROR_DELIVERY_SUGGEST_PUSH(97021,"发货建议【{}】非已完成不支持下推"),
+    ERROR_DELIVERY_SUGGEST_PUSH_INVALID(97021,"发货建议【{}】已作废不支持下推"),
 
 
 

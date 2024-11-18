@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.checkerframework.checker.units.qual.A;
 
 @Getter
 @Setter
@@ -22,6 +23,8 @@ public class LocalInventoryDTO {
 
     @Getter
     @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
     public static class ShopSalesDTO {
         /**
          * 店铺id
@@ -29,6 +32,20 @@ public class LocalInventoryDTO {
         private String shopId;
         /**
          * 销量
+         */
+        private Integer qty;
+    }
+
+
+    @Getter
+    @Setter
+    public static class OverseasInventoryDTO {
+        /**
+         * 仓库编码
+         */
+        private String warehouseCode;
+        /**
+         * 数量
          */
         private Integer qty;
     }

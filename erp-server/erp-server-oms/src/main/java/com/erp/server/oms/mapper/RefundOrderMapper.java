@@ -1,5 +1,9 @@
 package com.erp.server.oms.mapper;
 
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.erp.model.oms.dto.RefundOrderDTO;
+import com.erp.model.oms.entity.RefundOrderEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -26,5 +30,5 @@ public interface RefundOrderMapper extends BaseMapper<RefundOrderEntity> {
      * @param params
      * @return com.baomidou.mybatisplus.core.metadata.IPage<com.erp.model.oms.dto.RefundOrderDTO.PagingViewDTO>
      */
-    IPage<RefundOrderDTO.PagingViewDTO> paging(Page query, @Param("params")RefundOrderDTO.PagingParamDTO params);
+    IPage<RefundOrderDTO.PagingViewDTO> paging(Page<RefundOrderDTO.PagingViewDTO> query, @Param("params")RefundOrderDTO.PagingParamDTO params);
 }

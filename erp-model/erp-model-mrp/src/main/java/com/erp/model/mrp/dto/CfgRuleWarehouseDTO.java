@@ -1,6 +1,7 @@
 package com.erp.model.mrp.dto;
 
 import cn.hutool.json.JSONArray;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.erp.model.mrp.entity.CfgRuleWarehouseDetailEntity;
 import lombok.*;
 
@@ -213,6 +214,10 @@ public class CfgRuleWarehouseDTO implements Serializable {
          * 主表id
          */
         private String mainId;
+        /**
+         * 平台
+         */
+        private String dictPlatform;
 
         public static StrategyDetailResultDTO buildStrategyDetailResultDTO(CfgRuleWarehouseDetailEntity entity) {
             StrategyDetailResultDTO detailResultDTO = new StrategyDetailResultDTO();
@@ -224,6 +229,7 @@ public class CfgRuleWarehouseDTO implements Serializable {
             detailResultDTO.setChannelIdJson(entity.getChannelIdJson());
             detailResultDTO.setInventoryAllocateType(entity.getInventoryAllocateType());
             detailResultDTO.setMainId(entity.getMainId());
+            detailResultDTO.setDictPlatform(entity.getDictPlatform());
             return detailResultDTO;
         }
     }

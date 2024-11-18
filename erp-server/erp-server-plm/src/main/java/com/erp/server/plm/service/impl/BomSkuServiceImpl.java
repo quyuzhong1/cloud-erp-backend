@@ -322,8 +322,9 @@ public class BomSkuServiceImpl extends ServiceImpl<BomRefSkuMapper, BomSkuEntity
 
     @Override
     public List<BomDTO.BomSku> listAllBom(List<String> childSkuIdList) {
-        return baseMapper.listAllBomByChildSkuIdList(childSkuIdList);
-    }
+        List<BomDTO.BomSku> list = baseMapper.listAllBomByChildSkuIdList(childSkuIdList);
+        list = list.stream().filter(v-> BomStateEnum.AUDIT_PASS.getState().equals(v.getState())).collect(Collectors.toList());
+        return list;    }
 
     @Override
     public List<BomChildrenSkuDTO> checkExistAndListCombinationSku(List<String> parentSkuNos) {

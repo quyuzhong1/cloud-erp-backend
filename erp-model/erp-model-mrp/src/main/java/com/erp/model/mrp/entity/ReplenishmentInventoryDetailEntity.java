@@ -39,7 +39,11 @@ public class ReplenishmentInventoryDetailEntity extends BaseEntity<Replenishment
      */
     @TableField("inventory_type")
     private String inventoryType;
-
+    /**
+     * 平台
+     */
+    @TableField("dict_platform")
+    private String dictPlatform;
     /**
      * 实体仓id
      */
@@ -81,6 +85,12 @@ public class ReplenishmentInventoryDetailEntity extends BaseEntity<Replenishment
      */
     @TableField("total_qty")
     private Integer totalQty;
+
+    /**
+     * 平台数量
+     */
+    @TableField("platform_qty")
+    private Integer platformQty;
 
     /**
      * 计算版本  所有子表加   根据单号生成规则

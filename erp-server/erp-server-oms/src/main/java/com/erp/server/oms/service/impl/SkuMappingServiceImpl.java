@@ -35,7 +35,6 @@ import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.oms.entity.ListingInfoEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.entity.SkuMappingEntity;
-import com.erp.model.oms.enums.AuthStatusEnum;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.oms.enums.ListingMatchResultEnum;
 import com.erp.model.oms.enums.RuleTypeEnum;
@@ -113,6 +112,9 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
     private ListingInfoService listingInfoService;
 
     @Resource
+    private ShopSysUserAuthService shopSysUserAuthService;
+
+    @Resource
     private WmsTaskFeign wmsTaskFeign;
 
     @Resource
@@ -125,9 +127,6 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
     private SkuMappingExtendService skuMappingExtendService;
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
-
-    @Resource
-    private ShopSysUserAuthService shopSysUserAuthService;
 
     @Resource
     private BomSkuFeign bomSkuFeign;
@@ -1313,43 +1312,6 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
-    public void updateNotMatch(SkuMappingDTO.UpdateNotMatchDTO dto) {
-        List<ListingInfoEntity> listingInfoEntityList = listingInfoService.listByIds(dto.getListingIds());
-        if (CollectionUtils.isEmpty(listingInfoEntityList)){
-            throw new ServiceException("listing不存在");
-        }
-        if(listingInfoEntityList.stream().anyMatch(v->ListingMatchResultEnum.TRUE.getCode().equals(v.getMatchResult()))
-        || listingInfoEntityList.stream().anyMatch(v->ListingMatchResultEnum.NOT.getCode().equals(v.getMatchResult()))){
-            throw new ServiceException("只有未匹配的数据可以操作无需匹配");
-        }
-        listingInfoEntityList.forEach(v->{
-            v.setMatchResult(ListingMatchResultEnum.NOT.getCode());
-            v.setRemark(dto.getRemark());
-            String msg = CharSequenceUtil.format("用户【{}】更新状态为无需匹配", UserContext.getDefaultLoginUser().getUserName());
-            operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.LISTING_INFO.getCode(), v.getId(), "状态变更");
-        });
-        listingInfoService.updateBatchById(listingInfoEntityList);
-    }
-
-    @Override
-    public PagingVO<SkuMappingDTO.SyncPlatformProductView> syncPlatformProductView(PagingDTO<AdvanceQueryContainer> advanceQueryDTO) {
-        LoginUser userInfo = UserContext.getDefaultLoginUser();
-        List<ShopSysUserAuthDTO.ViewDTO> shopSysUserAuthList = shopSysUserAuthService.listShopSysUserAuthByUserIdList(Arrays.asList(userInfo.getUid()));
-        if (CollectionUtils.isEmpty(shopSysUserAuthList)) {
-            return new PagingVO<>();
-        }
-        List<ShopSysUserAuthDTO.ViewShopDTO> detailList = shopSysUserAuthList.get(0).getDetailList();
-        List<String> shopIds = detailList.stream().map(v->v.getShopId()).collect(Collectors.toList());
-        return shopInfoService.pageAuthShop(advanceQueryDTO,shopIds);
-    }
-
-    @Override
-    public PagingVO<SkuMappingDTO.SyncWarehouseProductView> syncWarehouseProductView(PagingDTO<AdvanceQueryContainer> advanceQueryDTO) {
-        return wmsOverseasWarehouseFeign.pageWarehouseProduct(advanceQueryDTO);
-    }
-
-    @Override
     public List<SkuMappingDTO.ProductSkuInfoDTO> listSkuBySkuNos(SkuMappingDTO.SkuParamDTO skuParamDTO) {
         if(null ==  skuParamDTO || StringUtils.isBlank(skuParamDTO.getCutomerId())){
             throw new ServiceException("客户id不能为空");
@@ -1454,5 +1416,42 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         paramDTO.setLastExpireDate(platformOrderCreateTime);
         paramDTO.setIsExpire(isExpire);
         return paramDTO;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void updateNotMatch(SkuMappingDTO.UpdateNotMatchDTO dto) {
+        List<ListingInfoEntity> listingInfoEntityList = listingInfoService.listByIds(dto.getListingIds());
+        if (CollectionUtils.isEmpty(listingInfoEntityList)){
+            throw new ServiceException("listing不存在");
+        }
+        if(listingInfoEntityList.stream().anyMatch(v->ListingMatchResultEnum.TRUE.getCode().equals(v.getMatchResult()))
+        || listingInfoEntityList.stream().anyMatch(v->ListingMatchResultEnum.NOT.getCode().equals(v.getMatchResult()))){
+            throw new ServiceException("只有未匹配的数据可以操作无需匹配");
+        }
+        listingInfoEntityList.forEach(v->{
+            v.setMatchResult(ListingMatchResultEnum.NOT.getCode());
+            v.setRemark(dto.getRemark());
+            String msg =  CharSequenceUtil.format("用户【{}】更新状态为无需匹配", UserContext.getDefaultLoginUser().getUserName());
+            operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.LISTING_INFO.getCode(), v.getId(), "状态变更");
+        });
+        listingInfoService.updateBatchById(listingInfoEntityList);
+    }
+
+    @Override
+    public PagingVO<SkuMappingDTO.SyncPlatformProductView> syncPlatformProductView(PagingDTO<AdvanceQueryContainer> advanceQueryDTO) {
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
+        List<ShopSysUserAuthDTO.ViewDTO> shopSysUserAuthList = shopSysUserAuthService.listShopSysUserAuthByUserIdList(Collections.singletonList(userInfo.getUid()));
+        if (CollectionUtils.isEmpty(shopSysUserAuthList)) {
+            return new PagingVO<>();
+        }
+        List<ShopSysUserAuthDTO.ViewShopDTO> detailList = shopSysUserAuthList.get(0).getDetailList();
+        List<String> shopIds = detailList.stream().map(ShopSysUserAuthDTO.ViewShopDTO::getShopId).collect(Collectors.toList());
+        return shopInfoService.pageAuthShop(advanceQueryDTO,shopIds);
+    }
+
+    @Override
+    public PagingVO<SkuMappingDTO.SyncWarehouseProductView> syncWarehouseProductView(PagingDTO<AdvanceQueryContainer> advanceQueryDTO) {
+        return wmsOverseasWarehouseFeign.pageWarehouseProduct(advanceQueryDTO);
     }
 }

@@ -2061,11 +2061,6 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         addDTO.setSourceId(entity.getId());
         addDTO.setSourceType(SourceTypeEnum.SO_B2C_DELIVERY.getCode());
         addDTO.setSourceCode(entity.getCode());
-        //重试时需要按照发货单的发货时间调拨
-        if(entity.getDeliveryTime() == null){
-            throw new ServiceException("发货单发货时间不能为空");
-        }
-        addDTO.setBillDate(entity.getDeliveryTime().toLocalDate());
         List<TransferInfoDetailDTO.AddDTO> detailList = new ArrayList<>();
         for (PickingListsDTO.SourceView sourceView : pickingList) {
             TransferInfoDetailDTO.AddDTO detailAddDTO = new TransferInfoDetailDTO.AddDTO();
@@ -2471,11 +2466,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
             outInStockDTO.setSourceId(entity.getId());
             outInStockDTO.setSourceCode(entity.getCode());
             outInStockDTO.setSourceDetailId(detailEntity.getId());
-            //重试时需要按照发货单的发货时间调拨
-            if(entity.getDeliveryTime() == null){
-                throw new ServiceException("发货单发货时间不能为空");
-            }
-            outInStockDTO.setBillDate(entity.getDeliveryTime().toLocalDate());
+            outInStockDTO.setBillDate(LocalDate.now());
             outInStockDTO.setSkuId(detailEntity.getSkuId());
             outInStockDTO.setSkuNo(detailEntity.getSkuNo());
             outInStockDTO.setQty(detailEntity.getDeliveryQty());
@@ -2514,5 +2505,6 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         }
         return Boolean.TRUE;
     }
+
 
 }

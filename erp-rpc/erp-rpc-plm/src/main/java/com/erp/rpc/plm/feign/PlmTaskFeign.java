@@ -634,4 +634,18 @@ public interface PlmTaskFeign {
      */
     @PostMapping("feign/bom/listAllBom")
     List<BomDTO.BomSku> listAllBom(@RequestBody List<String> childSkuIdList);
+    @PostMapping("feign/plmWorkOption/pilotApprovalNoPass")
+    void pilotApprovalNoPass(@RequestBody @Validated ApproveOneDTO approveOneDTO);
+    /**
+     * 获取已审核且已上市sku
+     * @return List<SkuVO>
+     */
+    @GetMapping("feign/product/listApproveAndListingSku")
+    List<SkuVO> listApproveAndListingSku();
+
+    @GetMapping("/feign/product/getCategoryByQuerySql")
+    List<String> getCategoryByQuerySql(@RequestParam String compareCodeSplicingValueSql);
+
+    @GetMapping("/feign/product/getBrandByQuerySql")
+    List<String> getBrandByQuerySql(@RequestParam String compareCodeSplicingValueSql);
 }

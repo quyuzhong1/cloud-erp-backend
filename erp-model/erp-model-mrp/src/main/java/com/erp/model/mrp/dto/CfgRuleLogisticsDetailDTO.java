@@ -107,13 +107,11 @@ public class CfgRuleLogisticsDetailDTO implements Serializable {
         /**
          * 区域
          */
-        @NotBlank(message = "区域不能为空")
         private String area;
 
         /**
          * 店铺类型（all全部店铺，part指定店铺）
          */
-        @NotBlank(message = "店铺类型不能为空")
         private String type;
 
         /**
