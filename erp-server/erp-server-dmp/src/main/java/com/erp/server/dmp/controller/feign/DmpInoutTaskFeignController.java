@@ -1,20 +1,31 @@
 package com.erp.server.dmp.controller.feign;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.json.JSONUtil;
 import com.common.business.dto.DmpSyncTaskDTO;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.entity.BaseEntity;
 import com.common.core.exception.ServiceException;
 import com.erp.model.dmp.dto.DmpInoutDTO;
 import com.erp.model.dmp.dto.DmpOutputTaskRecordDTO;
 import com.erp.model.dmp.dto.DmpPushTaskDTO;
+import com.erp.model.dmp.entity.DmpInputTaskEntity;
 import com.erp.model.dmp.enums.DmpInputTaskTaskTypeEnum;
+import com.erp.model.oms.entity.SoB2cEntity;
+import com.erp.sdk.oms.amz.spapi.client.JSON;
+import com.erp.server.dmp.inout.dto.request.DmpInputFinishRequest;
 import com.erp.server.dmp.inout.dto.request.DmpInputHotfixCreateRequest;
+import com.erp.server.dmp.inout.dto.response.DmpInputCreateResponse;
 import com.erp.server.dmp.inout.handler.factory.DmpInputCreateFactory;
+import com.erp.server.dmp.inout.handler.factory.DmpInputTaskFactory;
+import com.erp.server.dmp.inout.job.DmpInputTaskJob;
 import com.erp.server.dmp.inout.utils.DmpOutputUtils;
 import com.erp.server.dmp.service.DmpCfgInputDetailService;
 import com.erp.server.dmp.service.DmpInputTaskService;
 import com.erp.server.dmp.service.DmpOutputTaskRecordService;
 import org.apache.commons.collections4.CollectionUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -25,6 +36,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
 import java.util.stream.Collectors;
 
 @RestController
@@ -41,7 +53,12 @@ public class DmpInoutTaskFeignController{
 	private DmpCfgInputDetailService dmpCfgInputDetailService;
 	@Resource
 	private DmpInputTaskService dmpInputTaskService;
-	
+	@Autowired
+	@Qualifier("dmpInputExecutorPool")
+	private ExecutorService dmpInputExecutorPool;
+	@Resource
+	private DmpInputTaskFactory dmpInputTaskFactory;
+
 	/**
 	 * @param updateDTO
 	 */
@@ -95,8 +112,21 @@ public class DmpInoutTaskFeignController{
 			// 拉取时间
 			dmpInputCreateRequest.setStartTime(createDTO.checkAndGetStartTime());
 			dmpInputCreateRequest.setEndTime(createDTO.checkAndGetEndTime());
-			dmpInputCreateRequest.setTaskType(DmpInputTaskTaskTypeEnum.NORMAL.getCode());
-			dmpInputCreateFactory.createHotfixInputTask(dmpInputCreateRequest);
+			dmpInputCreateRequest.setTaskType(createDTO.getTaskType());
+			// 创建任务
+			DmpInputCreateResponse response = dmpInputCreateFactory.createHotfixInputTask(dmpInputCreateRequest);
+			// 执行任务
+			if(CollectionUtils.isNotEmpty(response.getAfterDmpInputTaskEntityList())) {
+				for (DmpInputTaskEntity dmpInputTaskEntity : response.getAfterDmpInputTaskEntityList()) {
+					dmpInputExecutorPool.execute(() -> {
+						DmpInputFinishRequest dmpInputFinishRequest = new DmpInputFinishRequest();
+						dmpInputFinishRequest.setInputTaskId(dmpInputTaskEntity.getId());
+						dmpInputFinishRequest.setExecTimeout(dmpInputTaskEntity.getExecTimeout());
+						dmpInputTaskFactory.dealInputTask(dmpInputFinishRequest);
+					});
+				}
+			}
+
 		}
 		return true;
 	}
