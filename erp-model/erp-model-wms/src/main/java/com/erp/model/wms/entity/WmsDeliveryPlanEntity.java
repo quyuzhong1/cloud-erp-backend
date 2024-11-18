@@ -1,16 +1,17 @@
 package com.erp.model.wms.entity;
 
 import com.baomidou.mybatisplus.annotation.FieldFill;
-import com.baomidou.mybatisplus.annotation.TableName;
-import com.common.core.entity.BaseEntity;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
 import com.baomidou.mybatisplus.annotation.TableField;
-import java.io.Serializable;
+import com.baomidou.mybatisplus.annotation.TableName;
+import com.common.business.enums.ApproveStatusEnum;
+import com.common.core.entity.BaseEntity;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
-import com.common.business.enums.ApproveStatusEnum;
+
+import java.io.Serializable;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 
 /**
@@ -122,7 +123,25 @@ public class WmsDeliveryPlanEntity extends BaseEntity<WmsDeliveryPlanEntity> {
     @TableField("type")
     private String type;
 
-    
+    /**
+     * 来源类型
+     */
+    @TableField("source_type")
+    private String sourceType;
+
+    /**
+     * 期望发货时间
+     */
+    @TableField("expect_delivery_date")
+    private String expectDeliveryDate;
+
+    /**
+     * 期望物流方式
+     */
+    @TableField("expect_logistics_method")
+    private String expectLogisticsMethod;
+
+    public static final String CODE = "code";
 
     public static final String APPROVE_STATUS = "approve_status";
 
@@ -148,7 +167,7 @@ public class WmsDeliveryPlanEntity extends BaseEntity<WmsDeliveryPlanEntity> {
 
     public static final String PLAN_DELIVERY_DATE = "plan_delivery_date";
 
-    
+
 
     @Override
     public Serializable pkVal() {

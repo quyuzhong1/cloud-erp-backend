@@ -35,7 +35,6 @@ import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.oms.entity.ListingInfoEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.entity.SkuMappingEntity;
-import com.erp.model.oms.enums.AuthStatusEnum;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.oms.enums.ListingMatchResultEnum;
 import com.erp.model.oms.enums.RuleTypeEnum;
@@ -113,6 +112,9 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
     private ListingInfoService listingInfoService;
 
     @Resource
+    private ShopSysUserAuthService shopSysUserAuthService;
+
+    @Resource
     private WmsTaskFeign wmsTaskFeign;
 
     @Resource
@@ -125,9 +127,6 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
     private SkuMappingExtendService skuMappingExtendService;
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
-
-    @Resource
-    private ShopSysUserAuthService shopSysUserAuthService;
 
     @Resource
     private BomSkuFeign bomSkuFeign;

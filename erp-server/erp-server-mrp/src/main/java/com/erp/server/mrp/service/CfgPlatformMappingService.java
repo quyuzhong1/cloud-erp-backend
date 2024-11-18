@@ -2,6 +2,7 @@ package com.erp.server.mrp.service;
 
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.service.SuperService;
+import com.common.business.validator.ValidList;
 import com.erp.model.mrp.dto.CfgPlatformMappingDTO;
 import com.erp.model.mrp.entity.CfgPlatformMappingEntity;
 
@@ -18,22 +19,13 @@ import java.util.List;
 public interface CfgPlatformMappingService extends SuperService<CfgPlatformMappingEntity> {
 
     /**
-    * 新增
-    * @author will
-    * @date: 2024-08-29
-    * @param dto
-    * @return
-    */
-    BaseResultDTO.AddDTO add(CfgPlatformMappingDTO.AddDTO dto);
-
-    /**
     * 修改
     * @author will
     * @date: 2024-08-29
-    * @param dto
+    * @param updateList
     * @return
     */
-    Boolean update(CfgPlatformMappingDTO.UpdateDTO dto);
+    Boolean update(ValidList<CfgPlatformMappingDTO.UpdateDTO> updateList);
 
     /**
      * 远程下拉
@@ -44,13 +36,45 @@ public interface CfgPlatformMappingService extends SuperService<CfgPlatformMappi
      */
     List<CfgPlatformMappingDTO.ListDTO> selectPlatformMapping(CfgPlatformMappingDTO.SelectDTO dto);
 
+    /**
+     * 获取启用得平台数据
+     */
     List<CfgPlatformMappingEntity> listByEffective();
     /**
-     * 根据平台类型查询
+     * 根据平台类型查询有效数据
      * @author will
      * @date 2024/9/3 17:56
      * @param platformType 
      * @return List<CfgPlatformMappingEntity>
      */
     List<CfgPlatformMappingEntity> listByPlatformType(String platformType);
+    /**
+     * 根据平台类型查询所有数据
+     * @author will
+     * @date 2024/10/16 17:13
+     * @param platformType
+     * @return List<CfgPlatformMappingEntity>
+     */
+    List<CfgPlatformMappingEntity> listAllByPlatformType(String platformType);
+    /**
+     * 查询详情
+     * @author will
+     * @date 2024/10/15 10:01
+     * @return MainViewDTO
+     */
+    CfgPlatformMappingDTO.MainViewDTO view();
+    /**
+     * 根据平台类型查询
+     * @author will
+     * @date 2024/10/16 17:11
+     * @param platformType
+     * @return ViewDTO
+     */
+    CfgPlatformMappingDTO.ViewDTO getByPlatformType(String platformType);
+
+    /**
+     * 根据平台映射获取具体平台
+     * @param code
+     */
+    List<String> listEffectiveByPlatform(String code);
 }

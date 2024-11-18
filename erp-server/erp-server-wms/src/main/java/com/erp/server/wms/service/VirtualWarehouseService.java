@@ -93,4 +93,10 @@ public interface VirtualWarehouseService extends SuperService<VirtualWarehouseEn
      */
     List<VirtualWarehouseDTO.SelectDTO> listByParam(VirtualWarehouseDTO.SearchDTO searchDTO);
 
+    /**
+     * 根据高级查询查找虚拟仓
+     * @param compareCodeSplicingValueSql 高级查询
+     */
+    List<String> listWarehouseBySql(String compareCodeSplicingValueSql);
+
 }

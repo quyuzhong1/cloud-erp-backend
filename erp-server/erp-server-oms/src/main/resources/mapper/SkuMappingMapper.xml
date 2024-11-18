@@ -121,6 +121,7 @@
         WHERE
         ${params.sqlMap.default}
         and sm.is_deleted=FALSE
+        AND sm.is_expire = FALSE
         <if test="params.type !=null and params.type!=''">
             AND sm.type =#{params.type}
         </if>

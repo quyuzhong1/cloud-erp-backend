@@ -217,7 +217,7 @@ public class SkuMappingRuleServiceImpl extends SuperServiceImpl<SkuMappingRuleMa
             if(StringUtils.isEmpty(ruleConditionsDTO.getChildCombineSplitSymbol()) || StringUtils.isEmpty(ruleConditionsDTO.getChildQtySplitSymbol())){
                 throw new ServiceException("拆分符号不能为空");
             }
-            List<String> splitList = Arrays.asList(result.split("\\"+ruleConditionsDTO.getChildCombineSplitSymbol()));
+            List<String> splitList = this.splitWithoutDelimiter(result,ruleConditionsDTO.getChildCombineSplitSymbol());
             String desc = "";
             for (String childrenSku : splitList) {
                 SkuMappingRuleDTO.SplitSkuDTO splitSkuDTO = this.splitByLastSymbol(childrenSku,ruleConditionsDTO.getChildQtySplitSymbol());
@@ -408,7 +408,7 @@ public class SkuMappingRuleServiceImpl extends SuperServiceImpl<SkuMappingRuleMa
                     JSONObject jsonObject = new JSONObject(skuMappingRuleEntity.getRuleContent());
                     SkuMappingRuleDTO.RuleDTO ruleDTO = JSONObject.parseObject(jsonObject.toJSONString(),new TypeReference<SkuMappingRuleDTO.RuleDTO>() {}.getType());
                     SkuMappingRuleDTO.RuleConditionsDTO ruleConditionsDTO = ruleDTO.getRuleContentList().get(0);
-                    List<String> splitList = Arrays.asList(handlePlatformSkuNo.split("\\"+ruleConditionsDTO.getChildCombineSplitSymbol()));
+                    List<String> splitList = this.splitWithoutDelimiter(handlePlatformSkuNo,ruleConditionsDTO.getChildCombineSplitSymbol());
                     StringBuilder matchStr = new StringBuilder();
                     for (String childrenSku : splitList) {
                         SkuMappingRuleDTO.SplitSkuDTO splitSkuDTO = this.splitByLastSymbol(childrenSku,ruleConditionsDTO.getChildQtySplitSymbol());
@@ -518,22 +518,5 @@ public class SkuMappingRuleServiceImpl extends SuperServiceImpl<SkuMappingRuleMa
 
         // 不符合拆分条件的情况
         return  new SkuMappingRuleDTO.SplitSkuDTO(input, 1);
-    }
-    public boolean compareSplitStrings(String a, String b) {
-        // 分割字符串 a
-        String[] partsA = a.split("丨", 2);
-        // 分割字符串 b
-        String[] partsB = b.split("丨", 2);
-
-        // 检查分割后的部分是否相等，顺序可以不一致
-        if (partsA.length == 2 && partsB.length == 2) {
-            Set<String> setA = new HashSet<>(Arrays.asList(partsA));
-            Set<String> setB = new HashSet<>(Arrays.asList(partsB));
-
-            return setA.equals(setB);
-        }
-
-        // 如果任何一个字符串没有被正确分割成两部分，返回 false
-        return false;
     }
 }

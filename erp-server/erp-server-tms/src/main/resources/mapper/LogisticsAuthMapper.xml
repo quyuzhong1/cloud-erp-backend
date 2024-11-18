@@ -91,5 +91,16 @@
         AND la.is_deleted=false
     </select>
 
+    <select id="listAllChannelByOverseas" resultType="java.lang.String">
+        SELECT lc.id AS channelId
+        FROM logistics_auth la
+                 INNER JOIN logistics_supplier ls ON ls.id = la.main_id AND ls.is_deleted = FALSE
+                 INNER JOIN logistics_channel lc ON lc.main_id = ls.id AND lc.is_deleted = FALSE
+        WHERE la.is_deleted = FALSE
+        AND la.logistics_platform IN
+        <foreach collection="list" item="platform" open="(" separator="," close=")">
+            #{platform}
+        </foreach>
+    </select>
 
 </mapper>

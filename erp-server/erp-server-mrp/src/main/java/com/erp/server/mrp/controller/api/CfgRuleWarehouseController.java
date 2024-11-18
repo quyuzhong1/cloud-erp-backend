@@ -6,12 +6,14 @@ import com.common.core.anno.LogViewService;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.mrp.dto.CfgRuleWarehouseDTO;
+import com.erp.model.mrp.dto.CfgRuleWarehouseDetailDTO;
 import com.erp.server.mrp.service.CfgRuleWarehouseService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
+import java.util.List;
 
 /**
  * 仓库（规则设置）
@@ -90,5 +92,17 @@ public class CfgRuleWarehouseController extends BaseController {
     public ApiResult<Boolean> getIsEnableOverseas(@RequestParam("platformType") String platformType) {
         Boolean isEnableOverseas = cfgRuleWarehouseService.getIsEnableOverseas(platformType);
         return success(isEnableOverseas);
+    }
+
+    /**
+     * 查询海外仓配置
+     * @author will
+     * @date 2024/10/29 11:26
+     * @param platformType
+     * @return ApiResult<OverseasWarehouseDTO>
+     */
+    @GetMapping("/listOverseasWarehouse")
+    public ApiResult<List<CfgRuleWarehouseDetailDTO.OverseasWarehouseDTO>> listOverseasWarehouse(@RequestParam("platformType") String platformType) {
+        return success(cfgRuleWarehouseService.listOverseasWarehouse(platformType));
     }
 }
