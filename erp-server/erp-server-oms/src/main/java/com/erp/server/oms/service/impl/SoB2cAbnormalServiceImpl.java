@@ -101,9 +101,8 @@ public class SoB2cAbnormalServiceImpl implements SoB2cAbnormalService {
                 resultDTOList.add(batchResultDTO);
                 break;
             case ORDER_FETCH:
-                boolean orderFetchFlag = soB2cService.fetchOrder(Collections.singletonList(id));
-                BatchResultDTO orderFetchResultDTO = orderFetchFlag ? BatchResultDTO.success(id, soB2cEntity.getCode(), "订单拉取成功") : BatchResultDTO.fail(id, soB2cEntity.getCode(), "订单拉取失败");
-                resultDTOList.add(orderFetchResultDTO);
+                List<BatchResultDTO> resultDTOS = soB2cService.fetchOrder(Collections.singletonList(id));
+                resultDTOList.addAll(resultDTOS);
                 break;
             default:
                 break;
