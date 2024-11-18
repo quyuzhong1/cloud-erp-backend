@@ -1321,7 +1321,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
 
         TmsPushMsgEntity tmsPushMsgEntity = new TmsPushMsgEntity();
         tmsPushMsgEntity.setTargetPlatform(DmpBasicSystemCodeEnum.SDY.getCode());
-        tmsPushMsgEntity.setSourceType(SourceTypeEnum.SDY_SO_OUTSTOCK.getCode());
+        tmsPushMsgEntity.setSourceType(SourceTypeEnum.SDY_LOGISTICS_BILL.getCode());
         tmsPushMsgEntity.setSourceId(entity.getId());
         tmsPushMsgEntity.setSourceCode(entity.getTransportNo());
         tmsPushMsgEntity.setSyncOperate(operateEnum);
