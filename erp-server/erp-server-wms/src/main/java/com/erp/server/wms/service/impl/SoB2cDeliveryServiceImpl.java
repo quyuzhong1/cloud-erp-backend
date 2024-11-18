@@ -437,7 +437,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
                 .set(SoB2cDeliveryEntity::getShipmentMark, ShipmentMarkTypeEnum.MANUAL.getCode())
                 .eq(SoB2cDeliveryEntity::getId, id));
         //修改订单状态待发货
-        soB2cFeign.updateSoB2cStatus(Collections.singletonList(entity.getSourceId()), SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode());
+        soB2cFeign.updateSoB2cStatus(Collections.singletonList(entity.getSourceId()), SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode(), Boolean.TRUE);
         // 操作日志
         String msg = CharSequenceUtil.format("用户【{}】手动标发单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "b2c发货单", entity.getCode());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C_DELIVERY.getCode(), entity.getId(), "手动标发");
@@ -1211,6 +1211,30 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
             //更新库存
             virtualInventoryTransCoreService.approve(dto);
         }
+    }
+
+    @Override
+    public BatchResultDTO falseDeliveryBySoId(String id) {
+        //查询是否冻结
+        SoB2cEntity soB2cEntity = soB2cFeign.getById(id);
+        if (soB2cEntity.getIsFrozen()) {
+            throw new ServiceException(ApiError.ORDER_IS_INTERCEPT_NOT_UPDATE, soB2cEntity.getCode());
+        }
+        //修改订单状态待发货
+        soB2cFeign.updateSoB2cStatus(Collections.singletonList(id), StrUtil.EMPTY, Boolean.TRUE);
+        if (soB2cFeign.checkPlatformShipOrder(id)) {
+            // 调用第三方平台SDK标记发货(独立事务)
+            String businessDesc = "手动标发";
+            asyncService.asyncShipOrder(soB2cEntity.getId(),
+                    soB2cEntity.getCode(),
+                    soB2cEntity.getDictPlatform(),
+                    soB2cEntity.convertSubmitPlatformUniqueKey(),
+                    id,
+                    businessDesc, true);
+        } else {
+            log.warn("【{}】未达到条件:忽略标记平台发货", soB2cEntity.getCode());
+        }
+        return BatchResultDTO.success(soB2cEntity.getId(), soB2cEntity.getCode(), "手动标发");
     }
 
     @Override
@@ -2043,6 +2067,11 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         addDTO.setSourceId(entity.getId());
         addDTO.setSourceType(SourceTypeEnum.SO_B2C_DELIVERY.getCode());
         addDTO.setSourceCode(entity.getCode());
+        //重试时需要按照发货单的发货时间调拨
+        if(entity.getDeliveryTime() == null){
+            throw new ServiceException("发货单发货时间不能为空");
+        }
+        addDTO.setBillDate(entity.getDeliveryTime().toLocalDate());
         List<TransferInfoDetailDTO.AddDTO> detailList = new ArrayList<>();
         for (PickingListsDTO.SourceView sourceView : pickingList) {
             TransferInfoDetailDTO.AddDTO detailAddDTO = new TransferInfoDetailDTO.AddDTO();
@@ -2448,7 +2477,11 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
             outInStockDTO.setSourceId(entity.getId());
             outInStockDTO.setSourceCode(entity.getCode());
             outInStockDTO.setSourceDetailId(detailEntity.getId());
-            outInStockDTO.setBillDate(LocalDate.now());
+            //重试时需要按照发货单的发货时间调拨
+            if(entity.getDeliveryTime() == null){
+                throw new ServiceException("发货单发货时间不能为空");
+            }
+            outInStockDTO.setBillDate(entity.getDeliveryTime().toLocalDate());
             outInStockDTO.setSkuId(detailEntity.getSkuId());
             outInStockDTO.setSkuNo(detailEntity.getSkuNo());
             outInStockDTO.setQty(detailEntity.getDeliveryQty());
@@ -2487,6 +2520,5 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         }
         return Boolean.TRUE;
     }
-
 
 }

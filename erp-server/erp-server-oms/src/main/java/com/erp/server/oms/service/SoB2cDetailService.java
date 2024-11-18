@@ -1,6 +1,8 @@
 package com.erp.server.oms.service;
 
 import com.common.business.dto.PlatformOrderDTO;
+import com.common.business.dto.base.BaseIdDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.service.SuperService;
 import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
 import com.erp.model.oms.dto.SoB2cDTO;
@@ -199,4 +201,15 @@ public interface SoB2cDetailService extends SuperService<SoB2cDetailEntity> {
      * @return List<ViewDTO>
      */
     List<ReportOrderDataDTO.ViewDTO> listAllVirtualSoB2cDetail();
+
+    /**
+     * 更换发货SKU
+     *
+     * @param targetId
+     * @param entity
+     * @param detail
+     * @param skuVO
+     * @return
+     */
+    BatchResultDTO changeDeliverySku(String targetId, SoB2cEntity entity, SoB2cDetailEntity detail, SkuVO skuVO);
 }

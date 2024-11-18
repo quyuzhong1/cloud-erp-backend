@@ -376,6 +376,15 @@ public class ExportWmsFeignController {
     public PagingVO<WmsCartonDetailDTO.ListPackingDetailDTO> exportPackingTaskDetail(@RequestBody PagingDTO<PackingTaskDTO.ExportDTO> dto) {
         return packingTaskService.exportPackingTaskDetail(dto);
     }
+    @PostMapping("/unPackingTaskDetail")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "wms:packingTask:unPackingTaskDetail",
+            tableAlias = "pt"
+    )
+    public PagingVO<WmsCartonSpecDTO.NoPackingViewDTO> unPackingTaskDetail(@RequestBody PagingDTO<PackingTaskDTO.ExportDTO> dto) {
+        return packingTaskService.unPackingTaskDetail(dto);
+    }
 
     @PostMapping("/firstMilePackingTaskDetail")
     @DataPermission(operationType = DataAttributeEnum.LIST,

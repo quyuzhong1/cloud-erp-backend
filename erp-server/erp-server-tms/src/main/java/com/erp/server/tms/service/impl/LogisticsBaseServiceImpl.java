@@ -12,6 +12,7 @@ import com.common.business.enums.TrackQueryTypeEnum;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.MathUtil;
+import com.erp.model.dmp.dto.DmpLogisticsTrackRegisterDTO;
 import com.erp.model.oms.entity.ShopAuthEntity;
 import com.erp.model.oms.enums.AuthStatusEnum;
 import com.erp.model.oms.enums.AuthTypeEnum;
@@ -27,12 +28,13 @@ import com.erp.model.tms.enums.LogisticsAddressTypeEnum;
 import com.erp.model.tms.vo.request.*;
 import com.erp.model.tms.vo.response.LogisticsOrderResponseVO;
 import com.erp.model.tms.vo.response.RegisterResponseVO;
+import com.erp.rpc.dmp.feign.DmpLogisticsFeign;
 import com.erp.rpc.dmp.feign.DmpMongoDbFeign;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.oms.feign.ShopeeFeign;
 import com.erp.server.tms.convert.LogisticsAddressConverter;
+import com.erp.server.tms.convert.TrackDataConverter;
 import com.erp.server.tms.handler.LogisticsRegistry;
-import com.erp.server.tms.rocketmq.PlatformTrackConsumerService;
 import com.erp.server.tms.service.*;
 import com.erp.tms.aliexpress.api.IopResponse;
 import com.erp.tms.aliexpress.model.address.SellerResponse;
@@ -85,7 +87,7 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
     @Resource
     private DmpMongoDbFeign dmpMongoDbFeign;
     @Resource
-    private PlatformTrackConsumerService platformTrackConsumerService;
+    private DmpLogisticsFeign dmpLogisticsFeign;
 
     @Override
     public List<BatchResultDTO> syncLogisticsChannel(String platform) {
@@ -292,6 +294,7 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
         }
         List<String> errorIds = new ArrayList<>();
         List<LogisticsBillDetailDTO.BillDetailDTO> sucessList = new ArrayList<>();
+        List<DmpLogisticsTrackRegisterDTO.AddDTO> addDTOList = new ArrayList<>();
         for (LogisticsTrackDTO.UpdateTrackDTO record : records) {
             if (!listApiResult.isSuccess() || CollectionUtils.isEmpty(listApiResult.getData())) {
                 errorIds.add(record.getId());
@@ -312,6 +315,7 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
                 continue;
             }
             sucessList.add(LogisticsBillDetailDTO.BillDetailDTO.builder().trackNo(trackNo).platformOrderNo(record.getPlatformOrderNo()).build());
+            addDTOList.add(TrackDataConverter.INSTANCE.convertToDmpRegisterDTO(record));
         }
         if (CollectionUtils.isNotEmpty(errorIds)){
             logisticsBillDetailService.updateRegisterStatus(errorIds, -1);
@@ -319,6 +323,10 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
         if (CollectionUtils.isNotEmpty(sucessList)){
             logisticsBillDetailService.updateRegisterStatusByParams(sucessList, 1);
         }
+        if (CollectionUtils.isNotEmpty(addDTOList)){
+            dmpLogisticsFeign.batchAdd(addDTOList);
+        }
+
     }
 
     /**

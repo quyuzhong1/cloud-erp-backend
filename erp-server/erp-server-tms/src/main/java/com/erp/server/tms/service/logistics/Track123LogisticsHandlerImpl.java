@@ -145,7 +145,7 @@ public class Track123LogisticsHandlerImpl extends AbstractLogisticsHandler {
      */
     private String getDataMd5(LogisticsTrackEntity trackingDetail) {
         String trackTime = trackingDetail.getTrackTime().format(TIME_FORMAT);
-        return DigestUtil.md5Hex(trackingDetail.getTrackNo() + trackingDetail.getContent() + trackTime);
+        return DigestUtil.md5Hex(trackingDetail.getTrackNo() + "-" + trackingDetail.getContent() + "-" + trackTime);
     }
 
     @Override

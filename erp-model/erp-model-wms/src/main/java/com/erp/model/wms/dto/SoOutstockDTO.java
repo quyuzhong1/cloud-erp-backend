@@ -516,6 +516,12 @@ public class SoOutstockDTO implements Serializable {
          */
         private LocalDate billDate;
 
+
+        /**
+         * 订单标签
+         */
+        private String tradeLabel;
+
         /**
          * 详情
          */
@@ -1059,6 +1065,11 @@ public class SoOutstockDTO implements Serializable {
         @Valid
         @Size(min = 1, message = "销售出库详情不能为空")
         private List<SoOutstockDetailDTO.UpdateDTO> detailList;
+
+        /**
+         * 订单标签
+         */
+        private String tradeLabel;
 
     }
 

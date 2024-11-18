@@ -86,12 +86,6 @@ public class DmpInputAliExpressOrderDmpHandler extends DmpInputDbConvertDmpHandl
 			AliExpressOrder sourceOrder = JSON.parseObject(JSON.toJSONString(mongoDataMap), AliExpressOrder.class);
 			for(TreeMap<String, Object> dmpDataMap : dmpDataMaps) {
 				dmpDataMap.put("shopId", nextLevelId);
-				Object payAmountObj = mongoDataMap.get("pay_amount");
-				if(payAmountObj != null) {
-					Map<String, Object> payAmount = (Map)payAmountObj;
-					dmpDataMap.put("payAmount", payAmount.get("amount"));
-					dmpDataMap.put("currencyCode", payAmount.get("currency_code"));
-				}
 				
 				// 平台取消
 		        boolean isCancel = sourceOrder.convertCancel();
@@ -102,6 +96,13 @@ public class DmpInputAliExpressOrderDmpHandler extends DmpInputDbConvertDmpHandl
 				
 				Map<String, Object> detailData = orderIdDetailMaps.get(dmpDataMap.get("thirdCode"));
 				if(detailData != null) {
+					Object payAmountObj = detailData.get("new_seller_order_amount");
+					if(payAmountObj != null) {
+						Map<String, Object> payAmount = (Map)payAmountObj;
+						dmpDataMap.put("payAmount", payAmount.get("amount"));
+						dmpDataMap.put("currencyCode", payAmount.get("currency_code"));
+					}
+					
 					Object logistics_amount_obj = detailData.get("logistics_amount");
 					if(logistics_amount_obj != null) {
 						Map<String , Object> logistics_amount = (Map)logistics_amount_obj;

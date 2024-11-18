@@ -69,17 +69,18 @@
         sm.update_user_name,
         sm.effective_time,
         sm.expire_time,
-        sm.update_time
+        sm.update_time,
+        ci.seller_name
         FROM sku_mapping sm
         LEFT JOIN shop_info si ON sm.shop_id=si.id AND si.is_deleted=FALSE
         LEFT JOIN listing_info li ON sm.listing_id=li.id AND li.is_deleted=FALSE
+        LEFT join customer_info ci on si.customer_id = ci.id and ci.is_deleted = false
         WHERE
         ${params.sqlMap.default}
          and   sm.is_deleted=FALSE AND sm.is_expire = FALSE
         <if test="params.type !=null and params.type!=''">
             AND sm.type =#{params.type}
         </if>
-
         ORDER BY sm.create_time DESC
     </select>
 
@@ -107,16 +108,19 @@
         li.platform_fn_sku,
         li.platform_update_time,
         sm.create_user_name,
-        sm.create_time
+        sm.create_time,
+        sm.expire_time,
+        sm.effective_time,
+        ci.seller_name
         FROM sku_mapping sm
         LEFT JOIN shop_info si
         ON sm.shop_id=si.id AND si.is_deleted=FALSE
         LEFT JOIN listing_info li
         ON sm.listing_id=li.id AND li.is_deleted=FALSE
+        LEFT join customer_info ci on si.customer_id = ci.id and ci.is_deleted = false
         WHERE
         ${params.sqlMap.default}
         and sm.is_deleted=FALSE
-        AND sm.is_expire = FALSE
         <if test="params.type !=null and params.type!=''">
             AND sm.type =#{params.type}
         </if>
@@ -207,7 +211,7 @@
         <if test="params.type !=null and params.type!=''">
             AND sm.type =#{params.type}
         </if>
-        ORDER BY sm.create_time DESC
+        ORDER BY li.platform_sku_no,sm.create_time DESC
 
     </select>
 
@@ -229,7 +233,9 @@
         sm.create_time,
         sm.platform_name,
         sm.has_mapping_all,
-        op.short_name
+        op.short_name,
+        sm.effective_time,
+        sm.expire_time
         FROM sku_mapping sm
         LEFT JOIN listing_info li
         ON sm.listing_id=li.id AND li.is_deleted=FALSE
@@ -241,7 +247,7 @@
         <if test="params.type !=null and params.type!=''">
             AND sm.type =#{params.type}
         </if>
-        ORDER BY sm.create_time DESC
+        ORDER BY li.platform_sku_no,sm.create_time DESC
     </select>
     <select id="listByPlatformSkuNoList" resultType="com.erp.model.oms.dto.SkuMappingDTO$SkuDTO">
         SELECT li.id AS listingId,
@@ -574,4 +580,50 @@
             #{item}
         </foreach>
     </select>
+
+    <select id="listSkuBySkuNos" resultType="com.erp.model.oms.dto.SkuMappingDTO$ProductSkuInfoDTO">
+        SELECT
+        sm.ID,
+        sm.shop_id,
+        si.customer_id,
+        sm.listing_id,
+        sm.dict_platform,
+        sm.platform_name,
+        sm.product_sku_id AS skuId,
+        sm.product_sku_no AS skuNo,
+        sm.product_name AS skuName,
+        li.platform_sku_no,
+        li.platform_sku_name
+        from
+        sku_mapping sm
+        INNER JOIN shop_info si ON sm.shop_id = si.ID  AND si.is_deleted =FALSE
+        INNER JOIN listing_info li ON sm.listing_id = li.ID AND li.is_deleted = FALSE
+        INNER JOIN customer_info ci ON si.customer_id = ci.ID AND ci.is_deleted = FALSE
+        WHERE
+            sm.is_deleted=FALSE
+        AND sm.is_expire=FALSE
+        <if test="params.cutomerId != null and params.cutomerId != ''">
+            and si.customer_id = #{params.cutomerId}
+        </if>
+        <if test="params.skuIdList !=null and params.skuIdList.size>0">
+            AND sm.product_sku_id IN
+            <foreach collection="params.skuIdList" item="skuId" open="(" separator="," close=")">
+                #{skuId}
+            </foreach>
+        </if>
+        <if test="params.skuNoList !=null and params.skuNoList.size>0">
+            AND sm.product_sku_no IN
+            <foreach collection="params.skuNoList" item="skuNo" open="(" separator="," close=")">
+                #{skuNo}
+            </foreach>
+        </if>
+        <if test="params.platformSkuNoList !=null and params.platformSkuNoList.size>0">
+            AND li.platform_sku_no IN
+            <foreach collection="params.platformSkuNoList" item="skuNo" open="(" separator="," close=")">
+                #{skuNo}
+            </foreach>
+        </if>
+        order by sm.create_time desc
+    </select>
+
 </mapper>

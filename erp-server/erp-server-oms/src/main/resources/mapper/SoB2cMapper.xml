@@ -38,7 +38,12 @@
         sb2c.id,
         sb2c.code,
         sb2c.dict_platform as dictPlatform,
-        sb2c.platform_code as platformCode,
+        CASE
+	    WHEN sb2c.merge_platform_code != '' THEN
+		    sb2c.merge_platform_code
+	    ELSE
+		    sb2c.platform_code
+        END AS platformCode,
         sb2c.shop_id as shopId,
         sb2c.approve_status as approveStatus,
         sb2c.pay_status as payStatus,
@@ -67,6 +72,9 @@
         sb2c.approve_user_name as approveUserName,
         sb2c.frozen_type as frozenType,
         sb2c.is_change_receiver_address as isChangeReceiverAddress,
+        sb2c.is_change_sku as isChangeSku,
+        sb2c.is_not_outbound as isNotOutbound,
+        sb2c.is_manual_delivery as isManualDelivery,
         sb2cl.logistics_channel_name as logisticsChannelName,
         case when sb2cl.actual_shipping_cost = 0 then sb2cl.estimated_shipping_cost
              else sb2cl.actual_shipping_cost
@@ -118,6 +126,18 @@
         sb2c.pay_time as payTime,
         sb2c.exchange_rate as exchangeRate,
         sb2c.dict_pay_method as dictPayMethod,
+        sb2c.label_json as label,
+        sb2c.buyer_remark as buyerRemark,
+        sb2c.remark as remark,
+        sb2c.source_type as sourceType,
+        sb2c.is_intercept as isIntercept,
+        sb2c.is_frozen as isFrozen,
+        sb2c.is_cancel as isCancel,
+        sb2c.is_change_receiver_address as isChangeReceiverAddress,
+        sb2c.is_change_sku as isChangeSku,
+        sb2c.is_not_outbound as isNotOutbound,
+        sb2c.invalid_status as invalidStatus,
+        sb2cd.id as detailId,
         sb2cd.platform_spu_no as platformSpuNo,
         sb2cd.platform_sku_no as platformSkuNo,
         sb2cd.sku_id as skuId,
@@ -131,8 +151,7 @@
         sb2cd.warehouse_name as warehouseName,
         sb2cd.warehouse_location as warehouseLocation,
         sb2cd.virtual_warehouse_id as virtualWarehouseId,
-        sb2c.buyer_remark as buyerRemark,
-        sb2c.remark as remark,
+        sb2cd.label_json as labelJson,
         sb2cl.name,
         sb2cl.logistics_channel_name as logisticsChannelName,
         sb2cl.code as logisticsCode,
@@ -1003,6 +1022,23 @@
                sbd.platform_sku_no as platformSkuNo
         FROM so_b2c sb
         inner join so_b2c_detail sbd on sb.id = sbd.main_id and sbd.is_deleted = false
+        where sb.is_deleted = false
+        and sb.id in
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </select>
+
+    <select id="listChangeDeliverySkuView"
+            resultType="com.erp.model.oms.dto.SoB2cDTO$ChangeDeliverySkuViewDTO">
+        SELECT sb.id,
+        sbd.id as detailId,
+        sb.code ,
+        sbd.sku_id as skuId,
+        sbd.sku_no as skuNo,
+        sbd.platform_sku_no as platformSkuNo
+        FROM so_b2c sb
+        left join so_b2c_detail sbd on sb.id = sbd.main_id and sbd.is_deleted = false
         where sb.is_deleted = false
         and sb.id in
         <foreach collection="ids" item="id" open="(" separator="," close=")">

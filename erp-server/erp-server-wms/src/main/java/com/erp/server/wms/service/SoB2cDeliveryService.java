@@ -443,6 +443,13 @@ public interface SoB2cDeliveryService extends SuperService<SoB2cDeliveryEntity> 
     void addUsableVirtualInventory (List<SoB2cDeliveryEntity> deliveryEntityList);
 
     /**
+     * 根据销售订单手动标发
+     * @param id
+     * @return
+     */
+    BatchResultDTO falseDeliveryBySoId(String id);
+
+    /**
      * 更新中转仓库记录
      * @param entity
      * @param changeIds

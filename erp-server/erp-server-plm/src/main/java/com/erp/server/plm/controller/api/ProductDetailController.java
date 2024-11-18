@@ -870,7 +870,7 @@ public class ProductDetailController extends BaseController {
         return success(skuList);
     }
     /**
-     * 获取已授权店铺
+     * 获取SKU下拉框-分页查询
      *
      * @return ApiResult<List < ShopInfoEntity>>
      * @author hyj

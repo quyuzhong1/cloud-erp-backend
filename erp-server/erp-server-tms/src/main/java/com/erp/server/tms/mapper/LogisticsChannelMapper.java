@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseDropDownDTO;
 import com.common.business.dto.base.BaseIdDTO;
+import com.erp.model.tms.dto.LogisticsBillDetailQueryDTO;
 import com.erp.model.tms.dto.LogisticsChannelDTO;
 import com.erp.model.tms.dto.LogisticsSupplierDTO;
 import com.erp.model.tms.entity.LogisticsChannelEntity;
@@ -74,4 +75,10 @@ public interface LogisticsChannelMapper extends BaseMapper<LogisticsChannelEntit
      */
     List<LogisticsChannelEntity> listByMainIdsAndName(@Param("mainIdList") List<String> mainIdList,@Param("params") LogisticsSupplierDTO.PagingParamDTO params);
     IPage<LogisticsChannelDTO.PagingSelectDTO> pagingSelect(Page query, @Param("params") LogisticsChannelDTO.SelectDTO params);
+
+    /**
+     * 根据渠道汇总时间段内未更新运单号记录
+     * @return
+     */
+    List<LogisticsChannelDTO.WarnReportDTO> getWarnReportByChannel(@Param("query") LogisticsBillDetailQueryDTO query);
 }

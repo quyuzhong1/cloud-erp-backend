@@ -200,6 +200,48 @@
         ) wls
 
     </select>
+    <select id="getWarnReportByChannel" resultType="com.erp.model.tms.dto.LogisticsChannelDTO$WarnReportDTO">
+        select
+        lc.name as channelName,
+        count(DISTINCT lb.id) as total
+        from logistics_bill_detail lbd
+        inner join logistics_bill lb on lbd.main_id = lb.id and lb.is_deleted = false
+        LEFT JOIN logistics_channel lc on lb.channel_id = lc.id and lc.is_deleted = false
+        where lbd.track_status not in('sign','manualComplete','systemComplete')
+        and lbd.is_deleted = false AND lc.name != ''
+        <if test="query.trackTime != null">
+            and lbd.track_time &lt; #{query.trackTime}
+        </if>
+        <if test="query.transportType != null and query.transportType != '' and query.transportType == 'expressDelivery'">
+            and lb.order_type in ('B2B','B2C')
+        </if>
+        <if test="query.transportType != null and query.transportType != '' and query.transportType == 'ocean'">
+            and lb.order_type = 'firstMile'
+        </if>
+        <if test="query.trackQueryMode != null and query.trackQueryMode != ''">
+            and lbd.track_query_mode = #{query.trackQueryMode}
+        </if>
+        <if test="query.registerStatus != null">
+            and lbd.register_status = #{query.registerStatus}
+        </if>
+        <if test="query.trackEnable != null">
+            and lbd.track_enable = #{query.trackEnable}
+        </if>
+        <if test="query.trackNoList != null and query.trackNoList.size > 0">
+            and lbd.track_no in
+            <foreach collection="query.trackNoList" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="query.transportNoList != null and query.transportNoList.size > 0">
+            and lb.transport_no in
+            <foreach collection="query.transportNoList" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        GROUP BY channelName
+        ORDER BY total desc
+    </select>
 
 
 </mapper>

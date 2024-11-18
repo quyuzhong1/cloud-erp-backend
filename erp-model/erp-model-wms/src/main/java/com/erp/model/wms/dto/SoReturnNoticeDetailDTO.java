@@ -1,5 +1,6 @@
 package com.erp.model.wms.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -32,6 +33,18 @@ public class SoReturnNoticeDetailDTO {
          * 销售单明细表id
          */
         private String sourceDetailId;
+        /**
+         * 平台sku
+         */
+        private String platformSkuNo;
+        /**
+         * skuId
+         */
+        private String skuId;
+        /**
+         * 是否子sku
+         */
+        private Boolean isChildSkuNo;
     }
 
     /**
@@ -63,6 +76,18 @@ public class SoReturnNoticeDetailDTO {
          * 销售单明细表id
          */
         private String sourceDetailId;
+        /**
+         * 平台sku
+         */
+        private String platformSkuNo;
+        /**
+         * skuId
+         */
+        private String skuId;
+        /**
+         * 是否子sku
+         */
+        private Boolean isChildSkuNo;
     }
 
     /**
@@ -127,5 +152,10 @@ public class SoReturnNoticeDetailDTO {
          * 备注
          */
         private String remark;
+        /**
+         * 平台sku
+         */
+        @TableField("platform_sku_no")
+        private String platformSkuNo;
     }
 }

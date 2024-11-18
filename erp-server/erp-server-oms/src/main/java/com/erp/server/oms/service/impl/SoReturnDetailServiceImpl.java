@@ -11,6 +11,7 @@ import com.common.core.utils.MathUtil;
 import com.erp.model.oms.dto.*;
 import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.model.oms.entity.SoReturnDetailEntity;
+import com.erp.model.oms.entity.SoReturnEntity;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
@@ -23,13 +24,8 @@ import com.erp.model.wms.enums.ReturnTypeEnum;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.rpc.plm.feign.BomSkuFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
-import com.erp.rpc.scm.feign.*;
 import com.erp.rpc.sys.feign.SysUserFeign;
-import com.erp.rpc.wms.feign.InventoryFeign;
-import com.erp.rpc.wms.feign.SoDeliveryNoticeFeign;
-import com.erp.rpc.wms.feign.SoOutstockFeign;
-import com.erp.rpc.wms.feign.SoReturnReceiveFeign;
-import com.erp.rpc.wms.feign.WmsTaskFeign;
+import com.erp.rpc.wms.feign.*;
 import com.erp.server.oms.mapper.SoReturnDetailMapper;
 import com.erp.server.oms.service.*;
 import lombok.extern.slf4j.Slf4j;
@@ -141,6 +137,30 @@ public class SoReturnDetailServiceImpl extends SuperServiceImpl<SoReturnDetailMa
             soReturnDetailEntity.setReturnReasonDict(detailDto.getReturnReasonDict());
             soReturnDetailEntity.setRemark(detailDto.getRemark());
             soReturnDetailEntity.setSourceDetailId(detailDto.getSourceDetailId());
+            soReturnDetailEntity.setListingId(detailDto.getListingId());
+            soReturnDetailEntity.setPlatformSkuNo(detailDto.getPlatformSkuNo());
+            soReturnDetailEntity.setPlatformSkuName(detailDto.getPlatformSkuName());
+            list.add(soReturnDetailEntity);
+        }
+        return this.saveBatch(list);
+    }
+
+
+    @Override
+    public Boolean addByCutomer(SoReturnDTO.Add dto, String id) {
+        List<SoReturnDetailEntity> list = new ArrayList<>();
+        for (SoReturnDetailDTO.Add detailDto : dto.getDetailList()) {
+            SoReturnDetailEntity soReturnDetailEntity = new SoReturnDetailEntity();
+            soReturnDetailEntity.setMainId(id);
+            soReturnDetailEntity.setSkuId(detailDto.getSkuId());
+            soReturnDetailEntity.setSkuNo(detailDto.getSkuNo());
+            soReturnDetailEntity.setReturnQty(detailDto.getReturnQty());
+            soReturnDetailEntity.setReturnTypeDict(detailDto.getReturnTypeDict());
+            soReturnDetailEntity.setReturnReasonDict(detailDto.getReturnReasonDict());
+            soReturnDetailEntity.setRemark(detailDto.getRemark());
+            soReturnDetailEntity.setListingId(detailDto.getListingId());
+            soReturnDetailEntity.setPlatformSkuNo(detailDto.getPlatformSkuNo());
+            soReturnDetailEntity.setPlatformSkuName(detailDto.getPlatformSkuName());
             list.add(soReturnDetailEntity);
         }
         return this.saveBatch(list);
@@ -213,6 +233,9 @@ public class SoReturnDetailServiceImpl extends SuperServiceImpl<SoReturnDetailMa
             soReturnDetailEntity.setReturnReasonDict(detailDto.getReturnReasonDict());
             soReturnDetailEntity.setRemark(detailDto.getRemark());
             soReturnDetailEntity.setSourceDetailId(detailDto.getSourceDetailId());
+            soReturnDetailEntity.setListingId(detailDto.getListingId());
+            soReturnDetailEntity.setPlatformSkuNo(detailDto.getPlatformSkuNo());
+            soReturnDetailEntity.setPlatformSkuName(detailDto.getPlatformSkuName());
             list.add(soReturnDetailEntity);
             detailDto.setSkuNo(soDetailEntity.getSkuNo());
             //修改操作日志
@@ -233,6 +256,54 @@ public class SoReturnDetailServiceImpl extends SuperServiceImpl<SoReturnDetailMa
         }
         return falg;
     }
+
+    @Override
+    public Boolean updateByCutomer(SoReturnDTO.Update dto) {
+        List<String> addList = dto.getDetailList().stream().filter(c -> StringUtils.isBlank(c.getId())).map(SoReturnDetailDTO.Update::getId).collect(Collectors.toList());
+        //原明细数据
+        List<SoReturnDetailEntity> oldList = this.listDetailByMainId(dto.getId());
+        List<String> deleteIds = getDeleteIds(dto.getDetailList(), oldList);
+        if (CollectionUtils.isNotEmpty(deleteIds)) {
+            List<SoReturnDetailEntity> removeList = oldList.stream().filter(obj -> deleteIds.contains(obj.getId())).collect(Collectors.toList());
+            //操作日志
+            List<Pair<String, String>> pairList = removeList.stream().map(obj -> new Pair<>(obj.getMainId(), obj.getSkuNo())).collect(Collectors.toList());
+            operateLogService.batchAddModuleOperateLog("删除了一个SKU【%s】", ModuleTypeEnum.SO_RETURN.getCode(),pairList,"编辑操作");
+            this.removeByIds(deleteIds);
+        }
+        List<String> detailIds = dto.getDetailList().stream().filter(c -> StringUtils.isNotBlank(c.getId())).map(SoReturnDetailDTO.Update::getId).collect(Collectors.toList());
+        List<SoReturnDetailEntity> list = new ArrayList<>();
+        for (SoReturnDetailDTO.Update detailDto : dto.getDetailList()) {
+            SoReturnDetailEntity soReturnDetailEntity = new SoReturnDetailEntity();
+            soReturnDetailEntity.setMainId(dto.getId());
+            soReturnDetailEntity.setSkuId(detailDto.getSkuId());
+            soReturnDetailEntity.setSkuNo(detailDto.getSkuNo());
+            soReturnDetailEntity.setReturnQty(detailDto.getReturnQty());
+            soReturnDetailEntity.setReturnTypeDict(detailDto.getReturnTypeDict());
+            soReturnDetailEntity.setReturnReasonDict(detailDto.getReturnReasonDict());
+            soReturnDetailEntity.setRemark(detailDto.getRemark());
+            soReturnDetailEntity.setListingId(detailDto.getListingId());
+            soReturnDetailEntity.setPlatformSkuNo(detailDto.getPlatformSkuNo());
+            soReturnDetailEntity.setPlatformSkuName(detailDto.getPlatformSkuName());
+            list.add(soReturnDetailEntity);
+            //修改操作日志
+            if (StringUtils.isNotBlank(soReturnDetailEntity.getId())) {
+                SoReturnDetailEntity old = this.getById(soReturnDetailEntity.getId());
+                if (ObjectUtils.isEmpty(old)) {
+                    throw new ServiceException(ApiError.ERROR_98002);
+                }
+                operateLogService.addModuleOperateLogByObj(old,soReturnDetailEntity, ModuleTypeEnum.SO_RETURN.getCode(),dto.getId(),"",String.format("【%s】",old.getSkuNo()));
+            }
+        }
+        boolean falg = this.saveOrUpdateBatch(list);
+        //添加操作日志
+        if (CollectionUtils.isNotEmpty(addList)) {
+            List<SoReturnDetailEntity> returnDetailEntityList = this.listByIds(addList);
+            List<Pair<String, String>> addPairList = returnDetailEntityList.stream().map(obj -> new Pair<>(dto.getId(), obj.getSkuNo())).collect(Collectors.toList());
+            operateLogService.batchAddModuleOperateLog("添加了一个SKU【%s】", ModuleTypeEnum.SO_DELIVERY_NOTICE.getCode(), addPairList, "编辑操作");
+        }
+        return falg;
+    }
+
 
     private List<String> getDeleteIds(List<SoReturnDetailDTO.Update> newList, List<SoReturnDetailEntity> oldList) {
         List<String> newIds = newList.stream().filter(g -> StringUtils.isNotBlank(g.getId())).
@@ -299,6 +370,14 @@ public class SoReturnDetailServiceImpl extends SuperServiceImpl<SoReturnDetailMa
         //组织列表
         List<BaseIdDTO.CodeDTO> orgList = sysUserFeign.getAccountingCompanyList(orgIds);
 
+        //sku映射表
+        SoReturnEntity soReturnEntity = soReturnService.getById(dto.getId());
+        List<String> skuNoList = list.stream().map(SoDetailDTO.AddDetailView::getSkuNo).distinct().collect(Collectors.toList());
+        SkuMappingDTO.SkuParamDTO skuParamDTO = new SkuMappingDTO.SkuParamDTO();
+        skuParamDTO.setCutomerId(soReturnEntity.getCustomerId());
+        skuParamDTO.setSkuNoList(skuNoList);
+        List<SkuMappingDTO.ProductSkuInfoDTO> productSkuInfoList = skuMappingService.listSkuBySkuNos(skuParamDTO);
+
         for (SoDetailDTO.AddDetailView addDetailView : list) {
             String warehouseName = warehouseList.stream().filter(w -> w.getId().equals(addDetailView.getWarehouseId())).
                     findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
@@ -324,8 +403,97 @@ public class SoReturnDetailServiceImpl extends SuperServiceImpl<SoReturnDetailMa
             addDetailView.setMustQty(returnQty);
             addDetailView.setReturnTypeDictName(ReturnTypeEnum.getName(addDetailView.getReturnTypeDict()));
             addDetailView.setReturnReasonDictName(ReturnReasonEnum.getName(addDetailView.getReturnReasonDict()));
+            //平台sku
+            if(StringUtils.isBlank(addDetailView.getPlatformSkuNo())){
+                SkuMappingDTO.ProductSkuInfoDTO productSkuInfoDTO = productSkuInfoList.stream().filter(v -> v.getSkuNo().equals(addDetailView.getSkuNo())).findFirst().orElse(new SkuMappingDTO.ProductSkuInfoDTO());
+                addDetailView.setPlatformSkuNo(productSkuInfoDTO.getPlatformSkuNo());
+            }
         }
         return list;
+    }
+
+    //快粘贴 -- 根据客户id生成
+    private SoDetailDTO.ListAddDetailNoBomViewDTO generateAddDetailByCustomerId (SoReturnDTO.PlatformSkuDTO dto){
+        SoDetailDTO.ListAddDetailNoBomViewDTO view = new  SoDetailDTO.ListAddDetailNoBomViewDTO();
+        List<SoDetailDTO.AddDetailView> bomList = new ArrayList<>();
+        List<SoDetailDTO.AddDetailView> noBomList = new ArrayList<>();
+        List<String> parentSkuNoList = new ArrayList<>();
+
+        //没销售订单id，只有客户id
+        if(StringUtils.isBlank(dto.getCustomerId())){
+            throw new ServiceException("客户id不能为空");
+        }
+        if(CollectionUtils.isEmpty(dto.getPlatformSkuNoList())){
+            throw new ServiceException("平台sku不能为空");
+        }
+        //sku映射表
+        SkuMappingDTO.SkuParamDTO skuParamDTO = new SkuMappingDTO.SkuParamDTO();
+        skuParamDTO.setCutomerId(dto.getCustomerId());
+        skuParamDTO.setPlatformSkuNoList(dto.getPlatformSkuNoList());
+        List<SkuMappingDTO.ProductSkuInfoDTO> productSkuInfoList = skuMappingService.listSkuBySkuNos(skuParamDTO);
+        if(CollectionUtils.isEmpty(productSkuInfoList)){
+            return new SoDetailDTO.ListAddDetailNoBomViewDTO();
+        }
+        for (SkuMappingDTO.ProductSkuInfoDTO productSku : productSkuInfoList) {
+            SoDetailDTO.AddDetailView detailView = new SoDetailDTO.AddDetailView();
+            detailView.setSkuId(productSku.getSkuId());
+            detailView.setSkuNo(productSku.getSkuNo());
+            detailView.setPlatformSkuNo(productSku.getPlatformSkuNo());
+            detailView.setProductName(productSku.getSkuName());
+            detailView.setCustomerId(productSku.getCustomerId());
+            noBomList.add(detailView);
+        }
+
+        List<String> skuNOs = noBomList.stream().map(SoDetailDTO.AddDetailView::getSkuNo).filter(StringUtils::isNotBlank).collect(Collectors.toList());
+        List<BomChildrenSkuDTO> bomChildrenSkuList = bomSkuFeign.checkExistAndListCombinationSku(skuNOs);
+        if(CollectionUtils.isNotEmpty(bomChildrenSkuList)){
+            //存在套装SKU
+            view.setExistBom(Boolean.TRUE);
+            //根据父skuno 分组
+            Map<String, List<BomChildrenSkuDTO>> collect = bomChildrenSkuList.stream().collect(Collectors.groupingBy(BomChildrenSkuDTO::getParentSkuNo));
+            List<String> childSkuNoList = new ArrayList<>();
+            for (SoDetailDTO.AddDetailView addDetailView : noBomList) {
+                String skuNo = addDetailView.getSkuNo();
+                if(collect.containsKey(skuNo)){
+                    //把子件添加到结果集
+                    List<BomChildrenSkuDTO> bomChildrenSkuDTOS = collect.get(skuNo);
+                    for (BomChildrenSkuDTO bomChildrenSkuDTO : bomChildrenSkuDTOS) {
+                        childSkuNoList.add(bomChildrenSkuDTO.getSkuNo());
+                    }
+                }
+            }
+            //sku映射表
+            skuParamDTO = new SkuMappingDTO.SkuParamDTO();
+            skuParamDTO.setCutomerId(dto.getCustomerId());
+            skuParamDTO.setSkuNoList(childSkuNoList);
+            productSkuInfoList = skuMappingService.listSkuBySkuNos(skuParamDTO);
+            for (SoDetailDTO.AddDetailView addDetailView : noBomList) {
+                String skuNo = addDetailView.getSkuNo();
+                if(collect.containsKey(skuNo)){
+                    //父sku
+                    parentSkuNoList.add(skuNo);
+                    //把子件添加到结果集
+                    List<BomChildrenSkuDTO> bomChildrenSkuDTOS = collect.get(skuNo);
+                    for (BomChildrenSkuDTO bomChildrenSkuDTO : bomChildrenSkuDTOS) {
+                        SoDetailDTO.AddDetailView addChildDetailView = new SoDetailDTO.AddDetailView();
+                        addChildDetailView.setSkuId(bomChildrenSkuDTO.getSkuId());
+                        addChildDetailView.setSkuNo(bomChildrenSkuDTO.getSkuNo());
+                        addChildDetailView.setProductName(bomChildrenSkuDTO.getSkuName());
+                        String platformSkuNo = productSkuInfoList.stream().filter(v -> v.getSkuNo().equals(bomChildrenSkuDTO.getSkuNo())).map(SkuMappingDTO.ProductSkuInfoDTO::getPlatformSkuNo).findFirst().orElse("");
+                        addChildDetailView.setPlatformSkuNo(platformSkuNo);
+                        addChildDetailView.setCustomerId(dto.getCustomerId());
+                        addChildDetailView.setIsChildSkuNo(Boolean.TRUE);
+                        bomList.add(addChildDetailView);
+                    }
+                }else {
+                    bomList.add(addDetailView);
+                }
+            }
+        }
+        view.setNobomList(noBomList);
+        view.setBomList(bomList);
+        view.setParentSkuNoList(parentSkuNoList);
+        return view;
     }
 
     /**

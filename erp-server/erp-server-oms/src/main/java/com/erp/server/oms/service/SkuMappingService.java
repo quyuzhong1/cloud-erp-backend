@@ -13,6 +13,7 @@ import com.erp.model.oms.dto.SkuMappingDTO;
 import com.erp.model.oms.entity.ListingInfoEntity;
 import com.erp.model.oms.entity.SkuMappingEntity;
 import com.erp.model.oms.enums.RuleTypeEnum;
+import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.scm.dto.OperateLogDTO;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -267,6 +268,19 @@ public interface SkuMappingService extends SuperService<SkuMappingEntity> {
     PagingVO<SkuMappingDTO.PagingViewDTO> exportPlatformSku(PagingDTO<SkuMappingDTO.ExportDTO> dto);
 
     PagingVO<SkuMappingDTO.WarehousePagingViewDTO> exportWarehouseSku(PagingDTO<SkuMappingDTO.ExportWarehouseSkuDTO> dto);
+
+    void updateNotMatch(SkuMappingDTO.UpdateNotMatchDTO dto);
+
+    PagingVO<SkuMappingDTO.SyncPlatformProductView> syncPlatformProductView(PagingDTO<AdvanceQueryContainer> advanceQueryDTO);
+
+    PagingVO<SkuMappingDTO.SyncWarehouseProductView> syncWarehouseProductView(PagingDTO<AdvanceQueryContainer> advanceQueryDTO);
+
+    List<SkuMappingDTO.ProductSkuInfoDTO> listSkuBySkuNos(SkuMappingDTO.SkuParamDTO skuParamDTO);
+
+    void syncPlatformProduct(List<String> ids);
+
+    void syncWarehouseProduct(List<String> ids);
+
     /**
      * 构建查询映射关系参数DTO
      * @param platformSkuList 平台sku列表
@@ -283,6 +297,4 @@ public interface SkuMappingService extends SuperService<SkuMappingEntity> {
                                      List<String> shopIdList,
                                      LocalDateTime platformOrderCreateTime,
                                      Boolean isExpire);
-
-    void updateNotMatch(SkuMappingDTO.UpdateNotMatchDTO dto);
 }
