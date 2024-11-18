@@ -48,7 +48,6 @@ import com.erp.model.wms.enums.B2cDeliveryLogisticTypeEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.oms.feign.CfgRuleFeign;
 import com.erp.rpc.oms.feign.SoB2cFeign;
-import com.erp.rpc.oms.feign.SoInfoFeign;
 import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.rpc.wms.feign.WmsFirstMileDeliveryFeign;
 import com.erp.server.tms.constant.TmsConstant;
@@ -93,9 +92,6 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
     private DictBasicService dictBasicService;
 
     @Resource
-    private LogisticsTrackService logisticsTrackService;
-
-    @Resource
     private LogisticsBillCostService logisticsBillCostService;
 
     @Resource
@@ -133,15 +129,8 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
     @Resource
     private LogisticsBillService logisticsBillService;
 
-
     @Resource
     private MercadoSdkClientService mercadoSdkClientService;
-
-    @Resource
-    private LogisticsOperateService logisticsOperateService;
-
-    @Resource
-    private SoInfoFeign soInfoFeign;
 
     @Resource
     private CfgRuleFeign cfgRuleFeign;
@@ -151,6 +140,9 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
     private DownloadTaskFeign downloadTaskFeign;
     @Resource
     private WmsFirstMileDeliveryFeign wmsFirstMileDeliveryFeign;
+
+    @Resource
+    private TmsPushMsgService tmsPushMsgService;
 
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -165,7 +157,6 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         }
 
         logisticsBillDetailService.add(logisticsBillEntity, addDTO.getDetailList(),true);
-
 
         return save;
     }
