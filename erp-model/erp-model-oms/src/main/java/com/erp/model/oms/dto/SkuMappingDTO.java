@@ -630,12 +630,6 @@ public class SkuMappingDTO implements Serializable {
          * 平台sku
          */
         private String platformSkuName;
-        /**
-         * 客户id
-         */
-        private String customerId;
-
-
     }
 
     /**

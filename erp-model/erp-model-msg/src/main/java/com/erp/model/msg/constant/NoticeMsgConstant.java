@@ -46,12 +46,12 @@ public class NoticeMsgConstant {
     /**
      * 仓位补货通知消息头
      */
-    String FS_WLR_SETTING_HEAD="SDC-ERP：仓位补货通知";
+    public final static String FS_WLR_SETTING_HEAD="SDC-ERP：仓位补货通知";
 
     /**
      * 仓位补货通知消息体
      */
-    String FS_WLR_SETTING_CONTENT="**【仓储管理-仓位补货】待处理数据,数量：{%s}\n【仓储管理-仓位补货】处理中数据,数量：{%s}\n**推送时间：{%s}";
+    public final static String FS_WLR_SETTING_CONTENT="**【仓储管理-仓位补货】待处理数据,数量：{%s}\n【仓储管理-仓位补货】处理中数据,数量：{%s}\n**推送时间：{%s}";
 
 
     /**

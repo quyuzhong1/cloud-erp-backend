@@ -328,6 +328,172 @@ public class SoReturnDetailServiceImpl extends SuperServiceImpl<SoReturnDetailMa
         return list;
     }
 
+    @Override
+    public SoDetailDTO.ListAddDetailNoBomViewDTO listAddDetailWithNoBomView(SoReturnDTO.PlatformSkuDTO dto) {
+        if(StringUtils.isNotBlank(dto.getId())){
+            return generateAddDetailBySoReturn(dto);
+        }else {
+            return generateAddDetailByCustomerId(dto);
+        }
+    }
+
+    //快粘贴 -- 根据客户id生成
+    private SoDetailDTO.ListAddDetailNoBomViewDTO generateAddDetailByCustomerId (SoReturnDTO.PlatformSkuDTO dto){
+        SoDetailDTO.ListAddDetailNoBomViewDTO view = new  SoDetailDTO.ListAddDetailNoBomViewDTO();
+        List<SoDetailDTO.AddDetailView> bomList = new ArrayList<>();
+        List<SoDetailDTO.AddDetailView> noBomList = new ArrayList<>();
+        List<String> parentSkuNoList = new ArrayList<>();
+
+        //没销售订单id，只有客户id
+        if(StringUtils.isBlank(dto.getCustomerId())){
+            throw new ServiceException("客户id不能为空");
+        }
+        if(CollectionUtils.isEmpty(dto.getPlatformSkuNoList())){
+            throw new ServiceException("平台sku不能为空");
+        }
+        //sku映射表
+        SkuMappingDTO.SkuParamDTO skuParamDTO = new SkuMappingDTO.SkuParamDTO();
+        skuParamDTO.setCutomerId(dto.getCustomerId());
+        skuParamDTO.setPlatformSkuNoList(dto.getPlatformSkuNoList());
+        List<SkuMappingDTO.ProductSkuInfoDTO> productSkuInfoList = skuMappingService.listSkuBySkuNos(skuParamDTO);
+        if(CollectionUtils.isEmpty(productSkuInfoList)){
+            return new SoDetailDTO.ListAddDetailNoBomViewDTO();
+        }
+        for (SkuMappingDTO.ProductSkuInfoDTO productSku : productSkuInfoList) {
+            SoDetailDTO.AddDetailView detailView = new SoDetailDTO.AddDetailView();
+            detailView.setSkuId(productSku.getSkuId());
+            detailView.setSkuNo(productSku.getSkuNo());
+            detailView.setPlatformSkuNo(productSku.getPlatformSkuNo());
+            detailView.setProductName(productSku.getSkuName());
+            detailView.setCustomerId(productSku.getCustomerId());
+            noBomList.add(detailView);
+        }
+
+        List<String> skuNOs = noBomList.stream().map(SoDetailDTO.AddDetailView::getSkuNo).filter(StringUtils::isNotBlank).collect(Collectors.toList());
+        List<BomChildrenSkuDTO> bomChildrenSkuList = bomSkuFeign.checkExistAndListCombinationSku(skuNOs);
+        if(CollectionUtils.isNotEmpty(bomChildrenSkuList)){
+            //存在套装SKU
+            view.setExistBom(Boolean.TRUE);
+            //根据父skuno 分组
+            Map<String, List<BomChildrenSkuDTO>> collect = bomChildrenSkuList.stream().collect(Collectors.groupingBy(BomChildrenSkuDTO::getParentSkuNo));
+            List<String> childSkuNoList = new ArrayList<>();
+            for (SoDetailDTO.AddDetailView addDetailView : noBomList) {
+                String skuNo = addDetailView.getSkuNo();
+                if(collect.containsKey(skuNo)){
+                    //把子件添加到结果集
+                    List<BomChildrenSkuDTO> bomChildrenSkuDTOS = collect.get(skuNo);
+                    for (BomChildrenSkuDTO bomChildrenSkuDTO : bomChildrenSkuDTOS) {
+                        childSkuNoList.add(bomChildrenSkuDTO.getSkuNo());
+                    }
+                }
+            }
+            //sku映射表
+            skuParamDTO = new SkuMappingDTO.SkuParamDTO();
+            skuParamDTO.setCutomerId(dto.getCustomerId());
+            skuParamDTO.setSkuNoList(childSkuNoList);
+            productSkuInfoList = skuMappingService.listSkuBySkuNos(skuParamDTO);
+            for (SoDetailDTO.AddDetailView addDetailView : noBomList) {
+                String skuNo = addDetailView.getSkuNo();
+                if(collect.containsKey(skuNo)){
+                    //父sku
+                    parentSkuNoList.add(skuNo);
+                    //把子件添加到结果集
+                    List<BomChildrenSkuDTO> bomChildrenSkuDTOS = collect.get(skuNo);
+                    for (BomChildrenSkuDTO bomChildrenSkuDTO : bomChildrenSkuDTOS) {
+                        SoDetailDTO.AddDetailView addChildDetailView = new SoDetailDTO.AddDetailView();
+                        addChildDetailView.setSkuId(bomChildrenSkuDTO.getSkuId());
+                        addChildDetailView.setSkuNo(bomChildrenSkuDTO.getSkuNo());
+                        addChildDetailView.setProductName(bomChildrenSkuDTO.getSkuName());
+                        String platformSkuNo = productSkuInfoList.stream().filter(v -> v.getSkuNo().equals(bomChildrenSkuDTO.getSkuNo())).map(SkuMappingDTO.ProductSkuInfoDTO::getPlatformSkuNo).findFirst().orElse("");
+                        addChildDetailView.setPlatformSkuNo(platformSkuNo);
+                        addChildDetailView.setCustomerId(dto.getCustomerId());
+                        addChildDetailView.setIsChildSkuNo(Boolean.TRUE);
+                        bomList.add(addChildDetailView);
+                    }
+                }else {
+                    bomList.add(addDetailView);
+                }
+            }
+        }
+        view.setNobomList(noBomList);
+        view.setBomList(bomList);
+        view.setParentSkuNoList(parentSkuNoList);
+        return view;
+    }
+
+    //快粘贴 -- 根据销售退货单id生成
+    private SoDetailDTO.ListAddDetailNoBomViewDTO generateAddDetailBySoReturn (SoReturnDTO.PlatformSkuDTO dto){
+        SoDetailDTO.ListAddDetailNoBomViewDTO view = new  SoDetailDTO.ListAddDetailNoBomViewDTO();
+        List<SoDetailDTO.AddDetailView> bomList = new ArrayList<>();
+        List<SoDetailDTO.AddDetailView> noBomList = new ArrayList<>();
+        List<String> parentSkuNoList = new ArrayList<>();
+        //获取sku产品明细
+        listAddDetailViewDTO viewDTO = new listAddDetailViewDTO();
+        viewDTO.setId(dto.getId());
+        List<SoDetailDTO.AddDetailView> addDetailViews = listAddDetailView(viewDTO);
+        //过滤对应的平台sku
+        addDetailViews.stream().forEach(r ->{
+            boolean isPresent = dto.getPlatformSkuNoList().stream().anyMatch(v -> v.equals(r.getPlatformSkuNo()));
+            if(isPresent){
+                noBomList.add(r);
+            }
+        });
+        view.setNobomList(noBomList);
+        if(CollectionUtils.isNotEmpty(noBomList)){
+            List<String> skuNOs = noBomList.stream().map(SoDetailDTO.AddDetailView::getSkuNo).filter(StringUtils::isNotBlank).collect(Collectors.toList());
+            List<BomChildrenSkuDTO> bomChildrenSkuList = bomSkuFeign.checkExistAndListCombinationSku(skuNOs);
+            if(CollectionUtils.isNotEmpty(bomChildrenSkuList)){
+                //存在套装SKU
+                view.setExistBom(Boolean.TRUE);
+                //根据父skuno 分组
+                Map<String, List<BomChildrenSkuDTO>> collect = bomChildrenSkuList.stream().collect(Collectors.groupingBy(BomChildrenSkuDTO::getParentSkuNo));
+                List<String> childSkuNoList = new ArrayList<>();
+                for (SoDetailDTO.AddDetailView addDetailView : noBomList) {
+                    String skuNo = addDetailView.getSkuNo();
+                    if(collect.containsKey(skuNo)){
+                        //把子件添加到结果集
+                        List<BomChildrenSkuDTO> bomChildrenSkuDTOS = collect.get(skuNo);
+                        for (BomChildrenSkuDTO bomChildrenSkuDTO : bomChildrenSkuDTOS) {
+                            childSkuNoList.add(bomChildrenSkuDTO.getSkuNo());
+                        }
+                    }
+                }
+                //sku映射表
+                SkuMappingDTO.SkuParamDTO skuParamDTO = new SkuMappingDTO.SkuParamDTO();
+                skuParamDTO.setCutomerId(dto.getCustomerId());
+                skuParamDTO.setSkuNoList(childSkuNoList);
+                List<SkuMappingDTO.ProductSkuInfoDTO> productSkuInfoList = skuMappingService.listSkuBySkuNos(skuParamDTO);
+                for (SoDetailDTO.AddDetailView addDetailView : noBomList) {
+                    String skuNo = addDetailView.getSkuNo();
+                    if(collect.containsKey(skuNo)){
+                        //父sku
+                        parentSkuNoList.add(skuNo);
+                        //把子件添加到结果集
+                        List<BomChildrenSkuDTO> bomChildrenSkuDTOS = collect.get(skuNo);
+                        for (BomChildrenSkuDTO bomChildrenSkuDTO : bomChildrenSkuDTOS) {
+                            SoDetailDTO.AddDetailView addChildDetailView = new SoDetailDTO.AddDetailView();
+                            addChildDetailView.setSkuId(bomChildrenSkuDTO.getSkuId());
+                            addChildDetailView.setSkuNo(bomChildrenSkuDTO.getSkuNo());
+                            addChildDetailView.setProductName(bomChildrenSkuDTO.getSkuName());
+                            String platformSkuNo = productSkuInfoList.stream().filter(v -> v.getSkuNo().equals(bomChildrenSkuDTO.getSkuNo())).map(SkuMappingDTO.ProductSkuInfoDTO::getPlatformSkuNo).findFirst().orElse("");
+                            addChildDetailView.setPlatformSkuNo(platformSkuNo);
+                            addChildDetailView.setReturnReasonDictName(addDetailView.getReturnReasonDictName());
+                            addChildDetailView.setReturnTypeDictName(addDetailView.getReturnTypeDictName());
+                            addChildDetailView.setIsChildSkuNo(Boolean.TRUE);
+                            bomList.add(addChildDetailView);
+                        }
+                    }else {
+                        bomList.add(addDetailView);
+                    }
+                }
+            }
+        }
+        view.setBomList(bomList);
+        view.setParentSkuNoList(parentSkuNoList);
+        return view;
+    }
+
+
     /**
      * 获取可用数量
      *

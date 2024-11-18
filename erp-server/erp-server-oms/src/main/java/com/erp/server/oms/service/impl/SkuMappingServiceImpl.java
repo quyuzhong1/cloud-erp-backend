@@ -1292,6 +1292,93 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         return new PagingVO<>(page);
     }
 
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void updateNotMatch(SkuMappingDTO.UpdateNotMatchDTO dto) {
+        List<ListingInfoEntity> listingInfoEntityList = listingInfoService.listByIds(dto.getListingIds());
+        if (CollectionUtils.isEmpty(listingInfoEntityList)){
+            throw new ServiceException("listing不存在");
+        }
+        if(listingInfoEntityList.stream().anyMatch(v->ListingMatchResultEnum.TRUE.getCode().equals(v.getMatchResult()))
+        || listingInfoEntityList.stream().anyMatch(v->ListingMatchResultEnum.NOT.getCode().equals(v.getMatchResult()))){
+            throw new ServiceException("只有未匹配的数据可以操作无需匹配");
+        }
+        listingInfoEntityList.forEach(v->{
+            v.setMatchResult(ListingMatchResultEnum.NOT.getCode());
+            v.setRemark(dto.getRemark());
+            String msg = StrUtil.format("用户【{}】更新状态为无需匹配", UserContext.getDefaultLoginUser().getUserName());
+            operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.LISTING_INFO.getCode(), v.getId(), "状态变更");
+        });
+        listingInfoService.updateBatchById(listingInfoEntityList);
+    }
+
+    @Override
+    public PagingVO<SkuMappingDTO.SyncPlatformProductView> syncPlatformProductView(PagingDTO<AdvanceQueryContainer> advanceQueryDTO) {
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
+        List<ShopSysUserAuthDTO.ViewDTO> shopSysUserAuthList = shopSysUserAuthService.listShopSysUserAuthByUserIdList(Arrays.asList(userInfo.getUid()));
+        if (CollectionUtils.isEmpty(shopSysUserAuthList)) {
+            return new PagingVO<>();
+        }
+        List<ShopSysUserAuthDTO.ViewShopDTO> detailList = shopSysUserAuthList.get(0).getDetailList();
+        List<String> shopIds = detailList.stream().map(v->v.getShopId()).collect(Collectors.toList());
+        return shopInfoService.pageAuthShop(advanceQueryDTO,shopIds);
+    }
+
+    @Override
+    public PagingVO<SkuMappingDTO.SyncWarehouseProductView> syncWarehouseProductView(PagingDTO<AdvanceQueryContainer> advanceQueryDTO) {
+        return wmsOverseasWarehouseFeign.pageWarehouseProduct(advanceQueryDTO);
+    }
+
+    @Override
+    public List<SkuMappingDTO.ProductSkuInfoDTO> listSkuBySkuNos(SkuMappingDTO.SkuParamDTO skuParamDTO) {
+        if(null ==  skuParamDTO || StringUtils.isBlank(skuParamDTO.getCutomerId())){
+            throw new ServiceException("客户id不能为空");
+        }
+        return this.baseMapper.listSkuBySkuNos(skuParamDTO);
+    }
+
+    @Override
+    public void syncPlatformProduct(List<String> ids) {
+        List<ShopInfoEntity> shopInfoEntityList = shopInfoService.listByIds(ids);
+        if(CollectionUtils.isEmpty(shopInfoEntityList)){
+            throw new ServiceException("店铺不存在");
+        }
+        if(shopInfoEntityList.stream().anyMatch(v->!AuthStatusEnum.ALREADY.getCode().equals(v.getAuthStatus()))){
+            throw new ServiceException("只有已授权店铺可以同步");
+        }
+        if(shopInfoEntityList.stream().anyMatch(ShopInfoEntity::getDisabled)){
+            throw new ServiceException("已禁用店铺无法同步");
+        }
+        List<DmpInoutDTO.CreateInputDTO> createDTOList = new ArrayList<>();
+        for (ShopInfoEntity shopInfoEntity : shopInfoEntityList) {
+            DmpInoutDTO.CreateInputDTO dto = new DmpInoutDTO.CreateInputDTO();
+            dto.setSystemCode(shopInfoEntity.getDictPlatform());
+            dto.setBillType(BusinessTypeEnum.PRODUCT.getCode());
+            dto.setNextLevelId(shopInfoEntity.getId());
+            createDTOList.add(dto);
+        }
+        dmpInoutTaskFeign.doInputTask(createDTOList);
+    }
+
+    @Override
+    public void syncWarehouseProduct(List<String> ids) {
+        List<OverseasProviderEntity> overseasProviderEntityList = FeignQuery.getByIds(OverseasProviderEntity.class,ids);
+        if(CollectionUtils.isEmpty(overseasProviderEntityList)){
+            throw new ServiceException("三方仓不存在");
+        }
+        if(overseasProviderEntityList.stream().anyMatch(v->!AuthStatusEnum.ALREADY.getCode().equals(v.getAuthStatus()))){
+            throw new ServiceException("只有已授权三方仓可以同步");
+        }
+        List<DmpInoutDTO.CreateInputDTO> createDTOList = new ArrayList<>();
+        for (OverseasProviderEntity overseasProviderEntity : overseasProviderEntityList) {
+            DmpInoutDTO.CreateInputDTO dto = new DmpInoutDTO.CreateInputDTO();
+            dto.setSystemCode(overseasProviderEntity.getCode());
+            dto.setBillType(BusinessTypeEnum.PRODUCT.getCode());
+            dto.setNextLevelId(overseasProviderEntity.getId());
+            createDTOList.add(dto);
+        }
+        Boolean result = dmpInoutTaskFeign.doInputTask(createDTOList);
+    }
 
     @Override
     public ListingInfoParamDTO constructDto(List<String> platformSkuList,

@@ -20,8 +20,10 @@ public enum CfgSettingEnum implements EnumMessage {
     FS_REQUISITION_HANDLEING_NOTICE("fsRequisitionHandleIngNotice","飞书要货申请处理中配置"),
     FS_REQUISITION_PACKING_NOTICE("fsRequisitionPackingNotice","飞书要货申请已装箱配置"),
     FS_FIRSTMILEDELIVERY_WAITHANDLE_NOTICE("fsFirstMileDeliveryWaitHandleNotice","飞书头程发货单待处理配置"),
-    FS_REQUISITION_NOTICE("fsRequisitionNotice","飞书要货申请通知配置")
-    ;
+    FS_REQUISITION_NOTICE("fsRequisitionNotice","飞书要货申请通知配置"),
+    FS_WAREHOUSE_LOCATION_REPLENISH_NOTICE("fsWarehouseLocationReplenishNotice","飞书仓位补货通知配置")
+
+            ;
 
     /**
      * 类型
