@@ -43,6 +43,10 @@ public class DmpInoutDTO implements Serializable {
          * 数据结束时间:默认当前
          */
         private LocalDateTime endTime;
+        /**
+         * 任务类型：DmpInputTaskTaskTypeEnum
+         */
+        private String taskType;
 
         public LocalDateTime checkAndGetStartTime() {
             if (null == this.startTime) {
