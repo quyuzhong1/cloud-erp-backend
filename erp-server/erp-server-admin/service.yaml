@@ -23,7 +23,7 @@ spec:
       automountServiceAccountToken: true
       containers:
         - name: erp-server-admin
-          image: 172.16.100.92:5000/sdc-erp/erp-server-admins:1.0.0 #Tag
+          image: 172.16.100.92:5000/sdc-erp/erp-server-admins:${tag} #Tag
           imagePullPolicy: Always
           resources:
             requests:
@@ -34,7 +34,7 @@ spec:
               memory: "2Gi"
           envFrom:
             - configMapRef:
-                name: erp-config-${ENV}  # 通过环境变量来选择不同的 ConfigMap
+                name: erp-config-${ENV} # 通过环境变量来选择不同的 ConfigMap
           env:
             - name: ENV
               valueFrom:
@@ -47,7 +47,7 @@ spec:
           livenessProbe: #检查是否存活
             httpGet:
               path: /health
-              port: 6002
+              port: 8080
             initialDelaySeconds: 240 #首次检查在多少时间后
             periodSeconds: 180 #检查周期
             timeoutSeconds: 3 #超时时间
@@ -55,7 +55,7 @@ spec:
           readinessProbe: #检查是否成功启动
             httpGet:
               path: /health
-              port: 6002
+              port: 8080
             initialDelaySeconds: 140 #首次检查在多少时间后
             periodSeconds: 300 #检查周期
             timeoutSeconds: 3 #超时时间
