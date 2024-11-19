@@ -313,9 +313,9 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
     }
 
     @Override
-    public void downloadTemplate(HttpServletResponse response) {
+    public void downloadTemplate(String platformType,HttpServletResponse response) {
         String path = "classpath:excel/deliverySuggestTemplate.xlsx";
-        String excelName = "template.xlsx";
+        String excelName = CharSequenceUtil.equals(CfgRulePlatformTypeEnum.AMAZON.getCode(),platformType) ?  "本地发FBA_备货确认表.xlsx" : "本地发海外仓_备货确认表.xlsx";
         ExcelUtil.downloadTemplate(path,excelName,response);
     }
 
@@ -454,7 +454,7 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
         boolean isOverseas = StrUtil.equals(deliverySuggestList.get(0).getPlatformType(), CfgRulePlatformTypeEnum.OVERSEAS.getCode());
         if (isOverseas) {
             //海外平台
-            handleOverseas (viewPushDeliveryPlanDTO,entity);
+            handleOverseas (viewPushDeliveryPlanDTO,entity,warehouseId);
         } else {
             long count = deliverySuggestList.stream().map(DeliverySuggestEntity::getShopId).distinct().count();
             //校验
@@ -563,12 +563,13 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
      * @param viewPushDeliveryPlanDTO
      * @param entity
      */
-    private void handleOverseas (DeliverySuggestDTO.ViewPushDeliveryPlanDTO viewPushDeliveryPlanDTO, DeliverySuggestEntity entity) {
+    private void handleOverseas (DeliverySuggestDTO.ViewPushDeliveryPlanDTO viewPushDeliveryPlanDTO, DeliverySuggestEntity entity,String warehouseId) {
             viewPushDeliveryPlanDTO.setType(DeliveryPlanTypeEnum.THIRD_WAREHOUSE.getCode() );
             viewPushDeliveryPlanDTO.setTypeName( DeliveryPlanTypeEnum.THIRD_WAREHOUSE.getName());
             viewPushDeliveryPlanDTO.setDeliveryDate(entity.getSuggestDeliveryDate());
             viewPushDeliveryPlanDTO.setLogisticsMethod(entity.getLogisticsMethod());
             viewPushDeliveryPlanDTO.setLogisticsMethodName(LogisticsMethodEnum.getName(entity.getLogisticsMethod()));
+            viewPushDeliveryPlanDTO.setWarehouseId(warehouseId);
     }
 
     /**
