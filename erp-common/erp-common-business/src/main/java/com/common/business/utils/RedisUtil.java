@@ -1,6 +1,5 @@
 package com.common.business.utils;
 
-import com.common.core.exception.ServiceException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
@@ -12,7 +11,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 
-import javax.annotation.Resource;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -23,7 +21,7 @@ import java.util.concurrent.TimeUnit;
 @Slf4j
 public class RedisUtil {
 
-    @Resource
+    @Autowired
     private RedisTemplate redisTemplate;
 
     /**
@@ -61,10 +59,10 @@ public class RedisUtil {
      */
     public boolean hasKey(String key) {
         try {
-            return Boolean.TRUE.equals(redisTemplate.hasKey(key));
+            return redisTemplate.hasKey(key);
         } catch (Exception e) {
             e.printStackTrace();
-            throw new ServiceException(e.getMessage());
+            return false;
         }
     }
 
@@ -79,7 +77,7 @@ public class RedisUtil {
             if (key.length == 1) {
                 redisTemplate.delete(key[0]);
             } else {
-                redisTemplate.delete(CollectionUtils.arrayToList(key));
+                redisTemplate.delete((Collection<String>) CollectionUtils.arrayToList(key));
             }
         }
     }
@@ -417,7 +415,8 @@ public class RedisUtil {
      */
     public long setRemove(String key, Object... values) {
         try {
-            return redisTemplate.opsForSet().remove(key, values);
+            Long count = redisTemplate.opsForSet().remove(key, values);
+            return count;
         } catch (Exception e) {
 
             return 0;
@@ -451,6 +450,7 @@ public class RedisUtil {
         try {
             return redisTemplate.opsForList().size(key);
         } catch (Exception e) {
+
             return 0;
         }
     }
@@ -573,8 +573,10 @@ public class RedisUtil {
      */
     public long lRemove(String key, long count, Object value) {
         try {
-            return redisTemplate.opsForList().remove(key, count, value);
+            Long remove = redisTemplate.opsForList().remove(key, count, value);
+            return remove;
         } catch (Exception e) {
+
             return 0;
         }
     }
@@ -596,7 +598,7 @@ public class RedisUtil {
      * @param hKeys Hash键集合
      * @return Hash对象集合
      */
-    public <T> List<T> multiGet(final String key, final Collection<?> hKeys) {
+    public <T> List<T> multiGet(final String key, final Collection hKeys) {
         return redisTemplate.opsForHash().multiGet(key, hKeys);
     }
 }
