@@ -86,7 +86,7 @@ public interface DeliverySuggestService extends SuperService<DeliverySuggestEnti
      * @date 2024/10/16 10:55
      * @param response
      */
-    void downloadTemplate(HttpServletResponse response);
+    void downloadTemplate(String platformType,HttpServletResponse response);
     /**
      * 锁定
      * @author will
