@@ -266,14 +266,15 @@ public class DeliverySuggestController extends BaseController {
      * 下推补货计划
      * @author will
      * @date 2024/10/17 18:22
-     * @param idsDTO
+     * @param paramDTO
      * @return ApiResult<PushDeliveryPlanDTO>
      */
     @PostMapping(value = "/viewPushDeliveryPlan")
-    public ApiResult<DeliverySuggestDTO.ViewPushDeliveryPlanDTO> viewPushDeliveryPlan(@RequestBody BaseIdsDTO.IdsDTO idsDTO) {
-        DeliverySuggestDTO.ViewPushDeliveryPlanDTO dto = deliverySuggestService.viewPushDeliveryPlan(idsDTO.getIds());
+    public ApiResult<DeliverySuggestDTO.ViewPushDeliveryPlanDTO> viewPushDeliveryPlan(@RequestBody DeliverySuggestDTO.PushDeliveryPlanParamDTO paramDTO) {
+        DeliverySuggestDTO.ViewPushDeliveryPlanDTO dto = deliverySuggestService.viewPushDeliveryPlan(paramDTO.getIds(),paramDTO.getWarehouseId());
         return success(dto);
     }
+
 
     /**
      * 下推补货计划保存

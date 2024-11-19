@@ -842,4 +842,22 @@ public class DeliverySuggestDTO implements Serializable {
          */
         private String warehouseName;
     }
+
+    /**
+     * 添加发货计划
+     */
+    @Data
+    @NoArgsConstructor
+    public static class PushDeliveryPlanParamDTO {
+        /**
+         * 主键ids
+         */
+        @NotEmpty
+        private List<String> ids;
+
+        /**
+         * 仓库信息
+         */
+        private String warehouseId;
+    }
 }
