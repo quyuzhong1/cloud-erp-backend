@@ -50,7 +50,11 @@ public class SoB2cErrorFeiShuJob {
         sb.append("\n");
         for (SoB2cErrorDTO.TypeCountDTO typeCountDTO : list) {
             SoB2cErrorTypeEnum soB2cErrorTypeEnum = SoB2cErrorTypeEnum.getEnum(typeCountDTO.getType());
-            sb.append(soB2cErrorTypeEnum.getName()+"，数量："+typeCountDTO.getTypeCount());
+            if(soB2cErrorTypeEnum.getName().contains("异常")){
+                sb.append(soB2cErrorTypeEnum.getName()+"，数量："+typeCountDTO.getTypeCount());
+            }else{
+                sb.append(soB2cErrorTypeEnum.getName()+"异常，数量："+typeCountDTO.getTypeCount());
+            }
             sb.append("\n");
         }
         Map<String, Object> bodyMap = new HashMap<String, Object>();
