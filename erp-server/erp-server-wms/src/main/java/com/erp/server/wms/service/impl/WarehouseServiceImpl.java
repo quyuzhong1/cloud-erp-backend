@@ -816,7 +816,7 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
 //        }
         Boolean state = dto.getState();
 		if(Boolean.FALSE.equals(state)) {
-        	warehouse.setOpenTime(dto.getOpenTime());
+        	warehouse.setOpenTime(dto.getEnableTime());
         }
         warehouse.setDisabled(state);
         this.validateOpenCloseTime(warehouse);

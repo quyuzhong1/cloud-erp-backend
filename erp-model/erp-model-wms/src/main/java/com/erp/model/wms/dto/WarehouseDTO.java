@@ -207,7 +207,7 @@ public class WarehouseDTO implements Serializable {
     	/**
          * 启用日期
          */
-        private LocalDateTime openTime;
+        private LocalDateTime enableTime;
     }
 
     /**
