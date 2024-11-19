@@ -37,6 +37,8 @@ import com.erp.server.wms.service.WmsPushMsgService;
 
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
+
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -225,4 +227,59 @@ public class SyncKingdeeWarehouseServiceImpl implements SyncKingdeeWarehouseServ
         }
         return resultMap;
 	}
+
+	@Transactional(rollbackFor = Exception.class)
+	@Override
+	public void syncDataToSdy(WarehouseEntity paramEntity, String operate) {
+		WarehouseEntity entity = warehouseService.getById(paramEntity.getId());
+		if(entity.getOpenTime() == null) {
+			log.warn("{}仓库启用时间为空，不推送数帝云" , entity.getKingdeeWarehouseCode());
+			return;
+		}
+		WmsPushMsgEntity wmsPushMsgEntity = new WmsPushMsgEntity();
+        wmsPushMsgEntity.setTargetPlatform(DmpBasicSystemCodeEnum.SDY.getCode());
+        wmsPushMsgEntity.setSourceType(SourceTypeEnum.SDY_WAREHOUSE.getCode());
+        wmsPushMsgEntity.setSourceId(entity.getId());
+        wmsPushMsgEntity.setSourceCode(entity.getKingdeeWarehouseCode());
+        wmsPushMsgEntity.setSyncOperate(operate);
+        wmsPushMsgEntity.setPushData(JSON.toJSONString(this.newSyncDataToSdy(entity, operate)));
+        
+        wmsPushMsgService.save(wmsPushMsgEntity);
+	}
+
+	@Override
+	public Map<String, Object> newSyncDataToSdy(WarehouseEntity entity, String operate) {
+		String orgId = entity.getOrgId();
+		String shippingOrganization = entity.getShippingOrganization();
+		String financialOrganization = entity.getFinancialOrganization();
+		Map<String, String> idCodeMap = sysUserFeign.getAccountingCompanyList(Arrays.asList(orgId , shippingOrganization , financialOrganization))
+				.stream().collect(Collectors.toMap(BaseIdDTO.CodeDTO::getId, BaseIdDTO.CodeDTO::getCode));
+		
+		Map<String, Object> resultMap = new HashMap<>();
+		resultMap.put("biz_uni_key", entity.getId());
+		resultMap.put("inventory_org_code", orgId);
+		resultMap.put("inventory_org_name", idCodeMap.get(orgId));
+		resultMap.put("warehouse_code", entity.getKingdeeWarehouseCode());
+		resultMap.put("warehouse_name", entity.getName());
+		String channelAffiliation = entity.getChannelAffiliation();
+		if(StringUtils.isNotBlank(channelAffiliation)) {
+			List<com.erp.model.oms.entity.DictBasicEntity> dictBasicEntityList = FeignQuery.create(com.erp.model.oms.entity.DictBasicEntity.class)
+					.eq(com.erp.model.oms.entity.DictBasicEntity::getValue, channelAffiliation)
+					.eq(com.erp.model.oms.entity.DictBasicEntity::getType, "salesPlatform")
+					.list();
+			resultMap.put("channel_affiliation",  dictBasicEntityList.get(0).getName());
+		}
+		resultMap.put("shipping_organization", idCodeMap.get(shippingOrganization));
+		resultMap.put("financial_organization", idCodeMap.get(financialOrganization));
+		resultMap.put("warehouse_type", dictBasicService.getById(entity.getTypeId()).getName());
+		resultMap.put("created_time", entity.getOpenTime());
+		resultMap.put("modified_time", entity.getCloseTime());
+		if(SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
+			resultMap.put("status", "已删除");
+		}else {
+			resultMap.put("status", entity.getApproveStatus().getName());
+		}
+		return resultMap;
+	}
+	
 }

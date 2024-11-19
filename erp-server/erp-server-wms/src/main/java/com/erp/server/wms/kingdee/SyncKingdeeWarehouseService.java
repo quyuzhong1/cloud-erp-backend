@@ -17,5 +17,9 @@ public interface SyncKingdeeWarehouseService {
      **/
     DmpPushTaskEntity syncDataToKingdee(WarehouseEntity entity, String operate);
     
+    void syncDataToSdy(WarehouseEntity entity, String operate);
+    
     Map<String , Object> newSyncDataToKingdee(WarehouseEntity entity, String operate);
+    
+    Map<String , Object> newSyncDataToSdy(WarehouseEntity entity, String operate);
 }

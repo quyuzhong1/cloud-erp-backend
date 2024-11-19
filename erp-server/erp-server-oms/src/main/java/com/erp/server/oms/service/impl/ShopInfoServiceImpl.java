@@ -1,6 +1,7 @@
 package com.erp.server.oms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
@@ -33,10 +34,13 @@ import com.erp.model.oms.dto.*;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.*;
 import com.erp.model.sys.entity.DictCountryEntity;
+import com.erp.model.sys.entity.DictCurrencyEntity;
+import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.sys.enums.DictValueEnum;
 import com.erp.model.tms.dto.LogisticsBillCostDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.rpc.dmp.feign.DmpInoutTaskFeign;
+import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.sys.feign.SysDictFeign;
@@ -179,6 +183,7 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
             checkDomain("", dto.getDomain());
         }
         BeanMapper.copy(dto, shop);
+        
         String salesOrgId = dto.getSalesOrgId();
         List<BaseIdDTO.CodeDTO> orgList = sysUserFeign.getAccountingCompanyList(Arrays.asList(salesOrgId));
         String orgName = CollectionUtils.isNotEmpty(orgList) ? orgList.get(0).getName() : "";
@@ -233,7 +238,7 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         //平台
         customer.setPlatformType(shop.getDictPlatform());
         String countryId = shop.getDictCountryCode();
-        String currency = "CNY";
+        String currency = shop.getSettlementCurrency();
         if (StringUtils.isNotBlank(countryId)) {
             //根据国家查询
             List<DictCountryEntity> countryList = sysDictFeign.listCountryByIds(Arrays.asList(countryId));
@@ -254,6 +259,20 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         customer.setConditionDict(Objects.nonNull(one) ? one.getId() : "");
         customer.setSourceId(shop.getId());
         customer.setSourceType(SourceTypeEnum.SHOP.getCode());
+        
+        customer.setFinancialOrganization(shop.getSalesOrgId());
+        customer.setEnableTime(shop.getEnableTime());
+        customer.setTradeCurrency(shop.getTradeCurrency());
+        customer.setCountryId(shop.getDictCountryCode());
+        customer.setBusinessMode(CustomerInfoBusinessModeEnum.O2C.getCode());
+        if(PlatformDictEnum.SHOPIFY.getCode().equals(shop.getDictPlatform())) {
+        	customer.setTransactionalMode(CustomerInfoTransactionalModeEnum.XKHH.getCode());
+        }else {
+        	customer.setTransactionalMode(CustomerInfoTransactionalModeEnum.DBJY.getCode());
+        }
+        customer.setPeriodSetting(CustomerInfoPeriodSettingEnum.MONTH.getCode());
+        customer.setCheckType(CustomerInfoCheckTypeEnum.SHIP.getCode());
+        
         CustomerInfoEntity customerInfoEntity = customerInfoService.addOrGetCustom(customer);
         if (Objects.nonNull(customerInfoEntity)) {
             CustomerInfoEntity customerB2b = customerInfoService.getById(customerInfoEntity.getId());
@@ -475,6 +494,31 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         if (Objects.isNull(shopInfo)) {
             throw new ServiceException(ApiError.ERROR_92058);
         }
+        
+        String customerId = shopInfo.getCustomerId();
+        if(StringUtils.isNotBlank(customerId)) {
+        	CustomerInfoEntity customerInfoEntity = customerInfoService.getById(customerId);
+        	if(customerInfoEntity != null && (customerInfoEntity.getApproveStatus() == ApproveStatusEnum.APPROVE_ING 
+        			|| customerInfoEntity.getApproveStatus() == ApproveStatusEnum.APPROVE)) {
+        		boolean errorFlag = false;
+        		if(!shopInfo.getSettlementCurrency().equals(dto.getSettlementCurrency())) {
+        			errorFlag = true;
+        		}
+        		if(!shopInfo.getTradeCurrency().equals(dto.getTradeCurrency())) {
+        			errorFlag = true;
+        		}
+        		if(!shopInfo.getSalesOrgId().equals(dto.getSalesOrgId())) {
+        			errorFlag = true;
+        		}
+        		if(!shopInfo.getChargeId().equals(dto.getChargeId())) {
+        			errorFlag = true;
+        		}
+        		if(errorFlag) {
+        			throw new ServiceException("对应的客户信息状态为审核中/已审核时，不可修改【店铺站点，结算币种，交易币种，销售组织，销售员】字段");
+        		}
+        	}
+        }
+        
         //旧负责人
         String oldChargeId = shopInfo.getChargeId();
         shopInfo.setName(dto.getName());
@@ -498,6 +542,10 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         shopInfo.setChargeId(dto.getChargeId());
         shopInfo.setIossTaxNo(dto.getIossTaxNo());
         shopInfo.setVoecTaxNo(dto.getVoecTaxNo());
+        shopInfo.setSettlementCurrency(dto.getSettlementCurrency());
+        shopInfo.setTradeCurrency(dto.getTradeCurrency());
+        shopInfo.setEnableTime(dto.getEnableTime());
+        shopInfo.setReturnWarehouse(dto.getReturnWarehouse());
         String warehouseId = dto.getWarehouseId();
         if (StringUtils.isNotBlank(warehouseId)) {
             List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listWarehouseByIds(Arrays.asList(warehouseId));
@@ -539,6 +587,31 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         if (Objects.isNull(shopInfo)) {
             throw new ServiceException(ApiError.ERROR_92058);
         }
+        
+        String customerId = shopInfo.getCustomerId();
+        if(StringUtils.isNotBlank(customerId)) {
+        	CustomerInfoEntity customerInfoEntity = customerInfoService.getById(customerId);
+        	if(customerInfoEntity != null && (customerInfoEntity.getApproveStatus() == ApproveStatusEnum.APPROVE_ING 
+        			|| customerInfoEntity.getApproveStatus() == ApproveStatusEnum.APPROVE)) {
+        		boolean errorFlag = false;
+        		if(!shopInfo.getSettlementCurrency().equals(dto.getSettlementCurrency())) {
+        			errorFlag = true;
+        		}
+        		if(!shopInfo.getTradeCurrency().equals(dto.getTradeCurrency())) {
+        			errorFlag = true;
+        		}
+        		if(!shopInfo.getSalesOrgId().equals(dto.getSalesOrgId())) {
+        			errorFlag = true;
+        		}
+        		if(!shopInfo.getChargeId().equals(dto.getChargeId())) {
+        			errorFlag = true;
+        		}
+        		if(errorFlag) {
+        			throw new ServiceException("对应的客户信息状态为审核中/已审核时，不可修改【结算币种，交易币种，销售组织，负责人】字段");
+        		}
+        	}
+        }
+        
         //检查店铺是否存在
         checkInternalShopName(dto.getName(), dto.getId());
         //旧负责人
@@ -560,7 +633,10 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         shopInfo.setSalesOrgId(dto.getSalesOrgId());
         shopInfo.setSalesOrgName(orgName);
         shopInfo.setChargeId(dto.getChargeId());
-        String customerId = dto.getCustomerId();
+        shopInfo.setSettlementCurrency(dto.getSettlementCurrency());
+        shopInfo.setTradeCurrency(dto.getTradeCurrency());
+        shopInfo.setEnableTime(dto.getEnableTime());
+        shopInfo.setReturnWarehouse(dto.getReturnWarehouse());
         //设置用户信息
         setCustom(customerId, shopInfo);
         Boolean result = this.updateById(shopInfo);
@@ -639,6 +715,13 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
     private void fillDb(List<ShopDTO.PagingViewDTO> list) {
         String key = DictBasicTypeEnum.SALES_PLATFORM.getType();
         List<DictBasicEntity> dictList = dictBasicService.getByKeyList(Arrays.asList(key));
+        Map<String, String> wareIdNameMap = FeignQuery.getByIds(WarehouseEntity.class, 
+        		list.stream().map(ShopDTO.PagingViewDTO::getReturnWarehouse).collect(Collectors.toList()))
+        		.stream().collect(Collectors.toMap(WarehouseEntity::getId, WarehouseEntity::getName));
+        List<String> currIds = list.stream().map(ShopDTO.PagingViewDTO::getSettlementCurrency).collect(Collectors.toList());
+        currIds.addAll(list.stream().map(ShopDTO.PagingViewDTO::getTradeCurrency).collect(Collectors.toList()));
+		Map<String, String> currIdNameMap = FeignQuery.getByIds(DictCurrencyEntity.class, currIds)
+        		.stream().collect(Collectors.toMap(DictCurrencyEntity::getId, DictCurrencyEntity::getName));
         for (ShopDTO.PagingViewDTO item : list) {
             //平台
             String dictPlatform = item.getDictPlatform();
@@ -664,6 +747,9 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
             if (Objects.nonNull(customerInfoEntity)) {
                 item.setCustomerName(customerInfoEntity.getName());
             }
+            item.setSettlementCurrencyName(currIdNameMap.get(item.getSettlementCurrency()));
+            item.setTradeCurrencyName(currIdNameMap.get(item.getTradeCurrency()));
+            item.setReturnWarehouseName(wareIdNameMap.get(item.getReturnWarehouse()));
         }
 
     }
@@ -693,8 +779,20 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
             if (dbDisabled.equals(disabled)) {
                 throw new ServiceException("存在相同的状态");
             }
+            if(disabled) {
+            	shop.setDownTime(LocalDateTime.now());
+            }
             shop.setDisabled(disabled);
             this.updateById(shop);
+            String customerId = shop.getCustomerId();
+			if(StringUtils.isNotBlank(customerId)) {
+            	customerInfoService.lambdaUpdate()
+	            	.eq(CustomerInfoEntity::getId, customerId)
+	            	.set(CustomerInfoEntity::getDisabled, disabled)
+	            	.set(CustomerInfoEntity::getEnableTime, shop.getEnableTime())
+	            	.set(CustomerInfoEntity::getDownTime, shop.getDownTime())
+	            	.update();
+            }
             if (!Objects.equals(ShopTypeEnum.INTERNAL.getCode(), shop.getType())) {
                 // 禁用启用任务
                 dmpTaskFeign.allAddOrUpdateTaskAndSchedule(new PlatformTaskDTO.DisabledDTO(shop.getId(),
@@ -1501,6 +1599,12 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
                 resultDTOS.add(deleteResult);
                 continue;
             }
+            String customerId = shopInfoEntity.getCustomerId();
+            if (StringUtils.isNotBlank(customerId) && customerInfoService.getById(customerId) != null) {
+            	deleteResult = BatchResultDTO.fail(id, shopInfoEntity.getAccount(), "已下推B2B客户列表，不允许删除");
+            	resultDTOS.add(deleteResult);
+            	continue;
+            }
             try {
                 boolean flag = removeById(id);
                 if (flag) {
@@ -1636,10 +1740,10 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
                     List<String> ids = Arrays.asList(customerInfoEntity.getId());
                     //提交
                     Boolean submitResult = customerInfoService.submit(ids);
-                    if (submitResult) {
-                        customerInfoEntity.setApproveStatus(ApproveStatusEnum.APPROVE_ING);
-                        customerInfoService.approve(new BaseApproveParamDTO(ids, ApproveTypeEnum.PASS.getStatus(), "", Boolean.FALSE),customerInfoEntity);
-                    }
+//                    if (submitResult) {
+//                        customerInfoEntity.setApproveStatus(ApproveStatusEnum.APPROVE_ING);
+//                        customerInfoService.approve(new BaseApproveParamDTO(ids, ApproveTypeEnum.PASS.getStatus(), "", Boolean.FALSE),customerInfoEntity);
+//                    }
                 }
             }
         }
