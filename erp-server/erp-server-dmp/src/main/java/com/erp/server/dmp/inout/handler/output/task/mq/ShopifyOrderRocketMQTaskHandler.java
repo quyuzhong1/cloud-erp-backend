@@ -340,7 +340,7 @@ public class ShopifyOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHandle
         orderDTO.setSourceId(dmpSoInfoEntity.getThirdCode());
 
         // 来源编码
-        orderDTO.setSourceCode("");
+        orderDTO.setSourceCode(dmpSoInfoEntity.getThirdCode());
 
         // 异常原因（1、订单规则审核不通过；2、配货规则匹配失败；3、人工审核不通过）
         orderDTO.setAbnormalType("");

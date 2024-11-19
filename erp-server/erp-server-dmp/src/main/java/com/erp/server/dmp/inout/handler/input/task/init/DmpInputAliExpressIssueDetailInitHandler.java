@@ -132,6 +132,12 @@ public class DmpInputAliExpressIssueDetailInitHandler extends DmpInputInitHandle
         	if(errorResponse == null) {
         		return null;
         	}
+        	String sub_msg = errorResponse.getString("sub_msg");
+        	if("未找到纠纷记录或当前状态不可处理!".equals(sub_msg)) {
+        		data = new JSONObject();
+        		data.put("result_object", "{}");
+        		return data;
+        	}
         	String code = errorResponse.getString("code");
         	if(!"ApiCallLimit".equals(code) && !"15".equals(code) && !"UnknownRuntimeException".equals(code)) {
         		throw new ServiceException("调用速卖通" + apiType + "接口报错，错误原因：" + errorResponse.getString("msg"));
