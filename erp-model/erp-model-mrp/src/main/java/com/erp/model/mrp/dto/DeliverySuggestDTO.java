@@ -806,6 +806,10 @@ public class DeliverySuggestDTO implements Serializable {
          */
         private Integer purchaseStockUpQty;
         /**
+         * bom信息
+         */
+        private String bomStr;
+        /**
          * 建议值说明
          */
         private List<BomDetailDTO> bomList;
