@@ -1003,4 +1003,9 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
         return resultList;
     }
 
+    @Override
+    public void exportMerge(VirtualWarehouseAllocationDTO.ExportDTO dto) {
+
+    }
+
 }

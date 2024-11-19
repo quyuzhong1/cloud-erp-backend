@@ -137,4 +137,11 @@ public interface VirtualWarehouseAllocationService extends SuperService<VirtualW
      * @return VirtualInventoryQtyDTO
      */
     List<VirtualWarehouseAllocationDTO.VirtualInventoryQtyDTO> listVirtualInventory(List<VirtualWarehouseAllocationDTO.VirtualInventoryQtyParamDTO> list);
+    /**
+     * 导出分货统计
+     * @author will
+     * @date 2024/11/19 8:55
+     * @param dto
+     */
+    void exportMerge(VirtualWarehouseAllocationDTO.ExportDTO dto);
 }
