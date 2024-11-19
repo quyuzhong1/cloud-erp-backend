@@ -582,6 +582,31 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         if (Objects.isNull(shopInfo)) {
             throw new ServiceException(ApiError.ERROR_92058);
         }
+        
+        String customerId = shopInfo.getCustomerId();
+        if(StringUtils.isNotBlank(customerId)) {
+        	CustomerInfoEntity customerInfoEntity = customerInfoService.getById(customerId);
+        	if(customerInfoEntity != null && (customerInfoEntity.getApproveStatus() == ApproveStatusEnum.APPROVE_ING 
+        			|| customerInfoEntity.getApproveStatus() == ApproveStatusEnum.APPROVE)) {
+        		boolean errorFlag = false;
+        		if(!shopInfo.getSettlementCurrency().equals(dto.getSettlementCurrency())) {
+        			errorFlag = true;
+        		}
+        		if(!shopInfo.getTradeCurrency().equals(dto.getTradeCurrency())) {
+        			errorFlag = true;
+        		}
+        		if(!shopInfo.getSalesOrgId().equals(dto.getSalesOrgId())) {
+        			errorFlag = true;
+        		}
+        		if(!shopInfo.getChargeId().equals(dto.getChargeId())) {
+        			errorFlag = true;
+        		}
+        		if(errorFlag) {
+        			throw new ServiceException("对应的客户信息状态为审核中/已审核时，不可修改【结算币种，交易币种，销售组织，负责人】字段");
+        		}
+        	}
+        }
+        
         //检查店铺是否存在
         checkInternalShopName(dto.getName(), dto.getId());
         //旧负责人
@@ -603,7 +628,10 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         shopInfo.setSalesOrgId(dto.getSalesOrgId());
         shopInfo.setSalesOrgName(orgName);
         shopInfo.setChargeId(dto.getChargeId());
-        String customerId = dto.getCustomerId();
+        shopInfo.setSettlementCurrency(dto.getSettlementCurrency());
+        shopInfo.setTradeCurrency(dto.getTradeCurrency());
+        shopInfo.setEnableTime(dto.getEnableTime());
+        shopInfo.setReturnWarehouse(dto.getReturnWarehouse());
         //设置用户信息
         setCustom(customerId, shopInfo);
         Boolean result = this.updateById(shopInfo);

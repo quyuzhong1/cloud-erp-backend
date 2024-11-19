@@ -702,6 +702,27 @@ public class ShopDTO implements Serializable {
          * 接口地址：http://172.16.100.11:3002/project/110/interface/api/13777
          */
         private String customerId;
+        
+        /**
+         * 结算币别 http://172.16.100.11:3002/project/36/interface/api/8485
+         */
+        @NotBlank(message = "结算币别不能为空")
+         private String settlementCurrency;
+         /**
+         * 交易币别 http://172.16.100.11:3002/project/36/interface/api/8485
+         */
+         @NotBlank(message = "交易币别不能为空")
+         private String tradeCurrency;
+         /**
+         * 启用时间
+         */
+         @NotNull(message = "启用时间不能为空")
+         private LocalDateTime enableTime;
+         /**
+         * 店铺退货仓库： 同店铺平台仓库获取方式
+         */
+         @NotBlank(message = "店铺退货仓库不能为空")
+         private String returnWarehouse;
 
     }
 
@@ -1034,6 +1055,27 @@ public class ShopDTO implements Serializable {
          * 是否包含平台仓 true 包含
          */
         private Boolean  isHaveWarehouse;
+        
+        /**
+         * 结算币别 http://172.16.100.11:3002/project/36/interface/api/8485
+         */
+        @NotBlank(message = "结算币别不能为空")
+         private String settlementCurrency;
+         /**
+         * 交易币别 http://172.16.100.11:3002/project/36/interface/api/8485
+         */
+         @NotBlank(message = "交易币别不能为空")
+         private String tradeCurrency;
+         /**
+         * 启用时间
+         */
+         @NotNull(message = "启用时间不能为空")
+         private LocalDateTime enableTime;
+         /**
+         * 店铺退货仓库： 同店铺平台仓库获取方式
+         */
+         @NotBlank(message = "店铺退货仓库不能为空")
+         private String returnWarehouse;
     }
 
     /**

@@ -454,7 +454,7 @@ public class CustomerDTO implements Serializable {
          /**
          * 启用时间
          */
-        @NotBlank(message = "启用时间不能为空")
+        @NotNull(message = "启用时间不能为空")
          private LocalDateTime enableTime;
          /**
          * 交易币别 http://172.16.100.11:3002/project/36/interface/api/8485
