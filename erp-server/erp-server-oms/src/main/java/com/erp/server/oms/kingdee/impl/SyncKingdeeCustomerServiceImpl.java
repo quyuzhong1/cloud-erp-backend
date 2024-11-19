@@ -210,9 +210,14 @@ public class SyncKingdeeCustomerServiceImpl implements SyncKingdeeCustomerServic
         resultMap.put("groupName", entity.getGroupName());
         //简称
         resultMap.put("shortName", entity.getShortName());
-        DictCountryEntity countryEntity = sysUserFeign.getCountryById(entity.getCountryId());
-        //国家
-        resultMap.put("countryCode", countryEntity.getKingdeeCode());
+        
+        String countryId = entity.getCountryId();
+        DictCountryEntity countryEntity = null;
+        if(StringUtils.isNotBlank(countryId)) {
+        	countryEntity = sysUserFeign.getCountryById(countryId);
+            //国家
+            resultMap.put("countryCode", countryEntity.getKingdeeCode());
+        }
 
         if (StringUtils.isNotBlank(entity.getProvinceId())) {
             DictCityEntity province = sysUserFeign.getCityById(entity.getProvinceId());
@@ -310,11 +315,13 @@ public class SyncKingdeeCustomerServiceImpl implements SyncKingdeeCustomerServic
             platformTypeKingdeeCode = dictBasic.getRemark();
         }
         resultMap.put("platformType", platformTypeKingdeeCode);
-        String regionCode = countryEntity.getRegionCode();
-        if (CharSequenceUtil.isNotBlank(regionCode)) {
-            DictGlobalAreaEntity globalAreaEntity = sysUserFeign.getGlobalAreaById(regionCode);
-            if (ObjectUtil.isNotEmpty(globalAreaEntity)) {
-                resultMap.put("globalAreaCode", globalAreaEntity.getKingdeeCode());
+        if(countryEntity != null) {
+        	String regionCode = countryEntity.getRegionCode();
+            if (CharSequenceUtil.isNotBlank(regionCode)) {
+                DictGlobalAreaEntity globalAreaEntity = sysUserFeign.getGlobalAreaById(regionCode);
+                if (ObjectUtil.isNotEmpty(globalAreaEntity)) {
+                    resultMap.put("globalAreaCode", globalAreaEntity.getKingdeeCode());
+                }
             }
         }
         resultMap.put("disabled", entity.getDisabled());

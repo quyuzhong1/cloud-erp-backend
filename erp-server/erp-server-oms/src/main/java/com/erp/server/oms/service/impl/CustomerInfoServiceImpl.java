@@ -502,7 +502,7 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         if(CollectionUtils.isNotEmpty(countryList)){
             countryMap = countryList.stream().collect(Collectors.toMap(DictCountryDTO.ListDTO::getId, DictCountryDTO.ListDTO::getNameCn));
         }
-
+        
         for (CustomerDTO.PagingViewDTO item : list) {
             ApproveStatusEnum approveStatus = item.getApproveStatus();
             item.setApproveStatusName(approveStatus.getName());
@@ -974,9 +974,9 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         	}
         	shopInfoService.lambdaUpdate()
 	        	.eq(ShopInfoEntity::getCustomerId, d.getId())
-	        	.eq(ShopInfoEntity::getDisabled, d.getDisabled())
-	        	.eq(ShopInfoEntity::getEnableTime, d.getEnableTime())
-	        	.eq(ShopInfoEntity::getDownTime, d.getDownTime())
+	        	.set(ShopInfoEntity::getDisabled, d.getDisabled())
+	        	.set(ShopInfoEntity::getEnableTime, d.getEnableTime())
+	        	.set(ShopInfoEntity::getDownTime, d.getDownTime())
 	        	.update();
         });
         
@@ -1976,6 +1976,7 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         List<DmpPushTaskEntity> resultList = new ArrayList<>();
         list.forEach(obj -> {
             List<DmpPushTaskEntity> pushTaskEntityList = syncKingdeeCustomerService.syncDataToKingdee(obj, operate);
+            syncKingdeeCustomerService.syncDataToSdy(obj, operate);
             resultList.addAll(pushTaskEntityList);
         });
         //推送金蝶
