@@ -631,7 +631,6 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         shopInfo.setSettlementCurrency(dto.getSettlementCurrency());
         shopInfo.setTradeCurrency(dto.getTradeCurrency());
         shopInfo.setEnableTime(dto.getEnableTime());
-        shopInfo.setReturnWarehouse(dto.getReturnWarehouse());
         //设置用户信息
         setCustom(customerId, shopInfo);
         Boolean result = this.updateById(shopInfo);
