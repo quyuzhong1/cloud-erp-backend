@@ -590,6 +590,10 @@ public class CustomerDTO implements Serializable {
          * 销售员id
          */
         private String sellerId;
+        /**
+         * 销售员名称
+         */
+        private String sellerName;
 
         /**
          * 付款方

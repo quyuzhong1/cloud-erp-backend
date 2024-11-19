@@ -258,7 +258,6 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         customer.setFinancialOrganization(shop.getSalesOrgId());
         customer.setEnableTime(shop.getEnableTime());
         customer.setTradeCurrency(shop.getTradeCurrency());
-        customer.setCountryId(shop.getDictCountryCode());
         customer.setBusinessMode(CustomerInfoBusinessModeEnum.O2C.getCode());
         if(PlatformDictEnum.SHOPIFY.getCode().equals(shop.getDictPlatform())) {
         	customer.setTransactionalMode(CustomerInfoTransactionalModeEnum.XKHH.getCode());

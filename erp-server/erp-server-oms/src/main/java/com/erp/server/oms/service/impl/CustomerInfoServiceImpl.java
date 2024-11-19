@@ -34,6 +34,7 @@ import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.oms.dto.DictBasicDTO;
 import com.erp.model.oms.dto.*;
 import com.erp.model.oms.dto.CustomerDTO.CustomerBatchUpdateDTO;
+import com.erp.model.oms.dto.CustomerDTO.PagingViewDTO;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.AddressTypeEnum;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
@@ -43,6 +44,7 @@ import com.erp.model.sys.dto.*;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.sys.entity.DictCurrencyEntity;
 import com.erp.model.sys.entity.DictGlobalAreaEntity;
+import com.erp.model.sys.entity.SysUserInfoEntity;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
@@ -579,6 +581,7 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         }
         view.setAreaName(areaName);
         view.setSubregionName(subregionName);
+        view.setSellerName(sysUserFeign.getSysUserById(view.getSellerId()).getRealName());
         view.setApproveStatusName(customer.getApproveStatus().getName());
         List<OmsAttachmentDTO.UpdateDTO> attachmentList = omsAttachmentService.getByBusinessIds(Arrays.asList(id));
         List<String> attachmentUrlList = attachmentList.stream().
@@ -2008,7 +2011,11 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         List<DictBasicDTO.ViewDTO> dictList = dictBasicService.getByKey(type);
 
         ValidList<ProcessManagementDTO.HistoryActivityDTO> dtoList = new ValidList<>();
-        List<String> ids = page.getRecords().stream().map(CustomerDTO.PagingViewDTO::getId).collect(Collectors.toList());
+        List<PagingViewDTO> records = page.getRecords();
+        if(CollUtil.isEmpty(records)) {
+        	return new PagingVO<>(page);
+        }
+		List<String> ids = records.stream().map(CustomerDTO.PagingViewDTO::getId).collect(Collectors.toList());
         ids.forEach(obj -> dtoList.add(new ProcessManagementDTO.HistoryActivityDTO(SourceTypeEnum.CUSTOMER_INFO.getCode(), obj)));
         ApiResult<List<ProcessManagementDTO.CurApproveInfoDTO>> listApiResult = null;
         if (CollectionUtils.isNotEmpty(dtoList)) {
@@ -2024,7 +2031,10 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         if(CollectionUtils.isNotEmpty(countryList)){
             countryMap = countryList.stream().collect(Collectors.toMap(DictCountryDTO.ListDTO::getId, DictCountryDTO.ListDTO::getNameCn));
         }
-
+        Map<String, String> currIdNameMap = FeignQuery.getByIds(DictCurrencyEntity.class , records.stream().map(CustomerDTO.PagingViewDTO::getCurrency).collect(Collectors.toList()))
+        	.stream().collect(Collectors.toMap(DictCurrencyEntity::getId, DictCurrencyEntity::getName));
+        Map<String, String> orgIdNameMap = sysUserFeign.getAccountingCompanyList(records.stream().map(CustomerDTO.PagingViewDTO::getFinancialOrganization).collect(Collectors.toList()))
+        	.stream().collect(Collectors.toMap(BaseIdDTO.CodeDTO::getId, BaseIdDTO.CodeDTO::getName));
         for (CustomerDTO.PagingViewDTO item : page.getRecords()) {
             Boolean disabled = item.getDisabled();
             String disabledName = disabled ? "停用" : "启用";
@@ -2041,6 +2051,8 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
             }
             //国家
             item.setCountryName(countryMap.get(item.getCountryId()));
+            item.setCurrencyName(currIdNameMap.get(item.getCurrency()));
+            item.setFinancialOrganizationName(orgIdNameMap.get(item.getFinancialOrganization()));
         }
         return new PagingVO<>(page);
     }
