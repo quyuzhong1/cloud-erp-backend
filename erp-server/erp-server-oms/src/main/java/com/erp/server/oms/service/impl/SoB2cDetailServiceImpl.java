@@ -723,8 +723,8 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
                 .set(SoB2cDetailEntity::getSkuId,skuVO.getSkuId())
                 .set(SoB2cDetailEntity::getSkuNo,skuVO.getSkuNo())
                 .set(SoB2cDetailEntity::getWarehouseSkuNo,warehouseSkuNo)
-                .set(SoB2cDetailEntity::getAdvicePrice,skuVO.getRetailPrice())
-                .set(SoB2cDetailEntity::getTaxCost,skuVO.getActualTaxCost())
+                .set(SoB2cDetailEntity::getAdvicePrice,Objects.nonNull(skuVO.getRetailPrice()) ? skuVO.getRetailPrice() : BigDecimal.ZERO)
+                .set(SoB2cDetailEntity::getTaxCost, Objects.nonNull(skuVO.getActualTaxCost()) ? skuVO.getRetailPrice() : BigDecimal.ZERO)
                 .set(SoB2cDetailEntity::getInitSkuId, initSkuId)
                 .update();
         //记录更新日志

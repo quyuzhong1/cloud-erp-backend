@@ -93,13 +93,6 @@ public interface PackingTaskService extends SuperService<PackingTaskEntity> {
     List<WmsCartonSpecDTO.GroupSkuDTO> listGroupSkuById(String id);
 
     /**
-     * 批量汇总状态
-     * @param taskIds
-     * @return
-     */
-    List<WmsCartonSpecDTO.GroupSkuDTO> listGroupSkuByIds(List<String> taskIds);
-
-    /**
      * 装箱保存
      * @param dto
      * @param isDeleteCarton 是否需要删除装箱数据

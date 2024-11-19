@@ -347,34 +347,6 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
     }
 
     @Override
-    public List<WmsCartonSpecDTO.GroupSkuDTO> listGroupSkuByIds(List<String> taskIds) {
-        List<WmsCartonSpecDTO.GroupSkuDTO> list = baseMapper.listGroupSkuByMainIds(taskIds);
-        //查询产品信息
-        List<String> skuIdList = list.stream().map(WmsCartonSpecDTO.GroupSkuDTO::getSkuId).distinct().collect(Collectors.toList());
-        List<SkuVO> skuVOList = plmTaskFeign.listSkuPackByIds(skuIdList);
-        //查询已装箱数
-        List<WmsCartonSpecDTO.PackingQtyDTO> packingQtyDTOS = wmsCartonSpecService.listPackingQtyByMainIds(taskIds);
-        for (WmsCartonSpecDTO.GroupSkuDTO groupSkuDTO : list) {
-            //待装箱数量=发货数量-已装箱数量
-            int packQty = packingQtyDTOS.stream()
-                    .filter(e -> Objects.nonNull(e) && e.getSkuId().equals(groupSkuDTO.getSkuId())
-                            && e.getId().equals(groupSkuDTO.getId()))
-                    .mapToInt(WmsCartonSpecDTO.PackingQtyDTO::getPackQty).sum();
-            groupSkuDTO.setWaitPackQty(groupSkuDTO.getDeliveryQty() - packQty);
-            groupSkuDTO.setPackQty(packQty);
-            SkuVO skuVO = skuVOList.stream().filter(e -> Objects.nonNull(e) && e.getSkuId().equals(groupSkuDTO.getSkuId())).findFirst().orElse(new SkuVO());
-            groupSkuDTO.setProductName(skuVO.getSkuName());
-            groupSkuDTO.setSkuNo(skuVO.getSkuNo());
-            groupSkuDTO.setSingleGrossWeight(skuVO.getGrossWeight());
-            groupSkuDTO.setSingleWeightUnit(UnitEnum.WeightUnitEnum.G.code);
-            BigDecimal grossWeight = MathUtil.divide(MathUtil.multiply(skuVO.getGrossWeight(), packQty), MathUtil.BigDecimal_1000);
-            groupSkuDTO.setGrossWeight(grossWeight);
-            groupSkuDTO.setWeightUnit(UnitEnum.WeightUnitEnum.KG.code);
-        }
-        return list;
-    }
-
-    @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean packingSave(WmsCartonSpecDTO.WmsCartonAdd dto, Boolean isAddCarton) {
         PackingTaskEntity packingTask = this.getById(dto.getTaskId());
@@ -1989,7 +1961,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
             //拣货数量
             int pickQty = pickeDTOList.stream().filter(e -> Objects.nonNull(e) && e.getSkuId().equals(skuId) && Objects.equals(fnSku, e.getFnSku())).map(PickingListsDTO.DetailPickDTO::getQty).reduce(MathUtil.ZERO, Integer::sum);
             //已装=发货 则排除
-            if (deliveryQty == packQty){
+            if (deliveryQty == packQty || 0 == pickQty || pickQty <= packQty){
                 continue;
             }
             list.add(WmsCartonSpecDTO.NoPackingViewDTO.builder()
@@ -1999,7 +1971,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
                             .deliveryQty(deliveryQty)
                             .packedQty(packQty)
                             .pickingQty(pickQty)
-                            .unpackedQty(deliveryQty - packQty)
+                            .unpackedQty(pickQty - packQty)
                     .build());
         }
         return list;
@@ -2585,13 +2557,13 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
             int pickQty = pickeDTOList.stream().filter(e -> Objects.nonNull(e) && e.getSkuId().equals(skuId)
                     && Objects.equals(fnSku, e.getFnSku()) && Objects.equals(e.getSourceId(), packingTaskEntity.getSourceId())).map(PickingListsDTO.DetailPickDTO::getQty).reduce(MathUtil.ZERO, Integer::sum);
             //已装=发货 则排除
-            if (deliveryQty == packQty){
+            if (deliveryQty == packQty || 0 == pickQty || pickQty <= packQty){
                 continue;
             }
             list.add(WmsCartonSpecDTO.NoPackingViewDTO.builder().taskCode(packingTaskEntity.getCode())
                     .taskId(packingTaskEntity.getId()).sourceId(packingTaskEntity.getSourceId()).sourceCode(packingTaskEntity.getSourceCode())
                     .skuId(skuId).skuNo(dto.getSkuNo()).fnSku(dto.getFnSku()).deliveryQty(deliveryQty).packedQty(packQty).pickingQty(pickQty)
-                    .unpackedQty(deliveryQty - packQty).build());
+                    .unpackedQty(pickQty - packQty).build());
         }
         return list;
     }
