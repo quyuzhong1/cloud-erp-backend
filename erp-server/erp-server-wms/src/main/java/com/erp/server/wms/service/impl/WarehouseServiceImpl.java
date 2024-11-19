@@ -814,13 +814,17 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
 //        if (Objects.nonNull(dto.getState()) && !Objects.equals(dto.getState(), warehouse.getDisabled()) && Objects.equals(dto.getState(), true)) {
 //            checkDmpThirdMapping(warehouseId,warehouse.getName());
 //        }
-        warehouse.setDisabled(dto.getState());
+        Boolean state = dto.getState();
+		if(Boolean.FALSE.equals(state)) {
+        	warehouse.setOpenTime(dto.getOpenTime());
+        }
+        warehouse.setDisabled(state);
         this.validateOpenCloseTime(warehouse);
         this.updateById(warehouse);
 
         //发送金蝶
         String operate = SyncOperateEnum.OPERATE_ENABLE.getCode();
-        if (dto.getState()) {
+        if (state) {
             //Delete by Edison.qu 2024-07-23 去除不必要的限制:仓库绑定店铺，不允许禁用
 //            List<ShopInfoEntity> shopInfoEntities = shopInfoFeign.listShopInfoByWarehouseIds(Collections.singletonList(dto.getId()));
 //            if (CollectionUtils.isNotEmpty(shopInfoEntities)) {
