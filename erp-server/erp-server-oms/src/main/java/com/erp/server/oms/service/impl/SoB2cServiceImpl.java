@@ -9030,8 +9030,28 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 resultDTOS.add(result);
             });
         }
-
+        //只有订单异常订单类型为“订单拉取失败”的订单允许手动刷新，触发订单重新拉取
+        List<SoB2cErrorEntity> soB2cErrors = soB2cErrorService.getByMainIdsAndType(ids, SoB2cErrorTypeEnum.ORDER_FETCH.getCode());
+        if(CollectionUtils.isEmpty(soB2cErrors)){
+            throw new ServiceException("只有订单异常订单类型为“订单拉取失败”的订单允许手动刷新");
+        }
+        Map<String, String> errorMap = soB2cErrors.stream().collect(Collectors.toMap(SoB2cErrorEntity::getMainId, SoB2cErrorEntity::getId));
         soB2cEntities = soB2cEntities.stream().filter(v -> !v.getSourceType().equals(SourceTypeEnum.SELF_ADD.getCode())).collect(Collectors.toList());
+
+
+        List<SoB2cEntity> noErrorList = soB2cEntities.stream().filter(v -> !errorMap.containsKey(v.getId())).collect(Collectors.toList());
+        if(CollectionUtils.isNotEmpty(noErrorList)){
+            noErrorList.forEach(r -> {
+                BatchResultDTO result = BatchResultDTO.fail(r.getId(), r.getCode(), "只有订单异常订单类型为“订单拉取失败”的订单允许手动刷新");
+                resultDTOS.add(result);
+            });
+        }
+
+        soB2cEntities = soB2cEntities.stream().filter(v -> errorMap.containsKey(v.getId())).collect(Collectors.toList());
+        if(CollectionUtils.isEmpty(soB2cEntities)){
+            return resultDTOS;
+        }
+
         // 构建 DTO 列表
         List<DmpInoutDTO.CreateInputDTO> createDTOList = convertCreateInputDTOList(soB2cEntities);
 
