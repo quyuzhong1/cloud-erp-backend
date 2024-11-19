@@ -5894,7 +5894,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 transferWarehouseIdList = resultDTO.getTransferWarehouseIdList();
             }
         }
-        if (isTransit) {
+        if (isTransit && CollUtil.isNotEmpty(transferWarehouseIdList)) {
             warehouseId = transferWarehouseIdList.get(transferWarehouseIdList.size() -1);
         } else {
             if(StringUtils.isBlank(warehouseId)){
