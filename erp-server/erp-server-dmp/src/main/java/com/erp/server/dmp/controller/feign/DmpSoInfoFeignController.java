@@ -1,6 +1,6 @@
 package com.erp.server.dmp.controller.feign;
 
-import com.erp.model.wms.dto.ShudiyunB2cOrderDTO;
+import com.common.business.dto.ShudiyunB2cOrderDTO;
 import com.erp.server.dmp.service.DmpSoInfoService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;

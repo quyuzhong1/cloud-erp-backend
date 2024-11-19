@@ -371,7 +371,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     private ExecutorService soB2cTabExecutorPool;
     @Resource
     private CustomerInfoService customerInfoService;
-    @Autowired
+    @Resource
     private OmsPushMsgService omsPushMsgService;
     @Autowired
     private DmpSoInfoFeign dmpSoInfoFeign;
@@ -9423,10 +9423,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         omsPushMsgEntity.setPushData(JSON.toJSONString(shudiyunB2cOrderDTOList));
 
         //同步配货单
-        omsPushMsgService.save(omsPushMsgEntity);
+        return omsPushMsgService.save(omsPushMsgEntity);
 
         //同步线上订单
-        return SdyDmpSoInfoHandler(soB2cEntity.getPlatformCode(), operateEnum);
+//        SdyDmpSoInfoHandler(soB2cEntity.getPlatformCode(), operateEnum);
 
     }
 

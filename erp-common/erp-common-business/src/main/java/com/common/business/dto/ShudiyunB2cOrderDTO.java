@@ -1,4 +1,4 @@
-package com.erp.model.wms.dto;
+package com.common.business.dto;
 
 import lombok.*;
 import org.springframework.cglib.core.Local;

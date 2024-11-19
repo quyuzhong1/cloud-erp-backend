@@ -7,22 +7,14 @@ import java.util.*;
 
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.enums.PlatformDictEnum;
-import com.common.business.enums.SourceTypeEnum;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.utils.MathUtil;
 import com.erp.model.dmp.entity.DmpSoDetailEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
-import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.erp.model.oms.enums.OrderSubTypeEnum;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
-import com.erp.model.plm.dto.BomChildrenSkuDTO;
-import com.erp.model.plm.entity.ProductDetailEntity;
-import com.erp.model.plm.enums.BomTypeEnum;
-import com.erp.model.plm.vo.SkuVO;
-import com.erp.model.sys.entity.SysRefererConfigEntity;
-import com.erp.model.wms.dto.ShudiyunB2cOrderDTO;
+import com.common.business.dto.ShudiyunB2cOrderDTO;
 import com.erp.server.dmp.service.DmpSoDetailService;
-import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 

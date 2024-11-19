@@ -2,14 +2,12 @@ package com.erp.server.dmp.push.consumer.sdy;
 
 import com.alibaba.fastjson.JSON;
 import com.common.core.controller.vo.ApiResult;
-import com.erp.model.wms.dto.ShudiyunB2cOrderDTO;
+import com.common.business.dto.ShudiyunB2cOrderDTO;
 import com.erp.server.dmp.push.service.sdy.SdyPushCommonService;
-import com.sdk.wangdian.sdk.api.goods.dto.GoodsBatchPushDTO;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
-import java.util.ArrayList;
 import java.util.List;
 
 /**

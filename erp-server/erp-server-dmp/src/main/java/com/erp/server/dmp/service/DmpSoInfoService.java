@@ -3,7 +3,7 @@ import com.erp.model.dmp.entity.DmpSoInfoEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.dmp.dto.DmpSoInfoDTO;
-import com.erp.model.wms.dto.ShudiyunB2cOrderDTO;
+import com.common.business.dto.ShudiyunB2cOrderDTO;
 
 import java.util.List;
 

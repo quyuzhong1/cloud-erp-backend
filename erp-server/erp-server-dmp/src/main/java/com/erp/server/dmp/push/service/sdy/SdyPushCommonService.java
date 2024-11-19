@@ -1,6 +1,6 @@
 package com.erp.server.dmp.push.service.sdy;
 
-import com.erp.model.wms.dto.ShudiyunB2cOrderDTO;
+import com.common.business.dto.ShudiyunB2cOrderDTO;
 
 import java.util.List;
 
