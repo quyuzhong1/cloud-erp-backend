@@ -144,7 +144,7 @@ public class WarehouseExcelDTO  implements Serializable {
      */
     @ColumnWidth(20)
     @ExcelProperty(value = "所属渠道", index = 14)
-    @FieldValid(fieldName = "所属渠道",isNotBlank = true)
+    @FieldValid(fieldName = "所属渠道")
     private String channelAffiliation;
     
     /**
