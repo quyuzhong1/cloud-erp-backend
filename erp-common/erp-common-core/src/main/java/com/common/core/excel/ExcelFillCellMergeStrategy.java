@@ -20,7 +20,7 @@ public class ExcelFillCellMergeStrategy extends AbstractMergeStrategy {
         }
         int rowIndex = cell.getRowIndex();
         int colIndex = cell.getColumnIndex();
-//        sheet=cell.getSheet();
+        sheet=cell.getSheet();
         Row preRow = sheet.getRow(rowIndex - 1);
         Cell preCell = preRow.getCell(colIndex);//获取上一行的该格
         List<CellRangeAddress> list = sheet.getMergedRegions();
