@@ -769,7 +769,9 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
 
             //b2c发货单
             SoB2cDeliveryDetailEntity soB2cDeliveryDetail = soB2cDeliveryDetailList.stream().filter(obj -> StrUtil.equals(obj.getId(), soB2cDeliveryDetailId)).findFirst().orElse(null);
-            if (ObjectUtil.isEmpty(soB2cDeliveryDetail) || StrUtil.isBlank(soB2cDeliveryDetail.getVirtualWarehouseId())) {
+            if (ObjectUtil.isEmpty(soB2cDeliveryDetail)
+                    || !CharSequenceUtil.equals(soB2cDeliveryDetail.getWarehouseId(),detailEntity.getOutWarehouseId())
+                    || CharSequenceUtil.isBlank(soB2cDeliveryDetail.getVirtualWarehouseId())) {
                 continue;
             }
 
