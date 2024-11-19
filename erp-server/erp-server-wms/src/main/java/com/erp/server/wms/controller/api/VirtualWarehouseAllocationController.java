@@ -337,9 +337,9 @@ public class VirtualWarehouseAllocationController extends BaseController {
      * @return ApiResult<Boolean>
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出分货统计")
-    @PostMapping("/exportMerge")
-    public ApiResult<Boolean> exportMerge(@RequestBody VirtualWarehouseAllocationDTO.ExportDTO dto) {
-        virtualWarehouseAllocationService.exportMerge(dto);
+    @PostMapping("/exportStatistics")
+    public ApiResult<Boolean> exportStatistics(@RequestBody VirtualWarehouseAllocationDTO.ExportDTO dto) {
+        virtualWarehouseAllocationService.exportStatistics(dto);
         return success(true);
     }
 

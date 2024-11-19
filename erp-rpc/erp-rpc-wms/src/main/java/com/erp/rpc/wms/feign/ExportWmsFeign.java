@@ -219,4 +219,10 @@ public interface ExportWmsFeign {
      */
     @PostMapping("/feign/export/listReportOrderSales")
     PagingVO<ReportOrderSalesDTO.ListDTO> listReportOrderSales(@RequestBody PagingDTO<ReportOrderSalesDTO.PagingParamDTO> dto);
+
+    /**
+     * 导出虚拟仓分货
+     */
+    @PostMapping("/feign/export/exportVirtualStatistics")
+    PagingVO<VirtualWarehouseAllocationDTO.ExportStatisticsDTO> exportVirtualStatistics(PagingDTO<VirtualWarehouseAllocationDTO.ExportDTO> dto);
 }

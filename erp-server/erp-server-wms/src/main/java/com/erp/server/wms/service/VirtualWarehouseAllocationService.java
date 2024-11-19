@@ -143,5 +143,13 @@ public interface VirtualWarehouseAllocationService extends SuperService<VirtualW
      * @date 2024/11/19 8:55
      * @param dto
      */
-    void exportMerge(VirtualWarehouseAllocationDTO.ExportDTO dto);
+    void exportStatistics(VirtualWarehouseAllocationDTO.ExportDTO dto);
+    /**
+     * 导出分货统计
+     * @author will
+     * @date 2024/11/19 17:44
+     * @param dto
+     * @return PagingVO<ExportStatisticsDTO>
+     */
+    PagingVO<VirtualWarehouseAllocationDTO.ExportStatisticsDTO> exportVirtualStatistics(PagingDTO<VirtualWarehouseAllocationDTO.ExportDTO> dto);
 }
