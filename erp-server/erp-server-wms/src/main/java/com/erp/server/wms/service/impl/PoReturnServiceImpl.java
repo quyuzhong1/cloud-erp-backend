@@ -4,7 +4,6 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
@@ -74,9 +73,7 @@ import com.sdk.wangdian.sdk.api.wms.stockout.dto.CreateOtherStockoutRequest;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.context.config.annotation.RefreshScope;
 import org.springframework.stereotype.Service;
@@ -234,18 +231,8 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
 
         //根据ids查询sku信息
         List<ProductDetailEntity> detailEntityList = plmTaskFeign.getByIdList(skuIdList);
-        //获取采购单详情的id集合
-        List<String> detailId = records.stream().map(PurchaseReturnOrderDTO.PagingViewDTO::getPurchaseOrderDetailId).collect(Collectors.toList());
-        //获取采购单的id集合
-        List<String> purchaseOrderIds = records.stream().map(PurchaseReturnOrderDTO.PagingViewDTO::getPurchaseOrderId).collect(Collectors.toList());
-        List<PurchaseOrderDetailEntity> purchaseOrderDetailList = scmTaskFeign.listPurchaseOrderDetailById(detailId);
         records.stream().forEach(record->{
 
-            //获取采购单详情
-            PurchaseOrderDetailEntity purchaseOrderDetailEntity = purchaseOrderDetailList.stream().filter(entityClass -> entityClass.getId().equals(record.getPurchaseOrderDetailId())).findFirst().orElse(null);
-            if (ObjectUtil.isNotEmpty(purchaseOrderDetailEntity)) {
-                record.setReturnPrice(purchaseOrderDetailEntity.getTaxPrice());
-            }
             //委外订单号
             if (SourceTypeEnum.SUBCONTRACT_ORDER.getCode().equals(record.getPurchaseSourceType())){
                 record.setSubcontractCode(record.getPurchaseSourceCode());
@@ -584,7 +571,6 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
             //获取采购单详情
             PurchaseOrderDetailEntity purchaseOrderDetailEntity = purchaseOrderDetailEntities.stream().filter(entityClass -> entityClass.getId().equals(detailView.getPurchaseOrderDetailId())).findFirst().orElse(null);
             if (ObjectUtil.isNotEmpty(purchaseOrderDetailEntity)) {
-                detailView.setReturnPrice(purchaseOrderDetailEntity.getTaxPrice());
                 detailView.setPurchaseQty(purchaseOrderDetailEntity.getPurchaseQty());
                 detailView.setCurrency(purchaseOrderDetailEntity.getCurrency());
                 detailView.setCurrencySymbol(purchaseOrderDetailEntity.getCurrencySymbol());
@@ -608,11 +594,6 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
             SupplierEntity mainSupplierEntity = supplierList.stream().filter(obj -> obj.getId().equals(poReturnDetailEntity.getMainSupplierId())).findFirst().orElse(new SupplierEntity());
             detailView.setMainSupplierName(mainSupplierEntity.getName());
 
-            //根据组织、仓库、sku查询可用库存
-            /*
-            Integer curInventoryQty = inventoryService.getUsableInventoryTotal(purchaseReturnOrderEntity.getReturnWarehouseId(), purchaseReturnOrderDetailEntity.getSkuId());
-            detailView.setCurInventoryQty(curInventoryQty);
-             */
             //即时库存
             Integer curInventoryQty = skuInventoryList.stream().filter(r ->Objects.equals(r.getSkuId(), poReturnDetailEntity.getSkuId())
                     && Objects.equals(r.getWarehouseId(), poReturnEntity.getReturnWarehouseId())
