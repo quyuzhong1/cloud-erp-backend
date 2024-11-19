@@ -54,7 +54,6 @@ import com.erp.model.dmp.enums.AppClientEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.oms.dto.DictBasicDTO;
 import com.erp.model.oms.dto.*;
-import com.erp.model.oms.dto.SoB2cDTO.TabListDTO;
 import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.oms.entity.OperateLogEntity;
 import com.erp.model.oms.entity.*;
@@ -140,9 +139,7 @@ import java.math.RoundingMode;
 import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -354,6 +351,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
     @Resource
     private LogisticsMappingFeign logisticsMappingFeign;
+
+    @Resource
+    private DropDownListFeign dropDownListFeign;
     @Resource
     private AliExpressOrderService aliExpressOrderService;
     @Resource
@@ -1895,6 +1895,18 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             //必须要有物流渠道和物流单号后才可以提交发货
             if (StringUtils.isBlank(logisticsChannelId) || StringUtils.isBlank(code)) {
                 throw new ServiceException(ApiError.ERROR_SO_B2C_LOGISTICS_ID_AND_CODE_NOT_NULL, soCode);
+            }
+        }
+        List<BaseDropDownDTO.CommonDTO> commonDTOS = dropDownListFeign.list("channelSalesPlatform");
+        if(commonDTOS.stream().anyMatch(v->v.getCode().equals(entity.getDictPlatform()))){
+            //物流映射列表
+            List<LogisticsMappingEntity> mappingList = logisticsMappingFeign.listDbByChannelId(logisticsChannelId);
+            if(CollectionUtils.isEmpty(mappingList)){
+                throw new ServiceException(ApiError.ERROR_SO_B2C_LOGISTICS_MAPPING_NOT_NULL, soCode,entity.getDictPlatform(),logisticsEntity.getLogisticsChannelName());
+            }
+            List<LogisticsMappingEntity> collect = mappingList.stream().filter(v -> null != v.getSalesPlatform() && v.getSalesPlatform().equalsIgnoreCase(entity.getDictPlatform())).collect(Collectors.toList());
+            if(CollectionUtils.isEmpty(collect)){
+                throw new ServiceException(ApiError.ERROR_SO_B2C_LOGISTICS_MAPPING_NOT_NULL, soCode,entity.getDictPlatform(),logisticsEntity.getLogisticsChannelName());
             }
         }
         //库存验证
