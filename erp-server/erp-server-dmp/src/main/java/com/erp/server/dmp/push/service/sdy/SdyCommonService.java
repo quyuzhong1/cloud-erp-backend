@@ -21,7 +21,7 @@ public class SdyCommonService {
 	public static final String REQUEST_DATA = "requestData";
 	public static final String REQUEST_SDY = "requestSdy";
 	
-	@Value("${dmp.url:http://localhost:8080}")
+	@Value("${sdy.url:http://localhost:8080}")
     private String sdyUrl;
 	
 	public ApiResult<?> requestSdy(Object ext) {
