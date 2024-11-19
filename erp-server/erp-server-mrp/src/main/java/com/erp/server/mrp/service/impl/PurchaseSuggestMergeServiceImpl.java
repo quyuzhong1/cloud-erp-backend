@@ -196,7 +196,7 @@ public class PurchaseSuggestMergeServiceImpl extends SuperServiceImpl<PurchaseSu
     @Override
     public void downloadTemplate(HttpServletResponse response) {
         String path = "classpath:excel/purchaseSuggestMergeTemplate.xlsx";
-        String excelName = "template.xlsx";
+        String excelName = "采购备货确认表.xlsx";
         ExcelUtil.downloadTemplate(path,excelName,response);
     }
 

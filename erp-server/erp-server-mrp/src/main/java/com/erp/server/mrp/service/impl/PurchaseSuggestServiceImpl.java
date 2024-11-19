@@ -2,12 +2,12 @@ package com.erp.server.mrp.service.impl;
 
 
 import cn.hutool.core.lang.Pair;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
 import com.baomidou.mybatisplus.core.metadata.IPage;
-import cn.hutool.core.text.CharSequenceUtil;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
@@ -61,9 +61,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.time.LocalDateTime;
@@ -225,7 +222,7 @@ public class PurchaseSuggestServiceImpl extends SuperServiceImpl<PurchaseSuggest
     @Override
     public void downloadTemplate(HttpServletResponse response) {
         String path = "classpath:excel/purchaseSuggestTemplate.xlsx";
-        String excelName = "template.xlsx";
+        String excelName = "采购备货确认表.xlsx";
         ExcelUtil.downloadTemplate(path,excelName,response);
     }
 
@@ -389,7 +386,7 @@ public class PurchaseSuggestServiceImpl extends SuperServiceImpl<PurchaseSuggest
         if (CollectionUtils.isEmpty(successList) ) {
             return;
         }
-        String fileName = StrUtil.isBlank(originalFilename) ? "采购计划.xlsx" : originalFilename;
+        String fileName = StrUtil.isBlank(originalFilename) ? "采购建议.xlsx" : originalFilename;
         String pathUrl = "excel/purchaseSuggest.xlsx";
         FileExcelDTO.ExportFileDTO exportFileDTO = new FileExcelDTO.ExportFileDTO();
         exportFileDTO.setFileName(fileName);

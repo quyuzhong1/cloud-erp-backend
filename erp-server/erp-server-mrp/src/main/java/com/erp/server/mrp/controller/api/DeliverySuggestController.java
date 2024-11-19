@@ -105,8 +105,8 @@ public class DeliverySuggestController extends BaseController {
      * @return ApiResult<?>
      */
     @GetMapping("/downloadTemplate")
-    public ApiResult<String> downloadTemplate(HttpServletResponse response) {
-        deliverySuggestService.downloadTemplate(response);
+    public ApiResult<String> downloadTemplate(@RequestParam(value = "platformType") String platformType,HttpServletResponse response) {
+        deliverySuggestService.downloadTemplate(platformType,response);
         return success();
     }
 
