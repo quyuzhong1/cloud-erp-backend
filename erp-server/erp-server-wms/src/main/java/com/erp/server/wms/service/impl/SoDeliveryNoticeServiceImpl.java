@@ -1,7 +1,6 @@
 package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.ObjectUtil;
@@ -212,20 +211,23 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
                 CustomerInfoEntity customerInfoEntity = customerInfoEntities.stream().filter(req -> req.getId().equals(obj.getCustomerId())).findFirst().orElse(new CustomerInfoEntity());
                 obj.setCustomerName(customerInfoEntity.getName());
                 //如果装箱数量大于发货数量，拆分处理
-                if(Objects.nonNull(obj.getDeliveryQty()) && Objects.nonNull(obj.getPackingQty()) && obj.getPackingQty() > obj.getDeliveryQty()){
-                    String key = obj.getId() + obj.getSkuId();
-                    if(qtyMap.containsKey(key)){
-                        Integer reduceQty = qtyMap.get(key);
-                        if(reduceQty > obj.getDeliveryQty()){
-                            obj.setPackingQty(obj.getDeliveryQty());
-                            qtyMap.put(key,reduceQty - obj.getDeliveryQty());
-                        }else{
-                            obj.setPackingQty(reduceQty);
-                            qtyMap.put(key,0);
-                        }
+                String key = obj.getId() + obj.getSkuId();
+                if(qtyMap.containsKey(key)){
+                    Integer reduceQty = qtyMap.get(key);
+                    if(reduceQty > obj.getDeliveryQty()){
+                        obj.setPackingQty(obj.getDeliveryQty());
+                        qtyMap.put(key,reduceQty - obj.getDeliveryQty());
                     }else{
+                        obj.setPackingQty(reduceQty);
+                        qtyMap.put(key,0);
+                    }
+                }else{
+                    if(obj.getPackingQty() > obj.getDeliveryQty()){
                         qtyMap.put(key,obj.getPackingQty() - obj.getDeliveryQty());
                         obj.setPackingQty(obj.getDeliveryQty());
+                    }else{
+                        qtyMap.put(key,0);
+                        obj.setPackingQty(obj.getPackingQty());
                     }
                 }
             });
