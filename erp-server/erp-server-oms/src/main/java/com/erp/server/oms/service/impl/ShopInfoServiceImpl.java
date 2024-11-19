@@ -234,13 +234,13 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         customer.setPlatformType(shop.getDictPlatform());
         String countryId = shop.getDictCountryCode();
         String currency = shop.getSettlementCurrency();
-        if (StringUtils.isNotBlank(countryId)) {
-            //根据国家查询
-            List<DictCountryEntity> countryList = sysDictFeign.listCountryByIds(Arrays.asList(countryId));
-            if (CollectionUtils.isNotEmpty(countryList)) {
-                currency = countryList.get(0).getCurrencyCode();
-            }
-        }
+//        if (StringUtils.isNotBlank(countryId)) {
+//            //根据国家查询
+//            List<DictCountryEntity> countryList = sysDictFeign.listCountryByIds(Arrays.asList(countryId));
+//            if (CollectionUtils.isNotEmpty(countryList)) {
+//                currency = countryList.get(0).getCurrencyCode();
+//            }
+//        }
 
         if (StringUtils.isBlank(countryId)) {
             countryId = DictValueEnum.GL.getCode();
