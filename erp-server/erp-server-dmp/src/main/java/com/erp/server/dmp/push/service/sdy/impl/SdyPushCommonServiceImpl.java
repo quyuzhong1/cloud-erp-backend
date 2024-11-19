@@ -27,7 +27,7 @@ public class SdyPushCommonServiceImpl implements SdyPushCommonService {
     public void executeConsumer(List<ShudiyunB2cOrderDTO> shudiyunB2cOrderDTOList) {
         String path = "/openapi/information/save";
 
-        for (ShudiyunB2cOrderDTO shudiyunB2cOrderDTO : shudiyunB2cOrderDTOList) {
+/*        for (ShudiyunB2cOrderDTO shudiyunB2cOrderDTO : shudiyunB2cOrderDTOList) {
 
             //入参
             HashMap<String, Object> orderParams = new HashMap<>(1);
@@ -49,6 +49,6 @@ public class SdyPushCommonServiceImpl implements SdyPushCommonService {
                 throw new RuntimeException(StrUtil.format("调用url={},入参params={}, 数帝云接口请求失败，返回值 responseMap={}",
                         path, orderParams.toString(), JSONUtil.toJsonStr(apiResult)));
             }
-        }
+        }*/
     }
 }
