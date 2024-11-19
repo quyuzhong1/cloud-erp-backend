@@ -2,6 +2,7 @@ package com.erp.server.mrp.service.impl;
 
 
 import cn.hutool.core.lang.Pair;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
@@ -497,16 +498,18 @@ public class PurchaseSuggestMergeServiceImpl extends SuperServiceImpl<PurchaseSu
             //用量
             List<BomChildrenSkuDTO> childSkuList = bomChildrenSkuList.stream().filter(obj ->
                     StrUtil.equals(obj.getParentSkuId(), purchaseSuggestEntity.getSkuId())
-                            && StrUtil.equals(obj.getSkuId(), old.getSkuId())
                             && StrUtil.equals(obj.getBomVersion(), old.getBomVersion())
             ).collect(Collectors.toList());
+            String bomStr = "";
             for (BomChildrenSkuDTO bomChildrenSkuDTO : childSkuList) {
                 DeliverySuggestDTO.BomDetailDTO bomDetailDTO = new DeliverySuggestDTO.BomDetailDTO();
                 bomDetailDTO.setParentSkuNo(bomChildrenSkuDTO.getParentSkuNo());
                 bomDetailDTO.setSkuNo(bomChildrenSkuDTO.getSkuNo());
                 bomDetailDTO.setQuantity(bomChildrenSkuDTO.getQuantity());
                 bomList.add(bomDetailDTO);
+                bomStr = bomStr +"+" + CharSequenceUtil.format("{}*{}",bomChildrenSkuDTO.getSkuNo(),bomChildrenSkuDTO.getQuantity());
             }
+            purchaseSuggestBomDTO.setBomStr(bomStr);
             purchaseSuggestBomDTO.setBomList(bomList);
             resultList.add(purchaseSuggestBomDTO);
         }
