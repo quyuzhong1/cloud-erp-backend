@@ -692,20 +692,126 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (CollectionUtils.isEmpty(soIds)) {
             return Collections.emptyList();
         }
-        List<SplitSkuDTO> transferDeclareProductDTOS = new ArrayList<>();
         List<SoB2cEntity> soB2cEntityList = this.listByIds(soIds);
         List<SoB2cDetailEntity> allSoB2cDetailEntities = soB2cDetailService.listByMainIds(soIds);
-        for (SoB2cEntity soB2cEntity : soB2cEntityList) {
-            List<SoB2cDetailEntity> soB2cDetailEntities = allSoB2cDetailEntities.stream().filter(v -> v.getMainId().equals(soB2cEntity.getId())).collect(Collectors.toList());
-            if (CollectionUtils.isEmpty(soB2cDetailEntities)) {
-                continue;
-            }
-            List<SplitSkuDTO> productDTOS = splitBySoDetail(soB2cDetailEntities, null, soB2cEntity.getCode(), true);
-            if (CollectionUtils.isNotEmpty(productDTOS)) {
-                transferDeclareProductDTOS.addAll(productDTOS);
-            }
+        return splitByBatchSoDetail(allSoB2cDetailEntities, soB2cEntityList, true);
+    }
+
+    private List<SplitSkuDTO> splitByBatchSoDetail(List<SoB2cDetailEntity> soB2cDetailEntities, List<SoB2cEntity> soB2cEntityList, boolean judgeCombinationFlag) {
+        if (CollectionUtils.isEmpty(soB2cDetailEntities)) {
+            return Collections.emptyList();
         }
-        return transferDeclareProductDTOS;
+        //组建订单映射
+        Map<String, String> orderMap = soB2cEntityList.stream().collect(Collectors.toMap(SoB2cEntity::getId, SoB2cEntity::getCode));
+        List<SplitSkuDTO> splitSkuDTOS = new ArrayList<>();
+        List<String> skuIds = soB2cDetailEntities.stream().map(SoB2cDetailEntity::getSkuId).collect(Collectors.toList());
+        //子sku列表
+        List<BomChildrenSkuDTO> bomChildrenSkuDTOS = plmTaskFeign.listBomChildBySkuIds(skuIds);
+        //合并 子sku和父级sku获取 全量sku明细
+        if (CollectionUtils.isNotEmpty(bomChildrenSkuDTOS)) {
+            skuIds = Stream.concat(skuIds.stream(), bomChildrenSkuDTOS.stream().map(BomChildrenSkuDTO::getSkuId).filter(StrUtil::isNotEmpty))
+                    .collect(Collectors.toList());
+        }
+        if (CollectionUtils.isEmpty(skuIds)){
+            return splitSkuDTOS;
+        }
+        //全量sku的产品明细
+        List<LogisticsProductDTO.ProductDTO> skuInfoList = logisticsProductFeign.listLogisticsProduct(skuIds);
+        //sku 产品物流信息map
+        Map<String, LogisticsProductDTO.ProductDTO> skuMap = skuInfoList.stream().collect(Collectors.toMap(LogisticsProductDTO.ProductDTO::getSkuId, Function.identity()));
+        //sku 父子 map
+        Map<String, List<BomChildrenSkuDTO>> skuChildMap = bomChildrenSkuDTOS.stream().collect(Collectors.groupingBy(BomChildrenSkuDTO::getParentSkuId));
+        soB2cDetailEntities.forEach(soB2cDetailEntity -> {
+            BomChildrenSkuDTO skuDTO = bomChildrenSkuDTOS.stream().filter(e -> StrUtil.isNotEmpty(e.getParentSkuId())
+                            && StrUtil.isNotEmpty(e.getParentSkuNo()) && e.getParentSkuId().equals(soB2cDetailEntity.getSkuId()))
+                    .findFirst().orElse(null);
+            LogisticsProductDTO.ProductDTO productDTO = skuMap.get(soB2cDetailEntity.getSkuId());
+
+            Boolean isCombination = Boolean.FALSE;
+            //检查sku是否是组合产品
+            if (Objects.nonNull(productDTO) && CombinationDeclareTypeEnums.SPLIT.getCode().equals(productDTO.getCombinationDeclareType())) {
+                //申报类型
+                isCombination = Boolean.TRUE;
+            }
+            if (Objects.nonNull(skuDTO) && BomTypeEnum.COMBINATION.getType().equals(skuDTO.getType()) && ( isCombination||!judgeCombinationFlag)){
+                if (StrUtil.isNotEmpty(soB2cDetailEntity.getSkuId()) && CollectionUtils.isNotEmpty(skuChildMap.get(soB2cDetailEntity.getSkuId()))){
+                    List<BomChildrenSkuDTO> bomChildrenSkuDTOS1 = skuChildMap.get(soB2cDetailEntity.getSkuId());
+                    bomChildrenSkuDTOS1.forEach(bomChildrenSkuDTO -> {
+                        LogisticsProductDTO.ProductDTO bomProduct = skuMap.get(bomChildrenSkuDTO.getSkuId());
+                        splitSkuDTOS.add(SplitSkuDTO.builder()
+                                .soId(soB2cDetailEntity.getMainId())
+                                .soCode(orderMap.get(soB2cDetailEntity.getMainId()))
+                                .skuId(bomChildrenSkuDTO.getSkuId())
+                                .skuNo(bomChildrenSkuDTO.getSkuNo())
+                                .soDetailId(soB2cDetailEntity.getId())
+                                .qty(soB2cDetailEntity.getQty() * bomChildrenSkuDTO.getQuantity())
+                                .weight(Objects.nonNull(bomProduct) ? bomProduct.getWeight() : 0)
+                                .grossWeight(Objects.nonNull(bomProduct) ? bomProduct.getGrossWeight() : BigDecimal.ZERO)
+                                .declareCurrencySymbol(Objects.nonNull(bomProduct) ? bomProduct.getDeclareCurrencySymbol() : "")
+                                .isElectric(Objects.nonNull(bomProduct) ? bomProduct.getIsElectric(): Boolean.FALSE)
+                                .declareChineseName(Objects.nonNull(bomProduct) ? bomProduct.getDeclareChineseName() : "")
+                                .declareEnglishName(Objects.nonNull(bomProduct) ? bomProduct.getDeclareEnglishName() : "")
+                                .declarePrice(Objects.nonNull(bomProduct) ? bomProduct.getDeclarePrice() : BigDecimal.ZERO)
+                                .destDeclarePrice(Objects.nonNull(bomProduct) ? bomProduct.getDestDeclarePrice() : BigDecimal.ZERO)
+                                .destCurrency(Objects.nonNull(bomProduct) ? bomProduct.getDestCurrency() : "")
+                                .customsCode(Objects.nonNull(bomProduct) ? bomProduct.getCustomsCode() : "")
+                                .declareUnit(Objects.nonNull(bomProduct) ? bomProduct.getDeclareUnit() : "")
+                                .declareModel(Objects.nonNull(bomProduct) ? bomProduct.getDeclareModel() : "")
+                                .declareElement(Objects.nonNull(bomProduct) ? bomProduct.getDeclareElement() : "")
+                                .englishMaterial(Objects.nonNull(bomProduct) ? bomProduct.getEnglishMaterial() : "")
+                                .englishUsage(Objects.nonNull(bomProduct) ? bomProduct.getEnglishUsage() : "")
+                                .declareCurrency(Objects.nonNull(bomProduct) ? bomProduct.getDeclareCurrency() : "")
+                                .currencySymbol(Objects.nonNull(bomProduct) ? bomProduct.getDestCurrencySymbol() : "")
+                                .exemption(Objects.nonNull(bomProduct) ? bomProduct.getExemption() : "")
+                                .sourceCargo(Objects.nonNull(bomProduct) ? bomProduct.getSourceCargo() : "")
+                                .sourceCountry(Objects.nonNull(bomProduct) ? bomProduct.getSourceCountry() : "")
+                                .combinationDeclareType(Objects.nonNull(bomProduct) ? bomProduct.getCombinationDeclareType() : "")
+                                .productProperty(Objects.nonNull(bomProduct) ? bomProduct.getProductProperty() : "")
+                                .productPropertyId(Objects.nonNull(bomProduct) ? bomProduct.getProductPropertyId() : "")
+                                .length(Objects.nonNull(bomProduct) ? LengthConverterUtil.mmToCm(bomProduct.getProductLength()) : BigDecimal.ZERO)
+                                .width(Objects.nonNull(bomProduct) ? LengthConverterUtil.mmToCm(bomProduct.getProductWidth()) : BigDecimal.ZERO)
+                                .height(Objects.nonNull(bomProduct) ? LengthConverterUtil.mmToCm(bomProduct.getProductHeight()) : BigDecimal.ZERO)
+                                .build());
+                    });
+                }
+            }else {
+                splitSkuDTOS.add(SplitSkuDTO.builder()
+                        .soId(soB2cDetailEntity.getMainId())
+                        .soCode(orderMap.get(soB2cDetailEntity.getMainId()))
+                        .skuId(soB2cDetailEntity.getSkuId())
+                        .skuNo(soB2cDetailEntity.getSkuNo())
+                        .soDetailId(soB2cDetailEntity.getId())
+                        .qty(soB2cDetailEntity.getQty())
+                        .weight(Objects.nonNull(productDTO) ? productDTO.getWeight() : 0)
+                        .grossWeight(Objects.nonNull(productDTO) ? productDTO.getGrossWeight() : BigDecimal.ZERO)
+                        .declareCurrencySymbol(Objects.nonNull(productDTO) ? productDTO.getDeclareCurrencySymbol() : "")
+                        .isElectric(Objects.nonNull(productDTO) ? productDTO.getIsElectric(): Boolean.FALSE)
+                        .declareChineseName(Objects.nonNull(productDTO) ? productDTO.getDeclareChineseName() : "")
+                        .declareEnglishName(Objects.nonNull(productDTO) ? productDTO.getDeclareEnglishName() : "")
+                        .declarePrice(Objects.nonNull(productDTO) ? productDTO.getDeclarePrice() : BigDecimal.ZERO)
+                        .destDeclarePrice(Objects.nonNull(productDTO) ? productDTO.getDestDeclarePrice() : BigDecimal.ZERO)
+                        .destCurrency(Objects.nonNull(productDTO) ? productDTO.getDestCurrency() : "")
+                        .customsCode(Objects.nonNull(productDTO) ? productDTO.getCustomsCode() : "")
+                        .declareUnit(Objects.nonNull(productDTO) ? productDTO.getDeclareUnit() : "")
+                        .declareModel(Objects.nonNull(productDTO) ? productDTO.getDeclareModel() : "")
+                        .declareElement(Objects.nonNull(productDTO) ? productDTO.getDeclareElement() : "")
+                        .englishMaterial(Objects.nonNull(productDTO) ? productDTO.getEnglishMaterial() : "")
+                        .englishUsage(Objects.nonNull(productDTO) ? productDTO.getEnglishUsage() : "")
+                        .declareCurrency(Objects.nonNull(productDTO) ? productDTO.getDeclareCurrency() : "")
+                        .currencySymbol(Objects.nonNull(productDTO) ? productDTO.getDestCurrencySymbol() : "")
+                        .exemption(Objects.nonNull(productDTO) ? productDTO.getExemption() : "")
+                        .sourceCargo(Objects.nonNull(productDTO) ? productDTO.getSourceCargo() : "")
+                        .sourceCountry(Objects.nonNull(productDTO) ? productDTO.getSourceCountry() : "")
+                        .combinationDeclareType(Objects.nonNull(productDTO) ? productDTO.getCombinationDeclareType() : "")
+                        .productProperty(Objects.nonNull(productDTO) ? productDTO.getProductProperty() : "")
+                        .productPropertyId(Objects.nonNull(productDTO) ? productDTO.getProductPropertyId() : "")
+                        .length(Objects.nonNull(productDTO) ? LengthConverterUtil.mmToCm(productDTO.getProductLength()) : BigDecimal.ZERO)
+                        .width(Objects.nonNull(productDTO) ? LengthConverterUtil.mmToCm(productDTO.getProductWidth()) : BigDecimal.ZERO)
+                        .height(Objects.nonNull(productDTO) ? LengthConverterUtil.mmToCm(productDTO.getProductHeight()) : BigDecimal.ZERO)
+                        .build());
+            }
+        });
+        return splitSkuDTOS;
     }
 
     /**

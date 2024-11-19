@@ -56,7 +56,7 @@ public interface TransferDeclareProductService extends SuperService<TransferDecl
     List<TransferDeclareProductEntity> listByDeclareIds(List<String> declareIds);
 
 
-    Boolean saveOrUpdateTransferDeclareProducts(List<TransferDeclareDetailEntity> transferDeclareDetailEntities);
+    void saveOrUpdateTransferDeclareProducts(List<TransferDeclareDetailEntity> transferDeclareDetailEntities);
 
     /**
      * 根据报关明细id删除拆分记录
