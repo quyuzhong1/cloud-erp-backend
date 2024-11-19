@@ -1071,11 +1071,6 @@ public class ShopDTO implements Serializable {
          */
          @NotNull(message = "启用时间不能为空")
          private LocalDateTime enableTime;
-         /**
-         * 店铺退货仓库： 同店铺平台仓库获取方式
-         */
-         @NotBlank(message = "店铺退货仓库不能为空")
-         private String returnWarehouse;
     }
 
     /**
