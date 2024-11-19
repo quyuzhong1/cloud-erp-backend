@@ -373,7 +373,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     private CustomerInfoService customerInfoService;
     @Resource
     private OmsPushMsgService omsPushMsgService;
-    @Autowired
+    @Resource
     private DmpSoInfoFeign dmpSoInfoFeign;
 
     @Override
