@@ -113,7 +113,6 @@ public class TransferDeclareProductServiceImpl extends SuperServiceImpl<Transfer
     }
 
     @Override
-    @Async
     public void saveOrUpdateTransferDeclareProducts(List<TransferDeclareDetailEntity> transferDeclareDetailEntities) {
         List<String> soIds = transferDeclareDetailEntities.stream().map(TransferDeclareDetailEntity::getSoId).collect(Collectors.toList());
         Map<String, TransferDeclareDetailEntity> detailEntityMap = transferDeclareDetailEntities.stream().collect(Collectors.toMap(TransferDeclareDetailEntity::getSoId, Function.identity()));

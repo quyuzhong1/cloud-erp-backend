@@ -57,6 +57,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.jsoup.internal.StringUtil;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -113,14 +114,15 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
     @Resource
     private PackageForecastFeign packageForecastFeign;
     @Resource
-    private TransferDeclareProductService transferDeclareProductService;
-    @Resource
     private SoOutstockFeign soOutstockFeign;
 
     @Resource
     private TmsB2cDeclareReconciliationDetailService tmsB2cDeclareReconciliationDetailService;
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
+    @Lazy
+    @Resource
+    private TransferDeclareService service;
 
     @Override
     public PagingVO<TransferDeclareDTO.ListDTO> paging(PagingDTO<TransferDeclareDTO.PagingParamDTO> pagingParamDTO) {
@@ -181,18 +183,6 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
         transferDeclareEntity.setPackageTotalWeight(packageTotalWeight);
         //包裹总数量
         transferDeclareEntity.setPackageTotalQty(addDTO.getDetailList().size());
-
-        //设置预计中转日期
-        List<TransferDeclareDeadlineSettingDTO.ViewDTO> view = transferDeclareDeadlineSettingService.view();
-        TransferDeclareDeadlineSettingDTO.ViewDTO viewDTO = view.stream().filter(req -> req.getTransferLogisticsSupplierIdList().contains(transferDeclareEntity.getTransferLogisticsSupplierId())).findFirst().orElse(null);
-        if (ObjectUtil.isNotEmpty(viewDTO)) {
-            if (viewDTO.getDeadlineTime().isAfter(addDTO.getGenerateTime())) {
-                transferDeclareEntity.setPlanTransferDate(LocalDate.now());
-            } else {
-                transferDeclareEntity.setPlanTransferDate(LocalDate.now().plusDays(1));
-            }
-        }
-
         if (StringUtils.isBlank(transferDeclareEntity.getTransferLogisticsSupplierId())) {
             throw new ServiceException("未找到订单的中转物流商，请检查是否无需中转，无需中转不需要入库预报");
         }
@@ -713,6 +703,17 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
             fileExportList(page.getRecords());
         }
         return new PagingVO<>(page);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public List<BaseResultDTO.AddDTO> batchAdd(List<TransferDeclareDTO.AddDTO> dtoList) {
+        if (CollUtil.isEmpty(dtoList)){
+            return Collections.emptyList();
+        }
+        List<BaseResultDTO.AddDTO> addDTOList = new ArrayList<>(dtoList.size());
+        dtoList.forEach(e -> addDTOList.add(service.add(e)));
+        return addDTOList;
     }
 
     private void fillOne(TransferDeclareDTO.ViewDTO data, List<TransferDeclareDetailEntity> transferDeclareDetailEntities) {
