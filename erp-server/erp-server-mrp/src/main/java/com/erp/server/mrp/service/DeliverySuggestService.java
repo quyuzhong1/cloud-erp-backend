@@ -126,7 +126,7 @@ public interface DeliverySuggestService extends SuperService<DeliverySuggestEnti
      * @param ids
      * @return ViewPushDeliveryPlanDTO
      */
-    DeliverySuggestDTO.ViewPushDeliveryPlanDTO viewPushDeliveryPlan(List<String> ids);
+    DeliverySuggestDTO.ViewPushDeliveryPlanDTO viewPushDeliveryPlan(List<String> ids,String warehouseId);
     /**
      * 下推发货计划保存
      * @author will
