@@ -71,6 +71,7 @@ import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_VIRTUAL_STATISTICS;
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_VIRTUAL_WAREHOUSE_ALLOCATION;
 import static java.util.stream.Collectors.groupingBy;
 
@@ -1004,8 +1005,16 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
     }
 
     @Override
-    public void exportMerge(VirtualWarehouseAllocationDTO.ExportDTO dto) {
+    public void exportStatistics(VirtualWarehouseAllocationDTO.ExportDTO dto) {
+        downloadTaskFeign.saveDownloadTask("分货统计导出", EXPORT_WMS_VIRTUAL_STATISTICS.getCode(), dto);
+    }
 
+    @Override
+    public PagingVO<VirtualWarehouseAllocationDTO.ExportStatisticsDTO> exportVirtualStatistics(PagingDTO<VirtualWarehouseAllocationDTO.ExportDTO> dto) {
+        dto.getParams().setPermissionSql(dto.getPermissionSql());
+        Page<VirtualWarehouseAllocationDTO.ExportDTO> query = new Page<>(dto.getCurrPage(), dto.getPageSize());
+        IPage<VirtualWarehouseAllocationDTO.ExportStatisticsDTO> pageData = this.baseMapper.exportVirtualStatistics(query, dto.getParams());
+        return new PagingVO(pageData);
     }
 
 }

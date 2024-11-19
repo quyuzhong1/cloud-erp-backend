@@ -1,6 +1,5 @@
 package com.erp.model.wms.dto;
 
-import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import com.erp.model.wms.dto.excel.VwAllocationAllocationExcelDTO;
@@ -811,5 +810,62 @@ public class VirtualWarehouseAllocationDTO implements Serializable {
          */
         private Integer toVirtualWarehouseUsableQty;
 
+    }
+
+
+    /**
+     * 分货统计导出
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ExportStatisticsDTO {
+        /**
+         * sku
+         */
+        private String skuId;
+        /**
+         * sku
+         */
+        private String skuNo;
+        /**
+         * 产品名称
+         */
+        private String productName;
+        /**
+         * 仓库id
+         */
+        private String warehouseId;
+        /**
+         * 仓库名称
+         */
+        private String warehouseName;
+        /**
+         * 虚拟仓id
+         */
+        private String fromVirtualWarehouseId;
+        /**
+         * 虚拟仓名称
+         */
+        private String fromVirtualWarehouseName;
+        /**
+         * 总分货数量
+         */
+        private Integer totalQty;
+        /**
+         * 新增分货数量（待提交）
+         */
+        private Integer submitAddAllocationQty;
+        /**
+         * 新增分货数量（已处理）
+         */
+        private Integer handleAddAllocationQty;
+        /**
+         * 取消分货数量（待提交）
+         */
+        private Integer submitCancelAllocationQty;
+        /**
+         * 取消分货数量（已处理）
+         */
+        private Integer handleCancelAllocationQty;
     }
 }
