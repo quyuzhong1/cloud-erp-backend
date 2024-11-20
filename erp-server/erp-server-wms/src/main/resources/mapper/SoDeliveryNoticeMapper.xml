@@ -49,8 +49,8 @@
             sdn.pack_date AS packDate,
             sdn.approve_user_name AS approveUserName,
             sdn.create_user_name AS createUserName,
-        (select sum(wcd.pack_qty) from wms_carton_detail wcd inner join wms_carton wc on wcd.main_id = wc.id and wc.is_deleted = false
-        where wc.packing_task_id = pt.id  and wcd.is_deleted = false and wcd.sku_id = sdnd.sku_id) as packingQty,
+        COALESCE((select sum(wcd.pack_qty) from wms_carton_detail wcd inner join wms_carton wc on wcd.main_id = wc.id and wc.is_deleted = false
+        where wc.packing_task_id = pt.id  and wcd.is_deleted = false and wcd.sku_id = sdnd.sku_id),0) as packingQty,
         pt.packing_status as packingStatus,
             sdn.create_time AS createTime,
         sdnd.picking_qty as pickedQty,

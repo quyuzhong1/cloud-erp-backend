@@ -59,6 +59,7 @@
         sdncd.change_type as changeType,
         sdncd.origin_qty as originQty,
         sdncd.new_qty as newQty,
+        sdncd.id as detailId,
         sdnc.create_user_name as createUserName,
         sdnc.approve_user_name as approveUserName,
         sdnc.create_time as createTime,
