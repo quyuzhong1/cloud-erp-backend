@@ -184,7 +184,7 @@ public class WarehouseExcelListener extends AnalysisEventListener<WarehouseExcel
         if (!virtualList.contains(isVirtual)) {
             errorMsgList.add("是否虚拟仓有误");
         }
-        addDTO.setIsVirtual(isVirtual.equals("是"));
+        addDTO.setIsVirtual("是".equals(isVirtual));
         //仓库负责人
         String chargeName = warehouseExcelDTO.getChargeName();
         if(CharSequenceUtil.isNotBlank(chargeName)){

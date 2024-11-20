@@ -416,8 +416,8 @@ public class PackageForecastDTO implements Serializable {
 
         @Override
         public boolean equals(Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
+            if (this == o) { return true;}
+            if (o == null || getClass() != o.getClass()) { return false;}
             InstockForcastMergeDTO that = (InstockForcastMergeDTO) o;
             return Objects.equals(logisticsSupplierId, that.logisticsSupplierId) && Objects.equals(transferLogisticsSupplierId, that.transferLogisticsSupplierId) && Objects.equals(transferLogisticsChannelId, that.transferLogisticsChannelId);
         }

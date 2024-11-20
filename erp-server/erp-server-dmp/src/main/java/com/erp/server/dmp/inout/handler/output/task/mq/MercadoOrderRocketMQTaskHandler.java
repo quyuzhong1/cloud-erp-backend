@@ -374,6 +374,6 @@ public class MercadoOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHandle
     
     @Override
     protected List<String> getSourceCodeKeys() {
-    	return Arrays.asList("thirdCode");
+    	return Arrays.asList("platformCode");
     }
 }

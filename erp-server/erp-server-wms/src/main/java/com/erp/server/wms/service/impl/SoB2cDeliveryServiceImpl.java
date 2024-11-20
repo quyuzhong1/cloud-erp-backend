@@ -700,8 +700,8 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
             }
 
             LogisticsPlatformEnum logisticsPlatformEnum = LogisticsPlatformEnum.getByCode(authDTO.getLogisticsPlatform());
-            waybillDTO.setPrintLabel(logisticsPlatformEnum.getPrintLabel().equals("Y") ? Boolean.TRUE : Boolean.FALSE);
-            waybillDTO.setPrintDelivery(logisticsPlatformEnum.getPrintDelivery().equals("Y") ? Boolean.TRUE : Boolean.FALSE);
+            waybillDTO.setPrintLabel("Y".equals(logisticsPlatformEnum.getPrintLabel()) ? Boolean.TRUE : Boolean.FALSE);
+            waybillDTO.setPrintDelivery("Y".equals(logisticsPlatformEnum.getPrintDelivery()) ? Boolean.TRUE : Boolean.FALSE);
 
             List<SoB2cDeliveryEntity> collect = soB2cDeliveryEntities.stream().filter(req -> req.getLogisticsChannelId().equals(logisticsChannelId)).collect(Collectors.toList());
             if (CollectionUtils.isNotEmpty(collect)) {

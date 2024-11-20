@@ -33,10 +33,12 @@ public enum ReturnModeEnum implements EnumMessage {
         this.kingdeeCode = kingdeeCode;
     }
 
+    @Override
     public String getCode() {
         return code;
     }
 
+    @Override
     public String getName() {
         return name;
     }

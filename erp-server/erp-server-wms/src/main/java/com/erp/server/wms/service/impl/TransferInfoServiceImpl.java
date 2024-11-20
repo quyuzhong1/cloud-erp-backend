@@ -739,6 +739,11 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         if (CollectionUtils.isEmpty(transferInfoList)) {
             return;
         }
+        //排除服务类sku
+        detailList = removeNoInventorySku(detailList);
+        if(CollUtil.isEmpty(detailList)){
+            return;
+        }
         List<String> idList = transferInfoList.stream().map(TransferInfoEntity::getId).distinct().collect(Collectors.toList());
         List<TransferInfoDetailEntity> pushDetailList = detailList.stream().filter(obj -> idList.contains(obj.getMainId())).collect(Collectors.toList());
 
@@ -2018,5 +2023,18 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         if (!listApiResult.isSuccess()) {
             throw new ServiceException(listApiResult.getMsg());
         }
+    }
+    /**
+     * 移除包含服务和费用的sku明细
+     * @author will
+     * @date 2024/7/26 22:52
+     * @param newList
+     * @return List<TransferInfoDetailEntity>
+     */
+    private List<TransferInfoDetailEntity> removeNoInventorySku (List<TransferInfoDetailEntity> newList) {
+        List<SkuVO> noInventorySkuList = plmTaskFeign.getNoInventorySku();
+        List<String> skuIdList = CollectionUtils.isEmpty(noInventorySkuList)
+                ? new ArrayList<>() : noInventorySkuList.stream().map(SkuVO::getSkuId).distinct().collect(Collectors.toList());
+        return newList.stream().filter(obj -> !skuIdList.contains(obj.getSkuId())).collect(Collectors.toList());
     }
 }

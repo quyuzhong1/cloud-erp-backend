@@ -495,7 +495,7 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
             //发送金蝶
             sendPushTask(Collections.singletonList(entity),SyncOperateEnum.OPERATE_APPROVE.getCode());
             //同步旺店通
-            if(entity.getInventoryDirection().equalsIgnoreCase("ordinary")){
+            if("ordinary".equalsIgnoreCase(entity.getInventoryDirection())){
                 syncApproveInfoToWdt(entity, SyncOperateEnum.OPERATE_APPROVE);
             }else {
                 syncDisApproveInfoToWdt(entity, SyncOperateEnum.OPERATE_APPROVE);
@@ -541,7 +541,7 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
         sendPushTask(Collections.singletonList(entity),SyncOperateEnum.OPERATE_DISAPPROVE.getCode());
 
         //发送旺店通
-        if(entity.getInventoryDirection().equalsIgnoreCase("ordinary")){
+        if("ordinary".equalsIgnoreCase(entity.getInventoryDirection())){
             syncDisApproveInfoToWdt(entity, SyncOperateEnum.OPERATE_DISAPPROVE);
         }else {
             syncApproveInfoToWdt(entity, SyncOperateEnum.OPERATE_DISAPPROVE);

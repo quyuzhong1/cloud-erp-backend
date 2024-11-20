@@ -1,45 +1,22 @@
 package com.erp.server.oms.schedule;
 
 import cn.hutool.core.collection.CollectionUtil;
-import cn.hutool.core.date.DateUtil;
-import cn.hutool.core.exceptions.ExceptionUtil;
-import cn.hutool.core.util.StrUtil;
 import cn.hutool.extra.spring.SpringUtil;
 import cn.hutool.http.HttpUtil;
-import cn.hutool.json.JSONArray;
-import cn.hutool.json.JSONObject;
-import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.common.business.dto.base.BatchResultDTO;
-import com.common.core.entity.BaseEntity;
-import com.common.message.constant.RedisKeyConstant;
 import com.erp.model.oms.dto.SoB2cErrorDTO;
-import com.erp.model.oms.entity.SoB2cEntity;
-import com.erp.model.oms.entity.SoB2cErrorEntity;
-import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
-import com.erp.server.oms.service.SoB2cAbnormalService;
 import com.erp.server.oms.service.SoB2cErrorService;
-import com.erp.server.oms.service.SoB2cService;
 import com.xxl.job.core.biz.model.ReturnT;
 import com.xxl.job.core.context.XxlJobHelper;
 import com.xxl.job.core.handler.annotation.XxlJob;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
-import java.time.LocalDateTime;
-import java.util.*;
-import java.util.concurrent.TimeUnit;
-import java.util.function.Function;
-import java.util.stream.Collectors;
-
-import static com.rtfparserkit.rtf.Command.list;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * B2C订单标记发货重试
@@ -73,7 +50,11 @@ public class SoB2cErrorFeiShuJob {
         sb.append("\n");
         for (SoB2cErrorDTO.TypeCountDTO typeCountDTO : list) {
             SoB2cErrorTypeEnum soB2cErrorTypeEnum = SoB2cErrorTypeEnum.getEnum(typeCountDTO.getType());
-            sb.append(soB2cErrorTypeEnum.getName()+"，数量："+typeCountDTO.getTypeCount());
+            if(soB2cErrorTypeEnum.getName().contains("异常")){
+                sb.append(soB2cErrorTypeEnum.getName()+"，数量："+typeCountDTO.getTypeCount());
+            }else{
+                sb.append(soB2cErrorTypeEnum.getName()+"异常，数量："+typeCountDTO.getTypeCount());
+            }
             sb.append("\n");
         }
         Map<String, Object> bodyMap = new HashMap<String, Object>();
@@ -81,12 +62,12 @@ public class SoB2cErrorFeiShuJob {
         Map<String, String> contentMap = new HashMap<String, String>();
         contentMap.put("text", sb.toString());
         bodyMap.put("content", contentMap);
-        String url = "";
-        if("prod".equals(namespace)) {
+        String url = "https://open.feishu.cn/open-apis/bot/v2/hook/b18f5837-19c7-4383-808b-3b9d34b591f3";
+//        if("prod".equals(namespace)) {
             XxlJobHelper.log("SoB2cErrorFeiShuJob 发送至机器人");
-            url = "";
+            url = "https://open.feishu.cn/open-apis/bot/v2/hook/b18f5837-19c7-4383-808b-3b9d34b591f3";
             HttpUtil.post(url, JSON.toJSONString(bodyMap));
-        }
+//        }
         XxlJobHelper.log("SoB2cErrorFeiShuJob 执行任务列表结束");
         return ReturnT.SUCCESS;
     }

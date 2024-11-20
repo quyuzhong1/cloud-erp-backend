@@ -422,6 +422,6 @@ public class TikTokOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHandler
 
     @Override
     protected List<String> getSourceCodeKeys() {
-        return Arrays.asList("thirdCode");
+        return Arrays.asList("platformCode");
     }
 }

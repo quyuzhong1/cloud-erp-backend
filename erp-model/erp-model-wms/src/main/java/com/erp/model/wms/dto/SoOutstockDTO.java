@@ -1,6 +1,7 @@
 package com.erp.model.wms.dto;
 
 import cn.hutool.core.util.ObjectUtil;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.ApproveStatusEnum;
@@ -942,6 +943,11 @@ public class SoOutstockDTO implements Serializable {
          * 物流渠道名称
          */
         private String logisticsChannelName;
+
+        /**
+         * 订单标签
+         */
+        private String tradeLabel;
 
         private List<SoOutstockDetailDTO.ViewDTO> detailList;
 
