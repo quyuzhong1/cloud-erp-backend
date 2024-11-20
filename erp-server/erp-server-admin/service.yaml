@@ -71,7 +71,7 @@ metadata:
     app: erp-server-admin
 spec:
   selector:
-    app: erp-config
+    app: erp-server-admin
   ports:
     - name: TCP
       # 修改你的项目端口号
