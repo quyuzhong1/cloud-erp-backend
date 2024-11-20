@@ -45,7 +45,25 @@
         </if>
     </select>
 
-<!--    &lt;!&ndash;根据主表id分组sku查询发货及待装箱数&ndash;&gt;-->
+    <!-- 根据明细id查询来源 -->
+    <select id="listFirstMileSource"
+            resultType="com.erp.model.wms.dto.FirstMileDeliveryDetailDTO$listFirstMileDTO">
+        select
+            fd.id,
+            fdd.id as detailId,
+            fd.source_type,
+            fd.source_id,
+            fdd.source_detail_id,
+            fd.demand_type
+        from first_mile_delivery fd
+        inner join first_mile_delivery_detail fdd ON fd.id = fdd.main_id AND fdd.is_deleted = FALSE
+        where fd.is_deleted = false  and fdd.id in
+        <foreach collection="firstMileDetailIdList" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </select>
+
+    <!--    &lt;!&ndash;根据主表id分组sku查询发货及待装箱数&ndash;&gt;-->
 <!--    <select id="listGroupSkuByMainId" resultType="com.erp.model.wms.dto.FirstMileDeliveryDTO$GroupSkuDTO">-->
 <!--        SELECT-->
 <!--            fd.id,-->
