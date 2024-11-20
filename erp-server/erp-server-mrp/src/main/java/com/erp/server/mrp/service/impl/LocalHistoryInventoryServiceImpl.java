@@ -62,6 +62,7 @@ public class LocalHistoryInventoryServiceImpl extends SuperServiceImpl<LocalHist
                             .filter(e -> v.getKey().getSkuId().equals(e.getSkuId()))
                             .filter(e -> v.getKey().getWarehouseId().equals(e.getWarehouseId()))
                             .filter(e -> v.getKey().getOrgId().equals(e.getOrgId()))
+                            .filter(e -> v.getKey().getSkuNo().equals(e.getSkuNo()))
                             .findFirst()
                             .orElse(new LocalHistoryInventoryEntity());
                     buildBasicAttribute(calculationDate, v, inventory);
@@ -87,15 +88,10 @@ public class LocalHistoryInventoryServiceImpl extends SuperServiceImpl<LocalHist
      * @param inventory 库存
      */
     private void mergeInventory(Map.Entry<LocalHistoryInventoryGroupDTO, List<InventoryEntity>> v, LocalHistoryInventoryEntity inventory) {
-        for (InventoryEntity entity : v.getValue()) {
-            if (InventoryStatusEnum.USABLE.getCode().equals(entity.getDictInventoryStatus())) {
-                inventory.setUsableQty(Optional.ofNullable(inventory.getUsableQty()).orElse(0) + entity.getQty());
-            } else if (InventoryStatusEnum.WAIT_QC.getCode().equals(entity.getDictInventoryStatus())) {
-                inventory.setUsableQty(Optional.ofNullable(inventory.getWaitqcQty()).orElse(0) + entity.getQty());
-            }else if (InventoryStatusEnum.FROZEN.getCode().equals(entity.getDictInventoryStatus())) {
-                inventory.setUsableQty(Optional.ofNullable(inventory.getFrozenQty()).orElse(0) + entity.getQty());
-            }
-        }
+        Map<String, Integer> inventoryMap = v.getValue().stream().collect(Collectors.toMap(InventoryEntity::getDictInventoryStatus, InventoryEntity::getQty, Integer::sum));
+        inventory.setUsableQty(Optional.ofNullable(inventoryMap.get(InventoryStatusEnum.USABLE.getCode())).orElse(0));
+        inventory.setWaitqcQty(Optional.ofNullable(inventoryMap.get(InventoryStatusEnum.WAIT_QC.getCode())).orElse(0));
+        inventory.setFrozenQty(Optional.ofNullable(inventoryMap.get(InventoryStatusEnum.FROZEN.getCode())).orElse(0));
     }
 
     /**
