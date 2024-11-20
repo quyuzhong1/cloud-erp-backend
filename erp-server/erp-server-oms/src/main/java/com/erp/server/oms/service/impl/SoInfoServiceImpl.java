@@ -3946,7 +3946,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             shudiyunB2cOrderDTO.setSales_company_code(view.getSalesOrgId());
 
 
-            CustomerInfoEntity customerInfo = FeignQuery.getById(CustomerInfoEntity.class, entity.getCustomerId());
+            CustomerInfoEntity customerInfo = FeignQuery.getById(CustomerInfoEntity.class, view.getCustomerId());
 
             if (ObjectUtil.isNotEmpty(customerInfo)) {
                 shudiyunB2cOrderDTO.setSales_company_code(customerInfo.getFinancialOrganization());
