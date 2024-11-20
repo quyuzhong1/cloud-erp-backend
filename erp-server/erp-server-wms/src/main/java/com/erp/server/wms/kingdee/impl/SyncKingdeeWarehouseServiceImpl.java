@@ -255,15 +255,15 @@ public class SyncKingdeeWarehouseServiceImpl implements SyncKingdeeWarehouseServ
 		String orgId = entity.getOrgId();
 		String shippingOrganization = entity.getShippingOrganization();
 		String financialOrganization = entity.getFinancialOrganization();
-		Map<String, String> idCodeMap = sysUserFeign.getAccountingCompanyList(Arrays.asList(orgId , shippingOrganization , financialOrganization))
-				.stream().collect(Collectors.toMap(BaseIdDTO.CodeDTO::getId, BaseIdDTO.CodeDTO::getCode));
+		Map<String, BaseIdDTO.CodeDTO> idCodeMap = sysUserFeign.getAccountingCompanyList(Arrays.asList(orgId , shippingOrganization , financialOrganization))
+				.stream().collect(Collectors.toMap(BaseIdDTO.CodeDTO::getId, t -> t));
 		
 		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'");
 		
 		Map<String, Object> resultMap = new HashMap<>();
 		resultMap.put("biz_uni_key", entity.getId());
-		resultMap.put("inventory_org_code", orgId);
-		resultMap.put("inventory_org_name", idCodeMap.get(orgId));
+		resultMap.put("inventory_org_code", idCodeMap.get(orgId).getCode());
+		resultMap.put("inventory_org_name", idCodeMap.get(orgId).getName());
 		resultMap.put("warehouse_code", entity.getKingdeeWarehouseCode());
 		resultMap.put("warehouse_name", entity.getName());
 		String channelAffiliation = entity.getChannelAffiliation();
@@ -274,8 +274,8 @@ public class SyncKingdeeWarehouseServiceImpl implements SyncKingdeeWarehouseServ
 					.list();
 			resultMap.put("channel_affiliation",  dictBasicEntityList.get(0).getName());
 		}
-		resultMap.put("shipping_organization", idCodeMap.get(shippingOrganization));
-		resultMap.put("financial_organization", idCodeMap.get(financialOrganization));
+		resultMap.put("shipping_organization", idCodeMap.get(shippingOrganization).getCode());
+		resultMap.put("financial_organization", idCodeMap.get(financialOrganization).getCode());
 		resultMap.put("warehouse_type", dictBasicService.getById(entity.getTypeId()).getName());
 		LocalDateTime openTime = entity.getOpenTime();
 		if(openTime != null) {
