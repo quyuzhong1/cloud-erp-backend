@@ -172,7 +172,9 @@ public class DmpOutputSdyRefundHandler extends DmpOutputTaskHandler {
                 }
                 ShopInfoEntity shopInfo = FeignQuery.getById(ShopInfoEntity.class, shop.get(0).getSysId());
                 CustomerInfoEntity customerInfo = FeignQuery.getById(CustomerInfoEntity.class, shopInfo.getCustomerId());
-
+                if (ObjectUtil.isEmpty(customerInfo)) {
+                    throw new ServiceException(ApiError.ERROR_SDY_NOT_FOUND_CUSTOMER, shopInfo.getCustomerId());
+                }
                 sdyDTO.setSales_company_code(shopInfo.getSalesOrgId());
                 sdyDTO.setSales_company_code(customerInfo.getFinancialOrganization());
                 sdyDTO.setReceiving_company_code(customerInfo.getFinancialOrganization());
@@ -197,7 +199,7 @@ public class DmpOutputSdyRefundHandler extends DmpOutputTaskHandler {
                 }
                 CustomerInfoEntity customerInfo = FeignQuery.getById(CustomerInfoEntity.class, shopInfo.getCustomerId());
                 if (ObjectUtil.isEmpty(customerInfo)) {
-                    throw new ServiceException(ApiError.ERROR_SDY_NOT_FOUND_SHOP, shopInfo.getCustomerId());
+                    throw new ServiceException(ApiError.ERROR_SDY_NOT_FOUND_CUSTOMER, shopInfo.getCustomerId());
                 }
                 sdyDTO.setSales_company_code(shopInfo.getSalesOrgId());
                 sdyDTO.setSales_company_code(customerInfo.getFinancialOrganization());

@@ -3619,7 +3619,13 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             // todo 店铺结算币种代码：暂无数据需要新增(必填字段)
             shudiyunB2cOrderDTO.setSettlement_currency_code("");
             shudiyunB2cOrderDTO.setSource_system("SDC");
-            shudiyunB2cOrderDTO.setRoot_node_no_initial(platformCode);
+
+            if (CharSequenceUtil.isNotBlank(platformCode)) {
+                shudiyunB2cOrderDTO.setRoot_node_no_initial(platformCode);
+            } else {
+                shudiyunB2cOrderDTO.setRoot_node_no_initial(entity.getSoCode());
+            }
+
 
             shudiyunB2cOrderDTOList.add(shudiyunB2cOrderDTO);
 
