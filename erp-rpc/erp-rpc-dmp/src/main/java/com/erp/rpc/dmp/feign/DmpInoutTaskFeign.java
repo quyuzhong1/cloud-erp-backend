@@ -36,4 +36,10 @@ public interface DmpInoutTaskFeign {
      */
     @PostMapping("feign/inout/newInputTaskList")
     List<DmpInoutDTO.LastOneDTO> newInputTaskList(@RequestBody List<DmpInoutDTO.CommonDTO> commonDTOList);
+
+    /**
+     * 公共-查询输入任务明细记录
+     */
+    @PostMapping("feign/inout/inputDetailList")
+    List<DmpInoutDTO.ListDTO> inputDetailList(@RequestBody List<DmpInoutDTO.CommonDTO> commonDTOList);
 }

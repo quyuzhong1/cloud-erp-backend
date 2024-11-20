@@ -151,4 +151,22 @@ public class DmpInoutTaskFeignController{
 				.map(e -> DmpInoutDTO.LastOneDTO.init(list, e.getSystemCode(), e.getBillType(), e.getNextLevelId()))
 				.collect(Collectors.toList());
 	}
+
+
+	/**
+	 * 公共-查询输入任务明细记录
+	 */
+	@PostMapping("/inputDetailList")
+	public List<DmpInoutDTO.ListDTO> inputDetailList(@RequestBody List<DmpInoutDTO.CommonDTO> commonDTOList) {
+		List<String> systemCodeList = commonDTOList.stream().map(e -> e.getSystemCode().toLowerCase()).distinct().collect(Collectors.toList());
+		List<String> billTypeList = commonDTOList.stream().map(DmpInoutDTO.CommonDTO::getBillType).distinct().collect(Collectors.toList());
+		List<String> nextLevelIdList = commonDTOList.stream().map(DmpInoutDTO.CommonDTO::getNextLevelId).distinct().collect(Collectors.toList());
+		//查询任务是否存在
+		return dmpCfgInputDetailService.listBySystemCodeAndBillType(
+				systemCodeList,
+				billTypeList,
+				nextLevelIdList);
+	}
+
+
 }
