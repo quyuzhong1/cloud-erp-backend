@@ -121,6 +121,10 @@ public class SoDeliveryNoticeChangeDTO implements Serializable {
         private String  id;
 
         /**
+         * 明细Id
+         */
+        private String detailId;
+        /**
         * 单据编号
         */
         private String code;
