@@ -139,6 +139,18 @@
         vtf.id desc
     </select>
 
+    <!-- 查询指定天数最后一条流水 -->
+    <select id="listLastVirtualQty" resultType="com.erp.model.wms.dto.ReportOrderSalesDTO$LastVirtualQtyDTO">
+        select
+               *
+        from virtual_trans_flow  where is_deleted = false
+        and id in (select
+            max(vtf.id) as maxId
+        from virtual_trans_flow vtf
+        where vtf.is_deleted = false and #{localDate} >= vtf.bill_date
+        group by  vtf.sku_id,vtf.warehouse_id,vtf.virtual_warehouse_id)
+    </select>
+
     <!-- 更新流水状态为反审核 -->
     <update id="updateUnapprovedById">
         update virtual_trans_flow set is_unapproved = true,version = version + 1,

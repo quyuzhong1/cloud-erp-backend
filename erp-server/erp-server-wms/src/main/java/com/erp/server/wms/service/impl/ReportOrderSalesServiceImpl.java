@@ -2,10 +2,8 @@ package com.erp.server.wms.service.impl;
 
 
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.PagingDTO;
@@ -30,7 +28,6 @@ import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.wms.mapper.ReportOrderSalesMapper;
 import com.erp.server.wms.service.*;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -68,6 +65,11 @@ public class ReportOrderSalesServiceImpl extends SuperServiceImpl<ReportOrderSal
 
     @Resource
     private CfgSettingVirtualService cfgSettingVirtualService;
+
+    @Resource
+    private VirtualTransFlowService virtualTransFlowService;
+
+
 
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -178,7 +180,6 @@ public class ReportOrderSalesServiceImpl extends SuperServiceImpl<ReportOrderSal
         //虚拟仓id
         List<String> virtualWarehouseIdList = list.stream().map(ReportOrderSalesDTO.ListDTO::getVirtualWarehouseId).distinct().collect(Collectors.toList());
         List<VirtualWarehouseAllocationDetailDTO.AllocationDataDTO> allocationDataList = virtualWarehouseAllocationDetailService.listAllocationData(skuIdList, warehouseIdList, virtualWarehouseIdList);
-
         //虚拟仓配置
         CfgSettingVirtualDTO.ViewDTO viewDTO = cfgSettingVirtualService.viewVirtual();
 
@@ -226,6 +227,13 @@ public class ReportOrderSalesServiceImpl extends SuperServiceImpl<ReportOrderSal
 
             //已出库数量,累计分配 - 虚拟仓库存
             listDTO.setDeliveryQty(distributionQty - listDTO.getVirtualTotalQty());
+
+            //近30日累计分配
+
+
+            //近30日累计出库
+
+
             //预警
             handleWarnData (viewDTO,listDTO);
 

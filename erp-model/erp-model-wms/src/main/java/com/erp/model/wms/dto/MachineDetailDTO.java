@@ -62,11 +62,6 @@ public class MachineDetailDTO implements Serializable {
         private String remark;
 
         /**
-         * 来源明细id
-         */
-        private String sourceDetailId;
-
-        /**
          * 序号
          */
         private Integer index;
