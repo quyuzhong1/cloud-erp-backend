@@ -1,6 +1,7 @@
 package com.erp.model.sys.entity;
 
 import com.baomidou.mybatisplus.annotation.*;
+import com.common.core.entity.BaseEntity;
 import lombok.Data;
 
 import java.io.Serializable;
@@ -15,10 +16,7 @@ import java.time.LocalDateTime;
  */
 @Data
 @TableName("sys_accounting_company")
-public class SysAccountingCompanyEntity implements Serializable {
-
-    @TableId(type = IdType.ASSIGN_ID)
-    private String id;
+public class SysAccountingCompanyEntity extends BaseEntity<SysAccountingCompanyEntity> {
 
     /**
      * 公司编码
@@ -65,25 +63,4 @@ public class SysAccountingCompanyEntity implements Serializable {
      */
     @TableField("disabled")
     private Boolean disabled;
-
-    @TableLogic
-    @TableField("is_deleted")
-    private Boolean isDeleted;
-    /**
-     * 创建时间
-     */
-    @TableField(fill = FieldFill.INSERT)
-    private LocalDateTime createTime;
-
-    /**
-     * 更新时间
-     */
-    @TableField(fill = FieldFill.INSERT_UPDATE)
-    private LocalDateTime updateTime;
-
-    @TableField(fill = FieldFill.INSERT)
-    private String createUserId;
-
-    @TableField(fill = FieldFill.INSERT_UPDATE)
-    private String updateUserId;
 }

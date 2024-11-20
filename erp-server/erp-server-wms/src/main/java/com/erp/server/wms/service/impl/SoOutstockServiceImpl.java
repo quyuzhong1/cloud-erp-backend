@@ -3542,6 +3542,10 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             transactionSubType = soInfoEntity.getTransactionSubType();
         }
 
+        //组织信息
+        CustomerInfoEntity customerInfo = FeignQuery.getById(CustomerInfoEntity.class, entity.getCustomerId());
+        List<SysAccountingCompanyEntity> companyEntities = FeignQuery.getByIds(SysAccountingCompanyEntity.class, Arrays.asList(customerInfo.getFinancialOrganization(), entity.getSalesOrgId()));
+
         for (int i = 0; i < soOutstockDetailEntities.size(); i++) {
             SoOutstockDetailEntity soOutstockDetailEntity = soOutstockDetailEntities.get(i);
 
@@ -3556,34 +3560,52 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             shudiyunB2cOrderDTO.setTransaction_sub_type(convertOutstockTransactionSubType(transactionSubType));
             shudiyunB2cOrderDTO.setBiz_status(shudiyunB2cOrderDTO.sdyStatusHandle(operateEnum));
 
-            CustomerInfoEntity customerInfo = FeignQuery.getById(CustomerInfoEntity.class, entity.getCustomerId());
+            //组织信息
             if (ObjectUtil.isNotEmpty(customerInfo)) {
-                shudiyunB2cOrderDTO.setSales_company_code(customerInfo.getFinancialOrganization());
-                shudiyunB2cOrderDTO.setReceiving_company_code(customerInfo.getFinancialOrganization());
-            }
-            List<ShopInfoEntity> shopList = FeignQuery.create(ShopInfoEntity.class).eq(ShopInfoEntity::getCustomerId, customerInfo.getId()).list();
-            if (CollUtil.isNotEmpty(shopList)) {
-                shudiyunB2cOrderDTO.setSales_company_code(shopList.get(0).getSalesOrgId());
-                shudiyunB2cOrderDTO.setShop_no(shopList.get(0).getId());
-                shudiyunB2cOrderDTO.setShop_name(shopList.get(0).getName());
-                DictCurrencyEntity dictCurrencyEntity = FeignQuery.getById(DictCurrencyEntity.class, shopList.get(0).getTradeCurrency());
-                if (ObjectUtil.isNotEmpty(dictCurrencyEntity)) {
-                    shudiyunB2cOrderDTO.setTransaction_currency(dictCurrencyEntity.getName());
+                String salesOrgCode = companyEntities.stream().filter(req -> req.getId().equals(entity.getSalesOrgId())).map(req -> req.getCode()).findFirst().orElse("");
+                shudiyunB2cOrderDTO.setSales_company_code(salesOrgCode);
+                SysAccountingCompanyEntity sysAccountingCompanyEntity = companyEntities.stream().filter(req -> req.getId().equals(customerInfo.getFinancialOrganization())).findFirst().orElse(null);
+                if (ObjectUtil.isNotEmpty(sysAccountingCompanyEntity)) {
+                    shudiyunB2cOrderDTO.setReceiving_company_code(sysAccountingCompanyEntity.getCode());
+                    shudiyunB2cOrderDTO.setOrganization_code(sysAccountingCompanyEntity.getCode());
+                    shudiyunB2cOrderDTO.setOrganization_name(sysAccountingCompanyEntity.getCompanyName());
                 }
-                shudiyunB2cOrderDTO.setTransaction_currency_code(shopList.get(0).getTradeCurrency());
-                shudiyunB2cOrderDTO.setSettlement_currency_code(shopList.get(0).getSettlementCurrency());
+
+                if (customerInfo.getCurrency() == null) {
+                    shudiyunB2cOrderDTO.setSettlement_currency_code("");
+                } else {
+                    shudiyunB2cOrderDTO.setSettlement_currency_code(customerInfo.getCurrency());
+                }
+
+                if (customerInfo.getTradeCurrency() == null) {
+                    shudiyunB2cOrderDTO.setSettlement_currency_code("");
+                } else {
+                    shudiyunB2cOrderDTO.setTransaction_currency_code(customerInfo.getTradeCurrency());
+                }
+
+                shudiyunB2cOrderDTO.setPlatform_id(customerInfo.getPlatformType());
+                shudiyunB2cOrderDTO.setPlatform_name(PlatformDictEnum.checkAndGetByCode(customerInfo.getPlatformType()).getName());
+
             }
 
-            shudiyunB2cOrderDTO.setPlatform_id("");
-            shudiyunB2cOrderDTO.setPlatform_name("");
+            shudiyunB2cOrderDTO.setShop_no(entity.getCustomerId());
+            shudiyunB2cOrderDTO.setShop_name(entity.getCustomerName());
+
             shudiyunB2cOrderDTO.setShop_no(entity.getCustomerId());
             shudiyunB2cOrderDTO.setShop_name(entity.getCustomerName());
             shudiyunB2cOrderDTO.setRoot_node_no(entity.getCode());
             shudiyunB2cOrderDTO.setGoods_no(soOutstockDetailEntity.getSkuNo());
             SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuId().equals(soOutstockDetailEntity.getSkuId())).findFirst().orElse(new SkuVO());
             shudiyunB2cOrderDTO.setGoods_name(skuVO.getSkuName());
-            shudiyunB2cOrderDTO.setSpec_no(skuVO.getSpuNo());
-            shudiyunB2cOrderDTO.setSpec_name(skuVO.getSpuName());
+            if (skuVO.getSpuNo() == null) {
+                shudiyunB2cOrderDTO.setSpec_no("");
+                shudiyunB2cOrderDTO.setSpec_name("");
+            } else {
+                shudiyunB2cOrderDTO.setSpec_no(skuVO.getSpuNo());
+                shudiyunB2cOrderDTO.setSpec_name(skuVO.getSpuName());
+            }
+
+
             if (soOutstockDetailEntity.getAmount().compareTo(BigDecimal.ZERO) <= 0) {
                 shudiyunB2cOrderDTO.setIs_gift(1);
             } else {
@@ -3592,14 +3614,12 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             BomChildrenSkuDTO bomChildrenSkuDTO = bomChildrenSkuDTOS.stream().filter(req -> req.getSkuId().equals(soOutstockDetailEntity.getSkuId())).findFirst().orElse(null);
             shudiyunB2cOrderDTO.setIs_comb(0);
 
-            if (ObjectUtil.isNotEmpty(bomChildrenSkuDTO)) {
-                if (BomTypeEnum.COMBINATION.getType().equals(bomChildrenSkuDTO.getType())) {
-                    shudiyunB2cOrderDTO.setIs_comb(1);
-                    shudiyunB2cOrderDTO.setSuite_no(bomChildrenSkuDTO.getParentSkuNo());
-                    ProductDetailEntity productDetailEntity = parentSkuList.stream().filter(req -> req.getId().equals(bomChildrenSkuDTO.getParentSkuId())).findFirst().orElse(null);
-                    if (ObjectUtil.isNotEmpty(productDetailEntity)) {
-                        shudiyunB2cOrderDTO.setSuite_name(productDetailEntity.getName());
-                    }
+            if (ObjectUtil.isNotEmpty(bomChildrenSkuDTO) && BomTypeEnum.COMBINATION.getType().equals(bomChildrenSkuDTO.getType())) {
+                shudiyunB2cOrderDTO.setIs_comb(1);
+                shudiyunB2cOrderDTO.setSuite_no(bomChildrenSkuDTO.getParentSkuNo());
+                ProductDetailEntity productDetailEntity = parentSkuList.stream().filter(req -> req.getId().equals(bomChildrenSkuDTO.getParentSkuId())).findFirst().orElse(null);
+                if (ObjectUtil.isNotEmpty(productDetailEntity)) {
+                    shudiyunB2cOrderDTO.setSuite_name(productDetailEntity.getName());
                 }
             }
 
@@ -3610,10 +3630,15 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             // 商品状态
             shudiyunB2cOrderDTO.setGoods_status("10.10");
 
-            shudiyunB2cOrderDTO.setDelivery_time(entity.getApproveTime());
+            shudiyunB2cOrderDTO.setDelivery_time(entity.getActualDeliveryDate());
             shudiyunB2cOrderDTO.setGoods_transaction_quantity(soOutstockDetailEntity.getActualQty());
             shudiyunB2cOrderDTO.setUnit(skuVO.getUnitName());
-            shudiyunB2cOrderDTO.setGoods_benchmark_selling_price(skuVO.getRetailPrice());
+            if (skuVO.getRetailPrice() != null) {
+                shudiyunB2cOrderDTO.setGoods_benchmark_selling_price(skuVO.getRetailPrice());
+            } else {
+                shudiyunB2cOrderDTO.setGoods_benchmark_selling_price(BigDecimal.ZERO);
+            }
+
             if (CollectionUtils.isNotEmpty(currencyList)) {
                 shudiyunB2cOrderDTO.setTransaction_currency(currencyList.get(0).getName());
                 shudiyunB2cOrderDTO.setTransaction_currency_code(currencyList.get(0).getId());
@@ -3664,4 +3689,5 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         }
         return transactionSubType;
     }
+
 }
