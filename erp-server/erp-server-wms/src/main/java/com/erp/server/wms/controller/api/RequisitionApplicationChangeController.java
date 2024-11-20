@@ -3,6 +3,7 @@ package com.erp.server.wms.controller.api;
 
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.DataPermission;
+import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
@@ -16,7 +17,10 @@ import com.erp.model.wms.entity.RequisitionApplicationChangeEntity;
 import com.erp.server.wms.service.RequisitionApplicationChangeService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
@@ -39,6 +43,19 @@ public class RequisitionApplicationChangeController extends BaseController {
 
     @Resource
     private RequisitionApplicationChangeService requisitionApplicationChangeService;
+
+    /**
+     * 添加产品分页查询
+     * @author lrp
+     * @date:  2024-10-23
+     * @param dto
+     * @return ApiResult<String>
+     */
+    @PostMapping("/addProductPaging")
+    @WebAdvanceQuery
+    public ApiResult<PagingVO<RequisitionApplicationChangeDTO.ProductDTO>> addProductPaging(@RequestBody @Validated PagingDTO<RequisitionApplicationChangeDTO.ProductAddDTO> dto) {
+        return success(requisitionApplicationChangeService.addProductPaging(dto));
+    }
 
     /**
     * 新增

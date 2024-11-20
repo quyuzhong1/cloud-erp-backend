@@ -45,22 +45,14 @@ public class GoodCangServiceTest {
         GoodCangGetSkuReq goodCangGetSkuReq = GoodCangGetSkuReq.builder()
                 .page(1)
                 .pageSize(100)
-//                .productUpdateTimeFrom("2023-09-26 15:00:00")
-//                .productUpdateTimeTo("2023-09-26 16:00:00")
+                .productUpdateTimeFrom("2023-09-26 15:00:00")
+                .productUpdateTimeTo("2023-09-26 16:00:00")
 //                .productSku("YDXN5C-001300UK")
-                .productSkuArr(Arrays.asList("M032GBB1","L055GBA1"))
+//                .productSkuArr(Arrays.asList("M032GBB1","L055GBA1"))
                 .build();
         List<GoodCangSkuResp> respList = new ArrayList<>();
-        int page = 1;
-        while (true) {
-            goodCangGetSkuReq.setPage(page);
-            GoodCangResponse<List<GoodCangSkuResp>> goodCangResponse = goodCangService.getSkuList(goodCangGetSkuReq);
-            respList.addAll(goodCangResponse.getData());
-            if (goodCangResponse.getCount() <= page * 100) {
-                break;
-            }
-            page++;
-        }
+        GoodCangResponse<List<GoodCangSkuResp>> goodCangResponse = goodCangService.getSkuList(goodCangGetSkuReq);
+        System.out.println(goodCangResponse);
         respList = respList.stream().filter(v->v.getProductStatus().equals(GoodCangEnums.OpenApiProductStatusEnum.AVAILABLE.getCode())).collect(Collectors.toList());
         System.out.println(respList.size());
     }

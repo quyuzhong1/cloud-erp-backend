@@ -23,6 +23,8 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.StrUtils;
 import com.common.core.utils.date.DateUtil;
+import com.erp.model.oms.dto.ListingInfoDTO;
+import com.erp.model.plm.dto.ProductBomInfoDTO;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.wms.dto.RequisitionApplicationChangeDTO;
@@ -35,6 +37,7 @@ import com.erp.model.wms.enums.RequisitionApplicationStatusEnum;
 import com.erp.model.wms.enums.RequisitionApplicationTypeEnum;
 import com.erp.model.wms.enums.RequisitionChangeTypeEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
+import com.erp.rpc.oms.feign.OmsListingInfoFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.wms.mapper.RequisitionApplicationChangeMapper;
@@ -70,6 +73,9 @@ public class RequisitionApplicationChangeServiceImpl extends SuperServiceImpl<Re
 
     @Resource
     private PlmTaskFeign plmTaskFeign;
+
+    @Resource
+    private OmsListingInfoFeign listingInfoFeign;
 
     @Resource
     private RequisitionApplicationService requisitionApplicationService;
@@ -383,6 +389,74 @@ public class RequisitionApplicationChangeServiceImpl extends SuperServiceImpl<Re
         // todo 明细数据处理 上下游数据处理
 
         return Boolean.TRUE;
+    }
+
+    @Override
+    public PagingVO<RequisitionApplicationChangeDTO.ProductDTO> addProductPaging(PagingDTO<RequisitionApplicationChangeDTO.ProductAddDTO> dto) {
+        RequisitionApplicationChangeDTO.ProductAddDTO param = dto.getParams();
+        RequisitionApplicationEntity requisitionApplicationEntity =requisitionApplicationService.getByIdOpt(param.getRequisitionId()).orElseThrow(() -> new ServiceException("未找到要货申请数据"));
+        PagingDTO<ListingInfoDTO.PagingParamDTO> paramDTO = new PagingDTO<>();
+        BeanUtil.copyProperties(dto,paramDTO);
+        ListingInfoDTO.PagingParamDTO listingParamDTO = new ListingInfoDTO.PagingParamDTO();
+        listingParamDTO.setAdvanceQueryDTOList(new ArrayList<>());
+        listingParamDTO.setSqlMap(param.getSqlMap());
+        if (RequisitionApplicationTypeEnum.FBA.getCode().equals(requisitionApplicationEntity.getType())) {
+            listingParamDTO.setShopId(requisitionApplicationEntity.getChannelId());
+        } else {
+            listingParamDTO.setWarehouseId(requisitionApplicationEntity.getChannelId());
+        }
+        paramDTO.setParams(listingParamDTO);
+        //调用listing接口获取商品信息
+        PagingVO<ListingInfoDTO.PageDTO> pagingVO = listingInfoFeign.paging(paramDTO);
+        PagingVO<RequisitionApplicationChangeDTO.ProductDTO> result = new PagingVO<>();
+        BeanUtil.copyProperties(pagingVO,result);
+        if(CollUtil.isEmpty(pagingVO.getList())){
+            return result;
+        }
+        List<ListingInfoDTO.PageDTO> listingList = pagingVO.getList();
+        List<RequisitionApplicationChangeDTO.ProductDTO> productList = new ArrayList<>();
+        List<RequisitionApplicationDetailEntity> requisitionApplicationDetailEntityList = requisitionApplicationDetailService.listByMainIds(Collections.singletonList(requisitionApplicationEntity.getId()));
+        List<String> skuNos = listingList.stream().map(ListingInfoDTO.PageDTO::getSkuNo).collect(Collectors.toList());
+        List<ProductBomInfoDTO.SkuBomVersion> skuBomVersionList = plmTaskFeign.listBomVersionBySkuNos(skuNos);
+        for (ListingInfoDTO.PageDTO pageDTO : listingList) {
+            RequisitionApplicationChangeDTO.ProductDTO productDTO = new RequisitionApplicationChangeDTO.ProductDTO();
+            productDTO.setPlatformSku(pageDTO.getPlatformSku());
+            productDTO.setPlatformSkuName(pageDTO.getPlatformSkuName());
+            productDTO.setSkuId(pageDTO.getSkuId());
+            productDTO.setSkuNo(pageDTO.getSkuNo());
+            productDTO.setProductName(pageDTO.getProductName());
+            productDTO.setFnSku(pageDTO.getFnSku());
+            productDTO.setAsin(pageDTO.getAsin());
+            ProductBomInfoDTO.SkuBomVersion skuBomVersion = skuBomVersionList.stream().filter(v->v.getSkuNo().equals(pageDTO.getSkuNo())).findFirst().orElse(null);
+            if(Objects.nonNull(skuBomVersion)){
+                productDTO.setBomVersion(skuBomVersion.getBomVersionList().stream().max(String::compareTo).orElse(""));
+            }
+            RequisitionApplicationDetailEntity requisitionApplicationDetailEntity = requisitionApplicationDetailEntityList.stream().filter(v->v.getPlatformSku().equals(pageDTO.getPlatformSku())).findFirst().orElse(null);
+            //如果能关联到要货申明细，设置为修改类型
+            if(Objects.nonNull(requisitionApplicationDetailEntity)){
+                productDTO.setRequisitionDetailId(requisitionApplicationDetailEntity.getId());
+                productDTO.setBomVersion(requisitionApplicationDetailEntity.getBomVersion());
+                productDTO.setChangeType(RequisitionChangeTypeEnum.UPDATE.getCode());
+                productDTO.setChangeTypeName(RequisitionChangeTypeEnum.UPDATE.getName());
+                productDTO.setOriginRequisitionQty(requisitionApplicationDetailEntity.getRequisitionQty());
+            }else{
+                productDTO.setChangeType(RequisitionChangeTypeEnum.ADD.getCode());
+                productDTO.setChangeTypeName(RequisitionChangeTypeEnum.ADD.getName());
+            }
+            productList.add(productDTO);
+        }
+        List<String> patchPlatformSkuNos = param.getPlatformSkuNoList();
+        if(CollUtil.isNotEmpty(patchPlatformSkuNos)){
+            List<RequisitionApplicationChangeDTO.ProductDTO> productDTOS = new ArrayList<>();
+            for (String patchPlatformSkuNo : patchPlatformSkuNos) {
+                RequisitionApplicationChangeDTO.ProductDTO productDTO = productList.stream().filter(v->v.getPlatformSku().equals(patchPlatformSkuNo)).findFirst().orElse(new RequisitionApplicationChangeDTO.ProductDTO());
+                productDTOS.add(productDTO);
+            }
+            result.setList(productDTOS);
+        }else{
+            result.setList(productList);
+        }
+        return result;
     }
 
     @Override

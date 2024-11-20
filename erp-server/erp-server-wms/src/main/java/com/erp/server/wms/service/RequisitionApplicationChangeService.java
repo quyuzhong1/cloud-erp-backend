@@ -144,4 +144,5 @@ public interface RequisitionApplicationChangeService extends SuperService<Requis
     */
     Boolean approveEnd(ApproveOneDTO dto, RequisitionApplicationChangeEntity entity);
 
+    PagingVO<RequisitionApplicationChangeDTO.ProductDTO> addProductPaging(PagingDTO<RequisitionApplicationChangeDTO.ProductAddDTO> dto);
 }

@@ -26,6 +26,97 @@ import java.util.Map;
 @NoArgsConstructor
 public class RequisitionApplicationChangeDTO implements Serializable {
 
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ProductDTO {
+
+        /**
+         * 要货申请明细id
+         */
+        private String requisitionDetailId;
+
+        /**
+         * 第三方sku,MSKU
+         */
+        private String platformSku;
+
+        /**
+         * 第三方,平台产品名称
+         */
+        private String platformSkuName;
+
+        /**
+         * skuId
+         */
+        private String skuId;
+
+        /**
+         * sku
+         */
+        private String skuNo;
+
+        /**
+         * 品名
+         */
+        private String productName;
+
+        /**
+         * FNSKU
+         */
+        private String fnSku;
+
+        /**
+         * ASIN
+         */
+        private String asin;
+
+        /**
+         * 变更类型
+         */
+        private String changeType;
+        /**
+         * 变更类型名称
+         */
+        private String changeTypeName;
+        /**
+         * 原要货数量
+         */
+        private Integer originRequisitionQty;
+
+        /**
+         * bom版本
+         */
+        private String bomVersion;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ProductAddDTO {
+        /**
+         * 页面高级查询
+         */
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
+
+        /**
+         * sqlMap 默认key default
+         */
+        private Map<String,String> sqlMap;
+
+        /**
+         * 要货申请id
+         */
+        @NotBlank(message = "要货申请id不能为空")
+        private String requisitionId;
+
+        /**
+         * msku, 平台sku,快粘贴传
+         */
+        private List<String> platformSkuNoList;
+    }
+
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
@@ -418,6 +509,5 @@ public class RequisitionApplicationChangeDTO implements Serializable {
 
 
     }
-
 
 }
