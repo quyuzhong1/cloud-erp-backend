@@ -8,6 +8,7 @@ import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
 
 import java.io.Serializable;
+import java.time.LocalDate;
 
 
 /**
@@ -65,6 +66,12 @@ public class VirtualWarehouseAllocationEntity extends BaseEntity<VirtualWarehous
      */
     @TableField("is_statistics")
     private Boolean isStatistics;
+
+    /**
+     * 处理日期
+     */
+    @TableField("handle_date")
+    private LocalDate handleDate;
 
     public static final String INVALID_DESCRIPTION = "invalid_description";
 

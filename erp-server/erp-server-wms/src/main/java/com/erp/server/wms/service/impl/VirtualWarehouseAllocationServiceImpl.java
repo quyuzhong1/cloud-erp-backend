@@ -68,6 +68,7 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.io.File;
 import java.io.IOException;
+import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -373,6 +374,7 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
         //校验明细数据
         checkDetail(allocationEntity);
         allocationEntity.setStatus(code);
+        allocationEntity.setHandleDate(LocalDate.now());
         this.updateById(allocationEntity);
         //变更明细同步状态
         virtualWarehouseAllocationDetailService.updateByMainId(allocationEntity.getId(), VirtualWarehouseAllocationSyncStatusEnum.IN_SYNC.getCode());

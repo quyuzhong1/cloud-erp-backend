@@ -32,6 +32,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -182,62 +183,70 @@ public class ReportOrderSalesServiceImpl extends SuperServiceImpl<ReportOrderSal
         List<VirtualWarehouseAllocationDetailDTO.AllocationDataDTO> allocationDataList = virtualWarehouseAllocationDetailService.listAllocationData(skuIdList, warehouseIdList, virtualWarehouseIdList);
         //虚拟仓配置
         CfgSettingVirtualDTO.ViewDTO viewDTO = cfgSettingVirtualService.viewVirtual();
+        
+        //近30天分货数据
+        List<VirtualWarehouseAllocationDetailDTO.AllocationDataDTO> thirtyDaysAllocationDataList = allocationDataList.stream().filter(obj -> obj.getHandleDate().isAfter(LocalDate.now().minusDays(30))).collect(Collectors.toList());
 
         for (ReportOrderSalesDTO.ListDTO listDTO : list) {
-            /**
-             * 累计分配 = 【新增分货-调入虚拟仓-分配数量】+ 【虚拟仓调拨-调入虚拟仓-调拨数量】-【虚拟仓调拨-调出虚拟仓-调拨数量】-【取消分货-调出虚拟仓-取消数量】
-             */
-            //新增分货数量
-            Integer addQty = allocationDataList.stream().filter(obj ->
-                    CharSequenceUtil.equals(obj.getType(), VirtualWarehouseAllocationTypeEnum.ALLOCATION.getCode())
-                            && CharSequenceUtil.equals(obj.getSkuId(), listDTO.getSkuId())
-                            && CharSequenceUtil.equals(obj.getWarehouseId(), listDTO.getWarehouseId())
-                            && CharSequenceUtil.equals(obj.getToVirtualWarehouseId(), listDTO.getVirtualWarehouseId())
-            ).map(VirtualWarehouseAllocationDetailDTO.AllocationDataDTO::getQty).reduce(MathUtil.ZERO, Integer::sum);
-
-            //调入分货数量
-            Integer toTransferQty = allocationDataList.stream().filter(obj ->
-                    CharSequenceUtil.equals(obj.getType(), VirtualWarehouseAllocationTypeEnum.TRANSFER.getCode())
-                            && CharSequenceUtil.equals(obj.getSkuId(), listDTO.getSkuId())
-                            && CharSequenceUtil.equals(obj.getWarehouseId(), listDTO.getWarehouseId())
-                            && CharSequenceUtil.equals(obj.getToVirtualWarehouseId(), listDTO.getVirtualWarehouseId())
-            ).map(VirtualWarehouseAllocationDetailDTO.AllocationDataDTO::getQty).reduce(MathUtil.ZERO, Integer::sum);
-
-            //调出分货数量
-            Integer fromTransferQty = allocationDataList.stream().filter(obj ->
-                    CharSequenceUtil.equals(obj.getType(), VirtualWarehouseAllocationTypeEnum.TRANSFER.getCode())
-                            && CharSequenceUtil.equals(obj.getSkuId(), listDTO.getSkuId())
-                            && CharSequenceUtil.equals(obj.getWarehouseId(), listDTO.getWarehouseId())
-                            && CharSequenceUtil.equals(obj.getFromVirtualWarehouseId(), listDTO.getVirtualWarehouseId())
-            ).map(VirtualWarehouseAllocationDetailDTO.AllocationDataDTO::getQty).reduce(MathUtil.ZERO, Integer::sum);
-
-            //取消分货数量
-            Integer cancelQty = allocationDataList.stream().filter(obj ->
-                    CharSequenceUtil.equals(obj.getType(), VirtualWarehouseAllocationTypeEnum.CANCEL.getCode())
-                            && CharSequenceUtil.equals(obj.getSkuId(), listDTO.getSkuId())
-                            && CharSequenceUtil.equals(obj.getWarehouseId(), listDTO.getWarehouseId())
-                            && CharSequenceUtil.equals(obj.getFromVirtualWarehouseId(), listDTO.getVirtualWarehouseId())
-            ).map(VirtualWarehouseAllocationDetailDTO.AllocationDataDTO::getQty).reduce(MathUtil.ZERO, Integer::sum);
-            //分配数量
-            Integer distributionQty = addQty + toTransferQty - fromTransferQty - cancelQty;
+            //计算分配数量
+            Integer distributionQty = calculateDistributionQty(allocationDataList, listDTO);
             listDTO.setDistributionQty(distributionQty);
-
+            //已出库数量,累计分配 - 虚拟仓库存
+            listDTO.setDeliveryQty(listDTO.getDistributionQty() - listDTO.getVirtualTotalQty());
             //是否缺货
             listDTO.setIsVirtualScarceName(listDTO.getIsVirtualScarce() ? "是":"否");
 
-            //已出库数量,累计分配 - 虚拟仓库存
-            listDTO.setDeliveryQty(distributionQty - listDTO.getVirtualTotalQty());
-
             //近30日累计分配
-
-
-            //近30日累计出库
-
+            Integer thirtyDaysDistributionQty = calculateDistributionQty(thirtyDaysAllocationDataList, listDTO);
+            listDTO.setThirtyDaysDistributionQty(thirtyDaysDistributionQty);
+            //近30日出库 =  30日前结余库存 + 近30日有效分配 - 虚拟仓当前库存
+            Integer thirtyDaysOutstockQty = listDTO.getThirtyDaysVirtualQty() + thirtyDaysDistributionQty - listDTO.getVirtualTotalQty();
+            listDTO.setThirtyDaysOutstockQty(thirtyDaysOutstockQty);
 
             //预警
             handleWarnData (viewDTO,listDTO);
-
         }
+    }
+
+    private Integer calculateDistributionQty (List<VirtualWarehouseAllocationDetailDTO.AllocationDataDTO> allocationDataList,ReportOrderSalesDTO.ListDTO listDTO) {
+        /**
+         * 累计分配 = 【新增分货-调入虚拟仓-分配数量】+ 【虚拟仓调拨-调入虚拟仓-调拨数量】-【虚拟仓调拨-调出虚拟仓-调拨数量】-【取消分货-调出虚拟仓-取消数量】
+         */
+        //新增分货数量
+        Integer addQty = allocationDataList.stream().filter(obj ->
+                CharSequenceUtil.equals(obj.getType(), VirtualWarehouseAllocationTypeEnum.ALLOCATION.getCode())
+                        && CharSequenceUtil.equals(obj.getSkuId(), listDTO.getSkuId())
+                        && CharSequenceUtil.equals(obj.getWarehouseId(), listDTO.getWarehouseId())
+                        && CharSequenceUtil.equals(obj.getToVirtualWarehouseId(), listDTO.getVirtualWarehouseId())
+        ).map(VirtualWarehouseAllocationDetailDTO.AllocationDataDTO::getQty).reduce(MathUtil.ZERO, Integer::sum);
+
+        //调入分货数量
+        Integer toTransferQty = allocationDataList.stream().filter(obj ->
+                CharSequenceUtil.equals(obj.getType(), VirtualWarehouseAllocationTypeEnum.TRANSFER.getCode())
+                        && CharSequenceUtil.equals(obj.getSkuId(), listDTO.getSkuId())
+                        && CharSequenceUtil.equals(obj.getWarehouseId(), listDTO.getWarehouseId())
+                        && CharSequenceUtil.equals(obj.getToVirtualWarehouseId(), listDTO.getVirtualWarehouseId())
+        ).map(VirtualWarehouseAllocationDetailDTO.AllocationDataDTO::getQty).reduce(MathUtil.ZERO, Integer::sum);
+
+        //调出分货数量
+        Integer fromTransferQty = allocationDataList.stream().filter(obj ->
+                CharSequenceUtil.equals(obj.getType(), VirtualWarehouseAllocationTypeEnum.TRANSFER.getCode())
+                        && CharSequenceUtil.equals(obj.getSkuId(), listDTO.getSkuId())
+                        && CharSequenceUtil.equals(obj.getWarehouseId(), listDTO.getWarehouseId())
+                        && CharSequenceUtil.equals(obj.getFromVirtualWarehouseId(), listDTO.getVirtualWarehouseId())
+        ).map(VirtualWarehouseAllocationDetailDTO.AllocationDataDTO::getQty).reduce(MathUtil.ZERO, Integer::sum);
+
+        //取消分货数量
+        Integer cancelQty = allocationDataList.stream().filter(obj ->
+                CharSequenceUtil.equals(obj.getType(), VirtualWarehouseAllocationTypeEnum.CANCEL.getCode())
+                        && CharSequenceUtil.equals(obj.getSkuId(), listDTO.getSkuId())
+                        && CharSequenceUtil.equals(obj.getWarehouseId(), listDTO.getWarehouseId())
+                        && CharSequenceUtil.equals(obj.getFromVirtualWarehouseId(), listDTO.getVirtualWarehouseId())
+        ).map(VirtualWarehouseAllocationDetailDTO.AllocationDataDTO::getQty).reduce(MathUtil.ZERO, Integer::sum);
+
+
+        //分配数量
+        return addQty + toTransferQty - fromTransferQty - cancelQty;
     }
 
     /**

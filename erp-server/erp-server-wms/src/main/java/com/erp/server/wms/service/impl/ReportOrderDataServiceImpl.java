@@ -403,10 +403,15 @@ public class ReportOrderDataServiceImpl extends SuperServiceImpl<ReportOrderData
             //近90日销量
             Integer ninetyDaysSalesQty = value.stream().filter(obj -> obj.getDate().isEqual(LocalDate.now().minusDays(90L)) || obj.getDate().isAfter(LocalDate.now().minusDays(90L))).map(ReportOrderDataEntity::getOrderQty).reduce(MathUtil.ZERO, Integer::sum);
             addDTO.setNinetyDaysSalesQty(ninetyDaysSalesQty);
-            addOrUpdateList.add(addDTO);
 
             //近30日结余（可用+冻结）
-            //lastVirtualQtyList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSkuId(),))
+            Integer thirtyDaysVirtualQty = lastVirtualQtyList.stream().filter(obj ->
+                    CharSequenceUtil.equals(obj.getSkuId(), entity.getSkuId())
+                            && CharSequenceUtil.equals(obj.getWarehouseId(), entity.getWarehouseId())
+                            && CharSequenceUtil.equals(obj.getVirtualWarehouseId(), entity.getVirtualWarehouseId())
+            ).map(ReportOrderSalesDTO.LastVirtualQtyDTO::getCurInventoryQty).reduce(MathUtil.ZERO, Integer::sum);
+            addDTO.setThirtyDaysVirtualQty(thirtyDaysVirtualQty);
+            addOrUpdateList.add(addDTO);
 
         }
         reportOrderSalesService.batchAddOrUpdate(addOrUpdateList);
