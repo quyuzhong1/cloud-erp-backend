@@ -267,6 +267,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
     private WmsPushMsgService wmsPushMsgService;
 
 
+
     @Override
     public List<SoOutstockEntity> listBySourceId(List<String> ids) {
         return lambdaQuery().eq(SoOutstockEntity::getInvalidStatus, Boolean.FALSE)
@@ -3544,7 +3545,10 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
 
         //组织信息
         CustomerInfoEntity customerInfo = FeignQuery.getById(CustomerInfoEntity.class, entity.getCustomerId());
-        List<SysAccountingCompanyEntity> companyEntities = FeignQuery.getByIds(SysAccountingCompanyEntity.class, Arrays.asList(customerInfo.getFinancialOrganization(), entity.getSalesOrgId()));
+
+
+
+        List<BaseIdDTO.CodeDTO> companyEntities = sysUserFeign.getAccountingCompanyList(Arrays.asList(customerInfo.getFinancialOrganization(), entity.getSalesOrgId()));
 
         for (int i = 0; i < soOutstockDetailEntities.size(); i++) {
             SoOutstockDetailEntity soOutstockDetailEntity = soOutstockDetailEntities.get(i);
@@ -3564,11 +3568,11 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             if (ObjectUtil.isNotEmpty(customerInfo)) {
                 String salesOrgCode = companyEntities.stream().filter(req -> req.getId().equals(entity.getSalesOrgId())).map(req -> req.getCode()).findFirst().orElse("");
                 shudiyunB2cOrderDTO.setSales_company_code(salesOrgCode);
-                SysAccountingCompanyEntity sysAccountingCompanyEntity = companyEntities.stream().filter(req -> req.getId().equals(customerInfo.getFinancialOrganization())).findFirst().orElse(null);
+                BaseIdDTO.CodeDTO sysAccountingCompanyEntity = companyEntities.stream().filter(req -> req.getId().equals(customerInfo.getFinancialOrganization())).findFirst().orElse(null);
                 if (ObjectUtil.isNotEmpty(sysAccountingCompanyEntity)) {
                     shudiyunB2cOrderDTO.setReceiving_company_code(sysAccountingCompanyEntity.getCode());
                     shudiyunB2cOrderDTO.setOrganization_code(sysAccountingCompanyEntity.getCode());
-                    shudiyunB2cOrderDTO.setOrganization_name(sysAccountingCompanyEntity.getCompanyName());
+                    shudiyunB2cOrderDTO.setOrganization_name(sysAccountingCompanyEntity.getName());
                 }
 
                 if (customerInfo.getCurrency() == null) {
