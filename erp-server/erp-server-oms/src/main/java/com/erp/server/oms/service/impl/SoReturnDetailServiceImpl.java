@@ -274,6 +274,10 @@ public class SoReturnDetailServiceImpl extends SuperServiceImpl<SoReturnDetailMa
         List<SoReturnDetailEntity> list = new ArrayList<>();
         for (SoReturnDetailDTO.Update detailDto : dto.getDetailList()) {
             SoReturnDetailEntity soReturnDetailEntity = new SoReturnDetailEntity();
+            if (StringUtils.isNotBlank(detailDto.getId())) {
+                soReturnDetailEntity.setId(detailDto.getId());
+            }
+            soReturnDetailEntity.setId(detailDto.getId());
             soReturnDetailEntity.setMainId(dto.getId());
             soReturnDetailEntity.setSkuId(detailDto.getSkuId());
             soReturnDetailEntity.setSkuNo(detailDto.getSkuNo());

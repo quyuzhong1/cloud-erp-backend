@@ -1,6 +1,5 @@
 package com.erp.model.oms.dto;
 
-import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -8,7 +7,6 @@ import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
 import java.math.BigDecimal;
-import java.util.List;
 
 public class SoReturnDetailDTO {
     /**
@@ -53,17 +51,14 @@ public class SoReturnDetailDTO {
         /**
          * listing_id
          */
-        @TableField("listing_id")
         private String listingId;
         /**
          * 平台sku
          */
-        @TableField("platform_sku_no")
         private String platformSkuNo;
         /**
          * 平台sku名称
          */
-        @TableField("platform_sku_name")
         private String platformSkuName;
     }
 
@@ -120,17 +115,14 @@ public class SoReturnDetailDTO {
         /**
          * listing_id
          */
-        @TableField("listing_id")
         private String listingId;
         /**
          * 平台sku
          */
-        @TableField("platform_sku_no")
         private String platformSkuNo;
         /**
          * 平台sku名称
          */
-        @TableField("platform_sku_name")
         private String platformSkuName;
     }
 

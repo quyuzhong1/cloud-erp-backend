@@ -73,28 +73,31 @@ public class SoReturnNoticeDetailServiceImpl extends SuperServiceImpl<SoReturnNo
         //查询sku
         List<String> skuIds = dto.getDetailList().stream().map(SoReturnNoticeDetailDTO.Add::getSkuId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
         List<ProductDetailEntity> productDetailEntitys = plmTaskFeign.getByIdList(skuIds);
-
         for (SoReturnNoticeDetailDTO.Add detailDto : dto.getDetailList()) {
             SoReturnNoticeDetailEntity detailEntity = new SoReturnNoticeDetailEntity();
+            BeanMapper.copy(detailDto, detailEntity);
+            detailEntity.setMainId(id);
+            detailEntity.setReturnQty(detailDto.getReturnQty());
+            detailEntity.setRemark(detailDto.getRemark());
+            detailEntity.setPlatformSkuNo(detailDto.getPlatformSkuNo());
             if(StringUtils.isNotBlank(detailDto.getSourceDetailId())){
+                //下推通知单
                 SoReturnDetailEntity soReturnDetailEntity = soReturnDetailEntities.stream().filter(req -> req.getId().equals(detailDto.getSourceDetailId())).findFirst().orElse(null);
                 if (ObjectUtil.isEmpty(soReturnDetailEntity)) {
                     throw new ServiceException(ApiError.ERROR_92023);
                 }
+                detailEntity.setSkuId(soReturnDetailEntity.getSkuId());
+                detailEntity.setSkuNo(soReturnDetailEntity.getSkuNo());
+                detailEntity.setSourceDetailId(detailDto.getSourceDetailId());
+                detailEntity.setReturnReasonDict(soReturnDetailEntity.getReturnReasonDict());
+                detailEntity.setReturnTypeDict(soReturnDetailEntity.getReturnTypeDict());
+            }else {
+                ProductDetailEntity productDetailEntity = productDetailEntitys.stream().filter(v -> v.getId().equals(detailDto.getSkuId())).findFirst().orElse(new ProductDetailEntity());
+                detailEntity.setSkuNo(productDetailEntity.getSkuNo());
+                detailEntity.setIsChildSkuNo(detailDto.getIsChildSkuNo());
+                detailEntity.setReturnReasonDict(detailDto.getReturnReasonDict());
+                detailEntity.setReturnTypeDict(detailDto.getReturnTypeDict());
             }
-            BeanMapper.copy(detailDto, detailEntity);
-            detailEntity.setMainId(id);
-//            detailEntity.setSkuId(detailDto.getSkuId());
-            ProductDetailEntity productDetailEntity = productDetailEntitys.stream().filter(v -> v.getId().equals(detailDto.getSkuId())).findFirst().orElse(new ProductDetailEntity());
-            detailEntity.setSkuNo(productDetailEntity.getSkuNo());
-//            detailEntity.setReturnQty(detailDto.getReturnQty());
-//            detailEntity.setRemark(detailDto.getRemark());
-//            detailEntity.setSourceDetailId(detailDto.getSourceDetailId());
-//            detailEntity.setPlatformSkuNo(detailDto.getPlatformSkuNo());
-//            detailEntity.setIsChildSkuNo(detailDto.getIsChildSkuNo());
-//            detailEntity.setReturnTypeDict(detailDto.getReturnTypeDict());
-//            detailEntity.setReturnReasonDict(detailDto.getReturnReasonDict());
-
             if(ignoreInventorySkuIds.contains(detailEntity.getSkuId())) {
                 log.warn("sku id: {}，sku编号：{}产品属性是费用或服务，不参与库存出入库，不做库存验证", detailEntity.getSkuId(), detailEntity.getSkuNo());
             } else {
@@ -169,7 +172,6 @@ public class SoReturnNoticeDetailServiceImpl extends SuperServiceImpl<SoReturnNo
         List<SoB2cReturnDetailEntity> soB2cReturnDetailEntityList = FeignQuery.getByIds(SoB2cReturnDetailEntity.class,returnDetailIds);
 
         List<SoReturnNoticeDetailEntity> list = new ArrayList<>();
-//        List<SoReturnNoticeDetailEntity> noticeDetailEntities = this.listDetailBySourceDetailIds(returnDetailIds);
         List<SoReturnNoticeDetailEntity> noticeDetailEntities = this.listDetailByMainId(entity.getId());
         //原明细数据
         List<SoReturnNoticeDetailEntity> oldList = this.listDetailByMainId(dto.getId());
