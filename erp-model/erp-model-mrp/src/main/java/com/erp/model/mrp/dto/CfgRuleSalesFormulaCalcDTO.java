@@ -1,11 +1,13 @@
 package com.erp.model.mrp.dto;
 
+import com.erp.model.mrp.entity.CfgRuleSalesFormulaCalcEntity;
+import com.erp.model.mrp.enums.CfgRuleSalesFormulaDefaultTypeEnum;
+import com.erp.model.mrp.enums.CfgRuleSalesFormulaTypeEnum;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.experimental.Accessors;
 
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Size;
+import javax.validation.constraints.*;
 import java.io.Serializable;
 import java.time.LocalDate;
 import java.util.List;
@@ -88,100 +90,157 @@ public class CfgRuleSalesFormulaCalcDTO implements Serializable {
         private CfgRuleSalesFormulaDTO.PercentJsonDTO percentJsonDTO;
 
     }
-
     /**
-    * 新增
-    */
+     * 默认日销量DTO
+     */
     @Data
     @NoArgsConstructor
-    public static class AddDTO extends CommonDTO {
-
-
-    }
-
-    /**
-    * 修改
-    */
-    @Data
-    @NoArgsConstructor
-    public static class UpdateDTO extends CommonDTO {
+    @Accessors(chain = true)
+    public static class DefaultUpdateDTO {
 
         /**
-        * 主键id
-        */
-        @NotBlank(message = "主键id不能为空")
-        private String id;
-
-    }
-
-    @Data
-    @NoArgsConstructor
-    public static class CommonDTO {
-
-        /**
-        * 销量类型：default=默认，dynamic=动态、fixed=固定
-        */
-        @NotBlank(message = "销量类型：default=默认，dynamic=动态、fixed=固定不能为空")
-        @Size(max = 32,message = "销量类型：default=默认，dynamic=动态、fixed=固定最大长度不能超过32位")
-        private String type;
-
-        /**
-        * 销量默认类型：dynamic=动态、fixed=固定
-        */
+         * 销量默认类型：dynamic=动态、fixed=固定
+         */
         @NotBlank(message = "销量默认类型：dynamic=动态、fixed=固定不能为空")
-        @Size(max = 32,message = "销量默认类型：dynamic=动态、fixed=固定最大长度不能超过32位")
+        @Size(max = 32, message = "销量默认类型：dynamic=动态、fixed=固定最大长度不能超过32位")
         private String defaultType;
 
         /**
-        * 排序字段
-        */
-        @NotNull(message = "排序字段不能为空")
-        private Integer index;
-
-        /**
-        * 优先级字段
-        */
-        @NotNull(message = "优先级字段不能为空")
-        private Integer priority;
-
-        /**
-        * 名称
-        */
-        @NotBlank(message = "名称不能为空")
-        @Size(max = 64,message = "名称最大长度不能超过64位")
-        private String name;
-
-        /**
-        * 开始日期
-        */
-        private LocalDate startDate;
-
-        /**
-        * 结束日期
-        */
-        private LocalDate endDate;
-
-        /**
-        * 试算配置id
-        */
-        @NotBlank(message = "试算配置id不能为空")
-        @Size(max = 255,message = "试算配置id最大长度不能超过255位")
-        private String cfgRuleCalcId;
-
-        /**
-        * 固定值
-        */
-        @NotNull(message = "固定值不能为空")
+         * 固定值
+         */
+        @Digits(integer = 12, fraction = 4, message = "固定值整数位不能超过12位，小数位不能超过4位")
         private Integer fixedValue;
 
         /**
-        * 百分比json
-        */
-        @NotBlank(message = "百分比json不能为空")
-        private String percentJson;
+         * 百分比json
+         */
+        private CfgRuleSalesFormulaDTO.PercentJsonDTO percentJsonDTO;
+    }
 
+    /**
+     * 动态日销量DTO
+     */
+    @Data
+    @NoArgsConstructor
+    @Accessors(chain = true)
+    public static class DynamicUpdateDTO {
+
+        /**
+         * 名称
+         */
+        @NotBlank(message = "名称不能为空")
+        @Size(max = 10, message = "名称最大长度不能超过10位")
+        private String name;
+
+        /**
+         * 时间段
+         */
+        @NotEmpty(message = "时间段不能为空")
+        private List<LocalDate> dateList;
+
+        /**
+         * 百分比json
+         */
+        @NotNull(message = "动态日销量占比不能为空")
+        private CfgRuleSalesFormulaDTO.PercentJsonDTO percentJsonDTO;
+    }
+
+    /**
+     * 固定日销量DTO
+     */
+    @Data
+    @NoArgsConstructor
+    @Accessors(chain = true)
+    public static class FixedUpdateDTO {
+
+        /**
+         * 名称
+         */
+        @NotBlank(message = "名称不能为空")
+        @Size(max = 10, message = "名称最大长度不能超过10位")
+        private String name;
+
+        /**
+         * 时间段
+         */
+        @NotEmpty(message = "时间段不能为空")
+        private List<LocalDate> dateList;
+
+        /**
+         * 固定值
+         */
+        @NotNull(message = "固定值不能为空")
+        @Min(value = 0, message = "固定值最小值为0")
+        @Max(value = 999999999, message = "固定值最大值为999999999")
+        private Integer fixedValue;
 
     }
 
+    /**
+     * 导出详情
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ExportDTO {
+
+        /**
+         * 销量类型：default=默认，dynamic=动态、fixed=固定
+         */
+        private String type;
+        /**
+         * 销量类型：default=默认，dynamic=动态、fixed=固定
+         */
+        private String typeName;
+
+        /**
+         * 销量默认类型：dynamic=动态、fixed=固定
+         */
+        private String defaultType;
+        /**
+         * 销量默认类型：dynamic=动态、fixed=固定
+         */
+        private String defaultTypeName;
+
+        /**
+         * 名称
+         */
+        private String name;
+        /**
+         * 开始日期
+         */
+        private LocalDate startDate;
+        /**
+         * 结束日期
+         */
+        private LocalDate endDate;
+        /**
+         * 固定值
+         */
+        private Integer fixedValue;
+        /**
+         * 百分比json
+         */
+        private String percentJson;
+        /**
+         * 百分比json
+         */
+        private CfgRuleSalesFormulaDTO.PercentJsonDTO percentJsonDTO;
+
+        public static ExportDTO buildExportDTO(CfgRuleSalesFormulaCalcEntity entity) {
+            ExportDTO dto = new ExportDTO();
+            dto.setType(entity.getType());
+            dto.setTypeName(CfgRuleSalesFormulaTypeEnum.getName(entity.getType()));
+            dto.setDefaultType(entity.getDefaultType());
+            dto.setDefaultTypeName(CfgRuleSalesFormulaDefaultTypeEnum.getName(entity.getDefaultType()));
+            dto.setName(entity.getName());
+            dto.setStartDate(entity.getStartDate());
+            dto.setEndDate(entity.getEndDate());
+            dto.setFixedValue(entity.getFixedValue());
+            dto.setPercentJson(dto.getPercentJson());
+            dto.setPercentJsonDTO(dto.getPercentJsonDTO());
+            return dto;
+        }
+
+    }
 
 }

@@ -14,6 +14,7 @@ import com.erp.model.scm.enums.CreatePoTypeEnum;
 import com.erp.model.tms.entity.LogisticsBillEntity;
 import com.erp.model.wms.dto.FirstMileDeliveryDTO;
 import com.erp.model.wms.dto.OverseasProviderWarehouseDTO;
+import com.erp.model.wms.dto.inventory.InventoryReportDTO;
 import com.erp.model.wms.entity.FbaInventoryEntity;
 import com.erp.model.wms.entity.InventoryEntity;
 import com.erp.model.wms.entity.OverseasInventoryEntity;
@@ -32,6 +33,7 @@ import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -508,6 +510,11 @@ public class InventoryServiceImpl implements InventoryService {
                 overseasPlanDeliveryDetail, ReplenishmentInventoryTypeEnum.OVERSEAS_ESTIMATED_DELIVERY, CfgRuleWarehouseTypeEnum.OVERSEAS);
         replenishmentResultDTO.setOverseasDeliveryDetail(overseasPlanDeliveryDetail);
         return qty;
+    }
+
+    @Override
+    public List<InventoryReportDTO.TransportPagingDTO> listLocalInTransit(LocalDate calculationDate) {
+        return inventoryMapper.listLocalInTransit(getTableName(TRANSACTION_FLOW, calculationDate.format(DateTimeFormatter.BASIC_ISO_DATE)));
     }
 
     private List<LocalInventoryDTO> getOverseasPlanDeliveryInventory(ReplenishmentResultDTO replenishmentResultDTO, CfgRuleStrategyDTO cfgRuleStrategyDTO) {

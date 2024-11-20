@@ -2,6 +2,7 @@ package com.erp.server.mrp.calculation.service;
 
 import com.erp.model.mrp.dto.*;
 import com.erp.model.mrp.enums.ReplenishmentInventoryTypeEnum;
+import com.erp.model.wms.dto.inventory.InventoryReportDTO;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -131,4 +132,9 @@ public interface InventoryService {
      */
     int getOverseasPlanDelivery(ReplenishmentResultDTO replenishmentResultDTO, CfgRuleStrategyDTO cfgRuleStrategyDTO);
 
+
+    /**
+     * 获取在途库存
+     */
+    List<InventoryReportDTO.TransportPagingDTO> listLocalInTransit(LocalDate calculationDate);
 }

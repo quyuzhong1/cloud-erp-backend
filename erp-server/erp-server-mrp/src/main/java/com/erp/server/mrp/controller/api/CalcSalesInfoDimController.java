@@ -73,5 +73,14 @@ public class CalcSalesInfoDimController extends BaseController {
     }
 
 
+    /**
+     * 导出
+     */
+    @PostMapping("/exportSalesInfo")
+    public ApiResult<String> exportSalesInfo(@RequestBody CalcSalesInfoDimDTO.ExportSalesInfoDTO dto) {
+        calcSalesInfoDimService.exportSalesInfo(dto);
+       return success();
+    }
+
 
 }

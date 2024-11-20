@@ -5,8 +5,6 @@ import com.common.business.dto.DynamicExcelDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.erp.model.mrp.dto.*;
-import com.erp.model.mrp.dto.*;
-import com.erp.model.wms.dto.FbaInventoryDTO;
 import com.erp.server.mrp.handler.ReplenishmentSuggestionQueryHandler;
 import com.erp.server.mrp.service.*;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -34,6 +32,9 @@ public class ExportMrpFeignController {
 
     @Resource
     private FbaHistoryInventoryService fbaHistoryInventoryService;
+
+    @Resource
+    private CalcSalesInfoDimService calcSalesInfoDimService;
 
     /**
      * 历史销量导出数据查询
@@ -143,5 +144,15 @@ public class ExportMrpFeignController {
     @PostMapping("/exportCalcHistorySale")
     public PagingVO<CfgRuleCalcDTO.HistorySaleDTO> exportCalcHistorySale(@RequestBody PagingDTO<CfgRuleCalcDTO.DownloadDTO> dto) {
         return replenishmentSuggestionService.exportCalcHistorySale(dto);
+    }
+
+    /**
+     * 导出试算逻辑
+     * @param dto 参数
+     */
+    @PostMapping("/getListExportData")
+    @WebAdvanceQuery
+    PagingVO<CalcSalesInfoDimDTO.ExportResultDTO> getListExportData(@RequestBody PagingDTO<CalcSalesInfoDimDTO.ExportSalesInfoDTO> dto){
+        return calcSalesInfoDimService.getListExportData(dto);
     }
 }

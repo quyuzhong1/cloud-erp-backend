@@ -149,25 +149,25 @@ public class CfgRuleCalcDTO implements Serializable {
          * 默认日销量
          */
         @Valid
-        private CfgRuleSalesFormulaDTO.DefaultUpdateDTO defaultSalesQtyDTO;
+        private CfgRuleSalesFormulaCalcDTO.DefaultUpdateDTO defaultSalesQtyDTO;
 
         /**
          * 动态日销量
          */
         @Valid
-        private List<CfgRuleSalesFormulaDTO.DynamicUpdateDTO> dynamicSalesQtyList;
+        private List<CfgRuleSalesFormulaCalcDTO.DynamicUpdateDTO> dynamicSalesQtyList;
 
         /**
          * 固定日销量
          */
         @Valid
-        private List<CfgRuleSalesFormulaDTO.FixedUpdateDTO> fixedSalesQtyList;
+        private List<CfgRuleSalesFormulaCalcDTO.FixedUpdateDTO> fixedSalesQtyList;
 
         /**
          * 销量去噪
          */
         @Valid
-        private List<CfgRuleSalesDenoisingDTO.UpdateDTO> salesDenoisingList;
+        private List<CfgRuleSalesDenoisingCalcDTO.AddDTO> salesDenoisingList;
 
         public static CfgRuleCalcEntity buildCfgRuleCalcEntity(AddDTO addDTO) {
             CfgRuleCalcEntity entity = new CfgRuleCalcEntity();

@@ -62,8 +62,6 @@ public class BasicReplenishmentDataService {
     @Resource
     private CfgSettingFactory cfgSettingFactory;
     @Resource
-    private SalesService salesService;
-    @Resource
     private CfgRuleStockUpService cfgRuleStockUpService;
 
     @Resource
@@ -79,8 +77,6 @@ public class BasicReplenishmentDataService {
     private CfgRuleLogisticsService cfgRuleLogisticsService;
     @Resource
     private StockingTimeHandler stockingTimeHandler;
-    @Resource
-    private SalesInfoService salesInfoService;
     @Resource
     private InventoryService inventoryService;
     @Resource

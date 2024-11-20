@@ -587,5 +587,34 @@
                      AND owid.sku_id = #{result.replenishment.skuId}), 0)
             ) > 0
     </select>
+    <select id="listLocalInTransit"
+            resultType="com.erp.model.wms.dto.inventory.InventoryReportDTO$TransportPagingDTO">
+        select n.warehouse_id AS warehouseId,
+        n.org_id AS orgId,
+        n.sku_id AS skuId,
+        n.sku_no AS skuNo,
+        n.purchase_qty AS purchaseQty,
+        n.transfer_qty AS transferQty,
+        n.transport_qty AS transportQty
+        from (
+        select
+        m.warehouse_id,m.org_id,m.sku_id,m.sku_no,
+        case when m.purchase_qty <![CDATA[<]]> 0 then 0 else m.purchase_qty end as purchase_qty,
+        case when m.transfer_qty <![CDATA[<]]> 0 then 0 else m.transfer_qty end as transfer_qty,
+        purchase_qty + transfer_qty as transport_qty
+        from (
+        select
+        tf.warehouse_id,
+        tf.sku_id,
+        max(tf.org_id) as org_id,
+        max(tf.sku_no) as sku_no ,
+        sum(case when tf.dict_biz_type in ('21','01','03','04','25','27','28') and tf.dict_inventory_status =
+        'inTransit' then tf.qty else 0 end) as purchase_qty,
+        sum(case when tf.dict_biz_type in ('08','09') and tf.dict_inventory_status = 'inTransit' then tf.qty else 0 end) as transfer_qty
+        from ${tableName} tf
+        group by tf.warehouse_id, tf.sku_id
+        ) m
+        ) n where n.transport_qty > 0
+    </select>
 
 </mapper>

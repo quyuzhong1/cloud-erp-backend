@@ -1,11 +1,14 @@
 package com.erp.model.mrp.entity;
 
+import cn.hutool.json.JSONObject;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
+import com.erp.model.mrp.dto.CfgRuleSalesFormulaDTO;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
+import org.apache.ibatis.type.JdbcType;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
@@ -46,6 +49,31 @@ public class CalcSalesInfoEstimateEntity extends BaseEntity<CalcSalesInfoEstimat
     */
     @TableField("month")
     private String month;
+
+    /**
+     * 销量类型：default=默认，dynamic=动态、fixed=固定
+     */
+    @TableField("type")
+    private String type;
+    /**
+     * 销量默认类型：dynamic=动态、fixed=固定
+     */
+    @TableField("default_type")
+    private String defaultType;
+    /**
+     * 固定值
+     */
+    @TableField("fixed_value")
+    private Integer fixedValue;
+
+    @TableField(value = "percent_json", jdbcType = JdbcType.OTHER)
+    private JSONObject percentJson;
+
+    /**
+     * 百分比对象
+     */
+    @TableField(exist = false)
+    private CfgRuleSalesFormulaDTO.PercentJsonDTO percentJsonDTO;
 
 
     public static final String CALC_SALES_INFO_DIM_ID = "calc_sales_info_dim_id";

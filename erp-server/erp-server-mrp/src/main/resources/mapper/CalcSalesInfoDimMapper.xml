@@ -39,23 +39,23 @@
         sku_id, sku_no, country, shop_id, platform, sales_qty_json, avg_sales_qty_json, month_sales_estimate_qty_json, month_real_sales_qty_json, cfg_rule_calc_id, remark
     </sql>
     <select id="paging" resultType="com.erp.model.mrp.dto.CalcSalesInfoDimDTO$PagingView">
-        select id,
-               update_time,
-               sku_id,
-               sku_no,
-               country,
-               shop_id,
-               platform,
-               sales_qty_json,
-               avg_sales_qty_json,
-               month_sales_estimate_qty_json,
-               month_real_sales_qty_json,
-               cfg_rule_calc_id
-        from calc_sales_info_dim
+        select csic.id,
+               csic.update_time,
+               csic.sku_id,
+               csic.sku_no,
+               csic.country,
+               csic.shop_id,
+               csic.platform,
+               csic.sales_qty_json,
+               csic.avg_sales_qty_json,
+               csic.month_sales_estimate_qty_json,
+               csic.month_real_sales_qty_json,
+               csic.cfg_rule_calc_id
+        from calc_sales_info_dim csic
         where ${params.sqlMap.default}
-          and is_deleted = FALSE
-        and cfg_rule_calc_id = #{params.cfgRuleCalcId}
-        order by update_time desc
+          and csic.is_deleted = FALSE
+        and csic.cfg_rule_calc_id = #{params.cfgRuleCalcId}
+        order by csic.update_time desc
 
     </select>
     <select id="view" resultType="com.erp.model.mrp.dto.CalcSalesInfoDimDTO$ViewDTO">
@@ -70,5 +70,22 @@
                cfg_rule_calc_id
         from calc_sales_info_dim
         where id = #{id}
+    </select>
+    <select id="exportData" resultType="com.erp.model.mrp.dto.CalcSalesInfoDimDTO$ExportDTO">
+        select csic.id,
+               csic.sku_id,
+               csic.sku_no,
+               csic.country,
+               csic.shop_id,
+               csic.platform,
+               csic.sales_qty_json,
+               csic.avg_sales_qty_json,
+               csic.cfg_rule_calc_id,
+               crc.start_calc_date,
+               crc.end_calc_date
+        from calc_sales_info_dim csic
+                 inner join cfg_rule_calc crc on csic.cfg_rule_calc_id = crc.id and crc.is_deleted = false
+        where ${params.sqlMap.default}
+          and csic.is_deleted = FALSE
     </select>
 </mapper>

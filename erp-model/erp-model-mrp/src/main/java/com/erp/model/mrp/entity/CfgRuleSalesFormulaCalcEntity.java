@@ -30,12 +30,12 @@ import java.util.List;
 public class CfgRuleSalesFormulaCalcEntity extends BaseEntity<CfgRuleSalesFormulaCalcEntity> {
 
     /**
-    * 销量类型：default=默认，dynamic=动态、fixed=固定  枚举：CfgRuleSalesFormulaCalcTypeEnum
+    * 销量类型：default=默认，dynamic=动态、fixed=固定  枚举：CfgRuleSalesFormulaTypeEnum
     */
     @TableField("type")
     private String type;
     /**
-    * 销量默认类型：dynamic=动态、fixed=固定  枚举：CfgRuleSalesFormulaCalcDefaultTypeEnum
+    * 销量默认类型：dynamic=动态、fixed=固定  枚举：CfgRuleSalesFormulaDefaultTypeEnum
     */
     @TableField("default_type")
     private String defaultType;

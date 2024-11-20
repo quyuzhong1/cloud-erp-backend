@@ -1,6 +1,7 @@
 package com.erp.server.mrp.service.impl;
 
 
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.erp.model.mrp.entity.CfgRuleSalesDenoisingCalcEntity;
 import com.erp.server.mrp.mapper.CfgRuleSalesDenoisingCalcMapper;
@@ -8,6 +9,7 @@ import com.erp.server.mrp.service.CfgRuleSalesDenoisingCalcService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -24,7 +26,13 @@ public class CfgRuleSalesDenoisingCalcServiceImpl extends SuperServiceImpl<CfgRu
 
     @Override
     public List<CfgRuleSalesDenoisingCalcEntity> listByCfgRuleCalcId(String id) {
+        return listByCfgRuleCalcIds(Collections.singletonList(id));
+    }
 
-        return lambdaQuery().eq(CfgRuleSalesDenoisingCalcEntity::getCfgRuleCalcId, id).orderByAsc(CfgRuleSalesDenoisingCalcEntity::getIndex).list();
+    @Override
+    public List<CfgRuleSalesDenoisingCalcEntity> listByCfgRuleCalcIds(List<String> cfgRuleCalcIds) {
+        return list(Wrappers.<CfgRuleSalesDenoisingCalcEntity>lambdaQuery()
+                .in(CfgRuleSalesDenoisingCalcEntity::getCfgRuleCalcId,cfgRuleCalcIds)
+                .orderByAsc(CfgRuleSalesDenoisingCalcEntity::getIndex));
     }
 }

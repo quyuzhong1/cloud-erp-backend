@@ -1,5 +1,7 @@
 package com.erp.model.mrp.dto;
 
+import com.erp.model.mrp.entity.CfgRuleSalesDenoisingCalcEntity;
+import com.erp.model.mrp.enums.CfgRuleSalesDenoisingDenoisingTypeEnum;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -135,14 +137,77 @@ public class CfgRuleSalesDenoisingCalcDTO implements Serializable {
         */
         @NotNull(message = "有效值（去噪后的）不能为空")
         private Integer effectiveValue;
+    }
+
+
+    /**
+     * 导出
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ExportDTO {
 
         /**
-        * 试算配置id
-        */
-        @NotBlank(message = "试算配置id不能为空")
-        @Size(max = 19,message = "试算配置id最大长度不能超过19位")
+         * 序号
+         */
+        private Integer index;
+
+        /**
+         * 名称
+         */
+        private String name;
+
+        /**
+         * 开始日期
+         */
+        private LocalDate startDate;
+
+        /**
+         * 结束日期
+         */
+        private LocalDate endDate;
+
+        /**
+         * 去噪类型，percentage百分比去噪：fixedValue=固定值去噪，completely=完全去噪
+         */
+        private String denoisingType;
+        /**
+         * 去噪类型，percentage百分比去噪：fixedValue=固定值去噪，completely=完全去噪
+         */
+        private String denoisingTypeName;
+
+        /**
+         * 有效值（去噪后的）
+         */
+        private Integer effectiveValue;
+
+        /**
+         * 有效值（去噪后的 百分比）
+         */
+        private Integer percentageEffectiveValue;
+
+        /**
+         * 试算配置id
+         */
+
         private String cfgRuleCalcId;
 
+        public static ExportDTO buildExportDTO(CfgRuleSalesDenoisingCalcEntity entity) {
+            ExportDTO dto = new ExportDTO();
+            dto.setIndex(entity.getIndex());
+            dto.setName(entity.getName());
+            dto.setStartDate(entity.getStartDate());
+            dto.setEndDate(entity.getEndDate());
+            dto.setDenoisingType(entity.getDenoisingType());
+            dto.setCfgRuleCalcId(entity.getCfgRuleCalcId());
+            dto.setDenoisingTypeName(CfgRuleSalesDenoisingDenoisingTypeEnum.getName(entity.getDenoisingType()));
+            if (CfgRuleSalesDenoisingDenoisingTypeEnum.PERCENTAGE.getCode().equals(entity.getDenoisingType())) {
+                dto.setPercentageEffectiveValue(entity.getEffectiveValue());
+            } else {
+                dto.setEffectiveValue(entity.getEffectiveValue());
+            }
+            return dto;
+        }
 
     }
 
