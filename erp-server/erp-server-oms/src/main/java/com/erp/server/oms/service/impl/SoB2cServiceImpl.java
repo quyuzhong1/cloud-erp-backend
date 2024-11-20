@@ -77,6 +77,7 @@ import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.sys.dto.DictCountryDTO;
 import com.erp.model.sys.dto.SysDepartmentUserNumberDTO;
 import com.erp.model.sys.entity.DictCountryEntity;
+import com.erp.model.sys.entity.DictCurrencyEntity;
 import com.erp.model.tms.dto.*;
 import com.erp.model.tms.dto.transfer.TransferCancelOrderReq;
 import com.erp.model.tms.entity.*;
@@ -9297,8 +9298,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             if (SourceTypeEnum.SELF_ADD.getCode().equals(soB2cEntity.getSourceType())) {
                 shudiyunB2cOrderDTO.setTransaction_type("100.30");
 
-                // TODO 手工单：按照选择类型选择
-                shudiyunB2cOrderDTO.setTransaction_sub_type("");
+                shudiyunB2cOrderDTO.setTransaction_sub_type(soB2cEntity.getTransactionSubType());
             } else {
                 shudiyunB2cOrderDTO.setTransaction_type("100.20");
                 shudiyunB2cOrderDTO.setTransaction_sub_type("100.20.01");
@@ -9332,12 +9332,27 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             shudiyunB2cOrderDTO.setTotal_freight(soB2cEntity.getShippingFee());
             shudiyunB2cOrderDTO.setSales_company_code(soB2cEntity.getOrgId());
 
-            // todo 收款组织：暂无数据需要新增(必填字段)
-            shudiyunB2cOrderDTO.setReceiving_company_code("");
-            // todo 财务组织名称：暂无数据需要新增(必填字段)
-            shudiyunB2cOrderDTO.setOrganization_name("");
-            // todo 财务组织编码：暂无数据需要新增(必填字段)
-            shudiyunB2cOrderDTO.setOrganization_code("");
+
+            String shopId = soB2cEntity.getShopId();
+
+            ShopInfoEntity shopInfo = FeignQuery.getById(ShopInfoEntity.class, shopId);
+            if (ObjectUtil.isNotEmpty(shopInfo)) {
+                shudiyunB2cOrderDTO.setSales_company_code(shopInfo.getSalesOrgId());
+                shudiyunB2cOrderDTO.setShop_no(shopInfo.getId());
+                shudiyunB2cOrderDTO.setShop_name(shopInfo.getName());
+                DictCurrencyEntity dictCurrencyEntity = FeignQuery.getById(DictCurrencyEntity.class, shopInfo.getTradeCurrency());
+                if (ObjectUtil.isNotEmpty(dictCurrencyEntity)) {
+                    shudiyunB2cOrderDTO.setTransaction_currency(dictCurrencyEntity.getName());
+                }
+                shudiyunB2cOrderDTO.setTransaction_currency_code(shopInfo.getTradeCurrency());
+                shudiyunB2cOrderDTO.setSettlement_currency_code(shopInfo.getSettlementCurrency());
+            }
+            CustomerInfoEntity customerInfo = FeignQuery.getById(CustomerInfoEntity.class, shopInfo.getCustomerId());
+            if (ObjectUtil.isNotEmpty(customerInfo)) {
+                shudiyunB2cOrderDTO.setSales_company_code(customerInfo.getFinancialOrganization());
+                shudiyunB2cOrderDTO.setReceiving_company_code(customerInfo.getFinancialOrganization());
+            }
+
             shudiyunB2cOrderDTO.setPlatform_id(soB2cEntity.getDictPlatform());
             shudiyunB2cOrderDTO.setPlatform_name(PlatformDictEnum.getNameByCode(soB2cEntity.getDictPlatform()));
             shudiyunB2cOrderDTO.setShop_no(soB2cEntity.getShopId());
@@ -9407,8 +9422,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             shudiyunB2cOrderDTO.setSku_code(skuVO.getSkuNo());
             shudiyunB2cOrderDTO.setSku_name(skuVO.getSkuName());
 
-            // todo 店铺结算币种代码：暂无数据需要新增(必填字段)
-            shudiyunB2cOrderDTO.setSettlement_currency_code("");
             shudiyunB2cOrderDTO.setSource_system("SDC");
             shudiyunB2cOrderDTO.setRoot_node_no_initial(soB2cEntity.getPlatformCode());
 
@@ -9416,7 +9429,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             OmsPushMsgEntity omsPushMsgEntity = new OmsPushMsgEntity();
             omsPushMsgEntity.setTargetPlatform(DmpBasicSystemCodeEnum.SDY.getCode());
             omsPushMsgEntity.setSourceType(SourceTypeEnum.SDY_DELIVERY_ORDER.getCode());
-            omsPushMsgEntity.setSourceId(soB2cEntity.getId());
+            omsPushMsgEntity.setSourceId(soB2cDetailEntity.getId());
             omsPushMsgEntity.setSourceCode(soB2cEntity.getSourceCode());
             omsPushMsgEntity.setSyncOperate(operateEnum);
             omsPushMsgEntity.setPushData(JSON.toJSONString(shudiyunB2cOrderDTO));

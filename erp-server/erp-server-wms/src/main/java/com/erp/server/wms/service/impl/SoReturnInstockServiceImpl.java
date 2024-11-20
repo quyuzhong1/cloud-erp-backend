@@ -1758,27 +1758,22 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
             shudiyunB2cOrderDTO.setBiz_status(operateEnum);
 
             CustomerInfoEntity customerInfo = FeignQuery.getById(CustomerInfoEntity.class, entity.getCustomerId());
-
-            if (ObjectUtil.isEmpty(customerInfo)) {
-                throw new ServiceException(ApiError.ERROR_SDY_NOT_FOUND_CUSTOMER, entity.getCustomerId());
+            if (ObjectUtil.isNotEmpty(customerInfo)) {
+                shudiyunB2cOrderDTO.setSales_company_code(customerInfo.getFinancialOrganization());
+                shudiyunB2cOrderDTO.setReceiving_company_code(customerInfo.getFinancialOrganization());
             }
             List<ShopInfoEntity> shopList = FeignQuery.create(ShopInfoEntity.class).eq(ShopInfoEntity::getCustomerId, customerInfo.getId()).list();
-
-            if (CollUtil.isEmpty(shopList)) {
-                throw new ServiceException(ApiError.ERROR_SDY_NOT_FOUND_SHOP, customerInfo.getId());
+            if (CollUtil.isNotEmpty(shopList)) {
+                shudiyunB2cOrderDTO.setSales_company_code(shopList.get(0).getSalesOrgId());
+                shudiyunB2cOrderDTO.setShop_no(shopList.get(0).getId());
+                shudiyunB2cOrderDTO.setShop_name(shopList.get(0).getName());
+                DictCurrencyEntity dictCurrencyEntity = FeignQuery.getById(DictCurrencyEntity.class, shopList.get(0).getTradeCurrency());
+                if (ObjectUtil.isNotEmpty(dictCurrencyEntity)) {
+                    shudiyunB2cOrderDTO.setTransaction_currency(dictCurrencyEntity.getName());
+                }
+                shudiyunB2cOrderDTO.setTransaction_currency_code(shopList.get(0).getTradeCurrency());
+                shudiyunB2cOrderDTO.setSettlement_currency_code(shopList.get(0).getSettlementCurrency());
             }
-            shudiyunB2cOrderDTO.setSales_company_code(shopList.get(0).getSalesOrgId());
-            shudiyunB2cOrderDTO.setSales_company_code(customerInfo.getFinancialOrganization());
-            shudiyunB2cOrderDTO.setReceiving_company_code(customerInfo.getFinancialOrganization());
-            shudiyunB2cOrderDTO.setShop_no(shopList.get(0).getId());
-            shudiyunB2cOrderDTO.setShop_name(shopList.get(0).getName());
-            DictCurrencyEntity dictCurrencyEntity = FeignQuery.getById(DictCurrencyEntity.class, shopList.get(0).getTradeCurrency());
-            if (ObjectUtil.isNotEmpty(dictCurrencyEntity)) {
-                shudiyunB2cOrderDTO.setTransaction_currency(dictCurrencyEntity.getName());
-            }
-            shudiyunB2cOrderDTO.setTransaction_currency_code(shopList.get(0).getTradeCurrency());
-            shudiyunB2cOrderDTO.setSettlement_currency_code(shopList.get(0).getSettlementCurrency());
-
 
             shudiyunB2cOrderDTO.setPlatform_id("");
             shudiyunB2cOrderDTO.setPlatform_name("");
@@ -1836,7 +1831,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
             WmsPushMsgEntity wmsPushMsgEntity = new WmsPushMsgEntity();
             wmsPushMsgEntity.setTargetPlatform(DmpBasicSystemCodeEnum.SDY.getCode());
             wmsPushMsgEntity.setSourceType(SourceTypeEnum.SDY_SO_RETURN_INSTOCK.getCode());
-            wmsPushMsgEntity.setSourceId(entity.getId());
+            wmsPushMsgEntity.setSourceId(soReturnInstockDetailEntity.getId());
             wmsPushMsgEntity.setSourceCode(entity.getCode());
             wmsPushMsgEntity.setSyncOperate(operateEnum);
             wmsPushMsgEntity.setPushData(JSON.toJSONString(shudiyunB2cOrderDTO));

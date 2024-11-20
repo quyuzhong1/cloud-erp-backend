@@ -59,6 +59,7 @@ import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.sys.dto.DictCountryDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.sys.entity.DictCountryEntity;
+import com.erp.model.sys.entity.DictCurrencyEntity;
 import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.sys.entity.SysDepartmentEntity;
 import com.erp.model.tms.dto.*;
@@ -3558,12 +3559,24 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             shudiyunB2cOrderDTO.setTransaction_sub_type(convertOutstockTransactionSubType(transactionSubType));
             shudiyunB2cOrderDTO.setBiz_status(operateEnum);
 
-            // todo 收款组织：暂无数据需要新增(必填字段)
-            shudiyunB2cOrderDTO.setReceiving_company_code("");
-            // todo 财务组织名称：暂无数据需要新增(必填字段)
-            shudiyunB2cOrderDTO.setOrganization_name("");
-            // todo 财务组织编码：暂无数据需要新增(必填字段)
-            shudiyunB2cOrderDTO.setOrganization_code("");
+            CustomerInfoEntity customerInfo = FeignQuery.getById(CustomerInfoEntity.class, entity.getCustomerId());
+            if (ObjectUtil.isNotEmpty(customerInfo)) {
+                shudiyunB2cOrderDTO.setSales_company_code(customerInfo.getFinancialOrganization());
+                shudiyunB2cOrderDTO.setReceiving_company_code(customerInfo.getFinancialOrganization());
+            }
+            List<ShopInfoEntity> shopList = FeignQuery.create(ShopInfoEntity.class).eq(ShopInfoEntity::getCustomerId, customerInfo.getId()).list();
+            if (CollUtil.isNotEmpty(shopList)) {
+                shudiyunB2cOrderDTO.setSales_company_code(shopList.get(0).getSalesOrgId());
+                shudiyunB2cOrderDTO.setShop_no(shopList.get(0).getId());
+                shudiyunB2cOrderDTO.setShop_name(shopList.get(0).getName());
+                DictCurrencyEntity dictCurrencyEntity = FeignQuery.getById(DictCurrencyEntity.class, shopList.get(0).getTradeCurrency());
+                if (ObjectUtil.isNotEmpty(dictCurrencyEntity)) {
+                    shudiyunB2cOrderDTO.setTransaction_currency(dictCurrencyEntity.getName());
+                }
+                shudiyunB2cOrderDTO.setTransaction_currency_code(shopList.get(0).getTradeCurrency());
+                shudiyunB2cOrderDTO.setSettlement_currency_code(shopList.get(0).getSettlementCurrency());
+            }
+
             shudiyunB2cOrderDTO.setPlatform_id("");
             shudiyunB2cOrderDTO.setPlatform_name("");
             shudiyunB2cOrderDTO.setShop_no(entity.getCustomerId());
@@ -3614,8 +3627,6 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             shudiyunB2cOrderDTO.setSku_code(skuVO.getSkuNo());
             shudiyunB2cOrderDTO.setSku_name(skuVO.getSkuName());
 
-            // todo 店铺结算币种代码：暂无数据需要新增(必填字段)
-            shudiyunB2cOrderDTO.setSettlement_currency_code("");
             shudiyunB2cOrderDTO.setSource_system("SDC");
 
             if (CharSequenceUtil.isNotBlank(platformCode)) {
@@ -3627,7 +3638,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             WmsPushMsgEntity wmsPushMsgEntity = new WmsPushMsgEntity();
             wmsPushMsgEntity.setTargetPlatform(DmpBasicSystemCodeEnum.SDY.getCode());
             wmsPushMsgEntity.setSourceType(SourceTypeEnum.SDY_SO_OUTSTOCK.getCode());
-            wmsPushMsgEntity.setSourceId(entity.getId());
+            wmsPushMsgEntity.setSourceId(soOutstockDetailEntity.getId());
             wmsPushMsgEntity.setSourceCode(entity.getCode());
             wmsPushMsgEntity.setSyncOperate(operateEnum);
             wmsPushMsgEntity.setPushData(JSON.toJSONString(shudiyunB2cOrderDTO));

@@ -1011,5 +1011,5 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * @param soId
      * @param operateEnum
      */
-    Boolean shudiyunFieldHandler(SoB2cEntity soId, String operateEnum);
+    void shudiyunFieldHandler(SoB2cEntity soId, String operateEnum);
 }
