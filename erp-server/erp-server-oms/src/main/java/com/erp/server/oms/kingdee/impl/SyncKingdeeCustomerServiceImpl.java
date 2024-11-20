@@ -352,11 +352,11 @@ public class SyncKingdeeCustomerServiceImpl implements SyncKingdeeCustomerServic
 	public Map<String, Object> newSyncDataToSdy(CustomerInfoEntity entity, String operate) {
 		Map<String, Object> resultMap = new HashMap<>();
 		
-		String platformType = entity.getPlatformType();
-		if(StringUtils.isNotBlank(platformType)) {
-			List<DictBasicEntity> dictList = dictBasicService.lambdaQuery().eq(DictBasicEntity::getType, "sdySubPlatform").eq(DictBasicEntity::getName, platformType).list();
+		String subPlatformType = entity.getPlatformType();
+		if(StringUtils.isNotBlank(subPlatformType)) {
+			List<DictBasicEntity> dictList = dictBasicService.lambdaQuery().eq(DictBasicEntity::getType, "sdySubPlatform").eq(DictBasicEntity::getName, subPlatformType).list();
 			if(CollUtil.isNotEmpty(dictList)) {
-				platformType = dictList.get(0).getValue();
+				subPlatformType = dictList.get(0).getValue();
 			}
 		}
 		
@@ -369,7 +369,8 @@ public class SyncKingdeeCustomerServiceImpl implements SyncKingdeeCustomerServic
 		
 		resultMap.put("oms_system", "SDC");
 		resultMap.put("biz_uni_key", entity.getId());
-		resultMap.put("sub_platform_code", platformType);
+		resultMap.put("platform_code", entity.getPlatformType());
+		resultMap.put("sub_platform_code", subPlatformType);
 		resultMap.put("shop_code", entity.getCode());
 		resultMap.put("shop_site", entity.getCountryId());
 		resultMap.put("shop_name", entity.getName());
