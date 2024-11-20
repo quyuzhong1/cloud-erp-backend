@@ -741,16 +741,15 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         List<String> idList = transferInfoList.stream().map(TransferInfoEntity::getId).distinct().collect(Collectors.toList());
         List<TransferInfoDetailEntity> pushDetailList = detailList.stream().filter(obj -> idList.contains(obj.getMainId())).collect(Collectors.toList());
 
-        //b2c发货单
         List<String> sourceDetailIdList = pushDetailList.stream().map(TransferInfoDetailEntity::getSourceDetailId).distinct().collect(Collectors.toList());
-        List<SoB2cDeliveryDetailEntity> soB2cDeliveryDetailList = soB2cDeliveryDetailService.listByIds(sourceDetailIdList);
-
         //拣货明细
-        List<String> deliveryDetailIdList = soB2cDeliveryDetailList.stream().map(SoB2cDeliveryDetailEntity::getId).distinct().collect(Collectors.toList());
-        List<PickingDetailEntity> pickingDetailList = pickingDetailService.listPickingDetailBySourceDetailIds(deliveryDetailIdList);
+        List<PickingDetailEntity> pickingDetailList = pickingDetailService.listByIds(sourceDetailIdList);
         if (CollectionUtils.isEmpty(pickingDetailList)) {
             throw new ServiceException("未找到拣货单明细数据");
         }
+        //b2c发货单
+        List<String> deliveryDetailIdList = pickingDetailList.stream().map(PickingDetailEntity::getSourceDetailId).distinct().collect(Collectors.toList());
+        List<SoB2cDeliveryDetailEntity> soB2cDeliveryDetailList = soB2cDeliveryDetailService.listByIds(deliveryDetailIdList);
 
         //历史流水
         List<String> detailIdList = soB2cDeliveryDetailList.stream().map(SoB2cDeliveryDetailEntity::getId).distinct().collect(Collectors.toList());
