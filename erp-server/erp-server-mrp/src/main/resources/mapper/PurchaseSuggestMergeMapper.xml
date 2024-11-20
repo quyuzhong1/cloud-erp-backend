@@ -100,7 +100,7 @@
                 ${item.field} ${item.sort}
             </foreach>
         </if>
-        psm.id desc
+        psm.sku_id,psm.id desc
     </select>
 
 

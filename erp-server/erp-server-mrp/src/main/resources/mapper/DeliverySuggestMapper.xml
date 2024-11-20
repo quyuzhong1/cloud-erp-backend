@@ -144,7 +144,7 @@
                 ${item.field} ${item.sort}
             </foreach>
         </if>
-        ds.id desc
+        ds.sku_id,ds.platform,ds.shop_id,ds.id desc
     </select>
     <!-- 查询发货建议导出数据 -->
     <select id="pagingExportDeliverySuggestion"
@@ -172,7 +172,7 @@
                 ${item.field} ${item.sort}
             </foreach>
         </if>
-        ds.id asc
+        ds.sku_id,ds.platform,ds.shop_id,ds.id desc
     </select>
 
     <!-- 查询已完成30天的数据 -->
