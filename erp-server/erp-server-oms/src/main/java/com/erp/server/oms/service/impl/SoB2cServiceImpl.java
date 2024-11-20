@@ -9278,7 +9278,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 .list();
 
         //优惠额
-        BigDecimal totalDiscount = soB2cEntity.getTotalDiscount();
+        BigDecimal totalDiscount = BigDecimal.ZERO;
+        if (soB2cEntity.getTotalDiscount() != null) {
+            totalDiscount = soB2cEntity.getTotalDiscount();
+        }
 
         //总售价
         BigDecimal totalAmount = soB2cEntity.getAmount();
@@ -9317,7 +9320,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             ) {
                 shudiyunB2cOrderDTO.setTotal_canceled_goods_amount(soB2cEntity.getTotalCancelGoodsAmount());
             } else {
-                if (soB2cEntity.getIsCancel()) {
+                if (Boolean.TRUE.equals(soB2cEntity.getIsCancel()) && soB2cEntity.getIsCancel() != null) {
                     BigDecimal totalCancelGoodsAmount = soB2cDetailEntityList.stream().map(req -> req.getAmount()).reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
                     shudiyunB2cOrderDTO.setTotal_canceled_goods_amount(totalCancelGoodsAmount);
 
@@ -9370,7 +9373,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 shudiyunB2cOrderDTO.setGoods_status("10.10");
             }
 
-            if (soB2cEntity.getIsCancel()) {
+            if (Boolean.TRUE.equals(soB2cEntity.getIsCancel()) && soB2cEntity.getIsCancel() != null) {
                 shudiyunB2cOrderDTO.setGoods_status("10.20");
             }
 
