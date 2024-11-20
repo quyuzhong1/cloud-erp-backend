@@ -560,5 +560,10 @@ public class ReportOrderSalesDTO implements Serializable {
          * 交易后数量
          */
         private Integer curInventoryQty;
+
+        /**
+         * 库存状态
+         */
+        private String dictInventoryStatus;
     }
 }

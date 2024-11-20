@@ -329,7 +329,6 @@ public class ReportOrderDataServiceImpl extends SuperServiceImpl<ReportOrderData
         //查询30日前的结余库存，30天前最后一次流水
         List<ReportOrderSalesDTO.LastVirtualQtyDTO> lastVirtualQtyList = virtualTransFlowService.listLastVirtualQty(skuIdList, warehouseIdList, virtualWarehouseIdList, LocalDate.now().minusDays(30));
 
-
         List<ReportOrderSalesDTO.AddDTO> addOrUpdateList = new ArrayList<>();
         Map<String, List<ReportOrderDataEntity>> map = resultList.stream().collect(Collectors.groupingBy(obj -> obj.getSkuId().concat(obj.getWarehouseId()).concat(obj.getVirtualWarehouseId())));
         for (Map.Entry<String, List<ReportOrderDataEntity>> entry : map.entrySet()) {
@@ -405,6 +404,10 @@ public class ReportOrderDataServiceImpl extends SuperServiceImpl<ReportOrderData
             Integer ninetyDaysSalesQty = value.stream().filter(obj -> obj.getDate().isEqual(LocalDate.now().minusDays(90L)) || obj.getDate().isAfter(LocalDate.now().minusDays(90L))).map(ReportOrderDataEntity::getOrderQty).reduce(MathUtil.ZERO, Integer::sum);
             addDTO.setNinetyDaysSalesQty(ninetyDaysSalesQty);
             addOrUpdateList.add(addDTO);
+
+            //近30日结余（可用+冻结）
+            //lastVirtualQtyList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSkuId(),))
+
         }
         reportOrderSalesService.batchAddOrUpdate(addOrUpdateList);
     }
