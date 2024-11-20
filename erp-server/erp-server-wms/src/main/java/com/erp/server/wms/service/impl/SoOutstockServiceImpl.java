@@ -1228,7 +1228,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             sendPushTask(list,SyncOperateEnum.OPERATE_DELETE.getCode());
 
             //推送数帝云
-            list.forEach(req -> sdyFieldHandler(req,SyncOperateEnum.OPERATE_DISAPPROVE.getCode()));
+            list.forEach(req -> sdyFieldHandler(req,SyncOperateEnum.OPERATE_DELETE.getCode()));
         }
         return result;
     }
