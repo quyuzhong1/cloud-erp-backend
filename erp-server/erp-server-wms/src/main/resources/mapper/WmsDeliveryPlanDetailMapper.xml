@@ -33,8 +33,24 @@
         wdpd.is_deleted,
         wdpd.main_id, wdpd.sku_id, wdpd.sku_no, wdpd.qty, wdpd.is_combination,wdpd.source_json
     </sql>
-    <select id="ListAllVirtualDeliveryPlanDetail"
-            resultType="com.erp.model.wms.dto.ReportOrderDataDTO$ViewDTO"></select>
+
+    <!-- 根据来源id集合查询 -->
+    <select id="listBySourceIdList" resultType="com.erp.model.wms.entity.WmsDeliveryPlanDetailEntity">
+        select
+            <include refid="Base_Column_List" />
+            ,wdp.code
+        from wms_delivery_plan_detail wdpd
+        left join wms_delivery_plan wdp on wdpd.main_id = wdp.id and wdp.is_deleted = false
+        <where>
+            wdpd.is_deleted = false and wdp.invalid_status = 'false'
+            <if test="idList != null and idList.size > 0">
+               and
+                <foreach collection="idList" open="(" close=")" item="item" separator="or">
+                     wdpd.source_json::text like concat('%',#{item}::text,'%')
+                </foreach>
+            </if>
+        </where>
+    </select>
 
     <!-- 根据来源id集合查询 -->
     <select id="listBySourceIdList" resultType="com.erp.model.wms.entity.WmsDeliveryPlanDetailEntity">
