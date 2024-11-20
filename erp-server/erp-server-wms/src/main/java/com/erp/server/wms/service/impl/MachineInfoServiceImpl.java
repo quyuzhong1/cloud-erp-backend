@@ -722,7 +722,7 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
         updateInventoryForMachineSubComponents(entity,machineSubComponentsList);
 
         //头程发货单下推子件虚拟仓出库
-        updateFirstMileVirtualInventory(entity,detailList,machineSubComponentsList);
+        updateFirstMileVirtualInventory(entity,detailList);
     }
 
     /**
@@ -731,9 +731,8 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
      * @date 2024/11/18 14:11
      * @param entity
      * @param detailList
-     * @param machineSubComponentsList
      */
-    private void updateFirstMileVirtualInventory (MachineInfoEntity entity,List<MachineDetailEntity> detailList,List<MachineSubComponentsEntity> machineSubComponentsList) {
+    private void updateFirstMileVirtualInventory (MachineInfoEntity entity,List<MachineDetailEntity> detailList) {
         //头程发货单下推数据扣减虚拟仓库存
         if (!CharSequenceUtil.equals(entity.getSourceType(),SourceTypeEnum.FIRST_MILE_DELIVERY.getCode())) {
             return;
@@ -756,12 +755,9 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
             return;
         }
         List<VirtualInventoryStockDTO.OutInStockDTO>  outInStockList = new ArrayList<>();
-        for (MachineSubComponentsEntity detailEntity : machineSubComponentsList) {
-            //直接调拨单明细
-            String detailId = detailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), detailEntity.getDetailId()))
-                    .map(MachineDetailEntity::getId).findFirst().orElse("");
+        for (MachineDetailEntity detailEntity : detailList) {
             //头程发货单明细id
-            String refDetailId = machineList.stream().filter(obj -> CharSequenceUtil.equals(obj.getMachineDetailId(), detailId))
+            String refDetailId = machineList.stream().filter(obj -> CharSequenceUtil.equals(obj.getMachineDetailId(), detailEntity.getId()))
                     .map(MachineRefSoEntity::getSoDetailId).findFirst().orElse("");
             //要货申请明细id
             String applicationDetailId = firstMileDeliveryDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), refDetailId))
@@ -777,7 +773,7 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
             VirtualInventoryStockDTO.OutInStockDTO outInStockDTO = new VirtualInventoryStockDTO.OutInStockDTO();
             outInStockDTO.setSkuId(detailEntity.getSkuId());
             outInStockDTO.setSkuNo(detailEntity.getSkuNo());
-            outInStockDTO.setWarehouseId(detailEntity.getWarehouseId());
+            outInStockDTO.setWarehouseId(entity.getWarehouseId());
             outInStockDTO.setVirtualWarehouseId(virtualWarehouseId);
             outInStockDTO.setBillDate(LocalDate.now());
             outInStockDTO.setQty(detailEntity.getQty());
@@ -785,6 +781,7 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
             outInStockDTO.setSourceCode(entity.getCode());
             outInStockDTO.setSourceType(InventorySourceTypeEnum.MACHINE_INFO);
             outInStockDTO.setSourceDetailId(detailEntity.getId());
+            outInStockDTO.setBomVersion(detailEntity.getReferenceVersion());
             outInStockList.add(outInStockDTO);
         }
         //库存扣减
