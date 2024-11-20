@@ -3534,15 +3534,12 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
 
 
         String transactionSubType = "";
-        String platformCode = "";
         if (OrderTypeEnum.B2C.getCode().equals(entity.getOrderType())) {
             SoB2cEntity soB2cEntity = soB2cFeign.getById(entity.getSoId());
             transactionSubType = soB2cEntity.getTransactionSubType();
-            platformCode = soB2cEntity.getPlatformCode();
         } else if (OrderTypeEnum.B2B.getCode().equals(entity.getOrderType())) {
             SoInfoEntity soInfoEntity = soInfoFeign.getSoInfoById(entity.getSoId());
             transactionSubType = soInfoEntity.getTransactionSubType();
-            platformCode = soInfoEntity.getCode();
         }
 
         for (int i = 0; i < soOutstockDetailEntities.size(); i++) {
@@ -3629,11 +3626,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
 
             shudiyunB2cOrderDTO.setSource_system("SDC");
 
-            if (CharSequenceUtil.isNotBlank(platformCode)) {
-                shudiyunB2cOrderDTO.setRoot_node_no_initial(platformCode);
-            } else {
-                shudiyunB2cOrderDTO.setRoot_node_no_initial(entity.getSoCode());
-            }
+            shudiyunB2cOrderDTO.setRoot_node_no_initial(entity.getSoCode());
 
             WmsPushMsgEntity wmsPushMsgEntity = new WmsPushMsgEntity();
             wmsPushMsgEntity.setTargetPlatform(DmpBasicSystemCodeEnum.SDY.getCode());
