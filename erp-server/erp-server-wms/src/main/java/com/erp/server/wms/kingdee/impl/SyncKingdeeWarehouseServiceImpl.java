@@ -10,6 +10,7 @@ import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.dto.DmpPushTaskFeignDTO;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseIdDTO;
+import com.common.business.dto.base.BaseIdDTO.CodeDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.SyncOperateEnum;
@@ -262,8 +263,11 @@ public class SyncKingdeeWarehouseServiceImpl implements SyncKingdeeWarehouseServ
 		
 		Map<String, Object> resultMap = new HashMap<>();
 		resultMap.put("biz_uni_key", entity.getId());
-		resultMap.put("inventory_org_code", idCodeMap.get(orgId).getCode());
-		resultMap.put("inventory_org_name", idCodeMap.get(orgId).getName());
+		CodeDTO invertoryDto = idCodeMap.get(orgId);
+		if(invertoryDto != null) {
+			resultMap.put("inventory_org_code", invertoryDto.getCode());
+			resultMap.put("inventory_org_name", invertoryDto.getName());
+		}
 		resultMap.put("warehouse_code", entity.getKingdeeWarehouseCode());
 		resultMap.put("warehouse_name", entity.getName());
 		String channelAffiliation = entity.getChannelAffiliation();
@@ -274,8 +278,14 @@ public class SyncKingdeeWarehouseServiceImpl implements SyncKingdeeWarehouseServ
 					.list();
 			resultMap.put("channel_affiliation",  dictBasicEntityList.get(0).getName());
 		}
-		resultMap.put("shipping_organization", idCodeMap.get(shippingOrganization).getCode());
-		resultMap.put("financial_organization", idCodeMap.get(financialOrganization).getCode());
+		CodeDTO shippingDto = idCodeMap.get(shippingOrganization);
+		if(shippingDto != null) {
+			resultMap.put("shipping_organization", shippingDto.getCode());
+		}
+		CodeDTO finanDto = idCodeMap.get(financialOrganization);
+		if(finanDto != null) {
+			resultMap.put("financial_organization", finanDto.getCode());
+		}
 		resultMap.put("warehouse_type", dictBasicService.getById(entity.getTypeId()).getName());
 		LocalDateTime openTime = entity.getOpenTime();
 		if(openTime != null) {
