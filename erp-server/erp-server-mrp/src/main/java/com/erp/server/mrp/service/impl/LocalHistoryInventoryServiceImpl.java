@@ -150,4 +150,15 @@ public class LocalHistoryInventoryServiceImpl extends SuperServiceImpl<LocalHist
     public void exportExcel(LocalHistoryInventoryDTO.ExportDTO dto) {
         downloadTaskFeign.saveDownloadTask("本地仓每日库存", FileTaskEventEnum.EXPORT_MRP_LOCAL_INVENTORY.getCode(), dto);
     }
+
+    @Override
+    public PagingVO<LocalHistoryInventoryDTO.PagingViewDTO> exportLocalInventory(PagingDTO<LocalHistoryInventoryDTO.ExportDTO> dto) {
+        IPage<LocalHistoryInventoryDTO.PagingViewDTO> pageData = baseMapper.exportLocalInventory(new Page<>(dto.getCurrPage(), dto.getPageSize()), dto.getParams());
+        if (CollectionUtils.isEmpty(pageData.getRecords())){
+            return new PagingVO<>();
+        }
+        //填充分页数据
+        filList(pageData.getRecords());
+        return new PagingVO<>(pageData);
+    }
 }
