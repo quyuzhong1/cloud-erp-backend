@@ -171,7 +171,7 @@ public class SoB2cDeliveryFeignController extends BaseController {
      * @param code 类型
      */
     @PostMapping("/updateShipmentMark")
-    void updateShipmentMark(List<String> ids, String code) {
+    void updateShipmentMark(@RequestParam("ids")List<String> ids, @RequestParam("code")String code) {
         soB2cDeliveryService.updateShipmentMark(ids, code);
     }
 
