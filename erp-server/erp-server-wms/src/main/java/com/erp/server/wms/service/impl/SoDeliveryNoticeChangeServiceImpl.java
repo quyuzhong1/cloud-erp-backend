@@ -462,6 +462,8 @@ public class SoDeliveryNoticeChangeServiceImpl extends SuperServiceImpl<SoDelive
             detailService.updateBatchById(sourceDetailList);
         }
 
+        //同步装箱任务明细
+        packingTaskService.syncByDeliveryNoticeChange(soDeliveryNotice,addList,updateList,deleteList);
     }
 
     @Override

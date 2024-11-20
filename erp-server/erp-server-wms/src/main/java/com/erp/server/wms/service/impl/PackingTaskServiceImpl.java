@@ -3,17 +3,14 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.enums.CellExtraTypeEnum;
 import com.alibaba.excel.exception.ExcelAnalysisException;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
-import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.annotation.DataIdempotent;
 import com.common.business.config.DocNoGenHelper;
@@ -71,7 +68,6 @@ import com.erp.server.wms.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.ResourceLoader;
@@ -92,7 +88,8 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static com.common.business.enums.FileTaskEventEnum.*;
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_PACKING_TASK;
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_PACKING_TASK_DETAIL;
 
 /**
  * <p>
@@ -2576,7 +2573,6 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
         if(Objects.isNull(packingTaskEntity)){
             return;
         }
-        List<PackingTaskDetailEntity> dbDetailList = packingTaskDetailService.listByMainIds(Arrays.asList(packingTaskEntity.getId()));
         List<PackingTaskDetailEntity> addTaskDetailList =  new ArrayList<>();
         List<PackingTaskDetailEntity> updateTaskDetailList =  new ArrayList<>();
         List<PackingTaskDetailEntity> deleteTaskDetailList =  new ArrayList<>();
@@ -2587,40 +2583,14 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
                 packingTaskDetailEntity.setMainId(packingTaskEntity.getId());
                 packingTaskDetailEntity.setSkuId(v.getSkuId());
                 packingTaskDetailEntity.setSkuNo(v.getSkuNo());
-                packingTaskDetailEntity.setDeliveryQty(v.getDeliveryQty());
+                packingTaskDetailEntity.setDeliveryQty(0);
                 packingTaskDetailEntity.setSourceDetailId(v.getId());
                 packingTaskDetailEntity.setFnSku(v.getPlatformSkuNo());
                 addTaskDetailList.add(packingTaskDetailEntity);
             });
         }
-        //处理更新
-        if(CollectionUtils.isNotEmpty(updateList)){
-            updateList.forEach(v->{
-                PackingTaskDetailEntity packingTaskDetailEntity = dbDetailList.stream().filter(d->d.getSourceDetailId().equals(v.getId())).findFirst().orElse(null);
-                if(Objects.isNull(packingTaskDetailEntity)){
-                    return;
-                }
-                packingTaskDetailEntity.setDeliveryQty(v.getDeliveryQty());
-                updateTaskDetailList.add(packingTaskDetailEntity);
-            });
-        }
-
-        //处理删除
-        if(CollectionUtils.isNotEmpty(deleteList)){
-            deleteList.forEach(v->{
-                PackingTaskDetailEntity packingTaskDetailEntity = dbDetailList.stream().filter(d->d.getSourceDetailId().equals(v.getId())).findFirst().orElse(null);
-                if(Objects.isNull(packingTaskDetailEntity)){
-                    return;
-                }
-                deleteTaskDetailList.add(packingTaskDetailEntity);
-            });
-        }
 
         packingTaskDetailService.updateByChange(addTaskDetailList,updateTaskDetailList,deleteTaskDetailList);
-        //重新查询明细并更新主表的发货数量
-        List<PackingTaskDetailEntity> currentDetailList = packingTaskDetailService.listByMainIds(Arrays.asList(packingTaskEntity.getId()));
-        packingTaskEntity.setDeliveryQty(currentDetailList.stream().map(PackingTaskDetailEntity::getDeliveryQty).reduce(MathUtil.ZERO,Integer::sum));
-        this.updateById(packingTaskEntity);
     }
 
     /**
