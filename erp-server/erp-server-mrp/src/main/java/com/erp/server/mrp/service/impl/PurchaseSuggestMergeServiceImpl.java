@@ -500,15 +500,16 @@ public class PurchaseSuggestMergeServiceImpl extends SuperServiceImpl<PurchaseSu
                     StrUtil.equals(obj.getParentSkuId(), purchaseSuggestEntity.getSkuId())
                             && StrUtil.equals(obj.getBomVersion(), old.getBomVersion())
             ).collect(Collectors.toList());
-            String bomStr = "";
+            List<String> bomDataList = new ArrayList<>();
             for (BomChildrenSkuDTO bomChildrenSkuDTO : childSkuList) {
                 DeliverySuggestDTO.BomDetailDTO bomDetailDTO = new DeliverySuggestDTO.BomDetailDTO();
                 bomDetailDTO.setParentSkuNo(bomChildrenSkuDTO.getParentSkuNo());
                 bomDetailDTO.setSkuNo(bomChildrenSkuDTO.getSkuNo());
                 bomDetailDTO.setQuantity(bomChildrenSkuDTO.getQuantity());
                 bomList.add(bomDetailDTO);
-                bomStr = bomStr +"+" + CharSequenceUtil.format("{}*{}",bomChildrenSkuDTO.getSkuNo(),bomChildrenSkuDTO.getQuantity());
+                bomDataList.add(CharSequenceUtil.format("{}*{}",bomChildrenSkuDTO.getSkuNo(),bomChildrenSkuDTO.getQuantity()));
             }
+            String bomStr = bomDataList.stream().collect(Collectors.joining("+"));
             purchaseSuggestBomDTO.setBomStr(bomStr);
             purchaseSuggestBomDTO.setBomList(bomList);
             resultList.add(purchaseSuggestBomDTO);
