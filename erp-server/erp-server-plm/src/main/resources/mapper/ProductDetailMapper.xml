@@ -772,6 +772,7 @@
         ppk.box_qty as boxQty,
         ppk.gross_weight as grossWeight,
         ppk.net_weight,
+        pd.warehouse_location_large,
         pc.retail_price AS retailPrice
         FROM  product_detail pd
         LEFT JOIN product_info pi ON pi.id = pd.product_id AND pi.is_deleted = FALSE
