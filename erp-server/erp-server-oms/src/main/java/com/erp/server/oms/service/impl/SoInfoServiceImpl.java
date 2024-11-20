@@ -3879,9 +3879,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
      * @param soId
      * @param operateEnum
      */
-    public Boolean sdyFieldOrderHandler(String soId, String operateEnum) {
-        List<ShudiyunB2cOrderDTO> shudiyunB2cOrderDTOList = new ArrayList<>();
-
+    public void sdyFieldOrderHandler(String soId, String operateEnum) {
         SoInfoDTO.ViewDTO view = this.view(soId);
 
         List<String> skuNos = view.getDetailList().stream().map(req -> req.getSkuNo()).collect(Collectors.toList());
@@ -4028,20 +4026,15 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             shudiyunB2cOrderDTO.setSource_system("SDC");
             shudiyunB2cOrderDTO.setRoot_node_no_initial(view.getCode());
 
-            shudiyunB2cOrderDTOList.add(shudiyunB2cOrderDTO);
-
+            //同步B2B订单
+            OmsPushMsgEntity omsPushMsgEntity = new OmsPushMsgEntity();
+            omsPushMsgEntity.setTargetPlatform(DmpBasicSystemCodeEnum.SDY.getCode());
+            omsPushMsgEntity.setSourceType(SourceTypeEnum.SDY_OFFLINE_ORDER.getCode());
+            omsPushMsgEntity.setSourceId(soDetailEntity.getId());
+            omsPushMsgEntity.setSourceCode(view.getCode());
+            omsPushMsgEntity.setSyncOperate(operateEnum);
+            omsPushMsgEntity.setPushData(JSON.toJSONString(shudiyunB2cOrderDTO));
+            omsPushMsgService.save(omsPushMsgEntity);
         }
-
-        OmsPushMsgEntity omsPushMsgEntity = new OmsPushMsgEntity();
-        omsPushMsgEntity.setTargetPlatform(DmpBasicSystemCodeEnum.SDY.getCode());
-        omsPushMsgEntity.setSourceType(SourceTypeEnum.SDY_OFFLINE_ORDER.getCode());
-        omsPushMsgEntity.setSourceId(view.getId());
-        omsPushMsgEntity.setSourceCode(view.getCode());
-        omsPushMsgEntity.setSyncOperate(operateEnum);
-        omsPushMsgEntity.setPushData(JSON.toJSONString(shudiyunB2cOrderDTOList));
-
-        //同步B2B订单
-        return omsPushMsgService.save(omsPushMsgEntity);
-
     }
 }
