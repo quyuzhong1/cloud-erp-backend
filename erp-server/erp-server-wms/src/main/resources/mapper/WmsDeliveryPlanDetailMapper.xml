@@ -32,6 +32,8 @@
         is_deleted,
         main_id, sku_id, sku_no, qty, is_combination
     </sql>
+    <select id="ListAllVirtualDeliveryPlanDetail"
+            resultType="com.erp.model.wms.dto.ReportOrderDataDTO$ViewDTO"></select>
 
 
 </mapper>
