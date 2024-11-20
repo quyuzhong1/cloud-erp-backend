@@ -9450,22 +9450,4 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         omsPushMsgEntity.setPushData(JSON.toJSONString(shudiyunB2cOrderDTOList));
         return omsPushMsgService.save(omsPushMsgEntity);
     }
-
-    /**
-     * 线上订单同步数帝云
-     * @param platformCode
-     * @param operateEnum
-     * @return
-     */
-    private Boolean SdyDmpSoInfoHandler(String platformCode, String operateEnum) {
-        List<ShudiyunB2cOrderDTO> shudiyunB2cOrderDTOList = dmpSoInfoFeign.shudiyunFieldDmpOrderHandler(platformCode);
-        OmsPushMsgEntity omsPushMsgEntity = new OmsPushMsgEntity();
-        omsPushMsgEntity.setTargetPlatform(DmpBasicSystemCodeEnum.SDY.getCode());
-        omsPushMsgEntity.setSourceType(SourceTypeEnum.SDY_ONLINE_ORDER.getCode());
-        omsPushMsgEntity.setSourceId(platformCode);
-        omsPushMsgEntity.setSourceCode(platformCode);
-        omsPushMsgEntity.setSyncOperate(operateEnum);
-        omsPushMsgEntity.setPushData(JSON.toJSONString(shudiyunB2cOrderDTOList));
-        return omsPushMsgService.save(omsPushMsgEntity);
-    }
 }
