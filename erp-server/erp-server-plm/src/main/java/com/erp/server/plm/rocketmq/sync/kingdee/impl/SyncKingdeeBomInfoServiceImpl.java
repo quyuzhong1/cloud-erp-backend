@@ -1,6 +1,7 @@
 package com.erp.server.plm.rocketmq.sync.kingdee.impl;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -232,6 +233,8 @@ public class SyncKingdeeBomInfoServiceImpl implements SyncKingdeeBomInfoService 
 		ProductBomHistoryEntity productBomHistoryEntity = productBomHistoryService.getById(entity.getBomHistoryId());
 		BomInfoEntity bomInfoEntity = bomInfoService.getById(productBomHistoryEntity.getBomId());
 		
+		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'");
+		
 		Map<String, String> productIdNameMap = productDetailService.listByIds(Arrays.asList(entity.getSkuId() , entity.getParentSkuId()))
 				.stream().collect(Collectors.toMap(ProductDetailEntity::getId, ProductDetailEntity::getName));
 		
@@ -245,7 +248,10 @@ public class SyncKingdeeBomInfoServiceImpl implements SyncKingdeeBomInfoService 
 		resultMap.put("product_code", entity.getSkuNo());
 		resultMap.put("product_name", productIdNameMap.get(entity.getSkuId()));
 		resultMap.put("product_quota", entity.getQuantity());
-		resultMap.put("create_time", entity.getCreateTime());
+		LocalDateTime createTime = entity.getCreateTime();
+		if(createTime != null) {
+			resultMap.put("create_time", createTime.format(formatter));
+		}
 		resultMap.put("owner", entity.getCreateUserName());
 		resultMap.put("version", bomInfoEntity.getBomVersion());
 		

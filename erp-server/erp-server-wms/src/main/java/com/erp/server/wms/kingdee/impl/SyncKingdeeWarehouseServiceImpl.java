@@ -43,6 +43,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -255,6 +258,8 @@ public class SyncKingdeeWarehouseServiceImpl implements SyncKingdeeWarehouseServ
 		Map<String, String> idCodeMap = sysUserFeign.getAccountingCompanyList(Arrays.asList(orgId , shippingOrganization , financialOrganization))
 				.stream().collect(Collectors.toMap(BaseIdDTO.CodeDTO::getId, BaseIdDTO.CodeDTO::getCode));
 		
+		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'");
+		
 		Map<String, Object> resultMap = new HashMap<>();
 		resultMap.put("biz_uni_key", entity.getId());
 		resultMap.put("inventory_org_code", orgId);
@@ -272,8 +277,14 @@ public class SyncKingdeeWarehouseServiceImpl implements SyncKingdeeWarehouseServ
 		resultMap.put("shipping_organization", idCodeMap.get(shippingOrganization));
 		resultMap.put("financial_organization", idCodeMap.get(financialOrganization));
 		resultMap.put("warehouse_type", dictBasicService.getById(entity.getTypeId()).getName());
-		resultMap.put("created_time", entity.getOpenTime());
-		resultMap.put("modified_time", entity.getCloseTime());
+		LocalDateTime openTime = entity.getOpenTime();
+		if(openTime != null) {
+			resultMap.put("created_time", openTime.format(formatter));
+		}
+		LocalDateTime closeTime = entity.getCloseTime();
+		if(closeTime != null) {
+			resultMap.put("modified_time", closeTime.format(formatter));
+		}
 		if(SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
 			resultMap.put("status", "已删除");
 		}else {

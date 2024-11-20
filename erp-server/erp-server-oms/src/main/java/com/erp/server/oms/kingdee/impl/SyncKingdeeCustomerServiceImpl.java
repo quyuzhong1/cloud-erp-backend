@@ -1,5 +1,7 @@
 package com.erp.server.oms.kingdee.impl;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -363,6 +365,8 @@ public class SyncKingdeeCustomerServiceImpl implements SyncKingdeeCustomerServic
 		Map<String, String> orgIdCodeMap = sysUserFeign.getAccountingCompanyList(Arrays.asList(financialOrganization , useOrgId))
 			.stream().collect(Collectors.toMap(BaseIdDTO.CodeDTO::getId, BaseIdDTO.CodeDTO::getCode));
 		
+		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'");
+		
 		resultMap.put("oms_system", "SDC");
 		resultMap.put("biz_uni_key", entity.getId());
 		resultMap.put("sub_platform_code", platformType);
@@ -378,8 +382,14 @@ public class SyncKingdeeCustomerServiceImpl implements SyncKingdeeCustomerServic
 		resultMap.put("period_setting", entity.getPeriodSetting());
 		resultMap.put("check_type", entity.getCheckType());
 		resultMap.put("is_check", "是");
-		resultMap.put("enable_time", entity.getEnableTime());
-		resultMap.put("down_time", entity.getDownTime());
+		LocalDateTime enableTime = entity.getEnableTime();
+		if(enableTime != null) {
+			resultMap.put("enable_time", enableTime.format(formatter));
+		}
+		LocalDateTime downTime = entity.getDownTime();
+		if(downTime != null) {
+			resultMap.put("down_time", downTime.format(formatter));
+		}
 		
 		if(SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
 			resultMap.put("is_enable", "已删除");

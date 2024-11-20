@@ -342,6 +342,8 @@ public class SyncKingdeeProductDetailServiceImpl implements SyncKingdeeProductDe
 	public Map<String, Object> newSyncDataToSdy(ProductDetailEntity entity, String operate) {
 		ProductCostEntity productCostEntity = productCostService.getBySkuId(entity.getId());
 		
+		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'");
+		
 		Map<String, Object> resultMap = new HashMap<>();
 		resultMap.put("data_source_system", "SDC");
 		resultMap.put("biz_uni_key", entity.getId());
@@ -351,9 +353,15 @@ public class SyncKingdeeProductDetailServiceImpl implements SyncKingdeeProductDe
 			resultMap.put("uni_retail_price", productCostEntity.getRetailPrice());
 		}
 		resultMap.put("main_unit", entity.getUnitName());
-		resultMap.put("created_time", entity.getCreateTime());
+		LocalDateTime createTime = entity.getCreateTime();
+		if(createTime != null) {
+			resultMap.put("created_time", createTime.format(formatter));
+		}
 		resultMap.put("latest_update_time", LocalDateTime.now());
-		resultMap.put("enable_time", entity.getEnableTime());
+		LocalDateTime enableTime = entity.getEnableTime();
+		if(enableTime != null) {
+			resultMap.put("enable_time", enableTime.format(formatter));
+		}
 		resultMap.put("out_system_code", "SDC");
 		
 		if(SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
