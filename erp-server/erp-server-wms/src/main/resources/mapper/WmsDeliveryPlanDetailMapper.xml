@@ -33,6 +33,8 @@
         wdpd.is_deleted,
         wdpd.main_id, wdpd.sku_id, wdpd.sku_no, wdpd.qty, wdpd.is_combination,wdpd.source_json
     </sql>
+    <select id="ListAllVirtualDeliveryPlanDetail"
+            resultType="com.erp.model.wms.dto.ReportOrderDataDTO$ViewDTO"></select>
 
     <!-- 根据来源id集合查询 -->
     <select id="listBySourceIdList" resultType="com.erp.model.wms.entity.WmsDeliveryPlanDetailEntity">

@@ -11,6 +11,7 @@ import com.common.core.exception.ServiceException;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.wms.dto.ReportOrderDataDTO;
 import com.erp.model.wms.dto.WmsDeliveryPlanDTO;
 import com.erp.model.wms.dto.WmsDeliveryPlanDetailDTO;
 import com.erp.model.wms.entity.WmsDeliveryPlanDetailEntity;
@@ -189,6 +190,11 @@ public class WmsDeliveryPlanDetailServiceImpl extends SuperServiceImpl<WmsDelive
     @Override
     public List<WmsDeliveryPlanDetailEntity> listBySourceIdList(List<String> idList) {
         return baseMapper.listBySourceIdList(idList);
+    }
+
+    @Override
+    public List<ReportOrderDataDTO.ViewDTO> ListAllVirtualDeliveryPlanDetail() {
+        return baseMapper.ListAllVirtualDeliveryPlanDetail();
     }
 
     /**

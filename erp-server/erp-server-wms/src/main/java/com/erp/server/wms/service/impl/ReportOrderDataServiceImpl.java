@@ -4,7 +4,6 @@ package com.erp.server.wms.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONUtil;
 import com.common.business.enums.ApproveStatusEnum;
@@ -32,7 +31,6 @@ import com.erp.server.wms.service.*;
 import com.google.common.collect.Lists;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -83,6 +81,9 @@ public class ReportOrderDataServiceImpl extends SuperServiceImpl<ReportOrderData
 
     @Resource
     private SoDeliveryNoticeDetailService soDeliveryNoticeDetailService;
+
+    @Resource
+    private WmsDeliveryPlanDetailService wmsDeliveryPlanDetailService;
 
     /**
     * 修改
@@ -182,6 +183,12 @@ public class ReportOrderDataServiceImpl extends SuperServiceImpl<ReportOrderData
         if (CollectionUtils.isNotEmpty(requisitionApplicationDetailList)) {
             resultList.addAll(requisitionApplicationDetailList);
         }
+        //发货计划
+        List<ReportOrderDataDTO.ViewDTO> DeliveryPlanDetailList =  wmsDeliveryPlanDetailService.ListAllVirtualDeliveryPlanDetail();
+
+
+        //头程发货单
+
         //无数据则删除所有并且返回
         if (CollectionUtils.isEmpty(resultList)) {
             lambdaUpdate().remove();

@@ -1,4 +1,5 @@
 package com.erp.server.wms.service;
+import com.erp.model.wms.dto.ReportOrderDataDTO;
 import com.erp.model.wms.dto.WmsDeliveryPlanDTO;
 import com.erp.model.wms.entity.WmsDeliveryPlanDetailEntity;
 import com.common.business.service.SuperService;
@@ -60,4 +61,11 @@ public interface WmsDeliveryPlanDetailService extends SuperService<WmsDeliveryPl
      * @return List<WmsDeliveryPlanDetailEntity>
      */
     List<WmsDeliveryPlanDetailEntity> listBySourceIdList(List<String> idList);
+    /**
+     * 查看发货计划虚拟仓报表数据
+     * @author will
+     * @date 2024/11/20 10:33
+     * @return List<ViewDTO>
+     */
+    List<ReportOrderDataDTO.ViewDTO> ListAllVirtualDeliveryPlanDetail();
 }
