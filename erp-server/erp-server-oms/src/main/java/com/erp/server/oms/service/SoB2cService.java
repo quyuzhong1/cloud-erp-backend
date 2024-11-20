@@ -1012,4 +1012,7 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * @param operateEnum
      */
     void shudiyunFieldHandler(SoB2cEntity soId, String operateEnum);
+
+
+    Boolean tempTikTokOrderDate();
 }

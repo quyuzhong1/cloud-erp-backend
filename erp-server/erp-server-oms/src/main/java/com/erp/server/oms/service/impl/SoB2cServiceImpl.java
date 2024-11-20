@@ -48,6 +48,7 @@ import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.dto.CfgAppClientDTO;
 import com.erp.model.dmp.dto.DmpInoutDTO;
+import com.erp.model.dmp.dto.ThirdMappingDTO;
 import com.erp.model.dmp.entity.CfgAppClientEntity;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.dmp.enums.AppClientEnum;
@@ -151,6 +152,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static com.common.business.enums.FileTaskEventEnum.*;
+import static java.util.stream.Collectors.groupingBy;
 
 /**
  * <p>
@@ -9433,5 +9435,21 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             omsPushMsgService.save(omsPushMsgEntity);
 
         }
+    }
+
+    @Override
+    public Boolean tempTikTokOrderDate() {
+        List<SoB2cDetailEntity> soB2cDetailEntityList = baseMapper.listTikTokOrder();
+
+        List<String> mainIds = soB2cDetailEntityList.stream().map(req -> req.getMainId()).distinct().collect(Collectors.toList());
+        List<SoB2cDetailEntity> list = soB2cDetailService.lambdaQuery()
+                .in(SoB2cDetailEntity::getMainId, mainIds)
+                .list();
+
+        Map<String, List<SoB2cDetailEntity>> collect = list.stream().collect(groupingBy(req -> req.getMainId() + "-" + req.getSkuId()));
+        for (Map.Entry<String, List<SoB2cDetailEntity>> stringListEntry : collect.entrySet()) {
+
+        }
+        return null;
     }
 }

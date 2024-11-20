@@ -819,6 +819,17 @@ public class SoInfoController extends BaseController {
         return result ? success():failure();
     }
 
+    /**
+     * 临时修复数据接口 todo
+     * @param dto
+     * @return
+     */
+    @PostMapping("/tempTikTokOrderDate")
+    public ApiResult tempTikTokOrderDate() {
+        Boolean result = soInfoService.tempTikTokOrderDate();
+        return result ? success():failure();
+    }
+
 
 
 }
