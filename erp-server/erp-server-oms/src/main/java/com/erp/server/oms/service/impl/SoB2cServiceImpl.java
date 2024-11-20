@@ -1053,6 +1053,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     }
 
     private Boolean checkProcess(SoB2cEntity entity, ApproveOneDTO dto) {
+        if(Objects.nonNull(entity) && Objects.nonNull(entity.getIsChangeSku()) && !entity.getIsChangeSku()){
+            return Boolean.FALSE;
+        }
         Boolean isExistProcess = Boolean.FALSE;
         LoginUser userInfo = UserContext.getDefaultLoginUser();
         ProcessManagementDTO.ApproveDTO approveDTO = new ProcessManagementDTO.ApproveDTO();
