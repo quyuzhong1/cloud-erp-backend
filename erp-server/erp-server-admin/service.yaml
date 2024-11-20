@@ -34,12 +34,14 @@ spec:
               memory: "2Gi"
           envFrom:
             - configMapRef:
-                name: erp-config-${ENV} # 通过环境变量来选择不同的 ConfigMap
+                name: erp-config # 通过环境变量来选择不同的 ConfigMap
           env:
-            - name: ENV
+            - name: SPRING_PROFILES_ACTIVE
               valueFrom:
-                fieldRef:
-                  fieldPath: metadata.labels['env']
+                configMapKeyRef:
+                  key: erp-config
+                  name: SPRING_PROFILES_ACTIVE
+
           ports:
             - containerPort: 8080
               name: server
@@ -67,7 +69,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: erp-server-admin
-  namespace: dev #namespace
+  namespace: ${NAMESPACE} #namespace
   labels:
     app: erp-server-admin
 spec:
