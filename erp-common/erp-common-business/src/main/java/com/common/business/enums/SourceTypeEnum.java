@@ -220,7 +220,7 @@ public enum SourceTypeEnum {
     SDY_OFFLINE_ORDER("sdyOfflineOrder", "速帝云B2B订单","so_info"),
     SDY_SO_OUTSTOCK("sdySoOutstock", "速帝云销售出库订单","so_outstock"),
     SDY_LOGISTICS_BILL("sdyLogisticsBill", "速帝云运单","logistics_bill"),
-    SDY_SORETURN_INSTOCK("sdySoReturnInstock", "速帝云退货入库单","so_return_instock"),
+    SDY_SO_RETURN_INSTOCK("sdySoReturnInstock", "速帝云退货入库单","so_return_instock"),
 
     ;
 
