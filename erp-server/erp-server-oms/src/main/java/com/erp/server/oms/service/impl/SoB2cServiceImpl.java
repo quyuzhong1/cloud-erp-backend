@@ -9260,8 +9260,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
      * @param soB2cEntity
      * @param operateEnum
      */
-    public Boolean shudiyunFieldHandler(SoB2cEntity soB2cEntity, String operateEnum) {
-        List<ShudiyunB2cOrderDTO> shudiyunB2cOrderDTOList = new ArrayList<>();
+    public void shudiyunFieldHandler(SoB2cEntity soB2cEntity, String operateEnum) {
 
         List<SoB2cDetailEntity> soB2cDetailEntityList = soB2cDetailService.listByMainId(soB2cEntity.getId());
 
@@ -9413,20 +9412,19 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             shudiyunB2cOrderDTO.setSource_system("SDC");
             shudiyunB2cOrderDTO.setRoot_node_no_initial(soB2cEntity.getPlatformCode());
 
-            shudiyunB2cOrderDTOList.add(shudiyunB2cOrderDTO);
+            //同步配货单
+            OmsPushMsgEntity omsPushMsgEntity = new OmsPushMsgEntity();
+            omsPushMsgEntity.setTargetPlatform(DmpBasicSystemCodeEnum.SDY.getCode());
+            omsPushMsgEntity.setSourceType(SourceTypeEnum.SDY_DELIVERY_ORDER.getCode());
+            omsPushMsgEntity.setSourceId(soB2cEntity.getId());
+            omsPushMsgEntity.setSourceCode(soB2cEntity.getSourceCode());
+            omsPushMsgEntity.setSyncOperate(operateEnum);
+            omsPushMsgEntity.setPushData(JSON.toJSONString(shudiyunB2cOrderDTO));
+            omsPushMsgService.save(omsPushMsgEntity)
 
         }
 
-        OmsPushMsgEntity omsPushMsgEntity = new OmsPushMsgEntity();
-        omsPushMsgEntity.setTargetPlatform(DmpBasicSystemCodeEnum.SDY.getCode());
-        omsPushMsgEntity.setSourceType(SourceTypeEnum.SDY_DELIVERY_ORDER.getCode());
-        omsPushMsgEntity.setSourceId(soB2cEntity.getId());
-        omsPushMsgEntity.setSourceCode(soB2cEntity.getSourceCode());
-        omsPushMsgEntity.setSyncOperate(operateEnum);
-        omsPushMsgEntity.setPushData(JSON.toJSONString(shudiyunB2cOrderDTOList));
 
-        //同步配货单
-        return omsPushMsgService.save(omsPushMsgEntity);
 
         //同步线上订单
 //        SdyDmpSoInfoHandler(soB2cEntity.getPlatformCode(), operateEnum);

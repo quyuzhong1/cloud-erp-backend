@@ -1276,8 +1276,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
      * @param entity
      * @param operateEnum
      */
-    public Boolean pushSdyFieldHandler(LogisticsBillEntity entity, String operateEnum) {
-        List<ShudiyunB2cOrderDTO> shudiyunB2cOrderDTOList = new ArrayList<>();
+    public void pushSdyFieldHandler(LogisticsBillEntity entity, String operateEnum) {
 
         List<LogisticsBillDetailEntity> detailEntityList = logisticsBillDetailService.listByMainIds(Arrays.asList(entity.getId()));
                 LogisticsChannelEntity channelEntity = logisticsChannelService.getById(entity.getChannelId());
@@ -1312,18 +1311,14 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
             shudiyunB2cOrderDTO.setSource_system("SDC");
             shudiyunB2cOrderDTO.setRoot_node_no_initial(logisticsBillDetailEntity.getTrackNo());
 
-            shudiyunB2cOrderDTOList.add(shudiyunB2cOrderDTO);
-
+            TmsPushMsgEntity tmsPushMsgEntity = new TmsPushMsgEntity();
+            tmsPushMsgEntity.setTargetPlatform(DmpBasicSystemCodeEnum.SDY.getCode());
+            tmsPushMsgEntity.setSourceType(SourceTypeEnum.SDY_LOGISTICS_BILL.getCode());
+            tmsPushMsgEntity.setSourceId(entity.getId());
+            tmsPushMsgEntity.setSourceCode(entity.getTransportNo());
+            tmsPushMsgEntity.setSyncOperate(operateEnum);
+            tmsPushMsgEntity.setPushData(JSON.toJSONString(shudiyunB2cOrderDTO));
+            tmsPushMsgService.save(tmsPushMsgEntity);
         }
-
-        TmsPushMsgEntity tmsPushMsgEntity = new TmsPushMsgEntity();
-        tmsPushMsgEntity.setTargetPlatform(DmpBasicSystemCodeEnum.SDY.getCode());
-        tmsPushMsgEntity.setSourceType(SourceTypeEnum.SDY_LOGISTICS_BILL.getCode());
-        tmsPushMsgEntity.setSourceId(entity.getId());
-        tmsPushMsgEntity.setSourceCode(entity.getTransportNo());
-        tmsPushMsgEntity.setSyncOperate(operateEnum);
-        tmsPushMsgEntity.setPushData(JSON.toJSONString(shudiyunB2cOrderDTOList));
-        //同步运单
-        return tmsPushMsgService.save(tmsPushMsgEntity);
     }
 }

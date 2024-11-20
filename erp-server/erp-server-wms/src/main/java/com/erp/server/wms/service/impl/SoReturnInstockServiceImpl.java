@@ -1729,9 +1729,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
      * @param entity
      * @param operateEnum
      */
-    public Boolean sdyFieldHandler(SoReturnInstockEntity entity, String operateEnum) {
-        List<ShudiyunB2cOrderDTO> shudiyunB2cOrderDTOList = new ArrayList<>();
-
+    public void sdyFieldHandler(SoReturnInstockEntity entity, String operateEnum) {
         List<SoReturnInstockDetailEntity> soReturnInstockDetailEntities = soReturnInstockDetailService.listDetailByMainIds(Arrays.asList(entity.getId()));
         List<String> skuNos = soReturnInstockDetailEntities.stream().map(req -> req.getSkuNo()).collect(Collectors.toList());
         List<SkuVO> skuVOList = plmTaskFeign.listBySkuNoList(skuNos);
@@ -1835,20 +1833,15 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
             shudiyunB2cOrderDTO.setSource_system("SDC");
             shudiyunB2cOrderDTO.setRoot_node_no_initial(entity.getCode());
 
-            shudiyunB2cOrderDTOList.add(shudiyunB2cOrderDTO);
+            WmsPushMsgEntity wmsPushMsgEntity = new WmsPushMsgEntity();
+            wmsPushMsgEntity.setTargetPlatform(DmpBasicSystemCodeEnum.SDY.getCode());
+            wmsPushMsgEntity.setSourceType(SourceTypeEnum.SDY_SO_RETURN_INSTOCK.getCode());
+            wmsPushMsgEntity.setSourceId(entity.getId());
+            wmsPushMsgEntity.setSourceCode(entity.getCode());
+            wmsPushMsgEntity.setSyncOperate(operateEnum);
+            wmsPushMsgEntity.setPushData(JSON.toJSONString(shudiyunB2cOrderDTO));
+            wmsPushMsgService.save(wmsPushMsgEntity);
 
         }
-
-        WmsPushMsgEntity wmsPushMsgEntity = new WmsPushMsgEntity();
-        wmsPushMsgEntity.setTargetPlatform(DmpBasicSystemCodeEnum.SDY.getCode());
-        wmsPushMsgEntity.setSourceType(SourceTypeEnum.SDY_SO_RETURN_INSTOCK.getCode());
-        wmsPushMsgEntity.setSourceId(entity.getId());
-        wmsPushMsgEntity.setSourceCode(entity.getCode());
-        wmsPushMsgEntity.setSyncOperate(operateEnum);
-        wmsPushMsgEntity.setPushData(JSON.toJSONString(shudiyunB2cOrderDTOList));
-
-        //同步B2B订单
-        return wmsPushMsgService.save(wmsPushMsgEntity);
-
     }
 }
