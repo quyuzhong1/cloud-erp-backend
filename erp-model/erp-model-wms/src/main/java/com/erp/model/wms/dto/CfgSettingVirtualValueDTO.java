@@ -48,7 +48,7 @@ public class CfgSettingVirtualValueDTO implements Serializable {
          * 头程订单状态
          */
         @Valid
-        private BillStatusDTO firstMileStatusDTO;
+        private StatusDTO firstMileStatusDTO;
 
         /**
          * 统计时长集合
@@ -70,19 +70,6 @@ public class CfgSettingVirtualValueDTO implements Serializable {
         private WarnConditionDTO warnConditionDTO;
     }
 
-    @Data
-    @NoArgsConstructor
-    public static class BillStatusDTO extends StatusDTO{
-
-        /**
-         * 订单类型，取SourceTypeEnum枚举
-         * 发货计划，deliveryPlan
-         * 要货申请，requisitionApplication
-         * 头程发货单，firstMileDelivery
-         */
-        @NotBlank(message = "头程订单类型不能为空")
-        private String orderType;
-    }
 
     /**
      * 状态DTO

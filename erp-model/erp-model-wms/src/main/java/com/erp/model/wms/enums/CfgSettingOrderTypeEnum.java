@@ -7,7 +7,8 @@ import com.fasterxml.jackson.annotation.JsonValue;
 public enum CfgSettingOrderTypeEnum implements EnumMessage {
 
     B2B("b2b","B2B销售订单"),
-    B2C("b2c","B2C销售订单")
+    B2C("b2c","B2C销售订单"),
+    FIRST_MILE("firstMile","头程订单")
     ;
 
     /**
