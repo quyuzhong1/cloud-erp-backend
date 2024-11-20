@@ -78,5 +78,5 @@ spec:
       port: 8080
       # 容器暴露的访问端口 要确定与其他服务不冲突
       targetPort: 8040
-      nodePort: 30040
+      nodePort: 30140
   type: NodePort
