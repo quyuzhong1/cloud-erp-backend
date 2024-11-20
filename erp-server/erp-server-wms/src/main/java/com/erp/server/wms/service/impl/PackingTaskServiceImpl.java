@@ -1941,8 +1941,6 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
                                                                              PackingTaskEntity packingTaskEntity) {
         Map<String, List<WmsCartonSpecDTO.PackDateDTO>> packedMap = packDateDTOS.stream().collect(Collectors.groupingBy(e -> e.getSkuId() + e.getFnSku()));
         List<WmsCartonSpecDTO.NoPackingViewDTO> list = new ArrayList<>();
-        //拣货数量
-        List<PickingListsDTO.DetailPickDTO> pickeDTOList = pickingListsService.listDetailBySourceIds(Collections.singletonList(packingTaskEntity.getSourceId()));
         for (PackingTaskDTO.DetailDTO dto : detailDTOList){
             int deliveryQty = 0;
             if (Objects.nonNull(dto.getDeliveryQty())){
@@ -1955,10 +1953,8 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
             if (CollectionUtils.isNotEmpty(packDateDTOList)){
                 packQty = packDateDTOList.stream().map(WmsCartonSpecDTO.PackDateDTO::getPackQty).reduce(MathUtil.ZERO,Integer::sum);
             }
-            //拣货数量
-            int pickQty = pickeDTOList.stream().filter(e -> Objects.nonNull(e) && e.getSkuId().equals(skuId) && Objects.equals(fnSku, e.getFnSku())).map(PickingListsDTO.DetailPickDTO::getQty).reduce(MathUtil.ZERO, Integer::sum);
             //已装=发货 则排除
-            if (deliveryQty == packQty || 0 == pickQty || pickQty <= packQty){
+            if (deliveryQty <= packQty || 0 == deliveryQty){
                 continue;
             }
             list.add(WmsCartonSpecDTO.NoPackingViewDTO.builder()
@@ -1967,8 +1963,8 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
                             .fnSku(dto.getFnSku())
                             .deliveryQty(deliveryQty)
                             .packedQty(packQty)
-                            .pickingQty(pickQty)
-                            .unpackedQty(pickQty - packQty)
+                            .pickingQty(deliveryQty)
+                            .unpackedQty(deliveryQty - packQty)
                     .build());
         }
         return list;
@@ -2508,10 +2504,8 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
         List<PackingTaskDTO.DetailDTO> detailDTOList = packingTaskDetailService.listDetailByMainIds(ids);
         //装箱数
         List<WmsCartonSpecDTO.PackingQtyDTO> packingQtyDTOS = wmsCartonSpecService.listPackingQtyByMainIds(ids);
-        //拣货数量
-        List<PickingListsDTO.DetailPickDTO> pickeDTOList = pickingListsService.listDetailBySourceIds(sourceIds);
         //组装数据
-        List<WmsCartonSpecDTO.NoPackingViewDTO> noPackingViewDTOS = batchBuildNoPackingDetailList(detailDTOList,packingQtyDTOS,pickeDTOList,taskEntityList);
+        List<WmsCartonSpecDTO.NoPackingViewDTO> noPackingViewDTOS = batchBuildNoPackingDetailList(detailDTOList,packingQtyDTOS,taskEntityList);
         IPage<WmsCartonSpecDTO.NoPackingViewDTO> packDateDTOS = new Page<>();
         packDateDTOS.setPages(dto.getPage());
         packDateDTOS.setSize(dto.getPageSize());
@@ -2525,12 +2519,11 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
      * 批量构建未装箱数据
      * @param detailDTOList
      * @param packingQtyDTOS
-     * @param pickeDTOList
      * @param taskEntityList
      * @return
      */
     private List<WmsCartonSpecDTO.NoPackingViewDTO> batchBuildNoPackingDetailList(List<PackingTaskDTO.DetailDTO> detailDTOList, List<WmsCartonSpecDTO.PackingQtyDTO> packingQtyDTOS,
-                                                                                  List<PickingListsDTO.DetailPickDTO> pickeDTOList, List<PackingTaskEntity> taskEntityList) {
+                                                                                   List<PackingTaskEntity> taskEntityList) {
         Map<String, List<WmsCartonSpecDTO.PackingQtyDTO>> packedMap = packingQtyDTOS.stream().collect(Collectors.groupingBy(e -> e.getSkuId() + e.getFnSku() + e.getId()));
         Map<String, PackingTaskEntity> taskEntityMap = taskEntityList.stream().collect(Collectors.toMap(PackingTaskEntity::getId, Function.identity()));
         List<WmsCartonSpecDTO.NoPackingViewDTO> list = new ArrayList<>();
@@ -2550,17 +2543,14 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
             if (CollectionUtils.isNotEmpty(packDateDTOList)){
                 packQty = packDateDTOList.stream().map(WmsCartonSpecDTO.PackingQtyDTO::getPackQty).reduce(MathUtil.ZERO,Integer::sum);
             }
-            //拣货数量
-            int pickQty = pickeDTOList.stream().filter(e -> Objects.nonNull(e) && e.getSkuId().equals(skuId)
-                    && Objects.equals(fnSku, e.getFnSku()) && Objects.equals(e.getSourceId(), packingTaskEntity.getSourceId())).map(PickingListsDTO.DetailPickDTO::getQty).reduce(MathUtil.ZERO, Integer::sum);
             //已装=发货 则排除
-            if (deliveryQty == packQty || 0 == pickQty || pickQty <= packQty){
+            if (0 == deliveryQty || deliveryQty <= packQty){
                 continue;
             }
             list.add(WmsCartonSpecDTO.NoPackingViewDTO.builder().taskCode(packingTaskEntity.getCode())
                     .taskId(packingTaskEntity.getId()).sourceId(packingTaskEntity.getSourceId()).sourceCode(packingTaskEntity.getSourceCode())
-                    .skuId(skuId).skuNo(dto.getSkuNo()).fnSku(dto.getFnSku()).deliveryQty(deliveryQty).packedQty(packQty).pickingQty(pickQty)
-                    .unpackedQty(pickQty - packQty).build());
+                    .skuId(skuId).skuNo(dto.getSkuNo()).fnSku(dto.getFnSku()).deliveryQty(deliveryQty).packedQty(packQty).pickingQty(deliveryQty)
+                    .unpackedQty(deliveryQty - packQty).build());
         }
         return list;
     }
