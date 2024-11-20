@@ -103,21 +103,22 @@ public class DmpOutputSdyOrderHandler extends DmpOutputTaskHandler {
             int i = 0;
             for (Map.Entry<String, String> entry : map.entrySet()) {
                 String dataId = entry.getKey();
-                String pushData = entry.getValue();
                 List<ShudiyunB2cOrderDTO> shudiyunB2cOrderDTOList = JSON.parseArray(entry.getValue(), ShudiyunB2cOrderDTO.class);
-                DmpOutputTaskRecordEntity dmpOutputTaskRecordEntity = new DmpOutputTaskRecordEntity();
-                String id = identifierGenerator.nextId(dmpOutputTaskRecordEntity).toString();
-                dmpOutputTaskRecordEntity.setId(id);
-                dmpOutputTaskRecordEntity.setMainId(dmpRequest.getOutputTaskId());
-                dmpOutputTaskRecordEntity.setDataId(dataId);
-                dmpOutputTaskRecordEntity.setSourceCode(shudiyunB2cOrderDTOList.get(0).getBiz_no());
-                dmpOutputTaskRecordEntity.setRequestData(pushData);
-                dmpOutputTaskRecordEntity.setStatus(DmpOutputTaskRecordStatusEnum.INIT.getCode());
-                LocalDateTime insertTime = now.plus(i, ChronoUnit.MILLIS);
-                dmpOutputTaskRecordEntity.setCreateTime(insertTime);
-                dmpOutputTaskRecordEntity.setUpdateTime(insertTime);
-                dmpOutputTaskRecordEntityList.add(dmpOutputTaskRecordEntity);
-                i = i + 1;
+                for (ShudiyunB2cOrderDTO shudiyunB2cOrderDTO : shudiyunB2cOrderDTOList) {
+                    DmpOutputTaskRecordEntity dmpOutputTaskRecordEntity = new DmpOutputTaskRecordEntity();
+                    String id = identifierGenerator.nextId(dmpOutputTaskRecordEntity).toString();
+                    dmpOutputTaskRecordEntity.setId(id);
+                    dmpOutputTaskRecordEntity.setMainId(dmpRequest.getOutputTaskId());
+                    dmpOutputTaskRecordEntity.setDataId(shudiyunB2cOrderDTO.getTransaction_unique_key().substring(dataId.length()));
+                    dmpOutputTaskRecordEntity.setSourceCode(shudiyunB2cOrderDTOList.get(0).getBiz_no());
+                    dmpOutputTaskRecordEntity.setRequestData(JSON.toJSONString(shudiyunB2cOrderDTO));
+                    dmpOutputTaskRecordEntity.setStatus(DmpOutputTaskRecordStatusEnum.INIT.getCode());
+                    LocalDateTime insertTime = now.plus(i, ChronoUnit.MILLIS);
+                    dmpOutputTaskRecordEntity.setCreateTime(insertTime);
+                    dmpOutputTaskRecordEntity.setUpdateTime(insertTime);
+                    dmpOutputTaskRecordEntityList.add(dmpOutputTaskRecordEntity);
+                    i = i + 1;
+                }
             }
         }
 
