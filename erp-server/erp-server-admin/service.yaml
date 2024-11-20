@@ -23,7 +23,7 @@ spec:
       automountServiceAccountToken: true
       containers:
         - name: erp-server-admin
-          image: 172.16.100.92:5000/sdc-erp/erp-server-admins:1.0.0 #Tag
+          image: 172.16.100.92:5000/sdc-erp/erp-server-admin:1.0.0 #Tag
           imagePullPolicy: Always
           resources:
             requests:
