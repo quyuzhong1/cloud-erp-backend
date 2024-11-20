@@ -775,10 +775,11 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
                 continue;
             }
 
-            //判断是否是历史数据存在流水则不扣减虚拟仓流水
-            long count = virtualTransFlowList.stream().filter(obj -> StrUtil.equals(obj.getSourceDetailId(), detailEntity.getId())).count();
-            if (count > MathUtil.ZERO) {
-                continue;
+            //如果存在出冻结流水则无需再次扣减
+            long count = virtualTransFlowList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSourceDetailId(), detailEntity.getId())
+                    && CharSequenceUtil.equals(obj.getDictBizType(), VirtualInventoryBusinessTypeEnum.SO_OUT_STOCK.getCode())).count();
+            if (count > 0) {
+                return;
             }
             VirtualInventoryStockDTO.OutInStockDTO outInStockDTO = new VirtualInventoryStockDTO.OutInStockDTO();
             outInStockDTO.setBillDate(LocalDate.now());

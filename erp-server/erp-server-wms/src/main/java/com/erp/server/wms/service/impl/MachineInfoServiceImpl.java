@@ -745,7 +745,7 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
         }
         //头程单据
         List<String> sourceDetailIds = machineList.stream().map(MachineRefSoEntity::getSoDetailId).distinct().collect(Collectors.toList());
-        List<FirstMileDeliveryDetailEntity> firstMileDeliveryDetailList = firstMileDeliveryDetailService.listBySourceDetailIds(sourceDetailIds);
+        List<FirstMileDeliveryDetailEntity> firstMileDeliveryDetailList = firstMileDeliveryDetailService.listByIds(sourceDetailIds);
         if (CollectionUtils.isEmpty(firstMileDeliveryDetailList)) {
             return;
         }
@@ -763,8 +763,12 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
             //头程发货单明细id
             String refDetailId = machineList.stream().filter(obj -> CharSequenceUtil.equals(obj.getMachineDetailId(), detailId))
                     .map(MachineRefSoEntity::getSoDetailId).findFirst().orElse("");
+            //要货申请明细id
+            String applicationDetailId = firstMileDeliveryDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), refDetailId))
+                    .map(FirstMileDeliveryDetailEntity::getSourceDetailId).findFirst().orElse("");
+
             //要货申请明细虚拟仓id
-            String virtualWarehouseId = requisitionApplicationDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), refDetailId))
+            String virtualWarehouseId = requisitionApplicationDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), applicationDetailId))
                     .map(RequisitionApplicationDetailEntity::getFromVirtualWarehouseId).findFirst().orElse("");
             if (CharSequenceUtil.isBlank(virtualWarehouseId)) {
                 continue;

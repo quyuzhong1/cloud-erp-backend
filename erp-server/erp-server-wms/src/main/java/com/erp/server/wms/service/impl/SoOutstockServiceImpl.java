@@ -864,8 +864,9 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             List<SoOutstockDetailEntity> soOutstockDetailList = soOutstockDetailService.listByMainIds(Collections.singletonList(entity.getId()));
             List<String> detailIdList = soOutstockDetailList.stream().map(SoOutstockDetailEntity::getSourceDetailId).distinct().collect(Collectors.toList());
             List<VirtualTransFlowEntity> virtualTransFlowList = virtualTransFlowService.listHistoryFlow(detailIdList, InventorySourceTypeEnum.SO_B2C_DELIVERY.getCode());
-            //如果存在流水则无需再次扣减
-            if (CollectionUtils.isNotEmpty(virtualTransFlowList)) {
+            //如果存在出冻结流水则无需再次扣减
+            long count = virtualTransFlowList.stream().filter(obj -> CharSequenceUtil.equals(obj.getDictBizType(), VirtualInventoryBusinessTypeEnum.SO_OUT_STOCK.getCode())).count();
+            if (count > 0) {
                 return;
             }
         }
