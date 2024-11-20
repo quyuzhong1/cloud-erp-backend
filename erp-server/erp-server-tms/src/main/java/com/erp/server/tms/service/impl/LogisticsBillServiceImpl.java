@@ -3,6 +3,7 @@ package com.erp.server.tms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.ListUtil;
+import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
@@ -1277,7 +1278,10 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
      * @param operateEnum
      */
     public void pushSdyFieldHandler(LogisticsBillEntity entity, String operateEnum) {
-
+        if (ObjectUtil.isEmpty(entity)) {
+            log.error("运单同步数帝云失败入参：error={}", entity);
+            return;
+        }
         List<LogisticsBillDetailEntity> detailEntityList = logisticsBillDetailService.listByMainIds(Arrays.asList(entity.getId()));
                 LogisticsChannelEntity channelEntity = logisticsChannelService.getById(entity.getChannelId());
 
@@ -1299,7 +1303,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
             shudiyunB2cOrderDTO.setTransaction_type("200.20");
 
             shudiyunB2cOrderDTO.setTransaction_sub_type("200.20.01");
-            shudiyunB2cOrderDTO.setBiz_status(shudiyunB2cOrderDTO.sdyStatusHandle(operateEnum));
+            shudiyunB2cOrderDTO.setBiz_status(operateEnum);
 
             shudiyunB2cOrderDTO.setDelivery_time(entity.getDeliveryTime());
             shudiyunB2cOrderDTO.setLogistics_delivery_time(logisticsBillDetailEntity.getSignTime());

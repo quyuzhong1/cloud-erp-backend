@@ -2,13 +2,16 @@ package com.erp.server.tms.service.impl;
 
 
 import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.enums.OperationTypeEnum;
+import com.common.business.enums.SyncOperateEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
+import com.common.core.constant.SqlConstants;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
@@ -28,6 +31,8 @@ import org.apache.commons.math3.util.Pair;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronizationAdapter;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
@@ -174,6 +179,16 @@ public class LogisticsBillDetailServiceImpl extends SuperServiceImpl<LogisticsBi
 
         //添加物流轨迹
         addLogisticsTrack(detailEntity,trackTime,trackDesc);
+
+        //推送数帝云
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+            @Override
+            public void afterCommit() {
+                LogisticsBillEntity billEntity = logisticsBillService.getById(detailEntity.getMainId());
+                //同步速递云运单
+                logisticsBillService.pushSdyFieldHandler(billEntity, LogisticTrackStatusEnum.getName(trackStatus));
+            }
+        });
 
         //操作日志
         String msg = CharSequenceUtil.format("用户【{}】从【{}】变更为【{}】 ", UserContext.getDefaultLoginUser().getUserName(), oldTrackStatusName, newTrackStatusName);
@@ -335,6 +350,21 @@ public class LogisticsBillDetailServiceImpl extends SuperServiceImpl<LogisticsBi
         if (CharSequenceUtil.isNotBlank(logisticsTrackEntity.getTrackNo())){
             baseMapper.updateTransportNo(Collections.singletonList(logisticsTrackEntity.getTrackNo()),Boolean.TRUE,logisticsTrackEntity.getStatus(),signTime, trackTime,logisticsTrackEntity.getContent());
         }
+
+
+        //推送数帝云
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+            @Override
+            public void afterCommit() {
+                LogisticsBillDetailEntity detailEntity = lambdaQuery().eq(LogisticsBillDetailEntity::getTrackNo, logisticsTrackEntity.getTrackNo()).last(SqlConstants.LIMIT_1).one();
+                if (ObjectUtil.isNotEmpty(detailEntity)) {
+                    LogisticsBillEntity billEntity = logisticsBillService.getById(detailEntity.getMainId());
+
+                    //同步速递云运单
+                    logisticsBillService.pushSdyFieldHandler(billEntity, LogisticTrackStatusEnum.getName(logisticsTrackEntity.getStatus()));
+                }
+            }
+        });
     }
 
     @Override
