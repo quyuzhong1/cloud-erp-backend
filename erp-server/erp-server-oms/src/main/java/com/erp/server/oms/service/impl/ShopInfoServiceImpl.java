@@ -239,13 +239,13 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         customer.setPlatformType(shop.getDictPlatform());
         String countryId = shop.getDictCountryCode();
         String currency = shop.getSettlementCurrency();
-        if (StringUtils.isNotBlank(countryId)) {
-            //根据国家查询
-            List<DictCountryEntity> countryList = sysDictFeign.listCountryByIds(Arrays.asList(countryId));
-            if (CollectionUtils.isNotEmpty(countryList)) {
-                currency = countryList.get(0).getCurrencyCode();
-            }
-        }
+//        if (StringUtils.isNotBlank(countryId)) {
+//            //根据国家查询
+//            List<DictCountryEntity> countryList = sysDictFeign.listCountryByIds(Arrays.asList(countryId));
+//            if (CollectionUtils.isNotEmpty(countryList)) {
+//                currency = countryList.get(0).getCurrencyCode();
+//            }
+//        }
 
         if (StringUtils.isBlank(countryId)) {
             countryId = DictValueEnum.GL.getCode();
@@ -263,7 +263,6 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         customer.setFinancialOrganization(shop.getSalesOrgId());
         customer.setEnableTime(shop.getEnableTime());
         customer.setTradeCurrency(shop.getTradeCurrency());
-        customer.setCountryId(shop.getDictCountryCode());
         customer.setBusinessMode(CustomerInfoBusinessModeEnum.O2C.getCode());
         if(PlatformDictEnum.SHOPIFY.getCode().equals(shop.getDictPlatform())) {
         	customer.setTransactionalMode(CustomerInfoTransactionalModeEnum.XKHH.getCode());
@@ -636,7 +635,6 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         shopInfo.setSettlementCurrency(dto.getSettlementCurrency());
         shopInfo.setTradeCurrency(dto.getTradeCurrency());
         shopInfo.setEnableTime(dto.getEnableTime());
-        shopInfo.setReturnWarehouse(dto.getReturnWarehouse());
         //设置用户信息
         setCustom(customerId, shopInfo);
         Boolean result = this.updateById(shopInfo);

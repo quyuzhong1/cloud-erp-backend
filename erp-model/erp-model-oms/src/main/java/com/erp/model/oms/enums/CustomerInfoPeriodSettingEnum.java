@@ -15,7 +15,7 @@ import org.apache.commons.lang3.StringUtils;
 public enum CustomerInfoPeriodSettingEnum implements EnumMessage {
 	MONTH("month", "自然月"),
 	PLATFORM("platform", "平台自定义账期"),
-	SHOP("shop", "店铺自定义"),
+	SHOP("shop", "店铺自定义账期"),
     ;
     /**
      * 类型

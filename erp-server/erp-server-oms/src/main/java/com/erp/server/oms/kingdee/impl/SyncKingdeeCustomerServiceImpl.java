@@ -210,9 +210,14 @@ public class SyncKingdeeCustomerServiceImpl implements SyncKingdeeCustomerServic
         resultMap.put("groupName", entity.getGroupName());
         //简称
         resultMap.put("shortName", entity.getShortName());
-        DictCountryEntity countryEntity = sysUserFeign.getCountryById(entity.getCountryId());
-        //国家
-        resultMap.put("countryCode", countryEntity.getKingdeeCode());
+        
+        String countryId = entity.getCountryId();
+        DictCountryEntity countryEntity = null;
+        if(StringUtils.isNotBlank(countryId)) {
+        	countryEntity = sysUserFeign.getCountryById(countryId);
+            //国家
+            resultMap.put("countryCode", countryEntity.getKingdeeCode());
+        }
 
         if (StringUtils.isNotBlank(entity.getProvinceId())) {
             DictCityEntity province = sysUserFeign.getCityById(entity.getProvinceId());
@@ -310,11 +315,13 @@ public class SyncKingdeeCustomerServiceImpl implements SyncKingdeeCustomerServic
             platformTypeKingdeeCode = dictBasic.getRemark();
         }
         resultMap.put("platformType", platformTypeKingdeeCode);
-        String regionCode = countryEntity.getRegionCode();
-        if (CharSequenceUtil.isNotBlank(regionCode)) {
-            DictGlobalAreaEntity globalAreaEntity = sysUserFeign.getGlobalAreaById(regionCode);
-            if (ObjectUtil.isNotEmpty(globalAreaEntity)) {
-                resultMap.put("globalAreaCode", globalAreaEntity.getKingdeeCode());
+        if(countryEntity != null) {
+        	String regionCode = countryEntity.getRegionCode();
+            if (CharSequenceUtil.isNotBlank(regionCode)) {
+                DictGlobalAreaEntity globalAreaEntity = sysUserFeign.getGlobalAreaById(regionCode);
+                if (ObjectUtil.isNotEmpty(globalAreaEntity)) {
+                    resultMap.put("globalAreaCode", globalAreaEntity.getKingdeeCode());
+                }
             }
         }
         resultMap.put("disabled", entity.getDisabled());
@@ -342,6 +349,12 @@ public class SyncKingdeeCustomerServiceImpl implements SyncKingdeeCustomerServic
 	@Override
 	public Map<String, Object> newSyncDataToSdy(CustomerInfoEntity entity, String operate) {
 		Map<String, Object> resultMap = new HashMap<>();
+		
+		String financialOrganization = entity.getFinancialOrganization();
+		String useOrgId = entity.getUseOrgId();
+		Map<String, String> orgIdCodeMap = sysUserFeign.getAccountingCompanyList(Arrays.asList(financialOrganization , useOrgId))
+			.stream().collect(Collectors.toMap(BaseIdDTO.CodeDTO::getId, BaseIdDTO.CodeDTO::getCode));
+		
 		resultMap.put("oms_system", "SDC");
 		resultMap.put("biz_uni_key", entity.getId());
 		resultMap.put("sub_platform_code", "");
@@ -352,8 +365,8 @@ public class SyncKingdeeCustomerServiceImpl implements SyncKingdeeCustomerServic
 		resultMap.put("settlement_currency_code", entity.getCurrency());
 		resultMap.put("business_mode", entity.getBusinessMode());
 		resultMap.put("transactional_mode", entity.getTransactionalMode());
-		resultMap.put("financial_organization", entity.getFinancialOrganization());
-		resultMap.put("sales_organization", entity.getUseOrgId());
+		resultMap.put("financial_organization", orgIdCodeMap.get(financialOrganization));
+		resultMap.put("sales_organization", orgIdCodeMap.get(useOrgId));
 		resultMap.put("period_setting", entity.getPeriodSetting());
 		resultMap.put("check_type", entity.getCheckType());
 		resultMap.put("is_check", "是");

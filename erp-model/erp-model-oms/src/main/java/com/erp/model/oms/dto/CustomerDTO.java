@@ -177,12 +177,14 @@ public class CustomerDTO implements Serializable {
          */
         @Dict(serviceCode = ServiceCodeNameEnum.SYS , queryFieldName = "id" , returnFieldName = "name" , tableName = "dict_currency")
         private String currency;
+        private String currencyName;
         
          /**
          * 财务组织 名称字段financialOrganizationName
          */
          @Dict(serviceCode = ServiceCodeNameEnum.SYS , queryFieldName = "id" , returnFieldName = "company_name" , tableName = "sys_accounting_company")
          private String financialOrganization;
+         private String financialOrganizationName;
          /**
          * 启用时间
          */
@@ -588,6 +590,10 @@ public class CustomerDTO implements Serializable {
          * 销售员id
          */
         private String sellerId;
+        /**
+         * 销售员名称
+         */
+        private String sellerName;
 
         /**
          * 付款方
@@ -902,7 +908,7 @@ public class CustomerDTO implements Serializable {
          /**
          * 启用时间
          */
-        @NotBlank(message = "启用时间不能为空")
+        @NotNull(message = "启用时间不能为空")
          private LocalDateTime enableTime;
          /**
          * 交易币别 http://172.16.100.11:3002/project/36/interface/api/8485
