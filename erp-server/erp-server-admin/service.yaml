@@ -31,14 +31,15 @@ spec:
               memory: "1Gi"
             limits:
               cpu: "2"
-              memory: "2Gi"
+              memory: "4Gi"
           env:
             - name: SPRING_PROFILES_ACTIVE
               valueFrom:
                 configMapKeyRef:
                   key: SPRING_PROFILES_ACTIVE
                   name: erp-config
-
+            - name: JAVA_OPTS
+              value: "-Xms1g -Xmx2g -XX:MaxRAMPercentage=75.0"
           ports:
             - containerPort: 8080
               name: server
