@@ -359,7 +359,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     @Resource
     private WmsWarehouseFeign wmsWarehouseFeign;
     @Resource
-    private TransferInfoFeign transferInfoFeign;    
+    private TransferInfoFeign transferInfoFeign;
     @Resource
     private DmpInoutTaskFeign dmpInoutTaskFeign;
 
@@ -967,38 +967,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         log.info("提交 开始记录B2C销售订单表日志数据，id：【{}】", id);
         String msg =  CharSequenceUtil.format("用户【{}】单号为【{}】的【{}】单据提交审核 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "B2C销售订单表");
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C.getCode(), entity.getId(), "提交操作");
-        //检查是否存在流程
-//        ApproveOneDTO dto = new ApproveOneDTO(entity.getId(),ApproveTypeEnum.PASS.getStatus(),"", Boolean.FALSE);
-//        if (!checkProcess(entity,dto) && isProcess){
-//            ruleProcess(entity,dto);
-//        }
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.SUBMIT);
-    }
-    @Transactional(rollbackFor = Exception.class)
-    public void ruleProcess(SoB2cEntity entity, ApproveOneDTO dto) {
-        this.approve(dto, null, "");
-        //速卖通平台仓订单不走任何规则
-        if (PlatformDictEnum.ALI_EXPRESS.getCode().equals(entity.getDictPlatform()) && entity.hasPlatformWarehouseOrder()) {
-            return;
-        }
-        //仓库规则
-        SoB2cDTO.RuleResultDTO warehouseRuleResult = soB2cService.warehouseRule(entity.getId(), null, new HashMap<>());
-        Boolean warehouseRuleMatch = warehouseRuleResult.getIsRuleMatch();
-        if (warehouseRuleMatch) {
-            SoB2cDTO.RuleResultDTO logisticsRuleResult = soB2cService.logisticsRule(entity.getId(), new HashMap<>(), false);
-            //表示成功
-            if(logisticsRuleResult.getIsRuleMatch()){
-                //检查是否备案并修改状态
-                soB2cService.checkProductRegistrationAndUpdate(entity.getId(), "");
-            }
-            Boolean autoGetTrackNo = logisticsRuleResult.getAutoGetTrackNo();
-            if (Objects.nonNull(autoGetTrackNo) && Boolean.TRUE.equals(autoGetTrackNo)) {
-                soB2cService.getLogisticsCode(entity.getId(), true);
-            }
-        }
-        //清除预报异常
-        soB2cService.removeSignError(entity.getId(), SoB2cErrorTypeEnum.ORDER_FORECAST.getCode());
-        soB2cErrorService.removeErrorOrder(entity.getId(), SoB2cErrorTypeEnum.ORDER_FORECAST.getCode());
     }
 
     @GlobalTransactional(rollbackFor = Exception.class)
@@ -1019,7 +988,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (entity.getIsFrozen()) {
             throw new ServiceException(ApiError.ORDER_IS_INTERCEPT_NOT_UPDATE, entity.getCode());
         }
-
+        //更换sku走审核流
+        if (Objects.nonNull(entity.getIsChangeSku()) && entity.getIsChangeSku()){
+            dto.setIsNeedProcess(Boolean.TRUE);
+        }
         // 调用流程审核
         approveProcess(entity, dto, isMatch);
         String approveName = ApproveTypeEnum.REJECT.getName();
@@ -1046,17 +1018,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             soB2cService.approveEnd(dto, entity, isMatch);
             return;
         }
-        if (!checkProcess(entity,dto)) {
-            // 无需走流程的数据则直接更新状态
-            soB2cService.approveEnd(dto, entity, isMatch);
-        }
-    }
-
-    private Boolean checkProcess(SoB2cEntity entity, ApproveOneDTO dto) {
-        if(Objects.nonNull(entity) && Objects.nonNull(entity.getIsChangeSku()) && !entity.getIsChangeSku()){
-            return Boolean.FALSE;
-        }
-        Boolean isExistProcess = Boolean.FALSE;
         LoginUser userInfo = UserContext.getDefaultLoginUser();
         ProcessManagementDTO.ApproveDTO approveDTO = new ProcessManagementDTO.ApproveDTO();
         approveDTO.setBusinessId(entity.getId());
@@ -1076,9 +1037,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         }
         ProcessManagementDTO.ApproveResultDTO data = approveResult.getData();
         if (ObjectUtil.isEmpty(data.getIsExistProcess()) || !data.getIsExistProcess()) {
-            isExistProcess = Boolean.FALSE;
+            // 无需走流程的数据则直接更新状态
+            soB2cService.approveEnd(dto, entity, isMatch);
         }
-        return isExistProcess;
     }
 
 
