@@ -64,12 +64,19 @@ public class AntuInboundInitHandler extends DmpInputInitHandler {
             if (CollUtil.isEmpty(overseasProviderEntityList)) {
                 return Collections.emptyList();
             }
-
-            if (overseasProviderEntityList.get(0).getEnableDate().compareTo(LocalDate.now()) > 0) {
+            // 取对应授权ID授权
+            OverseasProviderEntity overseasProviderEntity = overseasProviderEntityList.stream()
+                    .filter(e -> e.getId().equalsIgnoreCase(dmpInputTaskEntity.getNextLevelId()))
+                    .findFirst()
+                    .orElse(null);
+            if(null == overseasProviderEntity) {
+                throw new ServiceException("安兔对应授权ID信息不存在");
+            }
+            if (overseasProviderEntity.getEnableDate().isAfter(LocalDate.now())) {
                 return Collections.emptyList();
             }
             Integer page = 1;
-            ThirdWarehouseContext.setAuthMap(overseasProviderEntityList.get(0).getAuthJson());
+            ThirdWarehouseContext.setAuthMap(overseasProviderEntity.getAuthJson());
 
             //查询数据
             AntuGetReceiptReq antuGetReceiptReq = AntuGetReceiptReq.builder()
