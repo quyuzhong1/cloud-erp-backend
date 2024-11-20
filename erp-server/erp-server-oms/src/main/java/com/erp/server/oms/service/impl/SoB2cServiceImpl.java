@@ -3354,10 +3354,14 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if(CollectionUtils.isNotEmpty(soB2cDeliveryEntities)){
             shippedMap = soB2cDeliveryEntities.stream()
                     .filter(v -> StringUtils.isNotBlank(v.getStatus()) && v.getStatus().equals(SoB2cDeliveryStatusEnum.SHIPPED.getCode()))
-                    .collect(Collectors.toMap(SoB2cDeliveryEntity::getSourceId, SoB2cDeliveryEntity::getStatus));
+                    .collect(Collectors.toMap(SoB2cDeliveryEntity::getSourceId, SoB2cDeliveryEntity::getStatus,(existing, replacement) -> existing ));
             manualMap = soB2cDeliveryEntities.stream()
-                    .filter(v -> StringUtils.isNotBlank(v.getShipmentMark()) && v.getShipmentMark().equals(ShipmentMarkTypeEnum.MANUAL.getCode()))
-                    .collect(Collectors.toMap(SoB2cDeliveryEntity::getSourceId, SoB2cDeliveryEntity::getShipmentMark));
+                    .filter(v -> StringUtils.isNotBlank(v.getShipmentMark())
+                            && v.getShipmentMark().equals(ShipmentMarkTypeEnum.MANUAL.getCode()))
+                    .collect(Collectors.toMap(
+                            SoB2cDeliveryEntity::getSourceId,
+                            SoB2cDeliveryEntity::getShipmentMark,
+                            (existing, replacement) -> existing ));
         }
         // 属性赋值
         for (SoB2cDTO.ListDTO data : list) {
