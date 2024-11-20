@@ -41,13 +41,13 @@ spec:
             - name: JAVA_OPTS
               value: "-Xms1g -Xmx2g -XX:MaxRAMPercentage=75.0"
           ports:
-            - containerPort: 8080
+            - containerPort: 9010
               name: server
               protocol: TCP #修改成你项目的端口
           livenessProbe: #检查是否存活
             httpGet:
               path: /health
-              port: 8080
+              port: 9010
             initialDelaySeconds: 240 #首次检查在多少时间后
             periodSeconds: 180 #检查周期
             timeoutSeconds: 3 #超时时间
@@ -55,7 +55,7 @@ spec:
           readinessProbe: #检查是否成功启动
             httpGet:
               path: /health
-              port: 8080
+              port: 9010
             initialDelaySeconds: 140 #首次检查在多少时间后
             periodSeconds: 300 #检查周期
             timeoutSeconds: 3 #超时时间
@@ -76,8 +76,7 @@ spec:
   ports:
     - name: tcp
       # 修改你的项目端口号
-      port: 8080
+      port: 9010
       # 容器暴露的访问端口 要确定与其他服务不冲突
-      targetPort: 8040
-      nodePort: 30140
+      targetPort: 9010
   type: NodePort
