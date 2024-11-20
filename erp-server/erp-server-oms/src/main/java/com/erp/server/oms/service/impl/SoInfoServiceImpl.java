@@ -3945,12 +3945,27 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             shudiyunB2cOrderDTO.setTotal_freight(view.getShippingFee());
             shudiyunB2cOrderDTO.setSales_company_code(view.getSalesOrgId());
 
-            // todo 收款组织：暂无数据需要新增(必填字段)
-            shudiyunB2cOrderDTO.setReceiving_company_code("");
-            // todo 财务组织名称：暂无数据需要新增(必填字段)
-            shudiyunB2cOrderDTO.setOrganization_name("");
-            // todo 财务组织编码：暂无数据需要新增(必填字段)
-            shudiyunB2cOrderDTO.setOrganization_code("");
+
+            CustomerInfoEntity customerInfo = FeignQuery.getById(CustomerInfoEntity.class, entity.getCustomerId());
+
+            if (ObjectUtil.isNotEmpty(customerInfo)) {
+                shudiyunB2cOrderDTO.setSales_company_code(customerInfo.getFinancialOrganization());
+                shudiyunB2cOrderDTO.setReceiving_company_code(customerInfo.getFinancialOrganization());
+            }
+            List<ShopInfoEntity> shopList = FeignQuery.create(ShopInfoEntity.class).eq(ShopInfoEntity::getCustomerId, customerInfo.getId()).list();
+
+            if (CollUtil.isNotEmpty(shopList)) {
+                shudiyunB2cOrderDTO.setSales_company_code(shopList.get(0).getSalesOrgId());
+                shudiyunB2cOrderDTO.setShop_no(shopList.get(0).getId());
+                shudiyunB2cOrderDTO.setShop_name(shopList.get(0).getName());
+                DictCurrencyEntity dictCurrencyEntity = FeignQuery.getById(DictCurrencyEntity.class, shopList.get(0).getTradeCurrency());
+                if (ObjectUtil.isNotEmpty(dictCurrencyEntity)) {
+                    shudiyunB2cOrderDTO.setTransaction_currency(dictCurrencyEntity.getName());
+                }
+                shudiyunB2cOrderDTO.setTransaction_currency_code(shopList.get(0).getTradeCurrency());
+                shudiyunB2cOrderDTO.setSettlement_currency_code(shopList.get(0).getSettlementCurrency());
+            }
+
             shudiyunB2cOrderDTO.setPlatform_id("sdc");
             shudiyunB2cOrderDTO.setPlatform_name("数大臣");
             shudiyunB2cOrderDTO.setShop_no(view.getCustomerId());
@@ -4009,8 +4024,6 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             shudiyunB2cOrderDTO.setSku_code(skuVO.getSkuNo());
             shudiyunB2cOrderDTO.setSku_name(skuVO.getSkuName());
 
-            // todo 店铺结算币种代码：暂无数据需要新增(必填字段)
-            shudiyunB2cOrderDTO.setSettlement_currency_code("");
             shudiyunB2cOrderDTO.setSource_system("SDC");
             shudiyunB2cOrderDTO.setRoot_node_no_initial(view.getCode());
 

@@ -902,6 +902,6 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
         if (CollectionUtils.isEmpty(soDetailIds)) {
             return Collections.emptyList();
         }
-        return lambdaQuery().in(SoChangeDetailEntity::getSoDetailId).list();
+        return lambdaQuery().in(SoChangeDetailEntity::getSoDetailId, soDetailIds).list();
     }
 }
