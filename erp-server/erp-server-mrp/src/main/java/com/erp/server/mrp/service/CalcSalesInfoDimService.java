@@ -49,4 +49,16 @@ public interface CalcSalesInfoDimService extends SuperService<CalcSalesInfoDimEn
      * @param dto 参数
      */
     CalcSalesInfoDimDTO.SalesEstimateDTO salesEstimation(CalcSalesInfoDimDTO.HistorySalesDTO dto);
+
+    /**
+     * 导出
+     * @param dto 参数
+     */
+    void exportSalesInfo(CalcSalesInfoDimDTO.ExportSalesInfoDTO dto);
+
+    /**
+     * 导出
+     * @param dto 参数
+     */
+    PagingVO<CalcSalesInfoDimDTO.ExportResultDTO> getListExportData(PagingDTO<CalcSalesInfoDimDTO.ExportSalesInfoDTO> dto);
 }

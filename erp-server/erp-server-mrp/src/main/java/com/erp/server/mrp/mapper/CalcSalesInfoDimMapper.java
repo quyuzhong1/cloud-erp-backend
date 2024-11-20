@@ -21,15 +21,18 @@ public interface CalcSalesInfoDimMapper extends BaseMapper<CalcSalesInfoDimEntit
 
 
     /**
-     *
-     * @param page 分页
+     * @param page   分页
      * @param params 参数
      */
     Page<CalcSalesInfoDimDTO.PagingView> paging(@Param("page") Page<CalcSalesInfoDimDTO.PagingView> page, @Param("params") CalcSalesInfoDimDTO.PagingParamDTO params);
 
     /**
-     *
      * @param id id
      */
     CalcSalesInfoDimDTO.ViewDTO view(String id);
+
+    /**
+     * 导出
+     */
+    Page<CalcSalesInfoDimDTO.ExportDTO> exportData(@Param("page") Page<CalcSalesInfoDimDTO.ExportDTO> page, @Param("params") CalcSalesInfoDimDTO.ExportSalesInfoDTO params);
 }

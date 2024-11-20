@@ -19,4 +19,9 @@ public interface CalcSalesInfoHisEsService {
      */
     List<CalcSalesInfoHisEsEntity> findByCfgRuleCalcIdAndSkuIdAndShopIdAndDateBetween(String cfgRuleCalcId, String skuId, String shopId,
                                                                                       LocalDate startDate, LocalDate endDate);
+
+    /**
+     * 根据试算配置id，查询历史销量
+     */
+    List<CalcSalesInfoHisEsEntity> findByCfgRuleCalcIdIn(List<String> cfgRuleCalcId);
 }

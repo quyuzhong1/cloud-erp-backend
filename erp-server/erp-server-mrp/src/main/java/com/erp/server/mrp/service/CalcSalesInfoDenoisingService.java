@@ -21,4 +21,10 @@ public interface CalcSalesInfoDenoisingService extends SuperService<CalcSalesInf
      * @param calcSalesInfoId 试算id
      */
     List<CalcSalesInfoDenoisingEntity> listByCalcSalesInfoId(String calcSalesInfoId);
+
+    /**
+     * 根据试算id查询去噪销量
+     * @param calcSalesInfoIds 试算id
+     */
+    List<CalcSalesInfoDenoisingEntity> listByCalcSalesInfoIds(List<String> calcSalesInfoIds);
 }

@@ -1,5 +1,8 @@
 package com.erp.model.mrp.dto;
 
+import com.erp.model.mrp.entity.CfgRuleSalesFormulaCalcEntity;
+import com.erp.model.mrp.enums.CfgRuleSalesFormulaDefaultTypeEnum;
+import com.erp.model.mrp.enums.CfgRuleSalesFormulaTypeEnum;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
@@ -173,5 +176,71 @@ public class CfgRuleSalesFormulaCalcDTO implements Serializable {
 
     }
 
+    /**
+     * 导出详情
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ExportDTO {
+
+        /**
+         * 销量类型：default=默认，dynamic=动态、fixed=固定
+         */
+        private String type;
+        /**
+         * 销量类型：default=默认，dynamic=动态、fixed=固定
+         */
+        private String typeName;
+
+        /**
+         * 销量默认类型：dynamic=动态、fixed=固定
+         */
+        private String defaultType;
+        /**
+         * 销量默认类型：dynamic=动态、fixed=固定
+         */
+        private String defaultTypeName;
+
+        /**
+         * 名称
+         */
+        private String name;
+        /**
+         * 开始日期
+         */
+        private LocalDate startDate;
+        /**
+         * 结束日期
+         */
+        private LocalDate endDate;
+        /**
+         * 固定值
+         */
+        private Integer fixedValue;
+        /**
+         * 百分比json
+         */
+        private String percentJson;
+        /**
+         * 百分比json
+         */
+        private CfgRuleSalesFormulaDTO.PercentJsonDTO percentJsonDTO;
+
+        public static ExportDTO buildExportDTO(CfgRuleSalesFormulaCalcEntity entity) {
+            ExportDTO dto = new ExportDTO();
+            dto.setType(entity.getType());
+            dto.setTypeName(CfgRuleSalesFormulaTypeEnum.getName(entity.getType()));
+            dto.setDefaultType(entity.getDefaultType());
+            dto.setDefaultTypeName(CfgRuleSalesFormulaDefaultTypeEnum.getName(entity.getDefaultType()));
+            dto.setName(entity.getName());
+            dto.setStartDate(entity.getStartDate());
+            dto.setEndDate(entity.getEndDate());
+            dto.setFixedValue(entity.getFixedValue());
+            dto.setPercentJson(dto.getPercentJson());
+            dto.setPercentJsonDTO(dto.getPercentJsonDTO());
+            return dto;
+        }
+
+    }
 
 }
