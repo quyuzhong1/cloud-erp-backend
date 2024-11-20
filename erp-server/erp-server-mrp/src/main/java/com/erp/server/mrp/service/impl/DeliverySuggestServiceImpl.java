@@ -476,6 +476,7 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
 
             Integer deliveryStockUpQty = value.stream().map(DeliverySuggestEntity::getDeliveryStockUpQty).reduce(MathUtil.ZERO, Integer::sum);
             detailDTO.setDeliveryStockUpQty(deliveryStockUpQty);
+            detailDTO.setPlanDeliveryQty(deliveryStockUpQty);
             //sku信息
             ProductDetailEntity productDetailEntity = skuList.stream().filter(obj -> StrUtil.equals(obj.getId(), suggestEntity.getSkuId()))
                     .findFirst().orElse(new ProductDetailEntity());
