@@ -48,17 +48,18 @@ spec:
             httpGet:
               path: /health
               port: 9010
-            initialDelaySeconds: 240 #首次检查在多少时间后
-            periodSeconds: 180 #检查周期
-            timeoutSeconds: 3 #超时时间
+            initialDelaySeconds: 60 #首次检查在多少时间后
+            periodSeconds: 30 #检查周期
+            timeoutSeconds: 5 #超时时间
             failureThreshold: 3 #失败的阈值，连续三次
           readinessProbe: #检查是否成功启动
             httpGet:
               path: /health
               port: 9010
-            initialDelaySeconds: 140 #首次检查在多少时间后
-            periodSeconds: 300 #检查周期
-            timeoutSeconds: 3 #超时时间
+            initialDelaySeconds: 60 #首次检查在多少时间后
+            periodSeconds: 30 #检查周期
+            timeoutSeconds: 5 #超时时间
+            failureThreshold: 3
   selector:
     matchLabels:
       app: erp-server-admin
@@ -79,4 +80,5 @@ spec:
       port: 9010
       # 容器暴露的访问端口 要确定与其他服务不冲突
       targetPort: 9010
+      nodePort: 30010 # 显式指定 NodePort 端口
   type: NodePort
