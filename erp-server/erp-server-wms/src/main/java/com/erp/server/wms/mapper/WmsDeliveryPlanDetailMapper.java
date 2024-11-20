@@ -1,9 +1,9 @@
 package com.erp.server.wms.mapper;
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.erp.model.wms.dto.ReportOrderDataDTO;
 import com.erp.model.wms.entity.WmsDeliveryPlanDetailEntity;
-import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
 
@@ -19,10 +19,11 @@ import java.util.List;
 @Mapper
 public interface WmsDeliveryPlanDetailMapper extends BaseMapper<WmsDeliveryPlanDetailEntity> {
     /**
-     * 查询虚拟仓报表数据
+     * 根据来源id查询
      * @author will
-     * @date 2024/11/20 10:35
-     * @return List<ViewDTO>
+     * @date 2024/10/23 10:02
+     * @param idList
+     * @return List<WmsDeliveryPlanDetailEntity>
      */
-    List<ReportOrderDataDTO.ViewDTO> ListAllVirtualDeliveryPlanDetail();
+    List<WmsDeliveryPlanDetailEntity> listBySourceIdList(@Param("idList") List<String> idList);
 }

@@ -183,11 +183,6 @@ public class ReportOrderDataServiceImpl extends SuperServiceImpl<ReportOrderData
         if (CollectionUtils.isNotEmpty(requisitionApplicationDetailList)) {
             resultList.addAll(requisitionApplicationDetailList);
         }
-        //发货计划
-        List<ReportOrderDataDTO.ViewDTO> DeliveryPlanDetailList =  wmsDeliveryPlanDetailService.ListAllVirtualDeliveryPlanDetail();
-
-
-        //头程发货单
 
         //无数据则删除所有并且返回
         if (CollectionUtils.isEmpty(resultList)) {
