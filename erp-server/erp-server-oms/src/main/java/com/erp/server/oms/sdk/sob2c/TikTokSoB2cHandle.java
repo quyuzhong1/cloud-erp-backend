@@ -1,8 +1,11 @@
 package com.erp.server.oms.sdk.sob2c;
 
+import com.alibaba.fastjson.JSON;
 import com.common.business.annotation.PlatformSoB2cAnnotate;
 import com.common.business.dto.PlatformOrderDTO;
+import com.common.business.enums.BusinessTypeEnum;
 import com.common.business.enums.PlatformDictEnum;
+import com.erp.model.dmp.dto.DmpInoutDTO;
 import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.dto.SoB2cErrorDTO;
 import com.erp.model.oms.entity.SoB2cEntity;
@@ -19,11 +22,15 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Component
 @PlatformSoB2cAnnotate(method = PlatformDictEnum.TIK_TOK)
-public class TikTokSoB2cHandle implements ISoB2cHandleService {
+public class TikTokSoB2cHandle extends AbstractSoB2cHandle  {
 
     @Resource
     private PlatformOrderConsumerHandleService platformOrderConsumerHandleService;
@@ -73,5 +80,16 @@ public class TikTokSoB2cHandle implements ISoB2cHandleService {
             }
         }
         return true;
+    }
+
+    /**
+     * 转换新中台刷新订单请求参数
+     */
+    @Override
+    public List<DmpInoutDTO.CreateInputDTO> convertCreateInputDTOList(List sourceList) {
+        Map<String, List<SoB2cEntity>> shopGroupMap = ((List<SoB2cEntity>) sourceList).stream().collect(Collectors.groupingBy(SoB2cEntity::getShopId));
+        return shopGroupMap.values().stream()
+                .map(this::createInputDTO)
+                .collect(Collectors.toList());
     }
 }

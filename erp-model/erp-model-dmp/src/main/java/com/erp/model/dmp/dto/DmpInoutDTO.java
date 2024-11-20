@@ -66,6 +66,7 @@ public class DmpInoutDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
+    @AllArgsConstructor
     public static class CommonDTO {
 
         /**
