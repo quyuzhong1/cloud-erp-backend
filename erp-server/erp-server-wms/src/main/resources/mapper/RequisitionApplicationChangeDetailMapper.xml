@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.wms.mapper.RequisitionApplicationChangeDetailMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.wms.entity.RequisitionApplicationChangeDetailEntity">
+       <result column="id" property="id" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_time" property="createTime" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_time" property="updateTime" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="main_id" property="mainId" />
+       <result column="sku_id" property="skuId" />
+       <result column="sku_no" property="skuNo" />
+       <result column="source_detail_id" property="sourceDetailId" />
+       <result column="change_type" property="changeType" />
+       <result column="origin_qty" property="originQty" />
+       <result column="new_qty" property="newQty" />
+       <result column="platform_sku_no" property="platformSkuNo" />
+       <result column="bom_version" property="bomVersion" />
+       <result column="fn_sku" property="fnSku" />
+       <result column="remark" property="remark" />
+       <result column="platform_sku_name" property="platformSkuName" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id,
+        create_user_id,
+        create_user_name,
+        create_time,
+        update_user_id,
+        update_user_name,
+        update_time,
+        version,
+        is_deleted,
+        main_id, sku_id, sku_no, source_detail_id, change_type, origin_qty, new_qty, platform_sku_no, bom_version, fn_sku, remark, platform_sku_name
+    </sql>
+    <select id="checkExist" resultType="com.erp.model.wms.dto.RequisitionApplicationChangeDTO$ExistDTO">
+        select
+            rac.id,
+            rac.code ,
+            racd.sku_id as skuId,
+            racd.sku_no as skuNo
+        from requisition_application_change rac
+        inner join requisition_application_change_detail racd on rac.id = racd.main_id and racd.is_deleted = false
+        where rac.is_deleted = false
+        and rac.invalid_status = false
+        and rac.approve_status not in ('approve','reject')
+        and racd.source_detail_id in
+        <foreach collection="sourceDetailIds" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </select>
+
+
+</mapper>
