@@ -6,6 +6,7 @@ import java.util.concurrent.TimeUnit;
 import javax.annotation.Resource;
 
 import cn.hutool.core.exceptions.ExceptionUtil;
+import com.erp.model.dmp.enums.DmpInputTaskTaskTypeEnum;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -121,6 +122,9 @@ public class DmpInputTaskFactory{
 			boolean errorFlag = errorCount.equals(maxRetryCount);
 			if(maxRetryCount < 0) {
 				errorFlag = false;
+			}
+			if(DmpInputTaskTaskTypeEnum.HOTFIX.getCode().equals(dmpInputTaskEntity.getTaskType())) {
+				errorFlag = true;
 			}
 			dmpInputTaskService.updateErrorStatus(dmpInputTaskEntity.getId(), errorFlag, errorCount, e);
 			throw e;
