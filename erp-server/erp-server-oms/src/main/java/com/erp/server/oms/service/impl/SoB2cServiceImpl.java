@@ -9420,7 +9420,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             omsPushMsgEntity.setSourceCode(soB2cEntity.getSourceCode());
             omsPushMsgEntity.setSyncOperate(operateEnum);
             omsPushMsgEntity.setPushData(JSON.toJSONString(shudiyunB2cOrderDTO));
-            omsPushMsgService.save(omsPushMsgEntity)
+            omsPushMsgService.save(omsPushMsgEntity);
 
         }
 
