@@ -7,4 +7,5 @@ WORKDIR /app
 COPY target/*jar /app/app.jar
 
 # 运行Spring Boot应用
-ENTRYPOINT ["java", "-jar", "/app/app.jar"]
+CMD ["sh", "-c", "java $JAVA_OPTS -jar /app/app.jar"]
+# ENTRYPOINT ["java", "-jar", "/app/app.jar"]
