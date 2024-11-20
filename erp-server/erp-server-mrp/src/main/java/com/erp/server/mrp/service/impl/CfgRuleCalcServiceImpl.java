@@ -1,9 +1,11 @@
 package com.erp.server.mrp.service.impl;
 
 
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
-import com.alibaba.excel.EasyExcel;
+import cn.hutool.json.JSONObject;
+import cn.hutool.json.JSONUtil;
+import com.alibaba.excel.EasyExcelFactory;
 import com.alibaba.excel.exception.ExcelCommonException;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
@@ -24,6 +26,8 @@ import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.mrp.dto.*;
 import com.erp.model.mrp.entity.*;
+import com.erp.model.mrp.enums.CfgRuleSalesDenoisingDenoisingTypeEnum;
+import com.erp.model.mrp.enums.CfgRuleSalesFormulaDefaultTypeEnum;
 import com.erp.model.mrp.enums.CfgRuleSalesFormulaTypeEnum;
 import com.erp.model.mrp.enums.HistorySalesTypeEnum;
 import com.erp.model.oms.entity.ShopInfoEntity;
@@ -42,6 +46,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
@@ -102,7 +107,7 @@ public class CfgRuleCalcServiceImpl extends SuperServiceImpl<CfgRuleCalcMapper, 
         } else {
             HistorySalesQtyExcelListener excelListener = new HistorySalesQtyExcelListener(skuVOS, shopInfoList, entity);
             try {
-                EasyExcel.read(FastDFSClientUtil.getInputStream(addDTO.getFileUrl()), CfgRuleCalcDTO.HistorySaleImportDTO.class, excelListener).headRowNumber(1).sheet(0).doRead();
+                EasyExcelFactory.read(FastDFSClientUtil.getInputStream(addDTO.getFileUrl()), CfgRuleCalcDTO.HistorySaleImportDTO.class, excelListener).headRowNumber(1).sheet(0).doRead();
                 //导出错误数据
                 exportErrorExcel(response,excelListener.getErrorList());
                 historySaleList = excelListener.getDataList();
@@ -120,7 +125,8 @@ public class CfgRuleCalcServiceImpl extends SuperServiceImpl<CfgRuleCalcMapper, 
         cfgRuleSalesDenoisingCalcService.saveBatch(salesDenoising);
         calcSalesInfoHisEsService.batchSave(historySaleList);
         List<CalcSalesInfoDimDTO.CalcResultDTO> calcResultList = new ArrayList<>();
-        List<CalcSalesInfoDimEntity> calcSalesInfoDimList = buildCalcSalesInfoDim(addDTO, shopMap, historySaleList, entity.getId(), skuMap, formulaCalcEntities, salesDenoising, calcResultList);
+        List<CalcSalesInfoDimEntity> calcSalesInfoDimList = buildCalcSalesInfoDim(addDTO, shopMap, historySaleList, entity.getId(),
+                skuMap, formulaCalcEntities, salesDenoising, calcResultList);
         calcSalesInfoDimService.saveBatch(calcSalesInfoDimList);
         calcSalesInfoDimService.calcSalesInfo(calcResultList);
         return new BaseResultDTO.AddDTO(entity.getId(), code);
@@ -245,7 +251,7 @@ public class CfgRuleCalcServiceImpl extends SuperServiceImpl<CfgRuleCalcMapper, 
 
         //默认日销量
         CfgRuleSalesFormulaCalcEntity defaultSalesFormula = formulaList.stream().filter(obj ->
-                StrUtil.equals(obj.getType(), CfgRuleSalesFormulaTypeEnum.DEFAULT.getCode()) && StrUtil.equals(obj.getCfgRuleCalcId(), id)
+                CharSequenceUtil.equals(obj.getType(), CfgRuleSalesFormulaTypeEnum.DEFAULT.getCode()) && CharSequenceUtil.equals(obj.getCfgRuleCalcId(), id)
         ).findFirst().orElse(null);
         if (ObjectUtil.isNotEmpty(defaultSalesFormula)) {
             CfgRuleSalesFormulaCalcDTO.ViewDTO defaultViewDTO = BeanMapperUtils.map(CfgRuleSalesFormulaCalcDTO.ViewDTO.class, defaultSalesFormula);
@@ -253,7 +259,7 @@ public class CfgRuleCalcServiceImpl extends SuperServiceImpl<CfgRuleCalcMapper, 
         }
         //动态日销量
         List<CfgRuleSalesFormulaCalcEntity> dynamicSalesFormulaList = formulaList.stream().filter(obj ->
-                StrUtil.equals(obj.getType(), CfgRuleSalesFormulaTypeEnum.DYNAMIC.getCode()) && StrUtil.equals(obj.getCfgRuleCalcId(), id)
+                CharSequenceUtil.equals(obj.getType(), CfgRuleSalesFormulaTypeEnum.DYNAMIC.getCode()) && CharSequenceUtil.equals(obj.getCfgRuleCalcId(), id)
         ).collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(dynamicSalesFormulaList)) {
             List<CfgRuleSalesFormulaCalcDTO.ViewDTO> dynamicViewList = BeanMapperUtils.copyList(CfgRuleSalesFormulaCalcDTO.ViewDTO.class, dynamicSalesFormulaList);
@@ -261,7 +267,7 @@ public class CfgRuleCalcServiceImpl extends SuperServiceImpl<CfgRuleCalcMapper, 
         }
         //固定日销量
         List<CfgRuleSalesFormulaCalcEntity> fixedSalesFormulaList = formulaList.stream().filter(obj ->
-                StrUtil.equals(obj.getType(), CfgRuleSalesFormulaTypeEnum.FIXED.getCode()) && StrUtil.equals(obj.getCfgRuleCalcId(), id)
+                CharSequenceUtil.equals(obj.getType(), CfgRuleSalesFormulaTypeEnum.FIXED.getCode()) && CharSequenceUtil.equals(obj.getCfgRuleCalcId(), id)
         ).collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(fixedSalesFormulaList)) {
             List<CfgRuleSalesFormulaCalcDTO.ViewDTO> fixedViewList = BeanMapperUtils.copyList(CfgRuleSalesFormulaCalcDTO.ViewDTO.class, fixedSalesFormulaList);
@@ -296,10 +302,67 @@ public class CfgRuleCalcServiceImpl extends SuperServiceImpl<CfgRuleCalcMapper, 
     }
 
 
+    /**
+     * 处理去噪销量规则
+     * @param addDTO 参数
+     * @param cfgRuleCalcId 试算配置id
+     */
     List<CfgRuleSalesDenoisingCalcEntity> handleSalesDenoising(CfgRuleCalcDTO.AddDTO addDTO, String cfgRuleCalcId) {
         List<CfgRuleSalesDenoisingCalcEntity> denoisingList = BeanMapperUtils.copyList(CfgRuleSalesDenoisingCalcEntity.class, addDTO.getSalesDenoisingList());
-        denoisingList.forEach(obj -> obj.setCfgRuleCalcId(cfgRuleCalcId));
+        validateDenoisingUniqueNames(denoisingList);
+        int index = MathUtil.ONE;
+        for (CfgRuleSalesDenoisingCalcEntity calcEntity : denoisingList) {
+            calcEntity.setCfgRuleCalcId(cfgRuleCalcId);
+            checkNumericValue(calcEntity);
+            //时间
+            List<LocalDate> dateList = calcEntity.getDateList();
+            checkDate(dateList);
+            calcEntity.setStartDate(CollectionUtils.isNotEmpty(dateList) ? dateList.get(0) : null);
+            calcEntity.setEndDate(CollectionUtils.isNotEmpty(dateList) ? dateList.get(1) : null);
+            calcEntity.setIndex(index);
+            index++;
+        }
         return denoisingList;
+    }
+
+    /**
+     * 建议试算销量去噪名字
+     * @param list 参数
+     */
+    private void validateDenoisingUniqueNames(List<CfgRuleSalesDenoisingCalcEntity> list) {
+        String names = list.stream().collect(Collectors.groupingBy(CfgRuleSalesDenoisingCalcEntity::getName)).entrySet().stream()
+                .filter(obj -> obj.getValue().size() > MathUtil.ONE).map(Map.Entry::getKey).distinct().collect(Collectors.joining(","));
+        if (!StringUtils.isEmpty(names)) {
+            throw new ServiceException("销量去噪名称【{}】唯一不能添加重复数据",names);
+        }
+    }
+
+    /**
+     * 校验百分比去噪、固定值去噪数值不能小于1
+     * @param denoisingEntity 参数
+     */
+    private void checkNumericValue(CfgRuleSalesDenoisingCalcEntity denoisingEntity) {
+        boolean isCompare = (CharSequenceUtil.equals(denoisingEntity.getDenoisingType(), CfgRuleSalesDenoisingDenoisingTypeEnum.PERCENTAGE.getCode())
+                || CharSequenceUtil.equals(denoisingEntity.getDenoisingType(), CfgRuleSalesDenoisingDenoisingTypeEnum.FIXED_VALUE.getCode()))
+                && MathUtil.compareTo(denoisingEntity.getEffectiveValue(), MathUtil.ZERO) <= MathUtil.ZERO;
+        if (isCompare) {
+            throw new ServiceException("百分比去噪、固定值去噪数值不能小于1");
+        }
+    }
+
+    /**
+     * 校验时间
+     * @param dateList 时间
+     */
+    private void checkDate(List<LocalDate> dateList) {
+        if (CollectionUtils.isNotEmpty(dateList)) {
+            if (CollectionUtils.isEmpty(dateList) || dateList.size() != 2) {
+                throw new ServiceException("时间区间不能为空");
+            }
+            if (dateList.get(0).isAfter(dateList.get(1))) {
+                throw new ServiceException("开始时间不能大于结束时间");
+            }
+        }
     }
 
 
@@ -335,6 +398,63 @@ public class CfgRuleCalcServiceImpl extends SuperServiceImpl<CfgRuleCalcMapper, 
             });
             list.addAll(fixedList);
         }
+        Map<String, List<CfgRuleSalesFormulaCalcEntity>> map = list.stream().collect(Collectors.groupingBy(CfgRuleSalesFormulaCalcEntity::getType));
+        for (Map.Entry<String, List<CfgRuleSalesFormulaCalcEntity>> entry : map.entrySet()) {
+            List<CfgRuleSalesFormulaCalcEntity> value = entry.getValue();
+            //排序
+            int index = MathUtil.ONE;
+            validateUniqueNames(value);
+            for (CfgRuleSalesFormulaCalcEntity salesFormula : value) {
+                salesFormula.setIndex(index);
+                //固定销量
+                if (CfgRuleSalesFormulaDefaultTypeEnum.FIXED.getCode().equals(salesFormula.getDefaultType())) {
+                    salesFormula.setPercentJson(JSONUtil.parseObj(new CfgRuleSalesFormulaDTO.PercentJsonDTO()));
+                }
+                //动态销量
+                setDynamicFormula(salesFormula);
+                //百分比json
+                JSONObject percentJson = JSONUtil.parseObj(salesFormula.getPercentJsonDTO());
+                salesFormula.setPercentJson(percentJson);
+
+                //时间
+                List<LocalDate> dateList = salesFormula.getDateList();
+                checkDate(dateList);
+                salesFormula.setStartDate(CollectionUtils.isNotEmpty(dateList) ? dateList.get(0) : null);
+                salesFormula.setEndDate(CollectionUtils.isNotEmpty(dateList) ? dateList.get(1) : null);
+                index ++;
+            }
+        }
         return list;
+    }
+
+
+    /**
+     * 获取销量名称重复数据
+     * @param value 参数
+     */
+    private void validateUniqueNames(List<CfgRuleSalesFormulaCalcEntity> value) {
+        String names = value.stream().filter(obj -> CharSequenceUtil.isNotBlank(obj.getName()))
+                .collect(Collectors.groupingBy(CfgRuleSalesFormulaCalcEntity::getName))
+                .entrySet().stream().filter(obj -> obj.getValue().size() > MathUtil.ONE).map(Map.Entry::getKey).distinct().collect(Collectors.joining(","));
+        if (CharSequenceUtil.isNotBlank(names)) {
+            throw new ServiceException("销量名称【{}】唯一不能添加重复数据",names);
+        }
+    }
+
+    /**
+     * 设置动态销量系数
+     * @param salesFormula 销量系数
+     */
+    private void setDynamicFormula(CfgRuleSalesFormulaCalcEntity salesFormula) {
+        if (CfgRuleSalesFormulaDefaultTypeEnum.DYNAMIC.getCode().equals(salesFormula.getDefaultType())) {
+            salesFormula.setFixedValue(MathUtil.ZERO);
+            //默认配置需要校验百分比之和为100
+            if (CfgRuleSalesFormulaTypeEnum.DEFAULT.getCode().equals(salesFormula.getType())) {
+                Integer totalRatio = salesFormula.getPercentJsonDTO().getTotalRatio();
+                if (MathUtil.compareTo(totalRatio,100) != MathUtil.ZERO) {
+                    throw new ServiceException("默认动态销量系数之和必须=100%；");
+                }
+            }
+        }
     }
 }

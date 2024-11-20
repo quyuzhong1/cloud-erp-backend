@@ -15,6 +15,17 @@ import java.util.List;
  */
 public interface CfgRuleSalesDenoisingCalcService extends SuperService<CfgRuleSalesDenoisingCalcEntity> {
 
-
-    List<CfgRuleSalesDenoisingCalcEntity> listByCfgRuleCalcId(String id);
+    /**
+     * 根据试算配置id查询销量公式
+     *
+     * @param cfgRuleCalcId 试算配置id
+     */
+    List<CfgRuleSalesDenoisingCalcEntity> listByCfgRuleCalcId(String cfgRuleCalcId);
+    /**
+     * 根据试算配置id查询销量公式
+     *
+     * @param cfgRuleCalcIds 试算id
+     * @return
+     */
+    List<CfgRuleSalesDenoisingCalcEntity> listByCfgRuleCalcIds(List<String> cfgRuleCalcIds);
 }

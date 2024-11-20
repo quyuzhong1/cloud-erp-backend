@@ -12,6 +12,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -27,9 +28,14 @@ import java.util.List;
 public class CfgRuleSalesFormulaCalcServiceImpl extends SuperServiceImpl<CfgRuleSalesFormulaCalcMapper, CfgRuleSalesFormulaCalcEntity> implements CfgRuleSalesFormulaCalcService {
 
     @Override
-    public List<CfgRuleSalesFormulaCalcEntity> listByCfgRuleCalcId(String id) {
+    public List<CfgRuleSalesFormulaCalcEntity> listByCfgRuleCalcId(String cfgRuleCalcId) {
+        return listByCfgRuleCalcIds(Collections.singletonList(cfgRuleCalcId));
+    }
+
+    @Override
+    public List<CfgRuleSalesFormulaCalcEntity> listByCfgRuleCalcIds(List<String> cfgRuleCalcIds) {
         List<CfgRuleSalesFormulaCalcEntity> list = list(Wrappers.<CfgRuleSalesFormulaCalcEntity>lambdaQuery()
-                .eq(CfgRuleSalesFormulaCalcEntity::getCfgRuleCalcId, id)
+                .in(CfgRuleSalesFormulaCalcEntity::getCfgRuleCalcId, cfgRuleCalcIds)
                 .orderByAsc(CfgRuleSalesFormulaCalcEntity::getIndex));
 
         for (CfgRuleSalesFormulaCalcEntity formulaEntity : list) {

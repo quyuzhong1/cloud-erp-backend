@@ -47,6 +47,12 @@ public class CalcSalesInfoDenoisingEntity extends BaseEntity<CalcSalesInfoDenois
     @TableField("denoising_type")
     private String denoisingType;
 
+    /**
+     * 有效值（去噪后的）
+     */
+    @TableField("effective_value")
+    private Integer effectiveValue;
+
 
     public static final String CALC_SALES_INFO_DIM_ID = "calc_sales_info_dim_id";
 

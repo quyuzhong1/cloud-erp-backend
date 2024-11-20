@@ -1,18 +1,16 @@
 package com.erp.model.mrp.entity;
 
 import cn.hutool.json.JSONArray;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
-
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import com.baomidou.mybatisplus.annotation.TableField;
-import java.io.Serializable;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
 
 import javax.validation.constraints.NotNull;
+import java.io.Serializable;
+import java.time.LocalDate;
 
 
 /**
@@ -67,9 +65,10 @@ public class CfgRuleCalcEntity extends BaseEntity<CfgRuleCalcEntity> {
     */
     @TableField("name")
     private String name;
+
     /**
-    * 试算配置编号
-    */
+     * 试算配置编号
+     */
     @TableField("code")
     private String code;
 
@@ -85,7 +84,6 @@ public class CfgRuleCalcEntity extends BaseEntity<CfgRuleCalcEntity> {
 
     public static final String NAME = "name";
 
-    public static final String CODE = "code";
 
     @Override
     public Serializable pkVal() {

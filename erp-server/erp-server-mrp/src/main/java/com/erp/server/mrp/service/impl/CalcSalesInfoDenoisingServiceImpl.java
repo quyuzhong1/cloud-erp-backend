@@ -9,6 +9,7 @@ import com.erp.server.mrp.service.CalcSalesInfoDenoisingService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.util.Collections;
 import java.util.List;
 /**
  * <p>
@@ -24,7 +25,12 @@ public class CalcSalesInfoDenoisingServiceImpl extends SuperServiceImpl<CalcSale
 
     @Override
     public List<CalcSalesInfoDenoisingEntity> listByCalcSalesInfoId(String calcSalesInfoId) {
+        return listByCalcSalesInfoIds(Collections.singletonList(calcSalesInfoId));
+    }
+
+    @Override
+    public List<CalcSalesInfoDenoisingEntity> listByCalcSalesInfoIds(List<String> calcSalesInfoIds) {
         return list(Wrappers.<CalcSalesInfoDenoisingEntity>lambdaQuery()
-                .eq(CalcSalesInfoDenoisingEntity::getCalcSalesInfoDimId, calcSalesInfoId));
+                .in(CalcSalesInfoDenoisingEntity::getCalcSalesInfoDimId, calcSalesInfoIds));
     }
 }

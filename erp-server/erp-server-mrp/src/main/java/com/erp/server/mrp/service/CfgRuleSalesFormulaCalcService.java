@@ -19,7 +19,14 @@ public interface CfgRuleSalesFormulaCalcService extends SuperService<CfgRuleSale
     /**
      * 根据试算配置id查询销量公式
      *
-     * @param id 试算id
+     * @param cfgRuleCalcId 试算id
      */
-    List<CfgRuleSalesFormulaCalcEntity> listByCfgRuleCalcId(String id);
+    List<CfgRuleSalesFormulaCalcEntity> listByCfgRuleCalcId(String cfgRuleCalcId);
+
+    /**
+     * 根据试算配置id查询销量公式
+     *
+     * @param cfgRuleCalcIds 试算id
+     */
+    List<CfgRuleSalesFormulaCalcEntity> listByCfgRuleCalcIds(List<String> cfgRuleCalcIds);
 }

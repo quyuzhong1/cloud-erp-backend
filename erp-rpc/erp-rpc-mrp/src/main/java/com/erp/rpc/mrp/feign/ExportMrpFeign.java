@@ -70,4 +70,7 @@ public interface ExportMrpFeign {
      */
     @PostMapping("/feign/export/exportCalcHistorySale")
     PagingVO<CfgRuleCalcDTO.HistorySaleDTO> exportCalcHistorySale(@RequestBody PagingDTO<CfgRuleCalcDTO.DownloadDTO> dto);
+
+    @PostMapping("/feign/export/getListExportData")
+    PagingVO<CalcSalesInfoDimDTO.ExportResultDTO> getListExportData(@RequestBody PagingDTO<CalcSalesInfoDimDTO.ExportSalesInfoDTO> dto);
 }
