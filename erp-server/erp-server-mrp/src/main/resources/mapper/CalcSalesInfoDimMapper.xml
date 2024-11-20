@@ -67,8 +67,10 @@
                shop_id,
                platform,
                remark,
-               cfg_rule_calc_id
+               cfg_rule_calc_id,
+               crc.name as ruleName
         from calc_sales_info_dim
+                 inner join cfg_rule_calc crc on csic.cfg_rule_calc_id = crc.id and crc.is_deleted = false
         where id = #{id}
     </select>
     <select id="exportData" resultType="com.erp.model.mrp.dto.CalcSalesInfoDimDTO$ExportDTO">

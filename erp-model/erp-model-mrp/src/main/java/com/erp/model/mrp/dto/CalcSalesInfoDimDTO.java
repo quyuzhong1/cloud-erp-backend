@@ -269,6 +269,11 @@ public class CalcSalesInfoDimDTO implements Serializable {
          */
         private String remark;
 
+        /**
+         * 试算模板名字
+         */
+        private String ruleName;
+
     }
 
     @Getter
