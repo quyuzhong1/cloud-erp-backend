@@ -36,8 +36,8 @@ spec:
             - name: SPRING_PROFILES_ACTIVE
               valueFrom:
                 configMapKeyRef:
-                  key: erp-config
-                  name: SPRING_PROFILES_ACTIVE
+                  key: SPRING_PROFILES_ACTIVE
+                  name: erp-config
 
           ports:
             - containerPort: 8080
@@ -73,7 +73,7 @@ spec:
   selector:
     app: erp-server-admin
   ports:
-    - name: TCP
+    - name: tcp
       # 修改你的项目端口号
       port: 8080
       # 容器暴露的访问端口 要确定与其他服务不冲突
