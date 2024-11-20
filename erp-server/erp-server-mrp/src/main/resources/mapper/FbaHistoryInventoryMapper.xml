@@ -14,9 +14,6 @@
         <result column="version" property="version"/>
         <result column="is_deleted" property="isDeleted"/>
         <result column="warehouse_id" property="warehouseId"/>
-        <result column="asin" property="asin"/>
-        <result column="msku" property="msku"/>
-        <result column="fn_sku" property="fnSku"/>
         <result column="sku_no" property="skuNo"/>
         <result column="fbm_fulfillable_qty" property="fbmFulfillableQty"/>
         <result column="inbound_working_qty" property="inboundWorkingQty"/>
@@ -74,15 +71,9 @@
     <select id="listExport" resultType="com.erp.model.mrp.dto.FbaHistoryInventoryDTO$ListDTO">
         SELECT
         fi.id,
-        fi.fba_shipment_id,
         fi.warehouse_id,
         fi.warehouse_name,
-        fi.asin,
-        fi.msku,
-        fi.fn_sku,
         fi.sku_no,
-        fi.product_name,
-        fi.delivery_channels,
         fi.fbm_fulfillable_qty,
         fi.inbound_working_qty,
         fi.inbound_shipped_qty,
@@ -91,71 +82,21 @@
         fi.reserved_qty,
         fi.researching_qty,
         fi.unsellable_qty,
-        fi.inventory_age_0_to_30_days,
-        fi.inventory_age_31_to_60_days,
-        fi.inventory_age_61_to_90_days,
-        fi.inventory_age_91_to_180_days,
-        fi.inventory_age_181_to_270_days,
-        fi.inventory_age_271_to_365_days,
-        fi.inventory_age_365_plus_days,
         fi.update_time,
         fi.bill_date
         FROM fba_history_inventory fi
         WHERE ${params.sqlMap.default} and fi.is_deleted = FALSE
-        <choose>
-            <when test="params.ids!=null and params.ids.size>0 ">
-                AND id IN
-                <foreach collection="params.ids" item="id" open="(" separator="," close=")">
-                    #{id}
-                </foreach>
-            </when>
-            <otherwise>
-                <!--仓库-->
-                <if test="params.warehouseIdList != null and params.warehouseIdList.size > 0">
-                    AND fi.warehouse_id in
-                    <foreach collection="params.warehouseIdList" item="warehouseId" open="(" close=")" separator=",">
-                        #{warehouseId}
-                    </foreach>
-                </if>
-                <!--平台sku-->
-                <if test="params.asin != null and params.asin != ''">
-                    AND fi.asin ILIKE concat('%',#{params.asin}::text,'%')
-                </if>
-                <!--fnSku-->
-                <if test="params.fnSku != null and params.fnSku != ''">
-                    AND fi.fn_sku ILIKE concat('%',#{params.fnSku}::text,'%')
-                </if>
-                <!--卖家sku-->
-                <if test="params.msku != null and params.msku != ''">
-                    AND fi.msku ILIKE concat('%',#{params.msku}::text,'%')
-                </if>
-                <!--配送渠道-->
-                <if test="params.deliveryChannelsList != null and params.deliveryChannelsList.size > 0">
-                    AND fi.delivery_channels in
-                    <foreach collection="params.deliveryChannelsList" item="deliveryChannels" open="(" close=")" separator=",">
-                        #{deliveryChannels}
-                    </foreach>
-                </if>
-                <!--修改时间-->
-                <if test="params.updateTimeList !=null and params.updateTimeList.size>0">
-                    AND fi.update_time >= #{params.updateTimeList[0]} and
-                    (#{params.updateTimeList[1]}::TIMESTAMP + INTERVAL '1
-                    DAY' ) > fd.update_time
-                </if>
-
-                <!--是否显示0库存-->
-                <if test="params.isShowZeroInventory">
-                    AND NOT EXISTS (SELECT id FROM fba_history_inventory f WHERE f.id = fi.id AND fi.fbm_fulfillable_qty = 0
-                    AND fi.inbound_working_qty = 0
-                    AND fi.inbound_shipped_qty = 0
-                    AND fi.inbound_receiving_qty = 0
-                    AND fi.fulfillable_qty = 0
-                    AND fi.reserved_qty = 0
-                    AND fi.researching_qty = 0
-                    AND fi.unsellable_qty = 0)
-                </if>
-            </otherwise>
-        </choose>
+        <!--是否显示0库存-->
+        <if test="params.isShowZeroInventory">
+            AND NOT EXISTS (SELECT id FROM fba_history_inventory f WHERE f.id = fi.id AND fi.fbm_fulfillable_qty = 0
+            AND fi.inbound_working_qty = 0
+            AND fi.inbound_shipped_qty = 0
+            AND fi.inbound_receiving_qty = 0
+            AND fi.fulfillable_qty = 0
+            AND fi.reserved_qty = 0
+            AND fi.researching_qty = 0
+            AND fi.unsellable_qty = 0)
+        </if>
         <!--数据权限-->
         <if test="params.permissionSql != null and params.permissionSql != ''">
             ${params.permissionSql}
