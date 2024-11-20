@@ -189,6 +189,10 @@ public class ReportOrderSalesDTO implements Serializable {
          */
         private Integer distributionQty;
         /**
+         * 近30天虚拟仓库存
+         */
+        private Integer thirtyDaysVirtualQty;
+        /**
          * 30天累计出库
          */
         private Integer thirtyDaysOutstockQty;
@@ -521,7 +525,11 @@ public class ReportOrderSalesDTO implements Serializable {
         @NotNull(message = "已分配数量不能为空")
         private Integer distributionQty;
 
-
+        /**
+         * 近30天虚拟仓库存
+         */
+        @NotNull(message = "近30天虚拟仓库存")
+        private Integer thirtyDaysVirtualQty;
     }
     @Data
     @NoArgsConstructor
