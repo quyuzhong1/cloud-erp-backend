@@ -1299,7 +1299,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
             shudiyunB2cOrderDTO.setTransaction_type("200.20");
 
             shudiyunB2cOrderDTO.setTransaction_sub_type("200.20.01");
-            shudiyunB2cOrderDTO.setBiz_status(operateEnum);
+            shudiyunB2cOrderDTO.setBiz_status(shudiyunB2cOrderDTO.sdyStatusHandle(operateEnum));
 
             shudiyunB2cOrderDTO.setDelivery_time(entity.getDeliveryTime());
             shudiyunB2cOrderDTO.setLogistics_delivery_time(logisticsBillDetailEntity.getSignTime());

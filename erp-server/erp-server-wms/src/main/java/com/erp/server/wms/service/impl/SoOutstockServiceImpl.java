@@ -3557,7 +3557,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             shudiyunB2cOrderDTO.setTransaction_type("200.10");
 
             shudiyunB2cOrderDTO.setTransaction_sub_type(convertOutstockTransactionSubType(transactionSubType));
-            shudiyunB2cOrderDTO.setBiz_status(operateEnum);
+            shudiyunB2cOrderDTO.setBiz_status(shudiyunB2cOrderDTO.sdyStatusHandle(operateEnum));
 
             CustomerInfoEntity customerInfo = FeignQuery.getById(CustomerInfoEntity.class, entity.getCustomerId());
             if (ObjectUtil.isNotEmpty(customerInfo)) {

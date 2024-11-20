@@ -9304,7 +9304,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 shudiyunB2cOrderDTO.setTransaction_sub_type("100.20.01");
             }
 
-            shudiyunB2cOrderDTO.setBiz_status(operateEnum);
+            shudiyunB2cOrderDTO.setBiz_status(shudiyunB2cOrderDTO.sdyStatusHandle(operateEnum));
             shudiyunB2cOrderDTO.setTotal_goods_transaction_amount(soB2cEntity.getAmount());
             //总优惠金额
             shudiyunB2cOrderDTO.setDiscount_deduction_amount(soB2cEntity.getTotalDiscount());

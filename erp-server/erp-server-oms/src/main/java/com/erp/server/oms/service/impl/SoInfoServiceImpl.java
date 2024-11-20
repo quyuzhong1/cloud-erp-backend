@@ -3922,7 +3922,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             //默认线下订单
             shudiyunB2cOrderDTO.setTransaction_type("100.30");
             shudiyunB2cOrderDTO.setTransaction_sub_type(view.getTransactionSubType());
-            shudiyunB2cOrderDTO.setBiz_status(operateEnum);
+            shudiyunB2cOrderDTO.setBiz_status(shudiyunB2cOrderDTO.sdyStatusHandle(operateEnum));
 
             BigDecimal taxAmountBefore = view.getDetailList().stream().map(req -> req.getTaxAmountBefore()).reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
             shudiyunB2cOrderDTO.setTotal_goods_transaction_amount(taxAmountBefore);
@@ -4037,4 +4037,6 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             omsPushMsgService.save(omsPushMsgEntity);
         }
     }
+
+
 }

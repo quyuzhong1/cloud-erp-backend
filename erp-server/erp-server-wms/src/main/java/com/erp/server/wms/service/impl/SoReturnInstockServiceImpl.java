@@ -1755,7 +1755,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
             //默认退货入库单
             shudiyunB2cOrderDTO.setTransaction_type("210.10");
             shudiyunB2cOrderDTO.setTransaction_sub_type("210.10.01");
-            shudiyunB2cOrderDTO.setBiz_status(operateEnum);
+            shudiyunB2cOrderDTO.setBiz_status(shudiyunB2cOrderDTO.sdyStatusHandle(operateEnum));
 
             CustomerInfoEntity customerInfo = FeignQuery.getById(CustomerInfoEntity.class, entity.getCustomerId());
             if (ObjectUtil.isNotEmpty(customerInfo)) {
