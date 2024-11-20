@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: erp-server-admin
-  namespace: ${NAMESPACE} #namespace
+  namespace: dev #namespace
   labels:
     app: erp-server-admin
 spec:
@@ -23,7 +23,7 @@ spec:
       automountServiceAccountToken: true
       containers:
         - name: erp-server-admin
-          image: 172.16.100.92:5000/sdc-erp/erp-server-admins:${tag} #Tag
+          image: 172.16.100.92:5000/sdc-erp/erp-server-admins:1.0.0 #Tag
           imagePullPolicy: Always
           resources:
             requests:
@@ -32,9 +32,6 @@ spec:
             limits:
               cpu: "2"
               memory: "2Gi"
-          envFrom:
-            - configMapRef:
-                name: erp-config # 通过环境变量来选择不同的 ConfigMap
           env:
             - name: SPRING_PROFILES_ACTIVE
               valueFrom:
@@ -69,12 +66,12 @@ apiVersion: v1
 kind: Service
 metadata:
   name: erp-server-admin
-  namespace: ${NAMESPACE} #namespace
+  namespace: dev #namespace
   labels:
     app: erp-server-admin
 spec:
   selector:
-    app: configmap-volumes
+    app: erp-config
   ports:
     - name: TCP
       # 修改你的项目端口号
