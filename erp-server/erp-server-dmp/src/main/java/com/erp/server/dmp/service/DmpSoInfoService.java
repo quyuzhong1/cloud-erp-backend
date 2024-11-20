@@ -34,9 +34,4 @@ public interface DmpSoInfoService extends SuperService<DmpSoInfoEntity> {
     * @return
     */
     Boolean update(DmpSoInfoDTO.UpdateDTO dto);
-
-    /**
-     * 数帝云线上字段映射
-     */
-    List<ShudiyunB2cOrderDTO> shudiyunFieldDmpOrderHandler(String thirdCode);
 }

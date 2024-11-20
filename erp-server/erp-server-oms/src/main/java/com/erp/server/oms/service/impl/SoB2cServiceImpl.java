@@ -101,7 +101,6 @@ import com.erp.oms.aliexpress.service.AliExpressOrderService;
 import com.erp.oms.aliexpress.util.ApiException;
 import com.erp.rpc.dmp.feign.DmpInoutTaskFeign;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
-import com.erp.rpc.dmp.feign.DmpSoInfoFeign;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.plm.feign.LogisticsProductFeign;
@@ -374,8 +373,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     private CustomerInfoService customerInfoService;
     @Resource
     private OmsPushMsgService omsPushMsgService;
-    @Resource
-    private DmpSoInfoFeign dmpSoInfoFeign;
 
     @Override
     public PagingVO<SoB2cDTO.ListDTO> paging(PagingDTO<SoB2cDTO.PagingParamDTO> pagingParamDTO) {
@@ -9436,29 +9433,5 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             omsPushMsgService.save(omsPushMsgEntity);
 
         }
-
-
-
-        //同步线上订单
-//        SdyDmpSoInfoHandler(soB2cEntity.getPlatformCode(), operateEnum);
-
-    }
-
-    /**
-     * 线上订单同步数帝云
-     * @param platformCode
-     * @param operateEnum
-     * @return
-     */
-    private Boolean SdyDmpSoInfoHandler(String platformCode, String operateEnum) {
-        List<ShudiyunB2cOrderDTO> shudiyunB2cOrderDTOList = dmpSoInfoFeign.shudiyunFieldDmpOrderHandler(platformCode);
-        OmsPushMsgEntity omsPushMsgEntity = new OmsPushMsgEntity();
-        omsPushMsgEntity.setTargetPlatform(DmpBasicSystemCodeEnum.SDY.getCode());
-        omsPushMsgEntity.setSourceType(SourceTypeEnum.SDY_ONLINE_ORDER.getCode());
-        omsPushMsgEntity.setSourceId(platformCode);
-        omsPushMsgEntity.setSourceCode(platformCode);
-        omsPushMsgEntity.setSyncOperate(operateEnum);
-        omsPushMsgEntity.setPushData(JSON.toJSONString(shudiyunB2cOrderDTOList));
-        return omsPushMsgService.save(omsPushMsgEntity);
     }
 }
