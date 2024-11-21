@@ -24,31 +24,28 @@ import java.util.Objects;
 public class SdyPushCommonServiceImpl implements SdyPushCommonService {
 
     @Override
-    public void executeConsumer(List<ShudiyunB2cOrderDTO> shudiyunB2cOrderDTOList) {
+    public void executeConsumer(ShudiyunB2cOrderDTO shudiyunB2cOrderDTO) {
         String path = "http://172.16.100.50:30860/openapi/information/save";
 
-        for (ShudiyunB2cOrderDTO shudiyunB2cOrderDTO : shudiyunB2cOrderDTOList) {
+        //入参
+        HashMap<String, Object> orderParams = new HashMap<>(1);
 
-            //入参
-            HashMap<String, Object> orderParams = new HashMap<>(1);
+        //设置请求头
+        Map<String, String> orderHeaderMap = new HashMap<>(1);
 
-            //设置请求头
-            Map<String, String> orderHeaderMap = new HashMap<>(1);
+        //拉取数据
+        ApiResult apiResult = HttpCommonUtil.sendOkHttpApiResult(path, JSONUtil.toJsonStr(shudiyunB2cOrderDTO), null, orderHeaderMap, RequestMethod.POST);
 
-            //拉取数据
-            ApiResult apiResult = HttpCommonUtil.sendOkHttpApiResult(path, JSONUtil.toJsonStr(shudiyunB2cOrderDTO), null, orderHeaderMap, RequestMethod.POST);
+        if (!Objects.equals(apiResult.getCode(), 200) && !Objects.equals(apiResult.getCode(), 201)) {
+            log.error("调用url={},入参params={}, 数帝云接口请求失败，返回值 responseMap={}", path, orderParams.toString(), JSONUtil.toJsonStr(apiResult));
+            throw new RuntimeException(StrUtil.format("调用url={},入参params={}, 数帝云接口请求失败，返回值 responseMap={}",
+                    path, orderParams.toString(), JSONUtil.toJsonStr(apiResult)));
+        }
 
-            if (!Objects.equals(apiResult.getCode(), 200) && !Objects.equals(apiResult.getCode(), 201)) {
-                log.error("调用url={},入参params={}, 数帝云接口请求失败，返回值 responseMap={}", path, orderParams.toString(), JSONUtil.toJsonStr(apiResult));
-                throw new RuntimeException(StrUtil.format("调用url={},入参params={}, 数帝云接口请求失败，返回值 responseMap={}",
-                        path, orderParams.toString(), JSONUtil.toJsonStr(apiResult)));
-            }
-
-            SdySaveResultDTO orderDTO = JSONUtil.toBean(JSONUtil.toJsonStr(apiResult.getData()), SdySaveResultDTO.class);
-            if (orderDTO.getErrno() != 0) {
-                throw new RuntimeException(StrUtil.format("调用url={},入参params={}, 数帝云接口请求失败，返回值 responseMap={}",
-                        path, orderParams.toString(), JSONUtil.toJsonStr(apiResult)));
-            }
+        SdySaveResultDTO orderDTO = JSONUtil.toBean(JSONUtil.toJsonStr(apiResult.getData()), SdySaveResultDTO.class);
+        if (orderDTO.getErrno() != 0) {
+            throw new RuntimeException(StrUtil.format("调用url={},入参params={}, 数帝云接口请求失败，返回值 responseMap={}",
+                    path, orderParams.toString(), JSONUtil.toJsonStr(apiResult)));
         }
     }
 }
