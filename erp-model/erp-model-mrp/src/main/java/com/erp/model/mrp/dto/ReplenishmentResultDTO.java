@@ -1424,6 +1424,14 @@ public class ReplenishmentResultDTO {
             dto.setShopInventoryDetails(shopInventoryDetails);
             return dto;
         }
+
+        public static ReplenishmentInventoryDetailDTO buildReplenishmentInventoryDetailDTO(String inventoryType,  Integer totalQty, List<ShopInventoryDetailDTO> shopInventoryDetails) {
+            ReplenishmentInventoryDetailDTO dto = new ReplenishmentInventoryDetailDTO();
+            dto.setInventoryType(inventoryType);
+            dto.setTotalQty(totalQty);
+            dto.setShopInventoryDetails(shopInventoryDetails);
+            return dto;
+        }
     }
 
 
