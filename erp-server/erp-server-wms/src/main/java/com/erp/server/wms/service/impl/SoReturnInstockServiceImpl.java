@@ -1744,6 +1744,10 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                 .in(ProductDetailEntity::getId, parentSkuId)
                 .list();
 
+        //组织信息
+        CustomerInfoEntity customerInfo = FeignQuery.getById(CustomerInfoEntity.class, entity.getCustomerId());
+        List<BaseIdDTO.CodeDTO> companyEntities = sysUserFeign.getAccountingCompanyList(Arrays.asList(customerInfo.getFinancialOrganization(), entity.getSalesOrgId()));
+
         for (int i = 0; i < soReturnInstockDetailEntities.size(); i++) {
             SoReturnInstockDetailEntity soReturnInstockDetailEntity = soReturnInstockDetailEntities.get(i);
 
@@ -1757,26 +1761,36 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
             shudiyunB2cOrderDTO.setTransaction_sub_type("210.10.01");
             shudiyunB2cOrderDTO.setBiz_status(shudiyunB2cOrderDTO.sdyStatusHandle(operateEnum));
 
-            CustomerInfoEntity customerInfo = FeignQuery.getById(CustomerInfoEntity.class, entity.getCustomerId());
             if (ObjectUtil.isNotEmpty(customerInfo)) {
-                shudiyunB2cOrderDTO.setSales_company_code(customerInfo.getFinancialOrganization());
-                shudiyunB2cOrderDTO.setReceiving_company_code(customerInfo.getFinancialOrganization());
-            }
-            List<ShopInfoEntity> shopList = FeignQuery.create(ShopInfoEntity.class).eq(ShopInfoEntity::getCustomerId, customerInfo.getId()).list();
-            if (CollUtil.isNotEmpty(shopList)) {
-                shudiyunB2cOrderDTO.setSales_company_code(shopList.get(0).getSalesOrgId());
-                shudiyunB2cOrderDTO.setShop_no(shopList.get(0).getId());
-                shudiyunB2cOrderDTO.setShop_name(shopList.get(0).getName());
-                DictCurrencyEntity dictCurrencyEntity = FeignQuery.getById(DictCurrencyEntity.class, shopList.get(0).getTradeCurrency());
-                if (ObjectUtil.isNotEmpty(dictCurrencyEntity)) {
-                    shudiyunB2cOrderDTO.setTransaction_currency(dictCurrencyEntity.getName());
-                }
-                shudiyunB2cOrderDTO.setTransaction_currency_code(shopList.get(0).getTradeCurrency());
-                shudiyunB2cOrderDTO.setSettlement_currency_code(shopList.get(0).getSettlementCurrency());
             }
 
-            shudiyunB2cOrderDTO.setPlatform_id("");
-            shudiyunB2cOrderDTO.setPlatform_name("");
+            //组织信息
+            if (ObjectUtil.isNotEmpty(customerInfo)) {
+                String salesOrgCode = companyEntities.stream().filter(req -> req.getId().equals(entity.getSalesOrgId())).map(req -> req.getCode()).findFirst().orElse("");
+                shudiyunB2cOrderDTO.setSales_company_code(salesOrgCode);
+                BaseIdDTO.CodeDTO sysAccountingCompanyEntity = companyEntities.stream().filter(req -> req.getId().equals(customerInfo.getFinancialOrganization())).findFirst().orElse(null);
+                if (ObjectUtil.isNotEmpty(sysAccountingCompanyEntity)) {
+                    shudiyunB2cOrderDTO.setReceiving_company_code(sysAccountingCompanyEntity.getCode());
+                    shudiyunB2cOrderDTO.setOrganization_code(sysAccountingCompanyEntity.getCode());
+                    shudiyunB2cOrderDTO.setOrganization_name(sysAccountingCompanyEntity.getName());
+                }
+
+                if (customerInfo.getCurrency() == null) {
+                    shudiyunB2cOrderDTO.setSettlement_currency_code("");
+                } else {
+                    shudiyunB2cOrderDTO.setSettlement_currency_code(customerInfo.getCurrency());
+                }
+
+                if (customerInfo.getTradeCurrency() == null) {
+                    shudiyunB2cOrderDTO.setSettlement_currency_code("");
+                } else {
+                    shudiyunB2cOrderDTO.setTransaction_currency_code(customerInfo.getTradeCurrency());
+                }
+
+                shudiyunB2cOrderDTO.setPlatform_id(customerInfo.getPlatformType());
+                shudiyunB2cOrderDTO.setPlatform_name(PlatformDictEnum.checkAndGetByCode(customerInfo.getPlatformType()).getName());
+            }
+
             shudiyunB2cOrderDTO.setShop_no(entity.getCustomerId());
             shudiyunB2cOrderDTO.setShop_name(entity.getCustomerName());
             shudiyunB2cOrderDTO.setRoot_node_no(entity.getCode());
