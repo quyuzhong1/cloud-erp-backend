@@ -1,9 +1,10 @@
 package com.erp.server.dmp.push.service.sdy;
 
 import com.common.business.dto.ShudiyunB2cOrderDTO;
+import com.common.core.controller.vo.ApiResult;
 
 import java.util.List;
 
 public interface SdyPushCommonService {
-    void executeConsumer(ShudiyunB2cOrderDTO shudiyunB2cOrderDTOList);
+    ApiResult executeConsumer(ShudiyunB2cOrderDTO shudiyunB2cOrderDTOList);
 }

@@ -89,7 +89,7 @@ public class DmpSoDetailEntity extends BaseEntity<DmpSoDetailEntity> {
     * 是否赠品：true/false
     */
     @TableField("is_gift")
-    private Boolean isGift;
+    private Boolean isGift = false;
     /**
     * 仓库编码
     */

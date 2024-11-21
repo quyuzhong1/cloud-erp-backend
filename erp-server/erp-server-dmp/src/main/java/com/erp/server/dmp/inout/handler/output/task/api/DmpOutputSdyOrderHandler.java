@@ -7,6 +7,7 @@ import com.alibaba.fastjson.JSON;
 import com.common.business.dto.ShudiyunB2cOrderDTO;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.wrapper.FeignQuery;
+import com.common.core.controller.vo.ApiResult;
 import com.common.core.entity.BaseEntity;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -101,7 +102,7 @@ public class DmpOutputSdyOrderHandler extends DmpOutputTaskHandler {
         Map<String, String> map = new HashMap<>();
         for(String changId : changeIds) {
             List<ShudiyunB2cOrderDTO> sdyDtoList = this.convert(DmpSoInfoEntityMap.get(changId), DmpSoDetailEntityMap.get(changId));
-            if(CollUtil.isEmpty(sdyDtoList)) {
+            if(CollUtil.isNotEmpty(sdyDtoList)) {
                 map.put(changId, JSON.toJSONString(sdyDtoList));
             }
         }
@@ -135,8 +136,17 @@ public class DmpOutputSdyOrderHandler extends DmpOutputTaskHandler {
 
     @Override
     protected void pushData(DmpCfgOutputEntity dmpCfgOutputEntity, DmpOutputTaskRecordEntity dmpOutputTaskRecordEntity) {
+        String id = dmpOutputTaskRecordEntity.getId();
+        String status = "";
         String requestData = dmpOutputTaskRecordEntity.getRequestData();
-        sdyDeliveryOrderConsumer.handle(requestData);
+        ApiResult handle = sdyDeliveryOrderConsumer.handle(requestData);
+        if ("200".equals(handle.getCode())) {
+            status = DmpOutputTaskRecordStatusEnum.FINISH.getCode();
+        } else {
+            status = DmpOutputTaskRecordStatusEnum.ERROR.getCode();
+        }
+
+        dmpOutputUtils.updateStatus(id, status, String.valueOf(handle.getData()) , handle.getMsg());
     }
 
     /**
@@ -239,12 +249,12 @@ public class DmpOutputSdyOrderHandler extends DmpOutputTaskHandler {
                     throw new ServiceException(ApiError.ERROR_SDY_NOT_FOUND_SHOP, shopId);
                 }
                 CustomerInfoEntity customerInfo = FeignQuery.getById(CustomerInfoEntity.class, shopInfo.getCustomerId());
-                if (ObjectUtil.isEmpty(customerInfo)) {
-                    throw new ServiceException(ApiError.ERROR_SDY_NOT_FOUND_CUSTOMER, shopInfo.getCustomerId());
+                if (ObjectUtil.isNotEmpty(customerInfo)) {
+                    shudiyunB2cOrderDTO.setSales_company_code(customerInfo.getFinancialOrganization());
+                    shudiyunB2cOrderDTO.setReceiving_company_code(customerInfo.getFinancialOrganization());
                 }
                 shudiyunB2cOrderDTO.setSales_company_code(shopInfo.getSalesOrgId());
-                shudiyunB2cOrderDTO.setSales_company_code(customerInfo.getFinancialOrganization());
-                shudiyunB2cOrderDTO.setReceiving_company_code(customerInfo.getFinancialOrganization());
+
                 shudiyunB2cOrderDTO.setShop_no(shopInfo.getId());
                 shudiyunB2cOrderDTO.setShop_name(shopInfo.getName());
                 DictCurrencyEntity dictCurrencyEntity = FeignQuery.getById(DictCurrencyEntity.class, shopInfo.getTradeCurrency());
@@ -266,7 +276,7 @@ public class DmpOutputSdyOrderHandler extends DmpOutputTaskHandler {
             shudiyunB2cOrderDTO.setGoods_name(dmpSoDetailEntity.getSkuName());
             shudiyunB2cOrderDTO.setSpec_no(dmpSoDetailEntity.getPlatformSpuNo());
             shudiyunB2cOrderDTO.setSpec_name("");
-            if (dmpSoDetailEntity.getIsGift()) {
+            if (dmpSoDetailEntity.getIsGift() && dmpSoDetailEntity.getIsGift() != null) {
                 shudiyunB2cOrderDTO.setIs_gift(1);
             } else {
                 shudiyunB2cOrderDTO.setIs_gift(0);
@@ -279,7 +289,7 @@ public class DmpOutputSdyOrderHandler extends DmpOutputTaskHandler {
                 shudiyunB2cOrderDTO.setGoods_status("10.10");
             }
 
-            if (dmpSoInfoEntity.getIsCancel()) {
+            if (dmpSoInfoEntity.getIsCancel() && dmpSoDetailEntity.getIsGift() != null) {
                 shudiyunB2cOrderDTO.setGoods_status("10.20");
             }
 
@@ -289,13 +299,13 @@ public class DmpOutputSdyOrderHandler extends DmpOutputTaskHandler {
             shudiyunB2cOrderDTO.setGoods_transaction_amount(dmpSoDetailEntity.getAfterAmount());
             if (dmpSoDetailEntity.getAfterAmount().compareTo(BigDecimal.ZERO) > 0) {
                 //获得分摊的商品优惠额
-                BigDecimal shareDiscount = dmpSoDetailEntity.getAfterAmount().divide(dmpSoInfoEntity.getAllAmount(), 4, RoundingMode.HALF_UP).multiply(totalDiscount);
+                BigDecimal shareDiscount = dmpSoDetailEntity.getAfterAmount().divide(dmpSoInfoEntity.getAllAmount(), 4, RoundingMode.DOWN).multiply(totalDiscount);
                 //计算为真实售价(原始币别)-商品分摊优惠/订单数量
                 if (dmpSoDetailEntityList.size() == i-1) {
-                    shudiyunB2cOrderDTO.setPrice(dmpSoDetailEntity.getAfterAmount().subtract(dmpSoInfoEntity.getAllAmount()).divide(MathUtil.valueOf(dmpSoDetailEntity.getQty()), 4, RoundingMode.HALF_UP));
+                    shudiyunB2cOrderDTO.setPrice(dmpSoDetailEntity.getAfterAmount().subtract(dmpSoInfoEntity.getAllAmount()).divide(MathUtil.valueOf(dmpSoDetailEntity.getQty()), 4, RoundingMode.DOWN));
                     shudiyunB2cOrderDTO.setGoods_transaction_amount(dmpSoDetailEntity.getAfterAmount().subtract(dmpSoInfoEntity.getAllAmount()));
                 } else {
-                    shudiyunB2cOrderDTO.setPrice(dmpSoDetailEntity.getAfterAmount().subtract(shareDiscount).divide(MathUtil.valueOf(dmpSoDetailEntity.getQty()), 4, RoundingMode.HALF_UP));
+                    shudiyunB2cOrderDTO.setPrice(dmpSoDetailEntity.getAfterAmount().subtract(shareDiscount).divide(MathUtil.valueOf(dmpSoDetailEntity.getQty()), 4, RoundingMode.DOWN));
                     shudiyunB2cOrderDTO.setGoods_transaction_amount(dmpSoDetailEntity.getAfterAmount().subtract(shareDiscount));
                 }
                 totalDiscount = totalDiscount.subtract(shareDiscount);
