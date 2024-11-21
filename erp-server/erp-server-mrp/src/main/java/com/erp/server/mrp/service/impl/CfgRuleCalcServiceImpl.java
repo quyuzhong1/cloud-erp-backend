@@ -300,7 +300,7 @@ public class CfgRuleCalcServiceImpl extends SuperServiceImpl<CfgRuleCalcMapper, 
         LoginUser user = UserContext.getDefaultLoginUser();
         calcSalesInfoFavoriteService.remove(Wrappers.<CalcSalesInfoFavoriteEntity>lambdaQuery()
                 .eq(CalcSalesInfoFavoriteEntity::getUserId, user.getUid())
-                .in(CalcSalesInfoFavoriteEntity::getCfgRuleCalcId, dto.getCfgRuleCalcId()));
+                .eq(CalcSalesInfoFavoriteEntity::getCfgRuleCalcId, dto.getCfgRuleCalcId()));
     }
 
 
