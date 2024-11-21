@@ -1,5 +1,6 @@
 package com.erp.server.mrp.service;
 
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
@@ -73,4 +74,11 @@ public interface CalcSalesInfoDimService extends SuperService<CalcSalesInfoDimEn
      * @param params 参数
      */
     PagingVO<CalcSalesInfoDimDTO.TemplateViewDTO> pagingTemplate(PagingDTO<CalcSalesInfoDimDTO.ParamDTO> params);
+
+    /**
+     * 修改备注
+     * @param id 试算id
+     * @param remark 备注
+     */
+    BatchResultDTO updateRemark(String id, String remark);
 }

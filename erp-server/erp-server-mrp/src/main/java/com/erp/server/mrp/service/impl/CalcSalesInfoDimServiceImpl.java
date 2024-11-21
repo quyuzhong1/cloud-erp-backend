@@ -7,8 +7,10 @@ import com.alibaba.fastjson.TypeReference;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.FileTaskEventEnum;
+import com.common.business.enums.OperationTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
@@ -263,7 +265,10 @@ public class CalcSalesInfoDimServiceImpl extends SuperServiceImpl<CalcSalesInfoD
         List<CalcSalesInfoEstimateEntity> salesInfoEstimateList = calcSalesInfoEstimateService.listByCalcSalesInfoIds(ids);
         List<String> shopIds = records.stream().map(CalcSalesInfoDimDTO.DetailViewDTO::getShopId).distinct().collect(Collectors.toList());
         List<String> country = records.stream().map(CalcSalesInfoDimDTO.DetailViewDTO::getCountry).distinct().collect(Collectors.toList());
-        List<DictCountryEntity> countryList = sysDictFeign.listCountryByIds(country);
+        List<DictCountryEntity> countryList = new ArrayList<>();
+        if (!CollectionUtils.isEmpty(country)) {
+            countryList = sysDictFeign.listCountryByIds(country);
+        }
         List<SkuVO> skuVOS = plmTaskFeign.listSkuCategoryByIds(skuIds);
         List<ShopInfoEntity> shopInfos = shopInfoFeign.listShopInfoByIds(shopIds);
         List<String> cfgRuleCalcIds = records.stream().map(CalcSalesInfoDimDTO.DetailViewDTO::getCfgRuleCalcId).distinct().collect(Collectors.toList());
@@ -332,6 +337,16 @@ public class CalcSalesInfoDimServiceImpl extends SuperServiceImpl<CalcSalesInfoD
             processTemplateData(page.getRecords(), user.getUid());
         }
         return new PagingVO<>(page);
+    }
+
+    @Override
+    public BatchResultDTO updateRemark(String id, String remark) {
+        //新建对象
+        CalcSalesInfoDimEntity entity = new CalcSalesInfoDimEntity();
+        entity.setId(id);
+        entity.setRemark(remark);
+        this.updateById(entity);
+        return BatchResultDTO.success(entity.getId(), entity.getSkuNo(), OperationTypeEnum.UPDATE);
     }
 
     /**
@@ -490,7 +505,10 @@ public class CalcSalesInfoDimServiceImpl extends SuperServiceImpl<CalcSalesInfoD
         List<CalcSalesInfoEstimateEntity> salesInfoEstimateList = calcSalesInfoEstimateService.listByCalcSalesInfoIds(ids);
         List<String> shopIds = records.stream().map(CalcSalesInfoDimDTO.PagingView::getShopId).distinct().collect(Collectors.toList());
         List<String> country = records.stream().map(CalcSalesInfoDimDTO.PagingView::getCountry).distinct().collect(Collectors.toList());
-        List<DictCountryEntity> countryList = sysDictFeign.listCountryByIds(country);
+        List<DictCountryEntity> countryList = new ArrayList<>();
+        if (!CollectionUtils.isEmpty(country)) {
+            countryList = sysDictFeign.listCountryByIds(country);
+        }
         List<SkuVO> skuVOS = plmTaskFeign.listSkuCategoryByIds(skuIds);
         List<ShopInfoEntity> shopInfos = shopInfoFeign.listShopInfoByIds(shopIds);
         List<String> cfgRuleCalcIds = records.stream().map(CalcSalesInfoDimDTO.PagingView::getCfgRuleCalcId).distinct().collect(Collectors.toList());

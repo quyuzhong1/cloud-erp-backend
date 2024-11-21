@@ -1,19 +1,28 @@
 package com.erp.server.mrp.controller.api;
 
 
+import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.dto.base.BaseIdsDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
+import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.mrp.dto.CalcSalesInfoDimDTO;
+import com.erp.model.mrp.entity.CalcSalesInfoDimEntity;
+import com.erp.model.mrp.entity.ReplenishmentSuggestionEntity;
 import com.erp.server.mrp.service.CalcSalesInfoDimService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * 销量试算表
@@ -105,6 +114,30 @@ public class CalcSalesInfoDimController extends BaseController {
     public ApiResult<PagingVO<CalcSalesInfoDimDTO.TemplateViewDTO>> pagingTemplate(@RequestBody @Validated PagingDTO<CalcSalesInfoDimDTO.ParamDTO> params) {
         PagingVO<CalcSalesInfoDimDTO.TemplateViewDTO> page = calcSalesInfoDimService.pagingTemplate(params);
         return success(page);
+    }
+
+
+    @PostMapping("/updateRemark")
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "编辑备注")
+    public ApiResult<List<BatchResultDTO>> updateRemark(@RequestBody @Validated BaseIdsDTO.BlankRemarkDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        for (String id : dto.getIds()) {
+            BatchResultDTO resultDTO;
+            try {
+                resultDTO = calcSalesInfoDimService.updateRemark(id,dto.getRemark());
+            }catch (Exception e){
+                log.error("销量试算编辑备注",e);
+                CalcSalesInfoDimEntity entity = calcSalesInfoDimService.getById(id);
+                if (ObjectUtil.isEmpty(entity)) {
+                    resultDTO = BatchResultDTO.fail(id, id, "销量试算不存在, 编辑备注失败");
+                    resultDTOS.add(resultDTO);
+                    continue;
+                }
+                resultDTO = BatchResultDTO.fail(entity.getId(), entity.getSkuNo(), e.getMessage());
+            }
+            resultDTOS.add(resultDTO);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
 }
