@@ -247,7 +247,10 @@ public class SyncKingdeeBomInfoServiceImpl implements SyncKingdeeBomInfoService 
 		resultMap.put("sku_description", productIdNameMap.get(entity.getSkuId()));
 		resultMap.put("product_code", entity.getSkuNo());
 		resultMap.put("product_name", productIdNameMap.get(entity.getSkuId()));
-		resultMap.put("product_quota", entity.getQuantity());
+		Integer quantity = entity.getQuantity();
+		if(quantity != null) {
+			resultMap.put("product_quota", quantity.toString());
+		}
 		LocalDateTime createTime = entity.getCreateTime();
 		if(createTime != null) {
 			resultMap.put("create_time", createTime.format(formatter));
