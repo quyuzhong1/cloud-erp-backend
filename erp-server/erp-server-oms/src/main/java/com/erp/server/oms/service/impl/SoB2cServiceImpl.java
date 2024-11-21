@@ -9430,7 +9430,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             omsPushMsgEntity.setTargetPlatform(DmpBasicSystemCodeEnum.SDY.getCode());
             omsPushMsgEntity.setSourceType(SourceTypeEnum.SDY_DELIVERY_ORDER.getCode());
             omsPushMsgEntity.setSourceId(soB2cDetailEntity.getId());
-            omsPushMsgEntity.setSourceCode(soB2cEntity.getSourceCode());
+            omsPushMsgEntity.setSourceCode(soB2cEntity.getCode());
             omsPushMsgEntity.setSyncOperate(operateEnum);
             omsPushMsgEntity.setPushData(JSON.toJSONString(shudiyunB2cOrderDTO));
             omsPushMsgService.save(omsPushMsgEntity);
