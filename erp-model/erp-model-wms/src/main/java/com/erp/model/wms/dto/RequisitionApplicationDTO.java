@@ -674,6 +674,11 @@ public class RequisitionApplicationDTO implements Serializable {
         private String detailId;
 
         /**
+         * 是否关联变更
+         */
+        private Boolean isChange;
+
+        /**
          * 单据编号
          */
         private String code;

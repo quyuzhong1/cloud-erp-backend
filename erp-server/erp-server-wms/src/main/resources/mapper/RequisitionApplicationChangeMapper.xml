@@ -91,5 +91,18 @@
         </if>
         GROUP BY rac.approve_status
     </select>
+    <select id="listNotHandleDetailByBusinessDetailIds"
+            resultType="com.erp.model.wms.entity.RequisitionApplicationChangeDetailEntity">
+        select racd.*
+        from requisition_application_change rac
+        inner join requisition_application_change_detail racd on rac.id = racd.main_id and racd.is_deleted = false
+        where rac.approve_status !='approve'
+        and rac.is_deleted = false
+        and rac.invalid_status = false
+        and racd.business_detail_id in
+        <foreach collection="businessDetailIds" item="item" open="(" separator="," close=")">
+        #{item}
+        </foreach>
+    </select>
 
 </mapper>

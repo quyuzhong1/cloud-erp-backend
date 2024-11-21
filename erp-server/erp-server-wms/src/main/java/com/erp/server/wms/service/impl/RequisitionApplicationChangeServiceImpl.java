@@ -26,7 +26,10 @@ import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.RequisitionApplicationChangeDTO;
 import com.erp.model.wms.dto.pickingstrategy.PickingListsDTO;
-import com.erp.model.wms.entity.*;
+import com.erp.model.wms.entity.RequisitionApplicationChangeDetailEntity;
+import com.erp.model.wms.entity.RequisitionApplicationChangeEntity;
+import com.erp.model.wms.entity.RequisitionApplicationDetailEntity;
+import com.erp.model.wms.entity.RequisitionApplicationEntity;
 import com.erp.model.wms.enums.RequisitionApplicationStatusEnum;
 import com.erp.model.wms.enums.RequisitionApplicationTypeEnum;
 import com.erp.model.wms.enums.RequisitionChangeTypeEnum;
@@ -451,6 +454,22 @@ public class RequisitionApplicationChangeServiceImpl extends SuperServiceImpl<Re
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据作废操作 ，备注：{}", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "要货申请变更单",remark);
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.REQUISITION_APPLICATION_CHANGE.getCode(), entity.getId(), "作废操作");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.INVALID);
+    }
+
+    @Override
+    public List<RequisitionApplicationChangeEntity> listNotHandleByBusinessIds(List<String> ids) {
+        if(CollectionUtils.isEmpty(ids)){
+            return new ArrayList<>();
+        }
+        return lambdaQuery().in(RequisitionApplicationChangeEntity::getBusinessId, ids).eq(RequisitionApplicationChangeEntity::getInvalidStatus, false).ne(RequisitionApplicationChangeEntity::getApproveStatus, ApproveStatusEnum.APPROVE.getCode()).list();
+    }
+
+    @Override
+    public List<RequisitionApplicationChangeDetailEntity> listNotHandleDetailByBusinessDetailIds(List<String> businessDetailIds) {
+        if(CollectionUtils.isEmpty(businessDetailIds)){
+            return new ArrayList<>();
+        }
+        return baseMapper.listNotHandleDetailByBusinessDetailIds(businessDetailIds);
     }
 
     @Override

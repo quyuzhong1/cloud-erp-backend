@@ -90,6 +90,15 @@ public class RequisitionApplicationQueryHandler extends AbstractQueryHandler {
         if("deliveryCode".equals(field)){
             return "EXISTS (SELECT id FROM first_mile_delivery fd WHERE fd.source_id = odp.id AND fd.code " + compareCodeSplicingValueSql + ")";
         }
+        if("isChange".equals(field)){
+            if((Boolean) value){
+                return "EXISTS (SELECT 1 FROM requisition_application_change rac" +
+                        " INNER JOIN requisition_application_change_detail racd on rac.id = racd.main_id WHERE rac.business_id = ra.id  and rac.is_deleted = false and rac.invalid_status = false and rac.approve_status != 'approve' and racd.business_detail_id = rad.id)";
+            }else{
+                return "NOT EXISTS (SELECT 1 FROM requisition_application_change rac" +
+                        " INNER JOIN requisition_application_change_detail racd on rac.id = racd.main_id WHERE rac.business_id = ra.id  and rac.is_deleted = false and rac.invalid_status = false and rac.approve_status != 'approve' and racd.business_detail_id = rad.id)";
+            }
+        }
         return null;
     }
 }

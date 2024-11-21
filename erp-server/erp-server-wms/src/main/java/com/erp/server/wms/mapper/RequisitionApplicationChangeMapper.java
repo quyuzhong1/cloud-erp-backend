@@ -1,4 +1,5 @@
 package com.erp.server.wms.mapper;
+import com.erp.model.wms.entity.RequisitionApplicationChangeDetailEntity;
 import com.erp.model.wms.entity.RequisitionApplicationChangeEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
@@ -52,4 +53,6 @@ public interface RequisitionApplicationChangeMapper extends BaseMapper<Requisiti
     * @return
     */
     List<RequisitionApplicationChangeDTO.TabListDTO> tabList(@Param("params") RequisitionApplicationChangeDTO.PagingParamDTO searchParam);
+
+    List<RequisitionApplicationChangeDetailEntity> listNotHandleDetailByBusinessDetailIds(@Param("businessDetailIds") List<String> businessDetailIds);
 }

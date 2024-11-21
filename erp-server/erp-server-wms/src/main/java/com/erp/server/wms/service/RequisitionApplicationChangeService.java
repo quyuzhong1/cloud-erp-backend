@@ -4,6 +4,7 @@ import com.common.business.dto.base.*;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.wms.dto.RequisitionApplicationChangeDTO;
+import com.erp.model.wms.entity.RequisitionApplicationChangeDetailEntity;
 import com.erp.model.wms.entity.RequisitionApplicationChangeEntity;
 
 import javax.servlet.http.HttpServletResponse;
@@ -149,4 +150,8 @@ public interface RequisitionApplicationChangeService extends SuperService<Requis
     PagingVO<RequisitionApplicationChangeDTO.ProductDTO> addProductPaging(PagingDTO<RequisitionApplicationChangeDTO.ProductAddDTO> dto);
 
     BatchResultDTO invalid(String id, String remark);
+
+    List<RequisitionApplicationChangeEntity> listNotHandleByBusinessIds(List<String> ids);
+
+    List<RequisitionApplicationChangeDetailEntity> listNotHandleDetailByBusinessDetailIds(List<String> detailIds);
 }
