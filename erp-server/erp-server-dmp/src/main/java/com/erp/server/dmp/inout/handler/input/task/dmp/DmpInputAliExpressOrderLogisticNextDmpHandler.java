@@ -54,7 +54,6 @@ public class DmpInputAliExpressOrderLogisticNextDmpHandler extends DmpInputDoNex
 					.select(DmpSoInfoEntity::getId , DmpSoInfoEntity::getThirdCode)
 					.list().stream().collect(Collectors.toMap(DmpSoInfoEntity::getThirdCode, DmpSoInfoEntity::getId));
 				
-				maidIdThirdCodeMaps.values();
 				for(Map.Entry<String, Map<String, Object>> orderIdDetailMap : orderIdDetailMaps.entrySet()) {
 					String ordreId = orderIdDetailMap.getKey();
 					String mainId = maidIdThirdCodeMaps.get(ordreId);
