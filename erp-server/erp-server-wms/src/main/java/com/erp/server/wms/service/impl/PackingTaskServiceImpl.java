@@ -88,8 +88,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_PACKING_TASK;
-import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_PACKING_TASK_DETAIL;
+import static com.common.business.enums.FileTaskEventEnum.*;
 
 /**
  * <p>
