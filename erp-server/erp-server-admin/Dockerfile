@@ -3,6 +3,14 @@ FROM 172.16.100.92:5000/library/java-8-docker:latest
 MAINTAINER sdc-erp
 # 设置工作目录
 WORKDIR /app
+
+# 安装 tzdata 用于设置时区
+RUN apt-get update && apt-get install -y tzdata
+
+# 设置时区与宿主机一致，假设宿主机的时区是 Asia/Shanghai
+ENV TZ=Asia/Shanghai
+RUN ln -sf /usr/share/zoneinfo/${TZ} /etc/localtime && echo ${TZ} > /etc/timezone
+
 # 将构建的JAR文件复制到容器中的工作目录
 COPY target/*jar /app/app.jar
 
