@@ -57,7 +57,6 @@ import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -849,8 +848,8 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
             return deliverPlanViewDTO;
         }
         deliverPlanViewDTO.setDeliverPlanCode(wmsDeliveryPlanEntity.getCode());
-        deliverPlanViewDTO.setApproveStatus(wmsDeliveryPlanEntity.getDeliveryStatus());
-        deliverPlanViewDTO.setApproveStatusName(ApproveStatusEnum.getName(wmsDeliveryPlanEntity.getDeliveryStatus()));
+        deliverPlanViewDTO.setApproveStatus(wmsDeliveryPlanEntity.getApproveStatus().getCode());
+        deliverPlanViewDTO.setApproveStatusName(ApproveStatusEnum.getName(wmsDeliveryPlanEntity.getApproveStatus().getCode()));
         //明细
         List<WmsDeliveryPlanDetailEntity> wmsDeliveryPlanDetailList = wmsDeliveryPlanDetailService.listByMainIds(Arrays.asList(id));
         if (CollectionUtils.isEmpty(wmsDeliveryPlanDetailList)) {
