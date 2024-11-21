@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.erp.model.oms.dto.*;
+import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.tms.dto.TransferDeclareDetailDTO;
 import com.erp.model.wms.dto.WmsDataCompareTaskDTO;
@@ -206,6 +207,15 @@ public interface SoB2cMapper extends BaseMapper<SoB2cEntity> {
     IPage<SoB2cForeignDTO.OrderDeliveryResp> getForeignOrderDeliveryInfo(Page query, @Param("params") SoB2cForeignDTO.OrderDeliveryReq orderDeliveryReq);
 
     List<SoB2cDTO.GenerateSoB2cReturnViewDTO> generateSoB2cReturnView(@Param("ids")List<String> ids);
+
+
+    List<SoB2cDetailEntity> listTikTokOrder();
+    List<SoB2cDetailEntity> listTikTokOrderAll(@Param("ids") List<String> mainIds);
+    void tikTokOrderUpdate(@Param("id") String id);
+    void tikTokOrderUpdateDetail(@Param("id") String id
+            ,@Param("sourceDetailId") String sourceDetailId
+            ,@Param("platformLineNumber") String platformLineNumber
+            ,@Param("platformPackageId") String platformPackageId);
 
     /**
      * 更换发货sku预览

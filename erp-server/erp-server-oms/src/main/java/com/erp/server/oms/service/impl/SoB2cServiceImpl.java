@@ -137,10 +137,7 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.time.Duration;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
+import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
@@ -9179,11 +9176,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         }
 
         // 构建 DTO 列表
-        List<DmpInoutDTO.CreateInputDTO> createDTOList = soB2cEntities.stream()
-                .collect(Collectors.groupingBy(SoB2cEntity::getShopId)) // 按 shopId 分组
-                .entrySet().stream()
-                .map(entry -> createInputDTO(entry.getKey(), entry.getValue()))
-                .collect(Collectors.toList());
+        List<DmpInoutDTO.CreateInputDTO> createDTOList = SoB2cHandler.groupConvertCreateInputDTOList(soB2cEntities);
 
         // 调用远程任务接口
         if(Boolean.TRUE.equals(dmpInoutTaskFeign.doInputTask(createDTOList))){
@@ -9200,22 +9193,43 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         return resultDTOS;
     }
 
-    // 辅助方法：根据 shopId 和分组数据构建 DTO
-    private DmpInoutDTO.CreateInputDTO createInputDTO(String shopId, List<SoB2cEntity> groupedEntities) {
-        DmpInoutDTO.CreateInputDTO dto = new DmpInoutDTO.CreateInputDTO();
-        dto.setNextLevelId(shopId);
-        dto.setSystemCode(groupedEntities.get(0).getDictPlatform()); // 默认取第一个的 dictPlatform
-        dto.setBillType(BusinessTypeEnum.ORDER.getCode());
 
-        // 构建 orderIdList 并封装为 JSON
-        Map<String, List<String>> map = Collections.singletonMap(
-                "orderIdList",
-                groupedEntities.stream()
-                        .map(SoB2cEntity::getPlatformCode)
-                        .collect(Collectors.toList())
-        );
-        dto.setDetailExtendJson(JSON.toJSONString(map));
-        return dto;
+    @Override
+    public Boolean tempTikTokOrderDate() {
+        //查询待修复已删除数据
+        List<SoB2cDetailEntity> soB2cDetailEntityList = baseMapper.listTikTokOrder();
+
+        List<String> mainIds = soB2cDetailEntityList.stream().map(req -> req.getMainId()).distinct().collect(Collectors.toList());
+
+
+        List<SoB2cDetailEntity> soB2cDetailEntityList1 = soB2cDetailService.listByMainIds(mainIds);
+
+
+        for (SoB2cDetailEntity soB2cDetailEntity : soB2cDetailEntityList) {
+            List<SoB2cDetailEntity> collect = soB2cDetailEntityList1.stream().filter(req -> req.getMainId().equals(soB2cDetailEntity.getMainId())
+                    && req.getSkuId().equals(soB2cDetailEntity.getSkuId())).collect(Collectors.toList());
+            //多个重复
+            List<SoB2cDetailEntity> aNull = collect.stream().filter(req -> CharSequenceUtil.isNotBlank(req.getPlatformLineNumber())
+                    && CharSequenceUtil.isNotBlank(req.getPlatformPackageId())
+            ).collect(Collectors.toList());
+
+            if (CollUtil.isNotEmpty(aNull)) {
+                soB2cDetailEntity.setSourceDetailId(aNull.get(0).getSourceDetailId());
+                soB2cDetailEntity.setPlatformLineNumber(aNull.get(0).getPlatformLineNumber());
+                soB2cDetailEntity.setPlatformPackageId(aNull.get(0).getPlatformPackageId());
+                baseMapper.tikTokOrderUpdateDetail(soB2cDetailEntity.getId(),
+                        soB2cDetailEntity.getSourceDetailId(),
+                        soB2cDetailEntity.getPlatformLineNumber(),
+                        soB2cDetailEntity.getPlatformPackageId());
+            } else {
+                baseMapper.tikTokOrderUpdate(soB2cDetailEntity.getId());
+            }
+
+            for (SoB2cDetailEntity b2cDetailEntity : collect) {
+                soB2cDetailService.lambdaUpdate().eq(SoB2cDetailEntity::getId, b2cDetailEntity.getId()).remove();
+            }
+
+        }
+        return Boolean.TRUE;
     }
-
 }

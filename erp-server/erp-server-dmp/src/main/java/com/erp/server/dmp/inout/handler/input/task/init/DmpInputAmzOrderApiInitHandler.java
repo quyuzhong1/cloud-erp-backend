@@ -12,14 +12,16 @@ import com.common.business.utils.RedisUtil;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.dmp.dto.AmazonShopInfoDTO;
-import com.erp.model.dmp.enums.DmpInputTaskTaskTypeEnum;
 import com.erp.sdk.oms.amz.spapi.api.OrdersV0Api;
 import com.erp.sdk.oms.amz.spapi.client.ApiClient;
 import com.erp.sdk.oms.amz.spapi.client.ApiException;
 import com.erp.sdk.oms.amz.spapi.client.ApiResponse;
+import com.erp.sdk.oms.amz.spapi.dto.PlatformAmazonOrderDTO;
+import com.erp.sdk.oms.amz.spapi.enums.AmazonMarketplaceEnum;
 import com.erp.sdk.oms.amz.spapi.enums.AmazonRequestTypeRateLimiterEnum;
 import com.erp.sdk.oms.amz.spapi.model.orders.GetOrdersResponse;
 import com.erp.sdk.oms.amz.spapi.model.orders.Order;
+import com.erp.sdk.oms.amz.spapi.model.orders.OrderList;
 import com.erp.sdk.oms.amz.spapi.utils.AmazonSpApiInitUtils;
 import com.erp.server.dmp.inout.dto.base.DmpInputTaskInitDTO;
 import com.erp.server.dmp.inout.dto.request.DmpInputInitRequest;
@@ -27,6 +29,7 @@ import com.erp.server.dmp.inout.dto.response.DmpInputInitResponse;
 import com.erp.server.dmp.inout.dto.response.DmpInputTaskResponse;
 import com.erp.server.dmp.service.CfgAppClientService;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
@@ -34,7 +37,6 @@ import org.springframework.stereotype.Service;
 import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -73,9 +75,72 @@ public class DmpInputAmzOrderApiInitHandler extends DmpInputInitHandler {
             DmpInputInitResponse initDmpResponse = (DmpInputInitResponse) dmpResponse;
             initDmpResponse.setDoNextChain(false);
             return Collections.emptyList();
-//            throw new ServiceException(msg);
         }
 
+        List<String> orderIdList = new ArrayList<>(50);
+        if (StringUtils.isNotBlank(dmpInputTaskEntity.getExtendJson())){
+            JSONObject jsonObject = JSONObject.parseObject(dmpInputTaskEntity.getExtendJson());
+            JSONArray jsonArray = jsonObject.getJSONArray("orderIdList");
+            if (CollectionUtils.isNotEmpty(jsonArray)){
+                orderIdList = jsonArray.stream().map(Object::toString).distinct().collect(Collectors.toList());
+            }
+        }
+
+        if (CollectionUtils.isNotEmpty(orderIdList)){
+            // 指定单号查询
+            return getByOrderIds((DmpInputInitResponse) dmpResponse, shopInfoDTO, limitKey, orderIdList);
+        } else {
+            // 查询最新
+            return getNewDmpInputTaskInitDTOS((DmpInputInitResponse) dmpResponse, shopInfoDTO, limitKey);
+        }
+
+    }
+
+    /**
+     * 根据订单IDS 查询
+     */
+    private List<DmpInputTaskInitDTO> getByOrderIds(DmpInputInitResponse dmpResponse, AmazonShopInfoDTO shopInfoDTO, String limitKey, List<String> orderIds) {
+        if (orderIds.size() > 50){
+            ServiceException.runError("亚马逊订单接口根据ID数量查询不能超过50");
+        }
+
+        String rateLimitStr = AmazonRequestTypeRateLimiterEnum.ORDER_LIST.getRateLimit();
+        // 亚马逊订单下载
+        OrdersV0Api api = AmazonSpApiInitUtils.create(OrdersV0Api.class, shopInfoDTO, false);
+        // 正式环境请求
+        try {
+            // 请求全站点
+            List<String> marketplaceIds = new ArrayList<>(shopInfoDTO.getMarketplaceShopIdMap().keySet());
+            // 发起请求
+            ApiResponse<GetOrdersResponse> ordersWithHttpInfo = api.getOrdersWithHttpInfo(marketplaceIds,
+                    null, null, null, null, null, null, null, null, null, 100,
+                    null, null, null, orderIds, null, null, null, null, null, null, null);
+            // 返回下载源数据
+            List<JSONObject> curJsonList = ordersWithHttpInfo.getData().getPayload()
+                    .getOrders()
+                    .stream()
+                    .map(e -> fillDataAndToJsonObject(e, shopInfoDTO)).collect(Collectors.toList());
+
+            // 返回下载源数据
+            return Collections.singletonList(DmpInputTaskInitDTO.initMsg(JSONArray.toJSONString(curJsonList)));
+        } catch (ApiException e) {
+            if (429 == e.getCode()) {
+                // 设置动态速率，失效时间=1/limit
+                BigDecimal timeOut = BigDecimal.ONE.max(BigDecimal.ONE.divide(new BigDecimal(rateLimitStr), 8, RoundingMode.DOWN));
+                redisUtil.set(limitKey, rateLimitStr, timeOut.longValue());
+                dmpResponse.setDoNextChain(false);
+                return Collections.emptyList();
+            }
+            throw new ServiceException("根据订单IDS请求亚马逊SP-APi订单失败 异常失败,body=" + JSONUtil.toJsonStr(e));
+        } catch (Exception e) {
+            throw new RuntimeException("根据订单IDS请求亚马逊SP-APi订单失败,body=" + JSONUtil.toJsonStr(e));
+        }
+    }
+
+    /**
+     * 查询最新订单
+     */
+    private List<DmpInputTaskInitDTO> getNewDmpInputTaskInitDTOS(DmpInputInitResponse dmpResponse, AmazonShopInfoDTO shopInfoDTO, String limitKey) {
         // 开始时间
         LocalDateTime startTime = dmpInputTaskEntity.getStartTime();
         // 结束时间
@@ -123,8 +188,7 @@ public class DmpInputAmzOrderApiInitHandler extends DmpInputInitHandler {
                 // 设置动态速率，失效时间=1/limit
                 BigDecimal timeOut = BigDecimal.ONE.max(BigDecimal.ONE.divide(new BigDecimal(rateLimitStr), 8, RoundingMode.DOWN));
                 redisUtil.set(limitKey, rateLimitStr, timeOut.longValue());
-                DmpInputInitResponse initDmpResponse = (DmpInputInitResponse) dmpResponse;
-                initDmpResponse.setDoNextChain(false);
+                dmpResponse.setDoNextChain(false);
                 return Collections.emptyList();
             }
             throw new ServiceException("请求亚马逊SP-APi订单api异常失败,body=" + JSONUtil.toJsonStr(e));

@@ -236,5 +236,4 @@ public class CfgSettingJob {
         }
         return ReturnT.SUCCESS;
     }
-
 }

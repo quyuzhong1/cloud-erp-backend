@@ -53,7 +53,6 @@ public class NoticeMsgConstant {
      */
     public final static String FS_WLR_SETTING_CONTENT="**【仓储管理-仓位补货】待处理数据,数量：{%s}\n【仓储管理-仓位补货】处理中数据,数量：{%s}\n**推送时间：{%s}";
 
-
     /**
      * 装箱完成通知消息头
      */
