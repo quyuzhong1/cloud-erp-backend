@@ -120,6 +120,21 @@ public class ReportOrderSalesEntity extends BaseEntity<ReportOrderSalesEntity> {
     @TableField("total_qty")
     private Integer totalQty;
     /**
+     * b2b需求总数
+     */
+    @TableField("b2b_qty")
+    private Integer b2bQty;
+    /**
+     * b2c需求总数
+     */
+    @TableField("b2c_qty")
+    private Integer b2cQty;
+    /**
+     * 头程需求总数
+     */
+    @TableField("first_mile_qty")
+    private Integer firstMileQty;
+    /**
     * 虚拟仓可用库存
     */
     @TableField("virtual_usable_qty")
@@ -145,6 +160,11 @@ public class ReportOrderSalesEntity extends BaseEntity<ReportOrderSalesEntity> {
     @TableField("distribution_qty")
     private Integer distributionQty;
 
+    /**
+     * 近30天虚拟仓库存
+     */
+    @TableField("thirty_days_virtual_qty")
+    private Integer thirtyDaysVirtualQty;
 
     public static final String WAREHOUSE_ID = "warehouse_id";
 

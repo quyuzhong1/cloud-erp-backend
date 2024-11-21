@@ -68,6 +68,34 @@
         </if>
     </select>
 
+    <!-- 导出分货统计 -->
+    <select id="exportVirtualStatistics"
+            resultType="com.erp.model.wms.dto.VirtualWarehouseAllocationDTO$ExportStatisticsDTO">
+            select
+                vmad.sku_id,
+                pd.sku_no,
+                pd.name as productName,
+                vmad.warehouse_id,
+                vmad.warehouse_name,
+                vmad.from_virtual_warehouse_id,
+                vmad.from_virtual_warehouse_name,
+                SUM(coalesce(vmad.qty,0)) as totalQty,
+                SUM(CASE WHEN vwa.status = 'waitSubmit' and vwa.type = 'allocation' THEN vmad.qty else 0 end) as submitAddAllocationQty,
+                SUM(CASE WHEN vwa.status = 'handle' and vwa.type = 'allocation' THEN vmad.qty else 0 end) as handleAddAllocationQty,
+                SUM(CASE WHEN vwa.status = 'waitSubmit' and vwa.type = 'cancel' THEN vmad.qty else 0 end) as submitCancelAllocationQty,
+                SUM(CASE WHEN vwa.status = 'handle' and vwa.type = 'cancel' THEN vmad.qty else 0 end) as handleCancelAllocationQty
+            from virtual_warehouse_allocation vwa
+            inner join virtual_warehouse_allocation_detail vmad on vwa.id = vmad.main_id and vmad.is_deleted = false
+            left join product_detail pd on vmad.sku_id = pd.id and pd.is_deleted = false
+            <where> ${params.sqlMap.default}
+                and vwa.is_deleted = false and vwa.status != 'invalid' and vwa.type != 'transfer'
+                <if test="params.permissionSql != null and params.permissionSql != ''">
+                    ${params.permissionSql}
+                </if>
+            </where>
+            group by vmad.sku_id,pd.sku_no,pd.name,vmad.warehouse_id,vmad.warehouse_name,vmad.from_virtual_warehouse_id,vmad.from_virtual_warehouse_name
+    </select>
+
     <sql id="list">
         SELECT vma.id,
         vmad.id as detailId,
@@ -99,6 +127,7 @@
         vmad.sys_type_name,
         vma.remark,
         vmad.detail_remark detailRemark,
+        vma.is_statistics,
         COALESCE(iv.realQty,0) - COALESCE(vi.distributionQty,0) as unDistributionQty,
         case when  vmad.to_virtual_warehouse_id = '' then null else COALESCE(vit.toVirtualUsableQty,0) end as toVirtualWarehouseUsableQty,
         case when  vmad.from_virtual_warehouse_id = '' then null else COALESCE(vif.fromVirtualUsableQty,0) end as fromVirtualWarehouseUsableQty,

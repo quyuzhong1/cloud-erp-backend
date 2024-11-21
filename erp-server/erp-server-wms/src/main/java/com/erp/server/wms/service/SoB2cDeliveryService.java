@@ -12,7 +12,6 @@ import com.common.core.controller.vo.ApiResult;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.sys.openapi.DimensionalWeightDTO;
 import com.erp.model.wms.dto.SoB2cDeliveryDTO;
-import com.erp.model.wms.dto.SoB2cDeliveryInterceptDTO;
 import com.erp.model.wms.dto.pickingstrategy.LocationInventoryResultDTO;
 import com.erp.model.wms.entity.SoB2cDeliveryDetailEntity;
 import com.erp.model.wms.entity.SoB2cDeliveryEntity;
@@ -197,30 +196,6 @@ public interface SoB2cDeliveryService extends SuperService<SoB2cDeliveryEntity> 
      * @create 2023-12-29 10:37
      */
     BatchResultDTO delivery(String id, String deliveryType);
-
-    /**
-     * 扣减冻结库存（库存不够生成异常）
-     * @author will
-     * @date 2024/7/21 9:47
-     * @param entity
-     */
-    Boolean generateOutFreezeError (SoB2cDeliveryEntity entity);
-
-    /**
-     * 清除扣减冻结异常
-     * @author will
-     * @date 2024/8/8 22:08
-     * @param entity
-     */
-    void cleanErrorSignFreeze (SoB2cDeliveryEntity entity);
-
-    /**
-     * 扣减冻结库存
-     * @author will
-     * @date 2024/7/21 9:47
-     * @param entity
-     */
-    Boolean outFreezeVirtualInventory (SoB2cDeliveryEntity entity);
 
     /**
      * 生成销售出库单

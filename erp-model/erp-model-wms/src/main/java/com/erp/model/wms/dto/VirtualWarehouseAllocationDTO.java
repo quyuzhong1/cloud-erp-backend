@@ -12,6 +12,7 @@ import lombok.NoArgsConstructor;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.time.LocalDateTime;
@@ -159,6 +160,10 @@ public class VirtualWarehouseAllocationDTO implements Serializable {
          * 作废说明
          */
         private String invalidDescription;
+        /**
+         * 是否计入统计，true是，false否
+         */
+        private Boolean isStatistics;
 
         /**
          * 附件名集合
@@ -229,7 +234,11 @@ public class VirtualWarehouseAllocationDTO implements Serializable {
 //        @Size(max = 255, message = "作废说明最大长度不能超过255位")
         private String invalidDescription;
 
-
+        /**
+         * 是否计入统计，true是，false否
+         */
+        @NotNull(message = "是否统计不能为空")
+        private Boolean isStatistics;
     }
 
     /**
@@ -354,6 +363,11 @@ public class VirtualWarehouseAllocationDTO implements Serializable {
         private Boolean isVirtualScarce;
 
         /**
+         * 缺货数量
+         */
+        private Integer virtualScarceQty;
+
+        /**
          * 调出数量/调拨数量
          */
         private Integer qty;
@@ -401,6 +415,10 @@ public class VirtualWarehouseAllocationDTO implements Serializable {
          * 同步平台单号（字符串）
          */
         private String thirdCode;
+        /**
+         * 是否计入统计，true是，false否
+         */
+        private Boolean isStatistics;
         /**
          * 附件名集合
          */
@@ -793,5 +811,62 @@ public class VirtualWarehouseAllocationDTO implements Serializable {
          */
         private Integer toVirtualWarehouseUsableQty;
 
+    }
+
+
+    /**
+     * 分货统计导出
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ExportStatisticsDTO {
+        /**
+         * sku
+         */
+        private String skuId;
+        /**
+         * sku
+         */
+        private String skuNo;
+        /**
+         * 产品名称
+         */
+        private String productName;
+        /**
+         * 仓库id
+         */
+        private String warehouseId;
+        /**
+         * 仓库名称
+         */
+        private String warehouseName;
+        /**
+         * 虚拟仓id
+         */
+        private String fromVirtualWarehouseId;
+        /**
+         * 虚拟仓名称
+         */
+        private String fromVirtualWarehouseName;
+        /**
+         * 总分货数量
+         */
+        private Integer totalQty;
+        /**
+         * 新增分货数量（待提交）
+         */
+        private Integer submitAddAllocationQty;
+        /**
+         * 新增分货数量（已处理）
+         */
+        private Integer handleAddAllocationQty;
+        /**
+         * 取消分货数量（待提交）
+         */
+        private Integer submitCancelAllocationQty;
+        /**
+         * 取消分货数量（已处理）
+         */
+        private Integer handleCancelAllocationQty;
     }
 }

@@ -157,6 +157,18 @@ public class ReportOrderSalesDTO implements Serializable {
          */
         private Integer totalQty;
         /**
+         * b2b需求总数
+         */
+        private Integer b2bQty;
+        /**
+         * b2c需求总数
+         */
+        private Integer b2cQty;
+        /**
+         * 头程需求总数
+         */
+        private Integer firstMileQty;
+        /**
          * 虚拟仓可用库存
          */
         private Integer virtualUsableQty;
@@ -176,6 +188,19 @@ public class ReportOrderSalesDTO implements Serializable {
          * 已分配数量
          */
         private Integer distributionQty;
+        /**
+         * 近30天虚拟仓库存
+         */
+        private Integer thirtyDaysVirtualQty;
+        /**
+         * 30天累计出库
+         */
+        private Integer thirtyDaysOutstockQty;
+
+        /**
+         * 30天累计分配
+         */
+        private Integer thirtyDaysDistributionQty;
         /**
          * 更新时间
          */
@@ -453,6 +478,24 @@ public class ReportOrderSalesDTO implements Serializable {
         private Integer totalQty;
 
         /**
+         * b2b需求总数
+         */
+        @NotNull(message = "b2b需求总数不能为空")
+        private Integer b2bQty;
+
+        /**
+         * b2c需求总数
+         */
+        @NotNull(message = "b2c需求总数不能为空")
+        private Integer b2cQty;
+
+        /**
+         * 头程需求总数
+         */
+        @NotNull(message = "头程需求总数不能为空")
+        private Integer firstMileQty;
+
+        /**
         * 虚拟仓可用库存
         */
         @NotNull(message = "虚拟仓可用库存不能为空")
@@ -482,7 +525,11 @@ public class ReportOrderSalesDTO implements Serializable {
         @NotNull(message = "已分配数量不能为空")
         private Integer distributionQty;
 
-
+        /**
+         * 近30天虚拟仓库存
+         */
+        @NotNull(message = "近30天虚拟仓库存")
+        private Integer thirtyDaysVirtualQty;
     }
     @Data
     @NoArgsConstructor
@@ -502,4 +549,29 @@ public class ReportOrderSalesDTO implements Serializable {
 
     }
 
+    @Data
+    @NoArgsConstructor
+    public static class LastVirtualQtyDTO {
+        /**
+         * skuid
+         */
+        private String skuId;
+        /**
+         * 仓库id
+         */
+        private String warehouseId;
+        /**
+         * 虚拟仓id
+         */
+        private String virtualWarehouseId;
+        /**
+         * 交易后数量
+         */
+        private Integer curInventoryQty;
+
+        /**
+         * 库存状态
+         */
+        private String dictInventoryStatus;
+    }
 }

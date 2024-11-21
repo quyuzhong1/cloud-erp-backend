@@ -328,4 +328,19 @@ public class VirtualWarehouseAllocationController extends BaseController {
         return success(virtualWarehouseAllocationService.listVirtualInventory(list));
     }
 
+
+    /**
+     * 导出分货统计
+     * @author will
+     * @date 2024/11/19 8:55
+     * @param dto
+     * @return ApiResult<Boolean>
+     */
+    @LogAction(value = LogActionEnum.EXPORT, desc = "导出分货统计")
+    @PostMapping("/exportStatistics")
+    public ApiResult<Boolean> exportStatistics(@RequestBody VirtualWarehouseAllocationDTO.ExportDTO dto) {
+        virtualWarehouseAllocationService.exportStatistics(dto);
+        return success(true);
+    }
+
 }

@@ -1,9 +1,9 @@
 package com.erp.server.wms.service.impl;
 
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
-import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.enums.ApiError;
@@ -14,11 +14,8 @@ import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.FirstMileDeliveryDTO;
 import com.erp.model.wms.dto.FirstMileDeliveryDetailDTO;
-import com.erp.model.wms.dto.WmsCartonSpecDTO;
 import com.erp.model.wms.entity.FirstMileDeliveryDetailEntity;
 import com.erp.model.wms.entity.FirstMileDeliveryEntity;
-import com.erp.model.wms.entity.PackingTaskEntity;
-import com.erp.rpc.oms.feign.OmsListingInfoFeign;
 import com.erp.rpc.oms.feign.SkuMappingFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.mapper.FirstMileDeliveryDetailMapper;
@@ -27,12 +24,14 @@ import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.math3.util.Pair;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 /**
  * <p>
@@ -183,6 +182,14 @@ public class FirstMileDeliveryDetailServiceImpl extends SuperServiceImpl<FirstMi
         }
         return this.lambdaQuery().in(FirstMileDeliveryDetailEntity::getFbaShipmentCode, shipmentCodes).list();
 
+    }
+
+    @Override
+    public List<FirstMileDeliveryDetailDTO.listFirstMileDTO> listFirstMileSource(List<String> firstMileDetailIdList) {
+        if (CollUtil.isEmpty(firstMileDetailIdList)) {
+            return Collections.emptyList();
+        }
+        return baseMapper.listFirstMileSource(firstMileDetailIdList);
     }
 
     /**
