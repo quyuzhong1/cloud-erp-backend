@@ -142,7 +142,10 @@ public class DmpOutputSdyWdtOriginalOrderHandler extends DmpOutputTaskHandler {
      * 解析订单数据
      **/
     public List<ShudiyunB2cOrderDTO> convert(DmpSoInfoEntity dmpSoInfoEntity, List<DmpSoDetailEntity> dmpSoDetailEntityList) {
-        //优惠额
+        //数帝云数据结构
+        List<ShudiyunB2cOrderDTO> shudiyunB2cOrderDTOList = new ArrayList<>();
+
+       /* //优惠额
         BigDecimal totalDiscount = dmpSoInfoEntity.getTotalDiscount();
 
         //如果是亚马逊的优惠额在明细里
@@ -150,8 +153,7 @@ public class DmpOutputSdyWdtOriginalOrderHandler extends DmpOutputTaskHandler {
             totalDiscount = dmpSoDetailEntityList.stream().filter(req -> req.getDiscount() != null).map(req -> req.getDiscount()).reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
         }
 
-        //数帝云数据结构
-        List<ShudiyunB2cOrderDTO> shudiyunB2cOrderDTOList = new ArrayList<>();
+
 
         //订单详情
         for (int i = 0; i < dmpSoDetailEntityList.size(); i++) {
@@ -313,7 +315,7 @@ public class DmpOutputSdyWdtOriginalOrderHandler extends DmpOutputTaskHandler {
 
             shudiyunB2cOrderDTOList.add(shudiyunB2cOrderDTO);
 
-        }
+        }*/
         return shudiyunB2cOrderDTOList;
 
     }
