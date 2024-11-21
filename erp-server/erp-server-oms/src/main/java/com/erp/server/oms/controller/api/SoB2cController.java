@@ -1491,8 +1491,8 @@ public class SoB2cController extends BaseController {
                 String content = StrUtil.format("拆分后订单编号：【{}】",String.join(",", resultDTO.getSoCodeList()));
                 result = BaseResultDTO.ContentDTO.builder().id(id).code(soB2cEntity.getCode()).msg("操作成功").content(content).build();
             } catch (Exception e) {
-                log.error("B2C销售订单取消拆分失败", e);
-                result = BaseResultDTO.ContentDTO.builder().id(id).code(soB2cEntity.getCode()).msg(e.getMessage()).build();
+                log.error("B2C销售订单拆分SKU失败", e);
+                result = BaseResultDTO.ContentDTO.builder().id(id).code(soB2cEntity.getCode()).msg(e.getMessage()).content("操作失败").build();
             }
             resultDTOS.add(result);
         }

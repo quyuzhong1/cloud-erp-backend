@@ -81,7 +81,9 @@ public class DmpInputAmzOrderApiInitHandler extends DmpInputInitHandler {
         if (StringUtils.isNotBlank(dmpInputTaskEntity.getExtendJson())){
             JSONObject jsonObject = JSONObject.parseObject(dmpInputTaskEntity.getExtendJson());
             JSONArray jsonArray = jsonObject.getJSONArray("orderIdList");
-            orderIdList = jsonArray.stream().map(Object::toString).distinct().collect(Collectors.toList());
+            if (CollectionUtils.isNotEmpty(jsonArray)){
+                orderIdList = jsonArray.stream().map(Object::toString).distinct().collect(Collectors.toList());
+            }
         }
 
         if (CollectionUtils.isNotEmpty(orderIdList)){
