@@ -170,7 +170,10 @@
             odpd.box_qty as boxQty,
             odp.type as deliveryPlanType,
             odp.shop_id as shopId,
-            odp.shop_name as shopName
+            odp.shop_name as shopName,
+        (select COALESCE(sum(rad.requisition_qty),0) from requisition_application ra
+        inner join requisition_application_detail rad on ra.id = rad.main_id and rad.is_deleted = false
+        where ra.is_deleted = false and ra.invalid_status = 'false' and rad.source_detail_id = odpd.id) as alreadyRequisitionQty
         FROM wms_delivery_plan_detail odpd
         INNER JOIN wms_delivery_plan odp ON odp.id = odpd.main_id AND odpd.is_deleted = FALSE
         WHERE odp.is_deleted = FALSE

@@ -1167,6 +1167,8 @@ public enum ApiError implements Serializable {
     ERROR_92245(92245,"存在有效下推单据【采购订单{}】,不支持反审"),
     ERROR_92246(92246,"存在有效下推单据【采购退货单{}】,不支持反审"),
     ERROR_92247(92247,"存在有效下推单据【委外退料单{}】【采购退货单{}】,不支持反审"),
+    ERROR_SO_DELIVERY_NOTICE_DETAIL_NOT_EXIST(92248,"销售通知单明细未找到"),
+
     ERROR_92248(92248,"中转规则自动产生的直接调拨单,不支持修改"),
     /**
      * OMS 错误

@@ -142,6 +142,9 @@ public interface ExportWmsFeign {
     @PostMapping("/feign/export/soDeliveryNotice")
     PagingVO<SoDeliveryNoticeDTO.PagingView> exportSoDeliveryNotice(@RequestBody PagingDTO<SoDeliveryNoticeDTO.PagingParam> dto);
 
+    @PostMapping("/feign/export/soDeliveryNoticeChange")
+    PagingVO<SoDeliveryNoticeChangeDTO.ListDTO> exportSoDeliveryNoticeChange(@RequestBody PagingDTO<SoDeliveryNoticeChangeDTO.PagingParamDTO> dto);
+
     @PostMapping("/feign/export/soOutStock")
     PagingVO<SoOutstockDTO.PagingViewDTO> exportSoOutStock(@RequestBody PagingDTO<SoOutstockDTO.ExportDTO> dto);
 

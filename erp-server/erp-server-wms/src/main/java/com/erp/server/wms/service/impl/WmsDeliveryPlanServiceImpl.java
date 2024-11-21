@@ -618,6 +618,16 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
                 viewDTO.setProductName(skuVO.getSkuName());
             }
         }
+        List<WmsDeliveryPlanDTO.GenerateRequisitionApplicationViewDTO> result = new ArrayList<>();
+        list.forEach(v->{
+            v.setRequisitionQty(v.getRequisitionQty() - v.getAlreadyRequisitionQty());
+            if(v.getRequisitionQty()> 0){
+                result.add(v);
+            }
+        });
+        if(CollectionUtils.isEmpty(result)){
+            throw new ServiceException("没有要货明细");
+        }
         return list;
     }
 

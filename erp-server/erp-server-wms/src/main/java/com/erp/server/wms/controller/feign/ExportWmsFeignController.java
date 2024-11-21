@@ -92,6 +92,8 @@ public class ExportWmsFeignController {
     @Resource
     private SoDeliveryNoticeService soDeliveryNoticeService;
     @Resource
+    private SoDeliveryNoticeChangeService soDeliveryNoticeChangeService;
+    @Resource
     private SoOutstockService soOutstockService;
     @Resource
     private SoReturnInstockService soReturnInstockService;
@@ -470,6 +472,12 @@ public class ExportWmsFeignController {
     @WebAdvanceQuery(handler = SoDeliveryNoticeQueryHandler.class)
     public PagingVO<SoDeliveryNoticeDTO.PagingView> exportSoDeliveryNotice(@RequestBody PagingDTO<SoDeliveryNoticeDTO.PagingParam> dto) {
         return soDeliveryNoticeService.exportSoDeliveryNotice(dto);
+    }
+
+    @PostMapping("/soDeliveryNoticeChange")
+    @WebAdvanceQuery
+    public PagingVO<SoDeliveryNoticeChangeDTO.ListDTO> exportSoDeliveryNoticeChange(@RequestBody PagingDTO<SoDeliveryNoticeChangeDTO.PagingParamDTO> dto) {
+        return soDeliveryNoticeChangeService.paging(dto);
     }
 
     @PostMapping("/soOutStock")
