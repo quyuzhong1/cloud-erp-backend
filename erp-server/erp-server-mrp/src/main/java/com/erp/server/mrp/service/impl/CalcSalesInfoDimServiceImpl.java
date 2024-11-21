@@ -5,10 +5,13 @@ import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.TypeReference;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.FileTaskEventEnum;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
+import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.enums.ApiError;
@@ -92,6 +95,9 @@ public class CalcSalesInfoDimServiceImpl extends SuperServiceImpl<CalcSalesInfoD
     private CfgRuleSalesDenoisingCalcService cfgRuleSalesDenoisingCalcService;
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
+
+    @Resource
+    private CalcSalesInfoFavoriteService calcSalesInfoFavoriteService;
 
     @Override
     public void calcSalesInfo(List<CalcSalesInfoDimDTO.CalcResultDTO> calcResultList) {
@@ -234,6 +240,117 @@ public class CalcSalesInfoDimServiceImpl extends SuperServiceImpl<CalcSalesInfoD
         return new PagingVO<>(results, (int) page.getTotal(), dto.getPageSize(), dto.getCurrPage());
     }
 
+    @Override
+    public PagingVO<CalcSalesInfoDimDTO.DetailViewDTO> pagingDetail(PagingDTO<CalcSalesInfoDimDTO.ParamDTO> params) {
+        LoginUser user = UserContext.getDefaultLoginUser();
+        Page<CalcSalesInfoDimDTO.DetailViewDTO> page = baseMapper.pagingDetail(new Page<>(params.getCurrPage(), params.getPageSize()), params.getParams(), user.getUid());
+        if (!CollectionUtils.isEmpty(page.getRecords())) {
+            processDetailData(page.getRecords(), user.getUid());
+        }
+        return new PagingVO<>(page);
+    }
+
+    /**
+     * 处理分页参数
+     * @param records 记录
+     * @param uid     用户id
+     */
+
+    private void processDetailData(List<CalcSalesInfoDimDTO.DetailViewDTO> records, String uid) {
+        List<String> cfgRuleCalcIdList = calcSalesInfoFavoriteService.listByUserId(uid);
+        List<String> skuIds = records.stream().map(CalcSalesInfoDimDTO.DetailViewDTO::getSkuId).distinct().collect(Collectors.toList());
+        List<String> ids = records.stream().map(CalcSalesInfoDimDTO.DetailViewDTO::getId).distinct().collect(Collectors.toList());
+        List<CalcSalesInfoEstimateEntity> salesInfoEstimateList = calcSalesInfoEstimateService.listByCalcSalesInfoIds(ids);
+        List<String> shopIds = records.stream().map(CalcSalesInfoDimDTO.DetailViewDTO::getShopId).distinct().collect(Collectors.toList());
+        List<String> country = records.stream().map(CalcSalesInfoDimDTO.DetailViewDTO::getCountry).distinct().collect(Collectors.toList());
+        List<DictCountryEntity> countryList = sysDictFeign.listCountryByIds(country);
+        List<SkuVO> skuVOS = plmTaskFeign.listSkuCategoryByIds(skuIds);
+        List<ShopInfoEntity> shopInfos = shopInfoFeign.listShopInfoByIds(shopIds);
+        List<String> cfgRuleCalcIds = records.stream().map(CalcSalesInfoDimDTO.DetailViewDTO::getCfgRuleCalcId).distinct().collect(Collectors.toList());
+        List<CfgRuleCalcEntity> cfgRuleCalcList = cfgRuleCalcService.listByIds(cfgRuleCalcIds);
+        Map<String, String> dictBasicMap = getPlatformMap();
+        for (CalcSalesInfoDimDTO.DetailViewDTO record : records) {
+            SkuVO skuVO = skuVOS.stream().filter(v -> v.getSkuId().equals(record.getSkuId())).findFirst().orElse(new SkuVO());
+            ShopInfoEntity shopInfoEntity = shopInfos.stream().filter(v -> v.getId().equals(record.getShopId())).findFirst().orElse(new ShopInfoEntity());
+            DictCountryEntity dictCountry = countryList.stream().filter(v -> v.getId().equals(record.getCountry())).findFirst().orElse(new DictCountryEntity());
+            record.setProductName(skuVO.getSkuName());
+            record.setSkuImgUrl(skuVO.getSkuImagesUrl());
+            record.setCountryName(dictCountry.getNameCn());
+            record.setCountryImgUrl(dictCountry.getFlagUrl());
+            record.setPlatform(dictBasicMap.get(record.getPlatform()));
+            record.setShopName(shopInfoEntity.getName());
+            record.setSalesQtyList(JSON.parseObject(record.getSalesQtyJson(), new TypeReference<List<CalcSalesInfoDimDTO.SalesVO>>() {
+            }));
+            record.setAvgSalesQtyList(JSON.parseObject(record.getAvgSalesQtyJson(), new TypeReference<List<CalcSalesInfoDimDTO.SalesVO>>() {
+            }));
+            record.setMonthSalesEstimateQtyList(JSON.parseObject(record.getMonthSalesEstimateQtyJson(), new TypeReference<List<CalcSalesInfoDimDTO.MonthSalesVO>>() {
+            }));
+            record.setMonthRealSalesQtyList(JSON.parseObject(record.getMonthRealSalesQtyJson(), new TypeReference<List<CalcSalesInfoDimDTO.MonthSalesVO>>() {
+            }));
+            CfgRuleCalcEntity cfgRuleCalc = cfgRuleCalcList.stream()
+                    .filter(v -> v.getId().equals(record.getCfgRuleCalcId()))
+                    .findFirst()
+                    .orElse(null);
+            if (!ObjectUtils.isEmpty(cfgRuleCalc)) {
+                Map<LocalDate, BigDecimal> estimateMap = salesInfoEstimateList.stream()
+                        .filter(v -> v.getCalcSalesInfoDimId().equals(record.getId()))
+                        .collect(Collectors.toMap(CalcSalesInfoEstimateEntity::getDate, CalcSalesInfoEstimateEntity::getQty));
+                LocalDate startCalcDate = cfgRuleCalc.getStartCalcDate();
+                LocalDate endDate = startCalcDate.plusDays(14);
+                List<LocalDate> dates = new ArrayList<>();
+                List<BigDecimal> qty = new ArrayList<>();
+                while (!startCalcDate.isAfter(endDate)) {
+                    dates.add(startCalcDate);
+                    qty.add(Optional.ofNullable(estimateMap.get(startCalcDate)).orElse(BigDecimal.ZERO));
+                    startCalcDate = startCalcDate.plusDays(1);
+                }
+                record.setSalesEstimateVO(new CalcSalesInfoDimDTO.SalesEstimateVO(dates, qty));
+
+            }
+            record.setFavorite(cfgRuleCalcIdList.contains(record.getCfgRuleCalcId()));
+        }
+
+    }
+    /**
+     * 获取平台名字
+     */
+    private static Map<String, String> getPlatformMap() {
+        List<DictBasicEntity> salesPlatformList = FeignQuery.create(DictBasicEntity.class)
+                .eq(DictBasicEntity::getType, DictBasicTypeEnum.SALES_PLATFORM.getType())
+                .eq(DictBasicEntity::getStatus, Boolean.TRUE)
+                .eq(DictBasicEntity::getIsDeleted, Boolean.FALSE)
+                .list();
+        return salesPlatformList.stream()
+                .collect(Collectors.toMap(DictBasicEntity::getValue, DictBasicEntity::getName));
+    }
+
+    @Override
+    public PagingVO<CalcSalesInfoDimDTO.TemplateViewDTO> pagingTemplate(PagingDTO<CalcSalesInfoDimDTO.ParamDTO> params) {
+        LoginUser user = UserContext.getDefaultLoginUser();
+        Page<CalcSalesInfoDimDTO.TemplateViewDTO> page = baseMapper.pagingTemplate(new Page<>(params.getCurrPage(), params.getPageSize()), params.getParams(), user.getUid());
+        if (!CollectionUtils.isEmpty(page.getRecords())) {
+            processTemplateData(page.getRecords(), user.getUid());
+        }
+        return new PagingVO<>(page);
+    }
+
+    /**
+     * 处理分页参数
+     * @param records 记录
+     * @param uid     用户id
+     */
+    private void processTemplateData(List<CalcSalesInfoDimDTO.TemplateViewDTO> records, String uid) {
+        List<String> cfgRuleCalcIds = records.stream().map(CalcSalesInfoDimDTO.TemplateViewDTO::getCfgRuleCalcId).distinct().collect(Collectors.toList());
+        List<CalcSalesInfoDimEntity> list = list(Wrappers.<CalcSalesInfoDimEntity>lambdaQuery().in(CalcSalesInfoDimEntity::getCfgRuleCalcId, cfgRuleCalcIds));
+        Map<String, List<String>> listMap = list.stream()
+                .collect(Collectors.groupingBy(CalcSalesInfoDimEntity::getCfgRuleCalcId, Collectors.mapping(CalcSalesInfoDimEntity::getId, Collectors.toList())));
+        List<String> cfgRuleCalcIdList = calcSalesInfoFavoriteService.listByUserId(uid);
+        for (CalcSalesInfoDimDTO.TemplateViewDTO record : records) {
+            record.setFavorite(cfgRuleCalcIdList.contains(record.getCfgRuleCalcId()));
+            record.setCalcSalesInfoDimIds(listMap.get(record.getCfgRuleCalcId()));
+        }
+    }
+
     /**
      * 处理数据
      *
@@ -250,13 +367,7 @@ public class CalcSalesInfoDimServiceImpl extends SuperServiceImpl<CalcSalesInfoD
         List<CalcSalesInfoDenoisingEntity> calcSalesInfoDenoisingList = calcSalesInfoDenoisingService.listByCalcSalesInfoIds(ids);
         List<ShopInfoEntity> shopInfoList = shopInfoFeign.listShopInfoByIds(shopIds);
         Map<String, ShopInfoEntity> shopMap = shopInfoList.stream().collect(Collectors.toMap(ShopInfoEntity::getId, v -> v, (o1, o2) -> o1));
-        List<DictBasicEntity> salesPlatformList = FeignQuery.create(DictBasicEntity.class)
-                .eq(DictBasicEntity::getType, DictBasicTypeEnum.SALES_PLATFORM.getType())
-                .eq(DictBasicEntity::getStatus, Boolean.TRUE)
-                .eq(DictBasicEntity::getIsDeleted, Boolean.FALSE)
-                .list();
-        Map<String, String> dictBasicMap = salesPlatformList.stream()
-                .collect(Collectors.toMap(DictBasicEntity::getValue, DictBasicEntity::getName));
+        Map<String, String> dictBasicMap = getPlatformMap();
         List<CalcSalesInfoDimDTO.ExportResultDTO> results = new ArrayList<>();
         for (CalcSalesInfoDimDTO.ExportDTO record : records) {
             CalcSalesInfoDimDTO.ExportResultDTO result = new CalcSalesInfoDimDTO.ExportResultDTO();
@@ -384,13 +495,7 @@ public class CalcSalesInfoDimServiceImpl extends SuperServiceImpl<CalcSalesInfoD
         List<ShopInfoEntity> shopInfos = shopInfoFeign.listShopInfoByIds(shopIds);
         List<String> cfgRuleCalcIds = records.stream().map(CalcSalesInfoDimDTO.PagingView::getCfgRuleCalcId).distinct().collect(Collectors.toList());
         List<CfgRuleCalcEntity> cfgRuleCalcList = cfgRuleCalcService.listByIds(cfgRuleCalcIds);
-        List<DictBasicEntity> salesPlatformList = FeignQuery.create(DictBasicEntity.class)
-                .eq(DictBasicEntity::getType, DictBasicTypeEnum.SALES_PLATFORM.getType())
-                .eq(DictBasicEntity::getStatus, Boolean.TRUE)
-                .eq(DictBasicEntity::getIsDeleted, Boolean.FALSE)
-                .list();
-        Map<String, String> dictBasicMap = salesPlatformList.stream()
-                .collect(Collectors.toMap(DictBasicEntity::getValue, DictBasicEntity::getName));
+        Map<String, String> dictBasicMap = getPlatformMap();
         for (CalcSalesInfoDimDTO.PagingView view : records) {
             SkuVO skuVO = skuVOS.stream().filter(v -> v.getSkuId().equals(view.getSkuId())).findFirst().orElse(new SkuVO());
             ShopInfoEntity shopInfoEntity = shopInfos.stream().filter(v -> v.getId().equals(view.getShopId())).findFirst().orElse(new ShopInfoEntity());
