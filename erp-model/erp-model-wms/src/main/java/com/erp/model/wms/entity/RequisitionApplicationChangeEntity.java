@@ -78,6 +78,11 @@ public class RequisitionApplicationChangeEntity extends BaseEntity<RequisitionAp
     private LocalDateTime approveTime;
 
     /**
+     * 来源类型
+     */
+    @TableField("source_type")
+    private String sourceType;
+    /**
      * 明细
      */
     @TableField(exist = false)

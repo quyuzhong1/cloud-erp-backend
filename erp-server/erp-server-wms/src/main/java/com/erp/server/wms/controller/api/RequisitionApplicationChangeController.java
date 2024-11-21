@@ -14,7 +14,9 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.wms.dto.RequisitionApplicationChangeDTO;
 import com.erp.model.wms.entity.RequisitionApplicationChangeEntity;
+import com.erp.model.wms.entity.SoDeliveryNoticeChangeEntity;
 import com.erp.server.wms.service.RequisitionApplicationChangeService;
+import com.erp.server.wms.service.SoDeliveryNoticeChangeService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -170,7 +172,6 @@ public class RequisitionApplicationChangeController extends BaseController {
     public ApiResult<List<BatchResultDTO>> submit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<String> ids = dto.getIds();
 		List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
-		// TODO 数据查询放入外层，处理结果统一更新或单条更新
 		List<RequisitionApplicationChangeEntity> list = requisitionApplicationChangeService.lambdaQuery().in(RequisitionApplicationChangeEntity::getId, ids).list();
 		Map<String, RequisitionApplicationChangeEntity> idEntityMap = list.stream().collect(Collectors.toMap(RequisitionApplicationChangeEntity::getId, w -> w));
         for (String id : dto.getIds()) {
@@ -209,7 +210,6 @@ public class RequisitionApplicationChangeController extends BaseController {
     public ApiResult<List<BatchResultDTO>> approve(@RequestBody @Validated BaseApproveParamDTO dto) {
         List<String> ids = dto.getIds();
 		List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
-		// TODO 数据查询放入外层，处理结果统一更新或单条更新
 		List<RequisitionApplicationChangeEntity> list = requisitionApplicationChangeService.lambdaQuery().in(RequisitionApplicationChangeEntity::getId, ids).list();
 		Map<String, RequisitionApplicationChangeEntity> idEntityMap = list.stream().collect(Collectors.toMap(RequisitionApplicationChangeEntity::getId, w -> w));
         for (String id : ids) {
@@ -232,44 +232,39 @@ public class RequisitionApplicationChangeController extends BaseController {
     }
 
     /**
-    * 反审核
-    * @author lrp
-    * @date:  2024-11-18
-    * @param dto
-    * @return ApiResult<List<BatchResultDTO>>
-    */
-    @PostMapping("/disApprove")
+     * 作废
+     * @author lrp
+     */
+    @PostMapping("/invalid")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "wms:requisitionApplicationChange:disApprove",
+            menuCode = "wms:requisitionApplicationChange:invalid",
             serviceClass = RequisitionApplicationChangeService.class,
             keyIdName = "ids")
-    @LogAction(value = LogActionEnum.DISAPPROVE, desc = "要货申请变更单反审核")
-    public ApiResult<List<BatchResultDTO>> disApprove(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+    @LogAction(value = LogActionEnum.INVALID, desc = "发货通知变更单作废")
+    public ApiResult<List<BatchResultDTO>> invalid(@RequestBody @Validated  BaseIdsDTO.RemarkDTO dto) {
         List<String> ids = dto.getIds();
-		List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
-		// TODO 数据查询放入外层，处理结果统一更新或单条更新
-		List<RequisitionApplicationChangeEntity> list = requisitionApplicationChangeService.lambdaQuery().in(RequisitionApplicationChangeEntity::getId, ids).list();
-		Map<String, RequisitionApplicationChangeEntity> idEntityMap = list.stream().collect(Collectors.toMap(RequisitionApplicationChangeEntity::getId, w -> w));
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
+        List<RequisitionApplicationChangeEntity> list = requisitionApplicationChangeService.lambdaQuery().in(RequisitionApplicationChangeEntity::getId, ids).list();
+        Map<String, RequisitionApplicationChangeEntity> idEntityMap = list.stream().collect(Collectors.toMap(RequisitionApplicationChangeEntity::getId, w -> w));
         for (String id : dto.getIds()) {
-            BatchResultDTO disApproveResult;
+            BatchResultDTO deleteResult;
             try {
-                disApproveResult = requisitionApplicationChangeService.disApprove(id);
+                deleteResult = requisitionApplicationChangeService.invalid(id,dto.getRemark());
             }catch (Exception e){
-                log.error("要货申请变更单反审核失败",e);
+                log.error("要货申请变更单作废失败",e);
                 RequisitionApplicationChangeEntity entity = idEntityMap.get(id);
                 if (ObjectUtil.isEmpty(entity)) {
-                    disApproveResult = BatchResultDTO.fail(id, id, "要货申请变更单不存在, 反审核失败");
-                    resultDTOS.add(disApproveResult);
+                    deleteResult = BatchResultDTO.fail(id, id, "要货申请变更单不存在, 作废失败");
+                    resultDTOS.add(deleteResult);
                     continue;
                 }
-                disApproveResult = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
+                deleteResult = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
             }
-            resultDTOS.add(disApproveResult);
+            resultDTOS.add(deleteResult);
         }
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
-
 
     /**
     * 删除
@@ -288,7 +283,6 @@ public class RequisitionApplicationChangeController extends BaseController {
     public ApiResult<List<BatchResultDTO>> delete(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<String> ids = dto.getIds();
 		List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
-		// TODO 数据查询放入外层，处理结果统一更新或单条更新
 		List<RequisitionApplicationChangeEntity> list = requisitionApplicationChangeService.lambdaQuery().in(RequisitionApplicationChangeEntity::getId, ids).list();
 		Map<String, RequisitionApplicationChangeEntity> idEntityMap = list.stream().collect(Collectors.toMap(RequisitionApplicationChangeEntity::getId, w -> w));
         for (String id : dto.getIds()) {
@@ -327,7 +321,6 @@ public class RequisitionApplicationChangeController extends BaseController {
     public ApiResult<List<BatchResultDTO>> cancelProcess(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<String> ids = dto.getIds();
 		List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
-        // TODO 数据查询放入外层，处理结果统一更新或单条更新
         List<RequisitionApplicationChangeEntity> list = requisitionApplicationChangeService.lambdaQuery().in(RequisitionApplicationChangeEntity::getId, ids).list();
         Map<String, RequisitionApplicationChangeEntity> idEntityMap = list.stream().collect(Collectors.toMap(RequisitionApplicationChangeEntity::getId, w -> w));
         for (String id : dto.getIds()) {

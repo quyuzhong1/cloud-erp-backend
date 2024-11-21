@@ -1,9 +1,11 @@
 package com.erp.server.wms.service;
-import com.erp.model.wms.entity.RequisitionApplicationChangeEntity;
-import com.common.business.service.SuperService;
+
 import com.common.business.dto.base.*;
-import com.erp.model.wms.dto.RequisitionApplicationChangeDTO;
+import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
+import com.erp.model.wms.dto.RequisitionApplicationChangeDTO;
+import com.erp.model.wms.entity.RequisitionApplicationChangeEntity;
+
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
@@ -145,4 +147,6 @@ public interface RequisitionApplicationChangeService extends SuperService<Requis
     Boolean approveEnd(ApproveOneDTO dto, RequisitionApplicationChangeEntity entity);
 
     PagingVO<RequisitionApplicationChangeDTO.ProductDTO> addProductPaging(PagingDTO<RequisitionApplicationChangeDTO.ProductAddDTO> dto);
+
+    BatchResultDTO invalid(String id, String remark);
 }

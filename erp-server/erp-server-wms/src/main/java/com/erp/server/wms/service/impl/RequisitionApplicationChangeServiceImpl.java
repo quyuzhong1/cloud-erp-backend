@@ -26,10 +26,7 @@ import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.RequisitionApplicationChangeDTO;
 import com.erp.model.wms.dto.pickingstrategy.PickingListsDTO;
-import com.erp.model.wms.entity.RequisitionApplicationChangeDetailEntity;
-import com.erp.model.wms.entity.RequisitionApplicationChangeEntity;
-import com.erp.model.wms.entity.RequisitionApplicationDetailEntity;
-import com.erp.model.wms.entity.RequisitionApplicationEntity;
+import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.RequisitionApplicationStatusEnum;
 import com.erp.model.wms.enums.RequisitionApplicationTypeEnum;
 import com.erp.model.wms.enums.RequisitionChangeTypeEnum;
@@ -132,6 +129,9 @@ public class RequisitionApplicationChangeServiceImpl extends SuperServiceImpl<Re
         if (!ApproveStatusEnum.allowUpdateStatus(old.getApproveStatus())) {
             throw new ServiceException(ApiError.ERROR_1029);
         }
+        if(!SourceTypeEnum.REQUISITION_APPLICATION.getCode().equals(old.getSourceType())){
+            throw new ServiceException("拣货单修改提交生成的变更单，不允许编辑");
+        }
         //只会修改明细
         detailService.update(updateDTO,old);
 
@@ -211,17 +211,10 @@ public class RequisitionApplicationChangeServiceImpl extends SuperServiceImpl<Re
         }
         validateSubmit(entity);
         // 更新单据审核状态
-        log.info("提交 开始修改要货申请变更单状态数据，id：【{}】", id);
         this.updateApproveStatus(id, ApproveStatusEnum.APPROVE_ING.getStatus());
-
-        // TODO 启动流程（如果需要的话）
-        log.info("提交 开始启动要货申请变更单流程，id=：【{}】", entity.getId());
         startProcess(entity);
-        // 记录操作日志
-        log.info("提交 开始记录要货申请变更单日志数据，id：【{}】", id);
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据提交审核 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "要货申请变更单");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, entity.getId(), "提交操作");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.REQUISITION_APPLICATION_CHANGE.getCode(), entity.getId(), "提交操作");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.SUBMIT);
     }
 
@@ -244,7 +237,6 @@ public class RequisitionApplicationChangeServiceImpl extends SuperServiceImpl<Re
         this.submit(dto.getId());
     }
 
-    @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BatchResultDTO approve(ApproveOneDTO dto) {
@@ -254,15 +246,14 @@ public class RequisitionApplicationChangeServiceImpl extends SuperServiceImpl<Re
         }
         RequisitionApplicationChangeEntity entity = getById(dto.getId());
         // 审核中的数据允许审核
-        if(!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING)) {
+        if(!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING.getStatus())) {
             throw new ServiceException(ApiError.ERROR_98006);
         }
         // 调用流程审核
         approveProcess(entity, dto);
         // 操作日志
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据审核操作  审核结果：【{}】 审核意见 ：【{}】", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "要货申请变更单", approveType.getName(), dto.getComment());
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, entity.getId(), "审核操作");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.REQUISITION_APPLICATION_CHANGE.getCode(), entity.getId(), "审核操作");
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(approveType);
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.approveStatus(approveStatus));
     }
@@ -276,8 +267,7 @@ public class RequisitionApplicationChangeServiceImpl extends SuperServiceImpl<Re
         LoginUser userInfo = UserContext.getDefaultLoginUser();
         ProcessManagementDTO.ApproveDTO approveDTO = new ProcessManagementDTO.ApproveDTO();
         approveDTO.setBusinessId(entity.getId());
-        // TODO 此处的null需修改为流程模块类型，BusinessKey查看SourceTypeEnum枚举类
-        approveDTO.setBusinessKey(null);
+        approveDTO.setBusinessKey(SourceTypeEnum.REQUISITION_APPLICATION_CHANGE.getCode());
         approveDTO.setApproveType(ApproveTypeEnum.getByCode(dto.getType()));
         approveDTO.setComment(dto.getComment());
         approveDTO.setUserId(userInfo.getUid());
@@ -290,7 +280,7 @@ public class RequisitionApplicationChangeServiceImpl extends SuperServiceImpl<Re
         ProcessManagementDTO.ApproveResultDTO data = approveResult.getData();
         if (ObjectUtil.isEmpty(data.getIsExistProcess()) || !data.getIsExistProcess()) {
             // 无需走流程的数据则直接更新状态
-            approveEnd(dto, entity);
+            this.approveEnd(dto, entity);
         }
     }
 
@@ -309,7 +299,7 @@ public class RequisitionApplicationChangeServiceImpl extends SuperServiceImpl<Re
         // 操作日志
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据反审核操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "要货申请变更单");
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, entity.getId(), "反审核操作");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.REQUISITION_APPLICATION_CHANGE.getCode(), entity.getId(), "反审核操作");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DISAPPROVE);
     }
 
@@ -327,25 +317,18 @@ public class RequisitionApplicationChangeServiceImpl extends SuperServiceImpl<Re
     public BatchResultDTO delete(String id) {
         RequisitionApplicationChangeEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到要货申请变更单数据"));
         // 只有待提交数据允许删除
-        if (!Objects.equals(ApproveStatusEnum.WAIT_SUBMIT, entity.getApproveStatus())) {
+        if (!Objects.equals(ApproveStatusEnum.WAIT_SUBMIT.getStatus(), entity.getApproveStatus())) {
             throw new ServiceException(ApiError.ERROR_98032);
         }
-        // TODO 删除明细数据（如果有明细数据的话）
-
-        // 删除主单数据
-        log.info("删除 开始删除要货申请变更单主单数据，id：【{}】", id);
         super.removeById(id);
-        // 删除日志数据
-        log.info("删除 开始删除要货申请变更单日志数据，id：【{}】", id);
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据删除操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "要货申请变更单");
-        operateLogService.addModuleOperateLog(msg, null, entity.getCode(), "删除要货申请变更单数据");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.REQUISITION_APPLICATION_CHANGE.getCode(), entity.getCode(), "删除要货申请变更单数据");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DELETE);
     }
 
     /**
     * 撤销
     */
-    @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BatchResultDTO cancelProcess(String id) {
@@ -354,23 +337,16 @@ public class RequisitionApplicationChangeServiceImpl extends SuperServiceImpl<Re
         if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING.getStatus())) {
             throw new ServiceException(ApiError.ERROR_98007);
         }
-        // TODO 撤销流程
-        log.info("撤销 开始撤销流程，id：【{}】",id);
-
-        log.info("撤销 开始修改要货申请变更单状态，id：【{}】", id);
-        updateApproveStatus(id, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
-
         //操作日志
         log.info("撤销 开始记录操作日志，id：【{}】", id);
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据撤销流程操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "要货申请变更单");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, entity.getId(), "取消流程操作");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.REQUISITION_APPLICATION_CHANGE.getCode(), entity.getId(), "取消流程操作");
         ProcessManagementDTO.RevokeDTO revokeDTO = new ProcessManagementDTO.RevokeDTO();
         revokeDTO.setBusinessId(entity.getId());
-        // TODO 此处的null需修改为日志模块类型，BusinessKey查看SourceTypeEnum枚举类
-        revokeDTO.setBusinessKey(null);
+        revokeDTO.setBusinessKey(SourceTypeEnum.REQUISITION_APPLICATION_CHANGE.getCode());
         revokeDTO.setUserId(UserContext.getDefaultLoginUser().getUid());
         workflowFeign.revokeProcess(revokeDTO);
+        updateApproveStatus(id, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.CANCEL_PROCESS);
     }
 
@@ -381,8 +357,11 @@ public class RequisitionApplicationChangeServiceImpl extends SuperServiceImpl<Re
             return Boolean.TRUE;
         }
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(dto.getType());
+        RequisitionApplicationEntity requisitionApplicationEntity = requisitionApplicationService.getByIdOpt(entity.getBusinessId()).orElseThrow(() -> new ServiceException("未找到要货申请数据"));
+        if(requisitionApplicationEntity.getStatus().equals(RequisitionApplicationStatusEnum.HANDLE.getStatus())){
+            throw new ServiceException("要货申请已完成，不允许审核");
+        }
         updateForApprove(entity.getId(), approveStatus.getStatus());
-        // todo 明细数据处理 上下游数据处理
 
         return Boolean.TRUE;
     }
@@ -453,6 +432,25 @@ public class RequisitionApplicationChangeServiceImpl extends SuperServiceImpl<Re
             result.setList(productList);
         }
         return result;
+    }
+
+    @Override
+    public BatchResultDTO invalid(String id, String remark) {
+        RequisitionApplicationChangeEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到要货申请变更单数据"));
+        // 只有待提交数据允许作废
+        if (!Objects.equals(ApproveStatusEnum.WAIT_SUBMIT.getStatus(), entity.getApproveStatus()) && !Objects.equals(ApproveStatusEnum.REJECT.getStatus(), entity.getApproveStatus())) {
+            throw new ServiceException("只有待提交或审核不通过数据支持作废");
+        }
+        if(entity.getInvalidStatus()){
+            throw new ServiceException("该数据已作废");
+        }
+        // 删除主单数据
+        entity.setInvalidStatus(true);
+        super.updateById(entity);
+        // 删除日志数据
+        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据作废操作 ，备注：{}", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "要货申请变更单",remark);
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.REQUISITION_APPLICATION_CHANGE.getCode(), entity.getId(), "作废操作");
+        return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.INVALID);
     }
 
     @Override
@@ -558,9 +556,11 @@ public class RequisitionApplicationChangeServiceImpl extends SuperServiceImpl<Re
             result.setBusinessCode(requisitionApplicationEntity.getCode());
             result.setApproveStatus(ApproveStatusEnum.WAIT_SUBMIT.getStatus());
             result.setApproveStatusName(ApproveStatusEnum.WAIT_SUBMIT.getName());
+            result.setSourceType(SourceTypeEnum.REQUISITION_APPLICATION.getCode());
         }else{
             result.setSourceId(requisitionApplicationChangeEntity.getSourceId());
             result.setSourceCode(requisitionApplicationChangeEntity.getSourceCode());
+            result.setSourceType(requisitionApplicationChangeEntity.getSourceType());
             result.setBusinessId(requisitionApplicationChangeEntity.getBusinessId());
             result.setBusinessCode(requisitionApplicationChangeEntity.getBusinessCode());
             result.setApproveStatus(requisitionApplicationChangeEntity.getApproveStatus());
@@ -589,19 +589,13 @@ public class RequisitionApplicationChangeServiceImpl extends SuperServiceImpl<Re
         ProcessManagementDTO.StartDTO startDTO = new ProcessManagementDTO.StartDTO();
         startDTO.setBusinessId(entity.getId());
         startDTO.setBusinessCode(entity.getCode());
-        // TODO 此处的null需修改为日志模块类型，BusinessKey查看SourceTypeEnum枚举类
-        startDTO.setBusinessKey(null);
+        startDTO.setBusinessKey(SourceTypeEnum.REQUISITION_APPLICATION_CHANGE.getCode());
         startDTO.setBusinessName(entity.getCode());
         startDTO.setUserId(UserContext.getDefaultLoginUser().getUid());
         startDTO.setVariablesMap(BeanUtil.beanToMap(entity));
         ApiResult<ProcessManagementDTO.StartResultDTO> result = workflowFeign.start(startDTO);
         if (!result.isSuccess()) {
             throw new ServiceException(result.getMsg());
-        }
-    }
-    private void fillOne(RequisitionApplicationChangeDTO.ViewDTO data) {
-        if (ObjectUtil.isEmpty(data)) {
-            return;
         }
     }
 
@@ -693,7 +687,6 @@ public class RequisitionApplicationChangeServiceImpl extends SuperServiceImpl<Re
         if(!ApproveStatusEnum.allowUpdateStatus(entity.getApproveStatus())) {
             throw new ServiceException(ApiError.ERROR_98010);
         }
-        return;
     }
 
     /**
@@ -704,6 +697,7 @@ public class RequisitionApplicationChangeServiceImpl extends SuperServiceImpl<Re
         requisitionApplicationChangeEntity.setSourceId(dto.getSourceId());
         requisitionApplicationChangeEntity.setBusinessId(dto.getBusinessId());
         requisitionApplicationChangeEntity.setBusinessCode(dto.getBusinessCode());
+        requisitionApplicationChangeEntity.setSourceType(dto.getSourceType());
     }
 
 

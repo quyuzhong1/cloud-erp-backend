@@ -377,6 +377,11 @@ public class RequisitionApplicationChangeDTO implements Serializable {
         private String sourceCode;
 
         /**
+         * 来源类型
+         */
+        private String sourceType;
+
+        /**
          * 业务id
          */
         private String businessId;
