@@ -119,7 +119,7 @@
         and csic.is_deleted = FALSE
         <if test="params.favorite != null and params.favorite ">
             and exists (select id from calc_sales_info_favorite where is_deleted = false and cfg_rule_calc_id = crc.id
-            and user_id = #{userId})
+            and user_id = #{uid})
         </if>
         order by csic.update_time desc
 
@@ -139,7 +139,7 @@
         and crc.is_deleted = FALSE
         <if test="params.favorite != null and params.favorite ">
             and exists (select id from calc_sales_info_favorite where is_deleted = false and cfg_rule_calc_id = crc.id
-            and user_id = #{userId})
+            and user_id = #{uid})
         </if>
         order by crc.update_time desc
     </select>
