@@ -1,5 +1,6 @@
 package com.erp.server.oms.controller.api;
 
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
@@ -1412,24 +1413,24 @@ public class SoB2cController extends BaseController {
             }
             SoB2cDetailEntity detail = soB2cDetailEntityList.stream().filter(e -> Objects.nonNull(e) && Objects.equals(e.getId(), dto.getDetailId())).findFirst().orElse(null);
             if (Objects.isNull(detail)){
-                result = BatchResultDTO.fail(dto.getId(), dto.getDetailId(), "B2C销售订单明细记录不存在");
+                result = BatchResultDTO.fail(dto.getId(), entity.getCode(), "B2C销售订单明细记录不存在");
                 resultDTOS.add(result);
                 continue;
             }
             //订单更换发货SKU操作只能在待提交和审核不通过状态操作
             if (!(ApproveStatusEnum.WAIT_SUBMIT.equals(entity.getApproveStatus()) || ApproveStatusEnum.REJECT.equals(entity.getApproveStatus()))){
-                result = BatchResultDTO.fail(dto.getId(), dto.getDetailId(), StrUtil.format(ApiError.ERROR_92154.msg, entity.getCode()));
+                result = BatchResultDTO.fail(dto.getId(), entity.getCode(), StrUtil.format(ApiError.ERROR_92154.msg, entity.getCode()));
                 resultDTOS.add(result);
                 continue;
             }
             SkuVO skuVO = skuVOList.stream().filter(e -> Objects.nonNull(e) && Objects.equals(e.getSkuId(), dto.getTargetId())).findFirst().orElse(null);
             if (Objects.isNull(skuVO)){
-                result = BatchResultDTO.fail(dto.getId(), dto.getDetailId(), StrUtil.format("更换SKU【{}】记录不存在",dto.getTargetId()));
+                result = BatchResultDTO.fail(dto.getId(), entity.getCode(), StrUtil.format("更换SKU【{}】记录不存在",dto.getTargetId()));
                 resultDTOS.add(result);
                 continue;
             }
             if (Objects.equals(dto.getSourceId(), dto.getTargetId())){
-                result = BatchResultDTO.fail(dto.getId(), dto.getDetailId(), "原SKU与更换SKU相同无需变更");
+                result = BatchResultDTO.fail(dto.getId(), entity.getCode(), CharSequenceUtil.format("原SKU【{}】与更换SKU【{}】相同无需变更",skuVO.getSkuNo(),skuVO.getSkuNo()));
                 resultDTOS.add(result);
                 continue;
             }
@@ -1478,7 +1479,7 @@ public class SoB2cController extends BaseController {
             }
             SoB2cDetailEntity soB2cDetail = detailEntityList.stream().filter(e -> Objects.equals(e.getSkuNo(), skuNo)).findFirst().orElse(null);
             if (Objects.isNull(soB2cDetail)){
-                resultDTOS.add(BaseResultDTO.ContentDTO.builder().id(id).code(soB2cEntity.getCode()).msg("订单不包含拆分SKU").build());
+                resultDTOS.add(BaseResultDTO.ContentDTO.builder().id(id).code(soB2cEntity.getCode()).msg(CharSequenceUtil.format("订单不包含拆分SKU【{}】",skuNo)).build());
                 continue;
             }
             List<SoB2cDTO.SplitSkuDetailDTO> splitSkuDetailDTOS = detailList.stream().filter(e -> Objects.equals(id, e.getId())).collect(Collectors.toList());

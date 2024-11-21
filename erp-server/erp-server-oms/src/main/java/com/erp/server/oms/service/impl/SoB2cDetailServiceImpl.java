@@ -731,7 +731,7 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
         String msg = StrUtil.format("更换发货SKU销售订单【{}】中SKU由【{}】改为【{}】,库存SKU由【{}】改为【{}】,建议售价由【{}】改为【{}】,含税成本由【{}】改为【{}】",
         entity.getCode(),detail.getSkuNo(), skuVO.getSkuNo(),detail.getWarehouseSkuNo(),warehouseSkuNo,detail.getAdvicePrice(),retailPrice,detail.getTaxCost(),actualTaxCost);
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C.getCode(), entity.getId(), "编辑操作");
-        return BatchResultDTO.success(entity.getId(),detail.getSkuNo(),"");
+        return BatchResultDTO.success(entity.getId(),entity.getCode(),CharSequenceUtil.format("操作成功由【{}】改为【{}】",detail.getSkuNo(), skuVO.getSkuNo()));
     }
 
     /**

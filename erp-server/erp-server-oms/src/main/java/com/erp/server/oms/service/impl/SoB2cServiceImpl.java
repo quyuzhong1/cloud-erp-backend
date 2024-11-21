@@ -7347,7 +7347,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         List<SoB2cEntity> notChangeList = soB2cEntityList.stream().filter(e -> !(ApproveStatusEnum.WAIT_SUBMIT.equals(e.getApproveStatus()) || ApproveStatusEnum.REJECT.equals(e.getApproveStatus()))).collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(notChangeList)){
             List<String> codeList = notChangeList.stream().map(SoB2cEntity::getCode).distinct().collect(Collectors.toList());
-            throw new ServiceException(ApiError.ERROR_92154, String.join(",",codeList));
+            String msg = getChangeSkuView(codeList);
+            throw new ServiceException(ApiError.ERROR_92154, msg);
         }
         List<SoB2cDTO.ChangeDeliverySkuViewDTO> changeDeliverySkuViewDTOS = baseMapper.listChangeDeliverySkuView(ids);
         List<String> skuIds = changeDeliverySkuViewDTOS.stream().map(SoB2cDTO.ChangeDeliverySkuViewDTO::getSkuId).distinct().collect(Collectors.toList());
@@ -7361,6 +7362,18 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             }
         });
         return changeDeliverySkuViewDTOS;
+    }
+
+    private String getChangeSkuView(List<String> codeList) {
+        List<List<String>> partition = ListUtil.partition(codeList, 5);
+        StringBuilder stringBuilder = new StringBuilder();
+        for (List<String> stringList : partition){
+            if (CharSequenceUtil.isNotBlank(stringBuilder)){
+                stringBuilder.append(",</br>");
+            }
+            stringBuilder.append(String.join(",",stringList));
+        }
+        return stringBuilder.toString();
     }
 
     @Override
