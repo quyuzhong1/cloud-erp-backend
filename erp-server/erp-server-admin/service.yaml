@@ -45,15 +45,17 @@ spec:
               name: server
               protocol: TCP #修改成你项目的端口
           livenessProbe: #检查是否存活
-            initialDelaySeconds: 60 #首次检查在多少时间后
-            periodSeconds: 30 #检查周期
-            timeoutSeconds: 5 #超时时间
-            failureThreshold: 3 #失败的阈值，连续三次
+            httpGet:
+              path: /health
+              port: 9010
+            initialDelaySeconds: 3 #首次检查在多少时间后
+            periodSeconds: 10 #检查周期
           readinessProbe: #检查是否成功启动
-            initialDelaySeconds: 60 #首次检查在多少时间后
-            periodSeconds: 30 #检查周期
-            timeoutSeconds: 5 #超时时间
-            failureThreshold: 3
+            httpGet:
+              path: /readiness
+              port: 9010
+            initialDelaySeconds: 3 #首次检查在多少时间后
+            periodSeconds: 5 #检查周期
   selector:
     matchLabels:
       app: erp-server-admin
