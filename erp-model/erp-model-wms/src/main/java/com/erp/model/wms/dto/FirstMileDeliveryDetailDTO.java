@@ -269,6 +269,18 @@ public class FirstMileDeliveryDetailDTO implements Serializable {
          */
         private String detailId;
         /**
+         * SKU
+         */
+        private String skuId;
+        /**
+         * SKU
+         */
+        private String skuNo;
+        /**
+         * mSku
+         */
+        private String platformSkuNo;
+        /**
          * 备货类型
          */
         private String demandType;
