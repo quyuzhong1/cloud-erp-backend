@@ -39,23 +39,17 @@ spec:
                   key: SPRING_PROFILES_ACTIVE
                   name: erp-config
             - name: JAVA_OPTS
-              value: "-Xms1g -Xmx2g -XX:MaxRAMPercentage=75.0"
+              value: "-Xms1g -Xmx2g -XX:+UseParallelGC -XX:ParallelGCThreads=2"
           ports:
             - containerPort: 9010
               name: server
               protocol: TCP #修改成你项目的端口
           livenessProbe: #检查是否存活
-            httpGet:
-              path: /health
-              port: 9010
             initialDelaySeconds: 60 #首次检查在多少时间后
             periodSeconds: 30 #检查周期
             timeoutSeconds: 5 #超时时间
             failureThreshold: 3 #失败的阈值，连续三次
           readinessProbe: #检查是否成功启动
-            httpGet:
-              path: /health
-              port: 9010
             initialDelaySeconds: 60 #首次检查在多少时间后
             periodSeconds: 30 #检查周期
             timeoutSeconds: 5 #超时时间
@@ -80,5 +74,4 @@ spec:
       port: 9010
       # 容器暴露的访问端口 要确定与其他服务不冲突
       targetPort: 9010
-      nodePort: 30010 # 显式指定 NodePort 端口
   type: NodePort
