@@ -56,7 +56,6 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.math3.util.Pair;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -989,7 +988,7 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
             for (PurchaseSuggestEntity purchaseSuggest : purchaseSuggests) {
                 purchaseSuggestService.addPurchaseSuggestSys(purchaseSuggest);
             }
-            purchaseSuggestMergeService.generatePurchaseSuggestMerge();
+            purchaseSuggestMergeService.generatePurchaseSuggestMerge("");
         }
         if (CollectionUtils.isNotEmpty(replenishmentResult.getRecentSuggestions())) {
             List<RecentSuggestionDetailEntity> recentSuggestionDetails = replenishmentResult.getRecentSuggestions().stream()

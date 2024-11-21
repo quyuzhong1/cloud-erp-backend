@@ -103,6 +103,10 @@ public class PurchaseSuggestServiceImpl extends SuperServiceImpl<PurchaseSuggest
     @Resource
     private CfgRuleOrderStrategyService cfgRuleOrderStrategyService;
 
+    @Resource
+    private PurchaseSuggestMergeService purchaseSuggestMergeService;
+
+
     @Override
     public List<PurchaseSuggestDTO.ListDTO> list(PurchaseSuggestDTO.ListParamDTO params) {
         List<PurchaseSuggestDTO.ListDTO> list = baseMapper.list(params);
@@ -130,6 +134,9 @@ public class PurchaseSuggestServiceImpl extends SuperServiceImpl<PurchaseSuggest
         }
         //保存系统值
         addPurchaseSuggestSys(purchaseSuggestEntity);
+
+        //添加采购建议合并数据
+        purchaseSuggestMergeService.generatePurchaseSuggestMerge(purchaseSuggestEntity.getId());
 
         // 操作日志
         String msg = StrUtil.format("新建了采购建议【编号：{}】",code);
@@ -369,8 +376,8 @@ public class PurchaseSuggestServiceImpl extends SuperServiceImpl<PurchaseSuggest
     }
 
     @Override
-    public List<PurchaseSuggestEntity> listGeneratePurchaseSuggestMerge() {
-        return baseMapper.listGeneratePurchaseSuggestMerge();
+    public List<PurchaseSuggestEntity> listGeneratePurchaseSuggestMerge(PurchaseSuggestEntity purchaseSuggestEntity) {
+        return baseMapper.listGeneratePurchaseSuggestMerge(purchaseSuggestEntity);
     }
 
 

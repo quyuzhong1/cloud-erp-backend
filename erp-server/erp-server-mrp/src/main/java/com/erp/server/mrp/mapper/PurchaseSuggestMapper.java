@@ -56,5 +56,5 @@ public interface PurchaseSuggestMapper extends BaseMapper<PurchaseSuggestEntity>
      * @date 2024/10/31 9:46
      * @return List<PurchaseSuggestEntity>
      */
-    List<PurchaseSuggestEntity> listGeneratePurchaseSuggestMerge();
+    List<PurchaseSuggestEntity> listGeneratePurchaseSuggestMerge(@Param("entity") PurchaseSuggestEntity purchaseSuggestEntity);
 }

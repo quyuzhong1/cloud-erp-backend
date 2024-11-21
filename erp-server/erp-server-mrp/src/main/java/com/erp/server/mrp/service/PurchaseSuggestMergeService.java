@@ -108,7 +108,7 @@ public interface PurchaseSuggestMergeService extends SuperService<PurchaseSugges
      * @author will
      * @date 2024/10/31 9:26
      */
-    void generatePurchaseSuggestMerge ();
+    void generatePurchaseSuggestMerge (String purchaseSuggestId);
     /**
      * 导入采购计划合并数据
      * @author will
