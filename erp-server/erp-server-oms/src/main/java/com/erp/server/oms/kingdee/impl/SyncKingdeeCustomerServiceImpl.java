@@ -42,6 +42,7 @@ import com.erp.model.oms.entity.CustomerInfoEntity;
 import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.oms.entity.KingdeeReceiptConditionEntity;
 import com.erp.model.oms.entity.OmsPushMsgEntity;
+import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.sys.dto.KingdeeBusinessOperatorDTO;
@@ -50,6 +51,7 @@ import com.erp.model.sys.entity.DictCityEntity;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.sys.entity.DictGlobalAreaEntity;
 import com.erp.model.sys.enums.KingdeeBusinessOperatorTypeEnum;
+import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.sys.feign.KingdeeFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
@@ -62,6 +64,7 @@ import com.erp.server.oms.service.CustomerInvoiceService;
 import com.erp.server.oms.service.DictBasicService;
 import com.erp.server.oms.service.KingdeeReceiptConditionService;
 import com.erp.server.oms.service.OmsPushMsgService;
+import com.erp.server.oms.service.ShopInfoService;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
@@ -111,6 +114,9 @@ public class SyncKingdeeCustomerServiceImpl implements SyncKingdeeCustomerServic
     
     @Resource
     private OmsPushMsgService omsPushMsgService;
+    
+    @Resource
+    private ShopInfoService shopInfoService;
     
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -383,6 +389,15 @@ public class SyncKingdeeCustomerServiceImpl implements SyncKingdeeCustomerServic
 		resultMap.put("period_setting", entity.getPeriodSetting());
 		resultMap.put("check_type", entity.getCheckType());
 		resultMap.put("is_check", "是");
+		List<ShopInfoEntity> shopInfoList = shopInfoService.lambdaQuery().eq(ShopInfoEntity::getCustomerId, entity.getId()).list();
+		if(CollUtil.isNotEmpty(shopInfoList)) {
+			ShopInfoEntity shopInfoEntity = shopInfoList.get(0);
+			String warehouseId = shopInfoEntity.getWarehouseId();
+			String returnWarehouse = shopInfoEntity.getReturnWarehouse();
+			Map<String, String> wareIdCodeMaps = FeignQuery.getByIds(WarehouseEntity.class, Arrays.asList(warehouseId , returnWarehouse)).stream().collect(Collectors.toMap(WarehouseEntity::getId, WarehouseEntity::getKingdeeWarehouseCode));
+			resultMap.put("default_platform_warehouse", wareIdCodeMaps.get(warehouseId));
+			resultMap.put("default_platform_return_warehouse" , wareIdCodeMaps.get(returnWarehouse));
+		}
 		LocalDateTime enableTime = entity.getEnableTime();
 		if(enableTime != null) {
 			resultMap.put("enable_time", enableTime.format(formatter));
