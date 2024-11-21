@@ -9,6 +9,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.dto.AdvanceQueryContainer;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.*;
@@ -22,6 +23,7 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.erp.model.dmp.dto.CfgAppClientDTO;
+import com.erp.model.dmp.dto.DmpInoutDTO;
 import com.erp.model.dmp.dto.PlatformTaskDTO;
 import com.erp.model.dmp.entity.CfgAppClientEntity;
 import com.erp.model.dmp.entity.CfgSettingEntity;
@@ -34,6 +36,7 @@ import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.sys.enums.DictValueEnum;
 import com.erp.model.tms.dto.LogisticsBillCostDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
+import com.erp.rpc.dmp.feign.DmpInoutTaskFeign;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.sys.feign.SysDictFeign;
@@ -141,6 +144,8 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
 
+    @Resource
+    private DmpInoutTaskFeign dmpInoutTaskFeign;
     /**
      * 添加店铺
      *
@@ -1674,4 +1679,35 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         shopAuthService.batchUpdateShopAuthById(authList);
         return true;
     }
+
+    @Override
+    public PagingVO<SkuMappingDTO.SyncPlatformProductView> pageAuthShop(PagingDTO<AdvanceQueryContainer> advanceQueryDTO, List<String> shopIds) {
+        Page query = new Page(advanceQueryDTO.getCurrPage(), advanceQueryDTO.getPageSize());
+        IPage pageData = baseMapper.pageAuthShop(query, advanceQueryDTO.getParams(),shopIds);
+        List<SkuMappingDTO.SyncPlatformProductView> list = pageData.getRecords();
+        if (CollectionUtils.isEmpty(list)) {
+            return new PagingVO<>(pageData);
+        }
+        List<DmpInoutDTO.CommonDTO> commonDTOList = new ArrayList<>();
+        list.forEach(v->{
+            DmpInoutDTO.CommonDTO commonDTO = new DmpInoutDTO.CommonDTO();
+            commonDTO.setSystemCode(v.getDictPlatform());
+            commonDTO.setBillType(BusinessTypeEnum.PRODUCT.getCode());
+            commonDTO.setNextLevelId(v.getShopId());
+            commonDTOList.add(commonDTO);
+        });
+
+        List<DmpInoutDTO.LastOneDTO> lastOneDTOS = dmpInoutTaskFeign.newInputTaskList(commonDTOList);
+        list.forEach(v->{
+            String authStatus = v.getAuthStatus();
+            String authStatusName = AuthStatusEnum.getName(authStatus);
+            v.setAuthStatusName(authStatusName);
+            DmpInoutDTO.LastOneDTO lastOneDTO = lastOneDTOS.stream().filter(o->o.getNextLevelId().equals(v.getShopId())).findFirst().orElse(new DmpInoutDTO.LastOneDTO());
+            v.setSyncResult(lastOneDTO.getStatusName());
+            v.setLastSyncTime(lastOneDTO.getLatestUpdateTime());
+        });
+        return new PagingVO<>(pageData);
+    }
 }
+
+

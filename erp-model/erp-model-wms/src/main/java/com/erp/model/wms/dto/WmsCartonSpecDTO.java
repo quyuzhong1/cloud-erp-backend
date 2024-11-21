@@ -630,6 +630,22 @@ public class WmsCartonSpecDTO implements Serializable {
     @AllArgsConstructor
     public static class NoPackingViewDTO {
         /**
+         * 装箱id
+         */
+        private String taskId;
+        /**
+         * 装箱编码
+         */
+        private String taskCode;
+        /**
+         * 来源id
+         */
+        private String sourceId;
+        /**
+         * 来源编码
+         */
+        private String sourceCode;
+        /**
          * skuId
          */
         private String skuId;
@@ -637,6 +653,9 @@ public class WmsCartonSpecDTO implements Serializable {
          * skuNo
          */
         private String skuNo;
+        /**
+         * fnSku
+         */
         private String fnSku;
         /**
          * 发货数量

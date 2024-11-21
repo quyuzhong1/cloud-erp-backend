@@ -158,7 +158,7 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
                 obj.setProductName(productDetailEntity.getName());
                 CustomerInfoEntity customerInfoEntity = customerInfoEntities.stream().filter(req -> req.getId().equals(obj.getCustomerId())).findFirst().orElse(new CustomerInfoEntity());
                 obj.setCustomerName(customerInfoEntity.getName());
-                if(obj.getType().equals("B2C")){
+                if("B2C".equals(obj.getType())){
                     obj.setReturnTypeDictName(SoB2cReturnTypeEnum.getName(obj.getReturnTypeDict()));
                     SoB2cReturnDetailEntity soB2cReturnDetailEntity = soB2cReturnDetailEntityList.stream().filter(v->v.getId().equals(obj.getSourceDetailId())).findFirst().orElse(new SoB2cReturnDetailEntity());
                     obj.setSalesQty(soB2cReturnDetailEntity.getSaleQty());
@@ -241,7 +241,7 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
         entity.setReturnLogisticCode(dto.getReturnLogisticCode());
         //如果有退货订单号
         if (CharSequenceUtil.isNotBlank(dto.getSourceId())) {
-            if(entity.getType().equals("B2C")){
+            if("B2C".equals(entity.getType())){
                 SoB2cReturnEntity soB2cReturnEntity = FeignQuery.getById(SoB2cReturnEntity.class,dto.getSourceId());
                 if(Objects.nonNull(soB2cReturnEntity)){
                     entity.setSourceCode(soB2cReturnEntity.getCode());
@@ -339,7 +339,7 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
             detailView.setVariantProperty(productDetailEntity.getVariantProperty());
             SoReturnDetailEntity soReturnDetailEntity = returnDetailEntityList.stream().filter(detail -> detail.getId().equals(detailEntity.getSourceDetailId())).findFirst().orElse(new SoReturnDetailEntity());
 
-            if(entity.getType().equals("B2C")){
+            if("B2C".equals(entity.getType())){
                 SoB2cReturnDetailEntity soB2cReturnDetailEntity = soB2cReturnDetailEntityList.stream().filter(v->v.getId().equals(detailEntity.getSourceDetailId())).findFirst().orElse(new SoB2cReturnDetailEntity());
                 detailView.setSalesQty(soB2cReturnDetailEntity.getSaleQty());
                 if(Objects.nonNull(soB2cReturnEntity)){

@@ -34,7 +34,7 @@ public class SpringAsyncConfig {
 	@Value("${openApi.download.pool.poolName}")
 	private String poolName = "";
 
-	private final static long period = 300l;
+	private final static Long period = 300L;
 	@Bean("wmsErpExecutor")
 	public ThreadPoolTaskExecutor asyncServiceErpExecutor() {
 		ThreadPoolTaskExecutor executor = createExecutor();

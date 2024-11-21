@@ -1013,8 +1013,9 @@ public enum ApiError implements Serializable {
     PLATFORM_SHIP_ORDER_ERROR(92116,"平台【{}】，更新平台订单发货状态失败！,错误信息【{}】"),
     NOT_ADD_SO_B2C_DELIVERY(92117,"订单【{}】已生成过发货单，不可以重复新增！"),
     ORDER_IS_INTERCEPT_NOT_UPDATE(92118,"订单【{}】已发起拦截已被冻结，禁止变更状态"),
-    SO_B2C_DELIVERY_STATUS_NOT_FALSE_DELIVERY(92119,"发货单【{}】状态手动标发，已发货，取消发货的数据不允许操作手动标发"),
-    APPROVE_IS_FALSE_DELIVERY(92120,"只有审核通过且待发货的订单允许手动标发"),
+    SO_B2C_DELIVERY_STATUS_NOT_FALSE_DELIVERY(92119,"发货单【{}】状态手动标发，已发货的数据不允许操作手动标发"),
+    APPROVE_IS_FALSE_DELIVERY(92120,"审核通过且待发货的订单允许手动标发"),
+    DISTRIBUTION_IS_FALSE_DELIVERY(92120,"配货中存在渠道和物流号的订单允许手动标发"),
     LOGISTICS_NOT_SUBMIT_NOT_FALSE_DELIVERY(92121,"请申请物流单号后再提交手动标发"),
     STATUS_NOT_PRINT_PICKING(92122,"单据【{}】未生成波次，不允许操作"),
     STATUS_NOT_PRINT_LABEL(92123,"单据【{}】取消发货单状态，不允许再打印标签"),
@@ -1167,6 +1168,8 @@ public enum ApiError implements Serializable {
     ERROR_92245(92245,"存在有效下推单据【采购订单{}】,不支持反审"),
     ERROR_92246(92246,"存在有效下推单据【采购退货单{}】,不支持反审"),
     ERROR_92247(92247,"存在有效下推单据【委外退料单{}】【采购退货单{}】,不支持反审"),
+    ERROR_SO_DELIVERY_NOTICE_DETAIL_NOT_EXIST(92248,"销售通知单明细未找到"),
+
     ERROR_92248(92248,"中转规则自动产生的直接调拨单,不支持修改"),
     /**
      * OMS 错误
@@ -1323,6 +1326,7 @@ public enum ApiError implements Serializable {
     ERROR_SO_B2C_LOGISTICS_CANCEL_FAI(92114,"当前渠道无法取消物流单【{}】"),
     ERROR_SO_B2C_LOGISTICS_CANCEL_FAIL(92114,"原物流订单取消失败，请联系物流商取消原物流订单后重新获取"),
     ERROR_SO_B2C_DELIVERY_NOT_EXIST_WAREHOUSE(92114,"销售订单发货仓库不存在不支持提交发货"),
+    ERROR_SO_B2C_ORDER_FETCH(92114,"订单拉取失败，请手动重试刷新订单后操作"),
     ERROR_SO_B2C_NOT_EXIST_WAREHOUSE(92114,"B2C销售订单发货仓库不存在"),
     ERROR_SO_B2C_DISTRIBUTION_NOT_NULL(92115,"手动配货仓库和渠道不能全部为空"),
     ERROR_SKU_MAPPING_RULE_NULL(92115,"sku匹配规则详情不能为空"),
@@ -1386,6 +1390,7 @@ public enum ApiError implements Serializable {
     ERROR_92151(92151,"启用日期不能大于上个映射关系的开始时间【{}】"),
     ERROR_92152(92152,"销售订单【{}】明细中sku不能全部为空"),
     ERROR_SO_B2C_LOGISTICS_MAPPING_NOT_NULL(92153,"【{}】所属的平台【{}】没有配置【{}】的标发信息，不允许提交发货"),
+    ERROR_92154(92154,"销售订单【{}】只能在待提交和审核不通过状态更换发货SKU"),
     ADMIN(92154,"admin"),
     ERROR_92155(92155,"b2b客户销售员变更单" ),
     ERROR_92156(92156,"状态由[%s]变更为[%s]"),
@@ -1394,6 +1399,7 @@ public enum ApiError implements Serializable {
     ERROR_92159(92159,"单据不存在"),
     ERROR_92160(92160,"本地推送消息单"),
     ERROR_92161(92161,"退款订单明细"),
+    ERROR_92162(92162,"合并后的平台订单后过长"),
     /**
      * TMS 错误
      * 从94000 开始

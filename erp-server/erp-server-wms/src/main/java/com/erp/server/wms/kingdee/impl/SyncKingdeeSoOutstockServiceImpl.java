@@ -590,6 +590,8 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
         }
         //2024.09.11 jack 同步物流渠道名称到金蝶销售出库单的物流渠道
         resultMap.put("logisticsChannelName",entity.getLogisticsChannelName());
+        //订单标签
+        resultMap.put("tradeLabel",entity.getTradeLabel());
         //————————————————————财务信息SubHeadEntity——————————————————————
         //结算币别
         CurrencyDTO.ViewDTO viewDTO = currencyList.stream().filter(req -> req.getId().equals(soInfoById.getCurrency())).findFirst().orElse(new CurrencyDTO.ViewDTO());
@@ -800,6 +802,8 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
         }
         //2024.09.11 jack 同步物流渠道名称到金蝶销售出库单的物流渠道
         resultMap.put("logisticsChannelName",entity.getLogisticsChannelName());
+        //订单标签
+        resultMap.put("tradeLabel",entity.getTradeLabel());
         //————————————————————财务信息SubHeadEntity——————————————————————
         //结算币别
         CurrencyDTO.ViewDTO viewDTO = currencyList.stream().filter(req -> req.getId().equals(currency)).findFirst().orElse(new CurrencyDTO.ViewDTO());
@@ -996,8 +1000,8 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
         }
         //2024.09.11 jack 同步物流渠道名称到金蝶销售出库单的物流渠道
         resultMap.put("logisticsChannelName",entity.getLogisticsChannelName());
-
-
+        //订单标签
+        resultMap.put("tradeLabel",entity.getTradeLabel());
         //————————————————————财务信息SubHeadEntity——————————————————————
         //结算币别
         CurrencyDTO.ViewDTO viewDTO = currencyList.stream().filter(req -> req.getId().equals(currency)).findFirst().orElse(new CurrencyDTO.ViewDTO());

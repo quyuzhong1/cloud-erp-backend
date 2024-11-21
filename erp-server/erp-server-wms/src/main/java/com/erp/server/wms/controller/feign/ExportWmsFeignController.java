@@ -92,6 +92,8 @@ public class ExportWmsFeignController {
     @Resource
     private SoDeliveryNoticeService soDeliveryNoticeService;
     @Resource
+    private SoDeliveryNoticeChangeService soDeliveryNoticeChangeService;
+    @Resource
     private SoOutstockService soOutstockService;
     @Resource
     private SoReturnInstockService soReturnInstockService;
@@ -374,6 +376,15 @@ public class ExportWmsFeignController {
     public PagingVO<WmsCartonDetailDTO.ListPackingDetailDTO> exportPackingTaskDetail(@RequestBody PagingDTO<PackingTaskDTO.ExportDTO> dto) {
         return packingTaskService.exportPackingTaskDetail(dto);
     }
+    @PostMapping("/unPackingTaskDetail")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "wms:packingTask:unPackingTaskDetail",
+            tableAlias = "pt"
+    )
+    public PagingVO<WmsCartonSpecDTO.NoPackingViewDTO> unPackingTaskDetail(@RequestBody PagingDTO<PackingTaskDTO.ExportDTO> dto) {
+        return packingTaskService.unPackingTaskDetail(dto);
+    }
 
     @PostMapping("/firstMilePackingTaskDetail")
     @DataPermission(operationType = DataAttributeEnum.LIST,
@@ -470,6 +481,12 @@ public class ExportWmsFeignController {
     @WebAdvanceQuery(handler = SoDeliveryNoticeQueryHandler.class)
     public PagingVO<SoDeliveryNoticeDTO.PagingView> exportSoDeliveryNotice(@RequestBody PagingDTO<SoDeliveryNoticeDTO.PagingParam> dto) {
         return soDeliveryNoticeService.exportSoDeliveryNotice(dto);
+    }
+
+    @PostMapping("/soDeliveryNoticeChange")
+    @WebAdvanceQuery
+    public PagingVO<SoDeliveryNoticeChangeDTO.ListDTO> exportSoDeliveryNoticeChange(@RequestBody PagingDTO<SoDeliveryNoticeChangeDTO.PagingParamDTO> dto) {
+        return soDeliveryNoticeChangeService.paging(dto);
     }
 
     @PostMapping("/soOutStock")

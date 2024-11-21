@@ -140,6 +140,18 @@ public class SoDeliveryNoticeDTO {
          */
         private String warehouseOrgName;
         /**
+         * 是否已完成拣货
+         */
+        private Boolean isPicked;
+        /**
+         * 是否已完成装箱
+         */
+        private Boolean isPacked;
+        /**
+         * 生成拣货单状态
+         */
+        private String generationPickStatus;
+        /**
          * 单据状态
          */
         private String approveStatus;
@@ -193,6 +205,15 @@ public class SoDeliveryNoticeDTO {
          */
         private Integer deliveryQty;
 
+        /**
+         * 拣货数量
+         */
+        private Integer pickedQty;
+
+        /**
+         * 拣货单
+         */
+        private Integer pickeStatus;
         /**
          * 装箱数量
          */

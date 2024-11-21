@@ -341,6 +341,11 @@ public class SkuMappingDTO implements Serializable {
         private String id;
 
         /**
+         * 销售员
+         */
+        private String sellerName;
+
+        /**
          * 备注
          */
         private String remark;
@@ -630,12 +635,6 @@ public class SkuMappingDTO implements Serializable {
          * 平台sku
          */
         private String platformSkuName;
-        /**
-         * 客户id
-         */
-        private String customerId;
-
-
     }
 
     /**
@@ -1100,5 +1099,79 @@ public class SkuMappingDTO implements Serializable {
          * 客户id
          */
         private String cutomerId;
+    }
+
+
+    @Data
+    @NoArgsConstructor
+    public static class SyncPlatformProductView {
+        /**
+         * 店铺id
+         */
+        private String shopId;
+
+        /**
+         * 平台
+         */
+        private String dictPlatform;
+        /**
+         * 店铺名称
+         */
+        private String shopName;
+        /**
+         * 授权状态
+         */
+        private String authStatus;
+        /**
+         * 授权状态
+         */
+        private String authStatusName;
+        /**
+         * 最近同步时间
+         */
+        private LocalDateTime lastSyncTime;
+        /**
+         * 同步结果
+         */
+        private String syncResult;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class SyncWarehouseProductView {
+        /**
+         * 授权id
+         */
+        private String authId;
+        /**
+         * 三方仓服务商code
+         */
+        private String warehouseProvideCode;
+        /**
+         * 三方仓服务商名称
+         */
+        private String warehouseProvideName;
+        /**
+         * 账号
+         */
+        private String account;
+
+        /**
+         * 授权状态
+         */
+        private String authStatus;
+
+        /**
+         * 授权状态Name
+         */
+        private String authStatusName;
+        /**
+         * 最近同步时间
+         */
+        private LocalDateTime lastSyncTime;
+        /**
+         * 同步结果
+         */
+        private String syncResult;
     }
 }

@@ -2,12 +2,10 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -41,8 +39,8 @@ import com.erp.model.dmp.dto.ThirdMappingDTO;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.dmp.entity.DmpThirdOutboundEntity;
 import com.erp.model.oms.dto.*;
-import com.erp.model.oms.entity.*;
 import com.erp.model.oms.entity.DictBasicEntity;
+import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
@@ -1556,7 +1554,14 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         } else {
             soOutstockDetailService.checkB2cOrderQty(dto.getWarehouseId(), dto.getSoId(), dto.getSourceId(), sourceType, detailList);
         }
-
+        //待提交状态
+        String tradeLabel = dto.getTradeLabel();
+        String oldTradeLabel = soOutstock.getTradeLabel();
+        if(!tradeLabel.equals(oldTradeLabel)){
+            if(!soOutstock.getApproveStatus().getCode().equals(ApproveStatusEnum.WAIT_SUBMIT.getCode())){
+                throw new ServiceException("订单标签只有提交状态下可编辑");
+            }
+        }
 
         String code = soOutstock.getCode();
         LocalDate billDate = dto.getBillDate();
@@ -2422,6 +2427,11 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 List<TransferInfoEntity> entities = transferInfoService.listBySourceId(notCancelBySoId.getId());
                 generateB2cDTO.setSourceId(notCancelBySoId.getId());
                 generateB2cDTO.setSourceCode(notCancelBySoId.getCode());
+                if(notCancelBySoId.getDeliveryTime() == null){
+                   throw new ServiceException("发货单发货时间不能为空");
+                }
+                //重试时需要按照发货单发货时间扣减
+                generateB2cDTO.setBillDate(notCancelBySoId.getDeliveryTime().toLocalDate());
                 List<SoB2cDeliveryDetailEntity> deliveryDetailList = soB2cDeliveryDetailService.listByMainIds(Collections.singletonList(notCancelBySoId.getId()));
                 List<PickingListsDTO.SourceView> views = pickingListsService.listBySourceIds(Collections.singletonList(notCancelBySoId.getId()));
                 List<SoOutstockDetailDTO.AddDTO> detailList = generateB2cDTO.getDetailList();

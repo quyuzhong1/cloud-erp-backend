@@ -57,7 +57,15 @@ public class DmpInputGoodCangOutboundInitHandler extends DmpInputInitHandler{
         if(CollUtil.isEmpty(overseasProviderEntityList)) {
         	throw new ServiceException("谷仓授权信息不存在");
         }
-        ThirdWarehouseContext.setAuthMap(overseasProviderEntityList.get(0).getAuthJson());
+		// 取对应授权ID授权
+		OverseasProviderEntity overseasProviderEntity = overseasProviderEntityList.stream()
+				.filter(e -> e.getId().equalsIgnoreCase(dmpInputTaskEntity.getNextLevelId()))
+				.findFirst()
+				.orElse(null);
+		if(null == overseasProviderEntity) {
+			throw new ServiceException("谷仓对应授权ID信息不存在");
+		}
+        ThirdWarehouseContext.setAuthMap(overseasProviderEntity.getAuthJson());
         while(true) {
         	goodCangGetOutBoundReq.setPage(page);
         	String response = GoodCangUtils.sendPost(apiType,JSON.toJSONString(goodCangGetOutBoundReq));

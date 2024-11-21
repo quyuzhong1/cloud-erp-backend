@@ -119,4 +119,14 @@
             AND opw.warehouse_id != ''
         </if>
     </select>
+    <select id="pageWarehouseProduct"
+            resultType="com.erp.model.oms.dto.SkuMappingDTO$SyncWarehouseProductView">
+        select op.id as authId,
+               op.code as warehouseProvideCode,
+               op.platform_account as account,
+               op.auth_status as authStatus
+        from overseas_provider op
+        where ${params.sqlMap.default}
+        and op.is_deleted = false
+    </select>
 </mapper>

@@ -69,7 +69,7 @@ public interface SoB2cReceiverService extends SuperService<SoB2cReceiverEntity> 
      * @Author Jim
      * @since 2023-11-10
      **/
-    SoB2cReceiverEntity saveOrUpdateEntity(PlatformOrderDTO dto, SoB2cEntity mainEntity, List<DictCountryEntity> countryList);
+    SoB2cReceiverEntity saveOrUpdateEntity(PlatformOrderDTO dto, SoB2cEntity mainEntity, List<DictCountryEntity> countryList ,boolean notUpdateAddress);
 
     /**
      * 更新指定字段
