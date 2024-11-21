@@ -15,6 +15,7 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.mrp.dto.DeliverySuggestDTO;
 import com.erp.model.mrp.entity.DeliverySuggestEntity;
+import com.erp.server.mrp.handler.DeliverySuggestionQueryHandler;
 import com.erp.server.mrp.handler.ReplenishmentSuggestionQueryHandler;
 import com.erp.server.mrp.service.DeliverySuggestService;
 import lombok.extern.slf4j.Slf4j;
@@ -50,7 +51,7 @@ public class DeliverySuggestController extends BaseController {
      * @return ApiResult<PagingVO<ListDTO>>
      */
     @PostMapping("/paging")
-    @WebAdvanceQuery
+    @WebAdvanceQuery(handler = DeliverySuggestionQueryHandler.class)
     public ApiResult<PagingVO<DeliverySuggestDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<DeliverySuggestDTO.PagingParamDTO> dto) {
         PagingVO<DeliverySuggestDTO.ListDTO> pagingVO = deliverySuggestService.paging(dto);
         return success(pagingVO);
