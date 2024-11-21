@@ -81,7 +81,7 @@
         <if test="params.type !=null and params.type!=''">
             AND sm.type =#{params.type}
         </if>
-        ORDER BY sm.create_time DESC
+        ORDER BY li.platform_sku_no,sm.create_time DESC
     </select>
 
     <select id="listExport" resultType="com.erp.model.oms.dto.SkuMappingDTO$PagingViewDTO">
@@ -124,7 +124,7 @@
         <if test="params.type !=null and params.type!=''">
             AND sm.type =#{params.type}
         </if>
-        ORDER BY sm.create_time DESC
+        ORDER BY li.platform_sku_no,sm.create_time DESC
     </select>
     <!--统计-->
     <select id="listMatchCount" resultType="com.erp.model.oms.dto.SkuMappingDTO$MatchCountDTO">
