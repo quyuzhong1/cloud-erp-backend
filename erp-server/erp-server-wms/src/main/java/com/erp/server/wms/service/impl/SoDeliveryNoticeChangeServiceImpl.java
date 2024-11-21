@@ -147,7 +147,9 @@ public class SoDeliveryNoticeChangeServiceImpl extends SuperServiceImpl<SoDelive
         SoDeliveryNoticeChangeEntity old = super.getById(updateDTO.getId());
         List<String> sourceDetailIds = updateDTO.getViewDetailList().stream().map(SoDeliveryNoticeChangeDTO.ViewDetail::getSourceDetailId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
         this.checkExist(sourceDetailIds,old.getSourceId(), updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "发货通知变更单"));
+        if (Objects.isNull(old)){
+            throw new ServiceException(ApiError.NOT_EXIST_BILL, "发货通知变更单");
+        }
         // 待提交和审核不通过允许修改
         if (!ApproveStatusEnum.allowUpdateStatus(ApproveStatusEnum.getByStatus(old.getApproveStatus()))) {
             throw new ServiceException(ApiError.ERROR_1029);
