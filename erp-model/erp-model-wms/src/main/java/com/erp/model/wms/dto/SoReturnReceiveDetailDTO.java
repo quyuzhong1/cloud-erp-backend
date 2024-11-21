@@ -64,6 +64,11 @@ public class SoReturnReceiveDetailDTO implements Serializable {
          * 退货原因 调用字典接口 类型=ReturnReason
          */
         private String returnReasonDict;
+
+        /**
+         * 是否子skuNo
+         */
+        private Boolean isChildSkuNo;
     }
 
     /**

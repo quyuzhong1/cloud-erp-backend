@@ -91,8 +91,7 @@ public class SoReturnReceiveDetailEntity extends BaseEntity<SoReturnReceiveDetai
     /**
      * 是否子sku
      */
-    @TableField("is_child_sku_no")
-    private String isChildSkuNo;
+    private Boolean isChildSkuNo;
 
 
     public static final String MAIN_ID = "main_id";
