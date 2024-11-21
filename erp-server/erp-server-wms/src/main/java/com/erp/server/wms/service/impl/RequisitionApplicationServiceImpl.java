@@ -6,7 +6,6 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
 import com.alibaba.fastjson2.JSONObject;
@@ -19,7 +18,6 @@ import com.common.business.dto.base.*;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
-import com.common.business.utils.PdfUtil;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.business.wrapper.FeignQuery;
@@ -48,11 +46,8 @@ import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.entity.SysPostEntity;
-import com.erp.model.tms.dto.excel.InventorySkuCostDetailExcelDTO;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.excel.RequisitionApplicationAssembleExportDTO;
-import com.erp.model.wms.dto.excel.RequisitionApplicationDetailExcelDTO;
-import com.erp.model.wms.dto.inventory.InventoryDTO;
 import com.erp.model.wms.dto.excel.RequisitionApplicationDetailExcelDTO;
 import com.erp.model.wms.dto.inventory.VirtualInventoryStockDTO;
 import com.erp.model.wms.dto.pickingstrategy.CfgRulePickingDTO;
@@ -70,26 +65,20 @@ import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.oms.feign.SkuMappingFeign;
 import com.erp.rpc.plm.feign.LogisticsProductFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
-import com.erp.rpc.plm.feign.ProductDetailFeign;
 import com.erp.rpc.sys.feign.SysPostFeign;
 import com.erp.server.wms.convert.RequisitionApplicationConverter;
 import com.erp.server.wms.listener.RequisitionApplicationDetailExcelListener;
 import com.erp.server.wms.mapper.RequisitionApplicationMapper;
-import com.erp.server.wms.pull.mapper.ProductDetailMapper;
 import com.erp.server.wms.service.*;
 import com.erp.server.wms.wdt.SyncWdtVirtualWarehousePushOrderService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.math3.util.Pair;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.apache.rocketmq.client.producer.SendResult;
 import org.apache.rocketmq.client.producer.SendStatus;
 import org.springframework.beans.BeanUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.core.io.DefaultResourceLoader;
-import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronizationAdapter;
@@ -101,8 +90,6 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -1964,13 +1951,9 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         //null 标识获取所有数据 。 稍后再自己提取qty>0 的数据进行使用
         Pair<List<CfgRulePickingDTO.CfgRulePickingInventoryDTO>, List<WarehouseLocationEntity>> listListPair = cfgRulePickingService.matchRuleActionList(executionData, null);
         //生成拣货单，只需要考虑qty>0的仓库仓位数据
-        if(CollectionUtils.isNotEmpty(listListPair.getFirst())){
-            List<CfgRulePickingDTO.CfgRulePickingInventoryDTO> cfgRulePickingInventoryDTOList = listListPair.getFirst();
-            cfgRulePickingInventoryDTOList = cfgRulePickingInventoryDTOList.stream().filter(v -> v.getQty() > 0).collect(Collectors.toList());
-
-            Pair<List<CfgRulePickingDTO.CfgRulePickingInventoryDTO>, List<WarehouseLocationEntity>> gtPair = Pair.create(cfgRulePickingInventoryDTOList, listListPair.getSecond());
-            ruleOrderMatchResult = cfgRulePickingService.getSoB2CRuleOrderMatchResult(executionData, gtPair);
-        }
+        List<CfgRulePickingDTO.CfgRulePickingInventoryDTO> cfgRulePickingInventoryGtList = listListPair.getFirst().stream().filter(v -> v.getQty() > 0).collect(Collectors.toList());
+        Pair<List<CfgRulePickingDTO.CfgRulePickingInventoryDTO>, List<WarehouseLocationEntity>> gtPair = Pair.create(cfgRulePickingInventoryGtList, listListPair.getSecond());
+        ruleOrderMatchResult = cfgRulePickingService.getSoB2CRuleOrderMatchResult(executionData, gtPair);
         if (ObjectUtil.isEmpty(ruleOrderMatchResult)) {
             throw new ServiceException(ApiError.NOT_EXIST, "拣货规则");
         }
@@ -1978,8 +1961,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         addDTO.setRuleOrderMatchResult(first);
         Map<String, Integer> errorList = ruleOrderMatchResult.getSecond();
         if (!org.springframework.util.CollectionUtils.isEmpty(errorList)) {
-            List<CfgRulePickingDTO.CfgRulePickingInventoryDTO> cfgRulePickingInventoryDTOList = listListPair.getFirst();
-            cfgRulePickingInventoryDTOList = cfgRulePickingInventoryDTOList.stream().filter(v -> v.getQty() == 0).collect(Collectors.toList());
+            List<CfgRulePickingDTO.CfgRulePickingInventoryDTO> cfgRulePickingInventoryDTOList = listListPair.getFirst().stream().filter(v -> v.getQty() == 0).collect(Collectors.toList());
 
             //要货申请-- 要货仓库
 //            String warehouseId = application.getRequisitionWarehouseId();
