@@ -263,7 +263,10 @@ public class CalcSalesInfoDimServiceImpl extends SuperServiceImpl<CalcSalesInfoD
         List<CalcSalesInfoEstimateEntity> salesInfoEstimateList = calcSalesInfoEstimateService.listByCalcSalesInfoIds(ids);
         List<String> shopIds = records.stream().map(CalcSalesInfoDimDTO.DetailViewDTO::getShopId).distinct().collect(Collectors.toList());
         List<String> country = records.stream().map(CalcSalesInfoDimDTO.DetailViewDTO::getCountry).distinct().collect(Collectors.toList());
-        List<DictCountryEntity> countryList = sysDictFeign.listCountryByIds(country);
+        List<DictCountryEntity> countryList = new ArrayList<>();
+        if (!CollectionUtils.isEmpty(country)) {
+            countryList = sysDictFeign.listCountryByIds(country);
+        }
         List<SkuVO> skuVOS = plmTaskFeign.listSkuCategoryByIds(skuIds);
         List<ShopInfoEntity> shopInfos = shopInfoFeign.listShopInfoByIds(shopIds);
         List<String> cfgRuleCalcIds = records.stream().map(CalcSalesInfoDimDTO.DetailViewDTO::getCfgRuleCalcId).distinct().collect(Collectors.toList());
@@ -490,7 +493,10 @@ public class CalcSalesInfoDimServiceImpl extends SuperServiceImpl<CalcSalesInfoD
         List<CalcSalesInfoEstimateEntity> salesInfoEstimateList = calcSalesInfoEstimateService.listByCalcSalesInfoIds(ids);
         List<String> shopIds = records.stream().map(CalcSalesInfoDimDTO.PagingView::getShopId).distinct().collect(Collectors.toList());
         List<String> country = records.stream().map(CalcSalesInfoDimDTO.PagingView::getCountry).distinct().collect(Collectors.toList());
-        List<DictCountryEntity> countryList = sysDictFeign.listCountryByIds(country);
+        List<DictCountryEntity> countryList = new ArrayList<>();
+        if (!CollectionUtils.isEmpty(country)) {
+            countryList = sysDictFeign.listCountryByIds(country);
+        }
         List<SkuVO> skuVOS = plmTaskFeign.listSkuCategoryByIds(skuIds);
         List<ShopInfoEntity> shopInfos = shopInfoFeign.listShopInfoByIds(shopIds);
         List<String> cfgRuleCalcIds = records.stream().map(CalcSalesInfoDimDTO.PagingView::getCfgRuleCalcId).distinct().collect(Collectors.toList());
