@@ -39,6 +39,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -350,7 +351,10 @@ public class SyncKingdeeProductDetailServiceImpl implements SyncKingdeeProductDe
 		resultMap.put("goods_code", entity.getSkuNo());
 		resultMap.put("goods_name", entity.getName());
 		if(productCostEntity != null) {
-			resultMap.put("uni_retail_price", productCostEntity.getRetailPrice());
+			BigDecimal retailPrice = productCostEntity.getRetailPrice();
+			if(retailPrice != null) {
+				resultMap.put("uni_retail_price", retailPrice.toString());
+			}
 		}
 		resultMap.put("main_unit", entity.getUnitName());
 		LocalDateTime createTime = entity.getCreateTime();
