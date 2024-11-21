@@ -33,8 +33,11 @@ spec:
           env:
             - name: JAVA_OPTS
               value: "-Xms1g -Xmx3g -XX:+UseParallelGC -XX:ParallelGCThreads=2"
+            - name: TZ
+              value: "Asia/Shanghai"  # 设置时区，确保与宿主机一致
           ports:
             - containerPort: 9010 #修改成你项目的端口
+
   selector:
     matchLabels:
       app: erp-server-admin
