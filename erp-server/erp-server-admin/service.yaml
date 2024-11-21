@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: erp-server-admin
-  namespace: dev #namespace
+  namespace: ${namespace} #namespace
 spec:
   replicas: 2
   minReadySeconds: 60  # 从容器启动到应用正常提供服务
@@ -21,7 +21,7 @@ spec:
       automountServiceAccountToken: true
       containers:
         - name: erp-server-admin
-          image: 172.16.100.92:5000/sdc-erp/erp-server-admin:1.0.0 #Tag
+          image: 172.16.100.92:5000/sdc-erp/erp-server-admin:${tag} #Tag
           imagePullPolicy: Always
           resources:
             requests:
@@ -43,7 +43,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: erp-server-admin
-  namespace: dev #namespace
+  namespace: ${namespace} #namespace
 spec:
   selector:
     app: erp-server-admin
