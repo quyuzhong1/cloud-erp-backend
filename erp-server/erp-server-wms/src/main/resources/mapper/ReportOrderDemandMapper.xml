@@ -32,7 +32,7 @@
     <sql id="Base_Column_List">
         rod.id,
         rod.create_time,
-        rod.update_time,
+        rod.update_time as updateTime,
         rod.create_user_name,
         rod.create_user_id,
         rod.update_user_name,
