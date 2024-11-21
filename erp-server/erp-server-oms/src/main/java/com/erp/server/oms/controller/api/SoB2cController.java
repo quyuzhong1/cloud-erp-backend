@@ -1501,4 +1501,14 @@ public class SoB2cController extends BaseController {
         List<BatchResultDTO> resultDTOS = soB2cService.fetchOrder(idDTO.getIds());
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success() : failure(resultDTOS);
     }
+
+    /**
+     * 临时修复数据接口 todo
+     * @return
+     */
+    @PostMapping("/tempTikTokOrderDate")
+    public ApiResult tempTikTokOrderDate() {
+        Boolean result = soB2cService.tempTikTokOrderDate();
+        return result ? success():failure();
+    }
 }

@@ -1000,4 +1000,7 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * @param ids
      */
     List<BatchResultDTO> fetchOrder(List<String> ids);
+
+
+    Boolean tempTikTokOrderDate();
 }

@@ -1010,4 +1010,40 @@
         </foreach>
     </select>
 
+
+
+    <select id="listTikTokOrder" resultType="com.erp.model.oms.entity.SoB2cDetailEntity">
+        SELECT
+        sod.*
+        FROM so_b2c so
+        LEFT JOIN so_b2c_detail sod ON so.id = sod.main_id
+        WHERE so.dict_platform = 'TikTok'
+        AND sod.warehouse_id &lt;&gt; '' AND sod.warehouse_id IS NOT NULL
+        AND sod.is_deleted = TRUE
+    </select>
+
+    <select id="listTikTokOrderAll" resultType="com.erp.model.oms.entity.SoB2cDetailEntity">
+        SELECT
+        *
+        FROM so_b2c_detail
+        WHERE main_id in
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </select>
+
+    <update id="tikTokOrderUpdate">
+        UPDATE so_b2c_detail
+        SET is_deleted = FALSE
+        WHERE id = #{id}
+    </update>
+
+    <update id="tikTokOrderUpdateDetail">
+        UPDATE so_b2c_detail
+        SET is_deleted = FALSE,
+        source_detail_id = #{sourceDetailId},
+        platform_line_number = #{platformLineNumber},
+        platform_package_id = #{platformPackageId}
+        WHERE id = #{id}
+    </update>
 </mapper>

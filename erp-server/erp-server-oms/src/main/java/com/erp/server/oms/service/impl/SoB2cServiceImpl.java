@@ -9002,4 +9002,44 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         }
         return resultDTOS;
     }
+
+
+    @Override
+    public Boolean tempTikTokOrderDate() {
+        //查询待修复已删除数据
+        List<SoB2cDetailEntity> soB2cDetailEntityList = baseMapper.listTikTokOrder();
+
+        List<String> mainIds = soB2cDetailEntityList.stream().map(req -> req.getMainId()).distinct().collect(Collectors.toList());
+
+
+        List<SoB2cDetailEntity> soB2cDetailEntityList1 = soB2cDetailService.listByMainIds(mainIds);
+
+
+        for (SoB2cDetailEntity soB2cDetailEntity : soB2cDetailEntityList) {
+            List<SoB2cDetailEntity> collect = soB2cDetailEntityList1.stream().filter(req -> req.getMainId().equals(soB2cDetailEntity.getMainId())
+                    && req.getSkuId().equals(soB2cDetailEntity.getSkuId())).collect(Collectors.toList());
+            //多个重复
+            List<SoB2cDetailEntity> aNull = collect.stream().filter(req -> CharSequenceUtil.isNotBlank(req.getPlatformLineNumber())
+                    && CharSequenceUtil.isNotBlank(req.getPlatformPackageId())
+            ).collect(Collectors.toList());
+
+            if (CollUtil.isNotEmpty(aNull)) {
+                soB2cDetailEntity.setSourceDetailId(aNull.get(0).getSourceDetailId());
+                soB2cDetailEntity.setPlatformLineNumber(aNull.get(0).getPlatformLineNumber());
+                soB2cDetailEntity.setPlatformPackageId(aNull.get(0).getPlatformPackageId());
+                baseMapper.tikTokOrderUpdateDetail(soB2cDetailEntity.getId(),
+                        soB2cDetailEntity.getSourceDetailId(),
+                        soB2cDetailEntity.getPlatformLineNumber(),
+                        soB2cDetailEntity.getPlatformPackageId());
+            } else {
+                baseMapper.tikTokOrderUpdate(soB2cDetailEntity.getId());
+            }
+
+            for (SoB2cDetailEntity b2cDetailEntity : collect) {
+                soB2cDetailService.lambdaUpdate().eq(SoB2cDetailEntity::getId, b2cDetailEntity.getId()).remove();
+            }
+
+        }
+        return Boolean.TRUE;
+    }
 }
