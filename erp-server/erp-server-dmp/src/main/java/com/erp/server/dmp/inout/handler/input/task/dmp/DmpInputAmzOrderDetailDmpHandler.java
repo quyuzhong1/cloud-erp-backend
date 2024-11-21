@@ -34,43 +34,6 @@ public class DmpInputAmzOrderDetailDmpHandler extends DmpInputAmzOrderDoChildDmp
         if (CollUtil.isEmpty(dmpInputMongoChildList)) {
             return dmpInputMongoChildList;
         }
-//        List<Map<String, Object>> dmpInputMongoChildEntityList = new ArrayList<>();
-//        for (Map<String, Object> dmpInputMongoChild : dmpInputMongoChildList) {
-//            OrderItem item = JSON.parseObject(JSON.toJSONString(dmpInputMongoChild), OrderItem.class);
-//            // item总价
-//            Money itemPrice = item.getItemPrice();
-//            // 金额
-//            detailDTO.setAmount(new java.math.BigDecimal(null == itemPrice ? "0" : itemPrice.getAmount()));
-//
-//            // 计算单价
-//            java.math.BigDecimal price = java.math.BigDecimal.ZERO;
-//            if (null != item.getQuantityOrdered() && 0 < item.getQuantityOrdered()){
-//                price = detailDTO.getAmount().divide(java.math.BigDecimal.valueOf(item.getQuantityOrdered()), 2, RoundingMode.DOWN);
-//            }
-//
-//            // 单价
-//            detailDTO.setPrice(price);
-//
-//            // 币别（原币）
-//            detailDTO.setCurrency(null == itemPrice ? "" : itemPrice.getCurrencyCode());
-//            // 汇率
-//            detailDTO.setExchangeRate(java.math.BigDecimal.ONE);
-//            // 建议售价（本位币）
-//            detailDTO.setAdvicePrice(java.math.BigDecimal.ZERO);
-//            // 含税成本（本位币）
-//            detailDTO.setTaxCost(BigDecimal.ZERO);
-//            // 来源明细id
-//            detailDTO.setSourceDetailId(item.getOrderItemId());
-//            // 标签json
-//            detailDTO.setLabelJson("");
-//            // 库存组织id
-//            detailDTO.setWarehouseOrgId("");
-//            // 库存组织名称
-//            detailDTO.setWarehouseOrgName("");
-//            // 库位
-//            detailDTO.setWarehouseLocation("");
-//        }
-//        return dmpInputMongoChildEntityList;
         return dmpInputMongoChildList;
     }
 

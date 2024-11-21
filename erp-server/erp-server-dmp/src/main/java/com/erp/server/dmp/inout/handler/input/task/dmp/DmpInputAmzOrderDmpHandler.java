@@ -36,8 +36,6 @@ public class DmpInputAmzOrderDmpHandler extends DmpInputDbConvertDmpHandler {
 
     @Override
     protected void afterConvertData(Map<List<Map<String, Object>>, List<TreeMap<String, Object>>> dmpInputDataDmpRelationMaps) {
-        super.afterConvertData(dmpInputDataDmpRelationMaps);
-
         Set<List<Map<String, Object>>> keySet = dmpInputDataDmpRelationMaps.keySet();
         if (CollUtil.isEmpty(keySet)) {
             return;
