@@ -51,6 +51,8 @@
         select
             fd.id,
             fdd.id as detailId,
+            fdd.sku_id,
+            fdd.platform_sku_no,
             fd.source_type,
             fd.source_id,
             fdd.source_detail_id,

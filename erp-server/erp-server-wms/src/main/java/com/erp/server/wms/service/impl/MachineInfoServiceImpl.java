@@ -32,7 +32,6 @@ import com.erp.model.scm.enums.PageListTypeEnum;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.inventory.*;
 import com.erp.model.wms.entity.*;
-import com.erp.model.wms.enums.FbaDemandTypeEnum;
 import com.erp.model.wms.enums.MachineSourceTypeEnum;
 import com.erp.model.wms.enums.WorkTypeEnum;
 import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
@@ -742,26 +741,9 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
          * 货件与要货申请明细关联，需要sku、msku对比
          */
 
-        //备货类型
-        String demandType = firstMileDeliveryDetailList.get(0).getDemandType();
-        List<String> refDetailIdList = firstMileDeliveryDetailList.stream().map(FirstMileDeliveryDetailDTO.listFirstMileDTO::getSourceDetailId).distinct().collect(Collectors.toList());
-        //要货申请
-        List<RequisitionApplicationDetailEntity> requisitionApplicationDetailList = new ArrayList<>();
-        //fba货件
-        List<FbaShipmentDetailEntity> fbaShipmentDetailList = new ArrayList<>();
-
-        if (CharSequenceUtil.equals(demandType, FbaDemandTypeEnum.DEMAND_OVERSEAS_WAREHOUSE.getCode())) {
-            //要货申请明细
-            requisitionApplicationDetailList = requisitionApplicationDetailService.listByIds(refDetailIdList);
-        } else {
-            fbaShipmentDetailList = fbaShipmentDetailService.listByIds(refDetailIdList);
-            if (CollUtil.isEmpty(fbaShipmentDetailList)) {
-                throw new ServiceException("未找到货件明细");
-            }
-            //要货申请明细
-            List<String> applicationIdList = firstMileDeliveryDetailList.stream().map(FirstMileDeliveryDetailDTO.listFirstMileDTO::getSourceId).distinct().collect(Collectors.toList());
-            requisitionApplicationDetailList = requisitionApplicationDetailService.listByMainIds(applicationIdList);
-        }
+        //要货申请明细
+        List<String> applicationIdList = firstMileDeliveryDetailList.stream().map(FirstMileDeliveryDetailDTO.listFirstMileDTO::getSourceId).distinct().collect(Collectors.toList());
+        List<RequisitionApplicationDetailEntity>  requisitionApplicationDetailList = requisitionApplicationDetailService.listByMainIds(applicationIdList);
         if (CollUtil.isEmpty(requisitionApplicationDetailList)) {
             throw new ServiceException("未找到要货申请明细");
         }
@@ -778,22 +760,9 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
             if (org.springframework.util.ObjectUtils.isEmpty(listFirstMileDTO)) {
                 continue;
             }
-            String virtualWarehouseId;
-            if (CharSequenceUtil.equals(demandType, FbaDemandTypeEnum.DEMAND_OVERSEAS_WAREHOUSE.getCode())) {
-                //要货申请明细虚拟仓id
-                 virtualWarehouseId = requisitionApplicationDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), listFirstMileDTO.getSourceDetailId()))
-                        .map(RequisitionApplicationDetailEntity::getFromVirtualWarehouseId).findFirst().orElse("");
-            } else {
-                //货件信息
-                FbaShipmentDetailEntity fbaShipmentDetailEntity = fbaShipmentDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), listFirstMileDTO.getSourceDetailId())).findFirst().orElse(null);
-                if (org.springframework.util.ObjectUtils.isEmpty(fbaShipmentDetailEntity)) {
-                    continue;
-                }
-                virtualWarehouseId = requisitionApplicationDetailList.stream().filter(obj ->
-                                CharSequenceUtil.equals(obj.getSkuId(), fbaShipmentDetailEntity.getSkuId())
-                        && CharSequenceUtil.equals(obj.getPlatformSku(), fbaShipmentDetailEntity.getMsku()))
-                        .map(RequisitionApplicationDetailEntity::getFromVirtualWarehouseId).findFirst().orElse("");
-            }
+            //要货申请明细虚拟仓id
+            String  virtualWarehouseId = requisitionApplicationDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getPlatformSku(),listFirstMileDTO.getPlatformSkuNo()) && CharSequenceUtil.equals(obj.getSkuId(), listFirstMileDTO.getSkuId()))
+                    .map(RequisitionApplicationDetailEntity::getFromVirtualWarehouseId).findFirst().orElse("");
             if (CharSequenceUtil.isBlank(virtualWarehouseId)) {
                 continue;
             }
