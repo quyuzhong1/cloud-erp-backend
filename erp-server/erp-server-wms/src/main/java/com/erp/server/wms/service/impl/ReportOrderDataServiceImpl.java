@@ -2,17 +2,16 @@ package com.erp.server.wms.service.impl;
 
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONUtil;
-import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
-import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.wms.dto.*;
@@ -20,8 +19,6 @@ import com.erp.model.wms.entity.ReportOrderDataEntity;
 import com.erp.model.wms.entity.ReportOrderDemandDetailEntity;
 import com.erp.model.wms.entity.SoDeliveryNoticeDetailEntity;
 import com.erp.model.wms.enums.CfgSettingOrderTypeEnum;
-import com.erp.model.wms.enums.DeliveryStatusEnum;
-import com.erp.model.wms.enums.RequisitionApplicationStatusEnum;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.rpc.oms.feign.SoInfoFeign;
@@ -38,7 +35,10 @@ import javax.annotation.Resource;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -153,7 +153,7 @@ public class ReportOrderDataServiceImpl extends SuperServiceImpl<ReportOrderData
         List<VirtualInventoryDTO.VirtualInventoryQtyDTO> virtualInventoryList = virtualInventoryService.listInventoryQty(paramDTO);
 
         //生成订单需求明细数据
-        generateReportOrderDemandDetail(reportOrderDataList,bomChildrenSkuList,virtualInventoryList,isSplit);
+        generateReportOrderDemandDetail(reportOrderDataList,bomChildrenSkuList,virtualInventoryList,isSplit,viewDTO.getReportOrderDemandDTO());
 
         //生成缺货统计数据
         generateReportOrderDemand(bomChildrenSkuList,isSplit);
@@ -195,32 +195,41 @@ public class ReportOrderDataServiceImpl extends SuperServiceImpl<ReportOrderData
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void generateReportOrderDemandDetail(List<ReportOrderDataEntity> reportOrderDataList,List<BomChildrenSkuDTO> bomChildrenSkuList,List<VirtualInventoryDTO.VirtualInventoryQtyDTO> virtualInventoryList,Boolean isSplit) {
+    public void generateReportOrderDemandDetail(List<ReportOrderDataEntity> reportOrderDataList,List<BomChildrenSkuDTO> bomChildrenSkuList,
+                                                List<VirtualInventoryDTO.VirtualInventoryQtyDTO> virtualInventoryList,Boolean isSplit,
+                                                CfgSettingVirtualValueDTO.ReportOrderDemandDTO reportOrderDemandDTO) {
         //订单数据
-        if (CollectionUtils.isEmpty(reportOrderDataList)) {
+        if (CollectionUtils.isEmpty(reportOrderDataList) || ObjectUtil.isEmpty(reportOrderDemandDTO)) {
             return;
         }
-        /**
-         * B2B,单据状态：待提交、审核中、已审核（排除：审核不通过） && 作废状态：未作废 && 发货状态：未发货、部分发货（排除：已发货）
-         * B2C,审核状态：待提交、审核中、已审核；（排除：审核不通过）&& 作废状态：未作废 && 订单状态：待配货、配货中、待发货、冻结中（排除：已发货）
-         * 要货申请，单据状态：待提交、待处理 && 作废状态：未作废
-         */
-        //审核状态
-        List<String> approveStatusList = Arrays.asList(ApproveStatusEnum.WAIT_SUBMIT.getStatus(), ApproveStatusEnum.APPROVE_ING.getStatus(), ApproveStatusEnum.APPROVE.getStatus());
-        //发货状态
-        List<String> deliveryStatusList = Arrays.asList(DeliveryStatusEnum.UN_SHIPPED.getCode(), DeliveryStatusEnum.PARTIAL_SHIPMENT.getCode());
-        //b2c订单状态
-        List<String> billStatusList = Arrays.asList(SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode(), SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode(), SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION.getCode(),
-                SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode(), SoB2cBillStatusEnum.ENUM_PARTIAL_SHIPPED.getCode(), SoB2cBillStatusEnum.ENUM_FROZEN.getCode());
-        //要货申请
-        List<String> statusList = Arrays.asList(RequisitionApplicationStatusEnum.WAIT_SUBMIT.getCode(), RequisitionApplicationStatusEnum.WAIT_HANDLE.getCode());
 
-        //需要添加订单需求明细数据
-        List<ReportOrderDataEntity> list = reportOrderDataList.stream().filter(obj ->
-                (CharSequenceUtil.equals(obj.getSourceType(), SourceTypeEnum.SO_INFO.getCode()) && approveStatusList.contains(obj.getApproveStatus()) && !obj.getInvalidStatus() && deliveryStatusList.contains(obj.getStatus()))
-                        || (CharSequenceUtil.equals(obj.getSourceType(), SourceTypeEnum.SO_B2C.getCode()) && approveStatusList.contains(obj.getApproveStatus()) && !obj.getInvalidStatus() && billStatusList.contains(obj.getStatus()))
-                        || (CharSequenceUtil.equals(obj.getSourceType(), SourceTypeEnum.REQUISITION_APPLICATION.getCode()) && statusList.contains(obj.getStatus()) && !obj.getInvalidStatus())
-        ).collect(Collectors.toList());
+        List<ReportOrderDataEntity> list = new ArrayList<>();
+
+        List<String> orderTypeList = reportOrderDemandDTO.getOrderTypeList();
+        //b2b销售订单数据格式化
+        boolean containsB2b = orderTypeList.contains(CfgSettingOrderTypeEnum.B2B.getCode());
+        if (containsB2b) {
+            List<ReportOrderDataEntity> b2bList =  handleB2bSales(reportOrderDataList, reportOrderDemandDTO.getB2bStatusDTO());
+            if (CollectionUtils.isNotEmpty(b2bList)) {
+                list.addAll(b2bList);
+            }
+        }
+        //b2c销售订单数据格式化
+        boolean containsB2c = orderTypeList.contains(CfgSettingOrderTypeEnum.B2C.getCode());
+        if (containsB2c) {
+            List<ReportOrderDataEntity> b2cList =  handleB2cSales(reportOrderDataList, reportOrderDemandDTO.getB2cStatusDTO());
+            if (CollectionUtils.isNotEmpty(b2cList)) {
+                list.addAll(b2cList);
+            }
+        }
+        //头程，要货申请数据格式化
+        boolean containsFirstMile = orderTypeList.contains(CfgSettingOrderTypeEnum.FIRST_MILE.getCode());
+        if (containsFirstMile) {
+            List<ReportOrderDataEntity> firstMileList =  handleFirstMileSales(reportOrderDataList, reportOrderDemandDTO.getFirstMileStatusDTO());
+            if (CollectionUtils.isNotEmpty(firstMileList)) {
+                list.addAll(firstMileList);
+            }
+        }
         //符合条件数据为空则返回
         if (CollectionUtils.isEmpty(list)) {
             return;
@@ -295,7 +304,7 @@ public class ReportOrderDataServiceImpl extends SuperServiceImpl<ReportOrderData
         //b2b销售订单数据格式化
         boolean containsB2b = orderTypeList.contains(CfgSettingOrderTypeEnum.B2B.getCode());
         if (containsB2b) {
-            List<ReportOrderDataEntity> b2bList =  handleB2bSales(reportOrderDataList, salesDashboardDTO.getB2bStatusDTO(),bomChildrenSkuList,isSplit);
+            List<ReportOrderDataEntity> b2bList =  handleB2bSales(reportOrderDataList, salesDashboardDTO.getB2bStatusDTO());
             if (CollectionUtils.isNotEmpty(b2bList)) {
                 resultList.addAll(b2bList);
             }
@@ -303,7 +312,7 @@ public class ReportOrderDataServiceImpl extends SuperServiceImpl<ReportOrderData
         //b2c销售订单数据格式化
         boolean containsB2c = orderTypeList.contains(CfgSettingOrderTypeEnum.B2C.getCode());
         if (containsB2c) {
-            List<ReportOrderDataEntity> b2cList =  handleB2cSales(reportOrderDataList, salesDashboardDTO.getB2cStatusDTO(),bomChildrenSkuList,isSplit);
+            List<ReportOrderDataEntity> b2cList =  handleB2cSales(reportOrderDataList, salesDashboardDTO.getB2cStatusDTO());
             if (CollectionUtils.isNotEmpty(b2cList)) {
                 resultList.addAll(b2cList);
             }
@@ -311,15 +320,20 @@ public class ReportOrderDataServiceImpl extends SuperServiceImpl<ReportOrderData
         //头程，要货申请数据格式化
         boolean containsFirstMile = orderTypeList.contains(CfgSettingOrderTypeEnum.FIRST_MILE.getCode());
         if (containsFirstMile) {
-            List<ReportOrderDataEntity> firstMileList =  handleFirstMileSales(reportOrderDataList, salesDashboardDTO.getFirstMileStatusDTO(),bomChildrenSkuList,isSplit);
+            List<ReportOrderDataEntity> firstMileList =  handleFirstMileSales(reportOrderDataList, salesDashboardDTO.getFirstMileStatusDTO());
             if (CollectionUtils.isNotEmpty(firstMileList)) {
                 resultList.addAll(firstMileList);
             }
         }
-
-        if (CollectionUtils.isEmpty(resultList)) {
+        //按bom拆分
+        if (CollectionUtils.isNotEmpty(resultList) && isSplit) {
+            resultList = splitBom(resultList, bomChildrenSkuList);
+        }
+        //无值直接返回
+        if (CollUtil.isEmpty(resultList)) {
             return;
         }
+
         //sku
         List<String> skuIdList = resultList.stream().map(ReportOrderDataEntity::getSkuId).distinct().collect(Collectors.toList());
         //实体仓id
@@ -422,12 +436,9 @@ public class ReportOrderDataServiceImpl extends SuperServiceImpl<ReportOrderData
      * @date 2024/11/20 15:03
      * @param reportOrderDataList
      * @param statusDTO
-     * @param bomChildrenSkuList
-     * @param isSplit
      * @return List<ReportOrderDataEntity>
      */
-    private List<ReportOrderDataEntity> handleFirstMileSales (List<ReportOrderDataEntity> reportOrderDataList, CfgSettingVirtualValueDTO.StatusDTO statusDTO,
-                                                        List<BomChildrenSkuDTO> bomChildrenSkuList,Boolean isSplit) {
+    private List<ReportOrderDataEntity> handleFirstMileSales (List<ReportOrderDataEntity> reportOrderDataList, CfgSettingVirtualValueDTO.StatusDTO statusDTO) {
         if (ObjectUtil.isEmpty(statusDTO)) {
             return Collections.emptyList();
         }
@@ -443,12 +454,7 @@ public class ReportOrderDataServiceImpl extends SuperServiceImpl<ReportOrderData
                         && approveStatusList.contains(obj.getApproveStatus())
                         && invalidStatusList.contains(obj.getInvalidStatus())
         ).collect(Collectors.toList());
-        //无数据直接返回 或 无拆分直接返回
-        if (CollectionUtils.isEmpty(list) || !isSplit) {
-            return list;
-        }
-        List<ReportOrderDataEntity> resultList = splitBom(list, bomChildrenSkuList);
-        return resultList;
+        return list;
     }
 
     /**
@@ -457,10 +463,8 @@ public class ReportOrderDataServiceImpl extends SuperServiceImpl<ReportOrderData
      * @date 2024/9/27 14:26
      * @param reportOrderDataList
      * @param statusDTO
-     * @param bomChildrenSkuList
      */
-    private List<ReportOrderDataEntity> handleB2cSales (List<ReportOrderDataEntity> reportOrderDataList, CfgSettingVirtualValueDTO.StatusDTO statusDTO,
-                                 List<BomChildrenSkuDTO> bomChildrenSkuList,Boolean isSplit) {
+    private List<ReportOrderDataEntity> handleB2cSales (List<ReportOrderDataEntity> reportOrderDataList, CfgSettingVirtualValueDTO.StatusDTO statusDTO) {
         if (ObjectUtil.isEmpty(statusDTO)) {
             return Collections.emptyList();
         }
@@ -476,12 +480,7 @@ public class ReportOrderDataServiceImpl extends SuperServiceImpl<ReportOrderData
                         && approveStatusList.contains(obj.getApproveStatus())
                         && invalidStatusList.contains(obj.getInvalidStatus())
         ).collect(Collectors.toList());
-        //无数据直接返回 或 无拆分直接返回
-        if (CollectionUtils.isEmpty(list) || !isSplit) {
-            return list;
-        }
-        List<ReportOrderDataEntity> resultList = splitBom(list, bomChildrenSkuList);
-        return resultList;
+        return list;
     }
 
 
@@ -492,8 +491,7 @@ public class ReportOrderDataServiceImpl extends SuperServiceImpl<ReportOrderData
      * @param reportOrderDataList
      * @param statusDTO
      */
-    private List<ReportOrderDataEntity> handleB2bSales (List<ReportOrderDataEntity> reportOrderDataList, CfgSettingVirtualValueDTO.StatusDTO statusDTO,
-                                 List<BomChildrenSkuDTO> bomChildrenSkuList,Boolean isSplit) {
+    private List<ReportOrderDataEntity> handleB2bSales (List<ReportOrderDataEntity> reportOrderDataList, CfgSettingVirtualValueDTO.StatusDTO statusDTO) {
         if (ObjectUtil.isEmpty(statusDTO)) {
             return Collections.emptyList();
         }
@@ -509,12 +507,7 @@ public class ReportOrderDataServiceImpl extends SuperServiceImpl<ReportOrderData
                         && approveStatusList.contains(obj.getApproveStatus())
                         && invalidStatusList.contains(obj.getInvalidStatus())
         ).collect(Collectors.toList());
-        //无数据直接返回 或 无拆分直接返回
-        if (CollectionUtils.isEmpty(list) || !isSplit) {
-            return list;
-        }
-        List<ReportOrderDataEntity> resultList = splitBom(list, bomChildrenSkuList);
-        return resultList;
+        return list;
     }
 
 

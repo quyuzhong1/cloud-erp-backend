@@ -47,7 +47,7 @@ public interface ReportOrderDataService extends SuperService<ReportOrderDataEnti
      * @author will
      * @date 2024/9/26 19:18
      */
-    void generateReportOrderDemandDetail(List<ReportOrderDataEntity> reportOrderDataList, List<BomChildrenSkuDTO> bomChildrenSkuList, List<VirtualInventoryDTO.VirtualInventoryQtyDTO> virtualInventoryList, Boolean isSplit);
+    void generateReportOrderDemandDetail(List<ReportOrderDataEntity> reportOrderDataList, List<BomChildrenSkuDTO> bomChildrenSkuList, List<VirtualInventoryDTO.VirtualInventoryQtyDTO> virtualInventoryList, Boolean isSplit,CfgSettingVirtualValueDTO.ReportOrderDemandDTO reportOrderDemandDTO);
     /**
      * 生成缺货数据
      * @author will

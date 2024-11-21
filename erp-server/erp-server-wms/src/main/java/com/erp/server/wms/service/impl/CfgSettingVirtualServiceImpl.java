@@ -3,7 +3,6 @@ package com.erp.server.wms.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.common.business.dto.base.BaseResultDTO;
@@ -126,6 +125,9 @@ public class CfgSettingVirtualServiceImpl implements CfgSettingVirtualService {
             case SALES_DASHBOARD:
                 jsonObject = ObjectUtil.isEmpty(addDTO.getSalesDashboardDTO()) ? null : JSONUtil.parseObj(addDTO.getSalesDashboardDTO());
                 break;
+            case REPORT_ORDER_DEMAND:
+                jsonObject = ObjectUtil.isEmpty(addDTO.getReportOrderDemandDTO()) ? null : JSONUtil.parseObj(addDTO.getReportOrderDemandDTO());
+                break;
             case VIRTUAL_RULE:
                 jsonObject = ObjectUtil.isEmpty(addDTO.getVirtualRuleDTO()) ? null : JSONUtil.parseObj(addDTO.getVirtualRuleDTO());
                 break;
@@ -162,6 +164,10 @@ public class CfgSettingVirtualServiceImpl implements CfgSettingVirtualService {
             case SALES_DASHBOARD:
                 CfgSettingVirtualValueDTO.SalesDashboardDTO salesDashboardDTO = BeanUtil.toBean(cfgSetting.getDataJson(), CfgSettingVirtualValueDTO.SalesDashboardDTO.class);
                 viewDTO.setSalesDashboardDTO(salesDashboardDTO);
+                break;
+            case REPORT_ORDER_DEMAND:
+                CfgSettingVirtualValueDTO.ReportOrderDemandDTO reportOrderDemandDTO = BeanUtil.toBean(cfgSetting.getDataJson(), CfgSettingVirtualValueDTO.ReportOrderDemandDTO.class);
+                viewDTO.setReportOrderDemandDTO(reportOrderDemandDTO);
                 break;
             case VIRTUAL_RULE:
                 CfgSettingVirtualValueDTO.VirtualRuleDTO virtualRuleDTO = BeanUtil.toBean(cfgSetting.getDataJson(), CfgSettingVirtualValueDTO.VirtualRuleDTO.class);

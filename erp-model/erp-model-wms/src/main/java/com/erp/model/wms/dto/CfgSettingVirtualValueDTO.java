@@ -5,7 +5,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.Valid;
-import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import java.io.Serializable;
@@ -70,6 +69,37 @@ public class CfgSettingVirtualValueDTO implements Serializable {
         private WarnConditionDTO warnConditionDTO;
     }
 
+    /**
+     * 销售看板DTO
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ReportOrderDemandDTO{
+
+        /**
+         * 订单类型，b2b,b2c,firstMile
+         */
+        @NotEmpty(message = "订单类型不能为空")
+        private List<String> orderTypeList;
+
+        /**
+         * b2b销售订单状态
+         */
+        @Valid
+        private StatusDTO b2bStatusDTO;
+
+        /**
+         * b2c销售订单状态
+         */
+        @Valid
+        private StatusDTO b2cStatusDTO;
+
+        /**
+         * 头程订单状态
+         */
+        @Valid
+        private StatusDTO firstMileStatusDTO;
+    }
 
     /**
      * 状态DTO
