@@ -28,7 +28,6 @@ import java.util.Map;
 public class DmpInputAmzOrderDetailDmpHandler extends DmpInputAmzOrderDoChildDmpHandler {
 
 
-
     @Override
     protected List<Map<String, Object>> afterDoDmpInputMongoChildEntityList(List<Map<String, Object>> dmpInputMongoChildList) {
         if (CollUtil.isEmpty(dmpInputMongoChildList)) {
@@ -42,8 +41,9 @@ public class DmpInputAmzOrderDetailDmpHandler extends DmpInputAmzOrderDoChildDmp
                 Map<String, Object> promotionDiscountMap = (Map<String, Object>) promotionDiscountObj;
                 dmpInputMongoChild.put("discount", promotionDiscountMap.get("amount"));
 
+            }
         }
         return dmpInputMongoChildList;
-    }
 
+    }
 }
