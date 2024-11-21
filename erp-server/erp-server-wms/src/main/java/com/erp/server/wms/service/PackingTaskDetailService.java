@@ -72,4 +72,6 @@ public interface PackingTaskDetailService extends SuperService<PackingTaskDetail
     List<PackingTaskDetailDTO.ViewDTO> searchProductBySearchKey(String taskId,String searchKey);
 
     List<PackingTaskDetailEntity> listBySourceIds(List<String> sourceDetailIds);
+
+    void updateByChange(List<PackingTaskDetailEntity> addTaskDetailList, List<PackingTaskDetailEntity> updateTaskDetailList, List<PackingTaskDetailEntity> deleteTaskDetailList);
 }

@@ -3,17 +3,14 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.enums.CellExtraTypeEnum;
 import com.alibaba.excel.exception.ExcelAnalysisException;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
-import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.annotation.DataIdempotent;
 import com.common.business.config.DocNoGenHelper;
@@ -71,7 +68,6 @@ import com.erp.server.wms.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.ResourceLoader;
@@ -92,7 +88,8 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static com.common.business.enums.FileTaskEventEnum.*;
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_PACKING_TASK;
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_PACKING_TASK_DETAIL;
 
 /**
  * <p>
@@ -2568,6 +2565,32 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
             size = boxLength.stripTrailingZeros().toPlainString() + "*" +boxWidth.stripTrailingZeros().toPlainString() +"*"+ boxHeight.stripTrailingZeros().toPlainString();
         }
         return size;
+    }
+
+    @Override
+    public void syncByDeliveryNoticeChange(SoDeliveryNoticeEntity soDeliveryNotice, List<SoDeliveryNoticeDetailEntity> addList, List<SoDeliveryNoticeDetailEntity> updateList, List<SoDeliveryNoticeDetailEntity> deleteList) {
+        PackingTaskEntity packingTaskEntity = this.getBySourceCode(soDeliveryNotice.getCode());
+        if(Objects.isNull(packingTaskEntity)){
+            return;
+        }
+        List<PackingTaskDetailEntity> addTaskDetailList =  new ArrayList<>();
+        List<PackingTaskDetailEntity> updateTaskDetailList =  new ArrayList<>();
+        List<PackingTaskDetailEntity> deleteTaskDetailList =  new ArrayList<>();
+        //处理新增
+        if(CollectionUtils.isNotEmpty(addList)){
+            addList.forEach(v->{
+                PackingTaskDetailEntity packingTaskDetailEntity = new PackingTaskDetailEntity();
+                packingTaskDetailEntity.setMainId(packingTaskEntity.getId());
+                packingTaskDetailEntity.setSkuId(v.getSkuId());
+                packingTaskDetailEntity.setSkuNo(v.getSkuNo());
+                packingTaskDetailEntity.setDeliveryQty(0);
+                packingTaskDetailEntity.setSourceDetailId(v.getId());
+                packingTaskDetailEntity.setFnSku(v.getPlatformSkuNo());
+                addTaskDetailList.add(packingTaskDetailEntity);
+            });
+        }
+
+        packingTaskDetailService.updateByChange(addTaskDetailList,updateTaskDetailList,deleteTaskDetailList);
     }
 
     /**
