@@ -560,6 +560,9 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
                 detailList.add(newDTO);
             }
         }
+        if (detailList.size() == MathUtil.ZERO) {
+            detailList.stream().forEach(obj -> obj.setPlanDeliveryQty(detailDTO.getPlanDeliveryQty()));
+        }
     }
 
     /**
