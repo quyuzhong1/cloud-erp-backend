@@ -222,13 +222,11 @@ public class SyncKingdeeSoReturnServiceImpl implements SyncKingdeeSoReturnServic
             soId = entity.getSoId();
         } else if (SourceTypeEnum.SO_INFO.getCode().equals(entity.getSourceType())) {
             soId = entity.getSoId();
-        }else if (SourceTypeEnum.SO_RETURN_INSTOCK.getCode().equals(entity.getSourceType())){
-            //金蝶订单编号
-            resultMap.put("platformOrderCode",entity.getPlatformOrderCode());
-            //金蝶第三方单据编号
-            resultMap.put("thirdCode",entity.getThirdCode());
         }
-
+        //金蝶订单编号
+        resultMap.put("platformOrderCode",entity.getPlatformOrderCode());
+        //金蝶第三方单据编号
+        resultMap.put("thirdCode",entity.getThirdCode());
         //销售单
         SoInfoEntity soInfoEntity = new SoInfoEntity();
         if (CharSequenceUtil.isNotBlank(soId)) {
