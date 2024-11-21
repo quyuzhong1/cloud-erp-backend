@@ -202,7 +202,7 @@ public class CustomerB2cContactServiceImpl extends SuperServiceImpl<CustomerB2cC
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void saveOrUpdateEntity(PlatformOrderDTO dto, CustomerB2cEntity mainEntity, SoB2cReceiverEntity receiverEntity) {
+    public void saveOrUpdateEntity(PlatformOrderDTO dto, CustomerB2cEntity mainEntity, SoB2cReceiverEntity receiverEntity,boolean notUpdateAddress) {
         CustomerB2cContactEntity entity = this.getByMainId(mainEntity.getId());
         if (null == entity){
             CustomerB2cContactEntity newEntity = new CustomerB2cContactEntity();

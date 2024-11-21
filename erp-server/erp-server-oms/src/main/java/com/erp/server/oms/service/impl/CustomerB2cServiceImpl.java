@@ -1391,7 +1391,7 @@ public class CustomerB2cServiceImpl extends SuperServiceImpl<CustomerB2cMapper, 
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public CustomerB2cEntity saveOrUpdateEntity(PlatformOrderDTO dto, SoB2cEntity mainEntity, SoB2cReceiverEntity receiverEntity, String dictCountryCode, List<DictCountryEntity> countryList) {
+    public CustomerB2cEntity saveOrUpdateEntity(PlatformOrderDTO dto, SoB2cEntity mainEntity, SoB2cReceiverEntity receiverEntity, String dictCountryCode, List<DictCountryEntity> countryList,boolean notUpdateAddress) {
         // 当前国家
         DictCountryEntity dictCountryEntity = countryList.stream().findFirst().orElse(null);
         CustomerB2cEntity entity = this.getBySourceId(mainEntity.getId());

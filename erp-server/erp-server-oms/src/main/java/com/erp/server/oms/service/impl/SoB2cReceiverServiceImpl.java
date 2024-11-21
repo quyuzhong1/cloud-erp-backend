@@ -181,7 +181,7 @@ public class SoB2cReceiverServiceImpl extends SuperServiceImpl<SoB2cReceiverMapp
 //                if (!this.updateById(entity2)){
 //                    throw new ServiceException("[SoB2cReceiverEntity] 更新失败");
 //                }
-                return entity;
+                return newReceiverEntity;
             }
 
     }
