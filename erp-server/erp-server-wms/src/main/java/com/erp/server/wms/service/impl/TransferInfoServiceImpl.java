@@ -35,6 +35,7 @@ import com.erp.model.dmp.dto.DmpPushWdtDTO;
 import com.erp.model.dmp.dto.DmpPushWdtDetailDTO;
 import com.erp.model.dmp.dto.ThirdMappingDTO;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
+import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.InvalidStatusEnum;
@@ -939,17 +940,27 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
             throw new ServiceException("未找到直接调拨单对应的要货申请明细");
         }
 
+        List<String> skuIdList = pushDetailList.stream().map(TransferInfoDetailEntity::getSkuId).distinct().collect(Collectors.toList());
+        List<BomChildrenSkuDTO> bomChildList = plmTaskFeign.listBomChildBySkuIds(skuIdList);
+
         //出冻结库存
         List<VirtualInventoryStockDTO.OutInStockDTO> outList = new ArrayList<>();
 
-        for (TransferInfoDetailEntity transferInfoDetailEntity : pushDetailList) {
+        for (TransferInfoDetailEntity entity : pushDetailList) {
+
+            //过滤组合品
+            long count = bomChildList.stream().filter(obj -> CharSequenceUtil.equals(obj.getParentSkuId(), entity.getSkuId())).count();
+            if (count > 0) {
+                continue;
+            }
+
             //直接调拨单
-            TransferInfoEntity transferInfoEntity = pushFirstMileDeliveryList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), transferInfoDetailEntity.getMainId())).findFirst().orElse(null);
+            TransferInfoEntity transferInfoEntity = pushFirstMileDeliveryList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), entity.getMainId())).findFirst().orElse(null);
             if (ObjectUtil.isEmpty(transferInfoEntity)) {
                 throw new ServiceException("直接调拨单未找到");
             }
 
-            FirstMileDeliveryDetailEntity firstMileDeliveryDetailEntity = firstMileDeliveryDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), transferInfoDetailEntity.getSourceDetailId())).findFirst().orElse(null);
+            FirstMileDeliveryDetailEntity firstMileDeliveryDetailEntity = firstMileDeliveryDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), entity.getSourceDetailId())).findFirst().orElse(null);
             if (ObjectUtil.isEmpty(firstMileDeliveryDetailEntity)) {
                 throw new ServiceException("未找到头程发货单明细");
             }
@@ -961,12 +972,13 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
             if (ObjectUtil.isEmpty(applicationEntity)) {
                 throw new ServiceException("未找到直接调拨单对应的要货申请信息");
             }
+
             VirtualInventoryStockDTO.OutInStockDTO outInStockDTO = new VirtualInventoryStockDTO.OutInStockDTO();
             outInStockDTO.setBillDate(LocalDate.now());
             outInStockDTO.setSourceId(transferInfoEntity.getId());
             outInStockDTO.setSourceCode(transferInfoEntity.getCode());
             outInStockDTO.setSourceType(InventorySourceTypeEnum.TRANSFER_INFO);
-            outInStockDTO.setSourceDetailId(transferInfoDetailEntity.getId());
+            outInStockDTO.setSourceDetailId(entity.getId());
             outInStockDTO.setBillDate(LocalDate.now());
             outInStockDTO.setSkuId(applicationDetailEntity.getSkuId());
             outInStockDTO.setSkuNo(applicationDetailEntity.getSkuNo());
@@ -975,7 +987,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
                 continue;
             }
             outInStockDTO.setVirtualWarehouseId(applicationDetailEntity.getFromVirtualWarehouseId());
-            outInStockDTO.setQty(transferInfoDetailEntity.getQty());
+            outInStockDTO.setQty(entity.getQty());
             outList.add(outInStockDTO);
         }
         if (CollectionUtils.isNotEmpty(outList)) {
