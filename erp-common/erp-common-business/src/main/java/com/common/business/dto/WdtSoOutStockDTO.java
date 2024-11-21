@@ -1,5 +1,6 @@
 package com.common.business.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.enums.ApproveStatusEnum;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -244,6 +245,11 @@ public class WdtSoOutStockDTO extends UniqueDto {
      * 物流公司名称
      */
     private String logisticsCompanyName;
+
+    /**
+     * 订单标签
+     */
+    private String tradeLabel;
 
     private List<WdtSoOutStockDetailDTO> detailList;
 }
