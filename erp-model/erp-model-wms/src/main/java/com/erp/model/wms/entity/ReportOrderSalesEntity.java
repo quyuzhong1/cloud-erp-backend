@@ -166,6 +166,12 @@ public class ReportOrderSalesEntity extends BaseEntity<ReportOrderSalesEntity> {
     @TableField("thirty_days_virtual_qty")
     private Integer thirtyDaysVirtualQty;
 
+    /**
+     * 实体仓未分配
+     */
+    @TableField("un_distribution_qty")
+    private Integer unDistributionQty;
+
     public static final String WAREHOUSE_ID = "warehouse_id";
 
     public static final String VIRTUAL_WAREHOUSE_ID = "virtual_warehouse_id";

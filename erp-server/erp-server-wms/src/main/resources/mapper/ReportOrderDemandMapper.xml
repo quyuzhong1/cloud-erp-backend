@@ -52,7 +52,8 @@
         rod.first_mile_qty  as firstMileQty,
         rod.virtual_usable_qty as virtualUsableQty,
         rod.is_virtual_scarce as isVirtualScarce,
-        rod.virtual_scarce_qty as virtualScarceQty
+        rod.virtual_scarce_qty as virtualScarceQty,
+        rod.un_distribution_qty as unDistributionQty
     </sql>
 
     <!-- 删除 -->

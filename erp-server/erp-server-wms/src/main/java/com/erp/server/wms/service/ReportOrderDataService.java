@@ -5,6 +5,7 @@ import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.wms.dto.CfgSettingVirtualValueDTO;
 import com.erp.model.wms.dto.ReportOrderDataDTO;
 import com.erp.model.wms.dto.VirtualInventoryDTO;
+import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
 import com.erp.model.wms.entity.ReportOrderDataEntity;
 
 import java.util.List;
@@ -53,11 +54,11 @@ public interface ReportOrderDataService extends SuperService<ReportOrderDataEnti
      * @author will
      * @date 2024/9/26 19:18
      */
-    void generateReportOrderDemand(List<BomChildrenSkuDTO> bomChildrenSkuList, Boolean isSplit);
+    void generateReportOrderDemand(List<BomChildrenSkuDTO> bomChildrenSkuList,List<VirtualInventoryDTO.VirtualInventoryQtyDTO> virtualInventoryList, List<InventoryQtyDTO.SkuInventoryStatusTotalDTO> skuInventoryList, Boolean isSplit);
     /**
      * 生成销售看板数据
      * @author will
      * @date 2024/9/26 19:20
      */
-    void generateReportOrderSales(List<ReportOrderDataEntity> reportOrderDataList, List<BomChildrenSkuDTO> bomChildrenSkuList, List<VirtualInventoryDTO.VirtualInventoryQtyDTO> virtualInventoryList, Boolean isSplit, CfgSettingVirtualValueDTO.SalesDashboardDTO salesDashboardDTO);
+    void generateReportOrderSales(List<ReportOrderDataEntity> reportOrderDataList, List<BomChildrenSkuDTO> bomChildrenSkuList,List<InventoryQtyDTO.SkuInventoryStatusTotalDTO> skuInventoryList, List<VirtualInventoryDTO.VirtualInventoryQtyDTO> virtualInventoryList, Boolean isSplit, CfgSettingVirtualValueDTO.SalesDashboardDTO salesDashboardDTO);
 }

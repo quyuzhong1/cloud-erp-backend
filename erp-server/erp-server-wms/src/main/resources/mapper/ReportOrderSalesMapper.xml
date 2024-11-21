@@ -60,6 +60,7 @@
         ros.seven_days_sales_qty as sevenDaysSalesQty,
         ros.fourteen_days_sales_qty as fourteenDaysSalesQty,
         ros.thirty_days_sales_qty as thirtyDaysSalesQty,
+        ros.thirty_days_distribution_qty as thirtyDaysDistributionQty,
         ros.is_virtual_scarce as isVirtualScarce,
         ros.is_warn as isWarn,
         ros.virtual_scarce_qty as virtualScarceQty,
@@ -71,7 +72,8 @@
         ros.virtual_frozen_qty as virtualFrozenQty,
         ros.virtual_total_qty as virtualTotalQty,
         ros.delivery_qty as deliveryQty,
-        ros.distribution_qty as distributionQty
+        ros.distribution_qty as distributionQty,
+        ros.un_distribution_qty as unDistributionQty
     </sql>
 
     <!-- 删除数据 -->
