@@ -83,12 +83,7 @@ public class PurchaseSuggestController extends BaseController {
     @PostMapping("/add")
     @LogAction(value = LogActionEnum.INSERT, desc = "建议采购新增")
     public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated PurchaseSuggestDTO.AddDTO dto) {
-        BaseResultDTO.AddDTO add = purchaseSuggestService.add(dto);
-        if(ObjectUtil.isNotEmpty(add.getId())) {
-            //添加采购建议合并数据
-            purchaseSuggestMergeService.generatePurchaseSuggestMerge();
-        }
-        return success(add);
+        return success(purchaseSuggestService.add(dto));
     }
 
     /**

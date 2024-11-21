@@ -293,14 +293,17 @@ public class PurchaseSuggestMergeServiceImpl extends SuperServiceImpl<PurchaseSu
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void generatePurchaseSuggestMerge () {
+    public void generatePurchaseSuggestMerge (String purchaseSuggestId) {
         //查询配置
         CfgRuleOrderStrategyDTO.ViewDTO viewDTO = cfgRuleOrderStrategyService.view();
         if (ObjectUtil.isEmpty(viewDTO) || !viewDTO.getIsSplit()) {
             return;
         }
+        //采购建议
+        PurchaseSuggestEntity purchaseSuggestEntity = purchaseSuggestService.getById(purchaseSuggestId);
+
         //查询可拆分合并的数据
-        List<PurchaseSuggestEntity> list = purchaseSuggestService.listGeneratePurchaseSuggestMerge();
+        List<PurchaseSuggestEntity> list = purchaseSuggestService.listGeneratePurchaseSuggestMerge(purchaseSuggestEntity);
         if (CollectionUtils.isEmpty(list)) {
             return;
         }

@@ -151,5 +151,5 @@ public interface PurchaseSuggestService extends SuperService<PurchaseSuggestEnti
      * @date 2024/10/31 9:40
      * @return List<PurchaseSuggestEntity>
      */
-    List<PurchaseSuggestEntity> listGeneratePurchaseSuggestMerge();
+    List<PurchaseSuggestEntity> listGeneratePurchaseSuggestMerge(PurchaseSuggestEntity purchaseSuggestEntity);
 }

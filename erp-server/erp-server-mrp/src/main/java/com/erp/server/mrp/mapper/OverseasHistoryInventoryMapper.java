@@ -34,4 +34,10 @@ public interface OverseasHistoryInventoryMapper extends BaseMapper<OverseasHisto
      * 根据开始结束查询
      */
     List<OverseasHistoryInventoryEntity> listByStartDateAndEndDate(@Param("startDate")LocalDate startDate,@Param("endDate") LocalDate endDate,@Param("warehouseCode") Set<String> warehouseCode);
+    /**
+     * 分页查询
+     * @param query 分页
+     * @param params 参数
+     */
+    IPage<OverseasHistoryInventoryDTO.ListDTO> exportOverseasInventory(@Param("page") Page<OverseasHistoryInventoryDTO.ListDTO> query,@Param("params") OverseasHistoryInventoryDTO.ExportDTO params);
 }
