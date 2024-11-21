@@ -223,10 +223,6 @@ public class SyncKingdeeSoReturnServiceImpl implements SyncKingdeeSoReturnServic
         } else if (SourceTypeEnum.SO_INFO.getCode().equals(entity.getSourceType())) {
             soId = entity.getSoId();
         }
-        //金蝶订单编号
-        resultMap.put("platformOrderCode",entity.getPlatformOrderCode());
-        //金蝶第三方单据编号
-        resultMap.put("thirdCode",entity.getThirdCode());
         //销售单
         SoInfoEntity soInfoEntity = new SoInfoEntity();
         if (CharSequenceUtil.isNotBlank(soId)) {
@@ -340,6 +336,10 @@ public class SyncKingdeeSoReturnServiceImpl implements SyncKingdeeSoReturnServic
             String finalSoDetailId = soDetailId;
             SoDetailEntity soDetailEntity = soDetailEntitieList.stream().filter(req -> req.getId().equals(finalSoDetailId)).findFirst().orElse(new SoDetailEntity());
             Map<String,Object> map = new HashMap<>();
+            //金蝶订单编号
+            map.put("platformOrderCode",entity.getPlatformOrderCode());
+            //金蝶第三方单据编号
+            map.put("thirdCode",entity.getThirdCode());
             //退货原因
             if (CharSequenceUtil.isNotBlank(detailEntity.getReturnReasonDict())) {
                 resultMap.put("returnReason", ReturnReasonEnum.getEnum(detailEntity.getReturnReasonDict()).getKingdeeCode());
