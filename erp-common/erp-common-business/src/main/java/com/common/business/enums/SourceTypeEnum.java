@@ -50,6 +50,7 @@ public enum SourceTypeEnum {
     OTHER_OUTSTOCK("otherOutstock", "其他出库","other_outstock"),
     WDT_OTHER_OUTSTOCK("wdtOtherOutstock", "其他出库","other_outstock"),
     WAREHOUSE("warehouse", "仓库","warehouse"),
+    SDY_WAREHOUSE("sdy_warehouse", "仓库","warehouse"),
     SO_B2C_DELIVERY("soB2cDelivery", "B2C发货单","so_b2c_delivery"),
     SO_B2C_DELIVERY_INTERCEPT("soB2cDeliveryIntercept", "B2C发货单拦截","so_b2c_delivery_intercept"),
     PLATFORM_SO_OUT_STOCK("platformSoOutStock", "平台销售出库单",""),
@@ -85,6 +86,7 @@ public enum SourceTypeEnum {
     SO_INFO_TRANSFER_INFP("soInfoTransferInfo", "B2B销售订单(中转调拨)","so_info"),
     SO_CHANGE("soChange", "销售变更单","so_change"),
     CUSTOMER_INFO( "customerInfo", "客户表","customer_info"),
+    SDY_CUSTOMER_INFO( "sdy_customerInfo", "客户表","customer_info"),
     CUSTOMER_B2B_CHANGE_SELLER( "customerB2bChangeSeller", "B2B客户表变更销售员","customer_b2b_seller_change"),
     SO_B2C( "soB2c", "B2C销售订单","so_b2c"),
     SO_MULTI_CHANNEL( "soMultiChannel", "多渠道订单","so_multi_channel"),
@@ -93,6 +95,7 @@ public enum SourceTypeEnum {
     CUSTOMER_CONTACT( "customerContact", "客户联系人","customer_contact"),
     CUSTOMER_GROUP( "customerGroup", "客户分组","customer_group"),
     LISTING_INFO( "listingInfo", "产品信息","listing_info"),
+    SDY_SKU_MAPPING( "sdy_skuMapping", "sku映射","sku_mapping"),
 
     //SRM
     DELIVERY_ORDER( "deliveryOrder", "送货单","delivery_order"),
@@ -109,9 +112,11 @@ public enum SourceTypeEnum {
 
     // PLM
     PRODUCT_BOM_INFO("productBomInfo", "BOM管理","product_bom_info"),
+    SDY_PRODUCT_BOM_INFO("sdy_productBomInfo", "BOM管理","product_bom_info"),
     PRODUCT_COMBINATION("productCombination", "组合产品",""),
 
     PRODUCT_DETAIL("productDetail", "产品管理","product_detail"),
+    SDY_PRODUCT_DETAIL("sdy_productDetail", "产品管理","product_detail"),
     WDT_PRODUCT_DETAIL("wdtProductDetail", "产品管理","product_detail"),
     PROJECT_TASK("projectTask", "任务列表","project_task"),
     PRODUCT_CHANGE("productChange", "变更管理","product_change"),

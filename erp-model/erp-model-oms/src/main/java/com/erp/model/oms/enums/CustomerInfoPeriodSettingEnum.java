@@ -1,4 +1,4 @@
-package com.erp.model.dmp.enums;
+package com.erp.model.oms.enums;
 import com.baomidou.mybatisplus.annotation.EnumValue;
 import com.common.core.constant.EnumMessage;
 import com.fasterxml.jackson.annotation.JsonValue;
@@ -6,27 +6,16 @@ import org.apache.commons.lang3.StringUtils;
 
 /**
  * <p>
- * 外部系统 系统代码 枚举
+ * 客户表 账期设置 枚举
  * </p>
  *
  * @author shukai
- * @since 2024-06-11 09:37:12
+ * @since 2024-11-14 11:15:54
  */
-public enum DmpBasicSystemCodeEnum implements EnumMessage {
-	AMAZON("amazon", "亚马逊"),
-	KINGDEE("kingdee", "金蝶"),
-	WDT("wdt", "旺店通"),
-	MABANG("mabang", "马帮"),
-    TIKTOK("TikTok", "TikTok"),
-	ALI_EXPRESS("AliExpress", "速卖通"),
-	SHOPIFY("Shopify", "Shopify"),
-    MERCADOLIBRE("mercadolibre", "美客多"),
-    GOODCANG("goodcang", "谷仓"),
-    IML("iml", "艾姆勒"),
-    ERP("erp", "数大臣"),
-    ANTU("antu", "安兔"),
-    SHOPEE("shopee", "虾皮"),
-    SDY("sdy", "数帝云"),
+public enum CustomerInfoPeriodSettingEnum implements EnumMessage {
+	MONTH("month", "自然月"),
+	PLATFORM("platform", "平台自定义账期"),
+	SHOP("shop", "店铺自定义账期"),
     ;
     /**
      * 类型
@@ -39,7 +28,7 @@ public enum DmpBasicSystemCodeEnum implements EnumMessage {
      */
     private String name;
 
-    DmpBasicSystemCodeEnum(String code, String name) {
+    CustomerInfoPeriodSettingEnum(String code, String name) {
         this.code = code;
         this.name = name;
     }
@@ -58,7 +47,7 @@ public enum DmpBasicSystemCodeEnum implements EnumMessage {
         if (StringUtils.isBlank(code)) {
             return "";
         }
-        for (DmpBasicSystemCodeEnum statusEnum : DmpBasicSystemCodeEnum.values()) {
+        for (CustomerInfoPeriodSettingEnum statusEnum : CustomerInfoPeriodSettingEnum.values()) {
             if (code.equals(statusEnum.getCode())) {
                 return statusEnum.getName();
             }

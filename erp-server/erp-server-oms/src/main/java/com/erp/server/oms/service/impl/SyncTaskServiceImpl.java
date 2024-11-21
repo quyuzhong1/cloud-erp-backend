@@ -67,6 +67,9 @@ public class SyncTaskServiceImpl implements SyncTaskService {
 
     @Resource
     private DmpMqFeign dmpMqFeign;
+    
+    @Resource
+    private SkuMappingService skuMappingService;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -252,6 +255,12 @@ public class SyncTaskServiceImpl implements SyncTaskService {
             case SO_CHANGE:
                 resultList = newSyncSoChange(sourceDetailList);
                 break;
+            case SDY_SKU_MAPPING:
+            	resultList = newSyncSdySkuMapping(sourceDetailList);
+            	break;
+            case SDY_CUSTOMER_INFO:
+            	resultList = newSyncSdyCustomerInfo(sourceDetailList);
+            	break;
             default:
                 break;
         }
@@ -389,6 +398,48 @@ public class SyncTaskServiceImpl implements SyncTaskService {
                 continue;
             }
             resultList.put(syncParamDetailDTO.getDataId(), syncKingdeeSoChangeService.newSyncDataToKingdee(entity, syncParamDetailDTO.getSyncOperate()));
+        }
+        return resultList;
+    }
+    
+    private Map<String , Map<String, Object>> newSyncSdySkuMapping (List<DmpSyncMqDTO.SyncParamDetailDTO> sourceDetailList) {
+    	Map<String , Map<String, Object>> resultList = new HashMap<>();
+    	List<String> sourceIdList = sourceDetailList.stream().map(DmpSyncMqDTO.SyncParamDetailDTO::getSourceId).collect(Collectors.toList());
+    	List<SkuMappingEntity> list = skuMappingService.listByIds(sourceIdList);
+    	if (CollectionUtils.isEmpty(list)) {
+    		log.error("newSyncSdySkuMapping >>>> 未找到数据！");
+    		return resultList;
+    	}
+    	for (DmpSyncMqDTO.SyncParamDetailDTO syncParamDetailDTO :  sourceDetailList) {
+    		String sourceId = syncParamDetailDTO.getSourceId();
+    		SkuMappingEntity entity = list.stream().filter(obj -> {
+    			return obj.getId().equals(sourceId);
+    		}).findFirst().orElse(null);
+    		if (ObjectUtils.isEmpty(entity)) {
+    			continue;
+    		}
+    		resultList.put(syncParamDetailDTO.getDataId(), skuMappingService.newSyncDataToSdy(entity, syncParamDetailDTO.getSyncOperate()));
+    	}
+    	return resultList;
+    }
+    
+    private Map<String , Map<String, Object>> newSyncSdyCustomerInfo (List<DmpSyncMqDTO.SyncParamDetailDTO> sourceDetailList) {
+    	Map<String , Map<String, Object>> resultList = new HashMap<>();
+    	List<String> sourceIdList = sourceDetailList.stream().map(DmpSyncMqDTO.SyncParamDetailDTO::getSourceId).collect(Collectors.toList());
+        List<CustomerInfoEntity> list = customerInfoService.listByIds(sourceIdList);
+        if (CollectionUtils.isEmpty(list)) {
+            log.error("newSyncSdyCustomerInfo >>>> 未找到数据！");
+            return resultList;
+        }
+        for (DmpSyncMqDTO.SyncParamDetailDTO syncParamDetailDTO :  sourceDetailList) {
+        	String sourceId = syncParamDetailDTO.getSourceId();
+            CustomerInfoEntity entity = list.stream().filter(obj -> {
+				return obj.getId().equals(sourceId);
+			}).findFirst().orElse(null);
+            if (ObjectUtils.isEmpty(entity)) {
+                continue;
+            }
+            resultList.put(syncParamDetailDTO.getDataId(), syncKingdeeCustomerInfoService.newSyncDataToSdy(entity, syncParamDetailDTO.getSyncOperate()));
         }
         return resultList;
     }

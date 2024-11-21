@@ -36,7 +36,6 @@
         sales_org_name,
         dict_area_code,
         dict_country_code,
-        dict_country_code,
         auth_status,
         disabled,
         auth_time,
@@ -48,7 +47,12 @@
         create_time,
         update_user_name,
         update_time,
-        si.extend_data
+        si.extend_data,
+        settlement_currency,
+        trade_currency,
+        enable_time,
+        down_time,
+        return_warehouse
         FROM shop_info si
         WHERE ${params.sqlMap.default}
         and si.is_deleted=FALSE

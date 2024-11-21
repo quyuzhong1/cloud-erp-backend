@@ -19,6 +19,7 @@ import com.common.core.enums.LogActionEnum;
 import com.erp.model.dmp.dto.ThirdMappingDTO;
 import com.erp.model.dmp.enums.ThirdSysTypeEnum;
 import com.erp.model.oms.dto.*;
+import com.erp.model.oms.dto.ShopDTO.ShopBatchUpdateDTO;
 import com.erp.model.oms.entity.CustomerInfoEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.rpc.dmp.feign.DmpThirdMappingFeign;
@@ -222,40 +223,48 @@ public class ShopInfoController extends BaseController {
      * @date 2023-08-22 14:37
      */
     @PostMapping("/updateStatus")
-    public ApiResult updateStatus(@RequestBody @Validated UpdateStateDTO.BatchUpdateDTO dto) {
+    public ApiResult updateStatus(@RequestBody @Validated ShopBatchUpdateDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         List<String> ids = dto.getIds();
         Boolean disabled = dto.getDisabled();
         for (String id : ids) {
             BatchResultDTO submit;
-            String flagCode = id;
-            try {
-                ShopInfoEntity shop = shopInfoService.getById(id);
-                if (Objects.isNull(shop)) {
-                    submit = BatchResultDTO.fail(id, id, "店铺不存在");
-                } else {
-                    //仓库下绑定第三方店铺不能修改为禁用状态
-                    if (Objects.nonNull(disabled) && !Objects.equals(disabled, shop.getDisabled()) && Objects.equals(disabled, true)) {
-                        Boolean flag = checkDmpThirdMapping(id);
-                        if (!flag) {
-                            submit = BatchResultDTO.fail(id, shop.getName(),  CharSequenceUtil.format(ApiError.EXIST_THIRD_SHOP_MAPPING.msg,shop.getName()));
-                        }else{
+            if(!disabled && dto.getEnableTime() == null) {
+            	submit = BatchResultDTO.fail(id, id, "修改状态为启用，启用时间必填");
+            }else {
+            	String flagCode = id;
+                try {
+                    ShopInfoEntity shop = shopInfoService.getById(id);
+                    if (Objects.isNull(shop)) {
+                        submit = BatchResultDTO.fail(id, id, "店铺不存在");
+                    } else {
+                    	if(!disabled) {
+                    		shop.setEnableTime(dto.getEnableTime());
+                    	}
+                        //仓库下绑定第三方店铺不能修改为禁用状态
+                        if (Objects.nonNull(disabled) && !Objects.equals(disabled, shop.getDisabled()) && Objects.equals(disabled, true)) {
+                            Boolean flag = checkDmpThirdMapping(id);
+                            if (!flag) {
+                                submit = BatchResultDTO.fail(id, shop.getName(), CharSequenceUtil.format(ApiError.EXIST_THIRD_SHOP_MAPPING.msg,shop.getName()));
+                            }else{
+                                flagCode = shop.getName();
+                                submit = shopInfoService.updateStatus(shop, disabled);
+                            }
+                        }else {
                             flagCode = shop.getName();
                             submit = shopInfoService.updateStatus(shop, disabled);
                         }
-                    }else {
-                        flagCode = shop.getName();
-                        submit = shopInfoService.updateStatus(shop, disabled);
                     }
+                } catch (Exception e) {
+                    log.error("店铺更改状态失败>>>>{}", e);
+                    submit = BatchResultDTO.fail(id, flagCode, e.getMessage());
                 }
-            } catch (Exception e) {
-                log.error("店铺更改状态失败>>>>{}", e);
-                submit = BatchResultDTO.fail(id, flagCode, e.getMessage());
             }
             resultDTOS.add(submit);
         }
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
+
 
     /**
      * 店铺批量费用设置

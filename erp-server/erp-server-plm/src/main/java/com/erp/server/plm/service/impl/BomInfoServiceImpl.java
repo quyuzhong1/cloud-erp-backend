@@ -626,6 +626,7 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
         }
         //更新金蝶
         List<DmpPushTaskEntity> pushTaskList = syncKingdeeBomInfoService.syncDataToKingdee(bomInfoEntity, SyncOperateEnum.OPERATE_DELETE.getCode());
+        syncKingdeeBomInfoService.syncDataToSdy(bomInfoEntity, SyncOperateEnum.OPERATE_DELETE.getCode());
         boolean flag = this.removeById(bomId);
         if (flag) {
             bomSkuService.deleteByBomId(bomId);
@@ -1427,6 +1428,7 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
         List<DmpPushTaskEntity> resultList = new ArrayList<>();
         list.forEach(obj -> {
             List<DmpPushTaskEntity> pushTaskEntityList = syncKingdeeBomInfoService.syncDataToKingdee(obj, operate);
+            syncKingdeeBomInfoService.syncDataToSdy(obj, operate);
             resultList.addAll(pushTaskEntityList);
         });
         //推送金蝶
