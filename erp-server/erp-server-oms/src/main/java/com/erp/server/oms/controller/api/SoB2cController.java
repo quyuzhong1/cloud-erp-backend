@@ -1518,15 +1518,4 @@ public class SoB2cController extends BaseController {
         Boolean result = soB2cService.tempTikTokOrderDate();
         return result ? success():failure();
     }
-
-
-    /**
-     * 临时修复数据接口 todo
-     * @return
-     */
-    @PostMapping("/tempTikTokOrderDate")
-    public ApiResult tempTikTokOrderDate() {
-        Boolean result = soB2cService.tempTikTokOrderDate();
-        return result ? success():failure();
-    }
 }

@@ -1003,9 +1003,6 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      */
     List<BatchResultDTO> fetchOrder(List<String> ids);
 
-
-    Boolean tempTikTokOrderDate();
-
     /**
      * 同步速递云数据
      * @param soId
