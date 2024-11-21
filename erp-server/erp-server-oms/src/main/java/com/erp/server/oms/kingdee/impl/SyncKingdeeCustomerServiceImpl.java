@@ -384,8 +384,8 @@ public class SyncKingdeeCustomerServiceImpl implements SyncKingdeeCustomerServic
 		resultMap.put("settlement_currency_code", entity.getCurrency());
 		resultMap.put("business_mode", entity.getBusinessMode());
 		resultMap.put("transactional_mode", entity.getTransactionalMode());
-		resultMap.put("financial_organization", orgIdCodeMap.get(financialOrganization));
-		resultMap.put("sales_organization", orgIdCodeMap.get(useOrgId));
+		resultMap.put("financial_organization_code", orgIdCodeMap.get(useOrgId));
+		resultMap.put("organization", orgIdCodeMap.get(financialOrganization));
 		resultMap.put("period_setting", entity.getPeriodSetting());
 		resultMap.put("check_type", entity.getCheckType());
 		resultMap.put("is_check", "是");
@@ -408,9 +408,9 @@ public class SyncKingdeeCustomerServiceImpl implements SyncKingdeeCustomerServic
 		}
 		
 		if(SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
-			resultMap.put("is_enable", "已删除");
+			resultMap.put("status", "已删除");
 		}else {
-			resultMap.put("is_enable", entity.getApproveStatus().getName());
+			resultMap.put("status", entity.getApproveStatus().getName());
 		}
 		return resultMap;
 	}
