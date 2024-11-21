@@ -3,8 +3,6 @@ kind: Deployment
 metadata:
   name: erp-server-admin
   namespace: dev #namespace
-  labels:
-    app: erp-server-admin
 spec:
   replicas: 2
   minReadySeconds: 60  # 从容器启动到应用正常提供服务
@@ -33,29 +31,10 @@ spec:
               cpu: "2"
               memory: "4Gi"
           env:
-            - name: SPRING_PROFILES_ACTIVE
-              valueFrom:
-                configMapKeyRef:
-                  key: SPRING_PROFILES_ACTIVE
-                  name: erp-config
             - name: JAVA_OPTS
-              value: "-Xms1g -Xmx2g -XX:+UseParallelGC -XX:ParallelGCThreads=2"
+              value: "-Xms1g -Xmx3g -XX:+UseParallelGC -XX:ParallelGCThreads=2"
           ports:
-            - containerPort: 9010
-              name: server
-              protocol: TCP #修改成你项目的端口
-          livenessProbe: #检查是否存活
-            httpGet:
-              path: /health
-              port: 9010
-            initialDelaySeconds: 3 #首次检查在多少时间后
-            periodSeconds: 10 #检查周期
-          readinessProbe: #检查是否成功启动
-            httpGet:
-              path: /readiness
-              port: 9010
-            initialDelaySeconds: 3 #首次检查在多少时间后
-            periodSeconds: 5 #检查周期
+            - containerPort: 9010 #修改成你项目的端口
   selector:
     matchLabels:
       app: erp-server-admin
@@ -65,8 +44,6 @@ kind: Service
 metadata:
   name: erp-server-admin
   namespace: dev #namespace
-  labels:
-    app: erp-server-admin
 spec:
   selector:
     app: erp-server-admin
@@ -76,4 +53,5 @@ spec:
       port: 9010
       # 容器暴露的访问端口 要确定与其他服务不冲突
       targetPort: 9010
+      nodePort: 30010
   type: NodePort
