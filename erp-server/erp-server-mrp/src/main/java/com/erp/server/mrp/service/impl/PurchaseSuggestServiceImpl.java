@@ -539,7 +539,7 @@ public class PurchaseSuggestServiceImpl extends SuperServiceImpl<PurchaseSuggest
             String productName = productDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), purchaseSuggestionDTO.getSkuId())).map(ProductDetailEntity::getName).findFirst().orElse("");
             purchaseSuggestionDTO.setProductName(productName);
             //创建名称
-            purchaseSuggestionDTO.setCreateTypeName(CreateTypeEnum.getNameByCode(purchaseSuggestionDTO.getCreateType()));
+            purchaseSuggestionDTO.setDataTypeName(CreateTypeEnum.getNameByCode(purchaseSuggestionDTO.getDataType()));
         }
     }
 

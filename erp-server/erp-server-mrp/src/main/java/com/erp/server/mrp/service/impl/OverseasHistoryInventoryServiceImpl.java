@@ -7,15 +7,13 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.FileTaskEventEnum;
 import com.common.business.service.impl.SuperServiceImpl;
-import com.common.business.vo.PagingVO;
-import com.erp.model.mrp.dto.FbaHistoryInventoryDTO;
-import com.erp.model.mrp.dto.OverseasHistoryInventoryDTO;
 import com.common.business.utils.ApplicationContextUtils;
+import com.common.business.vo.PagingVO;
+import com.erp.model.mrp.dto.OverseasHistoryInventoryDTO;
 import com.erp.model.mrp.entity.OverseasHistoryInventoryEntity;
 import com.erp.model.oms.dto.ListingInfoParamDTO;
 import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
 import com.erp.model.plm.vo.SkuVO;
-import com.erp.model.wms.dto.OverseasInventoryDTO;
 import com.erp.model.wms.dto.OverseasProviderDTO;
 import com.erp.model.wms.entity.OverseasInventoryEntity;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
@@ -33,7 +31,6 @@ import javax.annotation.Resource;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -171,5 +168,10 @@ public class OverseasHistoryInventoryServiceImpl extends SuperServiceImpl<Overse
             entity.setWarehouseId(warehouseCodeMap.get(entity.getWarehouseCode()));
         }
         return list;
+    }
+
+    @Override
+    public PagingVO<OverseasHistoryInventoryDTO.ListDTO> exportOverseasInventory(PagingDTO<OverseasHistoryInventoryDTO.ExportDTO> dto) {
+        return null;
     }
 }

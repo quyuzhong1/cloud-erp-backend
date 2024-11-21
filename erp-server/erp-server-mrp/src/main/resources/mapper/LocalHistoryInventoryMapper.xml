@@ -53,5 +53,36 @@
         </if>
         create_time DESC
     </select>
+    <select id="exportLocalInventory"
+            resultType="com.erp.model.mrp.dto.LocalHistoryInventoryDTO$PagingViewDTO">
+        select id,
+        update_time,
+        warehouse_id,
+        sku_id,
+        sku_no,
+        usable_qty,
+        waitqc_qty,
+        frozen_qty,
+        purchase_transit_qty,
+        transfer_transit_qty,
+        bill_date
+        from local_history_inventory
+        WHERE ${params.sqlMap.default} and is_deleted = FALSE
+        <!--是否显示0库存-->
+        <if test="params.isShowZeroInventory">
+            AND (usable_qty > 0
+            OR waitqc_qty > 0
+            OR frozen_qty > 0
+            OR purchase_transit_qty > 0
+            OR transfer_transit_qty > 0)
+        </if>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        create_time DESC
+    </select>
 
 </mapper>

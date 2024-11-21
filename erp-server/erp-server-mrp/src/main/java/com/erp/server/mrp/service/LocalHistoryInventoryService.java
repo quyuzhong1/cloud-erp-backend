@@ -38,4 +38,10 @@ public interface LocalHistoryInventoryService extends SuperService<LocalHistoryI
      * @param dto 参数
      */
     void exportExcel(LocalHistoryInventoryDTO.ExportDTO dto);
+
+    /**
+     * 导出
+     * @param dto 参数
+     */
+    PagingVO<LocalHistoryInventoryDTO.PagingViewDTO> exportLocalInventory(PagingDTO<LocalHistoryInventoryDTO.ExportDTO> dto);
 }

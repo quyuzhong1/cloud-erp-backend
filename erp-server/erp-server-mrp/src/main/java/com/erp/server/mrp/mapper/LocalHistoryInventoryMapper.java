@@ -25,4 +25,6 @@ public interface LocalHistoryInventoryMapper extends BaseMapper<LocalHistoryInve
      * @param params 参数
      */
     IPage<LocalHistoryInventoryDTO.PagingViewDTO> paging(@Param("page") Page<LocalHistoryInventoryDTO.PagingViewDTO> page, @Param("params") LocalHistoryInventoryDTO.SearchParamDTO params);
+
+    IPage<LocalHistoryInventoryDTO.PagingViewDTO> exportLocalInventory(@Param("page") Page<LocalHistoryInventoryDTO.PagingViewDTO> page, @Param("params")LocalHistoryInventoryDTO.ExportDTO params);
 }

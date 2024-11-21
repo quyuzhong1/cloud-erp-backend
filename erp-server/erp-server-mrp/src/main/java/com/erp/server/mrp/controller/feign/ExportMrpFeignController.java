@@ -5,6 +5,7 @@ import com.common.business.dto.DynamicExcelDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.erp.model.mrp.dto.*;
+import com.erp.server.mrp.handler.OverseasHistoryInventoryHandler;
 import com.erp.server.mrp.handler.ReplenishmentSuggestionQueryHandler;
 import com.erp.server.mrp.service.*;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -35,6 +36,11 @@ public class ExportMrpFeignController {
 
     @Resource
     private CalcSalesInfoDimService calcSalesInfoDimService;
+
+    @Resource
+    private OverseasHistoryInventoryService overseasHistoryInventoryService;
+    @Resource
+    private LocalHistoryInventoryService localHistoryInventoryService;
 
     /**
      * 历史销量导出数据查询
@@ -147,12 +153,29 @@ public class ExportMrpFeignController {
     }
 
     /**
+     * 海外仓每日库存
+     */
+    @PostMapping("/overseasInventory")
+    @WebAdvanceQuery(handler = OverseasHistoryInventoryHandler.class)
+    public PagingVO<OverseasHistoryInventoryDTO.ListDTO> exportOverseasInventory(@RequestBody PagingDTO<OverseasHistoryInventoryDTO.ExportDTO> dto){
+        return overseasHistoryInventoryService.exportOverseasInventory(dto);
+    }
+
+    /**
+     * 本地仓每日库存
+     */
+    @PostMapping("/localInventory")
+    @WebAdvanceQuery
+    public PagingVO<LocalHistoryInventoryDTO.PagingViewDTO> exportLocalInventory(@RequestBody PagingDTO<LocalHistoryInventoryDTO.ExportDTO> dto){
+        return localHistoryInventoryService.exportLocalInventory(dto);
+    }
+    /**
      * 导出试算逻辑
      * @param dto 参数
      */
     @PostMapping("/getListExportData")
     @WebAdvanceQuery
-    PagingVO<CalcSalesInfoDimDTO.ExportResultDTO> getListExportData(@RequestBody PagingDTO<CalcSalesInfoDimDTO.ExportSalesInfoDTO> dto){
+    public PagingVO<CalcSalesInfoDimDTO.ExportResultDTO> getListExportData(@RequestBody PagingDTO<CalcSalesInfoDimDTO.ExportSalesInfoDTO> dto){
         return calcSalesInfoDimService.getListExportData(dto);
     }
 }
