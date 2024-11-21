@@ -37,6 +37,10 @@ import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 
+
+/**
+ * 数帝云线上订单映射推送
+ */
 @Slf4j
 @Service
 @Scope("prototype")
@@ -159,7 +163,16 @@ public class DmpOutputSdyOrderHandler extends DmpOutputTaskHandler {
 
             shudiyunB2cOrderDTO.setBiz_no(dmpSoInfoEntity.getThirdCode());
             shudiyunB2cOrderDTO.setBiz_time(dmpSoInfoEntity.getPayTime());
-            shudiyunB2cOrderDTO.setTransaction_type("100.10");
+
+            //如果是旺店通中台表的订单属于配货单，其他的都是线上原始订单
+            if (PlatformDictEnum.WDT.getCode().equals(dmpSoInfoEntity.getSourcePlatform())) {
+                //配货单
+                shudiyunB2cOrderDTO.setTransaction_type("100.20");
+            } else {
+                //线上订单
+                shudiyunB2cOrderDTO.setTransaction_type("100.10");
+            }
+
             shudiyunB2cOrderDTO.setTransaction_sub_type(OrderSubTypeEnum.ONLINE_ORDER.getCode());
             shudiyunB2cOrderDTO.setBiz_status(dmpSoInfoEntity.getDeliveryStatus());
 

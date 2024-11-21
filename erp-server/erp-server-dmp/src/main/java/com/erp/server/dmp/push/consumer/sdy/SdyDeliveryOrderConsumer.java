@@ -23,7 +23,7 @@ public class SdyDeliveryOrderConsumer {
 
     public ApiResult<?> handle(Object ext) {
 
-        List<ShudiyunB2cOrderDTO> shudiyunB2cOrderDTOList = JSON.parseArray(ext.toString(), ShudiyunB2cOrderDTO.class);
+        ShudiyunB2cOrderDTO shudiyunB2cOrderDTOList = JSON.parseObject(ext.toString(), ShudiyunB2cOrderDTO.class);
         sdyPushCommonService.executeConsumer(shudiyunB2cOrderDTOList);
         return ApiResult.success();
     }
