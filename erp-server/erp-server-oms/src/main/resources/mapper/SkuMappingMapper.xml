@@ -617,7 +617,6 @@
                 #{skuNo}
             </foreach>
         </if>
-        order by sm.create_time desc
     </select>
 
 </mapper>

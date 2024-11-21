@@ -17,20 +17,19 @@ import com.erp.model.oms.dto.SoDetailDTO;
 import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.oms.dto.SoReturnDTO;
 import com.erp.model.oms.dto.listAddDetailViewDTO;
-import com.erp.model.oms.entity.CustomerInfoEntity;
 import com.erp.model.oms.entity.SoReturnEntity;
 import com.erp.server.oms.query.SoReturnQueryHandler;
 import com.erp.server.oms.service.SoReturnDetailService;
 import com.erp.server.oms.service.SoReturnService;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
-import javax.servlet.http.HttpServletResponse;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
 
 /**
  * 销售退货单
@@ -385,6 +384,7 @@ public class SoReturnController extends BaseController {
         return success(addDetailViews);
     }
 
+
     /**
      * 下推销售退货订单-保存
      * @Author Luo_WG
@@ -423,5 +423,6 @@ public class SoReturnController extends BaseController {
     public ApiResult<SoDetailDTO.ListAddDetailNoBomViewDTO> listAddDetailWithNoBomView(@RequestBody SoReturnDTO.PlatformSkuDTO dto) {
         return success(soReturnDetailService.listAddDetailWithNoBomView(dto));
     }
+
 
 }

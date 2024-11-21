@@ -13,7 +13,6 @@ import com.erp.model.oms.dto.SkuMappingDTO;
 import com.erp.model.oms.entity.SoB2cReturnDetailEntity;
 import com.erp.model.oms.entity.SoB2cReturnEntity;
 import com.erp.model.oms.entity.SoReturnDetailEntity;
-import com.erp.model.oms.entity.SoReturnEntity;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
@@ -37,7 +36,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
@@ -97,6 +99,8 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
 
             List<SoReturnInstockDetailEntity> list = new ArrayList<>();
             for (SoReturnInstockDetailDTO.Add detailDto : dto.getDetailList()) {
+                //获取平台sku
+                SoReturnReceiveDetailEntity soReturnReceiveDetailEntity = soReturnReceiveDetailEntities.stream().filter(req -> req.getSourceDetailId().equals(detailDto.getSoReturnDetailId())).findFirst().orElse(new SoReturnReceiveDetailEntity());
                 SkuVO skuVO = skuInfoByIds.stream().filter(req -> req.getSkuId().equals(detailDto.getSkuId())).findFirst().orElse(new SkuVO());
                 SoReturnInstockDetailEntity detailEntity = new SoReturnInstockDetailEntity();
                 detailEntity.setMainId(id);
@@ -108,6 +112,9 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
                 detailEntity.setRemark(detailDto.getRemark());
                 detailEntity.setSourceDetailId(detailDto.getSourceDetailId());
                 detailEntity.setSoReturnDetailId(detailDto.getSoReturnDetailId());
+                detailEntity.setPlatformSkuNo(soReturnReceiveDetailEntity.getPlatformSkuNo());
+                detailEntity.setIsChildSkuNo(soReturnReceiveDetailEntity.getIsChildSkuNo());
+
                 //封装仓库，如果没有明细仓库，取主记录的仓库
                 if(CharSequenceUtil.isBlank(detailDto.getWarehouseId())){
                     if(CharSequenceUtil.isNotBlank(dto.getWarehouseId())){
@@ -150,11 +157,6 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
                     detailEntity.setReturnTypeDict(returnTypeDict);
                     detailEntity.setReturnReasonDict(returnReasonDict);
                 }
-                //获取平台sku
-                String platformSkuNo = soReturnDetailEntities.stream()
-                        .filter(v -> v.getId().equals(detailDto.getSourceDetailId()) && StringUtils.isNotBlank(v.getPlatformSkuNo()))
-                        .map(SoReturnDetailEntity::getPlatformSkuNo).findFirst().orElse(null);
-                detailEntity.setPlatformSkuNo(platformSkuNo);
                 list.add(detailEntity);
             }
             //更新委外标识
@@ -415,8 +417,12 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
                 detailEntity.setWarehouseId(detailDto.getWarehouseId());
                 detailEntity.setWarehouseName(updateDTO.getName());
             }
-            String platformSkuNo = productSkuInfoList.stream().filter(v -> v.getSkuNo().equals(skuVO.getSkuNo())).map(SkuMappingDTO.ProductSkuInfoDTO::getPlatformSkuNo).findFirst().orElse("");
-            detailEntity.setPlatformSkuNo(platformSkuNo);
+            if(StringUtils.isBlank(detailDto.getPlatformSkuNo())){
+                String platformSkuNo = productSkuInfoList.stream().filter(v -> v.getSkuNo().equals(skuVO.getSkuNo())).map(SkuMappingDTO.ProductSkuInfoDTO::getPlatformSkuNo).findFirst().orElse("");
+                detailEntity.setPlatformSkuNo(platformSkuNo);
+            }else {
+                detailEntity.setPlatformSkuNo(detailDto.getPlatformSkuNo());
+            }
             list.add(detailEntity);
             //修改操作日志
             if (CharSequenceUtil.isNotBlank(detailEntity.getId())) {

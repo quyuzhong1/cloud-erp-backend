@@ -3,7 +3,6 @@ package com.erp.server.wms.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -52,7 +51,6 @@ import com.erp.server.wms.mapper.SoReturnReceiveMapper;
 import com.erp.server.wms.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -697,6 +695,8 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
                 detailAddDTO.setRemark(view.getRemark());
                 detailAddDTO.setSourceDetailId(view.getSourceDetailId());
                 detailAddDTO.setNoticeDetailId(view.getId());
+                detailAddDTO.setReturnReasonDict(view.getReturnReasonDict());
+                detailAddDTO.setReturnTypeDict(view.getReturnTypeDict());
                 detailList.add(detailAddDTO);
             }
             dto.setDetailList(detailList);
