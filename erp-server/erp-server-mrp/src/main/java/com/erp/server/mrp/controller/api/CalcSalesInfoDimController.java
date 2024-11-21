@@ -14,13 +14,13 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.mrp.dto.CalcSalesInfoDimDTO;
 import com.erp.model.mrp.entity.CalcSalesInfoDimEntity;
-import com.erp.model.mrp.entity.ReplenishmentSuggestionEntity;
 import com.erp.server.mrp.service.CalcSalesInfoDimService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -117,6 +117,10 @@ public class CalcSalesInfoDimController extends BaseController {
     }
 
 
+    /**
+     * 添加备注
+     * @param dto 参数
+     */
     @PostMapping("/updateRemark")
     @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "编辑备注")
     public ApiResult<List<BatchResultDTO>> updateRemark(@RequestBody @Validated BaseIdsDTO.BlankRemarkDTO dto) {
@@ -140,4 +144,13 @@ public class CalcSalesInfoDimController extends BaseController {
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
+
+    /**
+     * 下载系统历史销量
+     * @param calcSalesInfoDimId 参数
+     */
+    @GetMapping("/downloadHistorySales")
+    public void downloadHistorySales(@RequestParam String calcSalesInfoDimId, HttpServletResponse response) {
+        calcSalesInfoDimService.downloadHistorySales(calcSalesInfoDimId, response);
+    }
 }
