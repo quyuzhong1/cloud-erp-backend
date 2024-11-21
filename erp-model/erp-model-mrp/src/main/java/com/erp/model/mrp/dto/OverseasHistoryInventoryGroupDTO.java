@@ -1,7 +1,6 @@
 package com.erp.model.mrp.dto;
 
 import com.erp.model.mrp.entity.OverseasHistoryInventoryEntity;
-import com.erp.model.mrp.entity.ReplenishmentSuggestionEntity;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
@@ -35,4 +34,23 @@ public class OverseasHistoryInventoryGroupDTO {
         return dto;
     }
 
+    @Getter
+    @Setter
+    @EqualsAndHashCode
+    public static class InventoryDTO {
+
+        /**
+         * 平台仓库编码
+         */
+        private String warehouseCode;
+        /**
+         * 平台类型: goodcang=谷仓，iml=艾姆勒
+         */
+        private String dictPlatform;
+
+        /**
+         * ERP的SKU ID
+         */
+        private String skuId;
+    }
 }

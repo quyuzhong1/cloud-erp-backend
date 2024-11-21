@@ -35,17 +35,6 @@ public class OverseasHistoryInventoryDTO {
          * 仓库名称
          */
         private String name;
-
-        /**
-         * 库存sku
-         */
-        private String platformSku;
-
-        /**
-         * 库存产品名称
-         */
-        private String platformSkuName;
-
         /**
          * ERP系统产品名称
          */
