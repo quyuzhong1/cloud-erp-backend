@@ -69,6 +69,7 @@ public enum SourceTypeEnum {
     DELIVERY_PLAN("deliveryPlan", "发货计划","wms_delivery_plan"),
     OVERSEAS_INBOUND("overseasInbound", "海外仓入库单","overseas_warehouse_inbound"),
     REQUISITION_APPLICATION("requisitionApplication", "要货申请","requisition_application"),
+    REQUISITION_APPLICATION_CHANGE("requisitionApplicationChange", "要货申请变更单","requisition_application_change"),
     REQUISITION_APPLICATION_HANDLE("requisitionApplicationHandle", "要货申请(处理)","requisition_application"),
     REQUISITION_APPLICATION_FINISH("requisitionApplicationFinish", "要货申请(完成)","requisition_application"),
 

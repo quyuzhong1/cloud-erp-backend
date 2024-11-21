@@ -11,15 +11,14 @@ import com.common.business.dto.base.*;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
+import com.common.business.validator.ValidList;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.entity.BaseEntity;
 import com.common.core.enums.ApiError;
-import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.StrUtils;
-import com.common.core.utils.date.DateUtil;
 import com.erp.model.oms.dto.ListingInfoDTO;
 import com.erp.model.plm.dto.ProductBomInfoDTO;
 import com.erp.model.plm.vo.SkuVO;
@@ -35,6 +34,7 @@ import com.erp.model.wms.enums.RequisitionApplicationStatusEnum;
 import com.erp.model.wms.enums.RequisitionApplicationTypeEnum;
 import com.erp.model.wms.enums.RequisitionChangeTypeEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.oms.feign.OmsListingInfoFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
@@ -52,6 +52,9 @@ import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
+
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_REQUISITION_APPLICATION_CHANGE;
+
 /**
  * <p>
  * 要货申请变更单 服务实现类
@@ -87,6 +90,9 @@ public class RequisitionApplicationChangeServiceImpl extends SuperServiceImpl<Re
 
     @Resource
     private RequisitionApplicationDetailService requisitionApplicationDetailService;
+
+    @Resource
+    private DownloadTaskFeign downloadTaskFeign;
 
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -157,34 +163,43 @@ public class RequisitionApplicationChangeServiceImpl extends SuperServiceImpl<Re
         List<String> existStatusList = list.stream().map(RequisitionApplicationChangeDTO.TabListDTO::getTabFlag).collect(Collectors.toList());
         statusList.parallelStream().forEach(status -> {
             if(!existStatusList.contains(status)) {
-            list.add(new RequisitionApplicationChangeDTO.TabListDTO(status, 0));
-        }
+                list.add(new RequisitionApplicationChangeDTO.TabListDTO(status,"", 0));
+            }
         });
-        list.add(new RequisitionApplicationChangeDTO.TabListDTO("all", list.stream().mapToInt(RequisitionApplicationChangeDTO.TabListDTO::getCount).sum()));
-        // 计算合计数量
+        list.forEach(v->{
+            if(v.getTabFlag().equals(ApproveStatusEnum.WAIT_SUBMIT.getCode())){
+                v.setTabFlagName("待提交");
+            }
+            if(v.getTabFlag().equals(ApproveStatusEnum.APPROVE_ING.getCode())){
+                v.setTabFlagName("待审核");
+            }
+            if(v.getTabFlag().equals(ApproveStatusEnum.APPROVE.getCode())){
+                v.setTabFlagName("审核通过");
+            }
+            if(v.getTabFlag().equals(ApproveStatusEnum.REJECT.getCode())){
+                v.setTabFlagName("审核不通过");
+            }
+        });
+        list.add(new RequisitionApplicationChangeDTO.TabListDTO("","全部", list.stream().mapToInt(RequisitionApplicationChangeDTO.TabListDTO::getCount).sum()));
+        // 定义排序顺序
+        Map<String, Integer> orderMap = new HashMap<>();
+        orderMap.put(ApproveStatusEnum.WAIT_SUBMIT.getCode(), 0);
+        orderMap.put(ApproveStatusEnum.APPROVE_ING.getCode(), 1);
+        orderMap.put(ApproveStatusEnum.APPROVE.getCode(), 2);
+        orderMap.put(ApproveStatusEnum.REJECT.getCode(), 3);
+
+        // 排序
+        list.sort((o1, o2) -> {
+            Integer order1 = orderMap.getOrDefault(o1.getTabFlag(), 4); // 4 表示“全部”
+            Integer order2 = orderMap.getOrDefault(o2.getTabFlag(), 4);
+            return order1.compareTo(order2);
+        });
         return list;
     }
 
     @Override
     public void exportList(RequisitionApplicationChangeDTO.ExportDTO param, HttpServletResponse response) {
-        List<RequisitionApplicationChangeDTO.ListDTO> list = this.baseMapper.listExport(param);
-        if(CollUtil.isEmpty(list)) {
-           return;
-        }
-        // 数据处理
-        fillList(list);
-
-        // 导出数据
-        StringBuffer sb = new StringBuffer();
-        String excelPath = "excel/requisitionApplicationChange.xlsx";
-        String name = "要货申请变更单导出";
-        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-        sb.append(date).append(name);
-        try {
-            new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
-        } catch (Exception e) {
-            throw new ServiceException(ApiError.ERROR_1015);
-        }
+        downloadTaskFeign.saveDownloadTask("要货申请通知变更单导出", EXPORT_WMS_REQUISITION_APPLICATION_CHANGE.getCode(), param);
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -554,8 +569,8 @@ public class RequisitionApplicationChangeServiceImpl extends SuperServiceImpl<Re
         if(SourceTypeEnum.DELIVERY_PLAN.getCode().equals(requisitionApplicationEntity.getSourceType())){
             result.setDeliveryPlanCode(requisitionApplicationEntity.getSourceCode());
         }
-        result.setBillType(requisitionApplicationEntity.getType());
-        result.setBillTypeName(RequisitionApplicationTypeEnum.getName(requisitionApplicationEntity.getType()));
+        result.setType(requisitionApplicationEntity.getType());
+        result.setTypeName(RequisitionApplicationTypeEnum.getName(requisitionApplicationEntity.getType()));
         result.setChannelId(requisitionApplicationEntity.getChannelId());
         result.setChannelName(requisitionApplicationEntity.getChannelName());
         result.setRequisitionWarehouseId(requisitionApplicationEntity.getRequisitionWarehouseId());
@@ -638,12 +653,36 @@ public class RequisitionApplicationChangeServiceImpl extends SuperServiceImpl<Re
         if(CollUtil.isEmpty(list)) {
            return;
         }
+        List<String> ids = list.stream().map(RequisitionApplicationChangeDTO.ListDTO::getId).collect(Collectors.toList());
+        ValidList<ProcessManagementDTO.HistoryActivityDTO> dtoList = new ValidList<>();
+        ids.forEach(obj -> {
+            dtoList.add(new ProcessManagementDTO.HistoryActivityDTO(SourceTypeEnum.REQUISITION_APPLICATION_CHANGE.getCode(), obj));
+        });
+        ApiResult<List<ProcessManagementDTO.CurApproveInfoDTO>> listApiResult = null;
+        if (org.apache.commons.collections4.CollectionUtils.isNotEmpty(dtoList)) {
+            listApiResult = workflowFeign.curApprover(dtoList);
+            Integer code = listApiResult.getCode();
+            if (200 != code) {
+                throw new ServiceException(listApiResult.getMsg());
+            }
+        }
 
+        List<String> skuIds = list.stream().map(RequisitionApplicationChangeDTO.ListDTO::getSkuId).collect(Collectors.toList());
+        List<SkuVO> skuVOList = plmTaskFeign.listSkuProductByIds(skuIds);
         // 属性赋值
         for(RequisitionApplicationChangeDTO.ListDTO data : list) {
             data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
             data.setInvalidStatusName(InvalidStatusEnum.getName(data.getInvalidStatus()));
-            // TODO 其他如需要显示名称的字段赋值
+            data.setChangeTypeName(RequisitionChangeTypeEnum.getName(data.getChangeType()));
+            //最新待审核人
+            if (listApiResult != null && CollectionUtils.isNotEmpty(listApiResult.getData())) {
+                String curApprove = listApiResult.getData().stream().filter(obj -> obj.getBusinessId().equals(data.getId()) && StringUtils.isNotBlank(obj.getCurApproveName())).map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName).collect(Collectors.joining(","));
+                if(StringUtils.isNotBlank(curApprove)){
+                    data.setApproveUserName(curApprove);
+                }
+            }
+            SkuVO skuVO = skuVOList.stream().filter(v->v.getSkuId().equals(data.getSkuId())).findFirst().orElse(new SkuVO());
+            data.setProductName(skuVO.getSkuName());
         }
     }
     /**

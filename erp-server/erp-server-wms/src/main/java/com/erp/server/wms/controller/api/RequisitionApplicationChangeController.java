@@ -98,7 +98,7 @@ public class RequisitionApplicationChangeController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "wms:requisitionApplicationChange:paging",
-            tableAlias = ""
+            tableAlias = "rac"
     )
     public ApiResult<List<RequisitionApplicationChangeDTO.TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
        return success(requisitionApplicationChangeService.tabList(dto));
@@ -115,8 +115,9 @@ public class RequisitionApplicationChangeController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "wms:requisitionApplicationChange:paging",
-            tableAlias = ""
+            tableAlias = "rac"
     )
+    @WebAdvanceQuery
     public ApiResult<PagingVO<RequisitionApplicationChangeDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<RequisitionApplicationChangeDTO.PagingParamDTO> dto) {
         return success(requisitionApplicationChangeService.paging(dto));
     }

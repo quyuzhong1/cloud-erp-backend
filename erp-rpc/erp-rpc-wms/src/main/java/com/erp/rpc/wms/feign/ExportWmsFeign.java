@@ -37,6 +37,9 @@ public interface ExportWmsFeign {
     @PostMapping("/feign/export/requisitionApplication")
     PagingVO<RequisitionApplicationDTO.ListDTO> exportRequisitionApplication(@RequestBody PagingDTO<RequisitionApplicationDTO.PagingParamDTO> dto);
 
+    @PostMapping("/feign/export/requisitionApplicationChange")
+    PagingVO<RequisitionApplicationChangeDTO.ListDTO> exportRequisitionApplicationChange(@RequestBody PagingDTO<RequisitionApplicationChangeDTO.PagingParamDTO> dto);
+
     @PostMapping("/feign/export/warehouseLocationSafetyInventory")
     PagingVO<WarehouseLocationSafetyInventoryDTO.ViewDTO> exportWarehouseLocationSafetyInventory(@RequestBody PagingDTO<WarehouseLocationSafetyInventoryDTO.exportParamDTO> dto);
 

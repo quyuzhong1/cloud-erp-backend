@@ -39,7 +39,38 @@
     </sql>
 
     <select id="paging" resultType="com.erp.model.wms.dto.RequisitionApplicationChangeDTO$ListDTO">
-
+        select rac.id,
+               racd.id as detailId,
+               rac.code,
+               ra.type,
+               rac.approve_status as approveStatus,
+               rac.source_code as sourceCode,
+               rac.source_id as sourceId,
+               rac.business_id as businessId,
+               rac.business_code as businessCode,
+               rac.invalid_status as invalidStatus,
+               rac.approve_time as approveTime,
+               rac.approve_user_id as approveUserId,
+               rac.approve_user_name as approveUserName,
+               rac.approve_status as approveStatus,
+               rac.create_time as createTime,
+               rac.create_user_name as createUserName,
+               racd.platform_sku_no as platformSku,
+               racd.platform_sku_name as platformSkuName,
+               racd.sku_id as skuId,
+               racd.sku_no as skuNo,
+               racd.fn_sku as fnSku,
+               racd.platform_spu as asin,
+               racd.origin_qty as originRequisitionQty,
+               racd.new_qty as newRequisitionQty,
+               racd.change_type as changeType
+        from requisition_application_change rac
+        inner join requisition_application_change_detail racd on rac.id = racd.main_id and racd.is_deleted = false
+        inner join requisition_application ra on ra.id = rac.business_id and ra.is_deleted = false
+        where
+        ${params.sqlMap.default}
+        and  rac.is_deleted=FALSE
+        ORDER BY rac.id DESC
     </select>
 
     <select id="listCount" resultType="com.common.business.dto.base.ApproveStatusQtyDTO">
@@ -51,14 +82,14 @@
     </select>
     <select id="tabList" resultType="com.erp.model.wms.dto.RequisitionApplicationChangeDTO$TabListDTO">
         SELECT
-        approve_status AS tabFlag,
+        rac.approve_status AS tabFlag,
         count(*)  AS count
-        FROM  requisition_application_change
+        FROM  requisition_application_change rac
         WHERE is_deleted=FALSE
         <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
             ${params.permissionSql}
         </if>
-        GROUP BY approve_status
+        GROUP BY rac.approve_status
     </select>
 
 </mapper>
