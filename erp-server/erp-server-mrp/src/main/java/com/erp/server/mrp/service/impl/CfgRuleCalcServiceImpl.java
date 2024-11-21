@@ -51,6 +51,7 @@ import org.springframework.util.StringUtils;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.net.URLEncoder;
 import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -143,6 +144,9 @@ public class CfgRuleCalcServiceImpl extends SuperServiceImpl<CfgRuleCalcMapper, 
         sb.append(name);
         String excelPath = "excel/calcHistorySaleQtyError.xlsx";
         try {
+            response.setCharacterEncoding("utf-8");
+            response.setContentType("application/octet-stream");
+            response.setHeader("Content-Disposition", "attachment;filename=" + URLEncoder.encode(name.concat(".xlsx"), "UTF-8"));
             new ExcelPrintUtils().patchExport(errorList, response, sb.toString(), excelPath);
         } catch (IOException e) {
             log.error("导出失败 原因{}", e.getMessage(), e);

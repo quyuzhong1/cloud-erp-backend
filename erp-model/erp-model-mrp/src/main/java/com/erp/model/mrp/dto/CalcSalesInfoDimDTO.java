@@ -61,6 +61,28 @@ public class CalcSalesInfoDimDTO implements Serializable {
 
     }
 
+    /**
+     * 高级查询参数
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ParamDTO extends SortDTO {
+
+        /**
+         * 页面高级查询
+         */
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
+
+        /**
+         * sqlMap 默认key default
+         */
+        private Map<String, String> sqlMap;
+        /**
+         * 是否关注
+         */
+        private Boolean favorite;
+    }
+
 
     @Getter
     @Setter
@@ -268,6 +290,11 @@ public class CalcSalesInfoDimDTO implements Serializable {
          * 备注
          */
         private String remark;
+
+        /**
+         * 试算模板名字
+         */
+        private String name;
 
     }
 
@@ -701,4 +728,206 @@ public class CalcSalesInfoDimDTO implements Serializable {
         private List<CfgRuleSalesDenoisingCalcDTO.ExportDTO> cfgRuleSalesDenoising;
     }
 
+    @Getter
+    @Setter
+    public static class DetailViewDTO {
+        /**
+         * id
+         */
+        private String cfgRuleCalcId;
+        /**
+         * 试算配置编号
+         */
+        private String code;
+        /**
+         * 试算配置名称
+         */
+        private String name;
+
+        /**
+         * 试算开始日期
+         */
+        private LocalDate startCalcDate;
+
+        /**
+         * 试算结束日期
+         */
+        private LocalDate endCalcDate;
+
+        /**
+         * 历史销量类型
+         */
+        private String saleType;
+
+        /**
+         * 文件地址
+         */
+        private String fileUrl;
+        /**
+         * 主表id
+         */
+        private String id;
+
+        /**
+         * sku id
+         */
+        private String skuId;
+
+        /**
+         * sku
+         */
+        private String skuNo;
+        /**
+         * sku图片
+         */
+        private String skuImgUrl;
+        /**
+         * 品名
+         */
+        private String productName;
+        /**
+         * 国家
+         */
+        private String country;
+        /**
+         * 国家名字
+         */
+        private String countryName;
+        /**
+         * 国家图片
+         */
+        private String countryImgUrl;
+        /**
+         * 店铺
+         */
+        private String shopId;
+        /**
+         * 店铺名字
+         */
+        private String shopName;
+        /**
+         * 平台
+         */
+        private String platform;
+
+        /**
+         * 销量分析
+         */
+        private SalesEstimateVO salesEstimateVO;
+        /**
+         * 分时段销量
+         */
+        private String salesQtyJson;
+        /**
+         * 分时段销量
+         */
+        private List<SalesVO> salesQtyList;
+        /**
+         * 分时段日均销
+         */
+        private String avgSalesQtyJson;
+        /**
+         * 分时段日均销
+         */
+        private List<SalesVO> avgSalesQtyList;
+        /**
+         * 预估销量
+         */
+        private String monthSalesEstimateQtyJson;
+        /**
+         * 预估销量
+         */
+        private List<MonthSalesVO> monthSalesEstimateQtyList;
+        /**
+         * 真实销量
+         */
+        private String monthRealSalesQtyJson;
+        /**
+         * 真实销量
+         */
+        private List<MonthSalesVO> monthRealSalesQtyList;
+        /**
+         * 修改人名称
+         */
+        private String updateUserName;
+        /**
+         * 更新时间
+         */
+        private LocalDateTime updateTime;
+
+        /**
+         * 创建人名称
+         */
+        private String createUserName;
+
+        /**
+         * 创建时间
+         */
+        private LocalDateTime createTime;
+        /**
+         * 备注
+         */
+        private String remark;
+
+        /**
+         * 是否关注
+         */
+        private Boolean favorite;
+    }
+
+    @Getter
+    @Setter
+    public static class TemplateViewDTO {
+        /**
+         * id
+         */
+        private String cfgRuleCalcId;
+        /**
+         * 试算配置编号
+         */
+        private String code;
+        /**
+         * 试算配置名称
+         */
+        private String name;
+
+        /**
+         * 试算开始日期
+         */
+        private LocalDate startCalcDate;
+
+        /**
+         * 试算结束日期
+         */
+        private LocalDate endCalcDate;
+
+        /**
+         * 历史销量类型
+         */
+        private String saleType;
+
+        /**
+         * 文件地址
+         */
+        private String fileUrl;
+
+        /**
+         * 创建人名称
+         */
+        private String createUserName;
+
+        /**
+         * 创建时间
+         */
+        private LocalDateTime createTime;
+
+        /**
+         * 试算数据id
+         */
+        private List<String> calcSalesInfoDimIds;
+        /**
+         * 是否关注
+         */
+        private Boolean favorite;
+    }
 }

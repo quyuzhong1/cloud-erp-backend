@@ -54,22 +54,24 @@
         from calc_sales_info_dim csic
         where ${params.sqlMap.default}
           and csic.is_deleted = FALSE
-        and csic.cfg_rule_calc_id = #{params.cfgRuleCalcId}
+          and csic.cfg_rule_calc_id = #{params.cfgRuleCalcId}
         order by csic.update_time desc
 
     </select>
     <select id="view" resultType="com.erp.model.mrp.dto.CalcSalesInfoDimDTO$ViewDTO">
-        select id,
-               update_time,
-               sku_id,
-               sku_no,
-               country,
-               shop_id,
-               platform,
-               remark,
-               cfg_rule_calc_id
-        from calc_sales_info_dim
-        where id = #{id}
+        select csic.id,
+               csic.update_time,
+               csic.sku_id,
+               csic.sku_no,
+               csic.country,
+               csic.shop_id,
+               csic.platform,
+               csic.remark,
+               csic.cfg_rule_calc_id,
+               crc.name
+        from calc_sales_info_dim csic
+                 inner join cfg_rule_calc crc on csic.cfg_rule_calc_id = crc.id and crc.is_deleted = false
+        where csic.id = #{id}
     </select>
     <select id="exportData" resultType="com.erp.model.mrp.dto.CalcSalesInfoDimDTO$ExportDTO">
         select csic.id,
@@ -87,5 +89,58 @@
                  inner join cfg_rule_calc crc on csic.cfg_rule_calc_id = crc.id and crc.is_deleted = false
         where ${params.sqlMap.default}
           and csic.is_deleted = FALSE
+    </select>
+
+    <select id="pagingDetail" resultType="com.erp.model.mrp.dto.CalcSalesInfoDimDTO$DetailViewDTO">
+        select crc.id as cfgRuleCalcId,
+        crc.name,
+        crc.code,
+        crc.start_calc_date,
+        crc.end_calc_date,
+        crc.sale_type,
+        crc.file_url,
+        crc.create_user_name,
+        crc.create_time,
+        csic.id,
+        csic.sku_id,
+        csic.sku_no,
+        csic.country,
+        csic.shop_id,
+        csic.platform,
+        csic.sales_qty_json,
+        csic.avg_sales_qty_json,
+        csic.cfg_rule_calc_id,
+        csic.update_time,
+        csic.update_user_name,
+        csic.remark
+        from calc_sales_info_dim csic
+        inner join cfg_rule_calc crc on csic.cfg_rule_calc_id = crc.id and crc.is_deleted = false
+        where ${params.sqlMap.default}
+        and csic.is_deleted = FALSE
+        <if test="params.favorite != null and params.favorite ">
+            and exists (select id from calc_sales_info_favorite where is_deleted = false and cfg_rule_calc_id = crc.id
+            and user_id = #{userId})
+        </if>
+        order by csic.update_time desc
+
+    </select>
+    <select id="pagingTemplate" resultType="com.erp.model.mrp.dto.CalcSalesInfoDimDTO$TemplateViewDTO">
+        select crc.id as cfgRuleCalcId,
+        crc.create_user_name,
+        crc.create_time,
+        crc.sale_type,
+        crc.file_url,
+        crc.name,
+        crc.code,
+        crc.start_calc_date,
+        crc.end_calc_date
+        from cfg_rule_calc as crc
+        where ${params.sqlMap.default}
+        and crc.is_deleted = FALSE
+        <if test="params.favorite != null and params.favorite ">
+            and exists (select id from calc_sales_info_favorite where is_deleted = false and cfg_rule_calc_id = crc.id
+            and user_id = #{userId})
+        </if>
+        order by crc.update_time desc
     </select>
 </mapper>

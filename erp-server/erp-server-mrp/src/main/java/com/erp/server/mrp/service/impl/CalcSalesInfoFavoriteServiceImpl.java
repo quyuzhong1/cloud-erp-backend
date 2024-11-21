@@ -1,25 +1,17 @@
 package com.erp.server.mrp.service.impl;
 
 
-import cn.hutool.core.util.StrUtil;
-import com.common.business.dto.base.BaseResultDTO;
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
+import com.common.business.service.impl.SuperServiceImpl;
 import com.erp.model.mrp.entity.CalcSalesInfoFavoriteEntity;
 import com.erp.server.mrp.mapper.CalcSalesInfoFavoriteMapper;
 import com.erp.server.mrp.service.CalcSalesInfoFavoriteService;
-import com.common.business.service.impl.SuperServiceImpl;
-import com.common.business.threadlocal.UserContext;
-import com.erp.server.mrp.service.OperateLogService;
-import com.erp.server.mrp.service.CommonService;
-import com.common.core.exception.ServiceException;
-import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Transactional;
-import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
-import com.erp.model.mrp.dto.CalcSalesInfoFavoriteDTO;
-import java.util.*;
-import com.common.core.utils.*;
-import com.common.core.enums.ApiError;
+import org.springframework.stereotype.Service;
+
+import java.util.List;
+import java.util.stream.Collectors;
+
 /**
  * <p>
  * 试算关注表 服务实现类
@@ -32,4 +24,11 @@ import com.common.core.enums.ApiError;
 @Service
 public class CalcSalesInfoFavoriteServiceImpl extends SuperServiceImpl<CalcSalesInfoFavoriteMapper, CalcSalesInfoFavoriteEntity> implements CalcSalesInfoFavoriteService {
 
+    @Override
+    public List<String> listByUserId(String uid) {
+        List<CalcSalesInfoFavoriteEntity> list = list(Wrappers.<CalcSalesInfoFavoriteEntity>lambdaQuery()
+                .eq(CalcSalesInfoFavoriteEntity::getUserId, uid));
+        return list.stream().map(CalcSalesInfoFavoriteEntity::getCfgRuleCalcId)
+                .collect(Collectors.toList());
+    }
 }

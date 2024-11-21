@@ -82,5 +82,29 @@ public class CalcSalesInfoDimController extends BaseController {
        return success();
     }
 
+    /**
+     *
+     * 试算跟踪明细
+     * @param params 参数
+     */
+    @PostMapping("/pagingDetail")
+    @WebAdvanceQuery
+    public ApiResult<PagingVO<CalcSalesInfoDimDTO.DetailViewDTO>> pagingDetail(@RequestBody @Validated PagingDTO<CalcSalesInfoDimDTO.ParamDTO> params) {
+        PagingVO<CalcSalesInfoDimDTO.DetailViewDTO> page = calcSalesInfoDimService.pagingDetail(params);
+        return success(page);
+    }
+
+
+    /**
+     *
+     * 试算跟踪模板
+     * @param params 参数
+     */
+    @PostMapping("/pagingTemplate")
+    @WebAdvanceQuery
+    public ApiResult<PagingVO<CalcSalesInfoDimDTO.TemplateViewDTO>> pagingTemplate(@RequestBody @Validated PagingDTO<CalcSalesInfoDimDTO.ParamDTO> params) {
+        PagingVO<CalcSalesInfoDimDTO.TemplateViewDTO> page = calcSalesInfoDimService.pagingTemplate(params);
+        return success(page);
+    }
 
 }
