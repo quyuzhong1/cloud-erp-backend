@@ -69,17 +69,18 @@
         sm.update_user_name,
         sm.effective_time,
         sm.expire_time,
-        sm.update_time
+        sm.update_time,
+        ci.seller_name
         FROM sku_mapping sm
         LEFT JOIN shop_info si ON sm.shop_id=si.id AND si.is_deleted=FALSE
         LEFT JOIN listing_info li ON sm.listing_id=li.id AND li.is_deleted=FALSE
+        LEFT join customer_info ci on si.customer_id = ci.id and ci.is_deleted = false
         WHERE
         ${params.sqlMap.default}
          and   sm.is_deleted=FALSE AND sm.is_expire = FALSE
         <if test="params.type !=null and params.type!=''">
             AND sm.type =#{params.type}
         </if>
-
         ORDER BY sm.create_time DESC
     </select>
 
@@ -107,16 +108,19 @@
         li.platform_fn_sku,
         li.platform_update_time,
         sm.create_user_name,
-        sm.create_time
+        sm.create_time,
+        sm.expire_time,
+        sm.effective_time,
+        ci.seller_name
         FROM sku_mapping sm
         LEFT JOIN shop_info si
         ON sm.shop_id=si.id AND si.is_deleted=FALSE
         LEFT JOIN listing_info li
         ON sm.listing_id=li.id AND li.is_deleted=FALSE
+        LEFT join customer_info ci on si.customer_id = ci.id and ci.is_deleted = false
         WHERE
         ${params.sqlMap.default}
         and sm.is_deleted=FALSE
-        AND sm.is_expire = FALSE
         <if test="params.type !=null and params.type!=''">
             AND sm.type =#{params.type}
         </if>
@@ -207,7 +211,7 @@
         <if test="params.type !=null and params.type!=''">
             AND sm.type =#{params.type}
         </if>
-        ORDER BY sm.create_time DESC
+        ORDER BY li.platform_sku_no,sm.create_time DESC
 
     </select>
 
@@ -229,7 +233,9 @@
         sm.create_time,
         sm.platform_name,
         sm.has_mapping_all,
-        op.short_name
+        op.short_name,
+        sm.effective_time,
+        sm.expire_time
         FROM sku_mapping sm
         LEFT JOIN listing_info li
         ON sm.listing_id=li.id AND li.is_deleted=FALSE
@@ -241,7 +247,7 @@
         <if test="params.type !=null and params.type!=''">
             AND sm.type =#{params.type}
         </if>
-        ORDER BY sm.create_time DESC
+        ORDER BY li.platform_sku_no,sm.create_time DESC
     </select>
     <select id="listByPlatformSkuNoList" resultType="com.erp.model.oms.dto.SkuMappingDTO$SkuDTO">
         SELECT li.id AS listingId,

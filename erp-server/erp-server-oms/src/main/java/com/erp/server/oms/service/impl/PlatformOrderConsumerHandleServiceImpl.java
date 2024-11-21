@@ -351,11 +351,11 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
         soB2cFinanceService.saveOrUpdateEntity(dto, mainEntity, logisticsEntity, detailList);
 
         //客户信息
-        CustomerB2cEntity customerB2cEntity = customerB2cService.saveOrUpdateEntity(dto, mainEntity, receiverEntity, shopInfo.getDictCountryCode(), countryList);
+        CustomerB2cEntity customerB2cEntity = customerB2cService.saveOrUpdateEntity(dto, mainEntity, receiverEntity, shopInfo.getDictCountryCode(), countryList,null == soB2cError);
 
-        customerB2cAddressService.saveOrUpdateEntity(dto, customerB2cEntity, receiverEntity);
+        customerB2cAddressService.saveOrUpdateEntity(dto, customerB2cEntity, receiverEntity,null == soB2cError);
 
-        customerB2cContactService.saveOrUpdateEntity(dto, customerB2cEntity, receiverEntity);
+        customerB2cContactService.saveOrUpdateEntity(dto, customerB2cEntity, receiverEntity,null == soB2cError);
 
         receiverEntity.setCustomerId(customerB2cEntity.getId());
         soB2cReceiverService.saveOrUpdate(receiverEntity);

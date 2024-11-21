@@ -1324,6 +1324,11 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
             newDetailList.add(addDTO);
         }
         generateB2cDTO.setDetailList(newDetailList);
+        if(entity.getDeliveryTime() == null){
+            throw new ServiceException("发货单发货时间不能为空");
+        }
+        //重试时需要按照发货单发货时间扣减
+        generateB2cDTO.setBillDate(entity.getDeliveryTime().toLocalDate());
         return soOutstockService.generateB2cSoOutstock(generateB2cDTO);
     }
 

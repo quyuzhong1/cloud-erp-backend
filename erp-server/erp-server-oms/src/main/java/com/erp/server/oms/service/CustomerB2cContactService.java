@@ -71,7 +71,7 @@ public interface CustomerB2cContactService extends SuperService<CustomerB2cConta
      */
     void updateBatchContact(String mainId, List<CustomerContactDTO.ViewDTO> contactList);
 
-    void saveOrUpdateEntity(PlatformOrderDTO dto, CustomerB2cEntity mainEntity, SoB2cReceiverEntity receiverEntity);
+    void saveOrUpdateEntity(PlatformOrderDTO dto, CustomerB2cEntity mainEntity, SoB2cReceiverEntity receiverEntity ,boolean notUpdateAddress);
 
     CustomerB2cContactEntity getByMainId(String mainId);
 }
