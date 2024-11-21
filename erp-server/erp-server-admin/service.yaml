@@ -37,7 +37,13 @@ spec:
               value: "Asia/Shanghai"  # 设置时区，确保与宿主机一致
           ports:
             - containerPort: 9010 #修改成你项目的端口
-
+          volumeMounts:
+            - name: tz
+              mountPath: /etc/localtime
+      volumes:
+        - name: tz
+          hostPath:
+            path: /etc/localtime
   selector:
     matchLabels:
       app: erp-server-admin
