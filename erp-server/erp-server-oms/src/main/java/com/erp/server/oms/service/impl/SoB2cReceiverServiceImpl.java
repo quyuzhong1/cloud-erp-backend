@@ -111,7 +111,7 @@ public class SoB2cReceiverServiceImpl extends SuperServiceImpl<SoB2cReceiverMapp
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public SoB2cReceiverEntity saveOrUpdateEntity(PlatformOrderDTO dto, SoB2cEntity mainEntity, List<DictCountryEntity> countryList) {
+    public SoB2cReceiverEntity saveOrUpdateEntity(PlatformOrderDTO dto, SoB2cEntity mainEntity, List<DictCountryEntity> countryList ,boolean notUpdateAddress) {
         PlatformOrderReceiverDTO receiverDTO = dto.getReceiver();
         // 当前国家
         // 匹配来源三字码
@@ -173,7 +173,9 @@ public class SoB2cReceiverServiceImpl extends SuperServiceImpl<SoB2cReceiverMapp
                 }
                 newReceiverEntity.setId(entity.getId());
                 // 指定有值不更新
-                ReflectUtils.updateSpecifiedFieldsIfNotValue(newReceiverEntity, entity, SoB2cReceiverEntity.fieldsExistNotUpdate());
+                if(notUpdateAddress){
+                    ReflectUtils.updateSpecifiedFieldsIfNotValue(newReceiverEntity, entity, SoB2cReceiverEntity.fieldsExistNotUpdate());
+                }
 
                 this.updateById(newReceiverEntity);
 //                if (!this.updateById(entity2)){

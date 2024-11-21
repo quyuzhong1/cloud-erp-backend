@@ -2102,6 +2102,11 @@ public class SoB2cDTO implements Serializable {
          * 是否是状态变更为取消状态
          */
         private boolean isUpdateCancel = false;
+
+        /**
+         * SoB2cErrorTypeEnum.ORDER_FETCH
+         */
+        SoB2cErrorEntity soB2cError;
     }
 
     /**

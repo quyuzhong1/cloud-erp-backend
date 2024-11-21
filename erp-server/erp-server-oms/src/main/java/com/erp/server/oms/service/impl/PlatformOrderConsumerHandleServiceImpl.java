@@ -103,17 +103,6 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
 
     @Override
     public void handleAll(PlatformOrderDTO dto) {
-        // 已有出库详情/不保存订单
-        // 2024-03-25允许所有来源订单处理
-//        Boolean hasDeliveryDetail = Boolean.FALSE;
-//        if (StringUtils.isNotEmpty(dto.getPlatformCode()) && StringUtils.isNotEmpty(dto.getDictPlatform())){
-//            hasDeliveryDetail = dmpMongoDbFeign.checkHasDeliveryDetail(dto.getPlatformCode(), dto.getDictPlatform());
-//        }
-//        if (hasDeliveryDetail){
-//            log.warn("已存在对应销售出库单不新增：单号={}", dto.getPlatformCode());
-//            return;
-//        }
-
         SoB2cDTO.PullOrderResultDTO resultDTO = platformOrderConsumerHandleService.checkAndSaveAll(dto);
         SoB2cEntity mainEntity = resultDTO.getSoB2cEntity();
         //平台仓订单
@@ -138,7 +127,7 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
                 && !dto.getInvalidStatus()) {
             log.warn("卖家自发货订单无地址暂不新增：单号={}", dto.getPlatformCode());
 
-            SoB2cErrorEntity soB2cError = soB2cErrorService.getByMainIdAndType(mainEntity.getId(), SoB2cErrorTypeEnum.ORDER_FETCH.getCode());
+            SoB2cErrorEntity soB2cError = resultDTO.getSoB2cError();
             if(null == soB2cError){
                 //记录异常
                 SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO();
@@ -155,7 +144,7 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
             }
         }else{
             //拉取成功后清除订单异常信息，并自动触发订单审核和配货规则
-            SoB2cErrorEntity soB2cError = soB2cErrorService.getByMainIdAndType(mainEntity.getId(), SoB2cErrorTypeEnum.ORDER_FETCH.getCode());
+            SoB2cErrorEntity soB2cError = resultDTO.getSoB2cError();
             if(null != soB2cError){
                 soB2cErrorService.removeErrorOrder(mainEntity.getId(), SoB2cErrorTypeEnum.ORDER_FETCH.getCode());
                 retryFlag = true;
@@ -328,7 +317,9 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
             log.warn("[B2C订单消费] 平台订单【{}】：拆分后无平台来源明细不更新", dto.getPlatformCode());
             return resultDTO;
         }
-
+        //查询b2c error信息
+        SoB2cErrorEntity soB2cError = soB2cErrorService.getByMainIdAndType(mainEntity.getId(), SoB2cErrorTypeEnum.ORDER_FETCH.getCode());
+        resultDTO.setSoB2cError(soB2cError);
         // 毛重(捆绑商品按拆分后计算)
         BigDecimal allNetWeight = BigDecimal.ZERO;
         //长宽高计算
@@ -354,7 +345,7 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
         //物流信息更新保存
         SoB2cLogisticsEntity logisticsEntity = soB2cLogisticsService.saveOrUpdateEntity(dto, mainEntity, allNetWeight,maxLength,maxWidth,totalHeight);
         //买家信息更新保存
-        SoB2cReceiverEntity receiverEntity = soB2cReceiverService.saveOrUpdateEntity(dto, mainEntity, countryList);
+        SoB2cReceiverEntity receiverEntity = soB2cReceiverService.saveOrUpdateEntity(dto, mainEntity, countryList,null == soB2cError);
 
         //财务信息更新保存
         soB2cFinanceService.saveOrUpdateEntity(dto, mainEntity, logisticsEntity, detailList);
