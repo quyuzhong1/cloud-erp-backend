@@ -2,23 +2,14 @@ package com.erp.server.dmp.inout.handler.input.task.dmp;
 
 import cn.hutool.core.collection.CollUtil;
 import com.alibaba.fastjson.JSON;
-import com.common.business.dto.PlatformOrderDetailDTO;
-import com.common.core.anno.ParamData;
-import com.common.core.enums.PannoEnum;
 import com.erp.sdk.oms.amz.spapi.model.orders.Money;
-import com.erp.sdk.oms.amz.spapi.model.orders.Order;
-import com.erp.sdk.oms.amz.spapi.model.orders.OrderItem;
-import com.erp.server.dmp.inout.handler.input.task.mongo.DmpInputMongoHandler;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 /**
  * dmp处理金蝶明细子类任务handler，因有成员变量，最终实现类由spring管理需要是多例@Scope("prototype")
@@ -33,6 +24,31 @@ public class DmpInputAmzOrderDetailDmpHandler extends DmpInputAmzOrderDoChildDmp
     protected List<Map<String, Object>> afterDoDmpInputMongoChildEntityList(List<Map<String, Object>> dmpInputMongoChildList) {
         if (CollUtil.isEmpty(dmpInputMongoChildList)) {
             return dmpInputMongoChildList;
+        }
+        for (Map<String, Object> dmpInputMongoChild : dmpInputMongoChildList) {
+            Object itemPriceObj = dmpInputMongoChild.get("itemPrice");
+            if (null != itemPriceObj) {
+                // 订单买家信息
+                Money itemPrice = JSON.parseObject(JSON.toJSONString(itemPriceObj), Money.class);
+                // 金额
+                BigDecimal amount = new BigDecimal(null == itemPrice ? "0" : itemPrice.getAmount());
+                dmpInputMongoChild.put("amount", amount);
+                dmpInputMongoChild.put("afterAmount", amount);
+
+                Object quantityOrderedObj = dmpInputMongoChild.get("quantityOrdered");
+                if (null != quantityOrderedObj){
+                     int quantityOrdered = Integer.parseInt(quantityOrderedObj.toString());
+                    // 计算单价
+                    BigDecimal price = BigDecimal.ZERO;
+                    if (0 < quantityOrdered) {
+                        price = amount.divide(BigDecimal.valueOf(quantityOrdered), 2, RoundingMode.DOWN);
+                    }
+                    // 单价
+                    dmpInputMongoChild.put("price", price);
+                    dmpInputMongoChild.put("sellPrice", price);
+                }
+            }
+
         }
         return dmpInputMongoChildList;
     }
