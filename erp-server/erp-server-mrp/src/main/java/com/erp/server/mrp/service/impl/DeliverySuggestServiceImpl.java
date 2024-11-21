@@ -2,6 +2,7 @@ package com.erp.server.mrp.service.impl;
 
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.lang.Pair;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
@@ -129,7 +130,8 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
         DeliverySuggestEntity deliverySuggestEntity = new DeliverySuggestEntity();
         BeanMapperUtils.copy(addDTO, deliverySuggestEntity);
 
-
+        // 数据处理
+        handleData(deliverySuggestEntity);
         log.info("开始新增补货计划");
         // 生成单号
         String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_S);
@@ -276,6 +278,9 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
                 resultList.add(new DeliverySuggestDTO.DeliverySuggestWarehouseDTO(viewDTO.getWarehouseId(),viewDTO.getWarehouseName()));
             }
         }
+        if (CollUtil.isNotEmpty(resultList)) {
+            resultList = resultList.stream().distinct().collect(Collectors.toList());
+        }
         return resultList;
     }
 
@@ -306,7 +311,7 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
     public PagingVO<ReplenishmentSuggestionDTO.DeliverySuggestionDTO> listDeliverySuggestion(PagingDTO<ReplenishmentSuggestionDTO.PagingParamDTO> params) {
         Page<ReplenishmentSuggestionDTO.DeliverySuggestionDTO> pagingVO = baseMapper.pagingExportDeliverySuggestion(new Page<>(params.getCurrPage(), params.getPageSize()), params.getParams());
         if (CollectionUtils.isEmpty(pagingVO.getRecords())) {
-            throw new ServiceException("未找到采购计划数据");
+            throw new ServiceException("未找到发货计划数据");
         }
         handleExport(pagingVO.getRecords());
         return new PagingVO<>(pagingVO);
@@ -895,7 +900,7 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
             deliverySuggestionDTO.setShopName(shopName);
 
             //创建名称
-            deliverySuggestionDTO.setCreateTypeName(CreateTypeEnum.getNameByCode(deliverySuggestionDTO.getCreateType()));
+            deliverySuggestionDTO.setDataTypeName(CreateTypeEnum.getNameByCode(deliverySuggestionDTO.getDataType()));
         }
     }
 
