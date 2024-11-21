@@ -235,9 +235,11 @@ public class CfgRuleSalesFormulaCalcDTO implements Serializable {
             dto.setName(entity.getName());
             dto.setStartDate(entity.getStartDate());
             dto.setEndDate(entity.getEndDate());
-            dto.setFixedValue(entity.getFixedValue());
-            dto.setPercentJson(dto.getPercentJson());
-            dto.setPercentJsonDTO(dto.getPercentJsonDTO());
+            if (CfgRuleSalesFormulaDefaultTypeEnum.FIXED.getCode().equals(entity.getDefaultType())) {
+                dto.setFixedValue(entity.getFixedValue());
+            }else {
+                dto.setPercentJsonDTO(entity.getPercentJsonDTO());
+            }
             return dto;
         }
 
