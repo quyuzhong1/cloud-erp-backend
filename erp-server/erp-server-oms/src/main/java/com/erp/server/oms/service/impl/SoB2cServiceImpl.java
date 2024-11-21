@@ -9437,30 +9437,4 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
         }
     }
-
-    @Override
-    public Boolean tempTikTokOrderDate() {
-        //查询已删除且发货单
-        List<SoB2cDetailEntity> soB2cDetailEntityList = baseMapper.listTikTokOrder();
-
-        List<String> mainIds = soB2cDetailEntityList.stream().map(req -> req.getMainId()).distinct().collect(Collectors.toList());
-        List<SoB2cDetailEntity> list = baseMapper.listTikTokOrderAll(mainIds);
-
-        Map<String, List<SoB2cDetailEntity>> collect = list.stream().collect(groupingBy(req -> req.getMainId() + "-" + req.getSkuId()));
-        for (Map.Entry<String, List<SoB2cDetailEntity>> stringListEntry : collect.entrySet()) {
-            List<SoB2cDetailEntity> detailEntityList = stringListEntry.getValue();
-            if (detailEntityList.size() <= 1) {
-                for (SoB2cDetailEntity soB2cDetailEntity : detailEntityList) {
-                    baseMapper.tikTokOrderUpdate(soB2cDetailEntity.getId());
-                }
-            } else {
-
-
-
-            }
-
-
-        }
-        return null;
-    }
 }
