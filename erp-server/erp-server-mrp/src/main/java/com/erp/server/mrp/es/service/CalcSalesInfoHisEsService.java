@@ -24,4 +24,9 @@ public interface CalcSalesInfoHisEsService {
      * 根据试算配置id，查询历史销量
      */
     List<CalcSalesInfoHisEsEntity> findByCfgRuleCalcIdIn(List<String> cfgRuleCalcId);
+
+    /**
+     * 根据试算配置id，查询历史销量
+     */
+    List<CalcSalesInfoHisEsEntity> findByCfgRuleCalcIdAndShopIdAndSkuId(String cfgRuleCalcId, String shopId, String skuId);
 }

@@ -7,6 +7,7 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.mrp.dto.CalcSalesInfoDimDTO;
 import com.erp.model.mrp.entity.CalcSalesInfoDimEntity;
 
+import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
@@ -81,4 +82,13 @@ public interface CalcSalesInfoDimService extends SuperService<CalcSalesInfoDimEn
      * @param remark 备注
      */
     BatchResultDTO updateRemark(String id, String remark);
+
+    /**
+     * 下载系统销量
+     *
+     * @param calcSalesInfoDimId 参数
+     */
+    void downloadHistorySales(String calcSalesInfoDimId, HttpServletResponse response);
+
+
 }

@@ -1,6 +1,7 @@
 package com.erp.server.mrp.service.impl;
 
 
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.TypeReference;
@@ -17,8 +18,11 @@ import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.enums.ApiError;
+import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
+import com.common.core.utils.date.DateUtil;
 import com.erp.model.mrp.dto.*;
 import com.erp.model.mrp.entity.*;
 import com.erp.model.mrp.enums.CfgRuleSalesDenoisingDenoisingTypeEnum;
@@ -47,6 +51,8 @@ import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
@@ -347,6 +353,34 @@ public class CalcSalesInfoDimServiceImpl extends SuperServiceImpl<CalcSalesInfoD
         entity.setRemark(remark);
         this.updateById(entity);
         return BatchResultDTO.success(entity.getId(), entity.getSkuNo(), OperationTypeEnum.UPDATE);
+    }
+
+    @Override
+    public void downloadHistorySales(String calcSalesInfoDimId, HttpServletResponse response) {
+        CalcSalesInfoDimEntity entity = Optional.ofNullable(getById(calcSalesInfoDimId)).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST, "销量试算"));
+        List<CalcSalesInfoHisEsEntity> calcSalesInfoHisList = calcSalesInfoHisEsService.findByCfgRuleCalcIdAndShopIdAndSkuId(entity.getCfgRuleCalcId(), entity.getShopId(), entity.getSkuId());
+        List<CfgRuleCalcDTO.HistorySaleDTO> list = new ArrayList<>();
+        if (!ObjectUtil.isEmpty(calcSalesInfoHisList)) {
+            ShopInfoEntity shopInfo = shopInfoFeign.getShopInfoById(entity.getShopId());
+            Map<String, String> platformMap = getPlatformMap();
+            for (CalcSalesInfoHisEsEntity calcSalesInfoHis : calcSalesInfoHisList) {
+                CfgRuleCalcDTO.HistorySaleDTO dto = BeanMapperUtils.map(CfgRuleCalcDTO.HistorySaleDTO.class, calcSalesInfoHis);
+                dto.setPlatform(platformMap.get(shopInfo.getDictPlatform()));
+                dto.setBillDate(calcSalesInfoHis.getDate());
+                list.add(dto);
+            }
+        }
+        StringBuilder sb = new StringBuilder();
+        String excelPath = "excel/historySaleQty.xlsx";
+        String name = "系统试算历史销量";
+        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
+        sb.append(date);
+        sb.append(name);
+        try {
+            new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
+        } catch (IOException e) {
+            throw new ServiceException(ApiError.ERROR_95125);
+        }
     }
 
     /**
