@@ -871,6 +871,7 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
                 descriptionViewDTO.setHasDeliveryPlanQty(sourceJsonDTO.getPlanDeliveryQty());
                 descriptionViewDTOList.add(descriptionViewDTO);
             }
+            deliverPlanDetailViewDTO.setDescriptionList(descriptionViewDTOList);
             detailList.add(deliverPlanDetailViewDTO);
         }
         deliverPlanViewDTO.setDetailList(detailList);
