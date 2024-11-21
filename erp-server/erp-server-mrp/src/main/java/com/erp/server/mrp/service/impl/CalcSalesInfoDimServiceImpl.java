@@ -7,8 +7,10 @@ import com.alibaba.fastjson.TypeReference;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.FileTaskEventEnum;
+import com.common.business.enums.OperationTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
@@ -335,6 +337,16 @@ public class CalcSalesInfoDimServiceImpl extends SuperServiceImpl<CalcSalesInfoD
             processTemplateData(page.getRecords(), user.getUid());
         }
         return new PagingVO<>(page);
+    }
+
+    @Override
+    public BatchResultDTO updateRemark(String id, String remark) {
+        //新建对象
+        CalcSalesInfoDimEntity entity = new CalcSalesInfoDimEntity();
+        entity.setId(id);
+        entity.setRemark(remark);
+        this.updateById(entity);
+        return BatchResultDTO.success(entity.getId(), entity.getSkuNo(), OperationTypeEnum.UPDATE);
     }
 
     /**

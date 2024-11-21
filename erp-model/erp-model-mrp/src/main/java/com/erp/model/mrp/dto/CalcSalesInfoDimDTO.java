@@ -2,16 +2,14 @@ package com.erp.model.mrp.dto;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.TypeReference;
+import com.common.business.annotation.Dict;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import com.erp.model.mrp.entity.CalcSalesInfoDenoisingEntity;
 import com.erp.model.mrp.entity.CalcSalesInfoEstimateEntity;
 import com.erp.model.mrp.entity.CfgRuleSalesDenoisingCalcEntity;
 import com.erp.model.mrp.entity.CfgRuleSalesFormulaCalcEntity;
-import com.erp.model.mrp.enums.CfgRuleSalesDenoisingDenoisingTypeEnum;
-import com.erp.model.mrp.enums.CfgRuleSalesFormulaDefaultTypeEnum;
-import com.erp.model.mrp.enums.CfgRuleSalesFormulaTypeEnum;
-import com.erp.model.mrp.enums.TimePeriodEnum;
+import com.erp.model.mrp.enums.*;
 import lombok.*;
 import org.springframework.util.ObjectUtils;
 
@@ -757,6 +755,7 @@ public class CalcSalesInfoDimDTO implements Serializable {
         /**
          * 历史销量类型
          */
+        @Dict(enumClass = HistorySalesTypeEnum.class)
         private String saleType;
 
         /**
@@ -904,6 +903,7 @@ public class CalcSalesInfoDimDTO implements Serializable {
         /**
          * 历史销量类型
          */
+        @Dict(enumClass = HistorySalesTypeEnum.class)
         private String saleType;
 
         /**
