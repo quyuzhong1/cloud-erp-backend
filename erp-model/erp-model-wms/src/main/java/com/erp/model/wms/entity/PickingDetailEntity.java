@@ -89,6 +89,11 @@ public class PickingDetailEntity extends BaseEntity<PickingDetailEntity> {
     @TableField("is_out_stock")
     private Boolean isOutStock;
 
+    /**
+     * 实际拣货数量
+     */
+    @TableField("actual_qty")
+    private Integer actualQty;
 
     public static final String SKU_ID = "sku_id";
 

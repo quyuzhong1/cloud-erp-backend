@@ -122,6 +122,7 @@ public enum ModuleTypeEnum {
     DICT_RULE_CONDITION("110", "条件字典单"),
     RULE_CONDITION("111", "规则条件单"),
     CFG_RULE_VIRTUAL_TRANS("112", "虚拟库存交易规则设置"),
+    REQUISITION_APPLICATION_CHANGE("113", "要货申请变更单"),
     ;
 
 

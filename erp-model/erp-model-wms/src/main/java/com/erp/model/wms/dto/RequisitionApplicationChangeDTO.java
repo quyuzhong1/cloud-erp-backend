@@ -6,8 +6,10 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import javax.validation.Valid;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.time.LocalDateTime;
@@ -364,7 +366,8 @@ public class RequisitionApplicationChangeDTO implements Serializable {
         /**
          * 明细
          */
-        private List<RequisitionApplicationChangeDTO.ViewDetailDTO> details;
+        @Valid
+        private List<RequisitionApplicationChangeDTO.ViewDetailDTO> viewDetailList;
 
     }
 
@@ -379,6 +382,11 @@ public class RequisitionApplicationChangeDTO implements Serializable {
          * 明细id
          */
         private String detailId;
+
+        /**
+         * 来源明细id
+         */
+        private String sourceDetailId;
 
         /**
          * 要货申请明细id
@@ -437,6 +445,7 @@ public class RequisitionApplicationChangeDTO implements Serializable {
          * 变更后要货数量
          */
         @Min(value = 1, message = "变更后要货数量最少为1")
+        @NotNull(message = "变更后数量不能为空")
         private Integer newRequisitionQty;
         /**
          * 备注

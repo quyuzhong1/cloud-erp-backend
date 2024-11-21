@@ -1,9 +1,9 @@
 package com.erp.server.wms.service;
+
+import com.common.business.service.SuperService;
 import com.erp.model.wms.dto.RequisitionApplicationChangeDTO;
 import com.erp.model.wms.entity.RequisitionApplicationChangeDetailEntity;
-import com.common.business.service.SuperService;
-import com.common.business.dto.base.*;
-import com.erp.model.wms.dto.RequisitionApplicationChangeDetailDTO;
+import com.erp.model.wms.entity.RequisitionApplicationChangeEntity;
 
 import java.util.List;
 
@@ -18,22 +18,23 @@ import java.util.List;
 public interface RequisitionApplicationChangeDetailService extends SuperService<RequisitionApplicationChangeDetailEntity> {
 
     /**
-    * 新增
-    * @author lrp
-    * @date: 2024-11-18
-    * @param dto
-    * @return
-    */
-    BaseResultDTO.AddDTO add(RequisitionApplicationChangeDetailDTO.AddDTO dto);
+     * 新增
+     *
+     * @param entity
+     * @param addDTO
+     * @author lrp
+     * @date: 2024-11-18
+     */
+    void add(RequisitionApplicationChangeEntity entity, RequisitionApplicationChangeDTO.ViewDTO addDTO);
 
     /**
-    * 修改
-    * @author lrp
-    * @date: 2024-11-18
-    * @param dto
-    * @return
-    */
-    Boolean update(RequisitionApplicationChangeDetailDTO.UpdateDTO dto);
+     * 修改
+     *
+     * @param dto
+     * @author lrp
+     * @date: 2024-11-18
+     */
+    void update(RequisitionApplicationChangeDTO.ViewDTO dto, RequisitionApplicationChangeEntity entity);
 
 
     List<RequisitionApplicationChangeDTO.ExistDTO> checkExist(List<String> detailIds);

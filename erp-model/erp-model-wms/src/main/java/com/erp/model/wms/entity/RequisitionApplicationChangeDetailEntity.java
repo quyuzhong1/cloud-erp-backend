@@ -91,6 +91,12 @@ public class RequisitionApplicationChangeDetailEntity extends BaseEntity<Requisi
     @TableField("platform_spu")
     private String platformSpu;
 
+    /**
+     * 业务明细id（要货申请明细id）
+     */
+    @TableField("business_detail_id")
+    private String businessDetailId;
+
     public static final String MAIN_ID = "main_id";
 
     public static final String SKU_ID = "sku_id";

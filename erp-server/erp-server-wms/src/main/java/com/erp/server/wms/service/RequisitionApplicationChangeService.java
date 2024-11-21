@@ -24,7 +24,7 @@ public interface RequisitionApplicationChangeService extends SuperService<Requis
     * @param dto
     * @return
     */
-    BaseResultDTO.AddDTO add(RequisitionApplicationChangeDTO.AddDTO dto);
+    BaseResultDTO.AddDTO add(RequisitionApplicationChangeDTO.ViewDTO dto);
 
     /**
     * 修改
@@ -33,7 +33,7 @@ public interface RequisitionApplicationChangeService extends SuperService<Requis
     * @param dto
     * @return
     */
-    Boolean update(RequisitionApplicationChangeDTO.UpdateDTO dto);
+    Boolean update(RequisitionApplicationChangeDTO.ViewDTO dto);
 
     /**
     * 分页列表查询
@@ -70,7 +70,7 @@ public interface RequisitionApplicationChangeService extends SuperService<Requis
     * @param dto
     * @return BaseResultDTO.AddDTO
     */
-    BaseResultDTO.AddDTO addAndSubmit(RequisitionApplicationChangeDTO.AddDTO dto);
+    BaseResultDTO.AddDTO addAndSubmit(RequisitionApplicationChangeDTO.ViewDTO dto);
 
     /**
     * 修改并提交审核
@@ -79,7 +79,7 @@ public interface RequisitionApplicationChangeService extends SuperService<Requis
     * @param dto
     * @return
     */
-    void updateAndSubmit(RequisitionApplicationChangeDTO.UpdateDTO dto);
+    void updateAndSubmit(RequisitionApplicationChangeDTO.ViewDTO dto);
 
      /**
      * 提交审核

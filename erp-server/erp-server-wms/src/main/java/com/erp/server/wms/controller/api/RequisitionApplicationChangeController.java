@@ -27,6 +27,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
@@ -66,7 +67,7 @@ public class RequisitionApplicationChangeController extends BaseController {
     */
     @PostMapping("/add")
     @LogAction(value = LogActionEnum.INSERT, desc = "要货申请变更单新增")
-    public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated RequisitionApplicationChangeDTO.AddDTO dto) {
+    public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated RequisitionApplicationChangeDTO.ViewDTO dto) {
         return success(requisitionApplicationChangeService.add(dto));
     }
 
@@ -84,7 +85,7 @@ public class RequisitionApplicationChangeController extends BaseController {
         menuCode = "wms:requisitionApplicationChange:update",
         serviceClass = RequisitionApplicationChangeService.class,
         keyIdName = "id")
-    public ApiResult<?> update(@RequestBody @Validated RequisitionApplicationChangeDTO.UpdateDTO dto) {
+    public ApiResult<Objects> update(@RequestBody @Validated RequisitionApplicationChangeDTO.ViewDTO dto) {
         requisitionApplicationChangeService.update(dto);
         return success();
     }
@@ -128,7 +129,7 @@ public class RequisitionApplicationChangeController extends BaseController {
     * @return ApiResult<Void>
     */
     @PostMapping("/addAndSubmit")
-    public ApiResult<BaseResultDTO.AddDTO> addAndSubmit(@RequestBody @Validated RequisitionApplicationChangeDTO.AddDTO dto) {
+    public ApiResult<BaseResultDTO.AddDTO> addAndSubmit(@RequestBody @Validated RequisitionApplicationChangeDTO.ViewDTO dto) {
         BaseResultDTO.AddDTO result = requisitionApplicationChangeService.addAndSubmit(dto);
         return success(result);
     }
@@ -146,7 +147,7 @@ public class RequisitionApplicationChangeController extends BaseController {
             menuCode = "wms:requisitionApplicationChange:updateAndSubmit",
             serviceClass = RequisitionApplicationChangeService.class,
             keyIdName = "id")
-    public ApiResult<Void> updateAndSubmit(@RequestBody @Validated RequisitionApplicationChangeDTO.UpdateDTO dto) {
+    public ApiResult<Void> updateAndSubmit(@RequestBody @Validated RequisitionApplicationChangeDTO.ViewDTO dto) {
         requisitionApplicationChangeService.updateAndSubmit(dto);
         return success();
     }

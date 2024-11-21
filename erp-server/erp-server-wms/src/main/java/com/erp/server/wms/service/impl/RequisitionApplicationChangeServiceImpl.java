@@ -8,25 +8,23 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.base.*;
-import com.common.business.enums.ApproveStatusEnum;
-import com.common.business.enums.ApproveTypeEnum;
-import com.common.business.enums.OperationTypeEnum;
-import com.common.business.enums.SourceTypeEnum;
+import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.entity.BaseEntity;
 import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
-import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.StrUtils;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.oms.dto.ListingInfoDTO;
 import com.erp.model.plm.dto.ProductBomInfoDTO;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.InvalidStatusEnum;
+import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.RequisitionApplicationChangeDTO;
 import com.erp.model.wms.dto.pickingstrategy.PickingListsDTO;
 import com.erp.model.wms.entity.RequisitionApplicationChangeDetailEntity;
@@ -45,6 +43,7 @@ import com.erp.server.wms.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -89,20 +88,17 @@ public class RequisitionApplicationChangeServiceImpl extends SuperServiceImpl<Re
     @Resource
     private RequisitionApplicationDetailService requisitionApplicationDetailService;
 
-    @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public BaseResultDTO.AddDTO add(RequisitionApplicationChangeDTO.AddDTO addDTO) {
+    public BaseResultDTO.AddDTO add(RequisitionApplicationChangeDTO.ViewDTO addDTO) {
         RequisitionApplicationChangeEntity requisitionApplicationChangeEntity = new RequisitionApplicationChangeEntity();
-        BeanMapperUtils.copy(addDTO, requisitionApplicationChangeEntity);
-
+        List<String> businessDetailIds = addDTO.getViewDetailList().stream().map(RequisitionApplicationChangeDTO.ViewDetailDTO::getRequisitionDetailId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
+        this.checkExist(businessDetailIds,addDTO.getBusinessId(), addDTO.getId());
         // 数据处理
-        handleData(requisitionApplicationChangeEntity);
+        handleData(requisitionApplicationChangeEntity,addDTO);
 
-        log.info("开始新增要货申请变更单");
         // 生成单号
-        // TODO 此处的null需填写生成单号类型，type查看BusinessNoTypeEnum枚举类 注意需要填写prefix 为单号前缀
-        String code = docNoGenHelper.generateCode(null);
+        String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_YHBG);
         requisitionApplicationChangeEntity.setCode(code);
         boolean save = super.save(requisitionApplicationChangeEntity);
         if(!save) {
@@ -111,10 +107,8 @@ public class RequisitionApplicationChangeServiceImpl extends SuperServiceImpl<Re
 
         // 操作日志
         String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "要货申请变更单" , requisitionApplicationChangeEntity.getCode());
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, requisitionApplicationChangeEntity.getId(), "新增操作");
-        // TODO 新增明细（如果有明细的话）
-
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.REQUISITION_APPLICATION_CHANGE.getCode(), requisitionApplicationChangeEntity.getId(), "新增操作");
+        detailService.add(requisitionApplicationChangeEntity,addDTO);
         return new BaseResultDTO.AddDTO(requisitionApplicationChangeEntity.getId(), code);
     }
 
@@ -123,29 +117,18 @@ public class RequisitionApplicationChangeServiceImpl extends SuperServiceImpl<Re
     */
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public Boolean update(RequisitionApplicationChangeDTO.UpdateDTO updateDTO) {
+    public Boolean update(RequisitionApplicationChangeDTO.ViewDTO updateDTO) {
         RequisitionApplicationChangeEntity old = super.getById(updateDTO.getId());
         old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "要货申请变更单"));
+        List<String> businessDetailIds = updateDTO.getViewDetailList().stream().map(RequisitionApplicationChangeDTO.ViewDetailDTO::getRequisitionDetailId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
+        this.checkExist(businessDetailIds,updateDTO.getBusinessId(), updateDTO.getId());
         // 待提交和审核不通过允许修改
         if (!ApproveStatusEnum.allowUpdateStatus(old.getApproveStatus())) {
             throw new ServiceException(ApiError.ERROR_1029);
         }
-        RequisitionApplicationChangeEntity requisitionApplicationChangeEntity =  BeanMapperUtils.map(RequisitionApplicationChangeEntity.class, updateDTO);
+        //只会修改明细
+        detailService.update(updateDTO,old);
 
-        // 数据处理
-        handleData(requisitionApplicationChangeEntity);
-        log.info("编辑 开始修改要货申请变更单数据，单号：【{}】", old.getCode());
-        boolean save = super.updateById(requisitionApplicationChangeEntity);
-        if(!save) {
-            throw new ServiceException("要货申请变更单保存失败");
-        }
-        // TODO 修改明细数据（包含增删改）（如果有明细的话）
-
-        // 记录主单操作日志
-            log.info("编辑 开始记录要货申请变更单日志数据，单号：【{}】", requisitionApplicationChangeEntity.getCode());
-            String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), requisitionApplicationChangeEntity.getCode(), "要货申请变更单");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLogByObj(old, requisitionApplicationChangeEntity, null, requisitionApplicationChangeEntity.getId(), msg);
         return Boolean.TRUE;
     }
 
@@ -227,10 +210,9 @@ public class RequisitionApplicationChangeServiceImpl extends SuperServiceImpl<Re
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.SUBMIT);
     }
 
-    @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public BaseResultDTO.AddDTO addAndSubmit(RequisitionApplicationChangeDTO.AddDTO dto) {
+    public BaseResultDTO.AddDTO addAndSubmit(RequisitionApplicationChangeDTO.ViewDTO dto) {
         // 新增
         BaseResultDTO.AddDTO result = this.add(dto);
         // 提交
@@ -238,10 +220,9 @@ public class RequisitionApplicationChangeServiceImpl extends SuperServiceImpl<Re
         return result;
     }
 
-    @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public void updateAndSubmit(RequisitionApplicationChangeDTO.UpdateDTO dto) {
+    public void updateAndSubmit(RequisitionApplicationChangeDTO.ViewDTO dto) {
         // 修改
         this.update(dto);
         // 提交
@@ -493,7 +474,7 @@ public class RequisitionApplicationChangeServiceImpl extends SuperServiceImpl<Re
         List<RequisitionApplicationChangeDTO.ViewDetailDTO> details = new ArrayList<>();
         buildViewDetail(viewIdDTO, details, requisitionApplicationChangeEntity);
 
-        result.setDetails(details);
+        result.setViewDetailList(details);
 
         return result;
     }
@@ -507,6 +488,7 @@ public class RequisitionApplicationChangeServiceImpl extends SuperServiceImpl<Re
             for (RequisitionApplicationDetailEntity requisitionApplicationDetailEntity : requisitionApplicationDetailEntityList) {
                 RequisitionApplicationChangeDTO.ViewDetailDTO viewDetailDTO = new RequisitionApplicationChangeDTO.ViewDetailDTO();
                 viewDetailDTO.setRequisitionDetailId(requisitionApplicationDetailEntity.getId());
+                viewDetailDTO.setSourceDetailId(requisitionApplicationDetailEntity.getId());
                 viewDetailDTO.setPlatformSku(requisitionApplicationDetailEntity.getPlatformSku());
                 viewDetailDTO.setPlatformSkuName(requisitionApplicationDetailEntity.getPlatformSkuName());
                 viewDetailDTO.setSkuId(requisitionApplicationDetailEntity.getSkuId());
@@ -531,7 +513,8 @@ public class RequisitionApplicationChangeServiceImpl extends SuperServiceImpl<Re
         for (RequisitionApplicationChangeDetailEntity requisitionApplicationChangeDetailEntity : detailEntityList) {
             RequisitionApplicationChangeDTO.ViewDetailDTO viewDetailDTO = new RequisitionApplicationChangeDTO.ViewDetailDTO();
             viewDetailDTO.setDetailId(requisitionApplicationChangeDetailEntity.getId());
-            viewDetailDTO.setRequisitionDetailId(requisitionApplicationChangeDetailEntity.getSourceDetailId());
+            viewDetailDTO.setRequisitionDetailId(requisitionApplicationChangeDetailEntity.getBusinessDetailId());
+            viewDetailDTO.setSourceDetailId(requisitionApplicationChangeDetailEntity.getSourceDetailId());
             viewDetailDTO.setPlatformSku(requisitionApplicationChangeDetailEntity.getPlatformSkuNo());
             viewDetailDTO.setPlatformSkuName(requisitionApplicationChangeDetailEntity.getPlatformSkuName());
             viewDetailDTO.setSkuId(requisitionApplicationChangeDetailEntity.getSkuId());
@@ -677,7 +660,26 @@ public class RequisitionApplicationChangeServiceImpl extends SuperServiceImpl<Re
     /**
     * 新增修改处理数据
     */
-    private void handleData(RequisitionApplicationChangeEntity requisitionApplicationChangeEntity) {
-    // TODO 验证数据 & 数据赋值
+    private void handleData(RequisitionApplicationChangeEntity requisitionApplicationChangeEntity, RequisitionApplicationChangeDTO.ViewDTO dto) {
+        requisitionApplicationChangeEntity.setSourceCode(dto.getSourceCode());
+        requisitionApplicationChangeEntity.setSourceId(dto.getSourceId());
+        requisitionApplicationChangeEntity.setBusinessId(dto.getBusinessId());
+        requisitionApplicationChangeEntity.setBusinessCode(dto.getBusinessCode());
+    }
+
+
+    private void checkExist(List<String> businessDetailIds, String noticeId, String id){
+        if(CollectionUtils.isEmpty(businessDetailIds) || StringUtils.isBlank(noticeId)){
+            return;
+        }
+        List<RequisitionApplicationChangeEntity> exist = this.lambdaQuery().ne(StringUtils.isNotBlank(id),RequisitionApplicationChangeEntity::getId,id).eq(RequisitionApplicationChangeEntity::getBusinessId, noticeId).ne(RequisitionApplicationChangeEntity::getApproveStatus, ApproveStatusEnum.APPROVE.getCode()).eq(RequisitionApplicationChangeEntity::getInvalidStatus,false).list();
+        if(CollectionUtils.isEmpty(exist)){
+            return;
+        }
+        List<String> mainIds = exist.stream().map(BaseEntity::getId).collect(Collectors.toList());
+        List<RequisitionApplicationChangeDetailEntity> allExistDetailList = detailService.lambdaQuery().in(RequisitionApplicationChangeDetailEntity::getMainId,mainIds).in(RequisitionApplicationChangeDetailEntity::getBusinessDetailId,businessDetailIds).list();
+        if(CollectionUtils.isNotEmpty(allExistDetailList)){
+            throw new ServiceException("要货申请通知单存在未审核且未作废变更单，请勿重复提交");
+        }
     }
 }

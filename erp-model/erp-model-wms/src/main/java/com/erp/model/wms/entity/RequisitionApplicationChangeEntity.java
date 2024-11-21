@@ -9,6 +9,7 @@ import lombok.experimental.Accessors;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
+import java.util.List;
 
 
 /**
@@ -76,6 +77,11 @@ public class RequisitionApplicationChangeEntity extends BaseEntity<RequisitionAp
     @TableField("approve_time")
     private LocalDateTime approveTime;
 
+    /**
+     * 明细
+     */
+    @TableField(exist = false)
+    private List<RequisitionApplicationChangeDetailEntity> details;
 
     public static final String CODE = "code";
 
