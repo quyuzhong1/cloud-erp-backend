@@ -4,7 +4,7 @@ import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.QueryConditionEnum;
 import com.common.business.enums.QueryDataTypeEnum;
 import com.common.business.query.AbstractQueryHandler;
-import com.erp.model.wms.enums.PoReturnConfirmStatusEnum;
+import com.erp.model.wms.enums.PackingTaskStatusEnum;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -28,6 +28,14 @@ public class SoDeliveryNoticeQueryHandler extends AbstractQueryHandler {
             }
             if ("completeShipment".equals(value)) {
                 super.buildSplicingSQLDTO("sdn.delivery_status", QueryConditionEnum.EQ, true, QueryDataTypeEnum.BOOLEAN);
+            }
+        }
+
+        if("isPacked".equals(field)) {
+            if((Boolean) value){
+                super.buildDefaultDTO("pt.packing_status", PackingTaskStatusEnum.PACKED.getCode());
+            }else{
+                super.buildSplicingSQLDTO("pt.packing_status",QueryConditionEnum.NE,PackingTaskStatusEnum.PACKED.getCode() ,QueryDataTypeEnum.STRING);
             }
         }
         return null;

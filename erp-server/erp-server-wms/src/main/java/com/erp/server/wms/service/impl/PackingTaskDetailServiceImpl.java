@@ -4,6 +4,8 @@ package com.erp.server.wms.service.impl;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseResultDTO;
+import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.wms.dto.OperateLogDTO;
 import com.erp.model.wms.dto.PackingTaskDTO;
 import com.erp.model.wms.entity.PackingTaskDetailEntity;
 import com.erp.server.wms.mapper.PackingTaskDetailMapper;
@@ -21,6 +23,8 @@ import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import com.erp.model.wms.dto.PackingTaskDetailDTO;
 import java.util.*;
+import java.util.stream.Collectors;
+
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
 
@@ -148,6 +152,23 @@ public class PackingTaskDetailServiceImpl extends SuperServiceImpl<PackingTaskDe
             return Collections.emptyList();
         }
         return lambdaQuery().in(PackingTaskDetailEntity::getSourceDetailId, sourceDetailIds).list();
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void updateByChange(List<PackingTaskDetailEntity> addList, List<PackingTaskDetailEntity> updateList, List<PackingTaskDetailEntity> deleteList) {
+        if (CollectionUtils.isNotEmpty(addList)) {
+            this.saveBatch(addList);
+        }
+
+        if (CollectionUtils.isNotEmpty(updateList)) {
+            this.updateBatchById(updateList);
+        }
+
+        if (CollectionUtils.isNotEmpty(deleteList)) {
+            List<String> deleteIds = deleteList.stream().map(v->v.getId()).collect(Collectors.toList());
+            this.removeByIds(deleteIds);
+        }
     }
 
 

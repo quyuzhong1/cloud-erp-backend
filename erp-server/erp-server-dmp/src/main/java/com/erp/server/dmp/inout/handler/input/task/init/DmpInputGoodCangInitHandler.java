@@ -1,11 +1,15 @@
 package com.erp.server.dmp.inout.handler.input.task.init;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 import javax.annotation.Resource;
 
+import com.common.business.constant.BusinessCommonConstants;
+import com.erp.server.dmp.inout.dto.request.DmpInputApiInitRequest;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
@@ -37,6 +41,7 @@ import cn.hutool.core.collection.CollUtil;
 @Scope("prototype")
 public class DmpInputGoodCangInitHandler extends DmpInputInitHandler{
 
+	public static final String DATE_TIME_FORMAT = "yyyy-MM-dd HH:mm:ss";
 	@Resource
     private DmpHandlerCache dmpHandlerCache;
 	
@@ -55,13 +60,32 @@ public class DmpInputGoodCangInitHandler extends DmpInputInitHandler{
         if(CollUtil.isEmpty(overseasProviderEntityList)) {
         	throw new ServiceException("谷仓授权信息不存在");
         }
-        OverseasProviderEntity overseasProviderEntity = overseasProviderEntityList.get(0);
+		// 取对应授权ID授权
+		OverseasProviderEntity overseasProviderEntity = overseasProviderEntityList.stream()
+				.filter(e -> e.getId().equalsIgnoreCase(dmpInputTaskEntity.getNextLevelId()))
+				.findFirst()
+				.orElse(null);
+		if(null == overseasProviderEntity) {
+			throw new ServiceException("谷仓对应授权ID信息不存在");
+		}
 		ThirdWarehouseContext.setAuthMap(overseasProviderEntity.getAuthJson());
+		// 非线上环境拉取当天
+		if (!BusinessCommonConstants.hasProfile("prod")){
+			LocalDateTime startTime = dmpInputTaskEntity.getStartTime();
+			LocalDateTime endTime = dmpInputTaskEntity.getEndTime();
+			goodCangGetSkuReq.setProductUpdateTimeFrom(startTime.format(DateTimeFormatter.ofPattern(DATE_TIME_FORMAT)));
+			goodCangGetSkuReq.setProductUpdateTimeTo(endTime.format(DateTimeFormatter.ofPattern(DATE_TIME_FORMAT)));
+		}
+
         while(true) {
         	goodCangGetSkuReq.setPage(page);
         	String response = GoodCangUtils.sendPost(apiType,JSON.toJSONString(goodCangGetSkuReq));
         	GoodCangResponse<List<?>> result = JSONObject.parseObject(response,new TypeReference<GoodCangResponse<List<Object>>>() {}.getType());
-        	List<?> data = result.getData();
+        	if (!GoodCangUtils.SUCCESS.equalsIgnoreCase(result.getAsk())){
+				ServiceException.runError(response);
+			}
+
+			List<?> data = result.getData();
         	int size = data.size();
         	if(size == 0) {
         		break;
@@ -87,7 +111,5 @@ public class DmpInputGoodCangInitHandler extends DmpInputInitHandler{
 		dmpInputTaskInitDTO.setMsg(parseArray.toJSONString());
 		return Collections.singletonList(dmpInputTaskInitDTO);
 	}
-
-	
 	
 }

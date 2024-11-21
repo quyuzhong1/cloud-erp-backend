@@ -449,4 +449,11 @@ public interface SoB2cDeliveryService extends SuperService<SoB2cDeliveryEntity> 
      * @return
      */
     BatchResultDTO updateTransferWarehouse(SoB2cDeliveryEntity entity, List<String> changeIds);
+
+    /**
+     * 根据销售订单手动标发
+     * @param id
+     * @return
+     */
+    BatchResultDTO falseDeliveryBySoId(String id);
 }

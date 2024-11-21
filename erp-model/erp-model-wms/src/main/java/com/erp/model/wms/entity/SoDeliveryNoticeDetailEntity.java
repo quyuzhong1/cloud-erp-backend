@@ -106,6 +106,18 @@ public class SoDeliveryNoticeDetailEntity extends BaseEntity<SoDeliveryNoticeDet
     @TableField("last_picking_qty")
     private Integer lastPickingQty;
 
+    /**
+     * 修改前数量
+     */
+    @TableField(exist = false)
+    private Integer changeBeforeQty;
+
+    /**
+     * 修改前sku编号
+     */
+    @TableField(exist = false)
+    private String changeBeforeSkuNo;
+
     public static final String MAIN_ID = "main_id";
 
     public static final String SKU_ID = "sku_id";

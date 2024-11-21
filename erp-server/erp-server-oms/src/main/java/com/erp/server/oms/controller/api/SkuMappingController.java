@@ -297,6 +297,45 @@ public class SkuMappingController extends BaseController {
         return success();
     }
 
+    /**
+     * 平台同步平台商品view
+     * @return
+     */
+    @PostMapping("/syncPlatformProductView")
+    @WebAdvanceQuery
+    public ApiResult<PagingVO<SkuMappingDTO.SyncPlatformProductView>> syncPlatformProductView(@RequestBody PagingDTO<AdvanceQueryContainer> advanceQueryDTO){
+        return success(skuMappingService.syncPlatformProductView(advanceQueryDTO));
+    }
+
+    /**
+     * 仓库同步平台商品view
+     * @return
+     */
+    @PostMapping("/syncWarehouseProductView")
+    @WebAdvanceQuery
+    public ApiResult<PagingVO<SkuMappingDTO.SyncWarehouseProductView>> syncWarehouseProductView(@RequestBody PagingDTO<AdvanceQueryContainer> advanceQueryDTO){
+        return success(skuMappingService.syncWarehouseProductView(advanceQueryDTO));
+    }
+    /**
+     * 平台同步平台商品
+     * @return
+     */
+    @PostMapping("/syncPlatformProduct")
+    public ApiResult<Boolean> syncPlatformProduct(@RequestBody @Validated BaseIdsDTO.IdsDTO dto){
+        skuMappingService.syncPlatformProduct(dto.getIds());
+        return success();
+    }
+
+    /**
+     * 仓库同步平台商品
+     * @return
+     */
+    @PostMapping("/syncWarehouseProduct")
+    public ApiResult<Boolean> syncWarehouseProduct(@RequestBody @Validated BaseIdsDTO.IdsDTO dto){
+        skuMappingService.syncWarehouseProduct(dto.getIds());
+        return success();
+    }
+
 
     /**
      * 根据customerId和skuno 关联查询平台sku
@@ -309,16 +348,4 @@ public class SkuMappingController extends BaseController {
     public ApiResult<List<SkuMappingDTO.ProductSkuInfoDTO>> listSkuBySkuNos(@RequestBody SkuMappingDTO.SkuParamDTO skuParamDTO) {
         return this.success(skuMappingService.listSkuBySkuNos(skuParamDTO));
     }
-
-//    /**
-//     * 根据customerId和平台sku 查询是否存在套装bom
-//     * @author jack
-//     * @date: 2024-11-07
-//     * @param skuParamDTO
-//     * @return ApiResult<List<BomChildrenSkuDTO>>
-//     */
-//    @PostMapping("/checkBomByPlatformSkuNos")
-//    public ApiResult<List<BomChildrenSkuDTO>> checkBomByPlatformSkuNos(@RequestBody SkuMappingDTO.SkuParamDTO skuParamDTO) {
-//        return this.success(skuMappingService.checkBomByPlatformSkuNos(skuParamDTO));
-//    }
 }

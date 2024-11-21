@@ -10,6 +10,7 @@ import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.wms.dto.SoDeliveryNoticeDTO;
 import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.model.wms.dto.WarehouseLocationMoveDTO;
+import com.erp.model.wms.entity.SoDeliveryNoticeDetailEntity;
 import com.erp.model.wms.entity.SoDeliveryNoticeEntity;
 import org.springframework.web.bind.annotation.RequestBody;
 
@@ -287,4 +288,5 @@ public interface SoDeliveryNoticeService extends SuperService<SoDeliveryNoticeEn
      * @return
      */
     BatchResultDTO updateTransferWarehouse(SoDeliveryNoticeEntity entity, List<String> changeIds);
+    void updateByNoticeChange(List<SoDeliveryNoticeDetailEntity> addList, List<SoDeliveryNoticeDetailEntity> updateList, List<SoDeliveryNoticeDetailEntity> deleteList);
 }

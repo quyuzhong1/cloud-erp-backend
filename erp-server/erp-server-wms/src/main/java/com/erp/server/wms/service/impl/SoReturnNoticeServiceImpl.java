@@ -166,7 +166,7 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
                 obj.setCustomerName(customerInfoEntity.getName());
                 Integer actualQty = soOutstockDetailEntities.stream().filter(detail -> obj.getSoId().equals(detail.getSoId()) && detail.getSkuId().equals(obj.getSkuId()) && detail.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())).map(SoOutstockDetailEntity::getActualQty).reduce(MathUtil.ZERO, Integer::sum);
                 obj.setDeliveryQty(actualQty);
-                if(obj.getType().equals("B2C")){
+                if("B2C".equals(obj.getType())){
                     SoB2cReturnEntity soB2cReturnEntity = soB2cReturnEntityList.stream().filter(v -> v.getId().equals(obj.getSourceId())).findFirst().orElse(null);
                     if (ObjectUtils.isNotEmpty(soB2cReturnEntity)) {
                         obj.setReturnTypeDictName(SoB2cReturnTypeEnum.getName(soB2cReturnEntity.getType()));
@@ -457,7 +457,7 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
             ProductDetailEntity productDetailEntity = productDetailEntitys.stream().filter(entityClass -> entityClass.getId().equals(detailEntity.getSkuId())).findFirst().orElse(new ProductDetailEntity());
             detailView.setProductName(productDetailEntity.getName());
 
-            if(entity.getType().equals("B2C")){
+            if("B2C".equals(entity.getType())){
                 SoB2cReturnDetailEntity soB2cReturnDetailEntity = soB2cReturnDetailEntityList.stream().filter(v->v.getId().equals(detailEntity.getSourceDetailId())).findFirst().orElse(new SoB2cReturnDetailEntity());
                 detailView.setSalesQty(soB2cReturnDetailEntity.getSaleQty());
                 if(Objects.nonNull(soB2cReturnEntity)){
@@ -758,7 +758,7 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
             //产品sku信息
             ProductDetailEntity productDetailEntity = productDetailEntityList.stream().filter(entityClass -> entityClass.getId().equals(view.getSkuId())).findFirst().orElse(new ProductDetailEntity());
             view.setProductName(productDetailEntity.getName());
-            if(view.getType().equals("B2C")){
+            if("B2C".equals(view.getType())){
                 SoB2cReturnEntity soB2cReturnEntity = soB2cReturnEntityList.stream().filter(v->v.getId().equals(view.getSourceId())).findFirst().orElse(new SoB2cReturnEntity());
                 SoB2cReturnDetailEntity soB2cReturnDetailEntity = soB2cReturnDetailEntityList.stream().filter(v->v.getId().equals(view.getSourceDetailId())).findFirst().orElse(new SoB2cReturnDetailEntity());
                 view.setSalesQty(soB2cReturnDetailEntity.getSaleQty());

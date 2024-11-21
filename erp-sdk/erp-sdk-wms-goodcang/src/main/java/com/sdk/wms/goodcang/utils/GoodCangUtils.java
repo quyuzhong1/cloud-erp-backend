@@ -13,6 +13,9 @@ import java.util.Map;
 
 @Component
 public class GoodCangUtils {
+
+    public static final String SUCCESS = "Success";
+
     private GoodCangUtils() {
     }
     private static String BASE_URL;

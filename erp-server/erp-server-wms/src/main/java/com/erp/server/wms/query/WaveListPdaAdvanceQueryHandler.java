@@ -13,7 +13,7 @@ import org.springframework.stereotype.Component;
 public class WaveListPdaAdvanceQueryHandler extends AbstractQueryHandler {
     @Override
     protected String handleSqlLogic(String field, Object value, String compareCodeSplicingValueSql) {
-        if(field.equals("status")){
+        if("status".equals(field)){
             for (WaveStatusEnum statusEnum : WaveStatusEnum.values()) {
                 if(value.equals(WaveStatusEnum.HANG_UP.getCode()) || value.equals(WaveStatusEnum.PICK_ING.getCode())){
                     return "status in ('hangUp','pickIng')";

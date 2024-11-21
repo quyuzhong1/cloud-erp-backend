@@ -24,10 +24,12 @@ public enum RequisitionApplicationTypeEnum implements EnumMessage {
         this.name = name;
     }
 
+    @Override
     public String getCode() {
         return code;
     }
 
+    @Override
     public String getName() {
         return name;
     }

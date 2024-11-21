@@ -52,7 +52,8 @@ public class DmpInputAmzOrderAddressInitHandler extends DmpInputAmzCommonInitHan
         // 主单信息
         List<Map<String, Object>> mainMongoDataList = getMainOrderMongoDate(findMongoData, shopInfoDTO.getPlatformShopCode());
 
-        List<JSONObject> addressJsonList = new LinkedList<>();
+        List<DmpInputTaskInitDTO> dmpInputTaskInitDTOList = new ArrayList<>();
+
         for (Map<String, Object> mongoData : findMongoData) {
             // 主单ID
             String amazonOrderId = checkAndGetMongoValue(mongoData, "amazonOrderId");
@@ -82,11 +83,10 @@ public class DmpInputAmzOrderAddressInitHandler extends DmpInputAmzCommonInitHan
 
             // 合并转json
             JSONObject jsonObject = setAmazonOrderIdAndToJsonObject(shippingAddress, buyerInfo, amazonOrderId, shopInfoDTO.getPlatformShopCode());
-
-            addressJsonList.add(jsonObject);
+            dmpInputTaskInitDTOList.add(DmpInputTaskInitDTO.initMsg(JSON.toJSONString(jsonObject)));
         }
 
-        return Collections.singletonList(DmpInputTaskInitDTO.initMsg(JSON.toJSONString(addressJsonList)));
+        return dmpInputTaskInitDTOList;
     }
 
 

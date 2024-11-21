@@ -196,7 +196,7 @@ public class SyncSoReturnServiceImpl implements SyncSoReturnService {
 
         List<SoReturnInstockEntity> soReturnInstockEntities = soReturnInstockService.listByCode(Collections.singletonList(kingdeeReturnOrderEntity.getFBillNo()));
         List<String> ids = soReturnInstockEntities.stream().filter(req -> ApproveStatusEnum.APPROVE.getStatus().equals(req.getApproveStatus())).map(SoReturnInstockEntity::getId).collect(Collectors.toList());
-        if (kingdeeReturnOrderEntity.getFDocumentStatus().equals("C")) {
+        if ("C".equals(kingdeeReturnOrderEntity.getFDocumentStatus())) {
             soReturnInstockService.saveKingdeeSoReturn(instockEntity, detailEntityList, ids);
             //更新库存
             inventoryTransCore(Collections.singletonList(instockEntity));
@@ -327,6 +327,8 @@ public class SyncSoReturnServiceImpl implements SyncSoReturnService {
             throw new ServiceException(ApiError.ERROR_WDT_NOT_FOUND_SKU, StringUtil.join(skuList, ","));
         }
         inStockEntity.setId(IdWorker.getIdStr());
+        //平台订单号
+        inStockEntity.setPlatformOrderCode(dto.getSourceId());
         for (SoReturnInstockDetailEntity detailEntity : detailList) {
             detailEntity.setReturnTypeDict(ReturnTypeEnum.DEDUCTION.getCode());
             //获取仓库信息

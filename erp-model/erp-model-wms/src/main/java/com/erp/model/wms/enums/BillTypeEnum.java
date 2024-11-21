@@ -39,10 +39,12 @@ public enum BillTypeEnum implements EnumMessage {
     }
 
 
+    @Override
     public String getCode() {
         return code;
     }
 
+    @Override
     public String getName() {
         return name;
     }

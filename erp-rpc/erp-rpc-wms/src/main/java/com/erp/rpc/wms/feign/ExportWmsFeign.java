@@ -108,6 +108,8 @@ public interface ExportWmsFeign {
 
     @PostMapping("/feign/export/packingTaskDetail")
     PagingVO<WmsCartonDetailDTO.ListPackingDetailDTO> exportPackingTaskDetail(@RequestBody PagingDTO<PackingTaskDTO.ExportDTO> dto);
+    @PostMapping("/feign/export/unPackingTaskDetail")
+    PagingVO<WmsCartonSpecDTO.NoPackingViewDTO> unPackingTaskDetail(@RequestBody PagingDTO<PackingTaskDTO.ExportDTO> dto);
 
     @PostMapping("/feign/export/firstMilePackingTaskDetail")
     PagingVO<WmsCartonDetailDTO.ListPackingDetailDTO> firstMilePackingTaskDetail(@RequestBody PagingDTO<PackingTaskDTO.ExportDTO> dto);
@@ -141,6 +143,9 @@ public interface ExportWmsFeign {
 
     @PostMapping("/feign/export/soDeliveryNotice")
     PagingVO<SoDeliveryNoticeDTO.PagingView> exportSoDeliveryNotice(@RequestBody PagingDTO<SoDeliveryNoticeDTO.PagingParam> dto);
+
+    @PostMapping("/feign/export/soDeliveryNoticeChange")
+    PagingVO<SoDeliveryNoticeChangeDTO.ListDTO> exportSoDeliveryNoticeChange(@RequestBody PagingDTO<SoDeliveryNoticeChangeDTO.PagingParamDTO> dto);
 
     @PostMapping("/feign/export/soOutStock")
     PagingVO<SoOutstockDTO.PagingViewDTO> exportSoOutStock(@RequestBody PagingDTO<SoOutstockDTO.ExportDTO> dto);

@@ -3,6 +3,7 @@ package com.erp.server.dmp.inout.dto.request;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import com.erp.model.dmp.enums.DmpInputTaskTaskTypeEnum;
 import lombok.Data;
 
 /**
@@ -40,4 +41,18 @@ public class DmpInputHotfixCreateRequest extends DmpInputCreateRequest{
      * dmp_cfg_input_detail明细扩展参数
      */
     private String detailExtendJson;
+
+    /**
+     * 任务类型:
+     * DmpInputTaskTaskTypeEnum
+     */
+    private String taskType;
+
+    public String checkAndGetTaskType() {
+        DmpInputTaskTaskTypeEnum taskTypeEnum = DmpInputTaskTaskTypeEnum.getByType(this.taskType);
+        if (null != taskTypeEnum){
+           return taskTypeEnum.getCode();
+        }
+        return DmpInputTaskTaskTypeEnum.HOTFIX.getCode();
+    }
 }

@@ -79,7 +79,8 @@ public class DmpInputAmzOrderDetailInitHandler extends DmpInputAmzCommonInitHand
         String shopId = parseShopId(findMongoData);
         AmazonShopInfoDTO shopInfoDTO = cfgAppClientService.cacheAndFindShopAuth(shopId);
 
-        List<JSONObject> allItemList = new LinkedList<>();
+        List<DmpInputTaskInitDTO> dmpInputTaskInitDTOList = new ArrayList<>();
+
         for (Map<String, Object> findMongo : findMongoData) {
             String amazonOrderId = checkAndGetMongoValue(findMongo, "amazonOrderId");
             // 检查来源
@@ -88,7 +89,7 @@ public class DmpInputAmzOrderDetailInitHandler extends DmpInputAmzCommonInitHand
             Object resultObj = redisUtil.get(amazonOrderIdResultKey);
             if (null != resultObj) {
                 List<JSONObject> curItemList = JSONUtil.toList(resultObj.toString(), JSONObject.class);
-                allItemList.addAll(curItemList);
+                dmpInputTaskInitDTOList.add(DmpInputTaskInitDTO.initMsg(JSON.toJSONString(curItemList)));
                 continue;
             }
 
@@ -139,12 +140,12 @@ public class DmpInputAmzOrderDetailInitHandler extends DmpInputAmzCommonInitHand
                 continue;
             }
             List<JSONObject> curJsonList = curOrderItems.stream().map(e -> setAmazonOrderIdAndToJsonObject(e, amazonOrderId, shopInfoDTO.getPlatformShopCode())).collect(Collectors.toList());
-            allItemList.addAll(curJsonList);
+            dmpInputTaskInitDTOList.add(DmpInputTaskInitDTO.initMsg(JSON.toJSONString(curJsonList)));
             // 缓存倒redis
             redisUtil.set(amazonOrderIdResultKey, JSONArray.toJSONString(curJsonList), 600);
             log.warn("查询亚马逊订单详情成功, amazonOrderId={}, platformShopCode={}", amazonOrderId, shopInfoDTO.getPlatformShopCode());
         }
-        return Collections.singletonList(DmpInputTaskInitDTO.initMsg(JSON.toJSONString(allItemList)));
+        return dmpInputTaskInitDTOList;
     }
 
     /**

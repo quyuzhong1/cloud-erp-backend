@@ -172,6 +172,12 @@ public class SoB2cDetailEntity extends BaseEntity<SoB2cDetailEntity> {
     private String splitDetailId;
 
     /**
+     * 原始sku(记录变更sku前原skuId)
+     */
+    @TableField("init_sku_id")
+    private String initSkuId;
+
+    /**
      * 当前净重
      */
     @TableField(exist = false)

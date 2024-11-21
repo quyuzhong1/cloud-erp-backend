@@ -314,8 +314,8 @@ public class SoB2cFeignController extends BaseController {
      * @Date 2023/12/27 20:14
      **/
     @PostMapping("/updateSoB2cStatus")
-    Boolean updateSoB2cStatus(@RequestParam("soB2cIds") List<String> soB2cIds, @RequestParam("status") String status) {
-        return soB2cService.updateSoB2cStatus(soB2cIds, status);
+    Boolean updateSoB2cStatus(@RequestParam("soB2cIds") List<String> soB2cIds, @RequestParam("status") String status, @RequestParam("isManualDelivery")Boolean isManualDelivery) {
+        return soB2cService.updateSoB2cStatus(soB2cIds, status, isManualDelivery);
     }
 
     /**

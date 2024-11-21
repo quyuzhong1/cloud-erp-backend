@@ -18,6 +18,7 @@ import com.common.core.anno.ParamData;
 import com.common.core.enums.PannoEnum;
 import com.erp.model.dmp.entity.DmpSoInfoEntity;
 import com.erp.server.dmp.inout.handler.input.task.mongo.DmpInputMongoHandler;
+import com.erp.server.dmp.service.DmpLogisticInfoService;
 import com.erp.server.dmp.service.DmpSoInfoService;
 
 import cn.hutool.core.collection.CollUtil;
@@ -52,6 +53,7 @@ public class DmpInputAliExpressOrderLogisticNextDmpHandler extends DmpInputDoNex
 					.eq(DmpSoInfoEntity::getInputTaskId, inputTaskId)
 					.select(DmpSoInfoEntity::getId , DmpSoInfoEntity::getThirdCode)
 					.list().stream().collect(Collectors.toMap(DmpSoInfoEntity::getThirdCode, DmpSoInfoEntity::getId));
+				
 				for(Map.Entry<String, Map<String, Object>> orderIdDetailMap : orderIdDetailMaps.entrySet()) {
 					String ordreId = orderIdDetailMap.getKey();
 					String mainId = maidIdThirdCodeMaps.get(ordreId);
@@ -82,14 +84,24 @@ public class DmpInputAliExpressOrderLogisticNextDmpHandler extends DmpInputDoNex
 							}
 							List<Map<String, Object>> logistic_info_list = (List<Map<String, Object>>)logistic_info_list_obj;
 							ArrayList<TreeMap<String, Object>> valueList = new ArrayList<>();
-							for(Map<String, Object> logistic_info : logistic_info_list) {
+							if(CollUtil.isNotEmpty(logistic_info_list)) {
+								for(Map<String, Object> logistic_info : logistic_info_list) {
+									TreeMap<String, Object> value = new TreeMap<>();
+									value.put("mainId", mainId);
+									value.put("logisticsNo", logistic_info.get("logistics_no"));
+									value.put("deliveryTime", logistic_info.get("gmt_send"));
+									value.put("logisticsServiceName", logisticsServiceName);
+									value.put("logisticsTypeCode", logistic_info.get("logistics_type_code"));
+									value.put("receiveStatus", logistic_info.get("receive_status"));
+									value.put("currencyCode", currencyCode);
+									value.put(DmpInputMongoHandler.MONGO_BASE_NEXTLEVELID, nextLevelId);
+									valueList.add(value);
+								}
+							}else {
 								TreeMap<String, Object> value = new TreeMap<>();
 								value.put("mainId", mainId);
-								value.put("logisticsNo", logistic_info.get("logistics_no"));
-								value.put("deliveryTime", logistic_info.get("gmt_send"));
+								value.put("logisticsNo", "");
 								value.put("logisticsServiceName", logisticsServiceName);
-								value.put("logisticsTypeCode", logistic_info.get("logistics_type_code"));
-								value.put("receiveStatus", logistic_info.get("receive_status"));
 								value.put("currencyCode", currencyCode);
 								value.put(DmpInputMongoHandler.MONGO_BASE_NEXTLEVELID, nextLevelId);
 								valueList.add(value);
