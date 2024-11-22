@@ -210,6 +210,12 @@ public class DmpSoReturnInfoEntity extends BaseEntity<DmpSoReturnInfoEntity> {
      */
      @TableField("remark_name")
      private String remarkName = "";
+     
+     /**
+      * 入库状态
+      */
+     @TableField("stockin_status")
+     private String stockinStatus = "";
 
 
     public static final String PLATFORM_CREATE_TIME = "platform_create_time";
