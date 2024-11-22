@@ -9311,12 +9311,12 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             }
             // 平台订单：默认配货单  手工单：默认线下订单
             if (SourceTypeEnum.SELF_ADD.getCode().equals(soB2cEntity.getSourceType())) {
-                shudiyunB2cOrderDTO.setTransaction_type("100.30");
+                shudiyunB2cOrderDTO.setTransaction_type("线下订单");
 
                 shudiyunB2cOrderDTO.setTransaction_sub_type(soB2cEntity.getTransactionSubType());
             } else {
-                shudiyunB2cOrderDTO.setTransaction_type("100.20");
-                shudiyunB2cOrderDTO.setTransaction_sub_type("100.20.01");
+                shudiyunB2cOrderDTO.setTransaction_type("配货单");
+                shudiyunB2cOrderDTO.setTransaction_sub_type("配货单");
             }
 
             shudiyunB2cOrderDTO.setBiz_status(shudiyunB2cOrderDTO.sdyStatusHandle(operateEnum));
@@ -9404,14 +9404,14 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             }
 
             shudiyunB2cOrderDTO.setRemark(soB2cEntity.getRemark());
-            shudiyunB2cOrderDTO.setGoods_status("10.10");
+            shudiyunB2cOrderDTO.setGoods_status("未发货");
             // 商品状态
             if (SoB2cBillStatusEnum.ENUM_SHIPPED.getCode().equals(soB2cEntity.getBillStatus())) {
-                shudiyunB2cOrderDTO.setGoods_status("10.10");
+                shudiyunB2cOrderDTO.setGoods_status("已发货");
             }
 
             if (Boolean.TRUE.equals(soB2cEntity.getIsCancel()) && soB2cEntity.getIsCancel() != null) {
-                shudiyunB2cOrderDTO.setGoods_status("10.20");
+                shudiyunB2cOrderDTO.setGoods_status("已取消");
             }
 
             shudiyunB2cOrderDTO.setGoods_transaction_quantity(soB2cDetailEntity.getQty());
