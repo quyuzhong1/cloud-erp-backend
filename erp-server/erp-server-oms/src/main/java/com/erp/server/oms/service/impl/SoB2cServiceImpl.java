@@ -125,7 +125,6 @@ import org.apache.commons.math3.util.Pair;
 import org.apache.poi.ss.formula.functions.T;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
@@ -475,7 +474,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
 
     @Override
-    @Cacheable(cacheNames = "cache:oms:soB2cTabList",keyGenerator = "myKeyGenerator")
     public List<SoB2cDTO.TabListDTO> tabList(PermissionsDTO param) {
         SoB2cTabEnum[] values = SoB2cTabEnum.values();
         List<SoB2cDTO.TabListDTO> list = new ArrayList<>();
