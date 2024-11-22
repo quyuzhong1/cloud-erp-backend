@@ -99,7 +99,7 @@ public class DmpOutputSdyRefundHandler extends DmpOutputTaskHandler {
         Map<String, String> map = new HashMap<>();
         for(String changId : changeIds) {
             List<ShudiyunB2cOrderDTO> sdyDtoList = this.convert(dmpSoRefundInfoEntityMap.get(changId), dmpSoRefundDetailEntityMap.get(changId));
-            if(CollUtil.isEmpty(sdyDtoList)) {
+            if(CollUtil.isNotEmpty(sdyDtoList)) {
                 map.put(changId, JSON.toJSONString(sdyDtoList));
             }
         }
@@ -137,7 +137,7 @@ public class DmpOutputSdyRefundHandler extends DmpOutputTaskHandler {
         String status = "";
         String requestData = dmpOutputTaskRecordEntity.getRequestData();
         ApiResult handle = sdyDeliveryOrderConsumer.handle(requestData);
-        if ("200".equals(handle.getCode())) {
+        if (200 == handle.getCode()) {
             status = DmpOutputTaskRecordStatusEnum.FINISH.getCode();
         } else {
             status = DmpOutputTaskRecordStatusEnum.ERROR.getCode();

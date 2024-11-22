@@ -9381,8 +9381,15 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             shudiyunB2cOrderDTO.setGoods_no(soB2cDetailEntity.getSkuNo());
             SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuId().equals(soB2cDetailEntity.getSkuId())).findFirst().orElse(new SkuVO());
             shudiyunB2cOrderDTO.setGoods_name(skuVO.getSkuName());
-            shudiyunB2cOrderDTO.setSpec_no(skuVO.getSpuNo());
-            shudiyunB2cOrderDTO.setSpec_name(skuVO.getSpuName());
+
+            if (CharSequenceUtil.isNotBlank(skuVO.getSpuNo())) {
+                shudiyunB2cOrderDTO.setSpec_no(skuVO.getSpuNo());
+                shudiyunB2cOrderDTO.setSpec_name(skuVO.getSpuName());
+            } else {
+                shudiyunB2cOrderDTO.setSpec_name("");
+                shudiyunB2cOrderDTO.setSpec_name("");
+            }
+
             shudiyunB2cOrderDTO.setIs_gift(0);
 
             BomChildrenSkuDTO bomChildrenSkuDTO = bomChildrenSkuDTOS.stream().filter(req -> req.getParentSkuId().equals(soB2cDetailEntity.getSkuId())).findFirst().orElse(null);
@@ -9391,11 +9398,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             if (ObjectUtil.isNotEmpty(bomChildrenSkuDTO)) {
                 if (BomTypeEnum.COMBINATION.getType().equals(bomChildrenSkuDTO.getType())) {
                     shudiyunB2cOrderDTO.setIs_comb(1);
-                    shudiyunB2cOrderDTO.setSuite_no(bomChildrenSkuDTO.getParentSkuNo());
-                    ProductDetailEntity productDetailEntity = parentSkuList.stream().filter(req -> req.getId().equals(bomChildrenSkuDTO.getParentSkuId())).findFirst().orElse(null);
-                    if (ObjectUtil.isNotEmpty(productDetailEntity)) {
-                        shudiyunB2cOrderDTO.setSuite_name(productDetailEntity.getName());
-                    }
+                    shudiyunB2cOrderDTO.setSuite_no(skuVO.getSkuNo());
+                    shudiyunB2cOrderDTO.setSuite_name(skuVO.getSkuName());
                 }
             }
 

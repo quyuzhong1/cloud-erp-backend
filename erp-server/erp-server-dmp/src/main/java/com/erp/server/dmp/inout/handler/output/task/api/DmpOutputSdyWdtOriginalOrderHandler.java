@@ -85,7 +85,7 @@ public class DmpOutputSdyWdtOriginalOrderHandler extends DmpOutputTaskHandler {
         Map<String, String> map = new HashMap<>();
         for(String changId : changeIds) {
             List<ShudiyunB2cOrderDTO> sdyDtoList = this.convert(DmpSoInfoEntityMap.get(changId), DmpSoDetailEntityMap.get(changId));
-            if(CollUtil.isEmpty(sdyDtoList)) {
+            if(CollUtil.isNotEmpty(sdyDtoList)) {
                 map.put(changId, JSON.toJSONString(sdyDtoList));
             }
         }

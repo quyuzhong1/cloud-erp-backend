@@ -145,7 +145,7 @@ public class DmpOutputSdyOrderHandler extends DmpOutputTaskHandler {
         String status = "";
         String requestData = dmpOutputTaskRecordEntity.getRequestData();
         ApiResult handle = sdyDeliveryOrderConsumer.handle(requestData);
-        if ("200".equals(handle.getCode())) {
+        if (200 == handle.getCode()) {
             status = DmpOutputTaskRecordStatusEnum.FINISH.getCode();
         } else {
             status = DmpOutputTaskRecordStatusEnum.ERROR.getCode();
@@ -187,13 +187,12 @@ public class DmpOutputSdyOrderHandler extends DmpOutputTaskHandler {
                 //配货单
                 shudiyunB2cOrderDTO.setTransaction_type("配货单");
                 shudiyunB2cOrderDTO.setBiz_status(wdtStatusHandler(dmpSoInfoEntity.getOrderStatus()));
-
             } else {
                 //线上订单
                 shudiyunB2cOrderDTO.setTransaction_type("线上订单");
                 shudiyunB2cOrderDTO.setBiz_status(ApproveStatusEnum.getName(dmpSoInfoEntity.getOrderStatus()));
             }
-
+            shudiyunB2cOrderDTO.setStatus("已创建");
             shudiyunB2cOrderDTO.setTransaction_sub_type(OrderSubTypeEnum.ONLINE_ORDER.getName());
 
 
@@ -311,20 +310,19 @@ public class DmpOutputSdyOrderHandler extends DmpOutputTaskHandler {
             } else {
                 shudiyunB2cOrderDTO.setIs_gift(0);
             }
-
             shudiyunB2cOrderDTO.setRemark(dmpSoDetailEntity.getItemRemark());
             shudiyunB2cOrderDTO.setGoods_status("未发货");
             // 商品状态
             if (SoB2cBillStatusEnum.ENUM_SHIPPED.getCode().equals(dmpSoInfoEntity.getDeliveryStatus())) {
-                shudiyunB2cOrderDTO.setGoods_status("10.10");
+                shudiyunB2cOrderDTO.setGoods_status("已发货");
             }
 
             if (dmpSoInfoEntity.getIsCancel() && dmpSoDetailEntity.getIsGift() != null) {
-                shudiyunB2cOrderDTO.setGoods_status("10.20");
+                shudiyunB2cOrderDTO.setGoods_status("已取消");
             }
 
             shudiyunB2cOrderDTO.setGoods_transaction_quantity(dmpSoDetailEntity.getQty());
-            shudiyunB2cOrderDTO.setUnit(dmpSoDetailEntity.getProductUnit());
+            shudiyunB2cOrderDTO.setUnit("PCS");
 
             shudiyunB2cOrderDTO.setGoods_transaction_amount(dmpSoDetailEntity.getAfterAmount());
             if (dmpSoDetailEntity.getAfterAmount().compareTo(BigDecimal.ZERO) > 0) {
@@ -340,9 +338,6 @@ public class DmpOutputSdyOrderHandler extends DmpOutputTaskHandler {
                 }
                 totalDiscount = totalDiscount.subtract(shareDiscount);
             }
-
-            shudiyunB2cOrderDTO.setTransaction_currency_code(dmpSoDetailEntity.getCurrencyCode());
-
             shudiyunB2cOrderDTO.setPost_amount(dmpSoInfoEntity.getShippingAmount());
             shudiyunB2cOrderDTO.setMsku_code(dmpSoDetailEntity.getPlatformSku());
             shudiyunB2cOrderDTO.setMsku_name(dmpSoDetailEntity.getSkuName());
@@ -350,7 +345,7 @@ public class DmpOutputSdyOrderHandler extends DmpOutputTaskHandler {
             shudiyunB2cOrderDTO.setSku_name("");
 
             shudiyunB2cOrderDTO.setSource_system("SDC");
-            shudiyunB2cOrderDTO.setRoot_node_no_initial(dmpSoInfoEntity.getPlatformCode());
+            shudiyunB2cOrderDTO.setRoot_node_no_initial(dmpSoInfoEntity.getThirdCode());
 
             shudiyunB2cOrderDTOList.add(shudiyunB2cOrderDTO);
 

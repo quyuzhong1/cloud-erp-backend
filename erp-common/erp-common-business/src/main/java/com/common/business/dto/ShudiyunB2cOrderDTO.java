@@ -35,6 +35,10 @@ public class ShudiyunB2cOrderDTO {
      */
     private String biz_status;
     /**
+     * 操作状态
+     */
+    private String status;
+    /**
      * total_goods_transaction_amount
      * 商品总成交金额（合计）
      */
@@ -178,11 +182,11 @@ public class ShudiyunB2cOrderDTO {
     /**
      * 规格型号
      */
-    private String spec_no;
+    private String spec_no = "";
     /**
      * 规格型号名称
      */
-    private String spec_name;
+    private String spec_name = "";
     /**
      * 是否赠品
      */
