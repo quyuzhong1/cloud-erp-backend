@@ -48,13 +48,7 @@
         <if test="params.billDate != null" >
             AND bill_date = #{params.billDate}
         </if>
-        ORDER BY
-        <if test="params.sortList != null and params.sortList.size > 0">
-            <foreach collection="params.sortList" item="item" separator="," close=",">
-                ${item.field} ${item.sort}
-            </foreach>
-        </if>
-        create_time DESC
+        ORDER BY create_time DESC, id desc
     </select>
     <select id="exportLocalInventory"
             resultType="com.erp.model.mrp.dto.LocalHistoryInventoryDTO$PagingViewDTO">
@@ -82,13 +76,7 @@
         <if test="params.billDate != null" >
             AND bill_date = #{params.billDate}
         </if>
-        ORDER BY
-        <if test="params.sortList != null and params.sortList.size > 0">
-            <foreach collection="params.sortList" item="item" separator="," close=",">
-                ${item.field} ${item.sort}
-            </foreach>
-        </if>
-        create_time DESC
+        ORDER BY create_time DESC, id desc
     </select>
 
 </mapper>

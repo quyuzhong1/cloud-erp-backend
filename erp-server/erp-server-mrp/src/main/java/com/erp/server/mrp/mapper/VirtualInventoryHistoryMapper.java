@@ -6,6 +6,7 @@ import com.erp.model.mrp.dto.VirtualInventoryHistoryDTO;
 import com.erp.model.mrp.entity.VirtualInventoryHistoryEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -34,5 +35,5 @@ public interface VirtualInventoryHistoryMapper extends BaseMapper<VirtualInvento
      * @param query  查询
      * @param params 参数
      */
-    IPage<VirtualInventoryHistoryDTO.ListDTO> paging(Page<VirtualInventoryHistoryDTO.ListDTO> query, VirtualInventoryHistoryDTO.SearchParamDTO params);
+    IPage<VirtualInventoryHistoryDTO.ListDTO> paging(Page<VirtualInventoryHistoryDTO.ListDTO> query,@Param("params") VirtualInventoryHistoryDTO.SearchParamDTO params, @Param("lastId") String lastId);
 }

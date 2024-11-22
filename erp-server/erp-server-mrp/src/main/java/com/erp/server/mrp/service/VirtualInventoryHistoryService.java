@@ -38,4 +38,6 @@ public interface VirtualInventoryHistoryService extends SuperService<VirtualInve
      * @param dto 参数
      */
     void exportList(VirtualInventoryHistoryDTO.SearchParamDTO dto);
+
+    PagingVO<VirtualInventoryHistoryDTO.ListDTO> getVirtualInventory(PagingDTO<VirtualInventoryHistoryDTO.SearchParamDTO> dto);
 }

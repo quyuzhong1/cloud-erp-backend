@@ -79,7 +79,7 @@ public class VirtualInventoryHistoryServiceImpl extends SuperServiceImpl<Virtual
     public PagingVO<VirtualInventoryHistoryDTO.ListDTO> paging(PagingDTO<VirtualInventoryHistoryDTO.SearchParamDTO> dto) {
         dto.getParams().setPermissionSql(dto.getPermissionSql());
         Page<VirtualInventoryHistoryDTO.ListDTO> query = new Page<>(dto.getCurrPage(), dto.getPageSize());
-        IPage<VirtualInventoryHistoryDTO.ListDTO> pageData = this.baseMapper.paging(query, dto.getParams());
+        IPage<VirtualInventoryHistoryDTO.ListDTO> pageData = this.baseMapper.paging(query, dto.getParams(), dto.getLastId());
         // 填充名称
         fillPageData(pageData.getRecords(), dto.getParams().getBillDate());
         return new PagingVO<>(pageData);
@@ -198,5 +198,10 @@ public class VirtualInventoryHistoryServiceImpl extends SuperServiceImpl<Virtual
     @Override
     public void exportList(VirtualInventoryHistoryDTO.SearchParamDTO dto) {
         downloadTaskFeign.saveDownloadTask("虚拟仓库历史库存信息", EXPORT_MRP_VIRTUAL_INVENTORY.getCode(), dto);
+    }
+
+    @Override
+    public PagingVO<VirtualInventoryHistoryDTO.ListDTO> getVirtualInventory(PagingDTO<VirtualInventoryHistoryDTO.SearchParamDTO> dto) {
+        return this.paging(dto);
     }
 }

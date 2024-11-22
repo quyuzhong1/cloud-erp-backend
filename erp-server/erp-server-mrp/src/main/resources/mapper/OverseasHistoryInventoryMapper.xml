@@ -77,7 +77,7 @@
             OR oi.shipped_qty > 0)
         </if>
         ORDER BY
-        oi.create_time DESC
+        oi.create_time DESC,oi.id DESC
     </select>
     <select id="listByStartDateAndEndDate"
             resultType="com.erp.model.mrp.entity.OverseasHistoryInventoryEntity">
@@ -151,7 +151,7 @@
             OR oi.shipped_qty > 0)
         </if>
         ORDER BY
-        oi.create_time DESC
+        oi.create_time DESC,oi.id DESC
     </select>
 
 </mapper>

@@ -69,7 +69,7 @@
             AND fi.bill_date = #{params.billDate}
         </if>
         ORDER BY
-        fi.create_time DESC
+        fi.create_time DESC, fi.id DESC
     </select>
     <select id="listExport" resultType="com.erp.model.mrp.dto.FbaHistoryInventoryDTO$ListDTO">
         SELECT
@@ -108,12 +108,7 @@
             ${params.permissionSql}
         </if>
         ORDER BY
-        <if test="params.sortList != null and params.sortList.size > 0">
-            <foreach collection="params.sortList" item="item" separator="," close=",">
-                ${item.field} ${item.sort}
-            </foreach>
-        </if>
-        fi.create_time DESC
+        fi.create_time DESC, fi.id DESC
     </select>
 
 </mapper>

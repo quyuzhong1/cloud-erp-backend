@@ -51,30 +51,40 @@
         </where>
     </select>
     <select id="paging" resultType="com.erp.model.mrp.dto.VirtualInventoryHistoryDTO$ListDTO">
+        SELECT
+        t.indexId,
+        t.skuId,
+        t.virtualWarehouseId,
+        t.warehouseId,
+        t.billDate,
+        t.updateTime
+        FROM (
         select
-        string_agg(id, ',') as indexId,
-        sku_id as skuId,
-        warehouse_id as warehouseId,
-        virtual_warehouse_id as virtualWarehouseId,
-        bill_date as billDate,
-        max(update_time) as updateTime
-        from virtual_inventory_history
+        min(vi.id) as indexId,
+        vi.sku_id as skuId,
+        vi.virtual_warehouse_id as virtualWarehouseId,
+        vi.warehouse_id as warehouseId,
+        vi.bill_date as billDate,
+        max(vi.update_time) as updateTime
+        from virtual_inventory_history vi
         <where>
             ${params.sqlMap.default}
-            and is_deleted = false
+            and vi.is_deleted = false
             <if test="params.hideZeroInventory">
-                and qty != 0
-            </if>
-            <if test="params.permissionSql != null and params.permissionSql != ''">
-                ${params.permissionSql}
+                and  vi.qty != 0
             </if>
             <if test="params.billDate != null" >
                 AND bill_date = #{params.billDate}
             </if>
         </where>
-        group by sku_id,warehouse_id,virtual_warehouse_id,bill_date
-        order by
-        sku_id
+        group by vi.sku_id,vi.warehouse_id,vi.virtual_warehouse_id,bill_date
+        order by indexId
+        )t
+        WHERE 1=1
+        <if test="lastId != null and lastId != ''">
+            and t.indexId > #{lastId}
+        </if>
+        ORDER BY t.indexId
     </select>
 
 </mapper>

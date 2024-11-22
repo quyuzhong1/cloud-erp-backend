@@ -41,6 +41,8 @@ public class ExportMrpFeignController {
     private OverseasHistoryInventoryService overseasHistoryInventoryService;
     @Resource
     private LocalHistoryInventoryService localHistoryInventoryService;
+    @Resource
+    private VirtualInventoryHistoryService virtualInventoryHistoryService;
 
     /**
      * 历史销量导出数据查询
@@ -177,5 +179,15 @@ public class ExportMrpFeignController {
     @WebAdvanceQuery
     public PagingVO<CalcSalesInfoDimDTO.ExportResultDTO> getListExportData(@RequestBody PagingDTO<CalcSalesInfoDimDTO.ExportSalesInfoDTO> dto){
         return calcSalesInfoDimService.getListExportData(dto);
+    }
+
+    /**
+     * 导出虚拟仓库存
+     * @param dto 参数
+     */
+    @PostMapping("/getVirtualInventory")
+    @WebAdvanceQuery
+    public PagingVO<VirtualInventoryHistoryDTO.ListDTO> getVirtualInventory(@RequestBody PagingDTO<VirtualInventoryHistoryDTO.SearchParamDTO> dto){
+        return virtualInventoryHistoryService.getVirtualInventory(dto);
     }
 }
