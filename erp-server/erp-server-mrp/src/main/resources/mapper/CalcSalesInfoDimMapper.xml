@@ -143,4 +143,37 @@
         </if>
         order by crc.update_time desc
     </select>
+
+    <select id="listBySkuAndShopAndDate" resultType="com.erp.model.mrp.dto.CalcSalesInfoDimDTO$CompareResultDTO">
+        select csid.id,
+               csid.sku_id,
+               csid.sku_no,
+               csid.shop_id,
+               csid.cfg_rule_calc_id,
+               csid.his_data_md5,
+               crc.start_calc_date,
+               crc.name
+        from calc_sales_info_dim csid
+                 inner join cfg_rule_calc crc on csid.cfg_rule_calc_id = crc.id and crc.is_deleted = false
+        where csid.is_deleted = false and csid.sku_id = #{dto.skuId}
+          and csid.shop_id = #{dto.shopId} and crc.start_calc_date = #{dto.startCalcDate}
+    </select>
+    <select id="listCompareByIds" resultType="com.erp.model.mrp.dto.CalcSalesInfoDimDTO$CompareResultDTO">
+        select csid.id,
+               csid.sku_id,
+               csid.sku_no,
+               csid.shop_id,
+               csid.cfg_rule_calc_id,
+               csid.his_data_md5,
+               crc.start_calc_date,
+               crc.name
+        from calc_sales_info_dim csid
+                 inner join cfg_rule_calc crc on csid.cfg_rule_calc_id = crc.id and crc.is_deleted = false
+        where csid.is_deleted = false
+        and csid.id in
+        <foreach collection="ids" item="id" open="(" close=")" separator=",">
+            #{id}
+        </foreach>
+
+    </select>
 </mapper>

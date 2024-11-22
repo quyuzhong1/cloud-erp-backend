@@ -213,7 +213,7 @@ public class CalcSalesInfoDimServiceImpl extends SuperServiceImpl<CalcSalesInfoD
         List<OrderHistorySalesEsEntity> orderHistorySalesList = orderHistorySalesEsService.findByShopIdInAndSkuIdInAndDateBetween(Collections.singletonList(entity.getShopId()),
                 Collections.singletonList(entity.getShopId()), startDate, endDate);
         Map<LocalDate, Integer> orderHistorySalesMap = orderHistorySalesList.stream()
-                .collect(Collectors.toMap(OrderHistorySalesEsEntity::getDate, OrderHistorySalesEsEntity::getOriginalSalesQty));
+                .collect(Collectors.toMap(OrderHistorySalesEsEntity::getDate, OrderHistorySalesEsEntity::getOriginalSalesQty, Integer::sum));
         List<CalcSalesInfoEstimateEntity> calcSalesInfoEstimateList = calcSalesInfoEstimateService.listByCalcSalesInfoIds(Collections.singletonList(dto.getId()));
         Map<LocalDate, BigDecimal> calcSalesInfoEstimateMap = calcSalesInfoEstimateList.stream()
                 .collect(Collectors.toMap(CalcSalesInfoEstimateEntity::getDate, CalcSalesInfoEstimateEntity::getQty));
@@ -261,6 +261,7 @@ public class CalcSalesInfoDimServiceImpl extends SuperServiceImpl<CalcSalesInfoD
 
     /**
      * 处理分页参数
+     *
      * @param records 记录
      * @param uid     用户id
      */
@@ -323,6 +324,7 @@ public class CalcSalesInfoDimServiceImpl extends SuperServiceImpl<CalcSalesInfoD
         }
 
     }
+
     /**
      * 获取平台名字
      */
@@ -384,8 +386,55 @@ public class CalcSalesInfoDimServiceImpl extends SuperServiceImpl<CalcSalesInfoD
         }
     }
 
+    @Override
+    public CalcSalesInfoDimDTO.CalcCompareDTO calcCompare(CalcSalesInfoDimDTO.CalcCompareParamsDTO dto) {
+        List<CalcSalesInfoDimDTO.CompareResultDTO> list;
+        //查询对应数据
+        if (CollectionUtils.isEmpty(dto.getIds())) {
+            list = baseMapper.listBySkuAndShopAndDate(dto);
+        } else {
+            list = baseMapper.listCompareByIds(dto.getIds());
+        }
+        verifyData(list);
+        //获取真实销量
+        CalcSalesInfoDimDTO.CompareResultDTO resultDTO = list.get(0);
+
+        List<OrderHistorySalesEsEntity> salesInfos = orderHistorySalesEsService.findByShopIdAndSkuIdAndDateBetween(resultDTO.getShopId(), resultDTO.getShopId(),
+                resultDTO.getStartCalcDate().minusDays(361), resultDTO.getStartCalcDate().minusDays(1));
+        Map<LocalDate, Integer> hisSalesMap = salesInfos.stream()
+                .collect(Collectors.toMap(OrderHistorySalesEsEntity::getDate, OrderHistorySalesEsEntity::getOriginalSalesQty, Integer::sum));
+
+
+        return null;
+    }
+
+    /**
+     * 校验数据合法性
+     *
+     * @param list 参数
+     */
+    private void verifyData(List<CalcSalesInfoDimDTO.CompareResultDTO> list) {
+        if (CollectionUtils.isEmpty(list)) {
+            throw new ServiceException(ApiError.ERROR_NOT_EXIST_CALC_DATA);
+        }
+        // 校验是否是相同sku 店铺 试算开始时间
+        long count = list.stream().map(v -> v.getSkuId() + "-" + v.getShopId() + "-" + v.getStartCalcDate())
+                .distinct().count();
+        if (count > 1) {
+            throw new ServiceException(ApiError.ERROR_DATA_IS_DIFFERENT);
+        }
+        // 校验历史销量是否一致
+        long md5Count = list.stream().map(CalcSalesInfoDimDTO.CompareResultDTO::getHisDataMd5)
+                .distinct().count();
+        if (md5Count > 1) {
+            throw new ServiceException(ApiError.ERROR_HIS_SALES_IS_DIFFERENT);
+        }
+    }
+
+
     /**
      * 处理分页参数
+     *
      * @param records 记录
      * @param uid     用户id
      */

@@ -91,4 +91,10 @@ public interface CalcSalesInfoDimService extends SuperService<CalcSalesInfoDimEn
     void downloadHistorySales(String calcSalesInfoDimId, HttpServletResponse response);
 
 
+    /**
+     * 试算比较
+     * @param dto 参数
+     */
+    CalcSalesInfoDimDTO.CalcCompareDTO calcCompare(CalcSalesInfoDimDTO.CalcCompareParamsDTO dto);
+
 }

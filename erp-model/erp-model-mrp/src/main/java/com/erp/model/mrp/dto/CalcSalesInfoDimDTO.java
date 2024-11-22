@@ -949,4 +949,107 @@ public class CalcSalesInfoDimDTO implements Serializable {
          */
         private Integer qty;
     }
+
+    /**
+     * 试算比较
+     */
+    @Getter
+    @Setter
+    public static class CalcCompareParamsDTO {
+
+        /**
+         * id (选中的)
+         */
+        private List<String> ids;
+        /**
+         * sku
+         */
+        private String skuId;
+        /**
+         * 店铺
+         */
+        private String shopId;
+        /**
+         * 试算开始日期
+         */
+        private LocalDate startCalcDate;
+    }
+
+    /**
+     * 试算比较
+     */
+    @Getter
+    @Setter
+    public static class CalcCompareDTO {
+
+        /**
+         * 日期
+         */
+        private List<LocalDate> dateList;
+
+
+        private List<LineDTO> lineList;
+    }
+
+    /**
+     * 线
+     */
+    @Getter
+    @Setter
+    public static class LineDTO {
+
+        /**
+         * 模板名称
+         */
+        private String name;
+
+        /**
+         * 相似度
+         */
+        private BigDecimal similarity;
+
+        /**
+         * 销量
+         */
+        private List<BigDecimal> qty;
+    }
+
+    @Getter
+    @Setter
+    public static class CompareResultDTO {
+        /**
+         * 主键id
+         */
+        private String id;
+
+        /**
+         * sku id
+         */
+        private String skuId;
+
+        /**
+         * sku
+         */
+        private String skuNo;
+        /**
+         * 店铺
+         */
+        private String shopId;
+        /**
+         * 试算配置id
+         */
+        private String cfgRuleCalcId;
+        /**
+         * 试算模板名字
+         */
+        private String name;
+        /**
+         * 试算开始日期
+         */
+        private LocalDate startCalcDate;
+        /**
+         * 历史数据base
+         */
+        private String hisDataMd5;
+    }
 }

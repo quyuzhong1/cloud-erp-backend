@@ -153,4 +153,14 @@ public class CalcSalesInfoDimController extends BaseController {
     public void downloadHistorySales(@RequestParam String calcSalesInfoDimId, HttpServletResponse response) {
         calcSalesInfoDimService.downloadHistorySales(calcSalesInfoDimId, response);
     }
+
+    /**
+     * 试算比较
+     * @param dto 参数
+     */
+    @PostMapping("/calcCompare")
+    public ApiResult<CalcSalesInfoDimDTO.CalcCompareDTO> calcCompare(@RequestBody CalcSalesInfoDimDTO.CalcCompareParamsDTO dto) {
+        CalcSalesInfoDimDTO.CalcCompareDTO result = calcSalesInfoDimService.calcCompare(dto);
+        return success(result);
+    }
 }
