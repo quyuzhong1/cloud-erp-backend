@@ -241,6 +241,24 @@ public class VirtualWarehouseAllocationDTO implements Serializable {
         private Boolean isStatistics;
     }
 
+
+    @Data
+    @NoArgsConstructor
+    public static class UpdateIsStatisticsDTO {
+
+        /**
+         * 主键id
+         */
+        private String id;
+
+        /**
+         * 是否计入统计，true是，false否
+         */
+        @NotNull(message = "是否统计不能为空")
+        private Boolean isStatistics;
+    }
+
+
     /**
      * 分页列表查询参数
      */

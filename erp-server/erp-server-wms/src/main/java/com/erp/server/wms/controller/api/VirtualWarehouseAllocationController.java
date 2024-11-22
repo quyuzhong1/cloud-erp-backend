@@ -105,6 +105,25 @@ public class VirtualWarehouseAllocationController extends BaseController {
     }
 
     /**
+     * 分货单是否统计修改
+     * @author will
+     * @date 2024/11/22 18:23
+     * @param dto
+     * @return ApiResult<?>
+     */
+    @PostMapping("/updateIsStatistics")
+    @LogAction(value = LogActionEnum.UPDATE, desc = "分货单是否统计修改")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:virtualWarehouseAllocation:update",
+            serviceClass = VirtualWarehouseAllocationService.class,
+            keyIdName = "id")
+    public ApiResult<?> updateIsStatistics(@RequestBody @Validated VirtualWarehouseAllocationDTO.UpdateIsStatisticsDTO dto) {
+        virtualWarehouseAllocationService.updateIsStatistics(dto);
+        return success();
+    }
+
+    /**
      * 列表查询
      *
      * @param dto

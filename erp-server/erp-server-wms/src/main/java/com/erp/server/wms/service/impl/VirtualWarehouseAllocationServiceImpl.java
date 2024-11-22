@@ -1019,4 +1019,25 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
         return new PagingVO(pageData);
     }
 
+    @Override
+    public void updateIsStatistics(VirtualWarehouseAllocationDTO.UpdateIsStatisticsDTO dto) {
+        VirtualWarehouseAllocationEntity old = Optional.ofNullable(super.getById(dto.getId())).orElseThrow(() ->
+                new ServiceException(ApiError.NOT_EXIST_BILL, "分货单"));
+        VirtualWarehouseAllocationEntity virtualWarehouseAllocationEntity = BeanMapperUtils.map(VirtualWarehouseAllocationEntity.class, dto);
+        //字段值一致无需修改
+        if (dto.getIsStatistics().equals(old.getIsStatistics())) {
+            return;
+        }
+
+        log.info("编辑 开始修改分货单数据，单号：【{}】", old.getCode());
+        boolean save = super.updateById(virtualWarehouseAllocationEntity);
+        if (!save) {
+            throw new ServiceException("分货单保存失败");
+        }
+        // 记录主单操作日志
+        log.info("编辑 开始记录分货单日志数据，单号：【{}】", old.getCode());
+        String msg = CharSequenceUtil.format("是否统计由【{}】变更为【{}】", old.getIsStatistics(),dto.getIsStatistics());
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.VIRTUAL_WAREHOUSE_ALLOCATION.getCode(), old.getId(), "编辑操作");
+    }
+
 }
