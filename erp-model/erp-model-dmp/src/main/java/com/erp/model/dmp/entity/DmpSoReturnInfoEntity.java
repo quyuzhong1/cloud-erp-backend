@@ -204,6 +204,12 @@ public class DmpSoReturnInfoEntity extends BaseEntity<DmpSoReturnInfoEntity> {
     */
     @TableField("refund_tax")
     private BigDecimal refundTax;
+    
+    /**
+     * 备注明细
+     */
+     @TableField("remark_name")
+     private String remarkName = "";
 
 
     public static final String PLATFORM_CREATE_TIME = "platform_create_time";

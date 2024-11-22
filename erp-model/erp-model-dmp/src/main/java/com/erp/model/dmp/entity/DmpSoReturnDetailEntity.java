@@ -194,6 +194,12 @@ public class DmpSoReturnDetailEntity extends BaseEntity<DmpSoReturnDetailEntity>
      */
     @TableField("refund_tax")
     private BigDecimal refundTax;
+    
+    /**
+     * 退货入库数量
+     */
+     @TableField("stockin_num")
+     private Integer stockinNum;
 
     public static final String MAIN_ID = "main_id";
 
