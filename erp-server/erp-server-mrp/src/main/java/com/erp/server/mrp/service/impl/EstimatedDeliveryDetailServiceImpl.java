@@ -33,7 +33,7 @@ public class EstimatedDeliveryDetailServiceImpl extends SuperServiceImpl<Estimat
     public PagingVO<EstimatedDeliveryVO> estimatedDelivery(PagingDTO<ReplenishmentSuggestionDTO.DetailParamDTO> params) {
         Page<EstimatedDeliveryVO> page = baseMapper.estimatedDelivery(new Page<>(params.getCurrPage(), params.getPageSize()), params.getParams());
         for (EstimatedDeliveryVO vo : page.getRecords()) {
-            if (SourceTypeEnum.REPLENISHMENT_PLAN.getCode().equals(vo.getSourceCode())) {
+            if (SourceTypeEnum.REPLENISHMENT_PLAN.getCode().equals(vo.getSourceType())) {
                 vo.setStatusName(SuggestStatusEnum.getName(vo.getStatus()));
             } else {
                 vo.setStatusName(ApproveStatusEnum.getName(vo.getStatus()));

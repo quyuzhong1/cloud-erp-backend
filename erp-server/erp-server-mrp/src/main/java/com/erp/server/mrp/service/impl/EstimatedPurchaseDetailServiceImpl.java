@@ -32,7 +32,7 @@ public class EstimatedPurchaseDetailServiceImpl extends SuperServiceImpl<Estimat
     public PagingVO<EstimatedPurchaseVO> estimatedPurchase(PagingDTO<ReplenishmentSuggestionDTO.DetailParamDTO> params) {
         Page<EstimatedPurchaseVO> page = baseMapper.estimatedPurchase(new Page<>(params.getCurrPage(), params.getPageSize()), params.getParams());
         for (EstimatedPurchaseVO vo : page.getRecords()) {
-            if (SourceTypeEnum.REPLENISHMENT_PLAN.getCode().equals(vo.getSourceCode())) {
+            if (SourceTypeEnum.REPLENISHMENT_PLAN.getCode().equals(vo.getSourceType())) {
                 vo.setStatusName(SuggestStatusEnum.getName(vo.getStatus()));
             } else {
                 vo.setStatusName(ApproveStatusEnum.getName(vo.getStatus()));
