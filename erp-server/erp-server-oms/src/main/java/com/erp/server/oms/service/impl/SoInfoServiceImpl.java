@@ -1580,6 +1580,9 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         //删除释放冻结库存
         ids.stream().forEach(obj -> unLockVirtualInventory(obj));
 
+        //同步数帝云
+        list.forEach(obj -> sdyFieldOrderHandler(obj.getId(), SyncOperateEnum.OPERATE_DELETE.getCode()));
+
         Boolean result = this.removeByIds(ids);
 
         if (result) {
@@ -1587,9 +1590,6 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             String content = "删除销售订单[%s]";
             List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
             operateLogService.batchAddModuleOperateLog(content, ModuleTypeEnum.SO.getCode(), pairList, "删除");
-
-            //同步数帝云
-            list.forEach(obj -> sdyFieldOrderHandler(obj.getId(), SyncOperateEnum.OPERATE_DELETE.getCode()));
 
             //删除明细
             soDetailService.removeByMainIdList(ids);
