@@ -145,7 +145,7 @@ public class DmpSoInfoEntity extends BaseEntity<DmpSoInfoEntity> {
     * 商品总售价
     */
     @TableField("all_amount")
-    private BigDecimal allAmount;
+    private BigDecimal allAmount = BigDecimal.ZERO;
     /**
     * 运费收入
     */
@@ -230,17 +230,17 @@ public class DmpSoInfoEntity extends BaseEntity<DmpSoInfoEntity> {
      * 总优惠金额
      */
     @TableField("total_discount")
-    private BigDecimal totalDiscount;
+    private BigDecimal totalDiscount = BigDecimal.ZERO;
     /**
      * 取消商品总价
      */
     @TableField("total_cancel_goods_amount")
-    private BigDecimal totalCancelGoodsAmount;
+    private BigDecimal totalCancelGoodsAmount = BigDecimal.ZERO;
     /**
      * 取消商品币别
      */
     @TableField("cancel_goods_currency")
-    private String cancelGoodsCurrency;
+    private String cancelGoodsCurrency = "";
 
 
     public static final String PLATFORM_CREATE_TIME = "platform_create_time";

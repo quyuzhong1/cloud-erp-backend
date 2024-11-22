@@ -134,7 +134,7 @@ public class DmpSoDetailEntity extends BaseEntity<DmpSoDetailEntity> {
     * 折扣后订单总金额
     */
     @TableField("after_amount")
-    private BigDecimal afterAmount;
+    private BigDecimal afterAmount = BigDecimal.ZERO;
     /**
     * 运费
     */

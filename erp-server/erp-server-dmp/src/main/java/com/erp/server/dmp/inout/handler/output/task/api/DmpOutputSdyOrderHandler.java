@@ -175,7 +175,7 @@ public class DmpOutputSdyOrderHandler extends DmpOutputTaskHandler {
             shudiyunB2cOrderDTO.setBiz_time(dmpSoInfoEntity.getPayTime());
 
             //如果是旺店通中台表的订单属于配货单，其他的都是线上原始订单
-            if (PlatformDictEnum.WDT.getCode().equals(dmpSoInfoEntity.getSourcePlatform())) {
+            if (PlatformDictEnum.WDT.getCode().equals(dmpSoInfoEntity.getSourceSystem())) {
                 //配货单
                 shudiyunB2cOrderDTO.setTransaction_type("100.20");
             } else {
@@ -215,7 +215,7 @@ public class DmpOutputSdyOrderHandler extends DmpOutputTaskHandler {
                 List<ThirdMappingEntity> shop = thirdMappingService.lambdaQuery()
                         .eq(ThirdMappingEntity::getType, ThirdSysTypeEnum.SHOP.getCode())
                         .eq(ThirdMappingEntity::getThirdSysType, PlatformDictEnum.WDT.getCode())
-                        .eq(ThirdMappingEntity::getThirdId, dmpSoInfoEntity.getShopId())
+                        .eq(ThirdMappingEntity::getThirdCode, dmpSoInfoEntity.getShopId())
                         .list();
                 if (CollectionUtils.isEmpty(shop)) {
                     throw new ServiceException(ApiError.ERROR_SDY_NOT_FOUND_SHOP_MAPPING, dmpSoInfoEntity.getShopId());
