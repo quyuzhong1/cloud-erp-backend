@@ -49,6 +49,7 @@ import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.dto.CfgAppClientDTO;
 import com.erp.model.dmp.dto.DmpInoutDTO;
 import com.erp.model.dmp.entity.CfgAppClientEntity;
+import com.erp.model.dmp.entity.DmpOutputTaskRecordEntity;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.dmp.enums.AppClientEnum;
 import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
@@ -93,8 +94,8 @@ import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.*;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
-import com.erp.oms.aliexpress.api.IopResponse;
-import com.erp.oms.aliexpress.dto.response.*;
+import com.erp.oms.aliexpress.dto.response.AliExpressOrderDetail;
+import com.erp.oms.aliexpress.dto.response.ErpFulfillmentForwardDtoBean;
 import com.erp.oms.aliexpress.service.AliExpressDliveryOrderService;
 import com.erp.oms.aliexpress.service.AliExpressOrderService;
 import com.erp.oms.aliexpress.util.ApiException;
@@ -6863,123 +6864,17 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     @Override
     public Boolean updateAliExpressOrderWarehouse(String soId, String shopId) {
         SoB2cEntity entity = this.getById(soId);
-        SoB2cLogisticsEntity logisticsEntity = soB2cLogisticsService.getByMainId(soId);
-        Map<String, String> aliExpressCfgClientMap = getAliExpressCfgClientMap(shopId);
-
         //查询速卖通仓库名称是否映射ERP仓库
-        List<WarehouseMappingDTO.MappingViewDTO> mappingViewDTOS = warehouseMappingFeign.listMappingViewByDictPlatform(entity.getDictPlatform());
-
-        //查询速卖通订单
-        try {
-            IopResponse response = aliExpressDliveryOrderService.getDelivery(aliExpressCfgClientMap, Arrays.asList(entity.getPlatformCode()));
-
-            cn.hutool.json.JSONObject jsonObject = JSONUtil.parseObj(response.getBody());
-            cn.hutool.json.JSONObject resultJsONObject = jsonObject.getJSONObject("aliexpress_ascp_ffo_query_response");
-            cn.hutool.json.JSONObject resultJson = JSONUtil.parseObj(resultJsONObject.get("result"));
-            Boolean success = resultJson.getBool("success", Boolean.FALSE);
-            //失败
-            if (!success) {
-                log.error("异常订单重试拉取速卖通订单失败>>>>>>>{}", resultJsONObject.getOrDefault("error_message", "").toString());
-            }
-            AliExpressAscpFfoQueryResponse result = JSONObject.parseObject(response.getBody(), AliExpressAscpFfoQueryResponse.class);
-            DataListBean dataList = result.getAliexpressAscpFfoQueryResponse().getResult().getDataList();
-            if (ObjectUtil.isNotEmpty(dataList)) {
-                List<ErpFulfillmentForwardDtoBean> erpFulfillmentForwardDto = dataList.getErpFulfillmentForwardDto();
-                erpFulfillmentForwardDto = erpFulfillmentForwardDto.stream().filter(v -> StringUtils.isNotBlank(v.getWarehouseName())).collect(Collectors.toList());
-                if (CollectionUtils.isEmpty(erpFulfillmentForwardDto)) {
-                    return Boolean.FALSE;
-                }
-                erpFulfillmentForwardDto = erpFulfillmentForwardDto.stream()
-                        .filter(e -> !e.getOrderStatus().equalsIgnoreCase("已转商家仓发货"))
-                        .collect(Collectors.toList());
-                if (CollectionUtils.isEmpty(erpFulfillmentForwardDto)) {
-                    // 跳过商家转自发货生成销售出库单由ERP自发货单生成
-                    log.warn("速卖通生成销售出库单: 跳过商家转自发货生成销售出库单:{}", JSONUtil.toJsonStr(dataList.getErpFulfillmentForwardDto()));
-                    return Boolean.FALSE;
-                }
-
-                //根据SKUid+仓库去重
-                //速卖通分仓发货，可能有多个发货单，根据仓库分组生成数据
-                Map<String, List<ErpFulfillmentForwardDtoBean>> eroBeanMap = erpFulfillmentForwardDto.stream().collect(Collectors.groupingBy(ErpFulfillmentForwardDtoBean::getWarehouseName));
-
-                for (Map.Entry<String, List<ErpFulfillmentForwardDtoBean>> entry : eroBeanMap.entrySet()) {
-                    String key = entry.getKey();
-                    List<ErpFulfillmentForwardDtoBean> val = entry.getValue();
-                    //校验仓库是否匹配到
-                    WarehouseMappingDTO.MappingViewDTO mappingViewDTO = mappingViewDTOS.stream().filter(req -> key.equals(req.getThirdWarehouseName())).findFirst().orElse(null);
-                    if (Objects.isNull(mappingViewDTO)) {
-                        throw new ServiceException(CharSequenceUtil.format("发货单仓库【{}】未匹配系统仓库", key));
-                    }
-                    List<String> fulfillmentOrderNoList = val.stream().map(ErpFulfillmentForwardDtoBean::getFulfillmentOrderNo).distinct().collect(Collectors.toList());
-                    List<AliExpressDeliveryDetail> detailList = new ArrayList<>();
-                    for (String fulfillmentOrderNo : fulfillmentOrderNoList) {
-                        detailList.addAll(aliExpressDliveryOrderService.getDeliveryDetail(aliExpressCfgClientMap, fulfillmentOrderNo));
-                    }
-                    if (CollectionUtils.isEmpty(detailList)) {
-                        throw new ServiceException(CharSequenceUtil.format("速卖通【{}】发货明细为空", fulfillmentOrderNoList));
-                    }
-                    //校验sku
-                    List<String> platformSkuIdList = detailList.stream().map(AliExpressDeliveryDetail::getScItemId).distinct().collect(Collectors.toList());
-                    List<SkuMappingDTO.WarehouseSkuDTO> warehouseSkuDTOList = skuMappingService.listByWarehouseAndPlatformSku(mappingViewDTO.getWarehouseId(), platformSkuIdList);
-                    List<PlatformDeliveryDetailDTO> platformDeliveryDetailDTOList = new ArrayList<>();
-                    List<String> notMatchSkuNoList = new ArrayList<>();
-                    for (AliExpressDeliveryDetail deliveryDetailDTO : detailList) {
-                        SkuMappingDTO.WarehouseSkuDTO warehouseSkuDTO = warehouseSkuDTOList.stream().filter(v -> v.getPlatformSkuNo().equals(deliveryDetailDTO.getScItemId())).findFirst().orElse(new SkuMappingDTO.WarehouseSkuDTO());
-                        if (StringUtils.isBlank(warehouseSkuDTO.getProductSkuId())) {
-                            notMatchSkuNoList.add(deliveryDetailDTO.getScItemId());
-                            continue;
-                        }
-                        PlatformDeliveryDetailDTO platformDeliveryDetailDTO = new PlatformDeliveryDetailDTO();
-                        platformDeliveryDetailDTO.setSkuId(warehouseSkuDTO.getProductSkuId());
-                        platformDeliveryDetailDTO.setSkuNo(warehouseSkuDTO.getProductSkuNo());
-                        platformDeliveryDetailDTO.setWarehouseId(mappingViewDTO.getWarehouseId());
-                        platformDeliveryDetailDTO.setWarehouseName(mappingViewDTO.getWarehouseName());
-                        platformDeliveryDetailDTO.setWarehouseOrgId(mappingViewDTO.getWarehouseOrgId());
-                        platformDeliveryDetailDTO.setWarehouseOrgName(mappingViewDTO.getWarehouseOrgName());
-                        platformDeliveryDetailDTO.setPlatformWarehouseName(key);
-                        platformDeliveryDetailDTO.setPlatformSkuNo(deliveryDetailDTO.getScItemId());
-                        platformDeliveryDetailDTO.setPlatformSpuNo(deliveryDetailDTO.getItemId());
-                        platformDeliveryDetailDTO.setQty(Integer.valueOf(deliveryDetailDTO.getDeliveryQty()));
-                        platformDeliveryDetailDTO.setMainId(entity.getId());
-                        platformDeliveryDetailDTO.setScItemId(deliveryDetailDTO.getScItemId());
-                        platformDeliveryDetailDTO.setPlatformSkuId(deliveryDetailDTO.getPlatformSkuId());
-                        platformDeliveryDetailDTOList.add(platformDeliveryDetailDTO);
-                    }
-                    List<String> skuIds = platformDeliveryDetailDTOList.stream().map(PlatformDeliveryDetailDTO::getSkuId).collect(Collectors.toList());
-                    PlatformGenerateSoOutstockDTO platformGenerateSoOutstockDTO = PlatformGenerateSoOutstockDTO.builder()
-                            .platformDeliveryDetailDTOList(platformDeliveryDetailDTOList)
-                            .generateB2cDTO(this.getSoOutstockByIdAndWarehouseId(entity.getId(), mappingViewDTO.getWarehouseId()))
-                            .build();
-                    if (CollectionUtils.isNotEmpty(notMatchSkuNoList)) {
-                        SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO();
-                        addError.setType(SoB2cErrorTypeEnum.GENERATE_OUTSTOCK.getCode());
-                        addError.setParamJson("");
-                        addError.setReturnJson("");
-                        addError.setMainId(entity.getId());
-                        addError.setMessage(CharSequenceUtil.format("自动生成销售出库单失败：存在速卖通货品id未映射sku，货品id:【{}】", notMatchSkuNoList));
-                        soB2cErrorService.add(addError);
-                    }
-                    //生成销售出库单
-                    Boolean generateSoOutstockResult = soOutstockFeign.generateB2cSoOutstockByPlatformData(platformGenerateSoOutstockDTO);
-                    if (generateSoOutstockResult) {
-                        //更新映射的仓库信息
-                        soB2cDetailService.updateWarehouseByMapping(mappingViewDTO, entity.getId(), skuIds);
-                        //生成速卖通发货单
-                        addAliExpressDelivery(logisticsEntity, val.get(0), entity, platformDeliveryDetailDTOList);
-                        if (CollectionUtils.isNotEmpty(notMatchSkuNoList)) {
-                            return false;
-                        }
-                    } else {
-                        return false;
-                    }
-                }
-            }
+        List<DmpOutputTaskRecordEntity> list = FeignQuery.create(DmpOutputTaskRecordEntity.class).eq(DmpOutputTaskRecordEntity::getSourceCode, entity.getPlatformCode()).orderByDesc(DmpOutputTaskRecordEntity::getCreateTime).list();
+        if (CollUtil.isEmpty(list)) {
             return Boolean.TRUE;
-
-        } catch (ApiException e) {
-            log.error("速卖通接口异常", e);
-            throw new ServiceException("速卖通接口异常： " + e.getMessage());
         }
+        DmpOutputTaskRecordEntity dmpOutputTaskRecordEntity = list.stream().max(Comparator.comparing(DmpOutputTaskRecordEntity::getCreateTime)).orElse(null);
+        if (Objects.isNull(dmpOutputTaskRecordEntity)) {
+            return Boolean.TRUE;
+        }
+        PlatformOrderDTO dto = JSONUtil.toBean(dmpOutputTaskRecordEntity.getRequestData(), PlatformOrderDTO.class);
+        return SoB2cHandler.handleSoOutStock(dto, null, entity);
     }
 
     @Override

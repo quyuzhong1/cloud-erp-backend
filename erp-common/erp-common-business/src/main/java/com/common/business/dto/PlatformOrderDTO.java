@@ -68,6 +68,12 @@ public class PlatformOrderDTO extends UniqueDto {
     private String payStatus;
 
     /**
+     * 发货单状态（中文） 【暂用于速卖通】
+     */
+    private String deliveryStatusName;
+
+
+    /**
      * 订单金额
      */
     private BigDecimal amount;
