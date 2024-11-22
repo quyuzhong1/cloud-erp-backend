@@ -4,11 +4,13 @@ import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.ApproveStatusEnum;
+import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
 import com.erp.model.mrp.dto.ReplenishmentSuggestionDTO;
 import com.erp.model.mrp.entity.EstimatedDeliveryDetailEntity;
 import com.erp.model.mrp.enums.ReplenishmentInventoryTypeEnum;
+import com.erp.model.mrp.enums.SuggestStatusEnum;
 import com.erp.model.mrp.vo.EstimatedDeliveryVO;
 import com.erp.server.mrp.mapper.EstimatedDeliveryDetailMapper;
 import com.erp.server.mrp.service.EstimatedDeliveryDetailService;
@@ -31,7 +33,11 @@ public class EstimatedDeliveryDetailServiceImpl extends SuperServiceImpl<Estimat
     public PagingVO<EstimatedDeliveryVO> estimatedDelivery(PagingDTO<ReplenishmentSuggestionDTO.DetailParamDTO> params) {
         Page<EstimatedDeliveryVO> page = baseMapper.estimatedDelivery(new Page<>(params.getCurrPage(), params.getPageSize()), params.getParams());
         for (EstimatedDeliveryVO vo : page.getRecords()) {
+            if (SourceTypeEnum.REPLENISHMENT_PLAN.getCode().equals(vo.getSourceCode())) {
+                vo.setStatusName(SuggestStatusEnum.getName(vo.getStatus()));
+            } else {
                 vo.setStatusName(ApproveStatusEnum.getName(vo.getStatus()));
+            }
         }
         return new PagingVO<>(page);
     }
