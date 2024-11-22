@@ -1761,7 +1761,9 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
 
             shudiyunB2cOrderDTO.setTransaction_unique_key(entity.getId()+soReturnInstockDetailEntity.getId());
             shudiyunB2cOrderDTO.setBiz_no(entity.getCode());
-            shudiyunB2cOrderDTO.setBiz_time(localDate.format(entity.getBillDate()));
+            if (entity.getBillDate() != null) {
+                shudiyunB2cOrderDTO.setBiz_time(localDate.format(entity.getBillDate()));
+            }
             //默认退货入库单
             shudiyunB2cOrderDTO.setTransaction_type("210.10");
             shudiyunB2cOrderDTO.setTransaction_sub_type("210.10.01");
@@ -1841,16 +1843,18 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
             shudiyunB2cOrderDTO.setRemark(soReturnInstockDetailEntity.getRemark());
             shudiyunB2cOrderDTO.setWarehouse_no(soReturnInstockDetailEntity.getWarehouseId());
             shudiyunB2cOrderDTO.setWarehouse_name(soReturnInstockDetailEntity.getWarehouseName());
-
-            shudiyunB2cOrderDTO.setReturn_receipt_time(localDate.format(entity.getBillDate()));
+            if (entity.getBillDate() != null) {
+                shudiyunB2cOrderDTO.setReturn_receipt_time(localDate.format(entity.getBillDate()));
+            }
             shudiyunB2cOrderDTO.setReturn_receipt_amount(soReturnInstockDetailEntity.getAmount());
             shudiyunB2cOrderDTO.setSuite_no("");
             shudiyunB2cOrderDTO.setSuite_name("");
 
             // 商品状态
             shudiyunB2cOrderDTO.setGoods_status("10.10");
-
-            shudiyunB2cOrderDTO.setDelivery_time(localDateTime.format(entity.getApproveTime()));
+            if (entity.getApproveTime() != null) {
+                shudiyunB2cOrderDTO.setDelivery_time(localDateTime.format(entity.getApproveTime()));
+            }
             shudiyunB2cOrderDTO.setGoods_transaction_quantity(soReturnInstockDetailEntity.getRealQty());
             shudiyunB2cOrderDTO.setUnit(skuVO.getUnitName());
             shudiyunB2cOrderDTO.setGoods_benchmark_selling_price(skuVO.getRetailPrice());

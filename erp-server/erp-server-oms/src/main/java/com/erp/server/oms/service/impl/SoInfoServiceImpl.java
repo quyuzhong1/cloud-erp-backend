@@ -3988,7 +3988,9 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             shudiyunB2cOrderDTO.setShop_no(view.getCustomerId());
             shudiyunB2cOrderDTO.setShop_name(view.getCustomerName());
             shudiyunB2cOrderDTO.setRoot_node_no(view.getCode());
-            shudiyunB2cOrderDTO.setRoot_node_create_time(localDate.format(view.getReceiveDate()));
+            if (view.getReceiveDate() != null) {
+                shudiyunB2cOrderDTO.setRoot_node_create_time(localDate.format(view.getReceiveDate()));
+            }
             shudiyunB2cOrderDTO.setRoot_node_modify_time(localDateTime.format(view.getUpdateTime()));
             shudiyunB2cOrderDTO.setGoods_no(soDetailEntity.getSkuNo());
             SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuId().equals(soDetailEntity.getSkuId())).findFirst().orElse(new SkuVO());
