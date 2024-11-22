@@ -3914,6 +3914,10 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         }
 
 
+        //组织信息
+        CustomerInfoEntity customerInfo = FeignQuery.getById(CustomerInfoEntity.class, view.getCustomerId());
+        List<BaseIdDTO.CodeDTO> companyEntities = sysUserFeign.getAccountingCompanyList(Arrays.asList(customerInfo.getFinancialOrganization(), view.getSalesOrgId()));
+
         for (int i = 0; i < view.getDetailList().size(); i++) {
             SoDetailDTO.ViewDTO soDetailEntity = view.getDetailList().get(i);
 
@@ -3948,28 +3952,34 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             shudiyunB2cOrderDTO.setSales_company_code(view.getSalesOrgId());
 
 
-            CustomerInfoEntity customerInfo = FeignQuery.getById(CustomerInfoEntity.class, view.getCustomerId());
-
+            //组织信息
             if (ObjectUtil.isNotEmpty(customerInfo)) {
-                shudiyunB2cOrderDTO.setSales_company_code(customerInfo.getFinancialOrganization());
-                shudiyunB2cOrderDTO.setReceiving_company_code(customerInfo.getFinancialOrganization());
-            }
-            List<ShopInfoEntity> shopList = FeignQuery.create(ShopInfoEntity.class).eq(ShopInfoEntity::getCustomerId, customerInfo.getId()).list();
-
-            if (CollUtil.isNotEmpty(shopList)) {
-                shudiyunB2cOrderDTO.setSales_company_code(shopList.get(0).getSalesOrgId());
-                shudiyunB2cOrderDTO.setShop_no(shopList.get(0).getId());
-                shudiyunB2cOrderDTO.setShop_name(shopList.get(0).getName());
-                DictCurrencyEntity dictCurrencyEntity = FeignQuery.getById(DictCurrencyEntity.class, shopList.get(0).getTradeCurrency());
-                if (ObjectUtil.isNotEmpty(dictCurrencyEntity)) {
-                    shudiyunB2cOrderDTO.setTransaction_currency(dictCurrencyEntity.getName());
+                String salesOrgCode = companyEntities.stream().filter(req -> req.getId().equals(view.getSalesOrgId())).map(req -> req.getCode()).findFirst().orElse("");
+                shudiyunB2cOrderDTO.setSales_company_code(salesOrgCode);
+                BaseIdDTO.CodeDTO sysAccountingCompanyEntity = companyEntities.stream().filter(req -> req.getId().equals(customerInfo.getFinancialOrganization())).findFirst().orElse(null);
+                if (ObjectUtil.isNotEmpty(sysAccountingCompanyEntity)) {
+                    shudiyunB2cOrderDTO.setReceiving_company_code(sysAccountingCompanyEntity.getCode());
+                    shudiyunB2cOrderDTO.setOrganization_code(sysAccountingCompanyEntity.getCode());
+                    shudiyunB2cOrderDTO.setOrganization_name(sysAccountingCompanyEntity.getName());
                 }
-                shudiyunB2cOrderDTO.setTransaction_currency_code(shopList.get(0).getTradeCurrency());
-                shudiyunB2cOrderDTO.setSettlement_currency_code(shopList.get(0).getSettlementCurrency());
+
+                if (customerInfo.getCurrency() == null) {
+                    shudiyunB2cOrderDTO.setSettlement_currency_code("");
+                } else {
+                    shudiyunB2cOrderDTO.setSettlement_currency_code(customerInfo.getCurrency());
+                }
+
+                if (customerInfo.getTradeCurrency() == null) {
+                    shudiyunB2cOrderDTO.setSettlement_currency_code("");
+                } else {
+                    shudiyunB2cOrderDTO.setTransaction_currency_code(customerInfo.getTradeCurrency());
+                }
+
+                shudiyunB2cOrderDTO.setPlatform_id(customerInfo.getPlatformType());
+                shudiyunB2cOrderDTO.setPlatform_name(PlatformDictEnum.checkAndGetByCode(customerInfo.getPlatformType()).getName());
             }
 
-            shudiyunB2cOrderDTO.setPlatform_id("sdc");
-            shudiyunB2cOrderDTO.setPlatform_name("数大臣");
+
             shudiyunB2cOrderDTO.setShop_no(view.getCustomerId());
             shudiyunB2cOrderDTO.setShop_name(view.getCustomerName());
             shudiyunB2cOrderDTO.setRoot_node_no(view.getCode());
@@ -3985,7 +3995,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             } else {
                 shudiyunB2cOrderDTO.setIs_gift(0);
             }
-            BomChildrenSkuDTO bomChildrenSkuDTO = bomChildrenSkuDTOS.stream().filter(req -> req.getSkuId().equals(soDetailEntity.getSkuId())).findFirst().orElse(null);
+            BomChildrenSkuDTO bomChildrenSkuDTO = bomChildrenSkuDTOS.stream().filter(req -> req.getParentSkuId().equals(soDetailEntity.getSkuId())).findFirst().orElse(null);
             shudiyunB2cOrderDTO.setIs_comb(0);
 
             if (ObjectUtil.isNotEmpty(bomChildrenSkuDTO)) {
@@ -4000,6 +4010,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             }
 
             shudiyunB2cOrderDTO.setRemark(soDetailEntity.getRemark());
+            shudiyunB2cOrderDTO.setGoods_status("10.20");
             // 商品状态
             if (DeliveryStatusEnum.COMPLETE_SHIPMENT.getCode().equals(soDetailEntity.getDeliveryStatus())) {
                 shudiyunB2cOrderDTO.setGoods_status("10.10");

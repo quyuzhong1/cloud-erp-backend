@@ -9288,6 +9288,21 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         //总售价
         BigDecimal totalAmount = soB2cEntity.getAmount();
 
+
+        ShopInfoEntity shopInfo = FeignQuery.getById(ShopInfoEntity.class, soB2cEntity.getShopId());
+
+        //组织信息
+        CustomerInfoEntity customerInfo = FeignQuery.getById(CustomerInfoEntity.class, shopInfo.getCustomerId());
+        List<BaseIdDTO.CodeDTO> companyEntities = new ArrayList<>();
+
+        if (ObjectUtil.isNotEmpty(customerInfo)) {
+            companyEntities = sysUserFeign.getAccountingCompanyList(Arrays.asList(customerInfo.getFinancialOrganization(), shopInfo.getSalesOrgId()));
+        }
+
+        List<String> skuNoList = soB2cDetailEntityList.stream().map(req -> req.getPlatformSkuNo()).distinct().collect(Collectors.toList());
+        //组织信息
+        List<ListingInfoEntity> listingInfoEntities = FeignQuery.create(ListingInfoEntity.class).in(ListingInfoEntity::getPlatformSkuNo, skuNoList).list();
+
         for (int i = 0; i < soB2cDetailEntityList.size(); i++) {
             SoB2cDetailEntity soB2cDetailEntity = soB2cDetailEntityList.get(i);
 
@@ -9334,12 +9349,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             shudiyunB2cOrderDTO.setTotal_freight(soB2cEntity.getShippingFee());
             shudiyunB2cOrderDTO.setSales_company_code(soB2cEntity.getOrgId());
 
-
-            String shopId = soB2cEntity.getShopId();
-
-            ShopInfoEntity shopInfo = FeignQuery.getById(ShopInfoEntity.class, shopId);
             if (ObjectUtil.isNotEmpty(shopInfo)) {
-                shudiyunB2cOrderDTO.setSales_company_code(shopInfo.getSalesOrgId());
+                String salesOrgCode = companyEntities.stream().filter(req -> req.getId().equals(shopInfo.getSalesOrgId())).map(req -> req.getCode()).findFirst().orElse("");
+                shudiyunB2cOrderDTO.setSales_company_code(salesOrgCode);
                 shudiyunB2cOrderDTO.setShop_no(shopInfo.getId());
                 shudiyunB2cOrderDTO.setShop_name(shopInfo.getName());
                 DictCurrencyEntity dictCurrencyEntity = FeignQuery.getById(DictCurrencyEntity.class, shopInfo.getTradeCurrency());
@@ -9348,17 +9360,21 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 }
                 shudiyunB2cOrderDTO.setTransaction_currency_code(shopInfo.getTradeCurrency());
                 shudiyunB2cOrderDTO.setSettlement_currency_code(shopInfo.getSettlementCurrency());
+                shudiyunB2cOrderDTO.setShop_name(shopInfo.getName());
             }
-            CustomerInfoEntity customerInfo = FeignQuery.getById(CustomerInfoEntity.class, shopInfo.getCustomerId());
+
             if (ObjectUtil.isNotEmpty(customerInfo)) {
-                shudiyunB2cOrderDTO.setSales_company_code(customerInfo.getFinancialOrganization());
-                shudiyunB2cOrderDTO.setReceiving_company_code(customerInfo.getFinancialOrganization());
+                BaseIdDTO.CodeDTO sysAccountingCompanyEntity = companyEntities.stream().filter(req -> req.getId().equals(customerInfo.getFinancialOrganization())).findFirst().orElse(null);
+                if (ObjectUtil.isNotEmpty(sysAccountingCompanyEntity)) {
+                    shudiyunB2cOrderDTO.setReceiving_company_code(sysAccountingCompanyEntity.getCode());
+                    shudiyunB2cOrderDTO.setOrganization_code(sysAccountingCompanyEntity.getCode());
+                    shudiyunB2cOrderDTO.setOrganization_name(sysAccountingCompanyEntity.getName());
+                }
             }
 
             shudiyunB2cOrderDTO.setPlatform_id(soB2cEntity.getDictPlatform());
             shudiyunB2cOrderDTO.setPlatform_name(PlatformDictEnum.getNameByCode(soB2cEntity.getDictPlatform()));
-            shudiyunB2cOrderDTO.setShop_no(soB2cEntity.getShopId());
-            shudiyunB2cOrderDTO.setShop_name(soB2cEntity.getShopName());
+
             shudiyunB2cOrderDTO.setRoot_node_no(soB2cEntity.getPlatformCode());
             shudiyunB2cOrderDTO.setRoot_node_create_time(localDateTime.format(soB2cEntity.getPayTime()));
             shudiyunB2cOrderDTO.setRoot_node_modify_time(localDateTime.format(soB2cEntity.getUpdateTime()));
@@ -9369,7 +9385,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             shudiyunB2cOrderDTO.setSpec_name(skuVO.getSpuName());
             shudiyunB2cOrderDTO.setIs_gift(0);
 
-            BomChildrenSkuDTO bomChildrenSkuDTO = bomChildrenSkuDTOS.stream().filter(req -> req.getSkuId().equals(soB2cDetailEntity.getSkuId())).findFirst().orElse(null);
+            BomChildrenSkuDTO bomChildrenSkuDTO = bomChildrenSkuDTOS.stream().filter(req -> req.getParentSkuId().equals(soB2cDetailEntity.getSkuId())).findFirst().orElse(null);
             shudiyunB2cOrderDTO.setIs_comb(0);
 
             if (ObjectUtil.isNotEmpty(bomChildrenSkuDTO)) {
@@ -9384,6 +9400,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             }
 
             shudiyunB2cOrderDTO.setRemark(soB2cEntity.getRemark());
+            shudiyunB2cOrderDTO.setGoods_status("10.10");
             // 商品状态
             if (SoB2cBillStatusEnum.ENUM_SHIPPED.getCode().equals(soB2cEntity.getBillStatus())) {
                 shudiyunB2cOrderDTO.setGoods_status("10.10");
@@ -9411,16 +9428,25 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 totalDiscount = totalDiscount.subtract(shareDiscount);
             }
 
+            if (skuVO.getRetailPrice() != null) {
+                shudiyunB2cOrderDTO.setGoods_benchmark_selling_price(skuVO.getRetailPrice());
+            } else {
+                shudiyunB2cOrderDTO.setGoods_benchmark_selling_price(BigDecimal.ZERO);
+            }
 
-            shudiyunB2cOrderDTO.setGoods_benchmark_selling_price(skuVO.getRetailPrice());
             if (CollectionUtils.isNotEmpty(currencyList)) {
                 shudiyunB2cOrderDTO.setTransaction_currency(currencyList.get(0).getName());
                 shudiyunB2cOrderDTO.setTransaction_currency_code(currencyList.get(0).getId());
             }
 
             shudiyunB2cOrderDTO.setPost_amount(soB2cEntity.getShippingFee());
-            shudiyunB2cOrderDTO.setMsku_code(skuVO.getSpuNo());
-            shudiyunB2cOrderDTO.setMsku_name(skuVO.getSpuName());
+            shudiyunB2cOrderDTO.setMsku_code(soB2cDetailEntity.getPlatformSkuNo());
+            String skuName = listingInfoEntities.stream().filter(req -> req.getPlatform().equals(soB2cEntity.getDictPlatform())
+                    && req.getPlatformSkuNo().equals(soB2cDetailEntity.getPlatformSkuNo()))
+                    .sorted(Comparator.comparing(ListingInfoEntity::getUpdateTime).reversed()) // 倒序排序
+                    .map(ListingInfoEntity::getPlatformSkuName).findFirst().orElse("");
+            shudiyunB2cOrderDTO.setMsku_name(skuName);
+
             shudiyunB2cOrderDTO.setSku_code(skuVO.getSkuNo());
             shudiyunB2cOrderDTO.setSku_name(skuVO.getSkuName());
 
