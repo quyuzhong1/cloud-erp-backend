@@ -17,7 +17,6 @@ import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.common.message.constant.RedisKeyConstant;
 import com.common.message.service.mq.MQProducerService;
-import com.erp.model.dmp.entity.DmpSkuCostEntity;
 import com.erp.model.msg.dto.WarnMsgInfoDTO;
 import com.erp.model.msg.enums.WarnMsgTypeEnum;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
@@ -127,6 +126,7 @@ public class ReportOrderDataServiceImpl extends SuperServiceImpl<ReportOrderData
         if (ObjectUtil.isEmpty(virtualRuleDTO) || CollectionUtils.isEmpty(virtualRuleDTO.getExecTimeList())) {
             return;
         }
+        //判断是定时任务执行还是手动执行
         if (isAuto) {
             LocalTime now = CharSequenceUtil.isBlank(time) ? LocalTime.now() : LocalTime.parse(time,DateTimeFormatter.ofPattern("HH:mm"));
             boolean isGenerate = virtualRuleDTO.getExecTimeList().contains(LocalTime.parse(now.format(DateTimeFormatter.ofPattern("HH:mm")), DateTimeFormatter.ofPattern("HH:mm")));
@@ -134,10 +134,32 @@ public class ReportOrderDataServiceImpl extends SuperServiceImpl<ReportOrderData
                 return;
             }
         }
+        //查询redis缓存标记
+        String existKey = RedisKeyConstant.REPORT_VIRTUAL_ORDER_DATA;
+        boolean isHas = redisUtil.hasKey(existKey);
+        if (isHas) {
+          throw new ServiceException("已有任务进行中，请勿重复提交请求");
+        }
+        //添加缓存
+        redisUtil.set(existKey,isAuto);
+        //生成缺货统计、销售看板
+        try {
+            generateAllReport(viewDTO);
+        } catch (Exception e) {
+            log.error("生成虚拟仓报表数据失败,e = {}",e.getMessage());
+            //发送预警
+            sendWarnMsg(isAuto);
+            throw new ServiceException(CharSequenceUtil.format("生成虚拟仓报表数据失败，e = {}",e.getMessage()));
+        }
+    }
 
-        //添加redis缓存标记
-
-
+    /**
+     * 生成所有数据
+     * @author will
+     * @date 2024/11/22 14:32
+     * @param viewDTO
+     */
+    private void generateAllReport (CfgSettingVirtualDTO.ViewDTO viewDTO) {
         //是否拆分
         boolean isSplit = ObjectUtil.isEmpty(viewDTO.getVirtualRuleDTO()) ? false : viewDTO.getVirtualRuleDTO().getIsSplit();
         //生成源数据
@@ -188,7 +210,6 @@ public class ReportOrderDataServiceImpl extends SuperServiceImpl<ReportOrderData
         //生成销售看板数据
         generateReportOrderSales(reportOrderDataList,bomChildrenSkuList,skuInventoryList,virtualInventoryList,isSplit,viewDTO.getSalesDashboardDTO());
     }
-
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -718,36 +739,20 @@ public class ReportOrderDataServiceImpl extends SuperServiceImpl<ReportOrderData
         return addOrUpdateList;
     }
 
-
-    /**
-     * 添加redis缓存
-     */
-    private void setRedisSkuCost (DmpSkuCostEntity dmpSkuCostEntity) {
-        String existKey = StrUtil.format(RedisKeyConstant.DMP_SKU_COST_CODE, dmpSkuCostEntity.getSkuNo());
-        boolean isHas = redisUtil.hasKey(existKey);
-        if (isHas) {
-            //删除缓存
-            redisUtil.keys(existKey).forEach(key -> redisUtil.del(key));
-        }
-        //添加缓存
-        redisUtil.set(existKey,dmpSkuCostEntity);
-    }
-
     /**
      * 添加预警
      * @author will
      * @date 2024/11/22 10:40
-     * @param date
-     * @param currency
+     * @param isAuto
      */
-    public void sendWarnMsg(String date,String currency) {
+    public void sendWarnMsg(Boolean isAuto) {
         WarnMsgInfoDTO warnMsgInfo = new WarnMsgInfoDTO();
-        warnMsgInfo.setBizName("SKU成本信息同步");
+        warnMsgInfo.setBizName("虚拟仓报表生成");
         warnMsgInfo.setErpServerModuleEnum(ErpServerModuleEnum.ERP_SERVER_DMP);
-        warnMsgInfo.setTitle("汇率查询失败");
-        warnMsgInfo.setTableName("dmp_sku_cost");
-        warnMsgInfo.setTableId(currency);
-        warnMsgInfo.setKeyInfo(StrUtil.format("时间【{}】币别【{}】未找到汇率信息",date,currency));
+        warnMsgInfo.setTitle("虚拟仓报表生成失败");
+        warnMsgInfo.setTableName("ReportOrderDataEntity");
+        warnMsgInfo.setTableId(isAuto ? "自动" : "手动");
+        warnMsgInfo.setKeyInfo(StrUtil.format("{}生成虚拟仓报表失败",isAuto ? "自动" : "手动"));
         warnMsgInfo.setWarnMsgTypeEnum(WarnMsgTypeEnum.SYS_EXCEPTION);
         mqProducerService.sendWarnMsg(warnMsgInfo);
     }
