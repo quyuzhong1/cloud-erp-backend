@@ -1,6 +1,5 @@
 package com.erp.model.wms.dto;
 
-import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -64,11 +63,14 @@ public class SoReturnReceiveDetailDTO implements Serializable {
          * 退货原因 调用字典接口 类型=ReturnReason
          */
         private String returnReasonDict;
-
         /**
          * 是否子skuNo
          */
         private Boolean isChildSkuNo;
+        /**
+         * 平台sku
+         */
+        private String platformSkuNo;
     }
 
     /**
@@ -122,6 +124,14 @@ public class SoReturnReceiveDetailDTO implements Serializable {
          * 退货原因 调用字典接口 类型=ReturnReason
          */
         private String returnReasonDict;
+        /**
+         * 是否子skuNo
+         */
+        private Boolean isChildSkuNo;
+        /**
+         * 平台sku
+         */
+        private String platformSkuNo;
     }
 
     /**
@@ -192,9 +202,12 @@ public class SoReturnReceiveDetailDTO implements Serializable {
          */
         private String sourceDetailId;
         /**
+         * 是否子skuNo
+         */
+        private Boolean isChildSkuNo;
+        /**
          * 平台sku
          */
-        @TableField("platform_sku_no")
         private String platformSkuNo;
     }
 }

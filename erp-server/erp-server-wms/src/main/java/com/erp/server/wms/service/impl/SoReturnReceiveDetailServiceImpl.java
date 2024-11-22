@@ -15,7 +15,6 @@ import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.SoReturnReceiveDTO;
 import com.erp.model.wms.dto.SoReturnReceiveDetailDTO;
-import com.erp.model.wms.entity.SoReturnNoticeDetailEntity;
 import com.erp.model.wms.entity.SoReturnReceiveDetailEntity;
 import com.erp.rpc.oms.feign.SkuMappingFeign;
 import com.erp.rpc.oms.feign.SoInfoFeign;
@@ -83,18 +82,18 @@ public class SoReturnReceiveDetailServiceImpl extends SuperServiceImpl<SoReturnR
             List<SoB2cReturnDetailEntity> soB2cReturnDetailEntityList = FeignQuery.getByIds(SoB2cReturnDetailEntity.class,returnDetailIds);
             List<SoReturnReceiveDetailEntity> soReturnReceiveDetailEntities = this.listDetailBySourceIds(Collections.singletonList(dto.getSourceId()));
 
-            List<String> noticeDetailIds = dto.getDetailList().stream().map(SoReturnReceiveDetailDTO.Add::getNoticeDetailId).collect(Collectors.toList());
-            List<SoReturnNoticeDetailEntity> soReturnNoticeDetailEntities = soReturnNoticeDetailService.listByIds(noticeDetailIds);
-
+            List<String> skuIds = dto.getDetailList().stream().map(SoReturnReceiveDetailDTO.Add::getSkuId).collect(Collectors.toList());
+            List<SkuVO> skuInfoByIds = plmTaskFeign.listSkuProductByIds(skuIds);
+            //sku映射表
+            SkuMappingDTO.SkuParamDTO skuParamDTO = new SkuMappingDTO.SkuParamDTO();
+            skuParamDTO.setCutomerId(dto.getCustomerId());
+            List<String> skuNos = skuInfoByIds.stream().map(SkuVO::getSkuNo).collect(Collectors.toList());
+            skuParamDTO.setSkuNoList(skuNos);
+            List<SkuMappingDTO.ProductSkuInfoDTO> productSkuInfoList = skuMappingFeign.listSkuBySkuNos(skuParamDTO);
             for (SoReturnReceiveDetailDTO.Add detailDto : dto.getDetailList()) {
                 SoReturnReceiveDetailEntity detailEntity = new SoReturnReceiveDetailEntity();
-                //退货通知单详情
-                SoReturnNoticeDetailEntity soReturnNoticeDetailEntity = soReturnNoticeDetailEntities.stream().filter(v -> v.getId().equals(detailDto.getNoticeDetailId())).findFirst().orElse(new SoReturnNoticeDetailEntity());
-                //获取平台sku
-                detailEntity.setPlatformSkuNo(soReturnNoticeDetailEntity.getPlatformSkuNo());
-                detailEntity.setIsChildSkuNo(detailDto.getIsChildSkuNo());
+                SkuVO skuVO = skuInfoByIds.stream().filter(req -> req.getSkuId().equals(detailDto.getSkuId())).findFirst().orElse(new SkuVO());
                 detailEntity.setMainId(id);
-
                 detailEntity.setSkuId(detailDto.getSkuId());
                 detailEntity.setSkuNo(detailDto.getSkuNo());
                 detailEntity.setReturnQty(detailDto.getReturnQty());
@@ -126,8 +125,15 @@ public class SoReturnReceiveDetailServiceImpl extends SuperServiceImpl<SoReturnR
                             throw new ServiceException(ApiError.ERROR_92023, detailDto.getSkuNo());
                         }
                     }
-                    detailEntity.setReturnTypeDict(soReturnNoticeDetailEntity.getReturnTypeDict());
-                    detailEntity.setReturnReasonDict(soReturnNoticeDetailEntity.getReturnReasonDict());
+                    detailEntity.setReturnTypeDict(detailDto.getReturnTypeDict());
+                    detailEntity.setReturnReasonDict(detailDto.getReturnReasonDict());
+                }
+                //获取平台sku
+                if(StringUtils.isBlank(detailDto.getPlatformSkuNo())){
+                    String platformSkuNo = productSkuInfoList.stream().filter(v -> v.getSkuNo().equals(skuVO.getSkuNo())).map(SkuMappingDTO.ProductSkuInfoDTO::getPlatformSkuNo).findFirst().orElse("");
+                    detailEntity.setPlatformSkuNo(platformSkuNo);
+                }else {
+                    detailEntity.setPlatformSkuNo(detailDto.getPlatformSkuNo());
                 }
                 list.add(detailEntity);
             }
@@ -165,8 +171,14 @@ public class SoReturnReceiveDetailServiceImpl extends SuperServiceImpl<SoReturnR
             detailEntity.setSourceDetailId(detailDto.getSourceDetailId());
             detailEntity.setReturnTypeDict(detailDto.getReturnTypeDict());
             detailEntity.setReturnReasonDict(detailDto.getReturnReasonDict());
-            String platformSkuNo = productSkuInfoList.stream().filter(v -> v.getSkuNo().equals(skuVO.getSkuNo())).map(SkuMappingDTO.ProductSkuInfoDTO::getPlatformSkuNo).findFirst().orElse("");
-            detailEntity.setPlatformSkuNo(platformSkuNo);
+            //获取平台sku
+            if(StringUtils.isBlank(detailDto.getPlatformSkuNo())){
+                String platformSkuNo = productSkuInfoList.stream().filter(v -> v.getSkuNo().equals(skuVO.getSkuNo())).map(SkuMappingDTO.ProductSkuInfoDTO::getPlatformSkuNo).findFirst().orElse("");
+                detailEntity.setPlatformSkuNo(platformSkuNo);
+            }else {
+                detailEntity.setPlatformSkuNo(detailDto.getPlatformSkuNo());
+            }
+            detailEntity.setIsChildSkuNo(detailDto.getIsChildSkuNo());
             list.add(detailEntity);
         }
         this.saveBatch(list);
@@ -198,9 +210,17 @@ public class SoReturnReceiveDetailServiceImpl extends SuperServiceImpl<SoReturnR
                 operateLogService.batchAddModuleOperateLog("删除了一个SKU【%s】", ModuleTypeEnum.SO_RETURN_RECEIVE.getCode(),pairList,"编辑操作");
                 this.removeByIds(deleteIds);
             }
+            List<String> skuIds = dto.getDetailList().stream().map(SoReturnReceiveDetailDTO.Update::getSkuId).collect(Collectors.toList());
+            List<SkuVO> skuInfoByIds = plmTaskFeign.listSkuProductByIds(skuIds);
+            //sku映射表
+            SkuMappingDTO.SkuParamDTO skuParamDTO = new SkuMappingDTO.SkuParamDTO();
+            skuParamDTO.setCutomerId(dto.getCustomerId());
+            List<String> skuNos = skuInfoByIds.stream().map(SkuVO::getSkuNo).collect(Collectors.toList());
+            skuParamDTO.setSkuNoList(skuNos);
+            List<SkuMappingDTO.ProductSkuInfoDTO> productSkuInfoList = skuMappingFeign.listSkuBySkuNos(skuParamDTO);
             for (SoReturnReceiveDetailDTO.Update detailDto : dto.getDetailList()) {
+                SkuVO skuVO = skuInfoByIds.stream().filter(req -> req.getSkuId().equals(detailDto.getSkuId())).findFirst().orElse(new SkuVO());
                 SoReturnReceiveDetailEntity detailEntity = new SoReturnReceiveDetailEntity();
-
                 //此单历史签收数量
                 Integer historyReceiveQty = soReturnReceiveDetailEntities.stream().filter(req -> req.getSourceDetailId().equals(detailDto.getSourceDetailId())).map(SoReturnReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
                 if (CharSequenceUtil.isNotBlank(detailDto.getId())) {
@@ -219,20 +239,21 @@ public class SoReturnReceiveDetailServiceImpl extends SuperServiceImpl<SoReturnR
                     detailEntity.setSkuId(soReturnDetailEntity.getSkuId());
                     detailEntity.setSkuNo(soReturnDetailEntity.getSkuNo());
                 }else{
-                    SoReturnDetailEntity soReturnDetailEntity = soReturnDetailEntities.stream().filter(req -> req.getId().equals(detailDto.getSourceDetailId())).findFirst().orElse(null);
-                    if (ObjectUtil.isEmpty(soReturnDetailEntity)) {
-                        throw new ServiceException(ApiError.ERROR_92023, detailDto.getSkuNo());
+                    if(StringUtils.isNotBlank(detailDto.getSourceDetailId())){
+                        SoReturnDetailEntity soReturnDetailEntity = soReturnDetailEntities.stream().filter(req -> req.getId().equals(detailDto.getSourceDetailId())).findFirst().orElse(null);
+                        if (ObjectUtil.isEmpty(soReturnDetailEntity)) {
+                            throw new ServiceException(ApiError.ERROR_92023, detailDto.getSkuNo());
+                        }
+                        Integer returnQty = soReturnDetailEntities.stream().filter(req -> req.getId().equals(detailDto.getSourceDetailId())).map(SoReturnDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
+                        if (detailDto.getReceiveQty() + historyReceiveQty > returnQty) {
+                            throw new ServiceException(ApiError.ERROR_92020);
+                        }
                     }
-                    Integer returnQty = soReturnDetailEntities.stream().filter(req -> req.getId().equals(detailDto.getSourceDetailId())).map(SoReturnDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
-                    if (detailDto.getReceiveQty() + historyReceiveQty > returnQty) {
-                        throw new ServiceException(ApiError.ERROR_92020);
-                    }
-                    detailEntity.setSkuId(soReturnDetailEntity.getSkuId());
-                    detailEntity.setSkuNo(soReturnDetailEntity.getSkuNo());
                 }
-
                 detailEntity.setId(detailDto.getId());
                 detailEntity.setMainId(dto.getId());
+                detailEntity.setSkuId(detailDto.getSkuId());
+                detailEntity.setSkuNo(skuVO.getSkuNo());
                 detailEntity.setReturnQty(detailDto.getReturnQty());
                 detailEntity.setReceiveQty(detailDto.getReceiveQty());
                 detailEntity.setRemark(detailDto.getRemark());
@@ -240,10 +261,13 @@ public class SoReturnReceiveDetailServiceImpl extends SuperServiceImpl<SoReturnR
                 detailEntity.setReturnTypeDict(detailDto.getReturnTypeDict());
                 detailEntity.setReturnReasonDict(detailDto.getReturnReasonDict());
                 //获取平台sku
-                String platformSkuNo = soReturnDetailEntities.stream()
-                        .filter(v -> v.getId().equals(detailDto.getSourceDetailId()))
-                        .map(SoReturnDetailEntity::getPlatformSkuNo).findFirst().orElse("");
-                detailEntity.setPlatformSkuNo(platformSkuNo);
+                if(StringUtils.isBlank(detailDto.getPlatformSkuNo())){
+                    String platformSkuNo = productSkuInfoList.stream().filter(v -> v.getSkuNo().equals(skuVO.getSkuNo())).map(SkuMappingDTO.ProductSkuInfoDTO::getPlatformSkuNo).findFirst().orElse("");
+                    detailEntity.setPlatformSkuNo(platformSkuNo);
+                }else {
+                    detailEntity.setPlatformSkuNo(detailDto.getPlatformSkuNo());
+                }
+                detailEntity.setIsChildSkuNo(detailDto.getIsChildSkuNo());
                 list.add(detailEntity);
                 //修改操作日志
                 if (CharSequenceUtil.isNotBlank(detailEntity.getId())) {
@@ -293,7 +317,6 @@ public class SoReturnReceiveDetailServiceImpl extends SuperServiceImpl<SoReturnR
         List<String> skuNos = skuInfoByIds.stream().map(SkuVO::getSkuNo).collect(Collectors.toList());
         skuParamDTO.setSkuNoList(skuNos);
         List<SkuMappingDTO.ProductSkuInfoDTO> productSkuInfoList = skuMappingFeign.listSkuBySkuNos(skuParamDTO);
-
         for (SoReturnReceiveDetailDTO.Update detailDto : dto.getDetailList()) {
             SoReturnReceiveDetailEntity detailEntity = new SoReturnReceiveDetailEntity();
             SkuVO skuVO = skuInfoByIds.stream().filter(req -> req.getSkuId().equals(detailDto.getSkuId())).findFirst().orElse(new SkuVO());
@@ -307,8 +330,14 @@ public class SoReturnReceiveDetailServiceImpl extends SuperServiceImpl<SoReturnR
             detailEntity.setSourceDetailId(detailDto.getSourceDetailId());
             detailEntity.setReturnTypeDict(detailDto.getReturnTypeDict());
             detailEntity.setReturnReasonDict(detailDto.getReturnReasonDict());
-            String platformSkuNo = productSkuInfoList.stream().filter(v -> v.getSkuNo().equals(skuVO.getSkuNo())).map(SkuMappingDTO.ProductSkuInfoDTO::getPlatformSkuNo).findFirst().orElse("");
-            detailEntity.setPlatformSkuNo(platformSkuNo);
+            //获取平台sku
+            if(StringUtils.isBlank(detailDto.getPlatformSkuNo())){
+                String platformSkuNo = productSkuInfoList.stream().filter(v -> v.getSkuNo().equals(skuVO.getSkuNo())).map(SkuMappingDTO.ProductSkuInfoDTO::getPlatformSkuNo).findFirst().orElse("");
+                detailEntity.setPlatformSkuNo(platformSkuNo);
+            }else {
+                detailEntity.setPlatformSkuNo(detailDto.getPlatformSkuNo());
+            }
+            detailEntity.setIsChildSkuNo(detailDto.getIsChildSkuNo());
             list.add(detailEntity);
             //修改操作日志
             if (CharSequenceUtil.isNotBlank(detailEntity.getId())) {

@@ -127,7 +127,9 @@
             srnd.return_reason_dict,
             srnd.remark,
             srn.approve_status,
-            srn.return_logistic_code
+            srn.return_logistic_code,
+            srnd.platform_sku_no,
+            srnd.is_child_sku_no
         FROM so_return_notice_detail srnd
         INNER JOIN so_return_notice srn ON srn.id = srnd.main_id AND srnd.is_deleted = FALSE
         WHERE srn.is_deleted = FALSE

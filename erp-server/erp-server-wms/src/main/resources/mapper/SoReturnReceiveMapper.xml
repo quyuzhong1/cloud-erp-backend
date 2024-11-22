@@ -164,7 +164,9 @@
             srrd.return_type_dict,
             srrd.return_reason_dict,
             srrd.remark,
-            srr.return_logistic_code
+            srr.return_logistic_code,
+            srrd.is_child_sku_no,
+            srrd.platform_sku_no
         FROM so_return_receive srr
         INNER JOIN so_return_receive_detail srrd ON srr.id = srrd.main_id AND srr.is_deleted=FALSE
         WHERE srrd.is_deleted=FALSE

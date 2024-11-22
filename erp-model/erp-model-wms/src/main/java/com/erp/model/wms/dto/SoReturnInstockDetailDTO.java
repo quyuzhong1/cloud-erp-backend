@@ -94,6 +94,10 @@ public class SoReturnInstockDetailDTO {
          * 是否子skuNo
          */
         private Boolean isChildSkuNo;
+        /**
+         * 平台sku
+         */
+        private String platformSkuNo;
     }
 
     /**
@@ -161,8 +165,6 @@ public class SoReturnInstockDetailDTO {
          * 平台sku
          */
         private String platformSkuNo;
-
-
         /**
          * 是否子skuNo
          */
