@@ -95,7 +95,10 @@ public class DmpInputAmzOrderReceiverDmpHandler extends DmpInputAmzOrderDoChildD
             ) {
                 receiverName = shippingAddress.getName();
             }
-            dmpInputMongoChild.put("buyerName", receiverName);
+            String buyerName = dmpInputMongoChild.getOrDefault("buyerName", "").toString();
+            if (StringUtils.isBlank(buyerName)){
+                dmpInputMongoChild.put("buyerName", receiverName);
+            }
 
             String secondAddress = StrUtil.concat(true, shippingAddress.getAddressLine2(), shippingAddress.getAddressLine3());
             dmpInputMongoChild.put("secondStreet", secondAddress);
