@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -36,8 +37,6 @@ public class DmpInputAmzOrderDmpHandler extends DmpInputDbConvertDmpHandler {
 
     @Override
     protected void afterConvertData(Map<List<Map<String, Object>>, List<TreeMap<String, Object>>> dmpInputDataDmpRelationMaps) {
-        super.afterConvertData(dmpInputDataDmpRelationMaps);
-
         Set<List<Map<String, Object>>> keySet = dmpInputDataDmpRelationMaps.keySet();
         if (CollUtil.isEmpty(keySet)) {
             return;
@@ -46,12 +45,6 @@ public class DmpInputAmzOrderDmpHandler extends DmpInputDbConvertDmpHandler {
         for (List<Map<String, Object>> key : keySet) {
             orderIdList.addAll(key.stream().map(f -> f.get("amazonOrderId").toString()).collect(Collectors.toList()));
         }
-
-        // 查询明细信息
-//        List<ParamData> paramDataList = new ArrayList<>();
-//        paramDataList.add(new ParamData("amazonOrderId", "amazonOrderId", PannoEnum.IN, orderIdList));
-//        paramDataList.add(new ParamData(DmpInputMongoHandler.MONGO_BASE_NEXTLEVELID, DmpInputMongoHandler.MONGO_BASE_NEXTLEVELID, PannoEnum.EQ, nextLevelId));
-//        List<Map<String, Object>> findMongoData = mongoService.findMongoData(paramDataList, "amazon_order_items_data");
 
         // 移除马帮
         List<DmpSoInfoEntity> otherlist = dmpSoInfoService.lambdaQuery()
@@ -68,9 +61,6 @@ public class DmpInputAmzOrderDmpHandler extends DmpInputDbConvertDmpHandler {
                     .set(DmpSoDetailEntity::getIsDeleted, true)
                     .update();
         }
-        // Map<订单ID, List<订单明细>>
-//        Map<String, List<Map<String, Object>>> orderIdDetailMaps = findMongoData.stream()
-//                .collect(Collectors.groupingBy(f -> f.get("amazonOrderId").toString()));
 
         for (Map.Entry<List<Map<String, Object>>, List<TreeMap<String, Object>>> dmpInputDataDmpRelationMap :
                 dmpInputDataDmpRelationMaps.entrySet()) {
@@ -79,7 +69,6 @@ public class DmpInputAmzOrderDmpHandler extends DmpInputDbConvertDmpHandler {
             Map<String, Object> mongoDataMap = mongoDataMaps.get(0);
             Order sourceOrder = JSON.parseObject(JSON.toJSONString(mongoDataMap), Order.class);
             for (TreeMap<String, Object> dmpDataMap : dmpDataMaps) {
-//                dmpDataMap.put("shopId", nextLevelId);
 
                 // 付款金额
                 BigDecimal payMount = null == sourceOrder.getOrderTotal() ? BigDecimal.ZERO : new BigDecimal(sourceOrder.getOrderTotal().getAmount());
@@ -118,6 +107,14 @@ public class DmpInputAmzOrderDmpHandler extends DmpInputDbConvertDmpHandler {
 
                 dmpDataMap.put("orderStatus", sourceOrder.convertBillStatus());
                 dmpDataMap.put("payStatus", sourceOrder.convertPayStatus());
+
+                // 订单日期
+                LocalDateTime purchaseLocalDateTime = sourceOrder.convertPurchaseLocalDateTime();
+                dmpDataMap.put("billDate", purchaseLocalDateTime.toLocalDate());
+
+                // 未付款无付款时间
+                dmpDataMap.put("payTime", "payment".equalsIgnoreCase(sourceOrder.convertPayStatus()) ? null : purchaseLocalDateTime);
+
                 // 审核状态状态
                 // （ApproveStatus字典类型）
                 dmpDataMap.put("approveStatus", sourceOrder.convertApproveStatusStr());

@@ -1,7 +1,6 @@
 package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.ObjectUtil;
@@ -164,6 +163,9 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
     @Resource
     private RequisitionApplicationService requisitionApplicationService;
 
+    @Resource
+    private SoDeliveryNoticeChangeService soDeliveryNoticeChangeService;
+
     @Override
     public PagingVO<SoDeliveryNoticeDTO.PagingView> paging(PagingDTO<SoDeliveryNoticeDTO.PagingParam> pagingParamDTO) {
         pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
@@ -200,7 +202,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
                 } else {
                     obj.setDeliveryStatusName(DeliveryStatusEnum.UN_SHIPPED.getName());
                 }
-
+                obj.setIsPicked(obj.getDeliveryQty().equals(obj.getPickedQty()));
                 ProductDetailEntity productDetailEntity = detailEntityList.stream().filter(entityClass -> entityClass.getId().equals(obj.getSkuId())).findFirst().orElse(new ProductDetailEntity());
                 SoDetailEntity soDetailEntity = soDetailEntities.stream().filter(detail -> detail.getId().equals(obj.getSourceDetailId())).findFirst().orElse(new SoDetailEntity());
                 obj.setProductName(productDetailEntity.getName());
@@ -209,24 +211,33 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
                 CustomerInfoEntity customerInfoEntity = customerInfoEntities.stream().filter(req -> req.getId().equals(obj.getCustomerId())).findFirst().orElse(new CustomerInfoEntity());
                 obj.setCustomerName(customerInfoEntity.getName());
                 //如果装箱数量大于发货数量，拆分处理
-                if(Objects.nonNull(obj.getDeliveryQty()) && Objects.nonNull(obj.getPackingQty()) && obj.getPackingQty() > obj.getDeliveryQty()){
-                    String key = obj.getId() + obj.getSkuId();
-                    if(qtyMap.containsKey(key)){
-                        Integer reduceQty = qtyMap.get(key);
-                        if(reduceQty > obj.getDeliveryQty()){
-                            obj.setPackingQty(obj.getDeliveryQty());
-                            qtyMap.put(key,reduceQty - obj.getDeliveryQty());
-                        }else{
-                            obj.setPackingQty(reduceQty);
-                            qtyMap.put(key,0);
-                        }
+                String key = obj.getId() + obj.getSkuId();
+                if(qtyMap.containsKey(key)){
+                    Integer reduceQty = qtyMap.get(key);
+                    if(reduceQty > obj.getDeliveryQty()){
+                        obj.setPackingQty(obj.getDeliveryQty());
+                        qtyMap.put(key,reduceQty - obj.getDeliveryQty());
                     }else{
+                        obj.setPackingQty(reduceQty);
+                        qtyMap.put(key,0);
+                    }
+                }else{
+                    if(obj.getPackingQty() > obj.getDeliveryQty()){
                         qtyMap.put(key,obj.getPackingQty() - obj.getDeliveryQty());
                         obj.setPackingQty(obj.getDeliveryQty());
+                    }else{
+                        qtyMap.put(key,0);
+                        obj.setPackingQty(obj.getPackingQty());
                     }
                 }
             });
         }
+        Map<String,List<SoDeliveryNoticeDTO.PagingView>> map = records.stream().collect(Collectors.groupingBy(SoDeliveryNoticeDTO.PagingView::getId));
+        map.forEach((key,val)->{
+            for (SoDeliveryNoticeDTO.PagingView pagingView : val) {
+                pagingView.setIsPicked(pagingView.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getCode())&&val.stream().allMatch(SoDeliveryNoticeDTO.PagingView::getIsPicked));
+            }
+        });
         return new PagingVO(pageData);
     }
 
@@ -558,6 +569,11 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
 
         //TODO 待加审核流程
         if (ApproveTypeEnum.PASS.getStatus().equals(type)) {
+            List<SoDeliveryNoticeChangeEntity> soDeliveryNoticeChangeEntities = soDeliveryNoticeChangeService.listNoApproveByNoticeId(entity.getId());
+            if(CollectionUtils.isNotEmpty(soDeliveryNoticeChangeEntities)){
+                throw new ServiceException("存在未审核的变更单，无法审核通知单");
+            }
+
             LoginUser userInfo = UserContext.getDefaultLoginUser();
             //审核通过
             lambdaUpdate().set(SoDeliveryNoticeEntity::getApproveStatus, ApproveStatusEnum.APPROVE.getStatus())
@@ -1689,5 +1705,40 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         String msg = "【{}】更新了中转仓配置由【{}】改为【{}】";
         operateLogService.addModuleOperateLog(CharSequenceUtil.format(msg, UserContext.getLoginUser().getUserName(),entity.getTransferWarehouseIds(),transferWarehouseIdList), ModuleTypeEnum.SO_DELIVERY_NOTICE.getCode(), entity.getId(), "批量修改中转仓配置");
         return BatchResultDTO.success(entity.getId(),entity.getCode(),"修改中转仓配置成功");
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void updateByNoticeChange(List<SoDeliveryNoticeDetailEntity> addList, List<SoDeliveryNoticeDetailEntity> updateList, List<SoDeliveryNoticeDetailEntity> deleteList) {
+        // 添加日志
+        List<OperateLogDTO.AddModuleOperateLogDTO> logList = new ArrayList<>();
+        if (CollectionUtils.isNotEmpty(addList)) {
+            addList.forEach(v->{
+                logList.add(new OperateLogDTO.AddModuleOperateLogDTO(StrUtil.format("发货通知变更单新增明细sku{}",v.getSkuNo()),ModuleTypeEnum.SO_DELIVERY_NOTICE.getCode(),v.getMainId(),"新增sku"));
+            });
+            soDeliveryNoticeDetailService.saveBatch(addList);
+        }
+
+        if (CollectionUtils.isNotEmpty(updateList)) {
+            updateList.forEach(v->{
+                if(v.getSkuNo().equals(v.getChangeBeforeSkuNo())){
+                    logList.add(new OperateLogDTO.AddModuleOperateLogDTO(StrUtil.format("发货通知变更单修改明细sku【{}】数量，从{}修改为{}",v.getSkuNo(),v.getChangeBeforeQty(),v.getDeliveryQty()),ModuleTypeEnum.SO_DELIVERY_NOTICE.getCode(),v.getMainId(),"修改sku"));
+                }else{
+                    logList.add(new OperateLogDTO.AddModuleOperateLogDTO(StrUtil.format("发货通知变更单修改明细sku,从【{}】修改为【{}】，数量，从{}修改为{}",v.getSkuNo(),v.getChangeBeforeSkuNo(),v.getChangeBeforeQty(),v.getDeliveryQty()),ModuleTypeEnum.SO_DELIVERY_NOTICE.getCode(),v.getMainId(),"修改sku"));
+                }
+            });
+            soDeliveryNoticeDetailService.updateBatchById(updateList);
+        }
+
+        if (CollectionUtils.isNotEmpty(deleteList)) {
+            deleteList.forEach(v->{
+                logList.add(new OperateLogDTO.AddModuleOperateLogDTO(StrUtil.format("删除sku{}",v.getSkuNo()),ModuleTypeEnum.SO_DELIVERY_NOTICE.getCode(),v.getMainId(),"删除明细"));
+            });
+            List<String> deleteIds = deleteList.stream().map(v->v.getId()).collect(Collectors.toList());
+            soDeliveryNoticeDetailService.removeByIds(deleteIds);
+        }
+        if(CollectionUtils.isNotEmpty(logList)){
+            operateLogService.batchAddModuleOperateLog(logList);
+        }
     }
 }

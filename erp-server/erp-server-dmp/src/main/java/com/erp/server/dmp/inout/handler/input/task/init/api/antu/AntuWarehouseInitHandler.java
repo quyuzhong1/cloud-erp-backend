@@ -56,9 +56,17 @@ public class AntuWarehouseInitHandler extends DmpInputInitHandler {
 		if(CollUtil.isEmpty(overseasProviderEntityList)) {
 			return Collections.emptyList();
 		}
-		for (OverseasProviderEntity overseasProviderEntity : overseasProviderEntityList) {
-			if (overseasProviderEntityList.get(0).getEnableDate().compareTo(LocalDate.now()) > 0) {
-				continue;
+		// 取对应授权ID授权
+		OverseasProviderEntity overseasProviderEntity = overseasProviderEntityList.stream()
+				.filter(e -> e.getId().equalsIgnoreCase(dmpInputTaskEntity.getNextLevelId()))
+				.findFirst()
+				.orElse(null);
+		if(null == overseasProviderEntity) {
+			throw new ServiceException("安兔对应授权ID信息不存在");
+		}
+
+			if (overseasProviderEntity.getEnableDate().isAfter(LocalDate.now())) {
+				return Collections.emptyList();
 			}
 			ThirdWarehouseContext.setAuthMap(overseasProviderEntity.getAuthJson());
 			while(true) {
@@ -99,7 +107,6 @@ public class AntuWarehouseInitHandler extends DmpInputInitHandler {
 			});
 			dmpInputTaskInitDTO.setMsg(parseArray.toJSONString());
 			resultList.add(dmpInputTaskInitDTO);
-		}
 		return resultList;
 	}
 

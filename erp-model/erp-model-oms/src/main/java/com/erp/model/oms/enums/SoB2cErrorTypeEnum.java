@@ -25,7 +25,7 @@ public enum SoB2cErrorTypeEnum {
     THIRD_WAREHOUSE_OUT_EXCEPTION("thirdWarehouseOutException",  "第三方仓出库异常"),
     GENERATE_TRANSFER_INFO("generateTransferInfo",  "生成直接调拨单"),
     VIRTUAL_FREEZE_QTY("virtualFreezeQty",  "扣减虚拟冻结库存"),
-
+    ORDER_FETCH("orderFetch",  "订单拉取失败"),
     ;
     /**
      * 类型

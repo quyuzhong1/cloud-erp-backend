@@ -73,7 +73,8 @@ public class DmpInputAmzFbaShipmentDetailInitHandler extends DmpInputAmzCommonIn
         // 初始化API
         FbaInboundApi api = AmazonSpApiInitUtils.create(FbaInboundApi.class, shopInfoDTO, false);
 
-        List<JSONObject> allItemList = new LinkedList<>();
+        List<DmpInputTaskInitDTO> dmpInputTaskInitDTOList = new ArrayList<>();
+
         for (Map<String, Object> findMongo : findMongoData) {
             String shipmentId = findMongo.get("shipmentId").toString();
             // 检查来源
@@ -86,7 +87,7 @@ public class DmpInputAmzFbaShipmentDetailInitHandler extends DmpInputAmzCommonIn
             Object resultObj = redisUtil.get(shipmentIdResultKey);
             if (null != resultObj) {
                 List<JSONObject> curItemList = JSONArray.parseArray(resultObj.toString(), JSONObject.class);
-                allItemList.addAll(curItemList);
+                dmpInputTaskInitDTOList.add(DmpInputTaskInitDTO.initMsg(JSON.toJSONString(curItemList)));
                 continue;
             }
             AmazonRequestTypeRateLimiterEnum requestTypeRateLimiterEnum = AmazonRequestTypeRateLimiterEnum.FBA_SHIPMENT_DETAIL;
@@ -108,7 +109,7 @@ public class DmpInputAmzFbaShipmentDetailInitHandler extends DmpInputAmzCommonIn
                 List<JSONObject> curJsonList = itemData.stream().map(e -> (JSONObject) JSON.toJSON(e)).collect(Collectors.toList());
                 // 缓存倒redis
                 redisUtil.set(shipmentIdResultKey, JSONArray.toJSONString(curJsonList), 300);
-                allItemList.addAll(curJsonList);
+                dmpInputTaskInitDTOList.add(DmpInputTaskInitDTO.initMsg(JSON.toJSONString(curJsonList)));
             } catch (ApiException e) {
                 if (429 == e.getCode()) {
                     // 设置动态速率，失效时间=1/limit
@@ -119,7 +120,7 @@ public class DmpInputAmzFbaShipmentDetailInitHandler extends DmpInputAmzCommonIn
             }
             log.warn("查询亚马逊FBA货件详情成功, shipmentId={}, platformShopCode={}", shipmentId, shopInfoDTO.getPlatformShopCode());
         }
-        return Collections.singletonList(DmpInputTaskInitDTO.initMsg(JSON.toJSONString(allItemList)));
+        return dmpInputTaskInitDTOList;
     }
 
 }

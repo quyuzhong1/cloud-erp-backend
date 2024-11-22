@@ -25,10 +25,7 @@ import com.erp.model.dmp.dto.CfgApiFieldMapDTO;
 import com.erp.model.dmp.entity.CfgApiAuthEntity;
 import com.erp.model.dmp.entity.CfgApiFieldMapValueEntity;
 import com.erp.model.dmp.entity.PlatformEntity;
-import com.erp.model.dmp.enums.ApiFieldTypeEnum;
-import com.erp.model.dmp.enums.ApiGroupTypeEnum;
-import com.erp.model.dmp.enums.KingdeeDocStatusEnum;
-import com.erp.model.dmp.enums.KingdeePushModuleEnum;
+import com.erp.model.dmp.enums.*;
 import com.erp.rpc.oms.feign.OmsTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.scm.feign.ScmTaskFeign;
@@ -37,11 +34,11 @@ import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.sdk.third.kingdee.utils.KingdeeApiUtils;
 import com.erp.sdk.third.kingdee.utils.KingdeeUtils;
 import com.erp.server.dmp.push.service.kingdee.KingdeeCommonService;
-import com.erp.server.dmp.service.CfgApiAuthService;
-import com.erp.server.dmp.service.CfgApiFieldMapService;
-import com.erp.server.dmp.service.CfgApiFieldMapValueService;
-import com.erp.server.dmp.service.PlatformService;
-import com.kingdee.bos.webapi.entity.*;
+import com.erp.server.dmp.service.*;
+import com.kingdee.bos.webapi.entity.RepoResult;
+import com.kingdee.bos.webapi.entity.RepoRet;
+import com.kingdee.bos.webapi.entity.RepoStatus;
+import com.kingdee.bos.webapi.entity.SuccessEntity;
 import com.kingdee.bos.webapi.sdk.K3CloudApi;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -96,6 +93,8 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
     @Resource
     private OmsTaskFeign omsTaskFeign;
 
+    @Resource
+    private CfgSettingService cfgSettingService;
 
     @Override
     public JSONObject makeApiFieldJson(Map<String, Object> map, String apiPlatformId, Integer moduleType) {
@@ -337,6 +336,12 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
             msg = "修改数据";
         }
         log.warn("msg>>>>>{}，param>>>>>>>{},json>>>>>>>>{}", msg, JSONUtil.toJsonStr(param), json);
+        //是否进行基础性校验
+        String value = cfgSettingService.getValue(SettingEnum.KINGDEE_BASE_CHECK_KEY);
+        if (StrUtil.isNotBlank(value)) {
+            Boolean isCheck = Boolean.valueOf(value);
+            param.setIsVerifyBaseDataField(isCheck);
+        }
         RepoResult save = apiUtils.saveKingDee(param);
         if (!save.getResponseStatus().isIsSuccess()) {
             throw new ServiceException(ApiError.ERROR_ADD_KINGDEE_DATA);
@@ -364,6 +369,12 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
         String msg = "新增数据";
         if (CollectionUtils.isNotEmpty(param.getNeedUpDateFields())) {
             msg = "修改数据";
+        }
+        //是否进行基础性校验
+        String value = cfgSettingService.getValue(SettingEnum.KINGDEE_BASE_CHECK_KEY);
+        if (StrUtil.isNotBlank(value)) {
+            Boolean isCheck = Boolean.valueOf(value);
+            param.setIsVerifyBaseDataField(isCheck);
         }
         log.info("msg>>>>>{}，param>>>>>>>{}", msg, param);
         RepoResult save = apiUtils.saveKingDee(param);
@@ -637,7 +648,14 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
             throw new ServiceException(ApiError.ERROR_97025);
         }
         JSONObject json = kingdeeCommonService.makeApiFieldJson(dataMap, platformEntity.getId(), modelType);
-        RepoResult saveResult = apiUtils.saveKingDee(new KingdeeParamDTO.SaveParamDTO(json));
+        KingdeeParamDTO.SaveParamDTO param = new KingdeeParamDTO.SaveParamDTO(json);
+        //是否进行基础性校验
+        String value = cfgSettingService.getValue(SettingEnum.KINGDEE_BASE_CHECK_KEY);
+        if (StrUtil.isNotBlank(value)) {
+            Boolean isCheck = Boolean.valueOf(value);
+            param.setIsVerifyBaseDataField(isCheck);
+        }
+        RepoResult saveResult = apiUtils.saveKingDee(param);
         boolean save = saveResult.getResponseStatus().isIsSuccess();
         if (!save) {
             log.error("KingdeeCommonServiceImpl>>>addKingdeeRecord>>>调用金蝶保存接口失败saveResult:{}", saveResult);
@@ -679,6 +697,13 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
             msg = "修改数据";
         }
         log.warn("msg>>>>>{}，param>>>>>>>{},json>>>>>>>>{}", msg, JSONUtil.toJsonStr(param), json);
+        //是否进行基础性校验
+        String value = cfgSettingService.getValue(SettingEnum.KINGDEE_BASE_CHECK_KEY);
+        if (StrUtil.isNotBlank(value)) {
+            Boolean isCheck = Boolean.valueOf(value);
+            param.setIsVerifyBaseDataField(isCheck);
+        }
+
         RepoResult save = apiUtils.saveKingDee(param);
         if (!save.getResponseStatus().isIsSuccess()) {
             throw new ServiceException(ApiError.ERROR_ADD_KINGDEE_DATA);

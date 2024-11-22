@@ -63,6 +63,8 @@ public enum SettingEnum {
 
     //支持推送仓位的金蝶仓库
     PUSH_KINGDEE_WAREHOUSE_LOCATION_LIST("push_kingdee_warehouse_location",SettingEnum.PUSH_KINGDEE_WAREHOUSE_LOCATION,"支持推送仓位的金蝶仓库"),
+    //是否支持金蝶基础性校验
+    KINGDEE_BASE_CHECK_KEY("kingdee_base_check",SettingEnum.KINGDEE_BASE_CHECK,"是否支持金蝶基础性校验"),
 
 
     //oms_shopify_hmac
@@ -151,7 +153,10 @@ public enum SettingEnum {
      */
     public static final String PUSH_KINGDEE_WAREHOUSE_LOCATION = "push_kingdee_warehouse_location";
 
-
+    /**
+     * 是否支持金蝶基础性校验
+     */
+    public static final String KINGDEE_BASE_CHECK = "kingdee_base_check";
 
     SettingEnum(String key, String type, String value) {
         this.key = key;

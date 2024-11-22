@@ -235,6 +235,9 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Cf
             case FS_FIRSTMILEDELIVERY_WAITHANDLE_NOTICE:
                 jsonObject = JSONUtil.parseObj(addDTO.getFsFirstMileDeliveryWaitHandleNoticeDTO());
                 break;
+            case FS_WAREHOUSE_LOCATION_REPLENISH_NOTICE:
+                jsonObject = JSONUtil.parseObj(addDTO.getFsWlrNoticeDTO());
+                break;
             default:
                 break;
         }
@@ -314,6 +317,10 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Cf
             case SUBCONTRACT_IN_STOCK:
                 CfgSettingValueDTO.SubcontractInStock subcontractInStock = BeanUtil.toBean(cfgSetting.getDataJson(), CfgSettingValueDTO.SubcontractInStock.class);
                 viewDTO.setSubcontractInStock(subcontractInStock);
+                break;
+            case FS_WAREHOUSE_LOCATION_REPLENISH_NOTICE:
+                CfgSettingValueDTO.FsQcNoticeDTO fsWlrNoticeDTO = BeanUtil.toBean(cfgSetting.getDataJson(), CfgSettingValueDTO.FsQcNoticeDTO.class);
+                viewDTO.setFsWlrNoticeDTO(fsWlrNoticeDTO);
                 break;
             case FS_REQUISITION_WAITHANDLE_NOTICE:
                 CfgSettingValueDTO.FsRequisitionNoticeDTO fsRequisitionWaitHandle = BeanUtil.toBean(cfgSetting.getDataJson(), CfgSettingValueDTO.FsRequisitionNoticeDTO.class);

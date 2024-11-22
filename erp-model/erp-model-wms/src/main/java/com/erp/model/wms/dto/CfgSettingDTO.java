@@ -107,6 +107,11 @@ public class CfgSettingDTO implements Serializable {
         private CfgSettingValueDTO.SubcontractInStock subcontractInStock;
 
         /**
+         * 飞书仓位补货通知配置
+         */
+        private CfgSettingValueDTO.FsQcNoticeDTO fsWlrNoticeDTO;
+
+        /**
          * 飞书要货申请待处理配置
          */
         private CfgSettingValueDTO.FsRequisitionNoticeDTO fsRequisitionWaitHandleDTO;

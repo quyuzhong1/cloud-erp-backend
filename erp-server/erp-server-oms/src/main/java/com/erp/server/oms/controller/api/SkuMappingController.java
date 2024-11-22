@@ -3,6 +3,7 @@ package com.erp.server.oms.controller.api;
 
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.dto.AdvanceQueryContainer;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.BatchResultDTO;
@@ -290,6 +291,45 @@ public class SkuMappingController extends BaseController {
     @PostMapping("/updateNotMatch")
     public ApiResult<Boolean> updateNotMatch(@RequestBody @Validated SkuMappingDTO.UpdateNotMatchDTO dto){
         skuMappingService.updateNotMatch(dto);
+        return success();
+    }
+
+    /**
+     * 平台同步平台商品view
+     * @return
+     */
+    @PostMapping("/syncPlatformProductView")
+    @WebAdvanceQuery
+    public ApiResult<PagingVO<SkuMappingDTO.SyncPlatformProductView>> syncPlatformProductView(@RequestBody PagingDTO<AdvanceQueryContainer> advanceQueryDTO){
+        return success(skuMappingService.syncPlatformProductView(advanceQueryDTO));
+    }
+
+    /**
+     * 仓库同步平台商品view
+     * @return
+     */
+    @PostMapping("/syncWarehouseProductView")
+    @WebAdvanceQuery
+    public ApiResult<PagingVO<SkuMappingDTO.SyncWarehouseProductView>> syncWarehouseProductView(@RequestBody PagingDTO<AdvanceQueryContainer> advanceQueryDTO){
+        return success(skuMappingService.syncWarehouseProductView(advanceQueryDTO));
+    }
+    /**
+     * 平台同步平台商品
+     * @return
+     */
+    @PostMapping("/syncPlatformProduct")
+    public ApiResult<Boolean> syncPlatformProduct(@RequestBody @Validated BaseIdsDTO.IdsDTO dto){
+        skuMappingService.syncPlatformProduct(dto.getIds());
+        return success();
+    }
+
+    /**
+     * 仓库同步平台商品
+     * @return
+     */
+    @PostMapping("/syncWarehouseProduct")
+    public ApiResult<Boolean> syncWarehouseProduct(@RequestBody @Validated BaseIdsDTO.IdsDTO dto){
+        skuMappingService.syncWarehouseProduct(dto.getIds());
         return success();
     }
 }
