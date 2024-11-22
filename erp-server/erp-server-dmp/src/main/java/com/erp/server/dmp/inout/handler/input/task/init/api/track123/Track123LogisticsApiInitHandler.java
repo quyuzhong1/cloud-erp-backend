@@ -4,7 +4,9 @@ import cn.hutool.core.collection.ListUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.extension.conditions.query.LambdaQueryChainWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.constant.RedisCacheConstants;
@@ -29,7 +31,9 @@ import com.erp.server.dmp.inout.dto.base.DmpInputTaskInitDTO;
 import com.erp.server.dmp.inout.dto.request.DmpInputApiInitRequest;
 import com.erp.server.dmp.inout.handler.input.task.init.api.DmpInputApiInitHandler;
 //import com.erp.server.dmp.service.DmpLogisticsTrackRegisterService;
+import com.erp.server.dmp.mapper.ForeignMapper;
 import com.erp.server.dmp.service.DmpLogisticsTrackService;
+import com.erp.server.dmp.service.ForeignService;
 import com.sdk.tms.track123.model.request.TrackRequest;
 import com.sdk.tms.track123.model.response.*;
 import com.sdk.tms.track123.service.TrackShipperService;
@@ -38,6 +42,7 @@ import jnr.ffi.annotations.In;
 import jodd.util.StringUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang.StringUtils;
+import org.apache.ibatis.annotations.Param;
 import org.springframework.context.annotation.Scope;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
@@ -52,13 +57,16 @@ import java.util.stream.Collectors;
 @Slf4j
 @Scope("prototype")
 public class Track123LogisticsApiInitHandler implements DmpInputApiInitHandler {
-    private static long pageSize = 100;
+    private static final int pageSize = 100;
+    public static final String PAGE_SIZE = "pageSize";
     @Resource
     private DmpTaskFeign dmpTaskFeign;
     @Resource
     private TrackShipperService trackShipperService;
     @Resource
     private RedisUtil redisUtil;
+    @Resource
+    private ForeignService foreignService;
 
     @Override
     public List<DmpInputTaskInitDTO> getApiData(DmpInputApiInitRequest dmpInputApiInitRequest) {
@@ -80,11 +88,14 @@ public class Track123LogisticsApiInitHandler implements DmpInputApiInitHandler {
             return Collections.emptyList();
         }
 
+        // 每页数量
+        int pageSizeValue = getPageSizeValue(dmpInputApiInitRequest);
+
         long current = 1;
         //根据跟踪单获取跟踪轨迹
         LogisticsBillDetailQueryDTO query = LogisticsBillDetailQueryDTO.builder()
                 .trackQueryMode(LogisticsPlatformEnum.TRACK123.getCode())
-                .size(pageSize)
+                .size(pageSizeValue)
                 .current(current)
                 .registerStatus(1)
                 .trackEnable(true)
@@ -118,7 +129,7 @@ public class Track123LogisticsApiInitHandler implements DmpInputApiInitHandler {
     private ResponseData getTrackData(LogisticsBillDetailQueryDTO query, CfgAppClientEntity cfgAppClient) {
 //        List<LogisticsTrackDTO.UpdateTrackDTO> list = logisticsBillFeign.listTrackDto(query);
         // 分页查询
-        List<DmpLogisticsTrackRegisterDTO.ViewDTO> list =  pageDmpLogisticsTrack(query);
+        List<LogisticsTrackDTO.UpdateTrackDTO> list =  pageDmpLogisticsTrack(query);
         if (list.size() > MathUtil.NUMBER_100){
 
             List<String> noList = new ArrayList<>();
@@ -128,9 +139,9 @@ public class Track123LogisticsApiInitHandler implements DmpInputApiInitHandler {
             if (ObjectUtil.isNotEmpty(o)) {
                 List<List<String>> redisTrackList = (List<List<String>>) o;
                 for (List<String> strings : redisTrackList) {
-                    Iterator<DmpLogisticsTrackRegisterDTO.ViewDTO> iterator = list.iterator();
+                    Iterator<LogisticsTrackDTO.UpdateTrackDTO> iterator = list.iterator();
                     while (iterator.hasNext()) {
-                        DmpLogisticsTrackRegisterDTO.ViewDTO dto = iterator.next();
+                        LogisticsTrackDTO.UpdateTrackDTO dto = iterator.next();
                         if (strings.contains(dto.getTrackNo())) {
                             iterator.remove();
                         }
@@ -142,10 +153,10 @@ public class Track123LogisticsApiInitHandler implements DmpInputApiInitHandler {
             //过滤后查询是否超过100条
             if (list.size() > MathUtil.NUMBER_100){
                 //列表数据较多情况下，进行分割集合
-                List<List<DmpLogisticsTrackRegisterDTO.ViewDTO>> partition = ListUtil.partition(list, MathUtil.NUMBER_100);
+                List<List<LogisticsTrackDTO.UpdateTrackDTO>> partition = ListUtil.partition(list, MathUtil.NUMBER_100);
 
                 //一次请求一百条并存储到redis下次过滤
-                List<String> collect = partition.get(0).stream().map(DmpLogisticsTrackRegisterDTO.ViewDTO::getTrackNo).distinct().collect(Collectors.toList());
+                List<String> collect = partition.get(0).stream().map(LogisticsTrackDTO.UpdateTrackDTO::getTrackNo).distinct().collect(Collectors.toList());
                 noList.addAll(collect);
                 // 缓存到redis
                 redisUtil.lSet(RedisCacheConstants.DMP_TRACK123_TRACK_LOGISTICS_NO, noList);
@@ -184,7 +195,7 @@ public class Track123LogisticsApiInitHandler implements DmpInputApiInitHandler {
         return null;
     }
 
-    private ResponseData processTrackData(List<DmpLogisticsTrackRegisterDTO.ViewDTO> records, CfgAppClientEntity cfgAppClient) {
+    private ResponseData processTrackData(List<LogisticsTrackDTO.UpdateTrackDTO> records, CfgAppClientEntity cfgAppClient) {
         if (CollectionUtils.isNotEmpty(records)) {
             String token = cfgAppClient.getClientSecret();
             //根据配置进行获取
@@ -223,19 +234,16 @@ public class Track123LogisticsApiInitHandler implements DmpInputApiInitHandler {
     /**
      * 分页查询
      */
-    private List<DmpLogisticsTrackRegisterDTO.ViewDTO> pageDmpLogisticsTrack(LogisticsBillDetailQueryDTO query) {
+    private List<LogisticsTrackDTO.UpdateTrackDTO> pageDmpLogisticsTrack(LogisticsBillDetailQueryDTO query) {
         // 缓存获取上次执行最后的页码
         int currentPage = 1;
         Object lastPageObj = redisUtil.get(RedisCacheConstants.DMP_LOGISTICS_TRACK);
         if (null != lastPageObj) {
             currentPage = (Integer) lastPageObj;
         }
-        Page<DmpLogisticsTrackRegisterDTO.ViewDTO> page = new Page<>();
-//                dmpLogisticsTrackRegisterService.lambdaQuery()
-//                .orderByAsc(DmpLogisticsTrackRegisterDTO.ViewDTO::getCreateTime)
-//                .orderByAsc(DmpLogisticsTrackRegisterDTO.ViewDTO::getId)
-//                .page(new Page<>(currentPage, query.getSize()));
-        List<DmpLogisticsTrackRegisterDTO.ViewDTO> list = page.getRecords();
+        query.setCurrent(currentPage);
+
+        List<LogisticsTrackDTO.UpdateTrackDTO> list = foreignService.listTrackDto(query);
         if (CollectionUtils.isEmpty(list)) {
             if (null != lastPageObj){
                 // 移除缓存 等下次任务从最小时间开始
@@ -253,5 +261,18 @@ public class Track123LogisticsApiInitHandler implements DmpInputApiInitHandler {
             redisUtil.set(RedisCacheConstants.DMP_LOGISTICS_TRACK, currentPage);
         }
         return list;
+    }
+
+    private static int getPageSizeValue(DmpInputApiInitRequest dmpInputApiInitRequest) {
+        int pageSizeValue = pageSize;
+        String requestParam = dmpInputApiInitRequest.getRequestParam();
+        if (StringUtils.isNotBlank(requestParam)){
+            JSONObject jsonObject = JSON.parseObject(requestParam);
+            Integer intValue = jsonObject.getInteger(PAGE_SIZE);
+            if (null != intValue){
+                pageSizeValue = intValue;
+            }
+        }
+        return pageSizeValue;
     }
 }
