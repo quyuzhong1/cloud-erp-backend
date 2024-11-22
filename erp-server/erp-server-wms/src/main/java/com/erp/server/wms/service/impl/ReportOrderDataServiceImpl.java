@@ -5,13 +5,21 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONUtil;
+import com.common.business.enums.ErpServerModuleEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.utils.RedisUtil;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
+import com.common.message.constant.RedisKeyConstant;
+import com.common.message.service.mq.MQProducerService;
+import com.erp.model.dmp.entity.DmpSkuCostEntity;
+import com.erp.model.msg.dto.WarnMsgInfoDTO;
+import com.erp.model.msg.enums.WarnMsgTypeEnum;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.wms.dto.*;
@@ -86,7 +94,11 @@ public class ReportOrderDataServiceImpl extends SuperServiceImpl<ReportOrderData
     @Resource
     private InventoryService inventoryService;
 
+    @Resource
+    private MQProducerService<ReportOrderDataEntity> mqProducerService;
 
+    @Resource
+    private RedisUtil redisUtil;
     /**
     * 修改
     */
@@ -122,6 +134,10 @@ public class ReportOrderDataServiceImpl extends SuperServiceImpl<ReportOrderData
                 return;
             }
         }
+
+        //添加redis缓存标记
+
+
         //是否拆分
         boolean isSplit = ObjectUtil.isEmpty(viewDTO.getVirtualRuleDTO()) ? false : viewDTO.getVirtualRuleDTO().getIsSplit();
         //生成源数据
@@ -700,5 +716,39 @@ public class ReportOrderDataServiceImpl extends SuperServiceImpl<ReportOrderData
             addOrUpdateList.add(entity);
         }
         return addOrUpdateList;
+    }
+
+
+    /**
+     * 添加redis缓存
+     */
+    private void setRedisSkuCost (DmpSkuCostEntity dmpSkuCostEntity) {
+        String existKey = StrUtil.format(RedisKeyConstant.DMP_SKU_COST_CODE, dmpSkuCostEntity.getSkuNo());
+        boolean isHas = redisUtil.hasKey(existKey);
+        if (isHas) {
+            //删除缓存
+            redisUtil.keys(existKey).forEach(key -> redisUtil.del(key));
+        }
+        //添加缓存
+        redisUtil.set(existKey,dmpSkuCostEntity);
+    }
+
+    /**
+     * 添加预警
+     * @author will
+     * @date 2024/11/22 10:40
+     * @param date
+     * @param currency
+     */
+    public void sendWarnMsg(String date,String currency) {
+        WarnMsgInfoDTO warnMsgInfo = new WarnMsgInfoDTO();
+        warnMsgInfo.setBizName("SKU成本信息同步");
+        warnMsgInfo.setErpServerModuleEnum(ErpServerModuleEnum.ERP_SERVER_DMP);
+        warnMsgInfo.setTitle("汇率查询失败");
+        warnMsgInfo.setTableName("dmp_sku_cost");
+        warnMsgInfo.setTableId(currency);
+        warnMsgInfo.setKeyInfo(StrUtil.format("时间【{}】币别【{}】未找到汇率信息",date,currency));
+        warnMsgInfo.setWarnMsgTypeEnum(WarnMsgTypeEnum.SYS_EXCEPTION);
+        mqProducerService.sendWarnMsg(warnMsgInfo);
     }
 }
