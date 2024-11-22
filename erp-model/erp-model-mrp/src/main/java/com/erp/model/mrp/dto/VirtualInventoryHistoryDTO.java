@@ -175,6 +175,11 @@ public class VirtualInventoryHistoryDTO {
          */
         private Boolean hideZeroInventory;
 
+        /**
+         * 单据日期
+         */
+        private LocalDate billDate;
+
     }
 
     @Data

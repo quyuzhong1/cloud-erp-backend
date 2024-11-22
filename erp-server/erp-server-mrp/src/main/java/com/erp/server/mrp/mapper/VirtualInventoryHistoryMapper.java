@@ -7,6 +7,7 @@ import com.erp.model.mrp.entity.VirtualInventoryHistoryEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Mapper;
 
+import java.time.LocalDate;
 import java.util.List;
 
 /**
@@ -24,8 +25,9 @@ public interface VirtualInventoryHistoryMapper extends BaseMapper<VirtualInvento
      *
      * @param skuIdList              查询条件
      * @param virtualWarehouseIdList 参数
+     * @param billDate
      */
-    List<VirtualInventoryHistoryDTO.ListInventoryDTO> listVirtualWarehouseIdListAndSkuIdList(List<String> skuIdList, List<String> virtualWarehouseIdList);
+    List<VirtualInventoryHistoryDTO.ListInventoryDTO> listVirtualWarehouseIdListAndSkuIdList(List<String> skuIdList, List<String> virtualWarehouseIdList, LocalDate billDate);
 
     /**
      * 库存分页

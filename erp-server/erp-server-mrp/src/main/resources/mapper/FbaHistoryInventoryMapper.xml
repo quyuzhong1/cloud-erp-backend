@@ -65,6 +65,9 @@
             AND fi.researching_qty = 0
             AND fi.unsellable_qty = 0)
         </if>
+        <if test="params.billDate != null" >
+            AND fi.bill_date = #{params.billDate}
+        </if>
         ORDER BY
         fi.create_time DESC
     </select>
@@ -96,6 +99,9 @@
             AND fi.reserved_qty = 0
             AND fi.researching_qty = 0
             AND fi.unsellable_qty = 0)
+        </if>
+        <if test="params.billDate != null" >
+            AND fi.bill_date = #{params.billDate}
         </if>
         <!--数据权限-->
         <if test="params.permissionSql != null and params.permissionSql != ''">

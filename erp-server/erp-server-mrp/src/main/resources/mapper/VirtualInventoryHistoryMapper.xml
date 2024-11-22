@@ -37,6 +37,9 @@
         = vi.warehouse_id and lhi.bill_date = vi.bill_date
         <where>
             vi.is_deleted = false
+            <if test="billDate != null" >
+                AND vi.bill_date = #{billDate}
+            </if>
             and vi.sku_id in
             <foreach collection="skuIdList" item="item" open="(" close=")" separator=",">
                 #{item}
@@ -64,6 +67,9 @@
             </if>
             <if test="params.permissionSql != null and params.permissionSql != ''">
                 ${params.permissionSql}
+            </if>
+            <if test="params.billDate != null" >
+                AND bill_date = #{params.billDate}
             </if>
         </where>
         group by sku_id,warehouse_id,virtual_warehouse_id,bill_date

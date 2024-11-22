@@ -1,12 +1,12 @@
 package com.erp.server.mrp.service.impl;
 
-import cn.hutool.core.collection.CollectionUtil;
-import cn.hutool.core.util.StrUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.utils.ApplicationContextUtils;
 import com.common.business.vo.PagingVO;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.enums.ApiError;
@@ -14,22 +14,19 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.erp.model.mrp.dto.VirtualInventoryHistoryDTO;
-import com.common.business.utils.ApplicationContextUtils;
 import com.erp.model.mrp.entity.VirtualInventoryHistoryEntity;
 import com.erp.model.plm.entity.ProductDetailEntity;
-import com.erp.model.wms.dto.VirtualInventoryDTO;
-import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.entity.VirtualInventoryEntity;
 import com.erp.model.wms.entity.VirtualWarehouseEntity;
 import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.wms.feign.WmsVirtualWarehouseFeign;
-import com.erp.rpc.wms.feign.WmsWarehouseFeign;
 import com.erp.server.mrp.mapper.VirtualInventoryHistoryMapper;
 import com.erp.server.mrp.service.VirtualInventoryHistoryService;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Resource;
 import java.time.LocalDate;
@@ -39,7 +36,6 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_MRP_VIRTUAL_INVENTORY;
-import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_VIRTUAL_INVENTORY;
 
 /**
  * <p>
@@ -85,7 +81,7 @@ public class VirtualInventoryHistoryServiceImpl extends SuperServiceImpl<Virtual
         Page<VirtualInventoryHistoryDTO.ListDTO> query = new Page<>(dto.getCurrPage(), dto.getPageSize());
         IPage<VirtualInventoryHistoryDTO.ListDTO> pageData = this.baseMapper.paging(query, dto.getParams());
         // 填充名称
-        fillPageData(pageData.getRecords());
+        fillPageData(pageData.getRecords(), dto.getParams().getBillDate());
         return new PagingVO<>(pageData);
     }
 
@@ -93,11 +89,12 @@ public class VirtualInventoryHistoryServiceImpl extends SuperServiceImpl<Virtual
      * 虚拟库存分页查询数据处理
      *
      * @param list
+     * @param billDate
      * @author will
      * @date 2024/6/3 15:24
      */
-    private void fillPageData(List<VirtualInventoryHistoryDTO.ListDTO> list) {
-        if (CollectionUtil.isEmpty(list)) {
+    private void fillPageData(List<VirtualInventoryHistoryDTO.ListDTO> list, LocalDate billDate) {
+        if (CollectionUtils.isEmpty(list)) {
             return;
         }
         //产品信息
@@ -109,7 +106,7 @@ public class VirtualInventoryHistoryServiceImpl extends SuperServiceImpl<Virtual
         List<VirtualWarehouseEntity> virtualWarehouseEntityList = wmsVirtualWarehouseFeign.listByIds(virtualWarehouseIdList);
 
         //虚拟库存数据
-        List<VirtualInventoryHistoryDTO.ListInventoryDTO> virtualInventoryList = this.baseMapper.listVirtualWarehouseIdListAndSkuIdList(skuIdList, virtualWarehouseIdList);
+        List<VirtualInventoryHistoryDTO.ListInventoryDTO> virtualInventoryList = this.baseMapper.listVirtualWarehouseIdListAndSkuIdList(skuIdList, virtualWarehouseIdList, billDate);
 
         //实际仓库
         List<String> warehouseIdList = virtualInventoryList.stream().map(VirtualInventoryHistoryDTO.ListInventoryDTO::getWarehouseId).distinct().collect(Collectors.toList());
@@ -122,25 +119,25 @@ public class VirtualInventoryHistoryServiceImpl extends SuperServiceImpl<Virtual
             listDTO.setProductName(productDetailEntity.getName());
 
             //虚拟仓库
-            VirtualWarehouseEntity virtualWarehouseEntity = virtualWarehouseEntityList.stream().filter(obj -> StrUtil.equals(obj.getId(), listDTO.getVirtualWarehouseId())).findFirst().orElse(new VirtualWarehouseEntity());
+            VirtualWarehouseEntity virtualWarehouseEntity = virtualWarehouseEntityList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), listDTO.getVirtualWarehouseId())).findFirst().orElse(new VirtualWarehouseEntity());
             listDTO.setVirtualWarehouseCode(virtualWarehouseEntity.getCode());
             listDTO.setVirtualWarehouseName(virtualWarehouseEntity.getName());
 
             //明细信息(关联查询实物库存)
             List<VirtualInventoryHistoryDTO.ListInventoryDTO> virtualInventoryDetailList = virtualInventoryList.stream().filter(obj ->
-                    StrUtil.equals(obj.getSkuId(), listDTO.getSkuId())
-                            && StrUtil.equals(obj.getVirtualWarehouseId(), listDTO.getVirtualWarehouseId())
+                    CharSequenceUtil.equals(obj.getSkuId(), listDTO.getSkuId())
+                            && CharSequenceUtil.equals(obj.getVirtualWarehouseId(), listDTO.getVirtualWarehouseId())
             ).collect(Collectors.toList());
             //无明细则直接返回
-            if (CollectionUtil.isEmpty(virtualInventoryDetailList)) {
+            if (CollectionUtils.isEmpty(virtualInventoryDetailList)) {
                 continue;
             }
             //虚拟可用库存
-            Integer virtualUsableQty = virtualInventoryDetailList.stream().filter(obj -> StrUtil.equals(obj.getDictInventoryStatus(), InventoryStatusEnum.USABLE.getCode()))
+            Integer virtualUsableQty = virtualInventoryDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getDictInventoryStatus(), InventoryStatusEnum.USABLE.getCode()))
                     .map(VirtualInventoryHistoryDTO.ListInventoryDTO::getVirtualQty).reduce(MathUtil.ZERO, Integer::sum);
             listDTO.setVirtualUsableQty(virtualUsableQty);
             //虚拟冻结库存
-            Integer virtualFrozenQty = virtualInventoryDetailList.stream().filter(obj -> StrUtil.equals(obj.getDictInventoryStatus(), InventoryStatusEnum.FROZEN.getCode()))
+            Integer virtualFrozenQty = virtualInventoryDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getDictInventoryStatus(), InventoryStatusEnum.FROZEN.getCode()))
                     .map(VirtualInventoryHistoryDTO.ListInventoryDTO::getVirtualQty).reduce(MathUtil.ZERO, Integer::sum);
             listDTO.setVirtualFrozenQty(virtualFrozenQty);
             //虚拟库存总数
@@ -155,11 +152,11 @@ public class VirtualInventoryHistoryServiceImpl extends SuperServiceImpl<Virtual
                 //明细数据
                 VirtualInventoryHistoryDTO.ListDetailDTO listDetailDTO = BeanMapperUtils.map(VirtualInventoryHistoryDTO.ListDetailDTO.class, listDTO);
                 //实体仓库名称
-                String warehouseName = warehouseList.stream().filter(obj -> StrUtil.equals(obj.getId(), warehouseId))
+                String warehouseName = warehouseList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), warehouseId))
                         .map(WarehouseEntity::getName).findFirst().orElse("");
 
                 String indexId = value.stream().map(VirtualInventoryHistoryDTO.ListInventoryDTO::getId).collect(Collectors.joining(","));
-                listDetailDTO.setIndexId(StrUtil.format("{}_{}", indexId, warehouseId));
+                listDetailDTO.setIndexId(CharSequenceUtil.format("{}_{}", indexId, warehouseId));
                 listDetailDTO.setSkuNo(listDTO.getSkuNo());
                 listDetailDTO.setWarehouseId(warehouseId);
                 listDetailDTO.setWarehouseName(warehouseName);
@@ -173,15 +170,15 @@ public class VirtualInventoryHistoryServiceImpl extends SuperServiceImpl<Virtual
                 listDetailDTO.setRealQty(MathUtil.add(usableQty,frozenQty));
 
                 //可用数据
-                Integer detailVirtualUsableQty = value.stream().filter(obj -> StrUtil.equals(obj.getDictInventoryStatus(), InventoryStatusEnum.USABLE.getCode())).map(VirtualInventoryHistoryDTO.ListInventoryDTO::getVirtualQty).findFirst().orElse(MathUtil.ZERO);
+                Integer detailVirtualUsableQty = value.stream().filter(obj -> CharSequenceUtil.equals(obj.getDictInventoryStatus(), InventoryStatusEnum.USABLE.getCode())).map(VirtualInventoryHistoryDTO.ListInventoryDTO::getVirtualQty).findFirst().orElse(MathUtil.ZERO);
                 listDetailDTO.setVirtualUsableQty(detailVirtualUsableQty);
                 //冻结数据
-                Integer detailVirtualFrozenQty = value.stream().filter(obj -> StrUtil.equals(obj.getDictInventoryStatus(), InventoryStatusEnum.FROZEN.getCode())).map(VirtualInventoryHistoryDTO.ListInventoryDTO::getVirtualQty).findFirst().orElse(MathUtil.ZERO);
+                Integer detailVirtualFrozenQty = value.stream().filter(obj -> CharSequenceUtil.equals(obj.getDictInventoryStatus(), InventoryStatusEnum.FROZEN.getCode())).map(VirtualInventoryHistoryDTO.ListInventoryDTO::getVirtualQty).findFirst().orElse(MathUtil.ZERO);
                 listDetailDTO.setVirtualFrozenQty(detailVirtualFrozenQty);
 
                 //实体仓分配数量
-                Integer distributionQty = virtualInventoryList.stream().filter(obj -> StrUtil.equals(obj.getWarehouseId(), warehouseId)
-                                && StrUtil.equals(obj.getSkuId(), listDTO.getSkuId()))
+                Integer distributionQty = virtualInventoryList.stream().filter(obj -> CharSequenceUtil.equals(obj.getWarehouseId(), warehouseId)
+                                && CharSequenceUtil.equals(obj.getSkuId(), listDTO.getSkuId()))
                         .map(VirtualInventoryHistoryDTO.ListInventoryDTO::getVirtualQty)
                         .reduce(MathUtil.ZERO, Integer::sum);
                 listDetailDTO.setDistributionQty(distributionQty);

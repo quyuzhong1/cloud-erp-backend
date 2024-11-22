@@ -45,6 +45,9 @@
             OR purchase_transit_qty > 0
             OR transfer_transit_qty > 0)
         </if>
+        <if test="params.billDate != null" >
+            AND bill_date = #{params.billDate}
+        </if>
         ORDER BY
         <if test="params.sortList != null and params.sortList.size > 0">
             <foreach collection="params.sortList" item="item" separator="," close=",">
@@ -75,6 +78,9 @@
             OR frozen_qty > 0
             OR purchase_transit_qty > 0
             OR transfer_transit_qty > 0)
+        </if>
+        <if test="params.billDate != null" >
+            AND bill_date = #{params.billDate}
         </if>
         ORDER BY
         <if test="params.sortList != null and params.sortList.size > 0">

@@ -129,6 +129,11 @@ public class FbaHistoryInventoryDTO {
          * 是否显示0库存
          */
         private Boolean isShowZeroInventory;
+
+        /**
+         * 单据日期
+         */
+        private LocalDate billDate;
     }
 
 

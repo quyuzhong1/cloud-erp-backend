@@ -44,8 +44,6 @@
             oi.is_deleted,
             oi.warehouse_code,
             oi.dict_platform,
-            oi.platform_sku,
-            oi.platform_sku_name,
             oi.product_name,
             oi.sku_no,
             oi.sku_id,
@@ -63,6 +61,9 @@
         FROM overseas_history_inventory as oi
         where ${params.sqlMap.default}
         and is_deleted = false
+        <if test="params.billDate != null" >
+            AND oi.bill_date = #{params.billDate}
+        </if>
         <!--是否显示0库存-->
         <if test="params.isShowZeroInventory">
             AND (oi.deliver_onway_qty > 0
@@ -117,8 +118,6 @@
         oi.is_deleted,
         oi.warehouse_code,
         oi.dict_platform,
-        oi.platform_sku,
-        oi.platform_sku_name,
         oi.product_name,
         oi.sku_no,
         oi.sku_id,
@@ -136,6 +135,9 @@
         FROM overseas_history_inventory as oi
         where ${params.sqlMap.default}
         and is_deleted = false
+        <if test="params.billDate != null" >
+            AND oi.bill_date = #{params.billDate}
+        </if>
         <!--是否显示0库存-->
         <if test="params.isShowZeroInventory">
             AND (oi.deliver_onway_qty > 0

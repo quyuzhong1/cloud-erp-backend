@@ -2,11 +2,9 @@ package com.erp.model.mrp.dto;
 
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import lombok.*;
+import lombok.Getter;
+import lombok.Setter;
 
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotEmpty;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -106,6 +104,11 @@ public class LocalHistoryInventoryDTO {
          * 是否显示0库存
          */
         private Boolean isShowZeroInventory;
+
+        /**
+         * 单据日期
+         */
+        private LocalDate billDate;
     }
 
     @Getter
