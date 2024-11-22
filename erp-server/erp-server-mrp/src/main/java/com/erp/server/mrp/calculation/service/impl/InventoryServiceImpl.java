@@ -751,7 +751,12 @@ public class InventoryServiceImpl implements InventoryService {
         }
         Set<String> localReplenishmentPlan = cfgRuleCommonService.findByKey(baseKey, inventoryResult, baseKey + ":" + CfgRuleInventoryNodeEnum.getLocalReplenishmentPlan());
         if (!CollectionUtils.isEmpty(localReplenishmentPlan)) {
-            // todo 本地补货计划
+
+            List<ReplenishmentResultDTO.EstimatedPurchaseDetailDTO> planDelivery = getReplenishmentPurchasePlan(replenishmentResultDTO, localReplenishmentPlan, cfgRuleStrategyDTO.getStockUpResult(),
+                    ReplenishmentInventoryTypeEnum.LOCAL_ESTIMATED_DELIVERY);
+            if (!CollectionUtils.isEmpty(planDelivery)) {
+                detailList.addAll(planDelivery);
+            }
         }
 
         Set<String> localPurchasePlan = cfgRuleCommonService.findByKey(baseKey, inventoryResult, baseKey + ":" + CfgRuleInventoryNodeEnum.getLocalPurchasePlan());
@@ -818,6 +823,15 @@ public class InventoryServiceImpl implements InventoryService {
                             return existing;
                         }
                 )).values());
+    }
+
+
+
+    private List<ReplenishmentResultDTO.EstimatedPurchaseDetailDTO> getReplenishmentPurchasePlan(ReplenishmentResultDTO replenishmentResultDTO,
+                                                                                                 Set<String> localReplenishmentPlan,
+                                                                                                 CfgRuleStockUpDTO.StrategyResultDTO stockUpResult,
+                                                                                                 ReplenishmentInventoryTypeEnum replenishmentInventoryTypeEnum) {
+        return null;
     }
 
 }
