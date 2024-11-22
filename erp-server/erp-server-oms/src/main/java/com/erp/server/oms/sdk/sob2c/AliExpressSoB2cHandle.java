@@ -3,16 +3,19 @@ package com.erp.server.oms.sdk.sob2c;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
+import com.alibaba.fastjson.JSON;
 import com.common.business.annotation.PlatformSoB2cAnnotate;
 import com.common.business.dto.PlatformDeliveryDetailDTO;
 import com.common.business.dto.PlatformOrderDTO;
 import com.common.business.dto.PlatformOrderLogisticsDTO;
 import com.common.business.dto.base.BatchResultDTO;
+import com.common.business.enums.BusinessTypeEnum;
 import com.common.business.enums.LogisticsPlatformEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.dmp.dto.CfgAppClientDTO;
+import com.erp.model.dmp.dto.DmpInoutDTO;
 import com.erp.model.dmp.entity.CfgAppClientEntity;
 import com.erp.model.dmp.enums.AppClientEnum;
 import com.erp.model.oms.dto.*;
@@ -55,8 +58,9 @@ import java.util.stream.Collectors;
 @Slf4j
 @Component
 @PlatformSoB2cAnnotate(method = PlatformDictEnum.ALI_EXPRESS)
-public class AliExpressSoB2cHandle implements ISoB2cHandleService<SoB2cEntity> {
+public class AliExpressSoB2cHandle extends AbstractSoB2cHandle {
 
+    public static final String HISTORY = "history";
     @Resource
     private SoOutstockFeign soOutstockFeign;
     @Resource
@@ -253,5 +257,47 @@ public class AliExpressSoB2cHandle implements ISoB2cHandleService<SoB2cEntity> {
         }
         addDTO.setDetailList(detailAddList);
         aliexpressDeliveryFeign.add(addDTO);
+    }
+
+    /**
+     * 转换新中台刷新订单请求参数
+     */
+    @Override
+    public List<DmpInoutDTO.CreateInputDTO> convertCreateInputDTOList(List orderEntityList){
+        Map<String, List<SoB2cEntity>> shopGroupMap = ((List<SoB2cEntity>) orderEntityList).stream().collect(Collectors.groupingBy(SoB2cEntity::getShopId));
+        return shopGroupMap.entrySet().stream()
+                .flatMap(entry -> entry.getValue().stream().map(this::createAliExpressInputDTO))
+                .collect(Collectors.toCollection(LinkedList::new));
+
+    }
+
+
+    /**
+     * 转换速卖通订单拉取任务
+     */
+    private DmpInoutDTO.CreateInputDTO createAliExpressInputDTO(SoB2cEntity e) {
+        DmpInoutDTO.CreateInputDTO dto = new DmpInoutDTO.CreateInputDTO();
+        dto.setNextLevelId(e.getShopId());
+        dto.setSystemCode(e.getDictPlatform());
+        dto.setBillType(BusinessTypeEnum.ORDER.getCode());
+        //  DmpInputTaskTaskTypeEnum	HISTORY("history", "历史任务"),
+        dto.setTaskType(HISTORY);
+
+        // 速卖通GMT时区转北京时区
+        LocalDateTime targetOrderCreateTime = DateUtil.convertZoneTime(e.getPlatformOrderCreateTime(),
+                ZoneId.of("America/Los_Angeles"),
+                ZoneId.of("Asia/Shanghai"));
+        LocalDateTime startTime = targetOrderCreateTime.minusSeconds(1);
+        LocalDateTime endTime = targetOrderCreateTime.plusSeconds(1);
+        dto.setStartTime(startTime);
+        dto.setEndTime(endTime);
+
+        // 构建 orderIdList 并封装为 JSON
+        Map<String, List<String>> map = Collections.singletonMap(
+                ORDER_ID_LIST,
+                Collections.singletonList(e.getPlatformCode())
+        );
+        dto.setDetailExtendJson(JSON.toJSONString(map));
+        return dto;
     }
 }

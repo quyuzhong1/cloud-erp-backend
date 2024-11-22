@@ -1,8 +1,12 @@
 package com.erp.server.oms.sdk.sob2c;
 
+import com.alibaba.fastjson.JSON;
 import com.common.business.annotation.PlatformSoB2cAnnotate;
 import com.common.business.dto.PlatformOrderDTO;
+import com.common.business.enums.BusinessTypeEnum;
 import com.common.business.enums.PlatformDictEnum;
+import com.common.core.utils.date.DateUtil;
+import com.erp.model.dmp.dto.DmpInoutDTO;
 import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.dto.SoB2cErrorDTO;
 import com.erp.model.oms.entity.SoB2cEntity;
@@ -19,6 +23,13 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.util.Collections;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * ShopifyB2C订单处理
@@ -29,7 +40,7 @@ import javax.annotation.Resource;
 @Slf4j
 @Component
 @PlatformSoB2cAnnotate(method = PlatformDictEnum.SHOPIFY)
-public class ShopifySoB2cHandle implements ISoB2cHandleService {
+public class ShopifySoB2cHandle extends AbstractSoB2cHandle  {
 
     @Resource
     private PlatformOrderConsumerHandleService platformOrderConsumerHandleService;
@@ -79,5 +90,13 @@ public class ShopifySoB2cHandle implements ISoB2cHandleService {
             }
         }
         return true;
+    }
+
+    @Override
+    public List<DmpInoutDTO.CreateInputDTO> convertCreateInputDTOList(List sourceList) {
+        Map<String, List<SoB2cEntity>> shopGroupMap = ((List<SoB2cEntity>) sourceList).stream().collect(Collectors.groupingBy(SoB2cEntity::getShopId));
+        return shopGroupMap.values().stream()
+                .map(this::createInputDTO)
+                .collect(Collectors.toList());
     }
 }

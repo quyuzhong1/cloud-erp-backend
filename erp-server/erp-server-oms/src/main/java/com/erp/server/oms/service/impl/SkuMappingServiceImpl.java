@@ -3,6 +3,7 @@ package com.erp.server.oms.service.impl;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -10,9 +11,11 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.AdvanceQueryContainer;
+import com.common.business.dto.DmpSyncTaskDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.BusinessTypeEnum;
 import com.common.business.enums.OmsPlatformEnum;
 import com.common.business.enums.OperationTypeEnum;
 import com.common.business.enums.PlatformDictEnum;
@@ -20,7 +23,9 @@ import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.SyncOperateEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
+import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
+import com.common.business.wrapper.FeignQuery;
 import com.common.core.entity.BaseEntity;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -28,6 +33,7 @@ import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.LengthConverterUtil;
 import com.common.core.utils.MathUtil;
 import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
+import com.erp.model.dmp.dto.DmpInoutDTO;
 import com.erp.model.oms.dto.*;
 import com.erp.model.oms.dto.excel.SkuMappingImportExcelDTO;
 import com.erp.model.oms.dto.excel.SkuMappingWarehouseImportExcelDTO;
@@ -36,6 +42,7 @@ import com.erp.model.oms.entity.ListingInfoEntity;
 import com.erp.model.oms.entity.OmsPushMsgEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.entity.SkuMappingEntity;
+import com.erp.model.oms.enums.AuthStatusEnum;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.oms.enums.ListingMatchResultEnum;
 import com.erp.model.oms.enums.RuleTypeEnum;
@@ -48,8 +55,11 @@ import com.erp.model.scm.dto.OperateLogDTO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.OverseasProviderWarehouseDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
+import com.erp.model.wms.entity.OverseasProviderEntity;
+import com.erp.rpc.dmp.feign.DmpInoutTaskFeign;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.rpc.wms.feign.OverseasProviderFeign;
 import com.erp.rpc.wms.feign.WmsOverseasWarehouseFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.rpc.wms.feign.WmsWarehouseFeign;
@@ -125,6 +135,12 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
     
     @Resource
     private OmsPushMsgService omsPushMsgService;
+
+    @Resource
+    private ShopSysUserAuthService shopSysUserAuthService;
+
+    @Resource
+    private DmpInoutTaskFeign dmpInoutTaskFeign;
 
     @Override
     public void downloadTemplate(String type, HttpServletResponse response) {
@@ -1302,8 +1318,6 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         fillWarehouseDb(page.getRecords());
         return new PagingVO<>(page);
     }
-
-
     @Override
     public ListingInfoParamDTO constructDto(List<String> platformSkuList,
                                             List<String> platformSpuList,
@@ -1430,4 +1444,64 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         });
         listingInfoService.updateBatchById(listingInfoEntityList);
     }
+
+    @Override
+    public PagingVO<SkuMappingDTO.SyncPlatformProductView> syncPlatformProductView(PagingDTO<AdvanceQueryContainer> advanceQueryDTO) {
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
+        List<ShopSysUserAuthDTO.ViewDTO> shopSysUserAuthList = shopSysUserAuthService.listShopSysUserAuthByUserIdList(Arrays.asList(userInfo.getUid()));
+        if (CollectionUtils.isEmpty(shopSysUserAuthList)) {
+            return new PagingVO<>();
+        }
+        List<ShopSysUserAuthDTO.ViewShopDTO> detailList = shopSysUserAuthList.get(0).getDetailList();
+        List<String> shopIds = detailList.stream().map(v->v.getShopId()).collect(Collectors.toList());
+        return shopInfoService.pageAuthShop(advanceQueryDTO,shopIds);
+    }
+
+    @Override
+    public PagingVO<SkuMappingDTO.SyncWarehouseProductView> syncWarehouseProductView(PagingDTO<AdvanceQueryContainer> advanceQueryDTO) {
+        return wmsOverseasWarehouseFeign.pageWarehouseProduct(advanceQueryDTO);
+    }
+    @Override
+    public void syncPlatformProduct(List<String> ids) {
+        List<ShopInfoEntity> shopInfoEntityList = shopInfoService.listByIds(ids);
+        if(CollectionUtils.isEmpty(shopInfoEntityList)){
+            throw new ServiceException("店铺不存在");
+        }
+        if(shopInfoEntityList.stream().anyMatch(v->!AuthStatusEnum.ALREADY.getCode().equals(v.getAuthStatus()))){
+            throw new ServiceException("只有已授权店铺可以同步");
+        }
+        if(shopInfoEntityList.stream().anyMatch(ShopInfoEntity::getDisabled)){
+            throw new ServiceException("已禁用店铺无法同步");
+        }
+        List<DmpInoutDTO.CreateInputDTO> createDTOList = new ArrayList<>();
+        for (ShopInfoEntity shopInfoEntity : shopInfoEntityList) {
+            DmpInoutDTO.CreateInputDTO dto = new DmpInoutDTO.CreateInputDTO();
+            dto.setSystemCode(shopInfoEntity.getDictPlatform());
+            dto.setBillType(BusinessTypeEnum.PRODUCT.getCode());
+            dto.setNextLevelId(shopInfoEntity.getId());
+            createDTOList.add(dto);
+        }
+        dmpInoutTaskFeign.doInputTask(createDTOList);
+    }
+
+    @Override
+    public void syncWarehouseProduct(List<String> ids) {
+        List<OverseasProviderEntity> overseasProviderEntityList = FeignQuery.getByIds(OverseasProviderEntity.class,ids);
+        if(CollectionUtils.isEmpty(overseasProviderEntityList)){
+            throw new ServiceException("三方仓不存在");
+        }
+        if(overseasProviderEntityList.stream().anyMatch(v->!AuthStatusEnum.ALREADY.getCode().equals(v.getAuthStatus()))){
+            throw new ServiceException("只有已授权三方仓可以同步");
+        }
+        List<DmpInoutDTO.CreateInputDTO> createDTOList = new ArrayList<>();
+        for (OverseasProviderEntity overseasProviderEntity : overseasProviderEntityList) {
+            DmpInoutDTO.CreateInputDTO dto = new DmpInoutDTO.CreateInputDTO();
+            dto.setSystemCode(overseasProviderEntity.getCode());
+            dto.setBillType(BusinessTypeEnum.PRODUCT.getCode());
+            dto.setNextLevelId(overseasProviderEntity.getId());
+            createDTOList.add(dto);
+        }
+        Boolean result = dmpInoutTaskFeign.doInputTask(createDTOList);
+    }
+
 }

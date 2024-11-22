@@ -330,4 +330,12 @@ public interface B2cOrderConverter {
     @Mapping(target = "id", ignore = true)
     SoB2cDetailEntity convertB2cDetailByGiftDto(SoB2cDTO.GiftDTO dto);
     List<SoB2cDetailEntity> convertB2cDetailByGiftDto(List<SoB2cDTO.GiftDTO> dtoList);
+
+    /**
+     * 订单明细转换成拆分
+     * @param detailEntity
+     * @return
+     */
+    SoB2cDTO.SplitDetailSaveDTO convertDetailTOSplitDTO(SoB2cDetailEntity detailEntity);
+    List<SoB2cDTO.SplitDetailSaveDTO> convertDetailTOSplitDTO(List<SoB2cDetailEntity> detailEntityList1);
 }

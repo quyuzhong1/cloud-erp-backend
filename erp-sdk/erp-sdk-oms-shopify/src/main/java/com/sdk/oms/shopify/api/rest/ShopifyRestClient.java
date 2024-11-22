@@ -824,6 +824,15 @@ public class ShopifyRestClient {
         return getOrders(response);
     }
 
+    /**
+     * 通过订单IDS查询
+     */
+    public ShopifyPage<ShopifyOrder> getOrderByIds(List<String> orderIds) {
+        final Response response =
+                get(buildOrdersEndpoint().queryParam(IDS_QUERY_PARAMETER, String.join(",", orderIds)));
+        return getOrders(response);
+    }
+
 
     /**
      * @param shopifyFulfillmentRoot
@@ -835,21 +844,6 @@ public class ShopifyRestClient {
         return shopifyFulfillmentRootResponse.getFulfillment();
     }
 
-
-    /**
-     * @param shopifyFulfillmentUpdateRequest
-     * @return ShopifyFulfillment
-     */
-    public ShopifyFulfillment updateFulfillment(final ShopifyFulfillmentUpdateRequest shopifyFulfillmentUpdateRequest) {
-//        final ShopifyFulfillmentRoot shopifyFulfillmentRoot = new ShopifyFulfillmentRoot();
-//        final ShopifyFulfillment shopifyFulfillment = shopifyFulfillmentUpdateRequest.getRequest();
-//        shopifyFulfillmentRoot.setFulfillment(shopifyFulfillment);
-//        final Response response = put(buildOrdersEndpoint().path(shopifyFulfillment.getOrderId()).path(FULFILLMENTS).path(shopifyFulfillment.getId()),
-//                shopifyFulfillmentRoot);
-//        final ShopifyFulfillmentRoot shopifyFulfillmentRootResponse = response.readEntity(ShopifyFulfillmentRoot.class);
-//        return shopifyFulfillmentRootResponse.getFulfillment();
-        return null;
-    }
 
 
     /**

@@ -6,7 +6,6 @@ import com.common.business.enums.ApproveStatusEnum;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.SoB2cCategoryTypeEnum;
 import com.erp.model.oms.enums.SoB2cOptionTypeEnum;
-import jnr.ffi.annotations.In;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -134,6 +133,11 @@ public class SoB2cDTO implements Serializable {
          */
         @NotEmpty(message = "ids不能为空")
         private List<String> ids;
+        /**
+         * 实际发货仓库
+         */
+        @NotEmpty(message = "实际发货仓库不能为空")
+        private String warehouseId;
 
         /**
          * 平台是否标发
@@ -578,7 +582,18 @@ public class SoB2cDTO implements Serializable {
          * 是否地址修改 true 是  false 否
          */
         private Boolean isChangeReceiverAddress;
-
+        /**
+         * 是否更换sku true 是  false 否
+         */
+        private Boolean isChangeSku;
+        /**
+         * 是否标记不出库发货 true 是  false 否
+         */
+        private Boolean isNotOutbound;
+        /**
+         * 是否标记手动发货true 是  false 否(以label为准)
+         */
+        private Boolean isManualDelivery;
         /**
          * 标签
          */
@@ -1040,7 +1055,6 @@ public class SoB2cDTO implements Serializable {
          * SoB2cOptionTypeEnum枚举（拆分、合并）
          */
         private SoB2cOptionTypeEnum operateType;
-
     }
 
 
@@ -2104,6 +2118,11 @@ public class SoB2cDTO implements Serializable {
          * 是否是状态变更为取消状态
          */
         private boolean isUpdateCancel = false;
+
+        /**
+         * SoB2cErrorTypeEnum.ORDER_FETCH
+         */
+        SoB2cErrorEntity soB2cError;
     }
 
     /**
@@ -2382,11 +2401,43 @@ public class SoB2cDTO implements Serializable {
          * 销售订单id
          */
         private String id;
+        /**
+         * 销售订单明细id
+         */
+        private String detailId;
 
         /**
          * 单据编码
          */
         private String code;
+        /**
+         * 来源类型
+         */
+        private String sourceType;
+        /**
+         * 作废状态
+         */
+        private Boolean invalidStatus;
+        /**
+         * 是否冻结
+         */
+        private Boolean isFrozen;
+        /**
+         * 是否取消（false未取消，true已取消）
+         */
+        private Boolean isCancel;
+        /**
+         * 是否地址修改 true 是  false 否
+         */
+        private Boolean isChangeReceiverAddress;
+        /**
+         * 是否更换sku true 是  false 否
+         */
+        private Boolean isChangeSku;
+        /**
+         * 是否标记不出库发货 true 是  false 否
+         */
+        private Boolean isNotOutbound;
 
         /**
          * 销售平台
@@ -2524,6 +2575,10 @@ public class SoB2cDTO implements Serializable {
          * 规格属性
          */
         private String variantProperty;
+        /**
+         * 属性对象
+         */
+        private List<SoB2cDetailDTO.PropertyDTO> propertyDTOList;
 
         /**
          * 含税成本
@@ -2798,6 +2853,35 @@ public class SoB2cDTO implements Serializable {
          * 销售出库时间
          */
         private LocalDate soOutStockTime;
+        /**
+         * 标签
+         */
+        private String label;
+        /**
+         * 明细标签
+         */
+        private String labelJson;
+        /**
+         * 拦截订单（ERP发货拦截中，拦截成功，拦截失败的订单）
+         */
+        private Boolean isIntercept;
+        /**
+         * 1、拆分生成的子订单 split
+         * 2、合并生成的新订单 merge
+         */
+        private String refType;
+        /**
+         * WFS（沃尔玛订单shipNodeType=WFSFulfilled或3PLFulfilled）
+         */
+        private String shipNodeType;
+        /**
+         * 订单标签集合
+         */
+        private String labelOrderList;
+        /**
+         * 明细标签集合
+         */
+        private String labelDetailList;
 
         /**
          * 提交发货时间
@@ -2848,6 +2932,10 @@ public class SoB2cDTO implements Serializable {
          * id
          */
         private List<String> soB2cIds;
+        /**
+         * 编码
+         */
+        private List<String> soCodeList;
         /**
          * TikTok拆单入参
          */
@@ -3025,5 +3113,100 @@ public class SoB2cDTO implements Serializable {
          */
         private String bomVersion;
     }
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class ChangeDeliverySkuViewDTO {
 
+        @NotBlank(message = "id不能为空")
+        private String id;
+
+        private String code;
+        /**
+         * 明细ID
+         */
+        @NotBlank(message = "明细ID不能为空")
+        private String detailId;
+
+        @NotBlank(message = "skuId不能为空")
+        private String skuId;
+
+        /**
+         * sku
+         */
+        private String skuNo;
+
+        /**
+         * 产品名称
+         */
+        private String productName;
+        /**
+         * spuNo
+         */
+        private String spuNo;
+        /**
+         * spu名称
+         */
+        private String spuName;
+
+        /**
+         * 平台sku
+         */
+        private String platformSkuNo;
+        /**
+         * 更换skuId
+         */
+        private String changeSkuId;
+        /**
+         * 更换skuNo
+         */
+        private String changeSkuNo;
+    }
+
+    /**
+     * 拆分保存
+     */
+    @Data
+    @NoArgsConstructor
+    public static class SplitSkuDTO {
+        /**
+         * skuNo
+         */
+        @NotBlank(message = "拆分SKU不能为空")
+        private String skuNo;
+        /**
+         * 拆分明细
+         */
+        @Valid
+        @NotEmpty(message = "拆分明细不能为空")
+        private List<SplitSkuDetailDTO> detailList;
+    }
+    /**
+     * 拆分保存
+     */
+    @Data
+    @NoArgsConstructor
+    public static class SplitSkuDetailDTO {
+        /**
+         * 主键id
+         */
+        @NotBlank(message = "主键id不能为空")
+        private String id;
+
+        /**
+         * 明细id
+         */
+        @NotBlank(message = "明细id不能为空")
+        private String detailId;
+
+        /**
+         * skuId
+         */
+        private String skuId;
+        /**
+         * skuNo
+         */
+        private String skuNo;
+    }
 }

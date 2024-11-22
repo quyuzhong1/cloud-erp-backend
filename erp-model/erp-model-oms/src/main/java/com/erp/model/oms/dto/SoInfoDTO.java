@@ -2045,6 +2045,11 @@ public class SoInfoDTO implements Serializable {
         private Integer salesQty;
 
         /**
+         * 已下推发货数量
+         */
+        private Integer alreadyDeliveryQty;
+
+        /**
          * 发货数量
          */
         private Integer deliveryQty;

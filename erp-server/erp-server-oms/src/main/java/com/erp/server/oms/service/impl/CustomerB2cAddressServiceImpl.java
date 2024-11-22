@@ -199,17 +199,17 @@ public class CustomerB2cAddressServiceImpl extends SuperServiceImpl<CustomerB2cA
 
         @Override
     @Transactional(rollbackFor = Exception.class)
-    public void saveOrUpdateEntity(PlatformOrderDTO dto, CustomerB2cEntity mainEntity, SoB2cReceiverEntity receiverEntity) {
+    public void saveOrUpdateEntity(PlatformOrderDTO dto, CustomerB2cEntity mainEntity, SoB2cReceiverEntity receiverEntity,boolean notUpdateAddress) {
         CustomerB2cAddressEntity entity = this.getByMainId(mainEntity.getId());
         if (null == entity){
             saveEntity(mainEntity, receiverEntity);
         } else {
-            udpateEntity(receiverEntity, entity);
+            udpateEntity(receiverEntity, entity,notUpdateAddress);
         }
     }
 
-    private void udpateEntity(SoB2cReceiverEntity receiverEntity, CustomerB2cAddressEntity entity) {
-        if (StringUtils.isBlank(entity.getAddress())){
+    private void udpateEntity(SoB2cReceiverEntity receiverEntity, CustomerB2cAddressEntity entity,boolean notUpdateAddress) {
+        if (StringUtils.isBlank(entity.getAddress()) || !notUpdateAddress){
             String address = CharSequenceUtil.concat(true, receiverEntity.getFirstAddress(), receiverEntity.getSecondAddress(), receiverEntity.getFullAddress());
             entity.setAddress(address);
         }

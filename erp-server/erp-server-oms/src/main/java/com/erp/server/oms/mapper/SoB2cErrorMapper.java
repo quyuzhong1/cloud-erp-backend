@@ -59,4 +59,6 @@ public interface SoB2cErrorMapper extends BaseMapper<SoB2cErrorEntity> {
      * @return Boolean
      */
     Boolean deleteByMainIds(@Param("mainIds") List<String> mainIds);
+
+    List<SoB2cErrorDTO.TypeCountDTO> getTypeCountDTO();
 }

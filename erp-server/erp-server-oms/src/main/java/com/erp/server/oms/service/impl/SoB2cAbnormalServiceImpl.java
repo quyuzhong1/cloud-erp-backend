@@ -9,6 +9,7 @@ import com.common.core.exception.ServiceException;
 import com.erp.model.oms.dto.SoB2cAbnormalDTO;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
+import com.erp.rpc.dmp.feign.DmpInoutTaskFeign;
 import com.erp.rpc.wms.feign.SoB2cDeliveryFeign;
 import com.erp.rpc.wms.feign.SoOutstockFeign;
 import com.erp.server.oms.service.SoB2cAbnormalService;
@@ -19,6 +20,7 @@ import org.springframework.stereotype.Service;
 import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -40,6 +42,9 @@ public class SoB2cAbnormalServiceImpl implements SoB2cAbnormalService {
 
     @Resource
     private SoB2cDeliveryFeign soB2cDeliveryFeign;
+
+    @Resource
+    private DmpInoutTaskFeign dmpInoutTaskFeign;
 
 
     @Override
@@ -94,6 +99,10 @@ public class SoB2cAbnormalServiceImpl implements SoB2cAbnormalService {
                 Boolean outFreeze = soB2cDeliveryFeign.afreshOutFreezeVirtualInventory(soB2cEntity.getId());
                 BatchResultDTO batchResultDTO = outFreeze ? BatchResultDTO.success(id, soB2cEntity.getCode(), "虚拟仓库存扣减") : BatchResultDTO.fail(id, soB2cEntity.getCode(), "虚拟仓库存扣减");
                 resultDTOList.add(batchResultDTO);
+                break;
+            case ORDER_FETCH:
+                List<BatchResultDTO> resultDTOS = soB2cService.fetchOrder(Collections.singletonList(id));
+                resultDTOList.addAll(resultDTOS);
                 break;
             default:
                 break;

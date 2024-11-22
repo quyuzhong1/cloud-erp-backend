@@ -3,7 +3,6 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.ObjectUtil;
@@ -12,7 +11,6 @@ import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.annotation.DataIdempotent;
@@ -96,7 +94,6 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.math3.util.Pair;
 import org.springframework.beans.BeanUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -387,7 +384,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
 
         //获取一个当前时间当作发货时间
         LocalDateTime deliveryTime = LocalDateTime.now();
-
+        entity.setDeliveryTime(deliveryTime);
         //修改发货状态
         lambdaUpdate()
                 .set(SoB2cDeliveryEntity::getStatus, SoB2cDeliveryStatusEnum.SHIPPED.getCode())
@@ -437,7 +434,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
                 .set(SoB2cDeliveryEntity::getShipmentMark, ShipmentMarkTypeEnum.MANUAL.getCode())
                 .eq(SoB2cDeliveryEntity::getId, id));
         //修改订单状态待发货
-        soB2cFeign.updateSoB2cStatus(Collections.singletonList(entity.getSourceId()), SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode());
+        soB2cFeign.updateSoB2cStatus(Collections.singletonList(entity.getSourceId()), SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode(), Boolean.TRUE);
         // 操作日志
         String msg = CharSequenceUtil.format("用户【{}】手动标发单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "b2c发货单", entity.getCode());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C_DELIVERY.getCode(), entity.getId(), "手动标发");
@@ -706,8 +703,8 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
             }
 
             LogisticsPlatformEnum logisticsPlatformEnum = LogisticsPlatformEnum.getByCode(authDTO.getLogisticsPlatform());
-            waybillDTO.setPrintLabel(logisticsPlatformEnum.getPrintLabel().equals("Y") ? Boolean.TRUE : Boolean.FALSE);
-            waybillDTO.setPrintDelivery(logisticsPlatformEnum.getPrintDelivery().equals("Y") ? Boolean.TRUE : Boolean.FALSE);
+            waybillDTO.setPrintLabel("Y".equals(logisticsPlatformEnum.getPrintLabel()) ? Boolean.TRUE : Boolean.FALSE);
+            waybillDTO.setPrintDelivery("Y".equals(logisticsPlatformEnum.getPrintDelivery()) ? Boolean.TRUE : Boolean.FALSE);
 
             List<SoB2cDeliveryEntity> collect = soB2cDeliveryEntities.stream().filter(req -> req.getLogisticsChannelId().equals(logisticsChannelId)).collect(Collectors.toList());
             if (CollectionUtils.isNotEmpty(collect)) {
@@ -1214,6 +1211,30 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
     }
 
     @Override
+    public BatchResultDTO falseDeliveryBySoId(String id) {
+        //查询是否冻结
+        SoB2cEntity soB2cEntity = soB2cFeign.getById(id);
+        if (soB2cEntity.getIsFrozen()) {
+            throw new ServiceException(ApiError.ORDER_IS_INTERCEPT_NOT_UPDATE, soB2cEntity.getCode());
+        }
+        //修改订单状态待发货
+        soB2cFeign.updateSoB2cStatus(Collections.singletonList(id), StrUtil.EMPTY, Boolean.TRUE);
+        if (soB2cFeign.checkPlatformShipOrder(id)) {
+            // 调用第三方平台SDK标记发货(独立事务)
+            String businessDesc = "手动标发";
+            asyncService.asyncShipOrder(soB2cEntity.getId(),
+                    soB2cEntity.getCode(),
+                    soB2cEntity.getDictPlatform(),
+                    soB2cEntity.convertSubmitPlatformUniqueKey(),
+                    id,
+                    businessDesc, true);
+        } else {
+            log.warn("【{}】未达到条件:忽略标记平台发货", soB2cEntity.getCode());
+        }
+        return BatchResultDTO.success(soB2cEntity.getId(), soB2cEntity.getCode(), "手动标发");
+    }
+
+    @Override
     public BatchResultDTO updateTransferWarehouse(SoB2cDeliveryEntity entity, List<String> changeIds) {
         //无需校验单据状态，关联的调拨单必须非审核通过、或者无关联的调拨单
         List<TransferInfoEntity> transferInfoEntities = transferInfoService.listBySourceId(entity.getId());
@@ -1303,6 +1324,11 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
             newDetailList.add(addDTO);
         }
         generateB2cDTO.setDetailList(newDetailList);
+        if(entity.getDeliveryTime() == null){
+            throw new ServiceException("发货单发货时间不能为空");
+        }
+        //重试时需要按照发货单发货时间扣减
+        generateB2cDTO.setBillDate(entity.getDeliveryTime().toLocalDate());
         return soOutstockService.generateB2cSoOutstock(generateB2cDTO);
     }
 
@@ -2043,6 +2069,11 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         addDTO.setSourceId(entity.getId());
         addDTO.setSourceType(SourceTypeEnum.SO_B2C_DELIVERY.getCode());
         addDTO.setSourceCode(entity.getCode());
+        //重试时需要按照发货单的发货时间调拨
+        if(entity.getDeliveryTime() == null){
+            throw new ServiceException("发货单发货时间不能为空");
+        }
+        addDTO.setBillDate(entity.getDeliveryTime().toLocalDate());
         List<TransferInfoDetailDTO.AddDTO> detailList = new ArrayList<>();
         for (PickingListsDTO.SourceView sourceView : pickingList) {
             TransferInfoDetailDTO.AddDTO detailAddDTO = new TransferInfoDetailDTO.AddDTO();
@@ -2448,7 +2479,11 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
             outInStockDTO.setSourceId(entity.getId());
             outInStockDTO.setSourceCode(entity.getCode());
             outInStockDTO.setSourceDetailId(detailEntity.getId());
-            outInStockDTO.setBillDate(LocalDate.now());
+            //重试时需要按照发货单的发货时间调拨
+            if(entity.getDeliveryTime() == null){
+                throw new ServiceException("发货单发货时间不能为空");
+            }
+            outInStockDTO.setBillDate(entity.getDeliveryTime().toLocalDate());
             outInStockDTO.setSkuId(detailEntity.getSkuId());
             outInStockDTO.setSkuNo(detailEntity.getSkuNo());
             outInStockDTO.setQty(detailEntity.getDeliveryQty());
@@ -2487,6 +2522,5 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         }
         return Boolean.TRUE;
     }
-
 
 }

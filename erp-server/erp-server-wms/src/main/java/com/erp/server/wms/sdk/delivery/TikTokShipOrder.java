@@ -148,7 +148,7 @@ public class TikTokShipOrder extends AbstractShipOrder {
             // 校验捆绑商品拆分
             // 来源明细ID为空代表是手工添加的明细忽略
             detailEntityList =  detailEntityList.stream()
-                    .filter(e -> CharSequenceUtil.isNotBlank(e.getSourceDetailId()))
+                    .filter(e -> CharSequenceUtil.isNotBlank(e.getPlatformLineNumber())).distinct()
                     .collect(Collectors.toList());
             if (CollectionUtils.isEmpty(detailEntityList)) {
                 log.warn("订单【{}】所有明细来源ID为空,不请求接口", entity.getCode());
@@ -156,7 +156,7 @@ public class TikTokShipOrder extends AbstractShipOrder {
             }
             List<String> sourceDetailIds = new ArrayList<>();
             for (SoB2cDetailEntity soB2cDetailEntity : detailEntityList) {
-                String[] split = soB2cDetailEntity.getSourceDetailId().split(",");
+                String[] split = soB2cDetailEntity.getPlatformLineNumber().split(",");
                 if (split.length > 0) {
                     sourceDetailIds.addAll(Arrays.asList(split));
                 }

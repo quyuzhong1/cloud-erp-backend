@@ -61,7 +61,14 @@ public class DmpInputGoodCangReturnInstockInitHandler extends DmpInputInitHandle
         if (CollUtil.isEmpty(overseasProviderEntityList)) {
             throw new ServiceException("谷仓授权信息不存在");
         }
-        OverseasProviderEntity overseasProviderEntity = overseasProviderEntityList.get(0);
+        // 取对应授权ID授权
+        OverseasProviderEntity overseasProviderEntity = overseasProviderEntityList.stream()
+                .filter(e -> e.getId().equalsIgnoreCase(dmpInputTaskEntity.getNextLevelId()))
+                .findFirst()
+                .orElse(null);
+        if(null == overseasProviderEntity) {
+            throw new ServiceException("谷仓对应授权ID信息不存在");
+        }
         String authId = overseasProviderEntity.getId();
         ThirdWarehouseContext.setAuthMap(overseasProviderEntity.getAuthJson());
         while (true) {

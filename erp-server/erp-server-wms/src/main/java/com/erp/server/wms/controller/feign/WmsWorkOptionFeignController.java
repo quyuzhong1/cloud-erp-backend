@@ -61,6 +61,9 @@ public class WmsWorkOptionFeignController {
     @Resource
     private TransferInfoService transferInfoService;
 
+    @Resource
+    private SoDeliveryNoticeChangeService soDeliveryNoticeChangeService;
+
     /**
      * 根据入参查询单据数量
      *
@@ -259,6 +262,32 @@ public class WmsWorkOptionFeignController {
                 resultDTOS.add(transferInfoService.approve(entity,dto.getType(),dto.getComment(),dto.getIsNeedProcess(),Boolean.TRUE,Boolean.TRUE));
             }catch (Exception e){
                 log.error("直接调拨单审核失败",e);
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
+            }
+        }
+        return resultDTOS;
+    }
+
+
+    /**
+     * 发货通知变更单审核
+     * @param dto
+     * @return
+     */
+    @PostMapping("/noticeChangeApprove")
+    public List<BatchResultDTO> noticeChangeApprove(@RequestBody BaseApproveParamDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        List<SoDeliveryNoticeChangeEntity> entityList = soDeliveryNoticeChangeService.listByIds(dto.getIds());
+        for (String id : dto.getIds()) {
+            SoDeliveryNoticeChangeEntity entity = entityList.stream().filter(v->v.getId().equals(id)).findFirst().orElse(null);
+            if(Objects.isNull(entity)){
+                resultDTOS.add(BatchResultDTO.fail(id,id,"发货通知变更单记录不存在"));
+                continue;
+            }
+            try {
+                resultDTOS.add(soDeliveryNoticeChangeService.approve(new ApproveOneDTO(entity.getId(),dto.getType(),dto.getComment())));
+            }catch (Exception e){
+                log.error("发货通知变更单审核失败",e);
                 resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
             }
         }

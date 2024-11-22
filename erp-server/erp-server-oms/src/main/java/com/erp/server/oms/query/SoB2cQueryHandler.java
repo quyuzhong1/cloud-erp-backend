@@ -75,8 +75,7 @@ public class SoB2cQueryHandler extends AbstractQueryHandler {
                         sb.append(" exists (select id from so_b2c_ref sbf where sbf.is_deleted = false and type = 'merge' and sbf.target_id = sb2c.id ) ");
                     }
                     if(valueStr.equals("aliexpressTaxed")){
-                        sb.append(" (sb2cd.label_json ~ 'U_TAXED' or sb2cd.label_json ~ 'I_TAXED') ");
-                        sb.append(" and exists ( select id from so_b2c_detail where is_deleted = false and main_id = sb2c.id and (label_json ~ 'U_TAXED' or label_json ~ 'I_TAXED')) ");
+                        sb.append(" exists ( select id from so_b2c_detail where is_deleted = false and main_id = sb2c.id and (label_json ~ 'U_TAXED' or label_json ~ 'I_TAXED')) ");
                     }
                     if(valueStr.equals("cainiaoWarehouse")){
                         sb.append(" sb2c.label_json ~ 'cainiaoInternationalWarehouse' ");

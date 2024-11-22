@@ -290,4 +290,12 @@ public interface SkuMappingService extends SuperService<SkuMappingEntity> {
     Map<String, Object> newSyncDataToSdy(SkuMappingEntity entity, String operate);
 
     void updateNotMatch(SkuMappingDTO.UpdateNotMatchDTO dto);
+
+    PagingVO<SkuMappingDTO.SyncPlatformProductView> syncPlatformProductView(PagingDTO<AdvanceQueryContainer> advanceQueryDTO);
+
+    PagingVO<SkuMappingDTO.SyncWarehouseProductView> syncWarehouseProductView(PagingDTO<AdvanceQueryContainer> advanceQueryDTO);
+    void syncPlatformProduct(List<String> ids);
+
+    void syncWarehouseProduct(List<String> ids);
+
 }
