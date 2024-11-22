@@ -99,8 +99,10 @@
                vi.dict_inventory_status,
                COALESCE(vi.qty,0) as virtualQty,
                vi.virtual_warehouse_id,
-               (select  COALESCE(sum(qty),0) from inventory where is_deleted = false and sku_id = vi.sku_id and warehouse_id = vi.warehouse_id and dict_inventory_status = 'usable') as usableQty,
-               (select  COALESCE(sum(qty),0) from inventory where is_deleted = false and sku_id = vi.sku_id and warehouse_id = vi.warehouse_id and dict_inventory_status = 'frozen') as frozenQty
+               sum(case when dict_inventory_status = 'usable' then COALESCE(qty,0) else 0) as usableQty,
+               sum(case when dict_inventory_status = 'frozen' then COALESCE(qty,0) else 0) as frozenQty,
+               sum(case when dict_inventory_status = 'inTransit' then COALESCE(qty,0) else 0) as inTransitQty,
+               sum(case when dict_inventory_status = 'waitQc' then COALESCE(qty,0) else 0) as waitQcQty
         from virtual_inventory vi
         <where>
             vi.is_deleted = false

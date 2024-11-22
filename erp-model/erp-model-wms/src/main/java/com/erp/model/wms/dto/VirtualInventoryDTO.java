@@ -129,6 +129,14 @@ public class VirtualInventoryDTO implements Serializable {
          */
         private Integer realQty;
         /**
+         * 实体仓在途库存
+         */
+        private Integer inTransitQty;
+        /**
+         * 实体仓待检库存
+         */
+        private Integer waitQcQty;
+        /**
          * 实体仓已分配数
          */
         private Integer distributionQty;
@@ -193,6 +201,16 @@ public class VirtualInventoryDTO implements Serializable {
          * 实体仓冻结数量
          */
         private Integer frozenQty;
+
+        /**
+         * 实体仓在途库存
+         */
+        private Integer inTransitQty;
+
+        /**
+         * 实体仓待检库存
+         */
+        private Integer waitQcQty;
     }
 
 

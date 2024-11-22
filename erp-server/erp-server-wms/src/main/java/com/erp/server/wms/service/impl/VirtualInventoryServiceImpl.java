@@ -2,13 +2,10 @@ package com.erp.server.wms.service.impl;
 
 
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
@@ -562,6 +559,12 @@ public class VirtualInventoryServiceImpl extends SuperServiceImpl<VirtualInvento
                 //冻结库存
                 Integer frozenQty = value.stream().map(VirtualInventoryDTO.ListInventoryDTO::getFrozenQty).findFirst().orElse(MathUtil.ZERO);
                 listDetailDTO.setFrozenQty(frozenQty);
+                //在途库存
+                Integer inTransitQty = value.stream().map(VirtualInventoryDTO.ListInventoryDTO::getInTransitQty).findFirst().orElse(MathUtil.ZERO);
+                listDetailDTO.setInTransitQty(inTransitQty);
+                //在途库存
+                Integer waitQcQty = value.stream().map(VirtualInventoryDTO.ListInventoryDTO::getWaitQcQty).findFirst().orElse(MathUtil.ZERO);
+                listDetailDTO.setWaitQcQty(waitQcQty);
                 //实际库存
                 listDetailDTO.setRealQty(MathUtil.add(usableQty,frozenQty));
 
