@@ -1219,6 +1219,9 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             String content = "删除销售订单[%s]";
             List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
             operateLogService.batchAddModuleOperateLog(content, ModuleTypeEnum.SO_OUT_STOCK.getCode(), pairList, "删除");
+            //推送数帝云
+            list.forEach(req -> sdyFieldHandler(req,SyncOperateEnum.OPERATE_DELETE.getCode()));
+
             //删除明细
             soOutstockDetailService.removeByMainIdList(ids);
 
@@ -1227,9 +1230,6 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
 
             //B2B发送金蝶
             sendPushTask(list,SyncOperateEnum.OPERATE_DELETE.getCode());
-
-            //推送数帝云
-            list.forEach(req -> sdyFieldHandler(req,SyncOperateEnum.OPERATE_DELETE.getCode()));
         }
         return result;
     }
@@ -3561,7 +3561,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
 
             shudiyunB2cOrderDTO.setTransaction_unique_key(entity.getId()+soOutstockDetailEntity.getId());
             shudiyunB2cOrderDTO.setBiz_no(entity.getCode());
-            shudiyunB2cOrderDTO.setBiz_time(localDateTime.format(entity.getBillDate()));
+            shudiyunB2cOrderDTO.setBiz_time(localDate.format(entity.getBillDate()));
             //默认出库单
             shudiyunB2cOrderDTO.setTransaction_type("200.10");
 
