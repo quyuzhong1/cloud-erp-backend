@@ -555,5 +555,13 @@ public class SoReturnNoticeDTO {
          * 退货物流单号
          */
         private String returnLogisticCode;
+        /**
+         * 平台sku
+         */
+        private String platformSkuNo;
+        /**
+         * 是否子sku
+         */
+        private Boolean isChildSkuNo;
     }
 }

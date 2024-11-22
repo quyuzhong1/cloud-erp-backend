@@ -679,6 +679,15 @@ public class SoReturnReceiveDTO {
          * 退货物流单号
          */
         private String returnLogisticCode;
+
+        /**
+         * 是否子skuNo
+         */
+        private Boolean isChildSkuNo;
+        /**
+         * 平台sku
+         */
+        private String platformSkuNo;
     }
 
     /**
