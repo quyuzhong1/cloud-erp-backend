@@ -833,13 +833,13 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
     @Override
     public WmsDeliveryPlanDTO.DeliverPlanViewDTO deliverPlanView(String id) {
         WmsDeliveryPlanDTO.DeliverPlanViewDTO deliverPlanViewDTO = new WmsDeliveryPlanDTO.DeliverPlanViewDTO();
-        WmsDeliveryPlanEntity wmsDeliveryPlanEntity = this.getById(id);
-        if (ObjectUtil.isEmpty(wmsDeliveryPlanEntity)) {
+        WmsDeliveryPlanEntity entity = this.getById(id);
+        if (ObjectUtil.isEmpty(entity)) {
             return deliverPlanViewDTO;
         }
-        deliverPlanViewDTO.setDeliverPlanCode(wmsDeliveryPlanEntity.getCode());
-        deliverPlanViewDTO.setApproveStatus(wmsDeliveryPlanEntity.getApproveStatus().getCode());
-        deliverPlanViewDTO.setApproveStatusName(ApproveStatusEnum.getName(wmsDeliveryPlanEntity.getApproveStatus().getCode()));
+        deliverPlanViewDTO.setDeliverPlanCode(entity.getCode());
+        deliverPlanViewDTO.setApproveStatus(entity.getApproveStatus().getCode());
+        deliverPlanViewDTO.setApproveStatusName(ApproveStatusEnum.getName(entity.getApproveStatus().getCode()));
         //明细
         List<WmsDeliveryPlanDetailEntity> wmsDeliveryPlanDetailList = wmsDeliveryPlanDetailService.listByMainIds(Arrays.asList(id));
         if (CollectionUtils.isEmpty(wmsDeliveryPlanDetailList)) {
@@ -849,18 +849,52 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
         List<String> sourceIdList = wmsDeliveryPlanDetailList.stream().flatMap(obj -> Stream.of(BeanUtil.copyToList(JSONUtil.parseArray(obj.getSourceJson()), WmsDeliveryPlanDetailDTO.SourceJsonDTO.class).stream().map(WmsDeliveryPlanDetailDTO.SourceJsonDTO::getSourceId).toArray(String[]::new))).collect(Collectors.toList());
         List<DeliverySuggestEntity> deliverySuggestList = FeignQuery.create(DeliverySuggestEntity.class).in(DeliverySuggestEntity::getId, sourceIdList).list();
 
+        //根据来源id查询发货单
+        List<RequisitionApplicationEntity> requisitionApplicationEntityList = requisitionApplicationService.listBySourceIds(Collections.singletonList(id));
+        List<String> requisitionIds = requisitionApplicationEntityList.stream().map(v->v.getId()).collect(Collectors.toList());
+        List<RequisitionApplicationDetailEntity> requisitionApplicationDetailEntities = requisitionApplicationDetailService.listByMainIds(requisitionIds);
+        List<FirstMileDeliveryEntity> firstMileDeliveryEntities = firstMileDeliveryService.listBySourceIds(new ArrayList<>(CollectionUtil.union(Collections.singletonList(id),requisitionIds)));
+        List<String> allDeliveryIds = firstMileDeliveryEntities.stream().map(v->v.getId()).collect(Collectors.toList());
+        //根据来源详情id查询发货详情
+        List<FirstMileDeliveryDetailEntity> fbaDeliveryDetailEntities = firstMileDeliveryDetailService.listByMainIds(allDeliveryIds);
+
         List<WmsDeliveryPlanDTO.DeliverPlanDetailViewDTO> detailList = new ArrayList<>();
-        for (WmsDeliveryPlanDetailEntity wmsDeliveryPlanDetailEntity :wmsDeliveryPlanDetailList) {
+        for (WmsDeliveryPlanDetailEntity detailEntity :wmsDeliveryPlanDetailList) {
             WmsDeliveryPlanDTO.DeliverPlanDetailViewDTO deliverPlanDetailViewDTO = new WmsDeliveryPlanDTO.DeliverPlanDetailViewDTO();
-            deliverPlanDetailViewDTO.setMSku(wmsDeliveryPlanDetailEntity.getPlatformSku());
-            deliverPlanDetailViewDTO.setFnSku(wmsDeliveryPlanDetailEntity.getPlatformFnSku());
-            deliverPlanDetailViewDTO.setSkuNo(wmsDeliveryPlanDetailEntity.getSkuNo());
-            deliverPlanDetailViewDTO.setDeliveryPlanQty(wmsDeliveryPlanDetailEntity.getQty());
+            deliverPlanDetailViewDTO.setMSku(detailEntity.getPlatformSku());
+            deliverPlanDetailViewDTO.setFnSku(detailEntity.getPlatformFnSku());
+            deliverPlanDetailViewDTO.setSkuNo(detailEntity.getSkuNo());
+            deliverPlanDetailViewDTO.setDeliveryPlanQty(detailEntity.getQty());
             //来源json数据
-            List<WmsDeliveryPlanDetailDTO.SourceJsonDTO> sourceJsonList = BeanUtil.copyToList(JSONUtil.parseArray(wmsDeliveryPlanDetailEntity.getSourceJson()), WmsDeliveryPlanDetailDTO.SourceJsonDTO.class);
+            List<WmsDeliveryPlanDetailDTO.SourceJsonDTO> sourceJsonList = BeanUtil.copyToList(JSONUtil.parseArray(detailEntity.getSourceJson()), WmsDeliveryPlanDetailDTO.SourceJsonDTO.class);
             //已发数量
             Integer hasDeliveryPlanQty = sourceJsonList.stream().map(WmsDeliveryPlanDetailDTO.SourceJsonDTO::getPlanDeliveryQty).reduce(MathUtil.ZERO, Integer::sum);
             deliverPlanDetailViewDTO.setHasDeliveryPlanQty(hasDeliveryPlanQty);
+            Integer deliveryQty = MathUtil.ZERO;
+            //设置发货单号拿最新的一个发货单
+            if(entity.getType().equals(DeliveryPlanTypeEnum.FBA.getCode())){
+                List<RequisitionApplicationEntity> requisitionApplicationList = requisitionApplicationEntityList.stream().filter(req -> req.getSourceId().equals(entity.getId())).collect(Collectors.toList());
+                List<String> requisitionIdList = requisitionApplicationList.stream().map(v->v.getId()).collect(Collectors.toList());
+                List<FirstMileDeliveryEntity> deliveryEntities = firstMileDeliveryEntities.stream().filter(v->requisitionIdList.contains(v.getSourceId()) || v.getSourceId().equals(entity.getId())).sorted(Comparator.comparing(FirstMileDeliveryEntity::getCreateTime).reversed()).collect(Collectors.toList());
+                List<String> deliveryIds = deliveryEntities.stream().filter(e ->Objects.equals(e.getApproveStatus(),ApproveStatusEnum.APPROVE.getStatus())).map(BaseEntity::getId).collect(Collectors.toList());
+                List<FirstMileDeliveryDetailEntity> deliveryDetailEntities = fbaDeliveryDetailEntities.stream().filter(req -> deliveryIds.contains(req.getMainId())).collect(Collectors.toList());
+                if (CollectionUtils.isNotEmpty(deliveryEntities)) {
+                    //发货数量 关联的发货单中SKU的发货数量，多个发货单汇总
+                    List<FirstMileDeliveryDetailEntity> detailDeliveryByFbaList = deliveryDetailEntities.stream().filter(v->v.getSkuId().equals(detailEntity.getSkuId()) && v.getFnSku().equals(detailEntity.getPlatformFnSku())).collect(Collectors.toList());
+                     deliveryQty = detailDeliveryByFbaList.stream().mapToInt(FirstMileDeliveryDetailEntity::getDeliveryQty).sum();
+                }
+            }else{
+                List<RequisitionApplicationEntity> requisitionApplicationList = requisitionApplicationEntityList.stream().filter(req -> req.getSourceId().equals(entity.getId())).collect(Collectors.toList());
+                List<String> requisitionIdList = requisitionApplicationList.stream().map(BaseEntity::getId).collect(Collectors.toList());
+                List<RequisitionApplicationDetailEntity> requisitionApplicationDetailEntityList = requisitionApplicationDetailEntities.stream()
+                        .filter(e -> requisitionIdList.contains(e.getMainId()) && Objects.equals(detailEntity.getId(), e.getSourceDetailId())).collect(Collectors.toList());
+                List<String> requisitionDetailIds = requisitionApplicationDetailEntityList.stream().map(RequisitionApplicationDetailEntity::getId).collect(Collectors.toList());
+                List<FirstMileDeliveryEntity> deliveryEntities = firstMileDeliveryEntities.stream().filter(req -> req.getSourceId().equals(entity.getId()) || requisitionIdList.contains(req.getSourceId())).sorted(Comparator.comparing(FirstMileDeliveryEntity::getCreateTime).reversed()).collect(Collectors.toList());
+
+                List<String> deliveryIds = deliveryEntities.stream().filter(e ->Objects.equals(e.getApproveStatus(),ApproveStatusEnum.APPROVE.getStatus())).map(FirstMileDeliveryEntity::getId).collect(Collectors.toList());
+                //发货数量 关联的发货单中SKU的发货数量，多个发货单汇总
+                 deliveryQty = fbaDeliveryDetailEntities.stream().filter(req -> requisitionDetailIds.contains(req.getSourceDetailId()) && CollectionUtils.isNotEmpty(deliveryIds) && deliveryIds.contains(req.getMainId())).mapToInt(FirstMileDeliveryDetailEntity::getDeliveryQty).sum();
+            }
 
             List<WmsDeliveryPlanDTO.DescriptionViewDTO> descriptionViewDTOList = new ArrayList<>();
             for (WmsDeliveryPlanDetailDTO.SourceJsonDTO sourceJsonDTO : sourceJsonList) {
@@ -868,7 +902,12 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
                 DeliverySuggestEntity suggestEntity = deliverySuggestList.stream().filter(obj -> StrUtil.equals(obj.getId(), sourceJsonDTO.getSourceId())).findFirst().orElse(new DeliverySuggestEntity());
                 descriptionViewDTO.setDeliverySuggestCode(suggestEntity.getCode());
                 descriptionViewDTO.setDeliverySuggestQty(suggestEntity.getPlanDeliveryQty());
-                descriptionViewDTO.setHasDeliveryPlanQty(sourceJsonDTO.getPlanDeliveryQty());
+                if (deliveryQty > suggestEntity.getPlanDeliveryQty()) {
+                    descriptionViewDTO.setHasDeliveryPlanQty(sourceJsonDTO.getPlanDeliveryQty());
+                    deliveryQty = deliveryQty - suggestEntity.getPlanDeliveryQty();
+                } else {
+                    descriptionViewDTO.setHasDeliveryPlanQty(deliveryQty);
+                }
                 descriptionViewDTOList.add(descriptionViewDTO);
             }
             deliverPlanDetailViewDTO.setDescriptionList(descriptionViewDTOList);

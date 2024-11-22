@@ -632,7 +632,7 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
             addDetailDTO.setPlatformSku(detailDTO.getMSKu());
             addDetailDTO.setSkuId(detailDTO.getSkuId());
             addDetailDTO.setQty(detailDTO.getPlanDeliveryQty());
-            if (StrUtil.isBlank(detailDTO.getMSKu()) || StrUtil.isBlank(detailDTO.getFnSku())) {
+            if (StrUtil.isBlank(detailDTO.getMSKu()) || MathUtil.compareTo(detailDTO.getPlanDeliveryQty(),MathUtil.ZERO) == MathUtil.ZERO) {
                 continue;
             }
             //来源信息
