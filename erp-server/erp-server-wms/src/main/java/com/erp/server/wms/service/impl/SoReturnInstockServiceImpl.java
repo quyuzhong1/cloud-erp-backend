@@ -762,14 +762,15 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         if (count != entityList.size()) {
             throw new ServiceException(ApiError.ERROR_98009);
         }
+        //同步数帝云
+        entityList.forEach(req -> sdyFieldHandler(req, SyncOperateEnum.OPERATE_DELETE.getCode()));
+
         //删除详情表
         soReturnInstockDetailService.delete(ids);
         boolean flag = this.removeByIds(ids);
         //发送金蝶
         sendPushTask(entityList,SyncOperateEnum.OPERATE_DELETE.getCode());
 
-        //同步数帝云
-        entityList.forEach(req -> sdyFieldHandler(req, SyncOperateEnum.OPERATE_DELETE.getCode()));
         //删除主表
         return flag;
     }
