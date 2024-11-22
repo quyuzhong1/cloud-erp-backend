@@ -3775,6 +3775,8 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             Integer toFrozenQty = soDetailEntity.getQty() - totalNoticeQty - soDetailEntity.getFrozenQty();
             batchLockDTO.setToFrozenQty(virtualUsableQty > toFrozenQty ? toFrozenQty : virtualUsableQty);
             batchLockDTO.setVirtualScarceQty(paramScarceDTO.getVirtualScarceQty());
+            //锁定数量返回时默认填充最大可锁数量
+            batchLockDTO.setFrozenQty(batchLockDTO.getToFrozenQty());
 
             //销售出库单
             Integer outstockQty = deliveryQtyList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSourceDetailId(), soDetailEntity.getId())
@@ -3892,7 +3894,8 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             Integer toFrozenQty = soDetailEntity.getQty() - totalNoticeQty - soDetailEntity.getFrozenQty();
             detailDTO.setToFrozenQty(detailDTO.getVirtualUsableQty() > toFrozenQty ? toFrozenQty : detailDTO.getVirtualUsableQty());
             detailDTO.setVirtualScarceQty(paramScarceDTO.getVirtualScarceQty());
-
+            //锁定数量返回时默认最大可锁数
+            detailDTO.setFrozenQty(detailDTO.getToFrozenQty());
             //销售出库单
             Integer outstockQty = deliveryQtyList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSourceDetailId(), soDetailEntity.getId())
                     && CharSequenceUtil.equals(obj.getApproveStatus(), ApproveStatusEnum.APPROVE.getStatus())
