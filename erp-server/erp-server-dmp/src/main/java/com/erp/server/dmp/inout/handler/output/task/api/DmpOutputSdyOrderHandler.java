@@ -5,6 +5,7 @@ import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.alibaba.fastjson.JSON;
 import com.common.business.dto.ShudiyunB2cOrderDTO;
+import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.controller.vo.ApiResult;
@@ -178,13 +179,16 @@ public class DmpOutputSdyOrderHandler extends DmpOutputTaskHandler {
             if (PlatformDictEnum.WDT.getCode().equals(dmpSoInfoEntity.getSourceSystem())) {
                 //配货单
                 shudiyunB2cOrderDTO.setTransaction_type("100.20");
+                shudiyunB2cOrderDTO.setBiz_status(wdtStatusHandler(dmpSoInfoEntity.getOrderStatus()));
+
             } else {
                 //线上订单
                 shudiyunB2cOrderDTO.setTransaction_type("100.10");
+                shudiyunB2cOrderDTO.setBiz_status(ApproveStatusEnum.getName(dmpSoInfoEntity.getOrderStatus()));
             }
 
             shudiyunB2cOrderDTO.setTransaction_sub_type(OrderSubTypeEnum.ONLINE_ORDER.getCode());
-            shudiyunB2cOrderDTO.setBiz_status(dmpSoInfoEntity.getDeliveryStatus());
+
 
             shudiyunB2cOrderDTO.setTotal_goods_transaction_amount(dmpSoInfoEntity.getAllAmount());
             //总优惠金额
@@ -327,5 +331,55 @@ public class DmpOutputSdyOrderHandler extends DmpOutputTaskHandler {
         }
         return shudiyunB2cOrderDTOList;
 
+    }
+
+    private String wdtStatusHandler(String status) {
+        if ("4".equals(status)) {
+            return "线下退款";
+        } else if ("5".equals(status)) {
+            return "已取消";
+        } else if ("6".equals(status)) {
+            return "待转预订单(待审核)";
+        } else if ("7".equals(status)) {
+            return "待转已完成";
+        } else if ("10".equals(status)) {
+            return "未付款";
+        } else if ("12".equals(status)) {
+            return "待尾款";
+        } else if ("15".equals(status)) {
+            return "等未付";
+        } else if ("16".equals(status)) {
+            return "延时审核";
+        } else if ("19".equals(status)) {
+            return "预订单前处理";
+        } else if ("20".equals(status)) {
+            return "审核前处理";
+        } else if ("21".equals(status)) {
+            return "自流转待发货";
+        } else if ("23".equals(status)) {
+            return "异常订单";
+        } else if ("24".equals(status)) {
+            return "换货预订单";
+        } else if ("25".equals(status)) {
+            return "待处理预订单";
+        } else if ("27".equals(status)) {
+            return "待分配预订单";
+        } else if ("30".equals(status)) {
+            return "待客审";
+        } else if ("35".equals(status)) {
+            return "待财审";
+        } else if ("40".equals(status)) {
+            return "审核中";
+        } else if ("55".equals(status)) {
+            return "已审核";
+        } else if ("95".equals(status)) {
+            return "已发货";
+        } else if ("96".equals(status)) {
+            return "成本确认（待录入计划成本，订单结算时有货品无计划成本）";
+        } else if ("101".equals(status)) {
+            return "已过账";
+        } else {
+            return "已完成";
+        }
     }
 }

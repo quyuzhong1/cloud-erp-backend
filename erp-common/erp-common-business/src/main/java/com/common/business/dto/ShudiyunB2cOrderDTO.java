@@ -583,4 +583,5 @@ public class ShudiyunB2cOrderDTO {
         }
         return ApproveStatusEnum.APPROVE.getName();
     }
+
 }
