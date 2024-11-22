@@ -308,7 +308,7 @@ public class ShudiyunB2cOrderDTO {
     /**
      * 发货时间
      */
-    private LocalDateTime delivery_time;
+    private String delivery_time;
     /**
      * 物流签收时间
      */
@@ -352,11 +352,11 @@ public class ShudiyunB2cOrderDTO {
     /**
      * 快递公司名称
      */
-    private String logistic_company;
+    private String logistic_company = "";
     /**
      * 快递公司编码
      */
-    private String logistic_company_code;
+    private String logistic_company_code = "";
     /**
      * 发货运单号
      */
@@ -388,7 +388,7 @@ public class ShudiyunB2cOrderDTO {
     /**
      * 退货入库时间
      */
-    private LocalDateTime return_receipt_time;
+    private String return_receipt_time;
     /**
      * 退货入库金额
      */

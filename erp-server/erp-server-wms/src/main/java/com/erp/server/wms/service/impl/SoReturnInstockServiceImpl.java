@@ -64,6 +64,7 @@ import com.erp.rpc.oms.feign.SoReturnFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
+import com.erp.sdk.oms.amz.spapi.model.orders.Order;
 import com.erp.server.wms.kingdee.SyncKingdeeSoReturnService;
 import com.erp.server.wms.mapper.SoReturnInstockMapper;
 import com.erp.server.wms.service.*;
@@ -82,6 +83,7 @@ import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -1730,6 +1732,9 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
      * @param operateEnum
      */
     public void sdyFieldHandler(SoReturnInstockEntity entity, String operateEnum) {
+        DateTimeFormatter localDateTime = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+        DateTimeFormatter localDate = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+
         List<SoReturnInstockDetailEntity> soReturnInstockDetailEntities = soReturnInstockDetailService.listDetailByMainIds(Arrays.asList(entity.getId()));
         List<String> skuNos = soReturnInstockDetailEntities.stream().map(req -> req.getSkuNo()).collect(Collectors.toList());
         List<SkuVO> skuVOList = plmTaskFeign.listBySkuNoList(skuNos);
@@ -1804,7 +1809,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
             } else {
                 shudiyunB2cOrderDTO.setIs_gift(0);
             }
-            BomChildrenSkuDTO bomChildrenSkuDTO = bomChildrenSkuDTOS.stream().filter(req -> req.getSkuId().equals(soReturnInstockDetailEntity.getSkuId())).findFirst().orElse(null);
+            BomChildrenSkuDTO bomChildrenSkuDTO = bomChildrenSkuDTOS.stream().filter(req -> req.getParentSkuId().equals(soReturnInstockDetailEntity.getSkuId())).findFirst().orElse(null);
             shudiyunB2cOrderDTO.setIs_comb(0);
 
             if (ObjectUtil.isNotEmpty(bomChildrenSkuDTO)) {
@@ -1817,15 +1822,34 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                     }
                 }
             }
+            shudiyunB2cOrderDTO.setDomestic_return_waybill_number("");
+            shudiyunB2cOrderDTO.setInternational_return_waybill_number("");
+            if (OrderTypeEnum.B2B.getCode().equals(entity.getType())) {
+                shudiyunB2cOrderDTO.setLogistic_company("【未知】");
+                shudiyunB2cOrderDTO.setLogistic_company_code(entity.getReturnLogisticCode());
+                shudiyunB2cOrderDTO.setDomestic_return_waybill_number(entity.getReturnLogisticCode());
+            } else {
+                shudiyunB2cOrderDTO.setLogistic_company("");
+                shudiyunB2cOrderDTO.setLogistic_company_code("");
+            }
+
+            shudiyunB2cOrderDTO.setReturn_status(shudiyunB2cOrderDTO.sdyStatusHandle(operateEnum));
+            shudiyunB2cOrderDTO.setReturn_receipt_number(entity.getCode());
+            shudiyunB2cOrderDTO.setReturned_quantity(soReturnInstockDetailEntity.getRealQty());
 
             shudiyunB2cOrderDTO.setRemark(soReturnInstockDetailEntity.getRemark());
             shudiyunB2cOrderDTO.setWarehouse_no(soReturnInstockDetailEntity.getWarehouseId());
             shudiyunB2cOrderDTO.setWarehouse_name(soReturnInstockDetailEntity.getWarehouseName());
 
+            shudiyunB2cOrderDTO.setReturn_receipt_time(localDate.format(entity.getBillDate()));
+            shudiyunB2cOrderDTO.setReturn_receipt_amount(soReturnInstockDetailEntity.getAmount());
+            shudiyunB2cOrderDTO.setSuite_no("");
+            shudiyunB2cOrderDTO.setSuite_name("");
+
             // 商品状态
             shudiyunB2cOrderDTO.setGoods_status("10.10");
 
-            shudiyunB2cOrderDTO.setDelivery_time(entity.getApproveTime());
+            shudiyunB2cOrderDTO.setDelivery_time(localDateTime.format(entity.getApproveTime()));
             shudiyunB2cOrderDTO.setGoods_transaction_quantity(soReturnInstockDetailEntity.getRealQty());
             shudiyunB2cOrderDTO.setUnit(skuVO.getUnitName());
             shudiyunB2cOrderDTO.setGoods_benchmark_selling_price(skuVO.getRetailPrice());
