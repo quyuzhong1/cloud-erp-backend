@@ -1587,6 +1587,10 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             String content = "删除销售订单[%s]";
             List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
             operateLogService.batchAddModuleOperateLog(content, ModuleTypeEnum.SO.getCode(), pairList, "删除");
+
+            //同步数帝云
+            list.forEach(obj -> sdyFieldOrderHandler(obj.getId(), SyncOperateEnum.OPERATE_DELETE.getCode()));
+
             //删除明细
             soDetailService.removeByMainIdList(ids);
 
@@ -3908,9 +3912,11 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                 ).map(req -> req.getSoDetailId()).collect(Collectors.toList());
 
         BigDecimal totalCanceledGoodsAmount = BigDecimal.ZERO;
+        Integer totalCanceledGoodsQty = 0;
         List<SoDetailDTO.ViewDTO> cancelSoDetailList = view.getDetailList().stream().filter(req -> cancelSoDetailIds.contains(req.getId())).collect(Collectors.toList());
         for (SoDetailDTO.ViewDTO viewDTO : cancelSoDetailList) {
             totalCanceledGoodsAmount = totalCanceledGoodsAmount.add(viewDTO.getTaxAmountBefore());
+            totalCanceledGoodsQty = totalCanceledGoodsQty + viewDTO.getQty();
         }
 
 
@@ -3945,12 +3951,11 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             shudiyunB2cOrderDTO.setTotal_canceled_goods_amount(totalCanceledGoodsAmount);
 
             // 取消商品数量（合计）
-            shudiyunB2cOrderDTO.setTotal_canceled_goods_quantity(totalQty);
+            shudiyunB2cOrderDTO.setTotal_canceled_goods_quantity(totalCanceledGoodsQty);
 
             shudiyunB2cOrderDTO.setBuyer_actual_payment(view.getReceiveAmount());
             shudiyunB2cOrderDTO.setTotal_freight(view.getShippingFee());
             shudiyunB2cOrderDTO.setSales_company_code(view.getSalesOrgId());
-
 
             //组织信息
             if (ObjectUtil.isNotEmpty(customerInfo)) {

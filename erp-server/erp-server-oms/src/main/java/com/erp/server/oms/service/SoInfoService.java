@@ -476,4 +476,11 @@ public interface SoInfoService extends SuperService<SoInfoEntity> {
      * 导出销售订单
      */
     PagingVO<SoInfoDTO.PagingViewDTO> exportSo(PagingDTO<SoInfoDTO.ExportDTO> dto);
+
+    /**
+     * 同步速递云B2B订单
+     * @param soId
+     * @param operateEnum
+     */
+    void sdyFieldOrderHandler(String soId, String operateEnum);
 }
