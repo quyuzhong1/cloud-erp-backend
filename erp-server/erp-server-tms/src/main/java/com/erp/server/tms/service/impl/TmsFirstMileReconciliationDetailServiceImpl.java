@@ -362,7 +362,7 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
         List<LogisticsBillEntity> logisticsBillEntityList = logisticsBillService.listByIds(billIds);
         //过滤首次对账时账单/已存在对账单账单
         //不存在费用表记录，新增一个费用列表
-        List<LogisticsBillCostEntity> updateBillList = getBillCostList(mainEntity, billIds, logisticsBillEntityList, billEntityList, mainId, actualMap, list,logisticsBillDetailEntityList);
+        List<LogisticsBillCostEntity> updateBillList = getBillCostList(mainEntity, billIds, logisticsBillEntityList, billEntityList, mainId, actualMap, list);
         // 批量更新物流单状态
         if (!CollectionUtils.isEmpty(updateBillList)) {
             // 更新费用信息
@@ -394,31 +394,28 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
         return Boolean.TRUE;
     }
 
-    private List<LogisticsBillCostEntity> getBillCostList(TmsFirstMileReconciliationEntity mainEntity, List<String> billIds, List<LogisticsBillEntity> logisticsBillEntityList, List<LogisticsBillCostEntity> billEntityList, String mainId, Map<String, TmsFirstMileReconciliationDetailEntity> actualMap, List<TmsFirstMileReconciliationDetailEntity> list, List<LogisticsBillDetailEntity> logisticsBillDetailEntityList) {
-        if(CollUtil.isEmpty(billIds)){
+    private List<LogisticsBillCostEntity> getBillCostList(TmsFirstMileReconciliationEntity mainEntity, List<String> billIds, List<LogisticsBillEntity> logisticsBillEntityList, List<LogisticsBillCostEntity> billEntityList, String mainId, Map<String, TmsFirstMileReconciliationDetailEntity> actualMap, List<TmsFirstMileReconciliationDetailEntity> list) {
+        if (CollUtil.isEmpty(billIds)) {
             return Collections.emptyList();
         }
         Map<String, ShopInfoEntity> shopMap = null;
-        if (CollUtil.isNotEmpty(logisticsBillEntityList)){
+        if (CollUtil.isNotEmpty(logisticsBillEntityList)) {
             List<String> shopIds = logisticsBillEntityList.stream().map(LogisticsBillEntity::getShopId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
-            if (CollUtil.isNotEmpty(shopIds)){
+            if (CollUtil.isNotEmpty(shopIds)) {
                 List<ShopInfoEntity> shopInfoEntityList = shopInfoFeign.listShopInfoByIds(shopIds);
-                if (CollUtil.isNotEmpty(shopInfoEntityList)){
+                if (CollUtil.isNotEmpty(shopInfoEntityList)) {
                     shopMap = shopInfoEntityList.stream().collect(Collectors.toMap(ShopInfoEntity::getId, Function.identity()));
                 }
             }
         }
-
-
         List<LogisticsBillCostEntity> updateBillList = new ArrayList<>(billIds.size());
-        for (String billId : billIds){
+        for (String billId : billIds) {
             LogisticsBillEntity logisticsBillEntity = logisticsBillEntityList.stream().filter(e -> Objects.equals(billId, e.getId())).findFirst().orElse(null);
-            if (Objects.isNull(logisticsBillEntity)){
+            if (Objects.isNull(logisticsBillEntity)) {
                 continue;
             }
-
             LogisticsBillCostEntity entity = billEntityList.stream()
-                    .filter(e -> Objects.nonNull(e) &&  Objects.equals(billId, e.getLogisticsBillId())
+                    .filter(e -> Objects.nonNull(e) && Objects.equals(billId, e.getLogisticsBillId())
                             && (CharSequenceUtil.isBlank(e.getReconciliationId()) || Objects.equals(mainId, e.getReconciliationId()))).findFirst().orElse(new LogisticsBillCostEntity());
             entity.setLogisticsBillId(billId);
             entity.setTransportNo(logisticsBillEntity.getTransportNo());
@@ -447,12 +444,12 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
             entity.setReconciliationId(mainId);
             //获取对应明细数据
             TmsFirstMileReconciliationDetailEntity tmsFirstMileReconciliationDetailEntity = list.stream().filter(e -> Objects.nonNull(e) && Objects.equals(e.getTransportNo(), logisticsBillEntity.getTransportNo())).findFirst().orElse(null);
-            if (Objects.isNull(tmsFirstMileReconciliationDetailEntity)){
+            if (Objects.isNull(tmsFirstMileReconciliationDetailEntity)) {
                 continue;
             }
             entity.setChannelId(tmsFirstMileReconciliationDetailEntity.getLogisticsChannelId()).setCurrency(mainEntity.getCurrency()).setTransportNo(logisticsBillEntity.getTransportNo()).setType(DictCostAttributionEnum.FIRST_MILE.getCode());
             //店铺信息
-            if (CharSequenceUtil.isNotBlank(logisticsBillEntity.getShopId()) && Objects.nonNull(shopMap)){
+            if (CharSequenceUtil.isNotBlank(logisticsBillEntity.getShopId()) && Objects.nonNull(shopMap)) {
                 ShopInfoEntity shopInfoEntity = shopMap.get(logisticsBillEntity.getShopId());
                 if (Objects.nonNull(shopInfoEntity)) {
                     entity.setShopChargeId(shopInfoEntity.getChargeId());
@@ -460,8 +457,6 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
                 }
             }
             entity.setType(DictCostAttributionEnum.FIRST_MILE.getCode());
-
-            logisticsBillCostService.handleData(entity);
             updateBillList.add(entity);
         }
         return updateBillList;
