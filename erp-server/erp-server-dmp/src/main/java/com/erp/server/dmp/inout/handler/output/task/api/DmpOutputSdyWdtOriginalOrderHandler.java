@@ -1,38 +1,22 @@
 package com.erp.server.dmp.inout.handler.output.task.api;
 
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.text.CharSequenceUtil;
-import cn.hutool.core.util.ObjectUtil;
 import com.alibaba.fastjson.JSON;
 import com.common.business.dto.ShudiyunB2cOrderDTO;
-import com.common.business.enums.PlatformDictEnum;
-import com.common.business.wrapper.FeignQuery;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.entity.BaseEntity;
-import com.common.core.enums.ApiError;
-import com.common.core.exception.ServiceException;
-import com.common.core.utils.MathUtil;
 import com.erp.model.dmp.entity.*;
 import com.erp.model.dmp.enums.DmpOutputTaskRecordStatusEnum;
-import com.erp.model.dmp.enums.ThirdSysTypeEnum;
-import com.erp.model.oms.entity.CustomerInfoEntity;
-import com.erp.model.oms.entity.ShopInfoEntity;
-import com.erp.model.oms.enums.OrderSubTypeEnum;
-import com.erp.model.oms.enums.SoB2cBillStatusEnum;
-import com.erp.model.sys.entity.DictCurrencyEntity;
 import com.erp.server.dmp.inout.dto.request.DmpOutputTaskRequest;
 import com.erp.server.dmp.inout.dto.response.DmpOutputTaskResponse;
 import com.erp.server.dmp.inout.handler.output.task.DmpOutputTaskHandler;
 import com.erp.server.dmp.push.consumer.sdy.SdyDeliveryOrderConsumer;
 import com.erp.server.dmp.service.ThirdMappingService;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
-import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
@@ -117,7 +101,7 @@ public class DmpOutputSdyWdtOriginalOrderHandler extends DmpOutputTaskHandler {
                     String id = identifierGenerator.nextId(dmpOutputTaskRecordEntity).toString();
                     dmpOutputTaskRecordEntity.setId(id);
                     dmpOutputTaskRecordEntity.setMainId(dmpRequest.getOutputTaskId());
-                    dmpOutputTaskRecordEntity.setDataId(shudiyunB2cOrderDTO.getTransaction_unique_key().substring(dataId.length()));
+                    dmpOutputTaskRecordEntity.setDataId(shudiyunB2cOrderDTO.getBiz_uni_key().substring(dataId.length()));
                     dmpOutputTaskRecordEntity.setSourceCode(shudiyunB2cOrderDTOList.get(0).getBiz_no());
                     dmpOutputTaskRecordEntity.setRequestData(JSON.toJSONString(shudiyunB2cOrderDTO));
                     dmpOutputTaskRecordEntity.setStatus(DmpOutputTaskRecordStatusEnum.INIT.getCode());

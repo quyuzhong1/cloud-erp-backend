@@ -3,7 +3,6 @@ package com.erp.server.tms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.ListUtil;
-import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
@@ -1300,7 +1299,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
 
             ShudiyunB2cOrderDTO shudiyunB2cOrderDTO = new ShudiyunB2cOrderDTO();
 
-            shudiyunB2cOrderDTO.setTransaction_unique_key(entity.getId()+logisticsBillDetailEntity.getId());
+            shudiyunB2cOrderDTO.setBiz_uni_key(entity.getId()+logisticsBillDetailEntity.getId());
             shudiyunB2cOrderDTO.setBiz_no(entity.getTransportNo());
             if (entity.getDeliveryTime() != null) {
                 shudiyunB2cOrderDTO.setBiz_time(localDateTime.format(entity.getDeliveryTime()));

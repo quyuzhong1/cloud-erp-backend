@@ -115,7 +115,7 @@ public class DmpOutputSdyRefundHandler extends DmpOutputTaskHandler {
                     String id = identifierGenerator.nextId(dmpOutputTaskRecordEntity).toString();
                     dmpOutputTaskRecordEntity.setId(id);
                     dmpOutputTaskRecordEntity.setMainId(dmpRequest.getOutputTaskId());
-                    dmpOutputTaskRecordEntity.setDataId(shudiyunB2cOrderDTO.getTransaction_unique_key().substring(dataId.length()));
+                    dmpOutputTaskRecordEntity.setDataId(shudiyunB2cOrderDTO.getBiz_uni_key().substring(dataId.length()));
                     dmpOutputTaskRecordEntity.setSourceCode(shudiyunB2cOrderDTOList.get(0).getBiz_no());
                     dmpOutputTaskRecordEntity.setRequestData(JSON.toJSONString(shudiyunB2cOrderDTO));
                     dmpOutputTaskRecordEntity.setStatus(DmpOutputTaskRecordStatusEnum.INIT.getCode());
@@ -157,13 +157,12 @@ public class DmpOutputSdyRefundHandler extends DmpOutputTaskHandler {
 
         for (DmpSoRefundDetailEntity dmpSoRefundDetailEntity : dmpSoRefundDetailEntityList) {
             ShudiyunB2cOrderDTO sdyDTO = new ShudiyunB2cOrderDTO();
-            sdyDTO.setTransaction_unique_key(dmpSoRefundEntity.getId() + dmpSoRefundDetailEntity.getId());
+            sdyDTO.setBiz_uni_key(dmpSoRefundEntity.getId() + dmpSoRefundDetailEntity.getId());
             sdyDTO.setBiz_no(dmpSoRefundEntity.getThirdCode());
             sdyDTO.setBiz_time(localDateTime.format(dmpSoRefundEntity.getRefundTime()));
 
             //仅退款
-            sdyDTO.setTransaction_type("CC");
-            sdyDTO.setTransaction_type("110.10.02");
+            sdyDTO.setTransaction_type("仅退款");
 
             if (CharSequenceUtil.isNotBlank(dmpSoRefundEntity.getStatus()) && CharSequenceUtil.isNotBlank(DmpRefundInfoStatusEnum.getName(dmpSoRefundEntity.getStatus()))) {
                 sdyDTO.setBiz_status(DmpRefundInfoStatusEnum.getName(dmpSoRefundEntity.getStatus()));

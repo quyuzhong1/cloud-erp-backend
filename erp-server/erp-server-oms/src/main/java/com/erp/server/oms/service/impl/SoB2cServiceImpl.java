@@ -48,7 +48,6 @@ import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.dto.CfgAppClientDTO;
 import com.erp.model.dmp.dto.DmpInoutDTO;
-import com.erp.model.dmp.dto.ThirdMappingDTO;
 import com.erp.model.dmp.entity.CfgAppClientEntity;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.dmp.enums.AppClientEnum;
@@ -56,7 +55,6 @@ import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.oms.dto.DictBasicDTO;
 import com.erp.model.oms.dto.*;
-import com.erp.model.oms.dto.SoB2cDTO.TabListDTO;
 import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.oms.entity.OperateLogEntity;
 import com.erp.model.oms.entity.*;
@@ -144,9 +142,7 @@ import java.math.RoundingMode;
 import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -9308,7 +9304,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
             ShudiyunB2cOrderDTO shudiyunB2cOrderDTO = new ShudiyunB2cOrderDTO();
 
-            shudiyunB2cOrderDTO.setTransaction_unique_key(soB2cEntity.getId()+soB2cDetailEntity.getId());
+            shudiyunB2cOrderDTO.setBiz_uni_key(soB2cEntity.getId()+soB2cDetailEntity.getId());
             shudiyunB2cOrderDTO.setBiz_no(soB2cEntity.getCode());
             if (soB2cEntity.getPayTime() != null) {
                 shudiyunB2cOrderDTO.setBiz_time(localDateTime.format(soB2cEntity.getPayTime()));

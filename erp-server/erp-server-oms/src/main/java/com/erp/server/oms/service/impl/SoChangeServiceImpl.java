@@ -884,7 +884,7 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
             });
 
             //同步数帝云
-            list.forEach(obj -> soInfoService.sdyFieldOrderHandler(obj.getId(), SyncOperateEnum.OPERATE_APPROVE.getCode()));
+            list.forEach(obj -> soInfoService.sdyFieldOrderHandler(obj.getSoId(), SyncOperateEnum.OPERATE_APPROVE.getCode()));
         }
         //推送金蝶
         TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {

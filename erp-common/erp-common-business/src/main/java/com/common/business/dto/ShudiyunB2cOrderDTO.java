@@ -13,7 +13,7 @@ public class ShudiyunB2cOrderDTO {
     /**
      * 主表业务唯一键_id
      */
-    private String transaction_unique_key;
+    private String biz_uni_key;
     /**
      * 交易单号
      */

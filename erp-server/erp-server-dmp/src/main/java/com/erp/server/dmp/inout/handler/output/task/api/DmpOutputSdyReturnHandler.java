@@ -115,7 +115,7 @@ public class DmpOutputSdyReturnHandler extends DmpOutputTaskHandler {
                     String id = identifierGenerator.nextId(dmpOutputTaskRecordEntity).toString();
                     dmpOutputTaskRecordEntity.setId(id);
                     dmpOutputTaskRecordEntity.setMainId(dmpRequest.getOutputTaskId());
-                    dmpOutputTaskRecordEntity.setDataId(shudiyunB2cOrderDTO.getTransaction_unique_key().substring(dataId.length()));
+                    dmpOutputTaskRecordEntity.setDataId(shudiyunB2cOrderDTO.getBiz_uni_key().substring(dataId.length()));
                     dmpOutputTaskRecordEntity.setSourceCode(shudiyunB2cOrderDTOList.get(0).getBiz_no());
                     dmpOutputTaskRecordEntity.setRequestData(JSON.toJSONString(shudiyunB2cOrderDTO));
                     dmpOutputTaskRecordEntity.setStatus(DmpOutputTaskRecordStatusEnum.INIT.getCode());
@@ -155,24 +155,24 @@ public class DmpOutputSdyReturnHandler extends DmpOutputTaskHandler {
 
         for (DmpSoReturnDetailEntity dmpSoReturnDetailEntity : dmpSoReturnDetailEntityList) {
             ShudiyunB2cOrderDTO sdyDTO = new ShudiyunB2cOrderDTO();
-            sdyDTO.setTransaction_unique_key(dmpSoReturnEntity.getId() + dmpSoReturnDetailEntity.getId());
+            sdyDTO.setBiz_uni_key(dmpSoReturnEntity.getId() + dmpSoReturnDetailEntity.getId());
             sdyDTO.setBiz_no(dmpSoReturnEntity.getThirdCode());
             sdyDTO.setBiz_time(localDateTime.format(dmpSoReturnEntity.getReturnTime()));
 
             if ("refund".equals(dmpSoReturnDetailEntity.getSolutionType())) {
                 //仅退款
-                sdyDTO.setTransaction_type("CC");
-                sdyDTO.setTransaction_type("110.10.02");
+                sdyDTO.setTransaction_type("仅退款");
+                sdyDTO.setTransaction_sub_type("退款不退货");
             } else if ("replacement".equals(dmpSoReturnDetailEntity.getSolutionType())) {
                 //RMA.退换货
-                sdyDTO.setTransaction_type("110.20");
+                sdyDTO.setTransaction_type("退换货");
                 //换货退货
-                sdyDTO.setTransaction_type("110.20.01");
+                sdyDTO.setTransaction_sub_type("换货退货");
             } else {
                 //RMA.退货单
-                sdyDTO.setTransaction_type("110.10");
+                sdyDTO.setTransaction_type("退货单");
                 //退货退款
-                sdyDTO.setTransaction_sub_type("110.10.01");
+                sdyDTO.setTransaction_sub_type("退货退款");
             }
 
             if (CharSequenceUtil.isNotBlank(dmpSoReturnEntity.getStatus()) && CharSequenceUtil.isNotBlank(DmpReturnInfoStatusEnum.getName(Integer.valueOf(dmpSoReturnEntity.getStatus())))) {

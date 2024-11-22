@@ -59,7 +59,6 @@ import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.sys.dto.DictCountryDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.sys.entity.DictCountryEntity;
-import com.erp.model.sys.entity.DictCurrencyEntity;
 import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.sys.entity.SysDepartmentEntity;
 import com.erp.model.tms.dto.*;
@@ -3559,7 +3558,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
 
             ShudiyunB2cOrderDTO shudiyunB2cOrderDTO = new ShudiyunB2cOrderDTO();
 
-            shudiyunB2cOrderDTO.setTransaction_unique_key(entity.getId()+soOutstockDetailEntity.getId());
+            shudiyunB2cOrderDTO.setBiz_uni_key(entity.getId()+soOutstockDetailEntity.getId());
             shudiyunB2cOrderDTO.setBiz_no(entity.getCode());
             shudiyunB2cOrderDTO.setBiz_time(localDate.format(entity.getBillDate()));
             //默认出库单

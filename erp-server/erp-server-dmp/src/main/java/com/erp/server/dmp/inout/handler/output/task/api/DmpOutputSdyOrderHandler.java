@@ -23,7 +23,6 @@ import com.erp.model.oms.enums.OrderSubTypeEnum;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.sys.entity.DictCurrencyEntity;
 import com.erp.rpc.sys.feign.SysUserFeign;
-import com.erp.server.dmp.enums.DmpRefundInfoStatusEnum;
 import com.erp.server.dmp.inout.dto.request.DmpOutputTaskRequest;
 import com.erp.server.dmp.inout.dto.response.DmpOutputTaskResponse;
 import com.erp.server.dmp.inout.handler.output.task.DmpOutputTaskHandler;
@@ -124,7 +123,7 @@ public class DmpOutputSdyOrderHandler extends DmpOutputTaskHandler {
                     String id = identifierGenerator.nextId(dmpOutputTaskRecordEntity).toString();
                     dmpOutputTaskRecordEntity.setId(id);
                     dmpOutputTaskRecordEntity.setMainId(dmpRequest.getOutputTaskId());
-                    dmpOutputTaskRecordEntity.setDataId(shudiyunB2cOrderDTO.getTransaction_unique_key().substring(dataId.length()));
+                    dmpOutputTaskRecordEntity.setDataId(shudiyunB2cOrderDTO.getBiz_uni_key().substring(dataId.length()));
                     dmpOutputTaskRecordEntity.setSourceCode(shudiyunB2cOrderDTOList.get(0).getBiz_no());
                     dmpOutputTaskRecordEntity.setRequestData(JSON.toJSONString(shudiyunB2cOrderDTO));
                     dmpOutputTaskRecordEntity.setStatus(DmpOutputTaskRecordStatusEnum.INIT.getCode());
@@ -178,7 +177,7 @@ public class DmpOutputSdyOrderHandler extends DmpOutputTaskHandler {
             DmpSoDetailEntity dmpSoDetailEntity = dmpSoDetailEntityList.get(i);
 
             ShudiyunB2cOrderDTO shudiyunB2cOrderDTO = new ShudiyunB2cOrderDTO();
-            shudiyunB2cOrderDTO.setTransaction_unique_key(dmpSoInfoEntity.getId() + dmpSoDetailEntity.getId());
+            shudiyunB2cOrderDTO.setBiz_uni_key(dmpSoInfoEntity.getId() + dmpSoDetailEntity.getId());
 
             shudiyunB2cOrderDTO.setBiz_no(dmpSoInfoEntity.getThirdCode());
             shudiyunB2cOrderDTO.setBiz_time(localDateTime.format(dmpSoInfoEntity.getPayTime()));
@@ -186,16 +185,16 @@ public class DmpOutputSdyOrderHandler extends DmpOutputTaskHandler {
             //如果是旺店通中台表的订单属于配货单，其他的都是线上原始订单
             if (PlatformDictEnum.WDT.getCode().equals(dmpSoInfoEntity.getSourceSystem())) {
                 //配货单
-                shudiyunB2cOrderDTO.setTransaction_type("100.20");
+                shudiyunB2cOrderDTO.setTransaction_type("配货单");
                 shudiyunB2cOrderDTO.setBiz_status(wdtStatusHandler(dmpSoInfoEntity.getOrderStatus()));
 
             } else {
                 //线上订单
-                shudiyunB2cOrderDTO.setTransaction_type("100.10");
+                shudiyunB2cOrderDTO.setTransaction_type("线上订单");
                 shudiyunB2cOrderDTO.setBiz_status(ApproveStatusEnum.getName(dmpSoInfoEntity.getOrderStatus()));
             }
 
-            shudiyunB2cOrderDTO.setTransaction_sub_type(OrderSubTypeEnum.ONLINE_ORDER.getCode());
+            shudiyunB2cOrderDTO.setTransaction_sub_type(OrderSubTypeEnum.ONLINE_ORDER.getName());
 
 
             shudiyunB2cOrderDTO.setTotal_goods_transaction_amount(dmpSoInfoEntity.getAllAmount());
@@ -275,9 +274,11 @@ public class DmpOutputSdyOrderHandler extends DmpOutputTaskHandler {
                     //收款组织编码
                     companyEntities = sysUserFeign.getAccountingCompanyList(Arrays.asList(customerInfo.getFinancialOrganization()));
                     BaseIdDTO.CodeDTO sysAccountingCompanyEntity = companyEntities.stream().filter(req -> req.getId().equals(customerInfo.getFinancialOrganization())).findFirst().orElse(null);
-                    shudiyunB2cOrderDTO.setReceiving_company_code(sysAccountingCompanyEntity.getCode());
-                    shudiyunB2cOrderDTO.setOrganization_code(sysAccountingCompanyEntity.getCode());
-                    shudiyunB2cOrderDTO.setOrganization_name(sysAccountingCompanyEntity.getName());
+                    if (ObjectUtil.isNotEmpty(sysAccountingCompanyEntity)) {
+                        shudiyunB2cOrderDTO.setReceiving_company_code(sysAccountingCompanyEntity.getCode());
+                        shudiyunB2cOrderDTO.setOrganization_code(sysAccountingCompanyEntity.getCode());
+                        shudiyunB2cOrderDTO.setOrganization_name(sysAccountingCompanyEntity.getName());
+                    }
                 }
 
                 //销售组织
@@ -297,8 +298,7 @@ public class DmpOutputSdyOrderHandler extends DmpOutputTaskHandler {
 
             shudiyunB2cOrderDTO.setPlatform_id(dmpSoInfoEntity.getSourceSystem());
             shudiyunB2cOrderDTO.setPlatform_name(PlatformDictEnum.getNameByCode(dmpSoInfoEntity.getSourcePlatform()));
-            shudiyunB2cOrderDTO.setShop_no(dmpSoInfoEntity.getShopId());
-            shudiyunB2cOrderDTO.setShop_name(dmpSoInfoEntity.getShopName());
+
             shudiyunB2cOrderDTO.setRoot_node_no(dmpSoInfoEntity.getThirdCode());
             shudiyunB2cOrderDTO.setRoot_node_create_time(localDateTime.format(dmpSoInfoEntity.getPayTime()));
             shudiyunB2cOrderDTO.setRoot_node_modify_time(localDateTime.format(dmpSoInfoEntity.getPlatformUpdateTime()));
@@ -313,7 +313,7 @@ public class DmpOutputSdyOrderHandler extends DmpOutputTaskHandler {
             }
 
             shudiyunB2cOrderDTO.setRemark(dmpSoDetailEntity.getItemRemark());
-            shudiyunB2cOrderDTO.setGoods_status("10.10");
+            shudiyunB2cOrderDTO.setGoods_status("未发货");
             // 商品状态
             if (SoB2cBillStatusEnum.ENUM_SHIPPED.getCode().equals(dmpSoInfoEntity.getDeliveryStatus())) {
                 shudiyunB2cOrderDTO.setGoods_status("10.10");

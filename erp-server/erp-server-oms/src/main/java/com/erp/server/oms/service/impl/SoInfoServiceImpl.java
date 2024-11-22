@@ -3929,7 +3929,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
 
             ShudiyunB2cOrderDTO shudiyunB2cOrderDTO = new ShudiyunB2cOrderDTO();
 
-            shudiyunB2cOrderDTO.setTransaction_unique_key(view.getId()+soDetailEntity.getId());
+            shudiyunB2cOrderDTO.setBiz_uni_key(view.getId()+soDetailEntity.getId());
             shudiyunB2cOrderDTO.setBiz_no(view.getCode());
             shudiyunB2cOrderDTO.setBiz_time(localDate.format(view.getBillDate()));
             //默认线下订单
