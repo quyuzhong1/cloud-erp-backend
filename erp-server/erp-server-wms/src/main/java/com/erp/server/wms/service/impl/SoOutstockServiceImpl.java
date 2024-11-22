@@ -3637,8 +3637,10 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
 
             // 商品状态
             shudiyunB2cOrderDTO.setGoods_status("10.10");
+            if (entity.getActualDeliveryDate() != null) {
+                shudiyunB2cOrderDTO.setDelivery_time(localDateTime.format(entity.getActualDeliveryDate()));
+            }
 
-            shudiyunB2cOrderDTO.setDelivery_time(localDateTime.format(entity.getActualDeliveryDate()));
             shudiyunB2cOrderDTO.setGoods_transaction_quantity(soOutstockDetailEntity.getActualQty());
             shudiyunB2cOrderDTO.setUnit(skuVO.getUnitName());
             if (skuVO.getRetailPrice() != null) {

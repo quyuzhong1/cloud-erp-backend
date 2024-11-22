@@ -5,6 +5,7 @@ import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.alibaba.fastjson.JSON;
 import com.common.business.dto.ShudiyunB2cOrderDTO;
+import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.controller.vo.ApiResult;
@@ -17,6 +18,7 @@ import com.erp.model.dmp.enums.ThirdSysTypeEnum;
 import com.erp.model.oms.entity.CustomerInfoEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.sys.entity.DictCurrencyEntity;
+import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.dmp.enums.DmpReturnInfoStatusEnum;
 import com.erp.server.dmp.inout.dto.request.DmpOutputTaskRequest;
 import com.erp.server.dmp.inout.dto.response.DmpOutputTaskResponse;
@@ -43,6 +45,8 @@ public class DmpOutputSdyReturnHandler extends DmpOutputTaskHandler {
     private ThirdMappingService thirdMappingService;
     @Resource
     private SdyDeliveryOrderConsumer sdyDeliveryOrderConsumer;
+    @Resource
+    private SysUserFeign sysUserFeign;
 
     @Override
     protected List<DmpOutputTaskRecordEntity> outputData(DmpOutputTaskRequest dmpRequest, DmpOutputTaskResponse dmpResponse) {
@@ -190,17 +194,27 @@ public class DmpOutputSdyReturnHandler extends DmpOutputTaskHandler {
                 List<ThirdMappingEntity> shop = thirdMappingService.lambdaQuery()
                         .eq(ThirdMappingEntity::getType, ThirdSysTypeEnum.SHOP.getCode())
                         .eq(ThirdMappingEntity::getThirdSysType, PlatformDictEnum.WDT.getCode())
-                        .eq(ThirdMappingEntity::getThirdId, dmpSoReturnEntity.getShopId())
+                        .eq(ThirdMappingEntity::getThirdCode, dmpSoReturnEntity.getShopId())
                         .list();
                 if (CollectionUtils.isEmpty(shop)) {
                     throw new ServiceException(ApiError.ERROR_SDY_NOT_FOUND_SHOP_MAPPING, dmpSoReturnEntity.getShopId());
                 }
                 ShopInfoEntity shopInfo = FeignQuery.getById(ShopInfoEntity.class, shop.get(0).getSysId());
                 CustomerInfoEntity customerInfo = FeignQuery.getById(CustomerInfoEntity.class, shopInfo.getCustomerId());
+                if (ObjectUtil.isEmpty(customerInfo)) {
+                    throw new ServiceException(ApiError.ERROR_SDY_NOT_FOUND_CUSTOMER, shop.get(0).getSysId());
+                }
 
-                sdyDTO.setSales_company_code(shopInfo.getSalesOrgId());
-                sdyDTO.setSales_company_code(customerInfo.getFinancialOrganization());
-                sdyDTO.setReceiving_company_code(customerInfo.getFinancialOrganization());
+                //组织编码
+                List<BaseIdDTO.CodeDTO> companyEntities = sysUserFeign.getAccountingCompanyList(Arrays.asList(customerInfo.getFinancialOrganization(), shopInfo.getSalesOrgId()));
+                BaseIdDTO.CodeDTO sysAccountingCompanyEntity = companyEntities.stream().filter(req -> req.getId().equals(customerInfo.getFinancialOrganization())).findFirst().orElse(null);
+                sdyDTO.setReceiving_company_code(sysAccountingCompanyEntity.getCode());
+                sdyDTO.setOrganization_code(sysAccountingCompanyEntity.getCode());
+                sdyDTO.setOrganization_name(sysAccountingCompanyEntity.getName());
+
+                //销售组织
+                BaseIdDTO.CodeDTO salesOrg = companyEntities.stream().filter(req -> req.getId().equals(shopInfo.getSalesOrgId())).findFirst().orElse(null);
+                sdyDTO.setSales_company_code(salesOrg.getCode());
                 sdyDTO.setShop_no(shopInfo.getId());
                 sdyDTO.setShop_name(shopInfo.getName());
                 DictCurrencyEntity dictCurrencyEntity = FeignQuery.getById(DictCurrencyEntity.class, shopInfo.getTradeCurrency());
@@ -210,17 +224,34 @@ public class DmpOutputSdyReturnHandler extends DmpOutputTaskHandler {
                 sdyDTO.setTransaction_currency_code(shopInfo.getTradeCurrency());
                 sdyDTO.setSettlement_currency_code(shopInfo.getSettlementCurrency());
             } else {
-                ShopInfoEntity shopInfo = FeignQuery.getById(ShopInfoEntity.class, dmpSoReturnEntity.getNextLevelId());
-                if (ObjectUtil.isEmpty(shopInfo)) {
-                    throw new ServiceException(ApiError.ERROR_SDY_NOT_FOUND_SHOP, dmpSoReturnEntity.getNextLevelId());
+                String shopId = "";
+                if (CharSequenceUtil.isNotBlank(dmpSoReturnEntity.getNextLevelId())) {
+                    shopId = dmpSoReturnEntity.getNextLevelId();
+                } else {
+                    shopId = dmpSoReturnEntity.getShopId();
                 }
+                ShopInfoEntity shopInfo = FeignQuery.getById(ShopInfoEntity.class, shopId);
+                if (ObjectUtil.isEmpty(shopInfo)) {
+                    throw new ServiceException(ApiError.ERROR_SDY_NOT_FOUND_SHOP, shopId);
+                }
+                //组织信息
+                List<BaseIdDTO.CodeDTO> companyEntities = new ArrayList<>();
                 CustomerInfoEntity customerInfo = FeignQuery.getById(CustomerInfoEntity.class, shopInfo.getCustomerId());
                 if (ObjectUtil.isEmpty(customerInfo)) {
-                    throw new ServiceException(ApiError.ERROR_SDY_NOT_FOUND_SHOP, shopInfo.getCustomerId());
+                    throw new ServiceException(ApiError.ERROR_SDY_NOT_FOUND_CUSTOMER, shopInfo.getId());
                 }
-                sdyDTO.setSales_company_code(shopInfo.getSalesOrgId());
-                sdyDTO.setSales_company_code(customerInfo.getFinancialOrganization());
-                sdyDTO.setReceiving_company_code(customerInfo.getFinancialOrganization());
+
+                //收款组织编码
+                companyEntities = sysUserFeign.getAccountingCompanyList(Arrays.asList(customerInfo.getFinancialOrganization(), shopInfo.getSalesOrgId()));
+                BaseIdDTO.CodeDTO sysAccountingCompanyEntity = companyEntities.stream().filter(req -> req.getId().equals(customerInfo.getFinancialOrganization())).findFirst().orElse(null);
+                if (ObjectUtil.isNotEmpty(sysAccountingCompanyEntity)) {
+                    sdyDTO.setReceiving_company_code(sysAccountingCompanyEntity.getCode());
+                    sdyDTO.setOrganization_code(sysAccountingCompanyEntity.getCode());
+                    sdyDTO.setOrganization_name(sysAccountingCompanyEntity.getName());
+                }
+
+                String salesOrgCode = companyEntities.stream().filter(req -> req.getId().equals(shopInfo.getSalesOrgId())).map(req -> req.getCode()).findFirst().orElse("");
+                sdyDTO.setSales_company_code(salesOrgCode);
                 sdyDTO.setShop_no(shopInfo.getId());
                 sdyDTO.setShop_name(shopInfo.getName());
                 DictCurrencyEntity dictCurrencyEntity = FeignQuery.getById(DictCurrencyEntity.class, shopInfo.getTradeCurrency());
@@ -230,7 +261,6 @@ public class DmpOutputSdyReturnHandler extends DmpOutputTaskHandler {
                 sdyDTO.setTransaction_currency_code(shopInfo.getTradeCurrency());
                 sdyDTO.setSettlement_currency_code(shopInfo.getSettlementCurrency());
             }
-
 
             sdyDTO.setPlatform_id(dmpSoReturnEntity.getSourceSystem());
             sdyDTO.setPlatform_name(PlatformDictEnum.getNameByCode(dmpSoReturnEntity.getSourceSystem()));

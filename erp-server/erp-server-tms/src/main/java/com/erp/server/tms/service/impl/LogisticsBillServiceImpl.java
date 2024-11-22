@@ -1302,15 +1302,20 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
 
             shudiyunB2cOrderDTO.setTransaction_unique_key(entity.getId()+logisticsBillDetailEntity.getId());
             shudiyunB2cOrderDTO.setBiz_no(entity.getTransportNo());
-            shudiyunB2cOrderDTO.setBiz_time(localDateTime.format(entity.getDeliveryTime()));
+            if (entity.getDeliveryTime() != null) {
+                shudiyunB2cOrderDTO.setBiz_time(localDateTime.format(entity.getDeliveryTime()));
+            }
             //默认运单
             shudiyunB2cOrderDTO.setTransaction_type("200.20");
 
             shudiyunB2cOrderDTO.setTransaction_sub_type("200.20.01");
             shudiyunB2cOrderDTO.setBiz_status(operateEnum);
-
-            shudiyunB2cOrderDTO.setDelivery_time(localDateTime.format(entity.getDeliveryTime()));
-            shudiyunB2cOrderDTO.setLogistics_delivery_time(localDateTime.format(logisticsBillDetailEntity.getSignTime()));
+            if (entity.getDeliveryTime() != null) {
+                shudiyunB2cOrderDTO.setDelivery_time(localDateTime.format(entity.getDeliveryTime()));
+            }
+            if (logisticsBillDetailEntity.getSignTime() != null) {
+                shudiyunB2cOrderDTO.setLogistics_delivery_time(localDateTime.format(logisticsBillDetailEntity.getSignTime()));
+            }
             shudiyunB2cOrderDTO.setDelivery_number(entity.getOutstockCode());
             shudiyunB2cOrderDTO.setLogistic_company(supplierName);
             shudiyunB2cOrderDTO.setLogistic_company_code(channelEntity.getMainId());

@@ -196,7 +196,7 @@ public enum ApiError implements Serializable {
     ERROR_SYS_TYPE_NOTFOUND(80013,"{}不存在"),
     ERROR_SDY_NOT_FOUND_SHOP_MAPPING(80014,"旺店通退货同步数帝云单据未找到对应的店铺映射【{}】"),
     ERROR_SDY_NOT_FOUND_SHOP(80015,"数据同步数帝云未找到店铺信息，店铺id【{}】"),
-    ERROR_SDY_NOT_FOUND_CUSTOMER(80016,"数据同步数帝云未找到客户信息，客户id【{}】"),
+    ERROR_SDY_NOT_FOUND_CUSTOMER(80016,"店铺未绑定客户信息，店铺id【{}】"),
 
     /**
      * 工作流错误 workflow

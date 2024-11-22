@@ -102,19 +102,19 @@ public class ShudiyunB2cOrderDTO {
     /**
      * 销售组织编码
      */
-    private String sales_company_code;
+    private String sales_company_code = "";
     /**
      * 收款组织编码
      */
-    private String receiving_company_code;
+    private String receiving_company_code = "";
     /**
      * 组织名称
      */
-    private String organization_name;
+    private String organization_name = "";
     /**
      * 组织编码
      */
-    private String organization_code;
+    private String organization_code = "";
     /**
      * 平台名称
      */

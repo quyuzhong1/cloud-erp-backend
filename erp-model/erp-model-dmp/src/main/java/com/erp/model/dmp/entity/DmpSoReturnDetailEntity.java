@@ -71,7 +71,7 @@ public class DmpSoReturnDetailEntity extends BaseEntity<DmpSoReturnDetailEntity>
     * 金额
     */
     @TableField("amount")
-    private BigDecimal amount;
+    private BigDecimal amount = BigDecimal.ZERO;
     /**
     * 是否赠品：true/false
     */
