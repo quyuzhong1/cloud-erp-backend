@@ -283,7 +283,7 @@ public class DmpOutputSdyOrderHandler extends DmpOutputTaskHandler {
             }
 
             shudiyunB2cOrderDTO.setRemark(dmpSoDetailEntity.getItemRemark());
-
+            shudiyunB2cOrderDTO.setGoods_status("10.10");
             // 商品状态
             if (SoB2cBillStatusEnum.ENUM_SHIPPED.getCode().equals(dmpSoInfoEntity.getDeliveryStatus())) {
                 shudiyunB2cOrderDTO.setGoods_status("10.10");
