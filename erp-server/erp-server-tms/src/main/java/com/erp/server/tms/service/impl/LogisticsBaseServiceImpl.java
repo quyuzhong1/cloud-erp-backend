@@ -28,7 +28,6 @@ import com.erp.model.tms.enums.LogisticsAddressTypeEnum;
 import com.erp.model.tms.vo.request.*;
 import com.erp.model.tms.vo.response.LogisticsOrderResponseVO;
 import com.erp.model.tms.vo.response.RegisterResponseVO;
-import com.erp.rpc.dmp.feign.DmpLogisticsFeign;
 import com.erp.rpc.dmp.feign.DmpMongoDbFeign;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.oms.feign.ShopeeFeign;
@@ -86,8 +85,6 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
     private LogisticsAddressService logisticsAddressService;
     @Resource
     private DmpMongoDbFeign dmpMongoDbFeign;
-    @Resource
-    private DmpLogisticsFeign dmpLogisticsFeign;
 
     @Override
     public List<BatchResultDTO> syncLogisticsChannel(String platform) {
@@ -323,10 +320,6 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
         if (CollectionUtils.isNotEmpty(sucessList)){
             logisticsBillDetailService.updateRegisterStatusByParams(sucessList, 1);
         }
-        if (CollectionUtils.isNotEmpty(addDTOList)){
-            dmpLogisticsFeign.batchAdd(addDTOList);
-        }
-
     }
 
     /**
