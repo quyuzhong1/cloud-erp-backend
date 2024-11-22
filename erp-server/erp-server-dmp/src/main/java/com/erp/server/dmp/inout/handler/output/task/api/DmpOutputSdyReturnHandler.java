@@ -31,6 +31,7 @@ import org.springframework.stereotype.Service;
 import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 
@@ -144,13 +145,15 @@ public class DmpOutputSdyReturnHandler extends DmpOutputTaskHandler {
      * 解析订单数据
      **/
     public List<ShudiyunB2cOrderDTO> convert(DmpSoReturnInfoEntity dmpSoReturnEntity, List<DmpSoReturnDetailEntity> dmpSoReturnDetailEntityList) {
+        DateTimeFormatter localDateTime = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+
         List<ShudiyunB2cOrderDTO> sdyListDTO = new ArrayList<>();
 
         for (DmpSoReturnDetailEntity dmpSoReturnDetailEntity : dmpSoReturnDetailEntityList) {
             ShudiyunB2cOrderDTO sdyDTO = new ShudiyunB2cOrderDTO();
             sdyDTO.setTransaction_unique_key(dmpSoReturnEntity.getId() + dmpSoReturnDetailEntity.getId());
             sdyDTO.setBiz_no(dmpSoReturnEntity.getThirdCode());
-            sdyDTO.setBiz_time(dmpSoReturnEntity.getReturnTime());
+            sdyDTO.setBiz_time(localDateTime.format(dmpSoReturnEntity.getReturnTime()));
 
             if ("refund".equals(dmpSoReturnDetailEntity.getSolutionType())) {
                 //仅退款
@@ -232,8 +235,8 @@ public class DmpOutputSdyReturnHandler extends DmpOutputTaskHandler {
             sdyDTO.setPlatform_id(dmpSoReturnEntity.getSourceSystem());
             sdyDTO.setPlatform_name(PlatformDictEnum.getNameByCode(dmpSoReturnEntity.getSourceSystem()));
             sdyDTO.setRoot_node_no(dmpSoReturnEntity.getThirdCode());
-            sdyDTO.setRoot_node_create_time(dmpSoReturnEntity.getReturnTime());
-            sdyDTO.setRoot_node_modify_time(dmpSoReturnEntity.getPlatformUpdateTime());
+            sdyDTO.setRoot_node_create_time(localDateTime.format(dmpSoReturnEntity.getReturnTime()));
+            sdyDTO.setRoot_node_modify_time(localDateTime.format(dmpSoReturnEntity.getPlatformUpdateTime()));
             sdyDTO.setGoods_status("10.30");
             sdyDTO.setMsku_code(dmpSoReturnDetailEntity.getSkuNo());
             sdyDTO.setReason(dmpSoReturnDetailEntity.getReason());

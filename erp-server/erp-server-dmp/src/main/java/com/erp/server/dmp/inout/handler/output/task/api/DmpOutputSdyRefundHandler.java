@@ -31,6 +31,7 @@ import org.springframework.stereotype.Service;
 import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 
@@ -145,13 +146,16 @@ public class DmpOutputSdyRefundHandler extends DmpOutputTaskHandler {
      * 解析订单数据
      **/
     public List<ShudiyunB2cOrderDTO> convert(DmpSoRefundInfoEntity dmpSoRefundEntity, List<DmpSoRefundDetailEntity> dmpSoRefundDetailEntityList) {
+        DateTimeFormatter localDateTime = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+        DateTimeFormatter localDate = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+
         List<ShudiyunB2cOrderDTO> sdyListDTO = new ArrayList<>();
 
         for (DmpSoRefundDetailEntity dmpSoRefundDetailEntity : dmpSoRefundDetailEntityList) {
             ShudiyunB2cOrderDTO sdyDTO = new ShudiyunB2cOrderDTO();
             sdyDTO.setTransaction_unique_key(dmpSoRefundEntity.getId() + dmpSoRefundDetailEntity.getId());
             sdyDTO.setBiz_no(dmpSoRefundEntity.getThirdCode());
-            sdyDTO.setBiz_time(dmpSoRefundEntity.getRefundTime());
+            sdyDTO.setBiz_time(localDateTime.format(dmpSoRefundEntity.getRefundTime()));
 
             //仅退款
             sdyDTO.setTransaction_type("CC");
@@ -229,8 +233,8 @@ public class DmpOutputSdyRefundHandler extends DmpOutputTaskHandler {
             sdyDTO.setPlatform_id(dmpSoRefundEntity.getSourceSystem());
             sdyDTO.setPlatform_name(PlatformDictEnum.getNameByCode(dmpSoRefundEntity.getSourceSystem()));
             sdyDTO.setRoot_node_no(dmpSoRefundEntity.getThirdCode());
-            sdyDTO.setRoot_node_create_time(dmpSoRefundEntity.getRefundTime());
-            sdyDTO.setRoot_node_modify_time(dmpSoRefundEntity.getPlatformUpdateTime());
+            sdyDTO.setRoot_node_create_time(localDateTime.format(dmpSoRefundEntity.getRefundTime()));
+            sdyDTO.setRoot_node_modify_time(localDateTime.format(dmpSoRefundEntity.getPlatformUpdateTime()));
             sdyDTO.setGoods_status("10.30");
             sdyDTO.setMsku_code(dmpSoRefundDetailEntity.getSkuNo());
             sdyDTO.setReason(dmpSoRefundEntity.getReason());

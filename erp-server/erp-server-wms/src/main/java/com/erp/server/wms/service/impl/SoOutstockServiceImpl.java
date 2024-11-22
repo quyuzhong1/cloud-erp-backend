@@ -3519,6 +3519,10 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
      * @param operateEnum
      */
     public void sdyFieldHandler(SoOutstockEntity entity, String operateEnum) {
+        DateTimeFormatter localDateTime = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+        DateTimeFormatter localDate = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+
+
         List<SoOutstockDetailEntity> soOutstockDetailEntities = soOutstockDetailService.listByMainIds(Arrays.asList(entity.getId()));
         List<String> skuNos = soOutstockDetailEntities.stream().map(req -> req.getSkuNo()).collect(Collectors.toList());
         List<SkuVO> skuVOList = plmTaskFeign.listBySkuNoList(skuNos);
@@ -3557,7 +3561,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
 
             shudiyunB2cOrderDTO.setTransaction_unique_key(entity.getId()+soOutstockDetailEntity.getId());
             shudiyunB2cOrderDTO.setBiz_no(entity.getCode());
-            shudiyunB2cOrderDTO.setBiz_time(entity.getBillDate().atStartOfDay());
+            shudiyunB2cOrderDTO.setBiz_time(localDateTime.format(entity.getBillDate()));
             //默认出库单
             shudiyunB2cOrderDTO.setTransaction_type("200.10");
 
@@ -3634,7 +3638,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             // 商品状态
             shudiyunB2cOrderDTO.setGoods_status("10.10");
 
-            shudiyunB2cOrderDTO.setDelivery_time(entity.getActualDeliveryDate());
+            shudiyunB2cOrderDTO.setDelivery_time(localDateTime.format(entity.getActualDeliveryDate()));
             shudiyunB2cOrderDTO.setGoods_transaction_quantity(soOutstockDetailEntity.getActualQty());
             shudiyunB2cOrderDTO.setUnit(skuVO.getUnitName());
             if (skuVO.getRetailPrice() != null) {

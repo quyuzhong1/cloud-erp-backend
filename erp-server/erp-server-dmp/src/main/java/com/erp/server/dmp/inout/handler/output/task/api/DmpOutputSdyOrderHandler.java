@@ -36,6 +36,7 @@ import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 
@@ -154,6 +155,9 @@ public class DmpOutputSdyOrderHandler extends DmpOutputTaskHandler {
      * 解析订单数据
      **/
     public List<ShudiyunB2cOrderDTO> convert(DmpSoInfoEntity dmpSoInfoEntity, List<DmpSoDetailEntity> dmpSoDetailEntityList) {
+        DateTimeFormatter localDateTime = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+        DateTimeFormatter localDate = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+
         //优惠额
         BigDecimal totalDiscount = dmpSoInfoEntity.getTotalDiscount();
 
@@ -173,7 +177,7 @@ public class DmpOutputSdyOrderHandler extends DmpOutputTaskHandler {
             shudiyunB2cOrderDTO.setTransaction_unique_key(dmpSoInfoEntity.getId() + dmpSoDetailEntity.getId());
 
             shudiyunB2cOrderDTO.setBiz_no(dmpSoInfoEntity.getThirdCode());
-            shudiyunB2cOrderDTO.setBiz_time(dmpSoInfoEntity.getPayTime());
+            shudiyunB2cOrderDTO.setBiz_time(localDateTime.format(dmpSoInfoEntity.getPayTime()));
 
             //如果是旺店通中台表的订单属于配货单，其他的都是线上原始订单
             if (PlatformDictEnum.WDT.getCode().equals(dmpSoInfoEntity.getSourceSystem())) {
@@ -274,8 +278,8 @@ public class DmpOutputSdyOrderHandler extends DmpOutputTaskHandler {
             shudiyunB2cOrderDTO.setShop_no(dmpSoInfoEntity.getShopId());
             shudiyunB2cOrderDTO.setShop_name(dmpSoInfoEntity.getShopName());
             shudiyunB2cOrderDTO.setRoot_node_no(dmpSoInfoEntity.getThirdCode());
-            shudiyunB2cOrderDTO.setRoot_node_create_time(dmpSoInfoEntity.getPayTime());
-            shudiyunB2cOrderDTO.setRoot_node_modify_time(dmpSoInfoEntity.getPlatformUpdateTime());
+            shudiyunB2cOrderDTO.setRoot_node_create_time(localDateTime.format(dmpSoInfoEntity.getPayTime()));
+            shudiyunB2cOrderDTO.setRoot_node_modify_time(localDateTime.format(dmpSoInfoEntity.getPlatformUpdateTime()));
             shudiyunB2cOrderDTO.setGoods_no(dmpSoDetailEntity.getPlatformSku());
             shudiyunB2cOrderDTO.setGoods_name(dmpSoDetailEntity.getSkuName());
             shudiyunB2cOrderDTO.setSpec_no(dmpSoDetailEntity.getPlatformSpuNo());

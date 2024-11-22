@@ -1760,7 +1760,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
 
             shudiyunB2cOrderDTO.setTransaction_unique_key(entity.getId()+soReturnInstockDetailEntity.getId());
             shudiyunB2cOrderDTO.setBiz_no(entity.getCode());
-            shudiyunB2cOrderDTO.setBiz_time(entity.getBillDate().atStartOfDay());
+            shudiyunB2cOrderDTO.setBiz_time(localDate.format(entity.getBillDate()));
             //默认退货入库单
             shudiyunB2cOrderDTO.setTransaction_type("210.10");
             shudiyunB2cOrderDTO.setTransaction_sub_type("210.10.01");

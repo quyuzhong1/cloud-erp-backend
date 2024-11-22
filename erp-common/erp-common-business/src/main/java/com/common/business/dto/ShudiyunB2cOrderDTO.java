@@ -3,10 +3,8 @@ package com.common.business.dto;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.SyncOperateEnum;
 import lombok.*;
-import org.springframework.cglib.core.Local;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 
 @Getter
 @Setter
@@ -23,7 +21,7 @@ public class ShudiyunB2cOrderDTO {
     /**
      * 交易时间
      */
-    private LocalDateTime biz_time;
+    private String biz_time;
     /**
      * 交易类型
      */
@@ -152,11 +150,11 @@ public class ShudiyunB2cOrderDTO {
     /**
      * 根节点交易创建日期
      */
-    private LocalDateTime root_node_create_time;
+    private String root_node_create_time;
     /**
      * 根节点交易修改日期
      */
-    private LocalDateTime root_node_modify_time;
+    private String root_node_modify_time;
     /**
      * 交易分区
      */
@@ -288,7 +286,7 @@ public class ShudiyunB2cOrderDTO {
     /**
      * 父节点单日期
      */
-    private LocalDateTime parent_node_create_time;
+    private String parent_node_create_time;
     /**
      * 父节点类型
      */
@@ -300,7 +298,7 @@ public class ShudiyunB2cOrderDTO {
     /**
      * 子节点单日期
      */
-    private LocalDateTime child_node_create_time;
+    private String child_node_create_time;
     /**
      * 子节点类型
      */
@@ -312,11 +310,11 @@ public class ShudiyunB2cOrderDTO {
     /**
      * 物流签收时间
      */
-    private LocalDateTime logistics_delivery_time;
+    private String logistics_delivery_time;
     /**
      * 平台签收时间
      */
-    private LocalDateTime platform_signing_time;
+    private String platform_signing_time;
     /**
      * 发货单号
      */
@@ -432,7 +430,7 @@ public class ShudiyunB2cOrderDTO {
     /**
      * sd_修改时间
      */
-    private LocalDateTime MODIFY_AT;
+    private String MODIFY_AT;
     /**
      * sd_修改人
      */
@@ -440,7 +438,7 @@ public class ShudiyunB2cOrderDTO {
     /**
      * sd_创建时间
      */
-    private LocalDateTime CREATED_AT;
+    private String CREATED_AT;
     /**
      * sd_创建人
      */
@@ -524,11 +522,11 @@ public class ShudiyunB2cOrderDTO {
     /**
      * 物流妥投时间
      */
-    private LocalDateTime logistics_invest_time;
+    private String logistics_invest_time;
     /**
      * 预估妥投时间
      */
-    private LocalDateTime estimate_investment_time;
+    private String estimate_investment_time;
     /**
      * 配送地址
      */
@@ -536,7 +534,7 @@ public class ShudiyunB2cOrderDTO {
     /**
      * 更新时间
      */
-    private LocalDateTime update_time;
+    private String update_time;
     /**
      * 买家信息
      */

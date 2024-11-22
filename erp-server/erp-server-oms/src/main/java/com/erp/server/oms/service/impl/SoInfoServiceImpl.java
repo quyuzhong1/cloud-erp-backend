@@ -3880,6 +3880,9 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
      * @param operateEnum
      */
     public void sdyFieldOrderHandler(String soId, String operateEnum) {
+        DateTimeFormatter localDateTime = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+        DateTimeFormatter localDate = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+
         SoInfoDTO.ViewDTO view = this.view(soId);
 
         List<String> skuNos = view.getDetailList().stream().map(req -> req.getSkuNo()).collect(Collectors.toList());
@@ -3918,7 +3921,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
 
             shudiyunB2cOrderDTO.setTransaction_unique_key(view.getId()+soDetailEntity.getId());
             shudiyunB2cOrderDTO.setBiz_no(view.getCode());
-            shudiyunB2cOrderDTO.setBiz_time(view.getBillDate().atStartOfDay());
+            shudiyunB2cOrderDTO.setBiz_time(localDate.format(view.getBillDate()));
             //默认线下订单
             shudiyunB2cOrderDTO.setTransaction_type("100.30");
             shudiyunB2cOrderDTO.setTransaction_sub_type(view.getTransactionSubType());
@@ -3970,8 +3973,8 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             shudiyunB2cOrderDTO.setShop_no(view.getCustomerId());
             shudiyunB2cOrderDTO.setShop_name(view.getCustomerName());
             shudiyunB2cOrderDTO.setRoot_node_no(view.getCode());
-            shudiyunB2cOrderDTO.setRoot_node_create_time(view.getReceiveDate().atStartOfDay());
-            shudiyunB2cOrderDTO.setRoot_node_modify_time(view.getUpdateTime());
+            shudiyunB2cOrderDTO.setRoot_node_create_time(localDate.format(view.getReceiveDate()));
+            shudiyunB2cOrderDTO.setRoot_node_modify_time(localDateTime.format(view.getUpdateTime()));
             shudiyunB2cOrderDTO.setGoods_no(soDetailEntity.getSkuNo());
             SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuId().equals(soDetailEntity.getSkuId())).findFirst().orElse(new SkuVO());
             shudiyunB2cOrderDTO.setGoods_name(skuVO.getSkuName());
