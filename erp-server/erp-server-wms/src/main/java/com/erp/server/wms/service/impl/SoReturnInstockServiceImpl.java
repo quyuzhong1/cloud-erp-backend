@@ -1818,10 +1818,10 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
             if (ObjectUtil.isNotEmpty(bomChildrenSkuDTO)) {
                 if (BomTypeEnum.COMBINATION.getType().equals(bomChildrenSkuDTO.getType())) {
                     shudiyunB2cOrderDTO.setIs_comb(1);
-                    shudiyunB2cOrderDTO.setSuite_no(bomChildrenSkuDTO.getParentSkuNo());
+                    shudiyunB2cOrderDTO.setSuite_no(soReturnInstockDetailEntity.getSkuNo());
                     ProductDetailEntity productDetailEntity = parentSkuList.stream().filter(req -> req.getId().equals(bomChildrenSkuDTO.getParentSkuId())).findFirst().orElse(null);
                     if (ObjectUtil.isNotEmpty(productDetailEntity)) {
-                        shudiyunB2cOrderDTO.setSuite_name(productDetailEntity.getName());
+                        shudiyunB2cOrderDTO.setSuite_name(skuVO.getSkuName());
                     }
                 }
             }
