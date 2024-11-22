@@ -7,6 +7,7 @@ import com.alibaba.fastjson.JSON;
 import com.common.business.dto.ShudiyunB2cOrderDTO;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.wrapper.FeignQuery;
+import com.common.core.controller.vo.ApiResult;
 import com.common.core.entity.BaseEntity;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -134,8 +135,17 @@ public class DmpOutputSdyWdtOriginalOrderHandler extends DmpOutputTaskHandler {
 
     @Override
     protected void pushData(DmpCfgOutputEntity dmpCfgOutputEntity, DmpOutputTaskRecordEntity dmpOutputTaskRecordEntity) {
+        String id = dmpOutputTaskRecordEntity.getId();
+        String status = "";
         String requestData = dmpOutputTaskRecordEntity.getRequestData();
-        sdyDeliveryOrderConsumer.handle(requestData);
+        ApiResult handle = sdyDeliveryOrderConsumer.handle(requestData);
+        if ("200".equals(handle.getCode())) {
+            status = DmpOutputTaskRecordStatusEnum.FINISH.getCode();
+        } else {
+            status = DmpOutputTaskRecordStatusEnum.ERROR.getCode();
+        }
+
+        dmpOutputUtils.updateStatus(id, status, String.valueOf(handle.getData()) , handle.getMsg());
     }
 
     /**
