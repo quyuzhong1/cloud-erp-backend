@@ -22,6 +22,7 @@ import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
+import com.common.core.utils.Md5Util;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.mrp.dto.*;
 import com.erp.model.mrp.entity.*;
@@ -115,7 +116,7 @@ public class CalcSalesInfoDimServiceImpl extends SuperServiceImpl<CalcSalesInfoD
                 entity.setId(dto.getCalcSalesInfoDimId());
                 List<CalcSalesInfoDenoisingEntity> allSalesList = new ArrayList<>();
                 //开始计算去噪销量
-                List<CalcSalesInfoDenoisingEntity> calculationSales = calculationSales(dto, allSalesList);
+                List<CalcSalesInfoDenoisingEntity> calculationSales = calculationSales(dto, allSalesList, entity);
                 //开始计算分时段销量和日均
                 List<CalcSalesInfoDimDTO.TimePeriodSalesDTO> avgTimePeriodSales = calculationTimePeriodSales(dto, allSalesList, entity);
                 //开始计算销量预估
@@ -792,10 +793,11 @@ public class CalcSalesInfoDimServiceImpl extends SuperServiceImpl<CalcSalesInfoD
     /**
      * 计算销量
      */
-    private List<CalcSalesInfoDenoisingEntity> calculationSales(CalcSalesInfoDimDTO.CalcResultDTO dto, List<CalcSalesInfoDenoisingEntity> allSalesList) {
+    private List<CalcSalesInfoDenoisingEntity> calculationSales(CalcSalesInfoDimDTO.CalcResultDTO dto, List<CalcSalesInfoDenoisingEntity> allSalesList, CalcSalesInfoDimEntity entity) {
         List<CalcSalesInfoDenoisingEntity> calcSalesInfoList = new ArrayList<>();
         LocalDate startDate = dto.getStartCalcDate().minusDays(361);
         LocalDate endDate = dto.getStartCalcDate().minusDays(1);
+        List<CalcSalesInfoDimDTO.HisSalesDTO> list = new ArrayList<>();
         while (!startDate.isAfter(endDate)) {
             LocalDate date = startDate;
             CalcSalesInfoDenoisingEntity salesInfoDTO = new CalcSalesInfoDenoisingEntity();
@@ -808,6 +810,7 @@ public class CalcSalesInfoDimServiceImpl extends SuperServiceImpl<CalcSalesInfoD
                     .max(Comparator.comparing(CfgRuleSalesDenoisingCalcEntity::getIndex))
                     .orElse(null);
             int originalSalesQty = Optional.ofNullable(dto.getSalesHistoryMap().get(date)).orElse(0);
+            list.add(new CalcSalesInfoDimDTO.HisSalesDTO(date, originalSalesQty));
             if (ObjectUtils.isEmpty(denoisingResult)) {
                 salesInfoDTO.setQty(new BigDecimal(originalSalesQty));
             } else {
@@ -820,6 +823,8 @@ public class CalcSalesInfoDimServiceImpl extends SuperServiceImpl<CalcSalesInfoD
             allSalesList.add(salesInfoDTO);
             startDate = startDate.plusDays(1);
         }
+        String md5 = Md5Util.md5(JSONUtil.toJsonStr(list));
+        entity.setHisDataMd5(md5);
         return calcSalesInfoList;
     }
 

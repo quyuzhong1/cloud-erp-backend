@@ -81,6 +81,12 @@ public class CalcSalesInfoDimEntity extends BaseEntity<CalcSalesInfoDimEntity> {
     @TableField("remark")
     private String remark;
 
+    /**
+     * 历史数据base
+     */
+    @TableField("his_data_md5")
+    private String hisDataMd5;
+
 
     public static final String SKU_ID = "sku_id";
 

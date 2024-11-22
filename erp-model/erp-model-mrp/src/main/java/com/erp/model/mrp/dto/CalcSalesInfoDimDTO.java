@@ -930,4 +930,23 @@ public class CalcSalesInfoDimDTO implements Serializable {
          */
         private Boolean favorite;
     }
+
+    /**
+     * 日期加数量
+     */
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class HisSalesDTO {
+
+        /**
+         * 日期
+         */
+        private LocalDate date;
+        /**
+         * 数量
+         */
+        private Integer qty;
+    }
 }
