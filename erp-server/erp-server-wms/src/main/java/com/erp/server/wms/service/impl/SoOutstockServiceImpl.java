@@ -1211,6 +1211,8 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         if (invalidCount > 0) {
             throw new ServiceException(ApiError.ERROR_98009);
         }
+        //推送数帝云
+        list.forEach(req -> sdyFieldHandler(req,SyncOperateEnum.OPERATE_DELETE.getCode()));
 
         Boolean result = this.removeByIds(ids);
         if (result) {
@@ -1218,8 +1220,6 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             String content = "删除销售订单[%s]";
             List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
             operateLogService.batchAddModuleOperateLog(content, ModuleTypeEnum.SO_OUT_STOCK.getCode(), pairList, "删除");
-            //推送数帝云
-            list.forEach(req -> sdyFieldHandler(req,SyncOperateEnum.OPERATE_DELETE.getCode()));
 
             //删除明细
             soOutstockDetailService.removeByMainIdList(ids);
@@ -3538,17 +3538,31 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
 
 
         String transactionSubType = "";
+        String orderPlatformCode = "";
         if (OrderTypeEnum.B2C.getCode().equals(entity.getOrderType())) {
             SoB2cEntity soB2cEntity = soB2cFeign.getById(entity.getSoId());
             transactionSubType = soB2cEntity.getTransactionSubType();
+            if (CharSequenceUtil.isBlank(soB2cEntity.getPlatformCode())) {
+                orderPlatformCode = entity.getSoCode();
+            } else {
+                orderPlatformCode = soB2cEntity.getPlatformCode();
+            }
+
         } else if (OrderTypeEnum.B2B.getCode().equals(entity.getOrderType())) {
             SoInfoEntity soInfoEntity = soInfoFeign.getSoInfoById(entity.getSoId());
             transactionSubType = soInfoEntity.getTransactionSubType();
+            orderPlatformCode = entity.getSoCode();
         }
 
         //组织信息
         CustomerInfoEntity customerInfo = FeignQuery.getById(CustomerInfoEntity.class, entity.getCustomerId());
-
+        String customerId = "";
+        if (ObjectUtil.isNotEmpty(customerInfo)) {
+            customerId = customerInfo.getId();
+        }
+        List<ShopInfoEntity> shopInfoList = FeignQuery.create(ShopInfoEntity.class)
+                .eq(ShopInfoEntity::getCustomerId, customerId)
+                .list();
 
 
         List<BaseIdDTO.CodeDTO> companyEntities = sysUserFeign.getAccountingCompanyList(Arrays.asList(customerInfo.getFinancialOrganization(), entity.getSalesOrgId()));
@@ -3562,14 +3576,12 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             shudiyunB2cOrderDTO.setBiz_no(entity.getCode());
             shudiyunB2cOrderDTO.setBiz_time(localDate.format(entity.getBillDate()));
             //默认出库单
-            shudiyunB2cOrderDTO.setTransaction_type("200.10");
-
+            shudiyunB2cOrderDTO.setTransaction_type("销售出库单");
             shudiyunB2cOrderDTO.setTransaction_sub_type(convertOutstockTransactionSubType(transactionSubType));
             shudiyunB2cOrderDTO.setBiz_status(entity.getApproveStatus().getName());
             shudiyunB2cOrderDTO.setStatus(shudiyunB2cOrderDTO.sdyStatusHandle(operateEnum, entity.getVersion(), soOutstockDetailEntity.getVersion()));
 
-
-            //组织信息
+            //客户信息
             if (ObjectUtil.isNotEmpty(customerInfo)) {
                 String salesOrgCode = companyEntities.stream().filter(req -> req.getId().equals(entity.getSalesOrgId())).map(req -> req.getCode()).findFirst().orElse("");
                 shudiyunB2cOrderDTO.setSales_company_code(salesOrgCode);
@@ -3591,18 +3603,20 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 } else {
                     shudiyunB2cOrderDTO.setTransaction_currency_code(customerInfo.getTradeCurrency());
                 }
-
                 shudiyunB2cOrderDTO.setPlatform_id(customerInfo.getPlatformType());
                 shudiyunB2cOrderDTO.setPlatform_name(PlatformDictEnum.checkAndGetByCode(customerInfo.getPlatformType()).getName());
-
             }
 
-            shudiyunB2cOrderDTO.setShop_no(entity.getCustomerId());
-            shudiyunB2cOrderDTO.setShop_name(entity.getCustomerName());
-
+            //店铺信息
+            if (CollUtil.isNotEmpty(shopInfoList)) {
+                shudiyunB2cOrderDTO.setSubplatform_no(shopInfoList.get(0).getDictPlatform());
+                shudiyunB2cOrderDTO.setSubplatform_name(PlatformDictEnum.getNameByCode(shopInfoList.get(0).getDictPlatform()));
+            }
             shudiyunB2cOrderDTO.setShop_no(entity.getCustomerId());
             shudiyunB2cOrderDTO.setShop_name(entity.getCustomerName());
             shudiyunB2cOrderDTO.setRoot_node_no(entity.getCode());
+
+            //产品信息
             shudiyunB2cOrderDTO.setGoods_no(soOutstockDetailEntity.getSkuNo());
             SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuId().equals(soOutstockDetailEntity.getSkuId())).findFirst().orElse(new SkuVO());
             shudiyunB2cOrderDTO.setGoods_name(skuVO.getSkuName());
@@ -3613,22 +3627,23 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 shudiyunB2cOrderDTO.setSpec_no(skuVO.getSpuNo());
                 shudiyunB2cOrderDTO.setSpec_name(skuVO.getSpuName());
             }
-
-
+            shudiyunB2cOrderDTO.setSku_code(skuVO.getSkuNo());
+            shudiyunB2cOrderDTO.setSku_name(skuVO.getSkuName());
             if (soOutstockDetailEntity.getAmount().compareTo(BigDecimal.ZERO) <= 0) {
                 shudiyunB2cOrderDTO.setIs_gift(1);
             } else {
                 shudiyunB2cOrderDTO.setIs_gift(0);
             }
             BomChildrenSkuDTO bomChildrenSkuDTO = bomChildrenSkuDTOS.stream().filter(req -> req.getParentSkuId().equals(soOutstockDetailEntity.getSkuId())).findFirst().orElse(null);
-            shudiyunB2cOrderDTO.setIs_comb(0);
-
             if (ObjectUtil.isNotEmpty(bomChildrenSkuDTO) && BomTypeEnum.COMBINATION.getType().equals(bomChildrenSkuDTO.getType())) {
                 shudiyunB2cOrderDTO.setIs_comb(1);
-                shudiyunB2cOrderDTO.setSuite_no(bomChildrenSkuDTO.getParentSkuNo());
-                ProductDetailEntity productDetailEntity = parentSkuList.stream().filter(req -> req.getId().equals(bomChildrenSkuDTO.getParentSkuId())).findFirst().orElse(null);
-                if (ObjectUtil.isNotEmpty(productDetailEntity)) {
-                    shudiyunB2cOrderDTO.setSuite_name(productDetailEntity.getName());
+            } else {
+                bomChildrenSkuDTO = bomChildrenSkuDTOS.stream().filter(req -> req.getSkuId().equals(soOutstockDetailEntity.getSkuId())).findFirst().orElse(null);
+                if (ObjectUtil.isNotEmpty(bomChildrenSkuDTO)) {
+                    shudiyunB2cOrderDTO.setSuite_no(bomChildrenSkuDTO.getParentSkuNo());
+                    BomChildrenSkuDTO finalBomChildrenSkuDTO = bomChildrenSkuDTO;
+                    String skuName = parentSkuList.stream().filter(req -> req.getId().equals(finalBomChildrenSkuDTO.getParentSkuId())).map(ProductDetailEntity::getName).findFirst().orElse("");
+                    shudiyunB2cOrderDTO.setSuite_name(skuName);
                 }
             }
 
@@ -3637,7 +3652,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             shudiyunB2cOrderDTO.setWarehouse_name(entity.getWarehouseName());
 
             // 商品状态
-            shudiyunB2cOrderDTO.setGoods_status("10.10");
+            shudiyunB2cOrderDTO.setGoods_status("已发货");
             if (entity.getActualDeliveryDate() != null) {
                 shudiyunB2cOrderDTO.setDelivery_time(localDateTime.format(entity.getActualDeliveryDate()));
             }
@@ -3655,14 +3670,8 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 shudiyunB2cOrderDTO.setTransaction_currency_code(currencyList.get(0).getId());
             }
 
-            shudiyunB2cOrderDTO.setMsku_code(skuVO.getSpuNo());
-            shudiyunB2cOrderDTO.setMsku_name(skuVO.getSpuName());
-            shudiyunB2cOrderDTO.setSku_code(skuVO.getSkuNo());
-            shudiyunB2cOrderDTO.setSku_name(skuVO.getSkuName());
-
             shudiyunB2cOrderDTO.setSource_system("SDC");
-
-            shudiyunB2cOrderDTO.setRoot_node_no_initial(entity.getSoCode());
+            shudiyunB2cOrderDTO.setRoot_node_no_initial(orderPlatformCode);
 
             WmsPushMsgEntity wmsPushMsgEntity = new WmsPushMsgEntity();
             wmsPushMsgEntity.setTargetPlatform(DmpBasicSystemCodeEnum.SDY.getCode());
@@ -3684,19 +3693,19 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
     private String convertOutstockTransactionSubType(String transactionSubType) {
         if (OrderSubTypeEnum.OFFLINE_ORDER.getCode().equals(transactionSubType) || OrderSubTypeEnum.ONLINE_ORDER.getCode().equals(transactionSubType)) {
             //普通出库
-            transactionSubType = "200.10.01";
+            transactionSubType = "普通出库";
         } else if (OrderSubTypeEnum.GIFT_ORDER.getCode().equals(transactionSubType) || OrderSubTypeEnum.GIFT_REPLENISHMENT.getCode().equals(transactionSubType)) {
             //赠品出库
-            transactionSubType = "200.10.02";
+            transactionSubType = "赠品出库";
         } else if (OrderSubTypeEnum.EXCHANGE_REPLACEMENT.getCode().equals(transactionSubType)) {
             //换货补发
-            transactionSubType = "200.10.03";
+            transactionSubType = "换货补发";
         } else if (OrderSubTypeEnum.REPLENISHMENT.getCode().equals(transactionSubType)) {
             //补发出库
-            transactionSubType = "200.10.04";
+            transactionSubType = "补发出库";
         } else {
             //其他
-            transactionSubType = "200.10.05";
+            transactionSubType = "其他";
         }
         return transactionSubType;
     }

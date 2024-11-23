@@ -4022,6 +4022,8 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             shudiyunB2cOrderDTO.setRoot_node_no(view.getCode());
             if (view.getReceiveDate() != null) {
                 shudiyunB2cOrderDTO.setRoot_node_create_time(localDate.format(view.getReceiveDate()));
+            } else {
+                shudiyunB2cOrderDTO.setRoot_node_create_time(localDateTime.format(view.getCreateTime()));
             }
             shudiyunB2cOrderDTO.setRoot_node_modify_time(localDateTime.format(view.getUpdateTime()));
             shudiyunB2cOrderDTO.setGoods_no(soDetailEntity.getSkuNo());
@@ -4065,7 +4067,6 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             }
 
             shudiyunB2cOrderDTO.setPost_amount(view.getShippingFee());
-
             shudiyunB2cOrderDTO.setSource_system("SDC");
             shudiyunB2cOrderDTO.setRoot_node_no_initial(view.getCode());
 

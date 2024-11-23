@@ -274,7 +274,7 @@ public class ShudiyunB2cOrderDTO {
     /**
      * 商品基准售价
      */
-    private BigDecimal goods_benchmark_selling_price;
+    private BigDecimal goods_benchmark_selling_price = BigDecimal.ZERO;
     /**
      * 商品分摊成交单价
      */
