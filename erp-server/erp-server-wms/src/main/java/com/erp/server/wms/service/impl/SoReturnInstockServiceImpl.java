@@ -1764,7 +1764,8 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
             //默认退货入库单
             shudiyunB2cOrderDTO.setTransaction_type("210.10");
             shudiyunB2cOrderDTO.setTransaction_sub_type("210.10.01");
-            shudiyunB2cOrderDTO.setBiz_status(shudiyunB2cOrderDTO.sdyStatusHandle(operateEnum));
+            shudiyunB2cOrderDTO.setBiz_status(ApproveStatusEnum.getName(entity.getApproveStatus()));
+            shudiyunB2cOrderDTO.setStatus(shudiyunB2cOrderDTO.sdyStatusHandle(operateEnum, entity.getVersion(), soReturnInstockDetailEntity.getVersion()));
 
             if (ObjectUtil.isNotEmpty(customerInfo)) {
             }
@@ -1833,7 +1834,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                 shudiyunB2cOrderDTO.setLogistic_company_code("");
             }
 
-            shudiyunB2cOrderDTO.setReturn_status(shudiyunB2cOrderDTO.sdyStatusHandle(operateEnum));
+            shudiyunB2cOrderDTO.setReturn_status(ApproveStatusEnum.getName(entity.getApproveStatus()));
             shudiyunB2cOrderDTO.setReturn_receipt_number(entity.getCode());
             shudiyunB2cOrderDTO.setReturned_quantity(soReturnInstockDetailEntity.getRealQty());
 

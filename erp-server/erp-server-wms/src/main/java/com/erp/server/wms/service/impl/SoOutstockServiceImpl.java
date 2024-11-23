@@ -3565,7 +3565,9 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             shudiyunB2cOrderDTO.setTransaction_type("200.10");
 
             shudiyunB2cOrderDTO.setTransaction_sub_type(convertOutstockTransactionSubType(transactionSubType));
-            shudiyunB2cOrderDTO.setBiz_status(shudiyunB2cOrderDTO.sdyStatusHandle(operateEnum));
+            shudiyunB2cOrderDTO.setBiz_status(entity.getApproveStatus().getName());
+            shudiyunB2cOrderDTO.setStatus(shudiyunB2cOrderDTO.sdyStatusHandle(operateEnum, entity.getVersion(), soOutstockDetailEntity.getVersion()));
+
 
             //组织信息
             if (ObjectUtil.isNotEmpty(customerInfo)) {

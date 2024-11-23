@@ -190,7 +190,7 @@ public class ShudiyunB2cOrderDTO {
     /**
      * 是否赠品
      */
-    private Integer is_gift;
+    private Integer is_gift = 0;
     /**
      * 是否组合装
      */
@@ -572,18 +572,24 @@ public class ShudiyunB2cOrderDTO {
      */
     private String root_node_no_initial;
 
+    public String sdyStatusHandle(String operateEnum, int mainVersion, int detailVersion) {
+        int version = 0;
+        if (mainVersion > 0) {
+            version = mainVersion;
+        } else {
+            version = detailVersion;
+        }
 
-    public String sdyStatusHandle(String operateEnum) {
-        if (SyncOperateEnum.OPERATE_APPROVE.getCode().equals(operateEnum)) {
-            return ApproveStatusEnum.APPROVE.getName();
-        } else if (SyncOperateEnum.OPERATE_DISAPPROVE.getCode().equals(operateEnum)) {
-            return ApproveStatusEnum.WAIT_SUBMIT.getName();
+        if (SyncOperateEnum.OPERATE_DISAPPROVE.getCode().equals(operateEnum)) {
+            return "已反审";
         } else if (SyncOperateEnum.OPERATE_DELETE.getCode().equals(operateEnum)) {
             return "已删除";
-        } else if (SyncOperateEnum.OPERATE_INVALID.getCode().equals(operateEnum)) {
-            return "已作废";
+        } else {
+            if (version > 0) {
+                return "已更新";
+            } else {
+                return "已创建";
+            }
         }
-        return ApproveStatusEnum.APPROVE.getName();
     }
-
 }

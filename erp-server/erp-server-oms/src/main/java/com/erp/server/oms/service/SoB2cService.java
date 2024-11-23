@@ -1003,13 +1003,5 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      */
     List<BatchResultDTO> fetchOrder(List<String> ids);
 
-    /**
-     * 同步速递云数据
-     * @param soId
-     * @param operateEnum
-     */
-    void shudiyunFieldHandler(SoB2cEntity soId, String operateEnum);
-
-
     Boolean tempTikTokOrderDate();
 }

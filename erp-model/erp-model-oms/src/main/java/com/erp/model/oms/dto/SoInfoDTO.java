@@ -1262,6 +1262,11 @@ public class SoInfoDTO implements Serializable {
         @Dict(enumClass = OrderSubTypeEnum.class)
         private String transactionSubType;
 
+        /**
+         * 版本
+         */
+        private Integer version;
+
 
         /**
          * 订单产品详情
