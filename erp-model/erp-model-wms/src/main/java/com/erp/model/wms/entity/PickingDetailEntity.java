@@ -95,6 +95,12 @@ public class PickingDetailEntity extends BaseEntity<PickingDetailEntity> {
     @TableField("actual_qty")
     private Integer actualQty;
 
+    /**
+     * 更新前仓位
+     */
+    @TableField(exist = false)
+    private String originWarehouseLocation;
+
     public static final String SKU_ID = "sku_id";
 
     public static final String SKU_NO = "sku_no";

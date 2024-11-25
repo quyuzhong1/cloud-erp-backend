@@ -24,13 +24,9 @@ import com.erp.model.plm.dto.ProductBomInfoDTO;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
-import com.erp.model.wms.dto.PickingDetailDTO;
 import com.erp.model.wms.dto.RequisitionApplicationChangeDTO;
 import com.erp.model.wms.dto.pickingstrategy.PickingListsDTO;
-import com.erp.model.wms.entity.RequisitionApplicationChangeDetailEntity;
-import com.erp.model.wms.entity.RequisitionApplicationChangeEntity;
-import com.erp.model.wms.entity.RequisitionApplicationDetailEntity;
-import com.erp.model.wms.entity.RequisitionApplicationEntity;
+import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.RequisitionApplicationStatusEnum;
 import com.erp.model.wms.enums.RequisitionApplicationTypeEnum;
 import com.erp.model.wms.enums.RequisitionChangeTypeEnum;
@@ -474,8 +470,25 @@ public class RequisitionApplicationChangeServiceImpl extends SuperServiceImpl<Re
     }
 
     @Override
-    public void generateByPickingList(List<PickingDetailDTO.View> mismatchedDetails, PickingListsDTO.UpdateDTO dto) {
+    public void generateByPickingList(PickingListsDTO.AddChangeDTO addChangeDTO, PickingListsDTO.UpdateDTO dto, PickingListsEntity entity) {
+        RequisitionApplicationChangeEntity requisitionApplicationChangeEntity = new RequisitionApplicationChangeEntity();
+        requisitionApplicationChangeEntity.setSourceCode(entity.getCode());
+        requisitionApplicationChangeEntity.setBusinessCode(entity.getSourceCode());
+        requisitionApplicationChangeEntity.setSourceId(entity.getId());
+        requisitionApplicationChangeEntity.setBusinessId(entity.getSourceId());
+        requisitionApplicationChangeEntity.setSourceType(SourceTypeEnum.PICKING_LISTS.getCode());
+        // 生成单号
+        String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_YHBG);
+        requisitionApplicationChangeEntity.setCode(code);
+        boolean save = super.save(requisitionApplicationChangeEntity);
+        if(!save) {
+            throw new ServiceException("要货申请变更单保存失败");
+        }
 
+        // 操作日志
+        String msg = StrUtil.format("用户【{}】修改拣货单自动新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "要货申请变更单" , requisitionApplicationChangeEntity.getCode());
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.REQUISITION_APPLICATION_CHANGE.getCode(), requisitionApplicationChangeEntity.getId(), "新增操作");
+        detailService.addByPicking(requisitionApplicationChangeEntity, addChangeDTO);
     }
 
     @Override

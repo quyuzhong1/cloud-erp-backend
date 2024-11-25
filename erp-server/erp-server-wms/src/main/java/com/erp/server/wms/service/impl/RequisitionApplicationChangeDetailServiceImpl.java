@@ -9,9 +9,11 @@ import com.common.core.exception.ServiceException;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.OperateLogDTO;
 import com.erp.model.wms.dto.RequisitionApplicationChangeDTO;
+import com.erp.model.wms.dto.pickingstrategy.PickingListsDTO;
 import com.erp.model.wms.entity.PickingDetailEntity;
 import com.erp.model.wms.entity.RequisitionApplicationChangeDetailEntity;
 import com.erp.model.wms.entity.RequisitionApplicationChangeEntity;
+import com.erp.model.wms.entity.RequisitionApplicationDetailEntity;
 import com.erp.model.wms.enums.RequisitionChangeTypeEnum;
 import com.erp.server.wms.mapper.RequisitionApplicationChangeDetailMapper;
 import com.erp.server.wms.service.OperateLogService;
@@ -218,6 +220,88 @@ public class RequisitionApplicationChangeDetailServiceImpl extends SuperServiceI
             return new ArrayList<>();
         }
         return lambdaQuery().in(RequisitionApplicationChangeDetailEntity::getMainId, mainIds).list();
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void addByPicking(RequisitionApplicationChangeEntity entity, PickingListsDTO.AddChangeDTO addChangeDTO) {
+        List<RequisitionApplicationChangeDetailEntity> detailEntityList = this.buildDetailByPicking(addChangeDTO,entity);
+        this.saveBatch(detailEntityList);
+    }
+
+    private List<RequisitionApplicationChangeDetailEntity> buildDetailByPicking(PickingListsDTO.AddChangeDTO addChangeDTO, RequisitionApplicationChangeEntity entity) {
+        List<RequisitionApplicationChangeDetailEntity> list = new ArrayList<>();
+        List<PickingDetailEntity> allList = new ArrayList<>();
+        allList.addAll(addChangeDTO.getAddList());
+        allList.addAll(addChangeDTO.getUpdateList());
+        allList.addAll(addChangeDTO.getRemoveList());
+        List<String> requisitionDetailIds = allList.stream().map(PickingDetailEntity::getSourceDetailId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
+        List<RequisitionApplicationDetailEntity> requisitionApplicationChangeEntities = new ArrayList<>();
+        if(CollectionUtils.isNotEmpty(requisitionDetailIds)){
+            requisitionApplicationChangeEntities = requisitionApplicationDetailService.listByIds(requisitionDetailIds);
+        }
+        for (PickingDetailEntity pickingDetailEntity : addChangeDTO.getAddList()) {
+            RequisitionApplicationChangeDetailEntity soDeliveryNoticeChangeDetailEntity = new RequisitionApplicationChangeDetailEntity();
+            soDeliveryNoticeChangeDetailEntity.setMainId(entity.getId());
+            soDeliveryNoticeChangeDetailEntity.setSkuId(pickingDetailEntity.getSkuId());
+            soDeliveryNoticeChangeDetailEntity.setSkuNo(pickingDetailEntity.getSkuNo());
+            soDeliveryNoticeChangeDetailEntity.setSourceDetailId(pickingDetailEntity.getId());
+            soDeliveryNoticeChangeDetailEntity.setBusinessDetailId(pickingDetailEntity.getSourceDetailId());
+            soDeliveryNoticeChangeDetailEntity.setChangeType(RequisitionChangeTypeEnum.ADD.getCode());
+            soDeliveryNoticeChangeDetailEntity.setOriginQty(0);
+            soDeliveryNoticeChangeDetailEntity.setNewQty(pickingDetailEntity.getActualQty());
+            soDeliveryNoticeChangeDetailEntity.setPlatformSkuNo(pickingDetailEntity.getPlatformSkuNo());
+            RequisitionApplicationDetailEntity requisitionApplicationDetailEntity = requisitionApplicationChangeEntities.stream().filter(v->v.getId().equals(pickingDetailEntity.getSourceDetailId())).findFirst().orElse(null);
+            if(Objects.nonNull(requisitionApplicationDetailEntity)){
+                soDeliveryNoticeChangeDetailEntity.setBomVersion(requisitionApplicationDetailEntity.getBomVersion());
+                soDeliveryNoticeChangeDetailEntity.setFnSku(requisitionApplicationDetailEntity.getPlatformFnSku());
+                soDeliveryNoticeChangeDetailEntity.setPlatformSkuName(requisitionApplicationDetailEntity.getPlatformSkuName());
+                soDeliveryNoticeChangeDetailEntity.setPlatformSpu(requisitionApplicationDetailEntity.getPlatformSpu());
+            }
+            list.add(soDeliveryNoticeChangeDetailEntity);
+        }
+        for (PickingDetailEntity pickingDetailEntity : addChangeDTO.getUpdateList()) {
+            RequisitionApplicationChangeDetailEntity soDeliveryNoticeChangeDetailEntity = new RequisitionApplicationChangeDetailEntity();
+            soDeliveryNoticeChangeDetailEntity.setMainId(entity.getId());
+            soDeliveryNoticeChangeDetailEntity.setSkuId(pickingDetailEntity.getSkuId());
+            soDeliveryNoticeChangeDetailEntity.setSkuNo(pickingDetailEntity.getSkuNo());
+            soDeliveryNoticeChangeDetailEntity.setSourceDetailId(pickingDetailEntity.getId());
+            soDeliveryNoticeChangeDetailEntity.setOriginWarehouseLocation(pickingDetailEntity.getOriginWarehouseLocation());
+            soDeliveryNoticeChangeDetailEntity.setBusinessDetailId(pickingDetailEntity.getSourceDetailId());
+            soDeliveryNoticeChangeDetailEntity.setChangeType(RequisitionChangeTypeEnum.UPDATE.getCode());
+            soDeliveryNoticeChangeDetailEntity.setOriginQty(0);
+            soDeliveryNoticeChangeDetailEntity.setNewQty(pickingDetailEntity.getActualQty());
+            soDeliveryNoticeChangeDetailEntity.setPlatformSkuNo(pickingDetailEntity.getPlatformSkuNo());
+            RequisitionApplicationDetailEntity requisitionApplicationDetailEntity = requisitionApplicationChangeEntities.stream().filter(v->v.getId().equals(pickingDetailEntity.getSourceDetailId())).findFirst().orElse(null);
+            if(Objects.nonNull(requisitionApplicationDetailEntity)){
+                soDeliveryNoticeChangeDetailEntity.setBomVersion(requisitionApplicationDetailEntity.getBomVersion());
+                soDeliveryNoticeChangeDetailEntity.setFnSku(requisitionApplicationDetailEntity.getPlatformFnSku());
+                soDeliveryNoticeChangeDetailEntity.setPlatformSkuName(requisitionApplicationDetailEntity.getPlatformSkuName());
+                soDeliveryNoticeChangeDetailEntity.setPlatformSpu(requisitionApplicationDetailEntity.getPlatformSpu());
+            }
+            list.add(soDeliveryNoticeChangeDetailEntity);
+        }
+        for (PickingDetailEntity pickingDetailEntity : addChangeDTO.getRemoveList()) {
+            RequisitionApplicationChangeDetailEntity soDeliveryNoticeChangeDetailEntity = new RequisitionApplicationChangeDetailEntity();
+            soDeliveryNoticeChangeDetailEntity.setMainId(entity.getId());
+            soDeliveryNoticeChangeDetailEntity.setSkuId(pickingDetailEntity.getSkuId());
+            soDeliveryNoticeChangeDetailEntity.setSkuNo(pickingDetailEntity.getSkuNo());
+            soDeliveryNoticeChangeDetailEntity.setSourceDetailId(pickingDetailEntity.getId());
+            soDeliveryNoticeChangeDetailEntity.setBusinessDetailId(pickingDetailEntity.getSourceDetailId());
+            soDeliveryNoticeChangeDetailEntity.setChangeType(RequisitionChangeTypeEnum.DELETE.getCode());
+            soDeliveryNoticeChangeDetailEntity.setOriginQty(0);
+            soDeliveryNoticeChangeDetailEntity.setNewQty(pickingDetailEntity.getActualQty());
+            soDeliveryNoticeChangeDetailEntity.setPlatformSkuNo(pickingDetailEntity.getPlatformSkuNo());
+            RequisitionApplicationDetailEntity requisitionApplicationDetailEntity = requisitionApplicationChangeEntities.stream().filter(v->v.getId().equals(pickingDetailEntity.getSourceDetailId())).findFirst().orElse(null);
+            if(Objects.nonNull(requisitionApplicationDetailEntity)){
+                soDeliveryNoticeChangeDetailEntity.setBomVersion(requisitionApplicationDetailEntity.getBomVersion());
+                soDeliveryNoticeChangeDetailEntity.setFnSku(requisitionApplicationDetailEntity.getPlatformFnSku());
+                soDeliveryNoticeChangeDetailEntity.setPlatformSkuName(requisitionApplicationDetailEntity.getPlatformSkuName());
+                soDeliveryNoticeChangeDetailEntity.setPlatformSpu(requisitionApplicationDetailEntity.getPlatformSpu());
+            }
+            list.add(soDeliveryNoticeChangeDetailEntity);
+        }
+        return list;
     }
 
 }

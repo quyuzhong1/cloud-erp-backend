@@ -2,6 +2,7 @@ package com.erp.server.wms.service;
 
 import com.common.business.service.SuperService;
 import com.erp.model.wms.dto.RequisitionApplicationChangeDTO;
+import com.erp.model.wms.dto.pickingstrategy.PickingListsDTO;
 import com.erp.model.wms.entity.RequisitionApplicationChangeDetailEntity;
 import com.erp.model.wms.entity.RequisitionApplicationChangeEntity;
 
@@ -40,4 +41,6 @@ public interface RequisitionApplicationChangeDetailService extends SuperService<
     List<RequisitionApplicationChangeDTO.ExistDTO> checkExist(List<String> sourceDetailIds, List<String> businessDetailIds);
 
     List<RequisitionApplicationChangeDetailEntity> listByMains(List<String> mainIds);
+
+    void addByPicking(RequisitionApplicationChangeEntity requisitionApplicationChangeEntity, PickingListsDTO.AddChangeDTO addChangeDTO);
 }

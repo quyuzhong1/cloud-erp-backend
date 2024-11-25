@@ -79,6 +79,7 @@ public enum SourceTypeEnum {
     VIRTUAL_WAREHOUSE_ALLOCATION("virtualWarehouseAllocation", "分货单","virtual_warehouse_allocation"),
     PICKING_LISTS_ADD("pickingListsAdd", "拣货单新增","picking_lists_add"),
     PICKING_LISTS_SUBTRACT("pickingListsSubtract", "拣货单减少","picking_lists_subtract"),
+    PICKING_LISTS("pickingLists", "拣货单","picking_lists"),
 
     //OMS
     SO_RETURN("soReturn", "销售退货订单","so_return"),

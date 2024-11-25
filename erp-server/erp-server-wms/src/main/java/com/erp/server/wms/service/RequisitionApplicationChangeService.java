@@ -3,9 +3,9 @@ package com.erp.server.wms.service;
 import com.common.business.dto.base.*;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
-import com.erp.model.wms.dto.PickingDetailDTO;
 import com.erp.model.wms.dto.RequisitionApplicationChangeDTO;
 import com.erp.model.wms.dto.pickingstrategy.PickingListsDTO;
+import com.erp.model.wms.entity.PickingListsEntity;
 import com.erp.model.wms.entity.RequisitionApplicationChangeDetailEntity;
 import com.erp.model.wms.entity.RequisitionApplicationChangeEntity;
 
@@ -157,5 +157,5 @@ public interface RequisitionApplicationChangeService extends SuperService<Requis
 
     List<RequisitionApplicationChangeDetailEntity> listNotHandleDetailByBusinessDetailIds(List<String> detailIds);
 
-    void generateByPickingList(List<PickingDetailDTO.View> mismatchedDetails, PickingListsDTO.UpdateDTO dto);
+    void generateByPickingList(PickingListsDTO.AddChangeDTO addChangeDTO, PickingListsDTO.UpdateDTO dto, PickingListsEntity entity);
 }
