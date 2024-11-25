@@ -247,9 +247,11 @@ public class DmpOutputSdyOrderHandler extends DmpOutputTaskHandler {
                         shudiyunB2cOrderDTO.setSales_company_code(salesOrg.getCode());
 
                         BaseIdDTO.CodeDTO sysAccountingCompanyEntity = companyEntities.stream().filter(req -> req.getId().equals(customerInfo.getFinancialOrganization())).findFirst().orElse(null);
-                        shudiyunB2cOrderDTO.setReceiving_company_code(sysAccountingCompanyEntity.getCode());
-                        shudiyunB2cOrderDTO.setOrganization_code(sysAccountingCompanyEntity.getCode());
-                        shudiyunB2cOrderDTO.setOrganization_name(sysAccountingCompanyEntity.getName());
+                        if (ObjectUtil.isNotEmpty(sysAccountingCompanyEntity)) {
+                            sdyDTO.setReceiving_company_code(sysAccountingCompanyEntity.getCode());
+                            sdyDTO.setOrganization_code(sysAccountingCompanyEntity.getCode());
+                            sdyDTO.setOrganization_name(sysAccountingCompanyEntity.getName());
+                        }
                     }
 
                     DictCurrencyEntity dictCurrencyEntity = FeignQuery.getById(DictCurrencyEntity.class, shopInfo.getTradeCurrency());
