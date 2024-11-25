@@ -1854,8 +1854,13 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
             shudiyunB2cOrderDTO.setSuite_name("");
 
             // 商品状态
-            shudiyunB2cOrderDTO.setGoods_status("已发货");
-
+            if (entity.getSourceType().equals(SourceTypeEnum.PLATFORM_RETURN_INSTOCK.getCode())) {
+                shudiyunB2cOrderDTO.setGoods_status("平台收货");
+            } else if (entity.getSourceType().equals(SourceTypeEnum.THIRD_WAREHOUSE_RETURN_INSTOCK.getCode())){
+                shudiyunB2cOrderDTO.setGoods_status("第三方仓收货");
+            } else  {
+                shudiyunB2cOrderDTO.setGoods_status("本地仓收货");
+            }
 
             if (entity.getApproveTime() != null) {
                 shudiyunB2cOrderDTO.setDelivery_time(localDateTime.format(entity.getApproveTime()));
