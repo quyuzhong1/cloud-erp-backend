@@ -508,7 +508,7 @@ public class RequisitionApplicationChangeServiceImpl extends SuperServiceImpl<Re
             }
         }else{
             requisitionApplicationChangeEntity = this.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到要货申请变更单数据"));
-            requisitionApplicationEntity = requisitionApplicationService.getByIdOpt(requisitionApplicationChangeEntity.getSourceId()).orElseThrow(() -> new ServiceException("未找到要货申请变更单数据"));
+            requisitionApplicationEntity = requisitionApplicationService.getByIdOpt(requisitionApplicationChangeEntity.getBusinessId()).orElseThrow(() -> new ServiceException("未找到要货申请单数据"));
         }
         //校验是否存在未处理
         if(CollectionUtils.isNotEmpty(viewIdDTO.getDetailIds())){
