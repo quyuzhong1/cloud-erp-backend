@@ -1803,8 +1803,14 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
             shudiyunB2cOrderDTO.setGoods_no(soReturnInstockDetailEntity.getSkuNo());
             SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuId().equals(soReturnInstockDetailEntity.getSkuId())).findFirst().orElse(new SkuVO());
             shudiyunB2cOrderDTO.setGoods_name(skuVO.getSkuName());
-            shudiyunB2cOrderDTO.setSpec_no(skuVO.getSpuNo());
-            shudiyunB2cOrderDTO.setSpec_name(skuVO.getSpuName());
+            if (skuVO.getSpuNo() == null) {
+                shudiyunB2cOrderDTO.setSpec_no(skuVO.getSkuNo());
+                shudiyunB2cOrderDTO.setSpec_name(skuVO.getSkuName());
+            } else {
+                shudiyunB2cOrderDTO.setSpec_no(skuVO.getSpuNo());
+                shudiyunB2cOrderDTO.setSpec_name(skuVO.getSpuName());
+            }
+
             if (soReturnInstockDetailEntity.getAmount().compareTo(BigDecimal.ZERO) <= 0) {
                 shudiyunB2cOrderDTO.setIs_gift(1);
             } else {

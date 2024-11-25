@@ -3621,8 +3621,8 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuId().equals(soOutstockDetailEntity.getSkuId())).findFirst().orElse(new SkuVO());
             shudiyunB2cOrderDTO.setGoods_name(skuVO.getSkuName());
             if (skuVO.getSpuNo() == null) {
-                shudiyunB2cOrderDTO.setSpec_no("");
-                shudiyunB2cOrderDTO.setSpec_name("");
+                shudiyunB2cOrderDTO.setSpec_no(skuVO.getSkuNo());
+                shudiyunB2cOrderDTO.setSpec_name(skuVO.getSkuName());
             } else {
                 shudiyunB2cOrderDTO.setSpec_no(skuVO.getSpuNo());
                 shudiyunB2cOrderDTO.setSpec_name(skuVO.getSpuName());

@@ -9412,8 +9412,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 shudiyunB2cOrderDTO.setSpec_no(skuVO.getSpuNo());
                 shudiyunB2cOrderDTO.setSpec_name(skuVO.getSpuName());
             } else {
-                shudiyunB2cOrderDTO.setSpec_no("");
-                shudiyunB2cOrderDTO.setSpec_name("");
+                shudiyunB2cOrderDTO.setSpec_no(skuVO.getSkuNo());
+                shudiyunB2cOrderDTO.setSpec_name(skuVO.getSkuName());
             }
 
             BomChildrenSkuDTO bomChildrenSkuDTO = bomChildrenSkuDTOS.stream().filter(req -> req.getParentSkuId().equals(soB2cDetailEntity.getSkuId())).findFirst().orElse(null);
@@ -9440,6 +9440,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
             if (Boolean.TRUE.equals(soB2cEntity.getIsCancel()) && soB2cEntity.getIsCancel() != null) {
                 shudiyunB2cOrderDTO.setGoods_status("已取消");
+                shudiyunB2cOrderDTO.setBiz_status("已取消");
             }
 
             shudiyunB2cOrderDTO.setGoods_transaction_quantity(soB2cDetailEntity.getQty());

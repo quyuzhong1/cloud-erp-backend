@@ -4031,8 +4031,13 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             //产品信息
             SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuId().equals(soDetailEntity.getSkuId())).findFirst().orElse(new SkuVO());
             shudiyunB2cOrderDTO.setGoods_name(skuVO.getSkuName());
-            shudiyunB2cOrderDTO.setSpec_no(skuVO.getSpuNo());
-            shudiyunB2cOrderDTO.setSpec_name(skuVO.getSpuName());
+            if (skuVO.getSpuNo() == null) {
+                shudiyunB2cOrderDTO.setSpec_no(skuVO.getSkuNo());
+                shudiyunB2cOrderDTO.setSpec_name(skuVO.getSkuName());
+            } else {
+                shudiyunB2cOrderDTO.setSpec_no(skuVO.getSpuNo());
+                shudiyunB2cOrderDTO.setSpec_name(skuVO.getSpuName());
+            }
             shudiyunB2cOrderDTO.setSku_code(skuVO.getSkuNo());
             shudiyunB2cOrderDTO.setSku_name(skuVO.getSkuName());
             if (soDetailEntity.getIsGift()) {
