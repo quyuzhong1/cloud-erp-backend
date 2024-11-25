@@ -1830,15 +1830,23 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                 }
             }
             shudiyunB2cOrderDTO.setDomestic_return_waybill_number("");
-            shudiyunB2cOrderDTO.setInternational_return_waybill_number("");
+
             if (OrderTypeEnum.B2B.getCode().equals(entity.getType())) {
                 shudiyunB2cOrderDTO.setLogistic_company("【未知】");
                 shudiyunB2cOrderDTO.setLogistic_company_code("【未知】");
-                shudiyunB2cOrderDTO.setDomestic_return_waybill_number(entity.getReturnLogisticCode());
+
+                if (CharSequenceUtil.isBlank(entity.getReturnLogisticCode())) {
+                    shudiyunB2cOrderDTO.setLogistic_company_code("【未知】");
+                } else {
+                    shudiyunB2cOrderDTO.setDomestic_return_waybill_number(entity.getReturnLogisticCode());
+                }
+
             } else {
-                shudiyunB2cOrderDTO.setLogistic_company("无");
-                shudiyunB2cOrderDTO.setLogistic_company_code("无");
+                shudiyunB2cOrderDTO.setLogistic_company("空");
+                shudiyunB2cOrderDTO.setLogistic_company_code("空");
             }
+
+            shudiyunB2cOrderDTO.setInternational_return_waybill_number("空");
             shudiyunB2cOrderDTO.setReturn_status(ApproveStatusEnum.getName(entity.getApproveStatus()));
             shudiyunB2cOrderDTO.setReturn_receipt_number(entity.getCode());
             shudiyunB2cOrderDTO.setReturned_quantity(soReturnInstockDetailEntity.getRealQty());
