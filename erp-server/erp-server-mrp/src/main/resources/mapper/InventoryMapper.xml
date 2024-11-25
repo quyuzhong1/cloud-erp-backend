@@ -508,14 +508,20 @@
             ${tableName} ds
         WHERE
         ds.shop_id = #{result.replenishment.shopId} AND ds.sku_id =
-            #{result.replenishment.skuId}
+            #{result.replenishment.skuId} AND ds.invalid_status = false
         <if test="codes != null and !codes.isEmpty()">
             <!-- 当 codes 包含 'approve' 时，处理特殊条件 -->
             <if test="codes.size() == 1 and 'finish' in codes">
                 AND ds.status = 'finish'
                 AND NOT EXISTS (SELECT 1 FROM ${otherTableDetailName} wdpd
-                left join ${otherTableName} wdp on wdp.id = wdpd.main_id and wdp.is_deleted = false and wdpd.is_deleted = false
-                WHERE wdpd.source_json->>'id' = ds.id::text )
+                left join ${otherTableName} wdp on wdp.id = wdpd.main_id and wdp.is_deleted = false and wdpd.is_deleted
+                = false
+                WHERE wdpd.source_json IS NOT NULL
+                AND EXISTS (
+                SELECT 1
+                FROM jsonb_array_elements(wdpd.source_json) AS elem
+                WHERE elem ->> 'sourceId' = ds.id::text
+                )
             </if>
             <!-- 当 codes 包含 'approve' 以及其他状态时 -->
             <if test="codes.size() > 1 and 'finish' in codes">

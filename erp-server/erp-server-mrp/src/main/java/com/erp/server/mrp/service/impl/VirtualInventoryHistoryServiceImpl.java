@@ -24,7 +24,6 @@ import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.wms.feign.WmsVirtualWarehouseFeign;
 import com.erp.server.mrp.mapper.VirtualInventoryHistoryMapper;
 import com.erp.server.mrp.service.VirtualInventoryHistoryService;
-import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
@@ -66,10 +65,13 @@ public class VirtualInventoryHistoryServiceImpl extends SuperServiceImpl<Virtual
                             .filter(e -> v.getVirtualWarehouseId().equals(e.getVirtualWarehouseId()))
                             .findFirst()
                             .orElse(new VirtualInventoryHistoryEntity());
-                    v.setId(null);
-                    BeanUtils.copyProperties(v, inventory);
+                    inventory.setWarehouseId(v.getWarehouseId());
+                    inventory.setSkuId(v.getSkuId());
+                    inventory.setSkuNo(v.getSkuNo());
+                    inventory.setQty(v.getQty());
+                    inventory.setDictInventoryStatus(v.getDictInventoryStatus());
+                    inventory.setVirtualWarehouseId(v.getVirtualWarehouseId());
                     inventory.setBillDate(calculationDate);
-                    inventory.setId(inventory.getId());
                     return inventory;
                 }).collect(Collectors.toList());
         ApplicationContextUtils.getBean(VirtualInventoryHistoryServiceImpl.class).saveOrUpdateBatch(entities);
