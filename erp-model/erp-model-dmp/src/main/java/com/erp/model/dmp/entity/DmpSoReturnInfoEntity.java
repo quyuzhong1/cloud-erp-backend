@@ -204,6 +204,22 @@ public class DmpSoReturnInfoEntity extends BaseEntity<DmpSoReturnInfoEntity> {
     */
     @TableField("refund_tax")
     private BigDecimal refundTax;
+    /**
+     * 退货物流商编码
+     */
+    @TableField("logistics_supplier_code")
+    private String logisticsSupplierCode;
+    /**
+     * 退货物流商名称
+     */
+    @TableField("logistics_supplier_name")
+    private String logisticsSupplierName;
+
+    /**
+     * 退货物流单号
+     */
+    @TableField("tracking_number")
+    private String trackingNumber;
 
 
     public static final String PLATFORM_CREATE_TIME = "platform_create_time";
