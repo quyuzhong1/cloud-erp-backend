@@ -37,6 +37,7 @@ import com.erp.sdk.oms.amz.spapi.model.orders.OrderItemList;
 import com.erp.sdk.oms.amz.spapi.model.orders.OrderItemsList;
 import com.erp.server.dmp.inout.dto.base.DmpInputTaskInitDTO;
 import com.erp.server.dmp.inout.dto.request.DmpInputInitRequest;
+import com.erp.server.dmp.inout.dto.response.DmpInputInitResponse;
 import com.erp.server.dmp.inout.dto.response.DmpInputTaskResponse;
 import com.erp.server.dmp.inout.handler.input.task.mongo.DmpInputMongoHandler;
 import com.erp.server.dmp.service.CfgAppClientService;
@@ -100,8 +101,10 @@ public class DmpInputAmzOrderDetailInitHandler extends DmpInputAmzCommonInitHand
             // 获取动态速率
             Object limitObj = redisUtil.get(limitKey);
             if (null != limitObj) {
-                String msg = StrUtil.format("【订单明细拉取】 amazonOrderId={}, platformShopCode={},存在429等待恢复:放弃当前请求任务", amazonOrderId, shopInfoDTO.getPlatformShopCode());
-                throw new ServiceException(msg);
+                log.warn("【订单明细拉取】 amazonOrderId={}, platformShopCode={},存在429等待恢复:放弃当前请求任务", amazonOrderId, shopInfoDTO.getPlatformShopCode());
+                DmpInputInitResponse initDmpResponse = (DmpInputInitResponse) dmpResponse;
+                initDmpResponse.setDoNextChain(false);
+                return Collections.emptyList();
             }
             String rateLimitStr = requestTypeRateLimiterEnum.getRateLimit();
 
@@ -131,6 +134,10 @@ public class DmpInputAmzOrderDetailInitHandler extends DmpInputAmzCommonInitHand
                     // 设置动态速率，失效时间=1/limit
                     BigDecimal timeOut = BigDecimal.ONE.max(BigDecimal.ONE.divide(new BigDecimal(rateLimitStr), 8, RoundingMode.DOWN));
                     redisUtil.set(limitKey, rateLimitStr, timeOut.longValue());
+                    log.warn("【DmpInputAmzOrderDetailInitHandler】查询亚马逊订单详情本次首次429限流:{}", shopInfoDTO.getPlatformShopCode());
+                    DmpInputInitResponse initDmpResponse = (DmpInputInitResponse) dmpResponse;
+                    initDmpResponse.setDoNextChain(false);
+                    return Collections.emptyList();
                 }
                 throw new ServiceException("查询亚马逊订单详情失败：API异常：" + JSONUtil.toJsonStr(e));
             } catch (Exception e) {
