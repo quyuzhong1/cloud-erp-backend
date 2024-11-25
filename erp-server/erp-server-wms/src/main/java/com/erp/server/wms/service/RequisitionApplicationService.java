@@ -6,6 +6,7 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.wms.dto.RequisitionApplicationDTO;
 import com.erp.model.wms.dto.WarehouseLocationMoveDTO;
 import com.erp.model.wms.dto.pickingstrategy.PickingListsDTO;
+import com.erp.model.wms.entity.RequisitionApplicationDetailEntity;
 import com.erp.model.wms.entity.RequisitionApplicationEntity;
 import com.erp.model.wms.enums.CfgSettingEnum;
 import org.springframework.web.multipart.MultipartFile;
@@ -263,4 +264,6 @@ public interface RequisitionApplicationService extends SuperService<RequisitionA
     List<WarehouseLocationMoveDTO.GenPickToSkuMove> genPickToSkuMove(String warehouseId, String warehouseName, PickingListsDTO.AddDTO addDTO);
 
     void printFnskuBillConfirm(RequisitionApplicationDTO.PrintFnskuBillConfirmDTO dto, HttpServletResponse response);
+
+    void updateByChange(List<RequisitionApplicationDetailEntity> addList, List<RequisitionApplicationDetailEntity> updateList, List<RequisitionApplicationDetailEntity> deleteList);
 }

@@ -2087,6 +2087,37 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         return moveEntityList;
     }
 
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void updateByChange(List<RequisitionApplicationDetailEntity> addList, List<RequisitionApplicationDetailEntity> updateList, List<RequisitionApplicationDetailEntity> deleteList) {
+        // 添加日志
+        List<OperateLogDTO.AddModuleOperateLogDTO> logList = new ArrayList<>();
+        if (CollectionUtils.isNotEmpty(addList)) {
+            addList.forEach(v->{
+                logList.add(new OperateLogDTO.AddModuleOperateLogDTO(StrUtil.format("要货申请变更单新增明细sku{}",v.getSkuNo()),ModuleTypeEnum.REQUISITION_APPLICATION.getCode(),v.getMainId(),"新增sku"));
+            });
+            requisitionApplicationDetailService.saveBatch(addList);
+        }
+
+        if (CollectionUtils.isNotEmpty(updateList)) {
+            updateList.forEach(v->{
+                logList.add(new OperateLogDTO.AddModuleOperateLogDTO(StrUtil.format("发货通知变更单修改明细sku【{}】数量，从{}修改为{}",v.getSkuNo(),v.getChangeBeforeQty(),v.getRequisitionQty()),ModuleTypeEnum.REQUISITION_APPLICATION.getCode(),v.getMainId(),"修改sku"));
+            });
+            requisitionApplicationDetailService.updateBatchById(updateList);
+        }
+
+        if (CollectionUtils.isNotEmpty(deleteList)) {
+            deleteList.forEach(v->{
+                logList.add(new OperateLogDTO.AddModuleOperateLogDTO(StrUtil.format("删除sku{}",v.getSkuNo()),ModuleTypeEnum.REQUISITION_APPLICATION.getCode(),v.getMainId(),"删除明细"));
+            });
+            List<String> deleteIds = deleteList.stream().map(v->v.getId()).collect(Collectors.toList());
+            requisitionApplicationDetailService.removeByIds(deleteIds);
+        }
+        if(CollectionUtils.isNotEmpty(logList)){
+            operateLogService.batchAddModuleOperateLog(logList);
+        }
+    }
+
     /**
     * 新增修改处理数据
     */

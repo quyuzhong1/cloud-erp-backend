@@ -2,6 +2,7 @@ package com.erp.model.wms.dto;
 
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
+import com.erp.model.wms.entity.RequisitionApplicationDetailEntity;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -13,6 +14,7 @@ import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -28,6 +30,16 @@ import java.util.Map;
 @NoArgsConstructor
 public class RequisitionApplicationChangeDTO implements Serializable {
 
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class UpdateVirtualDTO {
+
+        private List<RequisitionApplicationDetailEntity> addList = new ArrayList<>();
+        private List<RequisitionApplicationDetailEntity> updateList = new ArrayList<>();
+        private List<RequisitionApplicationDetailEntity> removeList = new ArrayList<>();
+
+    }
 
     @Data
     @NoArgsConstructor
@@ -183,6 +195,10 @@ public class RequisitionApplicationChangeDTO implements Serializable {
         */
         private String  id;
 
+        /**
+         * 来源类型
+         */
+        private String sourceType;
         /**
          * 明细id
          */

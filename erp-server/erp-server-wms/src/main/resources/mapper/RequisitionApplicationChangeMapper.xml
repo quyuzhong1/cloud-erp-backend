@@ -43,6 +43,7 @@
                racd.id as detailId,
                rac.code,
                ra.type,
+               rac.source_type as sourceType,
                rac.approve_status as approveStatus,
                rac.source_code as sourceCode,
                rac.source_id as sourceId,

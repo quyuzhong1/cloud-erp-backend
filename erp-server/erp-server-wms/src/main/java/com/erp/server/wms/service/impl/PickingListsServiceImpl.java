@@ -45,6 +45,7 @@ import com.erp.rpc.oms.feign.SoInfoFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.mapper.PickingListsMapper;
 import com.erp.server.wms.service.*;
+import io.seata.common.util.StringUtils;
 import io.seata.spring.annotation.GlobalTransactional;
 import org.apache.commons.math3.util.Pair;
 import org.springframework.context.annotation.Lazy;
@@ -292,6 +293,73 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
             changeQtyViews.add(changeQtyView);
         });
         return changeQtyViews;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void updateByChange(List<PickingDetailEntity> updatePickingList) {
+        if(CollectionUtils.isEmpty(updatePickingList)){
+            return;
+        }
+        PickingListsEntity pickingListsEntity = this.getByIdOpt(updatePickingList.get(0).getMainId()).orElseThrow(() -> new ServiceException("未找到拣货单数据"));
+        pickingDetailService.updateBatchById(updatePickingList);
+        List<WarehouseLocationMoveDetailDTO.AddDTO> addDTOS = new ArrayList<>();
+        List<WarehouseLocationMoveDetailDTO.AddDTO> subtractDTOS = new ArrayList<>();
+        for (PickingDetailEntity pickingDetailEntity : updatePickingList) {
+            //处理仓位移动数据
+            if (StringUtils.isBlank(pickingDetailEntity.getOriginWarehouseLocation()) || pickingDetailEntity.getWarehouseLocation().equals(pickingDetailEntity.getOriginWarehouseLocation())) {
+                if (pickingDetailEntity.getChangeBeforeQty() > pickingDetailEntity.getQty()) {
+                    subtractDTOS.add(WarehouseLocationMoveDetailDTO.AddDTO.getLocationMoveDTO(pickingDetailEntity.getSkuId(), pickingDetailEntity.getSkuNo(),
+                            pickingDetailEntity.getStagingLocation(), pickingDetailEntity.getWarehouseLocation(), pickingDetailEntity.getChangeBeforeQty() - pickingDetailEntity.getQty(), pickingListsEntity.getWarehouseId(), pickingListsEntity.getId()));
+                } else if (pickingDetailEntity.getChangeBeforeQty() < pickingDetailEntity.getQty()) {
+                    //处理仓位移动数据
+                    addDTOS.add(WarehouseLocationMoveDetailDTO.AddDTO.getLocationMoveDTO(pickingDetailEntity.getSkuId(), pickingDetailEntity.getSkuNo(),
+                            pickingDetailEntity.getWarehouseLocation(), pickingDetailEntity.getStagingLocation(), pickingDetailEntity.getQty() - pickingDetailEntity.getChangeBeforeQty(), pickingListsEntity.getWarehouseId(), pickingListsEntity.getId()));
+                } else {
+                    continue;
+                }
+            } else {
+                // 仓位变更了需要进行原数据仓位退回，新仓位移出
+                addDTOS.add(WarehouseLocationMoveDetailDTO.AddDTO.getLocationMoveDTO(pickingDetailEntity.getSkuId(), pickingDetailEntity.getSkuNo(),
+                        pickingDetailEntity.getWarehouseLocation(), pickingDetailEntity.getStagingLocation(), pickingDetailEntity.getQty(), pickingListsEntity.getWarehouseId(), pickingListsEntity.getId()));
+                subtractDTOS.add(WarehouseLocationMoveDetailDTO.AddDTO.getLocationMoveDTO(pickingDetailEntity.getSkuId(), pickingDetailEntity.getSkuNo(),
+                        pickingDetailEntity.getStagingLocation(), pickingDetailEntity.getOriginWarehouseLocation(), pickingDetailEntity.getChangeBeforeQty(), pickingListsEntity.getWarehouseId(), pickingListsEntity.getId()));
+            }
+        }
+        // 进行对应的仓位移动
+        if (!CollectionUtils.isEmpty(addDTOS)) {
+            WarehouseLocationMoveDTO.AddDTO moveDto = new WarehouseLocationMoveDTO.AddDTO();
+            moveDto.setWarehouseId(pickingListsEntity.getWarehouseId());
+            moveDto.setPcShow(true);
+            moveDto.setSourceId(pickingListsEntity.getId());
+            moveDto.setSourceType(SourceTypeEnum.PICKING_LISTS_ADD.getCode());
+            moveDto.setSourceCode(pickingListsEntity.getCode());
+            moveDto.setDetailList(addDTOS);
+            warehouseLocationMoveService.addAndApprove(moveDto);
+        }
+        if (!CollectionUtils.isEmpty(subtractDTOS)) {
+            WarehouseLocationMoveDTO.AddDTO moveDto = new WarehouseLocationMoveDTO.AddDTO();
+            moveDto.setWarehouseId(pickingListsEntity.getWarehouseId());
+            moveDto.setPcShow(true);
+            moveDto.setSourceId(pickingListsEntity.getId());
+            moveDto.setSourceType(SourceTypeEnum.PICKING_LISTS_SUBTRACT.getCode());
+            moveDto.setSourceCode(pickingListsEntity.getCode());
+            moveDto.setDetailList(subtractDTOS);
+            warehouseLocationMoveService.addAndApprove(moveDto);
+        }
+        List<String> sourceDetailIds = updatePickingList.stream().map(PickingDetailEntity::getSourceDetailId).distinct().collect(Collectors.toList());
+        if (SourceTypeEnum.REQUISITION_APPLICATION.getCode().equals(pickingListsEntity.getSourceType())) {
+            // 反写要货申请的拣货数量
+            requisitionApplicationService.writeBackData(sourceDetailIds, Boolean.TRUE);
+
+        }
+        List<PickingDetailEntity> allDetailList = pickingDetailService.list(Wrappers.<PickingDetailEntity>lambdaQuery().eq(PickingDetailEntity::getMainId, pickingListsEntity.getId()));
+        int qty = allDetailList.stream()
+                .map(PickingDetailEntity::getQty)
+                .reduce(0, Math::addExact);
+        pickingListsEntity.setSkuTotal(qty);
+        pickingListsEntity.setLocationTotal(allDetailList.size());
+        updateById(pickingListsEntity);
     }
 
     private List<PickingDetailDTO.View> getDiffQtyView(PickingListsDTO.UpdateDTO dto,PickingListsDTO.View view) {
@@ -725,12 +793,12 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
         if(SourceTypeEnum.REQUISITION_APPLICATION.getCode().equals(entity.getSourceType()) && !CollectionUtils.isEmpty(mismatchedDetails)){
             //头程拣货并且修改了数量
             //保存新增的拆分数据，应拣数量为0，修改的数据更新实际拣货数量，保存拆分的删除,不生成仓位移动
-            dto.setDetails(mismatchedDetails);
-            PickingListsDTO.AddChangeDTO addChangeDTO = handleUpdateBeforeChange(dto, detailList, entity);
-            requisitionApplicationChangeService.generateByPickingList(addChangeDTO,dto, entity);
             List<String> originSourceDetailIds = view.getDetails().stream().map(PickingDetailDTO.View::getSourceDetailId).collect(Collectors.toList());
             List<String> nowSourceDetailIds = dto.getDetails().stream().map(PickingDetailDTO.View::getSourceDetailId).collect(Collectors.toList());
             originSourceDetailIds.removeAll(nowSourceDetailIds);
+            dto.setDetails(mismatchedDetails);
+            PickingListsDTO.AddChangeDTO addChangeDTO = handleUpdateBeforeChange(dto, detailList, entity);
+            requisitionApplicationChangeService.generateByPickingList(addChangeDTO,dto, entity);
             //整个sku删除的不用生成要货申请变更单，直接走删除逻辑
             List<PickingDetailDTO.View> removeDetail = view.getDetails().stream().filter(v->originSourceDetailIds.contains(v.getSourceDetailId())).collect(Collectors.toList());
             if(!CollectionUtils.isEmpty(removeDetail)){

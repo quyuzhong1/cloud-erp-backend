@@ -50,12 +50,12 @@ public class RequisitionApplicationChangeDetailEntity extends BaseEntity<Requisi
     @TableField("change_type")
     private String changeType;
     /**
-    * 原发货通知数量
+    * 原要货申请数量
     */
     @TableField("origin_qty")
     private Integer originQty;
     /**
-    * 新发货通知数量
+    * 新要货申请数量
     */
     @TableField("new_qty")
     private Integer newQty;

@@ -105,4 +105,13 @@ public class PickingDetailServiceImpl extends SuperServiceImpl<PickingDetailMapp
         update(Wrappers.<PickingDetailEntity>lambdaUpdate().set(PickingDetailEntity::getIsOutStock, false)
                 .in(PickingDetailEntity::getMainId, ids));
     }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void updateByChange(List<PickingDetailEntity> updatePickingList) {
+        if(CollectionUtils.isEmpty(updatePickingList)){
+            return;
+        }
+        this.updateBatchById(updatePickingList);
+    }
 }
