@@ -260,7 +260,11 @@ public interface PackingTaskService extends SuperService<PackingTaskEntity> {
      * @return
      */
     WmsCartonDTO.PrintDTO getPrintBarCode(String cartonId);
-
+    /**
+     * 要货申请单转换装箱任务实体
+     * @param entity
+     * @return
+     */
     void addPackingByRequisition(RequisitionApplicationEntity entity);
 
     void updateDetailQty(Map<String, Integer> qtyMap);

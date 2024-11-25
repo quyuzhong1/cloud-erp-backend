@@ -545,6 +545,11 @@ public class SkuMappingDTO implements Serializable {
         private String productName;
 
         /**
+         * 三方仓商品条码
+         */
+        private String thirdBarcode;
+
+        /**
          * 库存sku
          */
         private String warehouseSkuNo;
