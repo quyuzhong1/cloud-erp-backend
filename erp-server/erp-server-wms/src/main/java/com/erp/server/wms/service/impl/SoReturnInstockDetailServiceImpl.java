@@ -169,6 +169,13 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
                     detailEntity.setReturnTypeDict(returnTypeDict);
                     detailEntity.setReturnReasonDict(returnReasonDict);
                 }
+                detailEntity.setReturnAmount(detailDto.getReturnAmount());
+                detailEntity.setTaxReturnAmount(detailDto.getTaxReturnAmount());
+                detailEntity.setReturnAmountLocalCurrency(detailDto.getReturnAmountLocalCurrency());
+                detailEntity.setTaxReturnAmountLocalCurrency(detailDto.getTaxReturnAmountLocalCurrency());
+                if(null == detailDto.getExchangeRate()){
+                    detailEntity.setExchangeRate(dto.getExchangeRate());
+                }
                 list.add(detailEntity);
             }
             //更新委外标识
@@ -248,6 +255,13 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
                 detailEntity.setPlatformSkuNo(detailDto.getPlatformSkuNo());
             }
             detailEntity.setIsChildSkuNo(detailDto.getIsChildSkuNo());
+            detailEntity.setReturnAmount(detailDto.getReturnAmount());
+            detailEntity.setTaxReturnAmount(detailDto.getTaxReturnAmount());
+            detailEntity.setReturnAmountLocalCurrency(detailDto.getReturnAmountLocalCurrency());
+            detailEntity.setTaxReturnAmountLocalCurrency(detailDto.getTaxReturnAmountLocalCurrency());
+            if(null == detailDto.getExchangeRate()){
+                detailEntity.setExchangeRate(dto.getExchangeRate());
+            }
             list.add(detailEntity);
         }
         //更新委外标识
@@ -343,6 +357,13 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
                     detailEntity.setPlatformSkuNo(detailDto.getPlatformSkuNo());
                 }
                 detailEntity.setIsChildSkuNo(detailDto.getIsChildSkuNo());
+                detailEntity.setReturnAmount(detailDto.getReturnAmount());
+                detailEntity.setTaxReturnAmount(detailDto.getTaxReturnAmount());
+                detailEntity.setReturnAmountLocalCurrency(detailDto.getReturnAmountLocalCurrency());
+                detailEntity.setTaxReturnAmountLocalCurrency(detailDto.getTaxReturnAmountLocalCurrency());
+                if(null == detailDto.getExchangeRate()){
+                    detailEntity.setExchangeRate(dto.getExchangeRate());
+                }
                 list.add(detailEntity);
                 //修改操作日志
                 if (CharSequenceUtil.isNotBlank(detailEntity.getId())) {
@@ -449,6 +470,13 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
                 detailEntity.setPlatformSkuNo(detailDto.getPlatformSkuNo());
             }
             detailEntity.setIsChildSkuNo(detailDto.getIsChildSkuNo());
+            detailEntity.setReturnAmount(detailDto.getReturnAmount());
+            detailEntity.setTaxReturnAmount(detailDto.getTaxReturnAmount());
+            detailEntity.setReturnAmountLocalCurrency(detailDto.getReturnAmountLocalCurrency());
+            detailEntity.setTaxReturnAmountLocalCurrency(detailDto.getTaxReturnAmountLocalCurrency());
+            if(null == detailDto.getExchangeRate()){
+                detailEntity.setExchangeRate(dto.getExchangeRate());
+            }
             list.add(detailEntity);
             //修改操作日志
             if (CharSequenceUtil.isNotBlank(detailEntity.getId())) {

@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotBlank;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -224,6 +225,35 @@ public class SoReturnReceiveDTO {
          * 退货物流单号
          */
         private String returnLogisticCode;
+        /**
+         * 币别
+         */
+        private String currency;
+
+        /**
+         * 币种符号
+         */
+        private String currencySymbol;
+        /**
+         *退货金额
+         */
+        private BigDecimal returnAmount;
+        /**
+         *含税退货金额
+         */
+        private BigDecimal taxReturnAmount;
+        /**
+         *销售金额
+         */
+        private BigDecimal amount;
+        /**
+         *含税销售金额
+         */
+        private BigDecimal taxAmount;
+        /**
+         *汇率
+         */
+        private BigDecimal exchangeRate;
     }
 
     /**
@@ -319,6 +349,19 @@ public class SoReturnReceiveDTO {
          * 明细信息
          */
         private List<SoReturnReceiveDetailDTO.Add> detailList;
+        /**
+         * 汇率
+         */
+        private BigDecimal exchangeRate;
+        /**
+         * 比重
+         */
+        private String currency;
+
+        /**
+         * 币种符号
+         */
+        private String currencySymbol;
     }
 
     /**
@@ -392,6 +435,19 @@ public class SoReturnReceiveDTO {
          * 明细信息
          */
         private List<SoReturnReceiveDetailDTO.Update> detailList;
+        /**
+         * 汇率
+         */
+        private BigDecimal exchangeRate;
+        /**
+         * 比重
+         */
+        private String currency;
+
+        /**
+         * 币种符号
+         */
+        private String currencySymbol;
     }
 
     /**
@@ -529,6 +585,19 @@ public class SoReturnReceiveDTO {
          * 明细信息
          */
         private List<SoReturnReceiveDetailDTO.View> detailList;
+        /**
+         * 汇率
+         */
+        private BigDecimal exchangeRate;
+        /**
+         * 比重
+         */
+        private String currency;
+
+        /**
+         * 币种符号
+         */
+        private String currencySymbol;
     }
 
     /**
@@ -688,6 +757,36 @@ public class SoReturnReceiveDTO {
          * 平台sku
          */
         private String platformSkuNo;
+
+        /**
+         * 币别
+         */
+        private String currency;
+
+        /**
+         * 币种符号
+         */
+        private String currencySymbol;
+        /**
+         *退货金额
+         */
+        private BigDecimal returnAmount;
+        /**
+         *含税退货金额
+         */
+        private BigDecimal taxReturnAmount;
+        /**
+         *销售金额
+         */
+        private BigDecimal amount;
+        /**
+         *含税销售金额
+         */
+        private BigDecimal taxAmount;
+        /**
+         *汇率
+         */
+        private BigDecimal exchangeRate;
     }
 
     /**
