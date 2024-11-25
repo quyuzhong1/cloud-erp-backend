@@ -86,6 +86,7 @@ public class RequisitionApplicationChangeDetailServiceImpl extends SuperServiceI
         List<PickingDetailEntity> pickingDetailEntityList = pickingDetailService.listPickingDetailBySourceDetailIds(requisitionDetailIds);
         // 收集所有 requisitionDetailId 及其对应的 SKU
         Map<String, List<String>> soDetailIdToSkuMap = details.stream()
+                .filter(v->StringUtils.isNotBlank(v.getRequisitionDetailId()))
                 .collect(Collectors.groupingBy(
                         RequisitionApplicationChangeDTO.ViewDetailDTO::getRequisitionDetailId,
                         Collectors.mapping(RequisitionApplicationChangeDTO.ViewDetailDTO::getSkuNo, Collectors.toList())
