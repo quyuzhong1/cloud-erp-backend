@@ -152,4 +152,13 @@ public interface PurchaseSuggestService extends SuperService<PurchaseSuggestEnti
      * @return List<PurchaseSuggestEntity>
      */
     List<PurchaseSuggestEntity> listGeneratePurchaseSuggestMerge(PurchaseSuggestEntity purchaseSuggestEntity);
+
+    /**
+     * 查询锁定数量
+     * @author will
+     * @date 2024/11/25 18:08
+     * @param entity
+     * @return Integer
+     */
+    Integer getLockingQty(PurchaseSuggestEntity entity);
 }

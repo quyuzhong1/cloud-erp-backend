@@ -1,10 +1,12 @@
 package com.erp.server.mrp.service;
+import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.dto.base.BatchResultDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.mrp.dto.DeliverySuggestDTO;
-import com.erp.model.mrp.entity.PurchaseSuggestMergeEntity;
-import com.common.business.service.SuperService;
-import com.common.business.dto.base.*;
 import com.erp.model.mrp.dto.PurchaseSuggestMergeDTO;
+import com.erp.model.mrp.entity.PurchaseSuggestMergeEntity;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
@@ -135,4 +137,13 @@ public interface PurchaseSuggestMergeService extends SuperService<PurchaseSugges
      * @return List<PurchaseSuggestBomDTO>
      */
     List<DeliverySuggestDTO.PurchaseSuggestBomDTO> listPurchaseSuggestBom(String id);
+
+    /**
+     * 查询锁定数量
+     * @author will
+     * @date 2024/11/25 18:08
+     * @param entity
+     * @return Integer
+     */
+    Integer getLockingQty(PurchaseSuggestMergeEntity entity);
 }

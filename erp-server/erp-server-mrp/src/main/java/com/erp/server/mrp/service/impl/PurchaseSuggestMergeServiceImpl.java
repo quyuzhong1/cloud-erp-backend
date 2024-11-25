@@ -442,6 +442,20 @@ public class PurchaseSuggestMergeServiceImpl extends SuperServiceImpl<PurchaseSu
     }
 
     @Override
+    public Integer getLockingQty(PurchaseSuggestMergeEntity entity) {
+        if (ObjectUtil.isEmpty(entity)) {
+            throw new ServiceException("未找到采购建议(合并)数据");
+        }
+        if (CharSequenceUtil.equals(entity.getStatus(),SuggestStatusEnum.DRAFT.getCode()) || entity.getInvalidStatus()) {
+            return MathUtil.ZERO;
+        }
+        if (CharSequenceUtil.equals(entity.getStatus(),SuggestStatusEnum.WAIT_CONFIRM.getCode())) {
+            return entity.getSuggestPurchaseQty();
+        }
+        return entity.getPlanPurchaseQty();
+    }
+
+    @Override
     public List<DeliverySuggestDTO.PurchaseSuggestBomDTO> listPurchaseSuggestBom(String id) {
         PurchaseSuggestMergeEntity old = super.getById(id);
         Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "采购建议（合并）（合并）"));

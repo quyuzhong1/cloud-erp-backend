@@ -380,6 +380,20 @@ public class PurchaseSuggestServiceImpl extends SuperServiceImpl<PurchaseSuggest
         return baseMapper.listGeneratePurchaseSuggestMerge(purchaseSuggestEntity);
     }
 
+    @Override
+    public Integer getLockingQty(PurchaseSuggestEntity entity) {
+        if (ObjectUtil.isEmpty(entity)) {
+            throw new ServiceException("未找到采购建议数据");
+        }
+        if (CharSequenceUtil.equals(entity.getStatus(),SuggestStatusEnum.DRAFT.getCode()) || entity.getInvalidStatus()) {
+            return MathUtil.ZERO;
+        }
+        if (CharSequenceUtil.equals(entity.getStatus(),SuggestStatusEnum.WAIT_CONFIRM.getCode())) {
+            return entity.getSuggestPurchaseQty();
+        }
+        return entity.getPlanPurchaseQty();
+    }
+
 
     /**
      * 上传正确数据
