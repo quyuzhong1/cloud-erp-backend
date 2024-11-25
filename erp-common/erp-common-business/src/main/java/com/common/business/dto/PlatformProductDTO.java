@@ -45,6 +45,10 @@ public class PlatformProductDTO extends UniqueDto {
      * 平台产品(spu)名称
      */
     private String platformProductName;
+    /**
+     * 平台商品条码
+     */
+    private String platformProductBarcode;
 
     /**
      * 匹配结果吧true 已匹配 false 未匹配
