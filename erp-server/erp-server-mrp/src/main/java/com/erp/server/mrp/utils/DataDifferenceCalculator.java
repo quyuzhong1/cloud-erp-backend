@@ -51,8 +51,8 @@ public class DataDifferenceCalculator {
 
         BigDecimal normASqrt = BigDecimal.valueOf(Math.sqrt(normA.doubleValue()));
         BigDecimal normBSqrt = BigDecimal.valueOf(Math.sqrt(normB.doubleValue()));
-
-        return dotProduct.divide(normASqrt.multiply(normBSqrt), 6, RoundingMode.HALF_UP);
+        BigDecimal bigDecimal = normASqrt.multiply(normBSqrt).compareTo(BigDecimal.ZERO) == 0 ? BigDecimal.ONE : normASqrt.multiply(normBSqrt);
+        return dotProduct.divide(bigDecimal, 6, RoundingMode.HALF_UP);
     }
 
     // 找出与基准数据差异最小的前N组数据
