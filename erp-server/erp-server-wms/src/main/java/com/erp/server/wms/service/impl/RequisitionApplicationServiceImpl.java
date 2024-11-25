@@ -2101,7 +2101,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
 
         if (CollectionUtils.isNotEmpty(updateList)) {
             updateList.forEach(v->{
-                logList.add(new OperateLogDTO.AddModuleOperateLogDTO(StrUtil.format("发货通知变更单修改明细sku【{}】数量，从{}修改为{}",v.getSkuNo(),v.getChangeBeforeQty(),v.getRequisitionQty()),ModuleTypeEnum.REQUISITION_APPLICATION.getCode(),v.getMainId(),"修改sku"));
+                logList.add(new OperateLogDTO.AddModuleOperateLogDTO(StrUtil.format("要货申请变更单修改明细sku【{}】数量，从{}修改为{}",v.getSkuNo(),v.getChangeBeforeQty(),v.getRequisitionQty()),ModuleTypeEnum.REQUISITION_APPLICATION.getCode(),v.getMainId(),"修改sku"));
             });
             requisitionApplicationDetailService.updateBatchById(updateList);
         }
