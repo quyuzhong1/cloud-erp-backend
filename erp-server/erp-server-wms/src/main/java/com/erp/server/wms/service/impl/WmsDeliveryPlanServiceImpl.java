@@ -867,9 +867,7 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
             deliverPlanDetailViewDTO.setDeliveryPlanQty(detailEntity.getQty());
             //来源json数据
             List<WmsDeliveryPlanDetailDTO.SourceJsonDTO> sourceJsonList = BeanUtil.copyToList(JSONUtil.parseArray(detailEntity.getSourceJson()), WmsDeliveryPlanDetailDTO.SourceJsonDTO.class);
-            //已发数量
-            Integer hasDeliveryPlanQty = sourceJsonList.stream().map(WmsDeliveryPlanDetailDTO.SourceJsonDTO::getPlanDeliveryQty).reduce(MathUtil.ZERO, Integer::sum);
-            deliverPlanDetailViewDTO.setHasDeliveryPlanQty(hasDeliveryPlanQty);
+
             Integer deliveryQty = MathUtil.ZERO;
             //设置发货单号拿最新的一个发货单
             if(entity.getType().equals(DeliveryPlanTypeEnum.FBA.getCode())){
@@ -895,13 +893,15 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
                 //发货数量 关联的发货单中SKU的发货数量，多个发货单汇总
                  deliveryQty = fbaDeliveryDetailEntities.stream().filter(req -> requisitionDetailIds.contains(req.getSourceDetailId()) && CollectionUtils.isNotEmpty(deliveryIds) && deliveryIds.contains(req.getMainId())).mapToInt(FirstMileDeliveryDetailEntity::getDeliveryQty).sum();
             }
+            //已发数量
+            deliverPlanDetailViewDTO.setHasDeliveryPlanQty(deliveryQty);
 
             List<WmsDeliveryPlanDTO.DescriptionViewDTO> descriptionViewDTOList = new ArrayList<>();
             for (WmsDeliveryPlanDetailDTO.SourceJsonDTO sourceJsonDTO : sourceJsonList) {
                 WmsDeliveryPlanDTO.DescriptionViewDTO descriptionViewDTO = new WmsDeliveryPlanDTO.DescriptionViewDTO();
                 DeliverySuggestEntity suggestEntity = deliverySuggestList.stream().filter(obj -> StrUtil.equals(obj.getId(), sourceJsonDTO.getSourceId())).findFirst().orElse(new DeliverySuggestEntity());
                 descriptionViewDTO.setDeliverySuggestCode(suggestEntity.getCode());
-                descriptionViewDTO.setDeliverySuggestQty(suggestEntity.getDeliveryStockUpQty());
+                descriptionViewDTO.setDeliverySuggestQty(suggestEntity.getPlanDeliveryQty());
                 if (deliveryQty > suggestEntity.getPlanDeliveryQty()) {
                     descriptionViewDTO.setHasDeliveryPlanQty(sourceJsonDTO.getPlanDeliveryQty());
                     deliveryQty = deliveryQty - suggestEntity.getPlanDeliveryQty();
