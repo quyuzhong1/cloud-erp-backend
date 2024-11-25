@@ -165,12 +165,12 @@ public class DmpOutputSdyReturnHandler extends DmpOutputTaskHandler {
                 sdyDTO.setTransaction_sub_type("退款不退货");
             } else if ("replacement".equals(dmpSoReturnDetailEntity.getSolutionType())) {
                 //RMA.退换货
-                sdyDTO.setTransaction_type("退换货");
+                sdyDTO.setTransaction_type("RMA.换货单");
                 //换货退货
                 sdyDTO.setTransaction_sub_type("换货退货");
             } else {
                 //RMA.退货单
-                sdyDTO.setTransaction_type("退货单");
+                sdyDTO.setTransaction_type("RMA.退货单");
                 //退货退款
                 sdyDTO.setTransaction_sub_type("退货退款");
             }
@@ -180,6 +180,7 @@ public class DmpOutputSdyReturnHandler extends DmpOutputTaskHandler {
             } else {
                 sdyDTO.setBiz_status("已完成");
             }
+            sdyDTO.setStatus("已创建");
             int qtyTotal = dmpSoReturnDetailEntityList.stream().mapToInt(DmpSoReturnDetailEntity::getQty).sum();
             sdyDTO.setOnline_appled_return_quanty(qtyTotal);
             sdyDTO.setCustomer_refundable_quantity(qtyTotal);
@@ -267,7 +268,8 @@ public class DmpOutputSdyReturnHandler extends DmpOutputTaskHandler {
             sdyDTO.setRoot_node_no(dmpSoReturnEntity.getThirdCode());
             sdyDTO.setRoot_node_create_time(localDateTime.format(dmpSoReturnEntity.getReturnTime()));
             sdyDTO.setRoot_node_modify_time(localDateTime.format(dmpSoReturnEntity.getPlatformUpdateTime()));
-            sdyDTO.setGoods_status("10.30");
+
+            sdyDTO.setGoods_status("已退货");
             sdyDTO.setMsku_code(dmpSoReturnDetailEntity.getSkuNo());
             sdyDTO.setReason(dmpSoReturnDetailEntity.getReason());
             sdyDTO.setSource_system("SDC");

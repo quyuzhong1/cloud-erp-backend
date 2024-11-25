@@ -151,7 +151,6 @@ public class DmpOutputSdyRefundHandler extends DmpOutputTaskHandler {
      **/
     public List<ShudiyunB2cOrderDTO> convert(DmpSoRefundInfoEntity dmpSoRefundEntity, List<DmpSoRefundDetailEntity> dmpSoRefundDetailEntityList) {
         DateTimeFormatter localDateTime = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-        DateTimeFormatter localDate = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
         List<ShudiyunB2cOrderDTO> sdyListDTO = new ArrayList<>();
 
@@ -169,6 +168,8 @@ public class DmpOutputSdyRefundHandler extends DmpOutputTaskHandler {
             } else {
                 sdyDTO.setBiz_status("成功");
             }
+            sdyDTO.setStatus("已创建");
+
             int qtyTotal = dmpSoRefundDetailEntityList.stream().mapToInt(DmpSoRefundDetailEntity::getQty).sum();
             sdyDTO.setOnline_appled_return_quanty(qtyTotal);
             sdyDTO.setCustomer_refundable_quantity(qtyTotal);
@@ -256,7 +257,7 @@ public class DmpOutputSdyRefundHandler extends DmpOutputTaskHandler {
             sdyDTO.setRoot_node_no(dmpSoRefundEntity.getThirdCode());
             sdyDTO.setRoot_node_create_time(localDateTime.format(dmpSoRefundEntity.getRefundTime()));
             sdyDTO.setRoot_node_modify_time(localDateTime.format(dmpSoRefundEntity.getPlatformUpdateTime()));
-            sdyDTO.setGoods_status("10.30");
+            sdyDTO.setGoods_status("已退货");
             sdyDTO.setMsku_code(dmpSoRefundDetailEntity.getSkuNo());
             sdyDTO.setReason(dmpSoRefundEntity.getReason());
             sdyDTO.setSource_system("SDC");

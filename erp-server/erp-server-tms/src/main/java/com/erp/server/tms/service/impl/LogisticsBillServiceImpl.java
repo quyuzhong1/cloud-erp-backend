@@ -1307,6 +1307,12 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
             shudiyunB2cOrderDTO.setTransaction_type("运单");
             shudiyunB2cOrderDTO.setTransaction_sub_type("普通运单");
             shudiyunB2cOrderDTO.setBiz_status(LogisticTrackStatusEnum.getName(logisticsBillDetailEntity.getTrackStatus()));
+            if (entity.getVersion() == null) {
+                entity.setVersion(0);
+            }
+            if (logisticsBillDetailEntity.getVersion() == null) {
+                entity.setVersion(0);
+            }
             shudiyunB2cOrderDTO.setStatus(shudiyunB2cOrderDTO.sdyStatusHandle(operateEnum, entity.getVersion(), logisticsBillDetailEntity.getVersion()));
 
             if (entity.getDeliveryTime() != null) {

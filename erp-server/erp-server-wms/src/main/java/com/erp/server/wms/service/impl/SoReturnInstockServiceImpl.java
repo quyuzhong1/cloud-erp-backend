@@ -1751,6 +1751,9 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         CustomerInfoEntity customerInfo = FeignQuery.getById(CustomerInfoEntity.class, entity.getCustomerId());
         List<BaseIdDTO.CodeDTO> companyEntities = sysUserFeign.getAccountingCompanyList(Arrays.asList(customerInfo.getFinancialOrganization(), entity.getSalesOrgId()));
 
+        //退货物流单号
+        String rootNodeNoInitial = getRootNodeNoInitial(entity);
+
         for (int i = 0; i < soReturnInstockDetailEntities.size(); i++) {
             SoReturnInstockDetailEntity soReturnInstockDetailEntity = soReturnInstockDetailEntities.get(i);
 
@@ -1762,13 +1765,10 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                 shudiyunB2cOrderDTO.setBiz_time(localDate.format(entity.getBillDate()));
             }
             //默认退货入库单
-            shudiyunB2cOrderDTO.setTransaction_type("210.10");
-            shudiyunB2cOrderDTO.setTransaction_sub_type("210.10.01");
+            shudiyunB2cOrderDTO.setTransaction_type("退货入库单");
+            shudiyunB2cOrderDTO.setTransaction_sub_type("退货入库");
             shudiyunB2cOrderDTO.setBiz_status(ApproveStatusEnum.getName(entity.getApproveStatus()));
             shudiyunB2cOrderDTO.setStatus(shudiyunB2cOrderDTO.sdyStatusHandle(operateEnum, entity.getVersion(), soReturnInstockDetailEntity.getVersion()));
-
-            if (ObjectUtil.isNotEmpty(customerInfo)) {
-            }
 
             //组织信息
             if (ObjectUtil.isNotEmpty(customerInfo)) {
@@ -1810,24 +1810,24 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
             } else {
                 shudiyunB2cOrderDTO.setIs_gift(0);
             }
-            BomChildrenSkuDTO bomChildrenSkuDTO = bomChildrenSkuDTOS.stream().filter(req -> req.getParentSkuId().equals(soReturnInstockDetailEntity.getSkuId())).findFirst().orElse(null);
-            shudiyunB2cOrderDTO.setIs_comb(0);
 
-            if (ObjectUtil.isNotEmpty(bomChildrenSkuDTO)) {
-                if (BomTypeEnum.COMBINATION.getType().equals(bomChildrenSkuDTO.getType())) {
-                    shudiyunB2cOrderDTO.setIs_comb(1);
-                    shudiyunB2cOrderDTO.setSuite_no(soReturnInstockDetailEntity.getSkuNo());
-                    ProductDetailEntity productDetailEntity = parentSkuList.stream().filter(req -> req.getId().equals(bomChildrenSkuDTO.getParentSkuId())).findFirst().orElse(null);
-                    if (ObjectUtil.isNotEmpty(productDetailEntity)) {
-                        shudiyunB2cOrderDTO.setSuite_name(skuVO.getSkuName());
-                    }
+            BomChildrenSkuDTO bomChildrenSkuDTO = bomChildrenSkuDTOS.stream().filter(req -> req.getParentSkuId().equals(soReturnInstockDetailEntity.getSkuId())).findFirst().orElse(null);
+            if (ObjectUtil.isNotEmpty(bomChildrenSkuDTO) && BomTypeEnum.COMBINATION.getType().equals(bomChildrenSkuDTO.getType())) {
+                shudiyunB2cOrderDTO.setIs_comb(1);
+            } else {
+                bomChildrenSkuDTO = bomChildrenSkuDTOS.stream().filter(req -> req.getSkuId().equals(soReturnInstockDetailEntity.getSkuId())).findFirst().orElse(null);
+                if (ObjectUtil.isNotEmpty(bomChildrenSkuDTO)) {
+                    shudiyunB2cOrderDTO.setSuite_no(bomChildrenSkuDTO.getParentSkuNo());
+                    BomChildrenSkuDTO finalBomChildrenSkuDTO = bomChildrenSkuDTO;
+                    String skuName = parentSkuList.stream().filter(req -> req.getId().equals(finalBomChildrenSkuDTO.getParentSkuId())).map(ProductDetailEntity::getName).findFirst().orElse("");
+                    shudiyunB2cOrderDTO.setSuite_name(skuName);
                 }
             }
             shudiyunB2cOrderDTO.setDomestic_return_waybill_number("");
             shudiyunB2cOrderDTO.setInternational_return_waybill_number("");
             if (OrderTypeEnum.B2B.getCode().equals(entity.getType())) {
                 shudiyunB2cOrderDTO.setLogistic_company("【未知】");
-                shudiyunB2cOrderDTO.setLogistic_company_code(entity.getReturnLogisticCode());
+                shudiyunB2cOrderDTO.setLogistic_company_code("【未知】");
                 shudiyunB2cOrderDTO.setDomestic_return_waybill_number(entity.getReturnLogisticCode());
             } else {
                 shudiyunB2cOrderDTO.setLogistic_company("");
@@ -1879,5 +1879,49 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
             wmsPushMsgService.save(wmsPushMsgEntity);
 
         }
+    }
+
+    private String getRootNodeNoInitial(SoReturnInstockEntity entity) {
+        String rootNodeNoInitial = "";
+        if (OrderTypeEnum.B2B.getCode().equals(entity.getType())) {
+            if (SourceTypeEnum.SO_RETURN.getCode().equals(entity.getSourceType())) {
+                SoReturnEntity soReturnEntity = soReturnFeign.getSoReturnById(entity.getSourceId());
+                if (ObjectUtil.isNotEmpty(soReturnEntity)) {
+                    rootNodeNoInitial = soReturnEntity.getCode();
+                }
+
+            } else if (SourceTypeEnum.SO_RETURN_RECEIVE.getCode().equals(entity.getSourceType())) {
+                SoReturnReceiveEntity receiveEntity = soReturnReceiveService.getById(entity.getSourceId());
+                if (ObjectUtil.isNotEmpty(receiveEntity)) {
+                    SoReturnEntity soReturnEntity = soReturnFeign.getSoReturnById(receiveEntity.getSourceId());
+                    if (ObjectUtil.isNotEmpty(soReturnEntity)) {
+                        rootNodeNoInitial = soReturnEntity.getCode();
+                    }
+
+                }
+            } else {
+                rootNodeNoInitial = entity.getCode();
+            }
+        } else {
+            if (SourceTypeEnum.SO_RETURN.getCode().equals(entity.getSourceType())) {
+                SoReturnEntity soReturnEntity = soReturnFeign.getSoReturnById(entity.getSourceId());
+                if (ObjectUtil.isNotEmpty(soReturnEntity)) {
+                    rootNodeNoInitial = soReturnEntity.getCode();
+                }
+
+            } else if (SourceTypeEnum.SO_RETURN_RECEIVE.getCode().equals(entity.getSourceType())) {
+                SoReturnReceiveEntity receiveEntity = soReturnReceiveService.getById(entity.getSourceId());
+                if (ObjectUtil.isNotEmpty(receiveEntity)) {
+                    SoReturnEntity soReturnEntity = soReturnFeign.getSoReturnById(receiveEntity.getSourceId());
+                    if (ObjectUtil.isNotEmpty(soReturnEntity)) {
+                        rootNodeNoInitial = soReturnEntity.getCode();
+                    }
+
+                }
+            } else {
+                rootNodeNoInitial = entity.getCode();
+            }
+        }
+        return rootNodeNoInitial;
     }
 }
