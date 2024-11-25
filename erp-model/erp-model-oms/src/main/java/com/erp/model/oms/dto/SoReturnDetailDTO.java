@@ -62,6 +62,11 @@ public class SoReturnDetailDTO {
         private String platformSkuName;
 
         /**
+         * 汇率
+         */
+        private BigDecimal exchangeRate;
+
+        /**
          *退货金额
          */
         private BigDecimal returnAmount;
@@ -141,6 +146,10 @@ public class SoReturnDetailDTO {
          * 平台sku名称
          */
         private String platformSkuName;
+        /**
+         * 汇率
+         */
+        private BigDecimal exchangeRate;
         /**
          *退货金额
          */

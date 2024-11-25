@@ -115,6 +115,11 @@ public class SoReturnDetailEntity extends BaseEntity<SoReturnDetailEntity> {
      */
     @TableField("tax_return_amount_local_currency")
     private BigDecimal taxReturnAmountLocalCurrency;
+    /**
+     * 汇率
+     */
+    @TableField("exchange_rate")
+    private BigDecimal exchangeRate;
 
     public static final String MAIN_ID = "main_id";
 

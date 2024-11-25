@@ -101,15 +101,6 @@ public class SoReturnDetailServiceImpl extends SuperServiceImpl<SoReturnDetailMa
             throw new ServiceException(ApiError.ERROR_92003);
         }
         List<SoReturnDetailEntity> soReturnDetailEntities = this.listDetailBySourceId(Arrays.asList(dto.getSourceId()));
-
-        /**
-        List<SkuVO> ignoreInventorySkuList = plmTaskFeign.getNoInventorySku();
-        List<String> ignoreInventorySkuIds = Lists.newArrayList();
-        if(CollUtil.isNotEmpty(ignoreInventorySkuList)) {
-            ignoreInventorySkuIds = ignoreInventorySkuList.stream().map(SkuVO::getSkuId).distinct().collect(Collectors.toList());
-        }
-         */
-
         List<SoReturnDetailEntity> list = new ArrayList<>();
         for (SoReturnDetailDTO.Add detailDto : dto.getDetailList()) {
             SoReturnDetailEntity soReturnDetailEntity = new SoReturnDetailEntity();
@@ -117,15 +108,6 @@ public class SoReturnDetailServiceImpl extends SuperServiceImpl<SoReturnDetailMa
             Integer returnQty = soReturnDetailEntities.stream().filter(req -> req.getSourceDetailId().equals(detailDto.getSourceDetailId())).map(SoReturnDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
             Integer actualQty = soOutstockDetailEntities.stream().filter(detail -> soDetailEntity.getMainId().equals(detail.getSoId()) && detail.getSkuId().equals(soDetailEntity.getSkuId()) && detail.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())).map(SoOutstockDetailEntity::getActualQty).reduce(MathUtil.ZERO, Integer::sum);
 
-            /**
-            if(ignoreInventorySkuIds.contains(soDetailEntity.getSkuId())) {
-                log.warn("sku id: {}，sku编号：{}产品属性是费用或服务，不参与库存出入库，不做库存验证", soDetailEntity.getSkuId(), soDetailEntity.getSkuNo());
-            } else {
-                if (actualQty < detailDto.getReturnQty() + returnQty) {
-                    throw new ServiceException(ApiError.ERROR_92009);
-                }
-            }
-             */
             if (actualQty < detailDto.getReturnQty() + returnQty) {
                 throw new ServiceException(ApiError.ERROR_92009);
             }
@@ -140,6 +122,11 @@ public class SoReturnDetailServiceImpl extends SuperServiceImpl<SoReturnDetailMa
             soReturnDetailEntity.setListingId(detailDto.getListingId());
             soReturnDetailEntity.setPlatformSkuNo(detailDto.getPlatformSkuNo());
             soReturnDetailEntity.setPlatformSkuName(detailDto.getPlatformSkuName());
+            soReturnDetailEntity.setExchangeRate(detailDto.getExchangeRate());
+            soReturnDetailEntity.setReturnAmount(detailDto.getReturnAmount());
+            soReturnDetailEntity.setTaxReturnAmount(detailDto.getTaxReturnAmount());
+            soReturnDetailEntity.setTaxReturnAmountLocalCurrency(detailDto.getTaxReturnAmountLocalCurrency());
+            soReturnDetailEntity.setReturnAmountLocalCurrency(detailDto.getReturnAmountLocalCurrency());
             list.add(soReturnDetailEntity);
         }
         return this.saveBatch(list);
@@ -161,6 +148,11 @@ public class SoReturnDetailServiceImpl extends SuperServiceImpl<SoReturnDetailMa
             soReturnDetailEntity.setListingId(detailDto.getListingId());
             soReturnDetailEntity.setPlatformSkuNo(detailDto.getPlatformSkuNo());
             soReturnDetailEntity.setPlatformSkuName(detailDto.getPlatformSkuName());
+            soReturnDetailEntity.setExchangeRate(detailDto.getExchangeRate());
+            soReturnDetailEntity.setReturnAmount(detailDto.getReturnAmount());
+            soReturnDetailEntity.setTaxReturnAmount(detailDto.getTaxReturnAmount());
+            soReturnDetailEntity.setTaxReturnAmountLocalCurrency(detailDto.getTaxReturnAmountLocalCurrency());
+            soReturnDetailEntity.setReturnAmountLocalCurrency(detailDto.getReturnAmountLocalCurrency());
             list.add(soReturnDetailEntity);
         }
         return this.saveBatch(list);
@@ -192,15 +184,6 @@ public class SoReturnDetailServiceImpl extends SuperServiceImpl<SoReturnDetailMa
 
         List<SoReturnDetailEntity> soReturnDetailEntities = this.listDetailBySourceId(Arrays.asList(dto.getSourceId()));
         List<SoReturnDetailEntity> list = new ArrayList<>();
-
-        /**
-        List<SkuVO> ignoreInventorySkuList = plmTaskFeign.getNoInventorySku();
-        List<String> ignoreInventorySkuIds = Lists.newArrayList();
-        if(CollUtil.isNotEmpty(ignoreInventorySkuList)) {
-            ignoreInventorySkuIds = ignoreInventorySkuList.stream().map(SkuVO::getSkuId).distinct().collect(Collectors.toList());
-        }
-         */
-
         for (SoReturnDetailDTO.Update detailDto : dto.getDetailList()) {
             SoReturnDetailEntity soReturnDetailEntity = new SoReturnDetailEntity();
             SoDetailEntity soDetailEntity = soDetailEntitieList.stream().filter(req -> req.getId().equals(detailDto.getSourceDetailId())).findFirst().orElse(new SoDetailEntity());
@@ -210,16 +193,6 @@ public class SoReturnDetailServiceImpl extends SuperServiceImpl<SoReturnDetailMa
                 soReturnDetailEntity.setId(detailDto.getId());
                 returnQty = soReturnDetailEntities.stream().filter(req -> req.getSourceDetailId().equals(detailDto.getSourceDetailId()) && !req.getId().equals(detailDto.getId())).map(SoReturnDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
             }
-
-            /**
-            if(ignoreInventorySkuIds.contains(soDetailEntity.getSkuId())) {
-                log.warn("sku id: {}，sku编号：{}产品属性是费用或服务，不参与库存出入库，不做库存验证", soDetailEntity.getSkuId(), soDetailEntity.getSkuNo());
-            } else {
-                if (actualQty < detailDto.getReturnQty() + returnQty) {
-                    throw new ServiceException(ApiError.ERROR_92009);
-                }
-            }
-             */
 
             if (actualQty < detailDto.getReturnQty() + returnQty) {
                 throw new ServiceException(ApiError.ERROR_92009);
@@ -236,6 +209,11 @@ public class SoReturnDetailServiceImpl extends SuperServiceImpl<SoReturnDetailMa
             soReturnDetailEntity.setListingId(detailDto.getListingId());
             soReturnDetailEntity.setPlatformSkuNo(detailDto.getPlatformSkuNo());
             soReturnDetailEntity.setPlatformSkuName(detailDto.getPlatformSkuName());
+            soReturnDetailEntity.setExchangeRate(detailDto.getExchangeRate());
+            soReturnDetailEntity.setReturnAmount(detailDto.getReturnAmount());
+            soReturnDetailEntity.setTaxReturnAmount(detailDto.getTaxReturnAmount());
+            soReturnDetailEntity.setTaxReturnAmountLocalCurrency(detailDto.getTaxReturnAmountLocalCurrency());
+            soReturnDetailEntity.setReturnAmountLocalCurrency(detailDto.getReturnAmountLocalCurrency());
             list.add(soReturnDetailEntity);
             detailDto.setSkuNo(soDetailEntity.getSkuNo());
             //修改操作日志
@@ -288,6 +266,11 @@ public class SoReturnDetailServiceImpl extends SuperServiceImpl<SoReturnDetailMa
             soReturnDetailEntity.setListingId(detailDto.getListingId());
             soReturnDetailEntity.setPlatformSkuNo(detailDto.getPlatformSkuNo());
             soReturnDetailEntity.setPlatformSkuName(detailDto.getPlatformSkuName());
+            soReturnDetailEntity.setExchangeRate(detailDto.getExchangeRate());
+            soReturnDetailEntity.setReturnAmount(detailDto.getReturnAmount());
+            soReturnDetailEntity.setTaxReturnAmount(detailDto.getTaxReturnAmount());
+            soReturnDetailEntity.setTaxReturnAmountLocalCurrency(detailDto.getTaxReturnAmountLocalCurrency());
+            soReturnDetailEntity.setReturnAmountLocalCurrency(detailDto.getReturnAmountLocalCurrency());
             list.add(soReturnDetailEntity);
             //修改操作日志
             if (StringUtils.isNotBlank(soReturnDetailEntity.getId())) {

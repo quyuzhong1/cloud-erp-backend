@@ -432,6 +432,10 @@ public class SoReturnDTO {
          */
         private Boolean canChangeSoInfo;
         /**
+         * 汇率
+         */
+        private BigDecimal exchangeRate;
+        /**
          * 详情信息
          */
         private List<SoReturnDetailDTO.View> detailList;

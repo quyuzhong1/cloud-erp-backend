@@ -476,4 +476,12 @@ public interface SoInfoService extends SuperService<SoInfoEntity> {
      * 导出销售订单
      */
     PagingVO<SoInfoDTO.PagingViewDTO> exportSo(PagingDTO<SoInfoDTO.ExportDTO> dto);
+    /**
+     * 下推销售退货订单-列表查询-计算退货金额
+     * @param dto dto
+     * @return com.common.core.controller.vo.ApiResult<java.util.List < com.erp.model.oms.dto.SoInfoDTO.GenerateSoReturnView>>
+     * @Author jack
+     * @Date 2024-11-25
+     **/
+    List<SoInfoDTO.GenerateSoReturnView> calReturnAmountByQty(SoInfoDTO.CalDTO dto);
 }

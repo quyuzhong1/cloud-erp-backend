@@ -293,7 +293,12 @@
         sd.main_id AS soId,
         sd.sku_id,
         sd.sku_no,
-        sd.qty AS salesQty
+        sd.qty AS salesQty,
+        si.currency,
+        si.currency_symbol,
+        sd.amount,
+        sd.tax_amount,
+        sd.exchange_rate
         FROM so_info si
         LEFT JOIN so_detail sd ON si.id = sd.main_id AND si.is_deleted = FALSE
         WHERE sd.is_deleted = FALSE

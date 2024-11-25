@@ -8,7 +8,6 @@ import lombok.Setter;
 import lombok.experimental.Accessors;
 
 import java.io.Serializable;
-import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
@@ -223,14 +222,6 @@ public class SoReturnEntity extends BaseEntity<SoReturnEntity> {
      */
     @TableField("sync_kingdee_id")
     private String syncKingdeeId;
-
-    /**
-     * 汇率
-     */
-    @TableField("exchange_rate")
-    private BigDecimal exchangeRate;
-
-    
 
     public static final String APPROVE_STATUS = "approve_status";
 
