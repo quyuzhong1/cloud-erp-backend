@@ -37,6 +37,7 @@ import com.erp.sdk.oms.amz.spapi.model.orders.OrderItemList;
 import com.erp.sdk.oms.amz.spapi.model.orders.OrderItemsList;
 import com.erp.server.dmp.inout.dto.base.DmpInputTaskInitDTO;
 import com.erp.server.dmp.inout.dto.request.DmpInputInitRequest;
+import com.erp.server.dmp.inout.dto.response.DmpInputInitResponse;
 import com.erp.server.dmp.inout.dto.response.DmpInputTaskResponse;
 import com.erp.server.dmp.inout.handler.input.task.mongo.DmpInputMongoHandler;
 import com.erp.server.dmp.service.CfgAppClientService;
@@ -131,6 +132,10 @@ public class DmpInputAmzOrderDetailInitHandler extends DmpInputAmzCommonInitHand
                     // 设置动态速率，失效时间=1/limit
                     BigDecimal timeOut = BigDecimal.ONE.max(BigDecimal.ONE.divide(new BigDecimal(rateLimitStr), 8, RoundingMode.DOWN));
                     redisUtil.set(limitKey, rateLimitStr, timeOut.longValue());
+                    log.warn("【DmpInputAmzOrderDetailInitHandler】查询亚马逊订单详情429限流:{}", shopInfoDTO.getPlatformShopCode());
+                    DmpInputInitResponse initDmpResponse = (DmpInputInitResponse) dmpResponse;
+                    initDmpResponse.setDoNextChain(false);
+                    return Collections.emptyList();
                 }
                 throw new ServiceException("查询亚马逊订单详情失败：API异常：" + JSONUtil.toJsonStr(e));
             } catch (Exception e) {
