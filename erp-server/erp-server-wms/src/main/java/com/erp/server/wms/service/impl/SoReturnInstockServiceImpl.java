@@ -1836,10 +1836,9 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                 shudiyunB2cOrderDTO.setLogistic_company_code("【未知】");
                 shudiyunB2cOrderDTO.setDomestic_return_waybill_number(entity.getReturnLogisticCode());
             } else {
-                shudiyunB2cOrderDTO.setLogistic_company("");
-                shudiyunB2cOrderDTO.setLogistic_company_code("");
+                shudiyunB2cOrderDTO.setLogistic_company("无");
+                shudiyunB2cOrderDTO.setLogistic_company_code("无");
             }
-
             shudiyunB2cOrderDTO.setReturn_status(ApproveStatusEnum.getName(entity.getApproveStatus()));
             shudiyunB2cOrderDTO.setReturn_receipt_number(entity.getCode());
             shudiyunB2cOrderDTO.setReturned_quantity(soReturnInstockDetailEntity.getRealQty());
@@ -1855,7 +1854,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
             shudiyunB2cOrderDTO.setSuite_name("");
 
             // 商品状态
-            shudiyunB2cOrderDTO.setGoods_status("10.10");
+            shudiyunB2cOrderDTO.setGoods_status("已发货");
             if (entity.getApproveTime() != null) {
                 shudiyunB2cOrderDTO.setDelivery_time(localDateTime.format(entity.getApproveTime()));
             }

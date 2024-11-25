@@ -786,6 +786,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             SoInfoToSdyDTO soInfoToSdyDTO = new SoInfoToSdyDTO();
             soInfoToSdyDTO.setSoId(entity.getSoId());
             soInfoToSdyDTO.setOperateEnum(SyncOperateEnum.OPERATE_APPROVE.getCode());
+            soInfoToSdyDTO.setDeliveryStatus(DeliveryStatusEnum.COMPLETE_SHIPMENT.getCode());
             soInfoFeign.sdyFieldOrderHandler(soInfoToSdyDTO);
 
         }

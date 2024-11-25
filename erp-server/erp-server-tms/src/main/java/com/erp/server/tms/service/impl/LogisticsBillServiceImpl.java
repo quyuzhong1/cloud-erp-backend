@@ -35,6 +35,7 @@ import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoB2cLogisticsEntity;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.sys.entity.DictCountryOrgEntity;
+import com.erp.model.sys.enums.ChargeSuperiorEnum;
 import com.erp.model.tms.dto.*;
 import com.erp.model.tms.entity.*;
 import com.erp.model.tms.enums.*;
@@ -1324,9 +1325,17 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
                 shudiyunB2cOrderDTO.setLogistics_delivery_time(localDateTime.format(LocalDateTime.now()));
             }
             shudiyunB2cOrderDTO.setDelivery_number(entity.getOutstockCode());
-            shudiyunB2cOrderDTO.setLogistic_company(supplierName);
+
+            if (CharSequenceUtil.isBlank(supplierName)) {
+                shudiyunB2cOrderDTO.setLogistic_company("无");
+            } else {
+                shudiyunB2cOrderDTO.setLogistic_company(supplierName);
+            }
+
             if (channelEntity != null) {
                 shudiyunB2cOrderDTO.setLogistic_company_code(channelEntity.getMainId());
+            } else {
+                shudiyunB2cOrderDTO.setLogistic_company("无");
             }
 
             shudiyunB2cOrderDTO.setWaybill_number(entity.getTransportNo());
