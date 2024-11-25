@@ -1380,6 +1380,10 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
 		List<SkuMappingEntity> skuMappingEntityList = lambdaQuery().ge(SkuMappingEntity::getUpdateTime, startTime).le(SkuMappingEntity::getUpdateTime, endTime).list();
 		if(CollUtil.isNotEmpty(skuMappingEntityList)) {
 			for(SkuMappingEntity skuMappingEntity : skuMappingEntityList) {
+				if(StringUtils.isBlank(skuMappingEntity.getProductSkuNo())) {
+					log.warn("sku映射产品为空，不推送：{}" , skuMappingEntity.getId());
+					continue;
+				}
 				String operate = SyncOperateEnum.OPERATE_APPROVE.getCode();
 				if(skuMappingEntity.getIsExpire()) {
 					operate = SyncOperateEnum.OPERATE_DELETE.getCode();
@@ -1394,7 +1398,9 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
 		        omsPushMsgEntity.setSyncOperate(operate);
 		        omsPushMsgEntityList.add(omsPushMsgEntity);
 			}
-		    omsPushMsgService.saveBatch(omsPushMsgEntityList);
+			if(CollUtil.isNotEmpty(omsPushMsgEntityList)) {
+				omsPushMsgService.saveBatch(omsPushMsgEntityList);
+			}
 		}
 		return omsPushMsgEntityList;
 	}
