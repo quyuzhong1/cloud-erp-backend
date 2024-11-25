@@ -191,6 +191,9 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
     @Resource
     private SoOutstockService soOutstockService;
 
+    @Resource
+    private SoReturnNoticeService soReturnNoticeService;
+
     @Override
     public PagingVO<SoReturnInstockDTO.PagingView> paging(PagingDTO<SoReturnInstockDTO.PagingParam> pagingParamDTO) {
         pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
@@ -405,6 +408,9 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         entity.setSourceId(dto.getSourceId());
         entity.setCode(code);
         entity.setBillDate(dto.getBillDate());
+        //币种
+        entity.setCurrency(dto.getCurrency());
+        entity.setCurrencySymbol(dto.getCurrencySymbol());
         this.save(entity);
 
         //操作日志
@@ -832,6 +838,11 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                     detailAddDTO.setSourceDetailId(view.getSourceDetailId());
                     detailAddDTO.setSoReturnDetailId(soReturnReceiveDetailEntity.getSourceDetailId());
                 }
+                detailAddDTO.setExchangeRate(view.getExchangeRate());
+                detailAddDTO.setReturnAmount(view.getReturnAmount());
+                detailAddDTO.setTaxReturnAmount(view.getTaxReturnAmount());
+                detailAddDTO.setReturnAmountLocalCurrency(soReturnNoticeService.calLocalCurrency(view.getExchangeRate(), view.getReturnAmount()));
+                detailAddDTO.setTaxReturnAmountLocalCurrency(soReturnNoticeService.calLocalCurrency(view.getExchangeRate(), view.getTaxReturnAmount()));
                 detailList.add(detailAddDTO);
             }
             dto.setDetailList(detailList);
@@ -889,6 +900,11 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                 }
                 detailAddDTO.setReturnTypeDict(view.getReturnTypeDict());
                 detailAddDTO.setReturnReasonDict(view.getReturnReasonDict());
+                detailAddDTO.setExchangeRate(view.getExchangeRate());
+                detailAddDTO.setReturnAmount(view.getReturnAmount());
+                detailAddDTO.setTaxReturnAmount(view.getTaxReturnAmount());
+                detailAddDTO.setReturnAmountLocalCurrency(soReturnNoticeService.calLocalCurrency(view.getExchangeRate(), view.getReturnAmount()));
+                detailAddDTO.setTaxReturnAmountLocalCurrency(soReturnNoticeService.calLocalCurrency(view.getExchangeRate(), view.getTaxReturnAmount()));
                 detailList.add(detailAddDTO);
             }
             dto.setDetailList(detailList);

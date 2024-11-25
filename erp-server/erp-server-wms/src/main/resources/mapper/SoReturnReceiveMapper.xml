@@ -29,7 +29,14 @@
             srr.create_user_name AS createUserName,
             srr.create_time AS createTime,
             srr.warehouse_id AS warehouseId,
-            srr.return_logistic_code as returnLogisticCode
+            srr.return_logistic_code as returnLogisticCode,
+            srr.currency,
+            srr.currency_symbol,
+            srrd.exchange_rate ,
+            srrd.return_amount ,
+            srrd.tax_return_amount ,
+            srrd.return_amount_local_currency ,
+            srrd.tax_return_amount_local_currency
         FROM so_return_receive_detail srrd
         INNER JOIN so_return_receive srr ON srrd.main_id = srr.id AND srrd.is_deleted = FALSE
         WHERE
@@ -95,7 +102,14 @@
         srr.bill_date AS billDate,
         srr.approve_user_name AS approveUserName,
         srr.create_user_name AS createUserName,
-        srr.create_time AS createTime
+        srr.create_time AS createTime,
+        srr.currency,
+        srr.currency_symbol,
+        srrd.exchange_rate ,
+        srrd.return_amount ,
+        srrd.tax_return_amount ,
+        srrd.return_amount_local_currency ,
+        srrd.tax_return_amount_local_currency
         FROM so_return_receive_detail srrd
         INNER JOIN so_return_receive srr ON srrd.main_id = srr.id AND srrd.is_deleted = FALSE
         WHERE
@@ -166,7 +180,14 @@
             srrd.remark,
             srr.return_logistic_code,
             srrd.is_child_sku_no,
-            srrd.platform_sku_no
+            srrd.platform_sku_no,
+            srr.currency,
+            srr.currency_symbol,
+            srrd.exchange_rate ,
+            srrd.return_amount ,
+            srrd.tax_return_amount ,
+            srrd.return_amount_local_currency ,
+            srrd.tax_return_amount_local_currency
         FROM so_return_receive srr
         INNER JOIN so_return_receive_detail srrd ON srr.id = srrd.main_id AND srr.is_deleted=FALSE
         WHERE srrd.is_deleted=FALSE

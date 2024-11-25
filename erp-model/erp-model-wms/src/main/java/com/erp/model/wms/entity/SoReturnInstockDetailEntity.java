@@ -166,6 +166,27 @@ public class SoReturnInstockDetailEntity extends BaseEntity<SoReturnInstockDetai
      */
     private Boolean isChildSkuNo;
 
+    /**
+     *退货金额
+     */
+    @TableField("return_amount")
+    private BigDecimal returnAmount;
+    /**
+     *含税退货金额
+     */
+    @TableField("tax_return_amount")
+    private BigDecimal taxReturnAmount;
+    /**
+     *退货金额（本位币）
+     */
+    @TableField("return_amount_local_currency")
+    private BigDecimal returnAmountLocalCurrency;
+    /**
+     *含税退货金额（本位币）
+     */
+    @TableField("tax_return_amount_local_currency")
+    private BigDecimal taxReturnAmountLocalCurrency;
+
     public static final String MAIN_ID = "main_id";
 
     public static final String SKU_ID = "sku_id";

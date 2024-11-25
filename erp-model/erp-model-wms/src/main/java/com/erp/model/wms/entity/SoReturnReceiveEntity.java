@@ -205,6 +205,18 @@ public class SoReturnReceiveEntity extends BaseEntity<SoReturnReceiveEntity> {
     @TableField("return_logistic_code")
     private String returnLogisticCode;
 
+    /**
+     * 比重
+     */
+    @TableField("currency")
+    private String currency;
+
+    /**
+     * 币种符号
+     */
+    @TableField("currency_symbol")
+    private String currencySymbol;
+
     public static final String APPROVE_STATUS = "approve_status";
 
     

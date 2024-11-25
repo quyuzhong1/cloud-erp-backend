@@ -633,5 +633,36 @@ public class SoReturnNoticeDTO {
          * 是否子sku
          */
         private Boolean isChildSkuNo;
+
+        /**
+         * 币别
+         */
+        private String currency;
+
+        /**
+         * 币种符号
+         */
+        private String currencySymbol;
+        /**
+         *退货金额
+         */
+        private BigDecimal returnAmount;
+        /**
+         *含税退货金额
+         */
+        private BigDecimal taxReturnAmount;
+        /**
+         *销售金额
+         */
+        private BigDecimal amount;
+        /**
+         *含税销售金额
+         */
+        private BigDecimal taxAmount;
+        /**
+         *汇率
+         */
+        private BigDecimal exchangeRate;
+
     }
 }
