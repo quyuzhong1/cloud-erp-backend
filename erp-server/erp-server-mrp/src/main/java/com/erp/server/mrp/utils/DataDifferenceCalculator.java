@@ -1,5 +1,6 @@
 package com.erp.server.mrp.utils;
 
+import com.erp.model.mrp.dto.CalcSalesInfoDimDTO;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -10,6 +11,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class DataDifferenceCalculator {
     //欧氏距离
@@ -58,70 +60,53 @@ public class DataDifferenceCalculator {
     }
 
     // 找出与基准数据差异最小的前N组数据
-    public static List<DataDifference> findTopNSimilarData(
-            List<List<BigDecimal>> dataSets, List<BigDecimal> baseData, String distanceType, int topN) {
-        List<DataDifference> differences = new ArrayList<>();
+    public static List<CalcSalesInfoDimDTO.LineDTO> findTopNSimilarData(
+            List<CalcSalesInfoDimDTO.LineDTO> calcList, List<BigDecimal> baseData, String distanceType) {
 
-        for (int i = 0; i < dataSets.size(); i++) {
-            BigDecimal difference;
-            switch (distanceType) {
-                case EUCLIDEAN:
-                    difference = calculateEuclideanDistance(baseData, dataSets.get(i));
-                    break;
-                case MANHATTAN:
-                    difference = calculateManhattanDistance(baseData, dataSets.get(i));
-                    break;
-                case COSINE:
-                    // 使用 1 - 相似度值表示差异
-                    difference = BigDecimal.ONE.subtract(calculateCosineSimilarity(baseData, dataSets.get(i)))
-                            .setScale(6, RoundingMode.HALF_UP);
-                    break;
-                default:
-                    throw new IllegalArgumentException("未知的距离类型: " + distanceType);
-            }
-            // 将索引和差异值存储到结果列表中
-            differences.add(new DataDifference(i, difference));
+        // 计算每个 LineDTO 的相似度
+        calcList.forEach(line -> {
+            BigDecimal similarity = calculateSimilarity(baseData, line.getQty(), distanceType);
+            line.setSimilarity(similarity);
+        });
+        // 按相似度降序排序并取 topN
+        return calcList.stream()
+                .sorted(Comparator.comparing(CalcSalesInfoDimDTO.LineDTO::getSimilarity).reversed())
+                .collect(Collectors.toList());
+    }
+
+    private static BigDecimal calculateSimilarity(List<BigDecimal> baseData, List<BigDecimal> qtyData, String distanceType) {
+        switch (distanceType.toLowerCase()) {
+            case EUCLIDEAN:
+                return calculateEuclideanDistance(baseData, qtyData);
+            case MANHATTAN:
+                return calculateManhattanDistance(baseData, qtyData);
+            case COSINE:
+                // 使用 1 - 相似度值表示差异
+                return BigDecimal.ONE.subtract(calculateCosineSimilarity(baseData, qtyData))
+                        .setScale(6, RoundingMode.HALF_UP);
+            default:
+                throw new IllegalArgumentException("未知的距离类型: " + distanceType);
         }
-
-        // 根据差异从小到大排序
-        differences.sort(Comparator.comparing(DataDifference::getDifference));
-
-        // 返回差异最小的前 topN 组数据
-        return differences.subList(0, Math.min(topN, differences.size()));
     }
 
     public static void main(String[] args) {
         // 示例数据
-        List<List<BigDecimal>> dataSets = new ArrayList<>();
-        dataSets.add(Arrays.asList(BigDecimal.valueOf(1.0), BigDecimal.valueOf(2.0), BigDecimal.valueOf(3.0)));
-        dataSets.add(Arrays.asList(BigDecimal.valueOf(2.0), BigDecimal.valueOf(3.0), BigDecimal.valueOf(4.0)));
-        dataSets.add(Arrays.asList(BigDecimal.valueOf(1.5), BigDecimal.valueOf(2.5), BigDecimal.valueOf(3.5)));
-        dataSets.add(Arrays.asList(BigDecimal.valueOf(5.0), BigDecimal.valueOf(5.0), BigDecimal.valueOf(5.0)));
-        dataSets.add(Arrays.asList(BigDecimal.valueOf(0.9), BigDecimal.valueOf(2.1), BigDecimal.valueOf(3.0)));
+        List<CalcSalesInfoDimDTO.LineDTO> calcList = Arrays.asList(
+                createLine("A", Arrays.asList(new BigDecimal("10"), new BigDecimal("20"), new BigDecimal("30"))),
+                createLine("B", Arrays.asList(new BigDecimal("15"), new BigDecimal("25"), new BigDecimal("35"))),
+                createLine("C", Arrays.asList(new BigDecimal("5"), new BigDecimal("15"), new BigDecimal("25")))
+        );
 
-        // 设置基准数据
-        List<BigDecimal> baseData = Arrays.asList(BigDecimal.valueOf(1.0), BigDecimal.valueOf(2.0), BigDecimal.valueOf(3.0));
+        List<BigDecimal> baseData = Arrays.asList(new BigDecimal("10"), new BigDecimal("20"), new BigDecimal("30"));
+        List<CalcSalesInfoDimDTO.LineDTO> result = findTopNSimilarData(calcList, baseData, "cosine", 2);
 
-        // 选择距离类型: "euclidean", "manhattan", "cosine"
-        String distanceType = "euclidean";
-        int topN = 3;
-
-        // 找出与基准数据差异最小的前 topN 组数据
-        List<DataDifference> topSimilarData = findTopNSimilarData(dataSets, baseData, distanceType, topN);
-
-        // 输出结果
-        System.out.println("与基准数据差异最小的前 " + topN + " 组数据及其差异为（按差异从小到大排序）：");
-        for (DataDifference data : topSimilarData) {
-            System.out.println("数据组索引：" + data.getIndex() + "，差异：" + data.getDifference());
-        }
+        result.forEach(System.out::println);
     }
 
-    // 用于存储数据组索引和差异值的类
-    @Getter
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public static class DataDifference {
-        private Integer index;
-        private BigDecimal difference;
+    private static CalcSalesInfoDimDTO.LineDTO createLine(String name, List<BigDecimal> qty) {
+        CalcSalesInfoDimDTO.LineDTO line = new CalcSalesInfoDimDTO.LineDTO();
+        line.setName(name);
+        line.setQty(qty);
+        return line;
     }
 }

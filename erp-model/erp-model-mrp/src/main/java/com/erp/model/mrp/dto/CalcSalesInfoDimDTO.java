@@ -996,6 +996,8 @@ public class CalcSalesInfoDimDTO implements Serializable {
      */
     @Getter
     @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
     public static class LineDTO {
 
         /**
@@ -1047,6 +1049,10 @@ public class CalcSalesInfoDimDTO implements Serializable {
          * 试算开始日期
          */
         private LocalDate startCalcDate;
+        /**
+         * 试算结束日期
+         */
+        private LocalDate endCalcDate;
         /**
          * 历史数据base
          */

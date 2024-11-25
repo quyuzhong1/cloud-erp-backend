@@ -45,6 +45,7 @@ import com.erp.server.mrp.es.service.CalcSalesInfoHisEsService;
 import com.erp.server.mrp.es.service.OrderHistorySalesEsService;
 import com.erp.server.mrp.mapper.CalcSalesInfoDimMapper;
 import com.erp.server.mrp.service.*;
+import com.erp.server.mrp.utils.DataDifferenceCalculator;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Service;
@@ -210,8 +211,8 @@ public class CalcSalesInfoDimServiceImpl extends SuperServiceImpl<CalcSalesInfoD
             startDate = cfgRuleCalc.getStartCalcDate();
             endDate = cfgRuleCalc.getEndCalcDate();
         }
-        List<OrderHistorySalesEsEntity> orderHistorySalesList = orderHistorySalesEsService.findByShopIdInAndSkuIdInAndDateBetween(Collections.singletonList(entity.getShopId()),
-                Collections.singletonList(entity.getShopId()), startDate, endDate);
+        List<OrderHistorySalesEsEntity> orderHistorySalesList = orderHistorySalesEsService.findByShopIdAndSkuIdAndDateBetween(entity.getShopId(),
+                entity.getSkuId(), startDate, endDate);
         Map<LocalDate, Integer> orderHistorySalesMap = orderHistorySalesList.stream()
                 .collect(Collectors.toMap(OrderHistorySalesEsEntity::getDate, OrderHistorySalesEsEntity::getOriginalSalesQty, Integer::sum));
         List<CalcSalesInfoEstimateEntity> calcSalesInfoEstimateList = calcSalesInfoEstimateService.listByCalcSalesInfoIds(Collections.singletonList(dto.getId()));
@@ -398,14 +399,44 @@ public class CalcSalesInfoDimServiceImpl extends SuperServiceImpl<CalcSalesInfoD
         verifyData(list);
         //获取真实销量
         CalcSalesInfoDimDTO.CompareResultDTO resultDTO = list.get(0);
-
-        List<OrderHistorySalesEsEntity> salesInfos = orderHistorySalesEsService.findByShopIdAndSkuIdAndDateBetween(resultDTO.getShopId(), resultDTO.getShopId(),
-                resultDTO.getStartCalcDate().minusDays(361), resultDTO.getStartCalcDate().minusDays(1));
+        Map<String, String> calcNameMap = list.stream().collect(Collectors.toMap(CalcSalesInfoDimDTO.CompareResultDTO::getId, CalcSalesInfoDimDTO.CompareResultDTO::getName));
+        List<OrderHistorySalesEsEntity> salesInfos = orderHistorySalesEsService.findByShopIdAndSkuIdAndDateBetween(resultDTO.getShopId(), resultDTO.getSkuId(),
+                resultDTO.getStartCalcDate(), resultDTO.getEndCalcDate());
         Map<LocalDate, Integer> hisSalesMap = salesInfos.stream()
                 .collect(Collectors.toMap(OrderHistorySalesEsEntity::getDate, OrderHistorySalesEsEntity::getOriginalSalesQty, Integer::sum));
 
+        LocalDate startCalcDate = resultDTO.getStartCalcDate();
 
-        return null;
+        List<BigDecimal> basicData = new ArrayList<>();
+        List<LocalDate> dateList = new ArrayList<>();
+        //组装历史真实销量
+        while (startCalcDate.isBefore(resultDTO.getEndCalcDate())) {
+            basicData.add(new BigDecimal(Optional.ofNullable(hisSalesMap.get(startCalcDate)).orElse(0)));
+            dateList.add(startCalcDate);
+            startCalcDate = startCalcDate.plusDays(1);
+        }
+        List<String> dimIds = list.stream().map(CalcSalesInfoDimDTO.CompareResultDTO::getId).distinct().collect(Collectors.toList());
+        //查询预估销量
+        List<CalcSalesInfoEstimateEntity> calcSalesInfoEstimateList = calcSalesInfoEstimateService.listByCalcSalesInfoIds(dimIds);
+        Map<String, List<BigDecimal>> calcDataList = calcSalesInfoEstimateList.stream()
+                .sorted(Comparator.comparing(CalcSalesInfoEstimateEntity::getDate))
+                .collect(Collectors.groupingBy(CalcSalesInfoEstimateEntity::getCalcSalesInfoDimId,
+                        Collectors.mapping(CalcSalesInfoEstimateEntity::getQty, Collectors.toList())));
+        List<CalcSalesInfoDimDTO.LineDTO> calcList = new ArrayList<>();
+        for (Map.Entry<String, List<BigDecimal>> entry : calcDataList.entrySet()) {
+            CalcSalesInfoDimDTO.LineDTO lineDTO = new CalcSalesInfoDimDTO.LineDTO();
+            lineDTO.setName(calcNameMap.get(entry.getKey()));
+            lineDTO.setQty(entry.getValue());
+            calcList.add(lineDTO);
+        }
+        DataDifferenceCalculator.findTopNSimilarData(calcList, basicData, DataDifferenceCalculator.COSINE);
+        List<CalcSalesInfoDimDTO.LineDTO> lineList = new ArrayList<>();
+        lineList.add(new CalcSalesInfoDimDTO.LineDTO("真实销量",BigDecimal.ONE, basicData));
+        lineList.addAll(calcList);
+        CalcSalesInfoDimDTO.CalcCompareDTO calcCompareDTO = new CalcSalesInfoDimDTO.CalcCompareDTO();
+        calcCompareDTO.setDateList(dateList);
+        calcCompareDTO.setLineList(lineList);
+        return calcCompareDTO;
     }
 
     /**
