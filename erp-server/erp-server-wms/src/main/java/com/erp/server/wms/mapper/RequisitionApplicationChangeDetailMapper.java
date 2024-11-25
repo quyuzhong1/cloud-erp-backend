@@ -20,5 +20,5 @@ import java.util.List;
 @Mapper
 public interface RequisitionApplicationChangeDetailMapper extends BaseMapper<RequisitionApplicationChangeDetailEntity> {
 
-    List<RequisitionApplicationChangeDTO.ExistDTO> checkExist(@Param("sourceDetailIds") List<String> sourceDetailIds);
+    List<RequisitionApplicationChangeDTO.ExistDTO> checkExist(@Param("sourceDetailIds") List<String> sourceDetailIds,@Param("businessDetailIds") List<String> businessDetailIds);
 }

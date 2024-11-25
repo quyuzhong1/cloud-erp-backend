@@ -37,7 +37,7 @@ public interface RequisitionApplicationChangeDetailService extends SuperService<
     void update(RequisitionApplicationChangeDTO.ViewDTO dto, RequisitionApplicationChangeEntity entity);
 
 
-    List<RequisitionApplicationChangeDTO.ExistDTO> checkExist(List<String> detailIds);
+    List<RequisitionApplicationChangeDTO.ExistDTO> checkExist(List<String> sourceDetailIds, List<String> businessDetailIds);
 
     List<RequisitionApplicationChangeDetailEntity> listByMains(List<String> mainIds);
 }

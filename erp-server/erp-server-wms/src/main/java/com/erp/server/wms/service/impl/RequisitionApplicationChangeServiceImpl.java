@@ -24,6 +24,7 @@ import com.erp.model.plm.dto.ProductBomInfoDTO;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.wms.dto.PickingDetailDTO;
 import com.erp.model.wms.dto.RequisitionApplicationChangeDTO;
 import com.erp.model.wms.dto.pickingstrategy.PickingListsDTO;
 import com.erp.model.wms.entity.RequisitionApplicationChangeDetailEntity;
@@ -473,6 +474,11 @@ public class RequisitionApplicationChangeServiceImpl extends SuperServiceImpl<Re
     }
 
     @Override
+    public void generateByPickingList(List<PickingDetailDTO.View> mismatchedDetails, PickingListsDTO.UpdateDTO dto) {
+
+    }
+
+    @Override
     public RequisitionApplicationChangeDTO.ViewDTO view(RequisitionApplicationChangeDTO.ViewIdDTO viewIdDTO) {
         String type = viewIdDTO.getType();
         String id = viewIdDTO.getId();
@@ -493,7 +499,7 @@ public class RequisitionApplicationChangeServiceImpl extends SuperServiceImpl<Re
         }
         //校验是否存在未处理
         if(CollectionUtils.isNotEmpty(viewIdDTO.getDetailIds())){
-            List<RequisitionApplicationChangeDTO.ExistDTO> existDTOList = detailService.checkExist(viewIdDTO.getDetailIds());
+            List<RequisitionApplicationChangeDTO.ExistDTO> existDTOList = detailService.checkExist(viewIdDTO.getDetailIds(), new ArrayList<>());
             if(CollectionUtils.isNotEmpty(existDTOList)){
                 String existCode = existDTOList.get(0).getCode();
                 List<String> existSkuNos = existDTOList.stream().map(RequisitionApplicationChangeDTO.ExistDTO::getSkuNo).collect(Collectors.toList());

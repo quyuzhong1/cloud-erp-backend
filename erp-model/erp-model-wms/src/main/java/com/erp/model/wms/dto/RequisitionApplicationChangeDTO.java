@@ -127,6 +127,7 @@ public class RequisitionApplicationChangeDTO implements Serializable {
         private String code;
         private String skuId;
         private String skuNo;
+        private String businessDetailId;
     }
 
      /**

@@ -97,6 +97,12 @@ public class RequisitionApplicationChangeDetailEntity extends BaseEntity<Requisi
     @TableField("business_detail_id")
     private String businessDetailId;
 
+    /**
+     * (拣货单)修改前的仓位
+     */
+    @TableField("origin_warehouse_location")
+    private String originWarehouseLocation;
+
     public static final String MAIN_ID = "main_id";
 
     public static final String SKU_ID = "sku_id";

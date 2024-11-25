@@ -2,7 +2,6 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
@@ -28,6 +27,7 @@ import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.PickingDetailDTO;
+import com.erp.model.wms.dto.RequisitionApplicationChangeDTO;
 import com.erp.model.wms.dto.WarehouseLocationMoveDTO;
 import com.erp.model.wms.dto.WarehouseLocationMoveDetailDTO;
 import com.erp.model.wms.dto.inventory.InOutStockDTO;
@@ -45,7 +45,6 @@ import com.erp.rpc.oms.feign.SoInfoFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.mapper.PickingListsMapper;
 import com.erp.server.wms.service.*;
-import io.seata.common.util.StringUtils;
 import io.seata.spring.annotation.GlobalTransactional;
 import org.apache.commons.math3.util.Pair;
 import org.springframework.context.annotation.Lazy;
@@ -54,8 +53,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Resource;
-import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
@@ -114,6 +111,13 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
 
     @Resource
     private WmsCartonDetailService wmsCartonDetailService;
+
+    @Resource
+    private RequisitionApplicationChangeService requisitionApplicationChangeService;
+
+    @Resource
+    private RequisitionApplicationChangeDetailService requisitionApplicationChangeDetailService;
+
     @Resource
     private RequisitionApplicationDetailService requisitionApplicationDetailService;
     @Resource
@@ -226,11 +230,105 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
         dto.setDetails(detailList);
     }
 
+    @Override
+    public List<PickingDetailDTO.ChangeQtyView> generateRequisitionChange(PickingListsDTO.UpdateDTO dto) {
+        PickingListsEntity entity = getById(dto.getId());
+        //非头程不需要展示
+        if (!SourceTypeEnum.REQUISITION_APPLICATION.getCode().equals(entity.getSourceType())) {
+            return new ArrayList<>();
+        }
+        checkStatus(entity);
+        checkCombination(entity, dto);
+        PickingListsDTO.View view = this.view(dto.getId());
+        List<PickingDetailDTO.View> mismatchedDetails = this.getDiffQtyView(dto,view);
+        if(CollectionUtils.isEmpty(mismatchedDetails)){
+            return new ArrayList<>();
+        }
+
+        List<RequisitionApplicationDetailEntity> detailEntities = requisitionApplicationDetailService.listByMainIds(Collections.singletonList(entity.getSourceId()));
+        List<String> skuIds = detailEntities.stream().map(RequisitionApplicationDetailEntity::getSkuId).collect(Collectors.toList());
+        //获取子SKU集合
+        List<BomChildrenSkuDTO> bomChildrenSkuList = plmTaskFeign.listBomChildBySkuIds(skuIds);
+        List<PickingDetailDTO.ChangeQtyView> changeQtyViews = new ArrayList<>();
+        // 按 sourceDetailId 分组
+        Map<String, List<PickingDetailDTO.View>> groupedMismatchedDetails = mismatchedDetails.stream()
+                .collect(Collectors.groupingBy(PickingDetailDTO.View::getSourceDetailId));
+        groupedMismatchedDetails.forEach((key,val)->{
+            RequisitionApplicationDetailEntity requisitionApplicationDetailEntity = detailEntities.stream().filter(v->v.getId().equals(key)).findFirst().orElse(null);
+            if(Objects.isNull(requisitionApplicationDetailEntity)){
+                return;
+            }
+            List<BomChildrenSkuDTO> bomChildren = bomChildrenSkuList.stream()
+                    .filter(req -> req.getParentSkuId().equals(requisitionApplicationDetailEntity.getSkuId())
+                            && BomTypeEnum.COMBINATION.getType().equals(req.getType())
+                    ).collect(Collectors.toList());
+            PickingDetailDTO.ChangeQtyView changeQtyView = new PickingDetailDTO.ChangeQtyView();
+            if (CollectionUtils.isEmpty(bomChildren)) {
+                changeQtyView.setSkuNo(requisitionApplicationDetailEntity.getSkuNo());
+                changeQtyView.setSkuId(requisitionApplicationDetailEntity.getSkuId());
+                changeQtyView.setQty(view.getDetails().stream().filter(v->v.getSourceDetailId().equals(key)).mapToInt(PickingDetailDTO.View::getQty).sum());
+                changeQtyView.setActualQty(val.stream().mapToInt(PickingDetailDTO.View::getActualQty).sum());
+                changeQtyView.setDiffQty(changeQtyView.getQty() - changeQtyView.getActualQty());
+            }else{
+                changeQtyView.setSkuNo(requisitionApplicationDetailEntity.getSkuNo());
+                changeQtyView.setSkuId(requisitionApplicationDetailEntity.getSkuId());
+                Map<String, Integer> qtyMap= val.stream().collect(Collectors.toMap(PickingDetailDTO.View::getSkuNo, PickingDetailDTO.View::getQty, Integer::sum));
+                Map<String, Integer> actualQtyMap= val.stream().collect(Collectors.toMap(PickingDetailDTO.View::getSkuNo, PickingDetailDTO.View::getActualQty, Integer::sum));
+                // 第一个元素的 skuNo 和 quantity
+                String skuNo = val.get(0).getSkuNo();
+                int bomQuantity = bomChildren.get(0).getQuantity();
+
+                // 计算比例并转换为整数
+                int qty = Optional.ofNullable(qtyMap.get(skuNo))
+                        .map(quantity -> new BigDecimal(quantity).divide(new BigDecimal(bomQuantity), 0, RoundingMode.HALF_UP).intValue())
+                        .orElse(0);
+                int actualQty = Optional.ofNullable(actualQtyMap.get(skuNo))
+                        .map(quantity -> new BigDecimal(quantity).divide(new BigDecimal(bomQuantity), 0, RoundingMode.HALF_UP).intValue())
+                        .orElse(0);
+                changeQtyView.setQty(qty);
+                changeQtyView.setActualQty(actualQty);
+                changeQtyView.setDiffQty(changeQtyView.getQty() - changeQtyView.getActualQty());
+            }
+            changeQtyViews.add(changeQtyView);
+        });
+        return changeQtyViews;
+    }
+
+    private List<PickingDetailDTO.View> getDiffQtyView(PickingListsDTO.UpdateDTO dto,PickingListsDTO.View view) {
+        List<PickingDetailDTO.View> originList = view.getDetails();
+        List<PickingDetailDTO.View> list = dto.getDetails();
+
+        List<String> originSourceDetailIds = originList.stream().map(PickingDetailDTO.View::getSourceDetailId).collect(Collectors.toList());
+        List<String> nowSourceDetailIds = list.stream().map(PickingDetailDTO.View::getSourceDetailId).collect(Collectors.toList());
+        originSourceDetailIds.removeAll(nowSourceDetailIds);
+        // 将 originList 聚合为 Map，key 为 sourceDetailId，value 为聚合后的 actualQty
+        Map<String, Integer> originAggregatedMap = originList.stream()
+                .collect(Collectors.groupingBy(PickingDetailDTO.View::getSourceDetailId,
+                        Collectors.summingInt(PickingDetailDTO.View::getActualQty)));
+
+        // 将 list 聚合为 Map，key 为 sourceDetailId，value 为聚合后的 actualQty
+        Map<String, Integer> aggregatedMap = list.stream()
+                .collect(Collectors.groupingBy(PickingDetailDTO.View::getSourceDetailId,
+                        Collectors.summingInt(PickingDetailDTO.View::getActualQty)));
+
+        // 过滤出聚合后的 actualQty 不相等的记录
+        return list.stream()
+                .filter(detail -> {
+                    Integer originQty = originAggregatedMap.get(detail.getSourceDetailId());
+                    Integer currentQty = aggregatedMap.get(detail.getSourceDetailId());
+                    return originQty != null && currentQty != null && !originQty.equals(currentQty);
+                })
+                .filter(detail -> originAggregatedMap.containsKey(detail.getSourceDetailId()))
+                .collect(Collectors.toList());
+    }
+
+
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
     public void saveAddData(PickingListsEntity entity, List<PickingDetailEntity> entities, WarehouseLocationMoveDTO.AddDTO moveDto) {
         save(entity);
         operateLogService.addModuleOperateLog(CharSequenceUtil.format("生成拣货单【{}】", entity.getCode()), ModuleTypeEnum.PICKING_LISTS.getCode(), entity.getId(), "新增操作");
+        entities.forEach(v->v.setActualQty(v.getQty()));
         pickingDetailService.saveBatch(entities);
         warehouseLocationMoveService.addAndApprove(moveDto);
     }
@@ -288,6 +386,14 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
             if (RequisitionApplicationStatusEnum.HANDLE.getStatus().equals(application.getStatus())) {
                 throw new ServiceException(ApiError.ERROR_99130);
             }
+            //校验明细是否有未审核的要货申请变更
+            List<PickingDetailEntity> pickingDetails = pickingDetailService.list(Wrappers.<PickingDetailEntity>lambdaQuery().eq(PickingDetailEntity::getMainId, entity.getId()).orderByDesc(PickingDetailEntity::getCreateTime));
+            List<String> detailIds = pickingDetails.stream().map(BaseEntity::getId).collect(Collectors.toList());
+            List<RequisitionApplicationChangeDTO.ExistDTO> existDTOList = requisitionApplicationChangeDetailService.checkExist(detailIds, new ArrayList<>());
+            List<String> existSkuNos = existDTOList.stream().map(RequisitionApplicationChangeDTO.ExistDTO::getSkuNo).collect(Collectors.toList());
+            if(!CollectionUtils.isEmpty(existSkuNos)){
+                throw new ServiceException("存在处理中的要货申请变更单，sku【{}】，请等待审核完成后操作",existSkuNos);
+            }
         } else if (SourceTypeEnum.SO_DELIVERY_NOTICE.getCode().equals(entity.getSourceType())) {
             //销售通知单下推销售出库单后，拣货单不允许修改和删除
             int count = soOutstockService.countNotVoided(entity.getSourceId());
@@ -311,6 +417,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
                 .collect(Collectors.toMap(WarehouseLocationEntity::getId, WarehouseLocationEntity::getName, (o1, o2) -> o1));
         PickingListsDTO.View view = BeanMapperUtils.map(PickingListsDTO.View.class, entity);
         List<PickingDetailEntity> pickingDetails = pickingDetailService.list(Wrappers.<PickingDetailEntity>lambdaQuery().eq(PickingDetailEntity::getMainId, id).orderByDesc(PickingDetailEntity::getCreateTime));
+        List<RequisitionApplicationChangeDTO.ExistDTO> existDTOList = requisitionApplicationChangeDetailService.checkExist(new ArrayList<>(),pickingDetails.stream().map(v->v.getSourceDetailId()).collect(Collectors.toList()));
         List<PickingDetailDTO.View> detailList = pickingDetails.stream()
                 .map(detail -> {
                     WarehouseLocationEntity location = locationAndAreaList.stream()
@@ -330,6 +437,8 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
                     detailView.setWarehouseAreaId(locationMap.get(detailView.getWarehouseLocation()));
                     detailView.setWarehouseAreaName(areaMap.get(locationMap.get(detailView.getWarehouseLocation())));
                     detailView.setStagingAreaName(areaMap.get(locationMap.get(detailView.getStagingLocation())));
+                    RequisitionApplicationChangeDTO.ExistDTO existDTO = existDTOList.stream().filter(v->v.getBusinessDetailId().equals(detail.getSourceDetailId())).findFirst().orElse(null);
+                    detailView.setIsChange(Objects.nonNull(existDTO));
                     return detailView;
                 }).collect(Collectors.toList());
         view.setDetails(detailList);
@@ -609,10 +718,114 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
         checkStatus(entity);
         checkCombination(entity, dto);
         List<PickingDetailEntity> detailList = pickingDetailService.list(Wrappers.<PickingDetailEntity>lambdaQuery().eq(PickingDetailEntity::getMainId, dto.getId()));
+        this.checkPickingQty(entity, dto.getDetails());
+        PickingListsDTO.View view = this.view(dto.getId());
+        List<PickingDetailDTO.View> mismatchedDetails = this.getDiffQtyView(dto,view);
+        //如果是头程拣货并且数量有变更，走变更单逻辑
+        if(SourceTypeEnum.REQUISITION_APPLICATION.getCode().equals(entity.getSourceType()) && !CollectionUtils.isEmpty(mismatchedDetails)){
+            //头程拣货并且修改了数量
+            requisitionApplicationChangeService.generateByPickingList(mismatchedDetails,dto);
+            //保存新增的拆分数据，应拣数量为0，修改的数据更新实际拣货数量，保存拆分的删除,不生成仓位移动
+            dto.setDetails(mismatchedDetails);
+            handleUpdateBeforeChange(dto, detailList, entity);
+            List<String> originSourceDetailIds = view.getDetails().stream().map(PickingDetailDTO.View::getSourceDetailId).collect(Collectors.toList());
+            List<String> nowSourceDetailIds = dto.getDetails().stream().map(PickingDetailDTO.View::getSourceDetailId).collect(Collectors.toList());
+            originSourceDetailIds.removeAll(nowSourceDetailIds);
+            //整个sku删除的不用生成要货申请变更单，直接走删除逻辑
+            List<PickingDetailDTO.View> removeDetail = view.getDetails().stream().filter(v->originSourceDetailIds.contains(v.getSourceDetailId())).collect(Collectors.toList());
+            if(!CollectionUtils.isEmpty(removeDetail)){
+                PickingListsDTO.UpdateDTO updateDTO = new PickingListsDTO.UpdateDTO();
+                updateDTO.setDetails(removeDetail);
+                updateDTO.setId(dto.getId());
+                List<String> removeDetailIds = removeDetail.stream().map(v->v.getId()).collect(Collectors.toList());
+                List<PickingDetailEntity> removeDetailList = pickingDetailService.listByIds(removeDetailIds);
+                updatePickDetail(updateDTO, removeDetailList, entity);
+            }
+        }else{
+            updatePickDetail(dto, detailList, entity);
+        }
+    }
+
+    private void handleUpdateBeforeChange(PickingListsDTO.UpdateDTO dto, List<PickingDetailEntity> detailList, PickingListsEntity entity) {
+        List<PickingDetailDTO.View> newAddDataList = dto.getDetails().stream()
+                .filter(detail -> ObjectUtil.isEmpty(detail.getId()))
+                .collect(Collectors.toList());
         List<String> skuIds = dto.getDetails()
                 .stream().map(PickingDetailDTO.View::getSkuId)
                 .distinct().collect(Collectors.toList());
-        this.checkPickingQty(entity, dto.getDetails());
+        List<ProductDetailEntity> detailEntityList = plmTaskFeign.getByIdList(skuIds);
+        //处理新增的数据
+        if (!CollectionUtils.isEmpty(newAddDataList)) {
+            List<PickingDetailEntity> addData = newAddDataList.stream().map(data -> {
+                PickingDetailEntity detailEntity = detailList.stream()
+                        .filter(v -> v.getSkuId().equals(data.getSkuId()))
+                        .findFirst().orElse(new PickingDetailEntity());
+                // 获取产品信息
+                ProductDetailEntity productDetailEntity = detailEntityList.stream()
+                        .filter(entityClass -> entityClass.getId().equals(data.getSkuId()))
+                        .findFirst().orElse(new ProductDetailEntity());
+                PickingDetailEntity detail = new PickingDetailEntity();
+                detail.setMainId(entity.getId());
+                detail.setId(IdWorker.getIdStr());
+                detail.setSkuId(data.getSkuId());
+                detail.setSkuNo(data.getSkuNo());
+                detail.setQty(0);
+                detail.setActualQty(data.getQty());
+                detail.setUnit(productDetailEntity.getUnitName());
+                detail.setWarehouseLocation(data.getWarehouseLocation());
+                detail.setSourceDetailId(data.getSourceDetailId());
+                detail.setStagingLocation(detailEntity.getStagingLocation());
+                //处理日志
+                String context = CharSequenceUtil.format("增加【{}】明细行,拣货仓位【{}}】,数量【{}】", data.getSkuNo(), data.getWarehouseLocation(), data.getQty());
+                operateLogService.addModuleOperateLog(context, ModuleTypeEnum.PICKING_LISTS.getCode(), entity.getId(), "编辑操作");
+                return detail;
+            }).collect(Collectors.toList());
+            pickingDetailService.saveBatch(addData);
+        }
+        //处理更新数据
+        List<PickingDetailDTO.View> updateData = dto.getDetails()
+                .stream()
+                .filter(detail -> ObjectUtil.isNotEmpty(detail.getId()))
+                .collect(Collectors.toList());
+        List<PickingDetailEntity> updateList = new ArrayList<>();
+        for (PickingDetailDTO.View view : updateData) {
+            PickingDetailEntity detailEntity = detailList.stream()
+                    .filter(v -> v.getId().equals(view.getId()))
+                    .findFirst()
+                    .orElseThrow(() -> new ServiceException(ApiError.ERROR_400));
+            String context = CharSequenceUtil.format("编辑了【{}】明细行,拣货仓位由【{}】变更为【{}】，数量由【{}】变更为【{}】", view.getSkuNo(),
+                    detailEntity.getWarehouseLocation(), view.getWarehouseLocation(), detailEntity.getQty(), view.getQty());
+            detailEntity.setWarehouseLocation(view.getWarehouseLocation());
+            detailEntity.setActualQty(view.getActualQty());
+            updateList.add(detailEntity);
+            operateLogService.addModuleOperateLog(context, ModuleTypeEnum.PICKING_LISTS.getCode(), entity.getId(), "编辑操作");
+
+        }
+        if (!CollectionUtils.isEmpty(updateList)) {
+            pickingDetailService.updateBatchById(updateList);
+        }
+        //处理删除的数据（非整行）
+        List<String> newDetailIds = dto.getDetails()
+                .stream().map(PickingDetailDTO.View::getId)
+                .distinct().collect(Collectors.toList());
+        List<PickingDetailEntity> removeData = detailList.stream()
+                .filter(v -> !newDetailIds.contains(v.getId()))
+                .collect(Collectors.toList());
+        if (!CollectionUtils.isEmpty(removeData)) {
+            List<String> removeIds = new ArrayList<>();
+            for (PickingDetailEntity detail : removeData) {
+                removeIds.add(detail.getId());
+                String context = CharSequenceUtil.format("移除【{}】明细行,拣货仓位【{}}】,数量【{}】", detail.getSkuNo(), detail.getWarehouseLocation(), detail.getQty());
+                operateLogService.addModuleOperateLog(context, ModuleTypeEnum.PICKING_LISTS.getCode(), entity.getId(), "编辑操作");
+            }
+            pickingDetailService.removeByIds(removeIds);
+        }
+    }
+
+    private void updatePickDetail(PickingListsDTO.UpdateDTO dto, List<PickingDetailEntity> detailList, PickingListsEntity entity) {
+        List<String> skuIds = dto.getDetails()
+                .stream().map(PickingDetailDTO.View::getSkuId)
+                .distinct().collect(Collectors.toList());
         List<ProductDetailEntity> detailEntityList = plmTaskFeign.getByIdList(skuIds);
         List<WarehouseLocationMoveDetailDTO.AddDTO> addDTOS = new ArrayList<>();
         List<WarehouseLocationMoveDetailDTO.AddDTO> subtractDTOS = new ArrayList<>();
@@ -668,7 +881,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
             //获取子SKU集合
             List<BomChildrenSkuDTO> bomChildrenSkuList = plmTaskFeign.listBomChildBySkuIds(skuIds);
             for (RequisitionApplicationDetailEntity detailEntity : detailEntities) {
-                checkProportion(dto, detailEntity.getSkuId(), detailEntity.getSkuNo(), detailEntity.getId(), bomChildrenSkuList);
+                checkProportion(dto, detailEntity.getSkuId(), detailEntity.getSkuNo(), detailEntity.getId(), bomChildrenSkuList, entity.getSourceType());
 
             }
         } else if (SourceTypeEnum.SO_DELIVERY_NOTICE.getCode().equals(entity.getSourceType())) {
@@ -677,20 +890,27 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
             //获取子SKU集合
             List<BomChildrenSkuDTO> bomChildrenSkuList = plmTaskFeign.listBomChildBySkuIds(skuIds);
             for (SoDeliveryNoticeDetailEntity detailEntity : noticeDetailEntities) {
-                checkProportion(dto, detailEntity.getSkuId(), detailEntity.getSkuNo(), detailEntity.getId(), bomChildrenSkuList);
+                checkProportion(dto, detailEntity.getSkuId(), detailEntity.getSkuNo(), detailEntity.getId(), bomChildrenSkuList,entity.getSourceType() );
             }
         }
 
     }
 
-    private static void checkProportion(PickingListsDTO.UpdateDTO dto, String skuId, String skuNo, String detailId, List<BomChildrenSkuDTO> bomChildrenSkuList) {
+    private static void checkProportion(PickingListsDTO.UpdateDTO dto, String skuId, String skuNo, String detailId, List<BomChildrenSkuDTO> bomChildrenSkuList, String sourceType) {
         List<BomChildrenSkuDTO> bomChildren = bomChildrenSkuList.stream()
                 .filter(req -> req.getParentSkuId().equals(skuId)
                         && BomTypeEnum.COMBINATION.getType().equals(req.getType())
                 ).collect(Collectors.toList());
         if (!CollectionUtils.isEmpty(bomChildren)) {
-            Map<String, Integer> skuMap = dto.getDetails().stream().filter(v -> v.getSourceDetailId().equals(detailId))
-                    .collect(Collectors.toMap(PickingDetailDTO.View::getSkuNo, PickingDetailDTO.View::getQty, Integer::sum));
+            Map<String, Integer> skuMap;
+            if (SourceTypeEnum.REQUISITION_APPLICATION.getCode().equals(sourceType)) {
+                skuMap = dto.getDetails().stream().filter(v -> v.getSourceDetailId().equals(detailId))
+                        .collect(Collectors.toMap(PickingDetailDTO.View::getSkuNo, PickingDetailDTO.View::getActualQty, Integer::sum));
+            }else{
+                skuMap = dto.getDetails().stream().filter(v -> v.getSourceDetailId().equals(detailId))
+                        .collect(Collectors.toMap(PickingDetailDTO.View::getSkuNo, PickingDetailDTO.View::getQty, Integer::sum));
+            }
+
             //计算比例
             BigDecimal proportion = new BigDecimal(Optional.ofNullable(skuMap.get(bomChildren.get(0).getSkuNo())).orElse(0)).divide(new BigDecimal(bomChildren.get(0).getQuantity()), 6, RoundingMode.HALF_UP);
             for (BomChildrenSkuDTO bomChild : bomChildren) {
@@ -841,6 +1061,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
             //更新库存
             inventoryTransCoreService.approveByType(inventoryInOutStockDTO);
             save(entity);
+            entities.forEach(v->v.setActualQty(v.getQty()));
             pickingDetailService.saveBatch(entities);
         }
         return new ArrayList<>(resultData.getSecond().keySet());
@@ -1000,6 +1221,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
                 operateLogService.addModuleOperateLog(context, ModuleTypeEnum.PICKING_LISTS.getCode(), entity.getId(), "编辑操作");
                 return detail;
             }).collect(Collectors.toList());
+            addData.forEach(v->v.setActualQty(v.getQty()));
             pickingDetailService.saveBatch(addData);
         }
     }
@@ -1063,6 +1285,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
             }
             entity.setLocationTotal(entities.size());
             save(entity);
+            entities.forEach(v->v.setActualQty(v.getQty()));
             pickingDetailService.saveBatch(entities);
         }
 

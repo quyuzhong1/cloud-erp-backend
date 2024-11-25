@@ -204,11 +204,11 @@ public class RequisitionApplicationChangeDetailServiceImpl extends SuperServiceI
     }
 
     @Override
-    public List<RequisitionApplicationChangeDTO.ExistDTO> checkExist(List<String> sourceDetailIds) {
-        if(CollUtil.isEmpty(sourceDetailIds)){
+    public List<RequisitionApplicationChangeDTO.ExistDTO> checkExist(List<String> sourceDetailIds, List<String> businessDetailIds) {
+        if(CollUtil.isEmpty(sourceDetailIds) && CollUtil.isEmpty(businessDetailIds)){
             return new ArrayList<>();
         }
-        return baseMapper.checkExist(sourceDetailIds);
+        return baseMapper.checkExist(sourceDetailIds,businessDetailIds);
     }
 
     @Override
