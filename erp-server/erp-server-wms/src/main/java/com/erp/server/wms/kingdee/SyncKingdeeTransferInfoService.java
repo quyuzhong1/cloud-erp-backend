@@ -1,8 +1,10 @@
 package com.erp.server.wms.kingdee;
 
+import java.util.List;
 import java.util.Map;
 
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
+import com.erp.model.wms.entity.TransferInfoDetailEntity;
 import com.erp.model.wms.entity.TransferInfoEntity;
 
 /**
@@ -16,7 +18,7 @@ public interface SyncKingdeeTransferInfoService {
     /**
      * 直接调拨单推送金蝶
      */
-    DmpPushTaskEntity syncDataToKingdee(TransferInfoEntity entity, String operate);
+    DmpPushTaskEntity syncDataToKingdee(TransferInfoEntity entity, List<TransferInfoDetailEntity> detailList, String operate);
     
-    Map<String , Object> newSyncDataToKingdee(TransferInfoEntity entity, String operate);
+    Map<String , Object> newSyncDataToKingdee(TransferInfoEntity entity, List<TransferInfoDetailEntity> detailList,String operate);
 }

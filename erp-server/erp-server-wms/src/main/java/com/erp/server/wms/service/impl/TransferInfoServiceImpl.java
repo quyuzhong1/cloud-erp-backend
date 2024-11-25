@@ -2056,12 +2056,32 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
      * @param list
      */
     private void sendPushTask (List<TransferInfoEntity> list,String operate) {
+        if(CollUtil.isEmpty(list)){
+            return;
+        }
+        List<String> ids = list.stream().map(TransferInfoEntity::getId).distinct().collect(Collectors.toList());
+        //直接调拨单明细
+        List<TransferInfoDetailEntity> transferInfoDetailEntityList = transferInfoDetailService.listByMainIds(ids);
+        Map<String, List<TransferInfoDetailEntity>> transferDetailMap = transferInfoDetailEntityList.stream().collect(Collectors.groupingBy(TransferInfoDetailEntity::getMainId));
+        //服务sku
+        List<SkuVO> noInventorySku = plmTaskFeign.getNoInventorySku();
+        List<String> ignoreInventorySkuIds = CollUtil.isNotEmpty(noInventorySku) ?
+                noInventorySku.stream().map(SkuVO::getSkuId).distinct().collect(Collectors.toList()) : Collections.emptyList();
+
         //审核通过发送金蝶
         List<DmpPushTaskEntity> resultList = new ArrayList<>();
         list.forEach(obj -> {
-            DmpPushTaskEntity pushTaskEntity = syncKingdeeTransferInfoService.syncDataToKingdee(obj, operate);
-            resultList.add(pushTaskEntity);
+            List<TransferInfoDetailEntity> transferInfoDetailEntityList1 = transferDetailMap.get(obj.getId());
+            transferInfoDetailEntityList1 = transferInfoDetailEntityList1.stream().filter(e -> !ignoreInventorySkuIds.contains(e.getSkuId())).collect(Collectors.toList());
+            if (CollUtil.isNotEmpty(transferInfoDetailEntityList1)){
+                DmpPushTaskEntity pushTaskEntity = syncKingdeeTransferInfoService.syncDataToKingdee(obj,transferInfoDetailEntityList1, operate);
+                resultList.add(pushTaskEntity);
+            }
         });
+        //空数据则直接返回
+        if (CollUtil.isEmpty(resultList)){
+            return;
+        }
         //推送金蝶
         TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
             @Override
