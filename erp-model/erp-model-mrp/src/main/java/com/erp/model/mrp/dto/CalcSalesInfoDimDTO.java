@@ -662,6 +662,11 @@ public class CalcSalesInfoDimDTO implements Serializable {
          * sqlMap 默认key default
          */
         private Map<String, String> sqlMap;
+
+        /**
+         * id
+         */
+        private String cfgRuleCalcId;
     }
 
     /**

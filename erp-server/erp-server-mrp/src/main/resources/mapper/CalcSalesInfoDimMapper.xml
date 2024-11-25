@@ -89,6 +89,9 @@
                  inner join cfg_rule_calc crc on csic.cfg_rule_calc_id = crc.id and crc.is_deleted = false
         where ${params.sqlMap.default}
           and csic.is_deleted = FALSE
+        <if test="params.cfgRuleCalcId != null and params.cfgRuleCalcId != ''">
+            csic.cfg_rule_calc_id = #{params.cfgRuleCalcId}
+        </if>
     </select>
 
     <select id="pagingDetail" resultType="com.erp.model.mrp.dto.CalcSalesInfoDimDTO$DetailViewDTO">
