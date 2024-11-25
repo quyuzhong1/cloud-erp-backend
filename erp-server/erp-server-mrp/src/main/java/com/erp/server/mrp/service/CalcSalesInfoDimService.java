@@ -102,4 +102,11 @@ public interface CalcSalesInfoDimService extends SuperService<CalcSalesInfoDimEn
      * @param dto 参数
      */
     CalcSalesInfoDimDTO.CalcCompareDataDTO calcCompareData(CalcSalesInfoDimDTO.CalcCompareParamsDTO dto);
+
+    /**
+     * 下载系统销量
+     *
+     * @param cfgRuleCalcId 参数
+     */
+    void downloadTemplateHistorySales(String cfgRuleCalcId, HttpServletResponse response);
 }

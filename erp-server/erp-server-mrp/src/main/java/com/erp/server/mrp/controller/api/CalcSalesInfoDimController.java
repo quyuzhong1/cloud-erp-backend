@@ -155,6 +155,15 @@ public class CalcSalesInfoDimController extends BaseController {
     }
 
     /**
+     * 下载系统历史销量
+     * @param cfgRuleCalcId 参数
+     */
+    @GetMapping("/downloadHistorySales")
+    public void downloadTemplateHistorySales(@RequestParam String cfgRuleCalcId, HttpServletResponse response) {
+        calcSalesInfoDimService.downloadTemplateHistorySales(cfgRuleCalcId, response);
+    }
+
+    /**
      * 试算比较
      * @param dto 参数
      */

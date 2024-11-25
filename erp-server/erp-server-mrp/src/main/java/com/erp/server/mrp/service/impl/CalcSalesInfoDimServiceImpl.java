@@ -461,6 +461,35 @@ public class CalcSalesInfoDimServiceImpl extends SuperServiceImpl<CalcSalesInfoD
         return viewDTO;
     }
 
+    @Override
+    public void downloadTemplateHistorySales(String cfgRuleCalcId, HttpServletResponse response) {
+        List<CalcSalesInfoHisEsEntity> calcSalesInfoHisList = calcSalesInfoHisEsService.findByCfgRuleCalcIdIn(Collections.singletonList(cfgRuleCalcId));
+        List<CfgRuleCalcDTO.HistorySaleDTO> list = new ArrayList<>();
+        if (!ObjectUtil.isEmpty(calcSalesInfoHisList)) {
+            List<String> shopIds = calcSalesInfoHisList.stream().map(CalcSalesInfoHisEsEntity::getShopId).distinct().collect(Collectors.toList());
+            List<ShopInfoEntity> shopInfoList = shopInfoFeign.listShopInfoByIds(shopIds);
+            Map<String, String> platformMap = getPlatformMap();
+            for (CalcSalesInfoHisEsEntity calcSalesInfoHis : calcSalesInfoHisList) {
+                ShopInfoEntity info = shopInfoList.stream().filter(v -> v.getId().equals(calcSalesInfoHis.getShopId())).findFirst().orElse(new ShopInfoEntity());
+                CfgRuleCalcDTO.HistorySaleDTO dto = BeanMapperUtils.map(CfgRuleCalcDTO.HistorySaleDTO.class, calcSalesInfoHis);
+                dto.setPlatform(platformMap.get(info.getDictPlatform()));
+                dto.setBillDate(calcSalesInfoHis.getDate());
+                list.add(dto);
+            }
+        }
+        StringBuilder sb = new StringBuilder();
+        String excelPath = "excel/historySaleQty.xlsx";
+        String name = "系统试算历史销量";
+        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
+        sb.append(date);
+        sb.append(name);
+        try {
+            new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
+        } catch (IOException e) {
+            throw new ServiceException(ApiError.ERROR_95125);
+        }
+    }
+
     /**
      * 校验数据合法性
      *
