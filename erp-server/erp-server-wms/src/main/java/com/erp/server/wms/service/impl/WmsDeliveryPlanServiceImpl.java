@@ -65,6 +65,7 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.io.File;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -895,19 +896,45 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
             }
             //已发数量
             deliverPlanDetailViewDTO.setHasDeliveryPlanQty(deliveryQty);
+            //总建议数量
+            Integer totalSuggestQty = sourceJsonList.stream().map(WmsDeliveryPlanDetailDTO.SourceJsonDTO::getPlanDeliveryQty).reduce(MathUtil.ZERO, Integer::sum);
+            //建议数量所占比例
+            BigDecimal ratio = MathUtil.divide(BigDecimal.valueOf(detailEntity.getQty()), BigDecimal.valueOf(totalSuggestQty));
 
+            //发货数量总数
+            Integer totalDeliveryQty = MathUtil.ZERO;
+            //已发货数量总数
+            Integer totalHasDeliveryQty = MathUtil.ZERO;
             List<WmsDeliveryPlanDTO.DescriptionViewDTO> descriptionViewDTOList = new ArrayList<>();
-            for (WmsDeliveryPlanDetailDTO.SourceJsonDTO sourceJsonDTO : sourceJsonList) {
+            for (int i = 0; i < sourceJsonList.size();i++) {
+                WmsDeliveryPlanDetailDTO.SourceJsonDTO sourceJsonDTO = sourceJsonList.get(i);
+
                 WmsDeliveryPlanDTO.DescriptionViewDTO descriptionViewDTO = new WmsDeliveryPlanDTO.DescriptionViewDTO();
                 DeliverySuggestEntity suggestEntity = deliverySuggestList.stream().filter(obj -> StrUtil.equals(obj.getId(), sourceJsonDTO.getSourceId())).findFirst().orElse(new DeliverySuggestEntity());
                 descriptionViewDTO.setDeliverySuggestCode(suggestEntity.getCode());
-                descriptionViewDTO.setDeliverySuggestQty(suggestEntity.getPlanDeliveryQty());
-                if (deliveryQty > suggestEntity.getPlanDeliveryQty()) {
-                    descriptionViewDTO.setHasDeliveryPlanQty(sourceJsonDTO.getPlanDeliveryQty());
-                    deliveryQty = deliveryQty - suggestEntity.getPlanDeliveryQty();
+                /**
+                 * 最后一条数量 = 总数 - 前面数量合计
+                 */
+                //发货数量
+                Integer deliveryPlanQty;
+                //已发货数量
+                Integer hasDeliveryPlanQty;
+                if (i == sourceJsonList.size() - 1) {
+                    //建议发货数量
+                    deliveryPlanQty = detailEntity.getQty() - totalDeliveryQty;
+                    //已发货数量
+                    hasDeliveryPlanQty = deliveryQty - totalHasDeliveryQty;
                 } else {
-                    descriptionViewDTO.setHasDeliveryPlanQty(deliveryQty);
+                    deliveryPlanQty = (int) Math.floor(MathUtil.multiply(ratio,  detailEntity.getQty()).doubleValue());
+                    hasDeliveryPlanQty = (int) Math.floor(MathUtil.multiply(ratio, deliveryQty).doubleValue());
                 }
+                //发货数量
+                totalDeliveryQty = MathUtil.add(totalDeliveryQty,deliveryPlanQty);
+                descriptionViewDTO.setDeliverySuggestQty(deliveryPlanQty);
+                //已发数量
+                totalHasDeliveryQty = MathUtil.add(totalHasDeliveryQty,hasDeliveryPlanQty);
+                descriptionViewDTO.setHasDeliveryPlanQty(hasDeliveryPlanQty);
+
                 descriptionViewDTOList.add(descriptionViewDTO);
             }
             deliverPlanDetailViewDTO.setDescriptionList(descriptionViewDTOList);
@@ -915,6 +942,10 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
         }
         deliverPlanViewDTO.setDetailList(detailList);
         return deliverPlanViewDTO;
+    }
+
+    public static void main(String[] args) {
+        System.out.println((int) Math.floor(MathUtil.multiply(new BigDecimal("1.23"), 14563245).doubleValue()));
     }
 
     /**
