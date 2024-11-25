@@ -244,9 +244,11 @@ public class DmpOutputSdyOrderHandler extends DmpOutputTaskHandler {
                 //组织编码
                 List<BaseIdDTO.CodeDTO> companyEntities = sysUserFeign.getAccountingCompanyList(Arrays.asList(customerInfo.getFinancialOrganization(), shopInfo.getSalesOrgId()));
                 BaseIdDTO.CodeDTO sysAccountingCompanyEntity = companyEntities.stream().filter(req -> req.getId().equals(customerInfo.getFinancialOrganization())).findFirst().orElse(null);
-                shudiyunB2cOrderDTO.setReceiving_company_code(sysAccountingCompanyEntity.getCode());
-                shudiyunB2cOrderDTO.setOrganization_code(sysAccountingCompanyEntity.getCode());
-                shudiyunB2cOrderDTO.setOrganization_name(sysAccountingCompanyEntity.getName());
+                if (ObjectUtil.isNotEmpty(sysAccountingCompanyEntity)) {
+                    shudiyunB2cOrderDTO.setReceiving_company_code(sysAccountingCompanyEntity.getCode());
+                    shudiyunB2cOrderDTO.setOrganization_code(sysAccountingCompanyEntity.getCode());
+                    shudiyunB2cOrderDTO.setOrganization_name(sysAccountingCompanyEntity.getName());
+                }
 
                 //销售组织
                 BaseIdDTO.CodeDTO salesOrg = companyEntities.stream().filter(req -> req.getId().equals(shopInfo.getSalesOrgId())).findFirst().orElse(null);
