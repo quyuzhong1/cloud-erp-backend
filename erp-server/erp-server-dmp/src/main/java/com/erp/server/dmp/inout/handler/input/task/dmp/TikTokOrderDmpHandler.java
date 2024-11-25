@@ -120,6 +120,7 @@ public class TikTokOrderDmpHandler extends DmpInputDbConvertDmpHandler {
                         dmpDataMap.put("orderStatus", ApproveStatusEnum.WAIT_SUBMIT.getCode());
                         dmpDataMap.put("deliveryStatus", SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode());
                         dmpDataMap.put("invalidStatus", Boolean.TRUE);
+                        dmpDataMap.put("isCancel", Boolean.TRUE);
                     }
                 }
                 Object shippingTypeObj = dmpDataMap.get("logisticType");

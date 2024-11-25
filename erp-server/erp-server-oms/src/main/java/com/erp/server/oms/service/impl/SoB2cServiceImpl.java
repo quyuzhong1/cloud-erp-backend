@@ -9342,7 +9342,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             }
 
             shudiyunB2cOrderDTO.setBiz_status(SoB2cBillStatusEnum.getName(soB2cEntity.getBillStatus()));
-            Integer version = 0;
 
             shudiyunB2cOrderDTO.setStatus(shudiyunB2cOrderDTO.sdyStatusHandle(operateEnum, soB2cEntity.getVersion(), soB2cDetailEntity.getVersion()));
             shudiyunB2cOrderDTO.setTotal_goods_transaction_amount(soB2cEntity.getAmount());
@@ -9448,8 +9447,12 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
             shudiyunB2cOrderDTO.setGoods_transaction_amount(soB2cDetailEntity.getAmount());
             if (soB2cDetailEntity.getAmount().compareTo(BigDecimal.ZERO) > 0) {
+                BigDecimal shareDiscount = BigDecimal.ZERO;
                 //获得分摊的商品优惠额
-                BigDecimal shareDiscount = soB2cDetailEntity.getAmount().divide(totalAmount, 4, RoundingMode.HALF_UP).multiply(totalDiscount);
+                if (totalAmount.compareTo(BigDecimal.ZERO) > 0) {
+                    shareDiscount = soB2cDetailEntity.getAmount().divide(totalAmount, 4, RoundingMode.DOWN).multiply(totalDiscount);
+                }
+
                 //计算为真实售价(原始币别)-商品分摊优惠/订单数量
                 if (soB2cDetailEntityList.size() == i-1) {
                     shudiyunB2cOrderDTO.setPrice(soB2cDetailEntity.getAmount().subtract(totalAmount).divide(MathUtil.valueOf(soB2cDetailEntity.getQty()), 4, RoundingMode.HALF_UP));

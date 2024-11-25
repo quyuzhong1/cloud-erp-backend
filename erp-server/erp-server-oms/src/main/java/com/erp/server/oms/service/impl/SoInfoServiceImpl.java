@@ -1379,7 +1379,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             sendPushTask(list,SyncOperateEnum.OPERATE_APPROVE.getCode());
 
             //同步数帝云
-            list.forEach(obj -> sdyFieldOrderHandler(obj.getId(), SyncOperateEnum.OPERATE_APPROVE.getCode()));
+            list.forEach(obj -> sdyFieldOrderHandler(obj.getId(), SyncOperateEnum.OPERATE_APPROVE.getCode(), null));
         } else {
             //审核不通过
             approveStatus = ApproveStatusEnum.REJECT.getStatus();
@@ -1466,7 +1466,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             sendPushTask(list,SyncOperateEnum.OPERATE_DISAPPROVE.getCode());
 
             //同步数帝云
-            list.forEach(obj -> sdyFieldOrderHandler(obj.getId(), SyncOperateEnum.OPERATE_DISAPPROVE.getCode()));
+            list.forEach(obj -> sdyFieldOrderHandler(obj.getId(), SyncOperateEnum.OPERATE_DISAPPROVE.getCode(), null));
         }
         return BatchResultDTO.success(entity.getId(),entity.getCode(),"操作成功");
     }
@@ -1582,7 +1582,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         ids.stream().forEach(obj -> unLockVirtualInventory(obj));
 
         //同步数帝云
-        list.forEach(obj -> sdyFieldOrderHandler(obj.getId(), SyncOperateEnum.OPERATE_DELETE.getCode()));
+        list.forEach(obj -> sdyFieldOrderHandler(obj.getId(), SyncOperateEnum.OPERATE_DELETE.getCode(), null));
 
         Boolean result = this.removeByIds(ids);
 
@@ -3888,12 +3888,20 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
      * 同步速递云B2B订单
      * @param soId
      * @param operateEnum
+     * @param changeViewDTO 变更单使用的数据
      */
-    public void sdyFieldOrderHandler(String soId, String operateEnum) {
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void sdyFieldOrderHandler(String soId, String operateEnum, SoInfoDTO.ViewDTO changeViewDTO) {
         DateTimeFormatter localDateTime = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
         DateTimeFormatter localDate = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
-        SoInfoDTO.ViewDTO view = this.view(soId);
+        SoInfoDTO.ViewDTO view = null;
+        if (ObjectUtil.isNotEmpty(changeViewDTO)) {
+            view = changeViewDTO;
+        } else {
+            view = this.view(soId);
+        }
 
         List<String> skuNos = view.getDetailList().stream().map(req -> req.getSkuNo()).collect(Collectors.toList());
         List<SkuVO> skuVOList = plmTaskFeign.listBySkuNoList(skuNos);
@@ -3987,7 +3995,8 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
 
             //组织信息
             if (ObjectUtil.isNotEmpty(customerInfo)) {
-                String salesOrgCode = companyEntities.stream().filter(req -> req.getId().equals(view.getSalesOrgId())).map(req -> req.getCode()).findFirst().orElse("");
+                SoInfoDTO.ViewDTO finalView = view;
+                String salesOrgCode = companyEntities.stream().filter(req -> req.getId().equals(finalView.getSalesOrgId())).map(req -> req.getCode()).findFirst().orElse("");
                 shudiyunB2cOrderDTO.setSales_company_code(salesOrgCode);
                 BaseIdDTO.CodeDTO sysAccountingCompanyEntity = companyEntities.stream().filter(req -> req.getId().equals(customerInfo.getFinancialOrganization())).findFirst().orElse(null);
                 if (ObjectUtil.isNotEmpty(sysAccountingCompanyEntity)) {

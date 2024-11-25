@@ -262,7 +262,7 @@ public class DmpOutputSdyReturnHandler extends DmpOutputTaskHandler {
                 sdyDTO.setTransaction_currency_code(shopInfo.getTradeCurrency());
                 sdyDTO.setSettlement_currency_code(shopInfo.getSettlementCurrency());
             }
-
+            sdyDTO.setUnit("PCS");
             sdyDTO.setPlatform_id(dmpSoReturnEntity.getSourceSystem());
             sdyDTO.setPlatform_name(PlatformDictEnum.getNameByCode(dmpSoReturnEntity.getSourceSystem()));
             sdyDTO.setRoot_node_no(dmpSoReturnEntity.getThirdCode());
@@ -271,6 +271,11 @@ public class DmpOutputSdyReturnHandler extends DmpOutputTaskHandler {
 
             sdyDTO.setGoods_status("已退货");
             sdyDTO.setMsku_code(dmpSoReturnDetailEntity.getSkuNo());
+            if (CharSequenceUtil.isBlank(dmpSoReturnDetailEntity.getSkuName())) {
+                sdyDTO.setMsku_name(dmpSoReturnDetailEntity.getSkuNo());
+            } else {
+                sdyDTO.setMsku_name(dmpSoReturnDetailEntity.getSkuName());
+            }
             sdyDTO.setReason(dmpSoReturnDetailEntity.getReason());
             sdyDTO.setSource_system("SDC");
             sdyDTO.setRoot_node_no_initial(dmpSoReturnEntity.getThirdCode());

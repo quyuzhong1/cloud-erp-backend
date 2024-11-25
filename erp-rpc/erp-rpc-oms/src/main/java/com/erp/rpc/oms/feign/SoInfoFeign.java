@@ -4,6 +4,7 @@ import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.erp.model.oms.dto.SoDetailDTO;
 import com.erp.model.oms.dto.SoInfoDTO;
+import com.erp.model.oms.dto.SoInfoToSdyDTO;
 import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.model.oms.entity.SoInfoEntity;
 import com.erp.model.wms.dto.ReportOrderDataDTO;
@@ -81,4 +82,11 @@ public interface SoInfoFeign {
      */
     @GetMapping("feign/soInfo/listAllVirtualSoDetail")
     List<ReportOrderDataDTO.ViewDTO> listAllVirtualSoDetail();
+
+    /**
+     * 同步速递云B2B订单
+     * @param soInfoToSdyDTO
+     */
+    @PostMapping("feign/soInfo/sdyFieldOrderHandler")
+    void sdyFieldOrderHandler(@RequestBody SoInfoToSdyDTO soInfoToSdyDTO);
 }

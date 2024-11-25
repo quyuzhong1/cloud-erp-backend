@@ -262,11 +262,11 @@ public class ShudiyunB2cOrderDTO {
     /**
      * 商品成交单价
      */
-    private BigDecimal price;
+    private BigDecimal price = BigDecimal.ZERO;
     /**
      * 商品成交金额
      */
-    private BigDecimal goods_transaction_amount;
+    private BigDecimal goods_transaction_amount = BigDecimal.ZERO;
     /**
      * 商品的分摊运费
      */

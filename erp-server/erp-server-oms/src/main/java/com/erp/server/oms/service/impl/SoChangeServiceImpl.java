@@ -867,6 +867,7 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
         if (!result) {
             throw new ServiceException(ApiError.ERROR_94006);
         }
+        List<SoInfoDTO.ViewDTO> viewList = new ArrayList<>();
         List<DmpPushTaskEntity> pushTaskList = new ArrayList<>();
         if (dto.getType().equals(ApproveType.PASS)) {
             //销售变更单校验
@@ -884,7 +885,13 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
             list.forEach(obj -> {
                 DmpPushTaskEntity pushTaskEntity = syncKingdeeSoChangeService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_APPROVE.getCode());
                 pushTaskList.add(pushTaskEntity);
+
+                //推送数帝云的变更数据
+                SoInfoDTO.ViewDTO view = soInfoService.view(obj.getSoId());
+                viewList.add(view);
             });
+
+
         }
 
         //推送金蝶
@@ -894,7 +901,10 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
                 dmpMqFeign.sendTask(pushTaskList);
 
                 //同步数帝云
-                list.forEach(req -> soInfoService.sdyFieldOrderHandler(req.getSoId(), SyncOperateEnum.OPERATE_APPROVE.getCode()));
+                list.forEach(req -> {
+                    List<SoInfoDTO.ViewDTO> collect = viewList.stream().filter(obj -> obj.getId().equals(req.getSoId())).collect(Collectors.toList());
+                    collect.forEach(data -> soInfoService.sdyFieldOrderHandler(req.getSoId(), SyncOperateEnum.OPERATE_APPROVE.getCode(), data));
+                });
             }
         });
         return Boolean.TRUE;
