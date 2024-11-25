@@ -3898,7 +3898,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         List<String> skuNos = view.getDetailList().stream().map(req -> req.getSkuNo()).collect(Collectors.toList());
         List<SkuVO> skuVOList = plmTaskFeign.listBySkuNoList(skuNos);
         List<String> skuIds = view.getDetailList().stream().map(req -> req.getSkuId()).collect(Collectors.toList());
-        List<BomChildrenSkuDTO> bomChildrenSkuDTOS = plmTaskFeign.listBomBySkuIds(skuIds);
+        List<BomChildrenSkuDTO> bomChildrenSkuDTOS = plmTaskFeign.listBomChildBySkuIds(skuIds);
 
         List<CurrencyDTO.ViewDTO> currencyList = sysUserFeign.listByCurrency(Arrays.asList(view.getCurrency()));
         //父类产品
@@ -4033,8 +4033,6 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             shudiyunB2cOrderDTO.setGoods_name(skuVO.getSkuName());
             shudiyunB2cOrderDTO.setSpec_no(skuVO.getSpuNo());
             shudiyunB2cOrderDTO.setSpec_name(skuVO.getSpuName());
-            shudiyunB2cOrderDTO.setMsku_code(skuVO.getSkuNo());
-            shudiyunB2cOrderDTO.setMsku_name(skuVO.getSkuName());
             shudiyunB2cOrderDTO.setSku_code(skuVO.getSkuNo());
             shudiyunB2cOrderDTO.setSku_name(skuVO.getSkuName());
             if (soDetailEntity.getIsGift()) {
