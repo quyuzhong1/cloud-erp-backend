@@ -248,9 +248,9 @@ public class DmpOutputSdyOrderHandler extends DmpOutputTaskHandler {
 
                         BaseIdDTO.CodeDTO sysAccountingCompanyEntity = companyEntities.stream().filter(req -> req.getId().equals(customerInfo.getFinancialOrganization())).findFirst().orElse(null);
                         if (ObjectUtil.isNotEmpty(sysAccountingCompanyEntity)) {
-                            sdyDTO.setReceiving_company_code(sysAccountingCompanyEntity.getCode());
-                            sdyDTO.setOrganization_code(sysAccountingCompanyEntity.getCode());
-                            sdyDTO.setOrganization_name(sysAccountingCompanyEntity.getName());
+                            shudiyunB2cOrderDTO.setReceiving_company_code(sysAccountingCompanyEntity.getCode());
+                            shudiyunB2cOrderDTO.setOrganization_code(sysAccountingCompanyEntity.getCode());
+                            shudiyunB2cOrderDTO.setOrganization_name(sysAccountingCompanyEntity.getName());
                         }
                     }
 
