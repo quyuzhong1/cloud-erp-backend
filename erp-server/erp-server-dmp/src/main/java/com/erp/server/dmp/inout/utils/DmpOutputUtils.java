@@ -58,7 +58,7 @@ public class DmpOutputUtils{
 	        warnMsgInfo.setTableId(id);
 	        warnMsgInfo.setKeyInfo(responseData);
 	        warnMsgInfo.setWarnMsgTypeEnum(WarnMsgTypeEnum.SYS_EXCEPTION);
-	        mqProducerService.sendWarnMsg(warnMsgInfo);
+//	        mqProducerService.sendWarnMsg(warnMsgInfo);
 	        
 	        if(StringUtils.isBlank(message)) {
 	        	message = responseData;
