@@ -60,6 +60,7 @@
         ros.seven_days_sales_qty as sevenDaysSalesQty,
         ros.fourteen_days_sales_qty as fourteenDaysSalesQty,
         ros.thirty_days_sales_qty as thirtyDaysSalesQty,
+        ros.thirty_days_virtual_qty as thirtyDaysVirtualQty,
         ros.is_virtual_scarce as isVirtualScarce,
         ros.is_warn as isWarn,
         ros.virtual_scarce_qty as virtualScarceQty,

@@ -3,6 +3,7 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -185,7 +186,7 @@ public class ReportOrderSalesServiceImpl extends SuperServiceImpl<ReportOrderSal
         CfgSettingVirtualDTO.ViewDTO viewDTO = cfgSettingVirtualService.viewVirtual();
         
         //近30天分货数据
-        List<VirtualWarehouseAllocationDetailDTO.AllocationDataDTO> thirtyDaysAllocationDataList = allocationDataList.stream().filter(obj -> obj.getHandleDate().isAfter(LocalDate.now().minusDays(30))).collect(Collectors.toList());
+        List<VirtualWarehouseAllocationDetailDTO.AllocationDataDTO> thirtyDaysAllocationDataList = allocationDataList.stream().filter(obj -> ObjUtil.isNotEmpty(obj.getHandleDate()) &&  obj.getHandleDate().isAfter(LocalDate.now().minusDays(30))).collect(Collectors.toList());
 
         for (ReportOrderSalesDTO.ListDTO listDTO : list) {
             //计算分配数量

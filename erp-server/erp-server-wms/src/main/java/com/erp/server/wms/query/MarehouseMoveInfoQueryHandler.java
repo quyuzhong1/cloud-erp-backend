@@ -2,7 +2,6 @@ package com.erp.server.wms.query;
 
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.query.AbstractQueryHandler;
-import com.erp.model.scm.enums.PageListTypeEnum;
 import org.springframework.stereotype.Component;
 
 /**
@@ -18,6 +17,12 @@ public class MarehouseMoveInfoQueryHandler extends AbstractQueryHandler {
     protected String handleSqlLogic(String field, Object value, String compareCodeSplicingValueSql) {
         if ("tab".equals(field)) {
             return getTabSql(value);
+        }
+        if ("sourceType".equals(field) && Boolean.TRUE.equals(value)) {
+            return "select * from picking_lists where is_deleted = false and id = wlmi.source_id and wlmi.source_type in ('requisitionApplication')";
+        }
+        if ("sourceType".equals(field) && Boolean.FALSE.equals(value)) {
+            return "select * from picking_lists where is_deleted = false and id = wlmi.source_id and wlmi.source_type in ('soDeliveryNotice')";
         }
         return null;
     }
