@@ -88,15 +88,25 @@ public class SoReturnNoticeDetailServiceImpl extends SuperServiceImpl<SoReturnNo
                 }
                 detailEntity.setSkuId(soReturnDetailEntity.getSkuId());
                 detailEntity.setSkuNo(soReturnDetailEntity.getSkuNo());
-                detailEntity.setSourceDetailId(detailDto.getSourceDetailId());
                 detailEntity.setReturnReasonDict(soReturnDetailEntity.getReturnReasonDict());
                 detailEntity.setReturnTypeDict(soReturnDetailEntity.getReturnTypeDict());
+                detailEntity.setReturnAmount(soReturnDetailEntity.getReturnAmount());
+                detailEntity.setTaxReturnAmount(soReturnDetailEntity.getTaxReturnAmount());
+                detailEntity.setReturnAmountLocalCurrency(soReturnDetailEntity.getReturnAmountLocalCurrency());
+                detailEntity.setTaxReturnAmountLocalCurrency(soReturnDetailEntity.getTaxReturnAmountLocalCurrency());
+                detailEntity.setExchangeRate(soReturnDetailEntity.getExchangeRate());
+                detailEntity.setSourceDetailId(detailDto.getSourceDetailId());
             }else {
                 ProductDetailEntity productDetailEntity = productDetailEntitys.stream().filter(v -> v.getId().equals(detailDto.getSkuId())).findFirst().orElse(new ProductDetailEntity());
                 detailEntity.setSkuNo(productDetailEntity.getSkuNo());
                 detailEntity.setIsChildSkuNo(detailDto.getIsChildSkuNo());
                 detailEntity.setReturnReasonDict(detailDto.getReturnReasonDict());
                 detailEntity.setReturnTypeDict(detailDto.getReturnTypeDict());
+                detailEntity.setReturnAmount(detailDto.getReturnAmount());
+                detailEntity.setTaxReturnAmount(detailDto.getTaxReturnAmount());
+                detailEntity.setReturnAmountLocalCurrency(detailDto.getReturnAmountLocalCurrency());
+                detailEntity.setTaxReturnAmountLocalCurrency(detailDto.getTaxReturnAmountLocalCurrency());
+                detailEntity.setExchangeRate(dto.getExchangeRate());
             }
             if(ignoreInventorySkuIds.contains(detailEntity.getSkuId())) {
                 log.warn("sku id: {}，sku编号：{}产品属性是费用或服务，不参与库存出入库，不做库存验证", detailEntity.getSkuId(), detailEntity.getSkuNo());
@@ -219,6 +229,17 @@ public class SoReturnNoticeDetailServiceImpl extends SuperServiceImpl<SoReturnNo
                     if (returnQty <  detailDto.getReturnQty() + returnNoticeQty) {
                         throw new ServiceException(ApiError.ERROR_92024);
                     }
+                    detailEntity.setReturnAmount(soReturnDetailEntity.getReturnAmount());
+                    detailEntity.setTaxReturnAmount(soReturnDetailEntity.getTaxReturnAmount());
+                    detailEntity.setReturnAmountLocalCurrency(soReturnDetailEntity.getReturnAmountLocalCurrency());
+                    detailEntity.setTaxReturnAmountLocalCurrency(soReturnDetailEntity.getTaxReturnAmountLocalCurrency());
+                    detailEntity.setExchangeRate(soReturnDetailEntity.getExchangeRate());
+                }else{
+                    detailEntity.setReturnAmount(detailDto.getReturnAmount());
+                    detailEntity.setTaxReturnAmount(detailDto.getTaxReturnAmount());
+                    detailEntity.setReturnAmountLocalCurrency(detailDto.getReturnAmountLocalCurrency());
+                    detailEntity.setTaxReturnAmountLocalCurrency(detailDto.getTaxReturnAmountLocalCurrency());
+                    detailEntity.setExchangeRate(dto.getExchangeRate());
                 }
                 detailEntity.setSkuId(detailDto.getSkuId());
                 ProductDetailEntity productDetailEntity = productDetailEntitys.stream().filter(v -> v.getId().equals(detailDto.getSkuId())).findFirst().orElse(new ProductDetailEntity());

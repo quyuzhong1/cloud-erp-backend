@@ -28,7 +28,14 @@
             srnd.return_type_dict AS returnTypeDict,
             srnd.return_reason_dict AS returnReasonDict,
             srn.create_time AS createTime,
-            srn.return_logistic_code as returnLogisticCode
+            srn.return_logistic_code as returnLogisticCode,
+            srn.currency,
+            srn.currency_symbol,
+            srnd.exchange_rate ,
+            srnd.return_amount ,
+            srnd.tax_return_amount ,
+            srnd.return_amount_local_currency ,
+            srnd.tax_return_amount_local_currency
         FROM so_return_notice_detail srnd
         INNER JOIN so_return_notice srn ON srn.id = srnd.main_id AND srnd.is_deleted = FALSE
         WHERE
@@ -88,7 +95,14 @@
         srnd.return_type_dict AS returnTypeDict,
         srnd.return_reason_dict AS returnReasonDict,
         srn.create_time AS createTime,
-        srn.return_logistic_code as returnLogisticCode
+        srn.return_logistic_code as returnLogisticCode,
+        srn.currency,
+        srn.currency_symbol,
+        srnd.exchange_rate ,
+        srnd.return_amount ,
+        srnd.tax_return_amount ,
+        srnd.return_amount_local_currency ,
+        srnd.tax_return_amount_local_currency
         FROM so_return_notice_detail srnd
         INNER JOIN so_return_notice srn ON srn.id = srnd.main_id AND srnd.is_deleted = FALSE
         WHERE
