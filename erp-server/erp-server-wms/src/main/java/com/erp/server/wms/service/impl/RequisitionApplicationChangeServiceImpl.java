@@ -689,6 +689,7 @@ public class RequisitionApplicationChangeServiceImpl extends SuperServiceImpl<Re
     }
 
     private void buildViewDetail(RequisitionApplicationChangeDTO.ViewIdDTO viewIdDTO, List<RequisitionApplicationChangeDTO.ViewDetailDTO> details, RequisitionApplicationChangeEntity requisitionApplicationChangeEntity) {
+
         if(CollectionUtils.isNotEmpty(viewIdDTO.getDetailIds())){
             List<RequisitionApplicationDetailEntity> requisitionApplicationDetailEntityList = requisitionApplicationDetailService.listByIds(viewIdDTO.getDetailIds());
             //查询产品信息
@@ -739,6 +740,14 @@ public class RequisitionApplicationChangeServiceImpl extends SuperServiceImpl<Re
             SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuId().equals(requisitionApplicationChangeDetailEntity.getSkuId())).findFirst().orElse(new SkuVO());
             viewDetailDTO.setProductName(skuVO.getSkuName());
             details.add(viewDetailDTO);
+        }
+
+        List<String> requisitionDetailIds = details.stream().map(RequisitionApplicationChangeDTO.ViewDetailDTO::getRequisitionDetailId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
+        List<PickingDetailEntity> pickingDetailEntityList = pickingDetailService.listPickingDetailBySourceDetailIds(requisitionDetailIds);
+        for (RequisitionApplicationChangeDTO.ViewDetailDTO detail : details) {
+            List<PickingDetailEntity> currentPickList = pickingDetailEntityList.stream().filter(v -> v.getSourceDetailId().equals(detail.getRequisitionDetailId())).collect(Collectors.toList());
+            Integer pickedQty = currentPickList.stream().mapToInt(PickingDetailEntity::getQty).sum();
+            detail.setPickQty(pickedQty);
         }
     }
 

@@ -536,6 +536,10 @@ public class RequisitionApplicationChangeDTO implements Serializable {
         @NotNull(message = "变更后数量不能为空")
         private Integer newRequisitionQty;
         /**
+         * 应拣数量
+         */
+        private Integer pickQty;
+        /**
          * 备注
          */
         private String remark;
