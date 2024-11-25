@@ -197,7 +197,7 @@ public enum SourceTypeEnum {
 
     // 亚马逊相关
     AMZ_REPORT_CONSUMER("amzReportConsumer", "亚马逊报告消费处理","amz_report_task"),
-
+    PLATFORM_RETURN_INSTOCK("platform_return_instock", "平台仓退货入库单","dmp_third_return_inbound"),
 
     // 旺店通相关
     WDT_OUT_STOCK("wdt_out_stock", "旺店通销售出库单","dmp_pull_task"),
