@@ -90,11 +90,11 @@ public class SoReturnNoticeDetailServiceImpl extends SuperServiceImpl<SoReturnNo
                 detailEntity.setSkuNo(soReturnDetailEntity.getSkuNo());
                 detailEntity.setReturnReasonDict(soReturnDetailEntity.getReturnReasonDict());
                 detailEntity.setReturnTypeDict(soReturnDetailEntity.getReturnTypeDict());
-                detailEntity.setReturnAmount(soReturnDetailEntity.getReturnAmount());
-                detailEntity.setTaxReturnAmount(soReturnDetailEntity.getTaxReturnAmount());
-                detailEntity.setReturnAmountLocalCurrency(soReturnDetailEntity.getReturnAmountLocalCurrency());
-                detailEntity.setTaxReturnAmountLocalCurrency(soReturnDetailEntity.getTaxReturnAmountLocalCurrency());
-                detailEntity.setExchangeRate(soReturnDetailEntity.getExchangeRate());
+//                detailEntity.setReturnAmount(soReturnDetailEntity.getReturnAmount());
+//                detailEntity.setTaxReturnAmount(soReturnDetailEntity.getTaxReturnAmount());
+//                detailEntity.setReturnAmountLocalCurrency(soReturnDetailEntity.getReturnAmountLocalCurrency());
+//                detailEntity.setTaxReturnAmountLocalCurrency(soReturnDetailEntity.getTaxReturnAmountLocalCurrency());
+//                detailEntity.setExchangeRate(soReturnDetailEntity.getExchangeRate());
                 detailEntity.setSourceDetailId(detailDto.getSourceDetailId());
             }else {
                 ProductDetailEntity productDetailEntity = productDetailEntitys.stream().filter(v -> v.getId().equals(detailDto.getSkuId())).findFirst().orElse(new ProductDetailEntity());
@@ -102,10 +102,12 @@ public class SoReturnNoticeDetailServiceImpl extends SuperServiceImpl<SoReturnNo
                 detailEntity.setIsChildSkuNo(detailDto.getIsChildSkuNo());
                 detailEntity.setReturnReasonDict(detailDto.getReturnReasonDict());
                 detailEntity.setReturnTypeDict(detailDto.getReturnTypeDict());
-                detailEntity.setReturnAmount(detailDto.getReturnAmount());
-                detailEntity.setTaxReturnAmount(detailDto.getTaxReturnAmount());
-                detailEntity.setReturnAmountLocalCurrency(detailDto.getReturnAmountLocalCurrency());
-                detailEntity.setTaxReturnAmountLocalCurrency(detailDto.getTaxReturnAmountLocalCurrency());
+            }
+            detailEntity.setReturnAmount(detailDto.getReturnAmount());
+            detailEntity.setTaxReturnAmount(detailDto.getTaxReturnAmount());
+            detailEntity.setReturnAmountLocalCurrency(detailDto.getReturnAmountLocalCurrency());
+            detailEntity.setTaxReturnAmountLocalCurrency(detailDto.getTaxReturnAmountLocalCurrency());
+            if(null == detailDto.getExchangeRate()){
                 detailEntity.setExchangeRate(dto.getExchangeRate());
             }
             if(ignoreInventorySkuIds.contains(detailEntity.getSkuId())) {
@@ -229,16 +231,17 @@ public class SoReturnNoticeDetailServiceImpl extends SuperServiceImpl<SoReturnNo
                     if (returnQty <  detailDto.getReturnQty() + returnNoticeQty) {
                         throw new ServiceException(ApiError.ERROR_92024);
                     }
-                    detailEntity.setReturnAmount(soReturnDetailEntity.getReturnAmount());
-                    detailEntity.setTaxReturnAmount(soReturnDetailEntity.getTaxReturnAmount());
-                    detailEntity.setReturnAmountLocalCurrency(soReturnDetailEntity.getReturnAmountLocalCurrency());
-                    detailEntity.setTaxReturnAmountLocalCurrency(soReturnDetailEntity.getTaxReturnAmountLocalCurrency());
-                    detailEntity.setExchangeRate(soReturnDetailEntity.getExchangeRate());
-                }else{
-                    detailEntity.setReturnAmount(detailDto.getReturnAmount());
-                    detailEntity.setTaxReturnAmount(detailDto.getTaxReturnAmount());
-                    detailEntity.setReturnAmountLocalCurrency(detailDto.getReturnAmountLocalCurrency());
-                    detailEntity.setTaxReturnAmountLocalCurrency(detailDto.getTaxReturnAmountLocalCurrency());
+//                    detailEntity.setReturnAmount(soReturnDetailEntity.getReturnAmount());
+//                    detailEntity.setTaxReturnAmount(soReturnDetailEntity.getTaxReturnAmount());
+//                    detailEntity.setReturnAmountLocalCurrency(soReturnDetailEntity.getReturnAmountLocalCurrency());
+//                    detailEntity.setTaxReturnAmountLocalCurrency(soReturnDetailEntity.getTaxReturnAmountLocalCurrency());
+//                    detailEntity.setExchangeRate(soReturnDetailEntity.getExchangeRate());
+                }
+                detailEntity.setReturnAmount(detailDto.getReturnAmount());
+                detailEntity.setTaxReturnAmount(detailDto.getTaxReturnAmount());
+                detailEntity.setReturnAmountLocalCurrency(detailDto.getReturnAmountLocalCurrency());
+                detailEntity.setTaxReturnAmountLocalCurrency(detailDto.getTaxReturnAmountLocalCurrency());
+                if(null == detailDto.getExchangeRate()){
                     detailEntity.setExchangeRate(dto.getExchangeRate());
                 }
                 detailEntity.setSkuId(detailDto.getSkuId());
