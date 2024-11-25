@@ -11,6 +11,7 @@ import com.erp.model.oms.dto.SoReturnDTO;
 import com.erp.model.oms.entity.SoReturnEntity;
 import org.springframework.web.bind.annotation.RequestBody;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 /**
@@ -246,4 +247,8 @@ public interface SoReturnService extends SuperService<SoReturnEntity> {
      * @param dto 参数
      */
     PagingVO<SoReturnDTO.PagingView> exportSoReturn(PagingDTO<SoReturnDTO.PagingParam> dto);
+
+    BigDecimal calLocalCurrency(BigDecimal exchangeRate, BigDecimal returnAmount);
+
+    BigDecimal calReturnAmount(BigDecimal amount, Integer qty, Integer returnQty);
 }

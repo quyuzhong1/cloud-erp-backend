@@ -43,7 +43,6 @@ import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.sys.dto.SysDepartmentUserNumberDTO;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.sys.entity.SysAccountingCompanyEntity;
-import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.ReturnReasonEnum;
@@ -73,7 +72,6 @@ import org.springframework.util.ObjectUtils;
 import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.function.Function;
@@ -496,28 +494,26 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
         soReturnEntity.setWarehouseId(dto.getWarehouseId());
         soReturnEntity.setBillDate(dto.getBillDate());
 
-        //币种，汇率，退货金额，含税退货金额，退货金额（本位币），含税退货金额（本位币）
-        List<SoReturnDetailDTO.Add> detailList = dto.getDetailList();
-        if(CollectionUtils.isNotEmpty(detailList)){
-            List<String> skuIds = detailList.stream().map(SoReturnDetailDTO.Add::getSkuId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
-            SoOutstockDTO.ListAmountParamDTO params = new SoOutstockDTO.ListAmountParamDTO();
-            params.setCustomerId(dto.getCustomerId());
-            params.setSkuIds(skuIds);
-            params.setReturnCreateDate(soReturnEntity.getCreateTime() == null ? LocalDate.now() : soReturnEntity.getCreateTime().toLocalDate());
-            List<SoOutstockDTO.AmountDTO> amountDTOS = soOutstockFeign.listAmountBySkuIds(params);
-            if(CollectionUtils.isNotEmpty(amountDTOS)){
-                //币种
-                soReturnEntity.setCurrency(amountDTOS.get(0).getCurrency());
-                soReturnEntity.setCurrencySymbol(amountDTOS.get(0).getCurrencySymbol());
-
-                detailList.forEach(detailDto -> {
-                    SoOutstockDTO.AmountDTO amountDTO = amountDTOS.stream().filter(v -> v.getSkuId().equals(detailDto.getSkuId())).findFirst().orElse(null);
-                    if(null != amountDTO){
-                        setAmoutDto(detailDto, amountDTO.getAmount(), amountDTO.getQty(), detailDto.getReturnQty(), amountDTO.getTaxAmount(), amountDTO.getExchangeRate());
-                    }
-                });
-            }
-        }
+//        //币种，汇率，退货金额，含税退货金额，退货金额（本位币），含税退货金额（本位币）
+//        List<SoReturnDetailDTO.Add> detailList = dto.getDetailList();
+//        if(CollectionUtils.isNotEmpty(detailList)){
+//            List<String> skuIds = detailList.stream().map(SoReturnDetailDTO.Add::getSkuId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
+//            SoOutstockDTO.ListAmountParamDTO params = new SoOutstockDTO.ListAmountParamDTO();
+//            params.setCustomerId(dto.getCustomerId());
+//            params.setSkuIds(skuIds);
+//            params.setReturnCreateDate(soReturnEntity.getCreateTime() == null ? LocalDate.now() : soReturnEntity.getCreateTime().toLocalDate());
+//            List<SoOutstockDTO.AmountDTO> amountDTOS = soOutstockFeign.listAmountBySkuIds(params);
+//            if(CollectionUtils.isNotEmpty(amountDTOS)){
+//                //币种
+//                soReturnEntity.setCurrency(amountDTOS.get(0).getCurrency());
+//                soReturnEntity.setCurrencySymbol(amountDTOS.get(0).getCurrencySymbol());
+//                detailList.forEach(detailDto -> amountDTOS.stream()
+//                        .filter(v -> v.getSkuId().equals(detailDto.getSkuId()))
+//                        .findFirst()
+//                        .ifPresent(amountDTO ->
+//                                this.setAmoutDto(detailDto, amountDTO.getAmount(), amountDTO.getQty(), detailDto.getReturnQty(), amountDTO.getTaxAmount(), amountDTO.getExchangeRate())));
+//            }
+//        }
     }
 
     //生成销售退货单
@@ -553,48 +549,50 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
         soReturnEntity.setSourceType(dto.getSourceType());
         soReturnEntity.setWarehouseId(dto.getWarehouseId());
         soReturnEntity.setBillDate(dto.getBillDate());
-        //从销售订单
-        //币种，汇率，退货金额，含税退货金额，退货金额（本位币），含税退货金额（本位币）
-        List<SoDetailEntity> detailEntities = soDetailService.listBaseByMainId(soInfoEntity.getId());
-        List<SoReturnDetailDTO.Add> detailList = dto.getDetailList();
-        if(CollectionUtils.isNotEmpty(detailEntities) && CollectionUtils.isNotEmpty(detailList)){
-            detailList.forEach(detailDto -> {
-                SoDetailEntity soDetailEntity = detailEntities.stream().filter(v -> v.getId().equals(detailDto.getSourceDetailId())).findFirst().orElse(null);
-                if(null != soDetailEntity){
-                    setAmoutDto(detailDto, soDetailEntity.getAmount(), soDetailEntity.getQty(), detailDto.getReturnQty(), soDetailEntity.getTaxAmount(), soDetailEntity.getExchangeRate());
-                }
-            });
-        }
+//        //从销售订单
+//        //币种，汇率，退货金额，含税退货金额，退货金额（本位币），含税退货金额（本位币）
+//        List<SoDetailEntity> detailEntities = soDetailService.listBaseByMainId(soInfoEntity.getId());
+//        List<SoReturnDetailDTO.Add> detailList = dto.getDetailList();
+//        if(CollectionUtils.isNotEmpty(detailEntities) && CollectionUtils.isNotEmpty(detailList)){
+//            detailList.forEach(detailDto -> detailEntities.stream()
+//                    .filter(v -> v.getId().equals(detailDto.getSourceDetailId()))
+//                    .findFirst()
+//                    .ifPresent(soDetailEntity ->
+//                            this.setAmoutDto(detailDto, soDetailEntity.getAmount(), soDetailEntity.getQty(), detailDto.getReturnQty(), soDetailEntity.getTaxAmount(), soDetailEntity.getExchangeRate())));
+//        }
     }
 
-    private static void setAmoutDto(SoReturnDetailDTO.Add detailDto, BigDecimal amount, Integer qty, Integer returnQty, BigDecimal taxAmount, BigDecimal exchangeRate) {
+    private void setAmoutDto(SoReturnDetailDTO.Add detailDto, BigDecimal amount, Integer qty, Integer returnQty, BigDecimal taxAmount, BigDecimal exchangeRate) {
         //退货金额
-        BigDecimal returnAmount = amount
-                .divide(BigDecimal.valueOf(qty), 4, RoundingMode.DOWN)
-                .multiply(BigDecimal.valueOf(returnQty))
-                .stripTrailingZeros();
+        BigDecimal returnAmount = this.calReturnAmount(amount, qty, returnQty);
         //含税退货金额
-        BigDecimal taxReturnAmount = taxAmount
-                .divide(BigDecimal.valueOf(qty), 4, RoundingMode.DOWN)
-                .multiply(BigDecimal.valueOf(returnQty))
-                .stripTrailingZeros();
+        BigDecimal taxReturnAmount =this.calReturnAmount(taxAmount, qty, returnQty);
         //退货金额（本位币）
-        BigDecimal returnAmountLocalCurrency = returnAmount
-                .multiply(exchangeRate)
-                .setScale(4, RoundingMode.DOWN)
-                .stripTrailingZeros();
+        BigDecimal returnAmountLocalCurrency = this.calLocalCurrency(exchangeRate, returnAmount);
         //含税退货金额（本位币）
-        BigDecimal taxReturnAmountLocalCurrency = taxReturnAmount
-                .multiply(exchangeRate)
-                .setScale(4, RoundingMode.DOWN)
-                .stripTrailingZeros();
+        BigDecimal taxReturnAmountLocalCurrency = this.calLocalCurrency(exchangeRate, taxReturnAmount);
         detailDto.setReturnAmount(returnAmount);
         detailDto.setTaxReturnAmount(taxReturnAmount);
         detailDto.setReturnAmountLocalCurrency(returnAmountLocalCurrency);
         detailDto.setTaxReturnAmountLocalCurrency(taxReturnAmountLocalCurrency);
+        detailDto.setExchangeRate(exchangeRate);
     }
 
+    @Override
+    public BigDecimal calLocalCurrency(BigDecimal exchangeRate, BigDecimal returnAmount) {
+        return returnAmount
+                .multiply(exchangeRate)
+                .setScale(4, RoundingMode.DOWN)
+                .stripTrailingZeros();
+    }
 
+    @Override
+    public BigDecimal calReturnAmount(BigDecimal amount, Integer qty, Integer returnQty) {
+        return amount
+                .divide(BigDecimal.valueOf(qty), 4, RoundingMode.DOWN)
+                .multiply(BigDecimal.valueOf(returnQty))
+                .stripTrailingZeros();
+    }
 
     @Override
     public SoReturnDTO.View view(String id) {
@@ -611,6 +609,8 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
             BeanMapperUtils.copy(soInfoEntity, viewDTO);
         }
         BeanMapperUtils.copy(soReturnEntity, viewDTO);
+        //汇率
+        viewDTO.setExchangeRate(detailEntityList.get(0).getExchangeRate());
         //能否编辑销售单号
         viewDTO.setCanChangeSoInfo(soReturnEntity.getSourceType().equals(SourceTypeEnum.SO_INFO.getCode()) ? Boolean.FALSE : Boolean.TRUE);
         //获取sku的id集合
@@ -632,6 +632,7 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
         if (ObjectUtil.isNotEmpty(customerAddressEntity)) {
             viewDTO.setReceiveAddress(customerAddressEntity.getAddress());
         }
+
         for (SoReturnDetailEntity detailEntity : detailEntityList) {
             SoReturnDetailDTO.View detailView = new SoReturnDetailDTO.View();
             BeanMapperUtils.copy(detailEntity, detailView);
@@ -1132,6 +1133,11 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
                 detailAdd.setReturnReasonDict(view.getReturnReasonDict());
                 detailAdd.setSourceDetailId(view.getDetailId());
                 detailAdd.setRemark(view.getRemark());
+                detailAdd.setExchangeRate(view.getExchangeRate());
+                detailAdd.setReturnAmount(view.getReturnAmount());
+                detailAdd.setTaxReturnAmount(view.getTaxReturnAmount());
+                detailAdd.setReturnAmountLocalCurrency(this.calLocalCurrency(view.getExchangeRate(), view.getReturnAmount()));
+                detailAdd.setTaxReturnAmountLocalCurrency(this.calLocalCurrency(view.getExchangeRate(), view.getTaxReturnAmount()));
                 add.setBillDate(view.getReturnDate());
                 detailList.add(detailAdd);
             }

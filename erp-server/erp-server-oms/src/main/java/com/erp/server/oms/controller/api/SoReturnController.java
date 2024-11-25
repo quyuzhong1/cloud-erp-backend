@@ -423,5 +423,4 @@ public class SoReturnController extends BaseController {
     public ApiResult<SoDetailDTO.ListAddDetailNoBomViewDTO> listAddDetailWithNoBomView(@RequestBody SoReturnDTO.PlatformSkuDTO dto) {
         return success(soReturnDetailService.listAddDetailWithNoBomView(dto));
     }
-
 }
