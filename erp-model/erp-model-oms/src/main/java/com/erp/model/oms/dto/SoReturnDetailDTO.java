@@ -60,6 +60,23 @@ public class SoReturnDetailDTO {
          * 平台sku名称
          */
         private String platformSkuName;
+
+        /**
+         *退货金额
+         */
+        private BigDecimal returnAmount;
+        /**
+         *含税退货金额
+         */
+        private BigDecimal taxReturnAmount;
+        /**
+         *退货金额（本位币）
+         */
+        private BigDecimal returnAmountLocalCurrency;
+        /**
+         *含税退货金额（本位币）
+         */
+        private BigDecimal taxReturnAmountLocalCurrency;
     }
 
     /**
@@ -124,6 +141,22 @@ public class SoReturnDetailDTO {
          * 平台sku名称
          */
         private String platformSkuName;
+        /**
+         *退货金额
+         */
+        private BigDecimal returnAmount;
+        /**
+         *含税退货金额
+         */
+        private BigDecimal taxReturnAmount;
+        /**
+         *退货金额（本位币）
+         */
+        private BigDecimal returnAmountLocalCurrency;
+        /**
+         *含税退货金额（本位币）
+         */
+        private BigDecimal taxReturnAmountLocalCurrency;
     }
 
     /**
@@ -200,5 +233,21 @@ public class SoReturnDetailDTO {
          * 备注
          */
         private String remark;
+        /**
+         *退货金额
+         */
+        private BigDecimal returnAmount;
+        /**
+         *含税退货金额
+         */
+        private BigDecimal taxReturnAmount;
+        /**
+         *退货金额（本位币）
+         */
+        private BigDecimal returnAmountLocalCurrency;
+        /**
+         *含税退货金额（本位币）
+         */
+        private BigDecimal taxReturnAmountLocalCurrency;
     }
 }

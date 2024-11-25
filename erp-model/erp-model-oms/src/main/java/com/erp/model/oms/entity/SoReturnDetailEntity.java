@@ -8,6 +8,7 @@ import lombok.Setter;
 import lombok.experimental.Accessors;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
 
 /**
  * <p>
@@ -93,6 +94,27 @@ public class SoReturnDetailEntity extends BaseEntity<SoReturnDetailEntity> {
      */
     @TableField("platform_sku_name")
     private String platformSkuName;
+
+    /**
+     *退货金额
+     */
+    @TableField("return_amount")
+    private BigDecimal returnAmount;
+    /**
+     *含税退货金额
+     */
+    @TableField("tax_return_amount")
+    private BigDecimal taxReturnAmount;
+    /**
+     *退货金额（本位币）
+     */
+    @TableField("return_amount_local_currency")
+    private BigDecimal returnAmountLocalCurrency;
+    /**
+     *含税退货金额（本位币）
+     */
+    @TableField("tax_return_amount_local_currency")
+    private BigDecimal taxReturnAmountLocalCurrency;
 
     public static final String MAIN_ID = "main_id";
 

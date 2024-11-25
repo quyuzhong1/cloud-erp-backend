@@ -1,7 +1,6 @@
 package com.erp.model.wms.dto;
 
 import cn.hutool.core.util.ObjectUtil;
-import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.ApproveStatusEnum;
@@ -1709,5 +1708,78 @@ public class SoOutstockDTO implements Serializable {
          * 装箱数量
          */
         private Integer packQty;
+    }
+
+    /**·
+     *
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ListAmountParamDTO{
+        /**
+         * skuId集合
+         */
+        private List<String> skuIds;
+        /**
+         * 退货订单创建时间
+         */
+        private LocalDate returnCreateDate;
+        /**
+         * 退货订单的客户（店铺）
+         */
+        private String customerId;
+
+    }
+
+
+    /**
+     *
+     */
+    @Data
+    @NoArgsConstructor
+    public static class AmountDTO {
+
+        /**
+         * 出库单详情id
+         */
+        private String soOutstockDetailId;
+
+        /**
+         * 销售订单详情id
+         */
+        private String soDetailId;
+
+        /**
+         *
+         */
+        private String skuId;
+
+        /**
+         * 销售数量
+         */
+        private Integer qty;
+
+        /**
+         * 销售金额
+         */
+        private BigDecimal amount;
+        /**
+         *含税销售金额
+         */
+        private BigDecimal taxAmount;
+        /**
+         *汇率
+         */
+        private BigDecimal exchangeRate;
+
+        /**
+         *币种
+         */
+        private String currency;
+
+        /**
+         *币种符号
+         */
+        private String currencySymbol;
     }
 }

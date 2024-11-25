@@ -496,4 +496,43 @@
            AND t.warehouse_name = #{params.warehouseName}
        	</if>
     </sql>
+
+    <select id="listAmountBySkuIds" resultType="com.erp.model.wms.dto.SoOutstockDTO$AmountDTO"
+            parameterType="com.erp.model.wms.dto.SoOutstockDTO$ListAmountParamDTO">
+
+        select
+        sod.id as soOutstockDetailId,
+        sd.id as soDetailId,
+        sod.sku_id,
+        sd.amount,
+        sd.qty,
+        sd.tax_amount,
+        sd.exchange_rate,
+        sd.currency,
+        sd.currency_symbol
+        from so_outstock_detail sod
+        INNER JOIN so_outstock so on so.id = sod.main_id and so.is_deleted =FALSE
+        INNER JOIN so_detail sd on sod.source_detail_id = sd.id and sd.is_deleted = FALSE and sd.is_close =FALSE
+        where
+        sod.is_deleted =FALSE
+        and sod.is_close = FALSE
+        and so.approve_status = 'approve'
+        and so.order_type ='B2B'
+        and sd.amount >0
+        and sd.tax_amount >0
+        and sd.qty >0
+        <if test="params.returnCreateDate!=null and params.returnCreateDate!=''">
+            <![CDATA[  and so.actual_delivery_date < #{params.returnCreateDate}]]>
+        </if>
+          <if test="params.customerId!=null and params.customerId!=''">
+            and so.customer_id = #{customerId}
+        </if>
+        <if test="params.skuIds !=null and params.skuIds.size>0">
+            and sod.sku_id in
+            <foreach collection="params.skuIds" item="id" open="(" separator="," close=")">
+                #{id}
+            </foreach>
+        </if>
+
+    </select>
 </mapper>

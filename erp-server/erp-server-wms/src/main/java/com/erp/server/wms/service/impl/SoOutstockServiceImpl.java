@@ -3492,4 +3492,13 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         pushWdtDTO.setDetailDTOList(detailDTOList);
         return pushWdtDTO;
     }
+
+
+    @Override
+    public List<SoOutstockDTO.AmountDTO> listAmountBySkuIds(SoOutstockDTO.ListAmountParamDTO params) {
+        if(null == params || params.getSkuIds().isEmpty() || null == params.getReturnCreateDate()){
+            return Collections.emptyList();
+        }
+        return this.baseMapper.listAmountBySkuIds(params);
+    }
 }

@@ -114,4 +114,6 @@ public interface SoOutstockMapper extends BaseMapper<SoOutstockEntity> {
     List<FirstMileDeliveryDTO.LogisticStatisticsDTO> logisticStatistics( FirstMileDeliveryDTO.StatisticsReq deliveryStaticsReq);
 
     List<SoOutstockDetailEntity> listApproveBySourceDetailIds(@Param("ids") List<String> ids);
+
+    List<SoOutstockDTO.AmountDTO> listAmountBySkuIds(@Param("params") SoOutstockDTO.ListAmountParamDTO params);
 }

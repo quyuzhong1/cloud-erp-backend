@@ -136,4 +136,14 @@ public interface SoOutstockFeign {
      */
     @PostMapping("feign/soOutstock/updateSoOutPrice")
     Boolean updateSoOutPrice(List<SoDetailEntity> saveOrUpdateList);
+
+    /**
+     * B2B退货订单没有关联订单时的计算规则
+     * @author jack
+     * @date: 2024-11-25
+     * @param params
+     * @return SoOutstockDTO.AmountDTO
+     */
+    @PostMapping("feign/soOutstock/listAmountBySkuIds")
+    List<SoOutstockDTO.AmountDTO> listAmountBySkuIds(@RequestBody SoOutstockDTO.ListAmountParamDTO params);
 }

@@ -543,4 +543,6 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
     void deleteTransferInfo(List<SoOutstockEntity> list);
 
     PagingVO<SoOutstockDTO.PagingViewDTO> exportSoOutStock(PagingDTO<SoOutstockDTO.ExportDTO> dto);
+
+    List<SoOutstockDTO.AmountDTO> listAmountBySkuIds(SoOutstockDTO.ListAmountParamDTO params);
 }
