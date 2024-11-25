@@ -147,7 +147,7 @@ public class AmzReportHandleServiceImpl implements AmzReportHandleService {
                 .eq(CfgSettingEntity::getType, SettingEnum.NEW_DMP_PULL_SWITCH_LIST.getType())
                 .eq(CfgSettingEntity::getValue, "1")
                 .count();
-        if (count > 1){
+        if (count > 0){
             // 执行新中台拉取逻辑
             return newDmpPullShipment(dto, shopInfoDTO);
         } else {
@@ -681,7 +681,7 @@ public class AmzReportHandleServiceImpl implements AmzReportHandleService {
         DmpInputHotfixCreateRequest dmpInputHotfixCreateRequest = new DmpInputHotfixCreateRequest();
         dmpInputHotfixCreateRequest.setCfgInputDetailIdList(inputDetailIds);
         dmpInputHotfixCreateRequest.setCfgInputId(inputEntity.getId());
-        dmpInputHotfixCreateRequest.setDetailExtendJson(JSONObject.toJSONString(dto));
+        dmpInputHotfixCreateRequest.setDetailExtendJson(JSON.toJSONString(dto));
         dmpInputCreateFactory.doHotfixInputTask(dmpInputHotfixCreateRequest);
         return true;
     }
