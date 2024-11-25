@@ -1038,6 +1038,14 @@ public class CalcSalesInfoDimDTO implements Serializable {
          */
         private String shopId;
         /**
+         * 国家
+         */
+        private String country;
+        /**
+         * 平台
+         */
+        private String platform;
+        /**
          * 试算配置id
          */
         private String cfgRuleCalcId;
@@ -1057,5 +1065,39 @@ public class CalcSalesInfoDimDTO implements Serializable {
          * 历史数据base
          */
         private String hisDataMd5;
+    }
+
+
+    @Getter
+    @Setter
+    public static class CalcCompareDataDTO {
+        /**
+         * sku
+         */
+        private String skuNo;
+        /**
+         * sku图片
+         */
+        private String skuImgUrl;
+        /**
+         * 品名
+         */
+        private String productName;
+        /**
+         * 国家名字
+         */
+        private String countryName;
+        /**
+         * 店铺名字
+         */
+        private String shopName;
+        /**
+         * 平台
+         */
+        private String platform;
+        /**
+         * 试算开始日期
+         */
+        private LocalDate startCalcDate;
     }
 }

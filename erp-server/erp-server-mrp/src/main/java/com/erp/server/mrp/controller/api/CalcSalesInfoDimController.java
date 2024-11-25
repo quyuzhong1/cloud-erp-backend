@@ -163,4 +163,14 @@ public class CalcSalesInfoDimController extends BaseController {
         CalcSalesInfoDimDTO.CalcCompareDTO result = calcSalesInfoDimService.calcCompare(dto);
         return success(result);
     }
+
+    /**
+     * 试算比较sku相关数据
+     * @param dto 参数
+     */
+    @PostMapping("/calcCompareData")
+    public ApiResult<CalcSalesInfoDimDTO.CalcCompareDataDTO> calcCompareData(@RequestBody CalcSalesInfoDimDTO.CalcCompareParamsDTO dto) {
+        CalcSalesInfoDimDTO.CalcCompareDataDTO result = calcSalesInfoDimService.calcCompareData(dto);
+        return success(result);
+    }
 }

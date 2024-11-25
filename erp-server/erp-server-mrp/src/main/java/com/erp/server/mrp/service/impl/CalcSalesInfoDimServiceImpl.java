@@ -154,14 +154,7 @@ public class CalcSalesInfoDimServiceImpl extends SuperServiceImpl<CalcSalesInfoD
         view.setProductName(skuVO.getSkuName());
         view.setCountryName(dictCountry.getNameCn());
         view.setShopName(shopInfoEntity.getName());
-        List<DictBasicEntity> salesPlatformList = FeignQuery.create(DictBasicEntity.class)
-                .eq(DictBasicEntity::getType, DictBasicTypeEnum.SALES_PLATFORM.getType())
-                .eq(DictBasicEntity::getStatus, Boolean.TRUE)
-                .eq(DictBasicEntity::getIsDeleted, Boolean.FALSE)
-                .eq(DictBasicEntity::getValue, view.getPlatform())
-                .list();
-        Map<String, String> dictBasicMap = salesPlatformList.stream()
-                .collect(Collectors.toMap(DictBasicEntity::getValue, DictBasicEntity::getName));
+        Map<String, String> dictBasicMap = getPlatformMap();;
         view.setPlatform(dictBasicMap.get(view.getPlatform()));
         return view;
     }
@@ -437,6 +430,35 @@ public class CalcSalesInfoDimServiceImpl extends SuperServiceImpl<CalcSalesInfoD
         calcCompareDTO.setDateList(dateList);
         calcCompareDTO.setLineList(lineList);
         return calcCompareDTO;
+    }
+
+    @Override
+    public CalcSalesInfoDimDTO.CalcCompareDataDTO calcCompareData(CalcSalesInfoDimDTO.CalcCompareParamsDTO dto) {
+        List<CalcSalesInfoDimDTO.CompareResultDTO> list;
+        //查询对应数据
+        if (CollectionUtils.isEmpty(dto.getIds())) {
+            list = baseMapper.listBySkuAndShopAndDate(dto);
+        } else {
+            list = baseMapper.listCompareByIds(dto.getIds());
+        }
+        verifyData(list);
+        CalcSalesInfoDimDTO.CalcCompareDataDTO viewDTO = new CalcSalesInfoDimDTO.CalcCompareDataDTO();
+        CalcSalesInfoDimDTO.CompareResultDTO resultDTO = list.get(0);
+        List<SkuVO> skuVOS = plmTaskFeign.listSkuProductByIds(Collections.singletonList(resultDTO.getSkuId()));
+        List<DictCountryEntity> countryList = sysDictFeign.listCountryByIds(Collections.singletonList(resultDTO.getCountry()));
+        SkuVO skuVO = skuVOS.stream().filter(v -> v.getSkuId().equals(resultDTO.getSkuId())).findFirst().orElse(new SkuVO());
+        List<ShopInfoEntity> shopInfos = shopInfoFeign.listShopInfoByIds(Collections.singletonList(resultDTO.getShopId()));
+        DictCountryEntity dictCountry = countryList.stream().filter(v -> v.getId().equals(resultDTO.getCountry())).findFirst().orElse(new DictCountryEntity());
+        ShopInfoEntity shopInfoEntity = shopInfos.stream().filter(v -> v.getId().equals(resultDTO.getShopId())).findFirst().orElse(new ShopInfoEntity());
+        Map<String, String> dictBasicMap = getPlatformMap();
+        viewDTO.setSkuNo(resultDTO.getSkuNo());
+        viewDTO.setProductName(skuVO.getSkuName());
+        viewDTO.setSkuImgUrl(skuVO.getSkuImagesUrl());
+        viewDTO.setShopName(shopInfoEntity.getName());
+        viewDTO.setPlatform(dictBasicMap.get(resultDTO.getPlatform()));
+        viewDTO.setCountryName(dictCountry.getNameCn());
+        viewDTO.setStartCalcDate(resultDTO.getStartCalcDate());
+        return viewDTO;
     }
 
     /**

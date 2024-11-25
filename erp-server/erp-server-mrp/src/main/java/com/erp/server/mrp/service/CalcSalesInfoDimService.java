@@ -97,4 +97,9 @@ public interface CalcSalesInfoDimService extends SuperService<CalcSalesInfoDimEn
      */
     CalcSalesInfoDimDTO.CalcCompareDTO calcCompare(CalcSalesInfoDimDTO.CalcCompareParamsDTO dto);
 
+    /**
+     * 试算比较基础数据
+     * @param dto 参数
+     */
+    CalcSalesInfoDimDTO.CalcCompareDataDTO calcCompareData(CalcSalesInfoDimDTO.CalcCompareParamsDTO dto);
 }
