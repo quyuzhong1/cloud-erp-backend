@@ -69,6 +69,11 @@ public class TransferApplicationDetailDTO implements Serializable {
         private String productName;
 
         /**
+         * 商品状态
+         */
+        private String  salesStateName;
+
+        /**
          * 单位
          */
         private String unit;

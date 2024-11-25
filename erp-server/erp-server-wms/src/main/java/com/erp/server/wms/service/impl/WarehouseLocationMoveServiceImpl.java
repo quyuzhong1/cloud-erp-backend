@@ -43,6 +43,7 @@ import com.erp.model.wms.entity.WarehouseLocationEntity;
 import com.erp.model.wms.entity.WarehouseLocationMoveDetailEntity;
 import com.erp.model.wms.entity.WarehouseLocationMoveEntity;
 import com.erp.model.wms.enums.CfgSettingEnum;
+import com.erp.model.wms.enums.MarehouseMoveSourceTypeEnum;
 import com.erp.model.wms.enums.inventory.*;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
@@ -1161,7 +1162,7 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
             }
             pdaPcListDTO.setInWarehouseLocationName(getWarehouseLocationEntity(warehouseLocationEntities, pdaPcListDTO.getWarehouseId(), pdaPcListDTO.getInWarehouseLocation()).getName());
             pdaPcListDTO.setOutWarehouseLocationName(getWarehouseLocationEntity(warehouseLocationEntities, pdaPcListDTO.getWarehouseId(), pdaPcListDTO.getOutWarehouseLocation()).getName());
-            pdaPcListDTO.setSourceTypeName(SourceTypeEnum.getName(pdaPcListDTO.getSourceType()));
+            pdaPcListDTO.setSourceTypeName(CharSequenceUtil.equals(pdaPcListDTO.getSourceType(),SourceTypeEnum.REQUISITION_APPLICATION.getCode()) ? MarehouseMoveSourceTypeEnum.FIRST_MILE_PICKING.getName() : MarehouseMoveSourceTypeEnum.B2B_PICKING.getName());
             pdaPcListDTO.setOutInventoryStatusName(InventoryStatusEnum.getNameByCode(pdaPcListDTO.getOutInventoryStatus()));
             pdaPcListDTO.setInInventoryStatusName(InventoryStatusEnum.getNameByCode(pdaPcListDTO.getInInventoryStatus()));
         }

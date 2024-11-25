@@ -20,6 +20,7 @@ import com.common.business.threadlocal.UserContext;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
+import com.common.business.wrapper.FeignQuery;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -27,7 +28,9 @@ import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
+import com.erp.model.plm.entity.ProductSaleEntity;
 import com.erp.model.plm.enums.BomTypeEnum;
+import com.erp.model.plm.enums.SaleStateEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
@@ -309,7 +312,10 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
 
         //产品信息
         List<String> skuIds = detailList.stream().map(TransferApplicationDetailEntity::getSkuId).collect(Collectors.toList());
-        List<SkuVO> skuList = plmTaskFeign.listSkuProductByIds(skuIds);
+        List<ProductDetailEntity> skuList = FeignQuery.getByIds(ProductDetailEntity.class,skuIds);
+
+        //产品销售信息
+        List<ProductSaleEntity> productSaleEntityList = FeignQuery.create(ProductSaleEntity.class).in(ProductSaleEntity::getSkuId,skuIds).list();
 
         //组织
         InventoryDTO.ParamDTO param = new InventoryDTO.ParamDTO();
@@ -321,10 +327,13 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
 
         for (TransferApplicationDetailDTO.ViewDTO viewDetailDTO : viewDetailList) {
             //产品名称
-            if (CollectionUtils.isNotEmpty(skuList)) {
-                String productName = skuList.stream().filter(e -> e.getSkuId().equals(viewDetailDTO.getSkuId())).map(SkuVO::getSkuName).findFirst().orElse(null);
-                viewDetailDTO.setProductName(productName);
-            }
+            String productName = skuList.stream().filter(e -> e.getId().equals(viewDetailDTO.getSkuId())).map(ProductDetailEntity::getName).findFirst().orElse("");
+            viewDetailDTO.setProductName(productName);
+
+            //商品状态
+            String salesStateName = productSaleEntityList.stream().filter(e -> CharSequenceUtil.equals(e.getSkuId(), viewDetailDTO.getSkuId())).findFirst().map(e -> SaleStateEnum.getNameByCode(e.getSaleState())).orElse("");
+            viewDetailDTO.setSalesStateName(salesStateName);
+
             //根据组织、仓库、sku查询可用库存
             Integer curInventoryQty = inventoryInfoList.stream().filter(obj -> obj.getSkuId().equals(viewDetailDTO.getSkuId()) && InventoryStatusEnum.USABLE.getCode().equals(obj.getDictInventoryStatus()))
                     .map(InventoryEntity::getQty).reduce(MathUtil.ZERO, Integer::sum);
@@ -1025,10 +1034,12 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
 
         List<String> ids = records.stream().map(TransferApplicationDTO.ListDTO::getSkuId).collect(Collectors.toList());
         //产品信息
-        List<ProductDetailEntity> productDetailList = plmTaskFeign.getByIdList(ids);
+        List<ProductDetailEntity> productDetailList = FeignQuery.getByIds(ProductDetailEntity.class,ids);
         if (CollectionUtils.isEmpty(productDetailList)) {
             throw new ServiceException(ApiError.ERROR_95084);
         }
+        //产品销售信息
+        List<ProductSaleEntity> productSaleEntityList = FeignQuery.create(ProductSaleEntity.class).in(ProductSaleEntity::getSkuId,ids).list();
 
         //调拨方向
         List<DictBasicDTO.ListDTO> transferDirectionList = dictBasicService.getByKey(DictBasicEnum.TRANSFER_DIRECTION.getKey());
@@ -1060,7 +1071,9 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
                 throw new ServiceException(ApiError.ERROR_95084);
             }
             obj.setProductName(productName);
-
+            //商品状态
+            String salesStateName = productSaleEntityList.stream().filter(e -> CharSequenceUtil.equals(e.getSkuId(), obj.getSkuId())).findFirst().map(e -> SaleStateEnum.getNameByCode(e.getSaleState())).orElse("");
+            obj.setSalesStateName(salesStateName);
             //调拨方向名称
             String transferDirectionName = transferDirectionList.stream().filter(e -> e.getValue().equals(obj.getTransferDirection())).map(DictBasicDTO.ListDTO::getName).findFirst().orElse("");
             if (CharSequenceUtil.isBlank(transferDirectionName)) {

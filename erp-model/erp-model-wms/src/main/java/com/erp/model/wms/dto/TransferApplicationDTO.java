@@ -84,6 +84,11 @@ public class TransferApplicationDTO implements Serializable {
          */
         private String  productName;
         /**
+         * 商品状态
+         */
+        private String  salesStateName;
+
+        /**
          * 加工单号
          */
         private String  machineCode;

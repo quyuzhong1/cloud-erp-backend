@@ -180,11 +180,12 @@
         wlmd.qty as qty,
         wlmi.source_id as sourceId,
         wlmi.source_code as sourceCode,
-        wlmi.source_type as sourceType,
+        pl.source_type as sourceType,
         wlmd.out_inventory_status as outInventoryStatus,
         wlmd.in_inventory_status as inInventoryStatus
         FROM warehouse_location_move_detail wlmd
         INNER JOIN warehouse_location_move wlmi ON wlmd.main_id = wlmi.id AND wlmd.is_deleted = FALSE
+        left join picking_lists pl on wlmi.source_id = pl.id and pl.is_deleted = false
         WHERE ${params.sqlMap.default}
         and wlmi.is_deleted = FALSE
         <if test="params.approveStatusList != null and params.approveStatusList.size > 0">
