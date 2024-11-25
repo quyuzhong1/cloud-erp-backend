@@ -978,6 +978,15 @@ public class CalcSalesInfoDimDTO implements Serializable {
          * 试算开始日期
          */
         private LocalDate startCalcDate;
+
+        /**
+         * 开始日期
+         */
+        private LocalDate startDate;
+        /**
+         * 结束日期
+         */
+        private LocalDate endDate;
     }
 
     /**

@@ -392,25 +392,25 @@ public class CalcSalesInfoDimServiceImpl extends SuperServiceImpl<CalcSalesInfoD
         verifyData(list);
         //获取真实销量
         CalcSalesInfoDimDTO.CompareResultDTO resultDTO = list.get(0);
+        LocalDate startCalcDate = ObjectUtils.isEmpty(dto.getStartDate()) ? resultDTO.getStartCalcDate() : dto.getStartDate();
+        LocalDate endCalcDate = ObjectUtils.isEmpty(dto.getEndDate()) ? resultDTO.getEndCalcDate() : dto.getEndDate();
         Map<String, String> calcNameMap = list.stream().collect(Collectors.toMap(CalcSalesInfoDimDTO.CompareResultDTO::getId, CalcSalesInfoDimDTO.CompareResultDTO::getName));
         List<OrderHistorySalesEsEntity> salesInfos = orderHistorySalesEsService.findByShopIdAndSkuIdAndDateBetween(resultDTO.getShopId(), resultDTO.getSkuId(),
-                resultDTO.getStartCalcDate(), resultDTO.getEndCalcDate());
+                startCalcDate, endCalcDate);
         Map<LocalDate, Integer> hisSalesMap = salesInfos.stream()
                 .collect(Collectors.toMap(OrderHistorySalesEsEntity::getDate, OrderHistorySalesEsEntity::getOriginalSalesQty, Integer::sum));
-
-        LocalDate startCalcDate = resultDTO.getStartCalcDate();
-
         List<BigDecimal> basicData = new ArrayList<>();
         List<LocalDate> dateList = new ArrayList<>();
         //组装历史真实销量
-        while (startCalcDate.isBefore(resultDTO.getEndCalcDate())) {
-            basicData.add(new BigDecimal(Optional.ofNullable(hisSalesMap.get(startCalcDate)).orElse(0)));
-            dateList.add(startCalcDate);
-            startCalcDate = startCalcDate.plusDays(1);
+        LocalDate date = startCalcDate;
+        while (date.isBefore(endCalcDate)) {
+            basicData.add(new BigDecimal(Optional.ofNullable(hisSalesMap.get(date)).orElse(0)));
+            dateList.add(date);
+            date = date.plusDays(1);
         }
         List<String> dimIds = list.stream().map(CalcSalesInfoDimDTO.CompareResultDTO::getId).distinct().collect(Collectors.toList());
         //查询预估销量
-        List<CalcSalesInfoEstimateEntity> calcSalesInfoEstimateList = calcSalesInfoEstimateService.listByCalcSalesInfoIds(dimIds);
+        List<CalcSalesInfoEstimateEntity> calcSalesInfoEstimateList = calcSalesInfoEstimateService.listByCalcSalesInfoIdsAndDate(dimIds, startCalcDate, endCalcDate);
         Map<String, List<BigDecimal>> calcDataList = calcSalesInfoEstimateList.stream()
                 .sorted(Comparator.comparing(CalcSalesInfoEstimateEntity::getDate))
                 .collect(Collectors.groupingBy(CalcSalesInfoEstimateEntity::getCalcSalesInfoDimId,
