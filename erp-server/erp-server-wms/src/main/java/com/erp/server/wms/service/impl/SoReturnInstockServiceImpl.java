@@ -1855,6 +1855,8 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
 
             // 商品状态
             shudiyunB2cOrderDTO.setGoods_status("已发货");
+
+
             if (entity.getApproveTime() != null) {
                 shudiyunB2cOrderDTO.setDelivery_time(localDateTime.format(entity.getApproveTime()));
             }
