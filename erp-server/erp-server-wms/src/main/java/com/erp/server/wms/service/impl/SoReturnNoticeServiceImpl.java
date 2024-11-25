@@ -58,6 +58,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -723,6 +725,11 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
                     SkuMappingDTO.ProductSkuInfoDTO productSkuInfoDTO = productSkuInfoList.stream().filter(v -> v.getSkuId().equals(view.getSkuId())).findFirst().orElse(new SkuMappingDTO.ProductSkuInfoDTO());
                     detailAddDTO.setPlatformSkuNo(productSkuInfoDTO.getPlatformSkuNo());
                 }
+                detailAddDTO.setExchangeRate(view.getExchangeRate());
+                detailAddDTO.setReturnAmount(view.getReturnAmount());
+                detailAddDTO.setTaxReturnAmount(view.getTaxReturnAmount());
+                detailAddDTO.setReturnAmountLocalCurrency(this.calLocalCurrency(view.getExchangeRate(), view.getReturnAmount()));
+                detailAddDTO.setTaxReturnAmountLocalCurrency(this.calLocalCurrency(view.getExchangeRate(), view.getTaxReturnAmount()));
                 detailList.add(detailAddDTO);
             }
             dto.setDetailList(detailList);
@@ -732,6 +739,22 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
             }
         }
         return flag;
+    }
+
+    @Override
+    public BigDecimal calLocalCurrency(BigDecimal exchangeRate, BigDecimal returnAmount) {
+        return returnAmount
+                .multiply(exchangeRate)
+                .setScale(4, RoundingMode.DOWN)
+                .stripTrailingZeros();
+    }
+
+    @Override
+    public BigDecimal calReturnAmount(BigDecimal amount, Integer qty, Integer returnQty) {
+        return amount
+                .divide(BigDecimal.valueOf(qty), 4, RoundingMode.DOWN)
+                .multiply(BigDecimal.valueOf(returnQty))
+                .stripTrailingZeros();
     }
 
     @Override

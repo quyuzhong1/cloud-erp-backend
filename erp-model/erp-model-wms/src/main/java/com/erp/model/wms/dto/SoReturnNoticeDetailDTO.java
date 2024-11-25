@@ -117,6 +117,10 @@ public class SoReturnNoticeDetailDTO {
          *含税退货金额（本位币）
          */
         private BigDecimal taxReturnAmountLocalCurrency;
+        /**
+         *汇率
+         */
+        private BigDecimal exchangeRate;
 
     }
 

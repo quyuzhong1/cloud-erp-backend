@@ -11,6 +11,7 @@ import com.erp.model.wms.entity.SoReturnNoticeEntity;
 import com.common.business.service.SuperService;
 import org.springframework.web.bind.annotation.RequestBody;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 /**
@@ -186,4 +187,8 @@ public interface SoReturnNoticeService extends SuperService<SoReturnNoticeEntity
     PagingVO<SoReturnNoticeDTO.PagingView> exportSoReturnNotice(PagingDTO<SoReturnNoticeDTO.PagingParam> dto);
 
     void generateSoB2cReturnNotice(List<SoB2cReturnDTO.GenerateSoReturnNoticeView> list);
+
+    BigDecimal calLocalCurrency(BigDecimal exchangeRate, BigDecimal returnAmount);
+
+    BigDecimal calReturnAmount(BigDecimal amount, Integer qty, Integer returnQty);
 }
