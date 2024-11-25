@@ -5,10 +5,10 @@ import com.google.gson.annotations.SerializedName;
 public class DiscountAmountBean {
     /**
      * currency : USD
-     * product_platform_discount : 2.1
-     * product_seller_discount : 0
-     * shipping_fee_platform_discount : 0
-     * shipping_fee_seller_discount : 0
+     * product_platform_discount : 0.1
+     * product_seller_discount : 0.1
+     * shipping_fee_platform_discount : 0.1
+     * shipping_fee_seller_discount : 0.1
      */
 
     @SerializedName("currency")

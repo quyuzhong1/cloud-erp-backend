@@ -4,13 +4,17 @@ import com.google.gson.annotations.SerializedName;
 
 public class RefundAmountBean {
     /**
+     * buyer_service_fee : 0.1
      * currency : USD
-     * refund_shipping_fee : 7.99
-     * refund_subtotal : 20.47
-     * refund_tax : 1.62
-     * refund_total : 28.46
+     * refund_shipping_fee : 0.2
+     * refund_subtotal : 1
+     * refund_tax : 0.03
+     * refund_total : 1.23
+     * retail_delivery_fee : 0.1
      */
 
+    @SerializedName("buyer_service_fee")
+    private String buyerServiceFee;
     @SerializedName("currency")
     private String currency;
     @SerializedName("refund_shipping_fee")
@@ -21,6 +25,16 @@ public class RefundAmountBean {
     private String refundTax;
     @SerializedName("refund_total")
     private String refundTotal;
+    @SerializedName("retail_delivery_fee")
+    private String retailDeliveryFee;
+
+    public String getBuyerServiceFee() {
+        return buyerServiceFee;
+    }
+
+    public void setBuyerServiceFee(String buyerServiceFee) {
+        this.buyerServiceFee = buyerServiceFee;
+    }
 
     public String getCurrency() {
         return currency;
@@ -60,5 +74,13 @@ public class RefundAmountBean {
 
     public void setRefundTotal(String refundTotal) {
         this.refundTotal = refundTotal;
+    }
+
+    public String getRetailDeliveryFee() {
+        return retailDeliveryFee;
+    }
+
+    public void setRetailDeliveryFee(String retailDeliveryFee) {
+        this.retailDeliveryFee = retailDeliveryFee;
     }
 }
