@@ -90,7 +90,7 @@
         where ${params.sqlMap.default}
           and csic.is_deleted = FALSE
         <if test="params.cfgRuleCalcId != null and params.cfgRuleCalcId != ''">
-            csic.cfg_rule_calc_id = #{params.cfgRuleCalcId}
+           and csic.cfg_rule_calc_id = #{params.cfgRuleCalcId}
         </if>
     </select>
 
