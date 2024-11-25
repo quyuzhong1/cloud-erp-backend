@@ -903,7 +903,7 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
                 //同步数帝云
                 list.forEach(req -> {
                     List<SoInfoDTO.ViewDTO> collect = viewList.stream().filter(obj -> obj.getId().equals(req.getSoId())).collect(Collectors.toList());
-                    collect.forEach(data -> soInfoService.sdyFieldOrderHandler(req.getSoId(), SyncOperateEnum.OPERATE_APPROVE.getCode(), data));
+                    collect.forEach(data -> soInfoService.sdyFieldOrderHandler(req.getSoId(), SyncOperateEnum.OPERATE_APPROVE.getCode(), data, ""));
                 });
             }
         });
