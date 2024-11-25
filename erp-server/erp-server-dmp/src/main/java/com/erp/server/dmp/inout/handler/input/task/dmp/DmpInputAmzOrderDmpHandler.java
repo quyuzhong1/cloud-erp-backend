@@ -75,6 +75,9 @@ public class DmpInputAmzOrderDmpHandler extends DmpInputDbConvertDmpHandler {
                 BigDecimal payMount = null == sourceOrder.getOrderTotal() ? BigDecimal.ZERO : new BigDecimal(sourceOrder.getOrderTotal().getAmount());
                 dmpDataMap.put("payAmount", payMount);
 
+                // 订单金额
+                dmpDataMap.put("allAmount", payMount);
+
                 // 币别（原币）
                 String currencyCode = null == sourceOrder.getOrderTotal() ? "" : sourceOrder.getOrderTotal().getCurrencyCode();
                 dmpDataMap.put("currencyCode", currencyCode);
