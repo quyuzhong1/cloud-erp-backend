@@ -1379,7 +1379,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             sendPushTask(list,SyncOperateEnum.OPERATE_APPROVE.getCode());
 
             //同步数帝云
-            list.forEach(obj -> sdyFieldOrderHandler(obj.getId(), SyncOperateEnum.OPERATE_APPROVE.getCode(), null, ""));
+            list.forEach(obj -> sdyFieldOrderHandler(obj.getId(), SyncOperateEnum.OPERATE_APPROVE.getCode(), ""));
         } else {
             //审核不通过
             approveStatus = ApproveStatusEnum.REJECT.getStatus();
@@ -1466,7 +1466,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             sendPushTask(list,SyncOperateEnum.OPERATE_DISAPPROVE.getCode());
 
             //同步数帝云
-            list.forEach(obj -> sdyFieldOrderHandler(obj.getId(), SyncOperateEnum.OPERATE_DISAPPROVE.getCode(), null, ""));
+            list.forEach(obj -> sdyFieldOrderHandler(obj.getId(), SyncOperateEnum.OPERATE_DISAPPROVE.getCode(), ""));
         }
         return BatchResultDTO.success(entity.getId(),entity.getCode(),"操作成功");
     }
@@ -1582,7 +1582,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         ids.stream().forEach(obj -> unLockVirtualInventory(obj));
 
         //同步数帝云
-        list.forEach(obj -> sdyFieldOrderHandler(obj.getId(), SyncOperateEnum.OPERATE_DELETE.getCode(), null, ""));
+        list.forEach(obj -> sdyFieldOrderHandler(obj.getId(), SyncOperateEnum.OPERATE_DELETE.getCode(), ""));
 
         Boolean result = this.removeByIds(ids);
 
@@ -3878,43 +3878,30 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         return dto;
     }
 
-
     /**
      * 同步速递云B2B订单
      * @param soId
      * @param operateEnum
-     */
-    /**
-     * 同步速递云B2B订单
-     * @param soId
-     * @param operateEnum
-     * @param changeViewDTO 变更单使用的数据
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void sdyFieldOrderHandler(String soId, String operateEnum, SoInfoDTO.ViewDTO changeViewDTO, String deliveryStatus) {
+    public void sdyFieldOrderHandler(String soId, String operateEnum, String deliveryStatus) {
         DateTimeFormatter localDateTime = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
         DateTimeFormatter localDate = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
-        SoInfoDTO.ViewDTO view = null;
-        if (ObjectUtil.isNotEmpty(changeViewDTO)) {
-            view = this.view(soId);
-            List<String> soDetailIds = view.getDetailList().stream().map(req -> req.getId()).collect(Collectors.toList());
-            List<SoChangeDetailEntity> soChangeDetailEntities = soChangeDetailService.listBySoDetailIdList(soDetailIds);
-            //获取取消的订单
-            List<String> cancelSoDetailIds = soChangeDetailEntities.stream()
-                    .filter(req -> SoChangeTypeEnum.TERMINATE.getCode().equals(req.getChangeType().getCode())
-                            || SoChangeTypeEnum.DELETE.getCode().equals(req.getChangeType().getCode())
-                    ).map(req -> req.getSoDetailId()).collect(Collectors.toList());
+        SoInfoDTO.ViewDTO view = this.view(soId);
+        List<String> soDetailIds = view.getDetailList().stream().map(req -> req.getId()).collect(Collectors.toList());
+        List<SoChangeDetailEntity> soChangeDetailEntities = soChangeDetailService.listBySoDetailIdList(soDetailIds);
+        //获取取消的订单
+        List<String> cancelSoDetailIds = soChangeDetailEntities.stream()
+                .filter(req -> SoChangeTypeEnum.TERMINATE.getCode().equals(req.getChangeType().getCode())
+                        || SoChangeTypeEnum.DELETE.getCode().equals(req.getChangeType().getCode())
+                ).map(req -> req.getSoDetailId()).collect(Collectors.toList());
 
-            List<SoDetailDTO.ViewDTO> viewDTOList = view.getDetailList().stream().filter(req -> cancelSoDetailIds.contains(req.getId())).collect(Collectors.toList());
-            view = changeViewDTO;
-            List<SoDetailDTO.ViewDTO> detailList = view.getDetailList();
-            detailList.addAll(viewDTOList);
-            view.setDetailList(detailList);
-        } else {
-            view = this.view(soId);
-        }
+        List<SoDetailDTO.ViewDTO> viewDTOList = view.getDetailList().stream().filter(req -> cancelSoDetailIds.contains(req.getId())).collect(Collectors.toList());
+        List<SoDetailDTO.ViewDTO> detailList = view.getDetailList();
+        detailList.addAll(viewDTOList);
+        view.setDetailList(detailList);
 
         List<String> skuNos = view.getDetailList().stream().map(req -> req.getSkuNo()).collect(Collectors.toList());
         List<SkuVO> skuVOList = plmTaskFeign.listBySkuNoList(skuNos);
@@ -3927,16 +3914,6 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         List<ProductDetailEntity> parentSkuList = FeignQuery.create(ProductDetailEntity.class)
                 .in(ProductDetailEntity::getId, parentSkuId)
                 .list();
-
-        //查询变更单
-        List<String> soDetailIds = view.getDetailList().stream().map(req -> req.getId()).collect(Collectors.toList());
-        List<SoChangeDetailEntity> soChangeDetailEntities = soChangeDetailService.listBySoDetailIdList(soDetailIds);
-
-        //获取取消的订单
-        List<String> cancelSoDetailIds = soChangeDetailEntities.stream()
-                .filter(req -> SoChangeTypeEnum.TERMINATE.getCode().equals(req.getChangeType().getCode())
-                        || SoChangeTypeEnum.DELETE.getCode().equals(req.getChangeType().getCode())
-                ).map(req -> req.getSoDetailId()).collect(Collectors.toList());
 
         BigDecimal totalCanceledGoodsAmount = BigDecimal.ZERO;
         Integer totalCanceledGoodsQty = 0;

@@ -886,12 +886,9 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
                 DmpPushTaskEntity pushTaskEntity = syncKingdeeSoChangeService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_APPROVE.getCode());
                 pushTaskList.add(pushTaskEntity);
 
-                //推送数帝云的变更数据
-                SoInfoDTO.ViewDTO view = soInfoService.view(obj.getSoId());
-                viewList.add(view);
+
+                soInfoService.sdyFieldOrderHandler(obj.getSoId(), SyncOperateEnum.OPERATE_APPROVE.getCode(), "");
             });
-
-
         }
 
         //推送金蝶
@@ -899,12 +896,6 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
             @Override
             public void afterCommit() {
                 dmpMqFeign.sendTask(pushTaskList);
-
-                //同步数帝云
-                list.forEach(req -> {
-                    List<SoInfoDTO.ViewDTO> collect = viewList.stream().filter(obj -> obj.getId().equals(req.getSoId())).collect(Collectors.toList());
-                    collect.forEach(data -> soInfoService.sdyFieldOrderHandler(req.getSoId(), SyncOperateEnum.OPERATE_APPROVE.getCode(), data, ""));
-                });
             }
         });
         return Boolean.TRUE;

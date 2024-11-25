@@ -482,5 +482,5 @@ public interface SoInfoService extends SuperService<SoInfoEntity> {
      * @param soId
      * @param operateEnum
      */
-    void sdyFieldOrderHandler(String soId, String operateEnum, SoInfoDTO.ViewDTO viewDTO, String deliveryStatus);
+    void sdyFieldOrderHandler(String soId, String operateEnum, String deliveryStatus);
 }
