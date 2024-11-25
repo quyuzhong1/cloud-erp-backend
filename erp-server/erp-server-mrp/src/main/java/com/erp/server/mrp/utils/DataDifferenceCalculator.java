@@ -1,13 +1,9 @@
 package com.erp.server.mrp.utils;
 
 import com.erp.model.mrp.dto.CalcSalesInfoDimDTO;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
@@ -98,7 +94,7 @@ public class DataDifferenceCalculator {
         );
 
         List<BigDecimal> baseData = Arrays.asList(new BigDecimal("10"), new BigDecimal("20"), new BigDecimal("30"));
-        List<CalcSalesInfoDimDTO.LineDTO> result = findTopNSimilarData(calcList, baseData, "cosine", 2);
+        List<CalcSalesInfoDimDTO.LineDTO> result = findTopNSimilarData(calcList, baseData, "cosine");
 
         result.forEach(System.out::println);
     }
