@@ -54,12 +54,14 @@
         spld.usable_qty AS usableQty,
         spld.frozen_qty AS frozenQty,
         spld.diff_qty AS diffQty,
-        w.name AS warehouseName
+        w.name AS warehouseName,
+        wl.name as warehouseLocationName
         FROM stocktaking_profit_loss spl
         INNER JOIN stocktaking_profit_loss_detail spld
         ON spl.id=spld.main_id AND spld.is_deleted=FALSE
         LEFT JOIN warehouse w
         ON spld.warehouse_id=w.id AND w.is_deleted=FALSE
+        left join  warehouse_location wl on spld.warehouse_location = wl.code and spld.warehouse_id = wl.warehouse_id  and wl.is_deleted = false
         WHERE
             ${params.sqlMap.default}
             and  spl.is_deleted = false
@@ -95,12 +97,14 @@
         spld.usable_qty AS usableQty,
         spld.frozen_qty AS frozenQty,
         spld.diff_qty AS diffQty,
-        w.name AS warehouseName
+        w.name AS warehouseName,
+        wl.name as warehouseLocationName
         FROM stocktaking_profit_loss spl
         INNER JOIN stocktaking_profit_loss_detail spld
         ON spl.id=spld.main_id AND spld.is_deleted=FALSE
         LEFT JOIN warehouse w
         ON spld.warehouse_id=w.id AND w.is_deleted=FALSE
+        left join  warehouse_location wl on spld.warehouse_location = wl.code and spld.warehouse_id = wl.warehouse_id  and wl.is_deleted = false
         WHERE
             ${params.sqlMap.default}
             and  spl.is_deleted = false
