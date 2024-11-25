@@ -303,6 +303,9 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
             entity.setWarehouseId(dto.getWarehouseId());
             entity.setWarehouseName(warehouseEntity.getName());
         }
+        //币种
+        entity.setCurrency(dto.getCurrency());
+        entity.setCurrencySymbol(dto.getCurrencySymbol());
         this.save(entity);
         //操作日志
         operateLogService.addModuleOperateLog(String.format("新增了一个销售退货通知单【%s】", code), ModuleTypeEnum.SO_RETURN_NOTICE.getCode(), entity.getId(), "新增操作");
@@ -396,6 +399,9 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
             operateLogService.addModuleOperateLog(CharSequenceUtil.format("退货物流单号从{}修改为{}",entity.getReturnLogisticCode(),dto.getReturnLogisticCode()), ModuleTypeEnum.SO_RETURN_NOTICE.getCode(), entity.getId(), "编辑");
         }
         BeanUtil.copyProperties(dto,entity);
+        //币种
+        entity.setCurrency(dto.getCurrency());
+        entity.setCurrencySymbol(dto.getCurrencySymbol());
         //操作日志
         SoReturnNoticeEntity byId = this.getById(dto.getId());
         operateLogService.addModuleOperateLogByObj(byId, entity, ModuleTypeEnum.SO_RETURN_NOTICE.getCode(), entity.getId(), "", "");
@@ -476,6 +482,7 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
                     Integer actualQty = soOutstockDetailEntities.stream().filter(detail -> soDetailEntity.getMainId().equals(detail.getSoId()) && detail.getSkuId().equals(detailEntity.getSkuId()) && detail.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())).map(SoOutstockDetailEntity::getActualQty).reduce(MathUtil.ZERO, Integer::sum);
                     detailView.setDeliveryQty(actualQty);
                 }
+                viewDTO.setExchangeRate(detailEntity.getExchangeRate());
             }
             detailViewDTOS.add(detailView);
         }

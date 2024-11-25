@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.DecimalMin;
 import javax.validation.constraints.NotNull;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -217,6 +218,35 @@ public class SoReturnNoticeDTO {
          * 类型
          */
         private String type;
+        /**
+         * 比重
+         */
+        private String currency;
+
+        /**
+         * 币种符号
+         */
+        private String currencySymbol;
+        /**
+         *退货金额
+         */
+        private BigDecimal returnAmount;
+        /**
+         *含税退货金额
+         */
+        private BigDecimal taxReturnAmount;
+        /**
+         *退货金额（本位币）
+         */
+        private BigDecimal returnAmountLocalCurrency;
+        /**
+         *含税退货金额（本位币）
+         */
+        private BigDecimal taxReturnAmountLocalCurrency;
+        /**
+         * 汇率
+         */
+        private BigDecimal exchangeRate;
     }
 
     /**
@@ -270,6 +300,20 @@ public class SoReturnNoticeDTO {
          * 明细信息
          */
         private List<SoReturnNoticeDetailDTO.Add> detailList;
+        /**
+         * 汇率
+         */
+        private BigDecimal exchangeRate;
+        /**
+         * 比重
+         */
+        private String currency;
+
+        /**
+         * 币种符号
+         */
+        private String currencySymbol;
+
     }
 
     /**
@@ -312,6 +356,19 @@ public class SoReturnNoticeDTO {
          * 明细信息
          */
         private List<SoReturnNoticeDetailDTO.Update> detailList;
+        /**
+         * 汇率
+         */
+        private BigDecimal exchangeRate;
+        /**
+         * 比重
+         */
+        private String currency;
+
+        /**
+         * 币种符号
+         */
+        private String currencySymbol;
     }
 
     /**
@@ -441,6 +498,19 @@ public class SoReturnNoticeDTO {
          * 明细信息
          */
         private List<SoReturnNoticeDetailDTO.View> detailList;
+        /**
+         * 汇率
+         */
+        private BigDecimal exchangeRate;
+        /**
+         * 比重
+         */
+        private String currency;
+
+        /**
+         * 币种符号
+         */
+        private String currencySymbol;
     }
 
     /**
