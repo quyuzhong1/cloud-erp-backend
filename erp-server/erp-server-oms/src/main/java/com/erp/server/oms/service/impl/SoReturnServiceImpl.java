@@ -29,7 +29,10 @@ import com.erp.model.dmp.entity.BiReturnOrderInfoEntity;
 import com.erp.model.dmp.entity.BiReturnOrderItemEntity;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.dmp.enums.PlatformEnum;
-import com.erp.model.oms.dto.*;
+import com.erp.model.oms.dto.SkuMappingDTO;
+import com.erp.model.oms.dto.SoInfoDTO;
+import com.erp.model.oms.dto.SoReturnDTO;
+import com.erp.model.oms.dto.SoReturnDetailDTO;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.BillTypeEnum;
 import com.erp.model.oms.enums.SoReturnChangeListTypeEnum;
@@ -40,6 +43,7 @@ import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.sys.dto.SysDepartmentUserNumberDTO;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.sys.entity.SysAccountingCompanyEntity;
+import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.ReturnReasonEnum;
@@ -68,6 +72,8 @@ import org.springframework.util.ObjectUtils;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.function.Function;
@@ -183,8 +189,12 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
                     obj.setDeliveryQty(actualQty);
                     obj.setUnDeliveryQty(soDetailEntity.getQty() - actualQty);
                     obj.setSalesAmount(soDetailEntity.getAmount());
-                    obj.setCurrency(soDetailEntity.getCurrency());
-                    obj.setCurrencySymbol(soDetailEntity.getCurrencySymbol());
+                    if(StringUtils.isBlank(obj.getCurrency())){
+                        obj.setCurrency(soDetailEntity.getCurrency());
+                    }
+                    if(StringUtils.isBlank(obj.getCurrencySymbol())){
+                        obj.setCurrencySymbol(soDetailEntity.getCurrencySymbol());
+                    }
                 }
                 obj.setUnit(productDetailEntity.getUnitName());
                 CustomerInfoEntity customerInfoEntity = customerInfoEntities.stream().filter(req -> req.getId().equals(obj.getCustomerId())).findFirst().orElse(new CustomerInfoEntity());
@@ -485,6 +495,29 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
         soReturnEntity.setSourceType(dto.getSourceType());
         soReturnEntity.setWarehouseId(dto.getWarehouseId());
         soReturnEntity.setBillDate(dto.getBillDate());
+
+        //币种，汇率，退货金额，含税退货金额，退货金额（本位币），含税退货金额（本位币）
+        List<SoReturnDetailDTO.Add> detailList = dto.getDetailList();
+        if(CollectionUtils.isNotEmpty(detailList)){
+            List<String> skuIds = detailList.stream().map(SoReturnDetailDTO.Add::getSkuId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
+            SoOutstockDTO.ListAmountParamDTO params = new SoOutstockDTO.ListAmountParamDTO();
+            params.setCustomerId(dto.getCustomerId());
+            params.setSkuIds(skuIds);
+            params.setReturnCreateDate(soReturnEntity.getCreateTime() == null ? LocalDate.now() : soReturnEntity.getCreateTime().toLocalDate());
+            List<SoOutstockDTO.AmountDTO> amountDTOS = soOutstockFeign.listAmountBySkuIds(params);
+            if(CollectionUtils.isNotEmpty(amountDTOS)){
+                //币种
+                soReturnEntity.setCurrency(amountDTOS.get(0).getCurrency());
+                soReturnEntity.setCurrencySymbol(amountDTOS.get(0).getCurrencySymbol());
+
+                detailList.forEach(detailDto -> {
+                    SoOutstockDTO.AmountDTO amountDTO = amountDTOS.stream().filter(v -> v.getSkuId().equals(detailDto.getSkuId())).findFirst().orElse(null);
+                    if(null != amountDTO){
+                        setAmoutDto(detailDto, amountDTO.getAmount(), amountDTO.getQty(), detailDto.getReturnQty(), amountDTO.getTaxAmount(), amountDTO.getExchangeRate());
+                    }
+                });
+            }
+        }
     }
 
     //生成销售退货单
@@ -520,7 +553,48 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
         soReturnEntity.setSourceType(dto.getSourceType());
         soReturnEntity.setWarehouseId(dto.getWarehouseId());
         soReturnEntity.setBillDate(dto.getBillDate());
+        //从销售订单
+        //币种，汇率，退货金额，含税退货金额，退货金额（本位币），含税退货金额（本位币）
+        List<SoDetailEntity> detailEntities = soDetailService.listBaseByMainId(soInfoEntity.getId());
+        List<SoReturnDetailDTO.Add> detailList = dto.getDetailList();
+        if(CollectionUtils.isNotEmpty(detailEntities) && CollectionUtils.isNotEmpty(detailList)){
+            detailList.forEach(detailDto -> {
+                SoDetailEntity soDetailEntity = detailEntities.stream().filter(v -> v.getId().equals(detailDto.getSourceDetailId())).findFirst().orElse(null);
+                if(null != soDetailEntity){
+                    setAmoutDto(detailDto, soDetailEntity.getAmount(), soDetailEntity.getQty(), detailDto.getReturnQty(), soDetailEntity.getTaxAmount(), soDetailEntity.getExchangeRate());
+                }
+            });
+        }
     }
+
+    private static void setAmoutDto(SoReturnDetailDTO.Add detailDto, BigDecimal amount, Integer qty, Integer returnQty, BigDecimal taxAmount, BigDecimal exchangeRate) {
+        //退货金额
+        BigDecimal returnAmount = amount
+                .divide(BigDecimal.valueOf(qty), 4, RoundingMode.DOWN)
+                .multiply(BigDecimal.valueOf(returnQty))
+                .stripTrailingZeros();
+        //含税退货金额
+        BigDecimal taxReturnAmount = taxAmount
+                .divide(BigDecimal.valueOf(qty), 4, RoundingMode.DOWN)
+                .multiply(BigDecimal.valueOf(returnQty))
+                .stripTrailingZeros();
+        //退货金额（本位币）
+        BigDecimal returnAmountLocalCurrency = returnAmount
+                .multiply(exchangeRate)
+                .setScale(4, RoundingMode.DOWN)
+                .stripTrailingZeros();
+        //含税退货金额（本位币）
+        BigDecimal taxReturnAmountLocalCurrency = taxReturnAmount
+                .multiply(exchangeRate)
+                .setScale(4, RoundingMode.DOWN)
+                .stripTrailingZeros();
+        detailDto.setReturnAmount(returnAmount);
+        detailDto.setTaxReturnAmount(taxReturnAmount);
+        detailDto.setReturnAmountLocalCurrency(returnAmountLocalCurrency);
+        detailDto.setTaxReturnAmountLocalCurrency(taxReturnAmountLocalCurrency);
+    }
+
+
 
     @Override
     public SoReturnDTO.View view(String id) {
@@ -734,16 +808,24 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
             pagingView.setInvalidStatusName(InvalidStatusEnum.getName(pagingView.getInvalidStatus()));
             pagingView.setTypeName(BillTypeEnum.getName(pagingView.getType()));
             ProductDetailEntity productDetailEntity = detailEntityList.stream().filter(entityClass -> entityClass.getId().equals(pagingView.getSkuId())).findFirst().orElse(new ProductDetailEntity());
-            SoDetailEntity soDetailEntity = soDetailEntities.stream().filter(detail -> detail.getId().equals(pagingView.getSourceDetailId())).findFirst().orElse(new SoDetailEntity());
+            if(StringUtils.isNotBlank(pagingView.getSourceDetailId())){
+                SoDetailEntity soDetailEntity = soDetailEntities.stream().filter(detail -> detail.getId().equals(pagingView.getSourceDetailId())).findFirst().orElse(new SoDetailEntity());
+                pagingView.setSalesQty(soDetailEntity.getQty());
+                Integer actualQty = soOutstockDetailEntities.stream().filter(detail -> soDetailEntity.getMainId().equals(detail.getSoId()) && detail.getSkuId().equals(pagingView.getSkuId()) && detail.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())).map(SoOutstockDetailEntity::getActualQty).reduce(MathUtil.ZERO, Integer::sum);
+                pagingView.setDeliveryQty(actualQty);
+                pagingView.setUnDeliveryQty(soDetailEntity.getQty() - actualQty);
+                pagingView.setSalesAmount(soDetailEntity.getAmount());
+                if(StringUtils.isBlank(pagingView.getCurrency())){
+                    pagingView.setCurrency(soDetailEntity.getCurrency());
+                }
+                if(StringUtils.isBlank(pagingView.getCurrencySymbol())){
+                    pagingView.setCurrencySymbol(soDetailEntity.getCurrencySymbol());
+                }
+            }
             pagingView.setProductName(productDetailEntity.getName());
-            pagingView.setSalesQty(soDetailEntity.getQty());
-            Integer actualQty = soOutstockDetailEntities.stream().filter(detail -> soDetailEntity.getMainId().equals(detail.getSoId()) && detail.getSkuId().equals(pagingView.getSkuId()) && detail.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())).map(SoOutstockDetailEntity::getActualQty).reduce(MathUtil.ZERO, Integer::sum);
-            pagingView.setDeliveryQty(actualQty);
-            pagingView.setUnDeliveryQty(soDetailEntity.getQty() - actualQty);
             pagingView.setUnit(productDetailEntity.getUnitName());
             CustomerInfoEntity customerInfoEntity = customerInfoEntities.stream().filter(req -> req.getId().equals(pagingView.getCustomerId())).findFirst().orElse(new CustomerInfoEntity());
             pagingView.setCustomerName(customerInfoEntity.getName());
-            pagingView.setSalesAmount(soDetailEntity.getAmount());
         }
         return new PagingVO<>(page);
     }

@@ -171,6 +171,26 @@ public class SoReturnDTO {
          * 创建时间
          */
         private LocalDateTime createTime;
+        /**
+         * 汇率
+         */
+        private BigDecimal exchangeRate;
+        /**
+         *退货金额
+         */
+        private BigDecimal returnAmount;
+        /**
+         *含税退货金额
+         */
+        private BigDecimal taxReturnAmount;
+        /**
+         *退货金额（本位币）
+         */
+        private BigDecimal returnAmountLocalCurrency;
+        /**
+         *含税退货金额（本位币）
+         */
+        private BigDecimal taxReturnAmountLocalCurrency;
     }
 
     /**
