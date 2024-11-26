@@ -1838,7 +1838,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                 shudiyunB2cOrderDTO.setLogistic_company_code("空");
             }
             if (CharSequenceUtil.isBlank(entity.getReturnLogisticCode())) {
-                shudiyunB2cOrderDTO.setLogistic_company_code("【未知】");
+                shudiyunB2cOrderDTO.setDomestic_return_waybill_number("【未知】");
             } else {
                 shudiyunB2cOrderDTO.setDomestic_return_waybill_number(entity.getReturnLogisticCode());
             }
