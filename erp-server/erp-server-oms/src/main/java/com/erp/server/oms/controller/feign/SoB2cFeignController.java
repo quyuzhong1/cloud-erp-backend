@@ -24,6 +24,7 @@ import com.erp.server.oms.service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.ibatis.annotations.Param;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -848,5 +849,15 @@ public class SoB2cFeignController extends BaseController {
     @GetMapping("/listAllVirtualSoB2cDetail")
     public List<ReportOrderDataDTO.ViewDTO> listAllVirtualSoB2cDetail(){
         return soB2cDetailService.listAllVirtualSoB2cDetail();
+    }
+
+    /**
+     * 同步速递云线上订单/配货单
+     * @param soId
+     * @param operateEnum
+     */
+    @GetMapping("/shudiyunFieldHandler")
+    public void shudiyunFieldHandler(@Param("soId") String soId, @Param("operateEnum") String operateEnum) {
+        soB2cService.shudiyunFieldHandler(soId, operateEnum);
     }
 }

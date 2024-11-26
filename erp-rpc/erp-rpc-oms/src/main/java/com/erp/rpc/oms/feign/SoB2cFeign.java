@@ -16,6 +16,7 @@ import com.erp.model.tms.dto.TransferDeclareGenerationSettingDTO;
 import com.erp.model.wms.dto.ReportOrderDataDTO;
 import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.model.wms.dto.WmsDataCompareTaskDTO;
+import org.apache.ibatis.annotations.Param;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -640,4 +641,12 @@ public interface SoB2cFeign {
      */
     @GetMapping("feign/soB2c/listAllVirtualSoB2cDetail")
     List<ReportOrderDataDTO.ViewDTO> listAllVirtualSoB2cDetail();
+
+    /**
+     * 同步速递云线上订单/配货单
+     * @param soId
+     * @param operateEnum
+     */
+    @GetMapping("/shudiyunFieldHandler")
+    void shudiyunFieldHandler(@Param("soId") String soId, @Param("operateEnum") String operateEnum);
 }

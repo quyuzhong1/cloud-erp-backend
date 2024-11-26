@@ -5576,14 +5576,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
             resultDTO.setSoB2cEntity(entity);
 
-            //事务结束后回调执行的业务
-            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
-                @Override
-                public void afterCommit() {
-                    //同步数帝云
-                    soB2cService.shudiyunFieldHandler(entity.getId(), SyncOperateEnum.OPERATE_UPDATE.getCode());
-                }
-            });
+            //同步数帝云
+            soB2cService.shudiyunFieldHandler(entity.getId(), SyncOperateEnum.OPERATE_UPDATE.getCode());
 
             return resultDTO;
         }
@@ -9279,7 +9273,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
      * @param soId
      * @param operateEnum
      */
-    private void shudiyunFieldHandler(String soId, String operateEnum) {
+    public void shudiyunFieldHandler(String soId, String operateEnum) {
         DateTimeFormatter localDateTime = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
         SoB2cEntity soB2cEntity = this.getById(soId);

@@ -1332,10 +1332,10 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
                 shudiyunB2cOrderDTO.setLogistic_company(supplierName);
             }
 
-            if (channelEntity != null) {
+            if (channelEntity != null && CharSequenceUtil.isNotBlank(channelEntity.getMainId())) {
                 shudiyunB2cOrderDTO.setLogistic_company_code(channelEntity.getMainId());
             } else {
-                shudiyunB2cOrderDTO.setLogistic_company("无");
+                shudiyunB2cOrderDTO.setLogistic_company_code("无");
             }
 
             shudiyunB2cOrderDTO.setWaybill_number(entity.getTransportNo());

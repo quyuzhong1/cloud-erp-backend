@@ -268,9 +268,9 @@ public class DmpOutputSdyOrderHandler extends DmpOutputTaskHandler {
                     shudiyunB2cOrderDTO.setSku_name(dmpSoDetailEntity.getSkuName());
                     shudiyunB2cOrderDTO.setSpec_no(dmpSoDetailEntity.getPlatformSpuNo());
                     shudiyunB2cOrderDTO.setSpec_name(dmpSoDetailEntity.getSpecifics());
-
-
                 }
+
+                shudiyunB2cOrderDTO.setGoods_status(wdtItemStatus(dmpSoInfoEntity.getOrderStatus()));
             } else {
                 String shopId = "";
                 if (CharSequenceUtil.isNotBlank(dmpSoInfoEntity.getNextLevelId())) {
@@ -318,6 +318,16 @@ public class DmpOutputSdyOrderHandler extends DmpOutputTaskHandler {
                 shudiyunB2cOrderDTO.setSku_name("");
                 shudiyunB2cOrderDTO.setSpec_no(dmpSoDetailEntity.getPlatformSpuNo());
                 shudiyunB2cOrderDTO.setSpec_name(dmpSoDetailEntity.getSpecifics());
+
+                shudiyunB2cOrderDTO.setGoods_status("未发货");
+                // 商品状态
+                if (SoB2cBillStatusEnum.ENUM_SHIPPED.getCode().equals(dmpSoInfoEntity.getDeliveryStatus()) || SoB2cBillStatusEnum.ENUM_SHIPPED.getCode().equals(dmpSoInfoEntity.getOrderStatus())) {
+                    shudiyunB2cOrderDTO.setGoods_status("已发货");
+                }
+
+                if (dmpSoInfoEntity.getIsCancel() && dmpSoInfoEntity.getIsCancel() != null) {
+                    shudiyunB2cOrderDTO.setGoods_status("已取消");
+                }
             }
 
 
@@ -339,6 +349,7 @@ public class DmpOutputSdyOrderHandler extends DmpOutputTaskHandler {
             }
 
             shudiyunB2cOrderDTO.setRemark(dmpSoDetailEntity.getItemRemark());
+
             shudiyunB2cOrderDTO.setGoods_status("未发货");
             // 商品状态
             if (SoB2cBillStatusEnum.ENUM_SHIPPED.getCode().equals(dmpSoInfoEntity.getDeliveryStatus()) || SoB2cBillStatusEnum.ENUM_SHIPPED.getCode().equals(dmpSoInfoEntity.getOrderStatus())) {
@@ -384,7 +395,20 @@ public class DmpOutputSdyOrderHandler extends DmpOutputTaskHandler {
 
         }
         return shudiyunB2cOrderDTOList;
+    }
 
+    private String wdtItemStatus(String status) {
+        if ("95".equals(status)) {
+            return "已发货";
+        } else if ("96".equals(status)) {
+            return "成本确认（待录入计划成本，订单结算时有货品无计划成本）";
+        } else if ("101".equals(status)) {
+            return "已发货";
+        } else if ("5".equals(status)) {
+            return "已取消";
+        } else {
+            return "未发货";
+        }
     }
 
     private String wdtStatusHandler(String status) {
@@ -436,4 +460,6 @@ public class DmpOutputSdyOrderHandler extends DmpOutputTaskHandler {
             return "已完成";
         }
     }
+
+
 }

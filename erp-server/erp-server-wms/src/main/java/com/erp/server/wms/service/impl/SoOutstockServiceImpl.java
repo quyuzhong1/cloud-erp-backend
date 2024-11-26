@@ -782,12 +782,18 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             this.syncToWdt(entity,SyncOperateEnum.OPERATE_APPROVE);
             //推送数帝云出库单
             sdyFieldHandler(entity,SyncOperateEnum.OPERATE_APPROVE.getCode());
-            //更新推送数帝云订单信息
-            SoInfoToSdyDTO soInfoToSdyDTO = new SoInfoToSdyDTO();
-            soInfoToSdyDTO.setSoId(entity.getSoId());
-            soInfoToSdyDTO.setOperateEnum(SyncOperateEnum.OPERATE_APPROVE.getCode());
-            soInfoToSdyDTO.setDeliveryStatus(DeliveryStatusEnum.COMPLETE_SHIPMENT.getCode());
-            soInfoFeign.sdyFieldOrderHandler(soInfoToSdyDTO);
+
+            if (OrderTypeEnum.B2B.getCode().equals(entity.getOrderType())) {
+                //更新推送数帝云订单信息
+                SoInfoToSdyDTO soInfoToSdyDTO = new SoInfoToSdyDTO();
+                soInfoToSdyDTO.setSoId(entity.getSoId());
+                soInfoToSdyDTO.setOperateEnum(SyncOperateEnum.OPERATE_APPROVE.getCode());
+                soInfoToSdyDTO.setDeliveryStatus(DeliveryStatusEnum.COMPLETE_SHIPMENT.getCode());
+                soInfoFeign.sdyFieldOrderHandler(soInfoToSdyDTO);
+            } else {
+                soB2cFeign.shudiyunFieldHandler(entity.getSoId(), SyncOperateEnum.OPERATE_APPROVE.getCode());
+            }
+
 
         }
         if (!SourceTypeEnum.SAL_OUTSTOCK.getCode().equals(entity.getSourceType())) {
