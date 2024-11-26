@@ -111,7 +111,7 @@ public class AliexpressDeliveryDTO implements Serializable {
          * 平台发货状态
          * AliexpressDeliveryOrderStatusEnum
          */
-        private String orderStatus;
+        private String platformDeliveryStatus;
 
         /**
         * 销售单id
