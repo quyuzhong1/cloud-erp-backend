@@ -208,20 +208,10 @@ public abstract class WebUtils {
                     SSLContext ctx = SSLContext.getInstance("TLS");
                     ctx.init(null, new TrustManager[] { new TrustAllTrustManager() }, new SecureRandom());
                     connHttps.setSSLSocketFactory(ctx.getSocketFactory());
-                    connHttps.setHostnameVerifier(new HostnameVerifier() {
-                        public boolean verify(String hostname, SSLSession session) {
-                            return HttpsURLConnection.getDefaultHostnameVerifier().verify(hostname, session);
-                        }
-                    });
+
                 } catch (Exception e) {
                     throw new IOException(e.toString());
                 }
-            } else if (ignoreHostCheck) {
-                connHttps.setHostnameVerifier(new HostnameVerifier() {
-                    public boolean verify(String hostname, SSLSession session) {
-                        return HttpsURLConnection.getDefaultHostnameVerifier().verify(hostname, session);
-                    }
-                });
             }
             conn = connHttps;
         }
