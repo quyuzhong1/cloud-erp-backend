@@ -742,7 +742,7 @@ public class CalcSalesInfoDimServiceImpl extends SuperServiceImpl<CalcSalesInfoD
             }
             CalcSalesInfoEstimateEntity entity = new CalcSalesInfoEstimateEntity();
             entity.setCalcSalesInfoDimId(dto.getCalcSalesInfoDimId());
-            entity.setQty(saleQty);
+            entity.setQty(saleQty.setScale(2, RoundingMode.HALF_UP));
             entity.setDate(startCalcDate);
             entity.setMonth(startCalcDate.format(DateTimeFormatter.ofPattern("yyyy-MM")));
             entity.setType(formulaResult.getType());
@@ -791,7 +791,7 @@ public class CalcSalesInfoDimServiceImpl extends SuperServiceImpl<CalcSalesInfoD
         LocalDate current = startCalcDate.withDayOfMonth(1);
         while (!current.isAfter(endDate)) {
             YearMonth currentMonth = YearMonth.from(current);
-            LocalDate calcStartDate = currentMonth.equals(YearMonth.from(endDate)) ? startCalcDate : current;
+            LocalDate calcStartDate = currentMonth.equals(YearMonth.from(startCalcDate)) ? startCalcDate : current;
             LocalDate calcEndDate = currentMonth.equals(YearMonth.from(endDate)) ? endDate : current.with(TemporalAdjusters.lastDayOfMonth());
             BigDecimal followingSales = salesEstimates.stream()
                     .filter(v -> !calcStartDate.isAfter(v.getDate()) && !calcEndDate.isBefore(v.getDate()))

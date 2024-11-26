@@ -93,6 +93,7 @@ public class CfgRuleCalcServiceImpl extends SuperServiceImpl<CfgRuleCalcMapper, 
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BatchResultDTO add(CfgRuleCalcDTO.AddDTO addDTO) {
+        verifyDate(addDTO);
         List<SkuVO> skuVOS = plmTaskFeign.listSkuProductByIds(addDTO.getSkuIds());
         Map<String, String> skuMap = skuVOS.stream()
                 .collect(Collectors.toMap(SkuVO::getSkuId, SkuVO::getSkuNo, (o1, o2) -> o1));
@@ -133,6 +134,19 @@ public class CfgRuleCalcServiceImpl extends SuperServiceImpl<CfgRuleCalcMapper, 
         calcSalesInfoDimService.saveBatch(calcSalesInfoDimList);
         calcSalesInfoDimService.calcSalesInfo(calcResultList);
         return BatchResultDTO.success(entity.getId(), code);
+    }
+
+    /**
+     * 校验日期
+     * @param addDTO 参数
+     */
+    private void verifyDate(CfgRuleCalcDTO.AddDTO addDTO) {
+        if (addDTO.getStartCalcDate().isAfter(LocalDate.now())) {
+            throw new ServiceException(ApiError.ERROR_VERIFY_START_CALC_DATE);
+        }
+        if (addDTO.getStartCalcDate().isAfter(addDTO.getEndCalcDate())) {
+            throw new ServiceException(ApiError.ERROR__VERIFY_END_CALC_DATE);
+        }
     }
 
     private String exportErrorExcel(List<CfgRuleCalcDTO.HistorySaleImportDTO> errorList) {
