@@ -542,6 +542,9 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
                 if ("处理人".equals(s)) {
                     noticeUserIdList.add(loginUser.getUid());
                 }
+                if (s.equals("审核人")) {
+                    noticeUserIdList.add(loginUser.getUid());
+                }
             }
         }
         //抄送人员
