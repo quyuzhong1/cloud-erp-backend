@@ -730,6 +730,8 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
                 detailAddDTO.setTaxReturnAmount(view.getTaxReturnAmount());
                 detailAddDTO.setReturnAmountLocalCurrency(this.calLocalCurrency(view.getExchangeRate(), view.getReturnAmount()));
                 detailAddDTO.setTaxReturnAmountLocalCurrency(this.calLocalCurrency(view.getExchangeRate(), view.getTaxReturnAmount()));
+                dto.setCurrency(view.getCurrency());
+                dto.setCurrencySymbol(view.getCurrencySymbol());
                 detailList.add(detailAddDTO);
             }
             dto.setDetailList(detailList);
@@ -783,7 +785,6 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
 
         for (SoReturnNoticeDTO.GenerateSoReturnReceiveView view : list) {
             Integer receiveQty = soReturnReceiveDetailEntities.stream().filter(detail -> view.getId().equals(detail.getNoticeDetailId()) && detail.getSkuId().equals(view.getSkuId())).map(SoReturnReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
-
             view.setReceiveQty(view.getReturnQty() - receiveQty);
             //产品sku信息
             ProductDetailEntity productDetailEntity = productDetailEntityList.stream().filter(entityClass -> entityClass.getId().equals(view.getSkuId())).findFirst().orElse(new ProductDetailEntity());
