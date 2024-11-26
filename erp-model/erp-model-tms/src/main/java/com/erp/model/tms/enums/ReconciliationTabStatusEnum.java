@@ -11,16 +11,13 @@ import org.apache.commons.lang3.StringUtils;
  * @description: 对账状态枚举
  * @date 2023/11/13 15:38
  */
-public enum ReconciliationStatusEnum implements EnumMessage {
+public enum ReconciliationTabStatusEnum implements EnumMessage {
 
 
-    TO_BE_GENERATED("toBeGenerated","待生成"),
-    TO_BE_CONFIRM("toBeConfirm","待确认"),
-    CONFIRMED("confirmed","账单确认"),
-    RECONCILED("Reconciled","已对账"),
-    INVALID("invalid","已作废"),
-    DIFF_CONFIRM("diffConfirm", "差异确认"),
-    ESTIMATE_CONFIRM("estimateConfirm", "暂估确认"),
+	PAY_CONFIRM("payConfirm","付款待确认"),
+	PAY_CONFIRMED("payConfirmed", "付款已确认"),
+	REFUND_CONFIRM("refundConfirm","退款待确认"),
+	REFUND_CONFIRMED("refundConfirmed","退款已确认"),
     ;
 
     /**
@@ -34,7 +31,7 @@ public enum ReconciliationStatusEnum implements EnumMessage {
      */
     private String name;
 
-    ReconciliationStatusEnum(String code, String name){
+    ReconciliationTabStatusEnum(String code, String name){
         this.code = code;
         this.name = name;
     }
@@ -53,7 +50,7 @@ public enum ReconciliationStatusEnum implements EnumMessage {
         if (StringUtils.isBlank(code)) {
             return "";
         }
-        for (ReconciliationStatusEnum typeEnums : ReconciliationStatusEnum.values()) {
+        for (ReconciliationTabStatusEnum typeEnums : ReconciliationTabStatusEnum.values()) {
             if (code.equals(typeEnums.getCode())) {
                 return typeEnums.getName();
             }

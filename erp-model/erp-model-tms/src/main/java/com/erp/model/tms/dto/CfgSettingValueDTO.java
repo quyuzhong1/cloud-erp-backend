@@ -5,6 +5,8 @@ import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.Digits;
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
+
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.List;
@@ -130,6 +132,40 @@ public class CfgSettingValueDTO implements Serializable {
          * 头程分摊日期
          */
         private Integer firstMileAllocationDate;
+        
+        /**
+         * 小包分摊类型，/wms/dict/drop/down?type=reconciliationType
+         */
+        @NotBlank(message = "小包分摊类型不能为空")
+        private String packageAllocationType;
+        
+        /**
+         * 小包分摊上月开始日期
+         */
+        private Integer packageBeginAllocationDate;
+        
+        /**
+         * 小包分摊生成日期
+         */
+        @NotNull(message = "小包分摊生成日期")
+        private Integer packageAllocationDate;
+        
+        /**
+         * 中转分摊类型，/wms/dict/drop/down?type=reconciliationType
+         */
+        @NotBlank(message = "中转分摊类型不能为空")
+        private String transferAllocationType;
+        
+        /**
+         * 中转分摊上月开始日期
+         */
+        private Integer transferBeginAllocationDate;
+        
+        /**
+         * 中转分摊生成日期
+         */
+        @NotNull(message = "中转分摊生成日期")
+        private Integer transferAllocationDate;
 
     }
 
@@ -211,7 +247,25 @@ public class CfgSettingValueDTO implements Serializable {
         private String packageShippingCost;
         //费用分摊-小包-关税费用
         private String packageTariffFee;
+        /**
+         * 费用分摊-小包-可抵扣税
+         */
+        private String packageDeductibleTax;
         //费用分摊-小包-其他费用
         private String packageOtherFee;
+        
+        /**
+         * 费用分摊-小包中转-运费
+         * http://172.16.100.11:3002/project/128/interface/api/25522   key=packageCostAllocation
+         */
+        private String transferShippingCost;
+        /**
+         * 费用分摊-小包中转-关税费用
+         */
+        private String transferTariffFee;
+        /**
+         * 费用分摊-小包中转-其他费用
+         */
+        private String transferOtherFee;
     }
 }

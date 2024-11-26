@@ -1,6 +1,7 @@
 package com.erp.server.tms.service.impl;
 
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.alibaba.excel.EasyExcel;
@@ -18,6 +19,7 @@ import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
+import com.common.business.wrapper.FeignQuery;
 import com.common.core.enums.ApiError;
 import com.common.core.enums.CurrencyEnum;
 import com.common.core.excel.ExcelPrintUtils;
@@ -27,6 +29,7 @@ import com.common.core.utils.FieldValidUtil;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.oms.entity.ShopInfoEntity;
+import com.erp.model.oms.entity.SoB2cLogisticsEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.tms.dto.DictBasicDTO;
@@ -185,12 +188,8 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
     @Override
     public List<LogisticsBillCostDTO.TabListDTO> tabList(PermissionsDTO dto, DictCostAttributionEnum attribution) {
         List<LogisticsBillCostDTO.TabListDTO> resultList = new ArrayList<>();
-        ReconciliationStatusEnum[] values = ReconciliationStatusEnum.values();
-        for (ReconciliationStatusEnum statusEnum : values) {
-            if (!ReconciliationStatusEnum.TO_BE_CONFIRM.getCode().equals(statusEnum.getCode())
-                && !ReconciliationStatusEnum.CONFIRMED.getCode().equals(statusEnum.getCode())) {
-                continue;
-            }
+        ReconciliationTabStatusEnum[] values = ReconciliationTabStatusEnum.values();
+        for (ReconciliationTabStatusEnum statusEnum : values) {
             LogisticsBillCostDTO.PagingParamDTO pagingParamDTO = new LogisticsBillCostDTO.PagingParamDTO();
             pagingParamDTO.setPermissionSql(dto.getPermissionSql());
             LogisticsBillCostDTO.TabListDTO resultDTO = new LogisticsBillCostDTO.TabListDTO();
@@ -469,6 +468,15 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
                 entity.setLogisticsBillDetailId(logisticsBillDetailEntityList.get(0).getId());
             }
         }
+        
+        String sourceId = logisticsBillEntity.getSourceId();
+        if(StringUtils.isNotBlank(sourceId)) {
+        	List<SoB2cLogisticsEntity> soB2cLogisticsList = FeignQuery.create(SoB2cLogisticsEntity.class).eq(SoB2cLogisticsEntity::getMainId, sourceId).list();
+        	if(CollUtil.isNotEmpty(soB2cLogisticsList)) {
+        		SoB2cLogisticsEntity soB2cLogisticsEntity = soB2cLogisticsList.get(0);
+				entity.setVolume(soB2cLogisticsEntity.getLength() + "*" + soB2cLogisticsEntity.getWidth() + "*" + soB2cLogisticsEntity.getHeight());
+        	}
+        }
     }
 
 
@@ -493,7 +501,17 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         List<String> mainIdList = records.stream().map(LogisticsBillCostDTO.ListDTO::getId).collect(Collectors.toList());
         List<TmsCostDetailDTO.CostViewDTO> costList = tmsCostDetailService.listCostByMainIdList(mainIdList);
 
+        Map<String, String> payStatusNameMap = new HashMap<>();
+        payStatusNameMap.put("pay_payment", "待付款");
+        payStatusNameMap.put("pay_paid", "已付款");
+        payStatusNameMap.put("refund_payment", "待退款");
+        payStatusNameMap.put("refund_paid", "已退款");
         for (LogisticsBillCostDTO.ListDTO listDTO : records) {
+        	String payType = listDTO.getPayType();
+        	String payStatus = listDTO.getPayStatus();
+        	if(StringUtils.isNotBlank(payType) && StringUtils.isNotBlank(payStatus)) {
+        		listDTO.setPayStatusName(payStatusNameMap.get(payType + "_" + payStatus));
+        	}
             listDTO.setOrderTypeName(OrderTypeEnum.getName(listDTO.getOrderType()));
             listDTO.setSourceTypeName(SourceTypeEnum.getName(listDTO.getSourceType()));
             listDTO.setReconciliationStatusName(ReconciliationStatusEnum.getName(listDTO.getReconciliationStatus()));
@@ -527,6 +545,13 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
                             && CharSequenceUtil.equals(obj.getType(), LogisticsBillCostTypeEnum.ESTIMATED.getCode()))
                     .map(TmsCostDetailDTO.CostViewDTO::getCostValue).reduce(BigDecimal.ZERO, BigDecimal::add);
             listDTO.setEstimatedOtherCost(estimatedOtherCost);
+            
+            //预估可抵扣税金
+            BigDecimal estimatedDeductibleTax = costList.stream().filter(obj -> CharSequenceUtil.equals(obj.getMainId(),listDTO.getId())
+            		&& CharSequenceUtil.equals(DictCostCategoryEnum.DEDUCTIBLE_TAX.getCode(), obj.getDictCostCategory())
+            		&& CharSequenceUtil.equals(obj.getType(), LogisticsBillCostTypeEnum.ESTIMATED.getCode()))
+            		.map(TmsCostDetailDTO.CostViewDTO::getCostValue).reduce(BigDecimal.ZERO, BigDecimal::add);
+            listDTO.setEstimatedDeductibleTax(estimatedDeductibleTax);
 
             //实际运费
             BigDecimal actualShippingCost = costList.stream().filter(obj -> CharSequenceUtil.equals(obj.getMainId(),listDTO.getId())
@@ -551,6 +576,14 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
                             && CharSequenceUtil.equals(obj.getType(), LogisticsBillCostTypeEnum.ACTUAL.getCode()))
                     .map(TmsCostDetailDTO.CostViewDTO::getCostValue).reduce(BigDecimal.ZERO, BigDecimal::add);
             listDTO.setActualOtherCost(actualOtherCost);
+            
+            //实际可抵扣税金
+            BigDecimal actualDeductibleTax = costList.stream().filter(obj -> CharSequenceUtil.equals(obj.getMainId(),listDTO.getId())
+            		&& CharSequenceUtil.equals(DictCostCategoryEnum.DEDUCTIBLE_TAX.getCode(), obj.getDictCostCategory())
+            		&& CharSequenceUtil.equals(obj.getType(), LogisticsBillCostTypeEnum.ACTUAL.getCode()))
+            		.map(TmsCostDetailDTO.CostViewDTO::getCostValue).reduce(BigDecimal.ZERO, BigDecimal::add);
+            listDTO.setActualDeductibleTax(actualDeductibleTax);
+            
             //费用规则
             listDTO.setFeeRuleName(ShippingFeeRuleEnum.getName(listDTO.getFeeRule()));
         }

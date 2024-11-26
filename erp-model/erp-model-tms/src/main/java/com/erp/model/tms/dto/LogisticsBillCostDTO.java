@@ -1,7 +1,11 @@
 package com.erp.model.tms.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
+import com.common.business.annotation.Dict;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
+import com.erp.model.tms.enums.LogisticsBillCostCheckStatusEnum;
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -261,6 +265,46 @@ public class LogisticsBillCostDTO implements Serializable {
          * 账单确认时间【可排序】
          */
         private LocalDateTime confirmTime;
+        
+        /**
+         * 体积
+         */
+        private String volume;
+
+        /**
+         * 退付款类型，pay=付款，refund=退款
+         */
+        private String payType;
+
+        /**
+         * 支付状态，payment=未支付，paid=已支付
+         */
+        private String payStatus;
+        /**
+         * 支付状态名称
+         */
+        private String payStatusName;
+
+        /**
+         *付款/退款时间 
+         */
+        private LocalDateTime payTime;
+
+        /**
+         * 核算状态，checking=待生成，checked=已生成，confirm=已确认，名称为 checkStatusName 字段
+         */
+        @Dict(enumClass = LogisticsBillCostCheckStatusEnum.class)
+        private String checkStatus;
+        
+        /**
+         * 预估可抵扣税金
+         */
+        private BigDecimal estimatedDeductibleTax;
+
+        /**
+         * 实际可抵扣税金
+         */
+        private BigDecimal actualDeductibleTax;
     }
 
     /**

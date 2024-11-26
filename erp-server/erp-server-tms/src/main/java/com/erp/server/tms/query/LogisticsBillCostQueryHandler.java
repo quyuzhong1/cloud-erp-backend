@@ -1,13 +1,17 @@
 package com.erp.server.tms.query;
 
-import cn.hutool.core.text.CharSequenceUtil;
-import cn.hutool.core.util.ObjectUtil;
+import java.util.Arrays;
+import java.util.Collections;
+
+import org.springframework.stereotype.Component;
+
 import com.common.business.query.AbstractQueryHandler;
 import com.erp.model.tms.enums.DictCostAttributionEnum;
 import com.erp.model.tms.enums.ReconciliationStatusEnum;
-import org.springframework.stereotype.Component;
+import com.erp.model.tms.enums.ReconciliationTabStatusEnum;
 
-import java.util.Collections;
+import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.core.util.ObjectUtil;
 
 @Component
 public class LogisticsBillCostQueryHandler extends AbstractQueryHandler {
@@ -42,13 +46,23 @@ public class LogisticsBillCostQueryHandler extends AbstractQueryHandler {
         super.buildDefaultDTO("lbc.type", DictCostAttributionEnum.SELF_DELIVER.getCode());
 
         // 待确认
-        if (ReconciliationStatusEnum.TO_BE_CONFIRM.getCode().equals(value)) {
+        if (ReconciliationTabStatusEnum.PAY_CONFIRM.getCode().equals(value)) {
             super.buildDefaultDTO("lbc.reconciliation_status", Collections.singletonList(ReconciliationStatusEnum.TO_BE_CONFIRM.getCode()));
+            super.buildDefaultDTO("lbc.pay_type", Collections.singletonList("pay"));
         }
-        // 已确认
-        if (ReconciliationStatusEnum.CONFIRMED.getCode().equals(value)) {
-            super.buildDefaultDTO("lbc.reconciliation_status", Collections.singletonList(ReconciliationStatusEnum.CONFIRMED.getCode()));
+        if (ReconciliationTabStatusEnum.PAY_CONFIRMED.getCode().equals(value)) {
+        	super.buildDefaultDTO("lbc.reconciliation_status", Arrays.asList(ReconciliationStatusEnum.CONFIRMED.getCode() , ReconciliationStatusEnum.ESTIMATE_CONFIRM.getCode()));
+        	super.buildDefaultDTO("lbc.pay_type", Collections.singletonList("pay"));
         }
+        if (ReconciliationTabStatusEnum.REFUND_CONFIRM.getCode().equals(value)) {
+        	super.buildDefaultDTO("lbc.reconciliation_status", Collections.singletonList(ReconciliationStatusEnum.TO_BE_CONFIRM.getCode()));
+        	super.buildDefaultDTO("lbc.pay_type", Collections.singletonList("refund"));
+        }
+        if (ReconciliationTabStatusEnum.REFUND_CONFIRMED.getCode().equals(value)) {
+        	super.buildDefaultDTO("lbc.reconciliation_status", Arrays.asList(ReconciliationStatusEnum.CONFIRMED.getCode() , ReconciliationStatusEnum.ESTIMATE_CONFIRM.getCode()));
+        	super.buildDefaultDTO("lbc.pay_type", Collections.singletonList("refund"));
+        }
+        
         return super.getSplicingSQL();
     }
 }
