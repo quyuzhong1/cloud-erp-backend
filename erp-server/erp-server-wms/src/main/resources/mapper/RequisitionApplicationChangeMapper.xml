@@ -108,6 +108,7 @@
     <select id="approveView" resultType="com.erp.model.wms.dto.RequisitionApplicationChangeDTO$ApproveView">
         SELECT rac.id,
                rac.approve_status as approveStatus,
+               ra.code as requisitionCode,
                rac.code,
                racd.id as detailId,
                racd.bom_version,

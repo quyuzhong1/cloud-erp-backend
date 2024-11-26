@@ -372,6 +372,10 @@ public class RequisitionApplicationChangeDTO implements Serializable {
          */
         private String code;
         /**
+         * 要货申请code
+         */
+        private String requisitionCode;
+        /**
          * 状态
          */
         private String approveStatus;
