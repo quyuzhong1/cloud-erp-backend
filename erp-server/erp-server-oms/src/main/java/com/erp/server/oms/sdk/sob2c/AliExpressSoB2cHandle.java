@@ -107,6 +107,13 @@ public class AliExpressSoB2cHandle extends AbstractSoB2cHandle {
 
     @Override
     public Boolean handleSoOutStock(PlatformOrderDTO dto, SoB2cDTO.PullOrderResultDTO resultDTO, SoB2cEntity mainEntity) {
+        //速卖通 已发货/已签收创建销售出库单
+        List<String> deliveryStatusNameList = new ArrayList<>();
+        deliveryStatusNameList.add(AliexpressDeliveryOrderStatusEnum.SHIPPED.getName());
+        deliveryStatusNameList.add(AliexpressDeliveryOrderStatusEnum.SIGNED.getName());
+        if (!deliveryStatusNameList.contains(dto.getDeliveryStatusName())){
+            return Boolean.TRUE;
+        }
         //平台仓订单
         Boolean hasPlatformWarehouse = mainEntity.hasPlatformWarehouseOrder();
         // 非平台仓由发货单生成销售出库单--不用实现

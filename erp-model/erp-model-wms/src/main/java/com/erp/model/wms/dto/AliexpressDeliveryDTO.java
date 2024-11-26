@@ -108,7 +108,8 @@ public class AliexpressDeliveryDTO implements Serializable {
         @Size(max = 64,message = "平台订单号最大长度不能超过64位")
         private String platformCode;
         /**
-         * 订单发货状态（中文）
+         * 平台发货状态
+         * AliexpressDeliveryOrderStatusEnum
          */
         private String orderStatus;
 

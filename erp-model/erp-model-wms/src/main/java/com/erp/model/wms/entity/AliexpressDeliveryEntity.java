@@ -69,6 +69,12 @@ public class AliexpressDeliveryEntity extends BaseEntity<AliexpressDeliveryEntit
     */
     @TableField("warehouse_name")
     private String warehouseName;
+    /**
+     * 平台发货状态
+     * AliexpressDeliveryOrderStatusEnum
+     */
+    @TableField("order_status")
+    private String orderStatus;
 
 
     public static final String PLATFORM_CODE = "platform_code";
