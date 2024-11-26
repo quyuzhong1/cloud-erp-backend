@@ -204,6 +204,18 @@ public class DmpSoReturnInfoEntity extends BaseEntity<DmpSoReturnInfoEntity> {
     */
     @TableField("refund_tax")
     private BigDecimal refundTax;
+
+    /**
+     * 备注明细
+     */
+     @TableField("remark_name")
+     private String remarkName = "";
+
+     /**
+      * 入库状态
+      */
+     @TableField("stockin_status")
+     private String stockinStatus = "";
     /**
      * 退货物流商编码
      */

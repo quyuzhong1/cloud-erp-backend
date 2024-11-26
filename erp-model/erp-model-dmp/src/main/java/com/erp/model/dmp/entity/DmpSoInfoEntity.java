@@ -242,6 +242,13 @@ public class DmpSoInfoEntity extends BaseEntity<DmpSoInfoEntity> {
     @TableField("cancel_goods_currency")
     private String cancelGoodsCurrency = "";
 
+    /**
+     * 预估货品成本
+     */
+     @TableField("goods_cost")
+     private BigDecimal goodsCost;
+
+
 
     public static final String PLATFORM_CREATE_TIME = "platform_create_time";
 

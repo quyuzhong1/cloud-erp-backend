@@ -200,6 +200,12 @@ public class DmpSoReturnDetailEntity extends BaseEntity<DmpSoReturnDetailEntity>
     @TableField("sku_name")
     private String skuName;
 
+    /**
+     * 退货入库数量
+     */
+     @TableField("stockin_num")
+     private Integer stockinNum;
+
     public static final String MAIN_ID = "main_id";
 
     public static final String THIRD_DETAIL_ID = "third_detail_id";
