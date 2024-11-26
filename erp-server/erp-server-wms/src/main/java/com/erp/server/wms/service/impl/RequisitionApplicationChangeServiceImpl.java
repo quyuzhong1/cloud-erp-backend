@@ -725,6 +725,7 @@ public class RequisitionApplicationChangeServiceImpl extends SuperServiceImpl<Re
             } else {
                 approveView.setIsCombination(Boolean.FALSE);
             }
+            approveView.setChangeTypeName(RequisitionChangeTypeEnum.getName(approveView.getChangeType()));
         }
         return list;
     }

@@ -120,7 +120,7 @@
                racd.origin_qty as originRequisitionQty,
                racd.new_qty as newRequisitionQty,
                rad.from_virtual_warehouse_id as fromVirtualWarehouseId,
-               rad.from_virtual_warehouse_id as fromVirtualWarehouseName
+               rad.from_virtual_warehouse_name as fromVirtualWarehouseName
         from requisition_application_change rac
         inner join requisition_application_change_detail racd on rac.id = racd.main_id and racd.is_deleted = false
         inner join requisition_application ra on ra.id = rac.business_id and ra.is_deleted = false
