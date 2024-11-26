@@ -389,7 +389,7 @@ public class SyncTaskServiceImpl implements SyncTaskService {
                 continue;
             }
             List<TransferInfoDetailEntity> transferInfoDetailEntityList1 = transferDetailMap.get(entity.getId());
-            transferInfoDetailEntityList1 = transferInfoDetailEntityList1.stream().filter(e -> !ignoreInventorySkuIds.contains(e.getSkuId())).collect(Collectors.toList());
+            transferInfoDetailEntityList1 = CollUtil.isNotEmpty(transferInfoDetailEntityList1) ? transferInfoDetailEntityList1.stream().filter(e -> !ignoreInventorySkuIds.contains(e.getSkuId())).collect(Collectors.toList()) : Collections.emptyList();
             if (CollUtil.isEmpty(transferInfoDetailEntityList1)){
                 continue;
             }
@@ -950,7 +950,7 @@ public class SyncTaskServiceImpl implements SyncTaskService {
                 continue;
             }
             List<TransferInfoDetailEntity> transferInfoDetailEntityList1 = transferDetailMap.get(entity.getId());
-            transferInfoDetailEntityList1 = transferInfoDetailEntityList1.stream().filter(e -> !ignoreInventorySkuIds.contains(e.getSkuId())).collect(Collectors.toList());
+            transferInfoDetailEntityList1 = CollUtil.isNotEmpty(transferInfoDetailEntityList1) ? transferInfoDetailEntityList1.stream().filter(e -> !ignoreInventorySkuIds.contains(e.getSkuId())).collect(Collectors.toList()) : Collections.emptyList();
             if (CollUtil.isEmpty(transferInfoDetailEntityList1)){
                 continue;
             }
