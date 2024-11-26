@@ -3898,7 +3898,13 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                         || SoChangeTypeEnum.DELETE.getCode().equals(req.getChangeType().getCode())
                 ).map(req -> req.getSoDetailId()).collect(Collectors.toList());
 
-        List<SoDetailDTO.ViewDTO> viewDTOList = view.getDetailList().stream().filter(req -> cancelSoDetailIds.contains(req.getId())).collect(Collectors.toList());
+        //删除的变更单需要重新新增到详情
+        List<String> cancelIds = soChangeDetailEntities.stream()
+                .filter(req -> SoChangeTypeEnum.DELETE.getCode().equals(req.getChangeType().getCode())
+                ).map(req -> req.getSoDetailId()).collect(Collectors.toList());
+        List<SoDetailDTO.ViewDTO> viewDTOList = view.getDetailList().stream()
+                .filter(req -> cancelIds.contains(req.getId()))
+                .collect(Collectors.toList());
         List<SoDetailDTO.ViewDTO> detailList = view.getDetailList();
         detailList.addAll(viewDTOList);
         view.setDetailList(detailList);
