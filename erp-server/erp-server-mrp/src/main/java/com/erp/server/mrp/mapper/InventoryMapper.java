@@ -1,6 +1,5 @@
 package com.erp.server.mrp.mapper;
 
-import com.erp.model.mrp.dto.LocalInventoryDTO;
 import com.erp.model.mrp.dto.ReplenishmentInventoryDTO;
 import com.erp.model.mrp.dto.ReplenishmentResultDTO;
 import com.erp.model.scm.dto.PurchaseApplicationRefPoDTO;
@@ -70,12 +69,12 @@ public interface InventoryMapper {
     /**
      * 查询本地仓可用库存
      */
-    List<LocalInventoryDTO> getLocalUsable(@Param("skuId") String skuId, @Param("codes") Set<String> codes, @Param("tableName") String tableName);
+    List<ReplenishmentInventoryDTO.LocalUsableDTO> getLocalUsable(@Param("codes") Set<String> codes, @Param("tableName") String tableName);
 
     /**
      * 查询虚拟仓可用库存
      */
-    List<LocalInventoryDTO> getVirtualUsable(@Param("skuId") String skuId, @Param("codes") Set<String> codes, @Param("tableName") String tableName);
+    List<ReplenishmentInventoryDTO.VirtualUsableDTO> getVirtualUsable(@Param("codes") Set<String> codes, @Param("tableName") String tableName);
 
     /**
      * 查询采购计划

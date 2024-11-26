@@ -246,7 +246,44 @@ public class BasicReplenishmentDataService {
         String calcDate = calculationDate.format(DateTimeFormatter.BASIC_ISO_DATE);
         getFbaUsable(inventoryResult, baseKey, dto, calcDate);
         getOverseasUsable(inventoryResult, baseKey, dto, calcDate);
+        getLocalUsable(inventoryResult, baseKey, dto, calcDate);
+        getVirtualUsable(inventoryResult, baseKey, dto, calcDate);
         return dto;
+    }
+    /**
+     * 获取虚拟仓可用库存
+     *
+     * @param inventoryResult 库存配置
+     * @param baseKey         公共key
+     * @param dto             库存参数
+     * @param calcDate        日期
+     */
+    private void getVirtualUsable(List<CfgRuleCommonDTO.StrategyResultDTO> inventoryResult, String baseKey, ReplenishmentInventoryDTO dto, String calcDate) {
+        Set<String> usable = cfgRuleCommonService.findByKey(baseKey, inventoryResult, baseKey + ":" + CfgRuleInventoryNodeEnum.getLocalUsable());
+        if (CollectionUtils.isEmpty(usable)){
+            dto.setVirtualUsableList(Collections.emptyList());
+            return;
+        }
+        List<ReplenishmentInventoryDTO.VirtualUsableDTO> virtualUsableList = inventoryService.getVirtualUsable(usable, calcDate);
+        dto.setVirtualUsableList(virtualUsableList);
+    }
+
+    /**
+     * 获取本地仓可用库存
+     *
+     * @param inventoryResult 库存配置
+     * @param baseKey         公共key
+     * @param dto             库存参数
+     * @param calcDate        日期
+     */
+    private void getLocalUsable(List<CfgRuleCommonDTO.StrategyResultDTO> inventoryResult, String baseKey, ReplenishmentInventoryDTO dto, String calcDate) {
+        Set<String> usable = cfgRuleCommonService.findByKey(baseKey, inventoryResult, baseKey + ":" + CfgRuleInventoryNodeEnum.getLocalUsable());
+        if (CollectionUtils.isEmpty(usable)){
+            dto.setLocalUsableList(Collections.emptyList());
+            return;
+        }
+        List<ReplenishmentInventoryDTO.LocalUsableDTO> localUsableList = inventoryService.getLocalUsable(usable, calcDate);
+        dto.setLocalUsableList(localUsableList);
     }
 
     /**

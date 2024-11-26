@@ -17,6 +17,16 @@ public class ReplenishmentInventoryDTO {
      */
     private List<OverseasUsableDTO> overseasUsableList;
 
+    /**
+     * 本地仓可用
+     */
+    private List<LocalUsableDTO> localUsableList;
+
+    /**
+     * 虚拟仓可用
+     */
+    private List<VirtualUsableDTO> virtualUsableList;
+
     @Setter
     @Getter
     public static class FbaUsableDTO {
@@ -46,6 +56,40 @@ public class ReplenishmentInventoryDTO {
          * 仓库
          */
         private String warehouseCode;
+        /**
+         * 数量
+         */
+        private Integer qty;
+    }
+
+    @Getter
+    @Setter
+    public static class LocalUsableDTO {
+        /**
+         * sku
+         */
+        private String skuId;
+        /**
+         * 仓库
+         */
+        private String warehouseId;
+        /**
+         * 数量
+         */
+        private Integer qty;
+    }
+
+    @Getter
+    @Setter
+    public static class VirtualUsableDTO {
+        /**
+         * sku
+         */
+        private String skuId;
+        /**
+         * 仓库
+         */
+        private String virtualWarehouseId;
         /**
          * 数量
          */

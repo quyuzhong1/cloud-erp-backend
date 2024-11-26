@@ -338,19 +338,13 @@ public class InventoryServiceImpl implements InventoryService {
 
     @Override
     @SuppressWarnings("all")
-    public int getLocalUsable(ReplenishmentResultDTO replenishmentResultDTO, Set<String> codes, CfgRuleStrategyDTO cfgRuleStrategyDTO) {
-        CfgRuleWarehouseDTO.StrategyResultDTO warehouseResult = cfgRuleStrategyDTO.getWarehouseResult();
-        String calcDate = replenishmentResultDTO.getReplenishmentDetail().getCalcDate();
-        List<ReplenishmentResultDTO.ReplenishmentInventoryDetailDTO> localUsableDetail = new ArrayList<>();
-        // 根据是否启用虚拟库存获取对应的库存列表
-        List<LocalInventoryDTO> inventoryList = Boolean.TRUE.equals(warehouseResult.getIsEnableVirtual())
-                ? inventoryMapper.getVirtualUsable(replenishmentResultDTO.getReplenishment().getSkuId(), codes, getTableName(VIRTUAL_INVENTORY, calcDate))
-                : inventoryMapper.getLocalUsable(replenishmentResultDTO.getReplenishment().getSkuId(), codes, getTableName(INVENTORY, calcDate));
-        CfgRuleWarehouseTypeEnum warehouseType = Boolean.TRUE.equals(warehouseResult.getIsEnableVirtual()) ? CfgRuleWarehouseTypeEnum.VIRTUAL : CfgRuleWarehouseTypeEnum.LOCAL;
-        int qty = getAllocateQty(replenishmentResultDTO, cfgRuleStrategyDTO.getWarehouseResult().getLocalWarehouseList(),
-                inventoryList, localUsableDetail, ReplenishmentInventoryTypeEnum.LOCAL_USABLE, warehouseType);
-        replenishmentResultDTO.setLocalUsableDetail(localUsableDetail);
-        return qty;
+    public List<ReplenishmentInventoryDTO.LocalUsableDTO> getLocalUsable(Set<String> codes, String calcDate) {
+        return inventoryMapper.getLocalUsable(codes, getTableName(INVENTORY, calcDate));
+    }
+
+    @Override
+    public List<ReplenishmentInventoryDTO.VirtualUsableDTO> getVirtualUsable(Set<String> codes, String calcDate) {
+        return inventoryMapper.getVirtualUsable(codes, getTableName(VIRTUAL_INVENTORY, calcDate));
     }
 
     @Override

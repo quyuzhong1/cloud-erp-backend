@@ -166,8 +166,9 @@
         GROUP BY warehouse_code, sku_id
     </select>
 
-    <select id="getLocalUsable" resultType="com.erp.model.mrp.dto.LocalInventoryDTO">
+    <select id="getLocalUsable" resultType="com.erp.model.mrp.dto.ReplenishmentInventoryDTO$LocalUsableDTO">
         SELECT
+        sku_id,
         warehouse_id AS warehouseId,
         SUM ( qty ) AS qty
         FROM
@@ -177,14 +178,14 @@
         <foreach item="code" collection="codes" open="(" separator="," close=")">
             #{code}
         </foreach>
-        AND sku_id = #{skuId}
         GROUP BY
-        warehouse_id
+        warehouse_id,sku_id
     </select>
 
-    <select id="getVirtualUsable" resultType="com.erp.model.mrp.dto.LocalInventoryDTO">
+    <select id="getVirtualUsable" resultType="com.erp.model.mrp.dto.ReplenishmentInventoryDTO$VirtualUsableDTO">
         SELECT
-        virtual_warehouse_id AS warehouseId,
+        sku_id,
+        virtual_warehouse_id,
         SUM ( qty ) AS qty
         FROM
         ${tableName}
@@ -193,9 +194,8 @@
         <foreach item="code" collection="codes" open="(" separator="," close=")">
             #{code}
         </foreach>
-        AND sku_id = #{skuId}
         GROUP BY
-        virtual_warehouse_id
+        virtual_warehouse_id,sku_id
     </select>
 
     <select id="listPurchasePlan" resultType="com.erp.model.mrp.dto.ReplenishmentResultDTO$EstimatedPurchaseDetailDTO">

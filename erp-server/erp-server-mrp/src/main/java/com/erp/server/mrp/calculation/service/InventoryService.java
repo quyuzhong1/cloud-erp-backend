@@ -55,12 +55,18 @@ public interface InventoryService {
     /**
      * 获取本地仓可用库存
      *
-     * @param replenishmentResultDTO 参数
-     * @param codes                  编码
-     * @param cfgRuleStrategyDTO     配置
+     * @param codes    编码
+     * @param calcDate 日期
      */
-    int getLocalUsable(ReplenishmentResultDTO replenishmentResultDTO, Set<String> codes, CfgRuleStrategyDTO cfgRuleStrategyDTO);
+    List<ReplenishmentInventoryDTO.LocalUsableDTO> getLocalUsable(Set<String> codes, String calcDate);
 
+    /**
+     * 获取虚拟仓可用库存
+     *
+     * @param codes    编码
+     * @param calcDate 日期
+     */
+    List<ReplenishmentInventoryDTO.VirtualUsableDTO> getVirtualUsable(Set<String> codes, String calcDate);
     /**
      * 获取本地仓在途
      *
@@ -152,4 +158,5 @@ public interface InventoryService {
                               List<ReplenishmentResultDTO.ReplenishmentInventoryDetailDTO> inventoryDetail,
                               ReplenishmentInventoryTypeEnum inventoryType,
                               CfgRuleWarehouseTypeEnum warehouseType);
+
 }
