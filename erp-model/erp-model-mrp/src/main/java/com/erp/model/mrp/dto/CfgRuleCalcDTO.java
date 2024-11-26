@@ -275,7 +275,7 @@ public class CfgRuleCalcDTO implements Serializable {
          * 数量
          */
         @ExcelProperty(value = "数量", index = 4)
-        @FieldValid(fieldName = "数量", isNotBlank = true, maxLength = 32)
+        @FieldValid(fieldName = "数量", isNotBlank = true, maxLength = 32, formatPattern = FieldFormatPatternTypeEnum.INTEGER)
         private String qty;
 
         /**
