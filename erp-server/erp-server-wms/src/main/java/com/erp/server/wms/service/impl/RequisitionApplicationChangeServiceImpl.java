@@ -483,7 +483,7 @@ public class RequisitionApplicationChangeServiceImpl extends SuperServiceImpl<Re
         outInStockDTO.setSkuId(requisitionApplicationDetailEntity.getSkuId());
         outInStockDTO.setSkuNo(requisitionApplicationDetailEntity.getSkuNo());
         outInStockDTO.setQty(Math.abs(diffQty));
-        outInStockDTO.setWarehouseId(requisitionApplicationDetailEntity.getFromWarehouseId());
+        outInStockDTO.setWarehouseId(requisitionApplicationEntity.getRequisitionWarehouseId());
         outInStockDTO.setVirtualWarehouseId(requisitionApplicationDetailEntity.getFromVirtualWarehouseId());
         //库存数量为0不添加
         if (MathUtil.compareTo(outInStockDTO.getQty(),MathUtil.ZERO) == MathUtil.ZERO) {
