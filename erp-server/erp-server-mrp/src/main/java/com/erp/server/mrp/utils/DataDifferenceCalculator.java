@@ -4,99 +4,158 @@ import com.erp.model.mrp.dto.CalcSalesInfoDimDTO;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class DataDifferenceCalculator {
-    //欧氏距离
-    public static final String EUCLIDEAN = "euclidean";
-    //曼哈顿距离
-    public static final String MANHATTAN = "manhattan";
-    //余弦相似度
-    public static final String COSINE = "cosine";
+    // 计算方式的枚举类型
+    public enum CalculationType {
+        EUCLIDEAN,
+        MANHATTAN,
+        COSINE
+    }
 
 
     // 计算欧氏距离
-    public static BigDecimal calculateEuclideanDistance(List<BigDecimal> data1, List<BigDecimal> data2) {
+    private static BigDecimal calculateEuclideanDistance(BigDecimal[] data1, BigDecimal[] data2) {
         BigDecimal sum = BigDecimal.ZERO;
-        for (int i = 0; i < data1.size(); i++) {
-            BigDecimal diff = data1.get(i).subtract(data2.get(i));
+        for (int i = 0; i < data1.length; i++) {
+            BigDecimal diff = data1[i].subtract(data2[i]);
             sum = sum.add(diff.pow(2));
         }
-        return BigDecimal.valueOf(Math.sqrt(sum.doubleValue())).setScale(6, RoundingMode.HALF_UP);
+        return sqrt(sum);
     }
 
     // 计算曼哈顿距离
-    public static BigDecimal calculateManhattanDistance(List<BigDecimal> data1, List<BigDecimal> data2) {
+    private static BigDecimal calculateManhattanDistance(BigDecimal[] data1, BigDecimal[] data2) {
         BigDecimal sum = BigDecimal.ZERO;
-        for (int i = 0; i < data1.size(); i++) {
-            sum = sum.add(data1.get(i).subtract(data2.get(i)).abs());
+        for (int i = 0; i < data1.length; i++) {
+            sum = sum.add(data1[i].subtract(data2[i]).abs());
         }
-        return sum.setScale(6, RoundingMode.HALF_UP);
+        return sum;
     }
 
     // 计算余弦相似度
-    public static BigDecimal calculateCosineSimilarity(List<BigDecimal> data1, List<BigDecimal> data2) {
+    private static BigDecimal calculateCosineSimilarity(BigDecimal[] data1, BigDecimal[] data2) {
         BigDecimal dotProduct = BigDecimal.ZERO;
         BigDecimal normA = BigDecimal.ZERO;
         BigDecimal normB = BigDecimal.ZERO;
 
-        for (int i = 0; i < data1.size(); i++) {
-            dotProduct = dotProduct.add(data1.get(i).multiply(data2.get(i)));
-            normA = normA.add(data1.get(i).pow(2));
-            normB = normB.add(data2.get(i).pow(2));
+        for (int i = 0; i < data1.length; i++) {
+            dotProduct = dotProduct.add(data1[i].multiply(data2[i]));
+            normA = normA.add(data1[i].pow(2));
+            normB = normB.add(data2[i].pow(2));
         }
 
-        BigDecimal normASqrt = BigDecimal.valueOf(Math.sqrt(normA.doubleValue()));
-        BigDecimal normBSqrt = BigDecimal.valueOf(Math.sqrt(normB.doubleValue()));
-        BigDecimal bigDecimal = normASqrt.multiply(normBSqrt).compareTo(BigDecimal.ZERO) == 0 ? BigDecimal.ONE : normASqrt.multiply(normBSqrt);
-        return dotProduct.divide(bigDecimal, 6, RoundingMode.HALF_UP);
-    }
+        normA = sqrt(normA);
+        normB = sqrt(normB);
 
-    // 找出与基准数据差异最小的前N组数据
-    public static List<CalcSalesInfoDimDTO.LineDTO> findTopNSimilarData(
-            List<CalcSalesInfoDimDTO.LineDTO> calcList, List<BigDecimal> baseData, String distanceType) {
-
-        // 计算每个 LineDTO 的相似度
-        calcList.forEach(line -> {
-            BigDecimal similarity = calculateSimilarity(baseData, line.getQty(), distanceType);
-            line.setSimilarity(similarity);
-        });
-        // 按相似度降序排序并取 topN
-        return calcList.stream()
-                .sorted(Comparator.comparing(CalcSalesInfoDimDTO.LineDTO::getSimilarity).reversed())
-                .collect(Collectors.toList());
-    }
-
-    private static BigDecimal calculateSimilarity(List<BigDecimal> baseData, List<BigDecimal> qtyData, String distanceType) {
-        switch (distanceType.toLowerCase()) {
-            case EUCLIDEAN:
-                return calculateEuclideanDistance(baseData, qtyData);
-            case MANHATTAN:
-                return calculateManhattanDistance(baseData, qtyData);
-            case COSINE:
-                // 使用 1 - 相似度值表示差异
-                return BigDecimal.ONE.subtract(calculateCosineSimilarity(baseData, qtyData))
-                        .setScale(6, RoundingMode.HALF_UP);
-            default:
-                throw new IllegalArgumentException("未知的距离类型: " + distanceType);
+        if (normA.compareTo(BigDecimal.ZERO) == 0 || normB.compareTo(BigDecimal.ZERO) == 0) {
+            return BigDecimal.ZERO; // 防止除零错误
         }
+
+        return dotProduct.divide(normA.multiply(normB), 10, RoundingMode.HALF_UP);
+    }
+
+    // 计算平方根
+    private static BigDecimal sqrt(BigDecimal value) {
+        BigDecimal x = BigDecimal.valueOf(Math.sqrt(value.doubleValue()));
+        return x.setScale(10, RoundingMode.HALF_UP);
+    }
+
+    // 动态计算上下界
+    private static BigDecimal[] calculateMinValues(BigDecimal[] baseData, BigDecimal factor) {
+        BigDecimal[] minValues = new BigDecimal[baseData.length];
+        for (int i = 0; i < baseData.length; i++) {
+            BigDecimal minValue = baseData[i].subtract(baseData[i].multiply(factor)).max(BigDecimal.ZERO);
+            minValues[i] = minValue;
+        }
+        return minValues;
+    }
+
+    // 校验倍数
+    private static void validateFactor(BigDecimal factor) {
+        if (factor.compareTo(BigDecimal.ZERO) < 0 || factor.compareTo(new BigDecimal("100")) > 0) {
+            throw new IllegalArgumentException("倍数必须在0到100之间");
+        }
+        if (factor.scale() > 4) {
+            throw new IllegalArgumentException("倍数小数位不能超过4位");
+        }
+    }
+
+    private static BigDecimal[] calculateMaxValues(BigDecimal[] baseData, BigDecimal factor) {
+        BigDecimal[] maxValues = new BigDecimal[baseData.length];
+        for (int i = 0; i < baseData.length; i++) {
+            BigDecimal maxValue = baseData[i].add(baseData[i].multiply(factor));
+            maxValues[i] = maxValue;
+        }
+        return maxValues;
+    }
+
+    // 计算与基准数据的吻合率
+    public static List<CalcSalesInfoDimDTO.LineDTO> calculateMatchRates(
+            List<CalcSalesInfoDimDTO.LineDTO> calcList, List<BigDecimal> baseData, BigDecimal factor, CalculationType type) {
+
+        validateFactor(factor);
+
+        BigDecimal[] baseArray = baseData.toArray(new BigDecimal[0]);
+        BigDecimal[] minValues = calculateMinValues(baseArray, factor);
+        BigDecimal[] maxValues = calculateMaxValues(baseArray, factor);
+
+        BigDecimal maxEuclideanDistance = calculateEuclideanDistance(minValues, maxValues);
+        BigDecimal maxManhattanDistance = calculateManhattanDistance(minValues, maxValues);
+
+        List<CalcSalesInfoDimDTO.LineDTO> results = new ArrayList<>();
+
+        for (CalcSalesInfoDimDTO.LineDTO line : calcList) {
+            BigDecimal[] dataArray = line.getQty().toArray(new BigDecimal[0]);
+            if (type == CalculationType.EUCLIDEAN) {
+                BigDecimal euclideanDistance = calculateEuclideanDistance(baseArray, dataArray);
+                BigDecimal euclideanMatchRate = BigDecimal.ONE.subtract(
+                        euclideanDistance.divide(maxEuclideanDistance, 10, RoundingMode.HALF_UP));
+                line.setSimilarity(euclideanMatchRate);
+            }
+            if (type == CalculationType.MANHATTAN) {
+                BigDecimal manhattanDistance = calculateManhattanDistance(baseArray, dataArray);
+                BigDecimal manhattanMatchRate = BigDecimal.ONE.subtract(
+                        manhattanDistance.divide(maxManhattanDistance, 10, RoundingMode.HALF_UP));
+                line.setSimilarity(manhattanMatchRate);
+            }
+            if (type == CalculationType.COSINE) {
+                BigDecimal cosineSimilarity = calculateCosineSimilarity(baseArray, dataArray);
+                line.setSimilarity(cosineSimilarity);
+            }
+            results.add(line);
+        }
+
+        results.sort(getComparator());
+        return results;
+    }
+
+
+    private static Comparator<CalcSalesInfoDimDTO.LineDTO> getComparator() {
+        return (a, b) -> b.getSimilarity().compareTo(a.getSimilarity());
     }
 
     public static void main(String[] args) {
-        // 示例数据
         List<CalcSalesInfoDimDTO.LineDTO> calcList = Arrays.asList(
                 createLine("A", Arrays.asList(new BigDecimal("10"), new BigDecimal("20"), new BigDecimal("30"))),
                 createLine("B", Arrays.asList(new BigDecimal("15"), new BigDecimal("25"), new BigDecimal("35"))),
                 createLine("C", Arrays.asList(new BigDecimal("5"), new BigDecimal("15"), new BigDecimal("25")))
         );
+        List<BigDecimal> baseData = Arrays.asList(new BigDecimal("1.0"), new BigDecimal("2.0"), new BigDecimal("3.0"));
+        BigDecimal factor = new BigDecimal("1.0");
+        CalculationType type = CalculationType.COSINE;
 
-        List<BigDecimal> baseData = Arrays.asList(new BigDecimal("10"), new BigDecimal("20"), new BigDecimal("30"));
-        List<CalcSalesInfoDimDTO.LineDTO> result = findTopNSimilarData(calcList, baseData, "cosine");
+        List<CalcSalesInfoDimDTO.LineDTO> results = calculateMatchRates(calcList, baseData, factor, type);
 
-        result.forEach(System.out::println);
+        results.forEach(result -> System.out.printf(
+                "模板名称：%s，相似度：%.2f%%%n",
+                result.getName(),
+                result.getSimilarity().multiply(new BigDecimal("100"))
+        ));
     }
 
     private static CalcSalesInfoDimDTO.LineDTO createLine(String name, List<BigDecimal> qty) {

@@ -154,7 +154,8 @@ public class CalcSalesInfoDimServiceImpl extends SuperServiceImpl<CalcSalesInfoD
         view.setProductName(skuVO.getSkuName());
         view.setCountryName(dictCountry.getNameCn());
         view.setShopName(shopInfoEntity.getName());
-        Map<String, String> dictBasicMap = getPlatformMap();;
+        Map<String, String> dictBasicMap = getPlatformMap();
+        ;
         view.setPlatform(dictBasicMap.get(view.getPlatform()));
         return view;
     }
@@ -422,9 +423,9 @@ public class CalcSalesInfoDimServiceImpl extends SuperServiceImpl<CalcSalesInfoD
             lineDTO.setQty(entry.getValue());
             calcList.add(lineDTO);
         }
-        DataDifferenceCalculator.findTopNSimilarData(calcList, basicData, DataDifferenceCalculator.COSINE);
+        DataDifferenceCalculator.calculateMatchRates(calcList, basicData, new BigDecimal(100), DataDifferenceCalculator.CalculationType.COSINE);
         List<CalcSalesInfoDimDTO.LineDTO> lineList = new ArrayList<>();
-        lineList.add(new CalcSalesInfoDimDTO.LineDTO("真实销量",BigDecimal.ONE, basicData));
+        lineList.add(new CalcSalesInfoDimDTO.LineDTO("真实销量", BigDecimal.ONE, basicData));
         lineList.addAll(calcList);
         CalcSalesInfoDimDTO.CalcCompareDTO calcCompareDTO = new CalcSalesInfoDimDTO.CalcCompareDTO();
         calcCompareDTO.setDateList(dateList);
