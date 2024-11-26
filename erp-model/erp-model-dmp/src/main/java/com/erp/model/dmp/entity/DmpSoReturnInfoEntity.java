@@ -233,6 +233,15 @@ public class DmpSoReturnInfoEntity extends BaseEntity<DmpSoReturnInfoEntity> {
     @TableField("tracking_number")
     private String trackingNumber;
 
+    /**
+     * 退货方式：
+     * SELLER_SHIPPED 卖家提供退货运输服务，
+     * BUYER_SHIPPED 买家提供退货运输服务，
+     * PLATFORM_SHIPPED 平台提供退货配送服务
+     */
+    @TableField("return_method")
+    private String returnMethod;
+
 
     public static final String PLATFORM_CREATE_TIME = "platform_create_time";
 

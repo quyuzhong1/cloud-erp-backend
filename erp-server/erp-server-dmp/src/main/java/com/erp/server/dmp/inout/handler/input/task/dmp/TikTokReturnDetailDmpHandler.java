@@ -63,11 +63,11 @@ public class TikTokReturnDetailDmpHandler extends TikTokReturnGetDetailDmpHandle
                 Object returnTypeObj = dmpDataMap.get("returnType");
                 if (returnTypeObj != null) {
                     if ("RETURN_AND_REFUND".equals(returnTypeObj.toString())) {
-                        dmpDataMap.put("solutionType", dmpDataMap.get("return_and_refund"));
+                        dmpDataMap.put("solutionType", "return_and_refund");
                     } else if ("REFUND".equals(returnTypeObj.toString())) {
-                        dmpDataMap.put("solutionType", dmpDataMap.get("refund"));
+                        dmpDataMap.put("solutionType", "refund");
                     } else if ("REPLACEMENT".equals(returnTypeObj.toString())) {
-                        dmpDataMap.put("solutionType", dmpDataMap.get("replacement"));
+                        dmpDataMap.put("solutionType", "replacement");
                     }
                 }
             }
