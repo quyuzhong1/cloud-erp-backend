@@ -205,6 +205,8 @@ public class DmpOutputSdyOrderHandler extends DmpOutputTaskHandler {
             shudiyunB2cOrderDTO.setBiz_no(dmpSoInfoEntity.getThirdCode());
             if (dmpSoInfoEntity.getPayTime() != null) {
                 shudiyunB2cOrderDTO.setBiz_time(localDateTime.format(dmpSoInfoEntity.getPayTime()));
+            } else {
+                shudiyunB2cOrderDTO.setBiz_time(localDateTime.format(dmpSoInfoEntity.getPlatformCreateTime()));
             }
 
             //如果是旺店通中台表的订单属于配货单，其他的都是线上原始订单
