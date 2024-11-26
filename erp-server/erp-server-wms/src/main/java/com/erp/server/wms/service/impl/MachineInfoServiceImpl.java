@@ -740,7 +740,9 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
         inventoryInOutStockDTO.setParamList(inOutStockList);
         if (WorkTypeEnum.ASSEMBLE.getCode().equals(entity.getWorkType())) {
             SoDeliveryNoticeEntity notice = soDeliveryNoticeService.getDeliveryNoticeBySourceId(entity.getSourceId());
-            if ((SourceTypeEnum.SO_INFO.getCode().equals(entity.getSourceType()) && ObjectUtils.isNotEmpty(notice))|| SourceTypeEnum.FIRST_MILE_DELIVERY.getCode().equals(entity.getSourceType())) {
+            if (SourceTypeEnum.SO_DELIVERY_NOTICE.getCode().equals(entity.getSourceType())){
+                inventoryInOutStockDTO.setBusinessType(InventoryBusinessTypeEnum.ASSEMBLE_IN_PARENT_FREEZE.getCode());
+            }else if ((SourceTypeEnum.SO_INFO.getCode().equals(entity.getSourceType()) && ObjectUtils.isNotEmpty(notice))|| SourceTypeEnum.FIRST_MILE_DELIVERY.getCode().equals(entity.getSourceType())) {
                 inventoryInOutStockDTO.setBusinessType(InventoryBusinessTypeEnum.ASSEMBLE_IN_PARENT_FREEZE.getCode());
             }else {
                 inventoryInOutStockDTO.setBusinessType(InventoryBusinessTypeEnum.ASSEMBLE_IN_PARENT.getCode());
@@ -789,7 +791,9 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
         inventoryInOutStockDTO.setParamList(inOutStockList);
         if (WorkTypeEnum.ASSEMBLE.getCode().equals(entity.getWorkType())) {
             SoDeliveryNoticeEntity notice = soDeliveryNoticeService.getDeliveryNoticeBySourceId(entity.getSourceId());
-            if ((SourceTypeEnum.SO_INFO.getCode().equals(entity.getSourceType()) && ObjectUtils.isNotEmpty(notice))|| SourceTypeEnum.FIRST_MILE_DELIVERY.getCode().equals(entity.getSourceType())) {
+            if (SourceTypeEnum.SO_DELIVERY_NOTICE.getCode().equals(entity.getSourceType())){
+                inventoryInOutStockDTO.setBusinessType(InventoryBusinessTypeEnum.ASSEMBLE_IN_CHILD_FREEZE.getCode());
+            }else if ((SourceTypeEnum.SO_INFO.getCode().equals(entity.getSourceType()) && ObjectUtils.isNotEmpty(notice))|| SourceTypeEnum.FIRST_MILE_DELIVERY.getCode().equals(entity.getSourceType())) {
                 inventoryInOutStockDTO.setBusinessType(InventoryBusinessTypeEnum.ASSEMBLE_IN_CHILD_FREEZE.getCode());
             }else {
                 inventoryInOutStockDTO.setBusinessType(InventoryBusinessTypeEnum.ASSEMBLE_IN_CHILDD.getCode());

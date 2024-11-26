@@ -166,6 +166,8 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
 
     @Resource
     private MachineInfoService machineInfoService;
+    @Resource
+    private MachineDetailService machineDetailService;
 
     @Override
     public PagingVO<SoDeliveryNoticeDTO.PagingView> paging(PagingDTO<SoDeliveryNoticeDTO.PagingParam> pagingParamDTO) {
@@ -1750,7 +1752,8 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         if (CollectionUtils.isEmpty(soDeliveryNoticeDetailEntityList)) {
             throw new ServiceException("未找到发货通知单明细");
         }
-
+        List<String> detailIds = soDeliveryNoticeDetailEntityList.stream().map(v->v.getId()).collect(Collectors.toList());
+        List<MachineDetailEntity> existDetailList = machineDetailService.listByIds(detailIds);
         //主表信息
         List<String> mainIds = soDeliveryNoticeDetailEntityList.stream().map(SoDeliveryNoticeDetailEntity::getMainId).collect(Collectors.toList());
         List<SoDeliveryNoticeEntity> soDeliveryNoticeEntityList = this.listByIds(mainIds);
@@ -1787,11 +1790,11 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
                 throw new ServiceException("未找到发货通知单明细");
             }
             List<MachineDetailDTO.AddDTO> detailList = new ArrayList<>();
+            boolean isAllPush = false;
             for (SoDeliveryNoticeDetailEntity soDeliveryNoticeDetailEntity : detailEntityList) {
                 MachineDetailDTO.AddDTO addDetailDTO = new MachineDetailDTO.AddDTO();
                 addDetailDTO.setSkuId(soDeliveryNoticeDetailEntity.getSkuId());
                 addDetailDTO.setSkuNo(soDeliveryNoticeDetailEntity.getSkuNo());
-                addDetailDTO.setQty(soDeliveryNoticeDetailEntity.getPickingQty());
                 // 获取仓库暂存区默认配置
                 CfgRulePickingStagingEntity pickingStaging = warehouseStagingList.stream()
                         .filter(staging -> PickingBillTypeEnum.B2B.getCode().equals(staging.getBillType()))
@@ -1802,6 +1805,13 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
                 if (CollectionUtils.isEmpty(bomList)) {
                     continue;
                 }
+                List<MachineDetailEntity> currentExistDetailList = existDetailList.stream().filter(v->v.getSourceDetailId().equals(soDeliveryNoticeDetailEntity.getId())).collect(Collectors.toList());
+                int alreadyQty = currentExistDetailList.stream().mapToInt(MachineDetailEntity::getQty).sum();
+                if(alreadyQty >= soDeliveryNoticeDetailEntity.getPickingQty()){
+                    isAllPush = true;
+                    continue;
+                }
+                addDetailDTO.setQty(soDeliveryNoticeDetailEntity.getPickingQty() - alreadyQty);
                 addDetailDTO.setReferenceVersion(bomList.get(0).getBomVersion());
                 addDetailDTO.setRefCode(soDeliveryNoticeEntity.getCode());
                 addDetailDTO.setRefId(soDeliveryNoticeEntity.getId());
@@ -1821,7 +1831,11 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
             }
             //如果没有明细则跳过无需新增
             if (CollectionUtils.isEmpty(detailList)) {
-                throw new ServiceException("{}未找到需要加工的明细",soDeliveryNoticeEntity.getCode());
+                if(isAllPush){
+                    throw new ServiceException("组合明细已经加工完成");
+                }else{
+                    throw new ServiceException("{}未找到需要加工的明细",soDeliveryNoticeEntity.getCode());
+                }
             }
             addDTO.setDetailList(detailList);
             machineInfoService.add(addDTO);
