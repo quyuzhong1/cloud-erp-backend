@@ -1,6 +1,7 @@
 package com.erp.model.wms.dto;
 
 import cn.hutool.core.util.ObjectUtil;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.ApproveStatusEnum;
@@ -516,6 +517,12 @@ public class SoOutstockDTO implements Serializable {
          */
         private LocalDate billDate;
 
+
+        /**
+         * 订单标签
+         */
+        private String tradeLabel;
+
         /**
          * 详情
          */
@@ -937,6 +944,11 @@ public class SoOutstockDTO implements Serializable {
          */
         private String logisticsChannelName;
 
+        /**
+         * 订单标签
+         */
+        private String tradeLabel;
+
         private List<SoOutstockDetailDTO.ViewDTO> detailList;
 
     }
@@ -1059,6 +1071,11 @@ public class SoOutstockDTO implements Serializable {
         @Valid
         @Size(min = 1, message = "销售出库详情不能为空")
         private List<SoOutstockDetailDTO.UpdateDTO> detailList;
+
+        /**
+         * 订单标签
+         */
+        private String tradeLabel;
 
     }
 

@@ -224,14 +224,16 @@ public interface SoB2cFeign {
 
     /**
      * 修改b2c销售单状态
-     * @Author Luo_WG
-     * @Date 2023/12/27 20:14
+     *
      * @param soB2cIds
      * @param status
+     * @param isManualDelivery
      * @return java.lang.Boolean
+     * @Author Luo_WG
+     * @Date 2023/12/27 20:14
      **/
     @PostMapping("/feign/soB2c/updateSoB2cStatus")
-    Boolean updateSoB2cStatus(@RequestParam("soB2cIds") List<String> soB2cIds, @RequestParam("status") String status);
+    Boolean updateSoB2cStatus(@RequestParam("soB2cIds") List<String> soB2cIds, @RequestParam("status") String status, @RequestParam("isManualDelivery")Boolean isManualDelivery);
 
     /**
      * 修改b2c销售单状态发货时间

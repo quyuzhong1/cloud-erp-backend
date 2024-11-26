@@ -24,6 +24,7 @@ import com.erp.sdk.oms.amz.spapi.model.fulfillmentinbound.InboundShipmentItemLis
 import com.erp.sdk.oms.amz.spapi.utils.AmazonSpApiInitUtils;
 import com.erp.server.dmp.inout.dto.base.DmpInputTaskInitDTO;
 import com.erp.server.dmp.inout.dto.request.DmpInputInitRequest;
+import com.erp.server.dmp.inout.dto.response.DmpInputInitResponse;
 import com.erp.server.dmp.inout.dto.response.DmpInputTaskResponse;
 import com.erp.server.dmp.inout.handler.input.task.mongo.DmpInputMongoHandler;
 import com.erp.server.dmp.service.CfgAppClientService;
@@ -73,7 +74,8 @@ public class DmpInputAmzFbaShipmentDetailInitHandler extends DmpInputAmzCommonIn
         // 初始化API
         FbaInboundApi api = AmazonSpApiInitUtils.create(FbaInboundApi.class, shopInfoDTO, false);
 
-        List<JSONObject> allItemList = new LinkedList<>();
+        List<DmpInputTaskInitDTO> dmpInputTaskInitDTOList = new ArrayList<>();
+
         for (Map<String, Object> findMongo : findMongoData) {
             String shipmentId = findMongo.get("shipmentId").toString();
             // 检查来源
@@ -86,7 +88,7 @@ public class DmpInputAmzFbaShipmentDetailInitHandler extends DmpInputAmzCommonIn
             Object resultObj = redisUtil.get(shipmentIdResultKey);
             if (null != resultObj) {
                 List<JSONObject> curItemList = JSONArray.parseArray(resultObj.toString(), JSONObject.class);
-                allItemList.addAll(curItemList);
+                dmpInputTaskInitDTOList.add(DmpInputTaskInitDTO.initMsg(JSON.toJSONString(curItemList)));
                 continue;
             }
             AmazonRequestTypeRateLimiterEnum requestTypeRateLimiterEnum = AmazonRequestTypeRateLimiterEnum.FBA_SHIPMENT_DETAIL;
@@ -96,9 +98,11 @@ public class DmpInputAmzFbaShipmentDetailInitHandler extends DmpInputAmzCommonIn
             // 获取动态速率
             Object limitObj = redisUtil.get(limitKey);
             if (null != limitObj) {
-                log.warn("【FBA货件列表拉取】 platformShopCode={},存在429等待恢复:放弃当前请求任务", shopInfoDTO.getPlatformShopCode());
-                String msg = StrUtil.format("【FBA货件明细拉取】 amazonOrderId={}, platformShopCode={},存在429等待恢复:放弃当前请求任务", shipmentId, shopInfoDTO.getPlatformShopCode());
-                throw new ServiceException(msg);
+                log.warn("【FBA货件明细拉取】 platformShopCode={},存在429等待恢复:放弃当前请求任务", shopInfoDTO.getPlatformShopCode());
+                // 触发限流不执行当前
+                DmpInputInitResponse initDmpResponse = (DmpInputInitResponse) dmpResponse;
+                initDmpResponse.setDoNextChain(false);
+                return Collections.emptyList();
             }
             String rateLimitStr = requestTypeRateLimiterEnum.getRateLimit();
             try {
@@ -108,18 +112,23 @@ public class DmpInputAmzFbaShipmentDetailInitHandler extends DmpInputAmzCommonIn
                 List<JSONObject> curJsonList = itemData.stream().map(e -> (JSONObject) JSON.toJSON(e)).collect(Collectors.toList());
                 // 缓存倒redis
                 redisUtil.set(shipmentIdResultKey, JSONArray.toJSONString(curJsonList), 300);
-                allItemList.addAll(curJsonList);
+                dmpInputTaskInitDTOList.add(DmpInputTaskInitDTO.initMsg(JSON.toJSONString(curJsonList)));
             } catch (ApiException e) {
                 if (429 == e.getCode()) {
                     // 设置动态速率，失效时间=1/limit
                     BigDecimal timeOut = BigDecimal.ONE.max(BigDecimal.ONE.divide(new BigDecimal(rateLimitStr), 8, RoundingMode.DOWN));
                     redisUtil.set(limitKey, rateLimitStr, timeOut.longValue());
+                    log.warn("【FBA货件明细拉取】 platformShopCode={},首次429等待恢复:放弃当前请求任务", shopInfoDTO.getPlatformShopCode());
+                    // 触发限流不执行当前
+                    DmpInputInitResponse initDmpResponse = (DmpInputInitResponse) dmpResponse;
+                    initDmpResponse.setDoNextChain(false);
+                    return Collections.emptyList();
                 }
                 throw new ServiceException("[Amazon SP-APi] 查询FBA货件item失败" + e);
             }
             log.warn("查询亚马逊FBA货件详情成功, shipmentId={}, platformShopCode={}", shipmentId, shopInfoDTO.getPlatformShopCode());
         }
-        return Collections.singletonList(DmpInputTaskInitDTO.initMsg(JSON.toJSONString(allItemList)));
+        return dmpInputTaskInitDTOList;
     }
 
 }

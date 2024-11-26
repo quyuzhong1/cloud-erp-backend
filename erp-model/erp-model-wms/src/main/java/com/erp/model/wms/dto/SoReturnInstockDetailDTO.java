@@ -265,5 +265,9 @@ public class SoReturnInstockDetailDTO {
          * 币种
          */
         private String currency;
+        /**
+         * 平台sku
+         */
+        private String platformSkuNo;
     }
 }

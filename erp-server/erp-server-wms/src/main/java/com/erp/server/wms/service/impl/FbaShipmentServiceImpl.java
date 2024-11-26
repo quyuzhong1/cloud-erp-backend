@@ -1736,7 +1736,7 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
                 return onWaylocalDate.isAfter(mainClosedDate) ? onWaylocalDate : mainClosedDate;
             } else if (null != onWaylocalDate) {
                 return onWaylocalDate;
-            } else return mainClosedDate;
+            } else {return mainClosedDate;}
         }
 
         return null;

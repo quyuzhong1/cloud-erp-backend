@@ -8,6 +8,7 @@ import java.util.List;
 
 import javax.annotation.Resource;
 
+import com.common.core.exception.ServiceException;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
@@ -61,11 +62,18 @@ public class AntuReturnInstockInitHandler extends DmpInputInitHandler {
         if(CollUtil.isEmpty(overseasProviderEntityList)) {
             return Collections.emptyList();
         }
-        if (overseasProviderEntityList.get(0).getEnableDate().isAfter(LocalDate.now())) {
+        // 取对应授权ID授权
+        OverseasProviderEntity overseasProviderEntity = overseasProviderEntityList.stream()
+                .filter(e -> e.getId().equalsIgnoreCase(dmpInputTaskEntity.getNextLevelId()))
+                .findFirst()
+                .orElse(null);
+        if(null == overseasProviderEntity) {
+            throw new ServiceException("安兔对应授权ID信息不存在");
+        }
+        if (overseasProviderEntity.getEnableDate().isAfter(LocalDate.now())) {
             return Collections.emptyList();
         }
 
-        OverseasProviderEntity overseasProviderEntity = overseasProviderEntityList.get(0);
         String authId = overseasProviderEntity.getId();
         ThirdWarehouseContext.setAuthMap(overseasProviderEntity.getAuthJson());
         while(true) {

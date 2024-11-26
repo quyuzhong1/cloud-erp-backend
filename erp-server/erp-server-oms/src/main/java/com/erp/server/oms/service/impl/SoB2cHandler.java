@@ -5,6 +5,7 @@ import com.common.business.annotation.PlatformSoB2cAnnotate;
 import com.common.business.config.AbstractSparrowAnnotationBeanMap;
 import com.common.business.dto.PlatformOrderDTO;
 import com.common.business.enums.PlatformDictEnum;
+import com.erp.model.dmp.dto.DmpInoutDTO;
 import com.erp.model.oms.dto.CancelAuthorizeDTO;
 import com.erp.model.oms.dto.ShopAuthorizeDTO;
 import com.erp.model.oms.dto.ShopAuthorizeUrlDTO;
@@ -15,9 +16,13 @@ import com.erp.server.oms.service.ISoB2cHandleService;
 import com.google.common.collect.Maps;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import org.springframework.util.CollectionUtils;
 
 import javax.servlet.http.HttpServletResponse;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Component
 @Slf4j
@@ -50,4 +55,20 @@ public class SoB2cHandler extends AbstractSparrowAnnotationBeanMap<PlatformSoB2c
         return service.handleSoOutStock(dto, resultDTO, mainEntity);
     }
 
+    /**
+     * 转换新中台刷新订单IDS
+     */
+    public static List<DmpInoutDTO.CreateInputDTO> groupConvertCreateInputDTOList(List<SoB2cEntity> mainEntityList) {
+        Map<String, List<SoB2cEntity>> groupMap = mainEntityList.stream().collect(Collectors.groupingBy(SoB2cEntity::getDictPlatform));
+        List<DmpInoutDTO.CreateInputDTO> resultList = new LinkedList<>();
+        for (Map.Entry<String, List<SoB2cEntity>> entry : groupMap.entrySet()) {
+            ISoB2cHandleService service = PAY_MAP.get(PlatformDictEnum.getByCode(entry.getKey()));
+            List<DmpInoutDTO.CreateInputDTO> list =  service.convertCreateInputDTOList(entry.getValue());
+            if (CollectionUtils.isEmpty(list)){
+                continue;
+            }
+            resultList.addAll(list);
+        }
+        return resultList;
+    }
 }

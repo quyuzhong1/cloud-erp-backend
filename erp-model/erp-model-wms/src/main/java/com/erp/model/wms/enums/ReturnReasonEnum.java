@@ -36,10 +36,12 @@ public enum ReturnReasonEnum implements EnumMessage {
         this.kingdeeCode = kingdeeCode;
     }
 
+    @Override
     public String getCode() {
         return code;
     }
 
+    @Override
     public String getName() {
         return name;
     }

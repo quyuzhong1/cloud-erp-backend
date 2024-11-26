@@ -59,10 +59,12 @@ public enum SettingEnum {
     AMAZON_FBA_SHIPMENT_SKIP_LIST("amazon_fba_shipment_skip", SettingEnum.AMAZON_FBA_SHIPMENT_SKIP, "亚马逊FBA货件暂时跳过亚马逊请求列表(英文逗号拼接)"),
 
     NEW_DMP_PUSH_SWTICH_LIST("push_swtich", SettingEnum.NEW_DMP_PUSH_SWTICH, "新中台推送开关"),
-    NEW_DMP_PULL_SWITCH_LIST("pull_switch", SettingEnum.NEW_DMP_PUSH_SWTICH, "新中台拉取开关"),
+    NEW_DMP_PULL_SWITCH_LIST("pull_switch", SettingEnum.NEW_DMP_PULL_SWITCH, "新中台拉取开关"),
 
     //支持推送仓位的金蝶仓库
     PUSH_KINGDEE_WAREHOUSE_LOCATION_LIST("push_kingdee_warehouse_location",SettingEnum.PUSH_KINGDEE_WAREHOUSE_LOCATION,"支持推送仓位的金蝶仓库"),
+    //是否支持金蝶基础性校验
+    KINGDEE_BASE_CHECK_KEY("kingdee_base_check",SettingEnum.KINGDEE_BASE_CHECK,"是否支持金蝶基础性校验"),
 
 
     //oms_shopify_hmac
@@ -134,7 +136,7 @@ public enum SettingEnum {
     /**
      * 新中台拉取开关
      */
-    public static final String NEW_DMP_PULL_SWITCH = "new_dmp_push_switch";
+    public static final String NEW_DMP_PULL_SWITCH = "new_dmp_pull_switch";
 
     /**
      * 亚马逊报告
@@ -151,7 +153,10 @@ public enum SettingEnum {
      */
     public static final String PUSH_KINGDEE_WAREHOUSE_LOCATION = "push_kingdee_warehouse_location";
 
-
+    /**
+     * 是否支持金蝶基础性校验
+     */
+    public static final String KINGDEE_BASE_CHECK = "kingdee_base_check";
 
     SettingEnum(String key, String type, String value) {
         this.key = key;

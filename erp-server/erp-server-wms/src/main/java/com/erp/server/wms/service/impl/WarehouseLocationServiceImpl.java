@@ -970,18 +970,18 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
         );
         List<WarehouseLocationDTO.ReplenishAreaDTO> replenishAreaDTOList = new ArrayList<>(ids.size());
         for (String warehouseId : ids) {
-            List<WarehouseLocationEntity> areaList = entityList.stream().filter(item -> item.getWarehouseId().equals(warehouseId) && item.getType().equals("area")).collect(Collectors.toList());
+            List<WarehouseLocationEntity> areaList = entityList.stream().filter(item -> item.getWarehouseId().equals(warehouseId) && "area".equals(item.getType())).collect(Collectors.toList());
             List<WarehouseLocationDTO.ReplenishAreaDTO.WarehouseAreaDTO> stockingAreaDTOList = new ArrayList<>();
             List<WarehouseLocationDTO.ReplenishAreaDTO.WarehouseAreaDTO> pickingAreaDTOList = new ArrayList<>();
             for (WarehouseLocationEntity areaEntity : areaList) {
                 if(! CharSequenceUtil.isNotBlank(areaEntity.getAreaType())){
                     continue;
                 }
-                if(areaEntity.getAreaType().equals("stockingArea")){
+                if("stockingArea".equals(areaEntity.getAreaType())){
                     WarehouseLocationDTO.ReplenishAreaDTO.WarehouseAreaDTO areaDTO = new WarehouseLocationDTO.ReplenishAreaDTO.WarehouseAreaDTO(areaEntity.getCode(), areaEntity.getName());
                     stockingAreaDTOList.add(areaDTO);
                 }
-                if(areaEntity.getAreaType().equals("pickingArea")){
+                if("pickingArea".equals(areaEntity.getAreaType())){
                     WarehouseLocationDTO.ReplenishAreaDTO.WarehouseAreaDTO areaDTO = new WarehouseLocationDTO.ReplenishAreaDTO.WarehouseAreaDTO(areaEntity.getCode(), areaEntity.getName());
                     pickingAreaDTOList.add(areaDTO);
                 }
@@ -1011,6 +1011,7 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
     }
 
 
+    @Override
     public WarehouseLocationDTO.WareInventoryQtyDTO getOneWareInventoryQty(String warehouseId, String skuNo){
         if(CharSequenceUtil.isBlank(warehouseId)||CharSequenceUtil.isBlank(skuNo)){
             return null;

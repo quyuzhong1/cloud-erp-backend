@@ -319,7 +319,9 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
 
         //2024.09.11 jack sdc-erp销售出库单增加旺店通的物流渠道名称
         soOutstock.setLogisticsChannelName(entity.getLogisticsCompanyName());
-        log.info("1.销售出库单增加旺店通的物流渠道名称："+ JSONUtil.toJsonStr(soOutstock));
+        //订单标签
+        soOutstock.setTradeLabel(entity.getTradeLabel());
+        log.info("旺店通同步订单标签到erp："+ JSONUtil.toJsonStr(soOutstock));
         //保存销售出库单
         soOutstockService.save(soOutstock);
         //保存销售出库单详情

@@ -1,11 +1,9 @@
 package com.erp.server.wms.kingdee.impl;
 
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
@@ -592,6 +590,8 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
         }
         //2024.09.11 jack 同步物流渠道名称到金蝶销售出库单的物流渠道
         resultMap.put("logisticsChannelName",entity.getLogisticsChannelName());
+        //订单标签
+        resultMap.put("tradeLabel",entity.getTradeLabel());
         //————————————————————财务信息SubHeadEntity——————————————————————
         //结算币别
         CurrencyDTO.ViewDTO viewDTO = currencyList.stream().filter(req -> req.getId().equals(soInfoById.getCurrency())).findFirst().orElse(new CurrencyDTO.ViewDTO());
@@ -741,10 +741,17 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
             //平台类型
             resultMap.put("platformType", salesPlatformCode);
         }
-        //销售部门
-        if (ObjectUtil.isNotEmpty(dept)) {
-            resultMap.put("salesDeptCode", dept.getCode());
+        //部门
+        if  (CharSequenceUtil.isNotBlank(deptId)) {
+            DeptKingdeeDTO.FindDeptKingdeeDTO dto = new DeptKingdeeDTO.FindDeptKingdeeDTO();
+            dto.setDeptId(entity.getSalesDeptId());
+            dto.setOrgId(entity.getSalesOrgId());
+            KingdeeDepartmentEntity deptKingdee = kingdeeFeign.getDeptKingdee(dto);
+            if (ObjectUtil.isNotEmpty(deptKingdee)) {
+                resultMap.put("salesDeptCode", deptKingdee.getKingdeeDeptCode());
+            }
         }
+
         //销售组织
         String salesOrgId = entity.getSalesOrgId();
 
@@ -795,6 +802,8 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
         }
         //2024.09.11 jack 同步物流渠道名称到金蝶销售出库单的物流渠道
         resultMap.put("logisticsChannelName",entity.getLogisticsChannelName());
+        //订单标签
+        resultMap.put("tradeLabel",entity.getTradeLabel());
         //————————————————————财务信息SubHeadEntity——————————————————————
         //结算币别
         CurrencyDTO.ViewDTO viewDTO = currencyList.stream().filter(req -> req.getId().equals(currency)).findFirst().orElse(new CurrencyDTO.ViewDTO());
@@ -805,6 +814,8 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
             resultMap.put("salesOrgCode", salesOrgCode);
         }
 
+        //是否支持下推仓位
+        List<CfgSettingDTO.WarehouseLocationSettingDTO> pushKingdeeList = dmpTaskFeign.isPushKingdeeWarehouseLocation(Collections.singletonList(entity.getWarehouseId()));
 
         //————————————————————物料信息——————————————————————
         List<Map<String, Object>> fEntityList = new ArrayList<>();
@@ -835,8 +846,13 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
                         .findFirst().flatMap(obj -> Optional.ofNullable(obj.getKingdeeWarehouseCode())).orElse(null);
                 map.put("warehouseCode", warehouseCode);
             }
-
-            map.put("warehouseLocation", detailEntity.getWarehouseLocation());
+            //是否下推仓位
+            Boolean isPush = pushKingdeeList.stream().filter(obj -> CharSequenceUtil.equals(obj.getWarehouseId(), entity.getWarehouseId()))
+                    .map(CfgSettingDTO.WarehouseLocationSettingDTO::getIsPush).findFirst().orElse(Boolean.FALSE);
+            if (isPush) {
+                //仓位
+                map.put("warehouseLocation", detailEntity.getWarehouseLocation());
+            }
             map.put("remark", detailEntity.getRemark());
             //销售订单金蝶id
             map.put("soSyncKingdeeId",entity.getSyncKingdeeId());
@@ -984,8 +1000,8 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
         }
         //2024.09.11 jack 同步物流渠道名称到金蝶销售出库单的物流渠道
         resultMap.put("logisticsChannelName",entity.getLogisticsChannelName());
-
-
+        //订单标签
+        resultMap.put("tradeLabel",entity.getTradeLabel());
         //————————————————————财务信息SubHeadEntity——————————————————————
         //结算币别
         CurrencyDTO.ViewDTO viewDTO = currencyList.stream().filter(req -> req.getId().equals(currency)).findFirst().orElse(new CurrencyDTO.ViewDTO());

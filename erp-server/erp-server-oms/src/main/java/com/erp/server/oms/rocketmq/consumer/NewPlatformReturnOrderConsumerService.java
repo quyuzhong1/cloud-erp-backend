@@ -1,19 +1,14 @@
 package com.erp.server.oms.rocketmq.consumer;
 
 import cn.hutool.json.JSONUtil;
-import com.common.business.dto.PlatformOrderDTO;
-import com.common.business.dto.PlatformRefundOrderDTO;
 import com.common.business.dto.PlatformReturnOrderDTO;
-import com.common.business.enums.PlatformDictEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.wrapper.FeignQuery;
 import com.common.message.constant.RocketMqNewConsumerGroup;
 import com.common.message.constant.RocketMqNewTag;
 import com.common.message.constant.RocketMqNewTopic;
 import com.common.message.handler.AbstractNewPlatformConsumerHandler;
-import com.erp.model.oms.dto.ListingInfoParamDTO;
 import com.erp.model.oms.entity.*;
-import com.erp.model.oms.enums.RuleTypeEnum;
 import com.erp.model.oms.enums.SoB2cReturnSourceTypeEnum;
 import com.erp.model.oms.enums.SoB2cReturnStatusEnum;
 import com.erp.model.oms.enums.SoB2cReturnTypeEnum;
@@ -32,7 +27,6 @@ import org.springframework.stereotype.Service;
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -140,6 +134,8 @@ public class NewPlatformReturnOrderConsumerService extends AbstractNewPlatformCo
 			matched.setSoReturnDetailId(soB2cReturnDetailEntity.getId());
 			updateDetailList.add(matched);
 			matchedMain.setSoReturnId(soB2cReturnEntity.getId());
+			matchedMain.setSoReturnCode(soB2cReturnEntity.getCode());
+			matchedMain.setPlatformOrderCode(Objects.nonNull(soB2cEntity) ? soB2cEntity.getPlatformCode() : "");
 			updateList.add(matchedMain);
 		}
 		if(CollectionUtils.isNotEmpty(updateList) && CollectionUtils.isNotEmpty(updateDetailList)){

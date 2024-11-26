@@ -286,8 +286,12 @@ public class DmpOutputAliExpressOrderRocketMQTaskHandler extends DmpOutputRocket
         List<PlatformOrderLogisticsDTO> orderLogisticList = new ArrayList<>();
         if(CollUtil.isNotEmpty(dmpLogisticInfoEntityList)) {
         	for(DmpLogisticInfoEntity dmpLogisticInfoEntity : dmpLogisticInfoEntityList) {
+        		String logisticsNo = dmpLogisticInfoEntity.getLogisticsNo();
+        		if(dmpLogisticInfoEntityList.size() > 1 && StringUtils.isBlank(logisticsNo)) {
+        			continue;
+        		}
         		PlatformOrderLogisticsDTO logisticsDTO = new PlatformOrderLogisticsDTO();
-            	logisticsDTO.setCode(dmpLogisticInfoEntity.getLogisticsNo());
+				logisticsDTO.setCode(logisticsNo);
                 String logisticsServiceName = dmpLogisticInfoEntity.getLogisticsServiceName();
                 if(StringUtils.isBlank(logisticsServiceName)) {
                 	logisticsServiceName = "";

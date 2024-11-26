@@ -6,6 +6,7 @@ import org.apache.commons.lang3.StringUtils;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.util.List;
 
 /**
  * @Classname SkuVO
@@ -253,6 +254,10 @@ public class SkuVO implements Serializable {
          * 关键词
          */
         private String searchKeyword;
+        /**
+         * 审核状态
+         */
+        private List<Integer> statusList;
     }
 
     @Data

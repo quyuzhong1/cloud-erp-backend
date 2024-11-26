@@ -293,4 +293,20 @@ public class SoB2cErrorDTO implements Serializable {
         private String type;
 
     }
+
+
+    @Data
+    @NoArgsConstructor
+    public static class TypeCountDTO{
+        /**
+         *
+         */
+        private Integer typeCount = 0;
+
+        /**
+         * 异常类型
+         */
+        private String type;
+
+    }
 }
