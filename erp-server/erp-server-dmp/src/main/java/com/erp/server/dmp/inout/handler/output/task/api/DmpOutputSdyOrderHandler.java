@@ -181,7 +181,9 @@ public class DmpOutputSdyOrderHandler extends DmpOutputTaskHandler {
             shudiyunB2cOrderDTO.setBiz_uni_key(dmpSoInfoEntity.getId() + dmpSoDetailEntity.getId());
 
             shudiyunB2cOrderDTO.setBiz_no(dmpSoInfoEntity.getThirdCode());
-            shudiyunB2cOrderDTO.setBiz_time(localDateTime.format(dmpSoInfoEntity.getPayTime()));
+            if (dmpSoInfoEntity.getPayTime() != null) {
+                shudiyunB2cOrderDTO.setBiz_time(localDateTime.format(dmpSoInfoEntity.getPayTime()));
+            }
 
             //如果是旺店通中台表的订单属于配货单，其他的都是线上原始订单
             if (PlatformDictEnum.WDT.getCode().equalsIgnoreCase(dmpSoInfoEntity.getSourceSystem())) {
@@ -260,6 +262,14 @@ public class DmpOutputSdyOrderHandler extends DmpOutputTaskHandler {
                     }
                     shudiyunB2cOrderDTO.setTransaction_currency_code(shopInfo.getTradeCurrency());
                     shudiyunB2cOrderDTO.setSettlement_currency_code(shopInfo.getSettlementCurrency());
+                    shudiyunB2cOrderDTO.setPlatform_id(shopInfo.getDictPlatform());
+                    shudiyunB2cOrderDTO.setPlatform_name(PlatformDictEnum.getNameByCode(shopInfo.getDictPlatform()));
+                    shudiyunB2cOrderDTO.setSku_code(dmpSoDetailEntity.getSkuNo());
+                    shudiyunB2cOrderDTO.setSku_name(dmpSoDetailEntity.getSkuName());
+                    shudiyunB2cOrderDTO.setSpec_no(dmpSoDetailEntity.getPlatformSpuNo());
+                    shudiyunB2cOrderDTO.setSpec_name(dmpSoDetailEntity.getSpecifics());
+
+
                 }
             } else {
                 String shopId = "";
@@ -299,18 +309,29 @@ public class DmpOutputSdyOrderHandler extends DmpOutputTaskHandler {
                 }
                 shudiyunB2cOrderDTO.setTransaction_currency_code(shopInfo.getTradeCurrency());
                 shudiyunB2cOrderDTO.setSettlement_currency_code(shopInfo.getSettlementCurrency());
+                shudiyunB2cOrderDTO.setPlatform_id(dmpSoInfoEntity.getSourceSystem());
+                shudiyunB2cOrderDTO.setPlatform_name(PlatformDictEnum.getNameByCode(dmpSoInfoEntity.getSourcePlatform()));
+                shudiyunB2cOrderDTO.setSubplatform_no(shopInfo.getDictPlatform());
+                shudiyunB2cOrderDTO.setSubplatform_name(PlatformDictEnum.getNameByCode(shopInfo.getDictPlatform()));
+
+                shudiyunB2cOrderDTO.setSku_code("");
+                shudiyunB2cOrderDTO.setSku_name("");
+                shudiyunB2cOrderDTO.setSpec_no(dmpSoDetailEntity.getPlatformSpuNo());
+                shudiyunB2cOrderDTO.setSpec_name(dmpSoDetailEntity.getSpecifics());
             }
 
-            shudiyunB2cOrderDTO.setPlatform_id(dmpSoInfoEntity.getSourceSystem());
-            shudiyunB2cOrderDTO.setPlatform_name(PlatformDictEnum.getNameByCode(dmpSoInfoEntity.getSourcePlatform()));
 
             shudiyunB2cOrderDTO.setRoot_node_no(dmpSoInfoEntity.getThirdCode());
-            shudiyunB2cOrderDTO.setRoot_node_create_time(localDateTime.format(dmpSoInfoEntity.getPayTime()));
+
+            if (dmpSoInfoEntity.getPayTime() != null) {
+                shudiyunB2cOrderDTO.setRoot_node_create_time(localDateTime.format(dmpSoInfoEntity.getPayTime()));
+            } else {
+                shudiyunB2cOrderDTO.setRoot_node_create_time(localDateTime.format(dmpSoInfoEntity.getPlatformCreateTime()));
+            }
             shudiyunB2cOrderDTO.setRoot_node_modify_time(localDateTime.format(dmpSoInfoEntity.getPlatformUpdateTime()));
             shudiyunB2cOrderDTO.setGoods_no(dmpSoDetailEntity.getPlatformSku());
             shudiyunB2cOrderDTO.setGoods_name(dmpSoDetailEntity.getSkuName());
-            shudiyunB2cOrderDTO.setSpec_no(dmpSoDetailEntity.getPlatformSpuNo());
-            shudiyunB2cOrderDTO.setSpec_name("");
+
             if (dmpSoDetailEntity.getIsGift() && dmpSoDetailEntity.getIsGift() != null) {
                 shudiyunB2cOrderDTO.setIs_gift(1);
             } else {
@@ -355,8 +376,6 @@ public class DmpOutputSdyOrderHandler extends DmpOutputTaskHandler {
             } else {
                 shudiyunB2cOrderDTO.setMsku_name(dmpSoDetailEntity.getSkuName());
             }
-            shudiyunB2cOrderDTO.setSku_code("");
-            shudiyunB2cOrderDTO.setSku_name("");
 
             shudiyunB2cOrderDTO.setSource_system("SDC");
             shudiyunB2cOrderDTO.setRoot_node_no_initial(dmpSoInfoEntity.getThirdCode());
