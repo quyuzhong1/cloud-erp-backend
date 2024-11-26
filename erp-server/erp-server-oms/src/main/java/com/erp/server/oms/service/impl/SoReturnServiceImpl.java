@@ -1139,6 +1139,7 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
                 detailAdd.setReturnAmountLocalCurrency(this.calLocalCurrency(view.getExchangeRate(), view.getReturnAmount()));
                 detailAdd.setTaxReturnAmountLocalCurrency(this.calLocalCurrency(view.getExchangeRate(), view.getTaxReturnAmount()));
                 add.setBillDate(view.getReturnDate());
+                add.setCustomerId(view.getCustomerId());
                 detailList.add(detailAdd);
             }
             add.setDetailList(detailList);

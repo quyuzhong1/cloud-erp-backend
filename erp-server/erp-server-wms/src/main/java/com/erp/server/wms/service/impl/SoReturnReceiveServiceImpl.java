@@ -705,6 +705,9 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
                 detailAddDTO.setTaxReturnAmount(view.getTaxReturnAmount());
                 detailAddDTO.setReturnAmountLocalCurrency(soReturnNoticeService.calLocalCurrency(view.getExchangeRate(), view.getReturnAmount()));
                 detailAddDTO.setTaxReturnAmountLocalCurrency(soReturnNoticeService.calLocalCurrency(view.getExchangeRate(), view.getTaxReturnAmount()));
+                dto.setCurrency(view.getCurrency());
+                dto.setCurrencySymbol(view.getCurrencySymbol());
+                dto.setCustomerId(view.getCustomerId());
                 detailList.add(detailAddDTO);
             }
             dto.setDetailList(detailList);

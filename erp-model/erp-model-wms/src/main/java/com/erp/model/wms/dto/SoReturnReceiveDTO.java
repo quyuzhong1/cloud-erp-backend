@@ -776,14 +776,6 @@ public class SoReturnReceiveDTO {
          */
         private BigDecimal taxReturnAmount;
         /**
-         *销售金额
-         */
-        private BigDecimal amount;
-        /**
-         *含税销售金额
-         */
-        private BigDecimal taxAmount;
-        /**
          *汇率
          */
         private BigDecimal exchangeRate;
