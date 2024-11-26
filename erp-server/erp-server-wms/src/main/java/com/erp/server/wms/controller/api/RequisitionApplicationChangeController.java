@@ -373,4 +373,15 @@ public class RequisitionApplicationChangeController extends BaseController {
     }
 
 
+    /**
+     * 审核弹窗
+     * @author lrp
+     * @date:  2024-11-18
+     * @return ApiResult<RequisitionApplicationChangeDTO.ViewDTO>>
+     */
+    @PostMapping("/view")
+    public ApiResult<RequisitionApplicationChangeDTO.ViewDTO> view(@RequestBody @Validated RequisitionApplicationChangeDTO.ViewIdDTO dto) {
+        return success(requisitionApplicationChangeService.view(dto));
+    }
+
 }

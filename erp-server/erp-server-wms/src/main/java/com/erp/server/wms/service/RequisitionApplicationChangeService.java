@@ -105,15 +105,6 @@ public interface RequisitionApplicationChangeService extends SuperService<Requis
     BatchResultDTO approve(ApproveOneDTO dto);
 
     /**
-    * 反审核
-    * @author lrp
-    * @date: 2024-11-18
-    * @param id
-    * @return
-    */
-    BatchResultDTO disApprove(String id);
-
-    /**
     * 删除
     * @author lrp
     * @date: 2024-11-18

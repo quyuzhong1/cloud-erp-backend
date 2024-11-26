@@ -495,6 +495,8 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         String createUserId = map.get("createUserId");
         String createUserName = map.get("createUserName");
         String packingCode = map.get("packingCode");
+        String approveStatus = map.get("approveStatus");
+        String approveUserName = map.getOrDefault("approveUserName","");
         //消息头
         String title = null;
         //消息体
@@ -515,6 +517,14 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
             case FS_REQUISITION_PACKING_NOTICE:
                 title = String.format(NoticeMsgConstant.FS_REQUISITION_SETTING_HEAD);
                 msgContent = String.format(NoticeMsgConstant.FS_REQUISITION_SETTING_CONTENT, "数大臣", "要货申请","要货申请单单据【"+requistionCode+"】关联装箱任务【"+packingCode+"】已装箱完成，请即时处理" ,createUserName, LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+                break;
+            case FS_REQUISITION_CHANGE_SUBMIT_NOTICE:
+                title = String.format(NoticeMsgConstant.FS_REQUISITION_CHANGE_SETTING_HEAD);
+                msgContent = String.format(NoticeMsgConstant.FS_REQUISITION_CHANGE_SETTING_CONTENT, "数大臣", "要货申请变更单",requistionCode ,createUserName, LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+                break;
+            case FS_REQUISITION_CHANGE_APPROVE_NOTICE:
+                title = String.format(NoticeMsgConstant.FS_REQUISITION_CHANGE_SETTING_HEAD);
+                msgContent = String.format(NoticeMsgConstant.FS_REQUISITION_CHANGE_SETTING_CONTENT, "数大臣", "要货申请变更单",requistionCode,approveStatus,createUserName,approveUserName, LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
                 break;
             default:
                 return;

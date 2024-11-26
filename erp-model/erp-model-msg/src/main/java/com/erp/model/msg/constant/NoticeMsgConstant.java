@@ -91,4 +91,13 @@ public class NoticeMsgConstant {
      * 头程发货通知消息体
      */
     public final static String FS_FIRSTMILEDELIVERY_SETTING_CONTENT="所属项目：%s\n业务名称：%s\n详细信息：%s\n创建人：%s\n发送时间：%s";
+
+    /**
+     * 要货申请变更通知消息头
+     */
+    public final static String FS_REQUISITION_CHANGE_SETTING_HEAD="要货申请变更通知";
+    /**
+     * 要货申请完成通知消息体
+     */
+    public final static String FS_REQUISITION_CHANGE_SETTING_CONTENT="所属项目：%s\n业务名称：%s\n详细信息：要货申请变更单：【%s】当前【%s】，请即时处理\n创建人：%s\n审核人：%s\n发送时间：%s";
 }

@@ -33,6 +33,7 @@ import com.erp.model.wms.dto.RequisitionApplicationChangeDTO;
 import com.erp.model.wms.dto.inventory.VirtualInventoryStockDTO;
 import com.erp.model.wms.dto.pickingstrategy.PickingListsDTO;
 import com.erp.model.wms.entity.*;
+import com.erp.model.wms.enums.CfgSettingEnum;
 import com.erp.model.wms.enums.RequisitionApplicationStatusEnum;
 import com.erp.model.wms.enums.RequisitionApplicationTypeEnum;
 import com.erp.model.wms.enums.RequisitionChangeTypeEnum;
@@ -45,7 +46,6 @@ import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.wms.mapper.RequisitionApplicationChangeMapper;
 import com.erp.server.wms.service.*;
-import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -230,6 +230,12 @@ public class RequisitionApplicationChangeServiceImpl extends SuperServiceImpl<Re
         startProcess(entity);
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据提交审核 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "要货申请变更单");
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.REQUISITION_APPLICATION_CHANGE.getCode(), entity.getId(), "提交操作");
+        Map<String, String> map = new HashMap<>();
+        map.put("code", entity.getCode());
+        map.put("createUserId", entity.getCreateUserId());
+        map.put("createUserName", entity.getCreateUserName());
+        map.put("approveStatus", "提交审核");
+        requisitionApplicationService.sendRequisitionMsg(map, CfgSettingEnum.FS_REQUISITION_CHANGE_SUBMIT_NOTICE);
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.SUBMIT);
     }
 
@@ -270,6 +276,17 @@ public class RequisitionApplicationChangeServiceImpl extends SuperServiceImpl<Re
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据审核操作  审核结果：【{}】 审核意见 ：【{}】", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "要货申请变更单", approveType.getName(), dto.getComment());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.REQUISITION_APPLICATION_CHANGE.getCode(), entity.getId(), "审核操作");
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(approveType);
+        Map<String, String> map = new HashMap<>();
+        map.put("code", entity.getCode());
+        map.put("createUserId", entity.getCreateUserId());
+        map.put("createUserName", entity.getCreateUserName());
+        if(Objects.equals(approveType, ApproveTypeEnum.REJECT)){
+            map.put("approveStatus", "审核不通过");
+        }else{
+            map.put("approveStatus", "审核通过");
+        }
+        map.put("approveUserName", entity.getApproveUserName());
+        requisitionApplicationService.sendRequisitionMsg(map, CfgSettingEnum.FS_REQUISITION_CHANGE_APPROVE_NOTICE);
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.approveStatus(approveStatus));
     }
 
@@ -297,34 +314,6 @@ public class RequisitionApplicationChangeServiceImpl extends SuperServiceImpl<Re
             // 无需走流程的数据则直接更新状态
             this.approveEnd(dto, entity);
         }
-    }
-
-    @GlobalTransactional(rollbackFor = Exception.class)
-    @Transactional(rollbackFor = Exception.class)
-    @Override
-    public BatchResultDTO disApprove(String id) {
-        RequisitionApplicationChangeEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到要货申请变更单单数据"));
-        // 反审核条件判断
-        validateDisApprove(entity);
-        // TODO 检查是否有下推单据（如果支持下推的话）明细数据
-
-        // 更新审核信息
-        updateForDisApprove(id, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
-
-        // 操作日志
-        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据反审核操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "要货申请变更单");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.REQUISITION_APPLICATION_CHANGE.getCode(), entity.getId(), "反审核操作");
-        return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DISAPPROVE);
-    }
-
-    private Boolean validateDisApprove(RequisitionApplicationChangeEntity entity) {
-        // 已审核支持反审核
-        if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE.getStatus())) {
-            throw new ServiceException(ApiError.ERROR_98014);
-        }
-        // TODO 下游盘点计划单反审核
-        return true;
     }
 
     @Transactional(rollbackFor = Exception.class)
