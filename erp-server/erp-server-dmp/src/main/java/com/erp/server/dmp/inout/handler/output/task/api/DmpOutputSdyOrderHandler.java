@@ -165,6 +165,9 @@ public class DmpOutputSdyOrderHandler extends DmpOutputTaskHandler {
         //优惠额
         BigDecimal totalDiscount = dmpSoInfoEntity.getTotalDiscount();
 
+
+        BigDecimal shareTotalDiscount = BigDecimal.ZERO;
+
         //如果是亚马逊的优惠额在明细里
         if (PlatformDictEnum.AMAZON.getCode().equals(dmpSoInfoEntity.getSourcePlatform())) {
             totalDiscount = dmpSoDetailEntityList.stream().filter(req -> req.getDiscount() != null).map(req -> req.getDiscount()).reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
@@ -366,19 +369,19 @@ public class DmpOutputSdyOrderHandler extends DmpOutputTaskHandler {
             shudiyunB2cOrderDTO.setGoods_transaction_amount(dmpSoDetailEntity.getAfterAmount());
             if (dmpSoDetailEntity.getAfterAmount().compareTo(BigDecimal.ZERO) > 0) {
                 BigDecimal shareDiscount = BigDecimal.ZERO;
-                //获得分摊的商品优惠额
+                //获得售价占比分摊的商品优惠额
                 if (dmpSoInfoEntity.getAllAmount().compareTo(BigDecimal.ZERO) > 0) {
                     shareDiscount = dmpSoDetailEntity.getAfterAmount().divide(dmpSoInfoEntity.getAllAmount(), 4, RoundingMode.DOWN).multiply(totalDiscount);
                 }
                 //计算为真实售价(原始币别)-商品分摊优惠/订单数量
                 if (dmpSoDetailEntityList.size() == i-1) {
-                    shudiyunB2cOrderDTO.setPrice(dmpSoDetailEntity.getAfterAmount().subtract(dmpSoInfoEntity.getAllAmount()).divide(MathUtil.valueOf(dmpSoDetailEntity.getQty()), 4, RoundingMode.DOWN));
-                    shudiyunB2cOrderDTO.setGoods_transaction_amount(dmpSoDetailEntity.getAfterAmount().subtract(dmpSoInfoEntity.getAllAmount()));
+                    shudiyunB2cOrderDTO.setPrice(dmpSoDetailEntity.getAfterAmount().subtract((totalDiscount.subtract(shareTotalDiscount))).divide(MathUtil.valueOf(dmpSoDetailEntity.getQty()), 4, RoundingMode.DOWN));
+                    shudiyunB2cOrderDTO.setGoods_transaction_amount(dmpSoDetailEntity.getAfterAmount().subtract((totalDiscount.subtract(shareTotalDiscount))));
                 } else {
                     shudiyunB2cOrderDTO.setPrice(dmpSoDetailEntity.getAfterAmount().subtract(shareDiscount).divide(MathUtil.valueOf(dmpSoDetailEntity.getQty()), 4, RoundingMode.DOWN));
                     shudiyunB2cOrderDTO.setGoods_transaction_amount(dmpSoDetailEntity.getAfterAmount().subtract(shareDiscount));
                 }
-                totalDiscount = totalDiscount.subtract(shareDiscount);
+                shareTotalDiscount = shareTotalDiscount.add(shareDiscount);
             }
             shudiyunB2cOrderDTO.setPost_amount(dmpSoInfoEntity.getShippingAmount());
             shudiyunB2cOrderDTO.setMsku_code(dmpSoDetailEntity.getPlatformSku());

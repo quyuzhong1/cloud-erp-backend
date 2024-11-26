@@ -114,7 +114,7 @@ public enum PlatformDictEnum implements EnumMessage {
     public static String getNameByCode(String code) {
         PlatformDictEnum[] values = values();
         for (PlatformDictEnum value : values) {
-            if (value.code.equals(code) ) {
+            if (value.code.equalsIgnoreCase(code) ) {
                 return value.getName();
             }
         }
