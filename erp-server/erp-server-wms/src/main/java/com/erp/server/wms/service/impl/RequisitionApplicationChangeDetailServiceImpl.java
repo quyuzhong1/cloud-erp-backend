@@ -54,6 +54,7 @@ public class RequisitionApplicationChangeDetailServiceImpl extends SuperServiceI
     @Override
     public void add(RequisitionApplicationChangeEntity entity, RequisitionApplicationChangeDTO.ViewDTO addDTO) {
         this.checkData(addDTO.getViewDetailList());
+        addDTO.getViewDetailList().forEach(v->v.setSourceDetailId(v.getRequisitionDetailId()));
         List<RequisitionApplicationChangeDetailEntity> detailEntityList = this.buildDetail(addDTO.getViewDetailList(),entity);
         this.saveBatch(detailEntityList);
     }
@@ -109,6 +110,9 @@ public class RequisitionApplicationChangeDetailServiceImpl extends SuperServiceI
         }
         for (RequisitionApplicationChangeDTO.ViewDetailDTO viewDetail : details) {
             if(RequisitionChangeTypeEnum.UPDATE.getCode().equals(viewDetail.getChangeType())){
+                if(StringUtils.isBlank(viewDetail.getRequisitionDetailId())){
+                    throw new ServiceException("修改变更明细数据，要货申请明细ID不能为空");
+                }
                 List<PickingDetailEntity> currentPickList = pickingDetailEntityList.stream().filter(v -> v.getSourceDetailId().equals(viewDetail.getRequisitionDetailId())).collect(Collectors.toList());
                 Integer pickedQty = currentPickList.stream().mapToInt(PickingDetailEntity::getQty).sum();
                 if(viewDetail.getNewRequisitionQty() < pickedQty){

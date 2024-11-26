@@ -391,7 +391,7 @@ public class RequisitionApplicationChangeServiceImpl extends SuperServiceImpl<Re
      * @return
      */
     private RequisitionApplicationChangeDTO.UpdateVirtualDTO changeRequisitionByPicking(RequisitionApplicationChangeEntity entity, List<RequisitionApplicationChangeDetailEntity> detailEntityList) {
-        RequisitionApplicationEntity requisitionApplicationEntity = requisitionApplicationService.getByIdOpt(entity.getSourceId()).orElseThrow(() -> new ServiceException("未找到要货申请单数据"));
+        RequisitionApplicationEntity requisitionApplicationEntity = requisitionApplicationService.getByIdOpt(entity.getBusinessId()).orElseThrow(() -> new ServiceException("未找到要货申请单数据"));
         PickingListsEntity pickingListsEntity = pickingListsService.getOne(new QueryWrapper<PickingListsEntity>().eq("source_id", requisitionApplicationEntity.getId()));
         List<PickingDetailEntity> allDetailList = pickingDetailService.list(Wrappers.<PickingDetailEntity>lambdaQuery().eq(PickingDetailEntity::getMainId, pickingListsEntity.getId()));
         List<RequisitionApplicationDetailEntity> requisitionApplicationDetailEntityList = requisitionApplicationDetailService.listByMainIds(Collections.singletonList(requisitionApplicationEntity.getId()));
@@ -505,7 +505,7 @@ public class RequisitionApplicationChangeServiceImpl extends SuperServiceImpl<Re
         if(CollectionUtils.isEmpty(detailList)){
             return new RequisitionApplicationChangeDTO.UpdateVirtualDTO();
         }
-        RequisitionApplicationEntity requisitionApplicationEntity = requisitionApplicationService.getByIdOpt(entity.getSourceId()).orElseThrow(() -> new ServiceException("未找到要货申请单数据"));
+        RequisitionApplicationEntity requisitionApplicationEntity = requisitionApplicationService.getByIdOpt(entity.getBusinessId()).orElseThrow(() -> new ServiceException("未找到要货申请单数据"));
         List<RequisitionApplicationDetailEntity> requisitionApplicationDetailEntityList = requisitionApplicationDetailService.listByMainIds(Collections.singletonList(requisitionApplicationEntity.getId()));
         List<String> requisitionDetailIds = requisitionApplicationDetailEntityList.stream().map(BaseEntity::getId).collect(Collectors.toList());
         List<PickingDetailEntity> pickingDetailEntityList = pickingDetailService.listPickingDetailBySourceDetailIds(requisitionDetailIds);
@@ -536,7 +536,7 @@ public class RequisitionApplicationChangeServiceImpl extends SuperServiceImpl<Re
                 detail.setSourceDetailId(requisitionApplicationDetailEntity.getId());
                 sourceDetailList.add(detail);
             }else if (RequisitionChangeTypeEnum.UPDATE.getCode().equals(detail.getChangeType())){
-                RequisitionApplicationDetailEntity requisitionApplicationDetailEntity = requisitionApplicationDetailEntityList.stream().filter(v -> v.getId().equals(detail.getSourceDetailId())).findFirst().orElseThrow(()->new ServiceException("{}未找到要货申请单明细数据",detail.getSkuNo()));
+                RequisitionApplicationDetailEntity requisitionApplicationDetailEntity = requisitionApplicationDetailEntityList.stream().filter(v -> v.getId().equals(detail.getBusinessDetailId())).findFirst().orElseThrow(()->new ServiceException("{}未找到要货申请单明细数据",detail.getSkuNo()));
                 requisitionApplicationDetailEntity.setChangeBeforeQty(requisitionApplicationDetailEntity.getRequisitionQty());
                 requisitionApplicationDetailEntity.setSkuId(detail.getSkuId());
                 requisitionApplicationDetailEntity.setSkuNo(detail.getSkuNo());
@@ -555,7 +555,7 @@ public class RequisitionApplicationChangeServiceImpl extends SuperServiceImpl<Re
                     updatePickingList.add(pickingDetailEntity);
                 }
             }else if (RequisitionChangeTypeEnum.DELETE.getCode().equals(detail.getChangeType())){
-                RequisitionApplicationDetailEntity deleteEntity = requisitionApplicationDetailEntityList.stream().filter(v -> v.getId().equals(detail.getSourceDetailId())).findFirst().orElseThrow(()->new ServiceException("{}未找到要货申请单明细数据",detail.getSkuNo()));
+                RequisitionApplicationDetailEntity deleteEntity = requisitionApplicationDetailEntityList.stream().filter(v -> v.getId().equals(detail.getBusinessDetailId())).findFirst().orElseThrow(()->new ServiceException("{}未找到要货申请单明细数据",detail.getSkuNo()));
                 deleteEntity.setChangeBeforeQty(deleteEntity.getRequisitionQty());
                 deleteList.add(deleteEntity);
             }
