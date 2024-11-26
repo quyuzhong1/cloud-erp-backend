@@ -89,9 +89,9 @@
     </select>
     <select id="isTableExist" resultType="java.lang.Boolean">
         SELECT EXISTS (SELECT 1
-                       FROM pg_tables
-                       WHERE tablename = #{tableName}
-                         AND schemaname = 'public')
+                       FROM information_schema.tables
+                       WHERE table_name = #{tableName}
+                         AND table_schema = 'public')
     </select>
     <select id="getPlanDelivery"
             resultType="com.erp.model.mrp.dto.ReplenishmentResultDTO$EstimatedDeliveryDetailDTO">
