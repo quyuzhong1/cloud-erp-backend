@@ -2,16 +2,14 @@ package com.erp.model.wms.dto;
 
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
+import com.common.core.anno.StateEnumValue;
 import com.erp.model.wms.entity.RequisitionApplicationDetailEntity;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.Valid;
-import javax.validation.constraints.Min;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Size;
+import javax.validation.constraints.*;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -331,6 +329,106 @@ public class RequisitionApplicationChangeDTO implements Serializable {
          * 变更后要货数量
          */
         private Integer newRequisitionQty;
+    }
+
+    /**
+     * 审核view
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ApproveDTO {
+
+        /**
+         * 类型（pass、审核通过，reject、审核不通过）
+         */
+        @NotBlank(message = "审核类型不能为空")
+        @StateEnumValue(strValues = {"pass","reject","reject_appoint","revoke"}, message = "审核类型有误")
+        private String type;
+
+        @NotEmpty(message = "审核数据不能为空")
+        @Valid
+        private List<ApproveView> approveViewList;
+    }
+    /**
+     * 审核view
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ApproveView {
+
+        /**
+         * 变更单id
+         */
+        @NotBlank(message = "id不能为空")
+        private String id;
+
+        /**
+         * 明细id
+         */
+        @NotBlank(message = "明细id不能为空")
+        private String detailId;
+        /**
+         * 变更单code
+         */
+        private String code;
+        /**
+         * 状态
+         */
+        private String approveStatus;
+        /**
+         * 要货仓库id
+         */
+        private String requisitionWarehouseId;
+        /**
+         * 要货仓库中文
+         */
+        private String requisitionWarehouseName;
+        /**
+         * 产品id
+         */
+        private String skuId;
+        /**
+         * 产品编号
+         */
+        private String skuNo;
+        /**
+         * bom版本
+         */
+        private String bomVersion;
+        /**
+         * 是否组合品
+         */
+        private Boolean isCombination;
+        /**
+         * 产品名称
+         */
+        private String productName;
+
+        /**
+         * 变更类型
+         */
+        private String changeType;
+
+        /**
+         * 变更类型name
+         */
+        private String changeTypeName;
+        /**
+         * 原要货数量
+         */
+        private Integer originRequisitionQty;
+        /**
+         * 变更后要货数量
+         */
+        private Integer newRequisitionQty;
+        /**
+         * 调出虚拟仓库Id
+         */
+        private String fromVirtualWarehouseId;
+        /**
+         * 调出虚拟仓库名称
+         */
+        private String fromVirtualWarehouseName;
     }
 
     /**

@@ -230,6 +230,32 @@ public class RequisitionApplicationChangeDetailServiceImpl extends SuperServiceI
         this.saveBatch(detailEntityList);
     }
 
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void updateVirtualWarehouse(List<RequisitionApplicationChangeDTO.ApproveView> approveViewList) {
+        if(CollUtil.isEmpty(approveViewList)){
+            return;
+        }
+        List<String> ids = approveViewList.stream().map(RequisitionApplicationChangeDTO.ApproveView::getDetailId).collect(Collectors.toList());
+
+        List<RequisitionApplicationChangeDetailEntity> requisitionApplicationChangeDetailEntities = this.listByIds(ids);
+        List<RequisitionApplicationChangeDetailEntity> updateList = new ArrayList<>();
+        for (RequisitionApplicationChangeDTO.ApproveView approveView : approveViewList) {
+            RequisitionApplicationChangeDetailEntity requisitionApplicationChangeDetailEntity = requisitionApplicationChangeDetailEntities.stream().filter(v->v.getId().equals(approveView.getDetailId())).findFirst().orElse(null);
+            if(Objects.isNull(requisitionApplicationChangeDetailEntity)){
+                continue;
+            }
+            if(!requisitionApplicationChangeDetailEntity.getFromVirtualWarehouseId().equals(approveView.getFromVirtualWarehouseId())){
+                requisitionApplicationChangeDetailEntity.setFromVirtualWarehouseId(approveView.getFromVirtualWarehouseId());
+                requisitionApplicationChangeDetailEntity.setFromVirtualWarehouseName(approveView.getFromVirtualWarehouseName());
+                updateList.add(requisitionApplicationChangeDetailEntity);
+            }
+        }
+        if(CollectionUtils.isNotEmpty(updateList)){
+            this.updateBatchById(updateList);
+        }
+    }
+
     private List<RequisitionApplicationChangeDetailEntity> buildDetailByPicking(PickingListsDTO.AddChangeDTO addChangeDTO, RequisitionApplicationChangeEntity entity) {
         List<RequisitionApplicationChangeDetailEntity> list = new ArrayList<>();
         List<PickingDetailEntity> allList = new ArrayList<>();

@@ -23,9 +23,10 @@ import com.common.core.entity.BaseEntity;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.MathUtil;
-import com.common.core.utils.StrUtils;
 import com.erp.model.oms.dto.ListingInfoDTO;
+import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.dto.ProductBomInfoDTO;
+import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
@@ -260,20 +261,21 @@ public class RequisitionApplicationChangeServiceImpl extends SuperServiceImpl<Re
 
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public BatchResultDTO approve(ApproveOneDTO dto) {
-        ApproveTypeEnum approveType = ApproveTypeEnum.getByCode(dto.getType());
-        if(Objects.equals(approveType, ApproveTypeEnum.REJECT) && StrUtils.isEmpty(dto.getComment())) {
-            throw new ServiceException(ApiError.REJECT_COMMENT_NOT_EMPTY);
-        }
-        RequisitionApplicationChangeEntity entity = getById(dto.getId());
+    public BatchResultDTO approve(String id, List<RequisitionApplicationChangeDTO.ApproveView> approveViewList, String type) {
+        ApproveTypeEnum approveType = ApproveTypeEnum.getByCode(type);
+        RequisitionApplicationChangeEntity entity = getById(id);
         // 审核中的数据允许审核
         if(!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING.getStatus())) {
             throw new ServiceException(ApiError.ERROR_98006);
         }
+        //保存虚拟仓数据
+        detailService.updateVirtualWarehouse(approveViewList);
         // 调用流程审核
-        approveProcess(entity, dto);
+        ApproveOneDTO approveOneDTO = new ApproveOneDTO();
+        approveOneDTO.setType(type);
+        approveProcess(entity, approveOneDTO);
         // 操作日志
-        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据审核操作  审核结果：【{}】 审核意见 ：【{}】", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "要货申请变更单", approveType.getName(), dto.getComment());
+        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据审核操作  审核结果：【{}】", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "要货申请变更单", approveType.getName());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.REQUISITION_APPLICATION_CHANGE.getCode(), entity.getId(), "审核操作");
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(approveType);
         Map<String, String> map = new HashMap<>();
@@ -528,9 +530,10 @@ public class RequisitionApplicationChangeServiceImpl extends SuperServiceImpl<Re
                 requisitionApplicationDetailEntity.setApproveQty(detail.getNewQty());
                 requisitionApplicationDetailEntity.setRequisitionQty(detail.getNewQty());
                 requisitionApplicationDetailEntity.setId(IdWorker.getIdStr());
+                requisitionApplicationDetailEntity.setFromVirtualWarehouseId(detail.getFromVirtualWarehouseId());
+                requisitionApplicationDetailEntity.setFromVirtualWarehouseName(detail.getFromVirtualWarehouseName());
                 addList.add(requisitionApplicationDetailEntity);
                 detail.setSourceDetailId(requisitionApplicationDetailEntity.getId());
-                //TODO 补充仓库
                 sourceDetailList.add(detail);
             }else if (RequisitionChangeTypeEnum.UPDATE.getCode().equals(detail.getChangeType())){
                 RequisitionApplicationDetailEntity requisitionApplicationDetailEntity = requisitionApplicationDetailEntityList.stream().filter(v -> v.getId().equals(detail.getSourceDetailId())).findFirst().orElseThrow(()->new ServiceException("{}未找到要货申请单明细数据",detail.getSkuNo()));
@@ -690,6 +693,40 @@ public class RequisitionApplicationChangeServiceImpl extends SuperServiceImpl<Re
         String msg = StrUtil.format("用户【{}】修改拣货单自动新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "要货申请变更单" , requisitionApplicationChangeEntity.getCode());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.REQUISITION_APPLICATION_CHANGE.getCode(), requisitionApplicationChangeEntity.getId(), "新增操作");
         detailService.addByPicking(requisitionApplicationChangeEntity, addChangeDTO);
+    }
+
+    @Override
+    public List<RequisitionApplicationChangeDTO.ApproveView> approveView(BaseIdsDTO.IdsDTO dto) {
+        List<RequisitionApplicationChangeDTO.ApproveView> list = baseMapper.approveView(dto.getIds());
+        long count = list.stream().filter(req -> !ApproveStatusEnum.APPROVE_ING.getStatus().equals(req.getApproveStatus())).count();
+        if (count > 0) {
+            throw new ServiceException("只有审核中可以审核");
+        }
+        //查询产品信息
+        List<String> skuIdList = list.stream().map(req -> req.getSkuId()).distinct().collect(Collectors.toList());
+        List<SkuVO> skuVOList = plmTaskFeign.listSkuProductByIds(skuIdList);
+
+        //获取子SKU集合
+        List<BomChildrenSkuDTO> bomChildrenSkuDTOS = plmTaskFeign.listHistoryBomChildBySkuIds(skuIdList);
+
+        for (RequisitionApplicationChangeDTO.ApproveView approveView : list) {
+            //产品信息
+            SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuId().equals(approveView.getSkuId())).findFirst().orElse(new SkuVO());
+            approveView.setProductName(skuVO.getSkuName());
+
+            //查询sku是否存在子SKU
+            List<BomChildrenSkuDTO> sonSkuList = bomChildrenSkuDTOS.stream()
+                    .filter(req -> req.getParentSkuId().equals(approveView.getSkuId())
+                            && req.getBomVersion().equals(approveView.getBomVersion())
+                            && BomTypeEnum.COMBINATION.getType().equalsIgnoreCase(req.getType())
+                    ).collect(Collectors.toList());
+            if (CollectionUtils.isNotEmpty(sonSkuList)) {
+                approveView.setIsCombination(Boolean.TRUE);
+            } else {
+                approveView.setIsCombination(Boolean.FALSE);
+            }
+        }
+        return list;
     }
 
     @Override

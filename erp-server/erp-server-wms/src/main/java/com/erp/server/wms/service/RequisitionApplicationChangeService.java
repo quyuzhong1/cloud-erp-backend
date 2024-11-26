@@ -96,13 +96,16 @@ public interface RequisitionApplicationChangeService extends SuperService<Requis
     BatchResultDTO submit(String id);
 
     /**
-    * 审核
-    * @author lrp
-    * @date: 2024-11-18
-    * @param dto
-    * @return
-    */
-    BatchResultDTO approve(ApproveOneDTO dto);
+     * 审核
+     *
+     * @param id
+     * @param approveViewList
+     * @param type
+     * @return
+     * @author lrp
+     * @date: 2024-11-18
+     */
+    BatchResultDTO approve(String id, List<RequisitionApplicationChangeDTO.ApproveView> approveViewList, String type);
 
     /**
     * 删除
@@ -149,4 +152,6 @@ public interface RequisitionApplicationChangeService extends SuperService<Requis
     List<RequisitionApplicationChangeDetailEntity> listNotHandleDetailByBusinessDetailIds(List<String> detailIds);
 
     void generateByPickingList(PickingListsDTO.AddChangeDTO addChangeDTO, PickingListsDTO.UpdateDTO dto, PickingListsEntity entity);
+
+    List<RequisitionApplicationChangeDTO.ApproveView> approveView(BaseIdsDTO.IdsDTO dto);
 }

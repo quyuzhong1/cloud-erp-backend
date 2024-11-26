@@ -30,4 +30,6 @@ public interface SysPostService extends IService<SysPostEntity> {
     List<SysPostEntity> findPost(BaseSearchDTO dto);
 
     List<SysPostEntity> listByRequisitionSetting();
+
+    List<SysPostEntity> listByRequisitionChangeSetting();
 }

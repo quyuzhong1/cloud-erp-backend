@@ -55,4 +55,6 @@ public interface RequisitionApplicationChangeMapper extends BaseMapper<Requisiti
     List<RequisitionApplicationChangeDTO.TabListDTO> tabList(@Param("params") RequisitionApplicationChangeDTO.PagingParamDTO searchParam);
 
     List<RequisitionApplicationChangeDetailEntity> listNotHandleDetailByBusinessDetailIds(@Param("businessDetailIds") List<String> businessDetailIds);
+
+    List<RequisitionApplicationChangeDTO.ApproveView> approveView(@Param("ids")List<String> ids);
 }

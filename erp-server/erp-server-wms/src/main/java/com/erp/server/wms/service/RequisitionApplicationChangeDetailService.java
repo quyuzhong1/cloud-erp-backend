@@ -43,4 +43,6 @@ public interface RequisitionApplicationChangeDetailService extends SuperService<
     List<RequisitionApplicationChangeDetailEntity> listByMains(List<String> mainIds);
 
     void addByPicking(RequisitionApplicationChangeEntity requisitionApplicationChangeEntity, PickingListsDTO.AddChangeDTO addChangeDTO);
+
+    void updateVirtualWarehouse(List<RequisitionApplicationChangeDTO.ApproveView> approveViewList);
 }

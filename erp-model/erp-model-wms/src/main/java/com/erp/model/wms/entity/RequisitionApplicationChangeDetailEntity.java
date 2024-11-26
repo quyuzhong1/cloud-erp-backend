@@ -103,6 +103,17 @@ public class RequisitionApplicationChangeDetailEntity extends BaseEntity<Requisi
     @TableField("origin_warehouse_location")
     private String originWarehouseLocation;
 
+    /**
+     * 调出虚拟仓库id
+     */
+    @TableField("from_virtual_warehouse_id")
+    private String fromVirtualWarehouseId;
+    /**
+     * 调出虚拟仓库中文名
+     */
+    @TableField("from_virtual_warehouse_name")
+    private String fromVirtualWarehouseName;
+
     public static final String MAIN_ID = "main_id";
 
     public static final String SKU_ID = "sku_id";

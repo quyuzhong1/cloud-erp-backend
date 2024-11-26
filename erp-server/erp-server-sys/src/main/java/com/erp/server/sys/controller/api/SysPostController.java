@@ -74,4 +74,10 @@ public class SysPostController extends BaseController {
         List<SysPostEntity> list = sysPostService.listByRequisitionSetting();
         return success(list);
     }
+
+    @GetMapping("/listByRequisitionChangeSetting")
+    public ApiResult listByRequisitionChangeSetting() {
+        List<SysPostEntity> list = sysPostService.listByRequisitionChangeSetting();
+        return success(list);
+    }
 }
