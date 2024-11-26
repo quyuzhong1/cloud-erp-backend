@@ -1013,7 +1013,12 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                     addDTO.setShopId(entity.getCustomerId());
                     addDTO.setShopName(entity.getCustomerName());
                     addDTO.setSourceType(orderType);
-                    addDTO.setToCountry(entity.getCountry());
+                    if (CharSequenceUtil.isNotBlank(entity.getCountry())) {
+                        List<DictCountryEntity> countryList = sysDictFeign.listCountryByIds(Collections.singletonList(entity.getCountry()));
+                        if (CollectionUtils.isNotEmpty(countryList)) {
+                            addDTO.setToCountry(countryList.get(0).getNameCn());
+                        }
+                    }
                     addDTO.setTransportNo(entity.getTrackNo());
                     CustomerInfoEntity customer = customerFeign.getCustomerById(entity.getCustomerId());
                     addDTO.setSalesPlatform(Objects.nonNull(customer) ? customer.getPlatformType() : CharSequenceUtil.EMPTY);

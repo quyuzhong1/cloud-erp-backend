@@ -18,6 +18,7 @@ import java.util.stream.Stream;
  */
 public enum FmLogisticTrackStatusEnum implements EnumMessage {
     WAIT_ORDER("waitOrder","待下单"),
+    WAIT_QUERY("waitQuery","待查询"),
     ORDERED("ordered","已下单"),
     INSPECTING("Inspecting","查验中"),
     TRACK_ING("trackIng","运输中"),
