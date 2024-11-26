@@ -277,7 +277,6 @@ public class DmpOutputSdyWdtOriginalOrderHandler extends DmpOutputTaskHandler {
                 shudiyunB2cOrderDTO.setPrice(dmpSoDetailEntity.getPrice().subtract(dmpSoDetailEntity.getShareDiscount().divide(dmpSoDetailEntity.getNum(), 4, RoundingMode.DOWN)));
             }
 
-
             shudiyunB2cOrderDTO.setPost_amount(BigDecimal.ZERO);
             shudiyunB2cOrderDTO.setMsku_code(dmpSoDetailEntity.getGoodsNo());
             shudiyunB2cOrderDTO.setMsku_name(dmpSoDetailEntity.getGoodsName());

@@ -9,6 +9,8 @@ import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.wrapper.FeignQuery;
+import com.common.business.wrapper.QueryParam;
+import com.common.business.wrapper.QueryTypeEnum;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.entity.BaseEntity;
 import com.common.core.enums.ApiError;
@@ -23,8 +25,10 @@ import com.erp.model.oms.enums.OrderSubTypeEnum;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.sys.entity.DictCurrencyEntity;
 import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.server.dmp.inout.dto.request.DmpOutputHotfixCreateRequest;
 import com.erp.server.dmp.inout.dto.request.DmpOutputTaskRequest;
 import com.erp.server.dmp.inout.dto.response.DmpOutputTaskResponse;
+import com.erp.server.dmp.inout.handler.factory.DmpOutputCreateFactory;
 import com.erp.server.dmp.inout.handler.output.task.DmpOutputTaskHandler;
 import com.erp.server.dmp.push.consumer.sdy.SdyDeliveryOrderConsumer;
 import com.erp.server.dmp.service.ThirdMappingService;
@@ -56,6 +60,8 @@ public class DmpOutputSdyOrderHandler extends DmpOutputTaskHandler {
     private SdyDeliveryOrderConsumer sdyDeliveryOrderConsumer;
     @Resource
     private SysUserFeign sysUserFeign;
+    @Resource
+    private DmpOutputCreateFactory dmpOutputCreateFactory;
 
     @Override
     protected List<DmpOutputTaskRecordEntity> outputData(DmpOutputTaskRequest dmpRequest, DmpOutputTaskResponse dmpResponse) {
@@ -153,6 +159,19 @@ public class DmpOutputSdyOrderHandler extends DmpOutputTaskHandler {
         }
 
         dmpOutputUtils.updateStatus(id, status, String.valueOf(handle.getData()) , handle.getMsg());
+
+        //创建旺店通原始订单任务
+        ShudiyunB2cOrderDTO shudiyunB2cOrderDTO = JSON.parseObject(requestData, ShudiyunB2cOrderDTO.class);
+        DmpOutputHotfixCreateRequest request = new DmpOutputHotfixCreateRequest();
+        request.setCfgOutputId("1861317267527064372");
+        List<QueryParam> queryParams = new ArrayList<>();
+        QueryParam queryParam = new QueryParam();
+        queryParam.setType(QueryTypeEnum.EQ);
+        queryParam.setName("third_code");
+        queryParam.setValue(shudiyunB2cOrderDTO.getBiz_no());
+        queryParams.add(queryParam);
+        request.setQueryParams(queryParams);
+        dmpOutputCreateFactory.doHotfixOutputTask(request);
     }
 
     /**
