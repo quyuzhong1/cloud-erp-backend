@@ -14,6 +14,7 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.wms.dto.SoDeliveryNoticeChangeDTO;
 import com.erp.model.wms.entity.SoDeliveryNoticeChangeEntity;
+import com.erp.server.wms.query.SoDeliveryNoticeChangeHandler;
 import com.erp.server.wms.service.SoDeliveryNoticeChangeService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
@@ -61,7 +62,7 @@ public class SoDeliveryNoticeChangeController extends BaseController {
      * @return ApiResult<String>
      */
     @PostMapping("/addProductPaging")
-    @WebAdvanceQuery
+    @WebAdvanceQuery(handler = SoDeliveryNoticeChangeHandler.class)
     public ApiResult<PagingVO<SoDeliveryNoticeChangeDTO.ProductDTO>> addProductPaging(@RequestBody @Validated PagingDTO<SoDeliveryNoticeChangeDTO.ProductAddDTO> dto) {
         return success(soDeliveryNoticeChangeService.addProductPaging(dto));
     }
