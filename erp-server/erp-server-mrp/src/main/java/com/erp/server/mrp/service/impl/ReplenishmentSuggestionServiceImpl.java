@@ -34,6 +34,7 @@ import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.entity.DictCountryEntity;
+import com.erp.model.wms.entity.OverseasProviderWarehouseEntity;
 import com.erp.model.wms.enums.LogisticsMethodEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.oms.feign.CustomerFeign;
@@ -1012,6 +1013,7 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
         if (CollectionUtils.isEmpty(detailsIds)) {
             return Collections.emptyList();
         }
+        List<OverseasProviderWarehouseDTO> overseasProviderWarehouseList = BeanMapperUtils.copyList(OverseasProviderWarehouseDTO.class, FeignQuery.list(OverseasProviderWarehouseEntity.class));
         LocalDate caleStartDate = calculationDate.minusDays(361);
         LocalDate caleEndDate = calculationDate.minusDays(1);
         //获取历史数据
@@ -1043,6 +1045,7 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
                     resultDTO.setSalesPrice(detail.getSalesPrice());
                     resultDTO.setPurchasePrice(detail.getPurchasePrice());
                     resultDTO.setShopSalesMap(shopSalesHistoryMap.get(v.getSkuId()));
+                    resultDTO.setOverseasProviderWarehouseList(overseasProviderWarehouseList);
                     return resultDTO;
                 }).filter(Objects::nonNull)
                 .collect(Collectors.toList());
@@ -1132,7 +1135,6 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
     /**
      * 异步获取详情数据
      * @param suggestionIds 建议id
-     * @return
      */
     private List<ReplenishmentSuggestionDetailEntity> getReplenishmentSuggestionDetailEntities(List<String> suggestionIds) {
         List<List<String>> partition = Lists.partition(suggestionIds, 1000);

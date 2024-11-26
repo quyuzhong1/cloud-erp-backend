@@ -13,7 +13,6 @@ import com.erp.model.scm.entity.SubcontractOrderDetailEntity;
 import com.erp.model.scm.enums.CreatePoTypeEnum;
 import com.erp.model.tms.entity.LogisticsBillEntity;
 import com.erp.model.wms.dto.FirstMileDeliveryDTO;
-import com.erp.model.wms.dto.OverseasProviderWarehouseDTO;
 import com.erp.model.wms.dto.inventory.InventoryReportDTO;
 import com.erp.model.wms.entity.FbaInventoryEntity;
 import com.erp.model.wms.entity.InventoryEntity;
@@ -21,7 +20,6 @@ import com.erp.model.wms.entity.OverseasInventoryEntity;
 import com.erp.model.wms.entity.VirtualInventoryEntity;
 import com.erp.model.wms.enums.DeliveryPlanTypeEnum;
 import com.erp.model.wms.enums.VitualWarehouseChannelTypeEnum;
-import com.erp.rpc.wms.feign.WmsOverseasWarehouseFeign;
 import com.erp.server.mrp.calculation.service.InventoryService;
 import com.erp.server.mrp.mapper.InventoryMapper;
 import com.erp.server.mrp.service.*;
@@ -53,14 +51,10 @@ public class InventoryServiceImpl implements InventoryService {
     private VirtualInventoryHistoryService virtualInventoryHistoryService;
     @Resource
     private CfgRuleCommonService cfgRuleCommonService;
-    @Resource
-    private WmsOverseasWarehouseFeign wmsOverseasWarehouseFeign;
 
     @Override
-    public int getFbaUsable(ReplenishmentResultDTO replenishmentResultDTO, Set<String> codes) {
-        String code = String.join("+", codes);
-        String calcDate = replenishmentResultDTO.getReplenishmentDetail().getCalcDate();
-        return inventoryMapper.getFbaUsable(replenishmentResultDTO, code, SnapshotTableEnum.getTableName(SnapshotTableEnum.FBA_INVENTORY, calcDate));
+    public List<ReplenishmentInventoryDTO.FbaUsableDTO> getFbaUsable(Set<String> codes, String calcDate) {
+        return inventoryMapper.getFbaUsable(String.join("+", codes), SnapshotTableEnum.getTableName(SnapshotTableEnum.FBA_INVENTORY, calcDate));
     }
 
     @Override
@@ -154,22 +148,8 @@ public class InventoryServiceImpl implements InventoryService {
     }
 
     @Override
-    public int getOverseasUsable(ReplenishmentResultDTO replenishmentResultDTO, Set<String> codes, CfgRuleStrategyDTO cfgRuleStrategyDTO) {
-
-        List<OverseasProviderWarehouseDTO.ViewDTO> list = wmsOverseasWarehouseFeign.listByWarehouseIdList(replenishmentResultDTO.getOverseasWarehouseId());
-        Map<String, String> codeMap = list.stream().collect(Collectors.toMap(OverseasProviderWarehouseDTO.ViewDTO::getPlatformWarehouseCode,
-                OverseasProviderWarehouseDTO.ViewDTO::getWarehouseId, (o1, o2) -> o1));
-        String code = String.join("+", codes);
-        String calcDate = replenishmentResultDTO.getReplenishmentDetail().getCalcDate();
-        List<ReplenishmentResultDTO.ReplenishmentInventoryDetailDTO> overseasUsableDetail = new ArrayList<>();
-        List<LocalInventoryDTO.OverseasInventoryDTO> invetoryOverseasList = inventoryMapper.getOverseasUsable(replenishmentResultDTO, code, getTableName(OVERSEAS_INVENTORY, calcDate), codeMap.keySet());
-        List<LocalInventoryDTO> invetoryList = invetoryOverseasList.stream()
-                .map(v -> new LocalInventoryDTO(codeMap.get(v.getWarehouseCode()), v.getQty()))
-                .collect(Collectors.toList());
-        int qty = getAllocateQty(replenishmentResultDTO, cfgRuleStrategyDTO.getWarehouseResult().getOverseasWarehouseList(), invetoryList, overseasUsableDetail,
-                ReplenishmentInventoryTypeEnum.OVERSEAS_USABLE, CfgRuleWarehouseTypeEnum.OVERSEAS);
-        replenishmentResultDTO.setOverseasUsableDetail(overseasUsableDetail);
-        return qty;
+    public List<ReplenishmentInventoryDTO.OverseasUsableDTO> getOverseasUsable(Set<String> codes, String calcDate) {
+        return inventoryMapper.getOverseasUsable(String.join("+", codes), getTableName(OVERSEAS_INVENTORY, calcDate));
     }
 
     /**
@@ -180,7 +160,7 @@ public class InventoryServiceImpl implements InventoryService {
      * @param inventoryList          仓库库存
      * @param inventoryDetail        库存详情
      */
-    private int getAllocateQty(ReplenishmentResultDTO replenishmentResultDTO,
+    public int getAllocateQty(ReplenishmentResultDTO replenishmentResultDTO,
                                List<CfgRuleWarehouseDTO.StrategyDetailResultDTO> warehouseList,
                                List<LocalInventoryDTO> inventoryList,
                                List<ReplenishmentResultDTO.ReplenishmentInventoryDetailDTO> inventoryDetail,
@@ -828,9 +808,18 @@ public class InventoryServiceImpl implements InventoryService {
 
 
     private List<ReplenishmentResultDTO.EstimatedPurchaseDetailDTO> getReplenishmentPurchasePlan(ReplenishmentResultDTO replenishmentResultDTO,
-                                                                                                 Set<String> localReplenishmentPlan,
+                                                                                                 Set<String> statusList,
                                                                                                  CfgRuleStockUpDTO.StrategyResultDTO stockUpResult,
-                                                                                                 ReplenishmentInventoryTypeEnum replenishmentInventoryTypeEnum) {
+                                                                                                 ReplenishmentInventoryTypeEnum inventoryTypeEnum) {
+//        String calcDate = replenishmentResultDTO.getReplenishmentDetail().getCalcDate();
+//        List<ReplenishmentResultDTO.EstimatedPurchaseDetailDTO> estimatedDeliveryDetails = inventoryMapper.getReplenishmentPurchasePlan(statusList,
+//                replenishmentResultDTO, SnapshotTableEnum.getTableName(DELIVERY_SUGGEST, calcDate), SnapshotTableEnum.getTableName(WMS_DELIVERY_PLAN, calcDate),
+//                SnapshotTableEnum.getTableName(WMS_DELIVERY_PLAN_DETAIL, calcDate));
+//        for (ReplenishmentResultDTO.EstimatedPurchaseDetailDTO detail : estimatedDeliveryDetails) {
+//            detail.setType(inventoryTypeEnum.getCode());
+//            detail.setSourceType(SourceTypeEnum.REPLENISHMENT_PLAN.getCode());
+//        }
+//        return estimatedDeliveryDetails;
         return null;
     }
 

@@ -1,6 +1,7 @@
 package com.erp.server.mrp.mapper;
 
 import com.erp.model.mrp.dto.LocalInventoryDTO;
+import com.erp.model.mrp.dto.ReplenishmentInventoryDTO;
 import com.erp.model.mrp.dto.ReplenishmentResultDTO;
 import com.erp.model.scm.dto.PurchaseApplicationRefPoDTO;
 import com.erp.model.scm.entity.SubcontractOrderDetailEntity;
@@ -26,7 +27,7 @@ public interface InventoryMapper {
     /**
      * 计算FBA可用库存
      */
-    int getFbaUsable(@Param("result") ReplenishmentResultDTO replenishmentResultDTO, @Param("code") String code, @Param("tableName") String tableName);
+    List<ReplenishmentInventoryDTO.FbaUsableDTO> getFbaUsable(@Param("code") String code, @Param("tableName") String tableName);
 
     /**
      * 查询FBA货件数据
@@ -64,7 +65,7 @@ public interface InventoryMapper {
     /**
      * 查询海外仓可用库存
      */
-    List<LocalInventoryDTO.OverseasInventoryDTO> getOverseasUsable(@Param("result") ReplenishmentResultDTO replenishmentResultDTO, @Param("code") String code, @Param("tableName") String tableName, @Param("warehouseCode") Set<String> warehouseCode);
+    List<ReplenishmentInventoryDTO.OverseasUsableDTO> getOverseasUsable(@Param("code") String codes, @Param("tableName") String tableName);
 
     /**
      * 查询本地仓可用库存

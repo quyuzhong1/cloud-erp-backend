@@ -2,12 +2,11 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
 <mapper namespace="com.erp.server.mrp.mapper.InventoryMapper">
 
-    <select id="getFbaUsable" resultType="java.lang.Integer">
-        select COALESCE(sum(${code}), 0)
-        from ${tableName}
-        where is_deleted = false
-          and sku_no = #{result.replenishment.skuNo}
-          and warehouse_id = #{result.replenishment.fbaWarehouseId}
+    <select id="getFbaUsable" resultType="com.erp.model.mrp.dto.ReplenishmentInventoryDTO$FbaUsableDTO">
+        SELECT COALESCE(SUM(${code}), 0) AS qty, sku_no, warehouse_id
+        FROM ${tableName}
+        WHERE is_deleted = FALSE
+        GROUP BY sku_no, warehouse_id
     </select>
     <select id="getFbaShipment"
             resultType="com.erp.model.mrp.dto.ReplenishmentResultDTO$FbaInTransitDetailDTO">
@@ -158,18 +157,13 @@
             </if>
         </if>
     </select>
-    <select id="getOverseasUsable" resultType="com.erp.model.mrp.dto.LocalInventoryDTO$OverseasInventoryDTO">
-        SELECT
+    <select id="getOverseasUsable" resultType="com.erp.model.mrp.dto.ReplenishmentInventoryDTO$OverseasUsableDTO">
+        SELECT sku_id,
                warehouse_code,
                COALESCE(sum(${code}), 0) AS qty
         FROM ${tableName}
         WHERE is_deleted = FALSE
-          AND sku_id = #{result.replenishment.skuId}
-         AND warehouse_code in
-        <foreach collection="warehouseCode" item="item" open="(" close=")" separator=",">
-            #{item}
-        </foreach>
-        GROUP BY warehouse_code
+        GROUP BY warehouse_code, sku_id
     </select>
 
     <select id="getLocalUsable" resultType="com.erp.model.mrp.dto.LocalInventoryDTO">

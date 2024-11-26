@@ -176,6 +176,16 @@ public class ReplenishmentResultDTO {
      */
     private Map<String, Integer> shopSalesMap = new HashMap<>();
 
+    /**
+     * 库存
+     */
+    private ReplenishmentInventoryDTO inventoryDTO;
+
+    /**
+     * 海外仓code映射
+     */
+    private List<OverseasProviderWarehouseDTO> overseasProviderWarehouseList;
+
     @Getter
     @Setter
     public static class BasicDTO {

@@ -1,6 +1,7 @@
 package com.erp.server.mrp.calculation.service;
 
 import com.erp.model.mrp.dto.*;
+import com.erp.model.mrp.enums.CfgRuleWarehouseTypeEnum;
 import com.erp.model.mrp.enums.ReplenishmentInventoryTypeEnum;
 import com.erp.model.wms.dto.inventory.InventoryReportDTO;
 
@@ -13,10 +14,10 @@ public interface InventoryService {
     /**
      * 计算FBA可用库存
      *
-     * @param replenishmentResultDTO 参数
-     * @param codes                  选中的code值
+     * @param codes    选中的code值
+     * @param calcDate 计算日
      */
-    int getFbaUsable(ReplenishmentResultDTO replenishmentResultDTO, Set<String> codes);
+    List<ReplenishmentInventoryDTO.FbaUsableDTO> getFbaUsable(Set<String> codes, String calcDate);
 
     /**
      * 计算FBA可用库存
@@ -46,11 +47,10 @@ public interface InventoryService {
     /**
      * 获取海外仓可用库存
      *
-     * @param replenishmentResultDTO 参数
-     * @param codes                  编码
-     * @param cfgRuleStrategyDTO     配置
+     * @param codes    编码
+     * @param calcDate 日期
      */
-    int getOverseasUsable(ReplenishmentResultDTO replenishmentResultDTO, Set<String> codes, CfgRuleStrategyDTO cfgRuleStrategyDTO);
+    List<ReplenishmentInventoryDTO.OverseasUsableDTO> getOverseasUsable(Set<String> codes, String calcDate);
 
     /**
      * 获取本地仓可用库存
@@ -137,4 +137,19 @@ public interface InventoryService {
      * 获取在途库存
      */
     List<InventoryReportDTO.TransportPagingDTO> listLocalInTransit(LocalDate calculationDate);
+
+    /**
+     * 分摊平台销量或店铺库存
+     *
+     * @param replenishmentResultDTO 建议
+     * @param warehouseList          仓库
+     * @param inventoryList          仓库库存
+     * @param inventoryDetail        库存详情
+     */
+    int getAllocateQty(ReplenishmentResultDTO replenishmentResultDTO,
+                              List<CfgRuleWarehouseDTO.StrategyDetailResultDTO> warehouseList,
+                              List<LocalInventoryDTO> inventoryList,
+                              List<ReplenishmentResultDTO.ReplenishmentInventoryDetailDTO> inventoryDetail,
+                              ReplenishmentInventoryTypeEnum inventoryType,
+                              CfgRuleWarehouseTypeEnum warehouseType);
 }
