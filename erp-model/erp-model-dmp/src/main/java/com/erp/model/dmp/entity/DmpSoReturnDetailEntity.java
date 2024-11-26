@@ -205,6 +205,12 @@ public class DmpSoReturnDetailEntity extends BaseEntity<DmpSoReturnDetailEntity>
      */
      @TableField("stockin_num")
      private Integer stockinNum;
+     
+     /**
+      * 退货原始状态
+      */
+     @TableField("return_original_type")
+     private String returnOriginalType;
 
     public static final String MAIN_ID = "main_id";
 
