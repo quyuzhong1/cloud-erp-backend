@@ -162,6 +162,7 @@ public class DmpOutputSdyRefundHandler extends DmpOutputTaskHandler {
 
             //仅退款
             sdyDTO.setTransaction_type("RMA.退货单");
+            sdyDTO.setTransaction_sub_type("退款不退货");
 
             if (CharSequenceUtil.isNotBlank(dmpSoRefundEntity.getStatus()) && CharSequenceUtil.isNotBlank(DmpRefundInfoStatusEnum.getName(dmpSoRefundEntity.getStatus()))) {
                 sdyDTO.setBiz_status(DmpRefundInfoStatusEnum.getName(dmpSoRefundEntity.getStatus()));

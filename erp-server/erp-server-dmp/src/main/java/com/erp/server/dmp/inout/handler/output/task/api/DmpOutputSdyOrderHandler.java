@@ -235,20 +235,6 @@ public class DmpOutputSdyOrderHandler extends DmpOutputTaskHandler {
             shudiyunB2cOrderDTO.setTotal_goods_quantity(totalQty);
             shudiyunB2cOrderDTO.setOrder_quantity_to_be_shipped(totalQty);
 
-            //取消金额、数量
-            if (dmpSoInfoEntity.getSourceSystem().equals(PlatformDictEnum.ALI_EXPRESS.getCode())
-                    || dmpSoInfoEntity.getSourceSystem().equals(PlatformDictEnum.SHOPEE.getCode())
-            ) {
-                shudiyunB2cOrderDTO.setTotal_canceled_goods_amount(dmpSoInfoEntity.getTotalCancelGoodsAmount());
-            } else {
-                if (dmpSoInfoEntity.getIsCancel()) {
-                    shudiyunB2cOrderDTO.setTotal_canceled_goods_amount(dmpSoInfoEntity.getAllAmount());
-
-                    // 取消商品数量（合计）
-                    shudiyunB2cOrderDTO.setTotal_canceled_goods_quantity(totalQty);
-                }
-            }
-
             shudiyunB2cOrderDTO.setBuyer_actual_payment(dmpSoInfoEntity.getPayAmount());
             shudiyunB2cOrderDTO.setTotal_freight(dmpSoInfoEntity.getShippingAmount());
             if (PlatformDictEnum.WDT.getCode().equals(dmpSoInfoEntity.getSourceSystem())) {
@@ -295,6 +281,19 @@ public class DmpOutputSdyOrderHandler extends DmpOutputTaskHandler {
                 }
 
                 shudiyunB2cOrderDTO.setGoods_status(wdtItemStatus(dmpSoInfoEntity.getOrderStatus()));
+
+                //取消金额、数量
+                if (dmpSoDetailEntity.getRefundNum().compareTo(BigDecimal.ZERO) > 0) {
+                    BigDecimal canceledAmount = dmpSoDetailEntityList.stream().map(req -> req.getAfterAmount().divide(MathUtil.valueOf(req.getQty()), 4, RoundingMode.DOWN).multiply(dmpSoDetailEntity.getRefundNum())).reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
+                    shudiyunB2cOrderDTO.setTotal_canceled_goods_amount(canceledAmount);
+                    // 取消商品数量（合计）
+                    shudiyunB2cOrderDTO.setTotal_canceled_goods_quantity(dmpSoDetailEntity.getRefundNum().intValue());
+                } else {
+                    shudiyunB2cOrderDTO.setTotal_canceled_goods_amount(BigDecimal.ZERO);
+                    shudiyunB2cOrderDTO.setTotal_canceled_goods_quantity(0);
+                }
+
+
             } else {
                 String shopId = "";
                 if (CharSequenceUtil.isNotBlank(dmpSoInfoEntity.getNextLevelId())) {
@@ -351,6 +350,20 @@ public class DmpOutputSdyOrderHandler extends DmpOutputTaskHandler {
 
                 if (dmpSoInfoEntity.getIsCancel() && dmpSoInfoEntity.getIsCancel() != null) {
                     shudiyunB2cOrderDTO.setGoods_status("已取消");
+                }
+
+                //取消金额、数量
+                if (dmpSoInfoEntity.getSourceSystem().equals(PlatformDictEnum.ALI_EXPRESS.getCode())
+                        || dmpSoInfoEntity.getSourceSystem().equals(PlatformDictEnum.SHOPEE.getCode())
+                ) {
+                    shudiyunB2cOrderDTO.setTotal_canceled_goods_amount(dmpSoInfoEntity.getTotalCancelGoodsAmount());
+                } else {
+                    if (dmpSoInfoEntity.getIsCancel()) {
+                        shudiyunB2cOrderDTO.setTotal_canceled_goods_amount(dmpSoInfoEntity.getAllAmount());
+
+                        // 取消商品数量（合计）
+                        shudiyunB2cOrderDTO.setTotal_canceled_goods_quantity(totalQty);
+                    }
                 }
             }
 

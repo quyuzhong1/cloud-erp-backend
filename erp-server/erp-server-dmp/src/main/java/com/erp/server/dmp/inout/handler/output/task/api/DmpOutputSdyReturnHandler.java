@@ -197,6 +197,23 @@ public class DmpOutputSdyReturnHandler extends DmpOutputTaskHandler {
             sdyDTO.setOrder_seller_payed(amountTotal);
 
             if (PlatformDictEnum.WDT.getCode().equalsIgnoreCase(dmpSoReturnEntity.getSourceSystem())) {
+                //RMA.退货单
+                if ("2".equals(dmpSoReturnDetailEntity.getReturnOriginalType())) {
+                    sdyDTO.setTransaction_type("RMA.退货单");
+                    sdyDTO.setTransaction_sub_type("退款退货");
+                } else if ("3".equals(dmpSoReturnDetailEntity.getReturnOriginalType())) {
+                    sdyDTO.setTransaction_type("RMA.换货单");
+                    sdyDTO.setTransaction_sub_type("换货退货");
+                } else if ("4".equals(dmpSoReturnDetailEntity.getReturnOriginalType())) {
+                    sdyDTO.setTransaction_type("RMA.退货单");
+                    sdyDTO.setTransaction_sub_type("退款不退货");
+                } else if ("6".equals(dmpSoReturnDetailEntity.getReturnOriginalType())) {
+                    sdyDTO.setTransaction_type("RMA.退货单");
+                    sdyDTO.setTransaction_sub_type("小额退款");
+                } else {
+                    return Collections.emptyList();
+                }
+
                 sdyDTO.setBiz_no(dmpSoReturnEntity.getPlatformCode());
                 //查询旺店通对应系统店铺
                 List<ThirdMappingEntity> shop = thirdMappingService.lambdaQuery()
@@ -275,7 +292,7 @@ public class DmpOutputSdyReturnHandler extends DmpOutputTaskHandler {
             sdyDTO.setUnit("PCS");
             sdyDTO.setPlatform_id(dmpSoReturnEntity.getSourceSystem());
             sdyDTO.setPlatform_name(PlatformDictEnum.getNameByCode(dmpSoReturnEntity.getSourceSystem()));
-            sdyDTO.setRoot_node_no(dmpSoReturnEntity.getThirdCode());
+            sdyDTO.setRoot_node_no(dmpSoReturnEntity.getPlatformCode());
 
             if (dmpSoReturnEntity.getReturnTime() != null) {
                 sdyDTO.setRoot_node_create_time(localDateTime.format(dmpSoReturnEntity.getReturnTime()));
