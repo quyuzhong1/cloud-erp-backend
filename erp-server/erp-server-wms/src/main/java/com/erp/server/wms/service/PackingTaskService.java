@@ -301,4 +301,9 @@ public interface PackingTaskService extends SuperService<PackingTaskEntity> {
     PagingVO<WmsCartonSpecDTO.NoPackingViewDTO> unPackingTaskDetail(PagingDTO<PackingTaskDTO.ExportDTO> dto);
 
     void syncByDeliveryNoticeChange(SoDeliveryNoticeEntity soDeliveryNotice, List<SoDeliveryNoticeDetailEntity> addList, List<SoDeliveryNoticeDetailEntity> updateList, List<SoDeliveryNoticeDetailEntity> deleteList);
+
+    /**
+     * 处理第三方仓产品条形码字段
+     */
+    void processThirdBarcode();
 }
