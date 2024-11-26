@@ -161,7 +161,7 @@ public class DmpOutputSdyReturnHandler extends DmpOutputTaskHandler {
 
             if ("refund".equals(dmpSoReturnDetailEntity.getSolutionType())) {
                 //仅退款
-                sdyDTO.setTransaction_type("仅退款");
+                sdyDTO.setTransaction_type("RMA.退货单");
                 sdyDTO.setTransaction_sub_type("退款不退货");
             } else if ("replacement".equals(dmpSoReturnDetailEntity.getSolutionType())) {
                 //RMA.退换货
@@ -190,7 +190,8 @@ public class DmpOutputSdyReturnHandler extends DmpOutputTaskHandler {
             sdyDTO.setOnline_applied_amount(amountTotal);
             sdyDTO.setOrder_seller_payed(amountTotal);
 
-            if (PlatformDictEnum.WDT.getCode().equals(dmpSoReturnEntity.getSourceSystem())) {
+            if (PlatformDictEnum.WDT.getCode().equalsIgnoreCase(dmpSoReturnEntity.getSourceSystem())) {
+                sdyDTO.setBiz_no(dmpSoReturnEntity.getPlatformCode());
                 //查询旺店通对应系统店铺
                 List<ThirdMappingEntity> shop = thirdMappingService.lambdaQuery()
                         .eq(ThirdMappingEntity::getType, ThirdSysTypeEnum.SHOP.getCode())

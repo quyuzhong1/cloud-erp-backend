@@ -179,7 +179,7 @@ public class DmpOutputSdyRefundHandler extends DmpOutputTaskHandler {
             sdyDTO.setOnline_applied_amount(amountTotal);
             sdyDTO.setOrder_seller_payed(amountTotal);
 
-            if (PlatformDictEnum.WDT.getCode().equals(dmpSoRefundEntity.getSourceSystem())) {
+            if (PlatformDictEnum.WDT.getCode().equalsIgnoreCase(dmpSoRefundEntity.getSourceSystem())) {
                 //查询旺店通对应系统店铺
                 List<ThirdMappingEntity> shop = thirdMappingService.lambdaQuery()
                         .eq(ThirdMappingEntity::getType, ThirdSysTypeEnum.SHOP.getCode())
