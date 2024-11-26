@@ -29,6 +29,11 @@ public class KingdeeOperatorRefPostEntity extends BaseEntity<KingdeeOperatorRefP
     */
     @TableField("type_code")
     private String typeCode;
+    /**
+     * 编码
+     */
+    @TableField("code")
+    private String code;
 
     /**
     * 金蝶员工任岗表id  kingdee_user_ref_post 表

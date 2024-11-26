@@ -96,6 +96,7 @@ public class KingdeeOperatorRefPostServiceImpl extends SuperServiceImpl<KingdeeO
         addEntity.setTypeCode(typeCode);
         addEntity.setUseOrgId(userPost.getUseOrgId());
         addEntity.setUseOrgName(userPost.getUseOrgName());
+        addEntity.setCode(userPost.getCode());
         handleDb(addEntity);
         Boolean result = this.save(addEntity);
         if (result) {
