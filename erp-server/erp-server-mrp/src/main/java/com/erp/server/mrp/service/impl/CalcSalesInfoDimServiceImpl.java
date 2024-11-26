@@ -155,7 +155,6 @@ public class CalcSalesInfoDimServiceImpl extends SuperServiceImpl<CalcSalesInfoD
         view.setCountryName(dictCountry.getNameCn());
         view.setShopName(shopInfoEntity.getName());
         Map<String, String> dictBasicMap = getPlatformMap();
-        ;
         view.setPlatform(dictBasicMap.get(view.getPlatform()));
         return view;
     }
@@ -897,7 +896,7 @@ public class CalcSalesInfoDimServiceImpl extends SuperServiceImpl<CalcSalesInfoD
         List<CalcSalesInfoDimDTO.TimePeriodSalesDTO> timePeriodSales = new ArrayList<>();
         //分时段日均销量
         List<CalcSalesInfoDimDTO.TimePeriodSalesDTO> avgTimePeriodSales = new ArrayList<>();
-        LocalDate endDate = dto.getEndCalcDate().minusDays(1);
+        LocalDate endDate = dto.getStartCalcDate().minusDays(1);
         for (TimePeriodEnum value : TimePeriodEnum.values()) {
             BigDecimal qty = calculationSales.stream()
                     .filter(v -> !endDate.minusDays(value.getDays()).isAfter(v.getDate()) && endDate.isAfter(v.getDate()))
@@ -925,7 +924,7 @@ public class CalcSalesInfoDimServiceImpl extends SuperServiceImpl<CalcSalesInfoD
     /**
      * 计算销量
      */
-    private List<CalcSalesInfoDenoisingEntity> calculationSales(CalcSalesInfoDimDTO.CalcResultDTO dto, List<CalcSalesInfoDenoisingEntity> allSalesList, CalcSalesInfoDimEntity entity) {
+    private List<CalcSalesInfoDenoisingEntity>  calculationSales(CalcSalesInfoDimDTO.CalcResultDTO dto, List<CalcSalesInfoDenoisingEntity> allSalesList, CalcSalesInfoDimEntity entity) {
         List<CalcSalesInfoDenoisingEntity> calcSalesInfoList = new ArrayList<>();
         LocalDate startDate = dto.getStartCalcDate().minusDays(361);
         LocalDate endDate = dto.getStartCalcDate().minusDays(1);
