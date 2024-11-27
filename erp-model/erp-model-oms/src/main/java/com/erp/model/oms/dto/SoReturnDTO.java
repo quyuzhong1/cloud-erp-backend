@@ -630,12 +630,13 @@ public class SoReturnDTO {
     public static class SkuParamDTO {
 
        @NotEmpty(message = "sku不能为空")
-       private List<SkuDTO> skuDTOList;
+       private List<ReturnSkuDTO> skuDTOList;
     }
 
     @Data
     @NoArgsConstructor
-    public static class SkuDTO {
+    public static class ReturnSkuDTO {
+
         /**
          * 销售订单明细id
          */
@@ -644,6 +645,10 @@ public class SoReturnDTO {
          * 退货订单id
          */
         private String returnId;
+        /**
+         * 退货单明细id
+         */
+        private String ReturnDetailId;
         /**
          * skuId
          */
