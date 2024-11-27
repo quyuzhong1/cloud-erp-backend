@@ -126,6 +126,10 @@ public class SoDetailDTO implements Serializable {
          */
         private BigDecimal taxAmountBefore;
 
+        /**
+         * 客户PO号
+         */
+        private String customerPO;
     }
 
 
@@ -364,6 +368,10 @@ public class SoDetailDTO implements Serializable {
          */
         private BigDecimal taxPriceLc;
 
+        /**
+         * 客户PO号
+         */
+        private String customerPO;
     }
 
     /**

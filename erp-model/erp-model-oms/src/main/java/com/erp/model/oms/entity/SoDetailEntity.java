@@ -214,6 +214,11 @@ public class SoDetailEntity extends BaseEntity<SoDetailEntity> {
     @TableField(value = "bom_version")
     private String bomVersion;
 
+    /**
+     * 客户PO号
+     */
+    @TableField("customer_po")
+    private String customerPO;
 
     @TableField(exist = false)
     private String approveStatus;

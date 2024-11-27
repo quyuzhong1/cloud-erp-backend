@@ -519,6 +519,7 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
             jsonObject.set("kingdeeWarehouseCode", kingdeeWarehouseCode);
             jsonObject.set("remark", item.getRemark());
             jsonObject.set("detailDiscountAmount", discountAmount);
+            jsonObject.set("customerPO", item.getCustomerPO());
             list.add(jsonObject);
         }
 
