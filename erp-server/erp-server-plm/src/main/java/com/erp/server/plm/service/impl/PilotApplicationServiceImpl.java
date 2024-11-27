@@ -815,21 +815,6 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
         //根据单据id查询审核流程
         List<String> ids = list.stream().map(item -> item.getId()).collect(Collectors.toList());
         List<ProcessTaskManagementEntity> processTaskManagementList = workflowFeign.listProcessByBusinessId(ids);
-        //获取单据最新的审批时间
-        Map<String, LocalDateTime> approveTimeMap = new HashMap<>();
-        if(CollectionUtils.isNotEmpty(processTaskManagementList)){
-            Map<String, Optional<LocalDateTime>> latestAuditTimes = processTaskManagementList.stream()
-                    .filter(v -> null != v.getApproveTime())
-                    .collect(Collectors.groupingBy(
-                            ProcessTaskManagementEntity::getBusinessId,
-                            Collectors.mapping(ProcessTaskManagementEntity::getApproveTime, Collectors.maxBy(Comparator.naturalOrder()))
-                    ));
-            // 将 Optional 转换为具体值，如果没有审核时间则返回 null
-            if(!latestAuditTimes.isEmpty()){
-                approveTimeMap = latestAuditTimes.entrySet().stream()
-                        .collect(Collectors.toMap(Map.Entry::getKey, entry -> entry.getValue().orElse(null)));
-            }
-        }
         //采购申请
         List<PurchaseApplicationEntity> purchaseApplicationList = purchaseApplicationFeign.listBySourceIds(ids);
         List<String> purchaseIds = purchaseApplicationList.stream()
@@ -859,9 +844,6 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
             List<String> curApproveName = processTaskManagementList.stream().filter(req -> req.getBusinessId().equals(item.getId()) && req.getTaskStatus().equals(ApproveStatusEnum.APPROVE_ING)).map(ProcessTaskManagementEntity::getCurApproveName).distinct().collect(Collectors.toList());
             String waitApproveUserName = StringUtils.join(curApproveName, ",");
             item.setApproveUserName(waitApproveUserName);
-            if(item.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getCode())){
-                item.setApproveTime(approveTimeMap.get(item.getId()));
-            }
             item.setCreateUserName(userMap.get(item.getCreateUserId()));
             item.setTypeName(PilotApplicationTypeEnum.getName(item.getType()));
             Optional<ProductCostEntity> productCostEntityOptional = productCostEntityList.stream().filter(v -> v.getSkuId().equals(item.getSkuId())).findFirst();
