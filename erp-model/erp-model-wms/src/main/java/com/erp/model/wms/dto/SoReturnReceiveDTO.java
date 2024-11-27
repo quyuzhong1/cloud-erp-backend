@@ -606,6 +606,10 @@ public class SoReturnReceiveDTO {
          * 币种符号
          */
         private String currencySymbol;
+        /**
+         * 创建时间
+         */
+        private LocalDateTime createTime;
     }
 
     /**

@@ -439,6 +439,10 @@ public class SoReturnDTO {
          * 详情信息
          */
         private List<SoReturnDetailDTO.View> detailList;
+        /**
+         * 创建时间
+         */
+        private LocalDateTime createTime;
     }
 
     /**
