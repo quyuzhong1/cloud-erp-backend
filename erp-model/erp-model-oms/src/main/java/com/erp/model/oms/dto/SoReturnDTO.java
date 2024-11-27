@@ -5,6 +5,9 @@ import com.common.business.dto.base.SortDTO;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import javax.validation.constraints.Max;
+import javax.validation.constraints.Min;
+import javax.validation.constraints.NotNull;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -641,5 +644,69 @@ public class SoReturnDTO {
          * 客户id
          */
         private String customerId;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class SkuDTO {
+        /**
+         * 销售订单明细id
+         */
+        private String soDetailId;
+        /**
+         * 退货订单id
+         */
+        private String returnId;
+        /**
+         * skuId
+         */
+        @NotNull(message = "sku不能为空")
+        private String skuId;
+        /**
+         * 客户id
+         */
+        @NotNull(message = "客户不能为空")
+        private String customerId;
+        /**
+         * 汇率
+         */
+        @NotNull(message = "汇率不能为空")
+        private BigDecimal exchangeRate;
+        /**
+         * 退货数量
+         */
+        @NotNull(message = "退货数量不能为空")
+        @Min(value = 1, message = "退货数量最小值为1")
+        @Max(value = 999999999, message = "退货数量最大值为999999999")
+        private Integer returnQty;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class SoReturnAmoutDTO {
+        /**
+         * skuId
+         */
+        private String skuId;
+        /**
+         * 客户id
+         */
+        private String customerId;
+        /**
+         *退货金额
+         */
+        private BigDecimal returnAmount;
+        /**
+         *含税退货金额
+         */
+        private BigDecimal taxReturnAmount;
+        /**
+         *退货金额（本位币）
+         */
+        private BigDecimal returnAmountLocalCurrency;
+        /**
+         *含税退货金额（本位币）
+         */
+        private BigDecimal taxReturnAmountLocalCurrency;
     }
 }
