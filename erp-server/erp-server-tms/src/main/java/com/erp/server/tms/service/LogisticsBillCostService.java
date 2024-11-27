@@ -38,6 +38,10 @@ public interface LogisticsBillCostService extends SuperService<LogisticsBillCost
     * @return
     */
     BaseResultDTO.AddDTO add(LogisticsBillCostDTO.AddDTO dto);
+    
+    BaseResultDTO.AddDTO addPayAndRefund(LogisticsBillCostDTO.AddDataDTO dto);
+    
+    void addPayAndRefundConfirm(LogisticsBillCostDTO.ConfirmAddDataDTO dto);
 
     /**
     * 修改
@@ -73,6 +77,8 @@ public interface LogisticsBillCostService extends SuperService<LogisticsBillCost
      * @return BatchResultDTO
      */
     BatchResultDTO updateReconciliationStatus(String id, String reconciliationStatus , LocalDateTime confirmTime);
+    
+    BatchResultDTO updatePayStatus(String id, String payStatus , LocalDateTime payTime);
     
     /**
      * @description: 下载模板

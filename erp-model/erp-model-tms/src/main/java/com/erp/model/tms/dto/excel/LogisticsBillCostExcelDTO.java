@@ -32,10 +32,17 @@ public class LogisticsBillCostExcelDTO  implements Serializable {
     private String  trackNo;
 
     /**
+     * 计费重[预估]
+     */
+    @ExcelProperty(value = "计费重[预估]")
+    @FieldValid(fieldName = "计费重[预估]",formatPattern = FieldFormatPatternTypeEnum.AMOUNT)
+    private String  billingWeight;
+    
+    /**
      * 计费重[物流商]
      */
-    @ExcelProperty(value = "*计费重[物流商]")
-    @FieldValid(fieldName = "计费重[物流商]",isNotBlank = true,formatPattern = FieldFormatPatternTypeEnum.AMOUNT)
+    @ExcelProperty(value = "计费重[物流商]")
+    @FieldValid(fieldName = "计费重[物流商]",formatPattern = FieldFormatPatternTypeEnum.AMOUNT)
     private String  billingWeightLogistics;
     
     /**

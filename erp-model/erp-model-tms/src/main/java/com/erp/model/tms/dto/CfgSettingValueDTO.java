@@ -226,6 +226,10 @@ public class CfgSettingValueDTO implements Serializable {
          * 重量分摊-小包费用配置
          */
         private String weightPackageAllocation;
+        /**
+         * 重量分摊-中转重量分摊
+         */
+        private String transferAllocation;
 
         /**
          * 费用分摊-头程-运费

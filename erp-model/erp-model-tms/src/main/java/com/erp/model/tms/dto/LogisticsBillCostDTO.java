@@ -5,6 +5,7 @@ import com.common.business.annotation.Dict;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import com.erp.model.tms.enums.LogisticsBillCostCheckStatusEnum;
+import com.erp.model.tms.enums.LogisticsBillCostPayTypeEnum;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -12,6 +13,7 @@ import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.math.BigDecimal;
@@ -440,7 +442,86 @@ public class LogisticsBillCostDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class AddDTO extends CommonDTO {
-
+    	/**
+         * 对账类型   http://172.16.100.11:3002/project/128/interface/api/25522 key=logisticsBillCostPayType
+         */
+         private String payType = LogisticsBillCostPayTypeEnum.PAY.getCode();
+    }
+    
+    /**
+     * 新增付款/退款，仅创建
+     */
+    @Data
+    @NoArgsConstructor
+    public static class AddDataDTO extends DataDTO{
+    	/**
+    	 * 对账类型   http://172.16.100.11:3002/project/128/interface/api/25522 key=logisticsBillCostPayType
+    	 */
+    	@NotBlank(message = "对账类型不能为空")
+    	private String payType;
+    	
+    	/**
+    	 * 选择单据id
+    	 */
+    	@NotBlank(message = "选择单据不能为空")
+    	private String sourceId;
+    	
+    }
+    
+    /**
+     * 新增付款/退款，仅创建
+     */
+    @Data
+    @NoArgsConstructor
+    public static class EditDataDTO extends DataDTO{
+    	/**
+    	 * id
+    	 */
+    	@NotBlank(message = "id不能为空")
+    	private String id;
+    	
+    }
+    
+    /**
+     * 新增付款/退款，仅创建
+     */
+    @Data
+    @NoArgsConstructor
+    public static class DataDTO {
+    	
+    	/**
+    	 * 计费重[预估]
+    	 */
+    	private BigDecimal billingWeight;
+    	
+    	/**
+    	 * 计费重[物流商]
+    	 */
+    	private BigDecimal billingWeightLogistics;
+    	
+    	/**
+    	 * 币别
+    	 */
+    	private String currency;
+    	
+    	/**
+         * 费用明细
+         */
+    	@NotEmpty(message = "费用明细不能为空")
+        private List<TmsCostDetailDTO.DetailDTO>  costDetailList;
+    }
+    
+    /**
+     * 新增付款/退款，对账已确认
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ConfirmAddDataDTO extends AddDataDTO{
+    	/**
+    	 * 对账确认时间
+    	 */
+    	@NotNull(message = "对账确认时间不能为空")
+    	private LocalDateTime confirmTime;
     }
 
     /**
@@ -500,6 +581,11 @@ public class LogisticsBillCostDTO implements Serializable {
         private String logisticsBillDetailId;
 
         private String trackNo;
+        
+        /**
+    	 * 计费重[预估]
+    	 */
+    	private BigDecimal billingWeight;
     }
 
     @Data
@@ -631,6 +717,30 @@ public class LogisticsBillCostDTO implements Serializable {
          */
         private LocalDateTime confirmTime;
 
+    }
+    
+    /**
+     * 支付状态
+     */
+    @Data
+    @NoArgsConstructor
+    public static class PayStatusDTO {
+    	
+    	/**
+    	 * ids
+    	 */
+    	private List<String> ids;
+    	
+    	/**
+    	 * 支付状态	根据列表payType字段，pay=付款，refund=退款，支付状态的 paid=已付款/已退款	payment=待付款/待退款
+    	 */
+    	private String payStatus;
+    	
+    	/**
+    	 *付款/退款时间
+    	 */
+    	private LocalDateTime payTime;
+    	
     }
     @Data
     @NoArgsConstructor

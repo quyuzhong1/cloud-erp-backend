@@ -13,6 +13,7 @@ import com.baomidou.mybatisplus.extension.conditions.update.LambdaUpdateChainWra
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.dto.base.BaseResultDTO.AddDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
@@ -35,8 +36,11 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.tms.dto.DictBasicDTO;
 import com.erp.model.tms.dto.LogisticsBillCostDTO;
+import com.erp.model.tms.dto.LogisticsBillCostDTO.AddDataDTO;
+import com.erp.model.tms.dto.LogisticsBillCostDTO.ConfirmAddDataDTO;
 import com.erp.model.tms.dto.LogisticsBillDTO;
 import com.erp.model.tms.dto.TmsCostDetailDTO;
+import com.erp.model.tms.dto.TmsCostDetailDTO.DetailDTO;
 import com.erp.model.tms.dto.excel.LogisticsBillCostExcelDTO;
 import com.erp.model.tms.entity.*;
 import com.erp.model.tms.enums.*;
@@ -153,6 +157,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "自发货费用"));
         //赋值
         LogisticsBillCostEntity logisticsBillCostEntity =  BeanMapperUtils.map(LogisticsBillCostEntity.class, old);
+        logisticsBillCostEntity.setBillingWeight(updateDTO.getBillingWeight());
         logisticsBillCostEntity.setBillingWeightLogistics(updateDTO.getBillingWeightLogistics());
         logisticsBillCostEntity.setRemark(updateDTO.getRemark());
         logisticsBillCostEntity.setCurrency(updateDTO.getCurrency());
@@ -724,6 +729,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
             //数据赋值
             LogisticsBillCostDTO.UpdateDTO updateDataDTO = new LogisticsBillCostDTO.UpdateDTO();
             updateDataDTO.setId(logisticsBillCostEntity.getId());
+            updateDataDTO.setBillingWeight(new BigDecimal(billCostExcelDTO.getBillingWeight()));
             updateDataDTO.setBillingWeightLogistics(new BigDecimal(billCostExcelDTO.getBillingWeightLogistics()));
             updateDataDTO.setCurrency(CharSequenceUtil.isBlank(billCostExcelDTO.getCurrency()) ? CurrencyEnum.CNY.getCurrencyCode() : billCostExcelDTO.getCurrency());
             updateDataDTO.setCostDetailList(updateDetailList);
@@ -1128,4 +1134,82 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
             }
         }
     }
+
+    @GlobalTransactional(rollbackFor = Exception.class)
+    @Transactional(rollbackFor = Exception.class)
+	@Override
+	public BaseResultDTO.AddDTO addPayAndRefund(AddDataDTO dto) {
+		String sourceId = dto.getSourceId();
+		LogisticsBillCostEntity logisticsBillCostEntity = getById(sourceId);
+		LogisticsBillCostDTO.AddDTO addDTO = new LogisticsBillCostDTO.AddDTO();
+		addDTO.setPayType(dto.getPayType());
+		addDTO.setReconciliationStatus(ReconciliationStatusEnum.TO_BE_CONFIRM.getCode());
+		addDTO.setLogisticsBillId(logisticsBillCostEntity.getLogisticsBillId());
+		addDTO.setLogisticsBillDetailId(logisticsBillCostEntity.getLogisticsBillDetailId());
+		addDTO.setActualWeight(logisticsBillCostEntity.getActualWeight());
+		addDTO.setVolumeWeight(logisticsBillCostEntity.getVolumeWeight());
+		String currency = dto.getCurrency();
+		if(org.apache.commons.lang3.StringUtils.isBlank(currency)) {
+			currency = CurrencyEnum.CNY.getCurrencyCode();
+		}
+		addDTO.setCurrency(currency);
+		addDTO.setTrackNo(logisticsBillCostEntity.getTrackNo());
+		addDTO.setChannelId(logisticsBillCostEntity.getChannelId());
+		addDTO.setWeightLogistics(logisticsBillCostEntity.getWeightLogistics());
+		addDTO.setVolumeWeightLogistics(logisticsBillCostEntity.getVolumeWeightLogistics());
+		
+		List<DetailDTO> newCostDetailList = dto.getCostDetailList();
+		List<TmsCostDetailDTO.AddDTO>  costDetailList = new ArrayList<>();
+		for(DetailDTO detailDTO : newCostDetailList) {
+			TmsCostDetailDTO.AddDTO add = new TmsCostDetailDTO.AddDTO();
+			add.setCfgCostId(detailDTO.getCfgCostId());
+			add.setCostValue(detailDTO.getCostValue());
+			add.setType(LogisticsBillCostTypeEnum.ACTUAL.getCode());
+			costDetailList.add(add);
+			
+			BigDecimal estimatedValue = detailDTO.getEstimatedValue();
+			if(estimatedValue != null && estimatedValue.compareTo(BigDecimal.ZERO) != 0) {
+				add = new TmsCostDetailDTO.AddDTO();
+				add.setCfgCostId(detailDTO.getCfgCostId());
+				add.setCostValue(estimatedValue);
+				add.setType(LogisticsBillCostTypeEnum.ESTIMATED.getCode());
+				costDetailList.add(add);
+			}
+		}
+		addDTO.setCostDetailList(costDetailList);
+		
+		return this.add(addDTO);
+	}
+
+    @GlobalTransactional(rollbackFor = Exception.class)
+    @Transactional(rollbackFor = Exception.class)
+	@Override
+	public void addPayAndRefundConfirm(ConfirmAddDataDTO dto) {
+		AddDTO addDTO = this.addPayAndRefund(dto);
+		this.updateReconciliationStatus(addDTO.getId(), ReconciliationStatusEnum.CONFIRMED.getCode(), dto.getConfirmTime());
+	}
+
+	@Override
+	public BatchResultDTO updatePayStatus(String id, String payStatus, LocalDateTime payTime) {
+		LogisticsBillCostEntity entity = super.getById(id);
+        Optional.ofNullable(entity).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "自发货费用"));
+        if(payStatus.equals(entity.getPayStatus())) {
+        	throw new ServiceException("修改前后支付状态一致");
+        }
+        if(payStatus.equals("paid")) {
+        	if(payTime == null) {
+        		throw new ServiceException("支付状态修改为已付款/已退款，付款/退款时间不能为空");
+        	}
+        	if(!ReconciliationStatusEnum.CONFIRMED.getCode().equals(entity.getReconciliationStatus())) {
+        		throw new ServiceException("支付状态修改为已付款/已退款，对账状态必须为账单确认");
+        	}
+        }else {
+        	payTime = null;
+        }
+        lambdaUpdate().eq(LogisticsBillCostEntity::getId, id)
+			        .set(LogisticsBillCostEntity::getPayStatus, payStatus)
+			        .set(LogisticsBillCostEntity::getPayTime, payTime)
+			        .update();
+		return BatchResultDTO.success(entity.getId(), entity.getTrackNo(), OperationTypeEnum.UPDATE_STATUS);
+	}
 }
