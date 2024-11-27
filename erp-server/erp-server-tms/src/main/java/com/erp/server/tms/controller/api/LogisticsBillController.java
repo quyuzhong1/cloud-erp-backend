@@ -1,6 +1,7 @@
 package com.erp.server.tms.controller.api;
 
 
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
@@ -121,17 +122,19 @@ public class LogisticsBillController extends BaseController {
         if (StringUtils.isBlank(trackNo) && StringUtils.isBlank(transportNo)){
             return failure("运单号和跟踪号不能同时为空");
         }
-        if (StringUtils.isBlank(trackNo) && StringUtils.isNotBlank(transportNo)){
-            trackNo = transportNo;
-        }
-        if (StringUtils.isNotBlank(logisticsChannelId) && StringUtils.isNotBlank(transportNo)){
+        //默认使用运单号
+        String number = transportNo;
+        //根据渠道设置进行判断使用哪个字段
+        if (CharSequenceUtil.isNotBlank(logisticsChannelId)){
             LogisticsChannelEntity channelEntity = logisticsChannelService.getById(logisticsChannelId);
-            if (Objects.isNull(channelEntity) || StringUtils.isBlank(channelEntity.getTrackQueryType())
-                    || !TrackQueryTypeEnum.TRACK_NO.getCode().equals(channelEntity.getTrackQueryType())){
-                trackNo = transportNo;
+            if (Objects.nonNull(channelEntity)){
+                number = TrackQueryTypeEnum.TRACK_NO.getCode().equals(channelEntity.getTrackQueryType()) && CharSequenceUtil.isNotBlank(trackNo) ? trackNo : transportNo;
             }
         }
-        LogisticsTrackDTO.ViewDTO list = logisticsTrackService.listByTrackNo(trackNo);
+        if (CharSequenceUtil.isBlank(number) && CharSequenceUtil.isNotBlank(trackNo)){
+            number = trackNo;
+        }
+        LogisticsTrackDTO.ViewDTO list = logisticsTrackService.listByTrackNo(number);
         return success(list);
 
     }

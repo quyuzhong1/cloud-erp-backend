@@ -19,6 +19,7 @@ import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
+import com.common.business.wrapper.FeignQuery;
 import com.common.core.constant.SqlConstants;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.entity.BaseEntity;
@@ -31,8 +32,10 @@ import com.common.core.utils.FileUtil;
 import com.common.core.utils.MathUtil;
 import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
 import com.erp.model.oms.dto.SoB2cDTO;
+import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoB2cLogisticsEntity;
+import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.sys.entity.DictCountryOrgEntity;
 import com.erp.model.sys.enums.ChargeSuperiorEnum;
@@ -717,16 +720,23 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         }
         LocalDateTime now = LocalDateTime.now();
         String signCode = LogisticTrackStatusEnum.SIGN.getCode();
+        //销售平台字典表数据
+        Map<String, String> salesPlatformMap = new HashMap<>();
+        List<DictBasicEntity> salesPlatformList = FeignQuery.create(DictBasicEntity.class)
+                .eq(DictBasicEntity::getType, DictBasicTypeEnum.SALES_PLATFORM.getType())
+                .eq(DictBasicEntity::getStatus, Boolean.TRUE)
+                .eq(DictBasicEntity::getIsDeleted, Boolean.FALSE)
+                .list();
+        if(CollectionUtils.isNotEmpty(salesPlatformList)){
+            salesPlatformMap = salesPlatformList.stream().collect(Collectors.toMap(DictBasicEntity::getValue, DictBasicEntity::getName));
+        }
         for (LogisticsBillDTO.PagingVO item : list) {
             //是否签收
-            Boolean isSign = signCode.equals(item.getTrackStatus());
-            String salesPlatform = item.getSalesPlatform();
-            PlatformDictEnum salesPlatformEnum = PlatformDictEnum.getByCode(salesPlatform);
-            String salesPlatformName = Objects.nonNull(salesPlatformEnum) ? salesPlatformEnum.getDesc() : "";
-            item.setSalesPlatformName(salesPlatformName);
+            boolean isSign = signCode.equals(item.getTrackStatus());
+            item.setSalesPlatformName(salesPlatformMap.get(item.getSalesPlatform()));
             //发货时间
             LocalDateTime deliveryTime = item.getDeliveryTime();
-            Integer transportDays = 0;
+            int transportDays = 0;
             LocalDateTime signTime = item.getSignTime();
             if (Objects.nonNull(deliveryTime)) {
                 LocalDateTime compareTime = now;

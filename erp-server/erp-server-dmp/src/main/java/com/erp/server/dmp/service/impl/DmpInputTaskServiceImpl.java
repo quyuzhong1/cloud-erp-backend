@@ -150,7 +150,7 @@ public class DmpInputTaskServiceImpl extends SuperServiceImpl<DmpInputTaskMapper
 	        warnMsgInfo.setTableId(id);
 	        warnMsgInfo.setKeyInfo(errorMessage);
 	        warnMsgInfo.setWarnMsgTypeEnum(WarnMsgTypeEnum.SYS_EXCEPTION);
-	        mqProducerService.sendWarnMsg(warnMsgInfo);
+//	        mqProducerService.sendWarnMsg(warnMsgInfo);
 	        
 	        String name = "";
 	        String cfgInputId = dmpInputTaskEntity.getCfgInputId();

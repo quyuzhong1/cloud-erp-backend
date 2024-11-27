@@ -88,6 +88,12 @@ public class ListingInfoEntity extends BaseEntity<ListingInfoEntity> {
     private String productPacking;
 
     /**
+     * 产品条码（三方仓商品条码）
+     */
+    @TableField("third_barcode")
+    private String thirdBarcode;
+
+    /**
      * 平台最后修改时间
      */
     @TableField(value = "platform_update_time")

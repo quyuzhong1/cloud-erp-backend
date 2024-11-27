@@ -379,11 +379,15 @@ public class LogisticsBillDetailServiceImpl extends SuperServiceImpl<LogisticsBi
     }
 
     @Override
-    public void updateRegisterStatus(List<String> detailIds, int status) {
-        if (CollectionUtils.isEmpty(detailIds)){
+    public void updateRegisterStatus(List<LogisticsBillDetailDTO.BillDetailErrorDTO> errorList, int status) {
+        if (CollectionUtils.isEmpty(errorList)){
             return;
         }
-        this.lambdaUpdate().set(LogisticsBillDetailEntity::getRegisterStatus, status).in(LogisticsBillDetailEntity::getId, detailIds).update();
+        errorList.forEach(e ->{
+            this.lambdaUpdate().set(LogisticsBillDetailEntity::getRegisterStatus, status)
+                    .set(LogisticsBillDetailEntity::getRegisterResult, e.getErrorMsg())
+                    .eq(LogisticsBillDetailEntity::getId, e.getId()).update();
+        });
     }
 
     @Override

@@ -893,6 +893,7 @@ public class SoInfoDTO implements Serializable {
          * 是否含税
          * true 是
          */
+        @NotNull(message = "是否含税不能为空", groups = {AddGroup.class})
         private Boolean isTax;
 
         /**
@@ -1552,6 +1553,7 @@ public class SoInfoDTO implements Serializable {
          * 是否含税
          * true 是
          */
+        @NotNull(message = "是否含税不能为空")
         private Boolean isTax;
 
         /**

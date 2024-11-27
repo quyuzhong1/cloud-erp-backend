@@ -6,10 +6,7 @@ import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
-import com.erp.model.oms.dto.ListingAdvanceQueryDTO;
-import com.erp.model.oms.dto.ListingInfoParamDTO;
-import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
-import com.erp.model.oms.dto.SkuMappingDTO;
+import com.erp.model.oms.dto.*;
 import com.erp.model.oms.entity.ListingInfoEntity;
 import com.erp.model.oms.entity.OmsPushMsgEntity;
 import com.erp.model.oms.entity.SkuMappingEntity;
@@ -298,4 +295,10 @@ public interface SkuMappingService extends SuperService<SkuMappingEntity> {
 
     void syncWarehouseProduct(List<String> ids);
 
+    /**
+     * 根据参数获取映射列表
+     * @param queryDTO
+     * @return
+     */
+    List<SkuMappingDTO.SkuMappingViewDTO> listSkuMappingByParams(ListingInfoDTO.QueryDTO queryDTO);
 }

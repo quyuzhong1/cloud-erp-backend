@@ -54,6 +54,11 @@ public class PackingTaskDetailEntity extends BaseEntity<PackingTaskDetailEntity>
     */
     @TableField("fn_sku")
     private String fnSku;
+    /**
+     * 三方仓商品条码
+     */
+    @TableField("third_barcode")
+    private String thirdBarcode;
 
 
     public static final String MAIN_ID = "main_id";

@@ -254,15 +254,15 @@ public class MQProducerService<T> {
      * @param msgInfoDTO
      */
     public void sendWarnMsg(WarnMsgInfoDTO msgInfoDTO) {
-//        ValidatorUtil.validateEntity(msgInfoDTO);
-//        String key = IdUtil.simpleUUID();
-//        msgInfoDTO.setHappenTime(LocalDateTime.now());
-//        String topic = RocketMqTopic.WARN_MSG_TOPIC.replace("${spring.cloud.nacos.discovery.namespace}", namespace);
-//        try {
-//            asyncClassMsg(topic, RocketMqTagEnum.MSG_WARN_TAG.getName(), (T) msgInfoDTO, key);
-//        } catch (Exception e) {
-//            log.error("异步发送MQ消息异常", e);
-//        }
+        ValidatorUtil.validateEntity(msgInfoDTO);
+        String key = IdUtil.simpleUUID();
+        msgInfoDTO.setHappenTime(LocalDateTime.now());
+        String topic = RocketMqTopic.WARN_MSG_TOPIC.replace("${spring.cloud.nacos.discovery.namespace}", namespace);
+        try {
+            asyncClassMsg(topic, RocketMqTagEnum.MSG_WARN_TAG.getName(), (T) msgInfoDTO, key);
+        } catch (Exception e) {
+            log.error("异步发送MQ消息异常", e);
+        }
     }
 
     // RocketMQ默认延时等级和对应的延时时间（秒）

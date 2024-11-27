@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -50,6 +51,14 @@ public class LogisticsBillDetailQueryDTO implements Serializable {
      * 物流运输类型（LogisticsTransportTypeEnum）
      */
     private String transportType;
+    /**
+     * 时间限制
+     */
+    private Integer day;
+    /**
+     * 物流轨迹时间
+     */
+    private LocalDateTime trackTime;
     /**
      * 跟踪号
      */

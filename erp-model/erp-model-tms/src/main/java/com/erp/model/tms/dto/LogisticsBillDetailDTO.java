@@ -122,4 +122,13 @@ public class LogisticsBillDetailDTO implements Serializable {
         private String platformOrderNo;
     }
 
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class BillDetailErrorDTO {
+        private String id;
+        private String errorMsg;
+    }
+
 }

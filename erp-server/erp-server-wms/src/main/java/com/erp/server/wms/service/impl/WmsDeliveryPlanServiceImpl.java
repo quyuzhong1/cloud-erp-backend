@@ -571,7 +571,10 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
 
     @Override
     public List<WmsDeliveryPlanDTO.GenerateRequisitionApplicationViewDTO> generateRequisitionApplicationView(List<String> detailIds) {
-        List<WmsDeliveryPlanDTO.GenerateRequisitionApplicationViewDTO> list = baseMapper.generateRequisitionApplicationView(detailIds);
+        //根据明细获取
+        List<WmsDeliveryPlanDetailEntity> wmsDeliveryPlanDetailEntities = wmsDeliveryPlanDetailService.lambdaQuery().select(WmsDeliveryPlanDetailEntity::getMainId).in(WmsDeliveryPlanDetailEntity::getId,detailIds).list();
+        List<String> ids = wmsDeliveryPlanDetailEntities.stream().map(WmsDeliveryPlanDetailEntity::getMainId).distinct().collect(Collectors.toList());
+        List<WmsDeliveryPlanDTO.GenerateRequisitionApplicationViewDTO> list = baseMapper.generateRequisitionApplicationView(ids);
 
         //审核通过才能下推
         long count = list.stream().filter(req -> !ApproveStatusEnum.APPROVE.getStatus().equals(req.getApproveStatus())).count();
@@ -628,7 +631,7 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
         if(CollectionUtils.isEmpty(result)){
             throw new ServiceException("没有要货明细");
         }
-        return list;
+        return result;
     }
 
     /**

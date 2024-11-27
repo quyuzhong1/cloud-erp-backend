@@ -5,6 +5,7 @@ import com.alibaba.fastjson.JSON;
 import com.erp.model.dmp.entity.DmpSoDetailEntity;
 import com.erp.model.dmp.entity.DmpSoInfoEntity;
 import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
+import com.erp.model.oms.enums.SoB2cPayStatusEnum;
 import com.erp.sdk.oms.amz.spapi.model.orders.Order;
 import com.erp.server.dmp.service.DmpSoDetailService;
 import com.erp.server.dmp.service.DmpSoInfoService;
@@ -74,6 +75,9 @@ public class DmpInputAmzOrderDmpHandler extends DmpInputDbConvertDmpHandler {
                 BigDecimal payMount = null == sourceOrder.getOrderTotal() ? BigDecimal.ZERO : new BigDecimal(sourceOrder.getOrderTotal().getAmount());
                 dmpDataMap.put("payAmount", payMount);
 
+                // 订单金额
+                dmpDataMap.put("allAmount", payMount);
+
                 // 币别（原币）
                 String currencyCode = null == sourceOrder.getOrderTotal() ? "" : sourceOrder.getOrderTotal().getCurrencyCode();
                 dmpDataMap.put("currencyCode", currencyCode);
@@ -106,7 +110,7 @@ public class DmpInputAmzOrderDmpHandler extends DmpInputDbConvertDmpHandler {
                 dmpDataMap.put("platformOrderStatus", sourceOrder.getOrderStatus());
 
                 dmpDataMap.put("orderStatus", sourceOrder.convertBillStatus());
-                dmpDataMap.put("payStatus", sourceOrder.convertPayStatus());
+                dmpDataMap.put("payStatus", SoB2cPayStatusEnum.ENUM_PAID.getCode().equalsIgnoreCase(sourceOrder.convertPayStatus()));
 
                 // 订单日期
                 LocalDateTime purchaseLocalDateTime = sourceOrder.convertPurchaseLocalDateTime();

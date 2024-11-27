@@ -1062,6 +1062,9 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         if (StringUtils.isBlank(currency)) {
             throw new ServiceException("币别不能空");
         }
+        if(Objects.isNull(dto.getIsTax())){
+            throw new ServiceException("是否含税不能空");
+        }
         Boolean isFirst = false;
         if (StringUtils.isNotBlank(id)) {
             SoInfoEntity soInfo = this.getById(id);

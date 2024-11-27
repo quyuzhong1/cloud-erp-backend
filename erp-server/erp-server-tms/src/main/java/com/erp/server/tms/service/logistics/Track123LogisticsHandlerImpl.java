@@ -145,7 +145,7 @@ public class Track123LogisticsHandlerImpl extends AbstractLogisticsHandler {
      */
     private String getDataMd5(LogisticsTrackEntity trackingDetail) {
         String trackTime = trackingDetail.getTrackTime().format(TIME_FORMAT);
-        return DigestUtil.md5Hex(trackingDetail.getTrackNo() + trackingDetail.getContent() + trackTime);
+        return DigestUtil.md5Hex(trackingDetail.getTrackNo() + "-" + trackingDetail.getContent() + "-" + trackTime);
     }
 
     @Override
@@ -253,17 +253,13 @@ public class Track123LogisticsHandlerImpl extends AbstractLogisticsHandler {
             String trackNo = registerRequest.getTrackNo();
             if (StringUtils.isEmpty(trackNo) || !trackNo.startsWith("SF")){
                 registerRequest.setExtendFieldMap(null);
-//                ExtendField extendFieldMap = registerRequest.getExtendFieldMap();
-//                if (Objects.nonNull(extendFieldMap)){
-//                    extendFieldMap.setPhoneSuffix(null);
-//                }
             }
         });
         ValidatorUtil.validateEntity(registerRequests);
         try {
             RegisterResult registerResult = trackShipperService.registerLogisticsNumber(token, registerRequests);
             //成功
-            if ("00000".equalsIgnoreCase(registerResult.getCode())) {
+            if (Objects.nonNull(registerResult) && "00000".equalsIgnoreCase(registerResult.getCode())) {
                 RegisterResponse data = registerResult.getData();
                 List<Accepted> accepted = data.getAccepted();
                 if (CollectionUtils.isNotEmpty(accepted)) {

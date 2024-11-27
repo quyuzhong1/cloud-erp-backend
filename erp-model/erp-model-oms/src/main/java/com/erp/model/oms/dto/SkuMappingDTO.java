@@ -545,6 +545,11 @@ public class SkuMappingDTO implements Serializable {
         private String productName;
 
         /**
+         * 三方仓商品条码
+         */
+        private String thirdBarcode;
+
+        /**
          * 库存sku
          */
         private String warehouseSkuNo;
@@ -1173,5 +1178,27 @@ public class SkuMappingDTO implements Serializable {
          * 同步结果
          */
         private String syncResult;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class SkuMappingViewDTO {
+        private String mappingId;
+        private String dictPlatform;
+        private String productSkuId;
+        private String productSkuNo;
+        private String productName;
+        private String type;
+        private String warehouseId;
+        private String warehouseName;
+        private String isExpire;
+        private String listingId;
+        private String platformSkuNo;
+        private String platformSkuName;
+        private String platformName;
+        private String thirdBarcode;
+        private String platformSpuNo;
+        private String platformSpuName;
+        private String platformFnSku;
     }
 }

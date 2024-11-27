@@ -1510,4 +1510,15 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         Boolean result = dmpInoutTaskFeign.doInputTask(createDTOList);
     }
 
+    @Override
+    public List<SkuMappingDTO.SkuMappingViewDTO> listSkuMappingByParams(ListingInfoDTO.QueryDTO queryDTO) {
+        if (Objects.isNull(queryDTO)){
+            return Collections.emptyList();
+        }
+        if (CollUtil.isEmpty(queryDTO.getPlatformSkuIdList()) && CollUtil.isEmpty(queryDTO.getPlatformSkuNoList())){
+            return Collections.emptyList();
+        }
+        return baseMapper.listSkuMappingByParams(queryDTO);
+    }
+
 }
