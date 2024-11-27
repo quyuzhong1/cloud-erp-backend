@@ -2,7 +2,6 @@ package com.erp.server.oms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
-import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.enums.ApiError;
@@ -21,7 +20,7 @@ import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
 import com.erp.model.wms.entity.SoDeliveryNoticeDetailEntity;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
-import com.erp.rpc.scm.feign.*;
+import com.erp.rpc.scm.feign.ScmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.InventoryFeign;
 import com.erp.rpc.wms.feign.SoDeliveryNoticeFeign;
@@ -36,7 +35,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
-import javax.annotation.Resource;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -503,10 +501,9 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
 
             //添加
             SoChangeTypeEnum addType = SoChangeTypeEnum.ADD;
-
+            //需要删除的明细id
             List<String> deleteSoDetailIdList = soChangeDetailList.stream().filter(s -> s.getChangeType().equals(deleteType)).
                     map(SoChangeDetailEntity::getSoDetailId).collect(Collectors.toList());
-            soDetailService.removeByIds(deleteSoDetailIdList);
             //关闭的销售订单id
             List<String> closeSoDetailIdList = soChangeDetailList.stream().filter(s -> s.getChangeType().equals(terminate)).
                     map(SoChangeDetailEntity::getSoDetailId).collect(Collectors.toList());
@@ -585,8 +582,11 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
             //释放明细库存
             List<String> idList = saveOrUpdateList.stream().filter(obj -> CharSequenceUtil.isNotBlank(obj.getId())).map(SoDetailEntity::getId).distinct().collect(Collectors.toList());
             if (CollectionUtils.isNotEmpty(idList)) {
+                idList.addAll(deleteSoDetailIdList);
                 soDetailService.batchUnLockVirtualInventory(idList,null);
             }
+            //删除销售明细
+            soDetailService.removeByIds(deleteSoDetailIdList);
         }
 
     }
