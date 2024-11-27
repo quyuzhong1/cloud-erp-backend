@@ -623,6 +623,10 @@ public class SoInfoDTO implements Serializable {
          */
         private Boolean isConstitute;
 
+        /**
+         * 客户PO号
+         */
+        private String customerPO;
     }
 
     /**
