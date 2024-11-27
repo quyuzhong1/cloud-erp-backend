@@ -133,4 +133,6 @@ public interface SoReturnDetailService extends SuperService<SoReturnDetailEntity
      * @Date 2024-11-27
      **/
     List<SoReturnDTO.SoReturnAmoutDTO> getReturnAmount(SoReturnDTO.SkuParamDTO dto);
+
+    List<SoReturnDTO.SoReturnAmoutDTO> getReturnAmountInNotice(SoReturnDTO.SkuParamDTO dto);
 }
