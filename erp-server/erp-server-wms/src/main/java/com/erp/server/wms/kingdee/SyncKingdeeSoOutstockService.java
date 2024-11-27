@@ -3,6 +3,9 @@ package com.erp.server.wms.kingdee;
 import java.util.Map;
 
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
+import com.erp.model.oms.dto.SoInfoDTO;
+import com.erp.model.oms.entity.SoDetailEntity;
+import com.erp.model.wms.entity.SoOutstockDetailEntity;
 import com.erp.model.wms.entity.SoOutstockEntity;
 
 /**
@@ -49,4 +52,14 @@ public interface SyncKingdeeSoOutstockService {
      * @param syncOperate
      */
     void syncOrderToDmp(SoOutstockEntity entity, String syncOperate);
+
+    /**
+     * 同步数帝云字段映射处理
+     */
+    Map<String, Object> syncDataToSdyFieldHandler(SoOutstockEntity entity, SoOutstockDetailEntity soOutstockDetailEntity, String operate);
+
+    /**
+     * 同步数帝云
+     */
+    void syncDataToSdy(SoOutstockEntity entity, SoOutstockDetailEntity soOutstockDetailEntity, String operate);
 }

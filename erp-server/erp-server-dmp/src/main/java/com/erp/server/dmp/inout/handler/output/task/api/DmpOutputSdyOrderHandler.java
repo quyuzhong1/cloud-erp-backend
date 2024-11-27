@@ -280,7 +280,7 @@ public class DmpOutputSdyOrderHandler extends DmpOutputTaskHandler {
                     shudiyunB2cOrderDTO.setSpec_name(dmpSoDetailEntity.getSpecifics());
                 }
 
-                shudiyunB2cOrderDTO.setGoods_status(wdtItemStatus(dmpSoInfoEntity.getOrderStatus()));
+                shudiyunB2cOrderDTO.setGoods_status(wdtItemStatus(dmpSoDetailEntity.getPlatformStatus()));
 
                 //取消金额、数量
                 if (dmpSoDetailEntity.getRefundNum().compareTo(BigDecimal.ZERO) > 0) {
@@ -387,16 +387,6 @@ public class DmpOutputSdyOrderHandler extends DmpOutputTaskHandler {
 
             shudiyunB2cOrderDTO.setRemark(dmpSoDetailEntity.getItemRemark());
 
-            shudiyunB2cOrderDTO.setGoods_status("未发货");
-            // 商品状态
-            if (SoB2cBillStatusEnum.ENUM_SHIPPED.getCode().equals(dmpSoInfoEntity.getDeliveryStatus()) || SoB2cBillStatusEnum.ENUM_SHIPPED.getCode().equals(dmpSoInfoEntity.getOrderStatus())) {
-                shudiyunB2cOrderDTO.setGoods_status("已发货");
-            }
-
-            if (dmpSoInfoEntity.getIsCancel() && dmpSoInfoEntity.getIsCancel() != null) {
-                shudiyunB2cOrderDTO.setGoods_status("已取消");
-            }
-
             shudiyunB2cOrderDTO.setGoods_transaction_quantity(dmpSoDetailEntity.getQty());
             shudiyunB2cOrderDTO.setUnit("PCS");
 
@@ -435,13 +425,17 @@ public class DmpOutputSdyOrderHandler extends DmpOutputTaskHandler {
     }
 
     private String wdtItemStatus(String status) {
-        if ("95".equals(status)) {
+        if ("40".equals(status)) {
             return "已发货";
-        } else if ("96".equals(status)) {
-            return "成本确认（待录入计划成本，订单结算时有货品无计划成本）";
-        } else if ("101".equals(status)) {
+        } else if ("50".equals(status)) {
             return "已发货";
-        } else if ("5".equals(status)) {
+        } else if ("60".equals(status)) {
+            return "已发货";
+        } else if ("70".equals(status)) {
+            return "已发货";
+        } else if ("80".equals(status)) {
+            return "已取消";
+        } else if ("90".equals(status)) {
             return "已取消";
         } else {
             return "未发货";

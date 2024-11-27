@@ -12,6 +12,4 @@ public class SoInfoToSdyDTO {
     private String operateEnum;
 
     private String deliveryStatus;
-
-    private SoInfoDTO.ViewDTO viewDTO;
 }

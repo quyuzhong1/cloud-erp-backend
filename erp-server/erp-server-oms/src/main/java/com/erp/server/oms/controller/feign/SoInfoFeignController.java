@@ -9,6 +9,7 @@ import com.erp.model.oms.dto.SoInfoToSdyDTO;
 import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.model.oms.entity.SoInfoEntity;
 import com.erp.model.wms.dto.ReportOrderDataDTO;
+import com.erp.server.oms.kingdee.SyncKingdeeSoService;
 import com.erp.server.oms.service.SoDetailService;
 import com.erp.server.oms.service.SoInfoService;
 import com.google.common.collect.Lists;
@@ -37,6 +38,9 @@ public class SoInfoFeignController extends BaseController {
 
     @Resource
     private SoInfoService soInfoService;
+
+    @Resource
+    private SyncKingdeeSoService syncKingdeeSoService;
 
     /**
      * 根据主键id查询销售单主表信息

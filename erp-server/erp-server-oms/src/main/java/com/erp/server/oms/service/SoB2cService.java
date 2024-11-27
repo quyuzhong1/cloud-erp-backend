@@ -1006,10 +1006,9 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
     Boolean tempTikTokOrderDate();
 
     /**
-     * 同步速递云线上订单/配货单
+     * 同步数帝云
      * @param soId
      * @param operateEnum
      */
-    void shudiyunFieldHandler(String soId, String operateEnum);
-
+    void syncSdyOrderHandler(String soId, String operateEnum);
 }

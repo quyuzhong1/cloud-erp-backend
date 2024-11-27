@@ -221,12 +221,11 @@ public enum SourceTypeEnum {
 
     //速帝云
     SDY_DELIVERY_ORDER("sdyDeliveryOrder", "速帝云配货单","so_b2c"),
-    SDY_ONLINE_ORDER("sdyOnlineOrder", "速帝云线上订单","dmp_so_info"),
     SDY_OFFLINE_ORDER("sdyOfflineOrder", "速帝云B2B订单","so_info"),
+    SDY_ONLINE_ORDER("sdyOnlineOrder", "速帝云线上订单","dmp_so_info"),
     SDY_SO_OUTSTOCK("sdySoOutstock", "速帝云销售出库订单","so_outstock"),
-    SDY_LOGISTICS_BILL("sdyLogisticsBill", "速帝云运单","logistics_bill"),
     SDY_SO_RETURN_INSTOCK("sdySoReturnInstock", "速帝云退货入库单","so_return_instock"),
-
+    SDY_LOGISTICS_BILL("sdyLogisticsBill", "速帝云运单","logistics_bill"),
     ;
 
     /**

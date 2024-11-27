@@ -5,6 +5,7 @@ import com.common.business.dto.DmpSyncMqDTO;
 import com.common.business.dto.DmpSyncMqDTO.SyncParamDTO;
 import com.common.business.enums.SourceTypeEnum;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
+import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.oms.entity.*;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.server.oms.kingdee.*;
@@ -70,6 +71,18 @@ public class SyncTaskServiceImpl implements SyncTaskService {
     
     @Resource
     private SkuMappingService skuMappingService;
+
+    @Resource
+    private SoB2cService soB2cService;
+
+    @Resource
+    private SoB2cDetailService soB2cDetailService;
+
+    @Resource
+    private SyncSoB2cService syncSoB2cService;
+
+    @Resource
+    private SoDetailService soDetailService;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -261,6 +274,12 @@ public class SyncTaskServiceImpl implements SyncTaskService {
             case SDY_CUSTOMER_INFO:
             	resultList = newSyncSdyCustomerInfo(sourceDetailList);
             	break;
+            case SDY_DELIVERY_ORDER:
+            	resultList = newSyncSdyDeliveryOrder(sourceDetailList);
+            	break;
+            case SDY_OFFLINE_ORDER:
+            	resultList = newSyncSdyOfflineOrder(sourceDetailList);
+            	break;
             default:
                 break;
         }
@@ -440,6 +459,58 @@ public class SyncTaskServiceImpl implements SyncTaskService {
                 continue;
             }
             resultList.put(syncParamDetailDTO.getDataId(), syncKingdeeCustomerInfoService.newSyncDataToSdy(entity, syncParamDetailDTO.getSyncOperate()));
+        }
+        return resultList;
+    }
+
+    private Map<String , Map<String, Object>> newSyncSdyDeliveryOrder(List<DmpSyncMqDTO.SyncParamDetailDTO> sourceDetailList) {
+    	Map<String , Map<String, Object>> resultList = new HashMap<>();
+    	List<String> sourceIdList = sourceDetailList.stream().map(DmpSyncMqDTO.SyncParamDetailDTO::getSourceId).collect(Collectors.toList());
+        //订单同步数帝云是详情级别同步，所以查询详情
+        List<SoB2cDetailEntity> soB2cDetailEntityList = soB2cDetailService.listByIds(sourceIdList);
+
+        //根据详情获取订单主表
+        List<String> soIdList = soB2cDetailEntityList.stream().map(SoB2cDetailEntity::getMainId).distinct().collect(Collectors.toList());
+        List<SoB2cEntity> soB2cEntities = soB2cService.listByIds(soIdList);
+        if (CollectionUtils.isEmpty(soB2cEntities)) {
+            log.error("newSyncSdyDeliveryOrder >>>> 未找到数据！");
+            return resultList;
+        }
+        for (DmpSyncMqDTO.SyncParamDetailDTO syncParamDetailDTO :  sourceDetailList) {
+        	String sourceId = syncParamDetailDTO.getSourceId();
+            SoB2cDetailEntity soB2cDetailEntity = soB2cDetailEntityList.stream().filter(req -> req.getId().equalsIgnoreCase(sourceId)).findFirst().orElse(null);
+            if (ObjectUtils.isEmpty(soB2cDetailEntity)) {
+                continue;
+            }
+            SoB2cEntity soB2cEntity = soB2cEntities.stream().filter(req -> req.getId().equals(soB2cDetailEntity.getMainId())).findFirst().orElse(null);
+            if (ObjectUtils.isEmpty(soB2cEntity)) {
+                continue;
+            }
+            resultList.put(syncParamDetailDTO.getDataId(), syncSoB2cService.syncDataToSdyFieldHandler(soB2cEntity, soB2cDetailEntity, syncParamDetailDTO.getSyncOperate()));
+        }
+        return resultList;
+    }
+
+    private Map<String , Map<String, Object>> newSyncSdyOfflineOrder(List<DmpSyncMqDTO.SyncParamDetailDTO> sourceDetailList) {
+    	Map<String , Map<String, Object>> resultList = new HashMap<>();
+    	List<String> sourceIdList = sourceDetailList.stream().map(DmpSyncMqDTO.SyncParamDetailDTO::getSourceId).collect(Collectors.toList());
+        //订单同步数帝云是详情级别同步，所以查询详情
+        List<SoDetailEntity> soDetailEntityList = soDetailService.listByIds(sourceIdList);
+        if (CollectionUtils.isEmpty(soDetailEntityList)) {
+            log.error("newSyncSdyOfflineOrder >>>> 未找到数据！");
+            return resultList;
+        }
+        for (DmpSyncMqDTO.SyncParamDetailDTO syncParamDetailDTO :  sourceDetailList) {
+        	String sourceId = syncParamDetailDTO.getSourceId();
+            SoDetailEntity soDetailEntity = soDetailEntityList.stream().filter(req -> req.getId().equalsIgnoreCase(sourceId)).findFirst().orElse(null);
+            if (ObjectUtils.isEmpty(soDetailEntity)) {
+                continue;
+            }
+            SoInfoDTO.ViewDTO view = soInfoService.view(soDetailEntity.getMainId());
+            if (ObjectUtils.isEmpty(view)) {
+                continue;
+            }
+            resultList.put(syncParamDetailDTO.getDataId(), syncKingdeeSoService.syncDataToSdyFieldHandler(view, soDetailEntity, syncParamDetailDTO.getSyncOperate(), ""));
         }
         return resultList;
     }

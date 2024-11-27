@@ -856,8 +856,8 @@ public class SoB2cFeignController extends BaseController {
      * @param soId
      * @param operateEnum
      */
-    @GetMapping("/shudiyunFieldHandler")
-    public void shudiyunFieldHandler(@RequestParam("soId") String soId, @RequestParam("operateEnum") String operateEnum) {
-        soB2cService.shudiyunFieldHandler(soId, operateEnum);
+    @GetMapping("/syncSdyOrderHandler")
+    public void syncSdyOrderHandler(@RequestParam("soId") String soId, @RequestParam("operateEnum") String operateEnum) {
+        soB2cService.syncSdyOrderHandler(soId, operateEnum);
     }
 }

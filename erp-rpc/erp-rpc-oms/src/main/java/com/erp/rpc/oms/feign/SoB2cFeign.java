@@ -647,6 +647,6 @@ public interface SoB2cFeign {
      * @param soId
      * @param operateEnum
      */
-    @GetMapping("feign/soB2c/shudiyunFieldHandler")
-    void shudiyunFieldHandler(@RequestParam("soId") String soId, @RequestParam("operateEnum") String operateEnum);
+    @GetMapping("feign/soB2c/syncSdyOrderHandler")
+    void syncSdyOrderHandler(@RequestParam("soId") String soId, @RequestParam("operateEnum") String operateEnum);
 }

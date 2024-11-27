@@ -187,13 +187,17 @@ public class DmpOutputSdyWdtOriginalOrderHandler extends DmpOutputTaskHandler {
             //线上原始订单
             shudiyunB2cOrderDTO.setTransaction_type("线上订单");
 
-            shudiyunB2cOrderDTO.setTransaction_sub_type(OrderSubTypeEnum.ONLINE_ORDER.getCode());
+            shudiyunB2cOrderDTO.setTransaction_sub_type(OrderSubTypeEnum.ONLINE_ORDER.getName());
             shudiyunB2cOrderDTO.setBiz_status(wdtStatusHandler(dmpSoInfoEntity.getTradeStatus()));
-
+            if (dmpSoInfoEntity.getPayTime() != null) {
+                shudiyunB2cOrderDTO.setBiz_time(localDateTime.format(dmpSoInfoEntity.getPayTime()));
+            } else {
+                shudiyunB2cOrderDTO.setBiz_time(localDateTime.format(dmpSoInfoEntity.getPlatformCreateTime()));
+            }
 
             shudiyunB2cOrderDTO.setTotal_goods_transaction_amount(allAmount);
             //总优惠金额
-            shudiyunB2cOrderDTO.setDiscount_deduction_amount(allAmount);
+            shudiyunB2cOrderDTO.setDiscount_deduction_amount(dmpSoInfoEntity.getDiscount());
 
             BigDecimal totalQty = dmpSoDetailEntityList.stream().map(DmpSoOriginalDetailEntity::getNum).reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
             shudiyunB2cOrderDTO.setTotal_goods_quantity(totalQty.intValue());
@@ -250,7 +254,7 @@ public class DmpOutputSdyWdtOriginalOrderHandler extends DmpOutputTaskHandler {
 
             shudiyunB2cOrderDTO.setPlatform_id(dmpSoInfoEntity.getSourceSystem());
             shudiyunB2cOrderDTO.setPlatform_name(PlatformDictEnum.getNameByCode(dmpSoInfoEntity.getSourcePlatform()));
-            shudiyunB2cOrderDTO.setRoot_node_no(dmpSoInfoEntity.getThirdCode());
+            shudiyunB2cOrderDTO.setRoot_node_no(dmpSoInfoEntity.getPlatformCode());
 
             if (dmpSoInfoEntity.getPayTime() != null) {
                 shudiyunB2cOrderDTO.setRoot_node_create_time(localDateTime.format(dmpSoInfoEntity.getPayTime()));
@@ -294,13 +298,17 @@ public class DmpOutputSdyWdtOriginalOrderHandler extends DmpOutputTaskHandler {
     }
 
     private String wdtItemStatus(String status) {
-        if ("95".equals(status)) {
+        if ("40".equals(status)) {
             return "已发货";
-        } else if ("96".equals(status)) {
-            return "成本确认（待录入计划成本，订单结算时有货品无计划成本）";
-        } else if ("101".equals(status)) {
+        } else if ("50".equals(status)) {
             return "已发货";
-        } else if ("5".equals(status)) {
+        } else if ("60".equals(status)) {
+            return "已发货";
+        } else if ("70".equals(status)) {
+            return "已发货";
+        } else if ("80".equals(status)) {
+            return "已取消";
+        } else if ("90".equals(status)) {
             return "已取消";
         } else {
             return "未发货";
@@ -309,50 +317,24 @@ public class DmpOutputSdyWdtOriginalOrderHandler extends DmpOutputTaskHandler {
 
 
     private String wdtStatusHandler(String status) {
-        if ("4".equals(status)) {
-            return "线下退款";
-        } else if ("5".equals(status)) {
-            return "已取消";
-        } else if ("6".equals(status)) {
-            return "待转预订单(待审核)";
-        } else if ("7".equals(status)) {
-            return "待转已完成";
-        } else if ("10".equals(status)) {
-            return "未付款";
-        } else if ("12".equals(status)) {
-            return "待尾款";
-        } else if ("15".equals(status)) {
-            return "等未付";
-        } else if ("16".equals(status)) {
-            return "延时审核";
-        } else if ("19".equals(status)) {
-            return "预订单前处理";
+        if ("10".equals(status)) {
+            return "未确认";
         } else if ("20".equals(status)) {
-            return "审核前处理";
-        } else if ("21".equals(status)) {
-            return "自流转待发货";
-        } else if ("23".equals(status)) {
-            return "异常订单";
-        } else if ("24".equals(status)) {
-            return "换货预订单";
-        } else if ("25".equals(status)) {
-            return "待处理预订单";
-        } else if ("27".equals(status)) {
-            return "待分配预订单";
+            return "待尾款";
         } else if ("30".equals(status)) {
-            return "待客审";
-        } else if ("35".equals(status)) {
-            return "待财审";
+            return "待发货";
         } else if ("40".equals(status)) {
-            return "审核中";
-        } else if ("55".equals(status)) {
-            return "已审核";
-        } else if ("95".equals(status)) {
+            return "部分发货";
+        } else if ("50".equals(status)) {
             return "已发货";
-        } else if ("96".equals(status)) {
-            return "成本确认（待录入计划成本，订单结算时有货品无计划成本）";
-        } else if ("101".equals(status)) {
-            return "已过账";
+        } else if ("60".equals(status)) {
+            return "已签收";
+        } else if ("70".equals(status)) {
+            return "已完成";
+        } else if ("80".equals(status)) {
+            return "已退款";
+        } else if ("90".equals(status)) {
+            return "已关闭";
         } else {
             return "已完成";
         }

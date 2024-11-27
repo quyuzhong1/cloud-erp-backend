@@ -308,7 +308,7 @@ public class DmpOutputSdyReturnHandler extends DmpOutputTaskHandler {
             }
             sdyDTO.setReason(dmpSoReturnDetailEntity.getReason());
             sdyDTO.setSource_system("SDC");
-            sdyDTO.setRoot_node_no_initial(dmpSoReturnEntity.getThirdCode());
+            sdyDTO.setRoot_node_no_initial(dmpSoReturnEntity.getPlatformCode());
             sdyListDTO.add(sdyDTO);
         }
 
