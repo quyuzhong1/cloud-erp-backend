@@ -112,7 +112,7 @@
                 pad.purchase_apply_qty purchaseApplyQty,
                 pad.business_type businessType,
                 pad.order_status orderStatus,
-                pa.approve_time
+                pa.approve_time as approveTime
         from pilot_application pa
         left join pilot_application_detail pad on pa.id = pad.main_id and pad.is_deleted = false
         <where>
