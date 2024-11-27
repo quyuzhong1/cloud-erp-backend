@@ -90,11 +90,6 @@ public class SoReturnNoticeDetailServiceImpl extends SuperServiceImpl<SoReturnNo
                 detailEntity.setSkuNo(soReturnDetailEntity.getSkuNo());
                 detailEntity.setReturnReasonDict(soReturnDetailEntity.getReturnReasonDict());
                 detailEntity.setReturnTypeDict(soReturnDetailEntity.getReturnTypeDict());
-//                detailEntity.setReturnAmount(soReturnDetailEntity.getReturnAmount());
-//                detailEntity.setTaxReturnAmount(soReturnDetailEntity.getTaxReturnAmount());
-//                detailEntity.setReturnAmountLocalCurrency(soReturnDetailEntity.getReturnAmountLocalCurrency());
-//                detailEntity.setTaxReturnAmountLocalCurrency(soReturnDetailEntity.getTaxReturnAmountLocalCurrency());
-//                detailEntity.setExchangeRate(soReturnDetailEntity.getExchangeRate());
                 detailEntity.setSourceDetailId(detailDto.getSourceDetailId());
             }else {
                 ProductDetailEntity productDetailEntity = productDetailEntitys.stream().filter(v -> v.getId().equals(detailDto.getSkuId())).findFirst().orElse(new ProductDetailEntity());

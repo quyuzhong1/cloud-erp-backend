@@ -589,14 +589,14 @@ public class SoInfoController extends BaseController {
 
     /**
      * 下推销售退货订单-列表查询-计算退货金额
-     * @param dto dto
+     * @param  calDTO
      * @return com.common.core.controller.vo.ApiResult<java.util.List < com.erp.model.oms.dto.SoInfoDTO.GenerateSoReturnView>>
      * @Author jack
      * @Date 2024-11-25
      **/
     @PostMapping("/calReturnAmountByQty")
-    public ApiResult<List<SoInfoDTO.GenerateSoReturnView>> calReturnAmountByQty(@RequestBody @Validated SoInfoDTO.CalDTO dto) {
-        List<SoInfoDTO.GenerateSoReturnView> list = soInfoService.calReturnAmountByQty(dto);
+    public ApiResult<List<SoInfoDTO.GenerateSoReturnView>> calReturnAmountByQty(@RequestBody SoInfoDTO.CalDetailDTO calDTO) {
+        List<SoInfoDTO.GenerateSoReturnView> list = soInfoService.calReturnAmountByQty(calDTO.getDetails());
         return success(list);
     }
 
