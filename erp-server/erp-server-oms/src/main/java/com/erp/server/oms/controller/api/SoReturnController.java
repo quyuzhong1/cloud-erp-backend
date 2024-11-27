@@ -435,4 +435,17 @@ public class SoReturnController extends BaseController {
     public ApiResult<List<SoReturnDTO.SoReturnAmoutDTO>> getReturnAmount(@RequestBody @Validated SoReturnDTO.SkuParamDTO dto) {
         return success(soReturnDetailService.getReturnAmount(dto));
     }
+
+
+    /**
+     * 退货通知单、签收单、入库单详情页，根据skuId + customerId / sodetailId查询以下字段 ：退货金额，含税退货金额，退货金额（本位币），含税退货金额（本位币）
+     * @param dto dto
+     * @return com.common.core.controller.vo.ApiResult<java.util.List < com.erp.model.oms.dto.SoDetailDTO.AddDetailView>>
+     * @Author jack
+     * @Date 2024-11-27
+     **/
+    @PostMapping("/getReturnAmountInNotice")
+    public ApiResult<List<SoReturnDTO.SoReturnAmoutDTO>> getReturnAmountInNotice(@RequestBody @Validated SoReturnDTO.SkuParamDTO dto) {
+        return success(soReturnDetailService.getReturnAmountInNotice(dto));
+    }
 }
