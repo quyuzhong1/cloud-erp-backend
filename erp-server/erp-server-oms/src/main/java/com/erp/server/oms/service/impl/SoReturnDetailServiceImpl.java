@@ -413,18 +413,22 @@ public class SoReturnDetailServiceImpl extends SuperServiceImpl<SoReturnDetailMa
     }
 
     @Override
-    public SoReturnDTO.SoReturnAmoutDTO getReturnAmount(SoReturnDTO.SkuDTO dto) {
-        SoReturnDTO.SoReturnAmoutDTO view = new SoReturnDTO.SoReturnAmoutDTO();
-        view.setSkuId(dto.getSkuId());
-        view.setCustomerId(dto.getCustomerId());
-        if(StringUtils.isNotBlank(dto.getSoDetailId())){
-            //有销售订单情况
-            getReturnAmountBySo(dto, view);
-        }else {
-            //无销售订单情况
-            getReturnAmoutByCustomer(dto, view);
+    public List<SoReturnDTO.SoReturnAmoutDTO> getReturnAmount(SoReturnDTO.SkuParamDTO dto) {
+        List<SoReturnDTO.SoReturnAmoutDTO> result = new ArrayList<>();
+        for (SoReturnDTO.SkuDTO skuDTO : dto.getSkuDTOList()) {
+            SoReturnDTO.SoReturnAmoutDTO view = new SoReturnDTO.SoReturnAmoutDTO();
+            view.setSkuId(skuDTO.getSkuId());
+            view.setCustomerId(skuDTO.getCustomerId());
+            if(StringUtils.isNotBlank(skuDTO.getSoDetailId())){
+                //有销售订单情况
+                getReturnAmountBySo(skuDTO, view);
+            }else {
+                //无销售订单情况
+                getReturnAmoutByCustomer(skuDTO, view);
+            }
+            result.add(view);
         }
-        return view;
+        return result;
     }
 
     //有销售订单情况

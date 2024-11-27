@@ -432,7 +432,7 @@ public class SoReturnController extends BaseController {
      * @Date 2024-11-27
      **/
     @PostMapping("/getReturnAmount")
-    public ApiResult<SoReturnDTO.SoReturnAmoutDTO> getReturnAmount(@RequestBody @Validated SoReturnDTO.SkuDTO dto) {
+    public ApiResult<List<SoReturnDTO.SoReturnAmoutDTO>> getReturnAmount(@RequestBody @Validated SoReturnDTO.SkuParamDTO dto) {
         return success(soReturnDetailService.getReturnAmount(dto));
     }
 }
