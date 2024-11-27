@@ -11,7 +11,6 @@ import com.common.business.utils.RedisUtil;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.dmp.dto.AmazonShopInfoDTO;
-import com.erp.model.dmp.enums.DmpInputTaskTaskTypeEnum;
 import com.erp.sdk.oms.amz.spapi.api.FbaInboundApi;
 import com.erp.sdk.oms.amz.spapi.client.ApiException;
 import com.erp.sdk.oms.amz.spapi.enums.AmazonFbaQueryTypeEnum;
@@ -36,11 +35,11 @@ import org.springframework.stereotype.Service;
 import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -60,16 +59,36 @@ public class DmpInputAmzFbaShipmentApiInitHandler extends DmpInputInitHandler {
 
     @Override
     public List<DmpInputTaskInitDTO> getInitData(DmpInputInitRequest dmpRequest, DmpInputTaskResponse dmpResponse) {
-        String shopId = dmpInputTaskEntity.getNextLevelId();
-        AmazonShopInfoDTO shopInfoDTO = cfgAppClientService.cacheAndFindShopAuth(shopId);
-        AmazonMarketplaceEnum marketPlaceEnum = AmazonMarketplaceEnum.getByCountryCode(shopInfoDTO.getDictCountryCode());
+        String queryShopId = dmpInputTaskEntity.getNextLevelId();
+        AmazonShopInfoDTO shopInfoDTO = cfgAppClientService.cacheAndFindShopAuth(queryShopId);
         // 指定FBA货件号
         List<String> fbaShipmentIds = new LinkedList<>();
         String extendJson = dmpInputTaskEntity.getExtendJson();
+        AmazonMarketplaceEnum marketPlaceEnum = AmazonMarketplaceEnum.getByCountryCode(shopInfoDTO.getDictCountryCode());
+        // 目标店铺
+        String shopId = shopInfoDTO.getDictCountryCode();
+        String shopName = shopInfoDTO.getDictCountryCode();
+
+        // 兼容手动拉取参数
         if (StringUtils.isNotBlank(extendJson)) {
-            JSONArray jsonArray = JSONObject.parseObject(extendJson).getJSONArray("shipmentCodeList");
+            JSONObject jsonObject = JSONObject.parseObject(extendJson);
+            JSONArray jsonArray = jsonObject.getJSONArray("shipmentCodeList");
             if (CollectionUtils.isNotEmpty(jsonArray)){
                 fbaShipmentIds = jsonArray.stream().map(Object::toString).collect(Collectors.toList());
+            }
+            String specShopId = jsonObject.getString("shopId");
+            if (StringUtils.isNotBlank(specShopId)){
+                shopId = specShopId;
+                Map.Entry<String, AmazonShopInfoDTO.ShopNameDTO> entry = shopInfoDTO.getMarketplaceShopIdMap()
+                        .entrySet()
+                        .stream()
+                        .filter(e -> e.getValue().getShopId().equalsIgnoreCase(specShopId))
+                        .findFirst()
+                        .orElse(null);
+                if (null != entry){
+                    shopName = entry.getValue().getShopName();
+                    marketPlaceEnum = AmazonMarketplaceEnum.getByMarketplaceId(entry.getKey());
+                }
             }
         }
 
@@ -91,11 +110,10 @@ public class DmpInputAmzFbaShipmentApiInitHandler extends DmpInputInitHandler {
 
         if (CollectionUtils.isNotEmpty(fbaShipmentIds)) {
             // 根据货件单号查询FBA货件
-            return queryListByShipmentIds(fbaShipmentIds, shopInfoDTO, marketPlaceEnum, rateLimitStr, limitKey, dmpResponse);
+            return queryListByShipmentIds(fbaShipmentIds, shopInfoDTO, marketPlaceEnum, rateLimitStr, limitKey, dmpResponse, shopId, shopName);
         } else {
             // 根据时间区间查询FBA货件
             return queryListByDateRange(shopInfoDTO, marketPlaceEnum, rateLimitStr, limitKey, dmpResponse);
-
         }
 
     }
@@ -103,7 +121,7 @@ public class DmpInputAmzFbaShipmentApiInitHandler extends DmpInputInitHandler {
     /**
      * 根据货件单号查询FBA货件
      */
-    private List<DmpInputTaskInitDTO> queryListByShipmentIds(List<String> shipmentIdList, AmazonShopInfoDTO shopInfoDTO, AmazonMarketplaceEnum marketPlaceEnum, String rateLimitStr, String limitKey, DmpInputTaskResponse dmpResponse) {
+    private List<DmpInputTaskInitDTO> queryListByShipmentIds(List<String> shipmentIdList, AmazonShopInfoDTO shopInfoDTO, AmazonMarketplaceEnum marketPlaceEnum, String rateLimitStr, String limitKey, DmpInputTaskResponse dmpResponse, String shopId, String shopName) {
         try {
             FbaInboundApi api = AmazonSpApiInitUtils.create(FbaInboundApi.class, shopInfoDTO, false);
             String queryType = AmazonFbaQueryTypeEnum.SHIPMENT.getCode();
@@ -114,7 +132,7 @@ public class DmpInputAmzFbaShipmentApiInitHandler extends DmpInputInitHandler {
 
             InboundShipmentList responseList = shipments.getPayload().getShipmentData();
             List<JSONObject> curJsonList = responseList.stream()
-                    .map(e -> fillDataAndToJsonObject(e, shopInfoDTO))
+                    .map(e -> fillDataAndToJsonObject(e, shopInfoDTO.getPlatformShopCode(), shopId, shopName))
                     .collect(Collectors.toList());
             return Collections.singletonList(DmpInputTaskInitDTO.initMsg(JSON.toJSONString(curJsonList)));
         } catch (ApiException e) {
@@ -152,7 +170,7 @@ public class DmpInputAmzFbaShipmentApiInitHandler extends DmpInputInitHandler {
             String lastUpdatedBefore = DateUtil.plus8SameUtcOffset(endTime).toString();
             InboundShipmentList responseList = api.getAllShipments(queryType, marketplaceId, shipmentStatusList, null, lastUpdatedAfter, lastUpdatedBefore, null);
             List<JSONObject> curJsonList = responseList.stream()
-                    .map(e -> fillDataAndToJsonObject(e, shopInfoDTO))
+                    .map(e -> fillDataAndToJsonObject(e, shopInfoDTO.getPlatformShopCode(), shopInfoDTO.getId(), shopInfoDTO.getName()))
                     .collect(Collectors.toList());
             return Collections.singletonList(DmpInputTaskInitDTO.initMsg(JSON.toJSONString(curJsonList)));
         } catch (ApiException e) {
@@ -173,11 +191,9 @@ public class DmpInputAmzFbaShipmentApiInitHandler extends DmpInputInitHandler {
     /**
      * 设置亚马逊货件ID和转换JSON
      */
-    private JSONObject fillDataAndToJsonObject(InboundShipmentInfo item, AmazonShopInfoDTO shopInfoDTO) {
+    private JSONObject fillDataAndToJsonObject(InboundShipmentInfo item, String platformShopCode, String shopId, String shopName) {
         JSONObject json = (JSONObject) JSON.toJSON(item);
-        json.put("platformShopCode", shopInfoDTO.getPlatformShopCode());
-        String shopId = shopInfoDTO.getId();
-        String shopName = shopInfoDTO.getName();
+        json.put("platformShopCode", platformShopCode);
         json.put("shopId", shopId);
         json.put("shopName", shopName);
         return json;

@@ -24,6 +24,7 @@ import com.erp.sdk.oms.amz.spapi.model.fulfillmentinbound.InboundShipmentItemLis
 import com.erp.sdk.oms.amz.spapi.utils.AmazonSpApiInitUtils;
 import com.erp.server.dmp.inout.dto.base.DmpInputTaskInitDTO;
 import com.erp.server.dmp.inout.dto.request.DmpInputInitRequest;
+import com.erp.server.dmp.inout.dto.response.DmpInputInitResponse;
 import com.erp.server.dmp.inout.dto.response.DmpInputTaskResponse;
 import com.erp.server.dmp.inout.handler.input.task.mongo.DmpInputMongoHandler;
 import com.erp.server.dmp.service.CfgAppClientService;
@@ -97,9 +98,11 @@ public class DmpInputAmzFbaShipmentDetailInitHandler extends DmpInputAmzCommonIn
             // 获取动态速率
             Object limitObj = redisUtil.get(limitKey);
             if (null != limitObj) {
-                log.warn("【FBA货件列表拉取】 platformShopCode={},存在429等待恢复:放弃当前请求任务", shopInfoDTO.getPlatformShopCode());
-                String msg = StrUtil.format("【FBA货件明细拉取】 amazonOrderId={}, platformShopCode={},存在429等待恢复:放弃当前请求任务", shipmentId, shopInfoDTO.getPlatformShopCode());
-                throw new ServiceException(msg);
+                log.warn("【FBA货件明细拉取】 platformShopCode={},存在429等待恢复:放弃当前请求任务", shopInfoDTO.getPlatformShopCode());
+                // 触发限流不执行当前
+                DmpInputInitResponse initDmpResponse = (DmpInputInitResponse) dmpResponse;
+                initDmpResponse.setDoNextChain(false);
+                return Collections.emptyList();
             }
             String rateLimitStr = requestTypeRateLimiterEnum.getRateLimit();
             try {
@@ -115,6 +118,11 @@ public class DmpInputAmzFbaShipmentDetailInitHandler extends DmpInputAmzCommonIn
                     // 设置动态速率，失效时间=1/limit
                     BigDecimal timeOut = BigDecimal.ONE.max(BigDecimal.ONE.divide(new BigDecimal(rateLimitStr), 8, RoundingMode.DOWN));
                     redisUtil.set(limitKey, rateLimitStr, timeOut.longValue());
+                    log.warn("【FBA货件明细拉取】 platformShopCode={},首次429等待恢复:放弃当前请求任务", shopInfoDTO.getPlatformShopCode());
+                    // 触发限流不执行当前
+                    DmpInputInitResponse initDmpResponse = (DmpInputInitResponse) dmpResponse;
+                    initDmpResponse.setDoNextChain(false);
+                    return Collections.emptyList();
                 }
                 throw new ServiceException("[Amazon SP-APi] 查询FBA货件item失败" + e);
             }
