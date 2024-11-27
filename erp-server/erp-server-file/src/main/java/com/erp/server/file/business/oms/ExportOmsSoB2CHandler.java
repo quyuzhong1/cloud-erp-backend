@@ -8,11 +8,13 @@ import com.erp.rpc.oms.feign.ExportOmsFeign;
 import com.erp.server.file.core.AbstractPageFileEventHandler;
 import com.erp.server.file.entity.FileTask;
 import com.fasterxml.jackson.core.type.TypeReference;
+import feign.Request;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_OMS_SO_B2C;
 
@@ -31,7 +33,7 @@ public class ExportOmsSoB2CHandler extends AbstractPageFileEventHandler<SoB2cDTO
 
     @Override
     protected PagingVO<SoB2cDTO.ExcelExportDTO> getPageData(PagingDTO<SoB2cDTO.ExportParamDTO> dto) {
-        return exportOmsFeign.exportSoB2C(dto);
+        return exportOmsFeign.exportSoB2C(new Request.Options(10, TimeUnit.MINUTES,10,TimeUnit.MINUTES,true),dto);
     }
 
     @Override

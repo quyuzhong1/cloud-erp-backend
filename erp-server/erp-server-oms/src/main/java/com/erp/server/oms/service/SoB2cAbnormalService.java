@@ -38,4 +38,6 @@ public interface SoB2cAbnormalService {
      * @return List<BatchResultDTO>
      */
     List<BatchResultDTO> batchRetry(String id);
+
+    void clearAbnormal(List<String> ids);
 }
