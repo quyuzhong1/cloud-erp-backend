@@ -769,28 +769,6 @@ public class SoReturnReceiveDTO {
          * 平台sku
          */
         private String platformSkuNo;
-
-        /**
-         * 币别
-         */
-        private String currency;
-
-        /**
-         * 币种符号
-         */
-        private String currencySymbol;
-        /**
-         *退货金额
-         */
-        private BigDecimal returnAmount;
-        /**
-         *含税退货金额
-         */
-        private BigDecimal taxReturnAmount;
-        /**
-         *汇率
-         */
-        private BigDecimal exchangeRate;
     }
 
     /**

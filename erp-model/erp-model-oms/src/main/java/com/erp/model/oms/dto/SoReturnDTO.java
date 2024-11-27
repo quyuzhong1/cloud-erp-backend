@@ -548,28 +548,6 @@ public class SoReturnDTO {
          * 退货物流单号
          */
         private String returnLogisticCode;
-
-        /**
-         * 币别
-         */
-        private String currency;
-
-        /**
-         * 币种符号
-         */
-        private String currencySymbol;
-        /**
-         *退货金额
-         */
-        private BigDecimal returnAmount;
-        /**
-         *含税退货金额
-         */
-        private BigDecimal taxReturnAmount;
-        /**
-         *汇率
-         */
-        private BigDecimal exchangeRate;
     }
 
     /**
@@ -650,14 +628,14 @@ public class SoReturnDTO {
     @Data
     @NoArgsConstructor
     public static class SkuParamDTO {
+
        @NotEmpty(message = "sku不能为空")
-       private List<ReturnSkuDTO> skuDTOList;
+       private List<SkuDTO> skuDTOList;
     }
 
     @Data
     @NoArgsConstructor
-    public static class ReturnSkuDTO {
-
+    public static class SkuDTO {
         /**
          * 销售订单明细id
          */
@@ -666,10 +644,6 @@ public class SoReturnDTO {
          * 退货订单id
          */
         private String returnId;
-        /**
-         * 退货订单明细id
-         */
-        private String returnDetailId;
         /**
          * skuId
          */

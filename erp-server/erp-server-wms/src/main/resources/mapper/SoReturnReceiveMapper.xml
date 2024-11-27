@@ -180,14 +180,7 @@
             srrd.remark,
             srr.return_logistic_code,
             srrd.is_child_sku_no,
-            srrd.platform_sku_no,
-            srr.currency,
-            srr.currency_symbol,
-            srrd.exchange_rate ,
-            srrd.return_amount ,
-            srrd.tax_return_amount ,
-            srrd.return_amount_local_currency ,
-            srrd.tax_return_amount_local_currency
+            srrd.platform_sku_no
         FROM so_return_receive srr
         INNER JOIN so_return_receive_detail srrd ON srr.id = srrd.main_id AND srr.is_deleted=FALSE
         WHERE srrd.is_deleted=FALSE

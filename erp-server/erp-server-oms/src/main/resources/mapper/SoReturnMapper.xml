@@ -129,14 +129,7 @@
             srd.return_qty,
             srd.return_type_dict,
             srd.remark,
-            srd.return_reason_dict,
-            sr.currency,
-            sr.currency_symbol,
-            srd.exchange_rate,
-            srd.return_amount ,
-            srd.tax_return_amount ,
-            srd.return_amount_local_currency ,
-            srd.tax_return_amount_local_currency
+            srd.return_reason_dict
         FROM so_return_detail srd
         INNER JOIN so_return sr ON srd.main_id = sr.id AND srd.is_deleted = FALSE
         WHERE sr.is_deleted = FALSE
