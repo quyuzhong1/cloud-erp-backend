@@ -707,7 +707,7 @@ public class SoReturnDetailServiceImpl extends SuperServiceImpl<SoReturnDetailMa
         SoOutstockDTO.ListAmountParamDTO params = new SoOutstockDTO.ListAmountParamDTO();
         params.setCustomerId(dto.getCustomerId());
         params.setSkuIds(Collections.singletonList(dto.getSkuId()));
-        params.setReturnCreateDate(returnCeateDate);
+        params.setReturnCreateDate(returnCeateDate.toString());
         List<SoOutstockDTO.AmountDTO> amountDTOS = soOutstockFeign.listAmountBySkuIds(params);
 
         if(CollectionUtils.isNotEmpty(amountDTOS)){

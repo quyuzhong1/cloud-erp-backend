@@ -522,10 +522,10 @@
         and sd.tax_amount >0
         and sd.qty >0
         <if test="params.returnCreateDate!=null and params.returnCreateDate!=''">
-            <![CDATA[  and so.actual_delivery_date < #{params.returnCreateDate}]]>
+            and so.actual_delivery_date &lt; #{params.returnCreateDate}
         </if>
           <if test="params.customerId!=null and params.customerId!=''">
-            and so.customer_id = #{customerId}
+            and so.customer_id = #{params.customerId}
         </if>
         <if test="params.skuIds !=null and params.skuIds.size>0">
             and sod.sku_id in

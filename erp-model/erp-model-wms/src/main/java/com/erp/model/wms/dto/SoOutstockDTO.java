@@ -1723,7 +1723,7 @@ public class SoOutstockDTO implements Serializable {
         /**
          * 退货订单创建时间
          */
-        private LocalDate returnCreateDate;
+        private String returnCreateDate;
         /**
          * 退货订单的客户（店铺）
          */
