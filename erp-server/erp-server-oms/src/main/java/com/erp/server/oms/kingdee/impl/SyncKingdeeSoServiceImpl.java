@@ -748,7 +748,7 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
         omsPushMsgEntity.setTargetPlatform(DmpBasicSystemCodeEnum.SDY.getCode());
         omsPushMsgEntity.setSourceType(SourceTypeEnum.SDY_OFFLINE_ORDER.getCode());
         omsPushMsgEntity.setSourceId(soDetailEntity.getId());
-        omsPushMsgEntity.setSourceCode(view.getCode());
+        omsPushMsgEntity.setSourceCode(view.getCode() + "_" + soDetailEntity.getSkuNo());
         omsPushMsgEntity.setSyncOperate(operate);
         omsPushMsgEntity.setPushData(JSON.toJSONString(this.syncDataToSdyFieldHandler(view, soDetailEntity, operate, deliveryStatus)));
         omsPushMsgService.save(omsPushMsgEntity);

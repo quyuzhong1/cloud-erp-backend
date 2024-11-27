@@ -1236,7 +1236,7 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
         wmsPushMsgEntity.setTargetPlatform(DmpBasicSystemCodeEnum.SDY.getCode());
         wmsPushMsgEntity.setSourceType(SourceTypeEnum.SDY_SO_OUTSTOCK.getCode());
         wmsPushMsgEntity.setSourceId(soOutstockDetailEntity.getId());
-        wmsPushMsgEntity.setSourceCode(entity.getCode() + "/" + soOutstockDetailEntity.getSkuNo());
+        wmsPushMsgEntity.setSourceCode(entity.getCode() + "_" + soOutstockDetailEntity.getSkuNo());
         wmsPushMsgEntity.setSyncOperate(operate);
         wmsPushMsgEntity.setPushData(JSON.toJSONString(this.syncDataToSdyFieldHandler(entity, soOutstockDetailEntity, operate)));
         wmsPushMsgService.save(wmsPushMsgEntity);

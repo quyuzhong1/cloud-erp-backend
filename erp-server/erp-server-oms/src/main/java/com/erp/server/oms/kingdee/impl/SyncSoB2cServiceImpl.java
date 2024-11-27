@@ -264,7 +264,7 @@ public class SyncSoB2cServiceImpl implements SyncSoB2cService {
         omsPushMsgEntity.setTargetPlatform(DmpBasicSystemCodeEnum.SDY.getCode());
         omsPushMsgEntity.setSourceType(SourceTypeEnum.SDY_DELIVERY_ORDER.getCode());
         omsPushMsgEntity.setSourceId(soB2cDetailEntity.getId());
-        omsPushMsgEntity.setSourceCode(soB2cEntity.getCode());
+        omsPushMsgEntity.setSourceCode(soB2cEntity.getCode() + "_" + soB2cDetailEntity.getSkuNo());
         omsPushMsgEntity.setSyncOperate(operate);
         omsPushMsgEntity.setPushData(JSON.toJSONString(this.syncDataToSdyFieldHandler(soB2cEntity, soB2cDetailEntity, operate)));
         omsPushMsgService.save(omsPushMsgEntity);

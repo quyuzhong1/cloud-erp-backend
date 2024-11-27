@@ -127,7 +127,7 @@ public class DmpOutputSdyWdtOriginalOrderHandler extends DmpOutputTaskHandler {
                     dmpOutputTaskRecordEntity.setId(id);
                     dmpOutputTaskRecordEntity.setMainId(dmpRequest.getOutputTaskId());
                     dmpOutputTaskRecordEntity.setDataId(shudiyunB2cOrderDTO.getBiz_uni_key().substring(dataId.length()));
-                    dmpOutputTaskRecordEntity.setSourceCode(shudiyunB2cOrderDTOList.get(0).getBiz_no());
+                    dmpOutputTaskRecordEntity.setSourceCode(shudiyunB2cOrderDTO.getBiz_no() + "_" + shudiyunB2cOrderDTO.getMsku_code());
                     dmpOutputTaskRecordEntity.setRequestData(JSON.toJSONString(shudiyunB2cOrderDTO));
                     dmpOutputTaskRecordEntity.setStatus(DmpOutputTaskRecordStatusEnum.INIT.getCode());
                     LocalDateTime insertTime = now.plus(i, ChronoUnit.MILLIS);

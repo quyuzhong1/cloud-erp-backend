@@ -225,7 +225,7 @@ public class SyncSoReturnInstockServiceImpl implements SyncSoReturnInstockServic
         wmsPushMsgEntity.setTargetPlatform(DmpBasicSystemCodeEnum.SDY.getCode());
         wmsPushMsgEntity.setSourceType(SourceTypeEnum.SDY_SO_RETURN_INSTOCK.getCode());
         wmsPushMsgEntity.setSourceId(soReturnInstockDetailEntity.getId());
-        wmsPushMsgEntity.setSourceCode(entity.getCode() + "/" + soReturnInstockDetailEntity.getSkuNo());
+        wmsPushMsgEntity.setSourceCode(entity.getCode() + "_" + soReturnInstockDetailEntity.getSkuNo());
         wmsPushMsgEntity.setSyncOperate(operate);
         wmsPushMsgEntity.setPushData(JSON.toJSONString(this.syncDataToSdyFieldHandler(entity, soReturnInstockDetailEntity, operate)));
         wmsPushMsgService.save(wmsPushMsgEntity);
