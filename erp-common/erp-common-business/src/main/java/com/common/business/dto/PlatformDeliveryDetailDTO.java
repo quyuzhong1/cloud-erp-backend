@@ -18,7 +18,10 @@ public class PlatformDeliveryDetailDTO {
      * erp 主记录id
      */
     private String mainId;
-
+    /**
+     * 来源单号（履约单号）
+     */
+    private String sourceCode;
     /**
      * skuId
      */
@@ -83,4 +86,7 @@ public class PlatformDeliveryDetailDTO {
      * 发货单状态（中文） 【暂用于速卖通】
      */
     private String deliveryStatusName;
+
+
+
 }
