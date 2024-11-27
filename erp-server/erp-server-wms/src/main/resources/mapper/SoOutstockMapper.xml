@@ -533,6 +533,6 @@
                 #{id}
             </foreach>
         </if>
-
+        order by so.create_time desc
     </select>
 </mapper>

@@ -3214,7 +3214,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             if(dto.getReturnQty() > view.getSalesQty()){
                 throw new ServiceException("退货数量不能大于销售数量");
             }
-            if(dto.getReturnQty() == view.getSalesQty()){
+            if(Objects.equals(dto.getReturnQty(), view.getSalesQty())){
                 //退货金额
                 view.setReturnAmount(view.getAmount());
                 //含税退货金额

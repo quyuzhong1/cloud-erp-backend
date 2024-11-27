@@ -1,11 +1,10 @@
 package com.erp.server.oms.service;
 
+import com.common.business.service.SuperService;
 import com.erp.model.oms.dto.SoDetailDTO;
 import com.erp.model.oms.dto.SoReturnDTO;
-import com.erp.model.oms.dto.SoReturnDetailDTO;
 import com.erp.model.oms.dto.listAddDetailViewDTO;
 import com.erp.model.oms.entity.SoReturnDetailEntity;
-import com.common.business.service.SuperService;
 
 import java.util.List;
 
@@ -124,6 +123,13 @@ public interface SoReturnDetailService extends SuperService<SoReturnDetailEntity
      * @Author jack
      * @Date 2024-11-08
      **/
-
     SoDetailDTO.ListAddDetailNoBomViewDTO listAddDetailWithNoBomView(SoReturnDTO.PlatformSkuDTO dto);
+    /**
+     * 退货详情页，根据skuId + customerId查询销售出库单来获取以下字段 ：币种，汇率，退货金额，含税退货金额，退货金额（本位币），含税退货金额（本位币）
+     * @param dto dto
+     * @return com.common.core.controller.vo.ApiResult<java.util.List < com.erp.model.oms.dto.SoDetailDTO.AddDetailView>>
+     * @Author jack
+     * @Date 2024-11-27
+     **/
+    SoReturnDTO.SoReturnAmoutDTO getReturnAmount(SoReturnDTO.SkuDTO dto);
 }

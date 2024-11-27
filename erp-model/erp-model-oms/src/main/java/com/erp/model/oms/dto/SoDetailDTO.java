@@ -1,6 +1,5 @@
 package com.erp.model.oms.dto;
 
-import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.validator.AddGroup;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -994,6 +993,26 @@ public class SoDetailDTO implements Serializable {
          * 是否子sku
          */
         private Boolean isChildSkuNo = false;
+        /**
+         *退货金额
+         */
+        private BigDecimal returnAmount;
+        /**
+         *含税退货金额
+         */
+        private BigDecimal taxReturnAmount;
+        /**
+         *退货金额（本位币）
+         */
+        private BigDecimal returnAmountLocalCurrency;
+        /**
+         *含税退货金额（本位币）
+         */
+        private BigDecimal taxReturnAmountLocalCurrency;
+        /**
+         *汇率
+         */
+        private BigDecimal exchangeRate;
     }
 
 
