@@ -127,16 +127,6 @@ public class AliExpressSoB2cHandle extends AbstractSoB2cHandle {
         if (Objects.isNull(dto) || CollUtil.isEmpty(dto.getDeliveryDTOList())){
             return;
         }
-        // 转化系统时区
-        PlatformOrderLogisticsDTO logisticsDTO = dto.getLogisticsList().stream().findFirst().orElse(null);
-        if (null == logisticsDTO){
-            return;
-        }
-        LocalDateTime sourceDeliveryTime = logisticsDTO.getDeliveryTime();
-        // 速卖通GMT时区转北京时区
-        LocalDateTime targetDeliveryTime = DateUtil.convertZoneTime(sourceDeliveryTime,
-                ZoneId.of("America/Los_Angeles"),
-                ZoneId.of("Asia/Shanghai"));
         //店铺信息
         String shopId = mainEntity.getShopId();
         String shopName = "";
@@ -157,6 +147,14 @@ public class AliExpressSoB2cHandle extends AbstractSoB2cHandle {
             if (!deliveryStatusNameList.contains(deliveryDTO.getOrderStatus())){
                 continue;
             }
+            LocalDateTime deliveryWarehouseTime = deliveryDTO.getDeliveryWarehouseTime();
+            if (Objects.isNull(deliveryWarehouseTime)){
+                continue;
+            }
+            // 速卖通GMT时区转北京时区
+            LocalDateTime targetDeliveryTime = DateUtil.convertZoneTime(deliveryWarehouseTime,
+                    ZoneId.of("America/Los_Angeles"),
+                    ZoneId.of("Asia/Shanghai"));
             AliexpressDeliveryDTO.AddDTO addDTO = new AliexpressDeliveryDTO.AddDTO();
             addDTO.setOutBoundTime(targetDeliveryTime);
             addDTO.setPlatformCode(mainEntity.getPlatformCode());
@@ -224,12 +222,6 @@ public class AliExpressSoB2cHandle extends AbstractSoB2cHandle {
      * @param mainEntity
      */
     public void createAliExpressOutStock(PlatformOrderDTO dto, SoB2cEntity mainEntity) {
-        //发货时间是否存在
-        List<PlatformOrderLogisticsDTO> logisticsDTOS = dto.getLogisticsList().stream().filter(req -> req.getDeliveryTime() != null).collect(Collectors.toList());
-        //没有发货时间不进行下一步操作
-        if (CollUtil.isEmpty(logisticsDTOS)) {
-            return;
-        }
         //限制状态
         List<String> deliveryStatusNameList = new ArrayList<>();
         deliveryStatusNameList.add(AliexpressDeliveryOrderStatusEnum.SHIPPED.getName());
@@ -243,16 +235,10 @@ public class AliExpressSoB2cHandle extends AbstractSoB2cHandle {
         //仓库映射
         List<WarehouseMappingDTO.MappingViewDTO> mappingViewDTOS = warehouseMappingFeign.listMappingViewByDictPlatform(mainEntity.getDictPlatform());
         //生产销售出库单
-        deliveryDTOList.forEach(deliveryDTO -> autoGenerateSalesDelivery(mainEntity, deliveryDTO, mappingViewDTOS, logisticsDTOS));
-//
-//        deliveryDTOList.forEach(e -> );
-//        //设置销售订单id，在后面新增销售出库单时用到
-//        deliveryDTOList.forEach(v -> v.setMainId(mainEntity.getId()));
-//        Map<String, List<PlatformDeliveryDetailDTO>> map = platformDeliveryDetailDTOList.stream().collect(Collectors.groupingBy(PlatformDeliveryDetailDTO::getPlatformWarehouseName));
-//        map.forEach((key, val) -> autoGenerateSalesDelivery(dto, mainEntity, key, val, mappingViewDTOS, logisticsDTOS));
+        deliveryDTOList.forEach(deliveryDTO -> autoGenerateSalesDelivery(mainEntity, deliveryDTO, mappingViewDTOS));
     }
 
-    private void autoGenerateSalesDelivery(SoB2cEntity mainEntity, PlatformDeliveryDTO deliveryDTO, List<WarehouseMappingDTO.MappingViewDTO> mappingViewDTOS, List<PlatformOrderLogisticsDTO> logisticsDTOS) {
+    private void autoGenerateSalesDelivery(SoB2cEntity mainEntity, PlatformDeliveryDTO deliveryDTO, List<WarehouseMappingDTO.MappingViewDTO> mappingViewDTOS) {
         //校验仓库是否匹配到
         WarehouseMappingDTO.MappingViewDTO mappingViewDTO = mappingViewDTOS.stream().filter(req -> Objects.equals(req.getThirdWarehouseName(),deliveryDTO.getPlatformWarehouseName())).findFirst().orElse(null);
         if (Objects.isNull(mappingViewDTO)) {
@@ -282,6 +268,8 @@ public class AliExpressSoB2cHandle extends AbstractSoB2cHandle {
                 .platformDeliveryDetailDTOList(detailDTOList)
                 .generateB2cDTO(soB2cService.getSoOutstockByIdAndWarehouseId(mainEntity.getId(), mappingViewDTO.getWarehouseId()))
                 .thirdCode(deliveryDTO.getSourceCode())
+                .deliveryTime(deliveryDTO.getDeliveryWarehouseTime())
+                .trackNo(deliveryDTO.getTrackNo())
                 .build();
         //生成销售出库单
         Boolean generateSoOutstockResult = soOutstockFeign.generateB2cSoOutstockByPlatformData(platformGenerateSoOutstockDTO);
