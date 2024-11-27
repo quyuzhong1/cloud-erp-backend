@@ -3,6 +3,7 @@ package com.erp.server.wms.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
@@ -1969,6 +1970,43 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         String msg = "【{}】更新了调拨日期由【{}】改为【{}】";
         operateLogService.addModuleOperateLog(CharSequenceUtil.format(msg, UserContext.getLoginUser().getUserName(),entity.getBillDate(),billDate), ModuleTypeEnum.TRANSFER_INFO.getCode(), entity.getId(), "批量修改调拨日期");
         return BatchResultDTO.success(entity.getId(),entity.getCode(),"修改调拨日期成功");
+    }
+
+    @Override
+    public BatchResultDTO handleErrorData(String id) {
+        TransferInfoEntity entity = this.getById(id);
+        if (ObjUtil.isEmpty(entity)) {
+            throw new ServiceException("未发现直接调拨单");
+        }
+        if (!SourceTypeEnum.SO_B2C_DELIVERY.getCode().equals(entity.getSourceType())) {
+            return BatchResultDTO.success(entity.getId(),entity.getCode(),"无需处理数据");
+        }
+        List<TransferInfoDetailEntity> transferInfoDetailList = transferInfoDetailService.listByMainId(id);
+        if (CollUtil.isEmpty(transferInfoDetailList)) {
+            return BatchResultDTO.success(entity.getId(),entity.getCode(),"无明细，无需处理数据");
+        }
+        List<String> sourceDetailIdList = transferInfoDetailList.stream().map(TransferInfoDetailEntity::getSourceDetailId).distinct().collect(Collectors.toList());
+        //拣货单明细信息
+        List<PickingDetailEntity> pickingDetailList = pickingDetailService.listByMainIdList(sourceDetailIdList);
+        if (CollUtil.isEmpty(pickingDetailList)) {
+            return BatchResultDTO.success(entity.getId(),entity.getCode(),"无拣货明细，无需处理数据");
+        }
+        List<String> useIdList = new ArrayList<>();
+        for (TransferInfoDetailEntity detailEntity : transferInfoDetailList) {
+            PickingDetailEntity pickingDetailEntity = pickingDetailList.stream().filter(obj ->
+                    CharSequenceUtil.equals(obj.getSkuId(), detailEntity.getSkuId())
+                            && CharSequenceUtil.equals(obj.getWarehouseLocation(), detailEntity.getOutWarehouseLocation())
+                            && MathUtil.compareTo(obj.getQty(), detailEntity.getQty()) == MathUtil.ZERO
+                            && !useIdList.contains(obj.getId())
+            ).findFirst().orElse(null);
+            if (ObjUtil.isEmpty(pickingDetailEntity)) {
+                continue;
+            }
+            useIdList.add(pickingDetailEntity.getId());
+            detailEntity.setSourceDetailId(pickingDetailEntity.getId());
+        }
+        transferInfoDetailService.updateBatchById(transferInfoDetailList);
+        return BatchResultDTO.success(entity.getId(),entity.getCode(),"修复直接调拨单明细成功");
     }
 
     /**
