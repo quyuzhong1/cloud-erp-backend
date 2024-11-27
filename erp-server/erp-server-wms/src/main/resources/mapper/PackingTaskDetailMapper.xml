@@ -66,13 +66,14 @@
             ptd.sku_id,
             ptd.sku_no,
             ptd.fn_sku,
+            ptd.third_barcode,
             ptd.source_detail_id,
             pp.ean
         FROM
             packing_task_detail ptd
                 LEFT JOIN product_purchase pp ON ptd.sku_id = pp.sku_id AND pp.is_deleted = FALSE
         where ptd.is_deleted = FALSE
-          AND (COALESCE(ptd.sku_no, '') || ' ' || COALESCE(ptd.fn_sku, '') || ' ' || COALESCE(pp.ean, '')) ILIKE CONCAT('%', #{searchKey}::text,'%')
+          AND (COALESCE(ptd.third_barcode, '') || ' ' || COALESCE(ptd.sku_no, '') || ' ' || COALESCE(ptd.fn_sku, '') || ' ' || COALESCE(pp.ean, '')) ILIKE CONCAT('%', #{searchKey}::text,'%')
         <if test="taskId != null and taskId != ''">
             AND ptd.main_id = #{taskId}
         </if>

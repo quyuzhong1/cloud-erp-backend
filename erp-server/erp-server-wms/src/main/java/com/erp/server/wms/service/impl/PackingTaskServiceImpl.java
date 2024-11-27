@@ -3,6 +3,7 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.collection.ListUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.alibaba.excel.EasyExcel;
@@ -37,9 +38,12 @@ import com.common.message.service.mq.MQProducerService;
 import com.erp.model.msg.constant.NoticeMsgConstant;
 import com.erp.model.msg.dto.NoticeMsgInfoDTO;
 import com.erp.model.msg.enums.NoticeTypeEnum;
+import com.erp.model.oms.dto.ListingInfoDTO;
+import com.erp.model.oms.dto.SkuMappingDTO;
 import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.entity.SoDetailEntity;
+import com.erp.model.oms.enums.AuthStatusEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.FileTemplateDTO;
@@ -49,10 +53,10 @@ import com.erp.model.sys.entity.SysPostUserEntity;
 import com.erp.model.sys.openapi.DimensionalWeightDTO;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.excel.PackingExcelDTO;
-import com.erp.model.wms.dto.pickingstrategy.PickingListsDTO;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.*;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
+import com.erp.rpc.oms.feign.OmsListingInfoFeign;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.oms.feign.SoInfoFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
@@ -88,6 +92,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static cn.hutool.json.XMLTokener.entity;
 import static com.common.business.enums.FileTaskEventEnum.*;
 
 /**
@@ -164,6 +169,12 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
     private FbaShipmentPackingService fbaShipmentPackingService;
     @Resource
     private FbaShipmentService fbaShipmentService;
+    @Resource
+    private OverseasProviderService overseasProviderService;
+    @Resource
+    private OmsListingInfoFeign omsListingInfoFeign;
+    @Resource
+    private OverseasProviderWarehouseService overseasProviderWarehouseService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -1132,7 +1143,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
         view.setDeliveryQty(deliveryQty);
         //总箱数
         view.setBoxNum(cartonEntityList.size());
-        //(输入SKU/FNSKU/EAN码)
+        //(输入SKU/FNSKU/EAN码/产品条码)
         String searchKey = searchDTO.getSearchKey();
         List<PackingTaskDetailDTO.ViewDTO> viewDTOList = packingTaskDetailService.searchProductBySearchKey(packingTaskEntity.getId(),searchKey);
         if (CollectionUtils.isNotEmpty(viewDTOList)){
@@ -2313,6 +2324,28 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
         String sourceType = RequisitionApplicationTypeEnum.THIRD_WAREHOUSE.getCode().equals(type)? PickingSourceTypeEnum.THIRD.getCode(): PickingSourceTypeEnum.FBA.getCode();
         //关联单号是否已存在装箱任务
         List<PackingTaskEntity> taskEntityList = listBySourceIdAndSourceType(entity.getId(), sourceType);
+        //是否是第三方仓
+        Boolean isThirdWarehouse = Objects.equals(PickingSourceTypeEnum.THIRD.getCode(),sourceType) ? Boolean.TRUE : Boolean.FALSE;
+        OverseasProviderEntity overseasProviderEntity;
+        List<SkuMappingDTO.SkuMappingViewDTO> skuMappingViewDTOS;
+        //目的仓
+        String channelId = entity.getChannelId();
+        if (isThirdWarehouse){
+            List<RequisitionApplicationDetailEntity> requisitionApplicationDetailEntities = requisitionApplicationDetailService.listByMainIds(Collections.singletonList(entity.getId()));
+            //平台sku
+            List<String> platformSkuList = requisitionApplicationDetailEntities.stream().map(RequisitionApplicationDetailEntity::getPlatformSku).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+            //海外物流商
+            overseasProviderEntity = overseasProviderService.getByWarehouseId(channelId);
+            if (CollUtil.isNotEmpty(platformSkuList)){
+                ListingInfoDTO.QueryDTO queryDTO = ListingInfoDTO.QueryDTO.builder().platformSkuNoList(platformSkuList).type(SourceTypeEnum.WAREHOUSE.getCode()).build();
+                skuMappingViewDTOS = omsListingInfoFeign.listSkuMappingByParams(queryDTO);
+            } else {
+                skuMappingViewDTOS = null;
+            }
+        } else {
+            skuMappingViewDTOS = null;
+            overseasProviderEntity = null;
+        }
         if (CollectionUtils.isNotEmpty(taskEntityList)){
             //存在装箱任务，更新数量
             PackingTaskEntity packingTaskEntity = taskEntityList.get(0);
@@ -2323,6 +2356,8 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
                 RequisitionApplicationDetailEntity updateDetail = detailEntityList.stream().filter(v->v.getId().equals(obj.getSourceDetailId())).findFirst().orElse(null);
                 if(Objects.nonNull(updateDetail)){
                     obj.setDeliveryQty(updateDetail.getPickingQty());
+                    //第三方仓需要匹配第三方产品条码
+                    obj.setThirdBarcode(isThirdWarehouse ? getThirdBarcode(updateDetail.getPlatformSku(), channelId, overseasProviderEntity, skuMappingViewDTOS) : CharSequenceUtil.EMPTY);
                 }
             });
             this.updateById(packingTaskEntity);
@@ -2345,11 +2380,34 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
                     packingTaskDetailEntity.setFnSku(requisitionApplicationDetailEntity.getPlatformFnSku());
                 }else{
                     packingTaskDetailEntity.setFnSku(requisitionApplicationDetailEntity.getPlatformSku());
+                    //第三方仓需要匹配第三方产品条码
+                    packingTaskDetailEntity.setThirdBarcode(isThirdWarehouse ? getThirdBarcode(requisitionApplicationDetailEntity.getPlatformSku(), channelId, overseasProviderEntity, skuMappingViewDTOS) : CharSequenceUtil.EMPTY);
                 }
             });
             //新增任务明细
             packingTaskDetailService.saveBatch(taskDetailList);
         }
+    }
+
+    private String getThirdBarcode(String platformSku, String channelId, OverseasProviderEntity overseasProviderEntity, List<SkuMappingDTO.SkuMappingViewDTO> skuMappingViewDTOS) {
+        if (CharSequenceUtil.isBlank(platformSku)){
+            return CharSequenceUtil.EMPTY;
+        }
+        if (CollUtil.isEmpty(skuMappingViewDTOS)){
+            return CharSequenceUtil.EMPTY;
+        }
+        SkuMappingDTO.SkuMappingViewDTO skuMappingViewDTO = skuMappingViewDTOS.stream().filter(e -> Objects.equals(e.getPlatformSkuNo(), platformSku) && Objects.equals(channelId, e.getWarehouseId()) && CharSequenceUtil.isNotBlank(e.getThirdBarcode())).findFirst().orElse(null);
+        if (Objects.nonNull(skuMappingViewDTO)){
+            return skuMappingViewDTO.getThirdBarcode();
+        }
+        if (Objects.isNull(overseasProviderEntity)){
+            return CharSequenceUtil.EMPTY;
+        }
+        SkuMappingDTO.SkuMappingViewDTO skuMappingViewDTO1 = skuMappingViewDTOS.stream().filter(e -> Objects.equals(e.getPlatformSkuNo(), platformSku) && Objects.equals(overseasProviderEntity.getName(), e.getPlatformName()) && CharSequenceUtil.isNotBlank(e.getThirdBarcode())).findFirst().orElse(null);
+        if (Objects.nonNull(skuMappingViewDTO1)){
+            return skuMappingViewDTO1.getThirdBarcode();
+        }
+        return CharSequenceUtil.EMPTY;
     }
 
     @Override
@@ -2610,6 +2668,97 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
         }
 
         packingTaskDetailService.updateByChange(addTaskDetailList,updateTaskDetailList,deleteTaskDetailList);
+    }
+
+    @Override
+    public void processThirdBarcode() {
+        //获取符合条件的列表
+        List<PackingTaskEntity> list = this.lambdaQuery().eq(PackingTaskEntity::getSourceType, PickingSourceTypeEnum.THIRD.getCode()).list();
+        if (CollUtil.isEmpty(list)){
+            return;
+        }
+        //列表拆分处理 489条
+        List<List<PackingTaskEntity>> partition = ListUtil.partition(list, MathUtil.NUMBER_100);
+        for (List<PackingTaskEntity> taskEntityList : partition){
+            //装箱明细列表
+            List<String> ids = taskEntityList.stream().map(PackingTaskEntity::getId).distinct().collect(Collectors.toList());
+            List<PackingTaskDetailEntity> taskDetailEntityList = packingTaskDetailService.listByMainIds(ids);
+            Map<String, List<PackingTaskDetailEntity>> detailMap = taskDetailEntityList.stream().collect(Collectors.groupingBy(PackingTaskDetailEntity::getMainId));
+            List<String> sourceIds = taskEntityList.stream().map(PackingTaskEntity::getSourceId).distinct().collect(Collectors.toList());
+            //要货申请
+            List<RequisitionApplicationEntity> requisitionApplicationEntities = requisitionApplicationService.listByIds(sourceIds);
+            Map<String, RequisitionApplicationEntity> applicationEntityMap = requisitionApplicationEntities.stream().collect(Collectors.toMap(RequisitionApplicationEntity::getId, Function.identity()));
+            List<RequisitionApplicationDetailEntity> requisitionApplicationDetailEntities = requisitionApplicationDetailService.listByMainIds(sourceIds);
+            //平台sku
+            List<String> platformSkuList = requisitionApplicationDetailEntities.stream().map(RequisitionApplicationDetailEntity::getPlatformSku).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+            ListingInfoDTO.QueryDTO queryDTO = ListingInfoDTO.QueryDTO.builder().platformSkuNoList(platformSkuList).type(SourceTypeEnum.WAREHOUSE.getCode()).build();
+            List<SkuMappingDTO.SkuMappingViewDTO> skuMappingViewDTOS = omsListingInfoFeign.listSkuMappingByParams(queryDTO);
+            //仓库授权配置
+            List<String> warehouseIds = requisitionApplicationEntities.stream().map(RequisitionApplicationEntity::getChannelId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+            List<OverseasProviderWarehouseEntity> overseasProviderWarehouseEntities = overseasProviderWarehouseService.listByWarehouseIds(warehouseIds);
+            Map<String, OverseasProviderWarehouseEntity> providerWarehouseEntityMap = overseasProviderWarehouseEntities.stream().filter(e -> !e.getDisabled()).collect(Collectors.toMap(OverseasProviderWarehouseEntity::getWarehouseId, Function.identity()));
+            //海外物流商
+            List<String> providerIds = overseasProviderWarehouseEntities.stream().map(OverseasProviderWarehouseEntity::getMainId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+            List<OverseasProviderEntity> overseasProviderEntities = CollUtil.isNotEmpty(providerIds) ? overseasProviderService.listByIds(providerIds) : Collections.emptyList();
+            Map<String, OverseasProviderEntity> providerEntityMap = overseasProviderEntities.stream().filter(e -> Objects.equals(AuthStatusEnum.ALREADY.getCode(), e.getAuthStatus())).collect(Collectors.toMap(OverseasProviderEntity::getId, Function.identity()));
+            //循环处理装箱任务
+            processByPackingTask(taskEntityList, detailMap, applicationEntityMap, providerWarehouseEntityMap, providerEntityMap, skuMappingViewDTOS);
+        }
+    }
+
+    /**
+     * 批量处理装箱任务列表
+     * @param taskEntityList
+     * @param detailMap
+     * @param applicationEntityMap
+     * @param providerWarehouseEntityMap
+     * @param providerEntityMap
+     * @param skuMappingViewDTOS
+     */
+    private void processByPackingTask(List<PackingTaskEntity> taskEntityList, Map<String, List<PackingTaskDetailEntity>> detailMap, Map<String, RequisitionApplicationEntity> applicationEntityMap, Map<String, OverseasProviderWarehouseEntity> providerWarehouseEntityMap, Map<String, OverseasProviderEntity> providerEntityMap, List<SkuMappingDTO.SkuMappingViewDTO> skuMappingViewDTOS) {
+        if (CollUtil.isEmpty(taskEntityList)){
+            return;
+        }
+        for (PackingTaskEntity packingTaskEntity : taskEntityList){
+            //装箱明细
+            List<PackingTaskDetailEntity> taskDetailEntityList1 = detailMap.get(packingTaskEntity.getId());
+            if (CollUtil.isEmpty(taskDetailEntityList1)){
+                continue;
+            }
+            //要货申请记录
+            RequisitionApplicationEntity requisitionApplicationEntity = applicationEntityMap.get(packingTaskEntity.getSourceId());
+            if (Objects.isNull(requisitionApplicationEntity)){
+                continue;
+            }
+            String channelId = requisitionApplicationEntity.getChannelId();
+            //海外物流商仓库配置
+            OverseasProviderWarehouseEntity overseasProviderWarehouseEntity = providerWarehouseEntityMap.get(channelId);
+            //第三方海外仓配置
+            OverseasProviderEntity overseasProviderEntity = Objects.nonNull(overseasProviderWarehouseEntity) ? providerEntityMap.get(overseasProviderWarehouseEntity.getMainId()) : null;
+            processByPackingDetail(skuMappingViewDTOS, taskDetailEntityList1, channelId, overseasProviderEntity);
+        }
+    }
+
+    /**
+     * 批量处理装箱明细
+     * @param skuMappingViewDTOS
+     * @param taskDetailEntityList1
+     * @param channelId
+     * @param overseasProviderEntity
+     */
+    private void processByPackingDetail(List<SkuMappingDTO.SkuMappingViewDTO> skuMappingViewDTOS, List<PackingTaskDetailEntity> taskDetailEntityList1, String channelId, OverseasProviderEntity overseasProviderEntity) {
+        if (CollUtil.isEmpty(taskDetailEntityList1)){
+            return;
+        }
+        for (PackingTaskDetailEntity packingTaskDetailEntity : taskDetailEntityList1){
+            //平台sku
+            String fnSku = packingTaskDetailEntity.getFnSku();
+            String thirdBarcode = getThirdBarcode(fnSku, channelId, overseasProviderEntity, skuMappingViewDTOS);
+            if (CharSequenceUtil.isNotBlank(thirdBarcode)){
+                //更新产品条码
+                packingTaskDetailService.lambdaUpdate().eq(PackingTaskDetailEntity::getId, packingTaskDetailEntity.getId()).set(PackingTaskDetailEntity::getThirdBarcode, thirdBarcode).update();
+            }
+        }
     }
 
     /**

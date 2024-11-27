@@ -107,7 +107,11 @@ public class TrackShipperService {
         headers.put("timestamp", String.valueOf(timestamp));
         String result = OkHttpUtils.doPostJsonObject(PathConstants.BASE_URL + PathConstants.REGISTER_LOGISTICS_NUMBER, registerRequests, headers);
         System.out.println(result);
-        return JSONUtil.toBean(result, RegisterResult.class);
+        try {
+            return JSONUtil.toBean(result, RegisterResult.class);
+        }catch (Exception e){
+            throw new ServiceException("解析返回数据异常："+ result);
+        }
     }
 
     private static byte[] calculateHmacSHA256(String message, String secretKey)

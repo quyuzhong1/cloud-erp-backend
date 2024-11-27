@@ -12,6 +12,7 @@ import com.common.business.enums.TrackQueryTypeEnum;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.MathUtil;
+import com.erp.model.dmp.dto.DmpLogisticsTrackRegisterDTO;
 import com.erp.model.oms.entity.ShopAuthEntity;
 import com.erp.model.oms.enums.AuthStatusEnum;
 import com.erp.model.oms.enums.AuthTypeEnum;
@@ -31,8 +32,8 @@ import com.erp.rpc.dmp.feign.DmpMongoDbFeign;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.oms.feign.ShopeeFeign;
 import com.erp.server.tms.convert.LogisticsAddressConverter;
+import com.erp.server.tms.convert.TrackDataConverter;
 import com.erp.server.tms.handler.LogisticsRegistry;
-import com.erp.server.tms.rocketmq.PlatformTrackConsumerService;
 import com.erp.server.tms.service.*;
 import com.erp.tms.aliexpress.api.IopResponse;
 import com.erp.tms.aliexpress.model.address.SellerResponse;
@@ -84,8 +85,6 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
     private LogisticsAddressService logisticsAddressService;
     @Resource
     private DmpMongoDbFeign dmpMongoDbFeign;
-    @Resource
-    private PlatformTrackConsumerService platformTrackConsumerService;
 
     @Override
     public List<BatchResultDTO> syncLogisticsChannel(String platform) {
@@ -290,11 +289,14 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
         } else {
             listApiResult = processRegisterOceanData(mapList,records,service);
         }
-        List<String> errorIds = new ArrayList<>();
+        if (Objects.isNull(listApiResult)){
+            return;
+        }
+        List<LogisticsBillDetailDTO.BillDetailErrorDTO> errorList = new ArrayList<>();
         List<LogisticsBillDetailDTO.BillDetailDTO> sucessList = new ArrayList<>();
         for (LogisticsTrackDTO.UpdateTrackDTO record : records) {
             if (!listApiResult.isSuccess() || CollectionUtils.isEmpty(listApiResult.getData())) {
-                errorIds.add(record.getId());
+//                errorList.add(LogisticsBillDetailDTO.BillDetailErrorDTO.builder().id(record.getId()).errorMsg("请求失败").build());
                 continue;
             }
             String trackNo = TrackQueryTypeEnum.TRACK_NO.getCode().equals(record.getTrackQueryType()) && CharSequenceUtil.isNotBlank(record.getTrackNo()) ? record.getTrackNo() : record.getTransportNo();
@@ -302,19 +304,23 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
                 trackNo = record.getTrackNo();
             }
             if (CharSequenceUtil.isBlank(trackNo)){
-                errorIds.add(record.getId());
+//                errorList.add(LogisticsBillDetailDTO.BillDetailErrorDTO.builder().id(record.getId()).errorMsg("运单号/跟踪号为空").build());
                 continue;
             }
             String finalTrackNo = trackNo;
             RegisterResponseVO registerResponseVO = listApiResult.getData().stream().filter(e -> Objects.equals(finalTrackNo, e.getTrackNo())).findFirst().orElse(null);
             if (Objects.isNull(registerResponseVO)){
-                errorIds.add(record.getId());
+//                errorList.add(LogisticsBillDetailDTO.BillDetailErrorDTO.builder().id(record.getId()).errorMsg("请求失败").build());
                 continue;
             }
-            sucessList.add(LogisticsBillDetailDTO.BillDetailDTO.builder().trackNo(trackNo).platformOrderNo(record.getPlatformOrderNo()).build());
+            if (Objects.nonNull(registerResponseVO.getTrackStatus()) && registerResponseVO.getTrackStatus()){
+                sucessList.add(LogisticsBillDetailDTO.BillDetailDTO.builder().trackNo(trackNo).platformOrderNo(record.getPlatformOrderNo()).build());
+            }else {
+                errorList.add(LogisticsBillDetailDTO.BillDetailErrorDTO.builder().id(record.getId()).errorMsg(registerResponseVO.getMsg()).build());
+            }
         }
-        if (CollectionUtils.isNotEmpty(errorIds)){
-            logisticsBillDetailService.updateRegisterStatus(errorIds, -1);
+        if (CollectionUtils.isNotEmpty(errorList)){
+            logisticsBillDetailService.updateRegisterStatus(errorList, -1);
         }
         if (CollectionUtils.isNotEmpty(sucessList)){
             logisticsBillDetailService.updateRegisterStatusByParams(sucessList, 1);

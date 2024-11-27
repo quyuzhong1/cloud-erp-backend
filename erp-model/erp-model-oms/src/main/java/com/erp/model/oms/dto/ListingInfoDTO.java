@@ -263,4 +263,22 @@ public class ListingInfoDTO implements Serializable {
         private String errorUrl;
     }
 
+    @Data
+    @Builder
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class QueryDTO {
+        /**
+         * 平台skuId
+         */
+        private List<String> platformSkuIdList;
+        /**
+         * 平台skuNo
+         */
+        private List<String> platformSkuNoList;
+        /**
+         * 类型 platform 平台  warehouse 仓库
+         */
+        private String type;
+    }
 }

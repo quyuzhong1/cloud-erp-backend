@@ -26,6 +26,7 @@ public interface GoodCangConverter {
             @Mapping(target = "platformType", constant = "warehouse"),
             @Mapping(target = "platformSkuNo", source = "productSku"),
             @Mapping(target = "platformSkuName", source = "productTitleCn"),
+            @Mapping(target = "platformProductBarcode", source = "productBarcode"),
             @Mapping(target = "productImageUrl", source = "productLink"),
             @Mapping(target = "productSpec", source = "productModel"),
             @Mapping(target = "type", expression ="java(GoodCangConverter.getType())"),

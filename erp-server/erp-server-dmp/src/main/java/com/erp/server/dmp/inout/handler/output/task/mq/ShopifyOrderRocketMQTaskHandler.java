@@ -354,33 +354,41 @@ public class ShopifyOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHandle
             orderDTO.setPayStatus(SoB2cPayStatusEnum.ENUM_PAID.getCode());
         }
 
-        orderDTO.setLabelJson(dmpSoInfoEntity.getExtendData());
         orderDTO.setApproveStatusStr(dmpSoInfoEntity.getOrderStatus());
         orderDTO.setBillStatus(dmpSoInfoEntity.getDeliveryStatus());
         orderDTO.setInvalidStatus(dmpSoInfoEntity.getInvalidStatus());
         // 作废类型（manual手动作废，automatic自动作废）
         orderDTO.setInvalidType(dmpSoInfoEntity.getInvalidStatus() ? "automatic" : "");
 
-        // 平台订单原始取消状态(已退款,部分退款)
-        DmpOrderReturnStatusEnum dmpBasicSystemCodeEnum = DmpOrderReturnStatusEnum.getByCode(dmpSoInfoEntity.getReturnStatus());
-        if (dmpBasicSystemCodeEnum != null && !DmpOrderReturnStatusEnum.NOT_RETURN.equals(dmpBasicSystemCodeEnum)) {
-            orderDTO.setIsCancel(Boolean.TRUE);
-        } else {
-            orderDTO.setIsCancel(Boolean.FALSE);
-        }
+        // 订单明细
+        List<PlatformOrderDetailDTO> details = parseDetailDto(dmpSoInfoEntity, dmpSoDetailEntityList);
+        orderDTO.setDetails(details);
 
+        // 卖家单号
         JSONObject jsonObject = JSONObject.parseObject(dmpSoInfoEntity.getExtendData());
         if (jsonObject.get("sellerOrderCode") != null) {
             orderDTO.setSellerOrderCode(jsonObject.get("sellerOrderCode") + "");
         }
 
+        // 平台订单原始取消状态(已退款,部分退款)
+        DmpOrderReturnStatusEnum dmpBasicSystemCodeEnum = DmpOrderReturnStatusEnum.getByCode(dmpSoInfoEntity.getReturnStatus());
+        // 整单退款 或 明细存在退货 才推送取消状态
+        if (DmpOrderReturnStatusEnum.ORDER_RETURN.equals(dmpBasicSystemCodeEnum)
+            || details.stream().anyMatch(PlatformOrderDetailDTO::getIsDetailRefund)
+        ) {
+            orderDTO.setIsCancel(Boolean.TRUE);
+        } else {
+            orderDTO.setIsCancel(Boolean.FALSE);
+        }
+        // 主单退款标签(包含退款/部分退款)
+        if (dmpBasicSystemCodeEnum != null && !DmpOrderReturnStatusEnum.NOT_RETURN.equals(dmpBasicSystemCodeEnum)) {
+            jsonObject.put("isRefunded", true);
+        }
 
+        orderDTO.setLabelJson(JSON.toJSONString(jsonObject));
         //创建时间
         orderDTO.setPlatformOrderCreateTime(dmpSoInfoEntity.getPlatformCreateTime());
 
-        // 订单明细
-        List<PlatformOrderDetailDTO> details = parseDetailDto(dmpSoInfoEntity, dmpSoDetailEntityList);
-        orderDTO.setDetails(details);
         //B2C销售订单买家信息表
         orderDTO.setReceiver(parseReceiver(dmpSoInfoEntity, dmpSoReceiverEntityList.get(0)));
         //B2C销售订单物流信息表

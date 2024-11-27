@@ -104,4 +104,17 @@ public class SoB2cAbnormalController extends BaseController {
         }
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
+
+
+    /**
+     * 清楚异常
+     * @param dto
+     * @return ApiResult<List<BatchResultDTO>>
+     */
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "清楚异常")
+    @PostMapping(value = "/clearAbnormal")
+    public ApiResult<?> clearAbnormal(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        soB2cAbnormalService.clearAbnormal(dto.getIds());
+        return success();
+    }
 }

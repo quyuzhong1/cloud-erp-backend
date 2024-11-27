@@ -280,4 +280,14 @@ public class PackingTaskController extends BaseController {
         packingTaskService.exportUnPackingDetail(dto);
         return success();
     }
+
+    /**
+     * 同步第三方仓产品条形码字段
+     * @return
+     */
+    @PostMapping("/processThirdBarcode")
+    public ApiResult processThirdBarcode(){
+        packingTaskService.processThirdBarcode();
+        return success();
+    }
 }
