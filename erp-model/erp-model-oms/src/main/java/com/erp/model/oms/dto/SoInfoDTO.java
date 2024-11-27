@@ -2828,6 +2828,18 @@ public class SoInfoDTO implements Serializable {
         private List<VirtualChildScarceDTO> childScarceList;
     }
 
+    /**
+     *
+     */
+    @Data
+    @NoArgsConstructor
+    public static class CalDetailDTO {
+        /**
+         * 明细
+         */
+        private List<CalDTO> details;
+
+    }
 
     /**
      *

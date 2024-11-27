@@ -3199,38 +3199,46 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
     }
 
     @Override
-    public List<SoInfoDTO.GenerateSoReturnView> calReturnAmountByQty(SoInfoDTO.CalDTO dto) {
-        if(null == dto || StringUtils.isBlank(dto.getDetailId())){
+    public List<SoInfoDTO.GenerateSoReturnView> calReturnAmountByQty(List<SoInfoDTO.CalDTO> dto) {
+        if(CollectionUtils.isEmpty(dto)){
             return Collections.emptyList();
         }
-        List<SoInfoDTO.GenerateSoReturnView> generateSoReturnViews = this.generateSoReturnView(Collections.singletonList(dto.getDetailId()));
-        if(CollectionUtils.isEmpty(generateSoReturnViews)){
-            return Collections.emptyList();
-        }
-        generateSoReturnViews.forEach(view ->{
-            if(dto.getReturnQty() < 0 ){
-                throw new ServiceException("退货数量不能小于0");
-            }
-            if(dto.getReturnQty() > view.getSalesQty()){
-                throw new ServiceException("退货数量不能大于销售数量");
-            }
-            if(Objects.equals(dto.getReturnQty(), view.getSalesQty())){
-                //退货金额
-                view.setReturnAmount(view.getAmount());
-                //含税退货金额
-                view.setTaxReturnAmount(view.getTaxAmount());
-                view.setReturnQty(dto.getReturnQty());
+        List<SoInfoDTO.GenerateSoReturnView> resultViews = new ArrayList<>();
+        for (SoInfoDTO.CalDTO calDTO : dto) {
+            List<SoInfoDTO.GenerateSoReturnView> generateSoReturnViews = this.generateSoReturnView(Collections.singletonList(calDTO.getDetailId()));
+            if (CollectionUtils.isEmpty(generateSoReturnViews)) {
+                SoInfoDTO.GenerateSoReturnView generateSoReturnView = new SoInfoDTO.GenerateSoReturnView();
+                generateSoReturnView.setDetailId(calDTO.getDetailId());
+                generateSoReturnView.setReturnQty(calDTO.getReturnQty());
+                resultViews.add(generateSoReturnView);
             }else {
-                //退货金额
-                BigDecimal returnAmount = soReturnService.calReturnAmount(view.getAmount(), view.getSalesQty(), dto.getReturnQty());
-                view.setReturnAmount(returnAmount);
-                //含税退货金额
-                BigDecimal taxReturnAmount = soReturnService.calReturnAmount(view.getTaxAmount(), view.getSalesQty(), dto.getReturnQty());
-                view.setTaxReturnAmount(taxReturnAmount);
-                view.setReturnQty(dto.getReturnQty());
+                generateSoReturnViews.forEach(view -> {
+                    if (calDTO.getReturnQty() < 0) {
+                        throw new ServiceException("退货数量不能小于0");
+                    }
+                    if (calDTO.getReturnQty() > view.getSalesQty()) {
+                        throw new ServiceException("退货数量不能大于销售数量");
+                    }
+                    if (Objects.equals(calDTO.getReturnQty(), view.getSalesQty())) {
+                        //退货金额
+                        view.setReturnAmount(view.getAmount());
+                        //含税退货金额
+                        view.setTaxReturnAmount(view.getTaxAmount());
+                        view.setReturnQty(calDTO.getReturnQty());
+                    } else {
+                        //退货金额
+                        BigDecimal returnAmount = soReturnService.calReturnAmount(view.getAmount(), view.getSalesQty(), calDTO.getReturnQty());
+                        view.setReturnAmount(returnAmount);
+                        //含税退货金额
+                        BigDecimal taxReturnAmount = soReturnService.calReturnAmount(view.getTaxAmount(), view.getSalesQty(), calDTO.getReturnQty());
+                        view.setTaxReturnAmount(taxReturnAmount);
+                        view.setReturnQty(calDTO.getReturnQty());
+                    }
+                });
+                resultViews.addAll(generateSoReturnViews);
             }
-        });
-        return generateSoReturnViews;
+        }
+        return resultViews;
     }
 
     /**

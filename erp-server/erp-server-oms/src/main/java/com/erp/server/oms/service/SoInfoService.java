@@ -483,5 +483,5 @@ public interface SoInfoService extends SuperService<SoInfoEntity> {
      * @Author jack
      * @Date 2024-11-25
      **/
-    List<SoInfoDTO.GenerateSoReturnView> calReturnAmountByQty(SoInfoDTO.CalDTO dto);
+    List<SoInfoDTO.GenerateSoReturnView> calReturnAmountByQty(List<SoInfoDTO.CalDTO> dto);
 }
