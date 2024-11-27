@@ -289,12 +289,14 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
         } else {
             listApiResult = processRegisterOceanData(mapList,records,service);
         }
-        List<String> errorIds = new ArrayList<>();
+        if (Objects.isNull(listApiResult)){
+            return;
+        }
+        List<LogisticsBillDetailDTO.BillDetailErrorDTO> errorList = new ArrayList<>();
         List<LogisticsBillDetailDTO.BillDetailDTO> sucessList = new ArrayList<>();
-        List<DmpLogisticsTrackRegisterDTO.AddDTO> addDTOList = new ArrayList<>();
         for (LogisticsTrackDTO.UpdateTrackDTO record : records) {
             if (!listApiResult.isSuccess() || CollectionUtils.isEmpty(listApiResult.getData())) {
-                errorIds.add(record.getId());
+//                errorList.add(LogisticsBillDetailDTO.BillDetailErrorDTO.builder().id(record.getId()).errorMsg("请求失败").build());
                 continue;
             }
             String trackNo = TrackQueryTypeEnum.TRACK_NO.getCode().equals(record.getTrackQueryType()) && CharSequenceUtil.isNotBlank(record.getTrackNo()) ? record.getTrackNo() : record.getTransportNo();
@@ -302,20 +304,23 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
                 trackNo = record.getTrackNo();
             }
             if (CharSequenceUtil.isBlank(trackNo)){
-                errorIds.add(record.getId());
+//                errorList.add(LogisticsBillDetailDTO.BillDetailErrorDTO.builder().id(record.getId()).errorMsg("运单号/跟踪号为空").build());
                 continue;
             }
             String finalTrackNo = trackNo;
             RegisterResponseVO registerResponseVO = listApiResult.getData().stream().filter(e -> Objects.equals(finalTrackNo, e.getTrackNo())).findFirst().orElse(null);
             if (Objects.isNull(registerResponseVO)){
-                errorIds.add(record.getId());
+//                errorList.add(LogisticsBillDetailDTO.BillDetailErrorDTO.builder().id(record.getId()).errorMsg("请求失败").build());
                 continue;
             }
-            sucessList.add(LogisticsBillDetailDTO.BillDetailDTO.builder().trackNo(trackNo).platformOrderNo(record.getPlatformOrderNo()).build());
-            addDTOList.add(TrackDataConverter.INSTANCE.convertToDmpRegisterDTO(record));
+            if (Objects.nonNull(registerResponseVO.getTrackStatus()) && registerResponseVO.getTrackStatus()){
+                sucessList.add(LogisticsBillDetailDTO.BillDetailDTO.builder().trackNo(trackNo).platformOrderNo(record.getPlatformOrderNo()).build());
+            }else {
+                errorList.add(LogisticsBillDetailDTO.BillDetailErrorDTO.builder().id(record.getId()).errorMsg(registerResponseVO.getMsg()).build());
+            }
         }
-        if (CollectionUtils.isNotEmpty(errorIds)){
-            logisticsBillDetailService.updateRegisterStatus(errorIds, -1);
+        if (CollectionUtils.isNotEmpty(errorList)){
+            logisticsBillDetailService.updateRegisterStatus(errorList, -1);
         }
         if (CollectionUtils.isNotEmpty(sucessList)){
             logisticsBillDetailService.updateRegisterStatusByParams(sucessList, 1);
