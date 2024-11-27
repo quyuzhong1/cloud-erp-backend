@@ -28,6 +28,10 @@ public class PlatformDeliveryDTO {
      */
     private String sourceCode;
     /**
+     * 平台订单号
+     */
+    private String platformCode;
+    /**
      * 物流单号
      */
     private String trackNo;
