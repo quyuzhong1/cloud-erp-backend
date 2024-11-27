@@ -725,13 +725,13 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
                     SkuMappingDTO.ProductSkuInfoDTO productSkuInfoDTO = productSkuInfoList.stream().filter(v -> v.getSkuId().equals(view.getSkuId())).findFirst().orElse(new SkuMappingDTO.ProductSkuInfoDTO());
                     detailAddDTO.setPlatformSkuNo(productSkuInfoDTO.getPlatformSkuNo());
                 }
-                detailAddDTO.setExchangeRate(view.getExchangeRate());
-                detailAddDTO.setReturnAmount(view.getReturnAmount());
-                detailAddDTO.setTaxReturnAmount(view.getTaxReturnAmount());
-                detailAddDTO.setReturnAmountLocalCurrency(this.calLocalCurrency(view.getExchangeRate(), view.getReturnAmount()));
-                detailAddDTO.setTaxReturnAmountLocalCurrency(this.calLocalCurrency(view.getExchangeRate(), view.getTaxReturnAmount()));
-                dto.setCurrency(view.getCurrency());
-                dto.setCurrencySymbol(view.getCurrencySymbol());
+                detailAddDTO.setExchangeRate(soReturnDetailEntity.getExchangeRate());
+                detailAddDTO.setReturnAmount(calReturnAmount(soReturnDetailEntity.getReturnAmount(),soReturnDetailEntity.getReturnQty(),view.getReturnQty()));
+                detailAddDTO.setTaxReturnAmount(calReturnAmount(soReturnDetailEntity.getTaxReturnAmount(),soReturnDetailEntity.getReturnQty(),view.getReturnQty()));
+                detailAddDTO.setReturnAmountLocalCurrency(calLocalCurrency(soReturnDetailEntity.getExchangeRate(), detailAddDTO.getReturnAmount()));
+                detailAddDTO.setTaxReturnAmountLocalCurrency(calLocalCurrency(soReturnDetailEntity.getExchangeRate(), detailAddDTO.getTaxReturnAmount()));
+                dto.setCurrency(soReturnEntity.getCurrency());
+                dto.setCurrencySymbol(soReturnEntity.getCurrencySymbol());
                 detailList.add(detailAddDTO);
             }
             dto.setDetailList(detailList);

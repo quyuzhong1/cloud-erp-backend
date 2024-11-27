@@ -143,14 +143,7 @@
             srn.approve_status,
             srn.return_logistic_code,
             srnd.platform_sku_no,
-            srnd.is_child_sku_no,
-            srn.currency,
-            srn.currency_symbol,
-            srnd.exchange_rate ,
-            srnd.return_amount ,
-            srnd.tax_return_amount ,
-            srnd.return_amount_local_currency ,
-            srnd.tax_return_amount_local_currency
+            srnd.is_child_sku_no
         FROM so_return_notice_detail srnd
         INNER JOIN so_return_notice srn ON srn.id = srnd.main_id AND srnd.is_deleted = FALSE
         WHERE srn.is_deleted = FALSE
