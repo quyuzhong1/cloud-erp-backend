@@ -293,8 +293,8 @@ public class LogisticsBillCostDTO implements Serializable {
         /**
          * 核算状态，checking=待生成，checked=已生成，confirm=已确认，名称为 checkStatusName 字段
          */
-        @Dict(enumClass = LogisticsBillCostCheckStatusEnum.class)
         private String checkStatus;
+        private String checkStatusName;
         
         /**
          * 预估可抵扣税金
@@ -625,6 +625,11 @@ public class LogisticsBillCostDTO implements Serializable {
          * 状态
          */
         private String reconciliationStatus;
+        
+        /**
+         * 对账确认时间
+         */
+        private LocalDateTime confirmTime;
 
     }
     @Data

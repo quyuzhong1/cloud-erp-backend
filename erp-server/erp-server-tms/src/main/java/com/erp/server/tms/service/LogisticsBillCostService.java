@@ -16,6 +16,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -71,7 +72,8 @@ public interface LogisticsBillCostService extends SuperService<LogisticsBillCost
      * @param reconciliationStatus
      * @return BatchResultDTO
      */
-    BatchResultDTO updateReconciliationStatus(String id, String reconciliationStatus);
+    BatchResultDTO updateReconciliationStatus(String id, String reconciliationStatus , LocalDateTime confirmTime);
+    
     /**
      * @description: 下载模板
      * @author Will

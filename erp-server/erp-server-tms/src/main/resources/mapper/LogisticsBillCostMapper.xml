@@ -95,6 +95,7 @@
             lbc.fee_rule,
             lbc.confirm_time as confirmTime,
             lbc.shop_charge_id,
+            lbc.shop_charge_name,
             lbc.volume,
             lbc.pay_type,
             lbc.pay_status,
@@ -156,7 +157,12 @@
             lbc.fee_rule as feeRule,
             lbc.confirm_time as confirmTime,
             lbc.shop_charge_id,
-            lbc.shop_charge_name
+            lbc.shop_charge_name,
+            lbc.volume,
+            lbc.pay_type,
+            lbc.pay_status,
+            lbc.pay_time,
+            lbc.check_status
         from logistics_bill_cost lbc
         inner join logistics_bill lb on lbc.logistics_bill_id = lb.id and lb.is_deleted = false
         left join (

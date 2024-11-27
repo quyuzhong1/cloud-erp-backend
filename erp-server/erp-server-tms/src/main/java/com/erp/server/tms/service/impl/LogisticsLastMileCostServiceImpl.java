@@ -39,6 +39,7 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
@@ -97,8 +98,8 @@ public class LogisticsLastMileCostServiceImpl implements LogisticsLastMileCostSe
     }
 
     @Override
-    public BatchResultDTO updateReconciliationStatus(String id, String reconciliationStatus) {
-        return logisticsBillCostService.updateReconciliationStatus(id,reconciliationStatus);
+    public BatchResultDTO updateReconciliationStatus(String id, String reconciliationStatus , LocalDateTime confirmTime) {
+        return logisticsBillCostService.updateReconciliationStatus(id,reconciliationStatus,confirmTime);
     }
 
     @Override

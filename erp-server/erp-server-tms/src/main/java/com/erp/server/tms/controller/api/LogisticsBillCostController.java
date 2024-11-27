@@ -116,7 +116,7 @@ public class LogisticsBillCostController extends BaseController {
     }
 
     /**
-     * 状态变更
+     * 对账状态
      * @author Will
      * @date: 2023/11/13 15:35
      * @param dto
@@ -134,7 +134,7 @@ public class LogisticsBillCostController extends BaseController {
         for (String id : dto.getIds()) {
             BatchResultDTO submit;
             try {
-                submit = logisticsBillCostService.updateReconciliationStatus(id,dto.getReconciliationStatus());
+                submit = logisticsBillCostService.updateReconciliationStatus(id,dto.getReconciliationStatus(),dto.getConfirmTime());
             }catch (Exception e){
                 log.error("自发货费用 状态变更",e);
                 LogisticsBillCostEntity entity = logisticsBillCostService.getById(id);

@@ -9,6 +9,7 @@ import com.alibaba.excel.exception.ExcelCommonException;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
+import com.baomidou.mybatisplus.extension.conditions.update.LambdaUpdateChainWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseResultDTO;
@@ -227,22 +228,64 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
     }
 
     @Override
-    public BatchResultDTO updateReconciliationStatus(String id, String reconciliationStatus) {
-        LogisticsBillCostEntity entity = super.getById(id);
+    public BatchResultDTO updateReconciliationStatus(String id, String reconciliationStatus , LocalDateTime confirmTime) {
+        if(org.apache.commons.lang3.StringUtils.isBlank(reconciliationStatus)) {
+        	throw new ServiceException("对账状态不能为空");
+        }
+        boolean confirmFlag = (ReconciliationStatusEnum.ESTIMATE_CONFIRM.getCode().equals(reconciliationStatus) 
+    			|| ReconciliationStatusEnum.CONFIRMED.getCode().equals(reconciliationStatus));
+    	if(confirmFlag && confirmTime == null) {
+    		throw new ServiceException("对账状态修改为" + reconciliationStatus + "时，对账确认时间不能为空");
+        }
+    	LogisticsBillCostEntity entity = super.getById(id);
         Optional.ofNullable(entity).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "自发货费用"));
         //自发货/尾程费用：状态变更【已确认/已作废】可以修改为其他状态【待确认/已确认】【现有功能优化】
 //        if (ReconciliationStatusEnum.INVALID.getCode().equals(entity.getReconciliationStatus()) || ReconciliationStatusEnum.CONFIRMED.getCode().equals(entity.getReconciliationStatus())) {
 //            throw new ServiceException(ApiError.ERROR_LOGISTICS_BILL_COST_RECONCILIATION_STATUS);
 //        }
+        String beforeReconciliationStatus = entity.getReconciliationStatus();
+        if(beforeReconciliationStatus.equals(reconciliationStatus)) {
+        	throw new ServiceException("修改后对账状态不能和当前对账状态一样");
+        }
+        if(ReconciliationStatusEnum.TO_BE_CONFIRM.getCode().equals(beforeReconciliationStatus)) {
+        	if(!ReconciliationStatusEnum.ESTIMATE_CONFIRM.getCode().equals(reconciliationStatus) 
+        			&& !ReconciliationStatusEnum.CONFIRMED.getCode().equals(reconciliationStatus) 
+        			&& !ReconciliationStatusEnum.INVALID.getCode().equals(reconciliationStatus)) {
+        		throw new ServiceException("当前对账状态为待确认，只能修改为暂估确认/账单确认/作废");
+        	}
+        }else if(ReconciliationStatusEnum.INVALID.getCode().equals(beforeReconciliationStatus)) {
+        	if(!confirmFlag) {
+        		throw new ServiceException("当前对账状态为已作废，只能修改为暂估确认/账单确认");
+        	}
+        }else if(ReconciliationStatusEnum.ESTIMATE_CONFIRM.getCode().equals(beforeReconciliationStatus)) {
+        	if(ReconciliationStatusEnum.CONFIRMED.getCode().equals(reconciliationStatus)) {
+        		if(LogisticsBillCostCheckStatusEnum.CHECKED.getCode().equals(entity.getCheckStatus())) {
+        			throw new ServiceException("当前对账状态为暂估确认，核算状态为已生成不能修改为账单确认");
+        		}
+        	}else {
+        		if(!(LogisticsBillCostCheckStatusEnum.CHECKING.getCode().equals(entity.getCheckStatus()) 
+            			&& "payment".equals(entity.getPayStatus()))) {
+            		String p = entity.getPayType().equals("pay") ? "付" : "退";
+            		throw new ServiceException("当前对账状态为暂估确认，只有核算状态为待生成且支付状态为待" + p + "款时才能修改为非账单确认状态");
+            	}
+        	}
+        }else if(ReconciliationStatusEnum.CONFIRMED.getCode().equals(beforeReconciliationStatus)) {
+        	if(!(LogisticsBillCostCheckStatusEnum.CHECKING.getCode().equals(entity.getCheckStatus()) 
+        			&& "payment".equals(entity.getPayStatus()))) {
+        		String p = entity.getPayType().equals("pay") ? "付" : "退";
+        		throw new ServiceException("当前对账状态为账单确认，只有核算状态为待生成且支付状态为待" + p + "款时才能修改为其他状态");
+        	}
+        }
+        
         //状态变更
         lambdaUpdate().eq(LogisticsBillCostEntity::getId, id)
-                .set(LogisticsBillCostEntity::getReconciliationStatus, reconciliationStatus)
-                .set(ReconciliationStatusEnum.CONFIRMED.getCode().equals(reconciliationStatus),LogisticsBillCostEntity::getConfirmTime, LocalDateTime.now())
-                .set(ReconciliationStatusEnum.CONFIRMED.getCode().equals(reconciliationStatus),LogisticsBillCostEntity::getConfirmUserId, UserContext.getDefaultLoginUser().getUid())
-                .set(ReconciliationStatusEnum.CONFIRMED.getCode().equals(reconciliationStatus),LogisticsBillCostEntity::getConfirmUserName, UserContext.getDefaultLoginUser().getUserName())
-                .set(ReconciliationStatusEnum.TO_BE_CONFIRM.getCode().equals(reconciliationStatus),LogisticsBillCostEntity::getConfirmTime, null)
-                .set(ReconciliationStatusEnum.TO_BE_CONFIRM.getCode().equals(reconciliationStatus),LogisticsBillCostEntity::getConfirmUserId, "")
-                .set(ReconciliationStatusEnum.TO_BE_CONFIRM.getCode().equals(reconciliationStatus),LogisticsBillCostEntity::getConfirmUserName, "")
+        		.set(LogisticsBillCostEntity::getReconciliationStatus, reconciliationStatus)
+                .set(confirmFlag,LogisticsBillCostEntity::getConfirmTime, confirmTime)
+                .set(confirmFlag,LogisticsBillCostEntity::getConfirmUserId, UserContext.getDefaultLoginUser().getUid())
+                .set(confirmFlag,LogisticsBillCostEntity::getConfirmUserName, UserContext.getDefaultLoginUser().getUserName())
+                .set(confirmFlag,LogisticsBillCostEntity::getConfirmTime, null)
+                .set(confirmFlag,LogisticsBillCostEntity::getConfirmUserId, "")
+                .set(confirmFlag,LogisticsBillCostEntity::getConfirmUserName, "")
                 .update();
         // 状态变更日志
         log.info("状态变更日志数据，id集合：【{}】", id);
@@ -512,6 +555,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         	if(StringUtils.isNotBlank(payType) && StringUtils.isNotBlank(payStatus)) {
         		listDTO.setPayStatusName(payStatusNameMap.get(payType + "_" + payStatus));
         	}
+        	listDTO.setCheckStatusName(LogisticsBillCostCheckStatusEnum.getName(listDTO.getCheckStatus()));
             listDTO.setOrderTypeName(OrderTypeEnum.getName(listDTO.getOrderType()));
             listDTO.setSourceTypeName(SourceTypeEnum.getName(listDTO.getSourceType()));
             listDTO.setReconciliationStatusName(ReconciliationStatusEnum.getName(listDTO.getReconciliationStatus()));
@@ -616,7 +660,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         List<String> costNameList = successList.stream().map(LogisticsBillCostExcelDTO::getCostName).distinct().collect(Collectors.toList());
         List<TmsCfgCostEntity> tmsCfgCostList = tmsCfgCostService.listByCostNameList(costNameList);
 
-        Map<String, List<LogisticsBillCostExcelDTO>> map = successList.stream().collect(Collectors.groupingBy(obj -> obj.getTrackNo()+obj.getOutstockCode()));
+        Map<String, List<LogisticsBillCostExcelDTO>> map = successList.stream().collect(Collectors.groupingBy(obj -> obj.getTrackNo()+"_"+obj.getOutstockCode()+"_"+obj.getPayType()));
 
 
         for ( Map.Entry<String, List<LogisticsBillCostExcelDTO>> entry : map.entrySet()) {
@@ -651,6 +695,15 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
                 updateDTO.setCfgCostId(tmsCfgCostEntity.getId());
                 updateDTO.setSourceType(SourceTypeEnum.LOGISTICS_BILL_COST.getCode());
                 updateDetailList.add(updateDTO);
+                String estimatedCostValue = excelDTO.getEstimatedCostValue();
+                if(StringUtils.isNotBlank(estimatedCostValue)) {
+                	updateDTO = new TmsCostDetailDTO.UpdateDTO();
+                    updateDTO.setCostValue(new BigDecimal(estimatedCostValue));
+                    updateDTO.setType(LogisticsBillCostTypeEnum.ESTIMATED.getCode());
+                    updateDTO.setCfgCostId(tmsCfgCostEntity.getId());
+                    updateDTO.setSourceType(SourceTypeEnum.LOGISTICS_BILL_COST.getCode());
+                    updateDetailList.add(updateDTO);
+                }
             }
             if (CollectionUtils.isEmpty(updateDetailList)) {
                 return;
@@ -664,7 +717,8 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
                     .findFirst().orElse(null);
             //物流费用单
             LogisticsBillCostEntity logisticsBillCostEntity = logisticsBillCostList.stream().filter(obj -> obj.getLogisticsBillId().equals(logisticsBillVo.getId())
-                    && CharSequenceUtil.equals(obj.getLogisticsBillDetailId(),logisticsBillDetailEntity.getId()))
+                    && CharSequenceUtil.equals(obj.getLogisticsBillDetailId(),logisticsBillDetailEntity.getId())
+                    && CharSequenceUtil.equals(obj.getPayType(),billCostExcelDTO.getPayType()))
                     .findFirst().orElse(null);
 
             //数据赋值
@@ -1013,13 +1067,23 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
                 errorMsgList.add("未找到物流跟踪单号对应的物流单明细");
             }
             //物流费用单
-            LogisticsBillCostEntity logisticsBillCostEntity = logisticsBillCostList.stream().filter(obj -> obj.getLogisticsBillId().equals(logisticsBillVo.getId()) && CharSequenceUtil.equals(excelDTO.getTrackNo(),obj.getTrackNo())).findFirst().orElse(null);
-            if (ObjectUtil.isEmpty(logisticsBillCostEntity)) {
-                errorMsgList.add("未找到出库单和运输单号对应的物流费用单");
+            List<LogisticsBillCostEntity> logisticsBillCostEntityList = logisticsBillCostList.stream()
+            		.filter(obj -> obj.getLogisticsBillId().equals(logisticsBillVo.getId()) 
+            				&& CharSequenceUtil.equals(excelDTO.getTrackNo(),obj.getTrackNo()) 
+            				&& CharSequenceUtil.equals(excelDTO.getPayType(),obj.getPayType()))
+            		.collect(Collectors.toList());
+            LogisticsBillCostEntity logisticsBillCostEntity = null;
+            if (CollUtil.isEmpty(logisticsBillCostEntityList)) {
+                errorMsgList.add("未找到出库单和运输单号对应对账类型的物流费用单");
             } else {
-                if (!CharSequenceUtil.equals(logisticsBillCostEntity.getType(),dictCostAttribution)) {
-                    errorMsgList.add(CharSequenceUtil.format("需要导入【{}】物流单费用信息",DictCostAttributionEnum.getName(dictCostAttribution)));
-                }
+            	if(logisticsBillCostEntityList.size() > 1) {
+            		errorMsgList.add("出库单和运输单号对应对账类型的物流费用单有多条，请在页面编辑指定物流费用单");
+            	}else {
+            		logisticsBillCostEntity = logisticsBillCostEntityList.get(0);
+                    if (!CharSequenceUtil.equals(logisticsBillCostEntity.getType(),dictCostAttribution)) {
+                        errorMsgList.add(CharSequenceUtil.format("需要导入【{}】物流单费用信息",DictCostAttributionEnum.getName(dictCostAttribution)));
+                    }
+            	}
             }
             if (ObjectUtil.isNotEmpty(logisticsBillCostEntity)){
                 excelDTO.setCurrency(CharSequenceUtil.isBlank(excelDTO.getCurrency()) ? logisticsBillCostEntity.getCurrency() : excelDTO.getCurrency());

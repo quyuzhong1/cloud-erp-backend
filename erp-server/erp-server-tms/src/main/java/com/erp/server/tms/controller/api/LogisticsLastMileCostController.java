@@ -137,7 +137,7 @@ public class LogisticsLastMileCostController extends BaseController {
         for (String id : dto.getIds()) {
             BatchResultDTO submit;
             try {
-                submit = logisticsLastMileCostService.updateReconciliationStatus(id,dto.getReconciliationStatus());
+                submit = logisticsLastMileCostService.updateReconciliationStatus(id,dto.getReconciliationStatus(),dto.getConfirmTime());
             }catch (Exception e){
                 log.error("自发货费用 状态变更",e);
                 LogisticsBillCostEntity entity = logisticsBillCostService.getById(id);
