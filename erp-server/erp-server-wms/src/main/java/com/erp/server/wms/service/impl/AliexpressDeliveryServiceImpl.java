@@ -14,6 +14,7 @@ import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.oms.dto.ShopSysUserAuthDTO;
 import com.erp.model.wms.dto.AliexpressDeliveryDTO;
@@ -32,6 +33,7 @@ import javax.annotation.Resource;
 import java.io.IOException;
 import java.util.Date;
 import java.util.List;
+import java.util.Objects;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_ALIEXPRESS_DELIVERY_EXPORT;
 
@@ -59,10 +61,19 @@ public class AliexpressDeliveryServiceImpl extends SuperServiceImpl<AliexpressDe
     public BaseResultDTO.AddDTO add(AliexpressDeliveryDTO.AddDTO addDTO) {
         AliexpressDeliveryEntity aliexpressDeliveryEntity = new AliexpressDeliveryEntity();
         BeanMapperUtils.copy(addDTO, aliexpressDeliveryEntity);
-
-        AliexpressDeliveryEntity entity = this.getBySoId(addDTO.getSoId());
+        //检查记录是否已存在
+        List<AliexpressDeliveryEntity> list = this.getBySoId(addDTO.getSoId());
+        AliexpressDeliveryEntity entity = CollUtil.isNotEmpty(list) ? list.stream().filter(e -> Objects.equals(e.getPlatformDeliveryCode(),addDTO.getPlatformDeliveryCode()))
+                .findFirst().orElse(null) : null;
         if (ObjectUtil.isNotEmpty(entity)) {
             aliexpressDeliveryEntity.setId(entity.getId());
+        }else if (CollUtil.isNotEmpty(list)){
+            //处理历史数据 第三方单号不存在时， 平台单号+物流跟踪号一致的时候
+            AliexpressDeliveryEntity entity1 = list.stream().filter(e -> Objects.equals(e.getPlatformCode(), addDTO.getPlatformCode()) && Objects.equals(e.getTrackNo(), addDTO.getTrackNo())).findFirst().orElse(null);
+            if (Objects.nonNull(entity1)){
+                //历史数据存在的情况下 不新增 不更新速卖通发货单
+                return new BaseResultDTO.AddDTO();
+            }
         }
         log.info("开始新增速卖通发货单");
         boolean save = super.saveOrUpdate(aliexpressDeliveryEntity);
@@ -105,7 +116,7 @@ public class AliexpressDeliveryServiceImpl extends SuperServiceImpl<AliexpressDe
         return new PagingVO<>(page);
     }
 
-    public AliexpressDeliveryEntity getBySoId(String soId) {
-        return lambdaQuery().eq(AliexpressDeliveryEntity::getSoId, soId).last("LIMIT 1").one();
+    public List<AliexpressDeliveryEntity> getBySoId(String soId) {
+        return lambdaQuery().eq(AliexpressDeliveryEntity::getSoId, soId).list();
     }
 }

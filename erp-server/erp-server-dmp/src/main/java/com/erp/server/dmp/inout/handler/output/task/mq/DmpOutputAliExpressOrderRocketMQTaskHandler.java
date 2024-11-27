@@ -293,7 +293,7 @@ public class DmpOutputAliExpressOrderRocketMQTaskHandler extends DmpOutputRocket
 
 		//取消商品币别
 		orderDTO.setCancelGoodsCurrency(dmpSoInfoEntity.getCancelGoodsCurrency());
-        
+
         List<PlatformOrderLogisticsDTO> orderLogisticList = new ArrayList<>();
         if(CollUtil.isNotEmpty(dmpLogisticInfoEntityList)) {
         	for(DmpLogisticInfoEntity dmpLogisticInfoEntity : dmpLogisticInfoEntityList) {
@@ -385,7 +385,7 @@ public class DmpOutputAliExpressOrderRocketMQTaskHandler extends DmpOutputRocket
                 deliveryDetailDTO.setPlatformSpuNo(v.getThirdDetailId());
                 deliveryDetailDTO.setPlatformSkuId(v.getSkuId());
                 deliveryDetailDTO.setScItemId(v.getPlatformDetailId());
-                platformDeliveryDetailDTOList.add(deliveryDetailDTO);
+				platformDeliveryDetailDTOList.add(deliveryDetailDTO);
         	}
         	orderDTO.setDeliveryDetailDTOList(platformDeliveryDetailDTOList);
         }

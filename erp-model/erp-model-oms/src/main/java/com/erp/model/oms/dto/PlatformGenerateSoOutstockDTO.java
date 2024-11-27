@@ -23,5 +23,9 @@ public class PlatformGenerateSoOutstockDTO implements Serializable {
     private List<PlatformDeliveryDetailDTO> platformDeliveryDetailDTOList;
 
     private SoOutstockDTO.GenerateB2cDTO generateB2cDTO;
+    /**
+     * 第三方编号
+     */
+    private String thirdCode;
 
 }

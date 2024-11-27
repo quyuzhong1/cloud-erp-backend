@@ -114,6 +114,11 @@ public class AliexpressDeliveryDTO implements Serializable {
         private String platformDeliveryStatus;
 
         /**
+         * 平台发货单号
+         */
+        private String platformDeliveryCode;
+
+        /**
         * 销售单id
         */
         @NotBlank(message = "销售单id不能为空")
@@ -147,6 +152,10 @@ public class AliexpressDeliveryDTO implements Serializable {
         @NotBlank(message = "物流跟踪号不能为空")
         @Size(max = 255,message = "物流跟踪号最大长度不能超过255位")
         private String trackNo;
+        /**
+         * 物流运单号
+         */
+        private String transportNo;
 
         /**
         * 订单创建时间

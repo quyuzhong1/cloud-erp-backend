@@ -4,6 +4,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -20,17 +21,9 @@ public class PlatformDeliveryDTO {
      */
     private String mainId;
     /**
-     * 扩展字段
-     */
-    private String extendFields;
-    /**
      * 来源单号（履约单号）
      */
     private String sourceCode;
-    /**
-     * 平台订单号
-     */
-    private String platformCode;
     /**
      * 物流单号
      */
@@ -45,34 +38,9 @@ public class PlatformDeliveryDTO {
      */
     private String orderStatus;
     /**
-     * 包裹费用
-     */
-    private String packageAmount;
-    /**
-     * 收件国家
-     */
-    private String receiverCountry;
-    /**
-     * 收件人电话
-     */
-    private String receiverMobile;
-    /**
-     * 收件人姓名
-     */
-    private String receiverName;
-    /**
-     * 收件人电话前缀
-     */
-    private String receiverPhone;
-    /**
      * 下发到仓时间戳
      */
-    private String deliveryWarehouseTime;
-    /**
-     * 订单创建时间
-     */
-    private String createTime;
-
+    private LocalDateTime deliveryWarehouseTime;
     /**
      * 平台仓库名称
      */

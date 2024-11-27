@@ -2570,8 +2570,8 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 last("LIMIT 1").one();
     }
 
-    private List<SoOutstockEntity> getBySoIdAndWarehouseId(String soB2cId,String warehouseId) {
-        return this.lambdaQuery().eq(SoOutstockEntity::getSoId, soB2cId).eq(SoOutstockEntity::getWarehouseId,warehouseId).list();
+    private List<SoOutstockEntity> getBySoIdAndWarehouseId(String soB2cId, String warehouseId, String thirdCode) {
+        return this.lambdaQuery().eq(SoOutstockEntity::getSoId, soB2cId).eq(SoOutstockEntity::getWarehouseId,warehouseId).eq(SoOutstockEntity::getThirdCode,thirdCode).list();
     }
 
     /**
@@ -3216,9 +3216,12 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         if(CollectionUtils.isEmpty(platformDeliveryDetailDTO)){
             return false;
         }
-        String warehouseId = platformDeliveryDetailDTO.get(0).getWarehouseId();
-        String soB2cId = platformDeliveryDetailDTO.get(0).getMainId();
-        List<SoOutstockEntity> outstockList = this.getBySoIdAndWarehouseId(soB2cId,warehouseId);
+        SoOutstockDTO.GenerateB2cDTO generateB2cDTO = platformGenerateSoOutstockDTO.getGenerateB2cDTO();
+        //第三方编号
+        String thirdCode = platformGenerateSoOutstockDTO.getThirdCode();
+        String warehouseId = generateB2cDTO.getWarehouseId();
+        String soB2cId = generateB2cDTO.getSoId();
+        List<SoOutstockEntity> outstockList = this.getBySoIdAndWarehouseId(soB2cId,warehouseId,thirdCode);
         List<String> dbMainIds = outstockList.stream().map(BaseEntity::getId).collect(Collectors.toList());
         List<SoOutstockDetailEntity> outstockDetailList = soOutstockDetailService.listByMainIds(dbMainIds);
         List<String> existSkuIds = outstockDetailList.stream().map(SoOutstockDetailEntity::getSkuId).collect(Collectors.toList());
@@ -3230,11 +3233,12 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
 
         if (CollectionUtils.isNotEmpty(platformDeliveryDetailDTO)) {
             SoOutstockDTO.GenerateB2cDTO dto = platformGenerateSoOutstockDTO.getGenerateB2cDTO();
+            dto.setThirdCode(thirdCode);
             //重新赋值仓库 因为可能销售订单是仓库A 速卖通发货是仓库B
             dto.setWarehouseId(warehouseId);
-            dto.setWarehouseName(platformDeliveryDetailDTO.get(0).getWarehouseName());
-            dto.setWarehouseOrgId(platformDeliveryDetailDTO.get(0).getWarehouseOrgId());
-            dto.setWarehouseOrgName(platformDeliveryDetailDTO.get(0).getWarehouseOrgName());
+            dto.setWarehouseName(generateB2cDTO.getWarehouseName());
+            dto.setWarehouseOrgId(generateB2cDTO.getWarehouseOrgId());
+            dto.setWarehouseOrgName(generateB2cDTO.getWarehouseOrgName());
 
             // 临时跳过生成已关账之前的销售出库单
             // 查询订单发货时间
