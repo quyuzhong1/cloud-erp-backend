@@ -131,5 +131,5 @@ public interface SoReturnDetailService extends SuperService<SoReturnDetailEntity
      * @Author jack
      * @Date 2024-11-27
      **/
-    SoReturnDTO.SoReturnAmoutDTO getReturnAmount(SoReturnDTO.SkuDTO dto);
+    List<SoReturnDTO.SoReturnAmoutDTO> getReturnAmount(SoReturnDTO.SkuParamDTO dto);
 }

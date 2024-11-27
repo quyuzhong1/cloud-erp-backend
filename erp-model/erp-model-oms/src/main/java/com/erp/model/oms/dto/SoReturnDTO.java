@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
+import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -644,6 +645,14 @@ public class SoReturnDTO {
          * 客户id
          */
         private String customerId;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class SkuParamDTO {
+
+       @NotEmpty(message = "sku不能为空")
+       private List<SkuDTO> skuDTOList;
     }
 
     @Data
