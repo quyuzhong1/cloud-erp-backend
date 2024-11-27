@@ -3208,6 +3208,8 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             dto.setCheckSkuHistory(false);
             Boolean result = createB2cSoOutstock(dto);
             return result;
+        }else{
+            log.error("速卖通发货单明细为空，无法生成销售出库单，{},{}",soB2cId,JSONUtil.toJsonStr(platformGenerateSoOutstockDTO));
         }
         existMains.forEach(outstock -> {
             String id = outstock.getId();
