@@ -19,4 +19,11 @@ public interface AliexpressDeliveryFeign {
      **/
     @PostMapping(value = "/feign/aliexpressDelivery/add")
     BaseResultDTO.AddDTO add(@RequestBody AliexpressDeliveryDTO.AddDTO dto);
+
+    /**
+     * 更新速卖通发货单 出库状态
+     * @param statusDTO
+     */
+    @PostMapping(value = "/feign/aliexpressDelivery/updateAliexpressOustock")
+    void updateAliexpressOustock(@RequestBody AliexpressDeliveryDTO.StatusDTO statusDTO);
 }

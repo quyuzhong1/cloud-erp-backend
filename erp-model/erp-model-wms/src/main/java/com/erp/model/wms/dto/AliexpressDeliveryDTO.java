@@ -2,6 +2,8 @@ package com.erp.model.wms.dto;
 
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -117,6 +119,10 @@ public class AliexpressDeliveryDTO implements Serializable {
          * 平台发货单号
          */
         private String platformDeliveryCode;
+        /**
+         * 系统已出库
+         */
+        private Boolean isOutstock;
 
         /**
         * 销售单id
@@ -264,5 +270,24 @@ public class AliexpressDeliveryDTO implements Serializable {
          * sqlMap 默认key default
          */
         private Map<String, String> sqlMap;
+    }
+
+    @Data
+    @Builder
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class StatusDTO {
+        /**
+         * 销售订单id
+         */
+        private String soId;
+        /**
+         * 平台发货单
+         */
+        private String platformDeliveryCode;
+        /**
+         * 是否销售出库
+         */
+        private Boolean isOutstock;
     }
 }

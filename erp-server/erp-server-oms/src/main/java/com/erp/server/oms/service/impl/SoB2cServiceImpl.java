@@ -6988,16 +6988,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (CollectionUtils.isEmpty(detailList)) {
             return false;
         }
-//        OffsetDateTime earliestPaymentDateTime  = detailList.stream()
-//                .map(PlatformSoOutStockDetailDTO::getPlatformPayTime)
-//                .min(Comparator.naturalOrder())
-//                .orElse(null);
-//        if (null != earliestPaymentDateTime){
-//            soB2cEntity.setPayTime(earliestPaymentDateTime.toLocalDateTime());
-//            if (!this.updateById(soB2cEntity)){
-//                throw new ServiceException("");
-//            }
-//        }
         // 记录明细仓库
         List<SoB2cDetailEntity> detailEntityList = soB2cDetailService.listByMainId(soB2cEntity.getId());
         if (CollectionUtils.isNotEmpty(detailEntityList)) {
@@ -7036,82 +7026,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         }
         logisticsEntity.setDeliveryTime(earliestDeliveryDateTime);
         soB2cLogisticsService.updateById(logisticsEntity);
-//        if (!soB2cLogisticsService.updateById(logisticsEntity)){
-//            throw new ServiceException("更新发货时间失败:id=" + logisticsEntity.getId());
-//        }
         return true;
-    }
-
-
-    /**
-     * 新增速卖通发货单
-     *
-     * @param logisticsEntity
-     * @param fulfillmentForwardDtoBean
-     * @param entity
-     */
-    private void addAliExpressDelivery(SoB2cLogisticsEntity logisticsEntity, ErpFulfillmentForwardDtoBean fulfillmentForwardDtoBean, SoB2cEntity entity, List<PlatformDeliveryDetailDTO> detailDTOList) {
-        AliexpressDeliveryDTO.AddDTO addDTO = new AliexpressDeliveryDTO.AddDTO();
-        addDTO.setOutBoundTime(logisticsEntity.getDeliveryTime());
-        addDTO.setPlatformCode(entity.getPlatformCode());
-        addDTO.setSoId(entity.getId());
-        addDTO.setSoCode(entity.getCode());
-        addDTO.setShopId(entity.getShopId());
-        if (org.apache.commons.lang3.StringUtils.isNotBlank(entity.getShopId())) {
-            addDTO.setShopId(entity.getShopId());
-            ShopInfoEntity shopInfoEntity = shopInfoService.getById(entity.getShopId());
-            if (ObjectUtil.isNotEmpty(shopInfoEntity)) {
-                addDTO.setShopName(shopInfoEntity.getName());
-            }
-        }
-        addDTO.setTrackNo(logisticsEntity.getCode());
-        addDTO.setTradeCreateTime(LocalDateTimeUtil.of(fulfillmentForwardDtoBean.getTradeCreateTime()));
-        addDTO.setWarehouseName(fulfillmentForwardDtoBean.getWarehouseName());
-        List<AliexpressDeliveryDetailDTO.AddDTO> detailAddList = new ArrayList<>();
-        for (PlatformDeliveryDetailDTO detailDTO : detailDTOList) {
-            AliexpressDeliveryDetailDTO.AddDTO detailAddDTO = new AliexpressDeliveryDetailDTO.AddDTO();
-            detailAddDTO.setOrderLineQty(detailDTO.getQty());
-            detailAddDTO.setPlatformSku(detailDTO.getPlatformSkuNo());
-            detailAddDTO.setSkuId(detailDTO.getSkuId());
-            detailAddDTO.setSkuNo(detailDTO.getSkuNo());
-            detailAddList.add(detailAddDTO);
-        }
-        addDTO.setDetailList(detailAddList);
-        aliexpressDeliveryFeign.add(addDTO);
-    }
-
-    /**
-     * 获取速卖通平台店铺授权信息+
-     *
-     * @param shopId
-     * @return
-     */
-    private Map<String, String> getAliExpressCfgClientMap(String shopId) {
-        CfgAppClientDTO.FindDTO findDTO = new CfgAppClientDTO.FindDTO();
-        AppClientEnum appClientEnum = AppClientEnum.ALI_EXPRESS_LOGISTICS;
-        findDTO.setBusinessType(appClientEnum.getBusinessType());
-        findDTO.setDictPlatform(appClientEnum.getPlatform());
-        findDTO.setPlatformType(appClientEnum.getPlatformType());
-        CfgAppClientEntity cfgAppClient = null;
-        try {
-            cfgAppClient = dmpTaskFeign.getCfgAppClient(findDTO);
-        } catch (Exception e) {
-            log.error("erp-dmp服务dmpTaskFeign.getCfgAppClient接口异常：{}", e.getMessage());
-            return new HashMap<>();
-        }
-        if (Objects.isNull(cfgAppClient)) return new HashMap<>();
-        Map<String, String> map = new HashMap<>();
-        map.put("clientSecret", cfgAppClient.getClientSecret());
-        map.put("clientId", cfgAppClient.getClientId());
-        map.put("url", cfgAppClient.getUrl());
-        if (org.apache.commons.lang3.StringUtils.isNotBlank(shopId)) {
-            ShopAuthEntity shopAuth = shopAuthService.getByShopId(shopId);
-            if (Objects.nonNull(shopAuth)) {
-                map.put("shopId", shopAuth.getShopId());
-                map.put("token", shopAuth.getAccessToken());
-            }
-        }
-        return map;
     }
 
     /**

@@ -30,4 +30,13 @@ public class AliexpressDeliveryFeignController extends BaseController {
     public BaseResultDTO.AddDTO add(@RequestBody AliexpressDeliveryDTO.AddDTO dto) {
         return aliexpressDeliveryService.add(dto);
     }
+
+    /**
+     * 更新速卖通发货单 出库状态
+     * @param statusDTO
+     */
+    @PostMapping(value = "/updateAliexpressOustock")
+    public void updateAliexpressOustock(@RequestBody AliexpressDeliveryDTO.StatusDTO statusDTO){
+        aliexpressDeliveryService.updateAliexpressOustock(statusDTO);
+    }
 }

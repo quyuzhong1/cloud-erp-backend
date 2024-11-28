@@ -2587,12 +2587,11 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         try {
             if (dto.isHasPlatformWarehouseOrder()){
                 // 非自发货订单独立事务
-                soOutstockService.handleCreateB2cSoOutstockWithoutTx(dto);
+                return soOutstockService.handleCreateB2cSoOutstockWithoutTx(dto);
             } else {
                 // 自发货订单事务一起
-                soOutstockService.handleCreateB2cSoOutstock(dto);
+                return soOutstockService.handleCreateB2cSoOutstock(dto);
             }
-            return Boolean.TRUE;
         } catch (Exception e) {
             String soB2cId = dto.getSoId();
             String type = SoB2cErrorTypeEnum.GENERATE_OUTSTOCK.getCode();
@@ -2605,8 +2604,8 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             addError.setMessage(message);
             addError.setParamJson(paramJson);
             soB2cFeign.addSoB2cError(addError);
+            return Boolean.FALSE;
         }
-        return Boolean.FALSE;
     }
 
     @Override

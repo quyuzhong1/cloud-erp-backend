@@ -50,13 +50,6 @@ public class AliexpressDeliveryDetailEntity extends BaseEntity<AliexpressDeliver
     @TableField("sku_id")
     private String skuId;
 
-    /**
-     * 平台发货状态
-     * AliexpressDeliveryOrderStatusEnum
-     */
-    @TableField("platform_delivery_status")
-    private String platformDeliveryStatus;
-
     public static final String MAIN_ID = "main_id";
 
     public static final String PLATFORM_SKU = "platform_sku";

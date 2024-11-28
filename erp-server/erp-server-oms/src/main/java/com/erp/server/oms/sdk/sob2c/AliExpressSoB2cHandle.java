@@ -8,7 +8,6 @@ import com.common.business.annotation.PlatformSoB2cAnnotate;
 import com.common.business.dto.PlatformDeliveryDTO;
 import com.common.business.dto.PlatformDeliveryDetailDTO;
 import com.common.business.dto.PlatformOrderDTO;
-import com.common.business.dto.PlatformOrderLogisticsDTO;
 import com.common.business.enums.BusinessTypeEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.core.exception.ServiceException;
@@ -109,7 +108,6 @@ public class AliExpressSoB2cHandle extends AbstractSoB2cHandle {
             this.createAliexpressDelivery(dto,mainEntity);
             // 平台仓生成销售出库单
             this.createAliExpressOutStock(dto, mainEntity);
-            return Boolean.TRUE;
         } catch (Exception e) {
             log.error("[速卖处理销售出库失败]:order={},msg={}", dto.getPlatformCode(), e.getMessage(), e);
             SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO();
@@ -121,6 +119,7 @@ public class AliExpressSoB2cHandle extends AbstractSoB2cHandle {
             soB2cErrorService.add(addError);
             return Boolean.FALSE;
         }
+        return Boolean.TRUE;
     }
 
     private void createAliexpressDelivery(PlatformOrderDTO dto, SoB2cEntity mainEntity) {
@@ -164,6 +163,7 @@ public class AliExpressSoB2cHandle extends AbstractSoB2cHandle {
             addDTO.setWarehouseName(deliveryDTO.getPlatformWarehouseName());
             addDTO.setPlatformDeliveryStatus(AliexpressDeliveryOrderStatusEnum.getCode(deliveryDTO.getOrderStatus()));
             addDTO.setPlatformDeliveryCode(deliveryDTO.getSourceCode());
+            addDTO.setIsOutstock(Boolean.FALSE);
             List<PlatformDeliveryDetailDTO> detailDTOList = deliveryDTO.getDetailDTOList();
             List<AliexpressDeliveryDetailDTO.AddDTO> detailAddList = new ArrayList<>();
             if (CollUtil.isNotEmpty(detailDTOList)){
@@ -272,6 +272,8 @@ public class AliExpressSoB2cHandle extends AbstractSoB2cHandle {
         if (Boolean.TRUE.equals(generateSoOutstockResult)) {
             //封装映射的仓库信息
             soB2cDetailService.updateWarehouseByMapping(mappingViewDTO, mainEntity.getId(), skuIdList);
+            //更新速卖通发货单状态
+            aliexpressDeliveryFeign.updateAliexpressOustock(AliexpressDeliveryDTO.StatusDTO.builder().soId(mainEntity.getId()).platformDeliveryCode(deliveryDTO.getSourceCode()).isOutstock(Boolean.TRUE).build());
         }
         if (CollectionUtils.isNotEmpty(notMatchSkuNoList)) {
             String msg = CharSequenceUtil.format("自动生成销售出库单失败：存在速卖通货品id未映射sku，货品id:【{}】", notMatchSkuNoList);

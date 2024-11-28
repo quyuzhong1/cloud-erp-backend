@@ -60,4 +60,10 @@ public interface AliexpressDeliveryService extends SuperService<AliexpressDelive
      * 导出
      */
     PagingVO<AliexpressDeliveryDTO.ListDTO> exportAliexpressDelivery(PagingDTO<AliexpressDeliveryDTO.SearchParamDTO> dto);
+
+    /**
+     * 更新速卖通发货单 出库状态
+     * @param statusDTO
+     */
+    void updateAliexpressOustock(AliexpressDeliveryDTO.StatusDTO statusDTO);
 }
