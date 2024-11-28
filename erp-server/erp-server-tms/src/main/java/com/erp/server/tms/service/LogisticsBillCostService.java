@@ -7,11 +7,15 @@ import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.tms.dto.LogisticsBillCostDTO;
+import com.erp.model.tms.dto.LogisticsBillCostDTO.EditDataDTO;
+import com.erp.model.tms.dto.LogisticsBillCostDTO.EditViewDTO;
 import com.erp.model.tms.dto.excel.LogisticsBillCostExcelDTO;
 import com.erp.model.tms.entity.LogisticsBillCostEntity;
 import com.erp.model.tms.entity.TmsFirstMileReconciliationDetailEntity;
 import com.erp.model.tms.entity.TmsFirstMileReconciliationEntity;
 import com.erp.model.tms.enums.DictCostAttributionEnum;
+import com.erp.model.wms.entity.SoReturnInstockEntity;
+
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
@@ -51,6 +55,10 @@ public interface LogisticsBillCostService extends SuperService<LogisticsBillCost
     * @return
     */
     Boolean update(LogisticsBillCostDTO.UpdateDTO dto,Boolean isImport);
+    
+    EditViewDTO editView(String id);
+    
+    void edit(EditDataDTO dto);
 
     /**
      * @description: tab列表
@@ -79,6 +87,8 @@ public interface LogisticsBillCostService extends SuperService<LogisticsBillCost
     BatchResultDTO updateReconciliationStatus(String id, String reconciliationStatus , LocalDateTime confirmTime);
     
     BatchResultDTO updatePayStatus(String id, String payStatus , LocalDateTime payTime);
+    
+    BatchResultDTO delete(String id);
     
     /**
      * @description: 下载模板
@@ -210,4 +220,6 @@ public interface LogisticsBillCostService extends SuperService<LogisticsBillCost
      * @param logisticsBillIds
      */
     void removeRefByReconciliationIds(String reconciliationId, List<String> logisticsBillIds);
+    
+    void generateLogisticsBill(SoReturnInstockEntity entity);
 }

@@ -487,6 +487,33 @@ public class LogisticsBillCostDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
+    public static class EditViewDTO extends DataDTO{
+    	/**
+    	 * id
+    	 */
+    	private String id;
+    	
+    	/**
+    	 * 对账类型
+    	 */
+    	private String payType;
+    	
+    	/**
+    	 * 对账类型名称
+    	 */
+    	private String payTypeName;
+    	
+    	/**
+    	 * 物流单号
+    	 */
+    	private String trackNo;
+    }
+    
+    /**
+     * 新增付款/退款，仅创建
+     */
+    @Data
+    @NoArgsConstructor
     public static class DataDTO {
     	
     	/**

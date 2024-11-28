@@ -4,6 +4,9 @@ package com.erp.server.tms.controller.api;
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.dto.base.BaseDTO;
+import com.common.business.dto.base.BaseIdDTO;
+import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
@@ -16,6 +19,8 @@ import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.tms.dto.LogisticsBillCostDTO;
+import com.erp.model.tms.dto.LogisticsBillCostDTO.EditDataDTO;
+import com.erp.model.tms.dto.LogisticsBillCostDTO.EditViewDTO;
 import com.erp.model.tms.entity.LogisticsBillCostEntity;
 import com.erp.model.tms.enums.DictCostAttributionEnum;
 import com.erp.server.tms.query.LogisticsBillCostQueryHandler;
@@ -84,44 +89,6 @@ public class LogisticsBillCostController extends BaseController {
     }
 
     /**
-     * 新增付款/退款（仅创建）
-     * @author Will
-     * @date:  2023-11-06
-     * @param dto
-     * @return ApiResult
-     */
-     @PostMapping("/addPayAndRefund")
-     @LogAction(value = LogActionEnum.INSERT, desc = "新增付款/退款")
-         @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-         tableField = "create_user_id",
-         menuCode = "tms:logisticsBillCost:update",
-         serviceClass = LogisticsBillCostService.class,
-         keyIdName = "id")
-     public ApiResult<Object> addPayAndRefund(@RequestBody @Validated LogisticsBillCostDTO.AddDataDTO dto) {
-         logisticsBillCostService.addPayAndRefund(dto);
-         return success();
-     }
-     
-     /**
-      * 新增付款/退款（对账已确认）
-      * @author Will
-      * @date:  2023-11-06
-      * @param dto
-      * @return ApiResult
-      */
-     @PostMapping("/addPayAndRefundConfirm")
-     @LogAction(value = LogActionEnum.INSERT, desc = "新增付款/退款")
-     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-     tableField = "create_user_id",
-     menuCode = "tms:logisticsBillCost:update",
-     serviceClass = LogisticsBillCostService.class,
-     keyIdName = "id")
-     public ApiResult<Object> addPayAndRefundConfirm(@RequestBody @Validated LogisticsBillCostDTO.ConfirmAddDataDTO dto) {
-    	 logisticsBillCostService.addPayAndRefundConfirm(dto);
-    	 return success();
-     }
-    
-    /**
     * 修改
     * @author Will
     * @date:  2023-11-06
@@ -139,7 +106,7 @@ public class LogisticsBillCostController extends BaseController {
         logisticsBillCostService.update(dto,Boolean.FALSE);
         return success();
     }
-
+    
     /**
      *查询详情
      * @author Will
@@ -266,4 +233,131 @@ public class LogisticsBillCostController extends BaseController {
         return flag == true ? success() : failure();
     }
 
+    /**
+     * 新增付款/退款（仅创建）
+     * @author Will
+     * @date:  2023-11-06
+     * @param dto
+     * @return ApiResult
+     */
+     @PostMapping("/addPayAndRefund")
+     @LogAction(value = LogActionEnum.INSERT, desc = "新增付款/退款")
+         @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+         tableField = "create_user_id",
+         menuCode = "tms:logisticsBillCost:update",
+         serviceClass = LogisticsBillCostService.class,
+         keyIdName = "id")
+     public ApiResult<Object> addPayAndRefund(@RequestBody @Validated LogisticsBillCostDTO.AddDataDTO dto) {
+         logisticsBillCostService.addPayAndRefund(dto);
+         return success();
+     }
+     
+     /**
+      * 新增付款/退款（对账已确认）
+      * @author Will
+      * @date:  2023-11-06
+      * @param dto
+      * @return ApiResult
+      */
+     @PostMapping("/addPayAndRefundConfirm")
+     @LogAction(value = LogActionEnum.INSERT, desc = "新增付款/退款")
+     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+     tableField = "create_user_id",
+     menuCode = "tms:logisticsBillCost:update",
+     serviceClass = LogisticsBillCostService.class,
+     keyIdName = "id")
+     public ApiResult<Object> addPayAndRefundConfirm(@RequestBody @Validated LogisticsBillCostDTO.ConfirmAddDataDTO dto) {
+    	 logisticsBillCostService.addPayAndRefundConfirm(dto);
+    	 return success();
+     }
+    
+     /**
+      * 编辑付款/退款 数据显示
+      * @author Will
+      * @date:  2023-11-06
+      * @param dto
+      * @return ApiResult
+      */
+     @PostMapping("/editView")
+     @LogAction(value = LogActionEnum.UPDATE, desc = "编辑付款/退款")
+     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+     tableField = "create_user_id",
+     menuCode = "tms:logisticsBillCost:editView",
+     serviceClass = LogisticsBillCostService.class,
+     keyIdName = "id")
+     public ApiResult<EditViewDTO> editView(@RequestBody @Validated BaseIdDTO dto) {
+     	return success(logisticsBillCostService.editView(dto.getId()));
+     }
+     
+     /**
+      * 编辑付款/退款 保存
+      * @author Will
+      * @date:  2023-11-06
+      * @param dto
+      * @return ApiResult
+      */
+     @PostMapping("/edit")
+     @LogAction(value = LogActionEnum.UPDATE, desc = "编辑付款/退款")
+     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+     tableField = "create_user_id",
+     menuCode = "tms:logisticsBillCost:edit",
+     serviceClass = LogisticsBillCostService.class,
+     keyIdName = "id")
+     public ApiResult<Object> edit(@RequestBody @Validated EditDataDTO dto) {
+     	logisticsBillCostService.edit(dto);
+     	return success();
+     }
+     
+     /**
+      * 下推分摊
+      * @author Will
+      * @date:  2023-11-06
+      * @param dto
+      * @return ApiResult
+      */
+     @PostMapping("/pushAllocation")
+     @LogAction(value = LogActionEnum.INSERT, desc = "下推分摊")
+     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+     tableField = "create_user_id",
+     menuCode = "tms:logisticsBillCost:pushAllocation",
+     serviceClass = LogisticsBillCostService.class,
+     keyIdName = "id")
+     public ApiResult<Object> pushAllocation(@RequestBody @Validated BaseIdsDTO dto) {
+     	return success();
+     }
+     
+     /**
+      * 删除
+      * @author Will
+      * @date: 2023/11/13 15:35
+      * @param dto
+      * @return ApiResult<List<BatchResultDTO>>
+      */
+     @LogAction(value = LogActionEnum.DELETE, desc = "状态变更:idList={idList}")
+     @PostMapping("/delete")
+     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+     tableField = "create_user_id",
+     menuCode = "tms:logisticsBillCost:updatePayStatus",
+     serviceClass = LogisticsBillCostService.class,
+     keyIdName = "id")
+     public ApiResult<List<BatchResultDTO>> delete(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+     	List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+     	for (String id : dto.getIds()) {
+     		BatchResultDTO submit;
+     		try {
+     			submit = logisticsBillCostService.delete(id);
+     		}catch (Exception e){
+     			log.error("自发货费用 状态变更",e);
+     			LogisticsBillCostEntity entity = logisticsBillCostService.getById(id);
+     			if (ObjectUtil.isEmpty(entity)) {
+     				submit = BatchResultDTO.fail(id, id, "自发货费用不存在, 状态变更");
+     				resultDTOS.add(submit);
+     				continue;
+     			}
+     			submit = BatchResultDTO.fail(entity.getId(), entity.getTrackNo(), e.getMessage());
+     		}
+     		resultDTOS.add(submit);
+     	}
+     	return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+     }
 }

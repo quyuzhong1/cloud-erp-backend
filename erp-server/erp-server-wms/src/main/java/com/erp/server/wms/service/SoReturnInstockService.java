@@ -114,6 +114,8 @@ public interface SoReturnInstockService extends SuperService<SoReturnInstockEnti
      * @return java.lang.Boolean
      **/
     BatchResultDTO disApprove(SoReturnInstockEntity entity, Boolean isPushKingDee);
+    
+    BatchResultDTO generateLogisticsBill(SoReturnInstockEntity entity);
 
     /**
      * 取消流程

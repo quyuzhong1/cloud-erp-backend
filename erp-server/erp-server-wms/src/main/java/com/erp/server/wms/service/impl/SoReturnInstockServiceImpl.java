@@ -1,5 +1,6 @@
 package com.erp.server.wms.service.impl;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
@@ -7,6 +8,7 @@ import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.annotation.DataIdempotent;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.ApproveType;
 import com.common.business.dto.FindUserDTO;
@@ -40,6 +42,7 @@ import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.entity.SysDepartmentEntity;
+import com.erp.model.tms.entity.LogisticsBillEntity;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.inventory.InOutStockDTO;
 import com.erp.model.wms.dto.inventory.InventoryBatchUnApproveDTO;
@@ -60,6 +63,7 @@ import com.erp.rpc.oms.feign.SoReturnFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.scm.feign.ScmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.rpc.tms.feign.LogisticsBillCostFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.wms.kingdee.SyncKingdeeSoReturnService;
 import com.erp.server.wms.mapper.SoReturnInstockMapper;
@@ -191,6 +195,9 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
 
     @Resource
     private SoOutstockService soOutstockService;
+    
+    @Resource
+    private LogisticsBillCostFeign logisticsBillCostFeign;
 
     @Override
     public PagingVO<SoReturnInstockDTO.PagingView> paging(PagingDTO<SoReturnInstockDTO.PagingParam> pagingParamDTO) {
@@ -1719,5 +1726,33 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         List<DmpPushWdtDetailDTO> detailDTOList = BeanMapper.copyList(inGoods, DmpPushWdtDetailDTO.class);
         pushWdtDTO.setDetailDTOList(detailDTOList);
         return pushWdtDTO;
+    }
+    
+    @Override
+    @DataIdempotent(keyIdName = "entity.code" , businessType = "generateLogisticsBill")
+    public BatchResultDTO generateLogisticsBill(SoReturnInstockEntity entity) {
+        String returnLogisticCode = entity.getReturnLogisticCode();
+    	if(StringUtils.isBlank(returnLogisticCode)) {
+    		return BatchResultDTO.fail(entity.getId(),entity.getCode(),"退货物流单号为空，不允许下推自发货费用");
+        }
+    	
+    	if(!entity.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getCode())) {
+    		return BatchResultDTO.fail(entity.getId(),entity.getCode(),"单据状态不为已审核，不允许下推自发货费用");
+    	}
+    	String id = entity.getId();
+		String sourceType = SourceTypeEnum.SO_RETURN_INSTOCK.getCode();
+		List<LogisticsBillEntity> logisticsBillEntityList = FeignQuery.create(LogisticsBillEntity.class)
+			.eq(LogisticsBillEntity::getOutstockId, id)
+			.eq(LogisticsBillEntity::getSourceType, sourceType)
+			.list();
+		if(CollUtil.isNotEmpty(logisticsBillEntityList)) {
+			 return BatchResultDTO.fail(entity.getId(),entity.getCode(),"已关联生成自发货费用，不允许重复下推");
+		}
+		
+		logisticsBillCostFeign.generateLogisticsBill(entity);
+    	
+        //操作日志
+        operateLogService.addModuleOperateLog(String.format("退货入库【%s】下推物流单",entity.getCode()), ModuleTypeEnum.SO_RETURN_NOTICE.getCode(), id, "下推操作");
+        return BatchResultDTO.success(id, entity.getCode(), "操作成功");
     }
 }

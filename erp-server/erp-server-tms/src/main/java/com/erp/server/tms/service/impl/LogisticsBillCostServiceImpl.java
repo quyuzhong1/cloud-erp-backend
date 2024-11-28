@@ -1,6 +1,7 @@
 package com.erp.server.tms.service.impl;
 
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
@@ -30,6 +31,7 @@ import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.FieldValidUtil;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
+import com.erp.model.oms.entity.CustomerInfoEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.entity.SoB2cLogisticsEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
@@ -38,12 +40,16 @@ import com.erp.model.tms.dto.DictBasicDTO;
 import com.erp.model.tms.dto.LogisticsBillCostDTO;
 import com.erp.model.tms.dto.LogisticsBillCostDTO.AddDataDTO;
 import com.erp.model.tms.dto.LogisticsBillCostDTO.ConfirmAddDataDTO;
+import com.erp.model.tms.dto.LogisticsBillCostDTO.EditDataDTO;
+import com.erp.model.tms.dto.LogisticsBillCostDTO.EditViewDTO;
 import com.erp.model.tms.dto.LogisticsBillDTO;
+import com.erp.model.tms.dto.LogisticsBillDetailDTO;
 import com.erp.model.tms.dto.TmsCostDetailDTO;
 import com.erp.model.tms.dto.TmsCostDetailDTO.DetailDTO;
 import com.erp.model.tms.dto.excel.LogisticsBillCostExcelDTO;
 import com.erp.model.tms.entity.*;
 import com.erp.model.tms.enums.*;
+import com.erp.model.wms.entity.SoReturnInstockEntity;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
@@ -154,6 +160,18 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
     @Override
     public Boolean update(LogisticsBillCostDTO.UpdateDTO updateDTO,Boolean isImport) {
         LogisticsBillCostEntity old = super.getById(updateDTO.getId());
+        String reconciliationStatus = old.getReconciliationStatus();
+        if("pay".equals(old.getPayType())) {
+			if(!(ReconciliationStatusEnum.TO_BE_CONFIRM.getCode().equals(reconciliationStatus)
+					|| ReconciliationStatusEnum.ESTIMATE_CONFIRM.getCode().equals(reconciliationStatus)
+					|| ReconciliationStatusEnum.CONFIRMED.getCode().equals(reconciliationStatus))) {
+				 throw new ServiceException("付款编辑仅支持对账状态为待确认，暂估确认且已确认时可操作");
+        	}
+        }else {
+        	if(!ReconciliationStatusEnum.TO_BE_CONFIRM.getCode().equals(reconciliationStatus)) {
+        		throw new ServiceException("退款编辑仅支持对账状态为待确认时可操作");
+        	}
+        }
         Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "自发货费用"));
         //赋值
         LogisticsBillCostEntity logisticsBillCostEntity =  BeanMapperUtils.map(LogisticsBillCostEntity.class, old);
@@ -1165,6 +1183,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 			add.setCfgCostId(detailDTO.getCfgCostId());
 			add.setCostValue(detailDTO.getCostValue());
 			add.setType(LogisticsBillCostTypeEnum.ACTUAL.getCode());
+			add.setSourceType(SourceTypeEnum.LOGISTICS_BILL_COST.getCode());
 			costDetailList.add(add);
 			
 			BigDecimal estimatedValue = detailDTO.getEstimatedValue();
@@ -1173,6 +1192,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 				add.setCfgCostId(detailDTO.getCfgCostId());
 				add.setCostValue(estimatedValue);
 				add.setType(LogisticsBillCostTypeEnum.ESTIMATED.getCode());
+				add.setSourceType(SourceTypeEnum.LOGISTICS_BILL_COST.getCode());
 				costDetailList.add(add);
 			}
 		}
@@ -1212,4 +1232,108 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 			        .update();
 		return BatchResultDTO.success(entity.getId(), entity.getTrackNo(), OperationTypeEnum.UPDATE_STATUS);
 	}
+
+	@Override
+	public EditViewDTO editView(String id) {
+		LogisticsBillCostEntity entity = super.getById(id);
+		EditViewDTO editViewDTO = BeanUtil.copyProperties(entity, EditViewDTO.class);
+		String payType = entity.getPayType();
+		editViewDTO.setPayTypeName(payType.equals("pay") ? "付款" : "退款");
+		List<TmsCostDetailDTO.DetailDTO>  costDetailList = new ArrayList<>();
+		List<TmsCostDetailEntity> tmsCostDetailEntityList = tmsCostDetailService.lambdaQuery().eq(TmsCostDetailEntity::getMainId, id).list();
+		Map<String, List<TmsCostDetailEntity>> costIdMaps = tmsCostDetailEntityList.stream().collect(Collectors.groupingBy(TmsCostDetailEntity::getCfgCostId));
+		for(Map.Entry<String, List<TmsCostDetailEntity>> costIdMap : costIdMaps.entrySet()) {
+			List<TmsCostDetailEntity> value = costIdMap.getValue();
+			TmsCostDetailDTO.DetailDTO dto = new TmsCostDetailDTO.DetailDTO();
+			dto.setCfgCostId(costIdMap.getKey());
+			dto.setCostValue(value.stream().filter(v -> LogisticsBillCostTypeEnum.ACTUAL.getCode().equals(v.getType())).map(TmsCostDetailEntity::getCostValue).reduce(BigDecimal::add).orElse(BigDecimal.ZERO));
+			dto.setEstimatedValue(value.stream().filter(v -> LogisticsBillCostTypeEnum.ESTIMATED.getCode().equals(v.getType())).map(TmsCostDetailEntity::getCostValue).reduce(BigDecimal::add).orElse(BigDecimal.ZERO));
+			costDetailList.add(dto);
+		}
+		editViewDTO.setCostDetailList(costDetailList);
+		return editViewDTO;
+	}
+
+	@Transactional(rollbackFor = Exception.class)
+	@Override
+	public void edit(EditDataDTO dto) {
+		LogisticsBillCostDTO.UpdateDTO updateDataDTO = new LogisticsBillCostDTO.UpdateDTO();
+		updateDataDTO.setId(dto.getId());
+        updateDataDTO.setBillingWeight(dto.getBillingWeight());
+        updateDataDTO.setBillingWeightLogistics(dto.getBillingWeightLogistics());
+        updateDataDTO.setCurrency(CharSequenceUtil.isBlank(dto.getCurrency()) ? CurrencyEnum.CNY.getCurrencyCode() : dto.getCurrency());
+        
+        List<TmsCostDetailDTO.UpdateDTO> updateDetailList = new ArrayList<>();
+        List<DetailDTO> costDetailList = dto.getCostDetailList();
+        for(DetailDTO detailDTO : costDetailList) {
+        	TmsCostDetailDTO.UpdateDTO updateDTO = new TmsCostDetailDTO.UpdateDTO();
+            updateDTO.setCostValue(detailDTO.getCostValue());
+            updateDTO.setType(LogisticsBillCostTypeEnum.ACTUAL.getCode());
+            updateDTO.setCfgCostId(detailDTO.getCfgCostId());
+            updateDTO.setSourceType(SourceTypeEnum.LOGISTICS_BILL_COST.getCode());
+            updateDetailList.add(updateDTO);
+            BigDecimal estimatedCostValue = detailDTO.getEstimatedValue();
+            if(estimatedCostValue != null && estimatedCostValue.compareTo(BigDecimal.ZERO) != 0) {
+            	updateDTO = new TmsCostDetailDTO.UpdateDTO();
+                updateDTO.setCostValue(estimatedCostValue);
+                updateDTO.setType(LogisticsBillCostTypeEnum.ESTIMATED.getCode());
+                updateDTO.setCfgCostId(detailDTO.getCfgCostId());
+                updateDTO.setSourceType(SourceTypeEnum.LOGISTICS_BILL_COST.getCode());
+                updateDetailList.add(updateDTO);
+            }
+        }
+        updateDataDTO.setCostDetailList(updateDetailList);
+		this.update(updateDataDTO , false);
+	}
+
+	@Transactional(rollbackFor = Exception.class)
+	@Override
+	public void generateLogisticsBill(SoReturnInstockEntity entity) {
+		LogisticsBillDTO.AddDTO addDTO = new LogisticsBillDTO.AddDTO();
+		addDTO.setSourceType(SourceTypeEnum.SO_RETURN_INSTOCK.getCode());
+		String returnLogisticCode = entity.getReturnLogisticCode();
+		addDTO.setTransportNo(returnLogisticCode);
+		
+		String customerId = entity.getCustomerId();
+		CustomerInfoEntity customerInfoEntity = FeignQuery.getById(CustomerInfoEntity.class, customerId);
+		addDTO.setSalesPlatform(customerInfoEntity.getPlatformType());
+		List<ShopInfoEntity> shopInfoEntityList = FeignQuery.create(ShopInfoEntity.class).eq(ShopInfoEntity::getCustomerId, customerId).list();
+		if(CollUtil.isNotEmpty(shopInfoEntityList)) {
+			ShopInfoEntity shopInfoEntity = shopInfoEntityList.get(0);
+			addDTO.setShopId(shopInfoEntity.getId());
+			addDTO.setShopName(shopInfoEntity.getName());
+		}
+		addDTO.setSourceId(entity.getSoId());
+		addDTO.setSourceCode(entity.getSoCode());
+		addDTO.setOutstockId(entity.getId());
+		addDTO.setOutstockCode(entity.getCode());
+		addDTO.setDeliveryTime(entity.getApproveTime());
+		
+		List<LogisticsBillDetailDTO.AddDTO> detailList = new ArrayList<>();
+		LogisticsBillDetailDTO.AddDTO detailAdd = new LogisticsBillDetailDTO.AddDTO();
+		detailAdd.setTrackNo(returnLogisticCode);
+		detailAdd.setTrackStatus(LogisticTrackStatusEnum.SIGN.getCode());
+		detailList.add(detailAdd);
+		addDTO.setDetailList(detailList);
+		
+		logisticsBillService.add(addDTO);
+	}
+	
+	@Transactional(rollbackFor = Exception.class)
+	@Override
+    public BatchResultDTO delete(String id) {
+        LogisticsBillCostEntity entity = this.getById(id);
+        if(!entity.getCheckStatus().equals(LogisticsBillCostCheckStatusEnum.CHECKING.getCode())) {
+        	return BatchResultDTO.fail(entity.getId(), entity.getTrackNo(), "仅未下推分摊的数据删除，下推费用分摊后不可删除");
+        }
+        this.removeById(id);
+        tmsCostDetailService.lambdaUpdate()
+        	.eq(TmsCostDetailEntity::getMainId, id)
+        	.set(TmsCostDetailEntity::getIsDeleted, true)
+        	.update();
+        logisticsBillDetailService.removeById(entity.getLogisticsBillDetailId());
+        logisticsBillService.removeById(entity.getLogisticsBillId());
+        
+        return BatchResultDTO.success(entity.getId(), entity.getTrackNo(), OperationTypeEnum.DELETE);
+    }
 }
