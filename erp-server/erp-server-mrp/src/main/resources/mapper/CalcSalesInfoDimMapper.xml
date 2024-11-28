@@ -112,6 +112,8 @@
         csic.platform,
         csic.sales_qty_json,
         csic.avg_sales_qty_json,
+        csic.month_real_sales_qty_json,
+        csic.month_sales_estimate_qty_json,
         csic.cfg_rule_calc_id,
         csic.update_time,
         csic.update_user_name,

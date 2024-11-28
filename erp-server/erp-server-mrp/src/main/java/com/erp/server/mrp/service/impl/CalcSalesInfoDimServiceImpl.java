@@ -390,10 +390,12 @@ public class CalcSalesInfoDimServiceImpl extends SuperServiceImpl<CalcSalesInfoD
             list = baseMapper.listCompareByIds(dto.getIds());
         }
         verifyData(list);
+        LocalDate endDate = list.stream().min(Comparator.comparing(CalcSalesInfoDimDTO.CompareResultDTO::getEndCalcDate))
+                .map(CalcSalesInfoDimDTO.CompareResultDTO::getEndCalcDate).orElse(LocalDate.now());
+        LocalDate endCalcDate = verifyEndDate(endDate, dto.getEndDate());
         //获取真实销量
         CalcSalesInfoDimDTO.CompareResultDTO resultDTO = list.get(0);
         LocalDate startCalcDate = ObjectUtils.isEmpty(dto.getStartDate()) ? resultDTO.getStartCalcDate() : dto.getStartDate();
-        LocalDate endCalcDate = ObjectUtils.isEmpty(dto.getEndDate()) ? resultDTO.getEndCalcDate() : dto.getEndDate();
         Map<String, String> calcNameMap = list.stream().collect(Collectors.toMap(CalcSalesInfoDimDTO.CompareResultDTO::getId, CalcSalesInfoDimDTO.CompareResultDTO::getName));
         List<OrderHistorySalesEsEntity> salesInfos = orderHistorySalesEsService.findByShopIdAndSkuIdAndDateBetween(resultDTO.getShopId(), resultDTO.getSkuId(),
                 startCalcDate, endCalcDate);
@@ -430,6 +432,16 @@ public class CalcSalesInfoDimServiceImpl extends SuperServiceImpl<CalcSalesInfoD
         calcCompareDTO.setDateList(dateList);
         calcCompareDTO.setLineList(lineList);
         return calcCompareDTO;
+    }
+
+    private LocalDate verifyEndDate(LocalDate endDate, LocalDate endDate1) {
+        if (ObjectUtils.isEmpty(endDate1)) {
+            return endDate;
+        }
+        if (endDate1.isAfter(endDate)) {
+            throw new ServiceException(ApiError.ERROR__VERIFY_END_DATE);
+        }
+        return endDate1;
     }
 
     @Override

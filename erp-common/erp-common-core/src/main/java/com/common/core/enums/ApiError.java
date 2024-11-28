@@ -1539,6 +1539,7 @@ public enum ApiError implements Serializable {
     ERROR_HIS_SALES_IS_DIFFERENT(97032,"选中的数据，历史销量不一致，无法进行比较"),
     ERROR_VERIFY_START_CALC_DATE(97033,"试算开始日期不能晚于当前日期"),
     ERROR__VERIFY_END_CALC_DATE(97034,"试算结束日期不能晚于试算开始日期"),
+    ERROR__VERIFY_END_DATE(97034,"结束日期不能晚于选中数据最小试算结束日期"),
 
 
 
