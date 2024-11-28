@@ -2,12 +2,13 @@ package com.erp.server.mrp.calculation.strategy.platform;
 
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.exception.ServiceException;
-import com.erp.model.mrp.dto.FbaHistoryInventoryGroupDTO;
 import com.erp.model.mrp.dto.OverseasHistoryInventoryGroupDTO;
 import com.erp.model.mrp.dto.ReplenishmentResultDTO;
-import com.erp.model.mrp.entity.*;
+import com.erp.model.mrp.entity.CfgRuleWarehouseDetailEntity;
+import com.erp.model.mrp.entity.CfgRuleWarehouseEntity;
+import com.erp.model.mrp.entity.OverseasHistoryInventoryEntity;
+import com.erp.model.mrp.entity.ReplenishmentSuggestionEntity;
 import com.erp.model.mrp.enums.CfgRulePlatformTypeEnum;
-import com.erp.model.mrp.enums.CfgRuleWarehouseTypeEnum;
 import com.erp.model.mrp.enums.PlatformMappingTypeEnum;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.wms.enums.VitualWarehouseChannelTypeEnum;
@@ -137,14 +138,14 @@ public class OverseasCalculationStrategy extends AbstractCalculationStrategy {
             Map<LocalDate, Integer> inventoryResultMap = result.get(group);
             if (CollectionUtils.isEmpty(inventoryResultMap)) {
                 Map<LocalDate, Integer> data = new HashMap<>();
-                data.put(entity.getBillDate(), entity.getSellableQty().intValue());
+                data.put(entity.getBillDate(), entity.getSellableQty());
                 result.put(group, data);
             } else {
                 Integer qty = inventoryResultMap.get(entity.getBillDate());
                 if (ObjectUtils.isEmpty(qty)) {
-                    inventoryResultMap.put(entity.getBillDate(), entity.getSellableQty().intValue());
+                    inventoryResultMap.put(entity.getBillDate(), entity.getSellableQty());
                 } else {
-                    inventoryResultMap.put(entity.getBillDate(), entity.getSellableQty().intValue() + qty);
+                    inventoryResultMap.put(entity.getBillDate(), entity.getSellableQty() + qty);
                 }
                 result.put(group, inventoryResultMap);
             }
