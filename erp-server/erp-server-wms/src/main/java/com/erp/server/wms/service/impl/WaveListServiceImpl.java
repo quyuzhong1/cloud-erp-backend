@@ -419,14 +419,17 @@ public class WaveListServiceImpl extends SuperServiceImpl<WaveListMapper, WaveLi
     @Transactional(rollbackFor = Exception.class)
     public ApiResult<?> updateWaveStatus(List<String> ids) {
         //修改波次状态为已完成
-        lambdaUpdate()
-                .set(WaveListEntity::getStatus, WaveStatusEnum.FINISH.getCode())
-                .ne(WaveListEntity::getStatus,WaveStatusEnum.FINISH.getCode())
-                .in(WaveListEntity::getId, ids)
-                .update();
         LoginUser loginUser = UserContext.getDefaultLoginUser();
         for (String id : ids) {
-            operateLogService.addModuleOperateLog("手动标记波次状态为已完成", ModuleTypeEnum.WAVE_LIST.getCode(), id, "手动完成", loginUser.getUid(), loginUser.getUserName());
+            List<WaveListEntity> list = lambdaQuery().eq(WaveListEntity::getId, id).eq(WaveListEntity::getStatus, WaveStatusEnum.FINISH.getCode()).list();
+            if(CollUtil.isEmpty(list)){
+                lambdaUpdate()
+                        .set(WaveListEntity::getStatus, WaveStatusEnum.FINISH.getCode())
+                        .ne(WaveListEntity::getStatus,WaveStatusEnum.FINISH.getCode())
+                        .eq(WaveListEntity::getId, id)
+                        .update();
+                operateLogService.addModuleOperateLog("手动标记波次状态为已完成", ModuleTypeEnum.WAVE_LIST.getCode(), id, "手动完成", loginUser.getUid(), loginUser.getUserName());
+            }
         }
         return ApiResult.success();
     }
