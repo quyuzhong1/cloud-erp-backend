@@ -3246,12 +3246,8 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             // 临时跳过生成已关账之前的销售出库单
             // 查询订单发货时间
             if (null != deliveryTime){
-                // 速卖通GMT时区转北京时区
-                LocalDateTime targetDeliveryTime = DateUtil.convertZoneTime(deliveryTime,
-                        ZoneId.of("America/Los_Angeles"),
-                        ZoneId.of("Asia/Shanghai"));
                 // 检查关账时间
-                LocalDate closedDate = inventoryClosedRecordService.checkClosed(dto.getWarehouseOrgId(), targetDeliveryTime.toLocalDate());
+                LocalDate closedDate = inventoryClosedRecordService.checkClosed(dto.getWarehouseOrgId(), deliveryTime.toLocalDate());
                 if (null != closedDate){
                     // 临时跳过生成已关账之前的销售出库单
                     return true;

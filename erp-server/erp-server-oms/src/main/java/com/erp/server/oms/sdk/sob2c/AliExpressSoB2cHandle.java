@@ -151,12 +151,8 @@ public class AliExpressSoB2cHandle extends AbstractSoB2cHandle {
             if (Objects.isNull(deliveryWarehouseTime)){
                 continue;
             }
-            // 速卖通GMT时区转北京时区
-            LocalDateTime targetDeliveryTime = DateUtil.convertZoneTime(deliveryWarehouseTime,
-                    ZoneId.of("America/Los_Angeles"),
-                    ZoneId.of("Asia/Shanghai"));
             AliexpressDeliveryDTO.AddDTO addDTO = new AliexpressDeliveryDTO.AddDTO();
-            addDTO.setOutBoundTime(targetDeliveryTime);
+            addDTO.setOutBoundTime(deliveryWarehouseTime);
             addDTO.setPlatformCode(mainEntity.getPlatformCode());
             addDTO.setSoId(mainEntity.getId());
             addDTO.setSoCode(mainEntity.getCode());
