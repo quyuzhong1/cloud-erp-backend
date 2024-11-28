@@ -209,11 +209,16 @@ public class TransferLogisticsChannelServiceImpl extends SuperServiceImpl<Transf
         TransferLogisticsChannelEntity one  = baseMapper.selectOne(queryWrapper);
         //检查数据是否存在
         if (Objects.nonNull(one)){
-            transferLogisticsChannelEntity.setId(one.getId());
-            transferLogisticsChannelEntity.setUpdateTime(LocalDateTime.now());
-            return this.updateById(transferLogisticsChannelEntity);
+            return this.lambdaUpdate()
+                    .set(TransferLogisticsChannelEntity::getUpdateTime, LocalDateTime.now())
+                    .set(TransferLogisticsChannelEntity::getCode, transferLogisticsChannelEntity.getCode())
+                    .set(TransferLogisticsChannelEntity::getName, transferLogisticsChannelEntity.getName())
+                    .set(TransferLogisticsChannelEntity::getLogisticsPlatform, transferLogisticsChannelEntity.getLogisticsPlatform())
+                    .eq(TransferLogisticsChannelEntity::getId, one.getId())
+                    .update();
+        } else {
+            return this.save(transferLogisticsChannelEntity);
         }
-        return this.save(transferLogisticsChannelEntity);
     }
 
     @Override
