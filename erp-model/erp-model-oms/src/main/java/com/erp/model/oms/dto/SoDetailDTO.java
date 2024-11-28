@@ -557,6 +557,10 @@ public class SoDetailDTO implements Serializable {
          */
         @Size(max = 200, message = "备注最大200字符")
         private String remark;
+        /**
+         * 客户PO号
+         */
+        private String customerPO;
     }
 
 
