@@ -47,6 +47,6 @@ public class AliexpressDeliveryFeignController extends BaseController {
      */
     @PostMapping(value = "/listBySoId")
     public List<AliexpressDeliveryEntity> listBySoId(@RequestBody String soId){
-        return aliexpressDeliveryService.listBySoId(soId);
+        return aliexpressDeliveryService.getBySoId(soId);
     }
 }
