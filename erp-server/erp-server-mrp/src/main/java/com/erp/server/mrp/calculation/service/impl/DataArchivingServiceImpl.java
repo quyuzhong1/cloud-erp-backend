@@ -52,6 +52,8 @@ public class DataArchivingServiceImpl implements DataArchivingService {
                     // 执行归档逻辑
                     cfgDataArchivingService.archiveData(config);
                 }
+                //归档建议
+                cfgDataArchivingService.dataArchivingSuggestion(null);
                 List<CfgPlatformMappingEntity> mappings = cfgPlatformMappingService.listByEffective();
                 log.warn("完成处理归档数据,时间{}", System.currentTimeMillis());
                 log.warn("开始增量更新建议基础数据,时间{}", System.currentTimeMillis());
