@@ -2,6 +2,9 @@ package com.erp.model.tms.dto;
 
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
+import com.common.core.anno.StateEnumValue;
+import com.erp.model.oms.enums.SoB2cPayStatusEnum;
+import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -462,4 +465,21 @@ public class TmsFirstMileReconciliationDTO implements Serializable {
     }
 
 
+    /**
+     * 更新付款状态入参
+     */
+    @Data
+    @NoArgsConstructor
+    public static class UpdatePayStatusDTO {
+        /**
+         * 勾选的id集合
+         */
+        private List<String> ids;
+        /**
+         * 付款状态：
+         * 接口：/oms/drop/down/dict/list?type=soB2cPayStatus
+         */
+        @StateEnumValue(clazz = SoB2cPayStatusEnum.class,message = "付款状态有误")
+        private String payStatus;
+    }
 }
