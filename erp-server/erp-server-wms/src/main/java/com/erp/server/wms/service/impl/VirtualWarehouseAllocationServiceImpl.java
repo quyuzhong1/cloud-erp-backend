@@ -305,12 +305,6 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
 
         //实体仓id集合
         List<String> warehouseIds = records.stream().map(obj -> obj.getWarehouseId()).distinct().collect(Collectors.toList());
-        //实体仓库存
-        InventoryQtyDTO.SkuInventoryStatusParamDTO dto = new InventoryQtyDTO.SkuInventoryStatusParamDTO();
-        dto.setWarehouseIdList(warehouseIds);
-        dto.setSkuIdList(skuIds);
-        dto.setInventoryStatusList(Arrays.asList(InventoryStatusEnum.USABLE.getCode(),InventoryStatusEnum.FROZEN.getCode()));
-        List<InventoryQtyDTO.SkuInventoryStatusTotalDTO> skuInventoryTotalList = inventoryService.listSkuInventory(dto);
         //调出虚拟仓id
         List<String> fromVirtualWarehouseIdList = records.stream().map(obj -> obj.getFromVirtualWarehouseId()).distinct().collect(Collectors.toList());
         //可用库存
@@ -337,11 +331,8 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
             Integer virtualScarceQty = MathUtil.ZERO;
             //新增分货
             if (VirtualWarehouseAllocationTypeEnum.ALLOCATION.getCode().equals(type)) {
-                //即时库存
-                Integer curInventoryQty = skuInventoryTotalList.stream().filter(s -> s.getSkuId().equals(record.getSkuId())
-                                && s.getWarehouseId().equals(record.getWarehouseId()))
-                        .mapToInt(InventoryQtyDTO.SkuInventoryStatusTotalDTO::getInventoryTotal).sum();
-                virtualScarceQty = totalQty > curInventoryQty ? totalQty - curInventoryQty : MathUtil.ZERO;
+
+                virtualScarceQty = totalQty > record.getUnDistributionQty() ? totalQty - record.getUnDistributionQty() : MathUtil.ZERO;
             }
             //调拨分货、取消分货
             if (VirtualWarehouseAllocationTypeEnum.TRANSFER.getCode().equals(type) || VirtualWarehouseAllocationTypeEnum.CANCEL.getCode().equals(type)) {
