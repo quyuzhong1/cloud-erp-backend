@@ -1308,6 +1308,8 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 		addDTO.setOutstockId(entity.getId());
 		addDTO.setOutstockCode(entity.getCode());
 		addDTO.setDeliveryTime(entity.getApproveTime());
+		addDTO.setOrderType(OrderTypeEnum.B2C.getCode());
+		addDTO.setShipmentType(ShipmentTypeEnum.SELF_DELIVER.getCode());
 		
 		List<LogisticsBillDetailDTO.AddDTO> detailList = new ArrayList<>();
 		LogisticsBillDetailDTO.AddDTO detailAdd = new LogisticsBillDetailDTO.AddDTO();
