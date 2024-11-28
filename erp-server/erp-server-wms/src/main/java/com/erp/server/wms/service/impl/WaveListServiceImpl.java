@@ -265,9 +265,9 @@ public class WaveListServiceImpl extends SuperServiceImpl<WaveListMapper, WaveLi
                 .set("picking_user_id", "")
                 .set("picking_user_name", "")
                 .set("picking_time", null)
-                .set("print_status", null)
+                .set("print_status", "")
                 .set("print_time", null)
-                .set("picking_print_status", null)
+                .set("picking_print_status",  "")
                 .set("picking_print_time", null);
         if(StringUtils.equals(waveListEntity.getStatus(), WaveStatusEnum.PICK_ING.getCode())) {
             updateWrapper.set("status", WaveStatusEnum.AWAIT_PICK.getCode());
@@ -277,6 +277,7 @@ public class WaveListServiceImpl extends SuperServiceImpl<WaveListMapper, WaveLi
             operateLogService.addModuleOperateLog(String.format("波次拣货单取消已打印【%s】，自动变更状态为待拣货", waveListEntity.getCode()), ModuleTypeEnum.WAVE_LIST.getCode(), waveId, "波次列表波次状态自动变更", user.getUid(), user.getUserName());
         }
         update(updateWrapper);
+        cleanPickingList(waveListEntity);
         return BatchResultDTO.success(waveListEntity.getId(), waveListEntity.getCode(), "成功");
     }
 
