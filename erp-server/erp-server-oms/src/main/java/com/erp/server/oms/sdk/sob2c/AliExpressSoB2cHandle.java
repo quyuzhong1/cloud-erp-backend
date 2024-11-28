@@ -283,55 +283,6 @@ public class AliExpressSoB2cHandle extends AbstractSoB2cHandle {
             soB2cService.removeSignError(mainEntity.getId(), SoB2cErrorTypeEnum.GENERATE_OUTSTOCK.getCode());
         }
     }
-
-//    /**
-//     * 新增速卖通发货单
-//     * @param dto
-//     * @param mainEntity
-//     * @param logisticsDTOS
-//     */
-//    private void addAliExpressDelivery(PlatformOrderDTO dto, SoB2cEntity mainEntity, List<PlatformOrderLogisticsDTO> logisticsDTOS, String warehouseName,List<PlatformDeliveryDetailDTO> detailDTOList) {
-//        AliexpressDeliveryDTO.AddDTO addDTO = new AliexpressDeliveryDTO.AddDTO();
-//        // 转化系统时区
-//        PlatformOrderLogisticsDTO logisticsDTO = logisticsDTOS.stream().findFirst().orElse(null);
-//        if (null == logisticsDTO){
-//            throw new ServiceException("发货时间为空");
-//        }
-//        LocalDateTime sourceDeliveryTime = logisticsDTO.getDeliveryTime();
-//        // 速卖通GMT时区转北京时区
-//        LocalDateTime targetDeliveryTime = DateUtil.convertZoneTime(sourceDeliveryTime,
-//                ZoneId.of("America/Los_Angeles"),
-//                ZoneId.of("Asia/Shanghai"));
-//        addDTO.setOutBoundTime(targetDeliveryTime);
-//        addDTO.setPlatformCode(mainEntity.getPlatformCode());
-//        addDTO.setSoId(mainEntity.getId());
-//        addDTO.setSoCode(mainEntity.getCode());
-//        addDTO.setShopId(mainEntity.getShopId());
-//        if (StringUtils.isNotBlank(mainEntity.getShopId())) {
-//            addDTO.setShopId(mainEntity.getShopId());
-//            ShopInfoEntity shopInfoEntity = shopInfoService.getById(mainEntity.getShopId());
-//            if (ObjectUtil.isNotEmpty(shopInfoEntity)) {
-//                addDTO.setShopName(shopInfoEntity.getName());
-//            }
-//        }
-//        addDTO.setTrackNo(logisticsDTOS.get(0).getCode());
-//        addDTO.setTradeCreateTime(dto.getPlatformOrderCreateTime());
-//        addDTO.setWarehouseName(warehouseName);
-//        addDTO.setPlatformDeliveryStatus(AliexpressDeliveryOrderStatusEnum.getCode(detailDTOList.get(0).getDeliveryStatusName()));
-//        List<AliexpressDeliveryDetailDTO.AddDTO> detailAddList = new ArrayList<>();
-//        for (PlatformDeliveryDetailDTO detailDTO : detailDTOList) {
-//            AliexpressDeliveryDetailDTO.AddDTO detailAddDTO = new AliexpressDeliveryDetailDTO.AddDTO();
-//            detailAddDTO.setOrderLineQty(detailDTO.getQty());
-//            detailAddDTO.setPlatformSku(detailDTO.getPlatformSkuNo());
-//            detailAddDTO.setSkuId(detailDTO.getSkuId());
-//            detailAddDTO.setSkuNo(detailDTO.getSkuNo());
-//            detailAddDTO.setPlatformDeliveryStatus(AliexpressDeliveryOrderStatusEnum.getCode(detailDTO.getDeliveryStatusName()));
-//            detailAddList.add(detailAddDTO);
-//        }
-//        addDTO.setDetailList(detailAddList);
-//        aliexpressDeliveryFeign.add(addDTO);
-//    }
-
     /**
      * 转换新中台刷新订单请求参数
      */
