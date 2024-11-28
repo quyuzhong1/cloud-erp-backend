@@ -43,6 +43,7 @@ public class HistorySalesQtyExcelListener extends AnalysisEventListener<CfgRuleC
         if (!CollectionUtils.isEmpty(msgList)) {
             data.setErrorMsg(String.join(",", msgList));
             errorList.add(data);
+            return;
         }
         Map<String, String> skuMap = skuVOS.stream()
                 .collect(Collectors.toMap(SkuVO::getSkuNo, SkuVO::getSkuId, (o1, o2) -> o1));
@@ -51,10 +52,12 @@ public class HistorySalesQtyExcelListener extends AnalysisEventListener<CfgRuleC
         if (!shopMap.containsKey(data.getShopName())) {
             data.setErrorMsg("该店铺不在已选中的试算店铺中");
             errorList.add(data);
+            return;
         }
         if (!skuMap.containsKey(data.getSkuNo())) {
             data.setErrorMsg("该sku不在已选中的试算sku中");
             errorList.add(data);
+            return;
         }
         //存在错误数据则直接返回
         if (!CollectionUtils.isEmpty(errorList)) {
