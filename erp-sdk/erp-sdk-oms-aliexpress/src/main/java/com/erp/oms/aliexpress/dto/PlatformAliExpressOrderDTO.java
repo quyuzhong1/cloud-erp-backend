@@ -316,7 +316,6 @@ public class PlatformAliExpressOrderDTO extends CleanBaseDTO {
         List<PlatformOrderDetailDTO> details = parseDetailList(detailNotNull ? detail.getChildOrderList() : Collections.emptyList(), warehouseName);
         orderDTO.setDetails(details);
 
-        orderDTO.setDeliveryDetailDTOList(parseDeliveryDetailList(dto.getAliExpressDeliveryDetailList()));
         PlatformOrderReceiverDTO receiverDTO = new PlatformOrderReceiverDTO();
         if (detailNotNull) {
             //收货信息
