@@ -34,24 +34,6 @@ public class FbaHistoryInventoryEntity extends BaseEntity<FbaHistoryInventoryEnt
     private String warehouseId;
 
     /**
-     * 平台sku
-     */
-    @TableField("asin")
-    private String asin;
-
-    /**
-     * 卖家sku
-     */
-    @TableField("msku")
-    private String msku;
-
-    /**
-     * FNSKU
-     */
-    @TableField("fn_sku")
-    private String fnSku;
-
-    /**
      * ERP的SKU
      */
     @TableField("sku_no")

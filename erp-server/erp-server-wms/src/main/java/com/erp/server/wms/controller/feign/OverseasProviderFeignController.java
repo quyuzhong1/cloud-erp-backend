@@ -8,6 +8,7 @@ import org.apache.xpath.operations.Bool;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
+import java.util.List;
 
 /**
  * 海外仓feign
@@ -53,5 +54,18 @@ public class OverseasProviderFeignController {
     @PostMapping("/feignBind")
     public Boolean feignBind(@RequestBody OverseasProviderDTO.FeignDTO feignDTO){
         return overseasProviderWarehouseService.feignBind(feignDTO);
+    }
+
+    /**
+     * 查询所有数据
+     */
+    @GetMapping("/listAllMatch")
+    public List<OverseasProviderDTO.ListWithWarehouseDTO> listAllMatch(){
+        return overseasProviderService.listAllMatch();
+    }
+
+    @GetMapping("/listProviderWarehouseBySql")
+    public List<String> listProviderWarehouseBySql(@RequestParam String compareCodeSplicingValueSql) {
+        return overseasProviderWarehouseService.listProviderWarehouseBySql(compareCodeSplicingValueSql);
     }
 }

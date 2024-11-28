@@ -135,6 +135,22 @@ public enum CfgRuleInventoryNodeEnum implements EnumMessage {
         return String.join(":", OVERSEAS_INVENTORY.getCode(), OVERSEAS_USABLE.getCode());
     }
 
+    public static String getOverseasInTransit() {
+        return String.join(":", OVERSEAS_INVENTORY.getCode(), OVERSEAS_IN_TRANSIT.getCode());
+    }
+
+    public static String getOverseasDeliveryPlanByManual() {
+        return String.join(":", OVERSEAS_INVENTORY.getCode(), OVERSEAS_ESTIMATED_DELIVERY.getCode(), OVERSEAS_DELIVERY_PLAN_BY_MANUAL.getCode());
+    }
+
+    public static String getOverseasDeliveryPlanByReplenishment() {
+        return String.join(":", OVERSEAS_INVENTORY.getCode(), OVERSEAS_ESTIMATED_DELIVERY.getCode(), OVERSEAS_DELIVERY_PLAN_BY_REPLENISHMENT.getCode());
+    }
+
+    public static String getOverseasReplenishmentPlan() {
+        return String.join(":", OVERSEAS_INVENTORY.getCode(), OVERSEAS_ESTIMATED_DELIVERY.getCode(), OVERSEAS_REPLENISHMENT_PLAN.getCode());
+    }
+
     public static String getTotalFbaInventory() {
         return String.join(":", TOTAL_ALL_INVENTORY.getCode(), TOTAL_INVENTORY.getCode(), TOTAL_FBA_INVENTORY.getCode());
     }

@@ -60,4 +60,5 @@ public interface CfgRuleWarehouseDetailService extends SuperService<CfgRuleWareh
      * @return List<CfgRuleWarehouseDetailEntity>
      */
     List<CfgRuleWarehouseDetailEntity> listRefreshVirtual(List<String> warehouseIdList, List<String> virtualWarehouseIdList, List<String> dictPlatformList, String type);
+
 }

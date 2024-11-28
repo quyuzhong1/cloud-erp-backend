@@ -1,4 +1,5 @@
 package com.erp.server.tms.mapper;
+import com.common.business.enums.OmsPlatformEnum;
 import com.erp.model.tms.dto.LogisticsAuthDTO;
 import com.erp.model.tms.dto.LogisticsSupplierDTO;
 import com.erp.model.tms.entity.LogisticsAuthEntity;
@@ -27,5 +28,9 @@ public interface LogisticsAuthMapper extends BaseMapper<LogisticsAuthEntity> {
 
     LogisticsSupplierDTO.AuthDTO getAuthBySupplierId(@Param("logisticsSupplierId") String logisticsSupplierId);
 
-
+    /**
+     * 查询所有渠道
+     * @param list 平台
+     */
+    List<String> listAllChannelByOverseas(@Param("list") List<String> list);
 }

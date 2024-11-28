@@ -235,10 +235,13 @@ public class ReplenishmentSuggestionDTO implements Serializable {
         private String code;
 
         /**
-         * 创建类型
+         * 数据类型
          */
-        private String createType;
-
+        private String dataType;
+        /**
+         * 数据类型名称
+         */
+        private String dataTypeName;
         /**
          * SKUID
          */
@@ -282,11 +285,6 @@ public class ReplenishmentSuggestionDTO implements Serializable {
          * 物流成本
          */
         private BigDecimal logisticsCost;
-
-        /**
-         * 创建方式
-         */
-        private String createTypeName;
 
         /**
          * 创建人
@@ -345,10 +343,13 @@ public class ReplenishmentSuggestionDTO implements Serializable {
         private String code;
 
         /**
-         * 创建类型
+         * 数据类型
          */
-        private String createType;
-
+        private String dataType;
+        /**
+         * 数据类型名称
+         */
+        private String dataTypeName;
         /**
          * SKUID
          */
@@ -396,11 +397,6 @@ public class ReplenishmentSuggestionDTO implements Serializable {
          * 预计采购成本（系统）
          */
         private BigDecimal purchaseCost;
-
-        /**
-         * 创建方式
-         */
-        private String createTypeName;
 
         /**
          * 创建人

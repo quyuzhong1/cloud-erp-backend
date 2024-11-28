@@ -600,11 +600,12 @@
         li.third_barcode as thirdBarcode,
         li.platform_spu_no as platformSpuNo,
         li.platform_spu_name as platformSpuName,
-        li.platform_fn_sku as platformFnSku
+        li.platform_fn_sku as platformFnSku,
+        op.short_name
         from sku_mapping sm
-        inner join listing_info li on sm.listing_id = li.id
+        inner join listing_info li on sm.listing_id = li.id and li.is_deleted = false
+        LEFT JOIN overseas_provider op on op.id = li.auth_id and op.is_deleted = false
         where sm.is_deleted = false
-        and li.is_deleted = false
         and sm.is_expire = false
         <if test="params.type != null and params.type != ''">
             AND li.type = #{params.type} AND sm.type = #{params.type}

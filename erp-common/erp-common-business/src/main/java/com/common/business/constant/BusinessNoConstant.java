@@ -147,6 +147,10 @@ public interface BusinessNoConstant {
     String JHC = "JHC";
     //拣货波次
     String JHBC = "JHBC";
+    String JSRQ = "JSRQ";
+    String S = "S";
+    String P = "P";
+    String PP = "PP";
     //退料单
     String TLD = "TLD";
     String QCFT = "QCFT";
@@ -154,9 +158,9 @@ public interface BusinessNoConstant {
     //试产量产
     String SCLC = "SCLC";
     String FHBG = "FHBG";
-    String JSRQ = "JSRQ";
     String FHJY = "FHJY";
     String CGJY = "CGJY";
     String THD = "THD";
     String TKD = "TKD";
+    String XLSS = "XLSS";
 }

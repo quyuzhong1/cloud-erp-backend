@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.mrp.mapper.PurchaseSuggestMergeMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.mrp.entity.PurchaseSuggestMergeEntity">
+       <result column="id" property="id" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_time" property="createTime" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_time" property="updateTime" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="code" property="code" />
+       <result column="data_type" property="dataType" />
+       <result column="suggest_purchase_qty" property="suggestPurchaseQty" />
+       <result column="suggest_purchase_date" property="suggestPurchaseDate" />
+       <result column="logistics_method" property="logisticsMethod" />
+       <result column="logistics_days" property="logisticsDays" />
+       <result column="estimate_instock_date" property="estimateInstockDate" />
+       <result column="estimate_sales_date" property="estimateSalesDate" />
+       <result column="purchase_cost" property="purchaseCost" />
+       <result column="invalid_status" property="invalidStatus" />
+       <result column="invalid_remark" property="invalidRemark" />
+       <result column="source_id_json" property="sourceIdJson" jdbcType="OTHER"  typeHandler="com.erp.server.mrp.handler.ObjectJsonArrayHandler" />
+       <result column="source_type" property="sourceType" />
+       <result column="currency" property="currency" />
+       <result column="platform_type" property="platformType" />
+       <result column="platform" property="platform" />
+       <result column="shop_id" property="shopId" />
+       <result column="sku_id" property="skuId" />
+       <result column="status" property="status" />
+       <result column="plan_purchase_qty" property="planPurchaseQty" />
+       <result column="purchase_stock_up_qty" property="purchaseStockUpQty" />
+       <result column="remark" property="remark" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        psm.id,
+        psm.create_user_id as createUserId,
+        psm.create_user_name as createUserName,
+        psm.create_time as createTime,
+        psm.update_user_id as updateUserId,
+        psm.update_user_name as updateUserName,
+        psm.update_time as updateTime,
+        psm.code,
+        psm.data_type as dataType,
+        psm.suggest_purchase_qty as suggestPurchaseQty,
+        pss.suggest_purchase_qty as sysSuggestPurchaseQty,
+        psm.suggest_purchase_date as suggestPurchaseDate,
+        pss.suggest_purchase_date as sysSuggestPurchaseDate,
+        psm.logistics_method as logisticsMethod ,
+        pss.logistics_method as sysLogisticsMethod ,
+        psm.logistics_days as logisticsDays,
+        pss.logistics_days as sysLogisticsDays,
+        psm.estimate_instock_date as estimateInstockDate,
+        pss.estimate_instock_date as sysEstimateInstockDate,
+        psm.estimate_sales_date as estimateSalesDate,
+        pss.estimate_sales_date as sysEstimateSalesDate,
+        psm.purchase_cost as purchaseCost,
+        psm.invalid_status as invalidStatus,
+        psm.invalid_remark as invalidRemark,
+        psm.invalid_time as invalidTime,
+        psm.invalid_user_id as invalidUserId,
+        psm.invalid_user_name as invalidUserName,
+        psm.source_id_json as sourceIdJson,
+        psm.source_type as sourceType,
+        psm.currency,
+        psm.platform_type as platformType,
+        psm.platform,
+        psm.shop_id as shopId,
+        psm.sku_id as skuId,
+        psm.status,
+        psm.plan_purchase_qty as planPurchaseQty,
+        psm.purchase_stock_up_qty as purchaseStockUpQty,
+        psm.remark,
+        psm.bom_version
+    </sql>
+
+    <!-- 分页查询 -->
+    <select id="paging" resultType="com.erp.model.mrp.dto.PurchaseSuggestMergeDTO$ListDTO">
+        select
+            <include refid="Base_Column_List"/>
+        ,pd.sku_no as skuNo,pd.name as productName,pd.images_url as imagesUrl
+        from  purchase_suggest_merge psm
+        left join purchase_suggest_sys pss on psm.id = pss.source_id and pss.is_deleted = false
+        left join product_detail pd on psm.sku_id = pd.id and pd.is_deleted = false
+        <where>
+            ${params.sqlMap.default}
+            and psm.is_deleted = false
+            <if test="params.permissionSql != null and params.permissionSql != ''">
+                ${params.permissionSql}
+            </if>
+        </where>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        psm.sku_id,psm.id desc
+    </select>
+
+
+</mapper>

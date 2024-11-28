@@ -1,6 +1,8 @@
 package com.erp.server.mrp.service;
 
+import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.SuperService;
+import com.common.business.vo.PagingVO;
 import com.erp.model.mrp.dto.InventoryTotalDTO;
 import com.erp.model.mrp.dto.ReplenishmentResultDTO;
 import com.erp.model.mrp.entity.ReplenishmentInventoryDetailEntity;
@@ -26,7 +28,7 @@ public interface ReplenishmentInventoryDetailService extends SuperService<Replen
     /**
      * 获取库存明细
      */
-    List<InventoryDetailVO> inventoryDetail(InventoryTotalDTO params);
+    PagingVO<InventoryDetailVO> inventoryDetail(PagingDTO<InventoryTotalDTO> params);
 
     /**
      * 保存库存明细及店铺明细

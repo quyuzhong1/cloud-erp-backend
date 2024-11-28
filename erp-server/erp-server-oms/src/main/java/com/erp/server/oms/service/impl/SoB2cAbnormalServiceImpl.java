@@ -1,6 +1,7 @@
 package com.erp.server.oms.service.impl;
 
 import cn.hutool.core.util.ObjUtil;
+import com.alibaba.fastjson.JSON;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
@@ -15,6 +16,9 @@ import com.erp.rpc.wms.feign.SoOutstockFeign;
 import com.erp.server.oms.service.SoB2cAbnormalService;
 import com.erp.server.oms.service.SoB2cErrorService;
 import com.erp.server.oms.service.SoB2cService;
+import org.apache.commons.collections4.CollectionUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -22,6 +26,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * @description: b2c异常订单实现
@@ -31,6 +36,7 @@ import java.util.List;
 @Service
 public class SoB2cAbnormalServiceImpl implements SoB2cAbnormalService {
 
+    private static final Logger log = LoggerFactory.getLogger(SoB2cAbnormalServiceImpl.class);
     @Resource
     private SoB2cService soB2cService;
 
@@ -108,6 +114,18 @@ public class SoB2cAbnormalServiceImpl implements SoB2cAbnormalService {
                 break;
         }
         return resultDTOList;
+    }
+
+    @Override
+    public void clearAbnormal(List<String> ids) {
+        List<SoB2cEntity> soB2cEntityList = soB2cService.listByIds(ids);
+        if(CollectionUtils.isEmpty(soB2cEntityList)){
+            return;
+        }
+        List<String> codes = soB2cEntityList.stream().map(SoB2cEntity::getCode).collect(Collectors.toList());
+        soB2cEntityList.forEach(v->v.setSignOrderError(""));
+        soB2cService.updateBatchById(soB2cEntityList);
+        log.error("清除异常销售订单异常：{}", JSON.toJSONString(codes));
     }
 
 }

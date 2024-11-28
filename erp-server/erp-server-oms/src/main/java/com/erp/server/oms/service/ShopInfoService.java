@@ -334,6 +334,8 @@ public interface ShopInfoService extends SuperService<ShopInfoEntity> {
      * 导出店铺
      */
     PagingVO<ShopDTO.PagingViewDTO> exportShop(PagingDTO<ShopDTO.ExportDTO> dto);
+
+    PagingVO<SkuMappingDTO.SyncPlatformProductView> pageAuthShop(PagingDTO<AdvanceQueryContainer> advanceQueryDTO, List<String> shopIds);
     /**
      * 区域远程搜索
      * @author will
@@ -363,5 +365,4 @@ public interface ShopInfoService extends SuperService<ShopInfoEntity> {
      */
     Boolean checkAndSaveAllAmazonToken(AmazonTokenUpdateDTO updateDTO);
 
-    PagingVO<SkuMappingDTO.SyncPlatformProductView> pageAuthShop(PagingDTO<AdvanceQueryContainer> advanceQueryDTO, List<String> shopIds);
 }

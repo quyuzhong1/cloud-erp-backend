@@ -44,6 +44,7 @@ public interface ShopInfoMapper extends BaseMapper<ShopInfoEntity> {
 
     Page<ShopDTO.PagingViewDTO> listExport(@Param("page") Page<ShopDTO.PagingViewDTO> page,@Param("params") ShopDTO.ExportDTO dto);
 
+    IPage<SkuMappingDTO.SyncPlatformProductView> pageAuthShop(@Param("page") Page query, @Param("params") AdvanceQueryContainer advanceQueryDTO, @Param("shopIds") List<String> shopIds);
     /**
      * 分页查询区域
      * @author will
@@ -53,5 +54,4 @@ public interface ShopInfoMapper extends BaseMapper<ShopInfoEntity> {
      * @return IPage<AreaDTO>
      */
     IPage<ShopDTO.AreaDTO> pagingSelectArea(Page query,@Param("params") ShopDTO.AreaParamDTO params);
-    IPage<SkuMappingDTO.SyncPlatformProductView> pageAuthShop(@Param("page") Page query, @Param("params") AdvanceQueryContainer advanceQueryDTO, @Param("shopIds") List<String> shopIds);
 }

@@ -52,4 +52,12 @@ public interface WmsDeliveryPlanDetailService extends SuperService<WmsDeliveryPl
      * @return void
      **/
     Boolean removeByMainIds(List<String> mainIds);
+    /**
+     * 根据发货计划明细查询
+     * @author will
+     * @date 2024/10/23 10:01
+     * @param idList
+     * @return List<WmsDeliveryPlanDetailEntity>
+     */
+    List<WmsDeliveryPlanDetailEntity> listBySourceIdList(List<String> idList);
 }

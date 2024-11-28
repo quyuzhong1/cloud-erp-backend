@@ -49,4 +49,11 @@ public interface CfgRuleLogisticsService extends SuperService<CfgRuleLogisticsEn
      * @param stockUpId
      */
     void deleteByStockUpId(String stockUpId);
+    /**
+     * 下拉物流信息
+     * @author will
+     * @date 2024/10/29 10:19
+     * @return List<SelectLogisticsDTO>
+     */
+    List<CfgRuleLogisticsDTO.SelectLogisticsDTO> selectLogistics(CfgRuleLogisticsDTO.SelectLogisticsParamDTO paramDTO);
 }

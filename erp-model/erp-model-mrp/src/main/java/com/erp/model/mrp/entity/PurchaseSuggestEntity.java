@@ -10,6 +10,7 @@ import lombok.experimental.Accessors;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 
 /**
@@ -32,10 +33,10 @@ public class PurchaseSuggestEntity extends BaseEntity<PurchaseSuggestEntity> {
     @TableField("code")
     private String code;
     /**
-    * 创建类型（auto系统，manual人工）
+    * 数据类型（auto系统，manual人工）
     */
-    @TableField("create_type")
-    private String createType;
+    @TableField("data_type")
+    private String dataType;
     /**
     * 建议采购量
     */
@@ -82,6 +83,11 @@ public class PurchaseSuggestEntity extends BaseEntity<PurchaseSuggestEntity> {
     @TableField("invalid_remark")
     private String invalidRemark;
     /**
+     * 状态
+     */
+    @TableField("status")
+    private String status;
+    /**
     * 来源id
     */
     @TableField("source_id")
@@ -92,6 +98,75 @@ public class PurchaseSuggestEntity extends BaseEntity<PurchaseSuggestEntity> {
     @TableField("source_type")
     private String sourceType;
 
+    /**
+     * 币别
+     */
+    @TableField("currency")
+    private String currency;
+
+    /**
+     * 平台类型
+     */
+    @TableField("platform_type")
+    private String platformType;
+
+    /**
+     * 平台
+     */
+    @TableField("platform")
+    private String platform;
+
+    /**
+     * 店铺id
+     */
+    @TableField("shop_id")
+    private String shopId;
+
+    /**
+     * skuid
+     */
+    @TableField("sku_id")
+    private String skuId;
+
+    /**
+     * 计划采购量（计划修正值）
+     */
+    @TableField("plan_purchase_qty")
+    private Integer planPurchaseQty;
+
+    /**
+     * 采购备货量
+     */
+    @TableField("purchase_stock_up_qty")
+    private Integer purchaseStockUpQty;
+
+    /**
+     * 备注
+     */
+    @TableField("remark")
+    private String remark;
+    /**
+     * 作废时间
+     */
+    @TableField("invalid_time")
+    private LocalDateTime invalidTime;
+    /**
+     * 作废人id
+     */
+    @TableField("invalid_user_id")
+    private String invalidUserId;
+    /**
+     * 作废人名称
+     */
+    @TableField("invalid_user_name")
+    private String invalidUserName;
+
+
+    /**
+     * bom版本
+     */
+    @TableField(exist = false)
+    private String bomVersion;
 
     public static final String CODE = "code";
 
