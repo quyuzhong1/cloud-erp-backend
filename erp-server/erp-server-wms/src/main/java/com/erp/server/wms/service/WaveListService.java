@@ -140,4 +140,8 @@ public interface WaveListService extends SuperService<WaveListEntity> {
      * 波次列表波次状态自动变更
      */
     void waveListStatusAutoChange(String deliveryId);
+    /**
+     * 格努波次id删除拣货单
+     */
+    void cleanPickingList( WaveListEntity waveListEntity);
 }

@@ -27,6 +27,8 @@ import com.erp.model.wms.dto.WaveListDTO;
 import com.erp.model.wms.dto.pickingstrategy.PickingListsDTO;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.*;
+import com.erp.server.wms.mapper.PickingDetailMapper;
+import com.erp.server.wms.mapper.PickingListsMapper;
 import com.erp.server.wms.mapper.WaveListCartTypeMapper;
 import com.erp.server.wms.mapper.WaveListMapper;
 import com.erp.server.wms.service.*;
@@ -57,6 +59,11 @@ public class WaveListServiceImpl extends SuperServiceImpl<WaveListMapper, WaveLi
     private WaveListCartTypeMapper waveListCartTypeMapper;
     @Resource
     private PickingListsService pickingListsService;
+
+    @Resource
+    private PickingDetailMapper pickingDetailMapper;
+    @Resource
+    private PickingListsMapper pickingListsMapper;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -250,44 +257,40 @@ public class WaveListServiceImpl extends SuperServiceImpl<WaveListMapper, WaveLi
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO cancelPrinted(String waveId) {
-        /*WaveListDetailDTO.ViewDTO viewDTO = waveListDetailService.view(waveId);
-        for (WaveListDetailDTO.DeliveryInfoDTO deliveryDto : viewDTO.getDeliveryInfoList()) {
-            Integer pickedSumQty = deliveryDto.getPickedSumQty();
-            if(pickedSumQty != 0){
-                return BatchResultDTO.fail(waveId, viewDTO.getCode(), "已部分拣货，无法取消打印");
-            }
-        }*/
         WaveListEntity waveListEntity = getById(waveId);
-        if(! StringUtils.equals(waveListEntity.getStatus(), WaveStatusEnum.AWAIT_PICK.getCode())) {
-            return BatchResultDTO.fail(waveListEntity.getId(), waveListEntity.getCode(), "已部分拣货，无法取消打印");
-        }
-
-        update(new UpdateWrapper<WaveListEntity>()
+        UpdateWrapper<WaveListEntity> updateWrapper = new UpdateWrapper<WaveListEntity>()
                 .eq("id", waveId)
-                .set("status", WaveStatusEnum.AWAIT_PICK.getCode())
                 .set("picking_user_id", "")
                 .set("picking_user_name", "")
                 .set("picking_time", null)
+                .set("print_status", null)
                 .set("print_time", null)
                 .set("picking_print_status", null)
-                .set("picking_print_time", null)
-        );
-        //记录日志
-        LoginUser user = UserContext.getNonLoginUser();
-        operateLogService.addModuleOperateLog(String.format("取消已打印【%s】", waveListEntity.getCode()), ModuleTypeEnum.WAREHOUSE_LOCATION_REPLENISH.getCode(), waveListEntity.getId(), "取消打印操作", user.getUid(), user.getUserName());
-
-        //波次状态自动变更
-        //校验波次状态是否为待拣货
-        LoginUser loginUser = UserContext.getDefaultLoginUser();
-        String status = waveListEntity.getStatus();
-        if(status.equals(WaveStatusEnum.PICK_ING.getCode())){
-            update(new UpdateWrapper<WaveListEntity>()
-                    .set("status",WaveStatusEnum.AWAIT_PICK.getCode())
-                    .eq("id", waveId));
-            operateLogService.addModuleOperateLog("波次拣货单取消打印，自动变更状态为待拣货", ModuleTypeEnum.WAREHOUSE_LOCATION_REPLENISH.getCode(), waveId, "波次列表波次状态自动变更", loginUser.getUid(), loginUser.getUserName());
+                .set("picking_print_time", null);
+        if(StringUtils.equals(waveListEntity.getStatus(), WaveStatusEnum.PICK_ING.getCode())) {
+            updateWrapper.set("status", WaveStatusEnum.AWAIT_PICK.getCode());
+            //记录日志
+            LoginUser user = UserContext.getNonLoginUser();
+            //波次状态自动变更
+            operateLogService.addModuleOperateLog(String.format("波次拣货单取消已打印【%s】，自动变更状态为待拣货", waveListEntity.getCode()), ModuleTypeEnum.WAVE_LIST.getCode(), waveId, "波次列表波次状态自动变更", user.getUid(), user.getUserName());
         }
+        update(updateWrapper);
         return BatchResultDTO.success(waveListEntity.getId(), waveListEntity.getCode(), "成功");
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void cleanPickingList(WaveListEntity waveListEntity){
+        if(null != waveListEntity && StringUtils.isNotBlank(waveListEntity.getId())) {
+            pickingListsMapper.deleteByWaveIds(Collections.singletonList(waveListEntity.getId()));
+            pickingDetailMapper.deleteByWaveIds(Collections.singletonList(waveListEntity.getId()));
+            //记录日志
+            LoginUser user = UserContext.getNonLoginUser();
+            //波次状态自动变更
+            operateLogService.addModuleOperateLog(String.format("波次拣货单取消已打印【%s】，清除拣货单数量", waveListEntity.getCode()), ModuleTypeEnum.PICKING_LISTS.getCode(), waveListEntity.getId(), "波次列表取消打印--清除拣货单数量", user.getUid(), user.getUserName());
+        }
     }
 
     @Override

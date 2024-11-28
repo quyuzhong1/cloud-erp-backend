@@ -41,4 +41,6 @@ public interface PickingListsMapper extends BaseMapper<PickingListsEntity> {
      * @return
      */
     List<PickingListsDTO.DetailPickDTO> listRequitDetailBySourceIds(@Param("sourceIds") List<String> sourceIds);
+
+    int deleteByWaveIds(@Param("waveIds") List<String> waveIds);
 }

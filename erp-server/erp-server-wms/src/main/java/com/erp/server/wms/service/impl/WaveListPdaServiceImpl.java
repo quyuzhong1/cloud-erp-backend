@@ -32,9 +32,9 @@ import com.erp.server.wms.mapper.WaveListPdaMapper;
 import com.erp.server.wms.service.*;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -191,13 +191,14 @@ public class WaveListPdaServiceImpl extends SuperServiceImpl<WaveListPdaMapper, 
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public ApiResult<?> exitPicking(WaveListDetailPdaDTO.ExitPickingDTO exitDTO) {
         waveListService.update(new UpdateWrapper<WaveListEntity>()
                 .eq("id", exitDTO.getId())
                 .set("picking_cart_code", "")
                 .set("picking_cart_type", "")
                 .set("is_out_stock", false)
-                .set("status", WaveStatusEnum.AWAIT_PICK.getCode()));
+                .set("status", WaveStatusEnum.PICK_ING.getCode()));
         List<WaveListDetailEntity> waveDetailList = waveDetailService.list(new LambdaQueryWrapper<WaveListDetailEntity>().eq(WaveListDetailEntity::getMainId, exitDTO.getId()));
         if(! waveDetailList.isEmpty()){
             List<String> deliveryIds = waveDetailList.stream().map(WaveListDetailEntity::getDeliveryId).collect(Collectors.toList());
@@ -205,6 +206,8 @@ public class WaveListPdaServiceImpl extends SuperServiceImpl<WaveListPdaMapper, 
             List<String> pickingDetailIds = pickingDetailList.stream().map(BaseEntity::getId).collect(Collectors.toList());
             pickingDetailService.update(new LambdaUpdateWrapper<PickingDetailEntity>().set(PickingDetailEntity::getIsOutStock, false).in(PickingDetailEntity::getId, pickingDetailIds));
         }
+        //清除拣货单
+        waveListService.cleanPickingList(waveListService.getById(exitDTO.getId()));
         return ApiResult.success();
     }
 
