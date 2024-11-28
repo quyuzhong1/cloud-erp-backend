@@ -45,6 +45,11 @@ public class CfgRuleCalcDTO implements Serializable {
         private List<String> skuIds;
 
         /**
+         * sku
+         */
+        private List<SkuDTO> skuList;
+
+        /**
          * 试算开始日期
          */
         private LocalDate startCalcDate;
@@ -303,5 +308,20 @@ public class CfgRuleCalcDTO implements Serializable {
          */
         private LocalDate billDate;
 
+    }
+
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class SkuDTO {
+        /**
+         * SKU
+         */
+        private String skuId;
+        /**
+         * SKU
+         */
+        private String skuNo;
     }
 }

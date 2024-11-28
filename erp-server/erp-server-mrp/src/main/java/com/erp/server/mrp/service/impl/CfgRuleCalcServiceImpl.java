@@ -263,6 +263,11 @@ public class CfgRuleCalcServiceImpl extends SuperServiceImpl<CfgRuleCalcMapper, 
         CfgRuleCalcDTO.ViewDTO dto = BeanMapperUtils.map(CfgRuleCalcDTO.ViewDTO.class, cfgRuleCalc);
         dto.setSkuIds(cfgRuleCalc.getSkuJson().toList(String.class));
         dto.setShopIds(cfgRuleCalc.getShopJson().toList(String.class));
+        List<SkuVO> skuVOS = plmTaskFeign.listSkuProductByIds(dto.getSkuIds());
+        List<CfgRuleCalcDTO.SkuDTO> skuDTOList = skuVOS.stream()
+                .map(v -> new CfgRuleCalcDTO.SkuDTO(v.getSkuId(), v.getSkuNo()))
+                .collect(Collectors.toList());
+        dto.setSkuList(skuDTOList);
         List<CfgRuleSalesFormulaCalcEntity> formulaList = cfgRuleSalesFormulaCalcService.listByCfgRuleCalcId(id);
 
         //默认日销量
