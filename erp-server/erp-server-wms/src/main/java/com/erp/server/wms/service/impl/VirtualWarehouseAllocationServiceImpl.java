@@ -325,6 +325,8 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
             //总数
             Integer totalQty = virtualWarehouseAllocationDetailList.stream().filter(obj ->
                             CharSequenceUtil.equals(obj.getMainId(), record.getId())
+                                    && CharSequenceUtil.equals(obj.getWarehouseId(), record.getWarehouseId())
+                                    && CharSequenceUtil.equals(obj.getFromVirtualWarehouseId(), record.getFromVirtualWarehouseId())
                                     && CharSequenceUtil.equals(obj.getSkuId(), record.getSkuId()))
                     .map(VirtualWarehouseAllocationDetailEntity::getQty).reduce(MathUtil.ZERO, Integer::sum);
             String type = record.getType();
@@ -340,6 +342,7 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
                 Integer virtualUsableQty = virtualInventoryList.stream().filter(obj ->
                                 CharSequenceUtil.equals(InventoryStatusEnum.USABLE.getCode(), obj.getDictInventoryStatus())
                                 && CharSequenceUtil.equals(obj.getSkuId(), record.getSkuId())
+                                && CharSequenceUtil.equals(obj.getWarehouseId(), record.getWarehouseId())
                                 && CharSequenceUtil.equals(obj.getVirtualWarehouseId(),record.getFromVirtualWarehouseId()))
                         .map(VirtualInventoryDTO.VirtualInventoryQtyDTO::getInventoryQty).reduce(MathUtil.ZERO, Integer::sum);
                 virtualScarceQty = totalQty > virtualUsableQty ? totalQty - virtualUsableQty : MathUtil.ZERO;
