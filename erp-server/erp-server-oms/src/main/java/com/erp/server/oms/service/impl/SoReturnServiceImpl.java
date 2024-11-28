@@ -1074,6 +1074,8 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
         SoReturnEntity byId = this.getById(id);
         SoReturnDTO.SoReturnEntityDTO dto = new SoReturnDTO.SoReturnEntityDTO();
         BeanMapper.copy(byId, dto);
+        List<SoReturnDetailEntity> list = soReturnDetailService.lambdaQuery().eq(SoReturnDetailEntity::getMainId, id).list();
+        dto.setExchangeRate(list.get(0).getExchangeRate());
         return dto;
     }
 
