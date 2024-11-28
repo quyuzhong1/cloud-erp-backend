@@ -450,11 +450,9 @@ public class WaveListServiceImpl extends SuperServiceImpl<WaveListMapper, WaveLi
             Map<String, List<WaveListDTO.WaveDeliveryStatusDTO>> map = waveDeliveryStatusList.stream().collect(Collectors.groupingBy(WaveListDTO.WaveDeliveryStatusDTO::getId));
             for (Map.Entry<String, List<WaveListDTO.WaveDeliveryStatusDTO>> wave : map.entrySet()) {
                 String waveId = wave.getKey();
-                //发货单状态全匹配已发货
-                boolean isShipped = wave.getValue().stream().allMatch(item -> item.getStatus().equals(SoB2cDeliveryStatusEnum.SHIPPED.getStatus()));
-                //发货单状态全匹配取消发货
-                boolean iscCancelDelivery = wave.getValue().stream().allMatch(item -> item.getStatus().equals(SoB2cDeliveryStatusEnum.CANCEL_DELIVERY.getStatus()));
-                if(isShipped||iscCancelDelivery){
+                //发货单状态全匹配已发货或取消发货
+                boolean isShipped = wave.getValue().stream().allMatch(item -> item.getStatus().equals(SoB2cDeliveryStatusEnum.SHIPPED.getStatus()) || item.getStatus().equals(SoB2cDeliveryStatusEnum.CANCEL_DELIVERY.getStatus()));
+                if(isShipped){
                     //更新波次状态为已完成
                     this.lambdaUpdate().set(WaveListEntity::getStatus,WaveStatusEnum.FINISH.getCode()).eq(WaveListEntity::getId, waveId).update();
                     operateLogService.addModuleOperateLog("波次下发货单完结，自动变更状态为已完成", ModuleTypeEnum.WAVE_LIST.getCode(), waveId, "波次列表波次状态自动变更");
