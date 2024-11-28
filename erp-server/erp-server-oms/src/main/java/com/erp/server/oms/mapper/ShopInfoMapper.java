@@ -54,5 +54,4 @@ public interface ShopInfoMapper extends BaseMapper<ShopInfoEntity> {
      * @return IPage<AreaDTO>
      */
     IPage<ShopDTO.AreaDTO> pagingSelectArea(Page query,@Param("params") ShopDTO.AreaParamDTO params);
-    IPage<SkuMappingDTO.SyncPlatformProductView> pageAuthShop(@Param("page") Page query, @Param("params") AdvanceQueryContainer advanceQueryDTO, @Param("shopIds") List<String> shopIds);
 }

@@ -365,5 +365,4 @@ public interface ShopInfoService extends SuperService<ShopInfoEntity> {
      */
     Boolean checkAndSaveAllAmazonToken(AmazonTokenUpdateDTO updateDTO);
 
-    PagingVO<SkuMappingDTO.SyncPlatformProductView> pageAuthShop(PagingDTO<AdvanceQueryContainer> advanceQueryDTO, List<String> shopIds);
 }

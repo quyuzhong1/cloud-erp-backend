@@ -16,7 +16,6 @@ import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
@@ -1076,73 +1075,6 @@ public class SkuMappingDTO implements Serializable {
     }
 
 
-    @Data
-    @NoArgsConstructor
-    public static class SyncPlatformProductView {
-        /**
-         * 店铺id
-         */
-        private String shopId;
-        /**
-         * 店铺名称
-         */
-        private String shopName;
-        /**
-         * 授权状态
-         */
-        private String authStatus;
-        /**
-         * 授权状态
-         */
-        private String authStatusName;
-        /**
-         * 最近同步时间
-         */
-        private LocalDateTime lastSyncTime;
-        /**
-         * 同步结果
-         */
-        private String syncResult;
-    }
-
-    @Data
-    @NoArgsConstructor
-    public static class SyncWarehouseProductView {
-        /**
-         * 授权id
-         */
-        private String authId;
-        /**
-         * 三方仓服务商code
-         */
-        private String warehouseProvideCode;
-        /**
-         * 三方仓服务商名称
-         */
-        private String warehouseProvideName;
-        /**
-         * 账号
-         */
-        private String account;
-
-        /**
-         * 授权状态
-         */
-        private String authStatus;
-
-        /**
-         * 授权状态Name
-         */
-        private String authStatusName;
-        /**
-         * 最近同步时间
-         */
-        private LocalDateTime lastSyncTime;
-        /**
-         * 同步结果
-         */
-        private String syncResult;
-    }
 
     @Data
     @NoArgsConstructor
