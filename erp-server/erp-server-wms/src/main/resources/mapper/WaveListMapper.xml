@@ -64,6 +64,7 @@
                 wl.picking_user_id,
                 wl.picking_user_name,
                 wl.picking_time,
+                wl.print_time,
                 wl.is_out_stock,
                 wl.picking_print_status,
                 wl.picking_print_time
