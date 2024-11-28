@@ -1097,21 +1097,24 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
         }
 
         List<MachineRefSoEntity> refList = new ArrayList<>();
+        List<String> useIdList = new ArrayList<>();
         for (MachineDetailEntity machineDetailEntity : detailEntityList) {
             FirstMileDeliveryDetailEntity deliveryDetailEntity = deliveryDetailList.stream().filter(obj ->
                     CharSequenceUtil.equals(obj.getSkuId(), machineDetailEntity.getSkuId())
                             && CharSequenceUtil.equals(obj.getWarehouseLocation(), machineDetailEntity.getWarehouseLocation())
                             && MathUtil.compareTo(obj.getDeliveryQty(), machineDetailEntity.getQty()) == MathUtil.ZERO
+                            && !useIdList.contains(obj.getId())
             ).findFirst().orElse(null);
             if (ObjUtil.isEmpty(deliveryDetailEntity)) {
                 return BatchResultDTO.fail(entity.getId(),entity.getCode(),CharSequenceUtil.format("id = {},未找到头程发货明细数据",machineDetailEntity.getId()));
             }
             MachineRefSoEntity refSoEntity = new MachineRefSoEntity();
-            refSoEntity.setMachineDetailId(machineDetailEntity.getMainId());
+            refSoEntity.setMachineDetailId(machineDetailEntity.getId());
             refSoEntity.setMachineId(id);
             refSoEntity.setSoId(firstMileDeliveryEntity.getId());
             refSoEntity.setSoCode(firstMileDeliveryEntity.getCode());
-            refSoEntity.setSoDetailId(firstMileDeliveryEntity.getId());
+            refSoEntity.setSoDetailId(deliveryDetailEntity.getId());
+            useIdList.add(deliveryDetailEntity.getId());
             refList.add(refSoEntity);
         }
         if (CollUtil.isNotEmpty(refList)) {
