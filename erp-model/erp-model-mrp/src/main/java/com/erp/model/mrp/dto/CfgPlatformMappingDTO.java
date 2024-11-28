@@ -4,10 +4,12 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.time.LocalDate;
+import java.util.List;
 
 /**
  * <p>
@@ -56,7 +58,7 @@ public class CfgPlatformMappingDTO implements Serializable {
         private String platformName;
 
         /**
-         * 类型
+         * 类型,amazonPlatform 亚马逊平台， overseasPlatform海 外平台，internalPlatform 国内平台，b2bPlatform B2B平台
          */
         private String type;
 
@@ -67,6 +69,22 @@ public class CfgPlatformMappingDTO implements Serializable {
     }
 
     /**
+     * 详情（代id）
+     */
+    @Data
+    @NoArgsConstructor
+    public static class MainViewDTO {
+        /**
+         * 主键id
+         */
+        private String id;
+        /**
+         * 详情数据
+         */
+        private List<ViewDTO> viewList;
+    }
+
+    /**
     * 详情
     */
     @Data
@@ -74,19 +92,19 @@ public class CfgPlatformMappingDTO implements Serializable {
     public static class ViewDTO {
 
         /**
-        * 主键id
-        */
-        private String  id;
-
-        /**
         * 平台
         */
-        private String platform;
+        private List<String> platformList;
 
         /**
-        * 归属平台
+        * 归属平台,amazonPlatform 亚马逊平台， overseasPlatform海 外平台，internalPlatform 国内平台，b2bPlatform B2B平台
         */
         private String type;
+
+        /**
+         * 归属平台名称
+         */
+        private String typeName;
 
         /**
         * 是否禁用
@@ -98,7 +116,10 @@ public class CfgPlatformMappingDTO implements Serializable {
         */
         private LocalDate effectiveDate;
 
-
+        /**
+         * 备货模式
+         */
+        private String stockingMode;
     }
 
     /**
@@ -118,11 +139,7 @@ public class CfgPlatformMappingDTO implements Serializable {
     @NoArgsConstructor
     public static class UpdateDTO extends CommonDTO {
 
-        /**
-        * 主键id
-        */
-        @NotBlank(message = "主键id不能为空")
-        private String id;
+
 
     }
 
@@ -131,14 +148,13 @@ public class CfgPlatformMappingDTO implements Serializable {
     public static class CommonDTO {
 
         /**
-        * 平台
-        */
-        @NotBlank(message = "平台不能为空")
-        @Size(max = 64,message = "平台最大长度不能超过64位")
-        private String platform;
+         * 平台集合
+         */
+        @NotEmpty(message = "平台集合不能为空")
+        private List<String> platformList;
 
         /**
-        * 归属平台
+        * 归属平台,amazonPlatform 亚马逊平台， overseasPlatform海 外平台，internalPlatform 国内平台，b2bPlatform B2B平台
         */
         @NotBlank(message = "归属平台不能为空")
         @Size(max = 32,message = "归属平台最大长度不能超过32位")
@@ -151,11 +167,15 @@ public class CfgPlatformMappingDTO implements Serializable {
         private Boolean disabled;
 
         /**
-        * 生效时间
+        * 定时生效时间
         */
         private LocalDate effectiveDate;
 
-
+        /**
+         * 备货模式
+         */
+        @NotBlank(message = "备货模式不能为空")
+        private String stockingMode;
     }
 
 

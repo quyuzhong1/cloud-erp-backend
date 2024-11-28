@@ -14,6 +14,10 @@ public enum HistoryImportRecordTypeEnum implements EnumMessage {
 
     CFG_RULE_REPLENISHMENT("cfgRuleReplenishment", "补货规则"),
     SALES_ESTIMATE_MANUAL("salesEstimateManual", "运营月销预估"),
+    DELIVERY_SUGGESTION_CONFIRM("deliverySuggestionConfirm", "发货备货确认表"),
+    PURCHASE_SUGGESTION_CONFIRM("purchaseSuggestionConfirm", "采购备货确认表"),
+    PURCHASE_SUGGESTION_CONFIRM_MERGE("purchaseSuggestionConfirmMerge", "采购备货（合并）确认表"),
+
     ;
     /**
      * 类型

@@ -302,6 +302,7 @@ public class CfgRuleWarehouseDetailServiceImpl extends SuperServiceImpl<CfgRuleW
                 .list();
     }
 
+
     /**
      * 查询需要删除的数据
      */

@@ -61,6 +61,10 @@ public class WmsDeliveryPlanQueryHandler extends AbstractQueryHandler {
         if("deliveryCode".equals(field)){
             return "EXISTS (SELECT id FROM first_mile_delivery fd WHERE fd.source_id = odp.id AND fd.code " + compareCodeSplicingValueSql + ")";
         }
+        if("sourceCode".equals(field)){
+            return "EXISTS (select source_code ,id from  (select json_array_elements(source_json::json) ->> 'sourceCode' as source_code,id from wms_delivery_plan_detail where is_deleted = false \n" +
+                    "and id = odpd.id ) as sj where sj.source_code " + compareCodeSplicingValueSql + ")";
+        }
         return null;
     }
 }

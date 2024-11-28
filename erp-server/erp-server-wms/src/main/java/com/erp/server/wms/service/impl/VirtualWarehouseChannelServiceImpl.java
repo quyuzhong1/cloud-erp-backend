@@ -331,7 +331,7 @@ public class VirtualWarehouseChannelServiceImpl extends SuperServiceImpl<Virtual
         if (CollectionUtils.isEmpty(virtualWarehouseRelationList)) {
             return resultList;
         }
-        Map<String, List<VirtualWarehouseChannelEntity>> map = virtualWarehouseChannelList.stream().collect(Collectors.groupingBy(obj -> obj.getVirtualWarehouseId().concat(obj.getRelationId())));
+        Map<String, List<VirtualWarehouseChannelEntity>> map = virtualWarehouseChannelList.stream().collect(Collectors.groupingBy(obj -> obj.getVirtualWarehouseId().concat(obj.getDictPlatform()).concat(obj.getRelationId())));
         for (Map.Entry<String, List<VirtualWarehouseChannelEntity>> entry : map.entrySet()) {
             List<VirtualWarehouseChannelEntity> value = entry.getValue();
             //实体仓库

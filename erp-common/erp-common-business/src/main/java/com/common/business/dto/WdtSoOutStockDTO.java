@@ -245,6 +245,11 @@ public class WdtSoOutStockDTO extends UniqueDto {
      * 物流公司名称
      */
     private String logisticsCompanyName;
+    
+    /**
+     * 订单标签
+     */
+    private String tradeLabel;
 
     /**
      * 订单标签

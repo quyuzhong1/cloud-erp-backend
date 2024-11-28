@@ -35,6 +35,11 @@ public class HistoryImportRecordEntity extends BaseEntity<HistoryImportRecordEnt
     @TableField("type")
     private String type;
     /**
+     * 平台类型
+     */
+    @TableField("platform_type")
+    private String platformType;
+    /**
     * 模块，SourceTypeEnum枚举
     */
     @TableField("module")

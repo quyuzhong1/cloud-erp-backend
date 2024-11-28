@@ -191,6 +191,12 @@ public class DmpSoOutstockEntity extends BaseEntity<DmpSoOutstockEntity> {
       */
      @TableField(value = "logistics_company_name")
      private String logisticsCompanyName;
+     
+     /**
+      * 订单标签
+      */
+     @TableField(value = "trade_label")
+     private String tradeLabel;
       
     
     /**

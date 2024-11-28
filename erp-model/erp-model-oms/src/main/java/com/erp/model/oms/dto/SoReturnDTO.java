@@ -219,6 +219,10 @@ public class SoReturnDTO {
          */
         private String warehouseId;
         /**
+         * 客户id
+         */
+        private String customerId;
+        /**
          * 明细信息
          */
         private List<SoReturnDetailDTO.Add> detailList;
@@ -246,6 +250,10 @@ public class SoReturnDTO {
          * 仓库id
          */
         private String warehouseId;
+        /**
+         * 客户id
+         */
+        private String customerId;
         /**
          * 明细信息
          */
@@ -398,6 +406,11 @@ public class SoReturnDTO {
          * 库存组织id
          */
         private String inventoryOrgName;
+
+        /**
+         * 能否编辑销售单号
+         */
+        private Boolean canChangeSoInfo;
         /**
          * 详情信息
          */

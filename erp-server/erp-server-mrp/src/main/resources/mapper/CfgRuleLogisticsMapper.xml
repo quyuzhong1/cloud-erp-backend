@@ -33,5 +33,18 @@
         index, logistics_method, logistics_days, logistics_cycle_days, stock_up_id
     </sql>
 
+    <!-- 物流下拉 -->
+    <select id="selectLogistics" resultType="com.erp.model.mrp.dto.CfgRuleLogisticsDTO$SelectLogisticsDTO">
+        select
+            distinct
+            crl.logistics_method as logisticsMethod,
+            crl.logistics_days as logisticsDays
+        from cfg_rule_logistics crl
+        left join cfg_rule_stock_up crsu on crl.stock_up_id = crsu.id and crsu.is_deleted = false
+        <where>
+            crl.is_deleted = false and crsu.platform_type = #{params.platformType} and (crsu.ref_id = #{params.replenishmentSuggestionId} or crsu.ref_id = '')
+        </where>
+    </select>
+
 
 </mapper>
