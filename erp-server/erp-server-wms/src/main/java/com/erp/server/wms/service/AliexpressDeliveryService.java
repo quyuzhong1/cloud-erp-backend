@@ -66,4 +66,6 @@ public interface AliexpressDeliveryService extends SuperService<AliexpressDelive
      * @param statusDTO
      */
     void updateAliexpressOustock(AliexpressDeliveryDTO.StatusDTO statusDTO);
+
+    List<AliexpressDeliveryEntity> getBySoId(String soId);
 }

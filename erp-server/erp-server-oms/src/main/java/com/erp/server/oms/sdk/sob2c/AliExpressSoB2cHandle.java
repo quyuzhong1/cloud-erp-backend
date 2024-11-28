@@ -23,6 +23,7 @@ import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
 import com.erp.model.wms.dto.AliexpressDeliveryDTO;
 import com.erp.model.wms.dto.AliexpressDeliveryDetailDTO;
 import com.erp.model.wms.dto.WarehouseMappingDTO;
+import com.erp.model.wms.entity.AliexpressDeliveryEntity;
 import com.erp.model.wms.enums.AliexpressDeliveryOrderStatusEnum;
 import com.erp.oms.aliexpress.service.AliExpressDliveryOrderService;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
@@ -118,6 +119,11 @@ public class AliExpressSoB2cHandle extends AbstractSoB2cHandle {
             // 平台仓生成销售出库单
             this.createAliExpressOutStock(dto, mainEntity);
         } catch (Exception e) {
+            //查询发货单是否全部已出库
+            List<AliexpressDeliveryEntity> aliexpressDeliveryEntities = aliexpressDeliveryFeign.listBySoId(mainEntity.getId());
+            if(CollectionUtils.isNotEmpty(aliexpressDeliveryEntities) && aliexpressDeliveryEntities.stream().allMatch(AliexpressDeliveryEntity::getIsOutstock)){
+                return Boolean.TRUE;
+            }
             log.error("[速卖处理销售出库失败]:order={},msg={}", dto.getPlatformCode(), e.getMessage(), e);
             SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO();
             addError.setType(SoB2cErrorTypeEnum.GENERATE_OUTSTOCK.getCode());
