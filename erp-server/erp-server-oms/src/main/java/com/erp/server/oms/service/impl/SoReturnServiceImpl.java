@@ -2,6 +2,7 @@ package com.erp.server.oms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -15,16 +16,20 @@ import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
+import com.common.business.utils.RedisUtil;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
+import com.common.core.enums.CurrencyEnum;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
+import com.common.message.constant.RedisKeyConstant;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
+import com.erp.model.bi.entity.BiSettlementExchangeRateEntity;
 import com.erp.model.dmp.entity.BiReturnOrderInfoEntity;
 import com.erp.model.dmp.entity.BiReturnOrderItemEntity;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
@@ -39,6 +44,7 @@ import com.erp.model.oms.enums.SoReturnChangeListTypeEnum;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.sys.dto.SysDepartmentUserNumberDTO;
 import com.erp.model.sys.entity.DictCountryEntity;
@@ -72,6 +78,7 @@ import org.springframework.util.ObjectUtils;
 import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.function.Function;
@@ -150,6 +157,9 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
     private DownloadTaskFeign downloadTaskFeign;
     @Resource
     private SkuMappingService skuMappingService;
+
+    @Resource
+    private RedisUtil redisUtil;
 
 
     @Override
@@ -463,6 +473,9 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
 
     //根据客户id生成销售退货单
     private void generateSoReturnByCutomer(SoReturnDTO.Add dto,SoReturnEntity soReturnEntity){
+        //币种符号集合
+        Map<String, String> currencySymbol = getCurrencySymbol(Collections.singletonList(dto.getCurrency()));
+
         soReturnEntity.setCustomerId(dto.getCustomerId());
         CustomerInfoEntity customerInfoEntity = customerInfoService.getById(dto.getCustomerId());
         List<CustomerAddressEntity> customerAddressList = customerAddressService.lambdaQuery()
@@ -493,11 +506,15 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
         soReturnEntity.setSourceType(dto.getSourceType());
         soReturnEntity.setWarehouseId(dto.getWarehouseId());
         soReturnEntity.setBillDate(dto.getBillDate());
+        soReturnEntity.setCurrency(dto.getCurrency());
+        soReturnEntity.setCurrencySymbol(currencySymbol.get(dto.getCurrency()));
     }
 
     //生成销售退货单
     private void generateSoReturn(SoReturnDTO.Add dto,SoReturnEntity soReturnEntity){
         SoInfoEntity soInfoEntity = soInfoService.getById(dto.getSourceId());
+        //币种符号集合
+        Map<String, String> currencySymbol = getCurrencySymbol(Collections.singletonList(dto.getCurrency()));
         soReturnEntity.setType(soInfoEntity.getOrderType());
         soReturnEntity.setSalesOrgId(soInfoEntity.getSalesOrgId());
         soReturnEntity.setSalesOrgName(soInfoEntity.getSalesOrgName());
@@ -519,8 +536,6 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
         soReturnEntity.setTelNumber(soInfoEntity.getTelNumber());
         soReturnEntity.setReceiveAddress(soInfoEntity.getReceiveAddress());
         soReturnEntity.setDeliveryModeDict(soInfoEntity.getDeliveryMode());
-        soReturnEntity.setCurrency(soInfoEntity.getCurrency());
-        soReturnEntity.setCurrencySymbol(soInfoEntity.getCurrencySymbol());
         soReturnEntity.setIsTax(soInfoEntity.getIsTax());
         soReturnEntity.setAddressTypeDict(soInfoEntity.getAddressType());
         soReturnEntity.setSourceId(dto.getSourceId());
@@ -528,22 +543,8 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
         soReturnEntity.setSourceType(dto.getSourceType());
         soReturnEntity.setWarehouseId(dto.getWarehouseId());
         soReturnEntity.setBillDate(dto.getBillDate());
-    }
-
-    private void setAmoutDto(SoReturnDetailDTO.Add detailDto, BigDecimal amount, Integer qty, Integer returnQty, BigDecimal taxAmount, BigDecimal exchangeRate) {
-        //退货金额
-        BigDecimal returnAmount = this.calReturnAmount(amount, qty, returnQty);
-        //含税退货金额
-        BigDecimal taxReturnAmount =this.calReturnAmount(taxAmount, qty, returnQty);
-        //退货金额（本位币）
-        BigDecimal returnAmountLocalCurrency = this.calLocalCurrency(exchangeRate, returnAmount);
-        //含税退货金额（本位币）
-        BigDecimal taxReturnAmountLocalCurrency = this.calLocalCurrency(exchangeRate, taxReturnAmount);
-        detailDto.setReturnAmount(returnAmount);
-        detailDto.setTaxReturnAmount(taxReturnAmount);
-        detailDto.setReturnAmountLocalCurrency(returnAmountLocalCurrency);
-        detailDto.setTaxReturnAmountLocalCurrency(taxReturnAmountLocalCurrency);
-        detailDto.setExchangeRate(exchangeRate);
+        soReturnEntity.setCurrency(dto.getCurrency());
+        soReturnEntity.setCurrencySymbol(currencySymbol.get(dto.getCurrency()));
     }
 
     @Override
@@ -1069,8 +1070,11 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
     }
 
     @Override
-    public SoReturnEntity getSoReturnById(String id) {
-        return this.getById(id);
+    public SoReturnDTO.SoReturnEntityDTO getSoReturnById(String id) {
+        SoReturnEntity byId = this.getById(id);
+        SoReturnDTO.SoReturnEntityDTO dto = new SoReturnDTO.SoReturnEntityDTO();
+        BeanMapper.copy(byId, dto);
+        return dto;
     }
 
     @Override
@@ -1086,12 +1090,22 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
     @Transactional(rollbackFor = Exception.class)
     public Boolean generateSoReturnSave(List<SoInfoDTO.GenerateSoReturnView> list) {
         List<String> soIdList = list.stream().map(SoInfoDTO.GenerateSoReturnView::getSoId).distinct().collect(Collectors.toList());
+        //B2B销售订单
+        List<SoInfoEntity> soInfoEntities = soInfoService.listByIds(soIdList);
+        //去重后的币种集合
+        List<String> currencys = soInfoEntities.stream().map(SoInfoEntity::getCurrency).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
+        //汇率集合
+        Map<String, BigDecimal> currencyMap = getCurrencyMap(currencys);
+        //币种符号集合
+        Map<String, String> currencySymbol = getCurrencySymbol(currencys);
+        //获取
         for (String soId : soIdList) {
             SoReturnDTO.Add add = new SoReturnDTO.Add();
             add.setSourceId(soId);
             add.setSourceType(SourceTypeEnum.SO_INFO.getCode());
 
             List<SoInfoDTO.GenerateSoReturnView> viewList = list.stream().filter(req -> req.getSoId().equals(soId)).collect(Collectors.toList());
+            SoInfoEntity soInfoEntity = soInfoEntities.stream().filter(req -> req.getId().equals(soId)).findFirst().orElse(new SoInfoEntity());
             List<SoReturnDetailDTO.Add> detailList = new ArrayList<>();
             for (SoInfoDTO.GenerateSoReturnView view : viewList) {
                 add.setWarehouseId(view.getWarehouseId());
@@ -1101,19 +1115,60 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
                 detailAdd.setReturnReasonDict(view.getReturnReasonDict());
                 detailAdd.setSourceDetailId(view.getDetailId());
                 detailAdd.setRemark(view.getRemark());
-                detailAdd.setExchangeRate(view.getExchangeRate());
                 detailAdd.setReturnAmount(view.getReturnAmount());
                 detailAdd.setTaxReturnAmount(view.getTaxReturnAmount());
                 detailAdd.setReturnAmountLocalCurrency(this.calLocalCurrency(view.getExchangeRate(), view.getReturnAmount()));
                 detailAdd.setTaxReturnAmountLocalCurrency(this.calLocalCurrency(view.getExchangeRate(), view.getTaxReturnAmount()));
                 add.setBillDate(view.getReturnDate());
                 add.setCustomerId(view.getCustomerId());
+                add.setCurrency(soInfoEntity.getCurrency());
+                add.setCurrencySymbol(currencySymbol.get(soInfoEntity.getCurrency()));
+                detailAdd.setExchangeRate(currencyMap.get(soInfoEntity.getCurrency()));
                 detailList.add(detailAdd);
             }
             add.setDetailList(detailList);
             this.add(add);
         }
         return Boolean.TRUE;
+    }
+    //获取币种符号集合
+    private Map<String,String> getCurrencySymbol(List<String> currencys) {
+        List<CurrencyDTO.ViewDTO> currencySymbols = sysUserFeign.listByCurrency(currencys);
+        Map<String,String> currencySymbolMap = new HashMap<>();
+        if(CollUtil.isNotEmpty(currencySymbols)){
+            for (CurrencyDTO.ViewDTO currencySymbol : currencySymbols) {
+                currencySymbolMap.put(currencySymbol.getId(),currencySymbol.getSymbol());
+            }
+        }
+        return currencySymbolMap;
+    }
+
+    //获取货币汇率
+    private Map<String,BigDecimal> getCurrencyMap(List<String> currencys) {
+        Map<String,BigDecimal> currencyMap = new HashMap<>();
+        if(CollectionUtils.isNotEmpty(currencys)){
+            LocalDate localDate = LocalDate.now();
+            for (String currency : currencys) {
+                //查询redis中存储的成本信息
+                String existKey = StrUtil.format(RedisKeyConstant.SETTLEMENT_EXCHANGE_RATE, CurrencyEnum.CNY.getCurrencyCode(),currency);
+                List<BiSettlementExchangeRateEntity> rateList = (List<BiSettlementExchangeRateEntity>) redisUtil.get(existKey);
+                if(CollectionUtils.isEmpty(rateList)){
+                    //从dmp获取对应的币种汇率
+                    BigDecimal exchangeRate = dmpTaskFeign.getRate(localDate.toString(), currency);
+                    currencyMap.put(currency,exchangeRate);
+                }else {
+                    //从缓存汇率
+                    BigDecimal exchangeRate = rateList.stream().filter(obj -> obj.getSettlementDateBegin().isEqual(localDate)
+                                    || obj.getSettlementDateEnd().isEqual(localDate)
+                                    || (obj.getSettlementDateBegin().isBefore(localDate) && obj.getSettlementDateEnd().isAfter(localDate)))
+                            .sorted(Comparator.comparing(BiSettlementExchangeRateEntity::getUpdateTime, Comparator.reverseOrder()))
+                            .map(BiSettlementExchangeRateEntity::getExchangeRate)
+                            .findFirst().orElse(null);
+                    currencyMap.put(currency,exchangeRate);
+                }
+            }
+        }
+        return currencyMap;
     }
 
     @Override

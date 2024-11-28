@@ -2,6 +2,7 @@ package com.erp.model.oms.dto;
 
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
+import com.erp.model.oms.entity.SoReturnEntity;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -250,6 +251,19 @@ public class SoReturnDTO {
          * 明细信息
          */
         private List<SoReturnDetailDTO.Add> detailList;
+        /**
+         * 汇率
+         */
+        private BigDecimal exchangeRate;
+        /**
+         * 币种
+         */
+        private String currency;
+
+        /**
+         * 币种符号
+         */
+        private String currencySymbol;
     }
 
     /**
@@ -282,6 +296,19 @@ public class SoReturnDTO {
          * 明细信息
          */
         private List<SoReturnDetailDTO.Update> detailList;
+        /**
+         * 汇率
+         */
+        private BigDecimal exchangeRate;
+        /**
+         * 币种
+         */
+        private String currency;
+
+        /**
+         * 币种符号
+         */
+        private String currencySymbol;
     }
 
     /**
@@ -700,5 +727,16 @@ public class SoReturnDTO {
          *含税退货金额（本位币）
          */
         private BigDecimal taxReturnAmountLocalCurrency;
+    }
+
+
+    @Data
+    @NoArgsConstructor
+    public static class SoReturnEntityDTO extends SoReturnEntity {
+        /**
+         * 汇率
+         */
+        private BigDecimal exchangeRate;
+
     }
 }

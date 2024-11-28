@@ -366,8 +366,8 @@ public class SoReturnController extends BaseController {
      * @return com.common.core.controller.vo.ApiResult
      **/
     @GetMapping(value = "/getSoReturnById")
-    public ApiResult<SoReturnEntity> getSoReturnById(@RequestParam("id") String id) {
-        SoReturnEntity entity = soReturnService.getSoReturnById(id);
+    public ApiResult<SoReturnDTO.SoReturnEntityDTO> getSoReturnById(@RequestParam("id") String id) {
+        SoReturnDTO.SoReturnEntityDTO entity = soReturnService.getSoReturnById(id);
         return success(entity);
     }
 

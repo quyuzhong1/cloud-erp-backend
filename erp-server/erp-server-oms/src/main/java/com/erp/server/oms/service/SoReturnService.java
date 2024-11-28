@@ -174,7 +174,7 @@ public interface SoReturnService extends SuperService<SoReturnEntity> {
      * @Date 2023/4/13 18:59
      * @return com.common.core.controller.vo.ApiResult
      **/
-    SoReturnEntity getSoReturnById(String id);
+    SoReturnDTO.SoReturnEntityDTO getSoReturnById(String id);
 
     /**
      * 下推销售退货订单-保存

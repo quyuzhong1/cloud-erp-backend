@@ -13,17 +13,17 @@ import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.sys.dto.*;
 import com.erp.model.sys.entity.*;
-import com.erp.model.sys.vo.*;
+import com.erp.model.sys.vo.MsgChannelConfigDTO;
+import com.erp.model.sys.vo.MsgConfigDTO;
+import com.erp.model.sys.vo.SysCalendarListVO;
+import com.erp.model.sys.vo.ThirdUnionDTO;
 import org.springframework.cloud.openfeign.FeignClient;
-import org.springframework.cloud.openfeign.SpringQueryMap;
-import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import javax.validation.Valid;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -33,7 +33,7 @@ import java.util.Map;
  * @Date 2022-07-08 16:52
  * @Created by yl
  */
-@FeignClient(name = "erp-sys",configuration = {FeignErrorDecoder.class})
+@FeignClient(name = "erp-sys", configuration = {FeignErrorDecoder.class})
 public interface SysUserFeign {
 
     /**
