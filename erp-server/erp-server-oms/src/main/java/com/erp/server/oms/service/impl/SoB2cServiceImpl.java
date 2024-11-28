@@ -140,12 +140,13 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.time.*;
+import java.time.Duration;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -2485,7 +2486,12 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
         //新增发货拦截
         BatchResultDTO result = soB2cService.addIntercept(remark, entity, logisticsEntity);
-
+        if(Boolean.TRUE.equals(result.getSuccess())){
+            List<SoB2cDeliveryEntity> soB2cDeliveryList = FeignQuery.create(SoB2cDeliveryEntity.class).eq(SoB2cDeliveryEntity::getSourceId,entity.getId()).list();
+            if(CollUtil.isNotEmpty(soB2cDeliveryList)){
+                wmsTaskFeign.waveListStatusAutoChange(soB2cDeliveryList.get(0).getId());
+            }
+        }
         return result;
     }
 

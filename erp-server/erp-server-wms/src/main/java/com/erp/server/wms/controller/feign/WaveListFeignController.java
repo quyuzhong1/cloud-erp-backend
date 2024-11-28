@@ -4,10 +4,8 @@ import com.common.business.dto.base.BaseResultDTO;
 import com.common.core.controller.BaseController;
 import com.erp.model.wms.dto.WaveListDTO;
 import com.erp.server.wms.service.WaveListService;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 
@@ -29,5 +27,19 @@ public class WaveListFeignController extends BaseController {
     @PostMapping("/add")
     public BaseResultDTO.AddDTO add(@RequestBody WaveListDTO.AddDTO addDto){
         return waveListService.add(addDto);
+    }
+
+
+
+    /**
+     * 波次状态自动更新
+     * @author jack
+     * @date 2024/11/28
+     */
+    @PostMapping("/waveListStatusAutoChange")
+    public void waveListStatusAutoChange(@RequestParam("deliveryId") String deliveryId){
+        if(StringUtils.isNotBlank(deliveryId)){
+            waveListService.waveListStatusAutoChange(deliveryId);
+        }
     }
 }
