@@ -1,9 +1,25 @@
 package com.erp.server.tms.controller.api;
 
 
-import cn.hutool.core.util.ObjectUtil;
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
+
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
+
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.dto.base.BaseIdDTO;
+import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
@@ -16,19 +32,16 @@ import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.tms.dto.LogisticsBillCostDTO;
+import com.erp.model.tms.dto.LogisticsBillCostDTO.EditDataDTO;
+import com.erp.model.tms.dto.LogisticsBillCostDTO.EditViewDTO;
 import com.erp.model.tms.entity.LogisticsBillCostEntity;
+import com.erp.model.tms.enums.DictCostAttributionEnum;
 import com.erp.server.tms.query.LogisticsLastMileCostQueryHandler;
 import com.erp.server.tms.service.LogisticsBillCostService;
 import com.erp.server.tms.service.LogisticsLastMileCostService;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 
-import javax.annotation.Resource;
-import javax.servlet.http.HttpServletResponse;
-import java.util.ArrayList;
-import java.util.List;
+import cn.hutool.core.util.ObjectUtil;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * 尾程费用
@@ -42,9 +55,9 @@ import java.util.List;
 @RequestMapping("/logisticsLastMileCost")
 public class LogisticsLastMileCostController extends BaseController {
 
+
     @Resource
     private LogisticsBillCostService logisticsBillCostService;
-
     @Resource
     private LogisticsLastMileCostService logisticsLastMileCostService;
 
@@ -58,12 +71,12 @@ public class LogisticsLastMileCostController extends BaseController {
      */
     @PostMapping("/tabList")
     @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "shop_charge_id",
+            tableField = "create_user_id",
             menuCode = "tms:logisticsLastMileCost:paging",
             tableAlias = "lbc"
     )
     public ApiResult<List<LogisticsBillCostDTO.TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
-        List<LogisticsBillCostDTO.TabListDTO> tabList = logisticsLastMileCostService.tabList(dto);
+        List<LogisticsBillCostDTO.TabListDTO> tabList = logisticsBillCostService.tabList(dto, DictCostAttributionEnum.LAST_MILE);
         return success(tabList);
     }
 
@@ -76,13 +89,13 @@ public class LogisticsLastMileCostController extends BaseController {
      */
     @PostMapping("/paging")
     @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "shop_charge_id",
+            tableField = "create_user_id",
             menuCode = "tms:logisticsLastMileCost:paging",
             tableAlias = "lbc"
     )
     @WebAdvanceQuery(handler = LogisticsLastMileCostQueryHandler.class)
     public ApiResult<PagingVO<LogisticsBillCostDTO.ListDTO>> queryByPage(@RequestBody @Validated PagingDTO<LogisticsBillCostDTO.PagingParamDTO> dto) {
-        PagingVO<LogisticsBillCostDTO.ListDTO> pagingVO = logisticsLastMileCostService.paging(dto);
+        PagingVO<LogisticsBillCostDTO.ListDTO> pagingVO = logisticsBillCostService.paging(dto);
         return success(pagingVO);
     }
 
@@ -94,17 +107,17 @@ public class LogisticsLastMileCostController extends BaseController {
     * @return ApiResult
     */
     @PostMapping("/update")
-    @LogAction(value = LogActionEnum.UPDATE, desc = "自发货费用修改")
+    @LogAction(value = LogActionEnum.UPDATE, desc = "尾层费用修改")
         @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-        tableField = "shop_charge_id",
+        tableField = "create_user_id",
         menuCode = "tms:logisticsLastMileCost:update",
         serviceClass = LogisticsBillCostService.class,
         keyIdName = "id")
     public ApiResult<Object>update(@RequestBody @Validated LogisticsBillCostDTO.UpdateDTO dto) {
-        logisticsLastMileCostService.update(dto,Boolean.FALSE);
+        logisticsBillCostService.update(dto,Boolean.FALSE);
         return success();
     }
-
+    
     /**
      *查询详情
      * @author Will
@@ -115,11 +128,11 @@ public class LogisticsLastMileCostController extends BaseController {
     @GetMapping("/view")
     @LogViewService
     public ApiResult<LogisticsBillCostDTO.ViewDTO> view(@RequestParam("id") String id) {
-        return success(logisticsLastMileCostService.view(id));
+        return success(logisticsBillCostService.view(id));
     }
 
     /**
-     * 状态变更
+     * 对账状态
      * @author Will
      * @date: 2023/11/13 15:35
      * @param dto
@@ -128,7 +141,7 @@ public class LogisticsLastMileCostController extends BaseController {
     @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "状态变更:idList={idList}")
     @PostMapping("/updateReconciliationStatus")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "shop_charge_id",
+            tableField = "create_user_id",
             menuCode = "tms:logisticsLastMileCost:updateReconciliationStatus",
             serviceClass = LogisticsBillCostService.class,
             keyIdName = "id")
@@ -137,12 +150,12 @@ public class LogisticsLastMileCostController extends BaseController {
         for (String id : dto.getIds()) {
             BatchResultDTO submit;
             try {
-                submit = logisticsLastMileCostService.updateReconciliationStatus(id,dto.getReconciliationStatus(),dto.getConfirmTime());
+                submit = logisticsBillCostService.updateReconciliationStatus(id,dto.getReconciliationStatus(),dto.getConfirmTime());
             }catch (Exception e){
-                log.error("自发货费用 状态变更",e);
+                log.error("尾层费用 状态变更",e);
                 LogisticsBillCostEntity entity = logisticsBillCostService.getById(id);
                 if (ObjectUtil.isEmpty(entity)) {
-                    submit = BatchResultDTO.fail(id, id, "自发货费用不存在, 状态变更");
+                    submit = BatchResultDTO.fail(id, id, "尾层费用不存在, 状态变更");
                     resultDTOS.add(submit);
                     continue;
                 }
@@ -152,6 +165,41 @@ public class LogisticsLastMileCostController extends BaseController {
         }
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
+    
+    /**
+     * 支付状态
+     * @author Will
+     * @date: 2023/11/13 15:35
+     * @param dto
+     * @return ApiResult<List<BatchResultDTO>>
+     */
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "状态变更:idList={idList}")
+    @PostMapping("/updatePayStatus")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+    tableField = "create_user_id",
+    menuCode = "tms:logisticsLastMileCost:updatePayStatus",
+    serviceClass = LogisticsBillCostService.class,
+    keyIdName = "id")
+    public ApiResult<List<BatchResultDTO>> updatePayStatus(@RequestBody @Validated LogisticsBillCostDTO.PayStatusDTO dto) {
+    	List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+    	for (String id : dto.getIds()) {
+    		BatchResultDTO submit;
+    		try {
+    			submit = logisticsBillCostService.updatePayStatus(id,dto.getPayStatus(),dto.getPayTime());
+    		}catch (Exception e){
+    			log.error("尾层费用 状态变更",e);
+    			LogisticsBillCostEntity entity = logisticsBillCostService.getById(id);
+    			if (ObjectUtil.isEmpty(entity)) {
+    				submit = BatchResultDTO.fail(id, id, "尾层费用不存在, 状态变更");
+    				resultDTOS.add(submit);
+    				continue;
+    			}
+    			submit = BatchResultDTO.fail(entity.getId(), entity.getTrackNo(), e.getMessage());
+    		}
+    		resultDTOS.add(submit);
+    	}
+    	return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
 
     /**
      * 下载模板
@@ -160,11 +208,11 @@ public class LogisticsLastMileCostController extends BaseController {
      * @param response
      * @return ApiResult
      */
-    @LogAction(value = LogActionEnum.EXPORT, desc = "下载自发货费用模板")
+    @LogAction(value = LogActionEnum.EXPORT, desc = "下载尾层费用模板")
     @GetMapping("/downloadTemplate")
     public ApiResult<Object>downloadTemplate(HttpServletResponse response) {
-        Boolean result = logisticsLastMileCostService.downloadTemplate(response);
-        return result ? success() : failure();
+        logisticsBillCostService.downloadTemplate(response);
+        return success();
     }
 
     /**
@@ -175,10 +223,10 @@ public class LogisticsLastMileCostController extends BaseController {
      * @param response
      * @return ApiResult
      */
-    @LogAction(value = LogActionEnum.IMPORT, desc = "导入自发货费用模板")
+    @LogAction(value = LogActionEnum.IMPORT, desc = "导入尾层费用模板")
     @PostMapping("/import")
-    public ApiResult<Object>exportWarehouse(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
-        Boolean result = logisticsLastMileCostService.importFile(excelFile, response);
+    public ApiResult<Object>importFile(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
+        Boolean result = logisticsBillCostService.importFile(excelFile, response);
         return result ? success() : failure();
     }
 
@@ -189,11 +237,138 @@ public class LogisticsLastMileCostController extends BaseController {
      * @param dto
      * @return ApiResult
      */
-    @LogAction(value = LogActionEnum.EXPORT, desc = "导出自发货费用模板")
+    @LogAction(value = LogActionEnum.EXPORT, desc = "导出尾层费用模板")
     @PostMapping(value = "/exportExcel")
     public ApiResult<Object>exportExcel(@RequestBody LogisticsBillCostDTO.PagingParamDTO dto) {
         Boolean flag = logisticsLastMileCostService.exportExcel(dto);
         return flag == true ? success() : failure();
     }
 
+    /**
+     * 新增付款/退款（仅创建）
+     * @author Will
+     * @date:  2023-11-06
+     * @param dto
+     * @return ApiResult
+     */
+     @PostMapping("/addPayAndRefund")
+     @LogAction(value = LogActionEnum.INSERT, desc = "新增付款/退款")
+         @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+         tableField = "create_user_id",
+         menuCode = "tms:logisticsLastMileCost:update",
+         serviceClass = LogisticsBillCostService.class,
+         keyIdName = "id")
+     public ApiResult<Object> addPayAndRefund(@RequestBody @Validated LogisticsBillCostDTO.AddDataDTO dto) {
+         logisticsBillCostService.addPayAndRefund(dto);
+         return success();
+     }
+     
+     /**
+      * 新增付款/退款（对账已确认）
+      * @author Will
+      * @date:  2023-11-06
+      * @param dto
+      * @return ApiResult
+      */
+     @PostMapping("/addPayAndRefundConfirm")
+     @LogAction(value = LogActionEnum.INSERT, desc = "新增付款/退款")
+     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+     tableField = "create_user_id",
+     menuCode = "tms:logisticsLastMileCost:update",
+     serviceClass = LogisticsBillCostService.class,
+     keyIdName = "id")
+     public ApiResult<Object> addPayAndRefundConfirm(@RequestBody @Validated LogisticsBillCostDTO.ConfirmAddDataDTO dto) {
+    	 logisticsBillCostService.addPayAndRefundConfirm(dto);
+    	 return success();
+     }
+    
+     /**
+      * 编辑付款/退款 数据显示
+      * @author Will
+      * @date:  2023-11-06
+      * @param dto
+      * @return ApiResult
+      */
+     @PostMapping("/editView")
+     @LogAction(value = LogActionEnum.UPDATE, desc = "编辑付款/退款")
+     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+     tableField = "create_user_id",
+     menuCode = "tms:logisticsLastMileCost:editView",
+     serviceClass = LogisticsBillCostService.class,
+     keyIdName = "id")
+     public ApiResult<EditViewDTO> editView(@RequestBody @Validated BaseIdDTO dto) {
+     	return success(logisticsBillCostService.editView(dto.getId()));
+     }
+     
+     /**
+      * 编辑付款/退款 保存
+      * @author Will
+      * @date:  2023-11-06
+      * @param dto
+      * @return ApiResult
+      */
+     @PostMapping("/edit")
+     @LogAction(value = LogActionEnum.UPDATE, desc = "编辑付款/退款")
+     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+     tableField = "create_user_id",
+     menuCode = "tms:logisticsLastMileCost:edit",
+     serviceClass = LogisticsBillCostService.class,
+     keyIdName = "id")
+     public ApiResult<Object> edit(@RequestBody @Validated EditDataDTO dto) {
+     	logisticsBillCostService.edit(dto);
+     	return success();
+     }
+     
+     /**
+      * 下推分摊
+      * @author Will
+      * @date:  2023-11-06
+      * @param dto
+      * @return ApiResult
+      */
+     @PostMapping("/pushAllocation")
+     @LogAction(value = LogActionEnum.INSERT, desc = "下推分摊")
+     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+     tableField = "create_user_id",
+     menuCode = "tms:logisticsLastMileCost:pushAllocation",
+     serviceClass = LogisticsBillCostService.class,
+     keyIdName = "id")
+     public ApiResult<Object> pushAllocation(@RequestBody @Validated BaseIdsDTO dto) {
+     	return success();
+     }
+     
+     /**
+      * 删除
+      * @author Will
+      * @date: 2023/11/13 15:35
+      * @param dto
+      * @return ApiResult<List<BatchResultDTO>>
+      */
+     @LogAction(value = LogActionEnum.DELETE, desc = "状态变更:idList={idList}")
+     @PostMapping("/delete")
+     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+     tableField = "create_user_id",
+     menuCode = "tms:logisticsLastMileCost:updatePayStatus",
+     serviceClass = LogisticsBillCostService.class,
+     keyIdName = "id")
+     public ApiResult<List<BatchResultDTO>> delete(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+     	List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+     	for (String id : dto.getIds()) {
+     		BatchResultDTO submit;
+     		try {
+     			submit = logisticsBillCostService.delete(id);
+     		}catch (Exception e){
+     			log.error("尾层费用 状态变更",e);
+     			LogisticsBillCostEntity entity = logisticsBillCostService.getById(id);
+     			if (ObjectUtil.isEmpty(entity)) {
+     				submit = BatchResultDTO.fail(id, id, "尾层费用不存在, 状态变更");
+     				resultDTOS.add(submit);
+     				continue;
+     			}
+     			submit = BatchResultDTO.fail(entity.getId(), entity.getTrackNo(), e.getMessage());
+     		}
+     		resultDTOS.add(submit);
+     	}
+     	return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+     }
 }
