@@ -56,7 +56,7 @@ public class DataDifferenceCalculator {
             return BigDecimal.ZERO; // 防止除零错误
         }
 
-        return dotProduct.divide(normA.multiply(normB), 10, RoundingMode.HALF_UP);
+        return dotProduct.divide(normA.multiply(normB), 4, RoundingMode.HALF_UP).multiply(new BigDecimal(100));
     }
 
     // 计算平方根
@@ -114,13 +114,13 @@ public class DataDifferenceCalculator {
             if (type == CalculationType.EUCLIDEAN) {
                 BigDecimal euclideanDistance = calculateEuclideanDistance(baseArray, dataArray);
                 BigDecimal euclideanMatchRate = BigDecimal.ONE.subtract(
-                        euclideanDistance.divide(maxEuclideanDistance, 10, RoundingMode.HALF_UP));
+                        euclideanDistance.divide(maxEuclideanDistance, 4, RoundingMode.HALF_UP)).multiply(new BigDecimal(100));
                 line.setSimilarity(euclideanMatchRate);
             }
             if (type == CalculationType.MANHATTAN) {
                 BigDecimal manhattanDistance = calculateManhattanDistance(baseArray, dataArray);
                 BigDecimal manhattanMatchRate = BigDecimal.ONE.subtract(
-                        manhattanDistance.divide(maxManhattanDistance, 10, RoundingMode.HALF_UP));
+                        manhattanDistance.divide(maxManhattanDistance, 4, RoundingMode.HALF_UP)).multiply(new BigDecimal(100));
                 line.setSimilarity(manhattanMatchRate);
             }
             if (type == CalculationType.COSINE) {
@@ -130,13 +130,8 @@ public class DataDifferenceCalculator {
             results.add(line);
         }
 
-        results.sort(getComparator());
+        results.sort(Comparator.comparing(CalcSalesInfoDimDTO.LineDTO::getSimilarity).reversed());
         return results;
-    }
-
-
-    private static Comparator<CalcSalesInfoDimDTO.LineDTO> getComparator() {
-        return (a, b) -> b.getSimilarity().compareTo(a.getSimilarity());
     }
 
     public static void main(String[] args) {
