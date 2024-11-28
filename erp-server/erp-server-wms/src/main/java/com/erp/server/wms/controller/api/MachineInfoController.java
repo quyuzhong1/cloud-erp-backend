@@ -17,17 +17,13 @@ import com.common.core.enums.LogActionEnum;
 import com.erp.model.wms.dto.MachineInfoDTO;
 import com.erp.model.wms.dto.MachineSubComponentsDTO;
 import com.erp.model.wms.entity.MachineInfoEntity;
-import com.erp.model.wms.entity.SoReturnReceiveEntity;
-import com.erp.model.wms.entity.TransferInfoEntity;
 import com.erp.server.wms.query.MachineInfoQueryHandler;
 import com.erp.server.wms.service.MachineInfoService;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
-import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 import java.util.ArrayList;
 import java.util.List;
@@ -371,7 +367,7 @@ public class MachineInfoController extends BaseController {
      * @return ApiResult<List<BatchResultDTO>>
      */
     @PostMapping("/handleErrorData")
-    public ApiResult<List<BatchResultDTO>> handleErrorData(@RequestBody @Validated BaseIdsDTO.DateDTO dto) {
+    public ApiResult<List<BatchResultDTO>> handleErrorData(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         List<String> ids = dto.getIds();
         for (String id : ids) {

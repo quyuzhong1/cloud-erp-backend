@@ -381,7 +381,7 @@ public class TransferInfoController extends BaseController {
      * @return ApiResult<List<BatchResultDTO>>
      */
     @PostMapping("/handleErrorData")
-    public ApiResult<List<BatchResultDTO>> handleErrorData(@RequestBody @Validated BaseIdsDTO.DateDTO dto) {
+    public ApiResult<List<BatchResultDTO>> handleErrorData(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         List<String> ids = dto.getIds();
         for (String id : ids) {
