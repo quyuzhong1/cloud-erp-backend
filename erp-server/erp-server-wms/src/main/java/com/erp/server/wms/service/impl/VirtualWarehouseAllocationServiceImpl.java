@@ -337,7 +337,9 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
             //调拨分货、取消分货
             if (VirtualWarehouseAllocationTypeEnum.TRANSFER.getCode().equals(type) || VirtualWarehouseAllocationTypeEnum.CANCEL.getCode().equals(type)) {
                 //虚拟仓可用
-                Integer virtualUsableQty = virtualInventoryList.stream().filter(obj -> CharSequenceUtil.equals(InventoryStatusEnum.USABLE.getCode(), obj.getDictInventoryStatus())
+                Integer virtualUsableQty = virtualInventoryList.stream().filter(obj ->
+                                CharSequenceUtil.equals(InventoryStatusEnum.USABLE.getCode(), obj.getDictInventoryStatus())
+                                && CharSequenceUtil.equals(obj.getSkuId(), record.getSkuId())
                                 && CharSequenceUtil.equals(obj.getVirtualWarehouseId(),record.getFromVirtualWarehouseId()))
                         .map(VirtualInventoryDTO.VirtualInventoryQtyDTO::getInventoryQty).reduce(MathUtil.ZERO, Integer::sum);
                 virtualScarceQty = totalQty > virtualUsableQty ? totalQty - virtualUsableQty : MathUtil.ZERO;
