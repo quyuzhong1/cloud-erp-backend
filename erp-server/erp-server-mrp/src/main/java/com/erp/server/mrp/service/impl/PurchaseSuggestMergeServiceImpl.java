@@ -148,8 +148,7 @@ public class PurchaseSuggestMergeServiceImpl extends SuperServiceImpl<PurchaseSu
     @Transactional(rollbackFor = Exception.class)
     @Override
     public Boolean update(PurchaseSuggestMergeDTO.UpdateDTO updateDTO) {
-        PurchaseSuggestMergeEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "建议采购(合并后)"));
+        PurchaseSuggestMergeEntity old = Optional.ofNullable(super.getById(updateDTO.getId())).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "建议采购(合并后)"));
         PurchaseSuggestMergeEntity purchaseSuggestMergeEntity =  BeanMapperUtils.map(PurchaseSuggestMergeEntity.class, updateDTO);
 
         // 数据处理
@@ -167,8 +166,7 @@ public class PurchaseSuggestMergeServiceImpl extends SuperServiceImpl<PurchaseSu
     @Transactional(rollbackFor = Exception.class)
     @Override
     public Boolean importUpdate(PurchaseSuggestMergeDTO.ImportUpdateDTO updateDTO) {
-        PurchaseSuggestMergeEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "建议采购(合并后)"));
+        PurchaseSuggestMergeEntity old =Optional.ofNullable(super.getById(updateDTO.getId())).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "建议采购(合并后)"));
         PurchaseSuggestMergeEntity purchaseSuggestMergeEntity =  BeanMapperUtils.map(PurchaseSuggestMergeEntity.class, updateDTO);
 
         // 数据处理
@@ -204,8 +202,7 @@ public class PurchaseSuggestMergeServiceImpl extends SuperServiceImpl<PurchaseSu
     @Override
     @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO locking(String id) {
-        PurchaseSuggestMergeEntity old = super.getById(id);
-        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "采购建议（合并）（合并）"));
+        PurchaseSuggestMergeEntity old = Optional.ofNullable(super.getById(id)).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "采购建议（合并）（合并）"));
         if (!StrUtil.equals(old.getStatus(), SuggestStatusEnum.DRAFT.getCode())) {
             throw new ServiceException(ApiError.ERROR_SUGGEST_LOCKING);
         }
@@ -222,8 +219,7 @@ public class PurchaseSuggestMergeServiceImpl extends SuperServiceImpl<PurchaseSu
     @Override
     @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO confirm(String id) {
-        PurchaseSuggestMergeEntity old = super.getById(id);
-        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "采购建议（合并）（合并）"));
+        PurchaseSuggestMergeEntity old = Optional.ofNullable(super.getById(id)).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "采购建议（合并）（合并）"));
         if (!StrUtil.equals(old.getStatus(), SuggestStatusEnum.WAIT_CONFIRM.getCode())) {
             throw new ServiceException(ApiError.ERROR_SUGGEST_CONFIRM);
         }
@@ -240,8 +236,7 @@ public class PurchaseSuggestMergeServiceImpl extends SuperServiceImpl<PurchaseSu
     @Override
     @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO invalid(String id, String remark) {
-        PurchaseSuggestMergeEntity old = super.getById(id);
-        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "采购建议（合并）（合并）"));
+        PurchaseSuggestMergeEntity old = Optional.ofNullable(super.getById(id)).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "采购建议（合并）（合并）"));
         //草稿和待确认支持作废
         if (!Arrays.asList(SuggestStatusEnum.DRAFT.getCode(),SuggestStatusEnum.WAIT_CONFIRM.getCode()).contains(old.getStatus())) {
             throw new ServiceException(ApiError.ERROR_SUGGEST_INVALID);
@@ -274,8 +269,7 @@ public class PurchaseSuggestMergeServiceImpl extends SuperServiceImpl<PurchaseSu
     @Override
     @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO updateRemark(String id, String remark) {
-        PurchaseSuggestMergeEntity old = super.getById(id);
-        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "采购建议（合并）（合并）"));
+        PurchaseSuggestMergeEntity old = Optional.ofNullable(super.getById(id)).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "采购建议（合并）（合并）"));
         //草稿和待确认支持更新备注
         if (!Arrays.asList(SuggestStatusEnum.DRAFT.getCode(),SuggestStatusEnum.WAIT_CONFIRM.getCode()).contains(old.getStatus())) {
             throw new ServiceException(ApiError.ERROR_SUGGEST_UPDATE_REMARK);
@@ -457,8 +451,7 @@ public class PurchaseSuggestMergeServiceImpl extends SuperServiceImpl<PurchaseSu
 
     @Override
     public List<DeliverySuggestDTO.PurchaseSuggestBomDTO> listPurchaseSuggestBom(String id) {
-        PurchaseSuggestMergeEntity old = super.getById(id);
-        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "采购建议（合并）（合并）"));
+        PurchaseSuggestMergeEntity old = Optional.ofNullable(super.getById(id)).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "采购建议（合并）（合并）"));
         List<String> sourceIdList = old.getSourceIdJson().stream().map(obj -> obj.toString()).collect(Collectors.toList());
         List<PurchaseSuggestEntity> purchaseSuggestList = purchaseSuggestService.listByIds(sourceIdList);
         if (CollectionUtils.isEmpty(purchaseSuggestList)) {

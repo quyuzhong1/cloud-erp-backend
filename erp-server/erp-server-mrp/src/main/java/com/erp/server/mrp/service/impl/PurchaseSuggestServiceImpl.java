@@ -183,8 +183,7 @@ public class PurchaseSuggestServiceImpl extends SuperServiceImpl<PurchaseSuggest
     @Transactional(rollbackFor = Exception.class)
     @Override
     public Boolean importUpdate(PurchaseSuggestDTO.ImportUpdateDTO updateDTO) {
-        PurchaseSuggestEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "建议采购"));
+        PurchaseSuggestEntity old = Optional.ofNullable(super.getById(updateDTO.getId())).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "建议采购"));
         PurchaseSuggestEntity purchaseSuggestEntity =  BeanMapperUtils.map(PurchaseSuggestEntity.class, updateDTO);
         //查询配置
         CfgRuleOrderStrategyDTO.ViewDTO viewDTO = cfgRuleOrderStrategyService.view();
@@ -236,8 +235,7 @@ public class PurchaseSuggestServiceImpl extends SuperServiceImpl<PurchaseSuggest
     @Override
     @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO locking(String id) {
-        PurchaseSuggestEntity old = super.getById(id);
-        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "采购建议"));
+        PurchaseSuggestEntity old = Optional.ofNullable(super.getById(id)).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "采购建议"));
         if (!StrUtil.equals(old.getStatus(), SuggestStatusEnum.DRAFT.getCode())) {
             throw new ServiceException(ApiError.ERROR_SUGGEST_LOCKING);
         }
@@ -259,8 +257,7 @@ public class PurchaseSuggestServiceImpl extends SuperServiceImpl<PurchaseSuggest
     @Override
     @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO confirm(String id) {
-        PurchaseSuggestEntity old = super.getById(id);
-        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "采购建议"));
+        PurchaseSuggestEntity old = Optional.ofNullable(super.getById(id)).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "采购建议"));
         if (!StrUtil.equals(old.getStatus(), SuggestStatusEnum.WAIT_CONFIRM.getCode())) {
             throw new ServiceException(ApiError.ERROR_SUGGEST_CONFIRM);
         }
@@ -282,8 +279,7 @@ public class PurchaseSuggestServiceImpl extends SuperServiceImpl<PurchaseSuggest
     @Override
     @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO invalid(String id, String remark) {
-        PurchaseSuggestEntity old = super.getById(id);
-        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "采购建议"));
+        PurchaseSuggestEntity old = Optional.ofNullable(super.getById(id)).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "采购建议"));
         //草稿和待确认支持作废
         if (!Arrays.asList(SuggestStatusEnum.DRAFT.getCode(),SuggestStatusEnum.WAIT_CONFIRM.getCode()).contains(old.getStatus())) {
             throw new ServiceException(ApiError.ERROR_SUGGEST_INVALID);
@@ -321,8 +317,7 @@ public class PurchaseSuggestServiceImpl extends SuperServiceImpl<PurchaseSuggest
     @Override
     @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO updateRemark(String id, String remark) {
-        PurchaseSuggestEntity old = super.getById(id);
-        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "采购建议"));
+        PurchaseSuggestEntity old = Optional.ofNullable(super.getById(id)).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "采购建议"));
         //草稿和待确认支持更新备注
         if (!Arrays.asList(SuggestStatusEnum.DRAFT.getCode(),SuggestStatusEnum.WAIT_CONFIRM.getCode()).contains(old.getStatus())) {
             throw new ServiceException(ApiError.ERROR_SUGGEST_UPDATE_REMARK);
