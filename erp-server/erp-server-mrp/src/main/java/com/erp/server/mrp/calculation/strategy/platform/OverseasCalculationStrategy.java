@@ -156,6 +156,9 @@ public class OverseasCalculationStrategy extends AbstractCalculationStrategy {
     @Override
     protected List<ReplenishmentResultDTO.SalesInfoAllDTO> getSalesInfoByOrderData(LocalDate calculationDate, Integer cleanDay) {
         List<String> channelIdList = logisticsAuthFeign.listAllChannelByOverseas();
+        if (CollectionUtils.isEmpty(channelIdList)) {
+            return Collections.emptyList();
+        }
         List<String> platforms = cfgPlatformMappingService.listEffectiveByPlatform(PlatformMappingTypeEnum.OVERSEAS_PLATFORM.getCode());
         return salesService.listAllOverseasSalesBySob2c(calculationDate, cleanDay, channelIdList, platforms);
     }
@@ -164,6 +167,9 @@ public class OverseasCalculationStrategy extends AbstractCalculationStrategy {
     @Override
     protected List<ReplenishmentResultDTO.SalesInfoAllDTO> getSalesInfoByOutStockData(LocalDate calculationDate, Integer cleanDay) {
         List<String> channelIdList = logisticsAuthFeign.listAllChannelByOverseas();
+        if (CollectionUtils.isEmpty(channelIdList)) {
+            return Collections.emptyList();
+        }
         List<String> platforms = cfgPlatformMappingService.listEffectiveByPlatform(PlatformMappingTypeEnum.OVERSEAS_PLATFORM.getCode());
         return salesService.listAllOverseasSalesBySoOutStock(calculationDate, cleanDay, channelIdList, platforms);
     }
