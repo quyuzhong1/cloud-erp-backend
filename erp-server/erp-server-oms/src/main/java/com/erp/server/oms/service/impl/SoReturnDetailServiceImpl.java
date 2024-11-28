@@ -128,7 +128,7 @@ public class SoReturnDetailServiceImpl extends SuperServiceImpl<SoReturnDetailMa
             soReturnDetailEntity.setListingId(detailDto.getListingId());
             soReturnDetailEntity.setPlatformSkuNo(detailDto.getPlatformSkuNo());
             soReturnDetailEntity.setPlatformSkuName(detailDto.getPlatformSkuName());
-            soReturnDetailEntity.setExchangeRate(detailDto.getExchangeRate());
+            soReturnDetailEntity.setExchangeRate(dto.getExchangeRate());
             soReturnDetailEntity.setReturnAmount(detailDto.getReturnAmount());
             soReturnDetailEntity.setTaxReturnAmount(detailDto.getTaxReturnAmount());
             soReturnDetailEntity.setTaxReturnAmountLocalCurrency(detailDto.getTaxReturnAmountLocalCurrency());
@@ -154,7 +154,7 @@ public class SoReturnDetailServiceImpl extends SuperServiceImpl<SoReturnDetailMa
             soReturnDetailEntity.setListingId(detailDto.getListingId());
             soReturnDetailEntity.setPlatformSkuNo(detailDto.getPlatformSkuNo());
             soReturnDetailEntity.setPlatformSkuName(detailDto.getPlatformSkuName());
-            soReturnDetailEntity.setExchangeRate(detailDto.getExchangeRate());
+            soReturnDetailEntity.setExchangeRate(dto.getExchangeRate());
             soReturnDetailEntity.setReturnAmount(detailDto.getReturnAmount());
             soReturnDetailEntity.setTaxReturnAmount(detailDto.getTaxReturnAmount());
             soReturnDetailEntity.setTaxReturnAmountLocalCurrency(detailDto.getTaxReturnAmountLocalCurrency());
@@ -215,7 +215,7 @@ public class SoReturnDetailServiceImpl extends SuperServiceImpl<SoReturnDetailMa
             soReturnDetailEntity.setListingId(detailDto.getListingId());
             soReturnDetailEntity.setPlatformSkuNo(detailDto.getPlatformSkuNo());
             soReturnDetailEntity.setPlatformSkuName(detailDto.getPlatformSkuName());
-            soReturnDetailEntity.setExchangeRate(detailDto.getExchangeRate());
+            soReturnDetailEntity.setExchangeRate(dto.getExchangeRate());
             soReturnDetailEntity.setReturnAmount(detailDto.getReturnAmount());
             soReturnDetailEntity.setTaxReturnAmount(detailDto.getTaxReturnAmount());
             soReturnDetailEntity.setTaxReturnAmountLocalCurrency(detailDto.getTaxReturnAmountLocalCurrency());
@@ -272,7 +272,7 @@ public class SoReturnDetailServiceImpl extends SuperServiceImpl<SoReturnDetailMa
             soReturnDetailEntity.setListingId(detailDto.getListingId());
             soReturnDetailEntity.setPlatformSkuNo(detailDto.getPlatformSkuNo());
             soReturnDetailEntity.setPlatformSkuName(detailDto.getPlatformSkuName());
-            soReturnDetailEntity.setExchangeRate(detailDto.getExchangeRate());
+            soReturnDetailEntity.setExchangeRate(dto.getExchangeRate());
             soReturnDetailEntity.setReturnAmount(detailDto.getReturnAmount());
             soReturnDetailEntity.setTaxReturnAmount(detailDto.getTaxReturnAmount());
             soReturnDetailEntity.setTaxReturnAmountLocalCurrency(detailDto.getTaxReturnAmountLocalCurrency());
