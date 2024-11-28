@@ -426,7 +426,7 @@ public class CalcSalesInfoDimServiceImpl extends SuperServiceImpl<CalcSalesInfoD
         }
         List<CalcSalesInfoDimDTO.LineDTO> lineDTOS = DataDifferenceCalculator.calculateMatchRates(calcList, basicData, new BigDecimal(1), DataDifferenceCalculator.CalculationType.COSINE);
         List<CalcSalesInfoDimDTO.LineDTO> lineList = new ArrayList<>();
-        lineList.add(new CalcSalesInfoDimDTO.LineDTO("真实销量", BigDecimal.ONE, basicData));
+        lineList.add(new CalcSalesInfoDimDTO.LineDTO("真实销量", new BigDecimal(100), basicData));
         lineList.addAll(lineDTOS);
         CalcSalesInfoDimDTO.CalcCompareDTO calcCompareDTO = new CalcSalesInfoDimDTO.CalcCompareDTO();
         calcCompareDTO.setDateList(dateList);
