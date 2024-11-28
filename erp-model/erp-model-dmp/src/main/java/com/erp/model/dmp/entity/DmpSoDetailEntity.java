@@ -180,30 +180,6 @@ public class DmpSoDetailEntity extends BaseEntity<DmpSoDetailEntity> {
      */
     @TableField("platform_package_id")
     private String platformPackageId;
-    
-    /**
-     * 子单平台状态
-     */
-    @TableField("platform_status")
-    private String platformStatus;
-    
-    /**
-     * 售后退款数量
-     */
-    @TableField("refund_num")
-    private BigDecimal refundNum;
-    
-    /**
-     * 平台货品名称
-     */
-    @TableField("api_goods_name")
-    private String apiGoodsName;
-    
-    /**
-     * 平台规格名称
-     */
-    @TableField("api_spec_name")
-    private String apiSpecName;
 
     public static final String MAIN_ID = "main_id";
 
