@@ -2,6 +2,7 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.core.util.ObjUtil;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
@@ -165,6 +166,9 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
     @Resource
     private RequisitionApplicationService requisitionApplicationService;
 
+
+    @Resource
+    private FirstMileDeliveryService firstMileDeliveryService;
 
     @Override
     public PagingVO<MachineInfoDTO.ListDTO> paging(PagingDTO<MachineInfoDTO.SearchParamDTO> pagingDTO) {
@@ -1067,6 +1071,53 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
             doOpHandleData(page.getRecords(),true);
         }
         return new PagingVO<>(page);
+    }
+
+    @Override
+    public BatchResultDTO handleErrorData(String id) {
+        MachineInfoEntity entity = this.getById(id);
+        if (ObjUtil.isEmpty(entity)) {
+            return BatchResultDTO.fail(entity.getId(),entity.getCode(),"未找到加工单数据");
+        }
+        //加工单明细
+        List<MachineDetailEntity> detailEntityList = machineDetailService.listByMainId(id);
+        if (CollUtil.isEmpty(detailEntityList)) {
+            return BatchResultDTO.fail(entity.getId(),entity.getCode(),"未找到加工单明细数据");
+        }
+        //头程发货单
+        FirstMileDeliveryEntity firstMileDeliveryEntity = firstMileDeliveryService.getById(entity.getSourceId());
+
+        List<FirstMileDeliveryDetailEntity> deliveryDetailList = firstMileDeliveryDetailService.listDetailByMainId(entity.getSourceId());
+        if (CollUtil.isEmpty(deliveryDetailList)) {
+            return BatchResultDTO.fail(entity.getId(),entity.getCode(),"未找到头程发货明细数据");
+        }
+        List<MachineRefSoEntity> machineRefSoList = machineRefSoService.listBySoIdList(Collections.singletonList(entity.getSourceId()));
+        if (CollUtil.isNotEmpty(machineRefSoList)) {
+            return BatchResultDTO.fail(entity.getId(),entity.getCode(),"已关联头程发货单数据");
+        }
+
+        List<MachineRefSoEntity> refList = new ArrayList<>();
+        for (MachineDetailEntity machineDetailEntity : detailEntityList) {
+            FirstMileDeliveryDetailEntity deliveryDetailEntity = deliveryDetailList.stream().filter(obj ->
+                    CharSequenceUtil.equals(obj.getSkuId(), machineDetailEntity.getSkuId())
+                            && CharSequenceUtil.equals(obj.getWarehouseLocation(), machineDetailEntity.getWarehouseLocation())
+                            && MathUtil.compareTo(obj.getDeliveryQty(), machineDetailEntity.getQty()) == MathUtil.ZERO
+            ).findFirst().orElse(null);
+            if (ObjUtil.isEmpty(deliveryDetailEntity)) {
+                return BatchResultDTO.fail(entity.getId(),entity.getCode(),CharSequenceUtil.format("id = {},未找到头程发货明细数据",machineDetailEntity.getId()));
+            }
+            MachineRefSoEntity refSoEntity = new MachineRefSoEntity();
+            refSoEntity.setMachineDetailId(machineDetailEntity.getMainId());
+            refSoEntity.setMachineId(id);
+            refSoEntity.setSoId(firstMileDeliveryEntity.getId());
+            refSoEntity.setSoCode(firstMileDeliveryEntity.getCode());
+            refSoEntity.setSoDetailId(firstMileDeliveryEntity.getId());
+            refList.add(refSoEntity);
+        }
+        if (CollUtil.isNotEmpty(refList)) {
+            machineRefSoService.saveBatch(refList);
+        }
+        return BatchResultDTO.success(entity.getId(),entity.getCode(),"修复成功");
     }
 
     /**

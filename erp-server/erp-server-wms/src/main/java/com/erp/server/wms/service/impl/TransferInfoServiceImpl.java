@@ -193,6 +193,8 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
     @Resource
     private PickingDetailService pickingDetailService;
 
+    @Resource
+    private TransactionFlowService transactionFlowService;
 
     @Override
     public PagingVO<TransferInfoDTO.ListDTO> paging(PagingDTO<TransferInfoDTO.SearchParamDTO> pagingDTO) {
@@ -1976,14 +1978,14 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
     public BatchResultDTO handleErrorData(String id) {
         TransferInfoEntity entity = this.getById(id);
         if (ObjUtil.isEmpty(entity)) {
-            throw new ServiceException("未发现直接调拨单");
+            return BatchResultDTO.fail(entity.getId(),entity.getCode(),"未找到直接调拨单数据");
         }
         if (!SourceTypeEnum.SO_B2C_DELIVERY.getCode().equals(entity.getSourceType())) {
-            return BatchResultDTO.success(entity.getId(),entity.getCode(),"无需处理数据");
+            return BatchResultDTO.fail(entity.getId(),entity.getCode(),"无需处理数据");
         }
         List<TransferInfoDetailEntity> transferInfoDetailList = transferInfoDetailService.listByMainId(id);
         if (CollUtil.isEmpty(transferInfoDetailList)) {
-            return BatchResultDTO.success(entity.getId(),entity.getCode(),"无明细，无需处理数据");
+            return BatchResultDTO.fail(entity.getId(),entity.getCode(),"无明细，无需处理数据");
         }
         List<String> sourceDetailIdList = transferInfoDetailList.stream().map(TransferInfoDetailEntity::getSourceDetailId).distinct().collect(Collectors.toList());
         //拣货单明细信息
@@ -1991,8 +1993,10 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         if (CollUtil.isEmpty(pickingDetailList)) {
             return BatchResultDTO.success(entity.getId(),entity.getCode(),"无拣货明细，无需处理数据");
         }
+
         List<String> useIdList = new ArrayList<>();
         for (TransferInfoDetailEntity detailEntity : transferInfoDetailList) {
+            //拣货明细
             PickingDetailEntity pickingDetailEntity = pickingDetailList.stream().filter(obj ->
                     CharSequenceUtil.equals(obj.getSkuId(), detailEntity.getSkuId())
                             && CharSequenceUtil.equals(obj.getWarehouseLocation(), detailEntity.getOutWarehouseLocation())
