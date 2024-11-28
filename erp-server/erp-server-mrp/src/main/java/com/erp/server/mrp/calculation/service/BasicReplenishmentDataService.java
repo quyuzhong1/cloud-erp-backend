@@ -19,7 +19,6 @@ import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.wms.entity.OverseasProviderWarehouseEntity;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
-import com.erp.rpc.wms.feign.WmsOverseasWarehouseFeign;
 import com.erp.server.mrp.calculation.factory.CfgSettingFactory;
 import com.erp.server.mrp.calculation.factory.PlatformCalculationFactory;
 import com.erp.server.mrp.calculation.handler.StockingTimeHandler;
@@ -100,7 +99,7 @@ public class BasicReplenishmentDataService {
     @Resource
     private CfgRuleCommonService cfgRuleCommonService;
     @Resource
-    private WmsOverseasWarehouseFeign wmsOverseasWarehouseFeign;
+    private CfgDataArchivingService cfgDataArchivingService;
 
     /**
      * 增量变动建议补货基础数据
@@ -346,6 +345,7 @@ public class BasicReplenishmentDataService {
         LocalDate endDate = LocalDate.now().minusDays(1);
         //归档该条数据明细
         dataArchivingService.dataArchiving(detail.getId());
+        cfgDataArchivingService.dataArchivingSuggestion(id);
         //获取所有店铺
         ApiResult<List<ShopInfoEntity>> allShopResult = shopInfoFeign.list();
         if (!allShopResult.isSuccess()) {

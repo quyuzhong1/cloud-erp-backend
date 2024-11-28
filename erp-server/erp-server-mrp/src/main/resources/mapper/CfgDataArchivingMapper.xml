@@ -26,11 +26,57 @@
     <insert id="moveDataByRelId">
         INSERT INTO ${archiveTable} SELECT * FROM ${sourceTable} WHERE ${refSql}
     </insert>
+
     <delete id="deleteSource">
         DELETE FROM ${sourceTable}
     </delete>
     <delete id="deleteSourceByRelId">
         DELETE FROM ${sourceTable} WHERE ${refSql}
     </delete>
+    <delete id="deleteDeliverySuggest">
+        DELETE FROM delivery_suggest WHERE status = 'draft'
+        <if test="sourceId !=null and sourceId !=''" >
+            and source_id = #{sourceId}
+        </if>
+    </delete>
+
+    <insert id="moveDeliverySuggest">
+        INSERT INTO delivery_suggest_history SELECT * FROM delivery_suggest WHERE status = 'draft'
+        <if test="sourceId !=null and sourceId !=''" >
+            and source_id = #{sourceId}
+        </if>
+    </insert>
+    <insert id="movePurchaseSuggestMerge">
+        INSERT INTO purchase_suggest_merge_history SELECT * FROM purchase_suggest_merge WHERE status = 'draft'
+    </insert>
+    <delete id="deletePurchaseSuggestMerge">
+        DELETE FROM purchase_suggest_merge WHERE status = 'draft'
+    </delete>
+    <delete id="deletePurchaseSuggest">
+        DELETE FROM purchase_suggest ps WHERE ps.status = 'draft'
+        <if test="sourceId !=null and sourceId !=''" >
+            and source_id = #{sourceId}
+        </if>
+                                          AND NOT EXISTS (
+            SELECT 1
+            FROM purchase_suggest_merge psm,
+                 jsonb_array_elements_text(psm.source_id_json) AS source_id
+            WHERE psm.status in ('waitConfirm', 'finish')
+              AND source_id = ps.id
+        )
+    </delete>
+    <insert id="movePurchaseSuggest">
+        INSERT INTO purchase_suggest_history SELECT * FROM purchase_suggest ps WHERE ps.status = 'draft'
+        <if test="sourceId !=null and sourceId !=''" >
+            and source_id = #{sourceId}
+        </if>
+                                                                                 AND NOT EXISTS (
+            SELECT 1
+            FROM purchase_suggest_merge psm,
+                 jsonb_array_elements_text(psm.source_id_json) AS source_id
+            WHERE psm.status in ('waitConfirm', 'finish')
+              AND source_id = ps.id
+        )
+    </insert>
 
 </mapper>
