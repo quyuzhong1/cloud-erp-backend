@@ -347,8 +347,10 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
                         .map(VirtualInventoryDTO.VirtualInventoryQtyDTO::getInventoryQty).reduce(MathUtil.ZERO, Integer::sum);
                 virtualScarceQty = totalQty > virtualUsableQty ? totalQty - virtualUsableQty : MathUtil.ZERO;
             }
-            record.setVirtualScarceQty(virtualScarceQty);
-            record.setIsVirtualScarce(virtualScarceQty > MathUtil.ZERO ? Boolean.TRUE : Boolean.FALSE);
+            if (VirtualWarehouseAllocationStatusEnum.WAIT_SUBMIT.getCode().equals(record.getStatus())) {
+                record.setVirtualScarceQty(virtualScarceQty);
+                record.setIsVirtualScarce(virtualScarceQty > MathUtil.ZERO ? Boolean.TRUE : Boolean.FALSE);
+            }
         }
     }
 

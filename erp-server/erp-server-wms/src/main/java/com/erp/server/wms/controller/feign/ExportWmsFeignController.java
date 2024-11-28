@@ -705,7 +705,7 @@ public class ExportWmsFeignController {
     }
 
     /**
-     * 导出分货痛就
+     * 导出分货统计
      * @author will
      * @date 2024/11/19 17:43
      * @param dto
