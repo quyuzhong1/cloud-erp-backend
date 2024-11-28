@@ -183,14 +183,14 @@ public class VirtualInventoryDTO implements Serializable {
         private String skuId;
 
         /**
-         * 仓库状态
+         * 虚拟仓可用数量
          */
-        private String dictInventoryStatus;
+        private Integer virtualUsableQty;
 
         /**
-         * 虚拟仓数量
+         * 虚拟仓冻结数量
          */
-        private Integer virtualQty;
+        private Integer virtualFrozenQty;
 
         /**
          * 实体仓可用数量

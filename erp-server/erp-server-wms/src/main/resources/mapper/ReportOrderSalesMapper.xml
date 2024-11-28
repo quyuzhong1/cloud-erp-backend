@@ -90,7 +90,7 @@
             ${params.sqlMap.default}
             and ros.is_deleted = false
             <if test="params.isDeleteZeroInventory != null and params.isDeleteZeroInventory">
-                <if test="otherParamDTO.maxStatDurationList != null and otherParamDTO.maxStatDurationList.size > 0">
+                <if test="otherParamDTO != null and otherParamDTO.maxStatDurationList != null and otherParamDTO.maxStatDurationList.size > 0">
                     and
                     <foreach collection="otherParamDTO.maxStatDurationList" item="maxStatDuration" separator="and" open="(" close=")">
                         <if test="maxStatDuration != null and maxStatDuration == 'today'">
@@ -115,7 +115,7 @@
                 </if>
             </if>
             <if test="params.isWarn != null and params.isWarn">
-                <if test="otherParamDTO.compareType != null and otherParamDTO.compareType != ''">
+                <if test="otherParamDTO != null and otherParamDTO.compareType != null and otherParamDTO.compareType != ''">
                     <if test="otherParamDTO.daysTypeList != null and otherParamDTO.daysTypeList.size > 0">
                     and
                         <foreach collection="otherParamDTO.daysTypeList" item="daysType" open="(" close=")" separator="or">

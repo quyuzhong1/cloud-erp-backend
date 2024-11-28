@@ -93,32 +93,77 @@
     <select id="listVirtualWarehouseIdListAndSkuIdList"
             resultType="com.erp.model.wms.dto.VirtualInventoryDTO$ListInventoryDTO">
         select
-               vi.id,
-               vi.warehouse_id,
-               vi.sku_id,
-               vi.dict_inventory_status,
-               COALESCE(vi.qty,0) as virtualQty,
-               vi.virtual_warehouse_id,
-               sum(case when dict_inventory_status = 'usable' then COALESCE(qty,0) else 0) as usableQty,
-               sum(case when dict_inventory_status = 'frozen' then COALESCE(qty,0) else 0) as frozenQty,
-               sum(case when dict_inventory_status = 'inTransit' then COALESCE(qty,0) else 0) as inTransitQty,
-               sum(case when dict_inventory_status = 'waitQc' then COALESCE(qty,0) else 0) as waitQcQty
-        from virtual_inventory vi
+            id,
+            skuId,
+            warehouseId,
+            virtualQty,
+            virtualUsableQty,
+            virtualFrozenQty,
+            realQty,
+            usableQty,
+            frozenQty,
+            inTransitQty,
+            waitQcQty
+        from
+        (WITH VirtualInventory AS (
+        SELECT
+            min(id) as id,
+            sku_id,
+            warehouse_id,
+            virtual_warehouse_id,
+            SUM(qty) AS virtualQty,
+            SUM(CASE WHEN dict_inventory_status = 'usable' THEN qty ELSE 0 END) AS virtualUsableQty,
+            SUM(CASE WHEN dict_inventory_status = 'frozen' THEN qty ELSE 0 END) AS virtualFrozenQty
+            FROM
+            virtual_inventory
+            WHERE
+            is_deleted = false
+            GROUP BY
+            sku_id, warehouse_id, virtual_warehouse_id
+        ),
+        Inventory AS (
+            SELECT
+            sku_id,
+            warehouse_id,
+            SUM(CASE WHEN dict_inventory_status = 'usable' THEN qty ELSE 0 END) AS usableQty,
+            SUM(CASE WHEN dict_inventory_status = 'frozen' THEN qty ELSE 0 END) AS frozenQty,
+            SUM(CASE WHEN dict_inventory_status = 'inTransit' THEN qty ELSE 0 END) AS inTransitQty,
+            SUM(CASE WHEN dict_inventory_status = 'waitQc' THEN qty ELSE 0 END) AS waitQcQty
+            FROM
+            inventory
+            WHERE
+            is_deleted = false
+            GROUP BY
+            sku_id, warehouse_id
+        )
+        SELECT
+            vi.id,
+            i.sku_id AS skuId,
+            i.warehouse_id AS warehouseId,
+            vi.virtual_warehouse_id as virtualWarehouseId,
+            COALESCE(vi.virtualQty, 0) as virtualQty,
+            COALESCE(vi.virtualUsableQty, 0) as virtualUsableQty,
+            COALESCE(vi.virtualFrozenQty, 0) as virtualFrozenQty,
+            COALESCE(i.usableQty, 0) + COALESCE(i.frozenQty, 0) as realQty,
+            COALESCE(i.usableQty, 0) AS usableQty,
+            COALESCE(i.frozenQty, 0) AS frozenQty,
+            COALESCE(i.inTransitQty, 0) AS inTransitQty,
+            COALESCE(i.waitQcQty, 0) AS waitQcQty
+        FROM VirtualInventory vi
+        LEFT JOIN  Inventory i ON vi.sku_id = i.sku_id AND vi.warehouse_id = i.warehouse_id
         <where>
-            vi.is_deleted = false
-            and vi.sku_id in
+             vi.sku_id in
             <foreach collection="skuIdList" item="item" open="(" close=")" separator=",">
                 #{item}
             </foreach>
-
             <if test="virtualWarehouseIdList != null and virtualWarehouseIdList.size > 0">
                 and vi.virtual_warehouse_id in
                 <foreach collection="virtualWarehouseIdList" item="item" open="(" close=")" separator=",">
                     #{item}
                 </foreach>
             </if>
-
         </where>
+        ) diff
     </select>
 
     <!-- 库存差异分页查询 -->
