@@ -1,7 +1,6 @@
 package com.erp.server.bi.service.impl;
 
 import cn.hutool.core.text.CharSequenceUtil;
-import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -32,12 +31,13 @@ import com.erp.server.bi.mapper.BiSettlementExchangeRateMapper;
 import com.erp.server.bi.service.BiSettlementExchangeRateService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.poi.ss.formula.functions.T;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -260,6 +260,15 @@ public class BiSettlementExchangeRateServiceImpl extends ServiceImpl<BiSettlemen
         String targetCurrencyCode = CurrencyEnum.CNY.getCurrencyCode();
         if (CharSequenceUtil.isBlank(date)) {
             date = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+        }else{
+            // 尝试解析日期和时间部分
+            try{
+                SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+                Date parse = sdf.parse(date);
+                date = sdf.format(parse);
+            } catch (ParseException e) {
+                e.printStackTrace();
+            }
         }
         return listRedisByCurrencyCode(date, targetCurrencyCode, sourceCurrencyCode);
     }
