@@ -226,6 +226,12 @@ public class DmpSoInfoEntity extends BaseEntity<DmpSoInfoEntity> {
     */
     @TableField("logistics_channel_name")
     private String logisticsChannelName;
+    
+    /**
+     * 预估货品成本
+     */
+     @TableField("goods_cost")
+     private BigDecimal goodsCost;
 
 
     public static final String PLATFORM_CREATE_TIME = "platform_create_time";
