@@ -165,8 +165,7 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
     @Transactional(rollbackFor = Exception.class)
     @Override
     public Boolean update(DeliverySuggestDTO.UpdateDTO updateDTO) {
-        DeliverySuggestEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "补货计划"));
+        DeliverySuggestEntity old = Optional.ofNullable(super.getById(updateDTO.getId())).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "补货计划"));
         if (!Arrays.asList(SuggestStatusEnum.DRAFT.getCode(),SuggestStatusEnum.WAIT_CONFIRM.getCode()).contains(old.getStatus()) || old.getInvalidStatus()) {
             throw new ServiceException(ApiError.ERROR_SUGGEST_UPDATE);
         }
@@ -187,8 +186,7 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
     @Transactional(rollbackFor = Exception.class)
     @Override
     public Boolean importUpdate(DeliverySuggestDTO.ImportUpdateDTO updateDTO) {
-        DeliverySuggestEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "补货计划"));
+        DeliverySuggestEntity old = Optional.ofNullable(super.getById(updateDTO.getId())).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "补货计划"));
         if (!Arrays.asList(SuggestStatusEnum.DRAFT.getCode(),SuggestStatusEnum.WAIT_CONFIRM.getCode()).contains(old.getStatus()) || old.getInvalidStatus()) {
             throw new ServiceException(ApiError.ERROR_SUGGEST_UPDATE);
         }
@@ -327,8 +325,7 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
     @Override
     @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO locking(String id) {
-        DeliverySuggestEntity old = super.getById(id);
-        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "补货计划"));
+        DeliverySuggestEntity old = Optional.ofNullable(super.getById(id)).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "补货计划"));
         if (!StrUtil.equals(old.getStatus(), SuggestStatusEnum.DRAFT.getCode()) || old.getInvalidStatus()) {
             throw new ServiceException(ApiError.ERROR_SUGGEST_LOCKING);
         }
@@ -345,8 +342,7 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
     @Override
     @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO confirm(String id) {
-        DeliverySuggestEntity old = super.getById(id);
-        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "补货计划"));
+        DeliverySuggestEntity old = Optional.ofNullable(super.getById(id)).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "补货计划"));
         if (!StrUtil.equals(old.getStatus(), SuggestStatusEnum.WAIT_CONFIRM.getCode()) || old.getInvalidStatus()) {
             throw new ServiceException(ApiError.ERROR_SUGGEST_CONFIRM);
         }
@@ -364,8 +360,7 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
     @Override
     @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO invalid(String id,String remark) {
-        DeliverySuggestEntity old = super.getById(id);
-        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "补货计划"));
+        DeliverySuggestEntity old = Optional.ofNullable(super.getById(id)).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "补货计划"));
         Boolean isPush = isPushDeliveryPlan(id);
         if (isPush) {
             return BatchResultDTO.fail(old.getId(),old.getCode(),ApiError.ERROR_SUGGEST_INVALID.msg);
@@ -659,8 +654,7 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
 
     @Override
     public BatchResultDTO updateRemark(String id, String remark) {
-        DeliverySuggestEntity old = super.getById(id);
-        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "补货计划"));
+        DeliverySuggestEntity old = Optional.ofNullable(super.getById(id)).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "补货计划"));
         //草稿和待确认支持更新备注
         if (!Arrays.asList(SuggestStatusEnum.DRAFT.getCode(),SuggestStatusEnum.WAIT_CONFIRM.getCode()).contains(old.getStatus()) || old.getInvalidStatus()) {
             throw new ServiceException(ApiError.ERROR_SUGGEST_UPDATE_REMARK);
