@@ -73,6 +73,10 @@ public class CfgRuleCalcDTO implements Serializable {
          * 文件地址
          */
         private String fileUrl;
+        /**
+         * 文件名字
+         */
+        private String fileName;
 
         /**
          * 试算配置名称
@@ -144,6 +148,11 @@ public class CfgRuleCalcDTO implements Serializable {
         private String fileUrl;
 
         /**
+         * 文件名字
+         */
+        private String fileName;
+
+        /**
          * 试算配置名称
          */
         @NotBlank(message = "试算配置名称不能为空")
@@ -183,6 +192,7 @@ public class CfgRuleCalcDTO implements Serializable {
             entity.setSkuJson(JSONUtil.parseArray(addDTO.getSkuIds()));
             entity.setShopJson(JSONUtil.parseArray(addDTO.getShopIds()));
             entity.setFileUrl(addDTO.getFileUrl());
+            entity.setFileName(addDTO.getFileName());
             return entity;
         }
 
