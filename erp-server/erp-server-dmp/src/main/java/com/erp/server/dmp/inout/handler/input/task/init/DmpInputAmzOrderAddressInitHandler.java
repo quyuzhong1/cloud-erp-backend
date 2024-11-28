@@ -1,6 +1,7 @@
 package com.erp.server.dmp.inout.handler.input.task.init;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
@@ -59,8 +60,6 @@ public class DmpInputAmzOrderAddressInitHandler extends DmpInputAmzCommonInitHan
     private AmazonOrderHandler amazonOrderHandler;
     @Resource
     private RedisUtil redisUtil;
-    @Resource
-    private DmpInputTaskService dmpInputTaskService;
 
     @Override
     public List<DmpInputTaskInitDTO> getInitData(DmpInputInitRequest dmpRequest, DmpInputTaskResponse dmpResponse) {
@@ -98,7 +97,7 @@ public class DmpInputAmzOrderAddressInitHandler extends DmpInputAmzCommonInitHan
 
             String platformShopCode = shopInfoDTO.getPlatformShopCode();
 
-            String uniqueId = StrUtil.format("{}_{}", platformShopCode, amazonOrderId);
+            String uniqueId = CharSequenceUtil.format("{}_{}", platformShopCode, amazonOrderId);
 
             // 查询买家信息
             DmpInputInitChildResponse<OrderBuyerInfo> buyerInfoResponse = checkAndQueryBuyerInfo(ordersVoApi, amazonOrderId, platformShopCode, uniqueId, mainMongoDataList, shopInfoDTO, parentDmpInputTaskEntity);
@@ -148,11 +147,16 @@ public class DmpInputAmzOrderAddressInitHandler extends DmpInputAmzCommonInitHan
     /**
      * 请求地址
      */
-    private Address getAddress(OrdersV0Api ordersVoApi, String amazonOrderId, String rateLimitStr, String key) throws ApiException {
+    private Address getAddress(OrdersV0Api ordersVoApi, String amazonOrderId, String limitKey, String key) throws ApiException {
         ApiResponse<GetOrderAddressResponse> orderAddressResp = ordersVoApi.getOrderAddressWithHttpInfo(amazonOrderId);
         List<String> limitArray = orderAddressResp.getHeaders().get(ApiClient.X_AMAZON_RATE_LIMIT);
-        rateLimitStr = limitArray.get(0);
+        String rateLimitStr = limitArray.get(0);
         GetOrderAddressResponse response = orderAddressResp.getData();
+        if (StringUtils.isNotBlank(rateLimitStr)) {
+            // 设置动态速率，失效时间=1/limit
+            BigDecimal timeOut = BigDecimal.ONE.max(BigDecimal.ONE.divide(new BigDecimal(rateLimitStr), 8, RoundingMode.DOWN));
+            redisUtil.set(limitKey, rateLimitStr, timeOut.longValue());
+        }
         // 结果缓存倒redis(消费完移除)
         redisUtil.set(key, JSONUtil.toJsonStr(response.getPayload().getShippingAddress()), 300);
         return response.getPayload().getShippingAddress();
@@ -161,10 +165,10 @@ public class DmpInputAmzOrderAddressInitHandler extends DmpInputAmzCommonInitHan
     /**
      * 请求买家信息
      */
-    private OrderBuyerInfo getOrderBuyerInfo(OrdersV0Api ordersVoApi, String amazonOrderId, String rateLimitStr, String limitKey, String key) throws ApiException {
+    private OrderBuyerInfo getOrderBuyerInfo(OrdersV0Api ordersVoApi, String amazonOrderId, String limitKey, String key) throws ApiException {
         ApiResponse<GetOrderBuyerInfoResponse> orderBuyerInfoResp = ordersVoApi.getOrderBuyerInfoWithHttpInfo(amazonOrderId);
         List<String> limitArray = orderBuyerInfoResp.getHeaders().get(ApiClient.X_AMAZON_RATE_LIMIT);
-        rateLimitStr = limitArray.get(0);
+        String rateLimitStr = limitArray.get(0);
         GetOrderBuyerInfoResponse response = orderBuyerInfoResp.getData();
         if (StringUtils.isNotBlank(rateLimitStr)) {
             // 设置动态速率，失效时间=1/limit
@@ -181,7 +185,7 @@ public class DmpInputAmzOrderAddressInitHandler extends DmpInputAmzCommonInitHan
      */
     private DmpInputInitChildResponse<OrderBuyerInfo> checkAndQueryBuyerInfo(OrdersV0Api ordersVoApi, String amazonOrderId, String platformShopCode, String uniqueId, List<Map<String, Object>> mainMongoDataList, AmazonShopInfoDTO shopInfoDTO, DmpInputTaskEntity parentDmpInputTaskEntity) {
         // 查询买家信息
-        String key = StrUtil.format(RedisCacheConstants.AMZ_SP_API_RESULT_PREFIX, AmazonRequestTypeRateLimiterEnum.BUYER_INFO.getBusinessTypeName(), uniqueId);
+        String key = CharSequenceUtil.format(RedisCacheConstants.AMZ_SP_API_RESULT_PREFIX, AmazonRequestTypeRateLimiterEnum.BUYER_INFO.getBusinessTypeName(), uniqueId);
 
         // 缓存优先
         Object resultObj = redisUtil.get(key);
@@ -204,7 +208,7 @@ public class DmpInputAmzOrderAddressInitHandler extends DmpInputAmzCommonInitHan
 
         // 请求亚马逊接口
         AmazonRequestTypeRateLimiterEnum requestTypeRateLimiterEnum = AmazonRequestTypeRateLimiterEnum.BUYER_INFO;
-        String limitKey = StrUtil.format(RedisCacheConstants.PLATFORM_RATE_LIMIT, PlatformDictEnum.AMAZON.getCode(), platformShopCode, requestTypeRateLimiterEnum.getBusinessTypeName());
+        String limitKey = CharSequenceUtil.format(RedisCacheConstants.PLATFORM_RATE_LIMIT, PlatformDictEnum.AMAZON.getCode(), platformShopCode, requestTypeRateLimiterEnum.getBusinessTypeName());
         Object limitObj = redisUtil.get(limitKey);
         if (null != limitObj) {
             log.warn("【订单买家信息拉取】 platformShopCode={},存在429等待恢复:放弃当前请求任务", platformShopCode);
@@ -213,13 +217,15 @@ public class DmpInputAmzOrderAddressInitHandler extends DmpInputAmzCommonInitHan
         }
         String rateLimitStr = AmazonRequestTypeRateLimiterEnum.BUYER_INFO.getRateLimit();
         try {
-            OrderBuyerInfo buyerInfo = getOrderBuyerInfo(ordersVoApi, amazonOrderId, rateLimitStr, limitKey, key);
+            OrderBuyerInfo buyerInfo = getOrderBuyerInfo(ordersVoApi, amazonOrderId, limitKey, key);
             return new DmpInputInitChildResponse<>(true, buyerInfo);
         } catch (ApiException e) {
             if (429 == e.getCode()) {
-                // 设置动态速率，失效时间=1/limit
-                BigDecimal timeOut = BigDecimal.ONE.max(BigDecimal.ONE.divide(new BigDecimal(rateLimitStr), 8, RoundingMode.DOWN));
-                redisUtil.set(limitKey, rateLimitStr, timeOut.longValue());
+                if (!redisUtil.hasKey(limitKey)){
+                    // 设置动态速率，失效时间=1/limit
+                    BigDecimal timeOut = BigDecimal.ONE.max(BigDecimal.ONE.divide(new BigDecimal(rateLimitStr), 8, RoundingMode.DOWN));
+                    redisUtil.set(limitKey, rateLimitStr, timeOut.longValue());
+                }
                 log.warn("【订单买家信息拉取】 platformShopCode={},接口首次429:放弃当前请求任务", platformShopCode);
                 // 触发限流不执行当前
                 return new DmpInputInitChildResponse<>(false, null);
@@ -235,7 +241,7 @@ public class DmpInputAmzOrderAddressInitHandler extends DmpInputAmzCommonInitHan
      */
     public boolean hasSkipGetAddressBuyerData(List<Map<String, Object>> mainMongoDataList, String amazonOrderId, DmpInputTaskEntity parentDmpInputTaskEntity) {
         if (null != parentDmpInputTaskEntity && StringUtils.isNotBlank(parentDmpInputTaskEntity.getExtendJson())){
-            JSONObject jsonObject = JSONObject.parseObject(parentDmpInputTaskEntity.getExtendJson());
+            JSONObject jsonObject = JSON.parseObject(parentDmpInputTaskEntity.getExtendJson());
             JSONArray jsonArray = jsonObject.getJSONArray(ORDER_ID_LIST);
             if (CollectionUtils.isNotEmpty(jsonArray)){
                 List<String> orderIdList = jsonArray.stream().map(Object::toString).distinct().collect(Collectors.toList());
@@ -257,7 +263,7 @@ public class DmpInputAmzOrderAddressInitHandler extends DmpInputAmzCommonInitHan
      * 检查和查询地址
      */
     private DmpInputInitChildResponse<Address> checkAndQueryAddress(OrdersV0Api ordersVoApi, String amazonOrderId, String platformShopCode, String uniqueId, List<Map<String, Object>> mainMongoDataList, AmazonShopInfoDTO shopInfoDTO, DmpInputTaskEntity parentDmpInputTaskEntity) {
-        String addressKey = StrUtil.format(RedisCacheConstants.AMZ_SP_API_RESULT_PREFIX, AmazonRequestTypeRateLimiterEnum.ORDER_ADDRESS.getBusinessTypeName(), uniqueId);
+        String addressKey = CharSequenceUtil.format(RedisCacheConstants.AMZ_SP_API_RESULT_PREFIX, AmazonRequestTypeRateLimiterEnum.ORDER_ADDRESS.getBusinessTypeName(), uniqueId);
         Object addressResultObj = redisUtil.get(addressKey);
         if (null != addressResultObj) {
             Address shippingAddress = JSONUtil.toBean(addressResultObj.toString(), Address.class);
@@ -279,7 +285,7 @@ public class DmpInputAmzOrderAddressInitHandler extends DmpInputAmzCommonInitHan
         // 获取动态速率
         // 平台请求中:平台类型:sellerId:业务类型
         AmazonRequestTypeRateLimiterEnum requestTypeRateLimiterEnum = AmazonRequestTypeRateLimiterEnum.ORDER_ADDRESS;
-        String limitKey = StrUtil.format(RedisCacheConstants.PLATFORM_RATE_LIMIT, PlatformDictEnum.AMAZON.getCode(), platformShopCode, requestTypeRateLimiterEnum.getBusinessTypeName());
+        String limitKey = CharSequenceUtil.format(RedisCacheConstants.PLATFORM_RATE_LIMIT, PlatformDictEnum.AMAZON.getCode(), platformShopCode, requestTypeRateLimiterEnum.getBusinessTypeName());
         Object limitObj = redisUtil.get(limitKey);
         if (null != limitObj) {
             log.warn("【订单地址拉取】 UniqueId={},存在429等待恢复:放弃当前请求任务", uniqueId);
@@ -288,13 +294,15 @@ public class DmpInputAmzOrderAddressInitHandler extends DmpInputAmzCommonInitHan
         }
         String rateLimitStr = AmazonRequestTypeRateLimiterEnum.ORDER_ADDRESS.getRateLimit();
         try {
-            Address address = getAddress(ordersVoApi, amazonOrderId, rateLimitStr, addressKey);
+            Address address = getAddress(ordersVoApi, amazonOrderId, limitKey, addressKey);
             return new DmpInputInitChildResponse<>(true, address);
         } catch (ApiException e) {
             if (429 == e.getCode()) {
-                // 设置动态速率，失效时间=1/limit
-                BigDecimal timeOut = BigDecimal.ONE.max(BigDecimal.ONE.divide(new BigDecimal(rateLimitStr), 8, RoundingMode.DOWN));
-                redisUtil.set(limitKey, rateLimitStr, timeOut.longValue());
+                if (!redisUtil.hasKey(limitKey)){
+                    // 设置动态速率，失效时间=1/limit
+                    BigDecimal timeOut = BigDecimal.ONE.max(BigDecimal.ONE.divide(new BigDecimal(rateLimitStr), 8, RoundingMode.DOWN));
+                    redisUtil.set(limitKey, rateLimitStr, timeOut.longValue());
+                }
                 log.warn("【订单地址拉取】 platformShopCode={},接口首次429:放弃当前请求任务", platformShopCode);
                 // 触发限流不执行当前
                 return new DmpInputInitChildResponse<>(false, null);

@@ -1,5 +1,6 @@
 package com.erp.rpc.oms.feign;
 
+import com.erp.model.oms.dto.ListingInfoDTO;
 import com.erp.model.oms.dto.ListingInfoParamDTO;
 import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
 import com.erp.model.oms.dto.SkuMappingDTO;
@@ -41,4 +42,14 @@ public interface OmsListingInfoFeign {
      **/
     @PostMapping("feign/listing/checkAndUpdateFnsku")
     List<ListingInfoWithSkuMappingDTO> checkAndUpdateFnsku(@RequestBody @Validated ListingInfoParamDTO dto);
+
+    /**
+     * 根据参数查询sku映射记录
+     * @Author zdy
+     * @Date 2024/11/25 17:24
+     * @param queryDTO
+     * @return java.util.List<com.erp.model.oms.dto.SkuMappingDTO.SkuMappingViewDTO>
+     **/
+    @PostMapping("feign/listing/listSkuMappingByParams")
+    public List<SkuMappingDTO.SkuMappingViewDTO> listSkuMappingByParams(@RequestBody ListingInfoDTO.QueryDTO queryDTO);
 }

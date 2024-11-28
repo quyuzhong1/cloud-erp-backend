@@ -1,5 +1,6 @@
 package com.erp.server.mrp.calculation.handler;
 
+import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.erp.model.mrp.dto.CfgRuleSalesQtyDTO;
 import com.erp.model.mrp.dto.CfgRuleStrategyDTO;
 import com.erp.model.mrp.dto.ReplenishmentResultDTO;
@@ -13,10 +14,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 import static com.erp.model.mrp.enums.CfgRuleSalesDenoisingDenoisingTypeEnum.COMPLETELY;
 
@@ -90,31 +88,44 @@ public class HistorySalesHandler extends AbstractSkuCalculationHandler {
      * @param defaultDenoisingResults 默认去噪规则
      */
     private void calculationSales(boolean isIgnoreOutOfStock, ReplenishmentResultDTO replenishmentResultDTO, List<CfgRuleSalesQtyDTO.StrategyDenoisingResultDTO> denoisingResults, List<CfgRuleSalesQtyDTO.StrategyDenoisingResultDTO> defaultDenoisingResults) {
-        for (ReplenishmentResultDTO.SalesInfoDTO salesInfo : replenishmentResultDTO.getSalesInfos()) {
+
+        List<ReplenishmentResultDTO.SalesInfoDTO> salesInfoDTOS = new ArrayList<>();
+        List<ReplenishmentResultDTO.SalesInfoDTO> salesInfoList = new ArrayList<>();
+        LocalDate nowDate = LocalDate.parse(replenishmentResultDTO.getReplenishmentDetail().getCalcDate(), DateTimeFormatter.BASIC_ISO_DATE);
+        LocalDate startDate = nowDate.minusDays(361);
+        LocalDate endDate = nowDate.minusDays(1);
+        while (!startDate.isAfter(endDate)) {
+            LocalDate date = startDate;
+            ReplenishmentResultDTO.SalesInfoDTO salesInfoDTO = new ReplenishmentResultDTO.SalesInfoDTO();
+            salesInfoDTO.setId(IdWorker.getIdStr());
+            salesInfoDTO.setDate(date);
+            //获取符合的最大优先级销量去噪规则 (序号越小优先级越大)
             //获取符合的最大优先级销量去噪规则 (序号越小优先级越大)
             CfgRuleSalesQtyDTO.StrategyDenoisingResultDTO denoisingResult = denoisingResults.stream()
-                    .filter(v -> !v.getStartDate().isAfter(salesInfo.getDate()) && !v.getEndDate().isBefore(salesInfo.getDate()))
+                    .filter(v -> !v.getStartDate().isAfter(date) && !v.getEndDate().isBefore(date))
                     .max(Comparator.comparing(CfgRuleSalesQtyDTO.StrategyDenoisingResultDTO::getIndex))
                     .orElse(defaultDenoisingResults.stream()
-                            .filter(v -> !v.getStartDate().isAfter(salesInfo.getDate()) && !v.getEndDate().isBefore(salesInfo.getDate()))
+                            .filter(v -> !v.getStartDate().isAfter(date) && !v.getEndDate().isBefore(date))
                             .max(Comparator.comparing(CfgRuleSalesQtyDTO.StrategyDenoisingResultDTO::getIndex))
                             .orElse(null));
+            int originalSalesQty = Optional.ofNullable(replenishmentResultDTO.getHistorySalesList().get(date)).orElse(0);
+            int originalInventQty = Optional.ofNullable(replenishmentResultDTO.getHistoryInventoryList().get(date)).orElse(0);
             // 断货排除 ＞ 销量去噪
-            if (isIgnoreOutOfStock && salesInfo.getOriginalInventoryQty() == 0 && salesInfo.getOriginalSalesQty() == 0) {
+            if (Boolean.TRUE.equals(isIgnoreOutOfStock) && originalSalesQty == 0 && originalInventQty == 0) {
                 //存在真实断货
-                salesInfo.setSalesQty(new BigDecimal(0));
-                salesInfo.setIsIgnoreOutOfStock(true);
+                salesInfoDTO.setIsIgnoreOutOfStock(true);
+                salesInfoDTO.setSalesQty(new BigDecimal(0));
+                salesInfoList.add(salesInfoDTO);
             } else {
-                salesInfo.setIsIgnoreOutOfStock(false);
-                //走销量规则
+                salesInfoDTO.setIsIgnoreOutOfStock(false);
                 if (ObjectUtils.isEmpty(denoisingResult)) {
-                    salesInfo.setSalesQty(new BigDecimal(salesInfo.getOriginalSalesQty()));
+                    salesInfoDTO.setSalesQty(new BigDecimal(originalSalesQty));
                 } else {
                     CfgRuleSalesDenoisingDenoisingTypeEnum code = CfgRuleSalesDenoisingDenoisingTypeEnum.getEnumByCode(denoisingResult.getDenoisingType());
                     BigDecimal salesQty = new BigDecimal(0);
                     switch (Objects.requireNonNull(code)) {
                         case PERCENTAGE:
-                            salesQty = new BigDecimal(salesInfo.getOriginalSalesQty())
+                            salesQty = new BigDecimal(originalSalesQty)
                                     .multiply(BigDecimal.valueOf(denoisingResult.getEffectiveValue()))
                                     .divide(new BigDecimal(100), 2, RoundingMode.HALF_UP);
                             break;
@@ -124,10 +135,15 @@ public class HistorySalesHandler extends AbstractSkuCalculationHandler {
                         default:
                             break;
                     }
-                    salesInfo.setSalesQty(salesQty);
-                    salesInfo.setDenoisingType(denoisingResult.getDenoisingType());
+                    salesInfoDTO.setSalesQty(salesQty);
+                    salesInfoDTO.setDenoisingType(denoisingResult.getDenoisingType());
+                    salesInfoList.add(salesInfoDTO);
                 }
             }
+            salesInfoDTOS.add(salesInfoDTO);
+            startDate = startDate.plusDays(1);
         }
+        replenishmentResultDTO.setSalesInfos(salesInfoDTOS);
+        replenishmentResultDTO.setSalesInfoList(salesInfoList);
     }
 }

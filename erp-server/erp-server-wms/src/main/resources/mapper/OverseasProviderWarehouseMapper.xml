@@ -88,6 +88,9 @@
         opw.platform_warehouse_code desc
         ) warehouse
     </select>
+    <select id="listProviderWarehouseBySql" resultType="java.lang.String">
+        SELECT  platform_warehouse_code  FROM overseas_provider_warehouse  WHERE  is_deleted=false AND warehouse_id ${sql}
+    </select>
 
 
 </mapper>

@@ -3,44 +3,43 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
-import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
-import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.dmp.dto.ThirdMappingDTO;
-import com.erp.model.dmp.dto.ThirdShopDTO;
 import com.erp.model.dmp.dto.ThirdWarehouseDTO;
 import com.erp.model.dmp.enums.ThirdSysTypeEnum;
 import com.erp.model.oms.enums.AuthStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.OverseasProviderDTO;
+import com.erp.model.wms.dto.OverseasProviderWarehouseDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.entity.OverseasProviderEntity;
 import com.erp.model.wms.entity.OverseasProviderWarehouseEntity;
 import com.erp.rpc.dmp.feign.DmpThirdMappingFeign;
 import com.erp.server.wms.mapper.OverseasProviderWarehouseMapper;
-import com.erp.server.wms.service.*;
-import com.common.business.service.impl.SuperServiceImpl;
-import com.common.core.exception.ServiceException;
+import com.erp.server.wms.service.OperateLogService;
+import com.erp.server.wms.service.OverseasProviderService;
+import com.erp.server.wms.service.OverseasProviderWarehouseService;
+import com.erp.server.wms.service.WarehouseService;
 import io.seata.spring.annotation.GlobalTransactional;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
-import lombok.extern.slf4j.Slf4j;
-import com.erp.model.wms.dto.OverseasProviderWarehouseDTO;
-
-import java.util.*;
-import java.util.concurrent.CompletableFuture;
-import java.util.stream.Collectors;
-
-import com.common.core.utils.*;
-import com.common.core.enums.ApiError;
 
 import javax.annotation.Resource;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -299,5 +298,10 @@ public class OverseasProviderWarehouseServiceImpl extends SuperServiceImpl<Overs
         }
 
         return true;
+    }
+
+    @Override
+    public List<String> listProviderWarehouseBySql(String compareCodeSplicingValueSql) {
+        return baseMapper.listProviderWarehouseBySql(compareCodeSplicingValueSql);
     }
 }

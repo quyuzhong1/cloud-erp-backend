@@ -124,6 +124,9 @@
             and vwr.warehouse_id = #{params.warehouseId}
         </if>
     </select>
+    <select id="listWarehouseBySql" resultType="java.lang.String">
+        select id from virtual_warehouse  WHERE is_deleted=false and code ${compareCodeSplicingValueSql}
+    </select>
 
 
 </mapper>

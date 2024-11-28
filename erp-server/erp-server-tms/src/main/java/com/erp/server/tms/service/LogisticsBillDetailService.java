@@ -133,10 +133,10 @@ public interface LogisticsBillDetailService extends SuperService<LogisticsBillDe
 
     /**
      * 更新注册状态
-     * @param detailIds
+     * @param errorList
      * @param status
      */
-    void updateRegisterStatus(List<String> detailIds, int status);
+    void updateRegisterStatus(List<LogisticsBillDetailDTO.BillDetailErrorDTO> errorList, int status);
 
     /**
      * 更新注册状态 携带参数

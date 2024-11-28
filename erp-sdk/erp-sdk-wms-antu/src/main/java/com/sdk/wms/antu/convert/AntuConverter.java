@@ -26,6 +26,7 @@ public interface AntuConverter {
             @Mapping(target = "platformType", constant = "warehouse"),
             @Mapping(target = "platformSkuNo", source = "productSku"),
             @Mapping(target = "platformSkuName", source = "productTitle"),
+            @Mapping(target = "platformProductBarcode", source = "productId"),
             @Mapping(target = "productImageUrl", source = "productDescUrl"),
             @Mapping(target = "productSpec", source = "productModel"),
             @Mapping(target = "type", expression ="java(AntuConverter.getType())"),

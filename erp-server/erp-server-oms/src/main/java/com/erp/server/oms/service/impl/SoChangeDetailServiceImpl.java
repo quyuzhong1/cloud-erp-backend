@@ -581,7 +581,7 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
             wmsTaskFeign.closeBySoDetailIds(closeSoDetailIdList);
             //释放明细库存
             List<String> idList = saveOrUpdateList.stream().filter(obj -> CharSequenceUtil.isNotBlank(obj.getId())).map(SoDetailEntity::getId).distinct().collect(Collectors.toList());
-            if (CollectionUtils.isNotEmpty(idList)) {
+            if (CollectionUtils.isNotEmpty(idList) || CollectionUtils.isNotEmpty(deleteSoDetailIdList)) {
                 idList.addAll(deleteSoDetailIdList);
                 soDetailService.batchUnLockVirtualInventory(idList,null);
             }

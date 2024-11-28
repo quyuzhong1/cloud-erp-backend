@@ -33,4 +33,10 @@ public interface OverseasProviderWarehouseMapper extends BaseMapper<OverseasProv
     List<OverseasProviderWarehouseDTO.ViewDTO> listByWarehouseIdList(@Param("warehouseIds") List<String> warehouseIds);
 
     IPage<ThirdWarehouseDTO.PageSelectDTO> pagingSelect(Page query, @Param("params") OverseasProviderWarehouseDTO.SelectDTO params);
+
+    /**
+     * 高级查询
+     * @param compareCodeSplicingValueSql 参数
+     */
+    List<String> listProviderWarehouseBySql(@Param("sql") String compareCodeSplicingValueSql);
 }

@@ -29,7 +29,7 @@
         update_time,
         version,
         is_deleted,
-        platform, type, disabled, effective_date
+        platform, type, disabled, effective_date,stocking_mode
     </sql>
 
     <!-- 下拉 -->

@@ -2,42 +2,37 @@ package com.erp.server.wms.service.impl;
 
 
 import cn.hutool.core.text.CharSequenceUtil;
-import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.json.JSONArray;
+import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
-import com.baomidou.mybatisplus.core.toolkit.StringUtils;
-import com.erp.model.oms.dto.SkuMappingDTO;
+import com.common.business.service.impl.SuperServiceImpl;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.WmsDeliveryPlanDTO;
-import com.erp.model.wms.dto.OverseasProviderWarehouseDTO;
+import com.erp.model.wms.dto.WmsDeliveryPlanDetailDTO;
 import com.erp.model.wms.entity.WmsDeliveryPlanDetailEntity;
 import com.erp.rpc.oms.feign.OmsListingInfoFeign;
 import com.erp.rpc.oms.feign.SkuMappingFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.convert.DeliveryPlanConverter;
 import com.erp.server.wms.mapper.WmsDeliveryPlanDetailMapper;
-import com.erp.server.wms.service.WmsDeliveryPlanDetailService;
-import com.common.business.service.impl.SuperServiceImpl;
 import com.erp.server.wms.service.OperateLogService;
-import com.erp.server.wms.service.CommonService;
-import com.common.core.exception.ServiceException;
 import com.erp.server.wms.service.OverseasProviderWarehouseService;
+import com.erp.server.wms.service.WmsDeliveryPlanDetailService;
+import io.seata.spring.annotation.GlobalTransactional;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.math3.util.Pair;
 import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
-import io.seata.spring.annotation.GlobalTransactional;
-import lombok.extern.slf4j.Slf4j;
-import com.erp.model.wms.dto.WmsDeliveryPlanDetailDTO;
-import java.util.*;
-import java.util.stream.Collectors;
-
-import com.common.core.utils.*;
-import com.common.core.enums.ApiError;
 
 import javax.annotation.Resource;
+import java.util.Collections;
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -120,6 +115,11 @@ public class WmsDeliveryPlanDetailServiceImpl extends SuperServiceImpl<WmsDelive
         return lambdaUpdate().in(WmsDeliveryPlanDetailEntity::getMainId,mainIds).remove();
     }
 
+    @Override
+    public List<WmsDeliveryPlanDetailEntity> listBySourceIdList(List<String> idList) {
+        return baseMapper.listBySourceIdList(idList);
+    }
+
     /**
     * 新增修改处理数据
     */
@@ -147,6 +147,8 @@ public class WmsDeliveryPlanDetailServiceImpl extends SuperServiceImpl<WmsDelive
             //设置产品编号
             SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuId().equals(detailEntity.getSkuId())).findFirst().orElse(new SkuVO());
             detailEntity.setSkuNo(skuVO.getSkuNo());
+            //来源信息
+            detailEntity.setSourceJson(CollectionUtils.isEmpty(detailEntity.getSourceJsonList()) ? new JSONArray() : JSONUtil.parseArray(detailEntity.getSourceJsonList()));
 
             //校验是否是修改，如果是就新增修改日志
             if (CharSequenceUtil.isNotBlank(detailEntity.getId())) {

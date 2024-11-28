@@ -4,23 +4,79 @@
 
     <!-- 通用查询映射结果 -->
     <resultMap id="BaseResultMap" type="com.erp.model.mrp.entity.LocalHistoryInventoryEntity">
-        <result column="id" property="id" />
-        <result column="create_time" property="createTime" />
-        <result column="update_time" property="updateTime" />
-        <result column="create_user_name" property="createUserName" />
-        <result column="create_user_id" property="createUserId" />
-        <result column="update_user_name" property="updateUserName" />
-        <result column="update_user_id" property="updateUserId" />
-        <result column="version" property="version" />
-        <result column="is_deleted" property="isDeleted" />
-        <result column="org_id" property="orgId" />
-        <result column="warehouse_id" property="warehouseId" />
-        <result column="warehouse_location" property="warehouseLocation" />
-        <result column="sku_id" property="skuId" />
-        <result column="sku_no" property="skuNo" />
-        <result column="dict_inventory_status" property="dictInventoryStatus" />
-        <result column="qty" property="qty" />
-        <result column="bill_date" property="billDate" />
+        <result column="id" property="id"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+        <result column="create_user_name" property="createUserName"/>
+        <result column="create_user_id" property="createUserId"/>
+        <result column="update_user_name" property="updateUserName"/>
+        <result column="update_user_id" property="updateUserId"/>
+        <result column="version" property="version"/>
+        <result column="is_deleted" property="isDeleted"/>
+        <result column="warehouse_id" property="warehouseId"/>
+        <result column="sku_id" property="skuId"/>
+        <result column="sku_no" property="skuNo"/>
+        <result column="usable_qty" property="usableQty"/>
+        <result column="waitqc_qty" property="waitqcQty"/>
+        <result column="frozen_qty" property="frozenQty"/>
+        <result column="purchase_transit_qty" property="purchaseTransitQty"/>
+        <result column="transfer_transit_qty" property="transferTransitQty"/>
+        <result column="bill_date" property="billDate"/>
     </resultMap>
+    <select id="paging" resultType="com.erp.model.mrp.dto.LocalHistoryInventoryDTO$PagingViewDTO">
+        select id,
+               update_time,
+               warehouse_id,
+               sku_id,
+               sku_no,
+               usable_qty,
+               waitqc_qty,
+               frozen_qty,
+               purchase_transit_qty,
+               transfer_transit_qty,
+               bill_date
+        from local_history_inventory
+        WHERE ${params.sqlMap.default} and is_deleted = FALSE
+        <!--是否显示0库存-->
+        <if test="params.isShowZeroInventory">
+            AND (usable_qty > 0
+            OR waitqc_qty > 0
+            OR frozen_qty > 0
+            OR purchase_transit_qty > 0
+            OR transfer_transit_qty > 0)
+        </if>
+        <if test="params.billDate != null" >
+            AND bill_date = #{params.billDate}
+        </if>
+        ORDER BY create_time DESC, id desc
+    </select>
+    <select id="exportLocalInventory"
+            resultType="com.erp.model.mrp.dto.LocalHistoryInventoryDTO$PagingViewDTO">
+        select id,
+        update_time,
+        warehouse_id,
+        sku_id,
+        sku_no,
+        usable_qty,
+        waitqc_qty,
+        frozen_qty,
+        purchase_transit_qty,
+        transfer_transit_qty,
+        bill_date
+        from local_history_inventory
+        WHERE ${params.sqlMap.default} and is_deleted = FALSE
+        <!--是否显示0库存-->
+        <if test="params.isShowZeroInventory">
+            AND (usable_qty > 0
+            OR waitqc_qty > 0
+            OR frozen_qty > 0
+            OR purchase_transit_qty > 0
+            OR transfer_transit_qty > 0)
+        </if>
+        <if test="params.billDate != null" >
+            AND bill_date = #{params.billDate}
+        </if>
+        ORDER BY create_time DESC, id desc
+    </select>
 
 </mapper>

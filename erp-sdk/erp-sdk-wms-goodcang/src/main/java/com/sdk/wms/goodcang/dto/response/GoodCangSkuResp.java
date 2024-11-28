@@ -15,6 +15,9 @@ import java.util.List;
 @AllArgsConstructor
 public class GoodCangSkuResp extends CleanBaseDTO implements Serializable {
 
+    //谷仓商品条码
+    @JSONField(name = "product_barcode")
+    private String productBarcode;
     //商品sku
     @JSONField(name = "product_sku")
     private String productSku;

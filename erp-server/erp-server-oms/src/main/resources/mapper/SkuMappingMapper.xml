@@ -190,6 +190,7 @@
         li.platform_spu_no,
         li.platform_spu_name,
         li.platform_fn_sku,
+        li.third_barcode,
         sm.warehouse_id,
         sm.warehouse_name,
         sm.update_user_name,
@@ -227,6 +228,7 @@
         li.platform_sku_no AS warehouseSkuNo,
         li.platform_sku_name AS warehouseProductName,
         li.match_result,
+        li.third_barcode,
         sm.warehouse_id,
         sm.warehouse_name,
         sm.create_user_name,
@@ -577,6 +579,39 @@
           and sm.warehouse_id = #{warehouseId}
           AND li.platform_sku_no IN
         <foreach collection="platformSkuNoList" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </select>
+    <select id="listSkuMappingByParams" resultType="com.erp.model.oms.dto.SkuMappingDTO$SkuMappingViewDTO">
+        select
+        sm.id as mappingId,
+        sm.dict_platform as dictPlatform,
+        sm.product_sku_id as productSkuId,
+        sm.product_sku_no as productSkuNo,
+        sm.product_name as productName,
+        sm.platform_name as platformName,
+        sm.type as type,
+        sm.warehouse_id as warehouseId,
+        sm.warehouse_name as warehouseName,
+        sm.is_expire as isExpire,
+        li.id as listingId,
+        li.platform_sku_no as platformSkuNo,
+        li.platform_sku_name as platformSkuName,
+        li.third_barcode as thirdBarcode,
+        li.platform_spu_no as platformSpuNo,
+        li.platform_spu_name as platformSpuName,
+        li.platform_fn_sku as platformFnSku,
+        op.short_name
+        from sku_mapping sm
+        inner join listing_info li on sm.listing_id = li.id and li.is_deleted = false
+        LEFT JOIN overseas_provider op on op.id = li.auth_id and op.is_deleted = false
+        where sm.is_deleted = false
+        and sm.is_expire = false
+        <if test="params.type != null and params.type != ''">
+            AND li.type = #{params.type} AND sm.type = #{params.type}
+        </if>
+        AND li.platform_sku_no IN
+        <foreach collection="params.platformSkuNoList" item="item" open="(" separator="," close=")">
             #{item}
         </foreach>
     </select>

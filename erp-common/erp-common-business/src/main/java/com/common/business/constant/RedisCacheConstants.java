@@ -236,4 +236,9 @@ public interface RedisCacheConstants {
      */
     String DMP_TRACK123_TRACK_OCEAN_LOGISTICS_NO = "dmp_track123:ocean_logistics:track_no";
 
+    /**
+     * DMP物流跟踪记录分页查询缓存LastId
+     */
+    String DMP_LOGISTICS_TRACK = "dmp_logistics_track:last_page";
+
 }

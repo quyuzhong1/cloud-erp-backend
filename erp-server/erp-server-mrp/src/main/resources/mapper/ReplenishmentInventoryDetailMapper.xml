@@ -24,5 +24,25 @@
         <result column="total_qty" property="totalQty" />
         <result column="calc_version" property="calcVersion" />
     </resultMap>
+    <select id="inventoryDetail" resultType="com.erp.model.mrp.vo.InventoryDetailVO">
+        SELECT
+            rid.inventory_type,
+            rid.warehouse_id,
+            rid.virtual_warehouse_id,
+            rid.warehouse_type,
+            rid.dict_platform,
+            rid.channel_type,
+            rid.channel_id_json,
+            rid.inventory_allocate_type,
+            rid.total_qty,
+            rid.platform_qty,
+            sid.shop_id,
+            sid.qty
+        FROM
+            replenishment_inventory_detail AS rid
+                LEFT JOIN shop_inventory_detail AS sid ON rid."id" = sid.main_id
+                AND sid.is_deleted = FALSE
+        WHERE rid.replenishment_detail_id = #{param.detailId} AND rid.inventory_type = #{param.type}
+    </select>
 
 </mapper>

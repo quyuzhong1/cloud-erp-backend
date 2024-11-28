@@ -47,18 +47,6 @@ public class OverseasHistoryInventoryEntity extends BaseEntity<OverseasHistoryIn
     private String name;
 
     /**
-     * 库存sku
-     */
-    @TableField("platform_sku")
-    private String platformSku;
-
-    /**
-     * 库存产品名称
-     */
-    @TableField("platform_sku_name")
-    private String platformSkuName;
-
-    /**
      * ERP系统产品名称
      */
     @TableField("product_name")
@@ -134,6 +122,12 @@ public class OverseasHistoryInventoryEntity extends BaseEntity<OverseasHistoryIn
      */
     @TableField("bill_date")
     private LocalDate billDate;
+
+    /**
+     * 仓库id
+     */
+    @TableField(exist = false)
+    private String warehouseId;
 
 
     public static final String WAREHOUSE_CODE = "warehouse_code";

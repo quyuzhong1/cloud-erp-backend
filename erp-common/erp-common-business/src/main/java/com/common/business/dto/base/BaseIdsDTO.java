@@ -58,6 +58,15 @@ public class BaseIdsDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
+    public static class BlankRemarkDTO extends IdsDTO{
+
+        @Size(max = 255,message = "填写信息不能超过255字符")
+        private String remark;
+
+    }
+
+    @Data
+    @NoArgsConstructor
     public static class QtyDTO extends IdsDTO{
 
         @NotNull(message = "填写信息不能为空")

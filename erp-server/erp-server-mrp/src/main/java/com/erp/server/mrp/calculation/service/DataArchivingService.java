@@ -7,7 +7,7 @@ public interface DataArchivingService {
     /**
      * 归档所有数据
      */
-    void dataArchiving(LocalDate calculationDate);
+    void dataArchiving(LocalDate calculationDate, Integer cleanDay);
 
     /**
      * 归档某条数据
