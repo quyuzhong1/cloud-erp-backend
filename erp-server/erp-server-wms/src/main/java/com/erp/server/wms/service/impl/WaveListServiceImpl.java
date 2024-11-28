@@ -277,6 +277,7 @@ public class WaveListServiceImpl extends SuperServiceImpl<WaveListMapper, WaveLi
             operateLogService.addModuleOperateLog(String.format("波次拣货单取消已打印【%s】，自动变更状态为待拣货", waveListEntity.getCode()), ModuleTypeEnum.WAVE_LIST.getCode(), waveId, "波次列表波次状态自动变更", user.getUid(), user.getUserName());
         }
         update(updateWrapper);
+        //清除拣货单拣货数量
         cleanPickingList(waveListEntity);
         return BatchResultDTO.success(waveListEntity.getId(), waveListEntity.getCode(), "成功");
     }
@@ -285,12 +286,11 @@ public class WaveListServiceImpl extends SuperServiceImpl<WaveListMapper, WaveLi
     @Transactional(rollbackFor = Exception.class)
     public void cleanPickingList(WaveListEntity waveListEntity){
         if(null != waveListEntity && StringUtils.isNotBlank(waveListEntity.getId())) {
-            pickingListsMapper.deleteByWaveIds(Collections.singletonList(waveListEntity.getId()));
-            pickingDetailMapper.deleteByWaveIds(Collections.singletonList(waveListEntity.getId()));
+            pickingDetailMapper.updatePickedQtyByWaveIds(Collections.singletonList(waveListEntity.getId()));
             //记录日志
             LoginUser user = UserContext.getNonLoginUser();
             //波次状态自动变更
-            operateLogService.addModuleOperateLog(String.format("波次拣货单取消已打印【%s】，清除拣货单数量", waveListEntity.getCode()), ModuleTypeEnum.PICKING_LISTS.getCode(), waveListEntity.getId(), "波次列表取消打印--清除拣货单数量", user.getUid(), user.getUserName());
+            operateLogService.addModuleOperateLog(String.format("波次拣货单取消已打印【%s】，清除拣货单拣货数量", waveListEntity.getCode()), ModuleTypeEnum.PICKING_LISTS.getCode(), waveListEntity.getId(), "波次列表取消打印--清除拣货单数量", user.getUid(), user.getUserName());
         }
     }
 

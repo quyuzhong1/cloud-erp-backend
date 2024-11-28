@@ -17,5 +17,5 @@ import java.util.List;
  */
 @Mapper
 public interface PickingDetailMapper extends BaseMapper<PickingDetailEntity> {
-    int deleteByWaveIds(@Param("waveIds") List<String> waveIds);
+    int updatePickedQtyByWaveIds(@Param("waveIds") List<String> waveIds);
 }

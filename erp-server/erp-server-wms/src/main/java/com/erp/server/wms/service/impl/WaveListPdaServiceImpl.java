@@ -206,7 +206,7 @@ public class WaveListPdaServiceImpl extends SuperServiceImpl<WaveListPdaMapper, 
             List<String> pickingDetailIds = pickingDetailList.stream().map(BaseEntity::getId).collect(Collectors.toList());
             pickingDetailService.update(new LambdaUpdateWrapper<PickingDetailEntity>().set(PickingDetailEntity::getIsOutStock, false).in(PickingDetailEntity::getId, pickingDetailIds));
         }
-        //清除拣货单
+        //清除拣货单拣货数量
         waveListService.cleanPickingList(waveListService.getById(exitDTO.getId()));
         return ApiResult.success();
     }

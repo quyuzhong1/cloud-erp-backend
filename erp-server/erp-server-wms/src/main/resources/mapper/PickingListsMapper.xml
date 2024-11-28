@@ -125,15 +125,4 @@
         rad.sku_no,
         rad.platform_fn_sku
     </select>
-
-    <update id="deleteByWaveIds" parameterType="java.lang.String">
-        UPDATE picking_lists
-        SET is_deleted = TRUE
-        WHERE
-            source_code IN ( SELECT delivery_code FROM wave_list_detail WHERE main_id IN
-        <foreach collection="waveIds" item="id" open="(" close=")" separator=",">
-            #{id}
-        </foreach>)
-    </update>
-
 </mapper>
