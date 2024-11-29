@@ -687,6 +687,11 @@ public class SoReturnDTO {
         @NotNull(message = "客户不能为空")
         private String customerId;
         /**
+         * 币种
+         */
+        @NotNull(message = "币种不能为空")
+        private String currency;
+        /**
          * 汇率
          */
         @NotNull(message = "汇率不能为空")
