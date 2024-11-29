@@ -258,7 +258,7 @@ public class LogisticsLastMileCostController extends BaseController {
          menuCode = "tms:logisticsLastMileCost:update",
          serviceClass = LogisticsBillCostService.class,
          keyIdName = "id")
-     public ApiResult<Object> addPayAndRefund(@RequestBody @Validated LogisticsBillCostDTO.AddDataDTO dto) {
+     public ApiResult<Object> addPayAndRefund(@RequestBody @Validated List<LogisticsBillCostDTO.AddDataDTO> dto) {
          logisticsBillCostService.addPayAndRefund(dto);
          return success();
      }
@@ -296,7 +296,7 @@ public class LogisticsLastMileCostController extends BaseController {
      menuCode = "tms:logisticsLastMileCost:editView",
      serviceClass = LogisticsBillCostService.class,
      keyIdName = "id")
-     public ApiResult<EditViewDTO> editView(@RequestBody @Validated BaseIdDTO dto) {
+     public ApiResult<List<EditViewDTO>> editView(@RequestBody @Validated BaseIdDTO dto) {
      	return success(logisticsBillCostService.editView(dto.getId()));
      }
      
@@ -314,8 +314,8 @@ public class LogisticsLastMileCostController extends BaseController {
      menuCode = "tms:logisticsLastMileCost:edit",
      serviceClass = LogisticsBillCostService.class,
      keyIdName = "id")
-     public ApiResult<Object> edit(@RequestBody @Validated EditDataDTO dto) {
-     	logisticsBillCostService.edit(dto);
+     public ApiResult<Object> edit(@RequestBody @Validated List<EditDataDTO> dtoList) {
+     	logisticsBillCostService.edit(dtoList);
      	return success();
      }
      

@@ -285,7 +285,7 @@ public class LogisticsBillCostController extends BaseController {
      menuCode = "tms:logisticsBillCost:editView",
      serviceClass = LogisticsBillCostService.class,
      keyIdName = "id")
-     public ApiResult<EditViewDTO> editView(@RequestBody @Validated BaseIdDTO dto) {
+     public ApiResult<List<EditViewDTO>> editView(@RequestBody @Validated BaseIdDTO dto) {
      	return success(logisticsBillCostService.editView(dto.getId()));
      }
      
@@ -303,8 +303,8 @@ public class LogisticsBillCostController extends BaseController {
      menuCode = "tms:logisticsBillCost:edit",
      serviceClass = LogisticsBillCostService.class,
      keyIdName = "id")
-     public ApiResult<Object> edit(@RequestBody @Validated EditDataDTO dto) {
-     	logisticsBillCostService.edit(dto);
+     public ApiResult<Object> edit(@RequestBody @Validated List<EditDataDTO> dtoList) {
+     	logisticsBillCostService.edit(dtoList);
      	return success();
      }
      

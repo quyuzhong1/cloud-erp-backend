@@ -538,12 +538,17 @@ public class LogisticsBillCostDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
-    public static class ConfirmAddDataDTO extends AddDataDTO{
+    public static class ConfirmAddDataDTO{
     	/**
     	 * 对账确认时间
     	 */
     	@NotNull(message = "对账确认时间不能为空")
     	private LocalDateTime confirmTime;
+    	
+    	/**
+    	 * 新增付款/退款数据
+    	 */
+    	private List<AddDataDTO> addDataDTOList;
     }
 
     /**

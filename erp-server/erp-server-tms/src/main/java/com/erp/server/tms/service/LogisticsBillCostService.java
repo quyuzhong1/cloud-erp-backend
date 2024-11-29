@@ -43,7 +43,7 @@ public interface LogisticsBillCostService extends SuperService<LogisticsBillCost
     */
     BaseResultDTO.AddDTO add(LogisticsBillCostDTO.AddDTO dto);
     
-    BaseResultDTO.AddDTO addPayAndRefund(List<LogisticsBillCostDTO.AddDataDTO> dtoList);
+    List<BaseResultDTO.AddDTO> addPayAndRefund(List<LogisticsBillCostDTO.AddDataDTO> dtoList);
     
     void addPayAndRefundConfirm(LogisticsBillCostDTO.ConfirmAddDataDTO dto);
 
@@ -56,9 +56,9 @@ public interface LogisticsBillCostService extends SuperService<LogisticsBillCost
     */
     Boolean update(LogisticsBillCostDTO.UpdateDTO dto,Boolean isImport);
     
-    EditViewDTO editView(String id);
+    List<EditViewDTO> editView(String id);
     
-    void edit(EditDataDTO dto);
+    void edit(List<EditDataDTO> dtoList);
 
     /**
      * @description: tab列表

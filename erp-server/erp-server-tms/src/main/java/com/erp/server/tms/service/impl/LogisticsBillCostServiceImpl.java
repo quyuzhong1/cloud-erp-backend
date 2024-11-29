@@ -1156,57 +1156,63 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
 	@Override
-	public BaseResultDTO.AddDTO addPayAndRefund(List<LogisticsBillCostDTO.AddDataDTO> dtoList) {
-		String sourceId = dto.getSourceId();
-		LogisticsBillCostEntity logisticsBillCostEntity = getById(sourceId);
-		LogisticsBillCostDTO.AddDTO addDTO = new LogisticsBillCostDTO.AddDTO();
-		addDTO.setPayType(dto.getPayType());
-		addDTO.setReconciliationStatus(ReconciliationStatusEnum.TO_BE_CONFIRM.getCode());
-		addDTO.setLogisticsBillId(logisticsBillCostEntity.getLogisticsBillId());
-		addDTO.setLogisticsBillDetailId(logisticsBillCostEntity.getLogisticsBillDetailId());
-		addDTO.setActualWeight(logisticsBillCostEntity.getActualWeight());
-		addDTO.setVolumeWeight(logisticsBillCostEntity.getVolumeWeight());
-		String currency = dto.getCurrency();
-		if(org.apache.commons.lang3.StringUtils.isBlank(currency)) {
-			currency = CurrencyEnum.CNY.getCurrencyCode();
-		}
-		addDTO.setCurrency(currency);
-		addDTO.setTrackNo(logisticsBillCostEntity.getTrackNo());
-		addDTO.setChannelId(logisticsBillCostEntity.getChannelId());
-		addDTO.setWeightLogistics(logisticsBillCostEntity.getWeightLogistics());
-		addDTO.setVolumeWeightLogistics(logisticsBillCostEntity.getVolumeWeightLogistics());
-		
-		List<DetailDTO> newCostDetailList = dto.getCostDetailList();
-		List<TmsCostDetailDTO.AddDTO>  costDetailList = new ArrayList<>();
-		for(DetailDTO detailDTO : newCostDetailList) {
-			TmsCostDetailDTO.AddDTO add = new TmsCostDetailDTO.AddDTO();
-			add.setCfgCostId(detailDTO.getCfgCostId());
-			add.setCostValue(detailDTO.getCostValue());
-			add.setType(LogisticsBillCostTypeEnum.ACTUAL.getCode());
-			add.setSourceType(SourceTypeEnum.LOGISTICS_BILL_COST.getCode());
-			costDetailList.add(add);
-			
-			BigDecimal estimatedValue = detailDTO.getEstimatedValue();
-			if(estimatedValue != null && estimatedValue.compareTo(BigDecimal.ZERO) != 0) {
-				add = new TmsCostDetailDTO.AddDTO();
-				add.setCfgCostId(detailDTO.getCfgCostId());
-				add.setCostValue(estimatedValue);
-				add.setType(LogisticsBillCostTypeEnum.ESTIMATED.getCode());
-				add.setSourceType(SourceTypeEnum.LOGISTICS_BILL_COST.getCode());
-				costDetailList.add(add);
-			}
-		}
-		addDTO.setCostDetailList(costDetailList);
-		
-		return this.add(addDTO);
+	public List<BaseResultDTO.AddDTO> addPayAndRefund(List<LogisticsBillCostDTO.AddDataDTO> dtoList) {
+    	List<BaseResultDTO.AddDTO> addList = new ArrayList<>();
+    	Map<String, List<AddDataDTO>> sourceIdDtoMaps = dtoList.stream().collect(Collectors.groupingBy(LogisticsBillCostDTO.AddDataDTO::getSourceId));
+    	for(Map.Entry<String, List<AddDataDTO>> sourceIdDtoMap : sourceIdDtoMaps.entrySet()) {
+    		List<AddDataDTO> value = sourceIdDtoMap.getValue();
+			AddDataDTO dto = value.get(0);
+    		String sourceId = dto.getSourceId();
+    		LogisticsBillCostEntity logisticsBillCostEntity = getById(sourceId);
+    		LogisticsBillCostDTO.AddDTO addDTO = new LogisticsBillCostDTO.AddDTO();
+    		addDTO.setPayType(dto.getPayType());
+    		addDTO.setReconciliationStatus(ReconciliationStatusEnum.TO_BE_CONFIRM.getCode());
+    		addDTO.setLogisticsBillId(logisticsBillCostEntity.getLogisticsBillId());
+    		addDTO.setLogisticsBillDetailId(logisticsBillCostEntity.getLogisticsBillDetailId());
+    		addDTO.setActualWeight(logisticsBillCostEntity.getActualWeight());
+    		addDTO.setVolumeWeight(logisticsBillCostEntity.getVolumeWeight());
+    		String currency = dto.getCurrency();
+    		if(org.apache.commons.lang3.StringUtils.isBlank(currency)) {
+    			currency = CurrencyEnum.CNY.getCurrencyCode();
+    		}
+    		addDTO.setCurrency(currency);
+    		addDTO.setTrackNo(logisticsBillCostEntity.getTrackNo());
+    		addDTO.setChannelId(logisticsBillCostEntity.getChannelId());
+    		addDTO.setWeightLogistics(logisticsBillCostEntity.getWeightLogistics());
+    		addDTO.setVolumeWeightLogistics(logisticsBillCostEntity.getVolumeWeightLogistics());
+    		
+    		List<TmsCostDetailDTO.AddDTO>  costDetailList = new ArrayList<>();
+    		for(AddDataDTO detailDTO : value) {
+    			TmsCostDetailDTO.AddDTO add = new TmsCostDetailDTO.AddDTO();
+    			add.setCfgCostId(detailDTO.getCfgCostId());
+    			add.setCostValue(detailDTO.getCostValue());
+    			add.setType(LogisticsBillCostTypeEnum.ACTUAL.getCode());
+    			add.setSourceType(SourceTypeEnum.LOGISTICS_BILL_COST.getCode());
+    			costDetailList.add(add);
+    			
+    			BigDecimal estimatedValue = detailDTO.getEstimatedValue();
+    			if(estimatedValue != null && estimatedValue.compareTo(BigDecimal.ZERO) != 0) {
+    				add = new TmsCostDetailDTO.AddDTO();
+    				add.setCfgCostId(detailDTO.getCfgCostId());
+    				add.setCostValue(estimatedValue);
+    				add.setType(LogisticsBillCostTypeEnum.ESTIMATED.getCode());
+    				add.setSourceType(SourceTypeEnum.LOGISTICS_BILL_COST.getCode());
+    				costDetailList.add(add);
+    			}
+    		}
+    		addDTO.setCostDetailList(costDetailList);
+    		addList.add(this.add(addDTO));
+    	}
+    	
+		return addList;
 	}
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
 	@Override
 	public void addPayAndRefundConfirm(ConfirmAddDataDTO dto) {
-		AddDTO addDTO = this.addPayAndRefund(dto);
-		this.updateReconciliationStatus(addDTO.getId(), ReconciliationStatusEnum.CONFIRMED.getCode(), dto.getConfirmTime());
+		List<AddDTO> dtoList = this.addPayAndRefund(dto.getAddDataDTOList());
+		dtoList.forEach(addDTO -> this.updateReconciliationStatus(addDTO.getId(), ReconciliationStatusEnum.CONFIRMED.getCode(), dto.getConfirmTime()));
 	}
 
 	@Override
@@ -1234,38 +1240,37 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 	}
 
 	@Override
-	public EditViewDTO editView(String id) {
+	public List<EditViewDTO> editView(String id) {
+		List<EditViewDTO> costDetailList = new ArrayList<>();
 		LogisticsBillCostEntity entity = super.getById(id);
-		EditViewDTO editViewDTO = BeanUtil.copyProperties(entity, EditViewDTO.class);
-		String payType = entity.getPayType();
-		editViewDTO.setPayTypeName(payType.equals("pay") ? "付款" : "退款");
-		List<TmsCostDetailDTO.DetailDTO>  costDetailList = new ArrayList<>();
 		List<TmsCostDetailEntity> tmsCostDetailEntityList = tmsCostDetailService.lambdaQuery().eq(TmsCostDetailEntity::getMainId, id).list();
 		Map<String, List<TmsCostDetailEntity>> costIdMaps = tmsCostDetailEntityList.stream().collect(Collectors.groupingBy(TmsCostDetailEntity::getCfgCostId));
 		for(Map.Entry<String, List<TmsCostDetailEntity>> costIdMap : costIdMaps.entrySet()) {
+			EditViewDTO editViewDTO = BeanUtil.copyProperties(entity, EditViewDTO.class);
+			String payType = entity.getPayType();
+			editViewDTO.setPayTypeName(payType.equals("pay") ? "付款" : "退款");
+			
 			List<TmsCostDetailEntity> value = costIdMap.getValue();
-			TmsCostDetailDTO.DetailDTO dto = new TmsCostDetailDTO.DetailDTO();
-			dto.setCfgCostId(costIdMap.getKey());
-			dto.setCostValue(value.stream().filter(v -> LogisticsBillCostTypeEnum.ACTUAL.getCode().equals(v.getType())).map(TmsCostDetailEntity::getCostValue).reduce(BigDecimal::add).orElse(BigDecimal.ZERO));
-			dto.setEstimatedValue(value.stream().filter(v -> LogisticsBillCostTypeEnum.ESTIMATED.getCode().equals(v.getType())).map(TmsCostDetailEntity::getCostValue).reduce(BigDecimal::add).orElse(BigDecimal.ZERO));
-			costDetailList.add(dto);
+			editViewDTO.setCfgCostId(costIdMap.getKey());
+			editViewDTO.setCostValue(value.stream().filter(v -> LogisticsBillCostTypeEnum.ACTUAL.getCode().equals(v.getType())).map(TmsCostDetailEntity::getCostValue).reduce(BigDecimal::add).orElse(BigDecimal.ZERO));
+			editViewDTO.setEstimatedValue(value.stream().filter(v -> LogisticsBillCostTypeEnum.ESTIMATED.getCode().equals(v.getType())).map(TmsCostDetailEntity::getCostValue).reduce(BigDecimal::add).orElse(BigDecimal.ZERO));
+			costDetailList.add(editViewDTO);
 		}
-		editViewDTO.setCostDetailList(costDetailList);
-		return editViewDTO;
+		return costDetailList;
 	}
 
 	@Transactional(rollbackFor = Exception.class)
 	@Override
-	public void edit(EditDataDTO dto) {
+	public void edit(List<EditDataDTO> dtoList) {
 		LogisticsBillCostDTO.UpdateDTO updateDataDTO = new LogisticsBillCostDTO.UpdateDTO();
+		EditDataDTO dto = dtoList.get(0);
 		updateDataDTO.setId(dto.getId());
         updateDataDTO.setBillingWeight(dto.getBillingWeight());
         updateDataDTO.setBillingWeightLogistics(dto.getBillingWeightLogistics());
         updateDataDTO.setCurrency(CharSequenceUtil.isBlank(dto.getCurrency()) ? CurrencyEnum.CNY.getCurrencyCode() : dto.getCurrency());
         
         List<TmsCostDetailDTO.UpdateDTO> updateDetailList = new ArrayList<>();
-        List<DetailDTO> costDetailList = dto.getCostDetailList();
-        for(DetailDTO detailDTO : costDetailList) {
+        for(DetailDTO detailDTO : dtoList) {
         	TmsCostDetailDTO.UpdateDTO updateDTO = new TmsCostDetailDTO.UpdateDTO();
             updateDTO.setCostValue(detailDTO.getCostValue());
             updateDTO.setType(LogisticsBillCostTypeEnum.ACTUAL.getCode());
