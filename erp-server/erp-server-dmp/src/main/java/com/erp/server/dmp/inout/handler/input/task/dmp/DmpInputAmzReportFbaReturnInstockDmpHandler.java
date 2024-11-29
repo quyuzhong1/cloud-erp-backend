@@ -16,12 +16,10 @@ import java.util.TreeMap;
 @Slf4j
 @Service
 @Scope("prototype")
-public class DmpInputAmzReportFbaReturnInstockDmpHandler extends DmpInputDbConvertDmpHandler{
+public class DmpInputAmzReportFbaReturnInstockDmpHandler extends DmpInputDoNextDmpHandler{
 
 	@Override
 	protected void afterConvertData(Map<List<Map<String, Object>>, List<TreeMap<String, Object>>> dmpInputDataDmpRelationMaps) {
 		log.debug("DmpInputAmzReportFbaReturnInstockDmpHandler afterConvertData 处理");
-		super.afterConvertData(dmpInputDataDmpRelationMaps);
-
 	}
 }

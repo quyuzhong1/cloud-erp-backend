@@ -90,6 +90,7 @@ public class NewPlatformReturnOrderConsumerService extends AbstractNewPlatformCo
 			soB2cDetailEntityList = soB2cDetailService.listByMainIds(soIds);
 		}
 		if(Objects.isNull(soB2cEntity)){
+			log.warn("平台退货单消费:订单不存在:{}", dto.getPlatformOrderNo());
 			return;
 		}
 		SoB2cReturnEntity soB2cReturnEntity = this.buildReturn(dto,soB2cEntity);
