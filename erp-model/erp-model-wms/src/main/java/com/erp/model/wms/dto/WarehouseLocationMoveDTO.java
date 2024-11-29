@@ -201,6 +201,24 @@ public class WarehouseLocationMoveDTO implements Serializable {
          */
         private String sourceTypeName;
 
+        /**
+         * 上架仓位库存状态名称
+         */
+        private String inInventoryStatus;
+        /**
+         * 上架仓位库存状态名称
+         */
+        private String inInventoryStatusName;
+
+        /**
+         * 取出仓位库存状态名称
+         */
+        private String outInventoryStatus;
+        /**
+         * 取出仓位库存状态名称
+         */
+        private String outInventoryStatusName;
+
         public String getWarehouseId() {
             if (StringUtils.isBlank(warehouseId)){
                 return infoWarehouseId;
