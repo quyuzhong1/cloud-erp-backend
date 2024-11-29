@@ -2,10 +2,8 @@ package com.erp.server.wms.service.impl;
 
 
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.AdvanceQueryDTO;
@@ -15,10 +13,12 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
+import com.common.business.wrapper.FeignQuery;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
+import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.wms.dto.VirtualInventoryDTO;
 import com.erp.model.wms.dto.VirtualInventoryDiffDTO;
 import com.erp.model.wms.dto.VirtualWarehouseAllocationDTO;
@@ -286,12 +286,20 @@ public class VirtualInventoryDiffServiceImpl extends SuperServiceImpl<VirtualInv
         //虚拟仓库
         List<String> virtualWarehouseIdList = list.stream().map(VirtualInventoryDiffDTO.ListDetailQtyDTO::getVirtualWarehouseId).distinct().collect(Collectors.toList());
         List<VirtualWarehouseEntity> virtualWarehouseEntityList = virtualWarehouseService.listByIds(virtualWarehouseIdList);
+
+        List<String> skuIdList = list.stream().map(VirtualInventoryDiffDTO.ListDetailQtyDTO::getSkuId).distinct().collect(Collectors.toList());
+        List<ProductDetailEntity> productDetailList = FeignQuery.getByIds(ProductDetailEntity.class,skuIdList);
+
         for (VirtualInventoryDiffDTO.ListDetailQtyDTO listDetailQtyDTO : list) {
             //虚拟仓库
             VirtualWarehouseEntity virtualWarehouseEntity = virtualWarehouseEntityList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), listDetailQtyDTO.getVirtualWarehouseId()))
                     .findFirst().orElse(new VirtualWarehouseEntity());
             listDetailQtyDTO.setVirtualWarehouseCode(virtualWarehouseEntity.getCode());
             listDetailQtyDTO.setVirtualWarehouseName(virtualWarehouseEntity.getName());
+
+            //产品信息
+            String skuNo = productDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), listDetailQtyDTO.getSkuId())).map(ProductDetailEntity::getSkuNo).findFirst().orElse("");
+            listDetailQtyDTO.setSkuNo(skuNo);
         }
     }
 
