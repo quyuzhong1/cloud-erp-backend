@@ -325,6 +325,10 @@ public class ReplenishmentSuggestionVO {
          * fba在途配置
          */
         private String cfgFbaInTransit;
+        /**
+         * 明细配置
+         */
+        private String cfgRule;
     }
 
     @Getter

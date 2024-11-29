@@ -834,7 +834,10 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
             convertMap.put("shopName",shopName);
             convertMap.put("skuNo",pagingView.getSkuNo());
             convertMap.put("productName",productName);
-            convertMap.put("typeName","FBA");
+
+            CfgRuleStrategyDTO cfgRuleStrategyDTO = JSON.parseObject(pagingView.getCfgRule(), CfgRuleStrategyDTO.class);
+            CfgRuleSalesQtyDTO.StrategyResultDTO salesQtyResult = cfgRuleStrategyDTO.getSalesQtyResult();
+            convertMap.put("typeName",FbaOrderTypeEnum.getNameByCode(salesQtyResult.getOrderType()));
             //历史销量
             dyHeadMap.keySet().forEach(obj ->{
                 SalesInfoEntity salesInfoEntity = salesList.stream().filter(e -> CharSequenceUtil.equals(e.getDate().toString(), obj.toString())).findFirst().orElse(null);
