@@ -356,6 +356,11 @@ public class VirtualWarehouseAllocationDTO implements Serializable {
         private String warehouseName;
 
         /**
+         * 实体仓库存
+         */
+        private Integer realQty;
+
+        /**
          * 实体参可分配数量
          */
         private Integer unDistributionQty;
@@ -369,6 +374,11 @@ public class VirtualWarehouseAllocationDTO implements Serializable {
          * 调出虚拟仓名称
          */
         private String fromVirtualWarehouseName;
+
+        /**
+         * 虚拟仓实体仓库存
+         */
+        private Integer virtualRealQty;
 
         /**
          * 调出虚拟仓可用数量
@@ -406,6 +416,11 @@ public class VirtualWarehouseAllocationDTO implements Serializable {
         private Integer toVirtualWarehouseUsableQty;
 
         /**
+         * 相关明细数量合计
+         */
+        private Integer totalMergeQty;
+
+        /**
          * 完结说明
          */
         private String finishDescription;
@@ -437,6 +452,10 @@ public class VirtualWarehouseAllocationDTO implements Serializable {
          * 是否计入统计，true是，false否
          */
         private Boolean isStatistics;
+        /**
+         * 是否计入统计，true是，false否
+         */
+        private String isStatisticsName;
         /**
          * 附件名集合
          */

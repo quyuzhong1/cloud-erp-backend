@@ -281,39 +281,6 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
         if (CollectionUtils.isEmpty(skuVOList)) {
             return;
         }
-        /**
-         * 当状态=“待提交”，查询实体仓可分配数、调出虚拟仓可用库存、调入虚拟仓可用库存；
-         *
-         * - 当类型=“新增分货”：
-         *   - 实体仓可分配数＜ 总分配数量时，视为“缺货”
-         *   - 总分配数量：以“SKU+实体仓”，将“分配数量”合并
-         *   - 若缺货，相关明细行均标识“缺货”；缺货数量=“总分配数量-实体仓可分配数”
-         *
-         * - 当类型=“虚拟仓调拨”：
-         *   - 调出虚拟仓可用库存＜ 总调拨数量时，视为“缺货”
-         *   - 总调拨数量：以“SKU+实体仓+调出虚拟仓”，将“调拨数量”合并
-         *   - 若缺货，相关明细行均标识“缺货”；缺货数量=“总调拨数量-调出虚拟仓可用库存”
-         *
-         * - 当类型=“取消分货”：
-         *   - 调出虚拟仓可用库存＜ 总取消数量时，视为“缺货”
-         *   - 总取消数量：以“SKU+实体仓+调出虚拟仓”，将“取消数量”合并（当前虚拟仓仅对应1个实体仓，不会出现需合并场景）
-         *   - 若缺货，相关明细行均标识“缺货”；缺货数量=“总取消数量-调出虚拟仓可用库存”
-         */
-        //由于分页的原因可能无法查出对应数据的所有明细，所以需要单独查明细
-        List<String> mainIdList = records.stream().map(VirtualWarehouseAllocationDTO.ListDTO::getId).distinct().collect(Collectors.toList());
-        List<VirtualWarehouseAllocationDetailEntity> virtualWarehouseAllocationDetailList = virtualWarehouseAllocationDetailService.listByMainIdList(mainIdList);
-
-        //实体仓id集合
-        List<String> warehouseIds = records.stream().map(obj -> obj.getWarehouseId()).distinct().collect(Collectors.toList());
-        //调出虚拟仓id
-        List<String> fromVirtualWarehouseIdList = records.stream().map(obj -> obj.getFromVirtualWarehouseId()).distinct().collect(Collectors.toList());
-        //可用库存
-        VirtualInventoryDTO.VirtualInventoryParamDTO paramDTO = new VirtualInventoryDTO.VirtualInventoryParamDTO();
-        paramDTO.setSkuIdList(skuIds);
-        paramDTO.setWarehouseIdList(warehouseIds);
-        paramDTO.setVirtualWarehouseIdList(fromVirtualWarehouseIdList);
-        List<VirtualInventoryDTO.VirtualInventoryQtyDTO> virtualInventoryList = virtualInventoryService.listInventoryQty(paramDTO);
-
         for (VirtualWarehouseAllocationDTO.ListDTO record : records) {
             SkuVO skuVO = skuVOList.stream().filter(item -> Objects.equals(item.getSkuId(), record.getSkuId())).findFirst().orElse(null);
             if (Objects.nonNull(skuVO)) {
@@ -322,35 +289,8 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
                 record.setProductName(skuVO.getSkuName());
             }
             record.setSyncStatusName(VirtualWarehouseAllocationSyncStatusEnum.getNameByCode(record.getSyncStatus()));
-            //总数
-            Integer totalQty = virtualWarehouseAllocationDetailList.stream().filter(obj ->
-                            CharSequenceUtil.equals(obj.getMainId(), record.getId())
-                                    && CharSequenceUtil.equals(obj.getWarehouseId(), record.getWarehouseId())
-                                    && CharSequenceUtil.equals(obj.getFromVirtualWarehouseId(), record.getFromVirtualWarehouseId())
-                                    && CharSequenceUtil.equals(obj.getSkuId(), record.getSkuId()))
-                    .map(VirtualWarehouseAllocationDetailEntity::getQty).reduce(MathUtil.ZERO, Integer::sum);
-            String type = record.getType();
-            Integer virtualScarceQty = MathUtil.ZERO;
-            //新增分货
-            if (VirtualWarehouseAllocationTypeEnum.ALLOCATION.getCode().equals(type)) {
-
-                virtualScarceQty = totalQty > record.getUnDistributionQty() ? totalQty - record.getUnDistributionQty() : MathUtil.ZERO;
-            }
-            //调拨分货、取消分货
-            if (VirtualWarehouseAllocationTypeEnum.TRANSFER.getCode().equals(type) || VirtualWarehouseAllocationTypeEnum.CANCEL.getCode().equals(type)) {
-                //虚拟仓可用
-                Integer virtualUsableQty = virtualInventoryList.stream().filter(obj ->
-                                CharSequenceUtil.equals(InventoryStatusEnum.USABLE.getCode(), obj.getDictInventoryStatus())
-                                && CharSequenceUtil.equals(obj.getSkuId(), record.getSkuId())
-                                && CharSequenceUtil.equals(obj.getWarehouseId(), record.getWarehouseId())
-                                && CharSequenceUtil.equals(obj.getVirtualWarehouseId(),record.getFromVirtualWarehouseId()))
-                        .map(VirtualInventoryDTO.VirtualInventoryQtyDTO::getInventoryQty).reduce(MathUtil.ZERO, Integer::sum);
-                virtualScarceQty = totalQty > virtualUsableQty ? totalQty - virtualUsableQty : MathUtil.ZERO;
-            }
-            if (VirtualWarehouseAllocationStatusEnum.WAIT_SUBMIT.getCode().equals(record.getStatus())) {
-                record.setVirtualScarceQty(virtualScarceQty);
-                record.setIsVirtualScarce(virtualScarceQty > MathUtil.ZERO ? Boolean.TRUE : Boolean.FALSE);
-            }
+            //是否统计名称
+            record.setIsStatisticsName(record.getIsStatistics() ? "是" : "否");
         }
     }
 
