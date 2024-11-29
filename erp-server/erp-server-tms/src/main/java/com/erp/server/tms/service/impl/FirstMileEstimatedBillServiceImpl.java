@@ -26,6 +26,7 @@ import com.erp.model.tms.dto.excel.FirstMileEstimatedBillExcelDTO;
 import com.erp.model.tms.entity.*;
 import com.erp.model.tms.enums.*;
 import com.erp.model.wms.dto.FirstMileDeliveryDTO;
+import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.rpc.wms.feign.WmsFirstMileDeliveryFeign;
@@ -43,7 +44,9 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -76,6 +79,8 @@ public class FirstMileEstimatedBillServiceImpl extends SuperServiceImpl<FirstMil
     private DownloadTaskFeign downloadTaskFeign;
     @Resource
     private TmsFirstMileReconciliationService tmsFirstMileReconciliationService;
+    @Resource
+    private DmpTaskFeign dmpTaskFeign;
 
     @Override
     public PagingVO<FirstMileEstimatedBillDTO.View> paging(PagingDTO<FirstMileEstimatedBillDTO.PagingParam> dto) {
@@ -283,8 +288,17 @@ public class FirstMileEstimatedBillServiceImpl extends SuperServiceImpl<FirstMil
             detailEntity.setMainId(costId);
             detailEntity.setSourceType(SourceTypeEnum.FIRST_MILE_ESTIMATED.getCode());
             detailEntity.setType("estimated");
-            detailEntity.setCurrency(CurrencyEnum.CNY.getCurrencyCode());
-            detailEntity.setExchangeRate(BigDecimal.ONE);
+            detailEntity.setCurrency(dto.getCurrency());
+            if (CurrencyEnum.CNY.getCurrencyCode().equals(dto.getCurrency())){
+                detailEntity.setExchangeRate(BigDecimal.ONE);
+            }else {
+                BigDecimal exchangeRate = dmpTaskFeign.getRate(LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), dto.getCurrency());
+                if(Objects.isNull(exchangeRate)){
+                    log.error("币别【{}】,汇率为空，请维护汇率后再提交",dto.getCurrency());
+                    throw new ServiceException("汇率为空，请维护汇率后再提交");
+                }
+                detailEntity.setExchangeRate(exchangeRate);
+            }
             detailEntity.setCostValue(dto.getCostValue());
             LambdaQueryWrapper<TmsCostDetailEntity> lambdaQueryWrapper = new LambdaQueryWrapper<TmsCostDetailEntity>()
                     .eq(TmsCostDetailEntity::getCfgCostId, detailEntity.getCfgCostId())
