@@ -5,8 +5,6 @@ import com.common.business.dto.base.SortDTO;
 import com.common.business.vo.PagingVO;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.*;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotEmpty;
@@ -14,7 +12,6 @@ import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
