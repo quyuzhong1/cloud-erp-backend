@@ -17,6 +17,7 @@ import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -542,7 +543,6 @@ public class LogisticsBillCostDTO implements Serializable {
     	/**
     	 * 对账确认时间
     	 */
-    	@NotNull(message = "对账确认时间不能为空")
     	private LocalDateTime confirmTime;
     	
     	/**
@@ -767,6 +767,25 @@ public class LogisticsBillCostDTO implements Serializable {
     	 *付款/退款时间
     	 */
     	private LocalDateTime payTime;
+    	
+    }
+    
+    /**
+     * 支付状态
+     */
+    @Data
+    @NoArgsConstructor
+    public static class PushDTO {
+    	
+    	/**
+    	 * ids
+    	 */
+    	private List<String> ids;
+    	
+    	/**
+    	 *核算日期
+    	 */
+    	private LocalDate reportDate;
     	
     }
     @Data

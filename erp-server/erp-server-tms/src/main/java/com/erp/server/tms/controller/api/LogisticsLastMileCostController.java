@@ -34,6 +34,7 @@ import com.common.core.enums.LogActionEnum;
 import com.erp.model.tms.dto.LogisticsBillCostDTO;
 import com.erp.model.tms.dto.LogisticsBillCostDTO.EditDataDTO;
 import com.erp.model.tms.dto.LogisticsBillCostDTO.EditViewDTO;
+import com.erp.model.tms.dto.LogisticsBillCostDTO.PushDTO;
 import com.erp.model.tms.entity.LogisticsBillCostEntity;
 import com.erp.model.tms.enums.DictCostAttributionEnum;
 import com.erp.server.tms.query.LogisticsLastMileCostQueryHandler;
@@ -333,8 +334,8 @@ public class LogisticsLastMileCostController extends BaseController {
      menuCode = "tms:logisticsLastMileCost:pushAllocation",
      serviceClass = LogisticsBillCostService.class,
      keyIdName = "id")
-     public ApiResult<Object> pushAllocation(@RequestBody @Validated BaseIdsDTO dto) {
-     	return success();
+     public ApiResult<List<BatchResultDTO>> pushAllocation(@RequestBody @Validated PushDTO dto) {
+      	return success();
      }
      
      /**
