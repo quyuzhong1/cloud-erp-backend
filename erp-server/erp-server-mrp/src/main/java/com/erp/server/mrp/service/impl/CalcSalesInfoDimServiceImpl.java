@@ -389,7 +389,7 @@ public class CalcSalesInfoDimServiceImpl extends SuperServiceImpl<CalcSalesInfoD
         } else {
             list = baseMapper.listCompareByIds(dto.getIds());
         }
-        verifyData(list);
+        verifyData(list, dto.getStartDate());
         LocalDate endDate = list.stream().min(Comparator.comparing(CalcSalesInfoDimDTO.CompareResultDTO::getEndCalcDate))
                 .map(CalcSalesInfoDimDTO.CompareResultDTO::getEndCalcDate).orElse(LocalDate.now());
         LocalDate endCalcDate = verifyEndDate(endDate, dto.getEndDate());
@@ -453,7 +453,7 @@ public class CalcSalesInfoDimServiceImpl extends SuperServiceImpl<CalcSalesInfoD
         } else {
             list = baseMapper.listCompareByIds(dto.getIds());
         }
-        verifyData(list);
+        verifyData(list, dto.getStartDate());
         CalcSalesInfoDimDTO.CalcCompareDataDTO viewDTO = new CalcSalesInfoDimDTO.CalcCompareDataDTO();
         CalcSalesInfoDimDTO.CompareResultDTO resultDTO = list.get(0);
         List<SkuVO> skuVOS = plmTaskFeign.listSkuProductByIds(Collections.singletonList(resultDTO.getSkuId()));
@@ -507,7 +507,7 @@ public class CalcSalesInfoDimServiceImpl extends SuperServiceImpl<CalcSalesInfoD
      *
      * @param list 参数
      */
-    private void verifyData(List<CalcSalesInfoDimDTO.CompareResultDTO> list) {
+    private void verifyData(List<CalcSalesInfoDimDTO.CompareResultDTO> list, LocalDate startDate) {
         if (CollectionUtils.isEmpty(list)) {
             throw new ServiceException(ApiError.ERROR_NOT_EXIST_CALC_DATA);
         }
@@ -522,6 +522,10 @@ public class CalcSalesInfoDimServiceImpl extends SuperServiceImpl<CalcSalesInfoD
                 .distinct().count();
         if (md5Count > 1) {
             throw new ServiceException(ApiError.ERROR_HIS_SALES_IS_DIFFERENT);
+        }
+        LocalDate startCalcDate = list.get(0).getStartCalcDate();
+        if (!ObjectUtils.isEmpty(startDate) && startDate.isBefore(startCalcDate)) {
+            throw new ServiceException(ApiError.ERROR__VERIFY_START_DATE);
         }
     }
 

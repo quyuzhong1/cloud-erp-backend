@@ -1540,6 +1540,7 @@ public enum ApiError implements Serializable {
     ERROR_VERIFY_START_CALC_DATE(97033,"试算开始日期不能晚于当前日期"),
     ERROR__VERIFY_END_CALC_DATE(97034,"试算结束日期不能晚于试算开始日期"),
     ERROR__VERIFY_END_DATE(97034,"结束日期不能晚于选中数据最小试算结束日期"),
+    ERROR__VERIFY_START_DATE(97034,"开始日期不能早于选中数据试算开始日期"),
 
 
 
