@@ -161,16 +161,19 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
     public Boolean update(LogisticsBillCostDTO.UpdateDTO updateDTO,Boolean isImport) {
         LogisticsBillCostEntity old = super.getById(updateDTO.getId());
         String reconciliationStatus = old.getReconciliationStatus();
-        if("pay".equals(old.getPayType())) {
-			if(!(ReconciliationStatusEnum.TO_BE_CONFIRM.getCode().equals(reconciliationStatus)
-					|| ReconciliationStatusEnum.ESTIMATE_CONFIRM.getCode().equals(reconciliationStatus)
-					|| ReconciliationStatusEnum.CONFIRMED.getCode().equals(reconciliationStatus))) {
-				 throw new ServiceException("付款编辑仅支持对账状态为待确认，暂估确认且已确认时可操作");
-        	}
-        }else {
-        	if(!ReconciliationStatusEnum.TO_BE_CONFIRM.getCode().equals(reconciliationStatus)) {
-        		throw new ServiceException("退款编辑仅支持对账状态为待确认时可操作");
-        	}
+        if(old.getType().equals(DictCostAttributionEnum.SELF_DELIVER.getCode()) 
+        		|| old.getType().equals(DictCostAttributionEnum.LAST_MILE.getCode())) {
+        	if("pay".equals(old.getPayType())) {
+    			if(!(ReconciliationStatusEnum.TO_BE_CONFIRM.getCode().equals(reconciliationStatus)
+    					|| ReconciliationStatusEnum.ESTIMATE_CONFIRM.getCode().equals(reconciliationStatus)
+    					|| ReconciliationStatusEnum.CONFIRMED.getCode().equals(reconciliationStatus))) {
+    				 throw new ServiceException("付款编辑仅支持对账状态为待确认，暂估确认且已确认时可操作");
+            	}
+            }else {
+            	if(!ReconciliationStatusEnum.TO_BE_CONFIRM.getCode().equals(reconciliationStatus)) {
+            		throw new ServiceException("退款编辑仅支持对账状态为待确认时可操作");
+            	}
+            }
         }
         Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "自发货费用"));
         //赋值
