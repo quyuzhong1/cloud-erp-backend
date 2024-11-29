@@ -412,14 +412,20 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
                 }
                 return view;
             }).collect(Collectors.toList());
-            List<PickingListsDTO.PrintDetailView> viewList = new ArrayList<>(views.stream().collect(Collectors.groupingBy(v -> v.getSkuNo() + ":" + v.getWarehouseId() + ":" + v.getWarehouseLocation(),
+            //排序要求 先根据库位排序 然后相同sku放在一起
+            Map<String, List<PickingListsDTO.PrintDetailView>> groupMap = new ArrayList<>(views.stream().collect(Collectors.groupingBy(v -> v.getSkuNo() + ":" + v.getWarehouseId() + ":" + v.getWarehouseLocation(),
                     Collectors.collectingAndThen(Collectors.toList(), v -> {
                         PickingListsDTO.PrintDetailView view = v.get(0);
                         int totalQuantity = v.stream().mapToInt(PickingListsDTO.PrintDetailView::getPickingQty).sum();
                         view.setPickingQty(totalQuantity);
                         return view;
-                    }))).values()).stream().sorted(Comparator.comparing(PickingListsDTO.PrintDetailView::getSkuNo)
-                    .thenComparing(PickingListsDTO.PrintDetailView::getWarehouseLocation)).collect(Collectors.toList());
+                    }))).values()).stream().collect(Collectors.groupingBy(PickingListsDTO.PrintDetailView::getSkuNo,
+                    Collectors.collectingAndThen(Collectors.toList(), sub -> sub.stream().sorted(Comparator.comparing(PickingListsDTO.PrintDetailView::getWarehouseLocation)).collect(Collectors.toList()))));
+            //转换list形式
+            List<PickingListsDTO.PrintDetailView> viewList = new ArrayList<>(groupMap.values())
+                    .stream()
+                    .flatMap(Collection::stream)
+                    .collect(Collectors.toList());
             //相同sku去空格
             String currentSku = "";
             for (PickingListsDTO.PrintDetailView printDetailView : viewList){
@@ -438,7 +444,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
             //封装组合品明细
             if (SourceTypeEnum.REQUISITION_APPLICATION.getCode().equals(picking.getSourceType())) {
                 List<PickingListsDTO.CombinationPrintDetailView> combinationPrintDetailViewList = new ArrayList<>();
-                List<String> requisitionDetailIds = details.stream().map(v->v.getSourceDetailId()).collect(Collectors.toList());
+                List<String> requisitionDetailIds = details.stream().map(PickingDetailEntity::getSourceDetailId).collect(Collectors.toList());
                 List<RequisitionApplicationDetailEntity> requisitionApplicationDetailEntityList = applicationDetails.stream().filter(v->requisitionDetailIds.contains(v.getId())).collect(Collectors.toList());
                 for (RequisitionApplicationDetailEntity requisitionApplicationDetail : requisitionApplicationDetailEntityList) {
                     RequisitionApplicationEntity application = applicationEntities.stream().filter(v -> v.getId().equals(picking.getSourceId()))

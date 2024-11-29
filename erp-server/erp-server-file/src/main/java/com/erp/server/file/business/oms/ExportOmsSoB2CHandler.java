@@ -48,6 +48,6 @@ public class ExportOmsSoB2CHandler extends AbstractPageFileEventHandler<SoB2cDTO
 
     @Override
     protected int getPageSize() {
-        return 5000;
+        return 10000;
     }
 }

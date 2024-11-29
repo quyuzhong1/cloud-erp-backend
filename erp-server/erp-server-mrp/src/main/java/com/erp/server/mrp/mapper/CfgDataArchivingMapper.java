@@ -32,4 +32,30 @@ public interface CfgDataArchivingMapper extends BaseMapper<CfgDataArchivingEntit
      * 根据关联sql删除数据
      */
     void deleteSourceByRelId(@Param("sourceTable") String sourceTable, @Param("refSql") String refSql);
+
+    /**
+     * 删除建议
+     */
+    void deleteDeliverySuggest(@Param("sourceId") String sourceId);
+
+    /**
+     * 发货建议数据迁移
+     */
+    void moveDeliverySuggest(@Param("sourceId") String sourceId);
+    /**
+     * 采购合并建议数据迁移
+     */
+    void movePurchaseSuggestMerge();
+    /**
+     * 删除建议
+     */
+    void deletePurchaseSuggestMerge();
+    /**
+     * 采购建议数据迁移
+     */
+    void movePurchaseSuggest(@Param("sourceId") String sourceId);
+    /**
+     * 删除建议
+     */
+    void deletePurchaseSuggest(@Param("sourceId") String sourceId);
 }

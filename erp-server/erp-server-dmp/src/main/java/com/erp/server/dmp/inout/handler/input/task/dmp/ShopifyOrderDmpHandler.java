@@ -133,8 +133,9 @@ public class ShopifyOrderDmpHandler extends ShopifyDmpHandler {
                 Map<String, Object> transactionsMap = dmpInputTransactionsMongoChildList.stream()
                         .filter(req -> String.valueOf(req.get("orderId")).equals(String.valueOf(dmpDataMap.get("thirdCode"))))
                         .findFirst().orElse(null);
-                if (ObjectUtil.isNotEmpty(transactionsMap)) {
-                    dmpDataMap.put("payTime", transactionsMap.get("createdAt"));
+                boolean payStatus = Boolean.parseBoolean(dmpDataMap.getOrDefault("payStatus", false).toString());
+                if (ObjectUtil.isNotEmpty(transactionsMap) && payStatus) {
+                    dmpDataMap.put("payTime", transactionsMap.get("processedAt"));
                     dmpDataMap.put("payMethod", transactionsMap.get("gateway"));
                 }
 
