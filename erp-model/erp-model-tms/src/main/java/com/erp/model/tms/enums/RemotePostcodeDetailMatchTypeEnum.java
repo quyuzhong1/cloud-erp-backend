@@ -10,7 +10,7 @@ import org.apache.commons.lang3.StringUtils;
  * </p>
  *
  * @author jack
- * @since 2024-11-29 15:18:21
+ * @since 2024-11-29 15:36:59
  */
 public enum RemotePostcodeDetailMatchTypeEnum implements EnumMessage {
 	PRECISEMATCH("preciseMatch", "精准匹配"),
