@@ -640,7 +640,7 @@ public class SoReturnInstockDTO {
         /**
          * 创建时间
          */
-        private LocalDate createTime;
+        private LocalDateTime createTime;
 
         /**
          * 退货物流单号
