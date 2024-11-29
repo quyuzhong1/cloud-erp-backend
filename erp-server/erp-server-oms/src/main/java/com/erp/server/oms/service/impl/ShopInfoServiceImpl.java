@@ -162,8 +162,10 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
     @Transactional(rollbackFor = Exception.class)
     public List<ShopInfoEntity> add(ShopDTO.AddDTO dto) {
     	Boolean isHaveWarehouse = dto.getIsHaveWarehouse();
-    	if(Boolean.TRUE.equals(isHaveWarehouse) && StringUtils.isBlank(dto.getReturnWarehouse())) {
-    		throw new ServiceException("包含平台仓业务，店铺退货仓库不能为空");
+    	if(Boolean.TRUE.equals(isHaveWarehouse)) {
+    		if(StringUtils.isBlank(dto.getWarehouseId()) || StringUtils.isBlank(dto.getReturnWarehouse())) {
+    			throw new ServiceException("包含平台仓业务，店铺平台仓库和店铺退货仓库不能为空");
+    		}
     	}
         ShopInfoEntity shop = new ShopInfoEntity();
         String dictPlatform = dto.getDictPlatform();
