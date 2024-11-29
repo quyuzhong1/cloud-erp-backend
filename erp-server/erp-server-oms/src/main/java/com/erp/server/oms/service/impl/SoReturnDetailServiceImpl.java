@@ -10,6 +10,7 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.MathUtil;
 import com.erp.model.oms.dto.*;
 import com.erp.model.oms.entity.SoDetailEntity;
+import com.erp.model.oms.entity.SoInfoEntity;
 import com.erp.model.oms.entity.SoReturnDetailEntity;
 import com.erp.model.oms.entity.SoReturnEntity;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
@@ -680,11 +681,11 @@ public class SoReturnDetailServiceImpl extends SuperServiceImpl<SoReturnDetailMa
                     .multiply(BigDecimal.valueOf(dto.getReturnQty()))
                     .stripTrailingZeros();
             //先判断币种和汇率是否跟销售订单一致，若不同的情况下计算出详情页的币种的退货金额
-            SoReturnEntity soReturnEntity = soReturnService.getById(soDetailEntity.getMainId());
-            if(!soReturnEntity.getCurrency().equals(dto.getCurrency())){
+            SoInfoEntity soInfoEntity = soInfoService.getById(soDetailEntity.getMainId());
+            if(!soInfoEntity.getCurrency().equals(dto.getCurrency())){
                 //销售订单币种 转 CNY的汇率
-                Map<String, BigDecimal> currencyMap = soReturnService.getCurrencyMap(Collections.singletonList(soReturnEntity.getCurrency()));
-                BigDecimal soRate = currencyMap.get(soReturnEntity.getCurrency());
+                Map<String, BigDecimal> currencyMap = soReturnService.getCurrencyMap(Collections.singletonList(soInfoEntity.getCurrency()));
+                BigDecimal soRate = currencyMap.get(soInfoEntity.getCurrency());
                 //页面汇率 转 CNY的汇率
                 BigDecimal viewRate = dto.getExchangeRate();
                 //
