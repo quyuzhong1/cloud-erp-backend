@@ -624,12 +624,14 @@ public class SoReturnDetailServiceImpl extends SuperServiceImpl<SoReturnDetailMa
             SoReturnDTO.SoReturnAmoutDTO view = new SoReturnDTO.SoReturnAmoutDTO();
             view.setSkuId(skuDTO.getSkuId());
             view.setCustomerId(skuDTO.getCustomerId());
-            if(StringUtils.isNotBlank(skuDTO.getReturnDetailId())){
-                //有销售订单情况
-                getReturnAmountBySoReturn(skuDTO, view);
-            }else {
-                //无销售订单情况
-                getReturnAmoutByCustomer(skuDTO, view);
+            if(skuDTO.getReturnQty() != null){
+                if(StringUtils.isNotBlank(skuDTO.getReturnDetailId())){
+                    //有销售订单情况
+                    getReturnAmountBySoReturn(skuDTO, view);
+                }else {
+                    //无销售订单情况
+                    getReturnAmoutByCustomer(skuDTO, view);
+                }
             }
             result.add(view);
         }
@@ -653,12 +655,14 @@ public class SoReturnDetailServiceImpl extends SuperServiceImpl<SoReturnDetailMa
             SoReturnDTO.SoReturnAmoutDTO view = new SoReturnDTO.SoReturnAmoutDTO();
             view.setSkuId(skuDTO.getSkuId());
             view.setCustomerId(skuDTO.getCustomerId());
-            if(StringUtils.isNotBlank(skuDTO.getSoDetailId())){
-                //有销售订单情况
-                getReturnAmountBySoDetail(skuDTO, view);
-            }else {
-                //无销售订单情况
-                getReturnAmoutByCustomer(skuDTO, view);
+            if(skuDTO.getReturnQty() != null){
+                if(StringUtils.isNotBlank(skuDTO.getSoDetailId())){
+                    //有销售订单情况
+                    getReturnAmountBySoDetail(skuDTO, view);
+                }else {
+                    //无销售订单情况
+                    getReturnAmoutByCustomer(skuDTO, view);
+                }
             }
             result.add(view);
         }
