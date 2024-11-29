@@ -66,15 +66,11 @@
         </if>
         <!--是否显示0库存-->
         <if test="params.isShowZeroInventory">
-            AND (oi.deliver_onway_qty > 0
-            OR oi.pending_qty > 0
+            AND ( oi.pending_qty > 0
             OR oi.sellable_qty > 0
             OR oi.unsellable_qty > 0
             OR oi.reserved_qty > 0
-            OR oi.onway_qty > 0
-            OR oi.lack_qty > 0
-            OR oi.frozen_qty > 0
-            OR oi.shipped_qty > 0)
+            OR oi.frozen_qty > 0)
         </if>
         ORDER BY
         oi.create_time DESC,oi.id DESC
