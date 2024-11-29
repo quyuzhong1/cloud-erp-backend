@@ -2,10 +2,7 @@ package com.erp.model.mrp.vo;
 
 import com.common.business.annotation.Dict;
 import com.erp.model.mrp.enums.ReplenishmentTypeEnum;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -571,6 +568,11 @@ public class ReplenishmentSuggestionVO {
          * fba在途配置
          */
         private String cfgFbaInTransit;
+
+        /**
+         * 配置
+         */
+        private String cfgRule;
     }
 
     @Getter
@@ -621,5 +623,23 @@ public class ReplenishmentSuggestionVO {
          * 数量
          */
         private List<BigDecimal> qty;
+    }
+
+
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @EqualsAndHashCode
+    public static class SalesQtyTypeDTO {
+        /**
+         * sales_qty_type
+         * 销量计算类型，byCreateTime以销售订单订单创建时间计算销量，byOutStockTime以销售出库单出库时间计算销量
+         */
+        private String salesQtyType;
+        /**
+         * 订单类型，all:全部，fba:FBA,fbm:FBM
+         */
+        private String orderType;
     }
 }
