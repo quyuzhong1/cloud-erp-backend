@@ -13,11 +13,11 @@ import java.time.LocalDate;
 
 /**
  * <p>
- * 库存表
+ * 本地仓库存
  * </p>
  *
- * @author liaohui
- * @since 2024-09-23
+ * @author Lambda
+ * @since 2024-11-08
  */
 @Getter
 @Setter
@@ -34,16 +34,10 @@ public class LocalHistoryInventoryEntity extends BaseEntity<LocalHistoryInventor
     private String orgId;
 
     /**
-     * 仓库id 
+     * 仓库id
      */
     @TableField("warehouse_id")
     private String warehouseId;
-
-    /**
-     * 仓位id
-     */
-    @TableField("warehouse_location")
-    private String warehouseLocation;
 
     /**
      * sku id
@@ -52,22 +46,40 @@ public class LocalHistoryInventoryEntity extends BaseEntity<LocalHistoryInventor
     private String skuId;
 
     /**
-     * sku编号
+     * sku no
      */
     @TableField("sku_no")
     private String skuNo;
 
     /**
-     * 库存状态（usable可用，frozen冻结，inTransit在途，waitQc待检）
+     * 可用数量
      */
-    @TableField("dict_inventory_status")
-    private String dictInventoryStatus;
+    @TableField("usable_qty")
+    private Integer usableQty;
 
     /**
-     * 数量
+     * 待检库存数量
      */
-    @TableField("qty")
-    private Integer qty;
+    @TableField("waitqc_qty")
+    private Integer waitqcQty;
+
+    /**
+     * 冻结库存数量
+     */
+    @TableField("frozen_qty")
+    private Integer frozenQty;
+
+    /**
+     * 采购在途库存数量
+     */
+    @TableField("purchase_transit_qty")
+    private Integer purchaseTransitQty;
+
+    /**
+     * 调拨在途数量
+     */
+    @TableField("transfer_transit_qty")
+    private Integer transferTransitQty;
 
     /**
      * 单据日期
@@ -76,19 +88,21 @@ public class LocalHistoryInventoryEntity extends BaseEntity<LocalHistoryInventor
     private LocalDate billDate;
 
 
-    public static final String ORG_ID = "org_id";
-
     public static final String WAREHOUSE_ID = "warehouse_id";
-
-    public static final String WAREHOUSE_LOCATION = "warehouse_location";
 
     public static final String SKU_ID = "sku_id";
 
     public static final String SKU_NO = "sku_no";
 
-    public static final String DICT_INVENTORY_STATUS = "dict_inventory_status";
+    public static final String USABLE_QTY = "usable_qty";
 
-    public static final String QTY = "qty";
+    public static final String WAITQC_QTY = "waitqc_qty";
+
+    public static final String FROZEN_QTY = "frozen_qty";
+
+    public static final String PURCHASE_TRANSIT_QTY = "purchase_transit_qty";
+
+    public static final String TRANSFER_TRANSIT_QTY = "transfer_transit_qty";
 
     public static final String BILL_DATE = "bill_date";
 

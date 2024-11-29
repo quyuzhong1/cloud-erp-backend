@@ -5,8 +5,10 @@ import com.erp.model.wms.dto.VirtualWarehouseDTO;
 import com.erp.model.wms.entity.VirtualWarehouseEntity;
 import com.erp.model.wms.entity.VirtualWarehouseRelationEntity;
 import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import javax.validation.Valid;
 import java.util.List;
@@ -47,6 +49,14 @@ public interface WmsVirtualWarehouseFeign {
      */
     @PostMapping("/listCfgRuleVirtualWarehouse")
     List<VirtualWarehouseDTO.CfgRuleVirtualWarehouseDTO> listCfgRuleVirtualWarehouse(@RequestBody List<String> platformList);
+
+    /**
+     * 高级查询虚拟仓
+     * @param compareCodeSplicingValueSql 高级查询参数
+     */
+    @GetMapping("/listWarehouseBySql")
+    List<String> listWarehouseBySql(@RequestParam String compareCodeSplicingValueSql);
+
 }
 
 

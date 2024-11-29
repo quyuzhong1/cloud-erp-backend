@@ -30,7 +30,7 @@
         update_time,
         version,
         is_deleted,
-        name, type, module, file_url,business_id
+        name, type, module, file_url,business_id,platform_type
     </sql>
 
     <!-- 分页查询 -->
@@ -48,6 +48,9 @@
             </if>
             <if test="params.module != null and params.module != ''">
                 and hir.module = #{params.module}
+            </if>
+            <if test="params.platformType != null and params.platformType != ''">
+                and hir.platform_type = #{params.platformType}
             </if>
         </where>
         order by id desc

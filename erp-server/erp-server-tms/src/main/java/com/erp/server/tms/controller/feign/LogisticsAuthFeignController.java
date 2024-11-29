@@ -58,4 +58,13 @@ public class LogisticsAuthFeignController {
         List<LogisticsSupplierDTO.AuthChannelViewDTO> authChannelViewDTOS = logisticsAuthService.listAuthChannelView(channelIdList);
         return authChannelViewDTOS;
     }
+
+
+    /**
+     * 获取所有海外仓发货的渠道
+     */
+    @PostMapping("/listAllChannelByOverseas")
+    List<String> listAllChannelByOverseas() {
+        return logisticsAuthService.listAllChannelByOverseas();
+    }
 }

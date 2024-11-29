@@ -46,6 +46,12 @@ public class CfgPlatformMappingEntity extends BaseEntity<CfgPlatformMappingEntit
     @TableField("effective_date")
     private LocalDate effectiveDate;
 
+    /**
+     * 备货模式
+     */
+    @TableField("stocking_mode")
+    private String stockingMode;
+
 
     public static final String PLATFORM = "platform";
 

@@ -37,4 +37,9 @@ public interface CfgDataArchivingService extends SuperService<CfgDataArchivingEn
      * @param dto 参数
      */
     void saveData(CfgDataArchivingDTO dto);
+
+    /**
+     * 归档建议数据
+     */
+    void dataArchivingSuggestion(String detailId);
 }

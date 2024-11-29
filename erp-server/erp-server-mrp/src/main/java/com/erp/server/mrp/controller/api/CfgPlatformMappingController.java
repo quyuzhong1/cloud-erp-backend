@@ -1,28 +1,22 @@
 package com.erp.server.mrp.controller.api;
 
 
-import com.common.business.annotation.DataPermission;
-import com.common.business.dto.base.BaseResultDTO;
-import com.common.business.enums.DataAttributeEnum;
-import com.common.core.anno.LogAction;
+import com.common.business.validator.ValidList;
 import com.common.core.anno.LogSystemModule;
+import com.common.core.anno.LogViewService;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
-import com.common.core.enums.LogActionEnum;
 import com.erp.model.mrp.dto.CfgPlatformMappingDTO;
 import com.erp.server.mrp.service.CfgPlatformMappingService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import java.util.List;
 
 /**
- * 平台映射表
+ * 平台（规则设置）
  *
  * @author will
  * @since 2024-08-29
@@ -36,38 +30,42 @@ public class CfgPlatformMappingController extends BaseController {
     @Resource
     private CfgPlatformMappingService cfgPlatformMappingService;
 
-
-    /**
-    * 新增
-    * @author will
-    * @date:  2024-08-29
-    * @param dto
-    * @return ApiResult<String>
-    */
-    @PostMapping("/add")
-    @LogAction(value = LogActionEnum.INSERT, desc = "平台映射表新增")
-    public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated CfgPlatformMappingDTO.AddDTO dto) {
-        return success(cfgPlatformMappingService.add(dto));
-    }
-
     /**
     * 修改
     * @author will
     * @date:  2024-08-29
-    * @param dto
+    * @param updateList
     * @return ApiResult
     */
     @PostMapping("/update")
-    @LogAction(value = LogActionEnum.UPDATE, desc = "平台映射表修改")
-        @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-        tableField = "create_user_id",
-        menuCode = "mrp:cfgPlatformMapping:update",
-        serviceClass = CfgPlatformMappingService.class,
-        keyIdName = "id")
-    public ApiResult<String> update(@RequestBody @Validated CfgPlatformMappingDTO.UpdateDTO dto) {
-        cfgPlatformMappingService.update(dto);
+    public ApiResult<String> update(@RequestBody @Validated ValidList<CfgPlatformMappingDTO.UpdateDTO> updateList) {
+        cfgPlatformMappingService.update(updateList);
         return success();
     }
+
+    /**
+     * 查询详情
+     * @author will
+     * @date 2024/10/15 10:00
+     * @return ApiResult<ViewDTO>
+     */
+    @GetMapping("/view")
+    @LogViewService
+    public ApiResult<CfgPlatformMappingDTO.MainViewDTO> view() {
+        return success(cfgPlatformMappingService.view());
+    }
+
+    /**
+     * 根据平台类型查询
+     * @author will
+     * @date 2024/10/16 17:06
+     * @return ApiResult<ViewDTO>
+     */
+    @GetMapping("/getByPlatformType")
+    public ApiResult<CfgPlatformMappingDTO.ViewDTO> getByPlatformType(@RequestParam("platformType") String platformType) {
+        return success(cfgPlatformMappingService.getByPlatformType(platformType));
+    }
+
 
     /**
      * 下拉查询

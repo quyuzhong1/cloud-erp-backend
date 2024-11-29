@@ -3,30 +3,37 @@ package com.erp.server.mrp.service.impl;
 
 import cn.hutool.core.text.CharSequenceUtil;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
-import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.service.impl.SuperServiceImpl;
-import com.common.business.threadlocal.UserContext;
-import com.common.core.enums.ApiError;
+import com.common.business.validator.ValidList;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.MathUtil;
 import com.erp.model.mrp.dto.CfgPlatformMappingDTO;
 import com.erp.model.mrp.entity.CfgPlatformMappingEntity;
+import com.erp.model.mrp.enums.CfgRulePlatformTypeEnum;
+import com.erp.model.mrp.enums.CfgRuleStockingModeEnum;
+import com.erp.model.mrp.enums.PlatformMappingTypeEnum;
 import com.erp.model.oms.dto.DictBasicDTO;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
+import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.rpc.oms.feign.CustomerFeign;
 import com.erp.server.mrp.mapper.CfgPlatformMappingMapper;
 import com.erp.server.mrp.service.CfgPlatformMappingService;
 import com.erp.server.mrp.service.OperateLogService;
-import io.seata.spring.annotation.GlobalTransactional;
+import jodd.util.StringUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.ObjectUtils;
 
 import javax.annotation.Resource;
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
-import java.util.Optional;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -46,57 +53,74 @@ public class CfgPlatformMappingServiceImpl extends SuperServiceImpl<CfgPlatformM
     private CustomerFeign customerFeign;
 
     private static final String DOCUMENTS_NAM = "平台映射单";
-
-    @GlobalTransactional(rollbackFor = Exception.class)
+    
+    /**
+     * 修改
+     */
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public BaseResultDTO.AddDTO add(CfgPlatformMappingDTO.AddDTO addDTO) {
-        CfgPlatformMappingEntity cfgPlatformMappingEntity = new CfgPlatformMappingEntity();
-        BeanMapperUtils.copy(addDTO, cfgPlatformMappingEntity);
-
+    public Boolean update(ValidList<CfgPlatformMappingDTO.UpdateDTO> updateList) {
+        if (CollectionUtils.isEmpty(updateList)) {
+            throw new ServiceException("平台配置不能为空");
+        }
+        List<CfgPlatformMappingEntity> oldList = list();
         // 数据处理
-        handleData(cfgPlatformMappingEntity);
+        List<CfgPlatformMappingEntity> list = handleData(updateList.getList(),oldList);
 
-        log.info("开始新增平台映射单");
-        boolean save = super.save(cfgPlatformMappingEntity);
+        //删除多余数据
+        List<String> deleteIds = getDeleteIds(list, oldList);
+        if (CollectionUtils.isNotEmpty(deleteIds)) {
+            this.removeByIds(deleteIds);
+        }
+        //无数据则直接返回
+        if (CollectionUtils.isEmpty(list)) {
+            return Boolean.TRUE;
+        }
+
+        boolean save = super.saveOrUpdateBatch(list);
         if(!save) {
             throw new ServiceException("平台映射单保存失败");
         }
 
-        // 操作日志
-        String msg = CharSequenceUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), DOCUMENTS_NAM , cfgPlatformMappingEntity.getId());
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, cfgPlatformMappingEntity.getId(), "新增操作");
-        // TODO 新增明细（如果有明细的话）
-
-        return new BaseResultDTO.AddDTO(cfgPlatformMappingEntity.getId(), cfgPlatformMappingEntity.getId());
+        //日志
+        addOperateLog(list);
+        return Boolean.TRUE;
     }
 
     /**
-    * 修改
-    */
-    @Transactional(rollbackFor = Exception.class)
-    @Override
-    public Boolean update(CfgPlatformMappingDTO.UpdateDTO updateDTO) {
-        CfgPlatformMappingEntity old = super.getById(updateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, DOCUMENTS_NAM));
-        CfgPlatformMappingEntity cfgPlatformMappingEntity =  BeanMapperUtils.map(CfgPlatformMappingEntity.class, updateDTO);
-
-        // 数据处理
-        handleData(cfgPlatformMappingEntity);
-        log.info("编辑 开始修改平台映射单数据，id：【{}】", old.getId());
-        boolean save = super.updateById(cfgPlatformMappingEntity);
-        if(!save) {
-            throw new ServiceException("平台映射单保存失败");
+     * 添加日志
+     * @author will
+     * @date 2024/10/15 14:38
+     * @param list 
+     */
+    private void addOperateLog (List<CfgPlatformMappingEntity> list) {
+        if (CollectionUtils.isEmpty(list)) {
+            return;
         }
-        // TODO 修改明细数据（包含增删改）（如果有明细的话）
+        Map<String, List<CfgPlatformMappingEntity>> map = list.stream().collect(Collectors.groupingBy(CfgPlatformMappingEntity::getType));
 
-        // 记录主单操作日志
-            log.info("编辑 开始记录平台映射单日志数据，id：【{}】", cfgPlatformMappingEntity.getId());
-            String msg = CharSequenceUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), cfgPlatformMappingEntity.getId(), DOCUMENTS_NAM);
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLogByObj(old, cfgPlatformMappingEntity, null, cfgPlatformMappingEntity.getId(), msg);
-        return Boolean.TRUE;
+        //平台信息
+        List<DictBasicDTO.ViewDTO> platformViewList = customerFeign.getDictBasicByKey(DictBasicTypeEnum.SALES_PLATFORM.getType());
+
+        //日志
+        StringBuffer msg = new StringBuffer();
+        for (Map.Entry<String, List<CfgPlatformMappingEntity>> entry : map.entrySet()) {
+            List<CfgPlatformMappingEntity> value = entry.getValue();
+            CfgPlatformMappingEntity entity = value.get(0);
+            //平台集合
+            List<String> platformList = value.stream().map(CfgPlatformMappingEntity::getPlatform).distinct().collect(Collectors.toList());
+            String platformNames = platformViewList.stream().filter(obj -> platformList.contains(obj.getValue()))
+                    .map(DictBasicDTO.ViewDTO::getName)
+                    .collect(Collectors.joining(","));
+            String content = CharSequenceUtil.format("补货建议平台【{}】，平台【{}】，备货模式【{}】，是否启用【{}】，定时生效【{}】;<br>", PlatformMappingTypeEnum.getName(value.get(0).getType()),platformNames,
+                    CfgRuleStockingModeEnum.getName(entity.getStockingMode()),entity.getDisabled() ? "否":"是", entity.getEffectiveDate());
+            msg.append(content);
+        }
+        if (CharSequenceUtil.isBlank(msg)) {
+            return;
+        }
+        String minId = list.stream().min(Comparator.comparing(obj -> obj.getId())).map(CfgPlatformMappingEntity::getId).orElse("");
+        operateLogService.addModuleOperateLog(msg.toString(), ModuleTypeEnum.REPLENISHMENT_SUGGESTION.getCode(), minId, "平台");
     }
 
     @Override
@@ -122,12 +146,111 @@ public class CfgPlatformMappingServiceImpl extends SuperServiceImpl<CfgPlatformM
                 .list();
     }
 
+    @Override
+    public List<CfgPlatformMappingEntity> listAllByPlatformType(String platformType) {
+        return lambdaQuery()
+                .eq(CfgPlatformMappingEntity::getType, platformType)
+                .list();
+    }
+
+
+    @Override
+    public CfgPlatformMappingDTO.MainViewDTO view() {
+        CfgPlatformMappingDTO.MainViewDTO mainViewDTO = new CfgPlatformMappingDTO.MainViewDTO();
+
+        List<CfgPlatformMappingDTO.ViewDTO> viewList = new ArrayList<>();
+
+        List<CfgPlatformMappingEntity> platformMappingList = this.list();
+        if (CollectionUtils.isEmpty(platformMappingList)) {
+            return mainViewDTO;
+        }
+        //最小id
+        String minId = platformMappingList.stream().min(Comparator.comparing(obj -> obj.getId())).map(CfgPlatformMappingEntity::getId).orElse("");
+        mainViewDTO.setId(minId);
+        Map<String, List<CfgPlatformMappingEntity>> map = platformMappingList.stream().collect(Collectors.groupingBy(CfgPlatformMappingEntity::getType));
+        for (Map.Entry<String, List<CfgPlatformMappingEntity>> entry : map.entrySet()) {
+            List<CfgPlatformMappingEntity> value = entry.getValue();
+            CfgPlatformMappingDTO.ViewDTO viewDTO = new CfgPlatformMappingDTO.ViewDTO();
+            BeanMapperUtils.copy(value.get(0),viewDTO);
+            List<String> platformList = value.stream().map(CfgPlatformMappingEntity::getPlatform).distinct().collect(Collectors.toList());
+            viewDTO.setPlatformList(platformList);
+            viewDTO.setTypeName(PlatformMappingTypeEnum.getName(viewDTO.getType()));
+            viewList.add(viewDTO);
+        }
+        mainViewDTO.setViewList(viewList);
+        return mainViewDTO;
+    }
+
+    @Override
+    public CfgPlatformMappingDTO.ViewDTO getByPlatformType(String platformType) {
+        CfgPlatformMappingDTO.ViewDTO viewDTO = new CfgPlatformMappingDTO.ViewDTO();
+
+        List<CfgPlatformMappingEntity> cfgPlatformMappingList = this.listAllByPlatformType(platformType);
+        if (CollectionUtils.isEmpty(cfgPlatformMappingList)) {
+            return viewDTO;
+        }
+        BeanMapperUtils.copy(cfgPlatformMappingList.get(0),viewDTO);
+        List<String> platformList = cfgPlatformMappingList.stream().map(CfgPlatformMappingEntity::getPlatform).distinct().collect(Collectors.toList());
+        viewDTO.setPlatformList(platformList);
+        viewDTO.setTypeName(CfgRulePlatformTypeEnum.getName(viewDTO.getType()));
+        return viewDTO;
+    }
+
+    @Override
+    public List<String> listEffectiveByPlatform(String code) {
+        List<CfgPlatformMappingEntity> list = list(Wrappers.<CfgPlatformMappingEntity>lambdaQuery()
+                .eq(CfgPlatformMappingEntity::getType, code)
+                .eq(CfgPlatformMappingEntity::getDisabled, false)
+                .le(CfgPlatformMappingEntity::getEffectiveDate, LocalDate.now())
+                .select(CfgPlatformMappingEntity::getPlatform)
+        );
+        return list.stream()
+                .map(CfgPlatformMappingEntity::getPlatform)
+                .collect(Collectors.toList());
+    }
+
+
+    /**
+     * 查询需要删除的数据
+     */
+    private List<String> getDeleteIds(List<CfgPlatformMappingEntity> newList, List<CfgPlatformMappingEntity> oldList) {
+        List<String> newIds = newList.stream().filter(g -> StringUtil.isNotBlank(g.getId())).
+                map(CfgPlatformMappingEntity::getId).collect(Collectors.toList());
+        List<String> oldIds = oldList.stream().map(CfgPlatformMappingEntity::getId).collect(Collectors.toList());
+        return oldIds.stream().filter(s -> !newIds.contains(s)).collect(Collectors.toList());
+    }
 
     /**
     * 新增修改处理数据
     */
-    private void handleData(CfgPlatformMappingEntity cfgPlatformMappingEntity) {
-    // TODO 验证数据 & 数据赋值
+    private List<CfgPlatformMappingEntity> handleData(List<CfgPlatformMappingDTO.UpdateDTO> updateList,List<CfgPlatformMappingEntity> oldList) {
+        List<CfgPlatformMappingEntity> list = new ArrayList<>();
+        if (CollectionUtils.isEmpty(updateList)) {
+            return list;
+        }
+        for (CfgPlatformMappingDTO.UpdateDTO updateDTO : updateList) {
+            //非禁用时生效时间不能为空
+            if (!updateDTO.getDisabled() && ObjectUtils.isEmpty(updateDTO.getEffectiveDate())) {
+                throw new ServiceException("非禁用数据生效时间不能为空");
+            }
+            //补货建议平台
+            long count = updateList.stream().filter(obj -> CharSequenceUtil.equals(obj.getType(), updateDTO.getType())).count();
+            if (count > MathUtil.ONE) {
+                throw new ServiceException(CharSequenceUtil.format("补货建议平台【{}】重复",CfgRulePlatformTypeEnum.getName(updateDTO.getType())));
+            }
+            for (String platform : updateDTO.getPlatformList()) {
+                CfgPlatformMappingEntity entity = new CfgPlatformMappingEntity();
+                BeanMapperUtils.copy(updateDTO,entity);
+                //平台映射
+                CfgPlatformMappingEntity old = oldList.stream().filter(obj -> CharSequenceUtil.equals(obj.getType(), updateDTO.getType()) && CharSequenceUtil.equals(obj.getPlatform(), platform)).findFirst().orElse(null);
+                if (!ObjectUtils.isEmpty(old)) {
+                    entity.setId(old.getId());
+                }
+                entity.setPlatform(platform);
+                list.add(entity);
+            }
+        }
+        return list;
     }
 
     /**

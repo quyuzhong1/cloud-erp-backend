@@ -16,7 +16,6 @@ import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
@@ -25,7 +24,6 @@ import java.util.Map;
 /**
  * @author Lambda
  * @Classname SkuMapingDTO
-
  * @Date 2023-06-28 17:24
  * @Created by yl
  */
@@ -50,15 +48,13 @@ public class SkuMappingDTO implements Serializable {
          * 对照关系是否映射到改服务商所有仓库(当前只有谷仓支持): f=否(), t=是
          */
         public Boolean checkAndGetHasMappingAll() {
-            if (null == this.hasMappingAll){
+            if (null == this.hasMappingAll) {
                 return false;
             }
             return hasMappingAll;
         }
 
     }
-
-
 
 
     /**
@@ -88,7 +84,7 @@ public class SkuMappingDTO implements Serializable {
     @NoArgsConstructor
     public static class FindTabDTO extends PermissionsDTO {
 
-        @StateEnumValue(strValues = {"platform","warehouse"}, message = "类型有误")
+        @StateEnumValue(strValues = {"platform", "warehouse"}, message = "类型有误")
         private String type;
 
 
@@ -102,11 +98,11 @@ public class SkuMappingDTO implements Serializable {
         private String warehouseId;
 
         @NotBlank(message = "库存SKU不能为空")
-        @Size(max=200,message = "库存SKU最大100字符")
+        @Size(max = 200, message = "库存SKU最大100字符")
         private String warehouseSkuNo;
 
         @NotBlank(message = "库存产品名称不能为空")
-        @Size(max=200,message = "库存产品名称最大200字符")
+        @Size(max = 200, message = "库存产品名称最大200字符")
         private String warehouseProductName;
 
         @NotBlank(message = "产品sku不能为空")
@@ -155,7 +151,7 @@ public class SkuMappingDTO implements Serializable {
         /**
          * sqlMap 默认key default
          */
-        private Map<String,String> sqlMap;
+        private Map<String, String> sqlMap;
 
         private String type;
 
@@ -178,7 +174,7 @@ public class SkuMappingDTO implements Serializable {
         /**
          * sqlMap 默认key default
          */
-        private Map<String,String> sqlMap;
+        private Map<String, String> sqlMap;
 
         private String type;
 
@@ -225,7 +221,7 @@ public class SkuMappingDTO implements Serializable {
          */
 //        @NotBlank(message = "平台sku不能为空")
         @NotNull(message = "平台sku不能为null")
-        @Size(max=200,message = "平台SKU最大100字符")
+        @Size(max = 200, message = "平台SKU最大100字符")
         private String platformSkuNo;
 
         /**
@@ -235,7 +231,6 @@ public class SkuMappingDTO implements Serializable {
 
 
         private List<SkuMappingExtendListDTO> extendList;
-
 
 
     }
@@ -275,7 +270,6 @@ public class SkuMappingDTO implements Serializable {
         private String id;
 
 
-
         /**
          * 仓库id
          */
@@ -286,14 +280,14 @@ public class SkuMappingDTO implements Serializable {
          * 库存sku no
          */
         @NotBlank(message = "库存sku不能为空")
-        @Size(max=200,message = "库存SKU最大100字符")
+        @Size(max = 200, message = "库存SKU最大100字符")
         private String warehouseSkuNo;
 
         /**
          * 库存产品名称
          */
         @NotBlank(message = "库存产品名称不能为空")
-        @Size(max=200,message = "库存产品名称最大200字符")
+        @Size(max = 200, message = "库存产品名称最大200字符")
         private String warehouseProductName;
 
 
@@ -442,7 +436,6 @@ public class SkuMappingDTO implements Serializable {
          * 匹配结果
          */
         private String matchResultStr;
-
 
 
         /**
@@ -612,7 +605,7 @@ public class SkuMappingDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
-    public static class ProductSkuInfoDTO{
+    public static class ProductSkuInfoDTO {
 
         /**
          * sku id
@@ -701,7 +694,7 @@ public class SkuMappingDTO implements Serializable {
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class ListingSkuParamDTO{
+    public static class ListingSkuParamDTO {
         private String type;
 
         private String skuId;
@@ -747,9 +740,7 @@ public class SkuMappingDTO implements Serializable {
         private String listingId;
 
 
-
         private String type;
-
 
 
         /**
@@ -772,8 +763,6 @@ public class SkuMappingDTO implements Serializable {
          */
         private String platformSpuName;
     }
-
-
 
 
     @Data
@@ -811,10 +800,10 @@ public class SkuMappingDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class ListSkuDTO {
-       /**
-        * 产品skuId
-        */
-       private String productSkuId;
+        /**
+         * 产品skuId
+         */
+        private String productSkuId;
 
         /**
          * 产品skuNo
@@ -912,10 +901,10 @@ public class SkuMappingDTO implements Serializable {
         private String id;
 
         private String authId;
-       /**
-        * 产品skuId
-        */
-       private String productSkuId;
+        /**
+         * 产品skuId
+         */
+        private String productSkuId;
 
         /**
          * 产品skuNo
@@ -1085,6 +1074,8 @@ public class SkuMappingDTO implements Serializable {
         private String remark;
     }
 
+
+
     @Data
     @NoArgsConstructor
     public static class SkuParamDTO {
@@ -1200,5 +1191,9 @@ public class SkuMappingDTO implements Serializable {
         private String platformSpuNo;
         private String platformSpuName;
         private String platformFnSku;
+        /**
+         * 服务商简称
+         */
+        private String shortName;
     }
 }

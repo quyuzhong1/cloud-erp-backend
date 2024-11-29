@@ -2,7 +2,9 @@ package com.erp.server.mrp.service.impl;
 
 
 import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.wrapper.FeignQuery;
@@ -15,9 +17,11 @@ import com.erp.model.mrp.dto.CfgRuleLogisticsDetailDTO;
 import com.erp.model.mrp.entity.CfgRuleLogisticsDetailEntity;
 import com.erp.model.mrp.entity.CfgRuleLogisticsEntity;
 import com.erp.model.mrp.entity.CfgRuleStockUpEntity;
+import com.erp.model.mrp.enums.CfgRulePlatformTypeEnum;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.enums.ShopAuthTypeEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.model.wms.enums.LogisticsMethodEnum;
 import com.erp.server.mrp.mapper.CfgRuleLogisticsMapper;
 import com.erp.server.mrp.service.CfgRuleLogisticsDetailService;
@@ -27,7 +31,6 @@ import com.erp.server.mrp.service.OperateLogService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
@@ -35,11 +38,10 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.ObjectUtils;
 
 import javax.annotation.Resource;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
 /**
  * <p>
  * 备货物流（规则设置） 服务实现类
@@ -95,15 +97,25 @@ public class CfgRuleLogisticsServiceImpl extends SuperServiceImpl<CfgRuleLogisti
         //更新物流明细信息
         list.stream().forEach(obj -> cfgRuleLogisticsDetailService.update(obj.getDetailList(),obj.getId()));
 
-        //店铺
-        List<ShopInfoEntity> shopInfoList = FeignQuery.list(ShopInfoEntity.class);
+
         //备货信息
         CfgRuleStockUpEntity stockUpEntity = cfgRuleStockUpService.getById(stockUpId);
         if (ObjectUtil.isEmpty(stockUpEntity)) {
             throw new ServiceException(ApiError.NOT_EXIST_BILL,"规则设置（备货）");
         }
+        //是否海外
+        boolean isOverseas = CharSequenceUtil.equals(stockUpEntity.getPlatformType(), CfgRulePlatformTypeEnum.OVERSEAS.getCode());
+
+        //店铺
+        List<ShopInfoEntity> shopInfoList = isOverseas ? new ArrayList<>() :  FeignQuery.list(ShopInfoEntity.class);
+
+        //仓库
+        List<String> warehouseIdList = list.stream().filter(obj -> CollUtil.isNotEmpty(obj.getDetailList())).flatMap(obj -> Stream.of(obj.getDetailList().stream().filter(e -> StrUtil.isNotBlank(e.getWarehouseId()))
+                .map(CfgRuleLogisticsDetailDTO.UpdateDTO::getWarehouseId).toArray(String[]::new))).distinct().collect(Collectors.toList());
+        List<WarehouseEntity> warehouseList = CollectionUtils.isEmpty(warehouseIdList) ? new ArrayList<>() : FeignQuery.getByIds(WarehouseEntity.class, warehouseIdList);
+
         //日志
-        StringBuilder msg = getMsg(list, shopInfoList);
+        StringBuilder msg = getMsg(list, shopInfoList, isOverseas, warehouseList, stockUpEntity);
         operateLogService.addModuleOperateLog(msg.toString(), ModuleTypeEnum.REPLENISHMENT_SUGGESTION.getCode(), CharSequenceUtil.blankToDefault(stockUpEntity.getRefId(),stockUpEntity.getId()) , "备货");
         return Boolean.TRUE;
     }
@@ -113,9 +125,16 @@ public class CfgRuleLogisticsServiceImpl extends SuperServiceImpl<CfgRuleLogisti
      * @param list 参数
      * @param shopInfoList 参数
      */
-    private static StringBuilder getMsg(List<CfgRuleLogisticsEntity> list, List<ShopInfoEntity> shopInfoList) {
+    private static StringBuilder getMsg(List<CfgRuleLogisticsEntity> list, List<ShopInfoEntity> shopInfoList,
+                                        boolean isOverseas, List<WarehouseEntity> warehouseList, CfgRuleStockUpEntity stockUpEntity) {
         StringBuilder msg = new StringBuilder();
-        msg.append( CharSequenceUtil.format("本地发FBA：<br>"));
+        //日志
+        String title = "本地发FBA：";
+        if (isOverseas) {
+            title = "本地发海外：";
+        }
+        msg.append( StrUtil.format("{}<br>",title));
+
         for (CfgRuleLogisticsEntity logisticsEntity : list) {
             String parentMsg = CharSequenceUtil.format("物流方式【{}】、物流时效【{}】、发货频率【{}】<br>",LogisticsMethodEnum.getName(logisticsEntity.getLogisticsMethod()),logisticsEntity.getLogisticsDays(),logisticsEntity.getLogisticsCycleDays());
             msg.append(parentMsg);
@@ -124,6 +143,18 @@ public class CfgRuleLogisticsServiceImpl extends SuperServiceImpl<CfgRuleLogisti
                 continue;
             }
             for (CfgRuleLogisticsDetailDTO.UpdateDTO updateDTO : detailList) {
+                if (!CharSequenceUtil.equals(stockUpEntity.getPlatformType(), CfgRulePlatformTypeEnum.OVERSEAS.getCode())) {
+                    //非海外仓
+                    String shopNames = CollectionUtils.isEmpty(updateDTO.getShopIdList()) ? "" : shopInfoList.stream().filter(obj -> updateDTO.getShopIdList().contains(obj.getId())).map(ShopInfoEntity::getName).distinct().collect(Collectors.joining(","));
+                    String childMsg = CharSequenceUtil.format("•区域【{}】、店铺【{}】、时效【{}】<br>", updateDTO.getArea(),StrUtil.equals(ShopAuthTypeEnum.ENUM_ALL.getCode(),updateDTO.getType()) ? "全部店铺": shopNames, updateDTO.getLogisticsDays());
+                    msg.append(childMsg);
+                } else {
+                    String warehouseName = warehouseList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), updateDTO.getWarehouseId())).map(WarehouseEntity::getName).findFirst().orElse("");
+                    //海外仓
+                    String childMsg = CharSequenceUtil.format("•海外仓【{}】、时效【{}】<br>",warehouseName, updateDTO.getLogisticsDays());
+                    msg.append(childMsg);
+                }
+
                 String shopNames = CollectionUtils.isEmpty(shopInfoList) ? "" : shopInfoList.stream().filter(obj -> updateDTO.getShopIdList().contains(obj.getId())).map(ShopInfoEntity::getName).distinct().collect(Collectors.joining(","));
                 String childMsg = CharSequenceUtil.format("•区域【{}】、店铺【{}】、时效【{}】<br>", updateDTO.getArea(), CharSequenceUtil.equals(ShopAuthTypeEnum.ENUM_ALL.getCode(),updateDTO.getType()) ? "全部店铺": shopNames, updateDTO.getLogisticsDays());
                 msg.append(childMsg);
@@ -180,6 +211,29 @@ public class CfgRuleLogisticsServiceImpl extends SuperServiceImpl<CfgRuleLogisti
         //根据id删除
         List<String> idList = cfgRuleLogisticsList.stream().map(CfgRuleLogisticsEntity::getId).distinct().collect(Collectors.toList());
         deleteByIdList(idList);
+    }
+
+    @Override
+    public List<CfgRuleLogisticsDTO.SelectLogisticsDTO> selectLogistics(CfgRuleLogisticsDTO.SelectLogisticsParamDTO paramDTO) {
+        List<CfgRuleLogisticsDTO.SelectLogisticsDTO> list = baseMapper.selectLogistics(paramDTO);
+        handleSelectLogistics(list);
+        return list;
+    }
+
+    /**
+     * 处理下拉物流信息
+     * @author will
+     * @date 2024/10/30 11:38
+     * @param list
+     */
+    private void handleSelectLogistics(List<CfgRuleLogisticsDTO.SelectLogisticsDTO> list) {
+        if (CollectionUtils.isEmpty(list)) {
+            return;
+        }
+        for (CfgRuleLogisticsDTO.SelectLogisticsDTO selectLogisticsDTO : list) {
+            //物流方式名称
+            selectLogisticsDTO.setLogisticsMethodName(LogisticsMethodEnum.getName(selectLogisticsDTO.getLogisticsMethod()));
+        }
     }
 
     /**

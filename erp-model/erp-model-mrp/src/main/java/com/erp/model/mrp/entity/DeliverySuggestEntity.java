@@ -10,6 +10,7 @@ import lombok.experimental.Accessors;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 
 /**
@@ -32,15 +33,16 @@ public class DeliverySuggestEntity extends BaseEntity<DeliverySuggestEntity> {
     @TableField("code")
     private String code;
     /**
-    * 创建类型（auto系统，manual人工）
+    * 数据类型（auto系统，manual人工）
     */
-    @TableField("create_type")
-    private String createType;
+    @TableField("data_type")
+    private String dataType;
     /**
     * 建议发货量
     */
     @TableField("suggest_delivery_qty")
     private Integer suggestDeliveryQty;
+
     /**
     * 建议发货日期
     */
@@ -70,12 +72,23 @@ public class DeliverySuggestEntity extends BaseEntity<DeliverySuggestEntity> {
     * 作废状态
     */
     @TableField("invalid_status")
-    private String invalidStatus;
+    private Boolean invalidStatus;
     /**
     * 作废原因
     */
     @TableField("invalid_remark")
     private String invalidRemark;
+    /**
+     * 状态
+     */
+    @TableField("status")
+    private String status;
+
+    /**
+     * 完成时间
+     */
+    @TableField("finish_date")
+    private LocalDate finishDate;
     /**
     * 来源id
     */
@@ -86,6 +99,82 @@ public class DeliverySuggestEntity extends BaseEntity<DeliverySuggestEntity> {
     */
     @TableField("source_type")
     private String sourceType;
+
+    /**
+     * 币别
+     */
+    @TableField("currency")
+    private String currency;
+
+    /**
+     * 平台类型
+     */
+    @TableField("platform_type")
+    private String platformType;
+
+    /**
+     * 平台
+     */
+    @TableField("platform")
+    private String platform;
+
+    /**
+     * 店铺id
+     */
+    @TableField("shop_id")
+    private String shopId;
+
+    /**
+     * 国家
+     */
+    @TableField("country")
+    private String country;
+
+    /**
+     * skuid
+     */
+    @TableField("sku_id")
+    private String skuId;
+
+    /**
+     * 计划发货量（计划修正值）
+     */
+    @TableField("plan_delivery_qty")
+    private Integer planDeliveryQty;
+
+    /**
+     * 实际发货量（运营确认值）
+     */
+    @TableField("actual_delivery_qty")
+    private Integer actualDeliveryQty;
+
+    /**
+     * 发货备货量
+     */
+    @TableField("delivery_stock_up_qty")
+    private Integer deliveryStockUpQty;
+
+    /**
+     * 备注
+     */
+    @TableField("remark")
+    private String remark;
+
+    /**
+     * 作废时间
+     */
+    @TableField("invalid_time")
+    private LocalDateTime invalidTime;
+    /**
+     * 作废人id
+     */
+    @TableField("invalid_user_id")
+    private String invalidUserId;
+    /**
+     * 作废人名称
+     */
+    @TableField("invalid_user_name")
+    private String invalidUserName;
 
 
     public static final String CODE = "code";

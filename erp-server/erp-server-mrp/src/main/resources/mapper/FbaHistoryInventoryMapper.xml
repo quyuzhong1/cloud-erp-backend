@@ -4,30 +4,111 @@
 
     <!-- 通用查询映射结果 -->
     <resultMap id="BaseResultMap" type="com.erp.model.mrp.entity.FbaHistoryInventoryEntity">
-        <result column="id" property="id" />
-        <result column="create_user_id" property="createUserId" />
-        <result column="create_user_name" property="createUserName" />
-        <result column="create_time" property="createTime" />
-        <result column="update_user_id" property="updateUserId" />
-        <result column="update_user_name" property="updateUserName" />
-        <result column="update_time" property="updateTime" />
-        <result column="version" property="version" />
-        <result column="is_deleted" property="isDeleted" />
-        <result column="warehouse_id" property="warehouseId" />
-        <result column="asin" property="asin" />
-        <result column="msku" property="msku" />
-        <result column="fn_sku" property="fnSku" />
-        <result column="sku_no" property="skuNo" />
-        <result column="fbm_fulfillable_qty" property="fbmFulfillableQty" />
-        <result column="inbound_working_qty" property="inboundWorkingQty" />
-        <result column="inbound_shipped_qty" property="inboundShippedQty" />
-        <result column="inbound_receiving_qty" property="inboundReceivingQty" />
-        <result column="fulfillable_qty" property="fulfillableQty" />
-        <result column="reserved_qty" property="reservedQty" />
-        <result column="researching_qty" property="researchingQty" />
-        <result column="unsellable_qty" property="unsellableQty" />
-        <result column="warehouse_name" property="warehouseName" />
-        <result column="bill_date" property="billDate" />
+        <result column="id" property="id"/>
+        <result column="create_user_id" property="createUserId"/>
+        <result column="create_user_name" property="createUserName"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_user_id" property="updateUserId"/>
+        <result column="update_user_name" property="updateUserName"/>
+        <result column="update_time" property="updateTime"/>
+        <result column="version" property="version"/>
+        <result column="is_deleted" property="isDeleted"/>
+        <result column="warehouse_id" property="warehouseId"/>
+        <result column="sku_no" property="skuNo"/>
+        <result column="fbm_fulfillable_qty" property="fbmFulfillableQty"/>
+        <result column="inbound_working_qty" property="inboundWorkingQty"/>
+        <result column="inbound_shipped_qty" property="inboundShippedQty"/>
+        <result column="inbound_receiving_qty" property="inboundReceivingQty"/>
+        <result column="fulfillable_qty" property="fulfillableQty"/>
+        <result column="reserved_qty" property="reservedQty"/>
+        <result column="researching_qty" property="researchingQty"/>
+        <result column="unsellable_qty" property="unsellableQty"/>
+        <result column="warehouse_name" property="warehouseName"/>
+        <result column="bill_date" property="billDate"/>
     </resultMap>
+    <select id="paging" resultType="com.erp.model.mrp.dto.FbaHistoryInventoryDTO$ListDTO">
+        select fi.id,
+        fi.create_user_id,
+        fi.create_user_name,
+        fi.create_time,
+        fi.update_user_id,
+        fi.update_user_name,
+        fi.update_time,
+        fi.version,
+        fi.is_deleted,
+        fi.warehouse_id,
+        fi.asin,
+        fi.msku,
+        fi.fn_sku,
+        fi.sku_no,
+        fi.fbm_fulfillable_qty,
+        fi.inbound_working_qty,
+        fi.inbound_shipped_qty,
+        fi.inbound_receiving_qty,
+        fi.fulfillable_qty,
+        fi.reserved_qty,
+        fi.researching_qty,
+        fi.unsellable_qty,
+        fi.warehouse_name,
+        fi.bill_date
+        from fba_history_inventory fi
+        where ${params.sqlMap.default}
+        and is_deleted = false
+        <!--是否显示0库存-->
+        <if test="params.isShowZeroInventory">
+            AND NOT EXISTS (SELECT id FROM fba_history_inventory f WHERE f.id = fi.id AND fi.fbm_fulfillable_qty = 0
+            AND fi.inbound_working_qty = 0
+            AND fi.inbound_shipped_qty = 0
+            AND fi.inbound_receiving_qty = 0
+            AND fi.fulfillable_qty = 0
+            AND fi.reserved_qty = 0
+            AND fi.researching_qty = 0
+            AND fi.unsellable_qty = 0)
+        </if>
+        <if test="params.billDate != null" >
+            AND fi.bill_date = #{params.billDate}
+        </if>
+        ORDER BY
+        fi.create_time DESC, fi.id DESC
+    </select>
+    <select id="listExport" resultType="com.erp.model.mrp.dto.FbaHistoryInventoryDTO$ListDTO">
+        SELECT
+        fi.id,
+        fi.warehouse_id,
+        fi.warehouse_name,
+        fi.sku_no,
+        fi.fbm_fulfillable_qty,
+        fi.inbound_working_qty,
+        fi.inbound_shipped_qty,
+        fi.inbound_receiving_qty,
+        fi.fulfillable_qty,
+        fi.reserved_qty,
+        fi.researching_qty,
+        fi.unsellable_qty,
+        fi.update_time,
+        fi.bill_date
+        FROM fba_history_inventory fi
+        WHERE ${params.sqlMap.default} and fi.is_deleted = FALSE
+        <!--是否显示0库存-->
+        <if test="params.isShowZeroInventory">
+            AND NOT EXISTS (SELECT id FROM fba_history_inventory f WHERE f.id = fi.id AND fi.fbm_fulfillable_qty = 0
+            AND fi.inbound_working_qty = 0
+            AND fi.inbound_shipped_qty = 0
+            AND fi.inbound_receiving_qty = 0
+            AND fi.fulfillable_qty = 0
+            AND fi.reserved_qty = 0
+            AND fi.researching_qty = 0
+            AND fi.unsellable_qty = 0)
+        </if>
+        <if test="params.billDate != null" >
+            AND fi.bill_date = #{params.billDate}
+        </if>
+        <!--数据权限-->
+        <if test="params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY
+        fi.create_time DESC, fi.id DESC
+    </select>
 
 </mapper>

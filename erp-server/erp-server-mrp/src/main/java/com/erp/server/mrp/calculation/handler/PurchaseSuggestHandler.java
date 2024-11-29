@@ -19,7 +19,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import static com.common.business.enums.BusinessNoTypeEnum.CODE_CGJY;
+import static com.common.business.enums.BusinessNoTypeEnum.CODE_P;
 
 @Component
 public class PurchaseSuggestHandler extends AbstractSkuCalculationHandler {
@@ -70,8 +70,8 @@ public class PurchaseSuggestHandler extends AbstractSkuCalculationHandler {
         List<LocalDate> dates = rptOutOfStocks.stream().map(ReplenishmentResultDTO.RptOutOfStockDTO::getStartDate).distinct().collect(Collectors.toList());
         List<ReplenishmentResultDTO.PurchaseSuggestDTO> deliverySuggests = dates.parallelStream()
                 .map(localDate -> {
-                    String code = docNoGenHelper.generateCode(CODE_CGJY);
-                    ReplenishmentResultDTO.PurchaseSuggestDTO suggestDTO = ReplenishmentResultDTO.PurchaseSuggestDTO.buildPurchaseSuggestDTO(code, logisticsResult, replenishmentResultDTO.getReplenishmentDetail().getDetailId(), ExecutionTypeEnum.AUTO.getCode());
+                    String code = docNoGenHelper.generateCode(CODE_P);
+                    ReplenishmentResultDTO.PurchaseSuggestDTO suggestDTO = ReplenishmentResultDTO.PurchaseSuggestDTO.buildPurchaseSuggestDTO(code, logisticsResult, replenishmentResultDTO, ExecutionTypeEnum.AUTO.getCode());
                     if (CfgRulePlatformTypeEnum.AMAZON.getCode().equals(replenishmentResultDTO.getReplenishment().getPlatformType())
                             || CfgRulePlatformTypeEnum.OVERSEAS.getCode().equals(replenishmentResultDTO.getReplenishment().getPlatformType())) {
                         //建议采购日期（本地发FBA） = 断货日期 -（审批时长 + 采购交期 + 供应商发货时效 + 质检天数 + 采购频率 + 本地发FBA时效 + FBA入库时间 + 本地仓发货频率 + FBA安全天数）
@@ -123,7 +123,7 @@ public class PurchaseSuggestHandler extends AbstractSkuCalculationHandler {
                         suggestDTO.setPurchaseCost(replenishmentResultDTO.getPurchasePrice().multiply(BigDecimal.valueOf(suggestDTO.getSuggestPurchaseQty())));
                     }
                     return suggestDTO;
-                }).collect(Collectors.toList());
+                }).filter(v -> v.getSuggestPurchaseQty() > 0).collect(Collectors.toList());
         replenishmentResultDTO.setPurchaseSuggests(deliverySuggests);
     }
 

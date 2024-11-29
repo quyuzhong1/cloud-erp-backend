@@ -29,7 +29,7 @@ public interface ReplenishmentSuggestionImportService {
      * @param response
      * @return Boolean
      */
-    void importRule(MultipartFile excelFile, HttpServletResponse response);
+    void importRule(MultipartFile excelFile,String platformType, HttpServletResponse response);
     /**
      * 运营预估月销导入模板
      * @author will
@@ -45,6 +45,6 @@ public interface ReplenishmentSuggestionImportService {
      * @param response
      * @return Boolean
      */
-    void importSalesEstimate(MultipartFile excelFile, HttpServletResponse response);
+    void importSalesEstimate(MultipartFile excelFile,String platformType, HttpServletResponse response);
 
 }

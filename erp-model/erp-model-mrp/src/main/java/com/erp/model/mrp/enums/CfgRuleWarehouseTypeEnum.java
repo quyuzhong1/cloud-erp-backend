@@ -13,6 +13,7 @@ public enum CfgRuleWarehouseTypeEnum implements EnumMessage {
 
     LOCAL("local", "本地"),
     OVERSEAS("overseas", "海外"),
+    VIRTUAL("virtual", "虚拟仓")
     ;
     /**
      * 类型

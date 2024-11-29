@@ -181,4 +181,48 @@ public class CfgRuleLogisticsDTO implements Serializable {
         }
     }
 
+
+    /**
+     * 物流方式、时效下拉参数
+     */
+    @Data
+    @NoArgsConstructor
+    public static class SelectLogisticsParamDTO {
+
+        /**
+         * 补货建议id
+         */
+        @NotBlank(message = "补货建议id不能为空")
+        private String replenishmentSuggestionId;
+
+        /**
+         * 平台类型
+         */
+        @NotBlank(message = "平台类型不能为空")
+        private String platformType;
+    }
+
+    /**
+     * 物流方式、时效下拉
+     */
+    @Data
+    @NoArgsConstructor
+    public static class SelectLogisticsDTO {
+
+        /**
+         * 物流方式
+         */
+        private String logisticsMethod;
+
+        /**
+         * 物流方式名称
+         */
+        private String logisticsMethodName;
+
+        /**
+         * 物流时效（天）
+         */
+        private Integer logisticsDays;
+    }
+
 }

@@ -1,5 +1,8 @@
 package com.erp.server.mrp.service;
 
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.vo.PagingVO;
+import com.erp.model.mrp.dto.LocalHistoryInventoryDTO;
 import com.erp.model.mrp.entity.LocalHistoryInventoryEntity;
 import com.common.business.service.SuperService;
 import com.erp.model.wms.entity.InventoryEntity;
@@ -9,11 +12,11 @@ import java.util.List;
 
 /**
  * <p>
- * 库存表 服务类
+ * 本地仓库存 服务类
  * </p>
  *
- * @author liaohui
- * @since 2024-09-23
+ * @author Lambda
+ * @since 2024-11-08
  */
 public interface LocalHistoryInventoryService extends SuperService<LocalHistoryInventoryEntity> {
 
@@ -23,4 +26,22 @@ public interface LocalHistoryInventoryService extends SuperService<LocalHistoryI
      * @param calculationDate 计算日期
      */
     void saveTodayInventory(List<InventoryEntity> localHistoryInventory, LocalDate calculationDate);
+
+    /**
+     * 分页
+     * @param dto 参数
+     */
+    PagingVO<LocalHistoryInventoryDTO.PagingViewDTO> paging(PagingDTO<LocalHistoryInventoryDTO.SearchParamDTO> dto);
+
+    /**
+     * 导出
+     * @param dto 参数
+     */
+    void exportExcel(LocalHistoryInventoryDTO.ExportDTO dto);
+
+    /**
+     * 导出
+     * @param dto 参数
+     */
+    PagingVO<LocalHistoryInventoryDTO.PagingViewDTO> exportLocalInventory(PagingDTO<LocalHistoryInventoryDTO.ExportDTO> dto);
 }

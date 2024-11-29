@@ -4,11 +4,10 @@ import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.DynamicExcelDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
-import com.erp.model.mrp.dto.ReplenishmentSuggestionDTO;
+import com.erp.model.mrp.dto.*;
+import com.erp.server.mrp.handler.OverseasHistoryInventoryHandler;
 import com.erp.server.mrp.handler.ReplenishmentSuggestionQueryHandler;
-import com.erp.server.mrp.service.DeliverySuggestService;
-import com.erp.server.mrp.service.PurchaseSuggestService;
-import com.erp.server.mrp.service.ReplenishmentSuggestionService;
+import com.erp.server.mrp.service.*;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -26,9 +25,25 @@ public class ExportMrpFeignController {
     @Resource
     private PurchaseSuggestService purchaseSuggestService;
 
+    @Resource
+    private PurchaseSuggestMergeService purchaseSuggestMergeService;
 
     @Resource
     private DeliverySuggestService deliverySuggestService;
+
+    @Resource
+    private FbaHistoryInventoryService fbaHistoryInventoryService;
+
+    @Resource
+    private CalcSalesInfoDimService calcSalesInfoDimService;
+
+    @Resource
+    private OverseasHistoryInventoryService overseasHistoryInventoryService;
+    @Resource
+    private LocalHistoryInventoryService localHistoryInventoryService;
+    @Resource
+    private VirtualInventoryHistoryService virtualInventoryHistoryService;
+
     /**
      * 历史销量导出数据查询
      * @author will
@@ -42,7 +57,7 @@ public class ExportMrpFeignController {
         return replenishmentSuggestionService.listHistorySalesQty(dto);
     }
     /**
-     * 采购建议导出数据查询
+     * (补货建议)采购建议导出数据查询
      * @author will
      * @date 2024/9/6 14:53
      * @param dto
@@ -68,7 +83,7 @@ public class ExportMrpFeignController {
     }
 
     /**
-     * 发货建议导出数据查询
+     * (补货建议)发货建议导出数据查询
      * @author will
      * @date 2024/10/12 14:54
      * @param dto
@@ -78,5 +93,101 @@ public class ExportMrpFeignController {
     @WebAdvanceQuery(handler = ReplenishmentSuggestionQueryHandler.class)
     public PagingVO<ReplenishmentSuggestionDTO.DeliverySuggestionDTO> listDeliverySuggestion(@RequestBody PagingDTO<ReplenishmentSuggestionDTO.PagingParamDTO> dto) {
         return deliverySuggestService.listDeliverySuggestion(dto);
+    }
+
+    /**
+     * 采购建议导出数据查询
+     * @author will
+     * @date 2024/10/17 10:41
+     * @param dto
+     * @return PagingVO<ListDTO>
+     */
+    @PostMapping("/pagingPurchaseSuggestion")
+    @WebAdvanceQuery
+    public PagingVO<PurchaseSuggestDTO.ListDTO> pagingPurchaseSuggestion(@RequestBody PagingDTO<PurchaseSuggestDTO.PagingParamDTO> dto) {
+        return purchaseSuggestService.paging(dto);
+    }
+
+    /**
+     * 采购建议(合并)导出数据查询
+     * @author will
+     * @date 2024/10/17 10:41
+     * @param dto
+     * @return PagingVO<ListDTO>
+     */
+    @PostMapping("/pagingPurchaseSuggestionMerge")
+    @WebAdvanceQuery
+    public PagingVO<PurchaseSuggestMergeDTO.ListDTO> pagingPurchaseSuggestionMerge(@RequestBody PagingDTO<PurchaseSuggestMergeDTO.PagingParamDTO> dto) {
+        return purchaseSuggestMergeService.paging(dto);
+    }
+
+    /**
+     * 发货建议导出数据查询
+     * @author will
+     * @date 2024/10/17 10:44
+     * @param dto
+     * @return PagingVO<ListDTO>
+     */
+    @PostMapping("/pagingDeliverySuggestion")
+    @WebAdvanceQuery
+    public PagingVO<DeliverySuggestDTO.ListDTO> pagingDeliverySuggestion(@RequestBody PagingDTO<DeliverySuggestDTO.PagingParamDTO> dto) {
+        return deliverySuggestService.paging(dto);
+    }
+
+
+    /**
+     * fba库存
+     * @param dto 参数
+     */
+    @PostMapping("/fbaInventory")
+    @WebAdvanceQuery
+    public PagingVO<FbaHistoryInventoryDTO.ListDTO> exportFbaInventory(@RequestBody PagingDTO<FbaHistoryInventoryDTO.ExportDTO> dto) {
+        return fbaHistoryInventoryService.exportFbaInventory(dto);
+    }
+
+    /**
+     * 导出历史销量
+     * @param dto 参数
+     */
+    @PostMapping("/exportCalcHistorySale")
+    public PagingVO<CfgRuleCalcDTO.HistorySaleDTO> exportCalcHistorySale(@RequestBody PagingDTO<CfgRuleCalcDTO.DownloadDTO> dto) {
+        return replenishmentSuggestionService.exportCalcHistorySale(dto);
+    }
+
+    /**
+     * 海外仓每日库存
+     */
+    @PostMapping("/overseasInventory")
+    @WebAdvanceQuery(handler = OverseasHistoryInventoryHandler.class)
+    public PagingVO<OverseasHistoryInventoryDTO.ListDTO> exportOverseasInventory(@RequestBody PagingDTO<OverseasHistoryInventoryDTO.ExportDTO> dto){
+        return overseasHistoryInventoryService.exportOverseasInventory(dto);
+    }
+
+    /**
+     * 本地仓每日库存
+     */
+    @PostMapping("/localInventory")
+    @WebAdvanceQuery
+    public PagingVO<LocalHistoryInventoryDTO.PagingViewDTO> exportLocalInventory(@RequestBody PagingDTO<LocalHistoryInventoryDTO.ExportDTO> dto){
+        return localHistoryInventoryService.exportLocalInventory(dto);
+    }
+    /**
+     * 导出试算逻辑
+     * @param dto 参数
+     */
+    @PostMapping("/getListExportData")
+    @WebAdvanceQuery
+    public PagingVO<CalcSalesInfoDimDTO.ExportResultDTO> getListExportData(@RequestBody PagingDTO<CalcSalesInfoDimDTO.ExportSalesInfoDTO> dto){
+        return calcSalesInfoDimService.getListExportData(dto);
+    }
+
+    /**
+     * 导出虚拟仓库存
+     * @param dto 参数
+     */
+    @PostMapping("/getVirtualInventory")
+    @WebAdvanceQuery
+    public PagingVO<VirtualInventoryHistoryDTO.ListDTO> getVirtualInventory(@RequestBody PagingDTO<VirtualInventoryHistoryDTO.SearchParamDTO> dto){
+        return virtualInventoryHistoryService.getVirtualInventory(dto);
     }
 }

@@ -25,19 +25,7 @@ public class StockingTimeHandler extends AbstractSkuCalculationHandler {
     @Override
     public void doHandle(CfgRuleStrategyDTO cfgRuleStrategyDTO, ReplenishmentResultDTO replenishmentResultDTO) {
         CfgRuleStockUpDTO.StrategyResultDTO stockUpResult = cfgRuleStrategyDTO.getStockUpResult();
-        replenishmentResultDTO.getReplenishmentDetail().setPurchaseApproveDays(stockUpResult.getPurchaseApproveDays());
-        replenishmentResultDTO.getReplenishmentDetail().setProductionDays(stockUpResult.getProductionDays());
-        replenishmentResultDTO.getReplenishmentDetail().setSupplierDeliveryDays(stockUpResult.getSupplierDeliveryDays());
-        replenishmentResultDTO.getReplenishmentDetail().setQcDays(stockUpResult.getQcDays());
-        replenishmentResultDTO.getReplenishmentDetail().setPurchaseCycleDays(stockUpResult.getPurchaseCycleDays());
-        replenishmentResultDTO.getReplenishmentDetail().setSafeDays(stockUpResult.getSafeDays());
-        replenishmentResultDTO.getReplenishmentDetail().setInstockDays(stockUpResult.getInstockDays());
-        replenishmentResultDTO.getReplenishmentDetail().setLogisticsMinCycleDays(stockUpResult.getLogisticsMinResult().getLogisticsCycleDays());
-        replenishmentResultDTO.getReplenishmentDetail().setLogisticsCycleDays(stockUpResult.getLogisticsResult().getLogisticsCycleDays());
-        replenishmentResultDTO.getReplenishmentDetail().setLogisticsMaxCycleDays(stockUpResult.getLogisticsMaxResult().getLogisticsCycleDays());
-        replenishmentResultDTO.getReplenishmentDetail().setLogisticsMinMethod(stockUpResult.getLogisticsMinResult().getLogisticsMethod());
-        replenishmentResultDTO.getReplenishmentDetail().setLogisticsMethod(stockUpResult.getLogisticsResult().getLogisticsMethod());
-        replenishmentResultDTO.getReplenishmentDetail().setLogisticsMaxMethod(stockUpResult.getLogisticsMaxResult().getLogisticsMethod());
+        buildBasicStockingTime(replenishmentResultDTO, stockUpResult);
         //FBA备货时长：
         //最短：本地发FBA时效（最短）+ FBA入库天数
         //默认：采购审批时长 + 生产周期 + 供应商发货时长 + 质检入库时长 + 本地发FBA时效（默认） + FBA入库天数
@@ -79,5 +67,26 @@ public class StockingTimeHandler extends AbstractSkuCalculationHandler {
                     + stockUpResult.getQcDays() + stockUpResult.getPurchaseCycleDays() + stockUpResult.getSafeDays()
             );
         }
+    }
+
+    /**
+     * 构建基础补货数据
+     * @param replenishmentResultDTO 建议
+     * @param stockUpResult 备货配置
+     */
+    private static void buildBasicStockingTime(ReplenishmentResultDTO replenishmentResultDTO, CfgRuleStockUpDTO.StrategyResultDTO stockUpResult) {
+        replenishmentResultDTO.getReplenishmentDetail().setPurchaseApproveDays(stockUpResult.getPurchaseApproveDays());
+        replenishmentResultDTO.getReplenishmentDetail().setProductionDays(stockUpResult.getProductionDays());
+        replenishmentResultDTO.getReplenishmentDetail().setSupplierDeliveryDays(stockUpResult.getSupplierDeliveryDays());
+        replenishmentResultDTO.getReplenishmentDetail().setQcDays(stockUpResult.getQcDays());
+        replenishmentResultDTO.getReplenishmentDetail().setPurchaseCycleDays(stockUpResult.getPurchaseCycleDays());
+        replenishmentResultDTO.getReplenishmentDetail().setSafeDays(stockUpResult.getSafeDays());
+        replenishmentResultDTO.getReplenishmentDetail().setInstockDays(stockUpResult.getInstockDays());
+        replenishmentResultDTO.getReplenishmentDetail().setLogisticsMinCycleDays(stockUpResult.getLogisticsMinResult().getLogisticsCycleDays());
+        replenishmentResultDTO.getReplenishmentDetail().setLogisticsCycleDays(stockUpResult.getLogisticsResult().getLogisticsCycleDays());
+        replenishmentResultDTO.getReplenishmentDetail().setLogisticsMaxCycleDays(stockUpResult.getLogisticsMaxResult().getLogisticsCycleDays());
+        replenishmentResultDTO.getReplenishmentDetail().setLogisticsMinMethod(stockUpResult.getLogisticsMinResult().getLogisticsMethod());
+        replenishmentResultDTO.getReplenishmentDetail().setLogisticsMethod(stockUpResult.getLogisticsResult().getLogisticsMethod());
+        replenishmentResultDTO.getReplenishmentDetail().setLogisticsMaxMethod(stockUpResult.getLogisticsMaxResult().getLogisticsMethod());
     }
 }

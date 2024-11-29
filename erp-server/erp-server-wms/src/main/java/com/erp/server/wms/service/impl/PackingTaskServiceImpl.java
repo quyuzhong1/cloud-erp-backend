@@ -2403,7 +2403,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
         if (Objects.isNull(overseasProviderEntity)){
             return CharSequenceUtil.EMPTY;
         }
-        SkuMappingDTO.SkuMappingViewDTO skuMappingViewDTO1 = skuMappingViewDTOS.stream().filter(e -> Objects.equals(e.getPlatformSkuNo(), platformSku) && Objects.equals(overseasProviderEntity.getName(), e.getPlatformName()) && CharSequenceUtil.isNotBlank(e.getThirdBarcode())).findFirst().orElse(null);
+        SkuMappingDTO.SkuMappingViewDTO skuMappingViewDTO1 = skuMappingViewDTOS.stream().filter(e -> Objects.equals(e.getPlatformSkuNo(), platformSku) && Objects.equals(overseasProviderEntity.getShortName(), e.getShortName()) && CharSequenceUtil.isNotBlank(e.getThirdBarcode())).findFirst().orElse(null);
         if (Objects.nonNull(skuMappingViewDTO1)){
             return skuMappingViewDTO1.getThirdBarcode();
         }

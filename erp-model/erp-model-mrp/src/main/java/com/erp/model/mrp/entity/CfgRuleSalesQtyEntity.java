@@ -41,7 +41,7 @@ public class CfgRuleSalesQtyEntity extends BaseEntity<CfgRuleSalesQtyEntity> {
     @TableField("sales_qty_type")
     private String salesQtyType;
     /**
-    * 订单类型，all:全部，fba:FBA,fbm:FBM
+    * 订单类型，亚马逊取FbaOrderTypeEnum，海外取OverseasOrderTypeEnum
     */
     @TableField("order_type")
     private String orderType;

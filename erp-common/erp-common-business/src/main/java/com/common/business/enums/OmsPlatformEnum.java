@@ -3,6 +3,10 @@ package com.common.business.enums;
 import com.baomidou.mybatisplus.annotation.EnumValue;
 import lombok.Getter;
 
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
+
 /**
  * 中转仓平台枚举类
  *
@@ -43,5 +47,9 @@ public enum OmsPlatformEnum {
             }
         }
         return false;
+    }
+
+    public static List<String> allPlatform() {
+        return Arrays.stream(OmsPlatformEnum.values()).map(OmsPlatformEnum::getCode).collect(Collectors.toList());
     }
 }

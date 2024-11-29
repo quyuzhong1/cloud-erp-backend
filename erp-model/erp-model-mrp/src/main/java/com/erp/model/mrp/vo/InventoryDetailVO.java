@@ -45,6 +45,11 @@ public class InventoryDetailVO {
     private String warehouseType;
 
     /**
+     * 平台
+     */
+    private String dictPlatform;
+
+    /**
      * 关联店铺类型，platform按平台，shop按店铺
      */
     private String channelType;
@@ -70,38 +75,19 @@ public class InventoryDetailVO {
      */
     private Integer totalQty;
     /**
-     * 店铺库存明细
+     * 平台数量
      */
-    private List<ShopInventoryDetailVO> shopInventoryDetails;
-
-    @Getter
-    @Setter
-    public static class ShopInventoryDetailVO {
-        /**
-         * 店铺id
-         */
-        private String shopId;
-        /**
-         * 店铺名字
-         */
-        private String shopName;
-        /**
-         * 数量
-         */
-        private BigDecimal qty;
-    }
-    
-    
-    public static InventoryDetailVO buildInventoryDetailVO(ReplenishmentInventoryDetailEntity entity) {
-        InventoryDetailVO detailVO = new InventoryDetailVO();
-        detailVO.setInventoryType(entity.getInventoryType());
-        detailVO.setInventoryAllocateType(entity.getInventoryAllocateType());
-        detailVO.setChannelType(entity.getChannelType());
-        detailVO.setChannelIdJson(entity.getChannelIdJson());
-        detailVO.setTotalQty(entity.getTotalQty());
-        detailVO.setWarehouseId(entity.getWarehouseId());
-        detailVO.setWarehouseType(entity.getWarehouseType());
-        detailVO.setVirtualWarehouseId(entity.getVirtualWarehouseId());
-        return detailVO;
-    }
+    private Integer platformQty;
+    /**
+     * 店铺id
+     */
+    private String shopId;
+    /**
+     * 店铺名字
+     */
+    private String shopName;
+    /**
+     * 数量
+     */
+    private BigDecimal qty;
 }

@@ -37,6 +37,12 @@ public enum SnapshotTableEnum implements EnumMessage {
     PO_RETURN("po_return", "采购退货单"),
     TRANSFER_OUT("transfer_out", "分布式调出单"),
     TRANSFER_IN("transfer_in", "分布式调入单"),
+    DELIVERY_SUGGEST("delivery_suggest", "发货建议"),
+    PURCHASE_SUGGEST("purchase_suggest", "采购建议"),
+    PURCHASE_SUGGEST_MERGE("purchase_suggest_merge", "采购建议(合并)"),
+    SO_B2C_LOGISTICS("so_b2c_logistics", "B2C销售订单物流信息表"),
+    OVERSEAS_WAREHOUSE_INBOUND("overseas_warehouse_inbound", "海外仓入库单"),
+    OVERSEAS_WAREHOUSE_INBOUND_DETAIL("overseas_warehouse_inbound_detail", "海外仓入库单详情"),
     ;
 
     private final String code;
