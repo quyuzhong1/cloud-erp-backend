@@ -750,12 +750,10 @@ public class CalcSalesInfoDimServiceImpl extends SuperServiceImpl<CalcSalesInfoD
         while (!startCalcDate.isAfter(dto.getEndCalcDate())) {
             CfgRuleSalesFormulaCalcEntity formulaResult = getStrategyFormulaResultDTO(dto.getFormulaCalcEntities(), startCalcDate);
             if (ObjectUtils.isEmpty(formulaResult)) {
+                startCalcDate = startCalcDate.plusDays(1);
                 continue;
             }
             BigDecimal saleQty = getSaleQty(allSalesList, avgTimePeriodSales, formulaResult, dto.getStartCalcDate());
-            if (saleQty.equals(BigDecimal.ZERO)) {
-                continue;
-            }
             CalcSalesInfoEstimateEntity entity = new CalcSalesInfoEstimateEntity();
             entity.setCalcSalesInfoDimId(dto.getCalcSalesInfoDimId());
             entity.setQty(saleQty.setScale(2, RoundingMode.HALF_UP));
