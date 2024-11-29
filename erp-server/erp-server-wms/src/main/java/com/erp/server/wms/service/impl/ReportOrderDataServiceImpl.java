@@ -151,6 +151,8 @@ public class ReportOrderDataServiceImpl extends SuperServiceImpl<ReportOrderData
             sendWarnMsg(isAuto);
             throw new ServiceException(CharSequenceUtil.format("生成虚拟仓报表数据失败，e = {}",e.getMessage()));
         }
+        //清除缓存
+        redisUtil.del(existKey);
     }
 
     /**
