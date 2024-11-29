@@ -512,7 +512,6 @@ public class InventoryDTO implements Serializable {
         /**
          * 库存组织id（点击查看流水必传参数）
          */
-        @NotEmpty(message = "库存组织不能为空")
         private String orgId;
 
         /**

@@ -28,10 +28,12 @@
         WHERE
             t.is_deleted = false
             AND t.warehouse_id = #{params.warehouseId}
-            AND t.org_id = #{params.orgId}
             AND t.sku_id = #{params.skuId}
             <if test="params.warehouseLocation != null">
                 AND t.warehouse_location = #{params.warehouseLocation}
+            </if>
+            <if test="params.orgId != null and params.orgId != ''">
+                AND t.org_id = #{params.orgId}
             </if>
             <if test="params.sourceCode != null and params.sourceCode != ''">
                 and t.source_code = #{params.sourceCode}
