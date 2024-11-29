@@ -3,10 +3,7 @@ package com.erp.server.oms.mapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.AdvanceQueryContainer;
-import com.erp.model.oms.dto.ListingAdvanceQueryDTO;
-import com.erp.model.oms.dto.ListingInfoParamDTO;
-import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
-import com.erp.model.oms.dto.SkuMappingDTO;
+import com.erp.model.oms.dto.*;
 import com.erp.model.oms.entity.SkuMappingEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Mapper;
@@ -111,4 +108,11 @@ public interface SkuMappingMapper extends BaseMapper<SkuMappingEntity> {
     List<SkuMappingDTO.WarehouseSkuDTO> listByWarehouseAndPlatformSku(@Param("warehouseId") String warehouseId,@Param("platformSkuNoList") List<String> platformSkuNoList);
 
     List<SkuMappingDTO.ProductSkuInfoDTO> listSkuBySkuNos(@Param("params")SkuMappingDTO.SkuParamDTO params);
+
+    /**
+     * 根据参数查询sku映射记录
+     * @param params
+     * @return
+     */
+    List<SkuMappingDTO.SkuMappingViewDTO> listSkuMappingByParams(@Param("params") ListingInfoDTO.QueryDTO params);
 }

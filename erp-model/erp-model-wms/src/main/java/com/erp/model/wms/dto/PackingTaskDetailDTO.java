@@ -71,8 +71,17 @@ public class PackingTaskDetailDTO implements Serializable {
         * fnSku
         */
         private String fnSku;
+        /**
+         * ean
+         */
         private String ean;
-
+        /**
+         * 三方仓商品条码
+         */
+        private String thirdBarcode;
+        /**
+         * 来源编码
+         */
         private String sourceCode;
 
 

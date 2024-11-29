@@ -2,12 +2,11 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
 <mapper namespace="com.erp.server.mrp.mapper.InventoryMapper">
 
-    <select id="getFbaUsable" resultType="java.lang.Integer">
-        select COALESCE(sum(${code}), 0)
-        from ${tableName}
-        where is_deleted = false
-          and sku_no = #{result.replenishment.skuNo}
-          and warehouse_id = #{result.replenishment.fbaWarehouseId}
+    <select id="getFbaUsable" resultType="com.erp.model.mrp.dto.ReplenishmentInventoryDTO$FbaUsableDTO">
+        SELECT COALESCE(SUM(${code}), 0) AS qty, sku_no, warehouse_id
+        FROM ${tableName}
+        WHERE is_deleted = FALSE
+        GROUP BY sku_no, warehouse_id
     </select>
     <select id="getFbaShipment"
             resultType="com.erp.model.mrp.dto.ReplenishmentResultDTO$FbaInTransitDetailDTO">
@@ -89,9 +88,9 @@
     </select>
     <select id="isTableExist" resultType="java.lang.Boolean">
         SELECT EXISTS (SELECT 1
-                       FROM pg_tables
-                       WHERE tablename = #{tableName}
-                         AND schemaname = 'public')
+                       FROM information_schema.tables
+                       WHERE table_name = #{tableName}
+                         AND table_schema = 'public')
     </select>
     <select id="getPlanDelivery"
             resultType="com.erp.model.mrp.dto.ReplenishmentResultDTO$EstimatedDeliveryDetailDTO">
@@ -101,15 +100,36 @@
         CASE WHEN wdp.approve_status = 'approve' THEN wdp.approve_time
         ELSE wdp.create_time END AS estimateSalesDate,
         wdp.id AS sourceId,
-        wdp.code AS sourceCode
+        wdp.code AS sourceCode,
+        wdp.to_warehouse_id AS warehouseId
         FROM
         ${tableName} AS wdp
         INNER JOIN ${tableDetailName} AS wdpd ON wdpd.is_deleted = FALSE
         AND wdpd.main_id = wdp.id
         WHERE
-        wdp.is_deleted = FALSE
-        AND wdp."type" = #{type} AND wdp.shop_id = #{result.replenishment.shopId} AND wdpd.sku_id =
+        wdp.is_deleted = FALSE  and wdp.invalid_status = 'false'
+        AND wdp."type" = #{type}
+        <choose>
+            <when test="type == 'fba'">
+                AND wdp.shop_id = #{result.replenishment.shopId}
+            </when>
+            <otherwise>
+                AND wdp.to_warehouse_id in
+                <foreach collection="result.overseasWarehouseId" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </otherwise>
+        </choose>
+          AND wdpd.sku_id =
         #{result.replenishment.skuId}
+        <choose>
+            <when test="sourceType == 'replenishment_plan'">
+              AND  wdp.source_type = 'replenishment_plan'
+            </when>
+            <otherwise>
+                AND wdp.source_type = ''
+            </otherwise>
+        </choose>
         <if test="codes != null and !codes.isEmpty()">
             <!-- 当 codes 只有 'approve' 时，单独处理 -->
             <if test="codes.size() == 1 and 'approve' in codes">
@@ -137,16 +157,18 @@
             </if>
         </if>
     </select>
-    <select id="getOverseasUsable" resultType="java.lang.Integer">
-        select COALESCE(sum(${code}), 0)
-        from ${tableName}
-        where is_deleted = false
-          and sku_id = #{result.replenishment.skuId}
-          and warehouse_id = #{result.replenishment.fbaWarehouseId}
+    <select id="getOverseasUsable" resultType="com.erp.model.mrp.dto.ReplenishmentInventoryDTO$OverseasUsableDTO">
+        SELECT sku_id,
+               warehouse_code,
+               COALESCE(sum(${code}), 0) AS qty
+        FROM ${tableName}
+        WHERE is_deleted = FALSE
+        GROUP BY warehouse_code, sku_id
     </select>
 
-    <select id="getLocalUsable" resultType="com.erp.model.mrp.dto.LocalInventoryDTO">
+    <select id="getLocalUsable" resultType="com.erp.model.mrp.dto.ReplenishmentInventoryDTO$LocalUsableDTO">
         SELECT
+        sku_id,
         warehouse_id AS warehouseId,
         SUM ( qty ) AS qty
         FROM
@@ -156,14 +178,14 @@
         <foreach item="code" collection="codes" open="(" separator="," close=")">
             #{code}
         </foreach>
-        AND sku_id = #{skuId}
         GROUP BY
-        warehouse_id
+        warehouse_id,sku_id
     </select>
 
-    <select id="getVirtualUsable" resultType="com.erp.model.mrp.dto.LocalInventoryDTO">
+    <select id="getVirtualUsable" resultType="com.erp.model.mrp.dto.ReplenishmentInventoryDTO$VirtualUsableDTO">
         SELECT
-        virtual_warehouse_id AS warehouseId,
+        sku_id,
+        virtual_warehouse_id,
         SUM ( qty ) AS qty
         FROM
         ${tableName}
@@ -172,9 +194,8 @@
         <foreach item="code" collection="codes" open="(" separator="," close=")">
             #{code}
         </foreach>
-        AND sku_id = #{skuId}
         GROUP BY
-        virtual_warehouse_id
+        virtual_warehouse_id,sku_id
     </select>
 
     <select id="listPurchasePlan" resultType="com.erp.model.mrp.dto.ReplenishmentResultDTO$EstimatedPurchaseDetailDTO">
@@ -469,6 +490,131 @@
                qty
         from ${tableName}
         where is_deleted = false
+    </select>
+    <select id="getReplenishmentPlan"
+            resultType="com.erp.model.mrp.dto.ReplenishmentResultDTO$EstimatedDeliveryDetailDTO">
+        SELECT ds.id AS sourceId,
+        ds.code AS sourceCode,
+        ds.status AS status,
+        ds.suggest_delivery_qty AS qty,
+        ds.estimate_sales_date AS estimateSalesDate
+        FROM
+            ${tableName} ds
+        WHERE
+        ds.shop_id = #{result.replenishment.shopId} AND ds.sku_id =
+            #{result.replenishment.skuId} AND ds.invalid_status = false
+        <if test="codes != null and !codes.isEmpty()">
+            <!-- 当 codes 包含 'approve' 时，处理特殊条件 -->
+            <if test="codes.size() == 1 and 'finish' in codes">
+                AND ds.status = 'finish'
+                AND NOT EXISTS (SELECT 1 FROM ${otherTableDetailName} wdpd
+                left join ${otherTableName} wdp on wdp.id = wdpd.main_id and wdp.is_deleted = false and wdpd.is_deleted
+                = false
+                WHERE wdpd.source_json IS NOT NULL
+                AND EXISTS (
+                SELECT 1
+                FROM jsonb_array_elements(wdpd.source_json) AS elem
+                WHERE elem ->> 'sourceId' = ds.id::text
+                )
+            </if>
+            <!-- 当 codes 包含 'approve' 以及其他状态时 -->
+            <if test="codes.size() > 1 and 'finish' in codes">
+                AND ds.status IN
+                <foreach item="code" collection="codes" open="(" separator="," close=")">
+                    #{code}
+                </foreach>
+                AND NOT EXISTS (SELECT 1 FROM ${otherTableDetailName} wdpd
+                    left join ${otherTableName} wdp on wdp.id = wdpd.main_id and wdp.is_deleted = false and wdpd.is_deleted = false
+                                         WHERE wdpd.source_json->>'id' = ds.id::text )
+            </if>
+            <!-- 当 codes 不包含 'approve' 时，使用 IN 查询 -->
+            <if test="'finish' not in codes">
+                AND ds.status IN
+                <foreach item="code" collection="codes" open="(" separator="," close=")">
+                    #{code}
+                </foreach>
+            </if>
+        </if>
+    </select>
+    <select id="getOverseasDelivery"
+            resultType="com.erp.model.mrp.dto.ReplenishmentResultDTO$OverseasInTransitDetailDTO">
+        SELECT fmd.ID                AS deliveryPlanId,
+               fmd.code              AS deliveryPlanCode,
+               fmd.approve_status    AS status,
+               fmd.approve_time      AS deliveryDate,
+               fmdd.delivery_qty     AS deliveryQty,
+               COALESCE(
+                       (SELECT SUM
+                               (owid.receive_qty)
+                        FROM ${otherTableName} owi
+                                 INNER JOIN ${otherTableDetailName} owid ON owid.is_deleted = FALSE
+                            AND owid.main_id = owi.ID
+                            AND owi.is_deleted = FALSE
+                            AND owi.source_id = fmd.ID
+                            AND owid.sku_id = #{result.replenishment.skuId}),
+                       0
+               )                     AS receiveQty,
+               (fmdd.delivery_qty - COALESCE(
+                       (SELECT SUM
+                               (owid.receive_qty)
+                        FROM ${otherTableName} owi
+                                 INNER JOIN ${otherTableDetailName} owid ON owid.is_deleted = FALSE
+                            AND owid.main_id = owi.ID
+                            AND owi.is_deleted = FALSE
+                            AND owi.source_id = fmd.ID
+                            AND owid.sku_id = #{result.replenishment.skuId}), 0)
+                   )                 AS inTransitQty,
+               fmd.dest_warehouse_id AS warehouseId
+        FROM ${tableName} fmd
+                 INNER JOIN ${tableDetailName} fmdd ON fmdd.is_deleted = FALSE
+            AND fmdd.main_id = fmd.ID
+        WHERE fmd.is_deleted = FALSE
+          AND fmd.demand_type = 'demandOverseasWarehouse'
+          AND fmdd.sku_id = #{result.replenishment.skuId}
+          AND fmd.approve_status = 'approve'
+          AND fmd.dest_warehouse_id in
+        <foreach collection="result.overseasWarehouseId" item="item" open="(" close=")" separator=",">
+            #{item}
+        </foreach>
+          AND (fmdd.delivery_qty - COALESCE(
+                (SELECT SUM
+                        (owid.receive_qty)
+                 FROM ${otherTableName} owi
+                          INNER JOIN ${otherTableDetailName} owid ON owid.is_deleted = FALSE
+                     AND owid.main_id = owi.ID
+                     AND owi.is_deleted = FALSE
+                     AND owi.source_id = fmd.ID
+                     AND owid.sku_id = #{result.replenishment.skuId}), 0)
+            ) > 0
+    </select>
+    <select id="listLocalInTransit"
+            resultType="com.erp.model.wms.dto.inventory.InventoryReportDTO$TransportPagingDTO">
+        select n.warehouse_id AS warehouseId,
+        n.org_id AS orgId,
+        n.sku_id AS skuId,
+        n.sku_no AS skuNo,
+        n.purchase_qty AS purchaseQty,
+        n.transfer_qty AS transferQty,
+        n.transport_qty AS transportQty
+        from (
+        select
+        m.warehouse_id,m.org_id,m.sku_id,m.sku_no,
+        case when m.purchase_qty <![CDATA[<]]> 0 then 0 else m.purchase_qty end as purchase_qty,
+        case when m.transfer_qty <![CDATA[<]]> 0 then 0 else m.transfer_qty end as transfer_qty,
+        purchase_qty + transfer_qty as transport_qty
+        from (
+        select
+        tf.warehouse_id,
+        tf.sku_id,
+        max(tf.org_id) as org_id,
+        max(tf.sku_no) as sku_no ,
+        sum(case when tf.dict_biz_type in ('21','01','03','04','25','27','28') and tf.dict_inventory_status =
+        'inTransit' then tf.qty else 0 end) as purchase_qty,
+        sum(case when tf.dict_biz_type in ('08','09') and tf.dict_inventory_status = 'inTransit' then tf.qty else 0 end) as transfer_qty
+        from ${tableName} tf
+        group by tf.warehouse_id, tf.sku_id
+        ) m
+        ) n where n.transport_qty > 0
     </select>
 
 </mapper>

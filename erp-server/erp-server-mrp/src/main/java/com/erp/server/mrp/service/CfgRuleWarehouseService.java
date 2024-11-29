@@ -1,7 +1,10 @@
 package com.erp.server.mrp.service;
 import com.common.business.service.SuperService;
 import com.erp.model.mrp.dto.CfgRuleWarehouseDTO;
+import com.erp.model.mrp.dto.CfgRuleWarehouseDetailDTO;
 import com.erp.model.mrp.entity.CfgRuleWarehouseEntity;
+
+import java.util.List;
 
 /**
  * <p>
@@ -61,4 +64,12 @@ public interface CfgRuleWarehouseService extends SuperService<CfgRuleWarehouseEn
      * @return WarehouseShopDTO
      */
     CfgRuleWarehouseDTO.WarehouseShopDTO checkShop(CfgRuleWarehouseDTO.UpdateDTO dto);
+    /**
+     * 查询海外仓设置
+     * @author will
+     * @date 2024/10/29 11:27
+     * @param platformType
+     * @return List<OverseasWarehouseDTO>
+     */
+    List<CfgRuleWarehouseDetailDTO.OverseasWarehouseDTO> listOverseasWarehouse(String platformType);
 }

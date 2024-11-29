@@ -11,6 +11,7 @@ import com.erp.server.mrp.service.CfgDataArchivingService;
 import com.common.business.service.impl.SuperServiceImpl;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.ObjectUtils;
 
 import java.util.List;
 
@@ -63,5 +64,19 @@ public class CfgDataArchivingServiceImpl extends SuperServiceImpl<CfgDataArchivi
     public void saveData(CfgDataArchivingDTO dto) {
         CfgDataArchivingEntity entity = BeanMapperUtils.map(CfgDataArchivingEntity.class, dto);
         save(entity);
+    }
+
+    @Override
+    public void dataArchivingSuggestion(String sourceId) {
+        baseMapper.moveDeliverySuggest(sourceId);
+        if (ObjectUtils.isEmpty(sourceId)) {
+            baseMapper.movePurchaseSuggestMerge();
+        }
+        baseMapper.movePurchaseSuggest(sourceId);
+        baseMapper.deleteDeliverySuggest(sourceId);
+        baseMapper.deletePurchaseSuggest(sourceId);
+        if (ObjectUtils.isEmpty(sourceId)) {
+            baseMapper.deletePurchaseSuggestMerge();
+        }
     }
 }

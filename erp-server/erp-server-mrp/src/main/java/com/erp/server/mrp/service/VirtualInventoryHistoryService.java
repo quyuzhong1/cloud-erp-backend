@@ -1,5 +1,8 @@
 package com.erp.server.mrp.service;
 
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.vo.PagingVO;
+import com.erp.model.mrp.dto.VirtualInventoryHistoryDTO;
 import com.erp.model.mrp.entity.VirtualInventoryHistoryEntity;
 import com.common.business.service.SuperService;
 import com.erp.model.wms.entity.VirtualInventoryEntity;
@@ -23,4 +26,18 @@ public interface VirtualInventoryHistoryService extends SuperService<VirtualInve
      * @param calculationDate 计算日
      */
     void saveTodayInventory(List<VirtualInventoryEntity> virtualInventory, LocalDate calculationDate);
+
+    /**
+     * 分页列表
+     * @param dto 参数
+     */
+    PagingVO<VirtualInventoryHistoryDTO.ListDTO> paging(PagingDTO<VirtualInventoryHistoryDTO.SearchParamDTO> dto);
+
+    /**
+     * 导出
+     * @param dto 参数
+     */
+    void exportList(VirtualInventoryHistoryDTO.SearchParamDTO dto);
+
+    PagingVO<VirtualInventoryHistoryDTO.ListDTO> getVirtualInventory(PagingDTO<VirtualInventoryHistoryDTO.SearchParamDTO> dto);
 }

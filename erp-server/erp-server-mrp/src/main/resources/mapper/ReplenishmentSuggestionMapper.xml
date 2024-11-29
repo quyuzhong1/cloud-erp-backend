@@ -5,7 +5,7 @@
 
     <select id="paging" resultType="com.erp.model.mrp.vo.ReplenishmentSuggestionVO$PagingView">
         select rs.id,
-        rs.update_time,
+        rsd.update_time,
         rs.platform_type,
         rs.sku_id,
         rs.sku_no,
@@ -158,36 +158,22 @@
             </foreach>
         </where>
     </select>
-    <select id="getSalesByShopIds" resultType="com.erp.model.mrp.dto.LocalInventoryDTO$ShopSalesDTO">
 
-        SELECT
-        rs.shop_id AS shopId,
-        COALESCE (
-        (
-        SELECT
-        si.original_sales_qty
-        FROM
-        sales_info AS si
-        WHERE
-        si.is_deleted = FALSE
-        AND rsd.id = si.replenishment_detail_id
-        AND si.original_sales_qty != 0
-        ORDER BY
-        si.date DESC
-        LIMIT 1
-        ),
-        0
-        ) AS qty
-        FROM
-        replenishment_suggestion AS rs
-        INNER JOIN replenishment_suggestion_detail AS rsd ON rsd.is_deleted = FALSE
-        AND rsd.main_id = rs.id
-        WHERE
-        rs.sku_id = #{skuId}
-        AND rs.shop_id in
-        <foreach collection="shopIds" item="shopId" open="(" close=")" separator=",">
-            #{shopId}
-        </foreach>
+    <select id="listAllCalculationData" resultType="com.erp.model.mrp.entity.ReplenishmentSuggestionEntity">
+        select rs.id,
+               rs.platform_type,
+               rs.sku_id,
+               rs.sku_no,
+               rs.country,
+               rs.shop_id,
+               rs.platform,
+               rs.replenishment_type,
+               rs.area,
+               rs.fba_warehouse_id
+        from replenishment_suggestion rs
+        inner join replenishment_task rt on rt.replenishment_id = rs.id
+        where rs.is_deleted = false and rt.is_deleted = false and rs.platform_type = #{platformType}
+        and rs.replenishment_type = 'normal' and rt.status in ('1', '4')
     </select>
 
 </mapper>

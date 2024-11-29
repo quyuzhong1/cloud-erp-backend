@@ -1,5 +1,6 @@
 package com.erp.server.oms.service.impl;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
@@ -1453,6 +1454,17 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
             throw new ServiceException("客户id不能为空");
         }
         return this.baseMapper.listSkuBySkuNos(skuParamDTO);
+    }
+
+    @Override
+    public List<SkuMappingDTO.SkuMappingViewDTO> listSkuMappingByParams(ListingInfoDTO.QueryDTO queryDTO) {
+        if (Objects.isNull(queryDTO)){
+            return Collections.emptyList();
+        }
+        if (CollUtil.isEmpty(queryDTO.getPlatformSkuIdList()) && CollUtil.isEmpty(queryDTO.getPlatformSkuNoList())){
+            return Collections.emptyList();
+        }
+        return baseMapper.listSkuMappingByParams(queryDTO);
     }
 
 }

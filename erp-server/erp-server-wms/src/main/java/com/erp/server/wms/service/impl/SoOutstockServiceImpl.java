@@ -77,6 +77,7 @@ import com.erp.rpc.dmp.feign.DmpPushWdtFeign;
 import com.erp.rpc.dmp.feign.DmpThirdMappingFeign;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.oms.feign.CustomerFeign;
+import com.erp.rpc.oms.feign.OmsTaskFeign;
 import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.rpc.oms.feign.SoInfoFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
@@ -1007,6 +1008,20 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                         }
                         addDTO.setShipmentType(shipmentType);
                     }
+                }else {
+                    //旺店通存在销售soId不存在情况
+                    addDTO.setShopId(entity.getCustomerId());
+                    addDTO.setShopName(entity.getCustomerName());
+                    addDTO.setSourceType(orderType);
+                    if (CharSequenceUtil.isNotBlank(entity.getCountry())) {
+                        List<DictCountryEntity> countryList = sysDictFeign.listCountryByIds(Collections.singletonList(entity.getCountry()));
+                        if (CollectionUtils.isNotEmpty(countryList)) {
+                            addDTO.setToCountry(countryList.get(0).getNameCn());
+                        }
+                    }
+                    addDTO.setTransportNo(entity.getTrackNo());
+                    CustomerInfoEntity customer = customerFeign.getCustomerById(entity.getCustomerId());
+                    addDTO.setSalesPlatform(Objects.nonNull(customer) ? customer.getPlatformType() : CharSequenceUtil.EMPTY);
                 }
             }
             LocalDateTime actualDeliveryDate = entity.getActualDeliveryDate();
@@ -3208,6 +3223,8 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             dto.setCheckSkuHistory(false);
             Boolean result = createB2cSoOutstock(dto);
             return result;
+        }else{
+            log.error("速卖通发货单明细为空，无法生成销售出库单，{},{}",soB2cId,JSONUtil.toJsonStr(platformGenerateSoOutstockDTO));
         }
         existMains.forEach(outstock -> {
             String id = outstock.getId();

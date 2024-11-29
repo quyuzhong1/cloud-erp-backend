@@ -606,7 +606,7 @@ public class ExcelUtil {
             response.reset();
             // 设置文件头
             response.setHeader("Content-Disposition",
-                    "attchement;filename=" + new String(excelName.getBytes("gb2312"), StandardCharsets.ISO_8859_1));
+                    "attchement;filename=" + URLEncoder.encode(excelName, StandardCharsets.UTF_8.name()));
             response.setContentType("application/msexcel");
             wb.write(output);
         } catch (Exception e) {

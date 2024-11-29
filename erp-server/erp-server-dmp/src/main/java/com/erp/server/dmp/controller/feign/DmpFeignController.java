@@ -71,7 +71,6 @@ public class DmpFeignController extends BaseController {
     @Resource
     private CfgApiAuthService cfgApiAuthService;
 
-
     @PostMapping("/getShopById")
     public BiShopInfoDTO getShopById(@RequestBody String shopId) {
         return biDmpShopInfoService.getShopById(shopId);

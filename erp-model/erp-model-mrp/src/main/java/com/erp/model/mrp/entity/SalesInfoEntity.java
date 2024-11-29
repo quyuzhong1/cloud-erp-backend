@@ -59,18 +59,6 @@ public class SalesInfoEntity extends BaseEntity<SalesInfoEntity> {
     private String salesQtyType;
 
     /**
-     * 原始销量
-     */
-    @TableField("original_sales_qty")
-    private Integer originalSalesQty;
-
-    /**
-     * 原始库存
-     */
-    @TableField("original_inventory_qty")
-    private Integer originalInventoryQty;
-
-    /**
      * 计算版本  所有子表加   根据单号生成规则
      */
     @TableField("calc_version")

@@ -4,6 +4,7 @@ import com.common.business.config.FeignErrorDecoder;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.tms.dto.LogisticsAddressDTO;
+import com.erp.model.tms.dto.LogisticsBillDetailQueryDTO;
 import com.erp.model.tms.dto.LogisticsChannelDTO;
 import com.erp.model.tms.dto.LogisticsSupplierDTO;
 import com.erp.model.tms.entity.LogisticsAddressEntity;
@@ -94,4 +95,11 @@ public interface LogisticsFeign {
      */
     @PostMapping("/feign/logistics/listAddressByType")
     List<LogisticsAddressDTO.ListDTO> listAddressByType(@RequestBody @Validated LogisticsAddressDTO.AddressByTypeDTO dto);
+    /**
+     * 根据渠道汇总时间段内未更新运单号记录
+     *
+     * @return
+     */
+    @PostMapping("/feign/logistics/getWarnReportByChannel")
+    public List<LogisticsChannelDTO.WarnReportDTO> getWarnReportByChannel(@RequestBody LogisticsBillDetailQueryDTO query);
 }

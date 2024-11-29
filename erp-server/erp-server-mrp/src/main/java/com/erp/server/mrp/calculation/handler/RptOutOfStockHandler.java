@@ -99,27 +99,27 @@ public class RptOutOfStockHandler extends AbstractSkuCalculationHandler {
             //结余库存 = 前日结余库存 - 预估销量 + 到货库存
             for (int i = 0; i <= days; i++) {
                 LocalDate calcDate = LocalDate.parse(replenishmentResultDTO.getReplenishmentDetail().getCalcDate(), DateTimeFormatter.BASIC_ISO_DATE).plusDays(i);
-                Integer overseasInTransit = replenishmentResultDTO.getOverseasInTransitDetails()
+                Integer overseasInTransit = Optional.ofNullable(replenishmentResultDTO.getOverseasInTransitDetails()).orElse(Collections.emptyList())
                         .parallelStream()
                         .filter(v -> v.getEstimateSalesDate().equals(calcDate))
                         .map(ReplenishmentResultDTO.OverseasInTransitDetailDTO::getInTransitQty)
                         .reduce(0, Math::addExact);
-                Integer overseasDelivery = replenishmentResultDTO.getOverseasDeliveryDetails()
+                Integer overseasDelivery = Optional.ofNullable(replenishmentResultDTO.getOverseasDeliveryDetails()).orElse(Collections.emptyList())
                         .parallelStream()
                         .filter(v -> v.getEstimateSalesDate().equals(calcDate))
                         .map(ReplenishmentResultDTO.EstimatedDeliveryDetailDTO::getQty)
                         .reduce(0, Math::addExact);
-                Integer localInTransit = replenishmentResultDTO.getLocalInTransitDetails()
+                Integer localInTransit = Optional.ofNullable(replenishmentResultDTO.getLocalInTransitDetails()).orElse(Collections.emptyList())
                         .parallelStream()
                         .filter(v -> v.getEstimateSalesDate().equals(calcDate))
                         .map(ReplenishmentResultDTO.LocalInTransitDetailDTO::getQty)
                         .reduce(0, Math::addExact);
-                Integer localDelivery = replenishmentResultDTO.getLocalPurchaseDetails()
+                Integer localDelivery = Optional.ofNullable(replenishmentResultDTO.getLocalPurchaseDetails()).orElse(Collections.emptyList())
                         .parallelStream()
                         .filter(v -> v.getEstimateSalesDate().equals(calcDate))
                         .map(ReplenishmentResultDTO.EstimatedPurchaseDetailDTO::getQty)
                         .reduce(0, Math::addExact);
-                BigDecimal salesQty = replenishmentResultDTO.getSalesEstimates()
+                BigDecimal salesQty = Optional.ofNullable(replenishmentResultDTO.getSalesEstimates()).orElse(Collections.emptyList())
                         .stream()
                         .filter(v -> v.getDate().equals(calcDate))
                         .map(ReplenishmentResultDTO.SalesEstimateDTO::getSalesQty)
@@ -136,17 +136,17 @@ public class RptOutOfStockHandler extends AbstractSkuCalculationHandler {
             //结余库存 = 前日结余库存 - 预估销量 + 到货库存
             for (int i = 0; i <= days; i++) {
                 LocalDate calcDate = LocalDate.parse(replenishmentResultDTO.getReplenishmentDetail().getCalcDate(), DateTimeFormatter.BASIC_ISO_DATE).plusDays(i);
-                Integer localInTransit = replenishmentResultDTO.getLocalInTransitDetails()
+                Integer localInTransit = Optional.ofNullable(replenishmentResultDTO.getLocalInTransitDetails()).orElse(Collections.emptyList())
                         .parallelStream()
                         .filter(v -> v.getEstimateSalesDate().equals(calcDate))
                         .map(ReplenishmentResultDTO.LocalInTransitDetailDTO::getQty)
                         .reduce(0, Math::addExact);
-                Integer localDelivery = replenishmentResultDTO.getLocalPurchaseDetails()
+                Integer localDelivery = Optional.ofNullable(replenishmentResultDTO.getLocalPurchaseDetails()).orElse(Collections.emptyList())
                         .parallelStream()
                         .filter(v -> v.getEstimateSalesDate().equals(calcDate))
                         .map(ReplenishmentResultDTO.EstimatedPurchaseDetailDTO::getQty)
                         .reduce(0, Math::addExact);
-                BigDecimal salesQty = replenishmentResultDTO.getSalesEstimates()
+                BigDecimal salesQty = Optional.ofNullable(replenishmentResultDTO.getSalesEstimates()).orElse(Collections.emptyList())
                         .stream()
                         .filter(v -> v.getDate().equals(calcDate))
                         .map(ReplenishmentResultDTO.SalesEstimateDTO::getSalesQty)

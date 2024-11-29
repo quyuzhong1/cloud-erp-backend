@@ -260,7 +260,11 @@ public interface PackingTaskService extends SuperService<PackingTaskEntity> {
      * @return
      */
     WmsCartonDTO.PrintDTO getPrintBarCode(String cartonId);
-
+    /**
+     * 要货申请单转换装箱任务实体
+     * @param entity
+     * @return
+     */
     void addPackingByRequisition(RequisitionApplicationEntity entity);
 
     void updateDetailQty(Map<String, Integer> qtyMap);
@@ -297,4 +301,9 @@ public interface PackingTaskService extends SuperService<PackingTaskEntity> {
     PagingVO<WmsCartonSpecDTO.NoPackingViewDTO> unPackingTaskDetail(PagingDTO<PackingTaskDTO.ExportDTO> dto);
 
     void syncByDeliveryNoticeChange(SoDeliveryNoticeEntity soDeliveryNotice, List<SoDeliveryNoticeDetailEntity> addList, List<SoDeliveryNoticeDetailEntity> updateList, List<SoDeliveryNoticeDetailEntity> deleteList);
+
+    /**
+     * 处理第三方仓产品条形码字段
+     */
+    void processThirdBarcode();
 }

@@ -1,18 +1,20 @@
 package com.erp.server.mrp.calculation.handler;
 
-import com.erp.model.mrp.dto.CfgRuleCommonDTO;
 import com.erp.model.mrp.dto.CfgRuleStrategyDTO;
+import com.erp.model.mrp.dto.LocalInventoryDTO;
+import com.erp.model.mrp.dto.OverseasProviderWarehouseDTO;
 import com.erp.model.mrp.dto.ReplenishmentResultDTO;
-import com.erp.model.mrp.enums.CfgRuleCommonTypeEnum;
-import com.erp.model.mrp.enums.CfgRuleInventoryNodeEnum;
+import com.erp.model.mrp.enums.CfgRulePlatformTypeEnum;
+import com.erp.model.mrp.enums.CfgRuleWarehouseTypeEnum;
+import com.erp.model.mrp.enums.ReplenishmentInventoryTypeEnum;
 import com.erp.server.mrp.calculation.service.InventoryService;
-import com.erp.server.mrp.service.CfgRuleCommonService;
 import org.springframework.stereotype.Component;
-import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Resource;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Component
 public class OverseasUsableHandler extends AbstractSkuCalculationHandler {
@@ -20,8 +22,7 @@ public class OverseasUsableHandler extends AbstractSkuCalculationHandler {
     private OverseasInTransitHandler overseasInTransitHandler;
     @Resource
     private InventoryService inventoryService;
-    @Resource
-    private CfgRuleCommonService cfgRuleCommonService;
+
     @Override
     public SkuCalculationHandler getNextHandler(CfgRuleStrategyDTO cfgRuleStrategy, ReplenishmentResultDTO replenishmentResult) {
         return overseasInTransitHandler;
@@ -29,18 +30,25 @@ public class OverseasUsableHandler extends AbstractSkuCalculationHandler {
 
     @Override
     public boolean shouldHandle(CfgRuleStrategyDTO cfgRuleStrategyDTO, ReplenishmentResultDTO replenishmentResultDTO) {
-        return false;
+        return CfgRulePlatformTypeEnum.OVERSEAS.getCode().equals(replenishmentResultDTO.getReplenishment().getPlatformType())
+                || Boolean.TRUE.equals(cfgRuleStrategyDTO.getWarehouseResult().getIsEnableOverseas());
     }
 
     @Override
     public void doHandle(CfgRuleStrategyDTO cfgRuleStrategyDTO, ReplenishmentResultDTO replenishmentResultDTO) {
-        List<CfgRuleCommonDTO.StrategyResultDTO> inventoryResult = cfgRuleStrategyDTO.getInventoryResult();
-        String baseKey = CfgRuleCommonTypeEnum.getBaseInventoryRedisKey(replenishmentResultDTO.getReplenishment().getPlatformType());
-        Set<String> usable = cfgRuleCommonService.findByKey(baseKey, inventoryResult, baseKey + ":" + CfgRuleInventoryNodeEnum.getOverseasUsable());
-        if (CollectionUtils.isEmpty(usable)){
-            replenishmentResultDTO.getReplenishmentDetail().setFbaUsableQty(0);
-        }
-        int qty = inventoryService.getOverseasUsable(replenishmentResultDTO, usable, cfgRuleStrategyDTO);
+        Map<String, String> codeMap = replenishmentResultDTO.getOverseasProviderWarehouseList()
+                .stream().filter(v -> Boolean.FALSE.equals(v.getDisabled()))
+                .collect(Collectors.toMap(OverseasProviderWarehouseDTO::getPlatformWarehouseCode,
+                        OverseasProviderWarehouseDTO::getWarehouseId, (o1, o2) -> o1));
+        List<ReplenishmentResultDTO.ReplenishmentInventoryDetailDTO> overseasUsableDetail = new ArrayList<>();
+        List<LocalInventoryDTO> invetoryList = replenishmentResultDTO.getInventoryDTO().getOverseasUsableList()
+                .stream().filter(v -> v.getSkuId().equals(replenishmentResultDTO.getReplenishment().getSkuId()))
+                .filter(v -> codeMap.containsKey(v.getWarehouseCode()))
+                .map(v -> new LocalInventoryDTO(codeMap.get(v.getWarehouseCode()), v.getQty()))
+                .collect(Collectors.toList());
+        int qty = inventoryService.getAllocateQty(replenishmentResultDTO, cfgRuleStrategyDTO.getWarehouseResult().getOverseasWarehouseList(), invetoryList, overseasUsableDetail,
+                ReplenishmentInventoryTypeEnum.OVERSEAS_USABLE, CfgRuleWarehouseTypeEnum.OVERSEAS);
+        replenishmentResultDTO.setOverseasUsableDetail(overseasUsableDetail);
         replenishmentResultDTO.getReplenishmentDetail().setOverseasUsableQty(qty);
     }
 }

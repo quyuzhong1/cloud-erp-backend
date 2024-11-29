@@ -2,6 +2,7 @@ package com.erp.server.oms.controller.feign;
 
 
 import com.common.core.controller.BaseController;
+import com.erp.model.oms.dto.ListingInfoDTO;
 import com.erp.model.oms.dto.ListingInfoParamDTO;
 import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
 import com.erp.model.oms.dto.SkuMappingDTO;
@@ -43,6 +44,17 @@ public class ListingInfoFeignController extends BaseController {
     @PostMapping("/listStockSkuNoByProductSkuIds")
     public List<SkuMappingDTO.ListStockSkuNoByProductSkuIdView> listStockSkuNoByProductSkuIds(@RequestBody List<String> productSkuIdList) {
         return skuMappingService.listStockSkuNoByProductSkuIds(productSkuIdList);
+    }
+    /**
+     * 根据参数查询sku映射记录
+     * @Author zdy
+     * @Date 2024/11/25 17:24
+     * @param queryDTO
+     * @return java.util.List<com.erp.model.oms.dto.SkuMappingDTO.SkuMappingViewDTO>
+     **/
+    @PostMapping("/listSkuMappingByParams")
+    public List<SkuMappingDTO.SkuMappingViewDTO> listSkuMappingByParams(@RequestBody ListingInfoDTO.QueryDTO queryDTO) {
+        return skuMappingService.listSkuMappingByParams(queryDTO);
     }
 
     /**

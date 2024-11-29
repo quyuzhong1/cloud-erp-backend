@@ -37,6 +37,7 @@ public interface OmsListingConverter {
             @Mapping(target = "platformSkuId", source = "platformSkuId"),
             @Mapping(target = "platformSpuName", source = "platformProductName"),
             @Mapping(target = "platformSkuName", source = "platformSkuName"),
+            @Mapping(target = "thirdBarcode", source = "platformProductBarcode"),
             @Mapping(target = "platformUpdateTime", source = "platformUpdateTime"),
             @Mapping(target = "matchResult", source = "matchResultStr",defaultValue = "false"),
             @Mapping(target = "platformStatus", source = "platformStatus",defaultValue = ""),

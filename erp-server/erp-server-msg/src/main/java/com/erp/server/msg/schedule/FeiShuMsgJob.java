@@ -5,28 +5,22 @@ import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.collection.ListUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
-import com.baomidou.mybatisplus.core.toolkit.StringUtils;
-import com.common.business.enums.ErpServerModuleEnum;
-import com.common.business.enums.SourceTypeEnum;
-import com.common.business.enums.SyncKingdeeOmsStatusEnum;
-import com.common.business.enums.SyncStatusEnum;
-import com.common.core.exception.ServiceException;
+import com.common.business.enums.*;
 import com.common.core.utils.MathUtil;
 import com.erp.model.dmp.dto.DmpTaskMsgDTO;
 import com.erp.model.dmp.entity.DmpPullTaskEntity;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.msg.dto.WarnMsgInfoDTO;
 import com.erp.model.msg.enums.WarnMsgTypeEnum;
+import com.erp.model.tms.dto.LogisticsBillDetailQueryDTO;
+import com.erp.model.tms.dto.LogisticsChannelDTO;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
+import com.erp.rpc.tms.feign.LogisticsFeign;
 import com.erp.server.msg.config.MsgContext;
-import com.erp.server.msg.constant.MongoTableConstant;
 import com.xxl.job.core.context.XxlJobHelper;
 import com.xxl.job.core.handler.annotation.XxlJob;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.MongoTemplate;
-import org.springframework.data.mongodb.core.query.Criteria;
-import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.stereotype.Component;
 
@@ -34,7 +28,6 @@ import javax.annotation.Resource;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * SKU自动匹配JOB
@@ -49,6 +42,8 @@ public class FeiShuMsgJob {
     private MsgContext msgContext;
     @Resource
     private DmpTaskFeign dmpTaskFeign;
+    @Resource
+    private LogisticsFeign logisticsFeign;
 
     /**
      * 飞书预警消息汇总报告
@@ -66,6 +61,7 @@ public class FeiShuMsgJob {
             statusList.add(SyncStatusEnum.IN_SYNC.getCode());
             statusList.add(SyncStatusEnum.FAILED_SYNC.getCode());
         }
+
 
         //获取汇总消息
         List<DmpTaskMsgDTO> warnTaskReport = dmpTaskFeign.getWarnTaskReport(statusList);
@@ -181,5 +177,48 @@ public class FeiShuMsgJob {
             warnMsgInfoDTOS.add(warnMsgInfo);
         }
         return warnMsgInfoDTOS;
+    }
+
+    /**
+     * 飞书预警消息渠道汇总报告
+     */
+    @XxlJob("sendFeiShuWarnMsgReportByChannel")
+    public void sendFeiShuWarnMsgReportByChannel() {
+        XxlJobHelper.log("飞书预警消息渠道汇总报告:start");
+        String jobParam = XxlJobHelper.getJobParam();
+        int day;
+        if (CharSequenceUtil.isNotBlank(jobParam)){
+            day = Integer.parseInt(jobParam);
+        } else {
+            day = 3;
+        }
+        LocalDateTime trackTime = LocalDateTime.now().minusDays(day);
+        LogisticsBillDetailQueryDTO query = LogisticsBillDetailQueryDTO.builder()
+                .trackQueryMode(LogisticsPlatformEnum.TRACK123.getCode())
+                .registerStatus(1)
+                .trackEnable(true)
+                .trackTime(trackTime)
+                .transportType(LogisticsTransportTypeEnum.EXPRESS_DELIVERY.getCode())
+                .build();
+        //获取汇总消息
+        List<LogisticsChannelDTO.WarnReportDTO> warnReportByChannel = logisticsFeign.getWarnReportByChannel(query);
+        if (CollectionUtil.isNotEmpty(warnReportByChannel)){
+            WarnMsgInfoDTO warnMsgInfo = new WarnMsgInfoDTO();
+            warnMsgInfo.setBizName("预警消息");
+            warnMsgInfo.setErpServerModuleEnum(ErpServerModuleEnum.ERP_SERVER_OMS);
+            warnMsgInfo.setTitle("物流轨迹更新预警汇总");
+            warnMsgInfo.setTableName("logistics_channel/logistics_bill_detail");
+            warnMsgInfo.setTableId("");
+            warnMsgInfo.setHappenTime(LocalDateTime.now());
+            warnMsgInfo.setWarnMsgTypeEnum(WarnMsgTypeEnum.SYS_EXCEPTION);
+            List<String> keyInfoList = new ArrayList<>(warnReportByChannel.size());
+            warnReportByChannel.forEach(warnReportDTO -> {
+                String format = StrUtil.format("渠道【{}】在【{}】天内未更新轨迹信息,数量:{}", warnReportDTO.getChannelName(),day, warnReportDTO.getTotal());
+                keyInfoList.add(format);
+            });
+            warnMsgInfo.setKeyInfo(String.join("\n", keyInfoList));
+            msgContext.routeSendWarnMsg(warnMsgInfo);
+        }
+        XxlJobHelper.log("物流轨迹更新预警汇总报告:end");
     }
 }

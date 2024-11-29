@@ -35,6 +35,7 @@ import com.erp.model.dmp.entity.BiReturnOrderItemEntity;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.oms.dto.SkuMappingDTO;
+import com.erp.model.oms.dto.CustomerAddressDTO;
 import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.oms.dto.SoReturnDTO;
 import com.erp.model.oms.dto.SoReturnDetailDTO;

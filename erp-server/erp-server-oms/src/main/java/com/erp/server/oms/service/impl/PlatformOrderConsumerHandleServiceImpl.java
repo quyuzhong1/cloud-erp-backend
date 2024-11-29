@@ -122,9 +122,13 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
 
         Boolean retryFlag = false;
         // 跳过未作废的自发货无地址的订单
+        // 待发货/已发货订单不生成异常
         if ( notPlatformOrderNotExistAddress(dto)
                 && null != dto.getInvalidStatus()
-                && !dto.getInvalidStatus()) {
+                && !dto.getInvalidStatus()
+                && !SoB2cBillStatusEnum.ENUM_SHIPPED.getCode().equalsIgnoreCase(mainEntity.getBillStatus())
+                && !SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode().equalsIgnoreCase(mainEntity.getBillStatus())
+        ) {
             log.warn("卖家自发货订单无地址暂不新增：单号={}", dto.getPlatformCode());
 
             SoB2cErrorEntity soB2cError = resultDTO.getSoB2cError();

@@ -41,6 +41,8 @@ public enum OperationTypeEnum {
     MANUAL_FINISH("manualFinish", "手动完结"),
 
     EXECUTE("execute", "执行"),
+
+    LOCKING("locking", "锁定"),
     ;
     @JsonValue
     @EnumValue

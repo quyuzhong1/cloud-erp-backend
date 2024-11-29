@@ -877,4 +877,28 @@ public class LogisticsChannelDTO implements Serializable {
          */
         private String undeliverableDecision;
     }
+
+    /**
+     * 飞书预警汇总
+     */
+    @Data
+    @NoArgsConstructor
+    public static class WarnReportDTO {
+        /**
+         * 渠道名称
+         */
+        private String channelName;
+        /**
+         * 渠道ID
+         */
+        private String channelId;
+        /**
+         * 消息类型
+         */
+        private String sourceType;
+        /**
+         * 数量
+         */
+        private String total;
+    }
 }

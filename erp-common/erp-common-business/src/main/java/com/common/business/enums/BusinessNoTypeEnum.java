@@ -93,10 +93,14 @@ public enum BusinessNoTypeEnum {
     CODE_TLD(67, "tld","委外发退料单",BusinessNoConstant.TLD),
     CODE_FHBG(70, "FHBG","发货通知变更单",BusinessNoConstant.FHBG),
     CODE_JSRQ(70, "JSRQ","计算日期",BusinessNoConstant.JSRQ),
+    CODE_S(71, "S","发货建议",BusinessNoConstant.S),
+    CODE_P(72, "P","采购建议",BusinessNoConstant.P),
+    CODE_PP(73, "PP","采购建议",BusinessNoConstant.PP),
     CODE_FHJY(71, "FHJY","发货建议",BusinessNoConstant.FHJY),
     CODE_CGJY(72, "CGJY","采购建议",BusinessNoConstant.CGJY),
 
     CODE_TKD(71, "TKD","退款单",BusinessNoConstant.TKD),
+    CODE_XLSS(80, "XLSS","销量试算",BusinessNoConstant.XLSS),
     ;
 
 

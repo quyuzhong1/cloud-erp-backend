@@ -75,12 +75,13 @@ public class HistoryImportRecordDTO implements Serializable {
         private String businessId;
 
         /**
-         * 类型,枚举HistoryImportRecordTypeEnum,cfgRuleReplenishment补货规则,salesEstimateManual运营月销预估
+         * 类型,枚举HistoryImportRecordTypeEnum,cfgRuleReplenishment补货规则,salesEstimateManual运营月销预估，
+         * deliverySuggestionConfirm发货备货确认表,purchaseSuggestionConfirm采购备货确认表,purchaseSuggestionConfirmMerge采购备货（合并）确认表
          */
         private String type;
 
         /**
-         * 模块类型，取sourceType,replenishmentSuggestion补货建议
+         * 模块类型，取sourceType,replenishmentSuggestion补货建议,deliverySuggestion发货建议,purchaseSuggestion采购建议,purchaseSuggestionMerge采购建议（合并）
          */
         private String module;
 
@@ -130,6 +131,13 @@ public class HistoryImportRecordDTO implements Serializable {
         @NotBlank(message = "文件名称不能为空")
         @Size(max = 32,message = "文件名称最大长度不能超过32位")
         private String name;
+
+        /**
+         * 平台类型
+         */
+        @NotBlank(message = "平台类型不能为空")
+        @Size(max = 32,message = "平台类型最大长度不能超过32位")
+        private String platformType;
 
         /**
          * 导入数据
