@@ -793,18 +793,6 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
             headMap.put(headerEnum.getCode(), headerEnum.getName());
         });
 
-        //历史销量
-        List<String> detailIdList = list.stream().map(ReplenishmentSuggestionVO.PagingView::getDetailId).distinct().collect(Collectors.toList());
-        List<SalesInfoEntity> salesInfoList = salesInfoService.listHistorySalesInfo(detailIdList);
-        if (CollectionUtils.isEmpty(salesInfoList)) {
-            return Collections.emptyList();
-        }
-        // 动态字段标题
-        salesInfoList.forEach(obj ->{
-            headMap.put(obj.getDate().toString(),LocalDateTimeUtil.format(obj.getDate(), DateTimeFormatter.ofPattern("yyyy年MM月dd")));
-            dyHeadMap.put(obj.getDate().toString(),LocalDateTimeUtil.format(obj.getDate(), DateTimeFormatter.ofPattern("yyyy年MM月dd")));
-        });
-
         //平台
         List<DictBasicDTO.ViewDTO> platformViewList = customerFeign.getDictBasicByKey(DictBasicTypeEnum.SALES_PLATFORM.getType());
 
@@ -815,6 +803,24 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
         //SKU
         List<String> skuIdList = list.stream().map(ReplenishmentSuggestionVO.PagingView::getSkuId).distinct().collect(Collectors.toList());
         List<ProductDetailEntity> skuList = FeignQuery.getByIds(ProductDetailEntity.class, skuIdList);
+        Map<ReplenishmentSuggestionVO.SalesQtyTypeDTO, List<String>> salesQtyTypeMap = list.stream().collect(Collectors.groupingBy(v -> {
+            CfgRuleStrategyDTO cfgRuleStrategyDTO = JSON.parseObject(v.getCfgRule(), CfgRuleStrategyDTO.class);
+            return new ReplenishmentSuggestionVO.SalesQtyTypeDTO(cfgRuleStrategyDTO.getSalesQtyResult().getSalesQtyType(), cfgRuleStrategyDTO.getSalesQtyResult().getOrderType());
+        }, Collectors.mapping(ReplenishmentSuggestionVO.PagingView::getId, Collectors.toList())));
+        LocalDate endDate = LocalDate.now().minusDays(1);
+        LocalDate startDate = LocalDate.now().minusDays(361);
+        List<ReplenishmentResultDTO.SalesHistoryDTO> salesHistoryList = salesQtyTypeMap.entrySet()
+                .stream()
+                .map(v -> listSalesHistory(v.getValue(), v.getKey().getSalesQtyType(), v.getKey().getOrderType(), startDate, endDate))
+                .flatMap(Collection::stream)
+                .collect(Collectors.toList());
+        LocalDate date = startDate;
+
+        while (date.isBefore(endDate)) {
+            headMap.put(date.toString(),LocalDateTimeUtil.format(date, DateTimeFormatter.ofPattern("yyyy年MM月dd")));
+            dyHeadMap.put(date.toString(),LocalDateTimeUtil.format(date, DateTimeFormatter.ofPattern("yyyy年MM月dd")));
+            date = date.plusDays(1);
+        }
 
         for (ReplenishmentSuggestionVO.PagingView pagingView : list) {
             LinkedHashMap<String, Object> convertMap = new LinkedHashMap<>();
@@ -824,21 +830,24 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
             String platformName = platformViewList.stream().filter(obj -> CharSequenceUtil.equals(obj.getValue(), pagingView.getPlatform())).map(DictBasicDTO.ViewDTO::getName).findFirst().orElse("");
             //产品名称
             String productName = skuList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), pagingView.getSkuId())).map(ProductDetailEntity::getName).findFirst().orElse("");
-
-            List<SalesInfoEntity> salesList = salesInfoList.stream().filter(obj -> CharSequenceUtil.equals(obj.getReplenishmentDetailId(), pagingView.getDetailId())).collect(Collectors.toList());
-            if (CollectionUtils.isEmpty(salesList)) {
+            List<ReplenishmentResultDTO.SalesHistoryDTO> historyDTOS = salesHistoryList.stream()
+                    .filter(v -> v.getReplenishmentId().equals(pagingView.getId()))
+                    .collect(Collectors.toList());
+            if (CollectionUtils.isEmpty(historyDTOS)) {
                 continue;
             }
-
             convertMap.put("platform",platformName);
             convertMap.put("shopName",shopName);
             convertMap.put("skuNo",pagingView.getSkuNo());
             convertMap.put("productName",productName);
-            convertMap.put("typeName","FBA");
+
+            CfgRuleStrategyDTO cfgRuleStrategyDTO = JSON.parseObject(pagingView.getCfgRule(), CfgRuleStrategyDTO.class);
+            CfgRuleSalesQtyDTO.StrategyResultDTO salesQtyResult = cfgRuleStrategyDTO.getSalesQtyResult();
+            convertMap.put("typeName",CharSequenceUtil.equals(salesQtyResult.getPlatformType(),CfgRulePlatformTypeEnum.OVERSEAS.getCode()) ? OverseasOrderTypeEnum.getNameByCode(salesQtyResult.getOrderType()) : FbaOrderTypeEnum.getNameByCode(salesQtyResult.getOrderType()));
             //历史销量
             dyHeadMap.keySet().forEach(obj ->{
-                SalesInfoEntity salesInfoEntity = salesList.stream().filter(e -> CharSequenceUtil.equals(e.getDate().toString(), obj.toString())).findFirst().orElse(null);
-                BigDecimal salesQty = !ObjectUtils.isEmpty(salesInfoEntity) ? salesInfoEntity.getSalesQty() : BigDecimal.ZERO;
+                ReplenishmentResultDTO.SalesHistoryDTO salesInfoEntity = historyDTOS.stream().filter(e -> CharSequenceUtil.equals(e.getDate().toString(), obj.toString())).findFirst().orElse(null);
+                BigDecimal salesQty = !ObjectUtils.isEmpty(salesInfoEntity) ? new BigDecimal(salesInfoEntity.getOriginalSalesQty()) : BigDecimal.ZERO;
                 convertMap.put(obj.toString(),salesQty);
             });
             convertDataList.add(convertMap);
