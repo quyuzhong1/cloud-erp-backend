@@ -522,14 +522,11 @@ public class ReportOrderDataServiceImpl extends SuperServiceImpl<ReportOrderData
         }
         //订单状态
         List<String> statusList =  CollectionUtils.isEmpty(statusDTO.getStatusList()) ? new ArrayList<>() : statusDTO.getStatusList();
-        //审核状态
-        List<String> approveStatusList =  CollectionUtils.isEmpty(statusDTO.getApproveStatusList()) ? new ArrayList<>() : statusDTO.getApproveStatusList();
         //作废状态
         List<Boolean> invalidStatusList =  CollectionUtils.isEmpty(statusDTO.getInvalidStatusList()) ? new ArrayList<>() : statusDTO.getInvalidStatusList();
         List<ReportOrderDataEntity> list = reportOrderDataList.stream().filter(obj ->
                 SourceTypeEnum.REQUISITION_APPLICATION.getCode().equals(obj.getSourceType())
                         && statusList.contains(obj.getStatus())
-                        && approveStatusList.contains(obj.getApproveStatus())
                         && invalidStatusList.contains(obj.getInvalidStatus())
         ).collect(Collectors.toList());
         return list;
