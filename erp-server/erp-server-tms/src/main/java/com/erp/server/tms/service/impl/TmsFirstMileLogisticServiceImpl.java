@@ -1287,9 +1287,16 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
         if(Objects.isNull(reconciliationEntity.getReconciliationMonth()) && Objects.nonNull(reconciliationEntity.getEndDate())){
             reconciliationEntity.setReconciliationMonth(reconciliationEntity.getEndDate().withDayOfMonth(1));
         }
-        if (CharSequenceUtil.isBlank(reconciliationEntity.getCurrency())){
+        if (CharSequenceUtil.isBlank(reconciliationEntity.getCurrency()) || CurrencyEnum.CNY.getCurrencyCode().equals(reconciliationEntity.getCurrency())){
             reconciliationEntity.setCurrency(CurrencyEnum.CNY.getCurrencyCode());
             reconciliationEntity.setExchangeRate(BigDecimal.ONE);
+        }else {
+            String currentDate = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+            BigDecimal rate = dmpTaskFeign.getRate(currentDate, currency);
+            if (Objects.isNull(rate)){
+                throw new ServiceException(ApiError.ERROR_EXCHANGE_RATE_NOT_EXIST, LocalDate.now(), currency);
+            }
+            reconciliationEntity.setExchangeRate(rate);
         }
         // 保存头程对账单
         tmsFirstMileReconciliationService.saveOrUpdate(reconciliationEntity);

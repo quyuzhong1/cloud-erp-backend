@@ -192,4 +192,9 @@ public interface TmsFirstMileReconciliationService extends SuperService<TmsFirst
      * @return
      */
     List<TmsFirstMileReconciliationEntity> listbyCodes(List<String> codeList);
+
+    /**
+     * 初始化头程对账单汇率
+     */
+    void initExchangeRate();
 }

@@ -629,4 +629,13 @@ public class LogisticsBillCostDTO implements Serializable {
 
     }
 
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ExchangeRateDTO {
+        private String id;
+        private String currency;
+        private BigDecimal exchangeRate;
+        private LocalDateTime createTime;
+    }
 }
