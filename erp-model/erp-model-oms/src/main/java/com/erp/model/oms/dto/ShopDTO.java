@@ -376,7 +376,7 @@ public class ShopDTO implements Serializable {
          /**
          * 店铺退货仓库： 同店铺平台仓库获取方式
          */
-         @NotBlank(message = "店铺退货仓库不能为空")
+//         @NotBlank(message = "店铺退货仓库不能为空")
          private String returnWarehouse;
     }
 

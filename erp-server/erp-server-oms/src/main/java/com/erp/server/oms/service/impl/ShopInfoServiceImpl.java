@@ -161,6 +161,10 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
     @Override
     @Transactional(rollbackFor = Exception.class)
     public List<ShopInfoEntity> add(ShopDTO.AddDTO dto) {
+    	Boolean isHaveWarehouse = dto.getIsHaveWarehouse();
+    	if(Boolean.TRUE.equals(isHaveWarehouse) && StringUtils.isBlank(dto.getReturnWarehouse())) {
+    		throw new ServiceException("包含平台仓业务，店铺退货仓库不能为空");
+    	}
         ShopInfoEntity shop = new ShopInfoEntity();
         String dictPlatform = dto.getDictPlatform();
         //亚马逊
@@ -170,7 +174,7 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         //检查店铺是否存在
         checkIsExist("", dto.getDictPlatform(), dto.getAccount(), dto.getDictAreaCode(), dto.getDictCountryCodeList());
         //检测仓库
-        checkWarehouseExist(dto.getIsHaveWarehouse(), dto.getWarehouseId());
+        checkWarehouseExist(isHaveWarehouse, dto.getWarehouseId());
         //如果是亚马逊
         if (amazon.getCode().equals(dictPlatform)) {
             return this.handleAmazonShop(dto);
