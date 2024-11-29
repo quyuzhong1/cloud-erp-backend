@@ -129,6 +129,7 @@
                 lc.fee_rule feeRule,
                 lbc.id logisticsBillCostId,
                 lbc.currency,
+                lbc.exchange_rate,
                 lbc.reconciliation_status actualBillStatus,
                 lbd.track_status transportStatus,
                 lbd.sign_time signTime,

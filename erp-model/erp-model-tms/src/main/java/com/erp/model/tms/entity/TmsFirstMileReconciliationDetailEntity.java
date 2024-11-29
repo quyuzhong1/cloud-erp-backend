@@ -204,6 +204,14 @@ public class TmsFirstMileReconciliationDetailEntity extends BaseEntity<TmsFirstM
      */
     @TableField(exist = false)
     private LocalDate reconciliationMonth;
+    /**
+     * 币别
+     */
+    private String currency;
+    /**
+     * 直接汇率
+     */
+    private BigDecimal exchangeRate;
 
     /**
      * 账单类型： actual=实际， initPeriod=期初
