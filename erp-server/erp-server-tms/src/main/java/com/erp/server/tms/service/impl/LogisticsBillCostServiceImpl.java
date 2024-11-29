@@ -1156,7 +1156,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
 	@Override
-	public BaseResultDTO.AddDTO addPayAndRefund(AddDataDTO dto) {
+	public BaseResultDTO.AddDTO addPayAndRefund(List<LogisticsBillCostDTO.AddDataDTO> dtoList) {
 		String sourceId = dto.getSourceId();
 		LogisticsBillCostEntity logisticsBillCostEntity = getById(sourceId);
 		LogisticsBillCostDTO.AddDTO addDTO = new LogisticsBillCostDTO.AddDTO();

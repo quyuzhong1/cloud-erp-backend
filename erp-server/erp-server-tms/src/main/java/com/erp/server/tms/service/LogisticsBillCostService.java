@@ -43,7 +43,7 @@ public interface LogisticsBillCostService extends SuperService<LogisticsBillCost
     */
     BaseResultDTO.AddDTO add(LogisticsBillCostDTO.AddDTO dto);
     
-    BaseResultDTO.AddDTO addPayAndRefund(LogisticsBillCostDTO.AddDataDTO dto);
+    BaseResultDTO.AddDTO addPayAndRefund(List<LogisticsBillCostDTO.AddDataDTO> dtoList);
     
     void addPayAndRefundConfirm(LogisticsBillCostDTO.ConfirmAddDataDTO dto);
 

@@ -247,8 +247,8 @@ public class LogisticsBillCostController extends BaseController {
          menuCode = "tms:logisticsBillCost:update",
          serviceClass = LogisticsBillCostService.class,
          keyIdName = "id")
-     public ApiResult<Object> addPayAndRefund(@RequestBody @Validated LogisticsBillCostDTO.AddDataDTO dto) {
-         logisticsBillCostService.addPayAndRefund(dto);
+     public ApiResult<Object> addPayAndRefund(@RequestBody @Validated List<LogisticsBillCostDTO.AddDataDTO> dtoList) {
+         logisticsBillCostService.addPayAndRefund(dtoList);
          return success();
      }
      

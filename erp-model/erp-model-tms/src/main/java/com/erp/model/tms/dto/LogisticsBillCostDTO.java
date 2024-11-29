@@ -514,7 +514,7 @@ public class LogisticsBillCostDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
-    public static class DataDTO {
+    public static class DataDTO extends TmsCostDetailDTO.DetailDTO{
     	
     	/**
     	 * 计费重[预估]
@@ -531,11 +531,6 @@ public class LogisticsBillCostDTO implements Serializable {
     	 */
     	private String currency;
     	
-    	/**
-         * 费用明细
-         */
-    	@NotEmpty(message = "费用明细不能为空")
-        private List<TmsCostDetailDTO.DetailDTO>  costDetailList;
     }
     
     /**
