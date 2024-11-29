@@ -2,19 +2,14 @@ package com.erp.server.tms.controller.api;
 
 
 import cn.hutool.core.util.ObjectUtil;
-import com.erp.model.oms.dto.SkuMappingDTO;
-import com.erp.model.tms.dto.LogisticsChannelDTO;
-import com.erp.model.tms.entity.LogisticsChannelEntity;
 import com.erp.model.tms.entity.TransferLogisticsChannelEntity;
-import com.erp.server.tms.service.LogisticsChannelService;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
+
 import javax.annotation.Resource;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
-import com.common.core.anno.LogViewService;
 import com.common.core.enums.LogActionEnum;
 import com.common.business.dto.base.*;
 import org.springframework.web.bind.annotation.RestController;
@@ -168,5 +163,31 @@ public class TransferLogisticsChannelController extends BaseController {
         return success(transferLogisticsChannelService.listByLogisticsSupplierId(transferId));
     }
 
+    /**
+     * 编辑物流商渠道的发货国家
+     * @Author Luo_WG
+     * @Date 2024/11/29 10:08
+     * @param id
+     * @return com.common.core.controller.vo.ApiResult<com.erp.model.tms.dto.TransferLogisticsChannelDTO.editDeliveryCountry>
+     **/
+    @GetMapping("/editDeliveryCountry")
+    @LogAction(value = LogActionEnum.UPDATE, desc = "编辑物流商发货国家")
+    public ApiResult<TransferLogisticsChannelDTO.EditDeliveryCountryDTO> editDeliveryCountry(@RequestParam("id") String id) {
+        TransferLogisticsChannelDTO.EditDeliveryCountryDTO result = transferLogisticsChannelService.editDeliveryCountry(id);
+        return success(result);
+    }
 
+    /**
+     * 修改物流商发货国家
+     * @Author Luo_WG
+     * @Date 2024/11/29 10:41
+     * @param dto
+     * @return com.common.core.controller.vo.ApiResult<java.lang.Void>
+     **/
+    @GetMapping("/updateDeliveryCountry")
+    @LogAction(value = LogActionEnum.UPDATE, desc = "修改物流商发货国家")
+    public ApiResult<Void> updateDeliveryCountry(@RequestBody TransferLogisticsChannelDTO.EditDeliveryCountryDTO dto) {
+        boolean result = transferLogisticsChannelService.updateDeliveryCountry(dto);
+        return result ? success() : failure();
+    }
 }
