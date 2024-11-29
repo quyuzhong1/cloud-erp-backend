@@ -17,10 +17,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.Valid;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotEmpty;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Size;
+import javax.validation.constraints.*;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -337,6 +334,16 @@ public class SupplierDTO implements Serializable {
         private String paymentConditionName;
 
         /**
+         * 税率
+         */
+        private BigDecimal taxRate;
+
+        /**
+         * 付款公司名称
+         */
+        private String paymentCompanyName;
+
+        /**
          * 供应商联系信息
          */
         @Valid
@@ -456,6 +463,17 @@ public class SupplierDTO implements Serializable {
          */
         @NotBlank(message = "付款条件不能为空")
         private String paymentCondition;
+
+        /**
+         * 税率
+         */
+        private BigDecimal taxRate;
+
+        /**
+         * 付款公司名称
+         */
+        @Size(max = 200, message = "付款公司名称最大200字符")
+        private String paymentCompanyName;
 
     }
 

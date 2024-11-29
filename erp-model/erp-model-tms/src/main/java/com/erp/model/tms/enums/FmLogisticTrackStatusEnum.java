@@ -24,6 +24,7 @@ public enum FmLogisticTrackStatusEnum implements EnumMessage {
     ARRIVED("arrived","已到港"),
     SIGN("sign","已签收"),
     EXCEPTION("exception","运输异常"),
+    PICKUP("pickup","已揽收"),
     ;
 
 
