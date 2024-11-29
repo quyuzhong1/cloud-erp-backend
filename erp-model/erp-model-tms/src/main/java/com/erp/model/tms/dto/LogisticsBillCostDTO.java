@@ -99,7 +99,7 @@ public class LogisticsBillCostDTO implements Serializable {
         private String  channelName;
 
         /**
-         * 物流单号【可排序】
+         * 物流运单号【可排序】
          */
         private String  transportNo;
 
@@ -168,12 +168,12 @@ public class LogisticsBillCostDTO implements Serializable {
         private BigDecimal actualShippingCost;
 
         /**
-         * 实际报关费【可排序】
+         * 实际报关费
          */
         private BigDecimal actualDeclareCost;
 
         /**
-         * 实际其他费【可排序】
+         * 实际其他费
          */
         private BigDecimal actualOtherCost;
 
@@ -269,7 +269,7 @@ public class LogisticsBillCostDTO implements Serializable {
         private LocalDateTime confirmTime;
         
         /**
-         * 体积
+         * 体积 【可排序】
          */
         private String volume;
 
@@ -279,7 +279,7 @@ public class LogisticsBillCostDTO implements Serializable {
         private String payType;
 
         /**
-         * 支付状态，payment=未支付，paid=已支付
+         * 支付状态，payment=未支付，paid=已支付 【可排序】
          */
         private String payStatus;
         /**
@@ -288,12 +288,12 @@ public class LogisticsBillCostDTO implements Serializable {
         private String payStatusName;
 
         /**
-         *付款/退款时间 
+         *付款/退款时间 【可排序】
          */
         private LocalDateTime payTime;
 
         /**
-         * 核算状态，checking=待生成，checked=已生成，confirm=已确认，名称为 checkStatusName 字段
+         * 核算状态，checking=待生成，checked=已生成，confirm=已确认，名称为 checkStatusName 字段 【可排序】
          */
         private String checkStatus;
         private String checkStatusName;
