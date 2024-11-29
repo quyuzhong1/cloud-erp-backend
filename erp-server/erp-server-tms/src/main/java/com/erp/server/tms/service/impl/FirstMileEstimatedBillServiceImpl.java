@@ -153,7 +153,8 @@ public class FirstMileEstimatedBillServiceImpl extends SuperServiceImpl<FirstMil
                     item.setWeightUnit("kg");
                 }
             }
-            item.setTransportStatusName(FmLogisticTrackStatusEnum.getNameByCode(item.getTransportStatus()).getName());
+            FmLogisticTrackStatusEnum nameByCode = FmLogisticTrackStatusEnum.getNameByCode(item.getTransportStatus());
+            item.setTransportStatusName(Objects.nonNull(nameByCode) ? nameByCode.getName() : CharSequenceUtil.EMPTY);
         }
     }
 
