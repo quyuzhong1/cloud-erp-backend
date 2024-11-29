@@ -207,10 +207,12 @@ public class TmsFirstMileReconciliationDetailEntity extends BaseEntity<TmsFirstM
     /**
      * 币别
      */
+    @TableField(exist = false)
     private String currency;
     /**
      * 直接汇率
      */
+    @TableField(exist = false)
     private BigDecimal exchangeRate;
 
     /**
