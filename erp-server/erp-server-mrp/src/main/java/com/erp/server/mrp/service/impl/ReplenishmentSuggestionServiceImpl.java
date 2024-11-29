@@ -843,7 +843,7 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
 
             CfgRuleStrategyDTO cfgRuleStrategyDTO = JSON.parseObject(pagingView.getCfgRule(), CfgRuleStrategyDTO.class);
             CfgRuleSalesQtyDTO.StrategyResultDTO salesQtyResult = cfgRuleStrategyDTO.getSalesQtyResult();
-            convertMap.put("typeName",FbaOrderTypeEnum.getNameByCode(salesQtyResult.getOrderType()));
+            convertMap.put("typeName",CharSequenceUtil.equals(salesQtyResult.getPlatformType(),CfgRulePlatformTypeEnum.OVERSEAS.getCode()) ? OverseasOrderTypeEnum.getNameByCode(salesQtyResult.getOrderType()) : FbaOrderTypeEnum.getNameByCode(salesQtyResult.getOrderType()));
             //历史销量
             dyHeadMap.keySet().forEach(obj ->{
                 ReplenishmentResultDTO.SalesHistoryDTO salesInfoEntity = historyDTOS.stream().filter(e -> CharSequenceUtil.equals(e.getDate().toString(), obj.toString())).findFirst().orElse(null);
