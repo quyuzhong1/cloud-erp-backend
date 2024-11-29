@@ -39,7 +39,6 @@ public enum SnapshotTableEnum implements EnumMessage {
     TRANSFER_IN("transfer_in", "分布式调入单"),
     DELIVERY_SUGGEST("delivery_suggest", "发货建议"),
     PURCHASE_SUGGEST("delivery_suggest", "采购建议"),
-    SO_B2C_LOGISTICS("so_b2c_logistics", "B2C销售订单物流信息表"),
     OVERSEAS_WAREHOUSE_INBOUND("overseas_warehouse_inbound", "海外仓入库单"),
     OVERSEAS_WAREHOUSE_INBOUND_DETAIL("overseas_warehouse_inbound_detail", "海外仓入库单详情"),
     ;
