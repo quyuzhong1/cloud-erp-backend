@@ -679,6 +679,19 @@ public class SoReturnDetailServiceImpl extends SuperServiceImpl<SoReturnDetailMa
                     .divide(BigDecimal.valueOf(soDetailEntity.getQty()), 4, RoundingMode.DOWN)
                     .multiply(BigDecimal.valueOf(dto.getReturnQty()))
                     .stripTrailingZeros();
+            //先判断币种和汇率是否跟销售订单一致，若不同的情况下计算出详情页的币种的退货金额
+            SoReturnEntity soReturnEntity = soReturnService.getById(soDetailEntity.getMainId());
+            if(!soReturnEntity.getCurrency().equals(dto.getCurrency())){
+                //销售订单币种 转 CNY的汇率
+                Map<String, BigDecimal> currencyMap = soReturnService.getCurrencyMap(Collections.singletonList(soReturnEntity.getCurrency()));
+                BigDecimal soRate = currencyMap.get(soReturnEntity.getCurrency());
+                //页面汇率 转 CNY的汇率
+                BigDecimal viewRate = dto.getExchangeRate();
+                //
+                returnAmount = returnAmount.multiply(soRate).divide(viewRate, 4, RoundingMode.DOWN);
+                //
+                taxReturnAmount = taxReturnAmount.multiply(soRate).divide(viewRate, 4, RoundingMode.DOWN);
+            }
             //退货金额（本位币）
             BigDecimal returnAmountLocalCurrency = returnAmount
                     .multiply(dto.getExchangeRate())
@@ -721,6 +734,18 @@ public class SoReturnDetailServiceImpl extends SuperServiceImpl<SoReturnDetailMa
                     .divide(BigDecimal.valueOf(amountDTOS.get(0).getQty()), 4, RoundingMode.DOWN)
                     .multiply(BigDecimal.valueOf(dto.getReturnQty()))
                     .stripTrailingZeros();
+            //先判断币种和汇率是否跟销售出库单一致，若不同的情况下计算出详情页的币种的退货金额
+            if(!amountDTOS.get(0).equals(dto.getCurrency())){
+                //销售订单币种 转 CNY的汇率
+                Map<String, BigDecimal> currencyMap = soReturnService.getCurrencyMap(Collections.singletonList(amountDTOS.get(0).getCurrency()));
+                BigDecimal soRate = currencyMap.get(amountDTOS.get(0).getCurrency());
+                //页面汇率 转 CNY的汇率
+                BigDecimal viewRate = dto.getExchangeRate();
+                //
+                returnAmount = returnAmount.multiply(soRate).divide(viewRate, 4, RoundingMode.DOWN);
+                //
+                taxReturnAmount = taxReturnAmount.multiply(soRate).divide(viewRate, 4, RoundingMode.DOWN);
+            }
             //退货金额（本位币）
             BigDecimal returnAmountLocalCurrency = returnAmount
                     .multiply(dto.getExchangeRate())

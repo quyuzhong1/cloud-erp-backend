@@ -1134,7 +1134,8 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
         return Boolean.TRUE;
     }
     //获取币种符号集合
-    private Map<String,String> getCurrencySymbol(List<String> currencys) {
+    @Override
+    public Map<String,String> getCurrencySymbol(List<String> currencys) {
         List<CurrencyDTO.ViewDTO> currencySymbols = sysUserFeign.listByCurrency(currencys);
         Map<String,String> currencySymbolMap = new HashMap<>();
         if(CollUtil.isNotEmpty(currencySymbols)){
@@ -1146,7 +1147,8 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
     }
 
     //获取货币汇率
-    private Map<String,BigDecimal> getCurrencyMap(List<String> currencys) {
+    @Override
+    public Map<String,BigDecimal> getCurrencyMap(List<String> currencys) {
         Map<String,BigDecimal> currencyMap = new HashMap<>();
         if(CollectionUtils.isNotEmpty(currencys)){
             LocalDate localDate = LocalDate.now();

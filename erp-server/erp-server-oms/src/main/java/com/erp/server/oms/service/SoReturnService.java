@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 
 /**
  * <p>
@@ -251,4 +252,8 @@ public interface SoReturnService extends SuperService<SoReturnEntity> {
     BigDecimal calLocalCurrency(BigDecimal exchangeRate, BigDecimal returnAmount);
 
     BigDecimal calReturnAmount(BigDecimal amount, Integer qty, Integer returnQty);
+
+    Map<String,String> getCurrencySymbol(List<String> currencys);
+
+    Map<String,BigDecimal> getCurrencyMap(List<String> currencys);
 }
