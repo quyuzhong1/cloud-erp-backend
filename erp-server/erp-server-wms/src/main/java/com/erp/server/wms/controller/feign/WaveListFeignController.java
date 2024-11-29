@@ -36,7 +36,7 @@ public class WaveListFeignController extends BaseController {
      * @author jack
      * @date 2024/11/28
      */
-    @PostMapping("/waveListStatusAutoChange")
+    @GetMapping("/waveListStatusAutoChange")
     public void waveListStatusAutoChange(@RequestParam("deliveryId") String deliveryId){
         if(StringUtils.isNotBlank(deliveryId)){
             waveListService.waveListStatusAutoChange(deliveryId);
