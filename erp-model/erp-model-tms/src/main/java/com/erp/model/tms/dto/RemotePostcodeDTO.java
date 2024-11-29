@@ -1,5 +1,7 @@
 package com.erp.model.tms.dto;
 
+import com.common.business.dto.base.SortDTO;
+import java.util.List;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
@@ -8,6 +10,9 @@ import java.time.LocalDateTime;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
+import javax.validation.constraints.NotEmpty;
+import com.common.business.dto.AdvanceQueryDTO;
+import java.util.Map;
 
 /**
  * <p>
@@ -22,7 +27,105 @@ import javax.validation.constraints.Size;
 public class RemotePostcodeDTO implements Serializable {
 
 
+     /**
+     * 状态统计
+     */
+     @Data
+     @NoArgsConstructor
+     @AllArgsConstructor
+     public static class TabListDTO {
 
+         /**
+         * 类型
+         */
+         private String tabFlag;
+
+         /**
+         * 数量
+         */
+         private Integer count;
+
+     }
+     /**
+     * 分页列表查询参数
+     */
+     @Data
+     @NoArgsConstructor
+     public static class PagingParamDTO extends SortDTO {
+
+         /**
+         * 页面高级查询
+         */
+         private List<AdvanceQueryDTO> advanceQueryDTOList;
+
+        /**
+            * sqlMap 默认key default
+        */
+        private Map<String,String> sqlMap;
+
+     }
+    /**
+    * 分页列表
+    */
+    @Data
+    @NoArgsConstructor
+    public static class ListDTO {
+
+        /**
+        * 主键id
+        */
+        private String  id;
+
+        private String approveStatus;
+
+        /**
+        * code
+        */
+        private String code;
+
+        /**
+        * 名称
+        */
+        private String name;
+
+        /**
+        * 备注
+        */
+        private String remark;
+
+        /**
+        * 邮编组状态:true 禁用 false 启用
+        */
+        private Boolean disabled;
+
+
+        /**
+        * 审核状态名称
+        */
+        private String approveStatusName;
+
+        /**
+        * 创建时间
+        */
+        private LocalDateTime createTime;
+
+        /**
+        * 创建人名称
+        */
+        private String createUserName;
+    }
+
+    /**
+    * 导出Excel
+    */
+    @Data
+    @NoArgsConstructor
+    public static class ExportDTO extends PagingParamDTO {
+        /**
+        * 勾选的id集合
+        */
+        private List<String> ids;
+    }
 
     /**
     * 详情
@@ -35,6 +138,13 @@ public class RemotePostcodeDTO implements Serializable {
         * 主键id
         */
         private String  id;
+
+        private String approveStatus;
+
+        /**
+        * code
+        */
+        private String code;
 
         /**
         * 名称

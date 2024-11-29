@@ -1,5 +1,7 @@
 package com.erp.model.tms.dto;
 
+import com.common.business.dto.base.SortDTO;
+import java.util.List;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
@@ -8,6 +10,9 @@ import java.time.LocalDateTime;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
+import javax.validation.constraints.NotEmpty;
+import com.common.business.dto.AdvanceQueryDTO;
+import java.util.Map;
 
 /**
  * <p>
@@ -22,7 +27,115 @@ import javax.validation.constraints.Size;
 public class RemotePostcodeDetailDTO implements Serializable {
 
 
+     /**
+     * 状态统计
+     */
+     @Data
+     @NoArgsConstructor
+     @AllArgsConstructor
+     public static class TabListDTO {
 
+         /**
+         * 类型
+         */
+         private String tabFlag;
+
+         /**
+         * 数量
+         */
+         private Integer count;
+
+     }
+     /**
+     * 分页列表查询参数
+     */
+     @Data
+     @NoArgsConstructor
+     public static class PagingParamDTO extends SortDTO {
+
+         /**
+         * 页面高级查询
+         */
+         private List<AdvanceQueryDTO> advanceQueryDTOList;
+
+        /**
+            * sqlMap 默认key default
+        */
+        private Map<String,String> sqlMap;
+
+     }
+    /**
+    * 分页列表
+    */
+    @Data
+    @NoArgsConstructor
+    public static class ListDTO {
+
+        /**
+        * 主键id
+        */
+        private String  id;
+
+        /**
+        * 主表id 
+        */
+        private String mainId;
+
+        private String approveStatus;
+
+        /**
+        * code 
+        */
+        private String code;
+
+        /**
+        * 国家
+        */
+        private String country;
+
+        /**
+        * 城市
+        */
+        private String city;
+
+        /**
+        * 匹配类型dict_basic表matchType: preciseMatch=精准匹配, prefixMatch=匹配前缀, suffixMatch=匹配后缀, fuzzyMatch=模糊匹配
+        */
+        private String matchType;
+
+        /**
+        * 邮编
+        */
+        private String postCode;
+
+
+        /**
+        * 审核状态名称
+        */
+        private String approveStatusName;
+
+        /**
+        * 创建时间
+        */
+        private LocalDateTime createTime;
+
+        /**
+        * 创建人名称
+        */
+        private String createUserName;
+    }
+
+    /**
+    * 导出Excel
+    */
+    @Data
+    @NoArgsConstructor
+    public static class ExportDTO extends PagingParamDTO {
+        /**
+        * 勾选的id集合
+        */
+        private List<String> ids;
+    }
 
     /**
     * 详情
@@ -41,6 +154,13 @@ public class RemotePostcodeDetailDTO implements Serializable {
         */
         private String mainId;
 
+        private String approveStatus;
+
+        /**
+        * code 
+        */
+        private String code;
+
         /**
         * 国家
         */
@@ -52,7 +172,7 @@ public class RemotePostcodeDetailDTO implements Serializable {
         private String city;
 
         /**
-        * 匹配类型dict_basic表matchType:  preciseMatch=精准匹配, prefixMatch=匹配前缀, suffixMatch=匹配后缀, fuzzyMatch=模糊匹配
+        * 匹配类型dict_basic表matchType: preciseMatch=精准匹配, prefixMatch=匹配前缀, suffixMatch=匹配后缀, fuzzyMatch=模糊匹配
         */
         private String matchType;
 
@@ -115,10 +235,10 @@ public class RemotePostcodeDetailDTO implements Serializable {
         private String city;
 
         /**
-        * 匹配类型dict_basic表matchType:  preciseMatch=精准匹配, prefixMatch=匹配前缀, suffixMatch=匹配后缀, fuzzyMatch=模糊匹配
+        * 匹配类型dict_basic表matchType: preciseMatch=精准匹配, prefixMatch=匹配前缀, suffixMatch=匹配后缀, fuzzyMatch=模糊匹配
         */
-        @NotBlank(message = "匹配类型dict_basic表matchType:  preciseMatch=精准匹配, prefixMatch=匹配前缀, suffixMatch=匹配后缀, fuzzyMatch=模糊匹配不能为空")
-        @Size(max = 32,message = "匹配类型dict_basic表matchType:  preciseMatch=精准匹配, prefixMatch=匹配前缀, suffixMatch=匹配后缀, fuzzyMatch=模糊匹配最大长度不能超过32位")
+        @NotBlank(message = "匹配类型dict_basic表matchType: preciseMatch=精准匹配, prefixMatch=匹配前缀, suffixMatch=匹配后缀, fuzzyMatch=模糊匹配不能为空")
+        @Size(max = 32,message = "匹配类型dict_basic表matchType: preciseMatch=精准匹配, prefixMatch=匹配前缀, suffixMatch=匹配后缀, fuzzyMatch=模糊匹配最大长度不能超过32位")
         private String matchType;
 
         /**

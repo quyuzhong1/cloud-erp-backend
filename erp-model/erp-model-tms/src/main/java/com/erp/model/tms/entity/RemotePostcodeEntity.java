@@ -24,6 +24,13 @@ import com.common.business.enums.ApproveStatusEnum;
 @TableName("remote_postcode")
 public class RemotePostcodeEntity extends BaseEntity<RemotePostcodeEntity> {
 
+    @TableField("approve_status")
+    private ApproveStatusEnum approveStatus;
+    /**
+    * code
+    */
+    @TableField("code")
+    private String code;
     /**
     * 名称
     */
@@ -40,6 +47,10 @@ public class RemotePostcodeEntity extends BaseEntity<RemotePostcodeEntity> {
     @TableField("disabled")
     private Boolean disabled;
 
+
+    public static final String APPROVE_STATUS = "approve_status";
+
+    public static final String CODE = "code";
 
     public static final String NAME = "name";
 

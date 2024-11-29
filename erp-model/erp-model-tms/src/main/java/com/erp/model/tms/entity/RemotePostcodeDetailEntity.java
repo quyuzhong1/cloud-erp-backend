@@ -29,6 +29,13 @@ public class RemotePostcodeDetailEntity extends BaseEntity<RemotePostcodeDetailE
     */
     @TableField("main_id")
     private String mainId;
+    @TableField("approve_status")
+    private ApproveStatusEnum approveStatus;
+    /**
+    * code 
+    */
+    @TableField("code")
+    private String code;
     /**
     * 国家
     */
@@ -40,7 +47,7 @@ public class RemotePostcodeDetailEntity extends BaseEntity<RemotePostcodeDetailE
     @TableField("city")
     private String city;
     /**
-    * 匹配类型dict_basic表matchType:  preciseMatch=精准匹配, prefixMatch=匹配前缀, suffixMatch=匹配后缀, fuzzyMatch=模糊匹配  枚举：RemotePostcodeDetailMatchTypeEnum
+    * 匹配类型dict_basic表matchType: preciseMatch=精准匹配, prefixMatch=匹配前缀, suffixMatch=匹配后缀, fuzzyMatch=模糊匹配  枚举：RemotePostcodeDetailMatchTypeEnum
     */
     @TableField("match_type")
     private String matchType;
@@ -52,6 +59,10 @@ public class RemotePostcodeDetailEntity extends BaseEntity<RemotePostcodeDetailE
 
 
     public static final String MAIN_ID = "main_id";
+
+    public static final String APPROVE_STATUS = "approve_status";
+
+    public static final String CODE = "code";
 
     public static final String COUNTRY = "country";
 

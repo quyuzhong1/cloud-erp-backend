@@ -12,6 +12,8 @@
        <result column="update_time" property="updateTime" />
        <result column="version" property="version" />
        <result column="is_deleted" property="isDeleted" />
+       <result column="approve_status" property="approveStatus" />
+       <result column="code" property="code" />
        <result column="name" property="name" />
        <result column="remark" property="remark" />
        <result column="disabled" property="disabled" />
@@ -28,8 +30,30 @@
         update_time,
         version,
         is_deleted,
-        name, remark, disabled
+        approve_status, code, name, remark, disabled
     </sql>
 
+    <select id="paging" resultType="com.erp.model.tms.dto.RemotePostcodeDTO$ListDTO">
+
+    </select>
+
+    <select id="listCount" resultType="com.common.business.dto.base.ApproveStatusQtyDTO">
+        select approve_status, count(id) from remote_postcode where is_deleted = false group by approve_status
+    </select>
+
+    <select id="listExport" resultType="com.erp.model.tms.dto.RemotePostcodeDTO$ListDTO">
+
+    </select>
+    <select id="tabList" resultType="com.erp.model.tms.dto.RemotePostcodeDTO$TabListDTO">
+        SELECT
+        approve_status AS tabFlag,
+        count(*)  AS count
+        FROM  remote_postcode
+        WHERE is_deleted=FALSE
+        <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        GROUP BY approve_status
+    </select>
 
 </mapper>
