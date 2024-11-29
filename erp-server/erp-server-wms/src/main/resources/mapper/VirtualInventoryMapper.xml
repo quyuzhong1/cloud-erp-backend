@@ -96,6 +96,7 @@
             id,
             skuId,
             warehouseId,
+            virtualWarehouseId,
             virtualQty,
             virtualUsableQty,
             virtualFrozenQty,
