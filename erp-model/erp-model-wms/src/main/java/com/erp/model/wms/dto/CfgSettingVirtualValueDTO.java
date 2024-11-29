@@ -123,7 +123,6 @@ public class CfgSettingVirtualValueDTO implements Serializable {
         /**
          * 审核状态集合
          */
-        @NotEmpty(message = "审核状态不能为空")
         private List<String> approveStatusList;
     }
 
