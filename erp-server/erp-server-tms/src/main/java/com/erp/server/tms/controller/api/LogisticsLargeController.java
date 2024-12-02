@@ -108,6 +108,7 @@ public class LogisticsLargeController extends BaseController {
     @LogAction(value = LogActionEnum.INSERT, desc = "头程费用分摊生成物流大表")
     public ApiResult<List<BatchResultDTO>> generateFirstMileLogisticsTable(@RequestBody @Valid FirstMileCostAllocationDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        logisticsLargeService.listLargeDataById(dto.getIds());
         //头程费用分摊信息
         List<FirstMileCostAllocationEntity> costAllocationEntityList = firstMileCostAllocationService.listByIds(dto.getIds());
         //头程费用SKU分摊信息
