@@ -1384,6 +1384,10 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
 					log.warn("sku映射产品为空，不推送：{}" , skuMappingEntity.getId());
 					continue;
 				}
+				if(RuleTypeEnum.PLATFORM != skuMappingEntity.getType()) {
+					log.warn("sku映射类型不为平台，不推送：{}" , skuMappingEntity.getId());
+					continue;
+				}
 				String operate = SyncOperateEnum.OPERATE_APPROVE.getCode();
 				if(skuMappingEntity.getIsExpire()) {
 					operate = SyncOperateEnum.OPERATE_DELETE.getCode();
