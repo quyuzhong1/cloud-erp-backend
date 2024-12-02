@@ -998,7 +998,8 @@ public class RequisitionApplicationChangeServiceImpl extends SuperServiceImpl<Re
         List<String> mainIds = exist.stream().map(BaseEntity::getId).collect(Collectors.toList());
         List<RequisitionApplicationChangeDetailEntity> allExistDetailList = detailService.lambdaQuery().in(RequisitionApplicationChangeDetailEntity::getMainId,mainIds).in(RequisitionApplicationChangeDetailEntity::getBusinessDetailId,businessDetailIds).list();
         if(CollectionUtils.isNotEmpty(allExistDetailList)){
-            throw new ServiceException("要货申请通知单存在未审核且未作废变更单，请勿重复提交");
+            List<String> skuList = allExistDetailList.stream().map(RequisitionApplicationChangeDetailEntity::getSkuNo).collect(Collectors.toList());
+            throw new ServiceException("{}存在未审核且未作废变更单，请勿重复提交",skuList);
         }
     }
 }
