@@ -3,6 +3,9 @@ package com.erp.server.tms.controller.api;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+
+import java.util.List;
+
 import javax.annotation.Resource;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -11,14 +14,17 @@ import com.common.core.anno.LogSystemModule;
 import com.common.core.anno.LogViewService;
 import com.common.core.enums.LogActionEnum;
 import com.common.business.dto.base.*;
-import org.springframework.web.bind.annotation.RestController;
-
 import com.common.core.controller.BaseController;
+import com.erp.server.tms.query.LogisticsBillCostQueryHandler;
 import com.erp.server.tms.service.SmallBagCostAllocationService;
 import com.common.core.controller.vo.ApiResult;
 import com.common.business.annotation.DataPermission;
+import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.enums.DataAttributeEnum;
+import com.common.business.vo.PagingVO;
+import com.erp.model.tms.dto.LogisticsBillCostDTO;
 import com.erp.model.tms.dto.SmallBagCostAllocationDTO;
+import com.erp.model.tms.enums.DictCostAttributionEnum;
 
 /**
  * 小包费用分摊
@@ -68,5 +74,38 @@ public class SmallBagCostAllocationController extends BaseController {
     }
 
 
+    /**
+     * tab列表
+     * @author Will
+     * @date: 2023/11/13 15:12
+     * @param dto
+     * @return ApiResult<List<TabListDTO>>
+     */
+    @PostMapping("/tabList")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "tms:smallBagCostAllocation:paging",
+            tableAlias = "lbc"
+    )
+    public ApiResult<List<SmallBagCostAllocationDTO.TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
+        return success(smallBagCostAllocationService.tabList(dto));
+    }
 
+    /**
+     * 分页查询
+     * @author Will
+     * @date: 2023/11/13 15:12
+     * @param dto
+     * @return ApiResult<PagingVO<ListDTO>>
+     */
+    @PostMapping("/paging")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "tms:smallBagCostAllocation:paging",
+            tableAlias = "lbc"
+    )
+    @WebAdvanceQuery(handler = LogisticsBillCostQueryHandler.class)
+    public ApiResult<PagingVO<SmallBagCostAllocationDTO.ListDTO>> queryByPage(@RequestBody @Validated PagingDTO<SmallBagCostAllocationDTO.PagingParamDTO> dto) {
+        return success(smallBagCostAllocationService.paging(dto));
+    }
 }
