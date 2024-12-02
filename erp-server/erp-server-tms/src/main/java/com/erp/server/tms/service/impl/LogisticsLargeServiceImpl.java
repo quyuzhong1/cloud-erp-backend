@@ -5,9 +5,14 @@ import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.enums.OperationTypeEnum;
+import com.erp.model.oms.enums.SoB2cPayStatusEnum;
+import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.tms.entity.*;
+import com.erp.model.tms.enums.ReconciliationBillTypeEnum;
 import com.erp.model.wms.entity.FirstMileDeliveryDetailEntity;
 import com.erp.model.wms.entity.FirstMileDeliveryEntity;
+import com.erp.rpc.scm.feign.SupplierFeign;
+import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.tms.mapper.LogisticsLargeMapper;
 import com.erp.server.tms.service.*;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -19,6 +24,8 @@ import org.springframework.transaction.annotation.Transactional;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import com.erp.model.tms.dto.LogisticsLargeDTO;
+
+import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -52,6 +59,15 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
 
     @Resource
     private LogisticsBillCostService logisticsBillCostService;
+
+    @Resource
+    private LogisticsSupplierService logisticsSupplierService;
+
+    @Resource
+    private SupplierFeign supplierFeign;
+
+    @Resource
+    private WmsTaskFeign wmsTaskFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -115,23 +131,46 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
 
         //查询物流单
         LogisticsBillEntity logisticsBillEntity = logisticsBillService.getById(entity.getLogisticsBillId());
+
+        //物流商信息
+        LogisticsSupplierEntity logisticsSupplierEntity = logisticsSupplierService.getById(logisticsBillEntity.getId());
+
+        //查询供应商
+        SupplierEntity supplierEntity = supplierFeign.getSupplierById(logisticsSupplierEntity.getSupplierId());
+
+        //头程对账单主信息
+        TmsFirstMileReconciliationEntity reconciliationEntity = tmsFirstMileReconciliationService.getById(entity.getReconciliationId());
+
+        //头程对账单主信息
+        TmsFirstMileReconciliationDetailEntity reconciliationDetailEntity = tmsFirstMileReconciliationDetailService.getById(firstMileSkuCostAllocationEntity.getReconciliationDetailId());
+
         //自发货费用
         List<LogisticsBillCostEntity> logisticsBillCostEntities = logisticsBillCostService.listByLogisticsBillIdList(Arrays.asList(logisticsBillEntity.getId()));
 
+//        wmsTaskFeign.listWarehouseByIds()
         LogisticsLargeDTO.AddDTO addDTO = new LogisticsLargeDTO.AddDTO();
-
-        //头程对账单明细(一个头程物流单可生成多次对账单)
-        List<TmsFirstMileReconciliationDetailEntity> tmsFirstMileReconciliationDetailEntities = tmsFirstMileReconciliationDetailService.listBySourceIds(Arrays.asList(logisticsBillEntity.getId()), "");
-        List<String> fmrIds = tmsFirstMileReconciliationDetailEntities.stream().map(TmsFirstMileReconciliationDetailEntity::getMainId).collect(Collectors.toList());
-        List<TmsFirstMileReconciliationEntity> tmsFirstMileReconciliationEntities = tmsFirstMileReconciliationService.listByIds(fmrIds);
-        TmsFirstMileReconciliationEntity tmsFirstMileReconciliationEntity = tmsFirstMileReconciliationEntities.stream().filter(req -> req.getReconciliationMonth().equals(entity.getReconciliationMonth())).findFirst().orElse(null);
         addDTO.setOutstockCode(deliveryEntity.getCode());
         addDTO.setOutstockTime(deliveryEntity.getApproveTime());
-        addDTO.setPayStatus(tmsFirstMileReconciliationEntity.getPayStatus());
+        //付款状态
+
+        if (ReconciliationBillTypeEnum.ACTUAL.getCode().equals(firstMileSkuCostAllocationEntity.getBillSourceType())) {
+            addDTO.setPayStatus(reconciliationEntity.getPayStatus());
+        } else {
+            addDTO.setPayStatus(SoB2cPayStatusEnum.ENUM_PAYMENT.getCode());
+        }
         addDTO.setSkuId(firstMileSkuCostAllocationEntity.getSkuId());
         addDTO.setSkuNo(firstMileSkuCostAllocationEntity.getSkuNo());
         addDTO.setDeliveryQty(firstMileSkuCostAllocationEntity.getDeliveryQty());
+        addDTO.setWeight(reconciliationDetailEntity.getBillingWeight());
+        addDTO.setLogisticsBillingWeight(reconciliationDetailEntity.getVolumeWeight());
+        addDTO.setShippingMethod(logisticsBillEntity.getShippingMethod());
+        addDTO.setLogisticsSupplierId(logisticsSupplierEntity.getId());
+        addDTO.setLogisticsSupplierName(logisticsSupplierEntity.getSupplierName());
+        addDTO.setPaymentCompanyName(supplierEntity.getPaymentCompanyName());
+        addDTO.setTransportNo(logisticsBillEntity.getCounterNo());
 
+
+        deliveryEntity.getDeliveryWarehouseId();
 
 //        tmsFirstMileReconciliationService.set
         return BatchResultDTO.success(entity.getId(), entity.getBusinessCode(), OperationTypeEnum.UPDATE_STATUS);
