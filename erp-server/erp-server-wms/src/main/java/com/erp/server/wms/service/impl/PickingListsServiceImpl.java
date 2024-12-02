@@ -419,10 +419,11 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
                         int totalQuantity = v.stream().mapToInt(PickingListsDTO.PrintDetailView::getPickingQty).sum();
                         view.setPickingQty(totalQuantity);
                         return view;
-                    }))).values()).stream().collect(Collectors.groupingBy(PickingListsDTO.PrintDetailView::getSkuNo,
-                    Collectors.collectingAndThen(Collectors.toList(), sub -> sub.stream().sorted(Comparator.comparing(PickingListsDTO.PrintDetailView::getWarehouseLocation)).collect(Collectors.toList()))));
+                    }))).values()).stream()
+                    .sorted(Comparator.comparing(PickingListsDTO.PrintDetailView::getWarehouseLocation))
+                    .collect(Collectors.groupingBy(PickingListsDTO.PrintDetailView::getSkuNo, LinkedHashMap::new,Collectors.toList()));
             //转换list形式
-            List<PickingListsDTO.PrintDetailView> viewList = new ArrayList<>(groupMap.values())
+            List<PickingListsDTO.PrintDetailView> viewList = groupMap.values()
                     .stream()
                     .flatMap(Collection::stream)
                     .collect(Collectors.toList());
