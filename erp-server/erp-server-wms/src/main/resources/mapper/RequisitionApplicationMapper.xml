@@ -98,7 +98,7 @@
         SELECT 1
         FROM requisition_application_change rac
         INNER JOIN requisition_application_change_detail racd on rac.id = racd.main_id
-        WHERE rac.business_id = ra.id  and rac.is_deleted = false and rac.invalid_status = false and rac.approve_status != 'approved'
+        WHERE rac.business_id = ra.id  and rac.is_deleted = false and rac.invalid_status = false and rac.approve_status != 'approve'
         and racd.business_detail_id = rad.id
         ) AS isChange
         FROM requisition_application ra
