@@ -686,6 +686,9 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
         if (CollUtil.isNotEmpty(shopInfoList)) {
             shudiyunB2cOrderDTO.setSubplatform_no(shopInfoList.get(0).getDictPlatform());
             shudiyunB2cOrderDTO.setSubplatform_name(PlatformDictEnum.getNameByCode(shopInfoList.get(0).getDictPlatform()));
+        } else {
+            shudiyunB2cOrderDTO.setSubplatform_no("【未知】");
+            shudiyunB2cOrderDTO.setSubplatform_name("【未知】");
         }
 
         shudiyunB2cOrderDTO.setShop_no(view.getCustomerId());
