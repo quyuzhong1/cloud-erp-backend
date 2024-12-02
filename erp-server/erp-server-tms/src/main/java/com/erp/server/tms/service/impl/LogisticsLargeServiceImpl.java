@@ -173,9 +173,12 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
         addDTO.setPaymentCompanyName(supplierEntity.getPaymentCompanyName());
         addDTO.setTransportNo(logisticsBillEntity.getCounterNo());
 
-//        warehouseList.stream().filter(req -> deliveryEntity.getDeliveryWarehouseId().equals(req.getId())).collect(Collectors.toList());
+        WarehouseDTO.UpdateDTO deliveryWarehouse = warehouseList.stream().filter(req -> deliveryEntity.getDeliveryWarehouseId().equals(req.getId())).findFirst().orElse(null);
+        if (deliveryWarehouse != null) {
+            addDTO.setOriginPort(deliveryWarehouse.getAddress());
+        }
 
-        deliveryEntity.getDeliveryWarehouseId();
+
 
 //        tmsFirstMileReconciliationService.set
         return BatchResultDTO.success(entity.getId(), entity.getBusinessCode(), OperationTypeEnum.UPDATE_STATUS);
