@@ -23,7 +23,11 @@ public class SdyCommonService {
 	
 	@Value("${sdy.url:http://localhost:8080}")
     private String sdyUrl;
-	
+
+	public String getSdyUrl() {
+		return sdyUrl;
+	}
+
 	public ApiResult<?> requestSdy(Object ext) {
 		JSONObject parseObject = JSON.parseObject(ext.toString());
 		String url = parseObject.getString(REQUEST_URL);
