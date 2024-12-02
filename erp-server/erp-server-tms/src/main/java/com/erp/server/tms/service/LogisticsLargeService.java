@@ -57,4 +57,7 @@ public interface LogisticsLargeService extends SuperService<LogisticsLargeEntity
      * @param ids
      */
     void listLargeDataById(List<String> ids);
+
+
+
 }

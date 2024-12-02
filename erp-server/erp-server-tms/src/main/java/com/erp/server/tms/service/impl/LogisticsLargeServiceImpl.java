@@ -115,16 +115,16 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
 
 
         LogisticsLargeDTO.AddDTO addDTO = new LogisticsLargeDTO.AddDTO();
-        addDTO.setOutstockCode(deliveryEntity.getCode());
-        addDTO.setOutstockTime(deliveryEntity.getApproveTime());
+
 
         //头程对账单明细(一个头程物流单可生成多次对账单)
         List<TmsFirstMileReconciliationDetailEntity> tmsFirstMileReconciliationDetailEntities = tmsFirstMileReconciliationDetailService.listBySourceIds(Arrays.asList(logisticsBillEntity.getId()), "");
         List<String> fmrIds = tmsFirstMileReconciliationDetailEntities.stream().map(TmsFirstMileReconciliationDetailEntity::getMainId).collect(Collectors.toList());
         List<TmsFirstMileReconciliationEntity> tmsFirstMileReconciliationEntities = tmsFirstMileReconciliationService.listByIds(fmrIds);
-
-//        tmsFirstMileReconciliationEntities.
-
+        TmsFirstMileReconciliationEntity tmsFirstMileReconciliationEntity = tmsFirstMileReconciliationEntities.stream().filter(req -> req.getReconciliationMonth().equals(entity.getReconciliationMonth())).findFirst().orElse(null);
+        addDTO.setOutstockCode(deliveryEntity.getCode());
+        addDTO.setOutstockTime(deliveryEntity.getApproveTime());
+        addDTO.setPayStatus(tmsFirstMileReconciliationEntity.getPayStatus());
 
 
 //        tmsFirstMileReconciliationService.set
@@ -136,4 +136,7 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
     public void listLargeDataById(List<String> ids) {
         baseMapper.listLargeDataById(ids);
     }
+
+
+
 }
