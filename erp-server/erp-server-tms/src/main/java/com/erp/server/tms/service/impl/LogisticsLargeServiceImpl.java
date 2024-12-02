@@ -13,6 +13,7 @@ import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.entity.FirstMileDeliveryDetailEntity;
 import com.erp.model.wms.entity.FirstMileDeliveryEntity;
 import com.erp.rpc.scm.feign.SupplierFeign;
+import com.erp.rpc.wms.feign.WmsFirstMileDeliveryFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.tms.mapper.LogisticsLargeMapper;
 import com.erp.server.tms.service.*;
@@ -59,10 +60,16 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
     private LogisticsBillService logisticsBillService;
 
     @Resource
+    private LogisticsBillDetailService logisticsBillDetailService;
+
+    @Resource
     private LogisticsBillCostService logisticsBillCostService;
 
     @Resource
     private LogisticsSupplierService logisticsSupplierService;
+
+    @Resource
+    private WmsFirstMileDeliveryFeign wmsFirstMileDeliveryFeign;
 
     @Resource
     private SupplierFeign supplierFeign;
@@ -133,6 +140,9 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
         //查询物流单
         LogisticsBillEntity logisticsBillEntity = logisticsBillService.getById(entity.getLogisticsBillId());
 
+        //
+        List<LogisticsBillDetailEntity> detailEntityList = logisticsBillDetailService.listByMainIds(Arrays.asList(logisticsBillEntity.getId()));
+
         //物流商信息
         LogisticsSupplierEntity logisticsSupplierEntity = logisticsSupplierService.getById(logisticsBillEntity.getId());
 
@@ -172,17 +182,22 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
         addDTO.setLogisticsSupplierName(logisticsSupplierEntity.getSupplierName());
         addDTO.setPaymentCompanyName(supplierEntity.getPaymentCompanyName());
         addDTO.setTransportNo(logisticsBillEntity.getCounterNo());
-
         WarehouseDTO.UpdateDTO deliveryWarehouse = warehouseList.stream().filter(req -> deliveryEntity.getDeliveryWarehouseId().equals(req.getId())).findFirst().orElse(null);
         if (deliveryWarehouse != null) {
             addDTO.setOriginPort(deliveryWarehouse.getAddress());
+            addDTO.setPickupAddress(deliveryWarehouse.getAddress());
+        }
+        WarehouseDTO.UpdateDTO destWarehouse = warehouseList.stream().filter(req -> deliveryEntity.getDestWarehouseId().equals(req.getId())).findFirst().orElse(null);
+        if (destWarehouse != null) {
+            addDTO.setDestinationPort(destWarehouse.getAddress());
+            addDTO.setDeliveryAddress(destWarehouse.getAddress());
         }
 
 
-
+        pickupAddress
 //        tmsFirstMileReconciliationService.set
         return BatchResultDTO.success(entity.getId(), entity.getBusinessCode(), OperationTypeEnum.UPDATE_STATUS);
-
+        wmsFirstMileDeliveryFeign.logisticStatistics()
     }
 
     @Override
