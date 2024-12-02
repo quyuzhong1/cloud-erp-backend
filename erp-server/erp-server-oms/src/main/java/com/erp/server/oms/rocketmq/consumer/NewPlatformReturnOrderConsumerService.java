@@ -2,6 +2,7 @@ package com.erp.server.oms.rocketmq.consumer;
 
 import cn.hutool.json.JSONUtil;
 import com.common.business.dto.PlatformReturnOrderDTO;
+import com.common.business.enums.PlatformDictEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.wrapper.FeignQuery;
 import com.common.message.constant.RocketMqNewConsumerGroup;
