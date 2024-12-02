@@ -129,7 +129,7 @@ public class SyncSoReturnInstockServiceImpl implements SyncSoReturnInstockServic
 
         shudiyunB2cOrderDTO.setShop_no(entity.getCustomerId());
         shudiyunB2cOrderDTO.setShop_name(entity.getCustomerName());
-        shudiyunB2cOrderDTO.setRoot_node_no(entity.getCode());
+        shudiyunB2cOrderDTO.setRoot_node_no(rootNodeNoInitial);
         shudiyunB2cOrderDTO.setGoods_no(soReturnInstockDetailEntity.getSkuNo());
         SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuId().equals(soReturnInstockDetailEntity.getSkuId())).findFirst().orElse(new SkuVO());
         shudiyunB2cOrderDTO.setGoods_name(skuVO.getSkuName());
@@ -213,7 +213,7 @@ public class SyncSoReturnInstockServiceImpl implements SyncSoReturnInstockServic
         shudiyunB2cOrderDTO.setSku_name(skuVO.getSkuName());
 
         shudiyunB2cOrderDTO.setSource_system("SDC");
-        shudiyunB2cOrderDTO.setRoot_node_no_initial(entity.getCode());
+        shudiyunB2cOrderDTO.setRoot_node_no_initial(rootNodeNoInitial);
 
         return BeanUtil.beanToMap(shudiyunB2cOrderDTO);
 
@@ -233,46 +233,27 @@ public class SyncSoReturnInstockServiceImpl implements SyncSoReturnInstockServic
 
 
     private String getRootNodeNoInitial(SoReturnInstockEntity entity) {
-        String rootNodeNoInitial = "";
-        if (OrderTypeEnum.B2B.getCode().equals(entity.getType())) {
-            if (SourceTypeEnum.SO_RETURN.getCode().equals(entity.getSourceType())) {
-                SoReturnEntity soReturnEntity = soReturnFeign.getSoReturnById(entity.getSourceId());
-                if (ObjectUtil.isNotEmpty(soReturnEntity)) {
-                    rootNodeNoInitial = soReturnEntity.getCode();
-                }
+        return getRootNodeFromSource(entity);
+    }
 
-            } else if (SourceTypeEnum.SO_RETURN_RECEIVE.getCode().equals(entity.getSourceType())) {
-                SoReturnReceiveEntity receiveEntity = soReturnReceiveService.getById(entity.getSourceId());
-                if (ObjectUtil.isNotEmpty(receiveEntity)) {
-                    SoReturnEntity soReturnEntity = soReturnFeign.getSoReturnById(receiveEntity.getSourceId());
-                    if (ObjectUtil.isNotEmpty(soReturnEntity)) {
-                        rootNodeNoInitial = soReturnEntity.getCode();
-                    }
+    private String getRootNodeFromSource(SoReturnInstockEntity entity) {
+        String rootNodeNoInitial = entity.getCode(); // 默认值是 entity.getCode()
 
-                }
-            } else {
-                rootNodeNoInitial = entity.getCode();
+        if (SourceTypeEnum.SO_RETURN.getCode().equals(entity.getSourceType())) {
+            SoReturnEntity soReturnEntity = soReturnFeign.getSoReturnById(entity.getSourceId());
+            if (ObjectUtil.isNotEmpty(soReturnEntity)) {
+                rootNodeNoInitial = soReturnEntity.getCode();
             }
-        } else {
-            if (SourceTypeEnum.SO_RETURN.getCode().equals(entity.getSourceType())) {
-                SoReturnEntity soReturnEntity = soReturnFeign.getSoReturnById(entity.getSourceId());
+        } else if (SourceTypeEnum.SO_RETURN_RECEIVE.getCode().equals(entity.getSourceType())) {
+            SoReturnReceiveEntity receiveEntity = soReturnReceiveService.getById(entity.getSourceId());
+            if (ObjectUtil.isNotEmpty(receiveEntity)) {
+                SoReturnEntity soReturnEntity = soReturnFeign.getSoReturnById(receiveEntity.getSourceId());
                 if (ObjectUtil.isNotEmpty(soReturnEntity)) {
                     rootNodeNoInitial = soReturnEntity.getCode();
                 }
-
-            } else if (SourceTypeEnum.SO_RETURN_RECEIVE.getCode().equals(entity.getSourceType())) {
-                SoReturnReceiveEntity receiveEntity = soReturnReceiveService.getById(entity.getSourceId());
-                if (ObjectUtil.isNotEmpty(receiveEntity)) {
-                    SoReturnEntity soReturnEntity = soReturnFeign.getSoReturnById(receiveEntity.getSourceId());
-                    if (ObjectUtil.isNotEmpty(soReturnEntity)) {
-                        rootNodeNoInitial = soReturnEntity.getCode();
-                    }
-
-                }
-            } else {
-                rootNodeNoInitial = entity.getCode();
             }
         }
         return rootNodeNoInitial;
     }
+
 }

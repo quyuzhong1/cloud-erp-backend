@@ -148,7 +148,7 @@ public class DmpOutputSdyWdtOriginalOrderHandler extends DmpOutputTaskHandler {
         String status = "";
         String requestData = dmpOutputTaskRecordEntity.getRequestData();
         ApiResult handle = sdyDeliveryOrderConsumer.handle(requestData);
-        if ("200".equals(handle.getCode())) {
+        if (200 == handle.getCode()) {
             status = DmpOutputTaskRecordStatusEnum.FINISH.getCode();
         } else {
             status = DmpOutputTaskRecordStatusEnum.ERROR.getCode();

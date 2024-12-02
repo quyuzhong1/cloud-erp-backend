@@ -136,8 +136,10 @@ public class DmpInputAliExpressOrderDmpHandler extends DmpInputDbConvertDmpHandl
 						Map<String, Object> refundInfoMap = (Map) refundInfoObj;
 						if (refundInfoMap.get("refund_cash_amt") != null) {
 							Map<String, Object> refundCashAmtMap = (Map) refundInfoMap.get("refund_cash_amt");
-							refundCashAmtMap.get("amount");
-							refundCashAmtMap.get("currency_code");
+							if (ObjectUtil.isNotEmpty(refundCashAmtMap)) {
+								dmpDataMap.put("totalCancelGoodsAmount", refundCashAmtMap.get("amount"));
+								dmpDataMap.put("cancelGoodsCurrency", refundCashAmtMap.get("currency_code"));
+							}
 						}
 					}
 
