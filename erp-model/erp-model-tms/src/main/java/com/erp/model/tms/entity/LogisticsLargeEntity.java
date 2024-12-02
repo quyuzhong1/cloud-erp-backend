@@ -321,6 +321,27 @@ public class LogisticsLargeEntity extends BaseEntity<LogisticsLargeEntity> {
     */
     @TableField("other_tax_pay_time")
     private LocalDateTime otherTaxPayTime;
+    /**
+    * 来源id
+    */
+    @TableField("source_id")
+    private String sourceId;
+    /**
+    * 来源类型
+    */
+    @TableField("source_type")
+    private String sourceType;
+    /**
+    * 来源详情id
+    */
+    @TableField("source_detail_id")
+    private String sourceDetailId;
+    /**
+    * 对账单类型：estimated=预估账单，actual=实际账单
+    * ReconciliationBillTypeEnum
+    */
+    @TableField("reconciliation_bill_type")
+    private String reconciliationBillType;
 
 
     public static final String OUTSTOCK_CODE = "outstock_code";
