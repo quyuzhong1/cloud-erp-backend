@@ -8,6 +8,7 @@ import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONUtil;
+import com.common.business.constant.RedisCacheConstants;
 import com.common.business.enums.ErpServerModuleEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -137,7 +138,7 @@ public class ReportOrderDataServiceImpl extends SuperServiceImpl<ReportOrderData
         }
         //查询redis缓存标记
         String existKey = RedisKeyConstant.REPORT_VIRTUAL_ORDER_DATA;
-        boolean isHas = redisUtil.hasKey(existKey);
+        boolean isHas = redisUtil.expire(existKey, RedisCacheConstants.LOCK_DURATION_MINUTES * 10);
         if (isHas) {
           throw new ServiceException("已有任务进行中，请勿重复提交请求");
         }
@@ -508,7 +509,7 @@ public class ReportOrderDataServiceImpl extends SuperServiceImpl<ReportOrderData
                     CharSequenceUtil.equals(obj.getSkuId(), entity.getSkuId())
                             && CharSequenceUtil.equals(obj.getWarehouseId(), entity.getWarehouseId())
                             && CharSequenceUtil.equals(obj.getVirtualWarehouseId(), entity.getVirtualWarehouseId())
-            ).map(ReportOrderSalesDTO.LastVirtualQtyDTO::getCurInventoryQty).reduce(MathUtil.ZERO, Integer::sum);
+            ).map(obj -> Math.abs(obj.getCurInventoryQty())).reduce(MathUtil.ZERO, Integer::sum);
             addDTO.setThirtyDaysVirtualQty(thirtyDaysVirtualQty);
 
             //实体仓实际数量
