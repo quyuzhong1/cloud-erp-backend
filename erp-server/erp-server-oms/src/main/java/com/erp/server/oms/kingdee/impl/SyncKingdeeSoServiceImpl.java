@@ -11,6 +11,7 @@ import com.alibaba.fastjson.JSON;
 import com.common.business.dto.DmpPushTaskFeignDTO;
 import com.common.business.dto.ShudiyunB2cOrderDTO;
 import com.common.business.dto.base.BaseIdDTO;
+import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.SyncOperateEnum;
@@ -625,7 +626,13 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
         if (ObjectUtil.isNotEmpty(viewDTO)) {
             shudiyunB2cOrderDTO.setGoods_status("已取消");
         }
-        shudiyunB2cOrderDTO.setBiz_status(view.getApproveStatus().getName());
+        if (SyncOperateEnum.OPERATE_APPROVE.getCode().equals(operate)) {
+            shudiyunB2cOrderDTO.setBiz_status(ApproveStatusEnum.APPROVE.getName());
+        } else {
+            shudiyunB2cOrderDTO.setBiz_status(view.getApproveStatus().getName());
+        }
+
+
         shudiyunB2cOrderDTO.setStatus(shudiyunB2cOrderDTO.sdyStatusHandle(operate, view.getVersion(), soDetailEntity.getVersion()));
 
         BigDecimal taxAmountBefore = view.getDetailList().stream().map(req -> req.getTaxAmountBefore()).reduce(BigDecimal::add).orElse(BigDecimal.ZERO);

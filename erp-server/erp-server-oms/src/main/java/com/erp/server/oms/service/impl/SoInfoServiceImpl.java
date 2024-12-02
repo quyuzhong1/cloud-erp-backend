@@ -1385,7 +1385,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             for (SoInfoEntity soInfoEntity : list) {
                 SoInfoDTO.ViewDTO view = this.view(soInfoEntity.getId());
                 List<SoDetailEntity> soDetailEntities = soDetailService.listBaseByMainId(view.getId());
-                soDetailEntities.forEach(soDetailEntity -> syncKingdeeSoService.syncDataToSdy(view, soDetailEntity, SyncOperateEnum.OPERATE_DISAPPROVE.getCode(), ""));
+                soDetailEntities.forEach(soDetailEntity -> syncKingdeeSoService.syncDataToSdy(view, soDetailEntity, SyncOperateEnum.OPERATE_APPROVE.getCode(), ""));
             }
 
         } else {

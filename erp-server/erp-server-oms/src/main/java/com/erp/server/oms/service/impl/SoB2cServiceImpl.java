@@ -1122,7 +1122,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
         //同步数帝云
         List<SoB2cDetailEntity> soB2cDetailEntityList = soB2cDetailService.listByMainId(entity.getId());
-        soB2cDetailEntityList.forEach(detailObj -> syncSoB2cService.syncDataToSdy(entity, detailObj, SyncOperateEnum.OPERATE_DISAPPROVE.getCode()));
+        soB2cDetailEntityList.forEach(detailObj -> syncSoB2cService.syncDataToSdy(entity, detailObj, SyncOperateEnum.OPERATE_APPROVE.getCode()));
 
         return Boolean.TRUE;
     }
