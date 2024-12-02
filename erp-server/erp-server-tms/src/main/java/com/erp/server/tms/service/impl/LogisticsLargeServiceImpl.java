@@ -118,9 +118,13 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
         addDTO.setOutstockCode(deliveryEntity.getCode());
         addDTO.setOutstockTime(deliveryEntity.getApproveTime());
 
-        //头程对账单明细
+        //头程对账单明细(一个头程物流单可生成多次对账单)
         List<TmsFirstMileReconciliationDetailEntity> tmsFirstMileReconciliationDetailEntities = tmsFirstMileReconciliationDetailService.listBySourceIds(Arrays.asList(logisticsBillEntity.getId()), "");
-        String reconciliationId = tmsFirstMileReconciliationDetailEntities.stream().map(TmsFirstMileReconciliationDetailEntity::getMainId).distinct().findFirst().orElse(null);
+        List<String> fmrIds = tmsFirstMileReconciliationDetailEntities.stream().map(TmsFirstMileReconciliationDetailEntity::getMainId).collect(Collectors.toList());
+        List<TmsFirstMileReconciliationEntity> tmsFirstMileReconciliationEntities = tmsFirstMileReconciliationService.listByIds(fmrIds);
+
+//        tmsFirstMileReconciliationEntities.
+
 
 
 //        tmsFirstMileReconciliationService.set
