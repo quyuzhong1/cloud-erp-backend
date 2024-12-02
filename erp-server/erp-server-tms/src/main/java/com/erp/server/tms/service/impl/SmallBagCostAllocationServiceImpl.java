@@ -1,32 +1,41 @@
 package com.erp.server.tms.service.impl;
 
 
-import cn.hutool.core.util.StrUtil;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.common.business.constant.SearchType;
 import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
-import com.erp.model.tms.entity.SmallBagCostAllocationEntity;
-import com.erp.server.tms.mapper.SmallBagCostAllocationMapper;
-import com.erp.server.tms.service.SmallBagCostAllocationService;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
-import com.erp.server.tms.service.OperateLogService;
-import com.erp.server.tms.service.CommonService;
+import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Transactional;
-import io.seata.spring.annotation.GlobalTransactional;
-import lombok.extern.slf4j.Slf4j;
+import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.MathUtil;
+import com.erp.model.tms.dto.LogisticsBillCostDTO;
 import com.erp.model.tms.dto.SmallBagCostAllocationDTO;
 import com.erp.model.tms.dto.SmallBagCostAllocationDTO.ListDTO;
 import com.erp.model.tms.dto.SmallBagCostAllocationDTO.PagingParamDTO;
 import com.erp.model.tms.dto.SmallBagCostAllocationDTO.TabListDTO;
+import com.erp.model.tms.entity.SmallBagCostAllocationEntity;
+import com.erp.model.tms.enums.SmallBagCostAllocationReportStatusEnum;
+import com.erp.server.tms.mapper.SmallBagCostAllocationMapper;
+import com.erp.server.tms.service.OperateLogService;
+import com.erp.server.tms.service.SmallBagCostAllocationService;
 
-import java.util.*;
-import com.common.core.utils.*;
-import com.common.core.enums.ApiError;
+import cn.hutool.core.util.StrUtil;
+import io.seata.spring.annotation.GlobalTransactional;
+import lombok.extern.slf4j.Slf4j;
 /**
  * <p>
  * 小包费用分摊 服务实现类
@@ -103,11 +112,47 @@ public class SmallBagCostAllocationServiceImpl extends SuperServiceImpl<SmallBag
 
 	@Override
 	public List<TabListDTO> tabList(PermissionsDTO dto) {
-		return null;
+		List<SmallBagCostAllocationDTO.TabListDTO> resultList = new ArrayList<>();
+		SmallBagCostAllocationReportStatusEnum[] values = SmallBagCostAllocationReportStatusEnum.values();
+        Integer allCount = 0;
+        for (SmallBagCostAllocationReportStatusEnum statusEnum : values) {
+            LogisticsBillCostDTO.PagingParamDTO pagingParamDTO = new LogisticsBillCostDTO.PagingParamDTO();
+            pagingParamDTO.setPermissionSql(dto.getPermissionSql());
+            SmallBagCostAllocationDTO.TabListDTO resultDTO = new SmallBagCostAllocationDTO.TabListDTO();
+            Integer count = 0;
+            resultDTO.setCount(ObjectUtils.isEmpty(count) ? MathUtil.ZERO : count);
+            resultDTO.setTabFlag(statusEnum.getCode());
+            resultDTO.setTabFlagName(statusEnum.getName());
+            resultList.add(resultDTO);
+            allCount = allCount + resultDTO.getCount();
+        }
+        
+        SmallBagCostAllocationDTO.TabListDTO allTab = new SmallBagCostAllocationDTO.TabListDTO();
+        allTab.setCount(allCount);
+        allTab.setTabFlag(SearchType.ALL);
+        allTab.setTabFlagName("全部");
+        resultList.add(allTab);
+        
+        return resultList;
 	}
 
 	@Override
 	public PagingVO<ListDTO> paging(PagingDTO<PagingParamDTO> dto) {
+		return null;
+	}
+
+	@Override
+	public BatchResultDTO updateReportStatus(String id, String reportDate, String reportStatus) {
+		return null;
+	}
+
+	@Override
+	public BatchResultDTO reAllocation(String id) {
+		return null;
+	}
+
+	@Override
+	public BatchResultDTO pushBigTable(String id) {
 		return null;
 	}
 }

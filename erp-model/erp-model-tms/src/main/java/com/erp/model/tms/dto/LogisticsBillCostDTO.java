@@ -735,7 +735,7 @@ public class LogisticsBillCostDTO implements Serializable {
         private List<String> ids;
 
         /**
-         * 状态
+         * 状态 对账类型   http://172.16.100.11:3002/project/128/interface/api/25522 key=reconciliationStatus
          */
         private String reconciliationStatus;
         

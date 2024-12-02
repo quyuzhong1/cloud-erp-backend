@@ -54,7 +54,7 @@ public class SmallBagCostAllocationDetailDTO implements Serializable {
         private String feeType;
 
         /**
-        * 费用分摊类型
+        * 费用分摊方式
         */
         private String feeAllocationType;
 
@@ -69,7 +69,7 @@ public class SmallBagCostAllocationDetailDTO implements Serializable {
         private String allocatedCurrency;
 
         /**
-        * 费用分摊方式
+        * 单个产品分摊
         */
         private BigDecimal productAllocatedAmount;
 

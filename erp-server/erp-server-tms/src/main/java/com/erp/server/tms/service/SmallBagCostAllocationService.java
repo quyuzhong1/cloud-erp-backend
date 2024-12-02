@@ -39,5 +39,11 @@ public interface SmallBagCostAllocationService extends SuperService<SmallBagCost
     List<SmallBagCostAllocationDTO.TabListDTO> tabList(PermissionsDTO dto);
     
     PagingVO<SmallBagCostAllocationDTO.ListDTO> paging(PagingDTO<SmallBagCostAllocationDTO.PagingParamDTO> dto);
+    
+    BatchResultDTO updateReportStatus(String id , String reportDate , String reportStatus);
+    
+    BatchResultDTO reAllocation(String id);
+    
+    BatchResultDTO pushBigTable(String id);
 
 }

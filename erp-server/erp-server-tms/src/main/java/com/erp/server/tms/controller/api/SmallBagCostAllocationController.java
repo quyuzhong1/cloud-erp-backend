@@ -1,30 +1,38 @@
 package com.erp.server.tms.controller.api;
 
 
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.annotation.Resource;
+
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.*;
-import com.common.core.anno.LogAction;
-import com.common.core.anno.LogSystemModule;
-import com.common.core.anno.LogViewService;
-import com.common.core.enums.LogActionEnum;
-import com.common.business.dto.base.*;
-import com.common.core.controller.BaseController;
-import com.erp.server.tms.query.LogisticsBillCostQueryHandler;
-import com.erp.server.tms.service.SmallBagCostAllocationService;
-import com.common.core.controller.vo.ApiResult;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.dto.base.BaseIdsDTO;
+import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.dto.base.BatchResultDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
-import com.erp.model.tms.dto.LogisticsBillCostDTO;
+import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
+import com.common.core.controller.BaseController;
+import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.tms.dto.SmallBagCostAllocationDTO;
-import com.erp.model.tms.enums.DictCostAttributionEnum;
+import com.erp.model.tms.entity.SmallBagCostAllocationEntity;
+import com.erp.server.tms.service.LogisticsBillCostService;
+import com.erp.server.tms.service.SmallBagCostAllocationService;
+
+import cn.hutool.core.util.ObjectUtil;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * 小包费用分摊
@@ -104,8 +112,126 @@ public class SmallBagCostAllocationController extends BaseController {
             menuCode = "tms:smallBagCostAllocation:paging",
             tableAlias = "lbc"
     )
-    @WebAdvanceQuery(handler = LogisticsBillCostQueryHandler.class)
+    @WebAdvanceQuery()
     public ApiResult<PagingVO<SmallBagCostAllocationDTO.ListDTO>> queryByPage(@RequestBody @Validated PagingDTO<SmallBagCostAllocationDTO.PagingParamDTO> dto) {
         return success(smallBagCostAllocationService.paging(dto));
+    }
+    
+    /**
+     * 核算状态
+     * @author Will
+     * @date: 2023/11/13 15:35
+     * @param dto
+     * @return ApiResult<List<BatchResultDTO>>
+     */
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "状态变更:idList={idList}")
+    @PostMapping("/updateReportStatus")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "tms:smallBagCostAllocation:updateReportStatus",
+            serviceClass = LogisticsBillCostService.class,
+            keyIdName = "id")
+    public ApiResult<List<BatchResultDTO>> updateReportStatus(@RequestBody @Validated SmallBagCostAllocationDTO.UpdateStatusDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        for (String id : dto.getIds()) {
+            BatchResultDTO submit;
+            try {
+                submit = smallBagCostAllocationService.updateReportStatus(id,dto.getReportDate(),dto.getReportStatus());
+            }catch (Exception e){
+                log.error("小包分摊 状态变更",e);
+                SmallBagCostAllocationEntity entity = smallBagCostAllocationService.getById(id);
+                if (ObjectUtil.isEmpty(entity)) {
+                    submit = BatchResultDTO.fail(id, id, "小包分摊不存在, 核算状态");
+                    resultDTOS.add(submit);
+                    continue;
+                }
+                submit = BatchResultDTO.fail(entity.getId(), entity.getId(), e.getMessage());
+            }
+            resultDTOS.add(submit);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+    
+    /**
+     * 重新分摊
+     * @author Will
+     * @date: 2023/11/13 15:35
+     * @param dto
+     * @return ApiResult<List<BatchResultDTO>>
+     */
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "状态变更:idList={idList}")
+    @PostMapping("/reAllocation")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+    tableField = "create_user_id",
+    menuCode = "tms:smallBagCostAllocation:reAllocation",
+    serviceClass = LogisticsBillCostService.class,
+    keyIdName = "id")
+    public ApiResult<List<BatchResultDTO>> reAllocation(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+    	List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+    	for (String id : dto.getIds()) {
+    		BatchResultDTO submit;
+    		try {
+    			submit = smallBagCostAllocationService.reAllocation(id);
+    		}catch (Exception e){
+    			log.error("小包分摊 重新分摊",e);
+    			SmallBagCostAllocationEntity entity = smallBagCostAllocationService.getById(id);
+    			if (ObjectUtil.isEmpty(entity)) {
+    				submit = BatchResultDTO.fail(id, id, "小包分摊不存在, 重新分摊");
+    				resultDTOS.add(submit);
+    				continue;
+    			}
+    			submit = BatchResultDTO.fail(entity.getId(), entity.getId(), e.getMessage());
+    		}
+    		resultDTOS.add(submit);
+    	}
+    	return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+    
+    /**
+     *  导出excel
+     * @author Will
+     * @date: 2023/11/13 16:19
+     * @param dto
+     * @return ApiResult
+     */
+    @LogAction(value = LogActionEnum.EXPORT, desc = "导出Excel")
+    @PostMapping(value = "/exportExcel")
+    public ApiResult<Object> exportExcel(@RequestBody @Validated SmallBagCostAllocationDTO.PagingParamDTO dto) {
+        return success();
+    }
+    
+    /**
+     * 生成物流大表
+     * @author Will
+     * @date: 2023/11/13 15:35
+     * @param dto
+     * @return ApiResult<List<BatchResultDTO>>
+     */
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "状态变更:idList={idList}")
+    @PostMapping("/pushBigTable")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+    tableField = "create_user_id",
+    menuCode = "tms:smallBagCostAllocation:pushBigTable",
+    serviceClass = LogisticsBillCostService.class,
+    keyIdName = "id")
+    public ApiResult<List<BatchResultDTO>> pushBigTable(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+    	List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+    	for (String id : dto.getIds()) {
+    		BatchResultDTO submit;
+    		try {
+    			submit = smallBagCostAllocationService.pushBigTable(id);
+    		}catch (Exception e){
+    			log.error("小包分摊 生成物流大表",e);
+    			SmallBagCostAllocationEntity entity = smallBagCostAllocationService.getById(id);
+    			if (ObjectUtil.isEmpty(entity)) {
+    				submit = BatchResultDTO.fail(id, id, "小包分摊不存在,  生成物流大表");
+    				resultDTOS.add(submit);
+    				continue;
+    			}
+    			submit = BatchResultDTO.fail(entity.getId(), entity.getId(), e.getMessage());
+    		}
+    		resultDTOS.add(submit);
+    	}
+    	return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 }
