@@ -8,6 +8,7 @@ import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.oms.dto.*;
 import com.erp.model.oms.entity.ListingInfoEntity;
+import com.erp.model.oms.entity.OmsPushMsgEntity;
 import com.erp.model.oms.entity.SkuMappingEntity;
 import com.erp.model.oms.enums.RuleTypeEnum;
 import com.erp.model.scm.dto.OperateLogDTO;
@@ -280,6 +281,10 @@ public interface SkuMappingService extends SuperService<SkuMappingEntity> {
                                      List<String> shopIdList,
                                      LocalDateTime platformOrderCreateTime,
                                      Boolean isExpire);
+    
+    List<OmsPushMsgEntity> syncDataToSdy(LocalDateTime startTime , LocalDateTime endTime);
+    
+    Map<String, Object> newSyncDataToSdy(SkuMappingEntity entity, String operate);
 
     void updateNotMatch(SkuMappingDTO.UpdateNotMatchDTO dto);
 

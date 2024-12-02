@@ -5,9 +5,11 @@ import com.common.business.dto.base.BatchResultDTO;
 import com.common.core.controller.BaseController;
 import com.erp.model.oms.dto.SoDetailDTO;
 import com.erp.model.oms.dto.SoInfoDTO;
+import com.erp.model.oms.dto.SoInfoToSdyDTO;
 import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.model.oms.entity.SoInfoEntity;
 import com.erp.model.wms.dto.ReportOrderDataDTO;
+import com.erp.server.oms.kingdee.SyncKingdeeSoService;
 import com.erp.server.oms.service.SoDetailService;
 import com.erp.server.oms.service.SoInfoService;
 import com.google.common.collect.Lists;
@@ -36,6 +38,9 @@ public class SoInfoFeignController extends BaseController {
 
     @Resource
     private SoInfoService soInfoService;
+
+    @Resource
+    private SyncKingdeeSoService syncKingdeeSoService;
 
     /**
      * 根据主键id查询销售单主表信息
@@ -197,5 +202,14 @@ public class SoInfoFeignController extends BaseController {
     @GetMapping("/listAllVirtualSoDetail")
     public List<ReportOrderDataDTO.ViewDTO> listAllVirtualSoDetail(){
        return soDetailService.listAllVirtualSoDetail();
+    }
+
+    /**
+     * 同步速递云B2B订单
+     * @param soInfoToSdyDTO
+     */
+    @PostMapping("/sdyFieldOrderHandler")
+    public void sdyFieldOrderHandler(@RequestBody SoInfoToSdyDTO soInfoToSdyDTO) {
+        soInfoService.sdyFieldOrderHandler(soInfoToSdyDTO.getSoId(), soInfoToSdyDTO.getOperateEnum(), soInfoToSdyDTO.getDeliveryStatus());
     }
 }

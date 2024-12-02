@@ -42,7 +42,7 @@ public class WarehouseExcelDTO  implements Serializable {
      */
     @ColumnWidth(30)
     @ExcelProperty(value = "仓库类型", index = 2)
-    @FieldValid(fieldName = "仓库类型")
+    @FieldValid(fieldName = "仓库类型",isNotBlank = true)
     private String typeName;
 
 
@@ -68,7 +68,7 @@ public class WarehouseExcelDTO  implements Serializable {
      */
     @ColumnWidth(20)
     @ExcelProperty(value = "仓库负责人", index = 5)
-    @FieldValid(fieldName = "仓库负责人")
+    @FieldValid(fieldName = "仓库负责人",isNotBlank = true)
     private String chargeName;
 
 
@@ -77,7 +77,7 @@ public class WarehouseExcelDTO  implements Serializable {
      */
     @ColumnWidth(20)
     @ExcelProperty(value = "联系人", index = 6)
-    @FieldValid(fieldName = "联系人",maxLength = 50)
+    @FieldValid(fieldName = "联系人",isNotBlank = true,maxLength = 50)
     private String contacts;
 
 
@@ -85,8 +85,8 @@ public class WarehouseExcelDTO  implements Serializable {
      * 联系人电话
      */
     @ColumnWidth(25)
-    @ExcelProperty(value = "联系人电话", index = 7)
-    @FieldValid(fieldName = "联系人电话",maxLength = 20)
+    @ExcelProperty(value = "联系电话", index = 7)
+    @FieldValid(fieldName = "联系电话",isNotBlank = true,maxLength = 20)
     private String contactTelNumber;
 
 
@@ -111,7 +111,7 @@ public class WarehouseExcelDTO  implements Serializable {
      */
     @ColumnWidth(30)
     @ExcelProperty(value = "仓库地址", index = 10)
-    @FieldValid(fieldName = "仓库地址",maxLength = 200)
+    @FieldValid(fieldName = "仓库地址",isNotBlank = true,maxLength = 200)
     private String address;
 
     /**
@@ -138,13 +138,45 @@ public class WarehouseExcelDTO  implements Serializable {
     @ExcelProperty(value = "仓库地理位置", index = 13)
     @FieldValid(fieldName = "仓库地理位置",isNotBlank = true)
     private String geographyLocationName;
-
+    
+    /**
+     * 所属渠道
+     */
+    @ColumnWidth(20)
+    @ExcelProperty(value = "所属渠道", index = 14)
+    @FieldValid(fieldName = "所属渠道")
+    private String channelAffiliation;
+    
+    /**
+     * 发货组织
+     */
+    @ColumnWidth(20)
+    @ExcelProperty(value = "发货组织", index = 15)
+    @FieldValid(fieldName = "发货组织",isNotBlank = true)
+    private String shippingOrganization;
+    
+    /**
+     * 财务组织
+     */
+    @ColumnWidth(20)
+    @ExcelProperty(value = "财务组织", index = 16)
+    @FieldValid(fieldName = "财务组织",isNotBlank = true)
+    private String financialOrganization;
+    
+    /**
+     * 启用日期
+     */
+    @ColumnWidth(20)
+    @ExcelProperty(value = "启用时间", index = 17)
+    @FieldValid(fieldName = "启用时间")
+    private String openTime;
+    
 
     /**
      * 错误信息
      */
     @ColumnWidth(200)
-    @ExcelProperty(value = "错误信息", index = 14)
+    @ExcelProperty(value = "错误信息", index = 19)
     private String errorMsg;
 
 

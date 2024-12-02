@@ -1,21 +1,26 @@
 package com.erp.model.wms.dto;
 
-import com.common.business.dto.AdvanceQueryDTO;
-import com.common.business.dto.base.PermissionsDTO;
-import com.common.business.dto.base.SortDTO;
-import com.common.business.enums.ApproveStatusEnum;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotEmpty;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
+
+import com.common.business.annotation.Dict;
+import com.common.business.dto.AdvanceQueryDTO;
+import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.dto.base.SortDTO;
+import com.common.business.dto.base.UpdateStateDTO;
+import com.common.business.enums.ApproveStatusEnum;
+import com.common.business.enums.ServiceCodeNameEnum;
+
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 /**
  * @author Lambda
@@ -147,6 +152,31 @@ public class WarehouseDTO implements Serializable {
         @NotBlank(message = "地理位置不能空")
         private String geographyLocation;
 
+        /**
+         * 所属渠道 来源 http://172.16.100.11:3002/project/110/interface/api/13435 type=salesPlatform  详情显示名称字段加name
+         */
+        @Dict(serviceCode = ServiceCodeNameEnum.OMS , queryTypeField = "salesPlatform")
+        private String channelAffiliation;
+        
+        /**
+         * 发货组织 来源 http://172.16.100.11:3002/project/36/interface/api/30795  详情显示名称字段加name
+         */
+        @NotBlank(message = "发货组织不能空")
+        @Dict(serviceCode = ServiceCodeNameEnum.SYS , queryFieldName = "id" , returnFieldName = "company_name" , tableName = "sys_accounting_company")
+        private String shippingOrganization;
+        
+        /**
+         * 财务组织 来源 http://172.16.100.11:3002/project/36/interface/api/30795  详情显示名称字段加name
+         */
+        @NotBlank(message = "财务组织不能空")
+        @Dict(serviceCode = ServiceCodeNameEnum.SYS , queryFieldName = "id" , returnFieldName = "company_name" , tableName = "sys_accounting_company")
+        private String financialOrganization;
+        
+        /**
+         * 启用日期
+         */
+        private LocalDateTime openTime;
+        
     }
 
 
@@ -161,6 +191,23 @@ public class WarehouseDTO implements Serializable {
         private String id;
 
         private Integer index;
+        
+        /**
+         * 停用日期
+         */
+        private LocalDateTime closeTime;
+    }
+    
+    /**
+     * 修改仓库状态
+     */
+    @Data
+    @NoArgsConstructor
+    public static class WarehouseUpdateStateDTO extends UpdateStateDTO {
+    	/**
+         * 启用日期
+         */
+        private LocalDateTime enableTime;
     }
 
     /**
@@ -488,6 +535,34 @@ public class WarehouseDTO implements Serializable {
          * 地理位置名
          */
         private String geographyLocationName;
+        
+        /**
+         * 所属渠道，名称为字段后面加Name
+         */
+        @Dict(serviceCode = ServiceCodeNameEnum.OMS , queryTypeField = "salesPlatform")
+        private String channelAffiliation;
+        
+        /**
+         * 发货组织，名称为字段后面加Name
+         */
+        @Dict(serviceCode = ServiceCodeNameEnum.SYS , queryFieldName = "id" , returnFieldName = "company_name" , tableName = "sys_accounting_company")
+        private String shippingOrganization;
+        
+        /**
+         * 财务组织，名称为字段后面加Name
+         */
+        @Dict(serviceCode = ServiceCodeNameEnum.SYS , queryFieldName = "id" , returnFieldName = "company_name" , tableName = "sys_accounting_company")
+        private String financialOrganization;
+        
+        /**
+         * 启用日期
+         */
+        private LocalDateTime openTime;
+        
+        /**
+         * 停用日期
+         */
+        private LocalDateTime closeTime;
     }
 
 

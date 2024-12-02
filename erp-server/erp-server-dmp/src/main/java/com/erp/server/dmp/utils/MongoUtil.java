@@ -49,6 +49,7 @@ public class MongoUtil {
 		return createCriteriaByMap(criteria, filterParam);
 	}
 	
+	@SuppressWarnings({"squid:S1068" , "java:S1872"})
 	private static Map<String, List<ParamData>> getFilterParam(Object obj){
 		Class<? extends Object> classType=obj.getClass();
 		List<Field> fields = new ArrayList<>() ;

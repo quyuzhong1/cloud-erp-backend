@@ -7,6 +7,7 @@ import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.json.JSONUtil;
+import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
@@ -38,17 +39,23 @@ import com.erp.model.dmp.dto.DmpPushWdtDetailDTO;
 import com.erp.model.dmp.dto.ThirdMappingDTO;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.dmp.entity.DmpThirdOutboundEntity;
+import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
 import com.erp.model.oms.dto.*;
 import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
+import com.erp.model.oms.enums.OrderSubTypeEnum;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
+import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.dto.ProductDetailDTO;
+import com.erp.model.plm.entity.ProductDetailEntity;
+import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.plm.enums.CombinationDeclareTypeEnums;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.sys.dto.DictCountryDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.sys.entity.DictCountryEntity;
@@ -256,6 +263,9 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
     private AbstractWdtService abstractWdtService;
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
+    @Resource
+    private WmsPushMsgService wmsPushMsgService;
+
 
 
     @Override
@@ -771,6 +781,9 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             sendPushTask(Collections.singletonList(entity),SyncOperateEnum.OPERATE_APPROVE.getCode());
             //推送旺店通
             this.syncToWdt(entity,SyncOperateEnum.OPERATE_APPROVE);
+            //推送数帝云
+            this.syncToSdy(entity, SyncOperateEnum.OPERATE_APPROVE.getCode());
+
         }
         if (!SourceTypeEnum.SAL_OUTSTOCK.getCode().equals(entity.getSourceType())) {
             //订单推送dmp
@@ -779,6 +792,23 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         return Boolean.TRUE;
     }
 
+    private void syncToSdy(SoOutstockEntity entity, String operate) {
+        //推送数帝云
+        List<SoOutstockDetailEntity> soOutstockDetailEntityList = soOutstockDetailService.listByMainIds(Arrays.asList(entity.getId()));
+        soOutstockDetailEntityList.forEach(soOutstockDetailEntity -> syncKingdeeSoOutstockService.syncDataToSdy(entity, soOutstockDetailEntity, operate));
+
+        if (OrderTypeEnum.B2B.getCode().equals(entity.getOrderType())) {
+            //更新推送数帝云订单信息
+            SoInfoToSdyDTO soInfoToSdyDTO = new SoInfoToSdyDTO();
+            soInfoToSdyDTO.setSoId(entity.getSoId());
+            soInfoToSdyDTO.setOperateEnum(operate);
+            soInfoToSdyDTO.setDeliveryStatus(DeliveryStatusEnum.COMPLETE_SHIPMENT.getCode());
+            soInfoFeign.sdyFieldOrderHandler(soInfoToSdyDTO);
+
+        } else {
+            soB2cFeign.syncSdyOrderHandler(entity.getSoId(), operate);
+        }
+    }
 
     /**
      * 处理B2c销售出库单
@@ -1159,6 +1189,10 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             }
             //推送旺店通
             this.syncToWdt(entity,SyncOperateEnum.OPERATE_DISAPPROVE);
+
+            //推送数帝云
+            List<SoOutstockDetailEntity> soOutstockDetailEntityList = soOutstockDetailService.listByMainIds(Arrays.asList(entity.getId()));
+            soOutstockDetailEntityList.forEach(soOutstockDetailEntity -> syncKingdeeSoOutstockService.syncDataToSdy(entity, soOutstockDetailEntity, SyncOperateEnum.OPERATE_DISAPPROVE.getCode()));
         }
         return BatchResultDTO.success(entity.getId(),entity.getCode(), "反审核成功");
     }
@@ -1212,12 +1246,18 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             throw new ServiceException(ApiError.ERROR_98009);
         }
 
+        //获取需要同步数帝云的数据
+        List<SoOutstockDetailEntity> soOutstockDetailAllList = new ArrayList<>();
+        List<SoOutstockDetailEntity> soOutstockDetailEntityList = soOutstockDetailService.listByMainIds(ids);
+        soOutstockDetailAllList.addAll(soOutstockDetailEntityList);
+
         Boolean result = this.removeByIds(ids);
         if (result) {
             //添加日志
             String content = "删除销售订单[%s]";
             List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
             operateLogService.batchAddModuleOperateLog(content, ModuleTypeEnum.SO_OUT_STOCK.getCode(), pairList, "删除");
+
             //删除明细
             soOutstockDetailService.removeByMainIdList(ids);
 
@@ -1226,6 +1266,13 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
 
             //B2B发送金蝶
             sendPushTask(list,SyncOperateEnum.OPERATE_DELETE.getCode());
+
+            //推送数帝云
+            for (SoOutstockEntity outstockEntity : list) {
+                soOutstockDetailAllList.forEach(soOutstockDetailEntity -> syncKingdeeSoOutstockService.syncDataToSdy(outstockEntity, soOutstockDetailEntity, SyncOperateEnum.OPERATE_DELETE.getCode()));
+            }
+
+
         }
         return result;
     }

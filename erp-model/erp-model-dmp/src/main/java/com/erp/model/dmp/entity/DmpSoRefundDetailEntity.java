@@ -118,6 +118,11 @@ public class DmpSoRefundDetailEntity extends BaseEntity<DmpSoRefundDetailEntity>
     @TableField("src_order_detail_id")
     private String srcOrderDetailId = "";
 
+    /**
+     * sku名称
+     */
+    @TableField("sku_name")
+    private String skuName;
 
     public static final String MAIN_ID = "main_id";
 

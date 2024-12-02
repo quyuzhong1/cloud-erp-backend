@@ -2,14 +2,15 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
+import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.ApproveType;
 import com.common.business.dto.FindUserDTO;
+import com.common.business.dto.ShudiyunB2cOrderDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -30,15 +31,18 @@ import com.erp.model.dmp.dto.DmpPushWdtDTO;
 import com.erp.model.dmp.dto.DmpPushWdtDetailDTO;
 import com.erp.model.dmp.dto.ThirdMappingDTO;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
+import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.BillTypeEnum;
 import com.erp.model.oms.enums.SoB2cReturnTypeEnum;
 import com.erp.model.oms.enums.SoReturnChangeListTypeEnum;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
+import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.sys.entity.SysDepartmentEntity;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.inventory.InOutStockDTO;
@@ -49,8 +53,6 @@ import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.*;
 import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
 import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
-import com.erp.rpc.dmp.feign.DmpMqFeign;
-import com.erp.rpc.dmp.feign.DmpPushWdtFeign;
 import com.erp.rpc.dmp.feign.DmpThirdMappingFeign;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.oms.feign.CustomerFeign;
@@ -58,14 +60,12 @@ import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.rpc.oms.feign.SoInfoFeign;
 import com.erp.rpc.oms.feign.SoReturnFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
-import com.erp.rpc.scm.feign.ScmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.wms.kingdee.SyncKingdeeSoReturnService;
+import com.erp.server.wms.kingdee.SyncSoReturnInstockService;
 import com.erp.server.wms.mapper.SoReturnInstockMapper;
 import com.erp.server.wms.service.*;
-import com.erp.server.wms.wdt.SyncWdtOtherInStockService;
-import com.erp.server.wms.wdt.SyncWdtOtherOutStockService;
 import com.sdk.wangdian.sdk.api.wms.stockin.dto.CreateOtherStockinRequest;
 import com.sdk.wangdian.sdk.api.wms.stockout.dto.CommonCreateBillGoodsReq;
 import com.sdk.wangdian.sdk.api.wms.stockout.dto.CreateOtherStockoutRequest;
@@ -81,6 +81,7 @@ import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -158,8 +159,6 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
     @Resource
     private MachineSubComponentsService machineSubComponentsService;
 
-    @Resource
-    private DmpPushWdtFeign dmpPushWdtFeign;
 
     @Resource
     private PoReturnService poReturnService;
@@ -171,19 +170,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
     private WarehouseLocationService warehouseLocationService;
 
     @Resource
-    private ScmTaskFeign scmTaskFeign;
-
-    @Resource
-    private SyncWdtOtherInStockService syncWdtOtherInStockService;
-
-    @Resource
-    private SyncWdtOtherOutStockService syncWdtOtherOutStockService;
-
-    @Resource
     private DocNoGenHelper docNoGenHelper;
-
-    @Resource
-    private DmpMqFeign dmpMqFeign;
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
     @Resource
@@ -191,6 +178,9 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
 
     @Resource
     private SoOutstockService soOutstockService;
+
+    @Resource
+    private SyncSoReturnInstockService syncSoReturnInstockService;
 
     @Override
     public PagingVO<SoReturnInstockDTO.PagingView> paging(PagingDTO<SoReturnInstockDTO.PagingParam> pagingParamDTO) {
@@ -241,7 +231,14 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                     SoB2cEntity soB2cEntity = soB2cEntityList.stream().filter(v->v.getId().equals(obj.getSoId())).findFirst().orElse(new SoB2cEntity());
                     List<SoB2cDetailEntity> soB2cDetailEntity = soB2cDetailEntityList.stream().filter(detail -> detail.getMainId().equals(soB2cEntity.getId()) && detail.getSkuId().equals(obj.getSkuId())).collect(Collectors.toList());
                     obj.setSalesQty(soB2cDetailEntity.stream().mapToInt(SoB2cDetailEntity::getQty).sum());
-                    obj.setReturnTypeDict(SoB2cReturnTypeEnum.getName(obj.getReturnTypeDict()));
+                    if (SourceTypeEnum.PLATFORM_RETURN_INSTOCK.getCode().equalsIgnoreCase(obj.getSourceType())){
+                        // 平台来源
+                        obj.setReturnTypeDict(ReturnTypeEnum.getName(obj.getReturnTypeDict()));
+                    } else {
+                        obj.setReturnTypeDict(SoB2cReturnTypeEnum.getName(obj.getReturnTypeDict()));
+                    }
+
+                    obj.setPlatformOrderCode(soB2cEntity.getPlatformCode());
                     Integer actualQty = soOutstockDetailEntities.stream().filter(detail ->CharSequenceUtil.isNotBlank(obj.getSoId()) && detail.getSoId().equals(obj.getSoId()) && detail.getSkuId().equals(obj.getSkuId()) && detail.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())).map(SoOutstockDetailEntity::getActualQty).reduce(MathUtil.ZERO, Integer::sum);
                     obj.setDeliveryQty(actualQty);
                     if(obj.getReceiveQty() == 0){
@@ -646,6 +643,11 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
             //发送金蝶
             sendPushTask(Collections.singletonList(entity), SyncOperateEnum.OPERATE_APPROVE.getCode());
             this.syncToWdt(entity, SyncOperateEnum.OPERATE_APPROVE);
+
+            //推送数帝云
+            List<SoReturnInstockDetailEntity> detailEntityList = soReturnInstockDetailService.listDetailByMainId(entity.getId());
+            detailEntityList.forEach(detailEntity -> syncSoReturnInstockService.syncDataToSdy(entity, detailEntity, SyncOperateEnum.OPERATE_APPROVE.getCode()));
+
         }else {
             //审核不通过
             lambdaUpdate().set(SoReturnInstockEntity::getApproveStatus, ApproveStatusEnum.REJECT.getStatus())
@@ -683,6 +685,11 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
             sendPushTask(Collections.singletonList(entity),SyncOperateEnum.OPERATE_DISAPPROVE.getCode());
         }
         this.syncToWdt(entity,SyncOperateEnum.OPERATE_DISAPPROVE);
+
+        //推送数帝云
+        List<SoReturnInstockDetailEntity> detailEntityList = soReturnInstockDetailService.listDetailByMainId(entity.getId());
+        detailEntityList.forEach(detailEntity -> syncSoReturnInstockService.syncDataToSdy(entity, detailEntity, SyncOperateEnum.OPERATE_DISAPPROVE.getCode()));
+
         //操作日志
         operateLogService.addModuleOperateLog(String.format("反审核了一个销售退货通知单【%s】",entity.getCode()), ModuleTypeEnum.SO_RETURN_NOTICE.getCode(), entity.getId(), "反审核操作");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), "操作成功");
@@ -740,6 +747,14 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
 
         //发送金蝶
         sendPushTask(entityList,SyncOperateEnum.OPERATE_INVALID.getCode());
+
+        //推送数帝云
+        List<SoReturnInstockDetailEntity> soReturnInstockDetailEntityList = soReturnInstockDetailService.listDetailByMainIds(ids);
+        for (SoReturnInstockEntity entity : entityList) {
+            List<SoReturnInstockDetailEntity> detailEntityList = soReturnInstockDetailEntityList.stream().filter(req -> req.getMainId().equals(entity.getId())).collect(Collectors.toList());
+            detailEntityList.forEach(detailEntity -> syncSoReturnInstockService.syncDataToSdy(entity, detailEntity, SyncOperateEnum.OPERATE_INVALID.getCode()));
+        }
+
         //操作日志
         List<Pair<String, String>> pairList = entityList.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
         operateLogService.batchAddModuleOperateLog("作废了一个发货通知单【%s】，作废原因：".concat(remark), ModuleTypeEnum.SO_DELIVERY_NOTICE.getCode(), pairList, "作废操作");
@@ -761,11 +776,23 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         if (count != entityList.size()) {
             throw new ServiceException(ApiError.ERROR_98009);
         }
+
+        //获取需要推送数帝云的数据
+        List<SoReturnInstockDetailEntity> detailAllList = new ArrayList<>();
+        List<SoReturnInstockDetailEntity> soReturnInstockDetailEntityList = soReturnInstockDetailService.listDetailByMainIds(ids);
+        detailAllList.addAll(soReturnInstockDetailEntityList);
+
         //删除详情表
         soReturnInstockDetailService.delete(ids);
         boolean flag = this.removeByIds(ids);
         //发送金蝶
         sendPushTask(entityList,SyncOperateEnum.OPERATE_DELETE.getCode());
+
+        //推送数帝云
+        for (SoReturnInstockEntity entity : entityList) {
+            detailAllList.forEach(soOutstockDetailEntity -> syncSoReturnInstockService.syncDataToSdy(entity, soOutstockDetailEntity, SyncOperateEnum.OPERATE_DELETE.getCode()));
+        }
+
         //删除主表
         return flag;
     }

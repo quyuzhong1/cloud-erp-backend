@@ -17,6 +17,8 @@ import com.erp.model.dmp.entity.DmpSoInfoEntity;
 import com.erp.model.dmp.entity.DmpSoReceiverEntity;
 import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
 import com.erp.model.dmp.enums.DmpOrderReturnStatusEnum;
+import com.erp.model.oms.enums.SoB2cBillStatusEnum;
+import com.erp.model.oms.enums.SoB2cItemStatusEnum;
 import com.erp.model.oms.enums.SoB2cPayStatusEnum;
 import com.erp.server.dmp.inout.dto.request.DmpOutputTaskRequest;
 import com.erp.server.dmp.inout.dto.response.DmpOutputTaskResponse;
@@ -121,7 +123,7 @@ public class MercadoOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHandle
         PlatformOrderDTO orderDTO = new PlatformOrderDTO();
 
         //平台订单号
-        orderDTO.setPlatformCode(dmpSoInfoEntity.getPlatformCode());
+        orderDTO.setPlatformCode(dmpSoInfoEntity.getThirdCode());
 
         //销售平台
         orderDTO.setDictPlatform(PlatformDictEnum.MERCADOLIBRE.getCode());
@@ -192,6 +194,9 @@ public class MercadoOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHandle
 
         //创建时间
         orderDTO.setPlatformOrderCreateTime(dmpSoInfoEntity.getPlatformCreateTime());
+
+        //优惠金额
+        orderDTO.setTotalDiscount(dmpSoInfoEntity.getTotalDiscount());
 
         // 订单明细
         List<PlatformOrderDetailDTO> details = parseDetailDto(dmpSoInfoEntity, dmpSoDetailEntityList);
@@ -279,6 +284,7 @@ public class MercadoOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHandle
         detailDTO.setWarehouseLocation("");
         //包裹号
         detailDTO.setPlatformPackageId(soDetailEntity.getPlatformPackageId());
+
         return detailDTO;
     }
 

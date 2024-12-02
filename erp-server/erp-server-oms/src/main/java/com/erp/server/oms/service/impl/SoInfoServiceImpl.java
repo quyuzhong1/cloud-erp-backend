@@ -9,6 +9,7 @@ import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
+import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
@@ -19,6 +20,7 @@ import com.common.business.constant.ApproveType;
 import com.common.business.constant.FileTemplateConstant;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.FindUserDTO;
+import com.common.business.dto.ShudiyunB2cOrderDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -39,6 +41,7 @@ import com.common.core.utils.date.DateUtil;
 import com.common.core.utils.date.LocalDateUtil;
 import com.erp.model.dmp.dto.KingdeeDTO;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
+import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
 import com.erp.model.dmp.enums.KingdeePushModuleEnum;
 import com.erp.model.oms.dto.*;
 import com.erp.model.oms.dto.excel.B2BSoImportExcelDTO;
@@ -92,6 +95,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
 import org.apache.poi.ss.formula.functions.T;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.apache.xpath.operations.Bool;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.ResourceLoader;
@@ -107,6 +111,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.net.SocketTimeoutException;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
@@ -230,6 +235,12 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
 
     @Resource
     private FileTemplateFeign fileTemplateFeign;
+
+    @Resource
+    private SoChangeDetailService soChangeDetailService;
+
+    @Resource
+    private OmsPushMsgService omsPushMsgService;
 
     /**
      * 添加销售订单
@@ -1369,6 +1380,14 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
 
             //发送金蝶
             sendPushTask(list,SyncOperateEnum.OPERATE_APPROVE.getCode());
+
+            //同步数帝云
+            for (SoInfoEntity soInfoEntity : list) {
+                SoInfoDTO.ViewDTO view = this.view(soInfoEntity.getId());
+                List<SoDetailEntity> soDetailEntities = soDetailService.listBaseByMainId(view.getId());
+                soDetailEntities.forEach(soDetailEntity -> syncKingdeeSoService.syncDataToSdy(view, soDetailEntity, SyncOperateEnum.OPERATE_APPROVE.getCode(), ""));
+            }
+
         } else {
             //审核不通过
             approveStatus = ApproveStatusEnum.REJECT.getStatus();
@@ -1453,6 +1472,13 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
 
             //发送金蝶
             sendPushTask(list,SyncOperateEnum.OPERATE_DISAPPROVE.getCode());
+
+            //同步数帝云
+            for (SoInfoEntity soInfoEntity : list) {
+                SoInfoDTO.ViewDTO view = this.view(soInfoEntity.getId());
+                List<SoDetailEntity> soDetailEntities = soDetailService.listBaseByMainId(view.getId());
+                soDetailEntities.forEach(soDetailEntity -> syncKingdeeSoService.syncDataToSdy(view, soDetailEntity, SyncOperateEnum.OPERATE_DISAPPROVE.getCode(), ""));
+            }
         }
         return BatchResultDTO.success(entity.getId(),entity.getCode(),"操作成功");
     }
@@ -1567,6 +1593,17 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         //删除释放冻结库存
         ids.stream().forEach(obj -> unLockVirtualInventory(obj));
 
+        //获取需要同步数帝云的数据
+        List<Map<String, Object>> sdyList = new ArrayList<>();
+        for (SoInfoEntity soInfoEntity : list) {
+            Map<String, Object> sdyMap = new HashMap<>();
+            SoInfoDTO.ViewDTO view = this.view(soInfoEntity.getId());
+            List<SoDetailEntity> soDetailEntities = soDetailService.listBaseByMainId(view.getId());
+            sdyMap.put("view", view);
+            sdyMap.put("detail", soDetailEntities);
+            sdyList.add(sdyMap);
+        }
+
         Boolean result = this.removeByIds(ids);
 
         if (result) {
@@ -1574,6 +1611,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             String content = "删除销售订单[%s]";
             List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
             operateLogService.batchAddModuleOperateLog(content, ModuleTypeEnum.SO.getCode(), pairList, "删除");
+
             //删除明细
             soDetailService.removeByMainIdList(ids);
 
@@ -1585,6 +1623,13 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
 
                 //发送金蝶
                 sendPushTask(list,SyncOperateEnum.OPERATE_DELETE.getCode());
+            }
+
+            // 同步数帝云
+            for (Map<String, Object> map : sdyList) {
+                SoInfoDTO.ViewDTO view = BeanUtil.toBean(map.get("view"), SoInfoDTO.ViewDTO.class);
+                List<SoDetailEntity> soDetailEntities = (List<SoDetailEntity>) map.get("detail");
+                soDetailEntities.forEach(soDetailEntity -> syncKingdeeSoService.syncDataToSdy(view, soDetailEntity, SyncOperateEnum.OPERATE_DELETE.getCode(), ""));
             }
         }
         return result;
@@ -3860,4 +3905,11 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         return dto;
     }
 
+    @Override
+    public void sdyFieldOrderHandler(String soId, String operateEnum, String deliveryStatus) {
+        //同步数帝云
+        SoInfoDTO.ViewDTO view = this.view(soId);
+        List<SoDetailEntity> soDetailEntities = soDetailService.listBaseByMainId(view.getId());
+        soDetailEntities.forEach(soDetailEntity -> syncKingdeeSoService.syncDataToSdy(view, soDetailEntity, operateEnum, deliveryStatus));
+    }
 }

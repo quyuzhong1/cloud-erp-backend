@@ -1,10 +1,12 @@
 package com.erp.model.oms.dto;
 
+import com.common.business.annotation.Dict;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.BillApproveStatusEnum;
 import com.common.business.validator.AddGroup;
 import com.common.core.anno.StateEnumValue;
+import com.erp.model.oms.enums.OrderSubTypeEnum;
 import com.erp.model.oms.enums.BillTypeEnum;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.AllArgsConstructor;
@@ -966,6 +968,11 @@ public class SoInfoDTO implements Serializable {
          * 客户订单号
          */
         private String customerOrderNo;
+
+        /**
+         * 单据子类型
+         */
+        private String transactionSubType;
     }
 
 
@@ -1215,6 +1222,11 @@ public class SoInfoDTO implements Serializable {
         private LocalDateTime createTime;
 
         /**
+         * 修改时间
+         */
+        private LocalDateTime updateTime;
+
+        /**
          * 审核人
          */
         private String approveUserName;
@@ -1244,6 +1256,17 @@ public class SoInfoDTO implements Serializable {
          * 客户订单号
          */
         private String customerOrderNo;
+
+        /**
+         * 单据子类型
+         */
+        @Dict(enumClass = OrderSubTypeEnum.class)
+        private String transactionSubType;
+
+        /**
+         * 版本
+         */
+        private Integer version;
 
 
         /**
@@ -1605,6 +1628,12 @@ public class SoInfoDTO implements Serializable {
          * 客户订单号
          */
         private String customerOrderNo;
+
+        /**
+         * 单据子类型
+         */
+        @Dict(enumClass = OrderSubTypeEnum.class)
+        private String transactionSubType;
     }
 
     @Data

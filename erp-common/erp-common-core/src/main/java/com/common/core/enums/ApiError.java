@@ -194,6 +194,9 @@ public enum ApiError implements Serializable {
     ERROR_THIRD_WAREHOUSE_NOTFOUND(80011,"第三方仓库不存在"),
     ERROR_THIRD_SYS_TYPE_BINDING(80012,"同一个第三方平台只能绑定一个{}"),
     ERROR_SYS_TYPE_NOTFOUND(80013,"{}不存在"),
+    ERROR_SDY_NOT_FOUND_SHOP_MAPPING(80014,"旺店通退货同步数帝云单据未找到对应的店铺映射【{}】"),
+    ERROR_SDY_NOT_FOUND_SHOP(80015,"数据同步数帝云未找到店铺信息，店铺id【{}】"),
+    ERROR_SDY_NOT_FOUND_CUSTOMER(80016,"店铺未绑定客户信息，店铺id【{}】"),
 
     /**
      * 工作流错误 workflow
@@ -970,6 +973,7 @@ public enum ApiError implements Serializable {
     SHOP_INFO_EXIST_WAREHOUSE_NOT_DISABLE(99120,"仓库已绑定店铺【{}】不允许禁用"),
     SHOP_INFO_EXIST_WAREHOUSE_NOT_DISAPPROVE(99121,"仓库已绑定店铺【{}】不允许反审核"),
     WAIT_HANDLE_IS_CANCEL_PROCESS(99122,"只有待处理，处理中，已处理的单据允许撤销"),
+    OPEN_STATUS_OPEN_TIME_NOT_NULL(99222,"仓库状态为启用，启用日期不能空"),
 
     OVERSEAS_WAREHOUSE_INBOUND_DETAIL_NOT_EXIST(99121,"海外仓入库单详情不存在"),
     OVERSEAS_WAREHOUSE_INBOUND_NOT_EXIST(99122,"海外仓入库单不存在"),
@@ -1400,6 +1404,12 @@ public enum ApiError implements Serializable {
     ERROR_92160(92160,"本地推送消息单"),
     ERROR_92161(92161,"退款订单明细"),
     ERROR_92162(92162,"合并后的平台订单后过长"),
+
+
+    TRANSACTION_SUB_TYPE_NOT_NULL(92154,"【{}】手工单的单据子类型不能为空"),
+
+
+
     /**
      * TMS 错误
      * 从94000 开始

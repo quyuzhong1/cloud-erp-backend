@@ -70,6 +70,9 @@ public class DmpInputAmzReportDirectQueryApiInitHandler extends DmpInputInitHand
             ServiceException.runError("extendJson参数为空");
         }
         String reportType = extendObj.getString("reportType");
+        if (StringUtils.isBlank(reportType)){
+            ServiceException.runError("报告类型reportType不能为空");
+        }
 
         // 明细配置
         // 是否检查数据最后时间
@@ -191,7 +194,7 @@ public class DmpInputAmzReportDirectQueryApiInitHandler extends DmpInputInitHand
         // 校验中台是否已存在
         DmpAmzReportInfoEntity reportInfo = dmpAmzReportInfoService.getByReportId(report.getReportId(), Report.ProcessingStatusEnum.DONE.getValue());
         if (null != reportInfo) {
-            log.warn("[Amazon SP-APi] 查询最新listing最新报告已存在跳过:{}", report.getReportId());
+            log.warn("[Amazon SP-APi] 查询最新报告{},已存在跳过:{}", report.getReportType(), report.getReportId());
             return Collections.emptyList();
         }
         // 是否校验数据结束时间最新

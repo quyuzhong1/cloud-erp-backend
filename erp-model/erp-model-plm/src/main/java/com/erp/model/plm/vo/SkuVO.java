@@ -186,7 +186,7 @@ public class SkuVO implements Serializable {
     /**
      * 标准零售价
      */
-    private BigDecimal retailPrice;
+    private BigDecimal retailPrice = BigDecimal.ZERO;
 
     /**
      * 一级供应商

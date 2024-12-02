@@ -71,7 +71,7 @@ public class DmpSoReturnDetailEntity extends BaseEntity<DmpSoReturnDetailEntity>
     * 金额
     */
     @TableField("amount")
-    private BigDecimal amount;
+    private BigDecimal amount = BigDecimal.ZERO;
     /**
     * 是否赠品：true/false
     */
@@ -194,6 +194,23 @@ public class DmpSoReturnDetailEntity extends BaseEntity<DmpSoReturnDetailEntity>
      */
     @TableField("refund_tax")
     private BigDecimal refundTax;
+    /**
+     * sku名称
+     */
+    @TableField("sku_name")
+    private String skuName;
+
+    /**
+     * 退货入库数量
+     */
+     @TableField("stockin_num")
+     private Integer stockinNum;
+     
+     /**
+      * 退货原始状态
+      */
+     @TableField("return_original_type")
+     private String returnOriginalType;
 
     public static final String MAIN_ID = "main_id";
 

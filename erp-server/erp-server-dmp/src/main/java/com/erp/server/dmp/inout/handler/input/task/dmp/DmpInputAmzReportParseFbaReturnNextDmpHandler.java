@@ -15,7 +15,7 @@ import java.util.TreeMap;
 @Slf4j
 @Service
 @Scope("prototype")
-public class DmpInputAmzReportParseReturnNextDmpHandler extends DmpInputDoNextDmpHandler {
+public class DmpInputAmzReportParseFbaReturnNextDmpHandler extends DmpInputDoNextDmpHandler {
 
 	@Override
 	protected List<Map<String, Object>> getDetailList(Map<String, Object> dmpInputMongoEntity){
@@ -24,6 +24,6 @@ public class DmpInputAmzReportParseReturnNextDmpHandler extends DmpInputDoNextDm
 
 	@Override
 	protected void afterConvertData(Map<List<Map<String, Object>>, List<TreeMap<String, Object>>> dmpInputDataDmpRelationMaps) {
-		log.debug("DmpInputAmzReportParseReturnNextDmpHandler afterConvertData 处理");
+		log.debug("DmpInputAmzReportParseFbaReturnNextDmpHandler afterConvertData 处理");
 	}
 }

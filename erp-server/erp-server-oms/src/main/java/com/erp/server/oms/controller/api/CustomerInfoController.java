@@ -16,6 +16,7 @@ import com.common.core.utils.BeanMapper;
 import com.erp.model.oms.dto.CustomerAddressDTO;
 import com.erp.model.oms.dto.CustomerB2bSellerChangeDTO;
 import com.erp.model.oms.dto.CustomerDTO;
+import com.erp.model.oms.dto.CustomerDTO.CustomerBatchUpdateDTO;
 import com.erp.model.oms.entity.CustomerInfoEntity;
 import com.erp.server.oms.query.CustomerInfoQueryHandler;
 import com.erp.server.oms.service.CustomerAddressService;
@@ -379,7 +380,7 @@ public class CustomerInfoController extends BaseController {
      */
     @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "启用或者停用客户：ids={ids},禁用状态={disabled}(true=禁用;false=启用)")
     @PostMapping("/updateStatus")
-    public ApiResult<Object> updateStatus(@RequestBody @Validated UpdateStateDTO.BatchUpdateDTO dto) {
+    public ApiResult<Object> updateStatus(@RequestBody @Validated CustomerBatchUpdateDTO dto) {
         Boolean result = customerInfoService.updateStatus(dto);
         return Boolean.TRUE.equals(result) ? success() : failure();
     }

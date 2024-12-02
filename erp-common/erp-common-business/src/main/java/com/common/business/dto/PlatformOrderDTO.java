@@ -256,6 +256,21 @@ public class PlatformOrderDTO extends UniqueDto {
     private List<PlatformRefundOrderDTO> refundDTOList;
 
     /**
+     * 总优惠金额
+     */
+    private BigDecimal totalDiscount;
+
+    /**
+     * 取消商品总价
+     */
+    private BigDecimal totalCancelGoodsAmount;
+
+    /**
+     * 取消商品币别
+     */
+    private String cancelGoodsCurrency;
+
+    /**
      * 检查订单新增作废状态
      */
     public Boolean checkInsertInvalidStatus() {

@@ -20,6 +20,7 @@ import com.common.core.utils.MathUtil;
 import com.erp.model.dmp.entity.*;
 import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
+import com.erp.model.oms.enums.SoB2cItemStatusEnum;
 import com.erp.model.oms.enums.SoB2cPayStatusEnum;
 import com.erp.sdk.oms.amz.spapi.client.StringUtil;
 import com.erp.server.dmp.inout.dto.request.DmpOutputTaskRequest;
@@ -220,6 +221,9 @@ public class TikTokOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHandler
 
         //创建时间
         orderDTO.setPlatformOrderCreateTime(dmpSoInfoEntity.getPlatformCreateTime());
+
+        //优惠金额
+        orderDTO.setTotalDiscount(dmpSoInfoEntity.getTotalDiscount());
 
         // 订单明细
         List<PlatformOrderDetailDTO> details = parseDetailDto(dmpSoInfoEntity, dmpSoDetailEntityList);

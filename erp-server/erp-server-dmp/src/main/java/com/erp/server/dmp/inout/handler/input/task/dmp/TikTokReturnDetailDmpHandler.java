@@ -47,6 +47,7 @@ public class TikTokReturnDetailDmpHandler extends TikTokReturnGetDetailDmpHandle
                     dmpDataMap.put("logisticsFeeAmount", refundAmountMap.get("refundShippingFee"));
                     dmpDataMap.put("refundTax", refundAmountMap.get("refundTax"));
                     dmpDataMap.put("sellPrice", refundAmountMap.get("refundSubtotal"));
+                    dmpDataMap.put("amount", refundAmountMap.get("refundTotal"));
                     dmpDataMap.put("thirdOrderCode", dmpDataMap.get("orderId"));
                     dmpDataMap.put("platformOrderCode", dmpDataMap.get("orderId"));
                     dmpDataMap.put("soEntryId", refundAmountMap.get("orderLineItemId"));
@@ -62,11 +63,11 @@ public class TikTokReturnDetailDmpHandler extends TikTokReturnGetDetailDmpHandle
                 Object returnTypeObj = dmpDataMap.get("returnType");
                 if (returnTypeObj != null) {
                     if ("RETURN_AND_REFUND".equals(returnTypeObj.toString())) {
-                        dmpDataMap.put("solutionType", dmpDataMap.get("return_and_refund"));
+                        dmpDataMap.put("solutionType", "return_and_refund");
                     } else if ("REFUND".equals(returnTypeObj.toString())) {
-                        dmpDataMap.put("solutionType", dmpDataMap.get("refund"));
+                        dmpDataMap.put("solutionType", "refund");
                     } else if ("REPLACEMENT".equals(returnTypeObj.toString())) {
-                        dmpDataMap.put("solutionType", dmpDataMap.get("replacement"));
+                        dmpDataMap.put("solutionType", "replacement");
                     }
                 }
             }

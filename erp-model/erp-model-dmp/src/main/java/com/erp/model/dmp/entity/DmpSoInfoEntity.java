@@ -145,7 +145,7 @@ public class DmpSoInfoEntity extends BaseEntity<DmpSoInfoEntity> {
     * 商品总售价
     */
     @TableField("all_amount")
-    private BigDecimal allAmount;
+    private BigDecimal allAmount = BigDecimal.ZERO;
     /**
     * 运费收入
     */
@@ -226,6 +226,28 @@ public class DmpSoInfoEntity extends BaseEntity<DmpSoInfoEntity> {
     */
     @TableField("logistics_channel_name")
     private String logisticsChannelName;
+    /**
+     * 总优惠金额
+     */
+    @TableField("total_discount")
+    private BigDecimal totalDiscount = BigDecimal.ZERO;
+    /**
+     * 取消商品总价
+     */
+    @TableField("total_cancel_goods_amount")
+    private BigDecimal totalCancelGoodsAmount = BigDecimal.ZERO;
+    /**
+     * 取消商品币别
+     */
+    @TableField("cancel_goods_currency")
+    private String cancelGoodsCurrency = "";
+
+    /**
+     * 预估货品成本
+     */
+     @TableField("goods_cost")
+     private BigDecimal goodsCost;
+
 
 
     public static final String PLATFORM_CREATE_TIME = "platform_create_time";
@@ -308,5 +330,7 @@ public class DmpSoInfoEntity extends BaseEntity<DmpSoInfoEntity> {
     public Serializable pkVal() {
         return null;
     }
+
+
 
 }

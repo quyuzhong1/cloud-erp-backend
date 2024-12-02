@@ -818,7 +818,4 @@ public class SoInfoController extends BaseController {
         Boolean result = soInfoService.unLockVirtualInventory(dto.getId());
         return result ? success():failure();
     }
-
-
-
 }

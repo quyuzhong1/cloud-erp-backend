@@ -317,6 +317,31 @@ public class SoB2cEntity extends BaseEntity<SoB2cEntity> {
     @TableField("is_manual_delivery")
     private Boolean isManualDelivery;
 
+    /**
+     * 总优惠金额
+     */
+    @TableField("total_discount")
+    private BigDecimal totalDiscount;
+
+    /**
+     * 取消商品总价
+     */
+    @TableField("total_cancel_goods_amount")
+    private BigDecimal totalCancelGoodsAmount;
+
+    /**
+     * 取消商品币别
+     */
+    @TableField("cancel_goods_currency")
+    private String cancelGoodsCurrency;
+
+    /**
+     * 订单交易子状态
+     * 枚举：OrderSubTypeEnum
+     */
+    @TableField("transaction_sub_type")
+    private String transactionSubType;
+
     public static final String CODE = "code";
 
     public static final String APPROVE_STATUS = "approve_status";

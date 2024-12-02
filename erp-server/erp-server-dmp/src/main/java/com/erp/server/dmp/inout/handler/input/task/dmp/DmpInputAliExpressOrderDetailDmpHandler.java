@@ -6,6 +6,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import com.erp.model.oms.enums.SoB2cBillStatusEnum;
+import com.erp.model.oms.enums.SoB2cItemStatusEnum;
+import com.erp.oms.aliexpress.constants.AliexpressConstants;
+import com.erp.oms.aliexpress.dto.response.AliExpressOrder;
+import org.apache.commons.collections4.CollectionUtils;
 import org.python.icu.math.BigDecimal;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
@@ -38,8 +43,8 @@ public class DmpInputAliExpressOrderDetailDmpHandler extends DmpInputAliExpressO
 			paramDataList.add(new ParamData(DmpInputMongoHandler.MONGO_BASE_NEXTLEVELID, DmpInputMongoHandler.MONGO_BASE_NEXTLEVELID, PannoEnum.EQ, nextLevelId));
 			findMongoData = mongoService.findMongoData(paramDataList, "aliexpress_soOutstock_data");
 			Map<String, Map<String, Object>> soOutstockMaps = findMongoData.stream().collect(Collectors.toMap(f -> f.get("trade_order_no").toString(), f -> f , (f1 , f2) -> f2));
-			
 			for(Map<String, Object> dmpInputMongoChild : dmpInputMongoChildList) {
+				AliExpressOrder sourceOrder = JSON.parseObject(JSON.toJSONString(dmpInputMongoChild), AliExpressOrder.class);
 				Object child_order_list = dmpInputMongoChild.get("child_order_list");
 				if(child_order_list != null) {
 					List<Map<String, Object>> child_order_map_list = (List<Map<String, Object>>) child_order_list;
@@ -63,7 +68,7 @@ public class DmpInputAliExpressOrderDetailDmpHandler extends DmpInputAliExpressO
 								c.put("currencyCode", currency_code_obj);
 							}
 						}
-						
+
 						Map<String, Object> lableMap = new HashMap<>();
 						lableMap.put("alreadyTaxed", c.get("already_taxed"));
 				        lableMap.put("logisticsWarehouseType", c.get("logistics_warehouse_type"));

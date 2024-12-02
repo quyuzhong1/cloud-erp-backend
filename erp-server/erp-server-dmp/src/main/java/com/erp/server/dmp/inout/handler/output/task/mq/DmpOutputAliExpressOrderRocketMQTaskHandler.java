@@ -13,6 +13,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import com.erp.model.oms.enums.SoB2cBillStatusEnum;
+import com.erp.model.oms.enums.SoB2cItemStatusEnum;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
@@ -282,6 +284,15 @@ public class DmpOutputAliExpressOrderRocketMQTaskHandler extends DmpOutputRocket
         orderDTO.setAbnormalType("");
         // 同步金蝶状态（默认0无需同步,1待同步,2同步中,3同步成功,4同步失败）
         orderDTO.setSyncKingdeeStatus("0");
+
+        //总优惠金额
+		orderDTO.setTotalDiscount(dmpSoInfoEntity.getTotalDiscount());
+
+		//取消商品总价
+		orderDTO.setTotalCancelGoodsAmount(dmpSoInfoEntity.getTotalCancelGoodsAmount());
+
+		//取消商品币别
+		orderDTO.setCancelGoodsCurrency(dmpSoInfoEntity.getCancelGoodsCurrency());
         
         List<PlatformOrderLogisticsDTO> orderLogisticList = new ArrayList<>();
         if(CollUtil.isNotEmpty(dmpLogisticInfoEntityList)) {
@@ -359,7 +370,6 @@ public class DmpOutputAliExpressOrderRocketMQTaskHandler extends DmpOutputRocket
                 detailDTO.setWarehouseOrgName("");
                 // 库位
                 detailDTO.setWarehouseLocation("");
-                
                 details.add(detailDTO);
         	}
         }

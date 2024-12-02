@@ -30,6 +30,7 @@ import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.FileUtil;
 import com.common.core.utils.MathUtil;
+import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
 import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
@@ -37,6 +38,7 @@ import com.erp.model.oms.entity.SoB2cLogisticsEntity;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.sys.entity.DictCountryOrgEntity;
+import com.erp.model.sys.enums.ChargeSuperiorEnum;
 import com.erp.model.tms.dto.*;
 import com.erp.model.tms.entity.*;
 import com.erp.model.tms.enums.*;
@@ -46,12 +48,12 @@ import com.erp.model.tms.vo.response.InterceptResponseVO;
 import com.erp.model.tms.vo.response.LogisticsOrderResponseVO;
 import com.erp.model.tms.vo.response.LogisticsPrintLabelResponse;
 import com.erp.model.wms.dto.FirstMileDeliveryDTO;
+import com.common.business.dto.ShudiyunB2cOrderDTO;
 import com.erp.model.wms.entity.SoOutstockEntity;
 import com.erp.model.wms.enums.B2cDeliveryLogisticTypeEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.oms.feign.CfgRuleFeign;
 import com.erp.rpc.oms.feign.SoB2cFeign;
-import com.erp.rpc.oms.feign.SoInfoFeign;
 import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.rpc.wms.feign.WmsFirstMileDeliveryFeign;
 import com.erp.server.tms.constant.TmsConstant;
@@ -71,6 +73,7 @@ import javax.annotation.Resource;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -94,9 +97,6 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
 
     @Resource
     private DictBasicService dictBasicService;
-
-    @Resource
-    private LogisticsTrackService logisticsTrackService;
 
     @Resource
     private LogisticsBillCostService logisticsBillCostService;
@@ -136,15 +136,8 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
     @Resource
     private LogisticsBillService logisticsBillService;
 
-
     @Resource
     private MercadoSdkClientService mercadoSdkClientService;
-
-    @Resource
-    private LogisticsOperateService logisticsOperateService;
-
-    @Resource
-    private SoInfoFeign soInfoFeign;
 
     @Resource
     private CfgRuleFeign cfgRuleFeign;
@@ -154,6 +147,11 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
     private DownloadTaskFeign downloadTaskFeign;
     @Resource
     private WmsFirstMileDeliveryFeign wmsFirstMileDeliveryFeign;
+    @Resource
+    private LogisticsSupplierService logisticsSupplierService;
+
+    @Resource
+    private TmsPushMsgService tmsPushMsgService;
 
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -169,7 +167,8 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
 
         logisticsBillDetailService.add(logisticsBillEntity, addDTO.getDetailList(),true);
 
-
+        //同步速递云运单
+        pushSdyFieldHandler(logisticsBillEntity,SyncOperateEnum.OPERATE_APPROVE.getCode());
         return save;
     }
 
@@ -194,6 +193,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         // 记录主单操作日志
         String msg = CharSequenceUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), logisticsBillEntity.getId(), "物流单");
         operateLogService.addModuleOperateLogByObj(old, logisticsBillEntity, null, logisticsBillEntity.getId(), msg);
+
         return Boolean.TRUE;
     }
 
@@ -208,9 +208,14 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         List<LogisticsBillEntity> billEntityList = listByOutstockIds(outstockIdList);
         if (CollectionUtils.isNotEmpty(billEntityList)) {
             List<String> ids = billEntityList.stream().map(LogisticsBillEntity::getId).collect(Collectors.toList());
+            List<LogisticsBillEntity> logisticsBillEntityList = this.listByIds(ids);
+            //同步速递云运单
+            logisticsBillEntityList.forEach(req -> pushSdyFieldHandler(req, SyncOperateEnum.OPERATE_DELETE.getCode()));
+
             logisticsBillDetailService.removeByMainIds(ids,true);
             return this.removeByIds(ids);
         }
+
         return Boolean.FALSE;
     }
 
@@ -275,6 +280,9 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
             logisticsBillDetailService.saveOrUpdateBatch(detailEntityList);
             //新增物流费用单
             addLogisticsBillCost(saveEntity,detailEntityList);
+
+            //同步速递云运单
+            pushSdyFieldHandler(saveEntity, SyncOperateEnum.OPERATE_APPROVE.getCode());
         }
         return Boolean.TRUE;
     }
@@ -1272,6 +1280,87 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
                 String businessCode = CharSequenceUtil.isBlank(businessDTO.getBusinessCode()) ? StrUtil.EMPTY : businessDTO.getBusinessCode();
                 this.lambdaUpdate().eq(LogisticsBillEntity::getId, entity.getId()).set(LogisticsBillEntity::getBusinessCode, businessCode).update();
             }
+        }
+    }
+
+    /**
+     * 同步速递云销售出库单
+     * @param entity
+     * @param operateEnum
+     */
+    public void pushSdyFieldHandler(LogisticsBillEntity entity, String operateEnum) {
+        if (ObjectUtil.isEmpty(entity)) {
+            log.error("运单同步数帝云失败入参：error={}", entity);
+            return;
+        }
+        DateTimeFormatter localDateTime = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+
+        List<LogisticsBillDetailEntity> detailEntityList = logisticsBillDetailService.listByMainIds(Arrays.asList(entity.getId()));
+                LogisticsChannelEntity channelEntity = logisticsChannelService.getById(entity.getChannelId());
+
+        String supplierName = "";
+        if(Objects.nonNull(channelEntity)){
+            LogisticsSupplierEntity supplierEntity = logisticsSupplierService.getById(channelEntity.getMainId());
+            supplierName = supplierEntity.getSupplierName();
+        }
+
+        for (int i = 0; i < detailEntityList.size(); i++) {
+            LogisticsBillDetailEntity logisticsBillDetailEntity = detailEntityList.get(i);
+
+            ShudiyunB2cOrderDTO shudiyunB2cOrderDTO = new ShudiyunB2cOrderDTO();
+
+            shudiyunB2cOrderDTO.setBiz_uni_key(entity.getId()+logisticsBillDetailEntity.getId());
+            shudiyunB2cOrderDTO.setBiz_no(entity.getTransportNo());
+            if (entity.getDeliveryTime() != null) {
+                shudiyunB2cOrderDTO.setBiz_time(localDateTime.format(entity.getDeliveryTime()));
+            }
+            //默认运单
+            shudiyunB2cOrderDTO.setTransaction_type("运单");
+            shudiyunB2cOrderDTO.setTransaction_sub_type("普通运单");
+            shudiyunB2cOrderDTO.setBiz_status(LogisticTrackStatusEnum.getName(logisticsBillDetailEntity.getTrackStatus()));
+            if (entity.getVersion() == null) {
+                entity.setVersion(0);
+            }
+            if (logisticsBillDetailEntity.getVersion() == null) {
+                entity.setVersion(0);
+            }
+            shudiyunB2cOrderDTO.setStatus(shudiyunB2cOrderDTO.sdyStatusHandle(operateEnum, entity.getVersion(), logisticsBillDetailEntity.getVersion()));
+
+            if (entity.getDeliveryTime() != null) {
+                shudiyunB2cOrderDTO.setDelivery_time(localDateTime.format(entity.getDeliveryTime()));
+            }
+            if (logisticsBillDetailEntity.getSignTime() != null) {
+                shudiyunB2cOrderDTO.setLogistics_delivery_time(localDateTime.format(logisticsBillDetailEntity.getSignTime()));
+            } else {
+                shudiyunB2cOrderDTO.setLogistics_delivery_time(localDateTime.format(LocalDateTime.now()));
+            }
+            shudiyunB2cOrderDTO.setDelivery_number(entity.getOutstockCode());
+
+            if (CharSequenceUtil.isBlank(supplierName)) {
+                shudiyunB2cOrderDTO.setLogistic_company("无");
+            } else {
+                shudiyunB2cOrderDTO.setLogistic_company(supplierName);
+            }
+
+            if (channelEntity != null && CharSequenceUtil.isNotBlank(channelEntity.getMainId())) {
+                shudiyunB2cOrderDTO.setLogistic_company_code(channelEntity.getMainId());
+            } else {
+                shudiyunB2cOrderDTO.setLogistic_company_code("无");
+            }
+
+            shudiyunB2cOrderDTO.setWaybill_number(entity.getTransportNo());
+            shudiyunB2cOrderDTO.setForeign_waybill_number(logisticsBillDetailEntity.getTrackNo());
+            shudiyunB2cOrderDTO.setSource_system("SDC");
+            shudiyunB2cOrderDTO.setRoot_node_no_initial(logisticsBillDetailEntity.getTrackNo());
+
+            TmsPushMsgEntity tmsPushMsgEntity = new TmsPushMsgEntity();
+            tmsPushMsgEntity.setTargetPlatform(DmpBasicSystemCodeEnum.SDY.getCode());
+            tmsPushMsgEntity.setSourceType(SourceTypeEnum.SDY_LOGISTICS_BILL.getCode());
+            tmsPushMsgEntity.setSourceId(logisticsBillDetailEntity.getId());
+            tmsPushMsgEntity.setSourceCode(entity.getTransportNo());
+            tmsPushMsgEntity.setSyncOperate(operateEnum);
+            tmsPushMsgEntity.setPushData(JSON.toJSONString(shudiyunB2cOrderDTO));
+            tmsPushMsgService.save(tmsPushMsgEntity);
         }
     }
 }

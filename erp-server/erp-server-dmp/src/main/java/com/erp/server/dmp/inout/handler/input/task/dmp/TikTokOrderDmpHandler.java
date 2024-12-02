@@ -8,6 +8,7 @@ import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.BillApproveStatusEnum;
 import com.common.core.anno.ParamData;
 import com.common.core.enums.PannoEnum;
+import com.common.core.utils.MathUtil;
 import com.erp.model.dmp.entity.DmpInputTaskEntity;
 import com.erp.model.dmp.entity.DmpSoDetailEntity;
 import com.erp.model.dmp.entity.DmpSoInfoEntity;
@@ -119,6 +120,7 @@ public class TikTokOrderDmpHandler extends DmpInputDbConvertDmpHandler {
                         dmpDataMap.put("orderStatus", ApproveStatusEnum.WAIT_SUBMIT.getCode());
                         dmpDataMap.put("deliveryStatus", SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode());
                         dmpDataMap.put("invalidStatus", Boolean.TRUE);
+                        dmpDataMap.put("isCancel", Boolean.TRUE);
                     }
                 }
                 Object shippingTypeObj = dmpDataMap.get("logisticType");
@@ -188,6 +190,7 @@ public class TikTokOrderDmpHandler extends DmpInputDbConvertDmpHandler {
                     dmpDataMap.put("allAmount", paymentMap.get("subTotal"));
                     dmpDataMap.put("currencyCode", paymentMap.get("currency"));
                     dmpDataMap.put("shippingAmount", paymentMap.get("shippingFee"));
+                    dmpDataMap.put("totalDiscount", MathUtil.valueOf(paymentMap.get("sellerDiscount")).add(MathUtil.valueOf(paymentMap.get("platformDiscount"))));
                 }
             }
         }

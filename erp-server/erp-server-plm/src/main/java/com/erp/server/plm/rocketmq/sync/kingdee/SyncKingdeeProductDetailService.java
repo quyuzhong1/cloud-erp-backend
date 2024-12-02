@@ -20,5 +20,9 @@ public interface SyncKingdeeProductDetailService {
      */
     DmpPushTaskEntity syncDataToKingdee(ProductDetailEntity entity, String operate);
     
+    void syncDataToSdy(ProductDetailEntity entity, String operate);
+    
     Map<String, Object> newSyncDataToKingdee(ProductDetailEntity entity, String operate);
+    
+    Map<String, Object> newSyncDataToSdy(ProductDetailEntity entity, String operate);
 }

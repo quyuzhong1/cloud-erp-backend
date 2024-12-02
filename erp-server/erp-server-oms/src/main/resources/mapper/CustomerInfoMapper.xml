@@ -13,6 +13,15 @@
         use_org_id,
         create_user_name,create_time,
         ci.platform_type as platformType,
+        currency,
+        financial_organization,
+        enable_time,
+        down_time,
+        trade_currency,
+        business_mode,
+        transactional_mode,
+        period_setting,
+        check_type,
         ci.country_id
         FROM customer_info ci
         WHERE
@@ -36,6 +45,15 @@
         use_org_name,group_id,group_name,
         create_user_name,create_time,
         ci.platform_type as platformType,
+        currency,
+        financial_organization,
+        enable_time,
+        down_time,
+        trade_currency,
+        business_mode,
+        transactional_mode,
+        period_setting,
+        check_type,
         ci.country_id
         FROM customer_info ci
         WHERE

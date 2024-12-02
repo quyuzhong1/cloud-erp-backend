@@ -59,7 +59,8 @@ public class MercadoReturnDetailDmpHandler extends DmpInputDoNextDmpHandler {
                     dmpDataMap.put("skuId", skuNo);
                     dmpDataMap.put("skuNo", skuNo);
                 }
-
+                //退货类型暂时仅退款
+                dmpDataMap.put("solutionType", "refund");
 
                 Object unitPriceObj = dmpDataMap.get("sellPrice");
                 Object quantityObj = dmpDataMap.get("qty");

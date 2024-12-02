@@ -251,4 +251,11 @@ public interface LogisticsBillService extends SuperService<LogisticsBillEntity> 
      * 同步业务单号到物流单
      */
     void initLogisticsBillBusinessCode();
+
+    /**
+     * 同步速递云销售出库单
+     * @param entity
+     * @param operateEnum
+     */
+    void pushSdyFieldHandler(LogisticsBillEntity entity, String operateEnum);
 }
