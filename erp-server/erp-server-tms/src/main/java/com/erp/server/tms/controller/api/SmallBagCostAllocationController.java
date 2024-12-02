@@ -24,7 +24,7 @@ import com.erp.model.tms.dto.SmallBagCostAllocationDTO;
  * 小包费用分摊
  *
  * @author shukai
- * @since 2024-11-29
+ * @since 2024-12-02
  */
 @Slf4j
 @RestController
@@ -38,7 +38,7 @@ public class SmallBagCostAllocationController extends BaseController {
     /**
     * 新增
     * @author shukai
-    * @date:  2024-11-29
+    * @date:  2024-12-02
     * @param dto
     * @return ApiResult<String>
     */
@@ -51,7 +51,7 @@ public class SmallBagCostAllocationController extends BaseController {
     /**
     * 修改
     * @author shukai
-    * @date:  2024-11-29
+    * @date:  2024-12-02
     * @param dto
     * @return ApiResult
     */

@@ -36,12 +36,12 @@ public class SmallBagCostAllocationDetailEntity extends BaseEntity<SmallBagCostA
     @TableField("bill_amount")
     private BigDecimal billAmount;
     /**
-    * 费用类型
+    * 费用类型 AllocationFeeTypeEnum
     */
     @TableField("fee_type")
     private String feeType;
     /**
-    * 费用分摊类型
+    * 费用分摊类型 CostAllocationEnum
     */
     @TableField("fee_allocation_type")
     private String feeAllocationType;
@@ -56,7 +56,7 @@ public class SmallBagCostAllocationDetailEntity extends BaseEntity<SmallBagCostA
     @TableField("allocated_currency")
     private String allocatedCurrency;
     /**
-    * 费用分摊方式
+    * 单个产品分摊
     */
     @TableField("product_allocated_amount")
     private BigDecimal productAllocatedAmount;

@@ -10,7 +10,7 @@ import org.apache.commons.lang3.StringUtils;
  * </p>
  *
  * @author shukai
- * @since 2024-11-29 19:09:23
+ * @since 2024-12-02 10:48:45
  */
 public enum SmallBagCostAllocationReportStatusEnum implements EnumMessage {
 	TOBECONFIRM("toBeConfirm", "待确认"),

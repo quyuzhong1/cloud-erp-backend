@@ -10,14 +10,14 @@ import com.erp.model.tms.dto.SmallBagCostAllocationDTO;
  * </p>
  *
  * @author shukai
- * @since 2024-11-29
+ * @since 2024-12-02
  */
 public interface SmallBagCostAllocationService extends SuperService<SmallBagCostAllocationEntity> {
 
     /**
     * 新增
     * @author shukai
-    * @date: 2024-11-29
+    * @date: 2024-12-02
     * @param dto
     * @return
     */
@@ -26,7 +26,7 @@ public interface SmallBagCostAllocationService extends SuperService<SmallBagCost
     /**
     * 修改
     * @author shukai
-    * @date: 2024-11-29
+    * @date: 2024-12-02
     * @param dto
     * @return
     */

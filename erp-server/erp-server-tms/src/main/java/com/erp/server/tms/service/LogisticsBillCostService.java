@@ -20,6 +20,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -222,4 +223,6 @@ public interface LogisticsBillCostService extends SuperService<LogisticsBillCost
     void removeRefByReconciliationIds(String reconciliationId, List<String> logisticsBillIds);
     
     void generateLogisticsBill(SoReturnInstockEntity entity);
+    
+    BatchResultDTO pushAllocation(String id , LocalDate reportDate);
 }

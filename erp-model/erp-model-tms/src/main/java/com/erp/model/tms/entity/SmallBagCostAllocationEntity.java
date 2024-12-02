@@ -16,7 +16,7 @@ import com.common.business.enums.ApproveStatusEnum;
  * </p>
  *
  * @author shukai
- * @since 2024-11-29
+ * @since 2024-12-02
 */
 @Data
 @EqualsAndHashCode(callSuper = true)
@@ -55,10 +55,10 @@ public class SmallBagCostAllocationEntity extends BaseEntity<SmallBagCostAllocat
     @TableField("sku_no")
     private String skuNo;
     /**
-    * 产品名称
+    * 销售出库单明细id
     */
-    @TableField("sku_name")
-    private String skuName;
+    @TableField("outstock_detail_id")
+    private String outstockDetailId;
     /**
     * 发货数量
     */
@@ -78,7 +78,7 @@ public class SmallBagCostAllocationEntity extends BaseEntity<SmallBagCostAllocat
 
     public static final String SKU_NO = "sku_no";
 
-    public static final String SKU_NAME = "sku_name";
+    public static final String OUTSTOCK_DETAIL_ID = "outstock_detail_id";
 
     public static final String DELIVERY_QTY = "delivery_qty";
 

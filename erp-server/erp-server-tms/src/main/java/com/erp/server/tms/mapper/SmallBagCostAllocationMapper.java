@@ -11,7 +11,7 @@ import org.apache.ibatis.annotations.Mapper;
  * </p>
  *
  * @author shukai
- * @since 2024-11-29
+ * @since 2024-12-02
  */
 @Mapper
 public interface SmallBagCostAllocationMapper extends BaseMapper<SmallBagCostAllocationEntity> {

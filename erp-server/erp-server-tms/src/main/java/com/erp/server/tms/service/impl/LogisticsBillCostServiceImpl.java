@@ -5,8 +5,12 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.json.JSONObject;
+
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
+import com.alibaba.fastjson.JSON;
+import com.baomidou.mybatisplus.core.incrementer.IdentifierGenerator;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
@@ -36,6 +40,7 @@ import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.entity.SoB2cLogisticsEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.CurrencyDTO;
+import com.erp.model.tms.dto.CfgSettingValueDTO.AllocationSettingDTO;
 import com.erp.model.tms.dto.DictBasicDTO;
 import com.erp.model.tms.dto.LogisticsBillCostDTO;
 import com.erp.model.tms.dto.LogisticsBillCostDTO.AddDataDTO;
@@ -45,11 +50,13 @@ import com.erp.model.tms.dto.LogisticsBillCostDTO.EditViewDTO;
 import com.erp.model.tms.dto.LogisticsBillDTO;
 import com.erp.model.tms.dto.LogisticsBillDetailDTO;
 import com.erp.model.tms.dto.TmsCostDetailDTO;
+import com.erp.model.tms.dto.TmsCostDetailDTO.CostViewDTO;
 import com.erp.model.tms.dto.TmsCostDetailDTO.DetailDTO;
 import com.erp.model.tms.dto.TmsCostDetailDTO.UpdateDTO;
 import com.erp.model.tms.dto.excel.LogisticsBillCostExcelDTO;
 import com.erp.model.tms.entity.*;
 import com.erp.model.tms.enums.*;
+import com.erp.model.wms.entity.SoOutstockDetailEntity;
 import com.erp.model.wms.entity.SoReturnInstockEntity;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
@@ -63,6 +70,7 @@ import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
@@ -76,7 +84,9 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -127,6 +137,14 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
     private LogisticsChannelService logisticsChannelService;
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
+    @Resource
+    private SmallBagCostAllocationService smallBagCostAllocationService;
+    @Resource
+    private SmallBagCostAllocationDetailService smallBagCostAllocationDetailService;
+    @Autowired
+	protected IdentifierGenerator identifierGenerator;
+    @Resource
+    private CfgSettingService cfgSettingService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -1387,4 +1405,103 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         
         return BatchResultDTO.success(entity.getId(), entity.getTrackNo(), OperationTypeEnum.DELETE);
     }
+
+	@Transactional(rollbackFor = Exception.class)
+	@Override
+	public BatchResultDTO pushAllocation(String id, LocalDate reportDate) {
+		LogisticsBillCostEntity entity = getById(id);
+		String reconciliationStatus = entity.getReconciliationStatus();
+		if(!(ReconciliationStatusEnum.ESTIMATE_CONFIRM.getCode().equals(reconciliationStatus)
+				|| ReconciliationStatusEnum.CONFIRMED.getCode().equals(reconciliationStatus))) {
+			return BatchResultDTO.success(entity.getId(), entity.getTrackNo(), "只支持对账状态为暂估确认或账单确认下推分摊");
+		}
+		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM");
+		String reportDateStr = reportDate.format(formatter);
+		List<SmallBagCostAllocationEntity> smallBagCostAllocationEntityList = smallBagCostAllocationService.lambdaQuery()
+				.eq(SmallBagCostAllocationEntity::getCostId, id).list();
+		if(CollUtil.isNotEmpty(smallBagCostAllocationEntityList)) {
+			if(smallBagCostAllocationEntityList.stream().anyMatch(s -> s.getReportDate().equals(reportDateStr))) {
+				return BatchResultDTO.success(entity.getId(), entity.getTrackNo(), reportDateStr + "已存在下推分摊数据，不可下推分摊");
+			}
+			if(smallBagCostAllocationEntityList.stream().anyMatch(s -> !SmallBagCostAllocationReportStatusEnum.CONFIRMED.getCode().equals(s.getReportStatus()))) {
+				return BatchResultDTO.success(entity.getId(), entity.getTrackNo(), "存在历史未确认分摊数据，不可下推分摊");
+			}
+		}
+		
+		LogisticsBillEntity logisticsBillEntity = logisticsBillService.getById(entity.getLogisticsBillId());
+		String outstockId = logisticsBillEntity.getOutstockId();
+		if(org.apache.commons.lang3.StringUtils.isBlank(outstockId)) {
+			return BatchResultDTO.success(entity.getId(), entity.getTrackNo(), "销售出库单id不存在");
+		}
+		List<SoOutstockDetailEntity> soOutstockDetailEntityList = FeignQuery.create(SoOutstockDetailEntity.class)
+				.eq(SoOutstockDetailEntity::getMainId, logisticsBillEntity.getOutstockId()).list();
+		if(CollUtil.isEmpty(soOutstockDetailEntityList)) {
+			return BatchResultDTO.success(entity.getId(), entity.getTrackNo(), "销售出库单明细不存在");
+		}
+		
+		LogisticsBillCostTypeEnum costType = ReconciliationStatusEnum.ESTIMATE_CONFIRM.getCode().equals(reconciliationStatus) 
+				? LogisticsBillCostTypeEnum.ESTIMATED : LogisticsBillCostTypeEnum.ACTUAL;
+		List<TmsCostDetailDTO.CostViewDTO> costList = tmsCostDetailService.listCostByMainIdList(Collections.singletonList(id));
+		Map<String, List<CostViewDTO>> costCategoryMaps = new HashMap<>();
+		if(CollUtil.isNotEmpty(costList)) {
+			costList = costList.stream().filter(c -> costType.getCode().equals(c.getType())).collect(Collectors.toList());
+			costCategoryMaps = costList.stream().collect(Collectors.groupingBy(TmsCostDetailDTO.CostViewDTO::getDictCostCategory));
+		}
+		
+		List<SmallBagCostAllocationEntity> addSmallBagCostAllocationEntityList = new ArrayList<>();
+		List<SmallBagCostAllocationDetailEntity> addSmallBagCostAllocationDetailEntityList = new ArrayList<>();
+		
+		CfgSettingEntity byKey = cfgSettingService.getByKey(CfgSettingEnum.ALLOCATION_SETTING.getCode());
+		Map<String, String> feeTypeSettingMaps = new HashMap<>();
+		AllocationSettingDTO allocationSettingDTO = JSON.parseObject(byKey.getDataJson().toJSONString(0), AllocationSettingDTO.class);
+		AllocationFeeTypeEnum[] values = AllocationFeeTypeEnum.values();
+		for(AllocationFeeTypeEnum allocationFeeTypeEnum : values) {
+			if(AllocationFeeTypeEnum.SHIPPING_COST == allocationFeeTypeEnum) {
+				feeTypeSettingMaps.put(allocationFeeTypeEnum.getCode(), allocationSettingDTO.getPackageShippingCost());
+			}else if(AllocationFeeTypeEnum.DECLARE_COST == allocationFeeTypeEnum) {
+				feeTypeSettingMaps.put(allocationFeeTypeEnum.getCode(), allocationSettingDTO.getPackageTariffFee());
+			}else if(AllocationFeeTypeEnum.OTHER_COST == allocationFeeTypeEnum) {
+				feeTypeSettingMaps.put(allocationFeeTypeEnum.getCode(), allocationSettingDTO.getPackageDeductibleTax());
+			}else if(AllocationFeeTypeEnum.DEDUCTIBLE_TAX == allocationFeeTypeEnum) {
+				feeTypeSettingMaps.put(allocationFeeTypeEnum.getCode(), allocationSettingDTO.getPackageOtherFee());
+			}
+		}
+		for(SoOutstockDetailEntity soOutstockDetailEntity : soOutstockDetailEntityList) {
+			SmallBagCostAllocationEntity smallBagCostAllocationEntity = new SmallBagCostAllocationEntity();
+			String mainId = identifierGenerator.nextId(smallBagCostAllocationEntity).toString();
+			smallBagCostAllocationEntity.setId(mainId);
+			smallBagCostAllocationEntity.setCostId(id);
+			smallBagCostAllocationEntity.setReportDate(reportDateStr);
+			smallBagCostAllocationEntity.setReportStatus(SmallBagCostAllocationReportStatusEnum.TOBECONFIRM.getCode());
+			smallBagCostAllocationEntity.setBigTableStatus(SmallBagCostAllocationBigTableStatusEnum.TODO.getCode());
+			smallBagCostAllocationEntity.setSkuNo(soOutstockDetailEntity.getSkuNo());
+			smallBagCostAllocationEntity.setOutstockDetailId(smallBagCostAllocationEntity.getId());
+			smallBagCostAllocationEntity.setDeliveryQty(soOutstockDetailEntity.getActualQty());
+			addSmallBagCostAllocationEntityList.add(smallBagCostAllocationEntity);
+			
+			for(Map.Entry<String, String> feeTypeSettingMap : feeTypeSettingMaps.entrySet()) {
+				SmallBagCostAllocationDetailEntity smallBagCostAllocationDetailEntity = new SmallBagCostAllocationDetailEntity();
+				smallBagCostAllocationDetailEntity.setMainId(mainId);
+				String feeType = feeTypeSettingMap.getKey();
+				List<CostViewDTO> costViewDTOList = costCategoryMaps.get(feeType);
+				BigDecimal costValueSum = costViewDTOList.stream().map(CostViewDTO::getCostValue).reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
+				smallBagCostAllocationDetailEntity.setBillAmount(costValueSum);
+				smallBagCostAllocationDetailEntity.setFeeType(feeType);
+				String feeAllocationType = feeTypeSettingMap.getValue();
+				if(org.apache.commons.lang3.StringUtils.isBlank(feeAllocationType)) {
+					feeAllocationType = CostAllocationEnum.WEIGHT_ALLOCATION.getCode();
+				}
+				smallBagCostAllocationDetailEntity.setFeeAllocationType(feeAllocationType);
+				if(CostAllocationEnum.WEIGHT_ALLOCATION.getCode().equals(feeAllocationType)) {
+					
+				}else {
+					
+				}
+				addSmallBagCostAllocationDetailEntityList.add(smallBagCostAllocationDetailEntity);
+			}
+		
+		}
+		
+		return BatchResultDTO.success(entity.getId(), entity.getTrackNo(), "下推成功");
+	}
 }

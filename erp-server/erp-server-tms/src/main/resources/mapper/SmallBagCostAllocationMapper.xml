@@ -18,7 +18,7 @@
        <result column="report_status" property="reportStatus" />
        <result column="big_table_status" property="bigTableStatus" />
        <result column="sku_no" property="skuNo" />
-       <result column="sku_name" property="skuName" />
+       <result column="outstock_detail_id" property="outstockDetailId" />
        <result column="delivery_qty" property="deliveryQty" />
     </resultMap>
 
@@ -33,7 +33,7 @@
         update_time,
         version,
         is_deleted,
-        cost_id, report_date, account_date, report_status, big_table_status, sku_no, sku_name, delivery_qty
+        cost_id, report_date, account_date, report_status, big_table_status, sku_no, outstock_detail_id, delivery_qty
     </sql>
 
 

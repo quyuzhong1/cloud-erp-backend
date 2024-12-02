@@ -15,7 +15,7 @@ import javax.validation.constraints.Size;
  * </p>
  *
  * @author shukai
- * @since 2024-11-29
+ * @since 2024-12-02
 */
 @Data
 @NoArgsConstructor
@@ -67,9 +67,9 @@ public class SmallBagCostAllocationDTO implements Serializable {
         private String skuNo;
 
         /**
-        * 产品名称
+        * 销售出库单明细id
         */
-        private String skuName;
+        private String outstockDetailId;
 
         /**
         * 发货数量
@@ -144,11 +144,11 @@ public class SmallBagCostAllocationDTO implements Serializable {
         private String bigTableStatus;
 
         /**
-        * 产品名称
+        * 销售出库单明细id
         */
-        @NotBlank(message = "产品名称不能为空")
-        @Size(max = 500,message = "产品名称最大长度不能超过500位")
-        private String skuName;
+        @NotBlank(message = "销售出库单明细id不能为空")
+        @Size(max = 19,message = "销售出库单明细id最大长度不能超过19位")
+        private String outstockDetailId;
 
         /**
         * 发货数量
