@@ -107,13 +107,13 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
         List<TmsFirstMileReconciliationDetailEntity> tmsFirstMileReconciliationDetailEntities = tmsFirstMileReconciliationDetailService.listByRelationCode(Arrays.asList(entity.getSourceCode()));
 
 
-/*        LogisticsLargeDTO.AddDTO addDTO = new LogisticsLargeDTO.AddDTO();
-        addDTO.setOutstockCode(deliveryEntity.getCode());
+        LogisticsLargeDTO.AddDTO addDTO = new LogisticsLargeDTO.AddDTO();
+/*        addDTO.setOutstockCode(deliveryEntity.getCode());
         addDTO.setOutstockTime(deliveryEntity.getApproveTime());
 
 
-        addDTO.set
-        return BatchResultDTO.success(entity.getId(), entity.getBusinessCode(), OperationTypeEnum.UPDATE_STATUS);*/
+        addDTO.set*/
+        return BatchResultDTO.success(entity.getId(), entity.getBusinessCode(), OperationTypeEnum.UPDATE_STATUS);
 
     }
 }
