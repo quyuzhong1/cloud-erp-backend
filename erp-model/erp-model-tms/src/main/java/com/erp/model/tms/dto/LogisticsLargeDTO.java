@@ -401,6 +401,14 @@ public class LogisticsLargeDTO implements Serializable {
         @Size(max = 32,message = "产品id最大长度不能超过32位")
         private String skuId;
 
+
+        /**
+        * 产品编码
+        */
+        @NotBlank(message = "产品编码不能为空")
+        @Size(max = 32,message = "产品编码最大长度不能超过32位")
+        private String skuNo;
+
         /**
         * 发货数量
         */

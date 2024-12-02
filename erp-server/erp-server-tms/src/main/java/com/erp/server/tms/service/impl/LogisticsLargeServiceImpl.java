@@ -50,6 +50,9 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
     @Resource
     private LogisticsBillService logisticsBillService;
 
+    @Resource
+    private LogisticsBillCostService logisticsBillCostService;
+
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -112,9 +115,12 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
 
         //查询物流单
         LogisticsBillEntity logisticsBillEntity = logisticsBillService.getById(entity.getLogisticsBillId());
-
+        //自发货费用
+        List<LogisticsBillCostEntity> logisticsBillCostEntities = logisticsBillCostService.listByLogisticsBillIdList(Arrays.asList(logisticsBillEntity.getId()));
 
         LogisticsLargeDTO.AddDTO addDTO = new LogisticsLargeDTO.AddDTO();
+
+//        tmsFirstMileReconciliationDetailService.listByRelationCode()
 
 
         //头程对账单明细(一个头程物流单可生成多次对账单)
@@ -125,6 +131,9 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
         addDTO.setOutstockCode(deliveryEntity.getCode());
         addDTO.setOutstockTime(deliveryEntity.getApproveTime());
         addDTO.setPayStatus(tmsFirstMileReconciliationEntity.getPayStatus());
+        addDTO.setSkuId(firstMileSkuCostAllocationEntity.getSkuId());
+        addDTO.setSkuNo(firstMileSkuCostAllocationEntity.getSkuNo());
+        addDTO.setDeliveryQty(firstMileSkuCostAllocationEntity.getDeliveryQty());
 
 
 //        tmsFirstMileReconciliationService.set
