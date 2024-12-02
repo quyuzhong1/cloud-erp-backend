@@ -1493,6 +1493,16 @@ public class RequisitionApplicationDTO implements Serializable {
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
+    public static class PrintFnskuBillConfirmDTO {
+        private List<RequisitionApplicationDTO.PrintFnskuDetailDTO> details;
+    }
+
+    /**
+     * 打印fnsku的详情
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
     public static class PrintFnskuDetailDTO {
 
         /**
@@ -1547,6 +1557,10 @@ public class RequisitionApplicationDTO implements Serializable {
         /**
          * 拣货数量
          */
-        private Integer pickingQty = 0;
+        private Integer pickingQty;
+        /**
+         * 打印数量
+         */
+        private Integer printNum;
     }
 }

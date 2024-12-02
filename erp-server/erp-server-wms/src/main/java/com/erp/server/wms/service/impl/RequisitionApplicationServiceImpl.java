@@ -14,10 +14,13 @@ import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
+import com.common.business.constant.FileTemplateConstant;
 import com.common.business.dto.base.*;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
+import com.common.business.utils.JasperHelperUtil;
+import com.common.business.utils.PdfUtil;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.business.wrapper.FeignQuery;
@@ -45,6 +48,8 @@ import com.erp.model.plm.dto.LogisticsProductDTO;
 import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.sys.dto.FileTemplateDTO;
+import com.erp.model.sys.entity.FileTemplateEntity;
 import com.erp.model.sys.entity.SysPostEntity;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.excel.RequisitionApplicationAssembleExportDTO;
@@ -65,6 +70,7 @@ import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.oms.feign.SkuMappingFeign;
 import com.erp.rpc.plm.feign.LogisticsProductFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.rpc.sys.feign.FileTemplateFeign;
 import com.erp.rpc.sys.feign.SysPostFeign;
 import com.erp.server.wms.convert.RequisitionApplicationConverter;
 import com.erp.server.wms.listener.RequisitionApplicationDetailExcelListener;
@@ -85,11 +91,11 @@ import org.springframework.transaction.support.TransactionSynchronizationAdapter
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.util.ObjectUtils;
 import org.springframework.web.multipart.MultipartFile;
+import sun.misc.BASE64Decoder;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -210,6 +216,8 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
     private CfgRulePickingService cfgRulePickingService;
     @Resource
     private WarehouseLocationService warehouseLocationService;
+    @Resource
+    private FileTemplateFeign fileTemplateFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -2606,5 +2614,66 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
             result = map.values().stream().collect(Collectors.toList());
         }
         return result;
+    }
+
+
+    @Override
+    public void printFnskuBillConfirm(RequisitionApplicationDTO.PrintFnskuBillConfirmDTO dto, HttpServletResponse response) {
+        List<RequisitionApplicationDTO.PrintFnskuDetailDTO> details = dto.getDetails();
+        if(CollUtil.isEmpty(details)){
+            throw new ServiceException(ApiError.ERROR_1041,"FNSKU标签");
+        }
+        List<String> base64List = new ArrayList<>();
+        generateBase64ByFnskuBill(base64List, dto);
+        try {
+            String newMergePdfBase64 = PdfUtil.getNewMergePdfBase64(base64List);
+            // 设置响应头，告诉浏览器返回的是一个 PDF 文件
+            response.setContentType("application/pdf");
+            response.setHeader("Content-Disposition", "inline; filename=\"filename.pdf\""); // 设置 PDF 的显示方式和文件名
+            BASE64Decoder decoder = new BASE64Decoder();
+            try (OutputStream out = response.getOutputStream()) {
+                // 将 Base64 编码的字符串解码为字节数组
+                byte[] pdfBytes = decoder.decodeBuffer(newMergePdfBase64);
+                // 将字节数组写入到响应输出流中
+                out.write(pdfBytes);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new ServiceException(ApiError.ERROR_92249);
+        }
+    }
+
+    private void generateBase64ByFnskuBill(List<String> base64List, RequisitionApplicationDTO.PrintFnskuBillConfirmDTO dto){
+        FileTemplateDTO.GetOneDTO getOneDTO = new FileTemplateDTO.GetOneDTO();
+        getOneDTO.setName(FileTemplateConstant.FNSKU);
+        getOneDTO.setFileType(FileTypeEnum.JASPER.getCode());
+        getOneDTO.setSourceType(SourceTypeEnum.REQUISITION_APPLICATION.getCode());
+        FileTemplateEntity fileTemplateEntity = fileTemplateFeign.getByFileTemplate(getOneDTO);
+        //获取fastdfs文件
+        InputStream inputStream = FastDFSClientUtil.getInputStream(fileTemplateEntity.getUrl());
+        if (inputStream == null) {
+            log.info("获取fastdfs文件为空==========》地址：" + fileTemplateEntity.getUrl());
+            return;
+        }
+        try{
+            String filePath = "C:\\Users\\Administrator\\Desktop\\Blank_A4_4.jasper";
+            inputStream = new FileInputStream(filePath);
+            String nowDate = LocalDateTime.now().toString();
+            for (RequisitionApplicationDTO.PrintFnskuDetailDTO dtoDetail : dto.getDetails()) {
+                Integer printNum = dtoDetail.getPrintNum() == null || dtoDetail.getPrintNum() <=0 ? 1 : dtoDetail.getPrintNum();
+                Map<String, Object> map = BeanUtil.beanToMap(dtoDetail);
+                map.put("printTime",nowDate);
+                byte[] bytes = JasperHelperUtil.exportToPdfStream(inputStream, map, new ArrayList<>());
+                String base = Base64.getEncoder().encodeToString(bytes);
+                for (int i = 0; i < printNum; i++) {
+                    base64List.add("data:application/pdf;base64," + base);
+                }
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 }
