@@ -20,6 +20,7 @@ import com.erp.model.dmp.entity.*;
 import com.erp.model.dmp.enums.DmpOutputTaskRecordStatusEnum;
 import com.erp.model.dmp.enums.ThirdSysTypeEnum;
 import com.erp.model.oms.entity.CustomerInfoEntity;
+import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.enums.OrderSubTypeEnum;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
@@ -34,7 +35,7 @@ import com.erp.server.dmp.push.consumer.sdy.SdyDeliveryOrderConsumer;
 import com.erp.server.dmp.service.ThirdMappingService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
@@ -266,6 +267,16 @@ public class DmpOutputSdyOrderHandler extends DmpOutputTaskHandler {
                             shudiyunB2cOrderDTO.setOrganization_code(sysAccountingCompanyEntity.getCode());
                             shudiyunB2cOrderDTO.setOrganization_name(sysAccountingCompanyEntity.getName());
                         }
+
+                        String subPlatformType = customerInfo.getPlatformType();
+                        if(StringUtils.isNotBlank(subPlatformType)) {
+                            List<DictBasicEntity> dictList = FeignQuery.create(DictBasicEntity.class).eq(DictBasicEntity::getType, "sdySubPlatform").eq(DictBasicEntity::getName, subPlatformType).list();
+                            if(CollUtil.isNotEmpty(dictList)) {
+                                shudiyunB2cOrderDTO.setSubplatform_no(dictList.get(0).getValue());
+                                shudiyunB2cOrderDTO.setSubplatform_name(dictList.get(0).getName());
+                            }
+                        }
+
                     }
 
                     DictCurrencyEntity dictCurrencyEntity = FeignQuery.getById(DictCurrencyEntity.class, shopInfo.getTradeCurrency());
@@ -336,8 +347,6 @@ public class DmpOutputSdyOrderHandler extends DmpOutputTaskHandler {
                 shudiyunB2cOrderDTO.setSettlement_currency_code(shopInfo.getSettlementCurrency());
                 shudiyunB2cOrderDTO.setPlatform_id(dmpSoInfoEntity.getSourceSystem());
                 shudiyunB2cOrderDTO.setPlatform_name(PlatformDictEnum.getNameByCode(dmpSoInfoEntity.getSourcePlatform()));
-                shudiyunB2cOrderDTO.setSubplatform_no(shopInfo.getDictPlatform());
-                shudiyunB2cOrderDTO.setSubplatform_name(PlatformDictEnum.getNameByCode(shopInfo.getDictPlatform()));
 
                 shudiyunB2cOrderDTO.setSku_code("");
                 shudiyunB2cOrderDTO.setSku_name("");
