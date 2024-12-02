@@ -221,7 +221,7 @@ public class DmpOutputSdyReturnHandler extends DmpOutputTaskHandler {
                 List<ThirdMappingEntity> shop = thirdMappingService.lambdaQuery()
                         .eq(ThirdMappingEntity::getType, ThirdSysTypeEnum.SHOP.getCode())
                         .eq(ThirdMappingEntity::getThirdSysType, PlatformDictEnum.WDT.getCode())
-                        .eq(ThirdMappingEntity::getThirdCode, dmpSoReturnEntity.getShopId())
+                        .eq(ThirdMappingEntity::getThirdId, dmpSoReturnEntity.getShopId())
                         .list();
                 if (CollectionUtils.isNotEmpty(shop)) {
                     ShopInfoEntity shopInfo = FeignQuery.getById(ShopInfoEntity.class, shop.get(0).getSysId());
