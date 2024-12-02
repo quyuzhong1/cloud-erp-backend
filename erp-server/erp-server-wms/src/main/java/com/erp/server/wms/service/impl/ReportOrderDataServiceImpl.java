@@ -25,6 +25,7 @@ import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
 import com.erp.model.wms.entity.ReportOrderDataEntity;
 import com.erp.model.wms.entity.ReportOrderDemandDetailEntity;
+import com.erp.model.wms.entity.ReportOrderDemandEntity;
 import com.erp.model.wms.entity.SoDeliveryNoticeDetailEntity;
 import com.erp.model.wms.enums.CfgSettingOrderTypeEnum;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
@@ -411,6 +412,9 @@ public class ReportOrderDataServiceImpl extends SuperServiceImpl<ReportOrderData
         //查询30日前的结余库存，30天前最后一次流水
         List<ReportOrderSalesDTO.LastVirtualQtyDTO> lastVirtualQtyList = virtualTransFlowService.listLastVirtualQty(skuIdList, warehouseIdList, virtualWarehouseIdList, LocalDate.now().minusDays(30));
 
+        //缺货统计
+        List<ReportOrderDemandEntity> reportOrderDemandList = reportOrderDemandService.listByParam(skuIdList, warehouseIdList, virtualWarehouseIdList);
+
         List<ReportOrderSalesDTO.AddDTO> addOrUpdateList = new ArrayList<>();
         Map<String, List<ReportOrderDataEntity>> map = resultList.stream().collect(Collectors.groupingBy(obj -> obj.getSkuId().concat(obj.getWarehouseId()).concat(obj.getVirtualWarehouseId())));
         for (Map.Entry<String, List<ReportOrderDataEntity>> entry : map.entrySet()) {
@@ -422,19 +426,32 @@ public class ReportOrderDataServiceImpl extends SuperServiceImpl<ReportOrderData
             addDTO.setSkuId(entity.getSkuId());
 
             //需求总数量
-            Integer totalQty = value.stream().map(ReportOrderDataEntity::getQty).reduce(MathUtil.ZERO, Integer::sum);
+            Integer totalQty = reportOrderDemandList.stream().filter(obj ->
+                    CharSequenceUtil.equals(obj.getSkuId(),entity.getSkuId())
+                    && CharSequenceUtil.equals(obj.getWarehouseId(),entity.getWarehouseId())
+                    && CharSequenceUtil.equals(obj.getVirtualWarehouseId(),entity.getVirtualWarehouseId())
+            ).map(ReportOrderDemandEntity::getTotalQty).reduce(MathUtil.ZERO, Integer::sum);
             addDTO.setTotalQty(totalQty);
             //b2b总数量
-            Integer b2bQty = value.stream().filter(obj -> CharSequenceUtil.equals(obj.getSourceType(),SourceTypeEnum.SO_INFO.getCode()))
-                    .map(ReportOrderDataEntity::getQty).reduce(MathUtil.ZERO, Integer::sum);
+            Integer b2bQty = reportOrderDemandList.stream().filter(obj ->
+                    CharSequenceUtil.equals(obj.getSkuId(),entity.getSkuId())
+                    && CharSequenceUtil.equals(obj.getWarehouseId(),entity.getWarehouseId())
+                    && CharSequenceUtil.equals(obj.getVirtualWarehouseId(),entity.getVirtualWarehouseId())
+            ).map(ReportOrderDemandEntity::getSoQty).reduce(MathUtil.ZERO, Integer::sum);
             addDTO.setB2bQty(b2bQty);
             //b2c总数量
-            Integer b2cQty = value.stream().filter(obj -> CharSequenceUtil.equals(obj.getSourceType(),SourceTypeEnum.SO_B2C.getCode()))
-                    .map(ReportOrderDataEntity::getQty).reduce(MathUtil.ZERO, Integer::sum);
+            Integer b2cQty = reportOrderDemandList.stream().filter(obj ->
+                    CharSequenceUtil.equals(obj.getSkuId(),entity.getSkuId())
+                    && CharSequenceUtil.equals(obj.getWarehouseId(),entity.getWarehouseId())
+                    && CharSequenceUtil.equals(obj.getVirtualWarehouseId(),entity.getVirtualWarehouseId())
+            ).map(ReportOrderDemandEntity::getB2cSoQty).reduce(MathUtil.ZERO, Integer::sum);
             addDTO.setB2cQty(b2cQty);
             //头程总数量
-            Integer firstMileQty = value.stream().filter(obj -> CharSequenceUtil.equals(obj.getSourceType(),SourceTypeEnum.REQUISITION_APPLICATION.getCode()))
-                    .map(ReportOrderDataEntity::getQty).reduce(MathUtil.ZERO, Integer::sum);
+            Integer firstMileQty = reportOrderDemandList.stream().filter(obj ->
+                    CharSequenceUtil.equals(obj.getSkuId(),entity.getSkuId())
+                    && CharSequenceUtil.equals(obj.getWarehouseId(),entity.getWarehouseId())
+                    && CharSequenceUtil.equals(obj.getVirtualWarehouseId(),entity.getVirtualWarehouseId())
+            ).map(ReportOrderDemandEntity::getFirstMileQty).reduce(MathUtil.ZERO, Integer::sum);
             addDTO.setFirstMileQty(firstMileQty);
             //虚拟仓可用库存
             Integer virtualUsableQty = virtualInventoryList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSkuId(), entity.getSkuId())

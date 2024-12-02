@@ -2,10 +2,8 @@ package com.erp.server.wms.service.impl;
 
 
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.PagingDTO;
@@ -32,7 +30,6 @@ import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.wms.mapper.ReportOrderDemandMapper;
 import com.erp.server.wms.service.*;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -369,6 +366,14 @@ public class ReportOrderDemandServiceImpl extends SuperServiceImpl<ReportOrderDe
             batchAddVirtualTransfer(virtualTransferList);
         }
         return Boolean.TRUE;
+    }
+
+    @Override
+    public List<ReportOrderDemandEntity> listByParam(List<String> skuIdList, List<String> warehouseIdList, List<String> virtualWarehouseIdList) {
+        if (CollUtil.isEmpty(skuIdList) || CollUtil.isEmpty(warehouseIdList) || CollUtil.isEmpty(virtualWarehouseIdList)) {
+            return Collections.emptyList();
+        }
+        return this.baseMapper.listByParam(skuIdList,warehouseIdList,virtualWarehouseIdList);
     }
 
     /**

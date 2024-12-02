@@ -7,6 +7,8 @@ import com.erp.model.wms.entity.ReportOrderDemandEntity;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import java.util.List;
+
 
 /**
  * <p>
@@ -33,4 +35,14 @@ public interface ReportOrderDemandMapper extends BaseMapper<ReportOrderDemandEnt
      * @date 2024/9/27 12:08
      */
     void deleteAll();
+    /**
+     * 根据sku、仓库、虚拟仓查询
+     * @author will
+     * @date 2024/12/2 17:59
+     * @param skuIdList
+     * @param warehouseIdList
+     * @param virtualWarehouseIdList
+     * @return List<ReportOrderDemandEntity>
+     */
+    List<ReportOrderDemandEntity> listByParam( @Param("skuIdList")List<String> skuIdList,@Param("warehouseIdList") List<String> warehouseIdList,@Param("virtualWarehouseIdList") List<String> virtualWarehouseIdList);
 }

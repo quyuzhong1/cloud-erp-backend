@@ -79,5 +79,27 @@
         rod.id desc
     </select>
 
+    <!-- 根据sku、仓库、虚拟仓查询 -->
+    <select id="listByParam" resultType="com.erp.model.wms.entity.ReportOrderDemandEntity">
+        select
+        <include refid="Base_Column_List" />
+        from report_order_demand rod
+        <where>
+            rod.is_deleted = false
+            and sku_id in
+            <foreach collection="skuIdList" open="(" close=")" item="item" separator=",">
+                #{item}
+            </foreach>
+            and warehouse_id in
+            <foreach collection="warehouseIdList" open="(" close=")" item="item" separator=",">
+                #{item}
+            </foreach>
+            and virtual_warehouse_id in
+            <foreach collection="virtualWarehouseIdList" open="(" close=")" item="item" separator=",">
+                #{item}
+            </foreach>
+        </where>
+    </select>
+
 
 </mapper>
