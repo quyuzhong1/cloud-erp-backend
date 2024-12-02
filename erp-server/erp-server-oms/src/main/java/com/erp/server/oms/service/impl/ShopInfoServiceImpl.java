@@ -161,6 +161,12 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
     @Override
     @Transactional(rollbackFor = Exception.class)
     public List<ShopInfoEntity> add(ShopDTO.AddDTO dto) {
+    	Boolean isHaveWarehouse = dto.getIsHaveWarehouse();
+    	if(Boolean.TRUE.equals(isHaveWarehouse)) {
+    		if(StringUtils.isBlank(dto.getWarehouseId()) || StringUtils.isBlank(dto.getReturnWarehouse())) {
+    			throw new ServiceException("包含平台仓业务，店铺平台仓库和店铺退货仓库不能为空");
+    		}
+    	}
         ShopInfoEntity shop = new ShopInfoEntity();
         String dictPlatform = dto.getDictPlatform();
         //亚马逊
@@ -170,7 +176,7 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         //检查店铺是否存在
         checkIsExist("", dto.getDictPlatform(), dto.getAccount(), dto.getDictAreaCode(), dto.getDictCountryCodeList());
         //检测仓库
-        checkWarehouseExist(dto.getIsHaveWarehouse(), dto.getWarehouseId());
+        checkWarehouseExist(isHaveWarehouse, dto.getWarehouseId());
         //如果是亚马逊
         if (amazon.getCode().equals(dictPlatform)) {
             return this.handleAmazonShop(dto);
@@ -489,6 +495,12 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
     public ShopInfoEntity updateShop(ShopDTO.UpdateDTO dto) {
+    	Boolean isHaveWarehouse = dto.getIsHaveWarehouse();
+    	if(Boolean.TRUE.equals(isHaveWarehouse)) {
+    		if(StringUtils.isBlank(dto.getWarehouseId()) || StringUtils.isBlank(dto.getReturnWarehouse())) {
+    			throw new ServiceException("包含平台仓业务，店铺平台仓库和店铺退货仓库不能为空");
+    		}
+    	}
         ShopInfoEntity shopInfo = this.getById(dto.getId());
         if (Objects.isNull(shopInfo)) {
             throw new ServiceException(ApiError.ERROR_92058);
@@ -532,7 +544,7 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
             }
         }
         //检测仓库
-        checkWarehouseExist(dto.getIsHaveWarehouse(), dto.getWarehouseId());
+        checkWarehouseExist(isHaveWarehouse, dto.getWarehouseId());
         shopInfo.setChargeName(chargeName);
         List<BaseIdDTO.CodeDTO> orgList = sysUserFeign.getAccountingCompanyList(Arrays.asList(salesOrgId));
         String orgName = CollectionUtils.isNotEmpty(orgList) ? orgList.get(0).getName() : "";
@@ -552,8 +564,8 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
             shopInfo.setWarehouseName(updateDTO.getName());
             shopInfo.setWarehouseId(dto.getWarehouseId());
         }
-        shopInfo.setIsHaveWarehouse(dto.getIsHaveWarehouse());
-        if (!dto.getIsHaveWarehouse()){
+        shopInfo.setIsHaveWarehouse(isHaveWarehouse);
+        if (!isHaveWarehouse){
             shopInfo.setWarehouseName("");
             shopInfo.setWarehouseId("");
         }
