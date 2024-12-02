@@ -1,22 +1,20 @@
 package com.erp.model.tms.dto;
 
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
-import javax.validation.constraints.NotNull;
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 
-import com.baomidou.mybatisplus.annotation.TableField;
-import com.common.business.annotation.Dict;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
+
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 /**
  * <p>
@@ -64,6 +62,9 @@ public class SmallBagCostAllocationDTO implements Serializable {
         * 核算状态：toBeConfirm=待确认，confirmed=已确认
         */
         private String reportStatus;
+        /**
+         * 核算状态名称
+         */
         private String reportStatusName;
         
         /**
@@ -80,6 +81,9 @@ public class SmallBagCostAllocationDTO implements Serializable {
         * 大表状态：toDo=待生成，done=已生成
         */
         private String bigTableStatus;
+        /**
+         * 大表状态名称
+         */
         private String bigTableStatusName;
         
         /**
@@ -131,6 +135,11 @@ public class SmallBagCostAllocationDTO implements Serializable {
         * sku
         */
         private String skuNo;
+        
+        /**
+         * 产品名称
+         */
+         private String skuName;
 
         /**
         * 销售出库单明细id
@@ -141,7 +150,99 @@ public class SmallBagCostAllocationDTO implements Serializable {
         * 发货数量
         */
         private Integer deliveryQty;
+        
+        /**
+    	 * 预估收费重
+    	 */
+    	private BigDecimal billingWeight;
+    	
+    	/**
+    	 * 实际计费重
+    	 */
+    	private BigDecimal billingWeightLogistics;
+    	
+    	/**
+    	 * 单SKU计费重
+    	 */
+    	private BigDecimal skuWeight;
+    	
+    	/**
+    	 * 单位成本
+    	 */
+    	private BigDecimal unitCost;
+    	
+    	/**
+    	 * 总成本
+    	 */
+    	private BigDecimal totalCost;
+    	
+    	/**
+    	 * 费用来源
+    	 */
+    	private String feeSource;
+    	
+    	/**
+         * 费用类型
+         */
+         private String feeType;
+         /**
+         * 费用类型名称
+         */
+        private String feeTypeName;
+        
+        /**
+         * 账单金额
+         */
+         private BigDecimal billAmount;
+         
+         /**
+          * 分摊金额
+          */
+         private BigDecimal allocatedAmount;
+          
+          /**
+           * 单个产品分摊
+           */
+         private BigDecimal productAllocatedAmount;
+          
+          /**
+           * 分摊组织
+           */
+         private String orgName;
+           
+           /**
+            * 费用分摊方式
+            */
+         private String feeAllocationType;
+            
+            /**
+             * 费用分摊方式名称
+             */
+         private String feeAllocationTypeName;
+           
+           /**
+            * 重量分摊方式
+            */
+         private String weightAllocationType;
+           /**
+            * 重量分摊方式名称
+            */
+         private String weightAllocationTypeName;
+         
+         /**
+          * 创建时间
+          */
+         private LocalDateTime createTime;
 
+         /**
+          * 更新人名称
+          */
+         private String updateUserName;
+
+         /**
+          * 更新时间
+          */
+         private LocalDateTime updateTime;
 
     }
 
@@ -273,6 +374,30 @@ public class SmallBagCostAllocationDTO implements Serializable {
     @NoArgsConstructor
     public static class ListDTO extends ViewDTO{
     	
+    }
+    
+    /**
+     * 修改状态
+     */
+    @Data
+    @NoArgsConstructor
+    public static class UpdateStatusDTO {
+
+        /**
+         * ids
+         */
+        private List<String> ids;
+
+        /**
+         * 会计期间
+         */
+        private String reportDate;
+        
+        /**
+         * 核算状态 http://172.16.100.11:3002/project/128/interface/api/25522 key=reportStatus
+         */
+        private String reportStatus;
+
     }
 
 }
