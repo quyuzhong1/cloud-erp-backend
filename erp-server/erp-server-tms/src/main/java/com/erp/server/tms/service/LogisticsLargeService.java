@@ -1,8 +1,15 @@
 package com.erp.server.tms.service;
+import com.erp.model.tms.entity.FirstMileCostAllocationEntity;
+import com.erp.model.tms.entity.FirstMileSkuCostAllocationDetailEntity;
+import com.erp.model.tms.entity.FirstMileSkuCostAllocationEntity;
 import com.erp.model.tms.entity.LogisticsLargeEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.tms.dto.LogisticsLargeDTO;
+import com.erp.model.wms.entity.FirstMileDeliveryDetailEntity;
+import com.erp.model.wms.entity.FirstMileDeliveryEntity;
+
+import java.util.List;
 
 /**
  * <p>
@@ -32,5 +39,16 @@ public interface LogisticsLargeService extends SuperService<LogisticsLargeEntity
     */
     Boolean update(LogisticsLargeDTO.UpdateDTO dto);
 
-
+    /**
+     *
+     * @Author Luo_WG
+     * @Date 2024/12/2 9:45
+     * @param entity
+     * @param firstMileSkuCostAllocationEntity
+     * @param skuCostDetailEntityList
+     * @param deliveryEntity
+     * @param deliveryDetailEntities
+     * @return com.common.business.dto.base.BatchResultDTO
+     **/
+    BatchResultDTO generateFirstMileLogisticsTable(FirstMileCostAllocationEntity entity, FirstMileSkuCostAllocationEntity firstMileSkuCostAllocationEntity, List<FirstMileSkuCostAllocationDetailEntity> skuCostDetailEntityList, FirstMileDeliveryEntity deliveryEntity, List<FirstMileDeliveryDetailEntity> deliveryDetailEntities);
 }

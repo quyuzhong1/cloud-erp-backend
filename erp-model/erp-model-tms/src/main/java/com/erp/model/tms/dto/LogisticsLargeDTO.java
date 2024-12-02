@@ -2,6 +2,8 @@ package com.erp.model.tms.dto;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+
+import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
@@ -753,7 +755,21 @@ public class LogisticsLargeDTO implements Serializable {
         */
         private LocalDateTime otherTaxPayTime;
 
-
+        /**
+         * 来源id
+         */
+        @NotBlank(message = "来源id不能为空")
+        private String sourceId;
+        /**
+         * 来源类型
+         */
+        @NotBlank(message = "来源类型不能为空")
+        private String sourceType;
+        /**
+         * 来源详情id
+         */
+        @NotBlank(message = "来源详情id不能为空")
+        private String sourceDetailId;
     }
 
 
