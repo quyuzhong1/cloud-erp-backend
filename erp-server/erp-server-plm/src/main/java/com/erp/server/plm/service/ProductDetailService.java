@@ -693,8 +693,9 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
     /**
      * 重算目的国申报单价
      * @param details
+     * @param isManual 是否手动计算
      */
-    void recalDestDeclarePrice(List<ProductDetailEntity> details);
+    List<BatchResultDTO> resetDestDeclarePrice(List<ProductDetailEntity> details, Boolean isManual);
 
     /**
      * 历史数据sku 增加默认值 并且把已存在目的国海关编码值移到custom中

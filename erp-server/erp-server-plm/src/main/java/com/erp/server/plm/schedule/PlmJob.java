@@ -1,18 +1,6 @@
 package com.erp.server.plm.schedule;
 
-import cn.hutool.core.collection.CollectionUtil;
-import cn.hutool.core.util.StrUtil;
-import cn.hutool.json.JSONObject;
-import cn.hutool.json.JSONUtil;
-import com.common.core.enums.CurrencyEnum;
-import com.common.core.utils.MathUtil;
-import com.erp.model.dmp.entity.DmpSkuCostEntity;
 import com.erp.model.plm.entity.ProductDetailEntity;
-import com.erp.model.plm.entity.ProductInfoEntity;
-import com.erp.model.plm.entity.ProductLogisticsEntity;
-import com.erp.model.tms.dto.CfgSettingValueDTO;
-import com.erp.model.tms.entity.CfgSettingEntity;
-import com.erp.model.tms.enums.CfgSettingEnum;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.tms.feign.CfgSettingFeign;
 import com.erp.server.plm.rocketmq.sync.dmp.SyncProductService;
@@ -25,26 +13,14 @@ import com.erp.server.plm.service.ProductLogisticsService;
 import com.xxl.job.core.context.XxlJobHelper;
 import com.xxl.job.core.handler.annotation.XxlJob;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
-import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
-import java.math.BigDecimal;
-import java.math.RoundingMode;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
-import java.util.stream.Collectors;
 
 import static cn.hutool.core.collection.CollUtil.isNotEmpty;
-import static cn.hutool.json.XMLTokener.entity;
 
 /**
  * 来源xxljob
@@ -112,7 +88,7 @@ public class PlmJob {
         List<ProductDetailEntity> details = productDetailService.getProductDetailByDestDeclarePrice();
         if (isNotEmpty(details)){
             XxlJobHelper.log("重算目的国申报价sku数量：{}", details.size());
-            productDetailService.recalDestDeclarePrice(details);
+            productDetailService.resetDestDeclarePrice(details, Boolean.FALSE);
         }
         XxlJobHelper.log("recalDestDeclarePrice end : {}", LocalDateTime.now());
     }
