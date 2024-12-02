@@ -1333,7 +1333,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         updatePackageAndTransferStatus(id, packageStatus, transferStatus, isRegistration, isUpdateTransferStatus);
 
         //如果有物流单号 就要去取消
-        if (StringUtils.isNotBlank(code) && StringUtils.isNotBlank(logisticsChannelId) && !Objects.equals(logisticsChannelId, existChannelId)) {
+        if (StringUtils.isNotBlank(code) && !Objects.equals(logisticsChannelId,existChannelId)) {
             //已存在的渠道为空
             if (StringUtils.isBlank(existChannelId)) {
                 throw new ServiceException(ApiError.CANCEL_LOGISTICS_ID_NOT_EXIST);
