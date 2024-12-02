@@ -3,11 +3,14 @@ package com.erp.server.tms.service.impl;
 
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.PermissionsDTO;
 import com.erp.model.tms.entity.SmallBagCostAllocationEntity;
 import com.erp.server.tms.mapper.SmallBagCostAllocationMapper;
 import com.erp.server.tms.service.SmallBagCostAllocationService;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
+import com.common.business.vo.PagingVO;
 import com.erp.server.tms.service.OperateLogService;
 import com.erp.server.tms.service.CommonService;
 import com.common.core.exception.ServiceException;
@@ -17,6 +20,10 @@ import org.springframework.transaction.annotation.Transactional;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import com.erp.model.tms.dto.SmallBagCostAllocationDTO;
+import com.erp.model.tms.dto.SmallBagCostAllocationDTO.ListDTO;
+import com.erp.model.tms.dto.SmallBagCostAllocationDTO.PagingParamDTO;
+import com.erp.model.tms.dto.SmallBagCostAllocationDTO.TabListDTO;
+
 import java.util.*;
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
@@ -93,4 +100,14 @@ public class SmallBagCostAllocationServiceImpl extends SuperServiceImpl<SmallBag
     private void handleData(SmallBagCostAllocationEntity smallBagCostAllocationEntity) {
     // TODO 验证数据 & 数据赋值
     }
+
+	@Override
+	public List<TabListDTO> tabList(PermissionsDTO dto) {
+		return null;
+	}
+
+	@Override
+	public PagingVO<ListDTO> paging(PagingDTO<PagingParamDTO> dto) {
+		return null;
+	}
 }

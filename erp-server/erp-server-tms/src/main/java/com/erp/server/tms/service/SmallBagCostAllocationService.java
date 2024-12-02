@@ -1,6 +1,10 @@
 package com.erp.server.tms.service;
 import com.erp.model.tms.entity.SmallBagCostAllocationEntity;
 import com.common.business.service.SuperService;
+import com.common.business.vo.PagingVO;
+
+import java.util.List;
+
 import com.common.business.dto.base.*;
 import com.erp.model.tms.dto.SmallBagCostAllocationDTO;
 
@@ -31,6 +35,9 @@ public interface SmallBagCostAllocationService extends SuperService<SmallBagCost
     * @return
     */
     Boolean update(SmallBagCostAllocationDTO.UpdateDTO dto);
-
+    
+    List<SmallBagCostAllocationDTO.TabListDTO> tabList(PermissionsDTO dto);
+    
+    PagingVO<SmallBagCostAllocationDTO.ListDTO> paging(PagingDTO<SmallBagCostAllocationDTO.PagingParamDTO> dto);
 
 }
