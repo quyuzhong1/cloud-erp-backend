@@ -9,6 +9,7 @@ import com.erp.model.oms.enums.SoB2cPayStatusEnum;
 import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.tms.entity.*;
 import com.erp.model.tms.enums.ReconciliationBillTypeEnum;
+import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.entity.FirstMileDeliveryDetailEntity;
 import com.erp.model.wms.entity.FirstMileDeliveryEntity;
 import com.erp.rpc.scm.feign.SupplierFeign;
@@ -147,7 +148,10 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
         //自发货费用
         List<LogisticsBillCostEntity> logisticsBillCostEntities = logisticsBillCostService.listByLogisticsBillIdList(Arrays.asList(logisticsBillEntity.getId()));
 
-//        wmsTaskFeign.listWarehouseByIds()
+        //查询仓库
+        List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listWarehouseByIds(Arrays.asList(deliveryEntity.getDeliveryWarehouseId(), deliveryEntity.getDestWarehouseId()));
+
+
         LogisticsLargeDTO.AddDTO addDTO = new LogisticsLargeDTO.AddDTO();
         addDTO.setOutstockCode(deliveryEntity.getCode());
         addDTO.setOutstockTime(deliveryEntity.getApproveTime());
@@ -169,6 +173,7 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
         addDTO.setPaymentCompanyName(supplierEntity.getPaymentCompanyName());
         addDTO.setTransportNo(logisticsBillEntity.getCounterNo());
 
+//        warehouseList.stream().filter(req -> deliveryEntity.getDeliveryWarehouseId().equals(req.getId())).collect(Collectors.toList());
 
         deliveryEntity.getDeliveryWarehouseId();
 
