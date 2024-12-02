@@ -225,6 +225,9 @@ public class RequisitionApplicationChangeServiceImpl extends SuperServiceImpl<Re
         if (ObjectUtil.isEmpty(entity)) {
             throw new ServiceException("未找到要货申请变更单数据");
         }
+        if(entity.getInvalidStatus()){
+            throw new ServiceException("该单据已作废，无法提交");
+        }
         validateSubmit(entity);
         // 更新单据审核状态
         this.updateApproveStatus(id, ApproveStatusEnum.APPROVE_ING.getStatus());
@@ -323,7 +326,7 @@ public class RequisitionApplicationChangeServiceImpl extends SuperServiceImpl<Re
     public BatchResultDTO delete(String id) {
         RequisitionApplicationChangeEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到要货申请变更单数据"));
         // 只有待提交数据允许删除
-        if (!Objects.equals(ApproveStatusEnum.WAIT_SUBMIT.getStatus(), entity.getApproveStatus())) {
+        if (!Objects.equals(ApproveStatusEnum.WAIT_SUBMIT.getStatus(), entity.getApproveStatus()) && !Objects.equals(ApproveStatusEnum.REJECT.getStatus(), entity.getApproveStatus())) {
             throw new ServiceException(ApiError.ERROR_98032);
         }
         super.removeById(id);
