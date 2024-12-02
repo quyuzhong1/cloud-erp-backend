@@ -230,4 +230,17 @@ public class GoodCangServiceTest {
         System.out.println("结果 :"+ response);
     }
 
+    @Test
+    public void getCalculateDeliveryFeeTest() {
+        GoodCangCalculateDeliveryFeeReq deliveryFeeReq = GoodCangCalculateDeliveryFeeReq
+                .builder()
+                .warehouseCode("USEA")
+                .countryCode("US")
+                .postcode("33178")
+                .weight(1F)
+                .build();
+        GoodCangResponse<List<GoodCangCalculateDeliveryFeeResp>> response = goodCangService.getCalculateDeliveryFee(deliveryFeeReq);
+        System.out.println(response);
+        System.out.println(JSONUtil.toJsonStr(response.getData()));
+    }
 }
