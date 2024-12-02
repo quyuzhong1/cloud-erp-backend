@@ -19,7 +19,6 @@ import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.wms.entity.OverseasProviderWarehouseEntity;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
-import com.erp.rpc.wms.feign.WmsOverseasWarehouseFeign;
 import com.erp.server.mrp.calculation.factory.CfgSettingFactory;
 import com.erp.server.mrp.calculation.factory.PlatformCalculationFactory;
 import com.erp.server.mrp.calculation.handler.StockingTimeHandler;
@@ -34,7 +33,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Service;
-import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 
 import javax.annotation.Resource;
@@ -98,9 +96,8 @@ public class BasicReplenishmentDataService {
     @Resource
     private HistoryInventoryEsService historyInventoryEsService;
     @Resource
-    private CfgRuleCommonService cfgRuleCommonService;
-    @Resource
-    private WmsOverseasWarehouseFeign wmsOverseasWarehouseFeign;
+    private CfgDataArchivingService cfgDataArchivingService;
+
 
     /**
      * 增量变动建议补货基础数据
@@ -176,7 +173,7 @@ public class BasicReplenishmentDataService {
         //获取库存配置
         CfgRuleSettingStrategy<CfgRuleCommonDTO.StrategyDTO, List<CfgRuleCommonDTO.StrategyResultDTO>> inventoryStrategy = cfgSettingFactory.getCfgRuleSettingHandler(CfgRuleSettingEnum.GET_INVENTORY.getCode());
         List<CfgRuleCommonDTO.StrategyResultDTO> inventoryResult = inventoryStrategy.process(new CfgRuleCommonDTO.StrategyDTO(platformType));
-        ReplenishmentInventoryDTO inventoryDTO = getAllInventoryQty(inventoryResult, platformType, calculationDate);
+        ReplenishmentInventoryDTO inventoryDTO = inventoryService.getAllInventoryQty(inventoryResult, platformType, calculationDate);
         //获取建议配置
         CfgRuleSettingStrategy<CfgRuleCommonDTO.StrategyDTO, List<CfgRuleCommonDTO.StrategyResultDTO>> suggestedStrategy = cfgSettingFactory.getCfgRuleSettingHandler(CfgRuleSettingEnum.GET_SUGGESTED_AMOUNT.getCode());
         List<CfgRuleCommonDTO.StrategyResultDTO> suggestResult = suggestedStrategy.process(new CfgRuleCommonDTO.StrategyDTO(platformType));
@@ -240,88 +237,7 @@ public class BasicReplenishmentDataService {
         }
     }
 
-    private ReplenishmentInventoryDTO getAllInventoryQty(List<CfgRuleCommonDTO.StrategyResultDTO> inventoryResult, String platformType, LocalDate calculationDate) {
-        ReplenishmentInventoryDTO dto = new ReplenishmentInventoryDTO();
-        String baseKey = CfgRuleCommonTypeEnum.getBaseInventoryRedisKey(platformType);
-        String calcDate = calculationDate.format(DateTimeFormatter.BASIC_ISO_DATE);
-        getFbaUsable(inventoryResult, baseKey, dto, calcDate);
-        getOverseasUsable(inventoryResult, baseKey, dto, calcDate);
-        getLocalUsable(inventoryResult, baseKey, dto, calcDate);
-        getVirtualUsable(inventoryResult, baseKey, dto, calcDate);
-        return dto;
-    }
-    /**
-     * 获取虚拟仓可用库存
-     *
-     * @param inventoryResult 库存配置
-     * @param baseKey         公共key
-     * @param dto             库存参数
-     * @param calcDate        日期
-     */
-    private void getVirtualUsable(List<CfgRuleCommonDTO.StrategyResultDTO> inventoryResult, String baseKey, ReplenishmentInventoryDTO dto, String calcDate) {
-        Set<String> usable = cfgRuleCommonService.findByKey(baseKey, inventoryResult, baseKey + ":" + CfgRuleInventoryNodeEnum.getLocalUsable());
-        if (CollectionUtils.isEmpty(usable)){
-            dto.setVirtualUsableList(Collections.emptyList());
-            return;
-        }
-        List<ReplenishmentInventoryDTO.VirtualUsableDTO> virtualUsableList = inventoryService.getVirtualUsable(usable, calcDate);
-        dto.setVirtualUsableList(virtualUsableList);
-    }
 
-    /**
-     * 获取本地仓可用库存
-     *
-     * @param inventoryResult 库存配置
-     * @param baseKey         公共key
-     * @param dto             库存参数
-     * @param calcDate        日期
-     */
-    private void getLocalUsable(List<CfgRuleCommonDTO.StrategyResultDTO> inventoryResult, String baseKey, ReplenishmentInventoryDTO dto, String calcDate) {
-        Set<String> usable = cfgRuleCommonService.findByKey(baseKey, inventoryResult, baseKey + ":" + CfgRuleInventoryNodeEnum.getLocalUsable());
-        if (CollectionUtils.isEmpty(usable)){
-            dto.setLocalUsableList(Collections.emptyList());
-            return;
-        }
-        List<ReplenishmentInventoryDTO.LocalUsableDTO> localUsableList = inventoryService.getLocalUsable(usable, calcDate);
-        dto.setLocalUsableList(localUsableList);
-    }
-
-    /**
-     * 获取海外仓可用库存
-     *
-     * @param inventoryResult 库存配置
-     * @param baseKey         公共key
-     * @param dto             库存参数
-     * @param calcDate        日期
-     */
-    private void getOverseasUsable(List<CfgRuleCommonDTO.StrategyResultDTO> inventoryResult, String baseKey, ReplenishmentInventoryDTO dto, String calcDate) {
-        Set<String> usable = cfgRuleCommonService.findByKey(baseKey, inventoryResult, baseKey + ":" + CfgRuleInventoryNodeEnum.getOverseasUsable());
-        if (CollectionUtils.isEmpty(usable)){
-            dto.setOverseasUsableList(Collections.emptyList());
-            return;
-        }
-        List<ReplenishmentInventoryDTO.OverseasUsableDTO> overseasUsableList = inventoryService.getOverseasUsable(usable, calcDate);
-        dto.setOverseasUsableList(overseasUsableList);
-    }
-
-    /**
-     * 获取FBA可用库存
-     *
-     * @param inventoryResult 库存配置
-     * @param baseKey         公共key
-     * @param dto             库存参数
-     * @param calcDate        日期
-     */
-    private void getFbaUsable(List<CfgRuleCommonDTO.StrategyResultDTO> inventoryResult, String baseKey, ReplenishmentInventoryDTO dto, String calcDate) {
-        //获取fba可用
-        Set<String> usable = cfgRuleCommonService.findByKey(baseKey, inventoryResult, baseKey + ":" + CfgRuleInventoryNodeEnum.getFbaUsable());
-        if (CollectionUtils.isEmpty(usable)) {
-            dto.setFbaUsableList(Collections.emptyList());
-            return;
-        }
-        List<ReplenishmentInventoryDTO.FbaUsableDTO> fbaUsableList = inventoryService.getFbaUsable(usable, calcDate);
-        dto.setFbaUsableList(fbaUsableList);
-    }
 
 
     /**
@@ -346,6 +262,7 @@ public class BasicReplenishmentDataService {
         LocalDate endDate = LocalDate.now().minusDays(1);
         //归档该条数据明细
         dataArchivingService.dataArchiving(detail.getId());
+        cfgDataArchivingService.dataArchivingSuggestion(id);
         //获取所有店铺
         ApiResult<List<ShopInfoEntity>> allShopResult = shopInfoFeign.list();
         if (!allShopResult.isSuccess()) {
@@ -384,7 +301,7 @@ public class BasicReplenishmentDataService {
         //获取库存配置
         CfgRuleSettingStrategy<CfgRuleCommonDTO.StrategyDTO, List<CfgRuleCommonDTO.StrategyResultDTO>> inventoryStrategy = cfgSettingFactory.getCfgRuleSettingHandler(CfgRuleSettingEnum.GET_INVENTORY.getCode());
         List<CfgRuleCommonDTO.StrategyResultDTO> inventoryResult = inventoryStrategy.process(new CfgRuleCommonDTO.StrategyDTO(suggestion.getPlatformType()));
-        ReplenishmentInventoryDTO inventoryDTO = getAllInventoryQty(inventoryResult, suggestion.getPlatformType(), LocalDate.now());
+        ReplenishmentInventoryDTO inventoryDTO = inventoryService.getAllInventoryQty(inventoryResult, suggestion.getPlatformType(), LocalDate.now());
         //获取建议配置
         CfgRuleSettingStrategy<CfgRuleCommonDTO.StrategyDTO, List<CfgRuleCommonDTO.StrategyResultDTO>> suggestedStrategy = cfgSettingFactory.getCfgRuleSettingHandler(CfgRuleSettingEnum.GET_SUGGESTED_AMOUNT.getCode());
         List<CfgRuleCommonDTO.StrategyResultDTO> suggestResult = suggestedStrategy.process(new CfgRuleCommonDTO.StrategyDTO(suggestion.getPlatformType()));

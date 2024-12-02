@@ -354,6 +354,8 @@ public class ShopifyOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHandle
         //付款状态
         if (dmpSoInfoEntity.getPayTime() != null) {
             orderDTO.setPayStatus(SoB2cPayStatusEnum.ENUM_PAID.getCode());
+        } else {
+            orderDTO.setPayStatus(SoB2cPayStatusEnum.ENUM_PAYMENT.getCode());
         }
 
         orderDTO.setApproveStatusStr(dmpSoInfoEntity.getOrderStatus());

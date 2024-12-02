@@ -11,13 +11,6 @@ import java.util.Set;
 
 public interface InventoryService {
 
-    /**
-     * 计算FBA可用库存
-     *
-     * @param codes    选中的code值
-     * @param calcDate 计算日
-     */
-    List<ReplenishmentInventoryDTO.FbaUsableDTO> getFbaUsable(Set<String> codes, String calcDate);
 
     /**
      * 计算FBA可用库存
@@ -43,30 +36,6 @@ public interface InventoryService {
                                                                             String sourceType,
                                                                             ReplenishmentInventoryTypeEnum inventoryTypeEnum,
                                                                             String type);
-
-    /**
-     * 获取海外仓可用库存
-     *
-     * @param codes    编码
-     * @param calcDate 日期
-     */
-    List<ReplenishmentInventoryDTO.OverseasUsableDTO> getOverseasUsable(Set<String> codes, String calcDate);
-
-    /**
-     * 获取本地仓可用库存
-     *
-     * @param codes    编码
-     * @param calcDate 日期
-     */
-    List<ReplenishmentInventoryDTO.LocalUsableDTO> getLocalUsable(Set<String> codes, String calcDate);
-
-    /**
-     * 获取虚拟仓可用库存
-     *
-     * @param codes    编码
-     * @param calcDate 日期
-     */
-    List<ReplenishmentInventoryDTO.VirtualUsableDTO> getVirtualUsable(Set<String> codes, String calcDate);
     /**
      * 获取本地仓在途
      *
@@ -159,4 +128,11 @@ public interface InventoryService {
                               ReplenishmentInventoryTypeEnum inventoryType,
                               CfgRuleWarehouseTypeEnum warehouseType);
 
+    /**
+     * 获取全部库存
+     * @param inventoryResult 库存
+     * @param platformType    平台
+     * @param calculationDate 计算日
+     */
+    ReplenishmentInventoryDTO getAllInventoryQty(List<CfgRuleCommonDTO.StrategyResultDTO> inventoryResult, String platformType, LocalDate calculationDate);
 }

@@ -10,6 +10,7 @@ import com.common.core.enums.CurrencyEnum;
 import com.erp.model.mrp.entity.*;
 import com.erp.model.mrp.enums.CfgRuleSuggestedAmountNodeEnum;
 import com.erp.model.mrp.enums.RecentTimePeriodEnum;
+import com.erp.model.mrp.enums.ReplenishmentInventoryTypeEnum;
 import com.erp.model.mrp.enums.TimePeriodEnum;
 import com.erp.model.mrp.vo.ReplenishmentSuggestionVO;
 import lombok.AllArgsConstructor;
@@ -1193,14 +1194,6 @@ public class ReplenishmentResultDTO {
          * 仓库id
          */
         private String warehouseId;
-        /**
-         * 采购订单生成状态
-         */
-        private String createPoType;
-        /**
-         * 明细id
-         */
-        private String detailId;
 
         public static EstimatedPurchaseDetailEntity buildEstimatedPurchaseDetail(EstimatedPurchaseDetailDTO dto, String replenishmentDetailId, String calcVersion) {
             EstimatedPurchaseDetailEntity entity = new EstimatedPurchaseDetailEntity();
@@ -1215,6 +1208,42 @@ public class ReplenishmentResultDTO {
             entity.setSourceType(dto.getSourceType());
             entity.setCalcVersion(calcVersion);
             return entity;
+        }
+
+        public static EstimatedPurchaseDetailDTO buildEstimatedPurchaseDetailDTO(ReplenishmentInventoryDTO.EstimatedPurchaseDTO purchaseDTO) {
+            EstimatedPurchaseDetailDTO dto = new EstimatedPurchaseDetailDTO();
+            dto.setStatus(purchaseDTO.getStatus());
+            dto.setQty(purchaseDTO.getQty());
+            dto.setEstimatedPutAwayDate(purchaseDTO.getEstimatedPutAwayDate());
+            dto.setSourceId(purchaseDTO.getSourceId());
+            dto.setSourceCode(purchaseDTO.getSourceCode());
+            dto.setSourceType(purchaseDTO.getSourceType());
+            return dto;
+        }
+
+        public static EstimatedPurchaseDetailDTO buildEstimatedPurchaseDetailDTO(ReplenishmentInventoryDTO.ReplenishmentPurchaseDTO purchaseDTO) {
+            EstimatedPurchaseDetailDTO dto = new EstimatedPurchaseDetailDTO();
+            dto.setStatus(purchaseDTO.getStatus());
+            dto.setQty(purchaseDTO.getQty());
+            dto.setEstimatedPutAwayDate(purchaseDTO.getEstimatedPutAwayDate());
+            dto.setEstimateSalesDate(purchaseDTO.getEstimateSalesDate());
+            dto.setSourceId(purchaseDTO.getSourceId());
+            dto.setSourceCode(purchaseDTO.getSourceCode());
+            dto.setType(ReplenishmentInventoryTypeEnum.LOCAL_ESTIMATED_DELIVERY.getCode());
+            dto.setSourceType(purchaseDTO.getSourceType());
+            return dto;
+        }
+
+        public static EstimatedPurchaseDetailDTO buildEstimatedPurchaseDetailDTO(ReplenishmentInventoryDTO.ReplenishmentPurchaseMergeDTO purchaseDTO) {
+            EstimatedPurchaseDetailDTO dto = new EstimatedPurchaseDetailDTO();
+            dto.setStatus(purchaseDTO.getStatus());
+            dto.setEstimatedPutAwayDate(purchaseDTO.getEstimatedPutAwayDate());
+            dto.setEstimateSalesDate(purchaseDTO.getEstimateSalesDate());
+            dto.setSourceId(purchaseDTO.getSourceId());
+            dto.setSourceCode(purchaseDTO.getSourceCode());
+            dto.setType(ReplenishmentInventoryTypeEnum.LOCAL_ESTIMATED_DELIVERY.getCode());
+            dto.setSourceType(purchaseDTO.getSourceType());
+            return dto;
         }
     }
 
@@ -1467,6 +1496,42 @@ public class ReplenishmentResultDTO {
             entity.setQty(dto.getQty());
             entity.setCalcVersion(calcVersion);
             return entity;
+        }
+
+        public static EstimatedPurchaseDetailDTO buildEstimatedPurchaseDetailDTO(ReplenishmentInventoryDTO.EstimatedPurchaseDTO purchaseDTO) {
+            EstimatedPurchaseDetailDTO dto = new EstimatedPurchaseDetailDTO();
+            dto.setStatus(purchaseDTO.getStatus());
+            dto.setQty(purchaseDTO.getQty());
+            dto.setEstimatedPutAwayDate(purchaseDTO.getEstimatedPutAwayDate());
+            dto.setSourceId(purchaseDTO.getSourceId());
+            dto.setSourceCode(purchaseDTO.getSourceCode());
+            dto.setSourceType(purchaseDTO.getSourceType());
+            return dto;
+        }
+
+        public static EstimatedPurchaseDetailDTO buildEstimatedPurchaseDetailDTO(ReplenishmentInventoryDTO.ReplenishmentPurchaseDTO purchaseDTO) {
+            EstimatedPurchaseDetailDTO dto = new EstimatedPurchaseDetailDTO();
+            dto.setStatus(purchaseDTO.getStatus());
+            dto.setQty(purchaseDTO.getQty());
+            dto.setEstimatedPutAwayDate(purchaseDTO.getEstimatedPutAwayDate());
+            dto.setEstimateSalesDate(purchaseDTO.getEstimateSalesDate());
+            dto.setSourceId(purchaseDTO.getSourceId());
+            dto.setSourceCode(purchaseDTO.getSourceCode());
+            dto.setType(ReplenishmentInventoryTypeEnum.LOCAL_ESTIMATED_DELIVERY.getCode());
+            dto.setSourceType(purchaseDTO.getSourceType());
+            return dto;
+        }
+
+        public static EstimatedPurchaseDetailDTO buildEstimatedPurchaseDetailDTO(ReplenishmentInventoryDTO.ReplenishmentPurchaseMergeDTO purchaseDTO) {
+            EstimatedPurchaseDetailDTO dto = new EstimatedPurchaseDetailDTO();
+            dto.setStatus(purchaseDTO.getStatus());
+            dto.setEstimatedPutAwayDate(purchaseDTO.getEstimatedPutAwayDate());
+            dto.setEstimateSalesDate(purchaseDTO.getEstimateSalesDate());
+            dto.setSourceId(purchaseDTO.getSourceId());
+            dto.setSourceCode(purchaseDTO.getSourceCode());
+            dto.setType(ReplenishmentInventoryTypeEnum.LOCAL_ESTIMATED_DELIVERY.getCode());
+            dto.setSourceType(purchaseDTO.getSourceType());
+            return dto;
         }
     }
 

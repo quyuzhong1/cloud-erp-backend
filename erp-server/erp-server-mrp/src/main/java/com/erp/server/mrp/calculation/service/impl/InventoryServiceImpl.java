@@ -51,8 +51,9 @@ public class InventoryServiceImpl implements InventoryService {
     private VirtualInventoryHistoryService virtualInventoryHistoryService;
     @Resource
     private CfgRuleCommonService cfgRuleCommonService;
+    @Resource
+    private CfgRuleOrderStrategyService cfgRuleOrderStrategyService;
 
-    @Override
     public List<ReplenishmentInventoryDTO.FbaUsableDTO> getFbaUsable(Set<String> codes, String calcDate) {
         return inventoryMapper.getFbaUsable(String.join("+", codes), SnapshotTableEnum.getTableName(SnapshotTableEnum.FBA_INVENTORY, calcDate));
     }
@@ -147,7 +148,6 @@ public class InventoryServiceImpl implements InventoryService {
         return estimatedDeliveryDetails;
     }
 
-    @Override
     public List<ReplenishmentInventoryDTO.OverseasUsableDTO> getOverseasUsable(Set<String> codes, String calcDate) {
         return inventoryMapper.getOverseasUsable(String.join("+", codes), getTableName(OVERSEAS_INVENTORY, calcDate));
     }
@@ -209,6 +209,196 @@ public class InventoryServiceImpl implements InventoryService {
             }
         }
         return qty;
+    }
+
+    /**
+     * 获取全部库存
+     *
+     * @param inventoryResult 库存
+     * @param platformType    平台
+     * @param calculationDate 计算日
+     */
+    @Override
+    public ReplenishmentInventoryDTO getAllInventoryQty(List<CfgRuleCommonDTO.StrategyResultDTO> inventoryResult, String platformType, LocalDate calculationDate) {
+        ReplenishmentInventoryDTO dto = new ReplenishmentInventoryDTO();
+        String baseKey = CfgRuleCommonTypeEnum.getBaseInventoryRedisKey(platformType);
+        String calcDate = calculationDate.format(DateTimeFormatter.BASIC_ISO_DATE);
+        getFbaUsable(inventoryResult, baseKey, dto, calcDate);
+        getOverseasUsable(inventoryResult, baseKey, dto, calcDate);
+        getLocalUsable(inventoryResult, baseKey, dto, calcDate);
+        getVirtualUsable(inventoryResult, baseKey, dto, calcDate);
+        getEstimatedPurchase(inventoryResult, baseKey, dto, calcDate);
+        return dto;
+    }
+
+    /**
+     * 获取预计采购数据
+     * @param inventoryResult 库存配置
+     * @param baseKey         公共key
+     * @param dto             库存参数
+     * @param calcDate        日期
+     */
+    private void getEstimatedPurchase(List<CfgRuleCommonDTO.StrategyResultDTO> inventoryResult, String baseKey, ReplenishmentInventoryDTO dto, String calcDate) {
+        List<ReplenishmentInventoryDTO.EstimatedPurchaseDTO> estimatedPurchaseList = new ArrayList<>();
+        //预计采购
+        Set<String> localReplenishmentPlan = cfgRuleCommonService.findByKey(baseKey, inventoryResult, baseKey + ":" + CfgRuleInventoryNodeEnum.getLocalReplenishmentPlan());
+        if (!CollectionUtils.isEmpty(localReplenishmentPlan)) {
+            getReplenishmentPlan(dto, calcDate, localReplenishmentPlan);
+        }
+
+        //采购计划
+        Set<String> localPurchasePlan = cfgRuleCommonService.findByKey(baseKey, inventoryResult, baseKey + ":" + CfgRuleInventoryNodeEnum.getLocalPurchasePlan());
+        if (!CollectionUtils.isEmpty(localPurchasePlan)) {
+            List<ReplenishmentInventoryDTO.EstimatedPurchaseDTO> applications = getPurchasePlan(calcDate, localPurchasePlan);
+            if (!CollectionUtils.isEmpty(applications)) {
+                estimatedPurchaseList.addAll(applications);
+            }
+        }
+
+        //采购订单
+        Set<String> localPurchaseOrder = cfgRuleCommonService.findByKey(baseKey, inventoryResult, baseKey + ":" + CfgRuleInventoryNodeEnum.getLocalPurchaseOrder());
+        List<ReplenishmentInventoryDTO.EstimatedPurchaseDTO> purchaseDetails = inventoryMapper.listPurchase(localPurchaseOrder, getTableName(PURCHASE_ORDER, calcDate), getTableName(PURCHASE_ORDER_DETAIL, calcDate));
+        if (!CollectionUtils.isEmpty(purchaseDetails)) {
+            estimatedPurchaseList.addAll(purchaseDetails);
+        }
+        dto.setEstimatedPurchaseList(estimatedPurchaseList.stream()
+                        .filter(v -> v.getQty() > 0)
+                .collect(Collectors.toList()));
+    }
+
+    /**
+     * 采购建议
+     *
+     * @param dto                    参数
+     * @param calcDate               计算日
+     * @param localReplenishmentPlan 本地计划
+     */
+    private void getReplenishmentPlan(ReplenishmentInventoryDTO dto, String calcDate, Set<String> localReplenishmentPlan) {
+        CfgRuleOrderStrategyDTO.ViewDTO view = cfgRuleOrderStrategyService.view();
+        List<ReplenishmentInventoryDTO.ReplenishmentPurchaseDTO> replenishmentPurchases;
+        if (Boolean.TRUE.equals(view.getIsSplit())) {
+            replenishmentPurchases = inventoryMapper.getReplenishmentPurchaseMergePlan(localReplenishmentPlan, SnapshotTableEnum.getTableName(PURCHASE_SUGGEST_MERGE, calcDate));
+        } else {
+            replenishmentPurchases = inventoryMapper.getReplenishmentPurchasePlan(localReplenishmentPlan, SnapshotTableEnum.getTableName(PURCHASE_SUGGEST, calcDate));
+        }
+        if (CollectionUtils.isEmpty(replenishmentPurchases)) {
+            dto.setReplenishmentPurchaseList(new ArrayList<>());
+            return;
+        }
+        dto.setReplenishmentPurchaseList(replenishmentPurchases.stream()
+                .filter(v -> v.getQty() > 0)
+                .collect(Collectors.toList()));
+    }
+
+
+    /**
+     * 获取采购计划
+     * @param calcDate 计算日
+     * @param localPurchasePlan 采购计划
+     */
+    private List<ReplenishmentInventoryDTO.EstimatedPurchaseDTO> getPurchasePlan(String calcDate, Set<String> localPurchasePlan) {
+        List<ReplenishmentInventoryDTO.EstimatedPurchaseDTO> applications = inventoryMapper.listPurchasePlan(localPurchasePlan, getTableName(PURCHASE_APPLICATION, calcDate), getTableName(PURCHASE_APPLICATION_DETAIL, calcDate));
+        //查询关联采购
+        List<String> detailIds = applications.stream().map(ReplenishmentInventoryDTO.EstimatedPurchaseDTO::getDetailId).collect(Collectors.toList());
+        List<PurchaseApplicationRefPoDTO.ListDTO> refList = null;
+        List<SubcontractOrderDetailEntity> subcontractOrderDetailList = null;
+        if (!CollectionUtils.isEmpty(detailIds)) {
+            refList = inventoryMapper.listPurchaseApplicationRefPo(detailIds, getTableName(PURCHASE_ORDER, calcDate), getTableName(PURCHASE_ORDER_DETAIL, calcDate), getTableName(PURCHASE_APPLICATION_REF_PO, calcDate));
+            subcontractOrderDetailList = inventoryMapper.listSubcontractOrderDetail(detailIds, getTableName(SUBCONTRACT_ORDER, calcDate), getTableName(SUBCONTRACT_ORDER_DETAIL, calcDate), getTableName(PURCHASE_ORDER_DETAIL, calcDate));
+        }
+        //已下推委外订单的数量
+        //处理已审核 & 部分生成 数据
+        for (ReplenishmentInventoryDTO.EstimatedPurchaseDTO application : applications) {
+            if (ApproveStatusEnum.APPROVE.getCode().equals(application.getStatus()) && CreatePoTypeEnum.PARTIAL_GENERATED.getStatus().equals(application.getCreatePoType())) {
+                //委外数量
+                Integer subcontractQty = MathUtil.ZERO;
+                if (!CollectionUtils.isEmpty(subcontractOrderDetailList)) {
+                    subcontractQty = subcontractOrderDetailList.stream().filter(v -> v.getSourceDetailId().equals(application.getDetailId()) && StringUtils.isBlank(v.getParentId()))
+                            .map(SubcontractOrderDetailEntity::getQty).reduce(MathUtil.ZERO, Integer::sum);
+                }
+                //采购数量
+                Integer purchaseQty = MathUtil.ZERO;
+                if (!CollectionUtils.isEmpty(refList)) {
+                    purchaseQty = refList.stream().filter(e -> e.getPurchaseApplicationDetailId().equals(application.getDetailId()))
+                            .map(PurchaseApplicationRefPoDTO.ListDTO::getPurchaseQty).reduce(MathUtil.ZERO, Integer::sum);
+                }
+                application.setQty(application.getQty() - subcontractQty - purchaseQty);
+            }
+        }
+        return applications;
+    }
+
+    /**
+     * 获取虚拟仓可用库存
+     *
+     * @param inventoryResult 库存配置
+     * @param baseKey         公共key
+     * @param dto             库存参数
+     * @param calcDate        日期
+     */
+    private void getVirtualUsable(List<CfgRuleCommonDTO.StrategyResultDTO> inventoryResult, String baseKey, ReplenishmentInventoryDTO dto, String calcDate) {
+        Set<String> usable = cfgRuleCommonService.findByKey(baseKey, inventoryResult, baseKey + ":" + CfgRuleInventoryNodeEnum.getLocalUsable());
+        if (CollectionUtils.isEmpty(usable)){
+            dto.setVirtualUsableList(Collections.emptyList());
+            return;
+        }
+        List<ReplenishmentInventoryDTO.VirtualUsableDTO> virtualUsableList = getVirtualUsable(usable, calcDate);
+        dto.setVirtualUsableList(virtualUsableList);
+    }
+
+    /**
+     * 获取本地仓可用库存
+     *
+     * @param inventoryResult 库存配置
+     * @param baseKey         公共key
+     * @param dto             库存参数
+     * @param calcDate        日期
+     */
+    private void getLocalUsable(List<CfgRuleCommonDTO.StrategyResultDTO> inventoryResult, String baseKey, ReplenishmentInventoryDTO dto, String calcDate) {
+        Set<String> usable = cfgRuleCommonService.findByKey(baseKey, inventoryResult, baseKey + ":" + CfgRuleInventoryNodeEnum.getLocalUsable());
+        if (CollectionUtils.isEmpty(usable)){
+            dto.setLocalUsableList(Collections.emptyList());
+            return;
+        }
+        List<ReplenishmentInventoryDTO.LocalUsableDTO> localUsableList = getLocalUsable(usable, calcDate);
+        dto.setLocalUsableList(localUsableList);
+    }
+
+    /**
+     * 获取海外仓可用库存
+     *
+     * @param inventoryResult 库存配置
+     * @param baseKey         公共key
+     * @param dto             库存参数
+     * @param calcDate        日期
+     */
+    private void getOverseasUsable(List<CfgRuleCommonDTO.StrategyResultDTO> inventoryResult, String baseKey, ReplenishmentInventoryDTO dto, String calcDate) {
+        Set<String> usable = cfgRuleCommonService.findByKey(baseKey, inventoryResult, baseKey + ":" + CfgRuleInventoryNodeEnum.getOverseasUsable());
+        if (CollectionUtils.isEmpty(usable)){
+            dto.setOverseasUsableList(Collections.emptyList());
+            return;
+        }
+        List<ReplenishmentInventoryDTO.OverseasUsableDTO> overseasUsableList = getOverseasUsable(usable, calcDate);
+        dto.setOverseasUsableList(overseasUsableList);
+    }
+
+    /**
+     * 获取FBA可用库存
+     *
+     * @param inventoryResult 库存配置
+     * @param baseKey         公共key
+     * @param dto             库存参数
+     * @param calcDate        日期
+     */
+    private void getFbaUsable(List<CfgRuleCommonDTO.StrategyResultDTO> inventoryResult, String baseKey, ReplenishmentInventoryDTO dto, String calcDate) {
+        //获取fba可用
+        Set<String> usable = cfgRuleCommonService.findByKey(baseKey, inventoryResult, baseKey + ":" + CfgRuleInventoryNodeEnum.getFbaUsable());
+        if (CollectionUtils.isEmpty(usable)) {
+            dto.setFbaUsableList(Collections.emptyList());
+            return;
+        }
+        List<ReplenishmentInventoryDTO.FbaUsableDTO> fbaUsableList = getFbaUsable(usable, calcDate);
+        dto.setFbaUsableList(fbaUsableList);
     }
 
     /**
@@ -336,13 +526,10 @@ public class InventoryServiceImpl implements InventoryService {
     }
 
 
-    @Override
-    @SuppressWarnings("all")
     public List<ReplenishmentInventoryDTO.LocalUsableDTO> getLocalUsable(Set<String> codes, String calcDate) {
         return inventoryMapper.getLocalUsable(codes, getTableName(INVENTORY, calcDate));
     }
 
-    @Override
     public List<ReplenishmentInventoryDTO.VirtualUsableDTO> getVirtualUsable(Set<String> codes, String calcDate) {
         return inventoryMapper.getVirtualUsable(codes, getTableName(VIRTUAL_INVENTORY, calcDate));
     }
@@ -714,67 +901,19 @@ public class InventoryServiceImpl implements InventoryService {
      * @param replenishmentResultDTO 补货建议
      */
     private List<LocalInventoryDTO> getEstimatedPurchaseInventory(ReplenishmentResultDTO replenishmentResultDTO, CfgRuleStrategyDTO cfgRuleStrategyDTO) {
-        List<ReplenishmentResultDTO.EstimatedPurchaseDetailDTO> detailList = new ArrayList<>();
-        String calcDate = replenishmentResultDTO.getReplenishmentDetail().getCalcDate();
-        List<CfgRuleCommonDTO.StrategyResultDTO> inventoryResult = cfgRuleStrategyDTO.getInventoryResult();
-        String baseKey = CfgRuleCommonTypeEnum.getBaseInventoryRedisKey(replenishmentResultDTO.getReplenishment().getPlatformType());
         CfgRuleStockUpDTO.StrategyResultDTO stockUpResult = cfgRuleStrategyDTO.getStockUpResult();
         List<String> localWarehouseIds = replenishmentResultDTO.getLocalWarehouseId();
         if (CollectionUtils.isEmpty(localWarehouseIds)) {
             return Collections.emptyList();
         }
-        Set<String> localReplenishmentPlan = cfgRuleCommonService.findByKey(baseKey, inventoryResult, baseKey + ":" + CfgRuleInventoryNodeEnum.getLocalReplenishmentPlan());
-        if (!CollectionUtils.isEmpty(localReplenishmentPlan)) {
-
-            List<ReplenishmentResultDTO.EstimatedPurchaseDetailDTO> planDelivery = getReplenishmentPurchasePlan(replenishmentResultDTO, localReplenishmentPlan, cfgRuleStrategyDTO.getStockUpResult(),
-                    ReplenishmentInventoryTypeEnum.LOCAL_ESTIMATED_DELIVERY);
-            if (!CollectionUtils.isEmpty(planDelivery)) {
-                detailList.addAll(planDelivery);
-            }
-        }
-
-        Set<String> localPurchasePlan = cfgRuleCommonService.findByKey(baseKey, inventoryResult, baseKey + ":" + CfgRuleInventoryNodeEnum.getLocalPurchasePlan());
-        if (!CollectionUtils.isEmpty(localPurchasePlan)) {
-            List<ReplenishmentResultDTO.EstimatedPurchaseDetailDTO> applications = inventoryMapper.listPurchasePlan(localPurchasePlan, replenishmentResultDTO.getReplenishment().getSkuId(), localWarehouseIds, getTableName(PURCHASE_APPLICATION, calcDate), getTableName(PURCHASE_APPLICATION_DETAIL, calcDate));
-            //查询关联采购
-            List<String> detailIds = applications.stream().map(ReplenishmentResultDTO.EstimatedPurchaseDetailDTO::getDetailId).collect(Collectors.toList());
-            List<PurchaseApplicationRefPoDTO.ListDTO> refList = null;
-            List<SubcontractOrderDetailEntity> subcontractOrderDetailList = null;
-            if (!CollectionUtils.isEmpty(detailIds)) {
-                refList = inventoryMapper.listPurchaseApplicationRefPo(detailIds, getTableName(PURCHASE_ORDER, calcDate), getTableName(PURCHASE_ORDER_DETAIL, calcDate), getTableName(PURCHASE_APPLICATION_REF_PO, calcDate));
-                subcontractOrderDetailList = inventoryMapper.listSubcontractOrderDetail(detailIds, getTableName(SUBCONTRACT_ORDER, calcDate), getTableName(SUBCONTRACT_ORDER_DETAIL, calcDate), getTableName(PURCHASE_ORDER_DETAIL, calcDate));
-            }
-            //已下推委外订单的数量
-            //处理已审核 & 部分生成 数据
-            for (ReplenishmentResultDTO.EstimatedPurchaseDetailDTO application : applications) {
-                if (ApproveStatusEnum.APPROVE.getCode().equals(application.getStatus()) && CreatePoTypeEnum.PARTIAL_GENERATED.getStatus().equals(application.getCreatePoType())) {
-                    //委外数量
-                    Integer subcontractQty = MathUtil.ZERO;
-                    if (!CollectionUtils.isEmpty(subcontractOrderDetailList)) {
-                        subcontractQty = subcontractOrderDetailList.stream().filter(v -> v.getSourceDetailId().equals(application.getDetailId()) && StringUtils.isBlank(v.getParentId()))
-                                .map(SubcontractOrderDetailEntity::getQty).reduce(MathUtil.ZERO, Integer::sum);
-                    }
-                    //采购数量
-                    Integer purchaseQty = MathUtil.ZERO;
-                    if (!CollectionUtils.isEmpty(refList)) {
-                        purchaseQty = refList.stream().filter(e -> e.getPurchaseApplicationDetailId().equals(application.getDetailId()))
-                                .map(PurchaseApplicationRefPoDTO.ListDTO::getPurchaseQty).reduce(MathUtil.ZERO, Integer::sum);
-                    }
-                    application.setQty(application.getQty() - subcontractQty - purchaseQty);
-                }
-            }
-            if (!CollectionUtils.isEmpty(applications)) {
-                detailList.addAll(applications);
-            }
-        }
-        Set<String> localPurchaseOrder = cfgRuleCommonService.findByKey(baseKey, inventoryResult, baseKey + ":" + CfgRuleInventoryNodeEnum.getLocalPurchaseOrder());
-        if (!CollectionUtils.isEmpty(localPurchaseOrder)) {
-            List<ReplenishmentResultDTO.EstimatedPurchaseDetailDTO> purchaseDetails = inventoryMapper.listPurchase(localPurchaseOrder, replenishmentResultDTO.getReplenishment().getSkuId(), localWarehouseIds, getTableName(PURCHASE_ORDER, calcDate), getTableName(PURCHASE_ORDER_DETAIL, calcDate));
-            if (!CollectionUtils.isEmpty(purchaseDetails)) {
-                detailList.addAll(purchaseDetails);
-            }
-        }
-        for (ReplenishmentResultDTO.EstimatedPurchaseDetailDTO detail : detailList) {
+        List<ReplenishmentResultDTO.EstimatedPurchaseDetailDTO> detailList = new ArrayList<>();
+        //采购计划和采购单的数据
+        List<ReplenishmentResultDTO.EstimatedPurchaseDetailDTO> purchaseList = replenishmentResultDTO.getInventoryDTO().getEstimatedPurchaseList()
+                .stream().filter(v -> v.getSkuId().equals(replenishmentResultDTO.getReplenishment().getSkuId()))
+                .filter(v -> localWarehouseIds.contains(v.getWarehouseId()))
+                .map(ReplenishmentResultDTO.EstimatedPurchaseDetailDTO::buildEstimatedPurchaseDetailDTO)
+                .collect(Collectors.toList());
+        for (ReplenishmentResultDTO.EstimatedPurchaseDetailDTO detail : purchaseList) {
             detail.setType(ReplenishmentInventoryTypeEnum.LOCAL_ESTIMATED_DELIVERY.getCode());
             detail.setEstimatedPutAwayDate(detail.getEstimatedPutAwayDate().plusDays(stockUpResult.getPurchaseApproveDays())
                     .plusDays(stockUpResult.getProductionDays()).plusDays(stockUpResult.getSupplierDeliveryDays()).plusDays(stockUpResult.getQcDays())
@@ -784,6 +923,16 @@ public class InventoryServiceImpl implements InventoryService {
             } else {
                 detail.setEstimateSalesDate(detail.getEstimatedPutAwayDate());
             }
+            detailList.add(detail);
+        }
+        //补货计划采购建议数据
+        List<ReplenishmentResultDTO.EstimatedPurchaseDetailDTO> purchaseSuggestList  = replenishmentResultDTO.getInventoryDTO().getReplenishmentPurchaseList()
+                    .stream().filter(v -> replenishmentResultDTO.getReplenishment().getSkuId().equals(v.getSkuId()))
+                    .filter(v -> replenishmentResultDTO.getReplenishment().getShopId().equals(v.getShopId()))
+                    .map(ReplenishmentResultDTO.EstimatedPurchaseDetailDTO::buildEstimatedPurchaseDetailDTO)
+                    .collect(Collectors.toList());
+        if (!CollectionUtils.isEmpty(purchaseSuggestList)) {
+            detailList.addAll(purchaseSuggestList);
         }
         replenishmentResultDTO.setLocalPurchaseDetails(detailList);
         return new ArrayList<>(detailList.parallelStream()
@@ -797,24 +946,6 @@ public class InventoryServiceImpl implements InventoryService {
                             return existing;
                         }
                 )).values());
-    }
-
-
-
-    private List<ReplenishmentResultDTO.EstimatedPurchaseDetailDTO> getReplenishmentPurchasePlan(ReplenishmentResultDTO replenishmentResultDTO,
-                                                                                                 Set<String> statusList,
-                                                                                                 CfgRuleStockUpDTO.StrategyResultDTO stockUpResult,
-                                                                                                 ReplenishmentInventoryTypeEnum inventoryTypeEnum) {
-//        String calcDate = replenishmentResultDTO.getReplenishmentDetail().getCalcDate();
-//        List<ReplenishmentResultDTO.EstimatedPurchaseDetailDTO> estimatedDeliveryDetails = inventoryMapper.getReplenishmentPurchasePlan(statusList,
-//                replenishmentResultDTO, SnapshotTableEnum.getTableName(DELIVERY_SUGGEST, calcDate), SnapshotTableEnum.getTableName(WMS_DELIVERY_PLAN, calcDate),
-//                SnapshotTableEnum.getTableName(WMS_DELIVERY_PLAN_DETAIL, calcDate));
-//        for (ReplenishmentResultDTO.EstimatedPurchaseDetailDTO detail : estimatedDeliveryDetails) {
-//            detail.setType(inventoryTypeEnum.getCode());
-//            detail.setSourceType(SourceTypeEnum.REPLENISHMENT_PLAN.getCode());
-//        }
-//        return estimatedDeliveryDetails;
-        return null;
     }
 
 }

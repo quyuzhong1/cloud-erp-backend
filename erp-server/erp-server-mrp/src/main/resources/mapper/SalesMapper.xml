@@ -38,12 +38,12 @@
         SUM(sbd.qty) AS originalSalesQty,
         sb.shop_id AS shopId,
         sbd.sku_id AS skuId,
-        CASE WHEN sb.id in
-        <foreach collection="soIds" item="id" open="(" separator="," close=")">
+        CASE WHEN sbd.warehouse_id in
+        <foreach collection="localWarehouseId" item="id" open="(" separator="," close=")">
             #{id}
         </foreach>
-        THEN 'overseasWarehouse'
-        ELSE 'localWarehouse' END AS orderType
+        THEN 'localWarehouse'
+        ELSE 'overseasWarehouse' END AS orderType
         FROM ${tableName} AS sb
         INNER JOIN ${tableDetailName} sbd ON sbd.is_deleted = FALSE
         AND sb.id = sbd.main_id
@@ -61,12 +61,12 @@
         SUM(sod.actual_qty) AS originalSalesQty,
         sb.shop_id          AS shopId,
         sod.sku_id          AS skuId,
-        CASE WHEN sb.id in
-        <foreach collection="soIds" item="id" open="(" separator="," close=")">
+        CASE WHEN so.warehouse_id in
+        <foreach collection="localWarehouseId" item="id" open="(" separator="," close=")">
             #{id}
         </foreach>
-        THEN 'overseasWarehouse'
-        ELSE 'localWarehouse' END AS orderType
+        THEN 'localWarehouse'
+        ELSE 'overseasWarehouse' END AS orderType
         FROM ${tableName} AS so
         INNER JOIN ${tableDetailName} AS sod ON so.id = sod.main_id AND sod.is_deleted = FALSE
         INNER JOIN ${soB2cName} AS sb ON sb.is_deleted = FALSE AND sb.id = so.so_id

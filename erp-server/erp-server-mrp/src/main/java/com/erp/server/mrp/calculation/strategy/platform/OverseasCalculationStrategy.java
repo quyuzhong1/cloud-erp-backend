@@ -1,5 +1,6 @@
 package com.erp.server.mrp.calculation.strategy.platform;
 
+import com.common.business.wrapper.FeignQuery;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.exception.ServiceException;
 import com.erp.model.mrp.dto.OverseasHistoryInventoryGroupDTO;
@@ -11,9 +12,10 @@ import com.erp.model.mrp.entity.ReplenishmentSuggestionEntity;
 import com.erp.model.mrp.enums.CfgRulePlatformTypeEnum;
 import com.erp.model.mrp.enums.PlatformMappingTypeEnum;
 import com.erp.model.oms.entity.ShopInfoEntity;
+import com.erp.model.wms.entity.WarehouseEntity;
+import com.erp.model.wms.enums.GeographyLocationEnum;
 import com.erp.model.wms.enums.VitualWarehouseChannelTypeEnum;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
-import com.erp.rpc.tms.feign.LogisticsAuthFeign;
 import com.erp.server.mrp.calculation.service.SalesService;
 import com.erp.server.mrp.es.entity.HistoryInventoryEsEntity;
 import com.erp.server.mrp.service.CfgPlatformMappingService;
@@ -43,8 +45,6 @@ public class OverseasCalculationStrategy extends AbstractCalculationStrategy {
     private OverseasHistoryInventoryService overseasHistoryInventoryService;
     @Resource
     private ThreadPoolTaskExecutor threadPoolTaskExecutor;
-    @Resource
-    private LogisticsAuthFeign logisticsAuthFeign;
     @Resource
     private CfgRuleWarehouseService cfgRuleWarehouseService;
     @Resource
@@ -155,16 +155,27 @@ public class OverseasCalculationStrategy extends AbstractCalculationStrategy {
 
     @Override
     protected List<ReplenishmentResultDTO.SalesInfoAllDTO> getSalesInfoByOrderData(LocalDate calculationDate, Integer cleanDay) {
-        List<String> channelIdList = logisticsAuthFeign.listAllChannelByOverseas();
+        List<String> localWarehouseId = getLocalWarehouseId();
         List<String> platforms = cfgPlatformMappingService.listEffectiveByPlatform(PlatformMappingTypeEnum.OVERSEAS_PLATFORM.getCode());
-        return salesService.listAllOverseasSalesBySob2c(calculationDate, cleanDay, channelIdList, platforms);
+        return salesService.listAllOverseasSalesBySob2c(calculationDate, cleanDay, localWarehouseId, platforms);
+    }
+
+    private static List<String> getLocalWarehouseId() {
+        List<WarehouseEntity> updateDTOS = FeignQuery.list(WarehouseEntity.class);
+        // 获取本地仓
+        return updateDTOS.stream()
+                .filter(v -> Boolean.FALSE.equals(v.getDisabled()))
+                .filter(v -> GeographyLocationEnum.NOT_PACKING.getCode().equals(v.getGeographyLocation()))
+                .map(WarehouseEntity::getId)
+                .distinct()
+                .collect(Collectors.toList());
     }
 
 
     @Override
     protected List<ReplenishmentResultDTO.SalesInfoAllDTO> getSalesInfoByOutStockData(LocalDate calculationDate, Integer cleanDay) {
-        List<String> channelIdList = logisticsAuthFeign.listAllChannelByOverseas();
+        List<String> localWarehouseId = getLocalWarehouseId();
         List<String> platforms = cfgPlatformMappingService.listEffectiveByPlatform(PlatformMappingTypeEnum.OVERSEAS_PLATFORM.getCode());
-        return salesService.listAllOverseasSalesBySoOutStock(calculationDate, cleanDay, channelIdList, platforms);
+        return salesService.listAllOverseasSalesBySoOutStock(calculationDate, cleanDay, localWarehouseId, platforms);
     }
 }

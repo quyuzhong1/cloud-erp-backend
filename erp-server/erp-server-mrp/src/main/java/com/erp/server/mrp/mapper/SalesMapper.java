@@ -29,13 +29,13 @@ public interface SalesMapper {
     List<ReplenishmentResultDTO.SalesInfoAllDTO> listAllOverseasSalesBySob2c(@Param("tableName") String tableName, @Param("tableDetailName") String tableDetailName,
                                                                              @Param("startDate") LocalDate startDate,
                                                                              @Param("endDate") LocalDate endDate,
-                                                                             @Param("soIds") List<String> soIds,
+                                                                             @Param("localWarehouseId") List<String> localWarehouseId,
                                                                              @Param("platforms") List<String> platforms);
 
     List<ReplenishmentResultDTO.SalesInfoAllDTO> listAllOverseasSalesBySoOutStock(@Param("tableName") String tableName, @Param("tableDetailName") String tableDetailName, @Param("soB2cName") String soB2cName,
                                                                                   @Param("startDate") LocalDate startDate,
                                                                                   @Param("endDate") LocalDate endDate,
-                                                                                  @Param("soIds") List<String> soIds,
+                                                                                  @Param("localWarehouseId") List<String> localWarehouseId,
                                                                                   @Param("platforms") List<String> platforms);
 
     List<String> listIdByChannel(@Param("channelIdList") List<String> channelIdList,@Param("tableName") String tableName);

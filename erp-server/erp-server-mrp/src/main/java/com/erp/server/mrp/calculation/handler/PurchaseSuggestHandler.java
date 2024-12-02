@@ -123,7 +123,7 @@ public class PurchaseSuggestHandler extends AbstractSkuCalculationHandler {
                         suggestDTO.setPurchaseCost(replenishmentResultDTO.getPurchasePrice().multiply(BigDecimal.valueOf(suggestDTO.getSuggestPurchaseQty())));
                     }
                     return suggestDTO;
-                }).collect(Collectors.toList());
+                }).filter(v -> v.getSuggestPurchaseQty() > 0).collect(Collectors.toList());
         replenishmentResultDTO.setPurchaseSuggests(deliverySuggests);
     }
 

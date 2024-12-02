@@ -77,16 +77,6 @@ public interface InventoryMapper {
     List<ReplenishmentInventoryDTO.VirtualUsableDTO> getVirtualUsable(@Param("codes") Set<String> codes, @Param("tableName") String tableName);
 
     /**
-     * 查询采购计划
-     */
-    List<ReplenishmentResultDTO.EstimatedPurchaseDetailDTO> listPurchasePlan(@Param("codes") Set<String> codes, @Param("skuId") String skuId, @Param("localWarehouseIds") List<String> localWarehouseIds, @Param("tableName") String tableName, @Param("tableDetailName") String tableDetailName);
-
-    /**
-     * 查询采购单
-     */
-    List<ReplenishmentResultDTO.EstimatedPurchaseDetailDTO> listPurchase(@Param("codes") Set<String> codes, @Param("skuId") String skuId, @Param("localWarehouseIds") List<String> localWarehouseIds, @Param("tableName") String tableName, @Param("tableDetailName") String tableDetailName);
-
-    /**
      * 查询采购申请关联
      */
     List<PurchaseApplicationRefPoDTO.ListDTO> listPurchaseApplicationRefPo(@Param("detailIds") List<String> detailIds, @Param("tableName") String tableName, @Param("tableDetailName") String tableDetailName, @Param("otherTableName") String otherTableName);
@@ -142,4 +132,28 @@ public interface InventoryMapper {
      */
     List<InventoryReportDTO.TransportPagingDTO> listLocalInTransit(@Param("tableName") String tableName);
 
+    /**
+     * 查询采购单
+     */
+    List<ReplenishmentInventoryDTO.EstimatedPurchaseDTO> listPurchase(@Param("codes") Set<String> codes, @Param("tableName") String tableName, @Param("tableDetailName") String tableDetailName);
+
+    /**
+     * 查询采购计划
+     */
+    List<ReplenishmentInventoryDTO.EstimatedPurchaseDTO> listPurchasePlan(@Param("codes") Set<String> codes, @Param("tableName") String tableName, @Param("tableDetailName") String tableDetailName);
+
+    /**
+     * 查询补货计划预计采购
+     *
+     * @param codes     状态
+     * @param tableName 表
+     */
+    List<ReplenishmentInventoryDTO.ReplenishmentPurchaseDTO> getReplenishmentPurchasePlan(@Param("codes") Set<String> codes, @Param("tableName") String tableName);
+    /**
+     * 查询补货计划预计采购
+     *
+     * @param codes     状态
+     * @param tableName 表
+     */
+    List<ReplenishmentInventoryDTO.ReplenishmentPurchaseDTO> getReplenishmentPurchaseMergePlan(@Param("codes") Set<String> codes, @Param("tableName") String tableName);
 }
