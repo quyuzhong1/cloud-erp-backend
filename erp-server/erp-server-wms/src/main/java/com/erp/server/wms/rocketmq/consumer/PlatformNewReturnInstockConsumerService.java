@@ -31,6 +31,7 @@ import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.service.*;
 import io.seata.common.util.CollectionUtils;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.rocketmq.spring.annotation.ConsumeMode;
 import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
 import org.checkerframework.checker.units.qual.A;
@@ -260,7 +261,7 @@ public class PlatformNewReturnInstockConsumerService extends AbstractNewPlatform
 				SourceTypeEnum.SO_B2C.getCode()
 		);
 		if(CollectionUtils.isEmpty(soB2cEntityList)){
-			log.warn("销售订单不存在:{}", dto.getPlatformOrderNo());
+			log.warn("【平台退货入库】销售订单不存在:{}", dto.getPlatformOrderNo());
 			return;
 		}
 		List<String> soIds = soB2cEntityList.stream().map(BaseEntity::getId).collect(Collectors.toList());
@@ -270,12 +271,12 @@ public class PlatformNewReturnInstockConsumerService extends AbstractNewPlatform
 				.in(SoReturnInstockEntity::getSourceCode, dto.getUniqueId())
 				.list();
 		if(CollectionUtils.isNotEmpty(soReturnList)){
-			log.warn("退货入库单已存在:{}", dto.getPlatformOrderNo());
+			log.warn("【平台退货入库】退货入库单已存在:{}", dto.getPlatformOrderNo());
 			return;
 		}
 		List<SoOutstockEntity> soOutstockList = soOutstockService.listBySoIds(soIds);
 		if (CollectionUtils.isEmpty(soOutstockList)){
-			log.warn("销售出库单不存在:{}", dto.getPlatformOrderNo());
+			log.warn("【平台退货入库】销售出库单不存在:{}", dto.getPlatformOrderNo());
 			return;
 		}
 		// 查询对应店铺
@@ -286,19 +287,25 @@ public class PlatformNewReturnInstockConsumerService extends AbstractNewPlatform
 				.map(BaseEntity::getId)
 				.collect(Collectors.toList());
 		if (CollectionUtils.isEmpty(shopIds)){
-			log.warn("店铺不存在:店铺代号{}", dto.getAuthId());
+			log.warn("【平台退货入库】店铺不存在:店铺代号{}", dto.getAuthId());
 			return;
 		}
 		// 对应订单
 		SoB2cEntity soB2cEntity = soB2cEntityList.stream().filter(e -> shopIds.contains(e.getShopId())).findFirst().orElse(null);
 		if (null == soB2cEntity){
-			log.warn("销售订单单不存在:{}", dto.getPlatformOrderNo());
+			log.warn("【平台退货入库】销售订单不存在:{}", dto.getPlatformOrderNo());
 			return;
 		}
 		ShopInfoEntity shopInfoEntity = shopList.stream().filter(e -> e.getId().equalsIgnoreCase(soB2cEntity.getShopId())).findFirst().orElse(null);
+		if (null == shopInfoEntity){
+			log.warn("【平台退货入库】店铺不存在:{}", dto.getPlatformOrderNo());
+			return;
+		}
 
 		SoOutstockEntity soOutstock = soOutstockList.get(0);
-		WarehouseEntity warehouseEntity = warehouseService.getById(soOutstock.getWarehouseId());
+
+		String returnWarehouse = StringUtils.isBlank(shopInfoEntity.getReturnWarehouse()) ? shopInfoEntity.getWarehouseId() : shopInfoEntity.getReturnWarehouse();
+		WarehouseEntity warehouseEntity = warehouseService.getById(returnWarehouse);
 
 		List<PlatformReturnInstockDTO.Detail> details = dto.getProductDetailList();
 		if(CollectionUtils.isEmpty(details)){

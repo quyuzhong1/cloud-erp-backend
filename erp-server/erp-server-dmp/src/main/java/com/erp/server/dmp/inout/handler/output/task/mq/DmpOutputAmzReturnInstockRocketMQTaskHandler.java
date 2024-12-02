@@ -13,6 +13,7 @@ import com.common.core.utils.StrUtils;
 import com.erp.model.dmp.entity.DmpCfgInputConvertEntity;
 import com.erp.model.dmp.entity.DmpThirdReturnInboundDetailEntity;
 import com.erp.model.dmp.entity.DmpThirdReturnInboundEntity;
+import com.erp.model.wms.enums.ReturnTypeEnum;
 import com.erp.server.dmp.inout.dto.request.DmpOutputTaskRequest;
 import com.erp.server.dmp.inout.dto.response.DmpOutputTaskResponse;
 import com.sdk.wms.goodcang.enums.GoodCangEnums;
@@ -102,7 +103,8 @@ public class DmpOutputAmzReturnInstockRocketMQTaskHandler extends DmpOutputRocke
         String sourcePlatform = dmpMainEntity.getSourcePlatform();
         dto.setPlatform(sourcePlatform);
         dto.setPutawayTime(dmpMainEntity.getPutAwayTime());
-        dto.setReturnType(dmpMainEntity.getReturnType());
+        // 固定退货退款
+        dto.setReturnType(ReturnTypeEnum.DEDUCTION.getCode());
         // 明细
         List<PlatformReturnInstockDTO.Detail> detailList = dmpDetailList.stream().map(this::convertDetail).collect(Collectors.toList());
         dto.setProductDetailList(detailList);
