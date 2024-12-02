@@ -2246,10 +2246,18 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                     newCountry = CommonConstants.DEFAULT;
                     addList.add(customs);
                 }else {
+                    if (CharSequenceUtil.isBlank(customs.getCountry())){
+                        customs.setCountry(CommonConstants.DEFAULT);
+                    }
                     updateList.add(customs);
                 }
                 newCountry = CharSequenceUtil.isBlank(newCountry) || CommonConstants.DEFAULT.equals(newCountry) ? "默认" : customs.getCountry();
-                String msg = CharSequenceUtil.format("手动重算【{}】目的国申报价从【数值】为【{}】/手动修改【国家】目的国申报价从【数值】为【{}】", oldCountry, destDeclarePrice, newCountry,resultDestDeclarePrice);
+                String msg = "";
+                if (isManual){
+                    msg = CharSequenceUtil.format("手动重算【{}】目的国申报价从【数值】为【{}】/手动修改【{}】目的国申报价从【数值】为【{}】", oldCountry, destDeclarePrice, newCountry,resultDestDeclarePrice);
+                }else {
+                    msg = CharSequenceUtil.format("自动重算【{}】目的国申报价从【数值】为【{}】/手动修改【{}】目的国申报价从【数值】为【{}】", oldCountry, destDeclarePrice, newCountry,resultDestDeclarePrice);
+                }
                 operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.PRODUCT_DETAIL.getCode(),skuId,"编辑操作");
                 batchResultDTOList.add(BatchResultDTO.success(skuId,productDetailEntity.getSkuNo(),msg));
                 log.info("更新目的国申报价 sku:{},目的国申报价：{}",skuCostDTO.getSkuNo(), resultDestDeclarePrice);
