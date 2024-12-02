@@ -796,9 +796,8 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
             List<String> originSourceDetailIds = view.getDetails().stream().map(PickingDetailDTO.View::getSourceDetailId).collect(Collectors.toList());
             List<String> nowSourceDetailIds = dto.getDetails().stream().map(PickingDetailDTO.View::getSourceDetailId).collect(Collectors.toList());
             originSourceDetailIds.removeAll(nowSourceDetailIds);
-            dto.setDetails(mismatchedDetails);
-            PickingListsDTO.AddChangeDTO addChangeDTO = handleUpdateBeforeChange(dto, detailList, entity);
-            requisitionApplicationChangeService.generateByPickingList(addChangeDTO,dto, entity);
+            PickingListsDTO.AddChangeDTO addChangeDTO = handleUpdateBeforeChange(mismatchedDetails, detailList, entity,dto.getDetails());
+            requisitionApplicationChangeService.generateByPickingList(addChangeDTO, entity);
             //整个sku删除的不用生成要货申请变更单，直接走删除逻辑
             List<PickingDetailDTO.View> removeDetail = view.getDetails().stream().filter(v->originSourceDetailIds.contains(v.getSourceDetailId())).collect(Collectors.toList());
             if(!CollectionUtils.isEmpty(removeDetail)){
@@ -814,13 +813,13 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
         }
     }
 
-    private PickingListsDTO.AddChangeDTO handleUpdateBeforeChange(PickingListsDTO.UpdateDTO dto, List<PickingDetailEntity> detailList, PickingListsEntity entity) {
+    private PickingListsDTO.AddChangeDTO handleUpdateBeforeChange(List<PickingDetailDTO.View> mismatchedDetails, List<PickingDetailEntity> detailList, PickingListsEntity entity,List<PickingDetailDTO.View> views) {
         PickingListsDTO.AddChangeDTO result = new PickingListsDTO.AddChangeDTO();
 
-        List<PickingDetailDTO.View> newAddDataList = dto.getDetails().stream()
+        List<PickingDetailDTO.View> newAddDataList = mismatchedDetails.stream()
                 .filter(detail -> ObjectUtil.isEmpty(detail.getId()))
                 .collect(Collectors.toList());
-        List<String> skuIds = dto.getDetails()
+        List<String> skuIds = mismatchedDetails
                 .stream().map(PickingDetailDTO.View::getSkuId)
                 .distinct().collect(Collectors.toList());
         List<ProductDetailEntity> detailEntityList = plmTaskFeign.getByIdList(skuIds);
@@ -854,7 +853,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
             result.setAddList(addData);
         }
         //处理更新数据
-        List<PickingDetailDTO.View> updateData = dto.getDetails()
+        List<PickingDetailDTO.View> updateData = mismatchedDetails
                 .stream()
                 .filter(detail -> ObjectUtil.isNotEmpty(detail.getId()))
                 .collect(Collectors.toList());
@@ -881,11 +880,14 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
             result.setUpdateList(updateList);
         }
         //处理删除的数据（非整行）
-        List<String> newDetailIds = dto.getDetails()
+        List<String> newDetailIds = mismatchedDetails
+                .stream().map(PickingDetailDTO.View::getSourceDetailId)
+                .distinct().collect(Collectors.toList());
+        List<String> allDetailIds = views
                 .stream().map(PickingDetailDTO.View::getId)
                 .distinct().collect(Collectors.toList());
         List<PickingDetailEntity> removeData = detailList.stream()
-                .filter(v -> !newDetailIds.contains(v.getId()))
+                .filter(v -> newDetailIds.contains(v.getId()) && !allDetailIds.contains(v.getId()))
                 .collect(Collectors.toList());
         if (!CollectionUtils.isEmpty(removeData)) {
             List<String> removeIds = new ArrayList<>();

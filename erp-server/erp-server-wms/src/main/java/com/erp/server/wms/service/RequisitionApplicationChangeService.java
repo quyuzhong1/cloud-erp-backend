@@ -151,7 +151,7 @@ public interface RequisitionApplicationChangeService extends SuperService<Requis
 
     List<RequisitionApplicationChangeDetailEntity> listNotHandleDetailByBusinessDetailIds(List<String> detailIds);
 
-    void generateByPickingList(PickingListsDTO.AddChangeDTO addChangeDTO, PickingListsDTO.UpdateDTO dto, PickingListsEntity entity);
+    void generateByPickingList(PickingListsDTO.AddChangeDTO addChangeDTO, PickingListsEntity entity);
 
     List<RequisitionApplicationChangeDTO.ApproveView> approveView(BaseIdsDTO.IdsDTO dto);
 }

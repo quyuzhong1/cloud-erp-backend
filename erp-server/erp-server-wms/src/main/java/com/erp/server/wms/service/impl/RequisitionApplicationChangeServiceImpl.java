@@ -674,7 +674,7 @@ public class RequisitionApplicationChangeServiceImpl extends SuperServiceImpl<Re
     }
 
     @Override
-    public void generateByPickingList(PickingListsDTO.AddChangeDTO addChangeDTO, PickingListsDTO.UpdateDTO dto, PickingListsEntity entity) {
+    public void generateByPickingList(PickingListsDTO.AddChangeDTO addChangeDTO, PickingListsEntity entity) {
         RequisitionApplicationChangeEntity requisitionApplicationChangeEntity = new RequisitionApplicationChangeEntity();
         requisitionApplicationChangeEntity.setSourceCode(entity.getCode());
         requisitionApplicationChangeEntity.setBusinessCode(entity.getSourceCode());
