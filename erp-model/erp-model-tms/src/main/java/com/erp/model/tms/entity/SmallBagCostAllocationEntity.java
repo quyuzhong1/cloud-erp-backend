@@ -4,6 +4,8 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
 import com.baomidou.mybatisplus.annotation.TableField;
 import java.io.Serializable;
+import java.math.BigDecimal;
+
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
@@ -64,6 +66,12 @@ public class SmallBagCostAllocationEntity extends BaseEntity<SmallBagCostAllocat
     */
     @TableField("delivery_qty")
     private Integer deliveryQty;
+    
+    /**
+     * 单SKU计费重
+     */
+     @TableField("sku_weight")
+     private BigDecimal skuWeight;
 
 
     public static final String COST_ID = "cost_id";
