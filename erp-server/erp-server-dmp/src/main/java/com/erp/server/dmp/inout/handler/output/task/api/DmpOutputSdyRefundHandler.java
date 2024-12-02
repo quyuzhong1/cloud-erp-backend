@@ -16,6 +16,7 @@ import com.erp.model.dmp.entity.*;
 import com.erp.model.dmp.enums.DmpOutputTaskRecordStatusEnum;
 import com.erp.model.dmp.enums.ThirdSysTypeEnum;
 import com.erp.model.oms.entity.CustomerInfoEntity;
+import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.sys.entity.DictCurrencyEntity;
 import com.erp.rpc.sys.feign.SysUserFeign;
@@ -27,6 +28,7 @@ import com.erp.server.dmp.push.consumer.sdy.SdyDeliveryOrderConsumer;
 import com.erp.server.dmp.service.ThirdMappingService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
@@ -207,6 +209,14 @@ public class DmpOutputSdyRefundHandler extends DmpOutputTaskHandler {
                             sdyDTO.setOrganization_code(sysAccountingCompanyEntity.getCode());
                             sdyDTO.setOrganization_name(sysAccountingCompanyEntity.getName());
                         }
+                        String subPlatformType = customerInfo.getPlatformType();
+                        if(StringUtils.isNotBlank(subPlatformType)) {
+                            List<com.erp.model.oms.entity.DictBasicEntity> dictList = FeignQuery.create(com.erp.model.oms.entity.DictBasicEntity.class).eq(com.erp.model.oms.entity.DictBasicEntity::getType, "sdySubPlatform").eq(DictBasicEntity::getName, subPlatformType).list();
+                            if(CollUtil.isNotEmpty(dictList)) {
+                                sdyDTO.setSubplatform_no(dictList.get(0).getValue());
+                                sdyDTO.setSubplatform_name(dictList.get(0).getName());
+                            }
+                        }
                     }
 
                     DictCurrencyEntity dictCurrencyEntity = FeignQuery.getById(DictCurrencyEntity.class, shopInfo.getTradeCurrency());
@@ -253,7 +263,16 @@ public class DmpOutputSdyRefundHandler extends DmpOutputTaskHandler {
                 }
                 sdyDTO.setTransaction_currency_code(shopInfo.getTradeCurrency());
                 sdyDTO.setSettlement_currency_code(shopInfo.getSettlementCurrency());
+                String subPlatformType = customerInfo.getPlatformType();
+                if(StringUtils.isNotBlank(subPlatformType)) {
+                    List<com.erp.model.oms.entity.DictBasicEntity> dictList = FeignQuery.create(com.erp.model.oms.entity.DictBasicEntity.class).eq(com.erp.model.oms.entity.DictBasicEntity::getType, "sdySubPlatform").eq(DictBasicEntity::getName, subPlatformType).list();
+                    if(CollUtil.isNotEmpty(dictList)) {
+                        sdyDTO.setSubplatform_no(dictList.get(0).getValue());
+                        sdyDTO.setSubplatform_name(dictList.get(0).getName());
+                    }
+                }
             }
+
             sdyDTO.setUnit("PCS");
             sdyDTO.setPlatform_id(dmpSoRefundEntity.getSourceSystem());
             sdyDTO.setPlatform_name(PlatformDictEnum.getNameByCode(dmpSoRefundEntity.getSourceSystem()));

@@ -681,11 +681,15 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
 
             shudiyunB2cOrderDTO.setPlatform_id(customerInfo.getPlatformType());
             shudiyunB2cOrderDTO.setPlatform_name(PlatformDictEnum.checkAndGetByCode(customerInfo.getPlatformType()).getName());
-        }
 
-        if (CollUtil.isNotEmpty(shopInfoList)) {
-            shudiyunB2cOrderDTO.setSubplatform_no(shopInfoList.get(0).getDictPlatform());
-            shudiyunB2cOrderDTO.setSubplatform_name(PlatformDictEnum.getNameByCode(shopInfoList.get(0).getDictPlatform()));
+            String subPlatformType = customerInfo.getPlatformType();
+            if(StringUtils.isNotBlank(subPlatformType)) {
+                List<DictBasicEntity> dictList = dictBasicService.lambdaQuery().eq(DictBasicEntity::getType, "sdySubPlatform").eq(DictBasicEntity::getName, subPlatformType).list();
+                if(CollUtil.isNotEmpty(dictList)) {
+                    shudiyunB2cOrderDTO.setSubplatform_no(dictList.get(0).getValue());
+                    shudiyunB2cOrderDTO.setSubplatform_name(dictList.get(0).getName());
+                }
+            }
         }
 
         shudiyunB2cOrderDTO.setShop_no(view.getCustomerId());

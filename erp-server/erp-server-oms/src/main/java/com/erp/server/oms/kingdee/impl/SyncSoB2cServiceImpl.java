@@ -1,5 +1,6 @@
 package com.erp.server.oms.kingdee.impl;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.alibaba.fastjson.JSON;
@@ -22,11 +23,13 @@ import com.erp.model.sys.entity.DictCurrencyEntity;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.oms.kingdee.SyncSoB2cService;
+import com.erp.server.oms.service.DictBasicService;
 import com.erp.server.oms.service.OmsPushMsgService;
 import com.erp.server.oms.service.SoB2cDetailService;
 import com.erp.server.oms.service.SoB2cService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 
@@ -48,6 +51,8 @@ public class SyncSoB2cServiceImpl implements SyncSoB2cService {
     private OmsPushMsgService omsPushMsgService;
     @Resource
     private SoB2cDetailService soB2cDetailService;
+    @Resource
+    private DictBasicService dictBasicService;
 
     @Override
     public Map<String, Object> syncDataToSdyFieldHandler(SoB2cEntity soB2cEntity, SoB2cDetailEntity soB2cDetailEntity, String operate) {
@@ -150,8 +155,6 @@ public class SyncSoB2cServiceImpl implements SyncSoB2cService {
             shudiyunB2cOrderDTO.setTransaction_currency_code(shopInfo.getTradeCurrency());
             shudiyunB2cOrderDTO.setSettlement_currency_code(shopInfo.getSettlementCurrency());
             shudiyunB2cOrderDTO.setShop_name(shopInfo.getName());
-            shudiyunB2cOrderDTO.setSubplatform_no(shopInfo.getDictPlatform());
-            shudiyunB2cOrderDTO.setSubplatform_name(PlatformDictEnum.getNameByCode(shopInfo.getDictPlatform()));
         }
 
         if (ObjectUtil.isNotEmpty(customerInfo)) {
@@ -160,6 +163,14 @@ public class SyncSoB2cServiceImpl implements SyncSoB2cService {
                 shudiyunB2cOrderDTO.setReceiving_company_code(sysAccountingCompanyEntity.getCode());
                 shudiyunB2cOrderDTO.setOrganization_code(sysAccountingCompanyEntity.getCode());
                 shudiyunB2cOrderDTO.setOrganization_name(sysAccountingCompanyEntity.getName());
+            }
+            String subPlatformType = customerInfo.getPlatformType();
+            if(StringUtils.isNotBlank(subPlatformType)) {
+                List<DictBasicEntity> dictList = dictBasicService.lambdaQuery().eq(DictBasicEntity::getType, "sdySubPlatform").eq(DictBasicEntity::getName, subPlatformType).list();
+                if(CollUtil.isNotEmpty(dictList)) {
+                    shudiyunB2cOrderDTO.setSubplatform_no(dictList.get(0).getValue());
+                    shudiyunB2cOrderDTO.setSubplatform_name(dictList.get(0).getName());
+                }
             }
         }
 
