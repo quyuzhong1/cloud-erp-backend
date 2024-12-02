@@ -773,4 +773,337 @@ public class LogisticsLargeDTO implements Serializable {
     }
 
 
+
+    @Data
+    @NoArgsConstructor
+    public static class LargeDataDTO {
+
+        /**
+         * 出库单号
+         */
+        private String outstockCode;
+
+        /**
+         * 出库时间
+         */
+        private LocalDateTime outstockTime;
+
+        /**
+         * 付款状态（待付款、已付款）
+         */
+        private String payStatus;
+
+        /**
+         * 产品id
+         */
+        private String skuId;
+
+        /**
+         * 发货数量
+         */
+        private Integer deliveryQty;
+
+        /**
+         * 重量
+         */
+        private BigDecimal weight;
+
+        /**
+         * 物流商计费重量
+         */
+        private BigDecimal logisticsBillingWeight;
+
+        /**
+         * 运输方式
+         */
+        private String shippingMethod;
+
+        /**
+         * 物流公司id
+         */
+        private String logisticsSupplierId;
+
+        /**
+         * 物流公司名称
+         */
+        private String logisticsSupplierName;
+
+        /**
+         * 运单号
+         */
+        private String transportNo;
+
+        /**
+         * 取件时间
+         */
+        private LocalDateTime pickupTime;
+
+        /**
+         * 实际送达时间
+         */
+        private LocalDateTime actualDeliveryTime;
+
+        /**
+         * 计算系数运费
+         */
+        @NotNull(message = "计算系数运费不能为空")
+        @Digits(integer = 10, fraction = 6, message = "计算系数运费整数位不能超过10位，小数位不能超过6位")
+        private BigDecimal freightCalculationFactor;
+
+        /**
+         * 运费币种
+         */
+        @NotBlank(message = "运费币种不能为空")
+        @Size(max = 8,message = "运费币种最大长度不能超过8位")
+        private String freightCurrency;
+
+        /**
+         * 账单总金额
+         */
+        @NotNull(message = "账单总金额不能为空")
+        @Digits(integer = 10, fraction = 6, message = "账单总金额整数位不能超过10位，小数位不能超过6位")
+        private BigDecimal billTotalAmount;
+
+        /**
+         * 头程预估运费（含税）
+         */
+        @NotNull(message = "头程预估运费（含税）不能为空")
+        @Digits(integer = 10, fraction = 6, message = "头程预估运费（含税）整数位不能超过10位，小数位不能超过6位")
+        private BigDecimal firstMileEstimatedFreightTax;
+
+        /**
+         * 头程预估运费（不含税）
+         */
+        @NotNull(message = "头程预估运费（不含税）不能为空")
+        @Digits(integer = 10, fraction = 6, message = "头程预估运费（不含税）整数位不能超过10位，小数位不能超过6位")
+        private BigDecimal firstMileEstimatedFreight;
+
+        /**
+         * 头程实际运费（含税）
+         */
+        @NotNull(message = "头程实际运费（含税）不能为空")
+        @Digits(integer = 10, fraction = 6, message = "头程实际运费（含税）整数位不能超过10位，小数位不能超过6位")
+        private BigDecimal firstMileActualFreightTax;
+
+        /**
+         * 头程实际运费（不含税）
+         */
+        @NotNull(message = "头程实际运费（不含税）不能为空")
+        @Digits(integer = 10, fraction = 6, message = "头程实际运费（不含税）整数位不能超过10位，小数位不能超过6位")
+        private BigDecimal firstMileActualFreight;
+
+        /**
+         * 税率
+         */
+        @NotNull(message = "税率不能为空")
+        @Digits(integer = 10, fraction = 6, message = "税率整数位不能超过10位，小数位不能超过6位")
+        private BigDecimal taxRate;
+
+        /**
+         * 头程运费增值税
+         */
+        @NotNull(message = "头程运费增值税不能为空")
+        @Digits(integer = 10, fraction = 6, message = "头程运费增值税整数位不能超过10位，小数位不能超过6位")
+        private BigDecimal firstMileFreightVatAmount;
+
+        /**
+         * 头程付款时间
+         */
+        private LocalDateTime firstMilePayTime;
+
+        /**
+         * 尾程运费金额（含税）
+         */
+        @NotNull(message = "尾程运费金额（含税）不能为空")
+        @Digits(integer = 10, fraction = 6, message = "尾程运费金额（含税）整数位不能超过10位，小数位不能超过6位")
+        private BigDecimal lastMileFreightAmountTax;
+
+        /**
+         * 尾程运费金额（不含税）
+         */
+        @NotNull(message = "尾程运费金额（不含税）不能为空")
+        @Digits(integer = 10, fraction = 6, message = "尾程运费金额（不含税）整数位不能超过10位，小数位不能超过6位")
+        private BigDecimal lastMileFreightAmount;
+
+        /**
+         * 尾程运费金额-增值税
+         */
+        @NotNull(message = "尾程运费金额不能为空")
+        @Digits(integer = 10, fraction = 6, message = "尾程运费金额整数位不能超过10位，小数位不能超过6位")
+        private BigDecimal lastMileFreightVatAmount;
+
+        /**
+         * 目的杂费计算系数
+         */
+        @NotNull(message = "目的杂费计算系数不能为空")
+        @Digits(integer = 10, fraction = 6, message = "目的杂费计算系数整数位不能超过10位，小数位不能超过6位")
+        private BigDecimal destMiscFeeFactor;
+
+        /**
+         * 目的地杂费付款状态
+         */
+        @NotBlank(message = "目的地杂费付款状态不能为空")
+        @Size(max = 16,message = "目的地杂费付款状态最大长度不能超过16位")
+        private String destMiscFeePayStatus;
+
+        /**
+         * 杂费币别
+         */
+        @NotBlank(message = "杂费币别不能为空")
+        @Size(max = 8,message = "杂费币别最大长度不能超过8位")
+        private String miscFeeCurrency;
+
+        /**
+         * 预估目的港杂费
+         */
+        @NotNull(message = "预估目的港杂费不能为空")
+        @Digits(integer = 10, fraction = 6, message = "预估目的港杂费整数位不能超过10位，小数位不能超过6位")
+        private BigDecimal estimatedDestMiscFee;
+
+        /**
+         * 实际目的港杂费
+         */
+        @NotNull(message = "实际目的港杂费不能为空")
+        @Digits(integer = 10, fraction = 6, message = "实际目的港杂费整数位不能超过10位，小数位不能超过6位")
+        private BigDecimal actualDestMiscFee;
+
+        /**
+         * 目的港杂费付款时间
+         */
+        private LocalDateTime destMiscFeePayTime;
+
+        /**
+         * 目的杂费计算系数
+         */
+        @NotNull(message = "目的杂费计算系数不能为空")
+        @Digits(integer = 10, fraction = 6, message = "目的杂费计算系数整数位不能超过10位，小数位不能超过6位")
+        private BigDecimal dutyCalculationFactor;
+
+        /**
+         * 目的地关税付款状态
+         */
+        @NotBlank(message = "目的地关税付款状态不能为空")
+        @Size(max = 16,message = "目的地关税付款状态最大长度不能超过16位")
+        private String destDutyPayStatus;
+
+        /**
+         * 关税币别
+         */
+        @NotBlank(message = "关税币别不能为空")
+        @Size(max = 8,message = "关税币别最大长度不能超过8位")
+        private String dutyCurrency;
+
+        /**
+         * 预估税金-关税
+         */
+        @NotNull(message = "预估税金不能为空")
+        @Digits(integer = 10, fraction = 6, message = "预估税金整数位不能超过10位，小数位不能超过6位")
+        private BigDecimal estimatedDutyAmount;
+
+        /**
+         * 实际税金-关税
+         */
+        @NotNull(message = "实际税金不能为空")
+        @Digits(integer = 10, fraction = 6, message = "实际税金整数位不能超过10位，小数位不能超过6位")
+        private BigDecimal actualDutyAmount;
+
+        /**
+         * 目的地税金付款时间
+         */
+        private LocalDateTime destTaxPayTime;
+
+        /**
+         * 可抵扣税金计算系数
+         */
+        @NotNull(message = "可抵扣税金计算系数不能为空")
+        @Digits(integer = 10, fraction = 6, message = "可抵扣税金计算系数整数位不能超过10位，小数位不能超过6位")
+        private BigDecimal deductibleTaxFactor;
+
+        /**
+         * 可抵扣税金付款状态
+         */
+        @NotBlank(message = "可抵扣税金付款状态不能为空")
+        @Size(max = 16,message = "可抵扣税金付款状态最大长度不能超过16位")
+        private String deductibleTaxPayStatus;
+
+        /**
+         * 可抵扣税金币别
+         */
+        private String deductibleTaxCurrency;
+
+        /**
+         * 预估的可抵扣税金
+         */
+        @NotNull(message = "预估的可抵扣税金不能为空")
+        @Digits(integer = 10, fraction = 6, message = "预估的可抵扣税金整数位不能超过10位，小数位不能超过6位")
+        private BigDecimal estimatedDeductibleTax;
+
+        /**
+         * 实际的可抵扣税金
+         */
+        @NotNull(message = "实际的可抵扣税金不能为空")
+        @Digits(integer = 10, fraction = 6, message = "实际的可抵扣税金整数位不能超过10位，小数位不能超过6位")
+        private BigDecimal actualDeductibleTax;
+
+        /**
+         * 可抵扣税金付款时间
+         */
+        private LocalDateTime deductibleTaxPayTime;
+
+        /**
+         * 其他税金计算系数
+         */
+        @NotNull(message = "其他税金计算系数不能为空")
+        @Digits(integer = 10, fraction = 6, message = "其他税金计算系数整数位不能超过10位，小数位不能超过6位")
+        private BigDecimal otherTaxCalculationFactor;
+
+        /**
+         * 其他税金付款状态
+         */
+        @NotBlank(message = "其他税金付款状态不能为空")
+        @Size(max = 16,message = "其他税金付款状态最大长度不能超过16位")
+        private String otherTaxPayStatus;
+
+        /**
+         * 其他税金币别
+         */
+        @NotBlank(message = "其他税金币别不能为空")
+        @Size(max = 8,message = "其他税金币别最大长度不能超过8位")
+        private String otherTaxCurrency;
+
+        /**
+         * 预估税金-其他税金
+         */
+        @NotNull(message = "预估税金不能为空")
+        @Digits(integer = 10, fraction = 6, message = "预估税金整数位不能超过10位，小数位不能超过6位")
+        private BigDecimal estimatedTaxOtherTax;
+
+        /**
+         * 实际税金-其他税金
+         */
+        @NotNull(message = "实际税金不能为空")
+        @Digits(integer = 10, fraction = 6, message = "实际税金整数位不能超过10位，小数位不能超过6位")
+        private BigDecimal actualTaxOtherTax;
+
+        /**
+         * 其他税金付款时间
+         */
+        private LocalDateTime otherTaxPayTime;
+
+        /**
+         * 来源id
+         */
+        @NotBlank(message = "来源id不能为空")
+        private String sourceId;
+        /**
+         * 来源类型
+         */
+        @NotBlank(message = "来源类型不能为空")
+        private String sourceType;
+        /**
+         * 来源详情id
+         */
+        @NotBlank(message = "来源详情id不能为空")
+        private String sourceDetailId;
+    }
 }

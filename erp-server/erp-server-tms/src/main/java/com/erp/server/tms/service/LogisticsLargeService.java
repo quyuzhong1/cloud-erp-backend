@@ -51,4 +51,10 @@ public interface LogisticsLargeService extends SuperService<LogisticsLargeEntity
      * @return com.common.business.dto.base.BatchResultDTO
      **/
     BatchResultDTO generateFirstMileLogisticsTable(FirstMileCostAllocationEntity entity, FirstMileSkuCostAllocationEntity firstMileSkuCostAllocationEntity, List<FirstMileSkuCostAllocationDetailEntity> skuCostDetailEntityList, FirstMileDeliveryEntity deliveryEntity, List<FirstMileDeliveryDetailEntity> deliveryDetailEntities);
+
+    /**
+     * 查询需要添加物流大表的数据
+     * @param ids
+     */
+    void listLargeDataById(List<String> ids);
 }

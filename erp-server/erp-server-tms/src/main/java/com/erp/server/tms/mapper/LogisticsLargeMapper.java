@@ -3,6 +3,9 @@ import com.erp.model.tms.entity.LogisticsLargeEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
+
+import java.util.List;
 
 
 /**
@@ -15,5 +18,8 @@ import org.apache.ibatis.annotations.Mapper;
  */
 @Mapper
 public interface LogisticsLargeMapper extends BaseMapper<LogisticsLargeEntity> {
+
+
+    void listLargeDataById(@Param("ids") List<String> ids);
 
 }

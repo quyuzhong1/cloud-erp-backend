@@ -20,6 +20,8 @@ import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import com.erp.model.tms.dto.LogisticsLargeDTO;
 import java.util.*;
+import java.util.stream.Collectors;
+
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
 
@@ -41,6 +43,9 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
 
     @Resource
     private TmsFirstMileReconciliationDetailService tmsFirstMileReconciliationDetailService;
+
+    @Resource
+    private TmsFirstMileReconciliationService tmsFirstMileReconciliationService;
 
     @Resource
     private LogisticsBillService logisticsBillService;
@@ -104,16 +109,27 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
     @Override
     @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO generateFirstMileLogisticsTable(FirstMileCostAllocationEntity entity, FirstMileSkuCostAllocationEntity firstMileSkuCostAllocationEntity, List<FirstMileSkuCostAllocationDetailEntity> skuCostDetailEntityList, FirstMileDeliveryEntity deliveryEntity, List<FirstMileDeliveryDetailEntity> deliveryDetailEntities) {
-        List<TmsFirstMileReconciliationDetailEntity> tmsFirstMileReconciliationDetailEntities = tmsFirstMileReconciliationDetailService.listByRelationCode(Arrays.asList(entity.getSourceCode()));
+
+        //查询物流单
+        LogisticsBillEntity logisticsBillEntity = logisticsBillService.getById(entity.getLogisticsBillId());
 
 
         LogisticsLargeDTO.AddDTO addDTO = new LogisticsLargeDTO.AddDTO();
-/*        addDTO.setOutstockCode(deliveryEntity.getCode());
+        addDTO.setOutstockCode(deliveryEntity.getCode());
         addDTO.setOutstockTime(deliveryEntity.getApproveTime());
 
+        //头程对账单明细
+        List<TmsFirstMileReconciliationDetailEntity> tmsFirstMileReconciliationDetailEntities = tmsFirstMileReconciliationDetailService.listBySourceIds(Arrays.asList(logisticsBillEntity.getId()), "");
+        String reconciliationId = tmsFirstMileReconciliationDetailEntities.stream().map(TmsFirstMileReconciliationDetailEntity::getMainId).distinct().findFirst().orElse(null);
 
-        addDTO.set*/
+
+//        tmsFirstMileReconciliationService.set
         return BatchResultDTO.success(entity.getId(), entity.getBusinessCode(), OperationTypeEnum.UPDATE_STATUS);
 
+    }
+
+    @Override
+    public void listLargeDataById(List<String> ids) {
+        baseMapper.listLargeDataById(ids);
     }
 }
