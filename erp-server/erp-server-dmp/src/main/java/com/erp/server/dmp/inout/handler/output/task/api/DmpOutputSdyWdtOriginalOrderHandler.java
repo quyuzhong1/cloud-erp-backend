@@ -15,6 +15,7 @@ import com.common.core.utils.MathUtil;
 import com.erp.model.dmp.entity.*;
 import com.erp.model.dmp.enums.DmpOutputTaskRecordStatusEnum;
 import com.erp.model.dmp.enums.ThirdSysTypeEnum;
+import com.erp.model.dmp.enums.WdtSourcePlatformEnum;
 import com.erp.model.oms.entity.CustomerInfoEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.enums.OrderSubTypeEnum;
@@ -263,8 +264,14 @@ public class DmpOutputSdyWdtOriginalOrderHandler extends DmpOutputTaskHandler {
                 }
             }
 
-            shudiyunB2cOrderDTO.setPlatform_id(dmpSoInfoEntity.getSourceSystem());
-            shudiyunB2cOrderDTO.setPlatform_name(PlatformDictEnum.getNameByCode(dmpSoInfoEntity.getSourcePlatform()));
+            String sourcePlatform = dmpSoInfoEntity.getSourcePlatform();
+            String sourcePlatformName = dmpSoInfoEntity.getSourcePlatform();
+			shudiyunB2cOrderDTO.setPlatform_id(sourcePlatform);
+            WdtSourcePlatformEnum wdtSourcePlatformEnum = WdtSourcePlatformEnum.getByCode(sourcePlatform);
+            if(wdtSourcePlatformEnum != null) {
+            	sourcePlatformName = wdtSourcePlatformEnum.getName();
+            }
+            shudiyunB2cOrderDTO.setPlatform_name(sourcePlatformName);
             shudiyunB2cOrderDTO.setRoot_node_no(dmpSoInfoEntity.getPlatformCode());
 
             if (dmpSoInfoEntity.getPayTime() != null) {
