@@ -10,7 +10,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
-import com.common.business.constant.SearchType;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -114,7 +113,6 @@ public class SmallBagCostAllocationServiceImpl extends SuperServiceImpl<SmallBag
 	public List<TabListDTO> tabList(PermissionsDTO dto) {
 		List<SmallBagCostAllocationDTO.TabListDTO> resultList = new ArrayList<>();
 		SmallBagCostAllocationReportStatusEnum[] values = SmallBagCostAllocationReportStatusEnum.values();
-        Integer allCount = 0;
         for (SmallBagCostAllocationReportStatusEnum statusEnum : values) {
             LogisticsBillCostDTO.PagingParamDTO pagingParamDTO = new LogisticsBillCostDTO.PagingParamDTO();
             pagingParamDTO.setPermissionSql(dto.getPermissionSql());
@@ -124,14 +122,7 @@ public class SmallBagCostAllocationServiceImpl extends SuperServiceImpl<SmallBag
             resultDTO.setTabFlag(statusEnum.getCode());
             resultDTO.setTabFlagName(statusEnum.getName());
             resultList.add(resultDTO);
-            allCount = allCount + resultDTO.getCount();
         }
-        
-        SmallBagCostAllocationDTO.TabListDTO allTab = new SmallBagCostAllocationDTO.TabListDTO();
-        allTab.setCount(allCount);
-        allTab.setTabFlag(SearchType.ALL);
-        allTab.setTabFlagName("全部");
-        resultList.add(allTab);
         
         return resultList;
 	}
@@ -153,6 +144,12 @@ public class SmallBagCostAllocationServiceImpl extends SuperServiceImpl<SmallBag
 
 	@Override
 	public BatchResultDTO pushBigTable(String id) {
+		return null;
+	}
+
+	@Override
+	public BatchResultDTO delete(String id) {
+		// TODO Auto-generated method stub
 		return null;
 	}
 }

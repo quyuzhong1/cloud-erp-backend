@@ -28,7 +28,6 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.tms.dto.SmallBagCostAllocationDTO;
 import com.erp.model.tms.entity.SmallBagCostAllocationEntity;
-import com.erp.server.tms.service.LogisticsBillCostService;
 import com.erp.server.tms.service.SmallBagCostAllocationService;
 
 import cn.hutool.core.util.ObjectUtil;
@@ -129,7 +128,7 @@ public class SmallBagCostAllocationController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
             menuCode = "tms:smallBagCostAllocation:updateReportStatus",
-            serviceClass = LogisticsBillCostService.class,
+            serviceClass = SmallBagCostAllocationService.class,
             keyIdName = "id")
     public ApiResult<List<BatchResultDTO>> updateReportStatus(@RequestBody @Validated SmallBagCostAllocationDTO.UpdateStatusDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
@@ -164,7 +163,7 @@ public class SmallBagCostAllocationController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
     tableField = "create_user_id",
     menuCode = "tms:smallBagCostAllocation:reAllocation",
-    serviceClass = LogisticsBillCostService.class,
+    serviceClass = SmallBagCostAllocationService.class,
     keyIdName = "id")
     public ApiResult<List<BatchResultDTO>> reAllocation(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
     	List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
@@ -172,6 +171,41 @@ public class SmallBagCostAllocationController extends BaseController {
     		BatchResultDTO submit;
     		try {
     			submit = smallBagCostAllocationService.reAllocation(id);
+    		}catch (Exception e){
+    			log.error("小包分摊 重新分摊",e);
+    			SmallBagCostAllocationEntity entity = smallBagCostAllocationService.getById(id);
+    			if (ObjectUtil.isEmpty(entity)) {
+    				submit = BatchResultDTO.fail(id, id, "小包分摊不存在, 重新分摊");
+    				resultDTOS.add(submit);
+    				continue;
+    			}
+    			submit = BatchResultDTO.fail(entity.getId(), entity.getId(), e.getMessage());
+    		}
+    		resultDTOS.add(submit);
+    	}
+    	return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+    
+    /**
+     * 批量删除
+     * @author Will
+     * @date: 2023/11/13 15:35
+     * @param dto
+     * @return ApiResult<List<BatchResultDTO>>
+     */
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "状态变更:idList={idList}")
+    @PostMapping("/delete")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+    tableField = "create_user_id",
+    menuCode = "tms:smallBagCostAllocation:delete",
+    serviceClass = SmallBagCostAllocationService.class,
+    keyIdName = "id")
+    public ApiResult<List<BatchResultDTO>> delete(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+    	List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+    	for (String id : dto.getIds()) {
+    		BatchResultDTO submit;
+    		try {
+    			submit = smallBagCostAllocationService.delete(id);
     		}catch (Exception e){
     			log.error("小包分摊 重新分摊",e);
     			SmallBagCostAllocationEntity entity = smallBagCostAllocationService.getById(id);
@@ -212,7 +246,7 @@ public class SmallBagCostAllocationController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
     tableField = "create_user_id",
     menuCode = "tms:smallBagCostAllocation:pushBigTable",
-    serviceClass = LogisticsBillCostService.class,
+    serviceClass = SmallBagCostAllocationService.class,
     keyIdName = "id")
     public ApiResult<List<BatchResultDTO>> pushBigTable(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
     	List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());

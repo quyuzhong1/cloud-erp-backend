@@ -272,7 +272,6 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
     public List<LogisticsBillCostDTO.TabListDTO> tabList(PermissionsDTO dto, DictCostAttributionEnum attribution) {
         List<LogisticsBillCostDTO.TabListDTO> resultList = new ArrayList<>();
         ReconciliationTabStatusEnum[] values = ReconciliationTabStatusEnum.values();
-        Integer allCount = 0;
         for (ReconciliationTabStatusEnum statusEnum : values) {
             LogisticsBillCostDTO.PagingParamDTO pagingParamDTO = new LogisticsBillCostDTO.PagingParamDTO();
             pagingParamDTO.setPermissionSql(dto.getPermissionSql());
@@ -291,14 +290,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
             resultDTO.setTabFlag(statusEnum.getCode());
             resultDTO.setTabFlagName(statusEnum.getName());
             resultList.add(resultDTO);
-            allCount = allCount + resultDTO.getCount();
         }
-        
-        LogisticsBillCostDTO.TabListDTO allTab = new LogisticsBillCostDTO.TabListDTO();
-        allTab.setCount(allCount);
-        allTab.setTabFlag(SearchType.ALL);
-        allTab.setTabFlagName("全部");
-        resultList.add(allTab);
         
         return resultList;
     }
