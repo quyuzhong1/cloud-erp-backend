@@ -1,5 +1,6 @@
 package com.erp.server.oms.kingdee;
 
+import java.util.List;
 import java.util.Map;
 
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
@@ -33,9 +34,9 @@ public interface SyncKingdeeSoService {
     /**
      * 同步数帝云
      * @param view
-     * @param soDetailEntity
+     * @param soDetailEntityList
      * @param operate
      * @param deliveryStatus
      */
-    void syncDataToSdy(SoInfoDTO.ViewDTO view, SoDetailEntity soDetailEntity, String operate, String deliveryStatus);
+    void syncDataToSdy(SoInfoDTO.ViewDTO view, List<SoDetailEntity> soDetailEntityList, String operate, String deliveryStatus);
 }

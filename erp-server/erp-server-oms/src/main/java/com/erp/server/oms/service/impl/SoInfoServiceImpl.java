@@ -1385,7 +1385,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             for (SoInfoEntity soInfoEntity : list) {
                 SoInfoDTO.ViewDTO view = this.view(soInfoEntity.getId());
                 List<SoDetailEntity> soDetailEntities = soDetailService.listBaseByMainId(view.getId());
-                soDetailEntities.forEach(soDetailEntity -> syncKingdeeSoService.syncDataToSdy(view, soDetailEntity, SyncOperateEnum.OPERATE_APPROVE.getCode(), ""));
+                syncKingdeeSoService.syncDataToSdy(view, soDetailEntities, SyncOperateEnum.OPERATE_APPROVE.getCode(), "");
             }
 
         } else {
@@ -1477,7 +1477,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             for (SoInfoEntity soInfoEntity : list) {
                 SoInfoDTO.ViewDTO view = this.view(soInfoEntity.getId());
                 List<SoDetailEntity> soDetailEntities = soDetailService.listBaseByMainId(view.getId());
-                soDetailEntities.forEach(soDetailEntity -> syncKingdeeSoService.syncDataToSdy(view, soDetailEntity, SyncOperateEnum.OPERATE_DISAPPROVE.getCode(), ""));
+                syncKingdeeSoService.syncDataToSdy(view, soDetailEntities, SyncOperateEnum.OPERATE_DISAPPROVE.getCode(), "");
             }
         }
         return BatchResultDTO.success(entity.getId(),entity.getCode(),"操作成功");
@@ -1629,7 +1629,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             for (Map<String, Object> map : sdyList) {
                 SoInfoDTO.ViewDTO view = BeanUtil.toBean(map.get("view"), SoInfoDTO.ViewDTO.class);
                 List<SoDetailEntity> soDetailEntities = (List<SoDetailEntity>) map.get("detail");
-                soDetailEntities.forEach(soDetailEntity -> syncKingdeeSoService.syncDataToSdy(view, soDetailEntity, SyncOperateEnum.OPERATE_DELETE.getCode(), ""));
+                syncKingdeeSoService.syncDataToSdy(view, soDetailEntities, SyncOperateEnum.OPERATE_DELETE.getCode(), "");
             }
         }
         return result;
@@ -3910,6 +3910,6 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         //同步数帝云
         SoInfoDTO.ViewDTO view = this.view(soId);
         List<SoDetailEntity> soDetailEntities = soDetailService.listBaseByMainId(view.getId());
-        soDetailEntities.forEach(soDetailEntity -> syncKingdeeSoService.syncDataToSdy(view, soDetailEntity, operateEnum, deliveryStatus));
+        syncKingdeeSoService.syncDataToSdy(view, soDetailEntities, operateEnum, deliveryStatus);
     }
 }
