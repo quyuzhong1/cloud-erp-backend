@@ -684,6 +684,7 @@ public class RequisitionApplicationChangeServiceImpl extends SuperServiceImpl<Re
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void generateByPickingList(PickingListsDTO.AddChangeDTO addChangeDTO, PickingListsEntity entity) {
         RequisitionApplicationChangeEntity requisitionApplicationChangeEntity = new RequisitionApplicationChangeEntity();
         requisitionApplicationChangeEntity.setSourceCode(entity.getCode());
@@ -703,6 +704,8 @@ public class RequisitionApplicationChangeServiceImpl extends SuperServiceImpl<Re
         String msg = StrUtil.format("用户【{}】修改拣货单自动新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "要货申请变更单" , requisitionApplicationChangeEntity.getCode());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.REQUISITION_APPLICATION_CHANGE.getCode(), requisitionApplicationChangeEntity.getId(), "新增操作");
         detailService.addByPicking(requisitionApplicationChangeEntity, addChangeDTO);
+
+        this.submit(requisitionApplicationChangeEntity.getId());
     }
 
     @Override
