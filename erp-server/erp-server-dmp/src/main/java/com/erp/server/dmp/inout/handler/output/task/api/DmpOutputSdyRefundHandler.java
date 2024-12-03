@@ -155,6 +155,9 @@ public class DmpOutputSdyRefundHandler extends DmpOutputTaskHandler {
      * 解析订单数据
      **/
     public List<ShudiyunB2cOrderDTO> convert(DmpSoRefundInfoEntity dmpSoRefundEntity, List<DmpSoRefundDetailEntity> dmpSoRefundDetailEntityList) {
+        if (CollUtil.isEmpty(dmpSoRefundDetailEntityList)) {
+            return Collections.emptyList();
+        }
         DateTimeFormatter localDateTime = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
         List<ShudiyunB2cOrderDTO> sdyListDTO = new ArrayList<>();
@@ -181,7 +184,7 @@ public class DmpOutputSdyRefundHandler extends DmpOutputTaskHandler {
             sdyDTO.setCustomer_refundable_quantity(qtyTotal);
             sdyDTO.setQuantity_buyer_returned(qtyTotal);
 
-            BigDecimal amountTotal = dmpSoRefundDetailEntityList.stream().map(DmpSoRefundDetailEntity::getAmount).reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
+            BigDecimal amountTotal = dmpSoRefundDetailEntityList.stream().filter(req -> req.getAmount() != null).map(DmpSoRefundDetailEntity::getAmount).reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
             sdyDTO.setOnline_applied_amount(amountTotal);
             sdyDTO.setOrder_seller_payed(amountTotal);
 
