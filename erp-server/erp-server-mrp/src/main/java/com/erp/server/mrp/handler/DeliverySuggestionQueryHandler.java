@@ -11,10 +11,10 @@ public class DeliverySuggestionQueryHandler extends AbstractQueryHandler {
     @Override
     protected String handleSqlLogic(String field, Object value, String compareCodeSplicingValueSql) {
         if("isPush".equals(field) && (Boolean) value){
-            return "EXISTS(select 1 from wms_delivery_plan_detail, jsonb_array_elements(source_json) AS elem where is_deleted = false and elem ->>'sourceId' = ds.id)";
+            return "EXISTS(select 1 from wms_delivery_plan_detail_foreign, jsonb_array_elements(source_json) AS elem where is_deleted = false and elem ->>'sourceId' = ds.id)";
         }
         if("isPush".equals(field) && !(Boolean) value){
-            return "not EXISTS(select 1 from wms_delivery_plan_detail, jsonb_array_elements(source_json) AS elem where is_deleted = false and elem ->>'sourceId' = ds.id)";
+            return "not EXISTS(select 1 from wms_delivery_plan_detail_foreign, jsonb_array_elements(source_json) AS elem where is_deleted = false and elem ->>'sourceId' = ds.id)";
         }
         if("deliveryPlanCode".equals(field)){
 
