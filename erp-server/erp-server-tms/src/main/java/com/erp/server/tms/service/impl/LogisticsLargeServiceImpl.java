@@ -8,6 +8,7 @@ import com.common.business.dto.base.BaseDropDownDTO;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.enums.OperationTypeEnum;
+import com.common.business.enums.OrderTypeEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.wrapper.FeignQuery;
 import com.erp.model.oms.entity.SoB2cEntity;
@@ -353,7 +354,26 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
         addDTO.setSkuNo(soOutstockDetailEntity.getSkuNo());
         addDTO.setDeliveryQty(costAllocationEntity.getDeliveryQty());
         //平台订单号
-        addDTO.setPlatformOrderCode(getOutstockPlatformOrderCode(soOutstockEntity));
+        String platformCode = "";
+        if (SourceTypeEnum.PLATFORM_SO_OUT_STOCK.getCode().equals(soOutstockEntity.getSourceType())
+                || SourceTypeEnum.SO_B2C.getCode().equals(soOutstockEntity.getSourceType())
+                || SourceTypeEnum.SO_B2C_DELIVERY.getCode().equals(soOutstockEntity.getSourceType())
+                || SourceTypeEnum.THIRD_WAREHOUSE_CREATE_OUTBOUND_BILL.getCode().equals(soOutstockEntity.getSourceType())
+        ) {
+            String sourceId = soOutstockEntity.getSourceId();
+            SoB2cEntity soB2cEntity = soB2cFeign.getById(sourceId);
+            if (ObjectUtil.isNotEmpty(soB2cEntity)) {
+                platformCode = soB2cEntity.getPlatformCode();
+
+                if (soB2cEntity.getTransferStatus()) {
+
+                }
+            }
+        }  else {
+            platformCode = soOutstockEntity.getSoCode();
+        }
+
+        addDTO.setPlatformOrderCode(platformCode);
 
         addDTO.setWeight(logisticsBillCostEntity.getBillingWeightLogistics());
         addDTO.setLogisticsBillingWeight(logisticsBillCostEntity.getBillingWeightLogistics());
@@ -370,6 +390,11 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
                 addDTO.setOriginPort(list.get(0).getAddress());
             }
         }
+
+        if (OrderTypeEnum.B2C.getCode().equals(soOutstockEntity.getOrderType())) {
+            soB2cFeign.getById(soOutstockEntity);
+        }
+
 
 
         return null;
