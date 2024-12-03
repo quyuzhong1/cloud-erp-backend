@@ -2658,21 +2658,22 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
             log.info("获取fastdfs文件为空==========》地址：" + fileTemplateEntity.getUrl());
             return;
         }
-        try{
-            String nowDate = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
-            for (RequisitionApplicationDTO.PrintFnskuDetailDTO dtoDetail : dto.getDetails()) {
-                Integer printNum = dtoDetail.getPrintNum() == null || dtoDetail.getPrintNum() <=0 ? 1 : dtoDetail.getPrintNum();
-                Map<String, Object> map = BeanUtil.beanToMap(dtoDetail);
-                map.put("printTime",nowDate);
-                map.put("printNum",printNum);
-                byte[] bytes = JasperHelperUtil.exportToPdfStream(inputStream, map, new ArrayList<>());
-                String base = Base64.getEncoder().encodeToString(bytes);
-                for (int i = 0; i < printNum; i++) {
-                    base64List.add("data:application/pdf;base64," + base);
-                }
+        for (RequisitionApplicationDTO.PrintFnskuDetailDTO dtoDetail : dto.getDetails()) {
+            Integer printNum = dtoDetail.getPrintNum() == null || dtoDetail.getPrintNum() <= 0 ? 1 : dtoDetail.getPrintNum();
+            Map<String, Object> map = new HashMap<>();
+            map.put("skuNo", dtoDetail.getSkuNo());
+            map.put("declareEnglishName", dtoDetail.getDeclareEnglishName());
+            if (dtoDetail.getPlatformFnSku().length() > 20) {
+                //前后各保留8个字符，中间使用***代替
+                map.put("platformFnSku", dtoDetail.getPlatformFnSku().substring(0, 8) + "***" + dtoDetail.getPlatformFnSku().substring(dtoDetail.getPlatformFnSku().length() - 8));
+            } else {
+                map.put("platformFnSku", dtoDetail.getPlatformFnSku());
             }
-        } catch (Exception e) {
-            throw new RuntimeException(e);
+            byte[] bytes = JasperHelperUtil.exportToPdfStream(inputStream, map);
+            String base = Base64.getEncoder().encodeToString(bytes);
+            for (int i = 1; i <= printNum; i++) {
+                base64List.add("data:application/pdf;base64," + base);
+            }
         }
     }
 }
