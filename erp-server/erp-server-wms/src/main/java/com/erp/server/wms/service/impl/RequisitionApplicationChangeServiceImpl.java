@@ -373,7 +373,6 @@ public class RequisitionApplicationChangeServiceImpl extends SuperServiceImpl<Re
         updateForApprove(entity.getId(), approveStatus.getStatus());
         if (dto.getType().equals(ApproveType.PASS)) {
             List<RequisitionApplicationChangeDetailEntity> detailEntityList = detailService.listByMains(Collections.singletonList(entity.getId()));
-            new RequisitionApplicationChangeDTO.UpdateVirtualDTO();
             RequisitionApplicationChangeDTO.UpdateVirtualDTO updateVirtualDTO;
             if(entity.getSourceType().equals(SourceTypeEnum.REQUISITION_APPLICATION.getCode())){
                 updateVirtualDTO = changeRequisition(entity,detailEntityList);
@@ -402,34 +401,23 @@ public class RequisitionApplicationChangeServiceImpl extends SuperServiceImpl<Re
         List<RequisitionApplicationDetailEntity> updateList = new ArrayList<>();
         List<PickingDetailEntity> updatePickingList = new ArrayList<>();
         Map<String,List<RequisitionApplicationChangeDetailEntity>> map = detailEntityList.stream().collect(Collectors.groupingBy(RequisitionApplicationChangeDetailEntity::getBusinessDetailId));
-        map.forEach((key,value)->{
-            RequisitionApplicationDetailEntity requisitionApplicationDetailEntity = requisitionApplicationDetailEntityList.stream().filter(v -> v.getId().equals(key)).findFirst().orElseThrow(()->new ServiceException("{}未找到要货申请单明细数据",value.get(0).getSkuNo()));
-            List<PickingDetailEntity> sameSourcePickingList = allDetailList.stream().filter(v -> v.getSourceDetailId().equals(key)).collect(Collectors.toList());
-            List<String> excludeIds = value.stream().map(RequisitionApplicationChangeDetailEntity::getSourceDetailId).collect(Collectors.toList());
-            List<PickingDetailEntity> excludeSourcePickingList = sameSourcePickingList.stream().filter(v->!excludeIds.contains(v.getId())).collect(Collectors.toList());
-            int newQty = excludeSourcePickingList.stream().mapToInt(PickingDetailEntity::getQty).sum();
-            for (RequisitionApplicationChangeDetailEntity detail : value) {
-                PickingDetailEntity pickingDetailEntity = allDetailList.stream().filter(v->v.getId().equals(detail.getSourceDetailId())).findFirst().orElse(null);
-
-                if(RequisitionChangeTypeEnum.ADD.getCode().equals(detail.getChangeType())){
-                    newQty = newQty + detail.getNewQty();
-                }else if (RequisitionChangeTypeEnum.UPDATE.getCode().equals(detail.getChangeType())){
-                    newQty = newQty + detail.getNewQty();
-                }else if (RequisitionChangeTypeEnum.DELETE.getCode().equals(detail.getChangeType())){
-                    newQty = newQty - detail.getNewQty();
-                }
-                if(Objects.nonNull(pickingDetailEntity)){
-                    pickingDetailEntity.setOriginWarehouseLocation(detail.getOriginWarehouseLocation());
-                    pickingDetailEntity.setChangeBeforeQty(pickingDetailEntity.getQty());
-                    pickingDetailEntity.setQty(detail.getNewQty());
-                    updatePickingList.add(pickingDetailEntity);
-                }
-            }
+        for (RequisitionApplicationChangeDetailEntity requisitionApplicationChangeDetailEntity : detailEntityList) {
+            List<PickingDetailEntity> pickingDetailList = allDetailList.stream().filter(v -> v.getSourceDetailId().equals(requisitionApplicationChangeDetailEntity.getBusinessDetailId())).collect(Collectors.toList());
+            RequisitionApplicationDetailEntity requisitionApplicationDetailEntity = requisitionApplicationDetailEntityList.stream().filter(v -> v.getId().equals(requisitionApplicationChangeDetailEntity.getBusinessDetailId())).findFirst().orElseThrow(()->new ServiceException("{}未找到要货申请单明细数据",requisitionApplicationChangeDetailEntity.getSkuNo()));
             requisitionApplicationDetailEntity.setChangeBeforeQty(requisitionApplicationDetailEntity.getRequisitionQty());
-            requisitionApplicationDetailEntity.setApproveQty(newQty);
-            requisitionApplicationDetailEntity.setRequisitionQty(newQty);
+            requisitionApplicationDetailEntity.setApproveQty(requisitionApplicationChangeDetailEntity.getNewQty());
+            requisitionApplicationDetailEntity.setRequisitionQty(requisitionApplicationChangeDetailEntity.getNewQty());
             updateList.add(requisitionApplicationDetailEntity);
-        });
+            pickingDetailList = pickingDetailList.stream().filter(v->!v.getQty().equals(v.getActualQty()) || !v.getWarehouseLocation().equals(v.getOriginWarehouseLocation())).collect(Collectors.toList());
+            if(CollectionUtils.isEmpty(pickingDetailList)){
+                continue;
+            }
+            pickingDetailList.forEach(v->{
+                v.setChangeBeforeQty(v.getActualQty());
+                v.setQty(v.getActualQty());
+            });
+            updatePickingList.addAll(pickingDetailList);
+        }
 
         requisitionApplicationService.updateByChange(new ArrayList<>(),updateList,new ArrayList<>());
         pickingListsService.updateByChange(updatePickingList);
@@ -518,6 +506,9 @@ public class RequisitionApplicationChangeServiceImpl extends SuperServiceImpl<Re
         List<RequisitionApplicationDetailEntity> updateList = new ArrayList<>();
         List<RequisitionApplicationDetailEntity> deleteList = new ArrayList<>();
         List<PickingDetailEntity> updatePickingList = new ArrayList<>();
+        List<String> skuIds = detailList.stream().map(RequisitionApplicationChangeDetailEntity::getSkuId).collect(Collectors.toList());
+        //获取子SKU集合
+        List<BomChildrenSkuDTO> bomChildrenSkuList = plmTaskFeign.listBomChildBySkuIds(skuIds);
 
         for (RequisitionApplicationChangeDetailEntity detail : detailList) {
             if(RequisitionChangeTypeEnum.ADD.getCode().equals(detail.getChangeType())){
@@ -551,11 +542,27 @@ public class RequisitionApplicationChangeServiceImpl extends SuperServiceImpl<Re
                 requisitionApplicationDetailEntity.setApproveQty(detail.getNewQty());
                 requisitionApplicationDetailEntity.setRequisitionQty(detail.getNewQty());
                 updateList.add(requisitionApplicationDetailEntity);
-                PickingDetailEntity pickingDetailEntity = pickingDetailEntityList.stream().filter(v->v.getSourceDetailId().equals(requisitionApplicationDetailEntity.getId())).findFirst().orElse(null);
-                if(Objects.nonNull(pickingDetailEntity)){
-                    pickingDetailEntity.setChangeBeforeQty(pickingDetailEntity.getQty());
-                    pickingDetailEntity.setQty(detail.getNewQty());
-                    updatePickingList.add(pickingDetailEntity);
+                List<BomChildrenSkuDTO> bomChildrenList = bomChildrenSkuList.stream()
+                        .filter(req -> req.getParentSkuId().equals(requisitionApplicationDetailEntity.getSkuId())
+                                && BomTypeEnum.COMBINATION.getType().equals(req.getType())
+                        ).collect(Collectors.toList());
+                List<PickingDetailEntity> currentList =  pickingDetailEntityList.stream().filter(v->v.getSourceDetailId().equals(requisitionApplicationDetailEntity.getId())).collect(Collectors.toList());
+                if(CollectionUtils.isNotEmpty(bomChildrenList)){
+                    for (BomChildrenSkuDTO bomChildrenSkuDTO : bomChildrenList) {
+                        PickingDetailEntity pickingDetailEntity = currentList.stream().filter(v->v.getSkuId().equals(bomChildrenSkuDTO.getSkuId())).findFirst().orElse(null);
+                        if(Objects.nonNull(pickingDetailEntity)){
+                            pickingDetailEntity.setChangeBeforeQty(pickingDetailEntity.getQty());
+                            pickingDetailEntity.setQty(detail.getNewQty()*bomChildrenSkuDTO.getQuantity());
+                            updatePickingList.add(pickingDetailEntity);
+                        }
+                    }
+                }else{
+                    PickingDetailEntity pickingDetailEntity = pickingDetailEntityList.stream().filter(v->v.getSourceDetailId().equals(requisitionApplicationDetailEntity.getId())).findFirst().orElse(null);
+                    if(Objects.nonNull(pickingDetailEntity)){
+                        pickingDetailEntity.setChangeBeforeQty(pickingDetailEntity.getQty());
+                        pickingDetailEntity.setQty(detail.getNewQty());
+                        updatePickingList.add(pickingDetailEntity);
+                    }
                 }
             }else if (RequisitionChangeTypeEnum.DELETE.getCode().equals(detail.getChangeType())){
                 RequisitionApplicationDetailEntity deleteEntity = requisitionApplicationDetailEntityList.stream().filter(v -> v.getId().equals(detail.getBusinessDetailId())).findFirst().orElseThrow(()->new ServiceException("{}未找到要货申请单明细数据",detail.getSkuNo()));
@@ -966,6 +973,9 @@ public class RequisitionApplicationChangeServiceImpl extends SuperServiceImpl<Re
             }
             SkuVO skuVO = skuVOList.stream().filter(v->v.getSkuId().equals(data.getSkuId())).findFirst().orElse(new SkuVO());
             data.setProductName(skuVO.getSkuName());
+            if(data.getOriginRequisitionQty().equals(0)){
+                data.setOriginRequisitionQty(null);
+            }
         }
     }
     /**

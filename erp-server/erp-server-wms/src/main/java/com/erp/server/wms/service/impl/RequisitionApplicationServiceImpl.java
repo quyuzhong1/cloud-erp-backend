@@ -520,7 +520,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
                 break;
             case FS_REQUISITION_CHANGE_SUBMIT_NOTICE:
                 title = String.format(NoticeMsgConstant.FS_REQUISITION_CHANGE_SETTING_HEAD);
-                msgContent = String.format(NoticeMsgConstant.FS_REQUISITION_CHANGE_SETTING_CONTENT, "数大臣", "要货申请变更单",requistionCode ,createUserName, LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+                msgContent = String.format(NoticeMsgConstant.FS_REQUISITION_CHANGE_SETTING_CONTENT, "数大臣", "要货申请变更单",requistionCode ,"提交审核",createUserName, "",LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
                 break;
             case FS_REQUISITION_CHANGE_APPROVE_NOTICE:
                 title = String.format(NoticeMsgConstant.FS_REQUISITION_CHANGE_SETTING_HEAD);

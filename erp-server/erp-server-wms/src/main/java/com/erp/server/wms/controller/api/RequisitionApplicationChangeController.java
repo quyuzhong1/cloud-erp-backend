@@ -359,8 +359,9 @@ public class RequisitionApplicationChangeController extends BaseController {
             tableAlias = ""
     )
     @LogAction(value = LogActionEnum.EXPORT, desc = "要货申请变更单导出Excel数据")
-    public void exportList(@RequestBody @Validated RequisitionApplicationChangeDTO.ExportDTO dto, HttpServletResponse response) {
+    public ApiResult<?> exportList(@RequestBody @Validated RequisitionApplicationChangeDTO.ExportDTO dto, HttpServletResponse response) {
         requisitionApplicationChangeService.exportList(dto, response);
+        return success();
     }
 
 

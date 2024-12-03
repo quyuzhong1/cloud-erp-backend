@@ -58,6 +58,11 @@ public class PickingDetailEntity extends BaseEntity<PickingDetailEntity> {
     @TableField("warehouse_location")
     private String warehouseLocation;
 
+    /**
+     * 变更前库位
+     */
+    @TableField("origin_warehouse_location")
+    private String originWarehouseLocation;
 
     /**
      * 来源明细id
@@ -95,14 +100,14 @@ public class PickingDetailEntity extends BaseEntity<PickingDetailEntity> {
     @TableField("actual_qty")
     private Integer actualQty;
 
-    /**
-     * 更新前仓位
-     */
-    @TableField(exist = false)
-    private String originWarehouseLocation;
-
     @TableField(exist = false)
     private Integer changeBeforeQty;
+
+    /**
+     * 变更类型
+     */
+    @TableField(exist = false)
+    private String changeType;
 
     public static final String SKU_ID = "sku_id";
 

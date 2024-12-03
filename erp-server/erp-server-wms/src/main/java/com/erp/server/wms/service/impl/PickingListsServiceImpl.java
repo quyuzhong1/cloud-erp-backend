@@ -38,6 +38,7 @@ import com.erp.model.wms.dto.pickingstrategy.PickingListsDTO;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.RequisitionApplicationStatusEnum;
 import com.erp.model.wms.enums.RequisitionApplicationTypeEnum;
+import com.erp.model.wms.enums.RequisitionChangeTypeEnum;
 import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
 import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
@@ -823,6 +824,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
                 .stream().map(PickingDetailDTO.View::getSkuId)
                 .distinct().collect(Collectors.toList());
         List<ProductDetailEntity> detailEntityList = plmTaskFeign.getByIdList(skuIds);
+
         //处理新增的数据
         if (!CollectionUtils.isEmpty(newAddDataList)) {
             List<PickingDetailEntity> addData = newAddDataList.stream().map(data -> {
@@ -833,17 +835,18 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
                 ProductDetailEntity productDetailEntity = detailEntityList.stream()
                         .filter(entityClass -> entityClass.getId().equals(data.getSkuId()))
                         .findFirst().orElse(new ProductDetailEntity());
+
                 PickingDetailEntity detail = new PickingDetailEntity();
                 detail.setMainId(entity.getId());
                 detail.setId(IdWorker.getIdStr());
                 detail.setSkuId(data.getSkuId());
                 detail.setSkuNo(data.getSkuNo());
                 detail.setQty(0);
-                detail.setActualQty(data.getActualQty());
                 detail.setUnit(productDetailEntity.getUnitName());
                 detail.setWarehouseLocation(data.getWarehouseLocation());
                 detail.setSourceDetailId(data.getSourceDetailId());
                 detail.setStagingLocation(detailEntity.getStagingLocation());
+                detail.setChangeType(RequisitionChangeTypeEnum.ADD.getCode());
                 //处理日志
                 String context = CharSequenceUtil.format("增加【{}】明细行,拣货仓位【{}}】,数量【{}】", data.getSkuNo(), data.getWarehouseLocation(), data.getQty());
                 operateLogService.addModuleOperateLog(context, ModuleTypeEnum.PICKING_LISTS.getCode(), entity.getId(), "编辑操作");
@@ -871,6 +874,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
             detailEntity.setOriginWarehouseLocation(detailEntity.getWarehouseLocation());
             detailEntity.setWarehouseLocation(view.getWarehouseLocation());
             detailEntity.setActualQty(view.getActualQty());
+            detailEntity.setChangeType(RequisitionChangeTypeEnum.UPDATE.getCode());
             updateList.add(detailEntity);
             operateLogService.addModuleOperateLog(context, ModuleTypeEnum.PICKING_LISTS.getCode(), entity.getId(), "编辑操作");
 
@@ -895,6 +899,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
                 removeIds.add(detail.getId());
                 String context = CharSequenceUtil.format("移除【{}】明细行,拣货仓位【{}}】,数量【{}】", detail.getSkuNo(), detail.getWarehouseLocation(), detail.getQty());
                 operateLogService.addModuleOperateLog(context, ModuleTypeEnum.PICKING_LISTS.getCode(), entity.getId(), "编辑操作");
+                detail.setChangeType(RequisitionChangeTypeEnum.DELETE.getCode());
             }
             pickingDetailService.removeByIds(removeIds);
             result.setRemoveList(removeData);
