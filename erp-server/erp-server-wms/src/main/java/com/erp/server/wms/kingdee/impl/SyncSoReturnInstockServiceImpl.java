@@ -82,7 +82,6 @@ public class SyncSoReturnInstockServiceImpl implements SyncSoReturnInstockServic
 
         //组织信息
         CustomerInfoEntity customerInfo = FeignQuery.getById(CustomerInfoEntity.class, entity.getCustomerId());
-        List<BaseIdDTO.CodeDTO> companyEntities = sysUserFeign.getAccountingCompanyList(Arrays.asList(customerInfo.getFinancialOrganization(), entity.getSalesOrgId()));
 
         //退货物流单号
         String rootNodeNoInitial = getRootNodeNoInitial(entity);
@@ -102,6 +101,8 @@ public class SyncSoReturnInstockServiceImpl implements SyncSoReturnInstockServic
 
         //组织信息
         if (ObjectUtil.isNotEmpty(customerInfo)) {
+            List<BaseIdDTO.CodeDTO> companyEntities = sysUserFeign.getAccountingCompanyList(Arrays.asList(customerInfo.getFinancialOrganization(), entity.getSalesOrgId()));
+
             String salesOrgCode = companyEntities.stream().filter(req -> req.getId().equals(entity.getSalesOrgId())).map(req -> req.getCode()).findFirst().orElse("");
             shudiyunB2cOrderDTO.setSales_company_code(salesOrgCode);
             BaseIdDTO.CodeDTO sysAccountingCompanyEntity = companyEntities.stream().filter(req -> req.getId().equals(customerInfo.getFinancialOrganization())).findFirst().orElse(null);
