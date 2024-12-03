@@ -2659,13 +2659,12 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
             return;
         }
         try{
-//            String filePath = "C:\\Users\\Administrator\\Desktop\\Blank_A4_4.jasper";
-//            inputStream = new FileInputStream(filePath);
-            String nowDate = LocalDateTime.now().toString();
+            String nowDate = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
             for (RequisitionApplicationDTO.PrintFnskuDetailDTO dtoDetail : dto.getDetails()) {
                 Integer printNum = dtoDetail.getPrintNum() == null || dtoDetail.getPrintNum() <=0 ? 1 : dtoDetail.getPrintNum();
                 Map<String, Object> map = BeanUtil.beanToMap(dtoDetail);
                 map.put("printTime",nowDate);
+                map.put("printNum",printNum);
                 byte[] bytes = JasperHelperUtil.exportToPdfStream(inputStream, map, new ArrayList<>());
                 String base = Base64.getEncoder().encodeToString(bytes);
                 for (int i = 0; i < printNum; i++) {
