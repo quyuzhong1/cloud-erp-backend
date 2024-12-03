@@ -138,12 +138,12 @@ public class ReportOrderDataServiceImpl extends SuperServiceImpl<ReportOrderData
         }
         //查询redis缓存标记
         String existKey = RedisKeyConstant.REPORT_VIRTUAL_ORDER_DATA;
-        boolean isHas = redisUtil.expire(existKey, RedisCacheConstants.LOCK_DURATION_MINUTES * 10);
+        boolean isHas = redisUtil.hasKey(existKey);
         if (isHas) {
           throw new ServiceException("已有任务进行中，请勿重复提交请求");
         }
         //添加缓存
-        redisUtil.set(existKey,isAuto);
+        redisUtil.set(existKey,isAuto, RedisCacheConstants.LOCK_DURATION_MINUTES * 10);
         //生成缺货统计、销售看板
         try {
             generateAllReport(viewDTO);
