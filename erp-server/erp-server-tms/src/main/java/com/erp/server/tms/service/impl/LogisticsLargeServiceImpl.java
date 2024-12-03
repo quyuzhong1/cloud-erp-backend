@@ -253,7 +253,7 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
         if (costAllocationDetailEntity != null) {
             addDTO.setFirstMileEstimatedFreightTax(costAllocationDetailEntity.getAmount());
 
-            logisticsBillEntity.getr
+
         }
 
 
