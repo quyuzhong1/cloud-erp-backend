@@ -1,13 +1,13 @@
 package com.erp.server.tms.service;
-import com.erp.model.tms.entity.FirstMileCostAllocationEntity;
-import com.erp.model.tms.entity.FirstMileSkuCostAllocationDetailEntity;
-import com.erp.model.tms.entity.FirstMileSkuCostAllocationEntity;
-import com.erp.model.tms.entity.LogisticsLargeEntity;
+import com.common.business.vo.PagingVO;
+import com.erp.model.tms.entity.*;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.tms.dto.LogisticsLargeDTO;
 import com.erp.model.wms.entity.FirstMileDeliveryDetailEntity;
 import com.erp.model.wms.entity.FirstMileDeliveryEntity;
+import com.erp.model.wms.entity.SoOutstockDetailEntity;
+import com.erp.model.wms.entity.SoOutstockEntity;
 
 import java.util.List;
 
@@ -20,6 +20,20 @@ import java.util.List;
  * @since 2024-11-29
  */
 public interface LogisticsLargeService extends SuperService<LogisticsLargeEntity> {
+
+    /**
+     * 分页查询
+     * @param dto
+     * @return
+     */
+    PagingVO<LogisticsLargeDTO.PagingViewDTO> paging(PagingDTO<LogisticsLargeDTO.PagingParamDTO> dto);
+
+    /**
+     * tab页
+     * @param dto
+     * @return
+     */
+    List<LogisticsLargeDTO.TabListDTO> tabList(PermissionsDTO dto);
 
     /**
     * 新增
@@ -39,6 +53,14 @@ public interface LogisticsLargeService extends SuperService<LogisticsLargeEntity
     */
     Boolean update(LogisticsLargeDTO.UpdateDTO dto);
 
+
+    /**
+     * 删除
+     * @param id
+     * @return
+     */
+    BatchResultDTO delete(String id);
+
     /**
      *
      * @Author Luo_WG
@@ -53,11 +75,22 @@ public interface LogisticsLargeService extends SuperService<LogisticsLargeEntity
     BatchResultDTO generateFirstMileLogisticsTable(FirstMileCostAllocationEntity entity, FirstMileSkuCostAllocationEntity firstMileSkuCostAllocationEntity, List<FirstMileSkuCostAllocationDetailEntity> skuCostDetailEntityList, FirstMileDeliveryEntity deliveryEntity, List<FirstMileDeliveryDetailEntity> deliveryDetailEntities);
 
     /**
-     * 查询需要添加物流大表的数据
+     * 根据来源id查询物流大表
      * @param ids
      */
-    void listLargeDataById(List<String> ids);
+    List<LogisticsLargeEntity> listByIdSourceId(List<String> ids);
 
 
+    /**
+     * 小包分摊下推物流大表
+     * @Author Luo_WG
+     * @Date 2024/12/3 15:37
+     * @param costAllocationEntity 小包分摊主表
+     * @param costAllocationDetailEntities 小包分摊明细表
+     * @param soOutstockEntity  销售出库主表
+     * @param soOutstockDetailEntity    销售出库明细信息
+     * @return com.common.business.dto.base.BatchResultDTO
+     **/
+    BatchResultDTO generateSmallBagCostAllocationTable(SmallBagCostAllocationEntity costAllocationEntity, List<SmallBagCostAllocationDetailEntity> costAllocationDetailEntities, SoOutstockEntity soOutstockEntity, SoOutstockDetailEntity soOutstockDetailEntity);
 
 }

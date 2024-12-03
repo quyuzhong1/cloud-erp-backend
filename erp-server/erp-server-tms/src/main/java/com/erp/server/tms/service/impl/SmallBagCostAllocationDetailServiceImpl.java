@@ -1,6 +1,7 @@
 package com.erp.server.tms.service.impl;
 
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseResultDTO;
 import com.erp.model.tms.entity.SmallBagCostAllocationDetailEntity;
@@ -92,5 +93,14 @@ public class SmallBagCostAllocationDetailServiceImpl extends SuperServiceImpl<Sm
     */
     private void handleData(SmallBagCostAllocationDetailEntity smallBagCostAllocationDetailEntity) {
     // TODO 验证数据 & 数据赋值
+    }
+
+    @Override
+    public List<SmallBagCostAllocationDetailEntity> listByMainIds(List<String> mainIds) {
+        if (CollUtil.isEmpty(mainIds)) {
+            return Collections.emptyList();
+        }
+
+        return lambdaQuery().in(SmallBagCostAllocationDetailEntity::getMainId, mainIds).list();
     }
 }
