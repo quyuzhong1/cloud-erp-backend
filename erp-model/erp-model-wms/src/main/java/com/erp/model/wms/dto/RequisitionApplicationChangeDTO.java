@@ -101,6 +101,10 @@ public class RequisitionApplicationChangeDTO implements Serializable {
          * bom版本
          */
         private String bomVersion;
+        /**
+         * 应拣数量
+         */
+        private Integer pickQty;
     }
 
     @Data
