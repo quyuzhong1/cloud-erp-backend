@@ -160,7 +160,7 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
     @Override
     @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO generateFirstMileLogisticsTable(FirstMileCostAllocationEntity entity, FirstMileSkuCostAllocationEntity firstMileSkuCostAllocationEntity, List<FirstMileSkuCostAllocationDetailEntity> skuCostDetailEntityList, FirstMileDeliveryEntity deliveryEntity, List<FirstMileDeliveryDetailEntity> deliveryDetailEntities) {
-        List<LogisticsLargeEntity> list = this.lambdaQuery().eq(LogisticsLargeEntity::getOutstockCode, entity.getSourceCode()).list();
+        /*List<LogisticsLargeEntity> list = this.lambdaQuery().eq(LogisticsLargeEntity::getOutstockCode, entity.getSourceCode()).list();
         LogisticsLargeEntity logisticsLargeEntity = list.stream().filter(req -> ReconciliationBillTypeEnum.ACTUAL.getCode().equals(req.getReconciliationBillType())).findFirst().orElse(null);
         if (logisticsLargeEntity != null) {
             throw new ServiceException("实际账单已添加物流大表，请不要重复添加");
@@ -218,28 +218,30 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
             //实际账单取【头程对账单】的汇率
             BigDecimal exchangeRate = reconciliationEntity.getExchangeRate();
             addDTO.setFirstMileEstimatedFreightTax(costAllocationDetailEntity.getAllocatedAmount().divide(exchangeRate, 4, RoundingMode.DOWN));
+            addDTO.setFirstMileActualFreight(costAllocationDetailEntity.getAllocatedAmount().divide(exchangeRate, 4, RoundingMode.DOWN));
 
         } else {
             addDTO.setPayStatus(SoB2cPayStatusEnum.ENUM_PAYMENT.getCode());
-
-
             BigDecimal exchangeRate = BigDecimal.ONE;
             //预估账单取【物流单】的汇率
             if (CollUtil.isNotEmpty(logisticsBillCostEntities)) {
                 String currency = logisticsBillCostEntities.get(0).getCurrency();
                 exchangeRate = dmpTaskFeign.getRate(logisticsBillEntity.getCreateTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), currency);
             }
+            addDTO.setFirstMileEstimatedFreightTax(costAllocationDetailEntity.getAllocatedAmount().divide(exchangeRate, 4, RoundingMode.DOWN));
+            addDTO.setFirstMileActualFreight(costAllocationDetailEntity.getAllocatedAmount().divide(exchangeRate, 4, RoundingMode.DOWN));
+        }
 
-            BigDecimal firstMileEstimatedFreight = BigDecimal.ZERO;
-            BigDecimal firstMileActualFreight = BigDecimal.ZERO;
-            for (TmsCostDetailDTO.CostCompareDTO costCompareDTO : costCompareDTOList) {
-                firstMileEstimatedFreight = firstMileEstimatedFreight.add(costCompareDTO.getEstimatedFee().divide(BigDecimal.ONE.add(exchangeRate)));
+        BigDecimal firstMileEstimatedFreight = BigDecimal.ZERO;
+        BigDecimal firstMileActualFreight = BigDecimal.ZERO;
+
+        for (TmsCostDetailDTO.CostCompareDTO costCompareDTO : costCompareDTOList) {
+            firstMileEstimatedFreight = firstMileEstimatedFreight.add(costCompareDTO.getEstimatedFee().divide(BigDecimal.ONE.add(exchangeRate)));
 
 
-                //头程物流单实际运费
-                firstMileActualFreight = firstMileActualFreight.add(costCompareDTO.getActualFee().divide(BigDecimal.ONE.add(exchangeRate)));
-                addDTO.setFirstMileActualFreight(firstMileActualFreight);
-            }
+            //头程物流单实际运费
+            firstMileActualFreight = firstMileActualFreight.add(costCompareDTO.getActualFee().divide(BigDecimal.ONE.add(exchangeRate)));
+            addDTO.setFirstMileActualFreight(firstMileActualFreight);
         }
 
         addDTO.setSkuId(firstMileSkuCostAllocationEntity.getSkuId());
@@ -281,7 +283,7 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
 
         addDTO.setFirstMileActualFreightTax(costAllocationDetailEntity.getAllocatedAmount());
 
-        addDTO.setFirstMileEstimatedFreight(firstMileEstimatedFreight);
+        addDTO.setFirstMileEstimatedFreight(firstMileEstimatedFreight);*/
 
 //        tmsFirstMileReconciliationService.set
         return BatchResultDTO.success(entity.getId(), entity.getBusinessCode(), OperationTypeEnum.UPDATE_STATUS);
