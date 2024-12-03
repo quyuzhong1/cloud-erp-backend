@@ -16,6 +16,7 @@ import com.erp.model.dmp.enums.AmzReportTaskStatusEnum;
 import com.erp.sdk.oms.amz.spapi.api.ReportsApi;
 import com.erp.sdk.oms.amz.spapi.client.ApiException;
 import com.erp.sdk.oms.amz.spapi.client.ApiResponse;
+import com.erp.sdk.oms.amz.spapi.client.StringUtil;
 import com.erp.sdk.oms.amz.spapi.enums.AmazonMarketplaceEnum;
 import com.erp.sdk.oms.amz.spapi.model.reports.GetReportsResponse;
 import com.erp.sdk.oms.amz.spapi.model.reports.Report;
@@ -28,6 +29,7 @@ import com.erp.server.dmp.service.CfgAmzReportTypeService;
 import com.erp.server.dmp.service.CfgAppClientService;
 import com.erp.server.dmp.service.DmpAmzReportInfoService;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
@@ -59,35 +61,51 @@ public class DmpInputAmzReportCreatedQueryApiInitHandler extends DmpInputInitHan
             ServiceException.runError("extendJson参数为空");
         }
         String reportType = extendObj.getString("reportType");
+        if (StringUtils.isBlank(reportType)){
+            ServiceException.runError("报告类型为空");
+        }
         // 店铺信息
         AmazonShopInfoDTO shopInfoDTO = cfgAppClientService.cacheAndFindShopAuth(dmpInputTaskEntity.getNextLevelId());
         // 市场信息
         AmazonMarketplaceEnum marketplaceEnum = AmazonMarketplaceEnum.getByCountryCode(shopInfoDTO.getDictCountryCode());
 
-        // 查询处理中的报告
-        DmpAmzReportInfoEntity reportEntity = dmpAmzReportInfoService.lambdaQuery()
-                .eq(DmpAmzReportInfoEntity::getPlatformShopCode, shopInfoDTO.getPlatformShopCode())
-                .eq(DmpAmzReportInfoEntity::getReportType, reportType)
-                .in(DmpAmzReportInfoEntity::getProcessingStatus, Arrays.asList(Report.ProcessingStatusEnum.IN_PROGRESS.getValue(), Report.ProcessingStatusEnum.IN_QUEUE.getValue()))
-                .last(" LIMIT 1")
-                .one();
-        if (null == reportEntity){
-            return Collections.emptyList();
+        // 指定报告ID解析
+        String reportId = "";
+        String detailExtendJson = dmpInputTaskEntity.getExtendJson();
+        if (StringUtils.isNotBlank(detailExtendJson)) {
+            JSONObject detailExtendObj = JSONObject.parseObject(detailExtendJson);
+            reportId = detailExtendObj.getString("reportId");
         }
 
-        // 从缓存获取(已完成或结束删除)
+
         String key = StrUtil.format(RedisCacheConstants.AMZ_REPORT_INFO_PREFIX, dmpInputTaskEntity.getId(), AmzReportTaskStatusEnum.CREATED.getCode());
-        Object reportObj = redisUtil.get(key);
-        if (null != reportObj) {
-            return Collections.singletonList(DmpInputTaskInitDTO.initMsg(reportObj.toString()));
+        if (StringUtils.isBlank(reportId)){
+            // 查询处理中的报告
+            DmpAmzReportInfoEntity reportEntity = dmpAmzReportInfoService.lambdaQuery()
+                    .eq(DmpAmzReportInfoEntity::getPlatformShopCode, shopInfoDTO.getPlatformShopCode())
+                    .eq(DmpAmzReportInfoEntity::getReportType, reportType)
+                    .in(DmpAmzReportInfoEntity::getProcessingStatus, Arrays.asList(Report.ProcessingStatusEnum.IN_PROGRESS.getValue(), Report.ProcessingStatusEnum.IN_QUEUE.getValue()))
+                    .last(" LIMIT 1")
+                    .one();
+            if (null == reportEntity){
+                return Collections.emptyList();
+            }
+
+            // 从缓存获取(已完成或结束删除)
+            Object reportObj = redisUtil.get(key);
+            if (null != reportObj) {
+                return Collections.singletonList(DmpInputTaskInitDTO.initMsg(reportObj.toString()));
+            }
+            reportId = reportEntity.getReportId();
         }
+
 
         // 请求亚马逊接口
         ReportsApi reportsApi = ReportsApi.initApi(marketplaceEnum.getEndpointsEnum(), shopInfoDTO, false, null);
 
         Report report;
         try {
-            report = reportsApi.getReport(reportEntity.getReportId());
+            report = reportsApi.getReport(reportId);
         } catch (ApiException e) {
             throw new RuntimeException(e);
         }
@@ -99,6 +117,7 @@ public class DmpInputAmzReportCreatedQueryApiInitHandler extends DmpInputInitHan
         jsonObject.put("shopId", shopInfoDTO.getId());
         if (null != report) {
             jsonObject.put("marketplaceIds", String.join(",", report.getMarketplaceIds()));
+            jsonObject.put("processingStatus", report.getProcessingStatus().getValue());
         }
         String resultJson = JSONUtil.toJsonStr(jsonObject);
         if (null != report) {

@@ -4,7 +4,14 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSON;
+import com.common.business.dto.PlatformOrderDTO;
+import com.common.business.dto.PlatformSoOutStockDTO;
+import com.common.core.entity.BaseEntity;
+import com.common.core.exception.ServiceException;
+import com.erp.model.dmp.entity.DmpAmzSoOutstockDetailEntity;
 import com.erp.model.dmp.entity.DmpCfgInputConvertEntity;
+import com.erp.model.dmp.entity.DmpFbaShipmentDetailEntity;
+import com.erp.model.dmp.entity.DmpFbaShipmentEntity;
 import com.erp.model.dmp.enums.CleanStatusEnum;
 import com.erp.sdk.oms.amz.spapi.convert.SdkSoOutStockConverter;
 import com.erp.sdk.oms.amz.spapi.dto.PlatformAmazonFulfilledShipmentsDTO;
@@ -13,6 +20,7 @@ import com.erp.sdk.oms.amz.spapi.enums.AmazonHandleStatusEnum;
 import com.erp.server.dmp.inout.dto.request.DmpOutputTaskRequest;
 import com.erp.server.dmp.inout.dto.response.DmpOutputTaskResponse;
 import com.erp.server.dmp.service.AmazonDownloadService;
+import org.springframework.beans.BeanUtils;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
@@ -31,32 +39,31 @@ public class DmpOutputAmzSoOutStockRocketMQTaskHandler extends DmpOutputRocketMQ
 
     @Override
     public Map<String, String> getPushJsonDataMap(DmpOutputTaskRequest dmpRequest, DmpOutputTaskResponse dmpResponse) {
-        Map<DmpCfgInputConvertEntity, List<Map<String, Object>>> convertInputMongoEntityListMaps = dmpRequest.getConvertInputMongoEntityListMaps();
-        Map<String, ReportFulfilledShipmentsMongoDTO> mongoEntityMap = new HashMap<>();
+        Map<DmpCfgInputConvertEntity, List<BaseEntity>> convertInputDmpBaseEntityListMaps = dmpRequest.getConvertInputDmpBaseEntityListMaps();
+        Map<String, DmpAmzSoOutstockDetailEntity> dmpMainEntityMap = new HashMap<>();
 
-        for (Map.Entry<DmpCfgInputConvertEntity, List<Map<String, Object>>> dmpCfgInputConvertEntityListEntry : convertInputMongoEntityListMaps.entrySet()) {
-            List<Map<String, Object>> value = dmpCfgInputConvertEntityListEntry.getValue();
+        for (Map.Entry<DmpCfgInputConvertEntity, List<BaseEntity>> convertInputDmpBaseEntityListMap : convertInputDmpBaseEntityListMaps.entrySet()) {
+            List<BaseEntity> value = convertInputDmpBaseEntityListMap.getValue();
             if (CollUtil.isNotEmpty(value)) {
-                String convertClass = dmpCfgInputConvertEntityListEntry.getKey().getConvertClass();
-                if ("DmpInputAmzSoOutStockMongoHandler".equals(convertClass)) {
-                    for (Map<String, Object> objectMap : value) {
-                        ReportFulfilledShipmentsMongoDTO mongoDTO = JSON.parseObject(JSON.toJSONString(objectMap), ReportFulfilledShipmentsMongoDTO.class);
-                        mongoEntityMap.put(mongoDTO.getId(), mongoDTO);
+                String storageName = convertInputDmpBaseEntityListMap.getKey().getStorageName();
+                if ("dmp_amz_so_outstock_detail".equals(storageName)) {
+                    for (BaseEntity v : value) {
+                        DmpAmzSoOutstockDetailEntity dmpMainEntity = (DmpAmzSoOutstockDetailEntity) v;
+                        dmpMainEntityMap.put(dmpMainEntity.getId(), dmpMainEntity);
                     }
                 }
             }
         }
 
-        Map<DmpCfgInputConvertEntity, List<Map<String, Object>>> changeConvertInputMongoBaseEntityListMaps = dmpRequest.getChangeConvertInputMongoEntityListMaps();
+        Map<DmpCfgInputConvertEntity, List<BaseEntity>> changeConvertInputDmpBaseEntityListMaps = dmpRequest.getChangeConvertInputDmpBaseEntityListMaps();
         Set<String> changeIds = new HashSet<>();
-        for (Map.Entry<DmpCfgInputConvertEntity, List<Map<String, Object>>> changeConvertInputDmpBaseEntityListMap : changeConvertInputMongoBaseEntityListMaps.entrySet()) {
-            List<Map<String, Object>> value = changeConvertInputDmpBaseEntityListMap.getValue();
+        for (Map.Entry<DmpCfgInputConvertEntity, List<BaseEntity>> changeConvertInputDmpBaseEntityListMap : changeConvertInputDmpBaseEntityListMaps.entrySet()) {
+            List<BaseEntity> value = changeConvertInputDmpBaseEntityListMap.getValue();
             if (CollUtil.isNotEmpty(value)) {
-                String convertClass = changeConvertInputDmpBaseEntityListMap.getKey().getConvertClass();
-                if ("DmpInputAmzSoOutStockMongoHandler".equals(convertClass)) {
-                    for (Map<String, Object> objectMap : value) {
-                        ReportFulfilledShipmentsMongoDTO mongoDTO = JSON.parseObject(JSON.toJSONString(objectMap), ReportFulfilledShipmentsMongoDTO.class);
-                        changeIds.add(mongoDTO.getId());
+                String storageName = changeConvertInputDmpBaseEntityListMap.getKey().getStorageName();
+                if ("dmp_amz_so_outstock_detail".equals(storageName)) {
+                    for (BaseEntity v : value) {
+                        changeIds.add(v.getId());
                     }
                 }
             }
@@ -64,20 +71,28 @@ public class DmpOutputAmzSoOutStockRocketMQTaskHandler extends DmpOutputRocketMQ
 
         Map<String, String> map = new HashMap<>();
         String cfgOutputId = dmpResponse.getDmpCfgOutputEntity().getId();
-        List<ReportFulfilledShipmentsMongoDTO> changeList = mongoEntityMap.entrySet().stream()
+        List<DmpAmzSoOutstockDetailEntity> changeList = dmpMainEntityMap.entrySet().stream()
                 .filter(e -> changeIds.contains(e.getKey()))
                 .map(Map.Entry::getValue)
                 .collect(Collectors.toList());
         if (CollectionUtil.isEmpty(changeList)) {
             return Collections.emptyMap();
         }
-        // 填充其他信息
-        List<ReportFulfilledShipmentsMongoDTO> dataList = amazonDownloadService.reportFulfillmentFillData(changeList);
+        List<ReportFulfilledShipmentsMongoDTO> list = dmpMainEntityMap.values().stream().map(e -> {
+            ReportFulfilledShipmentsMongoDTO dto = new ReportFulfilledShipmentsMongoDTO();
+            BeanUtils.copyProperties(e, dto);
+            return dto;
+        }).collect(Collectors.toList());
 
-        for (ReportFulfilledShipmentsMongoDTO mongoDTO : dataList) {
-            PlatformAmazonFulfilledShipmentsDTO itemDTO = this.convert(mongoDTO, cfgOutputId);
-            if (itemDTO != null) {
-                map.put(mongoDTO.getId(), JSON.toJSONString(itemDTO));
+        // 填充其他信息
+        List<ReportFulfilledShipmentsMongoDTO> dataList = amazonDownloadService.reportFulfillmentFillData(list);
+
+        for (String changId : changeIds) {
+            PlatformSoOutStockDTO orderDTO = this.convert(dmpMainEntityMap.get(changId),
+                    dataList,
+                    cfgOutputId);
+            if (null != orderDTO) {
+                map.put(changId, JSON.toJSONString(orderDTO));
             }
         }
         return map;
@@ -86,22 +101,46 @@ public class DmpOutputAmzSoOutStockRocketMQTaskHandler extends DmpOutputRocketMQ
     /**
      * 解析订单数据
      **/
-    private PlatformAmazonFulfilledShipmentsDTO convert(ReportFulfilledShipmentsMongoDTO mongoDTO, String cfgOutputId) {
-        if (this.validateDataBlack(mongoDTO, cfgOutputId)) {
+    private PlatformSoOutStockDTO convert(DmpAmzSoOutstockDetailEntity dmpEntity, List<ReportFulfilledShipmentsMongoDTO> dataList, String cfgOutputId) {
+        if (this.validateDataBlack(dmpEntity, cfgOutputId)) {
             return null;
         }
-        return SdkSoOutStockConverter.INSTANCE.sourceDtoToOutStockDto(mongoDTO,
+        ReportFulfilledShipmentsMongoDTO mongoDTO = dataList.stream()
+                .filter(e-> e.getShipmentItemId().equalsIgnoreCase(dmpEntity.getShipmentItemId()))
+                .findFirst().orElse(null);
+        if (null == mongoDTO){
+            ServiceException.runError("亚马逊销售出库单填充数据失败:");
+        }
+        if (mongoDTO.hasMultiChannel()){
+            // 多渠道订单不推送
+            return null;
+        }
+
+        PlatformAmazonFulfilledShipmentsDTO fulfilledShipmentsDTO = SdkSoOutStockConverter.INSTANCE.sourceDtoToOutStockDto(mongoDTO,
                 mongoDTO.getReportId(),
                 mongoDTO.getShopId(),
                 StrUtil.format("{}_{}_{}", mongoDTO.getAmazonOrderId(), mongoDTO.convertShipmentDate(), mongoDTO.getShopId()),
                 AmazonHandleStatusEnum.NONE.getCode(),
                 CleanStatusEnum.UNCLEAN.getCode()
         );
+        PlatformSoOutStockDTO platformSoOutStockDTO = SdkSoOutStockConverter.INSTANCE.amazonConvertDTO(
+                fulfilledShipmentsDTO.getAmazonOrderId(),
+                fulfilledShipmentsDTO.getShopId(),
+                fulfilledShipmentsDTO.getUniqueId(),
+                Collections.singletonList(fulfilledShipmentsDTO),
+                fulfilledShipmentsDTO.getWarehouseId(),
+                fulfilledShipmentsDTO.getWarehouseName(),
+                fulfilledShipmentsDTO.getFulfillmentCenterId());
+        if (null == mongoDTO.getShopId()){
+            // 解析不到对应店铺, 默认推送
+            platformSoOutStockDTO.setShopId(dmpEntity.getRequestShopId());
+        }
+        return platformSoOutStockDTO;
     }
 
     @Override
     protected List<String> getSourceCodeKeys() {
-        return Collections.singletonList("shipmentItemId");
+        return Collections.singletonList("uniqueId");
     }
 
 }
