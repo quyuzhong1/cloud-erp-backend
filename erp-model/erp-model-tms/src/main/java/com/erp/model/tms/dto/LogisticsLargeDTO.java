@@ -1,14 +1,23 @@
 package com.erp.model.tms.dto;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 import com.baomidou.mybatisplus.annotation.TableField;
+import com.common.business.annotation.Dict;
+import com.common.business.dto.AdvanceQueryDTO;
+import com.common.business.dto.base.SortDTO;
+import com.erp.model.oms.enums.SoB2cPayStatusEnum;
+import com.erp.model.tms.enums.LogisticsLargeShippingMethodEnum;
+import com.erp.model.wms.dto.SoOutstockDTO;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import java.io.Serializable;
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Map;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
@@ -1113,5 +1122,373 @@ public class LogisticsLargeDTO implements Serializable {
          */
         @NotBlank(message = "来源详情id不能为空")
         private String sourceDetailId;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class PagingParamDTO extends SortDTO {
+
+        /**
+         * 页面高级查询
+         */
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
+
+        /**
+         * sqlMap 默认key default
+         */
+        private Map<String,String> sqlMap;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public class PagingViewDTO {
+        /**
+         * 主键id
+         */
+        private String id;
+
+        /**
+         * 财务期间【可排序】
+         */
+        private LocalDate reconciliationMonth;
+
+        /**
+         * 出库单号【可排序】
+         */
+        private String outstockCode;
+
+        /**
+         * 出库时间【可排序】
+         */
+        private LocalDateTime outstockTime;
+
+        /**
+         * 付款状态（待付款、已付款）
+         */
+        @Dict(enumClass = SoB2cPayStatusEnum.class)
+        private String payStatus;
+
+        /**
+         * 应付账期(天)
+         */
+        private String payTermsDays;
+
+        /**
+         * 物料id
+         */
+        private String skuId;
+
+        /**
+         * 物料编码
+         */
+        private String skuNo;
+
+        /**
+         * 物料名称
+         */
+        private String productName;
+
+        /**
+         * 发货数量
+         */
+        private Integer deliveryQty;
+
+        /**
+         * 销售订单号【可排序】
+         */
+        private String platformOrderCode;
+
+        /**
+         * 重量【可排序】
+         */
+        private BigDecimal weight;
+
+        /**
+         * 物流商计费重量【可排序】
+         */
+        private BigDecimal logisticsBillingWeight;
+
+        /**
+         * 运输方式
+         */
+        @Dict(enumClass = LogisticsLargeShippingMethodEnum.class)
+        private String shippingMethod;
+
+        /**
+         * 物流公司名称【可排序】
+         */
+        private String logisticsSupplierName;
+
+        /**
+         * 运单号【可排序】
+         */
+        private String transportNo;
+
+        /**
+         * 起运地【可排序】
+         */
+        private String originPort;
+
+        /**
+         * 中转地【可排序】
+         */
+        private String transitPort;
+
+        /**
+         * 目的港【可排序】
+         */
+        private String destinationPort;
+
+        /**
+         * 取件地址（详细地址）【可排序】
+         */
+        private String pickupAddress;
+
+        /**
+         * 收件地址（详细地址）【可排序】
+         */
+        private String deliveryAddress;
+
+        /**
+         * 取件时间【可排序】
+         */
+        private LocalDateTime pickupTime;
+
+        /**
+         * 实际送达时间【可排序】
+         */
+        private LocalDateTime actualDeliveryTime;
+
+        /**
+         * 运费计算系数【可排序】
+         */
+        private BigDecimal freightCalculationFactor;
+
+        /**
+         * 运费币种【可排序】
+         */
+        private String freightCurrency;
+
+        /**
+         * 头程预估运费（含税）【可排序】
+         */
+        private BigDecimal firstMileEstimatedFreightTax;
+
+        /**
+         * 头程预估运费（不含税）【可排序】
+         */
+        private BigDecimal firstMileEstimatedFreight;
+
+        /**
+         * 头程实际运费（含税）【可排序】
+         */
+        private BigDecimal firstMileActualFreightTax;
+
+        /**
+         * 头程实际运费（不含税）【可排序】
+         */
+        private BigDecimal firstMileActualFreight;
+
+        /**
+         * 税率【可排序】
+         */
+        private BigDecimal taxRate;
+
+        /**
+         * 头程运费增值税【可排序】
+         */
+        private BigDecimal firstMileFreightVatAmount;
+
+        /**
+         * 头程付款时间【可排序】
+         */
+        private LocalDateTime firstMilePayTime;
+
+        /**
+         * 尾程运费金额（含税）【可排序】
+         */
+        private BigDecimal lastMileFreightAmountTax;
+
+        /**
+         * 尾程运费金额（不含税）【可排序】
+         */
+        private BigDecimal lastMileFreightAmount;
+
+        /**
+         * 尾程运费金额-增值税【可排序】
+         */
+        private BigDecimal lastMileFreightVatAmount;
+
+        /**
+         * 目的杂费计算系数【可排序】
+         */
+        private BigDecimal destMiscFeeFactor;
+
+        /**
+         * 目的地杂费付款状态
+         */
+        @Dict(enumClass = LogisticsLargeShippingMethodEnum.class)
+        private String destMiscFeePayStatus;
+
+        /**
+         * 杂费币别【可排序】
+         */
+        private String miscFeeCurrency;
+
+        /**
+         * 预估目的港杂费【可排序】
+         */
+        private BigDecimal estimatedDestMiscFee;
+
+        /**
+         * 实际目的港杂费【可排序】
+         */
+        private BigDecimal actualDestMiscFee;
+
+        /**
+         * 目的港杂费付款时间【可排序】
+         */
+        private LocalDateTime destMiscFeePayTime;
+
+        /**
+         * 目的杂费计算系数【可排序】
+         */
+        private BigDecimal dutyCalculationFactor;
+
+        /**
+         * 目的地关税付款状态
+         */
+        @Dict(enumClass = LogisticsLargeShippingMethodEnum.class)
+        private String destDutyPayStatus;
+
+        /**
+         * 关税币别【可排序】
+         */
+        private String dutyCurrency;
+
+        /**
+         * 预估税金-关税【可排序】
+         */
+        private BigDecimal estimatedDutyAmount;
+
+        /**
+         * 实际税金-关税【可排序】
+         */
+        private BigDecimal actualDutyAmount;
+
+        /**
+         * 目的地税金付款时间【可排序】
+         */
+        private LocalDateTime destTaxPayTime;
+
+        /**
+         * 可抵扣税金计算系数【可排序】
+         */
+        private BigDecimal deductibleTaxFactor;
+
+        /**
+         * 可抵扣税金付款状态
+         */
+        @Dict(enumClass = LogisticsLargeShippingMethodEnum.class)
+        private String deductibleTaxPayStatus;
+
+        /**
+         * 可抵扣税金币别【可排序】
+         */
+        private String deductibleTaxCurrency;
+
+        /**
+         * 预估的可抵扣税金【可排序】
+         */
+        private BigDecimal estimatedDeductibleTax;
+
+        /**
+         * 实际的可抵扣税金【可排序】
+         */
+        private BigDecimal actualDeductibleTax;
+
+        /**
+         * 可抵扣税金付款时间【可排序】
+         */
+        private LocalDateTime deductibleTaxPayTime;
+
+        /**
+         * 其他税金计算系数【可排序】
+         */
+        private BigDecimal otherTaxCalculationFactor;
+
+        /**
+         * 其他税金付款状态
+         */
+        @Dict(enumClass = LogisticsLargeShippingMethodEnum.class)
+        private String otherTaxPayStatus;
+
+        /**
+         * 其他税金币别【可排序】
+         */
+        private String otherTaxCurrency;
+
+        /**
+         * 预估税金-其他税金【可排序】
+         */
+        private BigDecimal estimatedTaxOtherTax;
+
+        /**
+         * 实际税金-其他税金【可排序】
+         */
+        private BigDecimal actualTaxOtherTax;
+
+        /**
+         * 其他税金付款时间【可排序】
+         */
+        private LocalDateTime otherTaxPayTime;
+
+        /**
+         * 来源id
+         */
+        private String sourceId;
+        /**
+         * 来源类型
+         */
+        private String sourceType;
+        /**
+         * 来源详情id
+         */
+        private String sourceDetailId;
+        /**
+         * 创建时间【可排序】
+         */
+        private LocalDateTime createTime;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class TabListDTO {
+
+        /**
+         * 类型 all全部
+         */
+        private String tabFlag;
+
+        /**
+         * 数量
+         */
+        private Integer count;
+
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class ExportDTO extends LogisticsLargeDTO.PagingParamDTO {
+
+        /**
+         * 页面高级查询
+         */
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
+
+        /**
+         * sqlMap 默认key default
+         */
+        private Map<String,String> sqlMap;
     }
 }

@@ -1,4 +1,7 @@
 package com.erp.server.tms.mapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.erp.model.tms.dto.LogisticsLargeDTO;
 import com.erp.model.tms.entity.LogisticsLargeEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
@@ -20,6 +23,18 @@ import java.util.List;
 public interface LogisticsLargeMapper extends BaseMapper<LogisticsLargeEntity> {
 
 
-    void listLargeDataById(@Param("ids") List<String> ids);
+    /**
+     * 分页查询
+     * @param query
+     * @param params
+     * @return
+     */
+    IPage<LogisticsLargeDTO.PagingViewDTO> paging(Page query, @Param("params") LogisticsLargeDTO.PagingParamDTO params);
 
+    /**
+     * tab页查询
+     * @param permissionSql
+     * @return
+     */
+    List<LogisticsLargeDTO.TabListDTO> listTabCount(@Param("permissionSql") String permissionSql);
 }

@@ -5,25 +5,32 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
-import com.common.business.dto.base.BaseDropDownDTO;
-import com.common.business.dto.base.BaseResultDTO;
-import com.common.business.dto.base.BatchResultDTO;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.constant.SearchType;
+import com.common.business.dto.AdvanceQueryDTO;
+import com.common.business.dto.base.*;
 import com.common.business.enums.OperationTypeEnum;
 import com.common.business.enums.OrderTypeEnum;
 import com.common.business.enums.SourceTypeEnum;
+import com.common.business.vo.PagingVO;
 import com.common.business.wrapper.FeignQuery;
+import com.common.core.anno.LogAction;
+import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.LogActionEnum;
+import com.erp.model.oms.dto.CustomerDTO;
 import com.erp.model.oms.entity.CustomerInfoEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.enums.SoB2cPayStatusEnum;
 import com.erp.model.oms.enums.TransferStatusEnum;
+import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.scm.entity.SupplierEntity;
+import com.erp.model.srm.entity.PoReconciliationEntity;
 import com.erp.model.sys.dto.DictCountryDTO;
-import com.erp.model.tms.dto.LogisticsChannelAddressDTO;
+import com.erp.model.tms.dto.*;
 import com.erp.model.tms.entity.*;
-import com.erp.model.tms.enums.LogisticsAddressTypeEnum;
-import com.erp.model.tms.enums.LogisticsLargeShippingMethodEnum;
-import com.erp.model.tms.enums.ReconciliationStatusEnum;
-import com.erp.model.tms.enums.ShipmentTypeEnum;
+import com.erp.model.tms.enums.*;
+import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.model.wms.entity.*;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.oms.feign.SoB2cFeign;
@@ -37,13 +44,14 @@ import com.erp.server.tms.service.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.core.exception.ServiceException;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
-import com.erp.model.tms.dto.LogisticsLargeDTO;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -55,8 +63,13 @@ import java.util.stream.Collectors;
 
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 
 import javax.annotation.Resource;
+import javax.validation.Valid;
+
+import static com.common.core.controller.vo.ApiResult.success;
 
 /**
  * <p>
@@ -121,6 +134,42 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
     private LogisticsChannelAddressService logisticsChannelAddressService;
 
 
+
+    @Override
+    public PagingVO<LogisticsLargeDTO.PagingViewDTO> paging(PagingDTO<LogisticsLargeDTO.PagingParamDTO> dto) {
+        LogisticsLargeDTO.PagingParamDTO params = dto.getParams();
+        params.setPermissionSql(dto.getPermissionSql());
+        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+        IPage pageData = baseMapper.paging(query, params);
+        List<LogisticsLargeDTO.PagingViewDTO> list = pageData.getRecords();
+        fillPagingData(list);
+        return new PagingVO<>(pageData);
+    }
+
+    private void fillPagingData(List<LogisticsLargeDTO.PagingViewDTO> list) {
+        List<String> skuIds = list.stream().map(LogisticsLargeDTO.PagingViewDTO::getSkuId).distinct().collect(Collectors.toList());
+        List<ProductDetailEntity> productDetailEntityList = FeignQuery.create(ProductDetailEntity.class).in(ProductDetailEntity::getId, skuIds).list();
+        for (LogisticsLargeDTO.PagingViewDTO pagingViewDTO : list) {
+            ProductDetailEntity productDetailEntity = productDetailEntityList.stream().filter(req -> req.getId().equals(pagingViewDTO.getSkuId())).findFirst().orElse(null);
+            if (productDetailEntity != null) {
+                pagingViewDTO.setProductName(productDetailEntity.getName());
+                pagingViewDTO.setSkuNo(productDetailEntity.getSkuNo());
+            }
+        }
+    }
+
+    @Override
+    public List<LogisticsLargeDTO.TabListDTO> tabList(PermissionsDTO dto) {
+        List<LogisticsLargeDTO.TabListDTO> resultList = new ArrayList<>(4);
+        List<LogisticsLargeDTO.TabListDTO> tabListDTOList = baseMapper.listTabCount(dto.getPermissionSql());
+        int allCount = tabListDTOList.stream().mapToInt(LogisticsLargeDTO.TabListDTO::getCount).sum();
+        LogisticsLargeDTO.TabListDTO all = new LogisticsLargeDTO.TabListDTO();
+        all.setCount(allCount);
+        all.setTabFlag(SearchType.ALL);
+        resultList.add(all);
+        return resultList;
+    }
+
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -168,6 +217,17 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
         return Boolean.TRUE;
     }
 
+    @Override
+    public BatchResultDTO delete(String id) {
+        LogisticsLargeEntity entity = this.getById(id);
+        if (ObjectUtil.isEmpty(entity)) {
+            throw new ServiceException("单据未存在!");
+        }
+
+        this.lambdaUpdate().eq(LogisticsLargeEntity::getId, id).remove();
+
+        return BatchResultDTO.success(entity.getId(), entity.getOutstockCode(), OperationTypeEnum.DELETE);
+    }
 
     /**
     * 新增修改处理数据
@@ -308,13 +368,6 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
 //        tmsFirstMileReconciliationService.set
         return BatchResultDTO.success(entity.getId(), entity.getBusinessCode(), OperationTypeEnum.UPDATE_STATUS);
     }
-
-    @Override
-    public void listLargeDataById(List<String> ids) {
-        baseMapper.listLargeDataById(ids);
-    }
-
-
 
     @Override
     public List<LogisticsLargeEntity> listByIdSourceId(List<String> ids) {

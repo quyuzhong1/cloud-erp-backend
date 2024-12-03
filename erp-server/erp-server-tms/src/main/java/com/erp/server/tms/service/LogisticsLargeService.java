@@ -1,4 +1,5 @@
 package com.erp.server.tms.service;
+import com.common.business.vo.PagingVO;
 import com.erp.model.tms.entity.*;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
@@ -21,6 +22,20 @@ import java.util.List;
 public interface LogisticsLargeService extends SuperService<LogisticsLargeEntity> {
 
     /**
+     * 分页查询
+     * @param dto
+     * @return
+     */
+    PagingVO<LogisticsLargeDTO.PagingViewDTO> paging(PagingDTO<LogisticsLargeDTO.PagingParamDTO> dto);
+
+    /**
+     * tab页
+     * @param dto
+     * @return
+     */
+    List<LogisticsLargeDTO.TabListDTO> tabList(PermissionsDTO dto);
+
+    /**
     * 新增
     * @author Luo_WG
     * @date: 2024-11-29
@@ -38,6 +53,14 @@ public interface LogisticsLargeService extends SuperService<LogisticsLargeEntity
     */
     Boolean update(LogisticsLargeDTO.UpdateDTO dto);
 
+
+    /**
+     * 删除
+     * @param id
+     * @return
+     */
+    BatchResultDTO delete(String id);
+
     /**
      *
      * @Author Luo_WG
@@ -50,12 +73,6 @@ public interface LogisticsLargeService extends SuperService<LogisticsLargeEntity
      * @return com.common.business.dto.base.BatchResultDTO
      **/
     BatchResultDTO generateFirstMileLogisticsTable(FirstMileCostAllocationEntity entity, FirstMileSkuCostAllocationEntity firstMileSkuCostAllocationEntity, List<FirstMileSkuCostAllocationDetailEntity> skuCostDetailEntityList, FirstMileDeliveryEntity deliveryEntity, List<FirstMileDeliveryDetailEntity> deliveryDetailEntities);
-
-    /**
-     * 查询需要添加物流大表的数据
-     * @param ids
-     */
-    void listLargeDataById(List<String> ids);
 
     /**
      * 根据来源id查询物流大表
@@ -75,4 +92,5 @@ public interface LogisticsLargeService extends SuperService<LogisticsLargeEntity
      * @return com.common.business.dto.base.BatchResultDTO
      **/
     BatchResultDTO generateSmallBagCostAllocationTable(SmallBagCostAllocationEntity costAllocationEntity, List<SmallBagCostAllocationDetailEntity> costAllocationDetailEntities, SoOutstockEntity soOutstockEntity, SoOutstockDetailEntity soOutstockDetailEntity);
+
 }

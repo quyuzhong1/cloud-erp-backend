@@ -2,19 +2,21 @@ package com.erp.server.tms.controller.api;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
+import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.enums.ConfirmStatusEnum;
+import com.common.business.vo.PagingVO;
 import com.common.business.wrapper.FeignQuery;
+import com.erp.model.plm.dto.SearchPagingDTO;
+import com.erp.model.plm.vo.ProductChangePagingVO;
 import com.erp.model.tms.dto.FirstMileCostAllocationDTO;
 import com.erp.model.tms.entity.*;
 import com.erp.model.tms.enums.DetailReconciliationTypeEnum;
 import com.erp.model.tms.enums.ReconciliationBillTypeEnum;
 import com.erp.model.wms.dto.SoOutstockDetailDTO;
-import com.erp.model.wms.entity.FirstMileDeliveryDetailEntity;
-import com.erp.model.wms.entity.FirstMileDeliveryEntity;
-import com.erp.model.wms.entity.SoOutstockDetailEntity;
-import com.erp.model.wms.entity.SoOutstockEntity;
+import com.erp.model.wms.entity.*;
 import com.erp.rpc.wms.feign.SoOutstockFeign;
 import com.erp.rpc.wms.feign.WmsFirstMileDeliveryFeign;
+import com.erp.server.tms.query.LogisticsLargeQueryHandler;
 import com.erp.server.tms.service.*;
 import lombok.extern.slf4j.Slf4j;
 import javax.annotation.Resource;
@@ -36,7 +38,10 @@ import com.erp.model.tms.dto.LogisticsLargeDTO;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
+
+import static com.common.core.controller.vo.ApiResult.success;
 
 /**
  * 物流大表
@@ -74,6 +79,58 @@ public class LogisticsLargeController extends BaseController {
     @Resource
     private SoOutstockFeign soOutstockFeign;
 
+
+    /**
+     * 变更分页展示
+     *
+     * @param dto
+     * @return
+     */
+    @PostMapping("/paging")
+    @WebAdvanceQuery(handler = LogisticsLargeQueryHandler.class)
+    public ApiResult<PagingVO<LogisticsLargeDTO.PagingViewDTO>> queryByPage(@RequestBody @Validated PagingDTO<LogisticsLargeDTO.PagingParamDTO> dto) {
+        PagingVO<LogisticsLargeDTO.PagingViewDTO> pagingVO = logisticsLargeService.paging(dto);
+        return success(pagingVO);
+    }
+
+    /**
+     * 获取 tab列表
+     * @param dto
+     * @return
+     */
+    @PostMapping("/tabList")
+    public ApiResult<List<LogisticsLargeDTO.TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
+        List<LogisticsLargeDTO.TabListDTO> tabList = logisticsLargeService.tabList(dto);
+        return success(tabList);
+    }
+
+    /**
+     * 删除
+     * @param dto
+     * @return
+     */
+    @PostMapping("/delete")
+    public ApiResult<List<BatchResultDTO>> delete(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        for (String id : dto.getIds()) {
+            BatchResultDTO deleteResult;
+            try {
+                deleteResult = logisticsLargeService.delete(id);
+            } catch (Exception e) {
+                log.error("删除失败===>{}", e);
+                LogisticsLargeEntity entity = logisticsLargeService.getById(id);
+                if(Objects.isNull(entity)){
+                    deleteResult = BatchResultDTO.fail(id, id, "删除失败");
+                    resultDTOS.add(deleteResult);
+                    continue;
+                }
+                deleteResult = BatchResultDTO.fail(entity.getId(), entity.getOutstockCode(), e.getMessage());
+            }
+            resultDTOS.add(deleteResult);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+
     /**
     * 新增
     * @author Luo_WG
@@ -106,6 +163,18 @@ public class LogisticsLargeController extends BaseController {
         return success();
     }
 
+
+    /**
+     * 导出数据
+     */
+    @LogAction(value = LogActionEnum.EXPORT, desc = "导出物流大表")
+    @PostMapping("/export")
+    public ApiResult exportLogisticsLarge(@RequestBody @Valid LogisticsLargeDTO.ExportDTO dto) {
+        Boolean result = Boolean.TRUE;
+        return result ? success() : failure();
+    }
+
+
     /**
      * 头程费用分摊生成物流大表
      * @Author Luo_WG
@@ -117,7 +186,6 @@ public class LogisticsLargeController extends BaseController {
     @LogAction(value = LogActionEnum.INSERT, desc = "头程费用分摊生成物流大表")
     public ApiResult<List<BatchResultDTO>> generateFirstMileLogisticsTable(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
-        logisticsLargeService.listLargeDataById(dto.getIds());
         //头程费用分摊信息
         List<FirstMileCostAllocationEntity> costAllocationEntityList = firstMileCostAllocationService.listByIds(dto.getIds());
         //头程费用SKU分摊信息
@@ -226,6 +294,22 @@ public class LogisticsLargeController extends BaseController {
             resultDTOS.add(result);
 
         }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+
+    }
+
+    /**
+     * 中转费用分摊生成物流大表
+     * @Author Luo_WG
+     * @Date 2024/11/29 15:17
+     * @param dto
+     * @return com.common.core.controller.vo.ApiResult<java.lang.Void>
+     **/
+    @PostMapping("/generateTransferCostAllocationTable")
+    @LogAction(value = LogActionEnum.INSERT, desc = "中转费用分摊生成物流大表")
+    public ApiResult<List<BatchResultDTO>> generateTransferCostAllocationTable(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
 
     }
