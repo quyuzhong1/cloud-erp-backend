@@ -680,7 +680,7 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
             }
 
             shudiyunB2cOrderDTO.setPlatform_id(customerInfo.getPlatformType());
-            shudiyunB2cOrderDTO.setPlatform_name(PlatformDictEnum.checkAndGetByCode(customerInfo.getPlatformType()).getName());
+            shudiyunB2cOrderDTO.setPlatform_name(PlatformDictEnum.getNameByCode(customerInfo.getPlatformType()));
 
             String subPlatformType = customerInfo.getPlatformType();
             if (StringUtils.isNotBlank(subPlatformType)) {
