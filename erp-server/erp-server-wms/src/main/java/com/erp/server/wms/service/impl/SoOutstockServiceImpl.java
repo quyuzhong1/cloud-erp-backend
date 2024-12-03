@@ -527,6 +527,8 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         result.setApproveStatusName(approveStatus.getName());
         List<CustomerInfoEntity> customerList = customerFeign.listCustomerByIds(Collections.singletonList(soOutstock.getCustomerId()));
         //国家
+
+        receiveAddress
         List<DictCountryDTO.ListDTO> countryList = sysUserFeign.countryList();
         if (CollectionUtils.isNotEmpty(countryList) && CollectionUtils.isNotEmpty(customerList)) {
             String countryName = countryList.stream().filter(obj -> obj.getId().equals(customerList.get(0).getCountryId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getNameCn())).orElse("");

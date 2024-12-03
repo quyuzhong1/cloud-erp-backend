@@ -2,6 +2,7 @@ package com.erp.server.tms.service.impl;
 
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseDropDownDTO;
@@ -11,10 +12,15 @@ import com.common.business.enums.OperationTypeEnum;
 import com.common.business.enums.OrderTypeEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.wrapper.FeignQuery;
+import com.erp.model.oms.entity.CustomerInfoEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.enums.SoB2cPayStatusEnum;
+import com.erp.model.oms.enums.TransferStatusEnum;
 import com.erp.model.scm.entity.SupplierEntity;
+import com.erp.model.sys.dto.DictCountryDTO;
+import com.erp.model.tms.dto.LogisticsChannelAddressDTO;
 import com.erp.model.tms.entity.*;
+import com.erp.model.tms.enums.LogisticsAddressTypeEnum;
 import com.erp.model.tms.enums.LogisticsLargeShippingMethodEnum;
 import com.erp.model.tms.enums.ReconciliationStatusEnum;
 import com.erp.model.tms.enums.ShipmentTypeEnum;
@@ -23,6 +29,7 @@ import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.rpc.scm.feign.ScmTaskFeign;
 import com.erp.rpc.scm.feign.SupplierFeign;
+import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.WmsFirstMileDeliveryFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.tms.mapper.LogisticsLargeMapper;
@@ -30,6 +37,7 @@ import com.erp.server.tms.service.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.core.exception.ServiceException;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
@@ -107,6 +115,10 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
     private ScmTaskFeign scmTaskFeign;
     @Resource
     private SoB2cFeign soB2cFeign;
+    @Resource
+    private SysUserFeign sysUserFeign;
+    @Resource
+    private LogisticsChannelAddressService logisticsChannelAddressService;
 
 
     @GlobalTransactional(rollbackFor = Exception.class)
@@ -365,12 +377,13 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
             if (ObjectUtil.isNotEmpty(soB2cEntity)) {
                 platformCode = soB2cEntity.getPlatformCode();
 
-                if (soB2cEntity.getTransferStatus()) {
-
+                if (!TransferStatusEnum.NOT.getCode().equals(soB2cEntity.getTransferStatus())) {
+                    addDTO.setTransitPort("中国-香港");
                 }
             }
         }  else {
             platformCode = soOutstockEntity.getSoCode();
+            addDTO.setTransitPort("中国");
         }
 
         addDTO.setPlatformOrderCode(platformCode);
@@ -391,11 +404,38 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
             }
         }
 
-        if (OrderTypeEnum.B2C.getCode().equals(soOutstockEntity.getOrderType())) {
-            soB2cFeign.getById(soOutstockEntity);
+        //地址
+        List<DictCountryDTO.ListDTO> countryList = sysUserFeign.countryList();
+        if (CharSequenceUtil.isNotBlank(soOutstockEntity.getCustomerId())) {
+            List<CustomerInfoEntity> customerList = FeignQuery.create(CustomerInfoEntity.class).eq(CustomerInfoEntity::getId, soOutstockEntity.getCustomerId()).list();
+            if (CollUtil.isNotEmpty(customerList)) {
+                String countryName = countryList.stream().filter(obj -> obj.getId().equals(customerList.get(0).getCountryId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getNameCn())).orElse("");
+                if (CharSequenceUtil.isNotBlank(countryName)) {
+                    addDTO.setDestinationPort(countryName);
+                } else {
+                    addDTO.setDestinationPort(customerList.get(0).getMailAddress());
+                }
+
+                addDTO.setDeliveryAddress(customerList.get(0).getMailAddress());
+            }
+        } else {
+            String countryName = countryList.stream().filter(obj -> obj.getId().equals(logisticsBillEntity.getToCountry())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getNameCn())).orElse("");
+            addDTO.setDestinationPort(countryName);
+        }
+        List<LogisticsChannelAddressDTO.ViewDTO> viewDTOS = logisticsChannelAddressService.listByChannelId(soOutstockEntity.getLogisticsChannelId());
+        LogisticsChannelAddressDTO.ViewDTO viewDTO = viewDTOS.stream().filter(req -> LogisticsAddressTypeEnum.DELIVER.getCode().equals(req.getLogisticsAddressType())).findFirst().orElse(null);
+        if (viewDTO != null) {
+            addDTO.setPickupAddress(viewDTO.getLogisticsAddressName());
+        }
+        addDTO.setPickupTime(soOutstockEntity.getBillDate().atStartOfDay());
+
+        List<LogisticsBillDetailEntity> detailEntityList = logisticsBillDetailService.listByMainIds(Arrays.asList(logisticsBillEntity.getId()));
+        if (CollUtil.isNotEmpty(detailEntityList)) {
+            addDTO.setActualDeliveryTime(detailEntityList.get(0).getSignTime());
         }
 
-
+        BigDecimal allocatedAmount = costAllocationDetailEntities.stream().map(SmallBagCostAllocationDetailEntity::getAllocatedAmount).reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
+//        addDTO.setFreightCalculationFactor(allocatedAmount.divide(logisticsBillCostEntity.get));
 
         return null;
     }
