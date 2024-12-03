@@ -1564,12 +1564,14 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 			addSmallBagCostAllocationEntityList.add(smallBagCostAllocationEntity);
 			
 			BigDecimal skuCostPre = BigDecimal.ZERO;
-			if(totalSkuCost.compareTo(BigDecimal.ZERO) != 0) {
-				skuCostPre = skuCostMaps.get(skuId).divide(totalSkuCost, 2, RoundingMode.HALF_UP);
+			BigDecimal skuCost = skuCostMaps.get(skuId);
+			if(totalSkuCost.compareTo(BigDecimal.ZERO) != 0 && skuCost != null) {
+				skuCostPre = skuCost.divide(totalSkuCost, 2, RoundingMode.HALF_UP);
 			}
 			BigDecimal skuWeightCostPre = BigDecimal.ZERO;
-			if(totalSkuWeightCost.compareTo(BigDecimal.ZERO) != 0) {
-				skuWeightCostPre = skuWeightCostMaps.get(skuId).divide(totalSkuWeightCost, 2, RoundingMode.HALF_UP);
+			BigDecimal skuWeightCost = skuWeightCostMaps.get(skuId);
+			if(totalSkuWeightCost.compareTo(BigDecimal.ZERO) != 0 && skuWeightCost != null) {
+				skuWeightCostPre = skuWeightCost.divide(totalSkuWeightCost, 2, RoundingMode.HALF_UP);
 			}
 			
 			String orgId = wareIdOrgIdMaps.get(soOutstockDetailEntity.getWarehouseId());
@@ -1579,6 +1581,9 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 				smallBagCostAllocationDetailEntity.setMainId(mainId);
 				String feeType = feeTypeSettingMap.getKey();
 				List<CostViewDTO> costViewDTOList = costCategoryMaps.get(feeType);
+				if(CollUtil.isEmpty(costViewDTOList)) {
+					continue;
+				}
 				BigDecimal costValueSum = costViewDTOList.stream().map(CostViewDTO::getCostValue).reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
 				smallBagCostAllocationDetailEntity.setBillAmount(costValueSum);
 				smallBagCostAllocationDetailEntity.setFeeType(feeType);

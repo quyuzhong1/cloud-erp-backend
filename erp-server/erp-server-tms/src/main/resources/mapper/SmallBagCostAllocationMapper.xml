@@ -54,16 +54,15 @@
             j.to_country,
             g.sku_no,
             g.delivery_qty,
-            t.sku_weight,
             t.fee_type,
             t.bill_amount,
-            t.fee_allocation_type
+            t.fee_allocation_type,
             t.allocated_amount,
             t.product_allocated_amount,
             t.weight_allocation_type,
             t.org_name
-        from small_bag_cost_allocation_detail t
-        left join small_bag_cost_allocation g on t.main_id = g.id and g.is_deleted = false
+        from small_bag_cost_allocation t
+        left join small_bag_cost_allocation_detail g on t.main_id = g.id and g.is_deleted = false
         left join logistics_bill_cost h on g.cost_id = h.id and h.is_deleted = false
         left join logistics_bill j on h.logistics_bill_id = j.id and j.is_deleted = false
         <where>
