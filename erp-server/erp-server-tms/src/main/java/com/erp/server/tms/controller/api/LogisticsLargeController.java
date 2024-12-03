@@ -201,7 +201,7 @@ public class LogisticsLargeController extends BaseController {
 
 
         for (SmallBagCostAllocationEntity costAllocationEntity : entityList) {
-            SoOutstockDetailEntity soOutstockDetailEntity = soOutstockDetailList.stream().filter(req -> req.getId().equals(entity.getOutstockDetailId())).findFirst().orElse(null);
+            SoOutstockDetailEntity soOutstockDetailEntity = soOutstockDetailList.stream().filter(req -> req.getId().equals(costAllocationEntity.getOutstockDetailId())).findFirst().orElse(null);
             if (ObjectUtil.isEmpty(soOutstockDetailEntity)) {
                 resultDTOS.add(BatchResultDTO.fail(costAllocationEntity.getId(), "","未找到销售出库单详情信息！"));
             }
@@ -210,7 +210,7 @@ public class LogisticsLargeController extends BaseController {
                 resultDTOS.add(BatchResultDTO.fail(costAllocationEntity.getId(), "","未找到销售出库单主表信息！"));
             }
 
-            List<SmallBagCostAllocationDetailEntity> costAllocationDetailEntities = smallBagCostAllocationDetailEntities.stream().filter(req -> req.getMainId().equals(entity.getId())).collect(Collectors.toList());
+            List<SmallBagCostAllocationDetailEntity> costAllocationDetailEntities = smallBagCostAllocationDetailEntities.stream().filter(req -> req.getMainId().equals(costAllocationEntity.getId())).collect(Collectors.toList());
             if (CollUtil.isEmpty(costAllocationDetailEntities)) {
                 resultDTOS.add(BatchResultDTO.fail(costAllocationEntity.getId(),soOutstockEntity.getCode(),"未找到小包费用分摊明细信息！"));
 
@@ -221,7 +221,7 @@ public class LogisticsLargeController extends BaseController {
                 result = logisticsLargeService.generateSmallBagCostAllocationTable(costAllocationEntity, costAllocationDetailEntities, soOutstockEntity, soOutstockDetailEntity);
             } catch (Exception e) {
                 log.error("头程费用分摊生成物流大表失败{}", e);
-                result = BatchResultDTO.fail(costAllocationEntity.getId(), soOutstockEntity.getBusinessCode(), e.getMessage());
+                result = BatchResultDTO.fail(costAllocationEntity.getId(), soOutstockEntity.getCode(), e.getMessage());
             }
             resultDTOS.add(result);
 

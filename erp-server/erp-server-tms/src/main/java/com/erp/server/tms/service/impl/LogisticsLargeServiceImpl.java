@@ -17,6 +17,7 @@ import com.erp.model.tms.entity.*;
 import com.erp.model.tms.enums.AllocationFeeTypeEnum;
 import com.erp.model.tms.enums.FmLogisticTrackStatusEnum;
 import com.erp.model.tms.enums.ReconciliationBillTypeEnum;
+import com.erp.model.tms.enums.ReconciliationStatusEnum;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.entity.FirstMileDeliveryDetailEntity;
 import com.erp.model.wms.entity.FirstMileDeliveryEntity;
@@ -311,13 +312,21 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
         LogisticsLargeDTO.AddDTO addDTO = new LogisticsLargeDTO.AddDTO();
         addDTO.setOutstockCode(soOutstockEntity.getCode());
         addDTO.setOutstockTime(soOutstockEntity.getApproveTime());
-/*
-        if (costAllocationEntity.getBigTableStatus()) {
 
+        LogisticsBillCostEntity logisticsBillCostEntity = logisticsBillCostService.getById(costAllocationEntity.getCostId());
+        LogisticsBillEntity logisticsBillEntity = logisticsBillService.getById(logisticsBillCostEntity.getLogisticsBillId());
+
+
+        if (ReconciliationStatusEnum.CONFIRMED.getCode().equals(logisticsBillCostEntity.getReconciliationStatus())) {
+            //实际账单
+            addDTO.setPayStatus(logisticsBillCostEntity.getPayStatus());
+
+        } else {
+            //预估账单
+            addDTO.setPayStatus(SoB2cPayStatusEnum.ENUM_PAYMENT.getCode());
         }
-*/
 
-
+        soOutstockEntity.getLogisticsChannelId()
         return null;
     }
 }
