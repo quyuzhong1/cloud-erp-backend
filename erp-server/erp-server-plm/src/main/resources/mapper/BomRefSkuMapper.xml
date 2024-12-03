@@ -49,10 +49,12 @@
         left join product_pack pp on pp.sku_id = pbs.sku_id and pp.is_deleted = false
         <where>
             pbi.is_deleted = false and pbi.state = 4
-            and pbs.parent_sku_id in
-            <foreach collection="parentSkuIds" item="item" open="(" separator="," close=")">
-                #{item}
-            </foreach>
+            <if test="parentSkuIds != null and parentSkuIds.size() > 0">
+                and pbs.parent_sku_id in
+                <foreach collection="parentSkuIds" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
         </where>
     </select>
 
