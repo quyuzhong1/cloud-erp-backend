@@ -57,6 +57,11 @@ public class SmallBagCostAllocationEntity extends BaseEntity<SmallBagCostAllocat
     @TableField("sku_no")
     private String skuNo;
     /**
+     * sku
+     */
+    @TableField("sku_id")
+    private String skuId;
+    /**
     * 销售出库单明细id
     */
     @TableField("outstock_detail_id")
