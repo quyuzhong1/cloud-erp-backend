@@ -272,7 +272,7 @@ public class RequisitionApplicationChangeServiceImpl extends SuperServiceImpl<Re
             throw new ServiceException(ApiError.ERROR_98006);
         }
         //保存虚拟仓数据
-        detailService.updateVirtualWarehouse(approveViewList);
+        detailService.updateVirtualWarehouse(approveViewList, approveType);
         // 调用流程审核
         ApproveOneDTO approveOneDTO = new ApproveOneDTO();
         approveOneDTO.setType(type);

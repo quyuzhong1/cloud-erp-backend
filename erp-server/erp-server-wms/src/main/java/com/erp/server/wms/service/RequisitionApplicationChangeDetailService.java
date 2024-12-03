@@ -1,5 +1,6 @@
 package com.erp.server.wms.service;
 
+import com.common.business.enums.ApproveTypeEnum;
 import com.common.business.service.SuperService;
 import com.erp.model.wms.dto.RequisitionApplicationChangeDTO;
 import com.erp.model.wms.dto.pickingstrategy.PickingListsDTO;
@@ -44,5 +45,5 @@ public interface RequisitionApplicationChangeDetailService extends SuperService<
 
     void addByPicking(RequisitionApplicationChangeEntity requisitionApplicationChangeEntity, PickingListsDTO.AddChangeDTO addChangeDTO);
 
-    void updateVirtualWarehouse(List<RequisitionApplicationChangeDTO.ApproveView> approveViewList);
+    void updateVirtualWarehouse(List<RequisitionApplicationChangeDTO.ApproveView> approveViewList, ApproveTypeEnum approveType);
 }

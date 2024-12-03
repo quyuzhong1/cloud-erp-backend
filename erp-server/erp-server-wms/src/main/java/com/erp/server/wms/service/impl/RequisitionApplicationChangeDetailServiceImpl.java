@@ -3,6 +3,7 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
+import com.common.business.enums.ApproveTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.entity.BaseEntity;
 import com.common.core.exception.ServiceException;
@@ -10,7 +11,6 @@ import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.OperateLogDTO;
-import com.erp.model.wms.dto.PickingDetailDTO;
 import com.erp.model.wms.dto.RequisitionApplicationChangeDTO;
 import com.erp.model.wms.dto.pickingstrategy.PickingListsDTO;
 import com.erp.model.wms.entity.PickingDetailEntity;
@@ -258,7 +258,7 @@ public class RequisitionApplicationChangeDetailServiceImpl extends SuperServiceI
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void updateVirtualWarehouse(List<RequisitionApplicationChangeDTO.ApproveView> approveViewList) {
+    public void updateVirtualWarehouse(List<RequisitionApplicationChangeDTO.ApproveView> approveViewList, ApproveTypeEnum approveType) {
         if (CollUtil.isEmpty(approveViewList)) {
             return;
         }
@@ -270,6 +270,10 @@ public class RequisitionApplicationChangeDetailServiceImpl extends SuperServiceI
             RequisitionApplicationChangeDetailEntity requisitionApplicationChangeDetailEntity = requisitionApplicationChangeDetailEntities.stream().filter(v -> v.getId().equals(approveView.getDetailId())).findFirst().orElse(null);
             if (Objects.isNull(requisitionApplicationChangeDetailEntity)) {
                 continue;
+            }
+            if(Objects.equals(approveType, ApproveTypeEnum.PASS) && approveView.getChangeType().equals(RequisitionChangeTypeEnum.ADD.getCode())
+            && StringUtils.isBlank(approveView.getFromVirtualWarehouseId())){
+                throw new ServiceException("新增的明细必须指定虚拟仓，{}",approveView.getSkuNo());
             }
             if (!requisitionApplicationChangeDetailEntity.getFromVirtualWarehouseId().equals(approveView.getFromVirtualWarehouseId())) {
                 requisitionApplicationChangeDetailEntity.setFromVirtualWarehouseId(approveView.getFromVirtualWarehouseId());
