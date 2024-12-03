@@ -58,6 +58,12 @@ public interface LogisticsLargeService extends SuperService<LogisticsLargeEntity
      */
     void listLargeDataById(List<String> ids);
 
+    /**
+     * 根据来源id查询物流大表
+     * @param ids
+     */
+    List<LogisticsLargeEntity> listByIdSourceId(List<String> ids);
+
 
 
 }

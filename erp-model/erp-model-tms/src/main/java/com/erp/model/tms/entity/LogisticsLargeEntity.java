@@ -3,6 +3,8 @@ package com.erp.model.tms.entity;
 import java.math.BigDecimal;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
+
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import com.baomidou.mybatisplus.annotation.TableField;
 import java.io.Serializable;
@@ -342,6 +344,11 @@ public class LogisticsLargeEntity extends BaseEntity<LogisticsLargeEntity> {
     */
     @TableField("reconciliation_bill_type")
     private String reconciliationBillType;
+    /**
+     * 财务期间
+     */
+    @TableField("reconciliation_month")
+    private LocalDate reconciliationMonth;
 
 
     public static final String OUTSTOCK_CODE = "outstock_code";

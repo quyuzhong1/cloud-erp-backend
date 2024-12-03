@@ -1,13 +1,19 @@
 package com.erp.server.tms.service.impl;
 
 
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
+import com.common.business.enums.ConfirmStatusEnum;
 import com.common.business.enums.OperationTypeEnum;
 import com.erp.model.oms.enums.SoB2cPayStatusEnum;
 import com.erp.model.scm.entity.SupplierEntity;
+import com.erp.model.tms.dto.FirstMileEstimatedBillDTO;
 import com.erp.model.tms.entity.*;
+import com.erp.model.tms.enums.AllocationFeeTypeEnum;
+import com.erp.model.tms.enums.FmLogisticTrackStatusEnum;
 import com.erp.model.tms.enums.ReconciliationBillTypeEnum;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.entity.FirstMileDeliveryDetailEntity;
@@ -27,6 +33,8 @@ import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import com.erp.model.tms.dto.LogisticsLargeDTO;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -51,6 +59,9 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
     private OperateLogService operateLogService;
 
     @Resource
+    private FirstMileSkuCostAllocationDetailService firstMileSkuCostAllocationDetailService;
+
+    @Resource
     private TmsFirstMileReconciliationDetailService tmsFirstMileReconciliationDetailService;
 
     @Resource
@@ -67,6 +78,9 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
 
     @Resource
     private LogisticsSupplierService logisticsSupplierService;
+
+    @Resource
+    private FirstMileEstimatedBillService firstMileEstimatedBillService;
 
     @Resource
     private WmsFirstMileDeliveryFeign wmsFirstMileDeliveryFeign;
@@ -136,11 +150,17 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
     @Override
     @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO generateFirstMileLogisticsTable(FirstMileCostAllocationEntity entity, FirstMileSkuCostAllocationEntity firstMileSkuCostAllocationEntity, List<FirstMileSkuCostAllocationDetailEntity> skuCostDetailEntityList, FirstMileDeliveryEntity deliveryEntity, List<FirstMileDeliveryDetailEntity> deliveryDetailEntities) {
+        List<LogisticsLargeEntity> list = this.lambdaQuery().eq(LogisticsLargeEntity::getOutstockCode, entity.getSourceCode()).eq(LogisticsLargeEntity::getReconciliationMonth, entity.getReconciliationMonth()).list();
+        LogisticsLargeEntity logisticsLargeEntity = list.stream().filter(req -> ReconciliationBillTypeEnum.ACTUAL.getCode().equals(req.getReconciliationBillType())).findFirst().orElse(null);
+
+        if () {
+
+        }
 
         //查询物流单
         LogisticsBillEntity logisticsBillEntity = logisticsBillService.getById(entity.getLogisticsBillId());
 
-        //
+        //查询物流详情
         List<LogisticsBillDetailEntity> detailEntityList = logisticsBillDetailService.listByMainIds(Arrays.asList(logisticsBillEntity.getId()));
 
         //物流商信息
@@ -160,6 +180,13 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
 
         //查询仓库
         List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listWarehouseByIds(Arrays.asList(deliveryEntity.getDeliveryWarehouseId(), deliveryEntity.getDestWarehouseId()));
+
+        //头程费用分摊费用明细表
+        List<FirstMileSkuCostAllocationDetailEntity> skuCostAllocationDetailEntities = firstMileSkuCostAllocationDetailService.listByMainIds(Arrays.asList(entity.getId()));
+
+        //物流暂估账单
+        List<FirstMileEstimatedBillDTO.View> estimatedBillView = firstMileEstimatedBillService.listByLogisticsBillIds(Arrays.asList(entity.getLogisticsBillId()), ConfirmStatusEnum.CONFIRM.getCode());
+
 
 
         LogisticsLargeDTO.AddDTO addDTO = new LogisticsLargeDTO.AddDTO();
@@ -193,8 +220,32 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
             addDTO.setDeliveryAddress(destWarehouse.getAddress());
         }
 
+        LogisticsBillDetailEntity billDetailEntity = detailEntityList.stream().filter(req -> FmLogisticTrackStatusEnum.PICKUP.getCode().equals(req.getTrackStatus())).findFirst().orElse(null);
+        if (billDetailEntity != null) {
+            addDTO.setPickupTime(billDetailEntity.getTrackTime());
+        }
+        if (CollUtil.isNotEmpty(detailEntityList)) {
+            addDTO.setActualDeliveryTime(detailEntityList.get(0).getSignTime());
+        }
 
-        pickupAddress
+        FirstMileSkuCostAllocationDetailEntity costAllocationDetailEntity = skuCostAllocationDetailEntities.stream().filter(req -> AllocationFeeTypeEnum.SHIPPING_COST.getCode().equals(req.getFeeType())).findFirst().orElse(null);
+        if (costAllocationDetailEntity != null && costAllocationDetailEntity.getAmount().compareTo(BigDecimal.ZERO) > 0) {
+            //[运费计算系数]头程分摊金额/头程金额
+            addDTO.setFreightCalculationFactor(costAllocationDetailEntity.getAllocatedAmount().divide(costAllocationDetailEntity.getAmount(), 6, RoundingMode.DOWN));
+        }
+        if (CollUtil.isNotEmpty(logisticsBillCostEntities)) {
+            addDTO.setFreightCurrency(logisticsBillCostEntities.get(0).getCurrency());
+        }
+        // TODO
+        addDTO.setBillTotalAmount(BigDecimal.ZERO);
+
+        if (CollUtil.isNotEmpty(estimatedBillView)) {
+            estimatedBillView.get(0).get
+            addDTO.setFirstMileEstimatedFreightTax();
+        }
+
+
+
 //        tmsFirstMileReconciliationService.set
         return BatchResultDTO.success(entity.getId(), entity.getBusinessCode(), OperationTypeEnum.UPDATE_STATUS);
         wmsFirstMileDeliveryFeign.logisticStatistics()
@@ -206,5 +257,13 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
     }
 
 
+
+    @Override
+    public List<LogisticsLargeEntity> listByIdSourceId(List<String> ids) {
+        if (CollUtil.isEmpty(ids)) {
+            return Collections.emptyList();
+        }
+        return this.lambdaQuery().eq(LogisticsLargeEntity::getSourceId, ids).list();
+    }
 
 }
