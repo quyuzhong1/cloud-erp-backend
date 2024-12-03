@@ -127,6 +127,9 @@ public class RequisitionApplicationChangeDetailServiceImpl extends SuperServiceI
                 if (StringUtils.isBlank(viewDetail.getRequisitionDetailId())) {
                     throw new ServiceException("修改变更明细数据，要货申请明细ID不能为空");
                 }
+                if(viewDetail.getNewRequisitionQty().equals(viewDetail.getOriginRequisitionQty())){
+                    throw new ServiceException("修改明细数据，变更数量不能等于原数量");
+                }
                 List<PickingDetailEntity> currentPickList = pickingDetailEntityList.stream().filter(v -> v.getSourceDetailId().equals(viewDetail.getRequisitionDetailId())).collect(Collectors.toList());
                 Integer pickedQty;
                 if(CollectionUtils.isNotEmpty(currentBomList) && CollectionUtils.isNotEmpty(currentPickList)){

@@ -64,6 +64,6 @@ public enum RequisitionApplicationStatusEnum implements EnumMessage  {
     }
 
     public static List<String> getPickingList(){
-        return Arrays.asList(HANDLE_ING.getCode(), HANDLE.getCode());
+        return Arrays.asList(HANDLE_ING.getCode());
     }
 }
