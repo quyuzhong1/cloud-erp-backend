@@ -47,4 +47,20 @@ public class VirtualInventoryAgeController extends BaseController {
     }
 
 
+    /**
+     * 导出excel
+     * @author will
+     * @date 2024/12/3 18:02
+     * @param dto
+     * @return ApiResult
+     */
+    @PostMapping("/exportExcel")
+    @WebAdvanceQuery
+    public ApiResult exportExcel(@RequestBody VirtualInventoryAgeDTO.SearchParamDTO dto) {
+        Boolean flag = virtualInventoryDetailService.exportExcel(dto);
+        return flag == true ? success() : failure();
+    }
+
+
+
 }

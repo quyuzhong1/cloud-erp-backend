@@ -44,4 +44,12 @@ public interface VirtualInventoryDetailService extends SuperService<VirtualInven
      * @return PagingVO<ListDTO>
      */
     PagingVO<VirtualInventoryAgeDTO.ListDTO> paging(PagingDTO<VirtualInventoryAgeDTO.SearchParamDTO> dto);
+    /**
+     * 导出excel
+     * @author will
+     * @date 2024/12/3 18:03
+     * @param dto
+     * @return Boolean
+     */
+    Boolean exportExcel(VirtualInventoryAgeDTO.SearchParamDTO dto);
 }

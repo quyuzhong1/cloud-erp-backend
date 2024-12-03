@@ -145,6 +145,10 @@ public class ExportWmsFeignController {
     @Resource
     private ReportOrderSalesService reportOrderSalesService;
 
+    @Resource
+    private VirtualInventoryDetailService virtualInventoryDetailService;
+
+
     @PostMapping("/b2cDelivery")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
@@ -688,5 +692,14 @@ public class ExportWmsFeignController {
     @WebAdvanceQuery
     public PagingVO<ReportOrderSalesDTO.ListDTO> listReportOrderSales(@RequestBody PagingDTO<ReportOrderSalesDTO.PagingParamDTO> dto){
         return reportOrderSalesService.listReportOrderSales(dto);
+    }
+
+    /**
+     * 销售看板数据导出
+     */
+    @PostMapping("/virtualInventoryAgePaging")
+    @WebAdvanceQuery
+    public PagingVO<VirtualInventoryAgeDTO.ListDTO> virtualInventoryAgePaging(@RequestBody PagingDTO<VirtualInventoryAgeDTO.SearchParamDTO> dto){
+        return virtualInventoryDetailService.paging(dto);
     }
 }

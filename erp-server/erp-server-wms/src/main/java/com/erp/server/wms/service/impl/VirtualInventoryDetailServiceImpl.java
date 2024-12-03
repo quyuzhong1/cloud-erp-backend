@@ -12,9 +12,9 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.wms.dto.VirtualInventoryAgeDTO;
-import com.erp.model.wms.dto.VirtualInventoryDTO;
 import com.erp.model.wms.dto.VirtualInventoryDetailDTO;
 import com.erp.model.wms.entity.VirtualInventoryDetailEntity;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.wms.mapper.VirtualInventoryDetailMapper;
 import com.erp.server.wms.service.OperateLogService;
 import com.erp.server.wms.service.VirtualInventoryDetailService;
@@ -26,6 +26,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
+
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_VIRTUAL_INVENTORY_AGE;
+
 /**
  * <p>
  * 虚拟仓库明细 服务实现类
@@ -39,6 +42,10 @@ import java.util.Optional;
 public class VirtualInventoryDetailServiceImpl extends SuperServiceImpl<VirtualInventoryDetailMapper, VirtualInventoryDetailEntity> implements VirtualInventoryDetailService {
     @Autowired
     private OperateLogService operateLogService;
+
+    @Autowired
+    private DownloadTaskFeign downloadTaskFeign;
+
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -99,6 +106,12 @@ public class VirtualInventoryDetailServiceImpl extends SuperServiceImpl<VirtualI
         // 填充名称
         fillPageData(pageData.getRecords());
         return new PagingVO<>(pageData);
+    }
+
+    @Override
+    public Boolean exportExcel(VirtualInventoryAgeDTO.SearchParamDTO dto) {
+        downloadTaskFeign.saveDownloadTask("库龄分析", EXPORT_WMS_VIRTUAL_INVENTORY_AGE.getCode(), dto);
+        return Boolean.TRUE;
     }
 
 

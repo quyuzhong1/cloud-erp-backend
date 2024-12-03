@@ -224,4 +224,9 @@ public interface ExportWmsFeign {
      */
     @PostMapping("/feign/export/listReportOrderSales")
     PagingVO<ReportOrderSalesDTO.ListDTO> listReportOrderSales(@RequestBody PagingDTO<ReportOrderSalesDTO.PagingParamDTO> dto);
+    /**
+     * 库龄分析导出
+     */
+    @PostMapping("/feign/export/virtualInventoryAgePaging")
+    PagingVO<VirtualInventoryAgeDTO.ListDTO> virtualInventoryAgePaging(PagingDTO<VirtualInventoryAgeDTO.SearchParamDTO> dto);
 }

@@ -6,6 +6,7 @@ import com.erp.model.wms.entity.VirtualInventoryDetailEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
 
 
 /**
@@ -26,5 +27,5 @@ public interface VirtualInventoryDetailMapper extends BaseMapper<VirtualInventor
      * @param params
      * @return IPage<ListDTO>
      */
-    IPage<VirtualInventoryAgeDTO.ListDTO> paging(Page<VirtualInventoryAgeDTO.SearchParamDTO> page, VirtualInventoryAgeDTO.SearchParamDTO params);
+    IPage<VirtualInventoryAgeDTO.ListDTO> paging(Page<VirtualInventoryAgeDTO.SearchParamDTO> page,@Param("params") VirtualInventoryAgeDTO.SearchParamDTO params);
 }
