@@ -2659,8 +2659,8 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
             return;
         }
         try{
-            String filePath = "C:\\Users\\Administrator\\Desktop\\Blank_A4_4.jasper";
-            inputStream = new FileInputStream(filePath);
+//            String filePath = "C:\\Users\\Administrator\\Desktop\\Blank_A4_4.jasper";
+//            inputStream = new FileInputStream(filePath);
             String nowDate = LocalDateTime.now().toString();
             for (RequisitionApplicationDTO.PrintFnskuDetailDTO dtoDetail : dto.getDetails()) {
                 Integer printNum = dtoDetail.getPrintNum() == null || dtoDetail.getPrintNum() <=0 ? 1 : dtoDetail.getPrintNum();
