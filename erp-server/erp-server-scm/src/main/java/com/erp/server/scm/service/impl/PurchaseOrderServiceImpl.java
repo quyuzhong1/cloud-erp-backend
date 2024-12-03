@@ -2430,7 +2430,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             //已收货数量
             Integer receiveQty = MathUtil.ZERO;
             //已送货数量
-            Integer deliveryQty = MathUtil.ZERO;
+            Integer waitReceiveQty = MathUtil.ZERO;
             //有送货单的收货数量
             Integer hasDeliveryReceiveQty = MathUtil.ZERO;
             //无送货单收货数量
@@ -2472,7 +2472,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             }
             //已送货数量
             if (CollectionUtils.isNotEmpty(deliveryOrderDetailList)) {
-                deliveryQty = deliveryOrderDetailList.stream().filter(e -> e.getSourceDetailId().equals(obj.getPurchaseDetailId()) )
+                waitReceiveQty = deliveryOrderDetailList.stream().filter(e -> e.getSourceDetailId().equals(obj.getPurchaseDetailId()) )
                         .map(DeliveryOrderDetailDTO.ListDTO::getDeliveryQty).reduce(MathUtil.ZERO, Integer::sum);
                 //收发差异
 //                diffSendAndReceive = deliveryOrderDetailList.stream().filter(e -> e.getSourceDetailId().equals(obj.getPurchaseDetailId())
@@ -2486,9 +2486,9 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
                         .reduce(MathUtil.ZERO, Integer::sum);
                 diffSendAndReceive = srmDeliveryQty - hasDeliveryReceiveQty;
             }
-            obj.setWaitReceiveQty(deliveryQty);
+            obj.setWaitReceiveQty(waitReceiveQty);
             //剩余送货量/可下推量=采购订单-送货单数量-无送货单收货数量-无收货单的入库数量+[收发差异]+退货补货数量[库存退货/质检退货]
-            obj.setDeliveryQty(obj.getPurchaseQty() - deliveryQty - unDeliveryReceiveQty - unReceiveInstockQty + diffSendAndReceive + returnQty );
+            obj.setDeliveryQty(obj.getPurchaseQty() - waitReceiveQty - unDeliveryReceiveQty - unReceiveInstockQty + diffSendAndReceive + returnQty );
             //交货周期
             Boolean deliveryCycleFlag = false;
             if(Objects.nonNull(obj.getDeliveryCycle())){
