@@ -400,13 +400,13 @@ public class RequisitionApplicationChangeServiceImpl extends SuperServiceImpl<Re
 
         List<RequisitionApplicationDetailEntity> updateList = new ArrayList<>();
         List<PickingDetailEntity> updatePickingList = new ArrayList<>();
-        Map<String,List<RequisitionApplicationChangeDetailEntity>> map = detailEntityList.stream().collect(Collectors.groupingBy(RequisitionApplicationChangeDetailEntity::getBusinessDetailId));
         for (RequisitionApplicationChangeDetailEntity requisitionApplicationChangeDetailEntity : detailEntityList) {
             List<PickingDetailEntity> pickingDetailList = allDetailList.stream().filter(v -> v.getSourceDetailId().equals(requisitionApplicationChangeDetailEntity.getBusinessDetailId())).collect(Collectors.toList());
             RequisitionApplicationDetailEntity requisitionApplicationDetailEntity = requisitionApplicationDetailEntityList.stream().filter(v -> v.getId().equals(requisitionApplicationChangeDetailEntity.getBusinessDetailId())).findFirst().orElseThrow(()->new ServiceException("{}未找到要货申请单明细数据",requisitionApplicationChangeDetailEntity.getSkuNo()));
             requisitionApplicationDetailEntity.setChangeBeforeQty(requisitionApplicationDetailEntity.getRequisitionQty());
             requisitionApplicationDetailEntity.setApproveQty(requisitionApplicationChangeDetailEntity.getNewQty());
             requisitionApplicationDetailEntity.setRequisitionQty(requisitionApplicationChangeDetailEntity.getNewQty());
+            requisitionApplicationDetailEntity.setVirtualFrozenQty(requisitionApplicationChangeDetailEntity.getNewQty());
             updateList.add(requisitionApplicationDetailEntity);
             pickingDetailList = pickingDetailList.stream().filter(v->!v.getQty().equals(v.getActualQty()) || !v.getWarehouseLocation().equals(v.getOriginWarehouseLocation())).collect(Collectors.toList());
             if(CollectionUtils.isEmpty(pickingDetailList)){
@@ -547,6 +547,7 @@ public class RequisitionApplicationChangeServiceImpl extends SuperServiceImpl<Re
                 requisitionApplicationDetailEntity.setBomVersion(detail.getBomVersion());
                 requisitionApplicationDetailEntity.setApproveQty(detail.getNewQty());
                 requisitionApplicationDetailEntity.setRequisitionQty(detail.getNewQty());
+                requisitionApplicationDetailEntity.setVirtualFrozenQty(detail.getNewQty());
                 updateList.add(requisitionApplicationDetailEntity);
                 List<BomChildrenSkuDTO> bomChildrenList = bomChildrenSkuList.stream()
                         .filter(req -> req.getParentSkuId().equals(requisitionApplicationDetailEntity.getSkuId())

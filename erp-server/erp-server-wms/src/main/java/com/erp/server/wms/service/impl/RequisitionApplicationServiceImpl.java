@@ -2124,6 +2124,8 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
                 logList.add(new OperateLogDTO.AddModuleOperateLogDTO(StrUtil.format("删除sku{}",v.getSkuNo()),ModuleTypeEnum.REQUISITION_APPLICATION.getCode(),v.getMainId(),"删除明细"));
             });
             List<String> deleteIds = deleteList.stream().map(v->v.getId()).collect(Collectors.toList());
+            deleteList.forEach(v->v.setVirtualFrozenQty(0));
+            requisitionApplicationDetailService.updateBatchById(deleteList);
             requisitionApplicationDetailService.removeByIds(deleteIds);
         }
         if(CollectionUtils.isNotEmpty(logList)){
