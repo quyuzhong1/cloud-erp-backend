@@ -270,7 +270,7 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
      * @param endDate   结束时间
      */
     private List<ReplenishmentResultDTO.SalesHistoryDTO> getSalesHistoryDTOS(List<ReplenishmentSuggestionVO.PagingView> records, LocalDate startDate, LocalDate endDate) {
-        Map<ReplenishmentSuggestionVO.SalesQtyTypeDTO, List<String>> salesQtyTypeMap = records.stream().collect(Collectors.groupingBy(v -> {
+        Map<ReplenishmentSuggestionVO.SalesQtyTypeDTO, List<String>> salesQtyTypeMap = records.stream().filter(v -> !ObjectUtils.isEmpty(v.getCfgRule())).collect(Collectors.groupingBy(v -> {
             CfgRuleStrategyDTO cfgRuleStrategyDTO = JSON.parseObject(v.getCfgRule(), CfgRuleStrategyDTO.class);
             return new ReplenishmentSuggestionVO.SalesQtyTypeDTO(cfgRuleStrategyDTO.getSalesQtyResult().getSalesQtyType(), cfgRuleStrategyDTO.getSalesQtyResult().getOrderType());
         }, Collectors.mapping(ReplenishmentSuggestionVO.PagingView::getId, Collectors.toList())));
@@ -858,7 +858,7 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
         //SKU
         List<String> skuIdList = list.stream().map(ReplenishmentSuggestionVO.PagingView::getSkuId).distinct().collect(Collectors.toList());
         List<ProductDetailEntity> skuList = FeignQuery.getByIds(ProductDetailEntity.class, skuIdList);
-        Map<ReplenishmentSuggestionVO.SalesQtyTypeDTO, List<String>> salesQtyTypeMap = list.stream().collect(Collectors.groupingBy(v -> {
+        Map<ReplenishmentSuggestionVO.SalesQtyTypeDTO, List<String>> salesQtyTypeMap = list.stream().filter(v -> !ObjectUtils.isEmpty(v.getCfgRule())).collect(Collectors.groupingBy(v -> {
             CfgRuleStrategyDTO cfgRuleStrategyDTO = JSON.parseObject(v.getCfgRule(), CfgRuleStrategyDTO.class);
             return new ReplenishmentSuggestionVO.SalesQtyTypeDTO(cfgRuleStrategyDTO.getSalesQtyResult().getSalesQtyType(), cfgRuleStrategyDTO.getSalesQtyResult().getOrderType());
         }, Collectors.mapping(ReplenishmentSuggestionVO.PagingView::getId, Collectors.toList())));

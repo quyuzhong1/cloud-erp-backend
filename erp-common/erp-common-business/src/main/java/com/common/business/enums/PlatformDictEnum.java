@@ -31,7 +31,7 @@ public enum PlatformDictEnum implements EnumMessage {
     ALIBABA_ABROAD("AlibabaAbroad", "1688-国外", "1688-国外", "028"),
     YOU_ZAN("YouZan", "有赞微商城", "有赞微商城", "015"),
     OTHER_PLATFORM("Other", "Other", "其他平台", "999"),
-    //B2B_INTERNAL("B2B_INTERNAL", "B2B线下-国内", "B2B", "020"),
+    B2B_INTERNAL("B2B_INTERNAL", "B2B线下-国内", "B2B", "020"),
     B2B_FOREIGN("B2B_FOREIGN", "B2B", "B2B", "021"),
     LITTLE_RED_BOOK("RedBook", "小红书", "RED", "014"),
     PDD("PDD", "拼多多", "Temu", "009"),

@@ -1240,9 +1240,9 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
         DateTimeFormatter localDateTime = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
         DateTimeFormatter localDate = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
-        List<String> skuNos = soOutstockDetailEntities.stream().map(req -> req.getSkuNo()).collect(Collectors.toList());
+        List<String> skuNos = soOutstockDetailEntities.stream().map(req -> req.getSkuNo()).distinct().collect(Collectors.toList());
         List<SkuVO> skuVOList = plmTaskFeign.listBySkuNoList(skuNos);
-        List<String> skuIds = soOutstockDetailEntities.stream().map(req -> req.getSkuId()).collect(Collectors.toList());
+        List<String> skuIds = soOutstockDetailEntities.stream().map(req -> req.getSkuId()).distinct().collect(Collectors.toList());
         List<BomChildrenSkuDTO> bomChildrenSkuDTOS = plmTaskFeign.listBomChildBySkuIds(skuIds);
 
         List<String> currencyCodeList = soOutstockDetailEntities.stream().map(req -> req.getCurrency()).distinct().collect(Collectors.toList());
@@ -1392,7 +1392,7 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
             wmsPushMsgEntity.setSourceId(soOutstockDetailEntity.getId());
             wmsPushMsgEntity.setSourceCode(entity.getCode() + "_" + soOutstockDetailEntity.getSkuNo());
             wmsPushMsgEntity.setSyncOperate(operate);
-            wmsPushMsgEntity.setPushData(JSON.toJSONString(this.syncDataToSdyFieldHandler(entity, soOutstockDetailEntity, operate)));
+            wmsPushMsgEntity.setPushData(JSON.toJSONString(shudiyunB2cOrderDTO));
             wmsPushMsgService.save(wmsPushMsgEntity);
         }
     }
