@@ -224,5 +224,5 @@ public interface LogisticsBillCostService extends SuperService<LogisticsBillCost
     
     void generateLogisticsBill(SoReturnInstockEntity entity);
     
-    BatchResultDTO pushAllocation(String id , LocalDate reportDate);
+    BatchResultDTO pushAllocation(String id , String reportDate);
 }

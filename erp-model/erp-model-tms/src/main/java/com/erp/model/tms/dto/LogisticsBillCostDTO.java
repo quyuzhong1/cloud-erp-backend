@@ -785,8 +785,8 @@ public class LogisticsBillCostDTO implements Serializable {
     	/**
     	 *核算日期
     	 */
-    	@NotNull(message = "核算日期不能为空")
-    	private LocalDate reportDate;
+    	@NotBlank(message = "核算日期不能为空")
+    	private String reportDate;
     	
     }
     @Data

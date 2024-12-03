@@ -70,8 +70,17 @@ public class SmallBagCostAllocationDTO implements Serializable {
         /**
          * 对账
          */
+        private String reconciliationStatus;
+        
+        /**
+         * 对账
+         */
         private String reconciliationStatusName;
         
+        /**
+         * 签收
+         */
+        private String deliveryStatus;
         /**
          * 签收
          */

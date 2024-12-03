@@ -1,11 +1,38 @@
 package com.erp.server.tms.service.impl;
 
 
-import cn.hutool.core.bean.BeanUtil;
-import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.text.CharSequenceUtil;
-import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.json.JSONObject;
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_TMS_LOGISTICS_BILL_COST;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.nio.charset.StandardCharsets;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.stream.Collectors;
+
+import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
+
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.DefaultResourceLoader;
+import org.springframework.core.io.ResourceLoader;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
@@ -14,16 +41,19 @@ import com.baomidou.mybatisplus.core.incrementer.IdentifierGenerator;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
-import com.baomidou.mybatisplus.extension.conditions.update.LambdaUpdateChainWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.common.business.constant.SearchType;
 import com.common.business.dto.FindUserDTO;
+import com.common.business.dto.base.BaseIdDTO.CodeDTO;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BaseResultDTO.AddDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
-import com.common.business.enums.*;
+import com.common.business.enums.OperationTypeEnum;
+import com.common.business.enums.OrderTypeEnum;
+import com.common.business.enums.PlatformDictEnum;
+import com.common.business.enums.SourceTypeEnum;
+import com.common.business.enums.UnitEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
@@ -39,6 +69,8 @@ import com.common.core.utils.date.DateUtil;
 import com.erp.model.oms.entity.CustomerInfoEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.entity.SoB2cLogisticsEntity;
+import com.erp.model.plm.entity.ProductCostEntity;
+import com.erp.model.plm.entity.ProductPackEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.tms.dto.CfgSettingValueDTO.AllocationSettingDTO;
@@ -55,10 +87,36 @@ import com.erp.model.tms.dto.TmsCostDetailDTO.CostViewDTO;
 import com.erp.model.tms.dto.TmsCostDetailDTO.DetailDTO;
 import com.erp.model.tms.dto.TmsCostDetailDTO.UpdateDTO;
 import com.erp.model.tms.dto.excel.LogisticsBillCostExcelDTO;
-import com.erp.model.tms.entity.*;
-import com.erp.model.tms.enums.*;
+import com.erp.model.tms.entity.CfgSettingEntity;
+import com.erp.model.tms.entity.LogisticsBillCostEntity;
+import com.erp.model.tms.entity.LogisticsBillDetailEntity;
+import com.erp.model.tms.entity.LogisticsBillEntity;
+import com.erp.model.tms.entity.LogisticsChannelEntity;
+import com.erp.model.tms.entity.SmallBagCostAllocationDetailEntity;
+import com.erp.model.tms.entity.SmallBagCostAllocationEntity;
+import com.erp.model.tms.entity.TmsCfgCostEntity;
+import com.erp.model.tms.entity.TmsCostDetailEntity;
+import com.erp.model.tms.entity.TmsFirstMileReconciliationDetailEntity;
+import com.erp.model.tms.entity.TmsFirstMileReconciliationEntity;
+import com.erp.model.tms.enums.AllocationFeeTypeEnum;
+import com.erp.model.tms.enums.CfgSettingEnum;
+import com.erp.model.tms.enums.CostAllocationEnum;
+import com.erp.model.tms.enums.DetailReconciliationTypeEnum;
+import com.erp.model.tms.enums.DictBasicEnum;
+import com.erp.model.tms.enums.DictCostAttributionEnum;
+import com.erp.model.tms.enums.DictCostCategoryEnum;
+import com.erp.model.tms.enums.LogisticTrackStatusEnum;
+import com.erp.model.tms.enums.LogisticsBillCostCheckStatusEnum;
+import com.erp.model.tms.enums.LogisticsBillCostTypeEnum;
+import com.erp.model.tms.enums.ReconciliationStatusEnum;
+import com.erp.model.tms.enums.ReconciliationTabStatusEnum;
+import com.erp.model.tms.enums.ShipmentTypeEnum;
+import com.erp.model.tms.enums.ShippingFeeRuleEnum;
+import com.erp.model.tms.enums.SmallBagCostAllocationBigTableStatusEnum;
+import com.erp.model.tms.enums.SmallBagCostAllocationReportStatusEnum;
 import com.erp.model.wms.entity.SoOutstockDetailEntity;
 import com.erp.model.wms.entity.SoReturnInstockEntity;
+import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
@@ -66,32 +124,24 @@ import com.erp.server.tms.listener.LogisticsBillCostExcelListener;
 import com.erp.server.tms.mapper.LogisticsBillCostMapper;
 import com.erp.server.tms.query.LogisticsBillCostQueryHandler;
 import com.erp.server.tms.query.LogisticsLastMileCostQueryHandler;
-import com.erp.server.tms.service.*;
+import com.erp.server.tms.service.CfgSettingService;
+import com.erp.server.tms.service.DictBasicService;
+import com.erp.server.tms.service.LogisticsBillCostService;
+import com.erp.server.tms.service.LogisticsBillDetailService;
+import com.erp.server.tms.service.LogisticsBillService;
+import com.erp.server.tms.service.LogisticsChannelService;
+import com.erp.server.tms.service.OperateLogService;
+import com.erp.server.tms.service.SmallBagCostAllocationDetailService;
+import com.erp.server.tms.service.SmallBagCostAllocationService;
+import com.erp.server.tms.service.TmsCfgCostService;
+import com.erp.server.tms.service.TmsCostDetailService;
+
+import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.core.util.ObjectUtil;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.collections4.CollectionUtils;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.io.DefaultResourceLoader;
-import org.springframework.core.io.ResourceLoader;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.multipart.MultipartFile;
-
-import javax.annotation.Resource;
-import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.math.BigDecimal;
-import java.nio.charset.StandardCharsets;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.*;
-import java.util.stream.Collectors;
-
-import static com.common.business.enums.FileTaskEventEnum.EXPORT_TMS_LOGISTICS_BILL_COST;
 
 /**
  * <p>
@@ -1410,20 +1460,18 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 
 	@Transactional(rollbackFor = Exception.class)
 	@Override
-	public BatchResultDTO pushAllocation(String id, LocalDate reportDate) {
+	public BatchResultDTO pushAllocation(String id, String reportDate) {
 		LogisticsBillCostEntity entity = getById(id);
 		String reconciliationStatus = entity.getReconciliationStatus();
 		if(!(ReconciliationStatusEnum.ESTIMATE_CONFIRM.getCode().equals(reconciliationStatus)
 				|| ReconciliationStatusEnum.CONFIRMED.getCode().equals(reconciliationStatus))) {
 			return BatchResultDTO.success(entity.getId(), entity.getTrackNo(), "只支持对账状态为暂估确认或账单确认下推分摊");
 		}
-		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM");
-		String reportDateStr = reportDate.format(formatter);
 		List<SmallBagCostAllocationEntity> smallBagCostAllocationEntityList = smallBagCostAllocationService.lambdaQuery()
 				.eq(SmallBagCostAllocationEntity::getCostId, id).list();
 		if(CollUtil.isNotEmpty(smallBagCostAllocationEntityList)) {
-			if(smallBagCostAllocationEntityList.stream().anyMatch(s -> s.getReportDate().equals(reportDateStr))) {
-				return BatchResultDTO.success(entity.getId(), entity.getTrackNo(), reportDateStr + "已存在下推分摊数据，不可下推分摊");
+			if(smallBagCostAllocationEntityList.stream().anyMatch(s -> s.getReportDate().equals(reportDate))) {
+				return BatchResultDTO.success(entity.getId(), entity.getTrackNo(), reportDate + "已存在下推分摊数据，不可下推分摊");
 			}
 			if(smallBagCostAllocationEntityList.stream().anyMatch(s -> !SmallBagCostAllocationReportStatusEnum.CONFIRMED.getCode().equals(s.getReportStatus()))) {
 				return BatchResultDTO.success(entity.getId(), entity.getTrackNo(), "存在历史未确认分摊数据，不可下推分摊");
@@ -1456,6 +1504,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 		CfgSettingEntity byKey = cfgSettingService.getByKey(CfgSettingEnum.ALLOCATION_SETTING.getCode());
 		Map<String, String> feeTypeSettingMaps = new HashMap<>();
 		AllocationSettingDTO allocationSettingDTO = JSON.parseObject(byKey.getDataJson().toJSONString(0), AllocationSettingDTO.class);
+		String weightPackageAllocation = allocationSettingDTO.getWeightPackageAllocation();
 		AllocationFeeTypeEnum[] values = AllocationFeeTypeEnum.values();
 		for(AllocationFeeTypeEnum allocationFeeTypeEnum : values) {
 			if(AllocationFeeTypeEnum.SHIPPING_COST == allocationFeeTypeEnum) {
@@ -1468,19 +1517,62 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 				feeTypeSettingMaps.put(allocationFeeTypeEnum.getCode(), allocationSettingDTO.getPackageOtherFee());
 			}
 		}
+		
+		List<ProductCostEntity> productCostEntityList = FeignQuery.create(ProductCostEntity.class)
+			.eq(ProductCostEntity::getSkuId, soOutstockDetailEntityList.stream().map(SoOutstockDetailEntity::getSkuId).collect(Collectors.toList()))
+			.list();
+		Map<String, BigDecimal> skuCostMaps = productCostEntityList.stream().collect(Collectors.toMap(ProductCostEntity::getSkuId, ProductCostEntity::getTargetTaxCost));
+		BigDecimal totalSkuCost = BigDecimal.ZERO;
+		List<ProductPackEntity> productPackEntityList = FeignQuery.create(ProductPackEntity.class)
+				.eq(ProductPackEntity::getSkuId, soOutstockDetailEntityList.stream().map(SoOutstockDetailEntity::getSkuId).collect(Collectors.toList()))
+				.list();
+		Map<String, BigDecimal> skuWeightCostMaps = productPackEntityList.stream().collect(Collectors.toMap(ProductPackEntity::getSkuId, ProductPackEntity::getGrossWeight));
+		BigDecimal totalSkuWeightCost = BigDecimal.ZERO;
 		for(SoOutstockDetailEntity soOutstockDetailEntity : soOutstockDetailEntityList) {
+			String skuId = soOutstockDetailEntity.getSkuId();
+			Integer actualQty = soOutstockDetailEntity.getActualQty();
+			BigDecimal skuCost = skuCostMaps.get(skuId);
+			if(skuCost != null) {
+				totalSkuCost = totalSkuCost.add(skuCost.multiply(new BigDecimal(actualQty)));
+			}
+			BigDecimal skuWeightCost = skuWeightCostMaps.get(skuId);
+			if(skuWeightCost != null) {
+				totalSkuWeightCost = totalSkuWeightCost.add(skuWeightCost.multiply(new BigDecimal(actualQty)));
+			}
+		}
+		
+		soOutstockDetailEntityList.sort((s1 , s2) -> s2.getActualQty().compareTo(s1.getActualQty()));
+		int i = 0;
+		Map<String, String> wareIdOrgIdMaps = FeignQuery.getByIds(WarehouseEntity.class, soOutstockDetailEntityList.stream().map(SoOutstockDetailEntity::getWarehouseId)
+				.collect(Collectors.toList())).stream().collect(Collectors.toMap(WarehouseEntity::getId, WarehouseEntity::getOrgId));
+		Map<String, String> orgIdNameMaps = sysUserFeign.getAccountingCompanyList(new ArrayList<>(wareIdOrgIdMaps.values())).stream().collect(Collectors.toMap(CodeDTO::getId, CodeDTO::getName));
+		for(SoOutstockDetailEntity soOutstockDetailEntity : soOutstockDetailEntityList) {
+			i = i + 1;
+			String skuId = soOutstockDetailEntity.getSkuId();
 			SmallBagCostAllocationEntity smallBagCostAllocationEntity = new SmallBagCostAllocationEntity();
 			String mainId = identifierGenerator.nextId(smallBagCostAllocationEntity).toString();
 			smallBagCostAllocationEntity.setId(mainId);
 			smallBagCostAllocationEntity.setCostId(id);
-			smallBagCostAllocationEntity.setReportDate(reportDateStr);
+			smallBagCostAllocationEntity.setReportDate(reportDate);
 			smallBagCostAllocationEntity.setReportStatus(SmallBagCostAllocationReportStatusEnum.TOBECONFIRM.getCode());
 			smallBagCostAllocationEntity.setBigTableStatus(SmallBagCostAllocationBigTableStatusEnum.TODO.getCode());
 			smallBagCostAllocationEntity.setSkuNo(soOutstockDetailEntity.getSkuNo());
 			smallBagCostAllocationEntity.setOutstockDetailId(smallBagCostAllocationEntity.getId());
-			smallBagCostAllocationEntity.setDeliveryQty(soOutstockDetailEntity.getActualQty());
+			Integer actualQty = soOutstockDetailEntity.getActualQty();
+			smallBagCostAllocationEntity.setDeliveryQty(actualQty);
 			addSmallBagCostAllocationEntityList.add(smallBagCostAllocationEntity);
 			
+			BigDecimal skuCostPre = BigDecimal.ZERO;
+			if(totalSkuCost.compareTo(BigDecimal.ZERO) != 0) {
+				skuCostPre = skuCostMaps.get(skuId).divide(totalSkuCost, 2, RoundingMode.HALF_UP);
+			}
+			BigDecimal skuWeightCostPre = BigDecimal.ZERO;
+			if(totalSkuWeightCost.compareTo(BigDecimal.ZERO) != 0) {
+				skuWeightCostPre = skuWeightCostMaps.get(skuId).divide(totalSkuWeightCost, 2, RoundingMode.HALF_UP);
+			}
+			
+			String orgId = wareIdOrgIdMaps.get(soOutstockDetailEntity.getWarehouseId());
+			String orgName = orgIdNameMaps.get(orgId);
 			for(Map.Entry<String, String> feeTypeSettingMap : feeTypeSettingMaps.entrySet()) {
 				SmallBagCostAllocationDetailEntity smallBagCostAllocationDetailEntity = new SmallBagCostAllocationDetailEntity();
 				smallBagCostAllocationDetailEntity.setMainId(mainId);
@@ -1494,11 +1586,22 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 					feeAllocationType = CostAllocationEnum.WEIGHT_ALLOCATION.getCode();
 				}
 				smallBagCostAllocationDetailEntity.setFeeAllocationType(feeAllocationType);
-				if(CostAllocationEnum.WEIGHT_ALLOCATION.getCode().equals(feeAllocationType)) {
-					
+				if(i < soOutstockDetailEntityList.size()) {
+					if(CostAllocationEnum.WEIGHT_ALLOCATION.getCode().equals(feeAllocationType)) {
+						smallBagCostAllocationDetailEntity.setAllocatedAmount(costValueSum.multiply(skuWeightCostPre).setScale(2, RoundingMode.HALF_UP));
+					}else {
+						smallBagCostAllocationDetailEntity.setAllocatedAmount(costValueSum.multiply(skuCostPre).setScale(2, RoundingMode.HALF_UP));
+					}
 				}else {
-					
+					smallBagCostAllocationDetailEntity.setAllocatedAmount(costValueSum.subtract(addSmallBagCostAllocationDetailEntityList.stream()
+							.filter(a -> a.getFeeType().equals(feeType)).map(SmallBagCostAllocationDetailEntity::getAllocatedAmount).reduce(BigDecimal::add).orElse(BigDecimal.ZERO)));
 				}
+				smallBagCostAllocationDetailEntity.setAllocatedCurrency(costViewDTOList.get(0).getCurrency());
+				smallBagCostAllocationDetailEntity.setProductAllocatedAmount(smallBagCostAllocationDetailEntity.getAllocatedAmount()
+						.divide(new BigDecimal(actualQty), 6, RoundingMode.HALF_UP));
+				smallBagCostAllocationDetailEntity.setWeightAllocationType(weightPackageAllocation);
+				smallBagCostAllocationDetailEntity.setOrgId(orgId);
+				smallBagCostAllocationDetailEntity.setOrgName(orgName);
 				addSmallBagCostAllocationDetailEntityList.add(smallBagCostAllocationDetailEntity);
 			}
 		
