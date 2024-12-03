@@ -1,13 +1,12 @@
 package com.erp.server.tms.service;
-import com.erp.model.tms.entity.FirstMileCostAllocationEntity;
-import com.erp.model.tms.entity.FirstMileSkuCostAllocationDetailEntity;
-import com.erp.model.tms.entity.FirstMileSkuCostAllocationEntity;
-import com.erp.model.tms.entity.LogisticsLargeEntity;
+import com.erp.model.tms.entity.*;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.tms.dto.LogisticsLargeDTO;
 import com.erp.model.wms.entity.FirstMileDeliveryDetailEntity;
 import com.erp.model.wms.entity.FirstMileDeliveryEntity;
+import com.erp.model.wms.entity.SoOutstockDetailEntity;
+import com.erp.model.wms.entity.SoOutstockEntity;
 
 import java.util.List;
 
@@ -65,5 +64,15 @@ public interface LogisticsLargeService extends SuperService<LogisticsLargeEntity
     List<LogisticsLargeEntity> listByIdSourceId(List<String> ids);
 
 
-
+    /**
+     * 小包分摊下推物流大表
+     * @Author Luo_WG
+     * @Date 2024/12/3 15:37
+     * @param costAllocationEntity 小包分摊主表
+     * @param costAllocationDetailEntities 小包分摊明细表
+     * @param soOutstockEntity  销售出库主表
+     * @param soOutstockDetailEntity    销售出库明细信息
+     * @return com.common.business.dto.base.BatchResultDTO
+     **/
+    BatchResultDTO generateSmallBagCostAllocationTable(SmallBagCostAllocationEntity costAllocationEntity, List<SmallBagCostAllocationDetailEntity> costAllocationDetailEntities, SoOutstockEntity soOutstockEntity, SoOutstockDetailEntity soOutstockDetailEntity);
 }

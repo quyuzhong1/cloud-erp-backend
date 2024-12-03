@@ -20,6 +20,8 @@ import com.erp.model.tms.enums.ReconciliationBillTypeEnum;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.entity.FirstMileDeliveryDetailEntity;
 import com.erp.model.wms.entity.FirstMileDeliveryEntity;
+import com.erp.model.wms.entity.SoOutstockDetailEntity;
+import com.erp.model.wms.entity.SoOutstockEntity;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.scm.feign.SupplierFeign;
 import com.erp.rpc.wms.feign.WmsFirstMileDeliveryFeign;
@@ -304,4 +306,18 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
         return this.lambdaQuery().eq(LogisticsLargeEntity::getSourceId, ids).list();
     }
 
+    @Override
+    public BatchResultDTO generateSmallBagCostAllocationTable(SmallBagCostAllocationEntity costAllocationEntity, List<SmallBagCostAllocationDetailEntity> costAllocationDetailEntities, SoOutstockEntity soOutstockEntity, SoOutstockDetailEntity soOutstockDetailEntity) {
+        LogisticsLargeDTO.AddDTO addDTO = new LogisticsLargeDTO.AddDTO();
+        addDTO.setOutstockCode(soOutstockEntity.getCode());
+        addDTO.setOutstockTime(soOutstockEntity.getApproveTime());
+/*
+        if (costAllocationEntity.getBigTableStatus()) {
+
+        }
+*/
+
+
+        return null;
+    }
 }
