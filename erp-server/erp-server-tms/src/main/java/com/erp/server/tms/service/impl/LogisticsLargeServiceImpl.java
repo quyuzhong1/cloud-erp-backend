@@ -12,6 +12,7 @@ import com.common.business.enums.OperationTypeEnum;
 import com.erp.model.oms.enums.SoB2cPayStatusEnum;
 import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.tms.dto.FirstMileEstimatedBillDTO;
+import com.erp.model.tms.dto.TmsCostDetailDTO;
 import com.erp.model.tms.entity.*;
 import com.erp.model.tms.enums.AllocationFeeTypeEnum;
 import com.erp.model.tms.enums.FmLogisticTrackStatusEnum;
@@ -38,6 +39,8 @@ import com.erp.model.tms.dto.LogisticsLargeDTO;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -95,6 +98,8 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
 
     @Resource
     private DmpTaskFeign dmpTaskFeign;
+    @Resource
+    private TmsCostDetailService logisticsBillCostDetailService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -184,7 +189,7 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
         //头程对账单主信息
         TmsFirstMileReconciliationEntity reconciliationEntity = tmsFirstMileReconciliationService.getById(entity.getReconciliationId());
 
-        //头程对账单主信息
+        //头程对账明细信息
         TmsFirstMileReconciliationDetailEntity reconciliationDetailEntity = tmsFirstMileReconciliationDetailService.getById(firstMileSkuCostAllocationEntity.getReconciliationDetailId());
 
 
@@ -197,7 +202,10 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
         //物流暂估账单
         List<FirstMileEstimatedBillDTO.View> estimatedBillView = firstMileEstimatedBillService.listByLogisticsBillIds(Arrays.asList(entity.getLogisticsBillId()), ConfirmStatusEnum.CONFIRM.getCode());
 
-
+        //运费
+        FirstMileSkuCostAllocationDetailEntity costAllocationDetailEntity = skuCostAllocationDetailEntities.stream().filter(req -> AllocationFeeTypeEnum.SHIPPING_COST.getCode().equals(req.getFeeType())).findFirst().orElse(null);
+        List<String> ids = logisticsBillCostEntities.stream().map(LogisticsBillCostEntity::getId).distinct().collect(Collectors.toList());
+        List<TmsCostDetailDTO.CostCompareDTO> costCompareDTOList = logisticsBillCostDetailService.getCostCompareListByIds(ids);
 
         LogisticsLargeDTO.AddDTO addDTO = new LogisticsLargeDTO.AddDTO();
         addDTO.setOutstockCode(deliveryEntity.getCode());
@@ -206,9 +214,34 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
 
         if (ReconciliationBillTypeEnum.ACTUAL.getCode().equals(firstMileSkuCostAllocationEntity.getBillSourceType())) {
             addDTO.setPayStatus(reconciliationEntity.getPayStatus());
+            addDTO.setFreightCurrency(reconciliationEntity.getCurrency());
+            //实际账单取【头程对账单】的汇率
+            BigDecimal exchangeRate = reconciliationEntity.getExchangeRate();
+            addDTO.setFirstMileEstimatedFreightTax(costAllocationDetailEntity.getAllocatedAmount().divide(exchangeRate, 4, RoundingMode.DOWN));
+
         } else {
             addDTO.setPayStatus(SoB2cPayStatusEnum.ENUM_PAYMENT.getCode());
+
+
+            BigDecimal exchangeRate = BigDecimal.ONE;
+            //预估账单取【物流单】的汇率
+            if (CollUtil.isNotEmpty(logisticsBillCostEntities)) {
+                String currency = logisticsBillCostEntities.get(0).getCurrency();
+                exchangeRate = dmpTaskFeign.getRate(logisticsBillEntity.getCreateTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), currency);
+            }
+
+            BigDecimal firstMileEstimatedFreight = BigDecimal.ZERO;
+            BigDecimal firstMileActualFreight = BigDecimal.ZERO;
+            for (TmsCostDetailDTO.CostCompareDTO costCompareDTO : costCompareDTOList) {
+                firstMileEstimatedFreight = firstMileEstimatedFreight.add(costCompareDTO.getEstimatedFee().divide(BigDecimal.ONE.add(exchangeRate)));
+
+
+                //头程物流单实际运费
+                firstMileActualFreight = firstMileActualFreight.add(costCompareDTO.getActualFee().divide(BigDecimal.ONE.add(exchangeRate)));
+                addDTO.setFirstMileActualFreight(firstMileActualFreight);
+            }
         }
+
         addDTO.setSkuId(firstMileSkuCostAllocationEntity.getSkuId());
         addDTO.setSkuNo(firstMileSkuCostAllocationEntity.getSkuNo());
         addDTO.setDeliveryQty(firstMileSkuCostAllocationEntity.getDeliveryQty());
@@ -238,30 +271,20 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
             addDTO.setActualDeliveryTime(detailEntityList.get(0).getSignTime());
         }
 
-        FirstMileSkuCostAllocationDetailEntity costAllocationDetailEntity = skuCostAllocationDetailEntities.stream().filter(req -> AllocationFeeTypeEnum.SHIPPING_COST.getCode().equals(req.getFeeType())).findFirst().orElse(null);
         if (costAllocationDetailEntity != null && costAllocationDetailEntity.getAmount().compareTo(BigDecimal.ZERO) > 0) {
             //[运费计算系数]头程分摊金额/头程金额
             addDTO.setFreightCalculationFactor(costAllocationDetailEntity.getAllocatedAmount().divide(costAllocationDetailEntity.getAmount(), 6, RoundingMode.DOWN));
         }
-        if (CollUtil.isNotEmpty(logisticsBillCostEntities)) {
-            addDTO.setFreightCurrency(logisticsBillCostEntities.get(0).getCurrency());
-        }
+
         // TODO
         addDTO.setBillTotalAmount(BigDecimal.ZERO);
 
-        //如果是预估需要取物流单费用的汇率
-        if (costAllocationDetailEntity != null) {
-            addDTO.setFirstMileEstimatedFreightTax(costAllocationDetailEntity.getAmount());
+        addDTO.setFirstMileActualFreightTax(costAllocationDetailEntity.getAllocatedAmount());
 
-
-        }
-
-
-
+        addDTO.setFirstMileEstimatedFreight(firstMileEstimatedFreight);
 
 //        tmsFirstMileReconciliationService.set
         return BatchResultDTO.success(entity.getId(), entity.getBusinessCode(), OperationTypeEnum.UPDATE_STATUS);
-        wmsFirstMileDeliveryFeign.logisticStatistics()
     }
 
     @Override
