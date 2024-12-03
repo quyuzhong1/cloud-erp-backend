@@ -834,10 +834,20 @@ public class RequisitionApplicationChangeServiceImpl extends SuperServiceImpl<Re
         }
 
         List<String> requisitionDetailIds = details.stream().map(RequisitionApplicationChangeDTO.ViewDetailDTO::getRequisitionDetailId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
+        List<String> skuIds = details.stream().map(RequisitionApplicationChangeDTO.ViewDetailDTO::getSkuId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
+        //获取子SKU集合
+        List<BomChildrenSkuDTO> allBomChildrenSkuList = plmTaskFeign.listBomChildBySkuIds(skuIds);
         List<PickingDetailEntity> pickingDetailEntityList = pickingDetailService.listPickingDetailBySourceDetailIds(requisitionDetailIds);
         for (RequisitionApplicationChangeDTO.ViewDetailDTO detail : details) {
             List<PickingDetailEntity> currentPickList = pickingDetailEntityList.stream().filter(v -> v.getSourceDetailId().equals(detail.getRequisitionDetailId())).collect(Collectors.toList());
-            Integer pickedQty = currentPickList.stream().mapToInt(PickingDetailEntity::getQty).sum();
+            List<BomChildrenSkuDTO> currentBomList = allBomChildrenSkuList.stream().filter(v->v.getParentSkuId().equals(detail.getSkuId())).collect(Collectors.toList());
+            int pickedQty;
+            if(CollectionUtils.isNotEmpty(currentBomList) && CollectionUtils.isNotEmpty(currentPickList)){
+                Integer bomQty = currentBomList.stream().filter(v->v.getSkuId().equals(currentPickList.get(0).getSkuId())).findFirst().map(BomChildrenSkuDTO::getQuantity).orElse(0);
+                pickedQty = bomQty * currentPickList.get(0).getQty();
+            }else{
+                pickedQty = currentPickList.stream().mapToInt(PickingDetailEntity::getQty).sum();
+            }
             detail.setPickQty(pickedQty);
         }
     }

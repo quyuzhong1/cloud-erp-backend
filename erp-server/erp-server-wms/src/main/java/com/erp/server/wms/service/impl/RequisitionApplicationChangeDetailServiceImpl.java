@@ -117,13 +117,25 @@ public class RequisitionApplicationChangeDetailServiceImpl extends SuperServiceI
             }
             throw new ServiceException("存在重复的明细: " + duplicateSkus);
         }
+        List<String> skuIds = details.stream().map(RequisitionApplicationChangeDTO.ViewDetailDTO::getSkuId).collect(Collectors.toList());
+        //获取子SKU集合
+        List<BomChildrenSkuDTO> allBomChildrenSkuList = plmTaskFeign.listBomChildBySkuIds(skuIds);
+
         for (RequisitionApplicationChangeDTO.ViewDetailDTO viewDetail : details) {
+            List<BomChildrenSkuDTO> currentBomList = allBomChildrenSkuList.stream().filter(v->v.getParentSkuId().equals(viewDetail.getSkuId())).collect(Collectors.toList());
             if (RequisitionChangeTypeEnum.UPDATE.getCode().equals(viewDetail.getChangeType())) {
                 if (StringUtils.isBlank(viewDetail.getRequisitionDetailId())) {
                     throw new ServiceException("修改变更明细数据，要货申请明细ID不能为空");
                 }
                 List<PickingDetailEntity> currentPickList = pickingDetailEntityList.stream().filter(v -> v.getSourceDetailId().equals(viewDetail.getRequisitionDetailId())).collect(Collectors.toList());
-                Integer pickedQty = currentPickList.stream().mapToInt(PickingDetailEntity::getQty).sum();
+                Integer pickedQty;
+                if(CollectionUtils.isNotEmpty(currentBomList) && CollectionUtils.isNotEmpty(currentPickList)){
+                    Integer bomQty = currentBomList.stream().filter(v->v.getSkuId().equals(currentPickList.get(0).getSkuId())).findFirst().map(BomChildrenSkuDTO::getQuantity).orElse(0);
+                    pickedQty = bomQty * currentPickList.get(0).getQty();
+                }else{
+                    pickedQty = currentPickList.stream().mapToInt(PickingDetailEntity::getQty).sum();
+                }
+
                 if (viewDetail.getNewRequisitionQty() < pickedQty) {
                     throw new ServiceException("【{}】变更数量不能小于已下推拣货单的应拣数量【{}】", viewDetail.getSkuNo(), pickedQty);
                 }
@@ -136,7 +148,7 @@ public class RequisitionApplicationChangeDetailServiceImpl extends SuperServiceI
                 List<PickingDetailEntity> currentPickList = pickingDetailEntityList.stream().filter(v -> v.getSourceDetailId().equals(viewDetail.getRequisitionDetailId())).collect(Collectors.toList());
                 if (CollectionUtils.isNotEmpty(currentPickList)) {
                     Integer pickedQty = currentPickList.stream().mapToInt(PickingDetailEntity::getPickedQty).sum();
-                    throw new ServiceException("【{}】已拣货【{}】，不允许删除", viewDetail.getSkuNo(), pickedQty);
+                    throw new ServiceException("【{}】已拣货，不允许删除", viewDetail.getSkuNo(), pickedQty);
                 }
             } else {
                 throw new ServiceException("变更类型错误");
