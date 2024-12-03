@@ -236,6 +236,14 @@ public class PurchaseOrderDTO implements Serializable {
          * 未交货数量/待交货量 srm改为 剩余送货量
          */
         private Integer deliveryQty;
+        /**
+         * 已送货数量
+         */
+        private Integer deliveredQty;
+        /**
+         * 剩余送货量
+         */
+        private Integer waitDeliveryQty;
 
         /**
          * 退货数量/已退货数量
