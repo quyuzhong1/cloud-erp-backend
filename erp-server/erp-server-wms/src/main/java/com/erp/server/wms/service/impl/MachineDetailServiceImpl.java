@@ -34,6 +34,7 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -150,6 +151,14 @@ public class MachineDetailServiceImpl extends SuperServiceImpl<MachineDetailMapp
     @Override
     public void removeByMainIds(List<String> mainIds) {
         lambdaUpdate().in(MachineDetailEntity::getMainId,mainIds).remove();
+    }
+
+    @Override
+    public List<MachineDetailEntity> listBySourceDetailIds(List<String> detailIds) {
+        if(CollectionUtils.isEmpty(detailIds)){
+            return new ArrayList<>();
+        }
+        return this.lambdaQuery().in(MachineDetailEntity::getSourceDetailId,detailIds).list();
     }
 
     @Override

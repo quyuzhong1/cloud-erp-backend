@@ -1753,7 +1753,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
             throw new ServiceException("未找到发货通知单明细");
         }
         List<String> detailIds = soDeliveryNoticeDetailEntityList.stream().map(v->v.getId()).collect(Collectors.toList());
-        List<MachineDetailEntity> existDetailList = machineDetailService.listByIds(detailIds);
+        List<MachineDetailEntity> existDetailList = machineDetailService.listBySourceDetailIds(detailIds);
         //主表信息
         List<String> mainIds = soDeliveryNoticeDetailEntityList.stream().map(SoDeliveryNoticeDetailEntity::getMainId).collect(Collectors.toList());
         List<SoDeliveryNoticeEntity> soDeliveryNoticeEntityList = this.listByIds(mainIds);
@@ -1815,6 +1815,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
                 addDetailDTO.setReferenceVersion(bomList.get(0).getBomVersion());
                 addDetailDTO.setRefCode(soDeliveryNoticeEntity.getCode());
                 addDetailDTO.setRefId(soDeliveryNoticeEntity.getId());
+                addDetailDTO.setSourceDetailId(soDeliveryNoticeDetailEntity.getId());
                 addDetailDTO.setRefDetailId(soDeliveryNoticeDetailEntity.getId());
                 List<MachineSubComponentsDTO.AddDTO> subComponentsList = new ArrayList<>();
                 for (BomChildrenSkuDTO bomChildrenSkuDTO : bomList) {

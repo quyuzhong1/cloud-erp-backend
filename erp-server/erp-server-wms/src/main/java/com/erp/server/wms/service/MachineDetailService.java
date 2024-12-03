@@ -55,4 +55,5 @@ public interface MachineDetailService extends SuperService<MachineDetailEntity> 
      */
     void removeByMainIds(List<String> mainIds);
 
+    List<MachineDetailEntity> listBySourceDetailIds(List<String> detailIds);
 }
