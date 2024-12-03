@@ -2,28 +2,25 @@ package com.erp.server.tms.service.impl;
 
 
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
+import com.common.business.dto.base.BaseDropDownDTO;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
-import com.common.business.enums.ConfirmStatusEnum;
 import com.common.business.enums.OperationTypeEnum;
+import com.common.business.enums.SourceTypeEnum;
+import com.common.business.wrapper.FeignQuery;
+import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.enums.SoB2cPayStatusEnum;
 import com.erp.model.scm.entity.SupplierEntity;
-import com.erp.model.tms.dto.FirstMileEstimatedBillDTO;
-import com.erp.model.tms.dto.TmsCostDetailDTO;
 import com.erp.model.tms.entity.*;
-import com.erp.model.tms.enums.AllocationFeeTypeEnum;
-import com.erp.model.tms.enums.FmLogisticTrackStatusEnum;
-import com.erp.model.tms.enums.ReconciliationBillTypeEnum;
+import com.erp.model.tms.enums.LogisticsLargeShippingMethodEnum;
 import com.erp.model.tms.enums.ReconciliationStatusEnum;
-import com.erp.model.wms.dto.WarehouseDTO;
-import com.erp.model.wms.entity.FirstMileDeliveryDetailEntity;
-import com.erp.model.wms.entity.FirstMileDeliveryEntity;
-import com.erp.model.wms.entity.SoOutstockDetailEntity;
-import com.erp.model.wms.entity.SoOutstockEntity;
+import com.erp.model.tms.enums.ShipmentTypeEnum;
+import com.erp.model.wms.entity.*;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
+import com.erp.rpc.oms.feign.SoB2cFeign;
+import com.erp.rpc.scm.feign.ScmTaskFeign;
 import com.erp.rpc.scm.feign.SupplierFeign;
 import com.erp.rpc.wms.feign.WmsFirstMileDeliveryFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
@@ -103,6 +100,13 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
     private DmpTaskFeign dmpTaskFeign;
     @Resource
     private TmsCostDetailService logisticsBillCostDetailService;
+    @Resource
+    private LogisticsChannelService logisticsChannelService;
+    @Resource
+    private ScmTaskFeign scmTaskFeign;
+    @Resource
+    private SoB2cFeign soB2cFeign;
+
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -321,12 +325,71 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
             //实际账单
             addDTO.setPayStatus(logisticsBillCostEntity.getPayStatus());
 
+
         } else {
             //预估账单
             addDTO.setPayStatus(SoB2cPayStatusEnum.ENUM_PAYMENT.getCode());
         }
 
-        soOutstockEntity.getLogisticsChannelId()
+        //付款方式
+        LogisticsChannelEntity channelEntity = logisticsChannelService.getById(soOutstockEntity.getLogisticsChannelId());
+        if (ObjectUtil.isNotEmpty(channelEntity)) {
+            LogisticsSupplierEntity logisticsSupplierEntity = logisticsSupplierService.getById(channelEntity.getMainId());
+            if (ObjectUtil.isNotEmpty(logisticsSupplierEntity)) {
+
+                addDTO.setLogisticsSupplierId(logisticsSupplierEntity.getId());
+                addDTO.setLogisticsSupplierName(logisticsSupplierEntity.getSupplierName());
+
+                SupplierEntity supplierEntity = supplierFeign.getSupplierById(logisticsSupplierEntity.getSupplierId());
+                if (ObjectUtil.isNotEmpty(supplierEntity)) {
+                    List<BaseDropDownDTO.DisabledDTO> disabledDTOS = scmTaskFeign.listPaymentCondition();
+                    String paymentCondition = disabledDTOS.stream().filter(req -> supplierEntity.getPaymentCondition().equals(req.getCode())).map(BaseDropDownDTO.DisabledDTO::getValue).findFirst().orElse("");
+                    addDTO.setPayTermsDays(paymentCondition);
+                    addDTO.setPaymentCompanyName(supplierEntity.getPaymentCompanyName());
+                }
+            }
+        }
+        addDTO.setSkuId(soOutstockDetailEntity.getSkuId());
+        addDTO.setSkuNo(soOutstockDetailEntity.getSkuNo());
+        addDTO.setDeliveryQty(costAllocationEntity.getDeliveryQty());
+        //平台订单号
+        addDTO.setPlatformOrderCode(getOutstockPlatformOrderCode(soOutstockEntity));
+
+        addDTO.setWeight(logisticsBillCostEntity.getBillingWeightLogistics());
+        addDTO.setLogisticsBillingWeight(logisticsBillCostEntity.getBillingWeightLogistics());
+        addDTO.setShippingMethod(LogisticsLargeShippingMethodEnum.EXPRESS_DELIVERY.getCode());
+
+        addDTO.setTransportNo(logisticsBillCostEntity.getTransportNo());
+
+        //自发货是直发，默认东莞
+        if (ShipmentTypeEnum.SELF_DELIVER.getCode().equals(logisticsBillEntity.getShipmentType())) {
+            addDTO.setOriginPort("东莞");
+        } else {
+            List<WarehouseEntity> list = FeignQuery.create(WarehouseEntity.class).eq(WarehouseEntity::getId, soOutstockEntity.getWarehouseId()).list();
+            if (CollUtil.isNotEmpty(list)) {
+                addDTO.setOriginPort(list.get(0).getAddress());
+            }
+        }
+
+
         return null;
+    }
+
+    private String getOutstockPlatformOrderCode(SoOutstockEntity soOutstockEntity) {
+        String platformCode = "";
+        if (SourceTypeEnum.PLATFORM_SO_OUT_STOCK.getCode().equals(soOutstockEntity.getSourceType())
+                || SourceTypeEnum.SO_B2C.getCode().equals(soOutstockEntity.getSourceType())
+                || SourceTypeEnum.SO_B2C_DELIVERY.getCode().equals(soOutstockEntity.getSourceType())
+                || SourceTypeEnum.THIRD_WAREHOUSE_CREATE_OUTBOUND_BILL.getCode().equals(soOutstockEntity.getSourceType())
+        ) {
+            String sourceId = soOutstockEntity.getSourceId();
+            SoB2cEntity soB2cEntity = soB2cFeign.getById(sourceId);
+            if (ObjectUtil.isNotEmpty(soB2cEntity)) {
+                platformCode = soB2cEntity.getPlatformCode();
+            }
+        }  else {
+            platformCode = soOutstockEntity.getSoCode();
+        }
+        return platformCode;
     }
 }
