@@ -323,10 +323,9 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
                         .reduce(MathUtil.ZERO, Integer::sum);
                 diffSendAndReceive = srmDeliveryQty - hasDeliveryReceiveQty;
             }
-            obj.setWaitReceiveQty(deliveredQty);
             obj.setDeliveredQty(deliveredQty);
             //剩余送货量/可下推量=采购订单-送货单数量-无送货单收货数量-无收货单的入库数量+[收发差异]+退货补货数量[库存退货/质检退货]
-            obj.setDeliveryQty(obj.getPurchaseQty() - deliveredQty - unDeliveryReceiveQty - unReceiveInstockQty + diffSendAndReceive + returnQty );
+            obj.setWaitDeliveryQty(obj.getPurchaseQty() - deliveredQty - unDeliveryReceiveQty - unReceiveInstockQty + diffSendAndReceive + returnQty );
             //交货周期
             Boolean deliveryCycleFlag = false;
             if(Objects.nonNull(obj.getDeliveryCycle())){
@@ -352,16 +351,16 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
         if (CollectionUtils.isEmpty(list)){
             dto.setPurchaseQty(MathUtil.ZERO);
             dto.setReceiveQty(MathUtil.ZERO);
-            dto.setDeliveryQty(MathUtil.ZERO);
-            dto.setWaitReceiveQty(MathUtil.ZERO);
+            dto.setWaitDeliveryQty(MathUtil.ZERO);
+            dto.setDeliveredQty(MathUtil.ZERO);
             dto.setStockInQty(MathUtil.ZERO);
             dto.setReturnQty(MathUtil.ZERO);
             return dto;
         }
         dto.setPurchaseQty(list.stream().filter(e -> Objects.nonNull(e.getPurchaseQty())).mapToInt(PurchaseOrderDTO.ListDTO::getPurchaseQty).sum());
         dto.setReceiveQty(list.stream().filter(e -> Objects.nonNull(e.getReceiveQty())).mapToInt(PurchaseOrderDTO.ListDTO::getReceiveQty).sum());
-        dto.setWaitReceiveQty(list.stream().filter(e -> Objects.nonNull(e.getWaitReceiveQty())).mapToInt(PurchaseOrderDTO.ListDTO::getWaitReceiveQty).sum());
-        dto.setDeliveryQty(list.stream().filter(e -> Objects.nonNull(e.getDeliveryQty())).mapToInt(PurchaseOrderDTO.ListDTO::getDeliveryQty).sum());
+        dto.setDeliveredQty(list.stream().filter(e -> Objects.nonNull(e.getDeliveredQty())).mapToInt(PurchaseOrderDTO.ListDTO::getDeliveredQty).sum());
+        dto.setWaitDeliveryQty(list.stream().filter(e -> Objects.nonNull(e.getWaitDeliveryQty())).mapToInt(PurchaseOrderDTO.ListDTO::getWaitDeliveryQty).sum());
         dto.setStockInQty(list.stream().filter(e -> Objects.nonNull(e.getStockInQty())).mapToInt(PurchaseOrderDTO.ListDTO::getStockInQty).sum());
         dto.setReturnQty(list.stream().filter(e -> Objects.nonNull(e.getReturnQty())).mapToInt(PurchaseOrderDTO.ListDTO::getReturnQty).sum());
         return dto;
