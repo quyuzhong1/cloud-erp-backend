@@ -526,6 +526,11 @@ public class RequisitionApplicationChangeServiceImpl extends SuperServiceImpl<Re
                 requisitionApplicationDetailEntity.setId(IdWorker.getIdStr());
                 requisitionApplicationDetailEntity.setFromVirtualWarehouseId(detail.getFromVirtualWarehouseId());
                 requisitionApplicationDetailEntity.setFromVirtualWarehouseName(detail.getFromVirtualWarehouseName());
+                requisitionApplicationDetailEntity.setFromWarehouseId(requisitionApplicationEntity.getRequisitionWarehouseId());
+                requisitionApplicationDetailEntity.setFromWarehouseName(requisitionApplicationEntity.getRequisitionWarehouseName());
+                requisitionApplicationDetailEntity.setToWarehouseId(requisitionApplicationEntity.getRequisitionWarehouseId());
+                requisitionApplicationDetailEntity.setToWarehouseName(requisitionApplicationEntity.getRequisitionWarehouseName());
+
                 addList.add(requisitionApplicationDetailEntity);
                 detail.setSourceDetailId(requisitionApplicationDetailEntity.getId());
                 sourceDetailList.add(detail);
