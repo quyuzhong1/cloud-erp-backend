@@ -1,5 +1,6 @@
 package com.erp.server.dmp.inout.handler.input.task.dmp;
 
+import cn.hutool.core.collection.CollUtil;
 import com.alibaba.fastjson.JSON;
 import com.common.core.anno.ParamData;
 import com.common.core.enums.PannoEnum;
@@ -24,7 +25,9 @@ public class MercadoReturnDetailDmpHandler extends DmpInputDoNextDmpHandler {
         List<ParamData> orderParamList = new ArrayList<>();
         orderParamList.add(new ParamData(MercadoConstant.MONGO_BASE_FID, MercadoConstant.MONGO_BASE_FID, PannoEnum.EQ, dmpInputMongoEntity.get("resourceId")));
         List<Map<String, Object>> orderDetailMongoList = mongoService.findMongoData(orderParamList, "mercadolibre_orderDetail_data");
-
+        if (CollUtil.isEmpty(orderDetailMongoList)) {
+            return Collections.emptyList();
+        }
         Map<String, Object> map = orderDetailMongoList.get(0);
         List<Map<String, Object>> detailList = (List<Map<String, Object>>) map.get("orderItems");
 
