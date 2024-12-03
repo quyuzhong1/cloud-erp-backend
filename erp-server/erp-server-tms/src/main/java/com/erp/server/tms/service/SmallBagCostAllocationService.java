@@ -44,6 +44,8 @@ public interface SmallBagCostAllocationService extends SuperService<SmallBagCost
     
     BatchResultDTO reAllocation(String id);
     
+    BatchResultDTO delete(String id);
+    
     BatchResultDTO pushBigTable(String id);
 
 }
