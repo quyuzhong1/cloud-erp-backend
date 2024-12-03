@@ -2,24 +2,30 @@ package com.erp.server.wms.service.impl;
 
 
 import cn.hutool.core.util.StrUtil;
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.common.business.dto.base.BaseResultDTO;
-import com.erp.model.wms.entity.VirtualInventoryDetailEntity;
-import com.erp.server.wms.mapper.VirtualInventoryDetailMapper;
-import com.erp.server.wms.service.VirtualInventoryDetailService;
+import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
-import com.erp.server.wms.service.OperateLogService;
-import com.erp.server.wms.service.CommonService;
+import com.common.business.vo.PagingVO;
+import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Transactional;
+import com.common.core.utils.BeanMapperUtils;
+import com.erp.model.wms.dto.VirtualInventoryAgeDTO;
+import com.erp.model.wms.dto.VirtualInventoryDTO;
+import com.erp.model.wms.dto.VirtualInventoryDetailDTO;
+import com.erp.model.wms.entity.VirtualInventoryDetailEntity;
+import com.erp.server.wms.mapper.VirtualInventoryDetailMapper;
+import com.erp.server.wms.service.OperateLogService;
+import com.erp.server.wms.service.VirtualInventoryDetailService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
-import com.erp.model.wms.dto.VirtualInventoryDetailDTO;
-import java.util.*;
-import com.common.core.utils.*;
-import com.common.core.enums.ApiError;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.Optional;
 /**
  * <p>
  * 虚拟仓库明细 服务实现类
@@ -86,11 +92,27 @@ public class VirtualInventoryDetailServiceImpl extends SuperServiceImpl<VirtualI
         return Boolean.TRUE;
     }
 
+    @Override
+    public PagingVO<VirtualInventoryAgeDTO.ListDTO> paging(PagingDTO<VirtualInventoryAgeDTO.SearchParamDTO> dto) {
+        dto.getParams().setPermissionSql(dto.getPermissionSql());
+        IPage<VirtualInventoryAgeDTO.ListDTO> pageData = this.baseMapper.paging(dto.page(), dto.getParams());
+        // 填充名称
+        fillPageData(pageData.getRecords());
+        return new PagingVO<>(pageData);
+    }
+
 
     /**
     * 新增修改处理数据
     */
     private void handleData(VirtualInventoryDetailEntity virtualInventoryDetailEntity) {
     // TODO 验证数据 & 数据赋值
+    }
+
+    /**
+     * 分页列表处理数据
+     */
+    private void fillPageData(List<VirtualInventoryAgeDTO.ListDTO> detailList) {
+        // TODO 验证数据 & 数据赋值
     }
 }

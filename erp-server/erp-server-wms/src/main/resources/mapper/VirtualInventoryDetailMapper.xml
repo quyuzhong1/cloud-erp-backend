@@ -37,6 +37,7 @@
         is_deleted,
         warehouse_id, virtual_warehouse_id, sku_id, sku_no, bill_date, qty, dict_inventory_status, virtual_trans_flow_id, batch_no, last_outstock_date
     </sql>
+    <select id="paging" resultType="com.erp.model.wms.dto.VirtualInventoryAgeDTO$ListDTO"></select>
 
 
 </mapper>
