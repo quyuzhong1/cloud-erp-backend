@@ -5,6 +5,7 @@ import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.SortParamDTO;
+import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
@@ -130,7 +131,7 @@ public class WaitDeliveryController extends BaseController {
      */
     @PostMapping("/generateDeliveryOrder")
     @LogAction(value = LogActionEnum.INSERT, desc = "生成送货单")
-    public ApiResult<List<BatchResultDTO>> addDeliveryOrder(@RequestBody @Valid List<DeliveryOrderDTO.AddDeliveryDTO> dtos) {
+    public ApiResult<List<BatchResultDTO>> addDeliveryOrder(@RequestBody @Valid ValidList<DeliveryOrderDTO.AddDeliveryDTO> dtos) {
         List<BatchResultDTO> resultDTOS = deliveryOrderService.addDeliveryOrder(dtos);
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
