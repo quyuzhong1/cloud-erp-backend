@@ -28,6 +28,7 @@ import com.erp.server.dmp.service.AmzReportHandleService;
 import com.erp.server.dmp.service.CfgAmzReportTypeService;
 import com.erp.server.dmp.service.CfgAppClientService;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
@@ -78,6 +79,17 @@ public class DmpInputAmzReportCreatedApiInitHandler extends DmpInputInitHandler 
         if (null == shopInfoDTO) {
             ServiceException.runError("未找到店铺授权:" + shopId);
         }
+
+        // 允许指定报告ID
+        String detailExtendJson = dmpInputTaskEntity.getExtendJson();
+        if (StringUtils.isNotBlank(detailExtendJson)) {
+            JSONObject detailExtendObj = JSONObject.parseObject(detailExtendJson);
+            String reportId = detailExtendObj.getString("reportId");
+            if (StringUtils.isNotBlank(reportId)){
+                return convertDmpInputTaskInitDTOS(reportId, reportType, shopInfoDTO);
+            }
+        }
+
 
         List<String> marketplaceIds;
         AmazonReportRecordTypeEnum recordTypeEnum = AmazonReportRecordTypeEnum.checkAndGetByRecordType(reportType);
@@ -150,16 +162,7 @@ public class DmpInputAmzReportCreatedApiInitHandler extends DmpInputInitHandler 
         // 设置到缓存(已完成或结束删除)
 //      redisUtil.set(key, reportId);
         // 组合响应
-        Report report = new Report();
-        report.setReportId(reportId);
-        report.setReportType(reportType);
-        report.setProcessingStatus(Report.ProcessingStatusEnum.IN_PROGRESS);
-
-        JSONObject jsonObject = (JSONObject) JSON.toJSON(report);
-        // 补充其他信息
-        jsonObject.put("platformShopCode", shopInfoDTO.getPlatformShopCode());
-        jsonObject.put("createdMethod", "system");
-        return Collections.singletonList(DmpInputTaskInitDTO.initMsg(JSON.toJSONString(jsonObject)));
+        return convertDmpInputTaskInitDTOS(reportId, reportType, shopInfoDTO);
     }
 
     /**
@@ -200,5 +203,22 @@ public class DmpInputAmzReportCreatedApiInitHandler extends DmpInputInitHandler 
         body.setDataStartTime(startTime);
         body.setDataEndTime(endTime);
         return body;
+    }
+
+
+    /**
+     * 转换响应
+     */
+    private static List<DmpInputTaskInitDTO> convertDmpInputTaskInitDTOS(String reportId, String reportType, AmazonShopInfoDTO shopInfoDTO) {
+        Report report = new Report();
+        report.setReportId(reportId);
+        report.setReportType(reportType);
+        report.setProcessingStatus(Report.ProcessingStatusEnum.IN_PROGRESS);
+
+        JSONObject jsonObject = (JSONObject) JSON.toJSON(report);
+        // 补充其他信息
+        jsonObject.put("platformShopCode", shopInfoDTO.getPlatformShopCode());
+        jsonObject.put("createdMethod", "system");
+        return Collections.singletonList(DmpInputTaskInitDTO.initMsg(JSON.toJSONString(jsonObject)));
     }
 }
