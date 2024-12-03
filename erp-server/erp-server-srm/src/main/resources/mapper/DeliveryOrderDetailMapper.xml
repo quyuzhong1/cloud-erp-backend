@@ -45,7 +45,7 @@
             resultType="com.erp.model.srm.dto.DeliveryOrderDetailDTO$ListDTO">
         select
             o.source_type,
-            o.receipt_status,
+            d.receipt_status,
             d.id as detailId,
             d.main_id,
             d.source_detail_id,

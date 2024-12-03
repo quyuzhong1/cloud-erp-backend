@@ -1122,7 +1122,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
         //同步数帝云
         List<SoB2cDetailEntity> soB2cDetailEntityList = soB2cDetailService.listByMainId(entity.getId());
-        soB2cDetailEntityList.forEach(detailObj -> syncSoB2cService.syncDataToSdy(entity, detailObj, SyncOperateEnum.OPERATE_APPROVE.getCode()));
+        syncSoB2cService.syncDataToSdy(entity, soB2cDetailEntityList, SyncOperateEnum.OPERATE_APPROVE.getCode());
 
         return Boolean.TRUE;
     }
@@ -4961,7 +4961,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
         //同步数帝云
         List<SoB2cDetailEntity> soB2cDetailEntityList = soB2cDetailService.listByMainId(entity.getId());
-        soB2cDetailEntityList.forEach(detailObj -> syncSoB2cService.syncDataToSdy(entity, detailObj, SyncOperateEnum.OPERATE_DISAPPROVE.getCode()));
+        syncSoB2cService.syncDataToSdy(entity, soB2cDetailEntityList, SyncOperateEnum.OPERATE_DISAPPROVE.getCode());
 
         //推送到DMP
         syncOrderToDmp(entity.getId(), SyncOperateEnum.OPERATE_DISAPPROVE.getCode());
@@ -5579,7 +5579,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
             //同步数帝云
             List<SoB2cDetailEntity> soB2cDetailEntityList = soB2cDetailService.listByMainId(entity.getId());
-            soB2cDetailEntityList.forEach(detailObj -> syncSoB2cService.syncDataToSdy(entity, detailObj, SyncOperateEnum.OPERATE_UPDATE.getCode()));
+            syncSoB2cService.syncDataToSdy(entity, soB2cDetailEntityList, SyncOperateEnum.OPERATE_UPDATE.getCode());
 
             return resultDTO;
         }
@@ -9289,6 +9289,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         SoB2cEntity soB2cEntity = this.getById(soId);
         //同步数帝云
         List<SoB2cDetailEntity> soB2cDetailEntityList = soB2cDetailService.listByMainId(soId);
-        soB2cDetailEntityList.forEach(detailObj -> syncSoB2cService.syncDataToSdy(soB2cEntity, detailObj, operateEnum));
+        syncSoB2cService.syncDataToSdy(soB2cEntity, soB2cDetailEntityList, operateEnum);
     }
 }

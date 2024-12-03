@@ -198,8 +198,17 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
         List<ShopInfoEntity> shopInfos = shopInfoFeign.listShopInfoByIds(shopIds);
         List<SalesEstimateManualEntity> salesEstimateManuals = salesEstimateManualService.listByReplenishmentIds(ids);
         List<SalesInfoEntity> salesInfos = salesInfoService.listByReplenishmentDetailIds(detailIds, LocalDate.now().minusDays(16), LocalDate.now());
+        LocalDate endDate = LocalDate.now().minusDays(1);
+        LocalDate startDate = LocalDate.now().minusDays(16);
+        List<ReplenishmentResultDTO.SalesHistoryDTO> salesHistoryList = getSalesHistoryDTOS(records, startDate, endDate);
         List<RecentSuggestionDetailEntity> suggestionDetails = recentSuggestionDetailService.listByReplenishmentDetailIds(detailIds);
         List<ReplenishmentSuggestionFavoriteEntity> favoriteList = replenishmentSuggestionFavoriteService.listByReplenishmentIds(ids);
+        LocalDate date = startDate;
+        List<LocalDate> dates = new ArrayList<>();
+        while (date.isBefore(endDate)) {
+            dates.add(date);
+            date = date.plusDays(1);
+        }
         for (ReplenishmentSuggestionVO.PagingView view : records) {
             SkuVO skuVO = skuVOS.stream().filter(v -> v.getSkuId().equals(view.getSkuId())).findFirst().orElse(new SkuVO());
             ShopInfoEntity shopInfoEntity = shopInfos.stream().filter(v -> v.getId().equals(view.getShopId())).findFirst().orElse(new ShopInfoEntity());
@@ -222,11 +231,10 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
             view.setSalesQty(JSON.parseObject(view.getSalesQtyJson(), new TypeReference<List<ReplenishmentSuggestionVO.SalesVO>>(){}));
             view.setSalesEstimateQty(JSON.parseObject(view.getSalesEstimateQtyJson(), new TypeReference<List<ReplenishmentSuggestionVO.SalesVO>>(){}));
             view.setAvgSalesEstimateQty(JSON.parseObject(view.getAvgSalesEstimateQtyJson(), new TypeReference<List<ReplenishmentSuggestionVO.SalesVO>>(){}));
-            List<SalesInfoEntity> salesInfoList = salesInfos.stream().filter(v -> v.getReplenishmentDetailId().equals(view.getDetailId())).sorted(Comparator.comparing(SalesInfoEntity::getDate)).collect(Collectors.toList());
-            List<LocalDate> salesAnalysisDate = salesInfoList.stream().map(SalesInfoEntity::getDate).collect(Collectors.toList());
-            List<BigDecimal> salesAnalysisQty = salesInfoList.stream().map(SalesInfoEntity::getSalesQty).collect(Collectors.toList());
+            List<BigDecimal> salesAnalysisQty = getSalesAnalysisQty(view, dates, salesInfos, salesHistoryList);
+
             //销量分析
-            view.setSalesAnalysis(new ReplenishmentSuggestionVO.SalesAnalysisVO(salesAnalysisDate, salesAnalysisQty));
+            view.setSalesAnalysis(new ReplenishmentSuggestionVO.SalesAnalysisVO(dates, salesAnalysisQty));
             SalesEstimateManualVO estimateManualVO = salesEstimateManuals.stream().filter(v -> v.getReplenishmentId().equals(view.getId()))
                     .map(v -> new SalesEstimateManualVO(v.getCurrentMonthSalesQty(), v.getNextMonthSales(), v.getFollowingMonthSales())).findFirst().orElse(null);
             //运营月销量预估
@@ -252,6 +260,53 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
                 view.setSuggestPurchaseQty(recentSuggestPurchase.getQty());
             }
         }
+    }
+
+    /**
+     * 获取历史销量
+     *
+     * @param records   记录
+     * @param startDate 开始时间
+     * @param endDate   结束时间
+     */
+    private List<ReplenishmentResultDTO.SalesHistoryDTO> getSalesHistoryDTOS(List<ReplenishmentSuggestionVO.PagingView> records, LocalDate startDate, LocalDate endDate) {
+        Map<ReplenishmentSuggestionVO.SalesQtyTypeDTO, List<String>> salesQtyTypeMap = records.stream().collect(Collectors.groupingBy(v -> {
+            CfgRuleStrategyDTO cfgRuleStrategyDTO = JSON.parseObject(v.getCfgRule(), CfgRuleStrategyDTO.class);
+            return new ReplenishmentSuggestionVO.SalesQtyTypeDTO(cfgRuleStrategyDTO.getSalesQtyResult().getSalesQtyType(), cfgRuleStrategyDTO.getSalesQtyResult().getOrderType());
+        }, Collectors.mapping(ReplenishmentSuggestionVO.PagingView::getId, Collectors.toList())));
+        return salesQtyTypeMap.entrySet()
+                .stream()
+                .map(v -> listSalesHistory(v.getValue(), v.getKey().getSalesQtyType(), v.getKey().getOrderType(), startDate, endDate))
+                .flatMap(Collection::stream)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * 获取数量
+     * @param view 记录
+     * @param dates 日期
+     * @param salesInfos 去噪销量
+     * @param salesHistoryList 历史销量
+     */
+    private static List<BigDecimal> getSalesAnalysisQty(ReplenishmentSuggestionVO.PagingView view, List<LocalDate> dates,
+                                            List<SalesInfoEntity> salesInfos, List<ReplenishmentResultDTO.SalesHistoryDTO> salesHistoryList) {
+        List<BigDecimal> salesAnalysisQty = new ArrayList<>();
+        for (LocalDate localDate : dates) {
+            BigDecimal qty = salesInfos.stream()
+                    .filter(v -> v.getReplenishmentDetailId().equals(view.getDetailId()))
+                    .filter(v -> v.getDate().equals(localDate))
+                    .map(SalesInfoEntity::getSalesQty)
+                    .findFirst()
+                    .orElse(salesHistoryList.stream()
+                            .filter(v -> v.getReplenishmentId().equals(view.getId()))
+                            .filter(v -> v.getDate().equals(localDate))
+                            .map(ReplenishmentResultDTO.SalesHistoryDTO::getOriginalSalesQty)
+                            .map(BigDecimal::new)
+                            .findFirst()
+                            .orElse(BigDecimal.ZERO));
+            salesAnalysisQty.add(qty);
+        }
+        return salesAnalysisQty;
     }
 
     @Override

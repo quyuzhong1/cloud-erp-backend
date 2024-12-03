@@ -18,5 +18,5 @@ public interface SyncSoB2cService {
      */
     Map<String, Object> syncDataToSdyFieldHandler(SoB2cEntity soB2cEntity, SoB2cDetailEntity soB2cDetailEntity, String operate);
 
-    void syncDataToSdy(SoB2cEntity soB2cEntity, SoB2cDetailEntity soB2cDetailEntity, String operate);
+    void syncDataToSdy(SoB2cEntity soB2cEntity, List<SoB2cDetailEntity> soB2cDetailEntityList, String operate);
 }
