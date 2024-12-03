@@ -12,6 +12,7 @@ import lombok.experimental.Accessors;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 
 /**
@@ -98,6 +99,30 @@ public class TmsB2cDeclareReconciliationEntity extends BaseEntity<TmsB2cDeclareR
     */
     @TableField("reason")
     private String reason;
+    
+    /**
+     * 东莞仓费用
+     */
+    @TableField("dg_warseHouse_fee")
+    private BigDecimal dgWarseHouseFee;
+    
+    /**
+     * 香港仓费用
+     */
+    @TableField("xg_warseHouse_fee")
+    private BigDecimal xgWarseHouseFee;
+    
+    /**
+     * 支付状态
+     */
+    @TableField("pay_status")
+    private String payStatus;
+    
+    /**
+     * 付款时间
+     */
+    @TableField("pay_time")
+    private LocalDateTime payTime;
 
 
     public static final String FIELD_CODE = "code";

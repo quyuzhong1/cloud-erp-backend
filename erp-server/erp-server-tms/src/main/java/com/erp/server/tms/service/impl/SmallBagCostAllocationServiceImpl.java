@@ -5,11 +5,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -112,14 +115,16 @@ public class SmallBagCostAllocationServiceImpl extends SuperServiceImpl<SmallBag
 	@Override
 	public List<TabListDTO> tabList(PermissionsDTO dto) {
 		List<SmallBagCostAllocationDTO.TabListDTO> resultList = new ArrayList<>();
+		List<SmallBagCostAllocationEntity> list = list();
 		SmallBagCostAllocationReportStatusEnum[] values = SmallBagCostAllocationReportStatusEnum.values();
         for (SmallBagCostAllocationReportStatusEnum statusEnum : values) {
             LogisticsBillCostDTO.PagingParamDTO pagingParamDTO = new LogisticsBillCostDTO.PagingParamDTO();
             pagingParamDTO.setPermissionSql(dto.getPermissionSql());
             SmallBagCostAllocationDTO.TabListDTO resultDTO = new SmallBagCostAllocationDTO.TabListDTO();
-            Integer count = 0;
+            String code = statusEnum.getCode();
+			Integer count = (int)list.stream().filter(l -> l.getReportStatus().equals(code)).count();
             resultDTO.setCount(ObjectUtils.isEmpty(count) ? MathUtil.ZERO : count);
-            resultDTO.setTabFlag(statusEnum.getCode());
+            resultDTO.setTabFlag(code);
             resultDTO.setTabFlagName(statusEnum.getName());
             resultList.add(resultDTO);
         }
@@ -129,9 +134,23 @@ public class SmallBagCostAllocationServiceImpl extends SuperServiceImpl<SmallBag
 
 	@Override
 	public PagingVO<ListDTO> paging(PagingDTO<PagingParamDTO> dto) {
-		return null;
+		PagingParamDTO params = dto.getParams();
+        params.setPermissionSql(dto.getPermissionSql());
+        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+        IPage<ListDTO> pageData = this.baseMapper.paging(query, params);
+        List<ListDTO> records = pageData.getRecords();
+        if (CollectionUtils.isEmpty(records)) {
+            return new PagingVO(pageData);
+        }
+        //数据赋值处理
+        handleDataPaging(records);
+        return new PagingVO(pageData);
 	}
 
+	private void handleDataPaging(List<ListDTO> records) {
+		
+	}
+	
 	@Override
 	public BatchResultDTO updateReportStatus(String id, String reportDate, String reportStatus) {
 		return null;
