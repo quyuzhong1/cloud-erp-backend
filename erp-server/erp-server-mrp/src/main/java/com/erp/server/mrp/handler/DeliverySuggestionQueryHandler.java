@@ -18,7 +18,7 @@ public class DeliverySuggestionQueryHandler extends AbstractQueryHandler {
         }
         if("deliveryPlanCode".equals(field)){
 
-            return "ds.id in (select jsonb_array_elements(source_json)->>'sourceId' from wms_delivery_plan_detail, jsonb_array_elements(source_json) AS elem where is_deleted = false and elem ->>'sourceCode' "+compareCodeSplicingValueSql+")";
+            return "ds.id in (select jsonb_array_elements(source_json)->>'sourceId' from wms_delivery_plan_detail_foreign, jsonb_array_elements(source_json) AS elem where is_deleted = false and elem ->>'sourceCode' "+compareCodeSplicingValueSql+")";
         }
         return null;
     }
