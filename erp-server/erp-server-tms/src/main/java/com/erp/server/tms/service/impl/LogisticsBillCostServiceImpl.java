@@ -196,6 +196,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 	protected IdentifierGenerator identifierGenerator;
     @Resource
     private CfgSettingService cfgSettingService;
+    
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -1604,7 +1605,12 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 				smallBagCostAllocationDetailEntity.setOrgName(orgName);
 				addSmallBagCostAllocationDetailEntityList.add(smallBagCostAllocationDetailEntity);
 			}
-		
+		}
+		if(CollUtil.isNotEmpty(addSmallBagCostAllocationEntityList)) {
+			smallBagCostAllocationService.saveBatch(addSmallBagCostAllocationEntityList);
+		}
+		if(CollUtil.isNotEmpty(addSmallBagCostAllocationDetailEntityList)) {
+			smallBagCostAllocationDetailService.saveBatch(addSmallBagCostAllocationDetailEntityList);
 		}
 		
 		return BatchResultDTO.success(entity.getId(), entity.getTrackNo(), "下推成功");
