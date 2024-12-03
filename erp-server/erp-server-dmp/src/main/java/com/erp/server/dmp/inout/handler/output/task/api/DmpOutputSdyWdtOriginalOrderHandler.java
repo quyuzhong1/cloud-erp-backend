@@ -165,6 +165,9 @@ public class DmpOutputSdyWdtOriginalOrderHandler extends DmpOutputTaskHandler {
      * 解析订单数据
      **/
     public List<ShudiyunB2cOrderDTO> convert(DmpSoOriginalInfoEntity dmpSoInfoEntity, List<DmpSoOriginalDetailEntity> dmpSoDetailEntityList) {
+        if (CollUtil.isEmpty(dmpSoDetailEntityList)) {
+            return Collections.emptyList();
+        }
         DateTimeFormatter localDateTime = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
         //数帝云数据结构
         List<ShudiyunB2cOrderDTO> shudiyunB2cOrderDTOList = new ArrayList<>();

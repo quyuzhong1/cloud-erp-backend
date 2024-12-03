@@ -155,6 +155,9 @@ public class DmpOutputSdyRefundHandler extends DmpOutputTaskHandler {
      * 解析订单数据
      **/
     public List<ShudiyunB2cOrderDTO> convert(DmpSoRefundInfoEntity dmpSoRefundEntity, List<DmpSoRefundDetailEntity> dmpSoRefundDetailEntityList) {
+        if (CollUtil.isEmpty(dmpSoRefundDetailEntityList)) {
+            return Collections.emptyList();
+        }
         DateTimeFormatter localDateTime = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
         List<ShudiyunB2cOrderDTO> sdyListDTO = new ArrayList<>();
