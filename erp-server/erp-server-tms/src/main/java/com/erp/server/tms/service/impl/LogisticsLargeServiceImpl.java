@@ -155,12 +155,15 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
     @Override
     @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO generateFirstMileLogisticsTable(FirstMileCostAllocationEntity entity, FirstMileSkuCostAllocationEntity firstMileSkuCostAllocationEntity, List<FirstMileSkuCostAllocationDetailEntity> skuCostDetailEntityList, FirstMileDeliveryEntity deliveryEntity, List<FirstMileDeliveryDetailEntity> deliveryDetailEntities) {
-        List<LogisticsLargeEntity> list = this.lambdaQuery().eq(LogisticsLargeEntity::getOutstockCode, entity.getSourceCode()).eq(LogisticsLargeEntity::getReconciliationMonth, entity.getReconciliationMonth()).list();
+        List<LogisticsLargeEntity> list = this.lambdaQuery().eq(LogisticsLargeEntity::getOutstockCode, entity.getSourceCode()).list();
         LogisticsLargeEntity logisticsLargeEntity = list.stream().filter(req -> ReconciliationBillTypeEnum.ACTUAL.getCode().equals(req.getReconciliationBillType())).findFirst().orElse(null);
         if (logisticsLargeEntity != null) {
-            throw new ServiceException("实际账单已添加物流大表");
+            throw new ServiceException("实际账单已添加物流大表，请不要重复添加");
         }
         LogisticsLargeEntity largeEntity = list.stream().filter(req -> ReconciliationBillTypeEnum.ESTIMATED.getCode().equals(req.getReconciliationBillType())).findFirst().orElse(null);
+        if (logisticsLargeEntity != null) {
+            throw new ServiceException("预估账单已添加物流大表，请不要重复添加");
+        }
 
         //查询物流单
         LogisticsBillEntity logisticsBillEntity = logisticsBillService.getById(entity.getLogisticsBillId());
