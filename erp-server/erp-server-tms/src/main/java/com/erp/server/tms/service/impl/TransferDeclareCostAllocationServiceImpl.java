@@ -1,25 +1,43 @@
 package com.erp.server.tms.service.impl;
 
 
-import cn.hutool.core.util.StrUtil;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+
+import org.apache.commons.collections4.CollectionUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseResultDTO;
-import com.erp.model.tms.entity.TransferDeclareCostAllocationEntity;
-import com.erp.server.tms.mapper.TransferDeclareCostAllocationMapper;
-import com.erp.server.tms.service.TransferDeclareCostAllocationService;
+import com.common.business.dto.base.BatchResultDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
-import com.erp.server.tms.service.OperateLogService;
-import com.erp.server.tms.service.CommonService;
+import com.common.business.vo.PagingVO;
+import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Transactional;
+import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.MathUtil;
+import com.erp.model.tms.dto.LogisticsBillCostDTO;
+import com.erp.model.tms.dto.TransferDeclareCostAllocationDTO;
+import com.erp.model.tms.dto.TransferDeclareCostAllocationDTO.ListDTO;
+import com.erp.model.tms.dto.TransferDeclareCostAllocationDTO.PagingParamDTO;
+import com.erp.model.tms.dto.TransferDeclareCostAllocationDTO.TabListDTO;
+import com.erp.model.tms.entity.TransferDeclareCostAllocationEntity;
+import com.erp.model.tms.enums.TransferDeclareCostAllocationReportStatusEnum;
+import com.erp.server.tms.mapper.TransferDeclareCostAllocationMapper;
+import com.erp.server.tms.service.OperateLogService;
+import com.erp.server.tms.service.TransferDeclareCostAllocationService;
+
+import cn.hutool.core.util.StrUtil;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
-import com.erp.model.tms.dto.TransferDeclareCostAllocationDTO;
-import java.util.*;
-import com.common.core.utils.*;
-import com.common.core.enums.ApiError;
 /**
  * <p>
  * 中转费用分摊 服务实现类
@@ -93,4 +111,69 @@ public class TransferDeclareCostAllocationServiceImpl extends SuperServiceImpl<T
     private void handleData(TransferDeclareCostAllocationEntity transferDeclareCostAllocationEntity) {
     // TODO 验证数据 & 数据赋值
     }
+
+	@Override
+	public List<TabListDTO> tabList(PermissionsDTO dto) {
+		List<TransferDeclareCostAllocationDTO.TabListDTO> resultList = new ArrayList<>();
+		List<TransferDeclareCostAllocationEntity> list = list();
+		TransferDeclareCostAllocationReportStatusEnum[] values = TransferDeclareCostAllocationReportStatusEnum.values();
+        for (TransferDeclareCostAllocationReportStatusEnum statusEnum : values) {
+            LogisticsBillCostDTO.PagingParamDTO pagingParamDTO = new LogisticsBillCostDTO.PagingParamDTO();
+            pagingParamDTO.setPermissionSql(dto.getPermissionSql());
+            TransferDeclareCostAllocationDTO.TabListDTO resultDTO = new TransferDeclareCostAllocationDTO.TabListDTO();
+            String code = statusEnum.getCode();
+			Integer count = (int)list.stream().filter(l -> l.getReportStatus().equals(code)).count();
+            resultDTO.setCount(ObjectUtils.isEmpty(count) ? MathUtil.ZERO : count);
+            resultDTO.setTabFlag(code);
+            resultDTO.setTabFlagName(statusEnum.getName());
+            resultList.add(resultDTO);
+        }
+        
+        return resultList;
+	}
+	
+	
+
+	@Override
+	public PagingVO<ListDTO> paging(PagingDTO<PagingParamDTO> dto) {
+		PagingParamDTO params = dto.getParams();
+        params.setPermissionSql(dto.getPermissionSql());
+        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+        IPage<ListDTO> pageData = this.baseMapper.paging(query, params);
+        List<ListDTO> records = pageData.getRecords();
+        if (CollectionUtils.isEmpty(records)) {
+            return new PagingVO(pageData);
+        }
+        //数据赋值处理
+        handleDataPaging(records);
+        return new PagingVO(pageData);
+	}
+	
+	private void handleDataPaging(List<ListDTO> records) {
+		
+	}
+
+	@Override
+	public BatchResultDTO updateReportStatus(String id, String reportDate, String reportStatus) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public BatchResultDTO reAllocation(String id) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public BatchResultDTO delete(String id) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public BatchResultDTO pushBigTable(String id) {
+		// TODO Auto-generated method stub
+		return null;
+	}
 }

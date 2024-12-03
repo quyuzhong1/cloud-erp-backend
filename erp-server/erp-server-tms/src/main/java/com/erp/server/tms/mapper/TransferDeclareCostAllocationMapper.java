@@ -1,8 +1,13 @@
 package com.erp.server.tms.mapper;
-import com.erp.model.tms.entity.TransferDeclareCostAllocationEntity;
-import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
+
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.erp.model.tms.dto.TransferDeclareCostAllocationDTO.PagingParamDTO;
+import com.erp.model.tms.dto.TransferDeclareCostAllocationDTO.ListDTO;
+import com.erp.model.tms.entity.TransferDeclareCostAllocationEntity;
 
 
 /**
@@ -15,5 +20,5 @@ import org.apache.ibatis.annotations.Mapper;
  */
 @Mapper
 public interface TransferDeclareCostAllocationMapper extends BaseMapper<TransferDeclareCostAllocationEntity> {
-
+	IPage<ListDTO> paging(Page query,@Param("params") PagingParamDTO params);
 }
