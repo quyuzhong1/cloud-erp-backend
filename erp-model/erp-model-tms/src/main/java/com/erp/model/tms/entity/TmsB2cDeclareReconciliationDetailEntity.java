@@ -135,15 +135,30 @@ public class TmsB2cDeclareReconciliationDetailEntity extends BaseEntity<TmsB2cDe
     @TableField("actual_shipping_cost")
     private BigDecimal actualShippingCost;
     /**
+     * 实际物流运费币别
+     */
+     @TableField("actual_shipping_currency")
+     private String actualShippingCurrency;
+    /**
     * 实际报关费
     */
     @TableField("actual_declare_cost")
     private BigDecimal actualDeclareCost;
     /**
+     * 实际报关费币别
+     */
+    @TableField("actual_declare_currency")
+    private String actualDeclareCurrency;
+    /**
     * 实际其他费
     */
     @TableField("actual_other_cost")
     private BigDecimal actualOtherCost;
+    /**
+     * 实际其他费币别
+     */
+    @TableField("actual_other_currency")
+    private String actualOtherCurrency;
     /**
     * 备注
     */

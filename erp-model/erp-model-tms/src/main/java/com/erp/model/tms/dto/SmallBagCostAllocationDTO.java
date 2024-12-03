@@ -252,6 +252,16 @@ public class SmallBagCostAllocationDTO implements Serializable {
           * 更新时间
           */
          private LocalDateTime updateTime;
+         
+         /**
+          * 币别
+          */
+         private String currency;
+         
+         /**
+         * 币别符号
+         */
+        private String currencySymbol;
 
     }
 

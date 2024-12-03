@@ -25,9 +25,12 @@ import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.tms.dto.TmsB2cDeclareReconciliationDTO;
 import com.erp.model.tms.dto.TmsB2cDeclareReconciliationDetailDTO;
+import com.erp.model.tms.entity.LogisticsBillCostEntity;
 import com.erp.model.tms.entity.TmsB2cDeclareReconciliationDetailEntity;
 import com.erp.model.tms.entity.TmsB2cDeclareReconciliationEntity;
 import com.erp.model.tms.entity.TransferLogisticsSupplierEntity;
+import com.erp.model.tms.enums.ReconciliationStatusEnum;
+import com.erp.model.tms.enums.TmsB2cDeclareReconciliationPayStatusEnum;
 import com.erp.model.tms.enums.TmsB2cDeclareReconciliationStatusEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
@@ -451,8 +454,12 @@ public class TmsB2cDeclareReconciliationServiceImpl extends SuperServiceImpl<Tms
         List<String> countryIdList = viewDTOList.stream().map(TmsB2cDeclareReconciliationDetailDTO.ViewDTO::getCountry).collect(Collectors.toList());
         List<DictCountryEntity> countryList = sysDictFeign.listCountryByIds(countryIdList);
 
+        List<String> currencyIds = viewDTOList.stream().map(TmsB2cDeclareReconciliationDetailDTO.ViewDTO::getActualShippingCurrency).collect(Collectors.toList());
+        currencyIds.addAll(viewDTOList.stream().map(TmsB2cDeclareReconciliationDetailDTO.ViewDTO::getActualDeclareCurrency).collect(Collectors.toList()));
+        currencyIds.addAll(viewDTOList.stream().map(TmsB2cDeclareReconciliationDetailDTO.ViewDTO::getActualOtherCurrency).collect(Collectors.toList()));
+        currencyIds.add(data.getCurrency());
         //币别信息
-        List<CurrencyDTO.ViewDTO> currencyList = sysUserFeign.listByCurrency(Arrays.asList(data.getCurrency()));
+        Map<String, String> currencyIdSymbolMap = sysUserFeign.listByCurrency(currencyIds).stream().collect(Collectors.toMap(CurrencyDTO.ViewDTO::getId, CurrencyDTO.ViewDTO::getSymbol));
 
         //物流费用总金额
         BigDecimal totalCost = detailList.stream().map(obj -> obj.getActualShippingCost().add(obj.getActualDeclareCost()).add(obj.getActualOtherCost())).reduce(BigDecimal.ZERO, BigDecimal::add);
@@ -469,9 +476,11 @@ public class TmsB2cDeclareReconciliationServiceImpl extends SuperServiceImpl<Tms
             viewDTO.setCountryName(countryName);
 
             //币别符号
-            if (CollUtil.isNotEmpty(currencyList)) {
-                viewDTO.setCurrencySymbol(currencyList.get(0).getSymbol());
-            }
+            viewDTO.setCurrencySymbol(currencyIdSymbolMap.get(data.getCurrency()));
+            viewDTO.setActualShippingCurrencySymbol(currencyIdSymbolMap.get(viewDTO.getActualShippingCurrency()));
+            viewDTO.setActualDeclareCurrencySymbol(currencyIdSymbolMap.get(viewDTO.getActualDeclareCurrency()));
+            viewDTO.setActualOtherCurrencySymbol(currencyIdSymbolMap.get(viewDTO.getActualOtherCurrency()));
+            
             viewDTO.setStatusName(TmsB2cDeclareReconciliationStatusEnum.getName(viewDTO.getStatus()));
 
         }
@@ -547,6 +556,8 @@ public class TmsB2cDeclareReconciliationServiceImpl extends SuperServiceImpl<Tms
                 data.setCurrencySymbol(viewDTO.getSymbol());
                 data.setCurrencyName(viewDTO.getName());
             }
+            String payStatus = data.getPayStatus();
+            data.setPayStatusName(TmsB2cDeclareReconciliationPayStatusEnum.getName(payStatus));
         }
     }
     /**
@@ -593,4 +604,25 @@ public class TmsB2cDeclareReconciliationServiceImpl extends SuperServiceImpl<Tms
         }
         tmsB2cDeclareReconciliationEntity.setExchangeRate(rate);
     }
+
+    @Override
+	public BatchResultDTO updatePayStatus(String id, String payStatus, LocalDateTime payTime) {
+		TmsB2cDeclareReconciliationEntity entity = super.getById(id);
+        Optional.ofNullable(entity).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "b2c报关对账单"));
+        if(payStatus.equals(entity.getPayStatus())) {
+        	throw new ServiceException("修改前后支付状态一致");
+        }
+        if(payStatus.equals("paid")) {
+        	if(payTime == null) {
+        		throw new ServiceException("支付状态修改为已付款，付款时间不能为空");
+        	}
+        }else {
+        	payTime = null;
+        }
+        lambdaUpdate().eq(TmsB2cDeclareReconciliationEntity::getId, id)
+			        .set(TmsB2cDeclareReconciliationEntity::getPayStatus, payStatus)
+			        .set(TmsB2cDeclareReconciliationEntity::getPayTime, payTime)
+			        .update();
+		return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.UPDATE_STATUS);
+	}
 }
