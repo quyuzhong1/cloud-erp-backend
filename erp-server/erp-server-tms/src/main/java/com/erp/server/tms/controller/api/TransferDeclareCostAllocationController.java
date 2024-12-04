@@ -28,6 +28,7 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.tms.dto.TransferDeclareCostAllocationDTO;
 import com.erp.model.tms.entity.TransferDeclareCostAllocationEntity;
+import com.erp.server.tms.query.TransferDeclareCostAllocationQueryHandler;
 import com.erp.server.tms.service.SmallBagCostAllocationService;
 import com.erp.server.tms.service.TransferDeclareCostAllocationService;
 
@@ -111,7 +112,7 @@ public class TransferDeclareCostAllocationController extends BaseController {
             menuCode = "tms:transferDeclareCostAllocation:paging",
             tableAlias = "lbc"
     )
-    @WebAdvanceQuery()
+    @WebAdvanceQuery(handler = TransferDeclareCostAllocationQueryHandler.class)
     public ApiResult<PagingVO<TransferDeclareCostAllocationDTO.ListDTO>> queryByPage(@RequestBody @Validated PagingDTO<TransferDeclareCostAllocationDTO.PagingParamDTO> dto) {
         return success(transferDeclareCostAllocationService.paging(dto));
     }
