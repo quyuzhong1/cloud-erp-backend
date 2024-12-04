@@ -182,7 +182,7 @@ public class LogisticsLargeController extends BaseController {
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出物流大表")
     @PostMapping("/export")
     public ApiResult exportLogisticsLarge(@RequestBody @Valid LogisticsLargeDTO.ExportDTO dto) {
-        Boolean result = Boolean.TRUE;
+        Boolean result = logisticsLargeService.exportLogisticsLarge(dto);
         return result ? success() : failure();
     }
 

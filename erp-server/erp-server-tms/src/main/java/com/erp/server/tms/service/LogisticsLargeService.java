@@ -68,6 +68,7 @@ public interface LogisticsLargeService extends SuperService<LogisticsLargeEntity
     BatchResultDTO delete(String id);
 
     /**
+     * 头程费用分摊下推物流大表
      * @param entity
      * @param firstMileSkuCostAllocationEntity
      * @param skuCostDetailEntityList
@@ -112,4 +113,11 @@ public interface LogisticsLargeService extends SuperService<LogisticsLargeEntity
      * @return com.common.business.dto.base.BatchResultDTO
      **/
     BatchResultDTO generateTransferCostAllocationTable(TransferDeclareCostAllocationEntity entity, List<TransferDeclareCostAllocationDetailEntity> detailEntityList, TmsB2cDeclareReconciliationEntity declareReconciliationEntity, TmsB2cDeclareReconciliationDetailEntity declareReconciliationDetailEntity, SoOutstockEntity soOutstockEntity);
+
+    /**
+     * 导出Excel
+     * @param dto
+     * @return
+     */
+    Boolean exportLogisticsLarge(LogisticsLargeDTO.ExportDTO dto);
 }
