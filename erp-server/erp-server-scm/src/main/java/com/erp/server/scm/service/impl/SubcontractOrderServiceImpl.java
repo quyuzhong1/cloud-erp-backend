@@ -789,6 +789,43 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
         //供应商
         List<SupplierEntity> supplierList = supplierService.listByIds(supplierIds);
 
+        //生成采购订单
+        List<String> poIds = addGroupPoData(resultList, supplierList, skuList, defaultSupplierContactList);
+        //ids为空则直接返回
+        if (CollectionUtils.isEmpty(poIds)) {
+            return;
+        }
+        //提交
+        Boolean submit = purchaseOrderService.submit(poIds, Boolean.FALSE);
+        if (!submit) {
+            throw new ServiceException(ApiError.ERROR_98076);
+        }
+        //审核
+        BaseApproveParamDTO baseApproveParamDTO = new BaseApproveParamDTO();
+        baseApproveParamDTO.setIds(poIds);
+        baseApproveParamDTO.setType(ApproveType.PASS);
+        Boolean approve = purchaseOrderService.autoBatchApprove(baseApproveParamDTO);
+        if (!approve) {
+            throw new ServiceException(ApiError.ERROR_98077);
+        }
+    }
+
+    /**
+     * 分组生成采购订单
+     * @author will
+     * @date 2024/12/4 15:34
+     * @param resultList
+     * @param supplierList
+     * @param skuList
+     * @param defaultSupplierContactList
+     * @return List<String>
+     */
+    private List<String> addGroupPoData ( List<SubcontractOrderDTO.GeneratePoAddDTO> resultList,List<SupplierEntity> supplierList,List<SkuVO> skuList,
+                             List<SupplierContactEntity> defaultSupplierContactList) {
+        if (CollUtil.isEmpty(resultList)) {
+            return Collections.emptyList();
+        }
+        List<String> poIds = new ArrayList<>();
         Map<String, List<SubcontractOrderDTO.GeneratePoAddDTO>> map = resultList.stream().collect(Collectors.groupingBy(obj -> obj.getSourceId().concat(obj.getSupplierId()).concat(obj.getDeliveryWarehouseId()).concat(obj.getIsParent().toString())));
         for (Map.Entry<String, List<SubcontractOrderDTO.GeneratePoAddDTO>> entry : map.entrySet()) {
             List<SubcontractOrderDTO.GeneratePoAddDTO> value = entry.getValue();
@@ -816,7 +853,6 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
             if (ObjectUtil.isNotEmpty(supplierEntity)) {
                 supplierDTO.setPayMethodId(supplierEntity.getPayMethodId());
             }
-
             //供应商默认联系人
             if (CollectionUtils.isNotEmpty(defaultSupplierContactList)) {
                 SupplierContactEntity supplierContactEntity = defaultSupplierContactList.stream().filter(obj -> obj.getSupplierId().equals(value.get(0).getSupplierId())).findFirst().orElse(null);
@@ -850,8 +886,13 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
                 poDetailList.add(poDetailAddDTO);
             }
             addDTO.setDetails(poDetailList);
-            purchaseOrderService.submitApprovePo(addDTO);
+            PurchaseOrderEntity purchaseOrderEntity = purchaseOrderService.add(addDTO);
+            if (ObjectUtils.isEmpty(purchaseOrderEntity)) {
+                throw new ServiceException(ApiError.ERROR_1019);
+            }
+            poIds.add(purchaseOrderEntity.getId());
         }
+        return poIds;
     }
 
     /**

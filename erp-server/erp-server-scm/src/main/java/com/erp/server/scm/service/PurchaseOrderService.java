@@ -73,24 +73,23 @@ public interface PurchaseOrderService extends SuperService<PurchaseOrderEntity> 
      */
     BatchResultDTO approve(ApproveOneDTO approveOneDTO);
 
-
-   /**
-    * 新增数据提交并审核
-    * @author will
-    * @date 2024/12/4 11:28
-    * @param dto
-    * @return BatchResultDTO
-    */
-    BatchResultDTO submitApprovePo(PurchaseOrderDTO.AddDTO dto);
+    /**
+     * 自动批量审核
+     * @author will
+     * @date 2024/12/4 15:23
+     * @param baseApproveParamDTO
+     * @return Boolean
+     */
+    Boolean autoBatchApprove(BaseApproveParamDTO baseApproveParamDTO);
     /**
      * @description: 结束审核
      * @author Will
      * @date: 2023/7/11 14:21
      * @param dto
-     * @param entity
+     * @param list
      * @return Boolean
      */
-    Boolean approveEnd(ApproveOneDTO dto, PurchaseOrderEntity entity);
+    Boolean approveEnd(ApproveOneDTO dto, List<PurchaseOrderEntity> list);
 
     /**
      * @description: 批量反审核
