@@ -394,8 +394,8 @@ public class RequisitionApplicationChangeServiceImpl extends SuperServiceImpl<Re
      */
     private RequisitionApplicationChangeDTO.UpdateVirtualDTO changeRequisitionByPicking(RequisitionApplicationChangeEntity entity, List<RequisitionApplicationChangeDetailEntity> detailEntityList) {
         RequisitionApplicationEntity requisitionApplicationEntity = requisitionApplicationService.getByIdOpt(entity.getBusinessId()).orElseThrow(() -> new ServiceException("未找到要货申请单数据"));
-        PickingListsEntity pickingListsEntity = pickingListsService.getOne(new QueryWrapper<PickingListsEntity>().eq("source_id", requisitionApplicationEntity.getId()));
-        List<PickingDetailEntity> allDetailList = pickingDetailService.list(Wrappers.<PickingDetailEntity>lambdaQuery().eq(PickingDetailEntity::getMainId, pickingListsEntity.getId()));
+        List<PickingListsEntity> pickingListsEntityList = pickingListsService.list(new QueryWrapper<PickingListsEntity>().eq("source_id", requisitionApplicationEntity.getId()));
+        List<PickingDetailEntity> allDetailList = pickingDetailService.list(Wrappers.<PickingDetailEntity>lambdaQuery().in(PickingDetailEntity::getMainId, pickingListsEntityList.stream().map(BaseEntity::getId).collect(Collectors.toList())));
         List<RequisitionApplicationDetailEntity> requisitionApplicationDetailEntityList = requisitionApplicationDetailService.listByMainIds(Collections.singletonList(requisitionApplicationEntity.getId()));
 
         List<RequisitionApplicationDetailEntity> updateList = new ArrayList<>();

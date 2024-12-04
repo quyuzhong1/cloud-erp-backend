@@ -2364,12 +2364,16 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
             //可能有新增的情况
             List<String> existIds = packingTaskDetailEntityList.stream().map(v->v.getSourceDetailId()).collect(Collectors.toList());
             detailEntityList = detailEntityList.stream().filter(v->!existIds.contains(v.getId())).collect(Collectors.toList());
-            if(CollectionUtils.isNotEmpty(detailEntityList)){
+            boolean isAdd = CollectionUtils.isNotEmpty(detailEntityList);
+            if(isAdd){
                 generatePackingDetail(entity, detailEntityList, packingTaskEntity, isThirdWarehouse, channelId, overseasProviderEntity, skuMappingViewDTOS);
             }
-
             this.updateById(packingTaskEntity);
             packingTaskDetailService.updateBatchById(packingTaskDetailEntityList);
+            if(isAdd){
+                //更新装箱状态
+                this.updatePackingStatus(listGroupSkuById(packingTaskEntity.getId()),packingTaskEntity);
+            }
         }else{
             PackingTaskEntity packingTaskEntity = PackingConverter.INSTANCE.requisitionToPackingTask(entity,sourceType);
             //查询明细

@@ -270,7 +270,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
                 changeQtyView.setSkuId(requisitionApplicationDetailEntity.getSkuId());
                 changeQtyView.setQty(view.getDetails().stream().filter(v->v.getSourceDetailId().equals(key)).mapToInt(PickingDetailDTO.View::getQty).sum());
                 changeQtyView.setActualQty(val.stream().mapToInt(PickingDetailDTO.View::getActualQty).sum());
-                changeQtyView.setDiffQty(changeQtyView.getQty() - changeQtyView.getActualQty());
+                changeQtyView.setDiffQty(changeQtyView.getActualQty() - changeQtyView.getQty());
             }else{
                 changeQtyView.setSkuNo(requisitionApplicationDetailEntity.getSkuNo());
                 changeQtyView.setSkuId(requisitionApplicationDetailEntity.getSkuId());
@@ -289,7 +289,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
                         .orElse(0);
                 changeQtyView.setQty(qty);
                 changeQtyView.setActualQty(actualQty);
-                changeQtyView.setDiffQty(changeQtyView.getQty() - changeQtyView.getActualQty());
+                changeQtyView.setDiffQty(changeQtyView.getActualQty() - changeQtyView.getQty());
             }
             changeQtyViews.add(changeQtyView);
         });
@@ -385,7 +385,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
                 .filter(detail -> {
                     Integer originQty = originAggregatedMap.get(detail.getSourceDetailId());
                     Integer currentQty = aggregatedMap.get(detail.getSourceDetailId());
-                    return originQty != null && currentQty != null && !originQty.equals(currentQty);
+                    return (originQty != null && currentQty != null && !originQty.equals(currentQty)) || !detail.getActualQty().equals(detail.getQty());
                 })
                 .filter(detail -> originAggregatedMap.containsKey(detail.getSourceDetailId()))
                 .collect(Collectors.toList());
@@ -866,17 +866,16 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
                     .filter(v -> v.getId().equals(view.getId()))
                     .findFirst()
                     .orElseThrow(() -> new ServiceException(ApiError.ERROR_400));
-            if(detailEntity.getWarehouseLocation().equals(view.getWarehouseLocation()) && detailEntity.getActualQty().equals(view.getActualQty()) ){
-                continue;
+            if(!detailEntity.getWarehouseLocation().equals(view.getWarehouseLocation()) || !detailEntity.getActualQty().equals(view.getActualQty()) ){
+                String context = CharSequenceUtil.format("编辑了【{}】明细行,拣货仓位由【{}】变更为【{}】，数量由【{}】变更为【{}】", view.getSkuNo(),
+                        detailEntity.getWarehouseLocation(), view.getWarehouseLocation(), detailEntity.getQty(), view.getQty());
+                operateLogService.addModuleOperateLog(context, ModuleTypeEnum.PICKING_LISTS.getCode(), entity.getId(), "编辑操作");
             }
-            String context = CharSequenceUtil.format("编辑了【{}】明细行,拣货仓位由【{}】变更为【{}】，数量由【{}】变更为【{}】", view.getSkuNo(),
-                    detailEntity.getWarehouseLocation(), view.getWarehouseLocation(), detailEntity.getQty(), view.getQty());
             detailEntity.setOriginWarehouseLocation(detailEntity.getWarehouseLocation());
             detailEntity.setWarehouseLocation(view.getWarehouseLocation());
             detailEntity.setActualQty(view.getActualQty());
             detailEntity.setChangeType(RequisitionChangeTypeEnum.UPDATE.getCode());
             updateList.add(detailEntity);
-            operateLogService.addModuleOperateLog(context, ModuleTypeEnum.PICKING_LISTS.getCode(), entity.getId(), "编辑操作");
 
         }
         if (!CollectionUtils.isEmpty(updateList)) {
