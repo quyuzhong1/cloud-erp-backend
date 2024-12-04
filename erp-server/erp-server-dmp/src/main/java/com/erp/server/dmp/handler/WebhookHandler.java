@@ -2,6 +2,8 @@ package com.erp.server.dmp.handler;
 
 import com.erp.model.dmp.track123.WebhookRequest;
 
+import java.util.Map;
+
 /**
  * @author zdy
  * @ClassName WebhookHandler
@@ -12,12 +14,16 @@ import com.erp.model.dmp.track123.WebhookRequest;
 public interface WebhookHandler {
     /**
      * 校验安全性
-     * @param request
+     * @param data
+     * @param headers
+     * @param serviceFlag
      */
-    void verify(String request);
+    void verify(String data, Map<String, String> headers, String serviceFlag);
     /**
      *业务处理
-     * @param request
+     * @param data
+     * @param headers
+     * @param serviceFlag
      */
-    void process(String request);
+    String process(String data, Map<String, String> headers, String serviceFlag);
 }

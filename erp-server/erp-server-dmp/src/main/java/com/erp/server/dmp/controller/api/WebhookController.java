@@ -3,8 +3,6 @@ package com.erp.server.dmp.controller.api;
 import cn.hutool.core.text.CharSequenceUtil;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
-import com.common.core.controller.vo.ApiResult;
-import com.common.core.exception.ServiceException;
 import com.erp.server.dmp.factory.WebhookHandlerFactory;
 import com.erp.server.dmp.handler.WebhookHandler;
 import lombok.extern.slf4j.Slf4j;
@@ -46,55 +44,32 @@ public class WebhookController extends BaseController {
 
     /**
      * 接收Webhook请求
-     * @param payload
-     * @param headers
+     * @param serviceFlag 服务名称
+     * @param data 传递数据
+     * @param headers 请求头
      * @return
      */
-    @PostMapping("/receive")
-    public ApiResult<String> receiveWebhook(@RequestBody String payload,
-                                            @RequestHeader Map<String, String> headers) {
+    @PostMapping("/receive/{serviceFlag}")
+    public String receiveWebhook(@PathVariable("serviceFlag") String serviceFlag,
+                                 @RequestBody String data,
+                                 @RequestHeader Map<String, String> headers) {
         log.info("========接收到webhook接口请求=======start");
-        // 解析请求中的平台标识，进行不同的处理
-        String platform = getPlatform(headers,payload);
-        //基础校验
-        baseVerify(payload,headers);
+        log.info("receiveWebhook:serviceFlag:{},data:{},headers:{}",serviceFlag,data,headers);
+        // 解析请求中的服务标识，进行不同的处理
+        String service = getService(serviceFlag, headers, data);
         // 根据不同平台的Webhook内容做处理
-        switch (platform) {
-            case "track123":
-                WebhookHandler handler = webhookHandlerFactory.getHandler(platform);
-                //安全校验
-//                handler.verify(payload);
-                //业务处理
-                handler.process(payload);
-                log.info("========接收到webhook接口请求=======end");
-                return success();
-            default:
-                log.info("========接收到webhook接口请求=======end");
-                return failure("Unknown platform");
-        }
+        WebhookHandler handler = webhookHandlerFactory.getHandler(service);
+        //安全校验
+        handler.verify(data,headers,serviceFlag);
+        //业务处理
+        String result = handler.process(data,headers,serviceFlag);
+        log.info("========接收到webhook接口请求=======end");
+        return result;
     }
-
-    /**
-     * 基础请求校验
-     *
-     * @param payload
-     * @param headers
-     */
-    private void baseVerify(String payload, Map<String, String> headers) {
-        String signature = headers.get("X-Hub-Signature");
-        String timestamp = headers.get("X-Hub-Timestamp");
-        // 校验时间戳
-        if (CharSequenceUtil.isNotBlank(timestamp) && Math.abs((System.currentTimeMillis() - Long.parseLong(timestamp))/1000) > MAX_AGE) {
-            throw new ServiceException("Request is too old or timestamp is missing");
+    private String getService(String serviceFlag, Map<String, String> headers, String data) {
+        if (CharSequenceUtil.isNotBlank(serviceFlag)){
+            return serviceFlag;
         }
-
-        // 校验签名
-        if (CharSequenceUtil.isNotBlank(signature) && !verifySignature(payload, signature)) {
-            throw new ServiceException("Invalid signature");
-        }
-    }
-
-    private String getPlatform(Map<String, String> headers, String payload) {
         RequestAttributes requestAttributes = RequestContextHolder.getRequestAttributes();
         if (requestAttributes == null) {
             return "";
@@ -108,11 +83,7 @@ public class WebhookController extends BaseController {
             requestURL.append("?").append(queryString);
         }
         String platform = headers.get("X-Platform");  // 假设平台信息通过头部传递
-        if (platform == null) {
-            return "track123";
-        }
-
-        return "track123";
+        return "";
     }
     private boolean verifySignature(String data, String signature) {
         try {

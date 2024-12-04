@@ -18,6 +18,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.util.Base64;
+import java.util.Map;
 
 /**
  * @author zdy
@@ -34,26 +35,28 @@ public class Track123WebhookHandler implements WebhookHandler{
 
     private final LogisticsFeign logisticsFeign = SpringUtil.getBean(LogisticsFeign.class);
     @Override
-    public void verify(String request) {
-        LogisticsTrackDTO.TrackWebHookDTO trackWebHookDTO = JSONUtil.toBean(request, LogisticsTrackDTO.TrackWebHookDTO.class);
-        LogisticsTrackDTO.Verify verify = trackWebHookDTO.getVerify();
-        String timestamp = verify.getTimestamp();
-        String signature = verify.getSignature();
-        // 校验时间戳
-        if (CharSequenceUtil.isNotBlank(timestamp) && Math.abs((System.currentTimeMillis() - Long.parseLong(timestamp))/1000) > MAX_AGE) {
-            throw new ServiceException("Request is too old or timestamp is missing");
-        }
-
-        // 校验签名
-        if (CharSequenceUtil.isNotBlank(signature) && !verifySignature(JSONUtil.toJsonStr(trackWebHookDTO.getData()), signature)) {
-            throw new ServiceException("Invalid signature");
-        }
+    public void verify(String data, Map<String, String> headers, String serviceFlag) {
+        return;
+//        LogisticsTrackDTO.TrackWebHookDTO trackWebHookDTO = JSONUtil.toBean(data, LogisticsTrackDTO.TrackWebHookDTO.class);
+//        LogisticsTrackDTO.Verify verify = trackWebHookDTO.getVerify();
+//        String timestamp = verify.getTimestamp();
+//        String signature = verify.getSignature();
+//        // 校验时间戳
+//        if (CharSequenceUtil.isNotBlank(timestamp) && Math.abs((System.currentTimeMillis() - Long.parseLong(timestamp))/1000) > MAX_AGE) {
+//            throw new ServiceException("Request is too old or timestamp is missing");
+//        }
+//
+//        // 校验签名
+//        if (CharSequenceUtil.isNotBlank(signature) && !verifySignature(JSONUtil.toJsonStr(trackWebHookDTO.getData()), signature)) {
+//            throw new ServiceException("Invalid signature");
+//        }
     }
 
     @Override
-    public void process(String request) {
-        LogisticsTrackDTO.TrackWebHookDTO trackWebHookDTO = JSONUtil.toBean(request, LogisticsTrackDTO.TrackWebHookDTO.class);
+    public String process(String data, Map<String, String> headers, String serviceFlag) {
+        LogisticsTrackDTO.TrackWebHookDTO trackWebHookDTO = JSONUtil.toBean(data, LogisticsTrackDTO.TrackWebHookDTO.class);
         logisticsFeign.webhookByTrack123(trackWebHookDTO);
+        return null;
     }
 
     private boolean verifySignature(String data, String signature) {
