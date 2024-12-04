@@ -299,8 +299,6 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
             if (logisticsLargeEstimatedEntity != null) {
                 //如果有需要生成负数的对冲预估账单
                 hedgingEstimated(logisticsLargeEstimatedEntity, addDTO.getReconciliationMonth());
-
-                //
             }
         } else {
             //预估账单
@@ -427,6 +425,8 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
         }
         addDTO.setOtherTaxPayTime(reconciliationEntity.getPayTime());
 
+        //添加
+        this.add(addDTO);
         return BatchResultDTO.success(entity.getId(), entity.getBusinessCode(), OperationTypeEnum.UPDATE_STATUS);
     }
 
