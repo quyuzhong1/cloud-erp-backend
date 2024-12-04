@@ -3772,8 +3772,9 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             batchLockDTO.setIsCombination(paramScarceDTO.getIsCombination());
 
             //Min 【（销售数量 - 发货通知单数量 - 当前锁定数量），虚拟仓可用库存】
-            Integer toFrozenQty = soDetailEntity.getQty() - totalNoticeQty - soDetailEntity.getFrozenQty();
-            batchLockDTO.setToFrozenQty(virtualUsableQty > toFrozenQty ? toFrozenQty : virtualUsableQty);
+            Integer unFrozenQty = soDetailEntity.getQty() - totalNoticeQty - soDetailEntity.getFrozenQty();
+            Integer toFrozenQty = virtualUsableQty > unFrozenQty ? unFrozenQty : virtualUsableQty;
+            batchLockDTO.setToFrozenQty(toFrozenQty + soDetailEntity.getFrozenQty());
             batchLockDTO.setVirtualScarceQty(paramScarceDTO.getVirtualScarceQty());
             //锁定数量返回时默认填充最大可锁数量
             batchLockDTO.setFrozenQty(batchLockDTO.getToFrozenQty());
