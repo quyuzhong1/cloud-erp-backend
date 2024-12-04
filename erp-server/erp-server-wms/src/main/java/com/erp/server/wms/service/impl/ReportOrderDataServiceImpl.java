@@ -517,8 +517,12 @@ public class ReportOrderDataServiceImpl extends SuperServiceImpl<ReportOrderData
                             && CharSequenceUtil.equals(obj.getWarehouseId(), addDTO.getWarehouseId())
                             && Arrays.asList(InventoryStatusEnum.USABLE.getCode(), InventoryStatusEnum.FROZEN.getCode()).contains(obj.getInventoryStatus())
             ).map(InventoryQtyDTO.SkuInventoryStatusTotalDTO::getInventoryTotal).reduce(MathUtil.ZERO, Integer::sum);
+
+            Integer virtualRealTotalQty = virtualInventoryList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSkuId(), entity.getSkuId())
+                    && CharSequenceUtil.equals(obj.getWarehouseId(), entity.getWarehouseId())
+            ).map(VirtualInventoryDTO.VirtualInventoryQtyDTO::getInventoryQty).reduce(MathUtil.ZERO, Integer::sum);
             //实体仓未分配数量
-            addDTO.setUnDistributionQty(realQty - virtualUsableQty - virtualFrozenQty);
+            addDTO.setUnDistributionQty(realQty - virtualRealTotalQty);
 
             addOrUpdateList.add(addDTO);
 
