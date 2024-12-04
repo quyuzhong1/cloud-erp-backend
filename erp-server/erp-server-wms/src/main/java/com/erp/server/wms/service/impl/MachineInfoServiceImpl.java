@@ -605,7 +605,7 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
         //已存在直接调拨单
         List<TransferInfoEntity> transferInfoList = transferInfoService.listBySourceIds(Arrays.asList(entity.getId(),entity.getSourceId()));
         if (CollectionUtils.isNotEmpty(transferInfoList)) {
-            List<String> codes = transferInfoList.stream().map(TransferInfoEntity::getSourceCode).collect(Collectors.toList());
+            List<String> codes = transferInfoList.stream().map(TransferInfoEntity::getSourceCode).distinct().collect(Collectors.toList());
             throw new ServiceException(ApiError.ERROR_MACHINE_EXIST_TRANSFER_INFO,codes);
         }
         //已存在出库单
