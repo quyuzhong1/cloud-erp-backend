@@ -28,6 +28,7 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.tms.dto.SmallBagCostAllocationDTO;
 import com.erp.model.tms.entity.SmallBagCostAllocationEntity;
+import com.erp.server.tms.query.SmallBagCostAllocationQueryHandler;
 import com.erp.server.tms.service.SmallBagCostAllocationService;
 
 import cn.hutool.core.util.ObjectUtil;
@@ -111,7 +112,7 @@ public class SmallBagCostAllocationController extends BaseController {
             menuCode = "tms:smallBagCostAllocation:paging",
             tableAlias = "lbc"
     )
-    @WebAdvanceQuery()
+    @WebAdvanceQuery(handler = SmallBagCostAllocationQueryHandler.class)
     public ApiResult<PagingVO<SmallBagCostAllocationDTO.ListDTO>> queryByPage(@RequestBody @Validated PagingDTO<SmallBagCostAllocationDTO.PagingParamDTO> dto) {
         return success(smallBagCostAllocationService.paging(dto));
     }
