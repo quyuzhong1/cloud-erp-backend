@@ -1162,7 +1162,12 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
             }
             pdaPcListDTO.setInWarehouseLocationName(getWarehouseLocationEntity(warehouseLocationEntities, pdaPcListDTO.getWarehouseId(), pdaPcListDTO.getInWarehouseLocation()).getName());
             pdaPcListDTO.setOutWarehouseLocationName(getWarehouseLocationEntity(warehouseLocationEntities, pdaPcListDTO.getWarehouseId(), pdaPcListDTO.getOutWarehouseLocation()).getName());
-            pdaPcListDTO.setSourceTypeName(CharSequenceUtil.equals(pdaPcListDTO.getSourceType(),SourceTypeEnum.REQUISITION_APPLICATION.getCode()) ? MarehouseMoveSourceTypeEnum.FIRST_MILE_PICKING.getName() : MarehouseMoveSourceTypeEnum.B2B_PICKING.getName());
+
+            if (CharSequenceUtil.equals(pdaPcListDTO.getSourceType(),SourceTypeEnum.REQUISITION_APPLICATION.getCode())) {
+                pdaPcListDTO.setSourceTypeName(MarehouseMoveSourceTypeEnum.FIRST_MILE_PICKING.getName());
+            } else if (CharSequenceUtil.equals(pdaPcListDTO.getSourceType(),SourceTypeEnum.SO_DELIVERY_NOTICE.getCode())) {
+                pdaPcListDTO.setSourceTypeName(MarehouseMoveSourceTypeEnum.B2B_PICKING.getName());
+            }
             pdaPcListDTO.setOutInventoryStatusName(InventoryStatusEnum.getNameByCode(pdaPcListDTO.getOutInventoryStatus()));
             pdaPcListDTO.setInInventoryStatusName(InventoryStatusEnum.getNameByCode(pdaPcListDTO.getInInventoryStatus()));
         }
