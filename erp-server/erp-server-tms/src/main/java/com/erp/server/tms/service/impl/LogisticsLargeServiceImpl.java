@@ -552,9 +552,15 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
         SmallBagCostAllocationDetailEntity deductibleTaxDetailEntity = costAllocationDetailEntities.stream()
                 .filter(req -> AllocationFeeTypeEnum.DEDUCTIBLE_TAX.getCode().equals(req.getFeeType()))
                 .findFirst().orElse(null);
-
-//        addDTO.setDeductibleTaxFactor();
-
+        if (deductibleTaxDetailEntity.getBillAmount().compareTo(BigDecimal.ZERO) > 0) {
+            addDTO.setDeductibleTaxFactor(deductibleTaxDetailEntity.getAllocatedAmount().divide(deductibleTaxDetailEntity.getBillAmount(), 4, RoundingMode.DOWN));
+        }
+        // TODO 暂时取物流单的 后期取大类的
+        addDTO.setDeductibleTaxCurrency(logisticsBillCostEntity.getCurrency());
+        if (ObjectUtil.isNotEmpty(deductibleTaxDetailEntity)) {
+            addDTO.setEstimatedDeductibleTax(deductibleTaxDetailEntity.getAllocatedAmount().multiply(rate));
+            addDTO.setActualDeductibleTax(deductibleTaxDetailEntity.getAllocatedAmount().multiply(rate));
+        }
 
 
         return null;
