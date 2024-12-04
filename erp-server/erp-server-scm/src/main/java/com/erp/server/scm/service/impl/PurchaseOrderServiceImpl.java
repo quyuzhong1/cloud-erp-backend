@@ -2,6 +2,7 @@ package com.erp.server.scm.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
@@ -92,6 +93,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.math3.util.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronizationAdapter;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
@@ -522,6 +524,33 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(approveType);
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.approveStatus(approveStatus));
     }
+
+
+    @Override
+    @GlobalTransactional(rollbackFor = Exception.class , propagation = io.seata.tm.api.transaction.Propagation.REQUIRES_NEW)
+    @Transactional(rollbackFor = Exception.class , propagation = Propagation.REQUIRES_NEW)
+    public BatchResultDTO  submitApprovePo(PurchaseOrderDTO.AddDTO addDTO) {
+        //新增
+        PurchaseOrderEntity purchaseOrderEntity = this.add(addDTO);
+        if (ObjectUtils.isEmpty(purchaseOrderEntity) || CharSequenceUtil.isBlank(purchaseOrderEntity.getId())) {
+            throw new ServiceException(ApiError.ERROR_1019);
+        }
+        //提交
+        Boolean submit = this.submit(Collections.singletonList(purchaseOrderEntity.getId()),Boolean.FALSE);
+        if (!submit) {
+            throw new ServiceException(ApiError.ERROR_98076);
+        }
+        //审核
+        ApproveOneDTO approveOneDTO = new ApproveOneDTO();
+        approveOneDTO.setId(purchaseOrderEntity.getId());
+        approveOneDTO.setType(ApproveType.PASS);
+        BatchResultDTO approve = this.approve(approveOneDTO);
+        if (!approve.getSuccess()) {
+            throw new ServiceException(ApiError.ERROR_98077);
+        }
+        return BatchResultDTO.success(purchaseOrderEntity.getId(), purchaseOrderEntity.getCode(),ApproveType.PASS);
+    }
+
 
     @Override
     @Transactional(rollbackFor = Exception.class)

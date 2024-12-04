@@ -3,7 +3,6 @@ package com.erp.server.scm.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
-import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
@@ -767,7 +766,7 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
     @Override
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
-    public void generatePo(ValidList<SubcontractOrderDTO.GeneratePoDTO> list,Boolean isAuto) {
+    public void generatePo(ValidList<SubcontractOrderDTO.GeneratePoDTO> list) {
         if (CollectionUtils.isEmpty(list)) {
             throw new ServiceException(ApiError.ERROR_98004);
         }
@@ -790,7 +789,6 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
         //供应商
         List<SupplierEntity> supplierList = supplierService.listByIds(supplierIds);
 
-        List<String> poIds = new ArrayList<>();
         Map<String, List<SubcontractOrderDTO.GeneratePoAddDTO>> map = resultList.stream().collect(Collectors.groupingBy(obj -> obj.getSourceId().concat(obj.getSupplierId()).concat(obj.getDeliveryWarehouseId()).concat(obj.getIsParent().toString())));
         for (Map.Entry<String, List<SubcontractOrderDTO.GeneratePoAddDTO>> entry : map.entrySet()) {
             List<SubcontractOrderDTO.GeneratePoAddDTO> value = entry.getValue();
@@ -852,32 +850,7 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
                 poDetailList.add(poDetailAddDTO);
             }
             addDTO.setDetails(poDetailList);
-            PurchaseOrderEntity purchaseOrderEntity = purchaseOrderService.add(addDTO);
-            if (ObjectUtils.isEmpty(purchaseOrderEntity)) {
-                throw new ServiceException(ApiError.ERROR_1019);
-            }
-            poIds.add(purchaseOrderEntity.getId());
-        }
-
-        //采购订单提交审核
-        if (CollectionUtils.isNotEmpty(poIds)) {
-            //更新采购申请单采购订单创建类型
-            purchaseOrderService.updateCreatePoType(poIds);
-            //提交
-            Boolean submit = purchaseOrderService.submit(poIds,Boolean.FALSE);
-            if (!submit) {
-                throw new ServiceException(ApiError.ERROR_98076);
-            }
-            //审核
-            for (String poId : poIds) {
-                ApproveOneDTO approveOneDTO = new ApproveOneDTO();
-                approveOneDTO.setId(poId);
-                approveOneDTO.setType(ApproveType.PASS);
-                BatchResultDTO approve = purchaseOrderService.approve(approveOneDTO);
-                if (!approve.getSuccess()) {
-                    throw new ServiceException(ApiError.ERROR_98077);
-                }
-            }
+            purchaseOrderService.submitApprovePo(addDTO);
         }
     }
 
@@ -1260,7 +1233,7 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
         List<SubcontractOrderDTO.GeneratePoDTO> resultList = BeanMapperUtils.copyList(SubcontractOrderDTO.GeneratePoDTO.class, addList);
         ValidList<SubcontractOrderDTO.GeneratePoDTO> list = new ValidList<>();
         list.setList(resultList);
-        generatePo(list,Boolean.TRUE);
+        generatePo(list);
     }
 
     /**

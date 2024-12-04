@@ -73,6 +73,15 @@ public interface PurchaseOrderService extends SuperService<PurchaseOrderEntity> 
      */
     BatchResultDTO approve(ApproveOneDTO approveOneDTO);
 
+
+   /**
+    * 新增数据提交并审核
+    * @author will
+    * @date 2024/12/4 11:28
+    * @param dto
+    * @return BatchResultDTO
+    */
+    BatchResultDTO submitApprovePo(PurchaseOrderDTO.AddDTO dto);
     /**
      * @description: 结束审核
      * @author Will
