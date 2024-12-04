@@ -116,6 +116,7 @@ import com.erp.model.tms.enums.SmallBagCostAllocationBigTableStatusEnum;
 import com.erp.model.tms.enums.SmallBagCostAllocationReportStatusEnum;
 import com.erp.model.tms.enums.WeightAllocationEnum;
 import com.erp.model.wms.entity.SoOutstockDetailEntity;
+import com.erp.model.wms.entity.SoReturnInstockDetailEntity;
 import com.erp.model.wms.entity.SoReturnInstockEntity;
 import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
@@ -1485,8 +1486,26 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 		if(org.apache.commons.lang3.StringUtils.isBlank(outstockId)) {
 			return BatchResultDTO.success(entity.getId(), entity.getTrackNo(), "销售出库单id不存在");
 		}
-		List<SoOutstockDetailEntity> soOutstockDetailEntityList = FeignQuery.create(SoOutstockDetailEntity.class)
-				.eq(SoOutstockDetailEntity::getMainId, logisticsBillEntity.getOutstockId()).list();
+		List<SoOutstockDetailEntity> soOutstockDetailEntityList = new ArrayList<>();
+		if(SourceTypeEnum.SO_RETURN_INSTOCK.getCode().equals(logisticsBillEntity.getSourceType())) {
+			List<SoReturnInstockDetailEntity> soReturnInstockDetailEntityList = FeignQuery.create(SoReturnInstockDetailEntity.class)
+					.eq(SoReturnInstockDetailEntity::getMainId, outstockId).list();
+			if(CollUtil.isEmpty(soReturnInstockDetailEntityList)) {
+				return BatchResultDTO.success(entity.getId(), entity.getTrackNo(), "退货入库明细不存在");
+			}
+			for(SoReturnInstockDetailEntity soReturnInstockDetailEntity : soReturnInstockDetailEntityList) {
+				SoOutstockDetailEntity soOutstockDetailEntity = new SoOutstockDetailEntity();
+				soOutstockDetailEntity.setId(soReturnInstockDetailEntity.getId());
+				soOutstockDetailEntity.setSkuId(soReturnInstockDetailEntity.getSkuId());
+				soOutstockDetailEntity.setSkuNo(soReturnInstockDetailEntity.getSkuNo());
+				soOutstockDetailEntity.setActualQty(soReturnInstockDetailEntity.getRealQty());
+				soOutstockDetailEntity.setWarehouseId(soReturnInstockDetailEntity.getWarehouseId());
+				soOutstockDetailEntityList.add(soOutstockDetailEntity);
+			}
+		}else {
+			soOutstockDetailEntityList = FeignQuery.create(SoOutstockDetailEntity.class)
+					.eq(SoOutstockDetailEntity::getMainId, outstockId).list();
+		}
 		if(CollUtil.isEmpty(soOutstockDetailEntityList)) {
 			return BatchResultDTO.success(entity.getId(), entity.getTrackNo(), "销售出库单明细不存在");
 		}
@@ -1560,7 +1579,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 			smallBagCostAllocationEntity.setBigTableStatus(SmallBagCostAllocationBigTableStatusEnum.TODO.getCode());
 			smallBagCostAllocationEntity.setSkuId(skuId);
 			smallBagCostAllocationEntity.setSkuNo(soOutstockDetailEntity.getSkuNo());
-			smallBagCostAllocationEntity.setOutstockDetailId(smallBagCostAllocationEntity.getId());
+			smallBagCostAllocationEntity.setOutstockDetailId(soOutstockDetailEntity.getId());
 			
 			BigDecimal skuCostPre = BigDecimal.ZERO;
 			BigDecimal skuCost = skuCostMaps.get(skuId);
