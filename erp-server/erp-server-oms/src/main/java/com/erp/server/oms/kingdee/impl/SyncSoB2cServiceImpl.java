@@ -276,17 +276,20 @@ public class SyncSoB2cServiceImpl implements SyncSoB2cService {
     }
 
     private void syncDataToSdyFieldHandlerBatch(SoB2cEntity soB2cEntity, List<SoB2cDetailEntity> soB2cDetailEntityList, String operate) {
-        List<String> skuNos = soB2cDetailEntityList.stream().map(req -> req.getSkuNo()).collect(Collectors.toList());
+        List<String> skuNos = soB2cDetailEntityList.stream().map(req -> req.getSkuNo()).distinct().collect(Collectors.toList());
         List<SkuVO> skuVOList = plmTaskFeign.listBySkuNoList(skuNos);
-        List<String> skuIds = soB2cDetailEntityList.stream().map(req -> req.getSkuId()).collect(Collectors.toList());
+        List<String> skuIds = soB2cDetailEntityList.stream().map(req -> req.getSkuId()).distinct().collect(Collectors.toList());
         List<BomChildrenSkuDTO> bomChildrenSkuDTOS = plmTaskFeign.listBomBySkuIds(skuIds);
 
         List<CurrencyDTO.ViewDTO> currencyList = sysUserFeign.listByCurrency(Arrays.asList(soB2cEntity.getCurrency()));
         //父类产品
         List<String> parentSkuId = bomChildrenSkuDTOS.stream().map(BomChildrenSkuDTO::getParentSkuId).distinct().collect(Collectors.toList());
-        List<ProductDetailEntity> parentSkuList = FeignQuery.create(ProductDetailEntity.class)
-                .in(ProductDetailEntity::getId, parentSkuId)
-                .list();
+        List<ProductDetailEntity> parentSkuList = new ArrayList<>();
+        if (CollUtil.isNotEmpty(parentSkuId)) {
+            parentSkuList = FeignQuery.create(ProductDetailEntity.class)
+                    .in(ProductDetailEntity::getId, parentSkuId)
+                    .list();
+        }
 
         ShopInfoEntity shopInfo = FeignQuery.getById(ShopInfoEntity.class, soB2cEntity.getShopId());
 

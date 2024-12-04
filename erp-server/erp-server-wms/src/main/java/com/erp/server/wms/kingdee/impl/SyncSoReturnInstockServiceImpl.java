@@ -247,7 +247,7 @@ public class SyncSoReturnInstockServiceImpl implements SyncSoReturnInstockServic
             }
         } else if (SourceTypeEnum.SO_RETURN_RECEIVE.getCode().equals(entity.getSourceType())) {
             SoReturnReceiveEntity receiveEntity = soReturnReceiveService.getById(entity.getSourceId());
-            if (ObjectUtil.isNotEmpty(receiveEntity)) {
+            if (CharSequenceUtil.isNotBlank(receiveEntity.getSourceId())) {
                 SoReturnEntity soReturnEntity = soReturnFeign.getSoReturnById(receiveEntity.getSourceId());
                 if (ObjectUtil.isNotEmpty(soReturnEntity)) {
                     rootNodeNoInitial = soReturnEntity.getCode();
