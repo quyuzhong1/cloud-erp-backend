@@ -599,10 +599,9 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
         if (ObjectUtil.isNotEmpty(customerInfo)) {
             customerId = customerInfo.getId();
         }
-        List<ShopInfoEntity> shopInfoList = FeignQuery.create(ShopInfoEntity.class)
-                .eq(ShopInfoEntity::getCustomerId, customerId)
-                .list();
 
+        List<String> dictKeys = Lists.newArrayList(DictBasicTypeEnum.SALES_PLATFORM.getType());
+        List<DictBasicEntity> dictBasicEntityList = dictBasicService.getByKeyList(dictKeys);
 
         ShudiyunB2cOrderDTO shudiyunB2cOrderDTO = new ShudiyunB2cOrderDTO();
 
@@ -681,7 +680,9 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
             }
 
             shudiyunB2cOrderDTO.setPlatform_id(customerInfo.getPlatformType());
-            shudiyunB2cOrderDTO.setPlatform_name(PlatformDictEnum.getNameByCode(customerInfo.getPlatformType()));
+
+            String platformName = dictBasicEntityList.stream().filter(req -> req.getValue().equals(customerInfo.getPlatformType())).map(DictBasicEntity::getName).findFirst().orElse("");
+            shudiyunB2cOrderDTO.setPlatform_name(platformName);
 
             String subPlatformType = customerInfo.getPlatformType();
             if (StringUtils.isNotBlank(subPlatformType)) {
@@ -781,6 +782,9 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
                     .in(ProductDetailEntity::getId, parentSkuId)
                     .list();
         }
+
+        List<String> dictKeys = Lists.newArrayList(DictBasicTypeEnum.SALES_PLATFORM.getType());
+        List<DictBasicEntity> dictBasicEntityList = dictBasicService.getByKeyList(dictKeys);
 
         List<CurrencyDTO.ViewDTO> currencyList = sysUserFeign.listByCurrency(Arrays.asList(view.getCurrency()));
         for (SoDetailEntity soDetailEntity : soDetailEntityList) {
@@ -893,8 +897,10 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
                     shudiyunB2cOrderDTO.setTransaction_currency_code(customerInfo.getTradeCurrency());
                 }
 
+                //平台名称
                 shudiyunB2cOrderDTO.setPlatform_id(customerInfo.getPlatformType());
-                shudiyunB2cOrderDTO.setPlatform_name(PlatformDictEnum.checkAndGetByCode(customerInfo.getPlatformType()).getName());
+                String platformName = dictBasicEntityList.stream().filter(req -> req.getValue().equals(customerInfo.getPlatformType())).map(DictBasicEntity::getName).findFirst().orElse("");
+                shudiyunB2cOrderDTO.setPlatform_name(platformName);
 
                 String subPlatformType = customerInfo.getPlatformType();
                 if (StringUtils.isNotBlank(subPlatformType)) {
