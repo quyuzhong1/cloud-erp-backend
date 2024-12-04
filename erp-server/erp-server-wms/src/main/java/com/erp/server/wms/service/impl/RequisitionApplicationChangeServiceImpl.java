@@ -581,9 +581,9 @@ public class RequisitionApplicationChangeServiceImpl extends SuperServiceImpl<Re
         requisitionApplicationService.updateByChange(addList,updateList,deleteList);
         pickingListsService.updateByChange(updatePickingList);
         //新增的数据ID回填
-        if(CollectionUtils.isNotEmpty(sourceDetailList)) {
-            detailService.updateBatchById(sourceDetailList);
-        }
+//        if(CollectionUtils.isNotEmpty(sourceDetailList)) {
+//            detailService.updateBatchById(sourceDetailList);
+//        }
         return new RequisitionApplicationChangeDTO.UpdateVirtualDTO(addList,updateList,deleteList);
     }
 
