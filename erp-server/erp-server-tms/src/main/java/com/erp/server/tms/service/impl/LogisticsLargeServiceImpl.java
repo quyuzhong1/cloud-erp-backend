@@ -377,6 +377,12 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
         return this.lambdaQuery().eq(LogisticsLargeEntity::getSourceId, ids).list();
     }
 
+    public static void main(String[] args) {
+        LogisticsLargeDTO.AddDTO addDTO = new LogisticsLargeDTO.AddDTO();
+        addDTO.setReconciliationMonth(null);
+
+        System.out.println(addDTO.getReconciliationMonth());
+    }
     @Override
     public BatchResultDTO generateSmallBagCostAllocationTable(SmallBagCostAllocationEntity costAllocationEntity, List<SmallBagCostAllocationDetailEntity> costAllocationDetailEntities, SoOutstockEntity soOutstockEntity, SoOutstockDetailEntity soOutstockDetailEntity) {
         List<LogisticsLargeEntity> logisticsLargeEntities = this.listByIdSourceId(Arrays.asList(costAllocationEntity.getId()));
