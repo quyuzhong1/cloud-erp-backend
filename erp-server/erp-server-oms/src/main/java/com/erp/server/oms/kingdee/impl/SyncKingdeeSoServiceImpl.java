@@ -60,6 +60,7 @@ import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.checkerframework.checker.units.qual.A;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronizationAdapter;
@@ -772,10 +773,14 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
         if (ObjectUtil.isNotEmpty(customerInfo)) {
             customerId = customerInfo.getId();
         }
-        List<ShopInfoEntity> shopInfoList = FeignQuery.create(ShopInfoEntity.class)
-                .eq(ShopInfoEntity::getCustomerId, customerId)
-                .list();
-
+        //父类产品
+        List<String> parentSkuId = bomChildrenSkuDTOS.stream().map(BomChildrenSkuDTO::getParentSkuId).distinct().collect(Collectors.toList());
+        List<ProductDetailEntity> parentSkuList = new ArrayList<>();
+        if (CollUtil.isNotEmpty(parentSkuId)) {
+            parentSkuList = FeignQuery.create(ProductDetailEntity.class)
+                    .in(ProductDetailEntity::getId, parentSkuId)
+                    .list();
+        }
 
         List<CurrencyDTO.ViewDTO> currencyList = sysUserFeign.listByCurrency(Arrays.asList(view.getCurrency()));
         for (SoDetailEntity soDetailEntity : soDetailEntityList) {
@@ -802,11 +807,7 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
             view.setDetailList(detailList);
 
 
-            //父类产品
-            List<String> parentSkuId = bomChildrenSkuDTOS.stream().map(BomChildrenSkuDTO::getParentSkuId).distinct().collect(Collectors.toList());
-            List<ProductDetailEntity> parentSkuList = FeignQuery.create(ProductDetailEntity.class)
-                    .in(ProductDetailEntity::getId, parentSkuId)
-                    .list();
+
 
             BigDecimal totalCanceledGoodsAmount = BigDecimal.ZERO;
             Integer totalCanceledGoodsQty = 0;

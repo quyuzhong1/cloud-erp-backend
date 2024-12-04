@@ -1,6 +1,7 @@
 package com.erp.server.dmp.inout.handler.output.task.api;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.alibaba.fastjson.JSON;
 import com.common.business.dto.ShudiyunB2cOrderDTO;
@@ -303,6 +304,9 @@ public class DmpOutputSdyWdtOriginalOrderHandler extends DmpOutputTaskHandler {
             }
 
             shudiyunB2cOrderDTO.setPost_amount(BigDecimal.ZERO);
+            if (CharSequenceUtil.isBlank(dmpSoDetailEntity.getGoodsNo())) {
+                continue;
+            }
             shudiyunB2cOrderDTO.setMsku_code(dmpSoDetailEntity.getGoodsNo());
             shudiyunB2cOrderDTO.setMsku_name(dmpSoDetailEntity.getGoodsName());
             shudiyunB2cOrderDTO.setSku_code("");
