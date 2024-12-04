@@ -537,6 +537,9 @@ public enum ApiError implements Serializable {
     CALL_THIRD_LOGISTICS_PLATFORM_ERROR(96000, "调用第三方物流平台接口异常"),
     BATCH_UPDATE_TRACK_INFO_HAS_EMPTY(96001, "物流单号不能为空"),
     LABEL_TYPE_NOT_EMPTY(96002, "标签类型不能为空"),
+    ERROR_EXISTS_LOGISTICS_LARGE(96003, "已存在实际账单的物流大表信息，请不要重复下推"),
+    ERROR_EXISTS_ESTIMATED_LOGISTICS_LARGE(96003, "已存在预估账单的物流大表信息，请不要重复下推"),
+    ERROR_SMALL_BAG_NOT_CONFIRMED(96003, "小包费用分摊未确认，不能生成物流大表"),
 
     /**
      * bi 错误

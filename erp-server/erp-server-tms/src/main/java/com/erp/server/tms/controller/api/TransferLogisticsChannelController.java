@@ -184,7 +184,7 @@ public class TransferLogisticsChannelController extends BaseController {
      * @param dto
      * @return com.common.core.controller.vo.ApiResult<java.lang.Void>
      **/
-    @GetMapping("/updateDeliveryCountry")
+    @PostMapping("/updateDeliveryCountry")
     @LogAction(value = LogActionEnum.UPDATE, desc = "修改物流商发货国家")
     public ApiResult<Void> updateDeliveryCountry(@RequestBody TransferLogisticsChannelDTO.EditDeliveryCountryDTO dto) {
         boolean result = transferLogisticsChannelService.updateDeliveryCountry(dto);

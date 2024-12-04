@@ -1,5 +1,6 @@
 package com.erp.model.tms.dto;
 
+import com.common.business.annotation.Dict;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.core.anno.StateEnumValue;
@@ -17,6 +18,7 @@ import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -104,6 +106,17 @@ public class TmsFirstMileReconciliationDTO implements Serializable {
          * 审核名称
          */
         private String approveStatusName;
+
+        /**
+         * 支付状态
+         */
+        @Dict(enumClass = SoB2cPayStatusEnum.class)
+        private String payStatus;
+
+        /**
+         * 支付时间【可排序】
+         */
+        private LocalDateTime payTime;
 
         /**
          * 审核人id【可排序】

@@ -378,6 +378,11 @@ public class LogisticsLargeDTO implements Serializable {
     public static class CommonDTO {
 
         /**
+        * 财务期间
+        */
+        private LocalDate reconciliationMonth;
+
+        /**
         * 出库单号
         */
         @NotBlank(message = "出库单号不能为空")
@@ -579,7 +584,7 @@ public class LogisticsLargeDTO implements Serializable {
         */
         @NotNull(message = "税率不能为空")
         @Digits(integer = 10, fraction = 6, message = "税率整数位不能超过10位，小数位不能超过6位")
-        private BigDecimal taxRate;
+        private BigDecimal taxRate = BigDecimal.ZERO;
 
         /**
         * 头程运费增值税
@@ -783,10 +788,10 @@ public class LogisticsLargeDTO implements Serializable {
         @NotBlank(message = "来源类型不能为空")
         private String sourceType;
         /**
-         * 来源详情id
+         * 对账单类型：estimated=预估账单，actual=实际账单
          */
-        @NotBlank(message = "来源详情id不能为空")
-        private String sourceDetailId;
+        @NotBlank(message = "对账单类型不能为空")
+        private String reconciliationBillType;
     }
 
 
