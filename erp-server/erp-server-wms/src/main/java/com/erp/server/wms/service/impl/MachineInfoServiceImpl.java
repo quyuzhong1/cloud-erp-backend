@@ -809,6 +809,9 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
             outInStockDTO.setBomVersion(detailEntity.getReferenceVersion());
             outInStockList.add(outInStockDTO);
         }
+        if (CollUtil.isEmpty(outInStockList)) {
+            return;
+        }
         //库存扣减
         VirtualInventoryStockDTO.StockParamDTO stockParamDTO = new VirtualInventoryStockDTO.StockParamDTO();
         stockParamDTO.setParamList(outInStockList);
