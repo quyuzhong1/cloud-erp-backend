@@ -191,14 +191,14 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
     private LogisticsChannelService logisticsChannelService;
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
-    @Resource
-    private SmallBagCostAllocationService smallBagCostAllocationService;
-    @Resource
-    private SmallBagCostAllocationDetailService smallBagCostAllocationDetailService;
     @Autowired
 	protected IdentifierGenerator identifierGenerator;
     @Resource
     private CfgSettingService cfgSettingService;
+    @Resource
+    private SmallBagCostAllocationService smallBagCostAllocationService;
+    @Resource
+    private SmallBagCostAllocationDetailService smallBagCostAllocationDetailService;
     
 
     @GlobalTransactional(rollbackFor = Exception.class)
