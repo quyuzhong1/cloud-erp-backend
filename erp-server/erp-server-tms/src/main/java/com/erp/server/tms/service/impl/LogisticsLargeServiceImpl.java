@@ -488,7 +488,12 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
         }
 
         BigDecimal allocatedAmount = costAllocationDetailEntities.stream().map(SmallBagCostAllocationDetailEntity::getAllocatedAmount).reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
-//        addDTO.setFreightCalculationFactor(allocatedAmount.divide(logisticsBillCostEntity.get));
+
+        BigDecimal billAmount = costAllocationDetailEntities.stream().map(SmallBagCostAllocationDetailEntity::getBillAmount).reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
+
+
+
+        //        addDTO.setFreightCalculationFactor(allocatedAmount.divide(logisticsBillCostEntity.get));
 
         return null;
     }
