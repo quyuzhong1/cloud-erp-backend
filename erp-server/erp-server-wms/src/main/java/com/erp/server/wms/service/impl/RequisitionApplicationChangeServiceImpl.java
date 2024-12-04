@@ -413,7 +413,7 @@ public class RequisitionApplicationChangeServiceImpl extends SuperServiceImpl<Re
                 continue;
             }
             pickingDetailList.forEach(v->{
-                v.setChangeBeforeQty(v.getActualQty());
+                v.setChangeBeforeQty(v.getQty());
                 v.setQty(v.getActualQty());
             });
             updatePickingList.addAll(pickingDetailList);

@@ -331,7 +331,7 @@ public class RequisitionApplicationChangeDetailServiceImpl extends SuperServiceI
             soDeliveryNoticeChangeDetailEntity.setBusinessDetailId(requisitionApplicationDetailEntity.getId());
             soDeliveryNoticeChangeDetailEntity.setChangeType(RequisitionChangeTypeEnum.UPDATE.getCode());
             soDeliveryNoticeChangeDetailEntity.setOriginQty(requisitionApplicationDetailEntity.getRequisitionQty());
-            Integer newQty = requisitionApplicationDetailEntity.getRequisitionQty();
+            Integer newQty = requisitionApplicationDetailEntity.getApproveQty();
             List<BomChildrenSkuDTO> bomChildrenList = allBomChildrenSkuList.stream().filter(req -> req.getParentSkuId().equals(requisitionApplicationDetailEntity.getSkuId()) && BomTypeEnum.COMBINATION.getType().equals(req.getType())).collect(Collectors.toList());
             Map<String, Integer> actualQtyMap = new HashMap<>();
             //计算数量
