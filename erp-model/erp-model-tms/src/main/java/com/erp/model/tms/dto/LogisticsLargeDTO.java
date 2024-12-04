@@ -579,7 +579,7 @@ public class LogisticsLargeDTO implements Serializable {
         */
         @NotNull(message = "税率不能为空")
         @Digits(integer = 10, fraction = 6, message = "税率整数位不能超过10位，小数位不能超过6位")
-        private BigDecimal taxRate;
+        private BigDecimal taxRate = BigDecimal.ZERO;
 
         /**
         * 头程运费增值税

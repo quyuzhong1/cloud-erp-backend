@@ -390,11 +390,19 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
         if (ReconciliationStatusEnum.CONFIRMED.getCode().equals(logisticsBillCostEntity.getReconciliationStatus())) {
             //实际账单
             addDTO.setPayStatus(logisticsBillCostEntity.getPayStatus());
+            addDTO.setDeductibleTaxPayStatus(logisticsBillCostEntity.getPayStatus());
+            addDTO.setDestDutyPayStatus(logisticsBillCostEntity.getPayStatus());
+            addDTO.setOtherTaxPayStatus(logisticsBillCostEntity.getPayStatus());
+            addDTO.setDestMiscFeePayStatus(logisticsBillCostEntity.getPayStatus());
 
 
         } else {
             //预估账单
             addDTO.setPayStatus(SoB2cPayStatusEnum.ENUM_PAYMENT.getCode());
+            addDTO.setDeductibleTaxPayStatus(SoB2cPayStatusEnum.ENUM_PAYMENT.getCode());
+            addDTO.setDestDutyPayStatus(SoB2cPayStatusEnum.ENUM_PAYMENT.getCode());
+            addDTO.setOtherTaxPayStatus(SoB2cPayStatusEnum.ENUM_PAYMENT.getCode());
+            addDTO.setDestMiscFeePayStatus(SoB2cPayStatusEnum.ENUM_PAYMENT.getCode());
         }
 
         //付款方式
@@ -412,6 +420,8 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
                     String paymentCondition = disabledDTOS.stream().filter(req -> supplierEntity.getPaymentCondition().equals(req.getCode())).map(BaseDropDownDTO.DisabledDTO::getValue).findFirst().orElse("");
                     addDTO.setPayTermsDays(paymentCondition);
                     addDTO.setPaymentCompanyName(supplierEntity.getPaymentCompanyName());
+                    addDTO.setTaxRate(supplierEntity.getTaxRate());
+
                 }
             }
         }
@@ -486,12 +496,37 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
         if (CollUtil.isNotEmpty(detailEntityList)) {
             addDTO.setActualDeliveryTime(detailEntityList.get(0).getSignTime());
         }
+        //账单总金额
+        BigDecimal billAmountTotal = costAllocationDetailEntities.stream().map(SmallBagCostAllocationDetailEntity::getBillAmount).reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
+        addDTO.setBillTotalAmount(billAmountTotal);
 
-        //分摊金额
-        BigDecimal allocatedAmount = costAllocationDetailEntities.stream().map(SmallBagCostAllocationDetailEntity::getAllocatedAmount).reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
-        //账单金额
-        BigDecimal billAmount = costAllocationDetailEntities.stream().map(SmallBagCostAllocationDetailEntity::getBillAmount).reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
-        addDTO.setFreightCalculationFactor(allocatedAmount.divide(billAmount, 4, RoundingMode.DOWN));
+        //运费
+        addDTO.setFreightCurrency(logisticsBillCostEntity.getCurrency());
+        SmallBagCostAllocationDetailEntity detailEntity = costAllocationDetailEntities.stream()
+                .filter(req -> AllocationFeeTypeEnum.SHIPPING_COST.getCode().equals(req.getFeeType()))
+                .findFirst().orElse(null);
+        if (detailEntity.getBillAmount().compareTo(BigDecimal.ZERO) > 0) {
+            addDTO.setFreightCalculationFactor(detailEntity.getAllocatedAmount().divide(detailEntity.getBillAmount(), 4, RoundingMode.DOWN));
+        }
+        addDTO.setFreightCurrency(logisticsBillCostEntity.getCurrency());
+        if (ObjectUtil.isNotEmpty(detailEntity)) {
+            BigDecimal rate = dmpTaskFeign.getRate(logisticsBillEntity.getCreateTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), logisticsBillCostEntity.getCurrency());
+            BigDecimal lastMileFreightAmount = detailEntity.getAllocatedAmount().multiply(rate);
+            addDTO.setLastMileFreightAmount(detailEntity.getAllocatedAmount().multiply(rate));
+            addDTO.setLastMileFreightAmountTax(lastMileFreightAmount.divide(BigDecimal.ONE.add(addDTO.getTaxRate()), 4, RoundingMode.DOWN));
+            addDTO.setLastMileFreightVatAmount(lastMileFreightAmount.divide(BigDecimal.ONE.add(addDTO.getTaxRate()), 4, RoundingMode.DOWN).multiply(addDTO.getTaxRate()));
+        }
+
+        //杂费
+        SmallBagCostAllocationDetailEntity otherCostDetailEntity = costAllocationDetailEntities.stream()
+                .filter(req -> AllocationFeeTypeEnum.OTHER_COST.getCode().equals(req.getFeeType()))
+                .findFirst().orElse(null);
+        if (otherCostDetailEntity.getBillAmount().compareTo(BigDecimal.ZERO) > 0) {
+            addDTO.setDestMiscFeeFactor(otherCostDetailEntity.getAllocatedAmount().divide(otherCostDetailEntity.getBillAmount(), 4, RoundingMode.DOWN));
+        }
+
+
+//        addDTO.setMiscFeeCurrency(logisticsBillEntity.p)
 
 
 
