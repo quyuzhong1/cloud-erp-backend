@@ -378,6 +378,11 @@ public class LogisticsLargeDTO implements Serializable {
     public static class CommonDTO {
 
         /**
+        * 财务期间
+        */
+        private LocalDate reconciliationMonth;
+
+        /**
         * 出库单号
         */
         @NotBlank(message = "出库单号不能为空")
@@ -783,15 +788,10 @@ public class LogisticsLargeDTO implements Serializable {
         @NotBlank(message = "来源类型不能为空")
         private String sourceType;
         /**
-         * 来源详情id
+         * 对账单类型：estimated=预估账单，actual=实际账单
          */
-        @NotBlank(message = "来源详情id不能为空")
-        private String sourceDetailId;
-        /**
-         * 单据类型：estimated=预估账单，actual=实际账单
-         */
-        @NotBlank(message = "单据类型不能为空")
-        private String billSourceType;
+        @NotBlank(message = "对账单类型不能为空")
+        private String reconciliationBillType;
     }
 
 
