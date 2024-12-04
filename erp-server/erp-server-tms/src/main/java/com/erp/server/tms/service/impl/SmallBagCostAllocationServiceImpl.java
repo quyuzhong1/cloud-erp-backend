@@ -1,9 +1,12 @@
 package com.erp.server.tms.service.impl;
 
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,17 +23,26 @@ import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
+import com.common.business.wrapper.FeignQuery;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
+import com.erp.model.plm.entity.ProductCostEntity;
+import com.erp.model.plm.entity.ProductDetailEntity;
+import com.erp.model.sys.entity.DictCurrencyEntity;
 import com.erp.model.tms.dto.LogisticsBillCostDTO;
 import com.erp.model.tms.dto.SmallBagCostAllocationDTO;
 import com.erp.model.tms.dto.SmallBagCostAllocationDTO.ListDTO;
 import com.erp.model.tms.dto.SmallBagCostAllocationDTO.PagingParamDTO;
 import com.erp.model.tms.dto.SmallBagCostAllocationDTO.TabListDTO;
 import com.erp.model.tms.entity.SmallBagCostAllocationEntity;
+import com.erp.model.tms.enums.AllocationFeeTypeEnum;
+import com.erp.model.tms.enums.CostAllocationEnum;
+import com.erp.model.tms.enums.ReconciliationStatusEnum;
+import com.erp.model.tms.enums.SmallBagCostAllocationBigTableStatusEnum;
 import com.erp.model.tms.enums.SmallBagCostAllocationReportStatusEnum;
+import com.erp.model.tms.enums.WeightAllocationEnum;
 import com.erp.server.tms.mapper.SmallBagCostAllocationMapper;
 import com.erp.server.tms.service.OperateLogService;
 import com.erp.server.tms.service.SmallBagCostAllocationService;
@@ -148,7 +160,31 @@ public class SmallBagCostAllocationServiceImpl extends SuperServiceImpl<SmallBag
 	}
 
 	private void handleDataPaging(List<ListDTO> records) {
-		
+		List<String> skuIds = records.stream().map(ListDTO::getSkuId).collect(Collectors.toList());
+		List<ProductDetailEntity> productDetailEntityList = FeignQuery.create(ProductDetailEntity.class).in(ProductDetailEntity::getId, 
+				skuIds).list();
+		List<ProductCostEntity> productCostEntityList = FeignQuery.create(ProductCostEntity.class).in(ProductCostEntity::getSkuId, 
+				skuIds).list();
+		Map<String, String> skuIdNameMap = productDetailEntityList.stream().collect(Collectors.toMap(ProductDetailEntity::getId, ProductDetailEntity::getName));
+		Map<String, BigDecimal> skuIdCostMap = productCostEntityList.stream().collect(Collectors.toMap(ProductCostEntity::getId, ProductCostEntity::getActualTaxCost));
+		Map<String, String> currencyIdSymbolMap = FeignQuery.getByIds(DictCurrencyEntity.class , records.stream().map(ListDTO::getCurrency).collect(Collectors.toList()))
+			.stream().collect(Collectors.toMap(DictCurrencyEntity::getId, DictCurrencyEntity::getSymbol));
+		for(ListDTO dto : records) {
+			dto.setReportStatusName(SmallBagCostAllocationReportStatusEnum.getName(dto.getReportStatus()));
+			dto.setReconciliationStatusName(ReconciliationStatusEnum.getName(dto.getReconciliationStatus()));
+			dto.setBigTableStatusName(SmallBagCostAllocationBigTableStatusEnum.getName(dto.getBigTableStatus()));
+			String skuId = dto.getSkuId();
+			dto.setSkuName(skuIdNameMap.get(skuId));
+			BigDecimal unitCost = skuIdCostMap.get(skuId);
+			if(unitCost != null) {
+				dto.setUnitCost(unitCost);
+				dto.setTotalCost(unitCost.multiply(new BigDecimal(dto.getDeliveryQty())));
+			}
+			dto.setFeeTypeName(AllocationFeeTypeEnum.getName(dto.getFeeType()));
+			dto.setFeeAllocationTypeName(CostAllocationEnum.getName(dto.getFeeAllocationType()));
+			dto.setWeightAllocationTypeName(WeightAllocationEnum.getName(dto.getWeightAllocationType()));
+			dto.setCurrencySymbol(currencyIdSymbolMap.get(dto.getCurrency()));
+		}
 	}
 	
 	@Override
@@ -168,7 +204,6 @@ public class SmallBagCostAllocationServiceImpl extends SuperServiceImpl<SmallBag
 
 	@Override
 	public BatchResultDTO delete(String id) {
-		// TODO Auto-generated method stub
 		return null;
 	}
 }

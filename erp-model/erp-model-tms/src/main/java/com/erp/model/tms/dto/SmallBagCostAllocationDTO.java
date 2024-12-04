@@ -95,6 +95,8 @@ public class SmallBagCostAllocationDTO implements Serializable {
          */
         private String bigTableStatusName;
         
+        private String channelId;
+        
         /**
          * 物流商：名称+渠道
          */
@@ -139,6 +141,11 @@ public class SmallBagCostAllocationDTO implements Serializable {
          * 国家
          */
         private String toCountry;
+        
+        /**
+         * sku
+         */
+         private String skuId;
         
         /**
         * sku
