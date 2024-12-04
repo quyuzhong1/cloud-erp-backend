@@ -40,11 +40,13 @@ import com.erp.model.tms.dto.SmallBagCostAllocationDTO;
 import com.erp.model.tms.dto.SmallBagCostAllocationDTO.ListDTO;
 import com.erp.model.tms.dto.SmallBagCostAllocationDTO.PagingParamDTO;
 import com.erp.model.tms.dto.SmallBagCostAllocationDTO.TabListDTO;
+import com.erp.model.tms.entity.LogisticsBillCostEntity;
 import com.erp.model.tms.entity.LogisticsChannelEntity;
 import com.erp.model.tms.entity.SmallBagCostAllocationDetailEntity;
 import com.erp.model.tms.entity.SmallBagCostAllocationEntity;
 import com.erp.model.tms.enums.AllocationFeeTypeEnum;
 import com.erp.model.tms.enums.CostAllocationEnum;
+import com.erp.model.tms.enums.LogisticsBillCostCheckStatusEnum;
 import com.erp.model.tms.enums.ReconciliationStatusEnum;
 import com.erp.model.tms.enums.SmallBagCostAllocationBigTableStatusEnum;
 import com.erp.model.tms.enums.SmallBagCostAllocationReportStatusEnum;
@@ -287,6 +289,7 @@ public class SmallBagCostAllocationServiceImpl extends SuperServiceImpl<SmallBag
 			.in(SmallBagCostAllocationDetailEntity::getMainId, ids)
 			.set(SmallBagCostAllocationDetailEntity::getIsDeleted, true)
 			.update();
+		logisticsBillCostService.lambdaUpdate().eq(LogisticsBillCostEntity::getId, costId).set(LogisticsBillCostEntity::getCheckStatus , LogisticsBillCostCheckStatusEnum.CHECKING.getCode()).update();
 		return BatchResultDTO.success(id, smallBagCostAllocationEntity.getSkuNo(), "删除成功");
 	}
 }
