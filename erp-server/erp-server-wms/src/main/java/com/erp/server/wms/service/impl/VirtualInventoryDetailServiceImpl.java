@@ -1,6 +1,7 @@
 package com.erp.server.wms.service.impl;
 
 
+import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.common.business.dto.base.BaseResultDTO;
@@ -8,16 +9,22 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
+import com.common.business.wrapper.FeignQuery;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
+import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.wms.dto.VirtualInventoryAgeDTO;
 import com.erp.model.wms.dto.VirtualInventoryDetailDTO;
 import com.erp.model.wms.entity.VirtualInventoryDetailEntity;
+import com.erp.model.wms.entity.VirtualWarehouseEntity;
+import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.wms.mapper.VirtualInventoryDetailMapper;
 import com.erp.server.wms.service.OperateLogService;
 import com.erp.server.wms.service.VirtualInventoryDetailService;
+import com.erp.server.wms.service.VirtualWarehouseService;
+import com.erp.server.wms.service.WarehouseService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -46,6 +53,11 @@ public class VirtualInventoryDetailServiceImpl extends SuperServiceImpl<VirtualI
     @Autowired
     private DownloadTaskFeign downloadTaskFeign;
 
+    @Autowired
+    private WarehouseService warehouseService;
+
+    @Autowired
+    private VirtualWarehouseService virtualWarehouseService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -112,6 +124,35 @@ public class VirtualInventoryDetailServiceImpl extends SuperServiceImpl<VirtualI
     public Boolean exportExcel(VirtualInventoryAgeDTO.SearchParamDTO dto) {
         downloadTaskFeign.saveDownloadTask("库龄分析", EXPORT_WMS_VIRTUAL_INVENTORY_AGE.getCode(), dto);
         return Boolean.TRUE;
+    }
+
+    @Override
+    public VirtualInventoryAgeDTO.ViewDTO view(VirtualInventoryAgeDTO.ViewParamDTO dto) {
+        VirtualInventoryAgeDTO.ViewDTO viewDTO = new VirtualInventoryAgeDTO.ViewDTO();
+        BeanMapperUtils.copy(dto,viewDTO);
+        //产品信息
+        ProductDetailEntity productDetailEntity = FeignQuery.getById(ProductDetailEntity.class, dto.getSkuId());
+        if (ObjUtil.isEmpty(productDetailEntity)) {
+            throw new ServiceException(ApiError.ERROR_95084);
+        }
+        viewDTO.setSkuNo(productDetailEntity.getSkuNo());
+        viewDTO.setProductName(productDetailEntity.getName());
+
+        //仓库信息
+        WarehouseEntity warehouseEntity = warehouseService.getById(dto.getWarehouseId());
+        if (ObjUtil.isEmpty(warehouseEntity)) {
+            throw new ServiceException(ApiError.ERROR_99002);
+        }
+
+        //虚拟仓库
+        VirtualWarehouseEntity virtualWarehouseEntity = virtualWarehouseService.getById(dto.getVirtualWarehouseId());
+
+        return null;
+    }
+
+    @Override
+    public Boolean exportHisInventoryAge(VirtualInventoryAgeDTO.ViewParamDTO dto) {
+        return null;
     }
 
 

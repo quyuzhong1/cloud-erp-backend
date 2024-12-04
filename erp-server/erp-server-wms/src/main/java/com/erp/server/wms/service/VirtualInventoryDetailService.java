@@ -52,4 +52,20 @@ public interface VirtualInventoryDetailService extends SuperService<VirtualInven
      * @return Boolean
      */
     Boolean exportExcel(VirtualInventoryAgeDTO.SearchParamDTO dto);
+    /**
+     * 查看详情
+     * @author will
+     * @date 2024/12/4 16:25
+     * @param dto
+     * @return ViewDTO
+     */
+    VirtualInventoryAgeDTO.ViewDTO view(VirtualInventoryAgeDTO.ViewParamDTO dto);
+    /**
+     * 导出历史库龄
+     * @author will
+     * @date 2024/12/4 16:40
+     * @param dto 
+     * @return Boolean
+     */
+    Boolean exportHisInventoryAge(VirtualInventoryAgeDTO.ViewParamDTO dto);
 }

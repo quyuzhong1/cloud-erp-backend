@@ -39,7 +39,24 @@
     </sql>
 
     <!-- 分页查询 -->
-    <select id="paging" resultType="com.erp.model.wms.dto.VirtualInventoryAgeDTO$ListDTO"></select>
+    <select id="paging" resultType="com.erp.model.wms.dto.VirtualInventoryAgeDTO$ListDTO">
+        select
+               *
+        from virtual_inventory_detail vid
+        <where>
+            vid.is_deleted = false
+            <if test="params.permissionSql != null and params.permissionSql != ''">
+                ${params.permissionSql}
+            </if>
+            order by
+            <if test="params.sortList != null and params.sortList.size > 0">
+                <foreach collection="params.sortList" item="item" separator="," close=",">
+                    ${item.field} ${item.sort}
+                </foreach>
+            </if>
+            vid.id desc
+        </where>
+    </select>
 
 
 </mapper>

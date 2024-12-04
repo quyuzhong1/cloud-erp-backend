@@ -5,6 +5,7 @@ import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogSystemModule;
+import com.common.core.anno.LogViewService;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.wms.dto.VirtualInventoryAgeDTO;
@@ -46,9 +47,23 @@ public class VirtualInventoryAgeController extends BaseController {
         return success(virtualInventoryDetailService.paging(dto));
     }
 
+    /**
+     * 查看详情
+     * @author will
+     * @date 2024/12/4 16:18
+     * @param dto
+     * @return ApiResult<ViewDTO>
+     */
+    @LogViewService
+    @PostMapping("/view")
+    public ApiResult<VirtualInventoryAgeDTO.ViewDTO> view(@RequestBody @Validated VirtualInventoryAgeDTO.ViewParamDTO dto) {
+        VirtualInventoryAgeDTO.ViewDTO view = virtualInventoryDetailService.view(dto);
+        return success(view);
+    }
+
 
     /**
-     * 导出excel
+     * 列表导出excel
      * @author will
      * @date 2024/12/3 18:02
      * @param dto
@@ -62,5 +77,17 @@ public class VirtualInventoryAgeController extends BaseController {
     }
 
 
-
+    /**
+     * 历史库龄导出excel
+     * @author will
+     * @date 2024/12/3 18:02
+     * @param dto
+     * @return ApiResult
+     */
+    @PostMapping("/exportHisInventoryAge")
+    @WebAdvanceQuery
+    public ApiResult exportHisInventoryAge(@RequestBody VirtualInventoryAgeDTO.ViewParamDTO dto) {
+        Boolean flag = virtualInventoryDetailService.exportHisInventoryAge(dto);
+        return flag == true ? success() : failure();
+    }
 }
