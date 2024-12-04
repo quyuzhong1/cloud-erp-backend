@@ -66,6 +66,8 @@ public class ExportTmsFeignController {
     private FirstMileEstimatedBillService firstMileEstimatedBillService;
     @Resource
     private FirstMileWeightAllocationService firstMileWeightAllocationService;
+    @Resource
+    private LogisticsLargeService logisticsLargeService;
 
     @PostMapping("/b2BDeclareBill")
     @WebAdvanceQuery(handler = TmsB2BDeclareQueryHandler.class)
@@ -267,5 +269,16 @@ public class ExportTmsFeignController {
     @WebAdvanceQuery(handler = FirstMileWeightAllocationQueryHandler.class)
     public PagingVO<FirstMileWeightAllocationDTO.ViewDTO> exportFirstMileWeightAllocation(@RequestBody @Valid PagingDTO<FirstMileWeightAllocationDTO.PagingParamDTO> dto) {
         return firstMileWeightAllocationService.paging(dto);
+    }
+
+    /**
+     * 物流大表
+     * @param dto
+     * @return
+     */
+    @PostMapping("/exportLogisticsLarge")
+    @WebAdvanceQuery(handler = LogisticsLargeQueryHandler.class)
+    public PagingVO<LogisticsLargeDTO.PagingViewDTO> exportLogisticsLarge(@RequestBody @Valid PagingDTO<LogisticsLargeDTO.PagingParamDTO> dto) {
+        return logisticsLargeService.paging(dto);
     }
 }

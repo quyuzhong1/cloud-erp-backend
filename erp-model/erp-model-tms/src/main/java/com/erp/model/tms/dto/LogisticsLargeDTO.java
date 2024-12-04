@@ -1225,6 +1225,11 @@ public class LogisticsLargeDTO implements Serializable {
         private String logisticsSupplierName;
 
         /**
+         * 物流商付款公司【可排序】
+         */
+        private String paymentCompanyName;
+
+        /**
          * 运单号【可排序】
          */
         private String transportNo;
@@ -1486,14 +1491,6 @@ public class LogisticsLargeDTO implements Serializable {
     @NoArgsConstructor
     public static class ExportDTO extends LogisticsLargeDTO.PagingParamDTO {
 
-        /**
-         * 页面高级查询
-         */
-        private List<AdvanceQueryDTO> advanceQueryDTOList;
-
-        /**
-         * sqlMap 默认key default
-         */
-        private Map<String,String> sqlMap;
+        private List<String> ids;
     }
 }

@@ -4,6 +4,8 @@ import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.tms.dto.TransferDeclareCostAllocationDetailDTO;
 
+import java.util.List;
+
 /**
  * <p>
  * 中转费用分摊明细 服务类
@@ -31,6 +33,13 @@ public interface TransferDeclareCostAllocationDetailService extends SuperService
     * @return
     */
     Boolean update(TransferDeclareCostAllocationDetailDTO.UpdateDTO dto);
+
+    /**
+     * 根据主表id查询明细信息
+     * @param mainIds
+     * @return
+     */
+    List<TransferDeclareCostAllocationDetailEntity> listByMainIds(List<String> mainIds);
 
 
 }

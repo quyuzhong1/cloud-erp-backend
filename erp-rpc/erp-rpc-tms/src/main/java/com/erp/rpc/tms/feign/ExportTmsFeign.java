@@ -64,4 +64,6 @@ public interface ExportTmsFeign {
     PagingVO<FirstMileEstimatedBillDTO.View> exportFirstMileEstimatedBill(@RequestBody PagingDTO<FirstMileEstimatedBillDTO.PagingParam> dto);
     @PostMapping("/feign/export/exportFirstMileWeightAllocation")
     PagingVO<FirstMileWeightAllocationDTO.ViewDTO> exportFirstMileWeightAllocation(@RequestBody @Valid PagingDTO<FirstMileWeightAllocationDTO.PagingParamDTO> dto);
+    @PostMapping("/feign/export/logisticsBill")
+    PagingVO<LogisticsLargeDTO.PagingViewDTO> exportLogisticsLarge(@RequestBody PagingDTO<LogisticsLargeDTO.PagingParamDTO> dto);
 }
