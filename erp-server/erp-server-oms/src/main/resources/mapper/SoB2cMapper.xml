@@ -689,7 +689,7 @@
                                 ON sb.id = sbl.main_id
                                     AND sbl.is_deleted = FALSE
             WHERE sb.is_deleted = FALSE
-              and  #{code} = ANY(string_to_array(sbl.track_no,','))
+              and  #{code} = sbl.track_no
             LIMIT 1
         )
         UNION ALL
