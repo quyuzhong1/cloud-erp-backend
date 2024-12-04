@@ -107,7 +107,6 @@ public class RequisitionApplicationChangeDetailServiceImpl extends SuperServiceI
                 .filter(entry -> entry.getValue().size() > 1)
                 .map(Map.Entry::getKey)
                 .collect(Collectors.toSet());
-
         if (!duplicateRequisitionDetailId.isEmpty()) {
             // 收集所有重复的 SKU
             StringBuilder duplicateSkus = new StringBuilder();
@@ -117,6 +116,22 @@ public class RequisitionApplicationChangeDetailServiceImpl extends SuperServiceI
             }
             throw new ServiceException("存在重复的明细: " + duplicateSkus);
         }
+        // 找出所有 platformSku 中存在的重复项
+        Map<String, Long> skuFrequency = details.stream()
+                .map(RequisitionApplicationChangeDTO.ViewDetailDTO::getPlatformSku)
+                .filter(Objects::nonNull) // 确保排除 null 值
+                .collect(Collectors.groupingBy(sku -> sku, Collectors.counting()));
+
+        // 提取重复的 platformSku
+        List<String> duplicatePlatformSkus = skuFrequency.entrySet().stream()
+                .filter(entry -> entry.getValue() > 1)
+                .map(Map.Entry::getKey)
+                .collect(Collectors.toList());
+
+        if (!duplicatePlatformSkus.isEmpty()) {
+            throw new ServiceException("存在相同的三方SKU{}",duplicatePlatformSkus);
+        }
+
         List<String> skuIds = details.stream().map(RequisitionApplicationChangeDTO.ViewDetailDTO::getSkuId).collect(Collectors.toList());
         //获取子SKU集合
         List<BomChildrenSkuDTO> allBomChildrenSkuList = plmTaskFeign.listBomChildBySkuIds(skuIds);
