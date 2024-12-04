@@ -380,6 +380,9 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
     @Override
     public BatchResultDTO generateSmallBagCostAllocationTable(SmallBagCostAllocationEntity costAllocationEntity, List<SmallBagCostAllocationDetailEntity> costAllocationDetailEntities, SoOutstockEntity soOutstockEntity, SoOutstockDetailEntity soOutstockDetailEntity) {
         LogisticsLargeDTO.AddDTO addDTO = new LogisticsLargeDTO.AddDTO();
+        addDTO.setSourceId(costAllocationEntity.getId());
+        addDTO.setSourceType(costAllocationEntity.getId());
+
         addDTO.setOutstockCode(soOutstockEntity.getCode());
         addDTO.setOutstockTime(soOutstockEntity.getApproveTime());
 
