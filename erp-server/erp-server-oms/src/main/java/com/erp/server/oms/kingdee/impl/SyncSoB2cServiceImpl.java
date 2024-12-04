@@ -14,6 +14,7 @@ import com.common.core.utils.MathUtil;
 import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
 import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.oms.entity.*;
+import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
@@ -28,6 +29,7 @@ import com.erp.server.oms.service.DictBasicService;
 import com.erp.server.oms.service.OmsPushMsgService;
 import com.erp.server.oms.service.SoB2cDetailService;
 import com.erp.server.oms.service.SoB2cService;
+import com.google.common.collect.Lists;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -179,7 +181,10 @@ public class SyncSoB2cServiceImpl implements SyncSoB2cService {
         }
 
         shudiyunB2cOrderDTO.setPlatform_id(soB2cEntity.getDictPlatform());
-        shudiyunB2cOrderDTO.setPlatform_name(PlatformDictEnum.getNameByCode(soB2cEntity.getDictPlatform()));
+        List<String> dictKeys = Lists.newArrayList(DictBasicTypeEnum.SALES_PLATFORM.getType());
+        List<DictBasicEntity> dictBasicEntityList = dictBasicService.getByKeyList(dictKeys);
+        String platformName = dictBasicEntityList.stream().filter(req -> req.getValue().equals(customerInfo.getPlatformType())).map(DictBasicEntity::getName).findFirst().orElse("");
+        shudiyunB2cOrderDTO.setPlatform_name(platformName);
 
         shudiyunB2cOrderDTO.setRoot_node_no(soB2cEntity.getPlatformCode());
         if (soB2cEntity.getPayTime() != null) {
@@ -303,7 +308,8 @@ public class SyncSoB2cServiceImpl implements SyncSoB2cService {
         if (ObjectUtil.isNotEmpty(customerInfo)) {
             companyEntities = sysUserFeign.getAccountingCompanyList(Arrays.asList(customerInfo.getFinancialOrganization(), shopInfo.getSalesOrgId()));
         }
-
+        List<String> dictKeys = Lists.newArrayList(DictBasicTypeEnum.SALES_PLATFORM.getType());
+        List<DictBasicEntity> dictBasicEntityList = dictBasicService.getByKeyList(dictKeys);
         for (SoB2cDetailEntity soB2cDetailEntity : soB2cDetailEntityList) {
             DateTimeFormatter localDateTime = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
@@ -398,8 +404,11 @@ public class SyncSoB2cServiceImpl implements SyncSoB2cService {
                 }
             }
 
+
             shudiyunB2cOrderDTO.setPlatform_id(soB2cEntity.getDictPlatform());
-            shudiyunB2cOrderDTO.setPlatform_name(PlatformDictEnum.getNameByCode(soB2cEntity.getDictPlatform()));
+
+            String platformName = dictBasicEntityList.stream().filter(req -> req.getValue().equals(customerInfo.getPlatformType())).map(DictBasicEntity::getName).findFirst().orElse("");
+            shudiyunB2cOrderDTO.setPlatform_name(platformName);
 
             shudiyunB2cOrderDTO.setRoot_node_no(soB2cEntity.getPlatformCode());
             if (soB2cEntity.getPayTime() != null) {
