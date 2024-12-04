@@ -350,7 +350,6 @@ public class ReportOrderDataServiceImpl extends SuperServiceImpl<ReportOrderData
             Integer virtualRealQty = virtualInventoryList.stream().filter(obj ->
                     CharSequenceUtil.equals(obj.getSkuId(), addDTO.getSkuId())
                             && CharSequenceUtil.equals(obj.getWarehouseId(), addDTO.getWarehouseId())
-                            && CharSequenceUtil.equals(obj.getVirtualWarehouseId(), addDTO.getVirtualWarehouseId())
             ).map(VirtualInventoryDTO.VirtualInventoryQtyDTO::getInventoryQty).reduce(MathUtil.ZERO, Integer::sum);
             //实体仓未分配数量
             addDTO.setUnDistributionQty(realQty - virtualRealQty);

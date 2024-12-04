@@ -32,8 +32,6 @@
        <result column="virtual_usable_qty" property="virtualUsableQty" />
        <result column="virtual_frozen_qty" property="virtualFrozenQty" />
        <result column="virtual_total_qty" property="virtualTotalQty" />
-       <result column="delivery_qty" property="deliveryQty" />
-       <result column="distribution_qty" property="distributionQty" />
     </resultMap>
 
     <!-- 通用查询结果列 -->
@@ -71,8 +69,6 @@
         ros.virtual_usable_qty as virtualUsableQty,
         ros.virtual_frozen_qty as virtualFrozenQty,
         ros.virtual_total_qty as virtualTotalQty,
-        ros.delivery_qty as deliveryQty,
-        ros.distribution_qty as distributionQty,
         ros.un_distribution_qty as unDistributionQty
     </sql>
 

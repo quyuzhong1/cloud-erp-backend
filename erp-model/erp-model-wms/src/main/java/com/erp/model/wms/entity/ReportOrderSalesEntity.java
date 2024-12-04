@@ -149,16 +149,6 @@ public class ReportOrderSalesEntity extends BaseEntity<ReportOrderSalesEntity> {
     */
     @TableField("virtual_total_qty")
     private Integer virtualTotalQty;
-    /**
-    * 已出库数量
-    */
-    @TableField("delivery_qty")
-    private Integer deliveryQty;
-    /**
-    * 已分配数量
-    */
-    @TableField("distribution_qty")
-    private Integer distributionQty;
 
     /**
      * 近30天虚拟仓库存
@@ -211,10 +201,6 @@ public class ReportOrderSalesEntity extends BaseEntity<ReportOrderSalesEntity> {
     public static final String VIRTUAL_FROZEN_QTY = "virtual_frozen_qty";
 
     public static final String VIRTUAL_TOTAL_QTY = "virtual_total_qty";
-
-    public static final String DELIVERY_QTY = "delivery_qty";
-
-    public static final String DISTRIBUTION_QTY = "distribution_qty";
 
     @Override
     public Serializable pkVal() {

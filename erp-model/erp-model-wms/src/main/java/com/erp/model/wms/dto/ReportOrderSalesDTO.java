@@ -520,18 +520,6 @@ public class ReportOrderSalesDTO implements Serializable {
         private Integer virtualTotalQty;
 
         /**
-        * 已出库数量
-        */
-        @NotNull(message = "已出库数量不能为空")
-        private Integer deliveryQty;
-
-        /**
-        * 已分配数量
-        */
-        @NotNull(message = "已分配数量不能为空")
-        private Integer distributionQty;
-
-        /**
          * 近30天虚拟仓库存
          */
         @NotNull(message = "近30天虚拟仓库存")
