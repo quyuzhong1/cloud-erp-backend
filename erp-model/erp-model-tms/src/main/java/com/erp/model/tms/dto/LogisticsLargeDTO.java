@@ -787,6 +787,11 @@ public class LogisticsLargeDTO implements Serializable {
          */
         @NotBlank(message = "来源详情id不能为空")
         private String sourceDetailId;
+        /**
+         * 单据类型：estimated=预估账单，actual=实际账单
+         */
+        @NotBlank(message = "单据类型不能为空")
+        private String billSourceType;
     }
 
 

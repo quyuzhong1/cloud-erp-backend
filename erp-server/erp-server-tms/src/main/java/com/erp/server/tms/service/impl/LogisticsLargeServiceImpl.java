@@ -394,8 +394,8 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
             addDTO.setDestDutyPayStatus(logisticsBillCostEntity.getPayStatus());
             addDTO.setOtherTaxPayStatus(logisticsBillCostEntity.getPayStatus());
             addDTO.setDestMiscFeePayStatus(logisticsBillCostEntity.getPayStatus());
-
-
+            addDTO.setBillSourceType(ReconciliationStatusEnum.CONFIRMED.getCode());
+            //查询是否有预估账单，如果有需要生成负数的对冲
         } else {
             //预估账单
             addDTO.setPayStatus(SoB2cPayStatusEnum.ENUM_PAYMENT.getCode());
@@ -403,6 +403,7 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
             addDTO.setDestDutyPayStatus(SoB2cPayStatusEnum.ENUM_PAYMENT.getCode());
             addDTO.setOtherTaxPayStatus(SoB2cPayStatusEnum.ENUM_PAYMENT.getCode());
             addDTO.setDestMiscFeePayStatus(SoB2cPayStatusEnum.ENUM_PAYMENT.getCode());
+            addDTO.setBillSourceType(ReconciliationStatusEnum.ESTIMATE_CONFIRM.getCode());
         }
 
         //付款方式
@@ -561,6 +562,16 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
             addDTO.setEstimatedDeductibleTax(deductibleTaxDetailEntity.getAllocatedAmount().multiply(rate));
             addDTO.setActualDeductibleTax(deductibleTaxDetailEntity.getAllocatedAmount().multiply(rate));
         }
+        addDTO.setDeductibleTaxPayTime(logisticsBillCostEntity.getPayTime());
+
+        //其他税金
+        SmallBagCostAllocationDetailEntity otherTaxFeeDetailEntity = costAllocationDetailEntities.stream()
+                .filter(req -> AllocationFeeTypeEnum.OTHER_TAX_FEE.getCode().equals(req.getFeeType()))
+                .findFirst().orElse(null);
+        if (otherTaxFeeDetailEntity.getBillAmount().compareTo(BigDecimal.ZERO) > 0) {
+            addDTO.setOtherTaxCalculationFactor(otherTaxFeeDetailEntity.getAllocatedAmount().divide(otherTaxFeeDetailEntity.getBillAmount(), 4, RoundingMode.DOWN));
+        }
+
 
 
         return null;
