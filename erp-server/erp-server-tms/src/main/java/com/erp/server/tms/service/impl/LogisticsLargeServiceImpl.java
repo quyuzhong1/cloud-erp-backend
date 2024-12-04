@@ -487,13 +487,14 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
             addDTO.setActualDeliveryTime(detailEntityList.get(0).getSignTime());
         }
 
+        //分摊金额
         BigDecimal allocatedAmount = costAllocationDetailEntities.stream().map(SmallBagCostAllocationDetailEntity::getAllocatedAmount).reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
-
+        //账单金额
         BigDecimal billAmount = costAllocationDetailEntities.stream().map(SmallBagCostAllocationDetailEntity::getBillAmount).reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
+        addDTO.setFreightCalculationFactor(allocatedAmount.divide(billAmount, 4, RoundingMode.DOWN));
 
 
 
-        //        addDTO.setFreightCalculationFactor(allocatedAmount.divide(logisticsBillCostEntity.get));
 
         return null;
     }
