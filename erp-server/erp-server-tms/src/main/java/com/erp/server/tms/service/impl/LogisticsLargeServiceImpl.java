@@ -377,12 +377,6 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
         return this.lambdaQuery().eq(LogisticsLargeEntity::getSourceId, ids).list();
     }
 
-    public static void main(String[] args) {
-        LogisticsLargeDTO.AddDTO addDTO = new LogisticsLargeDTO.AddDTO();
-        addDTO.setReconciliationMonth(null);
-
-        System.out.println(addDTO.getReconciliationMonth());
-    }
     @Override
     public BatchResultDTO generateSmallBagCostAllocationTable(SmallBagCostAllocationEntity costAllocationEntity, List<SmallBagCostAllocationDetailEntity> costAllocationDetailEntities, SoOutstockEntity soOutstockEntity, SoOutstockDetailEntity soOutstockDetailEntity) {
         List<LogisticsLargeEntity> logisticsLargeEntities = this.listByIdSourceId(Arrays.asList(costAllocationEntity.getId()));
@@ -416,8 +410,17 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
         addDTO.setOutstockTime(soOutstockEntity.getApproveTime());
 
         LogisticsBillCostEntity logisticsBillCostEntity = logisticsBillCostService.getById(costAllocationEntity.getCostId());
+        if (ObjectUtil.isEmpty(logisticsBillCostEntity)) {
+            throw new ServiceException("物流单费用信息未找到");
+        }
         LogisticsBillEntity logisticsBillEntity = logisticsBillService.getById(logisticsBillCostEntity.getLogisticsBillId());
+        if (ObjectUtil.isEmpty(logisticsBillCostEntity)) {
+            throw new ServiceException("物流单信息未找到");
+        }
 
+        if (ShipmentTypeEnum.PLATFORM_DELIVER.getCode().equals(logisticsBillEntity.getShipmentType())) {
+            throw new ServiceException("平台仓发货不需要推送物流大表");
+        }
 
         if (ReconciliationStatusEnum.CONFIRMED.getCode().equals(logisticsBillCostEntity.getReconciliationStatus())) {
             //实际账单
@@ -431,8 +434,7 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
             addDTO.setDestMiscFeePayStatus(logisticsBillCostEntity.getPayStatus());
             //查询是否有预估账单，如果有需要生成负数的对冲预估账单
             if (logisticsLargeEstimatedEntity != null) {
-                //, addDTO.getReconciliationMonth()
-                hedgingEstimated(logisticsLargeEstimatedEntity);
+                hedgingEstimated(logisticsLargeEstimatedEntity, addDTO.getReconciliationMonth());
             }
 
         } else {
@@ -612,17 +614,15 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
         if (otherTaxFeeDetailEntity.getBillAmount().compareTo(BigDecimal.ZERO) > 0) {
             addDTO.setOtherTaxCalculationFactor(otherTaxFeeDetailEntity.getAllocatedAmount().divide(otherTaxFeeDetailEntity.getBillAmount(), 4, RoundingMode.DOWN));
         }
-
-
-
-        return null;
+        return BatchResultDTO.success(costAllocationEntity.getId(), addDTO.getOutstockCode(), OperationTypeEnum.ADD);
     }
 
     /**
      * 对冲物流大表预估账单
      */
-    private void hedgingEstimated(LogisticsLargeEntity entity) {
+    private void hedgingEstimated(LogisticsLargeEntity entity, LocalDate reconciliationMonth) {
         entity.setId(null);
+        entity.setReconciliationMonth(reconciliationMonth);
         entity.setBillTotalAmount(entity.getBillTotalAmount().negate());
         entity.setFirstMileEstimatedFreightTax(entity.getFirstMileEstimatedFreightTax().negate());
         entity.setFirstMileEstimatedFreight(entity.getFirstMileEstimatedFreight().negate());
