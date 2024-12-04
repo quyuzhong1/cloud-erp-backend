@@ -3,6 +3,7 @@ package com.erp.server.dmp.controller.api;
 import cn.hutool.core.text.CharSequenceUtil;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
+import com.erp.model.dmp.enums.WebhookServiceEnum;
 import com.erp.server.dmp.factory.WebhookHandlerFactory;
 import com.erp.server.dmp.handler.WebhookHandler;
 import lombok.extern.slf4j.Slf4j;
@@ -19,6 +20,7 @@ import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.util.Base64;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * @author zdy
@@ -67,8 +69,9 @@ public class WebhookController extends BaseController {
         return result;
     }
     private String getService(String serviceFlag, Map<String, String> headers, String data) {
-        if (CharSequenceUtil.isNotBlank(serviceFlag)){
-            return serviceFlag;
+        WebhookServiceEnum serviceEnum = WebhookServiceEnum.getByName(serviceFlag);
+        if (Objects.nonNull(serviceEnum)){
+            return serviceEnum.getCode();
         }
         RequestAttributes requestAttributes = RequestContextHolder.getRequestAttributes();
         if (requestAttributes == null) {
