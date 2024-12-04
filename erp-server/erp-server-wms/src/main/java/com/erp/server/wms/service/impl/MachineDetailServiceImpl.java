@@ -224,7 +224,9 @@ public class MachineDetailServiceImpl extends SuperServiceImpl<MachineDetailMapp
         //仓位必填验证
         checkWarehouseLocation(warehouseEntity,newList);
 
-        for (MachineDetailEntity detail:newList) {
+        for (int i = 0; i < newList.size(); i++) {
+            MachineDetailEntity detail = newList.get(i);
+            detail.setIndex(i+1);
             //验证子件数量
             checkBomChildrenSku(bomChildrenSkuList,detail);
 

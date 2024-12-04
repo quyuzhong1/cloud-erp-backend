@@ -1823,7 +1823,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
                     subComponentsDTO.setSkuId(bomChildrenSkuDTO.getSkuId());
                     subComponentsDTO.setSkuNo(bomChildrenSkuDTO.getSkuNo());
                     subComponentsDTO.setWarehouseId(soDeliveryNoticeEntity.getWarehouseId());
-                    subComponentsDTO.setQty(soDeliveryNoticeDetailEntity.getPickingQty() * bomChildrenSkuDTO.getQuantity());
+                    subComponentsDTO.setQty(addDetailDTO.getQty() * bomChildrenSkuDTO.getQuantity());
                     subComponentsDTO.setWarehouseLocation(pickingStaging.getWarehouseLocation());
                     subComponentsList.add(subComponentsDTO);
                 }
