@@ -60,6 +60,12 @@ public class CfgRuleCalcEntity extends BaseEntity<CfgRuleCalcEntity> {
     */
     @TableField("file_url")
     private String fileUrl;
+
+    /**
+     * 文件名字
+     */
+    @TableField("file_name")
+    private String fileName;
     /**
     * 试算配置名称
     */

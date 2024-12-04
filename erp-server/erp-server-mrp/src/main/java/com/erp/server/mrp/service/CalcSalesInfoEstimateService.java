@@ -3,6 +3,7 @@ package com.erp.server.mrp.service;
 import com.common.business.service.SuperService;
 import com.erp.model.mrp.entity.CalcSalesInfoEstimateEntity;
 
+import java.time.LocalDate;
 import java.util.List;
 
 /**
@@ -21,4 +22,10 @@ public interface CalcSalesInfoEstimateService extends SuperService<CalcSalesInfo
      * @param ids ids
      */
     List<CalcSalesInfoEstimateEntity> listByCalcSalesInfoIds(List<String> ids);
+
+    /**
+     * 通过试算id,日期查询预估销量
+     * @param dimIds ids
+     */
+    List<CalcSalesInfoEstimateEntity> listByCalcSalesInfoIdsAndDate(List<String> dimIds, LocalDate startCalcDate, LocalDate endCalcDate);
 }
