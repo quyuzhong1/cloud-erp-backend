@@ -274,7 +274,9 @@ public class VirtualInventoryServiceImpl extends SuperServiceImpl<VirtualInvento
             //虚拟仓库存
             Integer virtualQty = vmRealQtyList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSkuId(), qtySearchDTO.getSkuId()) && CharSequenceUtil.equals(obj.getWarehouseId(), qtySearchDTO.getWarehouseId()))
                     .map(VirtualInventoryDTO.ViewQtyDTO::getToVirtualWarehouseRealQty).reduce(MathUtil.ZERO, Integer::sum);
+            viewQtyDTO.setToVirtualWarehouseRealQty(virtualQty);
             viewQtyDTO.setWarehouseAllocationQty(realQty - virtualQty);
+            viewQtyDTO.setRealQty(realQty);
 
             VirtualInventoryDTO.ViewQtyDTO vmUsableQtyDto = vmUsableQty.stream().filter(inventoryViewQtyDTO -> Objects.equals(inventoryViewQtyDTO.getSkuId(), qtySearchDTO.getSkuId())
                     && Objects.equals(inventoryViewQtyDTO.getWarehouseId(), qtySearchDTO.getWarehouseId())
