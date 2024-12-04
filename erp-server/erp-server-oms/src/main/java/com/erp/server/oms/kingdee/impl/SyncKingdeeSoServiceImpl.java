@@ -760,9 +760,9 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
     }
 
     private void syncDataToSdyFieldHandlerBatch(SoInfoDTO.ViewDTO view, List<SoDetailEntity> soDetailEntityList, String operate, String deliveryStatus) {
-        List<String> skuNos = view.getDetailList().stream().map(req -> req.getSkuNo()).collect(Collectors.toList());
+        List<String> skuNos = view.getDetailList().stream().map(req -> req.getSkuNo()).distinct().collect(Collectors.toList());
         List<SkuVO> skuVOList = plmTaskFeign.listBySkuNoList(skuNos);
-        List<String> skuIds = view.getDetailList().stream().map(req -> req.getSkuId()).collect(Collectors.toList());
+        List<String> skuIds = view.getDetailList().stream().map(req -> req.getSkuId()).distinct().collect(Collectors.toList());
         List<BomChildrenSkuDTO> bomChildrenSkuDTOS = plmTaskFeign.listBomChildBySkuIds(skuIds);
 
         //组织信息
