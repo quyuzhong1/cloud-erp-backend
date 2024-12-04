@@ -68,7 +68,8 @@
             t.fee_allocation_type,
             t.weight_allocation_type,
             t.create_time,
-            t.update_user_name,
+            g.update_user_name,
+            g.update_time,
             t.allocated_currency currency
         from small_bag_cost_allocation_detail t
         left join small_bag_cost_allocation g on t.main_id = g.id and g.is_deleted = false

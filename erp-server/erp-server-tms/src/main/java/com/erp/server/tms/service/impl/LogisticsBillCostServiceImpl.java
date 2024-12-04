@@ -42,6 +42,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.annotation.DataIdempotent;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseIdDTO.CodeDTO;
 import com.common.business.dto.base.BaseResultDTO;
@@ -419,9 +420,9 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
                 .set(confirmFlag,LogisticsBillCostEntity::getConfirmTime, confirmTime)
                 .set(confirmFlag,LogisticsBillCostEntity::getConfirmUserId, UserContext.getDefaultLoginUser().getUid())
                 .set(confirmFlag,LogisticsBillCostEntity::getConfirmUserName, UserContext.getDefaultLoginUser().getUserName())
-                .set(confirmFlag,LogisticsBillCostEntity::getConfirmTime, null)
-                .set(confirmFlag,LogisticsBillCostEntity::getConfirmUserId, "")
-                .set(confirmFlag,LogisticsBillCostEntity::getConfirmUserName, "")
+                .set(!confirmFlag,LogisticsBillCostEntity::getConfirmTime, null)
+                .set(!confirmFlag,LogisticsBillCostEntity::getConfirmUserId, "")
+                .set(!confirmFlag,LogisticsBillCostEntity::getConfirmUserName, "")
                 .update();
         // 状态变更日志
         log.info("状态变更日志数据，id集合：【{}】", id);
@@ -1463,35 +1464,36 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 
 	@Transactional(rollbackFor = Exception.class)
 	@Override
+	@DataIdempotent(keyIdName = "id")
 	public BatchResultDTO pushAllocation(String id, String reportDate) {
 		LogisticsBillCostEntity entity = getById(id);
 		String reconciliationStatus = entity.getReconciliationStatus();
 		if(!(ReconciliationStatusEnum.ESTIMATE_CONFIRM.getCode().equals(reconciliationStatus)
 				|| ReconciliationStatusEnum.CONFIRMED.getCode().equals(reconciliationStatus))) {
-			return BatchResultDTO.success(entity.getId(), entity.getTrackNo(), "只支持对账状态为暂估确认或账单确认下推分摊");
+			throw new ServiceException("只支持对账状态为暂估确认或账单确认下推分摊");
 		}
 		List<SmallBagCostAllocationEntity> smallBagCostAllocationEntityList = smallBagCostAllocationService.lambdaQuery()
 				.eq(SmallBagCostAllocationEntity::getCostId, id).list();
 		if(CollUtil.isNotEmpty(smallBagCostAllocationEntityList)) {
 			if(smallBagCostAllocationEntityList.stream().anyMatch(s -> s.getReportDate().equals(reportDate))) {
-				return BatchResultDTO.success(entity.getId(), entity.getTrackNo(), reportDate + "已存在下推分摊数据，不可下推分摊");
+				throw new ServiceException(reportDate + "已存在下推分摊数据，不可下推分摊");
 			}
 			if(smallBagCostAllocationEntityList.stream().anyMatch(s -> !SmallBagCostAllocationReportStatusEnum.CONFIRMED.getCode().equals(s.getReportStatus()))) {
-				return BatchResultDTO.success(entity.getId(), entity.getTrackNo(), "存在历史未确认分摊数据，不可下推分摊");
+				throw new ServiceException("存在历史未确认分摊数据，不可下推分摊");
 			}
 		}
 		
 		LogisticsBillEntity logisticsBillEntity = logisticsBillService.getById(entity.getLogisticsBillId());
 		String outstockId = logisticsBillEntity.getOutstockId();
 		if(org.apache.commons.lang3.StringUtils.isBlank(outstockId)) {
-			return BatchResultDTO.success(entity.getId(), entity.getTrackNo(), "销售出库单id不存在");
+			throw new ServiceException("销售出库单id不存在");
 		}
 		List<SoOutstockDetailEntity> soOutstockDetailEntityList = new ArrayList<>();
 		if(SourceTypeEnum.SO_RETURN_INSTOCK.getCode().equals(logisticsBillEntity.getSourceType())) {
 			List<SoReturnInstockDetailEntity> soReturnInstockDetailEntityList = FeignQuery.create(SoReturnInstockDetailEntity.class)
 					.eq(SoReturnInstockDetailEntity::getMainId, outstockId).list();
 			if(CollUtil.isEmpty(soReturnInstockDetailEntityList)) {
-				return BatchResultDTO.success(entity.getId(), entity.getTrackNo(), "退货入库明细不存在");
+				throw new ServiceException("退货入库明细不存在");
 			}
 			for(SoReturnInstockDetailEntity soReturnInstockDetailEntity : soReturnInstockDetailEntityList) {
 				SoOutstockDetailEntity soOutstockDetailEntity = new SoOutstockDetailEntity();
@@ -1507,7 +1509,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 					.eq(SoOutstockDetailEntity::getMainId, outstockId).list();
 		}
 		if(CollUtil.isEmpty(soOutstockDetailEntityList)) {
-			return BatchResultDTO.success(entity.getId(), entity.getTrackNo(), "销售出库单明细不存在");
+			throw new ServiceException("销售出库单明细不存在");
 		}
 		
 		LogisticsBillCostTypeEnum costType = ReconciliationStatusEnum.ESTIMATE_CONFIRM.getCode().equals(reconciliationStatus) 
@@ -1616,7 +1618,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 				String feeType = feeTypeSettingMap.getKey();
 				List<CostViewDTO> costViewDTOList = costCategoryMaps.get(feeType);
 				if(CollUtil.isEmpty(costViewDTOList)) {
-					continue;
+					costViewDTOList = new ArrayList<>();
 				}
 				BigDecimal costValueSum = costViewDTOList.stream().map(CostViewDTO::getCostValue).reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
 				smallBagCostAllocationDetailEntity.setBillAmount(costValueSum);
@@ -1636,7 +1638,11 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 					smallBagCostAllocationDetailEntity.setAllocatedAmount(costValueSum.subtract(addSmallBagCostAllocationDetailEntityList.stream()
 							.filter(a -> a.getFeeType().equals(feeType)).map(SmallBagCostAllocationDetailEntity::getAllocatedAmount).reduce(BigDecimal::add).orElse(BigDecimal.ZERO)));
 				}
-				smallBagCostAllocationDetailEntity.setAllocatedCurrency(costViewDTOList.get(0).getCurrency());
+				String allocatedCurrency = "CNY";
+				if(CollUtil.isNotEmpty(costViewDTOList)) {
+					allocatedCurrency = costViewDTOList.get(0).getCurrency();
+				}
+				smallBagCostAllocationDetailEntity.setAllocatedCurrency(allocatedCurrency);
 				smallBagCostAllocationDetailEntity.setProductAllocatedAmount(smallBagCostAllocationDetailEntity.getAllocatedAmount()
 						.divide(new BigDecimal(actualQty), 6, RoundingMode.HALF_UP));
 				smallBagCostAllocationDetailEntity.setWeightAllocationType(weightPackageAllocation);
@@ -1651,6 +1657,8 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 		if(CollUtil.isNotEmpty(addSmallBagCostAllocationDetailEntityList)) {
 			smallBagCostAllocationDetailService.saveBatch(addSmallBagCostAllocationDetailEntityList);
 		}
+		
+		lambdaUpdate().eq(LogisticsBillCostEntity::getId, entity.getId()).set(LogisticsBillCostEntity::getCheckStatus, LogisticsBillCostCheckStatusEnum.CHECKED.getCode()).update();
 		
 		return BatchResultDTO.success(entity.getId(), entity.getTrackNo(), "下推成功");
 	}

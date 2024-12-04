@@ -8,7 +8,10 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import javax.annotation.Resource;
+
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -16,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.annotation.DataIdempotent;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -36,6 +40,8 @@ import com.erp.model.tms.dto.SmallBagCostAllocationDTO;
 import com.erp.model.tms.dto.SmallBagCostAllocationDTO.ListDTO;
 import com.erp.model.tms.dto.SmallBagCostAllocationDTO.PagingParamDTO;
 import com.erp.model.tms.dto.SmallBagCostAllocationDTO.TabListDTO;
+import com.erp.model.tms.entity.LogisticsChannelEntity;
+import com.erp.model.tms.entity.SmallBagCostAllocationDetailEntity;
 import com.erp.model.tms.entity.SmallBagCostAllocationEntity;
 import com.erp.model.tms.enums.AllocationFeeTypeEnum;
 import com.erp.model.tms.enums.CostAllocationEnum;
@@ -44,7 +50,11 @@ import com.erp.model.tms.enums.SmallBagCostAllocationBigTableStatusEnum;
 import com.erp.model.tms.enums.SmallBagCostAllocationReportStatusEnum;
 import com.erp.model.tms.enums.WeightAllocationEnum;
 import com.erp.server.tms.mapper.SmallBagCostAllocationMapper;
+import com.erp.server.tms.service.LogisticsBillCostService;
+import com.erp.server.tms.service.LogisticsChannelService;
+import com.erp.server.tms.service.LogisticsSupplierService;
 import com.erp.server.tms.service.OperateLogService;
+import com.erp.server.tms.service.SmallBagCostAllocationDetailService;
 import com.erp.server.tms.service.SmallBagCostAllocationService;
 
 import cn.hutool.core.util.StrUtil;
@@ -63,6 +73,15 @@ import lombok.extern.slf4j.Slf4j;
 public class SmallBagCostAllocationServiceImpl extends SuperServiceImpl<SmallBagCostAllocationMapper, SmallBagCostAllocationEntity> implements SmallBagCostAllocationService {
     @Autowired
     private OperateLogService operateLogService;
+    
+    @Resource
+    private LogisticsSupplierService logisticsSupplierService;
+    @Resource
+    private LogisticsChannelService logisticsChannelService;
+    @Resource
+    private SmallBagCostAllocationDetailService smallBagCostAllocationDetailService;
+    @Resource
+    private LogisticsBillCostService logisticsBillCostService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -169,9 +188,15 @@ public class SmallBagCostAllocationServiceImpl extends SuperServiceImpl<SmallBag
 		Map<String, BigDecimal> skuIdCostMap = productCostEntityList.stream().collect(Collectors.toMap(ProductCostEntity::getId, ProductCostEntity::getActualTaxCost));
 		Map<String, String> currencyIdSymbolMap = FeignQuery.getByIds(DictCurrencyEntity.class , records.stream().map(ListDTO::getCurrency).collect(Collectors.toList()))
 			.stream().collect(Collectors.toMap(DictCurrencyEntity::getId, DictCurrencyEntity::getSymbol));
+		Map<String, LogisticsChannelEntity> channelIdMaps = logisticsChannelService.listByIds(records.stream().map(ListDTO::getChannelId).collect(Collectors.toList())).stream().collect(Collectors.toMap(LogisticsChannelEntity::getId, l -> l));
 		for(ListDTO dto : records) {
+			LogisticsChannelEntity logisticsChannelEntity = channelIdMaps.get(dto.getChannelId());
+			if(logisticsChannelEntity != null) {
+				dto.setSupplierName(logisticsChannelEntity.getName());
+			}
 			dto.setReportStatusName(SmallBagCostAllocationReportStatusEnum.getName(dto.getReportStatus()));
-			dto.setReconciliationStatusName(ReconciliationStatusEnum.getName(dto.getReconciliationStatus()));
+			String reconciliationStatus = dto.getReconciliationStatus();
+			dto.setReconciliationStatusName(ReconciliationStatusEnum.getName(reconciliationStatus));
 			dto.setBigTableStatusName(SmallBagCostAllocationBigTableStatusEnum.getName(dto.getBigTableStatus()));
 			String skuId = dto.getSkuId();
 			dto.setSkuName(skuIdNameMap.get(skuId));
@@ -179,6 +204,16 @@ public class SmallBagCostAllocationServiceImpl extends SuperServiceImpl<SmallBag
 			if(unitCost != null) {
 				dto.setUnitCost(unitCost);
 				dto.setTotalCost(unitCost.multiply(new BigDecimal(dto.getDeliveryQty())));
+			}
+			if(ReconciliationStatusEnum.CONFIRMED.getCode().equals(reconciliationStatus)) {
+				dto.setFeeSource("实际账单");
+			}else {
+				dto.setFeeSource("暂估账单");
+			}
+			if(dto.getDeliveryTime() != null) {
+				dto.setDeliveryStatusName("已签收");
+			}else {
+				dto.setDeliveryStatusName("未签收");
 			}
 			dto.setFeeTypeName(AllocationFeeTypeEnum.getName(dto.getFeeType()));
 			dto.setFeeAllocationTypeName(CostAllocationEnum.getName(dto.getFeeAllocationType()));
@@ -188,13 +223,47 @@ public class SmallBagCostAllocationServiceImpl extends SuperServiceImpl<SmallBag
 	}
 	
 	@Override
+	@DataIdempotent(keyIdName = "id")
 	public BatchResultDTO updateReportStatus(String id, String reportDate, String reportStatus) {
-		return null;
+		SmallBagCostAllocationEntity smallBagCostAllocationEntity = getById(id);
+		if(StringUtils.isBlank(reportDate) && StringUtils.isBlank(reportStatus)) {
+			throw new ServiceException("会计期间和核算状态不能同时为空");
+		}
+		if(StringUtils.isNotBlank(reportStatus)) {
+			if(reportStatus.equals(smallBagCostAllocationEntity.getReportStatus())) {
+				throw new ServiceException("更新前后核算状态一致");
+			}
+			if(reportStatus.equals(SmallBagCostAllocationReportStatusEnum.TOBECONFIRM.getCode()) 
+					&& SmallBagCostAllocationBigTableStatusEnum.DONE.getCode().equals(smallBagCostAllocationEntity.getBigTableStatus())) {
+				throw new ServiceException("物流大表已生成，无法从已确认更新为待确认");
+			}
+		}
+		this.lambdaUpdate().eq(SmallBagCostAllocationEntity::getId, id)
+			.set(StringUtils.isNotBlank(reportDate) , SmallBagCostAllocationEntity::getAccountDate, reportDate)
+			.set(StringUtils.isNotBlank(reportStatus) , SmallBagCostAllocationEntity::getReportStatus, reportStatus)
+			.update();
+		return BatchResultDTO.success(id, smallBagCostAllocationEntity.getSkuNo(), "更新核算状态成功");
 	}
 
 	@Override
+	@DataIdempotent(keyIdName = "id")
+	@Transactional(rollbackFor = Exception.class)
 	public BatchResultDTO reAllocation(String id) {
-		return null;
+		SmallBagCostAllocationEntity smallBagCostAllocationEntity = getById(id);
+		String costId = smallBagCostAllocationEntity.getCostId();
+		List<SmallBagCostAllocationEntity> smallBagCostAllocationEntityList = lambdaQuery().in(SmallBagCostAllocationEntity::getCostId, costId).list();
+		if(smallBagCostAllocationEntityList.stream().anyMatch(s -> SmallBagCostAllocationReportStatusEnum.CONFIRMED.getCode().equals(s.getReportStatus()))) {
+			throw new ServiceException("所选分摊费用下所有分摊SKU的核算状态必须为【待确认】才可重新分摊");
+		}
+		List<String> ids = smallBagCostAllocationEntityList.stream().map(SmallBagCostAllocationEntity::getId).collect(Collectors.toList());
+		removeByIds(ids);
+		smallBagCostAllocationDetailService.lambdaUpdate()
+			.in(SmallBagCostAllocationDetailEntity::getMainId, ids)
+			.set(SmallBagCostAllocationDetailEntity::getIsDeleted, true)
+			.update();
+		logisticsBillCostService.pushAllocation(costId, smallBagCostAllocationEntity.getReportDate());
+		
+		return BatchResultDTO.success(id, smallBagCostAllocationEntity.getSkuNo(), "重新分摊成功");
 	}
 
 	@Override
@@ -203,7 +272,21 @@ public class SmallBagCostAllocationServiceImpl extends SuperServiceImpl<SmallBag
 	}
 
 	@Override
+	@DataIdempotent(keyIdName = "id")
+	@Transactional(rollbackFor = Exception.class)
 	public BatchResultDTO delete(String id) {
-		return null;
+		SmallBagCostAllocationEntity smallBagCostAllocationEntity = getById(id);
+		String costId = smallBagCostAllocationEntity.getCostId();
+		List<SmallBagCostAllocationEntity> smallBagCostAllocationEntityList = lambdaQuery().in(SmallBagCostAllocationEntity::getCostId, costId).list();
+		if(smallBagCostAllocationEntityList.stream().anyMatch(s -> SmallBagCostAllocationReportStatusEnum.CONFIRMED.getCode().equals(s.getReportStatus()))) {
+			throw new ServiceException("所选分摊费用下所有分摊SKU的核算状态必须为【待确认】才可删除");
+		}
+		List<String> ids = smallBagCostAllocationEntityList.stream().map(SmallBagCostAllocationEntity::getId).collect(Collectors.toList());
+		removeByIds(ids);
+		smallBagCostAllocationDetailService.lambdaUpdate()
+			.in(SmallBagCostAllocationDetailEntity::getMainId, ids)
+			.set(SmallBagCostAllocationDetailEntity::getIsDeleted, true)
+			.update();
+		return BatchResultDTO.success(id, smallBagCostAllocationEntity.getSkuNo(), "删除成功");
 	}
 }
