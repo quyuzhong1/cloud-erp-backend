@@ -1,6 +1,7 @@
 package com.erp.server.tms.service.impl;
 
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseResultDTO;
 import com.erp.model.tms.entity.TransferDeclareCostAllocationDetailEntity;
@@ -92,5 +93,13 @@ public class TransferDeclareCostAllocationDetailServiceImpl extends SuperService
     */
     private void handleData(TransferDeclareCostAllocationDetailEntity transferDeclareCostAllocationDetailEntity) {
     // TODO 验证数据 & 数据赋值
+    }
+
+    @Override
+    public List<TransferDeclareCostAllocationDetailEntity> listByMainIds(List<String> mainIds) {
+        if (CollUtil.isNotEmpty(mainIds)) {
+            return Collections.emptyList();
+        }
+        return lambdaQuery().in(TransferDeclareCostAllocationDetailEntity::getMainId, mainIds).list();
     }
 }
