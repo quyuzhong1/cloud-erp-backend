@@ -331,8 +331,8 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
             viewDetailDTO.setProductName(productName);
 
             //商品状态
-            String salesStateName = productSaleEntityList.stream().filter(e -> CharSequenceUtil.equals(e.getSkuId(), viewDetailDTO.getSkuId())).findFirst().map(e -> SaleStateEnum.getNameByCode(e.getSaleState())).orElse("");
-            viewDetailDTO.setSalesStateName(salesStateName);
+            String saleStateName = productSaleEntityList.stream().filter(e -> CharSequenceUtil.equals(e.getSkuId(), viewDetailDTO.getSkuId())).findFirst().map(e -> SaleStateEnum.getNameByCode(e.getSaleState())).orElse("");
+            viewDetailDTO.setSaleStateName(saleStateName);
 
             //根据组织、仓库、sku查询可用库存
             Integer curInventoryQty = inventoryInfoList.stream().filter(obj -> obj.getSkuId().equals(viewDetailDTO.getSkuId()) && InventoryStatusEnum.USABLE.getCode().equals(obj.getDictInventoryStatus()))
@@ -1072,8 +1072,8 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
             }
             obj.setProductName(productName);
             //商品状态
-            String salesStateName = productSaleEntityList.stream().filter(e -> CharSequenceUtil.equals(e.getSkuId(), obj.getSkuId())).findFirst().map(e -> SaleStateEnum.getNameByCode(e.getSaleState())).orElse("");
-            obj.setSalesStateName(salesStateName);
+            String saleStateName = productSaleEntityList.stream().filter(e -> CharSequenceUtil.equals(e.getSkuId(), obj.getSkuId())).findFirst().map(e -> SaleStateEnum.getNameByCode(e.getSaleState())).orElse("");
+            obj.setSaleStateName(saleStateName);
             //调拨方向名称
             String transferDirectionName = transferDirectionList.stream().filter(e -> e.getValue().equals(obj.getTransferDirection())).map(DictBasicDTO.ListDTO::getName).findFirst().orElse("");
             if (CharSequenceUtil.isBlank(transferDirectionName)) {
