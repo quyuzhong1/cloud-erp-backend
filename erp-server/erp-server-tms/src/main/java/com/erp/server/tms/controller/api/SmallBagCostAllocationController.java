@@ -232,6 +232,7 @@ public class SmallBagCostAllocationController extends BaseController {
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出Excel")
     @PostMapping(value = "/exportExcel")
     public ApiResult<Object> exportExcel(@RequestBody @Validated SmallBagCostAllocationDTO.PagingParamDTO dto) {
+    	smallBagCostAllocationService.exportExcel(dto);
         return success();
     }
     

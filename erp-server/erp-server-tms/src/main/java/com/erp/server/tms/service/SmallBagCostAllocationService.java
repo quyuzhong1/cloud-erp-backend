@@ -1,12 +1,14 @@
 package com.erp.server.tms.service;
-import com.erp.model.tms.entity.SmallBagCostAllocationEntity;
-import com.common.business.service.SuperService;
-import com.common.business.vo.PagingVO;
-
 import java.util.List;
 
-import com.common.business.dto.base.*;
+import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.dto.base.BatchResultDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.service.SuperService;
+import com.common.business.vo.PagingVO;
 import com.erp.model.tms.dto.SmallBagCostAllocationDTO;
+import com.erp.model.tms.entity.SmallBagCostAllocationEntity;
 
 /**
  * <p>
@@ -46,6 +48,8 @@ public interface SmallBagCostAllocationService extends SuperService<SmallBagCost
     
     BatchResultDTO delete(String id);
     
+    Boolean exportExcel(SmallBagCostAllocationDTO.PagingParamDTO dto);
+    
     BatchResultDTO pushBigTable(String id);
-
+    
 }

@@ -24,6 +24,7 @@ import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.enums.FileTaskEventEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
@@ -51,6 +52,7 @@ import com.erp.model.tms.enums.ReconciliationStatusEnum;
 import com.erp.model.tms.enums.SmallBagCostAllocationBigTableStatusEnum;
 import com.erp.model.tms.enums.SmallBagCostAllocationReportStatusEnum;
 import com.erp.model.tms.enums.WeightAllocationEnum;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.tms.mapper.SmallBagCostAllocationMapper;
 import com.erp.server.tms.service.LogisticsBillCostService;
 import com.erp.server.tms.service.LogisticsChannelService;
@@ -84,6 +86,8 @@ public class SmallBagCostAllocationServiceImpl extends SuperServiceImpl<SmallBag
     private SmallBagCostAllocationDetailService smallBagCostAllocationDetailService;
     @Resource
     private LogisticsBillCostService logisticsBillCostService;
+    @Resource
+    private DownloadTaskFeign downloadTaskFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -292,4 +296,11 @@ public class SmallBagCostAllocationServiceImpl extends SuperServiceImpl<SmallBag
 		logisticsBillCostService.lambdaUpdate().eq(LogisticsBillCostEntity::getId, costId).set(LogisticsBillCostEntity::getCheckStatus , LogisticsBillCostCheckStatusEnum.CHECKING.getCode()).update();
 		return BatchResultDTO.success(id, smallBagCostAllocationEntity.getSkuNo(), "删除成功");
 	}
+
+	@Override
+	public Boolean exportExcel(PagingParamDTO dto) {
+		downloadTaskFeign.saveDownloadTask("小包费用分摊列表", FileTaskEventEnum.EXPORT_SMALL_BAG_COST_ALLOCATION.getCode(), dto);
+        return Boolean.TRUE;
+	}
+
 }

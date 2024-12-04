@@ -39,6 +39,8 @@ public class ExportTmsFeignController {
     @Resource
     private LogisticsBillCostService logisticsBillCostService;
     @Resource
+    private SmallBagCostAllocationService smallBagCostAllocationService;
+    @Resource
     private LogisticsBillService logisticsBillService;
     @Resource
     private LogisticsSupplierService logisticsSupplierService;
@@ -139,6 +141,16 @@ public class ExportTmsFeignController {
     @WebAdvanceQuery(handler = LogisticsBillCostQueryHandler.class)
     public PagingVO<LogisticsBillCostDTO.ListDTO> exportLogisticsBillCost(@RequestBody PagingDTO<LogisticsBillCostDTO.PagingParamDTO> dto) {
         return logisticsBillCostService.exportLogisticsBillCost(dto);
+    }
+    @PostMapping("/smallBagCostAllocation")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+    tableField = "create_user_id",
+    menuCode = "tms:smallBagCostAllocation:paging",
+    tableAlias = "lbc"
+    		)
+    @WebAdvanceQuery(handler = SmallBagCostAllocationQueryHandler.class)
+    public PagingVO<SmallBagCostAllocationDTO.ListDTO> exportSmallBagCostAllocation(@RequestBody PagingDTO<SmallBagCostAllocationDTO.PagingParamDTO> dto) {
+    	return smallBagCostAllocationService.paging(dto);
     }
 
     @PostMapping("/logisticsBill")
