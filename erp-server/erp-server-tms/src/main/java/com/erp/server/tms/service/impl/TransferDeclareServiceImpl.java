@@ -897,4 +897,9 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
         }
 
     }
+
+	@Override
+	public BatchResultDTO pushAllocation(String id, String reportDate) {
+		return null;
+	}
 }

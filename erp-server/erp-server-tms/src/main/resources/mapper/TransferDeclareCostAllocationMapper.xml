@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.tms.mapper.TransferDeclareCostAllocationMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.tms.entity.TransferDeclareCostAllocationEntity">
+       <result column="id" property="id" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_time" property="createTime" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_time" property="updateTime" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="transfer_declare_id" property="transferDeclareId" />
+       <result column="report_date" property="reportDate" />
+       <result column="account_date" property="accountDate" />
+       <result column="report_status" property="reportStatus" />
+       <result column="big_table_status" property="bigTableStatus" />
+       <result column="sku_id" property="skuId" />
+       <result column="sku_no" property="skuNo" />
+       <result column="declare_reconciliation_id" property="declareReconciliationId" />
+       <result column="declare_reconciliation_detail_id" property="declareReconciliationDetailId" />
+       <result column="delivery_qty" property="deliveryQty" />
+       <result column="sku_weight" property="skuWeight" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id,
+        create_user_id,
+        create_user_name,
+        create_time,
+        update_user_id,
+        update_user_name,
+        update_time,
+        version,
+        is_deleted,
+        transfer_declare_id, report_date, account_date, report_status, big_table_status, sku_id, sku_no, declare_reconciliation_id, declare_reconciliation_detail_id, delivery_qty, sku_weight
+    </sql>
+
+	<select id="paging" resultType="com.erp.model.tms.dto.TransferDeclareCostAllocationDTO$ListDTO">
+        select
+            t.id,
+            g.report_date,
+            g.account_date,
+            g.report_status,
+            g.big_table_status,
+            g.sku_no,
+            g.delivery_qty,
+            t.fee_type,
+            t.bill_amount,
+            t.fee_allocation_type,
+            t.allocated_amount,
+            t.product_allocated_amount,
+            t.weight_allocation_type
+        from transfer_declare_cost_allocation_detail t
+        left join transfer_declare_cost_allocation g on t.main_id = g.id and g.is_deleted = false
+        <where>
+            ${params.sqlMap.default}
+            and t.is_deleted = false
+            <if test="params.permissionSql!=null and params.permissionSql!=''">
+                ${params.permissionSql}
+            </if>
+        </where>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        t.id desc
+    </select>
+
+</mapper>
