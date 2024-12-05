@@ -2627,7 +2627,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
                 .mapToInt(detail -> Optional.ofNullable(detail.getPrintNum()).orElse(0))
                 .sum();
         if(totalPrintNum > 10000){
-            throw new ServiceException("打印数量合计超过10000，建议在预览页面下载pdf单独打印");
+            throw new ServiceException("打印数量合计超过10000，建议减少打印数量后在预览页面下载pdf单独打印");
         }
 
         List<String> base64List = new ArrayList<>();
