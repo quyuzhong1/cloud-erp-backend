@@ -448,7 +448,7 @@ public class CalcSalesInfoDimDTO implements Serializable {
         /**
          * 有效值（去噪后的）
          */
-        private Integer effectiveValue;
+        private String effectiveValue;
         /**
          * 去噪销量
          */
@@ -472,7 +472,13 @@ public class CalcSalesInfoDimDTO implements Serializable {
             } else {
                 dto.setDenoisingType(entity.getDenoisingType());
                 dto.setDenoisingTypeName(CfgRuleSalesDenoisingDenoisingTypeEnum.getName(entity.getDenoisingType()));
-                dto.setEffectiveValue(entity.getEffectiveValue());
+                if (!ObjectUtils.isEmpty(entity.getEffectiveValue())) {
+                    if (CfgRuleSalesDenoisingDenoisingTypeEnum.PERCENTAGE.getCode().equals(entity.getDenoisingType())) {
+                        dto.setEffectiveValue(entity.getEffectiveValue() + "%");
+                    } else {
+                        dto.setEffectiveValue(String.valueOf(entity.getEffectiveValue()));
+                    }
+                }
                 dto.setDenoisingQty(entity.getQty());
             }
             return dto;
