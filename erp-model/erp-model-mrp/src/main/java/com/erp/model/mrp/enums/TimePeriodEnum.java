@@ -94,6 +94,6 @@ public enum TimePeriodEnum implements EnumMessage {
                 THREE_HUNDRED_AND_SIXTY.getName() +
                 "*" +
                 Optional.ofNullable(dto.getThreeHundredSixtyDaysRatio()).orElse(0) +
-                "% + ";
+                "%";
     }
 }
