@@ -95,6 +95,7 @@ import com.erp.model.tms.entity.LogisticsBillEntity;
 import com.erp.model.tms.entity.LogisticsChannelEntity;
 import com.erp.model.tms.entity.SmallBagCostAllocationDetailEntity;
 import com.erp.model.tms.entity.SmallBagCostAllocationEntity;
+import com.erp.model.tms.entity.SmallBagCostAllocationMainEntity;
 import com.erp.model.tms.entity.TmsCfgCostEntity;
 import com.erp.model.tms.entity.TmsCostDetailEntity;
 import com.erp.model.tms.entity.TmsFirstMileReconciliationDetailEntity;
@@ -117,6 +118,7 @@ import com.erp.model.tms.enums.SmallBagCostAllocationBigTableStatusEnum;
 import com.erp.model.tms.enums.SmallBagCostAllocationReportStatusEnum;
 import com.erp.model.tms.enums.WeightAllocationEnum;
 import com.erp.model.wms.entity.SoOutstockDetailEntity;
+import com.erp.model.wms.entity.SoOutstockEntity;
 import com.erp.model.wms.entity.SoReturnInstockDetailEntity;
 import com.erp.model.wms.entity.SoReturnInstockEntity;
 import com.erp.model.wms.entity.WarehouseEntity;
@@ -135,6 +137,7 @@ import com.erp.server.tms.service.LogisticsBillService;
 import com.erp.server.tms.service.LogisticsChannelService;
 import com.erp.server.tms.service.OperateLogService;
 import com.erp.server.tms.service.SmallBagCostAllocationDetailService;
+import com.erp.server.tms.service.SmallBagCostAllocationMainService;
 import com.erp.server.tms.service.SmallBagCostAllocationService;
 import com.erp.server.tms.service.TmsCfgCostService;
 import com.erp.server.tms.service.TmsCostDetailService;
@@ -195,6 +198,8 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 	protected IdentifierGenerator identifierGenerator;
     @Resource
     private CfgSettingService cfgSettingService;
+    @Resource
+    private SmallBagCostAllocationMainService smallBagCostAllocationMainService;
     @Resource
     private SmallBagCostAllocationService smallBagCostAllocationService;
     @Resource
@@ -1472,13 +1477,13 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 				|| ReconciliationStatusEnum.CONFIRMED.getCode().equals(reconciliationStatus))) {
 			throw new ServiceException("只支持对账状态为暂估确认或账单确认下推分摊");
 		}
-		List<SmallBagCostAllocationEntity> smallBagCostAllocationEntityList = smallBagCostAllocationService.lambdaQuery()
-				.eq(SmallBagCostAllocationEntity::getCostId, id).list();
-		if(CollUtil.isNotEmpty(smallBagCostAllocationEntityList)) {
-			if(smallBagCostAllocationEntityList.stream().anyMatch(s -> s.getReportDate().equals(reportDate))) {
+		List<SmallBagCostAllocationMainEntity> smallBagCostAllocationMainEntityList = smallBagCostAllocationMainService.lambdaQuery()
+				.eq(SmallBagCostAllocationMainEntity::getCostId, id).list();
+		if(CollUtil.isNotEmpty(smallBagCostAllocationMainEntityList)) {
+			if(smallBagCostAllocationMainEntityList.stream().anyMatch(s -> s.getReportDate().equals(reportDate))) {
 				throw new ServiceException(reportDate + "已存在下推分摊数据，不可下推分摊");
 			}
-			if(smallBagCostAllocationEntityList.stream().anyMatch(s -> !SmallBagCostAllocationReportStatusEnum.CONFIRMED.getCode().equals(s.getReportStatus()))) {
+			if(smallBagCostAllocationMainEntityList.stream().anyMatch(s -> !SmallBagCostAllocationReportStatusEnum.CONFIRMED.getCode().equals(s.getReportStatus()))) {
 				throw new ServiceException("存在历史未确认分摊数据，不可下推分摊");
 			}
 		}
@@ -1507,9 +1512,11 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 		}else {
 			soOutstockDetailEntityList = FeignQuery.create(SoOutstockDetailEntity.class)
 					.eq(SoOutstockDetailEntity::getMainId, outstockId).list();
-		}
-		if(CollUtil.isEmpty(soOutstockDetailEntityList)) {
-			throw new ServiceException("销售出库单明细不存在");
+			if(CollUtil.isEmpty(soOutstockDetailEntityList)) {
+				throw new ServiceException("销售出库单明细不存在");
+			}
+			String warehouseId = FeignQuery.getById(SoOutstockEntity.class, outstockId).getWarehouseId();
+			soOutstockDetailEntityList.forEach(s -> s.setWarehouseId(warehouseId));
 		}
 		
 		LogisticsBillCostTypeEnum costType = ReconciliationStatusEnum.ESTIMATE_CONFIRM.getCode().equals(reconciliationStatus) 
@@ -1564,10 +1571,20 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 			}
 		}
 		
+		SmallBagCostAllocationMainEntity smallBagCostAllocationMainEntity = new SmallBagCostAllocationMainEntity();
+		String smallBagCostAllocationMainId = identifierGenerator.nextId(smallBagCostAllocationMainEntity).toString();
+		smallBagCostAllocationMainEntity.setId(smallBagCostAllocationMainId);
+		smallBagCostAllocationMainEntity.setCostId(id);
+		smallBagCostAllocationMainEntity.setReportDate(reportDate);
+		smallBagCostAllocationMainEntity.setReportStatus(SmallBagCostAllocationReportStatusEnum.TOBECONFIRM.getCode());
+		smallBagCostAllocationMainEntity.setBigTableStatus(SmallBagCostAllocationBigTableStatusEnum.TODO.getCode());
+		smallBagCostAllocationMainEntity.setFeeSource(reconciliationStatus);
+		
 		soOutstockDetailEntityList.sort((s1 , s2) -> s2.getActualQty().compareTo(s1.getActualQty()));
 		int i = 0;
-		Map<String, String> wareIdOrgIdMaps = FeignQuery.getByIds(WarehouseEntity.class, soOutstockDetailEntityList.stream().map(SoOutstockDetailEntity::getWarehouseId)
-				.collect(Collectors.toList())).stream().collect(Collectors.toMap(WarehouseEntity::getId, WarehouseEntity::getOrgId));
+		
+		Map<String, String> wareIdOrgIdMaps = FeignQuery.getByIds(WarehouseEntity.class, soOutstockDetailEntityList.stream().map(SoOutstockDetailEntity::getWarehouseId).collect(Collectors.toList()))
+				.stream().collect(Collectors.toMap(WarehouseEntity::getId, WarehouseEntity::getOrgId));
 		Map<String, String> orgIdNameMaps = sysUserFeign.getAccountingCompanyList(new ArrayList<>(wareIdOrgIdMaps.values())).stream().collect(Collectors.toMap(CodeDTO::getId, CodeDTO::getName));
 		for(SoOutstockDetailEntity soOutstockDetailEntity : soOutstockDetailEntityList) {
 			i = i + 1;
@@ -1575,10 +1592,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 			SmallBagCostAllocationEntity smallBagCostAllocationEntity = new SmallBagCostAllocationEntity();
 			String mainId = identifierGenerator.nextId(smallBagCostAllocationEntity).toString();
 			smallBagCostAllocationEntity.setId(mainId);
-			smallBagCostAllocationEntity.setCostId(id);
-			smallBagCostAllocationEntity.setReportDate(reportDate);
-			smallBagCostAllocationEntity.setReportStatus(SmallBagCostAllocationReportStatusEnum.TOBECONFIRM.getCode());
-			smallBagCostAllocationEntity.setBigTableStatus(SmallBagCostAllocationBigTableStatusEnum.TODO.getCode());
+			smallBagCostAllocationEntity.setMainId(smallBagCostAllocationMainId);
 			smallBagCostAllocationEntity.setSkuId(skuId);
 			smallBagCostAllocationEntity.setSkuNo(soOutstockDetailEntity.getSkuNo());
 			smallBagCostAllocationEntity.setOutstockDetailId(soOutstockDetailEntity.getId());
@@ -1651,6 +1665,8 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 				addSmallBagCostAllocationDetailEntityList.add(smallBagCostAllocationDetailEntity);
 			}
 		}
+		
+		smallBagCostAllocationMainService.save(smallBagCostAllocationMainEntity);
 		if(CollUtil.isNotEmpty(addSmallBagCostAllocationEntityList)) {
 			smallBagCostAllocationService.saveBatch(addSmallBagCostAllocationEntityList);
 		}

@@ -12,14 +12,12 @@
        <result column="update_time" property="updateTime" />
        <result column="version" property="version" />
        <result column="is_deleted" property="isDeleted" />
-       <result column="cost_id" property="costId" />
-       <result column="report_date" property="reportDate" />
-       <result column="account_date" property="accountDate" />
-       <result column="report_status" property="reportStatus" />
-       <result column="big_table_status" property="bigTableStatus" />
+       <result column="main_id" property="mainId" />
+       <result column="sku_id" property="skuId" />
        <result column="sku_no" property="skuNo" />
        <result column="outstock_detail_id" property="outstockDetailId" />
        <result column="delivery_qty" property="deliveryQty" />
+       <result column="sku_weight" property="skuWeight" />
     </resultMap>
 
     <!-- 通用查询结果列 -->
@@ -33,49 +31,51 @@
         update_time,
         version,
         is_deleted,
-        cost_id, report_date, account_date, report_status, big_table_status, sku_no, outstock_detail_id, delivery_qty
+        main_id, sku_id, sku_no, outstock_detail_id, delivery_qty, sku_weight
     </sql>
-    
-	<select id="paging" resultType="com.erp.model.tms.dto.SmallBagCostAllocationDTO$ListDTO">
+
+<select id="paging" resultType="com.erp.model.tms.dto.SmallBagCostAllocationDTO$ListDTO">
         select
             g.id,
-            g.cost_id,
-            g.report_date,
-            g.account_date,
-            g.report_status,
-            h.reconciliation_status,
-            g.big_table_status,
-            h.channel_id,
-            j.outstock_code,
-            h.transport_no,
-            h.track_no,
-            j.delivery_time,
-            k.sign_time,
-            h.confirm_time,
-            j.shop_name,
-            j.to_country,
+            t.cost_id,
+            t.report_date,
+            t.account_date,
+            t.report_status,
+            j.reconciliation_status,
+            t.big_table_status,
+            j.channel_id,
+            k.outstock_code,
+            j.transport_no,
+            j.track_no,
+            k.delivery_time,
+            l.sign_time,
+            j.confirm_time,
+            k.shop_name,
+            k.to_country,
             g.sku_no,
             g.sku_id,
             g.delivery_qty,
-            h.billing_weight,
-            h.billing_weight_logistics,
+            j.billing_weight,
+            j.billing_weight_logistics,
             g.sku_weight,
-            t.fee_type,
-            t.bill_amount,
-            t.allocated_amount,
-            t.product_allocated_amount,
-            t.org_name,
-            t.fee_allocation_type,
-            t.weight_allocation_type,
-            t.create_time,
+            t.fee_source,
+            h.fee_type,
+            h.bill_amount,
+            h.allocated_amount,
+            h.product_allocated_amount,
+            h.org_name,
+            h.fee_allocation_type,
+            h.weight_allocation_type,
+            h.create_time,
             g.update_user_name,
             g.update_time,
-            t.allocated_currency currency
-        from small_bag_cost_allocation_detail t
-        left join small_bag_cost_allocation g on t.main_id = g.id and g.is_deleted = false
-        left join logistics_bill_cost h on g.cost_id = h.id and h.is_deleted = false
-        left join logistics_bill j on h.logistics_bill_id = j.id and j.is_deleted = false
-        left join logistics_bill_detail k on j.id = k.main_id and k.is_deleted = false
+            h.allocated_currency currency
+        from small_bag_cost_allocation_main t
+        left join small_bag_cost_allocation g on t.id = g.main_id and g.is_deleted = false
+        left join small_bag_cost_allocation_detail h on h.main_id = g.id and h.is_deleted = false
+        left join logistics_bill_cost j on t.cost_id = j.id and j.is_deleted = false
+        left join logistics_bill k on j.logistics_bill_id = k.id and k.is_deleted = false
+        left join logistics_bill_detail l on k.id = l.main_id and l.is_deleted = false
         <where>
             ${params.sqlMap.default}
             and t.is_deleted = false

@@ -1,11 +1,10 @@
 package com.erp.model.tms.entity;
 
+import java.math.BigDecimal;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
 import com.baomidou.mybatisplus.annotation.TableField;
 import java.io.Serializable;
-import java.math.BigDecimal;
-
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
@@ -18,7 +17,7 @@ import com.common.business.enums.ApproveStatusEnum;
  * </p>
  *
  * @author shukai
- * @since 2024-12-02
+ * @since 2024-12-05
 */
 @Data
 @EqualsAndHashCode(callSuper = true)
@@ -27,40 +26,20 @@ import com.common.business.enums.ApproveStatusEnum;
 public class SmallBagCostAllocationEntity extends BaseEntity<SmallBagCostAllocationEntity> {
 
     /**
-    * 小包费用id
+    * 主表id
     */
-    @TableField("cost_id")
-    private String costId;
+    @TableField("main_id")
+    private String mainId;
     /**
-    * 核算期间
+    * skuId
     */
-    @TableField("report_date")
-    private String reportDate;
-    /**
-    * 会计
-    */
-    @TableField("account_date")
-    private String accountDate;
-    /**
-    * 核算状态：toBeConfirm=待确认，confirmed=已确认  枚举：SmallBagCostAllocationReportStatusEnum
-    */
-    @TableField("report_status")
-    private String reportStatus;
-    /**
-    * 大表状态：toDo=待生成，done=已生成  枚举：SmallBagCostAllocationBigTableStatusEnum
-    */
-    @TableField("big_table_status")
-    private String bigTableStatus;
+    @TableField("sku_id")
+    private String skuId;
     /**
     * sku
     */
     @TableField("sku_no")
     private String skuNo;
-    /**
-     * sku
-     */
-    @TableField("sku_id")
-    private String skuId;
     /**
     * 销售出库单明细id
     */
@@ -71,29 +50,24 @@ public class SmallBagCostAllocationEntity extends BaseEntity<SmallBagCostAllocat
     */
     @TableField("delivery_qty")
     private Integer deliveryQty;
-    
     /**
-     * 单SKU计费重
-     */
-     @TableField("sku_weight")
-     private BigDecimal skuWeight;
+    * 单SKU计费重
+    */
+    @TableField("sku_weight")
+    private BigDecimal skuWeight;
 
 
-    public static final String COST_ID = "cost_id";
+    public static final String MAIN_ID = "main_id";
 
-    public static final String REPORT_DATE = "report_date";
-
-    public static final String ACCOUNT_DATE = "account_date";
-
-    public static final String REPORT_STATUS = "report_status";
-
-    public static final String BIG_TABLE_STATUS = "big_table_status";
+    public static final String SKU_ID = "sku_id";
 
     public static final String SKU_NO = "sku_no";
 
     public static final String OUTSTOCK_DETAIL_ID = "outstock_detail_id";
 
     public static final String DELIVERY_QTY = "delivery_qty";
+
+    public static final String SKU_WEIGHT = "sku_weight";
 
     @Override
     public Serializable pkVal() {
