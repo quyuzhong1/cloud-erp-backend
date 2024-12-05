@@ -12,8 +12,8 @@ import org.apache.commons.lang3.StringUtils;
  */
 public enum LogisticsBillCostPayStatusEnum implements EnumMessage {
 
-	PAYMENT("payment", "已付\\退款"),
-	PAID("paid", "待付\\退款"),
+	PAYMENT("payment", "待付\\退款"),
+	PAID("paid", "已付\\退款"),
     ;
 
     /**
