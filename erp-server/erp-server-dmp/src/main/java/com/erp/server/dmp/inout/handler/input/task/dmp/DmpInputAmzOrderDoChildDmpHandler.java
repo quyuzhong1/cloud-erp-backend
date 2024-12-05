@@ -58,21 +58,34 @@ public class DmpInputAmzOrderDoChildDmpHandler extends DmpInputDoChildDmpHandler
 		QueryWrapper<?> wrapper = new QueryWrapper<>();
 		wrapper.eq(INPUT_TASK_ID, inputTaskId);
 		List<Map<String, Object>> listMaps = parentServiceImpl.listMaps(wrapper);
+		// 单号和店铺唯一
 		Map<String, String> billNoIdMap = new HashMap<>();
+		// 单号唯一
+		Map<String, String> thirdMap = new HashMap<>();
 		if(CollUtil.isNotEmpty(listMaps)) {
 			for(Map<String, Object> listMap : listMaps) {
 				String thirdCode = listMap.getOrDefault("third_code", "").toString();
 				String shopId = listMap.getOrDefault("shop_id", "").toString();
+				// 唯一
 				String uniqueId = CharSequenceUtil.format("{}_{}", thirdCode, shopId);
+				// 单号配店铺
 				billNoIdMap.put(uniqueId, listMap.get(BaseEntity.FIELD_ID).toString());
+				// 单号
+				thirdMap.put(thirdCode, listMap.get(BaseEntity.FIELD_ID).toString());
+
 			}
 		}
 		for(Map<String, Object> dmpInputMongoChildEntity : dmpInputMongoChildEntityList) {
 			String thirdCode = dmpInputMongoChildEntity.get("amazonOrderId").toString();
-			String shopId = dmpInputMongoChildEntity.get("shopId").toString();
-			String uniqueId = CharSequenceUtil.format("{}_{}", thirdCode, shopId);
-			String dmpId = billNoIdMap.get(uniqueId);
-			dmpInputMongoChildEntity.put(MAIN_ID, dmpId);
+			String shopId = dmpInputMongoChildEntity.getOrDefault("shopId","").toString();
+			if (StringUtils.isBlank(shopId)){
+				String dmpId = thirdMap.get(thirdCode);
+				dmpInputMongoChildEntity.put(MAIN_ID, dmpId);
+			} else {
+				String uniqueId = CharSequenceUtil.format("{}_{}", thirdCode, shopId);
+				String dmpId = billNoIdMap.get(uniqueId);
+				dmpInputMongoChildEntity.put(MAIN_ID, dmpId);
+			}
 		}
 	}
 
