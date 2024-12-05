@@ -18,21 +18,21 @@ import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_VIRTUAL_HIS
 
 @Component
 @Slf4j
-public class ExportWmsVirtualHisInventoryAgeHandler extends AbstractPageFileEventHandler<VirtualInventoryAgeDTO.ListDTO, VirtualInventoryAgeDTO.ViewParamDTO> {
+public class ExportWmsVirtualHisInventoryAgeHandler extends AbstractPageFileEventHandler<VirtualInventoryAgeDTO.HisInventoryAgeDTO, VirtualInventoryAgeDTO.HisInventoryAgeParamDTO> {
 
     @Resource
     private ExportWmsFeign exportWmsFeign;
 
     @Override
-    protected List<VirtualInventoryAgeDTO.ListDTO> getData(FileTask fileTask) {
-        VirtualInventoryAgeDTO.SearchParamDTO dto = readValue(fileTask.getMetaInfo(), new TypeReference<VirtualInventoryAgeDTO.ViewParamDTO>() {
+    protected List<VirtualInventoryAgeDTO.HisInventoryAgeDTO> getData(FileTask fileTask) {
+        VirtualInventoryAgeDTO.HisInventoryAgeParamDTO dto = readValue(fileTask.getMetaInfo(), new TypeReference<VirtualInventoryAgeDTO.HisInventoryAgeParamDTO>() {
         });
         return listSeqData(dto);
     }
 
     @Override
-    protected PagingVO<VirtualInventoryAgeDTO.ListDTO> getPageData(PagingDTO<VirtualInventoryAgeDTO.ViewParamDTO> dto) {
-        return exportWmsFeign.virtualInventoryAgePaging(dto);
+    protected PagingVO<VirtualInventoryAgeDTO.HisInventoryAgeDTO> getPageData(PagingDTO<VirtualInventoryAgeDTO.HisInventoryAgeParamDTO> dto) {
+        return exportWmsFeign.virtualHisInventoryAgePaging(dto);
     }
 
     @Override

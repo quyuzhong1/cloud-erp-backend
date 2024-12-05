@@ -56,7 +56,7 @@ public class VirtualInventoryAgeController extends BaseController {
      */
     @LogViewService
     @PostMapping("/view")
-    public ApiResult<VirtualInventoryAgeDTO.ViewDTO> view(@RequestBody @Validated VirtualInventoryAgeDTO.ViewParamDTO dto) {
+    public ApiResult<VirtualInventoryAgeDTO.ViewDTO> view(@RequestBody @Validated VirtualInventoryAgeDTO.HisInventoryAgeParamDTO dto) {
         VirtualInventoryAgeDTO.ViewDTO view = virtualInventoryDetailService.view(dto);
         return success(view);
     }
@@ -86,8 +86,21 @@ public class VirtualInventoryAgeController extends BaseController {
      */
     @PostMapping("/exportHisInventoryAge")
     @WebAdvanceQuery
-    public ApiResult exportHisInventoryAge(@RequestBody VirtualInventoryAgeDTO.ViewParamDTO dto) {
+    public ApiResult exportHisInventoryAge(@RequestBody VirtualInventoryAgeDTO.HisInventoryAgeParamDTO dto) {
         Boolean flag = virtualInventoryDetailService.exportHisInventoryAge(dto);
         return flag == true ? success() : failure();
+    }
+
+    /**
+     * 库龄明细分页查询
+     * @author will
+     * @date 2024/12/5 9:49
+     * @param dto
+     * @return ApiResult<PagingVO<HisInventoryAgeDTO>>
+     */
+    @PostMapping("/hisInventoryAgePaging")
+    @WebAdvanceQuery
+    public ApiResult<PagingVO<VirtualInventoryAgeDTO.HisInventoryAgeDetailDTO>> hisInventoryAgePaging(@RequestBody @Validated PagingDTO<VirtualInventoryAgeDTO.HisInventoryAgeParamDTO> dto) {
+        return success(virtualInventoryDetailService.hisInventoryAgePaging(dto));
     }
 }

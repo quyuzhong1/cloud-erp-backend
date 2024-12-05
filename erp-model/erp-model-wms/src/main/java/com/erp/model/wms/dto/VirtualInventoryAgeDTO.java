@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 import javax.validation.constraints.NotBlank;
 import java.io.Serializable;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -94,7 +95,7 @@ public class VirtualInventoryAgeDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
-    public static class ViewParamDTO {
+    public static class HisInventoryAgeParamDTO {
         /**
          * skuId
          */
@@ -110,6 +111,11 @@ public class VirtualInventoryAgeDTO implements Serializable {
          */
         @NotBlank(message = "虚拟仓Id不能为空")
         private String virtualWarehouseId;
+
+        /**
+         * 日期
+         */
+        private LocalDate date;
     }
 
     /**
@@ -161,7 +167,7 @@ public class VirtualInventoryAgeDTO implements Serializable {
     }
 
     /**
-     * 详情DTO
+     * 历史库龄DTO
      */
     @Data
     @NoArgsConstructor
@@ -174,5 +180,89 @@ public class VirtualInventoryAgeDTO implements Serializable {
          * skuNo
          */
         private String skuNo;
+        /**
+         * 产品名称
+         */
+        private String productName;
+        /**
+         * 仓库id
+         */
+        private String warehouseId;
+        /**
+         * 仓库名称
+         */
+        private String warehouseName;
+        /**
+         * 虚拟仓id
+         */
+        private String virtualWarehouseId;
+        /**
+         * 虚拟仓id
+         */
+        private String virtualWarehouseCode;
+        /**
+         * 虚拟仓名称
+         */
+        private String virtualWarehouseName;
+        /**
+         * 统计日期
+         */
+        private LocalDate date;
+        /**
+         * 平均库龄（天）
+         */
+        private Integer avgInventoryAgeDays;
+    }
+
+    /**
+     * 历史库龄明细DTO
+     */
+    @Data
+    @NoArgsConstructor
+    public static class HisInventoryAgeDetailDTO extends HisInventoryAgeDTO{
+        /**
+         * 批次号
+         */
+        private String batchNo;
+        /**
+         * 批次出入库时间
+         */
+        private LocalDateTime tradeTime;
+        /**
+         * 流水号
+         */
+        private String transactionNo;
+        /**
+         * 来源类型
+         */
+        private String sourceType;
+        /**
+         * 来源类型名称
+         */
+        private String sourceTypeName;
+        /**
+         * 单据编号
+         */
+        private String sourceCode;
+        /**
+         * 库存状态
+         */
+        private String dictInventoryStatus;
+        /**
+         * 批次入库数量
+         */
+        private Integer batchQty;
+        /**
+         * 批次剩余数量
+         */
+        private Integer waitBatchQty;
+        /**
+         * 库龄（天）
+         */
+        private Integer inventoryAgeDays;
+        /**
+         * 更新时间
+         */
+        private LocalDateTime updateTime;
     }
 }

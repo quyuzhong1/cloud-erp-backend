@@ -58,5 +58,15 @@
         </where>
     </select>
 
+    <!-- 历史库龄 -->
+    <select id="hisInventoryAgePaging"
+            resultType="com.erp.model.wms.dto.VirtualInventoryAgeDTO$HisInventoryAgeDTO">
+
+    </select>
+
+    <!-- 历史库龄明细 -->
+    <select id="hisInventoryAgeDetailPaging"
+            resultType="com.erp.model.wms.dto.VirtualInventoryAgeDTO$HisInventoryAgeDetailDTO"></select>
+
 
 </mapper>

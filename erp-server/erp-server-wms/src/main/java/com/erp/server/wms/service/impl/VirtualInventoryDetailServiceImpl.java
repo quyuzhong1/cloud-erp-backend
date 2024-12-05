@@ -128,7 +128,7 @@ public class VirtualInventoryDetailServiceImpl extends SuperServiceImpl<VirtualI
     }
 
     @Override
-    public VirtualInventoryAgeDTO.ViewDTO view(VirtualInventoryAgeDTO.ViewParamDTO dto) {
+    public VirtualInventoryAgeDTO.ViewDTO view(VirtualInventoryAgeDTO.HisInventoryAgeParamDTO dto) {
         VirtualInventoryAgeDTO.ViewDTO viewDTO = new VirtualInventoryAgeDTO.ViewDTO();
         BeanMapperUtils.copy(dto,viewDTO);
         //产品信息
@@ -155,11 +155,22 @@ public class VirtualInventoryDetailServiceImpl extends SuperServiceImpl<VirtualI
     }
 
     @Override
-    public Boolean exportHisInventoryAge(VirtualInventoryAgeDTO.ViewParamDTO dto) {
+    public Boolean exportHisInventoryAge(VirtualInventoryAgeDTO.HisInventoryAgeParamDTO dto) {
         downloadTaskFeign.saveDownloadTask("历史库龄 ", EXPORT_WMS_VIRTUAL_HIS_INVENTORY_AGE.getCode(), dto);
         return Boolean.TRUE;
     }
 
+    @Override
+    public PagingVO<VirtualInventoryAgeDTO.HisInventoryAgeDTO> hisInventoryAgePaging(PagingDTO<VirtualInventoryAgeDTO.HisInventoryAgeParamDTO> dto) {
+        IPage<VirtualInventoryAgeDTO.HisInventoryAgeDTO> pageData = this.baseMapper.hisInventoryAgePaging(dto.page(), dto.getParams());
+        return new PagingVO<>(pageData);
+    }
+
+    @Override
+    public PagingVO<VirtualInventoryAgeDTO.HisInventoryAgeDetailDTO> hisInventoryAgeDetailPaging(PagingDTO<VirtualInventoryAgeDTO.HisInventoryAgeParamDTO> dto) {
+        IPage<VirtualInventoryAgeDTO.HisInventoryAgeDetailDTO> pageData = this.baseMapper.hisInventoryAgeDetailPaging(dto.page(), dto.getParams());
+        return new PagingVO<>(pageData);
+    }
 
     /**
     * 新增修改处理数据

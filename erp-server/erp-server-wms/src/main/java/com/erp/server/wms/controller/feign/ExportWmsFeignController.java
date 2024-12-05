@@ -695,11 +695,20 @@ public class ExportWmsFeignController {
     }
 
     /**
-     * 销售看板数据导出
+     * 库龄分析数据导出
      */
     @PostMapping("/virtualInventoryAgePaging")
     @WebAdvanceQuery
     public PagingVO<VirtualInventoryAgeDTO.ListDTO> virtualInventoryAgePaging(@RequestBody PagingDTO<VirtualInventoryAgeDTO.SearchParamDTO> dto){
         return virtualInventoryDetailService.paging(dto);
+    }
+
+    /**
+     * 历史库龄数据导出
+     */
+    @PostMapping("/virtualHisInventoryAgePaging")
+    @WebAdvanceQuery
+    public PagingVO<VirtualInventoryAgeDTO.HisInventoryAgeDTO> virtualHisInventoryAgePaging(@RequestBody PagingDTO<VirtualInventoryAgeDTO.HisInventoryAgeParamDTO> dto){
+        return virtualInventoryDetailService.hisInventoryAgePaging(dto);
     }
 }
