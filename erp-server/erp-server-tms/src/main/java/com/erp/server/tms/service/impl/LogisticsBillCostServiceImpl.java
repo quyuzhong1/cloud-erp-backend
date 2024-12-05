@@ -1457,12 +1457,15 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         	return BatchResultDTO.fail(entity.getId(), entity.getTrackNo(), "仅未下推分摊的数据删除，下推费用分摊后不可删除");
         }
         this.removeById(id);
-        tmsCostDetailService.lambdaUpdate()
-        	.eq(TmsCostDetailEntity::getMainId, id)
-        	.set(TmsCostDetailEntity::getIsDeleted, true)
-        	.update();
-        logisticsBillDetailService.removeById(entity.getLogisticsBillDetailId());
-        logisticsBillService.removeById(entity.getLogisticsBillId());
+        Integer count = lambdaQuery().eq(LogisticsBillCostEntity::getLogisticsBillId, entity.getLogisticsBillId()).count();
+		if(count == null || count == 0) {
+	        tmsCostDetailService.lambdaUpdate()
+	        	.eq(TmsCostDetailEntity::getMainId, id)
+	        	.set(TmsCostDetailEntity::getIsDeleted, true)
+	        	.update();
+	        logisticsBillDetailService.removeById(entity.getLogisticsBillDetailId());
+	        logisticsBillService.removeById(entity.getLogisticsBillId());
+        }
         
         return BatchResultDTO.success(entity.getId(), entity.getTrackNo(), OperationTypeEnum.DELETE);
     }
