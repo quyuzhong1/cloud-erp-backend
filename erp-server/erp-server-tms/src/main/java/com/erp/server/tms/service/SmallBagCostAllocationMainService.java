@@ -32,5 +32,11 @@ public interface SmallBagCostAllocationMainService extends SuperService<SmallBag
     */
     Boolean update(SmallBagCostAllocationMainDTO.UpdateDTO dto);
 
-
+    /**
+     * 更新大表生成状态
+     * @param id
+     * @param bigTableStatus
+     * @return
+     */
+    Boolean updateBigTableStatus(String id, String bigTableStatus);
 }

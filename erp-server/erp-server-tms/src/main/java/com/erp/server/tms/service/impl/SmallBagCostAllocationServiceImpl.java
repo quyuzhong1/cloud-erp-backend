@@ -304,16 +304,4 @@ public class SmallBagCostAllocationServiceImpl extends SuperServiceImpl<SmallBag
 		downloadTaskFeign.saveDownloadTask("小包费用分摊列表", FileTaskEventEnum.EXPORT_SMALL_BAG_COST_ALLOCATION.getCode(), dto);
         return Boolean.TRUE;
 	}
-
-	@Override
-	public Boolean updateBigTableStatus(String id, String bigTableStatus) {
-		SmallBagCostAllocationEntity entity = this.getById(id);
-		if (ObjectUtil.isEmpty(entity)) {
-			throw new ServiceException("单据不存在!");
-		}
-		return smallBagCostAllocationMainService.lambdaUpdate()
-				.set(SmallBagCostAllocationMainEntity::getBigTableStatus, bigTableStatus)
-				.eq(SmallBagCostAllocationMainEntity::getId, id)
-				.update();
-	}
 }
