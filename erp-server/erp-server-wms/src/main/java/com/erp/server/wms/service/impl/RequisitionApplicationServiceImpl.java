@@ -2658,16 +2658,22 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
             log.info("获取fastdfs文件为空==========》地址：" + fileTemplateEntity.getUrl());
             return;
         }
+        try{
+            String filePath = "C:\\Users\\Administrator\\Desktop\\Blank_A4_4.jasper";
+            inputStream = new FileInputStream(filePath);
+        }catch (Exception e) {
+            throw new RuntimeException(e);
+        }
         for (RequisitionApplicationDTO.PrintFnskuDetailDTO dtoDetail : dto.getDetails()) {
             Integer printNum = dtoDetail.getPrintNum() == null || dtoDetail.getPrintNum() <= 0 ? 1 : dtoDetail.getPrintNum();
             Map<String, Object> map = new HashMap<>();
             map.put("skuNo", dtoDetail.getSkuNo());
-            map.put("declareEnglishName", dtoDetail.getDeclareEnglishName());
-            if (dtoDetail.getPlatformFnSku().length() > 20) {
+            map.put("platformFnSku", dtoDetail.getPlatformFnSku());
+            if (dtoDetail.getDeclareEnglishName().length() > 20) {
                 //前后各保留8个字符，中间使用***代替
-                map.put("platformFnSku", dtoDetail.getPlatformFnSku().substring(0, 8) + "***" + dtoDetail.getPlatformFnSku().substring(dtoDetail.getPlatformFnSku().length() - 8));
+                map.put("declareEnglishName", dtoDetail.getDeclareEnglishName().substring(0, 8) + "***" + dtoDetail.getDeclareEnglishName().substring(dtoDetail.getDeclareEnglishName().length() - 8));
             } else {
-                map.put("platformFnSku", dtoDetail.getPlatformFnSku());
+                map.put("declareEnglishName", dtoDetail.getDeclareEnglishName());
             }
             byte[] bytes = JasperHelperUtil.exportToPdfStream(inputStream, map);
             String base = Base64.getEncoder().encodeToString(bytes);
