@@ -201,10 +201,13 @@ public class RequisitionApplicationChangeDetailServiceImpl extends SuperServiceI
             }
             if (!dbEntity.getSkuNo().equals(viewDetail.getSkuNo()) || !dbEntity.getNewQty().equals(viewDetail.getNewRequisitionQty())) {
                 if (dbEntity.getSkuNo().equals(viewDetail.getSkuNo())) {
-                    operateLogList.add(new OperateLogDTO.AddModuleOperateLogDTO(StrUtil.format("编辑了SKU的新发货通知sku【{}】数量从【{}】为【{}】", dbEntity.getSkuNo(), dbEntity.getNewQty(), viewDetail.getNewRequisitionQty()), ModuleTypeEnum.REQUISITION_APPLICATION_CHANGE.getCode(), dbEntity.getMainId(), "编辑操作"));
+                    operateLogList.add(new OperateLogDTO.AddModuleOperateLogDTO(StrUtil.format("编辑了SKU的新要货申请通知sku【{}】数量从【{}】为【{}】", dbEntity.getSkuNo(), dbEntity.getNewQty(), viewDetail.getNewRequisitionQty()), ModuleTypeEnum.REQUISITION_APPLICATION_CHANGE.getCode(), dbEntity.getMainId(), "编辑操作"));
                 } else {
-                    operateLogList.add(new OperateLogDTO.AddModuleOperateLogDTO(StrUtil.format("编辑了SKU的新发货通知sku从【{}】为【{}】,数量从【{}】为【{}】", dbEntity.getSkuNo(), viewDetail.getSkuNo(), dbEntity.getNewQty(), viewDetail.getNewRequisitionQty()), ModuleTypeEnum.REQUISITION_APPLICATION_CHANGE.getCode(), dbEntity.getMainId(), "编辑操作"));
+                    operateLogList.add(new OperateLogDTO.AddModuleOperateLogDTO(StrUtil.format("编辑了SKU的新要货申请通知sku从【{}】为【{}】,数量从【{}】为【{}】", dbEntity.getSkuNo(), viewDetail.getSkuNo(), dbEntity.getNewQty(), viewDetail.getNewRequisitionQty()), ModuleTypeEnum.REQUISITION_APPLICATION_CHANGE.getCode(), dbEntity.getMainId(), "编辑操作"));
                 }
+            }
+            if (!dbEntity.getRemark().equals(viewDetail.getRemark())) {
+                operateLogList.add(new OperateLogDTO.AddModuleOperateLogDTO(StrUtil.format("编辑了备注从【{}】为【{}】", viewDetail.getRemark(), dbEntity.getRemark()),  ModuleTypeEnum.REQUISITION_APPLICATION_CHANGE.getCode(), dbEntity.getMainId(), "编辑操作"));
             }
             buildUpdateDetail(viewDetail, dbEntity);
             updateList.add(dbEntity);
