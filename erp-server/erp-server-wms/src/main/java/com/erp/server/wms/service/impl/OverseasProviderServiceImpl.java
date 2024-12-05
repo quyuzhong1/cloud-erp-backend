@@ -344,7 +344,7 @@ public class OverseasProviderServiceImpl extends SuperServiceImpl<OverseasProvid
     private List<ThirdWarehouseCalculateFeeReq> getCalculateFeeReq(String platform, OverseasProviderWarehouseEntity providerWarehouseEntity, ShippingCalculationDTO.PagingParamDTO params) {
         if (PlatformDictEnum.GOOD_CANG.getCode().equals(platform)){
             //邮政编码不能为空
-            if (CharSequenceUtil.isBlank(params.getZipCode())){
+            if (CharSequenceUtil.isBlank(params.getPostCode())){
                 return Collections.emptyList();
             }
             if (CollUtil.isEmpty(params.getToCountryList())){
@@ -375,7 +375,7 @@ public class OverseasProviderServiceImpl extends SuperServiceImpl<OverseasProvid
                     .warehouseCode(providerWarehouseEntity.getPlatformWarehouseCode())
                     .countryCode(country)
                     .shippingMethod(channelCodeList)
-                    .zipCode(params.getZipCode())
+                    .postCode(params.getPostCode())
                     .weight(params.getWeight())
                     .length(params.getLength())
                     .width(params.getWidth())
@@ -393,7 +393,7 @@ public class OverseasProviderServiceImpl extends SuperServiceImpl<OverseasProvid
             list.add(ThirdWarehouseCalculateFeeReq.builder()
                             .warehouseCode(providerWarehouseEntity.getPlatformWarehouseCode())
                             .countryCode(country)
-                            .zipCode(params.getZipCode())
+                            .postCode(params.getPostCode())
                             .weight(params.getWeight())
                             .length(params.getLength())
                             .width(params.getWidth())

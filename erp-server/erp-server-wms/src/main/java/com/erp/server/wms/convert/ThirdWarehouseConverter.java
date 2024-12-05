@@ -2,12 +2,8 @@ package com.erp.server.wms.convert;
 
 import com.erp.model.tms.dto.ShippingCalculationDTO;
 import com.erp.model.wms.dto.PackingTaskDetailDTO;
-import com.erp.model.wms.dto.WmsCartonDetailDTO;
-import com.erp.model.wms.dto.WmsCartonSpecDTO;
 import com.erp.model.wms.dto.third.ThirdWarehouseCalculateFeeReq;
 import com.erp.model.wms.dto.third.ThirdWarehouseCalculateFeeResponse;
-import com.erp.model.wms.entity.WmsCartonDetailEntity;
-import com.erp.model.wms.entity.WmsCartonEntity;
 import com.erp.model.wms.entity.WmsCartonSpecEntity;
 import com.erp.server.wms.convert.tool.TypeConversionWorker;
 import com.sdk.wms.antu.dto.request.AntuCalculateFeeReq;
@@ -56,7 +52,7 @@ public interface ThirdWarehouseConverter {
     })
     WmsCartonSpecEntity historyToSpec(PackingTaskDetailDTO.HistoryCartonDTO historyCartonDTO);
     @Mappings({
-            @Mapping(target = "postcode", source = "zipCode"),
+            @Mapping(target = "postcode", source = "getPostCode"),
             @Mapping(target = "state", source = "province")
     })
     AntuCalculateFeeReq reqToAntuCalculateFeeReq(ThirdWarehouseCalculateFeeReq calculateFeeReq);
@@ -77,7 +73,7 @@ public interface ThirdWarehouseConverter {
     @Mapping(target = "smCode", ignore = true)
     @Mapping(target = "sku", ignore = true)
     @Mapping(target = "propertyLabel", constant = "SFP")
-    @Mapping(target = "postcode", source = "zipCode")
+    @Mapping(target = "postcode", source = "getPostCode")
     @Mapping(target = "isSignServer", ignore = true)
     @Mapping(target = "isResidential", ignore = true)
     @Mapping(target = "isInsuranceService", ignore = true)
@@ -86,7 +82,7 @@ public interface ThirdWarehouseConverter {
 
     @Mapping(target = "channelCode", source = "smCode")
     @Mapping(target = "channelNameEn", source = "smName")
-    @Mapping(target = "channelName", source = "smCode")
+    @Mapping(target = "channelName", source = "smNameCn")
     @Mapping(target = "totalShippingCost", source = "total")
     ThirdWarehouseCalculateFeeResponse gucangResToThirdWarehouseResponse(GoodCangCalculateDeliveryFeeResp goodCangCalculateDeliveryFeeResp);
     List<ThirdWarehouseCalculateFeeResponse> gucangResToThirdWarehouseResponse(List<GoodCangCalculateDeliveryFeeResp> goodCangCalculateDeliveryFeeRespList);

@@ -1,6 +1,5 @@
 package com.erp.model.wms.dto.third;
 
-import com.alibaba.fastjson.annotation.JSONField;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 
@@ -30,7 +29,7 @@ public class ThirdWarehouseCalculateFeeReq extends ThirdWarehouseAuth{
     private List<String> shippingMethod;
 
     //邮政编码
-    private String zipCode;
+    private String postCode;
 
     //包裹重量
     private BigDecimal weight;

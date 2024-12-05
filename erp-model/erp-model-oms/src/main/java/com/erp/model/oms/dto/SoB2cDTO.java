@@ -340,6 +340,26 @@ public class SoB2cDTO implements Serializable {
          * 国家代号
          */
         private String country;
+        /**
+         * 省份编码
+         */
+        private String province;
+        /**
+         * 省份名称
+         */
+        private String provinceName;
+        /**
+         * 城市编码
+         */
+        private String city;
+        /**
+         * 城市名称
+         */
+        private String cityName;
+        /**
+         * 邮编
+         */
+        private String postCode;
 
         /**
          * 是否对接了第三方海外仓
@@ -560,6 +580,26 @@ public class SoB2cDTO implements Serializable {
          * 包装重量单位
          */
         private String weightUnit;
+        /**
+         * 包装长度单位
+         */
+        private String sizeUnit;
+        /**
+         * 包装 长
+         */
+        private BigDecimal length;
+        /**
+         * 包装 宽
+         */
+        private BigDecimal width;
+        /**
+         * 包装 高
+         */
+        private BigDecimal height;
+        /**
+         * 发货仓库id
+         */
+        private String fromWarehouseId;
         /**
          * 审核时间
          */

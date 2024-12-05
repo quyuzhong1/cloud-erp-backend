@@ -13,7 +13,6 @@ import com.common.business.enums.UnitEnum;
 import com.common.business.enums.WarehousePlatformTypeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.constant.EnumMessage;
-import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
@@ -26,8 +25,6 @@ import com.erp.model.tms.dto.LogisticsChannelDTO;
 import com.erp.model.tms.dto.ShippingCalculationDTO;
 import com.erp.model.tms.entity.*;
 import com.erp.model.tms.enums.*;
-import com.erp.model.wms.dto.third.ThirdWarehouseCalculateFeeReq;
-import com.erp.model.wms.dto.third.ThirdWarehouseCalculateFeeResponse;
 import com.erp.model.wms.entity.OverseasProviderEntity;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.oms.feign.SoB2cFeign;
@@ -143,15 +140,52 @@ public class ShippingCalculationServiceImpl implements ShippingCalculationServic
         if (Objects.isNull(overseasProviderEntity)){
             return Collections.emptyList();
         }
+        //请求参数校验
+        checkThirdCalculationParam(params,overseasProviderEntity);
         if (CollUtil.isNotEmpty(params.getChannelIdList())){
             List<LogisticsChannelEntity> logisticsChannelEntityList = logisticsChannelService.listByIds(params.getChannelIdList());
             params.setChannelCodeList(logisticsChannelEntityList.stream().map(LogisticsChannelEntity::getCode).distinct().collect(Collectors.toList()));
-        }else if (CollUtil.isNotEmpty(params.getChannelIdList()) && PlatformDictEnum.ANTU.getCode().equals(overseasProviderEntity.getCode())){
+        }else if (CollUtil.isEmpty(params.getChannelIdList()) && PlatformDictEnum.ANTU.getCode().equals(overseasProviderEntity.getCode())){
             //获取antu启用的所有物流渠道 并根据发货仓进行匹配
             List<LogisticsChannelDTO.ChannelWarehouseDTO> list = logisticsChannelService.listChannelWarehouse(PlatformDictEnum.ANTU.getCode(), AuthStatusEnum.ALREADY.getCode(), WarehousePlatformTypeEnum.OVERSEAS_WAREHOUSE.getCode(),Boolean.FALSE);
             params.setChannelCodeList(list.stream().filter(e -> fromWarehouseId.equals(e.getWarehouseId()) || LogisticsChannelWarehouseTypeEnum.ENUM_ALL.getCode().equals(e.getType())).map(LogisticsChannelDTO.ChannelWarehouseDTO::getCode).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList()));
         }
-        return thirdWarehouseFeign.getCalculateFeeBatch(params);
+        List<ShippingCalculationDTO.ListDTO> calculateFeeBatch = thirdWarehouseFeign.getCalculateFeeBatch(params);
+        handleThirdWarehouseData(calculateFeeBatch, params, overseasProviderEntity);
+        return calculateFeeBatch;
+    }
+
+    /**
+     * 构建第三方返回参数
+     * @param calculateFeeBatch
+     * @param params
+     * @param overseasProviderEntity
+     */
+    private void handleThirdWarehouseData(List<ShippingCalculationDTO.ListDTO> calculateFeeBatch, ShippingCalculationDTO.PagingParamDTO params, OverseasProviderEntity overseasProviderEntity) {
+    }
+
+    /**
+     * 校验参数必填
+     * @param params
+     * @param overseasProviderEntity
+     */
+    private void checkThirdCalculationParam(ShippingCalculationDTO.PagingParamDTO params, OverseasProviderEntity overseasProviderEntity) {
+        if (PlatformDictEnum.ANTU.getCode().equals(overseasProviderEntity.getCode())){
+            if (CollUtil.isEmpty(params.getToCountryList())){
+                throw new ServiceException(ApiError.ERROR_92264);
+            }
+            if (Objects.isNull(params.getWeight())){
+                throw new ServiceException(ApiError.ERROR_92265);
+            }
+        }else if (PlatformDictEnum.GOOD_CANG.getCode().equals(overseasProviderEntity.getCode())){
+            //邮政编码不能为空
+            if (CharSequenceUtil.isBlank(params.getPostCode())){
+                throw new ServiceException(ApiError.ERROR_92267);
+            }
+            if (CollUtil.isEmpty(params.getToCountryList())){
+                throw new ServiceException(ApiError.ERROR_92264);
+            }
+        }
     }
 
     /**

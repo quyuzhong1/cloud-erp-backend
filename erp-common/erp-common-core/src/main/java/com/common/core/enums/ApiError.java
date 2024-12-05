@@ -1077,6 +1077,9 @@ public enum ApiError implements Serializable {
     ERROR_92261(92261,"无关联采购时,退款单价不能为空"),
     ERROR_92262(92262,"采购退货单【{}】无关联采购时,SKU【{}】退款单价不能为空"),
     ERROR_92263(92263,"未找到【{}】仓库"),
+    ERROR_92264(92264,"目的国家不能为空"),
+    ERROR_92265(92265,"重量不能为空"),
+    ERROR_92267(92267,"安兔运费试算时邮编不能为空"),
 
     ERROR_SUBCONTRACT_ISSUE_NOT_EXIST(92124,"委外发料单不存在"),
     ERROR_SUBCONTRACT_ISSUE_DETAIL_NOT_EXIST(92125,"委外发料单明细不存在"),

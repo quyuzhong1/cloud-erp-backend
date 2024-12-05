@@ -5,6 +5,7 @@ import cn.hutool.core.collection.CollUtil;
 import com.common.business.enums.OmsPlatformEnum;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.exception.ServiceException;
+import com.common.core.utils.MathUtil;
 import com.erp.model.wms.dto.third.*;
 import com.erp.model.wms.enums.ThirdWarehouseCancelResultEnum;
 import com.erp.server.wms.convert.OverseasWarehouseInboundConverter;
@@ -130,12 +131,14 @@ public class GoodCangHandlerServiceImpl extends AbstractThirdWarehouseHandler {
             response.setOperatingCost(BigDecimal.ZERO);
         }else {
             for (GoodCangCalculateDeliveryFeeResp.Income cost : income){
-                if ("运输费".equals(cost.getName())){
+                if (cost.getName().contains("运输费")){
                     response.setShippingCost(new BigDecimal(cost.getAmount()));
-                }else if ("报关费".equals(cost.getName())){
-                    response.setDeclareCost(new BigDecimal(cost.getAmount()));
-                }else if ("其他费".equals(cost.getName())){
-                    response.setDeclareCost(new BigDecimal(cost.getAmount()));
+                }else if (cost.getName().contains("关税") || cost.getName().contains("报关费") || cost.getName().contains("偏远住宅费") || cost.getName().contains("附加费")){
+                    BigDecimal amount = new BigDecimal(cost.getAmount());
+                    BigDecimal declareCost = Objects.nonNull(response.getDeclareCost()) ? response.getDeclareCost() : BigDecimal.ZERO;
+                    response.setDeclareCost(MathUtil.add(amount, declareCost));
+                }else if (cost.getName().contains("操作费")){
+                    response.setOperatingCost(new BigDecimal(cost.getAmount()));
                 }
             }
         }

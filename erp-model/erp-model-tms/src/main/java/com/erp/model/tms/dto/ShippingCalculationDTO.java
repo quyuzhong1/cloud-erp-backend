@@ -1,7 +1,5 @@
 package com.erp.model.tms.dto;
 
-import com.alibaba.fastjson.annotation.JSONField;
-import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.base.SortDTO;
 import com.erp.model.tms.entity.ShippingTemplateEntity;
 import com.erp.model.tms.entity.ShippingTemplateRuleEntity;
@@ -115,7 +113,7 @@ public class ShippingCalculationDTO {
         /**
          * 邮编
          */
-        private String zipCode;
+        private String postCode;
     }
 
     /**

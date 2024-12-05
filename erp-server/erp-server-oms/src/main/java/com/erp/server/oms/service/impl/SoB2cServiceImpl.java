@@ -3422,22 +3422,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                     return logisticsBillVo;
                 }).collect(Collectors.toList());
         //获取运输状态
+        Map<String, List<LogisticsBillDTO.LogisticsBillVo>> logisticsBillMap = null;
         if (CollectionUtils.isNotEmpty(billVos)) {
-            Map<String, List<LogisticsBillDTO.LogisticsBillVo>> logisticsBillMap = logisticsBillFeign.getTrackStatusByTrackNo(billVos)
+            logisticsBillMap = logisticsBillFeign.getTrackStatusByTrackNo(billVos)
                     .stream().collect(Collectors.groupingBy(LogisticsBillDTO.LogisticsBillVo::getTrackNo));
-            if (ObjectUtils.isNotEmpty(logisticsBillMap)) {
-                list.forEach(item -> {
-                    if (StringUtils.isNotBlank(item.getLogisticsCode())) {
-                        List<LogisticsBillDTO.LogisticsBillVo> logisticsBillVos = logisticsBillMap.get(item.getLogisticsCode());
-                        if (CollectionUtils.isNotEmpty(logisticsBillVos)) {
-                            LogisticsBillDTO.LogisticsBillVo logisticsBillVo = logisticsBillVos.get(0);
-                            //运输状态
-                            item.setTrackStatus(logisticsBillVo.getTrackStatus());
-                            item.setTrackStatusName(logisticsBillVo.getTrackStatusName());
-                        }
-                    }
-                });
-            }
         }
         //财务信息
         List<SoB2cFinanceEntity> soB2cFinanceEntityList = soB2cFinanceService.listByMainIds(ids);
@@ -3475,7 +3463,15 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         }
         // 属性赋值
         for (SoB2cDTO.ListDTO data : list) {
-
+            if (StringUtils.isNotBlank(data.getLogisticsCode()) && Objects.nonNull(logisticsBillMap)) {
+                List<LogisticsBillDTO.LogisticsBillVo> logisticsBillVos = logisticsBillMap.get(data.getLogisticsCode());
+                if (CollectionUtils.isNotEmpty(logisticsBillVos)) {
+                    LogisticsBillDTO.LogisticsBillVo logisticsBillVo = logisticsBillVos.get(0);
+                    //运输状态
+                    data.setTrackStatus(logisticsBillVo.getTrackStatus());
+                    data.setTrackStatusName(logisticsBillVo.getTrackStatusName());
+                }
+            }
             //店铺
             ShopInfoEntity shopInfoEntity = shopInfoList.stream().filter(obj -> obj.getId().equals(data.getShopId())).findFirst().orElse(null);
             if (ObjectUtils.isNotEmpty(shopInfoEntity)) {
@@ -3682,6 +3678,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             data.setTotalProfit(financialInfoDTO.getProfit());
             data.setProfitCurrency(data.getCurrency());
             data.setProfitRate(new BigDecimal(financialInfoDTO.getProfitRate().replace("%", "")));
+            //订单发货仓
+            data.setFromWarehouseId(CollUtil.isNotEmpty(soB2cDetailList) ? soB2cDetailList.stream().map(SoB2cDetailDTO.ListDTO::getWarehouseId).filter(CharSequenceUtil::isNotBlank).findFirst().orElse(CharSequenceUtil.EMPTY) : CharSequenceUtil.EMPTY);
             data.setDetailList(soB2cDetailList);
             //明细存在一条数据时组合SKU则标识
             labelDTO.setIsCombination(isCombination);

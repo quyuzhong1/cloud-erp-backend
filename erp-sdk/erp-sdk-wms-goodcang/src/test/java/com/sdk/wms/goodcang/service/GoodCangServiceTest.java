@@ -234,7 +234,7 @@ public class GoodCangServiceTest {
     public void getCalculateDeliveryFeeTest() {
         GoodCangCalculateDeliveryFeeReq deliveryFeeReq = GoodCangCalculateDeliveryFeeReq
                 .builder()
-                .warehouseCode("USEA")
+                .warehouseCode("USWE")
                 .countryCode("US")
                 .postcode("33178")
                 .weight(1F)
