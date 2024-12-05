@@ -1,6 +1,7 @@
 package com.erp.server.dmp.inout.handler.input.task.dmp;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -12,6 +13,7 @@ import com.erp.model.dmp.entity.DmpCfgInputConvertEntity;
 import com.erp.model.dmp.entity.DmpInputTaskEntity;
 import com.erp.server.dmp.inout.handler.input.task.mongo.DmpInputMongoHandler;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.CharSequenceUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
@@ -59,12 +61,17 @@ public class DmpInputAmzOrderDoChildDmpHandler extends DmpInputDoChildDmpHandler
 		Map<String, String> billNoIdMap = new HashMap<>();
 		if(CollUtil.isNotEmpty(listMaps)) {
 			for(Map<String, Object> listMap : listMaps) {
-				billNoIdMap.put(listMap.get("third_code").toString(), listMap.get(BaseEntity.FIELD_ID).toString());
+				String thirdCode = listMap.getOrDefault("third_code", "").toString();
+				String shopId = listMap.getOrDefault("shop_id", "").toString();
+				String uniqueId = CharSequenceUtil.format("{}_{}", thirdCode, shopId);
+				billNoIdMap.put(uniqueId, listMap.get(BaseEntity.FIELD_ID).toString());
 			}
 		}
 		for(Map<String, Object> dmpInputMongoChildEntity : dmpInputMongoChildEntityList) {
-			String billNo = dmpInputMongoChildEntity.get("amazonOrderId").toString();
-			String dmpId = billNoIdMap.get(billNo);
+			String thirdCode = dmpInputMongoChildEntity.get("amazonOrderId").toString();
+			String shopId = dmpInputMongoChildEntity.get("shopId").toString();
+			String uniqueId = CharSequenceUtil.format("{}_{}", thirdCode, shopId);
+			String dmpId = billNoIdMap.get(uniqueId);
 			dmpInputMongoChildEntity.put(MAIN_ID, dmpId);
 		}
 	}
