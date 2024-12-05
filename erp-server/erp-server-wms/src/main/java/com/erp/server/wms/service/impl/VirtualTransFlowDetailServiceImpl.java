@@ -2,24 +2,32 @@ package com.erp.server.wms.service.impl;
 
 
 import cn.hutool.core.util.StrUtil;
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.common.business.dto.base.BaseResultDTO;
-import com.erp.model.wms.entity.VirtualTransFlowDetailEntity;
-import com.erp.server.wms.mapper.VirtualTransFlowDetailMapper;
-import com.erp.server.wms.service.VirtualTransFlowDetailService;
+import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
-import com.erp.server.wms.service.OperateLogService;
-import com.erp.server.wms.service.CommonService;
+import com.common.business.vo.PagingVO;
+import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Transactional;
+import com.common.core.utils.BeanMapperUtils;
+import com.erp.model.wms.dto.VirtualTransFlowDetailDTO;
+import com.erp.model.wms.entity.VirtualTransFlowDetailEntity;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
+import com.erp.server.wms.mapper.VirtualTransFlowDetailMapper;
+import com.erp.server.wms.service.OperateLogService;
+import com.erp.server.wms.service.VirtualTransFlowDetailService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
-import com.erp.model.wms.dto.VirtualTransFlowDetailDTO;
-import java.util.*;
-import com.common.core.utils.*;
-import com.common.core.enums.ApiError;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.Optional;
+
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_VIRTUAL_TRANS_FLOW_DETAIL;
+
 /**
  * <p>
  * 虚拟仓库存流水明细 服务实现类
@@ -33,6 +41,10 @@ import com.common.core.enums.ApiError;
 public class VirtualTransFlowDetailServiceImpl extends SuperServiceImpl<VirtualTransFlowDetailMapper, VirtualTransFlowDetailEntity> implements VirtualTransFlowDetailService {
     @Autowired
     private OperateLogService operateLogService;
+
+    @Autowired
+    private DownloadTaskFeign downloadTaskFeign;
+
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -86,11 +98,32 @@ public class VirtualTransFlowDetailServiceImpl extends SuperServiceImpl<VirtualT
         return Boolean.TRUE;
     }
 
+    @Override
+    public PagingVO<VirtualTransFlowDetailDTO.ListDTO> paging(PagingDTO<VirtualTransFlowDetailDTO.SearchParamDTO> dto) {
+        dto.getParams().setPermissionSql(dto.getPermissionSql());
+        IPage<VirtualTransFlowDetailDTO.ListDTO> pageData = this.baseMapper.paging(dto.page(), dto.getParams());
+        // 填充名称
+        fillPageData(pageData.getRecords());
+        return new PagingVO<>(pageData);
+    }
+
+    @Override
+    public Boolean exportExcel(VirtualTransFlowDetailDTO.SearchParamDTO dto) {
+        downloadTaskFeign.saveDownloadTask("库龄流水", EXPORT_WMS_VIRTUAL_TRANS_FLOW_DETAIL.getCode(), dto);
+        return Boolean.TRUE;
+    }
 
     /**
     * 新增修改处理数据
     */
     private void handleData(VirtualTransFlowDetailEntity virtualTransFlowDetailEntity) {
     // TODO 验证数据 & 数据赋值
+    }
+
+    /**
+     * 分页列表处理数据
+     */
+    private void fillPageData(List<VirtualTransFlowDetailDTO.ListDTO> detailList) {
+        // TODO 验证数据 & 数据赋值
     }
 }

@@ -34,8 +34,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.Optional;
 
-import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_VIRTUAL_HIS_INVENTORY_AGE;
-import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_VIRTUAL_INVENTORY_AGE;
+import static com.common.business.enums.FileTaskEventEnum.*;
 
 /**
  * <p>
@@ -170,6 +169,12 @@ public class VirtualInventoryDetailServiceImpl extends SuperServiceImpl<VirtualI
     public PagingVO<VirtualInventoryAgeDTO.HisInventoryAgeDetailDTO> hisInventoryAgeDetailPaging(PagingDTO<VirtualInventoryAgeDTO.HisInventoryAgeParamDTO> dto) {
         IPage<VirtualInventoryAgeDTO.HisInventoryAgeDetailDTO> pageData = this.baseMapper.hisInventoryAgeDetailPaging(dto.page(), dto.getParams());
         return new PagingVO<>(pageData);
+    }
+
+    @Override
+    public Boolean exportHisInventoryAgeDetail(VirtualInventoryAgeDTO.HisInventoryAgeParamDTO dto) {
+        downloadTaskFeign.saveDownloadTask("历史库龄明细", EXPORT_WMS_VIRTUAL_HIS_INVENTORY_AGE_DETAIL.getCode(), dto);
+        return Boolean.TRUE;
     }
 
     /**

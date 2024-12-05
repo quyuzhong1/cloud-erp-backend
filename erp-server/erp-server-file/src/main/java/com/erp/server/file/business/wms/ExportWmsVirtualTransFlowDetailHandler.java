@@ -4,6 +4,7 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.FileTaskEventEnum;
 import com.common.business.vo.PagingVO;
 import com.erp.model.wms.dto.VirtualInventoryAgeDTO;
+import com.erp.model.wms.dto.VirtualTransFlowDetailDTO;
 import com.erp.rpc.wms.feign.ExportWmsFeign;
 import com.erp.server.file.core.AbstractPageFileEventHandler;
 import com.erp.server.file.entity.FileTask;
@@ -14,30 +15,30 @@ import org.springframework.stereotype.Component;
 import javax.annotation.Resource;
 import java.util.List;
 
-import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_VIRTUAL_HIS_INVENTORY_AGE;
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_VIRTUAL_TRANS_FLOW_DETAIL;
 
 @Component
 @Slf4j
-public class ExportWmsVirtualHisInventoryAgeHandler extends AbstractPageFileEventHandler<VirtualInventoryAgeDTO.HisInventoryAgeDTO, VirtualInventoryAgeDTO.HisInventoryAgeParamDTO> {
+public class ExportWmsVirtualTransFlowDetailHandler extends AbstractPageFileEventHandler<VirtualTransFlowDetailDTO.ListDTO, VirtualTransFlowDetailDTO.SearchParamDTO> {
 
     @Resource
     private ExportWmsFeign exportWmsFeign;
 
     @Override
-    protected List<VirtualInventoryAgeDTO.HisInventoryAgeDTO> getData(FileTask fileTask) {
-        VirtualInventoryAgeDTO.HisInventoryAgeParamDTO dto = readValue(fileTask.getMetaInfo(), new TypeReference<VirtualInventoryAgeDTO.HisInventoryAgeParamDTO>() {
+    protected List<VirtualTransFlowDetailDTO.ListDTO> getData(FileTask fileTask) {
+        VirtualTransFlowDetailDTO.SearchParamDTO dto = readValue(fileTask.getMetaInfo(), new TypeReference<VirtualTransFlowDetailDTO.SearchParamDTO>() {
         });
         return listSeqData(dto);
     }
 
     @Override
-    protected PagingVO<VirtualInventoryAgeDTO.HisInventoryAgeDTO> getPageData(PagingDTO<VirtualInventoryAgeDTO.HisInventoryAgeParamDTO> dto) {
-        return exportWmsFeign.hisInventoryAgePaging(dto);
+    protected PagingVO<VirtualTransFlowDetailDTO.ListDTO> getPageData(PagingDTO<VirtualTransFlowDetailDTO.SearchParamDTO> dto) {
+        return exportWmsFeign.virtualTransFlowDetailPaging(dto);
     }
 
     @Override
     public FileTaskEventEnum getEvent() {
-        return EXPORT_WMS_VIRTUAL_HIS_INVENTORY_AGE;
+        return EXPORT_WMS_VIRTUAL_TRANS_FLOW_DETAIL;
     }
 
     @Override

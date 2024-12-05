@@ -1,24 +1,22 @@
 package com.erp.server.wms.controller.api;
 
 
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import javax.annotation.Resource;
-import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.*;
-import com.common.core.anno.LogAction;
+import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogSystemModule;
-import com.common.core.anno.LogViewService;
-import com.common.core.enums.LogActionEnum;
-import com.common.business.dto.base.*;
+import com.common.core.controller.BaseController;
+import com.common.core.controller.vo.ApiResult;
+import com.erp.model.wms.dto.VirtualTransFlowDetailDTO;
+import com.erp.server.wms.service.VirtualTransFlowDetailService;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.common.core.controller.BaseController;
-import com.erp.server.wms.service.VirtualTransFlowDetailService;
-import com.common.core.controller.vo.ApiResult;
-import com.common.business.annotation.DataPermission;
-import com.common.business.enums.DataAttributeEnum;
-import com.erp.model.wms.dto.VirtualTransFlowDetailDTO;
+import javax.annotation.Resource;
 
 /**
  * 虚拟仓库存流水明细
@@ -35,38 +33,31 @@ public class VirtualTransFlowDetailController extends BaseController {
     @Resource
     private VirtualTransFlowDetailService virtualTransFlowDetailService;
 
+
     /**
-    * 新增
-    * @author will
-    * @date:  2024-12-03
-    * @param dto
-    * @return ApiResult<String>
-    */
-    @PostMapping("/add")
-    @LogAction(value = LogActionEnum.INSERT, desc = "虚拟仓库存流水明细新增")
-    public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated VirtualTransFlowDetailDTO.AddDTO dto) {
-        return success(virtualTransFlowDetailService.add(dto));
+     * 分页查询
+     * @author will
+     * @date 2024/12/5 10:54
+     * @param dto
+     * @return ApiResult<PagingVO<ListDTO>>
+     */
+    @PostMapping("/paging")
+    @WebAdvanceQuery
+    public ApiResult<PagingVO<VirtualTransFlowDetailDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<VirtualTransFlowDetailDTO.SearchParamDTO> dto) {
+        return success(virtualTransFlowDetailService.paging(dto));
     }
 
     /**
-    * 修改
-    * @author will
-    * @date:  2024-12-03
-    * @param dto
-    * @return ApiResult
-    */
-    @PostMapping("/update")
-    @LogAction(value = LogActionEnum.UPDATE, desc = "虚拟仓库存流水明细修改")
-        @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-        tableField = "create_user_id",
-        menuCode = "wms:virtualTransFlowDetail:update",
-        serviceClass = VirtualTransFlowDetailService.class,
-        keyIdName = "id")
-    public ApiResult<?> update(@RequestBody @Validated VirtualTransFlowDetailDTO.UpdateDTO dto) {
-        virtualTransFlowDetailService.update(dto);
-        return success();
+     * 导出
+     * @author will
+     * @date 2024/12/5 11:00
+     * @param dto
+     * @return ApiResult
+     */
+    @PostMapping("/exportExcel")
+    @WebAdvanceQuery
+    public ApiResult exportExcel(@RequestBody VirtualTransFlowDetailDTO.SearchParamDTO dto) {
+        Boolean flag = virtualTransFlowDetailService.exportExcel(dto);
+        return flag == true ? success() : failure();
     }
-
-
-
 }

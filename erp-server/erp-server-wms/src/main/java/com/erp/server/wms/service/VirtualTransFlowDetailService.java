@@ -1,4 +1,5 @@
 package com.erp.server.wms.service;
+import com.common.business.vo.PagingVO;
 import com.erp.model.wms.entity.VirtualTransFlowDetailEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
@@ -32,5 +33,20 @@ public interface VirtualTransFlowDetailService extends SuperService<VirtualTrans
     */
     Boolean update(VirtualTransFlowDetailDTO.UpdateDTO dto);
 
-
+    /**
+     * 分页查询
+     * @author will
+     * @date 2024/12/5 10:54
+     * @param dto
+     * @return PagingVO<ListDTO>
+     */
+    PagingVO<VirtualTransFlowDetailDTO.ListDTO> paging(PagingDTO<VirtualTransFlowDetailDTO.SearchParamDTO> dto);
+    /**
+     * 导出
+     * @author will
+     * @date 2024/12/5 11:00
+     * @param dto
+     * @return Boolean
+     */
+    Boolean exportExcel(VirtualTransFlowDetailDTO.SearchParamDTO dto);
 }

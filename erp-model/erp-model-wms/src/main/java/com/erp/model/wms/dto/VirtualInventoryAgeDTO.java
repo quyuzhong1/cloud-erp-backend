@@ -76,7 +76,7 @@ public class VirtualInventoryAgeDTO implements Serializable {
     }
 
     /**
-     * 详情
+     * 查询参数
      */
     @Data
     @NoArgsConstructor

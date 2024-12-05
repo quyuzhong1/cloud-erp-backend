@@ -85,4 +85,13 @@ public interface VirtualInventoryDetailService extends SuperService<VirtualInven
      * @return PagingVO<HisInventoryAgeDetailDTO>
      */
     PagingVO<VirtualInventoryAgeDTO.HisInventoryAgeDetailDTO> hisInventoryAgeDetailPaging(PagingDTO<VirtualInventoryAgeDTO.HisInventoryAgeParamDTO> dto);
+
+    /**
+     * 导出历史库龄明细
+     * @author will
+     * @date 2024/12/4 16:40
+     * @param dto
+     * @return Boolean
+     */
+    Boolean exportHisInventoryAgeDetail(VirtualInventoryAgeDTO.HisInventoryAgeParamDTO dto);
 }

@@ -96,11 +96,11 @@ public class VirtualInventoryAgeController extends BaseController {
      * @author will
      * @date 2024/12/5 9:49
      * @param dto
-     * @return ApiResult<PagingVO<HisInventoryAgeDTO>>
+     * @return ApiResult<PagingVO<HisInventoryAgeDetailDTO>>
      */
-    @PostMapping("/hisInventoryAgePaging")
+    @PostMapping("/hisInventoryAgeDetailPaging")
     @WebAdvanceQuery
-    public ApiResult<PagingVO<VirtualInventoryAgeDTO.HisInventoryAgeDetailDTO>> hisInventoryAgePaging(@RequestBody @Validated PagingDTO<VirtualInventoryAgeDTO.HisInventoryAgeParamDTO> dto) {
-        return success(virtualInventoryDetailService.hisInventoryAgePaging(dto));
+    public ApiResult<PagingVO<VirtualInventoryAgeDTO.HisInventoryAgeDetailDTO>> hisInventoryAgeDetailPaging(@RequestBody @Validated PagingDTO<VirtualInventoryAgeDTO.HisInventoryAgeParamDTO> dto) {
+        return success(virtualInventoryDetailService.hisInventoryAgeDetailPaging(dto));
     }
 }

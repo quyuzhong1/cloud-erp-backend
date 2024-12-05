@@ -14,30 +14,30 @@ import org.springframework.stereotype.Component;
 import javax.annotation.Resource;
 import java.util.List;
 
-import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_VIRTUAL_HIS_INVENTORY_AGE;
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_VIRTUAL_HIS_INVENTORY_AGE_DETAIL;
 
 @Component
 @Slf4j
-public class ExportWmsVirtualHisInventoryAgeHandler extends AbstractPageFileEventHandler<VirtualInventoryAgeDTO.HisInventoryAgeDTO, VirtualInventoryAgeDTO.HisInventoryAgeParamDTO> {
+public class ExportWmsVirtualHisInventoryAgeDetailHandler extends AbstractPageFileEventHandler<VirtualInventoryAgeDTO.HisInventoryAgeDetailDTO, VirtualInventoryAgeDTO.HisInventoryAgeParamDTO> {
 
     @Resource
     private ExportWmsFeign exportWmsFeign;
 
     @Override
-    protected List<VirtualInventoryAgeDTO.HisInventoryAgeDTO> getData(FileTask fileTask) {
+    protected List<VirtualInventoryAgeDTO.HisInventoryAgeDetailDTO> getData(FileTask fileTask) {
         VirtualInventoryAgeDTO.HisInventoryAgeParamDTO dto = readValue(fileTask.getMetaInfo(), new TypeReference<VirtualInventoryAgeDTO.HisInventoryAgeParamDTO>() {
         });
         return listSeqData(dto);
     }
 
     @Override
-    protected PagingVO<VirtualInventoryAgeDTO.HisInventoryAgeDTO> getPageData(PagingDTO<VirtualInventoryAgeDTO.HisInventoryAgeParamDTO> dto) {
-        return exportWmsFeign.hisInventoryAgePaging(dto);
+    protected PagingVO<VirtualInventoryAgeDTO.HisInventoryAgeDetailDTO> getPageData(PagingDTO<VirtualInventoryAgeDTO.HisInventoryAgeParamDTO> dto) {
+        return exportWmsFeign.hisInventoryAgeDetailPaging(dto);
     }
 
     @Override
     public FileTaskEventEnum getEvent() {
-        return EXPORT_WMS_VIRTUAL_HIS_INVENTORY_AGE;
+        return EXPORT_WMS_VIRTUAL_HIS_INVENTORY_AGE_DETAIL;
     }
 
     @Override

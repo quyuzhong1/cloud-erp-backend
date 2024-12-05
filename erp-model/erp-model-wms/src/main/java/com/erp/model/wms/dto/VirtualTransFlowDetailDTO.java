@@ -1,14 +1,17 @@
 package com.erp.model.wms.dto;
 
-import java.time.LocalDateTime;
+import com.common.business.dto.AdvanceQueryDTO;
+import com.common.business.dto.base.SortDTO;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
+
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.time.LocalDateTime;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.Size;
+import java.util.List;
+import java.util.Map;
 
 /**
  * <p>
@@ -23,7 +26,34 @@ import javax.validation.constraints.Size;
 public class VirtualTransFlowDetailDTO implements Serializable {
 
 
+    /**
+     * 分页显示数据
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ListDTO {
 
+        private String skuId;
+    }
+
+
+    /**
+     * 查询参数
+     */
+    @Data
+    @NoArgsConstructor
+    public static class SearchParamDTO extends SortDTO {
+
+        /**
+         * 页面高级查询
+         */
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
+
+        /**
+         * sqlMap 默认key default
+         */
+        private Map<String,String> sqlMap;
+    }
 
     /**
     * 详情

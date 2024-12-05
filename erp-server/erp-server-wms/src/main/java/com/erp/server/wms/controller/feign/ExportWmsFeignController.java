@@ -148,6 +148,10 @@ public class ExportWmsFeignController {
     @Resource
     private VirtualInventoryDetailService virtualInventoryDetailService;
 
+    @Resource
+    private VirtualTransFlowDetailService virtualTransFlowDetailService;
+
+
 
     @PostMapping("/b2cDelivery")
     @DataPermission(operationType = DataAttributeEnum.LIST,
@@ -706,9 +710,28 @@ public class ExportWmsFeignController {
     /**
      * 历史库龄数据导出
      */
-    @PostMapping("/virtualHisInventoryAgePaging")
+    @PostMapping("/hisInventoryAgePaging")
     @WebAdvanceQuery
-    public PagingVO<VirtualInventoryAgeDTO.HisInventoryAgeDTO> virtualHisInventoryAgePaging(@RequestBody PagingDTO<VirtualInventoryAgeDTO.HisInventoryAgeParamDTO> dto){
+    public PagingVO<VirtualInventoryAgeDTO.HisInventoryAgeDTO> hisInventoryAgePaging(@RequestBody PagingDTO<VirtualInventoryAgeDTO.HisInventoryAgeParamDTO> dto){
         return virtualInventoryDetailService.hisInventoryAgePaging(dto);
+    }
+
+    /**
+     * 历史库龄明细数据导出
+     */
+    @PostMapping("/hisInventoryAgeDetailPaging")
+    @WebAdvanceQuery
+    public PagingVO<VirtualInventoryAgeDTO.HisInventoryAgeDetailDTO> hisInventoryAgeDetailPaging(@RequestBody PagingDTO<VirtualInventoryAgeDTO.HisInventoryAgeParamDTO> dto){
+        return virtualInventoryDetailService.hisInventoryAgeDetailPaging(dto);
+    }
+
+
+    /**
+     * 历史库龄明细数据导出
+     */
+    @PostMapping("/virtualTransFlowDetailPaging")
+    @WebAdvanceQuery
+    public PagingVO<VirtualTransFlowDetailDTO.ListDTO> virtualTransFlowDetailPaging(@RequestBody PagingDTO<VirtualTransFlowDetailDTO.SearchParamDTO> dto){
+        return virtualTransFlowDetailService.paging(dto);
     }
 }

@@ -33,5 +33,10 @@
         qty, cur_inventory_qty, virtual_trans_flow_id, virtual_inventory_detail_id, trade_time
     </sql>
 
+    <!-- 分页查询 -->
+    <select id="paging" resultType="com.erp.model.wms.dto.VirtualTransFlowDetailDTO$ListDTO">
+
+    </select>
+
 
 </mapper>
