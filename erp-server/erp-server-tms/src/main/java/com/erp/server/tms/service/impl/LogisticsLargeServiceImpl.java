@@ -136,6 +136,12 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
     @Resource
     private TransferDeclareCostAllocationService transferDeclareCostAllocationService;
 
+    @Resource
+    private SmallBagCostAllocationDetailService smallBagCostAllocationDetailService;
+
+    @Resource
+    private SmallBagCostAllocationMainService smallBagCostAllocationMainService;
+
 
     @Override
     public PagingVO<LogisticsLargeDTO.PagingViewDTO> paging(PagingDTO<LogisticsLargeDTO.PagingParamDTO> dto) {
@@ -457,16 +463,31 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
         return this.lambdaQuery().eq(LogisticsLargeEntity::getSourceId, ids).list();
     }
 
-    @Override
-    public BatchResultDTO generateSmallBagCostAllocationTable(SmallBagCostAllocationEntity costAllocationEntity, List<SmallBagCostAllocationDetailEntity> costAllocationDetailEntities, SoOutstockEntity soOutstockEntity, SoOutstockDetailEntity soOutstockDetailEntity) {
+    /**
+     * 小包分摊下推物流大表
+     *
+     * @param smallBagCostAllocationMainEntity         小包分摊
+     * @param costAllocationEntity         小包分摊明细
+     * @param costAllocationDetailEntities 小包分摊明细费用
+     * @param soOutstockEntity             销售出库主表
+     * @param soOutstockDetailEntity       销售出库明细信息
+     * @return com.common.business.dto.base.BatchResultDTO
+     * @Author Luo_WG
+     * @Date 2024/12/3 15:37
+     **/
+    private BatchResultDTO smallBagCostAllocationHandler(SmallBagCostAllocationMainEntity smallBagCostAllocationMainEntity,
+                                                         SmallBagCostAllocationEntity costAllocationEntity,
+                                                         List<SmallBagCostAllocationDetailEntity> costAllocationDetailEntities,
+                                                         SoOutstockEntity soOutstockEntity,
+                                                         SoOutstockDetailEntity soOutstockDetailEntity) {
         List<LogisticsLargeEntity> logisticsLargeEntities = this.listByIdSourceId(Arrays.asList(costAllocationEntity.getId()));
 
         //已确认才能下推
-        if (!SmallBagCostAllocationReportStatusEnum.CONFIRMED.getCode().equals(costAllocationEntity.getReportStatus())) {
+        if (!SmallBagCostAllocationReportStatusEnum.CONFIRMED.getCode().equals(smallBagCostAllocationMainEntity.getReportStatus())) {
             throw new ServiceException(ApiError.ERROR_SMALL_BAG_NOT_CONFIRMED);
         }
         //已生成物流大表不能再次生成
-        if (SmallBagCostAllocationBigTableStatusEnum.DONE.getCode().equals(costAllocationEntity.getBigTableStatus())) {
+        if (SmallBagCostAllocationBigTableStatusEnum.DONE.getCode().equals(smallBagCostAllocationMainEntity.getBigTableStatus())) {
             throw new ServiceException(ApiError.ERROR_EXISTS_LOGISTICS_LARGE);
         }
 
@@ -474,15 +495,15 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
         addDTO.setSourceId(costAllocationEntity.getId());
         addDTO.setSourceType(SourceTypeEnum.SMALL_BAG_COST_ALLOCATION.getCode());
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM");
-        if (CharSequenceUtil.isNotBlank(costAllocationEntity.getReportDate())) {
-            LocalDate reconciliationMonth = LocalDate.parse(costAllocationEntity.getReportDate(), formatter);
+        if (CharSequenceUtil.isNotBlank(smallBagCostAllocationMainEntity.getReportDate())) {
+            LocalDate reconciliationMonth = LocalDate.parse(smallBagCostAllocationMainEntity.getReportDate(), formatter);
             addDTO.setReconciliationMonth(reconciliationMonth);
         }
 
         addDTO.setOutstockCode(soOutstockEntity.getCode());
         addDTO.setOutstockTime(soOutstockEntity.getBillDate().atStartOfDay());
 
-        LogisticsBillCostEntity logisticsBillCostEntity = logisticsBillCostService.getById(costAllocationEntity.getCostId());
+        LogisticsBillCostEntity logisticsBillCostEntity = logisticsBillCostService.getById(smallBagCostAllocationMainEntity.getCostId());
         if (ObjectUtil.isEmpty(logisticsBillCostEntity)) {
             throw new ServiceException("物流单费用信息未找到");
         }
@@ -516,7 +537,7 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
             List<LogisticsLargeEntity> list = this.lambdaQuery()
                     .eq(LogisticsLargeEntity::getOutstockCode, outstockCode)
                     .eq(LogisticsLargeEntity::getSkuId, skuId)
-                    .le(LogisticsLargeEntity::getReconciliationMonth, LocalDate.parse(costAllocationEntity.getReportDate(), formatter))
+                    .le(LogisticsLargeEntity::getReconciliationMonth, LocalDate.parse(smallBagCostAllocationMainEntity.getReportDate(), formatter))
                     .list();
             List<LogisticsLargeEntity> estimatedList = list.stream()
                     .filter(req -> ReconciliationBillTypeEnum.ESTIMATED.getCode().equals(req.getReconciliationBillType()))
@@ -712,8 +733,51 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
         this.add(addDTO);
 
         //修改小包费用分摊生成状态
-        smallBagCostAllocationService.updateBigTableStatus(costAllocationEntity.getId(), SmallBagCostAllocationBigTableStatusEnum.DONE.getCode());
+        smallBagCostAllocationMainService.updateBigTableStatus(smallBagCostAllocationMainEntity.getId(), SmallBagCostAllocationBigTableStatusEnum.DONE.getCode());
         return BatchResultDTO.success(costAllocationEntity.getId(), addDTO.getOutstockCode(), OperationTypeEnum.ADD);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public List<BatchResultDTO> generateSmallBagCostAllocationTable(SmallBagCostAllocationMainEntity smallBagCostAllocationMainEntity) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>();
+
+        List<SmallBagCostAllocationEntity> entityList = smallBagCostAllocationService.lambdaQuery().eq(SmallBagCostAllocationEntity::getMainId, smallBagCostAllocationMainEntity.getId()).list();
+        List<String> ids = entityList.stream().map(req -> req.getId()).collect(Collectors.toList());
+        List<SmallBagCostAllocationDetailEntity> smallBagCostAllocationDetailEntities = smallBagCostAllocationDetailService.listByMainIds(ids);
+
+        //销售出库单
+        List<String> outstockDetailIds = entityList.stream().map(req -> req.getOutstockDetailId()).distinct().collect(Collectors.toList());
+        List<SoOutstockDetailEntity> soOutstockDetailList = FeignQuery.create(SoOutstockDetailEntity.class).in(SoOutstockDetailEntity::getId, outstockDetailIds).list();
+        List<String> outstockIds = soOutstockDetailList.stream().map(req -> req.getMainId()).distinct().collect(Collectors.toList());
+        List<SoOutstockEntity> soOutstockEntitylList = FeignQuery.create(SoOutstockEntity.class).in(SoOutstockEntity::getId, outstockIds).list();
+
+        for (SmallBagCostAllocationEntity costAllocationEntity : entityList) {
+            SoOutstockDetailEntity soOutstockDetailEntity = soOutstockDetailList.stream().filter(req -> req.getId().equals(costAllocationEntity.getOutstockDetailId())).findFirst().orElse(null);
+            if (ObjectUtil.isEmpty(soOutstockDetailEntity)) {
+                resultDTOS.add(BatchResultDTO.fail(costAllocationEntity.getId(), costAllocationEntity.getId(),"未找到销售出库单详情信息！"));
+            }
+            SoOutstockEntity soOutstockEntity = soOutstockEntitylList.stream().filter(req -> req.getId().equals(soOutstockDetailEntity.getMainId())).findFirst().orElse(null);
+            if (ObjectUtil.isEmpty(soOutstockEntity)) {
+                resultDTOS.add(BatchResultDTO.fail(costAllocationEntity.getId(), costAllocationEntity.getId(),"未找到销售出库单主表信息！"));
+            }
+
+            List<SmallBagCostAllocationDetailEntity> costAllocationDetailEntities = smallBagCostAllocationDetailEntities.stream().filter(req -> req.getMainId().equals(costAllocationEntity.getId())).collect(Collectors.toList());
+            if (CollUtil.isEmpty(costAllocationDetailEntities)) {
+                resultDTOS.add(BatchResultDTO.fail(costAllocationEntity.getId(),soOutstockEntity.getCode() + " 产品编码" +soOutstockDetailEntity.getSkuNo(),"未找到小包费用分摊明细信息！"));
+            }
+
+            BatchResultDTO result = null;
+            try {
+                result = this.smallBagCostAllocationHandler(smallBagCostAllocationMainEntity, costAllocationEntity, costAllocationDetailEntities, soOutstockEntity, soOutstockDetailEntity);
+            } catch (Exception e) {
+                log.error("小包费用分摊生成物流大表失败{}", e);
+                result = BatchResultDTO.fail(costAllocationEntity.getId(), soOutstockEntity.getCode() + " 产品编码" +soOutstockDetailEntity.getSkuNo(), e.getMessage());
+            }
+            resultDTOS.add(result);
+        }
+
+        return resultDTOS;
     }
 
     /**

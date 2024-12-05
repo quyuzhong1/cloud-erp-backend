@@ -99,7 +99,14 @@ public interface LogisticsLargeService extends SuperService<LogisticsLargeEntity
      * @Author Luo_WG
      * @Date 2024/12/3 15:37
      **/
-    BatchResultDTO generateSmallBagCostAllocationTable(SmallBagCostAllocationEntity costAllocationEntity, List<SmallBagCostAllocationDetailEntity> costAllocationDetailEntities, SoOutstockEntity soOutstockEntity, SoOutstockDetailEntity soOutstockDetailEntity);
+    /**
+     * 小包分摊下推物流大表
+     * @Author Luo_WG
+     * @Date 2024/12/5 17:16
+     * @param [smallBagCostAllocationMainEntity]
+     * @return java.util.List<com.common.business.dto.base.BatchResultDTO>
+     **/
+    List<BatchResultDTO> generateSmallBagCostAllocationTable(SmallBagCostAllocationMainEntity smallBagCostAllocationMainEntity);
 
     /**
      * 中转费用分摊生成物流大表

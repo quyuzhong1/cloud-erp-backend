@@ -1,8 +1,10 @@
 package com.erp.server.tms.service.impl;
 
 
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseResultDTO;
+import com.erp.model.tms.entity.SmallBagCostAllocationEntity;
 import com.erp.model.tms.entity.SmallBagCostAllocationMainEntity;
 import com.erp.server.tms.mapper.SmallBagCostAllocationMainMapper;
 import com.erp.server.tms.service.SmallBagCostAllocationMainService;
@@ -92,5 +94,17 @@ public class SmallBagCostAllocationMainServiceImpl extends SuperServiceImpl<Smal
     */
     private void handleData(SmallBagCostAllocationMainEntity smallBagCostAllocationMainEntity) {
     // TODO 验证数据 & 数据赋值
+    }
+
+    @Override
+    public Boolean updateBigTableStatus(String id, String bigTableStatus) {
+        SmallBagCostAllocationMainEntity entity = this.getById(id);
+        if (ObjectUtil.isEmpty(entity)) {
+            throw new ServiceException("单据不存在!");
+        }
+        return this.lambdaUpdate()
+                .set(SmallBagCostAllocationMainEntity::getBigTableStatus, bigTableStatus)
+                .eq(SmallBagCostAllocationMainEntity::getId, id)
+                .update();
     }
 }
