@@ -3,7 +3,6 @@ package com.erp.server.tms.mapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.common.business.dto.base.BaseDropDownDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.erp.model.tms.dto.LogisticsBillDetailQueryDTO;
 import com.erp.model.tms.dto.LogisticsChannelDTO;
@@ -83,4 +82,16 @@ public interface LogisticsChannelMapper extends BaseMapper<LogisticsChannelEntit
     List<LogisticsChannelDTO.WarnReportDTO> getWarnReportByChannel(@Param("query") LogisticsBillDetailQueryDTO query);
 
     IPage<LogisticsChannelDTO.PagingViewDTO> paging(Page<LogisticsChannelDTO.PagingViewDTO> query, @Param("params") LogisticsChannelDTO.PagingParamDTO params);
+
+    /**
+     * 获取物流类型/仓库类型下 渠道列表
+     * @param platform
+     * @param authStatus
+     * @param warehousePlatformType
+     * @param disabled
+     * @return
+     */
+    List<LogisticsChannelDTO.ChannelWarehouseDTO> listChannelWarehouse(@Param("platform") String platform, @Param("authStatus") String authStatus, @Param("warehousePlatformType") String warehousePlatformType, @Param("disabled") Boolean disabled);
+
+    Boolean estimateIsOutOfRangeDelivery(@Param("logisticsChannelId")String logisticsChannelId, @Param("country")String country, @Param("postCode")String postCode);
 }

@@ -106,4 +106,7 @@ public interface LogisticsFeign {
      */
     @PostMapping("/feign/logistics/webhookByTrack123")
     void webhookByTrack123(@RequestBody LogisticsTrackDTO.TrackWebHookDTO dto);
+
+    @GetMapping("/feign/logistics/estimateIsOutOfRangeDelivery")
+    Boolean estimateIsOutOfRangeDelivery(@RequestParam("logisticsChannelId")String logisticsChannelId, @RequestParam("country")String country, @RequestParam("postCode")String postCode);
 }

@@ -610,6 +610,11 @@ public class SoB2cDTO implements Serializable {
          * 面单打印时间
          */
         private LocalDateTime finishPrintTime;
+
+        /**
+         * 是否超出范围派送
+         */
+        private Boolean isOutOfRangeDelivery;
     }
 
     @Data
@@ -1098,8 +1103,10 @@ public class SoB2cDTO implements Serializable {
          */
         private Boolean autoGetTrackNo;
 
-
-
+        /**
+         *是否自动获取跟踪号提交发货（非超范围派送订单）
+         */
+        private Boolean autoGetTrackNotOfRangeDelivery;
     }
 
     /**

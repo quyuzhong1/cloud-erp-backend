@@ -238,4 +238,20 @@ public interface LogisticsChannelService extends SuperService<LogisticsChannelEn
     List<LogisticsChannelDTO.WarnReportDTO> getWarnReportByChannel(LogisticsBillDetailQueryDTO query);
 
     PagingVO<LogisticsChannelDTO.PagingViewDTO> paging(PagingDTO<LogisticsChannelDTO.PagingParamDTO> dto);
+
+    /**
+     * 获取物流类型/仓库类型下 渠道列表
+     * @param platform 物流平台
+     * @param authStatus 授权类型
+     * @param warehousePlatformType 海外仓类型
+     * @param disabled 是否启用
+     * @return
+     */
+    List<LogisticsChannelDTO.ChannelWarehouseDTO> listChannelWarehouse(String platform, String authStatus, String warehousePlatformType, Boolean disabled);
+    /**
+     * 根据渠道id ， 国家二字码，邮编判断是否属于偏远邮编组
+     * @param
+     * @return
+     */
+    Boolean estimateIsOutOfRangeDelivery(String logisticsChannelId, String country, String postCode);
 }

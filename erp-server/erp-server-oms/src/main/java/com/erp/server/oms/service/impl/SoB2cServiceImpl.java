@@ -138,9 +138,7 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -1575,13 +1573,19 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
-    public BatchResultDTO getLogisticsCodeInner(String id, Boolean isDelivery) {
+    public BatchResultDTO getLogisticsCodeInner(String id, Boolean isDelivery,Boolean remoteNotDlivery) {
         String message = "";
         //B2C销售订单主表信息
         SoB2cEntity entity = this.getById(id);
         if (ObjectUtils.isEmpty(entity)) {
             throw new ServiceException(ApiError.ERROR_SO_B2C_NOT_EXIST);
         }
+        //判断订单是否是超范围派送并且需要排除超范围派送
+        Boolean isOutOfRangeDelivery = entity.getIsOutOfRangeDelivery();
+        if(Boolean.TRUE.equals(isOutOfRangeDelivery) && Boolean.TRUE.equals(remoteNotDlivery)){
+            isDelivery = false ;
+        }
+
         String paramJson = "";
         String returnJson = "";
 
@@ -1908,7 +1912,12 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     @Override
     @DistributeLocker(businessType = RedisKeyConstant.SO_B2C_ORDER_KEY, keyName = "id", waiteTime = 60)
     public BatchResultDTO getLogisticsCode(String id, Boolean isDelivery) {
-        return soB2cService.getLogisticsCodeInner(id, isDelivery);
+        return soB2cService.getLogisticsCodeInner(id,isDelivery,false);
+    }
+
+    @DistributeLocker(businessType = RedisKeyConstant.SO_B2C_ORDER_KEY,keyName = "id",waiteTime = 60)
+    public BatchResultDTO getLogisticsCodeNotRemote(String id, Boolean isDelivery) {
+        return soB2cService.getLogisticsCodeInner(id,isDelivery,true);
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -4628,12 +4637,14 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         Boolean result = Objects.nonNull(matchResult);
         SoB2cDTO.RuleResultDTO resultDTO = new SoB2cDTO.RuleResultDTO();
         Boolean autoGetTrackNo = Boolean.FALSE;
+        Boolean autoGetTrackNotOfRangeDelivery = Boolean.FALSE;
         //表示通过
         if (result) {
             //物流商id
             String logisticsChannelId = matchResult.getLogisticsChannelId();
             String logisticsChannelName = matchResult.getLogisticsChannelName();
             autoGetTrackNo = matchResult.getAutoGetTrackNo();
+            autoGetTrackNotOfRangeDelivery = matchResult.getAutoGetTrackNotOfRangeDelivery();
             if (StringUtils.isNotBlank(logisticsChannelId)) {
                 SoB2cLogisticsEntity b2cLogistics = soB2cLogisticsService.getByMainId(id);
                 if (Objects.nonNull(b2cLogistics)) {
@@ -4645,6 +4656,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                         soB2cLogisticsService.updateById(b2cLogistics);
                     }
                 }
+                //根据渠道和(国家+邮编）判断订单是否超范围配送
+                estimateIsOutOfRangeDelivery(entity.getId(), logisticsChannelId);
             }
             if (StringUtils.isNotBlank(matchResult.getName())) {
                 String msg = CharSequenceUtil.format("自动匹配物流规则成功，规则名称：{}", matchResult.getName());
@@ -4662,7 +4675,19 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
         resultDTO.setIsRuleMatch(result);
         resultDTO.setAutoGetTrackNo(autoGetTrackNo);
+        resultDTO.setAutoGetTrackNotOfRangeDelivery(autoGetTrackNotOfRangeDelivery);
         return resultDTO;
+    }
+
+    private void estimateIsOutOfRangeDelivery(String soB2cId, String logisticsChannelId) {
+        //根据渠道和(国家+邮编）判断订单是否超范围配送
+        SoB2cReceiverEntity receiver = soB2cReceiverService.getByMainId(soB2cId);
+        if(null != receiver){
+            Boolean isOutOfRangeDelivery =  logisticsFeign.estimateIsOutOfRangeDelivery(logisticsChannelId,receiver.getCountry(),receiver.getPostCode());
+            if(Boolean.TRUE.equals(isOutOfRangeDelivery)){
+                lambdaUpdate().set(SoB2cEntity::getIsOutOfRangeDelivery,isOutOfRangeDelivery).eq(SoB2cEntity::getId, soB2cId).update();
+            }
+        }
     }
 
     private static void isExist(SoB2cEntity entity) {
@@ -6440,9 +6465,13 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                     declareRule(id, new HashMap<>(), Boolean.FALSE, false);
                 }
                 Boolean autoGetTrackNo = logisticsRuleResult.getAutoGetTrackNo();
-                if (Objects.nonNull(autoGetTrackNo) && Boolean.TRUE.equals(autoGetTrackNo)) {
+                Boolean autoGetTrackNotOfRangeDelivery = logisticsRuleResult.getAutoGetTrackNotOfRangeDelivery();
+                if (Objects.nonNull(autoGetTrackNotOfRangeDelivery) && Boolean.TRUE.equals(autoGetTrackNotOfRangeDelivery)) {
+                    soB2cService.getLogisticsCodeNotRemote(id, true);
+                }else  if (Objects.nonNull(autoGetTrackNo) && Boolean.TRUE.equals(autoGetTrackNo)) {
                     soB2cService.getLogisticsCode(id, true);
                 }
+
             }
         }
         return isMatch;

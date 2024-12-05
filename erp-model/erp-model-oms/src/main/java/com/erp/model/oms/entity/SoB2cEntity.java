@@ -348,6 +348,12 @@ public class SoB2cEntity extends BaseEntity<SoB2cEntity> {
     @TableField("so_outstock_date")
     private String soOutstockDate;
 
+    /**
+     * 是否超范围派送，是：true  否：false
+     */
+    @TableField("is_out_of_range_delivery")
+    private Boolean isOutOfRangeDelivery;
+
     public static final String CODE = "code";
 
     public static final String APPROVE_STATUS = "approve_status";

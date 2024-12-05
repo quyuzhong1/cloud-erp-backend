@@ -259,4 +259,49 @@
     </select>
 
 
+    <select id="listChannelWarehouse"
+            resultType="com.erp.model.tms.dto.LogisticsChannelDTO$ChannelWarehouseDTO">
+        select
+            lc.id,
+            lc.code,
+            lcw."type",
+            lcw.warehouse_id
+        from logistics_channel lc
+                 LEFT JOIN logistics_supplier ls on ls.id = lc.main_id and ls.is_deleted = FALSE
+                 LEFT JOIN logistics_auth la on la.main_id = lc.main_id and la.is_deleted = FALSE
+                 LEFT JOIN logistics_channel_warehouse lcw on lc.id = lcw.logistics_channel_id and lcw.is_deleted = FALSE
+        where lc.is_deleted = FALSE
+        <if test="platform != null and platform != ''">
+            and la.logistics_platform = #{platform}
+        </if>
+        <if test="authStatus != null and authStatus != ''">
+            and ls.auth_status = #{authStatus}
+        </if>
+        <if test="warehousePlatformType != null and warehousePlatformType != ''">
+            and ls."type" = #{warehousePlatformType}
+        </if>
+        <if test="disabled != null">
+            and lc.disabled = #{disabled}
+        </if>
+    </select>
+    <select id="estimateIsOutOfRangeDelivery" resultType="java.lang.Boolean">
+        SELECT EXISTS (
+            SELECT
+                lc.id
+            FROM
+                logistics_channel lc
+                    INNER JOIN logistics_channel_remote_postcode lcrp ON lc.ID = lcrp.logistics_channel_id 	AND lcrp.is_deleted = FALSE
+                    INNER JOIN remote_postcode rp on rp.id = lcrp.remote_postcode_id and rp.is_deleted = FALSE and rp.disabled = FALSE
+                    INNER JOIN remote_postcode_detail rpd on rpd.main_id = rp.id and rpd.is_deleted = FALSE
+            WHERE
+                lc.is_deleted = FALSE
+                    and lc.id = #{logisticsChannelId}
+                    and
+                (rpd.match_type = 'preciseMatch' and  rpd.country = #{country} and rpd.post_code =  #{postCode} )
+               or (rpd.match_type = 'prefixMatch' and rpd.post_code like concat(#{postCode},'%'))
+               or (rpd.match_type = 'suffixMatch' and rpd.post_code like concat('%',#{postCode}) )
+               or (rpd.match_type = 'fuzzyMatch' and rpd.post_code like concat('%',#{postCode},'%'))
+            limit 1
+        )
+    </select>
 </mapper>

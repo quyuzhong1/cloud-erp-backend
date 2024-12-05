@@ -783,4 +783,17 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
         }
         return new PagingVO<>(pageData);
     }
+
+    @Override
+    public List<LogisticsChannelDTO.ChannelWarehouseDTO> listChannelWarehouse(String platform, String authStatus, String warehousePlatformType, Boolean disabled) {
+        return baseMapper.listChannelWarehouse(platform,authStatus,warehousePlatformType,disabled);
+    }
+
+    @Override
+    public Boolean estimateIsOutOfRangeDelivery(String logisticsChannelId, String country, String postCode) {
+        if(StringUtils.isBlank(logisticsChannelId) || StringUtils.isBlank(country) || StringUtils.isBlank(postCode)){
+            return false;
+        }
+        return baseMapper.estimateIsOutOfRangeDelivery(logisticsChannelId,country,postCode);
+    }
 }
