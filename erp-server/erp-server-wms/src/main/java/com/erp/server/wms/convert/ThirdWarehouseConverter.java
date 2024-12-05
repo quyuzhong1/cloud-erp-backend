@@ -73,6 +73,15 @@ public interface ThirdWarehouseConverter {
     ThirdWarehouseCalculateFeeResponse antuResToThirdWarehouseResponse(AntuCalculateFeeResp antuCalculateFeeResp);
     List<ThirdWarehouseCalculateFeeResponse> antuResToThirdWarehouseResponse(List<AntuCalculateFeeResp> antuCalculateFeeRespList);
 
+    @Mapping(target = "state", source = "province")
+    @Mapping(target = "smCode", ignore = true)
+    @Mapping(target = "sku", ignore = true)
+    @Mapping(target = "propertyLabel", constant = "SFP")
+    @Mapping(target = "postcode", source = "zipCode")
+    @Mapping(target = "isSignServer", ignore = true)
+    @Mapping(target = "isResidential", ignore = true)
+    @Mapping(target = "isInsuranceService", ignore = true)
+    @Mapping(target = "insuranceAmount", ignore = true)
     GoodCangCalculateDeliveryFeeReq reqToGucangCalculateFeeReq(ThirdWarehouseCalculateFeeReq calculateFeeReq);
 
     @Mapping(target = "channelCode", source = "smCode")
