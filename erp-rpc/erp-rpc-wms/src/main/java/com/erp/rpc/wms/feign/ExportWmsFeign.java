@@ -8,6 +8,7 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.scm.dto.PurchaseBusinessGatherTableDTO;
 import com.erp.model.srm.dto.DeliveryOrderDTO;
 import com.erp.model.srm.dto.excel.DeliveryOrderExportExcelDTO;
+import com.erp.model.tms.dto.RemotePostcodeDTO;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.excel.ExportQcReportExcelDTO;
 import com.erp.model.wms.dto.excel.QcBillExportExcelDTO;
@@ -227,4 +228,10 @@ public interface ExportWmsFeign {
      */
     @PostMapping("/feign/export/listReportOrderSales")
     PagingVO<ReportOrderSalesDTO.ListDTO> listReportOrderSales(@RequestBody PagingDTO<ReportOrderSalesDTO.PagingParamDTO> dto);
+
+    /**
+     * 偏远邮编导出
+     */
+    @PostMapping("/feign/export/exportRemotePostcode")
+    PagingVO<RemotePostcodeDTO.ExportListDTO> exportRemotePostcode(@RequestBody PagingDTO<RemotePostcodeDTO.PagingParamDTO> dto);
 }

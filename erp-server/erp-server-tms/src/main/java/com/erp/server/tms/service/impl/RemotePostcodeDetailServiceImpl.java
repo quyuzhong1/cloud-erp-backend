@@ -1,52 +1,59 @@
 package com.erp.server.tms.service.impl;
 
-import cn.hutool.core.bean.BeanUtil;
-import com.common.business.enums.OperationTypeEnum;
-import com.common.business.vo.LoginUser;
-
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
-import com.common.business.dto.base.BaseResultDTO;
-import com.erp.model.tms.entity.RemotePostcodeDetailEntity;
-import com.erp.server.tms.mapper.RemotePostcodeDetailMapper;
-import com.erp.server.tms.service.RemotePostcodeDetailService;
+import com.alibaba.excel.EasyExcel;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.dto.base.BatchResultDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.enums.ApproveStatusEnum;
+import com.common.business.enums.OperationTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
-import com.erp.server.tms.service.OperateLogService;
-import com.erp.server.tms.service.CommonService;
+import com.common.business.vo.PagingVO;
+import com.common.core.enums.ApiError;
+import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
-import com.common.business.config.DocNoGenHelper;
-import com.common.core.controller.vo.ApiResult;
-import cn.hutool.core.util.ObjectUtil;
-import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Transactional;
+import com.common.core.utils.BeanMapper;
+import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.ExcelUtil;
+import com.common.core.utils.FastDFSClientUtil;
+import com.common.core.utils.date.DateUtil;
+import com.erp.model.scm.dto.excel.PurchasePriceDetailImportExcelDTO;
+import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.sys.entity.DictCityEntity;
+import com.erp.model.tms.dto.RemotePostcodeDTO;
+import com.erp.model.tms.dto.RemotePostcodeDetailDTO;
+import com.erp.model.tms.entity.RemotePostcodeDetailEntity;
+import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.server.tms.listener.RemotePostcodeDetailExcelListener;
+import com.erp.server.tms.mapper.RemotePostcodeDetailMapper;
+import com.erp.server.tms.service.OperateLogService;
+import com.erp.server.tms.service.RemotePostcodeDetailService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
-import com.erp.model.tms.dto.RemotePostcodeDetailDTO;
-import com.erp.model.workflow.dto.ProcessManagementDTO;
-import com.erp.rpc.workflow.WorkflowFeign;
-import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import cn.hutool.core.collection.CollUtil;
-import com.google.common.collect.Sets;
-import com.alibaba.fastjson.JSONObject;
-import com.google.common.collect.Lists;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.math3.util.Pair;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.jetbrains.annotations.NotNull;
+import org.springframework.core.io.DefaultResourceLoader;
+import org.springframework.core.io.ResourceLoader;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
-import com.common.business.enums.ApproveStatusEnum;
-import com.common.business.enums.ApproveTypeEnum;
-import com.common.business.vo.LoginUser;
-import com.common.business.vo.PagingVO;
-import com.common.business.dto.base.*;
-import com.erp.model.sys.dto.SysCodeDTO;
-import com.common.core.excel.ExcelPrintUtils;
-import com.common.core.utils.date.DateUtil;
-
-import javax.servlet.http.HttpServletResponse;
 import javax.annotation.Resource;
-import java.util.stream.Collectors;
+import javax.servlet.http.HttpServletResponse;
+import java.io.File;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
-import com.common.core.utils.*;
-import com.common.core.enums.ApiError;
+import java.util.stream.Collectors;
 /**
  * <p>
  * 偏远邮编明细表 服务实现类
@@ -58,40 +65,31 @@ import com.common.core.enums.ApiError;
 @Slf4j
 @Service
 public class RemotePostcodeDetailServiceImpl extends SuperServiceImpl<RemotePostcodeDetailMapper, RemotePostcodeDetailEntity> implements RemotePostcodeDetailService {
-    @Autowired
+    @Resource
     private OperateLogService operateLogService;
-    @Autowired
-    private DocNoGenHelper docNoGenHelper;
-    @Autowired
-    private WorkflowFeign workflowFeign;
+    @Resource
+    private SysUserFeign sysUserFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public BaseResultDTO.AddDTO add(RemotePostcodeDetailDTO.AddDTO addDTO) {
-        RemotePostcodeDetailEntity remotePostcodeDetailEntity = new RemotePostcodeDetailEntity();
-        BeanMapperUtils.copy(addDTO, remotePostcodeDetailEntity);
+    public Boolean add(RemotePostcodeDTO.AddDTO addDTO, String mainId) {
+        List<RemotePostcodeDetailDTO.AddDTO> details = addDTO.getDetails();
+        List<RemotePostcodeDetailEntity> addList = new ArrayList<>();
+        for (RemotePostcodeDetailDTO.AddDTO detail : details) {
+            RemotePostcodeDetailEntity remotePostcodeDetailEntity = new RemotePostcodeDetailEntity();
+            BeanMapper.copy(detail, remotePostcodeDetailEntity);
 
-        // 数据处理
-        handleData(remotePostcodeDetailEntity);
-
-        log.info("开始新增偏远邮编明细单");
-        // 生成单号
-        // TODO 此处的null需填写生成单号类型，type查看BusinessNoTypeEnum枚举类 注意需要填写prefix 为单号前缀
-        String code = docNoGenHelper.generateCode(null);
-        remotePostcodeDetailEntity.setCode(code);
-        boolean save = super.save(remotePostcodeDetailEntity);
-        if(!save) {
-            throw new ServiceException("偏远邮编明细单保存失败");
+            //设置主表id
+            remotePostcodeDetailEntity.setMainId(mainId);
+            addList.add(remotePostcodeDetailEntity);
         }
-
-        // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "偏远邮编明细单" , remotePostcodeDetailEntity.getCode());
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, remotePostcodeDetailEntity.getId(), "新增操作");
-        // TODO 新增明细（如果有明细的话）
-
-        return new BaseResultDTO.AddDTO(remotePostcodeDetailEntity.getId(), code);
+        boolean flag = this.saveBatch(addList);
+        List<String> citys = addList.stream().map(RemotePostcodeDetailEntity::getCity).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
+        Map<String, String> cityNameMap = getCityNameMap(citys);
+        List<Pair<String, String>> addPairList = spliceOperateContent(addList, cityNameMap);
+        operateLogService.batchAddModuleOperateLog("新增明细【%s】", ModuleTypeEnum.REMOTE_POSTCODE.getCode(), addPairList, "新增操作");
+        return flag;
     }
 
     /**
@@ -99,30 +97,79 @@ public class RemotePostcodeDetailServiceImpl extends SuperServiceImpl<RemotePost
     */
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public Boolean update(RemotePostcodeDetailDTO.UpdateDTO updateDTO) {
-        RemotePostcodeDetailEntity old = super.getById(updateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "偏远邮编明细单"));
-        // 待提交和审核不通过允许修改
-        if (!ApproveStatusEnum.allowUpdateStatus(old.getApproveStatus())) {
-            throw new ServiceException(ApiError.ERROR_1029);
-        }
-        RemotePostcodeDetailEntity remotePostcodeDetailEntity =  BeanMapperUtils.map(RemotePostcodeDetailEntity.class, updateDTO);
+    public Boolean update(RemotePostcodeDTO.UpdateDTO dto,String mainId) {
+        List<String> citys = dto.getDetails().stream().map(RemotePostcodeDetailDTO.UpdateDTO::getCity).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
+        Map<String, String> cityNameMap = getCityNameMap(citys);
 
-        // 数据处理
-        handleData(remotePostcodeDetailEntity);
-        log.info("编辑 开始修改偏远邮编明细单数据，单号：【{}】", old.getCode());
-        boolean save = super.updateById(remotePostcodeDetailEntity);
-        if(!save) {
-            throw new ServiceException("偏远邮编明细单保存失败");
+        //原数据明细
+        List<RemotePostcodeDetailEntity> oldList = lambdaQuery().eq(RemotePostcodeDetailEntity::getMainId, mainId).list();
+        List<String> deleteIds = getDeleteIds(dto.getDetails(), oldList);
+        if (CollectionUtils.isNotEmpty(deleteIds)) {
+            List<RemotePostcodeDetailEntity> removeList = oldList.stream().filter(obj -> deleteIds.contains(obj.getId())).collect(Collectors.toList());
+            List<Pair<String, String>> pairList = spliceOperateContent(removeList, cityNameMap);
+            //操作日志
+            operateLogService.batchAddModuleOperateLog("删除了明细【%s】", ModuleTypeEnum.REMOTE_POSTCODE.getCode(),pairList,"编辑操作");
+            this.removeByIds(deleteIds);
         }
-        // TODO 修改明细数据（包含增删改）（如果有明细的话）
+        Map<String, RemotePostcodeDetailEntity> detailEntityMap = oldList.stream().collect(Collectors.toMap(RemotePostcodeDetailEntity::getId, obj -> obj));
+        List<RemotePostcodeDetailEntity> addList = new ArrayList<>();
+        for (RemotePostcodeDetailDTO.UpdateDTO detail : dto.getDetails()) {
+            RemotePostcodeDetailEntity remotePostcodeDetail = new RemotePostcodeDetailEntity();
+            BeanMapper.copy(detail, remotePostcodeDetail);
+            remotePostcodeDetail.setMainId(mainId);
+            if(StringUtils.isBlank(remotePostcodeDetail.getId())){
+                //新增
+                addList.add(remotePostcodeDetail);
+            }else{
+                //修改
+                RemotePostcodeDetailEntity old = detailEntityMap.get(remotePostcodeDetail.getId());
+                if (ObjectUtils.isEmpty(old)) {
+                    throw new ServiceException(ApiError.ERROR_98002);
+                }
+                this.updateById(remotePostcodeDetail);
+                //操作日志
+                operateLogService.addModuleOperateLogByObj(old,remotePostcodeDetail, ModuleTypeEnum.REMOTE_POSTCODE.getCode(),remotePostcodeDetail.getId(),"修改明细【%s】");
+            }
+        }
+        this.saveBatch(addList);
+        //添加操作日志
+        if (CollectionUtils.isNotEmpty(addList)) {
+            List<Pair<String, String>> addPairList = spliceOperateContent(addList, cityNameMap);
+            operateLogService.batchAddModuleOperateLog("新增明细【%s】", ModuleTypeEnum.REMOTE_POSTCODE.getCode(), addPairList, "编辑操作");
+        }
+        return true;
+    }
 
-        // 记录主单操作日志
-            log.info("编辑 开始记录偏远邮编明细单日志数据，单号：【{}】", remotePostcodeDetailEntity.getCode());
-            String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), remotePostcodeDetailEntity.getCode(), "偏远邮编明细单");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLogByObj(old, remotePostcodeDetailEntity, null, remotePostcodeDetailEntity.getId(), msg);
-        return Boolean.TRUE;
+    @NotNull
+    private Map<String, String> getCityNameMap(List<String> citys) {
+        List<DictCityEntity> dictCityEntities = sysUserFeign.listCityByIds(citys);
+        // 将城市信息转换为 Map，减少多次流式查找
+        Map<String, String> cityNameMap = dictCityEntities.stream()
+                .collect(Collectors.toMap(DictCityEntity::getId, DictCityEntity::getName));
+        return cityNameMap;
+    }
+
+    @NotNull
+    private static List<Pair<String, String>> spliceOperateContent(List<RemotePostcodeDetailEntity> removeList, Map<String, String> cityNameMap) {
+        List<Pair<String, String>> pairList = new ArrayList<>();
+        for (RemotePostcodeDetailEntity entity : removeList) {
+            Pair pair = null;
+            if(StringUtils.isNotBlank(entity.getCity())) {
+                pair = new Pair<>(entity.getId(),"【"+entity.getCountry() + "-" + cityNameMap.getOrDefault(entity.getCity(),entity.getCity()) + "-" + entity.getPostCode()+"】");
+            }else {
+                pair = new Pair<>(entity.getId(),"【"+entity.getCountry() + "-" + entity.getPostCode()+"】");
+            }
+            pairList.add(pair);
+        }
+        return pairList;
+    }
+
+    private List<String> getDeleteIds(List<RemotePostcodeDetailDTO.UpdateDTO> newList, List<RemotePostcodeDetailEntity> oldList) {
+        List<String> newIds = newList.stream().filter(g -> StringUtils.isNotBlank(g.getId())).
+                map(RemotePostcodeDetailDTO.UpdateDTO::getId).collect(Collectors.toList());
+        List<String> oldIds = oldList.stream().map(RemotePostcodeDetailEntity
+                ::getId).collect(Collectors.toList());
+        return oldIds.stream().filter(s -> !newIds.contains(s)).collect(Collectors.toList());
     }
 
 
@@ -135,7 +182,6 @@ public class RemotePostcodeDetailServiceImpl extends SuperServiceImpl<RemotePost
            return new PagingVO(pageData);
         }
         // 数据处理
-        fillList(pageData.getRecords());
         return new PagingVO(pageData);
     }
 
@@ -165,7 +211,6 @@ public class RemotePostcodeDetailServiceImpl extends SuperServiceImpl<RemotePost
            return;
         }
         // 数据处理
-        fillList(list);
 
         // 导出数据
         StringBuffer sb = new StringBuffer();
@@ -182,189 +227,15 @@ public class RemotePostcodeDetailServiceImpl extends SuperServiceImpl<RemotePost
 
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public BatchResultDTO submit(String id) {
-        RemotePostcodeDetailEntity entity = getById(id);
-        if (ObjectUtil.isEmpty(entity)) {
-            throw new ServiceException("未找到偏远邮编明细单数据");
-        }
-        validateSubmit(entity);
-        // 更新单据审核状态
-        log.info("提交 开始修改偏远邮编明细单状态数据，id：【{}】", id);
-        this.updateApproveStatus(id, ApproveStatusEnum.APPROVE_ING.getStatus());
-
-        // TODO 启动流程（如果需要的话）
-        log.info("提交 开始启动偏远邮编明细单流程，id=：【{}】", entity.getId());
-        startProcess(entity);
-        // 记录操作日志
-        log.info("提交 开始记录偏远邮编明细单日志数据，id：【{}】", id);
-        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据提交审核 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "偏远邮编明细单");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, entity.getId(), "提交操作");
-        return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.SUBMIT);
-    }
-
-    @GlobalTransactional(rollbackFor = Exception.class)
-    @Transactional(rollbackFor = Exception.class)
-    @Override
-    public BaseResultDTO.AddDTO addAndSubmit(RemotePostcodeDetailDTO.AddDTO dto) {
-        // 新增
-        BaseResultDTO.AddDTO result = this.add(dto);
-        // 提交
-        this.submit(result.getId());
-        return result;
-    }
-
-    @GlobalTransactional(rollbackFor = Exception.class)
-    @Transactional(rollbackFor = Exception.class)
-    @Override
-    public void updateAndSubmit(RemotePostcodeDetailDTO.UpdateDTO dto) {
-        // 修改
-        this.update(dto);
-        // 提交
-        this.submit(dto.getId());
-    }
-
-    @GlobalTransactional(rollbackFor = Exception.class)
-    @Transactional(rollbackFor = Exception.class)
-    @Override
-    public BatchResultDTO approve(ApproveOneDTO dto) {
-        ApproveTypeEnum approveType = ApproveTypeEnum.getByCode(dto.getType());
-        if(Objects.equals(approveType, ApproveTypeEnum.REJECT) && StrUtils.isEmpty(dto.getComment())) {
-            throw new ServiceException(ApiError.REJECT_COMMENT_NOT_EMPTY);
-        }
-        RemotePostcodeDetailEntity entity = getById(dto.getId());
-        // 审核中的数据允许审核
-        if(!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING)) {
-            throw new ServiceException(ApiError.ERROR_98006);
-        }
-        // 调用流程审核
-        approveProcess(entity, dto);
-        // 操作日志
-        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据审核操作  审核结果：【{}】 审核意见 ：【{}】", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "偏远邮编明细单", approveType.getName(), dto.getComment());
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, entity.getId(), "审核操作");
-        ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(approveType);
-        return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.approveStatus(approveStatus));
-    }
-
-    /**
-    * 审核流程处理
-    * @param entity
-    * @param dto
-    */
-    private void approveProcess(RemotePostcodeDetailEntity entity, ApproveOneDTO dto) {
-        LoginUser userInfo = UserContext.getDefaultLoginUser();
-        ProcessManagementDTO.ApproveDTO approveDTO = new ProcessManagementDTO.ApproveDTO();
-        approveDTO.setBusinessId(entity.getId());
-        // TODO 此处的null需修改为流程模块类型，BusinessKey查看SourceTypeEnum枚举类
-        approveDTO.setBusinessKey(null);
-        approveDTO.setApproveType(ApproveTypeEnum.getByCode(dto.getType()));
-        approveDTO.setComment(dto.getComment());
-        approveDTO.setUserId(userInfo.getUid());
-        approveDTO.setVariablesMap(BeanUtil.beanToMap(entity));
-        ApiResult<ProcessManagementDTO.ApproveResultDTO> approveResult = workflowFeign.approve(approveDTO);
-        Integer code = approveResult.getCode();
-        if (200 != code) {
-            throw new ServiceException(ApiError.ERROR_94006);
-        }
-        ProcessManagementDTO.ApproveResultDTO data = approveResult.getData();
-        if (ObjectUtil.isEmpty(data.getIsExistProcess()) || !data.getIsExistProcess()) {
-            // 无需走流程的数据则直接更新状态
-            approveEnd(dto, entity);
-        }
-    }
-
-    @GlobalTransactional(rollbackFor = Exception.class)
-    @Transactional(rollbackFor = Exception.class)
-    @Override
-    public BatchResultDTO disApprove(String id) {
-        RemotePostcodeDetailEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到偏远邮编明细单单数据"));
-        // 反审核条件判断
-        validateDisApprove(entity);
-        // TODO 检查是否有下推单据（如果支持下推的话）明细数据
-
-        // 更新审核信息
-        updateForDisApprove(id, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
-
-        // 操作日志
-        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据反审核操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "偏远邮编明细单");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, entity.getId(), "反审核操作");
-        return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DISAPPROVE);
-    }
-
-    private Boolean validateDisApprove(RemotePostcodeDetailEntity entity) {
-        // 已审核支持反审核
-        if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE.getStatus())) {
-            throw new ServiceException(ApiError.ERROR_98014);
-        }
-        // TODO 下游盘点计划单反审核
-        return true;
-    }
-
-    @Transactional(rollbackFor = Exception.class)
-    @Override
     public BatchResultDTO delete(String id) {
         RemotePostcodeDetailEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到偏远邮编明细单数据"));
-        // 只有待提交数据允许删除
-        if (!Objects.equals(ApproveStatusEnum.WAIT_SUBMIT, entity.getApproveStatus())) {
-            throw new ServiceException(ApiError.ERROR_98032);
-        }
-        // TODO 删除明细数据（如果有明细数据的话）
-
         // 删除主单数据
-        log.info("删除 开始删除偏远邮编明细单主单数据，id：【{}】", id);
         super.removeById(id);
         // 删除日志数据
         log.info("删除 开始删除偏远邮编明细单日志数据，id：【{}】", id);
-        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据删除操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "偏远邮编明细单");
-        operateLogService.addModuleOperateLog(msg, null, entity.getCode(), "删除偏远邮编明细单数据");
-        return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DELETE);
-    }
-
-    /**
-    * 撤销
-    */
-    @GlobalTransactional(rollbackFor = Exception.class)
-    @Transactional(rollbackFor = Exception.class)
-    @Override
-    public BatchResultDTO cancelProcess(String id) {
-        RemotePostcodeDetailEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到偏远邮编明细单数据"));
-        // 只有审核中的单据允许撤销
-        if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING.getStatus())) {
-            throw new ServiceException(ApiError.ERROR_98007);
-        }
-        // TODO 撤销流程
-        log.info("撤销 开始撤销流程，id：【{}】",id);
-
-        log.info("撤销 开始修改偏远邮编明细单状态，id：【{}】", id);
-        updateApproveStatus(id, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
-
-        //操作日志
-        log.info("撤销 开始记录操作日志，id：【{}】", id);
-        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据撤销流程操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "偏远邮编明细单");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, entity.getId(), "取消流程操作");
-        ProcessManagementDTO.RevokeDTO revokeDTO = new ProcessManagementDTO.RevokeDTO();
-        revokeDTO.setBusinessId(entity.getId());
-        // TODO 此处的null需修改为日志模块类型，BusinessKey查看SourceTypeEnum枚举类
-        revokeDTO.setBusinessKey(null);
-        revokeDTO.setUserId(UserContext.getDefaultLoginUser().getUid());
-        workflowFeign.revokeProcess(revokeDTO);
-        return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.CANCEL_PROCESS);
-    }
-
-    @Override
-    @Transactional(rollbackFor = Exception.class)
-    public Boolean approveEnd(ApproveOneDTO dto, RemotePostcodeDetailEntity entity) {
-        if (ObjectUtil.isEmpty(entity)) {
-            return Boolean.TRUE;
-        }
-        ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(dto.getType());
-        updateForApprove(entity.getId(), approveStatus.getStatus());
-        // todo 明细数据处理 上下游数据处理
-
-        return Boolean.TRUE;
+        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据删除操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getId(), "偏远邮编明细单");
+        operateLogService.addModuleOperateLog(msg, null, entity.getId(), "删除偏远邮编明细单数据");
+        return BatchResultDTO.success(entity.getId(), entity.getId(), OperationTypeEnum.DELETE);
     }
 
     @Override
@@ -372,100 +243,104 @@ public class RemotePostcodeDetailServiceImpl extends SuperServiceImpl<RemotePost
         RemotePostcodeDetailEntity remotePostcodeDetailEntity = super.getByIdOpt(id).orElseThrow(()->new ServiceException("未找到偏远邮编明细单数据"));
         RemotePostcodeDetailDTO.ViewDTO data = BeanMapperUtils.map(RemotePostcodeDetailDTO.ViewDTO.class, remotePostcodeDetailEntity);
         // 数据填充处理
-        fillOne(data);
-        // TODO 查询明细数据（如果有的话）
         return data;
     }
-    /**
-    * 启动流程
-    *
-    * @param entity
-    * @return void
-    * @Date 2023/7/4 10:07
-    **/
 
-    public void startProcess(RemotePostcodeDetailEntity entity) {
-        ProcessManagementDTO.StartDTO startDTO = new ProcessManagementDTO.StartDTO();
-        startDTO.setBusinessId(entity.getId());
-        startDTO.setBusinessCode(entity.getCode());
-        // TODO 此处的null需修改为日志模块类型，BusinessKey查看SourceTypeEnum枚举类
-        startDTO.setBusinessKey(null);
-        startDTO.setBusinessName(entity.getCode());
-        startDTO.setUserId(UserContext.getDefaultLoginUser().getUid());
-        startDTO.setVariablesMap(BeanUtil.beanToMap(entity));
-        ApiResult<ProcessManagementDTO.StartResultDTO> result = workflowFeign.start(startDTO);
-        if (!result.isSuccess()) {
-            throw new ServiceException(result.getMsg());
-        }
-    }
-    private void fillOne(RemotePostcodeDetailDTO.ViewDTO data) {
-        if (ObjectUtil.isEmpty(data)) {
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public void removeByMainIds(List<String> mainIds) {
+        if (CollUtil.isEmpty(mainIds)) {
             return;
         }
+        lambdaUpdate()
+                .set(RemotePostcodeDetailEntity::getIsDeleted, true)
+                .in(RemotePostcodeDetailEntity::getMainId, mainIds)
+                .update();
     }
 
-    /**
-    * 审核更新审核信息
-    * @param id
-    * @param approveStatus
-    */
-    public void updateForApprove(String id, String approveStatus) {
-        this.lambdaUpdate().eq(RemotePostcodeDetailEntity::getId, id)
-            .set(RemotePostcodeDetailEntity::getApproveStatus, approveStatus)
-            .update(new RemotePostcodeDetailEntity());
-     }
+    @Override
+    public List<RemotePostcodeDetailDTO.ViewDTO> listByMainIds(List<String> mainIds) {
+        if (CollUtil.isEmpty(mainIds)) {
+            return Collections.emptyList();
+        }
 
-    /**
-    * 反审核更新审核信息
-    * @param id
-    * @param approveStatus
-    */
+        List<RemotePostcodeDetailEntity> list = lambdaQuery()
+                .in(RemotePostcodeDetailEntity::getMainId, mainIds)
+                .list();
+
+        return CollUtil.isEmpty(list) ? Collections.emptyList() :
+                list.stream()
+                        .map(entity -> {
+                            RemotePostcodeDetailDTO.ViewDTO viewDTO = new RemotePostcodeDetailDTO.ViewDTO();
+                            BeanMapper.copy(entity, viewDTO); 
+                            return viewDTO;
+                        })
+                        .collect(Collectors.toList());
+    }
+
+
+    @Override
     @Transactional(rollbackFor = Exception.class)
-    public void updateForDisApprove(String id, String approveStatus) {
-        this.lambdaUpdate().eq(RemotePostcodeDetailEntity::getId, id)
-            .set(RemotePostcodeDetailEntity::getApproveStatus, approveStatus)
-            .update(new RemotePostcodeDetailEntity());
+    public RemotePostcodeDetailDTO.ImportResultDTO importFile(MultipartFile excelFile, HttpServletResponse response) {
+        RemotePostcodeDetailExcelListener excelListenerUtil = new RemotePostcodeDetailExcelListener();
+        try {
+            EasyExcel.read(excelFile.getInputStream(), RemotePostcodeDetailDTO.ImportDTO.class, excelListenerUtil).sheet(0).doRead();
+        } catch (Exception e) {
+            log.error("导入错误！", e);
+            throw new ServiceException(ApiError.ERROR_95124);
         }
+        RemotePostcodeDetailDTO.ImportResultDTO result = new RemotePostcodeDetailDTO.ImportResultDTO();
+        //导入数据处理
+        List<RemotePostcodeDetailDTO.ImportDTO> successList = excelListenerUtil.getSuccessList();
+        if(CollUtil.isNotEmpty(successList)){
+            List<String> cityName = successList.stream().map(RemotePostcodeDetailDTO.ImportDTO::getCity).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
 
-    /**
-    * 更新审核状态
-    */
-    @Transactional(rollbackFor = Exception.class)
-    public void updateApproveStatus(String id, String approveStatus) {
-        lambdaUpdate().eq(RemotePostcodeDetailEntity::getId, id)
-        .set(RemotePostcodeDetailEntity::getApproveStatus, approveStatus)
-        .update(new RemotePostcodeDetailEntity());
+            List<DictCityEntity> dictCityEntities = sysUserFeign.listByNames(cityName);
+            // 将城市信息转换为 Map，减少多次流式查找
+            Map<String, String> cityMap = dictCityEntities.stream()
+                    .collect(Collectors.toMap(DictCityEntity::getName, DictCityEntity::getId));
+
+            for (RemotePostcodeDetailDTO.ImportDTO dto : successList) {
+                dto.setCity(cityMap.get(dto.getCityName()));
+            }
+        }
+        result.setSuccessList(successList);
+
+        //导出错误数据
+        List<RemotePostcodeDetailDTO.ImportDTO> errorList = excelListenerUtil.getErrorList();
+        result.setSuccessList(successList);
+        String url = "";
+        if (CollectionUtils.isNotEmpty(errorList)) {
+            String fileName = "偏远邮编详情错误.xlsx";
+            File file = ExcelUtil.exportFile(fileName, "error", errorList, PurchasePriceDetailImportExcelDTO.class);
+            if (file != null && !file.isDirectory()) {
+                url = FastDFSClientUtil.uploadFile(file, fileName);
+            }
+        }
+        result.setErrorUrl(url);
+        return result;
     }
 
-    /**
-    * 分页查询、导出 数据处理
-    */
-    private void fillList(List<RemotePostcodeDetailDTO.ListDTO> list) {
-        if(CollUtil.isEmpty(list)) {
-           return;
+    @Override
+    public void downloadTemplate(HttpServletResponse response) {
+        String path = "classpath:excel/remotePostcodeDetailTemplate.xlsx";
+        String excelName = "template.xlsx";
+        ResourceLoader resourceLoader = new DefaultResourceLoader();
+        try {
+            InputStream inputStream = resourceLoader.getResource(path).getInputStream();
+            XSSFWorkbook wb = new XSSFWorkbook(inputStream);
+            // 输出Excel文件
+            OutputStream output = response.getOutputStream();
+            response.reset();
+            // 设置文件头
+            response.setHeader("Content-Disposition",
+                    "attchement;filename=" + new String(excelName.getBytes("gb2312"), StandardCharsets.ISO_8859_1));
+            response.setContentType("application/msexcel");
+            wb.write(output);
+            wb.close();
+        } catch (Exception e) {
+            log.error("warehouse downloadTemplate  出错了 e==", e);
+            throw new ServiceException(ApiError.ERROR_95131);
         }
-
-        // 属性赋值
-        for(RemotePostcodeDetailDTO.ListDTO data : list) {
-            data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
-            // TODO 其他如需要显示名称的字段赋值
-        }
-    }
-    /**
-    * 分页查询、导出 数据处理
-    */
-    private void validateSubmit(RemotePostcodeDetailEntity entity) {
-        // 待提交或审核不通过并且未作废允许提交
-        if(!ApproveStatusEnum.allowUpdateStatus(entity.getApproveStatus())) {
-            throw new ServiceException(ApiError.ERROR_98010);
-        }
-        return;
-    }
-
-    /**
-    * 新增修改处理数据
-    */
-    private void handleData(RemotePostcodeDetailEntity remotePostcodeDetailEntity) {
-    // TODO 验证数据 & 数据赋值
     }
 }

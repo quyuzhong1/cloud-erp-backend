@@ -1,17 +1,19 @@
 package com.erp.model.tms.dto;
 
+import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
-import java.util.List;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
+
+import javax.validation.Valid;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.time.LocalDateTime;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.Size;
-import javax.validation.constraints.NotEmpty;
-import com.common.business.dto.AdvanceQueryDTO;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -76,13 +78,6 @@ public class RemotePostcodeDTO implements Serializable {
         */
         private String  id;
 
-        private String approveStatus;
-
-        /**
-        * code
-        */
-        private String code;
-
         /**
         * 名称
         */
@@ -98,21 +93,24 @@ public class RemotePostcodeDTO implements Serializable {
         */
         private Boolean disabled;
 
+        /**
+        * 邮编组状态:true 禁用 false 启用
+        */
+        private String disabledName;
 
         /**
-        * 审核状态名称
+        * 更新时间
         */
-        private String approveStatusName;
+        private LocalDateTime updateTime;
 
         /**
-        * 创建时间
+        * 更新人id
         */
-        private LocalDateTime createTime;
-
+        private String updateUserId;
         /**
-        * 创建人名称
+        * 更新人名称
         */
-        private String createUserName;
+        private String updateUserName;
     }
 
     /**
@@ -139,13 +137,6 @@ public class RemotePostcodeDTO implements Serializable {
         */
         private String  id;
 
-        private String approveStatus;
-
-        /**
-        * code
-        */
-        private String code;
-
         /**
         * 名称
         */
@@ -161,6 +152,16 @@ public class RemotePostcodeDTO implements Serializable {
         */
         private Boolean disabled;
 
+        /**
+         * 邮编组状态:true 禁用 false 启用
+         */
+        private String disabledName;
+
+        /**
+         * 明细表
+         */
+        private List<RemotePostcodeDetailDTO.ViewDTO> details;
+
 
     }
 
@@ -171,7 +172,9 @@ public class RemotePostcodeDTO implements Serializable {
     @NoArgsConstructor
     public static class AddDTO extends CommonDTO {
 
-
+        @NotEmpty
+        @Valid
+        private List<RemotePostcodeDetailDTO.AddDTO> details;
     }
 
     /**
@@ -187,6 +190,9 @@ public class RemotePostcodeDTO implements Serializable {
         @NotBlank(message = "主键id不能为空")
         private String id;
 
+        @NotEmpty
+        @Valid
+        private List<RemotePostcodeDetailDTO.UpdateDTO> details;
     }
 
     @Data
@@ -212,8 +218,79 @@ public class RemotePostcodeDTO implements Serializable {
         @NotNull(message = "邮编组状态:true 禁用 false 启用不能为空")
         private Boolean disabled;
 
-
     }
 
+    /**
+     * 导出
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ExportListDTO {
+
+        /**
+         * 主键id
+         */
+        private String  id;
+
+        /**
+         * 名称
+         */
+        private String name;
+
+        /**
+         * 备注
+         */
+        private String remark;
+
+        /**
+         * 邮编组状态:true 禁用 false 启用
+         */
+        private Boolean disabled;
+
+        /**
+         * 邮编组状态:true 禁用 false 启用
+         */
+        private String disabledName;
+
+        /**
+         * 更新时间
+         */
+        private LocalDateTime updateTime;
+        private String updateTimeStr;
+
+        /**
+         * 更新人id
+         */
+        private String updateUserId;
+        /**
+         * 更新人名称
+         */
+        private String updateUserName;
+
+        /**
+         *
+         */
+        private String country;
+        /**
+         *
+         */
+        private String city;
+        /**
+         *
+         */
+        private String cityName;
+        /**
+         *
+         */
+        private String matchType;
+        /**
+         *
+         */
+        private String matchTypeName;
+        /**
+         *
+         */
+        private String postCode;
+    }
 
 }
