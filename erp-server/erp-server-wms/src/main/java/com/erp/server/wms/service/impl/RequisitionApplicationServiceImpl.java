@@ -2623,6 +2623,13 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         if(CollUtil.isEmpty(details)){
             throw new ServiceException(ApiError.ERROR_1041,"FNSKU标签");
         }
+        int totalPrintNum = details.stream()
+                .mapToInt(detail -> Optional.ofNullable(detail.getPrintNum()).orElse(0))
+                .sum();
+        if(totalPrintNum > 10000){
+            throw new ServiceException("打印数量合计超过10000，建议在预览页面下载pdf单独打印");
+        }
+
         List<String> base64List = new ArrayList<>();
         generateBase64ByFnskuBill(base64List, dto);
         try {
@@ -2653,15 +2660,15 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         getOneDTO.setSourceType(SourceTypeEnum.REQUISITION_APPLICATION.getCode());
         FileTemplateEntity fileTemplateEntity = fileTemplateFeign.getByFileTemplate(getOneDTO);
         //获取fastdfs文件
-        InputStream inputStream = FastDFSClientUtil.getInputStream(fileTemplateEntity.getUrl());
-        if (inputStream == null) {
-            log.info("获取fastdfs文件为空==========》地址：" + fileTemplateEntity.getUrl());
-            return;
-        }
-        try{
-            String filePath = "C:\\Users\\Administrator\\Desktop\\Blank_A4_4.jasper";
-            inputStream = new FileInputStream(filePath);
-        }catch (Exception e) {
+        byte[] content = null;
+        try {
+            content = FastDFSClientUtil.getStorageClient().download_file1(fileTemplateEntity.getUrl());
+            InputStream inputStream = new ByteArrayInputStream(content);
+            if (inputStream == null) {
+                log.info("获取fastdfs文件为空==========》地址：" + fileTemplateEntity.getUrl());
+                return;
+            }
+        } catch (Exception e) {
             throw new RuntimeException(e);
         }
         for (RequisitionApplicationDTO.PrintFnskuDetailDTO dtoDetail : dto.getDetails()) {
@@ -2675,10 +2682,11 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
             } else {
                 map.put("declareEnglishName", dtoDetail.getDeclareEnglishName());
             }
+            InputStream inputStream = new ByteArrayInputStream(content);
             byte[] bytes = JasperHelperUtil.exportToPdfStream(inputStream, map);
-            String base = Base64.getEncoder().encodeToString(bytes);
+            String base = "data:application/pdf;base64," +Base64.getEncoder().encodeToString(bytes);
             for (int i = 1; i <= printNum; i++) {
-                base64List.add("data:application/pdf;base64," + base);
+                base64List.add(base);
             }
         }
     }
