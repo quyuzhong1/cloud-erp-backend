@@ -15,6 +15,7 @@ import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
 import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
+import com.erp.model.oms.enums.OrderSubTypeEnum;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
@@ -114,7 +115,7 @@ public class SyncSoB2cServiceImpl implements SyncSoB2cService {
         if (SourceTypeEnum.SELF_ADD.getCode().equals(soB2cEntity.getSourceType())) {
             shudiyunB2cOrderDTO.setTransaction_type("线下订单");
 
-            shudiyunB2cOrderDTO.setTransaction_sub_type(soB2cEntity.getTransactionSubType());
+            shudiyunB2cOrderDTO.setTransaction_sub_type(OrderSubTypeEnum.getName(soB2cEntity.getTransactionSubType()));
         } else {
             shudiyunB2cOrderDTO.setTransaction_type("配货单");
             shudiyunB2cOrderDTO.setTransaction_sub_type("配货单");
@@ -338,7 +339,7 @@ public class SyncSoB2cServiceImpl implements SyncSoB2cService {
             if (SourceTypeEnum.SELF_ADD.getCode().equals(soB2cEntity.getSourceType())) {
                 shudiyunB2cOrderDTO.setTransaction_type("线下订单");
 
-                shudiyunB2cOrderDTO.setTransaction_sub_type(soB2cEntity.getTransactionSubType());
+                shudiyunB2cOrderDTO.setTransaction_sub_type(OrderSubTypeEnum.getName(soB2cEntity.getTransactionSubType()));
             } else {
                 shudiyunB2cOrderDTO.setTransaction_type("配货单");
                 shudiyunB2cOrderDTO.setTransaction_sub_type("配货单");
