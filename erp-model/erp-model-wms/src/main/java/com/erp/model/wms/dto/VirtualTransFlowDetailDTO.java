@@ -9,6 +9,7 @@ import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -32,9 +33,92 @@ public class VirtualTransFlowDetailDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class ListDTO {
-
+        /**
+         * skuId
+         */
         private String skuId;
+        /**
+         * sku编号
+         */
+        private String skuNo;
+        /**
+         * 产品名称
+         */
+        private String productName;
+        /**
+         * 仓库id
+         */
+        private String warehouseId;
+        /**
+         * 仓库名称
+         */
+        private String warehouseName;
+        /**
+         * 虚拟仓id
+         */
+        private String virtualWarehouseId;
+        /**
+         * 虚拟仓编码
+         */
+        private String virtualWarehouseCode;
+        /**
+         * 虚拟仓名称
+         */
+        private String virtualWarehouseName;
+        /**
+         * 统计日期
+         */
+        private LocalDate date;
+        /**
+         * 历史号
+         */
+        private String transactionNo;
+        /**
+         * 出入库时间
+         */
+        private LocalDateTime tradeTime;
+        /**
+         * 单据类型
+         */
+        private String sourceType;
+        /**
+         * 单据编号
+         */
+        private String sourceCode;
+        /**
+         * 库存状态
+         */
+        private String dictInventoryStatus;
+        /**
+         * 出入库数量
+         */
+        private Integer qty;
+        /**
+         * 操作类型
+         */
+        private String operateType;
+        /**
+         * 操作类型名称
+         */
+        private String operateTypeName;
+        /**
+         * 批次号
+         */
+        private String batchNo;
+        /**
+         * 批次剩余数量
+         */
+        private Integer waitBatchQty;
+        /**
+         * 库龄（天）
+         */
+        private Integer inventoryAgeDays;
+        /**
+         * 仓储时长（天）
+         */
+        private Integer inStockDays;
     }
+
 
 
     /**
