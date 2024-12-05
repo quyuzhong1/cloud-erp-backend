@@ -435,15 +435,15 @@ public class RequisitionApplicationChangeServiceImpl extends SuperServiceImpl<Re
         List<RequisitionApplicationDetailEntity> removeList = updateVirtualDTO.getRemoveList().stream().filter(v->StringUtils.isNotBlank(v.getFromVirtualWarehouseId())).collect(Collectors.toList());
 
         for (RequisitionApplicationDetailEntity requisitionApplicationDetailEntity : addList) {
-            Integer diffQty = requisitionApplicationDetailEntity.getRequisitionQty();
+            Integer diffQty = requisitionApplicationDetailEntity.getApproveQty();
             handleRequisitionAddParam(requisitionApplicationEntity, requisitionApplicationDetailEntity,addNoticeParamList,subNoticeParamList,diffQty);
         }
         for (RequisitionApplicationDetailEntity requisitionApplicationDetailEntity : updateList) {
-            Integer diffQty = requisitionApplicationDetailEntity.getRequisitionQty() - requisitionApplicationDetailEntity.getChangeBeforeQty();
+            Integer diffQty = requisitionApplicationDetailEntity.getApproveQty() - requisitionApplicationDetailEntity.getChangeBeforeQty();
             handleRequisitionAddParam(requisitionApplicationEntity, requisitionApplicationDetailEntity,addNoticeParamList,subNoticeParamList,diffQty);
         }
         for (RequisitionApplicationDetailEntity requisitionApplicationDetailEntity : removeList) {
-            Integer diffQty = -requisitionApplicationDetailEntity.getRequisitionQty();
+            Integer diffQty = -requisitionApplicationDetailEntity.getApproveQty();
             handleRequisitionAddParam(requisitionApplicationEntity, requisitionApplicationDetailEntity,addNoticeParamList,subNoticeParamList,diffQty);
         }
         if (CollectionUtils.isNotEmpty(addNoticeParamList)) {
