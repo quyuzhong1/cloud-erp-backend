@@ -143,6 +143,7 @@ public class CalcSalesInfoDimServiceImpl extends SuperServiceImpl<CalcSalesInfoD
 
     @Override
     public CalcSalesInfoDimDTO.ViewDTO view(String id) {
+        List<String> cfgRuleCalcIdList = calcSalesInfoFavoriteService.listByUserId(UserContext.getDefaultLoginUser().getUid());
         CalcSalesInfoDimDTO.ViewDTO view = baseMapper.view(id);
         List<DictCountryEntity> countryList = sysDictFeign.listCountryByIds(Collections.singletonList(view.getCountry()));
         List<SkuVO> skuVOS = plmTaskFeign.listSkuProductByIds(Collections.singletonList(view.getSkuId()));
@@ -156,6 +157,7 @@ public class CalcSalesInfoDimServiceImpl extends SuperServiceImpl<CalcSalesInfoD
         view.setShopName(shopInfoEntity.getName());
         Map<String, String> dictBasicMap = getPlatformMap();
         view.setPlatform(dictBasicMap.get(view.getPlatform()));
+        view.setFavorite(cfgRuleCalcIdList.contains(view.getCfgRuleCalcId()));
         return view;
     }
 
