@@ -1,7 +1,7 @@
 package com.erp.server.mrp.controller.api;
 
 
-import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
@@ -38,8 +38,8 @@ public class CfgRuleCalcController extends BaseController {
     * @return ApiResult<String>
     */
     @PostMapping("/add")
-    public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated CfgRuleCalcDTO.AddDTO dto, HttpServletResponse response) {
-        return success(cfgRuleCalcService.add(dto, response));
+    public ApiResult<BatchResultDTO> add(@RequestBody @Validated CfgRuleCalcDTO.AddDTO dto) {
+        return success(cfgRuleCalcService.add(dto));
     }
 
 

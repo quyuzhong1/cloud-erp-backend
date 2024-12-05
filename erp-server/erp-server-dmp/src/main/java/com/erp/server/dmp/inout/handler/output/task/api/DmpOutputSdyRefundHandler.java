@@ -16,6 +16,7 @@ import com.erp.model.dmp.entity.*;
 import com.erp.model.dmp.enums.DmpOutputTaskRecordStatusEnum;
 import com.erp.model.dmp.enums.ThirdSysTypeEnum;
 import com.erp.model.oms.entity.CustomerInfoEntity;
+import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.sys.entity.DictCurrencyEntity;
 import com.erp.rpc.sys.feign.SysUserFeign;
@@ -25,8 +26,10 @@ import com.erp.server.dmp.inout.dto.response.DmpOutputTaskResponse;
 import com.erp.server.dmp.inout.handler.output.task.DmpOutputTaskHandler;
 import com.erp.server.dmp.push.consumer.sdy.SdyDeliveryOrderConsumer;
 import com.erp.server.dmp.service.ThirdMappingService;
+import com.erp.server.dmp.service.ThirdShopService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
@@ -47,6 +50,8 @@ public class DmpOutputSdyRefundHandler extends DmpOutputTaskHandler {
     private SdyDeliveryOrderConsumer sdyDeliveryOrderConsumer;
     @Resource
     private SysUserFeign sysUserFeign;
+    @Resource
+    private ThirdShopService thirdShopService;
 
     @Override
     protected List<DmpOutputTaskRecordEntity> outputData(DmpOutputTaskRequest dmpRequest, DmpOutputTaskResponse dmpResponse) {
@@ -97,14 +102,14 @@ public class DmpOutputSdyRefundHandler extends DmpOutputTaskHandler {
         }
 
         Map<String, String> map = new HashMap<>();
-        for(String changId : changeIds) {
+        for (String changId : changeIds) {
             List<ShudiyunB2cOrderDTO> sdyDtoList = this.convert(dmpSoRefundInfoEntityMap.get(changId), dmpSoRefundDetailEntityMap.get(changId));
-            if(CollUtil.isNotEmpty(sdyDtoList)) {
+            if (CollUtil.isNotEmpty(sdyDtoList)) {
                 map.put(changId, JSON.toJSONString(sdyDtoList));
             }
         }
         List<DmpOutputTaskRecordEntity> dmpOutputTaskRecordEntityList = new ArrayList<>();
-        if(!map.isEmpty()) {
+        if (!map.isEmpty()) {
             LocalDateTime now = LocalDateTime.now();
             int i = 0;
             for (Map.Entry<String, String> entry : map.entrySet()) {
@@ -143,13 +148,16 @@ public class DmpOutputSdyRefundHandler extends DmpOutputTaskHandler {
             status = DmpOutputTaskRecordStatusEnum.ERROR.getCode();
         }
 
-        dmpOutputUtils.updateStatus(id, status, String.valueOf(handle.getData()) , handle.getMsg());
+        dmpOutputUtils.updateStatus(id, status, String.valueOf(handle.getData()), handle.getMsg());
     }
 
     /**
      * 解析订单数据
      **/
     public List<ShudiyunB2cOrderDTO> convert(DmpSoRefundInfoEntity dmpSoRefundEntity, List<DmpSoRefundDetailEntity> dmpSoRefundDetailEntityList) {
+        if (CollUtil.isEmpty(dmpSoRefundDetailEntityList)) {
+            return Collections.emptyList();
+        }
         DateTimeFormatter localDateTime = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
         List<ShudiyunB2cOrderDTO> sdyListDTO = new ArrayList<>();
@@ -176,45 +184,61 @@ public class DmpOutputSdyRefundHandler extends DmpOutputTaskHandler {
             sdyDTO.setCustomer_refundable_quantity(qtyTotal);
             sdyDTO.setQuantity_buyer_returned(qtyTotal);
 
-            BigDecimal amountTotal = dmpSoRefundDetailEntityList.stream().map(DmpSoRefundDetailEntity::getAmount).reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
+            BigDecimal amountTotal = dmpSoRefundDetailEntityList.stream().filter(req -> req.getAmount() != null).map(DmpSoRefundDetailEntity::getAmount).reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
             sdyDTO.setOnline_applied_amount(amountTotal);
             sdyDTO.setOrder_seller_payed(amountTotal);
 
             if (PlatformDictEnum.WDT.getCode().equalsIgnoreCase(dmpSoRefundEntity.getSourceSystem())) {
-                //查询旺店通对应系统店铺
-                List<ThirdMappingEntity> shop = thirdMappingService.lambdaQuery()
-                        .eq(ThirdMappingEntity::getType, ThirdSysTypeEnum.SHOP.getCode())
-                        .eq(ThirdMappingEntity::getThirdSysType, PlatformDictEnum.WDT.getCode())
-                        .eq(ThirdMappingEntity::getThirdCode, dmpSoRefundEntity.getShopId())
+                List<ThirdShopEntity> thirdShopEntityList = thirdShopService.lambdaQuery()
+                        .eq(ThirdShopEntity::getCode, dmpSoRefundEntity.getShopId())
+                        .eq(ThirdShopEntity::getSysType, PlatformDictEnum.WDT.getCode())
                         .list();
-                if (CollectionUtils.isNotEmpty(shop)) {
-                    ShopInfoEntity shopInfo = FeignQuery.getById(ShopInfoEntity.class, shop.get(0).getSysId());
-                    sdyDTO.setShop_no(shopInfo.getId());
-                    sdyDTO.setShop_name(shopInfo.getName());
 
-                    CustomerInfoEntity customerInfo = FeignQuery.getById(CustomerInfoEntity.class, shopInfo.getCustomerId());
+                if (CollUtil.isNotEmpty(thirdShopEntityList)) {
+                    //查询旺店通对应系统店铺
+                    List<ThirdMappingEntity> shop = thirdMappingService.lambdaQuery()
+                            .eq(ThirdMappingEntity::getType, ThirdSysTypeEnum.SHOP.getCode())
+                            .eq(ThirdMappingEntity::getThirdSysType, PlatformDictEnum.WDT.getCode())
+                            .eq(ThirdMappingEntity::getThirdInfoId, thirdShopEntityList.get(0).getId())
+                            .list();
 
-                    if (ObjectUtil.isNotEmpty(customerInfo)) {
-                        //组织编码
-                        List<BaseIdDTO.CodeDTO> companyEntities = sysUserFeign.getAccountingCompanyList(Arrays.asList(customerInfo.getFinancialOrganization(), shopInfo.getSalesOrgId()));
-                        //销售组织
-                        BaseIdDTO.CodeDTO salesOrg = companyEntities.stream().filter(req -> req.getId().equals(shopInfo.getSalesOrgId())).findFirst().orElse(null);
-                        sdyDTO.setSales_company_code(salesOrg.getCode());
+                    if (CollectionUtils.isNotEmpty(shop)) {
+                        ShopInfoEntity shopInfo = FeignQuery.getById(ShopInfoEntity.class, shop.get(0).getSysId());
+                        sdyDTO.setShop_no(shopInfo.getId());
+                        sdyDTO.setShop_name(shopInfo.getName());
 
-                        BaseIdDTO.CodeDTO sysAccountingCompanyEntity = companyEntities.stream().filter(req -> req.getId().equals(customerInfo.getFinancialOrganization())).findFirst().orElse(null);
-                        if (ObjectUtil.isNotEmpty(sysAccountingCompanyEntity)) {
-                            sdyDTO.setReceiving_company_code(sysAccountingCompanyEntity.getCode());
-                            sdyDTO.setOrganization_code(sysAccountingCompanyEntity.getCode());
-                            sdyDTO.setOrganization_name(sysAccountingCompanyEntity.getName());
+                        CustomerInfoEntity customerInfo = FeignQuery.getById(CustomerInfoEntity.class, shopInfo.getCustomerId());
+
+                        if (ObjectUtil.isNotEmpty(customerInfo)) {
+                            //组织编码
+                            List<BaseIdDTO.CodeDTO> companyEntities = sysUserFeign.getAccountingCompanyList(Arrays.asList(customerInfo.getFinancialOrganization(), shopInfo.getSalesOrgId()));
+                            //销售组织
+                            BaseIdDTO.CodeDTO salesOrg = companyEntities.stream().filter(req -> req.getId().equals(shopInfo.getSalesOrgId())).findFirst().orElse(null);
+                            sdyDTO.setSales_company_code(salesOrg.getCode());
+
+                            BaseIdDTO.CodeDTO sysAccountingCompanyEntity = companyEntities.stream().filter(req -> req.getId().equals(customerInfo.getFinancialOrganization())).findFirst().orElse(null);
+                            if (ObjectUtil.isNotEmpty(sysAccountingCompanyEntity)) {
+                                sdyDTO.setReceiving_company_code(sysAccountingCompanyEntity.getCode());
+                                sdyDTO.setOrganization_code(sysAccountingCompanyEntity.getCode());
+                                sdyDTO.setOrganization_name(sysAccountingCompanyEntity.getName());
+                            }
+                            String subPlatformType = customerInfo.getPlatformType();
+                            if (StringUtils.isNotBlank(subPlatformType)) {
+                                List<com.erp.model.oms.entity.DictBasicEntity> dictList = FeignQuery.create(com.erp.model.oms.entity.DictBasicEntity.class).eq(com.erp.model.oms.entity.DictBasicEntity::getType, "sdySubPlatform").eq(DictBasicEntity::getName, subPlatformType).list();
+                                if (CollUtil.isNotEmpty(dictList)) {
+                                    sdyDTO.setSubplatform_no(dictList.get(0).getValue());
+                                    sdyDTO.setSubplatform_name(dictList.get(0).getName());
+                                }
+                            }
                         }
-                    }
 
-                    DictCurrencyEntity dictCurrencyEntity = FeignQuery.getById(DictCurrencyEntity.class, shopInfo.getTradeCurrency());
-                    if (ObjectUtil.isNotEmpty(dictCurrencyEntity)) {
-                        sdyDTO.setTransaction_currency(dictCurrencyEntity.getName());
+                        DictCurrencyEntity dictCurrencyEntity = FeignQuery.getById(DictCurrencyEntity.class, shopInfo.getTradeCurrency());
+                        if (ObjectUtil.isNotEmpty(dictCurrencyEntity)) {
+                            sdyDTO.setTransaction_currency(dictCurrencyEntity.getName());
+                        }
+                        sdyDTO.setTransaction_currency_code(shopInfo.getTradeCurrency());
+                        sdyDTO.setSettlement_currency_code(shopInfo.getSettlementCurrency());
                     }
-                    sdyDTO.setTransaction_currency_code(shopInfo.getTradeCurrency());
-                    sdyDTO.setSettlement_currency_code(shopInfo.getSettlementCurrency());
                 }
             } else {
                 String shopId = "";
@@ -253,7 +277,16 @@ public class DmpOutputSdyRefundHandler extends DmpOutputTaskHandler {
                 }
                 sdyDTO.setTransaction_currency_code(shopInfo.getTradeCurrency());
                 sdyDTO.setSettlement_currency_code(shopInfo.getSettlementCurrency());
+                String subPlatformType = customerInfo.getPlatformType();
+                if (StringUtils.isNotBlank(subPlatformType)) {
+                    List<com.erp.model.oms.entity.DictBasicEntity> dictList = FeignQuery.create(com.erp.model.oms.entity.DictBasicEntity.class).eq(com.erp.model.oms.entity.DictBasicEntity::getType, "sdySubPlatform").eq(DictBasicEntity::getName, subPlatformType).list();
+                    if (CollUtil.isNotEmpty(dictList)) {
+                        sdyDTO.setSubplatform_no(dictList.get(0).getValue());
+                        sdyDTO.setSubplatform_name(dictList.get(0).getName());
+                    }
+                }
             }
+
             sdyDTO.setUnit("PCS");
             sdyDTO.setPlatform_id(dmpSoRefundEntity.getSourceSystem());
             sdyDTO.setPlatform_name(PlatformDictEnum.getNameByCode(dmpSoRefundEntity.getSourceSystem()));

@@ -1,6 +1,7 @@
 package com.erp.server.wms.kingdee.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.alibaba.fastjson.JSON;
@@ -13,7 +14,9 @@ import com.common.business.enums.SourceTypeEnum;
 import com.common.business.wrapper.FeignQuery;
 import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
 import com.erp.model.oms.entity.CustomerInfoEntity;
+import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.oms.entity.SoReturnEntity;
+import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.enums.BomTypeEnum;
@@ -30,12 +33,14 @@ import com.erp.server.wms.kingdee.SyncSoReturnInstockService;
 import com.erp.server.wms.service.SoReturnInstockDetailService;
 import com.erp.server.wms.service.SoReturnReceiveService;
 import com.erp.server.wms.service.WmsPushMsgService;
+import com.google.common.collect.Lists;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -76,13 +81,15 @@ public class SyncSoReturnInstockServiceImpl implements SyncSoReturnInstockServic
         List<CurrencyDTO.ViewDTO> currencyList = sysUserFeign.listByCurrency(currencyCodeList);
         //父类产品
         List<String> parentSkuId = bomChildrenSkuDTOS.stream().map(BomChildrenSkuDTO::getParentSkuId).distinct().collect(Collectors.toList());
-        List<ProductDetailEntity> parentSkuList = FeignQuery.create(ProductDetailEntity.class)
-                .in(ProductDetailEntity::getId, parentSkuId)
-                .list();
+        List<ProductDetailEntity> parentSkuList = new ArrayList<>();
+        if (CollUtil.isNotEmpty(parentSkuId)) {
+            parentSkuList = FeignQuery.create(ProductDetailEntity.class)
+                    .in(ProductDetailEntity::getId, parentSkuId)
+                    .list();
+        }
 
         //组织信息
         CustomerInfoEntity customerInfo = FeignQuery.getById(CustomerInfoEntity.class, entity.getCustomerId());
-        List<BaseIdDTO.CodeDTO> companyEntities = sysUserFeign.getAccountingCompanyList(Arrays.asList(customerInfo.getFinancialOrganization(), entity.getSalesOrgId()));
 
         //退货物流单号
         String rootNodeNoInitial = getRootNodeNoInitial(entity);
@@ -102,6 +109,8 @@ public class SyncSoReturnInstockServiceImpl implements SyncSoReturnInstockServic
 
         //组织信息
         if (ObjectUtil.isNotEmpty(customerInfo)) {
+            List<BaseIdDTO.CodeDTO> companyEntities = sysUserFeign.getAccountingCompanyList(Arrays.asList(customerInfo.getFinancialOrganization(), entity.getSalesOrgId()));
+
             String salesOrgCode = companyEntities.stream().filter(req -> req.getId().equals(entity.getSalesOrgId())).map(req -> req.getCode()).findFirst().orElse("");
             shudiyunB2cOrderDTO.setSales_company_code(salesOrgCode);
             BaseIdDTO.CodeDTO sysAccountingCompanyEntity = companyEntities.stream().filter(req -> req.getId().equals(customerInfo.getFinancialOrganization())).findFirst().orElse(null);
@@ -124,7 +133,9 @@ public class SyncSoReturnInstockServiceImpl implements SyncSoReturnInstockServic
             }
 
             shudiyunB2cOrderDTO.setPlatform_id(customerInfo.getPlatformType());
-            shudiyunB2cOrderDTO.setPlatform_name(PlatformDictEnum.checkAndGetByCode(customerInfo.getPlatformType()).getName());
+            List<DictBasicEntity> dictBasicEntityList = FeignQuery.create(DictBasicEntity.class).eq(DictBasicEntity::getType, DictBasicTypeEnum.SALES_PLATFORM.getType()).list();
+            String platformName = dictBasicEntityList.stream().filter(req -> req.getValue().equals(customerInfo.getPlatformType())).map(DictBasicEntity::getName).findFirst().orElse("");
+            shudiyunB2cOrderDTO.setPlatform_name(platformName);
         }
 
         shudiyunB2cOrderDTO.setShop_no(entity.getCustomerId());
@@ -246,7 +257,7 @@ public class SyncSoReturnInstockServiceImpl implements SyncSoReturnInstockServic
             }
         } else if (SourceTypeEnum.SO_RETURN_RECEIVE.getCode().equals(entity.getSourceType())) {
             SoReturnReceiveEntity receiveEntity = soReturnReceiveService.getById(entity.getSourceId());
-            if (ObjectUtil.isNotEmpty(receiveEntity)) {
+            if (CharSequenceUtil.isNotBlank(receiveEntity.getSourceId())) {
                 SoReturnEntity soReturnEntity = soReturnFeign.getSoReturnById(receiveEntity.getSourceId());
                 if (ObjectUtil.isNotEmpty(soReturnEntity)) {
                     rootNodeNoInitial = soReturnEntity.getCode();

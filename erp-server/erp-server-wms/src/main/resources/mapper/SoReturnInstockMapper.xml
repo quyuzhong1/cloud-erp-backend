@@ -13,6 +13,7 @@
         sri.code,
         sri.source_code AS sourceCode,
         sri.platform_order_code AS platformOrderCode,
+        sri.source_type AS sourceType,
         sri.so_code AS soCode,
         sri.type,
         sri.customer_id AS customerId,

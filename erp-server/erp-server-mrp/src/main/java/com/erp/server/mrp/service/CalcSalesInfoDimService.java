@@ -1,11 +1,13 @@
 package com.erp.server.mrp.service;
 
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.mrp.dto.CalcSalesInfoDimDTO;
 import com.erp.model.mrp.entity.CalcSalesInfoDimEntity;
 
+import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
@@ -61,4 +63,50 @@ public interface CalcSalesInfoDimService extends SuperService<CalcSalesInfoDimEn
      * @param dto 参数
      */
     PagingVO<CalcSalesInfoDimDTO.ExportResultDTO> getListExportData(PagingDTO<CalcSalesInfoDimDTO.ExportSalesInfoDTO> dto);
+
+    /**
+     * 试算详情
+     * @param params 参数
+     */
+    PagingVO<CalcSalesInfoDimDTO.DetailViewDTO> pagingDetail(PagingDTO<CalcSalesInfoDimDTO.ParamDTO> params);
+
+    /**
+     * 试算模板
+     * @param params 参数
+     */
+    PagingVO<CalcSalesInfoDimDTO.TemplateViewDTO> pagingTemplate(PagingDTO<CalcSalesInfoDimDTO.ParamDTO> params);
+
+    /**
+     * 修改备注
+     * @param id 试算id
+     * @param remark 备注
+     */
+    BatchResultDTO updateRemark(String id, String remark);
+
+    /**
+     * 下载系统销量
+     *
+     * @param calcSalesInfoDimId 参数
+     */
+    void downloadHistorySales(String calcSalesInfoDimId, HttpServletResponse response);
+
+
+    /**
+     * 试算比较
+     * @param dto 参数
+     */
+    CalcSalesInfoDimDTO.CalcCompareDTO calcCompare(CalcSalesInfoDimDTO.CalcCompareParamsDTO dto);
+
+    /**
+     * 试算比较基础数据
+     * @param dto 参数
+     */
+    CalcSalesInfoDimDTO.CalcCompareDataDTO calcCompareData(CalcSalesInfoDimDTO.CalcCompareParamsDTO dto);
+
+    /**
+     * 下载系统销量
+     *
+     * @param cfgRuleCalcId 参数
+     */
+    void downloadTemplateHistorySales(String cfgRuleCalcId, HttpServletResponse response);
 }

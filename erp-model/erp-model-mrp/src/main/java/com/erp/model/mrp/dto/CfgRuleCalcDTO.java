@@ -45,6 +45,11 @@ public class CfgRuleCalcDTO implements Serializable {
         private List<String> skuIds;
 
         /**
+         * sku
+         */
+        private List<SkuDTO> skuList;
+
+        /**
          * 试算开始日期
          */
         private LocalDate startCalcDate;
@@ -68,6 +73,10 @@ public class CfgRuleCalcDTO implements Serializable {
          * 文件地址
          */
         private String fileUrl;
+        /**
+         * 文件名字
+         */
+        private String fileName;
 
         /**
          * 试算配置名称
@@ -139,6 +148,11 @@ public class CfgRuleCalcDTO implements Serializable {
         private String fileUrl;
 
         /**
+         * 文件名字
+         */
+        private String fileName;
+
+        /**
          * 试算配置名称
          */
         @NotBlank(message = "试算配置名称不能为空")
@@ -178,6 +192,7 @@ public class CfgRuleCalcDTO implements Serializable {
             entity.setSkuJson(JSONUtil.parseArray(addDTO.getSkuIds()));
             entity.setShopJson(JSONUtil.parseArray(addDTO.getShopIds()));
             entity.setFileUrl(addDTO.getFileUrl());
+            entity.setFileName(addDTO.getFileName());
             return entity;
         }
 
@@ -274,8 +289,8 @@ public class CfgRuleCalcDTO implements Serializable {
         /**
          * 数量
          */
-        @ExcelProperty(value = "数量", index = 0)
-        @FieldValid(fieldName = "数量", isNotBlank = true, maxLength = 32)
+        @ExcelProperty(value = "数量", index = 4)
+        @FieldValid(fieldName = "数量", isNotBlank = true, maxLength = 32, formatPattern = FieldFormatPatternTypeEnum.INTEGER)
         private String qty;
 
         /**
@@ -303,5 +318,20 @@ public class CfgRuleCalcDTO implements Serializable {
          */
         private LocalDate billDate;
 
+    }
+
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class SkuDTO {
+        /**
+         * SKU
+         */
+        private String skuId;
+        /**
+         * SKU
+         */
+        private String skuNo;
     }
 }

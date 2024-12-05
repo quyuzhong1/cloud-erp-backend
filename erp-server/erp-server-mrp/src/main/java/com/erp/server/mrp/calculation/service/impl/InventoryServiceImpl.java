@@ -429,10 +429,13 @@ public class InventoryServiceImpl implements InventoryService {
                 .filter(v -> warehouseId.equals(v.getWarehouseId()))
                 .collect(Collectors.toMap(CfgRuleWarehouseDTO.StrategyDetailResultDTO::getDictPlatform, v -> {
                     if (VitualWarehouseChannelTypeEnum.PLATFORM.getCode().equals(v.getChannelType())) {
-                        return shopIdByPlatform.get(v.getDictPlatform());
+                        return Optional.ofNullable(shopIdByPlatform.get(v.getDictPlatform())).orElse(new ArrayList<>());
                     } else {
                         return v.getChannelIdJson().stream().map(Object::toString).collect(Collectors.toList());
                     }
+                }, (o1,o2) -> {
+                    o1.addAll(o2);
+                    return o1;
                 }));
     }
 

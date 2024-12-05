@@ -1,5 +1,6 @@
 package com.erp.server.wms.kingdee;
 
+import java.util.List;
 import java.util.Map;
 
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
@@ -61,5 +62,5 @@ public interface SyncKingdeeSoOutstockService {
     /**
      * 同步数帝云
      */
-    void syncDataToSdy(SoOutstockEntity entity, SoOutstockDetailEntity soOutstockDetailEntity, String operate);
+    void syncDataToSdy(SoOutstockEntity entity, List<SoOutstockDetailEntity> soOutstockDetailEntityList, String operate);
 }

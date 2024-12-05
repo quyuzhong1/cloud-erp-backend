@@ -6,11 +6,14 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.utils.HttpCommonUtil;
 import com.erp.model.dmp.dto.SdySaveResultDTO;
 import com.common.business.dto.ShudiyunB2cOrderDTO;
+import com.erp.server.dmp.push.service.sdy.SdyCommonService;
 import com.erp.server.dmp.push.service.sdy.SdyPushCommonService;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.RequestMethod;
 
+import javax.annotation.Resource;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -22,10 +25,13 @@ import java.util.Objects;
 @Slf4j
 @Service
 public class SdyPushCommonServiceImpl implements SdyPushCommonService {
+    @Resource
+    private SdyCommonService sdyCommonService;
 
     @Override
     public ApiResult executeConsumer(ShudiyunB2cOrderDTO shudiyunB2cOrderDTO) {
-        String path = "http://172.16.100.50:30860/openapi/information/save";
+
+        String path = sdyCommonService.getSdyUrl() + "/openapi/information/save";
 
         //入参
         HashMap<String, Object> orderParams = new HashMap<>(1);

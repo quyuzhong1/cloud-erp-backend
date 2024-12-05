@@ -266,6 +266,10 @@ public class SoReturnInstockDTO {
          *仓位
          */
         private String warehouseLocation;
+        /**
+         * 来源类型
+         */
+        private String sourceType;
     }
 
     /**

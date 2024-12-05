@@ -1,6 +1,7 @@
 package com.erp.server.dmp.inout.handler.output.task.api;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.alibaba.fastjson.JSON;
 import com.common.business.dto.ShudiyunB2cOrderDTO;
@@ -15,6 +16,7 @@ import com.common.core.utils.MathUtil;
 import com.erp.model.dmp.entity.*;
 import com.erp.model.dmp.enums.DmpOutputTaskRecordStatusEnum;
 import com.erp.model.dmp.enums.ThirdSysTypeEnum;
+import com.erp.model.dmp.enums.WdtSourcePlatformEnum;
 import com.erp.model.oms.entity.CustomerInfoEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.enums.OrderSubTypeEnum;
@@ -27,6 +29,7 @@ import com.erp.server.dmp.inout.handler.output.task.DmpOutputTaskHandler;
 import com.erp.server.dmp.push.consumer.sdy.SdyDeliveryOrderConsumer;
 import com.erp.server.dmp.service.DmpSoDetailService;
 import com.erp.server.dmp.service.ThirdMappingService;
+import com.erp.server.dmp.service.ThirdShopService;
 import io.seata.common.util.CollectionUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Scope;
@@ -57,6 +60,8 @@ public class DmpOutputSdyWdtOriginalOrderHandler extends DmpOutputTaskHandler {
     private DmpSoDetailService dmpSoDetailService;
     @Resource
     private SysUserFeign sysUserFeign;
+    @Resource
+    private ThirdShopService thirdShopService;
 
 
     @Override
@@ -161,6 +166,9 @@ public class DmpOutputSdyWdtOriginalOrderHandler extends DmpOutputTaskHandler {
      * 解析订单数据
      **/
     public List<ShudiyunB2cOrderDTO> convert(DmpSoOriginalInfoEntity dmpSoInfoEntity, List<DmpSoOriginalDetailEntity> dmpSoDetailEntityList) {
+        if (CollUtil.isEmpty(dmpSoDetailEntityList)) {
+            return Collections.emptyList();
+        }
         DateTimeFormatter localDateTime = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
         //数帝云数据结构
         List<ShudiyunB2cOrderDTO> shudiyunB2cOrderDTOList = new ArrayList<>();
@@ -186,7 +194,7 @@ public class DmpOutputSdyWdtOriginalOrderHandler extends DmpOutputTaskHandler {
 
             //线上原始订单
             shudiyunB2cOrderDTO.setTransaction_type("线上订单");
-
+            shudiyunB2cOrderDTO.setStatus("已创建");
             shudiyunB2cOrderDTO.setTransaction_sub_type(OrderSubTypeEnum.ONLINE_ORDER.getName());
             shudiyunB2cOrderDTO.setBiz_status(wdtStatusHandler(dmpSoInfoEntity.getTradeStatus()));
             if (dmpSoInfoEntity.getPayTime() != null) {
@@ -217,43 +225,57 @@ public class DmpOutputSdyWdtOriginalOrderHandler extends DmpOutputTaskHandler {
             shudiyunB2cOrderDTO.setTotal_freight(BigDecimal.ZERO);
 
             //查询旺店通对应系统店铺
-            List<ThirdMappingEntity> shop = thirdMappingService.lambdaQuery()
-                    .eq(ThirdMappingEntity::getType, ThirdSysTypeEnum.SHOP.getCode())
-                    .eq(ThirdMappingEntity::getThirdSysType, PlatformDictEnum.WDT.getCode())
-                    .eq(ThirdMappingEntity::getThirdCode, dmpSoInfoEntity.getShopNo())
+            List<ThirdShopEntity> thirdShopEntityList = thirdShopService.lambdaQuery()
+                    .eq(ThirdShopEntity::getCode, dmpSoInfoEntity.getShopNo())
+                    .eq(ThirdShopEntity::getSysType, PlatformDictEnum.WDT.getCode())
                     .list();
-            if (CollectionUtils.isNotEmpty(shop)) {
-                ShopInfoEntity shopInfo = FeignQuery.getById(ShopInfoEntity.class, shop.get(0).getSysId());
-                CustomerInfoEntity customerInfo = FeignQuery.getById(CustomerInfoEntity.class, shopInfo.getCustomerId());
 
-                if (ObjectUtil.isNotEmpty(customerInfo)) {
-                    //组织编码
-                    List<BaseIdDTO.CodeDTO> companyEntities = sysUserFeign.getAccountingCompanyList(Arrays.asList(customerInfo.getFinancialOrganization(), shopInfo.getSalesOrgId()));
+            if (CollUtil.isNotEmpty(thirdShopEntityList)) {
+                //查询旺店通对应系统店铺
+                List<ThirdMappingEntity> shop = thirdMappingService.lambdaQuery()
+                        .eq(ThirdMappingEntity::getType, ThirdSysTypeEnum.SHOP.getCode())
+                        .eq(ThirdMappingEntity::getThirdSysType, PlatformDictEnum.WDT.getCode())
+                        .eq(ThirdMappingEntity::getThirdInfoId, thirdShopEntityList.get(0).getId())
+                        .list();
+                if (CollectionUtils.isNotEmpty(shop)) {
+                    ShopInfoEntity shopInfo = FeignQuery.getById(ShopInfoEntity.class, shop.get(0).getSysId());
+                    CustomerInfoEntity customerInfo = FeignQuery.getById(CustomerInfoEntity.class, shopInfo.getCustomerId());
 
-                    //销售组织
-                    BaseIdDTO.CodeDTO salesOrg = companyEntities.stream().filter(req -> req.getId().equals(shopInfo.getSalesOrgId())).findFirst().orElse(null);
-                    shudiyunB2cOrderDTO.setSales_company_code(salesOrg.getCode());
+                    if (ObjectUtil.isNotEmpty(customerInfo)) {
+                        //组织编码
+                        List<BaseIdDTO.CodeDTO> companyEntities = sysUserFeign.getAccountingCompanyList(Arrays.asList(customerInfo.getFinancialOrganization(), shopInfo.getSalesOrgId()));
 
-                    BaseIdDTO.CodeDTO sysAccountingCompanyEntity = companyEntities.stream().filter(req -> req.getId().equals(customerInfo.getFinancialOrganization())).findFirst().orElse(null);
-                    if (ObjectUtil.isNotEmpty(sysAccountingCompanyEntity)) {
-                        shudiyunB2cOrderDTO.setReceiving_company_code(sysAccountingCompanyEntity.getCode());
-                        shudiyunB2cOrderDTO.setOrganization_code(sysAccountingCompanyEntity.getCode());
-                        shudiyunB2cOrderDTO.setOrganization_name(sysAccountingCompanyEntity.getName());
+                        //销售组织
+                        BaseIdDTO.CodeDTO salesOrg = companyEntities.stream().filter(req -> req.getId().equals(shopInfo.getSalesOrgId())).findFirst().orElse(null);
+                        shudiyunB2cOrderDTO.setSales_company_code(salesOrg.getCode());
+
+                        BaseIdDTO.CodeDTO sysAccountingCompanyEntity = companyEntities.stream().filter(req -> req.getId().equals(customerInfo.getFinancialOrganization())).findFirst().orElse(null);
+                        if (ObjectUtil.isNotEmpty(sysAccountingCompanyEntity)) {
+                            shudiyunB2cOrderDTO.setReceiving_company_code(sysAccountingCompanyEntity.getCode());
+                            shudiyunB2cOrderDTO.setOrganization_code(sysAccountingCompanyEntity.getCode());
+                            shudiyunB2cOrderDTO.setOrganization_name(sysAccountingCompanyEntity.getName());
+                        }
                     }
-                }
 
-                shudiyunB2cOrderDTO.setShop_no(shopInfo.getId());
-                shudiyunB2cOrderDTO.setShop_name(shopInfo.getName());
-                DictCurrencyEntity dictCurrencyEntity = FeignQuery.getById(DictCurrencyEntity.class, shopInfo.getTradeCurrency());
-                if (ObjectUtil.isNotEmpty(dictCurrencyEntity)) {
-                    shudiyunB2cOrderDTO.setTransaction_currency(dictCurrencyEntity.getName());
+                    shudiyunB2cOrderDTO.setShop_no(shopInfo.getId());
+                    shudiyunB2cOrderDTO.setShop_name(shopInfo.getName());
+                    DictCurrencyEntity dictCurrencyEntity = FeignQuery.getById(DictCurrencyEntity.class, shopInfo.getTradeCurrency());
+                    if (ObjectUtil.isNotEmpty(dictCurrencyEntity)) {
+                        shudiyunB2cOrderDTO.setTransaction_currency(dictCurrencyEntity.getName());
+                    }
+                    shudiyunB2cOrderDTO.setTransaction_currency_code(shopInfo.getTradeCurrency());
+                    shudiyunB2cOrderDTO.setSettlement_currency_code(shopInfo.getSettlementCurrency());
                 }
-                shudiyunB2cOrderDTO.setTransaction_currency_code(shopInfo.getTradeCurrency());
-                shudiyunB2cOrderDTO.setSettlement_currency_code(shopInfo.getSettlementCurrency());
             }
 
-            shudiyunB2cOrderDTO.setPlatform_id(dmpSoInfoEntity.getSourceSystem());
-            shudiyunB2cOrderDTO.setPlatform_name(PlatformDictEnum.getNameByCode(dmpSoInfoEntity.getSourcePlatform()));
+            String sourcePlatform = dmpSoInfoEntity.getSourcePlatform();
+            String sourcePlatformName = dmpSoInfoEntity.getSourcePlatform();
+			shudiyunB2cOrderDTO.setPlatform_id(sourcePlatform);
+            WdtSourcePlatformEnum wdtSourcePlatformEnum = WdtSourcePlatformEnum.getByCode(sourcePlatform);
+            if(wdtSourcePlatformEnum != null) {
+            	sourcePlatformName = wdtSourcePlatformEnum.getName();
+            }
+            shudiyunB2cOrderDTO.setPlatform_name(sourcePlatformName);
             shudiyunB2cOrderDTO.setRoot_node_no(dmpSoInfoEntity.getPlatformCode());
 
             if (dmpSoInfoEntity.getPayTime() != null) {
@@ -282,6 +304,9 @@ public class DmpOutputSdyWdtOriginalOrderHandler extends DmpOutputTaskHandler {
             }
 
             shudiyunB2cOrderDTO.setPost_amount(BigDecimal.ZERO);
+            if (CharSequenceUtil.isBlank(dmpSoDetailEntity.getGoodsNo())) {
+                continue;
+            }
             shudiyunB2cOrderDTO.setMsku_code(dmpSoDetailEntity.getGoodsNo());
             shudiyunB2cOrderDTO.setMsku_name(dmpSoDetailEntity.getGoodsName());
             shudiyunB2cOrderDTO.setSku_code("");

@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
@@ -103,12 +104,6 @@ public class CfgRuleSalesDenoisingCalcDTO implements Serializable {
     public static class CommonDTO {
 
         /**
-        * 序号
-        */
-        @NotNull(message = "序号不能为空")
-        private Integer index;
-
-        /**
         * 名称
         */
         @NotBlank(message = "名称不能为空")
@@ -116,14 +111,10 @@ public class CfgRuleSalesDenoisingCalcDTO implements Serializable {
         private String name;
 
         /**
-        * 开始日期
-        */
-        private LocalDate startDate;
-
-        /**
-        * 结束日期
-        */
-        private LocalDate endDate;
+         * 时间
+         */
+        @NotEmpty(message = "时间区间不能为空")
+        private List<LocalDate> dateList;
 
         /**
         * 去噪类型，percentage百分比去噪：fixedValue=固定值去噪，completely=完全去噪

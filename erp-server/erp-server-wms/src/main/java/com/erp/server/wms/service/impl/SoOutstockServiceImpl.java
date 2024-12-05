@@ -632,7 +632,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 180000)
     @DataIdempotent(keyIdName = "dto.id")
     public BatchResultDTO approve(ApproveOneDTO dto) {
         SoOutstockEntity entity = this.getById(dto.getId());
@@ -782,7 +782,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             //推送旺店通
             this.syncToWdt(entity,SyncOperateEnum.OPERATE_APPROVE);
             //推送数帝云
-            this.syncToSdy(entity, SyncOperateEnum.OPERATE_APPROVE.getCode());
+//            this.syncToSdy(entity, SyncOperateEnum.OPERATE_APPROVE.getCode());
 
         }
         if (!SourceTypeEnum.SAL_OUTSTOCK.getCode().equals(entity.getSourceType())) {
@@ -795,7 +795,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
     private void syncToSdy(SoOutstockEntity entity, String operate) {
         //推送数帝云
         List<SoOutstockDetailEntity> soOutstockDetailEntityList = soOutstockDetailService.listByMainIds(Arrays.asList(entity.getId()));
-        soOutstockDetailEntityList.forEach(soOutstockDetailEntity -> syncKingdeeSoOutstockService.syncDataToSdy(entity, soOutstockDetailEntity, operate));
+        syncKingdeeSoOutstockService.syncDataToSdy(entity, soOutstockDetailEntityList, operate);
 
         if (OrderTypeEnum.B2B.getCode().equals(entity.getOrderType())) {
             //更新推送数帝云订单信息
@@ -1140,7 +1140,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 180000)
     public BatchResultDTO disApprove(SoOutstockEntity entity, Boolean isPushKingDee) {
         //下游单据【报关单】生成后不可操作反审核：报关单[单号]已生成不可操作反审核
         List<TmsDeclareBillEntity> tmsDeclareBillEntities = tmsDeclareBillFeign.listBySourceIds(Collections.singletonList(entity.getSoId()));
@@ -1191,8 +1191,8 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             this.syncToWdt(entity,SyncOperateEnum.OPERATE_DISAPPROVE);
 
             //推送数帝云
-            List<SoOutstockDetailEntity> soOutstockDetailEntityList = soOutstockDetailService.listByMainIds(Arrays.asList(entity.getId()));
-            soOutstockDetailEntityList.forEach(soOutstockDetailEntity -> syncKingdeeSoOutstockService.syncDataToSdy(entity, soOutstockDetailEntity, SyncOperateEnum.OPERATE_DISAPPROVE.getCode()));
+//            List<SoOutstockDetailEntity> soOutstockDetailEntityList = soOutstockDetailService.listByMainIds(Arrays.asList(entity.getId()));
+//            syncKingdeeSoOutstockService.syncDataToSdy(entity, soOutstockDetailEntityList, SyncOperateEnum.OPERATE_DISAPPROVE.getCode());
         }
         return BatchResultDTO.success(entity.getId(),entity.getCode(), "反审核成功");
     }
@@ -1268,9 +1268,9 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             sendPushTask(list,SyncOperateEnum.OPERATE_DELETE.getCode());
 
             //推送数帝云
-            for (SoOutstockEntity outstockEntity : list) {
-                soOutstockDetailAllList.forEach(soOutstockDetailEntity -> syncKingdeeSoOutstockService.syncDataToSdy(outstockEntity, soOutstockDetailEntity, SyncOperateEnum.OPERATE_DELETE.getCode()));
-            }
+           /* for (SoOutstockEntity outstockEntity : list) {
+                syncKingdeeSoOutstockService.syncDataToSdy(outstockEntity, soOutstockDetailAllList, SyncOperateEnum.OPERATE_DELETE.getCode());
+            }*/
 
 
         }

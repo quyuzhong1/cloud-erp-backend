@@ -12,7 +12,6 @@ import com.common.core.anno.LogViewService;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
-import com.erp.model.scm.dto.PurchaseApplicationDTO;
 import com.erp.model.scm.dto.PurchaseOrderDTO;
 import com.erp.model.scm.dto.SubcontractChangeDTO;
 import com.erp.model.scm.dto.SubcontractOrderDTO;
@@ -390,7 +389,7 @@ public class SubcontractOrderController extends BaseController {
     @LogAction(value = LogActionEnum.INSERT, desc = "委外订单下推采购单保存")
     @PostMapping(value = "/generatePo")
     public ApiResult<Void> generatePo(@RequestBody @Validated ValidList<SubcontractOrderDTO.GeneratePoDTO> list) {
-         subcontractOrderService.generatePo(list,Boolean.FALSE);
+         subcontractOrderService.generatePo(list);
         return success();
     }
 //    /**
