@@ -1,4 +1,6 @@
 package com.erp.server.dmp.service;
+import java.util.List;
+
 import com.common.business.dto.DmpSyncTaskDTO;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
@@ -10,8 +12,6 @@ import com.erp.model.dmp.dto.DmpOutputTaskRecordDTO;
 import com.erp.model.dmp.dto.DmpPushTaskDTO;
 import com.erp.model.dmp.entity.DmpCfgOutputEntity;
 import com.erp.model.dmp.entity.DmpOutputTaskRecordEntity;
-
-import java.util.List;
 
 /**
  * <p>
@@ -130,4 +130,6 @@ public interface DmpOutputTaskRecordService extends SuperService<DmpOutputTaskRe
      * @return SyncInfoDTO
      */
     DmpPushTaskDTO.SyncInfoDTO getErrorData(DmpSyncTaskDTO.OneDTO oneDTO);
+    
+    List<DmpOutputTaskRecordEntity> getOutputErrorTask(String systemId , String size);
 }

@@ -259,7 +259,15 @@ public abstract class DmpInputTaskHandler extends DmpInputHandler{
 			this.doChildCfgInput(dmpRequest, dmpResponse);
 		}
 		if(dmpResponse.isDoUpdateStatus()) {
-			this.updateTaskStatus(dmpRequest, dmpResponse);
+			Integer childNeFinishCount = dmpInputTaskService.lambdaQuery()
+					.eq(DmpInputTaskEntity::getParentTaskId, inputTaskId)
+					.ne(DmpInputTaskEntity::getStatus, DmpInputTaskStatusEnum.FINISH.getCode())
+					.count();
+			if(childNeFinishCount == null || childNeFinishCount == 0) {
+				this.updateTaskStatus(dmpRequest, dmpResponse);
+			}else {
+				dmpResponse.setDoNextChain(false);
+			}
 		}
 		if(dmpResponse.isDoNextChain()) {
 			this.doNextChain(dmpRequest, dmpResponse, chain);

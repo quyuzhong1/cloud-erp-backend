@@ -3,29 +3,25 @@ package com.erp.server.dmp.inout.job;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
+import java.util.concurrent.ExecutorService;
 import java.util.stream.Collectors;
 
-import com.erp.server.dmp.inout.dto.request.DmpOutputFinishRequest;
-import com.erp.server.dmp.inout.handler.factory.DmpOutputTaskFactory;
+import javax.annotation.Resource;
+
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
-import com.common.business.utils.ApplicationContextUtils;
 import com.erp.model.dmp.entity.DmpCfgOutputEntity;
-import com.erp.model.dmp.entity.DmpOutputTaskEntity;
 import com.erp.model.dmp.entity.DmpOutputTaskRecordEntity;
 import com.erp.model.dmp.enums.DmpOutputTaskRecordStatusEnum;
 import com.erp.server.dmp.controller.api.DmpInoutController;
-import com.erp.server.dmp.inout.handler.output.task.DmpOutputTaskHandler;
-import com.erp.server.dmp.inout.utils.DmpHandlerUtils;
+import com.erp.server.dmp.inout.dto.request.DmpOutputFinishRequest;
+import com.erp.server.dmp.inout.handler.factory.DmpOutputTaskFactory;
 import com.erp.server.dmp.service.DmpCfgOutputService;
 import com.erp.server.dmp.service.DmpOutputTaskRecordService;
 import com.erp.server.dmp.service.DmpOutputTaskService;
@@ -35,8 +31,6 @@ import com.xxl.job.core.handler.annotation.XxlJob;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.LocalDateTimeUtil;
-
-import javax.annotation.Resource;
 
 @Component
 public class DmpOutputTaskJob {
@@ -50,40 +44,35 @@ public class DmpOutputTaskJob {
 	private DmpOutputTaskFactory dmpOutputTaskFactory;
     @Autowired
 	private DmpInoutController dmpInoutController;
+    @Autowired
+	@Qualifier("dmpDoOutputErrorTask")
+	private ExecutorService dmpDoOutputErrorTask;
 	
+    private List<String> systemIds = new ArrayList<>();
 	
 	@XxlJob("doOutputErrorTask")
     public ReturnT doOutputErrorTask(){
+		if(CollUtil.isEmpty(systemIds)) {
+			systemIds = dmpCfgOutputService.list().stream().map(DmpCfgOutputEntity::getSystemId).distinct().collect(Collectors.toList());
+		}
 		String jobParam = XxlJobHelper.getJobParam();
 		String size = "150";
-		List<String> mainIds = null;
-		List<String> ids = null;
 		if(StringUtils.isNotBlank(jobParam)) {
 			JSONObject parseObject = JSON.parseObject(jobParam);
 			String sizeParam = parseObject.getString("size");
 			if(StringUtils.isNotBlank(sizeParam)) {
 				size = sizeParam;
 			}
-			String mainIdsParam = parseObject.getString("mainIds");
-			if(StringUtils.isNotBlank(mainIdsParam)) {
-				mainIds = Arrays.asList(mainIdsParam.split(","));
-			}
-			String idsParam = parseObject.getString("ids");
-			if(StringUtils.isNotBlank(idsParam)) {
-				ids = Arrays.asList(idsParam.split(","));
-			}
 		}
 		
-		List<DmpOutputTaskRecordEntity> dmpOutputTaskRecordEntityList = dmpOutputTaskRecordService.lambdaQuery()
-			.in(CollUtil.isNotEmpty(ids) ,DmpOutputTaskRecordEntity::getId, ids)
-			.in(CollUtil.isNotEmpty(mainIds) ,DmpOutputTaskRecordEntity::getMainId, mainIds)
-			.eq(DmpOutputTaskRecordEntity::getIsDeleted, false)
-			.last(CollUtil.isEmpty(ids) , " and (status in ('init' , 'mqerror' , 'cosumererror') or (status = 'mqsuccess' and update_time < (CURRENT_TIMESTAMP - interval '7200 seconds'))) "
-					+ "order by update_time limit " + size)
-			.list();
-		
-		if(CollUtil.isNotEmpty(dmpOutputTaskRecordEntityList)) {
-			dmpOutputTaskRecordService.batchSync(dmpOutputTaskRecordEntityList);
+		String finalSize = size;
+		for(String systemId : systemIds) {
+			dmpDoOutputErrorTask.execute(() -> {
+				List<DmpOutputTaskRecordEntity> dmpOutputTaskRecordEntityList = dmpOutputTaskRecordService.getOutputErrorTask(systemId, finalSize);
+				if(CollUtil.isNotEmpty(dmpOutputTaskRecordEntityList)) {
+					dmpOutputTaskRecordService.batchSync(dmpOutputTaskRecordEntityList);
+				}
+			});
 		}
 		
         return ReturnT.SUCCESS;
