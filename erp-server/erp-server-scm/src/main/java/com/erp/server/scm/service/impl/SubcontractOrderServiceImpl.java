@@ -3,7 +3,6 @@ package com.erp.server.scm.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
-import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
@@ -767,7 +766,7 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
     @Override
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
-    public void generatePo(ValidList<SubcontractOrderDTO.GeneratePoDTO> list,Boolean isAuto) {
+    public void generatePo(ValidList<SubcontractOrderDTO.GeneratePoDTO> list) {
         if (CollectionUtils.isEmpty(list)) {
             throw new ServiceException(ApiError.ERROR_98004);
         }
@@ -790,6 +789,42 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
         //供应商
         List<SupplierEntity> supplierList = supplierService.listByIds(supplierIds);
 
+        //生成采购订单
+        List<String> poIds = addGroupPoData(resultList, supplierList, skuList, defaultSupplierContactList);
+        //ids为空则直接返回
+        if (CollectionUtils.isEmpty(poIds)) {
+            return;
+        }
+        //提交
+        Boolean submit = purchaseOrderService.submit(poIds, Boolean.FALSE);
+        if (!submit) {
+            throw new ServiceException(ApiError.ERROR_98076);
+        }
+        //审核
+        BaseApproveParamDTO baseApproveParamDTO = new BaseApproveParamDTO();
+        baseApproveParamDTO.setIds(poIds);
+        baseApproveParamDTO.setType(ApproveType.PASS);
+        Boolean approve = purchaseOrderService.autoBatchApprove(baseApproveParamDTO);
+        if (!approve) {
+            throw new ServiceException(ApiError.ERROR_98077);
+        }
+    }
+
+    /**
+     * 分组生成采购订单
+     * @author will
+     * @date 2024/12/4 15:34
+     * @param resultList
+     * @param supplierList
+     * @param skuList
+     * @param defaultSupplierContactList
+     * @return List<String>
+     */
+    private List<String> addGroupPoData ( List<SubcontractOrderDTO.GeneratePoAddDTO> resultList,List<SupplierEntity> supplierList,List<SkuVO> skuList,
+                             List<SupplierContactEntity> defaultSupplierContactList) {
+        if (CollUtil.isEmpty(resultList)) {
+            return Collections.emptyList();
+        }
         List<String> poIds = new ArrayList<>();
         Map<String, List<SubcontractOrderDTO.GeneratePoAddDTO>> map = resultList.stream().collect(Collectors.groupingBy(obj -> obj.getSourceId().concat(obj.getSupplierId()).concat(obj.getDeliveryWarehouseId()).concat(obj.getIsParent().toString())));
         for (Map.Entry<String, List<SubcontractOrderDTO.GeneratePoAddDTO>> entry : map.entrySet()) {
@@ -818,7 +853,6 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
             if (ObjectUtil.isNotEmpty(supplierEntity)) {
                 supplierDTO.setPayMethodId(supplierEntity.getPayMethodId());
             }
-
             //供应商默认联系人
             if (CollectionUtils.isNotEmpty(defaultSupplierContactList)) {
                 SupplierContactEntity supplierContactEntity = defaultSupplierContactList.stream().filter(obj -> obj.getSupplierId().equals(value.get(0).getSupplierId())).findFirst().orElse(null);
@@ -858,27 +892,7 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
             }
             poIds.add(purchaseOrderEntity.getId());
         }
-
-        //采购订单提交审核
-        if (CollectionUtils.isNotEmpty(poIds)) {
-            //更新采购申请单采购订单创建类型
-            purchaseOrderService.updateCreatePoType(poIds);
-            //提交
-            Boolean submit = purchaseOrderService.submit(poIds,Boolean.FALSE);
-            if (!submit) {
-                throw new ServiceException(ApiError.ERROR_98076);
-            }
-            //审核
-            for (String poId : poIds) {
-                ApproveOneDTO approveOneDTO = new ApproveOneDTO();
-                approveOneDTO.setId(poId);
-                approveOneDTO.setType(ApproveType.PASS);
-                BatchResultDTO approve = purchaseOrderService.approve(approveOneDTO);
-                if (!approve.getSuccess()) {
-                    throw new ServiceException(ApiError.ERROR_98077);
-                }
-            }
-        }
+        return poIds;
     }
 
     /**
@@ -1260,7 +1274,7 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
         List<SubcontractOrderDTO.GeneratePoDTO> resultList = BeanMapperUtils.copyList(SubcontractOrderDTO.GeneratePoDTO.class, addList);
         ValidList<SubcontractOrderDTO.GeneratePoDTO> list = new ValidList<>();
         list.setList(resultList);
-        generatePo(list,Boolean.TRUE);
+        generatePo(list);
     }
 
     /**
