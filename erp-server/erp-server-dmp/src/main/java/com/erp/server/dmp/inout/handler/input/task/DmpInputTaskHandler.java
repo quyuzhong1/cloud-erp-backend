@@ -252,6 +252,9 @@ public abstract class DmpInputTaskHandler extends DmpInputHandler{
 	 * @param dmpOutputRequest
 	 */
 	protected void doBaseChain(DmpInputTaskRequest dmpRequest, DmpInputInitResponse dmpResponse , DmpHandlerChain chain , DmpOutputTaskRequest dmpOutputRequest) {
+		if(!dmpResponse.isDoNextStatus()) {
+			return;
+		}
 		if(dmpResponse.isDoOutputChain()) {
 			this.doOutputChain(dmpRequest, dmpResponse, chain, dmpOutputRequest);
 		}
@@ -266,7 +269,7 @@ public abstract class DmpInputTaskHandler extends DmpInputHandler{
 			if(childNeFinishCount == null || childNeFinishCount == 0) {
 				this.updateTaskStatus(dmpRequest, dmpResponse);
 			}else {
-				dmpResponse.setDoNextChain(false);
+				dmpResponse.setDoNextStatus(false);
 			}
 		}
 		if(dmpResponse.isDoNextChain()) {
