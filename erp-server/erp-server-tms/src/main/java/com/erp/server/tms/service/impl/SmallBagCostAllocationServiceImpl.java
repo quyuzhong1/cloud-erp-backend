@@ -10,6 +10,7 @@ import java.util.stream.Collectors;
 
 import javax.annotation.Resource;
 
+import cn.hutool.core.util.ObjectUtil;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -303,4 +304,15 @@ public class SmallBagCostAllocationServiceImpl extends SuperServiceImpl<SmallBag
         return Boolean.TRUE;
 	}
 
+	@Override
+	public Boolean updateBigTableStatus(String id, String bigTableStatus) {
+		SmallBagCostAllocationEntity entity = this.getById(id);
+		if (ObjectUtil.isEmpty(entity)) {
+			throw new ServiceException("单据不存在!");
+		}
+		return this.lambdaUpdate()
+				.set(SmallBagCostAllocationEntity::getBigTableStatus, bigTableStatus)
+				.eq(SmallBagCostAllocationEntity::getId, id)
+				.update();
+	}
 }

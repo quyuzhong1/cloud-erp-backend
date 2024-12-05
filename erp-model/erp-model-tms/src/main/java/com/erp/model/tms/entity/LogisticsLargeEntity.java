@@ -349,6 +349,11 @@ public class LogisticsLargeEntity extends BaseEntity<LogisticsLargeEntity> {
      */
     @TableField("reconciliation_month")
     private LocalDate reconciliationMonth;
+    /**
+     * 是否是对冲预估账单的数据标识
+     */
+    @TableField("is_hedging")
+    private Boolean isHedging;
 
 
     public static final String OUTSTOCK_CODE = "outstock_code";

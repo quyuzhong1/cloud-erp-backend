@@ -5,6 +5,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import cn.hutool.core.util.ObjectUtil;
+import com.erp.model.tms.entity.SmallBagCostAllocationEntity;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -176,4 +178,16 @@ public class TransferDeclareCostAllocationServiceImpl extends SuperServiceImpl<T
 		// TODO Auto-generated method stub
 		return null;
 	}
+
+    @Override
+    public Boolean updateBigTableStatus(String id, String bigTableStatus) {
+        TransferDeclareCostAllocationEntity entity = this.getById(id);
+        if (ObjectUtil.isEmpty(entity)) {
+            throw new ServiceException("单据不存在!");
+        }
+        return this.lambdaUpdate()
+                .set(TransferDeclareCostAllocationEntity::getBigTableStatus, bigTableStatus)
+                .eq(TransferDeclareCostAllocationEntity::getId, id)
+                .update();
+    }
 }
