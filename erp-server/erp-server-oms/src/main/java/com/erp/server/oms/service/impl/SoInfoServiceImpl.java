@@ -3776,8 +3776,6 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             Integer toFrozenQty = virtualUsableQty > unFrozenQty ? unFrozenQty : virtualUsableQty;
             batchLockDTO.setToFrozenQty(toFrozenQty + soDetailEntity.getFrozenQty());
             batchLockDTO.setVirtualScarceQty(paramScarceDTO.getVirtualScarceQty());
-            //锁定数量返回时默认填充最大可锁数量
-            batchLockDTO.setFrozenQty(batchLockDTO.getToFrozenQty());
 
             //销售出库单
             Integer outstockQty = deliveryQtyList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSourceDetailId(), soDetailEntity.getId())
