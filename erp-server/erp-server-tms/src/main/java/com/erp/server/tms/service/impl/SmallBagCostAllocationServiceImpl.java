@@ -250,6 +250,11 @@ public class SmallBagCostAllocationServiceImpl extends SuperServiceImpl<SmallBag
 			.set(StringUtils.isNotBlank(reportDate) , SmallBagCostAllocationMainEntity::getAccountDate, reportDate)
 			.set(StringUtils.isNotBlank(reportStatus) , SmallBagCostAllocationMainEntity::getReportStatus, reportStatus)
 			.update();
+		logisticsBillCostService.lambdaUpdate()
+			.eq(LogisticsBillCostEntity::getId, smallBagCostAllocationMainEntity.getCostId())
+			.set(LogisticsBillCostEntity::getCheckStatus, reportStatus.equals(SmallBagCostAllocationReportStatusEnum.TOBECONFIRM.getCode()) 
+					? LogisticsBillCostCheckStatusEnum.CHECKED.getCode() : LogisticsBillCostCheckStatusEnum.CONFIRM.getCode())
+			.update();
 		return BatchResultDTO.success(id, id, "更新核算状态成功");
 	}
 
