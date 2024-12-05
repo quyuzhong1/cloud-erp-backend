@@ -382,7 +382,7 @@ public class VirtualInventoryDTO implements Serializable {
          */
         private Integer warehouseAllocationQty = 0;
         /**
-         * 实体仓可分配库存
+         * 实体仓实际库存
          */
         private Integer realQty = 0;
         /**
