@@ -152,5 +152,8 @@ public class PlmWorkOptionFeignController {
     public void pilotApprovalPass(@RequestBody @Validated ApproveOneDTO dto) {
         PilotApplicationDTO.ApproveDTO approveDTO = new PilotApplicationDTO.ApproveDTO();
         pilotApplicationService.approve(dto,approveDTO);
+        //回写产品管理--采购信息--一级和二级供应商
+        pilotApplicationService.writeProductPurchaseBack(dto.getId());
+        pilotApplicationService.approvePilotApplicationNotice(dto.getId());
     }
 }
