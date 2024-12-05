@@ -851,7 +851,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
                 detail.setStagingLocation(detailEntity.getStagingLocation());
                 detail.setChangeType(RequisitionChangeTypeEnum.ADD.getCode());
                 //处理日志
-                String context = CharSequenceUtil.format("增加【{}】明细行,拣货仓位【{}}】,数量【{}】", data.getSkuNo(), data.getWarehouseLocation(), data.getQty());
+                String context = CharSequenceUtil.format("增加【{}】明细行,拣货仓位【{}}】,实拣数量【{}】", data.getSkuNo(), data.getWarehouseLocation(), data.getActualQty());
                 operateLogService.addModuleOperateLog(context, ModuleTypeEnum.PICKING_LISTS.getCode(), entity.getId(), "编辑操作");
                 return detail;
             }).collect(Collectors.toList());
@@ -870,8 +870,8 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
                     .findFirst()
                     .orElseThrow(() -> new ServiceException(ApiError.ERROR_400));
             if(!detailEntity.getWarehouseLocation().equals(view.getWarehouseLocation()) || !detailEntity.getActualQty().equals(view.getActualQty()) ){
-                String context = CharSequenceUtil.format("编辑了【{}】明细行,拣货仓位由【{}】变更为【{}】，数量由【{}】变更为【{}】", view.getSkuNo(),
-                        detailEntity.getWarehouseLocation(), view.getWarehouseLocation(), detailEntity.getQty(), view.getQty());
+                String context = CharSequenceUtil.format("编辑了【{}】明细行,拣货仓位由【{}】变更为【{}】，实拣数量由【{}】变更为【{}】", view.getSkuNo(),
+                        detailEntity.getWarehouseLocation(), view.getWarehouseLocation(), detailEntity.getActualQty(), view.getActualQty());
                 operateLogService.addModuleOperateLog(context, ModuleTypeEnum.PICKING_LISTS.getCode(), entity.getId(), "编辑操作");
             }
             detailEntity.setOriginWarehouseLocation(detailEntity.getWarehouseLocation());
@@ -899,7 +899,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
             List<String> removeIds = new ArrayList<>();
             for (PickingDetailEntity detail : removeData) {
                 removeIds.add(detail.getId());
-                String context = CharSequenceUtil.format("移除【{}】明细行,拣货仓位【{}}】,数量【{}】", detail.getSkuNo(), detail.getWarehouseLocation(), detail.getQty());
+                String context = CharSequenceUtil.format("移除【{}】明细行,拣货仓位【{}}】,实拣数量【{}】", detail.getSkuNo(), detail.getWarehouseLocation(), detail.getActualQty());
                 operateLogService.addModuleOperateLog(context, ModuleTypeEnum.PICKING_LISTS.getCode(), entity.getId(), "编辑操作");
                 detail.setChangeType(RequisitionChangeTypeEnum.DELETE.getCode());
             }
