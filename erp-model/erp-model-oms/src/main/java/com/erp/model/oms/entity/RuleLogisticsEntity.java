@@ -1,13 +1,13 @@
 package com.erp.model.oms.entity;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
-import com.baomidou.mybatisplus.annotation.TableField;
-import java.io.Serializable;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
-import com.common.business.enums.ApproveStatusEnum;
+
+import java.io.Serializable;
 
 
 /**
@@ -70,7 +70,11 @@ public class RuleLogisticsEntity extends BaseEntity<RuleLogisticsEntity> {
     */
     @TableField("auto_get_track_no")
     private Boolean autoGetTrackNo;
-
+    /**
+     *是否自动获取跟踪号提交发货（非超范围派送订单）
+     */
+    @TableField("auto_get_track_not_of_range_delivery")
+    private Boolean autoGetTrackNotOfRangeDelivery;
 
     public static final String NAME = "name";
 

@@ -267,6 +267,7 @@ public class RuleLogisticsServiceImpl extends SuperServiceImpl<RuleLogisticsMapp
                 RuleLogisticsDTO.RuleMatchResultDTO ruleMatchResult = new RuleLogisticsDTO.RuleMatchResultDTO();
                 ruleMatchResult.setLogisticsSupplierId(item.getLogisticsSupplierId());
                 ruleMatchResult.setAutoGetTrackNo(item.getAutoGetTrackNo());
+                ruleMatchResult.setAutoGetTrackNotOfRangeDelivery(item.getAutoGetTrackNotOfRangeDelivery());
                 ruleMatchResult.setLogisticsChannelId(item.getLogisticsChannelId());
                 ruleMatchResult.setLogisticsChannelName(item.getLogisticsChannelName());
                 ruleMatchResult.setName(item.getName());

@@ -95,7 +95,8 @@
         sb2cl.code as logisticsCode,
         sb2cl.track_no as trackCode,
         sbd.create_time as createDeliveryTime,
-		sbd.finish_print_time as finishPrintTime
+		sbd.finish_print_time as finishPrintTime,
+        sb2c.is_out_of_range_delivery as isOutOfRangeDelivery
     </sql>
 
     <!-- 通用查询结果列 -->
@@ -112,7 +113,7 @@
              else sb2cl.actual_shipping_currency
         end
         as shippingCostCurrency,
-        sb2c.seller_order_code as sellerOrderCode,
+        sb2c.seller_order_code as sellerOrderCode,-
         sb2c.platform_code as platformCode,
         sb2c.approve_status as approveStatus,
         sb2c.bill_status as billStatus,

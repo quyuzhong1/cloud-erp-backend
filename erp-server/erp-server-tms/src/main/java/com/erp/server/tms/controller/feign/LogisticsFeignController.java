@@ -171,4 +171,13 @@ public class LogisticsFeignController {
     public void webhookByTrack123(@RequestBody LogisticsTrackDTO.TrackWebHookDTO dto){
         logisticsTrackService.webhookByTrack123(dto);
     }
+    /**
+     * 根据渠道id ， 国家二字码，邮编判断是否属于偏远邮编组
+     * @param
+     * @return
+     */
+    @PostMapping("/estimateIsOutOfRangeDelivery")
+    public Boolean estimateIsOutOfRangeDelivery(@RequestParam("logisticsChannelId")String logisticsChannelId, @RequestParam("country")String country, @RequestParam("postCode")String postCode){
+        return logisticsChannelService.estimateIsOutOfRangeDelivery(logisticsChannelId, country, postCode);
+    }
 }
