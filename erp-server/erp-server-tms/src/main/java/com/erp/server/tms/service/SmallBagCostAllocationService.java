@@ -51,13 +51,5 @@ public interface SmallBagCostAllocationService extends SuperService<SmallBagCost
     Boolean exportExcel(SmallBagCostAllocationDTO.PagingParamDTO dto);
     
     BatchResultDTO pushBigTable(String id);
-
-    /**
-     * 修改物流大表生成状态
-     * @param id
-     * @param bigTableStatus
-     * @return
-     */
-    Boolean updateBigTableStatus(String id, String bigTableStatus);
     
 }

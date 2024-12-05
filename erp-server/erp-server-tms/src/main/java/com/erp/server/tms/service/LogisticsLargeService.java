@@ -87,23 +87,11 @@ public interface LogisticsLargeService extends SuperService<LogisticsLargeEntity
      */
     List<LogisticsLargeEntity> listByIdSourceId(List<String> ids);
 
-
-    /**
-     * 小包分摊下推物流大表
-     *
-     * @param costAllocationEntity         小包分摊主表
-     * @param costAllocationDetailEntities 小包分摊明细表
-     * @param soOutstockEntity             销售出库主表
-     * @param soOutstockDetailEntity       销售出库明细信息
-     * @return com.common.business.dto.base.BatchResultDTO
-     * @Author Luo_WG
-     * @Date 2024/12/3 15:37
-     **/
     /**
      * 小包分摊下推物流大表
      * @Author Luo_WG
      * @Date 2024/12/5 17:16
-     * @param [smallBagCostAllocationMainEntity]
+     * @param smallBagCostAllocationMainEntity
      * @return java.util.List<com.common.business.dto.base.BatchResultDTO>
      **/
     List<BatchResultDTO> generateSmallBagCostAllocationTable(SmallBagCostAllocationMainEntity smallBagCostAllocationMainEntity);

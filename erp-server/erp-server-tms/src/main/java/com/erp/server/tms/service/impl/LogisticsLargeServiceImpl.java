@@ -492,7 +492,7 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
         }
 
         LogisticsLargeDTO.AddDTO addDTO = new LogisticsLargeDTO.AddDTO();
-        addDTO.setSourceId(costAllocationEntity.getId());
+        addDTO.setSourceId(smallBagCostAllocationMainEntity.getId());
         addDTO.setSourceType(SourceTypeEnum.SMALL_BAG_COST_ALLOCATION.getCode());
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM");
         if (CharSequenceUtil.isNotBlank(smallBagCostAllocationMainEntity.getReportDate())) {
@@ -520,7 +520,9 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
             throw new ServiceException("平台仓发货不需要推送物流大表");
         }
 
-        if (ReconciliationStatusEnum.CONFIRMED.getCode().equals(logisticsBillCostEntity.getReconciliationStatus())) {
+
+
+        if (SmallBagCostAllocationMainFeeSourceEnum.CONFIRMED.getCode().equals(smallBagCostAllocationMainEntity.getFeeSource())) {
             //实际账单
             addDTO.setReconciliationBillType(ReconciliationBillTypeEnum.ACTUAL.getCode());
 
@@ -734,7 +736,7 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
 
         //修改小包费用分摊生成状态
         smallBagCostAllocationMainService.updateBigTableStatus(smallBagCostAllocationMainEntity.getId(), SmallBagCostAllocationBigTableStatusEnum.DONE.getCode());
-        return BatchResultDTO.success(costAllocationEntity.getId(), addDTO.getOutstockCode(), OperationTypeEnum.ADD);
+        return BatchResultDTO.success(smallBagCostAllocationMainEntity.getId(), addDTO.getOutstockCode(), OperationTypeEnum.ADD);
     }
 
     @Override
