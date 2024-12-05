@@ -408,15 +408,22 @@ public class RequisitionApplicationChangeServiceImpl extends SuperServiceImpl<Re
             requisitionApplicationDetailEntity.setRequisitionQty(requisitionApplicationChangeDetailEntity.getNewQty());
             requisitionApplicationDetailEntity.setVirtualFrozenQty(requisitionApplicationChangeDetailEntity.getNewQty());
             updateList.add(requisitionApplicationDetailEntity);
-            pickingDetailList = pickingDetailList.stream().filter(v->!v.getQty().equals(v.getActualQty()) || !v.getWarehouseLocation().equals(v.getOriginWarehouseLocation())).collect(Collectors.toList());
-            if(CollectionUtils.isEmpty(pickingDetailList)){
-                continue;
+            List<PickingDetailEntity> notEqualList = pickingDetailList.stream().filter(v->!v.getQty().equals(v.getActualQty()) || !v.getWarehouseLocation().equals(v.getOriginWarehouseLocation())).collect(Collectors.toList());
+            if(CollectionUtils.isEmpty(notEqualList)){
+                Integer allPickQty = pickingDetailList.stream().mapToInt(PickingDetailEntity::getQty).sum();
+                if(!allPickQty.equals(requisitionApplicationChangeDetailEntity.getNewQty()) && CollectionUtils.isNotEmpty(pickingDetailList)){
+                    PickingDetailEntity pickingDetailEntity = pickingDetailList.get(0);
+                    pickingDetailEntity.setChangeBeforeQty(pickingDetailEntity.getQty());
+                    pickingDetailEntity.setQty(pickingDetailEntity.getActualQty());
+                    updatePickingList.add(pickingDetailEntity);
+                }
+            }else{
+                notEqualList.forEach(v->{
+                    v.setChangeBeforeQty(v.getQty());
+                    v.setQty(v.getActualQty());
+                });
+                updatePickingList.addAll(notEqualList);
             }
-            pickingDetailList.forEach(v->{
-                v.setChangeBeforeQty(v.getQty());
-                v.setQty(v.getActualQty());
-            });
-            updatePickingList.addAll(pickingDetailList);
         }
 
         requisitionApplicationService.updateByChange(new ArrayList<>(),updateList,new ArrayList<>());
@@ -566,8 +573,9 @@ public class RequisitionApplicationChangeServiceImpl extends SuperServiceImpl<Re
                 }else{
                     PickingDetailEntity pickingDetailEntity = pickingDetailEntityList.stream().filter(v->v.getSourceDetailId().equals(requisitionApplicationDetailEntity.getId())).findFirst().orElse(null);
                     if(Objects.nonNull(pickingDetailEntity)){
+                        Integer originPickQty = pickingDetailEntityList.stream().mapToInt(PickingDetailEntity::getQty).sum();
                         pickingDetailEntity.setChangeBeforeQty(pickingDetailEntity.getQty());
-                        pickingDetailEntity.setQty(detail.getNewQty());
+                        pickingDetailEntity.setQty(detail.getNewQty() - originPickQty + pickingDetailEntity.getQty());
                         updatePickingList.add(pickingDetailEntity);
                     }
                 }
