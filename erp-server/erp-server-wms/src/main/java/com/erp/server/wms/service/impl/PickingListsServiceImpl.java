@@ -840,6 +840,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
                 detail.setMainId(entity.getId());
                 detail.setId(IdWorker.getIdStr());
                 detail.setSkuId(data.getSkuId());
+                detail.setActualQty(data.getActualQty());
                 detail.setSkuNo(data.getSkuNo());
                 detail.setQty(0);
                 detail.setUnit(productDetailEntity.getUnitName());
