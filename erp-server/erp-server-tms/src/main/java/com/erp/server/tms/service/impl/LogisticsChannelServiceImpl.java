@@ -178,12 +178,6 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
             return Collections.emptyList();
         }
         List<LogisticsChannelEntity> list = baseMapper.listByMainIdsAndName(mainIdList, params);
-//        List<LogisticsChannelEntity> list = this.lambdaQuery().
-//                in(LogisticsChannelEntity::getMainId, mainIdList).
-//                like(StringUtils.isNotBlank(name), LogisticsChannelEntity::getName, name).
-//                orderByAsc(LogisticsChannelEntity::getDisabled).
-//                orderByDesc(LogisticsChannelEntity::getCreateTime).
-//                list();
         List<LogisticsChannelDTO.BaseDTO> resultList = new ArrayList<>(list.size());
         List<String> channelIdList = list.stream().map(LogisticsChannelEntity::getId).collect(Collectors.toList());
         List<ShippingTemplateRefChannelEntity> shippingTemplateList = shippingTemplateRefChannelService.listChannelIdList(channelIdList);

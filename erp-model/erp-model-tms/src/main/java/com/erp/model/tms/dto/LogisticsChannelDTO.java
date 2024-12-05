@@ -968,4 +968,26 @@ public class LogisticsChannelDTO implements Serializable {
         private BigDecimal shipmentOverLimitRate;
 
     }
+
+    @Data
+    @NoArgsConstructor
+    public static class ChannelWarehouseDTO {
+        /**
+         * 渠道id
+         */
+        private String id;
+        /**
+         * 渠道编码
+         */
+        private String code;
+        /**
+         * 匹配类型
+         */
+        private String type;
+        /**
+         * 匹配仓库
+         */
+        private String warehouseId;
+
+    }
 }

@@ -101,6 +101,8 @@
             lc.fee_rule as feeRule,
             lc.is_api_sign as isApiSign,
             lc.is_api_insurance as isApiInsurance,
+            lc.effective_time as effectiveTime,
+            lc.effective_time_unit as effectiveTimeUnit,
             st.id as templateId,
             st.billing_method as billingMethod,
             str.id as templateRuleId,

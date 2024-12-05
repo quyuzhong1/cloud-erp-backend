@@ -1,5 +1,7 @@
 package com.erp.model.tms.dto;
 
+import com.alibaba.fastjson.annotation.JSONField;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.base.SortDTO;
 import com.erp.model.tms.entity.ShippingTemplateEntity;
 import com.erp.model.tms.entity.ShippingTemplateRuleEntity;
@@ -55,11 +57,19 @@ public class ShippingCalculationDTO {
          * 城市
          */
         private String city;
+        /**
+         * 省/州
+         */
+        private String province;
 
         /**
          * 物流渠道id集合
          */
         private List<String> channelIdList;
+        /**
+         * 渠道编码
+         */
+        private List<String> channelCodeList;
 
         /**
          * 重量
@@ -92,6 +102,20 @@ public class ShippingCalculationDTO {
          * 体积
          */
         private BigDecimal volume;
+
+        /**
+         * 发货仓库id(自发货类型下必填)
+         * http://172.16.100.11:3002/project/128/interface/api/25567
+         */
+        private String fromWarehouseId;
+        /**
+         * 销售订单id
+         */
+        private String b2cSoId;
+        /**
+         * 邮编
+         */
+        private String zipCode;
     }
 
     /**
@@ -150,6 +174,18 @@ public class ShippingCalculationDTO {
          * 有效期
          */
         private String effectivePeriod;
+        /**
+         * 时效
+         */
+        private String effectiveTime;
+        /**
+         * 时效单位
+         */
+        private String effectiveTimeUnit;
+        /**
+         * 时效  时效取值为“物流渠道管理”对应渠道的时效 effective_time_unit
+         */
+        private String effectiveTimeStr;
 
         /**
          * 生效日期

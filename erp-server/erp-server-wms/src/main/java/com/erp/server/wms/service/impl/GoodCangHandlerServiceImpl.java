@@ -7,10 +7,13 @@ import com.common.core.exception.ServiceException;
 import com.erp.model.wms.dto.third.*;
 import com.erp.model.wms.enums.ThirdWarehouseCancelResultEnum;
 import com.erp.server.wms.convert.OverseasWarehouseInboundConverter;
+import com.erp.server.wms.convert.ThirdWarehouseConverter;
 import com.erp.server.wms.handler.AbstractThirdWarehouseHandler;
+import com.sdk.wms.goodcang.dto.request.GoodCangCalculateDeliveryFeeReq;
 import com.sdk.wms.goodcang.dto.request.GoodCangCreateInboundReq;
 import com.sdk.wms.goodcang.dto.request.GoodCangCreateOutboundReq;
 import com.sdk.wms.goodcang.dto.request.GoodCangGetSkuReq;
+import com.sdk.wms.goodcang.dto.response.GoodCangCalculateDeliveryFeeResp;
 import com.sdk.wms.goodcang.dto.response.GoodCangResponse;
 import com.sdk.wms.goodcang.dto.response.GoodCangSkuResp;
 import com.sdk.wms.goodcang.dto.response.GoodCangWarehouseResp;
@@ -90,6 +93,21 @@ public class GoodCangHandlerServiceImpl extends AbstractThirdWarehouseHandler {
     public ApiResult<String> cancelInboundBill(@Valid ThirdWarehouseCancelInboundReq cancelInboundReq) {
         GoodCangResponse<String> response = goodCangService.cancelInboundBill(cancelInboundReq.getReceivingCode());
         return isSuccess(response.getAsk()) ? success(response.getData()) : failure(response.getMessage());
+    }
+    @Override
+    public ApiResult<List<ThirdWarehouseCalculateFeeResponse>> getCalculateFeeBatch(@Valid ThirdWarehouseCalculateFeeReq calculateFeeReq) {
+        GoodCangCalculateDeliveryFeeReq goodCangCalculateDeliveryFeeReq = ThirdWarehouseConverter.INSTANCE.reqToGucangCalculateFeeReq(calculateFeeReq);
+        GoodCangResponse<List<GoodCangCalculateDeliveryFeeResp>> response = goodCangService.getCalculateDeliveryFee(goodCangCalculateDeliveryFeeReq);
+        List<GoodCangCalculateDeliveryFeeResp> goodCangCalculateDeliveryFeeRespList = response.getData();
+        String currency = response.getCurrency();
+        List<ThirdWarehouseCalculateFeeResponse> dataList = convertCalculateDeliveryFeeResp(currency, goodCangCalculateDeliveryFeeRespList);
+//        List<ThirdWarehouseCalculateFeeResponse> dataList = ThirdWarehouseConverter.INSTANCE.gucangResToThirdWarehouseResponse(goodCangCalculateDeliveryFeeRespList);
+
+        return isSuccess(response.getAsk()) ? success(dataList) : failure(response.getMessage());
+    }
+
+    private List<ThirdWarehouseCalculateFeeResponse> convertCalculateDeliveryFeeResp(String currency, List<GoodCangCalculateDeliveryFeeResp> goodCangCalculateDeliveryFeeRespList) {
+        return null;
     }
 
     @Override

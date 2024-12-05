@@ -4,11 +4,9 @@ package com.erp.server.wms.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
-import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.AdvanceQueryContainer;
-import com.common.business.dto.base.BaseDropDownDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.BusinessTypeEnum;
@@ -17,8 +15,8 @@ import com.common.business.enums.PlatformDictEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
+import com.common.core.controller.vo.ApiResult;
 import com.common.core.entity.BaseEntity;
-import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
@@ -27,12 +25,16 @@ import com.erp.model.dmp.dto.PlatformTaskDTO;
 import com.erp.model.oms.dto.SkuMappingDTO;
 import com.erp.model.oms.enums.AuthStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.tms.dto.ShippingCalculationDTO;
 import com.erp.model.wms.dto.OverseasProviderDTO;
 import com.erp.model.wms.dto.OverseasProviderWarehouseDTO;
+import com.erp.model.wms.dto.third.ThirdWarehouseCalculateFeeReq;
+import com.erp.model.wms.dto.third.ThirdWarehouseCalculateFeeResponse;
 import com.erp.model.wms.entity.OverseasProviderEntity;
 import com.erp.model.wms.entity.OverseasProviderWarehouseEntity;
 import com.erp.rpc.dmp.feign.DmpInoutTaskFeign;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
+import com.erp.server.wms.convert.ThirdWarehouseConverter;
 import com.erp.server.wms.handler.ThirdWarehouseRegistry;
 import com.erp.server.wms.mapper.OverseasProviderMapper;
 import com.erp.server.wms.service.OperateLogService;
@@ -42,7 +44,6 @@ import com.erp.server.wms.service.ThirdWarehouseService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -307,6 +308,100 @@ public class OverseasProviderServiceImpl extends SuperServiceImpl<OverseasProvid
             v.setLastSyncTime(lastOneDTO.getLatestUpdateTime());
         });
         return new PagingVO<>(pageData);
+    }
+
+    @Override
+    public List<ShippingCalculationDTO.ListDTO> getCalculateFeeBatch(ShippingCalculationDTO.PagingParamDTO params) {
+        if (CharSequenceUtil.isBlank(params.getFromWarehouseId())){
+            return Collections.emptyList();
+        }
+        OverseasProviderWarehouseEntity providerWarehouseEntity = overseasProviderWarehouseService.getByWarehouseId(params.getFromWarehouseId());
+        if (Objects.isNull(providerWarehouseEntity)){
+            return Collections.emptyList();
+        }
+        String platform = getPlatFormCodeById(providerWarehouseEntity.getMainId());
+        List<ThirdWarehouseCalculateFeeReq> list = getCalculateFeeReq(platform, providerWarehouseEntity, params);
+        if (CollUtil.isEmpty(list)){
+            return Collections.emptyList();
+        }
+        List<ShippingCalculationDTO.ListDTO> listDTOList = new ArrayList<>();
+        ThirdWarehouseService service = thirdWarehouseRegistry.getHandler(platform);
+        for (ThirdWarehouseCalculateFeeReq calculateFeeReq : list){
+            try {
+                ApiResult<List<ThirdWarehouseCalculateFeeResponse>> calculateFeeBatch = service.getCalculateFeeBatch(calculateFeeReq, providerWarehouseEntity.getMainId());
+                if (calculateFeeBatch.isSuccess()){
+                    List<ThirdWarehouseCalculateFeeResponse> responseList = calculateFeeBatch.getData();
+                    List<ShippingCalculationDTO.ListDTO> dtoList = ThirdWarehouseConverter.INSTANCE.responseToShippingDTO(responseList);
+                    listDTOList.addAll(dtoList);
+                }
+            } catch (ServiceException serviceException) {
+                return Collections.emptyList();
+            }
+        }
+        return listDTOList;
+    }
+
+    private List<ThirdWarehouseCalculateFeeReq> getCalculateFeeReq(String platform, OverseasProviderWarehouseEntity providerWarehouseEntity, ShippingCalculationDTO.PagingParamDTO params) {
+        if (PlatformDictEnum.GOOD_CANG.getCode().equals(platform)){
+            //邮政编码不能为空
+            if (CharSequenceUtil.isBlank(params.getZipCode())){
+                return Collections.emptyList();
+            }
+            if (CollUtil.isEmpty(params.getToCountryList())){
+                return Collections.emptyList();
+            }
+            return getGucangCalculateFeeReq(providerWarehouseEntity, params);
+        }else if (PlatformDictEnum.ANTU.getCode().equals(platform)){
+            if (CollUtil.isEmpty(params.getToCountryList())){
+                return Collections.emptyList();
+            }
+            if (Objects.isNull(params.getWeight())){
+                return Collections.emptyList();
+            }
+            if (CollUtil.isEmpty(params.getChannelCodeList())){
+                return Collections.emptyList();
+            }
+            return getAntuCalculateFeeReq(providerWarehouseEntity, params);
+        }
+        return Collections.emptyList();
+    }
+
+    private List<ThirdWarehouseCalculateFeeReq> getAntuCalculateFeeReq(OverseasProviderWarehouseEntity providerWarehouseEntity, ShippingCalculationDTO.PagingParamDTO params) {
+        List<ThirdWarehouseCalculateFeeReq> list = new ArrayList<>();
+        List<String> toCountryList = params.getToCountryList().stream().filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+        List<String> channelCodeList = params.getChannelCodeList();
+        for (String country : toCountryList){
+            list.add(ThirdWarehouseCalculateFeeReq.builder()
+                    .warehouseCode(providerWarehouseEntity.getPlatformWarehouseCode())
+                    .countryCode(country)
+                    .shippingMethod(channelCodeList)
+                    .zipCode(params.getZipCode())
+                    .weight(params.getWeight())
+                    .length(params.getLength())
+                    .width(params.getWidth())
+                    .height(params.getHeight())
+                    .province(params.getProvince())
+                    .city(params.getCity()).build());
+        }
+        return list;
+    }
+
+    private List<ThirdWarehouseCalculateFeeReq> getGucangCalculateFeeReq(OverseasProviderWarehouseEntity providerWarehouseEntity, ShippingCalculationDTO.PagingParamDTO params) {
+        List<ThirdWarehouseCalculateFeeReq> list = new ArrayList<>();
+        List<String> toCountryList = params.getToCountryList().stream().filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+        for (String country : toCountryList){
+            list.add(ThirdWarehouseCalculateFeeReq.builder()
+                            .warehouseCode(providerWarehouseEntity.getPlatformWarehouseCode())
+                            .countryCode(country)
+                            .zipCode(params.getZipCode())
+                            .weight(params.getWeight())
+                            .length(params.getLength())
+                            .width(params.getWidth())
+                            .height(params.getHeight())
+                            .province(params.getProvince())
+                            .city(params.getCity()).build());
+        }
+        return list;
     }
 
     @Override
