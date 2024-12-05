@@ -159,4 +159,20 @@ public class VirtualInventoryAgeDTO implements Serializable {
          */
         private List<String> avgInventoryAgeList;
     }
+
+    /**
+     * 详情DTO
+     */
+    @Data
+    @NoArgsConstructor
+    public static class HisInventoryAgeDTO {
+        /**
+         * skuId
+         */
+        private String skuId;
+        /**
+         * skuNo
+         */
+        private String skuNo;
+    }
 }

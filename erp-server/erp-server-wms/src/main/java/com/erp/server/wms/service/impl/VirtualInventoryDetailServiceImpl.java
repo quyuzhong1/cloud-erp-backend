@@ -34,6 +34,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.Optional;
 
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_VIRTUAL_HIS_INVENTORY_AGE;
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_VIRTUAL_INVENTORY_AGE;
 
 /**
@@ -146,13 +147,17 @@ public class VirtualInventoryDetailServiceImpl extends SuperServiceImpl<VirtualI
 
         //虚拟仓库
         VirtualWarehouseEntity virtualWarehouseEntity = virtualWarehouseService.getById(dto.getVirtualWarehouseId());
+        if (ObjUtil.isEmpty(virtualWarehouseEntity)) {
+            throw new ServiceException("未找到虚拟仓库");
+        }
 
         return null;
     }
 
     @Override
     public Boolean exportHisInventoryAge(VirtualInventoryAgeDTO.ViewParamDTO dto) {
-        return null;
+        downloadTaskFeign.saveDownloadTask("历史库龄 ", EXPORT_WMS_VIRTUAL_HIS_INVENTORY_AGE.getCode(), dto);
+        return Boolean.TRUE;
     }
 
 
@@ -170,3 +175,4 @@ public class VirtualInventoryDetailServiceImpl extends SuperServiceImpl<VirtualI
         // TODO 验证数据 & 数据赋值
     }
 }
+
