@@ -29,6 +29,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
+import javax.validation.Valid;
 import java.util.Collections;
 import java.util.List;
 
@@ -129,7 +130,7 @@ public class WaitDeliveryController extends BaseController {
      */
     @PostMapping("/generateDeliveryOrder")
     @LogAction(value = LogActionEnum.INSERT, desc = "生成送货单")
-    public ApiResult<List<BatchResultDTO>> addDeliveryOrder(@RequestBody @Validated List<DeliveryOrderDTO.AddDeliveryDTO> dtos) {
+    public ApiResult<List<BatchResultDTO>> addDeliveryOrder(@RequestBody @Valid List<DeliveryOrderDTO.AddDeliveryDTO> dtos) {
         List<BatchResultDTO> resultDTOS = deliveryOrderService.addDeliveryOrder(dtos);
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }

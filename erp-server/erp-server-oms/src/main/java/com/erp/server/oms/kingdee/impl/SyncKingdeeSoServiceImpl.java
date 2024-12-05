@@ -579,9 +579,12 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
         List<CurrencyDTO.ViewDTO> currencyList = sysUserFeign.listByCurrency(Arrays.asList(view.getCurrency()));
         //父类产品
         List<String> parentSkuId = bomChildrenSkuDTOS.stream().map(BomChildrenSkuDTO::getParentSkuId).distinct().collect(Collectors.toList());
-        List<ProductDetailEntity> parentSkuList = FeignQuery.create(ProductDetailEntity.class)
-                .in(ProductDetailEntity::getId, parentSkuId)
-                .list();
+        List<ProductDetailEntity> parentSkuList = new ArrayList<>();
+        if (CollUtil.isNotEmpty(parentSkuId)) {
+            parentSkuList = FeignQuery.create(ProductDetailEntity.class)
+                    .in(ProductDetailEntity::getId, parentSkuId)
+                    .list();
+        }
 
         BigDecimal totalCanceledGoodsAmount = BigDecimal.ZERO;
         Integer totalCanceledGoodsQty = 0;

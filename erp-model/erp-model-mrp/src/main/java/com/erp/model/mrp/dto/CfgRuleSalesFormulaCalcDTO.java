@@ -226,6 +226,43 @@ public class CfgRuleSalesFormulaCalcDTO implements Serializable {
          */
         private CfgRuleSalesFormulaDTO.PercentJsonDTO percentJsonDTO;
 
+        /**
+         * 三天日均
+         */
+        private Integer threeDaysRatio;
+        /**
+         * 七天日均
+         */
+        private Integer sevenDaysRatio;
+        /**
+         * 十四天日均
+         */
+        private Integer fourteenDaysRatio;
+        /**
+         * 三十天日均
+         */
+        private Integer thirtyDaysRatio;
+        /**
+         * 六十天日均
+         */
+        private Integer sixtyDaysRatio;
+        /**
+         * 九十天日均
+         */
+        private Integer ninetyDaysRatio;
+        /**
+         * 一百八十天日均
+         */
+        private Integer oneHundredEightyDaysRatio;
+        /**
+         * 二百七十天日均
+         */
+        private Integer twoHundredSeventyDaysRatio;
+        /**
+         * 三百六十天日均
+         */
+        private Integer threeHundredSixtyDaysRatio;
+
         public static ExportDTO buildExportDTO(CfgRuleSalesFormulaCalcEntity entity) {
             ExportDTO dto = new ExportDTO();
             dto.setType(entity.getType());
@@ -235,9 +272,20 @@ public class CfgRuleSalesFormulaCalcDTO implements Serializable {
             dto.setName(entity.getName());
             dto.setStartDate(entity.getStartDate());
             dto.setEndDate(entity.getEndDate());
-            dto.setFixedValue(entity.getFixedValue());
-            dto.setPercentJson(dto.getPercentJson());
-            dto.setPercentJsonDTO(dto.getPercentJsonDTO());
+            if (CfgRuleSalesFormulaDefaultTypeEnum.FIXED.getCode().equals(entity.getDefaultType()) || CfgRuleSalesFormulaTypeEnum.FIXED.getCode().equals(entity.getType())) {
+                dto.setFixedValue(entity.getFixedValue());
+            }else {
+                dto.setPercentJsonDTO(entity.getPercentJsonDTO());
+                dto.setThreeDaysRatio(entity.getPercentJsonDTO().getThreeDaysRatio());
+                dto.setSevenDaysRatio(entity.getPercentJsonDTO().getSevenDaysRatio());
+                dto.setFourteenDaysRatio(entity.getPercentJsonDTO().getFourteenDaysRatio());
+                dto.setThirtyDaysRatio(entity.getPercentJsonDTO().getThirtyDaysRatio());
+                dto.setSixtyDaysRatio(entity.getPercentJsonDTO().getSixtyDaysRatio());
+                dto.setNinetyDaysRatio(entity.getPercentJsonDTO().getNinetyDaysRatio());
+                dto.setOneHundredEightyDaysRatio(entity.getPercentJsonDTO().getOneHundredEightyDaysRatio());
+                dto.setTwoHundredSeventyDaysRatio(entity.getPercentJsonDTO().getTwoHundredSeventyDaysRatio());
+                dto.setThreeHundredSixtyDaysRatio(entity.getPercentJsonDTO().getThreeHundredSixtyDaysRatio());
+            }
             return dto;
         }
 

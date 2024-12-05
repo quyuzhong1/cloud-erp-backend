@@ -198,4 +198,9 @@ public class OrderHistorySalesEsServiceImpl implements OrderHistorySalesEsServic
     public Page<OrderHistorySalesEsEntity> findByShopIdInAndSkuIdInAndDateBetween(List<String> shopIds, List<String> skuIds, LocalDate startDate, LocalDate endDate, Pageable pageable) {
         return orderHistorySalesEsRepository.findByShopIdInAndSkuIdInAndDateBetween(shopIds, skuIds, startDate, endDate, pageable);
     }
+
+    @Override
+    public List<OrderHistorySalesEsEntity> findByShopIdAndSkuIdAndDateBetween(String shopId, String skuId, LocalDate startDate, LocalDate endDate) {
+        return orderHistorySalesEsRepository.findByShopIdAndSkuIdAndDateBetween(shopId, skuId, startDate, endDate);
+    }
 }

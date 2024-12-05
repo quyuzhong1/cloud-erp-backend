@@ -223,10 +223,10 @@ public class PurchaseOrderDTO implements Serializable {
          * 签收数量/已送货数量/已收货数量（已签收）
          */
         private Integer receiveQty;
-        /**
-         * 已送货未签收数量/已送货数量（待发货页面使用）
-         */
-        private Integer waitReceiveQty;
+//        /**
+//         * 已送货未签收数量/已送货数量（待发货页面使用）
+//         */
+//        private Integer waitReceiveQty;
         /**
          * 入库数量/已收货数量
          */
@@ -236,6 +236,14 @@ public class PurchaseOrderDTO implements Serializable {
          * 未交货数量/待交货量 srm改为 剩余送货量
          */
         private Integer deliveryQty;
+        /**
+         * 已送货数量
+         */
+        private Integer deliveredQty;
+        /**
+         * 剩余送货量
+         */
+        private Integer waitDeliveryQty;
 
         /**
          * 退货数量/已退货数量

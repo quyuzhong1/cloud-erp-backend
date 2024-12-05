@@ -308,7 +308,7 @@ public class SoInfoEntity extends BaseEntity<SoInfoEntity> {
      * 枚举：OrderSubTypeEnum
      */
     @TableField("transaction_sub_type")
-    private String transactionSubType;
+    private String transactionSubType = "offlineOrder";
 
     public static final String CODE = "code";
 

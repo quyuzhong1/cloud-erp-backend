@@ -194,7 +194,7 @@ public class DmpOutputSdyWdtOriginalOrderHandler extends DmpOutputTaskHandler {
 
             //线上原始订单
             shudiyunB2cOrderDTO.setTransaction_type("线上订单");
-
+            shudiyunB2cOrderDTO.setStatus("已创建");
             shudiyunB2cOrderDTO.setTransaction_sub_type(OrderSubTypeEnum.ONLINE_ORDER.getName());
             shudiyunB2cOrderDTO.setBiz_status(wdtStatusHandler(dmpSoInfoEntity.getTradeStatus()));
             if (dmpSoInfoEntity.getPayTime() != null) {

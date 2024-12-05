@@ -1548,6 +1548,13 @@ public enum ApiError implements Serializable {
     ERROR_SUGGEST_UPDATE(97020,"仅未作废的草稿和待确认数据支持更新备货操作"),
     ERROR_DELIVERY_SUGGEST_PUSH(97021,"发货建议【{}】非已完成不支持下推"),
     ERROR_DELIVERY_SUGGEST_PUSH_INVALID(97021,"发货建议【{}】已作废不支持下推"),
+    ERROR_NOT_EXIST_CALC_DATA(97030,"不存在符合的试算数据"),
+    ERROR_DATA_IS_DIFFERENT(97031,"选中的数据，存在sku/店铺/试算开始时间不一致，无法进行比较"),
+    ERROR_HIS_SALES_IS_DIFFERENT(97032,"选中的数据，历史销量不一致，无法进行比较"),
+    ERROR_VERIFY_START_CALC_DATE(97033,"试算开始日期不能晚于当前日期"),
+    ERROR__VERIFY_END_CALC_DATE(97034,"试算结束日期不能晚于试算开始日期"),
+    ERROR__VERIFY_END_DATE(97034,"结束日期不能晚于选中数据最小试算结束日期"),
+    ERROR__VERIFY_START_DATE(97034,"开始日期不能早于选中数据试算开始日期"),
 
 
 

@@ -2,6 +2,7 @@ package com.erp.server.scm.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
@@ -504,18 +505,12 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         if(!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING.getStatus())) {
             throw new ServiceException(ApiError.ERROR_98006);
         }
-
-        //验证存货核算是否关账
-        /*List<InventoryClosedRecordDTO.ClosedParamDTO> closedParamList = Arrays.asList(new InventoryClosedRecordDTO.ClosedParamDTO(entity.getPurchaseOrgId(), entity.getPurchaseDate()),
-                new InventoryClosedRecordDTO.ClosedParamDTO(entity.getReceiveOrgId(), entity.getPurchaseDate()));
-        inventoryCloseRecordFeign.checkHsClosed(closedParamList);*/
-
         String type = dto.getType();
 
         log.info("采购订单【{}】，ids=【{}】", ApproveTypeEnum.getName(type), JSONUtil.toJsonStr(dto.getId()));
 
         //调用审核流程
-        approveProcess(entity, dto);
+        approveProcess(Collections.singletonList(entity), dto);
         // 操作日志
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据审核操作  审核结果：【{}】 审核意见 ：【{}】", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "采购订单", approveType.getName(), dto.getComment());
         moduleOperateLogService.addModuleOperateLog(msg, ModuleTypeEnum.PURCHASE_ORDER.getCode(), entity.getId(), "审核操作");
@@ -524,12 +519,39 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
     }
 
     @Override
+    @GlobalTransactional(rollbackFor = Exception.class)
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean  autoBatchApprove(BaseApproveParamDTO baseApproveParamDTO) {
+        List<String> ids = baseApproveParamDTO.getIds();
+        //根据ids查询
+        List<PurchaseOrderEntity> list = getList(ids);
+        //审核中允许审核
+        long count = list.stream().filter(obj -> !ApproveStatusEnum.APPROVE_ING.getStatus().equals(obj.getApproveStatus())).count();
+        if (count > 0) {
+            throw new ServiceException(ApiError.ERROR_98006);
+        }
+        String type = baseApproveParamDTO.getType();
+
+        log.info("采购订单【{}】，ids=【{}】", ApproveTypeEnum.getName(type), JSONUtil.toJsonStr(ids));
+
+        //调用审核流程
+        approveProcess(list, new ApproveOneDTO(ids.get(0),baseApproveParamDTO.getType(),baseApproveParamDTO.getComment()));
+
+        //操作日志
+        List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
+        moduleOperateLogService.batchAddModuleOperateLog(String.format("审核【%s】了一个采购订单", ApproveTypeEnum.getName(type)).concat("【%s】").concat(StringUtils.isNotBlank(baseApproveParamDTO.getComment()) ? String.format(",意见：%s", baseApproveParamDTO.getComment()) : ""), ModuleTypeEnum.PURCHASE_ORDER.getCode(), pairList, "审核操作");
+        return Boolean.TRUE;
+    }
+
+    @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
-    public Boolean approveEnd(ApproveOneDTO dto, PurchaseOrderEntity entity) {
-        if (ObjectUtil.isEmpty(entity)) {
+    public Boolean approveEnd(ApproveOneDTO dto, List<PurchaseOrderEntity> list) {
+        if (CollUtil.isEmpty(list)) {
             return Boolean.TRUE;
         }
+        List<String> ids = list.stream().map(PurchaseOrderEntity::getId).distinct().collect(Collectors.toList());
+
         ApproveStatusEnum approveStatus;
         if (dto.getType().equals(ApproveType.PASS)) {
             //审核通过
@@ -538,19 +560,17 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             //审核不通过
             approveStatus = ApproveStatusEnum.REJECT;
         }
-        Boolean result = this.updateApproveStatusForApprove(Arrays.asList(entity.getId()), approveStatus.getStatus());
+        Boolean result = this.updateApproveStatusForApprove(ids, approveStatus.getStatus());
         if (!result) {
             throw new ServiceException(ApiError.ERROR_94006);
         }
         if (dto.getType().equals(ApproveType.PASS)) {
             // 更新库存信息（生成入库预报）
-            updateInventoryTransCore(entity);
-
+            updateInventoryTransCore(list);
             // 填入首批下单时间
-            setFirstPlaceOrder(Arrays.asList(entity.getId()));
-
+            setFirstPlaceOrder(ids);
             //发送金蝶
-            sendPushTask(Arrays.asList(entity),SyncOperateEnum.OPERATE_APPROVE.getCode());
+            sendPushTask(list,SyncOperateEnum.OPERATE_APPROVE.getCode());
         }
         return Boolean.TRUE;
     }
@@ -1696,18 +1716,21 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
      * @description: 结束深审核
      * @author Will
      * @date: 2023/7/11 14:22
-     * @param entity
+     * @param list
      * @param dto
      */
-    private void approveProcess(PurchaseOrderEntity entity, ApproveOneDTO dto) {
+    private void approveProcess(List<PurchaseOrderEntity> list, ApproveOneDTO dto) {
+        /**
+         * 目前代码里面批量审核的都是内部审核，不走流程，赋值可取第一条
+         */
         LoginUser userInfo = UserContext.getDefaultLoginUser();
         ProcessManagementDTO.ApproveDTO approveDTO = new ProcessManagementDTO.ApproveDTO();
-        approveDTO.setBusinessId(entity.getId());
+        approveDTO.setBusinessId(list.get(0).getId());
         approveDTO.setBusinessKey(SourceTypeEnum.PURCHASE_ORDER.getCode());
         approveDTO.setApproveType(ApproveTypeEnum.getByCode(dto.getType()));
         approveDTO.setComment(dto.getComment());
         approveDTO.setUserId(userInfo.getUid());
-        approveDTO.setVariablesMap(BeanUtil.beanToMap(entity));
+        approveDTO.setVariablesMap(BeanUtil.beanToMap(list.get(0)));
         ApiResult<ProcessManagementDTO.ApproveResultDTO> approveResult = workflowFeign.approve(approveDTO);
         Integer code = approveResult.getCode();
         if (200 != code) {
@@ -1716,7 +1739,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         ProcessManagementDTO.ApproveResultDTO data = approveResult.getData();
         if (ObjectUtil.isEmpty(data.getIsExistProcess()) || !data.getIsExistProcess()) {
             // 无需走流程的数据则直接更新状态
-            approveEnd(dto, entity);
+            approveEnd(dto, list);
         }
     }
 
@@ -1898,34 +1921,45 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
      * @description: 更新库存（采购订单审核）
      * @author zhangchunlin
      * @date: 2023/5/23 12:11
-     * @param entity
+     * @param list
      */
-    public void updateInventoryTransCore (PurchaseOrderEntity entity) {
+    public void updateInventoryTransCore (List<PurchaseOrderEntity> list) {
+        Map<String,PurchaseOrderEntity> orderMap =  list.stream().collect(Collectors.toMap(PurchaseOrderEntity::getId, Function.identity()));
+        List<InstockForcastDTO.AddDTO> dataList = Lists.newArrayList();
+
+        List<String> ids = list.stream().map(PurchaseOrderEntity::getId).distinct().collect(Collectors.toList());
+        List<PurchaseOrderDetailEntity> purchaseOrderDetailList = purchaseOrderDetailService.listByPurchaseOrderIds(ids);
+
         // 获取采购订单明细
-        List<PurchaseOrderDetailEntity> detailList = purchaseOrderDetailService.listByPurchaseOrderId(entity.getId());
-        if(CollUtil.isEmpty(detailList)) {
-            throw new ServiceException("未找到采购订单明细信息");
-        }
-        InstockForcastDTO.AddDTO inventoryForcastDTO = new InstockForcastDTO.AddDTO();
-        inventoryForcastDTO.setPurchaseOrderId(entity.getId());
-        inventoryForcastDTO.setPurchaseOrderCode(entity.getCode());
-        inventoryForcastDTO.setWarehouseId(entity.getDeliveryWarehouseId());
-        inventoryForcastDTO.setBillDate(entity.getPurchaseDate());
+        orderMap.forEach((id,order)->{
+            List<PurchaseOrderDetailEntity> detailList = purchaseOrderDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getPurchaseOrderId(),id)).collect(Collectors.toList());
+            if(CollUtil.isEmpty(detailList)) {
+                throw new ServiceException("未找到采购订单明细信息");
+            }
+            InstockForcastDTO.AddDTO inventoryForcastDTO = new InstockForcastDTO.AddDTO();
+            inventoryForcastDTO.setPurchaseOrderId(id);
+            inventoryForcastDTO.setPurchaseOrderCode(order.getCode());
+            inventoryForcastDTO.setWarehouseId(order.getDeliveryWarehouseId());
+            inventoryForcastDTO.setBillDate(order.getPurchaseDate());
 
-        List<InstockForcastDetailDTO.AddDTO> details = Lists.newArrayListWithExpectedSize(detailList.size());
-        detailList.stream().forEach(detail->{
-            InstockForcastDetailDTO.AddDTO member = new InstockForcastDetailDTO.AddDTO();
-            member.setSkuId(detail.getSkuId());
-            member.setSkuNo(detail.getSkuNo());
-            member.setPurchaseOrderDetailId(detail.getId());
+            List<InstockForcastDetailDTO.AddDTO> details = Lists.newArrayListWithExpectedSize(detailList.size());
+            detailList.stream().forEach(detail->{
+                InstockForcastDetailDTO.AddDTO member = new InstockForcastDetailDTO.AddDTO();
+                member.setSkuId(detail.getSkuId());
+                member.setSkuNo(detail.getSkuNo());
+                member.setPurchaseOrderDetailId(detail.getId());
+                member.setQty(detail.getPurchaseQty());
+                member.setProductName(detail.getProductName());
 
-            member.setQty(detail.getPurchaseQty());
-            member.setProductName(detail.getProductName());
-
-            details.add(member);
+                details.add(member);
+            });
+            inventoryForcastDTO.setDetails(details);
+            dataList.add(inventoryForcastDTO);
         });
-        inventoryForcastDTO.setDetails(details);
-        inventoryFeign.generateByPurchaseOrderBatch(Arrays.asList(inventoryForcastDTO));
+        if(CollUtil.isEmpty(dataList)) {
+            return;
+        }
+        inventoryFeign.generateByPurchaseOrderBatch(dataList);
     }
 
 
@@ -2430,7 +2464,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             //已收货数量
             Integer receiveQty = MathUtil.ZERO;
             //已送货数量
-            Integer waitReceiveQty = MathUtil.ZERO;
+            Integer deliveredQty = MathUtil.ZERO;
             //有送货单的收货数量
             Integer hasDeliveryReceiveQty = MathUtil.ZERO;
             //无送货单收货数量
@@ -2472,7 +2506,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             }
             //已送货数量
             if (CollectionUtils.isNotEmpty(deliveryOrderDetailList)) {
-                waitReceiveQty = deliveryOrderDetailList.stream().filter(e -> e.getSourceDetailId().equals(obj.getPurchaseDetailId()) )
+                deliveredQty = deliveryOrderDetailList.stream().filter(e -> e.getSourceDetailId().equals(obj.getPurchaseDetailId()) )
                         .map(DeliveryOrderDetailDTO.ListDTO::getDeliveryQty).reduce(MathUtil.ZERO, Integer::sum);
                 //收发差异
 //                diffSendAndReceive = deliveryOrderDetailList.stream().filter(e -> e.getSourceDetailId().equals(obj.getPurchaseDetailId())
@@ -2486,9 +2520,9 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
                         .reduce(MathUtil.ZERO, Integer::sum);
                 diffSendAndReceive = srmDeliveryQty - hasDeliveryReceiveQty;
             }
-            obj.setWaitReceiveQty(waitReceiveQty);
+            obj.setDeliveredQty(deliveredQty);
             //剩余送货量/可下推量=采购订单-送货单数量-无送货单收货数量-无收货单的入库数量+[收发差异]+退货补货数量[库存退货/质检退货]
-            obj.setDeliveryQty(obj.getPurchaseQty() - waitReceiveQty - unDeliveryReceiveQty - unReceiveInstockQty + diffSendAndReceive + returnQty );
+            obj.setWaitDeliveryQty(obj.getPurchaseQty() - deliveredQty - unDeliveryReceiveQty - unReceiveInstockQty + diffSendAndReceive + returnQty );
             //交货周期
             Boolean deliveryCycleFlag = false;
             if(Objects.nonNull(obj.getDeliveryCycle())){
@@ -2771,7 +2805,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             //有送货单的收货数量
             Integer hasDeliveryReceiveQty = MathUtil.ZERO;
             //已送货数量
-            Integer waitReceiveQty = MathUtil.ZERO;
+            Integer deliveredQty = MathUtil.ZERO;
             //无送货单收货数量
             Integer unDeliveryReceiveQty = MathUtil.ZERO;
             //无收货单的入库数量
@@ -2823,7 +2857,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             obj.setReturnQty(returnQtyt);
             //已送货数量
             if (CollectionUtils.isNotEmpty(deliveryOrderDetailList)) {
-                waitReceiveQty = deliveryOrderDetailList.stream().filter(e -> e.getSourceDetailId().equals(obj.getPurchaseDetailId()) )
+                deliveredQty = deliveryOrderDetailList.stream().filter(e -> e.getSourceDetailId().equals(obj.getPurchaseDetailId()) )
                         .map(DeliveryOrderDetailDTO.ListDTO::getDeliveryQty).reduce(MathUtil.ZERO, Integer::sum);
                 //收发差异
 //                diffSendAndReceive = deliveryOrderDetailList.stream().filter(e -> e.getSourceDetailId().equals(obj.getPurchaseDetailId())
@@ -2837,9 +2871,9 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
                         .reduce(MathUtil.ZERO, Integer::sum);
                 diffSendAndReceive = srmDeliveryQty - hasDeliveryReceiveQty;
             }
-            obj.setWaitReceiveQty(waitReceiveQty);
+            obj.setDeliveredQty(deliveredQty);
             //剩余送货量/可下推量=采购订单-送货单数量-无送货单收货数量-无收货单的入库数量+[收发差异]+退货补货数量[库存退货/质检退货]
-            obj.setDeliveryQty(obj.getPurchaseQty() - waitReceiveQty - unDeliveryReceiveQty - unReceiveInstockQty + diffSendAndReceive + returnQty );
+            obj.setWaitDeliveryQty(obj.getPurchaseQty() - deliveredQty - unDeliveryReceiveQty - unReceiveInstockQty + diffSendAndReceive + returnQty);
             obj.setTaxRateStr(MathUtil.multiply(obj.getTaxRate(),MathUtil.BigDecimal_100).toString().concat("%"));
 
             //是否是组合SKU
@@ -2947,8 +2981,8 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         if (CollectionUtils.isEmpty(list)){
             dto.setPurchaseQty(MathUtil.ZERO);
             dto.setReceiveQty(MathUtil.ZERO);
-            dto.setDeliveryQty(MathUtil.ZERO);
-            dto.setWaitReceiveQty(MathUtil.ZERO);
+            dto.setDeliveredQty(MathUtil.ZERO);
+            dto.setWaitDeliveryQty(MathUtil.ZERO);
             dto.setStockInQty(MathUtil.ZERO);
             dto.setReturnQty(MathUtil.ZERO);
             dto.setPurchaseAmount(BigDecimal.ZERO);
@@ -2956,8 +2990,8 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         }
         dto.setPurchaseQty(list.stream().filter(e -> Objects.nonNull(e.getPurchaseQty())).mapToInt(PurchaseOrderDTO.ListDTO::getPurchaseQty).sum());
         dto.setReceiveQty(list.stream().filter(e -> Objects.nonNull(e.getReceiveQty())).mapToInt(PurchaseOrderDTO.ListDTO::getReceiveQty).sum());
-        dto.setWaitReceiveQty(list.stream().filter(e -> Objects.nonNull(e.getWaitReceiveQty())).mapToInt(PurchaseOrderDTO.ListDTO::getWaitReceiveQty).sum());
-        dto.setDeliveryQty(list.stream().filter(e -> Objects.nonNull(e.getDeliveryQty())).mapToInt(PurchaseOrderDTO.ListDTO::getDeliveryQty).sum());
+        dto.setDeliveredQty(list.stream().filter(e -> Objects.nonNull(e.getDeliveredQty())).mapToInt(PurchaseOrderDTO.ListDTO::getDeliveredQty).sum());
+        dto.setWaitDeliveryQty(list.stream().filter(e -> Objects.nonNull(e.getWaitDeliveryQty())).mapToInt(PurchaseOrderDTO.ListDTO::getWaitDeliveryQty).sum());
         dto.setStockInQty(list.stream().filter(e -> Objects.nonNull(e.getStockInQty())).mapToInt(PurchaseOrderDTO.ListDTO::getStockInQty).sum());
         dto.setReturnQty(list.stream().filter(e -> Objects.nonNull(e.getReturnQty())).mapToInt(PurchaseOrderDTO.ListDTO::getReturnQty).sum());
         dto.setPurchaseAmount(list.stream().map(PurchaseOrderDTO.ListDTO::getPurchaseAmount).filter(Objects::nonNull).reduce(BigDecimal.ZERO,BigDecimal::add)
