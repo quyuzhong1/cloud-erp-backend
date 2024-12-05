@@ -52,7 +52,7 @@ public interface ThirdWarehouseConverter {
     })
     WmsCartonSpecEntity historyToSpec(PackingTaskDetailDTO.HistoryCartonDTO historyCartonDTO);
     @Mappings({
-            @Mapping(target = "postcode", source = "getPostCode"),
+            @Mapping(target = "postcode", source = "postCode"),
             @Mapping(target = "state", source = "province")
     })
     AntuCalculateFeeReq reqToAntuCalculateFeeReq(ThirdWarehouseCalculateFeeReq calculateFeeReq);
@@ -73,7 +73,7 @@ public interface ThirdWarehouseConverter {
     @Mapping(target = "smCode", ignore = true)
     @Mapping(target = "sku", ignore = true)
     @Mapping(target = "propertyLabel", constant = "SFP")
-    @Mapping(target = "postcode", source = "getPostCode")
+    @Mapping(target = "postcode", source = "postCode")
     @Mapping(target = "isSignServer", ignore = true)
     @Mapping(target = "isResidential", ignore = true)
     @Mapping(target = "isInsuranceService", ignore = true)
