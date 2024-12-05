@@ -34,14 +34,11 @@ import com.erp.server.tms.service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.ibatis.annotations.Param;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -94,6 +91,8 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
 
     @Resource
     private TmsCarrierService tmsCarrierService;
+    @Resource
+    private LogisticsChannelRemotePostcodeService logisticsChannelRemotePostcodeService;
 
 
     @Transactional(rollbackFor = Exception.class)
@@ -122,6 +121,8 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
         logisticsChannelBlacklistService.add(channelId, addDTO.getBlackList());
         //仓库设置
         logisticsChannelWarehouseService.batchUpdate(channelId, addDTO.getWarehouseDTO());
+        //邮编组设置
+        logisticsChannelRemotePostcodeService.batchUpdate(channelId, addDTO.getRemotePostcodeDTO());
         // 操作日志
         String msg = CharSequenceUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "物流渠道单", logisticsChannelEntity.getCode());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.LOGISTICS_CHANNEL.getCode(), logisticsChannelEntity.getId(), "新增操作");
@@ -157,6 +158,8 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
         shippingTemplateRefChannelService.addRef(channelId, templateId);
         //仓库设置
         logisticsChannelWarehouseService.batchUpdate(channelId, updateDTO.getWarehouseDTO());
+        //邮编组设置
+        logisticsChannelRemotePostcodeService.batchUpdate(channelId, updateDTO.getRemotePostcodeDTO());
 
         // 记录主单操作日志
         String msg = CharSequenceUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), logisticsChannelEntity.getCode(), "物流渠道单");
@@ -259,11 +262,17 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
          */
         LogisticsChannelWarehouseDTO.ViewDTO warehouseDTO = logisticsChannelWarehouseService.getByChannelId(id);
 
+        /**
+         * 邮编组设置
+         */
+        LogisticsChannelRemotePostcodeDTO.ViewDTO remotePostcodeDTO = logisticsChannelRemotePostcodeService.getByChannelId(id);
+
         view.setAddressList(addressList);
         view.setBlackList(blackList);
         view.setMappingList(mappingList);
         view.setPrintTypeList(printTypeList);
         view.setWarehouseDTO(warehouseDTO);
+        view.setRemotePostcodeDTO(remotePostcodeDTO);
         return view;
     }
 
@@ -312,6 +321,8 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
         logisticsChannelBlacklistService.removeByChannelIdList(channelIdList);
         //删除模板和渠道的关系表
         shippingTemplateRefChannelService.removeRef(channelIdList);
+        //删除偏远邮编组和渠道的关系表
+        logisticsChannelRemotePostcodeService.removeByChannelIdList(channelIdList);
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DELETE);
 
     }
@@ -372,6 +383,8 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
         logisticsChannelAddressService.copy(id, addChannelId);
         //发货限制 黑名单
         logisticsChannelBlacklistService.copy(id, addChannelId);
+        //删除偏远邮编组和渠道的关系表
+        logisticsChannelRemotePostcodeService.copy(id, addChannelId);
         return result;
     }
 

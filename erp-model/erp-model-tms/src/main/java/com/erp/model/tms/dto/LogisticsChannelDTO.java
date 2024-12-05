@@ -477,6 +477,10 @@ public class LogisticsChannelDTO implements Serializable {
          * 仓库设置
          */
         private LogisticsChannelWarehouseDTO.ViewDTO warehouseDTO;
+        /**
+         * 邮编组设置
+         */
+        private LogisticsChannelRemotePostcodeDTO.ViewDTO remotePostcodeDTO;
     }
 
     /**
@@ -512,6 +516,10 @@ public class LogisticsChannelDTO implements Serializable {
          */
         @NotNull(message = "仓库设置不能为空")
         private LogisticsChannelWarehouseDTO.BatchUpdateDTO warehouseDTO;
+        /**
+         * 邮编组设置
+         */
+        private LogisticsChannelRemotePostcodeDTO.ViewDTO remotePostcodeDTO;
     }
 
     /**
@@ -554,6 +562,11 @@ public class LogisticsChannelDTO implements Serializable {
          */
         @NotNull(message = "仓库设置不能为空")
         private LogisticsChannelWarehouseDTO.BatchUpdateDTO warehouseDTO;
+
+        /**
+         * 邮编组设置
+         */
+        private LogisticsChannelRemotePostcodeDTO.ViewDTO remotePostcodeDTO;
 
     }
 
