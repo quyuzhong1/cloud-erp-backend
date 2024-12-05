@@ -465,18 +465,10 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
         if (!SmallBagCostAllocationReportStatusEnum.CONFIRMED.getCode().equals(costAllocationEntity.getReportStatus())) {
             throw new ServiceException(ApiError.ERROR_SMALL_BAG_NOT_CONFIRMED);
         }
-
-        //只能下推一个实际账单
-        LogisticsLargeEntity logisticsLargeActualEntity = logisticsLargeEntities.stream().filter(req -> ReconciliationBillTypeEnum.ACTUAL.getCode().equals(req.getReconciliationBillType())).findFirst().orElse(null);
-        if (logisticsLargeActualEntity != null) {
+        //已生成物流大表不能再次生成
+        if (SmallBagCostAllocationBigTableStatusEnum.DONE.getCode().equals(costAllocationEntity.getBigTableStatus())) {
             throw new ServiceException(ApiError.ERROR_EXISTS_LOGISTICS_LARGE);
         }
-        //预估账单只能推送一个
-        LogisticsLargeEntity logisticsLargeEstimatedEntity = logisticsLargeEntities.stream().filter(req -> ReconciliationBillTypeEnum.ESTIMATED.getCode().equals(req.getReconciliationBillType())).findFirst().orElse(null);
-        if (logisticsLargeEstimatedEntity != null) {
-            throw new ServiceException(ApiError.ERROR_EXISTS_ESTIMATED_LOGISTICS_LARGE);
-        }
-
 
         LogisticsLargeDTO.AddDTO addDTO = new LogisticsLargeDTO.AddDTO();
         addDTO.setSourceId(costAllocationEntity.getId());
@@ -526,7 +518,9 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
                     .eq(LogisticsLargeEntity::getSkuId, skuId)
                     .le(LogisticsLargeEntity::getReconciliationMonth, LocalDate.parse(costAllocationEntity.getReportDate(), formatter))
                     .list();
-            List<LogisticsLargeEntity> estimatedList = list.stream().filter(req -> ReconciliationBillTypeEnum.ESTIMATED.getCode().equals(req.getReconciliationBillType())).collect(Collectors.toList());
+            List<LogisticsLargeEntity> estimatedList = list.stream()
+                    .filter(req -> ReconciliationBillTypeEnum.ESTIMATED.getCode().equals(req.getReconciliationBillType()))
+                    .collect(Collectors.toList());
             if (CollUtil.isNotEmpty(estimatedList)) {
                 for (LogisticsLargeEntity logisticsLargeEntity : estimatedList) {
                     //如果有需要生成负数的对冲预估账单
