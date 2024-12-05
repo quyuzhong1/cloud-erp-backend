@@ -135,4 +135,6 @@ public interface DictCityService extends SuperService<DictCityEntity> {
     PagingVO<DictCityDTO.PagingViewDTO> exportCity(PagingDTO<DictCityDTO.ProvincePagingParamDTO> dto);
 
     PagingVO<DictCityDTO.PagingViewDTO> exportCityProvince(PagingDTO<DictCityDTO.ProvincePagingParamDTO> dto);
+
+    List<DictCityEntity> listByNames(List<String> names);
 }

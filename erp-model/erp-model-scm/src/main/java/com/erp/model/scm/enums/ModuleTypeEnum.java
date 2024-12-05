@@ -124,6 +124,8 @@ public enum ModuleTypeEnum {
     CFG_RULE_VIRTUAL_TRANS("112", "虚拟库存交易规则设置"),
     REQUISITION_APPLICATION_CHANGE("113", "要货申请变更单"),
     WAVE_LIST("101", "波次列表"),
+    PRODUCT_DETAIL("113", "产品明细"),
+    REMOTE_POSTCODE("114", "产品明细"),
     ;
 
 

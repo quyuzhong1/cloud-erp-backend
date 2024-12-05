@@ -1,13 +1,13 @@
 package com.erp.model.tms.entity;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
-import com.baomidou.mybatisplus.annotation.TableField;
-import java.io.Serializable;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
-import com.common.business.enums.ApproveStatusEnum;
+
+import java.io.Serializable;
 
 
 /**
@@ -29,13 +29,6 @@ public class RemotePostcodeDetailEntity extends BaseEntity<RemotePostcodeDetailE
     */
     @TableField("main_id")
     private String mainId;
-    @TableField("approve_status")
-    private ApproveStatusEnum approveStatus;
-    /**
-    * code 
-    */
-    @TableField("code")
-    private String code;
     /**
     * 国家
     */
@@ -59,10 +52,6 @@ public class RemotePostcodeDetailEntity extends BaseEntity<RemotePostcodeDetailE
 
 
     public static final String MAIN_ID = "main_id";
-
-    public static final String APPROVE_STATUS = "approve_status";
-
-    public static final String CODE = "code";
 
     public static final String COUNTRY = "country";
 

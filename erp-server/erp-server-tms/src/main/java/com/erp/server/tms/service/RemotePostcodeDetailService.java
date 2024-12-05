@@ -1,9 +1,12 @@
 package com.erp.server.tms.service;
+import com.erp.model.tms.dto.RemotePostcodeDTO;
 import com.erp.model.tms.entity.RemotePostcodeDetailEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.tms.dto.RemotePostcodeDetailDTO;
 import com.common.business.vo.PagingVO;
+import org.springframework.web.multipart.MultipartFile;
+
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
@@ -18,22 +21,23 @@ import java.util.List;
 public interface RemotePostcodeDetailService extends SuperService<RemotePostcodeDetailEntity> {
 
     /**
-    * 新增
-    * @author jack
-    * @date: 2024-11-29
-    * @param dto
-    * @return
-    */
-    BaseResultDTO.AddDTO add(RemotePostcodeDetailDTO.AddDTO dto);
+     * 新增
+     * @author jack
+     * @date: 2024-11-29
+     * @param addDTO
+     * @param mainId
+     * @return
+     */
+    Boolean add(RemotePostcodeDTO.AddDTO addDTO,String mainId);
 
     /**
-    * 修改
-    * @author jack
-    * @date: 2024-11-29
-    * @param dto
-    * @return
-    */
-    Boolean update(RemotePostcodeDetailDTO.UpdateDTO dto);
+     * 修改
+     * @author jack
+     * @date: 2024-11-29
+     * @param dto
+     * @return
+     */
+    Boolean update(RemotePostcodeDTO.UpdateDTO dto,String mainId);
 
     /**
     * 分页列表查询
@@ -61,52 +65,6 @@ public interface RemotePostcodeDetailService extends SuperService<RemotePostcode
     * @return
     */
     RemotePostcodeDetailDTO.ViewDTO view(String id);
-
-    /**
-    * 新增并提交审核
-    * @author jack
-    * @date: 2024-11-29
-    * @param dto
-    * @return BaseResultDTO.AddDTO
-    */
-    BaseResultDTO.AddDTO addAndSubmit(RemotePostcodeDetailDTO.AddDTO dto);
-
-    /**
-    * 修改并提交审核
-    * @author jack
-    * @date: 2024-11-29
-    * @param dto
-    * @return
-    */
-    void updateAndSubmit(RemotePostcodeDetailDTO.UpdateDTO dto);
-
-     /**
-     * 提交审核
-     * @author jack
-     * @date: 2024-11-29
-     * @param id
-     * @return
-     */
-    BatchResultDTO submit(String id);
-
-    /**
-    * 审核
-    * @author jack
-    * @date: 2024-11-29
-    * @param dto
-    * @return
-    */
-    BatchResultDTO approve(ApproveOneDTO dto);
-
-    /**
-    * 反审核
-    * @author jack
-    * @date: 2024-11-29
-    * @param id
-    * @return
-    */
-    BatchResultDTO disApprove(String id);
-
     /**
     * 删除
     * @author jack
@@ -117,15 +75,6 @@ public interface RemotePostcodeDetailService extends SuperService<RemotePostcode
     BatchResultDTO delete(String id);
 
     /**
-    * 撤销
-    * @author jack
-    * @date: 2024-11-29
-    * @param id
-    * @return
-    */
-    BatchResultDTO cancelProcess(String id);
-
-    /**
     * 导出Excel
     * @author jack
     * @date: 2024-11-29
@@ -134,13 +83,33 @@ public interface RemotePostcodeDetailService extends SuperService<RemotePostcode
     * @return
     */
     void exportList(RemotePostcodeDetailDTO.ExportDTO dto, HttpServletResponse response);
-
     /**
-    * 审核通过回调方法
-    * @param dto
-    * @param entity
-    * @return
-    */
-    Boolean approveEnd(ApproveOneDTO dto, RemotePostcodeDetailEntity entity);
-
+     * 根据mainid删除明细表
+     * @param mainIds
+     * @return
+     */
+    void removeByMainIds(List<String> mainIds);
+    /**
+     * 根据mainid查询明细表
+     * @param mainIds
+     * @return
+     */
+    List<RemotePostcodeDetailDTO.ViewDTO> listByMainIds(List<String> mainIds);
+    /**
+     * 导入偏远邮编组
+     * @author jack
+     * @date:  2024-11-29
+     * @param excelFile
+     * @param response
+     * @return ApiResult
+     */
+    RemotePostcodeDetailDTO.ImportResultDTO importFile(MultipartFile excelFile, HttpServletResponse response);
+    /**
+     * 下载模板
+     * @author jack
+     * @date:  2024-11-29
+     * @param response
+     * @return void
+     */
+    void downloadTemplate(HttpServletResponse response);
 }

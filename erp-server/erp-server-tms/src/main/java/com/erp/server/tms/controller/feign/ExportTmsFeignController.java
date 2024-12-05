@@ -66,6 +66,8 @@ public class ExportTmsFeignController {
     private FirstMileEstimatedBillService firstMileEstimatedBillService;
     @Resource
     private FirstMileWeightAllocationService firstMileWeightAllocationService;
+    @Resource
+    private RemotePostcodeService remotePostcodeService;
 
     @PostMapping("/b2BDeclareBill")
     @WebAdvanceQuery(handler = TmsB2BDeclareQueryHandler.class)
@@ -267,5 +269,13 @@ public class ExportTmsFeignController {
     @WebAdvanceQuery(handler = FirstMileWeightAllocationQueryHandler.class)
     public PagingVO<FirstMileWeightAllocationDTO.ViewDTO> exportFirstMileWeightAllocation(@RequestBody @Valid PagingDTO<FirstMileWeightAllocationDTO.PagingParamDTO> dto) {
         return firstMileWeightAllocationService.paging(dto);
+    }
+    /**
+     * 偏远邮编到处
+     */
+    @PostMapping("/exportRemotePostcode")
+    @WebAdvanceQuery
+    public PagingVO<RemotePostcodeDTO.ExportListDTO> exportRemotePostcode(@RequestBody @Valid PagingDTO<RemotePostcodeDTO.PagingParamDTO> dto) {
+        return remotePostcodeService.listExport(dto);
     }
 }

@@ -1,17 +1,18 @@
 package com.erp.model.tms.dto;
 
+import com.alibaba.excel.annotation.ExcelProperty;
+import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
-import java.util.List;
+import com.common.core.anno.FieldValid;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
-import java.io.Serializable;
-import java.time.LocalDateTime;
-import javax.validation.constraints.NotNull;
+
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
-import javax.validation.constraints.NotEmpty;
-import com.common.business.dto.AdvanceQueryDTO;
+import java.io.Serializable;
+import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -81,12 +82,6 @@ public class RemotePostcodeDetailDTO implements Serializable {
         */
         private String mainId;
 
-        private String approveStatus;
-
-        /**
-        * code 
-        */
-        private String code;
 
         /**
         * 国家
@@ -107,12 +102,6 @@ public class RemotePostcodeDetailDTO implements Serializable {
         * 邮编
         */
         private String postCode;
-
-
-        /**
-        * 审核状态名称
-        */
-        private String approveStatusName;
 
         /**
         * 创建时间
@@ -154,13 +143,6 @@ public class RemotePostcodeDetailDTO implements Serializable {
         */
         private String mainId;
 
-        private String approveStatus;
-
-        /**
-        * code 
-        */
-        private String code;
-
         /**
         * 国家
         */
@@ -172,15 +154,20 @@ public class RemotePostcodeDetailDTO implements Serializable {
         private String city;
 
         /**
+         * 城市
+         */
+        private String cityName;
+
+        /**
         * 匹配类型dict_basic表matchType: preciseMatch=精准匹配, prefixMatch=匹配前缀, suffixMatch=匹配后缀, fuzzyMatch=模糊匹配
         */
         private String matchType;
 
+        private String matchTypeName;
         /**
         * 邮编
         */
         private String postCode;
-
 
     }
 
@@ -200,13 +187,67 @@ public class RemotePostcodeDetailDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class UpdateDTO extends CommonDTO {
-
         /**
         * 主键id
         */
         @NotBlank(message = "主键id不能为空")
         private String id;
+    }
 
+    /**
+     * 导入
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ImportResultDTO {
+        /**
+         * 成功返回数据
+         */
+        private List<ImportDTO> successList;
+
+        /**
+         * 错误的url
+         */
+        private String errorUrl;
+    }
+
+    /**
+    * 导入
+    */
+    @Data
+    @NoArgsConstructor
+    public static class ImportDTO {
+        /**
+         * 国家
+         */
+        @ExcelProperty(value = "*国家二字码")
+        @FieldValid(fieldName = "*国家二字码",isNotBlank = true)
+        private String country;
+
+        /**
+         * 城市
+         */
+        private String city;
+        @ExcelProperty(value = "城市")
+        private String cityName;
+
+        /**
+         * 匹配类型dict_basic表matchType: preciseMatch=精准匹配, prefixMatch=匹配前缀, suffixMatch=匹配后缀, fuzzyMatch=模糊匹配
+         */
+        private String matchType = "preciseMatch";
+
+        private String matchTypeName = "精准匹配";
+
+        /**
+         * 邮编
+         */
+        @ExcelProperty(value = "*邮编")
+        @FieldValid(fieldName = "*邮编",isNotBlank = true)
+        private String postCode;
+        /**
+         * 错误信息
+         */
+        private String errorMsg;
     }
 
     @Data
@@ -214,31 +255,25 @@ public class RemotePostcodeDetailDTO implements Serializable {
     public static class CommonDTO {
 
         /**
-        * 主表id 
+        * 主表id
         */
-        @NotBlank(message = "主表id 不能为空")
-        @Size(max = 19,message = "主表id 最大长度不能超过19位")
         private String mainId;
 
         /**
         * 国家
         */
         @NotBlank(message = "国家不能为空")
-        @Size(max = 32,message = "国家最大长度不能超过32位")
         private String country;
 
         /**
         * 城市
         */
-        @NotBlank(message = "城市不能为空")
-        @Size(max = 32,message = "城市最大长度不能超过32位")
         private String city;
 
         /**
         * 匹配类型dict_basic表matchType: preciseMatch=精准匹配, prefixMatch=匹配前缀, suffixMatch=匹配后缀, fuzzyMatch=模糊匹配
         */
         @NotBlank(message = "匹配类型dict_basic表matchType: preciseMatch=精准匹配, prefixMatch=匹配前缀, suffixMatch=匹配后缀, fuzzyMatch=模糊匹配不能为空")
-        @Size(max = 32,message = "匹配类型dict_basic表matchType: preciseMatch=精准匹配, prefixMatch=匹配前缀, suffixMatch=匹配后缀, fuzzyMatch=模糊匹配最大长度不能超过32位")
         private String matchType;
 
         /**
