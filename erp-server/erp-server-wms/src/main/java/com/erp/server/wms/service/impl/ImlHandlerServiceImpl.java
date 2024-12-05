@@ -73,6 +73,11 @@ public class ImlHandlerServiceImpl extends AbstractThirdWarehouseHandler {
     }
 
     @Override
+    protected ApiResult<List<ThirdWarehouseCalculateFeeResponse>> getCalculateFeeBatch(ThirdWarehouseCalculateFeeReq calculateFeeReq) {
+        return ApiResult.error("功能未开发");
+    }
+
+    @Override
     public ApiResult<String> createOutboundBill(ThirdWarehouseCreateOutboundReq createOutboundReq) {
         ImlCreateOutboundReq imlCreateOutboundReq = OverseasWarehouseInboundConverter.INSTANCE.outboundDtoToIml(createOutboundReq);
         // 艾姆勒同个客户同个参考号5分钟内不允许重复提交

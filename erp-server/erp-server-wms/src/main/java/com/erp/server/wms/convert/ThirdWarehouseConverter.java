@@ -65,7 +65,7 @@ public interface ThirdWarehouseConverter {
     @Mapping(target = "currency", source = "currencyCode")
     @Mapping(target = "shippingCost", source = "SHIPPING")
     @Mapping(target = "operatingCost", source = "OPF")
-    @Mapping(target = "otherCost", expression = "java(antuCalculateFeeResp.getFSC() + antuCalculateFeeResp.getDT() + antuCalculateFeeResp.getWHF() + antuCalculateFeeResp.getOTF())")
+    @Mapping(target = "otherCost", expression = "java(BigDecimal.valueOf(antuCalculateFeeResp.getFSC()).add(BigDecimal.valueOf(antuCalculateFeeResp.getDT()).add(BigDecimal.valueOf(antuCalculateFeeResp.getWHF()).add(BigDecimal.valueOf(antuCalculateFeeResp.getOTF())))))")
     @Mapping(target = "registrationCost", source = "RSF")
     @Mapping(target = "channelCode", source = "shippingMethod")
     @Mapping(target = "channelNameEn", source = "shippingName")
