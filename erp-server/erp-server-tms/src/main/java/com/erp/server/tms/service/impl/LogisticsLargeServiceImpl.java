@@ -285,6 +285,12 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
         addDTO.setOutstockCode(deliveryEntity.getCode());
         addDTO.setOutstockTime(deliveryEntity.getApproveTime());
 
+
+        String outstockCode = logisticsLargeEntities.get(0).getOutstockCode();
+        String skuId = logisticsLargeEntities.get(0).getSkuId();
+//        this.lambdaQuery().eq(LogisticsLargeEntity::getOutstockCode, outstockCode)
+//                .eq(LogisticsLargeEntity::getSkuId, skuId).orderByDesc(LogisticsLargeEntity::getReconciliationMonth)
+
         if (ReconciliationBillTypeEnum.ACTUAL.getCode().equals(firstMileSkuCostAllocationEntity.getBillSourceType())) {
             //实际账单
             addDTO.setReconciliationBillType(ReconciliationBillTypeEnum.ACTUAL.getCode());
