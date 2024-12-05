@@ -150,7 +150,7 @@ public class CfgRuleCalcServiceImpl extends SuperServiceImpl<CfgRuleCalcMapper, 
                 .eq(com.erp.model.oms.entity.DictBasicEntity::getIsDeleted, Boolean.FALSE)
                 .list();
         return salesPlatformList.stream()
-                .collect(Collectors.toMap(com.erp.model.oms.entity.DictBasicEntity::getName, DictBasicEntity::getValue));
+                .collect(Collectors.toMap(com.erp.model.oms.entity.DictBasicEntity::getName, DictBasicEntity::getValue, (o1,o2) -> o1));
     }
 
     /**
