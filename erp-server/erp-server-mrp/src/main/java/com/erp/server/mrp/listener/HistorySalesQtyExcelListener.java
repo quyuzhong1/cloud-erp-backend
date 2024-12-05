@@ -78,11 +78,12 @@ public class HistorySalesQtyExcelListener extends AnalysisEventListener<CfgRuleC
 
         boolean isExit = successList.stream().anyMatch(v -> v.getSkuNo().equals(data.getSkuNo()) &&
                 v.getShopName().equals(data.getShopName()) &&
-                v.getPlatform().equals(data.getPlatform())
+                v.getPlatform().equals(data.getPlatform()) &&
+                v.getDate().equals(LocalDateUtil.parseStrToLocalDate(data.getBillDate()))
         );
         //校验重复数据
         if (isExit) {
-            data.setErrorMsg("sku+平台+店铺重复");
+            data.setErrorMsg("sku+平台+店铺+日期重复");
             errorList.add(data);
             return;
         }
