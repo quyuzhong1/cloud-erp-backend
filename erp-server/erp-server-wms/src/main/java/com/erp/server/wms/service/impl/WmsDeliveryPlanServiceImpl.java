@@ -1084,8 +1084,10 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
                 List<String> deliveryIds = deliveryEntities.stream().filter(e ->Objects.equals(e.getApproveStatus(),ApproveStatusEnum.APPROVE.getStatus())).map(BaseEntity::getId).collect(Collectors.toList());
                 List<FirstMileDeliveryDetailEntity> deliveryDetailEntities = fbaDeliveryDetailEntities.stream().filter(req -> deliveryIds.contains(req.getMainId())).collect(Collectors.toList());
                 if (CollectionUtils.isNotEmpty(deliveryEntities)) {
-                    data.setDeliveryStatus(FbaDeliveryStatusEnum.SHIPPED.getCode());
-                    data.setDeliveryStatusName(FbaDeliveryStatusEnum.SHIPPED.getName());
+                    if(deliveryEntities.stream().allMatch(v->v.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus()))){
+                        data.setDeliveryStatus(FbaDeliveryStatusEnum.SHIPPED.getCode());
+                        data.setDeliveryStatusName(FbaDeliveryStatusEnum.SHIPPED.getName());
+                    }
                     data.setDeliveryCode(deliveryEntities.get(MathUtil.ZERO).getCode());
                     //发货数量 关联的发货单中SKU的发货数量，多个发货单汇总
                     List<FirstMileDeliveryDetailEntity> detailDeliveryByFbaList = deliveryDetailEntities.stream().filter(v->v.getSkuId().equals(data.getSkuId()) && v.getFnSku().equals(data.getPlatformFnSku())).collect(Collectors.toList());
@@ -1100,8 +1102,10 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
                 List<String> requisitionDetailIds = requisitionApplicationDetailEntityList.stream().map(RequisitionApplicationDetailEntity::getId).collect(Collectors.toList());
                 List<FirstMileDeliveryEntity> deliveryEntities = firstMileDeliveryEntities.stream().filter(req -> req.getSourceId().equals(data.getId()) || requisitionIdList.contains(req.getSourceId())).sorted(Comparator.comparing(FirstMileDeliveryEntity::getCreateTime).reversed()).collect(Collectors.toList());
                 if (CollectionUtils.isNotEmpty(deliveryEntities)) {
-                    data.setDeliveryStatus(FbaDeliveryStatusEnum.SHIPPED.getCode());
-                    data.setDeliveryStatusName(FbaDeliveryStatusEnum.SHIPPED.getName());
+                    if(deliveryEntities.stream().allMatch(v->v.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus()))){
+                        data.setDeliveryStatus(FbaDeliveryStatusEnum.SHIPPED.getCode());
+                        data.setDeliveryStatusName(FbaDeliveryStatusEnum.SHIPPED.getName());
+                    }
                     data.setDeliveryCode(deliveryEntities.get(MathUtil.ZERO).getCode());
                 }
                 List<String> deliveryIds = deliveryEntities.stream().filter(e ->Objects.equals(e.getApproveStatus(),ApproveStatusEnum.APPROVE.getStatus())).map(FirstMileDeliveryEntity::getId).collect(Collectors.toList());

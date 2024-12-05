@@ -403,7 +403,7 @@ public class RequisitionApplicationChangeServiceImpl extends SuperServiceImpl<Re
         for (RequisitionApplicationChangeDetailEntity requisitionApplicationChangeDetailEntity : detailEntityList) {
             List<PickingDetailEntity> pickingDetailList = allDetailList.stream().filter(v -> v.getSourceDetailId().equals(requisitionApplicationChangeDetailEntity.getBusinessDetailId())).collect(Collectors.toList());
             RequisitionApplicationDetailEntity requisitionApplicationDetailEntity = requisitionApplicationDetailEntityList.stream().filter(v -> v.getId().equals(requisitionApplicationChangeDetailEntity.getBusinessDetailId())).findFirst().orElseThrow(()->new ServiceException("{}未找到要货申请单明细数据",requisitionApplicationChangeDetailEntity.getSkuNo()));
-            requisitionApplicationDetailEntity.setChangeBeforeQty(requisitionApplicationDetailEntity.getRequisitionQty());
+            requisitionApplicationDetailEntity.setChangeBeforeQty(requisitionApplicationDetailEntity.getApproveQty());
             requisitionApplicationDetailEntity.setApproveQty(requisitionApplicationChangeDetailEntity.getNewQty());
             requisitionApplicationDetailEntity.setRequisitionQty(requisitionApplicationChangeDetailEntity.getNewQty());
             requisitionApplicationDetailEntity.setVirtualFrozenQty(requisitionApplicationChangeDetailEntity.getNewQty());
@@ -420,7 +420,7 @@ public class RequisitionApplicationChangeServiceImpl extends SuperServiceImpl<Re
         }
 
         requisitionApplicationService.updateByChange(new ArrayList<>(),updateList,new ArrayList<>());
-        pickingListsService.updateByChange(updatePickingList);
+        pickingListsService.updateByChange(updatePickingList, updateList.stream().map(BaseEntity::getId).collect(Collectors.toList()));
         return new RequisitionApplicationChangeDTO.UpdateVirtualDTO(new ArrayList<>(),updateList,new ArrayList<>());
     }
 
@@ -537,7 +537,7 @@ public class RequisitionApplicationChangeServiceImpl extends SuperServiceImpl<Re
                 sourceDetailList.add(detail);
             }else if (RequisitionChangeTypeEnum.UPDATE.getCode().equals(detail.getChangeType())){
                 RequisitionApplicationDetailEntity requisitionApplicationDetailEntity = requisitionApplicationDetailEntityList.stream().filter(v -> v.getId().equals(detail.getBusinessDetailId())).findFirst().orElseThrow(()->new ServiceException("{}未找到要货申请单明细数据",detail.getSkuNo()));
-                requisitionApplicationDetailEntity.setChangeBeforeQty(requisitionApplicationDetailEntity.getRequisitionQty());
+                requisitionApplicationDetailEntity.setChangeBeforeQty(requisitionApplicationDetailEntity.getApproveQty());
                 requisitionApplicationDetailEntity.setSkuId(detail.getSkuId());
                 requisitionApplicationDetailEntity.setSkuNo(detail.getSkuNo());
                 requisitionApplicationDetailEntity.setPlatformSku(detail.getPlatformSkuNo());
@@ -579,11 +579,8 @@ public class RequisitionApplicationChangeServiceImpl extends SuperServiceImpl<Re
         }
 
         requisitionApplicationService.updateByChange(addList,updateList,deleteList);
-        pickingListsService.updateByChange(updatePickingList);
-        //新增的数据ID回填
-//        if(CollectionUtils.isNotEmpty(sourceDetailList)) {
-//            detailService.updateBatchById(sourceDetailList);
-//        }
+        pickingListsService.updateByChange(updatePickingList, new ArrayList<>());
+
         return new RequisitionApplicationChangeDTO.UpdateVirtualDTO(addList,updateList,deleteList);
     }
 

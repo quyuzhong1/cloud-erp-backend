@@ -112,5 +112,5 @@ public interface PickingListsService extends SuperService<PickingListsEntity> {
 
     List<PickingDetailDTO.ChangeQtyView> generateRequisitionChange(PickingListsDTO.UpdateDTO dto);
 
-    void updateByChange(List<PickingDetailEntity> updatePickingList);
+    void updateByChange(List<PickingDetailEntity> updatePickingList, List<String> sourceDetailIds);
 }

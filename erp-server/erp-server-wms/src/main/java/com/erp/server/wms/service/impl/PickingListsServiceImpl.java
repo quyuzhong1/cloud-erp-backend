@@ -298,8 +298,10 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void updateByChange(List<PickingDetailEntity> updatePickingList) {
+    public void updateByChange(List<PickingDetailEntity> updatePickingList, List<String> originSourceDetailIds) {
         if(CollectionUtils.isEmpty(updatePickingList)){
+            // 反写要货申请的拣货数量
+            requisitionApplicationService.writeBackData(originSourceDetailIds, Boolean.TRUE);
             return;
         }
         PickingListsEntity pickingListsEntity = this.getByIdOpt(updatePickingList.get(0).getMainId()).orElseThrow(() -> new ServiceException("未找到拣货单数据"));
@@ -891,7 +893,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
                 .stream().map(PickingDetailDTO.View::getId)
                 .distinct().collect(Collectors.toList());
         List<PickingDetailEntity> removeData = detailList.stream()
-                .filter(v -> newDetailIds.contains(v.getId()) && !allDetailIds.contains(v.getId()))
+                .filter(v -> newDetailIds.contains(v.getSourceDetailId()) && !allDetailIds.contains(v.getId()))
                 .collect(Collectors.toList());
         if (!CollectionUtils.isEmpty(removeData)) {
             List<String> removeIds = new ArrayList<>();
