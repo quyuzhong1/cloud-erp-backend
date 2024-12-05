@@ -119,7 +119,15 @@ public class AliExpressSoB2cHandle extends AbstractSoB2cHandle {
             soB2cErrorService.add(addError);
             return Boolean.FALSE;
         }
-        return Boolean.TRUE;
+        //查询发货单是否全部已出库
+        List<AliexpressDeliveryEntity> aliexpressDeliveryEntities = aliexpressDeliveryFeign.listBySoId(mainEntity.getId());
+        if(CollectionUtils.isNotEmpty(aliexpressDeliveryEntities) && aliexpressDeliveryEntities.stream().allMatch(AliexpressDeliveryEntity::getIsOutstock)){
+            soB2cErrorService.deleteByCodeAndType(mainEntity.getCode(), SoB2cErrorTypeEnum.GENERATE_OUTSTOCK.getCode());
+            soB2cService.removeSignError(mainEntity.getId(), SoB2cErrorTypeEnum.GENERATE_OUTSTOCK.getCode());
+            return Boolean.TRUE;
+        }else {
+            return Boolean.FALSE;
+        }
     }
 
     private void createAliexpressDelivery(PlatformOrderDTO dto, SoB2cEntity mainEntity) {
@@ -231,7 +239,20 @@ public class AliExpressSoB2cHandle extends AbstractSoB2cHandle {
         //仓库映射
         List<WarehouseMappingDTO.MappingViewDTO> mappingViewDTOS = warehouseMappingFeign.listMappingViewByDictPlatform(mainEntity.getDictPlatform());
         //生产销售出库单
-        deliveryDTOList.forEach(deliveryDTO -> autoGenerateSalesDelivery(mainEntity, deliveryDTO, mappingViewDTOS));
+        deliveryDTOList.forEach(deliveryDTO -> {
+            try {
+                autoGenerateSalesDelivery(mainEntity, deliveryDTO, mappingViewDTOS);
+            }catch (Exception e){
+                log.error("[速卖处理销售出库失败]:order={},msg={}", dto.getPlatformCode(), e.getMessage(), e);
+                SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO();
+                addError.setType(SoB2cErrorTypeEnum.GENERATE_OUTSTOCK.getCode());
+                addError.setParamJson("");
+                addError.setReturnJson("");
+                addError.setMainId(mainEntity.getId());
+                addError.setMessage(e.getMessage());
+                soB2cErrorService.add(addError);
+            }
+        });
     }
 
     private void autoGenerateSalesDelivery(SoB2cEntity mainEntity, PlatformDeliveryDTO deliveryDTO, List<WarehouseMappingDTO.MappingViewDTO> mappingViewDTOS) {
@@ -247,7 +268,7 @@ public class AliExpressSoB2cHandle extends AbstractSoB2cHandle {
         List<String> notMatchSkuNoList = new ArrayList<>();
         for (PlatformDeliveryDetailDTO deliveryDetailDTO : detailDTOList) {
             SkuMappingDTO.WarehouseSkuDTO warehouseSkuDTO = warehouseSkuDTOList.stream().filter(v -> v.getPlatformSkuNo().equals(deliveryDetailDTO.getScItemId())).findFirst().orElse(new SkuMappingDTO.WarehouseSkuDTO());
-            if (com.baomidou.mybatisplus.core.toolkit.StringUtils.isBlank(warehouseSkuDTO.getProductSkuId())) {
+            if (CharSequenceUtil.isBlank(warehouseSkuDTO.getProductSkuId())) {
                 notMatchSkuNoList.add(deliveryDetailDTO.getScItemId());
                 continue;
             }
@@ -257,6 +278,10 @@ public class AliExpressSoB2cHandle extends AbstractSoB2cHandle {
             deliveryDetailDTO.setWarehouseName(mappingViewDTO.getWarehouseName());
             deliveryDetailDTO.setWarehouseOrgId(mappingViewDTO.getWarehouseOrgId());
             deliveryDetailDTO.setWarehouseOrgName(mappingViewDTO.getWarehouseOrgName());
+        }
+        if (CollectionUtils.isNotEmpty(notMatchSkuNoList)) {
+            String msg = CharSequenceUtil.format("自动生成销售出库单失败：存在速卖通货品id未映射sku，货品id:【{}】", notMatchSkuNoList);
+            throw new ServiceException(msg);
         }
         detailDTOList = detailDTOList.stream().filter(v -> StringUtils.isNotBlank(v.getSkuId())).collect(Collectors.toList());
         List<String> skuIdList = detailDTOList.stream().map(PlatformDeliveryDetailDTO::getSkuId).distinct().collect(Collectors.toList());
@@ -274,13 +299,6 @@ public class AliExpressSoB2cHandle extends AbstractSoB2cHandle {
             soB2cDetailService.updateWarehouseByMapping(mappingViewDTO, mainEntity.getId(), skuIdList);
             //更新速卖通发货单状态
             aliexpressDeliveryFeign.updateAliexpressOustock(AliexpressDeliveryDTO.StatusDTO.builder().soId(mainEntity.getId()).platformDeliveryCode(deliveryDTO.getSourceCode()).isOutstock(Boolean.TRUE).build());
-        }
-        if (CollectionUtils.isNotEmpty(notMatchSkuNoList)) {
-            String msg = CharSequenceUtil.format("自动生成销售出库单失败：存在速卖通货品id未映射sku，货品id:【{}】", notMatchSkuNoList);
-            throw new ServiceException(msg);
-        } else if (Boolean.TRUE.equals(generateSoOutstockResult)) {
-            soB2cErrorService.deleteByCodeAndType(mainEntity.getCode(), SoB2cErrorTypeEnum.GENERATE_OUTSTOCK.getCode());
-            soB2cService.removeSignError(mainEntity.getId(), SoB2cErrorTypeEnum.GENERATE_OUTSTOCK.getCode());
         }
     }
     /**
