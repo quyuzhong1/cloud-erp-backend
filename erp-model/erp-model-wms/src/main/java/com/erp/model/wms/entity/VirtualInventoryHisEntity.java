@@ -1,14 +1,15 @@
 package com.erp.model.wms.entity;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
-import java.time.LocalDate;
-import com.baomidou.mybatisplus.annotation.TableField;
-import java.io.Serializable;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
-import com.common.business.enums.ApproveStatusEnum;
+
+import java.io.Serializable;
+import java.math.BigDecimal;
+import java.time.LocalDate;
 
 
 /**
@@ -70,6 +71,12 @@ public class VirtualInventoryHisEntity extends BaseEntity<VirtualInventoryHisEnt
     */
     @TableField("bill_date")
     private LocalDate billDate;
+
+    /**
+     * 平均库龄（天）
+     */
+    @TableField("avg_inventory_age_days")
+    private BigDecimal avgInventoryAgeDays;
 
 
     public static final String SKU_ID = "sku_id";

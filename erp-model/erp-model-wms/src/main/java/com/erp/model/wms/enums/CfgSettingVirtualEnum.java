@@ -8,6 +8,7 @@ public enum CfgSettingVirtualEnum implements EnumMessage {
 
     SALES_DASHBOARD("salesDashboard","销售看板"),
     VIRTUAL_RULE("virtualRule","规则设置"),
+    INVENTORY_AGE_STATISTICS("INVENTORY_AGE_STATISTICS","库龄统计"),
     ;
 
     /**

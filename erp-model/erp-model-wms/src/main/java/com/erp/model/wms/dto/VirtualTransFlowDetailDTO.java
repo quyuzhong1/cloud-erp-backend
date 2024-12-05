@@ -82,6 +82,10 @@ public class VirtualTransFlowDetailDTO implements Serializable {
          */
         private String sourceType;
         /**
+         * 单据类型名称
+         */
+        private String sourceTypeName;
+        /**
          * 单据编号
          */
         private String sourceCode;
@@ -90,12 +94,17 @@ public class VirtualTransFlowDetailDTO implements Serializable {
          */
         private String dictInventoryStatus;
         /**
+         * 库存状态名称
+         */
+        private String dictInventoryStatusName;
+        /**
          * 出入库数量
          */
         private Integer qty;
         /**
          * 操作类型
          */
+
         private String operateType;
         /**
          * 操作类型名称
@@ -117,6 +126,10 @@ public class VirtualTransFlowDetailDTO implements Serializable {
          * 仓储时长（天）
          */
         private Integer inStockDays;
+        /**
+         * 更新时间
+         */
+        private LocalDateTime updateTime;
     }
 
 

@@ -249,6 +249,10 @@ public class VirtualInventoryAgeDTO implements Serializable {
          */
         private String dictInventoryStatus;
         /**
+         * 库存状态名称
+         */
+        private String dictInventoryStatusName;
+        /**
          * 批次入库数量
          */
         private Integer batchQty;

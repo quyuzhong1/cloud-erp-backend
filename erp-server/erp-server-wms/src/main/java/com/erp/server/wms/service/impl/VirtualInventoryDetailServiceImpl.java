@@ -1,6 +1,7 @@
 package com.erp.server.wms.service.impl;
 
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -188,7 +189,11 @@ public class VirtualInventoryDetailServiceImpl extends SuperServiceImpl<VirtualI
      * 分页列表处理数据
      */
     private void fillPageData(List<VirtualInventoryAgeDTO.ListDTO> detailList) {
-        // TODO 验证数据 & 数据赋值
+        if (CollUtil.isEmpty(detailList)) {
+            return;
+        }
+
+
     }
 }
 

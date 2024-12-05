@@ -40,21 +40,45 @@
 
     <!-- 分页查询 -->
     <select id="paging" resultType="com.erp.model.wms.dto.VirtualInventoryAgeDTO$ListDTO">
-        select
-               *
-        from virtual_inventory_detail vid
+        WITH VirtualInventory AS (
+            SELECT
+            sku_id,
+            warehouse_id,
+            virtual_warehouse_id,
+            SUM(qty) AS virtualQty,
+            SUM(CASE WHEN dict_inventory_status = 'usable' THEN qty ELSE 0 END) AS virtualUsableQty,
+            SUM(CASE WHEN dict_inventory_status = 'frozen' THEN qty ELSE 0 END) AS virtualFrozenQty
+            FROM
+            virtual_inventory
+            WHERE
+            is_deleted = false
+            GROUP BY
+            sku_id, warehouse_id, virtual_warehouse_id
+            )
+            select
+            vi.sku_id as skuId,
+            pd.sku_no as skuNo,
+            pd.name as productName,
+            wh."name" as warehouseName,
+            vw.code as virtualWarehouseCode,
+            vw.name as virtualWarehouseName,
+            vi.virtualQty,
+            vi.virtualUsableQty,
+            vi.virtualFrozenQty,
+            now() as date
+        from VirtualInventory vi
+        left join product_detail pd on vi.sku_id = pd.id and pd.is_deleted = false
+        left join warehouse wh on vi.warehouse_id = wh.id and wh.is_deleted = false
+        left join virtual_warehouse vw on vi.virtual_warehouse_id = vw.id and vw.is_deleted = false
         <where>
-            vid.is_deleted = false
-            <if test="params.permissionSql != null and params.permissionSql != ''">
-                ${params.permissionSql}
-            </if>
+            ${params.sqlMap.default}
             order by
             <if test="params.sortList != null and params.sortList.size > 0">
                 <foreach collection="params.sortList" item="item" separator="," close=",">
                     ${item.field} ${item.sort}
                 </foreach>
             </if>
-            vid.id desc
+            vi.sku_id desc
         </where>
     </select>
 

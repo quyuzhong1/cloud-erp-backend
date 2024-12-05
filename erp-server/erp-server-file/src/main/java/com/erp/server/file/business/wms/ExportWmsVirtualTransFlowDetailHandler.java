@@ -3,7 +3,6 @@ package com.erp.server.file.business.wms;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.FileTaskEventEnum;
 import com.common.business.vo.PagingVO;
-import com.erp.model.wms.dto.VirtualInventoryAgeDTO;
 import com.erp.model.wms.dto.VirtualTransFlowDetailDTO;
 import com.erp.rpc.wms.feign.ExportWmsFeign;
 import com.erp.server.file.core.AbstractPageFileEventHandler;
@@ -43,6 +42,6 @@ public class ExportWmsVirtualTransFlowDetailHandler extends AbstractPageFileEven
 
     @Override
     public String getExcelPath() {
-        return "excel/wms/virtualInventoryAge.xlsx";
+        return "excel/wms/virtualTransFlowDetail.xlsx";
     }
 }

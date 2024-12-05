@@ -42,6 +42,6 @@ public class ExportWmsVirtualHisInventoryAgeHandler extends AbstractPageFileEven
 
     @Override
     public String getExcelPath() {
-        return "excel/wms/virtualInventoryAge.xlsx";
+        return "excel/wms/virtualHisVirtualInventoryAge.xlsx";
     }
 }
