@@ -1,0 +1,22 @@
+package com.erp.server.plm.service.impl;
+
+
+import com.common.business.service.impl.SuperServiceImpl;
+import com.erp.model.plm.entity.MouldPurchasePriceEntity;
+import com.erp.server.plm.mapper.MouldPurchasePriceMapper;
+import com.erp.server.plm.service.MouldPurchasePriceService;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+/**
+ * <p>
+ * 模具价目表 服务实现类
+ * </p>
+ *
+ * @author liaohui
+ * @since 2024-12-03
+ */
+@Slf4j
+@Service
+public class MouldPurchasePriceServiceImpl extends SuperServiceImpl<MouldPurchasePriceMapper, MouldPurchasePriceEntity> implements MouldPurchasePriceService {
+
+}

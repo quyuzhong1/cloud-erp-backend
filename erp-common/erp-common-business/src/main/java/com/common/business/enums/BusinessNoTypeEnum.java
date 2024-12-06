@@ -101,6 +101,7 @@ public enum BusinessNoTypeEnum {
 
     CODE_TKD(71, "TKD","退款单",BusinessNoConstant.TKD),
     CODE_XLSS(80, "XLSS","销量试算",BusinessNoConstant.XLSS),
+    CODE_MOULD(90, "MJ","模具管理",BusinessNoConstant.MJ),
     ;
 
 

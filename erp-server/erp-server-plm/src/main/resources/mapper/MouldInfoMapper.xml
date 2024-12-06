@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.plm.mapper.MouldInfoMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.plm.entity.MouldInfoEntity">
+        <result column="id" property="id"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+        <result column="create_user_name" property="createUserName"/>
+        <result column="create_user_id" property="createUserId"/>
+        <result column="update_user_name" property="updateUserName"/>
+        <result column="update_user_id" property="updateUserId"/>
+        <result column="version" property="version"/>
+        <result column="is_deleted" property="isDeleted"/>
+        <result column="project_no" property="projectNo"/>
+        <result column="name" property="name"/>
+        <result column="status" property="status"/>
+        <result column="product_manager_id" property="productManagerId"/>
+        <result column="remark" property="remark"/>
+        <result column="category_id" property="categoryId"/>
+        <result column="mold_category_code" property="moldCategoryCode"/>
+    </resultMap>
+
+    <select id="paging" resultType="com.erp.model.plm.dto.MouldInfoDTO$PagingViewDTO">
+        select mi.id,
+               mi.project_no,
+               mi.name,
+               mi.status,
+               mi.approve_user_name,
+               mi.approve_time,
+               md.id as detailId,
+               md.mould_no,
+               md.third_mould_no,
+               md.type_id,
+               md.mold_holes,
+               md.length,
+               md.width,
+               md.height,
+               md.material,
+               md.life_cycle,
+               md.develop_cycle,
+               md.enable_date,
+               md.supplier_id,
+               md.remark,
+               md.create_user_name,
+               md.update_user_name,
+               md.update_time
+        from mould_info mi
+                 left join mould_detail md on mi.id = md.main_id and md.is_deleted = false
+        where ${params.sqlMap.default}
+          and mi.is_deleted = false
+    </select>
+
+
+</mapper>
