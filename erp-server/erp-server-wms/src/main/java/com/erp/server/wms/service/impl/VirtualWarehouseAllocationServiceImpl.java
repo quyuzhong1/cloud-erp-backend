@@ -954,6 +954,9 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
         dto.getParams().setPermissionSql(dto.getPermissionSql());
         Page<VirtualWarehouseAllocationDTO.ExportDTO> query = new Page<>(dto.getCurrPage(), dto.getPageSize());
         IPage<VirtualWarehouseAllocationDTO.ExportStatisticsDTO> pageData = this.baseMapper.exportVirtualStatistics(query, dto.getParams());
+        if (CollUtil.isEmpty(pageData.getRecords())) {
+            throw new ServiceException("未找到分货统计数据导出");
+        }
         return new PagingVO(pageData);
     }
 
