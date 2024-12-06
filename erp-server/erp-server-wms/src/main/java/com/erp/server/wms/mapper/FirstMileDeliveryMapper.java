@@ -126,5 +126,7 @@ public interface FirstMileDeliveryMapper extends BaseMapper<FirstMileDeliveryEnt
     List<FirstMileDeliveryDTO.BusinessDTO> getBusinessCodeByCodes(@Param("deliveryCodes") List<String> deliveryCodes);
     Page<WmsCartonDetailDTO.ListPackingDetailDTO> firstMilePackingTaskDetail(@Param("query") Page<PackingTaskDTO.ExportDTO> query,@Param("params") PackingTaskDTO.ExportDTO page, @Param("ids") List<String> ids, @Param("permissionSql") String permissionSql);
 
+    List<WmsCartonDetailDTO.ListPackingDetailPackQtyDTO> ListPackingDetailPackQty(@Param("params") PackingTaskDTO.ExportDTO page, @Param("ids") List<String> ids, @Param("permissionSql") String permissionSql);
+
     List<FirstMileDeliveryDTO.BusinessDTO> getDeliveryCodeByBusinessCodes(@Param("businessCodes")List<String> businessCodes);
 }
