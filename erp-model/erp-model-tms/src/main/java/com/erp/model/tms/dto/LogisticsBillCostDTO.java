@@ -685,6 +685,11 @@ public class LogisticsBillCostDTO implements Serializable {
          * 实重(物流商)
          */
         private BigDecimal weightLogistics;
+        
+        /**
+    	 * 计费重[物流商]
+    	 */
+    	private BigDecimal billingWeightLogistics;
 
         /**
          * 费用明细

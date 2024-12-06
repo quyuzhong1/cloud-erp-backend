@@ -335,7 +335,24 @@ public class LogisticsLastMileCostController extends BaseController {
      serviceClass = LogisticsBillCostService.class,
      keyIdName = "id")
      public ApiResult<List<BatchResultDTO>> pushAllocation(@RequestBody @Validated PushDTO dto) {
-      	return success();
+    	 List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+         for (String id : dto.getIds()) {
+             BatchResultDTO submit;
+             try {
+                 submit = logisticsBillCostService.pushAllocation(id,dto.getReportDate());
+             }catch (Exception e){
+                 log.error("尾程费用 状态变更",e);
+                 LogisticsBillCostEntity entity = logisticsBillCostService.getById(id);
+                 if (ObjectUtil.isEmpty(entity)) {
+                     submit = BatchResultDTO.fail(id, id, "尾程费用不存在, 下推分摊");
+                     resultDTOS.add(submit);
+                     continue;
+                 }
+                 submit = BatchResultDTO.fail(entity.getId(), entity.getTrackNo(), e.getMessage());
+             }
+             resultDTOS.add(submit);
+         }
+         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
      }
      
      /**

@@ -1290,6 +1290,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
     		addDTO.setLogisticsBillDetailId(logisticsBillCostEntity.getLogisticsBillDetailId());
     		addDTO.setActualWeight(logisticsBillCostEntity.getActualWeight());
     		addDTO.setVolumeWeight(logisticsBillCostEntity.getVolumeWeight());
+    		addDTO.setBillingWeightLogistics(logisticsBillCostEntity.getBillingWeightLogistics());
     		String currency = dto.getCurrency();
     		if(org.apache.commons.lang3.StringUtils.isBlank(currency)) {
     			currency = CurrencyEnum.CNY.getCurrencyCode();
@@ -1377,6 +1378,12 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 			editViewDTO.setCfgCostId(costIdMap.getKey());
 			editViewDTO.setCostValue(value.stream().filter(v -> LogisticsBillCostTypeEnum.ACTUAL.getCode().equals(v.getType())).map(TmsCostDetailEntity::getCostValue).reduce(BigDecimal::add).orElse(BigDecimal.ZERO));
 			editViewDTO.setEstimatedValue(value.stream().filter(v -> LogisticsBillCostTypeEnum.ESTIMATED.getCode().equals(v.getType())).map(TmsCostDetailEntity::getCostValue).reduce(BigDecimal::add).orElse(BigDecimal.ZERO));
+			costDetailList.add(editViewDTO);
+		}
+		if(CollUtil.isEmpty(costDetailList)) {
+			EditViewDTO editViewDTO = BeanUtil.copyProperties(entity, EditViewDTO.class);
+			String payType = entity.getPayType();
+			editViewDTO.setPayTypeName(payType.equals("pay") ? "付款" : "退款");
 			costDetailList.add(editViewDTO);
 		}
 		return costDetailList;
