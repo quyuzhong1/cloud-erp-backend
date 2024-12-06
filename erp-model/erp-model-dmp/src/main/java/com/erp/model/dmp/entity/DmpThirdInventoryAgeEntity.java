@@ -4,6 +4,9 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
 import com.baomidou.mybatisplus.annotation.TableField;
 import java.io.Serializable;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
@@ -55,10 +58,10 @@ public class DmpThirdInventoryAgeEntity extends BaseEntity<DmpThirdInventoryAgeE
     @TableField("inventory_qty")
     private Integer inventoryQty;
     /**
-    * 库龄
+    * 上架日期
     */
-    @TableField("inventory_age")
-    private Integer inventoryAge;
+    @TableField("put_away_date")
+    private LocalDate putAwayDate;
 
 
     public static final String CONVERT_ID = "convert_id";
