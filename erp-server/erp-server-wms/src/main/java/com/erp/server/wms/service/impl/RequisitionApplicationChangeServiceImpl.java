@@ -50,6 +50,8 @@ import com.erp.server.wms.service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -85,6 +87,10 @@ public class RequisitionApplicationChangeServiceImpl extends SuperServiceImpl<Re
 
     @Resource
     private OmsListingInfoFeign listingInfoFeign;
+
+    @Resource
+    @Lazy
+    private RequisitionApplicationChangeServiceImpl requisitionApplicationChangeService;
 
     @Resource
     private RequisitionApplicationService requisitionApplicationService;
@@ -281,6 +287,13 @@ public class RequisitionApplicationChangeServiceImpl extends SuperServiceImpl<Re
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据审核操作  审核结果：【{}】", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "要货申请变更单", approveType.getName());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.REQUISITION_APPLICATION_CHANGE.getCode(), entity.getId(), "审核操作");
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(approveType);
+        requisitionApplicationChangeService.sendMsg(id, approveType, entity);
+        return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.approveStatus(approveStatus));
+    }
+
+
+    @Async
+    public void sendMsg(String id, ApproveTypeEnum approveType, RequisitionApplicationChangeEntity entity) {
         Map<String, String> map = new HashMap<>();
         map.put("code", entity.getCode());
         map.put("createUserId", entity.getCreateUserId());
@@ -302,7 +315,6 @@ public class RequisitionApplicationChangeServiceImpl extends SuperServiceImpl<Re
             }
         }
         requisitionApplicationService.sendRequisitionMsg(map, CfgSettingEnum.FS_REQUISITION_CHANGE_APPROVE_NOTICE);
-        return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.approveStatus(approveStatus));
     }
 
     /**
