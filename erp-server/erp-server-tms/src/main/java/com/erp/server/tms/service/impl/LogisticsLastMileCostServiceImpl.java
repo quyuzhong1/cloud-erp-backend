@@ -130,6 +130,7 @@ public class LogisticsLastMileCostServiceImpl implements LogisticsLastMileCostSe
         headerNameList.add("*平台订单号");
         headerNameList.add("*物流跟踪单号");
         headerNameList.add("*计费重[物流商]");
+        headerNameList.add("*对账类型");
         headerNameList.add("币种[默认￥]");
         return headerNameList;
     }
@@ -145,6 +146,7 @@ public class LogisticsLastMileCostServiceImpl implements LogisticsLastMileCostSe
         jsonObject.set("*平台订单号","platformCode");
         jsonObject.set("*物流跟踪单号","trackNo");
         jsonObject.set("*计费重[物流商]","billingWeightStr");
+        jsonObject.set("*对账类型","payType");
         jsonObject.set("币种[默认￥]","currency");
         return jsonObject;
     }

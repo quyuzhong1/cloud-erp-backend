@@ -481,6 +481,15 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         handleImportSuccessList(successList, errorList,DictCostAttributionEnum.SELF_DELIVER.getCode());
 
         if (!errorList.isEmpty()) {
+        	errorList.forEach((excelDTO) -> {
+        		String payType = excelDTO.getPayType();
+        		if("pay".equals(payType)) {
+        			payType = "付款";
+        		}else if("refund".equals(payType)) {
+        			payType = "退款";
+        		}
+        		excelDTO.setPayType(payType);
+        	});
             StringBuffer sb = new StringBuffer();
             String excelPath = "excel/logisticsBillCostError.xlsx";
             String name = "logisticsBillCostError";
@@ -791,7 +800,6 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         if (CollectionUtils.isEmpty(successList)) {
             return;
         }
-        successList.forEach(excelDTO -> excelDTO.setPayType(excelDTO.getPayType().equals("付款") ? "pay" : "refund"));
         //物流单
         List<String> trackNoList = successList.stream().map(LogisticsBillCostExcelDTO::getTrackNo).collect(Collectors.toList());
         List<LogisticsBillDTO.LogisticsBillVo> logisticsBillVos = logisticsBillService.listLogisticsBillVoByTrackNo(trackNoList);
