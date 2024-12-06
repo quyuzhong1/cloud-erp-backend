@@ -19,11 +19,8 @@ public class MarehouseMoveInfoQueryHandler extends AbstractQueryHandler {
         if ("tab".equals(field)) {
             return getTabSql(value);
         }
-        if ("sourceType".equals(field) && MarehouseMoveSourceTypeEnum.FIRST_MILE_PICKING.getCode().equals(value)) {
-            return " EXISTS (select id from picking_lists where is_deleted = false and id = wlmi.source_id and source_type ='requisitionApplication')";
-        }
-        if ("sourceType".equals(field) && MarehouseMoveSourceTypeEnum.B2B_PICKING.getCode().equals(value)) {
-            return " EXISTS (select id from picking_lists where is_deleted = false and id = wlmi.source_id and source_type = 'soDeliveryNotice')";
+        if ("sourceType".equals(field)) {
+            return " EXISTS (select id from picking_lists where is_deleted = false and id = wlmi.source_id and source_type "+compareCodeSplicingValueSql+")";
         }
         return null;
     }

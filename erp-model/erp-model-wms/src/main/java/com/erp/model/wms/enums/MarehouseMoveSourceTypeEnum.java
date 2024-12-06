@@ -6,8 +6,8 @@ import com.fasterxml.jackson.annotation.JsonValue;
 
 public enum MarehouseMoveSourceTypeEnum implements EnumMessage {
 
-    FIRST_MILE_PICKING("firstMilePicking", "头程拣货单"),
-    B2B_PICKING("b2bPicking", "B2B拣货单");
+    FIRST_MILE_PICKING("requisitionApplication", "头程拣货单"),
+    B2B_PICKING("soDeliveryNotice", "B2B拣货单");
 
     /**
      * 类型
