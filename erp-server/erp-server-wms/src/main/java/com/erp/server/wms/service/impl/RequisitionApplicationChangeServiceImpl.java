@@ -583,7 +583,7 @@ public class RequisitionApplicationChangeServiceImpl extends SuperServiceImpl<Re
                 }else{
                     PickingDetailEntity pickingDetailEntity = pickingDetailEntityList.stream().filter(v->v.getSourceDetailId().equals(requisitionApplicationDetailEntity.getId())).findFirst().orElse(null);
                     if(Objects.nonNull(pickingDetailEntity)){
-                        Integer originPickQty = pickingDetailEntityList.stream().mapToInt(PickingDetailEntity::getQty).sum();
+                        Integer originPickQty = currentList.stream().mapToInt(PickingDetailEntity::getQty).sum();
                         pickingDetailEntity.setChangeBeforeQty(pickingDetailEntity.getQty());
                         pickingDetailEntity.setQty(detail.getNewQty() - originPickQty + pickingDetailEntity.getQty());
                         updatePickingList.add(pickingDetailEntity);
