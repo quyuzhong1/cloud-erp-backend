@@ -2,7 +2,6 @@ package com.erp.server.wms.query;
 
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.query.AbstractQueryHandler;
-import com.erp.model.wms.enums.MarehouseMoveSourceTypeEnum;
 import org.springframework.stereotype.Component;
 
 /**
