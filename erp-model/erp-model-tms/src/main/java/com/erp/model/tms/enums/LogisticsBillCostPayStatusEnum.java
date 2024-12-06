@@ -12,10 +12,10 @@ import org.apache.commons.lang3.StringUtils;
  */
 public enum LogisticsBillCostPayStatusEnum implements EnumMessage {
 
-	PAY_PAYMENT("payment", "待付款"),
-	REFUND_PAYMENT("payment", "待退款"),
-	PAY_PAID("paid", "已付款"),
-	REFUND_PAID("paid", "已退款"),
+	PAYPAYMENT("pay_payment", "待付款"),
+	REFUNDPAYMENT("refund_payment", "待退款"),
+	PAYPAID("pay_paid", "已付款"),
+	REFUNDPAID("refund_paid", "已退款"),
     ;
 
     /**
