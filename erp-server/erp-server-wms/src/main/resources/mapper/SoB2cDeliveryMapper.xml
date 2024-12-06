@@ -36,8 +36,7 @@
         sbd.abnormal_cause as abnormalCause,
         sbl.code as logisticsCode,
         sbl.track_no as trackCode,
-        sbd.shipment_mark,
-        (select id from so_b2c_delivery_intercept sbdi where sbdi.delivery_id = sbd.id and sbdi.handle_status = 'waitHandle' and  sbdi.is_deleted = false limit 1) as interceptId
+        sbd.shipment_mark
         FROM so_b2c_delivery sbd
         LEFT JOIN so_b2c_delivery_detail sbdd ON sbd.id = sbdd.main_id AND sbd.is_deleted = FALSE
         left join so_b2c_logistics sbl on sbl.main_id = sbd.source_id and sbl.is_deleted = false
