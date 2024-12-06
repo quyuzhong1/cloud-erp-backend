@@ -383,7 +383,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
                         Collectors.summingInt(PickingDetailDTO.View::getActualQty)));
 
         // 过滤出聚合后的 actualQty 不相等的记录
-        return list.stream()
+        List<PickingDetailDTO.View> views =  list.stream()
                 .filter(detail -> {
                     Integer originQty = originAggregatedMap.get(detail.getSourceDetailId());
                     Integer currentQty = aggregatedMap.get(detail.getSourceDetailId());
@@ -391,6 +391,34 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
                 })
                 .filter(detail -> originAggregatedMap.containsKey(detail.getSourceDetailId()))
                 .collect(Collectors.toList());
+        //过滤实拣数量相加与要货申请的批准数量一致的数据
+        List<String> requisitionDetailIds = views.stream().map(PickingDetailDTO.View::getSourceDetailId).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
+        List<RequisitionApplicationDetailEntity> requisitionApplicationDetailEntityList = requisitionApplicationDetailService.listByIds(requisitionDetailIds);
+
+        Map<String, Integer> qtySumMap = views.stream()
+                .filter(v -> StringUtils.isNotBlank(v.getSourceDetailId()))
+                .collect(Collectors.groupingBy(
+                        PickingDetailDTO.View::getSourceDetailId,
+                        Collectors.summingInt(PickingDetailDTO.View::getActualQty)
+                ));
+        Map<String, Integer> approvedQtyMap = requisitionApplicationDetailEntityList.stream()
+                .collect(Collectors.toMap(
+                        RequisitionApplicationDetailEntity::getId,
+                        RequisitionApplicationDetailEntity::getApproveQty
+                ));
+        views = views.stream()
+                .filter(detail -> {
+                    String detailId = detail.getSourceDetailId();
+                    if (StringUtils.isNotBlank(detailId) && approvedQtyMap.containsKey(detailId)) {
+                        Integer approvedQty = approvedQtyMap.get(detailId);
+                        Integer totalPickedQty = qtySumMap.getOrDefault(detailId, 0);
+                        return !totalPickedQty.equals(approvedQty);
+                    }
+                    // 如果没有找到对应的 approvedQty，则保留该记录
+                    return true;
+                })
+                .collect(Collectors.toList());
+        return views;
     }
 
 
