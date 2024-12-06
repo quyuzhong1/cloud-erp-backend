@@ -541,6 +541,7 @@ public enum ApiError implements Serializable {
     ERROR_EXISTS_ESTIMATED_LOGISTICS_LARGE(96004, "已存在预估账单的物流大表信息，请不要重复下推"),
     ERROR_SMALL_BAG_NOT_CONFIRMED(96005, "小包费用分摊未确认，不能生成物流大表"),
     ERROR_NOT_EXISTS(96006, "自发货费用不存在"),
+    ERROR_EXISTS_ACTUAL_NOT_ESTIMATED(96007, "已存在实际账单，不能再下推实际账单"),
 
     /**
      * bi 错误

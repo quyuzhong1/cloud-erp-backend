@@ -158,6 +158,9 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
     @Resource
     private TransferDeclareCostAllocationMainService transferDeclareCostAllocationMainService;
 
+    @Resource
+    private ReportPeriodMonthService reportPeriodMonthService;
+
 
     @Override
     public PagingVO<LogisticsLargeDTO.PagingViewDTO> paging(PagingDTO<LogisticsLargeDTO.PagingParamDTO> dto) {
@@ -262,7 +265,7 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
 
 
     private BatchResultDTO firstMileLogisticsTableHandler(FirstMileCostAllocationEntity entity, FirstMileSkuCostAllocationEntity firstMileSkuCostAllocationEntity, List<FirstMileSkuCostAllocationDetailEntity> skuCostDetailEntityList, FirstMileDeliveryEntity deliveryEntity, List<FirstMileDeliveryDetailEntity> deliveryDetailEntities) {
-        List<LogisticsLargeEntity> logisticsLargeEntities = this.listByIdSourceId(Arrays.asList(entity.getId()));
+        List<LogisticsLargeEntity> logisticsLargeEntities = this.listByIdOutstockCode(Arrays.asList(deliveryEntity.getCode()));
 
         //已确认才能下推
         if (!ConfirmStatusEnum.CONFIRM.getCode().equals(entity.getStatus())) {
@@ -271,17 +274,28 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
 
         //只能下推一个实际账单
         LogisticsLargeEntity logisticsLargeActualEntity = logisticsLargeEntities.stream()
-                .filter(req -> ReconciliationBillTypeEnum.ACTUAL.getCode().equals(req.getReconciliationBillType()))
+                .filter(req -> ReconciliationBillTypeEnum.ACTUAL.getCode().equals(req.getReconciliationBillType())
+                        && CharSequenceUtil.isBlank(entity.getEstimatedBillId()))
                 .findFirst().orElse(null);
         if (logisticsLargeActualEntity != null) {
             throw new ServiceException(ApiError.ERROR_EXISTS_LOGISTICS_LARGE);
         }
         //预估账单只能推送一个
         LogisticsLargeEntity logisticsLargeEstimatedEntity = logisticsLargeEntities.stream()
-                .filter(req -> ReconciliationBillTypeEnum.ESTIMATED.getCode().equals(req.getReconciliationBillType()))
+                .filter(req -> ReconciliationBillTypeEnum.ESTIMATED.getCode().equals(req.getReconciliationBillType())
+                        && CharSequenceUtil.isNotBlank(entity.getEstimatedBillId()))
                 .findFirst().orElse(null);
         if (logisticsLargeEstimatedEntity != null) {
             throw new ServiceException(ApiError.ERROR_EXISTS_ESTIMATED_LOGISTICS_LARGE);
+        }
+
+        //已经有实际账单不能再下推预估账单
+        LogisticsLargeEntity logisticsLargeEntity = logisticsLargeEntities.stream()
+                .filter(req -> ReconciliationBillTypeEnum.ACTUAL.getCode().equals(req.getReconciliationBillType())
+                        && CharSequenceUtil.isBlank(entity.getEstimatedBillId()))
+                .findFirst().orElse(null);
+        if (logisticsLargeEntity != null) {
+            throw new ServiceException(ApiError.ERROR_EXISTS_ACTUAL_NOT_ESTIMATED);
         }
 
         //查询物流单
@@ -307,11 +321,13 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
         }
         //查询仓库
         List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listWarehouseByIds(Arrays.asList(deliveryEntity.getDeliveryWarehouseId(), deliveryEntity.getDestWarehouseId()));
+        ReportPeriodMonthEntity monthEntity = reportPeriodMonthService.getById(entity.getReportPeriodId());
 
         LogisticsLargeDTO.AddDTO addDTO = new LogisticsLargeDTO.AddDTO();
         addDTO.setSourceId(entity.getId());
         addDTO.setSourceType(SourceTypeEnum.FIRST_MILE_COST_ALLOCATION.getCode());
-        addDTO.setReconciliationMonth(entity.getReconciliationMonth());
+        addDTO.setSourceDetailId(firstMileSkuCostAllocationEntity.getSourceDetailId());
+        addDTO.setReconciliationMonth(monthEntity.getMonth());
         addDTO.setOutstockCode(deliveryEntity.getCode());
         addDTO.setOutstockTime(deliveryEntity.getApproveTime());
 
@@ -515,6 +531,14 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
             return Collections.emptyList();
         }
         return this.lambdaQuery().eq(LogisticsLargeEntity::getSourceId, ids).list();
+    }
+
+    @Override
+    public List<LogisticsLargeEntity> listByIdOutstockCode(List<String> outstockCode) {
+        if (CollUtil.isEmpty(outstockCode)) {
+            return Collections.emptyList();
+        }
+        return this.lambdaQuery().eq(LogisticsLargeEntity::getOutstockCode, outstockCode).list();
     }
 
 

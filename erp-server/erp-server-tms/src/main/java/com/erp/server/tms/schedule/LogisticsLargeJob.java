@@ -1,11 +1,10 @@
 package com.erp.server.tms.schedule;
 
 import com.common.business.enums.SourceTypeEnum;
-import com.erp.model.tms.entity.LogisticsLargeEntity;
-import com.erp.model.tms.entity.SmallBagCostAllocationMainEntity;
-import com.erp.server.tms.service.LogisticsLargeService;
-import com.erp.server.tms.service.SmallBagCostAllocationMainService;
-import com.erp.server.tms.service.SmallBagCostAllocationService;
+import com.erp.model.tms.entity.*;
+import com.erp.model.tms.enums.SmallBagCostAllocationMainBigTableStatusEnum;
+import com.erp.model.tms.enums.SmallBagCostAllocationMainReportStatusEnum;
+import com.erp.server.tms.service.*;
 import com.xxl.job.core.handler.annotation.XxlJob;
 
 import javax.annotation.Resource;
@@ -14,8 +13,6 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class LogisticsLargeJob {
-    @Resource
-    private SmallBagCostAllocationService smallBagCostAllocationService;
 
     @Resource
     private SmallBagCostAllocationMainService smallBagCostAllocationMainService;
@@ -23,19 +20,65 @@ public class LogisticsLargeJob {
     @Resource
     private LogisticsLargeService logisticsLargeService;
 
+    @Resource
+    private TransferDeclareCostAllocationMainService transferDeclareCostAllocationMainService;
+
+    @Resource
+    private FirstMileCostAllocationService firstMileCostAllocationService;
+
     /**
      * 小包费用分摊自动生成物流大表
      */
     @XxlJob("smallBagAllocationToLogisticsLarge")
     public void smallBagAllocationToLogisticsLarge() {
-        List<LogisticsLargeEntity> largeEntityList = logisticsLargeService.lambdaQuery()
-                .eq(LogisticsLargeEntity::getSourceType, SourceTypeEnum.SMALL_BAG_COST_ALLOCATION.getCode())
-                .ge(LogisticsLargeEntity::getReconciliationMonth, LocalDate.now().minusMonths(3))
+        List<SmallBagCostAllocationMainEntity> allocationMainEntityList = smallBagCostAllocationMainService.lambdaQuery()
+                .eq(SmallBagCostAllocationMainEntity::getBigTableStatus, SmallBagCostAllocationMainBigTableStatusEnum.TODO.getCode())
+                .eq(SmallBagCostAllocationMainEntity::getReportStatus, SmallBagCostAllocationMainReportStatusEnum.CONFIRMED.getCode())
+                .orderByDesc(SmallBagCostAllocationMainEntity::getReportDate)
                 .list();
 
-        List<String> ids = largeEntityList.stream().map(LogisticsLargeEntity::getSourceId).distinct().collect(Collectors.toList());
-        List<SmallBagCostAllocationMainEntity> list = smallBagCostAllocationMainService.list();
+        for (SmallBagCostAllocationMainEntity smallBagCostAllocationMainEntity : allocationMainEntityList) {
+            logisticsLargeService.generateSmallBagCostAllocationTable(smallBagCostAllocationMainEntity);
+        }
+    }
 
 
+
+    /**
+     * 中转费用分摊自动生成物流大表
+     */
+    @XxlJob("transferDeclareCostAllocationToLogisticsLarge")
+    public void transferDeclareCostAllocationToLogisticsLarge() {
+        List<TransferDeclareCostAllocationMainEntity> allocationMainEntityList = transferDeclareCostAllocationMainService.lambdaQuery()
+                .eq(TransferDeclareCostAllocationMainEntity::getBigTableStatus, SmallBagCostAllocationMainBigTableStatusEnum.TODO.getCode())
+                .eq(TransferDeclareCostAllocationMainEntity::getReportStatus, SmallBagCostAllocationMainReportStatusEnum.CONFIRMED.getCode())
+                .orderByDesc(TransferDeclareCostAllocationMainEntity::getReportDate)
+                .list();
+
+        for (TransferDeclareCostAllocationMainEntity transferDeclareCostAllocationMainEntity : allocationMainEntityList) {
+            logisticsLargeService.generateTransferCostAllocationTable(transferDeclareCostAllocationMainEntity);
+        }
+    }
+
+
+    /**
+     * 头程费用分摊自动生成物流大表
+     */
+    @XxlJob("firstMileCostAllocationToLogisticsLarge")
+    public void firstMileCostAllocationToLogisticsLarge() {
+/*        logisticsLargeService.lambdaQuery()
+                .eq(LogisticsLargeEntity::getSourceType, SourceTypeEnum.FIRST_MILE_COST_ALLOCATION.getCode())
+                .
+                .list();*/
+
+        List<TransferDeclareCostAllocationMainEntity> allocationMainEntityList = transferDeclareCostAllocationMainService.lambdaQuery()
+                .eq(TransferDeclareCostAllocationMainEntity::getBigTableStatus, SmallBagCostAllocationMainBigTableStatusEnum.TODO.getCode())
+                .eq(TransferDeclareCostAllocationMainEntity::getReportStatus, SmallBagCostAllocationMainReportStatusEnum.CONFIRMED.getCode())
+                .orderByDesc(TransferDeclareCostAllocationMainEntity::getReportDate)
+                .list();
+
+        for (TransferDeclareCostAllocationMainEntity transferDeclareCostAllocationMainEntity : allocationMainEntityList) {
+            logisticsLargeService.generateTransferCostAllocationTable(transferDeclareCostAllocationMainEntity);
+        }
     }
 }

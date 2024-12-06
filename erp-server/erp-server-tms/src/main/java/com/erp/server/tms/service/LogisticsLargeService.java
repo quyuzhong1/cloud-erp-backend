@@ -83,12 +83,20 @@ public interface LogisticsLargeService extends SuperService<LogisticsLargeEntity
                                                     List<FirstMileDeliveryDetailEntity> firstMileDeliveryDetailEntities,
                                                     FirstMileCostAllocationEntity entity,
                                                     List<FirstMileSkuCostAllocationEntity> skuCostAllocationEntityList);
+
     /**
-     *
-     *
+     * 根据来源id查询物流大表
      * @param ids
+     * @return
      */
     List<LogisticsLargeEntity> listByIdSourceId(List<String> ids);
+
+    /**
+     * 根据单号查询物流大表
+     * @param outstockCode
+     * @return
+     */
+    List<LogisticsLargeEntity> listByIdOutstockCode(List<String> outstockCode);
 
     /**
      * 根据来源详情id查询物流大表
