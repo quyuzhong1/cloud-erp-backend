@@ -41,15 +41,10 @@ public class TransferDeclareCostAllocationEntity extends BaseEntity<TransferDecl
     @TableField("sku_no")
     private String skuNo;
     /**
-    * 报关对账id
+    * 销售出库明细id
     */
-    @TableField("declare_reconciliation_id")
-    private String declareReconciliationId;
-    /**
-    * 报关对账明细id
-    */
-    @TableField("declare_reconciliation_detail_id")
-    private String declareReconciliationDetailId;
+    @TableField("outstock_detail_id")
+    private String outstockDetailId;
     /**
     * 发货数量
     */
@@ -68,9 +63,7 @@ public class TransferDeclareCostAllocationEntity extends BaseEntity<TransferDecl
 
     public static final String SKU_NO = "sku_no";
 
-    public static final String DECLARE_RECONCILIATION_ID = "declare_reconciliation_id";
-
-    public static final String DECLARE_RECONCILIATION_DETAIL_ID = "declare_reconciliation_detail_id";
+    public static final String OUTSTOCK_DETAIL_ID = "outstock_detail_id";
 
     public static final String DELIVERY_QTY = "delivery_qty";
 
