@@ -5,8 +5,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-import cn.hutool.core.util.ObjectUtil;
-import com.erp.model.tms.entity.SmallBagCostAllocationEntity;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -32,9 +30,11 @@ import com.erp.model.tms.dto.TransferDeclareCostAllocationDTO.ListDTO;
 import com.erp.model.tms.dto.TransferDeclareCostAllocationDTO.PagingParamDTO;
 import com.erp.model.tms.dto.TransferDeclareCostAllocationDTO.TabListDTO;
 import com.erp.model.tms.entity.TransferDeclareCostAllocationEntity;
+import com.erp.model.tms.entity.TransferDeclareCostAllocationMainEntity;
 import com.erp.model.tms.enums.TransferDeclareCostAllocationReportStatusEnum;
 import com.erp.server.tms.mapper.TransferDeclareCostAllocationMapper;
 import com.erp.server.tms.service.OperateLogService;
+import com.erp.server.tms.service.TransferDeclareCostAllocationMainService;
 import com.erp.server.tms.service.TransferDeclareCostAllocationService;
 
 import cn.hutool.core.util.StrUtil;
@@ -53,6 +53,8 @@ import lombok.extern.slf4j.Slf4j;
 public class TransferDeclareCostAllocationServiceImpl extends SuperServiceImpl<TransferDeclareCostAllocationMapper, TransferDeclareCostAllocationEntity> implements TransferDeclareCostAllocationService {
     @Autowired
     private OperateLogService operateLogService;
+    @Autowired
+    private TransferDeclareCostAllocationMainService transferDeclareCostAllocationMainService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -117,7 +119,7 @@ public class TransferDeclareCostAllocationServiceImpl extends SuperServiceImpl<T
 	@Override
 	public List<TabListDTO> tabList(PermissionsDTO dto) {
 		List<TransferDeclareCostAllocationDTO.TabListDTO> resultList = new ArrayList<>();
-		List<TransferDeclareCostAllocationEntity> list = list();
+		List<TransferDeclareCostAllocationMainEntity> list = transferDeclareCostAllocationMainService.list();
 		TransferDeclareCostAllocationReportStatusEnum[] values = TransferDeclareCostAllocationReportStatusEnum.values();
         for (TransferDeclareCostAllocationReportStatusEnum statusEnum : values) {
             LogisticsBillCostDTO.PagingParamDTO pagingParamDTO = new LogisticsBillCostDTO.PagingParamDTO();
