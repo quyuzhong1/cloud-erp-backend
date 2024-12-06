@@ -1195,7 +1195,7 @@
 
     <select id="logisticsProductPaging" resultType="com.erp.model.plm.dto.LogisticsProductDTO$PagingVO">
         SELECT
-            pd.id,
+            DISTINCT pd.id,
             pd.id AS skuId,
             pd.sku_no AS skuNo,
             pd.name AS productName,
@@ -1369,7 +1369,7 @@
     <!--导出-->
     <select id="listExport" resultType="com.erp.model.plm.dto.LogisticsProductDTO$ExportInfoDTO">
         SELECT
-            pd.id AS skuId,
+            DISTINCT pd.id AS skuId,
             pd.sku_no AS skuNo,
             pd.name AS productName,
             pd.status AS approveStatus,
