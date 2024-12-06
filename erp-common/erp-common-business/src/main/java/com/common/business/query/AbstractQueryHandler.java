@@ -69,4 +69,15 @@ public abstract class AbstractQueryHandler implements IQueryHandler{
     protected String getQueryAllSql(){
         return " 1 = 1 ";
     }
+
+    /**
+     * 等于，在列表，包含
+     */
+    protected Boolean isContain(){
+        return QueryConditionEnum.EQ.equals(AdvanceQueryContext.getCompareCode())
+                ||QueryConditionEnum.IN_LIST.equals(AdvanceQueryContext.getCompareCode())
+                ||QueryConditionEnum.ENDS_WITH.equals(AdvanceQueryContext.getCompareCode())
+                ||QueryConditionEnum.CONTAINS.equals(AdvanceQueryContext.getCompareCode())
+                ;
+    }
 }
