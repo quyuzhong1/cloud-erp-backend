@@ -1,7 +1,6 @@
 package com.erp.server.plm.controller.feign;
 
 import com.common.business.dto.base.ApproveOneDTO;
-import com.common.business.enums.ApproveTypeEnum;
 import com.erp.model.plm.dto.AuditParamDTO;
 import com.erp.model.plm.dto.PilotApplicationDTO;
 import com.erp.model.plm.dto.ProductDetailOperateDTO;
@@ -153,11 +152,5 @@ public class PlmWorkOptionFeignController {
     public void pilotApprovalPass(@RequestBody @Validated ApproveOneDTO dto) {
         PilotApplicationDTO.ApproveDTO approveDTO = new PilotApplicationDTO.ApproveDTO();
         pilotApplicationService.approve(dto, approveDTO);
-        if (ApproveTypeEnum.PASS.getStatus().equals(dto.getType())) {
-            //回写产品管理--采购信息--一级和二级供应商 审核流回调导致状态无法查询，则判断通过则直接通知
-            pilotApplicationService.writeProductPurchaseBackByWork(dto.getId());
-            pilotApplicationService.approvePilotApplicationNoticeByWork(dto.getId());
-        }
-
     }
 }

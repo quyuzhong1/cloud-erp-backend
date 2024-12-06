@@ -228,15 +228,5 @@ public interface PilotApplicationService extends SuperService<PilotApplicationEn
      */
     void writeProductPurchaseBack(String id);
 
-    /**
-     * 工作流审核通过处理
-     * @param id id
-     */
-    void writeProductPurchaseBackByWork(String id);
 
-    /**
-     * 工作流审核通过处理
-     * @param id id
-     */
-    void approvePilotApplicationNoticeByWork(String id);
 }

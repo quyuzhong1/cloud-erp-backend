@@ -67,7 +67,11 @@ public class WorkflowProcessServiceImpl implements WorkflowProcessService {
         approveOne.setId(dto.getBusinessId());
         PilotApplicationEntity entity = new PilotApplicationEntity();
         entity.setId(dto.getBusinessId());
-        return pilotApplicationService.approveEnd(approveOne, entity);
+        Boolean approveEnd = pilotApplicationService.approveEnd(approveOne, entity);
+        //回写产品管理--采购信息--一级和二级供应商
+        pilotApplicationService.writeProductPurchaseBack(dto.getBusinessId());
+        pilotApplicationService.approvePilotApplicationNotice(dto.getBusinessId());
+        return approveEnd;
     }
 
 }
