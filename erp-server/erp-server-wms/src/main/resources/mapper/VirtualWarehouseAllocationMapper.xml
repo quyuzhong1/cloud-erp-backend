@@ -71,30 +71,39 @@
     <!-- 导出分货统计 -->
     <select id="exportVirtualStatistics"
             resultType="com.erp.model.wms.dto.VirtualWarehouseAllocationDTO$ExportStatisticsDTO">
+        WITH allocation AS (
             select
                 vmad.sku_id,
-                pd.sku_no,
-                pd.name as productName,
                 vmad.warehouse_id,
-                wh.name as warehouseName,
-                vmad.from_virtual_warehouse_id,
-                vw.name as fromVirtualWarehouseName,
-                SUM(CASE WHEN vwa.type = 'allocation' THEN vmad.qty WHEN vwa.type = 'cancel' THEN -vmad.qty else 0 end) as totalQty,
-                SUM(CASE WHEN vwa.status = 'waitSubmit' and vwa.type = 'allocation' THEN vmad.qty else 0 end) as submitAddAllocationQty,
-                SUM(CASE WHEN vwa.status = 'handle' and vwa.type = 'allocation' THEN vmad.qty else 0 end) as handleAddAllocationQty,
-                SUM(CASE WHEN vwa.status = 'waitSubmit' and vwa.type = 'cancel' THEN vmad.qty else 0 end) as submitCancelAllocationQty,
-                SUM(CASE WHEN vwa.status = 'handle' and vwa.type = 'cancel' THEN vmad.qty else 0 end) as handleCancelAllocationQty
+                case when vwa.type = 'allocation' then vmad.to_virtual_warehouse_id else vmad.from_virtual_warehouse_id end as virtual_warehouse_id,
+                vwa.status,
+                vwa.type,
+                vmad.qty
             from virtual_warehouse_allocation vwa
             inner join virtual_warehouse_allocation_detail vmad on vwa.id = vmad.main_id and vmad.is_deleted = false
-            left join product_detail pd on vmad.sku_id = pd.id and pd.is_deleted = false
-            left join warehouse wh on vmad.warehouse_id = wh.id and wh.is_deleted = false
-            left join virtual_warehouse vw on vmad.from_virtual_warehouse_id = vw.id and vw.is_deleted = false
-            <where>  vwa.is_deleted = false and vwa.status != 'invalid' and vwa.type != 'transfer' and vwa.is_statistics = true
+            where vwa.is_deleted = false and vwa.status != 'invalid' and vwa.type in ('allocation','cancel') and vwa.is_statistics = true
                 <if test="params.permissionSql != null and params.permissionSql != ''">
                     ${params.permissionSql}
                 </if>
-            </where>
-        group by vmad.sku_id,pd.sku_no,pd.name,vmad.warehouse_id,wh.name,vmad.from_virtual_warehouse_id,vw.name
+        )
+        select
+            al.sku_id,
+            pd.sku_no,
+            pd.name as productName,
+            al.warehouse_id,
+            wh.name as warehouseName,
+            al.virtual_warehouse_id as virtualWarehouseId,
+            vw.name as virtualWarehouseName,
+        SUM(CASE WHEN al.type = 'allocation' THEN al.qty WHEN al.type = 'cancel' THEN -al.qty else 0 end) as totalQty,
+        SUM(CASE WHEN al.status = 'waitSubmit' and al.type = 'allocation' THEN al.qty else 0 end) as submitAddAllocationQty,
+        SUM(CASE WHEN al.status = 'handle' and al.type = 'allocation' THEN al.qty else 0 end) as handleAddAllocationQty,
+        SUM(CASE WHEN al.status = 'waitSubmit' and al.type = 'cancel' THEN al.qty else 0 end) as submitCancelAllocationQty,
+        SUM(CASE WHEN al.status = 'handle' and al.type = 'cancel' THEN al.qty else 0 end) as handleCancelAllocationQty
+        from allocation al
+        left join product_detail pd on al.sku_id = pd.id and pd.is_deleted = false
+        left join warehouse wh on al.warehouse_id = wh.id and wh.is_deleted = false
+        left join virtual_warehouse vw on al.virtual_warehouse_id = vw.id and vw.is_deleted = false
+        group by al.sku_id,pd.sku_no,pd.name,al.warehouse_id,wh.name,al.virtual_warehouse_id,vw.name
     </select>
 
     <sql id="list">

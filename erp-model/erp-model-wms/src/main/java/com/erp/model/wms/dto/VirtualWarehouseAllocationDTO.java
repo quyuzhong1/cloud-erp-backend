@@ -880,11 +880,11 @@ public class VirtualWarehouseAllocationDTO implements Serializable {
         /**
          * 虚拟仓id
          */
-        private String fromVirtualWarehouseId;
+        private String virtualWarehouseId;
         /**
          * 虚拟仓名称
          */
-        private String fromVirtualWarehouseName;
+        private String virtualWarehouseName;
         /**
          * 总分货数量
          */
