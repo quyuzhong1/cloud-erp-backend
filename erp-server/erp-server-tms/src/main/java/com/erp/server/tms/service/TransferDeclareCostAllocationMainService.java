@@ -32,5 +32,11 @@ public interface TransferDeclareCostAllocationMainService extends SuperService<T
     */
     Boolean update(TransferDeclareCostAllocationMainDTO.UpdateDTO dto);
 
-
+    /**
+     * 修改物流大表生成状态
+     * @param id
+     * @param bigTableStatus
+     * @return
+     */
+    Boolean updateBigTableStatus(String id, String bigTableStatus);
 }

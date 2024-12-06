@@ -1,8 +1,10 @@
 package com.erp.server.tms.service.impl;
 
 
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseResultDTO;
+import com.erp.model.tms.entity.TransferDeclareCostAllocationEntity;
 import com.erp.model.tms.entity.TransferDeclareCostAllocationMainEntity;
 import com.erp.server.tms.mapper.TransferDeclareCostAllocationMainMapper;
 import com.erp.server.tms.service.TransferDeclareCostAllocationMainService;
@@ -92,5 +94,19 @@ public class TransferDeclareCostAllocationMainServiceImpl extends SuperServiceIm
     */
     private void handleData(TransferDeclareCostAllocationMainEntity transferDeclareCostAllocationMainEntity) {
     // TODO 验证数据 & 数据赋值
+    }
+
+
+
+    @Override
+    public Boolean updateBigTableStatus(String id, String bigTableStatus) {
+        TransferDeclareCostAllocationMainEntity entity = this.getById(id);
+        if (ObjectUtil.isEmpty(entity)) {
+            throw new ServiceException("单据不存在!");
+        }
+        return this.lambdaUpdate()
+                .set(TransferDeclareCostAllocationMainEntity::getBigTableStatus, bigTableStatus)
+                .eq(TransferDeclareCostAllocationMainEntity::getId, id)
+                .update();
     }
 }

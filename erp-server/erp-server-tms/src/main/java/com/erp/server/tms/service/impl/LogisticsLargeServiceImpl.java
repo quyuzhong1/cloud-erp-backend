@@ -155,6 +155,9 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
     @Resource
     private SoOutstockFeign soOutstockFeign;
 
+    @Resource
+    private TransferDeclareCostAllocationMainService transferDeclareCostAllocationMainService;
+
 
     @Override
     public PagingVO<LogisticsLargeDTO.PagingViewDTO> paging(PagingDTO<LogisticsLargeDTO.PagingParamDTO> dto) {
@@ -1130,7 +1133,7 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
         this.add(addDTO);
 
         //更新中转费用分摊生成大表状态
-        transferDeclareCostAllocationService.updateBigTableStatus(entity.getId(), SmallBagCostAllocationBigTableStatusEnum.DONE.getCode());
+        transferDeclareCostAllocationMainService.updateBigTableStatus(mainEntity.getId(), SmallBagCostAllocationBigTableStatusEnum.DONE.getCode());
         return BatchResultDTO.success(entity.getId(), addDTO.getOutstockCode(), OperationTypeEnum.ADD);
     }
 

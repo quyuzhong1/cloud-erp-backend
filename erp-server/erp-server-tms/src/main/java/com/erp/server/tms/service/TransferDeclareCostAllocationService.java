@@ -49,12 +49,4 @@ public interface TransferDeclareCostAllocationService extends SuperService<Trans
     BatchResultDTO delete(String id);
     
     BatchResultDTO pushBigTable(String id);
-
-    /**
-     * 修改物流大表生成状态
-     * @param id
-     * @param bigTableStatus
-     * @return
-     */
-    Boolean updateBigTableStatus(String id, String bigTableStatus);
 }
