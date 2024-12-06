@@ -1,14 +1,15 @@
 package com.erp.model.wms.dto;
 
-import java.time.LocalDate;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
-import java.io.Serializable;
-import java.time.LocalDateTime;
-import javax.validation.constraints.NotNull;
+
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
+import java.io.Serializable;
+import java.time.LocalDate;
+import java.util.List;
 
 /**
  * <p>
@@ -176,4 +177,28 @@ public class VirtualInventoryHisDTO implements Serializable {
     }
 
 
+    /**
+     * 参数DTO
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ParamDTO {
+        /**
+         * skuId集合
+         */
+        private List<String> skuIdList;
+        /**
+         * 仓库Id集合
+         */
+        private List<String> warehouseIdList;
+        /**
+         * 虚拟仓Id集合
+         */
+        private List<String> virtualWarehouseIdList;
+        /**
+         * 结束时间
+         */
+        private LocalDate endDate;
+    }
 }

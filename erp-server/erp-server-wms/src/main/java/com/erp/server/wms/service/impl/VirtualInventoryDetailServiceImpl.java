@@ -17,14 +17,13 @@ import com.common.business.wrapper.FeignQuery;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.MathUtil;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.wms.dto.CfgSettingVirtualValueDTO;
 import com.erp.model.wms.dto.VirtualInventoryAgeDTO;
 import com.erp.model.wms.dto.VirtualInventoryDetailDTO;
-import com.erp.model.wms.entity.CfgSettingEntity;
-import com.erp.model.wms.entity.VirtualInventoryDetailEntity;
-import com.erp.model.wms.entity.VirtualWarehouseEntity;
-import com.erp.model.wms.entity.WarehouseEntity;
+import com.erp.model.wms.dto.VirtualInventoryHisDTO;
+import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.CfgSettingVirtualEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.wms.mapper.VirtualInventoryDetailMapper;
@@ -35,9 +34,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import static com.common.business.enums.FileTaskEventEnum.*;
 
@@ -66,6 +68,9 @@ public class VirtualInventoryDetailServiceImpl extends SuperServiceImpl<VirtualI
 
     @Autowired
     private CfgSettingService cfgSettingService;
+
+    @Autowired
+    private VirtualInventoryHisService virtualInventoryHisService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -207,6 +212,19 @@ public class VirtualInventoryDetailServiceImpl extends SuperServiceImpl<VirtualI
         CfgSettingVirtualValueDTO.InventoryAgeTO inventoryAgeTO = BeanUtil.toBean(cfgSettingEntity.getDataJson(), CfgSettingVirtualValueDTO.InventoryAgeTO.class);
         List<CfgSettingVirtualValueDTO.InventoryAgeDateTO> list = inventoryAgeTO.getList();
 
+        //SKU
+        List<String> skuIdList = detailList.stream().map(VirtualInventoryAgeDTO.ListDTO::getSkuId).distinct().collect(Collectors.toList());
+        //仓库
+        List<String> warehouseIdList = detailList.stream().map(VirtualInventoryAgeDTO.ListDTO::getWarehouseId).distinct().collect(Collectors.toList());
+        //虚拟仓
+        List<String> virtualWarehouseId = detailList.stream().map(VirtualInventoryAgeDTO.ListDTO::getVirtualWarehouseId).distinct().collect(Collectors.toList());
+
+
+        //查询库龄历史
+        Integer endDays = list.stream().max(Comparator.comparingInt(CfgSettingVirtualValueDTO.InventoryAgeDateTO::getStartDays)).map(CfgSettingVirtualValueDTO.InventoryAgeDateTO::getEndDays).orElse(null);
+        LocalDate minStartDate = ObjUtil.isNull(endDays) ? null : LocalDate.now().minusDays(endDays);
+        List<VirtualInventoryHisEntity> virtualInventoryHisList = virtualInventoryHisService.listByParam(new VirtualInventoryHisDTO.ParamDTO(skuIdList, warehouseIdList, virtualWarehouseId, minStartDate));
+
         HashMap<String, VirtualInventoryAgeDTO.VirtualIntervalDTO> map = new HashMap<>();
         for (CfgSettingVirtualValueDTO.InventoryAgeDateTO inventoryAgeDateTO :list) {
             String ageDateInterval = "";
@@ -215,7 +233,15 @@ public class VirtualInventoryDetailServiceImpl extends SuperServiceImpl<VirtualI
                 ageDateInterval = CharSequenceUtil.format("{}以上", inventoryAgeDateTO.getEndDays());
             } else {
                 ageDateInterval = CharSequenceUtil.format("{}~{}天", inventoryAgeDateTO.getStartDays(), inventoryAgeDateTO.getEndDays());
-            }
+            }fenh
+
+            LocalDate nowDate = LocalDate.now();
+            LocalDate endDate = nowDate.minusDays(inventoryAgeDateTO.getStartDays());
+            LocalDate startDate = nowDate.minusDays(inventoryAgeDateTO.getEndDays());
+
+            Integer reduce = virtualInventoryHisList.stream().filter(obj -> obj.getDate().isAfter(endDate) && obj.getDate().isBefore(startDate)).map(VirtualInventoryHisEntity::getQty).reduce(MathUtil.ZERO, Integer::sum);
+
+
             map.put(ageDateInterval,new VirtualInventoryAgeDTO.VirtualIntervalDTO());
         }
     }

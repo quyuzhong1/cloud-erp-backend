@@ -37,5 +37,36 @@
         sku_id, warehouse_id, virtual_warehouse_id, date, qty, dict_inventory_status, virtual_trans_flow_id, batch_no, bill_date
     </sql>
 
+    <!-- 根据sku、仓库、虚拟仓查询 -->
+    <select id="listByParam" resultType="com.erp.model.wms.entity.VirtualInventoryHisEntity">
+        select
+            <include refid="Base_Column_List" />
+        from virtual_inventory_his vih
+        <where>
+            vih.is_deleted = false
+            <if test="params.endDate != null">
+                and vih.date > #{params.endDate}
+            </if>
+            <if test="params.skuIdList != null and params.skuIdList.size > 0">
+                and vih.sku_id in
+                <foreach collection="params.skuIdList" item="item" separator="," open="(" close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.warehouseIdList != null and params.warehouseIdList.size > 0">
+                and vih.warehouse_id in
+                <foreach collection="params.warehouseIdList" item="item" separator="," open="(" close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.virtualWarehouseIdList != null and params.virtualWarehouseIdList.size > 0">
+                and vih.virtual_warehouse_id in
+                <foreach collection="params.virtualWarehouseIdList" item="item" separator="," open="(" close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </select>
+
 
 </mapper>

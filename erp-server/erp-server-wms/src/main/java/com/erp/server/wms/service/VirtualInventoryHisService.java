@@ -1,8 +1,11 @@
 package com.erp.server.wms.service;
-import com.erp.model.wms.entity.VirtualInventoryHisEntity;
+
+import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.service.SuperService;
-import com.common.business.dto.base.*;
 import com.erp.model.wms.dto.VirtualInventoryHisDTO;
+import com.erp.model.wms.entity.VirtualInventoryHisEntity;
+
+import java.util.List;
 
 /**
  * <p>
@@ -32,5 +35,12 @@ public interface VirtualInventoryHisService extends SuperService<VirtualInventor
     */
     Boolean update(VirtualInventoryHisDTO.UpdateDTO dto);
 
-
+    /**
+     * 根据paramDTO参数查询
+     * @author will
+     * @date 2024/12/6 11:50
+     * @param paramDTO
+     * @return List<VirtualInventoryHisEntity>
+     */
+    List<VirtualInventoryHisEntity> listByParam(VirtualInventoryHisDTO.ParamDTO paramDTO);
 }

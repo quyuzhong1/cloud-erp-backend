@@ -3,23 +3,24 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseResultDTO;
-import com.erp.model.wms.entity.VirtualInventoryHisEntity;
-import com.erp.server.wms.mapper.VirtualInventoryHisMapper;
-import com.erp.server.wms.service.VirtualInventoryHisService;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
-import com.erp.server.wms.service.OperateLogService;
-import com.erp.server.wms.service.CommonService;
+import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Transactional;
+import com.common.core.utils.BeanMapperUtils;
+import com.erp.model.wms.dto.VirtualInventoryHisDTO;
+import com.erp.model.wms.entity.VirtualInventoryHisEntity;
+import com.erp.server.wms.mapper.VirtualInventoryHisMapper;
+import com.erp.server.wms.service.OperateLogService;
+import com.erp.server.wms.service.VirtualInventoryHisService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
-import com.erp.model.wms.dto.VirtualInventoryHisDTO;
-import java.util.*;
-import com.common.core.utils.*;
-import com.common.core.enums.ApiError;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.Optional;
 /**
  * <p>
  * 虚拟仓库存历史信息 服务实现类
@@ -84,6 +85,11 @@ public class VirtualInventoryHisServiceImpl extends SuperServiceImpl<VirtualInve
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLogByObj(old, virtualInventoryHisEntity, null, virtualInventoryHisEntity.getId(), msg);
         return Boolean.TRUE;
+    }
+
+    @Override
+    public List<VirtualInventoryHisEntity> listByParam(VirtualInventoryHisDTO.ParamDTO paramDTO) {
+        return baseMapper.listByParam(paramDTO);
     }
 
 
