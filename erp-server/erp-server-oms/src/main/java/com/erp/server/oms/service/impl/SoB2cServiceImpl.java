@@ -5577,9 +5577,12 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
             resultDTO.setSoB2cEntity(entity);
 
-            //同步数帝云
-            List<SoB2cDetailEntity> soB2cDetailEntityList = soB2cDetailService.listByMainId(entity.getId());
-            syncSoB2cService.syncDataToSdy(entity, soB2cDetailEntityList, SyncOperateEnum.OPERATE_UPDATE.getCode());
+            //如果是审核状态 同步数帝云
+            if (ApproveStatusEnum.APPROVE.getCode().equals(entity.getApproveStatus())) {
+                //同步数帝云
+                List<SoB2cDetailEntity> soB2cDetailEntityList = soB2cDetailService.listByMainId(entity.getId());
+                syncSoB2cService.syncDataToSdy(entity, soB2cDetailEntityList, SyncOperateEnum.OPERATE_UPDATE.getCode());
+            }
 
             return resultDTO;
         }
