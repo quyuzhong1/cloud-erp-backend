@@ -54,7 +54,7 @@ public class SyncLogisticsBillServiceImpl implements SyncLogisticsBillService {
         ShudiyunB2cOrderDTO shudiyunB2cOrderDTO = new ShudiyunB2cOrderDTO();
 
         shudiyunB2cOrderDTO.setBiz_uni_key(entity.getId() + logisticsBillDetailEntity.getId());
-        shudiyunB2cOrderDTO.setBiz_no(entity.getTransportNo());
+        shudiyunB2cOrderDTO.setBiz_no(CharSequenceUtil.isBlank(entity.getTransportNo()) ? logisticsBillDetailEntity.getTrackNo() : entity.getTransportNo());
         if (entity.getDeliveryTime() != null) {
             shudiyunB2cOrderDTO.setBiz_time(localDateTime.format(entity.getDeliveryTime()));
         }
@@ -92,7 +92,7 @@ public class SyncLogisticsBillServiceImpl implements SyncLogisticsBillService {
             shudiyunB2cOrderDTO.setLogistic_company_code("无");
         }
 
-        shudiyunB2cOrderDTO.setWaybill_number(entity.getTransportNo());
+        shudiyunB2cOrderDTO.setWaybill_number(CharSequenceUtil.isBlank(entity.getTransportNo()) ? logisticsBillDetailEntity.getTrackNo() : entity.getTransportNo());
         shudiyunB2cOrderDTO.setForeign_waybill_number(logisticsBillDetailEntity.getTrackNo());
         shudiyunB2cOrderDTO.setSource_system("SDC");
         shudiyunB2cOrderDTO.setRoot_node_no_initial(logisticsBillDetailEntity.getTrackNo());
@@ -106,7 +106,7 @@ public class SyncLogisticsBillServiceImpl implements SyncLogisticsBillService {
         tmsPushMsgEntity.setTargetPlatform(DmpBasicSystemCodeEnum.SDY.getCode());
         tmsPushMsgEntity.setSourceType(SourceTypeEnum.SDY_LOGISTICS_BILL.getCode());
         tmsPushMsgEntity.setSourceId(detailEntity.getId());
-        tmsPushMsgEntity.setSourceCode(entity.getTransportNo());
+        tmsPushMsgEntity.setSourceCode(CharSequenceUtil.isBlank(entity.getTransportNo()) ? detailEntity.getTrackNo() : entity.getTransportNo());
         tmsPushMsgEntity.setSyncOperate(operate);
         tmsPushMsgEntity.setPushData(JSON.toJSONString(this.syncDataToSdyFieldHandler(entity, detailEntity, operate)));
         tmsPushMsgService.save(tmsPushMsgEntity);
