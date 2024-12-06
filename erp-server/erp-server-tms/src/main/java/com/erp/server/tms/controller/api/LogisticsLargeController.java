@@ -97,6 +97,9 @@ public class LogisticsLargeController extends BaseController {
     @Resource
     private TransferDeclareCostAllocationMainService transferDeclareCostAllocationMainService;
 
+    @Resource
+    private TransferDeclareCostAllocationSubService transferDeclareCostAllocationSubService;
+
 
     /**
      * 变更分页展示
@@ -266,12 +269,18 @@ public class LogisticsLargeController extends BaseController {
         List<BatchResultDTO> resultDTOS = new ArrayList<>();
         List<TransferDeclareCostAllocationEntity> entityList = transferDeclareCostAllocationService.listByIds(dto.getIds());
         List<String> ids = entityList.stream().map(TransferDeclareCostAllocationEntity::getMainId).distinct().collect(Collectors.toList());
-        List<TransferDeclareCostAllocationMainEntity> transferDeclareCostAllocationMainEntities = transferDeclareCostAllocationMainService.listByIds(ids);
+
+        List<TransferDeclareCostAllocationSubEntity> transferDeclareCostAllocationSubEntities = transferDeclareCostAllocationSubService.listByIds(ids);
+
+        List<String> mainIds = transferDeclareCostAllocationSubEntities.stream().map(TransferDeclareCostAllocationSubEntity::getMainId).distinct().collect(Collectors.toList());
+        List<TransferDeclareCostAllocationMainEntity> transferDeclareCostAllocationMainEntities = transferDeclareCostAllocationMainService.listByIds(mainIds);
+
         //根据整单添加操作
         for (TransferDeclareCostAllocationMainEntity transferDeclareCostAllocationMainEntity : transferDeclareCostAllocationMainEntities) {
-            List<BatchResultDTO> resultDTOList = logisticsLargeService.generateTransferCostAllocationTable(transferDeclareCostAllocationMainEntity);
-            resultDTOS.addAll(resultDTOList);
+                List<BatchResultDTO> resultDTOList = logisticsLargeService.generateTransferCostAllocationTable(transferDeclareCostAllocationMainEntity);
+                resultDTOS.addAll(resultDTOList);
         }
+
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 }
