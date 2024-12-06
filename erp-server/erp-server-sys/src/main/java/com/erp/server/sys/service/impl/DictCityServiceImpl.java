@@ -402,7 +402,7 @@ public class DictCityServiceImpl extends SuperServiceImpl<DictCityMapper, DictCi
     }
 
     @Override
-    public List<DictCityEntity> listByNames(List<String> names) {
+    public List<DictCityEntity> listCityByNames(List<String> names) {
         return lambdaQuery().in(DictCityEntity::getName,names).list();
     }
 

@@ -79,11 +79,11 @@ public class DictCityServiceFeignController {
     /**
      * 根据名称查询
      */
-    @PostMapping("/listByNames")
-    public List<DictCityEntity> listByNames(@RequestBody List<String> names) {
+    @PostMapping("/listCityByNames")
+    public List<DictCityEntity> listCityByNames(@RequestBody List<String> names) {
         if (CollectionUtils.isEmpty(names)) {
             return Collections.EMPTY_LIST;
         }
-        return dictCityService.listByNames(names);
+        return dictCityService.listCityByNames(names);
     }
 }

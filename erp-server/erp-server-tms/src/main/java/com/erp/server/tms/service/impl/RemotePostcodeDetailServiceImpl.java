@@ -24,6 +24,7 @@ import com.common.core.utils.FastDFSClientUtil;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.scm.dto.excel.PurchasePriceDetailImportExcelDTO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.sys.dto.DictCountryDTO;
 import com.erp.model.sys.entity.DictCityEntity;
 import com.erp.model.tms.dto.RemotePostcodeDTO;
 import com.erp.model.tms.dto.RemotePostcodeDetailDTO;
@@ -75,18 +76,27 @@ public class RemotePostcodeDetailServiceImpl extends SuperServiceImpl<RemotePost
     @Override
     public Boolean add(RemotePostcodeDTO.AddDTO addDTO, String mainId) {
         List<RemotePostcodeDetailDTO.AddDTO> details = addDTO.getDetails();
+
+        List<DictCountryDTO.ListDTO> listDTOS = sysUserFeign.countryList();
+        Map<String, String> countryMap = listDTOS.stream().collect(Collectors.toMap(DictCountryDTO.ListDTO::getId, DictCountryDTO.ListDTO::getId));
+
+        List<String> cityNames = details.stream().map(RemotePostcodeDetailDTO.AddDTO::getCityName).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
+        // 将城市信息转换为 Map
+        Map<String, String> cityNameMap = getCityNameMap(cityNames);
         List<RemotePostcodeDetailEntity> addList = new ArrayList<>();
         for (RemotePostcodeDetailDTO.AddDTO detail : details) {
+            //校验国家是否存在
+            if(Boolean.FALSE.equals(countryMap.containsKey(detail.getCountry()))){
+                throw new ServiceException("国家【"+detail.getCountry()+"】不存在");
+            }
             RemotePostcodeDetailEntity remotePostcodeDetailEntity = new RemotePostcodeDetailEntity();
             BeanMapper.copy(detail, remotePostcodeDetailEntity);
-
             //设置主表id
             remotePostcodeDetailEntity.setMainId(mainId);
+            remotePostcodeDetailEntity.setCity(cityNameMap.getOrDefault(detail.getCityName(),""));
             addList.add(remotePostcodeDetailEntity);
         }
         boolean flag = this.saveBatch(addList);
-        List<String> citys = addList.stream().map(RemotePostcodeDetailEntity::getCity).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
-        Map<String, String> cityNameMap = getCityNameMap(citys);
         List<Pair<String, String>> addPairList = spliceOperateContent(addList, cityNameMap);
         operateLogService.batchAddModuleOperateLog("新增明细【%s】", ModuleTypeEnum.REMOTE_POSTCODE.getCode(), addPairList, "新增操作");
         return flag;
@@ -98,8 +108,12 @@ public class RemotePostcodeDetailServiceImpl extends SuperServiceImpl<RemotePost
     @Transactional(rollbackFor = Exception.class)
     @Override
     public Boolean update(RemotePostcodeDTO.UpdateDTO dto,String mainId) {
-        List<String> citys = dto.getDetails().stream().map(RemotePostcodeDetailDTO.UpdateDTO::getCity).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
-        Map<String, String> cityNameMap = getCityNameMap(citys);
+        List<String> cityNames = dto.getDetails().stream().map(RemotePostcodeDetailDTO.UpdateDTO::getCityName).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
+        // 将城市信息转换为 Map
+        Map<String, String> cityNameMap = getCityNameMap(cityNames);
+
+        List<DictCountryDTO.ListDTO> listDTOS = sysUserFeign.countryList();
+        Map<String, String> countryMap = listDTOS.stream().collect(Collectors.toMap(DictCountryDTO.ListDTO::getId, DictCountryDTO.ListDTO::getId));
 
         //原数据明细
         List<RemotePostcodeDetailEntity> oldList = lambdaQuery().eq(RemotePostcodeDetailEntity::getMainId, mainId).list();
@@ -114,9 +128,14 @@ public class RemotePostcodeDetailServiceImpl extends SuperServiceImpl<RemotePost
         Map<String, RemotePostcodeDetailEntity> detailEntityMap = oldList.stream().collect(Collectors.toMap(RemotePostcodeDetailEntity::getId, obj -> obj));
         List<RemotePostcodeDetailEntity> addList = new ArrayList<>();
         for (RemotePostcodeDetailDTO.UpdateDTO detail : dto.getDetails()) {
+            //校验国家是否存在
+            if(Boolean.FALSE.equals(countryMap.containsKey(detail.getCountry()))){
+                throw new ServiceException("国家【"+detail.getCountry()+"】不存在");
+            }
             RemotePostcodeDetailEntity remotePostcodeDetail = new RemotePostcodeDetailEntity();
             BeanMapper.copy(detail, remotePostcodeDetail);
             remotePostcodeDetail.setMainId(mainId);
+            remotePostcodeDetail.setCity(cityNameMap.getOrDefault(detail.getCityName(),""));
             if(StringUtils.isBlank(remotePostcodeDetail.getId())){
                 //新增
                 addList.add(remotePostcodeDetail);
@@ -141,12 +160,11 @@ public class RemotePostcodeDetailServiceImpl extends SuperServiceImpl<RemotePost
     }
 
     @NotNull
-    private Map<String, String> getCityNameMap(List<String> citys) {
-        List<DictCityEntity> dictCityEntities = sysUserFeign.listCityByIds(citys);
+    private Map<String, String> getCityNameMap(List<String> cityNames) {
+        List<DictCityEntity> dictCityEntities = sysUserFeign.listCityByNames(cityNames);
         // 将城市信息转换为 Map，减少多次流式查找
-        Map<String, String> cityNameMap = dictCityEntities.stream()
-                .collect(Collectors.toMap(DictCityEntity::getId, DictCityEntity::getName));
-        return cityNameMap;
+        return dictCityEntities.stream()
+                .collect(Collectors.toMap(DictCityEntity::getName, DictCityEntity::getId));
     }
 
     @NotNull
@@ -293,12 +311,9 @@ public class RemotePostcodeDetailServiceImpl extends SuperServiceImpl<RemotePost
         //导入数据处理
         List<RemotePostcodeDetailDTO.ImportDTO> successList = excelListenerUtil.getSuccessList();
         if(CollUtil.isNotEmpty(successList)){
-            List<String> cityName = successList.stream().map(RemotePostcodeDetailDTO.ImportDTO::getCity).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
-
-            List<DictCityEntity> dictCityEntities = sysUserFeign.listByNames(cityName);
+            List<String> cityNames = successList.stream().map(RemotePostcodeDetailDTO.ImportDTO::getCity).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
             // 将城市信息转换为 Map，减少多次流式查找
-            Map<String, String> cityMap = dictCityEntities.stream()
-                    .collect(Collectors.toMap(DictCityEntity::getName, DictCityEntity::getId));
+            Map<String, String> cityMap = getCityNameMap(cityNames);
 
             for (RemotePostcodeDetailDTO.ImportDTO dto : successList) {
                 dto.setCity(cityMap.get(dto.getCityName()));
