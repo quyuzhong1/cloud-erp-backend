@@ -270,6 +270,8 @@ public class RemotePostcodeDetailDTO implements Serializable {
         */
         private String city;
 
+        private String cityName;
+
         /**
         * 匹配类型dict_basic表matchType: preciseMatch=精准匹配, prefixMatch=匹配前缀, suffixMatch=匹配后缀, fuzzyMatch=模糊匹配
         */
