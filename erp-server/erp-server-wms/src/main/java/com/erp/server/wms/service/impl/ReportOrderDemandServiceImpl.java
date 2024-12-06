@@ -389,6 +389,7 @@ public class ReportOrderDemandServiceImpl extends SuperServiceImpl<ReportOrderDe
         addDTO.setDirection(VwAllocationDirectionEnum.FORWARD.getCode());
         addDTO.setStatus(VirtualWarehouseAllocationStatusEnum.WAIT_SUBMIT.getCode());
         addDTO.setDisabled(Boolean.FALSE);
+        addDTO.setIsStatistics(Boolean.TRUE);
         List<VirtualWarehouseAllocationDTO.DetailDto> detailList = new ArrayList<>();
         for (ReportOrderDemandDTO.BatchAddVirtualAllocationDTO allocationDTO : virtualAllocationList) {
             VirtualWarehouseAllocationDTO.DetailDto detailDto = new VirtualWarehouseAllocationDTO.DetailDto();
@@ -415,6 +416,7 @@ public class ReportOrderDemandServiceImpl extends SuperServiceImpl<ReportOrderDe
         addDTO.setDirection(VwAllocationDirectionEnum.FORWARD.getCode());
         addDTO.setStatus(VirtualWarehouseAllocationStatusEnum.WAIT_SUBMIT.getCode());
         addDTO.setDisabled(Boolean.FALSE);
+        addDTO.setIsStatistics(Boolean.FALSE);
         List<VirtualWarehouseAllocationDTO.DetailDto> detailList = new ArrayList<>();
         for (ReportOrderDemandDTO.BatchAddVirtualAllocationDTO addVirtualAllocationDTO : addVirtualTransferList) {
             VirtualWarehouseAllocationDTO.DetailDto detailDto = new VirtualWarehouseAllocationDTO.DetailDto();
