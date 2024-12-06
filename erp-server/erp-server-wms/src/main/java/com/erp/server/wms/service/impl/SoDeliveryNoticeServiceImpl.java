@@ -134,6 +134,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
 
     @Resource
     private DocNoGenHelper docNoGenHelper;
+    @Lazy
     @Resource
     private PickingListsService pickingListsService;
 

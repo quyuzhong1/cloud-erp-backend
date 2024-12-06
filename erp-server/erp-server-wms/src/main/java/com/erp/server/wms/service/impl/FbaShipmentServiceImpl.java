@@ -100,6 +100,7 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
     @Lazy
     @Resource
     private FirstMileDeliveryService firstMileDeliveryService;
+    @Lazy
     @Resource
     private FirstMileDeliveryDetailService firstMileDeliveryDetailService;
     @Resource

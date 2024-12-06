@@ -100,7 +100,7 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
 
     @Resource
     private SoB2cDeliveryService soB2cDeliveryService;
-
+    @Lazy
     @Resource
     private SoOutstockService soOutstockService;
 

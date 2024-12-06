@@ -138,6 +138,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
     private FbaShipmentDetailService fbaShipmentDetailService;
     @Resource
     private FbaShipmentReceiveService fbaShipmentReceiveService;
+    @Lazy
     @Resource
     private WmsAttachmentService wmsAttachmentService;
     @Resource

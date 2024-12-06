@@ -91,7 +91,7 @@ public class RequisitionApplicationChangeServiceImpl extends SuperServiceImpl<Re
     @Resource
     @Lazy
     private RequisitionApplicationChangeService requisitionApplicationChangeService;
-
+    @Lazy
     @Resource
     private RequisitionApplicationService requisitionApplicationService;
     @Lazy

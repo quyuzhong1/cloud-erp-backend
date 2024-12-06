@@ -137,6 +137,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
     private SoB2cFeign soB2cFeign;
     @Resource
     private LogisticsBillFeign logisticsBillFeign;
+    @Lazy
     @Resource
     private SoB2cDeliveryInterceptService soB2cDeliveryInterceptService;
     @Resource
