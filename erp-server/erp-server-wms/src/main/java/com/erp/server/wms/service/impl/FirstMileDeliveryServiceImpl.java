@@ -83,6 +83,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.rocketmq.client.producer.SendResult;
 import org.apache.rocketmq.client.producer.SendStatus;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -126,6 +127,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
     private PlmTaskFeign plmTaskFeign;
     @Resource
     private WarehouseLocationService warehouseLocationService;
+    @Lazy
     @Resource
     private MachineInfoService machineInfoService;
     @Resource

@@ -94,7 +94,7 @@ public class RequisitionApplicationChangeServiceImpl extends SuperServiceImpl<Re
 
     @Resource
     private RequisitionApplicationService requisitionApplicationService;
-
+    @Lazy
     @Resource
     private PickingListsService pickingListsService;
 
