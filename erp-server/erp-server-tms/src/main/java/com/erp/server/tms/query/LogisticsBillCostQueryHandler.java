@@ -1,10 +1,14 @@
 package com.erp.server.tms.query;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 
 import org.springframework.stereotype.Component;
 
+import com.common.business.enums.QueryConditionEnum;
+import com.common.business.enums.QueryDataTypeEnum;
 import com.common.business.query.AbstractQueryHandler;
 import com.erp.model.tms.enums.DictCostAttributionEnum;
 import com.erp.model.tms.enums.ReconciliationStatusEnum;
@@ -36,10 +40,27 @@ public class LogisticsBillCostQueryHandler extends AbstractQueryHandler {
             }
         }
         if ("lbc.pay_status".equals(field) && ObjectUtil.isNotEmpty(value)) {
+        	List<String> values = new ArrayList<>();
+        	if(value instanceof String) {
+        		values.add(value.toString());
+        	}else {
+        		values = (List<String>)value;
+        	}
+        	List<String> payTypeList = new ArrayList<>();
+        	List<String> payStatusList = new ArrayList<>();
         	//LogisticsBillCostPayStatusEnum 枚举
-        	String[] payStatusArr = value.toString().split("_");
-        	super.buildDefaultDTO("lbc.pay_type", payStatusArr[0]);
-        	super.buildDefaultDTO("lbc.pay_status", payStatusArr[1]);
+        	for(String v : values) {
+        		String[] payTypeStatus = v.split("_");
+        		payTypeList.add(payTypeStatus[0]);
+        		payStatusList.add(payTypeStatus[1]);
+        	}
+        	if(compareCodeSplicingValueSql.startsWith(QueryConditionEnum.NE.getCode()) || compareCodeSplicingValueSql.startsWith(QueryConditionEnum.NOT_IN_LIST.getCode())) {
+        		buildSplicingSQLDTO("lbc.pay_type", QueryConditionEnum.NOT_IN_LIST, payTypeList, QueryDataTypeEnum.STRING);
+            	buildSplicingSQLDTO("lbc.pay_status", QueryConditionEnum.NOT_IN_LIST, payStatusList, QueryDataTypeEnum.STRING);
+        	}else {
+        		super.buildDefaultDTO("lbc.pay_type", payTypeList);
+            	super.buildDefaultDTO("lbc.pay_status", payStatusList);
+        	}
         }
         return null;
     }

@@ -791,6 +791,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         if (CollectionUtils.isEmpty(successList)) {
             return;
         }
+        successList.forEach(excelDTO -> excelDTO.setPayType(excelDTO.getPayType().equals("付款") ? "pay" : "refund"));
         //物流单
         List<String> trackNoList = successList.stream().map(LogisticsBillCostExcelDTO::getTrackNo).collect(Collectors.toList());
         List<LogisticsBillDTO.LogisticsBillVo> logisticsBillVos = logisticsBillService.listLogisticsBillVoByTrackNo(trackNoList);

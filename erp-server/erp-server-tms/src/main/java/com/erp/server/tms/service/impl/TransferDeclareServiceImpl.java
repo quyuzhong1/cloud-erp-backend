@@ -935,11 +935,19 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
 		transferDeclareCostAllocationMainEntity.setReportDate(reportDate);
 		transferDeclareCostAllocationMainEntity.setReportStatus(TransferDeclareCostAllocationMainReportStatusEnum.TOBECONFIRM.getCode());
 		transferDeclareCostAllocationMainEntity.setBigTableStatus(TransferDeclareCostAllocationMainBigTableStatusEnum.TODO.getCode());
+		
+		List<TransferDeclareCostAllocationSubEntity> transferDeclareCostAllocationSubEntityList = new ArrayList<>();
+		List<String> soIds = tmsB2cDeclareReconciliationDetailEntityList.stream().map(TmsB2cDeclareReconciliationDetailEntity::getSoId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
+		if(CollUtil.isNotEmpty(soIds)) {
+			FeignQuery.create(SoOutstockEntity.class).in(SoOutstockEntity::getSoId, soIds).list();
+		}
 		for(TmsB2cDeclareReconciliationDetailEntity t : tmsB2cDeclareReconciliationDetailEntityList) {
-			TransferDeclareCostAllocationEntity transferDeclareCostAllocationEntity = new TransferDeclareCostAllocationEntity();
-			String transferDeclareCostAllocationEntityId = identifierGenerator.nextId(transferDeclareCostAllocationEntity).toString();
-			transferDeclareCostAllocationEntity.setId(transferDeclareCostAllocationEntityId);
-			transferDeclareCostAllocationEntity.setMainId(transferDeclareCostAllocationMainEntityId);
+			TransferDeclareCostAllocationSubEntity transferDeclareCostAllocationSubEntity = new TransferDeclareCostAllocationSubEntity();
+			String transferDeclareCostAllocationSubEntityId = identifierGenerator.nextId(transferDeclareCostAllocationSubEntity).toString();
+			transferDeclareCostAllocationSubEntity.setId(transferDeclareCostAllocationSubEntityId);
+			transferDeclareCostAllocationSubEntity.setMainId(transferDeclareCostAllocationMainEntityId);
+			transferDeclareCostAllocationSubEntity.setDeclareReconciliationDetailId(t.getId());
+			transferDeclareCostAllocationSubEntityList.add(transferDeclareCostAllocationSubEntity);
 			
 		}
 		return BatchResultDTO.success(id, transferDeclareEntity.getCode(), "下推成功");
