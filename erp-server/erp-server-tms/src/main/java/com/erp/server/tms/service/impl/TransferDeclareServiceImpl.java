@@ -8,6 +8,7 @@ import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONObject;
+import com.baomidou.mybatisplus.core.incrementer.IdentifierGenerator;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
@@ -57,6 +58,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.jsoup.internal.StringUtil;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -120,7 +122,17 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
     @Resource
     private TmsB2cDeclareReconciliationDetailService tmsB2cDeclareReconciliationDetailService;
     @Resource
+    private TmsB2cDeclareReconciliationService tmsB2cDeclareReconciliationService;
+    @Resource
     private DownloadTaskFeign downloadTaskFeign;
+    @Resource
+    private TransferDeclareCostAllocationMainService transferDeclareCostAllocationMainService;
+    @Resource
+    private TransferDeclareCostAllocationService transferDeclareCostAllocationService;
+    @Resource
+    private TransferDeclareCostAllocationDetailService transferDeclareCostAllocationDetailService;
+    @Autowired
+	protected IdentifierGenerator identifierGenerator;
 
     @Override
     public PagingVO<TransferDeclareDTO.ListDTO> paging(PagingDTO<TransferDeclareDTO.PagingParamDTO> pagingParamDTO) {
@@ -900,6 +912,36 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
 
 	@Override
 	public BatchResultDTO pushAllocation(String id, String reportDate) {
-		return null;
+		TransferDeclareEntity transferDeclareEntity = this.getById(id);
+		List<TmsB2cDeclareReconciliationDetailEntity> tmsB2cDeclareReconciliationDetailEntityList = tmsB2cDeclareReconciliationDetailService
+				.lambdaQuery().eq(TmsB2cDeclareReconciliationDetailEntity::getSourceId, id).list();
+		if(CollUtil.isEmpty(tmsB2cDeclareReconciliationDetailEntityList)) {
+			throw new ServiceException("未生成B2C报关对账单");
+		}
+		TmsB2cDeclareReconciliationDetailEntity tmsB2cDeclareReconciliationDetailEntity = tmsB2cDeclareReconciliationDetailEntityList.get(0);
+		TmsB2cDeclareReconciliationEntity tmsB2cDeclareReconciliationEntity = tmsB2cDeclareReconciliationService.getById(tmsB2cDeclareReconciliationDetailEntity.getId());
+		if(ApproveStatusEnum.APPROVE != tmsB2cDeclareReconciliationEntity.getApproveStatus()) {
+			throw new ServiceException("B2C报关对账单未审核");
+		}
+		List<TransferDeclareCostAllocationMainEntity> transferDeclareCostAllocationMainEntityList = transferDeclareCostAllocationMainService.lambdaQuery().eq(TransferDeclareCostAllocationMainEntity::getTransferDeclareId, id).list();
+		if(CollUtil.isNotEmpty(transferDeclareCostAllocationMainEntityList)) {
+			throw new ServiceException("B2C报关对账单已下推分摊");
+		}
+		
+		TransferDeclareCostAllocationMainEntity transferDeclareCostAllocationMainEntity = new TransferDeclareCostAllocationMainEntity();
+		String transferDeclareCostAllocationMainEntityId = identifierGenerator.nextId(transferDeclareCostAllocationMainEntity).toString();
+		transferDeclareCostAllocationMainEntity.setId(transferDeclareCostAllocationMainEntityId);
+		transferDeclareCostAllocationMainEntity.setTransferDeclareId(id);
+		transferDeclareCostAllocationMainEntity.setReportDate(reportDate);
+		transferDeclareCostAllocationMainEntity.setReportStatus(TransferDeclareCostAllocationMainReportStatusEnum.TOBECONFIRM.getCode());
+		transferDeclareCostAllocationMainEntity.setBigTableStatus(TransferDeclareCostAllocationMainBigTableStatusEnum.TODO.getCode());
+		for(TmsB2cDeclareReconciliationDetailEntity t : tmsB2cDeclareReconciliationDetailEntityList) {
+			TransferDeclareCostAllocationEntity transferDeclareCostAllocationEntity = new TransferDeclareCostAllocationEntity();
+			String transferDeclareCostAllocationEntityId = identifierGenerator.nextId(transferDeclareCostAllocationEntity).toString();
+			transferDeclareCostAllocationEntity.setId(transferDeclareCostAllocationEntityId);
+			transferDeclareCostAllocationEntity.setMainId(transferDeclareCostAllocationMainEntityId);
+			
+		}
+		return BatchResultDTO.success(id, transferDeclareEntity.getCode(), "下推成功");
 	}
 }
