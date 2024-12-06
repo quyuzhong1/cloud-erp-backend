@@ -254,7 +254,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         		if(updateBillingWeight == null) {
         			updateBillingWeight = BigDecimal.ZERO;
         		}
-				if(!billingWeight.equals(updateBillingWeight)) {
+				if(billingWeight.compareTo(updateBillingWeight) != 0) {
 					throw new ServiceException("核算状态为暂估确认，不能修改计费重[预估]");
         		}
 				List<TmsCostDetailEntity> tmsCostDetailEntityList = tmsCostDetailService.lambdaQuery()
@@ -613,9 +613,13 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         }
         entity.setTransportNo(logisticsBillEntity.getTransportNo());
         entity.setChannelId(logisticsBillEntity.getChannelId());
+        
+        BigDecimal billingWeight = entity.getBillingWeight();
+        if(StringUtils.isBlank(entity.getId()) && billingWeight == null) {
+        	billingWeight = MathUtil.compareTo(entity.getActualWeight(),entity.getVolumeWeight()) > MathUtil.ZERO
+                    ? entity.getActualWeight() : entity.getVolumeWeight();
+        }
         //计费重
-        BigDecimal billingWeight = MathUtil.compareTo(entity.getActualWeight(),entity.getVolumeWeight()) > MathUtil.ZERO
-                ? entity.getActualWeight() : entity.getVolumeWeight();
         entity.setBillingWeight(billingWeight);
 
         //默认kg
@@ -866,8 +870,14 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
             //数据赋值
             LogisticsBillCostDTO.UpdateDTO updateDataDTO = new LogisticsBillCostDTO.UpdateDTO();
             updateDataDTO.setId(logisticsBillCostEntity.getId());
-            updateDataDTO.setBillingWeight(new BigDecimal(billCostExcelDTO.getBillingWeight()));
-            updateDataDTO.setBillingWeightLogistics(new BigDecimal(billCostExcelDTO.getBillingWeightLogistics()));
+            String billingWeight = billCostExcelDTO.getBillingWeight();
+            if(StringUtils.isNotBlank(billingWeight)) {
+            	updateDataDTO.setBillingWeight(new BigDecimal(billingWeight));
+            }
+            String billingWeightLogistics = billCostExcelDTO.getBillingWeightLogistics();
+            if(StringUtils.isNotBlank(billingWeightLogistics)) {
+            	updateDataDTO.setBillingWeightLogistics(new BigDecimal(billingWeightLogistics));
+            }
             updateDataDTO.setCurrency(CharSequenceUtil.isBlank(billCostExcelDTO.getCurrency()) ? CurrencyEnum.CNY.getCurrencyCode() : billCostExcelDTO.getCurrency());
             updateDataDTO.setCostDetailList(updateDetailList);
             this.update(updateDataDTO,Boolean.TRUE);
@@ -1392,6 +1402,9 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 	@Transactional(rollbackFor = Exception.class)
 	@Override
 	public void edit(List<EditDataDTO> dtoList) {
+		if(CollUtil.isEmpty(dtoList)) {
+			throw new ServiceException("不能移除所有费用");
+		}
 		LogisticsBillCostDTO.UpdateDTO updateDataDTO = new LogisticsBillCostDTO.UpdateDTO();
 		EditDataDTO dto = dtoList.get(0);
 		updateDataDTO.setId(dto.getId());

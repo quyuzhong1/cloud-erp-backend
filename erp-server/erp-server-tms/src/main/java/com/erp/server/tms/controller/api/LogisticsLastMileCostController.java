@@ -212,7 +212,7 @@ public class LogisticsLastMileCostController extends BaseController {
     @LogAction(value = LogActionEnum.EXPORT, desc = "下载尾程费用模板")
     @GetMapping("/downloadTemplate")
     public ApiResult<Object>downloadTemplate(HttpServletResponse response) {
-        logisticsBillCostService.downloadTemplate(response);
+    	logisticsLastMileCostService.downloadTemplate(response);
         return success();
     }
 
@@ -227,7 +227,7 @@ public class LogisticsLastMileCostController extends BaseController {
     @LogAction(value = LogActionEnum.IMPORT, desc = "导入尾程费用模板")
     @PostMapping("/import")
     public ApiResult<Object>importFile(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
-        Boolean result = logisticsBillCostService.importFile(excelFile, response);
+        Boolean result = logisticsLastMileCostService.importFile(excelFile, response);
         return result ? success() : failure();
     }
 

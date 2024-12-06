@@ -34,6 +34,12 @@ public class LogisticsLastMileCostQueryHandler extends AbstractQueryHandler {
                 return "lbc.diff_shipping_cost = 0";
             }
         }
+        if ("lbc.pay_status".equals(field) && ObjectUtil.isNotEmpty(value)) {
+        	//LogisticsBillCostPayStatusEnum 枚举
+        	String[] payStatusArr = value.toString().split("_");
+        	super.buildDefaultDTO("lbc.pay_type", payStatusArr[0]);
+        	super.buildDefaultDTO("lbc.pay_status", payStatusArr[1]);
+        }
         return null;
     }
 
