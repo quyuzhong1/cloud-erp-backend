@@ -291,6 +291,16 @@ public class RequisitionApplicationChangeServiceImpl extends SuperServiceImpl<Re
             map.put("approveStatus", "审核通过");
         }
         map.put("approveUserName", entity.getApproveUserName());
+        ValidList<ProcessManagementDTO.HistoryActivityDTO> dtoList = new ValidList<>();
+        dtoList.add(new ProcessManagementDTO.HistoryActivityDTO(SourceTypeEnum.REQUISITION_APPLICATION_CHANGE.getCode(), id));
+        ApiResult<List<ProcessManagementDTO.CurApproveInfoDTO>> listApiResult = workflowFeign.curApprover(dtoList);
+        //最新待审核人
+        if (listApiResult != null && CollectionUtils.isNotEmpty(listApiResult.getData())) {
+            String curApprove = listApiResult.getData().get(0).getCurApproveName();
+            if(StringUtils.isNotBlank(curApprove)){
+                map.put("approveUserName", curApprove);
+            }
+        }
         requisitionApplicationService.sendRequisitionMsg(map, CfgSettingEnum.FS_REQUISITION_CHANGE_APPROVE_NOTICE);
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.approveStatus(approveStatus));
     }
