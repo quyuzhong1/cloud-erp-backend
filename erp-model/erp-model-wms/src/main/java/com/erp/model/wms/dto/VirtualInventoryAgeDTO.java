@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotBlank;
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -27,52 +28,67 @@ public class VirtualInventoryAgeDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class ListDTO {
-
-        /**
-         * 序号
-         */
-        private String indexId;
         /**
          * skuId【可排序】
          */
         private String skuId;
         /**
-         * SKU
+         * SKU【可排序】
          */
         private String skuNo;
         /**
-         * 产品名称
+         * 产品名称【可排序】
          */
         private String productName;
+        /**
+         * 仓库id【可排序】
+         */
+        private String warehouseId;
+        /**
+         * 仓库名称【可排序】
+         */
+        private String warehouseName;
+
         /**
          * 虚拟仓库【可排序】
          */
         private String virtualWarehouseId;
         /**
-         * 虚拟仓库编号
+         * 虚拟仓库编号【可排序】
          */
         private String virtualWarehouseCode;
         /**
-         * 虚拟仓库名称
+         * 虚拟仓库名称【可排序】
          */
         private String virtualWarehouseName;
         /**
-         * 虚拟仓库存
+         * 虚拟仓库存【可排序】
          */
         private Integer virtualQty;
         /**
-         * 虚拟仓可用库存
+         * 虚拟仓可用库存【可排序】
          */
         private Integer virtualUsableQty;
         /**
-         * 虚拟仓冻结库存
+         * 虚拟仓冻结库存【可排序】
          */
         private Integer virtualFrozenQty;
-
         /**
-         * 虚拟库存明细
+         * 统计日期
          */
-        private List<VirtualInventoryDTO.ListDetailDTO> detailList;
+        private LocalDate date;
+        /**
+         * 平均库存（反推）
+         */
+        private BigDecimal backAvgInventoryAge;
+        /**
+         * 平均库龄（正推）
+         */
+        private BigDecimal avgInventoryAge;
+        /**
+         * 库龄计算差异
+         */
+        private Boolean isDiff;
     }
 
     /**
