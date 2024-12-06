@@ -1,23 +1,21 @@
 package com.erp.model.tms.enums;
-
 import com.baomidou.mybatisplus.annotation.EnumValue;
 import com.common.core.constant.EnumMessage;
 import com.fasterxml.jackson.annotation.JsonValue;
 import org.apache.commons.lang3.StringUtils;
 
 /**
- * @description:
- * @author Will
- * @date: 2024/3/22 16:29
+ * <p>
+ * 中转费用分摊主表 核算状态 枚举
+ * </p>
+ *
+ * @author shukai
+ * @since 2024-12-06 11:37:40
  */
-public enum LogisticsBillCostPayStatusEnum implements EnumMessage {
-
-	PAY_PAYMENT("payment", "待付款"),
-	REFUND_PAYMENT("payment", "待退款"),
-	PAY_PAID("paid", "已付款"),
-	REFUND_PAID("paid", "已退款"),
+public enum TransferDeclareCostAllocationMainReportStatusEnum implements EnumMessage {
+	TOBECONFIRM("toBeConfirm", "待确认"),
+	CONFIRMED("confirmed", "已确认"),
     ;
-
     /**
      * 类型
      */
@@ -29,8 +27,7 @@ public enum LogisticsBillCostPayStatusEnum implements EnumMessage {
      */
     private String name;
 
-
-    LogisticsBillCostPayStatusEnum(String code, String name) {
+    TransferDeclareCostAllocationMainReportStatusEnum(String code, String name) {
         this.code = code;
         this.name = name;
     }
@@ -49,7 +46,7 @@ public enum LogisticsBillCostPayStatusEnum implements EnumMessage {
         if (StringUtils.isBlank(code)) {
             return "";
         }
-        for (LogisticsBillCostPayStatusEnum statusEnum : LogisticsBillCostPayStatusEnum.values()) {
+        for (TransferDeclareCostAllocationMainReportStatusEnum statusEnum : TransferDeclareCostAllocationMainReportStatusEnum.values()) {
             if (code.equals(statusEnum.getCode())) {
                 return statusEnum.getName();
             }
@@ -57,5 +54,3 @@ public enum LogisticsBillCostPayStatusEnum implements EnumMessage {
         return "";
     }
 }
-
-

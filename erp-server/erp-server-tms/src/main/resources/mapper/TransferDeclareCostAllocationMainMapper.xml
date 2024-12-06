@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="com.erp.server.tms.mapper.TransferDeclareCostAllocationMapper">
+<mapper namespace="com.erp.server.tms.mapper.TransferDeclareCostAllocationMainMapper">
     <!-- 通用查询映射结果 -->
-    <resultMap id="BaseResultMap" type="com.erp.model.tms.entity.TransferDeclareCostAllocationEntity">
+    <resultMap id="BaseResultMap" type="com.erp.model.tms.entity.TransferDeclareCostAllocationMainEntity">
        <result column="id" property="id" />
        <result column="create_user_id" property="createUserId" />
        <result column="create_user_name" property="createUserName" />
@@ -12,13 +12,11 @@
        <result column="update_time" property="updateTime" />
        <result column="version" property="version" />
        <result column="is_deleted" property="isDeleted" />
-       <result column="main_id" property="mainId" />
-       <result column="sku_id" property="skuId" />
-       <result column="sku_no" property="skuNo" />
-       <result column="declare_reconciliation_id" property="declareReconciliationId" />
-       <result column="declare_reconciliation_detail_id" property="declareReconciliationDetailId" />
-       <result column="delivery_qty" property="deliveryQty" />
-       <result column="sku_weight" property="skuWeight" />
+       <result column="transfer_declare_id" property="transferDeclareId" />
+       <result column="report_date" property="reportDate" />
+       <result column="account_date" property="accountDate" />
+       <result column="report_status" property="reportStatus" />
+       <result column="big_table_status" property="bigTableStatus" />
     </resultMap>
 
     <!-- 通用查询结果列 -->
@@ -32,7 +30,7 @@
         update_time,
         version,
         is_deleted,
-        main_id, sku_id, sku_no, declare_reconciliation_id, declare_reconciliation_detail_id, delivery_qty, sku_weight
+        transfer_declare_id, report_date, account_date, report_status, big_table_status
     </sql>
 
 

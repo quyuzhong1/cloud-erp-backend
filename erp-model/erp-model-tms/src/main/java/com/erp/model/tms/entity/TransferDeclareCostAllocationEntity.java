@@ -17,7 +17,7 @@ import com.common.business.enums.ApproveStatusEnum;
  * </p>
  *
  * @author shukai
- * @since 2024-12-03
+ * @since 2024-12-06
 */
 @Data
 @EqualsAndHashCode(callSuper = true)
@@ -26,30 +26,10 @@ import com.common.business.enums.ApproveStatusEnum;
 public class TransferDeclareCostAllocationEntity extends BaseEntity<TransferDeclareCostAllocationEntity> {
 
     /**
-    * 中转报关id
+    * 主表id
     */
-    @TableField("transfer_declare_id")
-    private String transferDeclareId;
-    /**
-    * 核算期间
-    */
-    @TableField("report_date")
-    private String reportDate;
-    /**
-    * 会计
-    */
-    @TableField("account_date")
-    private String accountDate;
-    /**
-    * 核算状态：toBeConfirm=待确认，confirmed=已确认  枚举：TransferDeclareCostAllocationReportStatusEnum
-    */
-    @TableField("report_status")
-    private String reportStatus;
-    /**
-    * 大表状态：toDo=待生成，done=已生成  枚举：TransferDeclareCostAllocationBigTableStatusEnum
-    */
-    @TableField("big_table_status")
-    private String bigTableStatus;
+    @TableField("main_id")
+    private String mainId;
     /**
     * skuId
     */
@@ -82,15 +62,7 @@ public class TransferDeclareCostAllocationEntity extends BaseEntity<TransferDecl
     private BigDecimal skuWeight;
 
 
-    public static final String TRANSFER_DECLARE_ID = "transfer_declare_id";
-
-    public static final String REPORT_DATE = "report_date";
-
-    public static final String ACCOUNT_DATE = "account_date";
-
-    public static final String REPORT_STATUS = "report_status";
-
-    public static final String BIG_TABLE_STATUS = "big_table_status";
+    public static final String MAIN_ID = "main_id";
 
     public static final String SKU_ID = "sku_id";
 
