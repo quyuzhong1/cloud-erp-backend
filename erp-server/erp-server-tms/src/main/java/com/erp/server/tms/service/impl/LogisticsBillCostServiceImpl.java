@@ -1240,7 +1240,8 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
             	}
             }
             if (ObjectUtil.isNotEmpty(logisticsBillCostEntity)){
-                excelDTO.setCurrency(CharSequenceUtil.isBlank(excelDTO.getCurrency()) ? logisticsBillCostEntity.getCurrency() : excelDTO.getCurrency());
+                String currency = CharSequenceUtil.isBlank(excelDTO.getCurrency()) ? logisticsBillCostEntity.getCurrency() : excelDTO.getCurrency();
+				excelDTO.setCurrency(currency);
 
                 if (ObjectUtil.isNotEmpty(logisticsBillCostEntity) && !CharSequenceUtil.equals(excelDTO.getCurrency(),logisticsBillCostEntity.getCurrency())) {
                     errorMsgList.add("导入币别与物流费用单币别不一致");
