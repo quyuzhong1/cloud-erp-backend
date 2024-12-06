@@ -106,6 +106,7 @@ public class ShippingCalculationServiceImpl implements ShippingCalculationServic
         }
         //整合erp和海外仓列表
         IPage<ShippingCalculationDTO.ListDTO> pageData = integratedPageData(erpPageData,thirdPageData);
+        //异步更新
         return new PagingVO(pageData);
     }
 
@@ -140,6 +141,8 @@ public class ShippingCalculationServiceImpl implements ShippingCalculationServic
         if (Objects.isNull(overseasProviderEntity)){
             return Collections.emptyList();
         }
+        List<LogisticsChannelDTO.ChannelWarehouseDTO> channelWarehouseDTOList = logisticsChannelService.listChannelWarehouse(overseasProviderEntity.getCode(), AuthStatusEnum.ALREADY.getCode(), WarehousePlatformTypeEnum.OVERSEAS_WAREHOUSE.getCode(),Boolean.FALSE);
+        List<DictCountryEntity> dictCountryEntityList = sysDictFeign.listCountryByIds(params.getToCountryList());
         //请求参数校验
         checkThirdCalculationParam(params,overseasProviderEntity);
         if (CollUtil.isNotEmpty(params.getChannelIdList())){
@@ -147,21 +150,59 @@ public class ShippingCalculationServiceImpl implements ShippingCalculationServic
             params.setChannelCodeList(logisticsChannelEntityList.stream().map(LogisticsChannelEntity::getCode).distinct().collect(Collectors.toList()));
         }else if (CollUtil.isEmpty(params.getChannelIdList()) && PlatformDictEnum.ANTU.getCode().equals(overseasProviderEntity.getCode())){
             //获取antu启用的所有物流渠道 并根据发货仓进行匹配
-            List<LogisticsChannelDTO.ChannelWarehouseDTO> list = logisticsChannelService.listChannelWarehouse(PlatformDictEnum.ANTU.getCode(), AuthStatusEnum.ALREADY.getCode(), WarehousePlatformTypeEnum.OVERSEAS_WAREHOUSE.getCode(),Boolean.FALSE);
-            params.setChannelCodeList(list.stream().filter(e -> fromWarehouseId.equals(e.getWarehouseId()) || LogisticsChannelWarehouseTypeEnum.ENUM_ALL.getCode().equals(e.getType())).map(LogisticsChannelDTO.ChannelWarehouseDTO::getCode).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList()));
+            params.setChannelCodeList(channelWarehouseDTOList.stream().filter(e -> fromWarehouseId.equals(e.getWarehouseId()) || LogisticsChannelWarehouseTypeEnum.ENUM_ALL.getCode().equals(e.getType())).map(LogisticsChannelDTO.ChannelWarehouseDTO::getChannelCode).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList()));
         }
         List<ShippingCalculationDTO.ListDTO> calculateFeeBatch = thirdWarehouseFeign.getCalculateFeeBatch(params);
-        handleThirdWarehouseData(calculateFeeBatch, params, overseasProviderEntity);
+        calculateFeeBatch = handleThirdWarehouseData(calculateFeeBatch, params, overseasProviderEntity, channelWarehouseDTOList,dictCountryEntityList);
         return calculateFeeBatch;
     }
 
     /**
      * 构建第三方返回参数
+     *
      * @param calculateFeeBatch
      * @param params
      * @param overseasProviderEntity
+     * @param channelWarehouseDTOList
+     * @param countryList
      */
-    private void handleThirdWarehouseData(List<ShippingCalculationDTO.ListDTO> calculateFeeBatch, ShippingCalculationDTO.PagingParamDTO params, OverseasProviderEntity overseasProviderEntity) {
+    private List<ShippingCalculationDTO.ListDTO> handleThirdWarehouseData(List<ShippingCalculationDTO.ListDTO> calculateFeeBatch, ShippingCalculationDTO.PagingParamDTO params, OverseasProviderEntity overseasProviderEntity, List<LogisticsChannelDTO.ChannelWarehouseDTO> channelWarehouseDTOList, List<DictCountryEntity> countryList) {
+        calculateFeeBatch = calculateFeeBatch.stream().filter(e -> hasChannelCode(e.getChannelCode(), channelWarehouseDTOList)).collect(Collectors.toList());
+        List<String> currencyIdList = calculateFeeBatch.stream().map(ShippingCalculationDTO.ListDTO::getCurrency).collect(Collectors.toList());
+        List<CurrencyDTO.ViewDTO> currencyList = sysUserFeign.listByCurrency(currencyIdList);
+        for (ShippingCalculationDTO.ListDTO dto : calculateFeeBatch){
+            LogisticsChannelDTO.ChannelWarehouseDTO channelWarehouseDTO = channelWarehouseDTOList.stream().filter(f -> dto.getChannelCode().equals(f.getChannelCode())).findFirst().orElse(null);
+            if (Objects.isNull(channelWarehouseDTO)){
+                continue;
+            }
+            dto.setChannelId(channelWarehouseDTO.getChannelId());
+            dto.setChannelName(channelWarehouseDTO.getChannelName());
+            dto.setLogisticsName(channelWarehouseDTO.getSupplierName());
+            //时效
+            String effectiveTime = channelWarehouseDTO.getEffectiveTime();
+            String effectiveTimeUnit = channelWarehouseDTO.getEffectiveTimeUnit();
+            String effectiveTimeStr = EnumMessage.getNameByCode(UnitEnum.TimeUnitEnum.class, effectiveTimeUnit);
+            dto.setEffectiveTimeStr(effectiveTime.concat(effectiveTimeStr));
+            //币种符号
+            String currencySymbol = currencyList.stream().filter(obj -> obj.getId().equals(dto.getCurrency())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getSymbol())).orElse("");
+            dto.setCurrencySymbol(currencySymbol);
+            //目的国
+            String toCountryName = countryList.stream().filter(obj -> obj.getId().equals(dto.getToCountry())).findFirst()
+                    .flatMap(obj -> Optional.ofNullable(obj.getNameCn())).orElse("");
+            dto.setToCountryName(toCountryName);
+        }
+        return calculateFeeBatch;
+    }
+
+    private boolean hasChannelCode(String channelCode, List<LogisticsChannelDTO.ChannelWarehouseDTO> channelWarehouseDTOList) {
+        if (CharSequenceUtil.isBlank(channelCode) || CollUtil.isEmpty(channelWarehouseDTOList)){
+            return Boolean.FALSE;
+        }
+        LogisticsChannelDTO.ChannelWarehouseDTO channelWarehouseDTO = channelWarehouseDTOList.stream().filter(e -> channelCode.equals(e.getChannelCode())).findFirst().orElse(null);
+        if (Objects.nonNull(channelWarehouseDTO)){
+            return Boolean.TRUE;
+        }
+        return Boolean.FALSE;
     }
 
     /**
@@ -185,6 +226,9 @@ public class ShippingCalculationServiceImpl implements ShippingCalculationServic
             if (CollUtil.isEmpty(params.getToCountryList())){
                 throw new ServiceException(ApiError.ERROR_92264);
             }
+        }
+        if ("g".equals(params.getWeightUnit())){
+            params.setWeight(MathUtil.divide(params.getWeight(), BigDecimal.valueOf(1000)));
         }
     }
 
@@ -233,7 +277,7 @@ public class ShippingCalculationServiceImpl implements ShippingCalculationServic
             //目的国
             String toCountryName = countryList.stream().filter(obj -> obj.getId().equals(listDTO.getToCountry())).findFirst()
                     .flatMap(obj -> Optional.ofNullable(obj.getNameCn())).orElse("");
-            listDTO.setToCountry(toCountryName);
+            listDTO.setToCountryName(toCountryName);
 
             //有效期
             String effectivePeriod = CharSequenceUtil.format("{}至{}", listDTO.getEffectiveDate(), ObjectUtil.isEmpty(listDTO.getExpireDate()) ? "无期限" : listDTO.getExpireDate());
@@ -706,14 +750,8 @@ public class ShippingCalculationServiceImpl implements ShippingCalculationServic
     }
 
     @Override
-    public PagingVO<ShippingCalculationDTO.ListDTO> exportShippingCalculation(PagingDTO<ShippingCalculationDTO.PagingParamDTO> dto) {
-        BigDecimal volume = MathUtil.multiply(MathUtil.multiply(dto.getParams().getLength(), dto.getParams().getWidth()), dto.getParams().getHeight());
-        dto.getParams().setVolume(volume);
-        Page<ShippingCalculationDTO.ListDTO> page = shippingTemplateOtherCostMapper.listByExportExcel(new Page<>(dto.getCurrPage(), dto.getPageSize()), dto.getParams());
-        if (!CollectionUtils.isEmpty(page.getRecords())) {
-            handleData(page.getRecords(), dto.getParams());
-        }
-        return new PagingVO<>(page);
+    public PagingVO<ShippingCalculationDTO.ListDTO> exportShippingCalculation(PagingDTO<ShippingCalculationDTO.PagingParamDTO> pagingDTO) {
+        return this.paging(pagingDTO);
     }
 
     /**

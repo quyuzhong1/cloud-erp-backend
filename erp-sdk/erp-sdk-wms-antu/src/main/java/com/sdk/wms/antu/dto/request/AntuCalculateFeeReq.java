@@ -7,24 +7,27 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
+import javax.validation.constraints.NotNull;
 import java.util.List;
 
-@EqualsAndHashCode(callSuper = true)
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 @SuperBuilder
-public class AntuCalculateFeeReq extends AntuBaseRequest {
+public class AntuCalculateFeeReq {
 
     //	发货仓库代码
+    @NotNull(message = "发货仓库代码不能为空")
     @JSONField(name = "warehouse_code")
     private String warehouseCode;
 
     //目的国家代码
+    @NotNull(message = "目的国家代码不能为空")
     @JSONField(name = "country_code")
     private String countryCode;
 
     //配送方式
+    @NotNull(message = "配送方式不能为空")
     @JSONField(name = "shipping_method")
     private List<String> shippingMethod;
 
@@ -33,6 +36,7 @@ public class AntuCalculateFeeReq extends AntuBaseRequest {
     private String postcode;
 
     //包裹重量
+    @NotNull(message = "包裹重量不能为空")
     @JSONField(name = "weight")
     private Float weight;
 

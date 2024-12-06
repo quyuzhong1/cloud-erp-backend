@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
 import javax.validation.constraints.Max;
+import javax.validation.constraints.NotNull;
 import java.util.List;
 
 /**
@@ -21,6 +22,7 @@ public class GoodCangCalculateDeliveryFeeReq {
      * 仓库代码
      * 必填
      */
+    @NotNull(message = "仓库代码不能为空")
     @JSONField(name = "warehouse_code")
     protected String warehouseCode;
     /**
@@ -33,6 +35,7 @@ public class GoodCangCalculateDeliveryFeeReq {
      * 目的国家/地区代码
      * 必填
      */
+    @NotNull(message = "目的国家不能为空")
     @JSONField(name = "country_code")
     protected String countryCode;
 
@@ -40,6 +43,7 @@ public class GoodCangCalculateDeliveryFeeReq {
      * 邮政编码
      * 必填
      */
+    @NotNull(message = "邮政编码不能为空")
     @JSONField(name = "postcode")
     protected String postcode;
 

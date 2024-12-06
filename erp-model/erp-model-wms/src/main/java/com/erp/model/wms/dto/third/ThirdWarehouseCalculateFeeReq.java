@@ -17,13 +17,13 @@ import java.util.List;
 @SuperBuilder
 public class ThirdWarehouseCalculateFeeReq extends ThirdWarehouseAuth{
 
-    //第三方仓的入库单号
-    private String receivingCode;
     //	发货仓库代码
     private String warehouseCode;
 
     //目的国家代码
     private String countryCode;
+    //渠道编码
+    private String channelCode;
 
     //配送方式
     private List<String> shippingMethod;

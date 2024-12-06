@@ -137,6 +137,10 @@ public class ShippingCalculationDTO {
          * 物流渠道id
          */
         private String channelId;
+        /**
+         * 渠道编码
+         */
+        private String channelCode;
 
         /**
          * 计费规则
@@ -162,6 +166,10 @@ public class ShippingCalculationDTO {
          * 目的地
          */
         private String toCountry;
+        /**
+         * 目的国家名称
+         */
+        private String toCountryName;
 
         /**
          * 分区

@@ -18,5 +18,15 @@ public class WmsExecutorPoolConfig {
 
         return service;
     }
-    
+    @Bean(name = "thirdWarehouseExecutorPool")
+    public ExecutorService thirdWarehouseExecutorPool() {
+        ThreadPoolExecutor service = new ThreadPoolExecutor(5, 10,
+                5L, TimeUnit.SECONDS,
+                new LinkedBlockingQueue<>(100));
+        //设置线城池的饱和策略
+        RejectedExecutionHandler handler = new ThreadPoolExecutor.CallerRunsPolicy();
+        service.setRejectedExecutionHandler(handler);
+
+        return service;
+    }
 }

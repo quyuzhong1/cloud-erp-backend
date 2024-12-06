@@ -70,7 +70,7 @@ public interface ThirdWarehouseConverter {
     List<ThirdWarehouseCalculateFeeResponse> antuResToThirdWarehouseResponse(List<AntuCalculateFeeResp> antuCalculateFeeRespList);
 
     @Mapping(target = "state", source = "province")
-    @Mapping(target = "smCode", ignore = true)
+    @Mapping(target = "smCode", source = "channelCode")
     @Mapping(target = "sku", ignore = true)
     @Mapping(target = "propertyLabel", constant = "SFP")
     @Mapping(target = "postcode", source = "postCode")
@@ -85,8 +85,6 @@ public interface ThirdWarehouseConverter {
     @Mapping(target = "channelName", source = "smNameCn")
     @Mapping(target = "totalShippingCost", source = "total")
     ThirdWarehouseCalculateFeeResponse gucangResToThirdWarehouseResponse(GoodCangCalculateDeliveryFeeResp goodCangCalculateDeliveryFeeResp);
-    List<ThirdWarehouseCalculateFeeResponse> gucangResToThirdWarehouseResponse(List<GoodCangCalculateDeliveryFeeResp> goodCangCalculateDeliveryFeeRespList);
-
     @Mapping(target = "templateRuleEntity", ignore = true)
     @Mapping(target = "templateEntity", ignore = true)
     @Mapping(target = "otherCostDTO", ignore = true)

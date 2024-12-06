@@ -228,7 +228,7 @@ public class GoodCangService {
     /**
      * 运费试算
      */
-    public GoodCangResponse<List<GoodCangCalculateDeliveryFeeResp>> getCalculateDeliveryFee(GoodCangCalculateDeliveryFeeReq goodCangCalculateDeliveryFeeReq){
+    public GoodCangResponse<List<GoodCangCalculateDeliveryFeeResp>> getCalculateDeliveryFee(@Valid GoodCangCalculateDeliveryFeeReq goodCangCalculateDeliveryFeeReq){
         String json = JSON.toJSONString(goodCangCalculateDeliveryFeeReq);
         String response = GoodCangUtils.sendPost(GoodCangConstants.METHOD_POST_CALCULATE_DELIVERY_FEE,json);
         GoodCangResponse<List<GoodCangCalculateDeliveryFeeResp>> respDto = JSON.parseObject(response,new TypeReference<GoodCangResponse<List<GoodCangCalculateDeliveryFeeResp>>>() {}.getType());

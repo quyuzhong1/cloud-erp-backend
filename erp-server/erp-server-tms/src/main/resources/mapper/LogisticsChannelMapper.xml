@@ -245,8 +245,13 @@
     <select id="listChannelWarehouse"
             resultType="com.erp.model.tms.dto.LogisticsChannelDTO$ChannelWarehouseDTO">
         select
-            lc.id,
-            lc.code,
+            lc.id as channelId,
+            lc.code as channelCode,
+            lc.name as channelName,
+            lc.effective_time,
+            lc.effective_time_unit,
+            ls.supplier_id,
+            ls.supplier_name,
             lcw."type",
             lcw.warehouse_id
         from logistics_channel lc

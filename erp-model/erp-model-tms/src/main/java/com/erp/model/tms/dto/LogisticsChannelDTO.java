@@ -975,11 +975,32 @@ public class LogisticsChannelDTO implements Serializable {
         /**
          * 渠道id
          */
-        private String id;
+        private String channelId;
         /**
          * 渠道编码
          */
-        private String code;
+        private String channelCode;
+        /**
+         * 渠道名称
+         */
+        private String channelName;
+        /**
+         * 物流商
+         */
+        private String supplierId;
+        /**
+         * 物流商名称
+         */
+        private String supplierName;
+        /**
+         * 时效
+         */
+        private String effectiveTime;
+
+        /**
+         * 时效单位
+         */
+        private String effectiveTimeUnit;
         /**
          * 匹配类型
          */

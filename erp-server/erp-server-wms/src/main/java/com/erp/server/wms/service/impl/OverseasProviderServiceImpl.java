@@ -23,6 +23,7 @@ import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.dmp.dto.DmpInoutDTO;
 import com.erp.model.dmp.dto.PlatformTaskDTO;
 import com.erp.model.oms.dto.SkuMappingDTO;
+import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.enums.AuthStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.tms.dto.ShippingCalculationDTO;
@@ -44,12 +45,16 @@ import com.erp.server.wms.service.ThirdWarehouseService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 
 /**
@@ -78,6 +83,9 @@ public class OverseasProviderServiceImpl extends SuperServiceImpl<OverseasProvid
     @Resource
     private DmpInoutTaskFeign dmpInoutTaskFeign;
 
+    @Resource
+    @Qualifier("thirdWarehouseExecutorPool")
+    private ExecutorService thirdWarehouseExecutorPool;
     /**
     * 修改
     */
@@ -326,16 +334,41 @@ public class OverseasProviderServiceImpl extends SuperServiceImpl<OverseasProvid
         }
         List<ShippingCalculationDTO.ListDTO> listDTOList = new ArrayList<>();
         ThirdWarehouseService service = thirdWarehouseRegistry.getHandler(platform);
+        List<Future<List<ShippingCalculationDTO.ListDTO>>> futureList = new ArrayList<>();
         for (ThirdWarehouseCalculateFeeReq calculateFeeReq : list){
-            try {
+            Future<List<ShippingCalculationDTO.ListDTO>> future = thirdWarehouseExecutorPool.submit(() -> {
                 ApiResult<List<ThirdWarehouseCalculateFeeResponse>> calculateFeeBatch = service.getCalculateFeeBatch(calculateFeeReq, providerWarehouseEntity.getMainId());
                 if (calculateFeeBatch.isSuccess()){
+                    String countryCode = calculateFeeReq.getCountryCode();
                     List<ThirdWarehouseCalculateFeeResponse> responseList = calculateFeeBatch.getData();
                     List<ShippingCalculationDTO.ListDTO> dtoList = ThirdWarehouseConverter.INSTANCE.responseToShippingDTO(responseList);
+                    if (CollUtil.isNotEmpty(dtoList)){
+                        dtoList.forEach(e -> e.setToCountry(countryCode));
+                    }
+                    return dtoList;
+                }else {
+                    return Collections.emptyList();
+                }
+            });
+            futureList.add(future);
+        }
+        for (Future<List<ShippingCalculationDTO.ListDTO>> future : futureList){
+            try {
+                List<ShippingCalculationDTO.ListDTO> dtoList = future.get();
+                if (CollUtil.isNotEmpty(dtoList)){
                     listDTOList.addAll(dtoList);
                 }
-            } catch (ServiceException serviceException) {
-                return Collections.emptyList();
+            } catch (InterruptedException e) {
+                // 恢复线程的中断状态，确保中断标志不会被忽略
+                Thread.currentThread().interrupt();
+                log.error("线程被中断", e);
+                throw new ServiceException("线程被中断", e);
+            } catch (ExecutionException e) {
+                log.error("线程任务执行异常", e);
+                throw new ServiceException("线程任务执行异常", e.getCause());
+            } catch (ThreadDeath td) {
+                log.error("捕获到 ThreadDeath，线程终止", td);
+                throw td; // 重新抛出以允许线程正常终止
             }
         }
         return listDTOList;
@@ -389,10 +422,13 @@ public class OverseasProviderServiceImpl extends SuperServiceImpl<OverseasProvid
     private List<ThirdWarehouseCalculateFeeReq> getGucangCalculateFeeReq(OverseasProviderWarehouseEntity providerWarehouseEntity, ShippingCalculationDTO.PagingParamDTO params) {
         List<ThirdWarehouseCalculateFeeReq> list = new ArrayList<>();
         List<String> toCountryList = params.getToCountryList().stream().filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+        List<String> channelCodeList = params.getChannelCodeList();
+        String channelCode = CollUtil.isNotEmpty(channelCodeList) && 1 == channelCodeList.size() ? channelCodeList.get(0) : null;
         for (String country : toCountryList){
             list.add(ThirdWarehouseCalculateFeeReq.builder()
                             .warehouseCode(providerWarehouseEntity.getPlatformWarehouseCode())
                             .countryCode(country)
+                            .channelCode(channelCode)
                             .postCode(params.getPostCode())
                             .weight(params.getWeight())
                             .length(params.getLength())
