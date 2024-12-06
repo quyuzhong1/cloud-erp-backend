@@ -61,6 +61,7 @@ public class AliexpressDeliveryServiceImpl extends SuperServiceImpl<AliexpressDe
                 .findFirst().orElse(null) : null;
         if (ObjectUtil.isNotEmpty(entity)) {
             aliexpressDeliveryEntity.setId(entity.getId());
+            aliexpressDeliveryEntity.setIsOutstock(entity.getIsOutstock());
         }else if (CollUtil.isNotEmpty(list)){
             //处理历史数据 第三方单号不存在时， 平台单号+物流跟踪号一致的时候
             AliexpressDeliveryEntity entity1 = list.stream().filter(e -> Objects.equals(e.getPlatformCode(), addDTO.getPlatformCode()) && Objects.equals(e.getTrackNo(), addDTO.getTrackNo())).findFirst().orElse(null);
