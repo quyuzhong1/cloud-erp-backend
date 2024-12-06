@@ -25,7 +25,7 @@ public class SmallBagCostAllocationQueryHandler extends AbstractQueryHandler {
      */
     public String getTabSql(Object value) {
     	if(!"all".equals(value)) {
-        	super.buildDefaultDTO("g.report_status", Collections.singletonList(value));
+        	super.buildDefaultDTO("t.report_status", Collections.singletonList(value));
         }
         
         return super.getSplicingSQL();

@@ -418,7 +418,7 @@ public class TmsB2cDeclareReconciliationDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
-    public static class PayStatusUpdateDTO extends CommonDTO {
+    public static class PayStatusUpdateDTO{
     	
     	/**
     	 * 主键id列表

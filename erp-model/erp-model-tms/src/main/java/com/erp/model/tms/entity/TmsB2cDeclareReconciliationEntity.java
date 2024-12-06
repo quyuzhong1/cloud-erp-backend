@@ -103,13 +103,13 @@ public class TmsB2cDeclareReconciliationEntity extends BaseEntity<TmsB2cDeclareR
     /**
      * 东莞仓费用
      */
-    @TableField("dg_warseHouse_fee")
+    @TableField("dg_warsehouse_fee")
     private BigDecimal dgWarseHouseFee;
     
     /**
      * 香港仓费用
      */
-    @TableField("xg_warseHouse_fee")
+    @TableField("xg_warsehouse_fee")
     private BigDecimal xgWarseHouseFee;
     
     /**

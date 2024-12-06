@@ -16,6 +16,7 @@ import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.OperationTypeEnum;
+import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.UnitEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
@@ -54,6 +55,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.File;
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.util.*;
 import java.util.function.Function;
@@ -106,6 +108,8 @@ public class TmsB2cDeclareReconciliationDetailServiceImpl extends SuperServiceIm
     private TmsCfgCostService tmsCfgCostService;
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
+    @Resource
+    private SettingForecastService settingForecastService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -181,8 +185,92 @@ public class TmsB2cDeclareReconciliationDetailServiceImpl extends SuperServiceIm
         if (CollectionUtils.isEmpty(list)) {
             return;
         }
+        List<TmsB2cDeclareReconciliationDetailEntity> allNewDetailList = list.stream().filter(l -> StringUtils.isNotBlank(l.getMainId())).collect(Collectors.toList());
+        TmsB2cDeclareReconciliationEntity declareReconciliationEntity = tmsB2cDeclareReconciliationService.getById(allNewDetailList.get(0).getMainId());
+        
+        List<String> channelIds = allNewDetailList.stream().map(TmsB2cDeclareReconciliationDetailEntity::getLogisticsChannelId).collect(Collectors.toList());
+        List<String> dgFlagList = settingForecastService.lambdaQuery().in(SettingForecastEntity::getTransferLogisticsChannelId, channelIds).list()
+        		.stream().filter(SettingForecastEntity::getDgWarseHouse).map(SettingForecastEntity::getTransferLogisticsChannelId).collect(Collectors.toList());
+        List<String> xgFlagList = settingForecastService.lambdaQuery().in(SettingForecastEntity::getTransferLogisticsChannelId, channelIds).list()
+        		.stream().filter(SettingForecastEntity::getDgWarseHouse).map(SettingForecastEntity::getTransferLogisticsChannelId).collect(Collectors.toList());
+        BigDecimal dgWarseHouseFee = declareReconciliationEntity.getDgWarseHouseFee();
+        BigDecimal xgWarseHouseFee = declareReconciliationEntity.getXgWarseHouseFee();
+        BigDecimal dgTotalWeight = BigDecimal.ZERO;
+        BigDecimal xgTotalWeight = BigDecimal.ZERO;
+        String lastdgId = "";
+        String lastxgId = "";
+        for (TmsB2cDeclareReconciliationDetailEntity detailEntity : allNewDetailList) {
+        	BigDecimal estimateWeight = detailEntity.getEstimateWeight();
+        	if(estimateWeight != null) {
+        		if(detailEntity.getEstimateWeightUnit() == "kg") {
+        			estimateWeight = estimateWeight.multiply(new BigDecimal("1000"));
+        		}
+        		String logisticsChannelId = detailEntity.getLogisticsChannelId();
+            	if(dgFlagList.contains(logisticsChannelId)) {
+            		dgTotalWeight = dgTotalWeight.add(estimateWeight);
+            		lastdgId = detailEntity.getSourceDetailId();
+            	}
+            	if(xgFlagList.contains(logisticsChannelId)) {
+            		xgTotalWeight = xgTotalWeight.add(estimateWeight);
+            		lastxgId = detailEntity.getSourceDetailId();
+            	}
+        	}
+        }
+        
+        BigDecimal totalDg = BigDecimal.ZERO;
+        BigDecimal totalXg = BigDecimal.ZERO;
+        Map<String, String> feeNameIdMaps = tmsCfgCostService.lambdaQuery()
+	        .eq(TmsCfgCostEntity::getDictCostAttribution, DictCostAttributionEnum.DECLARE.getCode())
+	        .eq(TmsCfgCostEntity::getDictCostCategory, DictCostCategoryEnum.SHIPPING_COST.getCode())
+	        .in(TmsCfgCostEntity::getCostName, Arrays.asList("东莞仓运费" , "香港仓运费"))
+	        .list().stream().collect(Collectors.toMap(TmsCfgCostEntity::getCostName, TmsCfgCostEntity::getId));
+        String dgCostId = feeNameIdMaps.get("东莞仓运费");
+        if(StringUtils.isBlank(dgCostId)) {
+        	throw new ServiceException("报关物流运费的东莞仓运费未配置");
+        }
+        String xgCostId = feeNameIdMaps.get("香港仓运费");
+        if(StringUtils.isBlank(xgCostId)) {
+        	throw new ServiceException("报关物流运费的香港仓运费未配置");
+        }
         for (TmsB2cDeclareReconciliationDetailEntity detailEntity : list) {
             List<TmsCostDetailDTO.UpdateDTO> updateList = detailEntity.getUpdateList();
+            if(updateList == null) {
+            	updateList = new ArrayList<>();
+            }
+            BigDecimal estimateWeight = detailEntity.getEstimateWeight();
+            if(estimateWeight != null) {
+            	String logisticsChannelId = detailEntity.getLogisticsChannelId();
+            	if(detailEntity.getEstimateWeightUnit() == "kg") {
+        			estimateWeight = estimateWeight.multiply(new BigDecimal("1000"));
+        		}
+            	String sourceDetailId = detailEntity.getSourceDetailId();
+            	if(dgWarseHouseFee != null && dgTotalWeight.compareTo(BigDecimal.ZERO) != 0 && dgFlagList.contains(logisticsChannelId)) {
+            		TmsCostDetailDTO.UpdateDTO dto = new TmsCostDetailDTO.UpdateDTO();
+            		BigDecimal unitDgFee = dgWarseHouseFee.multiply(estimateWeight).divide(dgTotalWeight , 4 , RoundingMode.HALF_UP);
+            		if(lastdgId.equals(sourceDetailId)) {
+            			unitDgFee = dgWarseHouseFee.subtract(totalDg);
+            		}
+            		totalDg = totalDg.add(unitDgFee);
+            		dto.setCostValue(unitDgFee);
+            		dto.setType(LogisticsBillCostTypeEnum.ACTUAL.getCode());
+            		dto.setCfgCostId(dgCostId);
+            		dto.setSourceType(SourceTypeEnum.TMS_B2C_DECLARE_RECONCILIATION.getCode());
+            		updateList.add(dto);
+                }
+                if(xgWarseHouseFee != null && xgTotalWeight.compareTo(BigDecimal.ZERO) != 0 && xgFlagList.contains(logisticsChannelId)) {
+                	TmsCostDetailDTO.UpdateDTO dto = new TmsCostDetailDTO.UpdateDTO();
+                	BigDecimal unitXgFee = xgWarseHouseFee.multiply(estimateWeight).divide(xgTotalWeight , 4 , RoundingMode.HALF_UP);
+                	if(lastxgId.equals(sourceDetailId)) {
+                		unitXgFee = xgWarseHouseFee.subtract(totalXg);
+            		}
+                	totalXg = totalXg.add(unitXgFee);
+                	dto.setCostValue(unitXgFee);
+                	dto.setType(LogisticsBillCostTypeEnum.ACTUAL.getCode());
+            		dto.setCfgCostId(xgCostId);
+            		dto.setSourceType(SourceTypeEnum.TMS_B2C_DECLARE_RECONCILIATION.getCode());
+            		updateList.add(dto);
+                }
+            }
             if (CollectionUtils.isEmpty(updateList)) {
                 continue;
             }
