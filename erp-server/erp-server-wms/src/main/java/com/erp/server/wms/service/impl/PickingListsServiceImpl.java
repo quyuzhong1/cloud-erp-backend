@@ -255,7 +255,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
         // 按 sourceDetailId 分组
         Map<String, List<PickingDetailDTO.View>> groupedMismatchedDetails = mismatchedDetails.stream()
                 .collect(Collectors.groupingBy(PickingDetailDTO.View::getSourceDetailId));
-        groupedMismatchedDetails.forEach((key,val)->{
+        groupedMismatchedDetails.forEach((key, val)->{
             RequisitionApplicationDetailEntity requisitionApplicationDetailEntity = detailEntities.stream().filter(v->v.getId().equals(key)).findFirst().orElse(null);
             if(Objects.isNull(requisitionApplicationDetailEntity)){
                 return;
@@ -394,6 +394,9 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
         //过滤实拣数量相加与要货申请的批准数量一致的数据
         List<String> requisitionDetailIds = views.stream().map(PickingDetailDTO.View::getSourceDetailId).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
         List<RequisitionApplicationDetailEntity> requisitionApplicationDetailEntityList = requisitionApplicationDetailService.listByIds(requisitionDetailIds);
+        List<String> skuIds = requisitionApplicationDetailEntityList.stream().map(RequisitionApplicationDetailEntity::getSkuId).collect(Collectors.toList());
+        //获取子SKU集合
+        List<BomChildrenSkuDTO> bomChildrenSkuList = plmTaskFeign.listBomChildBySkuIds(skuIds);
 
         Map<String, Integer> qtySumMap = views.stream()
                 .filter(v -> StringUtils.isNotBlank(v.getSourceDetailId()))
@@ -408,13 +411,33 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
                 ));
         views = views.stream()
                 .filter(detail -> {
-                    String detailId = detail.getSourceDetailId();
-                    if (StringUtils.isNotBlank(detailId) && approvedQtyMap.containsKey(detailId)) {
-                        Integer approvedQty = approvedQtyMap.get(detailId);
-                        Integer totalPickedQty = qtySumMap.getOrDefault(detailId, 0);
-                        return !totalPickedQty.equals(approvedQty);
+                    //修改后的数量与要货申请批准数量相同，不生成要货申请变更单，考虑组合品情况
+                    RequisitionApplicationDetailEntity requisitionApplicationDetailEntity = requisitionApplicationDetailEntityList.stream().filter(v->v.getId().equals(detail.getSourceDetailId())).findFirst().orElse(null);
+                    if(Objects.isNull(requisitionApplicationDetailEntity)){
+                        return true;
                     }
-                    // 如果没有找到对应的 approvedQty，则保留该记录
+                    List<BomChildrenSkuDTO> bomChildren = bomChildrenSkuList.stream()
+                            .filter(req -> req.getParentSkuId().equals(requisitionApplicationDetailEntity.getSkuId())
+                                    && BomTypeEnum.COMBINATION.getType().equals(req.getType())
+                            ).collect(Collectors.toList());
+                    if(CollectionUtils.isEmpty(bomChildren)){
+                        String detailId = detail.getSourceDetailId();
+                        if (StringUtils.isNotBlank(detailId) && approvedQtyMap.containsKey(detailId)) {
+                            Integer approvedQty = approvedQtyMap.get(detailId);
+                            Integer totalPickedQty = qtySumMap.getOrDefault(detailId, 0);
+                            return !totalPickedQty.equals(approvedQty);
+                        }
+                        // 如果没有找到对应的 approvedQty，则保留该记录
+                    }else{
+                        Integer allQty = bomChildren.stream().mapToInt(BomChildrenSkuDTO::getQuantity).sum();
+                        String detailId = detail.getSourceDetailId();
+                        if (StringUtils.isNotBlank(detailId) && approvedQtyMap.containsKey(detailId)) {
+                            Integer approvedQty = approvedQtyMap.get(detailId) * allQty;
+                            Integer totalPickedQty = qtySumMap.getOrDefault(detailId, 0);
+                            return !totalPickedQty.equals(approvedQty);
+                        }
+                        // 如果没有找到对应的 approvedQty，则保留该记录
+                    }
                     return true;
                 })
                 .collect(Collectors.toList());
@@ -1244,7 +1267,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
                     //处理仓位移动数据
                     addDTOS.add(WarehouseLocationMoveDetailDTO.AddDTO.getLocationMoveDTO(view.getSkuId(), view.getSkuNo(),
                             view.getWarehouseLocation(), view.getStagingLocation(), view.getQty() - detailEntity.getQty(), entity.getWarehouseId(), entity.getId()));
-                } else {
+                } else if(detailEntity.getActualQty().equals(view.getActualQty())){
                     continue;
                 }
             } else {
