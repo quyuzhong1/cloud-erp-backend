@@ -94,6 +94,9 @@ public class LogisticsLargeController extends BaseController {
     @Resource
     private SmallBagCostAllocationMainService smallBagCostAllocationMainService;
 
+    @Resource
+    private TransferDeclareCostAllocationMainService transferDeclareCostAllocationMainService;
+
 
     /**
      * 变更分页展示
@@ -238,7 +241,7 @@ public class LogisticsLargeController extends BaseController {
         List<BatchResultDTO> resultDTOS = new ArrayList<>();
         List<SmallBagCostAllocationEntity> entityList = smallBagCostAllocationService.listByIds(dto.getIds());
         List<String> ids = entityList.stream().map(req -> req.getMainId()).distinct().collect(Collectors.toList());
-        List<SmallBagCostAllocationMainEntity> list = smallBagCostAllocationMainService.lambdaQuery().in(SmallBagCostAllocationMainEntity::getId, ids).list();
+        List<SmallBagCostAllocationMainEntity> list = smallBagCostAllocationMainService.listByIds(ids);
 
         //根据整单添加操作
         for (SmallBagCostAllocationMainEntity smallBagCostAllocationMainEntity : list) {
@@ -260,55 +263,15 @@ public class LogisticsLargeController extends BaseController {
     @PostMapping("/generateTransferCostAllocationTable")
     @LogAction(value = LogActionEnum.INSERT, desc = "中转费用分摊生成物流大表")
     public ApiResult<List<BatchResultDTO>> generateTransferCostAllocationTable(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
-        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
-
-        //分摊信息
+        List<BatchResultDTO> resultDTOS = new ArrayList<>();
         List<TransferDeclareCostAllocationEntity> entityList = transferDeclareCostAllocationService.listByIds(dto.getIds());
-        List<TransferDeclareCostAllocationDetailEntity> detailEntityList = transferDeclareCostAllocationDetailService.listByMainIds(dto.getIds());
-
-        //报关对账
-        List<String> declareReconciliationDetailIdList = entityList.stream().map(TransferDeclareCostAllocationEntity::getDeclareReconciliationDetailId).collect(Collectors.toList());
-        List<TmsB2cDeclareReconciliationDetailEntity> tmsB2cDeclareReconciliationDetailEntities = tmsB2cDeclareReconciliationDetailService.listByIds(declareReconciliationDetailIdList);
-        List<String> declareReconciliationIdList = tmsB2cDeclareReconciliationDetailEntities.stream().map(TmsB2cDeclareReconciliationDetailEntity::getMainId).collect(Collectors.toList());
-        List<TmsB2cDeclareReconciliationEntity> tmsB2cDeclareReconciliationEntities = tmsB2cDeclareReconciliationService.listByIds(declareReconciliationIdList);
-
-        //销售出库信息
-        List<String> soIdList = tmsB2cDeclareReconciliationDetailEntities.stream().map(req -> req.getSoId()).distinct().collect(Collectors.toList());
-        List<SoOutstockEntity> soOutstockEntities = soOutstockFeign.listBySoIds(soIdList);
-
-        for (TransferDeclareCostAllocationEntity entity : entityList) {
-            TmsB2cDeclareReconciliationDetailEntity declareReconciliationDetailEntity = tmsB2cDeclareReconciliationDetailEntities.stream()
-                    .filter(req -> req.getId().equals(entity.getDeclareReconciliationDetailId()))
-                    .findFirst().orElse(null);
-            if (declareReconciliationDetailEntity == null) {
-                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getId(),"未找到b2c报关对账单明细！"));
-            }
-            TmsB2cDeclareReconciliationEntity declareReconciliationEntity = tmsB2cDeclareReconciliationEntities.stream()
-                    .filter(req -> req.getId().equals(entity.getDeclareReconciliationId()))
-                    .findFirst().orElse(null);
-            if (declareReconciliationEntity == null) {
-                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getId(),"未找到b2c报关对账单！"));
-            }
-
-            SoOutstockEntity soOutstockEntity = soOutstockEntities.stream().filter(req -> req.getSoId().equals(declareReconciliationDetailEntity.getSoId())).findFirst().orElse(null);
-            if (soOutstockEntity == null) {
-                resultDTOS.add(BatchResultDTO.fail(entity.getId(), declareReconciliationDetailEntity.getSoCode(),"未找到对应的销售出库单！"));
-            }
-
-            BatchResultDTO result = null;
-            try {
-                result = logisticsLargeService.generateTransferCostAllocationTable(entity, detailEntityList, declareReconciliationEntity, declareReconciliationDetailEntity, soOutstockEntity);
-            } catch (Exception e) {
-                log.error("中转费用分摊生成物流大表失败{}", e);
-                result = BatchResultDTO.fail(entity.getId(), soOutstockEntity.getCode(), e.getMessage());
-            }
-            resultDTOS.add(result);
-
-
+        List<String> ids = entityList.stream().map(TransferDeclareCostAllocationEntity::getMainId).distinct().collect(Collectors.toList());
+        List<TransferDeclareCostAllocationMainEntity> transferDeclareCostAllocationMainEntities = transferDeclareCostAllocationMainService.listByIds(ids);
+        //根据整单添加操作
+        for (TransferDeclareCostAllocationMainEntity transferDeclareCostAllocationMainEntity : transferDeclareCostAllocationMainEntities) {
+            List<BatchResultDTO> resultDTOList = logisticsLargeService.generateTransferCostAllocationTable(transferDeclareCostAllocationMainEntity);
+            resultDTOS.addAll(resultDTOList);
         }
-
-
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
-
     }
 }

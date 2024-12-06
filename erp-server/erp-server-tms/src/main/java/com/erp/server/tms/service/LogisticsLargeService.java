@@ -108,16 +108,10 @@ public interface LogisticsLargeService extends SuperService<LogisticsLargeEntity
 
     /**
      * 中转费用分摊生成物流大表
-     * @Author Luo_WG
-     * @Date 2024/12/4 16:33
-     * @param entity
-     * @param detailEntityList
-     * @param declareReconciliationEntity
-     * @param declareReconciliationDetailEntity
-     * @param soOutstockEntity
-     * @return com.common.business.dto.base.BatchResultDTO
-     **/
-    BatchResultDTO generateTransferCostAllocationTable(TransferDeclareCostAllocationEntity entity, List<TransferDeclareCostAllocationDetailEntity> detailEntityList, TmsB2cDeclareReconciliationEntity declareReconciliationEntity, TmsB2cDeclareReconciliationDetailEntity declareReconciliationDetailEntity, SoOutstockEntity soOutstockEntity);
+     * @param transferDeclareCostAllocationMainEntity
+     * @return
+     */
+    List<BatchResultDTO> generateTransferCostAllocationTable(TransferDeclareCostAllocationMainEntity transferDeclareCostAllocationMainEntity);
 
     /**
      * 导出Excel

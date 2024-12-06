@@ -38,6 +38,7 @@ import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.rpc.scm.feign.ScmTaskFeign;
 import com.erp.rpc.scm.feign.SupplierFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.rpc.wms.feign.SoOutstockFeign;
 import com.erp.rpc.wms.feign.WmsFirstMileDeliveryFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.tms.mapper.LogisticsLargeMapper;
@@ -141,6 +142,18 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
 
     @Resource
     private SmallBagCostAllocationMainService smallBagCostAllocationMainService;
+
+    @Resource
+    private TransferDeclareCostAllocationDetailService transferDeclareCostAllocationDetailService;
+
+    @Resource
+    private TmsB2cDeclareReconciliationDetailService tmsB2cDeclareReconciliationDetailService;
+
+    @Resource
+    private TmsB2cDeclareReconciliationService tmsB2cDeclareReconciliationService;
+
+    @Resource
+    private SoOutstockFeign soOutstockFeign;
 
 
     @Override
@@ -857,11 +870,63 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
     }
 
     @Override
-    public BatchResultDTO generateTransferCostAllocationTable(TransferDeclareCostAllocationEntity entity, List<TransferDeclareCostAllocationDetailEntity> detailEntityList, TmsB2cDeclareReconciliationEntity declareReconciliationEntity, TmsB2cDeclareReconciliationDetailEntity declareReconciliationDetailEntity, SoOutstockEntity soOutstockEntity) {
+    @Transactional(rollbackFor = Exception.class)
+    public List<BatchResultDTO> generateTransferCostAllocationTable(TransferDeclareCostAllocationMainEntity transferDeclareCostAllocationMainEntity) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>();
+        List<TransferDeclareCostAllocationEntity> entityList = transferDeclareCostAllocationService.lambdaQuery().eq(TransferDeclareCostAllocationEntity::getMainId, transferDeclareCostAllocationMainEntity.getId()).list();
+        List<String> ids = entityList.stream().map(req -> req.getId()).collect(Collectors.toList());
+
+        //分摊信息
+        List<TransferDeclareCostAllocationDetailEntity> detailEntityList = transferDeclareCostAllocationDetailService.listByMainIds(ids);
+
+        //报关对账
+        List<String> declareReconciliationDetailIdList = entityList.stream().map(TransferDeclareCostAllocationEntity::getDeclareReconciliationDetailId).collect(Collectors.toList());
+        List<TmsB2cDeclareReconciliationDetailEntity> tmsB2cDeclareReconciliationDetailEntities = tmsB2cDeclareReconciliationDetailService.listByIds(declareReconciliationDetailIdList);
+        List<String> declareReconciliationIdList = tmsB2cDeclareReconciliationDetailEntities.stream().map(TmsB2cDeclareReconciliationDetailEntity::getMainId).collect(Collectors.toList());
+        List<TmsB2cDeclareReconciliationEntity> tmsB2cDeclareReconciliationEntities = tmsB2cDeclareReconciliationService.listByIds(declareReconciliationIdList);
+
+        //销售出库信息
+        List<String> soIdList = tmsB2cDeclareReconciliationDetailEntities.stream().map(req -> req.getSoId()).distinct().collect(Collectors.toList());
+        List<SoOutstockEntity> soOutstockEntities = soOutstockFeign.listBySoIds(soIdList);
+
+        for (TransferDeclareCostAllocationEntity entity : entityList) {
+            TmsB2cDeclareReconciliationDetailEntity declareReconciliationDetailEntity = tmsB2cDeclareReconciliationDetailEntities.stream()
+                    .filter(req -> req.getId().equals(entity.getDeclareReconciliationDetailId()))
+                    .findFirst().orElse(null);
+            if (declareReconciliationDetailEntity == null) {
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getId(),"未找到b2c报关对账单明细！"));
+            }
+            TmsB2cDeclareReconciliationEntity declareReconciliationEntity = tmsB2cDeclareReconciliationEntities.stream()
+                    .filter(req -> req.getId().equals(entity.getDeclareReconciliationId()))
+                    .findFirst().orElse(null);
+            if (declareReconciliationEntity == null) {
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getId(),"未找到b2c报关对账单！"));
+            }
+
+            SoOutstockEntity soOutstockEntity = soOutstockEntities.stream().filter(req -> req.getSoId().equals(declareReconciliationDetailEntity.getSoId())).findFirst().orElse(null);
+            if (soOutstockEntity == null) {
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), declareReconciliationDetailEntity.getSoCode(),"未找到对应的销售出库单！"));
+            }
+            List<TransferDeclareCostAllocationDetailEntity> costAllocationDetailEntities = detailEntityList.stream().filter(req -> req.getMainId().equals(entity.getId())).collect(Collectors.toList());
+
+            BatchResultDTO result = null;
+            try {
+                result = this.generateTransferCostAllocationHandler(transferDeclareCostAllocationMainEntity, entity, costAllocationDetailEntities, declareReconciliationEntity, declareReconciliationDetailEntity, soOutstockEntity);
+            } catch (Exception e) {
+                log.error("中转费用分摊生成物流大表失败{}", e);
+                result = BatchResultDTO.fail(entity.getId(), soOutstockEntity.getCode(), e.getMessage());
+            }
+            resultDTOS.add(result);
+        }
+
+        return resultDTOS;
+    }
+
+    private BatchResultDTO generateTransferCostAllocationHandler(TransferDeclareCostAllocationMainEntity mainEntity, TransferDeclareCostAllocationEntity entity, List<TransferDeclareCostAllocationDetailEntity> detailEntityList, TmsB2cDeclareReconciliationEntity declareReconciliationEntity, TmsB2cDeclareReconciliationDetailEntity declareReconciliationDetailEntity, SoOutstockEntity soOutstockEntity) {
         List<LogisticsLargeEntity> logisticsLargeEntities = this.listByIdSourceId(Arrays.asList(entity.getId()));
 
         //已确认才能下推
-        if (!SmallBagCostAllocationReportStatusEnum.CONFIRMED.getCode().equals(entity.getReportStatus())) {
+        if (!SmallBagCostAllocationReportStatusEnum.CONFIRMED.getCode().equals(mainEntity.getReportStatus())) {
             throw new ServiceException(ApiError.ERROR_SMALL_BAG_NOT_CONFIRMED);
         }
 
@@ -893,8 +958,8 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
         addDTO.setSourceId(entity.getId());
         addDTO.setSourceType(SourceTypeEnum.TRANSFER_DECLARE_COST_ALLOCATION.getCode());
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM");
-        if (CharSequenceUtil.isNotBlank(entity.getReportDate())) {
-            LocalDate reconciliationMonth = LocalDate.parse(entity.getReportDate(), formatter);
+        if (CharSequenceUtil.isNotBlank(mainEntity.getReportDate())) {
+            LocalDate reconciliationMonth = LocalDate.parse(mainEntity.getReportDate(), formatter);
             addDTO.setReconciliationMonth(reconciliationMonth);
         }
 
