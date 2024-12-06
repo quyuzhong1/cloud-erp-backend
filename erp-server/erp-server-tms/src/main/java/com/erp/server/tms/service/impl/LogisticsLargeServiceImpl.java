@@ -926,7 +926,7 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
     }
 
     private BatchResultDTO generateTransferCostAllocationHandler(TransferDeclareCostAllocationMainEntity mainEntity, TransferDeclareCostAllocationEntity entity, List<TransferDeclareCostAllocationDetailEntity> detailEntityList, TmsB2cDeclareReconciliationEntity declareReconciliationEntity, TmsB2cDeclareReconciliationDetailEntity declareReconciliationDetailEntity, SoOutstockEntity soOutstockEntity) {
-        List<LogisticsLargeEntity> logisticsLargeEntities = this.listByIdSourceId(Arrays.asList(entity.getId()));
+        List<LogisticsLargeEntity> logisticsLargeEntities = this.listByIdSourceId(Arrays.asList(mainEntity.getId()));
 
         //已确认才能下推
         if (!SmallBagCostAllocationReportStatusEnum.CONFIRMED.getCode().equals(mainEntity.getReportStatus())) {
@@ -934,12 +934,18 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
         }
 
         //只能下推一个实际账单
-        LogisticsLargeEntity logisticsLargeActualEntity = logisticsLargeEntities.stream().filter(req -> ReconciliationBillTypeEnum.ACTUAL.getCode().equals(req.getReconciliationBillType())).findFirst().orElse(null);
+        LogisticsLargeEntity logisticsLargeActualEntity = logisticsLargeEntities.stream()
+                .filter(req -> ReconciliationBillTypeEnum.ESTIMATED.getCode().equals(req.getReconciliationBillType())
+                        && soOutstockEntity.getCode().equals(req.getOutstockCode()))
+                .findFirst().orElse(null);
         if (logisticsLargeActualEntity != null) {
             throw new ServiceException(ApiError.ERROR_EXISTS_LOGISTICS_LARGE);
         }
         //预估账单只能推送一个
-        LogisticsLargeEntity logisticsLargeEstimatedEntity = logisticsLargeEntities.stream().filter(req -> ReconciliationBillTypeEnum.ESTIMATED.getCode().equals(req.getReconciliationBillType())).findFirst().orElse(null);
+        LogisticsLargeEntity logisticsLargeEstimatedEntity = logisticsLargeEntities.stream()
+                .filter(req -> ReconciliationBillTypeEnum.ESTIMATED.getCode().equals(req.getReconciliationBillType())
+                        && soOutstockEntity.getCode().equals(req.getOutstockCode()))
+                .findFirst().orElse(null);
         if (logisticsLargeEstimatedEntity != null) {
             throw new ServiceException(ApiError.ERROR_EXISTS_ESTIMATED_LOGISTICS_LARGE);
         }
@@ -958,8 +964,9 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
         LogisticsBillCostEntity logisticsBillCostEntity = logisticsBillCostEntities.get(0);
 
         LogisticsLargeDTO.AddDTO addDTO = new LogisticsLargeDTO.AddDTO();
-        addDTO.setSourceId(entity.getId());
+        addDTO.setSourceId(mainEntity.getId());
         addDTO.setSourceType(SourceTypeEnum.TRANSFER_DECLARE_COST_ALLOCATION.getCode());
+        addDTO.setSourceDetailId(entity.getId());
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM");
         if (CharSequenceUtil.isNotBlank(mainEntity.getReportDate())) {
             LocalDate reconciliationMonth = LocalDate.parse(mainEntity.getReportDate(), formatter);
@@ -1134,7 +1141,7 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
 
         //更新中转费用分摊生成大表状态
         transferDeclareCostAllocationMainService.updateBigTableStatus(mainEntity.getId(), SmallBagCostAllocationBigTableStatusEnum.DONE.getCode());
-        return BatchResultDTO.success(entity.getId(), addDTO.getOutstockCode(), OperationTypeEnum.ADD);
+        return BatchResultDTO.success(mainEntity.getId(), addDTO.getOutstockCode(), OperationTypeEnum.ADD);
     }
 
     @Override
