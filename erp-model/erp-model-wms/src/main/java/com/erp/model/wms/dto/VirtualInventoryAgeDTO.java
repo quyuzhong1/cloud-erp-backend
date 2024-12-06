@@ -10,6 +10,7 @@ import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -89,7 +90,32 @@ public class VirtualInventoryAgeDTO implements Serializable {
          * 库龄计算差异
          */
         private Boolean isDiff;
+
+        /**
+         * 区间信息
+         */
+        private HashMap<String,VirtualIntervalDTO> map;
+
+
     }
+
+    /**
+     * 查询参数
+     */
+    @Data
+    @NoArgsConstructor
+    public static class VirtualIntervalDTO {
+        /**
+         * 区间数量
+         */
+        private Integer qty;
+        /**
+         * 占比
+         */
+        private Integer ratio;
+    }
+
+
 
     /**
      * 查询参数

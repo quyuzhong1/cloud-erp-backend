@@ -1,8 +1,11 @@
 package com.erp.server.wms.service.impl;
 
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjUtil;
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.common.business.dto.base.BaseResultDTO;
@@ -15,23 +18,24 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.plm.entity.ProductDetailEntity;
+import com.erp.model.wms.dto.CfgSettingVirtualValueDTO;
 import com.erp.model.wms.dto.VirtualInventoryAgeDTO;
 import com.erp.model.wms.dto.VirtualInventoryDetailDTO;
+import com.erp.model.wms.entity.CfgSettingEntity;
 import com.erp.model.wms.entity.VirtualInventoryDetailEntity;
 import com.erp.model.wms.entity.VirtualWarehouseEntity;
 import com.erp.model.wms.entity.WarehouseEntity;
+import com.erp.model.wms.enums.CfgSettingVirtualEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.wms.mapper.VirtualInventoryDetailMapper;
-import com.erp.server.wms.service.OperateLogService;
-import com.erp.server.wms.service.VirtualInventoryDetailService;
-import com.erp.server.wms.service.VirtualWarehouseService;
-import com.erp.server.wms.service.WarehouseService;
+import com.erp.server.wms.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
 
@@ -59,6 +63,9 @@ public class VirtualInventoryDetailServiceImpl extends SuperServiceImpl<VirtualI
 
     @Autowired
     private VirtualWarehouseService virtualWarehouseService;
+
+    @Autowired
+    private CfgSettingService cfgSettingService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -192,8 +199,25 @@ public class VirtualInventoryDetailServiceImpl extends SuperServiceImpl<VirtualI
         if (CollUtil.isEmpty(detailList)) {
             return;
         }
+        //查询库龄分析配置
+        CfgSettingEntity cfgSettingEntity = cfgSettingService.getByKey(CfgSettingVirtualEnum.INVENTORY_AGE_STATISTICS.getCode());
+        if (ObjectUtil.isEmpty(cfgSettingEntity) || ObjectUtil.isEmpty(cfgSettingEntity.getDataJson())) {
+            return;
+        }
+        CfgSettingVirtualValueDTO.InventoryAgeTO inventoryAgeTO = BeanUtil.toBean(cfgSettingEntity.getDataJson(), CfgSettingVirtualValueDTO.InventoryAgeTO.class);
+        List<CfgSettingVirtualValueDTO.InventoryAgeDateTO> list = inventoryAgeTO.getList();
 
-
+        HashMap<String, VirtualInventoryAgeDTO.VirtualIntervalDTO> map = new HashMap<>();
+        for (CfgSettingVirtualValueDTO.InventoryAgeDateTO inventoryAgeDateTO :list) {
+            String ageDateInterval = "";
+            //区间字段
+            if (ObjUtil.isNull(inventoryAgeDateTO.getEndDays())) {
+                ageDateInterval = CharSequenceUtil.format("{}以上", inventoryAgeDateTO.getEndDays());
+            } else {
+                ageDateInterval = CharSequenceUtil.format("{}~{}天", inventoryAgeDateTO.getStartDays(), inventoryAgeDateTO.getEndDays());
+            }
+            map.put(ageDateInterval,new VirtualInventoryAgeDTO.VirtualIntervalDTO());
+        }
     }
 }
 

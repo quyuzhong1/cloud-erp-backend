@@ -152,10 +152,10 @@ public class CfgSettingVirtualValueDTO implements Serializable {
          * 开始天数
          */
         @NotNull(message = "开始天数不能为空")
-        private Integer startDate;
+        private Integer startDays;
         /**
          * 结束天数
          */
-        private Integer endDate;
+        private Integer endDays;
     }
 }

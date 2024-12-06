@@ -41,7 +41,7 @@
     <!-- 分页查询 -->
     <select id="paging" resultType="com.erp.model.wms.dto.VirtualInventoryAgeDTO$ListDTO">
         WITH VirtualInventory AS (
-            SELECT
+        SELECT
             sku_id,
             warehouse_id,
             virtual_warehouse_id,
@@ -54,8 +54,18 @@
             is_deleted = false
             GROUP BY
             sku_id, warehouse_id, virtual_warehouse_id
-            )
+        ),
+        VirtualInventoryHis AS (
             select
+            sku_id,
+            warehouse_id,
+            virtual_warehouse_id,
+            sum(qty * avg_inventory_age_days) / count(0) as avgInventoryQty
+            from virtual_inventory_his
+            where is_deleted = false
+            group by sku_id,warehouse_id,virtual_warehouse_id
+        )
+        select
             vi.sku_id as skuId,
             pd.sku_no as skuNo,
             pd.name as productName,
@@ -65,11 +75,14 @@
             vi.virtualQty,
             vi.virtualUsableQty,
             vi.virtualFrozenQty,
-            now() as date
+            now() as date,
+            case when vi.virtualQty = 0 then 0 else round(COALESCE(vih.avgInventoryQty,0)/ vi.virtualQty,2) end backAvgInventoryAge
         from VirtualInventory vi
+        left join VirtualInventoryHis vih on vi.sku_id = vih.sku_id and vi.warehouse_id = vih.warehouse_id and vi.virtual_warehouse_id = vih.virtual_warehouse_id
         left join product_detail pd on vi.sku_id = pd.id and pd.is_deleted = false
         left join warehouse wh on vi.warehouse_id = wh.id and wh.is_deleted = false
         left join virtual_warehouse vw on vi.virtual_warehouse_id = vw.id and vw.is_deleted = false
+
         <where>
             ${params.sqlMap.default}
             order by
