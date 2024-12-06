@@ -1,16 +1,14 @@
 package com.common.business.dto;
 
-import com.alibaba.fastjson.annotation.JSONField;
 import com.common.business.enums.OmsPlatformEnum;
 import com.common.business.enums.WarehousePlatformTypeEnum;
-import jnr.ffi.annotations.SaveError;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
-import net.sf.cglib.core.Local;
 
 import java.io.Serializable;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -110,11 +108,14 @@ public class PlatformInventoryDTO extends UniqueDto {
          * 在库库存
          */
         private Integer inventoryQty;
-
         /**
-         * 库龄
+         * 上架日期
          */
-        private Integer inventoryAge;
+        private LocalDate putAwayDate;
+        /**
+         * 拉取日期
+         */
+        private LocalDate pullDate;
     }
 
 }
