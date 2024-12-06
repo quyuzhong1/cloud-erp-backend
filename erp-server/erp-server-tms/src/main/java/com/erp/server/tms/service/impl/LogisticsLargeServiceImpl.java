@@ -190,38 +190,38 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
 
         log.info("开始新增物流大单");
         boolean save = super.save(logisticsLargeEntity);
-        if(!save) {
+        if (!save) {
             throw new ServiceException("物流大单保存失败");
         }
 
         // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "物流大单" , logisticsLargeEntity.getId());
+        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "物流大单", logisticsLargeEntity.getId());
         operateLogService.addModuleOperateLog(msg, null, logisticsLargeEntity.getId(), "新增操作");
 
         return new BaseResultDTO.AddDTO(logisticsLargeEntity.getId(), logisticsLargeEntity.getId());
     }
 
     /**
-    * 修改
-    */
+     * 修改
+     */
     @Transactional(rollbackFor = Exception.class)
     @Override
     public Boolean update(LogisticsLargeDTO.UpdateDTO updateDTO) {
         LogisticsLargeEntity old = super.getById(updateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "物流大单"));
-        LogisticsLargeEntity logisticsLargeEntity =  BeanMapperUtils.map(LogisticsLargeEntity.class, updateDTO);
+        old = Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "物流大单"));
+        LogisticsLargeEntity logisticsLargeEntity = BeanMapperUtils.map(LogisticsLargeEntity.class, updateDTO);
 
         // 数据处理
         handleData(logisticsLargeEntity);
         log.info("编辑 开始修改物流大单数据，id：【{}】", old.getId());
         boolean save = super.updateById(logisticsLargeEntity);
-        if(!save) {
+        if (!save) {
             throw new ServiceException("物流大单保存失败");
         }
 
         // 记录主单操作日志
-            log.info("编辑 开始记录物流大单日志数据，id：【{}】", logisticsLargeEntity.getId());
-            String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), logisticsLargeEntity.getId(), "物流大单");
+        log.info("编辑 开始记录物流大单日志数据，id：【{}】", logisticsLargeEntity.getId());
+        String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), logisticsLargeEntity.getId(), "物流大单");
         return Boolean.TRUE;
     }
 
@@ -238,16 +238,14 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
     }
 
     /**
-    * 新增修改处理数据
-    */
+     * 新增修改处理数据
+     */
     private void handleData(LogisticsLargeEntity logisticsLargeEntity) {
-    // 验证数据 & 数据赋值
+        // 验证数据 & 数据赋值
     }
 
 
-    @Override
-    @Transactional(rollbackFor = Exception.class)
-    public BatchResultDTO generateFirstMileLogisticsTable(FirstMileCostAllocationEntity entity, FirstMileSkuCostAllocationEntity firstMileSkuCostAllocationEntity, List<FirstMileSkuCostAllocationDetailEntity> skuCostDetailEntityList, FirstMileDeliveryEntity deliveryEntity, List<FirstMileDeliveryDetailEntity> deliveryDetailEntities) {
+    private BatchResultDTO firstMileLogisticsTableHandler(FirstMileCostAllocationEntity entity, FirstMileSkuCostAllocationEntity firstMileSkuCostAllocationEntity, List<FirstMileSkuCostAllocationDetailEntity> skuCostDetailEntityList, FirstMileDeliveryEntity deliveryEntity, List<FirstMileDeliveryDetailEntity> deliveryDetailEntities) {
         List<LogisticsLargeEntity> logisticsLargeEntities = this.listByIdSourceId(Arrays.asList(entity.getId()));
 
         //已确认才能下推
@@ -456,6 +454,46 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
+    public List<BatchResultDTO> generateFirstMileLogistics(List<BatchResultDTO> resultDTOS,
+                                                           List<FirstMileSkuCostAllocationDetailEntity> skuCostAllocationDetailEntities,
+                                                           List<FirstMileDeliveryEntity> deliveryEntities, List<FirstMileDeliveryDetailEntity>
+                                                                   firstMileDeliveryDetailEntities, FirstMileCostAllocationEntity entity,
+                                                           List<FirstMileSkuCostAllocationEntity> skuCostAllocationEntityList) {
+
+        for (FirstMileSkuCostAllocationEntity firstMileSkuCostAllocationEntity : skuCostAllocationEntityList) {
+
+            List<FirstMileSkuCostAllocationDetailEntity> detailEntityList = skuCostAllocationDetailEntities.stream()
+                    .filter(req -> req.getCostMainId().equals(firstMileSkuCostAllocationEntity.getId()))
+                    .collect(Collectors.toList());
+            if (ObjectUtil.isEmpty(detailEntityList)) {
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getSourceCode(), "头程费用SKU分摊明细记录不存在"));
+                continue;
+            }
+            if (ConfirmStatusEnum.WAIT_CONFIRM.getCode().equals(entity.getStatus())) {
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getSourceCode(), "只有已确认的单据可以生成物流大表数据"));
+                continue;
+            }
+            FirstMileDeliveryEntity deliveryEntity = deliveryEntities.stream().filter(req -> req.getId().equals(entity.getSourceId())).findFirst().orElse(null);
+            if (ObjectUtil.isEmpty(deliveryEntity)) {
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getSourceCode(), "未找到关联的头程发货单信息"));
+                continue;
+            }
+            List<FirstMileDeliveryDetailEntity> deliveryDetailEntities = firstMileDeliveryDetailEntities.stream().filter(req -> req.getMainId().equals(deliveryEntity.getId())).collect(Collectors.toList());
+
+            BatchResultDTO result = null;
+            try {
+                result = this.firstMileLogisticsTableHandler(entity, firstMileSkuCostAllocationEntity, detailEntityList, deliveryEntity, deliveryDetailEntities);
+            } catch (Exception e) {
+                log.error("头程费用分摊生成物流大表失败{}", e);
+                result = BatchResultDTO.fail(entity.getId(), entity.getBusinessCode(), e.getMessage());
+            }
+            resultDTOS.add(result);
+        }
+        return resultDTOS;
+    }
+
+    @Override
     public List<LogisticsLargeEntity> listByIdSourceId(List<String> ids) {
         if (CollUtil.isEmpty(ids)) {
             return Collections.emptyList();
@@ -463,14 +501,23 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
         return this.lambdaQuery().eq(LogisticsLargeEntity::getSourceId, ids).list();
     }
 
+
+    @Override
+    public List<LogisticsLargeEntity> listByIdSourceDetailIds(List<String> ids) {
+        if (CollUtil.isEmpty(ids)) {
+            return Collections.emptyList();
+        }
+        return this.lambdaQuery().eq(LogisticsLargeEntity::getSourceDetailId, ids).list();
+    }
+
     /**
      * 小包分摊下推物流大表
      *
-     * @param smallBagCostAllocationMainEntity         小包分摊
-     * @param costAllocationEntity         小包分摊明细
-     * @param costAllocationDetailEntities 小包分摊明细费用
-     * @param soOutstockEntity             销售出库主表
-     * @param soOutstockDetailEntity       销售出库明细信息
+     * @param smallBagCostAllocationMainEntity 小包分摊
+     * @param costAllocationEntity             小包分摊明细
+     * @param costAllocationDetailEntities     小包分摊明细费用
+     * @param soOutstockEntity                 销售出库主表
+     * @param soOutstockDetailEntity           销售出库明细信息
      * @return com.common.business.dto.base.BatchResultDTO
      * @Author Luo_WG
      * @Date 2024/12/3 15:37
@@ -480,7 +527,7 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
                                                          List<SmallBagCostAllocationDetailEntity> costAllocationDetailEntities,
                                                          SoOutstockEntity soOutstockEntity,
                                                          SoOutstockDetailEntity soOutstockDetailEntity) {
-        List<LogisticsLargeEntity> logisticsLargeEntities = this.listByIdSourceId(Arrays.asList(costAllocationEntity.getId()));
+        List<LogisticsLargeEntity> logisticsLargeEntities = this.listByIdSourceDetailIds(Arrays.asList(costAllocationEntity.getId()));
 
         //已确认才能下推
         if (!SmallBagCostAllocationReportStatusEnum.CONFIRMED.getCode().equals(smallBagCostAllocationMainEntity.getReportStatus())) {
@@ -494,6 +541,7 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
         LogisticsLargeDTO.AddDTO addDTO = new LogisticsLargeDTO.AddDTO();
         addDTO.setSourceId(smallBagCostAllocationMainEntity.getId());
         addDTO.setSourceType(SourceTypeEnum.SMALL_BAG_COST_ALLOCATION.getCode());
+        addDTO.setSourceDetailId(costAllocationEntity.getId());
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM");
         if (CharSequenceUtil.isNotBlank(smallBagCostAllocationMainEntity.getReportDate())) {
             LocalDate reconciliationMonth = LocalDate.parse(smallBagCostAllocationMainEntity.getReportDate(), formatter);
@@ -519,7 +567,6 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
         if (ShipmentTypeEnum.PLATFORM_DELIVER.getCode().equals(logisticsBillEntity.getShipmentType())) {
             throw new ServiceException("平台仓发货不需要推送物流大表");
         }
-
 
 
         if (SmallBagCostAllocationMainFeeSourceEnum.CONFIRMED.getCode().equals(smallBagCostAllocationMainEntity.getFeeSource())) {
@@ -602,7 +649,7 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
                     addDTO.setTransitPort("中国-香港");
                 }
             }
-        }  else {
+        } else {
             platformCode = soOutstockEntity.getSoCode();
             addDTO.setTransitPort("中国");
         }
@@ -757,16 +804,16 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
         for (SmallBagCostAllocationEntity costAllocationEntity : entityList) {
             SoOutstockDetailEntity soOutstockDetailEntity = soOutstockDetailList.stream().filter(req -> req.getId().equals(costAllocationEntity.getOutstockDetailId())).findFirst().orElse(null);
             if (ObjectUtil.isEmpty(soOutstockDetailEntity)) {
-                resultDTOS.add(BatchResultDTO.fail(costAllocationEntity.getId(), costAllocationEntity.getId(),"未找到销售出库单详情信息！"));
+                resultDTOS.add(BatchResultDTO.fail(costAllocationEntity.getId(), costAllocationEntity.getId(), "未找到销售出库单详情信息！"));
             }
             SoOutstockEntity soOutstockEntity = soOutstockEntitylList.stream().filter(req -> req.getId().equals(soOutstockDetailEntity.getMainId())).findFirst().orElse(null);
             if (ObjectUtil.isEmpty(soOutstockEntity)) {
-                resultDTOS.add(BatchResultDTO.fail(costAllocationEntity.getId(), costAllocationEntity.getId(),"未找到销售出库单主表信息！"));
+                resultDTOS.add(BatchResultDTO.fail(costAllocationEntity.getId(), costAllocationEntity.getId(), "未找到销售出库单主表信息！"));
             }
 
             List<SmallBagCostAllocationDetailEntity> costAllocationDetailEntities = smallBagCostAllocationDetailEntities.stream().filter(req -> req.getMainId().equals(costAllocationEntity.getId())).collect(Collectors.toList());
             if (CollUtil.isEmpty(costAllocationDetailEntities)) {
-                resultDTOS.add(BatchResultDTO.fail(costAllocationEntity.getId(),soOutstockEntity.getCode() + " 产品编码" +soOutstockDetailEntity.getSkuNo(),"未找到小包费用分摊明细信息！"));
+                resultDTOS.add(BatchResultDTO.fail(costAllocationEntity.getId(), soOutstockEntity.getCode() + " 产品编码" + soOutstockDetailEntity.getSkuNo(), "未找到小包费用分摊明细信息！"));
             }
 
             BatchResultDTO result = null;
@@ -774,7 +821,7 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
                 result = this.smallBagCostAllocationHandler(smallBagCostAllocationMainEntity, costAllocationEntity, costAllocationDetailEntities, soOutstockEntity, soOutstockDetailEntity);
             } catch (Exception e) {
                 log.error("小包费用分摊生成物流大表失败{}", e);
-                result = BatchResultDTO.fail(costAllocationEntity.getId(), soOutstockEntity.getCode() + " 产品编码" +soOutstockDetailEntity.getSkuNo(), e.getMessage());
+                result = BatchResultDTO.fail(costAllocationEntity.getId(), soOutstockEntity.getCode() + " 产品编码" + soOutstockDetailEntity.getSkuNo(), e.getMessage());
             }
             resultDTOS.add(result);
         }
@@ -906,7 +953,7 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
                     addDTO.setTransitPort("中国-香港");
                 }
             }
-        }  else {
+        } else {
             platformCode = soOutstockEntity.getSoCode();
             addDTO.setTransitPort("中国");
         }

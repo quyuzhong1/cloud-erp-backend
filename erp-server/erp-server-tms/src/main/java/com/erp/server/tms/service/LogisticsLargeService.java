@@ -69,23 +69,33 @@ public interface LogisticsLargeService extends SuperService<LogisticsLargeEntity
 
     /**
      * 头程费用分摊下推物流大表
+     * @param resultDTOS
+     * @param skuCostAllocationDetailEntities
+     * @param deliveryEntities
+     * @param firstMileDeliveryDetailEntities
      * @param entity
-     * @param firstMileSkuCostAllocationEntity
-     * @param skuCostDetailEntityList
-     * @param deliveryEntity
-     * @param deliveryDetailEntities
-     * @return com.common.business.dto.base.BatchResultDTO
-     * @Author Luo_WG
-     * @Date 2024/12/2 9:45
-     **/
-    BatchResultDTO generateFirstMileLogisticsTable(FirstMileCostAllocationEntity entity, FirstMileSkuCostAllocationEntity firstMileSkuCostAllocationEntity, List<FirstMileSkuCostAllocationDetailEntity> skuCostDetailEntityList, FirstMileDeliveryEntity deliveryEntity, List<FirstMileDeliveryDetailEntity> deliveryDetailEntities);
-
+     * @param skuCostAllocationEntityList
+     * @return
+     */
+    List<BatchResultDTO> generateFirstMileLogistics(List<BatchResultDTO> resultDTOS,
+                                                    List<FirstMileSkuCostAllocationDetailEntity> skuCostAllocationDetailEntities,
+                                                    List<FirstMileDeliveryEntity> deliveryEntities,
+                                                    List<FirstMileDeliveryDetailEntity> firstMileDeliveryDetailEntities,
+                                                    FirstMileCostAllocationEntity entity,
+                                                    List<FirstMileSkuCostAllocationEntity> skuCostAllocationEntityList);
     /**
-     * 根据来源id查询物流大表
+     *
      *
      * @param ids
      */
     List<LogisticsLargeEntity> listByIdSourceId(List<String> ids);
+
+    /**
+     * 根据来源详情id查询物流大表
+     * @param ids
+     * @return
+     */
+    List<LogisticsLargeEntity> listByIdSourceDetailIds(List<String> ids);
 
     /**
      * 小包分摊下推物流大表

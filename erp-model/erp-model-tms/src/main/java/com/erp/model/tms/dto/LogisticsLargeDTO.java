@@ -782,6 +782,12 @@ public class LogisticsLargeDTO implements Serializable {
          */
         @NotBlank(message = "来源id不能为空")
         private String sourceId;
+
+        /**
+         * 来源详情id
+         */
+        @NotBlank(message = "来源详情id不能为空")
+        private String sourceDetailId;
         /**
          * 来源类型
          */

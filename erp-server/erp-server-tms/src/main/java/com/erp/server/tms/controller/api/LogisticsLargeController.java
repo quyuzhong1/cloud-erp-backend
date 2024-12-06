@@ -204,7 +204,7 @@ public class LogisticsLargeController extends BaseController {
         //头程费用分摊信息
         List<FirstMileCostAllocationEntity> costAllocationEntityList = firstMileCostAllocationService.listByIds(dto.getIds());
         //头程费用SKU分摊信息
-        List<FirstMileSkuCostAllocationEntity> skuCostAllocationEntityList = firstMileSkuCostAllocationService.listByMainIds(dto.getIds());
+        List<FirstMileSkuCostAllocationEntity> skuCostAllocationEntityAllList = firstMileSkuCostAllocationService.listByMainIds(dto.getIds());
         //头程费用SKU分摊明细
         List<FirstMileSkuCostAllocationDetailEntity> skuCostAllocationDetailEntities = firstMileSkuCostAllocationDetailService.listByMainIds(dto.getIds());
 
@@ -216,46 +216,13 @@ public class LogisticsLargeController extends BaseController {
         List<FirstMileDeliveryDetailEntity> firstMileDeliveryDetailEntities = wmsFirstMileDeliveryFeign.listDetailByMainIds(deliveryIds);
 
         //按SKU的维度添加物流大表
-        for (FirstMileSkuCostAllocationEntity firstMileSkuCostAllocationEntity : skuCostAllocationEntityList) {
-
-            FirstMileCostAllocationEntity entity = costAllocationEntityList.stream()
-                    .filter(req -> req.getId().equals(firstMileSkuCostAllocationEntity.getMainId()))
-                    .findFirst().orElse(null);
-            if (ObjectUtil.isEmpty(entity)) {
-                resultDTOS.add(BatchResultDTO.fail(entity.getId(),entity.getSourceCode(),"头程费用分摊实际账单记录不存在"));
-                continue;
-            }
-
-            List<FirstMileSkuCostAllocationDetailEntity> detailEntityList = skuCostAllocationDetailEntities.stream()
-                    .filter(req -> req.getCostMainId().equals(firstMileSkuCostAllocationEntity.getId()))
-                    .collect(Collectors.toList());
-            if (ObjectUtil.isEmpty(detailEntityList)) {
-                resultDTOS.add(BatchResultDTO.fail(entity.getId(),entity.getSourceCode(),"头程费用SKU分摊明细记录不存在"));
-                continue;
-            }
-            if (ConfirmStatusEnum.WAIT_CONFIRM.getCode().equals(entity.getStatus())) {
-                resultDTOS.add(BatchResultDTO.fail(entity.getId(),entity.getSourceCode(),"只有已确认的单据可以生成物流大表数据"));
-                continue;
-            }
-            FirstMileDeliveryEntity deliveryEntity = deliveryEntities.stream().filter(req -> req.getId().equals(entity.getSourceId())).findFirst().orElse(null);
-            if (ObjectUtil.isEmpty(deliveryEntity)) {
-                resultDTOS.add(BatchResultDTO.fail(entity.getId(),entity.getSourceCode(),"未找到关联的头程发货单信息"));
-                continue;
-            }
-            List<FirstMileDeliveryDetailEntity> deliveryDetailEntities = firstMileDeliveryDetailEntities.stream().filter(req -> req.getMainId().equals(deliveryEntity.getId())).collect(Collectors.toList());
-
-            BatchResultDTO result = null;
-            try {
-                result = logisticsLargeService.generateFirstMileLogisticsTable(entity, firstMileSkuCostAllocationEntity, detailEntityList, deliveryEntity, deliveryDetailEntities);
-            } catch (Exception e) {
-                log.error("头程费用分摊生成物流大表失败{}", e);
-                result = BatchResultDTO.fail(entity.getId(), entity.getBusinessCode(), e.getMessage());
-            }
-            resultDTOS.add(result);
+        for (FirstMileCostAllocationEntity entity : costAllocationEntityList) {
+            List<FirstMileSkuCostAllocationEntity> skuCostAllocationEntityList = skuCostAllocationEntityAllList.stream().filter(req -> req.getMainId().equals(entity.getId())).collect(Collectors.toList());
+            logisticsLargeService.generateFirstMileLogistics(resultDTOS, skuCostAllocationDetailEntities, deliveryEntities, firstMileDeliveryDetailEntities, entity, skuCostAllocationEntityList);
         }
-
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
+
 
 
     /**
