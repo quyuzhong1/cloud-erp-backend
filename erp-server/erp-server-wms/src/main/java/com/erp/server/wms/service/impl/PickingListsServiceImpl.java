@@ -300,6 +300,9 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
     @Transactional(rollbackFor = Exception.class)
     public void updateByChange(List<PickingDetailEntity> updatePickingList, List<String> originSourceDetailIds) {
         if(CollectionUtils.isEmpty(updatePickingList)){
+            if(CollectionUtils.isEmpty(originSourceDetailIds)){
+                return;
+            }
             // 反写要货申请的拣货数量
             requisitionApplicationService.writeBackData(originSourceDetailIds, Boolean.TRUE);
             return;
