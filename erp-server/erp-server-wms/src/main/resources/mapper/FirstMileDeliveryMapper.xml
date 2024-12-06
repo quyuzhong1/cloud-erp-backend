@@ -497,7 +497,6 @@
         CEIL ( wcs.box_height ) AS height,
         wcd.sku_id,
         wcd.sku_no,
-        wcd.pack_qty,
         wcd.sku_no AS sku,
         fmd.code AS deliveryCode,
         CASE
