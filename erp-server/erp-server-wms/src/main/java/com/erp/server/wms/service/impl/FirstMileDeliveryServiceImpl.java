@@ -2081,7 +2081,8 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
 
         List<WmsCartonDetailDTO.ListPackingDetailPackQtyDTO> listPackingDetailPackQtyDTOS = baseMapper.ListPackingDetailPackQty(dto.getParams(), dto.getParams().getIds(), dto.getParams().getPermissionSql());
         //根据id汇总统计装箱总数量
-        Map<String, Integer> boxQtyMap = listPackingDetailPackQtyDTOS.stream().collect(Collectors.toMap(WmsCartonDetailDTO.ListPackingDetailPackQtyDTO::getId, WmsCartonDetailDTO.ListPackingDetailPackQtyDTO::getPackQty));
+        Map<String, Integer> boxQtyMap = listPackingDetailPackQtyDTOS.stream().collect(Collectors.groupingBy(WmsCartonDetailDTO.ListPackingDetailPackQtyDTO::getId, Collectors.summingInt(WmsCartonDetailDTO.ListPackingDetailPackQtyDTO::getPackQty)));
+
         //补充数据
         buildPackingDetailTask(page.getRecords());
         //切换为装箱清单导出
