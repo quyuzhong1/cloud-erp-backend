@@ -13,6 +13,7 @@
        <result column="version" property="version" />
        <result column="is_deleted" property="isDeleted" />
        <result column="transfer_declare_id" property="transferDeclareId" />
+       <result column="declare_reconciliation_detail_id" property="declareReconciliationDetailId" />
        <result column="report_date" property="reportDate" />
        <result column="account_date" property="accountDate" />
        <result column="report_status" property="reportStatus" />
@@ -30,7 +31,7 @@
         update_time,
         version,
         is_deleted,
-        transfer_declare_id, report_date, account_date, report_status, big_table_status
+        transfer_declare_id, declare_reconciliation_detail_id, report_date, account_date, report_status, big_table_status
     </sql>
 
 

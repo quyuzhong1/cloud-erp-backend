@@ -10,6 +10,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -122,6 +123,7 @@ import com.erp.model.wms.entity.SoOutstockEntity;
 import com.erp.model.wms.entity.SoReturnInstockDetailEntity;
 import com.erp.model.wms.entity.SoReturnInstockEntity;
 import com.erp.model.wms.entity.WarehouseEntity;
+import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
@@ -204,6 +206,8 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
     private SmallBagCostAllocationService smallBagCostAllocationService;
     @Resource
     private SmallBagCostAllocationDetailService smallBagCostAllocationDetailService;
+    @Resource
+    private DmpTaskFeign dmpTaskFeign;
     
 
     @GlobalTransactional(rollbackFor = Exception.class)
@@ -1668,7 +1672,19 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 					costViewDTOList = new ArrayList<>();
 				}
 				BigDecimal costValueSum = costViewDTOList.stream().map(CostViewDTO::getCostValue).reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
-				smallBagCostAllocationDetailEntity.setBillAmount(costValueSum);
+				String allocatedCurrency = "CNY";
+				BigDecimal rate = BigDecimal.ONE;
+				if(CollUtil.isNotEmpty(costViewDTOList)) {
+					allocatedCurrency = costViewDTOList.get(0).getCurrency();
+					if(!"CNY".equals(allocatedCurrency)) {
+						rate = dmpTaskFeign.getRate(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), allocatedCurrency);
+						if(ObjectUtil.isEmpty(rate)){
+				            log.error("币别【{}】,汇率为空，请维护汇率后再提交",allocatedCurrency);
+				            throw new ServiceException("汇率为空，请维护汇率后再提交");
+				        }
+					}
+				}
+				smallBagCostAllocationDetailEntity.setBillAmount(costValueSum.multiply(rate));
 				smallBagCostAllocationDetailEntity.setFeeType(feeType);
 				String feeAllocationType = feeTypeSettingMap.getValue();
 				if(org.apache.commons.lang3.StringUtils.isBlank(feeAllocationType)) {
@@ -1684,10 +1700,6 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 				}else {
 					smallBagCostAllocationDetailEntity.setAllocatedAmount(costValueSum.subtract(addSmallBagCostAllocationDetailEntityList.stream()
 							.filter(a -> a.getFeeType().equals(feeType)).map(SmallBagCostAllocationDetailEntity::getAllocatedAmount).reduce(BigDecimal::add).orElse(BigDecimal.ZERO)));
-				}
-				String allocatedCurrency = "CNY";
-				if(CollUtil.isNotEmpty(costViewDTOList)) {
-					allocatedCurrency = costViewDTOList.get(0).getCurrency();
 				}
 				smallBagCostAllocationDetailEntity.setAllocatedCurrency(allocatedCurrency);
 				smallBagCostAllocationDetailEntity.setProductAllocatedAmount(smallBagCostAllocationDetailEntity.getAllocatedAmount()

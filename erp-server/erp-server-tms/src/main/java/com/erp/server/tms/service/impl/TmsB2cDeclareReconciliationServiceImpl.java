@@ -28,6 +28,7 @@ import com.erp.model.tms.dto.TmsB2cDeclareReconciliationDetailDTO;
 import com.erp.model.tms.entity.LogisticsBillCostEntity;
 import com.erp.model.tms.entity.TmsB2cDeclareReconciliationDetailEntity;
 import com.erp.model.tms.entity.TmsB2cDeclareReconciliationEntity;
+import com.erp.model.tms.entity.TransferDeclareCostAllocationMainEntity;
 import com.erp.model.tms.entity.TransferLogisticsSupplierEntity;
 import com.erp.model.tms.enums.ReconciliationStatusEnum;
 import com.erp.model.tms.enums.TmsB2cDeclareReconciliationPayStatusEnum;
@@ -44,10 +45,13 @@ import com.erp.server.tms.mapper.TmsB2cDeclareReconciliationMapper;
 import com.erp.server.tms.service.OperateLogService;
 import com.erp.server.tms.service.TmsB2cDeclareReconciliationDetailService;
 import com.erp.server.tms.service.TmsB2cDeclareReconciliationService;
+import com.erp.server.tms.service.TransferDeclareCostAllocationMainService;
+import com.erp.server.tms.service.TransferDeclareService;
 import com.erp.server.tms.service.TransferLogisticsSupplierService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -101,6 +105,10 @@ public class TmsB2cDeclareReconciliationServiceImpl extends SuperServiceImpl<Tms
     private TransferLogisticsSupplierService transferLogisticsSupplierService;
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
+    @Resource
+    private TransferDeclareService transferDeclareService;
+    @Resource
+    private TransferDeclareCostAllocationMainService transferDeclareCostAllocationMainService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -297,6 +305,18 @@ public class TmsB2cDeclareReconciliationServiceImpl extends SuperServiceImpl<Tms
         TmsB2cDeclareReconciliationEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到b2c报关对账单单数据"));
         // 反审核条件判断
         validateDisApprove(entity);
+        
+        List<TmsB2cDeclareReconciliationDetailEntity> tmsB2cDeclareReconciliationDetailEntityList = tmsB2cDeclareReconciliationDetailService
+        		.lambdaQuery().eq(TmsB2cDeclareReconciliationDetailEntity::getMainId, id).list();
+        if(CollUtil.isNotEmpty(tmsB2cDeclareReconciliationDetailEntityList)) {
+        	Map<String, String> idSoCodeMap = tmsB2cDeclareReconciliationDetailEntityList.stream().collect(Collectors.toMap(TmsB2cDeclareReconciliationDetailEntity::getId, TmsB2cDeclareReconciliationDetailEntity::getSoCode));
+        	if(!idSoCodeMap.isEmpty()) {
+        		List<TransferDeclareCostAllocationMainEntity> transferDeclareCostAllocationMainEntityList = transferDeclareCostAllocationMainService.lambdaQuery().in(TransferDeclareCostAllocationMainEntity::getDeclareReconciliationDetailId, idSoCodeMap.keySet()).list();
+        		throw new ServiceException("销售出库单" + 
+        		transferDeclareCostAllocationMainEntityList.stream().map(t -> idSoCodeMap.get(t.getDeclareReconciliationDetailId())).collect(Collectors.joining("、")) 
+        		+ "已中转分摊");
+        	}
+        }
 
         // 更新审核信息
         updateForDisApprove(id, ApproveStatusEnum.WAIT_SUBMIT.getStatus());

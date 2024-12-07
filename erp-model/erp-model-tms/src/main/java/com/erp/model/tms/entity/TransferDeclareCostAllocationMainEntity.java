@@ -16,7 +16,7 @@ import com.common.business.enums.ApproveStatusEnum;
  * </p>
  *
  * @author shukai
- * @since 2024-12-06
+ * @since 2024-12-07
 */
 @Data
 @EqualsAndHashCode(callSuper = true)
@@ -29,6 +29,11 @@ public class TransferDeclareCostAllocationMainEntity extends BaseEntity<Transfer
     */
     @TableField("transfer_declare_id")
     private String transferDeclareId;
+    /**
+    * 对账明细id
+    */
+    @TableField("declare_reconciliation_detail_id")
+    private String declareReconciliationDetailId;
     /**
     * 核算期间
     */
@@ -52,6 +57,8 @@ public class TransferDeclareCostAllocationMainEntity extends BaseEntity<Transfer
 
 
     public static final String TRANSFER_DECLARE_ID = "transfer_declare_id";
+
+    public static final String DECLARE_RECONCILIATION_DETAIL_ID = "declare_reconciliation_detail_id";
 
     public static final String REPORT_DATE = "report_date";
 

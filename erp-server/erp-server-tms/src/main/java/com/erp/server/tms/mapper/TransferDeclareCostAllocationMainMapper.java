@@ -11,7 +11,7 @@ import org.apache.ibatis.annotations.Mapper;
  * </p>
  *
  * @author shukai
- * @since 2024-12-06
+ * @since 2024-12-07
  */
 @Mapper
 public interface TransferDeclareCostAllocationMainMapper extends BaseMapper<TransferDeclareCostAllocationMainEntity> {

@@ -97,9 +97,6 @@ public class LogisticsLargeController extends BaseController {
     @Resource
     private TransferDeclareCostAllocationMainService transferDeclareCostAllocationMainService;
 
-    @Resource
-    private TransferDeclareCostAllocationSubService transferDeclareCostAllocationSubService;
-
 
     /**
      * 变更分页展示
@@ -267,13 +264,7 @@ public class LogisticsLargeController extends BaseController {
     @LogAction(value = LogActionEnum.INSERT, desc = "中转费用分摊生成物流大表")
     public ApiResult<List<BatchResultDTO>> generateTransferCostAllocationTable(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>();
-        List<TransferDeclareCostAllocationEntity> entityList = transferDeclareCostAllocationService.listByIds(dto.getIds());
-        List<String> ids = entityList.stream().map(TransferDeclareCostAllocationEntity::getMainId).distinct().collect(Collectors.toList());
-
-        List<TransferDeclareCostAllocationSubEntity> transferDeclareCostAllocationSubEntities = transferDeclareCostAllocationSubService.listByIds(ids);
-
-        List<String> mainIds = transferDeclareCostAllocationSubEntities.stream().map(TransferDeclareCostAllocationSubEntity::getMainId).distinct().collect(Collectors.toList());
-        List<TransferDeclareCostAllocationMainEntity> transferDeclareCostAllocationMainEntities = transferDeclareCostAllocationMainService.listByIds(mainIds);
+        List<TransferDeclareCostAllocationMainEntity> transferDeclareCostAllocationMainEntities = transferDeclareCostAllocationMainService.listByIds(dto.getIds());
 
         //根据整单添加操作
         for (TransferDeclareCostAllocationMainEntity transferDeclareCostAllocationMainEntity : transferDeclareCostAllocationMainEntities) {

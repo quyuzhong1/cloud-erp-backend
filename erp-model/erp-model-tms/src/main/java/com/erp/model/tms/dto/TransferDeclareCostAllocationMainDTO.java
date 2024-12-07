@@ -15,7 +15,7 @@ import javax.validation.constraints.Size;
  * </p>
  *
  * @author shukai
- * @since 2024-12-06
+ * @since 2024-12-07
 */
 @Data
 @NoArgsConstructor
@@ -40,6 +40,11 @@ public class TransferDeclareCostAllocationMainDTO implements Serializable {
         * 中转报关id
         */
         private String transferDeclareId;
+
+        /**
+        * 对账明细id
+        */
+        private String declareReconciliationDetailId;
 
         /**
         * 核算期间
@@ -99,6 +104,13 @@ public class TransferDeclareCostAllocationMainDTO implements Serializable {
         @NotBlank(message = "中转报关id不能为空")
         @Size(max = 19,message = "中转报关id最大长度不能超过19位")
         private String transferDeclareId;
+
+        /**
+        * 对账明细id
+        */
+        @NotBlank(message = "对账明细id不能为空")
+        @Size(max = 19,message = "对账明细id最大长度不能超过19位")
+        private String declareReconciliationDetailId;
 
         /**
         * 核算期间

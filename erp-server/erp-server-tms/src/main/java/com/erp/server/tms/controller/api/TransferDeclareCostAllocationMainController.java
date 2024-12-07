@@ -24,7 +24,7 @@ import com.erp.model.tms.dto.TransferDeclareCostAllocationMainDTO;
  * 中转费用分摊主表
  *
  * @author shukai
- * @since 2024-12-06
+ * @since 2024-12-07
  */
 @Slf4j
 @RestController
@@ -38,7 +38,7 @@ public class TransferDeclareCostAllocationMainController extends BaseController 
     /**
     * 新增
     * @author shukai
-    * @date:  2024-12-06
+    * @date:  2024-12-07
     * @param dto
     * @return ApiResult<String>
     */
@@ -51,7 +51,7 @@ public class TransferDeclareCostAllocationMainController extends BaseController 
     /**
     * 修改
     * @author shukai
-    * @date:  2024-12-06
+    * @date:  2024-12-07
     * @param dto
     * @return ApiResult
     */

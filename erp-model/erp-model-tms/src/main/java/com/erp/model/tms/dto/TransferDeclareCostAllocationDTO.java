@@ -111,12 +111,22 @@ public class TransferDeclareCostAllocationDTO implements Serializable {
          /**
           * 店铺名称
           */
+         private String shopId;
+         
+         /**
+          * 店铺名称
+          */
          private String shopName;
          
          /**
           * 国家
           */
          private String toCountry;
+         
+         /**
+          * sku
+          */
+          private String skuId;
          
          /**
          * sku
@@ -137,6 +147,10 @@ public class TransferDeclareCostAllocationDTO implements Serializable {
      	 * 预估收费重
      	 */
      	private BigDecimal billingWeight;
+     	/**
+     	 * 预估收费重单位
+     	 */
+     	private String estimateWeightUnit;
      	
      	/**
      	 * 实际计费重

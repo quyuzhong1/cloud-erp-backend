@@ -169,6 +169,19 @@ public class TmsB2cDeclareReconciliationDetailServiceImpl extends SuperServiceIm
         if(!save) {
             throw new ServiceException("报关对账单明细保存失败");
         }
+        List<String> toBeConfirmIds = list.stream().filter(l -> TmsB2cDeclareReconciliationStatusEnum.TO_BE_CONFIRM.getCode().equals(l.getStatus())).map(TmsB2cDeclareReconciliationDetailEntity::getId).collect(Collectors.toList());
+		if(CollUtil.isNotEmpty(toBeConfirmIds)) {
+			lambdaUpdate().in(TmsB2cDeclareReconciliationDetailEntity::getId, toBeConfirmIds)
+        	.set(TmsB2cDeclareReconciliationDetailEntity::getConfirmDate, null)
+        	.update();
+		}
+		List<String> confirmIds = list.stream().filter(l -> !TmsB2cDeclareReconciliationStatusEnum.TO_BE_CONFIRM.getCode().equals(l.getStatus())).map(TmsB2cDeclareReconciliationDetailEntity::getId).collect(Collectors.toList());
+		if(CollUtil.isNotEmpty(confirmIds)) {
+			lambdaUpdate().in(TmsB2cDeclareReconciliationDetailEntity::getId, confirmIds)
+				.isNull(TmsB2cDeclareReconciliationDetailEntity::getConfirmDate)
+				.set(TmsB2cDeclareReconciliationDetailEntity::getConfirmDate, new Date())
+				.update();
+		}
 
         //更新费用信息
         addOrUpdateCost(list);

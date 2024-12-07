@@ -10,7 +10,7 @@ import org.apache.commons.lang3.StringUtils;
  * </p>
  *
  * @author shukai
- * @since 2024-12-06 11:37:40
+ * @since 2024-12-07 09:55:27
  */
 public enum TransferDeclareCostAllocationMainBigTableStatusEnum implements EnumMessage {
 	TODO("toDo", "待生成"),
