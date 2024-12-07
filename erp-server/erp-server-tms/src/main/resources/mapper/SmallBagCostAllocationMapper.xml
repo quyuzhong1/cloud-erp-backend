@@ -55,6 +55,7 @@
             k.to_country,
             g.sku_no,
             g.sku_id,
+            g.unit_cost,
             g.delivery_qty,
             j.billing_weight,
             j.billing_weight_logistics,

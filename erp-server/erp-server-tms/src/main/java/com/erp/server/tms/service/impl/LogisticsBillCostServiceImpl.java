@@ -9,6 +9,7 @@ import java.io.OutputStream;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -1596,7 +1597,9 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 		Map<String, String> wareIdOrgIdMaps = FeignQuery.getByIds(WarehouseEntity.class, soOutstockDetailEntityList.stream().map(SoOutstockDetailEntity::getWarehouseId).collect(Collectors.toList()))
 				.stream().collect(Collectors.toMap(WarehouseEntity::getId, WarehouseEntity::getOrgId));
 		Map<String, InventorySkuCostDetailEntity> unInventorySkuCostMap = new HashMap<>();
-		List<InventorySkuCostEntity> inventorySkuCostEntityList = inventorySkuCostService.lambdaQuery().eq(InventorySkuCostEntity::getAllocatedMonth, reportDate + "-01")
+		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+		LocalDate parse = LocalDate.parse(reportDate + "-01", formatter);
+		List<InventorySkuCostEntity> inventorySkuCostEntityList = inventorySkuCostService.lambdaQuery().eq(InventorySkuCostEntity::getAllocatedMonth, parse)
 				.eq(InventorySkuCostEntity::getStatus, "approve")
 				.in(InventorySkuCostEntity::getCompanyId, wareIdOrgIdMaps.values())
 				.list();
@@ -1671,13 +1674,16 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 			String orgId = wareIdOrgIdMaps.get(soOutstockDetailEntity.getWarehouseId());
 			String orgName = orgIdNameMaps.get(orgId);
 			
-			BigDecimal skuCostPre = null;
+			BigDecimal skuCostPre = BigDecimal.ZERO;
 			InventorySkuCostDetailEntity inventorySkuCostDetailEntity = unInventorySkuCostMap.get(orgId + "_" + skuId);
 			if(inventorySkuCostDetailEntity != null) {
 				BigDecimal skuCost = inventorySkuCostDetailEntity.getProductCost();
 				if(totalSkuCost.compareTo(BigDecimal.ZERO) != 0 && skuCost != null) {
 					skuCostPre = skuCost.divide(totalSkuCost, 2, RoundingMode.HALF_UP);
 				}
+				smallBagCostAllocationEntity.setUnitCost(skuCost);
+			}else {
+				throw new ServiceException(orgName + reportDate + "月份下sku=" + skuNo + "未配置分摊成本");
 			}
 			BigDecimal skuWeightCostPre = BigDecimal.ZERO;
 			BigDecimal skuWeightCost = skuWeightCostMaps.get(skuId);
@@ -1729,9 +1735,6 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 					feeAllocationType = CostAllocationEnum.WEIGHT_ALLOCATION.getCode();
 				}
 				smallBagCostAllocationDetailEntity.setFeeAllocationType(feeAllocationType);
-				if(CostAllocationEnum.COST_ALLOCATION.getCode().equals(feeAllocationType) && skuCostPre == null) {
-					throw new ServiceException("使用成本分摊时，" + orgName + reportDate + skuNo + "未配置分摊成本");
-				}
 				if(i < soOutstockDetailEntityList.size()) {
 					if(CostAllocationEnum.WEIGHT_ALLOCATION.getCode().equals(feeAllocationType)) {
 						smallBagCostAllocationDetailEntity.setAllocatedAmount(costValueSum.multiply(skuWeightCostPre).setScale(2, RoundingMode.HALF_UP));

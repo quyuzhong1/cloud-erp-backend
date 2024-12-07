@@ -196,10 +196,7 @@ public class SmallBagCostAllocationServiceImpl extends SuperServiceImpl<SmallBag
 		List<String> skuIds = records.stream().map(ListDTO::getSkuId).collect(Collectors.toList());
 		List<ProductDetailEntity> productDetailEntityList = FeignQuery.create(ProductDetailEntity.class).in(ProductDetailEntity::getId, 
 				skuIds).list();
-		List<ProductCostEntity> productCostEntityList = FeignQuery.create(ProductCostEntity.class).in(ProductCostEntity::getSkuId, 
-				skuIds).list();
 		Map<String, String> skuIdNameMap = productDetailEntityList.stream().collect(Collectors.toMap(ProductDetailEntity::getId, ProductDetailEntity::getName));
-		Map<String, BigDecimal> skuIdCostMap = productCostEntityList.stream().filter(p -> p.getActualTaxCost() != null).collect(Collectors.toMap(ProductCostEntity::getId, ProductCostEntity::getActualTaxCost));
 		Map<String, String> currencyIdSymbolMap = FeignQuery.getByIds(DictCurrencyEntity.class , records.stream().map(ListDTO::getCurrency).collect(Collectors.toList()))
 			.stream().collect(Collectors.toMap(DictCurrencyEntity::getId, DictCurrencyEntity::getSymbol));
 		Map<String, LogisticsChannelEntity> channelIdMaps = logisticsChannelService.listByIds(records.stream().map(ListDTO::getChannelId).collect(Collectors.toList())).stream().collect(Collectors.toMap(LogisticsChannelEntity::getId, l -> l));
@@ -214,9 +211,8 @@ public class SmallBagCostAllocationServiceImpl extends SuperServiceImpl<SmallBag
 			dto.setBigTableStatusName(SmallBagCostAllocationBigTableStatusEnum.getName(dto.getBigTableStatus()));
 			String skuId = dto.getSkuId();
 			dto.setSkuName(skuIdNameMap.get(skuId));
-			BigDecimal unitCost = skuIdCostMap.get(skuId);
+			BigDecimal unitCost = dto.getUnitCost();
 			if(unitCost != null) {
-				dto.setUnitCost(unitCost);
 				dto.setTotalCost(unitCost.multiply(new BigDecimal(dto.getDeliveryQty())));
 			}
 			dto.setFeeSource(SmallBagCostAllocationMainFeeSourceEnum.getName(dto.getFeeSource()));
