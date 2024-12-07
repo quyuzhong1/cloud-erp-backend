@@ -3,6 +3,7 @@ package com.erp.server.tms.service.impl;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -55,6 +56,7 @@ import com.erp.model.tms.enums.SmallBagCostAllocationBigTableStatusEnum;
 import com.erp.model.tms.enums.SmallBagCostAllocationMainFeeSourceEnum;
 import com.erp.model.tms.enums.SmallBagCostAllocationReportStatusEnum;
 import com.erp.model.tms.enums.WeightAllocationEnum;
+import com.erp.model.tms.enums.WeightAllocationSmallBagEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.tms.mapper.SmallBagCostAllocationMapper;
 import com.erp.server.tms.service.LogisticsBillCostService;
@@ -197,7 +199,7 @@ public class SmallBagCostAllocationServiceImpl extends SuperServiceImpl<SmallBag
 		List<ProductCostEntity> productCostEntityList = FeignQuery.create(ProductCostEntity.class).in(ProductCostEntity::getSkuId, 
 				skuIds).list();
 		Map<String, String> skuIdNameMap = productDetailEntityList.stream().collect(Collectors.toMap(ProductDetailEntity::getId, ProductDetailEntity::getName));
-		Map<String, BigDecimal> skuIdCostMap = productCostEntityList.stream().collect(Collectors.toMap(ProductCostEntity::getId, ProductCostEntity::getActualTaxCost));
+		Map<String, BigDecimal> skuIdCostMap = productCostEntityList.stream().filter(p -> p.getActualTaxCost() != null).collect(Collectors.toMap(ProductCostEntity::getId, ProductCostEntity::getActualTaxCost));
 		Map<String, String> currencyIdSymbolMap = FeignQuery.getByIds(DictCurrencyEntity.class , records.stream().map(ListDTO::getCurrency).collect(Collectors.toList()))
 			.stream().collect(Collectors.toMap(DictCurrencyEntity::getId, DictCurrencyEntity::getSymbol));
 		Map<String, LogisticsChannelEntity> channelIdMaps = logisticsChannelService.listByIds(records.stream().map(ListDTO::getChannelId).collect(Collectors.toList())).stream().collect(Collectors.toMap(LogisticsChannelEntity::getId, l -> l));
@@ -225,7 +227,7 @@ public class SmallBagCostAllocationServiceImpl extends SuperServiceImpl<SmallBag
 			}
 			dto.setFeeTypeName(AllocationFeeTypeEnum.getName(dto.getFeeType()));
 			dto.setFeeAllocationTypeName(CostAllocationEnum.getName(dto.getFeeAllocationType()));
-			dto.setWeightAllocationTypeName(WeightAllocationEnum.getName(dto.getWeightAllocationType()));
+			dto.setWeightAllocationTypeName(WeightAllocationSmallBagEnum.getName(dto.getWeightAllocationType()));
 			dto.setCurrencySymbol(currencyIdSymbolMap.get(dto.getCurrency()));
 		}
 	}

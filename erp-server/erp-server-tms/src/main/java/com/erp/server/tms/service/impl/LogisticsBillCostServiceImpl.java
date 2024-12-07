@@ -90,6 +90,8 @@ import com.erp.model.tms.dto.TmsCostDetailDTO.DetailDTO;
 import com.erp.model.tms.dto.TmsCostDetailDTO.UpdateDTO;
 import com.erp.model.tms.dto.excel.LogisticsBillCostExcelDTO;
 import com.erp.model.tms.entity.CfgSettingEntity;
+import com.erp.model.tms.entity.InventorySkuCostDetailEntity;
+import com.erp.model.tms.entity.InventorySkuCostEntity;
 import com.erp.model.tms.entity.LogisticsBillCostEntity;
 import com.erp.model.tms.entity.LogisticsBillDetailEntity;
 import com.erp.model.tms.entity.LogisticsBillEntity;
@@ -133,6 +135,8 @@ import com.erp.server.tms.query.LogisticsBillCostQueryHandler;
 import com.erp.server.tms.query.LogisticsLastMileCostQueryHandler;
 import com.erp.server.tms.service.CfgSettingService;
 import com.erp.server.tms.service.DictBasicService;
+import com.erp.server.tms.service.InventorySkuCostDetailService;
+import com.erp.server.tms.service.InventorySkuCostService;
 import com.erp.server.tms.service.LogisticsBillCostService;
 import com.erp.server.tms.service.LogisticsBillDetailService;
 import com.erp.server.tms.service.LogisticsBillService;
@@ -208,6 +212,10 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
     private SmallBagCostAllocationDetailService smallBagCostAllocationDetailService;
     @Resource
     private DmpTaskFeign dmpTaskFeign;
+    @Resource
+    private InventorySkuCostService inventorySkuCostService;
+    @Resource
+    private InventorySkuCostDetailService inventorySkuCostDetailService;
     
 
     @GlobalTransactional(rollbackFor = Exception.class)
@@ -1585,10 +1593,27 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 			}
 		}
 		
-		List<ProductCostEntity> productCostEntityList = FeignQuery.create(ProductCostEntity.class)
-			.eq(ProductCostEntity::getSkuId, soOutstockDetailEntityList.stream().map(SoOutstockDetailEntity::getSkuId).collect(Collectors.toList()))
-			.list();
-		Map<String, BigDecimal> skuCostMaps = productCostEntityList.stream().collect(Collectors.toMap(ProductCostEntity::getSkuId, ProductCostEntity::getTargetTaxCost));
+		Map<String, String> wareIdOrgIdMaps = FeignQuery.getByIds(WarehouseEntity.class, soOutstockDetailEntityList.stream().map(SoOutstockDetailEntity::getWarehouseId).collect(Collectors.toList()))
+				.stream().collect(Collectors.toMap(WarehouseEntity::getId, WarehouseEntity::getOrgId));
+		Map<String, InventorySkuCostDetailEntity> unInventorySkuCostMap = new HashMap<>();
+		List<InventorySkuCostEntity> inventorySkuCostEntityList = inventorySkuCostService.lambdaQuery().eq(InventorySkuCostEntity::getAllocatedMonth, reportDate + "-01")
+				.eq(InventorySkuCostEntity::getStatus, "approve")
+				.in(InventorySkuCostEntity::getCompanyId, wareIdOrgIdMaps.values())
+				.list();
+		if(CollUtil.isNotEmpty(inventorySkuCostEntityList)) {
+			Map<String, InventorySkuCostEntity> idEntityMaps = inventorySkuCostEntityList.stream().collect(Collectors.toMap(InventorySkuCostEntity::getId, i -> i));
+			List<InventorySkuCostDetailEntity> inventorySkuCostDetailEntityList = inventorySkuCostDetailService.lambdaQuery().in(InventorySkuCostDetailEntity::getMainId, idEntityMaps.keySet())
+				.in(InventorySkuCostDetailEntity::getSkuId , soOutstockDetailEntityList.stream().map(SoOutstockDetailEntity::getSkuId).collect(Collectors.toList())).list();
+			if(CollUtil.isNotEmpty(inventorySkuCostDetailEntityList)) {
+				for(InventorySkuCostDetailEntity i : inventorySkuCostDetailEntityList) {
+					InventorySkuCostEntity inventorySkuCostEntity = idEntityMaps.get(i.getMainId());
+					String companyId = inventorySkuCostEntity.getCompanyId();
+					String skuId = i.getSkuId();
+					unInventorySkuCostMap.put(companyId + "_" + skuId, i);
+				}
+			}
+		}
+		
 		BigDecimal totalSkuCost = BigDecimal.ZERO;
 		List<ProductPackEntity> productPackEntityList = FeignQuery.create(ProductPackEntity.class)
 				.eq(ProductPackEntity::getSkuId, soOutstockDetailEntityList.stream().map(SoOutstockDetailEntity::getSkuId).collect(Collectors.toList()))
@@ -1598,9 +1623,10 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 		for(SoOutstockDetailEntity soOutstockDetailEntity : soOutstockDetailEntityList) {
 			String skuId = soOutstockDetailEntity.getSkuId();
 			Integer actualQty = soOutstockDetailEntity.getActualQty();
-			BigDecimal skuCost = skuCostMaps.get(skuId);
-			if(skuCost != null) {
-				totalSkuCost = totalSkuCost.add(skuCost.multiply(new BigDecimal(actualQty)));
+			String orgId = wareIdOrgIdMaps.get(soOutstockDetailEntity.getWarehouseId());
+			InventorySkuCostDetailEntity inventorySkuCostDetailEntity = unInventorySkuCostMap.get(orgId + "_" + skuId);
+			if(inventorySkuCostDetailEntity != null) {
+				totalSkuCost = totalSkuCost.add(inventorySkuCostDetailEntity.getProductCost().multiply(new BigDecimal(actualQty)));
 			}
 			BigDecimal skuWeightCost = skuWeightCostMaps.get(skuId);
 			if(skuWeightCost != null) {
@@ -1620,24 +1646,38 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 		soOutstockDetailEntityList.sort((s1 , s2) -> s2.getActualQty().compareTo(s1.getActualQty()));
 		int i = 0;
 		
-		Map<String, String> wareIdOrgIdMaps = FeignQuery.getByIds(WarehouseEntity.class, soOutstockDetailEntityList.stream().map(SoOutstockDetailEntity::getWarehouseId).collect(Collectors.toList()))
-				.stream().collect(Collectors.toMap(WarehouseEntity::getId, WarehouseEntity::getOrgId));
 		Map<String, String> orgIdNameMaps = sysUserFeign.getAccountingCompanyList(new ArrayList<>(wareIdOrgIdMaps.values())).stream().collect(Collectors.toMap(CodeDTO::getId, CodeDTO::getName));
+		
+		if(WeightAllocationEnum.OUTSTOCK_CHARGED_WEIGHT.getCode().equals(weightPackageAllocation)) {
+			String channelId = entity.getChannelId();
+			LogisticsChannelEntity logisticsChannelEntity = logisticsChannelService.getById(channelId);
+			String feeRule = logisticsChannelEntity.getFeeRule();
+			if(StringUtils.isNotBlank(feeRule) && !ShippingFeeRuleEnum.BILLING_WEIGHT.getCode().equals(feeRule)) {
+				weightPackageAllocation = feeRule;
+			}
+		}
 		for(SoOutstockDetailEntity soOutstockDetailEntity : soOutstockDetailEntityList) {
 			i = i + 1;
 			String skuId = soOutstockDetailEntity.getSkuId();
+			String skuNo = soOutstockDetailEntity.getSkuNo();
 			SmallBagCostAllocationEntity smallBagCostAllocationEntity = new SmallBagCostAllocationEntity();
 			String mainId = identifierGenerator.nextId(smallBagCostAllocationEntity).toString();
 			smallBagCostAllocationEntity.setId(mainId);
 			smallBagCostAllocationEntity.setMainId(smallBagCostAllocationMainId);
 			smallBagCostAllocationEntity.setSkuId(skuId);
-			smallBagCostAllocationEntity.setSkuNo(soOutstockDetailEntity.getSkuNo());
+			smallBagCostAllocationEntity.setSkuNo(skuNo);
 			smallBagCostAllocationEntity.setOutstockDetailId(soOutstockDetailEntity.getId());
 			
-			BigDecimal skuCostPre = BigDecimal.ZERO;
-			BigDecimal skuCost = skuCostMaps.get(skuId);
-			if(totalSkuCost.compareTo(BigDecimal.ZERO) != 0 && skuCost != null) {
-				skuCostPre = skuCost.divide(totalSkuCost, 2, RoundingMode.HALF_UP);
+			String orgId = wareIdOrgIdMaps.get(soOutstockDetailEntity.getWarehouseId());
+			String orgName = orgIdNameMaps.get(orgId);
+			
+			BigDecimal skuCostPre = null;
+			InventorySkuCostDetailEntity inventorySkuCostDetailEntity = unInventorySkuCostMap.get(orgId + "_" + skuId);
+			if(inventorySkuCostDetailEntity != null) {
+				BigDecimal skuCost = inventorySkuCostDetailEntity.getProductCost();
+				if(totalSkuCost.compareTo(BigDecimal.ZERO) != 0 && skuCost != null) {
+					skuCostPre = skuCost.divide(totalSkuCost, 2, RoundingMode.HALF_UP);
+				}
 			}
 			BigDecimal skuWeightCostPre = BigDecimal.ZERO;
 			BigDecimal skuWeightCost = skuWeightCostMaps.get(skuId);
@@ -1661,8 +1701,6 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 			smallBagCostAllocationEntity.setSkuWeight(skuWeight);
 			addSmallBagCostAllocationEntityList.add(smallBagCostAllocationEntity);
 			
-			String orgId = wareIdOrgIdMaps.get(soOutstockDetailEntity.getWarehouseId());
-			String orgName = orgIdNameMaps.get(orgId);
 			for(Map.Entry<String, String> feeTypeSettingMap : feeTypeSettingMaps.entrySet()) {
 				SmallBagCostAllocationDetailEntity smallBagCostAllocationDetailEntity = new SmallBagCostAllocationDetailEntity();
 				smallBagCostAllocationDetailEntity.setMainId(mainId);
@@ -1691,6 +1729,9 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 					feeAllocationType = CostAllocationEnum.WEIGHT_ALLOCATION.getCode();
 				}
 				smallBagCostAllocationDetailEntity.setFeeAllocationType(feeAllocationType);
+				if(CostAllocationEnum.COST_ALLOCATION.getCode().equals(feeAllocationType) && skuCostPre == null) {
+					throw new ServiceException("使用成本分摊时，" + orgName + reportDate + skuNo + "未配置分摊成本");
+				}
 				if(i < soOutstockDetailEntityList.size()) {
 					if(CostAllocationEnum.WEIGHT_ALLOCATION.getCode().equals(feeAllocationType)) {
 						smallBagCostAllocationDetailEntity.setAllocatedAmount(costValueSum.multiply(skuWeightCostPre).setScale(2, RoundingMode.HALF_UP));
