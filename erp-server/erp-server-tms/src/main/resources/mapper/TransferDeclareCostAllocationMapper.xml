@@ -36,45 +36,41 @@
 <select id="paging" resultType="com.erp.model.tms.dto.TransferDeclareCostAllocationDTO$ListDTO">
 	select
             g.id,
-            t.cost_id,
-            t.report_date,
-            t.account_date,
-            t.report_status,
-            j.reconciliation_status,
-            t.big_table_status,
-            j.channel_id,
-            k.outstock_code,
-            j.transport_no,
-            j.track_no,
-            k.delivery_time,
-            l.sign_time,
-            j.confirm_time,
-            k.shop_name,
-            k.to_country,
-            g.sku_no,
-            g.sku_id,
-            g.delivery_qty,
-            j.billing_weight,
-            j.billing_weight_logistics,
-            g.sku_weight,
-            t.fee_source,
-            h.fee_type,
-            h.bill_amount,
-            h.allocated_amount,
-            h.product_allocated_amount,
-            h.org_name,
-            h.fee_allocation_type,
-            h.weight_allocation_type,
-            h.create_time,
-            g.update_user_name,
-            g.update_time,
-            h.allocated_currency currency
-        from small_bag_cost_allocation_main t
-        left join small_bag_cost_allocation g on t.id = g.main_id and g.is_deleted = false
-        left join small_bag_cost_allocation_detail h on h.main_id = g.id and h.is_deleted = false
-        left join logistics_bill_cost j on t.cost_id = j.id and j.is_deleted = false
-        left join logistics_bill k on j.logistics_bill_id = k.id and k.is_deleted = false
-        left join logistics_bill_detail l on k.id = l.main_id and l.is_deleted = false
+			t.report_date,
+			t.account_date,
+			t.report_status,
+			j.status reconciliationStatus,
+			t.big_table_status,
+			j.logistics_channel_id channelId,
+			j.logistics_channel_name supplierName,
+			j.so_code,
+			k.instock_forecast_date,
+			j.confirm_date confirmTime,
+			j.shop_id,
+			j.country toCountry,
+			g.sku_id,
+			g.sku_no,
+			g.unit_cost,
+			g.delivery_qty,
+			j.estimate_weight billingWeight,
+			j.estimate_weight_unit,
+			j.actual_billing_weight billingWeightLogistics,
+			g.sku_weight,
+			h.fee_type,
+			h.bill_amount,
+			h.allocated_amount,
+			h.product_allocated_amount,
+			h.fee_allocation_type,
+			h.weight_allocation_type,
+			t.update_user_name,
+			t.update_time,
+			t.create_time,
+			h.allocated_currency currency
+        from transfer_declare_cost_allocation_main t
+        left join transfer_declare_cost_allocation g on t.id = g.main_id and g.is_deleted = false
+        left join transfer_declare_cost_allocation_detail h on h.main_id = g.id and h.is_deleted = false
+        left join tms_b2c_declare_reconciliation_detail j on t.declare_reconciliation_detail_id = j.id and j.is_deleted = false
+        left join transfer_declare k on t.transfer_declare_id = k.id and k.is_deleted = false
 		<where>
             ${params.sqlMap.default}
             and t.is_deleted = false

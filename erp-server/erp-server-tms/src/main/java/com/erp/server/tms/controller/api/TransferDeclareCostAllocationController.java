@@ -3,6 +3,7 @@ package com.erp.server.tms.controller.api;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import javax.annotation.Resource;
 
@@ -132,8 +133,11 @@ public class TransferDeclareCostAllocationController extends BaseController {
             serviceClass = SmallBagCostAllocationService.class,
             keyIdName = "id")
     public ApiResult<List<BatchResultDTO>> updateReportStatus(@RequestBody @Validated TransferDeclareCostAllocationDTO.UpdateStatusDTO dto) {
-        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
-        for (String id : dto.getIds()) {
+    	List<String> ids = dto.getIds();
+        List<TransferDeclareCostAllocationEntity> listByIds = transferDeclareCostAllocationService.listByIds(ids);
+        ids = listByIds.stream().map(TransferDeclareCostAllocationEntity::getMainId).distinct().collect(Collectors.toList());
+    	List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+    	for (String id : ids) {
             BatchResultDTO submit;
             try {
                 submit = transferDeclareCostAllocationService.updateReportStatus(id,dto.getReportDate(),dto.getReportStatus());
@@ -167,8 +171,11 @@ public class TransferDeclareCostAllocationController extends BaseController {
     serviceClass = SmallBagCostAllocationService.class,
     keyIdName = "id")
     public ApiResult<List<BatchResultDTO>> reAllocation(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+    	List<String> ids = dto.getIds();
+        List<TransferDeclareCostAllocationEntity> listByIds = transferDeclareCostAllocationService.listByIds(ids);
+        ids = listByIds.stream().map(TransferDeclareCostAllocationEntity::getMainId).distinct().collect(Collectors.toList());
     	List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
-    	for (String id : dto.getIds()) {
+    	for (String id : ids) {
     		BatchResultDTO submit;
     		try {
     			submit = transferDeclareCostAllocationService.reAllocation(id);
@@ -202,8 +209,11 @@ public class TransferDeclareCostAllocationController extends BaseController {
     serviceClass = SmallBagCostAllocationService.class,
     keyIdName = "id")
     public ApiResult<List<BatchResultDTO>> delete(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+    	List<String> ids = dto.getIds();
+        List<TransferDeclareCostAllocationEntity> listByIds = transferDeclareCostAllocationService.listByIds(ids);
+        ids = listByIds.stream().map(TransferDeclareCostAllocationEntity::getMainId).distinct().collect(Collectors.toList());
     	List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
-    	for (String id : dto.getIds()) {
+    	for (String id : ids) {
     		BatchResultDTO submit;
     		try {
     			submit = transferDeclareCostAllocationService.delete(id);

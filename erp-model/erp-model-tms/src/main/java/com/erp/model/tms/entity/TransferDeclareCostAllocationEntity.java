@@ -55,6 +55,12 @@ public class TransferDeclareCostAllocationEntity extends BaseEntity<TransferDecl
     */
     @TableField("sku_weight")
     private BigDecimal skuWeight;
+    
+    /**
+     * 单SKU计费重
+     */
+    @TableField("unit_cost")
+    private BigDecimal unitCost;
 
 
     public static final String MAIN_ID = "main_id";

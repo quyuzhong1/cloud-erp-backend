@@ -91,6 +91,11 @@ public class TransferDeclareCostAllocationDTO implements Serializable {
          /**
           * 物流商：名称+渠道
           */
+         private String channelId;
+         
+         /**
+          * 物流商：名称+渠道
+          */
          private String supplierName;
          
          /**
@@ -175,7 +180,7 @@ public class TransferDeclareCostAllocationDTO implements Serializable {
      	/**
      	 * 费用来源
      	 */
-     	private String feeSource;
+     	private String feeSource = "实际账单";
      	
      	/**
           * 费用类型
