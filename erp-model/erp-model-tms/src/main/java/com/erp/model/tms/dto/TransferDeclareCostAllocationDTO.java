@@ -111,7 +111,7 @@ public class TransferDeclareCostAllocationDTO implements Serializable {
          /**
           * 确认时间
           */
-         private LocalDateTime confirmTime;
+         private LocalDate confirmTime;
          
          /**
           * 店铺名称
