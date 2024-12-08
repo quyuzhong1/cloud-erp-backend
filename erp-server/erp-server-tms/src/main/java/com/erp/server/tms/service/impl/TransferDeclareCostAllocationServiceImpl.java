@@ -146,14 +146,14 @@ public class TransferDeclareCostAllocationServiceImpl extends SuperServiceImpl<T
 	@Override
 	public List<TabListDTO> tabList(PermissionsDTO dto) {
 		List<TransferDeclareCostAllocationDTO.TabListDTO> resultList = new ArrayList<>();
-		List<TransferDeclareCostAllocationMainEntity> list = transferDeclareCostAllocationMainService.list();
+		Map<String, Integer> flagCountMap = this.getBaseMapper().tabList(dto).stream().collect(Collectors.toMap(TabListDTO::getTabFlag, TabListDTO::getCount));
 		TransferDeclareCostAllocationReportStatusEnum[] values = TransferDeclareCostAllocationReportStatusEnum.values();
         for (TransferDeclareCostAllocationReportStatusEnum statusEnum : values) {
             LogisticsBillCostDTO.PagingParamDTO pagingParamDTO = new LogisticsBillCostDTO.PagingParamDTO();
             pagingParamDTO.setPermissionSql(dto.getPermissionSql());
             TransferDeclareCostAllocationDTO.TabListDTO resultDTO = new TransferDeclareCostAllocationDTO.TabListDTO();
             String code = statusEnum.getCode();
-			Integer count = (int)list.stream().filter(l -> l.getReportStatus().equals(code)).count();
+            Integer count = flagCountMap.get(code);
             resultDTO.setCount(ObjectUtils.isEmpty(count) ? MathUtil.ZERO : count);
             resultDTO.setTabFlag(code);
             resultDTO.setTabFlagName(statusEnum.getName());

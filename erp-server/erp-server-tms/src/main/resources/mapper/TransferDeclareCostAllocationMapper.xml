@@ -86,4 +86,21 @@
         </if>
         t.id desc
     </select>
+    
+    <select id="tabList" resultType="com.erp.model.tms.dto.TransferDeclareCostAllocationDTO$TabListDTO">
+        select
+            t.report_status tabFlag,count(*) count
+        from transfer_declare_cost_allocation_main t
+        left join transfer_declare_cost_allocation g on t.id = g.main_id and g.is_deleted = false
+        left join transfer_declare_cost_allocation_detail h on h.main_id = g.id and h.is_deleted = false
+        left join tms_b2c_declare_reconciliation_detail j on t.declare_reconciliation_detail_id = j.id and j.is_deleted = false
+        left join transfer_declare k on t.transfer_declare_id = k.id and k.is_deleted = false
+        <where>
+            t.is_deleted = false
+            <if test="params.permissionSql!=null and params.permissionSql!=''">
+                ${params.permissionSql}
+            </if>
+        </where>
+        group by t.report_status
+    </select>
 </mapper>

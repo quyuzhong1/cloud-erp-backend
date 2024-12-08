@@ -94,4 +94,22 @@
         </if>
         t.id desc
     </select>
+    
+<select id="tabList" resultType="com.erp.model.tms.dto.SmallBagCostAllocationDTO$TabListDTO">
+        select
+            t.report_status tabFlag,count(*) count
+        from small_bag_cost_allocation_main t
+        left join small_bag_cost_allocation g on t.id = g.main_id and g.is_deleted = false
+        left join small_bag_cost_allocation_detail h on h.main_id = g.id and h.is_deleted = false
+        left join logistics_bill_cost j on t.cost_id = j.id and j.is_deleted = false
+        left join logistics_bill k on j.logistics_bill_id = k.id and k.is_deleted = false
+        left join logistics_bill_detail l on k.id = l.main_id and l.is_deleted = false
+        <where>
+            t.is_deleted = false
+            <if test="params.permissionSql!=null and params.permissionSql!=''">
+                ${params.permissionSql}
+            </if>
+        </where>
+        group by t.report_status
+    </select>
 </mapper>
