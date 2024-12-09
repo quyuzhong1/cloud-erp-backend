@@ -1,17 +1,17 @@
 package com.erp.model.wms.dto;
 
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-
 import com.common.business.dto.base.SortDTO;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
-import java.io.Serializable;
-import java.util.List;
-import javax.validation.constraints.NotNull;
+
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
+import java.io.Serializable;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * <p>
@@ -193,6 +193,41 @@ public class OverseasInventoryDTO implements Serializable {
          * 平台下载更新时间 (更新时间)
          */
         private LocalDateTime downloadTime;
+
+        /**
+         * 库龄 0-30 天的可售商品数量
+         */
+        private Integer inventoryAge0To30Days = 0 ;
+
+        /**
+         * 库龄 31-60 天的可售商品数量
+         */
+        private Integer inventoryAge31To60Days = 0 ;
+
+        /**
+         * 库龄 61-90 天的可售商品数量
+         */
+        private Integer inventoryAge61To90Days = 0 ;
+
+        /**
+         * 库龄 91-180 天的可售商品数量
+         */
+        private Integer inventoryAge91To180Days = 0 ;
+
+        /**
+         * 库龄 181-270 天的可售商品数量
+         */
+        private Integer inventoryAge181To270Days = 0 ;
+
+        /**
+         * 库龄 271-365 天的可售商品数量
+         */
+        private Integer inventoryAge271To365Days = 0 ;
+
+        /**
+         * 库龄 365 天以上的可售商品数量
+         */
+        private Integer inventoryAge365PlusDays = 0 ;
     }
 
 

@@ -1,10 +1,13 @@
 package com.erp.server.tms.service;
-import com.erp.model.tms.entity.RemotePostcodeEntity;
+
+import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.dto.base.BatchResultDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.service.SuperService;
-import com.common.business.dto.base.*;
-import com.erp.model.tms.dto.RemotePostcodeDTO;
 import com.common.business.vo.PagingVO;
-import org.springframework.web.multipart.MultipartFile;
+import com.erp.model.tms.dto.RemotePostcodeDTO;
+import com.erp.model.tms.entity.RemotePostcodeEntity;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
@@ -90,5 +93,12 @@ public interface RemotePostcodeService extends SuperService<RemotePostcodeEntity
      * @return
      */
     PagingVO<RemotePostcodeDTO.ExportListDTO> listExport(PagingDTO<RemotePostcodeDTO.PagingParamDTO> pagingParamDTO);
-
+    /**
+     * 邮编远程查询（分页型）
+     * @author jack
+     * @date:  2024-11-29
+     * @param dto
+     * @return ApiResult<PagingVO<RemotePostcodeDTO.ListDTO>>
+     */
+    PagingVO<RemotePostcodeDTO.ListDTO> pagingSelect(PagingDTO<RemotePostcodeDTO.SelectDTO> dto);
 }

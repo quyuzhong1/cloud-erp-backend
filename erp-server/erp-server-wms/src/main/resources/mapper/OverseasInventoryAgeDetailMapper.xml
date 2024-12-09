@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.wms.mapper.OverseasInventoryAgeDetailMapper">
+    <select id="getAgeRangeViewByMainIds"   resultType="com.erp.model.wms.dto.OverseasInventoryAgeDetailDTO$AgeRangeViewDTO">
+        SELECT
+        oiad.main_id,
+        SUM(CASE WHEN oiad.inventory_age BETWEEN 0 AND 30 THEN oiad.inventory_qty ELSE 0 END) AS inventoryAge0To30Days,
+        SUM(CASE WHEN oiad.inventory_age BETWEEN 31 AND 60 THEN oiad.inventory_qty ELSE 0 END) AS inventoryAge31To60Days,
+        SUM(CASE WHEN oiad.inventory_age BETWEEN 61 AND 90 THEN oiad.inventory_qty ELSE 0 END) AS inventoryAge61To90Days,
+        SUM(CASE WHEN oiad.inventory_age BETWEEN 91 AND 180 THEN oiad.inventory_qty ELSE 0 END) AS inventoryAge91To180Days,
+        SUM(CASE WHEN oiad.inventory_age BETWEEN 181 AND 270 THEN oiad.inventory_qty ELSE 0 END) AS inventoryAge181To270Days,
+        SUM(CASE WHEN oiad.inventory_age BETWEEN 271 AND 365 THEN oiad.inventory_qty ELSE 0 END) AS inventoryAge271To365Days,
+        SUM(CASE WHEN oiad.inventory_age > 365 THEN oiad.inventory_qty ELSE 0 END) AS inventoryAge365PlusDays
+        FROM
+        overseas_inventory_age_detail oiad
+        WHERE
+        oiad.is_deleted = FALSE
+        AND oiad.pull_date = #{nowDate}
+        <if test="mainIds != null and mainIds.size != ''">
+            AND oiad.main_id in
+            <foreach collection="mainIds" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        GROUP BY
+        oiad.main_id;
+    </select>
+    <select id="paging" resultType="com.erp.model.wms.dto.OverseasInventoryAgeDetailDTO$ListDTO">
+        SELECT
+        oiad.id,
+        oiad.pull_date,
+        oiad.put_away_date,
+        oiad.inventory_qty,
+        oiad.inventory_age
+        FROM
+        overseas_inventory_age_detail oiad
+        INNER JOIN
+        overseas_inventory oi
+        ON oi.id = oiad.main_id
+        AND oi.is_deleted = FALSE
+        WHERE
+        oiad.is_deleted = FALSE
+        <if test="params.mainId != null and params.mainId != ''">
+            AND oiad.main_id = #{params.mainId}
+        </if>
+        <if test="params.ageRangeType != null and params.ageRangeType != ''">
+            <choose>
+                <when test="params.ageRangeType == 'age0To30Days'">
+                    AND oiad.inventory_age BETWEEN 0 AND 30
+                </when>
+                <when test="params.ageRangeType == 'age31To60Days'">
+                    AND oiad.inventory_age BETWEEN 31 AND 60
+                </when>
+                <when test="params.ageRangeType == 'age61To90Days'">
+                    AND oiad.inventory_age BETWEEN 61 AND 90
+                </when>
+                <when test="params.ageRangeType == 'age91To180Days'">
+                    AND oiad.inventory_age BETWEEN 91 AND 180
+                </when>
+                <when test="params.ageRangeType == 'age181To270Days'">
+                    AND oiad.inventory_age BETWEEN 181 AND 270
+                </when>
+                <when test="params.ageRangeType == 'age271To365Days'">
+                    AND oiad.inventory_age BETWEEN 271 AND 365
+                </when>
+                <when test="params.ageRangeType == 'age365PlusDays'">
+                    AND oiad.inventory_age > 365
+                </when>
+                <otherwise>
+                    AND oiad.inventory_age = -1
+                </otherwise>
+            </choose>
+        </if>
+        order by oiad.inventory_age
+    </select>
+</mapper>

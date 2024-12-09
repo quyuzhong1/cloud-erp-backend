@@ -36,11 +36,6 @@ public class LogisticsChannelRemotePostcodeDTO implements Serializable {
         private String logisticsChannelId;
 
         /**
-         * 类型，all全部，part部分
-         */
-        private String type;
-
-        /**
          * 邮编组id集合
          */
         private List<String> remotePostcodeIdList;
@@ -49,7 +44,6 @@ public class LogisticsChannelRemotePostcodeDTO implements Serializable {
          *  邮编组名称集合
          */
         private List<String> remotePostcodeNameList;
-
 
     }
 
@@ -60,10 +54,9 @@ public class LogisticsChannelRemotePostcodeDTO implements Serializable {
     @NoArgsConstructor
     public static class AddDTO extends CommonDTO {
 
-        public AddDTO(String remotePostcodeId, String channelId, String type) {
+        public AddDTO(String remotePostcodeId, String channelId) {
             this.setRemotePostcodeId(remotePostcodeId);
             this.setLogisticsChannelId(channelId);
-            this.setType(type);
         }
     }
 
@@ -100,14 +93,6 @@ public class LogisticsChannelRemotePostcodeDTO implements Serializable {
         @NotBlank(message = "邮编组id不能为空")
         @Size(max = 19,message = "邮编组id最大长度不能超过19位")
         private String remotePostcodeId;
-
-        /**
-        * 类型，all全部，part部分
-        */
-        @NotBlank(message = "类型，all全部，part部分不能为空")
-        @Size(max = 6,message = "类型，all全部，part部分最大长度不能超过6位")
-        private String type;
-
 
     }
 
