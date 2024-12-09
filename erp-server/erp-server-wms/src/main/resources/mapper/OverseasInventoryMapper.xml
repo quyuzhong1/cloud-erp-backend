@@ -196,20 +196,17 @@
         oi.download_time as downloadTime,
         opw.warehouse_name as name
         FROM overseas_inventory as oi
-        LEFT JOIN overseas_provider_warehouse as opw
-        on opw.platform_warehouse_code = oi.warehouse_code
-        LEFT JOIN overseas_provider as op
-        on op.id = opw.main_id
+        LEFT JOIN overseas_provider_warehouse as opw  on opw.platform_warehouse_code = oi.warehouse_code
+        LEFT JOIN overseas_provider as op on op.id = opw.main_id
         <where>
+            <include refid="page_where_sql"/>
+            <include refid="conditionSql"/>
             <if test="params.ids!=null and params.ids.size>0 ">
                 AND oi.id IN
                 <foreach collection="params.ids" item="id" open="(" separator="," close=")">
                     #{id}
                 </foreach>
             </if>
-            <include refid="page_where_sql"/>
-            <include refid="conditionSql"/>
-
         </where>
     </select>
 

@@ -333,6 +333,7 @@ public class OverseasInventoryServiceImpl extends SuperServiceImpl<OverseasInven
             params.setPlatformWarehouseCodeList(codeList);
         }
         Page<OverseasInventoryDTO.ListDTO> page = baseMapper.listByParams(new Page<>(dto.getCurrPage(), dto.getPageSize()), params);
+        filList(page.getRecords());
         return new PagingVO<>(page);
     }
 
