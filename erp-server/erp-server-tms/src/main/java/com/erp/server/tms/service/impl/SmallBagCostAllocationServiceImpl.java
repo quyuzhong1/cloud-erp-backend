@@ -2,6 +2,7 @@ package com.erp.server.tms.service.impl;
 
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -11,7 +12,6 @@ import java.util.stream.Collectors;
 
 import javax.annotation.Resource;
 
-import cn.hutool.core.util.ObjectUtil;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,7 +35,6 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
-import com.erp.model.plm.entity.ProductCostEntity;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.sys.entity.DictCurrencyEntity;
 import com.erp.model.tms.dto.LogisticsBillCostDTO;
@@ -45,6 +44,7 @@ import com.erp.model.tms.dto.SmallBagCostAllocationDTO.PagingParamDTO;
 import com.erp.model.tms.dto.SmallBagCostAllocationDTO.TabListDTO;
 import com.erp.model.tms.entity.LogisticsBillCostEntity;
 import com.erp.model.tms.entity.LogisticsChannelEntity;
+import com.erp.model.tms.entity.LogisticsSupplierEntity;
 import com.erp.model.tms.entity.SmallBagCostAllocationDetailEntity;
 import com.erp.model.tms.entity.SmallBagCostAllocationEntity;
 import com.erp.model.tms.entity.SmallBagCostAllocationMainEntity;
@@ -55,8 +55,8 @@ import com.erp.model.tms.enums.ReconciliationStatusEnum;
 import com.erp.model.tms.enums.SmallBagCostAllocationBigTableStatusEnum;
 import com.erp.model.tms.enums.SmallBagCostAllocationMainFeeSourceEnum;
 import com.erp.model.tms.enums.SmallBagCostAllocationReportStatusEnum;
-import com.erp.model.tms.enums.WeightAllocationEnum;
 import com.erp.model.tms.enums.WeightAllocationSmallBagEnum;
+import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.tms.mapper.SmallBagCostAllocationMapper;
 import com.erp.server.tms.service.LogisticsBillCostService;
@@ -67,6 +67,8 @@ import com.erp.server.tms.service.SmallBagCostAllocationDetailService;
 import com.erp.server.tms.service.SmallBagCostAllocationMainService;
 import com.erp.server.tms.service.SmallBagCostAllocationService;
 
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
@@ -96,6 +98,8 @@ public class SmallBagCostAllocationServiceImpl extends SuperServiceImpl<SmallBag
     private LogisticsBillCostService logisticsBillCostService;
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
+    @Resource
+    private DmpTaskFeign dmpTaskFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -197,13 +201,19 @@ public class SmallBagCostAllocationServiceImpl extends SuperServiceImpl<SmallBag
 		List<ProductDetailEntity> productDetailEntityList = FeignQuery.create(ProductDetailEntity.class).in(ProductDetailEntity::getId, 
 				skuIds).list();
 		Map<String, String> skuIdNameMap = productDetailEntityList.stream().collect(Collectors.toMap(ProductDetailEntity::getId, ProductDetailEntity::getName));
-		Map<String, String> currencyIdSymbolMap = FeignQuery.getByIds(DictCurrencyEntity.class , records.stream().map(ListDTO::getCurrency).collect(Collectors.toList()))
-			.stream().collect(Collectors.toMap(DictCurrencyEntity::getId, DictCurrencyEntity::getSymbol));
+		
 		Map<String, LogisticsChannelEntity> channelIdMaps = logisticsChannelService.listByIds(records.stream().map(ListDTO::getChannelId).collect(Collectors.toList())).stream().collect(Collectors.toMap(LogisticsChannelEntity::getId, l -> l));
+		List<String> supplierIds = channelIdMaps.values().stream().map(LogisticsChannelEntity::getMainId).collect(Collectors.toList());
+		Map<String, String> supplierIdNameMap = new HashMap<>();
+		if(CollUtil.isNotEmpty(supplierIds)) {
+			supplierIdNameMap = logisticsSupplierService.listByIds(supplierIds).stream().collect(Collectors.toMap(LogisticsSupplierEntity::getId, LogisticsSupplierEntity::getShortName));
+		}
+		
+		Map<String, BigDecimal> rateMap = new HashMap<>();
 		for(ListDTO dto : records) {
 			LogisticsChannelEntity logisticsChannelEntity = channelIdMaps.get(dto.getChannelId());
 			if(logisticsChannelEntity != null) {
-				dto.setSupplierName(logisticsChannelEntity.getName());
+				dto.setSupplierName(supplierIdNameMap.get(logisticsChannelEntity.getMainId()) + "-" + logisticsChannelEntity.getName());
 			}
 			dto.setReportStatusName(SmallBagCostAllocationReportStatusEnum.getName(dto.getReportStatus()));
 			String reconciliationStatus = dto.getReconciliationStatus();
@@ -212,19 +222,95 @@ public class SmallBagCostAllocationServiceImpl extends SuperServiceImpl<SmallBag
 			String skuId = dto.getSkuId();
 			dto.setSkuName(skuIdNameMap.get(skuId));
 			BigDecimal unitCost = dto.getUnitCost();
+			Integer deliveryQty = dto.getDeliveryQty();
+			String reportDate = dto.getReportDate();
 			if(unitCost != null) {
-				dto.setTotalCost(unitCost.multiply(new BigDecimal(dto.getDeliveryQty())));
+				String unitCurrency = dto.getUnitCurrency();
+				if(StringUtils.isNotBlank(unitCurrency) && !"CNY".equals(unitCurrency)) {
+					String key = reportDate + "_" + unitCurrency;
+					BigDecimal rate = rateMap.get(key);
+					if(rate == null) {
+						rate = dmpTaskFeign.getRate(reportDate + "-01", unitCurrency);
+						if(ObjectUtil.isEmpty(rate)){
+				            log.error("币别【{}】,汇率为空，请维护汇率后再查询",unitCurrency);
+				            throw new ServiceException("汇率为空，请维护汇率后再查询");
+				        }
+						rateMap.put(key, rate);
+					}
+					unitCost = unitCost.multiply(rate);
+				}
+				dto.setUnitCost(unitCost);
+				dto.setTotalCost(unitCost.multiply(new BigDecimal(deliveryQty)));
 			}
+			
+			String currency = dto.getCurrency();
+			if(StringUtils.isNotBlank(currency) && !"CNY".equals(currency)) {
+				String key = reportDate + "_" + currency;
+				BigDecimal rate = rateMap.get(key);
+				if(rate == null) {
+					rate = dmpTaskFeign.getRate(reportDate + "-01", currency);
+					if(ObjectUtil.isEmpty(rate)){
+			            log.error("币别【{}】,汇率为空，请维护汇率后再查询",currency);
+			            throw new ServiceException("汇率为空，请维护汇率后再查询");
+			        }
+					rateMap.put(key, rate);
+				}
+				if(dto.getBillAmount() != null) {
+					dto.setBillAmount(dto.getBillAmount().multiply(rate));
+				}
+				if(dto.getAllocatedAmount() != null) {
+					dto.setAllocatedAmount(dto.getAllocatedAmount().multiply(rate));
+				}
+				if(dto.getProductAllocatedAmount() != null) {
+					dto.setProductAllocatedAmount(dto.getProductAllocatedAmount().multiply(rate));
+				}
+			}
+			
 			dto.setFeeSource(SmallBagCostAllocationMainFeeSourceEnum.getName(dto.getFeeSource()));
-			if(dto.getDeliveryTime() != null) {
+			if(dto.getSignTime() != null) {
 				dto.setDeliveryStatusName("已签收");
 			}else {
 				dto.setDeliveryStatusName("未签收");
 			}
+			BigDecimal skuWeight = dto.getSkuWeight();
+			if(skuWeight != null) {
+				dto.setBillingWeight(skuWeight.multiply(new BigDecimal(deliveryQty)));
+			}
 			dto.setFeeTypeName(AllocationFeeTypeEnum.getName(dto.getFeeType()));
 			dto.setFeeAllocationTypeName(CostAllocationEnum.getName(dto.getFeeAllocationType()));
 			dto.setWeightAllocationTypeName(WeightAllocationSmallBagEnum.getName(dto.getWeightAllocationType()));
-			dto.setCurrencySymbol(currencyIdSymbolMap.get(dto.getCurrency()));
+			dto.setCurrencySymbol("¥");
+			
+			BigDecimal billingWeight = dto.getBillingWeight();
+			if(billingWeight != null) {
+				dto.setBillingWeight(billingWeight.setScale(4, RoundingMode.HALF_UP));
+			}
+			BigDecimal billingWeightLogistics = dto.getBillingWeightLogistics();
+			if(billingWeightLogistics != null) {
+				dto.setBillingWeightLogistics(billingWeightLogistics.setScale(4, RoundingMode.HALF_UP));
+			}
+			if(skuWeight != null) {
+				dto.setSkuWeight(skuWeight.setScale(4, RoundingMode.HALF_UP));
+			}
+			if(unitCost != null) {
+				dto.setUnitCost(unitCost.setScale(6, RoundingMode.HALF_UP));
+			}
+			BigDecimal totalCost = dto.getTotalCost();
+			if(totalCost != null) {
+				dto.setTotalCost(totalCost.setScale(6, RoundingMode.HALF_UP));
+			}
+			BigDecimal billAmount = dto.getBillAmount();
+			if(billAmount != null) {
+				dto.setBillAmount(billAmount.setScale(4, RoundingMode.HALF_UP));
+			}
+			BigDecimal allocatedAmount = dto.getAllocatedAmount();
+			if(allocatedAmount != null) {
+				dto.setAllocatedAmount(allocatedAmount.setScale(2, RoundingMode.HALF_UP));
+			}
+			BigDecimal productAllocatedAmount = dto.getProductAllocatedAmount();
+			if(productAllocatedAmount != null) {
+				dto.setProductAllocatedAmount(productAllocatedAmount.setScale(6, RoundingMode.HALF_UP));
+			}
 		}
 	}
 	
@@ -273,6 +359,12 @@ public class SmallBagCostAllocationServiceImpl extends SuperServiceImpl<SmallBag
 			.set(SmallBagCostAllocationDetailEntity::getIsDeleted, true)
 			.update();
 		logisticsBillCostService.pushAllocation(costId, smallBagCostAllocationMainEntity.getReportDate());
+		
+		smallBagCostAllocationMainService.lambdaUpdate().eq(SmallBagCostAllocationMainEntity::getCostId, costId)
+			.set(SmallBagCostAllocationMainEntity::getCreateTime, smallBagCostAllocationMainEntity.getCreateTime())
+			.set(SmallBagCostAllocationMainEntity::getCreateUserId, smallBagCostAllocationMainEntity.getCreateUserId())
+			.set(SmallBagCostAllocationMainEntity::getCreateUserName, smallBagCostAllocationMainEntity.getCreateUserName())
+			.update();
 		
 		return BatchResultDTO.success(id, id, "重新分摊成功");
 	}

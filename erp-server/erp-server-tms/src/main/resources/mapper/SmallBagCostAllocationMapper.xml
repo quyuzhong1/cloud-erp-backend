@@ -36,7 +36,7 @@
 
 <select id="paging" resultType="com.erp.model.tms.dto.SmallBagCostAllocationDTO$ListDTO">
         select
-            g.id,
+            t.id,
             t.cost_id,
             t.report_date,
             t.account_date,
@@ -56,8 +56,9 @@
             g.sku_no,
             g.sku_id,
             g.unit_cost,
+            g.unit_currency,
             g.delivery_qty,
-            j.billing_weight,
+            g.billing_weight,
             j.billing_weight_logistics,
             g.sku_weight,
             t.fee_source,
@@ -69,9 +70,9 @@
             h.org_name,
             h.fee_allocation_type,
             h.weight_allocation_type,
-            h.create_time,
-            g.update_user_name,
-            g.update_time,
+            t.create_time,
+            t.update_user_name,
+            t.update_time,
             h.allocated_currency currency
         from small_bag_cost_allocation_main t
         left join small_bag_cost_allocation g on t.id = g.main_id and g.is_deleted = false
@@ -79,6 +80,7 @@
         left join logistics_bill_cost j on t.cost_id = j.id and j.is_deleted = false
         left join logistics_bill k on j.logistics_bill_id = k.id and k.is_deleted = false
         left join logistics_bill_detail l on k.id = l.main_id and l.is_deleted = false
+        left join dict_basic n on h.fee_type = n.code and n.type = 'dictCostCategory'
         <where>
             ${params.sqlMap.default}
             and t.is_deleted = false
@@ -92,7 +94,7 @@
                 ${item.field} ${item.sort}
             </foreach>
         </if>
-        t.id desc
+        t.id desc,g.id,n.index asc
     </select>
     
 <select id="tabList" resultType="com.erp.model.tms.dto.SmallBagCostAllocationDTO$TabListDTO">

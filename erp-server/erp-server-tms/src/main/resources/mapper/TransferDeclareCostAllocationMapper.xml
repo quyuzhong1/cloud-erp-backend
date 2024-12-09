@@ -35,7 +35,7 @@
     </sql>
 <select id="paging" resultType="com.erp.model.tms.dto.TransferDeclareCostAllocationDTO$ListDTO">
 	select
-            g.id,
+            t.id,
 			t.report_date,
 			t.account_date,
 			t.report_status,

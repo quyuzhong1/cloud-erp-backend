@@ -250,6 +250,8 @@ public class TmsB2cDeclareReconciliationDetailServiceImpl extends SuperServiceIm
             if(updateList == null) {
             	updateList = new ArrayList<>();
             }
+            BigDecimal unitDgFee = BigDecimal.ZERO;
+            BigDecimal unitXgFee = BigDecimal.ZERO;
             BigDecimal estimateWeight = detailEntity.getEstimateWeight();
             if(estimateWeight != null) {
             	String logisticsChannelId = detailEntity.getLogisticsChannelId();
@@ -258,35 +260,34 @@ public class TmsB2cDeclareReconciliationDetailServiceImpl extends SuperServiceIm
         		}
             	String sourceDetailId = detailEntity.getSourceDetailId();
             	if(dgWarseHouseFee != null && dgTotalWeight.compareTo(BigDecimal.ZERO) != 0 && dgFlagList.contains(logisticsChannelId)) {
-            		TmsCostDetailDTO.UpdateDTO dto = new TmsCostDetailDTO.UpdateDTO();
-            		BigDecimal unitDgFee = dgWarseHouseFee.multiply(estimateWeight).divide(dgTotalWeight , 4 , RoundingMode.HALF_UP);
+            		unitDgFee = dgWarseHouseFee.multiply(estimateWeight).divide(dgTotalWeight , 4 , RoundingMode.HALF_UP);
             		if(lastdgId.equals(sourceDetailId)) {
             			unitDgFee = dgWarseHouseFee.subtract(totalDg);
             		}
             		totalDg = totalDg.add(unitDgFee);
-            		dto.setCostValue(unitDgFee);
-            		dto.setType(LogisticsBillCostTypeEnum.ACTUAL.getCode());
-            		dto.setCfgCostId(dgCostId);
-            		dto.setSourceType(SourceTypeEnum.TMS_B2C_DECLARE_RECONCILIATION.getCode());
-            		updateList.add(dto);
                 }
                 if(xgWarseHouseFee != null && xgTotalWeight.compareTo(BigDecimal.ZERO) != 0 && xgFlagList.contains(logisticsChannelId)) {
-                	TmsCostDetailDTO.UpdateDTO dto = new TmsCostDetailDTO.UpdateDTO();
-                	BigDecimal unitXgFee = xgWarseHouseFee.multiply(estimateWeight).divide(xgTotalWeight , 4 , RoundingMode.HALF_UP);
+                	unitXgFee = xgWarseHouseFee.multiply(estimateWeight).divide(xgTotalWeight , 4 , RoundingMode.HALF_UP);
                 	if(lastxgId.equals(sourceDetailId)) {
                 		unitXgFee = xgWarseHouseFee.subtract(totalXg);
             		}
-                	totalXg = totalXg.add(unitXgFee);
-                	dto.setCostValue(unitXgFee);
-                	dto.setType(LogisticsBillCostTypeEnum.ACTUAL.getCode());
-            		dto.setCfgCostId(xgCostId);
-            		dto.setSourceType(SourceTypeEnum.TMS_B2C_DECLARE_RECONCILIATION.getCode());
-            		updateList.add(dto);
                 }
             }
-            if (CollectionUtils.isEmpty(updateList)) {
-                continue;
-            }
+            
+            TmsCostDetailDTO.UpdateDTO dgDto = new TmsCostDetailDTO.UpdateDTO();
+            dgDto.setCostValue(unitDgFee);
+            dgDto.setType(LogisticsBillCostTypeEnum.ACTUAL.getCode());
+            dgDto.setCfgCostId(dgCostId);
+            dgDto.setSourceType(SourceTypeEnum.TMS_B2C_DECLARE_RECONCILIATION.getCode());
+    		updateList.add(dgDto);
+    		
+    		TmsCostDetailDTO.UpdateDTO xgDto = new TmsCostDetailDTO.UpdateDTO();
+    		xgDto.setCostValue(unitXgFee);
+    		xgDto.setType(LogisticsBillCostTypeEnum.ACTUAL.getCode());
+    		xgDto.setCfgCostId(xgCostId);
+    		xgDto.setSourceType(SourceTypeEnum.TMS_B2C_DECLARE_RECONCILIATION.getCode());
+    		updateList.add(xgDto);
+            
             tmsCostDetailService.batchUpdate(updateList,detailEntity.getId(),DictCostAttributionEnum.DECLARE,Boolean.FALSE);
         }
         //更新报关明细实际费用

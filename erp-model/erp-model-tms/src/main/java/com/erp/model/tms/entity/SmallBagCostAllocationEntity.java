@@ -60,6 +60,18 @@ public class SmallBagCostAllocationEntity extends BaseEntity<SmallBagCostAllocat
      */
     @TableField("unit_cost")
     private BigDecimal unitCost;
+    
+    /**
+     * 成本币别
+     */
+    @TableField("unit_currency")
+    private String unitCurrency;
+    
+    /**
+     * 预估重
+     */
+    @TableField("billing_weight")
+    private BigDecimal billingWeight;
 
 
     public static final String MAIN_ID = "main_id";

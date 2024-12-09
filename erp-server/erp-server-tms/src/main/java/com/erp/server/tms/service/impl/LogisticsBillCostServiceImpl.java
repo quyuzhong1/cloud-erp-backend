@@ -282,6 +282,12 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 					for(TmsCostDetailEntity tmsCostDetailEntity : tmsCostDetailEntityList) {
 						UpdateDTO dbUpdateDto = cfgIdDtoMap.get(tmsCostDetailEntity.getCfgCostId());
 						if(dbUpdateDto == null) {
+							TmsCostDetailDTO.UpdateDTO dto = new TmsCostDetailDTO.UpdateDTO();
+							dto.setCostValue(tmsCostDetailEntity.getCostValue());
+							dto.setType(LogisticsBillCostTypeEnum.ESTIMATED.getCode());
+							dto.setCfgCostId(tmsCostDetailEntity.getCfgCostId());
+							dto.setSourceType(SourceTypeEnum.LOGISTICS_BILL_COST.getCode());
+							costDetailList.add(dto);
 							continue;
 //							throw new ServiceException("核算状态为暂估确认，不能删除预估金额");
 						}
@@ -291,7 +297,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 						}
 						BigDecimal costValue = dbUpdateDto.getCostValue();
 						if(costValue == null) {
-							costValue = dbCostValue;
+							costValue = BigDecimal.ZERO;
 						}
 						if(dbCostValue.compareTo(costValue) != 0) {
 							throw new ServiceException("核算状态为暂估确认，不能修改预估金额");
@@ -1446,7 +1452,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
             updateDTO.setSourceType(SourceTypeEnum.LOGISTICS_BILL_COST.getCode());
             updateDetailList.add(updateDTO);
             BigDecimal estimatedCostValue = detailDTO.getEstimatedValue();
-            if(estimatedCostValue != null && estimatedCostValue.compareTo(BigDecimal.ZERO) != 0) {
+            if(estimatedCostValue != null) {
             	updateDTO = new TmsCostDetailDTO.UpdateDTO();
                 updateDTO.setCostValue(estimatedCostValue);
                 updateDTO.setType(LogisticsBillCostTypeEnum.ESTIMATED.getCode());
@@ -1590,9 +1596,9 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 			}else if(AllocationFeeTypeEnum.DECLARE_COST == allocationFeeTypeEnum) {
 				feeTypeSettingMaps.put(allocationFeeTypeEnum.getCode(), allocationSettingDTO.getPackageTariffFee());
 			}else if(AllocationFeeTypeEnum.OTHER_COST == allocationFeeTypeEnum) {
-				feeTypeSettingMaps.put(allocationFeeTypeEnum.getCode(), allocationSettingDTO.getPackageDeductibleTax());
-			}else if(AllocationFeeTypeEnum.DEDUCTIBLE_TAX == allocationFeeTypeEnum) {
 				feeTypeSettingMaps.put(allocationFeeTypeEnum.getCode(), allocationSettingDTO.getPackageOtherFee());
+			}else if(AllocationFeeTypeEnum.DEDUCTIBLE_TAX == allocationFeeTypeEnum) {
+				feeTypeSettingMaps.put(allocationFeeTypeEnum.getCode(), allocationSettingDTO.getPackageDeductibleTax());
 			}
 		}
 		
@@ -1605,8 +1611,9 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 				.eq(InventorySkuCostEntity::getStatus, "approve")
 				.in(InventorySkuCostEntity::getCompanyId, wareIdOrgIdMaps.values())
 				.list();
+		Map<String, InventorySkuCostEntity> idEntityMaps = new HashMap<>();
 		if(CollUtil.isNotEmpty(inventorySkuCostEntityList)) {
-			Map<String, InventorySkuCostEntity> idEntityMaps = inventorySkuCostEntityList.stream().collect(Collectors.toMap(InventorySkuCostEntity::getId, i -> i));
+			idEntityMaps = inventorySkuCostEntityList.stream().collect(Collectors.toMap(InventorySkuCostEntity::getId, i -> i));
 			List<InventorySkuCostDetailEntity> inventorySkuCostDetailEntityList = inventorySkuCostDetailService.lambdaQuery().in(InventorySkuCostDetailEntity::getMainId, idEntityMaps.keySet())
 				.in(InventorySkuCostDetailEntity::getSkuId , soOutstockDetailEntityList.stream().map(SoOutstockDetailEntity::getSkuId).collect(Collectors.toList())).list();
 			if(CollUtil.isNotEmpty(inventorySkuCostDetailEntityList)) {
@@ -1621,7 +1628,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 		
 		BigDecimal totalSkuCost = BigDecimal.ZERO;
 		List<ProductPackEntity> productPackEntityList = FeignQuery.create(ProductPackEntity.class)
-				.eq(ProductPackEntity::getSkuId, soOutstockDetailEntityList.stream().map(SoOutstockDetailEntity::getSkuId).collect(Collectors.toList()))
+				.in(ProductPackEntity::getSkuId, soOutstockDetailEntityList.stream().map(SoOutstockDetailEntity::getSkuId).collect(Collectors.toList()))
 				.list();
 		Map<String, BigDecimal> skuWeightCostMaps = productPackEntityList.stream().collect(Collectors.toMap(ProductPackEntity::getSkuId, ProductPackEntity::getGrossWeight));
 		BigDecimal totalSkuWeightCost = BigDecimal.ZERO;
@@ -1653,13 +1660,14 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 		
 		Map<String, String> orgIdNameMaps = sysUserFeign.getAccountingCompanyList(new ArrayList<>(wareIdOrgIdMaps.values())).stream().collect(Collectors.toMap(CodeDTO::getId, CodeDTO::getName));
 		
-		if(WeightAllocationEnum.OUTSTOCK_CHARGED_WEIGHT.getCode().equals(weightPackageAllocation)) {
-			String channelId = entity.getChannelId();
-			if(StringUtils.isNotBlank(channelId)) {
-				LogisticsChannelEntity logisticsChannelEntity = logisticsChannelService.getById(channelId);
-				if(logisticsChannelEntity != null) {
-					String feeRule = logisticsChannelEntity.getFeeRule();
-					if(StringUtils.isNotBlank(feeRule) && !ShippingFeeRuleEnum.BILLING_WEIGHT.getCode().equals(feeRule)) {
+		String feeRule = "";
+		String channelId = entity.getChannelId();
+		if(StringUtils.isNotBlank(channelId)) {
+			LogisticsChannelEntity logisticsChannelEntity = logisticsChannelService.getById(channelId);
+			if(logisticsChannelEntity != null) {
+				feeRule = logisticsChannelEntity.getFeeRule();
+				if(StringUtils.isNotBlank(feeRule) && !ShippingFeeRuleEnum.BILLING_WEIGHT.getCode().equals(feeRule)) {
+					if(WeightAllocationEnum.OUTSTOCK_CHARGED_WEIGHT.getCode().equals(weightPackageAllocation)) {
 						weightPackageAllocation = feeRule;
 					}
 				}
@@ -1688,30 +1696,42 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 					skuCostPre = skuCost.divide(totalSkuCost, 2, RoundingMode.HALF_UP);
 				}
 				smallBagCostAllocationEntity.setUnitCost(skuCost);
+				smallBagCostAllocationEntity.setUnitCurrency(idEntityMaps.get(inventorySkuCostDetailEntity.getMainId()).getCurrency());
 			}else {
 				throw new ServiceException(orgName + reportDate + "月份下sku=" + skuNo + "未配置分摊成本");
 			}
+			Integer actualQty = soOutstockDetailEntity.getActualQty();
 			BigDecimal skuWeightCostPre = BigDecimal.ZERO;
 			BigDecimal skuWeightCost = skuWeightCostMaps.get(skuId);
 			if(totalSkuWeightCost.compareTo(BigDecimal.ZERO) != 0 && skuWeightCost != null) {
-				skuWeightCostPre = skuWeightCost.divide(totalSkuWeightCost, 2, RoundingMode.HALF_UP);
+				skuWeightCostPre = skuWeightCost.multiply(new BigDecimal(actualQty)).divide(totalSkuWeightCost, 2, RoundingMode.HALF_UP);
 			}
 			
-			Integer actualQty = soOutstockDetailEntity.getActualQty();
 			smallBagCostAllocationEntity.setDeliveryQty(actualQty);
+			BigDecimal billingWeight = BigDecimal.ZERO;
 			BigDecimal skuWeight = null;
-			if(WeightAllocationSmallBagEnum.OUTSTOCK_CHARGED_WEIGHT.getCode().equals(weightPackageAllocation) 
-					|| WeightAllocationSmallBagEnum.NETWEIGHT.getCode().equals(weightPackageAllocation)
-					|| WeightAllocationSmallBagEnum.VOLUMEWEIGHT.getCode().equals(weightPackageAllocation)) {
-				skuWeight = entity.getBillingWeight().multiply(skuCostPre).divide(new BigDecimal(actualQty), 2 , RoundingMode.HALF_UP);
+			if(WeightAllocationSmallBagEnum.OUTSTOCK_CHARGED_WEIGHT.getCode().equals(weightPackageAllocation)) {
+				skuWeight = entity.getBillingWeight().multiply(skuWeightCostPre).divide(new BigDecimal(actualQty), 4 , RoundingMode.HALF_UP);
 			}else if(WeightAllocationSmallBagEnum.SUPPLIER_CHARGED_WEIGHT.getCode().equals(weightPackageAllocation)) {
-				skuWeight = entity.getBillingWeightLogistics().multiply(skuCostPre).divide(new BigDecimal(actualQty), 2 , RoundingMode.HALF_UP);
+				skuWeight = entity.getBillingWeightLogistics().multiply(skuWeightCostPre).divide(new BigDecimal(actualQty), 4 , RoundingMode.HALF_UP);
 			}else if(WeightAllocationSmallBagEnum.SINGLE_PRODUCT_WEIGHT.getCode().equals(weightPackageAllocation)) {
 				skuWeight = skuWeightCostMaps.get(skuId);
+			}else if(WeightAllocationSmallBagEnum.NETWEIGHT.getCode().equals(weightPackageAllocation)) {
+				skuWeight = entity.getActualWeight().multiply(skuWeightCostPre).divide(new BigDecimal(actualQty), 4 , RoundingMode.HALF_UP);
+			}else if(WeightAllocationSmallBagEnum.VOLUMEWEIGHT.getCode().equals(weightPackageAllocation)) {
+				skuWeight = entity.getVolumeWeight().multiply(skuWeightCostPre).divide(new BigDecimal(actualQty), 4 , RoundingMode.HALF_UP);
 			}
 			if(skuWeight == null) {
 				skuWeight = BigDecimal.ZERO;
 			}
+			if(ShippingFeeRuleEnum.BILLING_WEIGHT.getCode().equals(feeRule)) {
+				billingWeight = entity.getBillingWeight();
+			}else if(ShippingFeeRuleEnum.NET_WEIGHT.getCode().equals(feeRule)) {
+				billingWeight = entity.getActualWeight();
+			}else if(ShippingFeeRuleEnum.VOLUME_WEIGHT.getCode().equals(feeRule)) {
+				billingWeight = entity.getVolumeWeight();
+			}
+			smallBagCostAllocationEntity.setBillingWeight(billingWeight);
 			smallBagCostAllocationEntity.setSkuWeight(skuWeight);
 			addSmallBagCostAllocationEntityList.add(smallBagCostAllocationEntity);
 			
@@ -1725,18 +1745,10 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 				}
 				BigDecimal costValueSum = costViewDTOList.stream().map(CostViewDTO::getCostValue).reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
 				String allocatedCurrency = "CNY";
-				BigDecimal rate = BigDecimal.ONE;
 				if(CollUtil.isNotEmpty(costViewDTOList)) {
 					allocatedCurrency = costViewDTOList.get(0).getCurrency();
-					if(!"CNY".equals(allocatedCurrency)) {
-						rate = dmpTaskFeign.getRate(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), allocatedCurrency);
-						if(ObjectUtil.isEmpty(rate)){
-				            log.error("币别【{}】,汇率为空，请维护汇率后再提交",allocatedCurrency);
-				            throw new ServiceException("汇率为空，请维护汇率后再提交");
-				        }
-					}
 				}
-				smallBagCostAllocationDetailEntity.setBillAmount(costValueSum.multiply(rate));
+				smallBagCostAllocationDetailEntity.setBillAmount(costValueSum);
 				smallBagCostAllocationDetailEntity.setFeeType(feeType);
 				String feeAllocationType = feeTypeSettingMap.getValue();
 				if(org.apache.commons.lang3.StringUtils.isBlank(feeAllocationType)) {

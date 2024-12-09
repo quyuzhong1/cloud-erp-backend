@@ -44,6 +44,11 @@ public class TransferDeclareCostAllocationDTO implements Serializable {
          * 主键id
          */
          private String  id;
+         
+         /**
+          * 主表id
+          */
+          private String  mainId;
 
          /**
          * 中转报关id

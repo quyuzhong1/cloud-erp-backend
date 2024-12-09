@@ -29,7 +29,9 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.tms.dto.SmallBagCostAllocationDTO;
 import com.erp.model.tms.entity.SmallBagCostAllocationEntity;
+import com.erp.model.tms.entity.SmallBagCostAllocationMainEntity;
 import com.erp.server.tms.query.SmallBagCostAllocationQueryHandler;
+import com.erp.server.tms.service.SmallBagCostAllocationMainService;
 import com.erp.server.tms.service.SmallBagCostAllocationService;
 
 import cn.hutool.core.util.ObjectUtil;
@@ -49,6 +51,9 @@ public class SmallBagCostAllocationController extends BaseController {
 
     @Resource
     private SmallBagCostAllocationService smallBagCostAllocationService;
+    
+    @Resource
+    private SmallBagCostAllocationMainService smallBagCostAllocationMainService;
 
     /**
     * 新增
@@ -76,6 +81,7 @@ public class SmallBagCostAllocationController extends BaseController {
         tableField = "create_user_id",
         menuCode = "tms:smallBagCostAllocation:update",
         serviceClass = SmallBagCostAllocationService.class,
+        		tableAlias = "t",
         keyIdName = "id")
     public ApiResult<?> update(@RequestBody @Validated SmallBagCostAllocationDTO.UpdateDTO dto) {
         smallBagCostAllocationService.update(dto);
@@ -94,7 +100,7 @@ public class SmallBagCostAllocationController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "tms:smallBagCostAllocation:paging",
-            tableAlias = "lbc"
+            tableAlias = "t"
     )
     public ApiResult<List<SmallBagCostAllocationDTO.TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
         return success(smallBagCostAllocationService.tabList(dto));
@@ -111,7 +117,7 @@ public class SmallBagCostAllocationController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "tms:smallBagCostAllocation:paging",
-            tableAlias = "lbc"
+            tableAlias = "t"
     )
     @WebAdvanceQuery(handler = SmallBagCostAllocationQueryHandler.class)
     public ApiResult<PagingVO<SmallBagCostAllocationDTO.ListDTO>> queryByPage(@RequestBody @Validated PagingDTO<SmallBagCostAllocationDTO.PagingParamDTO> dto) {
@@ -131,11 +137,10 @@ public class SmallBagCostAllocationController extends BaseController {
             tableField = "create_user_id",
             menuCode = "tms:smallBagCostAllocation:updateReportStatus",
             serviceClass = SmallBagCostAllocationService.class,
+            tableAlias = "t",
             keyIdName = "id")
     public ApiResult<List<BatchResultDTO>> updateReportStatus(@RequestBody @Validated SmallBagCostAllocationDTO.UpdateStatusDTO dto) {
         List<String> ids = dto.getIds();
-        List<SmallBagCostAllocationEntity> listByIds = smallBagCostAllocationService.listByIds(ids);
-        ids = listByIds.stream().map(SmallBagCostAllocationEntity::getMainId).distinct().collect(Collectors.toList());
 		List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
         for (String id : ids) {
             BatchResultDTO submit;
@@ -169,11 +174,10 @@ public class SmallBagCostAllocationController extends BaseController {
     tableField = "create_user_id",
     menuCode = "tms:smallBagCostAllocation:reAllocation",
     serviceClass = SmallBagCostAllocationService.class,
+    		tableAlias = "t",
     keyIdName = "id")
     public ApiResult<List<BatchResultDTO>> reAllocation(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
     	List<String> ids = dto.getIds();
-        List<SmallBagCostAllocationEntity> listByIds = smallBagCostAllocationService.listByIds(ids);
-        ids = listByIds.stream().map(SmallBagCostAllocationEntity::getMainId).distinct().collect(Collectors.toList());
     	List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
     	for (String id : ids) {
     		BatchResultDTO submit;
@@ -181,7 +185,7 @@ public class SmallBagCostAllocationController extends BaseController {
     			submit = smallBagCostAllocationService.reAllocation(id);
     		}catch (Exception e){
     			log.error("小包分摊 重新分摊",e);
-    			SmallBagCostAllocationEntity entity = smallBagCostAllocationService.getById(id);
+    			SmallBagCostAllocationMainEntity entity = smallBagCostAllocationMainService.getById(id);
     			if (ObjectUtil.isEmpty(entity)) {
     				submit = BatchResultDTO.fail(id, id, "小包分摊不存在, 重新分摊");
     				resultDTOS.add(submit);
@@ -207,11 +211,10 @@ public class SmallBagCostAllocationController extends BaseController {
     tableField = "create_user_id",
     menuCode = "tms:smallBagCostAllocation:delete",
     serviceClass = SmallBagCostAllocationService.class,
+    		tableAlias = "t",
     keyIdName = "id")
     public ApiResult<List<BatchResultDTO>> delete(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
     	List<String> ids = dto.getIds();
-        List<SmallBagCostAllocationEntity> listByIds = smallBagCostAllocationService.listByIds(ids);
-        ids = listByIds.stream().map(SmallBagCostAllocationEntity::getMainId).distinct().collect(Collectors.toList());
     	List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
     	for (String id : ids) {
     		BatchResultDTO submit;
@@ -219,7 +222,7 @@ public class SmallBagCostAllocationController extends BaseController {
     			submit = smallBagCostAllocationService.delete(id);
     		}catch (Exception e){
     			log.error("小包分摊 重新分摊",e);
-    			SmallBagCostAllocationEntity entity = smallBagCostAllocationService.getById(id);
+    			SmallBagCostAllocationMainEntity entity = smallBagCostAllocationMainService.getById(id);
     			if (ObjectUtil.isEmpty(entity)) {
     				submit = BatchResultDTO.fail(id, id, "小包分摊不存在, 重新分摊");
     				resultDTOS.add(submit);
@@ -259,6 +262,7 @@ public class SmallBagCostAllocationController extends BaseController {
     tableField = "create_user_id",
     menuCode = "tms:smallBagCostAllocation:pushBigTable",
     serviceClass = SmallBagCostAllocationService.class,
+    		tableAlias = "t",
     keyIdName = "id")
     public ApiResult<List<BatchResultDTO>> pushBigTable(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
     	List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
@@ -268,7 +272,7 @@ public class SmallBagCostAllocationController extends BaseController {
     			submit = smallBagCostAllocationService.pushBigTable(id);
     		}catch (Exception e){
     			log.error("小包分摊 生成物流大表",e);
-    			SmallBagCostAllocationEntity entity = smallBagCostAllocationService.getById(id);
+    			SmallBagCostAllocationMainEntity entity = smallBagCostAllocationMainService.getById(id);
     			if (ObjectUtil.isEmpty(entity)) {
     				submit = BatchResultDTO.fail(id, id, "小包分摊不存在,  生成物流大表");
     				resultDTOS.add(submit);

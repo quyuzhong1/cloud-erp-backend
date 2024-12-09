@@ -42,6 +42,11 @@ public class SmallBagCostAllocationDTO implements Serializable {
         * 主键id
         */
         private String  id;
+        
+        /**
+         * 主表id
+         */
+         private String  mainId;
 
         /**
         * 小包费用id
@@ -181,6 +186,11 @@ public class SmallBagCostAllocationDTO implements Serializable {
     	 * 单SKU计费重
     	 */
     	private BigDecimal skuWeight;
+    	
+    	/**
+    	 * 单位成本币别
+    	 */
+    	private String unitCurrency;
     	
     	/**
     	 * 单位成本
