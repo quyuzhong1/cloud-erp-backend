@@ -313,7 +313,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
         List<WarehouseLocationMoveDetailDTO.AddDTO> subtractDTOS = new ArrayList<>();
         for (PickingDetailEntity pickingDetailEntity : updatePickingList) {
             //处理仓位移动数据
-            if (StringUtils.isBlank(pickingDetailEntity.getOriginWarehouseLocation()) || pickingDetailEntity.getWarehouseLocation().equals(pickingDetailEntity.getOriginWarehouseLocation())) {
+            if (pickingDetailEntity.getWarehouseLocation().equals(pickingDetailEntity.getOriginWarehouseLocation())) {
                 if (pickingDetailEntity.getChangeBeforeQty() > pickingDetailEntity.getQty()) {
                     subtractDTOS.add(WarehouseLocationMoveDetailDTO.AddDTO.getLocationMoveDTO(pickingDetailEntity.getSkuId(), pickingDetailEntity.getSkuNo(),
                             pickingDetailEntity.getStagingLocation(), pickingDetailEntity.getWarehouseLocation(), pickingDetailEntity.getChangeBeforeQty() - pickingDetailEntity.getQty(), pickingListsEntity.getWarehouseId(), pickingListsEntity.getId()));
@@ -904,6 +904,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
                 detail.setQty(0);
                 detail.setUnit(productDetailEntity.getUnitName());
                 detail.setWarehouseLocation(data.getWarehouseLocation());
+                detail.setOriginWarehouseLocation(data.getWarehouseLocation());
                 detail.setSourceDetailId(data.getSourceDetailId());
                 detail.setStagingLocation(detailEntity.getStagingLocation());
                 detail.setChangeType(RequisitionChangeTypeEnum.ADD.getCode());
