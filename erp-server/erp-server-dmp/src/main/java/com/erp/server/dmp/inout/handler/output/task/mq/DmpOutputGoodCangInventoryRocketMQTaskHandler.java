@@ -1,14 +1,11 @@
 package com.erp.server.dmp.inout.handler.output.task.mq;
 
 import java.time.LocalDateTime;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
+import java.util.stream.Collectors;
 
+import com.erp.model.dmp.entity.DmpThirdInventoryAgeEntity;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
@@ -31,6 +28,9 @@ public class DmpOutputGoodCangInventoryRocketMQTaskHandler extends DmpOutputRock
 	public Map<String, String> getPushJsonDataMap(DmpOutputTaskRequest dmpRequest, DmpOutputTaskResponse dmpResponse) {
 		Map<DmpCfgInputConvertEntity, List<BaseEntity>> convertInputDmpBaseEntityListMaps = dmpRequest.getConvertInputDmpBaseEntityListMaps();
 		Map<String , DmpThirdInventoryEntity> dmpThirdInventoryEntityMap = new HashMap<>();
+
+		Map<String, List<DmpThirdInventoryAgeEntity>> dmpDetailEntityMap = new HashMap<>();
+
 		for(Map.Entry<DmpCfgInputConvertEntity, List<BaseEntity>> convertInputDmpBaseEntityListMap : convertInputDmpBaseEntityListMaps.entrySet()) {
 			List<BaseEntity> value = convertInputDmpBaseEntityListMap.getValue();
 			if(CollUtil.isNotEmpty(value)) {
@@ -39,6 +39,17 @@ public class DmpOutputGoodCangInventoryRocketMQTaskHandler extends DmpOutputRock
 					for(BaseEntity v : value) {
 						DmpThirdInventoryEntity dmpThirdInventoryEntity = (DmpThirdInventoryEntity) v;
 						dmpThirdInventoryEntityMap.put(dmpThirdInventoryEntity.getId(), dmpThirdInventoryEntity);
+					}
+				} else if ("dmp_third_inventory_age".equals(storageName)) {
+					for (BaseEntity v : value) {
+						DmpThirdInventoryAgeEntity dmpDetailEntity = (DmpThirdInventoryAgeEntity) v;
+						String mainId = dmpDetailEntity.getMainId();
+						List<DmpThirdInventoryAgeEntity> list = dmpDetailEntityMap.get(mainId);
+						if (CollUtil.isEmpty(list)) {
+							list = new ArrayList<>();
+						}
+						list.add(dmpDetailEntity);
+						dmpDetailEntityMap.put(mainId, list);
 					}
 				}
 			}
@@ -54,6 +65,11 @@ public class DmpOutputGoodCangInventoryRocketMQTaskHandler extends DmpOutputRock
 					for(BaseEntity v : value) {
 						changeIds.add(v.getId());
 					}
+				} else if ("dmp_third_inventory_age".equals(storageName)) {
+					for (BaseEntity v : value) {
+						DmpThirdInventoryAgeEntity dmpDetailEntity = (DmpThirdInventoryAgeEntity) v;
+						changeIds.add(dmpDetailEntity.getMainId());
+					}
 				}
 			}
 		}
@@ -61,7 +77,10 @@ public class DmpOutputGoodCangInventoryRocketMQTaskHandler extends DmpOutputRock
 		String cfgOutputId = dmpResponse.getDmpCfgOutputEntity().getId();
 		for(String changId : changeIds) {
 			DmpThirdInventoryEntity dmpThirdInventoryEntity = dmpThirdInventoryEntityMap.get(changId);
-			PlatformInventoryDTO platformInventoryDTO = this.convert(dmpThirdInventoryEntity, cfgOutputId);
+
+			List<DmpThirdInventoryAgeEntity> dmpDetailList = dmpDetailEntityMap.getOrDefault(changId, Collections.emptyList());
+
+			PlatformInventoryDTO platformInventoryDTO = this.convert(dmpThirdInventoryEntity, cfgOutputId, dmpDetailList);
 			if(platformInventoryDTO != null) {
 				map.put(dmpThirdInventoryEntity.getId(), JSON.toJSONString(platformInventoryDTO));
 			}
@@ -72,7 +91,7 @@ public class DmpOutputGoodCangInventoryRocketMQTaskHandler extends DmpOutputRock
 	/**
      * 解析订单数据
      **/
-    public PlatformInventoryDTO convert(DmpThirdInventoryEntity dmpThirdInventoryEntity , String cfgOutputId) {
+    public PlatformInventoryDTO convert(DmpThirdInventoryEntity dmpThirdInventoryEntity , String cfgOutputId, List<DmpThirdInventoryAgeEntity> dmpDetailList) {
     	if(this.validateDataBlack(dmpThirdInventoryEntity, cfgOutputId)) {
     		return null;
     	}
@@ -82,9 +101,27 @@ public class DmpOutputGoodCangInventoryRocketMQTaskHandler extends DmpOutputRock
     	platformInventoryDTO.setProvider(sourcePlatform);
     	platformInventoryDTO.setProviderErpId(dmpThirdInventoryEntity.getAuthId());
     	platformInventoryDTO.setDownloadTime(LocalDateTime.now());
-    	
+
+		// 库龄信息
+		List<PlatformInventoryDTO.PlatformInventoryAgeDTO> ageList = new LinkedList<>();
+		if (CollectionUtils.isNotEmpty(dmpDetailList)){
+			ageList = dmpDetailList.stream().map(this::convertAgeInfo).collect(Collectors.toList());
+		}
+		platformInventoryDTO.setAgeInfoList(ageList);
         return platformInventoryDTO;
     }
+
+	/**
+	 * 明细转换
+	 */
+	private PlatformInventoryDTO.PlatformInventoryAgeDTO  convertAgeInfo(DmpThirdInventoryAgeEntity ageEntity) {
+		PlatformInventoryDTO.PlatformInventoryAgeDTO platformInventoryAgeDTO = new PlatformInventoryDTO.PlatformInventoryAgeDTO();
+		platformInventoryAgeDTO.setInventoryQty(ageEntity.getInventoryQty());
+		platformInventoryAgeDTO.setPullDate(ageEntity.getUpdateTime().toLocalDate());
+		platformInventoryAgeDTO.setPutAwayDate(ageEntity.getPutAwayDate());
+		return platformInventoryAgeDTO;
+	}
+
     
     @Override
     protected List<String> getSourceCodeKeys() {
