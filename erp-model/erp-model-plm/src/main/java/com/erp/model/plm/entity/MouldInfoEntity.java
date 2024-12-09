@@ -107,7 +107,7 @@ public class MouldInfoEntity extends BaseEntity<MouldInfoEntity> {
 
     public static final String CATEGORY_ID = "category_id";
 
-    public static final String MOLD_CATEGORY_CODE = "mold_category_code";
+    public static final String MOULD_CATEGORY_CODE = "mould_category_code";
 
     @Override
     public Serializable pkVal() {

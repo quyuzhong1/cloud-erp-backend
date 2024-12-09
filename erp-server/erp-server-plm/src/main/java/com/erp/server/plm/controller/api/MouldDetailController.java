@@ -16,8 +16,8 @@ import org.springframework.web.bind.annotation.RestController;
 @Slf4j
 @RestController
 @LogSystemModule("模具明细")
-@RequestMapping("/moldDetail")
-public class MoldDetailController extends BaseController {
+@RequestMapping("/mouldDetail")
+public class MouldDetailController extends BaseController {
 
 
 

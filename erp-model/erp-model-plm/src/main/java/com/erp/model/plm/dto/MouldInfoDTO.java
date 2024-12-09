@@ -11,7 +11,6 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import javax.validation.Valid;
-import javax.validation.constraints.Digits;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
@@ -92,7 +91,7 @@ public class MouldInfoDTO implements Serializable {
         /**
          * 模具穴数
          */
-        private String moldHoles;
+        private String mouldHoles;
 
         /**
          * 模具长
@@ -233,7 +232,7 @@ public class MouldInfoDTO implements Serializable {
         /**
         * 模具分类编码
         */
-        private String moldCategoryCode;
+        private String mouldCategoryCode;
 
         /**
          * 模具明细
@@ -247,47 +246,27 @@ public class MouldInfoDTO implements Serializable {
     }
 
     /**
-    * 新增
-    */
-    @Data
-    @NoArgsConstructor
-    public static class AddDTO extends CommonDTO {
-        /**
-         * 明细数据
-         */
-        @Valid
-        private List<DetailDTO> detailList;
-
-        /**
-         * 文档数据
-         */
-        private List<DocDTO> docList;
-
-    }
-
-    /**
     * 修改
     */
-    @Data
-    @NoArgsConstructor
+    @Getter
+    @Setter
     public static class UpdateDTO extends CommonDTO {
 
         /**
         * 主键id
         */
-        @NotBlank(message = "主键id不能为空")
         private String id;
 
         /**
          * 明细数据
          */
         @Valid
-        private List<DetailDTO> detailList;
+        private List<MouldDetailDTO.UpdateDTO> detailList;
 
         /**
          * 文档数据
          */
-        private List<DocDTO> docList;
+        private List<MouldDocInfoDTO.UpdateDTO> docList;
     }
 
     @Data
@@ -327,210 +306,11 @@ public class MouldInfoDTO implements Serializable {
         @Size(max = 19,message = "分类id最大长度不能超过19位")
         private String categoryId;
 
-
-    }
-
-    @Getter
-    @Setter
-    public static class DetailDTO {
-
         /**
-         * 外部模具编号(供应商)
+         * 模具分类编码
          */
-        private String thirdMouldNo;
+        private String mouldCategoryCode;
 
-        /**
-         * 模具类型
-         */
-        @NotBlank(message = "模具类型不能为空")
-        @Size(max = 19,message = "模具类型最大长度不能超过19位")
-        private String typeId;
-
-        /**
-         * 模具穴数
-         */
-        @NotBlank(message = "模具穴数不能为空")
-        @Size(max = 255,message = "模具穴数最大长度不能超过255位")
-        private String moldHoles;
-
-        /**
-         * 产品信息
-         */
-        @NotNull(message = "产品信息不能为空")
-        @Valid
-        private List<ProductDTO> productList;
-
-        /**
-         * 模具长
-         */
-        private BigDecimal length;
-
-        /**
-         * 模具宽
-         */
-        private BigDecimal width;
-
-        /**
-         * 模具高
-         */
-        private BigDecimal height;
-
-        /**
-         * 模具材质
-         */
-        @NotBlank(message = "模具材质不能为空")
-        @Size(max = 255,message = "模具材质最大长度不能超过255位")
-        private String material;
-
-        /**
-         * 模具寿命(万)(啤)
-         */
-        @NotNull(message = "模具寿命(万)(啤)不能为空")
-        private Integer lifeCycle;
-
-        /**
-         * 开模周期(自然日)
-         */
-        @NotNull(message = "开模周期(自然日)不能为空")
-        private Integer developCycle;
-
-        /**
-         * 启用时间
-         */
-        @NotNull(message = "启用时间不能为空")
-        private LocalDateTime enableDate;
-
-        /**
-         * 供应商id
-         */
-        @NotBlank(message = "供应商id不能为空")
-        @Size(max = 19,message = "供应商id最大长度不能超过19位")
-        private String supplierId;
-
-        /**
-         * 备注
-         */
-        private String remark;
-        /**
-         * 数量
-         */
-        @NotNull(message = "数量不能为空")
-        private Integer qty;
-
-        /**
-         * 含税单价
-         */
-        @NotNull(message = "含税单价不能为空")
-        @Digits(integer = 12, fraction = 4, message = "含税单价整数位不能超过12位，小数位不能超过4位")
-        private BigDecimal taxPrice;
-
-        /**
-         * 税率
-         */
-        @NotNull(message = "税率不能为空")
-        @Digits(integer = 12, fraction = 4, message = "税率整数位不能超过12位，小数位不能超过4位")
-        private BigDecimal taxRate;
-
-        /**
-         * 结算方式
-         */
-        @NotBlank(message = "结算方式不能为空")
-        @Size(max = 19,message = "结算方式最大长度不能超过19位")
-        private String payMethodId;
-
-        /**
-         * 付款条件
-         */
-        @NotBlank(message = "付款条件不能为空")
-        @Size(max = 255,message = "付款条件最大长度不能超过255位")
-        private String paymentCondition;
-
-
-        /**
-         * 是否费用返还
-         */
-        private Boolean isNeedRefund;
-
-        /**
-         * 返还标准
-         */
-        private String refundStandard;
-
-        /**
-         * 退款单量
-         */
-        private Integer refundOrderQty;
-
-        /**
-         * 返还金额
-         */
-        private BigDecimal refundAmount;
-
-        /**
-         * 费用返还状态
-         */
-        private String refundStatus;
-
-        /**
-         * 关联产品
-         */
-        private List<MouldRefProductDTO.CommonDTO> refProductList;
-    }
-
-
-
-
-    @Getter
-    @Setter
-    public static class ProductDTO {
-        /**
-         * 产品名称
-         */
-        @NotBlank(message = "产品名称不能为空")
-        @Size(max = 255,message = "产品名称最大长度不能超过255位")
-        private String productName;
-
-        /**
-         * 图片地址
-         */
-        @NotBlank(message = "图片地址不能为空")
-        @Size(max = 255,message = "图片地址最大长度不能超过255位")
-        private String imagesUrl;
-    }
-
-
-    @Getter
-    @Setter
-    public static class DocDTO {
-        /**
-         * 文档类型id
-         */
-        private String typeId;
-
-        /**
-         * 版本号
-         */
-        private String docVersion;
-
-        /**
-         * 文件地址
-         */
-        private String docUrl;
-
-        /**
-         * 文档名字
-         */
-        private String docName;
-
-        /**
-         * 外部链接
-         */
-        private String extLink;
-
-        /**
-         * 备注
-         */
-        private String remark;
     }
 
     /**

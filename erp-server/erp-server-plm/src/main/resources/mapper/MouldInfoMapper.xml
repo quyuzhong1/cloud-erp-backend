@@ -18,7 +18,7 @@
         <result column="product_manager_id" property="productManagerId"/>
         <result column="remark" property="remark"/>
         <result column="category_id" property="categoryId"/>
-        <result column="mold_category_code" property="moldCategoryCode"/>
+        <result column="mold_category_code" property="mouldCategoryCode"/>
     </resultMap>
 
     <select id="paging" resultType="com.erp.model.plm.dto.MouldInfoDTO$PagingViewDTO">

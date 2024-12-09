@@ -40,13 +40,7 @@ public interface MouldInfoService extends SuperService<MouldInfoEntity> {
      * 新增并提交
      * @param dto 参数
      */
-    BatchResultDTO addAndSubmit(MouldInfoDTO.AddDTO dto);
-
-    /**
-     * 编辑并提交
-     * @param dto 参数
-     */
-    BatchResultDTO updateAndSubmit(MouldInfoDTO.UpdateDTO dto);
+    BatchResultDTO addAndSubmit(MouldInfoDTO.UpdateDTO dto);
 
     /**
      * 提交

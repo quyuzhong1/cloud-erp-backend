@@ -5,7 +5,6 @@ import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.common.business.utils.ApplicationContextUtils;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.plm.dto.MouldDocInfoDTO;
-import com.erp.model.plm.dto.MouldInfoDTO;
 import com.erp.model.plm.entity.MouldDocInfoEntity;
 import com.erp.server.plm.mapper.MouldDocInfoMapper;
 import com.erp.server.plm.service.MouldDocInfoService;
@@ -29,7 +28,7 @@ import java.util.stream.Collectors;
 public class MouldDocInfoServiceImpl extends SuperServiceImpl<MouldDocInfoMapper, MouldDocInfoEntity> implements MouldDocInfoService {
 
     @Override
-    public void add(List<MouldInfoDTO.DocDTO> docList, String id) {
+    public void add(List<MouldDocInfoDTO.UpdateDTO> docList, String id) {
 
         List<MouldDocInfoEntity> docInfoEntityList = docList.stream()
                 .map(v -> {
@@ -38,7 +37,7 @@ public class MouldDocInfoServiceImpl extends SuperServiceImpl<MouldDocInfoMapper
                     return entity;
                 }).collect(Collectors.toList());
 
-        ApplicationContextUtils.getBean(MouldDocInfoServiceImpl.class).saveBatch(docInfoEntityList);
+        ApplicationContextUtils.getBean(MouldDocInfoServiceImpl.class).saveOrUpdateBatch(docInfoEntityList);
     }
 
     @Override

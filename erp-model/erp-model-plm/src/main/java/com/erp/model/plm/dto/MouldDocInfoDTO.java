@@ -4,7 +4,6 @@ import com.common.business.annotation.Dict;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
 
@@ -94,7 +93,6 @@ public class MouldDocInfoDTO implements Serializable {
         /**
         * 主键id
         */
-        @NotBlank(message = "主键id不能为空")
         private String id;
 
     }
@@ -104,52 +102,37 @@ public class MouldDocInfoDTO implements Serializable {
     public static class CommonDTO {
 
         /**
-        * 模具信息
-        */
-        @NotBlank(message = "模具信息不能为空")
-        @Size(max = 19,message = "模具信息最大长度不能超过19位")
-        private String mouldInfoId;
-
-        /**
         * 文档类型id
         */
-        @NotBlank(message = "文档类型id不能为空")
         @Size(max = 19,message = "文档类型id最大长度不能超过19位")
         private String typeId;
 
         /**
         * 版本号
         */
-        @NotBlank(message = "版本号不能为空")
         @Size(max = 255,message = "版本号最大长度不能超过255位")
         private String docVersion;
 
         /**
         * 文件地址
         */
-        @NotBlank(message = "文件地址不能为空")
-        @Size(max = 255,message = "文件地址最大长度不能超过255位")
         private String docUrl;
 
         /**
         * 文档名字
         */
-        @NotBlank(message = "文档名字不能为空")
         @Size(max = 255,message = "文档名字最大长度不能超过255位")
         private String docName;
 
         /**
         * 外部链接
         */
-        @NotBlank(message = "外部链接不能为空")
         @Size(max = 255,message = "外部链接最大长度不能超过255位")
         private String extLink;
 
         /**
         * 备注
         */
-        @NotBlank(message = "备注不能为空")
-        @Size(max = 255,message = "备注最大长度不能超过255位")
         private String remark;
 
 

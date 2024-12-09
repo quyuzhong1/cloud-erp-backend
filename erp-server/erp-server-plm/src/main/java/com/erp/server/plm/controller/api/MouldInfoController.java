@@ -12,6 +12,7 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.plm.dto.MouldInfoDTO;
 import com.erp.model.plm.entity.MouldInfoEntity;
+import com.erp.server.plm.query.MouldInfoQueryHandler;
 import com.erp.server.plm.service.MouldInfoService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
@@ -47,7 +48,7 @@ public class MouldInfoController extends BaseController {
      * @param dto 参数
      */
     @PostMapping("/paging")
-    @WebAdvanceQuery
+    @WebAdvanceQuery(handler = MouldInfoQueryHandler.class)
     public ApiResult<PagingVO<MouldInfoDTO.PagingViewDTO>> paging(@RequestBody @Validated PagingDTO<MouldInfoDTO.PagingParamDTO> dto) {
         PagingVO<MouldInfoDTO.PagingViewDTO> pagingVO = mouldInfoService.paging(dto);
         return success(pagingVO);
@@ -85,21 +86,8 @@ public class MouldInfoController extends BaseController {
      */
     @PostMapping("/addAndSubmit")
     @LogAction(value = LogActionEnum.INSERT, desc = "模具保存并提交")
-    public ApiResult<BatchResultDTO> addAndSubmit(@RequestBody @Validated MouldInfoDTO.AddDTO dto) {
+    public ApiResult<BatchResultDTO> addAndSubmit(@RequestBody @Validated MouldInfoDTO.UpdateDTO dto) {
         return success(mouldInfoService.addAndSubmit(dto));
-    }
-
-
-    /**
-     * 编辑并提交
-     * @author liaohui
-     * date:  2024-12-03
-     * @return ApiResult<String>
-     */
-    @PostMapping("/updateAndSubmit")
-    @LogAction(value = LogActionEnum.INSERT, desc = "编辑并提交")
-    public ApiResult<BatchResultDTO> updateAndSubmit(@RequestBody @Validated MouldInfoDTO.UpdateDTO dto) {
-        return success(mouldInfoService.updateAndSubmit(dto));
     }
 
 

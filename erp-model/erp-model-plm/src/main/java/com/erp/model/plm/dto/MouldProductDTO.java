@@ -1,13 +1,13 @@
 package com.erp.model.plm.dto;
 
 import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
-import java.io.Serializable;
-import java.time.LocalDateTime;
-import javax.validation.constraints.NotNull;
+import lombok.Setter;
+
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
+import java.io.Serializable;
 
 /**
  * <p>
@@ -67,14 +67,13 @@ public class MouldProductDTO implements Serializable {
     /**
     * 修改
     */
-    @Data
-    @NoArgsConstructor
+    @Getter
+    @Setter
     public static class UpdateDTO extends CommonDTO {
 
         /**
         * 主键id
         */
-        @NotBlank(message = "主键id不能为空")
         private String id;
 
     }
@@ -82,13 +81,6 @@ public class MouldProductDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class CommonDTO {
-
-        /**
-        * 模具id
-        */
-        @NotBlank(message = "模具id不能为空")
-        @Size(max = 19,message = "模具id最大长度不能超过19位")
-        private String mouldDetailId;
 
         /**
         * 产品名称

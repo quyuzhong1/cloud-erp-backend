@@ -1,15 +1,16 @@
 package com.erp.model.plm.dto;
 
-import java.math.BigDecimal;
 import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
-import java.io.Serializable;
-import java.time.LocalDateTime;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.Size;
+import lombok.Setter;
+
 import javax.validation.constraints.Digits;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
+import java.io.Serializable;
+import java.math.BigDecimal;
 
 /**
  * <p>
@@ -84,14 +85,13 @@ public class MouldRefundAgreementDTO implements Serializable {
     /**
     * 修改
     */
-    @Data
-    @NoArgsConstructor
+    @Getter
+    @Setter
     public static class UpdateDTO extends CommonDTO {
 
         /**
         * 主键id
         */
-        @NotBlank(message = "主键id不能为空")
         private String id;
 
     }
@@ -99,13 +99,6 @@ public class MouldRefundAgreementDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class CommonDTO {
-
-        /**
-        * 模具id
-        */
-        @NotBlank(message = "模具id不能为空")
-        @Size(max = 19,message = "模具id最大长度不能超过19位")
-        private String mouldDetailId;
 
         /**
         * 是否费用返还
@@ -132,13 +125,6 @@ public class MouldRefundAgreementDTO implements Serializable {
         @NotNull(message = "返还金额不能为空")
         @Digits(integer = 12, fraction = 4, message = "返还金额整数位不能超过12位，小数位不能超过4位")
         private BigDecimal refundAmount;
-
-        /**
-        * 费用返还状态
-        */
-        @NotBlank(message = "费用返还状态不能为空")
-        @Size(max = 255,message = "费用返还状态最大长度不能超过255位")
-        private String refundStatus;
 
 
     }

@@ -39,6 +39,7 @@ import com.erp.server.plm.service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.ObjectUtils;
 
 import javax.annotation.Resource;
 import java.time.LocalDate;
@@ -167,28 +168,30 @@ public class MouldInfoServiceImpl extends SuperServiceImpl<MouldInfoMapper, Moul
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public BatchResultDTO addAndSubmit(MouldInfoDTO.AddDTO dto) {
+    public BatchResultDTO addAndSubmit(MouldInfoDTO.UpdateDTO dto) {
+        MouldInfoEntity entity = getById(dto.getId());
+        boolean isExit = ObjectUtils.isEmpty(entity);
+
+
+
         //保存基本信息
         MouldInfoEntity mouldInfoEntity = new MouldInfoEntity();
-        mouldInfoEntity.setStatus(ApproveStatusEnum.WAIT_SUBMIT.getStatus());
         BeanMapperUtils.copy(dto, mouldInfoEntity);
         BasicCategoryEntity category = basicCategoryService.getById(dto.getCategoryId());
-        String code = docNoGenHelper.generateMouldCode(category.getCode());
-        mouldInfoEntity.setMouldCategoryCode(code);
+        if (isExit) {
+            mouldInfoEntity.setStatus(ApproveStatusEnum.WAIT_SUBMIT.getStatus());
+            String code = docNoGenHelper.generateMouldCode(category.getCode());
+            mouldInfoEntity.setMouldCategoryCode(code);
+        }
         save(mouldInfoEntity);
         mouldDetailService.add(dto.getDetailList(), mouldInfoEntity);
         mouldDocInfoService.add(dto.getDocList(), mouldInfoEntity.getId());
         // 记录操作日志
-        String msg = CharSequenceUtil.format("用户【{}】新增了单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), mouldInfoEntity.getMouldCategoryCode(), "模具");
+        String msg = null;
+        if (isExit) {
+            msg = CharSequenceUtil.format("用户【{}】新增了单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), mouldInfoEntity.getMouldCategoryCode(), "模具");
+        }
         sysLogService.addSysLogBySave(msg, SysLogClassPathEnum.MOULD_DETAIL_ENTITY.getDesc(), mouldInfoEntity.getId(), "");
-        return submit(mouldInfoEntity.getId());
-    }
-
-    @Override
-    @Transactional(rollbackFor = Exception.class)
-    public BatchResultDTO updateAndSubmit(MouldInfoDTO.UpdateDTO dto) {
-        MouldInfoEntity mouldInfoEntity = new MouldInfoEntity();
-
         return submit(mouldInfoEntity.getId());
     }
 

@@ -1,15 +1,16 @@
 package com.erp.model.plm.dto;
 
-import java.math.BigDecimal;
 import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
-import java.io.Serializable;
-import java.time.LocalDateTime;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.Size;
+import lombok.Setter;
+
 import javax.validation.constraints.Digits;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
+import java.io.Serializable;
+import java.math.BigDecimal;
 
 /**
  * <p>
@@ -94,14 +95,13 @@ public class MouldPurchasePriceDTO implements Serializable {
     /**
     * 修改
     */
-    @Data
-    @NoArgsConstructor
+    @Getter
+    @Setter
     public static class UpdateDTO extends CommonDTO {
 
         /**
         * 主键id
         */
-        @NotBlank(message = "主键id不能为空")
         private String id;
 
     }
@@ -109,13 +109,6 @@ public class MouldPurchasePriceDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class CommonDTO {
-
-        /**
-        * 模具id
-        */
-        @NotBlank(message = "模具id不能为空")
-        @Size(max = 19,message = "模具id最大长度不能超过19位")
-        private String mouldDetailId;
 
         /**
         * 数量
@@ -150,22 +143,6 @@ public class MouldPurchasePriceDTO implements Serializable {
         @NotBlank(message = "付款条件不能为空")
         @Size(max = 255,message = "付款条件最大长度不能超过255位")
         private String paymentCondition;
-
-        /**
-        * 币种
-        */
-        @NotBlank(message = "币种不能为空")
-        @Size(max = 255,message = "币种最大长度不能超过255位")
-        private String currency;
-
-        /**
-        * 汇率
-        */
-        @NotNull(message = "汇率不能为空")
-        @Digits(integer = 12, fraction = 4, message = "汇率整数位不能超过12位，小数位不能超过4位")
-        private BigDecimal exchangeRate;
-
-
     }
 
 

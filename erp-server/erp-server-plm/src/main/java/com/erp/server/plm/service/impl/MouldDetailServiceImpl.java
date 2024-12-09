@@ -9,7 +9,6 @@ import com.common.business.utils.ApplicationContextUtils;
 import com.common.core.enums.CurrencyEnum;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.plm.dto.MouldDetailDTO;
-import com.erp.model.plm.dto.MouldInfoDTO;
 import com.erp.model.plm.entity.*;
 import com.erp.server.plm.mapper.MouldDetailMapper;
 import com.erp.server.plm.service.*;
@@ -18,6 +17,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Resource;
+import javax.validation.Valid;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
@@ -49,24 +49,24 @@ public class MouldDetailServiceImpl extends SuperServiceImpl<MouldDetailMapper, 
     private MouldRefProductService mouldRefProductService;
 
     @Override
-    public void add(List<MouldInfoDTO.DetailDTO> detailList, MouldInfoEntity entity) {
+    public void add(@Valid List<MouldDetailDTO.UpdateDTO> detailList, MouldInfoEntity entity) {
 
         List<MouldDetailEntity> details = new ArrayList<>();
         List<MouldRefundAgreementEntity> agreementList = new ArrayList<>();
         List<MouldPurchasePriceEntity> purchasePriceList = new ArrayList<>();
         List<MouldProductEntity> productList = new ArrayList<>();
         List<MouldRefProductEntity> mouldRefProductList = new ArrayList<>();
-        for (MouldInfoDTO.DetailDTO dto : detailList) {
+        for (MouldDetailDTO.UpdateDTO dto : detailList) {
             MouldDetailEntity mouldDetail = BeanMapperUtils.map(MouldDetailEntity.class, dto);
             mouldDetail.setMainId(entity.getId());
             String code = docNoGenHelper.generateCode(entity.getMouldCategoryCode());
             mouldDetail.setMouldNo(code);
             mouldDetail.setId(IdWorker.getIdStr());
             details.add(mouldDetail);
-            MouldRefundAgreementEntity agreement = BeanMapperUtils.map(MouldRefundAgreementEntity.class, dto);
+            MouldRefundAgreementEntity agreement = BeanMapperUtils.map(MouldRefundAgreementEntity.class, dto.getRefundAgreement());
             agreement.setMouldDetailId(mouldDetail.getId());
             agreementList.add(agreement);
-            MouldPurchasePriceEntity price = BeanMapperUtils.map(MouldPurchasePriceEntity.class, dto);
+            MouldPurchasePriceEntity price = BeanMapperUtils.map(MouldPurchasePriceEntity.class, dto.getPurchasePrice());
             price.setMouldDetailId(mouldDetail.getId());
             price.setCurrency(CurrencyEnum.RMB.getCurrencyCode());
             price.setExchangeRate(BigDecimal.ONE);
@@ -96,10 +96,10 @@ public class MouldDetailServiceImpl extends SuperServiceImpl<MouldDetailMapper, 
             mouldRefProductList.addAll(productEntityList);
         }
         ApplicationContextUtils.getBean(MouldDetailServiceImpl.class).saveBatch(details);
-        mouldRefundAgreementService.saveBatch(agreementList);
-        mouldPurchasePriceService.saveBatch(purchasePriceList);
-        mouldProductService.saveBatch(productList);
-        mouldRefProductService.saveBatch(mouldRefProductList);
+        mouldRefundAgreementService.saveOrUpdateBatch(agreementList);
+        mouldPurchasePriceService.saveOrUpdateBatch(purchasePriceList);
+        mouldProductService.saveOrUpdateBatch(productList);
+        mouldRefProductService.saveOrUpdateBatch(mouldRefProductList);
     }
 
     @Override

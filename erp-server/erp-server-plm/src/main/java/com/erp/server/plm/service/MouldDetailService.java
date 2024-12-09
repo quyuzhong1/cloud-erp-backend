@@ -2,10 +2,10 @@ package com.erp.server.plm.service;
 
 import com.common.business.service.SuperService;
 import com.erp.model.plm.dto.MouldDetailDTO;
-import com.erp.model.plm.dto.MouldInfoDTO;
 import com.erp.model.plm.entity.MouldDetailEntity;
 import com.erp.model.plm.entity.MouldInfoEntity;
 
+import javax.validation.Valid;
 import java.util.List;
 
 /**
@@ -24,7 +24,7 @@ public interface MouldDetailService extends SuperService<MouldDetailEntity> {
      * @param detailList 详情
      * @param entity     主表
      */
-    void add(List<MouldInfoDTO.DetailDTO> detailList, MouldInfoEntity entity);
+    void add(@Valid List<MouldDetailDTO.UpdateDTO> detailList, MouldInfoEntity entity);
 
     /**
      * 根据模具查询明细

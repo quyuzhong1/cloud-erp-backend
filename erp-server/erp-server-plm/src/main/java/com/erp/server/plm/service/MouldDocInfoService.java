@@ -2,7 +2,6 @@ package com.erp.server.plm.service;
 
 import com.common.business.service.SuperService;
 import com.erp.model.plm.dto.MouldDocInfoDTO;
-import com.erp.model.plm.dto.MouldInfoDTO;
 import com.erp.model.plm.entity.MouldDocInfoEntity;
 
 import java.util.List;
@@ -24,7 +23,7 @@ public interface MouldDocInfoService extends SuperService<MouldDocInfoEntity> {
      * @param docList 文档
      * @param id      模具id
      */
-    void add(List<MouldInfoDTO.DocDTO> docList, String id);
+    void add(List<MouldDocInfoDTO.UpdateDTO> docList, String id);
 
     /**
      * 根据模具id查询文档

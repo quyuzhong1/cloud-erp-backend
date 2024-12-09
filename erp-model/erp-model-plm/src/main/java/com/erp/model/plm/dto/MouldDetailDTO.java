@@ -9,6 +9,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
@@ -69,7 +70,7 @@ public class MouldDetailDTO implements Serializable {
         /**
         * 模具穴数
         */
-        private String moldHoles;
+        private String mouldHoles;
 
         /**
         * 模具长
@@ -164,21 +165,49 @@ public class MouldDetailDTO implements Serializable {
     /**
     * 修改
     */
-    @Data
-    @NoArgsConstructor
+    @Getter
+    @Setter
     public static class UpdateDTO extends CommonDTO {
 
         /**
         * 主键id
         */
-        @NotBlank(message = "主键id不能为空")
         private String id;
+
+        /**
+         * 产品信息
+         */
+        @Valid
+        private List<MouldProductDTO.UpdateDTO> productList;
+
+        /**
+         * 模具价目信息
+         */
+        @Valid
+        private MouldPurchasePriceDTO.UpdateDTO purchasePrice;
+
+        /**
+         * 模具价目信息
+         */
+        @Valid
+        private MouldRefundAgreementDTO.UpdateDTO refundAgreement;
+
+        /**
+         * 关联产品
+         */
+        @Valid
+        private List<MouldRefProductDTO.UpdateDTO> refProductList;
 
     }
 
     @Data
     @NoArgsConstructor
     public static class CommonDTO {
+
+        /**
+         * 模具编号
+         */
+        private String mouldNo;
 
         /**
         * 外部模具编号(供应商)
@@ -197,7 +226,7 @@ public class MouldDetailDTO implements Serializable {
         */
         @NotBlank(message = "模具穴数不能为空")
         @Size(max = 255,message = "模具穴数最大长度不能超过255位")
-        private String moldHoles;
+        private String mouldHoles;
 
         /**
         * 模具长
@@ -250,7 +279,6 @@ public class MouldDetailDTO implements Serializable {
         * 备注
         */
         private String remark;
-
 
     }
 
