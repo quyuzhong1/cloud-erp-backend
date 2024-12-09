@@ -497,6 +497,7 @@
         CEIL ( wcs.box_height ) AS height,
         wcd.sku_id,
         wcd.sku_no,
+        wcd.pack_qty,
         wcd.sku_no AS sku,
         fmd.code AS deliveryCode,
         CASE
@@ -520,6 +521,7 @@
         FALSE INNER JOIN wms_carton_detail wcd ON wc.ID = wcd.main_id
         AND wcd.is_deleted = FALSE
         AND wcd.sku_id = fmdd.sku_id
+        AND wcd.fn_sku = fmdd.fn_sku
         LEFT JOIN fba_shipment_packing fsp ON fsp.carton_id = wc.ID
         AND fsp.is_deleted =
         FALSE LEFT JOIN first_mile_delivery_detail fmdd2 ON fmdd2.main_id = fmd.ID
@@ -558,44 +560,6 @@
             <foreach collection="businessCodes" item="item" open="(" close=")" separator=",">
                 #{item}
             </foreach>
-        </if>
-    </select>
-
-
-    <select id="ListPackingDetailPackQty"
-            resultType="com.erp.model.wms.dto.WmsCartonDetailDTO$ListPackingDetailPackQtyDTO">
-        SELECT DISTINCT
-        wc.ID,
-        wcd.pack_qty
-        FROM
-        first_mile_delivery fmd
-        INNER JOIN first_mile_delivery_detail fmdd ON fmd.ID = fmdd.main_id
-        AND fmdd.is_deleted =
-        FALSE INNER JOIN packing_task pt ON ( pt.source_id = fmd.ID OR pt.source_id = fmd.source_id )
-        AND pt.is_deleted =
-        FALSE INNER JOIN wms_carton wc ON wc.packing_task_id = pt.ID
-        AND wc.is_deleted =
-        FALSE INNER JOIN wms_carton_spec wcs ON wc.spec_id = wcs.ID
-        AND wcs.is_deleted =
-        FALSE INNER JOIN wms_carton_detail wcd ON wc.ID = wcd.main_id
-        AND wcd.is_deleted = FALSE
-        AND wcd.sku_id = fmdd.sku_id
-        LEFT JOIN fba_shipment_packing fsp ON fsp.carton_id = wc.ID
-        AND fsp.is_deleted =
-        FALSE LEFT JOIN first_mile_delivery_detail fmdd2 ON fmdd2.main_id = fmd.ID
-        AND fmdd2.is_deleted =
-        FALSE LEFT JOIN overseas_warehouse_inbound owi ON owi.source_id = fmd.ID
-        AND owi.is_deleted = FALSE
-        where ${params.sqlMap.default} and fmd.is_deleted = false
-        AND wcd.pack_qty > 0
-        <if test="ids != null and ids.size > 0">
-            AND fmd.id IN
-            <foreach collection="ids" item="id" open="(" close=")" separator=",">
-                #{id}
-            </foreach>
-        </if>
-        <if test="permissionSql != null and permissionSql != ''">
-            ${permissionSql}
         </if>
     </select>
 </mapper>
