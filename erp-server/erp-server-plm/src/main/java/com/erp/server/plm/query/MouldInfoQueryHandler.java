@@ -1,7 +1,9 @@
 package com.erp.server.plm.query;
 
 import com.common.business.query.AbstractQueryHandler;
+import org.springframework.stereotype.Component;
 
+@Component
 public class MouldInfoQueryHandler extends AbstractQueryHandler {
 
 
