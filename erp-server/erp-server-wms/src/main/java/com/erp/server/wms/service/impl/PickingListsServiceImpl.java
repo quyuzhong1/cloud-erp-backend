@@ -298,7 +298,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void updateByChange(List<PickingDetailEntity> updatePickingList, List<String> originSourceDetailIds) {
+    public void updateByChange(List<PickingDetailEntity> updatePickingList, List<String> originSourceDetailIds, boolean isFromRequisition) {
         if(CollectionUtils.isEmpty(updatePickingList)){
             if(CollectionUtils.isEmpty(originSourceDetailIds)){
                 return;
@@ -312,8 +312,8 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
         List<WarehouseLocationMoveDetailDTO.AddDTO> addDTOS = new ArrayList<>();
         List<WarehouseLocationMoveDetailDTO.AddDTO> subtractDTOS = new ArrayList<>();
         for (PickingDetailEntity pickingDetailEntity : updatePickingList) {
-            //处理仓位移动数据
-            if (pickingDetailEntity.getWarehouseLocation().equals(pickingDetailEntity.getOriginWarehouseLocation())) {
+            //处理仓位移动数据,要货申请下推的情况只会改数量
+            if (pickingDetailEntity.getWarehouseLocation().equals(pickingDetailEntity.getOriginWarehouseLocation()) || isFromRequisition) {
                 if (pickingDetailEntity.getChangeBeforeQty() > pickingDetailEntity.getQty()) {
                     subtractDTOS.add(WarehouseLocationMoveDetailDTO.AddDTO.getLocationMoveDTO(pickingDetailEntity.getSkuId(), pickingDetailEntity.getSkuNo(),
                             pickingDetailEntity.getStagingLocation(), pickingDetailEntity.getWarehouseLocation(), pickingDetailEntity.getChangeBeforeQty() - pickingDetailEntity.getQty(), pickingListsEntity.getWarehouseId(), pickingListsEntity.getId()));

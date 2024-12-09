@@ -449,7 +449,7 @@ public class RequisitionApplicationChangeServiceImpl extends SuperServiceImpl<Re
         }
 
         requisitionApplicationService.updateByChange(new ArrayList<>(),updateList,new ArrayList<>());
-        pickingListsService.updateByChange(updatePickingList, updateList.stream().map(BaseEntity::getId).collect(Collectors.toList()));
+        pickingListsService.updateByChange(updatePickingList, updateList.stream().map(BaseEntity::getId).collect(Collectors.toList()),false );
         return new RequisitionApplicationChangeDTO.UpdateVirtualDTO(new ArrayList<>(),updateList,new ArrayList<>());
     }
 
@@ -609,7 +609,7 @@ public class RequisitionApplicationChangeServiceImpl extends SuperServiceImpl<Re
         }
 
         requisitionApplicationService.updateByChange(addList,updateList,deleteList);
-        pickingListsService.updateByChange(updatePickingList, new ArrayList<>());
+        pickingListsService.updateByChange(updatePickingList, new ArrayList<>(), true);
 
         return new RequisitionApplicationChangeDTO.UpdateVirtualDTO(addList,updateList,deleteList);
     }
