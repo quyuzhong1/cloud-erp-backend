@@ -663,6 +663,15 @@ public interface SoB2cFeign {
                             @RequestParam(value = "currency") String currency);
 
     /**
+     * 更新 超过订单金额比例标识
+     * @param b2cSoId
+     * @param isOverEstimatedShipCost
+     */
+    @GetMapping("feign/soB2c/updateOverEstimatedShipCost")
+    void updateOverEstimatedShipCost(@RequestParam(value = "b2cSoId") String b2cSoId,
+                                     @RequestParam(value = "isOverEstimatedShipCost") Boolean isOverEstimatedShipCost);
+
+    /**
      * 同步速递云线上订单/配货单
      * @param soId
      * @param operateEnum

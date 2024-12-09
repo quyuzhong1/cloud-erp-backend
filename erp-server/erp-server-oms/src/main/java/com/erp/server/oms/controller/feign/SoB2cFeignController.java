@@ -873,6 +873,17 @@ public class SoB2cFeignController extends BaseController {
     }
 
     /**
+     * 更新 超过订单金额比例标识
+     * @param b2cSoId
+     * @param isOverEstimatedShipCost
+     */
+    @GetMapping("/updateOverEstimatedShipCost")
+    public void updateOverEstimatedShipCost(@RequestParam(value = "b2cSoId") String b2cSoId,
+                                     @RequestParam(value = "isOverEstimatedShipCost") Boolean isOverEstimatedShipCost){
+        soB2cService.updateOverEstimatedShipCost(b2cSoId, isOverEstimatedShipCost);
+    }
+
+    /**
      * 同步速递云线上订单/配货单
      * @param soId
      * @param operateEnum

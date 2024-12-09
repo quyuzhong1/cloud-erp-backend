@@ -194,6 +194,10 @@ public class ShippingCalculationDTO {
          * 时效  时效取值为“物流渠道管理”对应渠道的时效 effective_time_unit
          */
         private String effectiveTimeStr;
+        /**
+         * 运费超限打标比例
+         */
+        private BigDecimal shipmentOverLimitRate;
 
         /**
          * 生效日期

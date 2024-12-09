@@ -250,6 +250,7 @@
             lc.name as channelName,
             lc.effective_time,
             lc.effective_time_unit,
+            lc.shipment_over_limit_rate as shipmentOverLimitRate,
             ls.supplier_id,
             ls.supplier_name,
             lcw."type",

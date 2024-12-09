@@ -9285,6 +9285,14 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     }
 
     @Override
+    public void updateOverEstimatedShipCost(String b2cSoId, Boolean isOverEstimatedShipCost) {
+        if(Objects.isNull(isOverEstimatedShipCost) || CharSequenceUtil.isBlank(b2cSoId)){
+            return;
+        }
+        this.lambdaUpdate().eq(SoB2cEntity::getId, b2cSoId).set(SoB2cEntity::getIsOverEstimatedShipCost, isOverEstimatedShipCost).update();
+    }
+
+    @Override
     public void syncSdyOrderHandler(String soId, String operateEnum) {
         SoB2cEntity soB2cEntity = this.getById(soId);
         //同步数帝云

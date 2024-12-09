@@ -1020,6 +1020,13 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
     void autoCalcEstimatedShippingCost(List<SoB2cDTO.SaveSoB2cDistributionDetailDTO> detailList);
 
     /**
+     * 更新 超过订单金额比例标识
+     * @param b2cSoId
+     * @param isOverEstimatedShipCost
+     */
+    void updateOverEstimatedShipCost(String b2cSoId, Boolean isOverEstimatedShipCost);
+
+    /**
      * 同步数帝云
      * @param soId
      * @param operateEnum

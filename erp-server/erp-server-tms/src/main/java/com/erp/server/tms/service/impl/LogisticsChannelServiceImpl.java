@@ -229,6 +229,10 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
         }
         view.setShippingTemplateId(shippingTemplateId);
         view.setShippingTemplateName(shippingTemplateName);
+        //运费超限达标比例展示调整
+        if (Objects.nonNull(view.getShipmentOverLimitRate())){
+            view.setShipmentOverLimitRate(view.getShipmentOverLimitRate().stripTrailingZeros());
+        }
         /**
          * 物流映射列表
          */

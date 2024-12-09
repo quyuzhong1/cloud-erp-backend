@@ -14,6 +14,7 @@ import com.common.business.enums.WarehousePlatformTypeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.constant.EnumMessage;
 import com.common.core.enums.ApiError;
+import com.common.core.enums.CurrencyEnum;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
@@ -26,6 +27,7 @@ import com.erp.model.tms.dto.ShippingCalculationDTO;
 import com.erp.model.tms.entity.*;
 import com.erp.model.tms.enums.*;
 import com.erp.model.wms.entity.OverseasProviderEntity;
+import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.rpc.sys.feign.SysDictFeign;
@@ -45,6 +47,8 @@ import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -88,6 +92,8 @@ public class ShippingCalculationServiceImpl implements ShippingCalculationServic
     private OverseasProviderFeign overseasProviderFeign;
     @Resource
     private LogisticsChannelService logisticsChannelService;
+    @Resource
+    private DmpTaskFeign dmpTaskFeign;
     @Override
     public PagingVO<ShippingCalculationDTO.ListDTO> paging(PagingDTO<ShippingCalculationDTO.PagingParamDTO> pagingDTO) {
         ShippingCalculationDTO.PagingParamDTO params = pagingDTO.getParams();
@@ -128,6 +134,7 @@ public class ShippingCalculationServiceImpl implements ShippingCalculationServic
         if (Objects.isNull(listDTO)){
             return;
         }
+        //预估费用
         BigDecimal totalShippingCost = listDTO.getTotalShippingCost();
         String currency = listDTO.getCurrency();
         //比较数值是否相同 不相同就更新
@@ -136,6 +143,43 @@ public class ShippingCalculationServiceImpl implements ShippingCalculationServic
             //更新物流预估费用
             soB2cFeign.updateLogisticsFee(b2cSoId,totalShippingCost,currency);
         }
+        //订单费用
+        BigDecimal amount = logisticsDTO.getAmount();
+        String currency1 = logisticsDTO.getCurrency();
+        BigDecimal exchangeRate = logisticsDTO.getExchangeRate();
+        //运费超限打标比例
+        BigDecimal shipmentOverLimitRate = listDTO.getShipmentOverLimitRate();
+        if (Objects.isNull(shipmentOverLimitRate) || shipmentOverLimitRate.compareTo(BigDecimal.ZERO) == 0) {
+            return;//未设置时，不更新
+        }
+        //重新获取订单汇率
+        if (exchangeRate.compareTo(BigDecimal.ZERO) == 0){
+            exchangeRate = dmpTaskFeign.getRate(LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), currency1);
+        }
+        if(Objects.isNull(exchangeRate)){
+            log.error("币别【{}】,汇率为空，请维护汇率后再提交",currency1);
+            return;
+//            throw new ServiceException("汇率为空，请维护汇率后再提交");
+        }
+        BigDecimal estimatedExchangeRate = BigDecimal.ONE;
+        if (!CurrencyEnum.CNY.getCurrencyCode().equals(currency)){
+            estimatedExchangeRate = dmpTaskFeign.getRate(LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), currency);
+        }
+        if(Objects.isNull(estimatedExchangeRate)){
+            log.error("币别【{}】,汇率为空，请维护汇率后再提交",currency);
+            return;
+//            throw new ServiceException("汇率为空，请维护汇率后再提交");
+        }
+        //订单金额本位币 -预估运费最大值
+        BigDecimal orderAmount = MathUtil.divide(MathUtil.multiply(shipmentOverLimitRate, MathUtil.multiply(amount, exchangeRate)), MathUtil.BigDecimal_100);
+        BigDecimal estimatedShippingCost = MathUtil.multiply(totalShippingCost, estimatedExchangeRate);
+        if (estimatedShippingCost.compareTo(orderAmount) > 0){
+            //超过订单金额比例
+            soB2cFeign.updateOverEstimatedShipCost(b2cSoId, Boolean.TRUE);
+        }else {
+            soB2cFeign.updateOverEstimatedShipCost(b2cSoId, Boolean.FALSE);
+        }
+
     }
 
     /**
@@ -181,7 +225,7 @@ public class ShippingCalculationServiceImpl implements ShippingCalculationServic
             params.setChannelCodeList(channelWarehouseDTOList.stream().filter(e -> fromWarehouseId.equals(e.getWarehouseId()) || LogisticsChannelWarehouseTypeEnum.ENUM_ALL.getCode().equals(e.getType())).map(LogisticsChannelDTO.ChannelWarehouseDTO::getChannelCode).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList()));
         }
         List<ShippingCalculationDTO.ListDTO> calculateFeeBatch = thirdWarehouseFeign.getCalculateFeeBatch(params);
-        calculateFeeBatch = handleThirdWarehouseData(calculateFeeBatch, params, overseasProviderEntity, channelWarehouseDTOList,dictCountryEntityList);
+        calculateFeeBatch = handleThirdWarehouseData(calculateFeeBatch, channelWarehouseDTOList,dictCountryEntityList);
         return calculateFeeBatch;
     }
 
@@ -194,7 +238,7 @@ public class ShippingCalculationServiceImpl implements ShippingCalculationServic
      * @param channelWarehouseDTOList
      * @param countryList
      */
-    private List<ShippingCalculationDTO.ListDTO> handleThirdWarehouseData(List<ShippingCalculationDTO.ListDTO> calculateFeeBatch, ShippingCalculationDTO.PagingParamDTO params, OverseasProviderEntity overseasProviderEntity, List<LogisticsChannelDTO.ChannelWarehouseDTO> channelWarehouseDTOList, List<DictCountryEntity> countryList) {
+    private List<ShippingCalculationDTO.ListDTO> handleThirdWarehouseData(List<ShippingCalculationDTO.ListDTO> calculateFeeBatch, List<LogisticsChannelDTO.ChannelWarehouseDTO> channelWarehouseDTOList, List<DictCountryEntity> countryList) {
         calculateFeeBatch = calculateFeeBatch.stream().filter(e -> hasChannelCode(e.getChannelCode(), channelWarehouseDTOList)).collect(Collectors.toList());
         List<String> currencyIdList = calculateFeeBatch.stream().map(ShippingCalculationDTO.ListDTO::getCurrency).collect(Collectors.toList());
         List<CurrencyDTO.ViewDTO> currencyList = sysUserFeign.listByCurrency(currencyIdList);
@@ -218,6 +262,8 @@ public class ShippingCalculationServiceImpl implements ShippingCalculationServic
             String toCountryName = countryList.stream().filter(obj -> obj.getId().equals(dto.getToCountry())).findFirst()
                     .flatMap(obj -> Optional.ofNullable(obj.getNameCn())).orElse("");
             dto.setToCountryName(toCountryName);
+            //运费超限打标比例
+            dto.setShipmentOverLimitRate(channelWarehouseDTO.getShipmentOverLimitRate());
         }
         return calculateFeeBatch;
     }

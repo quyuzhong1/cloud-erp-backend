@@ -70,6 +70,7 @@
         sb2c.is_change_sku as isChangeSku,
         sb2c.is_not_outbound as isNotOutbound,
         sb2c.is_manual_delivery as isManualDelivery,
+        sb2c.is_over_estimated_ship_cost as isOverEstimatedShipCost,
         sb2cl.logistics_channel_name as logisticsChannelName,
         case when sb2cl.actual_shipping_cost = 0 then sb2cl.estimated_shipping_cost
              else sb2cl.actual_shipping_cost
@@ -1094,6 +1095,9 @@
         SELECT
             sb.id,
             sb.code,
+            sb.amount,
+            sb.currency,
+            sb.exchange_rate,
             sbd.warehouse_id,
             sbl.logistics_channel_id,
             sbl.estimated_shipping_cost,

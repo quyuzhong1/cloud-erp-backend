@@ -637,6 +637,10 @@ public class SoB2cDTO implements Serializable {
          */
         private Boolean isManualDelivery;
         /**
+         * 是否预估运费超限，是：true  否：false
+         */
+        private Boolean isOverEstimatedShipCost;
+        /**
          * 标签
          */
         private Boolean tag;
@@ -3284,6 +3288,12 @@ public class SoB2cDTO implements Serializable {
         private String id;
         //销售订单编码
         private String code;
+        //订单金额
+        private BigDecimal amount;
+        //币别
+        private String currency;
+        // 汇率
+        private BigDecimal exchangeRate;
         //渠道id
         private String logisticsChannelId;
         //发货仓库id
