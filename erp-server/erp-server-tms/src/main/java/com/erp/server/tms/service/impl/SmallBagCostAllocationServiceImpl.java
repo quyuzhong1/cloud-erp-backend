@@ -50,6 +50,7 @@ import com.erp.model.tms.entity.SmallBagCostAllocationEntity;
 import com.erp.model.tms.entity.SmallBagCostAllocationMainEntity;
 import com.erp.model.tms.enums.AllocationFeeTypeEnum;
 import com.erp.model.tms.enums.CostAllocationEnum;
+import com.erp.model.tms.enums.LogisticTrackStatusEnum;
 import com.erp.model.tms.enums.LogisticsBillCostCheckStatusEnum;
 import com.erp.model.tms.enums.ReconciliationStatusEnum;
 import com.erp.model.tms.enums.SmallBagCostAllocationBigTableStatusEnum;
@@ -267,14 +268,12 @@ public class SmallBagCostAllocationServiceImpl extends SuperServiceImpl<SmallBag
 			}
 			
 			dto.setFeeSource(SmallBagCostAllocationMainFeeSourceEnum.getName(dto.getFeeSource()));
-			if(dto.getSignTime() != null) {
+			if(LogisticTrackStatusEnum.SIGN.getCode().equals(dto.getTrackStatus())
+					|| LogisticTrackStatusEnum.MANUAL_COMPLETE.getCode().equals(dto.getTrackStatus())
+					|| LogisticTrackStatusEnum.SYSTEM_COMPLETE.getCode().equals(dto.getTrackStatus())) {
 				dto.setDeliveryStatusName("已签收");
 			}else {
 				dto.setDeliveryStatusName("未签收");
-			}
-			BigDecimal skuWeight = dto.getSkuWeight();
-			if(skuWeight != null) {
-				dto.setBillingWeight(skuWeight.multiply(new BigDecimal(deliveryQty)));
 			}
 			dto.setFeeTypeName(AllocationFeeTypeEnum.getName(dto.getFeeType()));
 			dto.setFeeAllocationTypeName(CostAllocationEnum.getName(dto.getFeeAllocationType()));
@@ -289,6 +288,7 @@ public class SmallBagCostAllocationServiceImpl extends SuperServiceImpl<SmallBag
 			if(billingWeightLogistics != null) {
 				dto.setBillingWeightLogistics(billingWeightLogistics.setScale(4, RoundingMode.HALF_UP));
 			}
+			BigDecimal skuWeight = dto.getSkuWeight();
 			if(skuWeight != null) {
 				dto.setSkuWeight(skuWeight.setScale(4, RoundingMode.HALF_UP));
 			}

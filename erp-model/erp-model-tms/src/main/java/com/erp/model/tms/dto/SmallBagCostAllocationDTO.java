@@ -130,6 +130,10 @@ public class SmallBagCostAllocationDTO implements Serializable {
         /**
          * 签收时间
          */
+        private String trackStatus;
+        /**
+         * 签收时间
+         */
         private LocalDateTime signTime;
         
         /**

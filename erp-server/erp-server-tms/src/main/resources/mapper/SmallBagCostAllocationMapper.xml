@@ -50,6 +50,7 @@
             j.track_no,
             k.delivery_time,
             l.sign_time,
+            l.track_status,
             j.confirm_time,
             j.pay_type,
             k.shop_name,

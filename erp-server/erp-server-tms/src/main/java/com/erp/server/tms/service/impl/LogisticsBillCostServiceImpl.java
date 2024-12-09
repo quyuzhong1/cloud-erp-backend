@@ -1663,17 +1663,10 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 		
 		Map<String, String> orgIdNameMaps = sysUserFeign.getAccountingCompanyList(new ArrayList<>(wareIdOrgIdMaps.values())).stream().collect(Collectors.toMap(CodeDTO::getId, CodeDTO::getName));
 		
-		String feeRule = "";
-		String channelId = entity.getChannelId();
-		if(StringUtils.isNotBlank(channelId)) {
-			LogisticsChannelEntity logisticsChannelEntity = logisticsChannelService.getById(channelId);
-			if(logisticsChannelEntity != null) {
-				feeRule = logisticsChannelEntity.getFeeRule();
-				if(StringUtils.isNotBlank(feeRule) && !ShippingFeeRuleEnum.BILLING_WEIGHT.getCode().equals(feeRule)) {
-					if(WeightAllocationEnum.OUTSTOCK_CHARGED_WEIGHT.getCode().equals(weightPackageAllocation)) {
-						weightPackageAllocation = feeRule;
-					}
-				}
+		String feeRule = entity.getFeeRule();
+		if(StringUtils.isNotBlank(feeRule) && !ShippingFeeRuleEnum.BILLING_WEIGHT.getCode().equals(feeRule)) {
+			if(WeightAllocationEnum.OUTSTOCK_CHARGED_WEIGHT.getCode().equals(weightPackageAllocation)) {
+				weightPackageAllocation = feeRule;
 			}
 		}
 		for(SoOutstockDetailEntity soOutstockDetailEntity : soOutstockDetailEntityList) {
@@ -1696,7 +1689,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 			if(inventorySkuCostDetailEntity != null) {
 				BigDecimal skuCost = inventorySkuCostDetailEntity.getProductCost();
 				if(totalSkuCost.compareTo(BigDecimal.ZERO) != 0 && skuCost != null) {
-					skuCostPre = skuCost.divide(totalSkuCost, 2, RoundingMode.HALF_UP);
+					skuCostPre = skuCost.divide(totalSkuCost, 8, RoundingMode.HALF_UP);
 				}
 				smallBagCostAllocationEntity.setUnitCost(skuCost);
 				smallBagCostAllocationEntity.setUnitCurrency(idEntityMaps.get(inventorySkuCostDetailEntity.getMainId()).getCurrency());
@@ -1707,11 +1700,11 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 			BigDecimal skuWeightCostPre = BigDecimal.ZERO;
 			BigDecimal skuWeightCost = skuWeightCostMaps.get(skuId);
 			if(totalSkuWeightCost.compareTo(BigDecimal.ZERO) != 0 && skuWeightCost != null) {
-				skuWeightCostPre = skuWeightCost.multiply(new BigDecimal(actualQty)).divide(totalSkuWeightCost, 2, RoundingMode.HALF_UP);
+				skuWeightCostPre = skuWeightCost.multiply(new BigDecimal(actualQty)).divide(totalSkuWeightCost, 8, RoundingMode.HALF_UP);
 			}
 			
 			smallBagCostAllocationEntity.setDeliveryQty(actualQty);
-			BigDecimal billingWeight = BigDecimal.ZERO;
+			BigDecimal billingWeight = entity.getBillingWeight();
 			BigDecimal skuWeight = null;
 			if(WeightAllocationSmallBagEnum.OUTSTOCK_CHARGED_WEIGHT.getCode().equals(weightPackageAllocation)) {
 				skuWeight = entity.getBillingWeight().multiply(skuWeightCostPre).divide(new BigDecimal(actualQty), 4 , RoundingMode.HALF_UP);
