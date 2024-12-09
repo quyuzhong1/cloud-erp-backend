@@ -303,7 +303,7 @@ public class RequisitionApplicationChangeServiceImpl extends SuperServiceImpl<Re
         }else{
             map.put("approveStatus", "审核通过");
         }
-        map.put("approveUserName", entity.getApproveUserName());
+        map.put("approveUserName", UserContext.getDefaultLoginUser().getUserName());
         ValidList<ProcessManagementDTO.HistoryActivityDTO> dtoList = new ValidList<>();
         dtoList.add(new ProcessManagementDTO.HistoryActivityDTO(SourceTypeEnum.REQUISITION_APPLICATION_CHANGE.getCode(), id));
         ApiResult<List<ProcessManagementDTO.CurApproveInfoDTO>> listApiResult = workflowFeign.curApprover(dtoList);
