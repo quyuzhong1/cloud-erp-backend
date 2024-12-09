@@ -25,7 +25,7 @@ public interface LogisticsChannelRemotePostcodeService extends SuperService<Logi
      */
     LogisticsChannelRemotePostcodeDTO.ViewDTO getByChannelId(String id);
 
-    BaseResultDTO.AddDTO batchUpdate(String channelId, LogisticsChannelRemotePostcodeDTO.ViewDTO remotePostcodeDTO);
+    BaseResultDTO.AddDTO batchUpdate(String channelId, List<String> remotePostcodeIdList);
 
     void removeByChannelIdList(List<String> list);
 

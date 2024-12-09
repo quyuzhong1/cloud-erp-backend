@@ -2,7 +2,6 @@ package com.erp.server.wms.service.impl;
 
 
 import cn.hutool.core.text.CharSequenceUtil;
-import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -13,12 +12,14 @@ import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.oms.dto.ListingInfoParamDTO;
 import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
 import com.erp.model.oms.enums.ListingMatchResultEnum;
 import com.erp.model.oms.enums.RuleTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
+import com.erp.model.wms.dto.OverseasInventoryAgeDetailDTO;
 import com.erp.model.wms.dto.OverseasInventoryDTO;
 import com.erp.model.wms.dto.OverseasProviderDTO;
 import com.erp.model.wms.entity.OverseasInventoryEntity;
@@ -27,17 +28,20 @@ import com.erp.rpc.oms.feign.SkuMappingFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.mapper.OverseasInventoryMapper;
 import com.erp.server.wms.service.OperateLogService;
+import com.erp.server.wms.service.OverseasInventoryAgeDetailService;
 import com.erp.server.wms.service.OverseasInventoryService;
 import com.erp.server.wms.service.OverseasProviderService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -64,6 +68,10 @@ public class OverseasInventoryServiceImpl extends SuperServiceImpl<OverseasInven
     private OverseasProviderService overseasProviderService;
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
+    @Resource
+    private OverseasInventoryAgeDetailService overseasInventoryAgeDetailService;
+
+
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -165,6 +173,18 @@ public class OverseasInventoryServiceImpl extends SuperServiceImpl<OverseasInven
             listingedInfoWithSkuMappingList = skuMappingFeign.listingInfoWithSkuMappingList(paramDTO);
         }
 
+        //查询产品信息
+        List<String> skuIdList = list.stream()
+                .map(OverseasInventoryDTO.ListDTO::getSkuId)
+                .distinct()
+                .collect(Collectors.toList());
+        List<SkuVO> skuVOList = plmTaskFeign.listSkuProductByIds(skuIdList);
+        Map<String, SkuVO> skuVOMap = skuVOList.stream().collect(Collectors.toMap(SkuVO::getSkuId, Function.identity()));
+
+        //查询当日的三方仓库龄
+        List<String> ids = list.stream().map(OverseasInventoryDTO.ListDTO::getId).collect(Collectors.toList());
+        List<OverseasInventoryAgeDetailDTO.AgeRangeViewDTO> ageRangeViewByMainIds = overseasInventoryAgeDetailService.getAgeRangeViewByMainIds(ids);
+
         // 属性赋值
         for(OverseasInventoryDTO.ListDTO data : list) {
             ListingInfoWithSkuMappingDTO view = listingedInfoWithSkuMappingList.stream()
@@ -173,22 +193,17 @@ public class OverseasInventoryServiceImpl extends SuperServiceImpl<OverseasInven
                     .findFirst()
                     .orElse(new ListingInfoWithSkuMappingDTO());
             data.setPlatformSkuName(view.getPlatformSkuName());
-        }
 
-        //查询产品信息
-        List<String> skuIdList = list.stream()
-                .map(OverseasInventoryDTO.ListDTO::getSkuId)
-                .distinct()
-                .collect(Collectors.toList());
-
-        List<SkuVO> skuVOList = plmTaskFeign.listSkuProductByIds(skuIdList);
-        Map<String, SkuVO> skuVOMap = skuVOList.stream().collect(Collectors.toMap(SkuVO::getSkuId, Function.identity()));
-        for (OverseasInventoryDTO.ListDTO data : list) {
             if (CharSequenceUtil.isNotBlank(data.getSkuId())){
                 SkuVO skuVO = skuVOMap.get(data.getSkuId());
                 if (null != skuVO){
                     data.setProductName(skuVO.getSkuName());
                 }
+            }
+
+            OverseasInventoryAgeDetailDTO.AgeRangeViewDTO ageRangeViewDTO = ageRangeViewByMainIds.stream().filter(v -> v.getMainId().equals(data.getId())).findFirst().orElse(null);
+            if(null != ageRangeViewDTO){
+                BeanMapper.copy(ageRangeViewDTO, data);
             }
         }
     }

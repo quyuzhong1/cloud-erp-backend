@@ -1,13 +1,14 @@
 package com.erp.server.wms.rocketmq.consumer;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
-import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.common.business.dto.DmpSyncMqDTO;
 import com.common.business.dto.DmpSyncTaskIdDTO;
 import com.common.business.dto.PlatformInventoryDTO;
 import com.common.business.enums.*;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.utils.BeanMapper;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.handler.AbstractPlatformConsumerHandler;
 import com.common.message.service.mq.MQProducerService;
@@ -19,15 +20,16 @@ import com.erp.model.oms.dto.ListingInfoParamDTO;
 import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
 import com.erp.model.oms.enums.RuleTypeEnum;
 import com.erp.model.wms.dto.OverseasProviderDTO;
+import com.erp.model.wms.entity.OverseasInventoryAgeDetailEntity;
 import com.erp.model.wms.entity.OverseasInventoryEntity;
 import com.erp.rpc.dmp.feign.DmpMongoDbFeign;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.oms.feign.SkuMappingFeign;
 import com.erp.server.wms.convert.OverseasWarehouseConverter;
+import com.erp.server.wms.service.OverseasInventoryAgeDetailService;
 import com.erp.server.wms.service.OverseasInventoryService;
 import com.erp.server.wms.service.OverseasProviderService;
 import io.seata.common.util.CollectionUtils;
-import io.seata.common.util.StringUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.spring.annotation.ConsumeMode;
 import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
@@ -35,6 +37,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -68,6 +73,8 @@ public class PlatformInventoryConsumerService<T extends DmpSyncTaskIdDTO> extend
 
     @Resource
     private DmpMongoDbFeign dmpMongoDbFeign;
+    @Resource
+    private OverseasInventoryAgeDetailService overseasInventoryAgeDetailService;
 
     @Override
     public void updateMongodbData(String platform, String uniqueId, Integer isClean) {
@@ -161,6 +168,35 @@ public class PlatformInventoryConsumerService<T extends DmpSyncTaskIdDTO> extend
             overseasInventoryService.saveOrUpdateByPlatform(entity);
             //可能首次平台sku没有配置映射关系，在拉取数据时查没有映射关系的重新配置
             overseasInventoryService.handleNotMapping(entity.getDictPlatform());
+
+            //库龄计算
+            if(CollUtil.isNotEmpty(dto.getAgeInfoList())){
+                List<OverseasInventoryAgeDetailEntity> addList = new ArrayList<>();
+                List<OverseasInventoryAgeDetailEntity> oldDetails = overseasInventoryAgeDetailService.lambdaQuery()
+                        .eq(OverseasInventoryAgeDetailEntity::getPullDate, LocalDate.now())
+                        .eq(OverseasInventoryAgeDetailEntity::getMainId,entity.getId())
+                        .list();
+                for (PlatformInventoryDTO.PlatformInventoryAgeDTO ageDTO : dto.getAgeInfoList()) {
+                    // 计算日期差
+                    int daysBetween = (int) ChronoUnit.DAYS.between(ageDTO.getPullDate(), ageDTO.getPutAwayDate());
+
+                    OverseasInventoryAgeDetailEntity oldDetail = oldDetails.stream().filter(v -> v.getPutAwayDate().equals(ageDTO.getPutAwayDate())).findFirst().orElse(null);
+                    if(null == oldDetail){
+                        OverseasInventoryAgeDetailEntity detailEntity = new OverseasInventoryAgeDetailEntity();
+                        BeanMapper.copy(ageDTO, detailEntity);
+                        detailEntity.setMainId(entity.getId());
+                        detailEntity.setInventoryAge(daysBetween);
+                        addList.add(detailEntity);
+                    }else {
+                        oldDetail.setInventoryQty(ageDTO.getInventoryQty());
+                        oldDetail.setInventoryAge(daysBetween);
+                        addList.add(oldDetail);
+                    }
+                }
+                if(CollUtil.isNotEmpty(addList)){
+                    overseasInventoryAgeDetailService.saveOrUpdateBatch(addList);
+                }
+            }
         }
         return ApiResult.success();
     }

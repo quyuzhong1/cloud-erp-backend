@@ -91,5 +91,16 @@
         </if>
         GROUP BY approve_status
     </select>
+    <select id="pagingSelect" resultType="com.erp.model.tms.dto.RemotePostcodeDTO$ListDTO">
+        select
+        <include refid="Base_Column_List"></include>
+        from  remote_postcode as rp
+        WHERE rp.is_deleted=FALSE
+        and rp.disabled=FALSE
+        <if test="params.searchKeyword != null and params.searchKeyword != ''">
+            and ((rp.name = #{params.searchKeyword}) or rp.name ilike concat('%', #{params.searchKeyword}::text ,'%'))
+        </if>
+        order by rp.create_time desc
+    </select>
 
 </mapper>

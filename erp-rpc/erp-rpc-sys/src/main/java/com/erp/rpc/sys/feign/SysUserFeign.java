@@ -437,8 +437,8 @@ public interface SysUserFeign {
     /**
      * 根据names查询市
      */
-    @PostMapping("feign/city/listByNames")
-    List<DictCityEntity> listByNames(@RequestBody List<String> names);
+    @PostMapping("feign/city/listCityByNames")
+    List<DictCityEntity> listCityByNames(@RequestBody List<String> names);
 
     /**
      * @param userIds

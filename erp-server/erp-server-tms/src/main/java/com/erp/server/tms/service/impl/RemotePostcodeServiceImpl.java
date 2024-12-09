@@ -2,6 +2,7 @@ package com.erp.server.tms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
+import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseResultDTO;
@@ -210,5 +211,12 @@ public class RemotePostcodeServiceImpl extends SuperServiceImpl<RemotePostcodeMa
         });
         data.setDetails(details);
         return data;
+    }
+
+    @Override
+    public PagingVO<RemotePostcodeDTO.ListDTO> pagingSelect(PagingDTO<RemotePostcodeDTO.SelectDTO> searchDTO) {
+        Page query = new Page(searchDTO.getCurrPage(), searchDTO.getPageSize());
+        RemotePostcodeDTO.SelectDTO params = JSON.parseObject(JSON.toJSONString(searchDTO.getParams()), RemotePostcodeDTO.SelectDTO.class);
+        return new PagingVO<>(baseMapper.pagingSelect(query, params));
     }
 }

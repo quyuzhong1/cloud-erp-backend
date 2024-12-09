@@ -19,6 +19,7 @@ import com.erp.server.tms.service.RemotePostcodeService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
@@ -179,5 +180,17 @@ public class RemotePostcodeController extends BaseController {
     public ApiResult<Object> exportList(@RequestBody @Validated RemotePostcodeDTO.ExportDTO dto, HttpServletResponse response) {
         Boolean flag = remotePostcodeService.exportList(dto, response);
         return flag == true ? success() : failure();
+    }
+
+    /**
+     * 邮编远程查询（分页型）
+     * @author jack
+     * @date:  2024-11-29
+     * @param dto
+     * @return ApiResult<PagingVO<RemotePostcodeDTO.ListDTO>>
+     */
+    @PostMapping("/pagingSelect")
+    public ApiResult<PagingVO<RemotePostcodeDTO.ListDTO>> pagingSelect(@RequestBody @Validated PagingDTO<RemotePostcodeDTO.SelectDTO> dto) {
+        return success( remotePostcodeService.pagingSelect(dto));
     }
 }

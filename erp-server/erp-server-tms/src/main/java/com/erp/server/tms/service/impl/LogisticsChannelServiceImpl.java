@@ -122,7 +122,7 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
         //仓库设置
         logisticsChannelWarehouseService.batchUpdate(channelId, addDTO.getWarehouseDTO());
         //邮编组设置
-        logisticsChannelRemotePostcodeService.batchUpdate(channelId, addDTO.getRemotePostcodeDTO());
+        logisticsChannelRemotePostcodeService.batchUpdate(channelId, addDTO.getRemotePostcodeIdList());
         // 操作日志
         String msg = CharSequenceUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "物流渠道单", logisticsChannelEntity.getCode());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.LOGISTICS_CHANNEL.getCode(), logisticsChannelEntity.getId(), "新增操作");
@@ -159,7 +159,7 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
         //仓库设置
         logisticsChannelWarehouseService.batchUpdate(channelId, updateDTO.getWarehouseDTO());
         //邮编组设置
-        logisticsChannelRemotePostcodeService.batchUpdate(channelId, updateDTO.getRemotePostcodeDTO());
+        logisticsChannelRemotePostcodeService.batchUpdate(channelId, updateDTO.getRemotePostcodeIdList());
 
         // 记录主单操作日志
         String msg = CharSequenceUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), logisticsChannelEntity.getCode(), "物流渠道单");
