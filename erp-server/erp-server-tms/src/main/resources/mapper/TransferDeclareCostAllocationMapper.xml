@@ -86,7 +86,7 @@
                 ${item.field} ${item.sort}
             </foreach>
         </if>
-        t.id desc,g.id,n.index asc
+        t.id desc,g.id,l.index asc
     </select>
     
     <select id="tabList" resultType="com.erp.model.tms.dto.TransferDeclareCostAllocationDTO$TabListDTO">

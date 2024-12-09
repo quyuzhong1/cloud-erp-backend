@@ -1206,9 +1206,9 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
 						if("g".equals(t.getEstimateWeightUnit())) {
 							estimateWeight = estimateWeight.divide(new BigDecimal("1000"), 8, RoundingMode.HALF_UP);
 						}
-						skuWeight = estimateWeight.multiply(skuCostPre).divide(new BigDecimal(actualQty), 4 , RoundingMode.HALF_UP);
+						skuWeight = estimateWeight.multiply(skuWeightCostPre).divide(new BigDecimal(actualQty), 4 , RoundingMode.HALF_UP);
 					}else if(WeightAllocationEnum.SUPPLIER_CHARGED_WEIGHT.getCode().equals(transferAllocation)) {
-						skuWeight = t.getActualBillingWeight().multiply(skuCostPre).divide(new BigDecimal(actualQty), 4 , RoundingMode.HALF_UP);
+						skuWeight = t.getActualBillingWeight().multiply(skuWeightCostPre).divide(new BigDecimal(actualQty), 4 , RoundingMode.HALF_UP);
 					}else if(WeightAllocationEnum.SINGLE_PRODUCT_WEIGHT.getCode().equals(transferAllocation)) {
 						skuWeight = skuWeightCostMaps.get(skuId);
 					}
