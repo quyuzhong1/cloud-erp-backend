@@ -133,7 +133,8 @@
         oi.frozen_qty as frozenQty,
         oi.shipped_qty as shippedQty,
         oi.download_time as downloadTime,
-        opw.warehouse_name as name
+        opw.warehouse_name as name,
+        oi.sale_return_in_transit_qty as saleReturnInTransitQty
         FROM overseas_inventory as oi
         LEFT JOIN overseas_provider_warehouse as opw
         on opw.platform_warehouse_code = oi.warehouse_code

@@ -61,7 +61,7 @@ public class PlatformInventoryDTO extends UniqueDto {
     private Integer transferOnway;
 
     //销退在途数量
-    private Integer saleReturnOnway;
+    private Integer saleReturnInTransitQty;
 
     //待上架数量
     private Integer pending;
