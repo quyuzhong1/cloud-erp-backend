@@ -49,7 +49,6 @@ import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.PurchasePriceDTO;
 import com.erp.model.scm.dto.SupplierDTO;
 import com.erp.model.scm.entity.SupplierEntity;
-import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.DictCountryDTO;
 import com.erp.model.sys.dto.SysUserDeptDTO;
 import com.erp.model.sys.entity.DictCountryEntity;
@@ -61,10 +60,8 @@ import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
 import com.erp.model.wms.entity.InventoryEntity;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
-import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.scm.feign.ScmTaskFeign;
 import com.erp.rpc.scm.feign.SupplierFeign;
-import com.erp.rpc.sys.feign.FileTemplateFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.tms.feign.CfgSettingFeign;
 import com.erp.rpc.wms.feign.InventoryFeign;
@@ -260,13 +257,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
     @Resource
     private InventoryFeign inventoryFeign;
-    @Resource
-    private DownloadTaskFeign downloadTaskFeign;
 
-    @Resource
-    private FileTemplateFeign fileTemplateFeign;
-    @Resource
-    private OperateLogService operateLogService;
 
     //变更财务人员审核
     @Value("${changeFinancialAudit}")
@@ -2258,7 +2249,8 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 }else {
                     msg = CharSequenceUtil.format("自动重算【{}】目的国申报价从【数值】为【{}】/手动修改【{}】目的国申报价从【数值】为【{}】", oldCountry, destDeclarePrice, newCountry,resultDestDeclarePrice);
                 }
-                operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.PRODUCT_DETAIL.getCode(),skuId,"编辑操作");
+                sysLogService.addSysLogByOther(new SysLogEntity().setClassPath(SKUCLASSPATH).setPid(productDetailEntity.getProductId())
+                        .setBusinessId(productDetailEntity.getId()).setOperation("编辑操作").setContent(msg));
                 batchResultDTOList.add(BatchResultDTO.success(skuId,productDetailEntity.getSkuNo(),msg));
                 log.info("更新目的国申报价 sku:{},目的国申报价：{}",skuCostDTO.getSkuNo(), resultDestDeclarePrice);
             }
