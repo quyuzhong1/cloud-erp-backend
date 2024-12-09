@@ -9246,6 +9246,45 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     }
 
     @Override
+    public List<SoB2cDTO.LogisticsDTO> getB2cLogisticsByIds(List<String> ids) {
+        if (CollUtil.isEmpty(ids)){
+            return Collections.emptyList();
+        }
+        return baseMapper.getB2cLogisticsByIds(ids);
+    }
+
+    @Async
+    @Override
+    public void autoCalcEstimatedShippingCost(List<SoB2cDTO.SaveSoB2cDistributionDetailDTO> detailList) {
+        List<String> soIds = detailList.stream().map(SoB2cDTO.SaveSoB2cDistributionDetailDTO::getId).distinct().collect(Collectors.toList());
+        List<SoB2cDTO.LogisticsDTO> list = this.getB2cLogisticsByIds(soIds);
+        if (CollUtil.isEmpty(list)){
+            return;
+        }
+        //根据条件过滤
+        List<SoB2cDTO.LogisticsDTO> logisticsDTOS = list.stream()
+                .filter(e -> CharSequenceUtil.isNotBlank(e.getWarehouseId()) && CharSequenceUtil.isNotBlank(e.getLogisticsChannelId()) && Objects.nonNull(e.getWeight()))
+                .collect(Collectors.toList());
+        //根据发货仓库进行
+        for (String soId : soIds){
+            SoB2cDTO.LogisticsDTO logisticsDTO = logisticsDTOS.stream().filter(e -> soId.equals(e.getId())).findFirst().orElse(null);
+            if (Objects.isNull(logisticsDTO)){
+                continue;
+            }
+            ShippingCalculationDTO.PagingParamDTO pagingParamDTO = ShippingCalculationDTO.PagingParamDTO.builder()
+                    .b2cSoId(logisticsDTO.getId()).fromWarehouseId(logisticsDTO.getWarehouseId())
+                    .channelIdList(Collections.singletonList(logisticsDTO.getLogisticsChannelId()))
+                    .weight(logisticsDTO.getWeight()).weightUnit(logisticsDTO.getWeightUnit()).postCode(logisticsDTO.getPostCode())
+                    .build();
+            try {
+                logisticsFeign.updateShippingCalculation(pagingParamDTO);
+            }catch (Exception e){
+                log.error("更新销售订单预估运费异常：{}", e.getMessage());
+            }
+        }
+    }
+
+    @Override
     public void syncSdyOrderHandler(String soId, String operateEnum) {
         SoB2cEntity soB2cEntity = this.getById(soId);
         //同步数帝云

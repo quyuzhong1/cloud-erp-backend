@@ -3,8 +3,7 @@ package com.erp.model.tms.dto;
 import com.common.business.dto.base.SortDTO;
 import com.erp.model.tms.entity.ShippingTemplateEntity;
 import com.erp.model.tms.entity.ShippingTemplateRuleEntity;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
@@ -27,7 +26,10 @@ public class ShippingCalculationDTO {
     /**
      * 查询条件
      */
+    @EqualsAndHashCode(callSuper = true)
     @Data
+    @Builder
+    @AllArgsConstructor
     @NoArgsConstructor
     public static class PagingParamDTO extends SortDTO {
 

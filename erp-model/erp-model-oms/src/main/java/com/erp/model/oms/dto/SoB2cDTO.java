@@ -3276,4 +3276,35 @@ public class SoB2cDTO implements Serializable {
          */
         private String skuNo;
     }
+
+    @Data
+    @NoArgsConstructor
+    public static class LogisticsDTO {
+        //销售订单id
+        private String id;
+        //销售订单编码
+        private String code;
+        //渠道id
+        private String logisticsChannelId;
+        //发货仓库id
+        private String warehouseId;
+        //重量
+        private BigDecimal weight;
+        //重量单位
+        private String weightUnit;
+        //预估运费
+        private BigDecimal estimatedShippingCost;
+        //预估运费币种
+        private String estimatedShippingCurrency;
+        //国家二字码
+        private String country;
+        //国家名称
+        private String countryName;
+        //城市名称
+        private String cityName;
+        //邮编
+        private String postCode;
+        //省
+        private String provinceName;
+    }
 }

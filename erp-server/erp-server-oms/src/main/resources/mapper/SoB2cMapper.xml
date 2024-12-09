@@ -1090,6 +1090,31 @@
             #{id}
         </foreach>
     </select>
+    <select id="getB2cLogisticsByIds" resultType="com.erp.model.oms.dto.SoB2cDTO$LogisticsDTO">
+        SELECT
+            sb.id,
+            sb.code,
+            sbd.warehouse_id,
+            sbl.logistics_channel_id,
+            sbl.estimated_shipping_cost,
+            sbl.estimated_shipping_currency,
+            sbl.weight,
+            sbl.weight_unit,
+            sbr.country,
+            sbr.country_name,
+            sbr.city_name,
+            sbr.post_code,
+            sbr.province_name
+        FROM
+            so_b2c sb
+                LEFT JOIN so_b2c_logistics sbl ON sbl.main_id = sb.ID AND sbl.is_deleted =FALSE
+                LEFT JOIN so_b2c_detail sbd ON sb.ID = sbd.main_id AND sbd.is_deleted = FALSE
+                LEFT JOIN so_b2c_receiver sbr ON sb.ID = sbr.main_id AND sbr.is_deleted = FALSE
+        where sb.is_deleted =FALSE and sb.id in
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </select>
 
     <update id="tikTokOrderUpdate">
         UPDATE so_b2c_detail

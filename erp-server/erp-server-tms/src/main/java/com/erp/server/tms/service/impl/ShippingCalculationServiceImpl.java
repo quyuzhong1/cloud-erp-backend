@@ -40,6 +40,7 @@ import com.erp.server.tms.service.ShippingTemplateCostSettingService;
 import com.erp.server.tms.service.ShippingTemplateOtherCostService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -92,7 +93,7 @@ public class ShippingCalculationServiceImpl implements ShippingCalculationServic
         ShippingCalculationDTO.PagingParamDTO params = pagingDTO.getParams();
         String shipmentMethod = params.getShipmentMethod();
         String fromWarehouseId = params.getFromWarehouseId();
-        IPage<ShippingCalculationDTO.ListDTO> erpPageData = null;
+        IPage<ShippingCalculationDTO.ListDTO> erpPageData;
         List<ShippingCalculationDTO.ListDTO> thirdPageData = null;
         if ("first".equals(shipmentMethod)){
             erpPageData = getErpCalculationList(pagingDTO);
@@ -106,8 +107,35 @@ public class ShippingCalculationServiceImpl implements ShippingCalculationServic
         }
         //整合erp和海外仓列表
         IPage<ShippingCalculationDTO.ListDTO> pageData = integratedPageData(erpPageData,thirdPageData);
-        //异步更新
-        return new PagingVO(pageData);
+        //更新销售订单预估运费
+        updateOrderLogisticsFee(fromWarehouseId,params.getB2cSoId(),pageData.getRecords());
+        return new PagingVO<>(pageData);
+    }
+    public void updateOrderLogisticsFee(String fromWarehouseId, String b2cSoId, List<ShippingCalculationDTO.ListDTO> records) {
+        //数据为空时不处理
+        if (CharSequenceUtil.isBlank(b2cSoId) || CollUtil.isEmpty(records) || CharSequenceUtil.isBlank(fromWarehouseId)){
+            return;
+        }
+        List<SoB2cDTO.LogisticsDTO> logisticsDTOList = soB2cFeign.getB2cLogisticsByIds(Collections.singletonList(b2cSoId));
+        if (CollUtil.isEmpty(logisticsDTOList)){
+            return;
+        }
+        List<String> channelIds = logisticsDTOList.stream().map(SoB2cDTO.LogisticsDTO::getLogisticsChannelId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+        if (CollUtil.isEmpty(channelIds)){
+            return;
+        }
+        ShippingCalculationDTO.ListDTO listDTO = records.stream().filter(e -> channelIds.contains(e.getChannelId())).min(Comparator.comparing(ShippingCalculationDTO.ListDTO::getTotalShippingCost)).orElse(null);
+        if (Objects.isNull(listDTO)){
+            return;
+        }
+        BigDecimal totalShippingCost = listDTO.getTotalShippingCost();
+        String currency = listDTO.getCurrency();
+        //比较数值是否相同 不相同就更新
+        SoB2cDTO.LogisticsDTO logisticsDTO = logisticsDTOList.get(0);
+        if (Objects.isNull(logisticsDTO.getEstimatedShippingCost()) || totalShippingCost.compareTo(logisticsDTO.getEstimatedShippingCost()) != 0){
+            //更新物流预估费用
+            soB2cFeign.updateLogisticsFee(b2cSoId,totalShippingCost,currency);
+        }
     }
 
     /**

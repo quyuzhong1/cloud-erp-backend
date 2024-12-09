@@ -511,6 +511,15 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
         }
     }
 
+    @Override
+    public void updateLogisticsFee(String b2cSoId, BigDecimal totalShippingCost, String currency) {
+        if (CharSequenceUtil.isBlank(b2cSoId) || Objects.isNull(totalShippingCost) || CharSequenceUtil.isBlank(currency)){
+            return;
+        }
+        this.lambdaUpdate().eq(SoB2cLogisticsEntity::getMainId, b2cSoId)
+                .set(SoB2cLogisticsEntity::getEstimatedShippingCost, totalShippingCost).set(SoB2cLogisticsEntity::getEstimatedShippingCurrency,currency).update();
+    }
+
     private LogisticsBillDTO.AddDTO buildLogisticsBill(SoB2cLogisticsEntity entity, SoB2cEntity mainEntity) {
         LogisticsBillDTO.AddDTO addDTO = new LogisticsBillDTO.AddDTO();
         addDTO.setShopId(mainEntity.getShopId());

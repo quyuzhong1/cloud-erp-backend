@@ -852,6 +852,27 @@ public class SoB2cFeignController extends BaseController {
     }
 
     /**
+     * 根据销售订单id获取订单 渠道+仓库+重量 基础信息
+     * @param ids
+     * @return
+     */
+    @PostMapping("/getB2cLogisticsByIds")
+    public List<SoB2cDTO.LogisticsDTO> getB2cLogisticsByIds(@RequestBody List<String> ids){
+        return soB2cService.getB2cLogisticsByIds(ids);
+    }
+    /**
+     * 更新物流预估费用
+     * @param b2cSoId
+     * @param totalShippingCost
+     */
+    @GetMapping("/updateLogisticsFee")
+    public void updateLogisticsFee(@RequestParam(value = "b2cSoId")String b2cSoId,
+                                   @RequestParam(value = "totalShippingCost") BigDecimal totalShippingCost,
+                                   @RequestParam(value = "currency") String currency){
+        soB2cLogisticsService.updateLogisticsFee(b2cSoId, totalShippingCost,currency);
+    }
+
+    /**
      * 同步速递云线上订单/配货单
      * @param soId
      * @param operateEnum
