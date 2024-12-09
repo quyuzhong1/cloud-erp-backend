@@ -265,7 +265,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         		}
         		BigDecimal updateBillingWeight = updateDTO.getBillingWeight();
         		if(updateBillingWeight == null) {
-        			updateBillingWeight = BigDecimal.ZERO;
+        			updateBillingWeight = billingWeight;
         		}
 				if(billingWeight.compareTo(updateBillingWeight) != 0) {
 					throw new ServiceException("核算状态为暂估确认，不能修改计费重[预估]");
@@ -281,7 +281,8 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 					for(TmsCostDetailEntity tmsCostDetailEntity : tmsCostDetailEntityList) {
 						UpdateDTO dbUpdateDto = cfgIdDtoMap.get(tmsCostDetailEntity.getCfgCostId());
 						if(dbUpdateDto == null) {
-							throw new ServiceException("核算状态为暂估确认，不能删除预估金额");
+							continue;
+//							throw new ServiceException("核算状态为暂估确认，不能删除预估金额");
 						}
 						BigDecimal dbCostValue = tmsCostDetailEntity.getCostValue();
 						if(dbCostValue == null) {
@@ -289,7 +290,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 						}
 						BigDecimal costValue = dbUpdateDto.getCostValue();
 						if(costValue == null) {
-							costValue = BigDecimal.ZERO;
+							costValue = dbCostValue;
 						}
 						if(dbCostValue.compareTo(costValue) != 0) {
 							throw new ServiceException("核算状态为暂估确认，不能修改预估金额");
@@ -1479,7 +1480,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 		addDTO.setOutstockId(entity.getId());
 		addDTO.setOutstockCode(entity.getCode());
 		addDTO.setDeliveryTime(entity.getApproveTime());
-		addDTO.setOrderType(OrderTypeEnum.B2C.getCode());
+		addDTO.setOrderType(OrderTypeEnum.SORETURN_INSTOCK.getCode());
 		addDTO.setShipmentType(ShipmentTypeEnum.SELF_DELIVER.getCode());
 		
 		List<LogisticsBillDetailDTO.AddDTO> detailList = new ArrayList<>();

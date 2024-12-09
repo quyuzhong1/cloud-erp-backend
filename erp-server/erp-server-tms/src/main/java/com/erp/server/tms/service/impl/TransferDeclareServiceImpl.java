@@ -1008,6 +1008,14 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
 			throw new ServiceException("中转报关已下推分摊");
 		}
 		
+		this.singPushAllocation(id, reportDate, tmsB2cDeclareReconciliationDetailEntityList);
+		
+		return BatchResultDTO.success(id, transferDeclareEntity.getCode(), "下推成功");
+	}
+
+    @Transactional(rollbackFor = Exception.class)
+	@Override
+	public void singPushAllocation(String id, String reportDate , List<TmsB2cDeclareReconciliationDetailEntity> tmsB2cDeclareReconciliationDetailEntityList) {
 		Map<String, List<SoOutstockDetailEntity>> soIdSoOutstockDetailEntityListMaps = new HashMap<>();
 		List<String> soIds = tmsB2cDeclareReconciliationDetailEntityList.stream().map(TmsB2cDeclareReconciliationDetailEntity::getSoId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
 		if(CollUtil.isNotEmpty(soIds)) {
@@ -1202,7 +1210,5 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
 		if(CollUtil.isNotEmpty(addTransferDeclareCostAllocationDetailEntityList)) {
 			transferDeclareCostAllocationDetailService.saveBatch(addTransferDeclareCostAllocationDetailEntityList);
 		}
-		
-		return BatchResultDTO.success(id, transferDeclareEntity.getCode(), "下推成功");
 	}
 }

@@ -3,6 +3,7 @@ package com.erp.server.tms.service.impl;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -25,6 +26,7 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
+import com.common.business.utils.ApplicationContextUtils;
 import com.common.business.vo.PagingVO;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.enums.ApiError;
@@ -41,6 +43,7 @@ import com.erp.model.tms.dto.TransferDeclareCostAllocationDTO.ListDTO;
 import com.erp.model.tms.dto.TransferDeclareCostAllocationDTO.PagingParamDTO;
 import com.erp.model.tms.dto.TransferDeclareCostAllocationDTO.TabListDTO;
 import com.erp.model.tms.entity.LogisticsChannelEntity;
+import com.erp.model.tms.entity.TmsB2cDeclareReconciliationDetailEntity;
 import com.erp.model.tms.entity.TransferDeclareCostAllocationDetailEntity;
 import com.erp.model.tms.entity.TransferDeclareCostAllocationEntity;
 import com.erp.model.tms.entity.TransferDeclareCostAllocationMainEntity;
@@ -56,6 +59,7 @@ import com.erp.model.tms.enums.WeightAllocationSmallBagEnum;
 import com.erp.server.tms.mapper.TransferDeclareCostAllocationMapper;
 import com.erp.server.tms.service.LogisticsChannelService;
 import com.erp.server.tms.service.OperateLogService;
+import com.erp.server.tms.service.TmsB2cDeclareReconciliationDetailService;
 import com.erp.server.tms.service.TransferDeclareCostAllocationDetailService;
 import com.erp.server.tms.service.TransferDeclareCostAllocationMainService;
 import com.erp.server.tms.service.TransferDeclareCostAllocationService;
@@ -82,6 +86,8 @@ public class TransferDeclareCostAllocationServiceImpl extends SuperServiceImpl<T
     private TransferDeclareCostAllocationDetailService transferDeclareCostAllocationDetailService;
     @Resource
     private LogisticsChannelService logisticsChannelService;
+    @Resource
+    private TmsB2cDeclareReconciliationDetailService tmsB2cDeclareReconciliationDetailService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -248,10 +254,26 @@ public class TransferDeclareCostAllocationServiceImpl extends SuperServiceImpl<T
 		return BatchResultDTO.success(id, id, "更新核算状态成功");
 	}
 
+	@Transactional(rollbackFor = Exception.class)
 	@Override
 	public BatchResultDTO reAllocation(String id) {
-		// TODO Auto-generated method stub
-		return null;
+		TransferDeclareCostAllocationMainEntity transferDeclareCostAllocationMainEntity = transferDeclareCostAllocationMainService.getById(id);
+		if(SmallBagCostAllocationReportStatusEnum.CONFIRMED.getCode().equals(transferDeclareCostAllocationMainEntity.getReportStatus())) {
+			throw new ServiceException("所选分摊费用核算状态必须为【待确认】才可重新下推");
+		}
+		transferDeclareCostAllocationMainService.removeById(id);
+		List<String> ids = lambdaQuery().eq(TransferDeclareCostAllocationEntity::getMainId, id).list().stream().map(TransferDeclareCostAllocationEntity::getId).collect(Collectors.toList());
+		removeByIds(ids);
+		transferDeclareCostAllocationDetailService.lambdaUpdate()
+			.in(TransferDeclareCostAllocationDetailEntity::getMainId, ids)
+			.set(TransferDeclareCostAllocationDetailEntity::getIsDeleted, true)
+			.update();
+		
+		TmsB2cDeclareReconciliationDetailEntity tmsB2cDeclareReconciliationDetailEntity = tmsB2cDeclareReconciliationDetailService.getById(transferDeclareCostAllocationMainEntity.getDeclareReconciliationDetailId());
+		ApplicationContextUtils.getBean(TransferDeclareServiceImpl.class).singPushAllocation(transferDeclareCostAllocationMainEntity.getTransferDeclareId(), 
+				transferDeclareCostAllocationMainEntity.getReportDate(), Arrays.asList(tmsB2cDeclareReconciliationDetailEntity));
+		
+		return BatchResultDTO.success(id, id, "重新下推成功");
 	}
 
 	@Transactional(rollbackFor = Exception.class)
@@ -268,6 +290,7 @@ public class TransferDeclareCostAllocationServiceImpl extends SuperServiceImpl<T
 			.in(TransferDeclareCostAllocationDetailEntity::getMainId, ids)
 			.set(TransferDeclareCostAllocationDetailEntity::getIsDeleted, true)
 			.update();
+		
 		return BatchResultDTO.success(id, id, "删除成功");
 	}
 
