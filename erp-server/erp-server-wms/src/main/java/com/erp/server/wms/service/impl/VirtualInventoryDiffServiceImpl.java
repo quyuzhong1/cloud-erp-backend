@@ -136,6 +136,7 @@ public class VirtualInventoryDiffServiceImpl extends SuperServiceImpl<VirtualInv
         addDTO.setRemark("库存差异一键调整");
         addDTO.setStatus(VirtualWarehouseAllocationStatusEnum.WAIT_SUBMIT.getCode());
         addDTO.setDisabled(Boolean.FALSE);
+        addDTO.setIsStatistics(Boolean.TRUE);
         List<VirtualWarehouseAllocationDTO.DetailDto> detailList = new ArrayList<>();
         for (VirtualInventoryDiffDTO.UpdateVirtualInventoryDTO updateDTO : list) {
             VirtualWarehouseAllocationDTO.DetailDto detailDto = new VirtualWarehouseAllocationDTO.DetailDto();
