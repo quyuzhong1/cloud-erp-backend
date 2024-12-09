@@ -1653,10 +1653,14 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 		
 		if(WeightAllocationEnum.OUTSTOCK_CHARGED_WEIGHT.getCode().equals(weightPackageAllocation)) {
 			String channelId = entity.getChannelId();
-			LogisticsChannelEntity logisticsChannelEntity = logisticsChannelService.getById(channelId);
-			String feeRule = logisticsChannelEntity.getFeeRule();
-			if(StringUtils.isNotBlank(feeRule) && !ShippingFeeRuleEnum.BILLING_WEIGHT.getCode().equals(feeRule)) {
-				weightPackageAllocation = feeRule;
+			if(StringUtils.isNotBlank(channelId)) {
+				LogisticsChannelEntity logisticsChannelEntity = logisticsChannelService.getById(channelId);
+				if(logisticsChannelEntity != null) {
+					String feeRule = logisticsChannelEntity.getFeeRule();
+					if(StringUtils.isNotBlank(feeRule) && !ShippingFeeRuleEnum.BILLING_WEIGHT.getCode().equals(feeRule)) {
+						weightPackageAllocation = feeRule;
+					}
+				}
 			}
 		}
 		for(SoOutstockDetailEntity soOutstockDetailEntity : soOutstockDetailEntityList) {
