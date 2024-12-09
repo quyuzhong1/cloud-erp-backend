@@ -18,6 +18,8 @@ import com.erp.server.tms.service.LogisticsSupplierService;
 import com.erp.server.tms.sync.SyncLogisticsBillService;
 import com.xxl.job.core.context.XxlJobHelper;
 import com.xxl.job.core.handler.annotation.XxlJob;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
@@ -25,6 +27,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+@Component
+@Slf4j
 public class SyncSdyJob {
     @Resource
     private LogisticsBillService logisticsBillService;

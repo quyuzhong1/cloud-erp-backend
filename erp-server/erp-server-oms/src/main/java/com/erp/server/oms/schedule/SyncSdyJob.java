@@ -26,6 +26,8 @@ import com.erp.server.oms.service.*;
 import com.google.common.collect.Lists;
 import com.xxl.job.core.context.XxlJobHelper;
 import com.xxl.job.core.handler.annotation.XxlJob;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
@@ -37,6 +39,8 @@ import java.util.stream.Collectors;
 /**
  * 同步数帝云
  */
+@Component
+@Slf4j
 public class SyncSdyJob {
     @Resource
     private SoB2cService soB2cService;
