@@ -123,7 +123,7 @@ public class MouldInfoDTO implements Serializable {
         /**
          * 启用时间
          */
-        private LocalDateTime enableDate;
+        private LocalDate enableDate;
 
         /**
          * 供应商id

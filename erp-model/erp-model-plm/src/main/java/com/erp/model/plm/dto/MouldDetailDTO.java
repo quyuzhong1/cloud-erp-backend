@@ -275,7 +275,7 @@ public class MouldDetailDTO implements Serializable {
         * 启用时间
         */
         @NotNull(message = "启用时间不能为空")
-        private LocalDateTime enableDate;
+        private LocalDate enableDate;
 
         /**
         * 供应商id
