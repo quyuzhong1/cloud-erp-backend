@@ -91,7 +91,7 @@ public class SdyDataSyncJob {
 
         List<SoOutstockEntity> list = new ArrayList<>();
         while (true) {
-            System.out.println("===========当前页数：" + currentPage + "开始时间：" + LocalDateTime.now());
+            XxlJobHelper.log("===========当前页数：" + currentPage + "开始时间：" + LocalDateTime.now());
             int offset = currentPage * pageSize;
             list = soOutstockService.queryToSdy(createStartTime.toLocalDate(), createEndTime.toLocalDate(), pageSize, offset);
             if (CollUtil.isEmpty(list)) {
@@ -171,7 +171,7 @@ public class SdyDataSyncJob {
             }
 
             currentPage++;
-            System.out.println("===========当前页数：" + currentPage + "结束时间：" + LocalDateTime.now());
+            XxlJobHelper.log("===========当前页数：" + currentPage + "结束时间：" + LocalDateTime.now());
         }
     }
 
@@ -192,7 +192,7 @@ public class SdyDataSyncJob {
 
         List<SoReturnInstockEntity> list = new ArrayList<>();
         while (true) {
-            System.out.println("===========当前页数：" + currentPage + "开始时间：" + LocalDateTime.now());
+            XxlJobHelper.log("===========当前页数：" + currentPage + "开始时间：" + LocalDateTime.now());
             int offset = currentPage * pageSize;
             list = soReturnInstockService.queryToSdy(createStartTime.toLocalDate(), createEndTime.toLocalDate(), pageSize, offset);
             if (CollUtil.isEmpty(list)) {
@@ -262,7 +262,7 @@ public class SdyDataSyncJob {
                         receiveReturnList);
             }
             currentPage++;
-            System.out.println("===========当前页数：" + currentPage + "结束时间：" + LocalDateTime.now());
+            XxlJobHelper.log("===========当前页数：" + currentPage + "结束时间：" + LocalDateTime.now());
         }
 
     }

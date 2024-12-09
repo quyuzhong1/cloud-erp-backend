@@ -57,7 +57,7 @@ public class SyncSdyJob {
 
         List<LogisticsBillEntity> list = new ArrayList<>();
         while (true) {
-            System.out.println("===========当前页数：" + currentPage + "开始时间：" + LocalDateTime.now());
+            XxlJobHelper.log("===========当前页数：" + currentPage + "开始时间：" + LocalDateTime.now());
             int offset = currentPage * pageSize;
             list = logisticsBillService.queryToSdy(createStartTime, createEndTime, pageSize, offset);
             if (CollUtil.isEmpty(list)) {
@@ -78,6 +78,8 @@ public class SyncSdyJob {
                 List<LogisticsBillDetailEntity> detailEntityList = billDetailEntities.stream().filter(req -> req.getMainId().equals(entity.getId())).collect(Collectors.toList());
                 syncLogisticsBillService.syncDataToSdy(entity, detailEntityList, SyncOperateEnum.OPERATE_APPROVE.getCode(), logisticsChannelEntities, logisticsSupplierEntities);
             }
+            currentPage++;
+            XxlJobHelper.log("===========当前页数：" + currentPage + "结束时间：" + LocalDateTime.now());
         }
     }
 }

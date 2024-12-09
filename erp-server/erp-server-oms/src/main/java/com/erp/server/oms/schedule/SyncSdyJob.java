@@ -77,7 +77,7 @@ public class SyncSdyJob {
 
         List<SoB2cEntity> list = new ArrayList<>();
         while (true) {
-            System.out.println("===========当前页数：" + currentPage + "开始时间：" + LocalDateTime.now());
+            XxlJobHelper.log("===========当前页数：" + currentPage + "开始时间：" + LocalDateTime.now());
             int offset = currentPage * pageSize;
             list = soB2cService.queryToSdy(createStartTime.toLocalDate(), createEndTime.toLocalDate(), pageSize, offset);
             if (CollUtil.isEmpty(list)) {
@@ -165,7 +165,7 @@ public class SyncSdyJob {
                 );
             }
             currentPage++;
-            System.out.println("===========当前页数：" + currentPage + "结束时间：" + LocalDateTime.now());
+            XxlJobHelper.log("===========当前页数：" + currentPage + "结束时间：" + LocalDateTime.now());
         }
     }
 }
