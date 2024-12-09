@@ -300,6 +300,10 @@ public class RemotePostcodeDTO implements Serializable {
          * 关键词
          */
         private String searchKeyword;
+        /**
+         * 是否启用
+         */
+        private Boolean disabled;
 
     }
 }

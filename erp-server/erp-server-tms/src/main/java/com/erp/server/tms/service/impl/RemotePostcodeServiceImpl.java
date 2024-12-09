@@ -217,6 +217,11 @@ public class RemotePostcodeServiceImpl extends SuperServiceImpl<RemotePostcodeMa
     public PagingVO<RemotePostcodeDTO.ListDTO> pagingSelect(PagingDTO<RemotePostcodeDTO.SelectDTO> searchDTO) {
         Page query = new Page(searchDTO.getCurrPage(), searchDTO.getPageSize());
         RemotePostcodeDTO.SelectDTO params = JSON.parseObject(JSON.toJSONString(searchDTO.getParams()), RemotePostcodeDTO.SelectDTO.class);
-        return new PagingVO<>(baseMapper.pagingSelect(query, params));
+        return new PagingVO<>(baseMapper.pagingSelect(query,params));
+    }
+
+    @Override
+    public List<RemotePostcodeDTO.ListDTO> select(RemotePostcodeDTO.SelectDTO dto) {
+        return baseMapper.select(dto);
     }
 }

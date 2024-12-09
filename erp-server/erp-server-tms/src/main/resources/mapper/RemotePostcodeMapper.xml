@@ -96,7 +96,26 @@
         <include refid="Base_Column_List"></include>
         from  remote_postcode as rp
         WHERE rp.is_deleted=FALSE
-        and rp.disabled=FALSE
+        <if test="params.disabled != null and params.disabled != ''">
+            and rp.disabled= #{disabled}
+        </if>
+        <if test="params.searchKeyword != null and params.searchKeyword != ''">
+            and ((rp.name = #{params.searchKeyword}) or rp.name ilike concat('%', #{params.searchKeyword}::text ,'%'))
+        </if>
+        <if test="params.sqlMap.default != null and params.sqlMap.default != ''">
+            and ${params.sqlMap.default}
+        </if>
+        order by rp.create_time desc
+    </select>
+    <select id="select" resultType="com.erp.model.tms.dto.RemotePostcodeDTO$ListDTO"
+            parameterType="com.erp.model.tms.dto.RemotePostcodeDTO$SelectDTO">
+        select
+        <include refid="Base_Column_List"></include>
+        from  remote_postcode as rp
+        WHERE rp.is_deleted=FALSE
+        <if test="params.disabled != null and params.disabled != ''">
+            and rp.disabled= #{disabled}
+        </if>
         <if test="params.searchKeyword != null and params.searchKeyword != ''">
             and ((rp.name = #{params.searchKeyword}) or rp.name ilike concat('%', #{params.searchKeyword}::text ,'%'))
         </if>

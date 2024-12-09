@@ -101,4 +101,11 @@ public interface RemotePostcodeService extends SuperService<RemotePostcodeEntity
      * @return ApiResult<PagingVO<RemotePostcodeDTO.ListDTO>>
      */
     PagingVO<RemotePostcodeDTO.ListDTO> pagingSelect(PagingDTO<RemotePostcodeDTO.SelectDTO> dto);
+    /**
+     * 邮编下拉值
+     * @author jack
+     * @date:  2024-11-29
+     * @return ApiResult<List<RemotePostcodeDTO.ListDTO>>
+     */
+    List<RemotePostcodeDTO.ListDTO> select(RemotePostcodeDTO.SelectDTO dto);
 }
