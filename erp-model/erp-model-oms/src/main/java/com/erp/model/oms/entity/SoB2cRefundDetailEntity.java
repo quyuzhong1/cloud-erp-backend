@@ -4,12 +4,10 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
 import com.baomidou.mybatisplus.annotation.TableField;
 import java.io.Serializable;
-import java.math.BigDecimal;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
-import com.common.business.enums.ApproveStatusEnum;
 
 
 /**
@@ -23,8 +21,8 @@ import com.common.business.enums.ApproveStatusEnum;
 @Data
 @EqualsAndHashCode(callSuper = true)
 @Accessors(chain = true)
-@TableName("refund_order_detail")
-public class RefundOrderDetailEntity extends BaseEntity<RefundOrderDetailEntity> {
+@TableName("so_b2c_refund_detail")
+public class SoB2cRefundDetailEntity extends BaseEntity<SoB2cRefundDetailEntity> {
 
     /**
     * 主表id

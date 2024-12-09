@@ -10,9 +10,9 @@ import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
 import com.common.core.constant.SqlConstants;
 import com.common.core.utils.MathUtil;
-import com.erp.model.oms.dto.RefundOrderDTO;
-import com.erp.model.oms.entity.RefundOrderDetailEntity;
-import com.erp.model.oms.entity.RefundOrderEntity;
+import com.erp.model.oms.dto.SoB2cRefundDTO;
+import com.erp.model.oms.entity.SoB2cRefundDetailEntity;
+import com.erp.model.oms.entity.SoB2cRefundEntity;
 import com.erp.model.oms.enums.RefundOrderStatusEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
@@ -20,11 +20,11 @@ import com.erp.model.wms.entity.SoOutstockDetailEntity;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.wms.feign.SoOutstockFeign;
-import com.erp.server.oms.mapper.RefundOrderMapper;
+import com.erp.server.oms.mapper.SoB2cRefundMapper;
 import com.erp.server.oms.service.DictBasicService;
 import com.erp.server.oms.service.OperateLogService;
-import com.erp.server.oms.service.RefundOrderDetailService;
-import com.erp.server.oms.service.RefundOrderService;
+import com.erp.server.oms.service.SoB2cRefundDetailService;
+import com.erp.server.oms.service.SoB2cRefundService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
@@ -45,7 +45,7 @@ import static com.common.business.enums.FileTaskEventEnum.EXPORT_BI_RETURN_INFO;
  * @since 2023-08-25
  */
 @Service
-public class RefundOrderServiceImpl extends SuperServiceImpl<RefundOrderMapper, RefundOrderEntity> implements RefundOrderService {
+public class SoB2cRefundServiceImpl extends SuperServiceImpl<SoB2cRefundMapper, SoB2cRefundEntity> implements SoB2cRefundService {
 
     @Resource
     private OperateLogService operateLogService;
@@ -65,7 +65,7 @@ public class RefundOrderServiceImpl extends SuperServiceImpl<RefundOrderMapper, 
     private DownloadTaskFeign downloadTaskFeign;
 
     @Resource
-    private RefundOrderDetailService refundOrderDetailService;
+    private SoB2cRefundDetailService soB2cRefundDetailService;
 
     /**
      * 售后订单分页
@@ -76,12 +76,12 @@ public class RefundOrderServiceImpl extends SuperServiceImpl<RefundOrderMapper, 
      * @date 2023-08-25 14:09
      */
     @Override
-    public PagingVO<RefundOrderDTO.PagingViewDTO> paging(PagingDTO<RefundOrderDTO.PagingParamDTO> dto) {
-        RefundOrderDTO.PagingParamDTO params = dto.getParams();
+    public PagingVO<SoB2cRefundDTO.PagingViewDTO> paging(PagingDTO<SoB2cRefundDTO.PagingParamDTO> dto) {
+        SoB2cRefundDTO.PagingParamDTO params = dto.getParams();
         params.setPermissionSql(dto.getPermissionSql());
-        Page<RefundOrderDTO.PagingViewDTO> query = new Page<>(dto.getCurrPage(), dto.getPageSize());
-        IPage<RefundOrderDTO.PagingViewDTO> pageData = baseMapper.paging(query, params);
-        List<RefundOrderDTO.PagingViewDTO> list = pageData.getRecords();
+        Page<SoB2cRefundDTO.PagingViewDTO> query = new Page<>(dto.getCurrPage(), dto.getPageSize());
+        IPage<SoB2cRefundDTO.PagingViewDTO> pageData = baseMapper.paging(query, params);
+        List<SoB2cRefundDTO.PagingViewDTO> list = pageData.getRecords();
         if (CollectionUtils.isEmpty(list)) {
             return new PagingVO<>(pageData);
         }
@@ -91,17 +91,17 @@ public class RefundOrderServiceImpl extends SuperServiceImpl<RefundOrderMapper, 
     }
 
     @Override
-    public void exportExcel(RefundOrderDTO.PagingParamDTO dto) {
+    public void exportExcel(SoB2cRefundDTO.PagingParamDTO dto) {
         downloadTaskFeign.saveDownloadTask("退款订单导出", EXPORT_BI_RETURN_INFO.getCode(), dto);
     }
 
     @Override
-    public PagingVO<RefundOrderDTO.PagingViewDTO> exportRefund(PagingDTO<RefundOrderDTO.PagingParamDTO> dto) {
-        RefundOrderDTO.PagingParamDTO params = dto.getParams();
+    public PagingVO<SoB2cRefundDTO.PagingViewDTO> exportRefund(PagingDTO<SoB2cRefundDTO.PagingParamDTO> dto) {
+        SoB2cRefundDTO.PagingParamDTO params = dto.getParams();
         params.setPermissionSql(dto.getPermissionSql());
-        Page<RefundOrderDTO.PagingViewDTO> query = new Page<>(dto.getCurrPage(), dto.getPageSize());
-        IPage<RefundOrderDTO.PagingViewDTO> pageData = baseMapper.paging(query, params);
-        List<RefundOrderDTO.PagingViewDTO> list = pageData.getRecords();
+        Page<SoB2cRefundDTO.PagingViewDTO> query = new Page<>(dto.getCurrPage(), dto.getPageSize());
+        IPage<SoB2cRefundDTO.PagingViewDTO> pageData = baseMapper.paging(query, params);
+        List<SoB2cRefundDTO.PagingViewDTO> list = pageData.getRecords();
         if (CollectionUtils.isEmpty(list)) {
             return new PagingVO<>(pageData);
         }
@@ -112,26 +112,26 @@ public class RefundOrderServiceImpl extends SuperServiceImpl<RefundOrderMapper, 
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void add(RefundOrderEntity refundOrderEntity, List<RefundOrderDetailEntity> refundOrderDetailEntityList) {
+    public void add(SoB2cRefundEntity soB2cRefundEntity, List<SoB2cRefundDetailEntity> soB2cRefundDetailEntityList) {
         String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_TKD);
-        refundOrderEntity.setCode(code);
-        this.save(refundOrderEntity);
+        soB2cRefundEntity.setCode(code);
+        this.save(soB2cRefundEntity);
 
         //操作日志
-        operateLogService.addModuleOperateLog(String.format("新增退款单【%s】", code), ModuleTypeEnum.REFUND_ORDER.getCode(), refundOrderEntity.getId(), "新增操作");
-        if(CollectionUtils.isEmpty(refundOrderDetailEntityList)){
+        operateLogService.addModuleOperateLog(String.format("新增退款单【%s】", code), ModuleTypeEnum.REFUND_ORDER.getCode(), soB2cRefundEntity.getId(), "新增操作");
+        if(CollectionUtils.isEmpty(soB2cRefundDetailEntityList)){
             return;
         }
-        refundOrderDetailEntityList.forEach(v->v.setMainId(refundOrderEntity.getId()));
-        refundOrderDetailService.saveBatch(refundOrderDetailEntityList);
+        soB2cRefundDetailEntityList.forEach(v->v.setMainId(soB2cRefundEntity.getId()));
+        soB2cRefundDetailService.saveBatch(soB2cRefundDetailEntityList);
     }
 
     @Override
-    public RefundOrderEntity getByPlatformRefundCode(String platformRefundNo) {
+    public SoB2cRefundEntity getByPlatformRefundCode(String platformRefundNo) {
         if(StringUtils.isBlank(platformRefundNo)){
             return null;
         }
-        return lambdaQuery().eq(RefundOrderEntity::getPlatformRefundNo,platformRefundNo).last( SqlConstants.LIMIT_1).one();
+        return lambdaQuery().eq(SoB2cRefundEntity::getPlatformRefundNo,platformRefundNo).last( SqlConstants.LIMIT_1).one();
     }
 
     /**
@@ -139,12 +139,12 @@ public class RefundOrderServiceImpl extends SuperServiceImpl<RefundOrderMapper, 
      *
      * @param list
      */
-    private void fillDb(List<RefundOrderDTO.PagingViewDTO> list) {
+    private void fillDb(List<SoB2cRefundDTO.PagingViewDTO> list) {
         List<String> soIds = list.stream().map(v->v.getSoId()).distinct().collect(Collectors.toList());
         List<String> skuIds = list.stream().map(v->v.getSkuId()).distinct().collect(Collectors.toList());
         List<SkuVO> skuVoList = plmTaskFeign.listSkuProductByIds(skuIds);
         List<SoOutstockDetailEntity> allOutList = soOutstockFeign.listDetailBySoIds(soIds);
-        for (RefundOrderDTO.PagingViewDTO item : list) {
+        for (SoB2cRefundDTO.PagingViewDTO item : list) {
             String dictPlatform = item.getDictPlatform();
             item.setPlatformName(PlatformDictEnum.getNameByCode(dictPlatform));
             String status = item.getStatus();

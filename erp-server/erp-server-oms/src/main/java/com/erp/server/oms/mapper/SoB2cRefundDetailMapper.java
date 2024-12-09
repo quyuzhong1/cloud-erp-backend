@@ -1,5 +1,5 @@
 package com.erp.server.oms.mapper;
-import com.erp.model.oms.entity.RefundOrderDetailEntity;
+import com.erp.model.oms.entity.SoB2cRefundDetailEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
 import org.apache.ibatis.annotations.Mapper;
@@ -14,6 +14,6 @@ import org.apache.ibatis.annotations.Mapper;
  * @since 2024-09-27
  */
 @Mapper
-public interface RefundOrderDetailMapper extends BaseMapper<RefundOrderDetailEntity> {
+public interface SoB2cRefundDetailMapper extends BaseMapper<SoB2cRefundDetailEntity> {
 
 }

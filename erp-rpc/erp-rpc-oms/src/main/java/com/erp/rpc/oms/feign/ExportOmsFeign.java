@@ -38,7 +38,7 @@ public interface ExportOmsFeign {
     @PostMapping("/feign/export/so")
     PagingVO<SoInfoDTO.PagingViewDTO> exportSo(@RequestBody PagingDTO<SoInfoDTO.ExportDTO> dto);
     @PostMapping("/feign/export/exportRefund")
-    PagingVO<RefundOrderDTO.PagingViewDTO> exportRefund(@RequestBody PagingDTO<RefundOrderDTO.PagingParamDTO> dto);
+    PagingVO<SoB2cRefundDTO.PagingViewDTO> exportRefund(@RequestBody PagingDTO<SoB2cRefundDTO.PagingParamDTO> dto);
 
     @PostMapping("/feign/export/exportSoB2cReturn")
     PagingVO<SoB2cReturnDTO.PagingViewDTO> exportSoB2cReturn(@RequestBody PagingDTO<SoB2cReturnDTO.PagingParamDTO> dto);

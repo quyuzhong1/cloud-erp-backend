@@ -1,5 +1,5 @@
 package com.erp.server.oms.service;
-import com.erp.model.oms.entity.RefundOrderDetailEntity;
+import com.erp.model.oms.entity.SoB2cRefundDetailEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.oms.dto.RefundOrderDetailDTO;
@@ -12,7 +12,7 @@ import com.erp.model.oms.dto.RefundOrderDetailDTO;
  * @author lrp
  * @since 2024-09-27
  */
-public interface RefundOrderDetailService extends SuperService<RefundOrderDetailEntity> {
+public interface SoB2cRefundDetailService extends SuperService<SoB2cRefundDetailEntity> {
 
     /**
     * 新增

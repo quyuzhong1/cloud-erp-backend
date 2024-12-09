@@ -1,6 +1,5 @@
 package com.erp.model.oms.dto;
 
-import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import lombok.Data;
@@ -8,9 +7,7 @@ import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -20,7 +17,7 @@ import java.util.Map;
  * @Date 2023-08-25 12:27
  * @Created by yl
  */
-public class RefundOrderDTO implements Serializable {
+public class SoB2cRefundDTO implements Serializable {
 
 
     @Data
