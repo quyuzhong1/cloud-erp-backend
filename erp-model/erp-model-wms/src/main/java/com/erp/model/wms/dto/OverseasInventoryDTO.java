@@ -190,6 +190,11 @@ public class OverseasInventoryDTO implements Serializable {
         private Integer shippedQty;
 
         /**
+         * 销退在途数量
+         */
+        private Integer saleReturnInTransitQty;
+
+        /**
          * 平台下载更新时间 (更新时间)
          */
         private LocalDateTime downloadTime;

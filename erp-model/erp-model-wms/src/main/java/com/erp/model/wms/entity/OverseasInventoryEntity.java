@@ -1,13 +1,14 @@
 package com.erp.model.wms.entity;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
-import java.time.LocalDateTime;
-import com.baomidou.mybatisplus.annotation.TableField;
-import java.io.Serializable;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
+
+import java.io.Serializable;
+import java.time.LocalDateTime;
 
 
 /**
@@ -114,6 +115,13 @@ public class OverseasInventoryEntity extends BaseEntity<OverseasInventoryEntity>
     */
     @TableField("download_time")
     private LocalDateTime downloadTime;
+
+    /**
+     * 销退在途数量
+     */
+    @TableField("sale_return_in_transit_qty")
+    private Integer saleReturnInTransitQty;
+
 
 
     public static final String WAREHOUSE_CODE = "warehouse_code";
