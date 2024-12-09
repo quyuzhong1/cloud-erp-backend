@@ -117,9 +117,8 @@ public class DocNoGenHelper implements InitializingBean {
     /**
      * 按code获取递增单号
      * code+2顺序
-     * 注意事项：需在枚举类BusinessNoTypeEnum定义单号前缀，上线切换时需手工把最新的最大值放入到数据库
      */
-    public String generateCode(String code) {
+    public String generateMouldDetailCode(String code) {
 
         //注意，不保证绝对有序，有可能中间某个单生成了单号，但是后面数据库报错不会回收
         String docNoKey = BusinessNoTypeEnum.REDIS_GEN_KEY + ":" + code;
