@@ -49,8 +49,8 @@ public class MouldDetailEntity extends BaseEntity<MouldDetailEntity> {
     /**
     * 模具穴数
     */
-    @TableField("mold_holes")
-    private String moldHoles;
+    @TableField("mould_holes")
+    private String mouldHoles;
     /**
     * 模具长
     */
