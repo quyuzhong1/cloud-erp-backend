@@ -1,23 +1,27 @@
 package com.erp.server.dmp.controller.api;
 
 
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.ResultSet;
+import java.sql.Statement;
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeMap;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import javax.annotation.Resource;
 
+import cn.hutool.json.JSONUtil;
 import com.common.business.dto.base.ApproveOneDTO;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.PagingDTO;
+
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.client.RestTemplate;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -80,345 +84,437 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.DateUtil;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.web.client.RestTemplate;
 
 
 /**
  * 输入输出任务
- * @author Administrator
  *
+ * @author Administrator
  */
 @Slf4j
 @RestController
 @RequestMapping("/dmpInout")
 public class DmpInoutController extends BaseController {
 
-	@Autowired
-	private DmpInputCreateFactory dmpInputCreateFactory;
-	
-	@Autowired
-	private DmpHandlerCache dmpHandlerCache;
+    @Autowired
+    private DmpInputCreateFactory dmpInputCreateFactory;
 
-	@Autowired
-	private DmpCfgInputConvertService dmpCfgInputConvertService;
-	
-	@Autowired
-	private DmpCfgMqService dmpCfgMqService;
-	
-	@Autowired
-	private DmpOutputCreateFactory dmpOutputCreateFactory;
+    @Autowired
+    private DmpHandlerCache dmpHandlerCache;
 
-	@Autowired
-	private DmpCfgInputConvertMappingService dmpCfgInputConvertMappingService;
-	
-	@Autowired
-	private DmpOutputTaskService dmpOutputTaskService;
-	
-	@Autowired
-	private DmpCfgOutputService dmpCfgOutputService;
-	
-	@Autowired
-	private DmpOutputTaskRecordService dmpOutputTaskRecordService;
-	
-	@Resource
-	protected RedisTemplate<String,Object> redisTemplate;
-	
+    @Autowired
+    private DmpCfgInputConvertService dmpCfgInputConvertService;
+
+    @Autowired
+    private DmpCfgMqService dmpCfgMqService;
+
+    @Autowired
+    private DmpOutputCreateFactory dmpOutputCreateFactory;
+
+    @Autowired
+    private DmpCfgInputConvertMappingService dmpCfgInputConvertMappingService;
+
+    @Autowired
+    private DmpOutputTaskService dmpOutputTaskService;
+
+    @Autowired
+    private DmpCfgOutputService dmpCfgOutputService;
+
+    @Autowired
+    private DmpOutputTaskRecordService dmpOutputTaskRecordService;
+
+    @Resource
+    protected RedisTemplate<String, Object> redisTemplate;
+
     @PostMapping("doInputTask")
     public ApiResult<?> doInputTask(@RequestBody DmpInputHotfixCreateRequest dmpInputHotfixCreateRequest) {
-    	return success(dmpInputCreateFactory.doHotfixInputTask(dmpInputHotfixCreateRequest));
+        return success(dmpInputCreateFactory.doHotfixInputTask(dmpInputHotfixCreateRequest));
     }
-    
+
     @PostMapping("doOutputTask")
     public ApiResult<?> doOutputTask(@RequestBody DmpOutputHotfixCreateRequest dmpOutputHotfixCreateRequest) {
-    	List<QueryParam> queryParams = dmpOutputHotfixCreateRequest.getQueryParams();
-    	if(CollUtil.isEmpty(queryParams)) {
-    		throw new ServiceException("过滤条件queryParams不能为空");
-    	}
-    	return success(dmpOutputCreateFactory.doHotfixOutputTask(dmpOutputHotfixCreateRequest));
+        List<QueryParam> queryParams = dmpOutputHotfixCreateRequest.getQueryParams();
+        if (CollUtil.isEmpty(queryParams)) {
+            throw new ServiceException("过滤条件queryParams不能为空");
+        }
+        return success(dmpOutputCreateFactory.doHotfixOutputTask(dmpOutputHotfixCreateRequest));
     }
-    
+
     @PostMapping("getCache")
     public ApiResult<?> getCache() {
-    	Map<String, Object> typeCacheMap = new HashMap<>();
-    	typeCacheMap.put("dmpBasicSystem", dmpHandlerCache.getDmpBasicSystemEntityList(d -> true));
-		typeCacheMap.put("dmpCfgInputConvert", dmpHandlerCache.getDmpCfgInputConvertEntityList(d -> true));
-		
-		List<DmpCfgInputConvertEntity> dmpCfgInputConvertEntityList = dmpCfgInputConvertService.lambdaQuery()
-				.eq(DmpCfgInputConvertEntity::getDisabled, false).list();
+        Map<String, Object> typeCacheMap = new HashMap<>();
+        typeCacheMap.put("dmpBasicSystem", dmpHandlerCache.getDmpBasicSystemEntityList(d -> true));
+        typeCacheMap.put("dmpCfgInputConvert", dmpHandlerCache.getDmpCfgInputConvertEntityList(d -> true));
+
+        List<DmpCfgInputConvertEntity> dmpCfgInputConvertEntityList = dmpCfgInputConvertService.lambdaQuery()
+                .eq(DmpCfgInputConvertEntity::getDisabled, false).list();
 
 
-		Map<String, Map<String, List<String>>> convertMappingCache = new HashMap<>();
-    	for(DmpCfgInputConvertEntity dmpCfgInputConvertEntity : dmpCfgInputConvertEntityList) {
-    		String id = dmpCfgInputConvertEntity.getId();
-    		convertMappingCache.put(id, dmpHandlerCache.getDmpCfgInputConvertMapping(id));
+        Map<String, Map<String, List<String>>> convertMappingCache = new HashMap<>();
+        for (DmpCfgInputConvertEntity dmpCfgInputConvertEntity : dmpCfgInputConvertEntityList) {
+            String id = dmpCfgInputConvertEntity.getId();
+            convertMappingCache.put(id, dmpHandlerCache.getDmpCfgInputConvertMapping(id));
 
-    	}
+        }
 
-		Map<String, List<DmpCfgInputConvertValueDTO.MappingAndValueDTO>> convertValueCache = new HashMap<>();
-		List<DmpCfgInputConvertMappingEntity> dmpCfgInputConvertMappingEntityList = dmpCfgInputConvertMappingService.lambdaQuery().eq(DmpCfgInputConvertMappingEntity::getDisabled, Boolean.FALSE).list();
-		for (DmpCfgInputConvertMappingEntity dmpCfgInputConvertMappingEntity : dmpCfgInputConvertMappingEntityList) {
-			String id = dmpCfgInputConvertMappingEntity.getId();
-			convertValueCache.put(id, dmpHandlerCache.getDmpCfgInputConvertValue(id));
-		}
+        Map<String, List<DmpCfgInputConvertValueDTO.MappingAndValueDTO>> convertValueCache = new HashMap<>();
+        List<DmpCfgInputConvertMappingEntity> dmpCfgInputConvertMappingEntityList = dmpCfgInputConvertMappingService.lambdaQuery().eq(DmpCfgInputConvertMappingEntity::getDisabled, Boolean.FALSE).list();
+        for (DmpCfgInputConvertMappingEntity dmpCfgInputConvertMappingEntity : dmpCfgInputConvertMappingEntityList) {
+            String id = dmpCfgInputConvertMappingEntity.getId();
+            convertValueCache.put(id, dmpHandlerCache.getDmpCfgInputConvertValue(id));
+        }
 
-		typeCacheMap.put("dmpCfgInputConvertMapping" , convertMappingCache);
-		typeCacheMap.put("dmpCfgInputConvertValue" , convertValueCache);
+        typeCacheMap.put("dmpCfgInputConvertMapping", convertMappingCache);
+        typeCacheMap.put("dmpCfgInputConvertValue", convertValueCache);
 
-    	typeCacheMap.put("dmpCfgInputDetail", dmpHandlerCache.getDmpCfgInputDetailEntityList(d -> true));
-    	typeCacheMap.put("dmpCfgInput", dmpHandlerCache.getDmpCfgInputEntityList(d -> true));
-    	typeCacheMap.put("dmpCfgOutputBlack", dmpHandlerCache.getDmpCfgOutputBlackEntityList(d -> true));
-    	
-    	List<DmpCfgMqEntity> dmpCfgMqEntityList = dmpCfgMqService.lambdaQuery()
-			.eq(DmpCfgMqEntity::getMqType, DmpCfgMqMqTypeEnum.ROCKETMQ.getCode())
-			.eq(DmpCfgMqEntity::getDisabled, false).list();
-    	Map<String , DmpCfgMqEntity> rocketMQDmpCfgMqCache = new HashMap<>();
-    	Map<String , String> rocketMQTemplateMap = new HashMap<>();
-    	for(DmpCfgMqEntity dmpCfgMqEntity : dmpCfgMqEntityList) {
-    		String mqId = dmpCfgMqEntity.getId();
-    		rocketMQDmpCfgMqCache.put(mqId, dmpHandlerCache.getRocketMQDmpCfgMqCache(mqId));
-    		rocketMQTemplateMap.put(mqId, dmpHandlerCache.getRocketMQTemplate(mqId).getProducer().getNamesrvAddr() + "@" + dmpHandlerCache.getRocketMQTemplate(mqId).getProducer().getProducerGroup());
-    	}
-    	typeCacheMap.put("dmpCfgMqEntity", rocketMQDmpCfgMqCache);
-    	typeCacheMap.put("rocketMQTemplate", rocketMQTemplateMap);
-    	typeCacheMap.put("overseasProviderEntity", dmpHandlerCache.getOverseasProviderEntityList(d -> true));
-    	typeCacheMap.put("dmpCfgApiEntity", dmpHandlerCache.getDmpCfgApiEntityList(d -> true));
-    	
-    	return success(typeCacheMap);
+        typeCacheMap.put("dmpCfgInputDetail", dmpHandlerCache.getDmpCfgInputDetailEntityList(d -> true));
+        typeCacheMap.put("dmpCfgInput", dmpHandlerCache.getDmpCfgInputEntityList(d -> true));
+        typeCacheMap.put("dmpCfgOutputBlack", dmpHandlerCache.getDmpCfgOutputBlackEntityList(d -> true));
+
+        List<DmpCfgMqEntity> dmpCfgMqEntityList = dmpCfgMqService.lambdaQuery()
+                .eq(DmpCfgMqEntity::getMqType, DmpCfgMqMqTypeEnum.ROCKETMQ.getCode())
+                .eq(DmpCfgMqEntity::getDisabled, false).list();
+        Map<String, DmpCfgMqEntity> rocketMQDmpCfgMqCache = new HashMap<>();
+        Map<String, String> rocketMQTemplateMap = new HashMap<>();
+        for (DmpCfgMqEntity dmpCfgMqEntity : dmpCfgMqEntityList) {
+            String mqId = dmpCfgMqEntity.getId();
+            rocketMQDmpCfgMqCache.put(mqId, dmpHandlerCache.getRocketMQDmpCfgMqCache(mqId));
+            rocketMQTemplateMap.put(mqId, dmpHandlerCache.getRocketMQTemplate(mqId).getProducer().getNamesrvAddr() + "@" + dmpHandlerCache.getRocketMQTemplate(mqId).getProducer().getProducerGroup());
+        }
+        typeCacheMap.put("dmpCfgMqEntity", rocketMQDmpCfgMqCache);
+        typeCacheMap.put("rocketMQTemplate", rocketMQTemplateMap);
+        typeCacheMap.put("overseasProviderEntity", dmpHandlerCache.getOverseasProviderEntityList(d -> true));
+        typeCacheMap.put("dmpCfgApiEntity", dmpHandlerCache.getDmpCfgApiEntityList(d -> true));
+
+        return success(typeCacheMap);
     }
-    
+
     @PostMapping("initCache")
     public ApiResult<?> initCache() {
-    	dmpHandlerCache.initCache(false);
-    	return success();
+        dmpHandlerCache.initCache(false);
+        return success();
     }
 
-	/**
-	 * 查询同步
-	 * @param dto
-	 * @return
-	 */
-	@PostMapping("querySyncByIds")
+    /**
+     * 查询同步
+     *
+     * @param dto
+     * @return
+     */
+    @PostMapping("querySyncByIds")
     public ApiResult<?> querySyncIds(@RequestBody BaseIdsDTO.IdsDTO dto) {
-    	return this.querySync(Arrays.asList(new QueryParam(QueryTypeEnum.IN, "id", dto.getIds())));
+        return this.querySync(Arrays.asList(new QueryParam(QueryTypeEnum.IN, "id", dto.getIds())));
     }
-    
+
+	public static void main(String[] args) {
+		getSb();
+	}
+
+
+    public static String getSb() {
+        // JDBC 连接信息
+        String url = "jdbc:postgresql://172.16.100.10:5432/prod-erp-dmp?autoReconnect=true&useSSL=false&serverTimezone=GMT%2B8&stringtype=unspecified";
+        String username = "ulanzi_developer";
+        String password = "x8SmnZQmGZBZaqY8";
+
+        // 定义 JDBC 驱动类名
+        String driverName = "org.postgresql.Driver";
+
+        // 注册 JDBC 驱动
+        try {
+            Class.forName(driverName);
+        } catch (ClassNotFoundException e) {
+            System.out.println("找不到 JDBC 驱动类");
+            e.printStackTrace();
+            return "系统错误";
+        }
+        Map<String, Integer> map = new TreeMap<>();
+        Map<String, HashSet<String>> codeMap = new HashMap<>();
+        // 建立连接
+        try (Connection connection = DriverManager.getConnection(url, username, password)) {
+            Statement statement = connection.createStatement();
+            // 总条数查询
+            String countSql = "SELECT COUNT(*) AS count FROM dmp_output_task_record WHERE request_data = '{\"so_outstock\":\"test\"}'";
+            ResultSet countResultSet = statement.executeQuery(countSql);
+            Integer count = 0;
+            if (countResultSet.next()) {
+                count = countResultSet.getInt("count");
+            }
+
+			// 分页参数
+            Integer pageSize = 10000; // 每页记录数
+            Integer totalPages = (int) Math.ceil((double) count / pageSize); // 总页数
+
+			// 分页查询
+            for (int currentPage = 0; currentPage < totalPages; currentPage++) {
+                int offset = currentPage * pageSize;
+                String sqlt = "SELECT id AS id FROM dmp_output_task_record " +
+                        "WHERE request_data = '{\"so_outstock\":\"test\"}' " +
+                        "LIMIT " + pageSize + " OFFSET " + offset;
+                ResultSet resultSett = statement.executeQuery(sqlt);
+
+				BaseIdsDTO.IdsDTO idsDTO = new BaseIdsDTO.IdsDTO();
+				List<String> idList = new ArrayList<>();
+                // 遍历当前页结果
+                while (resultSett.next()) {
+                    String idConcat = resultSett.getString("id");
+					idList.add(idConcat);
+                }
+				idsDTO.setIds(idList);
+
+				// 请求的URL
+				String urlImp = "https://erp.ulanzi.cn:9000/api/dmp/dmpInout/querySyncByIds";
+				// 创建请求头
+				HttpHeaders headers = new HttpHeaders();
+				headers.add("Content-Type", "application/json");
+				headers.add("Authorization", "eyJhbGciOiJIUzI1NiJ9.eyJ1aWQiOiIxNjUwMDQ3NTQ1OTA2MzAyOTc4IiwidXNlcl9rZXkiOiIxNjUwMDQ3NTQ1OTA2MzAyOTc4IiwidXNlck5hbWUiOiLnvZfnu7TliJoiLCJpYXQiOjE3MzMzNzYwNzEsImV4cCI6MTczMzk4MDg3MX0.hOuCGKrIXIgSV9O0GD6yRdxVs_8Zg9dBTSoNPhyBZTA");
+
+				// 创建请求体
+				String requestBody = JSONUtil.toJsonStr(idsDTO);
+
+
+				// 封装请求头和请求体
+				HttpEntity entity = new HttpEntity(requestBody, headers);
+
+				// 使用RestTemplate发起请求
+				RestTemplate restTemplate = new RestTemplate();
+				ResponseEntity<String> response = restTemplate.exchange(urlImp, HttpMethod.POST, entity, String.class);
+
+				// 输出响应
+				System.out.println("响应状态码: " + response.getStatusCode());
+				System.out.println("响应体: " + response.getBody());
+
+				Thread.sleep(300000);
+			}
+
+        } catch (Exception e) {
+            System.out.println("数据库连接失败或查询失败");
+            e.printStackTrace();
+        }
+        return "";
+    }
+
+
     @PostMapping("querySync")
     public ApiResult<?> querySync(@RequestBody List<QueryParam> queryParams) {
-    	QueryWrapper<?> queryWrapper = QueryParam.getQueryWrapper(queryParams);
-    	queryWrapper.eq("status", DmpOutputTaskRecordStatusEnum.ERROR.getCode());
-    	ServiceImpl serviceImpl = ApplicationContextUtils.getBean("dmpOutputTaskRecordServiceImpl" , ServiceImpl.class);
-    	List<DmpOutputTaskRecordEntity> dmpOutputTaskRecordEntityList = (List<DmpOutputTaskRecordEntity>)serviceImpl.list(queryWrapper);
-    	if(CollUtil.isNotEmpty(dmpOutputTaskRecordEntityList)) {
-    		Map<String, String> cfgOutputIdEntityMaps = dmpOutputTaskService.lambdaQuery()
-	    			.in(DmpOutputTaskEntity::getId, dmpOutputTaskRecordEntityList.stream().map(DmpOutputTaskRecordEntity::getMainId).collect(Collectors.toSet()))
-	    			.select(DmpOutputTaskEntity::getId , DmpOutputTaskEntity::getCfgOutputId)
-	    			.list().stream().collect(Collectors.toMap(DmpOutputTaskEntity::getId, DmpOutputTaskEntity::getCfgOutputId));
-	    	
-	    	Map<String, DmpCfgOutputEntity> outputIdEntityMaps = dmpCfgOutputService.lambdaQuery().in(DmpCfgOutputEntity::getId, cfgOutputIdEntityMaps.values())
-	    			.list().stream().collect(Collectors.toMap(DmpCfgOutputEntity::getId, d -> d));
-	    	
-	    	Map<String, List<DmpOutputTaskRecordEntity>> cfgOutputRecordEntityListMaps = new HashMap<>();
-	    	for(DmpOutputTaskRecordEntity dmpOutputTaskRecordEntity : dmpOutputTaskRecordEntityList) {
-	    		String cfgOutputId = cfgOutputIdEntityMaps.get(dmpOutputTaskRecordEntity.getMainId());
-	    		List<DmpOutputTaskRecordEntity> list = cfgOutputRecordEntityListMaps.get(cfgOutputId);
-	    		if(CollUtil.isEmpty(list)) {
-	    			list = new ArrayList<>();
-	    		}
-	    		list.add(dmpOutputTaskRecordEntity);
-	    		cfgOutputRecordEntityListMaps.put(cfgOutputId, list);
-	    	}
-    		
-	    	for(Map.Entry<String, List<DmpOutputTaskRecordEntity>> cfgOutputRecordEntityListMap : cfgOutputRecordEntityListMaps.entrySet()) {
-	    		String cfgOutputId = cfgOutputRecordEntityListMap.getKey();
-				DmpCfgOutputEntity dmpCfgOutputEntity = outputIdEntityMaps.get(cfgOutputId);
-	    		String inputConvertId = dmpCfgOutputEntity.getInputConvertId();
-	    		String cfgInputId = dmpHandlerCache.getDmpCfgInputConvertEntityList(d -> d.getId().equals(inputConvertId)).get(0).getMainId();
-	    		DmpCfgInputEntity dmpCfgInputEntity = dmpHandlerCache.getDmpCfgInputEntityList(d -> d.getId().equals(cfgInputId)).get(0);
-	    		String systemId = dmpCfgInputEntity.getSystemId();
-	    		String systemCode = dmpHandlerCache.getDmpBasicSystemEntityList(d -> d.getId().equals(systemId)).get(0).getCode();
-	    		
-	    		List<DmpOutputTaskRecordEntity> list = cfgOutputRecordEntityListMap.getValue();
-	    		if(DmpBasicSystemCodeEnum.ERP.getCode().equals(systemCode)) {
-	    			List<DmpOutputTaskRecordEntity> erpQuerySync = dmpOutputTaskRecordService.erpQuerySync(dmpCfgOutputEntity, list);
-	    			if(CollUtil.isNotEmpty(erpQuerySync)) {
-	    				dmpOutputTaskRecordService.batchSync(dmpOutputTaskRecordService.listByIds(erpQuerySync.stream().map(DmpOutputTaskRecordEntity::getId).collect(Collectors.toList())));
-	    			}
-	    		}else {
-	    			List<String> dataIds = list.stream().map(DmpOutputTaskRecordEntity::getDataId).collect(Collectors.toList());
-	    			DmpOutputHotfixCreateRequest dmpOutputHotfixCreateRequest = new DmpOutputHotfixCreateRequest();
-	    			dmpOutputHotfixCreateRequest.setCfgOutputId(cfgOutputId);
-	    			dmpOutputHotfixCreateRequest.setQueryParams(Arrays.asList(new QueryParam(QueryTypeEnum.IN, "id", dataIds)));
-	    			try {
-						Map<String, String> queryPushData = dmpOutputCreateFactory.getQueryPushData(dmpOutputHotfixCreateRequest);
-						if(queryPushData != null) {
-							for(Map.Entry<String, String> queryData : queryPushData.entrySet()) {
-								String key = queryData.getKey();
-								List<DmpOutputTaskRecordEntity> queryDataList = list.stream().filter(l -> l.getDataId().equals(key)).collect(Collectors.toList());
-								if(CollUtil.isNotEmpty(queryDataList)) {
-									JSONObject parseObject = JSON.parseObject(queryData.getValue());
-									parseObject.put("dmpOutputTaskRecordDataId", key);
-									for(DmpOutputTaskRecordEntity  q : queryDataList) {
-										parseObject.put("dmpOutputTaskRecordId", q.getId());
-										q.setRequestData(JSON.toJSONString(parseObject));
-										q.setStatus(DmpOutputTaskRecordStatusEnum.INIT.getCode());
-										q.setIsNeedSync(Boolean.TRUE);
-									}
-									dmpOutputTaskRecordService.updateBatchById(queryDataList);
-									dmpOutputTaskRecordService.batchSync(queryDataList);
-								}
-							}
-						}
-					} catch (Exception e) {
-						log.error("查询同步调用dmp报错" , e);
-					}
-	    		}
-	    	}
-	    	
-    	}
-    	return success(dmpOutputTaskRecordEntityList);
+        QueryWrapper<?> queryWrapper = QueryParam.getQueryWrapper(queryParams);
+        queryWrapper.eq("status", DmpOutputTaskRecordStatusEnum.ERROR.getCode());
+        ServiceImpl serviceImpl = ApplicationContextUtils.getBean("dmpOutputTaskRecordServiceImpl", ServiceImpl.class);
+        List<DmpOutputTaskRecordEntity> dmpOutputTaskRecordEntityList = (List<DmpOutputTaskRecordEntity>) serviceImpl.list(queryWrapper);
+        if (CollUtil.isNotEmpty(dmpOutputTaskRecordEntityList)) {
+            Map<String, String> cfgOutputIdEntityMaps = dmpOutputTaskService.lambdaQuery()
+                    .in(DmpOutputTaskEntity::getId, dmpOutputTaskRecordEntityList.stream().map(DmpOutputTaskRecordEntity::getMainId).collect(Collectors.toSet()))
+                    .select(DmpOutputTaskEntity::getId, DmpOutputTaskEntity::getCfgOutputId)
+                    .list().stream().collect(Collectors.toMap(DmpOutputTaskEntity::getId, DmpOutputTaskEntity::getCfgOutputId));
+
+            Map<String, DmpCfgOutputEntity> outputIdEntityMaps = dmpCfgOutputService.lambdaQuery().in(DmpCfgOutputEntity::getId, cfgOutputIdEntityMaps.values())
+                    .list().stream().collect(Collectors.toMap(DmpCfgOutputEntity::getId, d -> d));
+
+            Map<String, List<DmpOutputTaskRecordEntity>> cfgOutputRecordEntityListMaps = new HashMap<>();
+            for (DmpOutputTaskRecordEntity dmpOutputTaskRecordEntity : dmpOutputTaskRecordEntityList) {
+                String cfgOutputId = cfgOutputIdEntityMaps.get(dmpOutputTaskRecordEntity.getMainId());
+                List<DmpOutputTaskRecordEntity> list = cfgOutputRecordEntityListMaps.get(cfgOutputId);
+                if (CollUtil.isEmpty(list)) {
+                    list = new ArrayList<>();
+                }
+                list.add(dmpOutputTaskRecordEntity);
+                cfgOutputRecordEntityListMaps.put(cfgOutputId, list);
+            }
+
+            for (Map.Entry<String, List<DmpOutputTaskRecordEntity>> cfgOutputRecordEntityListMap : cfgOutputRecordEntityListMaps.entrySet()) {
+                String cfgOutputId = cfgOutputRecordEntityListMap.getKey();
+                DmpCfgOutputEntity dmpCfgOutputEntity = outputIdEntityMaps.get(cfgOutputId);
+                String inputConvertId = dmpCfgOutputEntity.getInputConvertId();
+                String cfgInputId = dmpHandlerCache.getDmpCfgInputConvertEntityList(d -> d.getId().equals(inputConvertId)).get(0).getMainId();
+                DmpCfgInputEntity dmpCfgInputEntity = dmpHandlerCache.getDmpCfgInputEntityList(d -> d.getId().equals(cfgInputId)).get(0);
+                String systemId = dmpCfgInputEntity.getSystemId();
+                String systemCode = dmpHandlerCache.getDmpBasicSystemEntityList(d -> d.getId().equals(systemId)).get(0).getCode();
+
+                List<DmpOutputTaskRecordEntity> list = cfgOutputRecordEntityListMap.getValue();
+                if (DmpBasicSystemCodeEnum.ERP.getCode().equals(systemCode)) {
+                    List<DmpOutputTaskRecordEntity> erpQuerySync = dmpOutputTaskRecordService.erpQuerySync(dmpCfgOutputEntity, list);
+                    if (CollUtil.isNotEmpty(erpQuerySync)) {
+                        dmpOutputTaskRecordService.batchSync(dmpOutputTaskRecordService.listByIds(erpQuerySync.stream().map(DmpOutputTaskRecordEntity::getId).collect(Collectors.toList())));
+                    }
+                } else {
+                    List<String> dataIds = list.stream().map(DmpOutputTaskRecordEntity::getDataId).collect(Collectors.toList());
+                    DmpOutputHotfixCreateRequest dmpOutputHotfixCreateRequest = new DmpOutputHotfixCreateRequest();
+                    dmpOutputHotfixCreateRequest.setCfgOutputId(cfgOutputId);
+                    dmpOutputHotfixCreateRequest.setQueryParams(Arrays.asList(new QueryParam(QueryTypeEnum.IN, "id", dataIds)));
+                    try {
+                        Map<String, String> queryPushData = dmpOutputCreateFactory.getQueryPushData(dmpOutputHotfixCreateRequest);
+                        if (queryPushData != null) {
+                            for (Map.Entry<String, String> queryData : queryPushData.entrySet()) {
+                                String key = queryData.getKey();
+                                List<DmpOutputTaskRecordEntity> queryDataList = list.stream().filter(l -> l.getDataId().equals(key)).collect(Collectors.toList());
+                                if (CollUtil.isNotEmpty(queryDataList)) {
+                                    JSONObject parseObject = JSON.parseObject(queryData.getValue());
+                                    parseObject.put("dmpOutputTaskRecordDataId", key);
+                                    for (DmpOutputTaskRecordEntity q : queryDataList) {
+                                        parseObject.put("dmpOutputTaskRecordId", q.getId());
+                                        q.setRequestData(JSON.toJSONString(parseObject));
+                                        q.setStatus(DmpOutputTaskRecordStatusEnum.INIT.getCode());
+                                        q.setIsNeedSync(Boolean.TRUE);
+                                    }
+                                    dmpOutputTaskRecordService.updateBatchById(queryDataList);
+                                    dmpOutputTaskRecordService.batchSync(queryDataList);
+                                }
+                            }
+                        }
+                    } catch (Exception e) {
+                        log.error("查询同步调用dmp报错", e);
+                    }
+                }
+            }
+
+        }
+        return success(dmpOutputTaskRecordEntityList);
     }
-    
+
     /**
      * 获取旺店通库存不足单据
+     *
      * @return
      */
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @GetMapping("getWdtInsufficientInventory")
     public ApiResult<Collection<WdtInsufficientInventoryDTO>> getWdtInsufficientInventory() {
-    	Collection<WdtInsufficientInventoryDTO> values = null;
-    	String redisKey = "dmp:inout:wdt:inventory";
-    	if(redisTemplate.opsForValue().setIfAbsent(redisKey, DateUtil.now(), 300, TimeUnit.SECONDS)) {
-    		try {
-				List<DmpOutputTaskRecordEntity> dmpOutputTaskRecordEntityList = dmpOutputTaskRecordService.lambdaQuery()
-				    	.in(DmpOutputTaskRecordEntity::getStatus, Arrays.asList(DmpOutputTaskRecordStatusEnum.ERROR.getCode()))
-				    	.last(" and response_data like '旺店通出库消费数据失败%库存不足%' and response_data not like '%虚拟库存不足%' ")
-				    	.list();
-					Map<String, WdtInsufficientInventoryDTO> map = new TreeMap<>();
-					if(CollUtil.isNotEmpty(dmpOutputTaskRecordEntityList)) {
-						for(DmpOutputTaskRecordEntity dmpOutputTaskRecordEntity : dmpOutputTaskRecordEntityList) {
-							String requestData = dmpOutputTaskRecordEntity.getResponseData();
-				            String[] split = requestData.split("sku=");
-				            for(int i = 1; i < split.length ; i++) {
-				            	String[] split2 = split[i].split(",仓库=");
-				                String skuNo = split2[0].replace("[", "").replace("]", "");
-				                String[] split3 = split2[1].split(",仓位=");
-				                String warehouseName = split3[0].replace("[", "").replace("]", "");
-				                String[] split4 = split3[1].split(",库存状态");
-				                String position = split4[0].replace("[", "").replace("]", "");
-				                String[] split5 = split4[1].split("缺少数：");
-				                String qty = split5[1].replace(" 库存不足：", "").split(",")[0].trim();
-				                
-				                String key = warehouseName + "_" + position + "_" + skuNo;
-				                WdtInsufficientInventoryDTO dto = map.get(key);
-				        		if(dto == null) {
-				        			dto = new WdtInsufficientInventoryDTO();
-				        			dto.setWarehouse(warehouseName);
-				        			dto.setPosition(position);
-				        			dto.setSku(skuNo);
-				        		}
-				        		dto.setNum(dto.getNum() + Integer.valueOf(qty));
-				        		map.put(key, dto);
-				            }
-						}
-					}
-					values = map.values();
-					if(CollUtil.isNotEmpty(values)) {
-						String warehouseName = "东莞塘厦仓";
-						List<WdtInsufficientInventoryDTO> invertoryList = values.stream().filter(v -> v.getWarehouse().equals(warehouseName)).collect(Collectors.toList());
-						if(CollUtil.isNotEmpty(invertoryList)) {
-							List<WarehouseEntity> list = FeignQuery.create(WarehouseEntity.class).eq(WarehouseEntity::getName, warehouseName).list();
-							if(CollUtil.isNotEmpty(list)) {
-								WarehouseLocationMoveDTO.PcAddDTO addDto = new WarehouseLocationMoveDTO.PcAddDTO();
-								addDto.setBillDate(LocalDate.now());
-								List<WarehouseLocationMoveDetailDTO.AddDTO> detailList = new ArrayList<>();
-								
-								WarehouseEntity warehouseEntity = list.get(0);
-								PagingDTO<WarehouseLocationDTO.SelectDTO> searchDTO = new PagingDTO<WarehouseLocationDTO.SelectDTO>();
-								searchDTO.setPageSize(-1);
-								searchDTO.setCurrPage(1);
-								WarehouseLocationDTO.SelectDTO params = new WarehouseLocationDTO.SelectDTO();
-								String warehouseId = warehouseEntity.getId();
-								params.setWarehouseId(warehouseId);
-								params.setFilterZero(true);
-								searchDTO.setParams(params);
-								
-								List<ProductDetailEntity> productDetailList = FeignQuery.create(ProductDetailEntity.class)
-				    				.in(ProductDetailEntity::getSkuNo, invertoryList.stream().map(WdtInsufficientInventoryDTO::getSku).collect(Collectors.toList()))
-				    				.list();
-								List<WarehouseLocationEntity> warehouseLocationList = FeignQuery.create(WarehouseLocationEntity.class)
-				    				.eq(WarehouseLocationEntity::getWarehouseId, warehouseId)
-				    				.in(WarehouseLocationEntity::getName, invertoryList.stream().map(WdtInsufficientInventoryDTO::getPosition).collect(Collectors.toList()))
-				    				.list();
-								Map<String, String> skuIdNoMap = productDetailList.stream().collect(Collectors.toMap(ProductDetailEntity::getSkuNo, ProductDetailEntity::getId));
-								Map<String, String> locationNameCodeMap = warehouseLocationList.stream().collect(Collectors.toMap(WarehouseLocationEntity::getName, WarehouseLocationEntity::getCode));
-								for(WdtInsufficientInventoryDTO wdtInsufficientInventoryDTO : invertoryList) {
-									String sku = wdtInsufficientInventoryDTO.getSku();
-									params.setSkuNo(sku);
-				    				PagingVO pagingVO = FeignQuery.invoke(PagingVO.class, "com.erp.server.wms.service.impl.WarehouseLocationServiceImpl", "pagingSelect", Arrays.asList(searchDTO));
-				    				List dataList = pagingVO.getList();
-				    				if(CollUtil.isNotEmpty(dataList)) {
-				    					Integer num = wdtInsufficientInventoryDTO.getNum();
-				    					List<WarehouseLocationDTO.LocationListDTO> locationList = JSON.parseArray(JSON.toJSONString(dataList), LocationListDTO.class);
-				    					String positionName = wdtInsufficientInventoryDTO.getPosition();
-				    					locationList.removeIf(l -> l.getName().equals(positionName));
-				    					LocationListDTO dto = locationList.stream().filter(l -> l.getCode().startsWith("3") && l.getUsableQty().compareTo(num) >= 0).sorted((l1 , l2) -> l2.getUsableQty().compareTo(l1.getUsableQty())).findFirst().orElse(null);
-				    					if(dto == null) {
-				    						dto = locationList.stream().filter(l -> l.getCode().startsWith("2") && l.getUsableQty().compareTo(num) >= 0).sorted((l1 , l2) -> l2.getUsableQty().compareTo(l1.getUsableQty())).findFirst().orElse(null);
-				    						if(dto == null) {
-				    							dto = locationList.stream().filter(l -> l.getCode().startsWith("4") && l.getUsableQty().compareTo(num) >= 0).sorted((l1 , l2) -> l2.getUsableQty().compareTo(l1.getUsableQty())).findFirst().orElse(null);
-				    							if(dto == null) {
-					    							dto = locationList.stream().filter(l -> l.getCode().equals("") && l.getUsableQty().compareTo(num) >= 0).sorted((l1 , l2) -> l2.getUsableQty().compareTo(l1.getUsableQty())).findFirst().orElse(null);
-					    						}
-				    						}
-				    					}
-				    					if(dto != null) {
-				    						WarehouseLocationMoveDetailDTO.AddDTO detailAddDto = new WarehouseLocationMoveDetailDTO.AddDTO();
-				    						detailAddDto.setSkuId(skuIdNoMap.get(sku));
-				    						detailAddDto.setSkuNo(sku);
-				    						detailAddDto.setQty(num);
-				    						detailAddDto.setOutWarehouseLocation(dto.getCode());
-				    						String position = wdtInsufficientInventoryDTO.getPosition();
-				    						if("空仓位".equals(position)) {
-				    							position = "";
-				    						}else {
-				    							position = locationNameCodeMap.get(position);
-				    						}
-				    						if(position.equals(dto.getCode())) {
-				    							continue;
-				    						}
-											detailAddDto.setInWarehouseLocation(position);
-				    						detailAddDto.setOutInventoryStatus("usable");
-				    						detailAddDto.setInInventoryStatus("usable");
-				    						detailAddDto.setWarehouseId(warehouseId);
-				    						detailAddDto.setRemark("旺店通同步销售出库单库存不足自动仓位移动");
-				    						
-				    						detailList.add(detailAddDto);
-				    					}
-				    				}
-								}
-								if(CollUtil.isNotEmpty(detailList)) {
-									addDto.setDetailList(detailList);
-									FeignQuery.invoke("com.erp.server.wms.service.impl.WarehouseLocationMoveServiceImpl", "wdtAutoAdd", Arrays.asList(addDto));
-									List<DmpOutputTaskRecordEntity> dealDmpOutputTaskRecordEntityList = dmpOutputTaskRecordService.lambdaQuery()
-				    					.eq(DmpOutputTaskRecordEntity::getStatus, DmpOutputTaskRecordStatusEnum.ERROR.getCode())
-				    			    	.last(" and response_data like '旺店通出库消费数据失败%库存不足%" + warehouseName + "%'")
-				    			    	.list();
-									dealDmpOutputTaskRecordEntityList.forEach(d -> d.setStatus(DmpOutputTaskRecordStatusEnum.INIT.getCode()));
-									dmpOutputTaskRecordService.updateBatchById(dealDmpOutputTaskRecordEntityList);
-									dmpOutputTaskRecordService.batchSync(dealDmpOutputTaskRecordEntityList);
-								}
-							}
-						}
-					}
-			}catch (Exception e) {
-				log.error("wdt库存不足失败" , e);
-				throw e;
-			}finally {
-				redisTemplate.delete(redisKey);
-			}
-    	}else {
-    		throw new ServiceException("请勿重复点击");
-    	}
-		return success(values);
+        Collection<WdtInsufficientInventoryDTO> values = null;
+        String redisKey = "dmp:inout:wdt:inventory";
+        if (redisTemplate.opsForValue().setIfAbsent(redisKey, DateUtil.now(), 300, TimeUnit.SECONDS)) {
+            try {
+                List<DmpOutputTaskRecordEntity> dmpOutputTaskRecordEntityList = dmpOutputTaskRecordService.lambdaQuery()
+                        .in(DmpOutputTaskRecordEntity::getStatus, Arrays.asList(DmpOutputTaskRecordStatusEnum.ERROR.getCode()))
+                        .last(" and response_data like '旺店通出库消费数据失败%库存不足%' and response_data not like '%虚拟库存不足%' ")
+                        .list();
+                Map<String, WdtInsufficientInventoryDTO> map = new TreeMap<>();
+                if (CollUtil.isNotEmpty(dmpOutputTaskRecordEntityList)) {
+                    for (DmpOutputTaskRecordEntity dmpOutputTaskRecordEntity : dmpOutputTaskRecordEntityList) {
+                        String requestData = dmpOutputTaskRecordEntity.getResponseData();
+                        String[] split = requestData.split("sku=");
+                        for (int i = 1; i < split.length; i++) {
+                            String[] split2 = split[i].split(",仓库=");
+                            String skuNo = split2[0].replace("[", "").replace("]", "");
+                            String[] split3 = split2[1].split(",仓位=");
+                            String warehouseName = split3[0].replace("[", "").replace("]", "");
+                            String[] split4 = split3[1].split(",库存状态");
+                            String position = split4[0].replace("[", "").replace("]", "");
+                            String[] split5 = split4[1].split("缺少数：");
+                            String qty = split5[1].replace(" 库存不足：", "").split(",")[0].trim();
+
+                            String key = warehouseName + "_" + position + "_" + skuNo;
+                            WdtInsufficientInventoryDTO dto = map.get(key);
+                            if (dto == null) {
+                                dto = new WdtInsufficientInventoryDTO();
+                                dto.setWarehouse(warehouseName);
+                                dto.setPosition(position);
+                                dto.setSku(skuNo);
+                            }
+                            dto.setNum(dto.getNum() + Integer.valueOf(qty));
+                            map.put(key, dto);
+                        }
+                    }
+                }
+                values = map.values();
+                if (CollUtil.isNotEmpty(values)) {
+                    String warehouseName = "东莞塘厦仓";
+                    List<WdtInsufficientInventoryDTO> invertoryList = values.stream().filter(v -> v.getWarehouse().equals(warehouseName)).collect(Collectors.toList());
+                    if (CollUtil.isNotEmpty(invertoryList)) {
+                        List<WarehouseEntity> list = FeignQuery.create(WarehouseEntity.class).eq(WarehouseEntity::getName, warehouseName).list();
+                        if (CollUtil.isNotEmpty(list)) {
+                            WarehouseLocationMoveDTO.PcAddDTO addDto = new WarehouseLocationMoveDTO.PcAddDTO();
+                            addDto.setBillDate(LocalDate.now());
+                            List<WarehouseLocationMoveDetailDTO.AddDTO> detailList = new ArrayList<>();
+
+                            WarehouseEntity warehouseEntity = list.get(0);
+                            PagingDTO<WarehouseLocationDTO.SelectDTO> searchDTO = new PagingDTO<WarehouseLocationDTO.SelectDTO>();
+                            searchDTO.setPageSize(-1);
+                            searchDTO.setCurrPage(1);
+                            WarehouseLocationDTO.SelectDTO params = new WarehouseLocationDTO.SelectDTO();
+                            String warehouseId = warehouseEntity.getId();
+                            params.setWarehouseId(warehouseId);
+                            params.setFilterZero(true);
+                            searchDTO.setParams(params);
+
+                            List<ProductDetailEntity> productDetailList = FeignQuery.create(ProductDetailEntity.class)
+                                    .in(ProductDetailEntity::getSkuNo, invertoryList.stream().map(WdtInsufficientInventoryDTO::getSku).collect(Collectors.toList()))
+                                    .list();
+                            List<WarehouseLocationEntity> warehouseLocationList = FeignQuery.create(WarehouseLocationEntity.class)
+                                    .eq(WarehouseLocationEntity::getWarehouseId, warehouseId)
+                                    .in(WarehouseLocationEntity::getName, invertoryList.stream().map(WdtInsufficientInventoryDTO::getPosition).collect(Collectors.toList()))
+                                    .list();
+                            Map<String, String> skuIdNoMap = productDetailList.stream().collect(Collectors.toMap(ProductDetailEntity::getSkuNo, ProductDetailEntity::getId));
+                            Map<String, String> locationNameCodeMap = warehouseLocationList.stream().collect(Collectors.toMap(WarehouseLocationEntity::getName, WarehouseLocationEntity::getCode));
+                            for (WdtInsufficientInventoryDTO wdtInsufficientInventoryDTO : invertoryList) {
+                                String sku = wdtInsufficientInventoryDTO.getSku();
+                                params.setSkuNo(sku);
+                                PagingVO pagingVO = FeignQuery.invoke(PagingVO.class, "com.erp.server.wms.service.impl.WarehouseLocationServiceImpl", "pagingSelect", Arrays.asList(searchDTO));
+                                List dataList = pagingVO.getList();
+                                if (CollUtil.isNotEmpty(dataList)) {
+                                    Integer num = wdtInsufficientInventoryDTO.getNum();
+                                    List<WarehouseLocationDTO.LocationListDTO> locationList = JSON.parseArray(JSON.toJSONString(dataList), LocationListDTO.class);
+                                    String positionName = wdtInsufficientInventoryDTO.getPosition();
+                                    locationList.removeIf(l -> l.getName().equals(positionName));
+                                    LocationListDTO dto = locationList.stream().filter(l -> l.getCode().startsWith("3") && l.getUsableQty().compareTo(num) >= 0).sorted((l1, l2) -> l2.getUsableQty().compareTo(l1.getUsableQty())).findFirst().orElse(null);
+                                    if (dto == null) {
+                                        dto = locationList.stream().filter(l -> l.getCode().startsWith("2") && l.getUsableQty().compareTo(num) >= 0).sorted((l1, l2) -> l2.getUsableQty().compareTo(l1.getUsableQty())).findFirst().orElse(null);
+                                        if (dto == null) {
+                                            dto = locationList.stream().filter(l -> l.getCode().startsWith("4") && l.getUsableQty().compareTo(num) >= 0).sorted((l1, l2) -> l2.getUsableQty().compareTo(l1.getUsableQty())).findFirst().orElse(null);
+                                            if (dto == null) {
+                                                dto = locationList.stream().filter(l -> l.getCode().equals("") && l.getUsableQty().compareTo(num) >= 0).sorted((l1, l2) -> l2.getUsableQty().compareTo(l1.getUsableQty())).findFirst().orElse(null);
+                                            }
+                                        }
+                                    }
+                                    if (dto != null) {
+                                        WarehouseLocationMoveDetailDTO.AddDTO detailAddDto = new WarehouseLocationMoveDetailDTO.AddDTO();
+                                        detailAddDto.setSkuId(skuIdNoMap.get(sku));
+                                        detailAddDto.setSkuNo(sku);
+                                        detailAddDto.setQty(num);
+                                        detailAddDto.setOutWarehouseLocation(dto.getCode());
+                                        String position = wdtInsufficientInventoryDTO.getPosition();
+                                        if ("空仓位".equals(position)) {
+                                            position = "";
+                                        } else {
+                                            position = locationNameCodeMap.get(position);
+                                        }
+                                        if (position.equals(dto.getCode())) {
+                                            continue;
+                                        }
+                                        detailAddDto.setInWarehouseLocation(position);
+                                        detailAddDto.setOutInventoryStatus("usable");
+                                        detailAddDto.setInInventoryStatus("usable");
+                                        detailAddDto.setWarehouseId(warehouseId);
+                                        detailAddDto.setRemark("旺店通同步销售出库单库存不足自动仓位移动");
+
+                                        detailList.add(detailAddDto);
+                                    }
+                                }
+                            }
+                            if (CollUtil.isNotEmpty(detailList)) {
+                                addDto.setDetailList(detailList);
+                                FeignQuery.invoke("com.erp.server.wms.service.impl.WarehouseLocationMoveServiceImpl", "wdtAutoAdd", Arrays.asList(addDto));
+                                List<DmpOutputTaskRecordEntity> dealDmpOutputTaskRecordEntityList = dmpOutputTaskRecordService.lambdaQuery()
+                                        .eq(DmpOutputTaskRecordEntity::getStatus, DmpOutputTaskRecordStatusEnum.ERROR.getCode())
+                                        .last(" and response_data like '旺店通出库消费数据失败%库存不足%" + warehouseName + "%'")
+                                        .list();
+                                dealDmpOutputTaskRecordEntityList.forEach(d -> d.setStatus(DmpOutputTaskRecordStatusEnum.INIT.getCode()));
+                                dmpOutputTaskRecordService.updateBatchById(dealDmpOutputTaskRecordEntityList);
+                                dmpOutputTaskRecordService.batchSync(dealDmpOutputTaskRecordEntityList);
+                            }
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                log.error("wdt库存不足失败", e);
+                throw e;
+            } finally {
+                redisTemplate.delete(redisKey);
+            }
+        } else {
+            throw new ServiceException("请勿重复点击");
+        }
+        return success(values);
     }
 }

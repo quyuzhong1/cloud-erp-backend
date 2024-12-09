@@ -1101,20 +1101,29 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
         }
 
         String transactionSubType = "";
-        String orderPlatformCode = "";
+        String orderPlatformCode = entity.getSoCode();
         if (OrderTypeEnum.B2C.getCode().equals(entity.getOrderType())) {
             SoB2cEntity soB2cEntity = soB2cFeign.getById(entity.getSoId());
-            transactionSubType = soB2cEntity.getTransactionSubType();
-            if (CharSequenceUtil.isBlank(soB2cEntity.getPlatformCode())) {
-                orderPlatformCode = entity.getSoCode();
+            if (ObjectUtil.isEmpty(soB2cEntity)) {
+                transactionSubType = OrderSubTypeEnum.ONLINE_ORDER.getCode();
             } else {
-                orderPlatformCode = soB2cEntity.getPlatformCode();
+                transactionSubType = soB2cEntity.getTransactionSubType();
+                if (CharSequenceUtil.isBlank(soB2cEntity.getPlatformCode())) {
+                    orderPlatformCode = entity.getSoCode();
+                } else {
+                    orderPlatformCode = soB2cEntity.getPlatformCode();
+                }
             }
+
 
         } else if (OrderTypeEnum.B2B.getCode().equals(entity.getOrderType())) {
             SoInfoEntity soInfoEntity = soInfoFeign.getSoInfoById(entity.getSoId());
-            transactionSubType = soInfoEntity.getTransactionSubType();
-            orderPlatformCode = entity.getSoCode();
+            if (ObjectUtil.isEmpty(soInfoEntity)) {
+                transactionSubType = OrderSubTypeEnum.OFFLINE_ORDER.getCode();
+            } else {
+                transactionSubType = soInfoEntity.getTransactionSubType();
+                orderPlatformCode = soInfoEntity.getCode();
+            }
         }
 
         //组织信息
