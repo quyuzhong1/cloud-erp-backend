@@ -71,7 +71,7 @@ public class DmpInputAmzFinancialEventsApiInitHandler extends DmpInputInitHandle
         if (null != limitObj) {
             log.warn("【财务事件拉取】 PlatformShopCode={},存在429等待恢复:放弃当前请求任务", shopInfoDTO.getPlatformShopCode());
             DmpInputInitResponse initDmpResponse = (DmpInputInitResponse) dmpResponse;
-            initDmpResponse.setDoNextChain(false);
+            initDmpResponse.setDoNextStatus(false);
             return Collections.emptyList();
         }
 
@@ -116,7 +116,7 @@ public class DmpInputAmzFinancialEventsApiInitHandler extends DmpInputInitHandle
                 BigDecimal timeOut = BigDecimal.ONE.max(BigDecimal.ONE.divide(new BigDecimal(rateLimitStr), 8, RoundingMode.DOWN));
                 redisUtil.set(limitKey, rateLimitStr, timeOut.longValue());
                 DmpInputInitResponse initDmpResponse = (DmpInputInitResponse) dmpResponse;
-                initDmpResponse.setDoNextChain(false);
+                initDmpResponse.setDoNextStatus(false);
                 return Collections.emptyList();
             }
             throw new ServiceException("请求亚马逊SP-APi api 【财务事件拉取】异常失败,body=" + JSONUtil.toJsonStr(e));

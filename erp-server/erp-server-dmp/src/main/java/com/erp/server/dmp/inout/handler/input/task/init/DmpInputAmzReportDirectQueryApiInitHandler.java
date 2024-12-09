@@ -104,7 +104,7 @@ public class DmpInputAmzReportDirectQueryApiInitHandler extends DmpInputInitHand
             log.warn("【亚马逊报告查询】 platformShopCode={},存在429等待恢复:放弃当前请求任务", shopInfoDTO.getPlatformShopCode());
             // 触发限流不执行当前
             DmpInputInitResponse initDmpResponse = (DmpInputInitResponse) dmpResponse;
-            initDmpResponse.setDoNextChain(false);
+            initDmpResponse.setDoNextStatus(false);
             return Collections.emptyList();
         }
         String rateLimitStr = requestTypeRateLimiterEnum.getRateLimit();
@@ -144,7 +144,7 @@ public class DmpInputAmzReportDirectQueryApiInitHandler extends DmpInputInitHand
                         shopInfoDTO.getPlatformShopCode()
                 );
                 // 触发限流不执行当前
-                dmpResponse.setDoNextChain(false);
+                dmpResponse.setDoNextStatus(false);
                 return Collections.emptyList();
             }
             throw new ServiceException("[Amazon SP-APi] 查询指定报告 "+ reportType + "失败:body=" + JSONUtil.toJsonStr(e));
@@ -185,7 +185,7 @@ public class DmpInputAmzReportDirectQueryApiInitHandler extends DmpInputInitHand
                 redisUtil.set(limitKey, rateLimitStr, timeOut.longValue());
                 log.warn("【亚马逊报告查询】 platformShopCode={},当前触发429限流:放弃当前请求任务", shopInfoDTO.getPlatformShopCode());
                 // 触发限流不执行当前
-                dmpResponse.setDoNextChain(false);
+                dmpResponse.setDoNextStatus(false);
                 return Collections.emptyList();
             }
             throw new ServiceException("[Amazon SP-APi] 查询最新listing失败:body=" + JSONUtil.toJsonStr(e));

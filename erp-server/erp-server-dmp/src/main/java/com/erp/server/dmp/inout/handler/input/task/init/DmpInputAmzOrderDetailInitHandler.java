@@ -103,7 +103,7 @@ public class DmpInputAmzOrderDetailInitHandler extends DmpInputAmzCommonInitHand
             if (null != limitObj) {
                 log.warn("【订单明细拉取】 amazonOrderId={}, platformShopCode={},存在429等待恢复:放弃当前请求任务", amazonOrderId, shopInfoDTO.getPlatformShopCode());
                 DmpInputInitResponse initDmpResponse = (DmpInputInitResponse) dmpResponse;
-                initDmpResponse.setDoNextChain(false);
+                initDmpResponse.setDoNextStatus(false);
                 return Collections.emptyList();
             }
             String rateLimitStr = requestTypeRateLimiterEnum.getRateLimit();
@@ -136,7 +136,7 @@ public class DmpInputAmzOrderDetailInitHandler extends DmpInputAmzCommonInitHand
                     redisUtil.set(limitKey, rateLimitStr, timeOut.longValue());
                     log.warn("【DmpInputAmzOrderDetailInitHandler】查询亚马逊订单详情本次首次429限流:{}", shopInfoDTO.getPlatformShopCode());
                     DmpInputInitResponse initDmpResponse = (DmpInputInitResponse) dmpResponse;
-                    initDmpResponse.setDoNextChain(false);
+                    initDmpResponse.setDoNextStatus(false);
                     return Collections.emptyList();
                 }
                 throw new ServiceException("查询亚马逊订单详情失败：API异常：" + JSONUtil.toJsonStr(e));

@@ -136,7 +136,7 @@ public class DmpInputAmzReportCreatedApiInitHandler extends DmpInputInitHandler 
                     waitDto.getEstimatedWaitSecond());
             // 下次时间
             DmpInputInitResponse dmpInputInitResponse = (DmpInputInitResponse) dmpResponse;
-            dmpInputInitResponse.setDoNextChain(false);
+            dmpInputInitResponse.setDoNextStatus(false);
             return Collections.emptyList();
         }
 

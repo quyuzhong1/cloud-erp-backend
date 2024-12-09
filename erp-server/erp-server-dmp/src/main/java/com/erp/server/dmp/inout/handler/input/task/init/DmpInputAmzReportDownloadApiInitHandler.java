@@ -94,7 +94,7 @@ public class DmpInputAmzReportDownloadApiInitHandler extends DmpInputAmzCommonIn
             log.warn("【亚马逊报告文档查询】 platformShopCode={},存在429等待恢复:放弃当前请求任务", shopInfoDTO.getPlatformShopCode());
             // 触发限流不执行当前
             DmpInputInitResponse initDmpResponse = (DmpInputInitResponse) dmpResponse;
-            initDmpResponse.setDoNextChain(false);
+            initDmpResponse.setDoNextStatus(false);
             return Collections.emptyList();
         }
         String rateLimitStr = requestTypeRateLimiterEnum.getRateLimit();
@@ -111,7 +111,7 @@ public class DmpInputAmzReportDownloadApiInitHandler extends DmpInputAmzCommonIn
                 log.warn("【亚马逊报告文档查询】 platformShopCode={},当前触发429限流:放弃当前请求任务", shopInfoDTO.getPlatformShopCode());
                 // 触发限流不执行当前
                 DmpInputInitResponse initDmpResponse = (DmpInputInitResponse) dmpResponse;
-                initDmpResponse.setDoNextChain(false);
+                initDmpResponse.setDoNextStatus(false);
                 return Collections.emptyList();
             }
             throw new ServiceException("[Amazon SP-APi] 亚马逊报告文档查询失败:body=" + JSONUtil.toJsonStr(e));

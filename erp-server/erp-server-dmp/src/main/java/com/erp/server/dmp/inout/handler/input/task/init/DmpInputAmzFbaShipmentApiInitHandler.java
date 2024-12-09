@@ -104,7 +104,7 @@ public class DmpInputAmzFbaShipmentApiInitHandler extends DmpInputInitHandler {
             log.warn("【FBA货件列表拉取】 platformShopCode={},存在429等待恢复:放弃当前请求任务", shopInfoDTO.getPlatformShopCode());
             // 触发限流不执行当前
             DmpInputInitResponse initDmpResponse = (DmpInputInitResponse) dmpResponse;
-            initDmpResponse.setDoNextChain(false);
+            initDmpResponse.setDoNextStatus(false);
             return Collections.emptyList();
         }
 
@@ -143,7 +143,7 @@ public class DmpInputAmzFbaShipmentApiInitHandler extends DmpInputInitHandler {
                 log.warn("【FBA货件列表拉取】按货件号 platformShopCode={},存在429等待恢复:放弃当前请求任务", shopInfoDTO.getPlatformShopCode());
                 // 触发限流不执行当前
                 DmpInputInitResponse initDmpResponse = (DmpInputInitResponse) dmpResponse;
-                initDmpResponse.setDoNextChain(false);
+                initDmpResponse.setDoNextStatus(false);
                 return Collections.emptyList();
             }
             throw new ServiceException("指定货件单号查询亚马逊FBA货件失败：API异常：" + JSONUtil.toJsonStr(e));
@@ -181,7 +181,7 @@ public class DmpInputAmzFbaShipmentApiInitHandler extends DmpInputInitHandler {
                 log.warn("【FBA货件列表拉取】 按时间区间 platformShopCode={},存在429等待恢复:放弃当前请求任务", shopInfoDTO.getPlatformShopCode());
                 // 触发限流不执行当前
                 DmpInputInitResponse initDmpResponse = (DmpInputInitResponse) dmpResponse;
-                initDmpResponse.setDoNextChain(false);
+                initDmpResponse.setDoNextStatus(false);
                 return Collections.emptyList();
             }
             throw new ServiceException("时间区间查询亚马逊FBA货件列表失败：API异常：" + JSONUtil.toJsonStr(e));

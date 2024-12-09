@@ -2,11 +2,11 @@ package com.erp.server.dmp.inout.handler.input.task.init;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
-import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import com.common.business.constant.BusinessCommonConstants;
 import com.common.business.constant.RedisCacheConstants;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.utils.RedisUtil;
@@ -30,7 +30,6 @@ import com.erp.server.dmp.inout.dto.response.DmpInputInitChildResponse;
 import com.erp.server.dmp.inout.dto.response.DmpInputInitResponse;
 import com.erp.server.dmp.inout.dto.response.DmpInputTaskResponse;
 import com.erp.server.dmp.service.CfgAppClientService;
-import com.erp.server.dmp.service.DmpInputTaskService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -102,9 +101,9 @@ public class DmpInputAmzOrderAddressInitHandler extends DmpInputAmzCommonInitHan
             // 查询买家信息
             DmpInputInitChildResponse<OrderBuyerInfo> buyerInfoResponse = checkAndQueryBuyerInfo(ordersVoApi, amazonOrderId, platformShopCode, uniqueId, mainMongoDataList, shopInfoDTO, parentDmpInputTaskEntity);
             // 触发限流不执行当前
-            if (!buyerInfoResponse.isDoNextChain()) {
+            if (!buyerInfoResponse.isDoNextStatus()) {
                 DmpInputInitResponse initDmpResponse = (DmpInputInitResponse) dmpResponse;
-                initDmpResponse.setDoNextChain(false);
+                initDmpResponse.setDoNextStatus(false);
                 return Collections.emptyList();
             }
             OrderBuyerInfo buyerInfo = buyerInfoResponse.getData();
@@ -112,9 +111,9 @@ public class DmpInputAmzOrderAddressInitHandler extends DmpInputAmzCommonInitHan
             // 设置地址
             DmpInputInitChildResponse<Address> addressResponse = checkAndQueryAddress(ordersVoApi, amazonOrderId, platformShopCode, uniqueId, mainMongoDataList, shopInfoDTO, parentDmpInputTaskEntity);
             // 触发限流不执行当前
-            if (!addressResponse.isDoNextChain()) {
+            if (!addressResponse.isDoNextStatus()) {
                 DmpInputInitResponse initDmpResponse = (DmpInputInitResponse) dmpResponse;
-                initDmpResponse.setDoNextChain(false);
+                initDmpResponse.setDoNextStatus(false);
                 return Collections.emptyList();
             }
             Address shippingAddress = addressResponse.getData();
@@ -122,6 +121,12 @@ public class DmpInputAmzOrderAddressInitHandler extends DmpInputAmzCommonInitHan
                 log.warn("查询到亚马逊地址为空:amazonOrderId={}", amazonOrderId);
                 continue;
             }
+//            if (BusinessCommonConstants.hasProfile("dev")){
+//                // 开始环境限流重试测试
+//                DmpInputInitResponse initDmpResponse = (DmpInputInitResponse) dmpResponse;
+//                initDmpResponse.setDoNextStatus(false);
+//                return Collections.emptyList();
+//            }
 
             // 合并转json
             JSONObject jsonObject = setAmazonOrderIdAndToJsonObject(shippingAddress, buyerInfo, amazonOrderId, shopInfoDTO.getPlatformShopCode());
