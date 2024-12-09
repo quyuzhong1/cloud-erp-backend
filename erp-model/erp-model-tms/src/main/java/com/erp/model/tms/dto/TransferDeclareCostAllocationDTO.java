@@ -176,6 +176,10 @@ public class TransferDeclareCostAllocationDTO implements Serializable {
      	 * 单位成本
      	 */
      	private BigDecimal unitCost;
+     	/**
+     	 * 单位成本币别
+     	 */
+     	private String unitCurrency;
      	
      	/**
      	 * 总成本

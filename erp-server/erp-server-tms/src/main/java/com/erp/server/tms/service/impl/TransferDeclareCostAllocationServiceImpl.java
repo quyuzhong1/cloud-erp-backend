@@ -4,6 +4,7 @@ package com.erp.server.tms.service.impl;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -56,6 +57,7 @@ import com.erp.model.tms.enums.SmallBagCostAllocationReportStatusEnum;
 import com.erp.model.tms.enums.TmsB2cDeclareReconciliationStatusEnum;
 import com.erp.model.tms.enums.TransferDeclareCostAllocationReportStatusEnum;
 import com.erp.model.tms.enums.WeightAllocationSmallBagEnum;
+import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.server.tms.mapper.TransferDeclareCostAllocationMapper;
 import com.erp.server.tms.service.LogisticsChannelService;
 import com.erp.server.tms.service.OperateLogService;
@@ -64,6 +66,7 @@ import com.erp.server.tms.service.TransferDeclareCostAllocationDetailService;
 import com.erp.server.tms.service.TransferDeclareCostAllocationMainService;
 import com.erp.server.tms.service.TransferDeclareCostAllocationService;
 
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
@@ -88,6 +91,8 @@ public class TransferDeclareCostAllocationServiceImpl extends SuperServiceImpl<T
     private LogisticsChannelService logisticsChannelService;
     @Resource
     private TmsB2cDeclareReconciliationDetailService tmsB2cDeclareReconciliationDetailService;
+    @Resource
+    private DmpTaskFeign dmpTaskFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -191,8 +196,6 @@ public class TransferDeclareCostAllocationServiceImpl extends SuperServiceImpl<T
 		List<ProductDetailEntity> productDetailEntityList = FeignQuery.create(ProductDetailEntity.class).in(ProductDetailEntity::getId, 
 				skuIds).list();
 		Map<String, String> skuIdNameMap = productDetailEntityList.stream().collect(Collectors.toMap(ProductDetailEntity::getId, ProductDetailEntity::getName));
-		Map<String, String> currencyIdSymbolMap = FeignQuery.getByIds(DictCurrencyEntity.class , records.stream().map(ListDTO::getCurrency).collect(Collectors.toList()))
-			.stream().collect(Collectors.toMap(DictCurrencyEntity::getId, DictCurrencyEntity::getSymbol));
 		Map<String, LogisticsChannelEntity> channelIdMaps = logisticsChannelService.listByIds(records.stream().map(ListDTO::getChannelId).collect(Collectors.toList())).stream().collect(Collectors.toMap(LogisticsChannelEntity::getId, l -> l));
 		List<String> shopIds = records.stream().map(ListDTO::getShopId).collect(Collectors.toList());
 		List<ShopInfoEntity> shopInfoEntityList = FeignQuery.create(ShopInfoEntity.class).in(ShopInfoEntity::getId, 
@@ -202,6 +205,7 @@ public class TransferDeclareCostAllocationServiceImpl extends SuperServiceImpl<T
 		List<DictCountryEntity> dictCountryEntityList = FeignQuery.create(DictCountryEntity.class).in(DictCountryEntity::getId, 
 				countryIds).list();
 		Map<String, String> countryIdNameMap = dictCountryEntityList.stream().collect(Collectors.toMap(DictCountryEntity::getId, DictCountryEntity::getNameCn));
+		Map<String, BigDecimal> rateMap = new HashMap<>();
 		for(ListDTO dto : records) {
 			LogisticsChannelEntity logisticsChannelEntity = channelIdMaps.get(dto.getChannelId());
 			if(logisticsChannelEntity != null) {
@@ -221,16 +225,60 @@ public class TransferDeclareCostAllocationServiceImpl extends SuperServiceImpl<T
 			if(StringUtils.isNotBlank(toCountry)) {
 				dto.setToCountry(countryIdNameMap.get(dto.getToCountry()));
 			}
+			
+			Integer deliveryQty = dto.getDeliveryQty();
+			String reportDate = dto.getReportDate();
+			
 			BigDecimal unitCost = dto.getUnitCost();
 			if(unitCost != null) {
-				dto.setTotalCost(unitCost.multiply(new BigDecimal(dto.getDeliveryQty())));
+				String unitCurrency = dto.getUnitCurrency();
+				if(StringUtils.isNotBlank(unitCurrency) && !"CNY".equals(unitCurrency)) {
+					String key = reportDate + "_" + unitCurrency;
+					BigDecimal rate = rateMap.get(key);
+					if(rate == null) {
+						rate = dmpTaskFeign.getRate(reportDate + "-01", unitCurrency);
+						if(ObjectUtil.isEmpty(rate)){
+				            log.error("币别【{}】,汇率为空，请维护汇率后再查询",unitCurrency);
+				            throw new ServiceException("汇率为空，请维护汇率后再查询");
+				        }
+						rateMap.put(key, rate);
+					}
+					unitCost = unitCost.multiply(rate);
+				}
+				dto.setUnitCost(unitCost);
+				dto.setTotalCost(unitCost.multiply(new BigDecimal(deliveryQty)));
 			}
+			
+			String currency = dto.getCurrency();
+			if(StringUtils.isNotBlank(currency) && !"CNY".equals(currency)) {
+				String key = reportDate + "_" + currency;
+				BigDecimal rate = rateMap.get(key);
+				if(rate == null) {
+					rate = dmpTaskFeign.getRate(reportDate + "-01", currency);
+					if(ObjectUtil.isEmpty(rate)){
+			            log.error("币别【{}】,汇率为空，请维护汇率后再查询",currency);
+			            throw new ServiceException("汇率为空，请维护汇率后再查询");
+			        }
+					rateMap.put(key, rate);
+				}
+				if(dto.getBillAmount() != null) {
+					dto.setBillAmount(dto.getBillAmount().multiply(rate));
+				}
+				if(dto.getAllocatedAmount() != null) {
+					dto.setAllocatedAmount(dto.getAllocatedAmount().multiply(rate));
+				}
+				if(dto.getProductAllocatedAmount() != null) {
+					dto.setProductAllocatedAmount(dto.getProductAllocatedAmount().multiply(rate));
+				}
+			}
+			
 			dto.setFeeTypeName(AllocationFeeTypeEnum.getName(dto.getFeeType()));
 			dto.setFeeAllocationTypeName(CostAllocationEnum.getName(dto.getFeeAllocationType()));
 			if(dto.getWeightAllocationType() != null) {
 				dto.setWeightAllocationTypeName(WeightAllocationSmallBagEnum.getName(dto.getWeightAllocationType()));
 			}
-			dto.setCurrencySymbol(currencyIdSymbolMap.get(dto.getCurrency()));
+			dto.setCurrencySymbol("¥");
+			
 		}
 	}
 

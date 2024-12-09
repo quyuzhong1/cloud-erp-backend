@@ -61,6 +61,12 @@ public class TransferDeclareCostAllocationEntity extends BaseEntity<TransferDecl
      */
     @TableField("unit_cost")
     private BigDecimal unitCost;
+    
+    /**
+     * 成本币别
+     */
+    @TableField("unit_currency")
+    private String unitCurrency;
 
 
     public static final String MAIN_ID = "main_id";

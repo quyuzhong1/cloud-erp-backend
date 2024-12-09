@@ -1111,7 +1111,6 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
 			transferDeclareCostAllocationMainEntity.setReportDate(reportDate);
 			transferDeclareCostAllocationMainEntity.setReportStatus(TransferDeclareCostAllocationMainReportStatusEnum.TOBECONFIRM.getCode());
 			transferDeclareCostAllocationMainEntity.setBigTableStatus(TransferDeclareCostAllocationMainBigTableStatusEnum.TODO.getCode());
-			addTmsB2cDeclareReconciliationEntityList.add(transferDeclareCostAllocationMainEntity);
 			
 			String soId = t.getSoId();
 			List<SoOutstockDetailEntity> dealSoOutstockDetailEntityList = new ArrayList<>();
@@ -1120,6 +1119,7 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
 			}
 			
 			if(CollUtil.isNotEmpty(dealSoOutstockDetailEntityList)) {
+				addTmsB2cDeclareReconciliationEntityList.add(transferDeclareCostAllocationMainEntity);
 				Map<String, InventorySkuCostDetailEntity> unInventorySkuCostMap = new HashMap<>();
 				DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 				LocalDate parse = LocalDate.parse(reportDate + "-01", formatter);
@@ -1130,8 +1130,9 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
 							.in(InventorySkuCostEntity::getCompanyId, wareIdOrgIdMaps.values())
 							.list();
 				}
+				Map<String, InventorySkuCostEntity> idEntityMaps = new HashMap<>();
 				if(CollUtil.isNotEmpty(inventorySkuCostEntityList)) {
-					Map<String, InventorySkuCostEntity> idEntityMaps = inventorySkuCostEntityList.stream().collect(Collectors.toMap(InventorySkuCostEntity::getId, j -> j));
+					idEntityMaps = inventorySkuCostEntityList.stream().collect(Collectors.toMap(InventorySkuCostEntity::getId, j -> j));
 					List<InventorySkuCostDetailEntity> inventorySkuCostDetailEntityList = inventorySkuCostDetailService.lambdaQuery().in(InventorySkuCostDetailEntity::getMainId, idEntityMaps.keySet())
 						.in(InventorySkuCostDetailEntity::getSkuId , dealSoOutstockDetailEntityList.stream().map(SoOutstockDetailEntity::getSkuId).collect(Collectors.toList())).list();
 					if(CollUtil.isNotEmpty(inventorySkuCostDetailEntityList)) {
@@ -1188,6 +1189,7 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
 							skuCostPre = skuCost.multiply(new BigDecimal(actualQty)).divide(totalSkuCost, 8, RoundingMode.HALF_UP);
 						}
 						transferDeclareCostAllocationEntity.setUnitCost(skuCost);
+						transferDeclareCostAllocationEntity.setUnitCurrency(idEntityMaps.get(inventorySkuCostDetailEntity.getMainId()).getCurrency());
 					}else {
 						throw new ServiceException(orgName + reportDate + "月份下sku=" + skuNo + "未配置分摊成本");
 					}
@@ -1202,11 +1204,11 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
 					if(WeightAllocationEnum.OUTSTOCK_CHARGED_WEIGHT.getCode().equals(transferAllocation)) {
 						BigDecimal estimateWeight = t.getEstimateWeight();
 						if("g".equals(t.getEstimateWeightUnit())) {
-							estimateWeight = estimateWeight.divide(estimateWeight, 2, RoundingMode.HALF_UP);
+							estimateWeight = estimateWeight.divide(new BigDecimal("1000"), 8, RoundingMode.HALF_UP);
 						}
-						skuWeight = estimateWeight.multiply(skuCostPre).divide(new BigDecimal(actualQty), 2 , RoundingMode.HALF_UP);
+						skuWeight = estimateWeight.multiply(skuCostPre).divide(new BigDecimal(actualQty), 4 , RoundingMode.HALF_UP);
 					}else if(WeightAllocationEnum.SUPPLIER_CHARGED_WEIGHT.getCode().equals(transferAllocation)) {
-						skuWeight = t.getActualBillingWeight().multiply(skuCostPre).divide(new BigDecimal(actualQty), 2 , RoundingMode.HALF_UP);
+						skuWeight = t.getActualBillingWeight().multiply(skuCostPre).divide(new BigDecimal(actualQty), 4 , RoundingMode.HALF_UP);
 					}else if(WeightAllocationEnum.SINGLE_PRODUCT_WEIGHT.getCode().equals(transferAllocation)) {
 						skuWeight = skuWeightCostMaps.get(skuId);
 					}
@@ -1237,14 +1239,16 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
 						}
 						if(i < dealSoOutstockDetailEntityList.size()) {
 							if(CostAllocationEnum.WEIGHT_ALLOCATION.getCode().equals(feeAllocationType)) {
-								transferDeclareCostAllocationDetailEntity.setAllocatedAmount(costValueSum.multiply(skuWeightCostPre).setScale(2, RoundingMode.HALF_UP));
+								transferDeclareCostAllocationDetailEntity.setAllocatedAmount(costValueSum.multiply(skuWeightCostPre).setScale(4, RoundingMode.HALF_UP));
 							}else {
-								transferDeclareCostAllocationDetailEntity.setAllocatedAmount(costValueSum.multiply(skuCostPre).setScale(2, RoundingMode.HALF_UP));
+								transferDeclareCostAllocationDetailEntity.setAllocatedAmount(costValueSum.multiply(skuCostPre).setScale(4, RoundingMode.HALF_UP));
 							}
 						}else {
 							transferDeclareCostAllocationDetailEntity.setAllocatedAmount(costValueSum.subtract(addTransferDeclareCostAllocationDetailEntityList.stream()
 									.filter(a -> a.getFeeType().equals(feeType)).map(TransferDeclareCostAllocationDetailEntity::getAllocatedAmount).reduce(BigDecimal::add).orElse(BigDecimal.ZERO)));
 						}
+						transferDeclareCostAllocationDetailEntity.setProductAllocatedAmount(transferDeclareCostAllocationDetailEntity.getAllocatedAmount()
+								.divide(new BigDecimal(actualQty), 6, RoundingMode.HALF_UP));
 						transferDeclareCostAllocationDetailEntity.setFeeAllocationType(feeAllocationType);
 						transferDeclareCostAllocationDetailEntity.setAllocatedCurrency(allocatedCurrency);
 						transferDeclareCostAllocationDetailEntity.setWeightAllocationType(transferAllocation);
