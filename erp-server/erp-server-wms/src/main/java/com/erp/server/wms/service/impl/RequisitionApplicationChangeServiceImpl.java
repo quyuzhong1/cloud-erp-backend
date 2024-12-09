@@ -688,7 +688,7 @@ public class RequisitionApplicationChangeServiceImpl extends SuperServiceImpl<Re
             if(StringUtils.isBlank(productDTO.getRequisitionDetailId())){
                 continue;
             }
-            List<BomChildrenSkuDTO> currentBomList = allBomChildrenSkuList.stream().filter(v->v.getParentSkuId().equals(productDTO.getSkuId())).collect(Collectors.toList());
+            List<BomChildrenSkuDTO> currentBomList = allBomChildrenSkuList.stream().filter(v->v.getParentSkuId().equals(productDTO.getSkuId())&& BomTypeEnum.COMBINATION.getType().equals(v.getType())).collect(Collectors.toList());
             List<PickingDetailEntity> currentPickList = pickingDetailEntityList.stream().filter(v -> v.getSourceDetailId().equals(productDTO.getRequisitionDetailId())).collect(Collectors.toList());
             int pickedQty;
             if(CollectionUtils.isNotEmpty(currentBomList) && CollectionUtils.isNotEmpty(currentPickList)){
@@ -897,7 +897,7 @@ public class RequisitionApplicationChangeServiceImpl extends SuperServiceImpl<Re
         List<PickingDetailEntity> pickingDetailEntityList = pickingDetailService.listPickingDetailBySourceDetailIds(requisitionDetailIds);
         for (RequisitionApplicationChangeDTO.ViewDetailDTO detail : details) {
             List<PickingDetailEntity> currentPickList = pickingDetailEntityList.stream().filter(v -> v.getSourceDetailId().equals(detail.getRequisitionDetailId())).collect(Collectors.toList());
-            List<BomChildrenSkuDTO> currentBomList = allBomChildrenSkuList.stream().filter(v->v.getParentSkuId().equals(detail.getSkuId())).collect(Collectors.toList());
+            List<BomChildrenSkuDTO> currentBomList = allBomChildrenSkuList.stream().filter(v->v.getParentSkuId().equals(detail.getSkuId()) && BomTypeEnum.COMBINATION.getType().equals(v.getType())).collect(Collectors.toList());
             int pickedQty;
             if(CollectionUtils.isNotEmpty(currentBomList) && CollectionUtils.isNotEmpty(currentPickList)){
                 Integer bomQty = currentBomList.stream().filter(v->v.getSkuId().equals(currentPickList.get(0).getSkuId())).findFirst().map(BomChildrenSkuDTO::getQuantity).orElse(0);
