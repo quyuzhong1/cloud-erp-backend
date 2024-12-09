@@ -97,6 +97,7 @@
     <select id="paging" resultMap="BaseResultMap">
         select
             ls.supplier_name as logisticsName,
+            lc.id as channelId,
             lc.name as channelName,
             lc.fee_rule as feeRule,
             lc.is_api_sign as isApiSign,

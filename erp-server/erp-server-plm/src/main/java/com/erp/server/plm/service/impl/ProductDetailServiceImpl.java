@@ -2188,7 +2188,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         List<DmpSkuCostEntity> skuCostList = dmpTaskFeign.listRedisBySkuNoList(skuNoList);
         BigDecimal usdRate = dmpTaskFeign.getRate(LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), CurrencyEnum.USD.getCurrencyCode());
         if (Objects.isNull(usdRate)) {
-            batchResultDTOList.add(BatchResultDTO.fail("","","USD兑换CNY汇率不存在"));
+            batchResultDTOList.add(BatchResultDTO.fail("",String.join(",", skuNoList),"USD兑换CNY汇率不存在"));
             return batchResultDTOList;
         }
         List<ProductCustomsEntity> addList = new ArrayList<>();
@@ -2204,7 +2204,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 DmpSkuCostEntity skuCostDTO = skuCostList.stream().filter(e -> e.getSkuId().equals(skuId)).findFirst().orElse(null);
                 log.info("skuCostDTO: {}", JSONUtil.toJsonStr(skuCostDTO));
                 if (Objects.isNull(skuCostDTO)) {
-                    batchResultDTOList.add(BatchResultDTO.fail(skuId,productDetailEntity.getSkuNo(),"USD兑换CNY汇率不存在"));
+                    batchResultDTOList.add(BatchResultDTO.fail(skuId,productDetailEntity.getSkuNo(),CharSequenceUtil.format("SKU【{}】中【{}】兑换【{}】汇率不存在",productDetailEntity.getSkuNo(), CurrencyEnum.USD.getCurrencyCode(),CurrencyEnum.CNY.getCurrencyCode() )));
                     continue;
                 }
                 //含税成本 默认是人民币
