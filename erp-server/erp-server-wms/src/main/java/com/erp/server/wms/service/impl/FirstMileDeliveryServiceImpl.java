@@ -2078,15 +2078,10 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         if (CollectionUtils.isEmpty(page.getRecords())) {
             throw new ServiceException(ApiError.EXPORT_DATA_EMPTY);
         }
-
-        List<WmsCartonDetailDTO.ListPackingDetailPackQtyDTO> listPackingDetailPackQtyDTOS = baseMapper.ListPackingDetailPackQty(dto.getParams(), dto.getParams().getIds(), dto.getParams().getPermissionSql());
-        //根据id汇总统计装箱总数量
-        Map<String, Integer> boxQtyMap = listPackingDetailPackQtyDTOS.stream().collect(Collectors.groupingBy(WmsCartonDetailDTO.ListPackingDetailPackQtyDTO::getId, Collectors.summingInt(WmsCartonDetailDTO.ListPackingDetailPackQtyDTO::getPackQty)));
-
         //补充数据
         buildPackingDetailTask(page.getRecords());
         //切换为装箱清单导出
-        List<WmsCartonDetailDTO.ListPackingDetailDTO> list = buildPackingDetailExportTask(page.getRecords(),boxQtyMap);
+        List<WmsCartonDetailDTO.ListPackingDetailDTO> list = buildPackingDetailExportTask(page.getRecords());
         page.setRecords(list);
         return new PagingVO<>(page);
     }
@@ -2338,7 +2333,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         });
     }
 
-    private List<WmsCartonDetailDTO.ListPackingDetailDTO> buildPackingDetailExportTask(List<WmsCartonDetailDTO.ListPackingDetailDTO> listPackingDetailDTOS,Map<String, Integer> boxQtyMap) {
+    private List<WmsCartonDetailDTO.ListPackingDetailDTO> buildPackingDetailExportTask(List<WmsCartonDetailDTO.ListPackingDetailDTO> listPackingDetailDTOS) {
         List<String> taskIds = listPackingDetailDTOS.stream().map(WmsCartonDetailDTO.ListPackingDetailDTO::getTaskId).distinct().collect(Collectors.toList());
         List<PackingTaskEntity> taskEntityList = packingTaskService.listByIds(taskIds);
         Map<String, PackingTaskEntity> taskMap = taskEntityList.stream().collect(Collectors.toMap(PackingTaskEntity::getId, Function.identity()));
@@ -2355,6 +2350,8 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
                 return cartonIds.contains(v.getId());
             }).collect(Collectors.toList());
         }
+        //根据id汇总统计装箱总数量
+        Map<String, Integer> boxQtyMap = listPackingDetailDTOS.stream().collect(Collectors.groupingBy(WmsCartonDetailDTO.ListPackingDetailDTO::getId, Collectors.summingInt(WmsCartonDetailDTO.ListPackingDetailDTO::getPackQty)));
         //装箱状态 称重状态 异常原因 装箱数量 装箱重量（设备更新） 拣货数量
         List<PackingTaskDTO.StatusDTO> statusDTOList = packingTaskService.selectPackingStatusByIds(taskIds, null);
         Map<String, PackingTaskDTO.StatusDTO> statusDTOMap = statusDTOList.stream().collect(Collectors.toMap(PackingTaskDTO.StatusDTO::getId, Function.identity()));
