@@ -271,6 +271,7 @@ public class TmsB2cDeclareReconciliationDetailServiceImpl extends SuperServiceIm
                 	if(lastxgId.equals(sourceDetailId)) {
                 		unitXgFee = xgWarseHouseFee.subtract(totalXg);
             		}
+                	totalXg = totalXg.add(unitXgFee);
                 }
             }
             

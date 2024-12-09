@@ -259,57 +259,60 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         	if(reconciliationStatus.equals(ReconciliationStatusEnum.CONFIRMED.getCode())) {
         		throw new ServiceException("对账状态为账单确认，不能编辑");
         	}
+        	boolean throwFlag = false;
         	if(reconciliationStatus.equals(ReconciliationStatusEnum.ESTIMATE_CONFIRM.getCode())) {
-        		BigDecimal billingWeight = old.getBillingWeight();
-        		if(billingWeight == null) {
-        			billingWeight = BigDecimal.ZERO;
-        		}
-        		BigDecimal updateBillingWeight = updateDTO.getBillingWeight();
-        		if(updateBillingWeight == null) {
-        			updateBillingWeight = billingWeight;
-        		}
-				if(billingWeight.compareTo(updateBillingWeight) != 0) {
-					throw new ServiceException("核算状态为暂估确认，不能修改计费重[预估]");
-        		}
-				List<TmsCostDetailEntity> tmsCostDetailEntityList = tmsCostDetailService.lambdaQuery()
-						.eq(TmsCostDetailEntity::getMainId, old.getId())
-						.eq(TmsCostDetailEntity::getType, LogisticsBillCostTypeEnum.ESTIMATED.getCode())
-						.list();
-				List<TmsCostDetailDTO.UpdateDTO>  costDetailList = updateDTO.getCostDetailList();
-				if(CollUtil.isNotEmpty(tmsCostDetailEntityList) && CollUtil.isNotEmpty(costDetailList)) {
-					Map<String, UpdateDTO> cfgIdDtoMap = costDetailList.stream().filter(c -> LogisticsBillCostTypeEnum.ESTIMATED.getCode().equals(c.getType()))
-							.collect(Collectors.toMap(UpdateDTO::getCfgCostId, t -> t));
-					for(TmsCostDetailEntity tmsCostDetailEntity : tmsCostDetailEntityList) {
-						UpdateDTO dbUpdateDto = cfgIdDtoMap.get(tmsCostDetailEntity.getCfgCostId());
-						if(dbUpdateDto == null) {
-							TmsCostDetailDTO.UpdateDTO dto = new TmsCostDetailDTO.UpdateDTO();
-							dto.setCostValue(tmsCostDetailEntity.getCostValue());
-							dto.setType(LogisticsBillCostTypeEnum.ESTIMATED.getCode());
-							dto.setCfgCostId(tmsCostDetailEntity.getCfgCostId());
-							dto.setSourceType(SourceTypeEnum.LOGISTICS_BILL_COST.getCode());
-							costDetailList.add(dto);
-							continue;
-//							throw new ServiceException("核算状态为暂估确认，不能删除预估金额");
-						}
-						BigDecimal dbCostValue = tmsCostDetailEntity.getCostValue();
-						if(dbCostValue == null) {
-							dbCostValue = BigDecimal.ZERO;
-						}
-						BigDecimal costValue = dbUpdateDto.getCostValue();
-						if(costValue == null) {
-							costValue = BigDecimal.ZERO;
-						}
-						if(dbCostValue.compareTo(costValue) != 0) {
-							throw new ServiceException("核算状态为暂估确认，不能修改预估金额");
-						}
-						cfgIdDtoMap.remove(tmsCostDetailEntity.getCfgCostId());
-					}
-					if(!cfgIdDtoMap.isEmpty() && cfgIdDtoMap.values().stream().anyMatch(c -> c.getType().equals(LogisticsBillCostTypeEnum.ESTIMATED.getCode()) 
-							&& c.getCostValue() != null && c.getCostValue().compareTo(BigDecimal.ZERO) != 0)) {
-						throw new ServiceException("核算状态为暂估确认，不能新增预估金额");
-					}
-				}
+        		throwFlag = true;
         	}
+
+    		BigDecimal billingWeight = old.getBillingWeight();
+    		if(billingWeight == null) {
+    			billingWeight = BigDecimal.ZERO;
+    		}
+    		BigDecimal updateBillingWeight = updateDTO.getBillingWeight();
+    		if(updateBillingWeight == null) {
+    			updateBillingWeight = billingWeight;
+    		}
+			if(throwFlag && billingWeight.compareTo(updateBillingWeight) != 0) {
+				throw new ServiceException("核算状态为暂估确认，不能修改计费重[预估]");
+    		}
+			List<TmsCostDetailEntity> tmsCostDetailEntityList = tmsCostDetailService.lambdaQuery()
+					.eq(TmsCostDetailEntity::getMainId, old.getId())
+					.eq(TmsCostDetailEntity::getType, LogisticsBillCostTypeEnum.ESTIMATED.getCode())
+					.list();
+			List<TmsCostDetailDTO.UpdateDTO>  costDetailList = updateDTO.getCostDetailList();
+			if(CollUtil.isNotEmpty(tmsCostDetailEntityList) && CollUtil.isNotEmpty(costDetailList)) {
+				Map<String, UpdateDTO> cfgIdDtoMap = costDetailList.stream().filter(c -> LogisticsBillCostTypeEnum.ESTIMATED.getCode().equals(c.getType()))
+						.collect(Collectors.toMap(UpdateDTO::getCfgCostId, t -> t));
+				for(TmsCostDetailEntity tmsCostDetailEntity : tmsCostDetailEntityList) {
+					UpdateDTO dbUpdateDto = cfgIdDtoMap.get(tmsCostDetailEntity.getCfgCostId());
+					if(dbUpdateDto == null) {
+						TmsCostDetailDTO.UpdateDTO dto = new TmsCostDetailDTO.UpdateDTO();
+						dto.setCostValue(tmsCostDetailEntity.getCostValue());
+						dto.setType(LogisticsBillCostTypeEnum.ESTIMATED.getCode());
+						dto.setCfgCostId(tmsCostDetailEntity.getCfgCostId());
+						dto.setSourceType(SourceTypeEnum.LOGISTICS_BILL_COST.getCode());
+						costDetailList.add(dto);
+						continue;
+					}
+					BigDecimal dbCostValue = tmsCostDetailEntity.getCostValue();
+					if(dbCostValue == null) {
+						dbCostValue = BigDecimal.ZERO;
+					}
+					BigDecimal costValue = dbUpdateDto.getCostValue();
+					if(costValue == null) {
+						costValue = BigDecimal.ZERO;
+					}
+					if(throwFlag && dbCostValue.compareTo(costValue) != 0) {
+						throw new ServiceException("核算状态为暂估确认，不能修改预估金额");
+					}
+					cfgIdDtoMap.remove(tmsCostDetailEntity.getCfgCostId());
+				}
+				if(throwFlag && !cfgIdDtoMap.isEmpty() && cfgIdDtoMap.values().stream().anyMatch(c -> c.getType().equals(LogisticsBillCostTypeEnum.ESTIMATED.getCode()) 
+						&& c.getCostValue() != null && c.getCostValue().compareTo(BigDecimal.ZERO) != 0)) {
+					throw new ServiceException("核算状态为暂估确认，不能新增预估金额");
+				}
+			}
+    	
         }
         Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "自发货费用"));
         //赋值
