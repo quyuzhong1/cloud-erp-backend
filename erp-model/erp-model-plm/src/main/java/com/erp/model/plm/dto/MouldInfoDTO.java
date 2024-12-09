@@ -3,6 +3,7 @@ package com.erp.model.plm.dto;
 import com.common.business.annotation.Dict;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
+import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.ServiceCodeNameEnum;
 import lombok.Data;
 import lombok.Getter;
@@ -211,6 +212,7 @@ public class MouldInfoDTO implements Serializable {
         /**
         * 状态
         */
+        @Dict(enumClass = ApproveStatusEnum.class)
         private String status;
 
         /**
@@ -233,7 +235,15 @@ public class MouldInfoDTO implements Serializable {
         */
         private String moldCategoryCode;
 
+        /**
+         * 模具明细
+         */
+        private List<MouldDetailDTO.ViewDTO> mouldDetailList;
 
+        /**
+         * 文档明细
+         */
+        private List<MouldDocInfoDTO.ViewDTO> mouldDocInfoList;
     }
 
     /**

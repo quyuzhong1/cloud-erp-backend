@@ -58,8 +58,8 @@ public class MouldInfoEntity extends BaseEntity<MouldInfoEntity> {
     /**
     * 模具分类编码
     */
-    @TableField("mold_category_code")
-    private String moldCategoryCode;
+    @TableField("mould_category_code")
+    private String mouldCategoryCode;
     /**
      * 审核时间
      */

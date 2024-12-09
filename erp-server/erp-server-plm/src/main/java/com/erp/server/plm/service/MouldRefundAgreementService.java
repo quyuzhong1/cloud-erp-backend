@@ -3,6 +3,8 @@ package com.erp.server.plm.service;
 import com.common.business.service.SuperService;
 import com.erp.model.plm.entity.MouldRefundAgreementEntity;
 
+import java.util.List;
+
 /**
  * <p>
  * 合同返还约定 服务类
@@ -14,6 +16,5 @@ import com.erp.model.plm.entity.MouldRefundAgreementEntity;
 public interface MouldRefundAgreementService extends SuperService<MouldRefundAgreementEntity> {
 
 
-
-
+    List<MouldRefundAgreementEntity> listByMouldDetailIdList(List<String> detailIds);
 }

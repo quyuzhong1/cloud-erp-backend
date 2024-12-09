@@ -1,5 +1,9 @@
 package com.erp.model.plm.dto;
 
+import com.common.business.annotation.Dict;
+import com.common.business.enums.ServiceCodeNameEnum;
+import com.common.core.utils.BeanMapperUtils;
+import com.erp.model.plm.entity.*;
 import lombok.Data;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -10,7 +14,9 @@ import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * <p>
@@ -57,6 +63,7 @@ public class MouldDetailDTO implements Serializable {
         /**
         * 模具类型
         */
+        @Dict(tableName = "cfg_mould_setting", queryFieldName = "id")
         private String typeId;
 
         /**
@@ -97,11 +104,12 @@ public class MouldDetailDTO implements Serializable {
         /**
         * 启用时间
         */
-        private LocalDateTime enableDate;
+        private LocalDate enableDate;
 
         /**
         * 供应商id
         */
+        @Dict(tableName = "supplier", serviceCode = ServiceCodeNameEnum.SCM, queryFieldName = "id")
         private String supplierId;
 
         /**
@@ -109,7 +117,38 @@ public class MouldDetailDTO implements Serializable {
         */
         private String remark;
 
+        /**
+         * 产品信息
+         */
+        private List<MouldProductDTO.ViewDTO> productList;
 
+        /**
+         * 模具价目信息
+         */
+        private MouldPurchasePriceDTO.ViewDTO purchasePrice;
+
+        /**
+         * 模具价目信息
+         */
+        private MouldRefundAgreementDTO.ViewDTO refundAgreement;
+
+        /**
+         * 关联产品
+         */
+        private List<MouldRefProductDTO.ViewDTO> refProductList;
+
+        public static ViewDTO buildView(MouldDetailEntity entity, MouldPurchasePriceEntity purchasePrice, MouldRefundAgreementEntity refundAgreement, List<MouldRefProductEntity> refList, List<MouldProductEntity> productList) {
+            ViewDTO dto = BeanMapperUtils.map(ViewDTO.class, entity);
+            MouldPurchasePriceDTO.ViewDTO price = BeanMapperUtils.map(MouldPurchasePriceDTO.ViewDTO.class, purchasePrice);
+            MouldRefundAgreementDTO.ViewDTO agreement = BeanMapperUtils.map(MouldRefundAgreementDTO.ViewDTO.class, refundAgreement);
+            List<MouldProductDTO.ViewDTO> mouldProductList = BeanMapperUtils.copyList(MouldProductDTO.ViewDTO.class, productList);
+            List<MouldRefProductDTO.ViewDTO> mouldRefList = BeanMapperUtils.copyList(MouldRefProductDTO.ViewDTO.class, refList);
+            dto.setPurchasePrice(price);
+            dto.setRefundAgreement(agreement);
+            dto.setProductList(mouldProductList);
+            dto.setRefProductList(mouldRefList);
+            return dto;
+        }
     }
 
     /**

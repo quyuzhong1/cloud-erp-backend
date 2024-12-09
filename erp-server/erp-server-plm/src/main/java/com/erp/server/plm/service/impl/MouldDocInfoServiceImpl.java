@@ -1,8 +1,10 @@
 package com.erp.server.plm.service.impl;
 
 
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.common.business.utils.ApplicationContextUtils;
 import com.common.core.utils.BeanMapperUtils;
+import com.erp.model.plm.dto.MouldDocInfoDTO;
 import com.erp.model.plm.dto.MouldInfoDTO;
 import com.erp.model.plm.entity.MouldDocInfoEntity;
 import com.erp.server.plm.mapper.MouldDocInfoMapper;
@@ -37,5 +39,11 @@ public class MouldDocInfoServiceImpl extends SuperServiceImpl<MouldDocInfoMapper
                 }).collect(Collectors.toList());
 
         ApplicationContextUtils.getBean(MouldDocInfoServiceImpl.class).saveBatch(docInfoEntityList);
+    }
+
+    @Override
+    public List<MouldDocInfoDTO.ViewDTO> listByMouldId(String id) {
+        List<MouldDocInfoEntity> list = list(Wrappers.<MouldDocInfoEntity>lambdaQuery().eq(MouldDocInfoEntity::getMouldInfoId, id));
+        return BeanMapperUtils.copyList(MouldDocInfoDTO.ViewDTO.class, list);
     }
 }

@@ -23,9 +23,7 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.StrUtils;
-import com.erp.model.plm.dto.MouldInfoDTO;
-import com.erp.model.plm.dto.MouldProductDTO;
-import com.erp.model.plm.dto.MouldStoreLocationDTO;
+import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.*;
 import com.erp.model.plm.enums.SysLogClassPathEnum;
 import com.erp.model.scm.enums.InvalidStatusEnum;
@@ -141,9 +139,12 @@ public class MouldInfoServiceImpl extends SuperServiceImpl<MouldInfoMapper, Moul
     @Override
     public MouldInfoDTO.ViewDTO view(String id) {
         MouldInfoEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到模具数据"));
-
-
-        return null;
+        MouldInfoDTO.ViewDTO viewDTO = BeanMapperUtils.map(MouldInfoDTO.ViewDTO.class, entity);
+        List<MouldDetailDTO.ViewDTO> mouldDetailList = mouldDetailService.listByMouldId(id);
+        viewDTO.setMouldDetailList(mouldDetailList);
+        List<MouldDocInfoDTO.ViewDTO> mouldDocInfoList = mouldDocInfoService.listByMouldId(id);
+        viewDTO.setMouldDocInfoList(mouldDocInfoList);
+        return viewDTO;
     }
 
     @Override
@@ -154,14 +155,14 @@ public class MouldInfoServiceImpl extends SuperServiceImpl<MouldInfoMapper, Moul
         mouldInfoEntity.setStatus(ApproveStatusEnum.WAIT_SUBMIT.getStatus());
         BasicCategoryEntity category = basicCategoryService.getById(dto.getCategoryId());
         String code = docNoGenHelper.generateMouldCode(category.getCode());
-        mouldInfoEntity.setMoldCategoryCode(code);
+        mouldInfoEntity.setMouldCategoryCode(code);
         boolean save = super.save(mouldInfoEntity);
         if (!save) {
             throw new ServiceException("模具主表保存失败");
         }
-        String msg = CharSequenceUtil.format("用户【{}】暂存了单号为【{}】的【{}】单据", UserContext.getDefaultLoginUser().getUserName(), mouldInfoEntity.getMoldCategoryCode(), "模具");
+        String msg = CharSequenceUtil.format("用户【{}】暂存了单号为【{}】的【{}】单据", UserContext.getDefaultLoginUser().getUserName(), mouldInfoEntity.getMouldCategoryCode(), "模具");
         sysLogService.addSysLogBySave(msg, SysLogClassPathEnum.MOULD_DETAIL_ENTITY.getDesc(), mouldInfoEntity.getId(), "");
-        return BatchResultDTO.success(mouldInfoEntity.getId(), mouldInfoEntity.getMoldCategoryCode());
+        return BatchResultDTO.success(mouldInfoEntity.getId(), mouldInfoEntity.getMouldCategoryCode());
     }
 
     @Override
@@ -173,12 +174,12 @@ public class MouldInfoServiceImpl extends SuperServiceImpl<MouldInfoMapper, Moul
         BeanMapperUtils.copy(dto, mouldInfoEntity);
         BasicCategoryEntity category = basicCategoryService.getById(dto.getCategoryId());
         String code = docNoGenHelper.generateMouldCode(category.getCode());
-        mouldInfoEntity.setMoldCategoryCode(code);
+        mouldInfoEntity.setMouldCategoryCode(code);
         save(mouldInfoEntity);
         mouldDetailService.add(dto.getDetailList(), mouldInfoEntity);
         mouldDocInfoService.add(dto.getDocList(), mouldInfoEntity.getId());
         // 记录操作日志
-        String msg = CharSequenceUtil.format("用户【{}】新增了单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), mouldInfoEntity.getMoldCategoryCode(), "模具");
+        String msg = CharSequenceUtil.format("用户【{}】新增了单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), mouldInfoEntity.getMouldCategoryCode(), "模具");
         sysLogService.addSysLogBySave(msg, SysLogClassPathEnum.MOULD_DETAIL_ENTITY.getDesc(), mouldInfoEntity.getId(), "");
         return submit(mouldInfoEntity.getId());
     }
@@ -205,9 +206,9 @@ public class MouldInfoServiceImpl extends SuperServiceImpl<MouldInfoMapper, Moul
         log.info("提交 开始修改模具表状态数据，id：【{}】", id);
         this.updateApproveStatus(id, ApproveStatusEnum.APPROVE_ING.getStatus());
         // 记录操作日志
-        String msg = CharSequenceUtil.format("用户【{}】单号为【{}】的【{}】单据提交审核 ", UserContext.getDefaultLoginUser().getUserName(), entity.getMoldCategoryCode(), "模具");
+        String msg = CharSequenceUtil.format("用户【{}】单号为【{}】的【{}】单据提交审核 ", UserContext.getDefaultLoginUser().getUserName(), entity.getMouldCategoryCode(), "模具");
         sysLogService.addSysLogBySave(msg, SysLogClassPathEnum.MOULD_DETAIL_ENTITY.getDesc(), entity.getId(), "");
-        return BatchResultDTO.success(entity.getId(), entity.getMoldCategoryCode(), OperationTypeEnum.SUBMIT);
+        return BatchResultDTO.success(entity.getId(), entity.getMouldCategoryCode(), OperationTypeEnum.SUBMIT);
     }
 
     /**
@@ -225,9 +226,9 @@ public class MouldInfoServiceImpl extends SuperServiceImpl<MouldInfoMapper, Moul
     public void startProcess(MouldInfoEntity entity) {
         ProcessManagementDTO.StartDTO startDTO = new ProcessManagementDTO.StartDTO();
         startDTO.setBusinessId(entity.getId());
-        startDTO.setBusinessCode(entity.getMoldCategoryCode());
+        startDTO.setBusinessCode(entity.getMouldCategoryCode());
         startDTO.setBusinessKey(SourceTypeEnum.MOULD_INFO.getCode());
-        startDTO.setBusinessName(entity.getMoldCategoryCode());
+        startDTO.setBusinessName(entity.getMouldCategoryCode());
         String userId = UserContext.getDefaultLoginUser().getUid();
         startDTO.setUserId(userId);
         startDTO.setVariablesMap(BeanUtil.beanToMap(entity));
@@ -254,7 +255,7 @@ public class MouldInfoServiceImpl extends SuperServiceImpl<MouldInfoMapper, Moul
         this.updateApproveStatus(id, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
         String msg = "模具【{}】撤销流程";
         sysLogService.addSysLogBySave(msg, SysLogClassPathEnum.MOULD_DETAIL_ENTITY.getDesc(), entity.getId(), "");
-        return BatchResultDTO.success(entity.getId(), entity.getMoldCategoryCode(), "撤销流程");
+        return BatchResultDTO.success(entity.getId(), entity.getMouldCategoryCode(), "撤销流程");
     }
 
     @Override
@@ -272,11 +273,11 @@ public class MouldInfoServiceImpl extends SuperServiceImpl<MouldInfoMapper, Moul
         // 调用流程审核
         approveProcess(entity, dto);
         // 操作日志
-        String msg = CharSequenceUtil.format("用户【{}】单号为【{}】的【{}】单据审核操作  审核结果：【{}】 审核意见 ：【{}】", UserContext.getDefaultLoginUser().getUserName(), entity.getMoldCategoryCode(), "模具", approveType.getName(), dto.getComment());
+        String msg = CharSequenceUtil.format("用户【{}】单号为【{}】的【{}】单据审核操作  审核结果：【{}】 审核意见 ：【{}】", UserContext.getDefaultLoginUser().getUserName(), entity.getMouldCategoryCode(), "模具", approveType.getName(), dto.getComment());
         sysLogService.addSysLogBySave(msg, SysLogClassPathEnum.MOULD_DETAIL_ENTITY.getDesc(), entity.getId(), "");
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(approveType);
 
-        return BatchResultDTO.success(entity.getId(), entity.getMoldCategoryCode(), OperationTypeEnum.approveStatus(approveStatus));
+        return BatchResultDTO.success(entity.getId(), entity.getMouldCategoryCode(), OperationTypeEnum.approveStatus(approveStatus));
 
     }
 
@@ -335,7 +336,7 @@ public class MouldInfoServiceImpl extends SuperServiceImpl<MouldInfoMapper, Moul
         this.updateApproveStatus(id, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
         String msg = "模具【{}】反审核流程";
         sysLogService.addSysLogBySave(msg, SysLogClassPathEnum.MOULD_DETAIL_ENTITY.getDesc(), entity.getId(), "");
-        return BatchResultDTO.success(entity.getId(), entity.getMoldCategoryCode(), "反审核流程");
+        return BatchResultDTO.success(entity.getId(), entity.getMouldCategoryCode(), "反审核流程");
     }
 
     @Override
@@ -358,9 +359,9 @@ public class MouldInfoServiceImpl extends SuperServiceImpl<MouldInfoMapper, Moul
                 .update();
 
         log.info("作废 开始记录操作日志，id：【{}】", id);
-        String msg = CharSequenceUtil.format("用户【{}】单号为【{}】的【{}】单据作废操作 作废原因：【{}】", UserContext.getDefaultLoginUser().getUserName(), entity.getMoldCategoryCode(), "模具", remark);
+        String msg = CharSequenceUtil.format("用户【{}】单号为【{}】的【{}】单据作废操作 作废原因：【{}】", UserContext.getDefaultLoginUser().getUserName(), entity.getMouldCategoryCode(), "模具", remark);
         sysLogService.addSysLogBySave(msg, SysLogClassPathEnum.MOULD_DETAIL_ENTITY.getDesc(), entity.getId(), "");
-        return BatchResultDTO.success(entity.getId(), entity.getMoldCategoryCode(), OperationTypeEnum.INVALID);
+        return BatchResultDTO.success(entity.getId(), entity.getMouldCategoryCode(), OperationTypeEnum.INVALID);
     }
 
     @Override

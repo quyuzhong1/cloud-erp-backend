@@ -1,5 +1,7 @@
 package com.erp.model.plm.dto;
 
+import com.common.business.annotation.Dict;
+import com.common.business.enums.ServiceCodeNameEnum;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -52,9 +54,8 @@ public class MouldRefProductDTO implements Serializable {
         /**
         * 供应商id
         */
+        @Dict(tableName = "supplier", serviceCode = ServiceCodeNameEnum.SCM, queryFieldName = "id")
         private String supplierId;
-
-
     }
 
     /**
@@ -94,6 +95,12 @@ public class MouldRefProductDTO implements Serializable {
         private String skuId;
 
         /**
+         * skuNo
+         */
+        @NotBlank(message = "sku不能为空")
+        private String skuNo;
+
+        /**
         * 供应商id
         */
         @NotBlank(message = "供应商id不能为空")
@@ -102,6 +109,5 @@ public class MouldRefProductDTO implements Serializable {
 
 
     }
-
 
 }

@@ -62,7 +62,7 @@ public class CfgMouldSettingServiceImpl extends SuperServiceImpl<CfgMouldSetting
             index++;
         }
         int docIndex = 1;
-        for (CfgMouldSettingDTO.ParamDTO paramDTO : dto.getDocList()) {
+        for (CfgMouldSettingDTO.ParamDTO paramDTO : dto.getMouldList()) {
             CfgMouldSettingEntity entity = new CfgMouldSettingEntity();
             entity.setIndex(docIndex);
             entity.setType(MouldSettingTypeEnum.MOULD.getCode());

@@ -3,6 +3,8 @@ package com.erp.server.plm.service;
 import com.common.business.service.SuperService;
 import com.erp.model.plm.entity.MouldPurchasePriceEntity;
 
+import java.util.List;
+
 /**
  * <p>
  * 模具价目表 服务类
@@ -14,5 +16,6 @@ import com.erp.model.plm.entity.MouldPurchasePriceEntity;
 public interface MouldPurchasePriceService extends SuperService<MouldPurchasePriceEntity> {
 
 
+    List<MouldPurchasePriceEntity> listByMouldDetailIdList(List<String> detailIds);
 
 }
