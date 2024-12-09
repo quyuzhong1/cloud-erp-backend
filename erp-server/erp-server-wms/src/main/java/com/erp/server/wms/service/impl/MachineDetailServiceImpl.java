@@ -1,5 +1,6 @@
 package com.erp.server.wms.service.impl;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
@@ -34,7 +35,6 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -329,12 +329,18 @@ public class MachineDetailServiceImpl extends SuperServiceImpl<MachineDetailMapp
         List<MachineRefSoDTO.AddDTO> refAddList = new ArrayList<>();
         for (MachineDetailEntity detailEntity: list) {
             MachineRefSoDTO.AddDTO addDTO = new MachineRefSoDTO.AddDTO();
+            if (CharSequenceUtil.isBlank(detailEntity.getRefId()) || CharSequenceUtil.isBlank(detailEntity.getRefCode()) || CharSequenceUtil.isBlank(detailEntity.getRefDetailId())) {
+                continue;
+            }
             addDTO.setSoId(detailEntity.getRefId());
             addDTO.setSoCode(detailEntity.getRefCode());
             addDTO.setSoDetailId(detailEntity.getRefDetailId());
             addDTO.setMachineId(mainId);
             addDTO.setMachineDetailId(detailEntity.getId());
             refAddList.add(addDTO);
+        }
+        if (CollUtil.isEmpty(refAddList)) {
+            return;
         }
         List<MachineRefSoEntity> machineRefSoList = BeanMapperUtils.copyList(MachineRefSoEntity.class, refAddList);
         machineRefSoService.saveBatch(machineRefSoList);
