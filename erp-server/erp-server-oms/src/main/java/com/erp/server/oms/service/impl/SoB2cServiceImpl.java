@@ -8006,10 +8006,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         }
         //仓位信息
         List<String> warehouseIdList = records.stream().map(SoB2cDTO.ExcelExportDTO::getWarehouseId).distinct().collect(Collectors.toList());
-        List<WarehouseLocationEntity> warehouseLocationEntityList = warehouseLocationFeign.listByWarehouseIds(warehouseIdList);
-
+        List<WarehouseLocationEntity> warehouseLocationEntityList = FeignQuery.create(WarehouseLocationEntity.class).in(WarehouseLocationEntity::getWarehouseId, warehouseIdList).select(WarehouseLocationEntity::getWarehouseId, WarehouseLocationEntity::getCode, WarehouseLocationEntity::getName).list();
         //bom信息
-        List<BomChildrenSkuDTO> bomChildrenList = new ArrayList<>();
+        List<BomChildrenSkuDTO> bomChildrenList;
         //库存信息
         List<InventoryQtyDTO.SkuInventoryStatusTotalDTO> inventoryList = new ArrayList<>();
         //无需计算库存sku
@@ -8077,6 +8076,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         List<SoB2cDetailEntity> soB2cDetailEntityList = soB2cDetailService.listByIds(detailIds);
         List<SoB2cDeliveryEntity> soB2cDeliveryEntities = soB2cDeliveryFeign.listBySourceId(ids);
 
+        List<String> codeList = new ArrayList<>();
+        List<String> codeAndParentSkuIdList = new ArrayList<>();
         for (SoB2cDTO.ExcelExportDTO exportDTO : records) {
             SoOutstockEntity soOutstock = soOutstockEntityList.stream().filter(v -> v.getSoId().equals(exportDTO.getId())).findFirst().orElse(new SoOutstockEntity());
             exportDTO.setSoOutStockTime(soOutstock.getBillDate());
@@ -8197,7 +8198,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                     //如果按子级导出则添加
                     if (SoB2cExportTypeEnum.CHILD_EXPORT.getCode().equals(exportType)) {
                         //根据订单维度还是bom维度清除已存在的记录
-                        processRepeatData(resultDTO, resultList);
+                        processRepeatData(resultDTO, codeList, codeAndParentSkuIdList);
                         resultList.add(resultDTO);
                     }
                 }
@@ -8209,13 +8210,13 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                     }
                     exportDTO.setSkuQty(exportDTO.getQty());
                     //根据订单维度还是bom维度清除已存在的记录
-                    processRepeatData(exportDTO, resultList);
+                    processRepeatData(exportDTO, codeList, codeAndParentSkuIdList);
                     resultList.add(exportDTO);
                 }
             } else {
                 exportDTO.setSkuQty(exportDTO.getQty());
                 //根据订单维度还是bom维度清除已存在的记录
-                processRepeatData(exportDTO, resultList);
+                processRepeatData(exportDTO, codeList, codeAndParentSkuIdList);
                 resultList.add(exportDTO);
             }
         }
@@ -8365,10 +8366,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         return StrUtil.isNotBlank(labelOrder) ? labelOrder.substring(0, labelOrder.length() - 1) : "";
     }
 
-    private void processRepeatData(SoB2cDTO.ExcelExportDTO resultDTO, List<SoB2cDTO.ExcelExportDTO> resultList) {
+    private void processRepeatData(SoB2cDTO.ExcelExportDTO resultDTO, List<String> codeList, List<String> codeAndParentSkuIdList) {
         String code = resultDTO.getCode();
-        SoB2cDTO.ExcelExportDTO excelExportDTO = resultList.stream().filter(e -> Objects.nonNull(e) && StrUtil.isNotEmpty(code) && code.equals(e.getCode())).findFirst().orElse(null);
-        if (Objects.nonNull(excelExportDTO)) {
+        if (CharSequenceUtil.isNotBlank(code) && codeList.contains(code)) {
             //清除订单维度数据
             resultDTO.setShippingCost(BigDecimal.ZERO);
             resultDTO.setAmount(BigDecimal.ZERO);
@@ -8378,19 +8378,19 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             resultDTO.setWidth(BigDecimal.ZERO);
             resultDTO.setHeight(BigDecimal.ZERO);
             resultDTO.setWeight(BigDecimal.ZERO);
+        }else if (CharSequenceUtil.isNotBlank(code)){
+            codeList.add(code);
         }
         String parentSkuId = resultDTO.getParentSkuId();
-        SoB2cDTO.ExcelExportDTO excelExportDTO2 = resultList.stream().filter(e -> Objects.nonNull(e) && StrUtil.isNotEmpty(code)
-                && code.equals(e.getCode()) && StrUtil.isNotEmpty(parentSkuId) && parentSkuId.equals(e.getParentSkuId())
-        ).findFirst().orElse(null);
-        if (Objects.nonNull(excelExportDTO2)) {
+        if (CharSequenceUtil.isNotBlank(code) && CharSequenceUtil.isNotBlank(parentSkuId) && codeAndParentSkuIdList.contains(code + "-" + parentSkuId)) {
             //清除bom拆分数据
             resultDTO.setTaxCost(BigDecimal.ZERO);
             resultDTO.setSourceAmount(BigDecimal.ZERO);
             resultDTO.setBaseAmount(BigDecimal.ZERO);
             resultDTO.setQty(MathUtil.ZERO);
+        }else if (CharSequenceUtil.isNotBlank(code) && CharSequenceUtil.isNotBlank(parentSkuId)){
+            codeAndParentSkuIdList.add(code + "-" + parentSkuId);
         }
-
     }
 
 
