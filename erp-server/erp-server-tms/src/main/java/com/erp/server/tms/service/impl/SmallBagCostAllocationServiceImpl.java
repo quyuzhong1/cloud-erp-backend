@@ -299,17 +299,21 @@ public class SmallBagCostAllocationServiceImpl extends SuperServiceImpl<SmallBag
 			if(totalCost != null) {
 				dto.setTotalCost(totalCost.setScale(6, RoundingMode.HALF_UP));
 			}
+			BigDecimal refund = BigDecimal.ONE;
+			if("refund".equals(dto.getPayType())) {
+				refund = new BigDecimal("-1");
+			}
 			BigDecimal billAmount = dto.getBillAmount();
 			if(billAmount != null) {
-				dto.setBillAmount(billAmount.setScale(4, RoundingMode.HALF_UP));
+				dto.setBillAmount(billAmount.multiply(refund).setScale(4, RoundingMode.HALF_UP));
 			}
 			BigDecimal allocatedAmount = dto.getAllocatedAmount();
 			if(allocatedAmount != null) {
-				dto.setAllocatedAmount(allocatedAmount.setScale(2, RoundingMode.HALF_UP));
+				dto.setAllocatedAmount(allocatedAmount.multiply(refund).setScale(2, RoundingMode.HALF_UP));
 			}
 			BigDecimal productAllocatedAmount = dto.getProductAllocatedAmount();
 			if(productAllocatedAmount != null) {
-				dto.setProductAllocatedAmount(productAllocatedAmount.setScale(6, RoundingMode.HALF_UP));
+				dto.setProductAllocatedAmount(productAllocatedAmount.multiply(refund).setScale(6, RoundingMode.HALF_UP));
 			}
 		}
 	}

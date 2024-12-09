@@ -279,6 +279,10 @@ public class SmallBagCostAllocationDTO implements Serializable {
          * 币别符号
          */
         private String currencySymbol;
+        /**
+         * 支付类型
+         */
+        private String payType;
 
     }
 

@@ -141,6 +141,8 @@ public class SmallBagCostAllocationController extends BaseController {
             keyIdName = "id")
     public ApiResult<List<BatchResultDTO>> updateReportStatus(@RequestBody @Validated SmallBagCostAllocationDTO.UpdateStatusDTO dto) {
         List<String> ids = dto.getIds();
+        List<SmallBagCostAllocationEntity> listByIds = smallBagCostAllocationService.listByIds(ids);
+        ids = listByIds.stream().map(SmallBagCostAllocationEntity::getMainId).distinct().collect(Collectors.toList());
 		List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
         for (String id : ids) {
             BatchResultDTO submit;
@@ -148,7 +150,7 @@ public class SmallBagCostAllocationController extends BaseController {
                 submit = smallBagCostAllocationService.updateReportStatus(id,dto.getReportDate(),dto.getReportStatus());
             }catch (Exception e){
                 log.error("小包分摊 状态变更",e);
-                SmallBagCostAllocationEntity entity = smallBagCostAllocationService.getById(id);
+                SmallBagCostAllocationMainEntity entity = smallBagCostAllocationMainService.getById(id);
                 if (ObjectUtil.isEmpty(entity)) {
                     submit = BatchResultDTO.fail(id, id, "小包分摊不存在, 核算状态");
                     resultDTOS.add(submit);
@@ -178,6 +180,8 @@ public class SmallBagCostAllocationController extends BaseController {
     keyIdName = "id")
     public ApiResult<List<BatchResultDTO>> reAllocation(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
     	List<String> ids = dto.getIds();
+    	List<SmallBagCostAllocationEntity> listByIds = smallBagCostAllocationService.listByIds(ids);
+        ids = listByIds.stream().map(SmallBagCostAllocationEntity::getMainId).distinct().collect(Collectors.toList());
     	List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
     	for (String id : ids) {
     		BatchResultDTO submit;
@@ -215,6 +219,8 @@ public class SmallBagCostAllocationController extends BaseController {
     keyIdName = "id")
     public ApiResult<List<BatchResultDTO>> delete(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
     	List<String> ids = dto.getIds();
+    	List<SmallBagCostAllocationEntity> listByIds = smallBagCostAllocationService.listByIds(ids);
+        ids = listByIds.stream().map(SmallBagCostAllocationEntity::getMainId).distinct().collect(Collectors.toList());
     	List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
     	for (String id : ids) {
     		BatchResultDTO submit;
@@ -249,39 +255,4 @@ public class SmallBagCostAllocationController extends BaseController {
         return success();
     }
     
-    /**
-     * 生成物流大表
-     * @author Will
-     * @date: 2023/11/13 15:35
-     * @param dto
-     * @return ApiResult<List<BatchResultDTO>>
-     */
-    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "状态变更:idList={idList}")
-    @PostMapping("/pushBigTable")
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-    tableField = "create_user_id",
-    menuCode = "tms:smallBagCostAllocation:pushBigTable",
-    serviceClass = SmallBagCostAllocationService.class,
-    		tableAlias = "t",
-    keyIdName = "id")
-    public ApiResult<List<BatchResultDTO>> pushBigTable(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-    	List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
-    	for (String id : dto.getIds()) {
-    		BatchResultDTO submit;
-    		try {
-    			submit = smallBagCostAllocationService.pushBigTable(id);
-    		}catch (Exception e){
-    			log.error("小包分摊 生成物流大表",e);
-    			SmallBagCostAllocationMainEntity entity = smallBagCostAllocationMainService.getById(id);
-    			if (ObjectUtil.isEmpty(entity)) {
-    				submit = BatchResultDTO.fail(id, id, "小包分摊不存在,  生成物流大表");
-    				resultDTOS.add(submit);
-    				continue;
-    			}
-    			submit = BatchResultDTO.fail(entity.getId(), entity.getId(), e.getMessage());
-    		}
-    		resultDTOS.add(submit);
-    	}
-    	return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
-    }
 }
