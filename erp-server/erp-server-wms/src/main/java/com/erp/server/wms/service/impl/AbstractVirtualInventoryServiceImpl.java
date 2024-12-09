@@ -1,10 +1,8 @@
 package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson2.JSON;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.enums.BusinessNoTypeEnum;
@@ -28,7 +26,6 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.redisson.RedissonMultiLock;
 import org.redisson.api.RLock;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
@@ -249,6 +246,9 @@ public abstract class AbstractVirtualInventoryServiceImpl implements VirtualInve
         transactionFlowDTO.setTransactionNo(transactionNo);
         transactionFlowDTO.setVirtualTransRuleId(transRuleId);
         virtualTransFlowService.add(transactionFlowDTO, transRuleId, InventoryModeEnum.IN_STOCK);
+
+        //入库添加本地任务表数据
+
     }
 
     /**

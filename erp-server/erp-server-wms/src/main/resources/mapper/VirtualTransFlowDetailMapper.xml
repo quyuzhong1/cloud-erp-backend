@@ -35,12 +35,13 @@
 
     <!-- 分页查询 -->
     <select id="paging" resultType="com.erp.model.wms.dto.VirtualTransFlowDetailDTO$ListDTO">
-        select
+       select vm.* from  (select
             vtf.sku_id as skuId,
             pd.sku_no as skuNo,
             pd.name as productName,
             vtf.warehouse_id as warehouseId,
             wh.name as warehouseName,
+            vtf.virtual_warehouse_id as virtualWarehouseId,
             vw.code as virtualWarehouseCode,
             vw.name as virtualWarehosueName,
             to_char(vtfd.trade_time, 'yyyy-mm-dd') as date,
@@ -61,21 +62,40 @@
         left join product_detail pd on vtf.sku_id = pd.id and pd.is_deleted = false
         left join warehouse wh on vtf.warehouse_id = wh.id and wh.is_deleted = false
         left join virtual_warehouse vw on vtf.virtual_warehouse_id = vw.id and vw.is_deleted = false
+        union all
+        select
+            vih.sku_id as skuId,
+            '' as skuNo,
+            '' as productName,
+            vih.warehouse_id as warehouseId,
+            '' as warehouseName,
+            vih.virtual_warehouse_id as virtualWarehouseId,
+            '' as virtualWarehouseCode,
+            '' as virtualWarehosueName,
+            to_char(vih.date, 'yyyy-mm-dd') as date,
+            '' as transactionNo,
+            null as tradeTime,
+            '' as sourceType,
+            '' as sourceCode,
+            '' as dictInventoryStatus,
+            null as qty,
+            '转结' as operateTypeName,
+            vih.batch_no as batchNo,
+            vih.qty as waitBatchQty,
+            null as last_outstock_date,
+            vih.update_time as updateTime
+        from 	virtual_inventory_his vih
+        where vih.is_deleted = false) vm
         <where>
             ${params.sqlMap.default}
-            and vtfd.is_deleted = false
-            <if test="params.permissionSql != null and params.permissionSql != ''">
-                ${params.permissionSql}
-            </if>
         </where>
-
-        order by
+        order by skuId asc,warehouseId asc ,virtualWarehouseId asc ,date asc,
         <if test="params.sortList != null and params.sortList.size > 0">
             <foreach collection="params.sortList" item="item" separator="," close=",">
                 ${item.field} ${item.sort}
             </foreach>
         </if>
-        vtf.date desc
+        batchNo asc
     </select>
 
 
