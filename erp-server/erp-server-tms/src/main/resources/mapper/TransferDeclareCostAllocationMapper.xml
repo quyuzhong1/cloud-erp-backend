@@ -72,6 +72,7 @@
         left join transfer_declare_cost_allocation_detail h on h.main_id = g.id and h.is_deleted = false
         left join tms_b2c_declare_reconciliation_detail j on t.declare_reconciliation_detail_id = j.id and j.is_deleted = false
         left join transfer_declare k on t.transfer_declare_id = k.id and k.is_deleted = false
+        left join dict_basic l on h.fee_type = l.code and l.type = 'dictCostCategory'
 		<where>
             ${params.sqlMap.default}
             and t.is_deleted = false
@@ -85,7 +86,7 @@
                 ${item.field} ${item.sort}
             </foreach>
         </if>
-        t.id desc
+        t.id desc,g.id,n.index asc
     </select>
     
     <select id="tabList" resultType="com.erp.model.tms.dto.TransferDeclareCostAllocationDTO$TabListDTO">
