@@ -21,6 +21,7 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.web.client.RestTemplate;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -243,11 +244,12 @@ public class DmpInoutController extends BaseController {
             }
 
 			// 分页参数
-            Integer pageSize = 10000; // 每页记录数
+            Integer pageSize = 200; // 每页记录数
             Integer totalPages = (int) Math.ceil((double) count / pageSize); // 总页数
 
 			// 分页查询
-            for (int currentPage = 0; currentPage < totalPages; currentPage++) {
+            for (int currentPage = 8; currentPage < totalPages; currentPage++) {
+                System.out.println("===========当前页数：" + currentPage);
                 int offset = currentPage * pageSize;
                 String sqlt = "SELECT id AS id FROM dmp_output_task_record " +
                         "WHERE request_data = '{\"so_outstock\":\"test\"}' " +
@@ -276,16 +278,18 @@ public class DmpInoutController extends BaseController {
 
 				// 封装请求头和请求体
 				HttpEntity entity = new HttpEntity(requestBody, headers);
-
-				// 使用RestTemplate发起请求
-				RestTemplate restTemplate = new RestTemplate();
+                HttpComponentsClientHttpRequestFactory factory = new HttpComponentsClientHttpRequestFactory();
+                factory.setConnectTimeout(50000);  // 设置连接超时时间（毫秒）
+                factory.setReadTimeout(150000);    // 设置读取超时时间（毫秒）
+                // 使用RestTemplate发起请求
+                RestTemplate restTemplate = new RestTemplate(factory);
 				ResponseEntity<String> response = restTemplate.exchange(urlImp, HttpMethod.POST, entity, String.class);
 
 				// 输出响应
 				System.out.println("响应状态码: " + response.getStatusCode());
 				System.out.println("响应体: " + response.getBody());
 
-				Thread.sleep(300000);
+				Thread.sleep(1500);
 			}
 
         } catch (Exception e) {
