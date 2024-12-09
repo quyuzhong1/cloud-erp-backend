@@ -44,6 +44,7 @@ import com.erp.model.tms.dto.TransferDeclareCostAllocationDTO.ListDTO;
 import com.erp.model.tms.dto.TransferDeclareCostAllocationDTO.PagingParamDTO;
 import com.erp.model.tms.dto.TransferDeclareCostAllocationDTO.TabListDTO;
 import com.erp.model.tms.entity.LogisticsChannelEntity;
+import com.erp.model.tms.entity.SmallBagCostAllocationMainEntity;
 import com.erp.model.tms.entity.TmsB2cDeclareReconciliationDetailEntity;
 import com.erp.model.tms.entity.TransferDeclareCostAllocationDetailEntity;
 import com.erp.model.tms.entity.TransferDeclareCostAllocationEntity;
@@ -322,7 +323,11 @@ public class TransferDeclareCostAllocationServiceImpl extends SuperServiceImpl<T
 		TmsB2cDeclareReconciliationDetailEntity tmsB2cDeclareReconciliationDetailEntity = tmsB2cDeclareReconciliationDetailService.getById(transferDeclareCostAllocationMainEntity.getDeclareReconciliationDetailId());
 		ApplicationContextUtils.getBean(TransferDeclareServiceImpl.class).singPushAllocation(transferDeclareCostAllocationMainEntity.getTransferDeclareId(), 
 				transferDeclareCostAllocationMainEntity.getReportDate(), Arrays.asList(tmsB2cDeclareReconciliationDetailEntity));
-		
+		transferDeclareCostAllocationMainService.lambdaUpdate().eq(TransferDeclareCostAllocationMainEntity::getDeclareReconciliationDetailId, transferDeclareCostAllocationMainEntity.getDeclareReconciliationDetailId())
+			.set(TransferDeclareCostAllocationMainEntity::getCreateTime, transferDeclareCostAllocationMainEntity.getCreateTime())
+			.set(TransferDeclareCostAllocationMainEntity::getCreateUserId, transferDeclareCostAllocationMainEntity.getCreateUserId())
+			.set(TransferDeclareCostAllocationMainEntity::getCreateUserName, transferDeclareCostAllocationMainEntity.getCreateUserName())
+			.update();
 		return BatchResultDTO.success(id, id, "重新下推成功");
 	}
 
