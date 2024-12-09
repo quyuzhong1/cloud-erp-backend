@@ -68,11 +68,17 @@ public class SyncSdyJob {
             List<LogisticsBillDetailEntity> billDetailEntities = logisticsBillDetailService.listByMainIds(ids);
 
             List<String> channelIds = list.stream().map(req -> req.getChannelId()).distinct().collect(Collectors.toList());
-            List<LogisticsChannelEntity> logisticsChannelEntities = logisticsChannelService.listByIds(channelIds);
+
+            List<LogisticsChannelEntity> logisticsChannelEntities = new ArrayList<>();
+            if (CollUtil.isNotEmpty(channelIds)) {
+                logisticsChannelEntities = logisticsChannelService.listByIds(channelIds);
+            }
 
             List<String> supplierIds = logisticsChannelEntities.stream().map(req -> req.getMainId()).distinct().collect(Collectors.toList());
-            List<LogisticsSupplierEntity> logisticsSupplierEntities = logisticsSupplierService.listByIds(supplierIds);
-
+            List<LogisticsSupplierEntity> logisticsSupplierEntities = new ArrayList<>();
+            if (CollUtil.isNotEmpty(supplierIds)) {
+                logisticsSupplierEntities = logisticsSupplierService.listByIds(supplierIds);
+            }
 
             for (LogisticsBillEntity entity : list) {
                 List<LogisticsBillDetailEntity> detailEntityList = billDetailEntities.stream().filter(req -> req.getMainId().equals(entity.getId())).collect(Collectors.toList());
