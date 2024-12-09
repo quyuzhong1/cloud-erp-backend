@@ -29,8 +29,10 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.tms.dto.TransferDeclareCostAllocationDTO;
 import com.erp.model.tms.entity.TransferDeclareCostAllocationEntity;
+import com.erp.model.tms.entity.TransferDeclareCostAllocationMainEntity;
 import com.erp.server.tms.query.TransferDeclareCostAllocationQueryHandler;
 import com.erp.server.tms.service.SmallBagCostAllocationService;
+import com.erp.server.tms.service.TransferDeclareCostAllocationMainService;
 import com.erp.server.tms.service.TransferDeclareCostAllocationService;
 
 import cn.hutool.core.util.ObjectUtil;
@@ -50,6 +52,8 @@ public class TransferDeclareCostAllocationController extends BaseController {
 
     @Resource
     private TransferDeclareCostAllocationService transferDeclareCostAllocationService;
+    @Resource
+    private TransferDeclareCostAllocationMainService transferDeclareCostAllocationMainService;
 
     /**
     * 新增
@@ -142,10 +146,10 @@ public class TransferDeclareCostAllocationController extends BaseController {
             try {
                 submit = transferDeclareCostAllocationService.updateReportStatus(id,dto.getReportDate(),dto.getReportStatus());
             }catch (Exception e){
-                log.error("小包分摊 状态变更",e);
-                TransferDeclareCostAllocationEntity entity = transferDeclareCostAllocationService.getById(id);
+                log.error("中转分摊 状态变更",e);
+                TransferDeclareCostAllocationMainEntity entity = transferDeclareCostAllocationMainService.getById(id);
                 if (ObjectUtil.isEmpty(entity)) {
-                    submit = BatchResultDTO.fail(id, id, "小包分摊不存在, 核算状态");
+                    submit = BatchResultDTO.fail(id, id, "中转分摊不存在, 核算状态");
                     resultDTOS.add(submit);
                     continue;
                 }
@@ -180,10 +184,10 @@ public class TransferDeclareCostAllocationController extends BaseController {
     		try {
     			submit = transferDeclareCostAllocationService.reAllocation(id);
     		}catch (Exception e){
-    			log.error("小包分摊 重新分摊",e);
-    			TransferDeclareCostAllocationEntity entity = transferDeclareCostAllocationService.getById(id);
+    			log.error("中转分摊 重新分摊",e);
+    			TransferDeclareCostAllocationMainEntity entity = transferDeclareCostAllocationMainService.getById(id);
     			if (ObjectUtil.isEmpty(entity)) {
-    				submit = BatchResultDTO.fail(id, id, "小包分摊不存在, 重新分摊");
+    				submit = BatchResultDTO.fail(id, id, "中转分摊不存在, 重新分摊");
     				resultDTOS.add(submit);
     				continue;
     			}
@@ -218,10 +222,10 @@ public class TransferDeclareCostAllocationController extends BaseController {
     		try {
     			submit = transferDeclareCostAllocationService.delete(id);
     		}catch (Exception e){
-    			log.error("小包分摊 重新分摊",e);
-    			TransferDeclareCostAllocationEntity entity = transferDeclareCostAllocationService.getById(id);
+    			log.error("中转分摊 重新分摊",e);
+    			TransferDeclareCostAllocationMainEntity entity = transferDeclareCostAllocationMainService.getById(id);
     			if (ObjectUtil.isEmpty(entity)) {
-    				submit = BatchResultDTO.fail(id, id, "小包分摊不存在, 重新分摊");
+    				submit = BatchResultDTO.fail(id, id, "中转分摊不存在, 删除分摊");
     				resultDTOS.add(submit);
     				continue;
     			}
@@ -266,10 +270,10 @@ public class TransferDeclareCostAllocationController extends BaseController {
     		try {
     			submit = transferDeclareCostAllocationService.pushBigTable(id);
     		}catch (Exception e){
-    			log.error("小包分摊 生成物流大表",e);
-    			TransferDeclareCostAllocationEntity entity = transferDeclareCostAllocationService.getById(id);
+    			log.error("中转分摊 生成物流大表",e);
+    			TransferDeclareCostAllocationMainEntity entity = transferDeclareCostAllocationMainService.getById(id);
     			if (ObjectUtil.isEmpty(entity)) {
-    				submit = BatchResultDTO.fail(id, id, "小包分摊不存在,  生成物流大表");
+    				submit = BatchResultDTO.fail(id, id, "中转分摊不存在,  生成物流大表");
     				resultDTOS.add(submit);
     				continue;
     			}

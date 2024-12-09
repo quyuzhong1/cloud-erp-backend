@@ -121,6 +121,7 @@ import com.erp.model.tms.enums.ShippingFeeRuleEnum;
 import com.erp.model.tms.enums.SmallBagCostAllocationBigTableStatusEnum;
 import com.erp.model.tms.enums.SmallBagCostAllocationReportStatusEnum;
 import com.erp.model.tms.enums.WeightAllocationEnum;
+import com.erp.model.tms.enums.WeightAllocationSmallBagEnum;
 import com.erp.model.wms.entity.SoOutstockDetailEntity;
 import com.erp.model.wms.entity.SoOutstockEntity;
 import com.erp.model.wms.entity.SoReturnInstockDetailEntity;
@@ -1699,11 +1700,13 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 			Integer actualQty = soOutstockDetailEntity.getActualQty();
 			smallBagCostAllocationEntity.setDeliveryQty(actualQty);
 			BigDecimal skuWeight = null;
-			if(WeightAllocationEnum.OUTSTOCK_CHARGED_WEIGHT.getCode().equals(weightPackageAllocation)) {
+			if(WeightAllocationSmallBagEnum.OUTSTOCK_CHARGED_WEIGHT.getCode().equals(weightPackageAllocation) 
+					|| WeightAllocationSmallBagEnum.NETWEIGHT.getCode().equals(weightPackageAllocation)
+					|| WeightAllocationSmallBagEnum.VOLUMEWEIGHT.getCode().equals(weightPackageAllocation)) {
 				skuWeight = entity.getBillingWeight().multiply(skuCostPre).divide(new BigDecimal(actualQty), 2 , RoundingMode.HALF_UP);
-			}else if(WeightAllocationEnum.SUPPLIER_CHARGED_WEIGHT.getCode().equals(weightPackageAllocation)) {
+			}else if(WeightAllocationSmallBagEnum.SUPPLIER_CHARGED_WEIGHT.getCode().equals(weightPackageAllocation)) {
 				skuWeight = entity.getBillingWeightLogistics().multiply(skuCostPre).divide(new BigDecimal(actualQty), 2 , RoundingMode.HALF_UP);
-			}else if(WeightAllocationEnum.SINGLE_PRODUCT_WEIGHT.getCode().equals(weightPackageAllocation)) {
+			}else if(WeightAllocationSmallBagEnum.SINGLE_PRODUCT_WEIGHT.getCode().equals(weightPackageAllocation)) {
 				skuWeight = skuWeightCostMaps.get(skuId);
 			}
 			if(skuWeight == null) {

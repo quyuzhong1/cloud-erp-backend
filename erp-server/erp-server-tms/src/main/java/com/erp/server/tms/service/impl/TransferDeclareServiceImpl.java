@@ -38,6 +38,7 @@ import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.dto.base.BaseIdDTO.CodeDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.DeclareCodeTypeEnum;
@@ -78,6 +79,8 @@ import com.erp.model.tms.dto.transfer.TransferLogisticsCreateInboundReq;
 import com.erp.model.tms.dto.transfer.TransferLogisticsCreateOrderReq;
 import com.erp.model.tms.dto.transfer.TransferLogisticsOrderDTO;
 import com.erp.model.tms.entity.CfgSettingEntity;
+import com.erp.model.tms.entity.InventorySkuCostDetailEntity;
+import com.erp.model.tms.entity.InventorySkuCostEntity;
 import com.erp.model.tms.entity.LogisticsChannelEntity;
 import com.erp.model.tms.entity.LogisticsSupplierEntity;
 import com.erp.model.tms.entity.TmsB2cDeclareReconciliationDetailEntity;
@@ -106,15 +109,19 @@ import com.erp.model.wms.entity.PackageForecastDetailEntity;
 import com.erp.model.wms.entity.PackageForecastEntity;
 import com.erp.model.wms.entity.SoOutstockDetailEntity;
 import com.erp.model.wms.entity.SoOutstockEntity;
+import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.oms.feign.SoB2cFeign;
+import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.PackageForecastFeign;
 import com.erp.rpc.wms.feign.SoOutstockFeign;
 import com.erp.server.tms.convert.TransferDeclareConverter;
 import com.erp.server.tms.handler.TransferLogisticsRegistry;
 import com.erp.server.tms.mapper.TransferDeclareMapper;
 import com.erp.server.tms.service.CfgSettingService;
+import com.erp.server.tms.service.InventorySkuCostDetailService;
+import com.erp.server.tms.service.InventorySkuCostService;
 import com.erp.server.tms.service.LogisticsAuthService;
 import com.erp.server.tms.service.LogisticsChannelService;
 import com.erp.server.tms.service.LogisticsSupplierService;
@@ -212,6 +219,12 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
     private TmsCostDetailService tmsCostDetailService;
     @Resource
     private DmpTaskFeign dmpTaskFeign;
+    @Resource
+    private InventorySkuCostService inventorySkuCostService;
+    @Resource
+    private InventorySkuCostDetailService inventorySkuCostDetailService;
+    @Resource
+    private SysUserFeign sysUserFeign;
 
     @Override
     public PagingVO<TransferDeclareDTO.ListDTO> paging(PagingDTO<TransferDeclareDTO.PagingParamDTO> pagingParamDTO) {
@@ -1003,9 +1016,15 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
 		if(ApproveStatusEnum.APPROVE != tmsB2cDeclareReconciliationEntity.getApproveStatus()) {
 			throw new ServiceException("B2C报关对账单未审核");
 		}
-		List<TransferDeclareCostAllocationMainEntity> transferDeclareCostAllocationMainEntityList = transferDeclareCostAllocationMainService.lambdaQuery().eq(TransferDeclareCostAllocationMainEntity::getTransferDeclareId, id).list();
-		if(CollUtil.isNotEmpty(transferDeclareCostAllocationMainEntityList)) {
-			throw new ServiceException("中转报关已下推分摊");
+		List<TransferDeclareCostAllocationMainEntity> transferDeclareCostAllocationMainEntityList = transferDeclareCostAllocationMainService.lambdaQuery()
+				.eq(TransferDeclareCostAllocationMainEntity::getTransferDeclareId, id)
+				.in(TransferDeclareCostAllocationMainEntity::getDeclareReconciliationDetailId, tmsB2cDeclareReconciliationDetailEntityList
+						.stream().map(TmsB2cDeclareReconciliationDetailEntity::getId).collect(Collectors.toList()))
+				.list();
+		List<String> declareReconciliationDetailIds = transferDeclareCostAllocationMainEntityList.stream().map(TransferDeclareCostAllocationMainEntity::getDeclareReconciliationDetailId).collect(Collectors.toList());
+		tmsB2cDeclareReconciliationDetailEntityList.removeIf(t -> declareReconciliationDetailIds.contains(t.getId()));
+		if(CollUtil.isEmpty(tmsB2cDeclareReconciliationDetailEntityList)) {
+			throw new ServiceException("中转报关下的所有对账明细都已下推分摊");
 		}
 		
 		this.singPushAllocation(id, reportDate, tmsB2cDeclareReconciliationDetailEntityList);
@@ -1017,6 +1036,7 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
 	@Override
 	public void singPushAllocation(String id, String reportDate , List<TmsB2cDeclareReconciliationDetailEntity> tmsB2cDeclareReconciliationDetailEntityList) {
 		Map<String, List<SoOutstockDetailEntity>> soIdSoOutstockDetailEntityListMaps = new HashMap<>();
+		Map<String,String> outstockIdWareHouseIdMap = new HashMap<>();
 		List<String> soIds = tmsB2cDeclareReconciliationDetailEntityList.stream().map(TmsB2cDeclareReconciliationDetailEntity::getSoId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
 		if(CollUtil.isNotEmpty(soIds)) {
 			List<SoOutstockEntity> soOutstockEntityList = FeignQuery.create(SoOutstockEntity.class).in(SoOutstockEntity::getSoId, soIds).list();
@@ -1030,6 +1050,7 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
 					List<SoOutstockEntity> value = soSoOutstockEntityListMap.getValue();
 					List<SoOutstockDetailEntity> addSoOutstockDetailEntityList = new ArrayList<>();
 					for(SoOutstockEntity v : value) {
+						outstockIdWareHouseIdMap.put(v.getId(), v.getWarehouseId());
 						List<SoOutstockDetailEntity> list = mainSooutstockDetailEntityListMaps.get(v.getId());
 						if(CollUtil.isNotEmpty(list)) {
 							addSoOutstockDetailEntityList.addAll(list);
@@ -1066,6 +1087,14 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
 			mainCategoryMaps = costList.stream().collect(Collectors.groupingBy(TmsCostDetailDTO.CostViewDTO::getMainId));
 		}
 		
+		Map<String, String> wareIdOrgIdMaps = new HashMap<>();
+		Map<String, String> orgIdNameMaps = new HashMap<>();
+		if(!outstockIdWareHouseIdMap.isEmpty()) {
+			wareIdOrgIdMaps = FeignQuery.getByIds(WarehouseEntity.class, outstockIdWareHouseIdMap.values().stream().collect(Collectors.toList()))
+					.stream().collect(Collectors.toMap(WarehouseEntity::getId, WarehouseEntity::getOrgId));
+			orgIdNameMaps = sysUserFeign.getAccountingCompanyList(new ArrayList<>(wareIdOrgIdMaps.values())).stream().collect(Collectors.toMap(CodeDTO::getId, CodeDTO::getName));
+		}
+		
 		for(TmsB2cDeclareReconciliationDetailEntity t : tmsB2cDeclareReconciliationDetailEntityList) {
 			int i = 0;
 			Map<String, List<CostViewDTO>> costCategoryMaps = new HashMap<>();
@@ -1091,10 +1120,30 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
 			}
 			
 			if(CollUtil.isNotEmpty(dealSoOutstockDetailEntityList)) {
-				List<ProductCostEntity> productCostEntityList = FeignQuery.create(ProductCostEntity.class)
-						.eq(ProductCostEntity::getSkuId, dealSoOutstockDetailEntityList.stream().map(SoOutstockDetailEntity::getSkuId).collect(Collectors.toList()))
-						.list();
-					Map<String, BigDecimal> skuCostMaps = productCostEntityList.stream().collect(Collectors.toMap(ProductCostEntity::getSkuId, ProductCostEntity::getTargetTaxCost));
+				Map<String, InventorySkuCostDetailEntity> unInventorySkuCostMap = new HashMap<>();
+				DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+				LocalDate parse = LocalDate.parse(reportDate + "-01", formatter);
+				List<InventorySkuCostEntity> inventorySkuCostEntityList = new ArrayList<>();
+				if(!wareIdOrgIdMaps.isEmpty()) {
+					inventorySkuCostEntityList = inventorySkuCostService.lambdaQuery().eq(InventorySkuCostEntity::getAllocatedMonth, parse)
+							.eq(InventorySkuCostEntity::getStatus, "approve")
+							.in(InventorySkuCostEntity::getCompanyId, wareIdOrgIdMaps.values())
+							.list();
+				}
+				if(CollUtil.isNotEmpty(inventorySkuCostEntityList)) {
+					Map<String, InventorySkuCostEntity> idEntityMaps = inventorySkuCostEntityList.stream().collect(Collectors.toMap(InventorySkuCostEntity::getId, j -> j));
+					List<InventorySkuCostDetailEntity> inventorySkuCostDetailEntityList = inventorySkuCostDetailService.lambdaQuery().in(InventorySkuCostDetailEntity::getMainId, idEntityMaps.keySet())
+						.in(InventorySkuCostDetailEntity::getSkuId , dealSoOutstockDetailEntityList.stream().map(SoOutstockDetailEntity::getSkuId).collect(Collectors.toList())).list();
+					if(CollUtil.isNotEmpty(inventorySkuCostDetailEntityList)) {
+						for(InventorySkuCostDetailEntity j : inventorySkuCostDetailEntityList) {
+							InventorySkuCostEntity inventorySkuCostEntity = idEntityMaps.get(j.getMainId());
+							String companyId = inventorySkuCostEntity.getCompanyId();
+							String skuId = j.getSkuId();
+							unInventorySkuCostMap.put(companyId + "_" + skuId, j);
+						}
+					}
+				}
+				
 					BigDecimal totalSkuCost = BigDecimal.ZERO;
 					List<ProductPackEntity> productPackEntityList = FeignQuery.create(ProductPackEntity.class)
 							.eq(ProductPackEntity::getSkuId, dealSoOutstockDetailEntityList.stream().map(SoOutstockDetailEntity::getSkuId).collect(Collectors.toList()))
@@ -1104,9 +1153,10 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
 					for(SoOutstockDetailEntity soOutstockDetailEntity : dealSoOutstockDetailEntityList) {
 						String skuId = soOutstockDetailEntity.getSkuId();
 						Integer actualQty = soOutstockDetailEntity.getActualQty();
-						BigDecimal skuCost = skuCostMaps.get(skuId);
-						if(skuCost != null) {
-							totalSkuCost = totalSkuCost.add(skuCost.multiply(new BigDecimal(actualQty)));
+						String orgId = wareIdOrgIdMaps.get(outstockIdWareHouseIdMap.get(soOutstockDetailEntity.getMainId()));
+						InventorySkuCostDetailEntity inventorySkuCostDetailEntity = unInventorySkuCostMap.get(orgId + "_" + skuId);
+						if(inventorySkuCostDetailEntity != null) {
+							totalSkuCost = totalSkuCost.add(inventorySkuCostDetailEntity.getProductCost().multiply(new BigDecimal(actualQty)));
 						}
 						BigDecimal skuWeightCost = skuWeightCostMaps.get(skuId);
 						if(skuWeightCost != null) {
@@ -1122,13 +1172,23 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
 					transferDeclareCostAllocationEntity.setMainId(transferDeclareCostAllocationMainEntityId);
 					String skuId = soOutstockDetailEntity.getSkuId();
 					transferDeclareCostAllocationEntity.setSkuId(skuId);
-					transferDeclareCostAllocationEntity.setSkuNo(soOutstockDetailEntity.getSkuNo());
+					String skuNo = soOutstockDetailEntity.getSkuNo();
+					transferDeclareCostAllocationEntity.setSkuNo(skuNo);
 					transferDeclareCostAllocationEntity.setOutstockDetailId(soOutstockDetailEntity.getId());
 					
+					String orgId = wareIdOrgIdMaps.get(outstockIdWareHouseIdMap.get(soOutstockDetailEntity.getMainId()));
+					String orgName = orgIdNameMaps.get(orgId);
+					
 					BigDecimal skuCostPre = BigDecimal.ZERO;
-					BigDecimal skuCost = skuCostMaps.get(skuId);
-					if(totalSkuCost.compareTo(BigDecimal.ZERO) != 0 && skuCost != null) {
-						skuCostPre = skuCost.divide(totalSkuCost, 2, RoundingMode.HALF_UP);
+					InventorySkuCostDetailEntity inventorySkuCostDetailEntity = unInventorySkuCostMap.get(orgId + "_" + skuId);
+					if(inventorySkuCostDetailEntity != null) {
+						BigDecimal skuCost = inventorySkuCostDetailEntity.getProductCost();
+						if(totalSkuCost.compareTo(BigDecimal.ZERO) != 0 && skuCost != null) {
+							skuCostPre = skuCost.divide(totalSkuCost, 2, RoundingMode.HALF_UP);
+						}
+						transferDeclareCostAllocationEntity.setUnitCost(skuCost);
+					}else {
+						throw new ServiceException(orgName + reportDate + "月份下sku=" + skuNo + "未配置分摊成本");
 					}
 					BigDecimal skuWeightCostPre = BigDecimal.ZERO;
 					BigDecimal skuWeightCost = skuWeightCostMaps.get(skuId);

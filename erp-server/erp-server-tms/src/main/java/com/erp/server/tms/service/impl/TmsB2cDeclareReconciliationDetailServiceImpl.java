@@ -205,7 +205,7 @@ public class TmsB2cDeclareReconciliationDetailServiceImpl extends SuperServiceIm
         List<String> dgFlagList = settingForecastService.lambdaQuery().in(SettingForecastEntity::getTransferLogisticsChannelId, channelIds).list()
         		.stream().filter(SettingForecastEntity::getDgWarseHouse).map(SettingForecastEntity::getTransferLogisticsChannelId).collect(Collectors.toList());
         List<String> xgFlagList = settingForecastService.lambdaQuery().in(SettingForecastEntity::getTransferLogisticsChannelId, channelIds).list()
-        		.stream().filter(SettingForecastEntity::getDgWarseHouse).map(SettingForecastEntity::getTransferLogisticsChannelId).collect(Collectors.toList());
+        		.stream().filter(SettingForecastEntity::getXgWarseHouse).map(SettingForecastEntity::getTransferLogisticsChannelId).collect(Collectors.toList());
         BigDecimal dgWarseHouseFee = declareReconciliationEntity.getDgWarseHouseFee();
         BigDecimal xgWarseHouseFee = declareReconciliationEntity.getXgWarseHouseFee();
         BigDecimal dgTotalWeight = BigDecimal.ZERO;
