@@ -1260,6 +1260,9 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
                 .collect(Collectors.toList());
         List<PickingDetailEntity> updateList = new ArrayList<>();
         for (PickingDetailDTO.View view : updateData) {
+            if (SourceTypeEnum.REQUISITION_APPLICATION.getCode().equals(entity.getSourceType())) {
+                view.setQty(view.getActualQty());
+            }
             PickingDetailEntity detailEntity = detailList.stream()
                     .filter(v -> v.getId().equals(view.getId()))
                     .findFirst()
@@ -1348,6 +1351,9 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
                 ProductDetailEntity productDetailEntity = detailEntityList.stream()
                         .filter(entityClass -> entityClass.getId().equals(data.getSkuId()))
                         .findFirst().orElse(new ProductDetailEntity());
+                if (SourceTypeEnum.REQUISITION_APPLICATION.getCode().equals(entity.getSourceType())) {
+                    data.setQty(data.getActualQty());
+                }
                 PickingDetailEntity detail = new PickingDetailEntity();
                 detail.setMainId(entity.getId());
                 detail.setId(IdWorker.getIdStr());
