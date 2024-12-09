@@ -1706,26 +1706,28 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 			smallBagCostAllocationEntity.setDeliveryQty(actualQty);
 			BigDecimal billingWeight = entity.getBillingWeight();
 			BigDecimal skuWeight = null;
-			if(WeightAllocationSmallBagEnum.OUTSTOCK_CHARGED_WEIGHT.getCode().equals(weightPackageAllocation)) {
-				skuWeight = entity.getBillingWeight().multiply(skuWeightCostPre).divide(new BigDecimal(actualQty), 4 , RoundingMode.HALF_UP);
+			if(entity.getType().equals(DictCostAttributionEnum.LAST_MILE.getCode())) {
+				billingWeight = BigDecimal.ZERO;
+			}else {
+				if(ShippingFeeRuleEnum.BILLING_WEIGHT.getCode().equals(feeRule)) {
+					billingWeight = entity.getBillingWeight();
+				}else if(ShippingFeeRuleEnum.NET_WEIGHT.getCode().equals(feeRule)) {
+					billingWeight = entity.getActualWeight();
+				}else if(ShippingFeeRuleEnum.VOLUME_WEIGHT.getCode().equals(feeRule)) {
+					billingWeight = entity.getVolumeWeight();
+				}
+			}
+			if(WeightAllocationSmallBagEnum.OUTSTOCK_CHARGED_WEIGHT.getCode().equals(weightPackageAllocation) 
+					|| WeightAllocationSmallBagEnum.NETWEIGHT.getCode().equals(weightPackageAllocation)
+					|| WeightAllocationSmallBagEnum.VOLUMEWEIGHT.getCode().equals(weightPackageAllocation)) {
+				skuWeight = billingWeight.multiply(skuWeightCostPre).divide(new BigDecimal(actualQty), 4 , RoundingMode.HALF_UP);
 			}else if(WeightAllocationSmallBagEnum.SUPPLIER_CHARGED_WEIGHT.getCode().equals(weightPackageAllocation)) {
 				skuWeight = entity.getBillingWeightLogistics().multiply(skuWeightCostPre).divide(new BigDecimal(actualQty), 4 , RoundingMode.HALF_UP);
 			}else if(WeightAllocationSmallBagEnum.SINGLE_PRODUCT_WEIGHT.getCode().equals(weightPackageAllocation)) {
 				skuWeight = skuWeightCostMaps.get(skuId);
-			}else if(WeightAllocationSmallBagEnum.NETWEIGHT.getCode().equals(weightPackageAllocation)) {
-				skuWeight = entity.getActualWeight().multiply(skuWeightCostPre).divide(new BigDecimal(actualQty), 4 , RoundingMode.HALF_UP);
-			}else if(WeightAllocationSmallBagEnum.VOLUMEWEIGHT.getCode().equals(weightPackageAllocation)) {
-				skuWeight = entity.getVolumeWeight().multiply(skuWeightCostPre).divide(new BigDecimal(actualQty), 4 , RoundingMode.HALF_UP);
 			}
 			if(skuWeight == null) {
 				skuWeight = BigDecimal.ZERO;
-			}
-			if(ShippingFeeRuleEnum.BILLING_WEIGHT.getCode().equals(feeRule)) {
-				billingWeight = entity.getBillingWeight();
-			}else if(ShippingFeeRuleEnum.NET_WEIGHT.getCode().equals(feeRule)) {
-				billingWeight = entity.getActualWeight();
-			}else if(ShippingFeeRuleEnum.VOLUME_WEIGHT.getCode().equals(feeRule)) {
-				billingWeight = entity.getVolumeWeight();
 			}
 			smallBagCostAllocationEntity.setBillingWeight(billingWeight);
 			smallBagCostAllocationEntity.setSkuWeight(skuWeight);
