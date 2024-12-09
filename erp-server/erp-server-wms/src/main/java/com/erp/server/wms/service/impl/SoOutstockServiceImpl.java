@@ -3548,4 +3548,9 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         pushWdtDTO.setDetailDTOList(detailDTOList);
         return pushWdtDTO;
     }
+
+    @Override
+    public List<SoOutstockEntity> queryToSdy(LocalDate startDate, LocalDate endDate, Integer pageSize, Integer offset) {
+        return baseMapper.queryToSdy(startDate, endDate, pageSize, offset);
+    }
 }

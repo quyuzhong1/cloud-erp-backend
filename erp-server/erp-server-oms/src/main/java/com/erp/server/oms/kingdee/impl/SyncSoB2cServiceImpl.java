@@ -68,8 +68,6 @@ public class SyncSoB2cServiceImpl implements SyncSoB2cService {
         List<SkuVO> skuVOList = plmTaskFeign.listBySkuNoList(skuNos);
         List<String> skuIds = soB2cDetailEntityList.stream().map(req -> req.getSkuId()).collect(Collectors.toList());
         List<BomChildrenSkuDTO> bomChildrenSkuDTOS = plmTaskFeign.listBomBySkuIds(skuIds);
-
-        List<CurrencyDTO.ViewDTO> currencyList = sysUserFeign.listByCurrency(Arrays.asList(soB2cEntity.getCurrency()));
         //父类产品
         List<String> parentSkuId = bomChildrenSkuDTOS.stream().map(BomChildrenSkuDTO::getParentSkuId).distinct().collect(Collectors.toList());
         List<ProductDetailEntity> parentSkuList = new ArrayList<>();
@@ -78,6 +76,8 @@ public class SyncSoB2cServiceImpl implements SyncSoB2cService {
                     .in(ProductDetailEntity::getId, parentSkuId)
                     .list();
         }
+
+        List<CurrencyDTO.ViewDTO> currencyList = sysUserFeign.listByCurrency(Arrays.asList(soB2cEntity.getCurrency()));
 
         //优惠额
         BigDecimal totalDiscount = BigDecimal.ZERO;

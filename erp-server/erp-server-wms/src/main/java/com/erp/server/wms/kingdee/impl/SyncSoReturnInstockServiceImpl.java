@@ -67,36 +67,29 @@ public class SyncSoReturnInstockServiceImpl implements SyncSoReturnInstockServic
     private SoReturnReceiveService soReturnReceiveService;
 
     @Override
-    public Map<String, Object> syncDataToSdyFieldHandler(SoReturnInstockEntity entity, SoReturnInstockDetailEntity soReturnInstockDetailEntity, String operate) {
+    public Map<String, Object> syncDataToSdyFieldHandler(SoReturnInstockEntity entity,
+                                                         SoReturnInstockDetailEntity detailEntity,
+                                                         String operate,
+                                                         List<SkuVO> skuVOList,
+                                                         List<BomChildrenSkuDTO> bomChildrenSkuDTOS,
+                                                         List<CurrencyDTO.ViewDTO> currencyList,
+                                                         List<ProductDetailEntity> parentSkuList,
+                                                         List<CustomerInfoEntity> customerInfoList,
+                                                         List<BaseIdDTO.CodeDTO> companyEntities,
+                                                         List<DictBasicEntity> dictBasicEntityList,
+                                                         List<SoReturnEntity> soReturnEntityList,
+                                                         List<SoReturnReceiveEntity> soReturnReceiveEntityList,
+                                                         List<SoReturnEntity> receiveReturnList) {
+
         DateTimeFormatter localDateTime = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
         DateTimeFormatter localDate = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
-        List<SoReturnInstockDetailEntity> soReturnInstockDetailEntities = soReturnInstockDetailService.listDetailByMainIds(Arrays.asList(entity.getId()));
-        List<String> skuNos = soReturnInstockDetailEntities.stream().map(req -> req.getSkuNo()).collect(Collectors.toList());
-        List<SkuVO> skuVOList = plmTaskFeign.listBySkuNoList(skuNos);
-        List<String> skuIds = soReturnInstockDetailEntities.stream().map(req -> req.getSkuId()).collect(Collectors.toList());
-        List<BomChildrenSkuDTO> bomChildrenSkuDTOS = plmTaskFeign.listBomChildBySkuIds(skuIds);
-
-        List<String> currencyCodeList = soReturnInstockDetailEntities.stream().map(req -> req.getCurrency()).distinct().collect(Collectors.toList());
-        List<CurrencyDTO.ViewDTO> currencyList = sysUserFeign.listByCurrency(currencyCodeList);
-        //父类产品
-        List<String> parentSkuId = bomChildrenSkuDTOS.stream().map(BomChildrenSkuDTO::getParentSkuId).distinct().collect(Collectors.toList());
-        List<ProductDetailEntity> parentSkuList = new ArrayList<>();
-        if (CollUtil.isNotEmpty(parentSkuId)) {
-            parentSkuList = FeignQuery.create(ProductDetailEntity.class)
-                    .in(ProductDetailEntity::getId, parentSkuId)
-                    .list();
-        }
-
-        //组织信息
-        CustomerInfoEntity customerInfo = FeignQuery.getById(CustomerInfoEntity.class, entity.getCustomerId());
-
         //退货物流单号
-        String rootNodeNoInitial = getRootNodeNoInitial(entity);
+        String rootNodeNoInitial = getRootNodeNoInitial(entity, soReturnEntityList, soReturnReceiveEntityList, receiveReturnList);
 
         ShudiyunB2cOrderDTO shudiyunB2cOrderDTO = new ShudiyunB2cOrderDTO();
 
-        shudiyunB2cOrderDTO.setBiz_uni_key(entity.getId() + soReturnInstockDetailEntity.getId());
+        shudiyunB2cOrderDTO.setBiz_uni_key(entity.getId() + detailEntity.getId());
         shudiyunB2cOrderDTO.setBiz_no(entity.getCode());
         if (entity.getBillDate() != null) {
             shudiyunB2cOrderDTO.setBiz_time(localDate.format(entity.getBillDate()));
@@ -105,11 +98,11 @@ public class SyncSoReturnInstockServiceImpl implements SyncSoReturnInstockServic
         shudiyunB2cOrderDTO.setTransaction_type("退货入库单");
         shudiyunB2cOrderDTO.setTransaction_sub_type("退货入库");
         shudiyunB2cOrderDTO.setBiz_status(ApproveStatusEnum.getName(entity.getApproveStatus()));
-        shudiyunB2cOrderDTO.setStatus(shudiyunB2cOrderDTO.sdyStatusHandle(operate, entity.getVersion(), soReturnInstockDetailEntity.getVersion()));
+        shudiyunB2cOrderDTO.setStatus(shudiyunB2cOrderDTO.sdyStatusHandle(operate, entity.getVersion(), detailEntity.getVersion()));
 
         //组织信息
+        CustomerInfoEntity customerInfo = customerInfoList.stream().filter(req -> req.getId().equals(entity.getCustomerId())).findFirst().orElse(null);
         if (ObjectUtil.isNotEmpty(customerInfo)) {
-            List<BaseIdDTO.CodeDTO> companyEntities = sysUserFeign.getAccountingCompanyList(Arrays.asList(customerInfo.getFinancialOrganization(), entity.getSalesOrgId()));
 
             String salesOrgCode = companyEntities.stream().filter(req -> req.getId().equals(entity.getSalesOrgId())).map(req -> req.getCode()).findFirst().orElse("");
             shudiyunB2cOrderDTO.setSales_company_code(salesOrgCode);
@@ -133,7 +126,6 @@ public class SyncSoReturnInstockServiceImpl implements SyncSoReturnInstockServic
             }
 
             shudiyunB2cOrderDTO.setPlatform_id(customerInfo.getPlatformType());
-            List<DictBasicEntity> dictBasicEntityList = FeignQuery.create(DictBasicEntity.class).eq(DictBasicEntity::getType, DictBasicTypeEnum.SALES_PLATFORM.getType()).list();
             String platformName = dictBasicEntityList.stream().filter(req -> req.getValue().equals(customerInfo.getPlatformType())).map(DictBasicEntity::getName).findFirst().orElse("");
             shudiyunB2cOrderDTO.setPlatform_name(platformName);
         }
@@ -141,8 +133,8 @@ public class SyncSoReturnInstockServiceImpl implements SyncSoReturnInstockServic
         shudiyunB2cOrderDTO.setShop_no(entity.getCustomerId());
         shudiyunB2cOrderDTO.setShop_name(entity.getCustomerName());
         shudiyunB2cOrderDTO.setRoot_node_no(rootNodeNoInitial);
-        shudiyunB2cOrderDTO.setGoods_no(soReturnInstockDetailEntity.getSkuNo());
-        SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuId().equals(soReturnInstockDetailEntity.getSkuId())).findFirst().orElse(new SkuVO());
+        shudiyunB2cOrderDTO.setGoods_no(detailEntity.getSkuNo());
+        SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuId().equals(detailEntity.getSkuId())).findFirst().orElse(new SkuVO());
         shudiyunB2cOrderDTO.setGoods_name(skuVO.getSkuName());
         if (skuVO.getSpuNo() == null) {
             shudiyunB2cOrderDTO.setSpec_no(skuVO.getSkuNo());
@@ -152,17 +144,17 @@ public class SyncSoReturnInstockServiceImpl implements SyncSoReturnInstockServic
             shudiyunB2cOrderDTO.setSpec_name(skuVO.getSpuName());
         }
 
-        if (soReturnInstockDetailEntity.getAmount().compareTo(BigDecimal.ZERO) <= 0) {
+        if (detailEntity.getAmount().compareTo(BigDecimal.ZERO) <= 0) {
             shudiyunB2cOrderDTO.setIs_gift(1);
         } else {
             shudiyunB2cOrderDTO.setIs_gift(0);
         }
 
-        BomChildrenSkuDTO bomChildrenSkuDTO = bomChildrenSkuDTOS.stream().filter(req -> req.getParentSkuId().equals(soReturnInstockDetailEntity.getSkuId())).findFirst().orElse(null);
+        BomChildrenSkuDTO bomChildrenSkuDTO = bomChildrenSkuDTOS.stream().filter(req -> req.getParentSkuId().equals(detailEntity.getSkuId())).findFirst().orElse(null);
         if (ObjectUtil.isNotEmpty(bomChildrenSkuDTO) && BomTypeEnum.COMBINATION.getType().equals(bomChildrenSkuDTO.getType())) {
             shudiyunB2cOrderDTO.setIs_comb(1);
         } else {
-            bomChildrenSkuDTO = bomChildrenSkuDTOS.stream().filter(req -> req.getSkuId().equals(soReturnInstockDetailEntity.getSkuId())).findFirst().orElse(null);
+            bomChildrenSkuDTO = bomChildrenSkuDTOS.stream().filter(req -> req.getSkuId().equals(detailEntity.getSkuId())).findFirst().orElse(null);
             if (ObjectUtil.isNotEmpty(bomChildrenSkuDTO)) {
                 shudiyunB2cOrderDTO.setSuite_no(bomChildrenSkuDTO.getParentSkuNo());
                 BomChildrenSkuDTO finalBomChildrenSkuDTO = bomChildrenSkuDTO;
@@ -186,15 +178,15 @@ public class SyncSoReturnInstockServiceImpl implements SyncSoReturnInstockServic
         shudiyunB2cOrderDTO.setInternational_return_waybill_number("空");
         shudiyunB2cOrderDTO.setReturn_status(ApproveStatusEnum.getName(entity.getApproveStatus()));
         shudiyunB2cOrderDTO.setReturn_receipt_number(entity.getCode());
-        shudiyunB2cOrderDTO.setReturned_quantity(soReturnInstockDetailEntity.getRealQty());
+        shudiyunB2cOrderDTO.setReturned_quantity(detailEntity.getRealQty());
 
-        shudiyunB2cOrderDTO.setRemark(soReturnInstockDetailEntity.getRemark());
-        shudiyunB2cOrderDTO.setWarehouse_no(soReturnInstockDetailEntity.getWarehouseId());
-        shudiyunB2cOrderDTO.setWarehouse_name(soReturnInstockDetailEntity.getWarehouseName());
+        shudiyunB2cOrderDTO.setRemark(detailEntity.getRemark());
+        shudiyunB2cOrderDTO.setWarehouse_no(detailEntity.getWarehouseId());
+        shudiyunB2cOrderDTO.setWarehouse_name(detailEntity.getWarehouseName());
         if (entity.getBillDate() != null) {
             shudiyunB2cOrderDTO.setReturn_receipt_time(localDate.format(entity.getBillDate()));
         }
-        shudiyunB2cOrderDTO.setReturn_receipt_amount(soReturnInstockDetailEntity.getAmount());
+        shudiyunB2cOrderDTO.setReturn_receipt_amount(detailEntity.getAmount());
         shudiyunB2cOrderDTO.setSuite_no("");
         shudiyunB2cOrderDTO.setSuite_name("");
 
@@ -210,7 +202,7 @@ public class SyncSoReturnInstockServiceImpl implements SyncSoReturnInstockServic
         if (entity.getApproveTime() != null) {
             shudiyunB2cOrderDTO.setDelivery_time(localDateTime.format(entity.getApproveTime()));
         }
-        shudiyunB2cOrderDTO.setGoods_transaction_quantity(soReturnInstockDetailEntity.getRealQty());
+        shudiyunB2cOrderDTO.setGoods_transaction_quantity(detailEntity.getRealQty());
         shudiyunB2cOrderDTO.setUnit(skuVO.getUnitName());
         shudiyunB2cOrderDTO.setGoods_benchmark_selling_price(skuVO.getRetailPrice());
         if (CollectionUtils.isNotEmpty(currencyList)) {
@@ -231,34 +223,46 @@ public class SyncSoReturnInstockServiceImpl implements SyncSoReturnInstockServic
     }
 
     @Override
-    public void syncDataToSdy(SoReturnInstockEntity entity, SoReturnInstockDetailEntity soReturnInstockDetailEntity, String operate) {
-        WmsPushMsgEntity wmsPushMsgEntity = new WmsPushMsgEntity();
-        wmsPushMsgEntity.setTargetPlatform(DmpBasicSystemCodeEnum.SDY.getCode());
-        wmsPushMsgEntity.setSourceType(SourceTypeEnum.SDY_SO_RETURN_INSTOCK.getCode());
-        wmsPushMsgEntity.setSourceId(soReturnInstockDetailEntity.getId());
-        wmsPushMsgEntity.setSourceCode(entity.getCode() + "_" + soReturnInstockDetailEntity.getSkuNo());
-        wmsPushMsgEntity.setSyncOperate(operate);
-        wmsPushMsgEntity.setPushData(JSON.toJSONString(this.syncDataToSdyFieldHandler(entity, soReturnInstockDetailEntity, operate)));
-        wmsPushMsgService.save(wmsPushMsgEntity);
+    public void syncDataToSdy(SoReturnInstockEntity entity,
+                              List<SoReturnInstockDetailEntity> detailEntities,
+                              String operate,
+                              List<SkuVO> skuVOList,
+                              List<BomChildrenSkuDTO> bomChildrenSkuDTOS,
+                              List<CurrencyDTO.ViewDTO> currencyList,
+                              List<ProductDetailEntity> parentSkuList,
+                              List<CustomerInfoEntity> customerInfoList,
+                              List<BaseIdDTO.CodeDTO> companyEntities,
+                              List<DictBasicEntity> dictBasicEntityList,
+                              List<SoReturnEntity> soReturnEntityList,
+                              List<SoReturnReceiveEntity> soReturnReceiveEntityList,
+                              List<SoReturnEntity> receiveReturnList) {
+        for (SoReturnInstockDetailEntity detailEntity : detailEntities) {
+            WmsPushMsgEntity wmsPushMsgEntity = new WmsPushMsgEntity();
+            wmsPushMsgEntity.setTargetPlatform(DmpBasicSystemCodeEnum.SDY.getCode());
+            wmsPushMsgEntity.setSourceType(SourceTypeEnum.SDY_SO_RETURN_INSTOCK.getCode());
+            wmsPushMsgEntity.setSourceId(detailEntity.getId());
+            wmsPushMsgEntity.setSourceCode(entity.getCode() + "_" + detailEntity.getSkuNo());
+            wmsPushMsgEntity.setSyncOperate(operate);
+            wmsPushMsgEntity.setPushData(JSON.toJSONString(this.syncDataToSdyFieldHandler(entity, detailEntity, operate, skuVOList, bomChildrenSkuDTOS, currencyList, parentSkuList, customerInfoList, companyEntities, dictBasicEntityList, soReturnEntityList, soReturnReceiveEntityList, receiveReturnList)));
+            wmsPushMsgService.save(wmsPushMsgEntity);
+        }
     }
 
-
-    private String getRootNodeNoInitial(SoReturnInstockEntity entity) {
-        return getRootNodeFromSource(entity);
-    }
-
-    private String getRootNodeFromSource(SoReturnInstockEntity entity) {
+    private String getRootNodeNoInitial(SoReturnInstockEntity entity,
+                                        List<SoReturnEntity> soReturnEntityList,
+                                        List<SoReturnReceiveEntity> soReturnReceiveEntityList,
+                                        List<SoReturnEntity> receiveReturnList) {
         String rootNodeNoInitial = entity.getCode(); // 默认值是 entity.getCode()
 
         if (SourceTypeEnum.SO_RETURN.getCode().equals(entity.getSourceType())) {
-            SoReturnEntity soReturnEntity = soReturnFeign.getSoReturnById(entity.getSourceId());
+            SoReturnEntity soReturnEntity = soReturnEntityList.stream().filter(req -> req.getId().equals(entity.getSourceId())).findFirst().orElse(null);
             if (ObjectUtil.isNotEmpty(soReturnEntity)) {
                 rootNodeNoInitial = soReturnEntity.getCode();
             }
         } else if (SourceTypeEnum.SO_RETURN_RECEIVE.getCode().equals(entity.getSourceType())) {
-            SoReturnReceiveEntity receiveEntity = soReturnReceiveService.getById(entity.getSourceId());
-            if (CharSequenceUtil.isNotBlank(receiveEntity.getSourceId())) {
-                SoReturnEntity soReturnEntity = soReturnFeign.getSoReturnById(receiveEntity.getSourceId());
+            String receiveSourceId = soReturnReceiveEntityList.stream().filter(req -> req.getId().equals(entity.getSourceId())).map(SoReturnReceiveEntity::getSourceId).findFirst().orElse("");
+            if (CharSequenceUtil.isNotBlank(receiveSourceId)) {
+                SoReturnEntity soReturnEntity = receiveReturnList.stream().filter(req -> req.getId().equals(receiveSourceId)).findFirst().orElse(null);
                 if (ObjectUtil.isNotEmpty(soReturnEntity)) {
                     rootNodeNoInitial = soReturnEntity.getCode();
                 }

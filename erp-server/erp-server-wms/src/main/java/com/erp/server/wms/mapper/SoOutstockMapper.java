@@ -12,6 +12,7 @@ import com.erp.model.wms.entity.SoOutstockEntity;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 
@@ -114,4 +115,6 @@ public interface SoOutstockMapper extends BaseMapper<SoOutstockEntity> {
     List<FirstMileDeliveryDTO.LogisticStatisticsDTO> logisticStatistics( FirstMileDeliveryDTO.StatisticsReq deliveryStaticsReq);
 
     List<SoOutstockDetailEntity> listApproveBySourceDetailIds(@Param("ids") List<String> ids);
+
+    List<SoOutstockEntity> queryToSdy(@Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate, @Param("pageSize") Integer pageSize, @Param("offset") Integer offset);
 }

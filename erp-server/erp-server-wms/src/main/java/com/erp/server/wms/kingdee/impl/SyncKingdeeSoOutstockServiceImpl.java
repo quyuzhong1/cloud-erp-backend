@@ -1079,31 +1079,27 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
 
 
     @Override
-    public Map<String, Object> syncDataToSdyFieldHandler(SoOutstockEntity entity, SoOutstockDetailEntity soOutstockDetailEntity, String operate) {
+    public Map<String, Object> syncDataToSdyFieldHandler(SoOutstockEntity entity,
+                                                         SoOutstockDetailEntity soOutstockDetailEntity,
+                                                         String operate,
+                                                         List<CurrencyDTO.ViewDTO> currencyList,
+                                                         List<ShopInfoEntity> shopInfoList,
+                                                         List<CustomerInfoEntity> customerInfoList,
+                                                         List<BaseIdDTO.CodeDTO> companyEntities,
+                                                         List<SkuVO> skuVOList,
+                                                         List<BomChildrenSkuDTO> bomChildrenSkuDTOS,
+                                                         List<ProductDetailEntity> parentSkuList,
+                                                         List<SoB2cEntity> soB2cEntities,
+                                                         List<SoInfoEntity> soInfoEntities,
+                                                         List<DictBasicEntity> dictBasicEntityList) {
         DateTimeFormatter localDateTime = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
         DateTimeFormatter localDate = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
-        List<SoOutstockDetailEntity> soOutstockDetailEntities = soOutstockDetailService.listByMainIds(Arrays.asList(entity.getId()));
-        List<String> skuNos = soOutstockDetailEntities.stream().map(req -> req.getSkuNo()).collect(Collectors.toList());
-        List<SkuVO> skuVOList = plmTaskFeign.listBySkuNoList(skuNos);
-        List<String> skuIds = soOutstockDetailEntities.stream().map(req -> req.getSkuId()).collect(Collectors.toList());
-        List<BomChildrenSkuDTO> bomChildrenSkuDTOS = plmTaskFeign.listBomChildBySkuIds(skuIds);
-
-        List<String> currencyCodeList = soOutstockDetailEntities.stream().map(req -> req.getCurrency()).distinct().collect(Collectors.toList());
-        List<CurrencyDTO.ViewDTO> currencyList = sysUserFeign.listByCurrency(currencyCodeList);
-        //父类产品
-        List<String> parentSkuId = bomChildrenSkuDTOS.stream().map(BomChildrenSkuDTO::getParentSkuId).distinct().collect(Collectors.toList());
-        List<ProductDetailEntity> parentSkuList = new ArrayList<>();
-        if (CollUtil.isNotEmpty(parentSkuId)) {
-            parentSkuList = FeignQuery.create(ProductDetailEntity.class)
-                    .in(ProductDetailEntity::getId, parentSkuId)
-                    .list();
-        }
 
         String transactionSubType = "";
         String orderPlatformCode = entity.getSoCode();
         if (OrderTypeEnum.B2C.getCode().equals(entity.getOrderType())) {
-            SoB2cEntity soB2cEntity = soB2cFeign.getById(entity.getSoId());
+            SoB2cEntity soB2cEntity = soB2cEntities.stream().filter(req -> req.getId().equals(entity.getSoId())).findFirst().orElse(null);
             if (ObjectUtil.isEmpty(soB2cEntity)) {
                 transactionSubType = OrderSubTypeEnum.ONLINE_ORDER.getCode();
             } else {
@@ -1114,10 +1110,8 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
                     orderPlatformCode = soB2cEntity.getPlatformCode();
                 }
             }
-
-
         } else if (OrderTypeEnum.B2B.getCode().equals(entity.getOrderType())) {
-            SoInfoEntity soInfoEntity = soInfoFeign.getSoInfoById(entity.getSoId());
+            SoInfoEntity soInfoEntity = soInfoEntities.stream().filter(req -> req.getId().equals(entity.getSoId())).findFirst().orElse(null);
             if (ObjectUtil.isEmpty(soInfoEntity)) {
                 transactionSubType = OrderSubTypeEnum.OFFLINE_ORDER.getCode();
             } else {
@@ -1127,17 +1121,16 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
         }
 
         //组织信息
-        CustomerInfoEntity customerInfo = FeignQuery.getById(CustomerInfoEntity.class, entity.getCustomerId());
+        CustomerInfoEntity customerInfo = customerInfoList.stream().filter(req -> req.getId().equals(entity.getCustomerId())).findFirst().orElse(null);
         String customerId = "";
         if (ObjectUtil.isNotEmpty(customerInfo)) {
             customerId = customerInfo.getId();
         }
-        List<ShopInfoEntity> shopInfoList = FeignQuery.create(ShopInfoEntity.class)
-                .eq(ShopInfoEntity::getCustomerId, customerId)
-                .list();
+
+        String finalCustomerId = customerId;
+        ShopInfoEntity shopInfoEntity = shopInfoList.stream().filter(req -> finalCustomerId.equals(req.getCustomerId())).findFirst().orElse(null);
 
 
-        List<BaseIdDTO.CodeDTO> companyEntities = sysUserFeign.getAccountingCompanyList(Arrays.asList(customerInfo.getFinancialOrganization(), entity.getSalesOrgId()));
         ShudiyunB2cOrderDTO shudiyunB2cOrderDTO = new ShudiyunB2cOrderDTO();
         shudiyunB2cOrderDTO.setBiz_uni_key(entity.getId() + soOutstockDetailEntity.getId());
         shudiyunB2cOrderDTO.setBiz_no(entity.getCode());
@@ -1171,15 +1164,14 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
                 shudiyunB2cOrderDTO.setTransaction_currency_code(customerInfo.getTradeCurrency());
             }
             shudiyunB2cOrderDTO.setPlatform_id(customerInfo.getPlatformType());
-            List<DictBasicEntity> dictBasicEntityList = FeignQuery.create(DictBasicEntity.class).eq(DictBasicEntity::getType, DictBasicTypeEnum.SALES_PLATFORM.getType()).list();
             String platformName = dictBasicEntityList.stream().filter(req -> req.getValue().equals(customerInfo.getPlatformType())).map(DictBasicEntity::getName).findFirst().orElse("");
             shudiyunB2cOrderDTO.setPlatform_name(platformName);
         }
 
         //店铺信息
-        if (CollUtil.isNotEmpty(shopInfoList)) {
-            shudiyunB2cOrderDTO.setSubplatform_no(shopInfoList.get(0).getDictPlatform());
-            shudiyunB2cOrderDTO.setSubplatform_name(PlatformDictEnum.getNameByCode(shopInfoList.get(0).getDictPlatform()));
+        if (ObjectUtil.isNotEmpty(shopInfoEntity)) {
+            shudiyunB2cOrderDTO.setSubplatform_no(shopInfoEntity.getDictPlatform());
+            shudiyunB2cOrderDTO.setSubplatform_name(PlatformDictEnum.getNameByCode(shopInfoEntity.getDictPlatform()));
         }
         shudiyunB2cOrderDTO.setShop_no(entity.getCustomerId());
         shudiyunB2cOrderDTO.setShop_name(entity.getCustomerName());
@@ -1251,6 +1243,32 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
         this.syncDataToSdyFieldHandlerBatch(entity, soOutstockDetailEntityList, operate);
     }
 
+    @Override
+    public void syncDataToSdy(SoOutstockEntity entity,
+                              List<SoOutstockDetailEntity> detailEntities,
+                              String operate,
+                              List<CurrencyDTO.ViewDTO> currencyList,
+                              List<ShopInfoEntity> shopInfoList,
+                              List<CustomerInfoEntity> customerInfoList,
+                              List<BaseIdDTO.CodeDTO> companyEntities,
+                              List<SkuVO> skuVOList,
+                              List<BomChildrenSkuDTO> bomChildrenSkuDTOS,
+                              List<ProductDetailEntity> parentSkuList,
+                              List<SoB2cEntity> soB2cEntities,
+                              List<SoInfoEntity> soInfoEntities,
+                              List<DictBasicEntity> dictBasicEntityList) {
+
+        for (SoOutstockDetailEntity detailEntity : detailEntities) {
+            WmsPushMsgEntity wmsPushMsgEntity = new WmsPushMsgEntity();
+            wmsPushMsgEntity.setTargetPlatform(DmpBasicSystemCodeEnum.SDY.getCode());
+            wmsPushMsgEntity.setSourceType(SourceTypeEnum.SDY_SO_OUTSTOCK.getCode());
+            wmsPushMsgEntity.setSourceId(detailEntity.getId());
+            wmsPushMsgEntity.setSourceCode(entity.getCode() + "_" + detailEntity.getSkuNo());
+            wmsPushMsgEntity.setSyncOperate(operate);
+            wmsPushMsgEntity.setPushData(JSON.toJSONString(this.syncDataToSdyFieldHandler(entity, detailEntity, operate, currencyList, shopInfoList, customerInfoList, companyEntities, skuVOList, bomChildrenSkuDTOS, parentSkuList, soB2cEntities, soInfoEntities, dictBasicEntityList)));
+            wmsPushMsgService.save(wmsPushMsgEntity);
+        }
+    }
 
     private void syncDataToSdyFieldHandlerBatch(SoOutstockEntity entity, List<SoOutstockDetailEntity> soOutstockDetailEntities, String operate) {
         DateTimeFormatter localDateTime = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
