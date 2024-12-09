@@ -46,8 +46,6 @@ public class AntuReturnInventoryAgeDmpHandler extends DmpInputDoNextDmpHandler {
         if (CollectionUtils.isEmpty(batchInfo)) {
             return Collections.emptyList();
         }
-        // 解析出主数据到明细
-        AntuInventoryResp inventoryResp = JSONUtil.toBean(JSONUtil.toJsonStr(dmpInputMongoEntity), AntuInventoryResp.class);
 
         List<Map<String, Object>> resultList = new LinkedList<>();
 
