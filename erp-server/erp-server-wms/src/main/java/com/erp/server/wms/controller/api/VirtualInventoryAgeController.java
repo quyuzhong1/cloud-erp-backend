@@ -12,12 +12,10 @@ import com.erp.model.wms.dto.VirtualInventoryAgeDTO;
 import com.erp.server.wms.service.VirtualInventoryDetailService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
+import java.util.List;
 
 /**
  * 库龄分析
@@ -102,5 +100,16 @@ public class VirtualInventoryAgeController extends BaseController {
     @WebAdvanceQuery
     public ApiResult<PagingVO<VirtualInventoryAgeDTO.HisInventoryAgeDetailDTO>> hisInventoryAgeDetailPaging(@RequestBody @Validated PagingDTO<VirtualInventoryAgeDTO.HisInventoryAgeParamDTO> dto) {
         return success(virtualInventoryDetailService.hisInventoryAgeDetailPaging(dto));
+    }
+
+    /**
+     * 获取配置表头
+     * @author will
+     * @date 2024/12/9 9:19
+     * @return ApiResult<List<String>>
+     */
+    @GetMapping("/getCfgHead")
+    public ApiResult<List<String>> getCfgHead() {
+        return success(virtualInventoryDetailService.getCfgHead());
     }
 }

@@ -34,6 +34,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -190,6 +191,11 @@ public class VirtualInventoryDetailServiceImpl extends SuperServiceImpl<VirtualI
         return Boolean.TRUE;
     }
 
+    @Override
+    public List<String> getCfgHead() {
+        return null;
+    }
+
     /**
     * 新增修改处理数据
     */
@@ -226,23 +232,24 @@ public class VirtualInventoryDetailServiceImpl extends SuperServiceImpl<VirtualI
         List<VirtualInventoryHisEntity> virtualInventoryHisList = virtualInventoryHisService.listByParam(new VirtualInventoryHisDTO.ParamDTO(skuIdList, warehouseIdList, virtualWarehouseId, minStartDate));
 
         HashMap<String, VirtualInventoryAgeDTO.VirtualIntervalDTO> map = new HashMap<>();
-        for (CfgSettingVirtualValueDTO.InventoryAgeDateTO inventoryAgeDateTO :list) {
-            String ageDateInterval = "";
-            //区间字段
-            if (ObjUtil.isNull(inventoryAgeDateTO.getEndDays())) {
-                ageDateInterval = CharSequenceUtil.format("{}以上", inventoryAgeDateTO.getEndDays());
-            } else {
-                ageDateInterval = CharSequenceUtil.format("{}~{}天", inventoryAgeDateTO.getStartDays(), inventoryAgeDateTO.getEndDays());
-            }fenh
+        for (VirtualInventoryAgeDTO.ListDTO listDTO :detailList) {
+            for (CfgSettingVirtualValueDTO.InventoryAgeDateTO inventoryAgeDateTO :list) {
+                String ageDateInterval = "";
+                //区间字段
+                if (ObjUtil.isNull(inventoryAgeDateTO.getEndDays())) {
+                    ageDateInterval = CharSequenceUtil.format("{}以上", inventoryAgeDateTO.getEndDays());
+                } else {
+                    ageDateInterval = CharSequenceUtil.format("{}~{}天", inventoryAgeDateTO.getStartDays(), inventoryAgeDateTO.getEndDays());
+                }
+                LocalDate nowDate = LocalDate.now();
+                LocalDate endDate = nowDate.minusDays(inventoryAgeDateTO.getStartDays());
+                LocalDate startDate = nowDate.minusDays(inventoryAgeDateTO.getEndDays());
+                Integer totalQty = virtualInventoryHisList.stream().filter(obj -> obj.getDate().isAfter(endDate) && obj.getDate().isBefore(startDate)).map(VirtualInventoryHisEntity::getQty).reduce(MathUtil.ZERO, Integer::sum);
 
-            LocalDate nowDate = LocalDate.now();
-            LocalDate endDate = nowDate.minusDays(inventoryAgeDateTO.getStartDays());
-            LocalDate startDate = nowDate.minusDays(inventoryAgeDateTO.getEndDays());
-
-            Integer reduce = virtualInventoryHisList.stream().filter(obj -> obj.getDate().isAfter(endDate) && obj.getDate().isBefore(startDate)).map(VirtualInventoryHisEntity::getQty).reduce(MathUtil.ZERO, Integer::sum);
-
-
-            map.put(ageDateInterval,new VirtualInventoryAgeDTO.VirtualIntervalDTO());
+                BigDecimal ratio = MathUtil.compareTo(listDTO.getVirtualQty(),MathUtil.ZERO) == MathUtil.ZERO ? BigDecimal.ZERO : MathUtil.divide(MathUtil.valueOf(totalQty) ,BigDecimal.valueOf(listDTO.getVirtualQty()));
+                map.put(ageDateInterval,new VirtualInventoryAgeDTO.VirtualIntervalDTO(totalQty,StrUtil.format("{}%",ratio) ));
+                listDTO.setMap(map);
+            }
         }
     }
 }

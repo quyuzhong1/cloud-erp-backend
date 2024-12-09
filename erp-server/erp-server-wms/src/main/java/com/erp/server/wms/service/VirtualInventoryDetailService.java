@@ -8,6 +8,8 @@ import com.erp.model.wms.dto.VirtualInventoryAgeDTO;
 import com.erp.model.wms.dto.VirtualInventoryDetailDTO;
 import com.erp.model.wms.entity.VirtualInventoryDetailEntity;
 
+import java.util.List;
+
 /**
  * <p>
  * 虚拟仓库明细 服务类
@@ -94,4 +96,11 @@ public interface VirtualInventoryDetailService extends SuperService<VirtualInven
      * @return Boolean
      */
     Boolean exportHisInventoryAgeDetail(VirtualInventoryAgeDTO.HisInventoryAgeParamDTO dto);
+    /**
+     * 查询配置表头信息
+     * @author will
+     * @date 2024/12/9 9:20
+     * @return List<String>
+     */
+    List<String> getCfgHead();
 }

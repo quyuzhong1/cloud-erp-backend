@@ -2,6 +2,7 @@ package com.erp.model.wms.dto;
 
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -104,6 +105,7 @@ public class VirtualInventoryAgeDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
+    @AllArgsConstructor
     public static class VirtualIntervalDTO {
         /**
          * 区间数量
@@ -112,7 +114,7 @@ public class VirtualInventoryAgeDTO implements Serializable {
         /**
          * 占比
          */
-        private Integer ratio;
+        private String ratio;
     }
 
 
