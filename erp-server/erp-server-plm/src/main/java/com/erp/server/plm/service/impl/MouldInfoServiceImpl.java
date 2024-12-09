@@ -194,8 +194,6 @@ public class MouldInfoServiceImpl extends SuperServiceImpl<MouldInfoMapper, Moul
     public BatchResultDTO addAndSubmit(MouldInfoDTO.UpdateDTO dto) {
         MouldInfoEntity entity = getById(dto.getId());
         boolean isExit = ObjectUtils.isEmpty(entity);
-
-
         //保存基本信息
         MouldInfoEntity mouldInfoEntity = new MouldInfoEntity();
         BeanMapperUtils.copy(dto, mouldInfoEntity);

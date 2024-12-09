@@ -29,14 +29,13 @@ public class MouldDocInfoServiceImpl extends SuperServiceImpl<MouldDocInfoMapper
 
     @Override
     public void add(List<MouldDocInfoDTO.UpdateDTO> docList, String id) {
-
+        remove(Wrappers.<MouldDocInfoEntity>lambdaQuery().eq(MouldDocInfoEntity::getMouldInfoId, id));
         List<MouldDocInfoEntity> docInfoEntityList = docList.stream()
                 .map(v -> {
                     MouldDocInfoEntity entity = BeanMapperUtils.map(MouldDocInfoEntity.class, v);
                     entity.setMouldInfoId(id);
                     return entity;
                 }).collect(Collectors.toList());
-
         ApplicationContextUtils.getBean(MouldDocInfoServiceImpl.class).saveOrUpdateBatch(docInfoEntityList);
     }
 

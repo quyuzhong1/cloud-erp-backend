@@ -64,10 +64,10 @@ public class MouldDetailServiceImpl extends SuperServiceImpl<MouldDetailMapper, 
             mouldDetail.setMouldNo(code);
             mouldDetail.setId(IdWorker.getIdStr());
             details.add(mouldDetail);
-            MouldRefundAgreementEntity agreement = BeanMapperUtils.map(MouldRefundAgreementEntity.class, dto.getRefundAgreement());
+            MouldRefundAgreementEntity agreement = BeanMapperUtils.map(MouldRefundAgreementEntity.class, dto);
             agreement.setMouldDetailId(mouldDetail.getId());
             agreementList.add(agreement);
-            MouldPurchasePriceEntity price = BeanMapperUtils.map(MouldPurchasePriceEntity.class, dto.getPurchasePrice());
+            MouldPurchasePriceEntity price = BeanMapperUtils.map(MouldPurchasePriceEntity.class, dto);
             price.setMouldDetailId(mouldDetail.getId());
             price.setCurrency(CurrencyEnum.RMB.getCurrencyCode());
             price.setExchangeRate(BigDecimal.ONE);
@@ -97,6 +97,7 @@ public class MouldDetailServiceImpl extends SuperServiceImpl<MouldDetailMapper, 
             mouldRefProductList.addAll(productEntityList);
         }
         ApplicationContextUtils.getBean(MouldDetailServiceImpl.class).saveBatch(details);
+//        mouldRefundAgreementService.remove(Wrappers.<MouldRefundAgreementEntity>lambdaQuery().eq(MouldRefundAgreementEntity::getMouldDetailId, ));
         mouldRefundAgreementService.saveOrUpdateBatch(agreementList);
         mouldPurchasePriceService.saveOrUpdateBatch(purchasePriceList);
         mouldProductService.saveOrUpdateBatch(productList);
