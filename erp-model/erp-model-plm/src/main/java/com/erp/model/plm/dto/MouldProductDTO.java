@@ -6,8 +6,10 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
+import java.util.List;
 
 /**
  * <p>
@@ -49,7 +51,7 @@ public class MouldProductDTO implements Serializable {
         /**
         * 图片地址
         */
-        private String imagesUrl;
+        private List<String> imagesUrl;
 
 
     }
@@ -92,9 +94,8 @@ public class MouldProductDTO implements Serializable {
         /**
         * 图片地址
         */
-        @NotBlank(message = "图片地址不能为空")
-        @Size(max = 255,message = "图片地址最大长度不能超过255位")
-        private String imagesUrl;
+        @NotNull(message = "图片地址不能为空")
+        private List<String> imagesUrl;
 
 
     }

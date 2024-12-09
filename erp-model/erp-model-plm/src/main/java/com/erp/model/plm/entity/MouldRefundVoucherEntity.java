@@ -1,13 +1,13 @@
 package com.erp.model.plm.entity;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
-import com.baomidou.mybatisplus.annotation.TableField;
-import java.io.Serializable;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
-import com.common.business.enums.ApproveStatusEnum;
+
+import java.io.Serializable;
 
 
 /**
@@ -21,8 +21,8 @@ import com.common.business.enums.ApproveStatusEnum;
 @Data
 @EqualsAndHashCode(callSuper = true)
 @Accessors(chain = true)
-@TableName("mould_refound_voucher")
-public class MouldRefoundVoucherEntity extends BaseEntity<MouldRefoundVoucherEntity> {
+@TableName("mould_refund_voucher")
+public class MouldRefundVoucherEntity extends BaseEntity<MouldRefundVoucherEntity> {
 
     /**
     * 模具id

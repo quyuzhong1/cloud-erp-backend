@@ -340,4 +340,56 @@ public class MouldInfoController extends BaseController {
     public void export(@RequestBody @Validated MouldInfoDTO.PagingParamDTO dto) {
         mouldInfoService.export(dto);
     }
+
+
+    /**
+     * 下单跟踪
+     * @param dto 参数
+     */
+    @PostMapping("/orderTracking")
+    public ApiResult<PagingVO<MouldInfoDTO.OrderTrackingViewDTO>> orderTracking(@RequestBody @Validated PagingDTO<MouldInfoDTO.PagingParamDTO> dto) {
+        PagingVO<MouldInfoDTO.OrderTrackingViewDTO> page = mouldInfoService.orderTracking(dto);
+        return success(page);
+    }
+
+
+    /**
+     * tab
+     * @param dto 参数
+     */
+    @PostMapping("/tabList")
+    public ApiResult<List<MouldInfoDTO.TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
+        List<MouldInfoDTO.TabListDTO> tabList = mouldInfoService.tabList(dto);
+        return success(tabList);
+    }
+
+    /**
+     * 费用返还确认
+     * @param dto 参数
+     */
+    @PostMapping("/returnConfirm")
+    public ApiResult<String> returnConfirm(@RequestBody @Validated MouldInfoDTO.ReturnConfirmDTO dto) {
+        mouldInfoService.returnConfirm(dto);
+        return success();
+    }
+
+    /**
+     * 关联下单产品
+     * @param dto 参数
+     */
+    @PostMapping("/refProduct")
+    public ApiResult<String> refProduct(@RequestBody @Validated MouldInfoDTO.RefProductDTO dto) {
+        mouldInfoService.refProduct(dto);
+        return success();
+    }
+
+    /**
+     * 下单明细
+     * @param dto 参数
+     */
+    @PostMapping("/orderTrackingDetail")
+    public ApiResult<PagingVO<MouldInfoDTO.OrderTrackingDetailDTO>> orderTrackingDetail(@RequestBody @Validated MouldInfoDTO.OrderTrackingDetailParamDTO dto) {
+        PagingVO<MouldInfoDTO.OrderTrackingDetailDTO> page = mouldInfoService.orderTrackingDetail(dto);
+        return success(page);
+    }
 }

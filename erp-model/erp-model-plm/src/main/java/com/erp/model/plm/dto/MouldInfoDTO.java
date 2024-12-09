@@ -5,10 +5,7 @@ import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.ServiceCodeNameEnum;
-import lombok.Data;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
@@ -28,7 +25,7 @@ import java.util.Map;
  *
  * @author liaohui
  * @since 2024-12-03
-*/
+ */
 @Data
 @NoArgsConstructor
 public class MouldInfoDTO implements Serializable {
@@ -43,7 +40,7 @@ public class MouldInfoDTO implements Serializable {
         /**
          * 主键id
          */
-        private String  id;
+        private String id;
 
         /**
          * 项目编号
@@ -70,7 +67,7 @@ public class MouldInfoDTO implements Serializable {
         /**
          * 明细id
          */
-        private String  detailId;
+        private String detailId;
 
         /**
          * 模具编号
@@ -180,58 +177,57 @@ public class MouldInfoDTO implements Serializable {
         /**
          * sqlMap 默认key default
          */
-        private Map<String,String> sqlMap;
+        private Map<String, String> sqlMap;
 
     }
 
 
-
     /**
-    * 详情
-    */
+     * 详情
+     */
     @Data
     @NoArgsConstructor
     public static class ViewDTO {
 
         /**
-        * 主键id
-        */
-        private String  id;
+         * 主键id
+         */
+        private String id;
 
         /**
-        * 项目编号
-        */
+         * 项目编号
+         */
         private String projectNo;
 
         /**
-        * 项目名称
-        */
+         * 项目名称
+         */
         private String name;
 
         /**
-        * 状态
-        */
+         * 状态
+         */
         @Dict(enumClass = ApproveStatusEnum.class)
         private String status;
 
         /**
-        * 产品经理
-        */
+         * 产品经理
+         */
         private String productManagerId;
 
         /**
-        * 备注
-        */
+         * 备注
+         */
         private String remark;
 
         /**
-        * 分类id
-        */
+         * 分类id
+         */
         private String categoryId;
 
         /**
-        * 模具分类编码
-        */
+         * 模具分类编码
+         */
         private String mouldCategoryCode;
 
         /**
@@ -246,15 +242,15 @@ public class MouldInfoDTO implements Serializable {
     }
 
     /**
-    * 修改
-    */
+     * 修改
+     */
     @Getter
     @Setter
     public static class UpdateDTO extends CommonDTO {
 
         /**
-        * 主键id
-        */
+         * 主键id
+         */
         private String id;
 
         /**
@@ -274,36 +270,36 @@ public class MouldInfoDTO implements Serializable {
     public static class CommonDTO {
 
         /**
-        * 项目编号
-        */
-        @Size(max = 50,message = "项目编号最大长度不能超过50位")
+         * 项目编号
+         */
+        @Size(max = 50, message = "项目编号最大长度不能超过50位")
         private String projectNo;
 
         /**
-        * 项目名称
-        */
+         * 项目名称
+         */
         @NotBlank(message = "项目名称不能为空")
-        @Size(max = 255,message = "项目名称最大长度不能超过255位")
+        @Size(max = 255, message = "项目名称最大长度不能超过255位")
         private String name;
 
         /**
-        * 产品经理
-        */
+         * 产品经理
+         */
         @NotBlank(message = "产品经理不能为空")
-        @Size(max = 19,message = "产品经理最大长度不能超过19位")
+        @Size(max = 19, message = "产品经理最大长度不能超过19位")
         private String productManagerId;
 
         /**
-        * 备注
-        */
-        @Size(max = 255,message = "备注最大长度不能超过100位")
+         * 备注
+         */
+        @Size(max = 255, message = "备注最大长度不能超过100位")
         private String remark;
 
         /**
-        * 分类id
-        */
+         * 分类id
+         */
         @NotBlank(message = "分类id不能为空")
-        @Size(max = 19,message = "分类id最大长度不能超过19位")
+        @Size(max = 19, message = "分类id最大长度不能超过19位")
         private String categoryId;
 
         /**
@@ -354,5 +350,258 @@ public class MouldInfoDTO implements Serializable {
          */
         @NotNull(message = "启用时间")
         private LocalDate enableTime;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class TabListDTO {
+        /**
+         * 类型，
+         */
+        private String tabFlag;
+        /**
+         * 类型
+         */
+        private String tabFlagName;
+
+        /**
+         * 数量
+         */
+        private Integer count;
+    }
+
+    /**
+     * 下单跟踪
+     */
+    @Getter
+    @Setter
+    public static class OrderTrackingViewDTO {
+        /**
+         * 主键id
+         */
+        private String id;
+
+        /**
+         * 项目编号
+         */
+        private String projectNo;
+
+        /**
+         * 项目名称
+         */
+        private String name;
+
+        /**
+         * 状态
+         */
+        private String status;
+        /**
+         * 明细id
+         */
+        private String detailId;
+
+        /**
+         * 模具编号
+         */
+        private String mouldNo;
+
+        /**
+         * 外部模具编号(供应商)
+         */
+        private String thirdMouldNo;
+        /**
+         * 供应商id
+         */
+        @Dict(tableName = "supplier", serviceCode = ServiceCodeNameEnum.SCM, queryFieldName = "id")
+        private String supplierId;
+        /**
+         * 数量
+         */
+        private Integer qty;
+
+        /**
+         * 含税单价
+         */
+        private BigDecimal taxPrice;
+
+        /**
+         * 税率
+         */
+        private BigDecimal taxRate;
+
+        /**
+         * 结算方式
+         */
+        private String payMethodId;
+
+        /**
+         * 付款条件
+         */
+        private String paymentCondition;
+
+        /**
+         * 币种
+         */
+        private String currency;
+        /**
+         * 汇率
+         */
+        private BigDecimal exchangeRate;
+
+        /**
+         * 关联产品
+         */
+        private List<MouldRefProductDTO.ViewDTO> refProductList;
+
+        /**
+         * 是否费用返还
+         */
+        private Boolean isNeedRefund;
+
+        /**
+         * 返还标准
+         */
+        private String refundStandard;
+
+        /**
+         * 退款单量
+         */
+        private Integer refundOrderQty;
+
+        /**
+         * 返还金额
+         */
+        private BigDecimal refundAmount;
+
+        /**
+         * 费用返还状态
+         */
+        private String refundStatus;
+        /**
+         * 采购数量
+         */
+        private Integer purchaseQty;
+        /**
+         * 收货数量
+         */
+        private Integer receiveQty;
+        /**
+         * 入库数量
+         */
+        private Integer stockInQty;
+        /**
+         * 修改时间
+         */
+        private LocalDateTime updateTime;
+
+        /**
+         * 差异数量
+         */
+        private Integer diffQty;
+    }
+
+    @Getter
+    @Setter
+    public static class ReturnConfirmDTO {
+
+        /**
+         * 模具id
+         */
+        private String mouldDetailId;
+
+        /**
+         * 文件地址
+         */
+        private String fileUrl;
+
+        /**
+         * 文件名字
+         */
+        private String fileName;
+
+        /**
+         * 备注
+         */
+        private String remark;
+
+    }
+
+    @Getter
+    @Setter
+    public static class OrderTrackingDetailParamDTO extends SortDTO {
+
+        /**
+         * 页面高级查询
+         */
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
+
+        /**
+         * sqlMap 默认key default
+         */
+        private Map<String, String> sqlMap;
+
+        /**
+         * 模具id
+         */
+        private String mouldDetailId;
+
+    }
+
+    @Getter
+    @Setter
+    public static class RefProductDTO {
+        /**
+         * 模具id
+         */
+        private String mouldDetailId;
+
+        /**
+         * 关联产品
+         */
+        @Valid
+        private List<MouldRefProductDTO.UpdateDTO> refProductList;
+
+    }
+
+    @Getter
+    @Setter
+    public static class OrderTrackingDetailDTO {
+        /**
+         * 采购单号
+         */
+        private String purchaseOrderCode;
+
+        /**
+         * skuId
+         */
+        private String skuId;
+
+        /**
+         * skuNo
+         */
+        private String skuNo;
+
+        /**
+         * 供应商id
+         */
+        @Dict(tableName = "supplier", serviceCode = ServiceCodeNameEnum.SCM, queryFieldName = "id")
+        private String supplierId;
+
+        //创建时间
+        private LocalDateTime createTime;
+
+        /**
+         * 采购数量
+         */
+        private Integer purchaseQty;
+        /**
+         * 收货数量
+         */
+        private Integer receiveQty;
+        /**
+         * 入库数量
+         */
+        private Integer stockInQty;
     }
 }

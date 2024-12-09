@@ -20,6 +20,7 @@ import javax.annotation.Resource;
 import javax.validation.Valid;
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -77,7 +78,7 @@ public class MouldDetailServiceImpl extends SuperServiceImpl<MouldDetailMapper, 
                         MouldProductEntity mouldProduct = new MouldProductEntity();
                         mouldProduct.setProductName(v.getProductName());
                         mouldProduct.setMouldDetailId(mouldDetail.getId());
-                        mouldProduct.setImagesUrl(v.getImagesUrl());
+                        mouldProduct.setImagesUrl(String.join(",", v.getImagesUrl()));
                         return mouldProduct;
                     }).collect(Collectors.toList());
             if (!CollectionUtils.isEmpty(mouldProductList)) {
@@ -106,6 +107,9 @@ public class MouldDetailServiceImpl extends SuperServiceImpl<MouldDetailMapper, 
     public List<MouldDetailDTO.ViewDTO> listByMouldId(String id) {
 
         List<MouldDetailEntity> list = list(Wrappers.<MouldDetailEntity>lambdaQuery().eq(MouldDetailEntity::getMainId, id));
+        if (CollectionUtils.isEmpty(list)) {
+            return Collections.emptyList();
+        }
         List<String> detailIds = list.stream().map(MouldDetailEntity::getId).collect(Collectors.toList());
         List<MouldProductEntity> mouldProductList = mouldProductService.listByMouldDetailIdList(detailIds);
         List<MouldPurchasePriceEntity> mouldPurchasePriceList = mouldPurchasePriceService.listByMouldDetailIdList(detailIds);

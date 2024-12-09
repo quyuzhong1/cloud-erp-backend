@@ -5,11 +5,13 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.base.ApproveOneDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.ApproveTypeEnum;
 import com.common.business.enums.OperationTypeEnum;
@@ -25,6 +27,7 @@ import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.StrUtils;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.*;
+import com.erp.model.plm.enums.MouldRefundStatusEnum;
 import com.erp.model.plm.enums.SysLogClassPathEnum;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.wms.dto.WarehouseDTO;
@@ -88,6 +91,16 @@ public class MouldInfoServiceImpl extends SuperServiceImpl<MouldInfoMapper, Moul
 
     @Resource
     private MouldDocInfoService mouldDocInfoService;
+
+    @Resource
+    private MouldRefundAgreementService mouldRefundAgreementService;
+
+    @Resource
+    private MouldRefundVoucherService mouldRefundVoucherService;
+
+    @Resource
+    private MouldRefProductService mouldRefProductService;
+
     @Resource
     private WorkflowFeign workflowFeign;
 
@@ -171,7 +184,6 @@ public class MouldInfoServiceImpl extends SuperServiceImpl<MouldInfoMapper, Moul
     public BatchResultDTO addAndSubmit(MouldInfoDTO.UpdateDTO dto) {
         MouldInfoEntity entity = getById(dto.getId());
         boolean isExit = ObjectUtils.isEmpty(entity);
-
 
 
         //保存基本信息
@@ -435,5 +447,67 @@ public class MouldInfoServiceImpl extends SuperServiceImpl<MouldInfoMapper, Moul
     @Override
     public void export(MouldInfoDTO.PagingParamDTO dto) {
         downloadTaskFeign.saveDownloadTask("", null, dto);
+    }
+
+    @Override
+    public PagingVO<MouldInfoDTO.OrderTrackingViewDTO> orderTracking(PagingDTO<MouldInfoDTO.PagingParamDTO> dto) {
+        Page<MouldInfoDTO.OrderTrackingViewDTO> page = baseMapper.orderTracking(new Page<>(dto.getCurrPage(), dto.getPageSize()), dto.getParams());
+        if (CollUtil.isEmpty(page.getRecords())) {
+            return new PagingVO<>();
+        }
+        // 数据处理
+        handlerList(page.getRecords());
+        return new PagingVO<>(page);
+    }
+
+    private void handlerList(List<MouldInfoDTO.OrderTrackingViewDTO> records) {
+        List<String> detailIds = records.stream().map(MouldInfoDTO.OrderTrackingViewDTO::getDetailId).collect(Collectors.toList());
+
+    }
+
+    @Override
+    public List<MouldInfoDTO.TabListDTO> tabList(PermissionsDTO dto) {
+        List<MouldRefundAgreementEntity> list = mouldRefundAgreementService.list();
+        Map<String, List<MouldRefundAgreementEntity>> map = list.stream()
+                .collect(Collectors.groupingBy(MouldRefundAgreementEntity::getRefundStatus));
+        List<MouldInfoDTO.TabListDTO> tabListList = new ArrayList<>();
+        //未达量
+        tabListList.add(new MouldInfoDTO.TabListDTO(MouldRefundStatusEnum.NOT_REACHED.getCode(), MouldRefundStatusEnum.NOT_REACHED.getName(),
+                Optional.ofNullable(map.get(MouldRefundStatusEnum.NOT_REACHED.getCode())).orElse(new ArrayList<>()).size()));
+        //待返
+        tabListList.add(new MouldInfoDTO.TabListDTO(MouldRefundStatusEnum.TO_BE_RETURNED.getCode(), MouldRefundStatusEnum.TO_BE_RETURNED.getName(),
+                Optional.ofNullable(map.get(MouldRefundStatusEnum.TO_BE_RETURNED.getCode())).orElse(new ArrayList<>()).size()));
+        //已返
+        tabListList.add(new MouldInfoDTO.TabListDTO(MouldRefundStatusEnum.RETURNED.getCode(), MouldRefundStatusEnum.RETURNED.getName(),
+                Optional.ofNullable(map.get(MouldRefundStatusEnum.RETURNED.getCode())).orElse(new ArrayList<>()).size()));
+        return tabListList;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void returnConfirm(MouldInfoDTO.ReturnConfirmDTO dto) {
+        mouldRefundVoucherService.returnConfirm(dto);
+        MouldRefundAgreementEntity agreement = Optional.ofNullable(mouldRefundAgreementService.getOne(Wrappers.<MouldRefundAgreementEntity>lambdaQuery()
+                        .eq(MouldRefundAgreementEntity::getMouldDetailId, dto.getMouldDetailId())))
+                .orElseThrow(() -> new ServiceException("未找到模具数据"));
+        agreement.setRefundStatus(MouldRefundStatusEnum.RETURNED.getCode());
+        mouldRefundAgreementService.updateById(agreement);
+    }
+
+    @Override
+    public void refProduct(MouldInfoDTO.RefProductDTO dto) {
+        List<MouldRefProductEntity> productList = dto.getRefProductList().stream()
+                .map(v -> {
+                    MouldRefProductEntity refProduct = BeanMapperUtils.map(MouldRefProductEntity.class, v);
+                    refProduct.setMouldDetailId(dto.getMouldDetailId());
+                    return refProduct;
+                })
+                .collect(Collectors.toList());
+        mouldRefProductService.saveOrUpdateBatch(productList);
+    }
+
+    @Override
+    public PagingVO<MouldInfoDTO.OrderTrackingDetailDTO> orderTrackingDetail(MouldInfoDTO.OrderTrackingDetailParamDTO dto) {
+        return null;
     }
 }

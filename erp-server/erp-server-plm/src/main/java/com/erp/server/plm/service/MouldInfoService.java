@@ -3,12 +3,14 @@ package com.erp.server.plm.service;
 import com.common.business.dto.base.ApproveOneDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.plm.dto.MouldInfoDTO;
 import com.erp.model.plm.entity.MouldInfoEntity;
 
 import java.time.LocalDate;
+import java.util.List;
 
 /**
  * <p>
@@ -97,4 +99,34 @@ public interface MouldInfoService extends SuperService<MouldInfoEntity> {
      * @param dto 参数
      */
     void export(MouldInfoDTO.PagingParamDTO dto);
+
+    /**
+     * 下单跟踪
+     * @param dto 参数
+     */
+    PagingVO<MouldInfoDTO.OrderTrackingViewDTO> orderTracking(PagingDTO<MouldInfoDTO.PagingParamDTO> dto);
+
+    /**
+     * 下单跟踪
+     * @param dto 参数
+     */
+    List<MouldInfoDTO.TabListDTO> tabList(PermissionsDTO dto);
+
+    /**
+     * 费用返还确认
+     * @param dto 参数
+     */
+    void returnConfirm(MouldInfoDTO.ReturnConfirmDTO dto);
+
+    /**
+     * 关联下单产品
+     * @param dto 参数
+     */
+    void refProduct(MouldInfoDTO.RefProductDTO dto);
+
+    /**
+     * 下单跟踪明细
+     * @param dto 参数
+     */
+    PagingVO<MouldInfoDTO.OrderTrackingDetailDTO> orderTrackingDetail(MouldInfoDTO.OrderTrackingDetailParamDTO dto);
 }

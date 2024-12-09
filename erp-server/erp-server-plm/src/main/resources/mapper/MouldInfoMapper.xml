@@ -50,6 +50,25 @@
         where ${params.sqlMap.default}
           and mi.is_deleted = false
     </select>
-
-
+    <select id="orderTracking" resultType="com.erp.model.plm.dto.MouldInfoDTO$OrderTrackingViewDTO">
+        select mi.id,
+               mi.project_no,
+               mi.name,
+               mi.status,
+               md.id as detailId,
+               md.mould_no,
+               md.third_mould_no,
+               md.supplier_id,
+               md.update_time,
+               mra.is_need_refund,
+               mra.refund_standard,
+               mra.refund_order_qty,
+               mra.refund_amount,
+               mra.refund_status
+        from mould_info mi
+                 left join mould_detail md on mi.id = md.main_id and md.is_deleted = false
+                 left join mould_refund_agreement mra on md.id = mra.mould_detail_id and mra.is_deleted = false
+        where ${params.sqlMap.default}
+          and mi.is_deleted = false
+    </select>
 </mapper>

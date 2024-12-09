@@ -17,6 +17,8 @@ import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -142,7 +144,14 @@ public class MouldDetailDTO implements Serializable {
             ViewDTO dto = BeanMapperUtils.map(ViewDTO.class, entity);
             MouldPurchasePriceDTO.ViewDTO price = BeanMapperUtils.map(MouldPurchasePriceDTO.ViewDTO.class, purchasePrice);
             MouldRefundAgreementDTO.ViewDTO agreement = BeanMapperUtils.map(MouldRefundAgreementDTO.ViewDTO.class, refundAgreement);
-            List<MouldProductDTO.ViewDTO> mouldProductList = BeanMapperUtils.copyList(MouldProductDTO.ViewDTO.class, productList);
+            List<MouldProductDTO.ViewDTO> mouldProductList = new ArrayList<>();
+            for (MouldProductEntity viewDTO : productList) {
+                MouldProductDTO.ViewDTO productDto = new MouldProductDTO.ViewDTO();
+                productDto.setMouldDetailId(viewDTO.getMouldDetailId());
+                productDto.setProductName(viewDTO.getProductName());
+                productDto.setImagesUrl(Arrays.asList(viewDTO.getImagesUrl().split(",")));
+                mouldProductList.add(productDto);
+            }
             List<MouldRefProductDTO.ViewDTO> mouldRefList = BeanMapperUtils.copyList(MouldRefProductDTO.ViewDTO.class, refList);
             dto.setPurchasePrice(price);
             dto.setRefundAgreement(agreement);
