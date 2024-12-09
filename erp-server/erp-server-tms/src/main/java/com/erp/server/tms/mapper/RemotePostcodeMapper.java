@@ -53,4 +53,6 @@ public interface RemotePostcodeMapper extends BaseMapper<RemotePostcodeEntity> {
     List<RemotePostcodeDTO.TabListDTO> tabList(@Param("params") RemotePostcodeDTO.PagingParamDTO searchParam);
 
     IPage<RemotePostcodeDTO.ListDTO> pagingSelect(Page query, @Param("params")RemotePostcodeDTO.SelectDTO params);
+
+    List<RemotePostcodeDTO.ListDTO> select(@Param("params")RemotePostcodeDTO.SelectDTO params);
 }

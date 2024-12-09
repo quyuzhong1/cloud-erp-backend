@@ -191,6 +191,18 @@ public class RemotePostcodeController extends BaseController {
      */
     @PostMapping("/pagingSelect")
     public ApiResult<PagingVO<RemotePostcodeDTO.ListDTO>> pagingSelect(@RequestBody @Validated PagingDTO<RemotePostcodeDTO.SelectDTO> dto) {
-        return success( remotePostcodeService.pagingSelect(dto));
+        return success(remotePostcodeService.pagingSelect(dto));
+    }
+
+
+    /**
+     * 邮编下拉值
+     * @author jack
+     * @date:  2024-11-29
+     * @return ApiResult<List<RemotePostcodeDTO.ListDTO>>
+     */
+    @PostMapping("/select")
+    public ApiResult<List<RemotePostcodeDTO.ListDTO>> select(@RequestBody RemotePostcodeDTO.SelectDTO dto) {
+        return success(remotePostcodeService.select(dto));
     }
 }
