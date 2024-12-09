@@ -143,7 +143,9 @@ import java.math.RoundingMode;
 import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -480,28 +482,48 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     @Override
     public List<SoB2cDTO.TabListDTO> tabList(PermissionsDTO param) {
         SoB2cTabEnum[] values = SoB2cTabEnum.values();
+        List<Future<SoB2cDTO.TabListDTO>> futureList = new ArrayList<>();
         List<SoB2cDTO.TabListDTO> list = new ArrayList<>();
         SoB2cDTO.ShopAuthResultDTO shopAuthResultDTO = handleShopSysUserAuth();
-        List<Map<String, String>> maps = new ArrayList<>(values.length);
         for (SoB2cTabEnum item : values) {
-            String tabSql = soB2cQueryHandler.getTabSql(item.getCode());
-            HashMap<String, String> map = new HashMap<>();
-            map.put("tabFlag", item.getCode());
-            map.put("tabFlagName", item.getName());
-            map.put("sql", tabSql);
-            maps.add(map);
-            if (Objects.isNull(shopAuthResultDTO)) {
+            Future<SoB2cDTO.TabListDTO> submit = soB2cTabExecutorPool.submit(() -> {
+                SoB2cDTO.PagingParamDTO searchParamDTO = new SoB2cDTO.PagingParamDTO();
+                searchParamDTO.setPermissionSql(param.getPermissionSql());
                 SoB2cDTO.TabListDTO resultDTO = new SoB2cDTO.TabListDTO();
-                resultDTO.setCount(MathUtil.ZERO);
+                String tabSql = soB2cQueryHandler.getTabSql(item.getCode());
+                HashMap<String,String> map = new HashMap<>();
+                map.put("default",tabSql);
+                searchParamDTO.setSqlMap(map);
+                //查询店铺设置权限
+                Integer count;
+                if (ObjectUtil.isEmpty(shopAuthResultDTO)) {
+                    count = MathUtil.ZERO;
+                } else {
+                    count = this.baseMapper.listCount(searchParamDTO, shopAuthResultDTO);
+                }
+                resultDTO.setCount(ObjectUtils.isEmpty(count) ? MathUtil.ZERO : count);
                 resultDTO.setTabFlag(item.getCode());
                 resultDTO.setTabFlagName(item.getName());
-                list.add(resultDTO);
+                return resultDTO;
+            });
+            futureList.add(submit);
+        }
+        for(Future<SoB2cDTO.TabListDTO> f : futureList) {
+            try {
+                list.add(f.get());
+            } catch (InterruptedException e) {
+                // 恢复线程的中断状态，确保中断标志不会被忽略
+                Thread.currentThread().interrupt();
+                log.error("线程被中断", e);
+                throw new ServiceException("线程被中断", e);
+            } catch (ExecutionException e) {
+                log.error("线程任务执行异常", e);
+                throw new ServiceException("线程任务执行异常", e.getCause());
+            } catch (ThreadDeath td) {
+                log.error("捕获到 ThreadDeath，线程终止", td);
+                throw td; // 重新抛出以允许线程正常终止
             }
         }
-        if (Objects.isNull(shopAuthResultDTO)) {
-            return list;
-        }
-        list = this.baseMapper.listCountUnionAll(maps, shopAuthResultDTO);
         return list;
     }
 
