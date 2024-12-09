@@ -1684,19 +1684,19 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 			String orgId = wareIdOrgIdMaps.get(soOutstockDetailEntity.getWarehouseId());
 			String orgName = orgIdNameMaps.get(orgId);
 			
+			Integer actualQty = soOutstockDetailEntity.getActualQty();
 			BigDecimal skuCostPre = BigDecimal.ZERO;
 			InventorySkuCostDetailEntity inventorySkuCostDetailEntity = unInventorySkuCostMap.get(orgId + "_" + skuId);
 			if(inventorySkuCostDetailEntity != null) {
 				BigDecimal skuCost = inventorySkuCostDetailEntity.getProductCost();
 				if(totalSkuCost.compareTo(BigDecimal.ZERO) != 0 && skuCost != null) {
-					skuCostPre = skuCost.divide(totalSkuCost, 8, RoundingMode.HALF_UP);
+					skuCostPre = skuCost.multiply(new BigDecimal(actualQty)).divide(totalSkuCost, 8, RoundingMode.HALF_UP);
 				}
 				smallBagCostAllocationEntity.setUnitCost(skuCost);
 				smallBagCostAllocationEntity.setUnitCurrency(idEntityMaps.get(inventorySkuCostDetailEntity.getMainId()).getCurrency());
 			}else {
 				throw new ServiceException(orgName + reportDate + "月份下sku=" + skuNo + "未配置分摊成本");
 			}
-			Integer actualQty = soOutstockDetailEntity.getActualQty();
 			BigDecimal skuWeightCostPre = BigDecimal.ZERO;
 			BigDecimal skuWeightCost = skuWeightCostMaps.get(skuId);
 			if(totalSkuWeightCost.compareTo(BigDecimal.ZERO) != 0 && skuWeightCost != null) {
@@ -1755,9 +1755,9 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 				smallBagCostAllocationDetailEntity.setFeeAllocationType(feeAllocationType);
 				if(i < soOutstockDetailEntityList.size()) {
 					if(CostAllocationEnum.WEIGHT_ALLOCATION.getCode().equals(feeAllocationType)) {
-						smallBagCostAllocationDetailEntity.setAllocatedAmount(costValueSum.multiply(skuWeightCostPre).setScale(2, RoundingMode.HALF_UP));
+						smallBagCostAllocationDetailEntity.setAllocatedAmount(costValueSum.multiply(skuWeightCostPre).setScale(4, RoundingMode.HALF_UP));
 					}else {
-						smallBagCostAllocationDetailEntity.setAllocatedAmount(costValueSum.multiply(skuCostPre).setScale(2, RoundingMode.HALF_UP));
+						smallBagCostAllocationDetailEntity.setAllocatedAmount(costValueSum.multiply(skuCostPre).setScale(4, RoundingMode.HALF_UP));
 					}
 				}else {
 					smallBagCostAllocationDetailEntity.setAllocatedAmount(costValueSum.subtract(addSmallBagCostAllocationDetailEntityList.stream()

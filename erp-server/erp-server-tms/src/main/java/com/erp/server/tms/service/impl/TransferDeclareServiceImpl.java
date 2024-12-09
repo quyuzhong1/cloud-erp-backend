@@ -1179,12 +1179,13 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
 					String orgId = wareIdOrgIdMaps.get(outstockIdWareHouseIdMap.get(soOutstockDetailEntity.getMainId()));
 					String orgName = orgIdNameMaps.get(orgId);
 					
+					Integer actualQty = soOutstockDetailEntity.getActualQty();
 					BigDecimal skuCostPre = BigDecimal.ZERO;
 					InventorySkuCostDetailEntity inventorySkuCostDetailEntity = unInventorySkuCostMap.get(orgId + "_" + skuId);
 					if(inventorySkuCostDetailEntity != null) {
 						BigDecimal skuCost = inventorySkuCostDetailEntity.getProductCost();
 						if(totalSkuCost.compareTo(BigDecimal.ZERO) != 0 && skuCost != null) {
-							skuCostPre = skuCost.divide(totalSkuCost, 2, RoundingMode.HALF_UP);
+							skuCostPre = skuCost.multiply(new BigDecimal(actualQty)).divide(totalSkuCost, 8, RoundingMode.HALF_UP);
 						}
 						transferDeclareCostAllocationEntity.setUnitCost(skuCost);
 					}else {
@@ -1193,10 +1194,9 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
 					BigDecimal skuWeightCostPre = BigDecimal.ZERO;
 					BigDecimal skuWeightCost = skuWeightCostMaps.get(skuId);
 					if(totalSkuWeightCost.compareTo(BigDecimal.ZERO) != 0 && skuWeightCost != null) {
-						skuWeightCostPre = skuWeightCost.divide(totalSkuWeightCost, 2, RoundingMode.HALF_UP);
+						skuWeightCostPre = skuWeightCost.multiply(new BigDecimal(actualQty)).divide(totalSkuWeightCost, 8, RoundingMode.HALF_UP);
 					}
 					
-					Integer actualQty = soOutstockDetailEntity.getActualQty();
 					transferDeclareCostAllocationEntity.setDeliveryQty(actualQty);
 					BigDecimal skuWeight = null;
 					if(WeightAllocationEnum.OUTSTOCK_CHARGED_WEIGHT.getCode().equals(transferAllocation)) {
@@ -1226,18 +1226,10 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
 						}
 						BigDecimal costValueSum = costViewDTOList.stream().map(CostViewDTO::getCostValue).reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
 						String allocatedCurrency = "CNY";
-						BigDecimal rate = BigDecimal.ONE;
 						if(CollUtil.isNotEmpty(costViewDTOList)) {
 							allocatedCurrency = costViewDTOList.get(0).getCurrency();
-							if(!"CNY".equals(allocatedCurrency)) {
-								rate = dmpTaskFeign.getRate(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), allocatedCurrency);
-								if(ObjectUtil.isEmpty(rate)){
-						            log.error("币别【{}】,汇率为空，请维护汇率后再提交",allocatedCurrency);
-						            throw new ServiceException("汇率为空，请维护汇率后再提交");
-						        }
-							}
 						}
-						transferDeclareCostAllocationDetailEntity.setBillAmount(costValueSum.multiply(rate));
+						transferDeclareCostAllocationDetailEntity.setBillAmount(costValueSum);
 						transferDeclareCostAllocationDetailEntity.setFeeType(feeType);
 						String feeAllocationType = feeTypeSettingMap.getValue();
 						if(StringUtils.isBlank(feeAllocationType)) {

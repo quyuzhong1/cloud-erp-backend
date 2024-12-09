@@ -227,7 +227,9 @@ public class TransferDeclareCostAllocationServiceImpl extends SuperServiceImpl<T
 			}
 			dto.setFeeTypeName(AllocationFeeTypeEnum.getName(dto.getFeeType()));
 			dto.setFeeAllocationTypeName(CostAllocationEnum.getName(dto.getFeeAllocationType()));
-			dto.setWeightAllocationTypeName(WeightAllocationSmallBagEnum.getName(dto.getWeightAllocationType()));
+			if(dto.getWeightAllocationType() != null) {
+				dto.setWeightAllocationTypeName(WeightAllocationSmallBagEnum.getName(dto.getWeightAllocationType()));
+			}
 			dto.setCurrencySymbol(currencyIdSymbolMap.get(dto.getCurrency()));
 		}
 	}
