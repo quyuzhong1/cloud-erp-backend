@@ -70,6 +70,9 @@
         inner join requisition_application ra on ra.id = rac.business_id and ra.is_deleted = false
         where
         ${params.sqlMap.default}
+        <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
         and  rac.is_deleted=FALSE
         ORDER BY rac.id DESC
     </select>

@@ -394,6 +394,9 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
                 })
                 .filter(detail -> originAggregatedMap.containsKey(detail.getSourceDetailId()))
                 .collect(Collectors.toList());
+        if(CollectionUtils.isEmpty(views)){
+            return new ArrayList<>();
+        }
         //过滤实拣数量相加与要货申请的批准数量一致的数据
         List<String> requisitionDetailIds = views.stream().map(PickingDetailDTO.View::getSourceDetailId).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
         List<RequisitionApplicationDetailEntity> requisitionApplicationDetailEntityList = requisitionApplicationDetailService.listByIds(requisitionDetailIds);
@@ -401,7 +404,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
         //获取子SKU集合
         List<BomChildrenSkuDTO> bomChildrenSkuList = plmTaskFeign.listBomChildBySkuIds(skuIds);
 
-        Map<String, Integer> qtySumMap = views.stream()
+        Map<String, Integer> qtySumMap = list.stream()
                 .filter(v -> StringUtils.isNotBlank(v.getSourceDetailId()))
                 .collect(Collectors.groupingBy(
                         PickingDetailDTO.View::getSourceDetailId,
@@ -1280,8 +1283,8 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
                 subtractDTOS.add(WarehouseLocationMoveDetailDTO.AddDTO.getLocationMoveDTO(detailEntity.getSkuId(), detailEntity.getSkuNo(),
                         detailEntity.getStagingLocation(), detailEntity.getWarehouseLocation(), detailEntity.getQty(), entity.getWarehouseId(), entity.getId()));
             }
-            String context = CharSequenceUtil.format("编辑了【{}】明细行,拣货仓位由【{}】变更为【{}】，数量由【{}】变更为【{}】", view.getSkuNo(),
-                    detailEntity.getWarehouseLocation(), view.getWarehouseLocation(), detailEntity.getQty(), view.getQty());
+            String context = CharSequenceUtil.format("编辑了【{}】明细行,拣货仓位由【{}】变更为【{}】，应拣数量由【{}】变更为【{}】，实拣数量由【{}】变更为【{}】", view.getSkuNo(),
+                    detailEntity.getWarehouseLocation(), view.getWarehouseLocation(), detailEntity.getQty(), view.getQty(),detailEntity.getActualQty(),view.getActualQty());
             detailEntity.setWarehouseLocation(view.getWarehouseLocation());
             detailEntity.setQty(view.getQty());
             detailEntity.setActualQty(view.getActualQty());
