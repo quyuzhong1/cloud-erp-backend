@@ -125,7 +125,7 @@ public enum ModuleTypeEnum {
     REQUISITION_APPLICATION_CHANGE("113", "要货申请变更单"),
     WAVE_LIST("101", "波次列表"),
     PRODUCT_DETAIL("113", "产品明细"),
-    REMOTE_POSTCODE("114", "产品明细"),
+    REMOTE_POSTCODE("114", "偏远邮编"),
     ;
 
 
