@@ -102,6 +102,9 @@ public class MouldInfoServiceImpl extends SuperServiceImpl<MouldInfoMapper, Moul
     private MouldRefProductService mouldRefProductService;
 
     @Resource
+    private MouldPurchasePriceService mouldPurchasePriceService;
+
+    @Resource
     private WorkflowFeign workflowFeign;
 
 
@@ -469,7 +472,36 @@ public class MouldInfoServiceImpl extends SuperServiceImpl<MouldInfoMapper, Moul
 
     private void handlerList(List<MouldInfoDTO.OrderTrackingViewDTO> records) {
         List<String> detailIds = records.stream().map(MouldInfoDTO.OrderTrackingViewDTO::getDetailId).collect(Collectors.toList());
+        List<MouldPurchasePriceEntity> mouldPurchasePriceList = mouldPurchasePriceService.listByMouldDetailIdList(detailIds);
+        for (MouldInfoDTO.OrderTrackingViewDTO record : records) {
+            MouldPurchasePriceEntity purchasePrice = mouldPurchasePriceList.stream()
+                    .filter(v -> v.getMouldDetailId().equals(record.getDetailId()))
+                    .findFirst()
+                    .orElse(new MouldPurchasePriceEntity());
+            record.setQty(purchasePrice.getQty());
+            record.setTaxPrice(purchasePrice.getTaxPrice());
+            record.setTaxRate(purchasePrice.getTaxRate());
+//            record.setTaxPrice(purchasePrice.getTaxPrice());
+//            record.setTaxPrice(purchasePrice.getTaxPrice());
+//            record.setTaxPrice(purchasePrice.getTaxPrice());
+        }
 
+
+
+//        private String payMethodId;
+//        private String paymentCondition;
+//        private String currency;
+//        private BigDecimal exchangeRate;
+//        private List<MouldRefProductDTO.ViewDTO> refProductList;
+//        private Boolean isNeedRefund;
+//        private String refundStandard;
+//        private Integer refundOrderQty;
+//        private BigDecimal refundAmount;
+//        private String refundStatus;
+//        private Integer purchaseQty;
+//        private Integer receiveQty;
+//        private Integer stockInQty;
+//        private Integer diffQty;
     }
 
     @Override

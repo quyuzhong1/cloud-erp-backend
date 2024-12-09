@@ -96,7 +96,6 @@ public class MouldRefProductDTO implements Serializable {
         /**
          * skuNo
          */
-        @NotBlank(message = "sku不能为空")
         private String skuNo;
 
         /**
