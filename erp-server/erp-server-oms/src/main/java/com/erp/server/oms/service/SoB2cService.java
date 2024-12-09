@@ -21,6 +21,7 @@ import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.model.wms.dto.WmsDataCompareTaskDTO;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
@@ -1011,4 +1012,6 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * @param operateEnum
      */
     void syncSdyOrderHandler(String soId, String operateEnum);
+
+    List<SoB2cEntity> queryToSdy(LocalDate startDate, LocalDate endDate, Integer pageSize, int offset);
 }

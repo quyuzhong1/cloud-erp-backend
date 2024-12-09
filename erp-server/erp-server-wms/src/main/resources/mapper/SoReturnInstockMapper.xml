@@ -192,5 +192,6 @@
         AND so.is_deleted = FALSE
         AND sod.is_deleted = FALSE
         AND NOT EXISTS (SELECT * FROM wms_push_msg WHERE source_id = sod.id)
+        LIMIT #{pageSize} OFFSET #{offset}
     </select>
 </mapper>

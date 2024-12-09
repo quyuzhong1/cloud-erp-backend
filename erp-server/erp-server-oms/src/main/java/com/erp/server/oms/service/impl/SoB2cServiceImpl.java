@@ -9286,4 +9286,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         List<SoB2cDetailEntity> soB2cDetailEntityList = soB2cDetailService.listByMainId(soId);
         syncSoB2cService.syncDataToSdy(soB2cEntity, soB2cDetailEntityList, operateEnum);
     }
+
+    @Override
+    public List<SoB2cEntity> queryToSdy(LocalDate startDate, LocalDate endDate, Integer pageSize, int offset) {
+        return baseMapper.queryToSdy(startDate, endDate, pageSize, offset);
+    }
 }
