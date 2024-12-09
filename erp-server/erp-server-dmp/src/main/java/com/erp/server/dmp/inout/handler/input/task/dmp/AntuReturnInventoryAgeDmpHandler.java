@@ -9,10 +9,13 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.baomidou.mybatisplus.extension.toolkit.SqlHelper;
 import com.common.core.entity.BaseEntity;
 import com.erp.model.dmp.entity.DmpSoReturnInfoEntity;
+import com.erp.model.dmp.entity.DmpThirdInboundEntity;
+import com.erp.model.dmp.entity.DmpThirdInventoryEntity;
 import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
 import com.sdk.oms.shopify.api.rest.model.ShopifyLineItem;
 import com.sdk.oms.shopify.api.rest.model.ShopifyRefund;
 import com.sdk.oms.shopify.api.rest.model.ShopifyRefundLineItem;
+import com.sdk.wms.antu.dto.response.AntuInventoryResp;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.context.annotation.Scope;
@@ -43,6 +46,9 @@ public class AntuReturnInventoryAgeDmpHandler extends DmpInputDoNextDmpHandler {
         if (CollectionUtils.isEmpty(batchInfo)) {
             return Collections.emptyList();
         }
+        // 解析出主数据到明细
+        AntuInventoryResp inventoryResp = JSONUtil.toBean(JSONUtil.toJsonStr(dmpInputMongoEntity), AntuInventoryResp.class);
+
         List<Map<String, Object>> resultList = new LinkedList<>();
 
         for (Map<String, Object> batchInfoMap : batchInfo) {
@@ -60,6 +66,11 @@ public class AntuReturnInventoryAgeDmpHandler extends DmpInputDoNextDmpHandler {
 
             LocalDateTime parse = LocalDateTime.parse(ibFifoTime, DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
             batchInfoMap.put("put_away_date", parse.toLocalDate());
+
+            // 补充主单信息定位mainId
+            batchInfoMap.put("warehouse_code", dmpInputMongoEntity.getOrDefault("warehouse_code", "").toString());
+            batchInfoMap.put("product_sku", dmpInputMongoEntity.getOrDefault("product_sku", "").toString());
+            batchInfoMap.put("authId", dmpInputMongoEntity.getOrDefault("authId", "").toString());
             resultList.add(batchInfoMap);
         }
         return resultList;
@@ -68,7 +79,7 @@ public class AntuReturnInventoryAgeDmpHandler extends DmpInputDoNextDmpHandler {
     @Override
     protected void afterConvertData(Map<List<Map<String, Object>>, List<TreeMap<String, Object>>> dmpInputDataDmpRelationMaps) {
         log.debug("AntuReturnInventoryAgeDmpHandler afterConvertData：");
-        String parentTableName = SqlHelper.table(DmpSoReturnInfoEntity.class).getTableName();
+        String parentTableName = SqlHelper.table(DmpThirdInventoryEntity.class).getTableName();
         ServiceImpl parentServiceImpl = this.getServiceImpl(parentTableName);
         QueryWrapper<?> wrapper = new QueryWrapper<>();
         wrapper.eq(INPUT_TASK_ID, inputTaskId);
@@ -79,9 +90,9 @@ public class AntuReturnInventoryAgeDmpHandler extends DmpInputDoNextDmpHandler {
             for (Map<String, Object> listMap : listMaps) {
                 //,platformWarehouseCode,productSku,authId
                 String sourcePlatform = DmpBasicSystemCodeEnum.ANTU.getCode();
-                String platformWarehouseCode = listMap.getOrDefault("platformWarehouseCode", "").toString();
-                String productSku = listMap.getOrDefault("productSku", "").toString();
-                String authId = listMap.getOrDefault("authId", "").toString();
+                String platformWarehouseCode = listMap.getOrDefault("platform_warehouse_code", "").toString();
+                String productSku = listMap.getOrDefault("product_sku", "").toString();
+                String authId = listMap.getOrDefault("auth_id", "").toString();
                 String uniqueId = CharSequenceUtil.format("{}_{}_{}_{}", sourcePlatform, platformWarehouseCode, productSku, authId);
                 uniqueIdMap.put(uniqueId, listMap.get(BaseEntity.FIELD_ID).toString());
             }
@@ -91,7 +102,7 @@ public class AntuReturnInventoryAgeDmpHandler extends DmpInputDoNextDmpHandler {
                 String sourcePlatform = DmpBasicSystemCodeEnum.ANTU.getCode();
                 String platformWarehouseCode = detailMap.getOrDefault("warehouse_code", "").toString();
                 String productSku = detailMap.getOrDefault("product_sku", "").toString();
-                String authId = detailMap.getOrDefault("next_level_id", "").toString();
+                String authId = detailMap.getOrDefault("authId", "").toString();
                 String uniqueId = CharSequenceUtil.format("{}_{}_{}_{}", sourcePlatform, platformWarehouseCode, productSku, authId);
                 String dmpId = uniqueIdMap.get(uniqueId);
                 detailMap.put("mainId", dmpId);
