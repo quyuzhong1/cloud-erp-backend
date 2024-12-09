@@ -178,15 +178,53 @@ public class VirtualInventoryDetailServiceImpl extends SuperServiceImpl<VirtualI
     }
 
     @Override
-    public PagingVO<VirtualInventoryAgeDTO.HisInventoryAgeDetailDTO> hisInventoryAgeDetailPaging(PagingDTO<VirtualInventoryAgeDTO.HisInventoryAgeParamDTO> dto) {
+    public PagingVO<VirtualInventoryAgeDTO.HisInventoryAgeDetailDTO> hisInventoryAgeDetailPaging(PagingDTO<VirtualInventoryAgeDTO.HisInventoryAgeDetailParamDTO> dto) {
         IPage<VirtualInventoryAgeDTO.HisInventoryAgeDetailDTO> pageData = this.baseMapper.hisInventoryAgeDetailPaging(dto.page(), dto.getParams());
         return new PagingVO<>(pageData);
     }
 
     @Override
-    public Boolean exportHisInventoryAgeDetail(VirtualInventoryAgeDTO.HisInventoryAgeParamDTO dto) {
+    public Boolean exportHisInventoryAgeDetail(VirtualInventoryAgeDTO.HisInventoryAgeDetailParamDTO dto) {
         downloadTaskFeign.saveDownloadTask("历史库龄明细", EXPORT_WMS_VIRTUAL_HIS_INVENTORY_AGE_DETAIL.getCode(), dto);
         return Boolean.TRUE;
+    }
+
+    @Override
+    public PagingVO<VirtualInventoryAgeDTO.HisInventoryAgeDetailDTO> exportHisInventoryAgeDetailPaging(PagingDTO<VirtualInventoryAgeDTO.HisInventoryAgeDetailParamDTO> dto) {
+        IPage<VirtualInventoryAgeDTO.HisInventoryAgeDetailDTO> pageData = this.baseMapper.exportHisInventoryAgeDetailPaging(dto.page(), dto.getParams());
+        handleInventoryAgeDetail(pageData.getRecords(),dto.getParams());
+        return new PagingVO<>(pageData);
+    }
+
+
+    /**
+     * 库龄明细导出数据处理
+     * @author will
+     * @date 2024/12/9 11:30
+     * @param list
+     * @param dto
+     */
+    private void handleInventoryAgeDetail (List<VirtualInventoryAgeDTO.HisInventoryAgeDetailDTO> list,VirtualInventoryAgeDTO.HisInventoryAgeDetailParamDTO dto) {
+        if (CollUtil.isEmpty(list)) {
+            return;
+        }
+
+        //查询历史平均库龄
+        VirtualInventoryHisDTO.ParamDTO paramDTO = new VirtualInventoryHisDTO.ParamDTO();
+        paramDTO.setSkuIdList(Collections.singletonList(dto.getSkuId()));
+        paramDTO.setWarehouseIdList(Collections.singletonList(dto.getWarehouseId()));
+        paramDTO.setVirtualWarehouseIdList(Collections.singletonList(dto.getVirtualWarehouseId()));
+        paramDTO.setEndDate(dto.getDate());
+        List<VirtualInventoryHisEntity> virtualInventoryHisList = virtualInventoryHisService.listByParam(paramDTO);
+
+        for (VirtualInventoryAgeDTO.HisInventoryAgeDetailDTO detailDTO : list) {
+            //统计日期
+            detailDTO.setDate(dto.getDate());
+            //平均库龄
+            if (CollUtil.isNotEmpty(virtualInventoryHisList)) {
+                detailDTO.setAvgInventoryAgeDays(virtualInventoryHisList.get(0).getAvgInventoryAgeDays());
+            }
+        }
     }
 
     @Override

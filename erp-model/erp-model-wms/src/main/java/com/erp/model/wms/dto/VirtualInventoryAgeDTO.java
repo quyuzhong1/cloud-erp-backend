@@ -7,6 +7,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -162,6 +163,32 @@ public class VirtualInventoryAgeDTO implements Serializable {
         private List<LocalDate> dateList;
     }
 
+    @Data
+    @NoArgsConstructor
+    public static class HisInventoryAgeDetailParamDTO {
+        /**
+         * skuId
+         */
+        @NotBlank(message = "skuId不能为空")
+        private String skuId;
+        /**
+         * 仓库id
+         */
+        @NotBlank(message = "仓库Id不能为空")
+        private String warehouseId;
+        /**
+         * 虚拟仓id
+         */
+        @NotBlank(message = "虚拟仓Id不能为空")
+        private String virtualWarehouseId;
+
+        /**
+         * 日期
+         */
+        @NotNull(message = "导出日期不能为空")
+        private LocalDate date;
+    }
+
     /**
      * 历史库龄图形DTO
      */
@@ -314,6 +341,10 @@ public class VirtualInventoryAgeDTO implements Serializable {
          * 批次剩余数量
          */
         private Integer waitBatchQty;
+        /**
+         * 最后出库时间
+         */
+        private LocalDate lastOutstockDate;
         /**
          * 库龄（天）
          */

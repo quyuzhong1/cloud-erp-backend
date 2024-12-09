@@ -127,6 +127,10 @@ public class VirtualTransFlowDetailDTO implements Serializable {
          */
         private Integer inStockDays;
         /**
+         * 最后出库日期
+         */
+        private LocalDate lastOutstockDate;
+        /**
          * 更新时间
          */
         private LocalDateTime updateTime;

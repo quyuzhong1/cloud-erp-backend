@@ -239,7 +239,7 @@ public interface ExportWmsFeign {
      * 历史库龄明细导出
      */
     @PostMapping("/feign/export/hisInventoryAgeDetailPaging")
-    PagingVO<VirtualInventoryAgeDTO.HisInventoryAgeDetailDTO> hisInventoryAgeDetailPaging(PagingDTO<VirtualInventoryAgeDTO.HisInventoryAgeParamDTO> dto);
+    PagingVO<VirtualInventoryAgeDTO.HisInventoryAgeDetailDTO> hisInventoryAgeDetailPaging(PagingDTO<VirtualInventoryAgeDTO.HisInventoryAgeDetailParamDTO> dto);
 
     /**
      * 库龄流水导出

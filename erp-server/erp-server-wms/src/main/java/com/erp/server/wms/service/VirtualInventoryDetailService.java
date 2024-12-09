@@ -86,7 +86,7 @@ public interface VirtualInventoryDetailService extends SuperService<VirtualInven
      * @param dto
      * @return PagingVO<HisInventoryAgeDetailDTO>
      */
-    PagingVO<VirtualInventoryAgeDTO.HisInventoryAgeDetailDTO> hisInventoryAgeDetailPaging(PagingDTO<VirtualInventoryAgeDTO.HisInventoryAgeParamDTO> dto);
+    PagingVO<VirtualInventoryAgeDTO.HisInventoryAgeDetailDTO> hisInventoryAgeDetailPaging(PagingDTO<VirtualInventoryAgeDTO.HisInventoryAgeDetailParamDTO> dto);
 
     /**
      * 导出历史库龄明细
@@ -95,7 +95,15 @@ public interface VirtualInventoryDetailService extends SuperService<VirtualInven
      * @param dto
      * @return Boolean
      */
-    Boolean exportHisInventoryAgeDetail(VirtualInventoryAgeDTO.HisInventoryAgeParamDTO dto);
+    Boolean exportHisInventoryAgeDetail(VirtualInventoryAgeDTO.HisInventoryAgeDetailParamDTO dto);
+    /**
+     * 导出历史库龄明细数据查询
+     * @author will
+     * @date 2024/12/9 10:57
+     * @param dto
+     * @return PagingVO<HisInventoryAgeDetailDTO>
+     */
+    PagingVO<VirtualInventoryAgeDTO.HisInventoryAgeDetailDTO> exportHisInventoryAgeDetailPaging(PagingDTO<VirtualInventoryAgeDTO.HisInventoryAgeDetailParamDTO> dto);
     /**
      * 查询配置表头信息
      * @author will

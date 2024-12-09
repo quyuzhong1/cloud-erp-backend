@@ -98,12 +98,55 @@
     <!-- 历史库龄 -->
     <select id="hisInventoryAgePaging"
             resultType="com.erp.model.wms.dto.VirtualInventoryAgeDTO$HisInventoryAgeDTO">
-
+        select
+            vih.sku_id,
+            pd.sku_no,
+            pd.name as productName,
+            vih.warehouse_id,
+            wh.name as warehouseName,
+            vih.virtual_warehouse_id,
+            vw.name as virtualWarehouseName,
+            vih.date,
+            vih.avg_inventory_age_days
+        from virtual_inventory_his vih
+        left join product_detail pd on vih.sku_id = pd.id and pd.is_deleted = false
+        left join warehouse wh on vih.warehouse_id = wh.id and wh.is_deleted = false
+        left join virtual_warehouse vw on vih.virtual_warehouse_id = vw.id and vw.is_deleted = false
+        <where>
+            vih.is_deleted = false and vih.sku_id = #{params.skuId} and vih.warehouse_id = #{params.warehouseId}
+            and vih.virtual_warehouse_id = #{params.virtualWarehouseId}
+            <if test="params.dateList != null and params.dateList.size > 0">
+                and vih.date >= #{params.dateList[0]} and (#{params.dateList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > vih.date
+            </if>
+        </where>
+        order by vih.date asc
     </select>
 
     <!-- 历史库龄明细 -->
     <select id="hisInventoryAgeDetailPaging"
-            resultType="com.erp.model.wms.dto.VirtualInventoryAgeDTO$HisInventoryAgeDetailDTO"></select>
+            resultType="com.erp.model.wms.dto.VirtualInventoryAgeDTO$HisInventoryAgeDetailDTO">
+        select
+            vtf.transaction_no,
+            vid.batch_no,
+            vid.bill_date,
+            vtf.source_type,
+            vtf.source_code,
+            vtf.dict_inventory_status,
+            vtfd.qty as batchQty,
+            vid.qty as waitBatchQty,
+            vid.last_outstock_date,
+            vid.update_time
+        from virtual_trans_flow_detail vtfd
+        left join virtual_trans_flow vtf on vtf.id = vtfd.virtual_trans_flow_id and vtf.is_deleted = false
+        left join virtual_inventory_detail vid  on vtfd.virtual_inventory_detail_id = vid.id and vid.is_deleted = false
+        <where>
+            vtfd.is_deleted = false vtfd.sku_id = #{params.skuId} and vtfdwarehouse_id = #{params.warehouseId}
+            and vtfd.virtual_warehouse_id = #{params.virtualWarehouseId}
+            <if test="params.dateList != null and params.dateList.size > 0">
+                and vtfd.trade_time >= #{params.dateList[0]} and (#{params.dateList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > vtfd.trade_time
+            </if>
+        </where>
+    </select>
 
 
     <!-- 历史库龄图形数据 -->
@@ -114,12 +157,48 @@
             vih.avg_inventory_age_days
         from virtual_inventory_his vih
         <where>
-            vih.is_deleted = false and vih.sku_id = #{params.skuId} and vih.warehouse_id = #{params.warehouseId} and vih.virtual_warehouse_id = #{params.virtualWarehouseId}
+            vih.is_deleted = false and vih.sku_id = #{params.skuId} and vih.warehouse_id = #{params.warehouseId}
+            and vih.virtual_warehouse_id = #{params.virtualWarehouseId}
             <if test="params.dateList != null and params.dateList.size > 0">
                 and vih.date >= #{params.dateList[0]} and (#{params.dateList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > vih.date
             </if>
         </where>
         order by vih.date asc
+    </select>
+
+    <!-- 历史库龄详情明细导出 -->
+    <select id="exportHisInventoryAgeDetailPaging"
+            resultType="com.erp.model.wms.dto.VirtualInventoryAgeDTO$HisInventoryAgeDetailDTO">
+        select
+            vtf.sku_id,
+            pd.sku_no,
+            pd.name as productName,
+            wh.name as warehouseName,
+            vw.code as virtualWarehouseCode,
+            vw.name as virtualWarehouseName,
+            vtf.transaction_no,
+            vid.batch_no,
+            vid.bill_date,
+            vtf.source_type,
+            vtf.source_code,
+            vtf.dict_inventory_status,
+            vtfd.qty as batchQty,
+            vid.qty as waitBatchQty,
+            vid.last_outstock_date,
+            vid.update_time
+        from virtual_trans_flow_detail vtfd
+        inner join virtual_trans_flow vtf on vtf.id = vtfd.virtual_trans_flow_id and vtf.is_deleted = false
+        inner join virtual_inventory_detail vid  on vtfd.virtual_inventory_detail_id = vid.id and vid.is_deleted = false
+        left join product_detail pd on vtf.sku_id = pd.id and pd.is_deleted = false
+        left join warehouse wh on vtf.warehouse_id = wh.id and wh.is_deleted = false
+        left join virtual_warehouse vw on  vtf.virtual_warehouse_id = vw.id and vw.is_deleted = false
+        <where>
+            vtfd.is_deleted = false vtf.sku_id = #{params.skuId} and vtfdwarehouse_id = #{params.warehouseId}
+            and vtfd.virtual_warehouse_id = #{params.virtualWarehouseId}
+            <if test="params.dateList != null and params.dateList.size > 0">
+                and vtfd.trade_time >= #{params.dateList[0]} and (#{params.dateList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > vtfd.trade_time
+            </if>
+        </where>
     </select>
 
 

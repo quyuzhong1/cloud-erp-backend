@@ -47,7 +47,7 @@ public interface VirtualInventoryDetailMapper extends BaseMapper<VirtualInventor
      * @param params
      * @return IPage<HisInventoryAgeDetailDTO>
      */
-    IPage<VirtualInventoryAgeDTO.HisInventoryAgeDetailDTO> hisInventoryAgeDetailPaging(Page<VirtualInventoryAgeDTO.HisInventoryAgeParamDTO> page,@Param("params") VirtualInventoryAgeDTO.HisInventoryAgeParamDTO params);
+    IPage<VirtualInventoryAgeDTO.HisInventoryAgeDetailDTO> hisInventoryAgeDetailPaging(Page<VirtualInventoryAgeDTO.HisInventoryAgeDetailParamDTO> page,@Param("params") VirtualInventoryAgeDTO.HisInventoryAgeDetailParamDTO params);
     /**
      * 查询历史库龄图数据
      * @author will
@@ -56,4 +56,13 @@ public interface VirtualInventoryDetailMapper extends BaseMapper<VirtualInventor
      * @return List<HisInventoryAgeDTO>
      */
     List<VirtualInventoryAgeDTO.HisInventoryAgeDTO> getHisInventoryAgeChart(@Param("params")VirtualInventoryAgeDTO.HisInventoryAgeParamDTO params);
+    /**
+     * 导出历史库龄明细
+     * @author will
+     * @date 2024/12/9 10:57
+     * @param page
+     * @param params
+     * @return IPage<HisInventoryAgeDetailDTO>
+     */
+    IPage<VirtualInventoryAgeDTO.HisInventoryAgeDetailDTO> exportHisInventoryAgeDetailPaging(Page<VirtualInventoryAgeDTO.HisInventoryAgeDetailParamDTO> page,@Param("params") VirtualInventoryAgeDTO.HisInventoryAgeDetailParamDTO params);
 }

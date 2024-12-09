@@ -721,8 +721,8 @@ public class ExportWmsFeignController {
      */
     @PostMapping("/hisInventoryAgeDetailPaging")
     @WebAdvanceQuery
-    public PagingVO<VirtualInventoryAgeDTO.HisInventoryAgeDetailDTO> hisInventoryAgeDetailPaging(@RequestBody PagingDTO<VirtualInventoryAgeDTO.HisInventoryAgeParamDTO> dto){
-        return virtualInventoryDetailService.hisInventoryAgeDetailPaging(dto);
+    public PagingVO<VirtualInventoryAgeDTO.HisInventoryAgeDetailDTO> hisInventoryAgeDetailPaging(@RequestBody PagingDTO<VirtualInventoryAgeDTO.HisInventoryAgeDetailParamDTO> dto){
+        return virtualInventoryDetailService.exportHisInventoryAgeDetailPaging(dto);
     }
 
 

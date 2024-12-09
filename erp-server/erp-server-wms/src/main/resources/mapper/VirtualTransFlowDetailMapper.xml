@@ -35,7 +35,47 @@
 
     <!-- 分页查询 -->
     <select id="paging" resultType="com.erp.model.wms.dto.VirtualTransFlowDetailDTO$ListDTO">
+        select
+            vtf.sku_id as skuId,
+            pd.sku_no as skuNo,
+            pd.name as productName,
+            vtf.warehouse_id as warehouseId,
+            wh.name as warehouseName,
+            vw.code as virtualWarehouseCode,
+            vw.name as virtualWarehosueName,
+            to_char(vtfd.trade_time, 'yyyy-mm-dd') as date,
+            vtf.transaction_no as transactionNo,
+            vtfd.trade_time as tradeTime,
+            vtf.source_type as sourceType,
+            vtf.source_code as sourceCode,
+            vtf.dict_inventory_status as dictInventoryStatus,
+            vtfd.qty,
+            case when vtfd.qty > 0 then '入库' else '出库' end as operateTypeName,
+            vid.batch_no as batchNo,
+            vid.qty as waitBatchQty,
+            vid.last_outstock_date,
+            vtfd.update_time as updateTime
+        from virtual_trans_flow_detail vtfd
+        inner join virtual_trans_flow vtf on vtfd.virtual_trans_flow_id = vtf.id and vtf.is_deleted = false
+        inner join virtual_inventory_detail vid on vtfd.virtual_inventory_detail_id = vid.id  and vid.is_deleted = false
+        left join product_detail pd on vtf.sku_id = pd.id and pd.is_deleted = false
+        left join warehouse wh on vtf.warehouse_id = wh.id and wh.is_deleted = false
+        left join virtual_warehouse vw on vtf.virtual_warehouse_id = vw.id and vw.is_deleted = false
+        <where>
+            ${params.sqlMap.default}
+            and vtfd.is_deleted = false
+            <if test="params.permissionSql != null and params.permissionSql != ''">
+                ${params.permissionSql}
+            </if>
+        </where>
 
+        order by
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        vtf.date desc
     </select>
 
 

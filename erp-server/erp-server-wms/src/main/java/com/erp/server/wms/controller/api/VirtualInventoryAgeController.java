@@ -33,6 +33,17 @@ public class VirtualInventoryAgeController extends BaseController {
     private VirtualInventoryDetailService virtualInventoryDetailService;
 
     /**
+     * 获取配置表头
+     * @author will
+     * @date 2024/12/9 9:19
+     * @return ApiResult<List<String>>
+     */
+    @GetMapping("/getCfgHead")
+    public ApiResult<List<String>> getCfgHead() {
+        return success(virtualInventoryDetailService.getCfgHead());
+    }
+
+    /**
      * 分页列表
      * @author will
      * @date 2024/12/3 17:33
@@ -89,40 +100,42 @@ public class VirtualInventoryAgeController extends BaseController {
     }
 
     /**
-     * 历史库龄导出excel
+     * 详情历史库龄图导出excel
      * @author will
      * @date 2024/12/3 18:02
      * @param dto
      * @return ApiResult
      */
     @PostMapping("/exportHisInventoryAge")
-    @WebAdvanceQuery
-    public ApiResult exportHisInventoryAge(@RequestBody VirtualInventoryAgeDTO.HisInventoryAgeParamDTO dto) {
+    public ApiResult exportHisInventoryAge(@RequestBody @Validated VirtualInventoryAgeDTO.HisInventoryAgeParamDTO dto) {
         Boolean flag = virtualInventoryDetailService.exportHisInventoryAge(dto);
         return flag == true ? success() : failure();
     }
 
     /**
-     * 库龄明细分页查询
+     * 详情库龄明细分页查询
      * @author will
      * @date 2024/12/5 9:49
      * @param dto
      * @return ApiResult<PagingVO<HisInventoryAgeDetailDTO>>
      */
     @PostMapping("/hisInventoryAgeDetailPaging")
-    @WebAdvanceQuery
-    public ApiResult<PagingVO<VirtualInventoryAgeDTO.HisInventoryAgeDetailDTO>> hisInventoryAgeDetailPaging(@RequestBody @Validated PagingDTO<VirtualInventoryAgeDTO.HisInventoryAgeParamDTO> dto) {
+    public ApiResult<PagingVO<VirtualInventoryAgeDTO.HisInventoryAgeDetailDTO>> hisInventoryAgeDetailPaging(@RequestBody @Validated PagingDTO<VirtualInventoryAgeDTO.HisInventoryAgeDetailParamDTO> dto) {
         return success(virtualInventoryDetailService.hisInventoryAgeDetailPaging(dto));
     }
 
+
     /**
-     * 获取配置表头
+     * 详情历史库龄明细导出excel
      * @author will
-     * @date 2024/12/9 9:19
-     * @return ApiResult<List<String>>
+     * @date 2024/12/3 18:02
+     * @param dto
+     * @return ApiResult
      */
-    @GetMapping("/getCfgHead")
-    public ApiResult<List<String>> getCfgHead() {
-        return success(virtualInventoryDetailService.getCfgHead());
+    @PostMapping("/exportHisInventoryAge")
+    public ApiResult exportHisInventoryAgeDetail(@RequestBody @Validated VirtualInventoryAgeDTO.HisInventoryAgeDetailParamDTO dto) {
+        Boolean flag = virtualInventoryDetailService.exportHisInventoryAgeDetail(dto);
+        return flag == true ? success() : failure();
     }
+
 }
