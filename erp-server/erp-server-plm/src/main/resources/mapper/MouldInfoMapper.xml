@@ -32,7 +32,7 @@
                md.mould_no,
                md.third_mould_no,
                md.type_id,
-               md.mold_holes,
+               md.mould_holes,
                md.length,
                md.width,
                md.height,
