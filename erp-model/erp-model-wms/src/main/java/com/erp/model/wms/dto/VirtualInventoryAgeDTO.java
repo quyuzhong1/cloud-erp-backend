@@ -159,7 +159,24 @@ public class VirtualInventoryAgeDTO implements Serializable {
         /**
          * 日期
          */
-        private LocalDate date;
+        private List<LocalDate> dateList;
+    }
+
+    /**
+     * 历史库龄图形DTO
+     */
+    @Data
+    @NoArgsConstructor
+    public static class HisInventoryAgeChartDTO {
+
+        /**
+         * 日期集合
+         */
+        private List<LocalDate> dateList;
+        /**
+         * 平均库龄
+         */
+        private List<String> avgInventoryAgeList;
     }
 
     /**
@@ -200,14 +217,7 @@ public class VirtualInventoryAgeDTO implements Serializable {
          * 虚拟仓名称
          */
         private String virtualWarehouseName;
-        /**
-         * 日期集合
-         */
-        private List<LocalDate> dateList;
-        /**
-         * 平均库龄
-         */
-        private List<String> avgInventoryAgeList;
+
     }
 
     /**
@@ -255,7 +265,7 @@ public class VirtualInventoryAgeDTO implements Serializable {
         /**
          * 平均库龄（天）
          */
-        private Integer avgInventoryAgeDays;
+        private BigDecimal avgInventoryAgeDays;
     }
 
     /**

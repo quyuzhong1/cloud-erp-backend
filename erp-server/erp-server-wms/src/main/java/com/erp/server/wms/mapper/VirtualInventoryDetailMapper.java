@@ -1,12 +1,14 @@
 package com.erp.server.wms.mapper;
+
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.erp.model.wms.dto.VirtualInventoryAgeDTO;
 import com.erp.model.wms.entity.VirtualInventoryDetailEntity;
-import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
+
+import java.util.List;
 
 
 /**
@@ -46,4 +48,12 @@ public interface VirtualInventoryDetailMapper extends BaseMapper<VirtualInventor
      * @return IPage<HisInventoryAgeDetailDTO>
      */
     IPage<VirtualInventoryAgeDTO.HisInventoryAgeDetailDTO> hisInventoryAgeDetailPaging(Page<VirtualInventoryAgeDTO.HisInventoryAgeParamDTO> page,@Param("params") VirtualInventoryAgeDTO.HisInventoryAgeParamDTO params);
+    /**
+     * 查询历史库龄图数据
+     * @author will
+     * @date 2024/12/9 9:51
+     * @param params
+     * @return List<HisInventoryAgeDTO>
+     */
+    List<VirtualInventoryAgeDTO.HisInventoryAgeDTO> getHisInventoryAgeChart(@Param("params")VirtualInventoryAgeDTO.HisInventoryAgeParamDTO params);
 }

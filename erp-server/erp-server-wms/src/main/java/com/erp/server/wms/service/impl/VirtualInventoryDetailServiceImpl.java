@@ -36,10 +36,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.common.business.enums.FileTaskEventEnum.*;
@@ -157,14 +154,15 @@ public class VirtualInventoryDetailServiceImpl extends SuperServiceImpl<VirtualI
         if (ObjUtil.isEmpty(warehouseEntity)) {
             throw new ServiceException(ApiError.ERROR_99002);
         }
-
+        viewDTO.setWarehouseName(warehouseEntity.getName());
         //虚拟仓库
         VirtualWarehouseEntity virtualWarehouseEntity = virtualWarehouseService.getById(dto.getVirtualWarehouseId());
         if (ObjUtil.isEmpty(virtualWarehouseEntity)) {
             throw new ServiceException("未找到虚拟仓库");
         }
-
-        return null;
+        viewDTO.setVirtualWarehouseCode(virtualWarehouseEntity.getCode());
+        viewDTO.setVirtualWarehouseName(virtualWarehouseEntity.getName());
+        return viewDTO;
     }
 
     @Override
@@ -193,7 +191,40 @@ public class VirtualInventoryDetailServiceImpl extends SuperServiceImpl<VirtualI
 
     @Override
     public List<String> getCfgHead() {
-        return null;
+        List<String> headList = new ArrayList<>();
+        //查询库龄分析配置
+        CfgSettingEntity cfgSettingEntity = cfgSettingService.getByKey(CfgSettingVirtualEnum.INVENTORY_AGE_STATISTICS.getCode());
+        if (ObjectUtil.isEmpty(cfgSettingEntity) || ObjectUtil.isEmpty(cfgSettingEntity.getDataJson())) {
+            return Collections.EMPTY_LIST;
+        }
+        CfgSettingVirtualValueDTO.InventoryAgeTO inventoryAgeTO = BeanUtil.toBean(cfgSettingEntity.getDataJson(), CfgSettingVirtualValueDTO.InventoryAgeTO.class);
+        List<CfgSettingVirtualValueDTO.InventoryAgeDateTO> list = inventoryAgeTO.getList();
+        for (CfgSettingVirtualValueDTO.InventoryAgeDateTO inventoryAgeDateTO :list) {
+            String ageDateInterval = "";
+            //区间字段
+            if (ObjUtil.isNull(inventoryAgeDateTO.getEndDays())) {
+                ageDateInterval = CharSequenceUtil.format("{}以上", inventoryAgeDateTO.getEndDays());
+            } else {
+                ageDateInterval = CharSequenceUtil.format("{}~{}天", inventoryAgeDateTO.getStartDays(), inventoryAgeDateTO.getEndDays());
+            }
+            headList.add(ageDateInterval);
+        }
+        return headList;
+    }
+
+    @Override
+    public VirtualInventoryAgeDTO.HisInventoryAgeChartDTO getHisInventoryAgeChart(VirtualInventoryAgeDTO.HisInventoryAgeParamDTO dto) {
+        VirtualInventoryAgeDTO.HisInventoryAgeChartDTO chartDTO = new VirtualInventoryAgeDTO.HisInventoryAgeChartDTO();
+
+        List<VirtualInventoryAgeDTO.HisInventoryAgeDTO> list = baseMapper.getHisInventoryAgeChart(dto);
+        if (CollUtil.isEmpty(list)) {
+            return chartDTO;
+        }
+        List<LocalDate> dateList = list.stream().map(VirtualInventoryAgeDTO.HisInventoryAgeDTO::getDate).collect(Collectors.toList());
+        chartDTO.setDateList(dateList);
+        List<String> avgInventoryAgeDaysList = list.stream().map(obj -> obj.getAvgInventoryAgeDays().stripTrailingZeros().toPlainString()).collect(Collectors.toList());
+        chartDTO.setAvgInventoryAgeList(avgInventoryAgeDaysList);
+        return chartDTO;
     }
 
     /**
@@ -244,8 +275,14 @@ public class VirtualInventoryDetailServiceImpl extends SuperServiceImpl<VirtualI
                 LocalDate nowDate = LocalDate.now();
                 LocalDate endDate = nowDate.minusDays(inventoryAgeDateTO.getStartDays());
                 LocalDate startDate = nowDate.minusDays(inventoryAgeDateTO.getEndDays());
-                Integer totalQty = virtualInventoryHisList.stream().filter(obj -> obj.getDate().isAfter(endDate) && obj.getDate().isBefore(startDate)).map(VirtualInventoryHisEntity::getQty).reduce(MathUtil.ZERO, Integer::sum);
-
+                Integer totalQty = virtualInventoryHisList.stream().filter(obj ->
+                        CharSequenceUtil.equals(obj.getSkuId(),listDTO.getSkuId())
+                        && CharSequenceUtil.equals(obj.getWarehouseId(),listDTO.getWarehouseId())
+                        && CharSequenceUtil.equals(obj.getVirtualWarehouseId(),listDTO.getVirtualWarehouseId())
+                        && obj.getDate().isAfter(endDate)
+                        && obj.getDate().isBefore(startDate)
+                ).map(VirtualInventoryHisEntity::getQty).reduce(MathUtil.ZERO, Integer::sum);
+                //比例
                 BigDecimal ratio = MathUtil.compareTo(listDTO.getVirtualQty(),MathUtil.ZERO) == MathUtil.ZERO ? BigDecimal.ZERO : MathUtil.divide(MathUtil.valueOf(totalQty) ,BigDecimal.valueOf(listDTO.getVirtualQty()));
                 map.put(ageDateInterval,new VirtualInventoryAgeDTO.VirtualIntervalDTO(totalQty,StrUtil.format("{}%",ratio) ));
                 listDTO.setMap(map);

@@ -103,4 +103,12 @@ public interface VirtualInventoryDetailService extends SuperService<VirtualInven
      * @return List<String>
      */
     List<String> getCfgHead();
+    /**
+     * 详情库龄图
+     * @author will
+     * @date 2024/12/9 9:48
+     * @param dto
+     * @return HisInventoryAgeChartDTO
+     */
+    VirtualInventoryAgeDTO.HisInventoryAgeChartDTO getHisInventoryAgeChart(VirtualInventoryAgeDTO.HisInventoryAgeParamDTO dto);
 }

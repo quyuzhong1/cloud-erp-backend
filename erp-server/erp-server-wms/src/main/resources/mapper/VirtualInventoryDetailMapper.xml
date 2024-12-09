@@ -106,4 +106,21 @@
             resultType="com.erp.model.wms.dto.VirtualInventoryAgeDTO$HisInventoryAgeDetailDTO"></select>
 
 
+    <!-- 历史库龄图形数据 -->
+    <select id="getHisInventoryAgeChart"
+            resultType="com.erp.model.wms.dto.VirtualInventoryAgeDTO$HisInventoryAgeDTO">
+        select
+            vih.date,
+            vih.avg_inventory_age_days
+        from virtual_inventory_his vih
+        <where>
+            vih.is_deleted = false and vih.sku_id = #{params.skuId} and vih.warehouse_id = #{params.warehouseId} and vih.virtual_warehouse_id = #{params.virtualWarehouseId}
+            <if test="params.dateList != null and params.dateList.size > 0">
+                and vih.date >= #{params.dateList[0]} and (#{params.dateList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > vih.date
+            </if>
+        </where>
+        order by vih.date asc
+    </select>
+
+
 </mapper>

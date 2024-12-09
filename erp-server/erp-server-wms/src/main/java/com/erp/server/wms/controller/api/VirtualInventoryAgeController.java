@@ -76,6 +76,19 @@ public class VirtualInventoryAgeController extends BaseController {
 
 
     /**
+     * 详情库龄图
+     * @author will
+     * @date 2024/12/9 9:47
+     * @param dto
+     * @return ApiResult<HisInventoryAgeChartDTO>
+     */
+    @PostMapping("/getHisInventoryAgeChart")
+    public ApiResult<VirtualInventoryAgeDTO.HisInventoryAgeChartDTO> getHisInventoryAgeChart(@RequestBody VirtualInventoryAgeDTO.HisInventoryAgeParamDTO dto) {
+        VirtualInventoryAgeDTO.HisInventoryAgeChartDTO chartDTO = virtualInventoryDetailService.getHisInventoryAgeChart(dto);
+        return success(chartDTO);
+    }
+
+    /**
      * 历史库龄导出excel
      * @author will
      * @date 2024/12/3 18:02
