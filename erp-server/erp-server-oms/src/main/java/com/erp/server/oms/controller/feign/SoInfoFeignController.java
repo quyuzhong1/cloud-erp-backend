@@ -1,5 +1,6 @@
 package com.erp.server.oms.controller.feign;
 
+import cn.hutool.core.collection.CollUtil;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.core.controller.BaseController;
@@ -20,6 +21,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
@@ -64,6 +66,9 @@ public class SoInfoFeignController extends BaseController {
      **/
     @PostMapping("/listSoInfoByIds")
     public List<SoInfoEntity> listSoInfoByIds(@RequestBody List<String> ids) {
+        if (CollUtil.isEmpty(ids)) {
+            return Collections.emptyList();
+        }
         return soInfoService.listByIds(ids);
     }
 
