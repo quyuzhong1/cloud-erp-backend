@@ -21,9 +21,6 @@ import java.util.List;
 @NoArgsConstructor
 public class LogisticsChannelRemotePostcodeDTO implements Serializable {
 
-
-
-
     /**
     * 详情
     */

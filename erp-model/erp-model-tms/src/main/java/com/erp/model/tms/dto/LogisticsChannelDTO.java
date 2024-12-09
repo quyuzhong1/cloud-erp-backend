@@ -541,10 +541,16 @@ public class LogisticsChannelDTO implements Serializable {
          * 仓库设置
          */
         private LogisticsChannelWarehouseDTO.ViewDTO warehouseDTO;
+
         /**
-         * 邮编组设置
+         * 邮编组id集合
          */
-        private LogisticsChannelRemotePostcodeDTO.ViewDTO remotePostcodeDTO;
+        private List<String> remotePostcodeIdList;
+
+        /**
+         *  邮编组名称集合
+         */
+        private List<String> remotePostcodeNameList;
     }
 
     /**
