@@ -131,7 +131,14 @@ public class MouldInfoServiceImpl extends SuperServiceImpl<MouldInfoMapper, Moul
         for (MouldInfoDTO.PagingViewDTO record : records) {
             List<MouldProductDTO.ViewDTO> productList = mouldProductList.stream()
                     .filter(v -> v.getMouldDetailId().equals(record.getDetailId()))
-                    .map(v -> BeanMapperUtils.map(MouldProductDTO.ViewDTO.class, v))
+                    .map(v -> {
+                        MouldProductDTO.ViewDTO viewDTO = new MouldProductDTO.ViewDTO();
+                        viewDTO.setId(v.getId());
+                        viewDTO.setMouldDetailId(v.getMouldDetailId());
+                        viewDTO.setImagesUrl(Arrays.asList(v.getImagesUrl().split(",")));
+                        viewDTO.setProductName(v.getProductName());
+                        return viewDTO;
+                    })
                     .collect(Collectors.toList());
             record.setProductList(productList);
             MouldStoreLocationDTO.ViewDTO viewDTO = storeLocationList.stream()
