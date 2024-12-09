@@ -272,7 +272,8 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
         view.setMappingList(mappingList);
         view.setPrintTypeList(printTypeList);
         view.setWarehouseDTO(warehouseDTO);
-        view.setRemotePostcodeDTO(remotePostcodeDTO);
+        view.setRemotePostcodeIdList(remotePostcodeDTO.getRemotePostcodeIdList());
+        view.setRemotePostcodeNameList(remotePostcodeDTO.getRemotePostcodeNameList());
         return view;
     }
 
