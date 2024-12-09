@@ -38,8 +38,8 @@ public class SyncSdyJob {
     private SyncLogisticsBillService syncLogisticsBillService;
 
 
-    @XxlJob("syncSdySoB2c")
-    public void syncSdySoB2c() {
+    @XxlJob("syncSdyLogisticsBill")
+    public void syncSdyLogisticsBill() {
         String jobParam = XxlJobHelper.getJobParam();
         LocalDateTime createStartTime = null;
         LocalDateTime createEndTime = null;
