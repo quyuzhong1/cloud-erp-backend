@@ -6,6 +6,8 @@ import com.common.business.dto.base.*;
 import com.erp.model.wms.dto.VirtualTransFlowDetailDTO;
 import com.erp.model.wms.entity.VirtualTransFlowEntity;
 
+import java.util.List;
+
 /**
  * <p>
  * 虚拟仓库存流水明细 服务类
@@ -20,10 +22,10 @@ public interface VirtualTransFlowDetailService extends SuperService<VirtualTrans
     * 新增
     * @author will
     * @date: 2024-12-03
-    * @param dto
+    * @param addDTOList
     * @return
     */
-    VirtualTransFlowDetailEntity add(VirtualTransFlowDetailDTO.AddDTO dto);
+    Boolean batchAdd(List<VirtualTransFlowDetailDTO.AddDTO> addDTOList);
 
 
     /**

@@ -65,4 +65,14 @@ public interface VirtualInventoryDetailMapper extends BaseMapper<VirtualInventor
      * @return IPage<HisInventoryAgeDetailDTO>
      */
     IPage<VirtualInventoryAgeDTO.HisInventoryAgeDetailDTO> exportHisInventoryAgeDetailPaging(Page<VirtualInventoryAgeDTO.HisInventoryAgeDetailParamDTO> page,@Param("params") VirtualInventoryAgeDTO.HisInventoryAgeDetailParamDTO params);
+    /**
+     * 根据出库查询
+     * @author will
+     * @date 2024/12/10 16:27
+     * @param skuId
+     * @param warehouseId
+     * @param virtualWarehouseId
+     * @return List<VirtualInventoryDetailEntity>
+     */
+    List<VirtualInventoryDetailEntity> getByOutParam(@Param("skuId")String skuId,@Param("warehouseId") String warehouseId,@Param("virtualWarehouseId") String virtualWarehouseId);
 }

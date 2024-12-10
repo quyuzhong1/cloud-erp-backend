@@ -77,10 +77,6 @@ public class VirtualInventoryAgeDTO implements Serializable {
          */
         private Integer virtualFrozenQty;
         /**
-         * 统计日期
-         */
-        private LocalDate date;
-        /**
          * 平均库存（反推）
          */
         private BigDecimal backAvgInventoryAge;

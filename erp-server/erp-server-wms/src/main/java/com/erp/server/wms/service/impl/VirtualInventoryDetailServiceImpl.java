@@ -239,6 +239,11 @@ public class VirtualInventoryDetailServiceImpl extends SuperServiceImpl<VirtualI
         return chartDTO;
     }
 
+    @Override
+    public List<VirtualInventoryDetailEntity> getByOutParam(String skuId, String warehouseId, String virtualWarehouseId) {
+        return baseMapper.getByOutParam(skuId,warehouseId,virtualWarehouseId);
+    }
+
     /**
     * 新增修改处理数据
     */

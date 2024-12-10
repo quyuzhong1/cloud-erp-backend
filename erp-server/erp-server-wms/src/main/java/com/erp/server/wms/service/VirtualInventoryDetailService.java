@@ -109,4 +109,14 @@ public interface VirtualInventoryDetailService extends SuperService<VirtualInven
      * @return HisInventoryAgeChartDTO
      */
     VirtualInventoryAgeDTO.HisInventoryAgeChartDTO getHisInventoryAgeChart(VirtualInventoryAgeDTO.HisInventoryAgeParamDTO dto);
+    /**
+     * 根据出库参数查询
+     * @author will
+     * @date 2024/12/10 16:24
+     * @param skuId
+     * @param warehouseId
+     * @param virtualWarehouseId
+     * @return List<VirtualInventoryDetailEntity>
+     */
+    List<VirtualInventoryDetailEntity> getByOutParam(String skuId, String warehouseId, String virtualWarehouseId);
 }

@@ -75,14 +75,12 @@
             vi.virtualQty,
             vi.virtualUsableQty,
             vi.virtualFrozenQty,
-            now() as date,
             case when vi.virtualQty = 0 then 0 else round(COALESCE(vih.avgInventoryQty,0)/ vi.virtualQty,2) end backAvgInventoryAge
         from VirtualInventory vi
         left join VirtualInventoryHis vih on vi.sku_id = vih.sku_id and vi.warehouse_id = vih.warehouse_id and vi.virtual_warehouse_id = vih.virtual_warehouse_id
         left join product_detail pd on vi.sku_id = pd.id and pd.is_deleted = false
         left join warehouse wh on vi.warehouse_id = wh.id and wh.is_deleted = false
         left join virtual_warehouse vw on vi.virtual_warehouse_id = vw.id and vw.is_deleted = false
-
         <where>
             ${params.sqlMap.default}
             order by
@@ -199,6 +197,18 @@
                 and vtfd.trade_time >= #{params.dateList[0]} and (#{params.dateList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > vtfd.trade_time
             </if>
         </where>
+    </select>
+
+    <!-- 根据出库参数查询 -->
+    <select id="getByOutParam" resultType="com.erp.model.wms.entity.VirtualInventoryDetailEntity">
+        select
+            <include refid="Base_Column_List" />
+        from virtual_inventory_detail vid
+        <where>
+            vid.is_deleted = false and vid.qty > 0 and vid.sku_id = #{skuId}
+            and vid.warehosue_id = #{warehouseId} and vid.virtual_warehouse_id = #{virtualWarehouseId}
+        </where>
+        order by vid.bill_date asc
     </select>
 
 
