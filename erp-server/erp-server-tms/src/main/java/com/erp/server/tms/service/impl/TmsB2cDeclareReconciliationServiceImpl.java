@@ -312,7 +312,7 @@ public class TmsB2cDeclareReconciliationServiceImpl extends SuperServiceImpl<Tms
         	Map<String, String> idSoCodeMap = tmsB2cDeclareReconciliationDetailEntityList.stream().collect(Collectors.toMap(TmsB2cDeclareReconciliationDetailEntity::getId, TmsB2cDeclareReconciliationDetailEntity::getSoCode));
         	List<TransferDeclareCostAllocationMainEntity> transferDeclareCostAllocationMainEntityList = transferDeclareCostAllocationMainService.lambdaQuery().in(TransferDeclareCostAllocationMainEntity::getDeclareReconciliationDetailId, idSoCodeMap.keySet()).list();
         	if(CollUtil.isNotEmpty(transferDeclareCostAllocationMainEntityList)) {
-        		throw new ServiceException("销售出库单" + 
+        		throw new ServiceException("销售订单" + 
         		transferDeclareCostAllocationMainEntityList.stream().map(t -> idSoCodeMap.get(t.getDeclareReconciliationDetailId())).collect(Collectors.joining("、")) 
         		+ "已中转分摊");
         	}

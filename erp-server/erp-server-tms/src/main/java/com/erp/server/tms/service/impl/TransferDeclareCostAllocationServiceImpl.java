@@ -2,6 +2,8 @@ package com.erp.server.tms.service.impl;
 
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -207,6 +209,8 @@ public class TransferDeclareCostAllocationServiceImpl extends SuperServiceImpl<T
 				countryIds).list();
 		Map<String, String> countryIdNameMap = dictCountryEntityList.stream().collect(Collectors.toMap(DictCountryEntity::getId, DictCountryEntity::getNameCn));
 		Map<String, BigDecimal> rateMap = new HashMap<>();
+		DecimalFormat df6 = new DecimalFormat("0.000000");
+		DecimalFormat df4 = new DecimalFormat("0.0000");
 		for(ListDTO dto : records) {
 			LogisticsChannelEntity logisticsChannelEntity = channelIdMaps.get(dto.getChannelId());
 			if(logisticsChannelEntity != null) {
@@ -230,7 +234,15 @@ public class TransferDeclareCostAllocationServiceImpl extends SuperServiceImpl<T
 			Integer deliveryQty = dto.getDeliveryQty();
 			String reportDate = dto.getReportDate();
 			
-			BigDecimal unitCost = dto.getUnitCost();
+			String billingWeight = dto.getBillingWeight();
+			String estimateWeightUnit = dto.getEstimateWeightUnit();
+			if("g".equals(estimateWeightUnit)) {
+				dto.setBillingWeight(df4.format(new BigDecimal(billingWeight).divide(new BigDecimal("1000"), 4, RoundingMode.HALF_UP)));
+			}else {
+				dto.setBillingWeight(df4.format(new BigDecimal(billingWeight).setScale(4)));
+			}
+			
+			BigDecimal unitCost = new BigDecimal(dto.getUnitCost());
 			if(unitCost != null) {
 				String unitCurrency = dto.getUnitCurrency();
 				if(StringUtils.isNotBlank(unitCurrency) && !"CNY".equals(unitCurrency)) {
@@ -244,33 +256,10 @@ public class TransferDeclareCostAllocationServiceImpl extends SuperServiceImpl<T
 				        }
 						rateMap.put(key, rate);
 					}
-					unitCost = unitCost.multiply(rate);
+					unitCost = unitCost.multiply(rate).setScale(6);
 				}
-				dto.setUnitCost(unitCost);
-				dto.setTotalCost(unitCost.multiply(new BigDecimal(deliveryQty)));
-			}
-			
-			String currency = dto.getCurrency();
-			if(StringUtils.isNotBlank(currency) && !"CNY".equals(currency)) {
-				String key = reportDate + "_" + currency;
-				BigDecimal rate = rateMap.get(key);
-				if(rate == null) {
-					rate = dmpTaskFeign.getRate(reportDate + "-01", currency);
-					if(ObjectUtil.isEmpty(rate)){
-			            log.error("币别【{}】,汇率为空，请维护汇率后再查询",currency);
-			            throw new ServiceException("汇率为空，请维护汇率后再查询");
-			        }
-					rateMap.put(key, rate);
-				}
-				if(dto.getBillAmount() != null) {
-					dto.setBillAmount(dto.getBillAmount().multiply(rate));
-				}
-				if(dto.getAllocatedAmount() != null) {
-					dto.setAllocatedAmount(dto.getAllocatedAmount().multiply(rate));
-				}
-				if(dto.getProductAllocatedAmount() != null) {
-					dto.setProductAllocatedAmount(dto.getProductAllocatedAmount().multiply(rate));
-				}
+				dto.setUnitCost(df6.format(unitCost));
+				dto.setTotalCost(df6.format(unitCost.multiply(new BigDecimal(deliveryQty)).setScale(6)));
 			}
 			
 			dto.setFeeTypeName(AllocationFeeTypeEnum.getName(dto.getFeeType()));

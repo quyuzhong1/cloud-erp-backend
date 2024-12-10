@@ -3,6 +3,7 @@ package com.erp.server.tms.service.impl;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -211,6 +212,9 @@ public class SmallBagCostAllocationServiceImpl extends SuperServiceImpl<SmallBag
 		}
 		
 		Map<String, BigDecimal> rateMap = new HashMap<>();
+		DecimalFormat df2 = new DecimalFormat("0.00");
+		DecimalFormat df4 = new DecimalFormat("0.0000");
+		DecimalFormat df6 = new DecimalFormat("0.000000");
 		for(ListDTO dto : records) {
 			LogisticsChannelEntity logisticsChannelEntity = channelIdMaps.get(dto.getChannelId());
 			if(logisticsChannelEntity != null) {
@@ -222,7 +226,7 @@ public class SmallBagCostAllocationServiceImpl extends SuperServiceImpl<SmallBag
 			dto.setBigTableStatusName(SmallBagCostAllocationBigTableStatusEnum.getName(dto.getBigTableStatus()));
 			String skuId = dto.getSkuId();
 			dto.setSkuName(skuIdNameMap.get(skuId));
-			BigDecimal unitCost = dto.getUnitCost();
+			BigDecimal unitCost = new BigDecimal(dto.getUnitCost());
 			Integer deliveryQty = dto.getDeliveryQty();
 			String reportDate = dto.getReportDate();
 			if(unitCost != null) {
@@ -238,33 +242,10 @@ public class SmallBagCostAllocationServiceImpl extends SuperServiceImpl<SmallBag
 				        }
 						rateMap.put(key, rate);
 					}
-					unitCost = unitCost.multiply(rate);
+					unitCost = unitCost.multiply(rate).setScale(6);
 				}
-				dto.setUnitCost(unitCost);
-				dto.setTotalCost(unitCost.multiply(new BigDecimal(deliveryQty)));
-			}
-			
-			String currency = dto.getCurrency();
-			if(StringUtils.isNotBlank(currency) && !"CNY".equals(currency)) {
-				String key = reportDate + "_" + currency;
-				BigDecimal rate = rateMap.get(key);
-				if(rate == null) {
-					rate = dmpTaskFeign.getRate(reportDate + "-01", currency);
-					if(ObjectUtil.isEmpty(rate)){
-			            log.error("币别【{}】,汇率为空，请维护汇率后再查询",currency);
-			            throw new ServiceException("汇率为空，请维护汇率后再查询");
-			        }
-					rateMap.put(key, rate);
-				}
-				if(dto.getBillAmount() != null) {
-					dto.setBillAmount(dto.getBillAmount().multiply(rate));
-				}
-				if(dto.getAllocatedAmount() != null) {
-					dto.setAllocatedAmount(dto.getAllocatedAmount().multiply(rate));
-				}
-				if(dto.getProductAllocatedAmount() != null) {
-					dto.setProductAllocatedAmount(dto.getProductAllocatedAmount().multiply(rate));
-				}
+				dto.setUnitCost(df6.format(unitCost));
+				dto.setTotalCost(df6.format(unitCost.multiply(new BigDecimal(deliveryQty)).setScale(6)));
 			}
 			
 			dto.setFeeSource(SmallBagCostAllocationMainFeeSourceEnum.getName(dto.getFeeSource()));
@@ -280,40 +261,22 @@ public class SmallBagCostAllocationServiceImpl extends SuperServiceImpl<SmallBag
 			dto.setWeightAllocationTypeName(WeightAllocationSmallBagEnum.getName(dto.getWeightAllocationType()));
 			dto.setCurrencySymbol("¥");
 			
-			BigDecimal billingWeight = dto.getBillingWeight();
-			if(billingWeight != null) {
-				dto.setBillingWeight(billingWeight.setScale(4, RoundingMode.HALF_UP));
-			}
-			BigDecimal billingWeightLogistics = dto.getBillingWeightLogistics();
-			if(billingWeightLogistics != null) {
-				dto.setBillingWeightLogistics(billingWeightLogistics.setScale(4, RoundingMode.HALF_UP));
-			}
-			BigDecimal skuWeight = dto.getSkuWeight();
-			if(skuWeight != null) {
-				dto.setSkuWeight(skuWeight.setScale(6, RoundingMode.HALF_UP));
-			}
-			if(unitCost != null) {
-				dto.setUnitCost(unitCost.setScale(6, RoundingMode.HALF_UP));
-			}
-			BigDecimal totalCost = dto.getTotalCost();
-			if(totalCost != null) {
-				dto.setTotalCost(totalCost.setScale(6, RoundingMode.HALF_UP));
-			}
+			
 			BigDecimal refund = BigDecimal.ONE;
 			if("refund".equals(dto.getPayType())) {
 				refund = new BigDecimal("-1");
 			}
-			BigDecimal billAmount = dto.getBillAmount();
+			String billAmount = dto.getBillAmount();
 			if(billAmount != null) {
-				dto.setBillAmount(billAmount.multiply(refund).setScale(4, RoundingMode.HALF_UP));
+				dto.setBillAmount(df4.format(new BigDecimal(billAmount).multiply(refund).setScale(4, RoundingMode.HALF_UP)));
 			}
-			BigDecimal allocatedAmount = dto.getAllocatedAmount();
+			String allocatedAmount = dto.getAllocatedAmount();
 			if(allocatedAmount != null) {
-				dto.setAllocatedAmount(allocatedAmount.multiply(refund).setScale(2, RoundingMode.HALF_UP));
+				dto.setAllocatedAmount(df2.format(new BigDecimal(allocatedAmount).multiply(refund).setScale(2, RoundingMode.HALF_UP)));
 			}
-			BigDecimal productAllocatedAmount = dto.getProductAllocatedAmount();
+			String productAllocatedAmount = dto.getProductAllocatedAmount();
 			if(productAllocatedAmount != null) {
-				dto.setProductAllocatedAmount(productAllocatedAmount.multiply(refund).setScale(6, RoundingMode.HALF_UP));
+				dto.setProductAllocatedAmount(df6.format(new BigDecimal(productAllocatedAmount).multiply(refund).setScale(6, RoundingMode.HALF_UP)));
 			}
 		}
 	}

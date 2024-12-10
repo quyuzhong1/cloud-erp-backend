@@ -36,6 +36,11 @@ public class TransferDeclareCostAllocationDetailEntity extends BaseEntity<Transf
     @TableField("bill_amount")
     private BigDecimal billAmount;
     /**
+     * 账单金额兑换汇率
+     */
+    @TableField("bill_amount_exchange")
+    private BigDecimal billAmountExchange;
+    /**
     * 费用类型
     */
     @TableField("fee_type")
@@ -51,6 +56,11 @@ public class TransferDeclareCostAllocationDetailEntity extends BaseEntity<Transf
     @TableField("allocated_amount")
     private BigDecimal allocatedAmount;
     /**
+     * 分摊金额
+     */
+    @TableField("allocated_amount_exchange")
+    private BigDecimal allocatedAmountExchange;
+    /**
     * 分摊币种
     */
     @TableField("allocated_currency")
@@ -60,6 +70,11 @@ public class TransferDeclareCostAllocationDetailEntity extends BaseEntity<Transf
     */
     @TableField("product_allocated_amount")
     private BigDecimal productAllocatedAmount;
+    /**
+     * 费用分摊方式
+     */
+    @TableField("product_allocated_amount_exchange")
+    private BigDecimal productAllocatedAmountExchange;
     /**
     * 重量分摊方式
     */

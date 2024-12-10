@@ -83,6 +83,7 @@ import com.erp.model.tms.entity.InventorySkuCostDetailEntity;
 import com.erp.model.tms.entity.InventorySkuCostEntity;
 import com.erp.model.tms.entity.LogisticsChannelEntity;
 import com.erp.model.tms.entity.LogisticsSupplierEntity;
+import com.erp.model.tms.entity.SmallBagCostAllocationDetailEntity;
 import com.erp.model.tms.entity.TmsB2cDeclareReconciliationDetailEntity;
 import com.erp.model.tms.entity.TmsB2cDeclareReconciliationEntity;
 import com.erp.model.tms.entity.TransferDeclareCostAllocationDetailEntity;
@@ -104,6 +105,7 @@ import com.erp.model.tms.enums.TransferDeclareUploadStatusEnum;
 import com.erp.model.tms.enums.TransferLogisticsStatusEnum;
 import com.erp.model.tms.enums.TransferOutstockStatusEnum;
 import com.erp.model.tms.enums.WeightAllocationEnum;
+import com.erp.model.tms.enums.WeightAllocationSmallBagEnum;
 import com.erp.model.wms.dto.PackageForecastDTO;
 import com.erp.model.wms.entity.PackageForecastDetailEntity;
 import com.erp.model.wms.entity.PackageForecastEntity;
@@ -1094,7 +1096,7 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
 					.stream().collect(Collectors.toMap(WarehouseEntity::getId, WarehouseEntity::getOrgId));
 			orgIdNameMaps = sysUserFeign.getAccountingCompanyList(new ArrayList<>(wareIdOrgIdMaps.values())).stream().collect(Collectors.toMap(CodeDTO::getId, CodeDTO::getName));
 		}
-		
+		Map<String, BigDecimal> rateMap = new HashMap<>();
 		for(TmsB2cDeclareReconciliationDetailEntity t : tmsB2cDeclareReconciliationDetailEntityList) {
 			int i = 0;
 			Map<String, List<CostViewDTO>> costCategoryMaps = new HashMap<>();
@@ -1147,7 +1149,7 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
 				
 					BigDecimal totalSkuCost = BigDecimal.ZERO;
 					List<ProductPackEntity> productPackEntityList = FeignQuery.create(ProductPackEntity.class)
-							.eq(ProductPackEntity::getSkuId, dealSoOutstockDetailEntityList.stream().map(SoOutstockDetailEntity::getSkuId).collect(Collectors.toList()))
+							.in(ProductPackEntity::getSkuId, dealSoOutstockDetailEntityList.stream().map(SoOutstockDetailEntity::getSkuId).collect(Collectors.toList()))
 							.list();
 					Map<String, BigDecimal> skuWeightCostMaps = productPackEntityList.stream().collect(Collectors.toMap(ProductPackEntity::getSkuId, ProductPackEntity::getGrossWeight));
 					BigDecimal totalSkuWeightCost = BigDecimal.ZERO;
@@ -1201,15 +1203,15 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
 					
 					transferDeclareCostAllocationEntity.setDeliveryQty(actualQty);
 					BigDecimal skuWeight = null;
-					if(WeightAllocationEnum.OUTSTOCK_CHARGED_WEIGHT.getCode().equals(transferAllocation)) {
+					if(WeightAllocationSmallBagEnum.OUTSTOCK_CHARGED_WEIGHT.getCode().equals(transferAllocation)) {
 						BigDecimal estimateWeight = t.getEstimateWeight();
 						if("g".equals(t.getEstimateWeightUnit())) {
 							estimateWeight = estimateWeight.divide(new BigDecimal("1000"), 8, RoundingMode.HALF_UP);
 						}
 						skuWeight = estimateWeight.multiply(skuWeightCostPre).divide(new BigDecimal(actualQty), 4 , RoundingMode.HALF_UP);
-					}else if(WeightAllocationEnum.SUPPLIER_CHARGED_WEIGHT.getCode().equals(transferAllocation)) {
+					}else if(WeightAllocationSmallBagEnum.SUPPLIER_CHARGED_WEIGHT.getCode().equals(transferAllocation)) {
 						skuWeight = t.getActualBillingWeight().multiply(skuWeightCostPre).divide(new BigDecimal(actualQty), 4 , RoundingMode.HALF_UP);
-					}else if(WeightAllocationEnum.SINGLE_PRODUCT_WEIGHT.getCode().equals(transferAllocation)) {
+					}else if(WeightAllocationSmallBagEnum.SINGLE_PRODUCT_WEIGHT.getCode().equals(transferAllocation)) {
 						skuWeight = skuWeightCostMaps.get(skuId);
 					}
 					if(skuWeight == null) {
@@ -1231,7 +1233,18 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
 						if(CollUtil.isNotEmpty(costViewDTOList)) {
 							allocatedCurrency = costViewDTOList.get(0).getCurrency();
 						}
+						String key = reportDate + "_" + allocatedCurrency;
+						BigDecimal rate = rateMap.get(key);
+						if(rate == null) {
+							rate = dmpTaskFeign.getRate(reportDate + "-01", allocatedCurrency);
+							if(ObjectUtil.isEmpty(rate)){
+					            log.error("币别【{}】,汇率为空，请维护汇率后再查询",allocatedCurrency);
+					            throw new ServiceException("汇率为空，请维护汇率后再查询");
+					        }
+							rateMap.put(key, rate);
+						}
 						transferDeclareCostAllocationDetailEntity.setBillAmount(costValueSum);
+						transferDeclareCostAllocationDetailEntity.setBillAmountExchange(transferDeclareCostAllocationDetailEntity.getBillAmount().multiply(rate).setScale(4));
 						transferDeclareCostAllocationDetailEntity.setFeeType(feeType);
 						String feeAllocationType = feeTypeSettingMap.getValue();
 						if(StringUtils.isBlank(feeAllocationType)) {
@@ -1243,12 +1256,16 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
 							}else {
 								transferDeclareCostAllocationDetailEntity.setAllocatedAmount(costValueSum.multiply(skuCostPre).setScale(4, RoundingMode.HALF_UP));
 							}
+							transferDeclareCostAllocationDetailEntity.setAllocatedAmountExchange(transferDeclareCostAllocationDetailEntity.getAllocatedAmount().multiply(rate));
 						}else {
 							transferDeclareCostAllocationDetailEntity.setAllocatedAmount(costValueSum.subtract(addTransferDeclareCostAllocationDetailEntityList.stream()
 									.filter(a -> a.getFeeType().equals(feeType)).map(TransferDeclareCostAllocationDetailEntity::getAllocatedAmount).reduce(BigDecimal::add).orElse(BigDecimal.ZERO)));
+							transferDeclareCostAllocationDetailEntity.setAllocatedAmountExchange(costValueSum.subtract(addTransferDeclareCostAllocationDetailEntityList.stream()
+									.filter(a -> a.getFeeType().equals(feeType)).map(TransferDeclareCostAllocationDetailEntity::getAllocatedAmountExchange).reduce(BigDecimal::add).orElse(BigDecimal.ZERO)));
 						}
 						transferDeclareCostAllocationDetailEntity.setProductAllocatedAmount(transferDeclareCostAllocationDetailEntity.getAllocatedAmount()
 								.divide(new BigDecimal(actualQty), 6, RoundingMode.HALF_UP));
+						transferDeclareCostAllocationDetailEntity.setProductAllocatedAmountExchange(transferDeclareCostAllocationDetailEntity.getProductAllocatedAmount().multiply(rate).setScale(6));
 						transferDeclareCostAllocationDetailEntity.setFeeAllocationType(feeAllocationType);
 						transferDeclareCostAllocationDetailEntity.setAllocatedCurrency(allocatedCurrency);
 						transferDeclareCostAllocationDetailEntity.setWeightAllocationType(transferAllocation);
