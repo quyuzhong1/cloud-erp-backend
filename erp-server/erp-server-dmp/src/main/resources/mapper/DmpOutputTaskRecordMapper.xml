@@ -196,4 +196,25 @@ LEFT JOIN dmp_cfg_output h ON t.main_id = h.id
         </if>
         order by t.id asc limit 1
     </select>
+    
+    <select id="getOutputErrorTask" resultType="com.erp.model.dmp.entity.DmpOutputTaskRecordEntity">
+			SELECT T.* 
+	FROM
+		dmp_output_task_record
+		T LEFT JOIN dmp_output_task G ON T.main_id = G.
+		ID LEFT JOIN dmp_cfg_output h ON G.cfg_output_id = h.ID 
+	WHERE
+		T.is_deleted = 'f' 
+		AND G.is_deleted = 'f' 
+		AND h.is_deleted = 'f' 
+		AND (
+			T.status IN ( 'init', 'mqerror', 'cosumererror' ) 
+			OR ( T.status = 'mqsuccess' AND T.update_time <![CDATA[ < ]]> ( CURRENT_TIMESTAMP - INTERVAL '7200 seconds' ) ) 
+		) 
+		AND h.system_id = #{systemId}
+	ORDER BY
+		T.update_time 
+		LIMIT #{size}
+    </select>
+    
 </mapper>

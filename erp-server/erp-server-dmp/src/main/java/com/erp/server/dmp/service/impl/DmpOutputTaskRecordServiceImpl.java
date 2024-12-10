@@ -597,4 +597,13 @@ public class DmpOutputTaskRecordServiceImpl extends SuperServiceImpl<DmpOutputTa
         }
         return BeanMapperUtils.map(DmpPushTaskDTO.SyncInfoDTO.class, dmpPushTaskEntity);
     }
+
+	@Override
+	public List<DmpOutputTaskRecordEntity> getOutputErrorTask(String systemId, String size) {
+		List<DmpOutputTaskRecordEntity> outputErrorTask = this.getBaseMapper().getOutputErrorTask(systemId, size);
+		if(outputErrorTask == null) {
+			outputErrorTask = new ArrayList<>();
+		}
+		return outputErrorTask;
+	}
 }
