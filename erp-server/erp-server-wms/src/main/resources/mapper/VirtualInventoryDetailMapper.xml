@@ -137,16 +137,19 @@
             vid.last_outstock_date,
             vid.update_time
         from virtual_trans_flow_detail vtfd
-        left join virtual_trans_flow vtf on vtf.id = vtfd.virtual_trans_flow_id and vtf.is_deleted = false
-        left join virtual_inventory_detail vid  on vtfd.virtual_inventory_detail_id = vid.id and vid.is_deleted = false
+        inner join virtual_trans_flow vtf on vtf.id = vtfd.virtual_trans_flow_id and vtf.is_deleted = false
+        inner join virtual_inventory_detail vid  on vtfd.virtual_inventory_detail_id = vid.id and vid.is_deleted = false
         <where>
-            vtfd.is_deleted = false vtfd.sku_id = #{params.skuId} and vtfdwarehouse_id = #{params.warehouseId}
-            and vtfd.virtual_warehouse_id = #{params.virtualWarehouseId}
+            vtfd.is_deleted = false and vtf.sku_id = #{params.skuId} and vtf.warehouse_id = #{params.warehouseId}
+            and vtf.virtual_warehouse_id = #{params.virtualWarehouseId}
+            <if test="params.date != null ">
+                and vtfd.trade_time >= #{params.date}
+            </if>
             <if test="params.dateList != null and params.dateList.size == 1">
                 and vtfd.trade_time >= #{params.dateList[0]}
             </if>
             <if test="params.dateList != null and params.dateList.size == 2">
-                and vtfd.trade_time >= #{params.dateList[0]} and (#{params.dateList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > vtfd.trade_time
+                and  (#{params.dateList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > vtfd.trade_time
             </if>
         </where>
     </select>

@@ -47,7 +47,7 @@ public interface VirtualInventoryDetailMapper extends BaseMapper<VirtualInventor
      * @param params
      * @return IPage<HisInventoryAgeDetailDTO>
      */
-    IPage<VirtualInventoryAgeDTO.HisInventoryAgeDetailDTO> hisInventoryAgeDetailPaging(Page<VirtualInventoryAgeDTO.HisInventoryAgeDetailParamDTO> page,@Param("params") VirtualInventoryAgeDTO.HisInventoryAgeDetailParamDTO params);
+    IPage<VirtualInventoryAgeDTO.HisInventoryAgeDetailDTO> hisInventoryAgeDetailPaging(Page page,@Param("params") VirtualInventoryAgeDTO.HisInventoryAgeDetailParamDTO params);
     /**
      * 查询历史库龄图数据
      * @author will

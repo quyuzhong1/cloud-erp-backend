@@ -727,11 +727,21 @@ public class ExportWmsFeignController {
 
 
     /**
-     * 历史库龄明细数据导出
+     * 流水明细数据导出
      */
     @PostMapping("/virtualTransFlowDetailPaging")
     @WebAdvanceQuery
     public PagingVO<VirtualTransFlowDetailDTO.ListDTO> virtualTransFlowDetailPaging(@RequestBody PagingDTO<VirtualTransFlowDetailDTO.SearchParamDTO> dto){
         return virtualTransFlowDetailService.paging(dto);
     }
+
+    /**
+     * 列表历史库龄明细数据导出
+     */
+    @PostMapping("/framePaging")
+    @WebAdvanceQuery
+    public PagingVO<VirtualInventoryAgeDTO.HisInventoryAgeDetailDTO> framePaging(@RequestBody PagingDTO<VirtualInventoryAgeDTO.FrameParamDTO> dto){
+        return virtualInventoryDetailService.framePaging(dto);
+    }
+
 }

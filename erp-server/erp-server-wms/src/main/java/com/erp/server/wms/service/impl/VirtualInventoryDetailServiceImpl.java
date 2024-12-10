@@ -168,13 +168,60 @@ public class VirtualInventoryDetailServiceImpl extends SuperServiceImpl<VirtualI
 
     @Override
     public PagingVO<VirtualInventoryAgeDTO.HisInventoryAgeDetailDTO> framePaging(PagingDTO<VirtualInventoryAgeDTO.FrameParamDTO> dto) {
+        String daysInterval = dto.getParams().getDaysInterval();
+        List<LocalDate> dateList =  handleDaysInterval(daysInterval);
+        VirtualInventoryAgeDTO.FrameParamDTO params = dto.getParams();
+        VirtualInventoryAgeDTO.HisInventoryAgeDetailParamDTO paramDTO = BeanMapperUtils.map(VirtualInventoryAgeDTO.HisInventoryAgeDetailParamDTO.class, params);
+        paramDTO.setDateList(dateList);
+        IPage<VirtualInventoryAgeDTO.HisInventoryAgeDetailDTO> pageData = this.baseMapper.hisInventoryAgeDetailPaging(dto.page(), paramDTO);
+        return new PagingVO<>(pageData);
+    }
 
-        return null;
+    /**
+     * 处理区间数据
+     * @author will
+     * @date 2024/12/10 19:16
+     * @param daysInterval
+     * @return List<LocalDate>
+     */
+    private List<LocalDate> handleDaysInterval (String daysInterval) {
+        if (CharSequenceUtil.isBlank(daysInterval)) {
+            return Collections.EMPTY_LIST;
+        }
+        //查询库龄分析配置
+        CfgSettingEntity cfgSettingEntity = cfgSettingService.getByKey(CfgSettingVirtualEnum.INVENTORY_AGE_STATISTICS.getCode());
+        if (ObjUtil.isEmpty(cfgSettingEntity)) {
+            return Collections.EMPTY_LIST;
+        }
+        CfgSettingVirtualValueDTO.InventoryAgeTO inventoryAgeTO = BeanUtil.toBean(cfgSettingEntity.getDataJson(), CfgSettingVirtualValueDTO.InventoryAgeTO.class);
+        List<CfgSettingVirtualValueDTO.InventoryAgeDateTO> list = inventoryAgeTO.getList();
+        //区间时间
+        List<LocalDate> dateList = new ArrayList<>();
+        for (CfgSettingVirtualValueDTO.InventoryAgeDateTO inventoryAgeDateTO :list) {
+            String ageDateInterval = "";
+            //区间字段
+            if (ObjUtil.isNull(inventoryAgeDateTO.getEndDays())) {
+                ageDateInterval = CharSequenceUtil.format("{}以上", inventoryAgeDateTO.getStartDays());
+            } else {
+                ageDateInterval = CharSequenceUtil.format("{}~{}天", inventoryAgeDateTO.getStartDays(), inventoryAgeDateTO.getEndDays());
+            }
+            boolean equals = StrUtil.equals(daysInterval, ageDateInterval);
+            if(!equals) {
+                continue;
+            }
+            LocalDate nowDate = LocalDate.now();
+            LocalDate endDate = nowDate.minusDays(inventoryAgeDateTO.getStartDays());
+            LocalDate startDate = ObjUtil.isNull(inventoryAgeDateTO.getEndDays()) ? null : nowDate.minusDays(inventoryAgeDateTO.getEndDays());
+            dateList.add(startDate);
+            dateList.add(endDate);
+        }
+        return dateList;
     }
 
     @Override
     public Boolean frameExportExcel(VirtualInventoryAgeDTO.FrameParamDTO dto) {
-        return null;
+        downloadTaskFeign.saveDownloadTask("列表历史库龄明细", EXPORT_WMS_FRAME_VIRTUAL_HIS_INVENTORY_AGE_DETAIL.getCode(), dto);
+        return Boolean.TRUE;
     }
 
 

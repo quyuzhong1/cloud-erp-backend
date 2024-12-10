@@ -246,4 +246,9 @@ public interface ExportWmsFeign {
      */
     @PostMapping("/feign/export/virtualTransFlowDetailPaging")
     PagingVO<VirtualTransFlowDetailDTO.ListDTO> virtualTransFlowDetailPaging(PagingDTO<VirtualTransFlowDetailDTO.SearchParamDTO> dto);
+    /**
+     * 列表历史库龄明细导出
+     */
+    @PostMapping("/feign/export/framePaging")
+    PagingVO<VirtualInventoryAgeDTO.HisInventoryAgeDetailDTO> framePaging(PagingDTO<VirtualInventoryAgeDTO.FrameParamDTO> dto);
 }

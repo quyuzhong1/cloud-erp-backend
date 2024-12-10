@@ -183,6 +183,11 @@ public class VirtualInventoryAgeDTO implements Serializable {
          */
         @NotNull(message = "导出日期不能为空")
         private LocalDate date;
+
+        /**
+         * 日期集合（前端无需传值）
+         */
+        private List<LocalDate> dateList;
     }
 
     @Data
