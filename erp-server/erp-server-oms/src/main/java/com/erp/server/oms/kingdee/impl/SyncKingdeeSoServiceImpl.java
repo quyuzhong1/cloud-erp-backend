@@ -580,11 +580,14 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
         List<SoDetailEntity> viewDTOList = detailEntityList.stream()
                 .filter(req -> cancelIds.contains(req.getId()))
                 .collect(Collectors.toList());
-        detailEntityList.addAll(viewDTOList);
+
+        List<SoDetailEntity> detailEntities = new ArrayList<>();
+        detailEntities.addAll(viewDTOList);
+        detailEntities.addAll(detailEntityList);
 
         BigDecimal totalCanceledGoodsAmount = BigDecimal.ZERO;
         Integer totalCanceledGoodsQty = 0;
-        List<SoDetailEntity> cancelSoDetailList = detailEntityList.stream().filter(req -> cancelSoDetailIds.contains(req.getId())).collect(Collectors.toList());
+        List<SoDetailEntity> cancelSoDetailList = detailEntities.stream().filter(req -> cancelSoDetailIds.contains(req.getId())).collect(Collectors.toList());
         for (SoDetailEntity viewDTO : cancelSoDetailList) {
             totalCanceledGoodsAmount = totalCanceledGoodsAmount.add(viewDTO.getTaxAmountBefore());
             totalCanceledGoodsQty = totalCanceledGoodsQty + viewDTO.getQty();
@@ -622,13 +625,13 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
 
         shudiyunB2cOrderDTO.setStatus(shudiyunB2cOrderDTO.sdyStatusHandle(operate, soInfoEntity.getVersion(), soDetailEntity.getVersion()));
 
-        BigDecimal taxAmountBefore = detailEntityList.stream().map(req -> req.getTaxAmountBefore()).reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
+        BigDecimal taxAmountBefore = detailEntities.stream().map(req -> req.getTaxAmountBefore()).reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
         shudiyunB2cOrderDTO.setTotal_goods_transaction_amount(taxAmountBefore);
 
         //总优惠金额
         shudiyunB2cOrderDTO.setDiscount_deduction_amount(soInfoEntity.getDiscountAmount());
 
-        Integer totalQty = detailEntityList.stream().mapToInt(SoDetailEntity::getQty).sum();
+        Integer totalQty = detailEntities.stream().mapToInt(SoDetailEntity::getQty).sum();
         shudiyunB2cOrderDTO.setTotal_goods_quantity(totalQty);
         shudiyunB2cOrderDTO.setOrder_quantity_to_be_shipped(totalQty);
 
