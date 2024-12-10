@@ -4,6 +4,8 @@ import com.common.business.annotation.Dict;
 import com.common.business.enums.ServiceCodeNameEnum;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.plm.entity.*;
+import com.erp.model.plm.enums.MouldRefundStatusEnum;
+import com.erp.model.plm.enums.RefundStandardEnum;
 import lombok.Data;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -121,19 +123,72 @@ public class MouldDetailDTO implements Serializable {
         private String remark;
 
         /**
+         * 数量
+         */
+        private Integer qty;
+
+        /**
+         * 含税单价
+         */
+        private BigDecimal taxPrice;
+
+        /**
+         * 税率
+         */
+        private BigDecimal taxRate;
+
+        /**
+         * 结算方式
+         */
+        @Dict(serviceCode = ServiceCodeNameEnum.SCM, queryFieldName = "id")
+        private String payMethodId;
+
+        /**
+         * 付款条件
+         */
+        @Dict(serviceCode = ServiceCodeNameEnum.SCM, tableName = "kingdee_payment_condition", queryFieldName = "id")
+        private String paymentCondition;
+
+        /**
+         * 币种
+         */
+        private String currency;
+
+        /**
+         * 汇率
+         */
+        private BigDecimal exchangeRate;
+        /**
+         * 是否费用返还
+         */
+        private Boolean isNeedRefund;
+
+        /**
+         * 返还标准
+         */
+        @Dict(enumClass = RefundStandardEnum.class)
+        private String refundStandard;
+
+        /**
+         * 退款单量
+         */
+        private Integer refundOrderQty;
+
+        /**
+         * 返还金额
+         */
+        private BigDecimal refundAmount;
+
+        /**
+         * 费用返还状态
+         */
+        @Dict(enumClass = MouldRefundStatusEnum.class)
+        private String refundStatus;
+
+        /**
          * 产品信息
          */
         private List<MouldProductDTO.ViewDTO> productList;
-
-        /**
-         * 模具价目信息
-         */
-        private MouldPurchasePriceDTO.ViewDTO purchasePrice;
-
-        /**
-         * 模具价目信息
-         */
-        private MouldRefundAgreementDTO.ViewDTO refundAgreement;
 
         /**
          * 关联产品
@@ -153,8 +208,18 @@ public class MouldDetailDTO implements Serializable {
                 mouldProductList.add(productDto);
             }
             List<MouldRefProductDTO.ViewDTO> mouldRefList = BeanMapperUtils.copyList(MouldRefProductDTO.ViewDTO.class, refList);
-            dto.setPurchasePrice(price);
-            dto.setRefundAgreement(agreement);
+            dto.setQty(price.getQty());
+            dto.setTaxPrice(price.getTaxPrice());
+            dto.setTaxRate(price.getTaxRate());
+            dto.setPayMethodId(price.getPayMethodId());
+            dto.setPaymentCondition(price.getPaymentCondition());
+            dto.setCurrency(price.getCurrency());
+            dto.setExchangeRate(price.getExchangeRate());
+            dto.setIsNeedRefund(agreement.getIsNeedRefund());
+            dto.setRefundStandard(agreement.getRefundStandard());
+            dto.setRefundOrderQty(agreement.getRefundOrderQty());
+            dto.setRefundAmount(agreement.getRefundAmount());
+            dto.setRefundStatus(agreement.getRefundStatus());
             dto.setProductList(mouldProductList);
             dto.setRefProductList(mouldRefList);
             return dto;
