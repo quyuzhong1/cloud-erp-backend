@@ -910,7 +910,7 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
         TmsB2cDeclareReconciliationEntity declareReconciliationEntity = tmsB2cDeclareReconciliationService.getById(reconciliationDetailEntity.getMainId());
 
         List<String> outstockDetailId = costAllocationEntities.stream().map(TransferDeclareCostAllocationEntity::getOutstockDetailId).distinct().collect(Collectors.toList());
-        soOutstockFeign.listDetailBySourceDetailId()
+//        soOutstockFeign.listDetailBySourceDetailId()
 
         for (TransferDeclareCostAllocationEntity costAllocationEntity : costAllocationEntities) {
 
