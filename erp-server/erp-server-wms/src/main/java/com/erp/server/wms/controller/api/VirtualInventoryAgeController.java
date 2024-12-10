@@ -124,6 +124,10 @@ public class VirtualInventoryAgeController extends BaseController {
         return success(virtualInventoryDetailService.hisInventoryAgeDetailPaging(dto));
     }
 
+    @PostMapping("/viewHisInventoryAgeDetail")
+    public ApiResult<PagingVO<VirtualInventoryAgeDTO.HisInventoryAgeDetailDTO>> viewHisInventoryAgeDetail(@RequestBody @Validated PagingDTO<VirtualInventoryAgeDTO.HisInventoryAgeDetailParamDTO> dto) {
+        return success(virtualInventoryDetailService.hisInventoryAgeDetailPaging(dto));
+    }
 
     /**
      * 详情历史库龄明细导出excel
@@ -137,5 +141,7 @@ public class VirtualInventoryAgeController extends BaseController {
         Boolean flag = virtualInventoryDetailService.exportHisInventoryAgeDetail(dto);
         return flag == true ? success() : failure();
     }
+
+
 
 }
