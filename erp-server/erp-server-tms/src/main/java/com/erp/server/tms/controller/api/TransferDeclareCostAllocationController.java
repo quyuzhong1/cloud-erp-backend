@@ -247,6 +247,7 @@ public class TransferDeclareCostAllocationController extends BaseController {
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出Excel")
     @PostMapping(value = "/exportExcel")
     public ApiResult<Object> exportExcel(@RequestBody @Validated TransferDeclareCostAllocationDTO.PagingParamDTO dto) {
+    	transferDeclareCostAllocationService.exportExcel(dto);
         return success();
     }
     

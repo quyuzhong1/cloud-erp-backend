@@ -27,6 +27,7 @@ import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.enums.FileTaskEventEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.utils.ApplicationContextUtils;
@@ -61,6 +62,7 @@ import com.erp.model.tms.enums.TmsB2cDeclareReconciliationStatusEnum;
 import com.erp.model.tms.enums.TransferDeclareCostAllocationReportStatusEnum;
 import com.erp.model.tms.enums.WeightAllocationSmallBagEnum;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.tms.mapper.TransferDeclareCostAllocationMapper;
 import com.erp.server.tms.service.LogisticsChannelService;
 import com.erp.server.tms.service.OperateLogService;
@@ -96,6 +98,8 @@ public class TransferDeclareCostAllocationServiceImpl extends SuperServiceImpl<T
     private TmsB2cDeclareReconciliationDetailService tmsB2cDeclareReconciliationDetailService;
     @Resource
     private DmpTaskFeign dmpTaskFeign;
+    @Resource
+    private DownloadTaskFeign downloadTaskFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -342,5 +346,11 @@ public class TransferDeclareCostAllocationServiceImpl extends SuperServiceImpl<T
 	public BatchResultDTO pushBigTable(String id) {
 		// TODO Auto-generated method stub
 		return null;
+	}
+
+	@Override
+	public Boolean exportExcel(PagingParamDTO dto) {
+		downloadTaskFeign.saveDownloadTask("中转费用分摊列表", FileTaskEventEnum.EXPORT_TRANSFER_DECLARE_COST_ALLOCATION.getCode(), dto);
+        return Boolean.TRUE;
 	}
 }
