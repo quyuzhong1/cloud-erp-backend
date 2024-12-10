@@ -22,6 +22,8 @@
         <result column="sku_total" property="skuTotal"/>
         <result column="location_total" property="locationTotal"/>
     </resultMap>
+
+
     <select id="paging" resultType="com.erp.model.wms.dto.pickingstrategy.PickingListsDTO$PagingView">
         select id,
                update_time,
@@ -123,5 +125,4 @@
         rad.sku_no,
         rad.platform_fn_sku
     </select>
-
 </mapper>

@@ -28,6 +28,7 @@ import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.rpc.dmp.feign.DmpMongoDbFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysDictFeign;
+import com.erp.server.oms.kingdee.SyncSoB2cService;
 import com.erp.server.oms.rocketmq.consumer.NewPlatformRefundOrderConsumerService;
 import com.erp.server.oms.rocketmq.consumer.NewPlatformReturnOrderConsumerService;
 import com.erp.server.oms.service.*;
@@ -99,6 +100,9 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
 
     @Resource
     private SoB2cErrorService soB2cErrorService;
+
+    @Resource
+    private SyncSoB2cService syncSoB2cService;
 
 
 
@@ -376,6 +380,15 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
 //        if (!soB2cReceiverService.saveOrUpdate(receiverEntity)) {
 //            throw new ServiceException("[SoB2cReceiverEntity] 保存失败");
 //        }
+
+
+        //如果是已支付的订单
+        if (SoB2cPayStatusEnum.ENUM_PAID.getCode().equals(mainEntity.getPayStatus()) && mainEntity.getPayTime() != null && ApproveStatusEnum.APPROVE.getCode().equals(mainEntity.getApproveStatus().getStatus())) {
+            //同步数帝云
+            List<SoB2cDetailEntity> soB2cDetailEntityList = soB2cDetailService.listByMainId(mainEntity.getId());
+            syncSoB2cService.syncDataToSdy(mainEntity, soB2cDetailEntityList, SyncOperateEnum.OPERATE_UPDATE.getCode());
+        }
+
         return resultDTO;
     }
 

@@ -1,5 +1,6 @@
 package com.erp.server.wms.service.impl;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.json.JSONUtil;
@@ -33,7 +34,9 @@ import com.erp.model.dmp.dto.ThirdMappingDTO;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
 import com.erp.model.oms.entity.*;
+import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.oms.enums.BillTypeEnum;
+import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.oms.enums.SoB2cReturnTypeEnum;
 import com.erp.model.oms.enums.SoReturnChangeListTypeEnum;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
@@ -645,8 +648,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
             this.syncToWdt(entity, SyncOperateEnum.OPERATE_APPROVE);
 
             //推送数帝云
-            List<SoReturnInstockDetailEntity> detailEntityList = soReturnInstockDetailService.listDetailByMainId(entity.getId());
-            detailEntityList.forEach(detailEntity -> syncSoReturnInstockService.syncDataToSdy(entity, detailEntity, SyncOperateEnum.OPERATE_APPROVE.getCode()));
+            this.syncToSdyHandler(Arrays.asList(entity), SyncOperateEnum.OPERATE_APPROVE.getCode());
 
         }else {
             //审核不通过
@@ -687,8 +689,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         this.syncToWdt(entity,SyncOperateEnum.OPERATE_DISAPPROVE);
 
         //推送数帝云
-        List<SoReturnInstockDetailEntity> detailEntityList = soReturnInstockDetailService.listDetailByMainId(entity.getId());
-        detailEntityList.forEach(detailEntity -> syncSoReturnInstockService.syncDataToSdy(entity, detailEntity, SyncOperateEnum.OPERATE_DISAPPROVE.getCode()));
+        this.syncToSdyHandler(Arrays.asList(entity), SyncOperateEnum.OPERATE_DISAPPROVE.getCode());
 
         //操作日志
         operateLogService.addModuleOperateLog(String.format("反审核了一个销售退货通知单【%s】",entity.getCode()), ModuleTypeEnum.SO_RETURN_NOTICE.getCode(), entity.getId(), "反审核操作");
@@ -749,11 +750,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         sendPushTask(entityList,SyncOperateEnum.OPERATE_INVALID.getCode());
 
         //推送数帝云
-        List<SoReturnInstockDetailEntity> soReturnInstockDetailEntityList = soReturnInstockDetailService.listDetailByMainIds(ids);
-        for (SoReturnInstockEntity entity : entityList) {
-            List<SoReturnInstockDetailEntity> detailEntityList = soReturnInstockDetailEntityList.stream().filter(req -> req.getMainId().equals(entity.getId())).collect(Collectors.toList());
-            detailEntityList.forEach(detailEntity -> syncSoReturnInstockService.syncDataToSdy(entity, detailEntity, SyncOperateEnum.OPERATE_INVALID.getCode()));
-        }
+        this.syncToSdyHandler(entityList, SyncOperateEnum.OPERATE_INVALID.getCode());
 
         //操作日志
         List<Pair<String, String>> pairList = entityList.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
@@ -789,10 +786,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         sendPushTask(entityList,SyncOperateEnum.OPERATE_DELETE.getCode());
 
         //推送数帝云
-        for (SoReturnInstockEntity entity : entityList) {
-            detailAllList.forEach(soOutstockDetailEntity -> syncSoReturnInstockService.syncDataToSdy(entity, soOutstockDetailEntity, SyncOperateEnum.OPERATE_DELETE.getCode()));
-        }
-
+        this.syncToSdyHandler(entityList, SyncOperateEnum.OPERATE_DELETE.getCode());
         //删除主表
         return flag;
     }
@@ -1746,5 +1740,74 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         List<DmpPushWdtDetailDTO> detailDTOList = BeanMapper.copyList(inGoods, DmpPushWdtDetailDTO.class);
         pushWdtDTO.setDetailDTOList(detailDTOList);
         return pushWdtDTO;
+    }
+
+    @Override
+    public List<SoReturnInstockEntity> queryToSdy(LocalDate startDate, LocalDate endDate, Integer pageSize, int offset) {
+        return baseMapper.queryToSdy(startDate, endDate, pageSize, offset);
+    }
+
+    public void syncToSdyHandler(List<SoReturnInstockEntity> list, String operate) {
+        List<String> ids = list.stream().map(req -> req.getId()).collect(Collectors.toList());
+        List<SoReturnInstockDetailEntity> detailEntityList = soReturnInstockDetailService.listDetailByMainIds(ids);
+
+        List<String> skuNos = detailEntityList.stream().map(req -> req.getSkuNo()).collect(Collectors.toList());
+        List<SkuVO> skuVOList = plmTaskFeign.listBySkuNoList(skuNos);
+        List<String> skuIds = detailEntityList.stream().map(req -> req.getSkuId()).collect(Collectors.toList());
+        List<BomChildrenSkuDTO> bomChildrenSkuDTOS = plmTaskFeign.listBomChildBySkuIds(skuIds);
+
+        List<String> currencyCodeList = detailEntityList.stream().map(req -> req.getCurrency()).distinct().collect(Collectors.toList());
+        List<CurrencyDTO.ViewDTO> currencyList = sysUserFeign.listByCurrency(currencyCodeList);
+        //父类产品
+        List<String> parentSkuId = bomChildrenSkuDTOS.stream().map(BomChildrenSkuDTO::getParentSkuId).distinct().collect(Collectors.toList());
+        List<ProductDetailEntity> parentSkuList = new ArrayList<>();
+        if (CollUtil.isNotEmpty(parentSkuId)) {
+            parentSkuList = FeignQuery.create(ProductDetailEntity.class)
+                    .in(ProductDetailEntity::getId, parentSkuId)
+                    .list();
+        }
+
+        //客户
+        List<String> customerIds = list.stream().map(req -> req.getCustomerId()).distinct().collect(Collectors.toList());
+        List<CustomerInfoEntity> customerInfoList = new ArrayList<>();
+        if (CollUtil.isNotEmpty(customerIds)) {
+            //组织
+            customerInfoList = FeignQuery.create(CustomerInfoEntity.class)
+                    .in(CustomerInfoEntity::getId, customerIds)
+                    .list();
+        }
+
+        //组织
+        List<String> financialOrganization = customerInfoList.stream().map(req -> req.getFinancialOrganization()).distinct().collect(Collectors.toList());
+        List<BaseIdDTO.CodeDTO> companyEntities = sysUserFeign.getAccountingCompanyList(financialOrganization);
+
+        List<DictBasicEntity> dictBasicEntityList = FeignQuery.create(DictBasicEntity.class).eq(DictBasicEntity::getType, DictBasicTypeEnum.SALES_PLATFORM.getType()).list();
+
+
+        List<String> soReturnIds = list.stream().filter(req -> SourceTypeEnum.SO_RETURN.getCode().equals(req.getSourceType())).map(req -> req.getSourceId()).distinct().collect(Collectors.toList());
+        List<SoReturnEntity> soReturnEntityList = soReturnFeign.listByIds(soReturnIds);
+
+        List<String> receiveIds = list.stream().filter(req -> SourceTypeEnum.SO_RETURN_RECEIVE.getCode().equals(req.getSourceType())).map(req -> req.getSourceId()).distinct().collect(Collectors.toList());
+        List<SoReturnReceiveEntity> soReturnReceiveEntityList = soReturnReceiveService.listByIds(receiveIds);
+
+        List<String> returnIds = list.stream().map(req -> req.getSourceId()).distinct().collect(Collectors.toList());
+        List<SoReturnEntity> receiveReturnList = soReturnFeign.listByIds(returnIds);
+
+        for (SoReturnInstockEntity entity : list) {
+            List<SoReturnInstockDetailEntity> detailEntities = soReturnInstockDetailService.listDetailByMainId(entity.getId());
+            syncSoReturnInstockService.syncDataToSdy(entity,
+                    detailEntities,
+                    operate,
+                    skuVOList,
+                    bomChildrenSkuDTOS,
+                    currencyList,
+                    parentSkuList,
+                    customerInfoList,
+                    companyEntities,
+                    dictBasicEntityList,
+                    soReturnEntityList,
+                    soReturnReceiveEntityList,
+                    receiveReturnList);
+        }
     }
 }

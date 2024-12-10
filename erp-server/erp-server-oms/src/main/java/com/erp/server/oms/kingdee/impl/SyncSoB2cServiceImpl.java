@@ -54,30 +54,26 @@ public class SyncSoB2cServiceImpl implements SyncSoB2cService {
     @Resource
     private OmsPushMsgService omsPushMsgService;
     @Resource
-    private SoB2cDetailService soB2cDetailService;
-    @Resource
     private DictBasicService dictBasicService;
 
     @Override
-    public Map<String, Object> syncDataToSdyFieldHandler(SoB2cEntity soB2cEntity, SoB2cDetailEntity soB2cDetailEntity, String operate) {
+    public Map<String, Object> syncDataToSdyFieldHandler(SoB2cEntity soB2cEntity,
+                                                         List<SoB2cDetailEntity> soB2cDetailEntityList,
+                                                         SoB2cDetailEntity soB2cDetailEntity,
+                                                         String operate,
+                                                         List<SkuVO> skuVOList,
+                                                         List<BomChildrenSkuDTO> bomChildrenSkuDTOS,
+                                                         List<ProductDetailEntity> parentSkuList,
+                                                         List<ListingInfoEntity> listingInfoEntities,
+                                                         List<CurrencyDTO.ViewDTO> currencyList,
+                                                         List<DictCurrencyEntity> dictCurrencyEntities,
+                                                         List<ShopInfoEntity> shopInfoList,
+                                                         List<CustomerInfoEntity> customerInfoList,
+                                                         List<BaseIdDTO.CodeDTO> companyEntities,
+                                                         List<DictBasicEntity> dictBasicEntityList,
+                                                         List<DictBasicEntity> dictList) {
+
         DateTimeFormatter localDateTime = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-
-        List<SoB2cDetailEntity> soB2cDetailEntityList = soB2cDetailService.listByMainId(soB2cEntity.getId());
-
-        List<String> skuNos = soB2cDetailEntityList.stream().map(req -> req.getSkuNo()).collect(Collectors.toList());
-        List<SkuVO> skuVOList = plmTaskFeign.listBySkuNoList(skuNos);
-        List<String> skuIds = soB2cDetailEntityList.stream().map(req -> req.getSkuId()).collect(Collectors.toList());
-        List<BomChildrenSkuDTO> bomChildrenSkuDTOS = plmTaskFeign.listBomBySkuIds(skuIds);
-
-        List<CurrencyDTO.ViewDTO> currencyList = sysUserFeign.listByCurrency(Arrays.asList(soB2cEntity.getCurrency()));
-        //父类产品
-        List<String> parentSkuId = bomChildrenSkuDTOS.stream().map(BomChildrenSkuDTO::getParentSkuId).distinct().collect(Collectors.toList());
-        List<ProductDetailEntity> parentSkuList = new ArrayList<>();
-        if (CollUtil.isNotEmpty(parentSkuId)) {
-            parentSkuList = FeignQuery.create(ProductDetailEntity.class)
-                    .in(ProductDetailEntity::getId, parentSkuId)
-                    .list();
-        }
 
         //优惠额
         BigDecimal totalDiscount = BigDecimal.ZERO;
@@ -88,21 +84,6 @@ public class SyncSoB2cServiceImpl implements SyncSoB2cService {
 
         //总售价
         BigDecimal totalAmount = soB2cEntity.getAmount();
-
-
-        ShopInfoEntity shopInfo = FeignQuery.getById(ShopInfoEntity.class, soB2cEntity.getShopId());
-
-        //组织信息
-        CustomerInfoEntity customerInfo = FeignQuery.getById(CustomerInfoEntity.class, shopInfo.getCustomerId());
-        List<BaseIdDTO.CodeDTO> companyEntities = new ArrayList<>();
-
-        if (ObjectUtil.isNotEmpty(customerInfo)) {
-            companyEntities = sysUserFeign.getAccountingCompanyList(Arrays.asList(customerInfo.getFinancialOrganization(), shopInfo.getSalesOrgId()));
-        }
-
-        List<String> skuNoList = soB2cDetailEntityList.stream().map(req -> req.getPlatformSkuNo()).distinct().collect(Collectors.toList());
-        //组织信息
-        List<ListingInfoEntity> listingInfoEntities = FeignQuery.create(ListingInfoEntity.class).in(ListingInfoEntity::getPlatformSkuNo, skuNoList).list();
 
         ShudiyunB2cOrderDTO shudiyunB2cOrderDTO = new ShudiyunB2cOrderDTO();
 
@@ -149,21 +130,25 @@ public class SyncSoB2cServiceImpl implements SyncSoB2cService {
 
         shudiyunB2cOrderDTO.setBuyer_actual_payment(soB2cEntity.getPayAmount());
         shudiyunB2cOrderDTO.setTotal_freight(soB2cEntity.getShippingFee());
-
+        String customerId = "";
+        ShopInfoEntity shopInfo = shopInfoList.stream().filter(req -> req.getId().equals(soB2cEntity.getShopId())).findFirst().orElse(null);
         if (ObjectUtil.isNotEmpty(shopInfo)) {
             String salesOrgCode = companyEntities.stream().filter(req -> req.getId().equals(shopInfo.getSalesOrgId())).map(req -> req.getCode()).findFirst().orElse("");
             shudiyunB2cOrderDTO.setSales_company_code(salesOrgCode);
             shudiyunB2cOrderDTO.setShop_no(shopInfo.getId());
             shudiyunB2cOrderDTO.setShop_name(shopInfo.getName());
-            DictCurrencyEntity dictCurrencyEntity = FeignQuery.getById(DictCurrencyEntity.class, shopInfo.getTradeCurrency());
+            DictCurrencyEntity dictCurrencyEntity = dictCurrencyEntities.stream().filter(req -> req.getId().equals(shopInfo.getTradeCurrency())).findFirst().orElse(null);
             if (ObjectUtil.isNotEmpty(dictCurrencyEntity)) {
                 shudiyunB2cOrderDTO.setTransaction_currency(dictCurrencyEntity.getName());
             }
             shudiyunB2cOrderDTO.setTransaction_currency_code(shopInfo.getTradeCurrency());
             shudiyunB2cOrderDTO.setSettlement_currency_code(shopInfo.getSettlementCurrency());
             shudiyunB2cOrderDTO.setShop_name(shopInfo.getName());
+            customerId = shopInfo.getCustomerId();
         }
 
+        String finalCustomerId = customerId;
+        CustomerInfoEntity customerInfo = customerInfoList.stream().filter(req -> req.getId().equals(finalCustomerId)).findFirst().orElse(null);
         if (ObjectUtil.isNotEmpty(customerInfo)) {
             BaseIdDTO.CodeDTO sysAccountingCompanyEntity = companyEntities.stream().filter(req -> req.getId().equals(customerInfo.getFinancialOrganization())).findFirst().orElse(null);
             if (ObjectUtil.isNotEmpty(sysAccountingCompanyEntity)) {
@@ -173,20 +158,17 @@ public class SyncSoB2cServiceImpl implements SyncSoB2cService {
             }
             String subPlatformType = customerInfo.getPlatformType();
             if (StringUtils.isNotBlank(subPlatformType)) {
-                List<DictBasicEntity> dictList = dictBasicService.lambdaQuery().eq(DictBasicEntity::getType, "sdySubPlatform").eq(DictBasicEntity::getName, subPlatformType).list();
-                if (CollUtil.isNotEmpty(dictList)) {
-                    shudiyunB2cOrderDTO.setSubplatform_no(dictList.get(0).getValue());
-                    shudiyunB2cOrderDTO.setSubplatform_name(dictList.get(0).getName());
+                DictBasicEntity dictBasicEntity = dictList.stream().filter(req -> req.getName().equals(subPlatformType)).findFirst().orElse(null);
+                if (ObjectUtil.isNotEmpty(dictBasicEntity)) {
+                    shudiyunB2cOrderDTO.setSubplatform_no(dictBasicEntity.getValue());
+                    shudiyunB2cOrderDTO.setSubplatform_name(dictBasicEntity.getName());
                 }
             }
         }
 
         shudiyunB2cOrderDTO.setPlatform_id(soB2cEntity.getDictPlatform());
-        List<String> dictKeys = Lists.newArrayList(DictBasicTypeEnum.SALES_PLATFORM.getType());
-        List<DictBasicEntity> dictBasicEntityList = dictBasicService.getByKeyList(dictKeys);
         String platformName = dictBasicEntityList.stream().filter(req -> req.getValue().equals(customerInfo.getPlatformType())).map(DictBasicEntity::getName).findFirst().orElse("");
         shudiyunB2cOrderDTO.setPlatform_name(platformName);
-
         shudiyunB2cOrderDTO.setRoot_node_no(soB2cEntity.getPlatformCode());
         if (soB2cEntity.getPayTime() != null) {
             shudiyunB2cOrderDTO.setRoot_node_create_time(localDateTime.format(soB2cEntity.getPayTime()));
@@ -282,6 +264,21 @@ public class SyncSoB2cServiceImpl implements SyncSoB2cService {
     public void syncDataToSdy(SoB2cEntity soB2cEntity, List<SoB2cDetailEntity> soB2cDetailEntityList, String operate) {
         this.syncDataToSdyFieldHandlerBatch(soB2cEntity, soB2cDetailEntityList, operate);
 
+    }
+
+    @Override
+    public void syncDataToSdy(SoB2cEntity soB2cEntity, List<SoB2cDetailEntity> detailEntityList, String operate, List<SkuVO> skuVOList, List<BomChildrenSkuDTO> bomChildrenSkuDTOS, List<ProductDetailEntity> parentSkuList, List<ListingInfoEntity> listingInfoEntities, List<CurrencyDTO.ViewDTO> currencyList, List<DictCurrencyEntity> dictCurrencyEntities, List<ShopInfoEntity> shopInfoList, List<CustomerInfoEntity> customerInfoList, List<BaseIdDTO.CodeDTO> companyEntities, List<DictBasicEntity> dictBasicEntityList, List<DictBasicEntity> dictList) {
+        for (SoB2cDetailEntity soB2cDetailEntity : detailEntityList) {
+            //同步配货单
+            OmsPushMsgEntity omsPushMsgEntity = new OmsPushMsgEntity();
+            omsPushMsgEntity.setTargetPlatform(DmpBasicSystemCodeEnum.SDY.getCode());
+            omsPushMsgEntity.setSourceType(SourceTypeEnum.SDY_DELIVERY_ORDER.getCode());
+            omsPushMsgEntity.setSourceId(soB2cDetailEntity.getId());
+            omsPushMsgEntity.setSourceCode(soB2cEntity.getCode() + "_" + soB2cDetailEntity.getSkuNo());
+            omsPushMsgEntity.setSyncOperate(operate);
+            omsPushMsgEntity.setPushData(JSON.toJSONString(this.syncDataToSdyFieldHandler(soB2cEntity, detailEntityList, soB2cDetailEntity, operate, skuVOList, bomChildrenSkuDTOS, parentSkuList, listingInfoEntities, currencyList, dictCurrencyEntities, shopInfoList, customerInfoList, companyEntities, dictBasicEntityList, dictList)));
+            omsPushMsgService.save(omsPushMsgEntity);
+        }
     }
 
     private void syncDataToSdyFieldHandlerBatch(SoB2cEntity soB2cEntity, List<SoB2cDetailEntity> soB2cDetailEntityList, String operate) {

@@ -2,6 +2,7 @@ package com.erp.server.tms.sync.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.core.util.ObjectUtil;
 import com.alibaba.fastjson.JSON;
 import com.common.business.dto.ShudiyunB2cOrderDTO;
 import com.common.business.enums.SourceTypeEnum;
@@ -20,35 +21,31 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 @Service
 @Slf4j
 public class SyncLogisticsBillServiceImpl implements SyncLogisticsBillService {
 
     @Resource
-    private LogisticsBillDetailService logisticsBillDetailService;
-
-    @Resource
-    private LogisticsChannelService logisticsChannelService;
-
-    @Resource
-    private LogisticsSupplierService logisticsSupplierService;
-
-    @Resource
     private TmsPushMsgService tmsPushMsgService;
 
     @Override
-    public Map<String, Object> syncDataToSdyFieldHandler(LogisticsBillEntity entity, LogisticsBillDetailEntity logisticsBillDetailEntity, String operate) {
+    public Map<String, Object> syncDataToSdyFieldHandler(LogisticsBillEntity entity,
+                                                         LogisticsBillDetailEntity logisticsBillDetailEntity,
+                                                         String operate,
+                                                         List<LogisticsChannelEntity> logisticsChannelEntities,
+                                                         List<LogisticsSupplierEntity> logisticsSupplierEntities) {
 
         DateTimeFormatter localDateTime = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
-        List<LogisticsBillDetailEntity> detailEntityList = logisticsBillDetailService.listByMainIds(Arrays.asList(entity.getId()));
-        LogisticsChannelEntity channelEntity = logisticsChannelService.getById(entity.getChannelId());
-
+        LogisticsChannelEntity channelEntity = logisticsChannelEntities.stream().filter(req -> req.getId().equals(entity.getChannelId())).findFirst().orElse(null);
         String supplierName = "";
         if (Objects.nonNull(channelEntity)) {
-            LogisticsSupplierEntity supplierEntity = logisticsSupplierService.getById(channelEntity.getMainId());
-            supplierName = supplierEntity.getSupplierName();
+            LogisticsSupplierEntity supplierEntity = logisticsSupplierEntities.stream().filter(req -> req.getId().equals(channelEntity.getId())).findFirst().orElse(null);
+            if (ObjectUtil.isNotEmpty(supplierEntity)) {
+                supplierName = supplierEntity.getSupplierName();
+            }
         }
 
         ShudiyunB2cOrderDTO shudiyunB2cOrderDTO = new ShudiyunB2cOrderDTO();
@@ -100,15 +97,23 @@ public class SyncLogisticsBillServiceImpl implements SyncLogisticsBillService {
         return BeanUtil.beanToMap(shudiyunB2cOrderDTO);
     }
 
+
     @Override
-    public void syncDataToSdy(LogisticsBillEntity entity, LogisticsBillDetailEntity detailEntity, String operate) {
-        TmsPushMsgEntity tmsPushMsgEntity = new TmsPushMsgEntity();
-        tmsPushMsgEntity.setTargetPlatform(DmpBasicSystemCodeEnum.SDY.getCode());
-        tmsPushMsgEntity.setSourceType(SourceTypeEnum.SDY_LOGISTICS_BILL.getCode());
-        tmsPushMsgEntity.setSourceId(detailEntity.getId());
-        tmsPushMsgEntity.setSourceCode(CharSequenceUtil.isBlank(entity.getTransportNo()) ? detailEntity.getTrackNo() : entity.getTransportNo());
-        tmsPushMsgEntity.setSyncOperate(operate);
-        tmsPushMsgEntity.setPushData(JSON.toJSONString(this.syncDataToSdyFieldHandler(entity, detailEntity, operate)));
-        tmsPushMsgService.save(tmsPushMsgEntity);
+    public void syncDataToSdy(LogisticsBillEntity entity,
+                              List<LogisticsBillDetailEntity> detailEntityList,
+                              String operate,
+                              List<LogisticsChannelEntity> logisticsChannelEntities,
+                              List<LogisticsSupplierEntity> logisticsSupplierEntities) {
+
+        for (LogisticsBillDetailEntity billDetailEntity : detailEntityList) {
+            TmsPushMsgEntity tmsPushMsgEntity = new TmsPushMsgEntity();
+            tmsPushMsgEntity.setTargetPlatform(DmpBasicSystemCodeEnum.SDY.getCode());
+            tmsPushMsgEntity.setSourceType(SourceTypeEnum.SDY_LOGISTICS_BILL.getCode());
+            tmsPushMsgEntity.setSourceId(billDetailEntity.getId());
+            tmsPushMsgEntity.setSourceCode(CharSequenceUtil.isBlank(entity.getTransportNo()) ? billDetailEntity.getTrackNo() : entity.getTransportNo());
+            tmsPushMsgEntity.setSyncOperate(operate);
+            tmsPushMsgEntity.setPushData(JSON.toJSONString(this.syncDataToSdyFieldHandler(entity, billDetailEntity, operate, logisticsChannelEntities, logisticsSupplierEntities)));
+            tmsPushMsgService.save(tmsPushMsgEntity);
+        }
     }
 }

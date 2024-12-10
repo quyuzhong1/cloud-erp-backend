@@ -5,9 +5,9 @@ import com.common.business.dto.DmpSyncMqDTO;
 import com.common.business.enums.SourceTypeEnum;
 import com.erp.model.tms.entity.LogisticsBillDetailEntity;
 import com.erp.model.tms.entity.LogisticsBillEntity;
-import com.erp.server.tms.service.LogisticsBillDetailService;
-import com.erp.server.tms.service.LogisticsBillService;
-import com.erp.server.tms.service.SyncTaskService;
+import com.erp.model.tms.entity.LogisticsChannelEntity;
+import com.erp.model.tms.entity.LogisticsSupplierEntity;
+import com.erp.server.tms.service.*;
 import com.erp.server.tms.sync.SyncLogisticsBillService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -30,6 +30,12 @@ public class SyncTaskServiceImpl implements SyncTaskService {
 
     @Resource
     private SyncLogisticsBillService syncLogisticsBillService;
+
+    @Resource
+    private LogisticsChannelService logisticsChannelService;
+
+    @Resource
+    private LogisticsSupplierService logisticsSupplierService;
 
     @Override
     public Map<String, Map<String, Object>> newFindDataSendSyncTask(DmpSyncMqDTO.SyncParamDTO syncParamDTO) {
@@ -66,6 +72,13 @@ public class SyncTaskServiceImpl implements SyncTaskService {
         }
         List<String> billIds = detailEntityList.stream().map(LogisticsBillDetailEntity::getMainId).distinct().collect(Collectors.toList());
         List<LogisticsBillEntity> entityList = logisticsBillService.listByIds(billIds);
+
+        List<String> channelIds = entityList.stream().map(req -> req.getChannelId()).distinct().collect(Collectors.toList());
+        List<LogisticsChannelEntity> logisticsChannelEntities = logisticsChannelService.listByIds(channelIds);
+
+        List<String> supplierIds = logisticsChannelEntities.stream().map(req -> req.getMainId()).distinct().collect(Collectors.toList());
+        List<LogisticsSupplierEntity> logisticsSupplierEntities = logisticsSupplierService.listByIds(supplierIds);
+
         for (DmpSyncMqDTO.SyncParamDetailDTO syncParamDetailDTO :  sourceDetailList) {
             String sourceId = syncParamDetailDTO.getSourceId();
             LogisticsBillDetailEntity detailEntity = detailEntityList.stream().filter(req -> req.getId().equals(sourceId)).findFirst().orElse(null);
@@ -76,7 +89,7 @@ public class SyncTaskServiceImpl implements SyncTaskService {
             if (ObjectUtils.isEmpty(entity)) {
                 continue;
             }
-            resultList.put(syncParamDetailDTO.getDataId(), syncLogisticsBillService.syncDataToSdyFieldHandler(entity, detailEntity, syncParamDetailDTO.getSyncOperate()));
+            resultList.put(syncParamDetailDTO.getDataId(), syncLogisticsBillService.syncDataToSdyFieldHandler(entity, detailEntity, syncParamDetailDTO.getSyncOperate(), logisticsChannelEntities, logisticsSupplierEntities));
         }
         return resultList;
     }

@@ -63,6 +63,8 @@ public class MergePackageDeliveryConsumer implements RocketMQListener<String> {
     private PackageForecastService packageForecastService;
     @Resource
     private AsyncService asyncService;
+    @Resource
+    private WaveListService waveListService;
 
     /**
      * 组包处理标记发货和生成销售出库单(勿动)
@@ -101,6 +103,8 @@ public class MergePackageDeliveryConsumer implements RocketMQListener<String> {
         if(!SoB2cDeliveryStatusEnum.SHIPPED.getCode().equalsIgnoreCase(curDeliveryEntity.getStatus())){
             //处理其他d单据状态(独立事务)
             packageForecastService.handleMergePackageDeliveryOther(soId, curDeliveryEntity);
+            //波次列表波次状态自动变更
+            waveListService.waveListStatusAutoChange(curDeliveryEntity.getId());
             //扣减冻结库存
             isOutVirtual = soB2cDeliveryService.generateOutFreezeError(curDeliveryEntity);
         }

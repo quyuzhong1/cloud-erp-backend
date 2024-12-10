@@ -484,4 +484,6 @@ public interface SoInfoService extends SuperService<SoInfoEntity> {
      * @param deliveryStatus
      */
     void sdyFieldOrderHandler(String soId, String operateEnum, String deliveryStatus);
+
+    List<SoInfoEntity> queryToSdy(LocalDate startDate, LocalDate endStart, Integer pageSize, int offset);
 }

@@ -11,6 +11,8 @@ import com.erp.model.wms.dto.WmsDataCompareTaskDTO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -231,4 +233,6 @@ public interface SoB2cMapper extends BaseMapper<SoB2cEntity> {
      * @return
      */
     List<SoB2cDTO.TabListDTO> listCountUnionAll(@Param("maps") List<Map<String, String>> maps, @Param("shopAuthResultDTO") SoB2cDTO.ShopAuthResultDTO shopAuthResultDTO);
+
+    List<SoB2cEntity> queryToSdy(@Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate, @Param("pageSize") Integer pageSize, @Param("offset") Integer offset);
 }

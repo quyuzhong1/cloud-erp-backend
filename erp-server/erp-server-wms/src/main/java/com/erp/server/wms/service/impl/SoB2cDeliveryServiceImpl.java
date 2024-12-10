@@ -92,6 +92,7 @@ import lombok.extern.slf4j.Slf4j;
 import net.sf.jasperreports.engine.data.JRBeanCollectionDataSource;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.ObjectUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
 import org.springframework.beans.BeanUtils;
 import org.springframework.context.annotation.Lazy;
@@ -1369,6 +1370,16 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         Boolean update = updateStatusByIdList(Collections.singletonList(id), SoB2cDeliveryStatusEnum.PICKING.getStatus(), Boolean.TRUE, Boolean.TRUE);
         if (!update) {
             throw new ServiceException("完成打印失败");
+        }
+        //更新波次列表物流单打印时间和物流单打印状态
+        List<WaveListDetailEntity> waveListDetails = waveListDetailService.lambdaQuery().eq(WaveListDetailEntity::getDeliveryId, id).list();
+        List<String> waveIds = waveListDetails.stream().map(WaveListDetailEntity::getMainId).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
+        if(CollectionUtils.isNotEmpty(waveIds)){
+            waveListService.lambdaUpdate()
+                    .set(WaveListEntity::getPrintTime, LocalDateTime.now())
+                    .set(WaveListEntity::getPrintStatus, PrintStatusEnum.PRINT_FINISH.getCode())
+                    .in(WaveListEntity::getId,waveIds)
+                    .update();
         }
         operateLogService.addModuleOperateLog(CharSequenceUtil.format("完成单据单号为【{}】的打印操作",soB2cDeliveryEntity.getCode()), ModuleTypeEnum.SO_B2C_DELIVERY.getCode(), soB2cDeliveryEntity.getId(), "完成打印");
         return BatchResultDTO.success(soB2cDeliveryEntity.getId(), soB2cDeliveryEntity.getCode(), OperationTypeEnum.UPDATE);

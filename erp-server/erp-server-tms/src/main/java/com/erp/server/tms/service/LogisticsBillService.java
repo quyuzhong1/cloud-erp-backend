@@ -14,6 +14,7 @@ import com.erp.model.tms.entity.LogisticsBillEntity;
 import com.erp.model.tms.vo.response.CancelResponseVO;
 import com.erp.model.tms.vo.response.InterceptResponseVO;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -258,4 +259,6 @@ public interface LogisticsBillService extends SuperService<LogisticsBillEntity> 
      * @param operateEnum
      */
     void pushSdyFieldHandler(LogisticsBillEntity entity, String operateEnum);
+
+    List<LogisticsBillEntity> queryToSdy(LocalDateTime startTime, LocalDateTime endTime, Integer pageSize, int offset);
 }
