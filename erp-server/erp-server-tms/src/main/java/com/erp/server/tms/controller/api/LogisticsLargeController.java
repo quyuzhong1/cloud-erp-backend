@@ -269,6 +269,14 @@ public class LogisticsLargeController extends BaseController {
         List<String> mainIds = list.stream().map(req -> req.getMainId()).distinct().collect(Collectors.toList());
         List<TransferDeclareCostAllocationMainEntity> transferDeclareCostAllocationMainEntities = transferDeclareCostAllocationMainService.listByIds(mainIds);
 
+        List<String> outstockDetailId = list.stream().map(req -> req.getOutstockDetailId()).distinct().collect(Collectors.toList());
+        List<SoOutstockDetailEntity> soOutstockDetailEntityList = new ArrayList<>();
+        if (CollUtil.isNotEmpty(outstockDetailId)) {
+            soOutstockDetailEntityList = FeignQuery.getByIds(SoOutstockDetailEntity.class, outstockDetailId);
+        }
+        List<String> soOutstockIds = soOutstockDetailEntityList.stream().map(SoOutstockDetailEntity::getMainId).distinct().collect(Collectors.toList());
+        List<SoOutstockEntity> soOutstockEntities = soOutstockFeign.listByIds(soOutstockIds);
+
         //根据整单添加操作
         for (TransferDeclareCostAllocationMainEntity transferDeclareCostAllocationMainEntity : transferDeclareCostAllocationMainEntities) {
                 List<BatchResultDTO> resultDTOList = logisticsLargeService.generateTransferCostAllocationTable(transferDeclareCostAllocationMainEntity);
