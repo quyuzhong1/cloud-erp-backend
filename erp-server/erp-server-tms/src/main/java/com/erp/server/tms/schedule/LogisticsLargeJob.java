@@ -56,7 +56,7 @@ public class LogisticsLargeJob {
                 .list();
 
         for (TransferDeclareCostAllocationMainEntity transferDeclareCostAllocationMainEntity : allocationMainEntityList) {
-            logisticsLargeService.generateTransferCostAllocationTable(transferDeclareCostAllocationMainEntity);
+//            logisticsLargeService.generateTransferCostAllocationTable(transferDeclareCostAllocationMainEntity);
         }
     }
 
@@ -78,7 +78,7 @@ public class LogisticsLargeJob {
                 .list();
 
         for (TransferDeclareCostAllocationMainEntity transferDeclareCostAllocationMainEntity : allocationMainEntityList) {
-            logisticsLargeService.generateTransferCostAllocationTable(transferDeclareCostAllocationMainEntity);
+//            logisticsLargeService.generateTransferCostAllocationTable(transferDeclareCostAllocationMainEntity);
         }
     }
 }
