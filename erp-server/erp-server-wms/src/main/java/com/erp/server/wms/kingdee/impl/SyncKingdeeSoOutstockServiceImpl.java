@@ -1198,6 +1198,8 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
         BomChildrenSkuDTO bomChildrenSkuDTO = bomChildrenSkuDTOS.stream().filter(req -> req.getParentSkuId().equals(soOutstockDetailEntity.getSkuId())).findFirst().orElse(null);
         if (ObjectUtil.isNotEmpty(bomChildrenSkuDTO) && BomTypeEnum.COMBINATION.getType().equals(bomChildrenSkuDTO.getType())) {
             shudiyunB2cOrderDTO.setIs_comb(1);
+            shudiyunB2cOrderDTO.setSuite_no(bomChildrenSkuDTO.getSkuNo());
+            shudiyunB2cOrderDTO.setSuite_name(bomChildrenSkuDTO.getSkuName());
         } else {
             bomChildrenSkuDTO = bomChildrenSkuDTOS.stream().filter(req -> req.getSkuId().equals(soOutstockDetailEntity.getSkuId())).findFirst().orElse(null);
             if (ObjectUtil.isNotEmpty(bomChildrenSkuDTO)) {
@@ -1205,6 +1207,9 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
                 BomChildrenSkuDTO finalBomChildrenSkuDTO = bomChildrenSkuDTO;
                 String skuName = parentSkuList.stream().filter(req -> req.getId().equals(finalBomChildrenSkuDTO.getParentSkuId())).map(ProductDetailEntity::getName).findFirst().orElse("");
                 shudiyunB2cOrderDTO.setSuite_name(skuName);
+            } else {
+                shudiyunB2cOrderDTO.setSuite_no(skuVO.getSkuNo());
+                shudiyunB2cOrderDTO.setSuite_name(skuVO.getSkuName());
             }
         }
 
@@ -1390,6 +1395,8 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
             BomChildrenSkuDTO bomChildrenSkuDTO = bomChildrenSkuDTOS.stream().filter(req -> req.getParentSkuId().equals(soOutstockDetailEntity.getSkuId())).findFirst().orElse(null);
             if (ObjectUtil.isNotEmpty(bomChildrenSkuDTO) && BomTypeEnum.COMBINATION.getType().equals(bomChildrenSkuDTO.getType())) {
                 shudiyunB2cOrderDTO.setIs_comb(1);
+                shudiyunB2cOrderDTO.setSuite_no(bomChildrenSkuDTO.getSkuNo());
+                shudiyunB2cOrderDTO.setSuite_name(bomChildrenSkuDTO.getSkuName());
             } else {
                 bomChildrenSkuDTO = bomChildrenSkuDTOS.stream().filter(req -> req.getSkuId().equals(soOutstockDetailEntity.getSkuId())).findFirst().orElse(null);
                 if (ObjectUtil.isNotEmpty(bomChildrenSkuDTO)) {
@@ -1397,6 +1404,9 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
                     BomChildrenSkuDTO finalBomChildrenSkuDTO = bomChildrenSkuDTO;
                     String skuName = parentSkuList.stream().filter(req -> req.getId().equals(finalBomChildrenSkuDTO.getParentSkuId())).map(ProductDetailEntity::getName).findFirst().orElse("");
                     shudiyunB2cOrderDTO.setSuite_name(skuName);
+                } else {
+                    shudiyunB2cOrderDTO.setSuite_no(skuVO.getSkuNo());
+                    shudiyunB2cOrderDTO.setSuite_name(skuVO.getSkuName());
                 }
             }
 
