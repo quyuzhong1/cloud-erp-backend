@@ -43,6 +43,7 @@
                racd.id as detailId,
                rac.code,
                ra.type,
+               rac.source_type as sourceType,
                rac.approve_status as approveStatus,
                rac.source_code as sourceCode,
                rac.source_id as sourceId,
@@ -69,6 +70,9 @@
         inner join requisition_application ra on ra.id = rac.business_id and ra.is_deleted = false
         where
         ${params.sqlMap.default}
+        <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
         and  rac.is_deleted=FALSE
         ORDER BY rac.id DESC
     </select>
@@ -102,6 +106,31 @@
         and racd.business_detail_id in
         <foreach collection="businessDetailIds" item="item" open="(" separator="," close=")">
         #{item}
+        </foreach>
+    </select>
+    <select id="approveView" resultType="com.erp.model.wms.dto.RequisitionApplicationChangeDTO$ApproveView">
+        SELECT rac.id,
+               rac.approve_status as approveStatus,
+               ra.code as requisitionCode,
+               rac.code,
+               racd.id as detailId,
+               racd.bom_version,
+               ra.requisition_warehouse_id as requisitionWarehouseId,
+               ra.requisition_warehouse_name as requisitionWarehouseName,
+               racd.sku_id,
+               racd.sku_no,
+               racd.change_type,
+               racd.origin_qty as originRequisitionQty,
+               racd.new_qty as newRequisitionQty,
+               rad.from_virtual_warehouse_id as fromVirtualWarehouseId,
+               rad.from_virtual_warehouse_name as fromVirtualWarehouseName
+        from requisition_application_change rac
+        inner join requisition_application_change_detail racd on rac.id = racd.main_id and racd.is_deleted = false
+        inner join requisition_application ra on ra.id = rac.business_id and ra.is_deleted = false
+        left join requisition_application_detail rad on rad.id = racd.business_detail_id and rad.is_deleted = false
+        where rac.is_deleted = false and rac.id in
+        <foreach collection="ids" item="item" open="(" separator="," close=")">
+            #{item}
         </foreach>
     </select>
 

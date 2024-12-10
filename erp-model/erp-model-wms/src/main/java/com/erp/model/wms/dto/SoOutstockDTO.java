@@ -1550,6 +1550,10 @@ public class SoOutstockDTO implements Serializable {
          * 来源code
          */
         private String sourceCode;
+        /**
+         * 第三方编号
+         */
+        private String thirdCode;
 
         /**
          * 仓库id

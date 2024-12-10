@@ -2562,7 +2562,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 last("LIMIT 1").one();
     }
 
-    private List<SoOutstockEntity> getBySoIdAndWarehouseId(String soB2cId,String warehouseId) {
+    private List<SoOutstockEntity> getBySoIdAndWarehouseId(String soB2cId, String warehouseId) {
         return this.lambdaQuery().eq(SoOutstockEntity::getSoId, soB2cId).eq(SoOutstockEntity::getWarehouseId,warehouseId).list();
     }
 
@@ -2579,12 +2579,11 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         try {
             if (dto.isHasPlatformWarehouseOrder()){
                 // 非自发货订单独立事务
-                soOutstockService.handleCreateB2cSoOutstockWithoutTx(dto);
+                return soOutstockService.handleCreateB2cSoOutstockWithoutTx(dto);
             } else {
                 // 自发货订单事务一起
-                soOutstockService.handleCreateB2cSoOutstock(dto);
+                return soOutstockService.handleCreateB2cSoOutstock(dto);
             }
-            return Boolean.TRUE;
         } catch (Exception e) {
             String soB2cId = dto.getSoId();
             String type = SoB2cErrorTypeEnum.GENERATE_OUTSTOCK.getCode();
@@ -2597,8 +2596,8 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             addError.setMessage(message);
             addError.setParamJson(paramJson);
             soB2cFeign.addSoB2cError(addError);
+            return Boolean.FALSE;
         }
-        return Boolean.FALSE;
     }
 
     @Override
@@ -3208,51 +3207,44 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         if(CollectionUtils.isEmpty(platformDeliveryDetailDTO)){
             return false;
         }
-        String warehouseId = platformDeliveryDetailDTO.get(0).getWarehouseId();
-        String soB2cId = platformDeliveryDetailDTO.get(0).getMainId();
+        SoOutstockDTO.GenerateB2cDTO generateB2cDTO = platformGenerateSoOutstockDTO.getGenerateB2cDTO();
+        //第三方编号
+        String thirdCode = platformGenerateSoOutstockDTO.getThirdCode();
+        //物流跟踪号
+        String trackNo = platformGenerateSoOutstockDTO.getTrackNo();
+        //发货时间
+        LocalDateTime deliveryTime = platformGenerateSoOutstockDTO.getDeliveryTime();
+        String warehouseId = generateB2cDTO.getWarehouseId();
+        String soB2cId = generateB2cDTO.getSoId();
         List<SoOutstockEntity> outstockList = this.getBySoIdAndWarehouseId(soB2cId,warehouseId);
-        List<String> dbMainIds = outstockList.stream().map(BaseEntity::getId).collect(Collectors.toList());
-        List<SoOutstockDetailEntity> outstockDetailList = soOutstockDetailService.listByMainIds(dbMainIds);
-        List<String> existSkuIds = outstockDetailList.stream().map(SoOutstockDetailEntity::getSkuId).collect(Collectors.toList());
-        List<String> skuIds = platformDeliveryDetailDTO.stream().map(PlatformDeliveryDetailDTO::getSkuId).collect(Collectors.toList());
-        //已存在的主表ID
-        List<String> existMainIds = outstockDetailList.stream().filter(v->skuIds.contains(v.getSkuId())).map(SoOutstockDetailEntity::getMainId).collect(Collectors.toList());
-        List<SoOutstockEntity> existMains = outstockList.stream().filter(v->existMainIds.contains(v.getId())).collect(Collectors.toList());
-        platformDeliveryDetailDTO = platformDeliveryDetailDTO.stream().filter(v->!existSkuIds.contains(v.getSkuId())).collect(Collectors.toList());
-
-        if (CollectionUtils.isNotEmpty(platformDeliveryDetailDTO)) {
+        //判断是否是历史数据
+        SoOutstockEntity outstock = CollUtil.isNotEmpty(outstockList) ? outstockList.stream().filter(e -> Objects.equals(thirdCode, e.getThirdCode())).findFirst().orElse(null) : null;
+        if (Objects.isNull(outstock)){
+            SoOutstockEntity entity1 = CollUtil.isNotEmpty(outstockList) ? outstockList.stream().filter(e -> Objects.equals(trackNo, e.getTrackNo()) && CharSequenceUtil.isBlank(e.getThirdCode())).findFirst().orElse(null) : null;
+            //存在历史速卖通销售出库单数据，则不做处理
+            if (Objects.nonNull(entity1)){
+                return Boolean.TRUE;
+            }
+        }
+        if (Objects.isNull(outstock)) {
             SoOutstockDTO.GenerateB2cDTO dto = platformGenerateSoOutstockDTO.getGenerateB2cDTO();
+            dto.setThirdCode(thirdCode);
+            dto.setTrackNo(trackNo);
             //重新赋值仓库 因为可能销售订单是仓库A 速卖通发货是仓库B
             dto.setWarehouseId(warehouseId);
-            dto.setWarehouseName(platformDeliveryDetailDTO.get(0).getWarehouseName());
-            dto.setWarehouseOrgId(platformDeliveryDetailDTO.get(0).getWarehouseOrgId());
-            dto.setWarehouseOrgName(platformDeliveryDetailDTO.get(0).getWarehouseOrgName());
-
+            dto.setWarehouseName(generateB2cDTO.getWarehouseName());
+            dto.setWarehouseOrgId(generateB2cDTO.getWarehouseOrgId());
+            dto.setWarehouseOrgName(generateB2cDTO.getWarehouseOrgName());
             // 临时跳过生成已关账之前的销售出库单
             // 查询订单发货时间
-            List<SoB2cLogisticsEntity> list = FeignQuery.create(SoB2cLogisticsEntity.class)
-                    .eq(SoB2cLogisticsEntity::getMainId, soB2cId)
-                    .list();
-            if (CollectionUtils.isNotEmpty(list)){
-                LocalDateTime deliveryTime = list.stream()
-                        .map(SoB2cLogisticsEntity::getDeliveryTime)
-                        .findFirst()
-                        .orElse(null);
-                if (null != deliveryTime){
-                    // 速卖通GMT时区转北京时区
-                    LocalDateTime targetDeliveryTime = DateUtil.convertZoneTime(deliveryTime,
-                            ZoneId.of("America/Los_Angeles"),
-                            ZoneId.of("Asia/Shanghai"));
-                    // 检查关账时间
-                    LocalDate closedDate = inventoryClosedRecordService.checkClosed(dto.getWarehouseOrgId(), targetDeliveryTime.toLocalDate());
-                    if (null != closedDate){
-                        // 临时跳过生成已关账之前的销售出库单
-                        return true;
-                    }
+            if (null != deliveryTime){
+                // 检查关账时间
+                LocalDate closedDate = inventoryClosedRecordService.checkClosed(dto.getWarehouseOrgId(), deliveryTime.toLocalDate());
+                if (null != closedDate){
+                    // 临时跳过生成已关账之前的销售出库单
+                    return true;
                 }
             }
-
-
             //通过平台发货单生成销售出库单，不与销售订单明细关联
             LinkedList<SoOutstockDetailDTO.AddDTO> skuList = new LinkedList<>();
             for (PlatformDeliveryDetailDTO deliveryDetailDTO : platformDeliveryDetailDTO) {
@@ -3260,19 +3252,15 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             }
             dto.setDetailList(skuList);
             dto.setCheckSkuHistory(false);
-            Boolean result = createB2cSoOutstock(dto);
-            return result;
-        }else{
-            log.error("速卖通发货单明细为空，无法生成销售出库单，{},{}",soB2cId,JSONUtil.toJsonStr(platformGenerateSoOutstockDTO));
-        }
-        existMains.forEach(outstock -> {
+            return createB2cSoOutstock(dto);
+        }else {
             String id = outstock.getId();
             ApproveStatusEnum approveStatus = outstock.getApproveStatus();
             // 检查关账时间
             LocalDate closedDate = inventoryClosedRecordService.checkClosed(outstock.getWarehouseOrgId(), outstock.getBillDate());
             if (null != closedDate){
                 // 已关账
-                return;
+                return Boolean.TRUE;
             }
             //待提交
             if (ApproveStatusEnum.WAIT_SUBMIT.equals(approveStatus)) {
@@ -3282,8 +3270,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             if (ApproveStatusEnum.APPROVE_ING.equals(approveStatus)) {
                 soOutstockService.approve(new ApproveOneDTO(id, ApproveTypeEnum.PASS.getStatus(), ""));
             }
-        });
-
+        }
         return Boolean.TRUE;
 
     }

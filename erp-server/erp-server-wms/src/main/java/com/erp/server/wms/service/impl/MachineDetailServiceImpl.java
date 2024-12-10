@@ -34,6 +34,7 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -153,6 +154,14 @@ public class MachineDetailServiceImpl extends SuperServiceImpl<MachineDetailMapp
     }
 
     @Override
+    public List<MachineDetailEntity> listBySourceDetailIds(List<String> detailIds) {
+        if(CollectionUtils.isEmpty(detailIds)){
+            return new ArrayList<>();
+        }
+        return this.lambdaQuery().in(MachineDetailEntity::getSourceDetailId,detailIds).list();
+    }
+
+    @Override
     public List<MachineDetailEntity> listByMainId(String mainId) {
         return lambdaQuery()
                 .eq(MachineDetailEntity::getMainId,mainId)
@@ -215,7 +224,9 @@ public class MachineDetailServiceImpl extends SuperServiceImpl<MachineDetailMapp
         //仓位必填验证
         checkWarehouseLocation(warehouseEntity,newList);
 
-        for (MachineDetailEntity detail:newList) {
+        for (int i = 0; i < newList.size(); i++) {
+            MachineDetailEntity detail = newList.get(i);
+            detail.setIndex(i+1);
             //验证子件数量
             checkBomChildrenSku(bomChildrenSkuList,detail);
 
@@ -306,17 +317,6 @@ public class MachineDetailServiceImpl extends SuperServiceImpl<MachineDetailMapp
         }
         if (!SourceTypeEnum.SO_INFO.getCode().equals(machineInfoEntity.getSourceType())) {
             return;
-        }
-        List<String> refDetailIdList = list.stream().map(MachineDetailEntity::getRefDetailId).collect(Collectors.toList());
-        List<MachineRefSoEntity> oldRefList = machineRefSoService.listBySoDetailIdList(refDetailIdList);
-        if (CollectionUtils.isNotEmpty(oldRefList)) {
-            //存在下推的销售订单明细id集合
-            List<String> soDetailIdList = oldRefList.stream().map(MachineRefSoEntity::getSoDetailId).collect(Collectors.toList());
-            //销售订单号
-            String soCodes = oldRefList.stream().map(MachineRefSoEntity::getSoCode).collect(Collectors.joining(","));
-            //SKU编号
-            String skuNoList = list.stream().filter(obj -> soDetailIdList.contains(obj.getRefDetailId())).map(MachineDetailEntity::getSkuNo).collect(Collectors.joining(","));
-            throw new ServiceException(ApiError.ERROR_SO_PUSH_MACHINE,soCodes,skuNoList);
         }
         List<MachineRefSoDTO.AddDTO> refAddList = new ArrayList<>();
         for (MachineDetailEntity detailEntity: list) {

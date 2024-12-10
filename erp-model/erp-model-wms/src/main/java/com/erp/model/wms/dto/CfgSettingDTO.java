@@ -128,6 +128,16 @@ public class CfgSettingDTO implements Serializable {
          */
         private CfgSettingValueDTO.FsRequisitionNoticeDTO fsFirstMileDeliveryWaitHandleNoticeDTO;
 
+        /**
+         * 飞书要货申请变更提交配置
+         */
+        private CfgSettingValueDTO.FsRequisitionNoticeDTO fsRequisitionChangeSubmitNoticeDTO;
+
+        /**
+         * 飞书要货申请变更审核配置
+         */
+        private CfgSettingValueDTO.FsRequisitionNoticeDTO fsRequisitionChangeApproveNoticeDTO;
+
     }
 
 

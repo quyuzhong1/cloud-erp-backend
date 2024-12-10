@@ -1,6 +1,8 @@
 package com.erp.server.tms.service.impl;
 
 
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.collection.ListUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.alibaba.excel.EasyExcel;
@@ -36,6 +38,7 @@ import com.erp.model.tms.dto.TmsCostDetailDTO;
 import com.erp.model.tms.dto.excel.LogisticsBillCostExcelDTO;
 import com.erp.model.tms.entity.*;
 import com.erp.model.tms.enums.*;
+import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
@@ -61,7 +64,9 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -112,6 +117,8 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
     private LogisticsChannelService logisticsChannelService;
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
+    @Resource
+    private DmpTaskFeign dmpTaskFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -467,6 +474,18 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
             if (CollectionUtils.isNotEmpty(logisticsBillDetailEntityList)){
                 //现在正常情况下物流主表和物流明细是1：1关系
                 entity.setLogisticsBillDetailId(logisticsBillDetailEntityList.get(0).getId());
+            }
+        }
+        if (CharSequenceUtil.isNotBlank(entity.getCurrency())){
+            if (CurrencyEnum.CNY.getCurrencyCode().equals(entity.getCurrency())){
+                entity.setExchangeRate(BigDecimal.ONE);
+            }else {
+                String currentDate = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+                BigDecimal rate = dmpTaskFeign.getRate(currentDate, entity.getCurrency());
+                if (Objects.isNull(rate)){
+                    throw new ServiceException(ApiError.ERROR_EXCHANGE_RATE_NOT_EXIST, LocalDate.now(), entity.getCurrency());
+                }
+                entity.setExchangeRate(rate);
             }
         }
     }
@@ -1026,6 +1045,33 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
                     List<String> ids = tmsCostDetailEntities.stream().filter(e -> LogisticsBillCostTypeEnum.ACTUAL.getCode().equals(e.getType())).map(TmsCostDetailEntity::getId).collect(Collectors.toList());
                     if (CollectionUtils.isNotEmpty(ids)){
                         tmsCostDetailService.removeByIds(ids);
+                    }
+                }
+            }
+        }
+    }
+
+    @Override
+    public void initExchangeRate() {
+        List<LogisticsBillCostDTO.ExchangeRateDTO> dtoList = baseMapper.listBillCostByExchangeRate();
+        if (CollUtil.isEmpty(dtoList)){
+            return;
+        }
+        List<List<LogisticsBillCostDTO.ExchangeRateDTO>> partition = ListUtil.partition(dtoList, 100);
+        for (List<LogisticsBillCostDTO.ExchangeRateDTO> list : partition){
+            if (CollUtil.isEmpty(list)){
+                return;
+            }
+            for (LogisticsBillCostDTO.ExchangeRateDTO entity : list){
+                if (CurrencyEnum.CNY.getCurrencyCode().equals(entity.getCurrency()) || CharSequenceUtil.isBlank(entity.getCurrency())){
+                    this.lambdaUpdate().set(LogisticsBillCostEntity::getExchangeRate, BigDecimal.ONE)
+                            .set(CharSequenceUtil.isBlank(entity.getCurrency()), LogisticsBillCostEntity::getCurrency, CurrencyEnum.CNY.getCurrencyCode())
+                            .eq(LogisticsBillCostEntity::getId, entity.getId()).update();
+                }else {
+                    String currentDate = entity.getCreateTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+                    BigDecimal rate = dmpTaskFeign.getRate(currentDate, entity.getCurrency());
+                    if (Objects.nonNull(rate)){
+                        this.lambdaUpdate().set(LogisticsBillCostEntity::getExchangeRate, rate).eq(LogisticsBillCostEntity::getId, entity.getId()).update();
                     }
                 }
             }

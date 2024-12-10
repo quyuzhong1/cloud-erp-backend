@@ -13,8 +13,8 @@ import org.springframework.stereotype.Component;
  */
 @Component
 public class WebhookHandlerFactory {
-    public WebhookHandler getHandler(String platform) {
-        switch (platform) {
+    public WebhookHandler getHandler(String service) {
+        switch (service) {
             case "track123":
                 return new Track123WebhookHandler();
             default:

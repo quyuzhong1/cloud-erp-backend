@@ -50,12 +50,12 @@ public class RequisitionApplicationChangeDetailEntity extends BaseEntity<Requisi
     @TableField("change_type")
     private String changeType;
     /**
-    * 原发货通知数量
+    * 原要货申请数量
     */
     @TableField("origin_qty")
     private Integer originQty;
     /**
-    * 新发货通知数量
+    * 新要货申请数量
     */
     @TableField("new_qty")
     private Integer newQty;
@@ -96,6 +96,23 @@ public class RequisitionApplicationChangeDetailEntity extends BaseEntity<Requisi
      */
     @TableField("business_detail_id")
     private String businessDetailId;
+
+    /**
+     * (拣货单)修改前的仓位
+     */
+    @TableField("origin_warehouse_location")
+    private String originWarehouseLocation;
+
+    /**
+     * 调出虚拟仓库id
+     */
+    @TableField("from_virtual_warehouse_id")
+    private String fromVirtualWarehouseId;
+    /**
+     * 调出虚拟仓库中文名
+     */
+    @TableField("from_virtual_warehouse_name")
+    private String fromVirtualWarehouseName;
 
     public static final String MAIN_ID = "main_id";
 

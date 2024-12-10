@@ -108,6 +108,15 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
 
     @Override
     public void handleAll(PlatformOrderDTO dto) {
+        // 跳过未作废的自发货无地址的订单
+        if ( notPlatformOrderNotExistAddress(dto)
+                && null != dto.getInvalidStatus()
+                && !dto.getInvalidStatus()
+        ) {
+            log.warn("卖家自发货订单无地址暂不新增：单号={}", dto.getPlatformCode());
+            return;
+        }
+
         SoB2cDTO.PullOrderResultDTO resultDTO = platformOrderConsumerHandleService.checkAndSaveAll(dto);
         SoB2cEntity mainEntity = resultDTO.getSoB2cEntity();
         //平台仓订单
@@ -175,10 +184,8 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
                 SoB2cHandler.handleRule(mainEntity);
             }
         }
-
         // 销售出库单处理(分平台)
-        SoB2cHandler.handleSoOutStock(dto, resultDTO, mainEntity);
-
+        Boolean handled = SoB2cHandler.handleSoOutStock(dto, resultDTO, mainEntity);
         //平台取消订单后自动取消预报
         if(Objects.nonNull(mainEntity.getIsCancel()) && mainEntity.getIsCancel()){
             soB2cService.autoCancelOrderForecast(mainEntity);
@@ -217,6 +224,10 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
                 newPlatformRefundOrderConsumerService.handle(JSON.toJSONString(e));
             });
         }
+        //销售出库单消费异常抛出
+        if (Objects.nonNull(handled) && !handled){
+            throw new ServiceException("平台【{}】销售订单【{}】销售出库单处理失败",mainEntity.getDictPlatform(), mainEntity.getCode());
+        }
     }
 
 
@@ -238,8 +249,6 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
     }
 
     @Override
-//    @Transactional(rollbackFor = Exception.class)
-//    @GlobalTransactional(rollbackFor = Exception.class)
     public void handleRule(SoB2cEntity mainEntity) {
         //订单状态
         String billStatus = mainEntity.getBillStatus();

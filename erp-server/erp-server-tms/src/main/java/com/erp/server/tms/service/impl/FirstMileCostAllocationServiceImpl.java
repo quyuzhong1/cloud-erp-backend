@@ -1,6 +1,7 @@
 package com.erp.server.tms.service.impl;
 
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
@@ -471,7 +472,7 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
         //子sku列表
         List<BomChildrenSkuDTO> bomChildrenSkuDTOS = plmTaskFeign.listBomChildBySkuIds(skuIds);
         //合并 子sku和父级sku获取 全量sku明细
-        if (org.apache.commons.collections4.CollectionUtils.isNotEmpty(bomChildrenSkuDTOS)) {
+        if (CollUtil.isNotEmpty(bomChildrenSkuDTOS)) {
             skuIds = Stream.concat(skuIds.stream(), bomChildrenSkuDTOS.stream().map(BomChildrenSkuDTO::getSkuId).filter(StrUtil::isNotEmpty))
                     .collect(Collectors.toList());
         }
@@ -875,7 +876,7 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
          * 2.无账单无签收：取值为0
          * 3.有实际账单：取值为0
          */
-        if (ReconciliationBillTypeEnum.ESTIMATED.getCode().equals(skuCostAllocationEntity.getBillSourceType())) {
+        if (Objects.nonNull(skuCostAllocationEntity) && ReconciliationBillTypeEnum.ESTIMATED.getCode().equals(skuCostAllocationEntity.getBillSourceType())) {
             if (receiveQty <= deliveryQty) {
                 detailEntity.setEndPeriodEstimatedCost(MathUtil.multiply(productAllocatedAmount, BigDecimal.valueOf(receiveQty), 2));
             }else {
@@ -1374,10 +1375,12 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
                 .setAllocationType(allocationSettingDTO.getFirstOtherFee());
         BigDecimal amount = BigDecimal.ZERO;
         if (Objects.nonNull(reconciliationDetailEntity)) {
-            amount = Objects.nonNull(reconciliationDetailEntity.getOtherCost()) ? reconciliationDetailEntity.getOtherCost() : BigDecimal.ZERO;
+            BigDecimal exchangeRate = Objects.nonNull(reconciliationDetailEntity.getExchangeRate()) ? reconciliationDetailEntity.getExchangeRate() : BigDecimal.ONE;
+            amount = Objects.nonNull(reconciliationDetailEntity.getOtherCost()) ? MathUtil.multiply(exchangeRate,reconciliationDetailEntity.getOtherCost()) : BigDecimal.ZERO;
         } else if (Objects.nonNull(firstMileEstimatedBillEntity)) {
             //暂估
-            amount = Objects.nonNull(firstMileEstimatedBillEntity.getOtherCost()) ? firstMileEstimatedBillEntity.getOtherCost() : BigDecimal.ZERO;
+            BigDecimal exchangeRate = Objects.nonNull(firstMileEstimatedBillEntity.getExchangeRate()) ? firstMileEstimatedBillEntity.getExchangeRate() : BigDecimal.ONE;
+            amount = Objects.nonNull(firstMileEstimatedBillEntity.getOtherCost()) ? MathUtil.multiply(exchangeRate,firstMileEstimatedBillEntity.getOtherCost()) : BigDecimal.ZERO;
         }
         entity.setAmount(amount.setScale(2,BigDecimal.ROUND_HALF_UP));
         //头程分摊金额
@@ -1413,10 +1416,12 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
                 .setAllocationType(allocationSettingDTO.getFirstOtherTaxFee());
         BigDecimal amount = BigDecimal.ZERO;
         if (Objects.nonNull(reconciliationDetailEntity)) {
-            amount = Objects.nonNull(reconciliationDetailEntity.getOtherTaxCost()) ? reconciliationDetailEntity.getOtherTaxCost() : BigDecimal.ZERO;
+            BigDecimal exchangeRate = Objects.nonNull(reconciliationDetailEntity.getExchangeRate()) ? reconciliationDetailEntity.getExchangeRate() : BigDecimal.ONE;
+            amount = Objects.nonNull(reconciliationDetailEntity.getOtherTaxCost()) ? MathUtil.multiply(exchangeRate,reconciliationDetailEntity.getOtherTaxCost()) : BigDecimal.ZERO;
         } else if (Objects.nonNull(firstMileEstimatedBillEntity)) {
             //暂估
-            amount = Objects.nonNull(firstMileEstimatedBillEntity.getOtherTaxCost())? firstMileEstimatedBillEntity.getOtherTaxCost(): BigDecimal.ZERO;
+            BigDecimal exchangeRate = Objects.nonNull(firstMileEstimatedBillEntity.getExchangeRate()) ? firstMileEstimatedBillEntity.getExchangeRate() : BigDecimal.ONE;
+            amount = Objects.nonNull(firstMileEstimatedBillEntity.getOtherTaxCost())? MathUtil.multiply(exchangeRate, firstMileEstimatedBillEntity.getOtherTaxCost()): BigDecimal.ZERO;
         }
         entity.setAmount(amount.setScale(2,BigDecimal.ROUND_HALF_UP));
         //头程分摊金额
@@ -1452,12 +1457,14 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
                 .setAllocationType(allocationSettingDTO.getFirstTariffFee());
         BigDecimal amount = BigDecimal.ZERO;
         if (Objects.nonNull(reconciliationDetailEntity)) {
-            amount = Objects.nonNull(reconciliationDetailEntity.getDeclareCost()) ? reconciliationDetailEntity.getDeclareCost() : BigDecimal.ZERO;
+            BigDecimal exchangeRate = Objects.nonNull(reconciliationDetailEntity.getExchangeRate()) ? reconciliationDetailEntity.getExchangeRate() : BigDecimal.ONE;
+            amount = Objects.nonNull(reconciliationDetailEntity.getDeclareCost()) ? MathUtil.multiply(exchangeRate, reconciliationDetailEntity.getDeclareCost()) : BigDecimal.ZERO;
         } else if (Objects.nonNull(firstMileEstimatedBillEntity)) {
             //暂估
-            amount = Objects.nonNull(firstMileEstimatedBillEntity.getCustomsClearanceCost()) ? firstMileEstimatedBillEntity.getCustomsClearanceCost() : BigDecimal.ZERO;
+            BigDecimal exchangeRate = Objects.nonNull(firstMileEstimatedBillEntity.getExchangeRate()) ? firstMileEstimatedBillEntity.getExchangeRate() : BigDecimal.ONE;
+            amount = Objects.nonNull(firstMileEstimatedBillEntity.getCustomsClearanceCost()) ? MathUtil.multiply(exchangeRate, firstMileEstimatedBillEntity.getCustomsClearanceCost()) : BigDecimal.ZERO;
         }
-        entity.setAmount(amount.setScale(2,BigDecimal.ROUND_HALF_UP));
+        entity.setAmount(amount.setScale(2, RoundingMode.HALF_UP));
         //头程分摊金额
         if (CostAllocationEnum.WEIGHT_ALLOCATION.getCode().equals(allocationSettingDTO.getFirstTariffFee())) {
             entity.setAllocatedAmount(MathUtil.divide(MathUtil.multiply(allocationWeight, entity.getAmount()), weightTotal, 4).setScale(2, RoundingMode.DOWN));
@@ -1496,12 +1503,14 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
                 .setAllocationType(allocationSettingDTO.getFirstShippingCost());
         BigDecimal amount = BigDecimal.ZERO;
         if (Objects.nonNull(reconciliationDetailEntity)) {
-            amount = Objects.nonNull(reconciliationDetailEntity.getShippingCost()) ? reconciliationDetailEntity.getShippingCost() : BigDecimal.ZERO;
+            BigDecimal exchangeRate = Objects.nonNull(reconciliationDetailEntity.getExchangeRate()) ? reconciliationDetailEntity.getExchangeRate() : BigDecimal.ONE;
+            amount = Objects.nonNull(reconciliationDetailEntity.getShippingCost()) ? MathUtil.multiply(exchangeRate, reconciliationDetailEntity.getShippingCost()) : BigDecimal.ZERO;
         } else if (Objects.nonNull(firstMileEstimatedBillEntity)) {
             //暂估
-            amount = Objects.nonNull(firstMileEstimatedBillEntity.getLogisticsCost()) ? firstMileEstimatedBillEntity.getLogisticsCost() : BigDecimal.ZERO;
+            BigDecimal exchangeRate = Objects.nonNull(firstMileEstimatedBillEntity.getExchangeRate()) ? firstMileEstimatedBillEntity.getExchangeRate() : BigDecimal.ONE;
+            amount = Objects.nonNull(firstMileEstimatedBillEntity.getLogisticsCost()) ? MathUtil.multiply(exchangeRate,firstMileEstimatedBillEntity.getLogisticsCost()) : BigDecimal.ZERO;
         }
-        entity.setAmount(amount.setScale(2,BigDecimal.ROUND_HALF_UP));
+        entity.setAmount(amount.setScale(2, RoundingMode.HALF_UP));
         //头程分摊金额
         if (CostAllocationEnum.WEIGHT_ALLOCATION.getCode().equals(allocationSettingDTO.getFirstShippingCost())) {
             entity.setAllocatedAmount(MathUtil.divide(MathUtil.multiply(allocationWeight, entity.getAmount()), weightTotal, 4).setScale(2, RoundingMode.DOWN));

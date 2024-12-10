@@ -495,6 +495,8 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         String createUserId = map.get("createUserId");
         String createUserName = map.get("createUserName");
         String packingCode = map.get("packingCode");
+        String approveStatus = map.get("approveStatus");
+        String approveUserName = map.getOrDefault("approveUserName","");
         //消息头
         String title = null;
         //消息体
@@ -516,6 +518,14 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
                 title = String.format(NoticeMsgConstant.FS_REQUISITION_SETTING_HEAD);
                 msgContent = String.format(NoticeMsgConstant.FS_REQUISITION_SETTING_CONTENT, "数大臣", "要货申请","要货申请单单据【"+requistionCode+"】关联装箱任务【"+packingCode+"】已装箱完成，请即时处理" ,createUserName, LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
                 break;
+            case FS_REQUISITION_CHANGE_SUBMIT_NOTICE:
+                title = String.format(NoticeMsgConstant.FS_REQUISITION_CHANGE_SETTING_HEAD);
+                msgContent = String.format(NoticeMsgConstant.FS_REQUISITION_CHANGE_SETTING_CONTENT, "数大臣", "要货申请变更单",requistionCode ,"提交审核",createUserName, "",LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+                break;
+            case FS_REQUISITION_CHANGE_APPROVE_NOTICE:
+                title = String.format(NoticeMsgConstant.FS_REQUISITION_CHANGE_SETTING_HEAD);
+                msgContent = String.format(NoticeMsgConstant.FS_REQUISITION_CHANGE_SETTING_CONTENT, "数大臣", "要货申请变更单",requistionCode,approveStatus,createUserName,approveUserName, LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+                break;
             default:
                 return;
         }
@@ -530,6 +540,9 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
                     noticeUserIdList.add(createUserId);
                 }
                 if ("处理人".equals(s)) {
+                    noticeUserIdList.add(loginUser.getUid());
+                }
+                if (s.equals("审核人")) {
                     noticeUserIdList.add(loginUser.getUid());
                 }
             }
@@ -1922,7 +1935,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
             throw new ServiceException(ApiError.ERROR_BILL_NOT_EXIST);
         }
         if (!RequisitionApplicationStatusEnum.getPickingList().contains(application.getStatus())) {
-            throw new ServiceException(ApiError.HANDLE_ING_OR_HANDLE_IS_PRINT_PICKING);
+            throw new ServiceException("处理中才能下推拣货单");
         }
         List<RequisitionApplicationDetailEntity> details = requisitionApplicationDetailService.list(Wrappers.<RequisitionApplicationDetailEntity>lambdaQuery()
                 .eq(RequisitionApplicationDetailEntity::getMainId, picking.getId())
@@ -2085,6 +2098,39 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
             }
         }
         return moveEntityList;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void updateByChange(List<RequisitionApplicationDetailEntity> addList, List<RequisitionApplicationDetailEntity> updateList, List<RequisitionApplicationDetailEntity> deleteList) {
+        // 添加日志
+        List<OperateLogDTO.AddModuleOperateLogDTO> logList = new ArrayList<>();
+        if (CollectionUtils.isNotEmpty(addList)) {
+            addList.forEach(v->{
+                logList.add(new OperateLogDTO.AddModuleOperateLogDTO(StrUtil.format("要货申请变更单新增明细sku{}",v.getSkuNo()),ModuleTypeEnum.REQUISITION_APPLICATION.getCode(),v.getMainId(),"新增sku"));
+            });
+            requisitionApplicationDetailService.saveBatch(addList);
+        }
+
+        if (CollectionUtils.isNotEmpty(updateList)) {
+            updateList.forEach(v->{
+                logList.add(new OperateLogDTO.AddModuleOperateLogDTO(StrUtil.format("要货申请变更单修改明细sku【{}】数量，从{}修改为{}",v.getSkuNo(),v.getChangeBeforeQty(),v.getRequisitionQty()),ModuleTypeEnum.REQUISITION_APPLICATION.getCode(),v.getMainId(),"修改sku"));
+            });
+            requisitionApplicationDetailService.updateBatchById(updateList);
+        }
+
+        if (CollectionUtils.isNotEmpty(deleteList)) {
+            deleteList.forEach(v->{
+                logList.add(new OperateLogDTO.AddModuleOperateLogDTO(StrUtil.format("删除sku{}",v.getSkuNo()),ModuleTypeEnum.REQUISITION_APPLICATION.getCode(),v.getMainId(),"删除明细"));
+            });
+            List<String> deleteIds = deleteList.stream().map(v->v.getId()).collect(Collectors.toList());
+            deleteList.forEach(v->v.setVirtualFrozenQty(0));
+            requisitionApplicationDetailService.updateBatchById(deleteList);
+            requisitionApplicationDetailService.removeByIds(deleteIds);
+        }
+        if(CollectionUtils.isNotEmpty(logList)){
+            operateLogService.batchAddModuleOperateLog(logList);
+        }
     }
 
     /**

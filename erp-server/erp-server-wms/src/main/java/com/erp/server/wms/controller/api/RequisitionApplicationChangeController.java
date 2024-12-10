@@ -14,9 +14,7 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.wms.dto.RequisitionApplicationChangeDTO;
 import com.erp.model.wms.entity.RequisitionApplicationChangeEntity;
-import com.erp.model.wms.entity.SoDeliveryNoticeChangeEntity;
 import com.erp.server.wms.service.RequisitionApplicationChangeService;
-import com.erp.server.wms.service.SoDeliveryNoticeChangeService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -207,27 +205,20 @@ public class RequisitionApplicationChangeController extends BaseController {
             serviceClass = RequisitionApplicationChangeService.class,
             keyIdName = "ids")
     @LogAction(value = LogActionEnum.APPROVE, desc = "要货申请变更单审核")
-    public ApiResult<List<BatchResultDTO>> approve(@RequestBody @Validated BaseApproveParamDTO dto) {
-        List<String> ids = dto.getIds();
-		List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
-		List<RequisitionApplicationChangeEntity> list = requisitionApplicationChangeService.lambdaQuery().in(RequisitionApplicationChangeEntity::getId, ids).list();
-		Map<String, RequisitionApplicationChangeEntity> idEntityMap = list.stream().collect(Collectors.toMap(RequisitionApplicationChangeEntity::getId, w -> w));
-        for (String id : ids) {
+    public ApiResult<List<BatchResultDTO>> approve(@RequestBody @Validated RequisitionApplicationChangeDTO.ApproveDTO dto) {
+        List<RequisitionApplicationChangeDTO.ApproveView> approveViewList = dto.getApproveViewList();
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(approveViewList.size());
+        Map<String,List<RequisitionApplicationChangeDTO.ApproveView>> map = approveViewList.stream().collect(Collectors.groupingBy(RequisitionApplicationChangeDTO.ApproveView::getId));
+        map.forEach((id,list)->{
             BatchResultDTO approveResult;
             try {
-                approveResult = requisitionApplicationChangeService.approve(new ApproveOneDTO(id, dto.getType(),dto.getComment()));
+                approveResult = requisitionApplicationChangeService.approve(id,list,dto.getType());
             }catch (Exception e){
                 log.error("要货申请变更单审核失败",e);
-                RequisitionApplicationChangeEntity entity = idEntityMap.get(id);
-                if (ObjectUtil.isEmpty(entity)) {
-                    approveResult = BatchResultDTO.fail(id, id, "要货申请变更单不存在, 审核失败");
-                    resultDTOS.add(approveResult);
-                    continue;
-                }
-                approveResult = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
+                approveResult = BatchResultDTO.fail(id, list.get(0).getCode(), e.getMessage());
             }
             resultDTOS.add(approveResult);
-        }
+        });
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
@@ -368,9 +359,21 @@ public class RequisitionApplicationChangeController extends BaseController {
             tableAlias = ""
     )
     @LogAction(value = LogActionEnum.EXPORT, desc = "要货申请变更单导出Excel数据")
-    public void exportList(@RequestBody @Validated RequisitionApplicationChangeDTO.ExportDTO dto, HttpServletResponse response) {
+    public ApiResult<?> exportList(@RequestBody @Validated RequisitionApplicationChangeDTO.ExportDTO dto, HttpServletResponse response) {
         requisitionApplicationChangeService.exportList(dto, response);
+        return success();
     }
 
+
+    /**
+     * 审核弹窗
+     * @author lrp
+     * @date:  2024-11-18
+     * @return ApiResult<RequisitionApplicationChangeDTO.ViewDTO>>
+     */
+    @PostMapping("/approveView")
+    public ApiResult<List<RequisitionApplicationChangeDTO.ApproveView>> approveView(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        return success(requisitionApplicationChangeService.approveView(dto));
+    }
 
 }

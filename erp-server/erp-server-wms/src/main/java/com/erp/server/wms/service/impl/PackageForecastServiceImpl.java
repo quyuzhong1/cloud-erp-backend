@@ -881,7 +881,7 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
                 instockForcastMergeDTO.getDetailEntityList().addAll(currentMergeDTO.getDetailEntityList());
             }
         }
-
+        List<TransferDeclareDTO.AddDTO> addDTOList = new ArrayList<>(instockForcastMergeDTOList.size());
         for (PackageForecastDTO.InstockForcastMergeDTO instockForcastMergeDTO : instockForcastMergeDTOList) {
             TransferDeclareDTO.AddDTO addDTO = new TransferDeclareDTO.AddDTO();
             addDTO.setTransferLogisticsSupplierId(instockForcastMergeDTO.getTransferLogisticsSupplierId());
@@ -892,8 +892,9 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
             addDTO.setDetailList(addDetailList);
             addDTO.setUploadStatus(PackageUploadStatusEnum.UPLOAD_SUCCESS.getCode());
             addDTO.getDetailList().forEach(v->v.setOrderUploadStatus(PackageUploadStatusEnum.UPLOAD_SUCCESS.getCode()));
-            transferDeclareFeign.add(addDTO);
+            addDTOList.add(addDTO);
         }
+        transferDeclareFeign.batchAdd(addDTOList);
         return batchResultDTOList;
     }
 

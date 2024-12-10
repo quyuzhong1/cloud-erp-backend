@@ -207,6 +207,21 @@
           and cd.type = 'actual'
         and lb.source_id = #{soId}
     </select>
+    <select id="listBillCostByExchangeRate"
+            resultType="com.erp.model.tms.dto.LogisticsBillCostDTO$ExchangeRateDTO">
+        SELECT
+            lbc.id,
+            lbc.currency,
+            lbc.exchange_rate,
+            lbc.create_time
+        FROM
+            logistics_bill_cost lbc
+                LEFT JOIN logistics_bill lb ON lb.ID = lbc.logistics_bill_id
+                AND lb.is_deleted = FALSE
+        WHERE lbc.is_deleted = FALSE
+            AND lb.order_type = 'firstMile'
+          AND lbc.exchange_rate = 0
+    </select>
 
 
 </mapper>

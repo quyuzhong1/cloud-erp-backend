@@ -4,6 +4,8 @@ import com.common.business.dto.base.*;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.wms.dto.RequisitionApplicationChangeDTO;
+import com.erp.model.wms.dto.pickingstrategy.PickingListsDTO;
+import com.erp.model.wms.entity.PickingListsEntity;
 import com.erp.model.wms.entity.RequisitionApplicationChangeDetailEntity;
 import com.erp.model.wms.entity.RequisitionApplicationChangeEntity;
 
@@ -94,22 +96,16 @@ public interface RequisitionApplicationChangeService extends SuperService<Requis
     BatchResultDTO submit(String id);
 
     /**
-    * 审核
-    * @author lrp
-    * @date: 2024-11-18
-    * @param dto
-    * @return
-    */
-    BatchResultDTO approve(ApproveOneDTO dto);
-
-    /**
-    * 反审核
-    * @author lrp
-    * @date: 2024-11-18
-    * @param id
-    * @return
-    */
-    BatchResultDTO disApprove(String id);
+     * 审核
+     *
+     * @param id
+     * @param approveViewList
+     * @param type
+     * @return
+     * @author lrp
+     * @date: 2024-11-18
+     */
+    BatchResultDTO approve(String id, List<RequisitionApplicationChangeDTO.ApproveView> approveViewList, String type);
 
     /**
     * 删除
@@ -154,4 +150,8 @@ public interface RequisitionApplicationChangeService extends SuperService<Requis
     List<RequisitionApplicationChangeEntity> listNotHandleByBusinessIds(List<String> ids);
 
     List<RequisitionApplicationChangeDetailEntity> listNotHandleDetailByBusinessDetailIds(List<String> detailIds);
+
+    void generateByPickingList(PickingListsDTO.AddChangeDTO addChangeDTO, PickingListsEntity entity);
+
+    List<RequisitionApplicationChangeDTO.ApproveView> approveView(BaseIdsDTO.IdsDTO dto);
 }

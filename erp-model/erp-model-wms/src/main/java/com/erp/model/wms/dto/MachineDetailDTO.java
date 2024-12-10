@@ -80,6 +80,11 @@ public class MachineDetailDTO implements Serializable {
          * 关联明细id，用于销售单下推
          */
         private String refDetailId;
+
+        /**
+         * 来源明细id
+         */
+        private String sourceDetailId;
     }
 
     @Data

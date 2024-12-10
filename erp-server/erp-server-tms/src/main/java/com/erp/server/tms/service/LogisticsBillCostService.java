@@ -202,4 +202,9 @@ public interface LogisticsBillCostService extends SuperService<LogisticsBillCost
      * @param logisticsBillIds
      */
     void removeRefByReconciliationIds(String reconciliationId, List<String> logisticsBillIds);
+
+    /**
+     * 初始化头程对账单汇率
+     */
+    void initExchangeRate();
 }

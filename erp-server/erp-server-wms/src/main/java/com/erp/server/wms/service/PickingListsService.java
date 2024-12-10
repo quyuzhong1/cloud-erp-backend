@@ -3,9 +3,11 @@ package com.erp.server.wms.service;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
+import com.erp.model.wms.dto.PickingDetailDTO;
 import com.erp.model.wms.dto.pickingstrategy.CfgRulePickingDTO;
 import com.erp.model.wms.dto.pickingstrategy.LocationInventoryResultDTO;
 import com.erp.model.wms.dto.pickingstrategy.PickingListsDTO;
+import com.erp.model.wms.entity.PickingDetailEntity;
 import com.erp.model.wms.entity.PickingListsEntity;
 import com.erp.model.wms.entity.SoB2cDeliveryEntity;
 
@@ -108,4 +110,7 @@ public interface PickingListsService extends SuperService<PickingListsEntity> {
      */
     void generatePicking(PickingListsDTO.AddDTO dto);
 
+    List<PickingDetailDTO.ChangeQtyView> generateRequisitionChange(PickingListsDTO.UpdateDTO dto);
+
+    void updateByChange(List<PickingDetailEntity> updatePickingList, List<String> sourceDetailIds, boolean isFromRequisition);
 }

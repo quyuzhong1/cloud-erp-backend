@@ -44,16 +44,25 @@
             rac.id,
             rac.code ,
             racd.sku_id as skuId,
-            racd.sku_no as skuNo
+            racd.sku_no as skuNo,
+            racd.business_detail_id as businessDetailId
         from requisition_application_change rac
         inner join requisition_application_change_detail racd on rac.id = racd.main_id and racd.is_deleted = false
         where rac.is_deleted = false
         and rac.invalid_status = false
-        and rac.approve_status not in ('approve','reject')
-        and racd.source_detail_id in
-        <foreach collection="sourceDetailIds" item="id" open="(" separator="," close=")">
-            #{id}
-        </foreach>
+        and rac.approve_status not in ('approve')
+        <if test="sourceDetailIds !=null and sourceDetailIds.size>0">
+            and racd.source_detail_id in
+            <foreach collection="sourceDetailIds" item="id" open="(" separator="," close=")">
+                #{id}
+            </foreach>
+        </if>
+        <if test="businessDetailIds !=null and businessDetailIds.size>0">
+            and racd.business_detail_id in
+            <foreach collection="businessDetailIds" item="id" open="(" separator="," close=")">
+                #{id}
+            </foreach>
+        </if>
     </select>
 
 

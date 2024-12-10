@@ -326,5 +326,13 @@ public class TmsFirstMileReconciliationController extends BaseController {
         return success(true);
     }
 
-
+    /**
+     * 初始化头程对账单汇率
+     * @return
+     */
+    @PostMapping("/initExchangeRate")
+    public ApiResult initExchangeRate(){
+        tmsFirstMileReconciliationService.initExchangeRate();
+        return success();
+    }
 }

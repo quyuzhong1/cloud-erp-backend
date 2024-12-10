@@ -628,7 +628,7 @@ public enum ApiError implements Serializable {
     ERROR_INTERVAL_DIFFERENT(98048,"区间从,区间到 两个值不能相同"),
     ERROR_INTERVAL_SIZE(98050,"区间从值不能大于区间到值"),
     ERROR_PRICE_ZERO_SKUNO(98102,"以下SKU【{}】价格不能为零"),
-    ERROR_MACHINE_EXIST_TRANSFER_INFO(98102,"加工单【{}】已存在下推直接调拨单，不支持反审核"),
+    ERROR_MACHINE_EXIST_TRANSFER_INFO(98102,"【{}】已存在下推直接调拨单，不支持反审核"),
     ERROR_MACHINE_EXIST_PURCHASE_RETURN(98102,"加工单【{}】已存在下推采购退货单，不支持反审核"),
     ERROR_USER_NOT_REL_SUPPLIER(98102,"用户未关联供应商"),
     ERROR_USER_NOT_REL_OTHER_SUPPLIER(98051,"只能导入当前供应商用户"),

@@ -293,7 +293,7 @@ public class DmpOutputAliExpressOrderRocketMQTaskHandler extends DmpOutputRocket
 
 		//取消商品币别
 		orderDTO.setCancelGoodsCurrency(dmpSoInfoEntity.getCancelGoodsCurrency());
-        
+
         List<PlatformOrderLogisticsDTO> orderLogisticList = new ArrayList<>();
         if(CollUtil.isNotEmpty(dmpLogisticInfoEntityList)) {
         	for(DmpLogisticInfoEntity dmpLogisticInfoEntity : dmpLogisticInfoEntityList) {
@@ -374,7 +374,7 @@ public class DmpOutputAliExpressOrderRocketMQTaskHandler extends DmpOutputRocket
         	}
         }
         orderDTO.setDetails(details);
-        
+
         if(CollUtil.isNotEmpty(dmpSoOutstockDetailEntityList)) {
         	List<PlatformDeliveryDetailDTO> platformDeliveryDetailDTOList = new ArrayList<>();
         	for(DmpSoOutstockDetailEntity v : dmpSoOutstockDetailEntityList) {
@@ -385,7 +385,7 @@ public class DmpOutputAliExpressOrderRocketMQTaskHandler extends DmpOutputRocket
                 deliveryDetailDTO.setPlatformSpuNo(v.getThirdDetailId());
                 deliveryDetailDTO.setPlatformSkuId(v.getSkuId());
                 deliveryDetailDTO.setScItemId(v.getPlatformDetailId());
-                platformDeliveryDetailDTOList.add(deliveryDetailDTO);
+				platformDeliveryDetailDTOList.add(deliveryDetailDTO);
         	}
         	orderDTO.setDeliveryDetailDTOList(platformDeliveryDetailDTOList);
         }
@@ -487,4 +487,67 @@ public class DmpOutputAliExpressOrderRocketMQTaskHandler extends DmpOutputRocket
 			dmpOutputTaskRequest.getChangeConvertInputDmpBaseEntityListMaps().put(childDmpCfgInputConvertEntity, childEntityList);
 		}
     }
+
+
+	/**
+	 * 转换发货单DTO列表
+	 */
+	private List<PlatformDeliveryDTO> convertDeliveryDTOList(List<DmpSoOutstockEntity> dmpSoOutstockEntityList, List<DmpSoOutstockDetailEntity> dmpSoOutstockDetailEntityList) {
+		if (CollectionUtils.isEmpty(dmpSoOutstockEntityList)){
+			return Collections.emptyList();
+		}
+		List<PlatformDeliveryDTO> deliveryDTOList = new LinkedList<>();
+		for (DmpSoOutstockEntity dmpSoOutstockEntity : dmpSoOutstockEntityList) {
+			PlatformDeliveryDTO deliveryDTO =  convertDeliveryDTO(dmpSoOutstockEntity, dmpSoOutstockDetailEntityList);
+			deliveryDTOList.add(deliveryDTO);
+		}
+		return deliveryDTOList;
+	}
+
+	/**
+	 * 转换单发货单
+	 */
+	private PlatformDeliveryDTO convertDeliveryDTO(DmpSoOutstockEntity dmpSoOutstockEntity, List<DmpSoOutstockDetailEntity> dmpSoOutstockDetailEntityList) {
+		PlatformDeliveryDTO deliveryDTO = new PlatformDeliveryDTO();
+		deliveryDTO.setSourceCode(dmpSoOutstockEntity.getThirdCode());
+		// 物流单号
+		deliveryDTO.setTrackNo(dmpSoOutstockEntity.getLogisticsCode());
+		// 运单号
+		deliveryDTO.setTransportNo(dmpSoOutstockEntity.getTransportNo());
+		// 订单状态
+		deliveryDTO.setOrderStatus(dmpSoOutstockEntity.getPlatformStatus());
+		// 下发到仓时间戳
+		deliveryDTO.setDeliveryWarehouseTime(dmpSoOutstockEntity.getDeliveryTime());
+
+		String platformWarehouseName = "";
+		List<PlatformDeliveryDetailDTO> detailDTOList = new LinkedList<>();
+
+		List<DmpSoOutstockDetailEntity> dmpDetailList = dmpSoOutstockDetailEntityList.stream()
+				.filter(e -> e.getMainId().equalsIgnoreCase(dmpSoOutstockEntity.getId()))
+				.collect(Collectors.toList());
+
+		// 平台存在脏数据可能明细为空
+		if (CollectionUtils.isNotEmpty(dmpDetailList)){
+			for(DmpSoOutstockDetailEntity v : dmpDetailList) {
+				PlatformDeliveryDetailDTO deliveryDetailDTO = new PlatformDeliveryDetailDTO();
+				deliveryDetailDTO.setPlatformSkuNo(v.getPlatformSku());
+				deliveryDetailDTO.setQty(v.getQty());
+				deliveryDetailDTO.setPlatformWarehouseName(v.getWarehouseName());
+				deliveryDetailDTO.setPlatformSpuNo(v.getThirdDetailId());
+				deliveryDetailDTO.setPlatformSkuId(v.getSkuId());
+				deliveryDetailDTO.setScItemId(v.getPlatformDetailId());
+				detailDTOList.add(deliveryDetailDTO);
+				platformWarehouseName = v.getWarehouseName();
+			}
+		}
+
+		// 平台仓库名称
+		deliveryDTO.setPlatformWarehouseName(platformWarehouseName);
+		// 明细
+		deliveryDTO.setDetailDTOList(detailDTOList);
+		return deliveryDTO;
+	}
+
+
+
 }

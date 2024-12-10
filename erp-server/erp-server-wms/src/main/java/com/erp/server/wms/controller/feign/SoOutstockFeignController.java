@@ -155,7 +155,7 @@ public class SoOutstockFeignController {
      */
     @PostMapping("/generateB2cSoOutstockByPlatformData")
     Boolean generateB2cSoOutstockByPlatformData(@RequestBody PlatformGenerateSoOutstockDTO platformDeliveryDetailDTO) {
-        String redissonKey = CharSequenceUtil.format("{}:{}", RedisKeyConstant.SO_STOCK_KEY, platformDeliveryDetailDTO.getGenerateB2cDTO().getSourceCode());
+        String redissonKey = CharSequenceUtil.format("{}:{}", RedisKeyConstant.SO_STOCK_KEY, platformDeliveryDetailDTO.getThirdCode());
         return soOutstockService.generateB2cSoOutstockByPlatformData(platformDeliveryDetailDTO, redissonKey);
     }
 

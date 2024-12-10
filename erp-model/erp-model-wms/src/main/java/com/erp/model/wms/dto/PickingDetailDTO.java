@@ -22,6 +22,25 @@ public class PickingDetailDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
+    public static class ChangeQtyView {
+        private String skuNo;
+        private String skuId;
+        /**
+         * 应拣数量
+         */
+        private Integer qty;
+        /**
+         * 实际拣货数量
+         */
+        private Integer actualQty;
+        /**
+         * 差异数量
+         */
+        private Integer diffQty;
+    }
+
+    @Data
+    @NoArgsConstructor
     public static class SearchParamDTO {
 
         /**
@@ -218,6 +237,11 @@ public class PickingDetailDTO implements Serializable {
     public static class View {
 
         private String id;
+
+        /**
+         * 是否变更
+         */
+        private Boolean isChange;
         /**
          * skuId
          */
@@ -248,9 +272,14 @@ public class PickingDetailDTO implements Serializable {
          */
         private String warehouseLocationName;
         /**
-         * 数量
+         * 应拣数量
          */
         private Integer qty;
+        /**
+         * 实际拣货数量
+         */
+        private Integer actualQty;
+
         /**
          * 暂存库区
          */
