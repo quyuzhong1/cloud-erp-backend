@@ -228,7 +228,7 @@
     <!-- 列表数量查询 -->
     <select id="listCount" resultType="java.lang.Integer">
         select
-        count(distinct sb2c.id)
+        count(sb2c.id)
         from so_b2c sb2c 
         inner join so_b2c_logistics sb2cl on sb2c.id = sb2cl.main_id and sb2cl.is_deleted = false
         inner join so_b2c_receiver sb2cr on sb2c.id = sb2cr.main_id and sb2cr.is_deleted = false
@@ -309,7 +309,7 @@
     <!-- 合并列表数量查询 -->
     <select id="mergePagingCount" resultType="java.lang.Integer">
         select
-        count(distinct sb2c.id)
+        count(sb2c.id)
         from so_b2c sb2c
         inner join so_b2c_detail sb2cd on sb2c.id = sb2cd.main_id and sb2cd.is_deleted = false
         inner join so_b2c_logistics sb2cl on sb2c.id = sb2cl.main_id and sb2cl.is_deleted = false
@@ -1045,7 +1045,7 @@
             select
             '${item.tabFlag}' as tabFlag,
             '${item.tabFlagName}' as tabFlagName,
-            count(distinct sb2c.id) as count
+            count(sb2c.id) as count
             from so_b2c sb2c
             inner join so_b2c_logistics sb2cl on sb2c.id = sb2cl.main_id and sb2cl.is_deleted = false
             inner join so_b2c_receiver sb2cr on sb2c.id = sb2cr.main_id and sb2cr.is_deleted = false
