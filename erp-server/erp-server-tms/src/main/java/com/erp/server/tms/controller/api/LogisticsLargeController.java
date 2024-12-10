@@ -264,7 +264,10 @@ public class LogisticsLargeController extends BaseController {
     @LogAction(value = LogActionEnum.INSERT, desc = "中转费用分摊生成物流大表")
     public ApiResult<List<BatchResultDTO>> generateTransferCostAllocationTable(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>();
-        List<TransferDeclareCostAllocationMainEntity> transferDeclareCostAllocationMainEntities = transferDeclareCostAllocationMainService.listByIds(dto.getIds());
+
+        List<TransferDeclareCostAllocationEntity> list = transferDeclareCostAllocationService.lambdaQuery().in(TransferDeclareCostAllocationEntity::getMainId, dto.getIds()).list();
+        List<String> mainIds = list.stream().map(req -> req.getMainId()).distinct().collect(Collectors.toList());
+        List<TransferDeclareCostAllocationMainEntity> transferDeclareCostAllocationMainEntities = transferDeclareCostAllocationMainService.listByIds(mainIds);
 
         //根据整单添加操作
         for (TransferDeclareCostAllocationMainEntity transferDeclareCostAllocationMainEntity : transferDeclareCostAllocationMainEntities) {

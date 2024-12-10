@@ -898,8 +898,26 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public List<BatchResultDTO> generateTransferCostAllocationTable(TransferDeclareCostAllocationMainEntity transferDeclareCostAllocationMainEntity) {
-    	return null;
+    public List<BatchResultDTO> generateTransferCostAllocationTable(TransferDeclareCostAllocationMainEntity entity) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>();
+
+        List<TransferDeclareCostAllocationEntity> costAllocationEntities = transferDeclareCostAllocationService.lambdaQuery().eq(TransferDeclareCostAllocationEntity::getMainId, entity.getId()).list();
+        List<String> ids = costAllocationEntities.stream().map(req -> req.getId()).collect(Collectors.toList());
+        List<TransferDeclareCostAllocationDetailEntity> costAllocationDetailEntities = transferDeclareCostAllocationDetailService.listByMainIds(ids);
+
+
+        TmsB2cDeclareReconciliationDetailEntity reconciliationDetailEntity = tmsB2cDeclareReconciliationDetailService.getById(entity.getDeclareReconciliationDetailId());
+        TmsB2cDeclareReconciliationEntity declareReconciliationEntity = tmsB2cDeclareReconciliationService.getById(reconciliationDetailEntity.getMainId());
+
+        List<String> outstockDetailId = costAllocationEntities.stream().map(TransferDeclareCostAllocationEntity::getOutstockDetailId).distinct().collect(Collectors.toList());
+        soOutstockFeign.listDetailBySourceDetailId()
+
+        for (TransferDeclareCostAllocationEntity costAllocationEntity : costAllocationEntities) {
+
+            List<TransferDeclareCostAllocationDetailEntity> costAllocationDetailEntityList = costAllocationDetailEntities.stream().filter(req -> req.getMainId().equals(costAllocationEntity.getId())).collect(Collectors.toList());
+        }
+
+        return null;
     }
 
     private BatchResultDTO generateTransferCostAllocationHandler(TransferDeclareCostAllocationMainEntity mainEntity, TransferDeclareCostAllocationEntity entity, List<TransferDeclareCostAllocationDetailEntity> detailEntityList, TmsB2cDeclareReconciliationEntity declareReconciliationEntity, TmsB2cDeclareReconciliationDetailEntity declareReconciliationDetailEntity, SoOutstockEntity soOutstockEntity) {
