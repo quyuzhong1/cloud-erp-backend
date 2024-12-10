@@ -1669,6 +1669,8 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 				weightPackageAllocation = feeRule;
 			}
 		}
+		
+		Map<String, BigDecimal> rateMap = new HashMap<>();
 		for(SoOutstockDetailEntity soOutstockDetailEntity : soOutstockDetailEntityList) {
 			i = i + 1;
 			String skuId = soOutstockDetailEntity.getSkuId();
@@ -1746,7 +1748,18 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 				if(CollUtil.isNotEmpty(costViewDTOList)) {
 					allocatedCurrency = costViewDTOList.get(0).getCurrency();
 				}
+				String key = reportDate + "_" + allocatedCurrency;
+				BigDecimal rate = rateMap.get(key);
+				if(rate == null) {
+					rate = dmpTaskFeign.getRate(reportDate + "-01", allocatedCurrency);
+					if(ObjectUtil.isEmpty(rate)){
+			            log.error("币别【{}】,汇率为空，请维护汇率后再查询",allocatedCurrency);
+			            throw new ServiceException("汇率为空，请维护汇率后再查询");
+			        }
+					rateMap.put(key, rate);
+				}
 				smallBagCostAllocationDetailEntity.setBillAmount(costValueSum);
+				smallBagCostAllocationDetailEntity.setBillAmountExchange(smallBagCostAllocationDetailEntity.getBillAmount().multiply(rate).setScale(4));
 				smallBagCostAllocationDetailEntity.setFeeType(feeType);
 				String feeAllocationType = feeTypeSettingMap.getValue();
 				if(org.apache.commons.lang3.StringUtils.isBlank(feeAllocationType)) {
@@ -1759,13 +1772,17 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 					}else {
 						smallBagCostAllocationDetailEntity.setAllocatedAmount(costValueSum.multiply(skuCostPre).setScale(4, RoundingMode.HALF_UP));
 					}
+					smallBagCostAllocationDetailEntity.setAllocatedAmountExchange(smallBagCostAllocationDetailEntity.getAllocatedAmount().multiply(rate));
 				}else {
 					smallBagCostAllocationDetailEntity.setAllocatedAmount(costValueSum.subtract(addSmallBagCostAllocationDetailEntityList.stream()
 							.filter(a -> a.getFeeType().equals(feeType)).map(SmallBagCostAllocationDetailEntity::getAllocatedAmount).reduce(BigDecimal::add).orElse(BigDecimal.ZERO)));
+					smallBagCostAllocationDetailEntity.setAllocatedAmountExchange(costValueSum.subtract(addSmallBagCostAllocationDetailEntityList.stream()
+							.filter(a -> a.getFeeType().equals(feeType)).map(SmallBagCostAllocationDetailEntity::getAllocatedAmountExchange).reduce(BigDecimal::add).orElse(BigDecimal.ZERO)));
 				}
 				smallBagCostAllocationDetailEntity.setAllocatedCurrency(allocatedCurrency);
 				smallBagCostAllocationDetailEntity.setProductAllocatedAmount(smallBagCostAllocationDetailEntity.getAllocatedAmount()
 						.divide(new BigDecimal(actualQty), 6, RoundingMode.HALF_UP));
+				smallBagCostAllocationDetailEntity.setProductAllocatedAmountExchange(smallBagCostAllocationDetailEntity.getProductAllocatedAmount().multiply(rate).setScale(6));
 				smallBagCostAllocationDetailEntity.setWeightAllocationType(weightPackageAllocation);
 				smallBagCostAllocationDetailEntity.setOrgId(orgId);
 				smallBagCostAllocationDetailEntity.setOrgName(orgName);

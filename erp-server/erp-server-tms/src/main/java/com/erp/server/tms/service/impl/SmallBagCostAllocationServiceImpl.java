@@ -290,7 +290,7 @@ public class SmallBagCostAllocationServiceImpl extends SuperServiceImpl<SmallBag
 			}
 			BigDecimal skuWeight = dto.getSkuWeight();
 			if(skuWeight != null) {
-				dto.setSkuWeight(skuWeight.setScale(4, RoundingMode.HALF_UP));
+				dto.setSkuWeight(skuWeight.setScale(6, RoundingMode.HALF_UP));
 			}
 			if(unitCost != null) {
 				dto.setUnitCost(unitCost.setScale(6, RoundingMode.HALF_UP));

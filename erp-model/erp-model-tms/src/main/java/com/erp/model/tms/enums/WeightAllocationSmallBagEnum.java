@@ -10,7 +10,7 @@ import com.fasterxml.jackson.annotation.JsonValue;
 public enum WeightAllocationSmallBagEnum implements EnumMessage {
     OUTSTOCK_CHARGED_WEIGHT("outstockChargedWeight","出库计费重分摊"),
     SUPPLIER_CHARGED_WEIGHT("supplierChargedWeight","物流商计费重分摊"),
-    SINGLE_PRODUCT_WEIGHT("singleProductWeight","单产品重量分摊"),
+    SINGLE_PRODUCT_WEIGHT("productWeight","单产品重量分摊"),
     NETWEIGHT("netWeight","出库实重分摊"),
     VOLUMEWEIGHT("volumeWeight","出库体积重分摊"),
     ;
