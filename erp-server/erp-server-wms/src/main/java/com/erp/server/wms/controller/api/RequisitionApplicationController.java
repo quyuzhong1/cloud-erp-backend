@@ -626,4 +626,16 @@ public class RequisitionApplicationController extends BaseController {
     public ApiResult<List<RequisitionApplicationDTO.PrintFnskuDetailDTO>> printFnskuPreview(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         return success(requisitionApplicationService.printFnskuPreview(dto));
     }
+
+    /**
+     * 打印fnsku
+     * @param
+     * @Author jack
+     * @Date 2024/10/16
+     * @return void
+     **/
+    @PostMapping("/printFnskuBillConfirm")
+    public void printFnskuBillConfirm(@RequestBody @Validated RequisitionApplicationDTO.PrintFnskuBillConfirmDTO dto , HttpServletResponse response) {
+        requisitionApplicationService.printFnskuBillConfirm(dto,response);
+    }
 }

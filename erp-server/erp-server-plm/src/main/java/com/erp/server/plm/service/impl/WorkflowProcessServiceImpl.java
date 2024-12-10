@@ -1,6 +1,7 @@
 package com.erp.server.plm.service.impl;
 
 import com.common.business.dto.base.ApproveOneDTO;
+import com.common.business.enums.ApproveTypeEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.erp.model.plm.entity.PilotApplicationEntity;
 import com.erp.model.plm.entity.ProductLogisticsEntity;
@@ -67,7 +68,13 @@ public class WorkflowProcessServiceImpl implements WorkflowProcessService {
         approveOne.setId(dto.getBusinessId());
         PilotApplicationEntity entity = new PilotApplicationEntity();
         entity.setId(dto.getBusinessId());
-        return pilotApplicationService.approveEnd(approveOne, entity);
+        Boolean approveEnd = pilotApplicationService.approveEnd(approveOne, entity);
+        if (ApproveTypeEnum.PASS.getStatus().equals(dto.getApproveStatus().getStatus())) {
+            //回写产品管理--采购信息--一级和二级供应商 审核流回调导致状态无法查询，则判断通过则直接通知
+            pilotApplicationService.writeProductPurchaseBackByWork(dto.getBusinessId());
+            pilotApplicationService.approvePilotApplicationNoticeByWork(dto.getBusinessId());
+        }
+        return approveEnd;
     }
 
 }

@@ -113,11 +113,11 @@
                 pad.business_type businessType,
                 pad.order_status orderStatus,
                 pa.approve_time as approveTime
-        from pilot_application pa
-        left join pilot_application_detail pad on pa.id = pad.main_id and pad.is_deleted = false
+        from pilot_application_detail pad
+        left join pilot_application pa on pa.id = pad.main_id and pa.is_deleted = false
         <where>
             ${params.sqlMap.default}
-            and pa.is_deleted = false
+            and pad.is_deleted = false
         </where>
         ORDER BY
         <if test="params.sortList != null and params.sortList.size > 0">

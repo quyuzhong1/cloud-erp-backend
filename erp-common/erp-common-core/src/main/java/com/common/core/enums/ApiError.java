@@ -1175,6 +1175,7 @@ public enum ApiError implements Serializable {
     ERROR_SO_DELIVERY_NOTICE_DETAIL_NOT_EXIST(92248,"销售通知单明细未找到"),
 
     ERROR_92248(92248,"中转规则自动产生的直接调拨单,不支持修改"),
+    ERROR_92249(92249,"打印FNSKU标签失败"),
     /**
      * OMS 错误
      * 从92000 开始  以端口号

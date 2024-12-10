@@ -261,4 +261,6 @@ public interface RequisitionApplicationService extends SuperService<RequisitionA
     RequisitionApplicationDTO.ImportDTO importFile(MultipartFile excelFile, List<RequisitionApplicationDTO.FbaBindShipmentViewDetailDTO> fbaBindShipmentViewDTOS, HttpServletResponse response);
 
     List<WarehouseLocationMoveDTO.GenPickToSkuMove> genPickToSkuMove(String warehouseId, String warehouseName, PickingListsDTO.AddDTO addDTO);
+
+    void printFnskuBillConfirm(RequisitionApplicationDTO.PrintFnskuBillConfirmDTO dto, HttpServletResponse response);
 }
