@@ -1,14 +1,14 @@
 package com.erp.model.wms.dto;
 
-import java.time.LocalDateTime;
+import cn.hutool.json.JSONObject;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
+
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.time.LocalDateTime;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.Size;
 
 /**
  * <p>
@@ -40,7 +40,7 @@ public class WmsVirtualDetailMsgDTO implements Serializable {
         /**
         * json数据
         */
-        private String dataJson;
+        private JSONObject dataJson;
 
         /**
         * 备注
@@ -92,8 +92,8 @@ public class WmsVirtualDetailMsgDTO implements Serializable {
         /**
         * json数据
         */
-        @NotBlank(message = "json数据不能为空")
-        private String dataJson;
+        @NotNull(message = "json数据不能为空")
+        private JSONObject dataJson;
 
         /**
         * 备注

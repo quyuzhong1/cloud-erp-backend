@@ -3,23 +3,23 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseResultDTO;
-import com.erp.model.wms.entity.WmsVirtualDetailMsgEntity;
-import com.erp.server.wms.mapper.WmsVirtualDetailMsgMapper;
-import com.erp.server.wms.service.WmsVirtualDetailMsgService;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
-import com.erp.server.wms.service.OperateLogService;
-import com.erp.server.wms.service.CommonService;
+import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Transactional;
+import com.common.core.utils.BeanMapperUtils;
+import com.erp.model.wms.dto.WmsVirtualDetailMsgDTO;
+import com.erp.model.wms.entity.WmsVirtualDetailMsgEntity;
+import com.erp.server.wms.mapper.WmsVirtualDetailMsgMapper;
+import com.erp.server.wms.service.OperateLogService;
+import com.erp.server.wms.service.WmsVirtualDetailMsgService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
-import com.erp.model.wms.dto.WmsVirtualDetailMsgDTO;
-import java.util.*;
-import com.common.core.utils.*;
-import com.common.core.enums.ApiError;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Optional;
 /**
  * <p>
  * wms虚拟仓明细同步表 服务实现类
@@ -84,6 +84,11 @@ public class WmsVirtualDetailMsgServiceImpl extends SuperServiceImpl<WmsVirtualD
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLogByObj(old, wmsVirtualDetailMsgEntity, null, wmsVirtualDetailMsgEntity.getId(), msg);
         return Boolean.TRUE;
+    }
+
+    @Override
+    public void virtualDetailMsgJob() {
+
     }
 
 

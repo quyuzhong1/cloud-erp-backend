@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import java.time.LocalDate;
 import java.util.List;
 
 
@@ -27,4 +28,12 @@ public interface VirtualInventoryHisMapper extends BaseMapper<VirtualInventoryHi
      * @return List<VirtualInventoryHisEntity>
      */
     List<VirtualInventoryHisEntity> listByParam(@Param("params") VirtualInventoryHisDTO.ParamDTO paramDTO);
+    /**
+     * 查询虚拟仓历史数据
+     * @author will
+     * @date 2024/12/9 19:55
+     * @param date 
+     * @return List<VirtualInventoryHisEntity>
+     */
+    List<VirtualInventoryHisEntity> listVirtualInventoryHisJobData(@Param("date")LocalDate date);
 }

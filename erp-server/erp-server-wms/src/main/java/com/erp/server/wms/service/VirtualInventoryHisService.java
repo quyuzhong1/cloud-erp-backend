@@ -43,4 +43,10 @@ public interface VirtualInventoryHisService extends SuperService<VirtualInventor
      * @return List<VirtualInventoryHisEntity>
      */
     List<VirtualInventoryHisEntity> listByParam(VirtualInventoryHisDTO.ParamDTO paramDTO);
+    /**
+     * 历史库存任务保存
+     * @author will
+     * @date 2024/12/9 19:23
+     */
+    void hisVirtualInventoryJob();
 }

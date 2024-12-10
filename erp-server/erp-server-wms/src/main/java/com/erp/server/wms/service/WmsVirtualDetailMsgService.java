@@ -32,5 +32,10 @@ public interface WmsVirtualDetailMsgService extends SuperService<WmsVirtualDetai
     */
     Boolean update(WmsVirtualDetailMsgDTO.UpdateDTO dto);
 
-
+    /**
+     * 虚拟仓明细同步任务
+     * @author will
+     * @date 2024/12/9 19:22
+     */
+    void virtualDetailMsgJob();
 }

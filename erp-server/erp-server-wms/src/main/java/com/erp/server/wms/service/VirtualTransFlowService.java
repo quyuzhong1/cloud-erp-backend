@@ -33,7 +33,7 @@ public interface VirtualTransFlowService extends SuperService<VirtualTransFlowEn
      * @param virtualTansRuleId
      * @param inventoryModeEnum
      */
-    Boolean add(VirtualTransFlowDTO.AddDTO addDTO, String virtualTansRuleId, InventoryModeEnum inventoryModeEnum);
+    VirtualTransFlowEntity add(VirtualTransFlowDTO.AddDTO addDTO, String virtualTansRuleId, InventoryModeEnum inventoryModeEnum);
 
     /**
      * 根据已存在的流水新增新的流水

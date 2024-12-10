@@ -68,5 +68,22 @@
         </where>
     </select>
 
+    <!-- 查询历史库存数据 -->
+    <select id="listVirtualInventoryHisJobData"
+            resultType="com.erp.model.wms.entity.VirtualInventoryHisEntity">
+        select
+            vid.sku_id,
+            vid.warehouse_id,
+            vid.virtual_warehouse_id,
+            now() as date,
+            vid.dict_inventory_status,
+            vid.virtual_trans_flow_id,
+            vid.batch_no,
+            vid.bill_date,
+        from virtual_inventory_detail vid
+        left join virtual_trans_flow_detail vtfd on tid.id = vtfd.virtual_inventory_detail_id and vtfd.is_deleted = false
+        where
+    </select>
+
 
 </mapper>

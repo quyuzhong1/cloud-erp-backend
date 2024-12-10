@@ -2,9 +2,7 @@ package com.erp.server.wms.service.impl;
 
 
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.text.CharSequenceUtil;
-import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseIdDTO;
@@ -77,7 +75,7 @@ public class VirtualTransFlowServiceImpl extends SuperServiceImpl<VirtualTransFl
     }
 
     @Override
-    public Boolean add(VirtualTransFlowDTO.AddDTO addDTO, String virtualTansRuleId,InventoryModeEnum inventoryModeEnum) {
+    public VirtualTransFlowEntity add(VirtualTransFlowDTO.AddDTO addDTO, String virtualTansRuleId,InventoryModeEnum inventoryModeEnum) {
         // 记录交易流水
         VirtualTransFlowEntity virtualTransFlowEntity = new VirtualTransFlowEntity();
         BeanMapperUtils.copy(addDTO,virtualTransFlowEntity);
@@ -93,7 +91,7 @@ public class VirtualTransFlowServiceImpl extends SuperServiceImpl<VirtualTransFl
         virtualTransFlowEntity.setQty(qty);
         boolean save = super.save(virtualTransFlowEntity);
         ValidatorUtil.isTrue(save, ()->new ServiceException("虚拟库存流水数据保存失败"));
-        return save;
+        return virtualTransFlowEntity;
     }
 
     @Override

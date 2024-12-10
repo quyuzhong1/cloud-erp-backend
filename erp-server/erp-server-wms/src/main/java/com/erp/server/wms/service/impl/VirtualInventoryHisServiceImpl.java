@@ -13,12 +13,14 @@ import com.erp.model.wms.entity.VirtualInventoryHisEntity;
 import com.erp.server.wms.mapper.VirtualInventoryHisMapper;
 import com.erp.server.wms.service.OperateLogService;
 import com.erp.server.wms.service.VirtualInventoryHisService;
+import com.erp.server.wms.service.VirtualInventoryService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 /**
@@ -34,6 +36,9 @@ import java.util.Optional;
 public class VirtualInventoryHisServiceImpl extends SuperServiceImpl<VirtualInventoryHisMapper, VirtualInventoryHisEntity> implements VirtualInventoryHisService {
     @Autowired
     private OperateLogService operateLogService;
+
+    @Autowired
+    private VirtualInventoryService virtualInventoryService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -90,6 +95,15 @@ public class VirtualInventoryHisServiceImpl extends SuperServiceImpl<VirtualInve
     @Override
     public List<VirtualInventoryHisEntity> listByParam(VirtualInventoryHisDTO.ParamDTO paramDTO) {
         return baseMapper.listByParam(paramDTO);
+    }
+
+    @Override
+    public void hisVirtualInventoryJob() {
+        VirtualInventoryHisDTO.AddDTO  addDTO = new VirtualInventoryHisDTO.AddDTO();
+        LocalDate date = LocalDate.now().minusDays(1L);
+        List<VirtualInventoryHisEntity> virtualInventoryHisList = baseMapper.listVirtualInventoryHisJobData(date);
+
+
     }
 
 
