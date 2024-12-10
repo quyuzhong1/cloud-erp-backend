@@ -263,6 +263,12 @@ public class SyncSoB2cServiceImpl implements SyncSoB2cService {
         shudiyunB2cOrderDTO.setSource_system("SDC");
         shudiyunB2cOrderDTO.setRoot_node_no_initial(soB2cEntity.getPlatformCode());
 
+        if (SourceTypeEnum.SELF_ADD.getCode().equals(soB2cEntity.getSourceType())) {
+            shudiyunB2cOrderDTO.setMsku_code(skuVO.getSkuNo());
+            shudiyunB2cOrderDTO.setMsku_name(skuVO.getSkuName());
+            shudiyunB2cOrderDTO.setRoot_node_no_initial(soB2cEntity.getCode());
+            shudiyunB2cOrderDTO.setRoot_node_no(soB2cEntity.getCode());
+        }
         return JSONObject.parseObject(JSONObject.toJSONString(shudiyunB2cOrderDTO), Map.class);
     }
 
@@ -507,6 +513,13 @@ public class SyncSoB2cServiceImpl implements SyncSoB2cService {
 
             shudiyunB2cOrderDTO.setSource_system("SDC");
             shudiyunB2cOrderDTO.setRoot_node_no_initial(soB2cEntity.getPlatformCode());
+
+            if (SourceTypeEnum.SELF_ADD.getCode().equals(soB2cEntity.getSourceType())) {
+                shudiyunB2cOrderDTO.setMsku_code(skuVO.getSkuNo());
+                shudiyunB2cOrderDTO.setMsku_name(skuVO.getSkuName());
+                shudiyunB2cOrderDTO.setRoot_node_no_initial(soB2cEntity.getCode());
+                shudiyunB2cOrderDTO.setRoot_node_no(soB2cEntity.getCode());
+            }
 
             //同步配货单
             OmsPushMsgEntity omsPushMsgEntity = new OmsPushMsgEntity();
