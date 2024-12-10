@@ -236,4 +236,6 @@ public interface LogisticsChannelService extends SuperService<LogisticsChannelEn
      * @return
      */
     List<LogisticsChannelDTO.WarnReportDTO> getWarnReportByChannel(LogisticsBillDetailQueryDTO query);
+
+    PagingVO<LogisticsChannelDTO.PagingViewDTO> paging(PagingDTO<LogisticsChannelDTO.PagingParamDTO> dto);
 }

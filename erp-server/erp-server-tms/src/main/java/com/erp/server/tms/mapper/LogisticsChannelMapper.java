@@ -81,4 +81,6 @@ public interface LogisticsChannelMapper extends BaseMapper<LogisticsChannelEntit
      * @return
      */
     List<LogisticsChannelDTO.WarnReportDTO> getWarnReportByChannel(@Param("query") LogisticsBillDetailQueryDTO query);
+
+    IPage<LogisticsChannelDTO.PagingViewDTO> paging(Page<LogisticsChannelDTO.PagingViewDTO> query, @Param("params") LogisticsChannelDTO.PagingParamDTO params);
 }

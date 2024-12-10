@@ -755,4 +755,17 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
     public List<LogisticsChannelDTO.WarnReportDTO> getWarnReportByChannel(LogisticsBillDetailQueryDTO query) {
         return baseMapper.getWarnReportByChannel(query);
     }
+
+    @Override
+    public PagingVO<LogisticsChannelDTO.PagingViewDTO> paging(PagingDTO<LogisticsChannelDTO.PagingParamDTO> dto) {
+        LogisticsChannelDTO.PagingParamDTO params = dto.getParams();
+        params.setPermissionSql(dto.getPermissionSql());
+        Page<LogisticsChannelDTO.PagingViewDTO> query = new Page<>(dto.getCurrPage(), dto.getPageSize());
+        IPage<LogisticsChannelDTO.PagingViewDTO> pageData = baseMapper.paging(query, params);
+        List<LogisticsChannelDTO.PagingViewDTO> list = pageData.getRecords();
+        for (LogisticsChannelDTO.PagingViewDTO pagingViewDTO : list) {
+            pagingViewDTO.setTypeName(pagingViewDTO.getType().getName());
+        }
+        return new PagingVO<>(pageData);
+    }
 }
