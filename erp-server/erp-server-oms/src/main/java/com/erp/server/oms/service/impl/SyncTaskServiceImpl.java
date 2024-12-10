@@ -112,6 +112,9 @@ public class SyncTaskServiceImpl implements SyncTaskService {
     @Resource
     private DictBasicService dictBasicService;
 
+    @Resource
+    private SoChangeDetailService soChangeDetailService;
+
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
@@ -608,17 +611,64 @@ public class SyncTaskServiceImpl implements SyncTaskService {
             log.error("newSyncSdyOfflineOrder >>>> 未找到数据！");
             return resultList;
         }
+
+        //产品信息
+        List<String> skuNos = soDetailEntityList.stream().map(req -> req.getSkuNo()).distinct().collect(Collectors.toList());
+        List<SkuVO> skuVOList = plmTaskFeign.listBySkuNoList(skuNos);
+        List<String> skuIds = soDetailEntityList.stream().map(req -> req.getSkuId()).distinct().collect(Collectors.toList());
+        List<BomChildrenSkuDTO> bomChildrenSkuDTOS = plmTaskFeign.listBomChildBySkuIds(skuIds);
+        //父类产品
+        List<String> parentSkuId = bomChildrenSkuDTOS.stream().map(BomChildrenSkuDTO::getParentSkuId).distinct().collect(Collectors.toList());
+        List<ProductDetailEntity> parentSkuList = new ArrayList<>();
+        if (CollUtil.isNotEmpty(parentSkuId)) {
+            parentSkuList = FeignQuery.create(ProductDetailEntity.class)
+                    .in(ProductDetailEntity::getId, parentSkuId)
+                    .list();
+        }
+        List<String> ids = soDetailEntityList.stream().map(req -> req.getMainId()).collect(Collectors.toList());
+        List<SoInfoEntity> list = soInfoService.listByIds(ids);
+
+        List<String> customerIds = list.stream().map(req -> req.getCustomerId()).distinct().collect(Collectors.toList());
+        List<CustomerInfoEntity> customerInfoEntities = new ArrayList<>();
+        if (CollUtil.isNotEmpty(customerIds)) {
+            customerInfoEntities = customerInfoService.listByIds(customerIds);
+        }
+
+        //组织信息
+        List<String> orgIdList = new ArrayList<>();
+        List<String> orgIds = customerInfoEntities.stream().map(req -> req.getFinancialOrganization()).distinct().collect(Collectors.toList());
+        orgIdList.addAll(orgIds);
+        List<String> salesOrgIds = list.stream().map(req -> req.getSalesOrgId()).collect(Collectors.toList());
+        orgIdList.addAll(salesOrgIds);
+        List<BaseIdDTO.CodeDTO> companyEntities = sysUserFeign.getAccountingCompanyList(orgIdList);
+
+        List<String> dictKeys = Lists.newArrayList(DictBasicTypeEnum.SALES_PLATFORM.getType());
+        List<DictBasicEntity> dictBasicEntityList = dictBasicService.getByKeyList(dictKeys);
+
+        List<String> currencyIds = list.stream().map(req -> req.getCurrency()).distinct().collect(Collectors.toList());
+        List<CurrencyDTO.ViewDTO> currencyList = sysUserFeign.listByCurrency(currencyIds);
+
+        List<String> soDetailIds = soDetailEntityList.stream().map(req -> req.getId()).collect(Collectors.toList());
+        List<SoChangeDetailEntity> soChangeDetailEntities = soChangeDetailService.listBySoDetailIdList(soDetailIds);
+
+        List<String> subPlatformType = customerInfoEntities.stream().map(req -> req.getPlatformType()).distinct().collect(Collectors.toList());
+        List<DictBasicEntity> dictList = dictBasicService.lambdaQuery().eq(DictBasicEntity::getType, "sdySubPlatform").in(DictBasicEntity::getName, subPlatformType).list();
+
         for (DmpSyncMqDTO.SyncParamDetailDTO syncParamDetailDTO :  sourceDetailList) {
         	String sourceId = syncParamDetailDTO.getSourceId();
             SoDetailEntity soDetailEntity = soDetailEntityList.stream().filter(req -> req.getId().equalsIgnoreCase(sourceId)).findFirst().orElse(null);
             if (ObjectUtils.isEmpty(soDetailEntity)) {
                 continue;
             }
-            SoInfoDTO.ViewDTO view = soInfoService.view(soDetailEntity.getMainId());
-            if (ObjectUtils.isEmpty(view)) {
+            SoInfoEntity soInfoEntity = list.stream().filter(req -> req.getId().equals(soDetailEntity.getMainId())).findFirst().orElse(null);
+            if (ObjectUtils.isEmpty(soInfoEntity)) {
                 continue;
             }
-            resultList.put(syncParamDetailDTO.getDataId(), syncKingdeeSoService.syncDataToSdyFieldHandler(view, soDetailEntity, syncParamDetailDTO.getSyncOperate(), ""));
+            List<SoDetailEntity> detailEntityList = soDetailEntityList.stream().filter(req -> req.getMainId().equals(soInfoEntity.getId())).collect(Collectors.toList());
+            if (CollUtil.isEmpty(detailEntityList)) {
+                continue;
+            }
+            resultList.put(syncParamDetailDTO.getDataId(), syncKingdeeSoService.syncDataToSdyFieldHandler(soInfoEntity, soDetailEntity, detailEntityList, syncParamDetailDTO.getSyncOperate(), skuVOList, bomChildrenSkuDTOS, parentSkuList, customerInfoEntities, companyEntities, dictBasicEntityList, currencyList, soChangeDetailEntities, "", dictList));
         }
         return resultList;
     }

@@ -548,12 +548,25 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
     }
 
     @Override
-    public Map<String, Object> syncDataToSdyFieldHandler(SoInfoDTO.ViewDTO view, SoDetailEntity soDetailEntity, String operate, String deliveryStatus) {
+    public Map<String, Object> syncDataToSdyFieldHandler(SoInfoEntity soInfoEntity,
+                                                         SoDetailEntity soDetailEntity,
+                                                         List<SoDetailEntity> detailEntityList,
+                                                         String operate,
+                                                         List<SkuVO> skuVOList,
+                                                         List<BomChildrenSkuDTO> bomChildrenSkuDTOS,
+                                                         List<ProductDetailEntity> parentSkuList,
+                                                         List<CustomerInfoEntity> customerInfoEntities,
+                                                         List<BaseIdDTO.CodeDTO> companyEntities,
+                                                         List<DictBasicEntity> dictBasicEntityList,
+                                                         List<CurrencyDTO.ViewDTO> currencyList,
+                                                         List<SoChangeDetailEntity> soChangeDetailEntityList,
+                                                         String deliveryStatus,
+                                                         List<DictBasicEntity> dictList) {
         DateTimeFormatter localDateTime = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
         DateTimeFormatter localDate = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
-        List<String> soDetailIds = view.getDetailList().stream().map(req -> req.getId()).collect(Collectors.toList());
-        List<SoChangeDetailEntity> soChangeDetailEntities = soChangeDetailService.listBySoDetailIdList(soDetailIds);
+        List<String> soDetailIds = detailEntityList.stream().map(req -> req.getId()).collect(Collectors.toList());
+        List<SoChangeDetailEntity> soChangeDetailEntities = soChangeDetailEntityList.stream().filter(req -> soDetailIds.contains(req.getSoDetailId())).collect(Collectors.toList());
         //获取取消的订单
         List<String> cancelSoDetailIds = soChangeDetailEntities.stream()
                 .filter(req -> SoChangeTypeEnum.TERMINATE.getCode().equals(req.getChangeType().getCode())
@@ -564,59 +577,30 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
         List<String> cancelIds = soChangeDetailEntities.stream()
                 .filter(req -> SoChangeTypeEnum.DELETE.getCode().equals(req.getChangeType().getCode())
                 ).map(req -> req.getSoDetailId()).collect(Collectors.toList());
-        List<SoDetailDTO.ViewDTO> viewDTOList = view.getDetailList().stream()
+        List<SoDetailEntity> viewDTOList = detailEntityList.stream()
                 .filter(req -> cancelIds.contains(req.getId()))
                 .collect(Collectors.toList());
-        List<SoDetailDTO.ViewDTO> detailList = view.getDetailList();
-        detailList.addAll(viewDTOList);
-        view.setDetailList(detailList);
-
-        List<String> skuNos = view.getDetailList().stream().map(req -> req.getSkuNo()).collect(Collectors.toList());
-        List<SkuVO> skuVOList = plmTaskFeign.listBySkuNoList(skuNos);
-        List<String> skuIds = view.getDetailList().stream().map(req -> req.getSkuId()).collect(Collectors.toList());
-        List<BomChildrenSkuDTO> bomChildrenSkuDTOS = plmTaskFeign.listBomChildBySkuIds(skuIds);
-
-        List<CurrencyDTO.ViewDTO> currencyList = sysUserFeign.listByCurrency(Arrays.asList(view.getCurrency()));
-        //父类产品
-        List<String> parentSkuId = bomChildrenSkuDTOS.stream().map(BomChildrenSkuDTO::getParentSkuId).distinct().collect(Collectors.toList());
-        List<ProductDetailEntity> parentSkuList = new ArrayList<>();
-        if (CollUtil.isNotEmpty(parentSkuId)) {
-            parentSkuList = FeignQuery.create(ProductDetailEntity.class)
-                    .in(ProductDetailEntity::getId, parentSkuId)
-                    .list();
-        }
+        detailEntityList.addAll(viewDTOList);
 
         BigDecimal totalCanceledGoodsAmount = BigDecimal.ZERO;
         Integer totalCanceledGoodsQty = 0;
-        List<SoDetailDTO.ViewDTO> cancelSoDetailList = view.getDetailList().stream().filter(req -> cancelSoDetailIds.contains(req.getId())).collect(Collectors.toList());
-        for (SoDetailDTO.ViewDTO viewDTO : cancelSoDetailList) {
+        List<SoDetailEntity> cancelSoDetailList = detailEntityList.stream().filter(req -> cancelSoDetailIds.contains(req.getId())).collect(Collectors.toList());
+        for (SoDetailEntity viewDTO : cancelSoDetailList) {
             totalCanceledGoodsAmount = totalCanceledGoodsAmount.add(viewDTO.getTaxAmountBefore());
             totalCanceledGoodsQty = totalCanceledGoodsQty + viewDTO.getQty();
         }
 
-
-        //组织信息
-        CustomerInfoEntity customerInfo = FeignQuery.getById(CustomerInfoEntity.class, view.getCustomerId());
-        List<BaseIdDTO.CodeDTO> companyEntities = sysUserFeign.getAccountingCompanyList(Arrays.asList(customerInfo.getFinancialOrganization(), view.getSalesOrgId()));
-        String customerId = "";
-        if (ObjectUtil.isNotEmpty(customerInfo)) {
-            customerId = customerInfo.getId();
-        }
-
-        List<String> dictKeys = Lists.newArrayList(DictBasicTypeEnum.SALES_PLATFORM.getType());
-        List<DictBasicEntity> dictBasicEntityList = dictBasicService.getByKeyList(dictKeys);
-
         ShudiyunB2cOrderDTO shudiyunB2cOrderDTO = new ShudiyunB2cOrderDTO();
 
-        shudiyunB2cOrderDTO.setBiz_uni_key(view.getId() + soDetailEntity.getId());
-        shudiyunB2cOrderDTO.setBiz_no(view.getCode());
-        shudiyunB2cOrderDTO.setBiz_time(localDate.format(view.getBillDate()));
+        shudiyunB2cOrderDTO.setBiz_uni_key(soInfoEntity + soDetailEntity.getId());
+        shudiyunB2cOrderDTO.setBiz_no(soInfoEntity.getCode());
+        shudiyunB2cOrderDTO.setBiz_time(localDate.format(soInfoEntity.getBillDate()));
         //默认线下订单
         shudiyunB2cOrderDTO.setTransaction_type("配货单");
-        if (CharSequenceUtil.isBlank(view.getTransactionSubType())) {
+        if (CharSequenceUtil.isBlank(soInfoEntity.getTransactionSubType())) {
             shudiyunB2cOrderDTO.setTransaction_sub_type("配货单");
         } else {
-            shudiyunB2cOrderDTO.setTransaction_sub_type(OrderSubTypeEnum.getName(view.getTransactionSubType()));
+            shudiyunB2cOrderDTO.setTransaction_sub_type(OrderSubTypeEnum.getName(soInfoEntity.getTransactionSubType()));
         }
         shudiyunB2cOrderDTO.setGoods_status("未发货");
         // 商品状态
@@ -625,26 +609,26 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
             shudiyunB2cOrderDTO.setGoods_status("已发货");
         }
 
-        SoDetailDTO.ViewDTO viewDTO = cancelSoDetailList.stream().filter(req -> req.getId().equals(soDetailEntity.getId())).findFirst().orElse(null);
+        SoDetailEntity viewDTO = cancelSoDetailList.stream().filter(req -> req.getId().equals(soDetailEntity.getId())).findFirst().orElse(null);
         if (ObjectUtil.isNotEmpty(viewDTO)) {
             shudiyunB2cOrderDTO.setGoods_status("已取消");
         }
         if (SyncOperateEnum.OPERATE_APPROVE.getCode().equals(operate)) {
             shudiyunB2cOrderDTO.setBiz_status(ApproveStatusEnum.APPROVE.getName());
         } else {
-            shudiyunB2cOrderDTO.setBiz_status(view.getApproveStatus().getName());
+            shudiyunB2cOrderDTO.setBiz_status(soInfoEntity.getApproveStatus().getName());
         }
 
 
-        shudiyunB2cOrderDTO.setStatus(shudiyunB2cOrderDTO.sdyStatusHandle(operate, view.getVersion(), soDetailEntity.getVersion()));
+        shudiyunB2cOrderDTO.setStatus(shudiyunB2cOrderDTO.sdyStatusHandle(operate, soInfoEntity.getVersion(), soDetailEntity.getVersion()));
 
-        BigDecimal taxAmountBefore = view.getDetailList().stream().map(req -> req.getTaxAmountBefore()).reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
+        BigDecimal taxAmountBefore = detailEntityList.stream().map(req -> req.getTaxAmountBefore()).reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
         shudiyunB2cOrderDTO.setTotal_goods_transaction_amount(taxAmountBefore);
 
         //总优惠金额
-        shudiyunB2cOrderDTO.setDiscount_deduction_amount(view.getDiscountAmount());
+        shudiyunB2cOrderDTO.setDiscount_deduction_amount(soInfoEntity.getDiscountAmount());
 
-        Integer totalQty = view.getDetailList().stream().mapToInt(SoDetailDTO.ViewDTO::getQty).sum();
+        Integer totalQty = detailEntityList.stream().mapToInt(SoDetailEntity::getQty).sum();
         shudiyunB2cOrderDTO.setTotal_goods_quantity(totalQty);
         shudiyunB2cOrderDTO.setOrder_quantity_to_be_shipped(totalQty);
 
@@ -654,15 +638,15 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
         // 取消商品数量（合计）
         shudiyunB2cOrderDTO.setTotal_canceled_goods_quantity(totalCanceledGoodsQty);
 
-        shudiyunB2cOrderDTO.setBuyer_actual_payment(view.getReceiveAmount());
-        shudiyunB2cOrderDTO.setTotal_freight(view.getShippingFee());
-        shudiyunB2cOrderDTO.setSales_company_code(view.getSalesOrgId());
+        shudiyunB2cOrderDTO.setBuyer_actual_payment(soInfoEntity.getReceiveAmount());
+        shudiyunB2cOrderDTO.setTotal_freight(soInfoEntity.getShippingFee());
+
+        String salseOrgCode = companyEntities.stream().filter(req -> req.getId().equals(soInfoEntity.getSalesOrgId())).map(req -> req.getCode()).findFirst().orElse("");
+        shudiyunB2cOrderDTO.setSales_company_code(salseOrgCode);
 
         //组织信息
+        CustomerInfoEntity customerInfo = customerInfoEntities.stream().filter(req -> req.getId().equals(soInfoEntity.getCustomerId())).findFirst().orElse(null);
         if (ObjectUtil.isNotEmpty(customerInfo)) {
-            SoInfoDTO.ViewDTO finalView = view;
-            String salesOrgCode = companyEntities.stream().filter(req -> req.getId().equals(finalView.getSalesOrgId())).map(req -> req.getCode()).findFirst().orElse("");
-            shudiyunB2cOrderDTO.setSales_company_code(salesOrgCode);
             BaseIdDTO.CodeDTO sysAccountingCompanyEntity = companyEntities.stream().filter(req -> req.getId().equals(customerInfo.getFinancialOrganization())).findFirst().orElse(null);
             if (ObjectUtil.isNotEmpty(sysAccountingCompanyEntity)) {
                 shudiyunB2cOrderDTO.setReceiving_company_code(sysAccountingCompanyEntity.getCode());
@@ -689,23 +673,24 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
 
             String subPlatformType = customerInfo.getPlatformType();
             if (StringUtils.isNotBlank(subPlatformType)) {
-                List<DictBasicEntity> dictList = dictBasicService.lambdaQuery().eq(DictBasicEntity::getType, "sdySubPlatform").eq(DictBasicEntity::getName, subPlatformType).list();
-                if (CollUtil.isNotEmpty(dictList)) {
-                    shudiyunB2cOrderDTO.setSubplatform_no(dictList.get(0).getValue());
-                    shudiyunB2cOrderDTO.setSubplatform_name(dictList.get(0).getName());
+                DictBasicEntity dictBasicEntity = dictList.stream().filter(req -> req.getName().equals(customerInfo.getPlatformType())).findFirst().orElse(null);
+                if (ObjectUtil.isNotEmpty(dictBasicEntity)) {
+                    shudiyunB2cOrderDTO.setSubplatform_no(dictBasicEntity.getValue());
+                    shudiyunB2cOrderDTO.setSubplatform_name(dictBasicEntity.getName());
                 }
             }
+            shudiyunB2cOrderDTO.setShop_no(customerInfo.getId());
+            shudiyunB2cOrderDTO.setShop_name(customerInfo.getName());
         }
 
-        shudiyunB2cOrderDTO.setShop_no(view.getCustomerId());
-        shudiyunB2cOrderDTO.setShop_name(view.getCustomerName());
-        shudiyunB2cOrderDTO.setRoot_node_no(view.getCode());
-        if (view.getReceiveDate() != null) {
-            shudiyunB2cOrderDTO.setRoot_node_create_time(localDate.format(view.getReceiveDate()));
+
+        shudiyunB2cOrderDTO.setRoot_node_no(soInfoEntity.getCode());
+        if (soInfoEntity.getReceiveDate() != null) {
+            shudiyunB2cOrderDTO.setRoot_node_create_time(localDate.format(soInfoEntity.getReceiveDate()));
         } else {
-            shudiyunB2cOrderDTO.setRoot_node_create_time(localDateTime.format(view.getCreateTime()));
+            shudiyunB2cOrderDTO.setRoot_node_create_time(localDateTime.format(soInfoEntity.getCreateTime()));
         }
-        shudiyunB2cOrderDTO.setRoot_node_modify_time(localDateTime.format(view.getUpdateTime()));
+        shudiyunB2cOrderDTO.setRoot_node_modify_time(localDateTime.format(soInfoEntity.getUpdateTime()));
         shudiyunB2cOrderDTO.setGoods_no(soDetailEntity.getSkuNo());
 
         //产品信息
@@ -751,9 +736,9 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
             shudiyunB2cOrderDTO.setTransaction_currency_code(currencyList.get(0).getId());
         }
 
-        shudiyunB2cOrderDTO.setPost_amount(view.getShippingFee());
+        shudiyunB2cOrderDTO.setPost_amount(soInfoEntity.getShippingFee());
         shudiyunB2cOrderDTO.setSource_system("SDC");
-        shudiyunB2cOrderDTO.setRoot_node_no_initial(view.getCode());
+        shudiyunB2cOrderDTO.setRoot_node_no_initial(soInfoEntity.getCode());
 
         return BeanUtil.beanToMap(shudiyunB2cOrderDTO);
 
@@ -762,6 +747,34 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
     @Override
     public void syncDataToSdy(SoInfoDTO.ViewDTO view, List<SoDetailEntity> soDetailEntityList, String operate, String deliveryStatus) {
         this.syncDataToSdyFieldHandlerBatch(view, soDetailEntityList, operate, deliveryStatus);
+    }
+
+    @Override
+    public void syncDataToSdy(SoInfoEntity soInfoEntity,
+                              List<SoDetailEntity> detailEntityList,
+                              String operate,
+                              List<SkuVO> skuVOList,
+                              List<BomChildrenSkuDTO> bomChildrenSkuDTOS,
+                              List<ProductDetailEntity> parentSkuList,
+                              List<CustomerInfoEntity> customerInfoEntities,
+                              List<BaseIdDTO.CodeDTO> companyEntities,
+                              List<DictBasicEntity> dictBasicEntityList,
+                              List<CurrencyDTO.ViewDTO> currencyList,
+                              List<SoChangeDetailEntity> soChangeDetailEntities,
+                              String deliveryStatus,
+                              List<DictBasicEntity> dictList
+    ) {
+        for (SoDetailEntity soDetailEntity : detailEntityList) {
+            //同步B2B订单
+            OmsPushMsgEntity omsPushMsgEntity = new OmsPushMsgEntity();
+            omsPushMsgEntity.setTargetPlatform(DmpBasicSystemCodeEnum.SDY.getCode());
+            omsPushMsgEntity.setSourceType(SourceTypeEnum.SDY_OFFLINE_ORDER.getCode());
+            omsPushMsgEntity.setSourceId(soDetailEntity.getId());
+            omsPushMsgEntity.setSourceCode(soInfoEntity.getCode() + "_" + soDetailEntity.getSkuNo());
+            omsPushMsgEntity.setSyncOperate(operate);
+            omsPushMsgEntity.setPushData(JSON.toJSONString(this.syncDataToSdyFieldHandler(soInfoEntity, soDetailEntity, detailEntityList, operate, skuVOList, bomChildrenSkuDTOS, parentSkuList, customerInfoEntities, companyEntities, dictBasicEntityList, currencyList, soChangeDetailEntities, deliveryStatus, dictList)));
+            omsPushMsgService.save(omsPushMsgEntity);
+        }
     }
 
     private void syncDataToSdyFieldHandlerBatch(SoInfoDTO.ViewDTO view, List<SoDetailEntity> soDetailEntityList, String operate, String deliveryStatus) {
