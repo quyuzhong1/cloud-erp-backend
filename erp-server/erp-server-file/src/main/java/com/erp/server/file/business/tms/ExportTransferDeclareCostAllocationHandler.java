@@ -9,7 +9,7 @@ import org.springframework.stereotype.Component;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.FileTaskEventEnum;
 import com.common.business.vo.PagingVO;
-import com.erp.model.tms.dto.SmallBagCostAllocationDTO;
+import com.erp.model.tms.dto.TransferDeclareCostAllocationDTO;
 import com.erp.rpc.tms.feign.ExportTmsFeign;
 import com.erp.server.file.core.AbstractPageFileEventHandler;
 import com.erp.server.file.entity.FileTask;
@@ -19,7 +19,7 @@ import lombok.extern.slf4j.Slf4j;
 
 @Component
 @Slf4j
-public class ExportTransferDeclareCostAllocationHandler extends AbstractPageFileEventHandler<SmallBagCostAllocationDTO.ListDTO, SmallBagCostAllocationDTO.PagingParamDTO> {
+public class ExportTransferDeclareCostAllocationHandler extends AbstractPageFileEventHandler<TransferDeclareCostAllocationDTO.ListDTO, TransferDeclareCostAllocationDTO.PagingParamDTO> {
     @Resource
     private ExportTmsFeign exportTmsFeign;
 
@@ -34,14 +34,14 @@ public class ExportTransferDeclareCostAllocationHandler extends AbstractPageFile
     }
 
     @Override
-    protected List<SmallBagCostAllocationDTO.ListDTO> getData(FileTask fileTask) {
-        SmallBagCostAllocationDTO.PagingParamDTO dto = readValue(fileTask.getMetaInfo(), new TypeReference<SmallBagCostAllocationDTO.PagingParamDTO>() {
+    protected List<TransferDeclareCostAllocationDTO.ListDTO> getData(FileTask fileTask) {
+        TransferDeclareCostAllocationDTO.PagingParamDTO dto = readValue(fileTask.getMetaInfo(), new TypeReference<TransferDeclareCostAllocationDTO.PagingParamDTO>() {
         });
         return listSeqData(dto);
     }
 
     @Override
-    protected PagingVO<SmallBagCostAllocationDTO.ListDTO> getPageData(PagingDTO<SmallBagCostAllocationDTO.PagingParamDTO> dto) {
-        return exportTmsFeign.exportSmallBagCostAllocation(dto);
+    protected PagingVO<TransferDeclareCostAllocationDTO.ListDTO> getPageData(PagingDTO<TransferDeclareCostAllocationDTO.PagingParamDTO> dto) {
+        return exportTmsFeign.exportTransferDeclareCostAllocation(dto);
     }
 }
