@@ -6,6 +6,7 @@ import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.enums.ConfirmStatusEnum;
 import com.common.business.vo.PagingVO;
 import com.common.business.wrapper.FeignQuery;
+import com.common.core.exception.ServiceException;
 import com.erp.model.plm.dto.SearchPagingDTO;
 import com.erp.model.plm.vo.ProductChangePagingVO;
 import com.erp.model.tms.dto.FirstMileCostAllocationDTO;
@@ -268,10 +269,74 @@ public class LogisticsLargeController extends BaseController {
         List<TransferDeclareCostAllocationEntity> list = transferDeclareCostAllocationService.lambdaQuery().in(TransferDeclareCostAllocationEntity::getMainId, dto.getIds()).list();
         List<String> mainIds = list.stream().map(req -> req.getMainId()).distinct().collect(Collectors.toList());
         List<TransferDeclareCostAllocationMainEntity> transferDeclareCostAllocationMainEntities = transferDeclareCostAllocationMainService.listByIds(mainIds);
+
+        //
+        List<TransferDeclareCostAllocationEntity> costAllocationEntities = transferDeclareCostAllocationService.lambdaQuery().in(TransferDeclareCostAllocationEntity::getMainId, mainIds).list();
+        List<String> ids = costAllocationEntities.stream().map(req -> req.getId()).collect(Collectors.toList());
+        List<TransferDeclareCostAllocationDetailEntity> costAllocationDetailEntities = transferDeclareCostAllocationDetailService.listByMainIds(ids);
+
+        //b2c报关对账单
+        List<String> declareReconciliationDetailIds = transferDeclareCostAllocationMainEntities.stream().map(req -> req.getDeclareReconciliationDetailId()).distinct().collect(Collectors.toList());
+        if (CollUtil.isNotEmpty(declareReconciliationDetailIds)) {
+            throw new ServiceException("中转报关分摊关联的b2c报关对账单详情Id不存在");
+        }
+        List<TmsB2cDeclareReconciliationDetailEntity> tmsB2cDeclareReconciliationDetailEntities = tmsB2cDeclareReconciliationDetailService.listByIds(declareReconciliationDetailIds);
+        if (CollUtil.isEmpty(tmsB2cDeclareReconciliationDetailEntities)) {
+            throw new ServiceException("b2c报关对账单详情不存在");
+        }
+        List<String> declareReconciliationIds = tmsB2cDeclareReconciliationDetailEntities.stream().map(req -> req.getMainId()).distinct().collect(Collectors.toList());
+        List<TmsB2cDeclareReconciliationEntity> tmsB2cDeclareReconciliationEntities = tmsB2cDeclareReconciliationService.listByIds(declareReconciliationIds);
+        if (CollUtil.isEmpty(tmsB2cDeclareReconciliationEntities)) {
+            throw new ServiceException("b2c报关对账单不存在");
+        }
+        //销售出库
+        List<String> outstockDetailId = costAllocationEntities.stream().map(req -> req.getOutstockDetailId()).distinct().collect(Collectors.toList());
+        List<SoOutstockDetailEntity> soOutstockDetailEntityList = new ArrayList<>();
+        if (CollUtil.isNotEmpty(outstockDetailId)) {
+            soOutstockDetailEntityList = FeignQuery.getByIds(SoOutstockDetailEntity.class, outstockDetailId);
+        }
+        List<String> soOutstockIds = soOutstockDetailEntityList.stream().map(SoOutstockDetailEntity::getMainId).distinct().collect(Collectors.toList());
+        List<SoOutstockEntity> soOutstockEntities = soOutstockFeign.listByIds(soOutstockIds);
+        if (CollUtil.isEmpty(soOutstockEntities)) {
+            throw new ServiceException("销售出库单不存在");
+        }
+
         //根据整单添加操作
-        for (TransferDeclareCostAllocationMainEntity transferDeclareCostAllocationMainEntity : transferDeclareCostAllocationMainEntities) {
-                List<BatchResultDTO> resultDTOList = logisticsLargeService.generateTransferCostAllocationTable(transferDeclareCostAllocationMainEntity);
-                resultDTOS.addAll(resultDTOList);
+        for (TransferDeclareCostAllocationMainEntity mainEntity : transferDeclareCostAllocationMainEntities) {
+            List<TransferDeclareCostAllocationEntity> costAllocationEntityList = costAllocationEntities.stream().filter(req -> req.getMainId().equals(mainEntity.getId())).collect(Collectors.toList());
+
+            List<String> costAllocationIds = costAllocationEntityList.stream().map(req -> req.getMainId()).distinct().collect(Collectors.toList());
+            List<TransferDeclareCostAllocationDetailEntity> costAllocationDetailEntityList = costAllocationDetailEntities.stream()
+                    .filter(req -> costAllocationIds.contains(mainEntity.getId()))
+                    .collect(Collectors.toList());
+
+            TmsB2cDeclareReconciliationDetailEntity reconciliationDetailEntity = tmsB2cDeclareReconciliationDetailEntities.stream().filter(req -> req.getId().equals(mainEntity.getDeclareReconciliationDetailId())).findFirst().orElse(null);
+            if (ObjectUtil.isEmpty(reconciliationDetailEntity)) {
+                throw new ServiceException("b2c报关对账单详情不存在!");
+            }
+            TmsB2cDeclareReconciliationEntity reconciliationEntity = tmsB2cDeclareReconciliationEntities.stream().filter(req -> req.getId().equals(reconciliationDetailEntity.getMainId())).findFirst().orElse(null);
+            if (ObjectUtil.isEmpty(reconciliationEntity)) {
+                throw new ServiceException("b2c报关对账单不存在!");
+            }
+
+            List<String> outDetailId = costAllocationEntityList.stream().map(req -> req.getOutstockDetailId()).distinct().collect(Collectors.toList());
+            List<SoOutstockDetailEntity> collect = soOutstockDetailEntityList.stream().filter(req -> outDetailId.contains(req.getId())).collect(Collectors.toList());
+            if (CollUtil.isEmpty(collect)) {
+                throw new ServiceException("销售出库详情不存在!");
+
+            }
+            SoOutstockEntity soOutstockEntity = soOutstockEntities.stream().filter(req -> req.getId().equals(collect.get(0).getMainId())).findFirst().orElse(null);
+            if (ObjectUtil.isEmpty(soOutstockEntity)) {
+                throw new ServiceException("销售出库详情不存在!");
+            }
+            BatchResultDTO result = null;
+            try {
+                result = logisticsLargeService.generateTransferCostAllocationTable(mainEntity, costAllocationEntityList, costAllocationDetailEntityList, reconciliationEntity, reconciliationDetailEntity, soOutstockEntity);
+            } catch (Exception e) {
+                log.error("小包费用分摊生成物流大表失败{}", e);
+                result = BatchResultDTO.fail(mainEntity.getId(), mainEntity.getId(), e.getMessage());
+            }
+            resultDTOS.add(result);
         }
 
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);

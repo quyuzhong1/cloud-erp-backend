@@ -116,10 +116,15 @@ public interface LogisticsLargeService extends SuperService<LogisticsLargeEntity
 
     /**
      * 中转费用分摊生成物流大表
-     * @param transferDeclareCostAllocationMainEntity
+     * @param mainEntity
+     * @param costAllocationEntityList
+     * @param costAllocationDetailEntityList
+     * @param reconciliationEntity
+     * @param reconciliationDetailEntity
+     * @param soOutstockEntity
      * @return
      */
-    List<BatchResultDTO> generateTransferCostAllocationTable(TransferDeclareCostAllocationMainEntity transferDeclareCostAllocationMainEntity);
+    BatchResultDTO generateTransferCostAllocationTable(TransferDeclareCostAllocationMainEntity mainEntity, List<TransferDeclareCostAllocationEntity> costAllocationEntityList, List<TransferDeclareCostAllocationDetailEntity> costAllocationDetailEntityList, TmsB2cDeclareReconciliationEntity reconciliationEntity, TmsB2cDeclareReconciliationDetailEntity reconciliationDetailEntity, SoOutstockEntity soOutstockEntity);
 
     /**
      * 导出Excel
@@ -127,4 +132,7 @@ public interface LogisticsLargeService extends SuperService<LogisticsLargeEntity
      * @return
      */
     Boolean exportLogisticsLarge(LogisticsLargeDTO.ExportDTO dto);
+
+
+
 }
