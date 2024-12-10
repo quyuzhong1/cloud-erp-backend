@@ -479,9 +479,9 @@ public class DmpOutputAliExpressOrderRocketMQTaskHandler extends DmpOutputRocket
 		PlatformDeliveryDTO deliveryDTO = new PlatformDeliveryDTO();
 		deliveryDTO.setSourceCode(dmpSoOutstockEntity.getThirdCode());
 		// 物流单号
-		deliveryDTO.setTrackNo(dmpSoOutstockEntity.getTransportNo());
+		deliveryDTO.setTrackNo(dmpSoOutstockEntity.getLogisticsCode());
 		// 运单号
-		deliveryDTO.setTransportNo(dmpSoOutstockEntity.getLogisticsCode());
+		deliveryDTO.setTransportNo(dmpSoOutstockEntity.getTransportNo());
 		// 订单状态
 		deliveryDTO.setOrderStatus(dmpSoOutstockEntity.getPlatformStatus());
 		// 下发到仓时间戳
