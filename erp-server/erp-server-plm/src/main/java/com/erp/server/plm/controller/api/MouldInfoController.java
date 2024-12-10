@@ -347,6 +347,7 @@ public class MouldInfoController extends BaseController {
      * @param dto 参数
      */
     @PostMapping("/orderTracking")
+    @WebAdvanceQuery
     public ApiResult<PagingVO<MouldInfoDTO.OrderTrackingViewDTO>> orderTracking(@RequestBody @Validated PagingDTO<MouldInfoDTO.PagingParamDTO> dto) {
         PagingVO<MouldInfoDTO.OrderTrackingViewDTO> page = mouldInfoService.orderTracking(dto);
         return success(page);

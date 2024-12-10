@@ -5,6 +5,7 @@ import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.ServiceCodeNameEnum;
+import com.erp.model.plm.enums.MouldRefundStatusEnum;
 import lombok.*;
 
 import javax.validation.Valid;
@@ -477,6 +478,7 @@ public class MouldInfoDTO implements Serializable {
         /**
          * 费用返还状态
          */
+        @Dict(enumClass = MouldRefundStatusEnum.class)
         private String refundStatus;
         /**
          * 采购数量

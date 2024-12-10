@@ -471,35 +471,40 @@ public class MouldInfoServiceImpl extends SuperServiceImpl<MouldInfoMapper, Moul
     private void handlerList(List<MouldInfoDTO.OrderTrackingViewDTO> records) {
         List<String> detailIds = records.stream().map(MouldInfoDTO.OrderTrackingViewDTO::getDetailId).collect(Collectors.toList());
         List<MouldPurchasePriceEntity> mouldPurchasePriceList = mouldPurchasePriceService.listByMouldDetailIdList(detailIds);
+        List<MouldRefProductEntity> mouldRefProductList = mouldRefProductService.listByMouldDetailIdList(detailIds);
+        List<MouldRefundAgreementEntity> refundAgreementList = mouldRefundAgreementService.listByMouldDetailIdList(detailIds);
         for (MouldInfoDTO.OrderTrackingViewDTO record : records) {
+            List<MouldRefProductDTO.ViewDTO> list = mouldRefProductList.stream()
+                    .filter(v -> v.getMouldDetailId().equals(record.getDetailId()))
+                    .map(v -> BeanMapperUtils.map(MouldRefProductDTO.ViewDTO.class, v))
+                    .collect(Collectors.toList());
             MouldPurchasePriceEntity purchasePrice = mouldPurchasePriceList.stream()
                     .filter(v -> v.getMouldDetailId().equals(record.getDetailId()))
                     .findFirst()
                     .orElse(new MouldPurchasePriceEntity());
+            MouldRefundAgreementEntity refundAgreement = refundAgreementList.stream()
+                    .filter(v -> v.getMouldDetailId().equals(record.getDetailId()))
+                    .findFirst()
+                    .orElse(new MouldRefundAgreementEntity());
             record.setQty(purchasePrice.getQty());
             record.setTaxPrice(purchasePrice.getTaxPrice());
             record.setTaxRate(purchasePrice.getTaxRate());
-//            record.setTaxPrice(purchasePrice.getTaxPrice());
-//            record.setTaxPrice(purchasePrice.getTaxPrice());
-//            record.setTaxPrice(purchasePrice.getTaxPrice());
+            record.setPayMethodId(purchasePrice.getPayMethodId());
+            record.setPaymentCondition(purchasePrice.getPaymentCondition());
+            record.setCurrency(purchasePrice.getCurrency());
+            record.setExchangeRate(purchasePrice.getExchangeRate());
+            record.setTaxPrice(purchasePrice.getTaxPrice());
+            record.setIsNeedRefund(refundAgreement.getIsNeedRefund());
+            record.setRefundStandard(refundAgreement.getRefundStandard());
+            record.setRefundOrderQty(refundAgreement.getRefundOrderQty());
+            record.setRefundStatus(refundAgreement.getRefundStatus());
+            record.setRefundAmount(refundAgreement.getRefundAmount());
+            record.setPurchaseQty(0);
+            record.setReceiveQty(0);
+            record.setStockInQty(0);
+            record.setDiffQty(0);
+            record.setRefProductList(list);
         }
-
-
-
-//        private String payMethodId;
-//        private String paymentCondition;
-//        private String currency;
-//        private BigDecimal exchangeRate;
-//        private List<MouldRefProductDTO.ViewDTO> refProductList;
-//        private Boolean isNeedRefund;
-//        private String refundStandard;
-//        private Integer refundOrderQty;
-//        private BigDecimal refundAmount;
-//        private String refundStatus;
-//        private Integer purchaseQty;
-//        private Integer receiveQty;
-//        private Integer stockInQty;
-//        private Integer diffQty;
     }
 
     @Override
