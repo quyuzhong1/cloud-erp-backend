@@ -48,8 +48,6 @@ public class CfgMouldSettingServiceImpl extends SuperServiceImpl<CfgMouldSetting
     @Transactional(rollbackFor = Exception.class)
     public void add(CfgMouldSettingDTO.AddDTO dto) {
         verifyData(dto);
-        //移除原数据
-        remove(Wrappers.emptyWrapper());
         int index = 1;
         List<CfgMouldSettingEntity> list = new ArrayList<>();
         for (CfgMouldSettingDTO.ParamDTO paramDTO : dto.getDocList()) {
@@ -120,6 +118,7 @@ public class CfgMouldSettingServiceImpl extends SuperServiceImpl<CfgMouldSetting
                     .collect(Collectors.joining(","));
             throw new ServiceException(ApiError.ERROR_95280, errorMsg);
         }
+        removeByIds(mouldIdList);
     }
 
     /**
@@ -156,6 +155,7 @@ public class CfgMouldSettingServiceImpl extends SuperServiceImpl<CfgMouldSetting
                     .collect(Collectors.joining(","));
             throw new ServiceException(ApiError.ERROR_95280, errorMsg);
         }
+        removeByIds(docIdList);
     }
 
     @Override

@@ -580,4 +580,9 @@ public class MouldInfoServiceImpl extends SuperServiceImpl<MouldInfoMapper, Moul
     public MouldInfoDTO.OrderTrackingDetailTotalDTO orderTrackingDetailTotal(MouldInfoDTO.OrderTrackingDetailParamDTO dto) {
         return baseMapper.orderTrackingDetailTotal(dto);
     }
+
+    @Override
+    public void orderTrackingDetailExport(MouldInfoDTO.OrderTrackingDetailParamDTO dto) {
+
+    }
 }

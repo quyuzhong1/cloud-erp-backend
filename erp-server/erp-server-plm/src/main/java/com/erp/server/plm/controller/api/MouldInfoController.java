@@ -434,4 +434,13 @@ public class MouldInfoController extends BaseController {
         MouldInfoDTO.OrderTrackingDetailTotalDTO totalDTO = mouldInfoService.orderTrackingDetailTotal(dto);
         return success(totalDTO);
     }
+
+    /**
+     * 下单跟踪明细导出
+     * @param dto 参数
+     */
+    @PostMapping("/orderTrackingDetailExport")
+    public void orderTrackingDetailExport(@RequestBody @Validated MouldInfoDTO.OrderTrackingDetailParamDTO dto) {
+        mouldInfoService.orderTrackingDetailExport(dto);
+    }
 }
