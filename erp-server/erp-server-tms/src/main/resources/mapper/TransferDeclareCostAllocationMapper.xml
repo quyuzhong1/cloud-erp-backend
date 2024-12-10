@@ -43,7 +43,7 @@
 			j.status reconciliationStatus,
 			t.big_table_status,
 			j.logistics_channel_id channelId,
-			j.logistics_channel_name supplierName,
+			concat(j.logistics_supplier_name , '-',j.logistics_channel_name ) supplierName,
 			j.so_code,
 			k.instock_forecast_date,
 			j.confirm_date confirmTime,
