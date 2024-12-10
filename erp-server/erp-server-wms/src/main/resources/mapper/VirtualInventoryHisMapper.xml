@@ -71,6 +71,39 @@
     <!-- 查询历史库存数据 -->
     <select id="listVirtualInventoryHisJobData"
             resultType="com.erp.model.wms.entity.VirtualInventoryHisEntity">
+        WITH virtualTransFlowDetail AS (
+            select qty,virtual_trans_flow_id,virtual_inventory_detail_id from virtual_trans_flow_detail where id in (
+            SELECT
+                max(id)
+            FROM
+            virtual_trans_flow_detail
+            WHERE
+            is_deleted = false and #{date} > trade_time
+            group by virtual_trans_flow_id,virtual_inventory_detail_id)
+        ),virtualInventory AS (
+            SELECT
+            sku_id,
+            warehouse_id,
+            virtual_warehouse_id,
+            SUM(qty) AS virtualQty,
+            SUM(CASE WHEN dict_inventory_status = 'usable' THEN qty ELSE 0 END) AS virtualUsableQty,
+            SUM(CASE WHEN dict_inventory_status = 'frozen' THEN qty ELSE 0 END) AS virtualFrozenQty
+            FROM
+            virtual_inventory
+            WHERE
+            is_deleted = false
+            GROUP BY
+            sku_id, warehouse_id, virtual_warehouse_id
+        ),virtualInventoryDetail AS (
+            SELECT
+                sku_id,
+                warehouse_id,
+                virtual_warehouse_id,
+                SUM(qty * (last_outstock_date - bill_date)) / count(0) AS days_difference
+            FROM virtual_inventory_detail
+            WHERE is_deleted = false
+            GROUP BY sku_id, warehouse_id, virtual_warehouse_id
+        )
         select
             vid.sku_id,
             vid.warehouse_id,
@@ -80,9 +113,15 @@
             vid.virtual_trans_flow_id,
             vid.batch_no,
             vid.bill_date,
+            vi.virtualUsableQty,
+            vi.virtualFrozenQty,
+            vtfd.qty,
+            vitd.days_difference / virtualQty as avgInventoryAgeDays
         from virtual_inventory_detail vid
-        left join virtual_trans_flow_detail vtfd on tid.id = vtfd.virtual_inventory_detail_id and vtfd.is_deleted = false
-        where
+        left join virtualTransFlowDetail vtfd on vid.id = vtfd.virtual_inventory_detail_id
+        left join virtualInventory vi on vid.sku_id = vi.sku_id and vid.warehouse_id = vi.warehouse_id and vid.virtual_warehouse_id = vi.virtual_warehouse_id
+        left join virtualInventoryDetail vitd on vid.sku_id = vitd.sku_id and vid.warehouse_id = vitd.warehouse_id and vid.virtual_warehouse_id = vitd.virtual_warehouse_id
+        where vid.is_deleted = false
     </select>
 
 

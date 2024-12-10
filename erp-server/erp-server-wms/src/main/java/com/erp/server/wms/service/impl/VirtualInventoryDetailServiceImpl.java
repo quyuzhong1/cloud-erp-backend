@@ -8,10 +8,10 @@ import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
-import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.enums.ApiError;
@@ -70,56 +70,30 @@ public class VirtualInventoryDetailServiceImpl extends SuperServiceImpl<VirtualI
     @Autowired
     private VirtualInventoryHisService virtualInventoryHisService;
 
+    @Autowired
+    private DocNoGenHelper docNoGenHelper;
+
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public BaseResultDTO.AddDTO add(VirtualInventoryDetailDTO.AddDTO addDTO) {
-        VirtualInventoryDetailEntity virtualInventoryDetailEntity = new VirtualInventoryDetailEntity();
-        BeanMapperUtils.copy(addDTO, virtualInventoryDetailEntity);
+    public VirtualInventoryDetailEntity addOrUpdate(VirtualInventoryDetailDTO.UpdateDTO addOrUpdateDTO) {
+        VirtualInventoryDetailEntity entity = new VirtualInventoryDetailEntity();
+        BeanMapperUtils.copy(addOrUpdateDTO, entity);
 
         // 数据处理
-        handleData(virtualInventoryDetailEntity);
+        handleData(entity);
 
+        //生成单号
+        if (CharSequenceUtil.isBlank(entity.getId())) {
+            String batchNo =  docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_N);
+            entity.setBatchNo(batchNo);
+        }
         log.info("开始新增虚拟仓库明细");
-        boolean save = super.save(virtualInventoryDetailEntity);
+        boolean save = super.save(entity);
         if(!save) {
             throw new ServiceException("虚拟仓库明细保存失败");
         }
-
-        // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "虚拟仓库明细" , virtualInventoryDetailEntity.getId());
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, virtualInventoryDetailEntity.getId(), "新增操作");
-        // TODO 新增明细（如果有明细的话）
-
-        return new BaseResultDTO.AddDTO(virtualInventoryDetailEntity.getId(), virtualInventoryDetailEntity.getId());
-    }
-
-    /**
-    * 修改
-    */
-    @Transactional(rollbackFor = Exception.class)
-    @Override
-    public Boolean update(VirtualInventoryDetailDTO.UpdateDTO updateDTO) {
-        VirtualInventoryDetailEntity old = super.getById(updateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "虚拟仓库明细"));
-        VirtualInventoryDetailEntity virtualInventoryDetailEntity =  BeanMapperUtils.map(VirtualInventoryDetailEntity.class, updateDTO);
-
-        // 数据处理
-        handleData(virtualInventoryDetailEntity);
-        log.info("编辑 开始修改虚拟仓库明细数据，id：【{}】", old.getId());
-        boolean save = super.updateById(virtualInventoryDetailEntity);
-        if(!save) {
-            throw new ServiceException("虚拟仓库明细保存失败");
-        }
-        // TODO 修改明细数据（包含增删改）（如果有明细的话）
-
-        // 记录主单操作日志
-            log.info("编辑 开始记录虚拟仓库明细日志数据，id：【{}】", virtualInventoryDetailEntity.getId());
-            String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), virtualInventoryDetailEntity.getId(), "虚拟仓库明细");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLogByObj(old, virtualInventoryDetailEntity, null, virtualInventoryDetailEntity.getId(), msg);
-        return Boolean.TRUE;
+        return entity;
     }
 
     @Override

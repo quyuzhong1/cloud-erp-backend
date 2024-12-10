@@ -4,6 +4,7 @@ import com.erp.model.wms.entity.VirtualTransFlowDetailEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.wms.dto.VirtualTransFlowDetailDTO;
+import com.erp.model.wms.entity.VirtualTransFlowEntity;
 
 /**
  * <p>
@@ -22,16 +23,8 @@ public interface VirtualTransFlowDetailService extends SuperService<VirtualTrans
     * @param dto
     * @return
     */
-    BaseResultDTO.AddDTO add(VirtualTransFlowDetailDTO.AddDTO dto);
+    VirtualTransFlowDetailEntity add(VirtualTransFlowDetailDTO.AddDTO dto);
 
-    /**
-    * 修改
-    * @author will
-    * @date: 2024-12-03
-    * @param dto
-    * @return
-    */
-    Boolean update(VirtualTransFlowDetailDTO.UpdateDTO dto);
 
     /**
      * 分页查询
@@ -49,4 +42,12 @@ public interface VirtualTransFlowDetailService extends SuperService<VirtualTrans
      * @return Boolean
      */
     Boolean exportExcel(VirtualTransFlowDetailDTO.SearchParamDTO dto);
+    /**
+     * 消费
+     * @author will
+     * @date 2024/12/10 12:28
+     * @param virtualTransFlowEntity
+     * @return Boolean
+     */
+    Boolean consumeMessage(VirtualTransFlowEntity virtualTransFlowEntity);
 }

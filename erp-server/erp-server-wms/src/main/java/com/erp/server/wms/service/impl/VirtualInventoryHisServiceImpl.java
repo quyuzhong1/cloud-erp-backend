@@ -1,6 +1,8 @@
 package com.erp.server.wms.service.impl;
 
 
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -23,6 +25,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
+
 /**
  * <p>
  * 虚拟仓库存历史信息 服务实现类
@@ -99,13 +103,41 @@ public class VirtualInventoryHisServiceImpl extends SuperServiceImpl<VirtualInve
 
     @Override
     public void hisVirtualInventoryJob() {
-        VirtualInventoryHisDTO.AddDTO  addDTO = new VirtualInventoryHisDTO.AddDTO();
         LocalDate date = LocalDate.now().minusDays(1L);
         List<VirtualInventoryHisEntity> virtualInventoryHisList = baseMapper.listVirtualInventoryHisJobData(date);
-
-
+        if (CollUtil.isEmpty(virtualInventoryHisList)) {
+            return;
+        }
+        List<String> virtualTransFlowIdList = virtualInventoryHisList.stream().map(VirtualInventoryHisEntity::getVirtualTransFlowId).distinct().collect(Collectors.toList());
+        List<String> batchNoList = virtualInventoryHisList.stream().map(VirtualInventoryHisEntity::getBatchNo).distinct().collect(Collectors.toList());
+        List<VirtualInventoryHisEntity> oldList = listByVirtualTransFlowIdList(virtualTransFlowIdList, batchNoList,LocalDate.now());
+        for (VirtualInventoryHisEntity hisEntity : virtualInventoryHisList) {
+            //查询是否已有数据
+            String id = oldList.stream().filter(obj ->
+                    CharSequenceUtil.equals(obj.getVirtualTransFlowId(), hisEntity.getVirtualTransFlowId())
+                            && CharSequenceUtil.equals(obj.getBatchNo(), hisEntity.getBatchNo())
+                            && obj.getDate().isEqual(LocalDate.now())
+            ).findFirst().map(VirtualInventoryHisEntity::getId).orElse("");
+            hisEntity.setId(id);
+        }
+        this.saveOrUpdateBatch(virtualInventoryHisList);
     }
 
+    /**
+     * 根据流水id查询
+     * @author will
+     * @date 2024/12/10 10:57
+     * @param virtualTransFlowIdList
+     * @param batchNoList
+     * @return List<VirtualInventoryHisEntity>
+     */
+    private List<VirtualInventoryHisEntity> listByVirtualTransFlowIdList (List<String> virtualTransFlowIdList,List<String> batchNoList,LocalDate date) {
+        return lambdaQuery()
+                .in(VirtualInventoryHisEntity::getVirtualTransFlowId, virtualTransFlowIdList)
+                .in(VirtualInventoryHisEntity::getBatchNo, batchNoList)
+                .eq(VirtualInventoryHisEntity::getDate,date)
+                .list();
+    }
 
     /**
     * 新增修改处理数据

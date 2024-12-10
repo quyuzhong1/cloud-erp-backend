@@ -132,7 +132,7 @@ public class VirtualInventoryAgeController extends BaseController {
      * @param dto
      * @return ApiResult
      */
-    @PostMapping("/exportHisInventoryAge")
+    @PostMapping("/exportHisInventoryAgeDetail")
     public ApiResult exportHisInventoryAgeDetail(@RequestBody @Validated VirtualInventoryAgeDTO.HisInventoryAgeDetailParamDTO dto) {
         Boolean flag = virtualInventoryDetailService.exportHisInventoryAgeDetail(dto);
         return flag == true ? success() : failure();

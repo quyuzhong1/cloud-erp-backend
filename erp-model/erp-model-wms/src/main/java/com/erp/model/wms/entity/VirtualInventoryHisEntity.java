@@ -79,6 +79,19 @@ public class VirtualInventoryHisEntity extends BaseEntity<VirtualInventoryHisEnt
     private BigDecimal avgInventoryAgeDays;
 
 
+    /**
+     * 可用库存数量
+     */
+    @TableField("virtual_usable_qty")
+    private Integer virtualUsableQty;
+
+    /**
+     * 冻结库存数量
+     */
+    @TableField("virtual_frozen_qty")
+    private Integer virtualFrozenQty;
+
+
     public static final String SKU_ID = "sku_id";
 
     public static final String WAREHOUSE_ID = "warehouse_id";

@@ -1,6 +1,5 @@
 package com.erp.server.wms.service;
 
-import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
@@ -24,19 +23,10 @@ public interface VirtualInventoryDetailService extends SuperService<VirtualInven
     * 新增
     * @author will
     * @date: 2024-12-03
-    * @param dto
+    * @param addOrUpdateDTO
     * @return
     */
-    BaseResultDTO.AddDTO add(VirtualInventoryDetailDTO.AddDTO dto);
-
-    /**
-    * 修改
-    * @author will
-    * @date: 2024-12-03
-    * @param dto
-    * @return
-    */
-    Boolean update(VirtualInventoryDetailDTO.UpdateDTO dto);
+    VirtualInventoryDetailEntity addOrUpdate(VirtualInventoryDetailDTO.UpdateDTO addOrUpdateDTO);
 
     /**
      * 分页列表
