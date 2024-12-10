@@ -1231,9 +1231,10 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
             shudiyunB2cOrderDTO.setGoods_benchmark_selling_price(BigDecimal.ZERO);
         }
 
-        if (org.apache.commons.collections4.CollectionUtils.isNotEmpty(currencyList)) {
-            shudiyunB2cOrderDTO.setTransaction_currency(currencyList.get(0).getName());
-            shudiyunB2cOrderDTO.setTransaction_currency_code(currencyList.get(0).getId());
+        CurrencyDTO.ViewDTO viewDTO = currencyList.stream().filter(req -> req.getId().equals(soOutstockDetailEntity.getCurrency())).findFirst().orElse(null);
+        if (ObjectUtil.isNotEmpty(viewDTO)) {
+            shudiyunB2cOrderDTO.setTransaction_currency(viewDTO.getName());
+            shudiyunB2cOrderDTO.setTransaction_currency_code(viewDTO.getId());
         }
 
         shudiyunB2cOrderDTO.setSource_system("SDC");
@@ -1428,9 +1429,10 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
                 shudiyunB2cOrderDTO.setGoods_benchmark_selling_price(BigDecimal.ZERO);
             }
 
-            if (org.apache.commons.collections4.CollectionUtils.isNotEmpty(currencyList)) {
-                shudiyunB2cOrderDTO.setTransaction_currency(currencyList.get(0).getName());
-                shudiyunB2cOrderDTO.setTransaction_currency_code(currencyList.get(0).getId());
+            CurrencyDTO.ViewDTO viewDTO = currencyList.stream().filter(req -> req.getId().equals(soOutstockDetailEntity.getCurrency())).findFirst().orElse(null);
+            if (ObjectUtil.isNotEmpty(viewDTO)) {
+                shudiyunB2cOrderDTO.setTransaction_currency(viewDTO.getName());
+                shudiyunB2cOrderDTO.setTransaction_currency_code(viewDTO.getId());
             }
 
             shudiyunB2cOrderDTO.setSource_system("SDC");

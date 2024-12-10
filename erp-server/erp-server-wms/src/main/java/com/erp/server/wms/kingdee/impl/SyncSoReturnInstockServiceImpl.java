@@ -210,9 +210,11 @@ public class SyncSoReturnInstockServiceImpl implements SyncSoReturnInstockServic
         shudiyunB2cOrderDTO.setGoods_transaction_quantity(detailEntity.getRealQty());
         shudiyunB2cOrderDTO.setUnit(skuVO.getUnitName());
         shudiyunB2cOrderDTO.setGoods_benchmark_selling_price(skuVO.getRetailPrice());
-        if (CollectionUtils.isNotEmpty(currencyList)) {
-            shudiyunB2cOrderDTO.setTransaction_currency(currencyList.get(0).getName());
-            shudiyunB2cOrderDTO.setTransaction_currency_code(currencyList.get(0).getId());
+
+        CurrencyDTO.ViewDTO viewDTO = currencyList.stream().filter(req -> req.getId().equals(detailEntity.getCurrency())).findFirst().orElse(null);
+        if (ObjectUtil.isNotEmpty(viewDTO)) {
+            shudiyunB2cOrderDTO.setTransaction_currency(viewDTO.getName());
+            shudiyunB2cOrderDTO.setTransaction_currency_code(viewDTO.getId());
         }
 
         shudiyunB2cOrderDTO.setMsku_code(skuVO.getSpuNo());

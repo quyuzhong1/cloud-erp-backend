@@ -739,9 +739,11 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
         }
         shudiyunB2cOrderDTO.setGoods_transaction_amount(soDetailEntity.getTaxAmountBefore().subtract(soDetailEntity.getDiscountAmount()));
         shudiyunB2cOrderDTO.setGoods_benchmark_selling_price(skuVO.getRetailPrice());
-        if (CollectionUtils.isNotEmpty(currencyList)) {
-            shudiyunB2cOrderDTO.setTransaction_currency(currencyList.get(0).getName());
-            shudiyunB2cOrderDTO.setTransaction_currency_code(currencyList.get(0).getId());
+
+        CurrencyDTO.ViewDTO currencyDTO = currencyList.stream().filter(req -> req.getId().equals(soDetailEntity.getCurrency())).findFirst().orElse(null);
+        if (ObjectUtil.isNotEmpty(currencyDTO)) {
+            shudiyunB2cOrderDTO.setTransaction_currency(currencyDTO.getName());
+            shudiyunB2cOrderDTO.setTransaction_currency_code(currencyDTO.getId());
         }
 
         shudiyunB2cOrderDTO.setPost_amount(soInfoEntity.getShippingFee());
@@ -810,7 +812,8 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
         List<String> dictKeys = Lists.newArrayList(DictBasicTypeEnum.SALES_PLATFORM.getType());
         List<DictBasicEntity> dictBasicEntityList = dictBasicService.getByKeyList(dictKeys);
 
-        List<CurrencyDTO.ViewDTO> currencyList = sysUserFeign.listByCurrency(Arrays.asList(view.getCurrency()));
+        List<String> currencyIds = soDetailEntityList.stream().map(req -> req.getCurrency()).distinct().collect(Collectors.toList());
+        List<CurrencyDTO.ViewDTO> currencyList = sysUserFeign.listByCurrency(currencyIds);
         for (SoDetailEntity soDetailEntity : soDetailEntityList) {
             DateTimeFormatter localDateTime = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
             DateTimeFormatter localDate = DateTimeFormatter.ofPattern("yyyy-MM-dd");
@@ -925,7 +928,6 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
                 shudiyunB2cOrderDTO.setPlatform_id(customerInfo.getPlatformType());
                 String platformName = dictBasicEntityList.stream().filter(req -> req.getValue().equals(customerInfo.getPlatformType())).map(DictBasicEntity::getName).findFirst().orElse("");
                 shudiyunB2cOrderDTO.setPlatform_name(platformName);
-
                 String subPlatformType = customerInfo.getPlatformType();
                 if (StringUtils.isNotBlank(subPlatformType)) {
                     List<DictBasicEntity> dictList = dictBasicService.lambdaQuery().eq(DictBasicEntity::getType, "sdySubPlatform").eq(DictBasicEntity::getName, subPlatformType).list();
@@ -990,9 +992,11 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
             }
             shudiyunB2cOrderDTO.setGoods_transaction_amount(soDetailEntity.getTaxAmountBefore().subtract(soDetailEntity.getDiscountAmount()));
             shudiyunB2cOrderDTO.setGoods_benchmark_selling_price(skuVO.getRetailPrice());
-            if (CollectionUtils.isNotEmpty(currencyList)) {
-                shudiyunB2cOrderDTO.setTransaction_currency(currencyList.get(0).getName());
-                shudiyunB2cOrderDTO.setTransaction_currency_code(currencyList.get(0).getId());
+
+            CurrencyDTO.ViewDTO currencyDTO = currencyList.stream().filter(req -> req.getId().equals(soDetailEntity.getCurrency())).findFirst().orElse(null);
+            if (ObjectUtil.isNotEmpty(currencyDTO)) {
+                shudiyunB2cOrderDTO.setTransaction_currency(currencyDTO.getName());
+                shudiyunB2cOrderDTO.setTransaction_currency_code(currencyDTO.getId());
             }
 
             shudiyunB2cOrderDTO.setPost_amount(view.getShippingFee());
