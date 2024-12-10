@@ -109,7 +109,6 @@ public interface RequisitionApplicationChangeService extends SuperService<Requis
      */
     BatchResultDTO approve(String id, List<RequisitionApplicationChangeDTO.ApproveView> approveViewList, String type);
 
-    @Async
     void sendMsg(String id, ApproveTypeEnum approveType, RequisitionApplicationChangeEntity entity);
 
     /**
