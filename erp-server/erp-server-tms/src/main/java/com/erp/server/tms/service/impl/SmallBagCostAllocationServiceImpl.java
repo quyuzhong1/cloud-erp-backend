@@ -282,7 +282,6 @@ public class SmallBagCostAllocationServiceImpl extends SuperServiceImpl<SmallBag
 	}
 	
 	@Override
-	@DataIdempotent(keyIdName = "id")
 	public BatchResultDTO updateReportStatus(String id, String reportDate, String reportStatus) {
 		SmallBagCostAllocationMainEntity smallBagCostAllocationMainEntity = smallBagCostAllocationMainService.getById(id);
 		if(StringUtils.isBlank(reportDate) && StringUtils.isBlank(reportStatus)) {
@@ -310,7 +309,6 @@ public class SmallBagCostAllocationServiceImpl extends SuperServiceImpl<SmallBag
 	}
 
 	@Override
-	@DataIdempotent(keyIdName = "id")
 	@Transactional(rollbackFor = Exception.class)
 	public BatchResultDTO reAllocation(String id) {
 		SmallBagCostAllocationMainEntity smallBagCostAllocationMainEntity = smallBagCostAllocationMainService.getById(id);
@@ -342,7 +340,6 @@ public class SmallBagCostAllocationServiceImpl extends SuperServiceImpl<SmallBag
 	}
 
 	@Override
-	@DataIdempotent(keyIdName = "id")
 	@Transactional(rollbackFor = Exception.class)
 	public BatchResultDTO delete(String id) {
 		SmallBagCostAllocationMainEntity smallBagCostAllocationMainEntity = smallBagCostAllocationMainService.getById(id);
