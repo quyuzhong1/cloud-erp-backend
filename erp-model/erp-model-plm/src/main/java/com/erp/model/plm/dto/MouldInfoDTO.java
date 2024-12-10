@@ -56,6 +56,7 @@ public class MouldInfoDTO implements Serializable {
         /**
          * 状态
          */
+        @Dict(enumClass = ApproveStatusEnum.class)
         private String status;
         /**
          * 审核时间
@@ -234,11 +235,13 @@ public class MouldInfoDTO implements Serializable {
         /**
          * 模具明细
          */
+        @Dict
         private List<MouldDetailDTO.ViewDTO> mouldDetailList;
 
         /**
          * 文档明细
          */
+        @Dict
         private List<MouldDocInfoDTO.ViewDTO> mouldDocInfoList;
     }
 
