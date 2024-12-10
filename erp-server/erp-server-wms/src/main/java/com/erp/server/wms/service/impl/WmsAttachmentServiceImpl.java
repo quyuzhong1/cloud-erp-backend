@@ -26,6 +26,7 @@ import com.erp.server.wms.service.SoB2cDeliveryService;
 import com.erp.server.wms.service.WmsAttachmentService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -47,7 +48,7 @@ import java.util.Objects;
  */
 @Service
 public class WmsAttachmentServiceImpl extends SuperServiceImpl<WmsAttachmentMapper, WmsAttachmentEntity> implements WmsAttachmentService {
-
+    @Lazy
     @Resource
     private PackingTaskService packingTaskService;
 

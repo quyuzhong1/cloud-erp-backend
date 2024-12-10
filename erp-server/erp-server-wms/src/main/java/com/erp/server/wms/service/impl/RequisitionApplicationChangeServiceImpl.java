@@ -90,11 +90,11 @@ public class RequisitionApplicationChangeServiceImpl extends SuperServiceImpl<Re
 
     @Resource
     @Lazy
-    private RequisitionApplicationChangeServiceImpl requisitionApplicationChangeService;
-
+    private RequisitionApplicationChangeService requisitionApplicationChangeService;
+    @Lazy
     @Resource
     private RequisitionApplicationService requisitionApplicationService;
-
+    @Lazy
     @Resource
     private PickingListsService pickingListsService;
 
@@ -293,6 +293,7 @@ public class RequisitionApplicationChangeServiceImpl extends SuperServiceImpl<Re
 
 
     @Async
+    @Override
     public void sendMsg(String id, ApproveTypeEnum approveType, RequisitionApplicationChangeEntity entity) {
         Map<String, String> map = new HashMap<>();
         map.put("code", entity.getCode());

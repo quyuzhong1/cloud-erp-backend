@@ -56,6 +56,7 @@ import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.math3.util.Pair;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronizationAdapter;
@@ -136,6 +137,7 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
     private DownloadTaskFeign downloadTaskFeign;
     @Resource
     private WarehouseLocationService warehouseLocationService;
+    @Lazy
     @Resource
     private SoDeliveryNoticeService soDeliveryNoticeService;
     @Resource

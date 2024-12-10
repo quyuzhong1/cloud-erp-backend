@@ -1,6 +1,7 @@
 package com.erp.server.wms.service;
 
 import com.common.business.dto.base.*;
+import com.common.business.enums.ApproveTypeEnum;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.wms.dto.RequisitionApplicationChangeDTO;
@@ -8,6 +9,7 @@ import com.erp.model.wms.dto.pickingstrategy.PickingListsDTO;
 import com.erp.model.wms.entity.PickingListsEntity;
 import com.erp.model.wms.entity.RequisitionApplicationChangeDetailEntity;
 import com.erp.model.wms.entity.RequisitionApplicationChangeEntity;
+import org.springframework.scheduling.annotation.Async;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
@@ -106,6 +108,8 @@ public interface RequisitionApplicationChangeService extends SuperService<Requis
      * @date: 2024-11-18
      */
     BatchResultDTO approve(String id, List<RequisitionApplicationChangeDTO.ApproveView> approveViewList, String type);
+
+    void sendMsg(String id, ApproveTypeEnum approveType, RequisitionApplicationChangeEntity entity);
 
     /**
     * 删除
