@@ -221,7 +221,7 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
             });
         }
         //销售出库单消费异常抛出
-        if (Objects.isNull(handled) || !handled){
+        if (Objects.nonNull(handled) && !handled){
             throw new ServiceException("平台【{}】销售订单【{}】销售出库单处理失败",mainEntity.getDictPlatform(), mainEntity.getCode());
         }
     }

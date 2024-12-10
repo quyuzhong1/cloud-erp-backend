@@ -103,6 +103,15 @@ public class AliExpressSoB2cHandle extends AbstractSoB2cHandle {
         if (!Boolean.TRUE.equals(hasPlatformWarehouse)) {
             return Boolean.TRUE;
         }
+        List<PlatformDeliveryDTO> deliveryDTOList = dto.getDeliveryDTOList();
+        List<String> deliveryStatusNameList = new ArrayList<>();
+        deliveryStatusNameList.add(AliexpressDeliveryOrderStatusEnum.SHIPPED.getName());
+        deliveryStatusNameList.add(AliexpressDeliveryOrderStatusEnum.SIGNED.getName());
+        deliveryDTOList = deliveryDTOList.stream().filter(e -> deliveryStatusNameList.contains(e.getOrderStatus())).collect(Collectors.toList());
+        if (CollUtil.isEmpty(deliveryDTOList)){
+            return Boolean.TRUE;//不需要生成销售出库单
+        }
+        dto.setDeliveryDTOList(deliveryDTOList);
         try {
             //创建速卖通发货单
             this.createAliexpressDelivery(dto,mainEntity);
@@ -143,17 +152,9 @@ public class AliExpressSoB2cHandle extends AbstractSoB2cHandle {
                 shopName = shopInfoEntity.getName();
             }
         }
-        //速卖通 已发货/已签收创建销售出库单
-        List<String> deliveryStatusNameList = new ArrayList<>();
-        deliveryStatusNameList.add(AliexpressDeliveryOrderStatusEnum.SHIPPED.getName());
-        deliveryStatusNameList.add(AliexpressDeliveryOrderStatusEnum.SIGNED.getName());
-
         List<WarehouseMappingDTO.MappingViewDTO> mappingViewDTOS = warehouseMappingFeign.listMappingViewByDictPlatform(mainEntity.getDictPlatform());
         List<PlatformDeliveryDTO> deliveryDTOList = dto.getDeliveryDTOList();
         for (PlatformDeliveryDTO deliveryDTO : deliveryDTOList){
-            if (!deliveryStatusNameList.contains(deliveryDTO.getOrderStatus())){
-                continue;
-            }
             LocalDateTime deliveryWarehouseTime = deliveryDTO.getDeliveryWarehouseTime();
             if (Objects.isNull(deliveryWarehouseTime)){
                 continue;
