@@ -119,4 +119,28 @@ public interface VirtualInventoryDetailService extends SuperService<VirtualInven
      * @return List<VirtualInventoryDetailEntity>
      */
     List<VirtualInventoryDetailEntity> getByOutParam(String skuId, String warehouseId, String virtualWarehouseId);
+    /**
+     * 详情历史库龄明细
+     * @author will
+     * @date 2024/12/10 17:31
+     * @param dto 
+     * @return viewHisInventoryAgeDetailDTO
+     */
+    VirtualInventoryAgeDTO.viewHisInventoryAgeDetailDTO viewHisInventoryAgeDetail(VirtualInventoryAgeDTO.HisInventoryAgeDetailParamDTO dto);
+    /**
+     * 列表弹框分页查询
+     * @author will
+     * @date 2024/12/10 18:21
+     * @param dto
+     * @return PagingVO<HisInventoryAgeDetailDTO>
+     */
+    PagingVO<VirtualInventoryAgeDTO.HisInventoryAgeDetailDTO> framePaging(PagingDTO<VirtualInventoryAgeDTO.FrameParamDTO> dto);
+    /**
+     * 列表弹框导出
+     * @author will
+     * @date 2024/12/10 18:22
+     * @param dto
+     * @return Boolean
+     */
+    Boolean frameExportExcel(VirtualInventoryAgeDTO.FrameParamDTO dto);
 }

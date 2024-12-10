@@ -185,6 +185,31 @@ public class VirtualInventoryAgeDTO implements Serializable {
         private LocalDate date;
     }
 
+    @Data
+    @NoArgsConstructor
+    public static class FrameParamDTO {
+        /**
+         * skuId
+         */
+        @NotBlank(message = "skuId不能为空")
+        private String skuId;
+        /**
+         * 仓库id
+         */
+        @NotBlank(message = "仓库Id不能为空")
+        private String warehouseId;
+        /**
+         * 虚拟仓id
+         */
+        @NotBlank(message = "虚拟仓Id不能为空")
+        private String virtualWarehouseId;
+
+        /**
+         * 天数间隔区间
+         */
+        private String daysInterval;
+    }
+
     /**
      * 历史库龄图形DTO
      */
@@ -368,17 +393,25 @@ public class VirtualInventoryAgeDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class viewHisInventoryAgeDetailDTO {
-
         /**
-         * 平均库龄（天）
+         * 日期
          */
-        private BigDecimal avgInventoryAgeDays;
-
+        private LocalDate date;
         /**
          * 平均库龄（天）(去零)
          */
         private String avgInventoryAgeDaysStr;
-
+        /**
+         * 虚拟仓库存
+         */
         private Integer virtualQty;
+        /**
+         * 虚拟仓可用库存
+         */
+        private Integer virtualUsableQty;
+        /**
+         * 虚拟仓冻结库存
+         */
+        private Integer virtualFrozenQty;
     }
 }

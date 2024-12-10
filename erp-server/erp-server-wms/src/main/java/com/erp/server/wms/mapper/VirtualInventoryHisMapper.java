@@ -1,4 +1,5 @@
 package com.erp.server.wms.mapper;
+import com.erp.model.wms.dto.VirtualInventoryAgeDTO;
 import com.erp.model.wms.dto.VirtualInventoryHisDTO;
 import com.erp.model.wms.entity.VirtualInventoryHisEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
@@ -36,4 +37,12 @@ public interface VirtualInventoryHisMapper extends BaseMapper<VirtualInventoryHi
      * @return List<VirtualInventoryHisEntity>
      */
     List<VirtualInventoryHisEntity> listVirtualInventoryHisJobData(@Param("date")LocalDate date);
+    /**
+     * 查询历史平均库龄数据
+     * @author will
+     * @date 2024/12/10 17:36
+     * @param dto
+     * @return viewHisInventoryAgeDetailDTO
+     */
+    VirtualInventoryAgeDTO.viewHisInventoryAgeDetailDTO getHisInventoryAgeDetail(@Param("dto") VirtualInventoryAgeDTO.HisInventoryAgeDetailParamDTO dto);
 }

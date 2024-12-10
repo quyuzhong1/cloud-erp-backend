@@ -10,6 +10,7 @@ import com.common.business.threadlocal.UserContext;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
+import com.erp.model.wms.dto.VirtualInventoryAgeDTO;
 import com.erp.model.wms.dto.VirtualInventoryHisDTO;
 import com.erp.model.wms.entity.VirtualInventoryHisEntity;
 import com.erp.server.wms.mapper.VirtualInventoryHisMapper;
@@ -121,6 +122,11 @@ public class VirtualInventoryHisServiceImpl extends SuperServiceImpl<VirtualInve
             hisEntity.setId(id);
         }
         this.saveOrUpdateBatch(virtualInventoryHisList);
+    }
+
+    @Override
+    public VirtualInventoryAgeDTO.viewHisInventoryAgeDetailDTO getHisInventoryAgeDetail(VirtualInventoryAgeDTO.HisInventoryAgeDetailParamDTO dto) {
+        return baseMapper.getHisInventoryAgeDetail(dto);
     }
 
     /**

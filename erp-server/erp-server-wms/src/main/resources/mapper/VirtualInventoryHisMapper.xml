@@ -124,5 +124,17 @@
         where vid.is_deleted = false
     </select>
 
+    <!-- 查询历史平均库龄 -->
+    <select id="getHisInventoryAgeDetail"
+            resultType="com.erp.model.wms.dto.VirtualInventoryAgeDTO$viewHisInventoryAgeDetailDTO">
+        select
+            <include refid="Base_Column_List" />
+        from virtual_inventory_his vih
+        <where>
+            vih.is_deleted = false and vih.sku_id = #{dto.skuId} and vih.warehouse_id = #{dto.warehouseId}
+            and vih.virtual_warehouse_id = #{dto.virtualWarehouseId} and vih.date = #{dto.date}
+        </where>
+    </select>
+
 
 </mapper>

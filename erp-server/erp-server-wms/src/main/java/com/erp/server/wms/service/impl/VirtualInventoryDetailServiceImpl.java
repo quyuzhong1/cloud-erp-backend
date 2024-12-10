@@ -154,8 +154,29 @@ public class VirtualInventoryDetailServiceImpl extends SuperServiceImpl<VirtualI
     @Override
     public PagingVO<VirtualInventoryAgeDTO.HisInventoryAgeDetailDTO> hisInventoryAgeDetailPaging(PagingDTO<VirtualInventoryAgeDTO.HisInventoryAgeDetailParamDTO> dto) {
         IPage<VirtualInventoryAgeDTO.HisInventoryAgeDetailDTO> pageData = this.baseMapper.hisInventoryAgeDetailPaging(dto.page(), dto.getParams());
+        handleHisInventoryAgeDetail(pageData.getRecords());
         return new PagingVO<>(pageData);
     }
+
+    private void handleHisInventoryAgeDetail (List<VirtualInventoryAgeDTO.HisInventoryAgeDetailDTO> list) {
+        if (CollUtil.isEmpty(list)) {
+            return;
+        }
+
+    }
+
+
+    @Override
+    public PagingVO<VirtualInventoryAgeDTO.HisInventoryAgeDetailDTO> framePaging(PagingDTO<VirtualInventoryAgeDTO.FrameParamDTO> dto) {
+
+        return null;
+    }
+
+    @Override
+    public Boolean frameExportExcel(VirtualInventoryAgeDTO.FrameParamDTO dto) {
+        return null;
+    }
+
 
     @Override
     public Boolean exportHisInventoryAgeDetail(VirtualInventoryAgeDTO.HisInventoryAgeDetailParamDTO dto) {
@@ -243,6 +264,11 @@ public class VirtualInventoryDetailServiceImpl extends SuperServiceImpl<VirtualI
     @Override
     public List<VirtualInventoryDetailEntity> getByOutParam(String skuId, String warehouseId, String virtualWarehouseId) {
         return baseMapper.getByOutParam(skuId,warehouseId,virtualWarehouseId);
+    }
+
+    @Override
+    public VirtualInventoryAgeDTO.viewHisInventoryAgeDetailDTO viewHisInventoryAgeDetail(VirtualInventoryAgeDTO.HisInventoryAgeDetailParamDTO dto) {
+        return virtualInventoryHisService.getHisInventoryAgeDetail(dto);
     }
 
     /**

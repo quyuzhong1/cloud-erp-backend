@@ -2,6 +2,7 @@ package com.erp.server.wms.service;
 
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.service.SuperService;
+import com.erp.model.wms.dto.VirtualInventoryAgeDTO;
 import com.erp.model.wms.dto.VirtualInventoryHisDTO;
 import com.erp.model.wms.entity.VirtualInventoryHisEntity;
 
@@ -49,4 +50,12 @@ public interface VirtualInventoryHisService extends SuperService<VirtualInventor
      * @date 2024/12/9 19:23
      */
     void hisVirtualInventoryJob();
+    /**
+     * 详情历史库龄明细
+     * @author will
+     * @date 2024/12/10 17:35
+     * @param dto
+     * @return viewHisInventoryAgeDetailDTO
+     */
+    VirtualInventoryAgeDTO.viewHisInventoryAgeDetailDTO getHisInventoryAgeDetail(VirtualInventoryAgeDTO.HisInventoryAgeDetailParamDTO dto);
 }

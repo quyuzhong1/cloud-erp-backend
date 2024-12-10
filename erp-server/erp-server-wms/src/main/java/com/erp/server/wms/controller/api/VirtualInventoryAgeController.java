@@ -87,6 +87,32 @@ public class VirtualInventoryAgeController extends BaseController {
 
 
     /**
+     * 列表弹框分页
+     * @author will
+     * @date 2024/12/5 9:49
+     * @param dto
+     * @return ApiResult<PagingVO<HisInventoryAgeDetailDTO>>
+     */
+    @PostMapping("/framePaging")
+    public ApiResult<PagingVO<VirtualInventoryAgeDTO.HisInventoryAgeDetailDTO>> framePaging(@RequestBody @Validated PagingDTO<VirtualInventoryAgeDTO.FrameParamDTO> dto) {
+        return success(virtualInventoryDetailService.framePaging(dto));
+    }
+
+    /**
+     * 列表弹框分页导出excel
+     * @author will
+     * @date 2024/12/3 18:02
+     * @param dto
+     * @return ApiResult
+     */
+    @PostMapping("/frameExportExcel")
+    public ApiResult frameExportExcel(@RequestBody @Validated VirtualInventoryAgeDTO.FrameParamDTO dto) {
+        Boolean flag = virtualInventoryDetailService.frameExportExcel(dto);
+        return flag == true ? success() : failure();
+    }
+
+
+    /**
      * 详情库龄图
      * @author will
      * @date 2024/12/9 9:47
@@ -124,9 +150,16 @@ public class VirtualInventoryAgeController extends BaseController {
         return success(virtualInventoryDetailService.hisInventoryAgeDetailPaging(dto));
     }
 
+    /**
+     * 详情历史库龄明细
+     * @author will
+     * @date 2024/12/10 17:28
+     * @param dto
+     * @return ApiResult<viewHisInventoryAgeDetailDTO>
+     */
     @PostMapping("/viewHisInventoryAgeDetail")
-    public ApiResult<PagingVO<VirtualInventoryAgeDTO.HisInventoryAgeDetailDTO>> viewHisInventoryAgeDetail(@RequestBody @Validated PagingDTO<VirtualInventoryAgeDTO.HisInventoryAgeDetailParamDTO> dto) {
-        return success(virtualInventoryDetailService.hisInventoryAgeDetailPaging(dto));
+    public ApiResult<VirtualInventoryAgeDTO.viewHisInventoryAgeDetailDTO> viewHisInventoryAgeDetail(@RequestBody @Validated VirtualInventoryAgeDTO.HisInventoryAgeDetailParamDTO dto) {
+        return success(virtualInventoryDetailService.viewHisInventoryAgeDetail(dto));
     }
 
     /**
@@ -141,7 +174,6 @@ public class VirtualInventoryAgeController extends BaseController {
         Boolean flag = virtualInventoryDetailService.exportHisInventoryAgeDetail(dto);
         return flag == true ? success() : failure();
     }
-
 
 
 }
