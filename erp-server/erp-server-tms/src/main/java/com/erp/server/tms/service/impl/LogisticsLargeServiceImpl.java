@@ -905,22 +905,36 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
         List<String> ids = costAllocationEntities.stream().map(req -> req.getId()).collect(Collectors.toList());
         List<TransferDeclareCostAllocationDetailEntity> costAllocationDetailEntities = transferDeclareCostAllocationDetailService.listByMainIds(ids);
 
-
+        //b2c报关对账单
         TmsB2cDeclareReconciliationDetailEntity reconciliationDetailEntity = tmsB2cDeclareReconciliationDetailService.getById(entity.getDeclareReconciliationDetailId());
         TmsB2cDeclareReconciliationEntity declareReconciliationEntity = tmsB2cDeclareReconciliationService.getById(reconciliationDetailEntity.getMainId());
 
-        List<String> outstockDetailId = costAllocationEntities.stream().map(TransferDeclareCostAllocationEntity::getOutstockDetailId).distinct().collect(Collectors.toList());
-//        soOutstockFeign.listDetailBySourceDetailId()
+        //销售出库
+        List<String> outstockDetailId = costAllocationEntities.stream().map(req -> req.getOutstockDetailId()).distinct().collect(Collectors.toList());
+        List<SoOutstockDetailEntity> soOutstockDetailEntityList = new ArrayList<>();
+        if (CollUtil.isNotEmpty(outstockDetailId)) {
+            soOutstockDetailEntityList = FeignQuery.getByIds(SoOutstockDetailEntity.class, outstockDetailId);
+        }
+        List<String> soOutstockIds = soOutstockDetailEntityList.stream().map(SoOutstockDetailEntity::getMainId).distinct().collect(Collectors.toList());
+        List<SoOutstockEntity> soOutstockEntities = soOutstockFeign.listByIds(soOutstockIds);
+
 
         for (TransferDeclareCostAllocationEntity costAllocationEntity : costAllocationEntities) {
-
             List<TransferDeclareCostAllocationDetailEntity> costAllocationDetailEntityList = costAllocationDetailEntities.stream().filter(req -> req.getMainId().equals(costAllocationEntity.getId())).collect(Collectors.toList());
+            if (CollUtil.isEmpty(costAllocationDetailEntityList)) {
+                resultDTOS.add(BatchResultDTO.fail(costAllocationEntity.getId(), costAllocationEntity.getSkuNo() + " 产品编码" + costAllocationEntity.getSkuNo(), "未找到中转费用分摊明细信息！"));
+            }
         }
 
         return null;
     }
 
-    private BatchResultDTO generateTransferCostAllocationHandler(TransferDeclareCostAllocationMainEntity mainEntity, TransferDeclareCostAllocationEntity entity, List<TransferDeclareCostAllocationDetailEntity> detailEntityList, TmsB2cDeclareReconciliationEntity declareReconciliationEntity, TmsB2cDeclareReconciliationDetailEntity declareReconciliationDetailEntity, SoOutstockEntity soOutstockEntity) {
+    private BatchResultDTO generateTransferCostAllocationHandler(TransferDeclareCostAllocationMainEntity mainEntity,
+                                                                 TransferDeclareCostAllocationEntity entity,
+                                                                 List<TransferDeclareCostAllocationDetailEntity> detailEntityList,
+                                                                 TmsB2cDeclareReconciliationEntity declareReconciliationEntity,
+                                                                 TmsB2cDeclareReconciliationDetailEntity declareReconciliationDetailEntity,
+                                                                 SoOutstockEntity soOutstockEntity) {
         List<LogisticsLargeEntity> logisticsLargeEntities = this.listByIdSourceId(Arrays.asList(mainEntity.getId()));
 
         //已确认才能下推
