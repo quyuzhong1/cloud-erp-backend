@@ -156,7 +156,7 @@ public class TransferDeclareCostAllocationDTO implements Serializable {
          /**
      	 * 预估收费重
      	 */
-     	private BigDecimal billingWeight;
+     	private String billingWeight;
      	/**
      	 * 预估收费重单位
      	 */
@@ -165,17 +165,17 @@ public class TransferDeclareCostAllocationDTO implements Serializable {
      	/**
      	 * 实际计费重
      	 */
-     	private BigDecimal billingWeightLogistics;
+     	private String billingWeightLogistics;
      	
      	/**
      	 * 单SKU计费重
      	 */
-     	private BigDecimal skuWeight;
+     	private String skuWeight;
      	
      	/**
      	 * 单位成本
      	 */
-     	private BigDecimal unitCost;
+     	private String unitCost;
      	/**
      	 * 单位成本币别
      	 */
@@ -184,7 +184,7 @@ public class TransferDeclareCostAllocationDTO implements Serializable {
      	/**
      	 * 总成本
      	 */
-     	private BigDecimal totalCost;
+     	private String totalCost;
      	
      	/**
      	 * 费用来源
@@ -203,17 +203,17 @@ public class TransferDeclareCostAllocationDTO implements Serializable {
          /**
           * 账单金额
           */
-          private BigDecimal billAmount;
+          private String billAmount;
           
           /**
            * 分摊金额
            */
-          private BigDecimal allocatedAmount;
+          private String allocatedAmount;
            
            /**
             * 单个产品分摊
             */
-          private BigDecimal productAllocatedAmount;
+          private String productAllocatedAmount;
            
             /**
              * 费用分摊方式
