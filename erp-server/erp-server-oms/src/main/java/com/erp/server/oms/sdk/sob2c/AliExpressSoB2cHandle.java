@@ -105,6 +105,9 @@ public class AliExpressSoB2cHandle extends AbstractSoB2cHandle {
             return Boolean.TRUE;
         }
         List<PlatformDeliveryDTO> deliveryDTOList = dto.getDeliveryDTOList();
+        if (CollUtil.isEmpty(deliveryDTOList)){
+            return Boolean.TRUE;
+        }
         List<String> deliveryStatusNameList = new ArrayList<>();
         deliveryStatusNameList.add(AliexpressDeliveryOrderStatusEnum.SHIPPED.getName());
         deliveryStatusNameList.add(AliexpressDeliveryOrderStatusEnum.SIGNED.getName());
