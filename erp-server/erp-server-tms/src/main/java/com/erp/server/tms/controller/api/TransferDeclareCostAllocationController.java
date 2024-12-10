@@ -99,7 +99,7 @@ public class TransferDeclareCostAllocationController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "tms:transferDeclareCostAllocation:paging",
-            tableAlias = "lbc"
+            tableAlias = "t"
     )
     public ApiResult<List<TransferDeclareCostAllocationDTO.TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
         return success(transferDeclareCostAllocationService.tabList(dto));
@@ -116,7 +116,7 @@ public class TransferDeclareCostAllocationController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "tms:transferDeclareCostAllocation:paging",
-            tableAlias = "lbc"
+            tableAlias = "t"
     )
     @WebAdvanceQuery(handler = TransferDeclareCostAllocationQueryHandler.class)
     public ApiResult<PagingVO<TransferDeclareCostAllocationDTO.ListDTO>> queryByPage(@RequestBody @Validated PagingDTO<TransferDeclareCostAllocationDTO.PagingParamDTO> dto) {
