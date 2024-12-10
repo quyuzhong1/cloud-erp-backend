@@ -166,7 +166,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
 
     @Resource
     private SyncWdtOtherOutStockService syncWdtOtherOutStockService;
-
+    @Lazy
     @Resource
     private SoDeliveryNoticeService soDeliveryNoticeService;
 

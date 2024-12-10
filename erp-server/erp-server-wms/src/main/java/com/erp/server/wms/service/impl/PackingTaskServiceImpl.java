@@ -112,6 +112,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
     private DocNoGenHelper docNoGenHelper;
     @Resource
     private PackingTaskService packingTaskService;
+    @Lazy
     @Resource
     private SoDeliveryNoticeDetailService soDeliveryNoticeDetailService;
     @Resource

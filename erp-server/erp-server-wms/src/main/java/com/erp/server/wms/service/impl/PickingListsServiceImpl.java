@@ -113,7 +113,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
 
     @Resource
     private WmsCartonDetailService wmsCartonDetailService;
-
+    @Lazy
     @Resource
     private RequisitionApplicationChangeService requisitionApplicationChangeService;
 
