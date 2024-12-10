@@ -25,7 +25,7 @@ public class MouldRefundVoucherServiceImpl extends SuperServiceImpl<MouldRefundV
         MouldRefundVoucherEntity refundVoucher = new MouldRefundVoucherEntity();
         refundVoucher.setMouldDetailId(dto.getMouldDetailId());
         refundVoucher.setFileName(dto.getFileName());
-        refundVoucher.setFileUrl(dto.getFileUrl());
+        refundVoucher.setFileUrl(String.join(",", dto.getFileUrl()));
         refundVoucher.setRemark(dto.getRemark());
         save(refundVoucher);
     }

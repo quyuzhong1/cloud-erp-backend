@@ -105,6 +105,9 @@ public class MouldInfoServiceImpl extends SuperServiceImpl<MouldInfoMapper, Moul
     private MouldPurchasePriceService mouldPurchasePriceService;
 
     @Resource
+    private MouldRefCalcQtyService mouldRefCalcQtyService;
+
+    @Resource
     private WorkflowFeign workflowFeign;
 
 
@@ -473,6 +476,7 @@ public class MouldInfoServiceImpl extends SuperServiceImpl<MouldInfoMapper, Moul
         List<MouldPurchasePriceEntity> mouldPurchasePriceList = mouldPurchasePriceService.listByMouldDetailIdList(detailIds);
         List<MouldRefProductEntity> mouldRefProductList = mouldRefProductService.listByMouldDetailIdList(detailIds);
         List<MouldRefundAgreementEntity> refundAgreementList = mouldRefundAgreementService.listByMouldDetailIdList(detailIds);
+        List<MouldRefCalcQtyEntity> mouldRefCalcQtyList = mouldRefCalcQtyService.listByMouldDetailIdList(detailIds);
         for (MouldInfoDTO.OrderTrackingViewDTO record : records) {
             List<MouldRefProductDTO.ViewDTO> list = mouldRefProductList.stream()
                     .filter(v -> v.getMouldDetailId().equals(record.getDetailId()))
@@ -486,6 +490,10 @@ public class MouldInfoServiceImpl extends SuperServiceImpl<MouldInfoMapper, Moul
                     .filter(v -> v.getMouldDetailId().equals(record.getDetailId()))
                     .findFirst()
                     .orElse(new MouldRefundAgreementEntity());
+            MouldRefCalcQtyEntity refCalcQty = mouldRefCalcQtyList.stream()
+                    .filter(v -> v.getMouldDetailId().equals(record.getDetailId()))
+                    .findFirst()
+                    .orElse(new MouldRefCalcQtyEntity());
             record.setQty(purchasePrice.getQty());
             record.setTaxPrice(purchasePrice.getTaxPrice());
             record.setTaxRate(purchasePrice.getTaxRate());
@@ -499,10 +507,10 @@ public class MouldInfoServiceImpl extends SuperServiceImpl<MouldInfoMapper, Moul
             record.setRefundOrderQty(refundAgreement.getRefundOrderQty());
             record.setRefundStatus(refundAgreement.getRefundStatus());
             record.setRefundAmount(refundAgreement.getRefundAmount());
-            record.setPurchaseQty(0);
-            record.setReceiveQty(0);
-            record.setStockInQty(0);
-            record.setDiffQty(0);
+            record.setPurchaseQty(refCalcQty.getPurchaseQty());
+            record.setReceiveQty(refCalcQty.getReceiveQty());
+            record.setStockInQty(refCalcQty.getStockInQty());
+            record.setDiffQty(refCalcQty.getCalcQty());
             record.setRefProductList(list);
         }
     }
@@ -549,7 +557,7 @@ public class MouldInfoServiceImpl extends SuperServiceImpl<MouldInfoMapper, Moul
     }
 
     @Override
-    public PagingVO<MouldInfoDTO.OrderTrackingDetailDTO> orderTrackingDetail(MouldInfoDTO.OrderTrackingDetailParamDTO dto) {
-        return null;
+    public PagingVO<MouldInfoDTO.OrderTrackingDetailDTO> orderTrackingDetail(PagingDTO<MouldInfoDTO.OrderTrackingDetailParamDTO> dto) {
+        return baseMapper.orderTrackingDetail(new Page<>(dto.getCurrPage(), dto.getPageSize()), dto.getParams());
     }
 }

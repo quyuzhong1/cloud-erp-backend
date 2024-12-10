@@ -515,7 +515,7 @@ public class MouldInfoDTO implements Serializable {
         /**
          * 文件地址
          */
-        private String fileUrl;
+        private List<String> fileUrl;
 
         /**
          * 文件名字
