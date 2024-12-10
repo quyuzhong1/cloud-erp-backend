@@ -837,9 +837,15 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
 
         //销售出库单
         List<String> outstockDetailIds = entityList.stream().map(req -> req.getOutstockDetailId()).distinct().collect(Collectors.toList());
-        List<SoOutstockDetailEntity> soOutstockDetailList = FeignQuery.create(SoOutstockDetailEntity.class).in(SoOutstockDetailEntity::getId, outstockDetailIds).list();
+        List<SoOutstockDetailEntity> soOutstockDetailList = new ArrayList<>();
+        if (CollUtil.isNotEmpty(outstockDetailIds)) {
+            soOutstockDetailList = FeignQuery.create(SoOutstockDetailEntity.class).in(SoOutstockDetailEntity::getId, outstockDetailIds).list();
+        }
         List<String> outstockIds = soOutstockDetailList.stream().map(req -> req.getMainId()).distinct().collect(Collectors.toList());
-        List<SoOutstockEntity> soOutstockEntitylList = FeignQuery.create(SoOutstockEntity.class).in(SoOutstockEntity::getId, outstockIds).list();
+        List<SoOutstockEntity> soOutstockEntitylList = new ArrayList<>();
+        if (CollUtil.isNotEmpty(outstockIds)) {
+            soOutstockEntitylList = FeignQuery.create(SoOutstockEntity.class).in(SoOutstockEntity::getId, outstockIds).list();
+        }
 
         for (SmallBagCostAllocationEntity costAllocationEntity : entityList) {
             SoOutstockDetailEntity soOutstockDetailEntity = soOutstockDetailList.stream().filter(req -> req.getId().equals(costAllocationEntity.getOutstockDetailId())).findFirst().orElse(null);
@@ -898,35 +904,17 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public List<BatchResultDTO> generateTransferCostAllocationTable(TransferDeclareCostAllocationMainEntity entity) {
-        List<BatchResultDTO> resultDTOS = new ArrayList<>();
+    public BatchResultDTO generateTransferCostAllocationTable(TransferDeclareCostAllocationMainEntity mainEntity,
+                                                              List<TransferDeclareCostAllocationEntity> costAllocationEntityList,
+                                                              List<TransferDeclareCostAllocationDetailEntity> costAllocationDetailEntityList,
+                                                              TmsB2cDeclareReconciliationEntity reconciliationEntity,
+                                                              TmsB2cDeclareReconciliationDetailEntity reconciliationDetailEntity,
+                                                              SoOutstockEntity soOutstockEntity) {
 
-        List<TransferDeclareCostAllocationEntity> costAllocationEntities = transferDeclareCostAllocationService.lambdaQuery().eq(TransferDeclareCostAllocationEntity::getMainId, entity.getId()).list();
-        List<String> ids = costAllocationEntities.stream().map(req -> req.getId()).collect(Collectors.toList());
-        List<TransferDeclareCostAllocationDetailEntity> costAllocationDetailEntities = transferDeclareCostAllocationDetailService.listByMainIds(ids);
-
-        //b2c报关对账单
-        TmsB2cDeclareReconciliationDetailEntity reconciliationDetailEntity = tmsB2cDeclareReconciliationDetailService.getById(entity.getDeclareReconciliationDetailId());
-        TmsB2cDeclareReconciliationEntity declareReconciliationEntity = tmsB2cDeclareReconciliationService.getById(reconciliationDetailEntity.getMainId());
-
-        //销售出库
-        List<String> outstockDetailId = costAllocationEntities.stream().map(req -> req.getOutstockDetailId()).distinct().collect(Collectors.toList());
-        List<SoOutstockDetailEntity> soOutstockDetailEntityList = new ArrayList<>();
-        if (CollUtil.isNotEmpty(outstockDetailId)) {
-            soOutstockDetailEntityList = FeignQuery.getByIds(SoOutstockDetailEntity.class, outstockDetailId);
+        for (TransferDeclareCostAllocationEntity entity : costAllocationEntityList) {
+            generateTransferCostAllocationHandler(mainEntity, entity, costAllocationDetailEntityList, reconciliationEntity, reconciliationDetailEntity, soOutstockEntity);
         }
-        List<String> soOutstockIds = soOutstockDetailEntityList.stream().map(SoOutstockDetailEntity::getMainId).distinct().collect(Collectors.toList());
-        List<SoOutstockEntity> soOutstockEntities = soOutstockFeign.listByIds(soOutstockIds);
-
-
-        for (TransferDeclareCostAllocationEntity costAllocationEntity : costAllocationEntities) {
-            List<TransferDeclareCostAllocationDetailEntity> costAllocationDetailEntityList = costAllocationDetailEntities.stream().filter(req -> req.getMainId().equals(costAllocationEntity.getId())).collect(Collectors.toList());
-            if (CollUtil.isEmpty(costAllocationDetailEntityList)) {
-                resultDTOS.add(BatchResultDTO.fail(costAllocationEntity.getId(), costAllocationEntity.getSkuNo() + " 产品编码" + costAllocationEntity.getSkuNo(), "未找到中转费用分摊明细信息！"));
-            }
-        }
-
-        return null;
+        return BatchResultDTO.success(mainEntity.getId(), soOutstockEntity.getCode(), OperationTypeEnum.ADD);
     }
 
     private BatchResultDTO generateTransferCostAllocationHandler(TransferDeclareCostAllocationMainEntity mainEntity,
