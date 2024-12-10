@@ -374,7 +374,7 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
 
 
         //如果是已支付的订单
-        if (SoB2cPayStatusEnum.ENUM_PAID.getCode().equals(mainEntity.getPayStatus()) && mainEntity.getPayTime() != null) {
+        if (SoB2cPayStatusEnum.ENUM_PAID.getCode().equals(mainEntity.getPayStatus()) && mainEntity.getPayTime() != null && ApproveStatusEnum.APPROVE.getCode().equals(mainEntity.getApproveStatus().getStatus())) {
             //同步数帝云
             List<SoB2cDetailEntity> soB2cDetailEntityList = soB2cDetailService.listByMainId(mainEntity.getId());
             syncSoB2cService.syncDataToSdy(mainEntity, soB2cDetailEntityList, SyncOperateEnum.OPERATE_UPDATE.getCode());

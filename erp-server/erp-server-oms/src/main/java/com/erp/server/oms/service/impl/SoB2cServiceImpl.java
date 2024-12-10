@@ -5576,9 +5576,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             }
 
             resultDTO.setSoB2cEntity(entity);
+
             return resultDTO;
         }
-
     }
 
     @Override
