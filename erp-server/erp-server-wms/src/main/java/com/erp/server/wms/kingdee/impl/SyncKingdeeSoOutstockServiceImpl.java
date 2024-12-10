@@ -1152,16 +1152,19 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
                 shudiyunB2cOrderDTO.setOrganization_name(sysAccountingCompanyEntity.getName());
             }
 
-            if (customerInfo.getCurrency() == null) {
-                shudiyunB2cOrderDTO.setSettlement_currency_code("");
-            } else {
-                shudiyunB2cOrderDTO.setSettlement_currency_code(customerInfo.getCurrency());
+            if (customerInfo.getCurrency() != null) {
+                CurrencyDTO.ViewDTO viewDTO = currencyList.stream().filter(req -> req.getId().equals(customerInfo.getCurrency())).findFirst().orElse(null);
+                if (ObjectUtil.isNotEmpty(viewDTO)) {
+                    shudiyunB2cOrderDTO.setTransaction_currency_code(viewDTO.getId());
+                    shudiyunB2cOrderDTO.setTransaction_currency(viewDTO.getName());
+                }
             }
-
-            if (customerInfo.getTradeCurrency() == null) {
-                shudiyunB2cOrderDTO.setSettlement_currency_code("");
-            } else {
-                shudiyunB2cOrderDTO.setTransaction_currency_code(customerInfo.getTradeCurrency());
+            if (customerInfo.getTradeCurrency() != null) {
+                CurrencyDTO.ViewDTO viewDTO = currencyList.stream().filter(req -> req.getId().equals(customerInfo.getTradeCurrency())).findFirst().orElse(null);
+                if (ObjectUtil.isNotEmpty(viewDTO)) {
+                    shudiyunB2cOrderDTO.setTransaction_currency_code(viewDTO.getId());
+                    shudiyunB2cOrderDTO.setTransaction_currency(viewDTO.getName());
+                }
             }
             shudiyunB2cOrderDTO.setPlatform_id(customerInfo.getPlatformType());
             String platformName = dictBasicEntityList.stream().filter(req -> req.getValue().equals(customerInfo.getPlatformType())).map(DictBasicEntity::getName).findFirst().orElse("");
@@ -1285,8 +1288,7 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
         List<String> skuIds = soOutstockDetailEntities.stream().map(req -> req.getSkuId()).distinct().collect(Collectors.toList());
         List<BomChildrenSkuDTO> bomChildrenSkuDTOS = plmTaskFeign.listBomChildBySkuIds(skuIds);
 
-        List<String> currencyCodeList = soOutstockDetailEntities.stream().map(req -> req.getCurrency()).distinct().collect(Collectors.toList());
-        List<CurrencyDTO.ViewDTO> currencyList = sysUserFeign.listByCurrency(currencyCodeList);
+
         //父类产品
         List<String> parentSkuId = bomChildrenSkuDTOS.stream().map(BomChildrenSkuDTO::getParentSkuId).distinct().collect(Collectors.toList());
         List<ProductDetailEntity> parentSkuList = new ArrayList<>();
@@ -1322,7 +1324,12 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
                 .eq(ShopInfoEntity::getCustomerId, customerId)
                 .list();
 
-
+        List<String> currencyCodeList = soOutstockDetailEntities.stream().map(req -> req.getCurrency()).distinct().collect(Collectors.toList());
+        if (CharSequenceUtil.isNotBlank(customerInfo.getTradeCurrency())) {
+            currencyCodeList.add(customerInfo.getTradeCurrency());
+            currencyCodeList.add(customerInfo.getCurrency());
+        }
+        List<CurrencyDTO.ViewDTO> currencyList = sysUserFeign.listByCurrency(currencyCodeList);
         List<BaseIdDTO.CodeDTO> companyEntities = sysUserFeign.getAccountingCompanyList(Arrays.asList(customerInfo.getFinancialOrganization(), entity.getSalesOrgId()));
 
         List<DictBasicEntity> dictBasicEntityList = FeignQuery.create(DictBasicEntity.class).eq(DictBasicEntity::getType, DictBasicTypeEnum.SALES_PLATFORM.getType()).list();
@@ -1349,21 +1356,24 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
                     shudiyunB2cOrderDTO.setOrganization_name(sysAccountingCompanyEntity.getName());
                 }
 
-                if (customerInfo.getCurrency() == null) {
-                    shudiyunB2cOrderDTO.setSettlement_currency_code("");
-                } else {
-                    shudiyunB2cOrderDTO.setSettlement_currency_code(customerInfo.getCurrency());
+                if (customerInfo.getCurrency() != null) {
+                    CurrencyDTO.ViewDTO viewDTO = currencyList.stream().filter(req -> req.getId().equals(customerInfo.getCurrency())).findFirst().orElse(null);
+                    if (ObjectUtil.isNotEmpty(viewDTO)) {
+                        shudiyunB2cOrderDTO.setTransaction_currency_code(viewDTO.getId());
+                        shudiyunB2cOrderDTO.setTransaction_currency(viewDTO.getName());
+                    }
                 }
 
-                if (customerInfo.getTradeCurrency() == null) {
-                    shudiyunB2cOrderDTO.setSettlement_currency_code("");
-                } else {
-                    shudiyunB2cOrderDTO.setTransaction_currency_code(customerInfo.getTradeCurrency());
+                if (customerInfo.getTradeCurrency() != null) {
+                    CurrencyDTO.ViewDTO viewDTO = currencyList.stream().filter(req -> req.getId().equals(customerInfo.getTradeCurrency())).findFirst().orElse(null);
+                    if (ObjectUtil.isNotEmpty(viewDTO)) {
+                        shudiyunB2cOrderDTO.setTransaction_currency_code(viewDTO.getId());
+                        shudiyunB2cOrderDTO.setTransaction_currency(viewDTO.getName());
+                    }
                 }
                 shudiyunB2cOrderDTO.setPlatform_id(customerInfo.getPlatformType());
                 String platformName = dictBasicEntityList.stream().filter(req -> req.getValue().equals(customerInfo.getPlatformType())).map(DictBasicEntity::getName).findFirst().orElse("");
                 shudiyunB2cOrderDTO.setPlatform_name(platformName);
-
             }
 
             //店铺信息

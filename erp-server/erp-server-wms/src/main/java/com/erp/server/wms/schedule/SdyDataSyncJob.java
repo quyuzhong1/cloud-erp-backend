@@ -101,10 +101,6 @@ public class SdyDataSyncJob {
             List<String> ids = list.stream().map(req -> req.getId()).collect(Collectors.toList());
             List<SoOutstockDetailEntity> soOutstockDetailEntityList = soOutstockDetailService.listByMainIds(ids);
 
-            //币别
-            List<String> currencyCodeList = soOutstockDetailEntityList.stream().map(req -> req.getCurrency()).distinct().collect(Collectors.toList());
-            List<CurrencyDTO.ViewDTO> currencyList = sysUserFeign.listByCurrency(currencyCodeList);
-
             //B2C订单
             List<SoOutstockEntity> b2cEntity = list.stream().filter(req -> OrderTypeEnum.B2C.getCode().equals(req.getOrderType())).collect(Collectors.toList());
             List<String> b2cSoIds = b2cEntity.stream().map(req -> req.getSoId()).distinct().collect(Collectors.toList());
@@ -129,6 +125,14 @@ public class SdyDataSyncJob {
                         .in(CustomerInfoEntity::getId, customerIds)
                         .list();
             }
+
+            //币别
+            List<String> currencyCodeList = soOutstockDetailEntityList.stream().map(req -> req.getCurrency()).distinct().collect(Collectors.toList());
+            List<String> currency = customerInfoList.stream().map(req -> req.getCurrency()).distinct().collect(Collectors.toList());
+            currencyCodeList.addAll(currency);
+            List<String> tradeCurrency = customerInfoList.stream().map(req -> req.getTradeCurrency()).distinct().collect(Collectors.toList());
+            currencyCodeList.addAll(tradeCurrency);
+            List<CurrencyDTO.ViewDTO> currencyList = sysUserFeign.listByCurrency(currencyCodeList);
 
             //组织
             List<String> orgList = new ArrayList<>();
