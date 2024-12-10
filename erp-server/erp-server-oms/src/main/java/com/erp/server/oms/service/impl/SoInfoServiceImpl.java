@@ -3912,4 +3912,9 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         List<SoDetailEntity> soDetailEntities = soDetailService.listBaseByMainId(view.getId());
         syncKingdeeSoService.syncDataToSdy(view, soDetailEntities, operateEnum, deliveryStatus);
     }
+
+    @Override
+    public List<SoInfoEntity> queryToSdy(LocalDate startDate, LocalDate endDate, Integer pageSize, int offset) {
+        return baseMapper.queryToSdy(startDate, endDate, pageSize, offset);
+    }
 }

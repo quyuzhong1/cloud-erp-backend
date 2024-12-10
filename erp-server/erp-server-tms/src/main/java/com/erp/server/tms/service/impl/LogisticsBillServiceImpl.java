@@ -1368,4 +1368,9 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
             tmsPushMsgService.save(tmsPushMsgEntity);
         }
     }
+
+    @Override
+    public List<LogisticsBillEntity> queryToSdy(LocalDateTime startTime, LocalDateTime endTime, Integer pageSize, int offset) {
+        return baseMapper.queryToSdy(startTime, endTime, pageSize, offset);
+    }
 }

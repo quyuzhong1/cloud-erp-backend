@@ -10,6 +10,7 @@ import com.erp.model.oms.entity.SoInfoEntity;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 
@@ -86,5 +87,7 @@ public interface SoInfoMapper extends BaseMapper<SoInfoEntity> {
      **/
     List<ListingTimeDTO> listFirstListingTime(@Param("ids") List<String> ids);
 
+
+    List<SoInfoEntity> queryToSdy(@Param("startDate")LocalDate startDate, @Param("endDate")LocalDate endDate, @Param("pageSize")Integer pageSize, @Param("offset")int offset);
 
 }

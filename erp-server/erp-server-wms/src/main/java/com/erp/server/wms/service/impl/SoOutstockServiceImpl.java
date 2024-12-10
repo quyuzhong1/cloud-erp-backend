@@ -166,7 +166,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
 
     @Resource
     private SyncWdtOtherOutStockService syncWdtOtherOutStockService;
-
+    @Lazy
     @Resource
     private SoDeliveryNoticeService soDeliveryNoticeService;
 
@@ -3534,5 +3534,10 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         List<DmpPushWdtDetailDTO> detailDTOList = BeanMapper.copyList(outGoods, DmpPushWdtDetailDTO.class);
         pushWdtDTO.setDetailDTOList(detailDTOList);
         return pushWdtDTO;
+    }
+
+    @Override
+    public List<SoOutstockEntity> queryToSdy(LocalDate startDate, LocalDate endDate, Integer pageSize, Integer offset) {
+        return baseMapper.queryToSdy(startDate, endDate, pageSize, offset);
     }
 }

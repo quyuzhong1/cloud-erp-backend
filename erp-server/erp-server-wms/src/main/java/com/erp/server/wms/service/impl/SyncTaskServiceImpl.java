@@ -4,23 +4,35 @@ import cn.hutool.core.collection.CollUtil;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.dto.DmpSyncMqDTO;
 import com.common.business.dto.DmpSyncMqDTO.SyncParamDTO;
+import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.OrderTypeEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.SyncOperateEnum;
+import com.common.business.wrapper.FeignQuery;
 import com.erp.model.dmp.dto.DmpPushWdtDTO;
 import com.erp.model.dmp.dto.DmpPushWdtDetailDTO;
 import com.erp.model.dmp.dto.ThirdMappingDTO;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
-import com.erp.model.oms.dto.SoInfoDTO;
-import com.erp.model.oms.entity.SoDetailEntity;
+import com.erp.model.oms.entity.*;
+import com.erp.model.oms.entity.DictBasicEntity;
+import com.erp.model.oms.enums.DictBasicTypeEnum;
+import com.erp.model.plm.dto.BomChildrenSkuDTO;
+import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.vo.SkuVO;
+import com.erp.model.oms.dto.SoInfoDTO;
+import com.erp.model.plm.vo.SkuVO;
+import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.BillTypeEnum;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.dmp.feign.DmpPushWdtFeign;
 import com.erp.rpc.dmp.feign.DmpThirdMappingFeign;
+import com.erp.rpc.oms.feign.SoB2cFeign;
+import com.erp.rpc.oms.feign.SoInfoFeign;
+import com.erp.rpc.oms.feign.SoReturnFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.kingdee.*;
 import com.erp.server.wms.mabang.SyncMabangMachineService;
 import com.erp.server.wms.mabang.SyncMabangTransferService;
@@ -152,6 +164,21 @@ public class SyncTaskServiceImpl implements SyncTaskService {
 
     @Resource
     private PlmTaskFeign plmTaskFeign;
+
+    @Resource
+    private SysUserFeign sysUserFeign;
+
+    @Resource
+    private SoReturnFeign soReturnFeign;
+
+    @Resource
+    private SoReturnReceiveService soReturnReceiveService;
+
+    @Resource
+    private SoB2cFeign soB2cFeign;
+
+    @Resource
+    private SoInfoFeign soInfoFeign;
 
 
     @Override
@@ -1046,6 +1073,60 @@ public class SyncTaskServiceImpl implements SyncTaskService {
         }
         List<String> outstockIds = soOutstockDetailEntityList.stream().map(SoOutstockDetailEntity::getMainId).distinct().collect(Collectors.toList());
         List<SoOutstockEntity> soOutstockEntities = soOutstockService.listByIds(outstockIds);
+
+        //币别
+        List<String> currencyCodeList = soOutstockDetailEntityList.stream().map(req -> req.getCurrency()).distinct().collect(Collectors.toList());
+        List<CurrencyDTO.ViewDTO> currencyList = sysUserFeign.listByCurrency(currencyCodeList);
+
+        //B2C订单
+        List<SoOutstockEntity> b2cEntity = soOutstockEntities.stream().filter(req -> OrderTypeEnum.B2C.getCode().equals(req.getOrderType())).collect(Collectors.toList());
+        List<String> b2cSoIds = b2cEntity.stream().map(req -> req.getSoId()).distinct().collect(Collectors.toList());
+        List<SoB2cEntity> soB2cEntities = soB2cFeign.listByIds(b2cSoIds);
+
+        //B2B订单
+        List<SoOutstockEntity> b2bEntity = soOutstockEntities.stream().filter(req -> OrderTypeEnum.B2B.getCode().equals(req.getOrderType())).collect(Collectors.toList());
+        List<String> b2bSoIds = b2bEntity.stream().map(req -> req.getSoId()).distinct().collect(Collectors.toList());
+        List<SoInfoEntity> soInfoEntities = soInfoFeign.listSoInfoByIds(b2bSoIds);
+
+        //客户
+        List<String> customerIds = soOutstockEntities.stream().map(req -> req.getCustomerId()).distinct().collect(Collectors.toList());
+        List<ShopInfoEntity> shopInfoList = new ArrayList<>();
+        List<CustomerInfoEntity> customerInfoList = new ArrayList<>();
+        if (CollUtil.isNotEmpty(customerIds)) {
+            //店铺
+            shopInfoList = FeignQuery.create(ShopInfoEntity.class)
+                    .in(ShopInfoEntity::getCustomerId, customerIds)
+                    .list();
+            //组织
+            customerInfoList = FeignQuery.create(CustomerInfoEntity.class)
+                    .in(CustomerInfoEntity::getId, customerIds)
+                    .list();
+        }
+
+        //组织
+        List<String> orgList = new ArrayList<>();
+        List<String> salesOrgId = shopInfoList.stream().map(req -> req.getSalesOrgId()).distinct().collect(Collectors.toList());
+        orgList.addAll(salesOrgId);
+        List<String> financialOrganization = customerInfoList.stream().map(req -> req.getFinancialOrganization()).distinct().collect(Collectors.toList());
+        orgList.addAll(financialOrganization);
+        List<BaseIdDTO.CodeDTO> companyEntities = sysUserFeign.getAccountingCompanyList(orgList);
+
+        //产品信息
+        List<String> skuNos = soOutstockDetailEntityList.stream().map(req -> req.getSkuNo()).distinct().collect(Collectors.toList());
+        List<SkuVO> skuVOList = plmTaskFeign.listBySkuNoList(skuNos);
+        List<String> skuIds = soOutstockDetailEntityList.stream().map(req -> req.getSkuId()).distinct().collect(Collectors.toList());
+        List<BomChildrenSkuDTO> bomChildrenSkuDTOS = plmTaskFeign.listBomChildBySkuIds(skuIds);
+        //父类产品
+        List<String> parentSkuId = bomChildrenSkuDTOS.stream().map(BomChildrenSkuDTO::getParentSkuId).distinct().collect(Collectors.toList());
+        List<ProductDetailEntity> parentSkuList = new ArrayList<>();
+        if (CollUtil.isNotEmpty(parentSkuId)) {
+            parentSkuList = FeignQuery.create(ProductDetailEntity.class)
+                    .in(ProductDetailEntity::getId, parentSkuId)
+                    .list();
+        }
+        List<DictBasicEntity> dictBasicEntityList = FeignQuery.create(DictBasicEntity.class).eq(DictBasicEntity::getType, DictBasicTypeEnum.SALES_PLATFORM.getType()).list();
+
+
         for (DmpSyncMqDTO.SyncParamDetailDTO syncParamDetailDTO :  sourceDetailList) {
             String sourceId = syncParamDetailDTO.getSourceId();
             SoOutstockDetailEntity soOutstockDetailEntity = soOutstockDetailEntityList.stream().filter(req -> req.getId().equals(sourceId)).findFirst().orElse(null);
@@ -1056,7 +1137,19 @@ public class SyncTaskServiceImpl implements SyncTaskService {
             if (ObjectUtils.isEmpty(entity)) {
                 continue;
             }
-            resultList.put(syncParamDetailDTO.getDataId(), syncKingdeeSoOutstockService.syncDataToSdyFieldHandler(entity, soOutstockDetailEntity, syncParamDetailDTO.getSyncOperate()));
+            resultList.put(syncParamDetailDTO.getDataId(), syncKingdeeSoOutstockService.syncDataToSdyFieldHandler(entity,
+                    soOutstockDetailEntity,
+                    syncParamDetailDTO.getSyncOperate(),
+                    currencyList,
+                    shopInfoList,
+                    customerInfoList,
+                    companyEntities,
+                    skuVOList,
+                    bomChildrenSkuDTOS,
+                    parentSkuList,
+                    soB2cEntities,
+                    soInfoEntities,
+                    dictBasicEntityList));
         }
         return resultList;
     }
@@ -1076,18 +1169,74 @@ public class SyncTaskServiceImpl implements SyncTaskService {
             return resultList;
         }
         List<String> instockIds = detailEntityList.stream().map(SoReturnInstockDetailEntity::getMainId).distinct().collect(Collectors.toList());
-        List<SoReturnInstockEntity> entityList = soReturnInstockService.listByIds(instockIds);
+        List<SoReturnInstockEntity> list = soReturnInstockService.listByIds(instockIds);
+
+        List<String> skuNos = detailEntityList.stream().map(req -> req.getSkuNo()).collect(Collectors.toList());
+        List<SkuVO> skuVOList = plmTaskFeign.listBySkuNoList(skuNos);
+        List<String> skuIds = detailEntityList.stream().map(req -> req.getSkuId()).collect(Collectors.toList());
+        List<BomChildrenSkuDTO> bomChildrenSkuDTOS = plmTaskFeign.listBomChildBySkuIds(skuIds);
+
+        List<String> currencyCodeList = detailEntityList.stream().map(req -> req.getCurrency()).distinct().collect(Collectors.toList());
+        List<CurrencyDTO.ViewDTO> currencyList = sysUserFeign.listByCurrency(currencyCodeList);
+        //父类产品
+        List<String> parentSkuId = bomChildrenSkuDTOS.stream().map(BomChildrenSkuDTO::getParentSkuId).distinct().collect(Collectors.toList());
+        List<ProductDetailEntity> parentSkuList = new ArrayList<>();
+        if (CollUtil.isNotEmpty(parentSkuId)) {
+            parentSkuList = FeignQuery.create(ProductDetailEntity.class)
+                    .in(ProductDetailEntity::getId, parentSkuId)
+                    .list();
+        }
+
+        //客户
+        List<String> customerIds = list.stream().map(req -> req.getCustomerId()).distinct().collect(Collectors.toList());
+        List<CustomerInfoEntity> customerInfoList = new ArrayList<>();
+        if (CollUtil.isNotEmpty(customerIds)) {
+            //组织
+            customerInfoList = FeignQuery.create(CustomerInfoEntity.class)
+                    .in(CustomerInfoEntity::getId, customerIds)
+                    .list();
+        }
+
+        //组织
+        List<String> financialOrganization = customerInfoList.stream().map(req -> req.getFinancialOrganization()).distinct().collect(Collectors.toList());
+        List<BaseIdDTO.CodeDTO> companyEntities = sysUserFeign.getAccountingCompanyList(financialOrganization);
+
+        List<com.erp.model.oms.entity.DictBasicEntity> dictBasicEntityList = FeignQuery.create(com.erp.model.oms.entity.DictBasicEntity.class).eq(DictBasicEntity::getType, DictBasicTypeEnum.SALES_PLATFORM.getType()).list();
+
+
+        List<String> soReturnIds = list.stream().filter(req -> SourceTypeEnum.SO_RETURN.getCode().equals(req.getSourceType())).map(req -> req.getSourceId()).distinct().collect(Collectors.toList());
+        List<SoReturnEntity> soReturnEntityList = soReturnFeign.listByIds(soReturnIds);
+
+        List<String> receiveIds = list.stream().filter(req -> SourceTypeEnum.SO_RETURN_RECEIVE.getCode().equals(req.getSourceType())).map(req -> req.getSourceId()).distinct().collect(Collectors.toList());
+        List<SoReturnReceiveEntity> soReturnReceiveEntityList = soReturnReceiveService.listByIds(receiveIds);
+
+        List<String> returnIds = list.stream().map(req -> req.getSourceId()).distinct().collect(Collectors.toList());
+        List<SoReturnEntity> receiveReturnList = soReturnFeign.listByIds(returnIds);
+
         for (DmpSyncMqDTO.SyncParamDetailDTO syncParamDetailDTO :  sourceDetailList) {
             String sourceId = syncParamDetailDTO.getSourceId();
             SoReturnInstockDetailEntity detailEntity = detailEntityList.stream().filter(req -> req.getId().equals(sourceId)).findFirst().orElse(null);
             if (ObjectUtils.isEmpty(detailEntity)) {
                 continue;
             }
-            SoReturnInstockEntity entity = entityList.stream().filter(req -> req.getId().equals(detailEntity.getMainId())).findFirst().orElse(null);
+            SoReturnInstockEntity entity = list.stream().filter(req -> req.getId().equals(detailEntity.getMainId())).findFirst().orElse(null);
             if (ObjectUtils.isEmpty(entity)) {
                 continue;
             }
-            resultList.put(syncParamDetailDTO.getDataId(), syncSoReturnInstockService.syncDataToSdyFieldHandler(entity, detailEntity, syncParamDetailDTO.getSyncOperate()));
+
+            resultList.put(syncParamDetailDTO.getDataId(), syncSoReturnInstockService.syncDataToSdyFieldHandler(entity,
+                    detailEntity,
+                    syncParamDetailDTO.getSyncOperate(),
+                    skuVOList,
+                    bomChildrenSkuDTOS,
+                    currencyList,
+                    parentSkuList,
+                    customerInfoList,
+                    companyEntities,
+                    dictBasicEntityList,
+                    soReturnEntityList,
+                    soReturnReceiveEntityList,
+                    receiveReturnList));
         }
         return resultList;
     }

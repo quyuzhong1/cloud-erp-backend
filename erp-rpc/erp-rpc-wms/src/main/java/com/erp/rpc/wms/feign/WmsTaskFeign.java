@@ -367,4 +367,12 @@ public interface WmsTaskFeign {
      */
     @PostMapping("feign/wmsWorkOption/requisitionChangeApprove")
     List<BatchResultDTO> requisitionChangeApprove(@RequestBody BaseApproveParamDTO baseApproveParamDTO);
+
+    /**
+     * 波次状态自动更新
+     * @author jack
+     * @date 2024/11/28
+     */
+    @GetMapping("/feign/waveList/waveListStatusAutoChange")
+    void waveListStatusAutoChange(@RequestParam("deliveryId") String deliveryId);
 }
