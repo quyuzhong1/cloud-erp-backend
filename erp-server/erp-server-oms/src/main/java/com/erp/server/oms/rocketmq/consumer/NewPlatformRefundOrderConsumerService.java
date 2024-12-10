@@ -9,7 +9,7 @@ import com.common.message.constant.RocketMqNewTopic;
 import com.common.message.handler.AbstractNewPlatformConsumerHandler;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.RefundOrderStatusEnum;
-import com.erp.server.oms.service.RefundOrderService;
+import com.erp.server.oms.service.SoB2cRefundService;
 import com.erp.server.oms.service.ShopInfoService;
 import com.erp.server.oms.service.SoB2cDetailService;
 import com.erp.server.oms.service.SoB2cService;
@@ -39,7 +39,7 @@ consumeMode = ConsumeMode.ORDERLY)
 public class NewPlatformRefundOrderConsumerService extends AbstractNewPlatformConsumerHandler{
 
 	@Resource
-	private RefundOrderService refundOrderService;
+	private SoB2cRefundService soB2cRefundService;
 
 	@Resource
 	private SoB2cService soB2cService;
@@ -62,7 +62,7 @@ public class NewPlatformRefundOrderConsumerService extends AbstractNewPlatformCo
 		if(Objects.isNull(dto)){
 			return;
 		}
-		RefundOrderEntity exist = refundOrderService.getByPlatformRefundCode(dto.getPlatformRefundNo());
+		SoB2cRefundEntity exist = soB2cRefundService.getByPlatformRefundCode(dto.getPlatformRefundNo());
 		if(Objects.nonNull(exist)){
 			return;
 		}
@@ -78,48 +78,48 @@ public class NewPlatformRefundOrderConsumerService extends AbstractNewPlatformCo
 				soB2cDetailEntityList = soB2cDetailService.listByMainId(soB2cEntity.getId());
 			}
 		}
-		RefundOrderEntity refundOrderEntity = this.buildRefund(dto,soB2cEntity);
-		List<RefundOrderDetailEntity> refundOrderDetailEntityList = this.buildRefundDetail(dto,soB2cDetailEntityList);
-		refundOrderService.add(refundOrderEntity,refundOrderDetailEntityList);
+		SoB2cRefundEntity soB2cRefundEntity = this.buildRefund(dto,soB2cEntity);
+		List<SoB2cRefundDetailEntity> soB2cRefundDetailEntityList = this.buildRefundDetail(dto,soB2cDetailEntityList);
+		soB2cRefundService.add(soB2cRefundEntity, soB2cRefundDetailEntityList);
 	}
 
-	private List<RefundOrderDetailEntity> buildRefundDetail(PlatformRefundOrderDTO dto, List<SoB2cDetailEntity> soB2cDetailEntityList) {
-		List<RefundOrderDetailEntity> list = new ArrayList<>();
+	private List<SoB2cRefundDetailEntity> buildRefundDetail(PlatformRefundOrderDTO dto, List<SoB2cDetailEntity> soB2cDetailEntityList) {
+		List<SoB2cRefundDetailEntity> list = new ArrayList<>();
 		for (PlatformRefundOrderDTO.Detail detail : dto.getDetailList()) {
-			RefundOrderDetailEntity refundOrderDetailEntity = new RefundOrderDetailEntity();
-			refundOrderDetailEntity.setPlatformSkuNo(detail.getPlatformSkuNo());
-			refundOrderDetailEntity.setRefundQty(detail.getRefundQty());
+			SoB2cRefundDetailEntity soB2cRefundDetailEntity = new SoB2cRefundDetailEntity();
+			soB2cRefundDetailEntity.setPlatformSkuNo(detail.getPlatformSkuNo());
+			soB2cRefundDetailEntity.setRefundQty(detail.getRefundQty());
 			SoB2cDetailEntity soB2cDetailEntity = soB2cDetailEntityList.stream().filter(item -> item.getPlatformSkuNo().equals(detail.getPlatformSkuNo())).findFirst().orElse(null);
 			if(Objects.nonNull(soB2cDetailEntity)){
-				refundOrderDetailEntity.setSkuId(soB2cDetailEntity.getSkuId());
-				refundOrderDetailEntity.setSkuNo(soB2cDetailEntity.getSkuNo());
-				refundOrderDetailEntity.setSaleQty(soB2cDetailEntity.getQty());
+				soB2cRefundDetailEntity.setSkuId(soB2cDetailEntity.getSkuId());
+				soB2cRefundDetailEntity.setSkuNo(soB2cDetailEntity.getSkuNo());
+				soB2cRefundDetailEntity.setSaleQty(soB2cDetailEntity.getQty());
 			}
-			list.add(refundOrderDetailEntity);
+			list.add(soB2cRefundDetailEntity);
 		}
 
 		return list;
 	}
 
-	private RefundOrderEntity buildRefund(PlatformRefundOrderDTO dto,SoB2cEntity soB2cEntity) {
-		RefundOrderEntity refundOrderEntity = new RefundOrderEntity();
-		refundOrderEntity.setDictPlatform(dto.getDictPlatform());
-		refundOrderEntity.setPlatformOrderNo(dto.getPlatformOrderNo());
-		refundOrderEntity.setPlatformRefundNo(dto.getPlatformRefundNo());
-		refundOrderEntity.setStatus(RefundOrderStatusEnum.FINISH.getCode());
-		refundOrderEntity.setRefundAmount(dto.getRefundAmount());
-		refundOrderEntity.setCurrency(dto.getCurrency());
-		refundOrderEntity.setReason(dto.getRemark());
-		refundOrderEntity.setRefundTime(dto.getRefundTime());
-		refundOrderEntity.setPlatformCreateTime(dto.getPlatformCreateTime());
+	private SoB2cRefundEntity buildRefund(PlatformRefundOrderDTO dto, SoB2cEntity soB2cEntity) {
+		SoB2cRefundEntity soB2cRefundEntity = new SoB2cRefundEntity();
+		soB2cRefundEntity.setDictPlatform(dto.getDictPlatform());
+		soB2cRefundEntity.setPlatformOrderNo(dto.getPlatformOrderNo());
+		soB2cRefundEntity.setPlatformRefundNo(dto.getPlatformRefundNo());
+		soB2cRefundEntity.setStatus(RefundOrderStatusEnum.FINISH.getCode());
+		soB2cRefundEntity.setRefundAmount(dto.getRefundAmount());
+		soB2cRefundEntity.setCurrency(dto.getCurrency());
+		soB2cRefundEntity.setReason(dto.getRemark());
+		soB2cRefundEntity.setRefundTime(dto.getRefundTime());
+		soB2cRefundEntity.setPlatformCreateTime(dto.getPlatformCreateTime());
 		if(Objects.nonNull(soB2cEntity)){
-			refundOrderEntity.setShopId(soB2cEntity.getShopId());
+			soB2cRefundEntity.setShopId(soB2cEntity.getShopId());
 			ShopInfoEntity shopInfo = shopInfoService.getById(soB2cEntity.getShopId());
-			refundOrderEntity.setShopName(shopInfo.getName());
-			refundOrderEntity.setSoId(soB2cEntity.getId());
-			refundOrderEntity.setSoCode(soB2cEntity.getCode());
+			soB2cRefundEntity.setShopName(shopInfo.getName());
+			soB2cRefundEntity.setSoId(soB2cEntity.getId());
+			soB2cRefundEntity.setSoCode(soB2cEntity.getCode());
 		}
-        return refundOrderEntity;
+        return soB2cRefundEntity;
 	}
 
 }

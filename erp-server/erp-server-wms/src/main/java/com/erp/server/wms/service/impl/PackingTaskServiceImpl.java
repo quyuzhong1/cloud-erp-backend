@@ -2352,16 +2352,28 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
             List<RequisitionApplicationDetailEntity> detailEntityList = requisitionApplicationDetailService.listByMainIds(Collections.singletonList(entity.getId()));
             packingTaskEntity.setDeliveryQty(detailEntityList.stream().map(RequisitionApplicationDetailEntity::getPickingQty).reduce(MathUtil.ZERO,Integer::sum));
             List<PackingTaskDetailEntity> packingTaskDetailEntityList = packingTaskDetailService.listByMainIds(Collections.singletonList(packingTaskEntity.getId()));
+            List<RequisitionApplicationDetailEntity> finalDetailEntityList = detailEntityList;
             packingTaskDetailEntityList.forEach(obj->{
-                RequisitionApplicationDetailEntity updateDetail = detailEntityList.stream().filter(v->v.getId().equals(obj.getSourceDetailId())).findFirst().orElse(null);
+                RequisitionApplicationDetailEntity updateDetail = finalDetailEntityList.stream().filter(v->v.getId().equals(obj.getSourceDetailId())).findFirst().orElse(null);
                 if(Objects.nonNull(updateDetail)){
                     obj.setDeliveryQty(updateDetail.getPickingQty());
                     //第三方仓需要匹配第三方产品条码
                     obj.setThirdBarcode(isThirdWarehouse ? getThirdBarcode(updateDetail.getPlatformSku(), channelId, overseasProviderEntity, skuMappingViewDTOS) : CharSequenceUtil.EMPTY);
                 }
             });
+            //可能有新增的情况
+            List<String> existIds = packingTaskDetailEntityList.stream().map(v->v.getSourceDetailId()).collect(Collectors.toList());
+            detailEntityList = detailEntityList.stream().filter(v->!existIds.contains(v.getId())).collect(Collectors.toList());
+            boolean isAdd = CollectionUtils.isNotEmpty(detailEntityList);
+            if(isAdd){
+                generatePackingDetail(entity, detailEntityList, packingTaskEntity, isThirdWarehouse, channelId, overseasProviderEntity, skuMappingViewDTOS);
+            }
             this.updateById(packingTaskEntity);
             packingTaskDetailService.updateBatchById(packingTaskDetailEntityList);
+            if(isAdd){
+                //更新装箱状态
+                this.updatePackingStatus(listGroupSkuById(packingTaskEntity.getId()),packingTaskEntity);
+            }
         }else{
             PackingTaskEntity packingTaskEntity = PackingConverter.INSTANCE.requisitionToPackingTask(entity,sourceType);
             //查询明细
@@ -2372,21 +2384,25 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
             // 操作日志
             String msg = CharSequenceUtil.format("自动生成【{}】单据单号为【{}】", "装箱任务单" , packingTaskEntity.getCode());
             operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.PACKING_TASK.getCode(), packingTaskEntity.getId(), "新增操作");
-            List<PackingTaskDetailEntity> taskDetailList = PackingConverter.INSTANCE.requisitionDetailToPackingTaskDetail(detailEntityList);
-            taskDetailList.forEach(packingTaskDetailEntity -> {
-                packingTaskDetailEntity.setMainId(packingTaskEntity.getId());
-                RequisitionApplicationDetailEntity requisitionApplicationDetailEntity = detailEntityList.stream().filter(v->v.getId().equals(packingTaskDetailEntity.getSourceDetailId())).findFirst().orElse(new RequisitionApplicationDetailEntity());
-                if(entity.getType().equals(RequisitionApplicationTypeEnum.FBA.getCode())){
-                    packingTaskDetailEntity.setFnSku(requisitionApplicationDetailEntity.getPlatformFnSku());
-                }else{
-                    packingTaskDetailEntity.setFnSku(requisitionApplicationDetailEntity.getPlatformSku());
-                    //第三方仓需要匹配第三方产品条码
-                    packingTaskDetailEntity.setThirdBarcode(isThirdWarehouse ? getThirdBarcode(requisitionApplicationDetailEntity.getPlatformSku(), channelId, overseasProviderEntity, skuMappingViewDTOS) : CharSequenceUtil.EMPTY);
-                }
-            });
-            //新增任务明细
-            packingTaskDetailService.saveBatch(taskDetailList);
+            generatePackingDetail(entity, detailEntityList, packingTaskEntity, isThirdWarehouse, channelId, overseasProviderEntity, skuMappingViewDTOS);
         }
+    }
+
+    private void generatePackingDetail(RequisitionApplicationEntity entity, List<RequisitionApplicationDetailEntity> detailEntityList, PackingTaskEntity packingTaskEntity, Boolean isThirdWarehouse, String channelId, OverseasProviderEntity overseasProviderEntity, List<SkuMappingDTO.SkuMappingViewDTO> skuMappingViewDTOS) {
+        List<PackingTaskDetailEntity> taskDetailList = PackingConverter.INSTANCE.requisitionDetailToPackingTaskDetail(detailEntityList);
+        taskDetailList.forEach(packingTaskDetailEntity -> {
+            packingTaskDetailEntity.setMainId(packingTaskEntity.getId());
+            RequisitionApplicationDetailEntity requisitionApplicationDetailEntity = detailEntityList.stream().filter(v->v.getId().equals(packingTaskDetailEntity.getSourceDetailId())).findFirst().orElse(new RequisitionApplicationDetailEntity());
+            if(entity.getType().equals(RequisitionApplicationTypeEnum.FBA.getCode())){
+                packingTaskDetailEntity.setFnSku(requisitionApplicationDetailEntity.getPlatformFnSku());
+            }else{
+                packingTaskDetailEntity.setFnSku(requisitionApplicationDetailEntity.getPlatformSku());
+                //第三方仓需要匹配第三方产品条码
+                packingTaskDetailEntity.setThirdBarcode(isThirdWarehouse ? getThirdBarcode(requisitionApplicationDetailEntity.getPlatformSku(), channelId, overseasProviderEntity, skuMappingViewDTOS) : CharSequenceUtil.EMPTY);
+            }
+        });
+        //新增任务明细
+        packingTaskDetailService.saveBatch(taskDetailList);
     }
 
     private String getThirdBarcode(String platformSku, String channelId, OverseasProviderEntity overseasProviderEntity, List<SkuMappingDTO.SkuMappingViewDTO> skuMappingViewDTOS) {

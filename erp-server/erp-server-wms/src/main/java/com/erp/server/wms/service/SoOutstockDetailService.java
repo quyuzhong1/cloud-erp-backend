@@ -5,6 +5,7 @@ import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.model.wms.dto.SoOutstockDetailDTO;
 import com.erp.model.wms.entity.SoOutstockDetailEntity;
+import com.erp.model.wms.entity.SoOutstockEntity;
 
 import java.util.List;
 
@@ -29,14 +30,16 @@ public interface SoOutstockDetailService extends SuperService<SoOutstockDetailEn
     
     /**
      * 保存销售出库单明细
-     * @author yl
-     * @date 2023-05-19 10:18
+     *
      * @param mainId
      * @param detailList
-     * @param orderType 订单类型
+     * @param orderType  订单类型
+     * @param entity
      * @return void
+     * @author yl
+     * @date 2023-05-19 10:18
      */
-    void add(String mainId, List<SoOutstockDetailDTO.AddDTO> detailList,String orderType);
+    void add(String mainId, List<SoOutstockDetailDTO.AddDTO> detailList, String orderType, SoOutstockEntity entity);
 
     
     /**

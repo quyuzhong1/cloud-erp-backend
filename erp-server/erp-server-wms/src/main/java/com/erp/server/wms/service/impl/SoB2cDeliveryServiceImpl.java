@@ -2219,12 +2219,15 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         List<String> skuIds = records.stream().map(SoB2cDeliveryDTO.ListDTO::getSkuId).distinct().collect(Collectors.toList());
         List<SkuVO> skuVOList = plmTaskFeign.listSkuProductByIds(skuIds);
 
+
         //查询订单
         List<String> soIds = records.stream().map(SoB2cDeliveryDTO.ListDTO::getSourceId).distinct().collect(Collectors.toList());
         List<SoB2cEntity> soB2cEntities = soB2cFeign.listByIds(soIds);
         List<String> ids = records.stream().map(SoB2cDeliveryDTO.ListDTO::getId).distinct().collect(Collectors.toList());
+        List<SoB2cDeliveryInterceptEntity> soB2cDeliveryInterceptEntityList = soB2cDeliveryInterceptService.listByDeliveryIds(ids);
         List<PickingListsDTO.SourceView> views = pickingListsService.listBySourceIds(ids);
         List<WaveListDTO.WaveDeliveryDTO> deliveryList = waveListService.listByDeliverIds(ids);
+        List<SoB2cLogisticsEntity> soB2cLogisticsEntities = FeignQuery.create(SoB2cLogisticsEntity.class).in(SoB2cLogisticsEntity::getMainId, soIds).list();
         for (SoB2cDeliveryDTO.ListDTO record : records) {
             //拦截标识
             SoB2cEntity soB2cEntity = soB2cEntities.stream().filter(req -> req.getId().equals(record.getSourceId())).findFirst().orElse(null);
@@ -2270,6 +2273,13 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
             if(!record.getStatus().equals(SoB2cDeliveryStatusEnum.SHIPPED.getCode()) && record.getShipmentMark().equals(ShipmentMarkTypeEnum.MANUAL.getCode())){
                 record.setTag("发");
             }
+            SoB2cDeliveryInterceptEntity soB2cDeliveryInterceptEntity = soB2cDeliveryInterceptEntityList.stream().filter(v-> v.getDeliveryId().equals(record.getId()) && v.getHandleStatus().equals(SoB2cDeliveryInterceptStatusEnum.WAIT_HANDLE.getCode())).findFirst().orElse(null);
+            if(Objects.nonNull(soB2cDeliveryInterceptEntity)){
+                record.setInterceptId(soB2cDeliveryInterceptEntity.getId());
+            }
+            SoB2cLogisticsEntity soB2cLogisticsEntity = soB2cLogisticsEntities.stream().filter(v->v.getMainId().equals(record.getSourceId())).findFirst().orElse(new SoB2cLogisticsEntity());
+            record.setLogisticsCode(soB2cLogisticsEntity.getCode());
+            record.setTrackCode(soB2cLogisticsEntity.getTrackNo());
         }
     }
 

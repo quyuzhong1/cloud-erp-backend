@@ -7,13 +7,11 @@ import com.erp.model.wms.entity.PickingDetailEntity;
 import com.erp.model.wms.entity.PickingListsEntity;
 import com.erp.model.wms.enums.PickingBillTypeEnum;
 import com.fasterxml.jackson.annotation.JsonFormat;
-import lombok.Data;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 import javax.validation.constraints.NotBlank;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -454,5 +452,16 @@ public class PickingListsDTO {
          * source_id
          */
         private String sourceId;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class AddChangeDTO {
+
+        private List<PickingDetailEntity> addList = new ArrayList<>();
+        private List<PickingDetailEntity> updateList = new ArrayList<>();
+        private List<PickingDetailEntity> removeList = new ArrayList<>();
+
     }
 }

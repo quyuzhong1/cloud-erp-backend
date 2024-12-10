@@ -6,15 +6,13 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
-import com.erp.model.oms.dto.RefundOrderDTO;
-import com.erp.server.oms.service.RefundOrderService;
+import com.erp.model.oms.dto.SoB2cRefundDTO;
+import com.erp.server.oms.service.SoB2cRefundService;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-
-import javax.annotation.Resource;
 
 import javax.annotation.Resource;
 
@@ -28,11 +26,11 @@ import javax.annotation.Resource;
  */
 @RestController
 @RequestMapping("/refundOrder")
-public class RefundOrderController extends BaseController {
+public class SoB2cRefundController extends BaseController {
 
 
     @Resource
-    private RefundOrderService refundOrderService;
+    private SoB2cRefundService soB2cRefundService;
 
     /**
      * 退款订单分页
@@ -41,8 +39,8 @@ public class RefundOrderController extends BaseController {
      */
     @PostMapping("/paging")
     @WebAdvanceQuery
-    public ApiResult<PagingVO<RefundOrderDTO.PagingViewDTO>> queryByPage(@RequestBody @Validated PagingDTO<RefundOrderDTO.PagingParamDTO> dto) {
-        PagingVO<RefundOrderDTO.PagingViewDTO> pagingVO = refundOrderService.paging(dto);
+    public ApiResult<PagingVO<SoB2cRefundDTO.PagingViewDTO>> queryByPage(@RequestBody @Validated PagingDTO<SoB2cRefundDTO.PagingParamDTO> dto) {
+        PagingVO<SoB2cRefundDTO.PagingViewDTO> pagingVO = soB2cRefundService.paging(dto);
         return success(pagingVO);
     }
 
@@ -54,8 +52,8 @@ public class RefundOrderController extends BaseController {
      */
     @PostMapping("/export")
     @WebAdvanceQuery
-    public ApiResult<Object> export(@RequestBody @Validated RefundOrderDTO.PagingParamDTO dto) {
-        refundOrderService.exportExcel(dto);
+    public ApiResult<Object> export(@RequestBody @Validated SoB2cRefundDTO.PagingParamDTO dto) {
+        soB2cRefundService.exportExcel(dto);
         return success();
     }
 }

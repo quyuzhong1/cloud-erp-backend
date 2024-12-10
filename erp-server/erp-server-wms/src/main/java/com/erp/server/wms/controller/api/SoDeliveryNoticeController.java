@@ -23,13 +23,10 @@ import com.erp.server.wms.query.SoDeliveryNoticeQueryHandler;
 import com.erp.server.wms.service.PackingTaskService;
 import com.erp.server.wms.service.SoDeliveryNoticeService;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
-import javax.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -514,6 +511,16 @@ public class SoDeliveryNoticeController extends BaseController {
             resultDTOS.add(resultDTO);
         }
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+
+    /**
+     * 下推加工单保存
+     */
+    @LogAction(value = LogActionEnum.INSERT, desc = "下推加工单保存")
+    @PostMapping(value = "/generateMachineInfo")
+    public ApiResult generateMachineInfo(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        Boolean result =  soDeliveryNoticeService.generateMachineInfo(dto.getIds());
+        return result ? success():failure();
     }
 }
 

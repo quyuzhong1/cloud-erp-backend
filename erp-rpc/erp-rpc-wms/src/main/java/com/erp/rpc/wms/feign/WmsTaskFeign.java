@@ -359,4 +359,12 @@ public interface WmsTaskFeign {
      */
     @PostMapping("feign/wmsWorkOption/noticeChangeApprove")
     List<BatchResultDTO> noticeChangeApprove(@RequestBody BaseApproveParamDTO baseApproveParamDTO);
+
+    /**
+     * 要货申请变更审核
+     * @param baseApproveParamDTO
+     * @return
+     */
+    @PostMapping("feign/wmsWorkOption/requisitionChangeApprove")
+    List<BatchResultDTO> requisitionChangeApprove(@RequestBody BaseApproveParamDTO baseApproveParamDTO);
 }

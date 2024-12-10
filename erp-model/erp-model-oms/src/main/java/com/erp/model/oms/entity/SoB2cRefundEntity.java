@@ -10,7 +10,6 @@ import lombok.experimental.Accessors;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.Date;
 
 /**
  * <p>
@@ -23,8 +22,8 @@ import java.util.Date;
 @Getter
 @Setter
 @Accessors(chain = true)
-@TableName("refund_order")
-public class RefundOrderEntity extends BaseEntity<RefundOrderEntity> {
+@TableName("so_b2c_refund")
+public class SoB2cRefundEntity extends BaseEntity<SoB2cRefundEntity> {
 
     /**
      * 退款单号

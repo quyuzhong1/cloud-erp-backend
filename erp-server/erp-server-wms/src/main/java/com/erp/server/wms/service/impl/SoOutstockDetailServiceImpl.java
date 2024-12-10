@@ -3,7 +3,6 @@ package com.erp.server.wms.service.impl;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
@@ -109,13 +108,14 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
      *
      * @param mainId
      * @param detailList
+     * @param entity
      * @return void
      * @author yl
      * @date 2023-05-19 10:18
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void add(String mainId, List<SoOutstockDetailDTO.AddDTO> detailList, String orderType) {
+    public void add(String mainId, List<SoOutstockDetailDTO.AddDTO> detailList, String orderType, SoOutstockEntity entity) {
         if (CollectionUtils.isEmpty(detailList)) {
             return;
         }
@@ -163,7 +163,10 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
             //处理明细数据
             handleB2cDetailData(addList);
         }
-
+        //赋值仓库名称
+        if(Objects.nonNull(entity)){
+            addList.forEach(v->v.setWarehouseName(entity.getWarehouseName()));
+        }
 
         super.saveBatch(addList);
         wmsAttachmentService.saveBatch(batchAttachmentList);

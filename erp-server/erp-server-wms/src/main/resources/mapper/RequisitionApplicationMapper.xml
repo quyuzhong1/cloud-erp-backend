@@ -93,7 +93,14 @@
         (select sum(wcd.pack_qty) from wms_carton_detail wcd inner join wms_carton wc on wcd.main_id = wc.id and wc.is_deleted = false
         where wc.packing_task_id = pt.id  and wcd.is_deleted = false and wcd.sku_id = rad.sku_id) as packingQty,
         pt.packing_status as packingStatus,
-            (select id from fba_shipment fs where fs.is_deleted = false and fs.code = ra.fba_shipment_code limit 1) as shipmentId
+            (select id from fba_shipment fs where fs.is_deleted = false and fs.code = ra.fba_shipment_code limit 1) as shipmentId,
+        EXISTS (
+        SELECT 1
+        FROM requisition_application_change rac
+        INNER JOIN requisition_application_change_detail racd on rac.id = racd.main_id
+        WHERE rac.business_id = ra.id  and rac.is_deleted = false and rac.invalid_status = false and rac.approve_status != 'approve'
+        and racd.business_detail_id = rad.id
+        ) AS isChange
         FROM requisition_application ra
         INNER JOIN requisition_application_detail rad ON rad.main_id = ra.id AND rad.is_deleted = FALSE
         LEFT JOIN packing_task pt on pt.source_id = ra.id and pt.is_deleted = false
@@ -272,7 +279,13 @@
         inner join requisition_application_detail rad on ra.id = rad.main_id and rad.is_deleted = false
         where ${param.sqlMap.default}
         and ra.is_deleted = false
-        and ra.id = #{param.id} and rad.approve_qty > rad.picking_qty
+        and ra.id = #{param.id}
+        and not exists(
+        SELECT 1 from picking_lists pl
+        inner join picking_detail pd on pl.id = pd.main_id and pd.is_deleted = false
+        where pl.is_deleted = false
+        and pd.source_detail_id = rad.id
+        )
         <if test="ignoreInventorySkus != null and ignoreInventorySkus.size > 0">
             and rad.sku_no not in
             <foreach collection="ignoreInventorySkus" item="sku" open="(" separator="," close=")">
@@ -395,28 +408,5 @@
             </foreach>
         </if>
         order by ra.ID,rad.create_time desc
-    </select>
-    <select id="listPrintPreviewByIds" resultType="com.erp.model.wms.dto.RequisitionApplicationDTO$PrintFnskuDetailDTO">
-        SELECT
-            ra.ID,
-            rad.ID AS detailId,
-            rad.sku_id AS skuId,
-            rad.sku_no AS skuNo,
-            rad.platform_fn_sku AS platformFnSku,
-            rad.platform_sku,
-            rad.platform_spu,
-            rad.picking_qty
-        FROM
-            requisition_application ra
-                INNER JOIN requisition_application_detail rad ON rad.main_id = ra.ID
-                AND rad.is_deleted = FALSE
-        WHERE
-            ra.is_deleted = FALSE
-        <if test="ids!=null and ids.size>0 ">
-            AND ra.id IN
-            <foreach collection="ids" item="id" open="(" separator="," close=")">
-                #{id}
-            </foreach>
-        </if>
     </select>
 </mapper>

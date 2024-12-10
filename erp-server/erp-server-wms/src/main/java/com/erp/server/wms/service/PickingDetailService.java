@@ -47,4 +47,6 @@ public interface PickingDetailService extends SuperService<PickingDetailEntity> 
       * @param deliveryId 发货单id
       */
     void cleanException(String deliveryId);
+
+     void updateByChange(List<PickingDetailEntity> updatePickingList);
 }

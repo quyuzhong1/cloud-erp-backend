@@ -13,27 +13,19 @@ import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
-import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
+import com.common.core.exception.ServiceException;
 import com.erp.model.wms.dto.RequisitionApplicationDTO;
-import com.erp.model.wms.dto.WarehouseLocationMoveDTO;
-import com.erp.model.wms.dto.RequisitionApplicationDetailDTO;
 import com.erp.model.wms.dto.WarehouseLocationMoveDTO;
 import com.erp.model.wms.dto.pickingstrategy.PickingListsDTO;
 import com.erp.model.wms.entity.PackingTaskEntity;
+import com.erp.model.wms.entity.RequisitionApplicationChangeEntity;
 import com.erp.model.wms.entity.RequisitionApplicationEntity;
-import com.erp.model.wms.enums.RequisitionApplicationTypeEnum;
 import com.erp.model.wms.enums.CfgSettingEnum;
+import com.erp.model.wms.enums.RequisitionApplicationTypeEnum;
 import com.erp.server.wms.query.RequisitionApplicationQueryHandler;
-import com.erp.server.wms.service.FbaInventoryService;
-import com.erp.server.wms.service.PackingTaskService;
-import com.erp.server.wms.service.PickingListsService;
-import com.erp.server.wms.service.RequisitionApplicationService;
+import com.erp.server.wms.service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.collections4.CollectionUtils;
-import org.apache.poi.ss.formula.functions.T;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -62,6 +54,9 @@ public class RequisitionApplicationController extends BaseController {
     private PickingListsService pickingListsService;
     @Resource
     private FbaInventoryService fbaInventoryService;
+
+    @Resource
+    private RequisitionApplicationChangeService requisitionApplicationChangeService;
 
     /**
     * 新增
@@ -518,6 +513,7 @@ public class RequisitionApplicationController extends BaseController {
         List<String> sourceIds = entityList.stream().map(RequisitionApplicationEntity::getId).distinct().collect(Collectors.toList());
         List<PackingTaskEntity> packingTaskEntityList = packingTaskService.listBySourceCodes(sourceCodes);
         List<PickingListsDTO.SourceView> pickingList = pickingListsService.listBySourceIds(sourceIds);
+        List<RequisitionApplicationChangeEntity> allChangeEntityList = requisitionApplicationChangeService.listNotHandleByBusinessIds(dto.getIds());
         List<BatchResultDTO> result = new ArrayList<>();
         for (String id : dto.getIds()) {
             RequisitionApplicationEntity entity = entityList.stream().filter(v->v.getId().equals(id)).findFirst().orElse(null);
@@ -535,6 +531,10 @@ public class RequisitionApplicationController extends BaseController {
                 if(Objects.isNull(sourceView)){
                     result.add(BatchResultDTO.fail(id,entity.getCode(),"未生成拣货单，不能下推装箱任务"));
                     continue;
+                }
+                List<RequisitionApplicationChangeEntity> changeEntityList = allChangeEntityList.stream().filter(v->v.getBusinessId().equals(id)).collect(Collectors.toList());
+                if(CollectionUtils.isNotEmpty(changeEntityList)){
+                    throw new ServiceException("存在待处理的要货申请变更单【{}】",changeEntityList);
                 }
                 result.add(requisitionApplicationService.generatePackingTask(entity));
             }catch (Exception e){
@@ -632,5 +632,17 @@ public class RequisitionApplicationController extends BaseController {
     @PostMapping("/printFnskuPreview")
     public ApiResult<List<RequisitionApplicationDTO.PrintFnskuDetailDTO>> printFnskuPreview(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         return success(requisitionApplicationService.printFnskuPreview(dto));
+    }
+
+    /**
+     * 打印fnsku
+     * @param
+     * @Author jack
+     * @Date 2024/10/16
+     * @return void
+     **/
+    @PostMapping("/printFnskuBillConfirm")
+    public void printFnskuBillConfirm(@RequestBody @Validated RequisitionApplicationDTO.PrintFnskuBillConfirmDTO dto , HttpServletResponse response) {
+        requisitionApplicationService.printFnskuBillConfirm(dto,response);
     }
 }

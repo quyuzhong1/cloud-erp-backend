@@ -13,14 +13,12 @@ import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
-import com.common.business.enums.ApproveStatusEnum;
-import com.common.business.enums.ApproveTypeEnum;
-import com.common.business.enums.BusinessNoTypeEnum;
-import com.common.business.enums.SourceTypeEnum;
+import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
+import com.common.business.wrapper.FeignQuery;
 import com.common.core.entity.BaseEntity;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -165,6 +163,11 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
 
     @Resource
     private SoDeliveryNoticeChangeService soDeliveryNoticeChangeService;
+
+    @Resource
+    private MachineInfoService machineInfoService;
+    @Resource
+    private MachineDetailService machineDetailService;
 
     @Override
     public PagingVO<SoDeliveryNoticeDTO.PagingView> paging(PagingDTO<SoDeliveryNoticeDTO.PagingParam> pagingParamDTO) {
@@ -1740,5 +1743,108 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         if(CollectionUtils.isNotEmpty(logList)){
             operateLogService.batchAddModuleOperateLog(logList);
         }
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean generateMachineInfo(List<String> ids) {
+        List<SoDeliveryNoticeDetailEntity> soDeliveryNoticeDetailEntityList = soDeliveryNoticeDetailService.listByIds(ids);
+        if (CollectionUtils.isEmpty(soDeliveryNoticeDetailEntityList)) {
+            throw new ServiceException("未找到发货通知单明细");
+        }
+        List<String> detailIds = soDeliveryNoticeDetailEntityList.stream().map(v->v.getId()).collect(Collectors.toList());
+        List<MachineDetailEntity> existDetailList = machineDetailService.listBySourceDetailIds(detailIds);
+        //主表信息
+        List<String> mainIds = soDeliveryNoticeDetailEntityList.stream().map(SoDeliveryNoticeDetailEntity::getMainId).collect(Collectors.toList());
+        List<SoDeliveryNoticeEntity> soDeliveryNoticeEntityList = this.listByIds(mainIds);
+        if (CollectionUtils.isEmpty(soDeliveryNoticeEntityList)) {
+            throw new ServiceException("未找到发货通知单");
+        }
+        String codes = soDeliveryNoticeEntityList.stream().filter(obj -> !BillApproveStatusEnum.APPROVE.getStatus().equals(obj.getApproveStatus())).map(SoDeliveryNoticeEntity::getCode).collect(Collectors.joining(","));
+        if (StringUtils.isNotBlank(codes)) {
+            throw new ServiceException("{}未审核完成不允许下推",codes);
+        }
+
+        //非组合品不能下推加工单
+        List<String> skuIds = soDeliveryNoticeDetailEntityList.stream().map(SoDeliveryNoticeDetailEntity::getSkuId).collect(Collectors.toList());
+        List<BomChildrenSkuDTO> bomChildrenList = plmTaskFeign.listBomChildBySkuIds(skuIds);
+        List<CfgRulePickingStagingEntity> warehouseStagingList = FeignQuery.list(CfgRulePickingStagingEntity.class);
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
+        Boolean isHasAdd = Boolean.FALSE;
+        //生成加工单
+        for (SoDeliveryNoticeEntity soDeliveryNoticeEntity : soDeliveryNoticeEntityList) {
+            MachineInfoDTO.AddDTO addDTO = new MachineInfoDTO.AddDTO();
+            addDTO.setType(MachineTypeEnum.ORDINARY.getCode());
+            addDTO.setBillDate(LocalDate.now());
+
+            addDTO.setReceiverId(userInfo.getUid());
+            addDTO.setWarehouseKeeperId(userInfo.getUid());
+            addDTO.setWarehouseId(soDeliveryNoticeEntity.getWarehouseId());
+            addDTO.setWorkType(WorkTypeEnum.ASSEMBLE.getCode());
+            addDTO.setSourceType(SourceTypeEnum.SO_DELIVERY_NOTICE.getCode());
+            addDTO.setSourceId(soDeliveryNoticeEntity.getId());
+            addDTO.setSourceCode(soDeliveryNoticeEntity.getCode());
+            //明细信息
+            List<SoDeliveryNoticeDetailEntity> detailEntityList = soDeliveryNoticeDetailEntityList.stream().filter(obj -> soDeliveryNoticeEntity.getId().equals(obj.getMainId())).collect(Collectors.toList());
+            if (CollectionUtils.isEmpty(detailEntityList)) {
+                throw new ServiceException("未找到发货通知单明细");
+            }
+            List<MachineDetailDTO.AddDTO> detailList = new ArrayList<>();
+            boolean isAllPush = false;
+            for (SoDeliveryNoticeDetailEntity soDeliveryNoticeDetailEntity : detailEntityList) {
+                MachineDetailDTO.AddDTO addDetailDTO = new MachineDetailDTO.AddDTO();
+                addDetailDTO.setSkuId(soDeliveryNoticeDetailEntity.getSkuId());
+                addDetailDTO.setSkuNo(soDeliveryNoticeDetailEntity.getSkuNo());
+                // 获取仓库暂存区默认配置
+                CfgRulePickingStagingEntity pickingStaging = warehouseStagingList.stream()
+                        .filter(staging -> PickingBillTypeEnum.B2B.getCode().equals(staging.getBillType()))
+                        .filter(staging -> staging.getWarehouseId().equals(soDeliveryNoticeEntity.getWarehouseId()))
+                        .findFirst().orElseThrow(() -> new ServiceException(ApiError.ERROR_99088));
+                addDetailDTO.setWarehouseLocation(pickingStaging.getWarehouseLocation());
+                List<BomChildrenSkuDTO> bomList = bomChildrenList.stream().filter(obj -> obj.getParentSkuId().equals(soDeliveryNoticeDetailEntity.getSkuId()) && BomTypeEnum.COMBINATION.getType().equals(obj.getType())).collect(Collectors.toList());
+                if (CollectionUtils.isEmpty(bomList)) {
+                    continue;
+                }
+                List<MachineDetailEntity> currentExistDetailList = existDetailList.stream().filter(v->v.getSourceDetailId().equals(soDeliveryNoticeDetailEntity.getId())).collect(Collectors.toList());
+                int alreadyQty = currentExistDetailList.stream().mapToInt(MachineDetailEntity::getQty).sum();
+                if(alreadyQty >= soDeliveryNoticeDetailEntity.getPickingQty()){
+                    isAllPush = true;
+                    continue;
+                }
+                addDetailDTO.setQty(soDeliveryNoticeDetailEntity.getPickingQty() - alreadyQty);
+                addDetailDTO.setReferenceVersion(bomList.get(0).getBomVersion());
+                addDetailDTO.setRefCode(soDeliveryNoticeEntity.getCode());
+                addDetailDTO.setRefId(soDeliveryNoticeEntity.getId());
+                addDetailDTO.setSourceDetailId(soDeliveryNoticeDetailEntity.getId());
+                addDetailDTO.setRefDetailId(soDeliveryNoticeDetailEntity.getId());
+                List<MachineSubComponentsDTO.AddDTO> subComponentsList = new ArrayList<>();
+                for (BomChildrenSkuDTO bomChildrenSkuDTO : bomList) {
+                    MachineSubComponentsDTO.AddDTO subComponentsDTO = new MachineSubComponentsDTO.AddDTO();
+                    subComponentsDTO.setSkuId(bomChildrenSkuDTO.getSkuId());
+                    subComponentsDTO.setSkuNo(bomChildrenSkuDTO.getSkuNo());
+                    subComponentsDTO.setWarehouseId(soDeliveryNoticeEntity.getWarehouseId());
+                    subComponentsDTO.setQty(addDetailDTO.getQty() * bomChildrenSkuDTO.getQuantity());
+                    subComponentsDTO.setWarehouseLocation(pickingStaging.getWarehouseLocation());
+                    subComponentsList.add(subComponentsDTO);
+                }
+                addDetailDTO.setSubComponentsList(subComponentsList);
+                detailList.add(addDetailDTO);
+            }
+            //如果没有明细则跳过无需新增
+            if (CollectionUtils.isEmpty(detailList)) {
+                if(isAllPush){
+                    throw new ServiceException("组合明细已经加工完成");
+                }else{
+                    throw new ServiceException("{}未找到需要加工的明细",soDeliveryNoticeEntity.getCode());
+                }
+            }
+            addDTO.setDetailList(detailList);
+            machineInfoService.add(addDTO);
+            isHasAdd = Boolean.TRUE;
+        }
+        if (!isHasAdd) {
+            throw new ServiceException(ApiError.ERROR_SO_INFO_PUSH_MACHINE_NOT_EXIST_DATA);
+        }
+        return Boolean.TRUE;
     }
 }

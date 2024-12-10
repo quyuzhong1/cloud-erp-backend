@@ -69,6 +69,7 @@ public enum SourceTypeEnum {
     DELIVERY_PLAN("deliveryPlan", "发货计划","wms_delivery_plan"),
     OVERSEAS_INBOUND("overseasInbound", "海外仓入库单","overseas_warehouse_inbound"),
     REQUISITION_APPLICATION("requisitionApplication", "要货申请","requisition_application"),
+    REQUISITION_APPLICATION_CHANGE("requisitionApplicationChange", "要货申请变更单","requisition_application_change"),
     REQUISITION_APPLICATION_HANDLE("requisitionApplicationHandle", "要货申请(处理)","requisition_application"),
     REQUISITION_APPLICATION_FINISH("requisitionApplicationFinish", "要货申请(完成)","requisition_application"),
 
@@ -78,6 +79,7 @@ public enum SourceTypeEnum {
     VIRTUAL_WAREHOUSE_ALLOCATION("virtualWarehouseAllocation", "分货单","virtual_warehouse_allocation"),
     PICKING_LISTS_ADD("pickingListsAdd", "拣货单新增","picking_lists_add"),
     PICKING_LISTS_SUBTRACT("pickingListsSubtract", "拣货单减少","picking_lists_subtract"),
+    PICKING_LISTS("pickingLists", "拣货单","picking_lists"),
 
     //OMS
     SO_RETURN("soReturn", "销售退货订单","so_return"),

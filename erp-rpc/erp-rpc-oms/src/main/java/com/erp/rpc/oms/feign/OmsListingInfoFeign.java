@@ -1,5 +1,8 @@
 package com.erp.rpc.oms.feign;
 
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.vo.PagingVO;
+import com.erp.model.oms.dto.ListingInfoDTO;
 import com.erp.model.oms.dto.ListingInfoDTO;
 import com.erp.model.oms.dto.ListingInfoParamDTO;
 import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
@@ -52,4 +55,10 @@ public interface OmsListingInfoFeign {
      **/
     @PostMapping("feign/listing/listSkuMappingByParams")
     public List<SkuMappingDTO.SkuMappingViewDTO> listSkuMappingByParams(@RequestBody ListingInfoDTO.QueryDTO queryDTO);
+
+    /**
+     * listing 分页
+     **/
+    @PostMapping("feign/listing/paging")
+    PagingVO<ListingInfoDTO.PageDTO> paging(@RequestBody @Validated PagingDTO<ListingInfoDTO.PagingParamDTO> dto);
 }

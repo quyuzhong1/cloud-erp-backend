@@ -7,7 +7,6 @@ import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.json.JSONUtil;
-import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
@@ -39,23 +38,17 @@ import com.erp.model.dmp.dto.DmpPushWdtDetailDTO;
 import com.erp.model.dmp.dto.ThirdMappingDTO;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.dmp.entity.DmpThirdOutboundEntity;
-import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
 import com.erp.model.oms.dto.*;
 import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
-import com.erp.model.oms.enums.OrderSubTypeEnum;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
-import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.dto.ProductDetailDTO;
-import com.erp.model.plm.entity.ProductDetailEntity;
-import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.plm.enums.CombinationDeclareTypeEnums;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
-import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.sys.dto.DictCountryDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.sys.entity.DictCountryEntity;
@@ -84,7 +77,6 @@ import com.erp.rpc.dmp.feign.DmpPushWdtFeign;
 import com.erp.rpc.dmp.feign.DmpThirdMappingFeign;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.oms.feign.CustomerFeign;
-import com.erp.rpc.oms.feign.OmsTaskFeign;
 import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.rpc.oms.feign.SoInfoFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
@@ -378,7 +370,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         Boolean addResult = this.save(soOutstock);
         //添加成功
         if (addResult) {
-            soOutstockDetailService.add(id, addDetailList, soOutstock.getOrderType());
+            soOutstockDetailService.add(id, addDetailList, soOutstock.getOrderType(), soOutstock);
             //添加日志
             String content = String.format("新增了一个{%s}-销售出库单-{%s}", ApproveStatusEnum.WAIT_SUBMIT.getName(), code);
             addModuleOperateLog(content, ModuleTypeEnum.SO_OUT_STOCK.getCode(), id, "新增操作");
@@ -2786,7 +2778,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         soOutstock.setPackDate(billDate);
         Boolean addResult = super.save(soOutstock);
         if (addResult) {
-            soOutstockDetailService.add(soOutstock.getId(), detailList, OrderTypeEnum.B2C.getCode());
+            soOutstockDetailService.add(soOutstock.getId(), detailList, OrderTypeEnum.B2C.getCode(), soOutstock);
             //添加日志
             String content = String.format("新增了一个{%s}-销售出库单-{%s}", ApproveStatusEnum.WAIT_SUBMIT.getName(), code);
             addModuleOperateLog(content, ModuleTypeEnum.SO_OUT_STOCK.getCode(), soOutstock.getId(), "新增操作");

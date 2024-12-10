@@ -41,6 +41,8 @@ public class ExportWmsFeignController {
     @Resource
     private RequisitionApplicationService requisitionApplicationService;
     @Resource
+    private RequisitionApplicationChangeService requisitionApplicationChangeService;
+    @Resource
     private WarehouseLocationSafetyInventoryService warehouseLocationSafetyInventoryService;
     @Resource
     private VirtualInventoryDiffService virtualInventoryDiffService;
@@ -183,6 +185,18 @@ public class ExportWmsFeignController {
     public PagingVO<RequisitionApplicationDTO.ListDTO> exportRequisitionApplication(@RequestBody PagingDTO<RequisitionApplicationDTO.PagingParamDTO> dto) {
         return requisitionApplicationService.exportRequisitionApplication(dto);
     }
+
+    @PostMapping("/requisitionApplicationChange")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "wms:requisitionApplication:exportExcel",
+            tableAlias = "rac"
+    )
+    @WebAdvanceQuery
+    public PagingVO<RequisitionApplicationChangeDTO.ListDTO> exportRequisitionApplicationChange(@RequestBody PagingDTO<RequisitionApplicationChangeDTO.PagingParamDTO> dto) {
+        return requisitionApplicationChangeService.paging(dto);
+    }
+
 
     @PostMapping("/warehouseLocationSafetyInventory")
     public PagingVO<WarehouseLocationSafetyInventoryDTO.ViewDTO> exportWarehouseLocationSafetyInventory(@RequestBody PagingDTO<WarehouseLocationSafetyInventoryDTO.exportParamDTO> dto) {
