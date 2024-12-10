@@ -7,6 +7,7 @@ import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.plm.dto.MouldInfoDTO;
+import com.erp.model.plm.dto.MouldRefundVoucherDTO;
 import com.erp.model.plm.entity.MouldInfoEntity;
 
 import java.time.LocalDate;
@@ -129,4 +130,28 @@ public interface MouldInfoService extends SuperService<MouldInfoEntity> {
      * @param dto 参数
      */
     PagingVO<MouldInfoDTO.OrderTrackingDetailDTO> orderTrackingDetail(PagingDTO<MouldInfoDTO.OrderTrackingDetailParamDTO> dto);
+
+    /**
+     * 费用返还明细
+     * @param detailId 明细id
+     */
+    MouldRefundVoucherDTO returnConfirmDetail(String detailId);
+
+    /**
+     * 下单跟踪导出
+     * @param dto 参数
+     */
+    void orderTrackingExport(MouldInfoDTO.PagingParamDTO dto);
+
+    /**
+     * 下单跟踪合计
+     * @param dto 参数
+     */
+    MouldInfoDTO.OrderTrackingTotalDTO orderTrackingTotal(MouldInfoDTO.PagingParamDTO dto);
+
+    /**
+     * 下单跟踪明细合计
+     * @param dto 参数
+     */
+    MouldInfoDTO.OrderTrackingDetailTotalDTO orderTrackingDetailTotal(MouldInfoDTO.OrderTrackingDetailParamDTO dto);
 }

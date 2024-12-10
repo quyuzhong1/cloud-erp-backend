@@ -42,4 +42,16 @@ public interface MouldInfoMapper extends BaseMapper<MouldInfoEntity> {
     PagingVO<MouldInfoDTO.OrderTrackingDetailDTO> orderTrackingDetail(@Param("page") Page<MouldInfoDTO.OrderTrackingDetailDTO> page,
                                                                       @Param("params") MouldInfoDTO.OrderTrackingDetailParamDTO params);
 
+    /**
+     * 下单跟踪合计
+     * @param params 参数
+     */
+    MouldInfoDTO.OrderTrackingTotalDTO orderTrackingTotal(@Param("params") MouldInfoDTO.PagingParamDTO params);
+
+    /**
+     * 下单跟踪明细合计
+     * @param dto 参数
+     */
+    MouldInfoDTO.OrderTrackingDetailTotalDTO orderTrackingDetailTotal(MouldInfoDTO.OrderTrackingDetailParamDTO dto);
+
 }

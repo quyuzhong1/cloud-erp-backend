@@ -88,4 +88,29 @@
           and mrcq.mould_detail_id = #{params.mouldDetailId}
 
     </select>
+
+    <select id="orderTrackingTotal" resultType="com.erp.model.plm.dto.MouldInfoDTO$OrderTrackingTotalDTO">
+        select COALESCE(SUM(mra.refund_order_qty), 0) AS refundOrderQty,
+               COALESCE(SUM(mra.refund_amount), 0) AS refundAmount,
+               COALESCE(SUM(mrcq.purchase_qty), 0) AS purchaseQty,
+               COALESCE(SUM(mrcq.receive_qty), 0) AS receiveQty,
+               COALESCE(SUM(mrcq.stock_in_qty), 0) AS stockInQty
+        from mould_info mi
+                 inner join mould_detail md on mi.id = md.main_id and md.is_deleted = false
+                 left join mould_refund_agreement mra on md.id = mra.mould_detail_id and mra.is_deleted = false
+                 left join public.mould_ref_calc_qty mrcq on md.id = mrcq.mould_detail_id and mrcq.is_deleted = false
+        where ${params.sqlMap.default}
+          and mi.is_deleted = false
+    </select>
+    <select id="orderTrackingDetailTotal"
+            resultType="com.erp.model.plm.dto.MouldInfoDTO$OrderTrackingDetailTotalDTO">
+        select COALESCE(SUM(mrcqd.purchase_qty), 0) AS purchaseQty,
+               COALESCE(SUM(mrcqd.receive_qty), 0)  AS receiveQty,
+               COALESCE(SUM(mrcqd.stock_in_qty), 0) AS stockInQty
+        from mould_ref_calc_qty AS mrcq
+                 inner join mould_ref_calc_qty_detail AS mrcqd on mrcq.id = mrcqd.main_id and mrcqd.is_deleted = false
+        where ${params.sqlMap.default}
+          and mrcq.is_deleted = false
+          and mrcq.mould_detail_id = #{params.mouldDetailId}
+    </select>
 </mapper>

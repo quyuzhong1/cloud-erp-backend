@@ -60,7 +60,7 @@ public class MouldRefCalcQtyEntity extends BaseEntity<MouldRefCalcQtyEntity> {
 
     public static final String RECEIVE_QTY = "receive_qty";
 
-    public static final String STOCKIN_QTY = "stockIn_qty";
+    public static final String STOCK_IN_QTY = "stock_in_qty";
 
     public static final String CALC_QTY = "calc_qty";
 

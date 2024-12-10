@@ -2,6 +2,7 @@ package com.erp.server.plm.service;
 
 import com.common.business.service.SuperService;
 import com.erp.model.plm.dto.MouldInfoDTO;
+import com.erp.model.plm.dto.MouldRefundVoucherDTO;
 import com.erp.model.plm.entity.MouldRefundVoucherEntity;
 
 /**
@@ -14,6 +15,15 @@ import com.erp.model.plm.entity.MouldRefundVoucherEntity;
  */
 public interface MouldRefundVoucherService extends SuperService<MouldRefundVoucherEntity> {
 
-
+    /**
+     * 费用返还确认
+     * @param dto 参数
+     */
     void returnConfirm(MouldInfoDTO.ReturnConfirmDTO dto);
+
+    /**
+     * 费用返还确认详情
+     * @param detailId 参数
+     */
+    MouldRefundVoucherDTO returnConfirmDetail(String detailId);
 }

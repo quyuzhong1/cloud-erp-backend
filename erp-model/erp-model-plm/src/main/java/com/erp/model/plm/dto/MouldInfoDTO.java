@@ -505,6 +505,31 @@ public class MouldInfoDTO implements Serializable {
 
     @Getter
     @Setter
+    public static class OrderTrackingTotalDTO {
+        /**
+         * 退款单量
+         */
+        private Integer refundOrderQty;
+        /**
+         * 返还金额
+         */
+        private BigDecimal refundAmount;
+        /**
+         * 采购数量
+         */
+        private Integer purchaseQty;
+        /**
+         * 收货数量
+         */
+        private Integer receiveQty;
+        /**
+         * 入库数量
+         */
+        private Integer stockInQty;
+    }
+
+    @Getter
+    @Setter
     public static class ReturnConfirmDTO {
 
         /**
@@ -520,7 +545,7 @@ public class MouldInfoDTO implements Serializable {
         /**
          * 文件名字
          */
-        private String fileName;
+        private List<String> fileName;
 
         /**
          * 备注
@@ -593,6 +618,24 @@ public class MouldInfoDTO implements Serializable {
         //创建时间
         private LocalDateTime createTime;
 
+        /**
+         * 采购数量
+         */
+        private Integer purchaseQty;
+        /**
+         * 收货数量
+         */
+        private Integer receiveQty;
+        /**
+         * 入库数量
+         */
+        private Integer stockInQty;
+    }
+
+
+    @Getter
+    @Setter
+    public static class OrderTrackingDetailTotalDTO {
         /**
          * 采购数量
          */

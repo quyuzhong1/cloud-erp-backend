@@ -11,15 +11,13 @@ import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.plm.dto.MouldInfoDTO;
+import com.erp.model.plm.dto.MouldRefundVoucherDTO;
 import com.erp.model.plm.entity.MouldInfoEntity;
 import com.erp.server.plm.query.MouldInfoQueryHandler;
 import com.erp.server.plm.service.MouldInfoService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
@@ -393,5 +391,47 @@ public class MouldInfoController extends BaseController {
     public ApiResult<PagingVO<MouldInfoDTO.OrderTrackingDetailDTO>> orderTrackingDetail(@RequestBody @Validated PagingDTO<MouldInfoDTO.OrderTrackingDetailParamDTO> dto) {
         PagingVO<MouldInfoDTO.OrderTrackingDetailDTO> page = mouldInfoService.orderTrackingDetail(dto);
         return success(page);
+    }
+
+    /**
+     * 费用返还确认
+     * @param detailId 参数
+     */
+    @GetMapping("/returnConfirmDetail")
+    public ApiResult<MouldRefundVoucherDTO> returnConfirmDetail(@RequestParam String detailId) {
+        MouldRefundVoucherDTO dto = mouldInfoService.returnConfirmDetail(detailId);
+        return success(dto);
+    }
+
+
+    /**
+     * 下单跟踪导出
+     * @param dto 参数
+     */
+    @PostMapping("/orderTrackingExport")
+    public void orderTrackingExport(@RequestBody @Validated MouldInfoDTO.PagingParamDTO dto) {
+        mouldInfoService.orderTrackingExport(dto);
+    }
+
+    /**
+     * 下单跟踪合计
+     * @param dto 参数
+     */
+    @PostMapping("/orderTrackingTotal")
+    @WebAdvanceQuery
+    public ApiResult<MouldInfoDTO.OrderTrackingTotalDTO> orderTrackingTotal(@RequestBody @Validated MouldInfoDTO.PagingParamDTO dto) {
+        MouldInfoDTO.OrderTrackingTotalDTO trackingTotal = mouldInfoService.orderTrackingTotal(dto);
+        return success(trackingTotal);
+    }
+
+    /**
+     * 下单明细合计
+     * @param dto 参数
+     */
+    @PostMapping("/orderTrackingDetailTotal")
+    @WebAdvanceQuery
+    public ApiResult<MouldInfoDTO.OrderTrackingDetailTotalDTO> orderTrackingDetailTotal(@RequestBody @Validated MouldInfoDTO.OrderTrackingDetailParamDTO dto) {
+        MouldInfoDTO.OrderTrackingDetailTotalDTO totalDTO = mouldInfoService.orderTrackingDetailTotal(dto);
+        return success(totalDTO);
     }
 }
