@@ -25,10 +25,7 @@ import org.springframework.stereotype.Service;
 import javax.annotation.Resource;
 import javax.net.ssl.SSLHandshakeException;
 import java.net.SocketTimeoutException;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * dmp输入init任务基础处理器，被init任务状态执行器继承，因有成员变量，最终实现类由spring管理需要是多例@Scope("prototype")
@@ -51,15 +48,31 @@ public class DmpInputAliExpressInventoryWarehouseInitHandler extends DmpInputIni
 		String token = aliExpressShopInfoDTO.getToken();
 		IopClient client = new IopClientImpl(baseUrl, appKey, appSecret);
 
-		IopRequest request = new IopRequest();
 		String typeId = dmpCfgInputEntity.getTypeId();
 		DmpCfgApiEntity dmpCfgApiEntity = dmpCfgApiService.getById(typeId);
+
 		// 库存类型（1 良品，101 残品）
-		Integer inventoryType = 1;
-		if (StringUtils.isNotBlank(dmpCfgInputEntity.getExtendJson())){
-			JSONObject jsonObject = JSON.parseObject(dmpCfgInputEntity.getExtendJson());
-			inventoryType = jsonObject.getInteger("inventory_type");
-		}
+		Integer inventoryType1 = 1;
+		JSONArray jsonArray1 = queryAllInventoryType(dmpCfgApiEntity, inventoryType1, client, token);
+
+		Integer inventoryType101 = 101;
+		JSONArray jsonArray101 = queryAllInventoryType(dmpCfgApiEntity, inventoryType101, client, token);
+
+		JSONArray jsonArray = new JSONArray();
+		jsonArray.addAll(jsonArray1);
+		jsonArray.addAll(jsonArray101);
+
+		DmpInputTaskInitDTO dmpInputTaskInitDTO = new DmpInputTaskInitDTO();
+		jsonArray.forEach(o -> {
+			JSONObject j = (JSONObject) o;
+			j.put("authId", nextLevelId);
+		});
+		dmpInputTaskInitDTO.setMsg(jsonArray.toJSONString());
+		return Collections.singletonList(dmpInputTaskInitDTO);
+	}
+
+	private JSONArray queryAllInventoryType(DmpCfgApiEntity dmpCfgApiEntity, Integer inventoryType, IopClient client, String token) {
+		IopRequest request = new IopRequest();
 
 		String apiType = dmpCfgApiEntity.getApiType();
 		request.setApiName(apiType);
@@ -69,22 +82,24 @@ public class DmpInputAliExpressInventoryWarehouseInitHandler extends DmpInputIni
 		Map<String, Object> paramMap = new HashMap<>();
 		// 账套编码
 		paramMap.put("biz_type", 288000);
+		int pageSize = 30;
 		//分页大小，最大30
-		paramMap.put("page_size", 30);
+		paramMap.put("page_size", pageSize);
 		// 库存类型（1 良品，101 残品）
 		paramMap.put("inventory_type", inventoryType);
 
-		JSONArray order = new JSONArray();
+		JSONArray result = new JSONArray();
 		boolean firstFlag = true;
 		while(true) {
-			paramMap.put("current_page", pageNo);
-			request.addApiParameter("result", JSON.toJSONString(paramMap));
+			paramMap.put("page_index", pageNo);
+			request.addApiParameter("warehouse_inventory_query_dto", JSON.toJSONString(paramMap));
 
 			JSONObject data = null;
 			long sleepTime = 1000;
 			int count = 0;
 			while(data == null) {
 				data = this.execute(client, request, token, apiType);
+				log.debug("当前请求参数{}，查询结果:{}", JSON.toJSONString(request), JSON.toJSONString(data));
 				if(data == null) {
 					if(count == 10) {
 						throw new ServiceException("调用速卖通" + apiType + "接口重试" + count + "失败");
@@ -99,27 +114,19 @@ public class DmpInputAliExpressInventoryWarehouseInitHandler extends DmpInputIni
 				}
 			}
 			if(firstFlag) {
-				pageNo = data.getInteger("total_page");
+				Integer totalCount = data.getInteger("total_count");
+				pageNo = totalCount / pageSize;
 				firstFlag = false;
 			}else {
 				pageNo = pageNo - 1;
 			}
-			order.addAll(data.getJSONArray("target_list"));
+			result.addAll(data.getJSONArray("data_list"));
 
 			if(pageNo <= 1) {
 				break;
 			}
-
 		}
-
-		DmpInputTaskInitDTO dmpInputTaskInitDTO = new DmpInputTaskInitDTO();
-		order.forEach(o -> {
-			JSONObject j = (JSONObject) o;
-			j.put("shopId", nextLevelId);
-		});
-		dmpInputTaskInitDTO.setMsg(order.toJSONString());
-
-		return Collections.singletonList(dmpInputTaskInitDTO);
+		return result;
 	}
 
 	private JSONObject execute(IopClient client , IopRequest request , String token , String apiType){

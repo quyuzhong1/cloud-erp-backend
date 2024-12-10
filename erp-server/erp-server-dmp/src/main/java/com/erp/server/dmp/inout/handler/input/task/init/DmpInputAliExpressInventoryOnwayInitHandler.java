@@ -1,7 +1,9 @@
 package com.erp.server.dmp.inout.handler.input.task.init;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.collection.ListUtil;
 import cn.hutool.core.exceptions.ExceptionUtil;
+import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
@@ -10,6 +12,7 @@ import com.common.core.enums.PannoEnum;
 import com.common.core.exception.ServiceException;
 import com.erp.model.dmp.entity.DmpCfgApiEntity;
 import com.erp.model.dmp.enums.DmpInputTaskStatusEnum;
+import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.oms.aliexpress.api.IopClient;
 import com.erp.oms.aliexpress.api.IopClientImpl;
 import com.erp.oms.aliexpress.api.IopRequest;
@@ -36,44 +39,38 @@ import java.util.stream.Collectors;
 
 /**
  * dmp输入init任务基础处理器，被init任务状态执行器继承，因有成员变量，最终实现类由spring管理需要是多例@Scope("prototype")
- * @author Administrator
  *
+ * @author Administrator
  */
 @Slf4j
 @Service
 @Scope("prototype")
-public class DmpInputAliExpressInventoryOnwayInitHandler extends DmpInputInitHandler{
-	public static final String SHOP_ID = "shopId";
-	public static final String NEXT_LEVEL_ID = "nextLevelId";
-	@Resource
+public class DmpInputAliExpressInventoryOnwayInitHandler extends DmpInputInitHandler {
+
+    public static final String NEXT_LEVEL_ID = "nextLevelId";
+    public static final String SC_ITEM_ID = "sc_item_id";
+
+    @Resource
     private AliExpressOrderService aliExpressOrderService;
-	
-	@Override
-	public List<DmpInputTaskInitDTO> getInitData(DmpInputInitRequest dmpRequest, DmpInputTaskResponse dmpResponse) {
-		List<Map<String, Object>> findMongoData = null;
-		String parentStorageName = this.getParentStorageName(DmpInputTaskStatusEnum.MONGO);
-		String shopId = "";
-		if(StringUtils.isNotBlank(parentStorageName)) {
-			List<ParamData> paramDataList = new ArrayList<>();
-			paramDataList.add(new ParamData(DmpInputMongoHandler.MONGO_BASE_INPUTTASKID, DmpInputMongoHandler.MONGO_BASE_INPUTTASKID, PannoEnum.EQ, dmpInputTaskEntity.getNextLevelId()));
-			// 上一级mongoData
-			List<Map<String, Object>> mongoData = mongoService.findMongoData(paramDataList, parentStorageName);
-			if(CollUtil.isEmpty(mongoData)) {
-				return Collections.emptyList();
-			}
-			// 查询所以在仓信息
-			shopId = mongoData.get(0).get(NEXT_LEVEL_ID).toString();
-			paramDataList.add(new ParamData(SHOP_ID, SHOP_ID, PannoEnum.EQ, shopId));
-			findMongoData = mongoService.findMongoData(paramDataList, parentStorageName);
-		}
-		if(CollUtil.isEmpty(findMongoData)) {
-			return Collections.emptyList();
-		}
-		AliExpressShopInfoDTO aliExpressShopInfoDTO = aliExpressOrderService.getShopInfoByShopId(shopId);
 
-		List<DmpInputTaskInitDTO> dmpInputTaskInitDTOList = new ArrayList<>();
+    @Override
+    public List<DmpInputTaskInitDTO> getInitData(DmpInputInitRequest dmpRequest, DmpInputTaskResponse dmpResponse) {
+        List<Map<String, Object>> findMongoData = null;
+        String parentStorageName = this.getParentStorageName(DmpInputTaskStatusEnum.MONGO);
+        if (StringUtils.isNotBlank(parentStorageName)) {
+            List<ParamData> paramDataList = new ArrayList<>();
+            paramDataList.add(new ParamData(DmpInputMongoHandler.MONGO_BASE_INPUTTASKID, DmpInputMongoHandler.MONGO_BASE_INPUTTASKID, PannoEnum.EQ, dmpInputTaskEntity.getParentTaskId()));
+            findMongoData = mongoService.findMongoData(paramDataList, parentStorageName);
+        }
+        if (CollUtil.isEmpty(findMongoData)) {
+            return new ArrayList<>();
+        }
+        AliExpressShopInfoDTO aliExpressShopInfoDTO = aliExpressOrderService.getShopInfoByShopId(findMongoData.get(0).get(NEXT_LEVEL_ID).toString());
 
-		String appKey = aliExpressShopInfoDTO.getClientId();
+        List<String> scItemIdList = findMongoData.stream().map(e -> e.get(SC_ITEM_ID).toString()).distinct().collect(Collectors.toList());
+
+
+        String appKey = aliExpressShopInfoDTO.getClientId();
         String appSecret = aliExpressShopInfoDTO.getClientSecret();
         String baseUrl = aliExpressShopInfoDTO.getBaseUrl();
         String token = aliExpressShopInfoDTO.getToken();
@@ -81,77 +78,79 @@ public class DmpInputAliExpressInventoryOnwayInitHandler extends DmpInputInitHan
 
         IopRequest request = new IopRequest();
         String typeId = dmpCfgInputEntity.getTypeId();
-
         DmpCfgApiEntity dmpCfgApiEntity = dmpCfgApiService.getById(typeId);
 
-        Integer pageSize = 30;
         String apiType = dmpCfgApiEntity.getApiType();
-		request.setApiName(apiType);
-		request.addApiParameter("simplify", "true");
-		// 接口限制指定30个
-		List<String> scItenIdList = findMongoData.stream().map(f -> f.get("sc_item_id").toString()).distinct().collect(Collectors.toList());
-		List<List<String>> partition = Lists.partition(scItenIdList, pageSize);
+        request.setApiName(apiType);
+        request.addApiParameter("simplify", "true");
 
-		JSONArray result = new JSONArray();
-		for(List<String> p : partition) {
-			Map<String, Object> paramMap = new HashMap<>();
-	        paramMap.put("biz_type", 288000);
-	        paramMap.put("page_size", pageSize);
-			paramMap.put("customer_order_number_list", p);
-	        request.addApiParameter("fulfillment_forward_order_query", JSONObject.toJSONString(paramMap));
+        // 按数量分组
+        List<List<String>> partition = ListUtil.partition(scItemIdList, 30);
 
-	    	JSONObject data = null;
-	    	long sleepTime = 1000;
-	    	int count = 0;
-	    	while(data == null) {
-	    		data = this.execute(client, request, token, apiType);
-	    		if(data == null) {
-	    			if(count == 10) {
-        				throw new ServiceException("调用速卖通" + apiType + "接口重试" + count + "失败");
-        			}
-	    			try {
-						Thread.sleep(sleepTime);
-					} catch (InterruptedException e) {
-						Thread.currentThread().interrupt();
-					}
-	    			sleepTime = sleepTime + 1000;
-	    			count = count + 1;
-	    		}
-	    	}
+        JSONArray result = new JSONArray();
+        for (List<String> curList : partition) {
+            Map<String, Object> paramMap = new HashMap<>();
+            // 账套编码
+            paramMap.put("biz_type", 288000);
+            // 货品Id列表，最多30个
+            paramMap.put("sc_item_id_list", curList);
+            request.addApiParameter("on_way_inventory_query_dto", JSON.toJSONString(paramMap));
 
-	    	result.addAll(data.getJSONArray("data_list"));
-		}
-
-		DmpInputTaskInitDTO dmpInputTaskInitDTO = new DmpInputTaskInitDTO();
-		dmpInputTaskInitDTO.setMsg(result.toJSONString());
-		dmpInputTaskInitDTOList.add(dmpInputTaskInitDTO);
-
-		return dmpInputTaskInitDTOList;
-	}
-	
-	private JSONObject execute(IopClient client , IopRequest request , String token , String apiType){
-		IopResponse response = null;
-		try {
-			response = client.execute(request, token, Protocol.TOP);
-		} catch (ApiException e) {
-			Throwable cause = e.getCause();
-			if(cause instanceof SSLHandshakeException || cause instanceof SocketTimeoutException) {
-				return null;
-			}
-			throw new ServiceException("调用速卖通" + apiType + "接口报错，错误原因：" + ExceptionUtil.stacktraceToOneLineString(e));
-		}
-		JSONObject body = JSON.parseObject(response.getBody());
-        JSONObject data = body.getJSONObject("result");
-        if(data == null) {
-        	JSONObject errorResponse = body.getJSONObject("error_response");
-        	if(errorResponse == null) {
-        		return null;
-        	}
-        	String code = errorResponse.getString("code");
-        	if(!"ApiCallLimit".equals(code) && !"15".equals(code) && !"UnknownRuntimeException".equals(code)) {
-        		throw new ServiceException("调用速卖通" + apiType + "接口报错，错误原因：" + errorResponse.getString("msg"));
-        	}
+            JSONObject data = null;
+            long sleepTime = 1000;
+            int count = 0;
+            while (data == null) {
+                data = this.execute(client, request, token, apiType);
+                log.debug("速卖通在途库存查询结果:{}", JSON.toJSONString(data));
+                if (data == null) {
+                    if (count == 10) {
+                        throw new ServiceException("调用速卖通" + apiType + "接口重试" + count + "失败");
+                    }
+                    try {
+                        Thread.sleep(sleepTime);
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                    }
+                    sleepTime = sleepTime + 1000;
+                    count = count + 1;
+                }
+            }
+            result.addAll(data.getJSONArray("data_list"));
         }
-		return data;
-	}
+
+
+        DmpInputTaskInitDTO dmpInputTaskInitDTO = new DmpInputTaskInitDTO();
+        result.forEach(o -> {
+            JSONObject j = (JSONObject) o;
+            j.put("authId", nextLevelId);
+        });
+        dmpInputTaskInitDTO.setMsg(result.toJSONString());
+        return Collections.singletonList(dmpInputTaskInitDTO);
+    }
+
+    private JSONObject execute(IopClient client, IopRequest request, String token, String apiType) {
+        IopResponse response = null;
+        try {
+            response = client.execute(request, token, Protocol.TOP);
+        } catch (ApiException e) {
+            Throwable cause = e.getCause();
+            if (cause instanceof SSLHandshakeException || cause instanceof SocketTimeoutException) {
+                return null;
+            }
+            throw new ServiceException("调用速卖通" + apiType + "接口报错，错误原因：" + ExceptionUtil.stacktraceToOneLineString(e));
+        }
+        JSONObject body = JSON.parseObject(response.getBody());
+        JSONObject data = body.getJSONObject("result");
+        if (data == null) {
+            JSONObject errorResponse = body.getJSONObject("error_response");
+            if (errorResponse == null) {
+                return null;
+            }
+            String code = errorResponse.getString("code");
+            if (!"ApiCallLimit".equals(code) && !"15".equals(code) && !"UnknownRuntimeException".equals(code)) {
+                throw new ServiceException("调用速卖通" + apiType + "接口报错，错误原因：" + errorResponse.getString("msg"));
+            }
+        }
+        return data;
+    }
 }
