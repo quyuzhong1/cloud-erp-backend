@@ -12,6 +12,7 @@ public enum ThirdSysTypeEnum {
 
 
     SHOP("shop", "店铺"),
+    LOGISTICS("logistics", "物流渠道"),
     WAREHOUSE("warehouse", "仓库"),
     VIRTUAL_WAREHOUSE("virtualWarehouse", "虚拟仓"),
     ;

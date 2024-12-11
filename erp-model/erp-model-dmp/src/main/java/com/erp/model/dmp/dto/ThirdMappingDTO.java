@@ -31,9 +31,9 @@ public class ThirdMappingDTO implements Serializable {
     @NoArgsConstructor
     public static class ViewParamDTO implements Serializable {
         /**
-         * 当前查询类型  warehouse 仓库 shop 店铺
+         * 当前查询类型  warehouse 仓库 shop 店铺 logistics 物流渠道
          */
-        @NotBlank(message = "类型(warehouse 仓库 shop 店铺)不能为空")
+        @NotBlank(message = "类型(warehouse 仓库 shop 店铺 logistics 物流渠道)不能为空")
         @Size(max = 20, message = "类型最大长度不能超过20位")
         private String type;
         /**
@@ -74,9 +74,20 @@ public class ThirdMappingDTO implements Serializable {
         private String code;
 
         /**
-         * 名称
+         * 名称(物流商)
          */
         private String name;
+
+
+        /**
+         * 第三方渠道
+         */
+        private String thirdLogisticsId;
+
+        /**
+         * 第三方渠道名称
+         */
+        private String thirdLogisticsName;
 
         /**
          * 第三方系统类型：lingxing领星，wangdian旺店通
@@ -198,6 +209,25 @@ public class ThirdMappingDTO implements Serializable {
          */
         private String orgName;
 
+        /**
+         * 物流商名称
+         */
+        private String logisticsSupplierName;
+
+        /**
+         * 物流商id
+         */
+        private String logisticsSupplierId;
+
+        /**
+         * 物流类型
+         */
+        private String logisticsType;
+
+        /**
+         * 物流类型名称
+         */
+        private String logisticsTypeName;
         /**
          * 第三方信息
          */

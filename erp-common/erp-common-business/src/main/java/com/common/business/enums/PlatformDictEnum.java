@@ -62,6 +62,7 @@ public enum PlatformDictEnum implements EnumMessage {
     QI_MEN("qimen", "奇门", "奇门", "52"),
     TE_MU("TeMu", "TEMU", "拼多多海外版", "034"),
     ANTU("antu", "安兔", "安兔", "53"),
+    LING_XING("lingxing", "领星", "领星", "54"),
         ;
 
 

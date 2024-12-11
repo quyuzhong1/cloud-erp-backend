@@ -442,6 +442,8 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
             baseDTO.setLogisticsSupplierName(supplierEntity.getSupplierName());
             baseDTO.setLogisticsSupplierShortName(supplierEntity.getShortName());
             baseDTO.setLogisticsSupplierId(supplierEntity.getSupplierId());
+            baseDTO.setLogisticsType(supplierEntity.getType().getCode());
+            baseDTO.setLogisticsTypeName(supplierEntity.getType().getName());
         }
         return baseDTO;
     }
