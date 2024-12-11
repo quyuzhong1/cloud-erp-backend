@@ -153,6 +153,8 @@ public class SyncSoReturnInstockServiceImpl implements SyncSoReturnInstockServic
         BomChildrenSkuDTO bomChildrenSkuDTO = bomChildrenSkuDTOS.stream().filter(req -> req.getParentSkuId().equals(detailEntity.getSkuId())).findFirst().orElse(null);
         if (ObjectUtil.isNotEmpty(bomChildrenSkuDTO) && BomTypeEnum.COMBINATION.getType().equals(bomChildrenSkuDTO.getType())) {
             shudiyunB2cOrderDTO.setIs_comb(1);
+            shudiyunB2cOrderDTO.setSuite_no(bomChildrenSkuDTO.getSkuNo());
+            shudiyunB2cOrderDTO.setSuite_name(bomChildrenSkuDTO.getSkuName());
         } else {
             bomChildrenSkuDTO = bomChildrenSkuDTOS.stream().filter(req -> req.getSkuId().equals(detailEntity.getSkuId())).findFirst().orElse(null);
             if (ObjectUtil.isNotEmpty(bomChildrenSkuDTO)) {
@@ -160,6 +162,9 @@ public class SyncSoReturnInstockServiceImpl implements SyncSoReturnInstockServic
                 BomChildrenSkuDTO finalBomChildrenSkuDTO = bomChildrenSkuDTO;
                 String skuName = parentSkuList.stream().filter(req -> req.getId().equals(finalBomChildrenSkuDTO.getParentSkuId())).map(ProductDetailEntity::getName).findFirst().orElse("");
                 shudiyunB2cOrderDTO.setSuite_name(skuName);
+            } else {
+                shudiyunB2cOrderDTO.setSuite_no(skuVO.getSkuNo());
+                shudiyunB2cOrderDTO.setSuite_name(skuVO.getSkuName());
             }
         }
 
@@ -205,9 +210,11 @@ public class SyncSoReturnInstockServiceImpl implements SyncSoReturnInstockServic
         shudiyunB2cOrderDTO.setGoods_transaction_quantity(detailEntity.getRealQty());
         shudiyunB2cOrderDTO.setUnit(skuVO.getUnitName());
         shudiyunB2cOrderDTO.setGoods_benchmark_selling_price(skuVO.getRetailPrice());
-        if (CollectionUtils.isNotEmpty(currencyList)) {
-            shudiyunB2cOrderDTO.setTransaction_currency(currencyList.get(0).getName());
-            shudiyunB2cOrderDTO.setTransaction_currency_code(currencyList.get(0).getId());
+
+        CurrencyDTO.ViewDTO viewDTO = currencyList.stream().filter(req -> req.getId().equals(detailEntity.getCurrency())).findFirst().orElse(null);
+        if (ObjectUtil.isNotEmpty(viewDTO)) {
+            shudiyunB2cOrderDTO.setTransaction_currency(viewDTO.getName());
+            shudiyunB2cOrderDTO.setTransaction_currency_code(viewDTO.getId());
         }
 
         shudiyunB2cOrderDTO.setMsku_code(skuVO.getSpuNo());

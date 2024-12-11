@@ -11,6 +11,7 @@ import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.common.business.annotation.DataIdempotent;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.WdtReturnOrderDTO;
+import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.enums.*;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.constant.CommonConstants;
@@ -151,6 +152,16 @@ public class SyncSoReturnServiceImpl implements SyncSoReturnService {
         instockEntity.setApproveStatus(ApproveStatusEnum.WAIT_SUBMIT.getStatus());
         instockEntity.setType(BillTypeEnum.B2C.getCode());
         instockEntity.setSourceType(SourceTypeEnum.SAL_RETURNSTOCK.getCode());
+
+        List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(new ArrayList<>());
+        BaseIdDTO.CodeDTO codeDTO = accountingCompanyList.stream()
+                .filter(req -> CharSequenceUtil.isNotBlank(kingdeeReturnOrderEntity.getFSaleOrgId())
+                        && req.getFlagId().equals(kingdeeReturnOrderEntity.getFSaleOrgId()))
+                .findFirst().orElse(null);
+        if (ObjectUtil.isNotEmpty(codeDTO)) {
+            instockEntity.setSalesOrgId(codeDTO.getId());
+        }
+
         instockEntity.setSalesOrgName(kingdeeReturnOrderEntity.getFSaleOrgName());
         SysDepartmentDTO userDeptByCode = sysUserFeign.getUserDeptByCode(kingdeeReturnOrderEntity.getFSaledeptNumber());
         if (ObjectUtil.isNotEmpty(userDeptByCode)) {

@@ -189,6 +189,8 @@ public class SyncSoB2cServiceImpl implements SyncSoB2cService {
         BomChildrenSkuDTO bomChildrenSkuDTO = bomChildrenSkuDTOS.stream().filter(req -> req.getParentSkuId().equals(soB2cDetailEntity.getSkuId())).findFirst().orElse(null);
         if (ObjectUtil.isNotEmpty(bomChildrenSkuDTO) && BomTypeEnum.COMBINATION.getType().equals(bomChildrenSkuDTO.getType())) {
             shudiyunB2cOrderDTO.setIs_comb(1);
+            shudiyunB2cOrderDTO.setSuite_no(bomChildrenSkuDTO.getSkuNo());
+            shudiyunB2cOrderDTO.setSuite_name(bomChildrenSkuDTO.getSkuName());
         } else {
             bomChildrenSkuDTO = bomChildrenSkuDTOS.stream().filter(req -> req.getSkuId().equals(soB2cDetailEntity.getSkuId())).findFirst().orElse(null);
             if (ObjectUtil.isNotEmpty(bomChildrenSkuDTO)) {
@@ -196,6 +198,9 @@ public class SyncSoB2cServiceImpl implements SyncSoB2cService {
                 BomChildrenSkuDTO finalBomChildrenSkuDTO = bomChildrenSkuDTO;
                 String skuName = parentSkuList.stream().filter(req -> req.getId().equals(finalBomChildrenSkuDTO.getParentSkuId())).map(ProductDetailEntity::getName).findFirst().orElse("");
                 shudiyunB2cOrderDTO.setSuite_name(skuName);
+            } else {
+                shudiyunB2cOrderDTO.setSuite_no(skuVO.getSkuNo());
+                shudiyunB2cOrderDTO.setSuite_name(skuVO.getSkuName());
             }
         }
 
@@ -234,9 +239,10 @@ public class SyncSoB2cServiceImpl implements SyncSoB2cService {
             shudiyunB2cOrderDTO.setGoods_benchmark_selling_price(BigDecimal.ZERO);
         }
 
-        if (CollectionUtils.isNotEmpty(currencyList)) {
-            shudiyunB2cOrderDTO.setTransaction_currency(currencyList.get(0).getName());
-            shudiyunB2cOrderDTO.setTransaction_currency_code(currencyList.get(0).getId());
+        CurrencyDTO.ViewDTO viewDTO = currencyList.stream().filter(req -> req.getId().equals(soB2cDetailEntity.getCurrency())).findFirst().orElse(null);
+        if (ObjectUtil.isNotEmpty(viewDTO)) {
+            shudiyunB2cOrderDTO.setTransaction_currency(viewDTO.getName());
+            shudiyunB2cOrderDTO.setTransaction_currency_code(viewDTO.getId());
         }
 
         shudiyunB2cOrderDTO.setPost_amount(soB2cEntity.getShippingFee());
@@ -257,6 +263,12 @@ public class SyncSoB2cServiceImpl implements SyncSoB2cService {
         shudiyunB2cOrderDTO.setSource_system("SDC");
         shudiyunB2cOrderDTO.setRoot_node_no_initial(soB2cEntity.getPlatformCode());
 
+        if (SourceTypeEnum.SELF_ADD.getCode().equals(soB2cEntity.getSourceType())) {
+            shudiyunB2cOrderDTO.setMsku_code(skuVO.getSkuNo());
+            shudiyunB2cOrderDTO.setMsku_name(skuVO.getSkuName());
+            shudiyunB2cOrderDTO.setRoot_node_no_initial(soB2cEntity.getCode());
+            shudiyunB2cOrderDTO.setRoot_node_no(soB2cEntity.getCode());
+        }
         return JSONObject.parseObject(JSONObject.toJSONString(shudiyunB2cOrderDTO), Map.class);
     }
 
@@ -428,6 +440,8 @@ public class SyncSoB2cServiceImpl implements SyncSoB2cService {
             BomChildrenSkuDTO bomChildrenSkuDTO = bomChildrenSkuDTOS.stream().filter(req -> req.getParentSkuId().equals(soB2cDetailEntity.getSkuId())).findFirst().orElse(null);
             if (ObjectUtil.isNotEmpty(bomChildrenSkuDTO) && BomTypeEnum.COMBINATION.getType().equals(bomChildrenSkuDTO.getType())) {
                 shudiyunB2cOrderDTO.setIs_comb(1);
+                shudiyunB2cOrderDTO.setSuite_no(bomChildrenSkuDTO.getSkuNo());
+                shudiyunB2cOrderDTO.setSuite_name(bomChildrenSkuDTO.getSkuName());
             } else {
                 bomChildrenSkuDTO = bomChildrenSkuDTOS.stream().filter(req -> req.getSkuId().equals(soB2cDetailEntity.getSkuId())).findFirst().orElse(null);
                 if (ObjectUtil.isNotEmpty(bomChildrenSkuDTO)) {
@@ -435,6 +449,9 @@ public class SyncSoB2cServiceImpl implements SyncSoB2cService {
                     BomChildrenSkuDTO finalBomChildrenSkuDTO = bomChildrenSkuDTO;
                     String skuName = parentSkuList.stream().filter(req -> req.getId().equals(finalBomChildrenSkuDTO.getParentSkuId())).map(ProductDetailEntity::getName).findFirst().orElse("");
                     shudiyunB2cOrderDTO.setSuite_name(skuName);
+                } else {
+                    shudiyunB2cOrderDTO.setSuite_no(skuVO.getSkuNo());
+                    shudiyunB2cOrderDTO.setSuite_name(skuVO.getSkuName());
                 }
             }
 
@@ -473,9 +490,10 @@ public class SyncSoB2cServiceImpl implements SyncSoB2cService {
                 shudiyunB2cOrderDTO.setGoods_benchmark_selling_price(BigDecimal.ZERO);
             }
 
-            if (CollectionUtils.isNotEmpty(currencyList)) {
-                shudiyunB2cOrderDTO.setTransaction_currency(currencyList.get(0).getName());
-                shudiyunB2cOrderDTO.setTransaction_currency_code(currencyList.get(0).getId());
+            CurrencyDTO.ViewDTO viewDTO = currencyList.stream().filter(req -> req.getId().equals(soB2cDetailEntity.getCurrency())).findFirst().orElse(null);
+            if (ObjectUtil.isNotEmpty(viewDTO)) {
+                shudiyunB2cOrderDTO.setTransaction_currency(viewDTO.getName());
+                shudiyunB2cOrderDTO.setTransaction_currency_code(viewDTO.getId());
             }
 
             shudiyunB2cOrderDTO.setPost_amount(soB2cEntity.getShippingFee());
@@ -495,6 +513,13 @@ public class SyncSoB2cServiceImpl implements SyncSoB2cService {
 
             shudiyunB2cOrderDTO.setSource_system("SDC");
             shudiyunB2cOrderDTO.setRoot_node_no_initial(soB2cEntity.getPlatformCode());
+
+            if (SourceTypeEnum.SELF_ADD.getCode().equals(soB2cEntity.getSourceType())) {
+                shudiyunB2cOrderDTO.setMsku_code(skuVO.getSkuNo());
+                shudiyunB2cOrderDTO.setMsku_name(skuVO.getSkuName());
+                shudiyunB2cOrderDTO.setRoot_node_no_initial(soB2cEntity.getCode());
+                shudiyunB2cOrderDTO.setRoot_node_no(soB2cEntity.getCode());
+            }
 
             //同步配货单
             OmsPushMsgEntity omsPushMsgEntity = new OmsPushMsgEntity();

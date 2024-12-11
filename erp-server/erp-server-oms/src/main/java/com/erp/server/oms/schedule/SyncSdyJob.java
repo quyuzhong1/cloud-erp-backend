@@ -236,7 +236,7 @@ public class SyncSdyJob {
             List<String> dictKeys = Lists.newArrayList(DictBasicTypeEnum.SALES_PLATFORM.getType());
             List<DictBasicEntity> dictBasicEntityList = dictBasicService.getByKeyList(dictKeys);
 
-            List<String> currencyIds = list.stream().map(req -> req.getCurrency()).distinct().collect(Collectors.toList());
+            List<String> currencyIds = soDetailEntities.stream().map(req -> req.getCurrency()).distinct().collect(Collectors.toList());
             List<CurrencyDTO.ViewDTO> currencyList = sysUserFeign.listByCurrency(currencyIds);
 
             List<String> soDetailIds = soDetailEntities.stream().map(req -> req.getId()).collect(Collectors.toList());
