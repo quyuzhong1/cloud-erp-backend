@@ -4,6 +4,7 @@ package com.erp.server.wms.service.impl;
 import cn.hutool.core.date.DateTime;
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -243,7 +244,7 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
         List<String> ids = list.stream().map(PackageForecastDTO.PagingViewDTO::getId).distinct().collect(Collectors.toList());
         List<PackageForecastDetailEntity> allDetailEntityList = packageForecastDetailService.listDbByMainIds(ids);
         List<String> soIds = allDetailEntityList.stream().map(PackageForecastDetailEntity::getSoId).distinct().collect(Collectors.toList());
-        List<SoOutstockEntity> soOutstockList = soOutstockService.listBySoIds(soIds);
+        List<SoB2cEntity> soB2cEntityList = soB2cFeign.listByIds(soIds);
         List<String> soCodes = allDetailEntityList.stream().map(PackageForecastDetailEntity::getSoCode).distinct().collect(Collectors.toList());
         List<TransferDeclareDetailEntity> transferDeclareDetailEntityList = transferDeclareFeign.listBySoCodeList(soCodes);
         List<String> transferIds = transferDeclareDetailEntityList.stream().map(TransferDeclareDetailEntity::getMainId).collect(Collectors.toList());
@@ -264,9 +265,15 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
                 pagingDetailViewDTO.setWeight(packageForecastDetailEntity.getWeight());
                 pagingDetailViewDTO.setWeightUnit(packageForecastDetailEntity.getWeightUnit());
                 pagingDetailViewDTO.setMinPackageHandoverStatus(packageForecastDetailEntity.getHandoverStatus());
-                ApproveStatusEnum approveStatus = soOutstockList.stream().filter(s -> s.getSoId().equals(packageForecastDetailEntity.getSoId())).
-                        map(SoOutstockEntity::getApproveStatus).findFirst().orElse(ApproveStatusEnum.WAIT_SUBMIT);
-                pagingDetailViewDTO.setOutstockStatusName(ApproveStatusEnum.APPROVE.equals(approveStatus)?"已出库":"未出库");
+                SoB2cEntity soB2cEntity = soB2cEntityList.stream()
+                        .filter(req -> req.getId().equals(packageForecastDetailEntity.getSoId())
+                                && SoB2cBillStatusEnum.ENUM_SHIPPED.getCode().equals(req.getBillStatus()))
+                        .findFirst().orElse(null);
+                if (ObjectUtil.isNotEmpty(soB2cEntity)) {
+                    pagingDetailViewDTO.setOutstockStatusName("已出库");
+                } else {
+                    pagingDetailViewDTO.setOutstockStatusName("未出库");
+                }
                 detailViewDTOList.add(pagingDetailViewDTO);
             }
             pagingViewDTO.setDetailViewDTOList(detailViewDTOList);
