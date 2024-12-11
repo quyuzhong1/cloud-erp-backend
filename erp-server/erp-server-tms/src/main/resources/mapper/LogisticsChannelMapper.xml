@@ -242,6 +242,21 @@
         GROUP BY channelName
         ORDER BY total desc
     </select>
+    <select id="paging" resultType="com.erp.model.tms.dto.LogisticsChannelDTO$PagingViewDTO">
+        select ls.id,
+               ls.supplier_name as name,
+               ls.short_name as shortName,
+               ls.type,
+               lc.id as channelId,
+               lc.name as channelName
+        from logistics_supplier ls
+        inner join logistics_channel lc on ls.id = lc.main_id and lc.is_deleted = false
+        where ${params.sqlMap.default}
+        and ls.is_deleted = false
+        <if test="params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+    </select>
 
 
 </mapper>
