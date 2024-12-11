@@ -1773,7 +1773,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 						smallBagCostAllocationDetailEntity.setAllocatedAmountExchange(billAmountExchange.multiply(skuWeightCostPre).setScale(2, RoundingMode.DOWN));
 					}else {
 						smallBagCostAllocationDetailEntity.setAllocatedAmount(costValueSum.multiply(skuCostPre).setScale(2, RoundingMode.DOWN));
-						smallBagCostAllocationDetailEntity.setAllocatedAmount(billAmountExchange.multiply(skuCostPre).setScale(2, RoundingMode.DOWN));
+						smallBagCostAllocationDetailEntity.setAllocatedAmountExchange(billAmountExchange.multiply(skuCostPre).setScale(2, RoundingMode.DOWN));
 					}
 				}else {
 					smallBagCostAllocationDetailEntity.setAllocatedAmount(costValueSum.subtract(addSmallBagCostAllocationDetailEntityList.stream()
