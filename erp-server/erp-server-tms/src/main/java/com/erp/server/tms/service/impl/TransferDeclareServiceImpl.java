@@ -32,6 +32,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.incrementer.IdentifierGenerator;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.annotation.DataIdempotent;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.base.BaseDTO;
 import com.common.business.dto.base.BaseResultDTO;
@@ -1036,8 +1037,19 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
 
     @Transactional(rollbackFor = Exception.class)
 	@Override
+	@DataIdempotent(keyIdName = "id")
 	public void singPushAllocation(String id, String reportDate , List<TmsB2cDeclareReconciliationDetailEntity> tmsB2cDeclareReconciliationDetailEntityList) {
-		Map<String, List<SoOutstockDetailEntity>> soIdSoOutstockDetailEntityListMaps = new HashMap<>();
+		if(CollUtil.isEmpty(tmsB2cDeclareReconciliationDetailEntityList)) {
+			return;
+		}
+		List<TransferDeclareCostAllocationMainEntity> transferDeclareCostAllocationMainEntityList = transferDeclareCostAllocationMainService.lambdaQuery()
+    		.in(TransferDeclareCostAllocationMainEntity::getDeclareReconciliationDetailId, tmsB2cDeclareReconciliationDetailEntityList.stream().map(TmsB2cDeclareReconciliationDetailEntity::getId).collect(Collectors.toList()))
+    		.list();
+    	if(CollUtil.isNotEmpty(transferDeclareCostAllocationMainEntityList)) {
+    		Map<String, String> soIdCodeMap = tmsB2cDeclareReconciliationDetailEntityList.stream().collect(Collectors.toMap(TmsB2cDeclareReconciliationDetailEntity::getId, TmsB2cDeclareReconciliationDetailEntity::getSoCode));
+    		throw new ServiceException("中转报关下销售订单{}已下推分摊" , transferDeclareCostAllocationMainEntityList.stream().map(t -> soIdCodeMap.get(t.getDeclareReconciliationDetailId())).collect(Collectors.joining("、")));
+    	}
+    	Map<String, List<SoOutstockDetailEntity>> soIdSoOutstockDetailEntityListMaps = new HashMap<>();
 		Map<String,String> outstockIdWareHouseIdMap = new HashMap<>();
 		List<String> soIds = tmsB2cDeclareReconciliationDetailEntityList.stream().map(TmsB2cDeclareReconciliationDetailEntity::getSoId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
 		if(CollUtil.isNotEmpty(soIds)) {
@@ -1097,6 +1109,8 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
 			orgIdNameMaps = sysUserFeign.getAccountingCompanyList(new ArrayList<>(wareIdOrgIdMaps.values())).stream().collect(Collectors.toMap(CodeDTO::getId, CodeDTO::getName));
 		}
 		Map<String, BigDecimal> rateMap = new HashMap<>();
+		List<String> mainIds = tmsB2cDeclareReconciliationDetailEntityList.stream().map(TmsB2cDeclareReconciliationDetailEntity::getMainId).collect(Collectors.toList());
+		Map<String, String> mainIdCurrencyMap = tmsB2cDeclareReconciliationService.listByIds(mainIds).stream().collect(Collectors.toMap(TmsB2cDeclareReconciliationEntity::getId, TmsB2cDeclareReconciliationEntity::getCurrency));
 		for(TmsB2cDeclareReconciliationDetailEntity t : tmsB2cDeclareReconciliationDetailEntityList) {
 			int i = 0;
 			Map<String, List<CostViewDTO>> costCategoryMaps = new HashMap<>();
@@ -1230,10 +1244,13 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
 							costViewDTOList = new ArrayList<>();
 						}
 						BigDecimal costValueSum = costViewDTOList.stream().map(CostViewDTO::getCostValue).reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
-						String allocatedCurrency = "CNY";
-						if(CollUtil.isNotEmpty(costViewDTOList)) {
-							allocatedCurrency = costViewDTOList.get(0).getCurrency();
+						String allocatedCurrency = mainIdCurrencyMap.get(t.getMainId());
+						if(StringUtils.isBlank(allocatedCurrency)) {
+							allocatedCurrency = "CNY";
 						}
+//						if(CollUtil.isNotEmpty(costViewDTOList)) {
+//							allocatedCurrency = costViewDTOList.get(0).getCurrency();
+//						}
 						String key = reportDate + "_" + allocatedCurrency;
 						BigDecimal rate = rateMap.get(key);
 						if(rate == null) {
@@ -1245,7 +1262,7 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
 							rateMap.put(key, rate);
 						}
 						transferDeclareCostAllocationDetailEntity.setBillAmount(costValueSum);
-						transferDeclareCostAllocationDetailEntity.setBillAmountExchange(transferDeclareCostAllocationDetailEntity.getBillAmount().multiply(rate).setScale(4));
+						transferDeclareCostAllocationDetailEntity.setBillAmountExchange(transferDeclareCostAllocationDetailEntity.getBillAmount().multiply(rate).setScale(4, RoundingMode.DOWN));
 						transferDeclareCostAllocationDetailEntity.setFeeType(feeType);
 						String feeAllocationType = feeTypeSettingMap.getValue();
 						if(StringUtils.isBlank(feeAllocationType)) {

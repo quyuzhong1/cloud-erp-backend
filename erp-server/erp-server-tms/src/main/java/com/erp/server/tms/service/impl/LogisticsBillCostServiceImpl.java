@@ -1759,7 +1759,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 					rateMap.put(key, rate);
 				}
 				smallBagCostAllocationDetailEntity.setBillAmount(costValueSum);
-				smallBagCostAllocationDetailEntity.setBillAmountExchange(smallBagCostAllocationDetailEntity.getBillAmount().multiply(rate).setScale(4));
+				smallBagCostAllocationDetailEntity.setBillAmountExchange(smallBagCostAllocationDetailEntity.getBillAmount().multiply(rate).setScale(4 , RoundingMode.DOWN));
 				smallBagCostAllocationDetailEntity.setFeeType(feeType);
 				String feeAllocationType = feeTypeSettingMap.getValue();
 				if(org.apache.commons.lang3.StringUtils.isBlank(feeAllocationType)) {
