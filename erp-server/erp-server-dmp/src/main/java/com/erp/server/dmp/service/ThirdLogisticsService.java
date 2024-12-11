@@ -1,4 +1,5 @@
 package com.erp.server.dmp.service;
+import com.common.business.vo.PagingVO;
 import com.erp.model.dmp.entity.ThirdLogisticsEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
@@ -33,4 +34,5 @@ public interface ThirdLogisticsService extends SuperService<ThirdLogisticsEntity
     Boolean update(ThirdLogisticsDTO.UpdateDTO dto);
 
 
+    PagingVO<ThirdLogisticsDTO.PageSelectDTO> pagingSelect(PagingDTO<ThirdLogisticsDTO.SelectDTO> dto);
 }

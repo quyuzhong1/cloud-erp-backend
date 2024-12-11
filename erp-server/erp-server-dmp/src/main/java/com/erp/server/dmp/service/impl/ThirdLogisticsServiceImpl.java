@@ -1,15 +1,20 @@
 package com.erp.server.dmp.service.impl;
 
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.vo.PagingVO;
+import com.erp.model.dmp.dto.ThirdShopDTO;
 import com.erp.model.dmp.entity.ThirdLogisticsEntity;
 import com.erp.server.dmp.mapper.ThirdLogisticsMapper;
 import com.erp.server.dmp.service.ThirdLogisticsService;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.erp.server.dmp.service.OperateLogService;
-import com.erp.server.dmp.service.CommonService;
 import com.common.core.exception.ServiceException;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -84,6 +89,16 @@ public class ThirdLogisticsServiceImpl extends SuperServiceImpl<ThirdLogisticsMa
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLogByObj(old, thirdLogisticsEntity, null, thirdLogisticsEntity.getId(), msg);
         return Boolean.TRUE;
+    }
+
+    @Override
+    public PagingVO<ThirdLogisticsDTO.PageSelectDTO> pagingSelect(PagingDTO<ThirdLogisticsDTO.SelectDTO> dto) {
+        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+        IPage<ThirdLogisticsDTO.PageSelectDTO> pageData = this.baseMapper.pagingSelect(query, dto.getParams());
+        if (CollUtil.isEmpty(pageData.getRecords())) {
+            return new PagingVO(pageData);
+        }
+        return new PagingVO<>(pageData);
     }
 
 

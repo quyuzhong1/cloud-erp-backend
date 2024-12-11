@@ -22,8 +22,53 @@ import javax.validation.constraints.Size;
 @NoArgsConstructor
 public class ThirdLogisticsDTO implements Serializable {
 
+    @Data
+    @NoArgsConstructor
+    public static class PageSelectDTO {
+        /**
+         * 主键id
+         */
+        private String thirdId;
+        /**
+         * 系统类型：lingxing领星
+         */
+        private String sysType;
+        /**
+         * 物流商名称
+         */
+        private String thirdLogisticsSupplierName;
+        /**
+         * 第三方渠道
+         */
+        private String thirdLogisticsId;
 
+        /**
+         * 第三方渠道名称
+         */
+        private String thirdLogisticsName;
+        /**
+         * disabled
+         */
+        private Boolean disabled;
+    }
 
+    /**
+     * 远程搜索
+     */
+    @Data
+    @NoArgsConstructor
+    public static class SelectDTO {
+        /**
+         * 系统类型
+         */
+        @NotBlank(message = "系统类型不能为空")
+        private String sysType;
+
+        /**
+         * 关键词
+         */
+        private String searchKeyword;
+    }
 
     /**
     * 详情

@@ -36,6 +36,32 @@
         is_deleted,
         disabled, platform_type, type, logistics_supplier_id, logistics_supplier_name, channel_id, channel_name, platform_update_time, platform_create_time
     </sql>
+    <select id="pagingSelect" resultType="com.erp.model.dmp.dto.ThirdLogisticsDTO$PageSelectDTO">
+        select thirdLogisticsId,thirdId, thirdLogisticsName,thirdLogisticsSupplierName,disabled from (
+        select
+        tl.channel_id as thirdLogisticsId,
+        tl.id as thirdId,
+        tl.channel_name as thirdLogisticsName,
+        tl.disabled,
+        tl.logistics_supplier_name as thirdLogisticsSupplierName
+        from third_logistics tl
+        where  tl.is_deleted = FALSE
+        <if test="params.sysType!=null and params.sysType!=''">
+            and tl.platform_type = #{params.sysType}
+        </if>
+        <if test="params.searchKeyword != null and params.searchKeyword != ''">
+            and   tl.channel_name ilike concat('%', #{params.searchKeyword}::text ,'%')
+        </if>
+        order by
+        <if test="params.searchKeyword != null and params.searchKeyword != ''">
+            case when tl.name ILIKE concat(#{params.searchKeyword}::text,'%') THEN 1
+            when tl.name ILIKE concat('%',#{params.searchKeyword}::text) THEN 2
+            when tl.name ILIKE concat('%',#{params.searchKeyword}::text,'%') THEN 3
+            end , tl.name,
+        </if>
+        thirdLogisticsName desc
+        ) a
+    </select>
 
 
 </mapper>

@@ -1,6 +1,8 @@
 package com.erp.server.dmp.controller.api;
 
 
+import com.common.business.vo.PagingVO;
+import com.erp.model.dmp.dto.ThirdShopDTO;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import javax.annotation.Resource;
@@ -68,5 +70,18 @@ public class ThirdLogisticsController extends BaseController {
     }
 
 
+    /**
+     * 列表查询
+     *
+     * @param dto
+     * @return ApiResult<PagingVO < WarehouseLocationMoveDTO.ListDTO>>
+     * @author Luo_WG
+     * @date: 2023-08-24
+     */
+    @PostMapping("/pagingSelect")
+    public ApiResult<PagingVO<ThirdLogisticsDTO.PageSelectDTO>> pagingSelect(@RequestBody @Validated PagingDTO<ThirdLogisticsDTO.SelectDTO> dto) {
+        dto.setPageSize(100);
+        return success(thirdLogisticsService.pagingSelect(dto));
+    }
 
 }
