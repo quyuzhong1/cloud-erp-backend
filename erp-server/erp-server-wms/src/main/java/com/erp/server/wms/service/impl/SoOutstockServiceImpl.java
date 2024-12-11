@@ -2553,6 +2553,9 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
     public Boolean generateB2cSoOutstock(SoOutstockDTO.GenerateB2cDTO generateB2cDTO) {
         Boolean result = createB2cSoOutstock(generateB2cDTO);
         if (result) {
+            //销售出库单单据日期需要回写到B2C销售订单中
+            soB2cFeign.writeBackSoOutstockDate(generateB2cDTO.getSoId(),generateB2cDTO.getBillDate());
+
             this.removeSoB2cOutstockError(generateB2cDTO.getSoId());
         }
         return result;

@@ -1014,4 +1014,10 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
     void syncSdyOrderHandler(String soId, String operateEnum);
 
     List<SoB2cEntity> queryToSdy(LocalDate startDate, LocalDate endDate, Integer pageSize, int offset);
+    /**
+     * 同步销售出库单的单据日期
+     * @param soId
+     * @param soOutstockDate
+     */
+    void writeBackSoOutstockDate(String soId, LocalDate soOutstockDate);
 }

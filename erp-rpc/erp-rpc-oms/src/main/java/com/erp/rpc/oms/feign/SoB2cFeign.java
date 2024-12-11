@@ -16,7 +16,6 @@ import com.erp.model.tms.dto.TransferDeclareGenerationSettingDTO;
 import com.erp.model.wms.dto.ReportOrderDataDTO;
 import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.model.wms.dto.WmsDataCompareTaskDTO;
-import org.apache.ibatis.annotations.Param;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -25,6 +24,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 
 @FeignClient(name = "erp-oms", contextId = "soB2c")
@@ -649,4 +649,12 @@ public interface SoB2cFeign {
      */
     @GetMapping("feign/soB2c/syncSdyOrderHandler")
     void syncSdyOrderHandler(@RequestParam("soId") String soId, @RequestParam("operateEnum") String operateEnum);
+
+    /**
+     * 同步销售出库单的单据日期
+     * @param soId
+     * @param soOutstockDate
+     */
+    @GetMapping("feign/soB2c/writeBackSoOutstockDate")
+    void writeBackSoOutstockDate(@RequestParam("soId") String soId, @RequestParam("soOutstockDate") LocalDate soOutstockDate);
 }

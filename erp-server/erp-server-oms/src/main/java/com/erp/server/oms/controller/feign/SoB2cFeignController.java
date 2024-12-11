@@ -24,12 +24,12 @@ import com.erp.server.oms.service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.ibatis.annotations.Param;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -859,5 +859,15 @@ public class SoB2cFeignController extends BaseController {
     @GetMapping("/syncSdyOrderHandler")
     public void syncSdyOrderHandler(@RequestParam("soId") String soId, @RequestParam("operateEnum") String operateEnum) {
         soB2cService.syncSdyOrderHandler(soId, operateEnum);
+    }
+
+    /**
+     * 同步销售出库单的单据日期
+     * @param soId
+     * @param soOutstockDate
+     */
+    @GetMapping("/writeBackSoOutstockDate")
+    public void writeBackSoOutstockDate(@RequestParam("soId") String soId, @RequestParam("soOutstockDate") LocalDate soOutstockDate) {
+        soB2cService.writeBackSoOutstockDate(soId, soOutstockDate);
     }
 }
