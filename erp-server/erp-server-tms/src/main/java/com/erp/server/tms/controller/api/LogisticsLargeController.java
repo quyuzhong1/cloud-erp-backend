@@ -106,6 +106,11 @@ public class LogisticsLargeController extends BaseController {
      * @return
      */
     @PostMapping("/paging")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "tms:logisticsLarge:paging",
+            tableAlias = "ll"
+    )
     @WebAdvanceQuery(handler = LogisticsLargeQueryHandler.class)
     public ApiResult<PagingVO<LogisticsLargeDTO.PagingViewDTO>> queryByPage(@RequestBody @Validated PagingDTO<LogisticsLargeDTO.PagingParamDTO> dto) {
         PagingVO<LogisticsLargeDTO.PagingViewDTO> pagingVO = logisticsLargeService.paging(dto);
@@ -226,7 +231,7 @@ public class LogisticsLargeController extends BaseController {
 
             BatchResultDTO result = null;
             try {
-                result = logisticsLargeService.generateFirstMileLogistics(resultDTOS, skuCostAllocationDetailEntities, deliveryEntities, firstMileDeliveryDetailEntities, entity, skuCostAllocationEntityList);
+                result = logisticsLargeService.generateFirstMileLogistics(skuCostAllocationDetailEntities, deliveryEntities, firstMileDeliveryDetailEntities, entity, skuCostAllocationEntityList);
             } catch (Exception e) {
                 log.error("头程费用分摊生成物流大表失败{}", e);
                 result = BatchResultDTO.fail(entity.getId(), entity.getBusinessCode(), e.getMessage());

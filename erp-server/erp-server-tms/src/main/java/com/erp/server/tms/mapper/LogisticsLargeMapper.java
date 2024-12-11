@@ -37,4 +37,11 @@ public interface LogisticsLargeMapper extends BaseMapper<LogisticsLargeEntity> {
      * @return
      */
     List<LogisticsLargeDTO.TabListDTO> listTabCount(@Param("permissionSql") String permissionSql);
+
+    /**
+     * 查询不存在物流大表里的头程费用分摊主表id
+     * @return
+     */
+    List<String> listFirstMileCostAllocationIsExists();
+
 }

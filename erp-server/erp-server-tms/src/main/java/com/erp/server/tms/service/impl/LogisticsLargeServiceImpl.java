@@ -486,11 +486,11 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public BatchResultDTO generateFirstMileLogistics(List<BatchResultDTO> resultDTOS,
-                                                           List<FirstMileSkuCostAllocationDetailEntity> skuCostAllocationDetailEntities,
-                                                           List<FirstMileDeliveryEntity> deliveryEntities, List<FirstMileDeliveryDetailEntity>
-                                                                   firstMileDeliveryDetailEntities, FirstMileCostAllocationEntity entity,
-                                                           List<FirstMileSkuCostAllocationEntity> skuCostAllocationEntityList) {
+    public BatchResultDTO generateFirstMileLogistics(List<FirstMileSkuCostAllocationDetailEntity> skuCostAllocationDetailEntities,
+                                                     List<FirstMileDeliveryEntity> deliveryEntities,
+                                                     List<FirstMileDeliveryDetailEntity> firstMileDeliveryDetailEntities,
+                                                     FirstMileCostAllocationEntity entity,
+                                                     List<FirstMileSkuCostAllocationEntity> skuCostAllocationEntityList) {
 
         for (FirstMileSkuCostAllocationEntity firstMileSkuCostAllocationEntity : skuCostAllocationEntityList) {
 
@@ -1103,5 +1103,10 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
     public Boolean exportLogisticsLarge(LogisticsLargeDTO.ExportDTO dto) {
         downloadTaskFeign.saveDownloadTask("物流大表", EXPORT_TMS_LOGISTICS_LARGE.getCode(), dto);
         return Boolean.TRUE;
+    }
+
+    @Override
+    public List<String> listFirstMileCostAllocationIsExists() {
+        return baseMapper.listFirstMileCostAllocationIsExists();
     }
 }

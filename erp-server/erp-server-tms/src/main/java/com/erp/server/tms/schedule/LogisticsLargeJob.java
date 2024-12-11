@@ -9,9 +9,12 @@ import com.common.core.exception.ServiceException;
 import com.erp.model.tms.entity.*;
 import com.erp.model.tms.enums.SmallBagCostAllocationMainBigTableStatusEnum;
 import com.erp.model.tms.enums.SmallBagCostAllocationMainReportStatusEnum;
+import com.erp.model.wms.entity.FirstMileDeliveryDetailEntity;
+import com.erp.model.wms.entity.FirstMileDeliveryEntity;
 import com.erp.model.wms.entity.SoOutstockDetailEntity;
 import com.erp.model.wms.entity.SoOutstockEntity;
 import com.erp.rpc.wms.feign.SoOutstockFeign;
+import com.erp.rpc.wms.feign.WmsFirstMileDeliveryFeign;
 import com.erp.server.tms.service.*;
 import com.xxl.job.core.handler.annotation.XxlJob;
 
@@ -55,6 +58,15 @@ public class LogisticsLargeJob {
 
     @Resource
     private FirstMileCostAllocationService firstMileCostAllocationService;
+
+    @Resource
+    private FirstMileSkuCostAllocationService firstMileSkuCostAllocationService;
+
+    @Resource
+    private FirstMileSkuCostAllocationDetailService firstMileSkuCostAllocationDetailService;
+
+    @Resource
+    private WmsFirstMileDeliveryFeign wmsFirstMileDeliveryFeign;
 
 
     /**
@@ -191,19 +203,25 @@ public class LogisticsLargeJob {
      */
     @XxlJob("firstMileCostAllocationToLogisticsLarge")
     public void firstMileCostAllocationToLogisticsLarge() {
-/*        logisticsLargeService.lambdaQuery()
-                .eq(LogisticsLargeEntity::getSourceType, SourceTypeEnum.FIRST_MILE_COST_ALLOCATION.getCode())
-                .
-                .list();*/
+        List<String> ids = logisticsLargeService.listFirstMileCostAllocationIsExists();
+        List<FirstMileCostAllocationEntity> costAllocationEntityList = firstMileCostAllocationService.listByIds(ids);
 
-        List<TransferDeclareCostAllocationMainEntity> allocationMainEntityList = transferDeclareCostAllocationMainService.lambdaQuery()
-                .eq(TransferDeclareCostAllocationMainEntity::getBigTableStatus, SmallBagCostAllocationMainBigTableStatusEnum.TODO.getCode())
-                .eq(TransferDeclareCostAllocationMainEntity::getReportStatus, SmallBagCostAllocationMainReportStatusEnum.CONFIRMED.getCode())
-                .orderByDesc(TransferDeclareCostAllocationMainEntity::getReportDate)
-                .list();
+        //头程费用SKU分摊信息
+        List<FirstMileSkuCostAllocationEntity> skuCostAllocationEntityAllList = firstMileSkuCostAllocationService.listByMainIds(ids);
+        //头程费用SKU分摊明细
+        List<FirstMileSkuCostAllocationDetailEntity> skuCostAllocationDetailEntities = firstMileSkuCostAllocationDetailService.listByMainIds(ids);
 
-        for (TransferDeclareCostAllocationMainEntity transferDeclareCostAllocationMainEntity : allocationMainEntityList) {
-//            logisticsLargeService.generateTransferCostAllocationTable(transferDeclareCostAllocationMainEntity);
+        //获取头程发货单id
+        List<String> deliveryIds = costAllocationEntityList.stream().map(FirstMileCostAllocationEntity::getSourceId).distinct().collect(Collectors.toList());
+        //查询头程发货单
+        List<FirstMileDeliveryEntity> deliveryEntities = wmsFirstMileDeliveryFeign.listByIds(deliveryIds);
+        //查询头程发货单详情
+        List<FirstMileDeliveryDetailEntity> firstMileDeliveryDetailEntities = wmsFirstMileDeliveryFeign.listDetailByMainIds(deliveryIds);
+
+        for (FirstMileCostAllocationEntity entity : costAllocationEntityList) {
+            List<FirstMileSkuCostAllocationEntity> skuCostAllocationEntityList = skuCostAllocationEntityAllList.stream().filter(req -> req.getMainId().equals(entity.getId())).collect(Collectors.toList());
+
+            logisticsLargeService.generateFirstMileLogistics(skuCostAllocationDetailEntities, deliveryEntities, firstMileDeliveryDetailEntities, entity, skuCostAllocationEntityList);
         }
     }
 }

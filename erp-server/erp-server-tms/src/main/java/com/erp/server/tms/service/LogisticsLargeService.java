@@ -69,7 +69,6 @@ public interface LogisticsLargeService extends SuperService<LogisticsLargeEntity
 
     /**
      * 头程费用分摊下推物流大表
-     * @param resultDTOS
      * @param skuCostAllocationDetailEntities
      * @param deliveryEntities
      * @param firstMileDeliveryDetailEntities
@@ -77,8 +76,7 @@ public interface LogisticsLargeService extends SuperService<LogisticsLargeEntity
      * @param skuCostAllocationEntityList
      * @return
      */
-    BatchResultDTO generateFirstMileLogistics(List<BatchResultDTO> resultDTOS,
-                                                    List<FirstMileSkuCostAllocationDetailEntity> skuCostAllocationDetailEntities,
+    BatchResultDTO generateFirstMileLogistics(List<FirstMileSkuCostAllocationDetailEntity> skuCostAllocationDetailEntities,
                                                     List<FirstMileDeliveryEntity> deliveryEntities,
                                                     List<FirstMileDeliveryDetailEntity> firstMileDeliveryDetailEntities,
                                                     FirstMileCostAllocationEntity entity,
@@ -137,5 +135,10 @@ public interface LogisticsLargeService extends SuperService<LogisticsLargeEntity
      */
     Boolean exportLogisticsLarge(LogisticsLargeDTO.ExportDTO dto);
 
+    /**
+     * 查询不存在物流大表里的头程费用分摊主表id（用于定时器自动生成）
+     * @return
+     */
+    List<String> listFirstMileCostAllocationIsExists();
 
 }
