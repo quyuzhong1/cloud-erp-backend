@@ -1,6 +1,7 @@
 package com.erp.server.tms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.json.JSONObject;
@@ -39,6 +40,7 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
@@ -97,8 +99,8 @@ public class LogisticsLastMileCostServiceImpl implements LogisticsLastMileCostSe
     }
 
     @Override
-    public BatchResultDTO updateReconciliationStatus(String id, String reconciliationStatus) {
-        return logisticsBillCostService.updateReconciliationStatus(id,reconciliationStatus);
+    public BatchResultDTO updateReconciliationStatus(String id, String reconciliationStatus , LocalDateTime confirmTime) {
+        return logisticsBillCostService.updateReconciliationStatus(id,reconciliationStatus,confirmTime);
     }
 
     @Override
@@ -129,6 +131,7 @@ public class LogisticsLastMileCostServiceImpl implements LogisticsLastMileCostSe
         headerNameList.add("*平台订单号");
         headerNameList.add("*物流跟踪单号");
         headerNameList.add("*计费重[物流商]");
+        headerNameList.add("*对账类型");
         headerNameList.add("币种[默认￥]");
         return headerNameList;
     }
@@ -144,6 +147,7 @@ public class LogisticsLastMileCostServiceImpl implements LogisticsLastMileCostSe
         jsonObject.set("*平台订单号","platformCode");
         jsonObject.set("*物流跟踪单号","trackNo");
         jsonObject.set("*计费重[物流商]","billingWeightStr");
+        jsonObject.set("*对账类型","payType");
         jsonObject.set("币种[默认￥]","currency");
         return jsonObject;
     }
@@ -271,6 +275,13 @@ public class LogisticsLastMileCostServiceImpl implements LogisticsLastMileCostSe
             if (CollectionUtils.isNotEmpty(msgList)) {
                 errorMsgList.addAll(msgList);
             }
+            String payType = excelDTO.getPayType();
+            if("付款".equals(payType)) {
+            	payType = "pay";
+            }else if("退款".equals(payType)){
+            	payType = "refund";
+            }
+            excelDTO.setPayType(payType);
             //数据验证
             List<String> importMsgList = checkImportData(excelDTO,logisticsBillCostList,logisticsBillDetailList,DictCostAttributionEnum.LAST_MILE.getCode());
             if (CollectionUtils.isNotEmpty(importMsgList)) {
@@ -286,7 +297,8 @@ public class LogisticsLastMileCostServiceImpl implements LogisticsLastMileCostSe
                             && CharSequenceUtil.equals(obj.getTrackNo(),excelDTO.getTrackNo()))
                     .findFirst().orElse(null);
             //物流费用单
-            LogisticsBillCostEntity logisticsBillCostEntity = logisticsBillCostList.stream().filter(obj -> CharSequenceUtil.equals(obj.getLogisticsBillDetailId(),logisticsBillDetailEntity.getId()))
+            LogisticsBillCostEntity logisticsBillCostEntity = logisticsBillCostList.stream().filter(obj -> CharSequenceUtil.equals(obj.getLogisticsBillDetailId(),logisticsBillDetailEntity.getId())
+            		&& CharSequenceUtil.equals(obj.getPayType(),excelDTO.getPayType()))
                     .findFirst().orElse(null);
 
             //数据赋值
@@ -320,12 +332,19 @@ public class LogisticsLastMileCostServiceImpl implements LogisticsLastMileCostSe
             return errorMsgList;
         }
         //物流费用单
-        LogisticsBillCostEntity logisticsBillCostEntity = logisticsBillCostList.stream().filter(obj ->
-                CharSequenceUtil.equals(detailEntity.getId(),obj.getLogisticsBillDetailId())).findFirst().orElse(null);
-        if (ObjectUtil.isEmpty(logisticsBillCostEntity)) {
-            errorMsgList.add("未找到出库单和运输单号对应的尾程费用单");
+        List<LogisticsBillCostEntity> logisticsBillCostEntityList = logisticsBillCostList.stream().filter(obj ->
+                CharSequenceUtil.equals(detailEntity.getId(),obj.getLogisticsBillDetailId()) 
+                && CharSequenceUtil.equals(excelDTO.getPayType(),obj.getPayType()))
+        		.collect(Collectors.toList());
+        if (CollUtil.isEmpty(logisticsBillCostEntityList)) {
+            errorMsgList.add("未找到出库单和运输单号对应对账类型的尾程费用单");
             return errorMsgList;
         }
+        if (logisticsBillCostEntityList.size() > 1) {
+            errorMsgList.add("出库单和运输单号对应对账类型的尾程费用单有多条，请在页面编辑指定物流费用单");
+            return errorMsgList;
+        }
+        LogisticsBillCostEntity logisticsBillCostEntity = logisticsBillCostEntityList.get(0);
         if (!CharSequenceUtil.equals(logisticsBillCostEntity.getType(),dictCostAttribution)) {
             errorMsgList.add(CharSequenceUtil.format("需要导入【{}】尾程费用信息",DictCostAttributionEnum.getName(dictCostAttribution)));
         }

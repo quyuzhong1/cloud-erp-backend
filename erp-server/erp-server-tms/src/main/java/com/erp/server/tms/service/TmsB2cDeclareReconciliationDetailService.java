@@ -9,6 +9,9 @@ import com.erp.model.tms.dto.TmsB2cDeclareReconciliationDetailDTO;
 import com.erp.model.tms.entity.TmsB2cDeclareReconciliationDetailEntity;
 
 import javax.servlet.http.HttpServletResponse;
+
+import org.apache.ibatis.annotations.Param;
+
 import java.time.LocalDate;
 import java.util.LinkedList;
 import java.util.List;
@@ -118,5 +121,7 @@ public interface TmsB2cDeclareReconciliationDetailService extends SuperService<T
     LinkedList<String> thirdFieldListName(TmsB2cDeclareReconciliationDetailDTO.ExcelDownloadTemplateDTO dto);
 
     PagingVO<TmsB2cDeclareReconciliationDetailDTO.ListDTO> exportB2cDeclareReconciliationDetail(PagingDTO<TmsB2cDeclareReconciliationDetailDTO.ExportDTO> dto);
+    
+    List<TmsB2cDeclareReconciliationDetailEntity> listAutoGenerateCost(LocalDate startDate, LocalDate endDate);
 
 }

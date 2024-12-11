@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.tms.mapper.TransferDeclareCostAllocationDetailMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.tms.entity.TransferDeclareCostAllocationDetailEntity">
+       <result column="id" property="id" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_time" property="createTime" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_time" property="updateTime" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="main_id" property="mainId" />
+       <result column="bill_amount" property="billAmount" />
+       <result column="fee_type" property="feeType" />
+       <result column="fee_allocation_type" property="feeAllocationType" />
+       <result column="allocated_amount" property="allocatedAmount" />
+       <result column="allocated_currency" property="allocatedCurrency" />
+       <result column="product_allocated_amount" property="productAllocatedAmount" />
+       <result column="weight_allocation_type" property="weightAllocationType" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id,
+        create_user_id,
+        create_user_name,
+        create_time,
+        update_user_id,
+        update_user_name,
+        update_time,
+        version,
+        is_deleted,
+        main_id, bill_amount, fee_type, fee_allocation_type, allocated_amount, allocated_currency, product_allocated_amount, weight_allocation_type
+    </sql>
+
+
+</mapper>

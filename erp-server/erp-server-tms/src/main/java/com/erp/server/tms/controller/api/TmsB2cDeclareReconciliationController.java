@@ -162,6 +162,41 @@ public class TmsB2cDeclareReconciliationController extends BaseController {
         }
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
+    
+    /**
+     * 修改支付状态
+     * @author will
+     * @date:  2024-03-19
+     * @param dto
+     * @return ApiResult<List<BatchResultDTO>>
+     */
+    @PostMapping("/updatePayStatus")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+    tableField = "create_user_id",
+    menuCode = "tms:tmsB2cDeclareReconciliation:updatePayStatus",
+    serviceClass = TmsB2cDeclareReconciliationService.class,
+    keyIdName = "ids")
+    @LogAction(value = LogActionEnum.SUBMIT, desc = "b2c报关对账单提交审核")
+    public ApiResult<List<BatchResultDTO>> updatePayStatus(@RequestBody @Validated TmsB2cDeclareReconciliationDTO.PayStatusUpdateDTO dto) {
+    	List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+    	for (String id : dto.getIds()) {
+    		BatchResultDTO submit;
+    		try {
+    			submit = tmsB2cDeclareReconciliationService.updatePayStatus(id , dto.getPayStatus() , dto.getPayTime());
+    		}catch (Exception e){
+    			log.error("b2c报关对账单不存在, 不允许修改支付状态",e);
+    			TmsB2cDeclareReconciliationEntity entity = tmsB2cDeclareReconciliationService.getById(id);
+    			if (ObjectUtil.isEmpty(entity)) {
+    				submit = BatchResultDTO.fail(id, id, "b2c报关对账单不存在, 不允许修改支付状态");
+    				resultDTOS.add(submit);
+    				continue;
+    			}
+    			submit = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
+    		}
+    		resultDTOS.add(submit);
+    	}
+    	return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
 
     /**
     * 审核

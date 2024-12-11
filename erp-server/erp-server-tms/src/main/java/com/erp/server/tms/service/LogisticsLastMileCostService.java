@@ -8,6 +8,8 @@ import com.erp.model.tms.dto.LogisticsBillCostDTO;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
+
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -57,7 +59,7 @@ public interface LogisticsLastMileCostService {
      * @param reconciliationStatus
      * @return BatchResultDTO
      */
-    BatchResultDTO updateReconciliationStatus(String id, String reconciliationStatus);
+    BatchResultDTO updateReconciliationStatus(String id, String reconciliationStatus , LocalDateTime confirmTime);
     /**
      * @description: 下载模板
      * @author Will

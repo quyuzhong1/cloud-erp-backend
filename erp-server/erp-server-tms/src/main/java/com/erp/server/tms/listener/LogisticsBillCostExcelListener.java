@@ -62,6 +62,7 @@ public class LogisticsBillCostExcelListener extends AnalysisEventListener<Logist
             errorList.add(excelDTO);
             return;
         }
+        excelDTO.setPayType(excelDTO.getPayType().equals("付款") ? "pay" : "refund");
         successList.add(excelDTO);
 
     }
