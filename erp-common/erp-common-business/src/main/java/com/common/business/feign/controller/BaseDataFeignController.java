@@ -1,5 +1,6 @@
 package com.common.business.feign.controller;
 
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.Collection;
@@ -103,6 +104,10 @@ public class BaseDataFeignController extends BaseController implements BaseDataF
 			throw new ServiceException("调用远程"+ className + "#" + methodName +"方法参数错误");
 		} catch (ServiceException e) {
 			throw e;
+		} catch (InvocationTargetException e) {
+			Throwable cause = e.getCause();
+			log.error("调用远程方法错误" , cause);
+			throw new ServiceException("调用远程"+ className + "#" + methodName +"方法错误");
 		} catch (Exception e) {
 			log.error("调用远程方法错误{}" , ExceptionUtil.stacktraceToString(e));
 			throw new ServiceException("调用远程"+ className + "#" + methodName +"方法错误");
