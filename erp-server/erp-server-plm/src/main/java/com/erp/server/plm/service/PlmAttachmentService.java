@@ -70,4 +70,6 @@ public interface PlmAttachmentService extends SuperService<PlmAttachmentEntity> 
      * 根据URL删除附件信息
      */
     void removeAttachmentByUrl(AttachmentDTO.DeleteDTO dto);
+
+    List<AttachmentDTO.CommonDTO> getUrlById(String id);
 }
