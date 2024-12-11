@@ -3,7 +3,6 @@ package com.erp.server.wms.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.common.business.dto.base.BaseResultDTO;
@@ -129,6 +128,9 @@ public class CfgSettingVirtualServiceImpl implements CfgSettingVirtualService {
             case VIRTUAL_RULE:
                 jsonObject = ObjectUtil.isEmpty(addDTO.getVirtualRuleDTO()) ? null : JSONUtil.parseObj(addDTO.getVirtualRuleDTO());
                 break;
+            case INVENTORY_AGE_STATISTICS:
+                jsonObject = ObjectUtil.isEmpty(addDTO.getInventoryAgeTO()) ? null : JSONUtil.parseObj(addDTO.getInventoryAgeTO());
+                break;
             default:
                 break;
         }
@@ -166,6 +168,10 @@ public class CfgSettingVirtualServiceImpl implements CfgSettingVirtualService {
             case VIRTUAL_RULE:
                 CfgSettingVirtualValueDTO.VirtualRuleDTO virtualRuleDTO = BeanUtil.toBean(cfgSetting.getDataJson(), CfgSettingVirtualValueDTO.VirtualRuleDTO.class);
                 viewDTO.setVirtualRuleDTO(virtualRuleDTO);
+                break;
+            case INVENTORY_AGE_STATISTICS:
+                CfgSettingVirtualValueDTO.InventoryAgeTO inventoryAgeTO = BeanUtil.toBean(cfgSetting.getDataJson(), CfgSettingVirtualValueDTO.InventoryAgeTO.class);
+                viewDTO.setInventoryAgeTO(inventoryAgeTO);
                 break;
             default:
                 break;

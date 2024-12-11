@@ -165,4 +165,7 @@ public interface BusinessNoConstant {
     String XLSS = "XLSS";
     String YHBG = "YHBG";
     String MJ = "MJ";
+
+    //库龄批次号
+    String N = "N";
 }

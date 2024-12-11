@@ -147,6 +147,14 @@ public class ExportWmsFeignController {
     @Resource
     private ReportOrderSalesService reportOrderSalesService;
 
+    @Resource
+    private VirtualInventoryDetailService virtualInventoryDetailService;
+
+    @Resource
+    private VirtualTransFlowDetailService virtualTransFlowDetailService;
+
+
+
     @PostMapping("/b2cDelivery")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
@@ -703,4 +711,51 @@ public class ExportWmsFeignController {
     public PagingVO<ReportOrderSalesDTO.ListDTO> listReportOrderSales(@RequestBody PagingDTO<ReportOrderSalesDTO.PagingParamDTO> dto){
         return reportOrderSalesService.listReportOrderSales(dto);
     }
+
+    /**
+     * 库龄分析数据导出
+     */
+    @PostMapping("/virtualInventoryAgePaging")
+    @WebAdvanceQuery
+    public PagingVO<VirtualInventoryAgeDTO.ListDTO> virtualInventoryAgePaging(@RequestBody PagingDTO<VirtualInventoryAgeDTO.SearchParamDTO> dto){
+        return virtualInventoryDetailService.paging(dto);
+    }
+
+    /**
+     * 历史库龄数据导出
+     */
+    @PostMapping("/hisInventoryAgePaging")
+    @WebAdvanceQuery
+    public PagingVO<VirtualInventoryAgeDTO.HisInventoryAgeDTO> hisInventoryAgePaging(@RequestBody PagingDTO<VirtualInventoryAgeDTO.HisInventoryAgeParamDTO> dto){
+        return virtualInventoryDetailService.hisInventoryAgePaging(dto);
+    }
+
+    /**
+     * 历史库龄明细数据导出
+     */
+    @PostMapping("/hisInventoryAgeDetailPaging")
+    @WebAdvanceQuery
+    public PagingVO<VirtualInventoryAgeDTO.HisInventoryAgeDetailDTO> hisInventoryAgeDetailPaging(@RequestBody PagingDTO<VirtualInventoryAgeDTO.HisInventoryAgeDetailParamDTO> dto){
+        return virtualInventoryDetailService.exportHisInventoryAgeDetailPaging(dto);
+    }
+
+
+    /**
+     * 流水明细数据导出
+     */
+    @PostMapping("/virtualTransFlowDetailPaging")
+    @WebAdvanceQuery
+    public PagingVO<VirtualTransFlowDetailDTO.ListDTO> virtualTransFlowDetailPaging(@RequestBody PagingDTO<VirtualTransFlowDetailDTO.SearchParamDTO> dto){
+        return virtualTransFlowDetailService.paging(dto);
+    }
+
+    /**
+     * 列表历史库龄明细数据导出
+     */
+    @PostMapping("/framePaging")
+    @WebAdvanceQuery
+    public PagingVO<VirtualInventoryAgeDTO.HisInventoryAgeDetailDTO> framePaging(@RequestBody PagingDTO<VirtualInventoryAgeDTO.FrameParamDTO> dto){
+        return virtualInventoryDetailService.framePaging(dto);
+    }
+
 }
