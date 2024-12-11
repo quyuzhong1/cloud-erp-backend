@@ -1,5 +1,6 @@
 package com.erp.server.plm.service.impl;
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -146,5 +147,14 @@ public class PlmAttachmentServiceImpl extends SuperServiceImpl<PlmAttachmentMapp
                 .eq(PlmAttachmentEntity::getAttachUrl, dto.getAttachUrl())
                 .eq(StringUtils.isNotBlank(dto.getBusinessId()), PlmAttachmentEntity::getBusinessId, dto.getBusinessId())
                 .remove();
+    }
+
+    @Override
+    public List<AttachmentDTO.CommonDTO> getUrlById(String id) {
+        List<PlmAttachmentEntity> entities = this.lambdaQuery().eq(PlmAttachmentEntity::getBusinessId, id).list();
+        if(CollectionUtils.isEmpty(entities)){
+            return new ArrayList<>();
+        }
+        return BeanUtil.copyToList(entities,AttachmentDTO.CommonDTO.class);
     }
 }
