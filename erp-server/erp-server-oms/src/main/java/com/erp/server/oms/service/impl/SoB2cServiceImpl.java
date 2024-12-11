@@ -9360,4 +9360,15 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     public List<SoB2cEntity> queryToSdy(LocalDate startDate, LocalDate endDate, Integer pageSize, int offset) {
         return baseMapper.queryToSdy(startDate, endDate, pageSize, offset);
     }
+
+    @Override
+    public void writeBackSoOutstockDate(String soId, LocalDate soOutstockDate) {
+        if(StringUtils.isBlank(soId) || null == soOutstockDate){
+            return ;
+        }
+        lambdaUpdate()
+                .set(SoB2cEntity::getSoOutstockDate,soOutstockDate)
+                .eq(SoB2cEntity::getId,soId)
+                .update();
+    }
 }
