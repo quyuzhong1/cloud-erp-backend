@@ -1,9 +1,6 @@
 package com.erp.model.plm.enums;
 
-import com.erp.model.plm.entity.BomSkuEntity;
-import com.erp.model.plm.entity.ProductDetailEntity;
-import com.erp.model.plm.entity.ProductInfoEntity;
-import com.erp.model.plm.entity.ProjectTaskEntity;
+import com.erp.model.plm.entity.*;
 
 /**
  * @author Will
@@ -16,7 +13,8 @@ public enum SysLogClassPathEnum {
     PRODUCTDETAILENTITY(0, "SKU", String.valueOf(ProductDetailEntity.class)),
     PRODUCTINFOENTITY(1, "SPU", String.valueOf(ProductInfoEntity.class)),
     PROJECTTASKENTITY(2, "任务列表", String.valueOf(ProjectTaskEntity.class)),
-    BOM_SKU_ENTITY(2, "bomSku", String.valueOf(BomSkuEntity.class));
+    BOM_SKU_ENTITY(2, "bomSku", String.valueOf(BomSkuEntity.class)),
+    MOULD_DETAIL_ENTITY(4, "模具管理", String.valueOf(MouldDetailEntity.class));
 
 
     private Integer code;

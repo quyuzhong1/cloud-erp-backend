@@ -533,6 +533,7 @@ public enum ApiError implements Serializable {
     ERROR_NO_INVENTORY_SKU_NOT_EXIST(95272, "除服务、费用SKU外,不存在其他SKU信息！"),
     ERROR_95273(95273, "仅支持审核中的单据支持催办提醒"),
     ERROR_95274(95274, "%s已催办，间隔时间30min内请勿重复操作"),
+    ERROR_95280(95280,"【{}】属性已被使用，则不允许被删除"),
     /**
      * TMS 错误
      * 从96000 开始
