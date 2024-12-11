@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.tms.mapper.TransferDeclareCostAllocationMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.tms.entity.TransferDeclareCostAllocationEntity">
+       <result column="id" property="id" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_time" property="createTime" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_time" property="updateTime" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="main_id" property="mainId" />
+       <result column="sku_id" property="skuId" />
+       <result column="sku_no" property="skuNo" />
+       <result column="outstock_detail_id" property="outstockDetailId" />
+       <result column="delivery_qty" property="deliveryQty" />
+       <result column="sku_weight" property="skuWeight" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id,
+        create_user_id,
+        create_user_name,
+        create_time,
+        update_user_id,
+        update_user_name,
+        update_time,
+        version,
+        is_deleted,
+        main_id, sku_id, sku_no, outstock_detail_id, delivery_qty, sku_weight
+    </sql>
+<select id="paging" resultType="com.erp.model.tms.dto.TransferDeclareCostAllocationDTO$ListDTO">
+	select
+            t.id mainId,
+            g.id,
+			t.report_date,
+			t.account_date,
+			t.report_status,
+			j.status reconciliationStatus,
+			t.big_table_status,
+			j.logistics_channel_id channelId,
+			concat(j.logistics_supplier_name , '-',j.logistics_channel_name ) supplierName,
+			j.so_code,
+			k.instock_forecast_date,
+			j.confirm_date confirmTime,
+			j.shop_id,
+			j.country toCountry,
+			g.sku_id,
+			g.sku_no,
+			cast(g.unit_cost AS NUMERIC(16, 6)) unit_cost,
+			g.unit_currency,
+			g.delivery_qty,
+			cast(j.estimate_weight AS NUMERIC(16, 8)) billingWeight,
+			j.estimate_weight_unit,
+			cast(j.actual_billing_weight AS NUMERIC(16, 4)) billingWeightLogistics,
+			cast(g.sku_weight AS NUMERIC(16, 4)) sku_weight,
+			h.fee_type,
+			cast(h.bill_amount_exchange AS NUMERIC(16, 4)) bill_amount,
+            cast(h.allocated_amount_exchange AS NUMERIC(16, 2)) allocated_amount,
+            cast(h.product_allocated_amount_exchange AS NUMERIC(16, 6)) product_allocated_amount,
+			h.fee_allocation_type,
+			h.weight_allocation_type,
+			t.update_user_name,
+			t.update_time,
+			t.create_time,
+			h.allocated_currency currency
+        from transfer_declare_cost_allocation_main t
+        left join transfer_declare_cost_allocation g on t.id = g.main_id and g.is_deleted = false
+        left join transfer_declare_cost_allocation_detail h on h.main_id = g.id and h.is_deleted = false
+        left join tms_b2c_declare_reconciliation_detail j on t.declare_reconciliation_detail_id = j.id and j.is_deleted = false
+        left join transfer_declare k on t.transfer_declare_id = k.id and k.is_deleted = false
+        left join dict_basic l on h.fee_type = l.code and l.type = 'dictCostCategory'
+		<where>
+            ${params.sqlMap.default}
+            and t.is_deleted = false
+            <if test="params.permissionSql!=null and params.permissionSql!=''">
+                ${params.permissionSql}
+            </if>
+        </where>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        t.id desc,g.id,l.index asc
+    </select>
+    
+    <select id="tabList" resultType="com.erp.model.tms.dto.TransferDeclareCostAllocationDTO$TabListDTO">
+        select
+            t.report_status tabFlag,count(*) count
+        from transfer_declare_cost_allocation_main t
+        left join transfer_declare_cost_allocation g on t.id = g.main_id and g.is_deleted = false
+        left join transfer_declare_cost_allocation_detail h on h.main_id = g.id and h.is_deleted = false
+        left join tms_b2c_declare_reconciliation_detail j on t.declare_reconciliation_detail_id = j.id and j.is_deleted = false
+        left join transfer_declare k on t.transfer_declare_id = k.id and k.is_deleted = false
+        <where>
+            t.is_deleted = false
+            <if test="params.permissionSql!=null and params.permissionSql!=''">
+                ${params.permissionSql}
+            </if>
+        </where>
+        group by t.report_status
+    </select>
+</mapper>

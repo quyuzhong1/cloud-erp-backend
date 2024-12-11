@@ -194,7 +194,17 @@ public interface TmsFirstMileReconciliationService extends SuperService<TmsFirst
     List<TmsFirstMileReconciliationEntity> listbyCodes(List<String> codeList);
 
     /**
+<<<<<<< HEAD
      * 初始化头程对账单汇率
      */
     void initExchangeRate();
+    
+    /**
+     * 更新付款状态
+     * @Author Luo_WG
+     * @Date 2024/11/28 18:10
+     * @param dto
+     * @return com.common.core.controller.vo.ApiResult<java.lang.Boolean>
+     **/
+    Boolean updatePayStatus(TmsFirstMileReconciliationDTO.UpdatePayStatusDTO dto);
 }

@@ -1,5 +1,6 @@
 package com.erp.model.tms.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.ApproveStatusEnum;
@@ -12,6 +13,7 @@ import javax.validation.constraints.NotEmpty;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -202,6 +204,27 @@ public class TmsB2cDeclareReconciliationDTO implements Serializable {
          * 实际重量单位【可排序】
          */
         private String actualWeightUnit;
+        
+        /**
+         * 东莞仓费用
+         */
+        private BigDecimal dgWarseHouseFee;
+        
+        /**
+         * 香港仓费用
+         */
+        private BigDecimal xgWarseHouseFee;
+        
+        /**
+         * 支付状态
+         */
+        private String payStatus;
+        private String payStatusName;
+        
+        /**
+         * 付款时间
+         */
+        private LocalDateTime payTime;
 
     }
 
@@ -314,6 +337,16 @@ public class TmsB2cDeclareReconciliationDTO implements Serializable {
         * 审核不通过原因
         */
         private String reason;
+        
+        /**
+         * 东莞仓费用
+         */
+        private BigDecimal dgWarseHouseFee;
+        
+        /**
+         * 香港仓费用
+         */
+        private BigDecimal xgWarseHouseFee;
 
         /**
          * 报关对账单明细
@@ -368,6 +401,40 @@ public class TmsB2cDeclareReconciliationDTO implements Serializable {
          */
         @NotBlank(message = "结算币别不能为空")
         private String currency;
+        
+        /**
+         * 东莞仓费用
+         */
+        private BigDecimal dgWarseHouseFee;
+        
+        /**
+         * 香港仓费用
+         */
+        private BigDecimal xgWarseHouseFee;
+    }
+    
+    /**
+     * 修改
+     */
+    @Data
+    @NoArgsConstructor
+    public static class PayStatusUpdateDTO{
+    	
+    	/**
+    	 * 主键id列表
+    	 */
+    	private List<String> ids;
+    	
+    	/**
+    	 * 支付状态	http://172.16.100.11:3002/project/128/interface/api/25522 key=b2cDeclarePayStatus
+    	 */
+    	@NotEmpty(message = "支付状态不能为空")
+    	private String payStatus;
+    	
+    	/**
+    	 * 支付时间
+    	 */
+    	private LocalDateTime payTime;
     }
 
     @Data

@@ -335,4 +335,20 @@ public class TmsFirstMileReconciliationController extends BaseController {
         tmsFirstMileReconciliationService.initExchangeRate();
         return success();
     }
+
+    /**
+     * 更新付款状态
+     * @Author Luo_WG
+     * @Date 2024/11/28 18:10
+     * @param dto
+     * @return com.common.core.controller.vo.ApiResult<java.lang.Boolean>
+     **/
+    @PostMapping("/updatePayStatus")
+    @LogAction(value = LogActionEnum.UPDATE, desc = "更新付款状态")
+    public ApiResult<Boolean> updatePayStatus(@RequestBody @Validated TmsFirstMileReconciliationDTO.UpdatePayStatusDTO dto) {
+        Boolean flag = tmsFirstMileReconciliationService.updatePayStatus(dto);
+        return flag ? success() : failure();
+    }
+
+
 }
