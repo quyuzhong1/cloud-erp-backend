@@ -226,7 +226,7 @@ public class LogisticsLargeController extends BaseController {
 
             BatchResultDTO result = null;
             try {
-                result = logisticsLargeService.generateFirstMileLogistics(resultDTOS, skuCostAllocationDetailEntities, deliveryEntities, firstMileDeliveryDetailEntities, entity, skuCostAllocationEntityList);
+                result = logisticsLargeService.generateFirstMileLogistics(skuCostAllocationDetailEntities, deliveryEntities, firstMileDeliveryDetailEntities, entity, skuCostAllocationEntityList);
             } catch (Exception e) {
                 log.error("头程费用分摊生成物流大表失败{}", e);
                 result = BatchResultDTO.fail(entity.getId(), entity.getBusinessCode(), e.getMessage());
