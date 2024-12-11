@@ -221,21 +221,6 @@ public class GoodCangServiceTest {
         System.out.println(JSONUtil.toJsonStr(response.getData()));
     }
     @Test
-    public void getCalculateDeliveryFeeTest() {
-        GoodCangCalculateDeliveryFeeReq deliveryFeeReq = GoodCangCalculateDeliveryFeeReq
-                .builder()
-                .warehouseCode("USWE")
-                .countryCode("US")
-                .postcode("33178")
-                .weight(1F)
-                .build();
-        GoodCangResponse<List<GoodCangCalculateDeliveryFeeResp>> response = goodCangService.getCalculateDeliveryFee(deliveryFeeReq);
-        System.out.println(response);
-        System.out.println(JSONUtil.toJsonStr(response.getData()));
-    }
-
-
-    @Test
     public void getInventoryAgeList() {
         Map<Object, Object> hashMap = new HashMap<>();
         hashMap.put("page_size", 200);
