@@ -7,6 +7,7 @@ import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
+import java.time.LocalDate;
 
 /**
  * <p>
@@ -272,5 +273,10 @@ public class VirtualWarehouseAllocationDetailDTO implements Serializable {
          * 数量
          */
         private Integer qty;
+
+        /**
+         * 处理日期
+         */
+        private LocalDate handleDate;
     }
 }

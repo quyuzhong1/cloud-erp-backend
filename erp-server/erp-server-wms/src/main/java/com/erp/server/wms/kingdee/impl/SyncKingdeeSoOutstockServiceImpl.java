@@ -434,6 +434,7 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
             dmpOrderItemEntity.setDeliveryDetailId(entity.getId());
             dmpOrderItemEntity.setSaleOrderNo(finalSoId);
             dmpOrderItemEntity.setPlatformOrderId(finalSoCode);
+            dmpOrderItemEntity.setStockName(soOutstockEntity.getWarehouseName());
             ProductDetailEntity productDetailEntity = idProductDetailMap.get(soOutstockDetailEntity.getSkuId());
             if (productDetailEntity != null) {
                 dmpOrderItemEntity.setItemName(productDetailEntity.getName());

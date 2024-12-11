@@ -2,13 +2,10 @@ package com.erp.server.wms.service.impl;
 
 
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
@@ -277,7 +274,9 @@ public class VirtualInventoryServiceImpl extends SuperServiceImpl<VirtualInvento
             //虚拟仓库存
             Integer virtualQty = vmRealQtyList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSkuId(), qtySearchDTO.getSkuId()) && CharSequenceUtil.equals(obj.getWarehouseId(), qtySearchDTO.getWarehouseId()))
                     .map(VirtualInventoryDTO.ViewQtyDTO::getToVirtualWarehouseRealQty).reduce(MathUtil.ZERO, Integer::sum);
+            viewQtyDTO.setToVirtualWarehouseRealQty(virtualQty);
             viewQtyDTO.setWarehouseAllocationQty(realQty - virtualQty);
+            viewQtyDTO.setRealQty(realQty);
 
             VirtualInventoryDTO.ViewQtyDTO vmUsableQtyDto = vmUsableQty.stream().filter(inventoryViewQtyDTO -> Objects.equals(inventoryViewQtyDTO.getSkuId(), qtySearchDTO.getSkuId())
                     && Objects.equals(inventoryViewQtyDTO.getWarehouseId(), qtySearchDTO.getWarehouseId())
@@ -529,12 +528,10 @@ public class VirtualInventoryServiceImpl extends SuperServiceImpl<VirtualInvento
                 continue;
             }
             //虚拟可用库存
-            Integer virtualUsableQty = virtualInventoryDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getDictInventoryStatus(), InventoryStatusEnum.USABLE.getCode()))
-                    .map(VirtualInventoryDTO.ListInventoryDTO::getVirtualQty).reduce(MathUtil.ZERO, Integer::sum);
+            Integer virtualUsableQty = virtualInventoryDetailList.stream().map(VirtualInventoryDTO.ListInventoryDTO::getVirtualUsableQty).reduce(MathUtil.ZERO, Integer::sum);
             listDTO.setVirtualUsableQty(virtualUsableQty);
             //虚拟冻结库存
-            Integer virtualFrozenQty = virtualInventoryDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getDictInventoryStatus(), InventoryStatusEnum.FROZEN.getCode()))
-                    .map(VirtualInventoryDTO.ListInventoryDTO::getVirtualQty).reduce(MathUtil.ZERO, Integer::sum);
+            Integer virtualFrozenQty = virtualInventoryDetailList.stream().map(VirtualInventoryDTO.ListInventoryDTO::getVirtualFrozenQty).reduce(MathUtil.ZERO, Integer::sum);
             listDTO.setVirtualFrozenQty(virtualFrozenQty);
             //虚拟库存总数
             listDTO.setVirtualQty(MathUtil.add(virtualUsableQty, virtualFrozenQty));
@@ -562,20 +559,26 @@ public class VirtualInventoryServiceImpl extends SuperServiceImpl<VirtualInvento
                 //冻结库存
                 Integer frozenQty = value.stream().map(VirtualInventoryDTO.ListInventoryDTO::getFrozenQty).findFirst().orElse(MathUtil.ZERO);
                 listDetailDTO.setFrozenQty(frozenQty);
+                //在途库存
+                Integer inTransitQty = value.stream().map(VirtualInventoryDTO.ListInventoryDTO::getInTransitQty).findFirst().orElse(MathUtil.ZERO);
+                listDetailDTO.setInTransitQty(inTransitQty);
+                //在途库存
+                Integer waitQcQty = value.stream().map(VirtualInventoryDTO.ListInventoryDTO::getWaitQcQty).findFirst().orElse(MathUtil.ZERO);
+                listDetailDTO.setWaitQcQty(waitQcQty);
                 //实际库存
                 listDetailDTO.setRealQty(MathUtil.add(usableQty,frozenQty));
 
                 //可用数据
-                Integer detailVirtualUsableQty = value.stream().filter(obj -> CharSequenceUtil.equals(obj.getDictInventoryStatus(), InventoryStatusEnum.USABLE.getCode())).map(VirtualInventoryDTO.ListInventoryDTO::getVirtualQty).findFirst().orElse(MathUtil.ZERO);
+                Integer detailVirtualUsableQty = value.stream().map(VirtualInventoryDTO.ListInventoryDTO::getVirtualUsableQty).findFirst().orElse(MathUtil.ZERO);
                 listDetailDTO.setVirtualUsableQty(detailVirtualUsableQty);
                 //冻结数据
-                Integer detailVirtualFrozenQty = value.stream().filter(obj -> CharSequenceUtil.equals(obj.getDictInventoryStatus(), InventoryStatusEnum.FROZEN.getCode())).map(VirtualInventoryDTO.ListInventoryDTO::getVirtualQty).findFirst().orElse(MathUtil.ZERO);
+                Integer detailVirtualFrozenQty = value.stream().map(VirtualInventoryDTO.ListInventoryDTO::getVirtualFrozenQty).findFirst().orElse(MathUtil.ZERO);
                 listDetailDTO.setVirtualFrozenQty(detailVirtualFrozenQty);
 
                 //实体仓分配数量
                 Integer distributionQty = virtualInventoryList.stream().filter(obj -> CharSequenceUtil.equals(obj.getWarehouseId(), warehouseId)
                                 && CharSequenceUtil.equals(obj.getSkuId(), listDTO.getSkuId()))
-                        .map(VirtualInventoryDTO.ListInventoryDTO::getVirtualQty)
+                        .map(obj -> MathUtil.add(obj.getVirtualUsableQty(),obj.getVirtualFrozenQty()))
                         .reduce(MathUtil.ZERO, Integer::sum);
                 listDetailDTO.setDistributionQty(distributionQty);
 

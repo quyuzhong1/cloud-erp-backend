@@ -91,7 +91,8 @@
             vwad.warehouse_id,
             vwad.to_virtual_warehouse_id,
             vwad.from_virtual_warehouse_id,
-            vwad.qty
+            vwad.qty,
+            vwa.handle_date
         from virtual_warehouse_allocation vwa
         left join virtual_warehouse_allocation_detail vwad on vwad.is_deleted = false and vwa.id = vwad.main_id
         <where>

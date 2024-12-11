@@ -4,7 +4,6 @@ package com.erp.server.wms.service.impl;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.text.CharSequenceUtil;
-import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseIdDTO;
@@ -23,6 +22,7 @@ import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.StrUtils;
 import com.common.core.utils.ValidatorUtil;
 import com.erp.model.plm.entity.ProductDetailEntity;
+import com.erp.model.wms.dto.ReportOrderSalesDTO;
 import com.erp.model.wms.dto.VirtualTransFlowDTO;
 import com.erp.model.wms.entity.VirtualTransFlowEntity;
 import com.erp.model.wms.entity.WarehouseEntity;
@@ -38,7 +38,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -160,6 +162,23 @@ public class VirtualTransFlowServiceImpl extends SuperServiceImpl<VirtualTransFl
             fillPageData(pageData.getRecords());
         }
         return new PagingVO<>(pageData);
+    }
+
+    @Override
+    public List<VirtualTransFlowEntity> listHistoryFlow(List<String> sourceDetailIdList,String sourceType) {
+        if (CollectionUtil.isEmpty(sourceDetailIdList)) {
+            return Collections.EMPTY_LIST;
+        }
+        return lambdaQuery()
+                .in(VirtualTransFlowEntity::getSourceDetailId,sourceDetailIdList)
+                .eq(VirtualTransFlowEntity::getIsUnapproved,Boolean.FALSE)
+                .eq(VirtualTransFlowEntity::getSourceType,sourceType)
+                .list();
+    }
+
+    @Override
+    public List<ReportOrderSalesDTO.LastVirtualQtyDTO> listLastVirtualQty(List<String> skuIdList, List<String> warehouseIdList, List<String> virtualWarehouseIdList, LocalDate localDate) {
+        return baseMapper.listLastVirtualQty(skuIdList,warehouseIdList,virtualWarehouseIdList,localDate);
     }
 
     /**
