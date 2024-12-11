@@ -212,6 +212,28 @@
 
         </where>
     </select>
+    <select id="listBySkuAndWarehouseCode" resultType="com.erp.model.wms.entity.OverseasInventoryEntity">
+        select
+            id,warehouse_code, dict_platform,name,platform_sku,platform_sku_name,product_name,sku_no,sku_id,deliver_onway_qty,
+            pending_qty,sellable_qty,unsellable_qty,reserved_qty,onway_qty,lack_qty,frozen_qty,shipped_qty,download_time
+        from overseas_inventory
+        where is_deleted = false
+        <if test="query.platformSku != null and query.platformSku != ''">
+            platform_sku = #{query.platformSku}
+        </if>
+        <if test="query.skuIds != null and query.skuIds.size > 0">
+            and sku_id in
+            <foreach collection="query.skuIds" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="query.platformWarehouseCodeList != null and query.platformWarehouseCodeList.size > 0">
+            and warehouse_code in
+            <foreach collection="query.platformWarehouseCodeList" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+    </select>
 
 
 </mapper>

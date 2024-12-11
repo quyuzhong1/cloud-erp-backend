@@ -7,6 +7,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.PlatformDictEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
@@ -15,19 +16,27 @@ import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.dmp.dto.ThirdMappingDTO;
 import com.erp.model.dmp.dto.ThirdWarehouseDTO;
 import com.erp.model.dmp.enums.ThirdSysTypeEnum;
+import com.erp.model.oms.dto.ListingInfoParamDTO;
+import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
 import com.erp.model.oms.enums.AuthStatusEnum;
+import com.erp.model.oms.enums.ListingMatchResultEnum;
+import com.erp.model.oms.enums.RuleTypeEnum;
+import com.erp.model.plm.dto.BomChildrenSkuDTO;
+import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.wms.dto.OverseasInventoryDTO;
 import com.erp.model.wms.dto.OverseasProviderDTO;
 import com.erp.model.wms.dto.OverseasProviderWarehouseDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
+import com.erp.model.wms.entity.OverseasInventoryEntity;
 import com.erp.model.wms.entity.OverseasProviderEntity;
 import com.erp.model.wms.entity.OverseasProviderWarehouseEntity;
 import com.erp.rpc.dmp.feign.DmpThirdMappingFeign;
+import com.erp.rpc.oms.feign.SkuMappingFeign;
+import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.server.wms.convert.OverseasWarehouseConverter;
 import com.erp.server.wms.mapper.OverseasProviderWarehouseMapper;
-import com.erp.server.wms.service.OperateLogService;
-import com.erp.server.wms.service.OverseasProviderService;
-import com.erp.server.wms.service.OverseasProviderWarehouseService;
-import com.erp.server.wms.service.WarehouseService;
+import com.erp.server.wms.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -61,7 +70,12 @@ public class OverseasProviderWarehouseServiceImpl extends SuperServiceImpl<Overs
     private OverseasProviderService overseasProviderService;
     @Resource
     private DmpThirdMappingFeign dmpThirdMappingFeign;
-
+    @Resource
+    private SkuMappingFeign skuMappingFeign;
+    @Resource
+    private PlmTaskFeign plmTaskFeign;
+    @Resource
+    private OverseasInventoryService overseasInventoryService;
     /**
      * 修改
      */
@@ -303,5 +317,63 @@ public class OverseasProviderWarehouseServiceImpl extends SuperServiceImpl<Overs
     @Override
     public List<String> listProviderWarehouseBySql(String compareCodeSplicingValueSql) {
         return baseMapper.listProviderWarehouseBySql(compareCodeSplicingValueSql);
+    }
+
+    @Override
+    public List<OverseasProviderWarehouseDTO.ShippedViewDTO> getShippedInfo(OverseasProviderWarehouseDTO.ShippedDTO shippedDTO) {
+        //仓库列表
+        List<String> warehouseCodeList = shippedDTO.getWarehouseCodeList();
+        if (CollUtil.isEmpty(warehouseCodeList)){
+            return Collections.emptyList();
+        }
+        //根据平台配置进行匹配产品sku
+        ListingInfoParamDTO dto = new ListingInfoParamDTO();
+        dto.setPlatform(PlatformDictEnum.SHOPIFY.getCode());
+//        dto.setType(RuleTypeEnum.PLATFORM.code);
+        String platformSku = shippedDTO.getPlatformSku();
+        if (CharSequenceUtil.isNotBlank(platformSku)){
+            dto.setPlatformSkuNoList(Collections.singletonList(platformSku));
+        }
+        String platformProductId = shippedDTO.getPlatformProductId();
+        if (CharSequenceUtil.isNotBlank(platformProductId)){
+            dto.setPlatformSpuNoList(Collections.singletonList(platformProductId));
+        }
+        dto.setMatchResult(ListingMatchResultEnum.TRUE.getCode());
+        dto.setIsExpire(false);
+        List<ListingInfoWithSkuMappingDTO> listingInfoWithSkuMappingDTOS = skuMappingFeign.listingInfoWithSkuMappingList(dto);
+        if (CollUtil.isEmpty(listingInfoWithSkuMappingDTOS)){
+            return Collections.emptyList();
+        }
+        ListingInfoWithSkuMappingDTO listingInfoWithSkuMappingDTO = listingInfoWithSkuMappingDTOS.get(0);
+        //erp映射的sku
+        List<String> skuIds;
+        //根据是否组合品获取子件
+        List<BomChildrenSkuDTO> bomChildrenSkuList = plmTaskFeign.listBomChildBySkuIds(Collections.singletonList(listingInfoWithSkuMappingDTO.getProductSkuId()));
+        if (CollUtil.isNotEmpty(bomChildrenSkuList)){
+            List<BomChildrenSkuDTO> bomChildren = bomChildrenSkuList.stream()
+                    .filter(req -> req.getParentSkuId().equals(listingInfoWithSkuMappingDTO.getProductSkuId())
+                            && BomTypeEnum.COMBINATION.getType().equals(req.getType())
+                    ).collect(Collectors.toList());
+            skuIds = bomChildren.stream().map(BomChildrenSkuDTO::getSkuId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+        }else {
+            skuIds = Collections.singletonList(listingInfoWithSkuMappingDTO.getProductSkuId());
+        }
+        //查询三方仓库存
+        OverseasInventoryDTO.QueryDTO queryDTO = new OverseasInventoryDTO.QueryDTO();
+        queryDTO.setSkuIds(skuIds);
+        if (CollUtil.isNotEmpty(skuIds) && 1 == skuIds.size()){
+            queryDTO.setPlatformSku(platformSku);
+        }
+        queryDTO.setPlatformWarehouseCodeList(warehouseCodeList);
+        List<OverseasInventoryEntity> inventoryEntityList = overseasInventoryService.listBySkuAndWarehouseCode(queryDTO);
+        if (CollUtil.isEmpty(inventoryEntityList)){
+            return Collections.emptyList();
+        }
+        //匹配存在库存的仓库
+        List<OverseasInventoryEntity> overseasInventoryEntities = inventoryEntityList.stream().filter(e -> Objects.nonNull(e.getSellableQty()) && e.getSellableQty() > 0 && warehouseCodeList.contains(e.getWarehouseCode())).collect(Collectors.toList());
+        if (CollUtil.isEmpty(overseasInventoryEntities)){
+            return Collections.emptyList();
+        }
+        return OverseasWarehouseConverter.INSTANCE.inventoryToShipmentDTO(overseasInventoryEntities);
     }
 }

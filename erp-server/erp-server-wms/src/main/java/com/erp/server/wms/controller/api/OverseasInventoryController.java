@@ -1,27 +1,28 @@
 package com.erp.server.wms.controller.api;
 
 
+import com.common.business.annotation.DataPermission;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
-import com.common.core.enums.LogActionEnum;
-import com.erp.model.scm.dto.PurchaseChangeDTO;
-import lombok.extern.slf4j.Slf4j;
-
-import javax.annotation.Resource;
-import javax.servlet.http.HttpServletResponse;
-
-import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.*;
 import com.common.core.anno.LogSystemModule;
-import com.common.business.dto.base.*;
+import com.common.core.controller.BaseController;
+import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.LogActionEnum;
+import com.erp.model.wms.dto.OverseasInventoryDTO;
+import com.erp.model.wms.dto.OverseasProviderWarehouseDTO;
+import com.erp.server.wms.service.OverseasInventoryService;
+import com.erp.server.wms.service.OverseasProviderWarehouseService;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.common.core.controller.BaseController;
-import com.erp.server.wms.service.OverseasInventoryService;
-import com.common.core.controller.vo.ApiResult;
-import com.common.business.annotation.DataPermission;
-import com.common.business.enums.DataAttributeEnum;
-import com.erp.model.wms.dto.OverseasInventoryDTO;
+import javax.annotation.Resource;
+import java.util.List;
 
 /**
  * 海外仓库存
@@ -37,6 +38,8 @@ public class OverseasInventoryController extends BaseController {
 
     @Resource
     private OverseasInventoryService overseasInventoryService;
+    @Resource
+    private OverseasProviderWarehouseService overseasProviderWarehouseService;
 
 
     /**
@@ -87,4 +90,12 @@ public class OverseasInventoryController extends BaseController {
         return flag ? success() : failure();
     }
 
+    /**
+     * 独立站配送信息查询
+     *
+     */
+    @PostMapping("/shopifyShippedInfo")
+    public ApiResult<List<OverseasProviderWarehouseDTO.ShippedViewDTO>> getShippedInfo(@RequestBody OverseasProviderWarehouseDTO.ShippedDTO shippedDTO) {
+        return success(overseasProviderWarehouseService.getShippedInfo(shippedDTO));
+    }
 }

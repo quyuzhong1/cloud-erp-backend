@@ -2,7 +2,6 @@ package com.erp.server.wms.service.impl;
 
 
 import cn.hutool.core.text.CharSequenceUtil;
-import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -32,12 +31,14 @@ import com.erp.server.wms.service.OverseasProviderService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -319,6 +320,11 @@ public class OverseasInventoryServiceImpl extends SuperServiceImpl<OverseasInven
         }
         Page<OverseasInventoryDTO.ListDTO> page = baseMapper.listByParams(new Page<>(dto.getCurrPage(), dto.getPageSize()), params);
         return new PagingVO<>(page);
+    }
+
+    @Override
+    public List<OverseasInventoryEntity> listBySkuAndWarehouseCode(OverseasInventoryDTO.QueryDTO queryDTO) {
+        return baseMapper.listBySkuAndWarehouseCode(queryDTO);
     }
 
 }

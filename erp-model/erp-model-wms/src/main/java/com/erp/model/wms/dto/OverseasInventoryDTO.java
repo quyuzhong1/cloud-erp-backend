@@ -496,4 +496,18 @@ public class OverseasInventoryDTO implements Serializable {
     }
 
 
+    @Data
+    @NoArgsConstructor
+    public static class QueryDTO {
+        /**
+         * erp skuId
+         */
+        private List<String> skuIds;
+        /**
+         * 平台SKU
+         */
+        private String platformSku;
+        //平台仓库编码
+        private List<String> platformWarehouseCodeList;
+    }
 }
