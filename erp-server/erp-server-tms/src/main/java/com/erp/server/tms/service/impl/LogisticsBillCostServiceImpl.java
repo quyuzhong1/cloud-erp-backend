@@ -1776,7 +1776,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 				}else {
 					smallBagCostAllocationDetailEntity.setAllocatedAmount(costValueSum.subtract(addSmallBagCostAllocationDetailEntityList.stream()
 							.filter(a -> a.getFeeType().equals(feeType)).map(SmallBagCostAllocationDetailEntity::getAllocatedAmount).reduce(BigDecimal::add).orElse(BigDecimal.ZERO)).setScale(2, RoundingMode.DOWN));
-					smallBagCostAllocationDetailEntity.setAllocatedAmountExchange(costValueSum.subtract(addSmallBagCostAllocationDetailEntityList.stream()
+					smallBagCostAllocationDetailEntity.setAllocatedAmountExchange(smallBagCostAllocationDetailEntity.getBillAmountExchange().subtract(addSmallBagCostAllocationDetailEntityList.stream()
 							.filter(a -> a.getFeeType().equals(feeType)).map(SmallBagCostAllocationDetailEntity::getAllocatedAmountExchange).reduce(BigDecimal::add).orElse(BigDecimal.ZERO)).setScale(2, RoundingMode.DOWN));
 				}
 				smallBagCostAllocationDetailEntity.setAllocatedCurrency(allocatedCurrency);

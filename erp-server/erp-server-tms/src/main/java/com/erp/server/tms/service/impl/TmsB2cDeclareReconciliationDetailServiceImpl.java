@@ -1057,4 +1057,10 @@ public class TmsB2cDeclareReconciliationDetailServiceImpl extends SuperServiceIm
         viewDTO.setActualOtherCost(actualOtherCost);
     }
 
+
+	@Override
+	public List<TmsB2cDeclareReconciliationDetailEntity> listAutoGenerateCost(LocalDate startDate, LocalDate endDate) {
+		return this.getBaseMapper().listAutoGenerateCost(startDate, endDate);
+	}
+
 }

@@ -93,7 +93,7 @@ public class TransferDeclareCostAllocationJob {
         CfgSettingValueDTO.ReconciliationCycleDTO dto = BeanUtil.toBean(cfgSettingEntity.getDataJson(), CfgSettingValueDTO.ReconciliationCycleDTO.class);
         Integer transferAllocationDate = dto.getTransferAllocationDate();
         int dayOfMonth = currentDateTime.getDayOfMonth();
-        if(transferAllocationDate != null && dayOfMonth > transferAllocationDate) {
+        if(transferAllocationDate != null && dayOfMonth >= transferAllocationDate) {
         	LocalDateTime startTime = null;
         	LocalDateTime endTime = null;
         	//自然月生成
@@ -132,17 +132,13 @@ public class TransferDeclareCostAllocationJob {
             }
             
             List<TmsB2cDeclareReconciliationDetailEntity> tmsB2cDeclareReconciliationDetailEntityList = tmsB2cDeclareReconciliationDetailService
-            		.lambdaQuery()
-            		.ge(TmsB2cDeclareReconciliationDetailEntity::getConfirmDate, startTime.toLocalDate())
-                    .lt(TmsB2cDeclareReconciliationDetailEntity::getConfirmDate, endTime.toLocalDate())
-                    .last(" and id not in (select declare_reconciliation_detail_id from transfer_declare_cost_allocation_main where is_deleted = 'f') ")
-            		.list();
+            		.listAutoGenerateCost(startTime.toLocalDate(), endTime.toLocalDate());
             if(CollUtil.isNotEmpty(tmsB2cDeclareReconciliationDetailEntityList)) {
             	DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM");
             	for(TmsB2cDeclareReconciliationDetailEntity l : tmsB2cDeclareReconciliationDetailEntityList) {
             		costAllocationPool.execute(() -> {
             			try {
-            				transferDeclareService.singPushAllocation(l.getSourceId() , l.getConfirmDate().format(formatter) , Arrays.asList(l));
+            				transferDeclareService.singPushAllocation(l.getSourceId() , l.getApproveDate().format(formatter) , Arrays.asList(l));
     					} catch (Exception e) {
     						WarnMsgInfoDTO warnMsgInfo = new WarnMsgInfoDTO();
     				        warnMsgInfo.setBizName("自动生成中转分摊");

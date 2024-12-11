@@ -191,6 +191,11 @@ public class TmsB2cDeclareReconciliationDetailEntity extends BaseEntity<TmsB2cDe
     @TableField(exist = false)
     private List<TmsCostDetailDTO.UpdateDTO> updateList;
 
+    /**
+     * 主表审核日期
+     */
+    @TableField(exist = false)
+    private LocalDate approveDate;
 
     public static final String MAIN_ID = "main_id";
 

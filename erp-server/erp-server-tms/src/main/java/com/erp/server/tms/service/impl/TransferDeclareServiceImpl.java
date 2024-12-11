@@ -1278,7 +1278,7 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
 						}else {
 							transferDeclareCostAllocationDetailEntity.setAllocatedAmount(costValueSum.subtract(addTransferDeclareCostAllocationDetailEntityList.stream()
 									.filter(a -> a.getFeeType().equals(feeType)).map(TransferDeclareCostAllocationDetailEntity::getAllocatedAmount).reduce(BigDecimal::add).orElse(BigDecimal.ZERO)).setScale(2, RoundingMode.DOWN));
-							transferDeclareCostAllocationDetailEntity.setAllocatedAmountExchange(costValueSum.subtract(addTransferDeclareCostAllocationDetailEntityList.stream()
+							transferDeclareCostAllocationDetailEntity.setAllocatedAmountExchange(transferDeclareCostAllocationDetailEntity.getBillAmountExchange().subtract(addTransferDeclareCostAllocationDetailEntityList.stream()
 									.filter(a -> a.getFeeType().equals(feeType)).map(TransferDeclareCostAllocationDetailEntity::getAllocatedAmountExchange).reduce(BigDecimal::add).orElse(BigDecimal.ZERO)).setScale(2, RoundingMode.DOWN));
 						}
 						transferDeclareCostAllocationDetailEntity.setProductAllocatedAmount(transferDeclareCostAllocationDetailEntity.getAllocatedAmount()

@@ -91,7 +91,7 @@ public class SmallBagCostAllocationJob {
         CfgSettingValueDTO.ReconciliationCycleDTO dto = BeanUtil.toBean(cfgSettingEntity.getDataJson(), CfgSettingValueDTO.ReconciliationCycleDTO.class);
         Integer packageAllocationDate = dto.getPackageAllocationDate();
         int dayOfMonth = currentDateTime.getDayOfMonth();
-        if(packageAllocationDate != null && dayOfMonth > packageAllocationDate) {
+        if(packageAllocationDate != null && dayOfMonth >= packageAllocationDate) {
         	LocalDateTime startTime = null;
         	LocalDateTime endTime = null;
         	//自然月生成
