@@ -14,14 +14,13 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
 @Scope("prototype")
-public class AntuInventoryRocketMQTaskHandler extends DmpOutputRocketMQTaskHandler {
+public class DmpOutputAliExpressInventoryRocketMQTaskHandler extends DmpOutputRocketMQTaskHandler {
 
     @Override
     public Map<String, String> getPushJsonDataMap(DmpOutputTaskRequest dmpRequest, DmpOutputTaskResponse dmpResponse) {

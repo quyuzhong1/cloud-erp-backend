@@ -1,15 +1,16 @@
 package com.common.business.dto;
 
-import com.alibaba.fastjson.annotation.JSONField;
 import com.common.business.enums.OmsPlatformEnum;
 import com.common.business.enums.WarehousePlatformTypeEnum;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
-import net.sf.cglib.core.Local;
 
+import java.io.Serializable;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * 仓库DTO 所有平台库存数据通用数据，转换为此类后发送mq统一消费处理
@@ -89,4 +90,32 @@ public class PlatformInventoryDTO extends UniqueDto {
      * 数据下载时间
      */
     private LocalDateTime downloadTime;
+
+    /**
+     * 库龄信息
+     */
+    private List<PlatformInventoryAgeDTO> ageInfoList;
+
+
+    /**
+     * 库存信息
+     */
+    @Data
+    @NoArgsConstructor
+    public static class PlatformInventoryAgeDTO implements Serializable {
+
+        /**
+         * 在库库存
+         */
+        private Integer inventoryQty;
+        /**
+         * 上架日期
+         */
+        private LocalDate putAwayDate;
+        /**
+         * 拉取日期
+         */
+        private LocalDate pullDate;
+    }
+
 }

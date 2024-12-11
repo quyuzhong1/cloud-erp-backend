@@ -2,7 +2,10 @@ package com.sdk.wms.goodcang.service;
 
 
 import cn.hutool.json.JSONUtil;
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.TypeReference;
 import com.common.business.threadlocal.ThirdWarehouseContext;
+import com.sdk.wms.goodcang.constants.GoodCangConstants;
 import com.sdk.wms.goodcang.dto.request.*;
 import com.sdk.wms.goodcang.dto.response.*;
 import com.sdk.wms.goodcang.enums.GoodCangEnums;
@@ -14,6 +17,7 @@ import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import javax.annotation.Resource;
+import javax.validation.Valid;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -215,6 +219,30 @@ public class GoodCangServiceTest {
         GoodCangResponse<List<GoodCangReturnInstockResp>> response = goodCangService.getReturnInstock(goodCangGetReturnInstockReq);
         System.out.println(response);
         System.out.println(JSONUtil.toJsonStr(response.getData()));
+    }
+    @Test
+    public void getCalculateDeliveryFeeTest() {
+        GoodCangCalculateDeliveryFeeReq deliveryFeeReq = GoodCangCalculateDeliveryFeeReq
+                .builder()
+                .warehouseCode("USWE")
+                .countryCode("US")
+                .postcode("33178")
+                .weight(1F)
+                .build();
+        GoodCangResponse<List<GoodCangCalculateDeliveryFeeResp>> response = goodCangService.getCalculateDeliveryFee(deliveryFeeReq);
+        System.out.println(response);
+        System.out.println(JSONUtil.toJsonStr(response.getData()));
+    }
+
+
+    @Test
+    public void getInventoryAgeList() {
+        Map<Object, Object> hashMap = new HashMap<>();
+        hashMap.put("page_size", 200);
+        hashMap.put("page", 2);
+        String json = JSON.toJSONString(hashMap);
+        String response = GoodCangUtils.sendPost(GoodCangConstants.INVENTORY_AGE_LIST,json);
+        System.out.println("结果 :"+ response);
     }
 
 }

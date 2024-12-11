@@ -9,7 +9,7 @@ import java.util.List;
 import javax.annotation.Resource;
 
 import com.common.business.constant.BusinessCommonConstants;
-import com.erp.server.dmp.inout.dto.request.DmpInputApiInitRequest;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
@@ -50,10 +50,13 @@ public class DmpInputGoodCangInitHandler extends DmpInputInitHandler{
 		String typeId = dmpCfgInputEntity.getTypeId();
         DmpCfgApiEntity dmpCfgApiEntity = dmpCfgApiService.getById(typeId);
         String apiType = dmpCfgApiEntity.getApiType();
-        
-        GoodCangGetSkuReq goodCangGetSkuReq = new GoodCangGetSkuReq();
+
+		// 请求页数:默认100
+		int pageSize = checkAndGetPageSize();
+
+		GoodCangGetSkuReq goodCangGetSkuReq = new GoodCangGetSkuReq();
         Integer page = 1;
-        goodCangGetSkuReq.setPageSize(100);
+        goodCangGetSkuReq.setPageSize(pageSize);
         int currTotal = 0;
         List<Object> allResult = new ArrayList<>();
         List<OverseasProviderEntity> overseasProviderEntityList = dmpHandlerCache.getOverseasProviderEntityList(d -> d.getCode().equals(DmpBasicSystemCodeEnum.GOODCANG.getCode()));
@@ -111,5 +114,22 @@ public class DmpInputGoodCangInitHandler extends DmpInputInitHandler{
 		dmpInputTaskInitDTO.setMsg(parseArray.toJSONString());
 		return Collections.singletonList(dmpInputTaskInitDTO);
 	}
-	
+
+	/**
+	 * 解析请求页数:默认100
+	 */
+	private int checkAndGetPageSize() {
+		if (StringUtils.isNotBlank(dmpCfgInputEntity.getExtendJson())){
+			// 配置指定数量
+			JSONObject jsonObject = JSON.parseObject(dmpCfgInputEntity.getExtendJson());
+			if (null != jsonObject){
+				Integer cfgPageSize = jsonObject.getInteger("pageSize");
+				if (null != cfgPageSize){
+					return cfgPageSize;
+				}
+			}
+		}
+		return 100;
+	}
+
 }
