@@ -1,8 +1,11 @@
 package com.erp.model.tms.dto;
 
+import com.common.business.dto.AdvanceQueryDTO;
+import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.UnitEnum;
 import com.common.core.enums.CurrencyEnum;
 import com.common.core.exception.ServiceException;
+import com.erp.model.tms.enums.LogisticsSupplierTypeEnum;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -15,6 +18,7 @@ import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 
 /**
  * <p>
@@ -28,6 +32,56 @@ import java.util.List;
 @NoArgsConstructor
 public class LogisticsChannelDTO implements Serializable {
 
+    @Data
+    @NoArgsConstructor
+    public static class PagingParamDTO extends SortDTO {
+
+        /**
+         * 页面高级查询
+         */
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
+
+        /**
+         * sqlMap 默认key default
+         */
+        private Map<String,String> sqlMap;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class PagingViewDTO {
+        /**
+         * id
+         */
+        private String id;
+
+        /**
+         * 物流商名
+         */
+        private String name;
+        /**
+         * 物流商简称
+         */
+        private String shortName;
+
+        /**
+         * 类型
+         */
+        private LogisticsSupplierTypeEnum type;
+
+        /**
+         * 类型名称
+         */
+        private String typeName;
+        /**
+         * 渠道id
+         */
+        private String channelId;
+        /**
+         * 渠道名称
+         */
+        private String channelName;
+    }
 
     /**
      * 基础信息
@@ -57,6 +111,16 @@ public class LogisticsChannelDTO implements Serializable {
          * 物流商名
          */
         private String logisticsSupplierName;
+
+        /**
+         * 物流类型
+         */
+        private String logisticsType;
+
+        /**
+         * 物流类型名称
+         */
+        private String logisticsTypeName;
 
         private String logisticsSupplierId;
         private String supplierId;

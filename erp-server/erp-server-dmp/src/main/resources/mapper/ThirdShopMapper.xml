@@ -74,15 +74,15 @@
 
 
     <select id="pagingSelect" resultType="com.erp.model.dmp.dto.ThirdShopDTO$PageSelectDTO">
-        select id,infoId, code, name from (
+        select id,infoId, code, name,disabled from (
         select
         ts.shop_id as id,
         ts.id as infoId,
         ts.code,
-        ts.name
+        ts.name,
+        ts.disabled
         from third_shop ts
         where  ts.is_deleted = FALSE
-        and ts.disabled=false
         <if test="params.sysType!=null and params.sysType!=''">
             and ts.sys_type = #{params.sysType}
         </if>
