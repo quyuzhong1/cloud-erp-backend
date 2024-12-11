@@ -220,6 +220,7 @@ public class LingxingApiUtils {
     /**
      * 获取领星店铺列表
      */
+    @Deprecated
     public static List<ShopInfoDTO> getAllShopList() {
         Result<Object> result = LingxingApiUtils.getAndSign(LingxingApiUtils.SHOP_LIST_URI, new TreeMap<>());
         if (!"0".equalsIgnoreCase(result.getCode())) {

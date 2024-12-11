@@ -158,4 +158,9 @@ public class RocketMqNewTag {
      */
     public static final String DMP_PLATFORM_REFUND_ORDER_TO_OMS_TAG = "${spring.cloud.nacos.discovery.namespace}-dmp_platform_refund_order_to_oms_tag";
 
+
+    /**
+     * 新中台领星多平台店铺
+     */
+    public static final String DMP_LX_SELLER_SHOP_TO_DMP_TAG = "${spring.cloud.nacos.discovery.namespace}-dmp_lx_seller_shop_to_dmp_tag";
 }
