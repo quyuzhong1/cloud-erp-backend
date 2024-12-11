@@ -170,9 +170,9 @@ public class MouldInfoServiceImpl extends SuperServiceImpl<MouldInfoMapper, Moul
         MouldInfoEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到模具数据"));
         MouldInfoDTO.ViewDTO viewDTO = BeanMapperUtils.map(MouldInfoDTO.ViewDTO.class, entity);
         List<MouldDetailDTO.ViewDTO> mouldDetailList = mouldDetailService.listByMouldId(id);
-        viewDTO.setMouldDetailList(mouldDetailList);
+        viewDTO.setDetailList(mouldDetailList);
         List<MouldDocInfoDTO.ViewDTO> mouldDocInfoList = mouldDocInfoService.listByMouldId(id);
-        viewDTO.setMouldDocInfoList(mouldDocInfoList);
+        viewDTO.setDocList(mouldDocInfoList);
         return viewDTO;
     }
 
