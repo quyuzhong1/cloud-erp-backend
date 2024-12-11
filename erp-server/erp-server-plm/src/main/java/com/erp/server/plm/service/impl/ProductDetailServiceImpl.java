@@ -7,6 +7,7 @@ import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.excel.exception.ExcelCommonException;
+import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -5107,10 +5108,23 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
     @Override
     public BatchResultDTO updateProductPack(ProductPackViewDTO viewDTO) {
+        //校验 【箱规-长宽高】必须大于等于【包装尺寸-长宽高】【为空则忽略不校验】【长，宽，高分开校验】
+        checkSizeAndWeight(viewDTO);
         ProductPackEntity entity = new ProductPackEntity();
         BeanUtils.copyProperties(viewDTO, entity);
         productPackService.saveOrUpdate(entity);
         return BatchResultDTO.success(viewDTO.getSkuId(), viewDTO.getSkuNo(), "操作成功");
+    }
+
+
+    private void checkSizeAndWeight(ProductPackViewDTO productPackDTO) {
+        if (ObjectUtils.isNotEmpty(productPackDTO)) {
+            compareDimensions(productPackDTO.getBoxLength(), productPackDTO.getProductLength(), ApiError.ERROR_LENGTH_BOX_LITTER_THAN_PRODUCT);
+            compareDimensions(productPackDTO.getBoxWidth(), productPackDTO.getProductWidth(), ApiError.ERROR_WIDTH_BOX_LITTER_THAN_PRODUCT);
+            compareDimensions(productPackDTO.getBoxHeight(), productPackDTO.getProductHeight(), ApiError.ERROR_HEIGHT_BOX_LITTER_THAN_PRODUCT);
+            //毛重大于等于净重
+            compareDimensions(productPackDTO.getGrossWeight(), productPackDTO.getNetWeight(), ApiError.ERROR_WEIGHT_GROSS_LITTER_THAN_NET);
+        }
     }
 
     /**
