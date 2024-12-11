@@ -50,6 +50,8 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static com.common.business.enums.FileTaskEventEnum.*;
+
 /**
  * <p>
  * 模具主表 服务实现类
@@ -457,7 +459,7 @@ public class MouldInfoServiceImpl extends SuperServiceImpl<MouldInfoMapper, Moul
 
     @Override
     public void export(MouldInfoDTO.PagingParamDTO dto) {
-        downloadTaskFeign.saveDownloadTask("", null, dto);
+        downloadTaskFeign.saveDownloadTask("模具管理导出", EXPORT_PLM_MOULD_INFO.getCode(), dto);
     }
 
     @Override
@@ -568,7 +570,7 @@ public class MouldInfoServiceImpl extends SuperServiceImpl<MouldInfoMapper, Moul
 
     @Override
     public void orderTrackingExport(MouldInfoDTO.PagingParamDTO dto) {
-
+        downloadTaskFeign.saveDownloadTask("下单跟踪导出", EXPORT_PLM_ORDER_TRACKING.getCode(), dto);
     }
 
     @Override
@@ -583,6 +585,6 @@ public class MouldInfoServiceImpl extends SuperServiceImpl<MouldInfoMapper, Moul
 
     @Override
     public void orderTrackingDetailExport(MouldInfoDTO.OrderTrackingDetailParamDTO dto) {
-
+        downloadTaskFeign.saveDownloadTask("下单跟踪明细导出", EXPORT_PLM_ORDER_TRACKING_DETAIL.getCode(), dto);
     }
 }

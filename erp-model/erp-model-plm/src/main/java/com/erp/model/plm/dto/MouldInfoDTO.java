@@ -6,6 +6,7 @@ import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.ServiceCodeNameEnum;
 import com.erp.model.plm.enums.MouldRefundStatusEnum;
+import com.erp.model.plm.enums.RefundStandardEnum;
 import lombok.*;
 
 import javax.validation.Valid;
@@ -236,13 +237,13 @@ public class MouldInfoDTO implements Serializable {
          * 模具明细
          */
         @Dict
-        private List<MouldDetailDTO.ViewDTO> mouldDetailList;
+        private List<MouldDetailDTO.ViewDTO> detailList;
 
         /**
          * 文档明细
          */
         @Dict
-        private List<MouldDocInfoDTO.ViewDTO> mouldDocInfoList;
+        private List<MouldDocInfoDTO.ViewDTO> docList;
     }
 
     /**
@@ -437,11 +438,13 @@ public class MouldInfoDTO implements Serializable {
         /**
          * 结算方式
          */
+        @Dict(serviceCode = ServiceCodeNameEnum.SCM, queryFieldName = "id")
         private String payMethodId;
 
         /**
          * 付款条件
          */
+        @Dict(serviceCode = ServiceCodeNameEnum.SCM, tableName = "kingdee_payment_condition", queryFieldName = "id")
         private String paymentCondition;
 
         /**
@@ -466,6 +469,7 @@ public class MouldInfoDTO implements Serializable {
         /**
          * 返还标准
          */
+        @Dict(enumClass = RefundStandardEnum.class)
         private String refundStandard;
 
         /**
@@ -651,5 +655,333 @@ public class MouldInfoDTO implements Serializable {
          * 入库数量
          */
         private Integer stockInQty;
+    }
+
+    @Getter
+    @Setter
+    public static class MouldInfoExportDTO {
+
+        /**
+         * 项目编号
+         */
+        private String projectNo;
+
+        /**
+         * 项目名称
+         */
+        private String name;
+        /**
+         * 模具编号
+         */
+        private String mouldNo;
+
+        /**
+         * 外部模具编号(供应商)
+         */
+        private String thirdMouldNo;
+        /**
+         * 状态
+         */
+        private String statusName;
+
+        /**
+         * 状态
+         */
+        private String status;
+
+        /**
+         * 模具类型
+         */
+        private String typeId;
+
+        /**
+         * 类型名
+         */
+        private String typeName;
+        /**
+         * 模具穴数
+         */
+        private String mouldHoles;
+
+        /**
+         * 产品名称
+         */
+        private String productName;
+
+        /**
+         * 图片地址
+         */
+        private List<String> imagesUrl;
+
+        /**
+         * 模具长
+         */
+        private BigDecimal length;
+
+        /**
+         * 模具宽
+         */
+        private BigDecimal width;
+
+        /**
+         * 模具高
+         */
+        private BigDecimal height;
+
+        /**
+         * 模具材质
+         */
+        private String material;
+
+        /**
+         * 模具寿命(万)(啤)
+         */
+        private Integer lifeCycle;
+
+        /**
+         * 开模周期(自然日)
+         */
+        private Integer developCycle;
+
+        /**
+         * 启用时间
+         */
+        private LocalDate enableDate;
+
+        /**
+         * 供应商id
+         */
+        private String supplierId;
+
+        /**
+         * 供应商名称
+         */
+        private String supplierName;
+        /**
+         * 仓库id
+         */
+        private String warehouseId;
+        /**
+         * 仓库名字
+         */
+        private String warehouseName;
+
+        /**
+         * 库位
+         */
+        private String warehouseLocation;
+
+        /**
+         * 库位名字
+         */
+        private String warehouseLocationName;
+
+        /**
+         * 详细地址
+         */
+        private String address;
+
+        /**
+         * 备注
+         */
+        private String remark;
+
+        /**
+         * 创建人名称
+         */
+        private String createUserName;
+        /**
+         * 修改人名称
+         */
+        private String updateUserName;
+
+        /**
+         * 修改时间
+         */
+        private LocalDateTime updateTime;
+
+    }
+
+
+    @Getter
+    @Setter
+    public static class OrderTrackingExportDTO {
+
+        /**
+         * 项目编号
+         */
+        private String projectNo;
+
+        /**
+         * 项目名称
+         */
+        private String name;
+        /**
+         * 模具编号
+         */
+        private String mouldNo;
+
+        /**
+         * 外部模具编号(供应商)
+         */
+        private String thirdMouldNo;
+        /**
+         * 状态
+         */
+        private String statusName;
+
+        /**
+         * 状态
+         */
+        private String status;
+
+        /**
+         * 供应商id
+         */
+        private String supplierId;
+
+        /**
+         * 供应商名称
+         */
+        private String supplierName;
+        /**
+         * 数量
+         */
+        private Integer qty;
+
+        /**
+         * 含税单价
+         */
+        private BigDecimal taxPrice;
+
+        /**
+         * 税率
+         */
+        private BigDecimal taxRate;
+
+        /**
+         * 结算方式
+         */
+        private String payMethodId;
+
+        /**
+         * 结算方式
+         */
+        private String payMethodName;
+
+        /**
+         * 付款条件
+         */
+        private String paymentCondition;
+
+        /**
+         * 付款条件
+         */
+        private String paymentConditionName;
+
+        /**
+         * 币种
+         */
+        private String currency;
+        /**
+         * 汇率
+         */
+        private BigDecimal exchangeRate;
+
+        /**
+         * skuId
+         */
+        private String skuId;
+
+        /**
+         * skuNo
+         */
+        private String skuNo;
+
+        /**
+         * sku供应商id
+         */
+        private String skuSupplierId;
+
+        /**
+         * 供应商id
+         */
+        private String skuSupplierName;
+
+        /**
+         * 是否费用返还
+         */
+        private Boolean isNeedRefund;
+
+        /**
+         * 返还标准
+         */
+        private String refundStandard;
+
+        /**
+         * 退款单量
+         */
+        private Integer refundOrderQty;
+
+        /**
+         * 返还金额
+         */
+        private BigDecimal refundAmount;
+
+        /**
+         * 费用返还状态
+         */
+        private String refundStatus;
+        /**
+         * 费用返还状态
+         */
+        private String refundStatusName;
+        /**
+         * 采购数量
+         */
+        private Integer purchaseQty;
+        /**
+         * 收货数量
+         */
+        private Integer receiveQty;
+        /**
+         * 入库数量
+         */
+        private Integer stockInQty;
+
+        /**
+         * 差异数量
+         */
+        private Integer diffQty;
+        /**
+         * 修改时间
+         */
+        private LocalDateTime updateTime;
+
+    }
+
+
+    @Getter
+    @Setter
+    public static class OrderTrackingDetailExportDTO {
+
+        /**
+         * 模具编号
+         */
+        private String mouldNo;
+
+        /**
+         * 外部模具编号(供应商)
+         */
+        private String thirdMouldNo;
+        /**
+         * 供应商id
+         */
+        private String mouldSupplierId;
+        /**
+         * 供应商名称
+         */
+        private String mouldSupplierName;
+
     }
 }
