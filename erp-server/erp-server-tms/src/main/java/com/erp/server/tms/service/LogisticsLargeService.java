@@ -77,7 +77,7 @@ public interface LogisticsLargeService extends SuperService<LogisticsLargeEntity
      * @param skuCostAllocationEntityList
      * @return
      */
-    List<BatchResultDTO> generateFirstMileLogistics(List<BatchResultDTO> resultDTOS,
+    BatchResultDTO generateFirstMileLogistics(List<BatchResultDTO> resultDTOS,
                                                     List<FirstMileSkuCostAllocationDetailEntity> skuCostAllocationDetailEntities,
                                                     List<FirstMileDeliveryEntity> deliveryEntities,
                                                     List<FirstMileDeliveryDetailEntity> firstMileDeliveryDetailEntities,
@@ -110,9 +110,13 @@ public interface LogisticsLargeService extends SuperService<LogisticsLargeEntity
      * @Author Luo_WG
      * @Date 2024/12/5 17:16
      * @param smallBagCostAllocationMainEntity
+     * @param costAllocationEntities
+     * @param costAllocationDetailEntityList
+     * @param soOutstockEntity
+     * @param soOutstockDetailEntities
      * @return java.util.List<com.common.business.dto.base.BatchResultDTO>
      **/
-    List<BatchResultDTO> generateSmallBagCostAllocationTable(SmallBagCostAllocationMainEntity smallBagCostAllocationMainEntity);
+    BatchResultDTO generateSmallBagCostAllocationTable(SmallBagCostAllocationMainEntity smallBagCostAllocationMainEntity, List<SmallBagCostAllocationEntity> costAllocationEntities, List<SmallBagCostAllocationDetailEntity> costAllocationDetailEntityList, SoOutstockEntity soOutstockEntity, List<SoOutstockDetailEntity> soOutstockDetailEntities);
 
     /**
      * 中转费用分摊生成物流大表
@@ -132,7 +136,6 @@ public interface LogisticsLargeService extends SuperService<LogisticsLargeEntity
      * @return
      */
     Boolean exportLogisticsLarge(LogisticsLargeDTO.ExportDTO dto);
-
 
 
 }

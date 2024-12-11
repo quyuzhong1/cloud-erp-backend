@@ -264,7 +264,7 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
     }
 
 
-    private BatchResultDTO firstMileLogisticsTableHandler(FirstMileCostAllocationEntity entity, FirstMileSkuCostAllocationEntity firstMileSkuCostAllocationEntity, List<FirstMileSkuCostAllocationDetailEntity> skuCostDetailEntityList, FirstMileDeliveryEntity deliveryEntity, List<FirstMileDeliveryDetailEntity> deliveryDetailEntities) {
+    private void firstMileLogisticsTableHandler(FirstMileCostAllocationEntity entity, FirstMileSkuCostAllocationEntity firstMileSkuCostAllocationEntity, List<FirstMileSkuCostAllocationDetailEntity> skuCostDetailEntityList, FirstMileDeliveryEntity deliveryEntity, List<FirstMileDeliveryDetailEntity> deliveryDetailEntities) {
         List<LogisticsLargeEntity> logisticsLargeEntities = this.listByIdOutstockCode(Arrays.asList(deliveryEntity.getCode()));
 
         //已确认才能下推
@@ -482,12 +482,11 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
 
         //添加
         this.add(addDTO);
-        return BatchResultDTO.success(entity.getId(), entity.getBusinessCode(), OperationTypeEnum.UPDATE_STATUS);
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public List<BatchResultDTO> generateFirstMileLogistics(List<BatchResultDTO> resultDTOS,
+    public BatchResultDTO generateFirstMileLogistics(List<BatchResultDTO> resultDTOS,
                                                            List<FirstMileSkuCostAllocationDetailEntity> skuCostAllocationDetailEntities,
                                                            List<FirstMileDeliveryEntity> deliveryEntities, List<FirstMileDeliveryDetailEntity>
                                                                    firstMileDeliveryDetailEntities, FirstMileCostAllocationEntity entity,
@@ -499,30 +498,20 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
                     .filter(req -> req.getCostMainId().equals(firstMileSkuCostAllocationEntity.getId()))
                     .collect(Collectors.toList());
             if (ObjectUtil.isEmpty(detailEntityList)) {
-                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getSourceCode(), "头程费用SKU分摊明细记录不存在"));
-                continue;
+                throw new ServiceException("头程费用SKU分摊明细记录不存在");
             }
             if (ConfirmStatusEnum.WAIT_CONFIRM.getCode().equals(entity.getStatus())) {
-                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getSourceCode(), "只有已确认的单据可以生成物流大表数据"));
-                continue;
+                throw new ServiceException("只有已确认的单据可以生成物流大表数据");
             }
             FirstMileDeliveryEntity deliveryEntity = deliveryEntities.stream().filter(req -> req.getId().equals(entity.getSourceId())).findFirst().orElse(null);
             if (ObjectUtil.isEmpty(deliveryEntity)) {
-                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getSourceCode(), "未找到关联的头程发货单信息"));
-                continue;
+                throw new ServiceException("未找到关联的头程发货单信息");
             }
             List<FirstMileDeliveryDetailEntity> deliveryDetailEntities = firstMileDeliveryDetailEntities.stream().filter(req -> req.getMainId().equals(deliveryEntity.getId())).collect(Collectors.toList());
 
-            BatchResultDTO result = null;
-            try {
-                result = this.firstMileLogisticsTableHandler(entity, firstMileSkuCostAllocationEntity, detailEntityList, deliveryEntity, deliveryDetailEntities);
-            } catch (Exception e) {
-                log.error("头程费用分摊生成物流大表失败{}", e);
-                result = BatchResultDTO.fail(entity.getId(), entity.getBusinessCode(), e.getMessage());
-            }
-            resultDTOS.add(result);
+            this.firstMileLogisticsTableHandler(entity, firstMileSkuCostAllocationEntity, detailEntityList, deliveryEntity, deliveryDetailEntities);
         }
-        return resultDTOS;
+        return BatchResultDTO.success(entity.getId(), entity.getBusinessCode(), OperationTypeEnum.UPDATE_STATUS);
     }
 
     @Override
@@ -562,7 +551,7 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
      * @Author Luo_WG
      * @Date 2024/12/3 15:37
      **/
-    private BatchResultDTO smallBagCostAllocationHandler(SmallBagCostAllocationMainEntity smallBagCostAllocationMainEntity,
+    private void smallBagCostAllocationHandler(SmallBagCostAllocationMainEntity smallBagCostAllocationMainEntity,
                                                          SmallBagCostAllocationEntity costAllocationEntity,
                                                          List<SmallBagCostAllocationDetailEntity> costAllocationDetailEntities,
                                                          SoOutstockEntity soOutstockEntity,
@@ -823,56 +812,21 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
 
         //修改小包费用分摊生成状态
         smallBagCostAllocationMainService.updateBigTableStatus(smallBagCostAllocationMainEntity.getId(), SmallBagCostAllocationBigTableStatusEnum.DONE.getCode());
-        return BatchResultDTO.success(smallBagCostAllocationMainEntity.getId(), addDTO.getOutstockCode(), OperationTypeEnum.ADD);
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public List<BatchResultDTO> generateSmallBagCostAllocationTable(SmallBagCostAllocationMainEntity smallBagCostAllocationMainEntity) {
-        List<BatchResultDTO> resultDTOS = new ArrayList<>();
+    public BatchResultDTO generateSmallBagCostAllocationTable(SmallBagCostAllocationMainEntity mainEntity, List<SmallBagCostAllocationEntity> costAllocationEntityList, List<SmallBagCostAllocationDetailEntity> costAllocationDetailEntityList, SoOutstockEntity soOutstockEntity, List<SoOutstockDetailEntity> soOutstockDetailEntities) {
+        for (SmallBagCostAllocationEntity costAllocationEntity : costAllocationEntityList) {
+            List<SmallBagCostAllocationDetailEntity> costAllocationDetailEntities = costAllocationDetailEntityList.stream()
+                    .filter(req -> req.getMainId().equals(costAllocationEntity.getId()))
+                    .collect(Collectors.toList());
 
-        List<SmallBagCostAllocationEntity> entityList = smallBagCostAllocationService.lambdaQuery().eq(SmallBagCostAllocationEntity::getMainId, smallBagCostAllocationMainEntity.getId()).list();
-        List<String> ids = entityList.stream().map(req -> req.getId()).collect(Collectors.toList());
-        List<SmallBagCostAllocationDetailEntity> smallBagCostAllocationDetailEntities = smallBagCostAllocationDetailService.listByMainIds(ids);
-
-        //销售出库单
-        List<String> outstockDetailIds = entityList.stream().map(req -> req.getOutstockDetailId()).distinct().collect(Collectors.toList());
-        List<SoOutstockDetailEntity> soOutstockDetailList = new ArrayList<>();
-        if (CollUtil.isNotEmpty(outstockDetailIds)) {
-            soOutstockDetailList = FeignQuery.create(SoOutstockDetailEntity.class).in(SoOutstockDetailEntity::getId, outstockDetailIds).list();
-        }
-        List<String> outstockIds = soOutstockDetailList.stream().map(req -> req.getMainId()).distinct().collect(Collectors.toList());
-        List<SoOutstockEntity> soOutstockEntitylList = new ArrayList<>();
-        if (CollUtil.isNotEmpty(outstockIds)) {
-            soOutstockEntitylList = FeignQuery.create(SoOutstockEntity.class).in(SoOutstockEntity::getId, outstockIds).list();
+            SoOutstockDetailEntity soOutstockDetailEntity = soOutstockDetailEntities.stream().filter(req -> req.getId().equals(costAllocationEntity.getOutstockDetailId())).findFirst().orElse(null);
+            this.smallBagCostAllocationHandler(mainEntity, costAllocationEntity, costAllocationDetailEntities, soOutstockEntity, soOutstockDetailEntity);
         }
 
-        for (SmallBagCostAllocationEntity costAllocationEntity : entityList) {
-            SoOutstockDetailEntity soOutstockDetailEntity = soOutstockDetailList.stream().filter(req -> req.getId().equals(costAllocationEntity.getOutstockDetailId())).findFirst().orElse(null);
-            if (ObjectUtil.isEmpty(soOutstockDetailEntity)) {
-                resultDTOS.add(BatchResultDTO.fail(costAllocationEntity.getId(), costAllocationEntity.getId(), "未找到销售出库单详情信息！"));
-            }
-            SoOutstockEntity soOutstockEntity = soOutstockEntitylList.stream().filter(req -> req.getId().equals(soOutstockDetailEntity.getMainId())).findFirst().orElse(null);
-            if (ObjectUtil.isEmpty(soOutstockEntity)) {
-                resultDTOS.add(BatchResultDTO.fail(costAllocationEntity.getId(), costAllocationEntity.getId(), "未找到销售出库单主表信息！"));
-            }
-
-            List<SmallBagCostAllocationDetailEntity> costAllocationDetailEntities = smallBagCostAllocationDetailEntities.stream().filter(req -> req.getMainId().equals(costAllocationEntity.getId())).collect(Collectors.toList());
-            if (CollUtil.isEmpty(costAllocationDetailEntities)) {
-                resultDTOS.add(BatchResultDTO.fail(costAllocationEntity.getId(), soOutstockEntity.getCode() + " 产品编码" + soOutstockDetailEntity.getSkuNo(), "未找到小包费用分摊明细信息！"));
-            }
-
-            BatchResultDTO result = null;
-            try {
-                result = this.smallBagCostAllocationHandler(smallBagCostAllocationMainEntity, costAllocationEntity, costAllocationDetailEntities, soOutstockEntity, soOutstockDetailEntity);
-            } catch (Exception e) {
-                log.error("小包费用分摊生成物流大表失败{}", e);
-                result = BatchResultDTO.fail(costAllocationEntity.getId(), soOutstockEntity.getCode() + " 产品编码" + soOutstockDetailEntity.getSkuNo(), e.getMessage());
-            }
-            resultDTOS.add(result);
-        }
-
-        return resultDTOS;
+        return BatchResultDTO.success(mainEntity.getId(), soOutstockEntity.getCode(), OperationTypeEnum.ADD);
     }
 
     /**
@@ -912,12 +866,17 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
                                                               SoOutstockEntity soOutstockEntity) {
 
         for (TransferDeclareCostAllocationEntity entity : costAllocationEntityList) {
-            generateTransferCostAllocationHandler(mainEntity, entity, costAllocationDetailEntityList, reconciliationEntity, reconciliationDetailEntity, soOutstockEntity);
+            List<TransferDeclareCostAllocationDetailEntity> costAllocationDetailEntities = costAllocationDetailEntityList.stream()
+                    .filter(req -> req.getMainId().equals(entity.getId()))
+                    .collect(Collectors.toList());
+
+            //处理数据
+            this.generateTransferCostAllocationHandler(mainEntity, entity, costAllocationDetailEntities, reconciliationEntity, reconciliationDetailEntity, soOutstockEntity);
         }
         return BatchResultDTO.success(mainEntity.getId(), soOutstockEntity.getCode(), OperationTypeEnum.ADD);
     }
 
-    private BatchResultDTO generateTransferCostAllocationHandler(TransferDeclareCostAllocationMainEntity mainEntity,
+    private void generateTransferCostAllocationHandler(TransferDeclareCostAllocationMainEntity mainEntity,
                                                                  TransferDeclareCostAllocationEntity entity,
                                                                  List<TransferDeclareCostAllocationDetailEntity> detailEntityList,
                                                                  TmsB2cDeclareReconciliationEntity declareReconciliationEntity,
@@ -1138,7 +1097,6 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
 
         //更新中转费用分摊生成大表状态
         transferDeclareCostAllocationMainService.updateBigTableStatus(mainEntity.getId(), SmallBagCostAllocationBigTableStatusEnum.DONE.getCode());
-        return BatchResultDTO.success(mainEntity.getId(), addDTO.getOutstockCode(), OperationTypeEnum.ADD);
     }
 
     @Override
