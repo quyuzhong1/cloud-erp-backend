@@ -88,7 +88,10 @@ public class VirtualInventoryAgeDTO implements Serializable {
          * 库龄计算差异
          */
         private Boolean isDiff;
-
+        /**
+         * 统计日期
+         */
+        private LocalDate date;
         /**
          * 区间信息
          */
@@ -132,6 +135,11 @@ public class VirtualInventoryAgeDTO implements Serializable {
          * sqlMap 默认key default
          */
         private Map<String,String> sqlMap;
+
+        /**
+         * 日期
+         */
+        private LocalDate date;
     }
 
     @Data
@@ -185,9 +193,9 @@ public class VirtualInventoryAgeDTO implements Serializable {
         private LocalDate date;
 
         /**
-         * 日期集合（前端无需传值）
+         * 区间集合（前端无需传值）
          */
-        private List<LocalDate> dateList;
+        private List<Integer> daysList;
     }
 
     @Data
@@ -390,6 +398,8 @@ public class VirtualInventoryAgeDTO implements Serializable {
         private LocalDateTime updateTime;
     }
 
+
+
     /**
      *  历史库龄明细库存数据
      * @author will
@@ -399,9 +409,30 @@ public class VirtualInventoryAgeDTO implements Serializable {
     @NoArgsConstructor
     public static class viewHisInventoryAgeDetailDTO {
         /**
+         * skuId
+         */
+        private String skuId;
+        /**
+         * 仓库id
+         */
+        private String warehouseId;
+        /**
+         * 虚拟仓id
+         */
+        private String virtualWarehouseId;
+        /**
          * 日期
          */
         private LocalDate date;
+
+        /**
+         * 批次剩余数量
+         */
+        private Integer qty;
+        /**
+         * 平均库龄（天）
+         */
+        private BigDecimal avgInventoryAgeDays;
         /**
          * 平均库龄（天）(去零)
          */

@@ -1,6 +1,6 @@
 package com.erp.server.wms.schedule;
 
-import com.erp.server.wms.service.VirtualInventoryHisService;
+import com.erp.server.wms.service.VirtualInventoryDetailHisService;
 import com.erp.server.wms.service.WmsVirtualDetailMsgService;
 import com.xxl.job.core.biz.model.ReturnT;
 import com.xxl.job.core.context.XxlJobHelper;
@@ -24,7 +24,7 @@ public class WmsVirtualDetailMsgJob {
     private WmsVirtualDetailMsgService wmsVirtualDetailMsgService;
 
     @Resource
-    private VirtualInventoryHisService virtualInventoryHisService;
+    private VirtualInventoryDetailHisService virtualInventoryDetailHisService;
     /**
      * 虚拟仓明细任务
      * @author will
@@ -52,7 +52,8 @@ public class WmsVirtualDetailMsgJob {
     public ReturnT<String> hisVirtualInventoryJob() {
         XxlJobHelper.log("=====自动执行生成虚拟仓批次流水 开始任务=====");
         long start = System.currentTimeMillis();
-        virtualInventoryHisService.hisVirtualInventoryJob();
+        String jobParam = XxlJobHelper.getJobParam();
+        virtualInventoryDetailHisService.hisVirtualInventoryJob(jobParam);
         long end = System.currentTimeMillis();
         XxlJobHelper.log("主线程花费时间：{}", (end - start));
         XxlJobHelper.log("=====自动执行生成虚拟仓批次流水 结束任务=====");

@@ -1,9 +1,8 @@
 package com.erp.server.wms.mapper;
-import com.erp.model.wms.dto.VirtualInventoryAgeDTO;
+
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.erp.model.wms.dto.VirtualInventoryHisDTO;
 import com.erp.model.wms.entity.VirtualInventoryHisEntity;
-import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -17,32 +16,35 @@ import java.util.List;
  * </p>
  *
  * @author will
- * @since 2024-12-03
+ * @since 2024-12-10
  */
 @Mapper
 public interface VirtualInventoryHisMapper extends BaseMapper<VirtualInventoryHisEntity> {
     /**
-     * 根据paramDTO参数查询
+     * 查询每日库存结余数据
      * @author will
-     * @date 2024/12/6 11:52
-     * @param paramDTO
+     * @date 2024/12/11 10:12
+     * @return List<AddDTO>
+     */
+    List<VirtualInventoryHisDTO.AddDTO> listVirtualInventoryHis(@Param("localDate") LocalDate localDate);
+    /**
+     * 根据关联id和日期查询
+     * @author will
+     * @date 2024/12/11 11:13
+     * @param virtualInventoryIdList
+     * @param dateList
      * @return List<VirtualInventoryHisEntity>
      */
-    List<VirtualInventoryHisEntity> listByParam(@Param("params") VirtualInventoryHisDTO.ParamDTO paramDTO);
+    List<VirtualInventoryHisEntity> listByVirtualInventoryIdList(@Param("virtualInventoryIdList")List<String> virtualInventoryIdList,@Param("dateList") List<LocalDate> dateList);
     /**
-     * 查询虚拟仓历史数据
+     * 根据sku、仓库、虚拟仓、快照日期查询库存
      * @author will
-     * @date 2024/12/9 19:55
-     * @param date 
-     * @return List<VirtualInventoryHisEntity>
+     * @date 2024/12/11 12:20
+     * @param skuIdList
+     * @param warehouseIdList
+     * @param virtualWarehouseIdList
+     * @param localDate
+     * @return List<VirtualQtyDTO>
      */
-    List<VirtualInventoryHisEntity> listVirtualInventoryHisJobData(@Param("date")LocalDate date);
-    /**
-     * 查询历史平均库龄数据
-     * @author will
-     * @date 2024/12/10 17:36
-     * @param dto
-     * @return viewHisInventoryAgeDetailDTO
-     */
-    VirtualInventoryAgeDTO.viewHisInventoryAgeDetailDTO getHisInventoryAgeDetail(@Param("dto") VirtualInventoryAgeDTO.HisInventoryAgeDetailParamDTO dto);
+    List<VirtualInventoryHisDTO.VirtualQtyDTO> listInventoryQty(@Param("skuIdList")List<String> skuIdList,@Param("warehouseIdList") List<String> warehouseIdList,@Param("virtualWarehouseIdList") List<String> virtualWarehouseIdList,@Param("localDate")LocalDate localDate);
 }

@@ -72,7 +72,7 @@ public class VirtualInventoryAgeController extends BaseController {
 
 
     /**
-     * 列表导出excel
+     * 分页列表导出excel
      * @author will
      * @date 2024/12/3 18:02
      * @param dto

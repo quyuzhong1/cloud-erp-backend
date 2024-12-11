@@ -1,11 +1,10 @@
 package com.erp.server.wms.service;
-
-import com.common.business.dto.base.BaseResultDTO;
-import com.common.business.service.SuperService;
-import com.erp.model.wms.dto.VirtualInventoryAgeDTO;
-import com.erp.model.wms.dto.VirtualInventoryHisDTO;
 import com.erp.model.wms.entity.VirtualInventoryHisEntity;
+import com.common.business.service.SuperService;
+import com.common.business.dto.base.*;
+import com.erp.model.wms.dto.VirtualInventoryHisDTO;
 
+import java.time.LocalDate;
 import java.util.List;
 
 /**
@@ -14,48 +13,34 @@ import java.util.List;
  * </p>
  *
  * @author will
- * @since 2024-12-03
+ * @since 2024-12-10
  */
 public interface VirtualInventoryHisService extends SuperService<VirtualInventoryHisEntity> {
 
     /**
     * 新增
     * @author will
-    * @date: 2024-12-03
+    * @date: 2024-12-10
     * @param dto
     * @return
     */
-    BaseResultDTO.AddDTO add(VirtualInventoryHisDTO.AddDTO dto);
+    BaseResultDTO.AddDTO addOrUpdate(VirtualInventoryHisDTO.AddDTO dto);
+
 
     /**
-    * 修改
-    * @author will
-    * @date: 2024-12-03
-    * @param dto
-    * @return
-    */
-    Boolean update(VirtualInventoryHisDTO.UpdateDTO dto);
-
-    /**
-     * 根据paramDTO参数查询
+     * 查询结余库存
      * @author will
-     * @date 2024/12/6 11:50
-     * @param paramDTO
-     * @return List<VirtualInventoryHisEntity>
+     * @date 2024/12/11 10:04
+     * @param skuIdList
+     * @param warehouseIdList
+     * @param virtualWarehouseIdList
+     * @return List<VirtualInventoryHisDTO.VirtualQtyDTO>
      */
-    List<VirtualInventoryHisEntity> listByParam(VirtualInventoryHisDTO.ParamDTO paramDTO);
+    List<VirtualInventoryHisDTO.VirtualQtyDTO> listInventoryQty(List<String> skuIdList, List<String> warehouseIdList, List<String> virtualWarehouseIdList,LocalDate localDate);
     /**
-     * 历史库存任务保存
+     * 添加虚拟仓每日库存结余
      * @author will
-     * @date 2024/12/9 19:23
+     * @date 2024/12/11 10:09
      */
-    void hisVirtualInventoryJob();
-    /**
-     * 详情历史库龄明细
-     * @author will
-     * @date 2024/12/10 17:35
-     * @param dto
-     * @return viewHisInventoryAgeDetailDTO
-     */
-    VirtualInventoryAgeDTO.viewHisInventoryAgeDetailDTO getHisInventoryAgeDetail(VirtualInventoryAgeDTO.HisInventoryAgeDetailParamDTO dto);
+    void addVirtualInventoryHis(LocalDate localDate);
 }

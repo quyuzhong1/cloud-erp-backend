@@ -40,49 +40,56 @@
 
     <!-- 分页查询 -->
     <select id="paging" resultType="com.erp.model.wms.dto.VirtualInventoryAgeDTO$ListDTO">
-        WITH VirtualInventory AS (
-        SELECT
-            sku_id,
-            warehouse_id,
-            virtual_warehouse_id,
-            SUM(qty) AS virtualQty,
-            SUM(CASE WHEN dict_inventory_status = 'usable' THEN qty ELSE 0 END) AS virtualUsableQty,
-            SUM(CASE WHEN dict_inventory_status = 'frozen' THEN qty ELSE 0 END) AS virtualFrozenQty
-            FROM
-            virtual_inventory
-            WHERE
-            is_deleted = false
-            GROUP BY
-            sku_id, warehouse_id, virtual_warehouse_id
-        ),
-        VirtualInventoryHis AS (
+        WITH virtualInventoryDetailHis AS (
             select
-            sku_id,
-            warehouse_id,
-            virtual_warehouse_id,
-            sum(qty * avg_inventory_age_days) / count(0) as avgInventoryQty
-            from virtual_inventory_his
-            where is_deleted = false
-            group by sku_id,warehouse_id,virtual_warehouse_id
+                max(vidh.date),
+                vid.sku_id,
+                vid.warehouse_id,
+                vid.virtual_warehouse_id,
+                sum(vidh.wait_qty * vidh.inventory_age_days) as backInventoryAgeQty,
+                sum(vidh.qty * vidh.inventory_age_days) as inventoryAgeQty
+            from virtual_inventory_detail_his vidh
+            left join virtual_inventory_detail vid on vidh.virtual_inventory_detail_id = vid.id and vid.is_deleted = false
+            where vidh.is_deleted = false and vidh.date = #{dto.date}
+            group by vid.sku_id,vid.warehouse_id,vid.virtual_warehouse_id
+        ),VirtualInventoryHis AS (
+        SELECT
+                max(vih.date),
+                vi.sku_id,
+                vi.warehouse_id,
+                vi.virtual_warehouse_id,
+                SUM(vih.qty) AS virtualQty,
+                SUM(CASE WHEN vi.dict_inventory_status = 'usable' THEN vih.qty ELSE 0 END) AS virtualUsableQty,
+                SUM(CASE WHEN vi.dict_inventory_status = 'frozen' THEN vih.qty ELSE 0 END) AS virtualFrozenQty
+            FROM
+            virtual_inventory_his vih
+            left join virtual_inventory vi on vih.virtual_inventory_id = vi.id and vi.is_deleted = false
+            WHERE
+            vih.is_deleted = false and vih.date = #{dto.date}
+            GROUP BY
+            vi.sku_id, vi.warehouse_id, vi.virtual_warehouse_id
         )
         select
-            vi.sku_id as skuId,
+            vidh.date as date,
+            vidh.sku_id as skuId,
             pd.sku_no as skuNo,
             pd.name as productName,
-            wh.id as warehouseId,
+            vidh.warehouse_id as warehouseId,
             wh."name" as warehouseName,
-            vw.id as virtualWarehouseId,
+            vidh.virtual_warehouse_id as virtualWarehouseId,
             vw.code as virtualWarehouseCode,
             vw.name as virtualWarehouseName,
-            vi.virtualQty,
-            vi.virtualUsableQty,
-            vi.virtualFrozenQty,
-            case when vi.virtualQty = 0 then 0 else round(COALESCE(vih.avgInventoryQty,0)/ vi.virtualQty,2) end backAvgInventoryAge
-        from VirtualInventory vi
-        left join VirtualInventoryHis vih on vi.sku_id = vih.sku_id and vi.warehouse_id = vih.warehouse_id and vi.virtual_warehouse_id = vih.virtual_warehouse_id
-        left join product_detail pd on vi.sku_id = pd.id and pd.is_deleted = false
-        left join warehouse wh on vi.warehouse_id = wh.id and wh.is_deleted = false
-        left join virtual_warehouse vw on vi.virtual_warehouse_id = vw.id and vw.is_deleted = false
+            vih.virtualQty,
+            vih.virtualUsableQty,
+            vih.virtualFrozenQty,
+            case when vih.virtualQty = 0 then 0 else vidh.inventoryAgeQty / vih.virtualQty end as avgInventoryAge,
+            case when vih.virtualQty = 0 then 0 else vidh.backInventoryAgeQty / vih.virtualQty end as backAvgInventoryAge,
+        from virtualInventoryDetailHis vidh
+        left join VirtualInventoryHis vih on vidh.sku_id = vih.sku_id
+        and vidh.warehouse_id = vih.warehouse_id and vidh.virtual_warehouse_id = vih.virtual_warehouse_id
+        left join product_detail pd on vidh.sku_id = pd.id and pd.is_deleted = false
+        left join warehouse wh on vidh.warehouse_id = wh.id and wh.is_deleted = false
+        left join virtual_warehouse vw on vidh.virtual_warehouse_id = vw.id and vw.is_deleted = false
         <where>
             ${params.sqlMap.default}
             order by
@@ -91,85 +98,151 @@
                     ${item.field} ${item.sort}
                 </foreach>
             </if>
-            vi.sku_id desc
+            vih.sku_id desc
         </where>
     </select>
 
     <!-- 历史库龄 -->
     <select id="hisInventoryAgePaging"
             resultType="com.erp.model.wms.dto.VirtualInventoryAgeDTO$HisInventoryAgeDTO">
-        select
-            vih.sku_id,
-            pd.sku_no,
-            pd.name as productName,
-            vih.warehouse_id,
-            wh.name as warehouseName,
-            vih.virtual_warehouse_id,
-            vw.name as virtualWarehouseName,
-            vih.date,
-            vih.avg_inventory_age_days
-        from virtual_inventory_his vih
-        left join product_detail pd on vih.sku_id = pd.id and pd.is_deleted = false
-        left join warehouse wh on vih.warehouse_id = wh.id and wh.is_deleted = false
-        left join virtual_warehouse vw on vih.virtual_warehouse_id = vw.id and vw.is_deleted = false
-        <where>
-            vih.is_deleted = false and vih.sku_id = #{params.skuId} and vih.warehouse_id = #{params.warehouseId}
-            and vih.virtual_warehouse_id = #{params.virtualWarehouseId}
+        WITH virtualInventoryDetailHis AS (
+            select
+                vidh.date,
+                vid.sku_id,
+                vid.warehouse_id,
+                vid.virtual_warehouse_id,
+                sum(vidh.wait_qty * vidh.inventory_age_days) as inventoryAgeQty
+            from virtual_inventory_detail_his vidh
+            left join virtual_inventory_detail vid on vidh.virtual_inventory_detail_id = vid.id and vid.is_deleted = false
+            where vidh.is_deleted = false
+            and vid.sku_id = #{dto.skuId} and vid.warehouse_id = #{dto.warehouseId}
+            and vid.virtual_warehouse_id = #{dto.virtualWarehouseId}
+            <if test="params.dateList != null and params.dateList.size > 0">
+                and vidh.date >= #{params.dateList[0]} and (#{params.dateList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > vidh.date
+            </if>
+            group by vid.sku_id,vid.warehouse_id,vid.virtual_warehouse_id,vidh.date
+        ),VirtualInventoryHis AS (
+            SELECT
+                vi.sku_id,
+                vi.warehouse_id,
+                vi.virtual_warehouse_id,
+                SUM(vih.qty) AS virtualQty,
+                SUM(CASE WHEN vi.dict_inventory_status = 'usable' THEN vih.qty ELSE 0 END) AS virtualUsableQty,
+                SUM(CASE WHEN vi.dict_inventory_status = 'frozen' THEN vih.qty ELSE 0 END) AS virtualFrozenQty
+            FROM
+            virtual_inventory_his vih
+            left join virtual_inventory vi on vih.virtual_inventory_id = vi.id and vi.is_deleted = false
+            WHERE
+            vih.is_deleted = false
+            and vi.sku_id = #{dto.skuId} and vi.warehouse_id = #{dto.warehouseId}
+            and vi.virtual_warehouse_id = #{dto.virtualWarehouseId}
             <if test="params.dateList != null and params.dateList.size > 0">
                 and vih.date >= #{params.dateList[0]} and (#{params.dateList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > vih.date
             </if>
-        </where>
-        order by vih.date asc
+            GROUP BY
+            vi.sku_id, vi.warehouse_id, vi.virtual_warehouse_id
+        )
+        select
+            vidh.date,
+            vidh.sku_id,
+            pd.sku_no,
+            pd.name as productName,
+            vidh.warehouse_id,
+            wh.name as warehouseName,
+            vidh.virtual_warehouse_id,
+            vw.name as virtualWarehouseName,
+            case when vih.virtualQty = 0 then 0 else vidh.inventoryAgeQty / virtualQty end as avgInventoryAgeDays,
+            vih.virtualQty,
+            vih.virtualUsableQty ,
+            vih.virtualFrozenQty
+        from virtualInventoryDetailHis vidh
+        left join VirtualInventoryHis vih on vidh.sku_id = vih.sku_id and vidh.warehouse_id = vih.warehouse_id and vidh.virtual_warehouse_id = vih.virtual_warehouse_id
+        left join product_detail pd on vih.sku_id = pd.id and pd.is_deleted = false
+        left join warehouse wh on vih.warehouse_id = wh.id and wh.is_deleted = false
+        left join virtual_warehouse vw on vih.virtual_warehouse_id = vw.id and vw.is_deleted = false
+        order by vidh.date asc
     </select>
 
     <!-- 历史库龄明细 -->
     <select id="hisInventoryAgeDetailPaging"
             resultType="com.erp.model.wms.dto.VirtualInventoryAgeDTO$HisInventoryAgeDetailDTO">
         select
+            vhd.batch_no,
+            vtf.trade_time,
             vtf.transaction_no,
-            vid.batch_no,
-            vid.bill_date,
             vtf.source_type,
             vtf.source_code,
             vtf.dict_inventory_status,
-            vtfd.qty as batchQty,
-            vid.qty as waitBatchQty,
-            vid.last_outstock_date,
-            vid.update_time
-        from virtual_trans_flow_detail vtfd
-        inner join virtual_trans_flow vtf on vtf.id = vtfd.virtual_trans_flow_id and vtf.is_deleted = false
-        inner join virtual_inventory_detail vid  on vtfd.virtual_inventory_detail_id = vid.id and vid.is_deleted = false
+            vidh.qty as batchQty,
+            vidh.wait_qty as waitBatchQty,
+            vidh.inventory_age_days,
+            vidh.update_time
+        from virtual_inventory_detail_his vidh
+        inner join virtual_inventory_detail vhd on vidh.virtual_inventory_detail_id = vhd.id and vhd.is_deleted = false
+        inner join virtual_trans_flow vtf on vtf.id = vhd.virtual_trans_flow_id and vtf.is_deleted = false
         <where>
-            vtfd.is_deleted = false and vtf.sku_id = #{params.skuId} and vtf.warehouse_id = #{params.warehouseId}
-            and vtf.virtual_warehouse_id = #{params.virtualWarehouseId}
+            vidh.is_deleted = false and vidh.wait_qty > 0 and vhd.sku_id = #{params.skuId} and vhd.warehouse_id = #{params.warehouseId}
+            and vhd.virtual_warehouse_id = #{params.virtualWarehouseId}
             <if test="params.date != null ">
-                and vtfd.trade_time >= #{params.date}
+               and vidh.date = #{params.date}
             </if>
-            <if test="params.dateList != null and params.dateList.size == 1">
-                and vtfd.trade_time >= #{params.dateList[0]}
+            <if test="params.daysList != null and params.daysList.size == 1">
+                and vidh.inventory_age_days > #{params.daysList[0]}
             </if>
-            <if test="params.dateList != null and params.dateList.size == 2">
-                and  (#{params.dateList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > vtfd.trade_time
+            <if test="params.daysList != null and params.daysList.size == 2">
+                and  #{params.dateList[1] >= #{params.daysList[1]}
             </if>
         </where>
+        order by vtf.trade_time desc
     </select>
 
 
     <!-- 历史库龄图形数据 -->
     <select id="getHisInventoryAgeChart"
             resultType="com.erp.model.wms.dto.VirtualInventoryAgeDTO$HisInventoryAgeDTO">
-        select
-            vih.date,
-            vih.avg_inventory_age_days
-        from virtual_inventory_his vih
-        <where>
-            vih.is_deleted = false and vih.sku_id = #{params.skuId} and vih.warehouse_id = #{params.warehouseId}
-            and vih.virtual_warehouse_id = #{params.virtualWarehouseId}
+        WITH virtualInventoryDetailHis AS (
+            select
+                vidh.date,
+                vid.sku_id,
+                vid.warehouse_id,
+                vid.virtual_warehouse_id,
+                sum(vidh.wait_qty * vidh.inventory_age_days) as inventoryAgeQty
+            from virtual_inventory_detail_his vidh
+            left join virtual_inventory_detail vid on vidh.virtual_inventory_detail_id = vid.id and vid.is_deleted = false
+            where vidh.is_deleted = false
+            and vid.sku_id = #{params.skuId} and vid.warehouse_id = #{params.warehouseId}
+            and vid.virtual_warehouse_id = #{params.virtualWarehouseId}
             <if test="params.dateList != null and params.dateList.size > 0">
-                and vih.date >= #{params.dateList[0]} and (#{params.dateList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > vih.date
+                and vidh.date >= #{params.dateList[0]} and (#{params.dateList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > vidh.date
             </if>
-        </where>
-        order by vih.date asc
+            group by vid.sku_id,vid.warehouse_id,vid.virtual_warehouse_id,vidh.date
+        ),VirtualInventoryHis AS (
+            SELECT
+            vi.sku_id,
+            vi.warehouse_id,
+            vi.virtual_warehouse_id,
+            SUM(vih.qty) AS virtualQty,
+            SUM(CASE WHEN vi.dict_inventory_status = 'usable' THEN vih.qty ELSE 0 END) AS virtualUsableQty,
+            SUM(CASE WHEN vi.dict_inventory_status = 'frozen' THEN vih.qty ELSE 0 END) AS virtualFrozenQty
+        FROM
+        virtual_inventory_his vih
+        left join virtual_inventory vi on vih.virtual_inventory_id = vi.id and vi.is_deleted = false
+        WHERE
+        vih.is_deleted = false
+        and vi.sku_id = #{params.skuId} and vi.warehouse_id = #{params.warehouseId}
+        and vi.virtual_warehouse_id = #{params.virtualWarehouseId}
+        <if test="params.dateList != null and params.dateList.size > 0">
+            and vih.date >= #{params.dateList[0]} and (#{params.dateList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > vih.date
+        </if>
+        GROUP BY
+        vi.sku_id, vi.warehouse_id, vi.virtual_warehouse_id
+        )
+        select
+            vidh.date,
+            case when vih.virtualQty = 0 then 0 else vidh.inventoryAgeQty / virtualQty end as avgInventoryAgeDays
+        from virtualInventoryDetailHis vidh
+        left join VirtualInventoryHis vih on vidh.sku_id = vih.sku_id and vidh.warehouse_id = vih.warehouse_id and vidh.virtual_warehouse_id = vih.virtual_warehouse_id
+        order by vidh.date asc
     </select>
 
     <!-- 历史库龄详情明细导出 -->

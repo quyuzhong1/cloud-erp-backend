@@ -12,15 +12,9 @@
        <result column="update_time" property="updateTime" />
        <result column="version" property="version" />
        <result column="is_deleted" property="isDeleted" />
-       <result column="sku_id" property="skuId" />
-       <result column="warehouse_id" property="warehouseId" />
-       <result column="virtual_warehouse_id" property="virtualWarehouseId" />
+       <result column="virtual_inventory_id" property="virtualInventoryId" />
        <result column="date" property="date" />
        <result column="qty" property="qty" />
-       <result column="dict_inventory_status" property="dictInventoryStatus" />
-       <result column="virtual_trans_flow_id" property="virtualTransFlowId" />
-       <result column="batch_no" property="batchNo" />
-       <result column="bill_date" property="billDate" />
     </resultMap>
 
     <!-- 通用查询结果列 -->
@@ -34,106 +28,67 @@
         update_time,
         version,
         is_deleted,
-        sku_id, warehouse_id, virtual_warehouse_id, date, qty, dict_inventory_status, virtual_trans_flow_id, batch_no, bill_date
+        virtual_inventory_id, date, qty
     </sql>
 
-    <!-- 根据sku、仓库、虚拟仓查询 -->
-    <select id="listByParam" resultType="com.erp.model.wms.entity.VirtualInventoryHisEntity">
-        select
-            <include refid="Base_Column_List" />
-        from virtual_inventory_his vih
-        <where>
-            vih.is_deleted = false
-            <if test="params.endDate != null">
-                and vih.date > #{params.endDate}
-            </if>
-            <if test="params.skuIdList != null and params.skuIdList.size > 0">
-                and vih.sku_id in
-                <foreach collection="params.skuIdList" item="item" separator="," open="(" close=")">
-                    #{item}
-                </foreach>
-            </if>
-            <if test="params.warehouseIdList != null and params.warehouseIdList.size > 0">
-                and vih.warehouse_id in
-                <foreach collection="params.warehouseIdList" item="item" separator="," open="(" close=")">
-                    #{item}
-                </foreach>
-            </if>
-            <if test="params.virtualWarehouseIdList != null and params.virtualWarehouseIdList.size > 0">
-                and vih.virtual_warehouse_id in
-                <foreach collection="params.virtualWarehouseIdList" item="item" separator="," open="(" close=")">
-                    #{item}
-                </foreach>
-            </if>
-        </where>
-    </select>
-
-    <!-- 查询历史库存数据 -->
-    <select id="listVirtualInventoryHisJobData"
-            resultType="com.erp.model.wms.entity.VirtualInventoryHisEntity">
-        WITH virtualTransFlowDetail AS (
-            select qty,virtual_trans_flow_id,virtual_inventory_detail_id from virtual_trans_flow_detail where id in (
-            SELECT
-                max(id)
-            FROM
-            virtual_trans_flow_detail
-            WHERE
-            is_deleted = false and #{date} > trade_time
-            group by virtual_trans_flow_id,virtual_inventory_detail_id)
-        ),virtualInventory AS (
-            SELECT
-            sku_id,
-            warehouse_id,
-            virtual_warehouse_id,
-            SUM(qty) AS virtualQty,
-            SUM(CASE WHEN dict_inventory_status = 'usable' THEN qty ELSE 0 END) AS virtualUsableQty,
-            SUM(CASE WHEN dict_inventory_status = 'frozen' THEN qty ELSE 0 END) AS virtualFrozenQty
-            FROM
-            virtual_inventory
-            WHERE
-            is_deleted = false
-            GROUP BY
-            sku_id, warehouse_id, virtual_warehouse_id
-        ),virtualInventoryDetail AS (
-            SELECT
-                sku_id,
-                warehouse_id,
-                virtual_warehouse_id,
-                SUM(qty * (last_outstock_date - bill_date)) / count(0) AS days_difference
-            FROM virtual_inventory_detail
-            WHERE is_deleted = false
-            GROUP BY sku_id, warehouse_id, virtual_warehouse_id
+    <!--查询结余库存 -->
+    <select id="listVirtualInventoryHis" resultType="com.erp.model.wms.dto.VirtualInventoryHisDTO$AddDTO">
+        WITH virtualTransFlow as (
+            select
+                   virtual_inventory_id,
+                   sum(qty) as totalQty
+            from virtual_trans_flow
+            where is_deleted = false and #{localDate} > trade_time
+            group by virtual_inventory_id
         )
         select
-            vid.sku_id,
-            vid.warehouse_id,
-            vid.virtual_warehouse_id,
-            now() as date,
-            vid.dict_inventory_status,
-            vid.virtual_trans_flow_id,
-            vid.batch_no,
-            vid.bill_date,
-            vi.virtualUsableQty,
-            vi.virtualFrozenQty,
-            vtfd.qty,
-            vitd.days_difference / virtualQty as avgInventoryAgeDays
-        from virtual_inventory_detail vid
-        left join virtualTransFlowDetail vtfd on vid.id = vtfd.virtual_inventory_detail_id
-        left join virtualInventory vi on vid.sku_id = vi.sku_id and vid.warehouse_id = vi.warehouse_id and vid.virtual_warehouse_id = vi.virtual_warehouse_id
-        left join virtualInventoryDetail vitd on vid.sku_id = vitd.sku_id and vid.warehouse_id = vitd.warehouse_id and vid.virtual_warehouse_id = vitd.virtual_warehouse_id
-        where vid.is_deleted = false
+            vtf.totalQty as qty,
+            vi.id as virtualInventoryId
+        from virtual_inventory vi
+        left join virtualTransFlow vtf on vi.id = vtf.virtual_inventory_id
+        where vi.is_deleted = false
     </select>
 
-    <!-- 查询历史平均库龄 -->
-    <select id="getHisInventoryAgeDetail"
-            resultType="com.erp.model.wms.dto.VirtualInventoryAgeDTO$viewHisInventoryAgeDetailDTO">
+    <!-- 根据关联id和日期查询 -->
+    <select id="listByVirtualInventoryIdList" resultType="com.erp.model.wms.entity.VirtualInventoryHisEntity">
         select
             <include refid="Base_Column_List" />
+        from virtual_inventory_his
+        where is_deleted = false
+        and virtual_inventory_id in
+        <foreach collection="virtualInventoryIdList" open="(" close=")" separator="," item="item" >
+            #{item}
+        </foreach>
+        and date in
+        <foreach collection="dateList" open="(" close=")" separator="," item="item" >
+            #{item}
+        </foreach>
+    </select>
+
+    <!-- 查询快照历史库存合计 -->
+    <select id="listInventoryQty" resultType="com.erp.model.wms.dto.VirtualInventoryHisDTO$VirtualQtyDTO">
+        select
+            vi.sku_id,
+            vi.warehosue_id,
+            vi.virtual_warehouse_id,
+            sum(vih.qty) as virtualQty,
+            vih.date
         from virtual_inventory_his vih
-        <where>
-            vih.is_deleted = false and vih.sku_id = #{dto.skuId} and vih.warehouse_id = #{dto.warehouseId}
-            and vih.virtual_warehouse_id = #{dto.virtualWarehouseId} and vih.date = #{dto.date}
-        </where>
+        inner join virtual_inventory vi on vih.virtual_inventory_id = vi.id and vi.is_deleted = false
+        where vih.is_deleted = false and vih.date = #{localDate}
+            and vi.sku_id in
+            <foreach collection="skuIdList" item="item" separator="," open="(" close=")">
+                #{item}
+            </foreach>
+            and vi.warehosue_id in
+            <foreach collection="warehouseIdList" item="item" separator="," open="(" close=")">
+                #{item}
+            </foreach>
+            and vi.virtual_warehouse_id in
+            <foreach collection="virtualWarehouseIdList" item="item" separator="," open="(" close=")">
+                #{item}
+            </foreach>
+        group by vi.sku_id,vi.warehosue_id,vi.virtual_warehouse_id
     </select>
 
 
