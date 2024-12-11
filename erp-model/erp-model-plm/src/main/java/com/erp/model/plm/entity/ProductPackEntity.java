@@ -67,12 +67,6 @@ public class ProductPackEntity extends BaseEntity<ProductPackEntity> implements 
     private BigDecimal boxHeight;
 
     /**
-     * @deprecated (初始化数据后删除)
-     */
-    @TableField(value = "box_size")
-    @Deprecated
-    private String boxSize;
-    /**
      * 单箱重量
      */
     @TableField(value = "box_weight")

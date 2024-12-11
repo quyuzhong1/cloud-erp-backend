@@ -239,4 +239,10 @@ public interface PilotApplicationService extends SuperService<PilotApplicationEn
      * @param id id
      */
     void approvePilotApplicationNoticeByWork(String id);
+
+    /**
+     * 根据skuIds获取产品包装尺寸明细,过滤包装数据完整的数据
+     * @param ids 参数
+     */
+    List<ProductPackViewDTO> listProductPackBySkuIds(List<String> ids);
 }
