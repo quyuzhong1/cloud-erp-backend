@@ -280,6 +280,7 @@
         where ${param.sqlMap.default}
         and ra.is_deleted = false
         and ra.id = #{param.id}
+        and rad.approve_qty - rad.picking_qty > 0
         and not exists(
         SELECT 1 from picking_lists pl
         inner join picking_detail pd on pl.id = pd.main_id and pd.is_deleted = false
