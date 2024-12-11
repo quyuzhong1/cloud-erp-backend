@@ -828,4 +828,15 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
     void printEan(PrintEanDTO printEanDTO, HttpServletResponse response);
 
     void uploadSkuImage(UploadSkuDTO dto);
+
+    /**
+     * 根据skuIds获取产品包装尺寸明细
+     * @param ids skuIds
+     */
+    List<ProductPackViewDTO> listProductPackBySkuIds(List<String> ids);
+    /**
+     * 修改产品包装尺寸
+     * @param viewDTO 参数
+     */
+    BatchResultDTO updateProductPack(ProductPackViewDTO viewDTO);
 }
