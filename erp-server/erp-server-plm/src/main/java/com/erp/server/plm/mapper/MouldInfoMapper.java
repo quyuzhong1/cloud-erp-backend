@@ -22,21 +22,24 @@ public interface MouldInfoMapper extends BaseMapper<MouldInfoEntity> {
 
     /**
      * 分页
-     * @param page 分页参数
+     *
+     * @param page   分页参数
      * @param params 参数
      */
     Page<MouldInfoDTO.PagingViewDTO> paging(@Param("page") Page<MouldInfoDTO.PagingViewDTO> page, @Param("params") MouldInfoDTO.PagingParamDTO params);
 
     /**
      * 下单跟踪
-     * @param page 分页参数
+     *
+     * @param page   分页参数
      * @param params 参数
      */
     Page<MouldInfoDTO.OrderTrackingViewDTO> orderTracking(@Param("page") Page<MouldInfoDTO.OrderTrackingViewDTO> page, @Param("params") MouldInfoDTO.PagingParamDTO params);
 
     /**
      * 下单跟踪明细
-     * @param page 分页参数
+     *
+     * @param page   分页参数
      * @param params 参数
      */
     PagingVO<MouldInfoDTO.OrderTrackingDetailDTO> orderTrackingDetail(@Param("page") Page<MouldInfoDTO.OrderTrackingDetailDTO> page,
@@ -44,14 +47,29 @@ public interface MouldInfoMapper extends BaseMapper<MouldInfoEntity> {
 
     /**
      * 下单跟踪合计
+     *
      * @param params 参数
      */
     MouldInfoDTO.OrderTrackingTotalDTO orderTrackingTotal(@Param("params") MouldInfoDTO.PagingParamDTO params);
 
     /**
      * 下单跟踪明细合计
+     *
      * @param dto 参数
      */
     MouldInfoDTO.OrderTrackingDetailTotalDTO orderTrackingDetailTotal(MouldInfoDTO.OrderTrackingDetailParamDTO dto);
 
+
+    /**
+     * 导出
+     */
+    Page<MouldInfoDTO.MouldInfoExportDTO> exportMouldInfo(@Param("page") Page<MouldInfoDTO.MouldInfoExportDTO> page, @Param("params") MouldInfoDTO.PagingParamDTO params);
+    /**
+     * 导出
+     */
+    Page<MouldInfoDTO.OrderTrackingExportDTO> exportOrderTracking(@Param("page") Page<MouldInfoDTO.OrderTrackingExportDTO> page, @Param("params") MouldInfoDTO.PagingParamDTO params);
+    /**
+     * 导出
+     */
+    Page<MouldInfoDTO.OrderTrackingDetailExportDTO> exportOrderTrackingDetail(@Param("page") Page<MouldInfoDTO.OrderTrackingDetailExportDTO> page, @Param("params") MouldInfoDTO.OrderTrackingDetailParamDTO params);
 }

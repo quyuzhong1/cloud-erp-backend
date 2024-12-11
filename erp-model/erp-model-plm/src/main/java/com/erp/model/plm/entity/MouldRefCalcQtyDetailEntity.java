@@ -8,6 +8,7 @@ import lombok.Setter;
 import lombok.experimental.Accessors;
 
 import java.io.Serializable;
+import java.time.LocalDateTime;
 import java.util.Date;
 
 /**
@@ -58,7 +59,7 @@ public class MouldRefCalcQtyDetailEntity extends BaseEntity<MouldRefCalcQtyDetai
      * 创建时间
      */
     @TableField("po_create_time")
-    private Date poCreateTime;
+    private LocalDateTime poCreateTime;
 
     /**
      * skuId
