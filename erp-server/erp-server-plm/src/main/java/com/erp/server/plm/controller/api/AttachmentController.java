@@ -87,4 +87,12 @@ public class AttachmentController extends BaseController {
         return success();
     }
 
+    /**
+     * @param dto
+     * @return
+     */
+    @PostMapping("/getById")
+    public ApiResult<List<AttachmentDTO.CommonDTO>> getUrlById(@RequestBody BaseIdDTO dto) {
+        return success( plmAttachmentService.getUrlById(dto.getId()));
+    }
 }

@@ -721,17 +721,17 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
             return;
         }
         List<String> soIdList = transferDeclareDetailEntities.stream().map(req -> req.getSoId()).distinct().collect(Collectors.toList());
-        List<SoOutstockEntity> soOutstockEntities = soOutstockFeign.listBySoIds(soIdList);
-
+        List<SoB2cEntity> soB2cEntityList = soB2cFeign.listByIds(soIdList);
         //明细信息
         List<TransferDeclareDetailDTO.ViewDTO> detailList = BeanMapper.copyList(transferDeclareDetailEntities, TransferDeclareDetailDTO.ViewDTO.class);
         for (TransferDeclareDetailDTO.ViewDTO viewDTO : detailList) {
             //出库状态中文
-            SoOutstockEntity soOutstockEntity = soOutstockEntities.stream()
-                    .filter(req -> req.getSoId().equals(viewDTO.getSoId())
-                            && ApproveStatusEnum.APPROVE.getStatus().equals(req.getApproveStatus().getStatus()))
+            String soId = viewDTO.getSoId();
+            SoB2cEntity soB2cEntity = soB2cEntityList.stream()
+                    .filter(req -> req.getId().equals(soId)
+                            && SoB2cBillStatusEnum.ENUM_SHIPPED.getCode().equals(req.getBillStatus()))
                     .findFirst().orElse(null);
-            if (ObjectUtil.isNotEmpty(soOutstockEntity)) {
+            if (ObjectUtil.isNotEmpty(soB2cEntity)) {
                 viewDTO.setOutstockStatusName(TransferOutstockStatusEnum.OUTSTOCK.getName());
             } else {
                 viewDTO.setOutstockStatusName(TransferOutstockStatusEnum.UN_OUTSTOCK.getName());
