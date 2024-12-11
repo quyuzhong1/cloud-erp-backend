@@ -2,6 +2,7 @@ package com.erp.server.scm.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.excel.EasyExcel;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -228,6 +229,10 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
             addEntity.setSrmOperateUserId(userInfo.getUid());
             addEntity.setSrmOperateUserName(userInfo.getUserName());
         }
+        //如果付款公司是空，那就是自己公司付款
+        if (CharSequenceUtil.isBlank(addEntity.getPaymentCompanyName())) {
+            addEntity.setPaymentCompanyName(addEntity.getName());
+        }
         Boolean result = this.save(addEntity);
         //保存成功
         if (result) {
@@ -412,6 +417,11 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         String gradeName = supplierGradeList.stream().filter(d -> d.getId().equals(gradeId)).findFirst().
                 flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
         supplier.setGradeName(gradeName);
+
+        //如果付款公司是空，那就是自己公司付款
+        if (CharSequenceUtil.isBlank(supplier.getPaymentCompanyName())) {
+            supplier.setPaymentCompanyName(supplier.getName());
+        }
 
         Boolean result = this.updateById(supplier);
         //修改成功

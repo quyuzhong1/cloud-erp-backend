@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.tms.mapper.SmallBagCostAllocationMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.tms.entity.SmallBagCostAllocationEntity">
+       <result column="id" property="id" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_time" property="createTime" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_time" property="updateTime" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="main_id" property="mainId" />
+       <result column="sku_id" property="skuId" />
+       <result column="sku_no" property="skuNo" />
+       <result column="outstock_detail_id" property="outstockDetailId" />
+       <result column="delivery_qty" property="deliveryQty" />
+       <result column="sku_weight" property="skuWeight" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id,
+        create_user_id,
+        create_user_name,
+        create_time,
+        update_user_id,
+        update_user_name,
+        update_time,
+        version,
+        is_deleted,
+        main_id, sku_id, sku_no, outstock_detail_id, delivery_qty, sku_weight
+    </sql>
+
+<select id="paging" resultType="com.erp.model.tms.dto.SmallBagCostAllocationDTO$ListDTO">
+        select
+            t.id main_id,
+            g.id,
+            t.cost_id,
+            t.report_date,
+            t.account_date,
+            t.report_status,
+            j.reconciliation_status,
+            t.big_table_status,
+            j.channel_id,
+            k.outstock_code,
+            j.transport_no,
+            j.track_no,
+            k.delivery_time,
+            l.sign_time,
+            l.track_status,
+            j.confirm_time,
+            j.pay_type,
+            k.shop_name,
+            k.shop_id,
+            k.to_country,
+            g.sku_no,
+            g.sku_id,
+            cast(g.unit_cost AS NUMERIC(16, 6)) unit_cost,
+            g.unit_currency,
+            g.delivery_qty,
+            cast(g.billing_weight AS NUMERIC(16, 4)) billing_weight,
+            cast(j.billing_weight_logistics AS NUMERIC(16, 4)) billing_weight_logistics,
+            cast(g.sku_weight AS NUMERIC(16, 4)) sku_weight,
+            t.fee_source,
+            h.fee_type,
+            cast(h.bill_amount_exchange AS NUMERIC(16, 4)) bill_amount,
+            cast(h.allocated_amount_exchange AS NUMERIC(16, 2)) allocated_amount,
+            cast(h.product_allocated_amount_exchange AS NUMERIC(16, 6)) product_allocated_amount,
+            h.org_id,
+            h.org_name,
+            h.fee_allocation_type,
+            h.weight_allocation_type,
+            t.create_time,
+            t.update_user_name,
+            t.update_time,
+            h.allocated_currency currency
+        from small_bag_cost_allocation_main t
+        left join small_bag_cost_allocation g on t.id = g.main_id and g.is_deleted = false
+        left join small_bag_cost_allocation_detail h on h.main_id = g.id and h.is_deleted = false
+        left join logistics_bill_cost j on t.cost_id = j.id and j.is_deleted = false
+        left join logistics_bill k on j.logistics_bill_id = k.id and k.is_deleted = false
+        left join logistics_bill_detail l on k.id = l.main_id and l.is_deleted = false
+        left join dict_basic n on h.fee_type = n.code and n.type = 'dictCostCategory'
+        <where>
+            ${params.sqlMap.default}
+            and t.is_deleted = false
+            <if test="params.permissionSql!=null and params.permissionSql!=''">
+                ${params.permissionSql}
+            </if>
+        </where>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        t.id desc,g.id,n.index asc
+    </select>
+    
+<select id="tabList" resultType="com.erp.model.tms.dto.SmallBagCostAllocationDTO$TabListDTO">
+        select
+            t.report_status tabFlag,count(*) count
+        from small_bag_cost_allocation_main t
+        left join small_bag_cost_allocation g on t.id = g.main_id and g.is_deleted = false
+        left join small_bag_cost_allocation_detail h on h.main_id = g.id and h.is_deleted = false
+        left join logistics_bill_cost j on t.cost_id = j.id and j.is_deleted = false
+        left join logistics_bill k on j.logistics_bill_id = k.id and k.is_deleted = false
+        left join logistics_bill_detail l on k.id = l.main_id and l.is_deleted = false
+        <where>
+            t.is_deleted = false
+            <if test="params.permissionSql!=null and params.permissionSql!=''">
+                ${params.permissionSql}
+            </if>
+        </where>
+        group by t.report_status
+    </select>
+</mapper>

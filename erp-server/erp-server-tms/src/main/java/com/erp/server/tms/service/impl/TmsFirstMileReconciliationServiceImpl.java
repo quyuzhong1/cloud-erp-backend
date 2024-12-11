@@ -5,6 +5,8 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.ListUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
@@ -22,6 +24,8 @@ import com.common.core.enums.CurrencyEnum;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.StrUtils;
+import com.erp.model.oms.enums.SoB2cPayStatusEnum;
+import com.erp.model.plm.entity.ProjectTaskEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.tms.dto.TmsFirstMileLogisticDTO;
@@ -49,6 +53,7 @@ import org.springframework.util.CollectionUtils;
 import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -787,6 +792,26 @@ public class TmsFirstMileReconciliationServiceImpl extends SuperServiceImpl<TmsF
                     }
                 }
             }
+        }
+    }
+    public Boolean updatePayStatus(TmsFirstMileReconciliationDTO.UpdatePayStatusDTO dto) {
+        if (CollUtil.isEmpty(dto.getIds())) {
+            throw new ServiceException(ApiError.ERROR_98004);
+        }
+        if (SoB2cPayStatusEnum.ENUM_PAID.getCode().equals(dto.getPayStatus())) {
+            return lambdaUpdate()
+                    .set(TmsFirstMileReconciliationEntity::getPayStatus, dto.getPayStatus())
+                    .set(TmsFirstMileReconciliationEntity::getPayTime, LocalDateTime.now())
+                    .set(TmsFirstMileReconciliationEntity::getUpdateTime, LocalDateTime.now())
+                    .in(TmsFirstMileReconciliationEntity::getId, dto.getIds())
+                    .update();
+        } else {
+            return lambdaUpdate()
+                    .set(TmsFirstMileReconciliationEntity::getPayStatus, dto.getPayStatus())
+                    .set(TmsFirstMileReconciliationEntity::getPayTime, null)
+                    .set(TmsFirstMileReconciliationEntity::getUpdateTime, LocalDateTime.now())
+                    .in(TmsFirstMileReconciliationEntity::getId, dto.getIds())
+                    .update();
         }
     }
 }

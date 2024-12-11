@@ -203,4 +203,10 @@ public interface TmsFirstMileReconciliationDetailService extends SuperService<Tm
      * @param codeList
      */
     void initTotalLogisticsCost(List<String> codeList);
+
+    /**
+     * 根据关联单号查询对账详情
+     * @param relationCodeList
+     */
+    List<TmsFirstMileReconciliationDetailEntity> listByRelationCode(List<String> relationCodeList);
 }

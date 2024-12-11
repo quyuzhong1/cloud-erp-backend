@@ -39,6 +39,10 @@ public class ExportTmsFeignController {
     @Resource
     private LogisticsBillCostService logisticsBillCostService;
     @Resource
+    private SmallBagCostAllocationService smallBagCostAllocationService;
+    @Resource
+    private TransferDeclareCostAllocationService transferDeclareCostAllocationService;
+    @Resource
     private LogisticsBillService logisticsBillService;
     @Resource
     private LogisticsSupplierService logisticsSupplierService;
@@ -66,6 +70,8 @@ public class ExportTmsFeignController {
     private FirstMileEstimatedBillService firstMileEstimatedBillService;
     @Resource
     private FirstMileWeightAllocationService firstMileWeightAllocationService;
+    @Resource
+    private LogisticsLargeService logisticsLargeService;
 
     @PostMapping("/b2BDeclareBill")
     @WebAdvanceQuery(handler = TmsB2BDeclareQueryHandler.class)
@@ -137,6 +143,26 @@ public class ExportTmsFeignController {
     @WebAdvanceQuery(handler = LogisticsBillCostQueryHandler.class)
     public PagingVO<LogisticsBillCostDTO.ListDTO> exportLogisticsBillCost(@RequestBody PagingDTO<LogisticsBillCostDTO.PagingParamDTO> dto) {
         return logisticsBillCostService.exportLogisticsBillCost(dto);
+    }
+    @PostMapping("/smallBagCostAllocation")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+    tableField = "create_user_id",
+    menuCode = "tms:smallBagCostAllocation:paging",
+    tableAlias = "t"
+    		)
+    @WebAdvanceQuery(handler = SmallBagCostAllocationQueryHandler.class)
+    public PagingVO<SmallBagCostAllocationDTO.ListDTO> exportSmallBagCostAllocation(@RequestBody PagingDTO<SmallBagCostAllocationDTO.PagingParamDTO> dto) {
+    	return smallBagCostAllocationService.paging(dto);
+    }
+    @PostMapping("/transferDeclareCostAllocation")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+    tableField = "create_user_id",
+    menuCode = "tms:transferDeclareCostAllocation:paging",
+    tableAlias = "t"
+    		)
+    @WebAdvanceQuery(handler = TransferDeclareCostAllocationQueryHandler.class)
+    public PagingVO<TransferDeclareCostAllocationDTO.ListDTO> exportTransferDeclareCostAllocation(@RequestBody PagingDTO<TransferDeclareCostAllocationDTO.PagingParamDTO> dto) {
+    	return transferDeclareCostAllocationService.paging(dto);
     }
 
     @PostMapping("/logisticsBill")
@@ -267,5 +293,16 @@ public class ExportTmsFeignController {
     @WebAdvanceQuery(handler = FirstMileWeightAllocationQueryHandler.class)
     public PagingVO<FirstMileWeightAllocationDTO.ViewDTO> exportFirstMileWeightAllocation(@RequestBody @Valid PagingDTO<FirstMileWeightAllocationDTO.PagingParamDTO> dto) {
         return firstMileWeightAllocationService.paging(dto);
+    }
+
+    /**
+     * 物流大表
+     * @param dto
+     * @return
+     */
+    @PostMapping("/exportLogisticsLarge")
+    @WebAdvanceQuery(handler = LogisticsLargeQueryHandler.class)
+    public PagingVO<LogisticsLargeDTO.PagingViewDTO> exportLogisticsLarge(@RequestBody @Valid PagingDTO<LogisticsLargeDTO.PagingParamDTO> dto) {
+        return logisticsLargeService.paging(dto);
     }
 }

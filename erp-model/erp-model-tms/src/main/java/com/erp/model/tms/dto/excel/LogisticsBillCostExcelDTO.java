@@ -32,11 +32,25 @@ public class LogisticsBillCostExcelDTO  implements Serializable {
     private String  trackNo;
 
     /**
+     * 计费重[预估]
+     */
+    @ExcelProperty(value = "计费重[预估]")
+    @FieldValid(fieldName = "计费重[预估]",formatPattern = FieldFormatPatternTypeEnum.AMOUNT)
+    private String  billingWeight;
+    
+    /**
      * 计费重[物流商]
      */
-    @ExcelProperty(value = "*计费重[物流商]")
-    @FieldValid(fieldName = "计费重[物流商]",isNotBlank = true,formatPattern = FieldFormatPatternTypeEnum.AMOUNT)
+    @ExcelProperty(value = "计费重[物流商]")
+    @FieldValid(fieldName = "计费重[物流商]",formatPattern = FieldFormatPatternTypeEnum.AMOUNT)
     private String  billingWeightLogistics;
+    
+    /**
+     * 类型
+     */
+    @ExcelProperty(value = "*对账类型")
+    @FieldValid(fieldName = "对账类型",isNotBlank = true,fieldValues = "付款,退款")
+    private String  payType;
 
     /**
      * 费用名称
@@ -48,17 +62,24 @@ public class LogisticsBillCostExcelDTO  implements Serializable {
     /**
      * 实际运费
      */
-    @ExcelProperty(value = "*实际运费")
-    @FieldValid(fieldName = "实际运费",isNotBlank = true,formatPattern = FieldFormatPatternTypeEnum.AMOUNT)
+    @ExcelProperty(value = "*实际金额")
+    @FieldValid(fieldName = "实际金额",isNotBlank = true,formatPattern = FieldFormatPatternTypeEnum.AMOUNT)
     private String  costValue;
 
     /**
      * 币种
      */
-    @ExcelProperty(value = "币种")
+    @ExcelProperty(value  = "币种")
     @FieldValid(fieldName = "币种",enumClass = CurrencyEnum.class)
     private String  currency;
-
+    
+    /**
+     * 预估运费
+     */
+    @ExcelProperty(value = "预估金额")
+    @FieldValid(fieldName = "预估金额",formatPattern = FieldFormatPatternTypeEnum.AMOUNT)
+    private String  estimatedCostValue;
+    
     /**
      * 错误信息
      */

@@ -16,12 +16,14 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.tms.dto.TransferLogisticsChannelDTO;
 import com.erp.model.tms.dto.transfer.TransferLogisticsOrderDTO;
 import com.erp.model.tms.entity.TransferDeclareEntity;
 import com.erp.model.tms.entity.TransferLogisticsAuthEntity;
 import com.erp.model.tms.entity.TransferLogisticsChannelEntity;
 import com.erp.model.tms.enums.TransferLogisticsStatusEnum;
+import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.tms.convert.TransferLogisticsChannelConverter;
 import com.erp.server.tms.handler.TransferLogisticsRegistry;
 import com.erp.server.tms.mapper.TransferLogisticsChannelMapper;
@@ -57,6 +59,8 @@ public class TransferLogisticsChannelServiceImpl extends SuperServiceImpl<Transf
     private TransferLogisticsRegistry transferLogisticsRegistry;
     @Resource
     private TransferLogisticsAuthService transferLogisticsAuthService;
+    @Resource
+    private SysUserFeign sysUserFeign;
 
     @Resource
     @Lazy
@@ -209,11 +213,16 @@ public class TransferLogisticsChannelServiceImpl extends SuperServiceImpl<Transf
         TransferLogisticsChannelEntity one  = baseMapper.selectOne(queryWrapper);
         //检查数据是否存在
         if (Objects.nonNull(one)){
-            transferLogisticsChannelEntity.setId(one.getId());
-            transferLogisticsChannelEntity.setUpdateTime(LocalDateTime.now());
-            return this.updateById(transferLogisticsChannelEntity);
+            return this.lambdaUpdate()
+                    .set(TransferLogisticsChannelEntity::getUpdateTime, LocalDateTime.now())
+                    .set(TransferLogisticsChannelEntity::getCode, transferLogisticsChannelEntity.getCode())
+                    .set(TransferLogisticsChannelEntity::getName, transferLogisticsChannelEntity.getName())
+                    .set(TransferLogisticsChannelEntity::getLogisticsPlatform, transferLogisticsChannelEntity.getLogisticsPlatform())
+                    .eq(TransferLogisticsChannelEntity::getId, one.getId())
+                    .update();
+        } else {
+            return this.save(transferLogisticsChannelEntity);
         }
-        return this.save(transferLogisticsChannelEntity);
     }
 
     @Override
@@ -237,4 +246,27 @@ public class TransferLogisticsChannelServiceImpl extends SuperServiceImpl<Transf
         return baseMapper.listLogisticsChannel(new ArrayList<>(),channelIds);
     }
 
+    @Override
+    public TransferLogisticsChannelDTO.EditDeliveryCountryDTO editDeliveryCountry(String id) {
+        TransferLogisticsChannelDTO.EditDeliveryCountryDTO deliveryCountryDTO = new TransferLogisticsChannelDTO.EditDeliveryCountryDTO();
+        TransferLogisticsChannelEntity entity = this.getById(id);
+        deliveryCountryDTO.setId(entity.getId());
+        if (CharSequenceUtil.isBlank(entity.getDeliveryCountry())) {
+            return deliveryCountryDTO;
+        }
+        DictCountryEntity countryEntity = sysUserFeign.getCountryById(entity.getDeliveryCountry());
+        if (ObjectUtil.isNotEmpty(countryEntity)) {
+            deliveryCountryDTO.setCountryCode(countryEntity.getId());
+            deliveryCountryDTO.setCountryName(countryEntity.getNameCn());
+        }
+        return deliveryCountryDTO;
+    }
+
+    @Override
+    public Boolean updateDeliveryCountry(TransferLogisticsChannelDTO.EditDeliveryCountryDTO dto) {
+        return this.lambdaUpdate()
+                .set(TransferLogisticsChannelEntity::getDeliveryCountry, dto.getCountryCode())
+                .eq(TransferLogisticsChannelEntity::getId, dto.getId())
+                .update();
+    }
 }
