@@ -86,6 +86,8 @@ import static com.common.core.controller.vo.ApiResult.success;
 @Slf4j
 @Service
 public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMapper, LogisticsLargeEntity> implements LogisticsLargeService {
+    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+
     @Autowired
     private OperateLogService operateLogService;
 
@@ -132,28 +134,7 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
     private DownloadTaskFeign downloadTaskFeign;
 
     @Resource
-    private SmallBagCostAllocationService smallBagCostAllocationService;
-
-    @Resource
-    private TransferDeclareCostAllocationService transferDeclareCostAllocationService;
-
-    @Resource
-    private SmallBagCostAllocationDetailService smallBagCostAllocationDetailService;
-
-    @Resource
     private SmallBagCostAllocationMainService smallBagCostAllocationMainService;
-
-    @Resource
-    private TransferDeclareCostAllocationDetailService transferDeclareCostAllocationDetailService;
-
-    @Resource
-    private TmsB2cDeclareReconciliationDetailService tmsB2cDeclareReconciliationDetailService;
-
-    @Resource
-    private TmsB2cDeclareReconciliationService tmsB2cDeclareReconciliationService;
-
-    @Resource
-    private SoOutstockFeign soOutstockFeign;
 
     @Resource
     private TransferDeclareCostAllocationMainService transferDeclareCostAllocationMainService;
@@ -422,7 +403,7 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
         FirstMileSkuCostAllocationDetailEntity detailEntity = skuCostDetailEntityList.stream()
                 .filter(req -> AllocationFeeTypeEnum.SHIPPING_COST.getCode().equals(req.getFeeType()))
                 .findFirst().orElse(null);
-        if (detailEntity.getAmount().compareTo(BigDecimal.ZERO) > 0) {
+        if (detailEntity != null && detailEntity.getAmount().compareTo(BigDecimal.ZERO) > 0) {
             addDTO.setFreightCalculationFactor(detailEntity.getAllocatedAmount().divide(detailEntity.getAmount(), 4, RoundingMode.DOWN));
         }
         BigDecimal rate = dmpTaskFeign.getRate(logisticsBillEntity.getCreateTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), logisticsBillCostEntity.getCurrency());
@@ -438,7 +419,7 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
         FirstMileSkuCostAllocationDetailEntity otherCostDetailEntity = skuCostDetailEntityList.stream()
                 .filter(req -> AllocationFeeTypeEnum.OTHER_COST.getCode().equals(req.getFeeType()))
                 .findFirst().orElse(null);
-        if (otherCostDetailEntity.getAmount().compareTo(BigDecimal.ZERO) > 0) {
+        if (otherCostDetailEntity != null && otherCostDetailEntity.getAmount().compareTo(BigDecimal.ZERO) > 0) {
             addDTO.setDestMiscFeeFactor(otherCostDetailEntity.getAllocatedAmount().divide(otherCostDetailEntity.getAmount(), 4, RoundingMode.DOWN));
         }
         // TODO 暂时取物流单的 后期取大类的
@@ -453,7 +434,7 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
         FirstMileSkuCostAllocationDetailEntity declareCostDetailEntity = skuCostDetailEntityList.stream()
                 .filter(req -> AllocationFeeTypeEnum.DECLARE_COST.getCode().equals(req.getFeeType()))
                 .findFirst().orElse(null);
-        if (declareCostDetailEntity.getAmount().compareTo(BigDecimal.ZERO) > 0) {
+        if (declareCostDetailEntity != null && declareCostDetailEntity.getAmount().compareTo(BigDecimal.ZERO) > 0) {
             addDTO.setDutyCalculationFactor(declareCostDetailEntity.getAllocatedAmount().divide(declareCostDetailEntity.getAmount(), 4, RoundingMode.DOWN));
         }
         // TODO 暂时取物流单的 后期取大类的
@@ -468,7 +449,7 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
         FirstMileSkuCostAllocationDetailEntity otherTaxFeeDetailEntity = skuCostDetailEntityList.stream()
                 .filter(req -> AllocationFeeTypeEnum.OTHER_TAX_FEE.getCode().equals(req.getFeeType()))
                 .findFirst().orElse(null);
-        if (otherTaxFeeDetailEntity.getAmount().compareTo(BigDecimal.ZERO) > 0) {
+        if (otherTaxFeeDetailEntity != null && otherTaxFeeDetailEntity.getAmount().compareTo(BigDecimal.ZERO) > 0) {
             addDTO.setOtherTaxCalculationFactor(otherTaxFeeDetailEntity.getAllocatedAmount().divide(otherTaxFeeDetailEntity.getAmount(), 4, RoundingMode.DOWN));
         }
 
@@ -486,11 +467,11 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public BatchResultDTO generateFirstMileLogistics(List<BatchResultDTO> resultDTOS,
-                                                           List<FirstMileSkuCostAllocationDetailEntity> skuCostAllocationDetailEntities,
-                                                           List<FirstMileDeliveryEntity> deliveryEntities, List<FirstMileDeliveryDetailEntity>
-                                                                   firstMileDeliveryDetailEntities, FirstMileCostAllocationEntity entity,
-                                                           List<FirstMileSkuCostAllocationEntity> skuCostAllocationEntityList) {
+    public BatchResultDTO generateFirstMileLogistics(List<FirstMileSkuCostAllocationDetailEntity> skuCostAllocationDetailEntities,
+                                                     List<FirstMileDeliveryEntity> deliveryEntities,
+                                                     List<FirstMileDeliveryDetailEntity> firstMileDeliveryDetailEntities,
+                                                     FirstMileCostAllocationEntity entity,
+                                                     List<FirstMileSkuCostAllocationEntity> skuCostAllocationEntityList) {
 
         for (FirstMileSkuCostAllocationEntity firstMileSkuCostAllocationEntity : skuCostAllocationEntityList) {
 
@@ -519,7 +500,7 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
         if (CollUtil.isEmpty(ids)) {
             return Collections.emptyList();
         }
-        return this.lambdaQuery().eq(LogisticsLargeEntity::getSourceId, ids).list();
+        return this.lambdaQuery().in(LogisticsLargeEntity::getSourceId, ids).list();
     }
 
     @Override
@@ -527,7 +508,7 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
         if (CollUtil.isEmpty(outstockCode)) {
             return Collections.emptyList();
         }
-        return this.lambdaQuery().eq(LogisticsLargeEntity::getOutstockCode, outstockCode).list();
+        return this.lambdaQuery().in(LogisticsLargeEntity::getOutstockCode, outstockCode).list();
     }
 
 
@@ -536,8 +517,9 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
         if (CollUtil.isEmpty(ids)) {
             return Collections.emptyList();
         }
-        return this.lambdaQuery().eq(LogisticsLargeEntity::getSourceDetailId, ids).list();
+        return this.lambdaQuery().in(LogisticsLargeEntity::getSourceDetailId, ids).list();
     }
+
 
     /**
      * 小包分摊下推物流大表
@@ -552,10 +534,11 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
      * @Date 2024/12/3 15:37
      **/
     private void smallBagCostAllocationHandler(SmallBagCostAllocationMainEntity smallBagCostAllocationMainEntity,
-                                                         SmallBagCostAllocationEntity costAllocationEntity,
-                                                         List<SmallBagCostAllocationDetailEntity> costAllocationDetailEntities,
-                                                         SoOutstockEntity soOutstockEntity,
-                                                         SoOutstockDetailEntity soOutstockDetailEntity) {
+                                               SmallBagCostAllocationEntity costAllocationEntity,
+                                               List<SmallBagCostAllocationDetailEntity> costAllocationDetailEntities,
+                                               SoOutstockEntity soOutstockEntity,
+                                               SoOutstockDetailEntity soOutstockDetailEntity,
+                                               SoB2cEntity soB2cEntity) {
         List<LogisticsLargeEntity> logisticsLargeEntities = this.listByIdSourceDetailIds(Arrays.asList(costAllocationEntity.getId()));
 
         //已确认才能下推
@@ -571,9 +554,13 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
         addDTO.setSourceId(smallBagCostAllocationMainEntity.getId());
         addDTO.setSourceType(SourceTypeEnum.SMALL_BAG_COST_ALLOCATION.getCode());
         addDTO.setSourceDetailId(costAllocationEntity.getId());
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM");
+
+
         if (CharSequenceUtil.isNotBlank(smallBagCostAllocationMainEntity.getReportDate())) {
-            LocalDate reconciliationMonth = LocalDate.parse(smallBagCostAllocationMainEntity.getReportDate(), formatter);
+            // 在日期字符串末尾添加"01"来补充日期部分
+            String dateWithDay = smallBagCostAllocationMainEntity.getReportDate() + "-01";
+            // 解析字符串并转换为LocalDate
+            LocalDate reconciliationMonth = LocalDate.parse(dateWithDay, formatter);
             addDTO.setReconciliationMonth(reconciliationMonth);
         }
 
@@ -670,7 +657,6 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
                 || SourceTypeEnum.THIRD_WAREHOUSE_CREATE_OUTBOUND_BILL.getCode().equals(soOutstockEntity.getSourceType())
         ) {
             String sourceId = soOutstockEntity.getSourceId();
-            SoB2cEntity soB2cEntity = soB2cFeign.getById(sourceId);
             if (ObjectUtil.isNotEmpty(soB2cEntity)) {
                 platformCode = soB2cEntity.getPlatformCode();
 
@@ -743,7 +729,7 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
         SmallBagCostAllocationDetailEntity detailEntity = costAllocationDetailEntities.stream()
                 .filter(req -> AllocationFeeTypeEnum.SHIPPING_COST.getCode().equals(req.getFeeType()))
                 .findFirst().orElse(null);
-        if (detailEntity.getBillAmount().compareTo(BigDecimal.ZERO) > 0) {
+        if (detailEntity !=null && detailEntity.getBillAmount().compareTo(BigDecimal.ZERO) > 0) {
             addDTO.setFreightCalculationFactor(detailEntity.getAllocatedAmount().divide(detailEntity.getBillAmount(), 4, RoundingMode.DOWN));
         }
         BigDecimal rate = dmpTaskFeign.getRate(logisticsBillEntity.getCreateTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), logisticsBillCostEntity.getCurrency());
@@ -758,7 +744,7 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
         SmallBagCostAllocationDetailEntity otherCostDetailEntity = costAllocationDetailEntities.stream()
                 .filter(req -> AllocationFeeTypeEnum.OTHER_COST.getCode().equals(req.getFeeType()))
                 .findFirst().orElse(null);
-        if (otherCostDetailEntity.getBillAmount().compareTo(BigDecimal.ZERO) > 0) {
+        if (otherCostDetailEntity != null && otherCostDetailEntity.getBillAmount().compareTo(BigDecimal.ZERO) > 0) {
             addDTO.setDestMiscFeeFactor(otherCostDetailEntity.getAllocatedAmount().divide(otherCostDetailEntity.getBillAmount(), 4, RoundingMode.DOWN));
         }
         // TODO 暂时取物流单的 后期取大类的
@@ -773,7 +759,7 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
         SmallBagCostAllocationDetailEntity declareCostDetailEntity = costAllocationDetailEntities.stream()
                 .filter(req -> AllocationFeeTypeEnum.DECLARE_COST.getCode().equals(req.getFeeType()))
                 .findFirst().orElse(null);
-        if (declareCostDetailEntity.getBillAmount().compareTo(BigDecimal.ZERO) > 0) {
+        if (declareCostDetailEntity.getBillAmount() != null && declareCostDetailEntity.getBillAmount().compareTo(BigDecimal.ZERO) > 0) {
             addDTO.setDutyCalculationFactor(declareCostDetailEntity.getAllocatedAmount().divide(declareCostDetailEntity.getBillAmount(), 4, RoundingMode.DOWN));
         }
         // TODO 暂时取物流单的 后期取大类的
@@ -788,7 +774,7 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
         SmallBagCostAllocationDetailEntity deductibleTaxDetailEntity = costAllocationDetailEntities.stream()
                 .filter(req -> AllocationFeeTypeEnum.DEDUCTIBLE_TAX.getCode().equals(req.getFeeType()))
                 .findFirst().orElse(null);
-        if (deductibleTaxDetailEntity.getBillAmount().compareTo(BigDecimal.ZERO) > 0) {
+        if (deductibleTaxDetailEntity != null && deductibleTaxDetailEntity.getBillAmount().compareTo(BigDecimal.ZERO) > 0) {
             addDTO.setDeductibleTaxFactor(deductibleTaxDetailEntity.getAllocatedAmount().divide(deductibleTaxDetailEntity.getBillAmount(), 4, RoundingMode.DOWN));
         }
         // TODO 暂时取物流单的 后期取大类的
@@ -803,7 +789,7 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
         SmallBagCostAllocationDetailEntity otherTaxFeeDetailEntity = costAllocationDetailEntities.stream()
                 .filter(req -> AllocationFeeTypeEnum.OTHER_TAX_FEE.getCode().equals(req.getFeeType()))
                 .findFirst().orElse(null);
-        if (otherTaxFeeDetailEntity.getBillAmount().compareTo(BigDecimal.ZERO) > 0) {
+        if (otherTaxFeeDetailEntity != null && otherTaxFeeDetailEntity.getBillAmount().compareTo(BigDecimal.ZERO) > 0) {
             addDTO.setOtherTaxCalculationFactor(otherTaxFeeDetailEntity.getAllocatedAmount().divide(otherTaxFeeDetailEntity.getBillAmount(), 4, RoundingMode.DOWN));
         }
 
@@ -816,14 +802,16 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public BatchResultDTO generateSmallBagCostAllocationTable(SmallBagCostAllocationMainEntity mainEntity, List<SmallBagCostAllocationEntity> costAllocationEntityList, List<SmallBagCostAllocationDetailEntity> costAllocationDetailEntityList, SoOutstockEntity soOutstockEntity, List<SoOutstockDetailEntity> soOutstockDetailEntities) {
+    public BatchResultDTO generateSmallBagCostAllocationTable(SmallBagCostAllocationMainEntity mainEntity, List<SmallBagCostAllocationEntity> costAllocationEntityList, List<SmallBagCostAllocationDetailEntity> costAllocationDetailEntityList, SoOutstockEntity soOutstockEntity, List<SoOutstockDetailEntity> soOutstockDetailEntities, List<SoB2cEntity> soB2cEntities) {
         for (SmallBagCostAllocationEntity costAllocationEntity : costAllocationEntityList) {
             List<SmallBagCostAllocationDetailEntity> costAllocationDetailEntities = costAllocationDetailEntityList.stream()
                     .filter(req -> req.getMainId().equals(costAllocationEntity.getId()))
                     .collect(Collectors.toList());
 
             SoOutstockDetailEntity soOutstockDetailEntity = soOutstockDetailEntities.stream().filter(req -> req.getId().equals(costAllocationEntity.getOutstockDetailId())).findFirst().orElse(null);
-            this.smallBagCostAllocationHandler(mainEntity, costAllocationEntity, costAllocationDetailEntities, soOutstockEntity, soOutstockDetailEntity);
+
+            SoB2cEntity soB2cEntity = soB2cEntities.stream().filter(req -> req.getId().equals(soOutstockEntity.getSourceId())).findFirst().orElse(null);
+            this.smallBagCostAllocationHandler(mainEntity, costAllocationEntity, costAllocationDetailEntities, soOutstockEntity, soOutstockDetailEntity, soB2cEntity);
         }
 
         return BatchResultDTO.success(mainEntity.getId(), soOutstockEntity.getCode(), OperationTypeEnum.ADD);
@@ -908,7 +896,7 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
 
         //根据销售出库单id查询物流单
         List<LogisticsBillEntity> logisticsBillEntityList = logisticsBillService.listByOutstockIdList(Arrays.asList(soOutstockEntity.getId()));
-        if (logisticsBillEntityList != null) {
+        if (logisticsBillEntityList == null) {
             throw new ServiceException(ApiError.ERROR_99058);
         }
         LogisticsBillEntity logisticsBillEntity = logisticsBillEntityList.get(0);
@@ -923,12 +911,15 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
         addDTO.setSourceId(mainEntity.getId());
         addDTO.setSourceType(SourceTypeEnum.TRANSFER_DECLARE_COST_ALLOCATION.getCode());
         addDTO.setSourceDetailId(entity.getId());
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM");
         if (CharSequenceUtil.isNotBlank(mainEntity.getReportDate())) {
-            LocalDate reconciliationMonth = LocalDate.parse(mainEntity.getReportDate(), formatter);
+            // 在日期字符串末尾添加"01"来补充日期部分
+            String dateWithDay = mainEntity.getReportDate() + "-01";
+            // 解析字符串并转换为LocalDate
+            LocalDate reconciliationMonth = LocalDate.parse(dateWithDay, formatter);
             addDTO.setReconciliationMonth(reconciliationMonth);
         }
 
+        addDTO.setReconciliationBillType(ReconciliationBillTypeEnum.ACTUAL.getCode());
         addDTO.setOutstockCode(soOutstockEntity.getCode());
         addDTO.setOutstockTime(soOutstockEntity.getBillDate().atStartOfDay());
 
@@ -1050,7 +1041,7 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
                 .filter(req -> AllocationFeeTypeEnum.SHIPPING_COST.getCode().equals(req.getFeeType()))
                 .findFirst().orElse(null);
 
-        if (shippingCostDetailEntity.getBillAmount().compareTo(BigDecimal.ZERO) > 0) {
+        if (shippingCostDetailEntity != null && shippingCostDetailEntity.getBillAmount().compareTo(BigDecimal.ZERO) > 0) {
             addDTO.setFreightCalculationFactor(shippingCostDetailEntity.getAllocatedAmount().divide(shippingCostDetailEntity.getBillAmount(), 4, RoundingMode.DOWN));
         }
         BigDecimal rate = dmpTaskFeign.getRate(logisticsBillEntity.getCreateTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), logisticsBillCostEntity.getCurrency());
@@ -1066,7 +1057,7 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
         TransferDeclareCostAllocationDetailEntity otherCostDetailEntity = detailEntityList.stream()
                 .filter(req -> AllocationFeeTypeEnum.OTHER_COST.getCode().equals(req.getFeeType()))
                 .findFirst().orElse(null);
-        if (otherCostDetailEntity.getBillAmount().compareTo(BigDecimal.ZERO) > 0) {
+        if (otherCostDetailEntity != null && otherCostDetailEntity.getBillAmount().compareTo(BigDecimal.ZERO) > 0) {
             addDTO.setDestMiscFeeFactor(otherCostDetailEntity.getAllocatedAmount().divide(otherCostDetailEntity.getBillAmount(), 4, RoundingMode.DOWN));
         }
         // TODO 暂时取物流单的 后期取大类的
@@ -1081,7 +1072,7 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
         TransferDeclareCostAllocationDetailEntity declareCostDetailEntity = detailEntityList.stream()
                 .filter(req -> AllocationFeeTypeEnum.DECLARE_COST.getCode().equals(req.getFeeType()))
                 .findFirst().orElse(null);
-        if (declareCostDetailEntity.getBillAmount().compareTo(BigDecimal.ZERO) > 0) {
+        if (declareCostDetailEntity != null && declareCostDetailEntity.getBillAmount().compareTo(BigDecimal.ZERO) > 0) {
             addDTO.setDutyCalculationFactor(declareCostDetailEntity.getAllocatedAmount().divide(declareCostDetailEntity.getBillAmount(), 4, RoundingMode.DOWN));
         }
         // TODO 暂时取物流单的 后期取大类的
@@ -1103,5 +1094,10 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
     public Boolean exportLogisticsLarge(LogisticsLargeDTO.ExportDTO dto) {
         downloadTaskFeign.saveDownloadTask("物流大表", EXPORT_TMS_LOGISTICS_LARGE.getCode(), dto);
         return Boolean.TRUE;
+    }
+
+    @Override
+    public List<String> listFirstMileCostAllocationIsExists() {
+        return baseMapper.listFirstMileCostAllocationIsExists();
     }
 }

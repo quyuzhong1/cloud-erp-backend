@@ -154,7 +154,7 @@
           reconciliation_bill_type,
           reconciliation_month,
           create_time
-      FROM logistics_large
+      FROM logistics_large ll
       WHERE
       ${params.sqlMap.default}
       and is_deleted=false
@@ -180,5 +180,21 @@
         <if test="permissionSql != null and permissionSql != ''">
             ${permissionSql}
         </if>
+    </select>
+
+    <!--查询不存在物流大表里的头程费用分摊主表id-->
+    <select id="listFirstMileCostAllocationIsExists" resultType="string">
+        SELECT
+            fmca.ID
+        FROM
+            first_mile_cost_allocation fmca
+            INNER JOIN first_mile_sku_cost_allocation fmsca ON fmca.ID = fmsca.main_id
+        WHERE
+            fmca.is_deleted = FALSE
+            AND fmsca.is_deleted = FALSE
+            AND fmca.status = 'confirm'
+            AND NOT EXISTS ( SELECT ll.ID FROM logistics_large ll WHERE ll.outstock_code = fmca.source_code AND fmsca.bill_source_type = ll.reconciliation_bill_type )
+        GROUP BY fmca.ID
+		ORDER BY fmca.ID
     </select>
 </mapper>

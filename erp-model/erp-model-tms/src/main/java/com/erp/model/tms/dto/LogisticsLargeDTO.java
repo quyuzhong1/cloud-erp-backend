@@ -1152,7 +1152,7 @@ public class LogisticsLargeDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
-    public class PagingViewDTO {
+    public static class PagingViewDTO {
         /**
          * 主键id
          */
