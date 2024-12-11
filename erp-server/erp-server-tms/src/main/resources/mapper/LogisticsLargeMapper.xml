@@ -154,7 +154,7 @@
           reconciliation_bill_type,
           reconciliation_month,
           create_time
-      FROM logistics_large
+      FROM logistics_large ll
       WHERE
       ${params.sqlMap.default}
       and is_deleted=false

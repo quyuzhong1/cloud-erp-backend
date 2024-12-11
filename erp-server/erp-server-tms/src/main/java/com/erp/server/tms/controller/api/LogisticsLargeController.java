@@ -106,6 +106,11 @@ public class LogisticsLargeController extends BaseController {
      * @return
      */
     @PostMapping("/paging")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "tms:logisticsLarge:paging",
+            tableAlias = "ll"
+    )
     @WebAdvanceQuery(handler = LogisticsLargeQueryHandler.class)
     public ApiResult<PagingVO<LogisticsLargeDTO.PagingViewDTO>> queryByPage(@RequestBody @Validated PagingDTO<LogisticsLargeDTO.PagingParamDTO> dto) {
         PagingVO<LogisticsLargeDTO.PagingViewDTO> pagingVO = logisticsLargeService.paging(dto);
