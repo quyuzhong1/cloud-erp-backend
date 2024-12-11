@@ -1266,7 +1266,7 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
 						}
 						transferDeclareCostAllocationDetailEntity.setProductAllocatedAmount(transferDeclareCostAllocationDetailEntity.getAllocatedAmount()
 								.divide(new BigDecimal(actualQty), 6, RoundingMode.HALF_UP));
-						transferDeclareCostAllocationDetailEntity.setProductAllocatedAmountExchange(transferDeclareCostAllocationDetailEntity.getProductAllocatedAmount().multiply(rate).setScale(6));
+						transferDeclareCostAllocationDetailEntity.setProductAllocatedAmountExchange(transferDeclareCostAllocationDetailEntity.getProductAllocatedAmount().multiply(rate).setScale(6 , RoundingMode.HALF_UP));
 						transferDeclareCostAllocationDetailEntity.setFeeAllocationType(feeAllocationType);
 						transferDeclareCostAllocationDetailEntity.setAllocatedCurrency(allocatedCurrency);
 						transferDeclareCostAllocationDetailEntity.setWeightAllocationType(transferAllocation);
