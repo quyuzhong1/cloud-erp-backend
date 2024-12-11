@@ -1279,7 +1279,8 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
 							rateMap.put(key, rate);
 						}
 						transferDeclareCostAllocationDetailEntity.setBillAmount(costValueSum);
-						transferDeclareCostAllocationDetailEntity.setBillAmountExchange(transferDeclareCostAllocationDetailEntity.getBillAmount().multiply(rate).setScale(4, RoundingMode.DOWN));
+						BigDecimal billAmountExchange = transferDeclareCostAllocationDetailEntity.getBillAmount().multiply(rate).setScale(4, RoundingMode.DOWN);
+						transferDeclareCostAllocationDetailEntity.setBillAmountExchange(billAmountExchange);
 						transferDeclareCostAllocationDetailEntity.setFeeType(feeType);
 						String feeAllocationType = feeTypeSettingMap.getValue();
 						if(StringUtils.isBlank(feeAllocationType)) {
@@ -1288,19 +1289,22 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
 						if(i < dealSoOutstockDetailEntityList.size()) {
 							if(CostAllocationEnum.WEIGHT_ALLOCATION.getCode().equals(feeAllocationType)) {
 								transferDeclareCostAllocationDetailEntity.setAllocatedAmount(costValueSum.multiply(skuWeightCostPre).setScale(2, RoundingMode.DOWN));
+								transferDeclareCostAllocationDetailEntity.setAllocatedAmount(billAmountExchange.multiply(skuWeightCostPre).setScale(2, RoundingMode.DOWN));
 							}else {
 								transferDeclareCostAllocationDetailEntity.setAllocatedAmount(costValueSum.multiply(skuCostPre).setScale(2, RoundingMode.DOWN));
+								transferDeclareCostAllocationDetailEntity.setAllocatedAmount(billAmountExchange.multiply(skuCostPre).setScale(2, RoundingMode.DOWN));
 							}
 							transferDeclareCostAllocationDetailEntity.setAllocatedAmountExchange(transferDeclareCostAllocationDetailEntity.getAllocatedAmount().multiply(rate).setScale(2, RoundingMode.DOWN));
 						}else {
 							transferDeclareCostAllocationDetailEntity.setAllocatedAmount(costValueSum.subtract(addTransferDeclareCostAllocationDetailEntityList.stream()
 									.filter(a -> a.getFeeType().equals(feeType)).map(TransferDeclareCostAllocationDetailEntity::getAllocatedAmount).reduce(BigDecimal::add).orElse(BigDecimal.ZERO)).setScale(2, RoundingMode.DOWN));
-							transferDeclareCostAllocationDetailEntity.setAllocatedAmountExchange(transferDeclareCostAllocationDetailEntity.getBillAmountExchange().subtract(addTransferDeclareCostAllocationDetailEntityList.stream()
+							transferDeclareCostAllocationDetailEntity.setAllocatedAmountExchange(billAmountExchange.subtract(addTransferDeclareCostAllocationDetailEntityList.stream()
 									.filter(a -> a.getFeeType().equals(feeType)).map(TransferDeclareCostAllocationDetailEntity::getAllocatedAmountExchange).reduce(BigDecimal::add).orElse(BigDecimal.ZERO)).setScale(2, RoundingMode.DOWN));
 						}
 						transferDeclareCostAllocationDetailEntity.setProductAllocatedAmount(transferDeclareCostAllocationDetailEntity.getAllocatedAmount()
 								.divide(new BigDecimal(actualQty), 6, RoundingMode.HALF_UP));
-						transferDeclareCostAllocationDetailEntity.setProductAllocatedAmountExchange(transferDeclareCostAllocationDetailEntity.getProductAllocatedAmount().multiply(rate).setScale(6 , RoundingMode.HALF_UP));
+						transferDeclareCostAllocationDetailEntity.setProductAllocatedAmountExchange(transferDeclareCostAllocationDetailEntity.getAllocatedAmountExchange()
+								.divide(new BigDecimal(actualQty), 6, RoundingMode.HALF_UP));
 						transferDeclareCostAllocationDetailEntity.setFeeAllocationType(feeAllocationType);
 						transferDeclareCostAllocationDetailEntity.setAllocatedCurrency(allocatedCurrency);
 						transferDeclareCostAllocationDetailEntity.setWeightAllocationType(transferAllocation);
