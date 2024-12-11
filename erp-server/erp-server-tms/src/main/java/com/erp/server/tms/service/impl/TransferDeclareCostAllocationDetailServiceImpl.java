@@ -97,7 +97,7 @@ public class TransferDeclareCostAllocationDetailServiceImpl extends SuperService
 
     @Override
     public List<TransferDeclareCostAllocationDetailEntity> listByMainIds(List<String> mainIds) {
-        if (CollUtil.isNotEmpty(mainIds)) {
+        if (CollUtil.isEmpty(mainIds)) {
             return Collections.emptyList();
         }
         return lambdaQuery().in(TransferDeclareCostAllocationDetailEntity::getMainId, mainIds).list();

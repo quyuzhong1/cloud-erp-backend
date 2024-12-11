@@ -6,6 +6,7 @@ import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.exception.ServiceException;
+import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.tms.entity.*;
 import com.erp.model.tms.enums.SmallBagCostAllocationMainBigTableStatusEnum;
 import com.erp.model.tms.enums.SmallBagCostAllocationMainReportStatusEnum;
@@ -13,6 +14,7 @@ import com.erp.model.wms.entity.FirstMileDeliveryDetailEntity;
 import com.erp.model.wms.entity.FirstMileDeliveryEntity;
 import com.erp.model.wms.entity.SoOutstockDetailEntity;
 import com.erp.model.wms.entity.SoOutstockEntity;
+import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.rpc.wms.feign.SoOutstockFeign;
 import com.erp.rpc.wms.feign.WmsFirstMileDeliveryFeign;
 import com.erp.server.tms.service.*;
@@ -68,6 +70,9 @@ public class LogisticsLargeJob {
     @Resource
     private WmsFirstMileDeliveryFeign wmsFirstMileDeliveryFeign;
 
+    @Resource
+    private SoB2cFeign soB2cFeign;
+
 
     /**
      * 小包费用分摊自动生成物流大表
@@ -81,7 +86,7 @@ public class LogisticsLargeJob {
                 .list();
 
         List<String> ids = allocationMainEntityList.stream().map(req -> req.getId()).distinct().collect(Collectors.toList());
-        List<SmallBagCostAllocationEntity> costAllocationEntityList = smallBagCostAllocationService.lambdaQuery().eq(SmallBagCostAllocationEntity::getMainId, ids).list();
+        List<SmallBagCostAllocationEntity> costAllocationEntityList = smallBagCostAllocationService.lambdaQuery().in(SmallBagCostAllocationEntity::getMainId, ids).list();
         List<String> costAllocationIds = costAllocationEntityList.stream().map(req -> req.getId()).collect(Collectors.toList());
         List<SmallBagCostAllocationDetailEntity> smallBagCostAllocationDetailEntities = smallBagCostAllocationDetailService.listByMainIds(costAllocationIds);
 
@@ -97,6 +102,11 @@ public class LogisticsLargeJob {
             soOutstockEntitylList = FeignQuery.create(SoOutstockEntity.class).in(SoOutstockEntity::getId, outstockIds).list();
         }
 
+        List<String> soIds = soOutstockEntitylList.stream().map(req -> req.getSourceId()).distinct().collect(Collectors.toList());
+        List<SoB2cEntity> soB2cEntities = new ArrayList<>();
+        if (CollUtil.isNotEmpty(soIds)) {
+            soB2cEntities = soB2cFeign.listByIds(soIds);
+        }
 
         for (SmallBagCostAllocationMainEntity entity : allocationMainEntityList) {
             List<SmallBagCostAllocationEntity> costAllocationEntities = costAllocationEntityList.stream().filter(req -> req.getMainId().equals(entity.getId())).collect(Collectors.toList());
@@ -119,7 +129,7 @@ public class LogisticsLargeJob {
                 throw new ServiceException("销售出库详情不存在!");
             }
 
-            logisticsLargeService.generateSmallBagCostAllocationTable(entity, costAllocationEntities, costAllocationDetailEntityList, soOutstockEntity, soOutstockDetailEntities);
+            logisticsLargeService.generateSmallBagCostAllocationTable(entity, costAllocationEntities, costAllocationDetailEntityList, soOutstockEntity, soOutstockDetailEntities, soB2cEntities);
         }
     }
 
