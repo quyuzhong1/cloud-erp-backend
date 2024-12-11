@@ -124,6 +124,7 @@ public enum SourceTypeEnum {
     PRODUCT_CHANGE("productChange", "变更管理","product_change"),
     BASIC_CATEGORY("basicCategory", "产品分类","basic_category"),
     PRODUCT_LOGISTICS("ProductLogistics", "物流产品","product_logistics"),
+    MOULD_INFO("mouldInfo", "模具管理","mould_info"),
 
 
     //SYS

@@ -164,4 +164,5 @@ public interface BusinessNoConstant {
     String TKD = "TKD";
     String XLSS = "XLSS";
     String YHBG = "YHBG";
+    String MJ = "MJ";
 }

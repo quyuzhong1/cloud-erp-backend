@@ -1,6 +1,7 @@
 package com.erp.server.plm.controller.feign;
 
 import com.common.business.dto.base.ApproveOneDTO;
+import com.common.business.enums.ApproveTypeEnum;
 import com.erp.model.plm.dto.AuditParamDTO;
 import com.erp.model.plm.dto.PilotApplicationDTO;
 import com.erp.model.plm.dto.ProductDetailOperateDTO;
