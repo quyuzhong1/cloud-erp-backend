@@ -1167,6 +1167,7 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
 						}
 					}
 				
+					dealSoOutstockDetailEntityList.sort((s1 , s2) -> s1.getActualQty().compareTo(s2.getActualQty()));
 				for(SoOutstockDetailEntity soOutstockDetailEntity : dealSoOutstockDetailEntityList) {
 					i = i + 1;
 					TransferDeclareCostAllocationEntity transferDeclareCostAllocationEntity = new TransferDeclareCostAllocationEntity();
