@@ -336,9 +336,25 @@ public class TmsFirstMileReconciliationController extends BaseController {
      **/
     @PostMapping("/updatePayStatus")
     @LogAction(value = LogActionEnum.UPDATE, desc = "更新付款状态")
-    public ApiResult<Boolean> updatePayStatus(@RequestBody @Validated TmsFirstMileReconciliationDTO.UpdatePayStatusDTO dto) {
-        Boolean flag = tmsFirstMileReconciliationService.updatePayStatus(dto);
-        return flag ? success() : failure();
+    public ApiResult<List<BatchResultDTO>> updatePayStatus(@RequestBody @Validated TmsFirstMileReconciliationDTO.UpdatePayStatusDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        for (String id : dto.getIds()) {
+            BatchResultDTO result;
+            try {
+                result = tmsFirstMileReconciliationService.updatePayStatus(dto, id);
+            } catch (Exception e) {
+                log.error("更新付款状态失败", e);
+                TmsFirstMileReconciliationEntity entity = tmsFirstMileReconciliationService.getById(id);
+                if (ObjectUtil.isEmpty(entity)) {
+                    result = BatchResultDTO.fail(id, id, "头程对账单不存在, 更新付款状态失败");
+                    resultDTOS.add(result);
+                    continue;
+                }
+                result = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
+            }
+            resultDTOS.add(result);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
 
