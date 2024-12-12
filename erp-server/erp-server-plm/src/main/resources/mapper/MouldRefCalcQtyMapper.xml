@@ -19,5 +19,12 @@
         <result column="stock_in_qty" property="stockInQty" />
         <result column="calc_qty" property="calcQty" />
     </resultMap>
+    <select id="getNeedCalcData" resultType="com.erp.model.plm.dto.MouldRefCalcQtyDTO">
+        select md.id as detailId, md.enable_date, mra.refund_standard
+        from mould_detail md
+                 inner join public.mould_refund_agreement mra on md.id = mra.mould_detail_id
+        where is_need_refund = true
+
+    </select>
 
 </mapper>

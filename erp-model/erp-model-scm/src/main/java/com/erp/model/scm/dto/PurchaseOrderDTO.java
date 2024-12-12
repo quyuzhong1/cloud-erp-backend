@@ -6,9 +6,7 @@ import com.common.business.dto.base.SortDTO;
 import com.common.core.anno.StateEnumValue;
 import com.erp.model.plm.vo.ProductVO;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import javax.validation.Valid;
 import javax.validation.constraints.*;
@@ -1669,4 +1667,74 @@ public class PurchaseOrderDTO implements Serializable {
          */
         private String code;
     }
+
+
+    @Data
+    @NoArgsConstructor
+    public static class PurchaseCalcQtyDTO {
+        /**
+         * 主键id
+         */
+        private String id;
+
+        /**
+         * 采购订单明细id
+         */
+        private String purchaseDetailId;
+        /**
+         * 采购单号
+         */
+        private String code;
+        /**
+         * 供应商id
+         */
+        private String supplierId;
+        /**
+         * skuId
+         */
+        private String skuId;
+
+        /**
+         * sku编码
+         */
+        private String skuNo;
+        /**
+         * 采购数量/订单数量
+         */
+        private Integer purchaseQty;
+
+        /**
+         * 签收数量/已送货数量/已收货数量（已签收）
+         */
+        private Integer receiveQty;
+
+        /**
+         * 入库数量/已收货数量
+         */
+        private Integer stockInQty;
+
+        /**
+         * 创建时间
+         */
+        private LocalDateTime createTime;
+
+    }
+
+
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class PurchaseCalcQtyParamsDTO {
+        /**
+         * sku
+         */
+        private List<String> skuIdList;
+
+        /**
+         * supplier
+         */
+        private List<String> supplierIdList;
+    }
+
 }

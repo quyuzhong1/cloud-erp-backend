@@ -244,7 +244,7 @@ public class MouldInfoServiceImpl extends SuperServiceImpl<MouldInfoMapper, Moul
     public BatchResultDTO submit(String id) {
         MouldInfoEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到模具数据"));
         // 待提交或审核不通过并且未作废允许提交
-        if (!ApproveStatusEnum.allowUpdateStatus(ApproveStatusEnum.getByStatus(entity.getStatus()))) {
+        if (Boolean.FALSE.equals(ApproveStatusEnum.allowUpdateStatus(ApproveStatusEnum.getByStatus(entity.getStatus())))) {
             throw new ServiceException(ApiError.ERROR_98010);
         }
         log.info("提交 开始启动模具表流程，id=：【{}】", entity.getId());
@@ -350,7 +350,7 @@ public class MouldInfoServiceImpl extends SuperServiceImpl<MouldInfoMapper, Moul
             throw new ServiceException(ApiError.ERROR_94006);
         }
         ProcessManagementDTO.ApproveResultDTO data = approveResult.getData();
-        if (ObjectUtil.isEmpty(data.getIsExistProcess()) || !data.getIsExistProcess()) {
+        if (ObjectUtil.isEmpty(data.getIsExistProcess()) || Boolean.TRUE.equals(!data.getIsExistProcess())) {
             // 无需走流程的数据则直接更新状态
             approveEnd(dto, entity);
         }
@@ -391,7 +391,7 @@ public class MouldInfoServiceImpl extends SuperServiceImpl<MouldInfoMapper, Moul
     public BatchResultDTO invalid(String id, String remark) {
         MouldInfoEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到模具数据"));
         // 待提交或审核不通过并且未作废允许作废
-        if (!ApproveStatusEnum.allowUpdateStatus(ApproveStatusEnum.getByStatus(entity.getStatus()))) {
+        if (Boolean.FALSE.equals(ApproveStatusEnum.allowUpdateStatus(ApproveStatusEnum.getByStatus(entity.getStatus())))) {
             throw new ServiceException(ApiError.ERROR_98005);
         }
         //已作废数据不支持作废

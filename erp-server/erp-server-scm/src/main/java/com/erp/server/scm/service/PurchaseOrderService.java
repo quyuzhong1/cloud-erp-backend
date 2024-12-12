@@ -477,4 +477,10 @@ public interface PurchaseOrderService extends SuperService<PurchaseOrderEntity> 
      * @return PagingVO<SourceCodeDTO>
      */
     PagingVO<PurchaseOrderDTO.SourceCodeDTO> purchaseCodePaging(PagingDTO<PurchaseOrderDTO.SourceCodeParamDTO> dto);
+
+    /**
+     * 通过sku 供应商查询所有采购订单
+     * @param purchaseCalcQtyParamsDTO 参数
+     */
+    List<PurchaseOrderDTO.PurchaseCalcQtyDTO> listAllPurchaseBySkuIdAndSupplier(PurchaseOrderDTO.PurchaseCalcQtyParamsDTO purchaseCalcQtyParamsDTO);
 }

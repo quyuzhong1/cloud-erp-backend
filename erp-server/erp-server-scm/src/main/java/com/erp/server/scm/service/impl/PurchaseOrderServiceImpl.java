@@ -3094,6 +3094,38 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
     }
 
     @Override
+    public List<PurchaseOrderDTO.PurchaseCalcQtyDTO> listAllPurchaseBySkuIdAndSupplier(PurchaseOrderDTO.PurchaseCalcQtyParamsDTO purchaseCalcQtyParamsDTO) {
+
+        List<PurchaseOrderDTO.PurchaseCalcQtyDTO> result = baseMapper.listAllPurchaseBySkuIdAndSupplier(purchaseCalcQtyParamsDTO.getSkuIdList(), purchaseCalcQtyParamsDTO.getSupplierIdList());
+        // 采购订单明细id集合
+        List<String> podIds = result.stream().map(PurchaseOrderDTO.PurchaseCalcQtyDTO::getPurchaseDetailId).collect(Collectors.toList());
+        //入库信息
+        List<PoInstockDetailEntity> purchaseStockInDetailList = wmsTaskFeign.listPurchaseStockInDetailByPodIds(podIds);
+
+        //收货信息
+        List<WarehouseReceiveDetailEntity> receiveDetailList = wmsTaskFeign.listWarehouseReceiveDetailByPodIds(podIds);
+        for (PurchaseOrderDTO.PurchaseCalcQtyDTO obj : result) {
+            //已收货数量
+            Integer receiveQty = MathUtil.ZERO;
+            //收货数量
+            if (CollectionUtils.isNotEmpty(receiveDetailList)) {
+                receiveQty = receiveDetailList.stream().filter(e -> e.getPurchaseOrderDetailId().equals(obj.getPurchaseDetailId()) && ApproveStatusEnum.APPROVE.getStatus().equals(e.getApproveStatus()))
+                        .map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
+            }
+            //入库数量
+            Integer stockInQty = MathUtil.ZERO;
+            if (CollectionUtils.isNotEmpty(purchaseStockInDetailList)) {
+                stockInQty = purchaseStockInDetailList.stream().filter(e -> e.getPurchaseOrderDetailId().equals(obj.getPurchaseDetailId()) && ApproveStatusEnum.APPROVE.getStatus().equals(e.getApproveStatus()))
+                        .map(PoInstockDetailEntity::getStockInQty).reduce(MathUtil.ZERO, Integer::sum);
+            }
+            //已收货数量
+            obj.setReceiveQty(receiveQty);
+            obj.setStockInQty(stockInQty);
+        }
+        return result;
+    }
+
+    @Override
     public List<DeliveryOrderDTO.WaitDeliveryCountDTO> srmWaitDeliveryCount(PurchaseOrderSrmDTO.WaitDeliveryParamDTO dto) {
         WaitDeliveryCycleEnum[] values = WaitDeliveryCycleEnum.values();
         List<DeliveryOrderDTO.WaitDeliveryCountDTO> dtos = new ArrayList<>(values.length);

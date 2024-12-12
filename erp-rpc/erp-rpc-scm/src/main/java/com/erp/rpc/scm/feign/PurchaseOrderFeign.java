@@ -10,7 +10,6 @@ import com.erp.model.scm.dto.PurchaseOrderSrmDTO;
 import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
 import com.erp.model.scm.entity.PurchaseOrderEntity;
 import com.erp.model.srm.dto.DeliveryOrderDTO;
-import org.apache.ibatis.annotations.Param;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -18,7 +17,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 
-import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 import java.util.Set;
 
@@ -127,4 +125,10 @@ public interface PurchaseOrderFeign {
     @PostMapping("/feign/purchaseOrder/viewGenerateStockIn")
     List<PurchaseOrderDTO.ViewGenerateStockInDTO> viewGenerateStockIn(@RequestBody @Validated List<String>  purchaseDetailIdList);
 
+    /**
+     * 通过sku 供应商查询所有采购订单
+     * @param purchaseCalcQtyParamsDTO 参数
+     */
+    @PostMapping("/feign/purchaseOrder/listAllPurchaseBySkuIdAndSupplier")
+    List<PurchaseOrderDTO.PurchaseCalcQtyDTO> listAllPurchaseBySkuIdAndSupplier(@RequestBody PurchaseOrderDTO.PurchaseCalcQtyParamsDTO purchaseCalcQtyParamsDTO);
 }
