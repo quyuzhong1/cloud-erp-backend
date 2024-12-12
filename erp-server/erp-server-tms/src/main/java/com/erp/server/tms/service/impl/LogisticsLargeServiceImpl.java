@@ -510,15 +510,6 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
                                                SoOutstockDetailEntity soOutstockDetailEntity,
                                                SoB2cEntity soB2cEntity) {
 
-        //已确认才能下推
-        if (!SmallBagCostAllocationReportStatusEnum.CONFIRMED.getCode().equals(smallBagCostAllocationMainEntity.getReportStatus())) {
-            throw new ServiceException(ApiError.ERROR_SMALL_BAG_NOT_CONFIRMED);
-        }
-        //已生成物流大表不能再次生成
-        if (SmallBagCostAllocationBigTableStatusEnum.DONE.getCode().equals(smallBagCostAllocationMainEntity.getBigTableStatus())) {
-            throw new ServiceException(ApiError.ERROR_EXISTS_LOGISTICS_LARGE);
-        }
-
         LogisticsLargeDTO.AddDTO addDTO = new LogisticsLargeDTO.AddDTO();
         addDTO.setSourceId(smallBagCostAllocationMainEntity.getId());
         addDTO.setSourceType(SourceTypeEnum.SMALL_BAG_COST_ALLOCATION.getCode());
@@ -764,6 +755,16 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
     @Override
     @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO generateSmallBagCostAllocationTable(SmallBagCostAllocationMainEntity mainEntity, List<SmallBagCostAllocationEntity> costAllocationEntityList, List<SmallBagCostAllocationDetailEntity> costAllocationDetailEntityList, SoOutstockEntity soOutstockEntity, List<SoOutstockDetailEntity> soOutstockDetailEntities, List<SoB2cEntity> soB2cEntities) {
+
+        //已确认才能下推
+        if (!SmallBagCostAllocationReportStatusEnum.CONFIRMED.getCode().equals(mainEntity.getReportStatus())) {
+            throw new ServiceException(ApiError.ERROR_SMALL_BAG_NOT_CONFIRMED);
+        }
+        //已生成物流大表不能再次生成
+        if (SmallBagCostAllocationBigTableStatusEnum.DONE.getCode().equals(mainEntity.getBigTableStatus())) {
+            throw new ServiceException(ApiError.ERROR_EXISTS_LOGISTICS_LARGE);
+        }
+
         for (SmallBagCostAllocationEntity costAllocationEntity : costAllocationEntityList) {
             List<SmallBagCostAllocationDetailEntity> costAllocationDetailEntities = costAllocationDetailEntityList.stream()
                     .filter(req -> req.getMainId().equals(costAllocationEntity.getId()))
@@ -840,23 +841,16 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
                                                               TmsB2cDeclareReconciliationDetailEntity reconciliationDetailEntity,
                                                               SoOutstockEntity soOutstockEntity) {
 
-        for (TransferDeclareCostAllocationEntity entity : costAllocationEntityList) {
-            List<TransferDeclareCostAllocationDetailEntity> costAllocationDetailEntities = costAllocationDetailEntityList.stream()
-                    .filter(req -> req.getMainId().equals(entity.getId()))
-                    .collect(Collectors.toList());
-
-            //处理数据
-            this.generateTransferCostAllocationHandler(mainEntity, entity, costAllocationDetailEntities, reconciliationEntity, reconciliationDetailEntity, soOutstockEntity);
+        mainEntity = transferDeclareCostAllocationMainService.getById(mainEntity.getId());
+        //已确认才能下推
+        if (!SmallBagCostAllocationReportStatusEnum.CONFIRMED.getCode().equals(mainEntity.getReportStatus())) {
+            throw new ServiceException(ApiError.ERROR_SMALL_BAG_NOT_CONFIRMED);
         }
-        return BatchResultDTO.success(mainEntity.getId(), soOutstockEntity.getCode(), OperationTypeEnum.ADD);
-    }
+        //已生成物流大表不能再次生成
+        if (SmallBagCostAllocationBigTableStatusEnum.DONE.getCode().equals(mainEntity.getBigTableStatus())) {
+            throw new ServiceException(ApiError.ERROR_EXISTS_LOGISTICS_LARGE);
+        }
 
-    private void generateTransferCostAllocationHandler(TransferDeclareCostAllocationMainEntity mainEntity,
-                                                                 TransferDeclareCostAllocationEntity entity,
-                                                                 List<TransferDeclareCostAllocationDetailEntity> detailEntityList,
-                                                                 TmsB2cDeclareReconciliationEntity declareReconciliationEntity,
-                                                                 TmsB2cDeclareReconciliationDetailEntity declareReconciliationDetailEntity,
-                                                                 SoOutstockEntity soOutstockEntity) {
         List<LogisticsLargeEntity> logisticsLargeEntities = this.listByIdSourceId(Arrays.asList(mainEntity.getId()));
 
         //已确认才能下推
@@ -882,6 +876,25 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
         if (logisticsLargeEstimatedEntity != null) {
             throw new ServiceException(ApiError.ERROR_EXISTS_ESTIMATED_LOGISTICS_LARGE);
         }
+
+        for (TransferDeclareCostAllocationEntity entity : costAllocationEntityList) {
+            List<TransferDeclareCostAllocationDetailEntity> costAllocationDetailEntities = costAllocationDetailEntityList.stream()
+                    .filter(req -> req.getMainId().equals(entity.getId()))
+                    .collect(Collectors.toList());
+
+
+            //处理数据
+            this.generateTransferCostAllocationHandler(mainEntity, entity, costAllocationDetailEntities, reconciliationEntity, reconciliationDetailEntity, soOutstockEntity);
+        }
+        return BatchResultDTO.success(mainEntity.getId(), soOutstockEntity.getCode(), OperationTypeEnum.ADD);
+    }
+
+    private void generateTransferCostAllocationHandler(TransferDeclareCostAllocationMainEntity mainEntity,
+                                                                 TransferDeclareCostAllocationEntity entity,
+                                                                 List<TransferDeclareCostAllocationDetailEntity> detailEntityList,
+                                                                 TmsB2cDeclareReconciliationEntity declareReconciliationEntity,
+                                                                 TmsB2cDeclareReconciliationDetailEntity declareReconciliationDetailEntity,
+                                                                 SoOutstockEntity soOutstockEntity) {
 
         //根据销售出库单id查询物流单
         List<LogisticsBillEntity> logisticsBillEntityList = logisticsBillService.listByOutstockIdList(Arrays.asList(soOutstockEntity.getId()));
