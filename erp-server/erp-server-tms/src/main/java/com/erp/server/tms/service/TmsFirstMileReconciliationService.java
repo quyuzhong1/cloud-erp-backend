@@ -200,5 +200,5 @@ public interface TmsFirstMileReconciliationService extends SuperService<TmsFirst
      * @param dto
      * @return com.common.core.controller.vo.ApiResult<java.lang.Boolean>
      **/
-    Boolean updatePayStatus(TmsFirstMileReconciliationDTO.UpdatePayStatusDTO dto);
+    BatchResultDTO updatePayStatus(TmsFirstMileReconciliationDTO.UpdatePayStatusDTO dto, String id);
 }
