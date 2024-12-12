@@ -72,6 +72,13 @@ public class RemotePostcodeServiceImpl extends SuperServiceImpl<RemotePostcodeMa
         RemotePostcodeEntity remotePostcodeEntity = new RemotePostcodeEntity();
         BeanMapperUtils.copy(addDTO, remotePostcodeEntity);
 
+        boolean exists = lambdaQuery()
+                .eq(RemotePostcodeEntity::getName, addDTO.getName())
+                .count() > 0;
+        if(Boolean.TRUE.equals(exists)) {
+            throw new ServiceException("已存在相同名称的邮编组");
+        }
+
         // 数据处理
         log.info("开始新增偏远邮编组");
         boolean save = super.save(remotePostcodeEntity);
@@ -92,6 +99,14 @@ public class RemotePostcodeServiceImpl extends SuperServiceImpl<RemotePostcodeMa
     @Transactional(rollbackFor = Exception.class)
     @Override
     public Boolean update(RemotePostcodeDTO.UpdateDTO updateDTO) {
+        boolean exists = lambdaQuery()
+                .eq(RemotePostcodeEntity::getName, updateDTO.getName())
+                .ne(RemotePostcodeEntity::getId, updateDTO.getId())
+                .count() > 0;
+        if(Boolean.TRUE.equals(exists)) {
+            throw new ServiceException("已存在相同名称的邮编组");
+        }
+
         RemotePostcodeEntity old = super.getById(updateDTO.getId());
         old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "偏远邮编组"));
         RemotePostcodeEntity remotePostcodeEntity =  BeanMapperUtils.map(RemotePostcodeEntity.class, updateDTO);

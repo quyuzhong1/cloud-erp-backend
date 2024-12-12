@@ -312,7 +312,7 @@ public class RemotePostcodeDetailServiceImpl extends SuperServiceImpl<RemotePost
         List<RemotePostcodeDetailDTO.ImportDTO> successList = excelListenerUtil.getSuccessList();
         //导出错误数据
         List<RemotePostcodeDetailDTO.ImportDTO> errorList = excelListenerUtil.getErrorList();
-        List<RemotePostcodeDetailDTO.ImportDTO> resultList = new ArrayList<>();
+        List<RemotePostcodeDetailDTO.AddDTO> resultList = new ArrayList<>();
         if(CollUtil.isNotEmpty(successList)){
             // 将城市信息转换为 Map，减少多次流式查找
             List<String> cityNames = successList.stream().map(RemotePostcodeDetailDTO.ImportDTO::getCityName).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
@@ -331,11 +331,13 @@ public class RemotePostcodeDetailServiceImpl extends SuperServiceImpl<RemotePost
                     errorList.add(dto);
                     continue;
                 }
-                dto.setCity(cityMap.get(dto.getCityName()));
+                RemotePostcodeDetailDTO.AddDTO addDTO = new RemotePostcodeDetailDTO.AddDTO();
+                BeanMapper.copy(dto,addDTO);
+                addDTO.setCity(cityMap.get(dto.getCityName()));
                 // 匹配类型名称
-                dto.setMatchType(RemotePostcodeDetailMatchTypeEnum.PRECISEMATCH.getCode());
-                dto.setMatchTypeName(RemotePostcodeDetailMatchTypeEnum.PRECISEMATCH.getName());
-                resultList.add(dto);
+                addDTO.setMatchType(RemotePostcodeDetailMatchTypeEnum.PRECISEMATCH.getCode());
+                addDTO.setMatchTypeName(RemotePostcodeDetailMatchTypeEnum.PRECISEMATCH.getName());
+                resultList.add(addDTO);
             }
         }
         result.setSuccessList(resultList);
