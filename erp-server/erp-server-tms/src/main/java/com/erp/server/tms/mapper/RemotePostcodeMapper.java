@@ -43,7 +43,7 @@ public interface RemotePostcodeMapper extends BaseMapper<RemotePostcodeEntity> {
     * @param params
     * @return
     */
-    Page<RemotePostcodeDTO.ExportListDTO> listExport(Page query, @Param("params") RemotePostcodeDTO.PagingParamDTO params);
+    IPage<RemotePostcodeDTO.ExportListDTO> listExport(Page query, @Param("params") RemotePostcodeDTO.ExportDTO params);
 
     /**
     * 获取状态统计

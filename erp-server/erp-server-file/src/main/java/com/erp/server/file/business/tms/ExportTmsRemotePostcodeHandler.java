@@ -18,7 +18,7 @@ import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_REMOTE_POST
 
 @Component
 @Slf4j
-public class ExportTmsRemotePostcodeHandler extends AbstractPageFileEventHandler<RemotePostcodeDTO.ExportListDTO, RemotePostcodeDTO.PagingParamDTO> {
+public class ExportTmsRemotePostcodeHandler extends AbstractPageFileEventHandler<RemotePostcodeDTO.ExportListDTO, RemotePostcodeDTO.ExportDTO> {
     @Resource
     private ExportTmsFeign exportTmsFeign;
 
@@ -34,13 +34,13 @@ public class ExportTmsRemotePostcodeHandler extends AbstractPageFileEventHandler
 
     @Override
     protected List<RemotePostcodeDTO.ExportListDTO> getData(FileTask fileTask) {
-        RemotePostcodeDTO.PagingParamDTO dto = readValue(fileTask.getMetaInfo(), new TypeReference<RemotePostcodeDTO.PagingParamDTO>() {
+        RemotePostcodeDTO.ExportDTO dto = readValue(fileTask.getMetaInfo(), new TypeReference<RemotePostcodeDTO.ExportDTO>() {
         });
         return listSeqData(dto);
     }
 
     @Override
-    protected PagingVO<RemotePostcodeDTO.ExportListDTO> getPageData(PagingDTO<RemotePostcodeDTO.PagingParamDTO> dto) {
+    protected PagingVO<RemotePostcodeDTO.ExportListDTO> getPageData(PagingDTO<RemotePostcodeDTO.ExportDTO> dto) {
         return exportTmsFeign.exportRemotePostcode(dto);
     }
 }

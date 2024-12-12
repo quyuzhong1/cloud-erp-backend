@@ -65,5 +65,5 @@ public interface ExportTmsFeign {
     @PostMapping("/feign/export/exportFirstMileWeightAllocation")
     PagingVO<FirstMileWeightAllocationDTO.ViewDTO> exportFirstMileWeightAllocation(@RequestBody @Valid PagingDTO<FirstMileWeightAllocationDTO.PagingParamDTO> dto);
     @PostMapping("/feign/export/exportRemotePostcode")
-    PagingVO<RemotePostcodeDTO.ExportListDTO> exportRemotePostcode(@RequestBody PagingDTO<RemotePostcodeDTO.PagingParamDTO> dto);
+    PagingVO<RemotePostcodeDTO.ExportListDTO> exportRemotePostcode(@RequestBody PagingDTO<RemotePostcodeDTO.ExportDTO> dto);
 }

@@ -152,8 +152,9 @@ public class RemotePostcodeServiceImpl extends SuperServiceImpl<RemotePostcodeMa
     }
 
     @Override
-    public PagingVO<RemotePostcodeDTO.ExportListDTO> listExport(PagingDTO<RemotePostcodeDTO.PagingParamDTO> pagingParamDTO) {
-        Page<RemotePostcodeDTO.ExportListDTO> pageData = this.baseMapper.listExport(new Page<>(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize()), pagingParamDTO.getParams());
+    public PagingVO<RemotePostcodeDTO.ExportListDTO> listExport(PagingDTO<RemotePostcodeDTO.ExportDTO> pagingParamDTO) {
+        pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
+        IPage<RemotePostcodeDTO.ExportListDTO> pageData = this.baseMapper.listExport(new Page<>(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize()), pagingParamDTO.getParams());
         if(CollUtil.isEmpty(pageData.getRecords())) {
             return new PagingVO(pageData);
         }

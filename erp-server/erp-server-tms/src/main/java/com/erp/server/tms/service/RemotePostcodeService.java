@@ -92,7 +92,7 @@ public interface RemotePostcodeService extends SuperService<RemotePostcodeEntity
      * @param pagingParamDTO
      * @return
      */
-    PagingVO<RemotePostcodeDTO.ExportListDTO> listExport(PagingDTO<RemotePostcodeDTO.PagingParamDTO> pagingParamDTO);
+    PagingVO<RemotePostcodeDTO.ExportListDTO> listExport(PagingDTO<RemotePostcodeDTO.ExportDTO> pagingParamDTO);
     /**
      * 邮编远程查询（分页型）
      * @author jack

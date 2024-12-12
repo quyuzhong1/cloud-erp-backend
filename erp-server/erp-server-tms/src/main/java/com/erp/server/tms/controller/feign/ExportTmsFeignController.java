@@ -275,7 +275,7 @@ public class ExportTmsFeignController {
      */
     @PostMapping("/exportRemotePostcode")
     @WebAdvanceQuery
-    public PagingVO<RemotePostcodeDTO.ExportListDTO> exportRemotePostcode(@RequestBody @Valid PagingDTO<RemotePostcodeDTO.PagingParamDTO> dto) {
+    public PagingVO<RemotePostcodeDTO.ExportListDTO> exportRemotePostcode(@RequestBody @Valid PagingDTO<RemotePostcodeDTO.ExportDTO> dto) {
         return remotePostcodeService.listExport(dto);
     }
 }
