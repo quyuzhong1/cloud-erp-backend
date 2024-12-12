@@ -71,5 +71,5 @@ public interface ExportTmsFeign {
     @PostMapping("/feign/export/logisticsBill")
     PagingVO<LogisticsLargeDTO.PagingViewDTO> exportLogisticsLarge(@RequestBody PagingDTO<LogisticsLargeDTO.PagingParamDTO> dto);
     @PostMapping("/feign/export/exportRemotePostcode")
-    PagingVO<RemotePostcodeDTO.ExportListDTO> exportRemotePostcode(@RequestBody PagingDTO<RemotePostcodeDTO.PagingParamDTO> dto);
+    PagingVO<RemotePostcodeDTO.ExportListDTO> exportRemotePostcode(@RequestBody PagingDTO<RemotePostcodeDTO.ExportDTO> dto);
 }
