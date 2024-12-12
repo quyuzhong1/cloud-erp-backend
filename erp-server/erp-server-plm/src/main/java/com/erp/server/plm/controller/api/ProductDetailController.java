@@ -42,6 +42,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * 产品管理
@@ -1312,6 +1313,19 @@ public class ProductDetailController extends BaseController {
                 resultDTOS.add(BatchResultDTO.fail(viewDTO.getSkuId(), viewDTO.getSkuNo(), e.getMessage()));
             }
         }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+
+    /**
+     * 目的国申报价重算
+     * @param dto
+     * @return
+     */
+    @PostMapping("/resetDestDeclarePrice")
+    public ApiResult<List<BatchResultDTO>> resetDestDeclarePrice(@RequestBody @Validated BaseIdsDTO.IdsDTO dto){
+        List<String> ids = dto.getIds().stream().distinct().collect(Collectors.toList());
+        List<ProductDetailEntity> productDetailEntityList = productDetailService.listByIds(ids);
+        List<BatchResultDTO> resultDTOS = productDetailService.resetDestDeclarePrice(productDetailEntityList, Boolean.TRUE);
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 }

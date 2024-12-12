@@ -711,7 +711,12 @@ public class MouldInfoDTO implements Serializable {
         /**
          * 图片地址
          */
-        private List<String> imagesUrl;
+        private String imagesUrl;
+
+        /**
+         * 图片地址
+         */
+        private String imageUrl;
 
         /**
          * 模具长
@@ -790,6 +795,11 @@ public class MouldInfoDTO implements Serializable {
          * 创建人名称
          */
         private String createUserName;
+        /**
+         * 创建时间
+         */
+        private LocalDateTime createTime;
+
         /**
          * 修改人名称
          */
@@ -912,11 +922,16 @@ public class MouldInfoDTO implements Serializable {
          * 是否费用返还
          */
         private Boolean isNeedRefund;
+        private String isNeedRefundName;
 
         /**
          * 返还标准
          */
         private String refundStandard;
+        /**
+         * 返还标准名字
+         */
+        private String refundStandardName;
 
         /**
          * 退款单量
@@ -975,13 +990,47 @@ public class MouldInfoDTO implements Serializable {
          */
         private String thirdMouldNo;
         /**
-         * 供应商id
+         * 模具供应商id
          */
         private String mouldSupplierId;
         /**
-         * 供应商名称
+         * 模具供应商名称
          */
         private String mouldSupplierName;
+        /**
+         * 采购单号
+         */
+        private String purchaseOrderCode;
+        /**
+         * SKU
+         */
+        private String skuNo;
+        /**
+         * 供应商id
+         */
+        private String supplierId;
+        /**
+         * 供应商名称
+         */
+        private String supplierName;
+        /**
+         * 采购数量
+         */
+        private Integer purchaseQty;
 
+        /**
+         * 收获数量
+         */
+        private Integer receiveQty;
+
+        /**
+         * 入库数量
+         */
+        private Integer stockInQty;
+
+        /**
+         * 创建时间
+         */
+        private LocalDateTime poCreateTime;
     }
 }

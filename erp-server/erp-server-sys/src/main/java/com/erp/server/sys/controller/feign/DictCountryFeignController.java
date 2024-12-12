@@ -68,8 +68,16 @@ public class DictCountryFeignController {
      */
     @PostMapping("/listCountryByNames")
     public List<DictCountryEntity> listCountryByNames(@RequestBody List<String> names) {
-        List<DictCountryEntity>list = dictCountryService.listCountryByNames(names);
-        return list;
+        return dictCountryService.listCountryByNames(names);
+    }
+    /**
+     * 根据国家名/Id 集合 获取到国家列表
+     * @param codeList
+     * @return
+     */
+    @PostMapping("/listCountryByNamesOrIds")
+    public List<DictCountryEntity> listCountryByNamesOrIds(@RequestBody List<String> codeList){
+        return dictCountryService.listCountryByNamesOrIds(codeList);
     }
 
     /**

@@ -49,6 +49,7 @@
                  left join mould_detail md on mi.id = md.main_id and md.is_deleted = false
         where ${params.sqlMap.default}
           and mi.is_deleted = false
+        order by md.create_time desc, md.id desc
     </select>
     <select id="orderTracking" resultType="com.erp.model.plm.dto.MouldInfoDTO$OrderTrackingViewDTO">
         select mi.id,
@@ -70,6 +71,7 @@
                  left join mould_refund_agreement mra on md.id = mra.mould_detail_id and mra.is_deleted = false
         where ${params.sqlMap.default}
           and mi.is_deleted = false
+        order by md.create_time desc, md.id desc
     </select>
 
     <select id="orderTrackingDetail" resultType="com.erp.model.plm.dto.MouldInfoDTO$OrderTrackingDetailDTO">
@@ -86,15 +88,15 @@
         where ${params.sqlMap.default}
           and mrcq.is_deleted = false
           and mrcq.mould_detail_id = #{params.mouldDetailId}
-
+        order by mrcqd.po_create_time
     </select>
 
     <select id="orderTrackingTotal" resultType="com.erp.model.plm.dto.MouldInfoDTO$OrderTrackingTotalDTO">
         select COALESCE(SUM(mra.refund_order_qty), 0) AS refundOrderQty,
-               COALESCE(SUM(mra.refund_amount), 0) AS refundAmount,
-               COALESCE(SUM(mrcq.purchase_qty), 0) AS purchaseQty,
-               COALESCE(SUM(mrcq.receive_qty), 0) AS receiveQty,
-               COALESCE(SUM(mrcq.stock_in_qty), 0) AS stockInQty
+               COALESCE(SUM(mra.refund_amount), 0)    AS refundAmount,
+               COALESCE(SUM(mrcq.purchase_qty), 0)    AS purchaseQty,
+               COALESCE(SUM(mrcq.receive_qty), 0)     AS receiveQty,
+               COALESCE(SUM(mrcq.stock_in_qty), 0)    AS stockInQty
         from mould_info mi
                  inner join mould_detail md on mi.id = md.main_id and md.is_deleted = false
                  left join mould_refund_agreement mra on md.id = mra.mould_detail_id and mra.is_deleted = false
@@ -112,5 +114,100 @@
         where ${params.sqlMap.default}
           and mrcq.is_deleted = false
           and mrcq.mould_detail_id = #{params.mouldDetailId}
+    </select>
+
+    <select id="exportMouldInfo" resultType="com.erp.model.plm.dto.MouldInfoDTO$MouldInfoExportDTO">
+        select mi.project_no,
+               mi.name,
+               mi.status,
+               md.mould_no,
+               md.third_mould_no,
+               md.type_id,
+               md.mould_holes,
+               mp.product_name,
+               mp.images_url,
+               md.length,
+               md.width,
+               md.height,
+               md.material,
+               md.life_cycle,
+               md.develop_cycle,
+               md.enable_date,
+               md.supplier_id,
+               msl.warehouse_id,
+               msl.warehouse_location,
+               msl.address,
+               md.remark,
+               md.create_user_name,
+               md.create_time,
+               md.update_user_name,
+               md.update_time
+        from mould_info mi
+                 left join mould_detail md on mi.id = md.main_id and md.is_deleted = false
+                 left join public.mould_product mp on md.id = mp.mould_detail_id and mp.is_deleted = false
+                 left join mould_store_location msl on md.id = msl.mould_detail_id and msl.is_deleted = false
+        where ${params.sqlMap.default}
+          and mi.is_deleted = false
+        order by md.create_time desc, md.id desc
+    </select>
+
+    <select id="exportOrderTracking" resultType="com.erp.model.plm.dto.MouldInfoDTO$OrderTrackingExportDTO">
+        select mi.project_no,
+               mi.name,
+               mi.status,
+               md.mould_no,
+               md.third_mould_no,
+               md.supplier_id,
+               mpp.qty,
+               mpp.tax_price,
+               mpp.tax_rate,
+               mpp.pay_method_id,
+               mpp.payment_condition,
+               mpp.currency,
+               mpp.exchange_rate,
+               mrp.sku_id,
+               mrp.sku_no,
+               mrp.supplier_id                      as skuSupplierId,
+               mra.is_need_refund,
+               mra.refund_standard,
+               mra.refund_order_qty,
+               mra.refund_amount,
+               mra.refund_status,
+               mrcq.purchase_qty,
+               mrcq.receive_qty,
+               mrcq.stock_in_qty,
+               mrcq.calc_qty - mra.refund_order_qty AS diffQty,
+               md.update_time
+        from mould_info mi
+                 left join mould_detail md on mi.id = md.main_id and md.is_deleted = false
+                 left join public.mould_purchase_price mpp on md.id = mpp.mould_detail_id and mpp.is_deleted = false
+                 left join public.mould_refund_agreement mra on md.id = mra.mould_detail_id and mra.is_deleted = false
+                 left join public.mould_ref_product mrp on md.id = mrp.mould_detail_id and mrp.is_deleted = false
+                 left join public.mould_ref_calc_qty mrcq on md.id = mrcq.mould_detail_id and mrcq.is_deleted = false
+        where ${params.sqlMap.default}
+          and mi.is_deleted = false
+        order by md.create_time desc, md.id desc
+    </select>
+
+    <select id="exportOrderTrackingDetail"
+            resultType="com.erp.model.plm.dto.MouldInfoDTO$OrderTrackingDetailExportDTO">
+        select md.mould_no,
+               md.third_mould_no,
+               md.supplier_id as mouldSupplierId,
+               mrcqd.purchase_qty,
+               mrcqd.receive_qty,
+               mrcqd.stock_in_qty,
+               mrcqd.purchase_order_code,
+               mrcqd.po_create_time,
+               mrcqd.sku_id,
+               mrcqd.sku_no,
+               mrcqd.supplier_id
+        from mould_detail md
+                 inner join mould_ref_calc_qty AS mrcq on md.id = mrcq.mould_detail_id and mrcq.is_deleted = false
+                 inner join mould_ref_calc_qty_detail AS mrcqd on mrcq.id = mrcqd.main_id and mrcqd.is_deleted = false
+        where ${params.sqlMap.default}
+          and mrcq.is_deleted = false
+          and mrcq.mould_detail_id = #{params.mouldDetailId}
+        order by mrcqd.po_create_time
     </select>
 </mapper>

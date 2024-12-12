@@ -2,6 +2,7 @@ package com.erp.model.tms.dto;
 
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.enums.UnitEnum;
 import com.common.core.enums.CurrencyEnum;
 import com.common.core.exception.ServiceException;
@@ -515,6 +516,10 @@ public class LogisticsChannelDTO implements Serializable {
          * 材积设置
          */
         private Integer volumeSetting;
+        /**
+         * 运费超限打标比例
+         */
+        private BigDecimal shipmentOverLimitRate;
 
         /**
          * 物流映射列表
@@ -812,6 +817,11 @@ public class LogisticsChannelDTO implements Serializable {
          * 材积设置
          */
         private Integer volumeSetting;
+
+        /**
+         * 运费超限打标比例
+         */
+        private BigDecimal shipmentOverLimitRate;
     }
 
     @Data
@@ -985,7 +995,6 @@ public class LogisticsChannelDTO implements Serializable {
          */
         private String total;
     }
-
     @Data
     @NoArgsConstructor
     public static class ChannelWarehouseDTO {

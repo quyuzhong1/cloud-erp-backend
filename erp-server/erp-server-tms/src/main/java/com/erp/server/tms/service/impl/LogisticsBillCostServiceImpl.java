@@ -246,7 +246,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
     private InventorySkuCostService inventorySkuCostService;
     @Resource
     private InventorySkuCostDetailService inventorySkuCostDetailService;
-    
+
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -279,9 +279,13 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
     @Transactional(rollbackFor = Exception.class)
     @Override
     public Boolean update(LogisticsBillCostDTO.UpdateDTO updateDTO,Boolean isImport) {
-        LogisticsBillCostEntity old = super.getById(updateDTO.getId());
+        LogisticsBillCostEntity old = null;
+        if (Objects.nonNull(updateDTO.getId())){
+            old = super.getById(updateDTO.getId());
+        }
+        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "自发货费用"));
         String reconciliationStatus = old.getReconciliationStatus();
-        if(old.getType().equals(DictCostAttributionEnum.SELF_DELIVER.getCode()) 
+        if(old.getType().equals(DictCostAttributionEnum.SELF_DELIVER.getCode())
         		|| old.getType().equals(DictCostAttributionEnum.LAST_MILE.getCode())) {
         	if(reconciliationStatus.equals(ReconciliationStatusEnum.CONFIRMED.getCode())) {
         		throw new ServiceException("对账状态为账单确认，不能编辑");
@@ -334,12 +338,12 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 					}
 					cfgIdDtoMap.remove(tmsCostDetailEntity.getCfgCostId());
 				}
-				if(throwFlag && !cfgIdDtoMap.isEmpty() && cfgIdDtoMap.values().stream().anyMatch(c -> c.getType().equals(LogisticsBillCostTypeEnum.ESTIMATED.getCode()) 
+				if(throwFlag && !cfgIdDtoMap.isEmpty() && cfgIdDtoMap.values().stream().anyMatch(c -> c.getType().equals(LogisticsBillCostTypeEnum.ESTIMATED.getCode())
 						&& c.getCostValue() != null && c.getCostValue().compareTo(BigDecimal.ZERO) != 0)) {
 					throw new ServiceException("核算状态为暂估确认，不能新增预估金额");
 				}
 			}
-    	
+
         }
         Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "自发货费用"));
         //赋值
@@ -401,7 +405,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
             resultDTO.setTabFlagName(statusEnum.getName());
             resultList.add(resultDTO);
         }
-        
+
         return resultList;
     }
 
@@ -425,7 +429,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         if(org.apache.commons.lang3.StringUtils.isBlank(reconciliationStatus)) {
         	throw new ServiceException("对账状态不能为空");
         }
-        boolean confirmFlag = (ReconciliationStatusEnum.ESTIMATE_CONFIRM.getCode().equals(reconciliationStatus) 
+        boolean confirmFlag = (ReconciliationStatusEnum.ESTIMATE_CONFIRM.getCode().equals(reconciliationStatus)
     			|| ReconciliationStatusEnum.CONFIRMED.getCode().equals(reconciliationStatus));
     	if(confirmFlag && confirmTime == null) {
     		throw new ServiceException("对账状态修改为" + reconciliationStatus + "时，对账确认时间不能为空");
@@ -441,8 +445,8 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         	throw new ServiceException("修改后对账状态不能和当前对账状态一样");
         }
         if(ReconciliationStatusEnum.TO_BE_CONFIRM.getCode().equals(beforeReconciliationStatus)) {
-        	if(!ReconciliationStatusEnum.ESTIMATE_CONFIRM.getCode().equals(reconciliationStatus) 
-        			&& !ReconciliationStatusEnum.CONFIRMED.getCode().equals(reconciliationStatus) 
+        	if(!ReconciliationStatusEnum.ESTIMATE_CONFIRM.getCode().equals(reconciliationStatus)
+        			&& !ReconciliationStatusEnum.CONFIRMED.getCode().equals(reconciliationStatus)
         			&& !ReconciliationStatusEnum.INVALID.getCode().equals(reconciliationStatus)) {
         		throw new ServiceException("当前对账状态为待确认，只能修改为暂估确认/账单确认/作废");
         	}
@@ -456,20 +460,20 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         			throw new ServiceException("当前对账状态为暂估确认，核算状态为已生成不能修改为账单确认");
         		}
         	}else {
-        		if(!(LogisticsBillCostCheckStatusEnum.CHECKING.getCode().equals(entity.getCheckStatus()) 
+        		if(!(LogisticsBillCostCheckStatusEnum.CHECKING.getCode().equals(entity.getCheckStatus())
             			&& "payment".equals(entity.getPayStatus()))) {
             		String p = entity.getPayType().equals("pay") ? "付" : "退";
             		throw new ServiceException("当前对账状态为暂估确认，只有核算状态为待生成且支付状态为待" + p + "款时才能修改为非账单确认状态");
             	}
         	}
         }else if(ReconciliationStatusEnum.CONFIRMED.getCode().equals(beforeReconciliationStatus)) {
-        	if(!(LogisticsBillCostCheckStatusEnum.CHECKING.getCode().equals(entity.getCheckStatus()) 
+        	if(!(LogisticsBillCostCheckStatusEnum.CHECKING.getCode().equals(entity.getCheckStatus())
         			&& "payment".equals(entity.getPayStatus()))) {
         		String p = entity.getPayType().equals("pay") ? "付" : "退";
         		throw new ServiceException("当前对账状态为账单确认，只有核算状态为待生成且支付状态为待" + p + "款时才能修改为其他状态");
         	}
         }
-        
+
         //状态变更
         lambdaUpdate().eq(LogisticsBillCostEntity::getId, id)
         		.set(LogisticsBillCostEntity::getReconciliationStatus, reconciliationStatus)
@@ -673,7 +677,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         }
         entity.setTransportNo(logisticsBillEntity.getTransportNo());
         entity.setChannelId(logisticsBillEntity.getChannelId());
-        
+
         BigDecimal billingWeight = entity.getBillingWeight();
         if(StringUtils.isBlank(entity.getId()) && billingWeight == null) {
         	billingWeight = MathUtil.compareTo(entity.getActualWeight(),entity.getVolumeWeight()) > MathUtil.ZERO
@@ -728,7 +732,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
                 }
                 entity.setExchangeRate(rate);
             }
-        
+
         String sourceId = logisticsBillEntity.getSourceId();
         if(StringUtils.isNotBlank(sourceId)) {
         	List<SoB2cLogisticsEntity> soB2cLogisticsList = FeignQuery.create(SoB2cLogisticsEntity.class).eq(SoB2cLogisticsEntity::getMainId, sourceId).list();
@@ -807,7 +811,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
                             && CharSequenceUtil.equals(obj.getType(), LogisticsBillCostTypeEnum.ESTIMATED.getCode()))
                     .map(TmsCostDetailDTO.CostViewDTO::getCostValue).reduce(BigDecimal.ZERO, BigDecimal::add);
             listDTO.setEstimatedOtherCost(estimatedOtherCost);
-            
+
             //预估可抵扣税金
             BigDecimal estimatedDeductibleTax = costList.stream().filter(obj -> CharSequenceUtil.equals(obj.getMainId(),listDTO.getId())
             		&& CharSequenceUtil.equals(DictCostCategoryEnum.DEDUCTIBLE_TAX.getCode(), obj.getDictCostCategory())
@@ -838,14 +842,14 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
                             && CharSequenceUtil.equals(obj.getType(), LogisticsBillCostTypeEnum.ACTUAL.getCode()))
                     .map(TmsCostDetailDTO.CostViewDTO::getCostValue).reduce(BigDecimal.ZERO, BigDecimal::add);
             listDTO.setActualOtherCost(actualOtherCost);
-            
+
             //实际可抵扣税金
             BigDecimal actualDeductibleTax = costList.stream().filter(obj -> CharSequenceUtil.equals(obj.getMainId(),listDTO.getId())
             		&& CharSequenceUtil.equals(DictCostCategoryEnum.DEDUCTIBLE_TAX.getCode(), obj.getDictCostCategory())
             		&& CharSequenceUtil.equals(obj.getType(), LogisticsBillCostTypeEnum.ACTUAL.getCode()))
             		.map(TmsCostDetailDTO.CostViewDTO::getCostValue).reduce(BigDecimal.ZERO, BigDecimal::add);
             listDTO.setActualDeductibleTax(actualDeductibleTax);
-            
+
             //费用规则
             listDTO.setFeeRuleName(ShippingFeeRuleEnum.getName(listDTO.getFeeRule()));
         }
@@ -928,16 +932,16 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
             }
 
             //物流单
-            LogisticsBillDTO.LogisticsBillVo logisticsBillVo = logisticsBillVos.stream().filter(obj -> obj.getTrackNo().equals(billCostExcelDTO.getTrackNo())).findFirst().orElse(null);
+            LogisticsBillDTO.LogisticsBillVo logisticsBillVo = logisticsBillVos.stream().filter(obj -> obj.getTrackNo().equals(billCostExcelDTO.getTrackNo())).findFirst().orElse(new LogisticsBillDTO.LogisticsBillVo());
             //物流费用单
             LogisticsBillDetailEntity logisticsBillDetailEntity = logisticsBillDetailList.stream().filter(obj -> obj.getMainId().equals(logisticsBillVo.getId())
                     && CharSequenceUtil.equals(obj.getTrackNo(),billCostExcelDTO.getTrackNo()))
-                    .findFirst().orElse(null);
+                    .findFirst().orElse(new LogisticsBillDetailEntity());
             //物流费用单
             LogisticsBillCostEntity logisticsBillCostEntity = logisticsBillCostList.stream().filter(obj -> obj.getLogisticsBillId().equals(logisticsBillVo.getId())
                     && CharSequenceUtil.equals(obj.getLogisticsBillDetailId(),logisticsBillDetailEntity.getId())
                     && CharSequenceUtil.equals(obj.getPayType(),billCostExcelDTO.getPayType()))
-                    .findFirst().orElse(null);
+                    .findFirst().orElse(new LogisticsBillCostEntity());
 
             //数据赋值
             LogisticsBillCostDTO.UpdateDTO updateDataDTO = new LogisticsBillCostDTO.UpdateDTO();
@@ -1281,9 +1285,8 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
     private List<String> checkImportData (LogisticsBillCostExcelDTO excelDTO,List<LogisticsBillDTO.LogisticsBillVo> logisticsBillList
             ,List<LogisticsBillCostEntity> logisticsBillCostList,List<LogisticsBillDetailEntity> logisticsBillDetailList ,String dictCostAttribution) {
         List<String> errorMsgList = new ArrayList<>();
-        LogisticsBillDTO.LogisticsBillVo logisticsBillVo = logisticsBillList.stream().filter(obj -> obj.getTrackNo().equals(excelDTO.getTrackNo())
-                ).findFirst().orElse(null);
-        if (ObjectUtil.isEmpty(logisticsBillVo)) {
+        LogisticsBillDTO.LogisticsBillVo logisticsBillVo = logisticsBillList.stream().filter(obj -> obj.getTrackNo().equals(excelDTO.getTrackNo())).findFirst().orElse(null);
+        if (Objects.isNull(logisticsBillVo)) {
             errorMsgList.add("未找到对应物流单");
         } else {
             //物流单明细
@@ -1293,8 +1296,8 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
             }
             //物流费用单
             List<LogisticsBillCostEntity> logisticsBillCostEntityList = logisticsBillCostList.stream()
-            		.filter(obj -> obj.getLogisticsBillId().equals(logisticsBillVo.getId()) 
-            				&& CharSequenceUtil.equals(excelDTO.getTrackNo(),obj.getTrackNo()) 
+            		.filter(obj -> obj.getLogisticsBillId().equals(logisticsBillVo.getId())
+            				&& CharSequenceUtil.equals(excelDTO.getTrackNo(),obj.getTrackNo())
             				&& CharSequenceUtil.equals(excelDTO.getPayType(),obj.getPayType()))
             		.collect(Collectors.toList());
             LogisticsBillCostEntity logisticsBillCostEntity = null;
@@ -1310,11 +1313,8 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
                     }
             	}
             }
-            if (ObjectUtil.isNotEmpty(logisticsBillCostEntity)){
-                String currency = CharSequenceUtil.isBlank(excelDTO.getCurrency()) ? logisticsBillCostEntity.getCurrency() : excelDTO.getCurrency();
-				excelDTO.setCurrency(currency);
-
-                if (ObjectUtil.isNotEmpty(logisticsBillCostEntity) && !CharSequenceUtil.equals(excelDTO.getCurrency(),logisticsBillCostEntity.getCurrency())) {
+            if (Objects.nonNull(logisticsBillCostEntity)){
+                if (!CharSequenceUtil.equals(excelDTO.getCurrency(),logisticsBillCostEntity.getCurrency())) {
                     errorMsgList.add("导入币别与物流费用单币别不一致");
                 }
                 if (ReconciliationStatusEnum.CONFIRMED.getCode().equals(logisticsBillCostEntity.getReconciliationStatus())
@@ -1409,7 +1409,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
     		addDTO.setChannelId(logisticsBillCostEntity.getChannelId());
     		addDTO.setWeightLogistics(logisticsBillCostEntity.getWeightLogistics());
     		addDTO.setVolumeWeightLogistics(logisticsBillCostEntity.getVolumeWeightLogistics());
-    		
+
     		List<TmsCostDetailDTO.AddDTO>  costDetailList = new ArrayList<>();
     		for(AddDataDTO detailDTO : value) {
     			TmsCostDetailDTO.AddDTO add = new TmsCostDetailDTO.AddDTO();
@@ -1418,7 +1418,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
     			add.setType(LogisticsBillCostTypeEnum.ACTUAL.getCode());
     			add.setSourceType(SourceTypeEnum.LOGISTICS_BILL_COST.getCode());
     			costDetailList.add(add);
-    			
+
     			BigDecimal estimatedValue = detailDTO.getEstimatedValue();
     			if(estimatedValue != null && estimatedValue.compareTo(BigDecimal.ZERO) != 0) {
     				add = new TmsCostDetailDTO.AddDTO();
@@ -1432,7 +1432,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
     		addDTO.setCostDetailList(costDetailList);
     		addList.add(this.add(addDTO));
     	}
-    	
+
 		return addList;
 	}
 
@@ -1482,7 +1482,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 			EditViewDTO editViewDTO = BeanUtil.copyProperties(entity, EditViewDTO.class);
 			String payType = entity.getPayType();
 			editViewDTO.setPayTypeName(payType.equals("pay") ? "付款" : "退款");
-			
+
 			List<TmsCostDetailEntity> value = costIdMap.getValue();
 			editViewDTO.setCfgCostId(costIdMap.getKey());
 			editViewDTO.setCostValue(value.stream().filter(v -> LogisticsBillCostTypeEnum.ACTUAL.getCode().equals(v.getType())).map(TmsCostDetailEntity::getCostValue).reduce(BigDecimal::add).orElse(BigDecimal.ZERO));
@@ -1510,7 +1510,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         updateDataDTO.setBillingWeight(dto.getBillingWeight());
         updateDataDTO.setBillingWeightLogistics(dto.getBillingWeightLogistics());
         updateDataDTO.setCurrency(CharSequenceUtil.isBlank(dto.getCurrency()) ? CurrencyEnum.CNY.getCurrencyCode() : dto.getCurrency());
-        
+
         List<TmsCostDetailDTO.UpdateDTO> updateDetailList = new ArrayList<>();
         for(DetailDTO detailDTO : dtoList) {
         	TmsCostDetailDTO.UpdateDTO updateDTO = new TmsCostDetailDTO.UpdateDTO();
@@ -1540,7 +1540,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 		addDTO.setSourceType(SourceTypeEnum.SO_RETURN_INSTOCK.getCode());
 		String returnLogisticCode = entity.getReturnLogisticCode();
 		addDTO.setTransportNo(returnLogisticCode);
-		
+
 		String customerId = entity.getCustomerId();
 		CustomerInfoEntity customerInfoEntity = FeignQuery.getById(CustomerInfoEntity.class, customerId);
 		addDTO.setSalesPlatform(customerInfoEntity.getPlatformType());
@@ -1557,17 +1557,17 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 		addDTO.setDeliveryTime(entity.getApproveTime());
 		addDTO.setOrderType(OrderTypeEnum.SORETURN_INSTOCK.getCode());
 		addDTO.setShipmentType(ShipmentTypeEnum.SELF_DELIVER.getCode());
-		
+
 		List<LogisticsBillDetailDTO.AddDTO> detailList = new ArrayList<>();
 		LogisticsBillDetailDTO.AddDTO detailAdd = new LogisticsBillDetailDTO.AddDTO();
 		detailAdd.setTrackNo(returnLogisticCode);
 		detailAdd.setTrackStatus(LogisticTrackStatusEnum.SIGN.getCode());
 		detailList.add(detailAdd);
 		addDTO.setDetailList(detailList);
-		
+
 		logisticsBillService.add(addDTO);
 	}
-	
+
 	@Transactional(rollbackFor = Exception.class)
 	@Override
     public BatchResultDTO delete(String id) {
@@ -1585,7 +1585,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 	        logisticsBillDetailService.removeById(entity.getLogisticsBillDetailId());
 	        logisticsBillService.removeById(entity.getLogisticsBillId());
         }
-        
+
         return BatchResultDTO.success(entity.getId(), entity.getTrackNo(), OperationTypeEnum.DELETE);
     }
 
@@ -1609,7 +1609,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 				throw new ServiceException("存在历史未确认分摊数据，不可下推分摊");
 			}
 		}
-		
+
 		LogisticsBillEntity logisticsBillEntity = logisticsBillService.getById(entity.getLogisticsBillId());
 		String outstockId = logisticsBillEntity.getOutstockId();
 		if(org.apache.commons.lang3.StringUtils.isBlank(outstockId)) {
@@ -1640,8 +1640,8 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 			String warehouseId = FeignQuery.getById(SoOutstockEntity.class, outstockId).getWarehouseId();
 			soOutstockDetailEntityList.forEach(s -> s.setWarehouseId(warehouseId));
 		}
-		
-		LogisticsBillCostTypeEnum costType = ReconciliationStatusEnum.ESTIMATE_CONFIRM.getCode().equals(reconciliationStatus) 
+
+		LogisticsBillCostTypeEnum costType = ReconciliationStatusEnum.ESTIMATE_CONFIRM.getCode().equals(reconciliationStatus)
 				? LogisticsBillCostTypeEnum.ESTIMATED : LogisticsBillCostTypeEnum.ACTUAL;
 		List<TmsCostDetailDTO.CostViewDTO> costList = tmsCostDetailService.listCostByMainIdList(Collections.singletonList(id));
 		Map<String, List<CostViewDTO>> costCategoryMaps = new HashMap<>();
@@ -1649,10 +1649,10 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 			costList = costList.stream().filter(c -> costType.getCode().equals(c.getType())).collect(Collectors.toList());
 			costCategoryMaps = costList.stream().collect(Collectors.groupingBy(TmsCostDetailDTO.CostViewDTO::getDictCostCategory));
 		}
-		
+
 		List<SmallBagCostAllocationEntity> addSmallBagCostAllocationEntityList = new ArrayList<>();
 		List<SmallBagCostAllocationDetailEntity> addSmallBagCostAllocationDetailEntityList = new ArrayList<>();
-		
+
 		CfgSettingEntity byKey = cfgSettingService.getByKey(CfgSettingEnum.ALLOCATION_SETTING.getCode());
 		Map<String, String> feeTypeSettingMaps = new HashMap<>();
 		AllocationSettingDTO allocationSettingDTO = JSON.parseObject(byKey.getDataJson().toJSONString(0), AllocationSettingDTO.class);
@@ -1669,7 +1669,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 				feeTypeSettingMaps.put(allocationFeeTypeEnum.getCode(), allocationSettingDTO.getPackageDeductibleTax());
 			}
 		}
-		
+
 		Map<String, String> wareIdOrgIdMaps = FeignQuery.getByIds(WarehouseEntity.class, soOutstockDetailEntityList.stream().map(SoOutstockDetailEntity::getWarehouseId).collect(Collectors.toList()))
 				.stream().collect(Collectors.toMap(WarehouseEntity::getId, WarehouseEntity::getOrgId));
 		Map<String, InventorySkuCostDetailEntity> unInventorySkuCostMap = new HashMap<>();
@@ -1693,7 +1693,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 				}
 			}
 		}
-		
+
 		BigDecimal totalSkuCost = BigDecimal.ZERO;
 		List<ProductPackEntity> productPackEntityList = FeignQuery.create(ProductPackEntity.class)
 				.in(ProductPackEntity::getSkuId, soOutstockDetailEntityList.stream().map(SoOutstockDetailEntity::getSkuId).collect(Collectors.toList()))
@@ -1713,7 +1713,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 				totalSkuWeightCost = totalSkuWeightCost.add(skuWeightCost.multiply(new BigDecimal(actualQty)));
 			}
 		}
-		
+
 		SmallBagCostAllocationMainEntity smallBagCostAllocationMainEntity = new SmallBagCostAllocationMainEntity();
 		String smallBagCostAllocationMainId = identifierGenerator.nextId(smallBagCostAllocationMainEntity).toString();
 		smallBagCostAllocationMainEntity.setId(smallBagCostAllocationMainId);
@@ -1722,19 +1722,19 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 		smallBagCostAllocationMainEntity.setReportStatus(SmallBagCostAllocationReportStatusEnum.TOBECONFIRM.getCode());
 		smallBagCostAllocationMainEntity.setBigTableStatus(SmallBagCostAllocationBigTableStatusEnum.TODO.getCode());
 		smallBagCostAllocationMainEntity.setFeeSource(reconciliationStatus);
-		
+
 		soOutstockDetailEntityList.sort((s1 , s2) -> s1.getActualQty().compareTo(s2.getActualQty()));
 		int i = 0;
-		
+
 		Map<String, String> orgIdNameMaps = sysUserFeign.getAccountingCompanyList(new ArrayList<>(wareIdOrgIdMaps.values())).stream().collect(Collectors.toMap(CodeDTO::getId, CodeDTO::getName));
-		
+
 		String feeRule = entity.getFeeRule();
 		if(StringUtils.isNotBlank(feeRule) && !ShippingFeeRuleEnum.BILLING_WEIGHT.getCode().equals(feeRule)) {
 			if(WeightAllocationEnum.OUTSTOCK_CHARGED_WEIGHT.getCode().equals(weightPackageAllocation)) {
 				weightPackageAllocation = feeRule;
 			}
 		}
-		
+
 		Map<String, BigDecimal> rateMap = new HashMap<>();
 		for(SoOutstockDetailEntity soOutstockDetailEntity : soOutstockDetailEntityList) {
 			i = i + 1;
@@ -1747,10 +1747,10 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 			smallBagCostAllocationEntity.setSkuId(skuId);
 			smallBagCostAllocationEntity.setSkuNo(skuNo);
 			smallBagCostAllocationEntity.setOutstockDetailId(soOutstockDetailEntity.getId());
-			
+
 			String orgId = wareIdOrgIdMaps.get(soOutstockDetailEntity.getWarehouseId());
 			String orgName = orgIdNameMaps.get(orgId);
-			
+
 			Integer actualQty = soOutstockDetailEntity.getActualQty();
 			BigDecimal skuCostPre = BigDecimal.ZERO;
 			InventorySkuCostDetailEntity inventorySkuCostDetailEntity = unInventorySkuCostMap.get(orgId + "_" + skuId);
@@ -1769,7 +1769,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 			if(totalSkuWeightCost.compareTo(BigDecimal.ZERO) != 0 && skuWeightCost != null) {
 				skuWeightCostPre = skuWeightCost.multiply(new BigDecimal(actualQty)).divide(totalSkuWeightCost, 8, RoundingMode.HALF_UP);
 			}
-			
+
 			smallBagCostAllocationEntity.setDeliveryQty(actualQty);
 			BigDecimal billingWeight = entity.getBillingWeight();
 			BigDecimal skuWeight = null;
@@ -1802,7 +1802,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 			smallBagCostAllocationEntity.setBillingWeight(billingWeight);
 			smallBagCostAllocationEntity.setSkuWeight(skuWeight);
 			addSmallBagCostAllocationEntityList.add(smallBagCostAllocationEntity);
-			
+
 			for(Map.Entry<String, String> feeTypeSettingMap : feeTypeSettingMaps.entrySet()) {
 				SmallBagCostAllocationDetailEntity smallBagCostAllocationDetailEntity = new SmallBagCostAllocationDetailEntity();
 				smallBagCostAllocationDetailEntity.setMainId(mainId);
@@ -1860,7 +1860,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 				addSmallBagCostAllocationDetailEntityList.add(smallBagCostAllocationDetailEntity);
 			}
 		}
-		
+
 		smallBagCostAllocationMainService.save(smallBagCostAllocationMainEntity);
 		if(CollUtil.isNotEmpty(addSmallBagCostAllocationEntityList)) {
 			smallBagCostAllocationService.saveBatch(addSmallBagCostAllocationEntityList);
@@ -1868,9 +1868,9 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 		if(CollUtil.isNotEmpty(addSmallBagCostAllocationDetailEntityList)) {
 			smallBagCostAllocationDetailService.saveBatch(addSmallBagCostAllocationDetailEntityList);
 		}
-		
+
 		lambdaUpdate().eq(LogisticsBillCostEntity::getId, entity.getId()).set(LogisticsBillCostEntity::getCheckStatus, LogisticsBillCostCheckStatusEnum.CHECKED.getCode()).update();
-		
+
 		return BatchResultDTO.success(entity.getId(), entity.getTrackNo(), "下推成功");
 	}
 }

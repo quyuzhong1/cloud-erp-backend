@@ -70,6 +70,7 @@
         sb2c.is_change_sku as isChangeSku,
         sb2c.is_not_outbound as isNotOutbound,
         sb2c.is_manual_delivery as isManualDelivery,
+        sb2c.is_over_estimated_ship_cost as isOverEstimatedShipCost,
         sb2cl.logistics_channel_name as logisticsChannelName,
         case when sb2cl.actual_shipping_cost = 0 then sb2cl.estimated_shipping_cost
              else sb2cl.actual_shipping_cost
@@ -87,10 +88,18 @@
         sb2cr.country as country,
         sb2cr.email as email,
         sb2cr.tel_number as telNumber,
+        sb2cr.post_code as postCode,
+        sb2cr.province_name as provinceName,
+        sb2cr.city_name as cityName,
         sb2c.create_time as createTime,
         sb2cl.transfer_logistics_supplier_id as transferLogisticsSupplierId,
         sb2cl.transfer_logistics_channel_id as transferLogisticsChannelId,
         sb2cl.weight,
+        sb2cl.weight_unit as weightUnit,
+        sb2cl.length,
+        sb2cl.width,
+        sb2cl.height,
+        sb2cl.size_unit as sizeUnit,
         sb2cl.name as sellerLogisticName,
         sb2cl.code as logisticsCode,
         sb2cl.track_no as trackCode,
@@ -1074,6 +1083,34 @@
         *
         FROM so_b2c_detail
         WHERE main_id in
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </select>
+    <select id="getB2cLogisticsByIds" resultType="com.erp.model.oms.dto.SoB2cDTO$LogisticsDTO">
+        SELECT
+            sb.id,
+            sb.code,
+            sb.amount,
+            sb.currency,
+            sb.exchange_rate,
+            sbd.warehouse_id,
+            sbl.logistics_channel_id,
+            sbl.estimated_shipping_cost,
+            sbl.estimated_shipping_currency,
+            sbl.weight,
+            sbl.weight_unit,
+            sbr.country,
+            sbr.country_name,
+            sbr.city_name,
+            sbr.post_code,
+            sbr.province_name
+        FROM
+            so_b2c sb
+                LEFT JOIN so_b2c_logistics sbl ON sbl.main_id = sb.ID AND sbl.is_deleted =FALSE
+                LEFT JOIN so_b2c_detail sbd ON sb.ID = sbd.main_id AND sbd.is_deleted = FALSE
+                LEFT JOIN so_b2c_receiver sbr ON sb.ID = sbr.main_id AND sbr.is_deleted = FALSE
+        where sb.is_deleted =FALSE and sb.id in
         <foreach collection="ids" item="id" open="(" separator="," close=")">
             #{id}
         </foreach>

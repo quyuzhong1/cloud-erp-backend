@@ -340,6 +340,26 @@ public class SoB2cDTO implements Serializable {
          * 国家代号
          */
         private String country;
+        /**
+         * 省份编码
+         */
+        private String province;
+        /**
+         * 省份名称
+         */
+        private String provinceName;
+        /**
+         * 城市编码
+         */
+        private String city;
+        /**
+         * 城市名称
+         */
+        private String cityName;
+        /**
+         * 邮编
+         */
+        private String postCode;
 
         /**
          * 是否对接了第三方海外仓
@@ -561,6 +581,26 @@ public class SoB2cDTO implements Serializable {
          */
         private String weightUnit;
         /**
+         * 包装长度单位
+         */
+        private String sizeUnit;
+        /**
+         * 包装 长
+         */
+        private BigDecimal length;
+        /**
+         * 包装 宽
+         */
+        private BigDecimal width;
+        /**
+         * 包装 高
+         */
+        private BigDecimal height;
+        /**
+         * 发货仓库id
+         */
+        private String fromWarehouseId;
+        /**
          * 审核时间
          */
         private LocalDateTime approveTime;
@@ -596,6 +636,10 @@ public class SoB2cDTO implements Serializable {
          * 是否标记手动发货true 是  false 否(以label为准)
          */
         private Boolean isManualDelivery;
+        /**
+         * 是否预估运费超限，是：true  否：false
+         */
+        private Boolean isOverEstimatedShipCost;
         /**
          * 标签
          */
@@ -3235,5 +3279,42 @@ public class SoB2cDTO implements Serializable {
          * skuNo
          */
         private String skuNo;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class LogisticsDTO {
+        //销售订单id
+        private String id;
+        //销售订单编码
+        private String code;
+        //订单金额
+        private BigDecimal amount;
+        //币别
+        private String currency;
+        // 汇率
+        private BigDecimal exchangeRate;
+        //渠道id
+        private String logisticsChannelId;
+        //发货仓库id
+        private String warehouseId;
+        //重量
+        private BigDecimal weight;
+        //重量单位
+        private String weightUnit;
+        //预估运费
+        private BigDecimal estimatedShippingCost;
+        //预估运费币种
+        private String estimatedShippingCurrency;
+        //国家二字码
+        private String country;
+        //国家名称
+        private String countryName;
+        //城市名称
+        private String cityName;
+        //邮编
+        private String postCode;
+        //省
+        private String provinceName;
     }
 }

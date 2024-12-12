@@ -2,6 +2,7 @@ package com.erp.rpc.tms.feign;
 
 import com.common.business.config.FeignErrorDecoder;
 import com.common.business.dto.base.BaseIdDTO;
+import com.common.business.dto.base.PagingDTO;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.tms.dto.*;
 import com.erp.model.tms.entity.LogisticsAddressEntity;
@@ -109,4 +110,15 @@ public interface LogisticsFeign {
 
     @GetMapping("/feign/logistics/estimateIsOutOfRangeDelivery")
     Boolean estimateIsOutOfRangeDelivery(@RequestParam("logisticsChannelId")String logisticsChannelId, @RequestParam("country")String country, @RequestParam("postCode")String postCode);
+
+    /**
+     * 更新销售订单预估运费
+     *
+     * @param pagingParamDTO
+     * @return void
+     * @author zdy
+     * @date: 2024/12/10 17:35
+     */
+    @PostMapping("/feign/logistics/updateShippingCalculation")
+    void updateShippingCalculation(@RequestBody @Validated ShippingCalculationDTO.PagingParamDTO pagingParamDTO);
 }

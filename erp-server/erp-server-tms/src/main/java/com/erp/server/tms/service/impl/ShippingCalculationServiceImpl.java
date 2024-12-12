@@ -1,5 +1,6 @@
 package com.erp.server.tms.service.impl;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.json.JSONObject;
@@ -7,32 +8,47 @@ import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.PlatformDictEnum;
+import com.common.business.enums.UnitEnum;
+import com.common.business.enums.WarehousePlatformTypeEnum;
 import com.common.business.vo.PagingVO;
+import com.common.core.constant.EnumMessage;
 import com.common.core.enums.ApiError;
+import com.common.core.enums.CurrencyEnum;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.erp.model.oms.dto.SoB2cDTO;
+import com.erp.model.oms.enums.AuthStatusEnum;
 import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.sys.entity.DictCountryEntity;
+import com.erp.model.tms.dto.LogisticsChannelDTO;
 import com.erp.model.tms.dto.ShippingCalculationDTO;
 import com.erp.model.tms.entity.*;
 import com.erp.model.tms.enums.*;
+import com.erp.model.wms.entity.OverseasProviderEntity;
+import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.rpc.wms.feign.OverseasProviderFeign;
+import com.erp.rpc.wms.feign.ThirdWarehouseFeign;
 import com.erp.server.tms.mapper.ShippingRegionCityMapper;
 import com.erp.server.tms.mapper.ShippingTemplateOtherCostMapper;
+import com.erp.server.tms.service.LogisticsChannelService;
 import com.erp.server.tms.service.ShippingCalculationService;
 import com.erp.server.tms.service.ShippingTemplateCostSettingService;
 import com.erp.server.tms.service.ShippingTemplateOtherCostService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -70,20 +86,243 @@ public class ShippingCalculationServiceImpl implements ShippingCalculationServic
     private SoB2cFeign soB2cFeign;
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
-
+    @Resource
+    private ThirdWarehouseFeign thirdWarehouseFeign;
+    @Resource
+    private OverseasProviderFeign overseasProviderFeign;
+    @Resource
+    private LogisticsChannelService logisticsChannelService;
+    @Resource
+    private DmpTaskFeign dmpTaskFeign;
     @Override
     public PagingVO<ShippingCalculationDTO.ListDTO> paging(PagingDTO<ShippingCalculationDTO.PagingParamDTO> pagingDTO) {
         ShippingCalculationDTO.PagingParamDTO params = pagingDTO.getParams();
+        String shipmentMethod = params.getShipmentMethod();
+        String fromWarehouseId = params.getFromWarehouseId();
+        IPage<ShippingCalculationDTO.ListDTO> erpPageData;
+        List<ShippingCalculationDTO.ListDTO> thirdPageData = null;
+        if ("first".equals(shipmentMethod)){
+            erpPageData = getErpCalculationList(pagingDTO);
+        }else {
+            if (CharSequenceUtil.isBlank(fromWarehouseId)){
+                throw new ServiceException("发货仓库不能为空");
+            }
+            erpPageData = getErpCalculationList(pagingDTO);
+            //物流渠道：留空；如果是有映射的海外仓，自动计算海外仓下启用的所有渠道；如果是非映射的海外仓，按现有逻辑，按起始地+目的地+城市匹配系统的运费模板，符合的模板全部计算
+            thirdPageData = getThirdCalculationList(params);
+        }
+        //整合erp和海外仓列表
+        IPage<ShippingCalculationDTO.ListDTO> pageData = integratedPageData(erpPageData,thirdPageData);
+        //更新销售订单预估运费
+        updateOrderLogisticsFee(fromWarehouseId,params.getB2cSoId(),pageData.getRecords());
+        return new PagingVO<>(pageData);
+    }
+    public void updateOrderLogisticsFee(String fromWarehouseId, String b2cSoId, List<ShippingCalculationDTO.ListDTO> records) {
+        //数据为空时不处理
+        if (CharSequenceUtil.isBlank(b2cSoId) || CollUtil.isEmpty(records) || CharSequenceUtil.isBlank(fromWarehouseId)){
+            return;
+        }
+        List<SoB2cDTO.LogisticsDTO> logisticsDTOList = soB2cFeign.getB2cLogisticsByIds(Collections.singletonList(b2cSoId));
+        if (CollUtil.isEmpty(logisticsDTOList)){
+            return;
+        }
+        List<String> channelIds = logisticsDTOList.stream().map(SoB2cDTO.LogisticsDTO::getLogisticsChannelId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+        if (CollUtil.isEmpty(channelIds)){
+            return;
+        }
+        ShippingCalculationDTO.ListDTO listDTO = records.stream().filter(e -> channelIds.contains(e.getChannelId())).min(Comparator.comparing(ShippingCalculationDTO.ListDTO::getTotalShippingCost)).orElse(null);
+        if (Objects.isNull(listDTO)){
+            return;
+        }
+        //预估费用
+        BigDecimal totalShippingCost = listDTO.getTotalShippingCost();
+        String currency = listDTO.getCurrency();
+        //比较数值是否相同 不相同就更新
+        SoB2cDTO.LogisticsDTO logisticsDTO = logisticsDTOList.get(0);
+        if (Objects.isNull(logisticsDTO.getEstimatedShippingCost()) || totalShippingCost.compareTo(logisticsDTO.getEstimatedShippingCost()) != 0){
+            //更新物流预估费用
+            soB2cFeign.updateLogisticsFee(b2cSoId,totalShippingCost,currency);
+        }
+        //订单费用
+        BigDecimal amount = logisticsDTO.getAmount();
+        String currency1 = logisticsDTO.getCurrency();
+        BigDecimal exchangeRate = logisticsDTO.getExchangeRate();
+        //运费超限打标比例
+        BigDecimal shipmentOverLimitRate = listDTO.getShipmentOverLimitRate();
+        if (Objects.isNull(shipmentOverLimitRate) || shipmentOverLimitRate.compareTo(BigDecimal.ZERO) == 0) {
+            return;//未设置时，不更新
+        }
+        //重新获取订单汇率
+        if (exchangeRate.compareTo(BigDecimal.ZERO) == 0){
+            exchangeRate = dmpTaskFeign.getRate(LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), currency1);
+        }
+        if(Objects.isNull(exchangeRate)){
+            log.error("币别【{}】,汇率为空，请维护汇率后再提交",currency1);
+            return;
+//            throw new ServiceException("汇率为空，请维护汇率后再提交");
+        }
+        BigDecimal estimatedExchangeRate = BigDecimal.ONE;
+        if (!CurrencyEnum.CNY.getCurrencyCode().equals(currency)){
+            estimatedExchangeRate = dmpTaskFeign.getRate(LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), currency);
+        }
+        if(Objects.isNull(estimatedExchangeRate)){
+            log.error("币别【{}】,汇率为空，请维护汇率后再提交",currency);
+            return;
+//            throw new ServiceException("汇率为空，请维护汇率后再提交");
+        }
+        //订单金额本位币 -预估运费最大值
+        BigDecimal orderAmount = MathUtil.divide(MathUtil.multiply(shipmentOverLimitRate, MathUtil.multiply(amount, exchangeRate)), MathUtil.BigDecimal_100);
+        BigDecimal estimatedShippingCost = MathUtil.multiply(totalShippingCost, estimatedExchangeRate);
+        if (estimatedShippingCost.compareTo(orderAmount) > 0){
+            //超过订单金额比例
+            soB2cFeign.updateOverEstimatedShipCost(b2cSoId, Boolean.TRUE);
+        }else {
+            soB2cFeign.updateOverEstimatedShipCost(b2cSoId, Boolean.FALSE);
+        }
+
+    }
+
+    /**
+     * 整合erp和海外仓列表
+     * @param erpPageData
+     * @param thirdPageData
+     * @return
+     */
+    private IPage<ShippingCalculationDTO.ListDTO> integratedPageData(IPage<ShippingCalculationDTO.ListDTO> erpPageData, List<ShippingCalculationDTO.ListDTO> thirdPageData) {
+        IPage<ShippingCalculationDTO.ListDTO> pageData = new Page<>();
+        if (CollUtil.isNotEmpty(thirdPageData)){
+            List<ShippingCalculationDTO.ListDTO> list = Stream.concat(erpPageData.getRecords().stream(), thirdPageData.stream()).sorted(Comparator.comparing(ShippingCalculationDTO.ListDTO::getTotalShippingCost)).collect(Collectors.toList());
+            pageData.setRecords(list).setTotal(list.size()).setCurrent(list.size()).setPages(list.size());
+            return pageData;
+        }else {
+            return erpPageData;
+        }
+    }
+
+    /**
+     * 第三方试算
+     * @param params
+     * @return
+     */
+    private List<ShippingCalculationDTO.ListDTO> getThirdCalculationList(ShippingCalculationDTO.PagingParamDTO params) {
+        String fromWarehouseId = params.getFromWarehouseId();
+        if (CharSequenceUtil.isBlank(fromWarehouseId)){
+            return Collections.emptyList();
+        }
+        OverseasProviderEntity overseasProviderEntity = overseasProviderFeign.getByWarehouseId(fromWarehouseId);
+        if (Objects.isNull(overseasProviderEntity)){
+            return Collections.emptyList();
+        }
+        List<LogisticsChannelDTO.ChannelWarehouseDTO> channelWarehouseDTOList = logisticsChannelService.listChannelWarehouse(overseasProviderEntity.getCode(), AuthStatusEnum.ALREADY.getCode(), WarehousePlatformTypeEnum.OVERSEAS_WAREHOUSE.getCode(),Boolean.FALSE);
+        List<DictCountryEntity> dictCountryEntityList = sysDictFeign.listCountryByIds(params.getToCountryList());
+        //请求参数校验
+        checkThirdCalculationParam(params,overseasProviderEntity);
+        if (CollUtil.isNotEmpty(params.getChannelIdList())){
+            List<LogisticsChannelEntity> logisticsChannelEntityList = logisticsChannelService.listByIds(params.getChannelIdList());
+            params.setChannelCodeList(logisticsChannelEntityList.stream().map(LogisticsChannelEntity::getCode).distinct().collect(Collectors.toList()));
+        }else if (CollUtil.isEmpty(params.getChannelIdList()) && PlatformDictEnum.ANTU.getCode().equals(overseasProviderEntity.getCode())){
+            //获取antu启用的所有物流渠道 并根据发货仓进行匹配
+            params.setChannelCodeList(channelWarehouseDTOList.stream().filter(e -> fromWarehouseId.equals(e.getWarehouseId()) || LogisticsChannelWarehouseTypeEnum.ENUM_ALL.getCode().equals(e.getType())).map(LogisticsChannelDTO.ChannelWarehouseDTO::getChannelCode).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList()));
+        }
+        List<ShippingCalculationDTO.ListDTO> calculateFeeBatch = thirdWarehouseFeign.getCalculateFeeBatch(params);
+        calculateFeeBatch = handleThirdWarehouseData(calculateFeeBatch, channelWarehouseDTOList,dictCountryEntityList);
+        return calculateFeeBatch;
+    }
+
+    /**
+     * 构建第三方返回参数
+     *
+     * @param calculateFeeBatch
+     * @param params
+     * @param overseasProviderEntity
+     * @param channelWarehouseDTOList
+     * @param countryList
+     */
+    private List<ShippingCalculationDTO.ListDTO> handleThirdWarehouseData(List<ShippingCalculationDTO.ListDTO> calculateFeeBatch, List<LogisticsChannelDTO.ChannelWarehouseDTO> channelWarehouseDTOList, List<DictCountryEntity> countryList) {
+        calculateFeeBatch = calculateFeeBatch.stream().filter(e -> hasChannelCode(e.getChannelCode(), channelWarehouseDTOList)).collect(Collectors.toList());
+        List<String> currencyIdList = calculateFeeBatch.stream().map(ShippingCalculationDTO.ListDTO::getCurrency).collect(Collectors.toList());
+        List<CurrencyDTO.ViewDTO> currencyList = sysUserFeign.listByCurrency(currencyIdList);
+        for (ShippingCalculationDTO.ListDTO dto : calculateFeeBatch){
+            LogisticsChannelDTO.ChannelWarehouseDTO channelWarehouseDTO = channelWarehouseDTOList.stream().filter(f -> dto.getChannelCode().equals(f.getChannelCode())).findFirst().orElse(null);
+            if (Objects.isNull(channelWarehouseDTO)){
+                continue;
+            }
+            dto.setChannelId(channelWarehouseDTO.getChannelId());
+            dto.setChannelName(channelWarehouseDTO.getChannelName());
+            dto.setLogisticsName(channelWarehouseDTO.getSupplierName());
+            //时效
+            String effectiveTime = channelWarehouseDTO.getEffectiveTime();
+            String effectiveTimeUnit = channelWarehouseDTO.getEffectiveTimeUnit();
+            String effectiveTimeStr = EnumMessage.getNameByCode(UnitEnum.TimeUnitEnum.class, effectiveTimeUnit);
+            dto.setEffectiveTimeStr(effectiveTime.concat(effectiveTimeStr));
+            //币种符号
+            String currencySymbol = currencyList.stream().filter(obj -> obj.getId().equals(dto.getCurrency())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getSymbol())).orElse("");
+            dto.setCurrencySymbol(currencySymbol);
+            //目的国
+            String toCountryName = countryList.stream().filter(obj -> obj.getId().equals(dto.getToCountry())).findFirst()
+                    .flatMap(obj -> Optional.ofNullable(obj.getNameCn())).orElse("");
+            dto.setToCountryName(toCountryName);
+            //运费超限打标比例
+            dto.setShipmentOverLimitRate(channelWarehouseDTO.getShipmentOverLimitRate());
+        }
+        return calculateFeeBatch;
+    }
+
+    private boolean hasChannelCode(String channelCode, List<LogisticsChannelDTO.ChannelWarehouseDTO> channelWarehouseDTOList) {
+        if (CharSequenceUtil.isBlank(channelCode) || CollUtil.isEmpty(channelWarehouseDTOList)){
+            return Boolean.FALSE;
+        }
+        LogisticsChannelDTO.ChannelWarehouseDTO channelWarehouseDTO = channelWarehouseDTOList.stream().filter(e -> channelCode.equals(e.getChannelCode())).findFirst().orElse(null);
+        if (Objects.nonNull(channelWarehouseDTO)){
+            return Boolean.TRUE;
+        }
+        return Boolean.FALSE;
+    }
+
+    /**
+     * 校验参数必填
+     * @param params
+     * @param overseasProviderEntity
+     */
+    private void checkThirdCalculationParam(ShippingCalculationDTO.PagingParamDTO params, OverseasProviderEntity overseasProviderEntity) {
+        if (PlatformDictEnum.ANTU.getCode().equals(overseasProviderEntity.getCode())){
+            if (CollUtil.isEmpty(params.getToCountryList())){
+                throw new ServiceException(ApiError.ERROR_92264);
+            }
+            if (Objects.isNull(params.getWeight())){
+                throw new ServiceException(ApiError.ERROR_92265);
+            }
+        }else if (PlatformDictEnum.GOOD_CANG.getCode().equals(overseasProviderEntity.getCode())){
+            //邮政编码不能为空
+            if (CharSequenceUtil.isBlank(params.getPostCode())){
+                throw new ServiceException(ApiError.ERROR_92267);
+            }
+            if (CollUtil.isEmpty(params.getToCountryList())){
+                throw new ServiceException(ApiError.ERROR_92264);
+            }
+        }
+        if ("g".equals(params.getWeightUnit())){
+            params.setWeight(MathUtil.divide(params.getWeight(), BigDecimal.valueOf(1000)));
+        }
+    }
+
+    /**
+     * erp试算
+     * @param pagingDTO
+     * @return
+     */
+    private IPage<ShippingCalculationDTO.ListDTO> getErpCalculationList(PagingDTO<ShippingCalculationDTO.PagingParamDTO> pagingDTO) {
+        ShippingCalculationDTO.PagingParamDTO params = pagingDTO.getParams();
         params.setPermissionSql(pagingDTO.getPermissionSql());
-        Page query = new Page(pagingDTO.getCurrPage(), pagingDTO.getPageSize());
+        Page<ShippingCalculationDTO.ListDTO> query = new Page<>(pagingDTO.getCurrPage(), pagingDTO.getPageSize());
         IPage<ShippingCalculationDTO.ListDTO> pageData = shippingTemplateOtherCostService.paging(query, params);
         List<ShippingCalculationDTO.ListDTO> records = pageData.getRecords();
         if (CollectionUtils.isEmpty(records)) {
-            return new PagingVO(pageData);
+            return pageData;
         }
         //处理数据
         handleData(records, params);
-        return new PagingVO(pageData);
+        return pageData;
     }
 
     /**
@@ -112,11 +351,16 @@ public class ShippingCalculationServiceImpl implements ShippingCalculationServic
             //目的国
             String toCountryName = countryList.stream().filter(obj -> obj.getId().equals(listDTO.getToCountry())).findFirst()
                     .flatMap(obj -> Optional.ofNullable(obj.getNameCn())).orElse("");
-            listDTO.setToCountry(toCountryName);
+            listDTO.setToCountryName(toCountryName);
 
             //有效期
             String effectivePeriod = CharSequenceUtil.format("{}至{}", listDTO.getEffectiveDate(), ObjectUtil.isEmpty(listDTO.getExpireDate()) ? "无期限" : listDTO.getExpireDate());
             listDTO.setEffectivePeriod(effectivePeriod);
+            //时效
+            String effectiveTime = listDTO.getEffectiveTime();
+            String effectiveTimeUnit = listDTO.getEffectiveTimeUnit();
+            String effectiveTimeStr = EnumMessage.getNameByCode(UnitEnum.TimeUnitEnum.class, effectiveTimeUnit);
+            listDTO.setEffectiveTimeStr(effectiveTime.concat(effectiveTimeStr));
 
             /**
              * 体积重=长*宽*高/材积设置
@@ -174,8 +418,6 @@ public class ShippingCalculationServiceImpl implements ShippingCalculationServic
             listDTO.setRegistrationCost(shippingCalculationDTO.getRegistrationCost());
             listDTO.setOperatingCost(shippingCalculationDTO.getOperatingCost());
             listDTO.setTotalShippingCost(shippingCalculationDTO.getTotalShippingCost());
-//            listDTO.setDeclareCost(shippingCalculationDTO.getDeclareCost());
-//            listDTO.setOtherCost(shippingCalculationDTO.getOtherCost());
             //其他费用
             ShippingCalculationDTO.OtherCostDTO otherCostDTO = new ShippingCalculationDTO.OtherCostDTO();
             otherCostDTO.setDiscountCost(shippingCalculationDTO.getDiscountCost());
@@ -582,14 +824,8 @@ public class ShippingCalculationServiceImpl implements ShippingCalculationServic
     }
 
     @Override
-    public PagingVO<ShippingCalculationDTO.ListDTO> exportShippingCalculation(PagingDTO<ShippingCalculationDTO.PagingParamDTO> dto) {
-        BigDecimal volume = MathUtil.multiply(MathUtil.multiply(dto.getParams().getLength(), dto.getParams().getWidth()), dto.getParams().getHeight());
-        dto.getParams().setVolume(volume);
-        Page<ShippingCalculationDTO.ListDTO> page = shippingTemplateOtherCostMapper.listByExportExcel(new Page<>(dto.getCurrPage(), dto.getPageSize()), dto.getParams());
-        if (!CollectionUtils.isEmpty(page.getRecords())) {
-            handleData(page.getRecords(), dto.getParams());
-        }
-        return new PagingVO<>(page);
+    public PagingVO<ShippingCalculationDTO.ListDTO> exportShippingCalculation(PagingDTO<ShippingCalculationDTO.PagingParamDTO> pagingDTO) {
+        return this.paging(pagingDTO);
     }
 
     /**

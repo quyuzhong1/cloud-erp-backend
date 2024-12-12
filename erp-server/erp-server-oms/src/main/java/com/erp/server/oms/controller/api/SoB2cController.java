@@ -606,6 +606,8 @@ public class SoB2cController extends BaseController {
             }
             resultDTOS.add(result);
         }
+        //自动计算预估运费到订单的预估运费字段
+        soB2cService.autoCalcEstimatedShippingCost(dto.getDetailList());
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 

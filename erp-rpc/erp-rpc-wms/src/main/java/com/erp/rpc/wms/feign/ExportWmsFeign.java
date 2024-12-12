@@ -262,6 +262,7 @@ public interface ExportWmsFeign {
     @PostMapping("/feign/export/exportRemotePostcode")
     PagingVO<RemotePostcodeDTO.ExportListDTO> exportRemotePostcode(@RequestBody PagingDTO<RemotePostcodeDTO.PagingParamDTO> dto);
 
+
     /**
      * 导出虚拟仓分货
      */

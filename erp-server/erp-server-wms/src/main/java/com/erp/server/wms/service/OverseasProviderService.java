@@ -2,6 +2,7 @@ package com.erp.server.wms.service;
 import com.common.business.dto.AdvanceQueryContainer;
 import com.common.business.vo.PagingVO;
 import com.erp.model.oms.dto.SkuMappingDTO;
+import com.erp.model.tms.dto.ShippingCalculationDTO;
 import com.erp.model.wms.entity.OverseasProviderEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
@@ -109,4 +110,11 @@ public interface OverseasProviderService extends SuperService<OverseasProviderEn
     OverseasProviderEntity getByWarehouseId(String warehouseId);
 
     PagingVO<SkuMappingDTO.SyncWarehouseProductView> pageWarehouseProduct(PagingDTO<AdvanceQueryContainer> advanceQueryDTO);
+
+    /**
+     * 获取海外仓运费试算
+     * @param params
+     * @return
+     */
+    List<ShippingCalculationDTO.ListDTO> getCalculateFeeBatch(ShippingCalculationDTO.PagingParamDTO params);
 }

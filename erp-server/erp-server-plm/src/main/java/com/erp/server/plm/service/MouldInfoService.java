@@ -160,4 +160,22 @@ public interface MouldInfoService extends SuperService<MouldInfoEntity> {
      * @param dto 参数
      */
     void orderTrackingDetailExport(MouldInfoDTO.OrderTrackingDetailParamDTO dto);
+
+    /**
+     * 导出列表
+     * @param dto 导出参数
+     */
+    PagingVO<MouldInfoDTO.MouldInfoExportDTO> exportMouldInfo(PagingDTO<MouldInfoDTO.PagingParamDTO> dto);
+
+    /**
+     * 导出下单跟踪
+     * @param dto 参数
+     */
+    PagingVO<MouldInfoDTO.OrderTrackingExportDTO> exportOrderTracking(PagingDTO<MouldInfoDTO.PagingParamDTO> dto);
+
+    /**
+     * 导出下单跟踪明细
+     * @param dto 参数
+     */
+    PagingVO<MouldInfoDTO.OrderTrackingDetailExportDTO> exportOrderTrackingDetail(PagingDTO<MouldInfoDTO.OrderTrackingDetailParamDTO> dto);
 }

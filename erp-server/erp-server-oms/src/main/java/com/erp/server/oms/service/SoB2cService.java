@@ -1007,6 +1007,26 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
     Boolean tempTikTokOrderDate();
 
     /**
+     * 根据销售订单id获取订单 渠道+仓库+重量 基础信息
+     * @param ids
+     * @return
+     */
+    List<SoB2cDTO.LogisticsDTO> getB2cLogisticsByIds(List<String> ids);
+
+    /**
+     * 重算订单预估费用
+     * @param detailList
+     */
+    void autoCalcEstimatedShippingCost(List<SoB2cDTO.SaveSoB2cDistributionDetailDTO> detailList);
+
+    /**
+     * 更新 超过订单金额比例标识
+     * @param b2cSoId
+     * @param isOverEstimatedShipCost
+     */
+    void updateOverEstimatedShipCost(String b2cSoId, Boolean isOverEstimatedShipCost);
+
+    /**
      * 同步数帝云
      * @param soId
      * @param operateEnum

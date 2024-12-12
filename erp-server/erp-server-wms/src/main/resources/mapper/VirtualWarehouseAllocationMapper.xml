@@ -153,8 +153,8 @@
             vm.*,
             CASE
             WHEN vm.status = 'waitSubmit' AND vm.type = 'allocation' AND isVirtualScarce THEN vm.totalMergeQty - vm.unDistributionQty
-            WHEN vm.status = 'waitSubmit' AND vm.type = 'transfer' AND isVirtualScarce THEN vm.totalMergeQty - vm.fromVirtualUsableQty
-            WHEN vm.status = 'waitSubmit' AND vm.type = 'cancel' AND isVirtualScarce THEN vm.totalMergeQty - vm.fromVirtualUsableQty
+            WHEN vm.status = 'waitSubmit' AND vm.type = 'transfer' AND isVirtualScarce THEN vm.totalMergeQty - vm.fromVirtualWarehouseUsableQty
+            WHEN vm.status = 'waitSubmit' AND vm.type = 'cancel' AND isVirtualScarce THEN vm.totalMergeQty - vm.fromVirtualWarehouseUsableQty
             ELSE 0
             END AS virtualScarceQty
         FROM (

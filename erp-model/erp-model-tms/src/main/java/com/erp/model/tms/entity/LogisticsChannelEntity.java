@@ -212,6 +212,11 @@ public class LogisticsChannelEntity extends BaseEntity<LogisticsChannelEntity> {
      */
     @TableField("volume_setting")
     private Integer volumeSetting;
+    /**
+     * 运费超限打标比例
+     */
+    @TableField("shipment_over_limit_rate")
+    private BigDecimal shipmentOverLimitRate;
 
     public static final String MAIN_ID = "main_id";
 
