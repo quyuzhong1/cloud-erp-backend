@@ -1,11 +1,16 @@
 package com.erp.rpc.wms.feign;
 
 import com.common.core.controller.vo.ApiResult;
+import com.erp.model.tms.dto.ShippingCalculationDTO;
+import com.erp.model.wms.dto.third.ThirdWarehouseCalculateFeeReq;
+import com.erp.model.wms.dto.third.ThirdWarehouseCalculateFeeResponse;
 import com.erp.model.wms.dto.third.ThirdWarehouseCancelOutboundReq;
 import com.erp.model.wms.dto.third.ThirdWarehouseCreateOutboundReq;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+
+import java.util.List;
 
 /**
  * @author lrp
@@ -27,4 +32,12 @@ public interface ThirdWarehouseFeign {
      */
     @PostMapping("feign/thirdWarehouse/cancelOutboundOrder")
     ApiResult<String> cancelOutboundOrder(@RequestBody ThirdWarehouseCancelOutboundReq cancelOutboundReq);
+
+    /**
+     * 运费试算
+     * @param params
+     * @return
+     */
+    @PostMapping("feign/thirdWarehouse/getCalculateFeeBatch")
+    List<ShippingCalculationDTO.ListDTO> getCalculateFeeBatch(@RequestBody ShippingCalculationDTO.PagingParamDTO params);
 }

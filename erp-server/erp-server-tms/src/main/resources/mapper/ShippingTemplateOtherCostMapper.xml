@@ -97,10 +97,14 @@
     <select id="paging" resultMap="BaseResultMap">
         select
             ls.supplier_name as logisticsName,
+            lc.id as channelId,
             lc.name as channelName,
             lc.fee_rule as feeRule,
             lc.is_api_sign as isApiSign,
             lc.is_api_insurance as isApiInsurance,
+            lc.effective_time as effectiveTime,
+            lc.effective_time_unit as effectiveTimeUnit,
+            lc.shipment_over_limit_rate as shipmentOverLimitRate,
             st.id as templateId,
             st.billing_method as billingMethod,
             str.id as templateRuleId,

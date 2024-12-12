@@ -170,4 +170,13 @@ public interface SoB2cLogisticsService extends SuperService<SoB2cLogisticsEntity
      * @param trackDTOS
      */
     void updateTrackNoByTransportNo(List<LogisticsBillDTO.TrackDTO> trackDTOS);
+
+    /**
+     * 更新物流预估费用
+     *
+     * @param b2cSoId
+     * @param totalShippingCost
+     * @param currency
+     */
+    void updateLogisticsFee(String b2cSoId, BigDecimal totalShippingCost, String currency);
 }

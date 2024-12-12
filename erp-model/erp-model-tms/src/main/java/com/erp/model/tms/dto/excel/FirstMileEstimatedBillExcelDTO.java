@@ -2,6 +2,7 @@ package com.erp.model.tms.dto.excel;
 
 import com.alibaba.excel.annotation.ExcelProperty;
 import com.common.core.anno.FieldValid;
+import com.common.core.enums.CurrencyEnum;
 import com.common.core.enums.FieldFormatPatternTypeEnum;
 import lombok.Data;
 
@@ -56,6 +57,12 @@ public class FirstMileEstimatedBillExcelDTO implements Serializable {
     @ExcelProperty(value = "*预付费用", index = 5)
     @FieldValid(fieldName = "预付费用", maxLength = 32, isNotBlank = true, formatPattern = FieldFormatPatternTypeEnum.AMOUNT2)
     private BigDecimal costValue;
+    /**
+     * 币种
+     */
+    @ExcelProperty(value = "*币种", index = 6)
+    @FieldValid(fieldName = "币种",isNotBlank = true,enumClass = CurrencyEnum.class)
+    private String  currency;
 
     /**
      * 错误信息

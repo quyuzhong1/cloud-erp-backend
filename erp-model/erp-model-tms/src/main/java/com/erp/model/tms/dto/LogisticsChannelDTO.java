@@ -2,6 +2,7 @@ package com.erp.model.tms.dto;
 
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.enums.UnitEnum;
 import com.common.core.enums.CurrencyEnum;
 import com.common.core.exception.ServiceException;
@@ -515,6 +516,10 @@ public class LogisticsChannelDTO implements Serializable {
          * 材积设置
          */
         private Integer volumeSetting;
+        /**
+         * 运费超限打标比例
+         */
+        private BigDecimal shipmentOverLimitRate;
 
         /**
          * 物流映射列表
@@ -812,6 +817,11 @@ public class LogisticsChannelDTO implements Serializable {
          * 材积设置
          */
         private Integer volumeSetting;
+
+        /**
+         * 运费超限打标比例
+         */
+        private BigDecimal shipmentOverLimitRate;
     }
 
     @Data
@@ -984,6 +994,52 @@ public class LogisticsChannelDTO implements Serializable {
          * 数量
          */
         private String total;
+    }
+    @Data
+    @NoArgsConstructor
+    public static class ChannelWarehouseDTO {
+        /**
+         * 渠道id
+         */
+        private String channelId;
+        /**
+         * 渠道编码
+         */
+        private String channelCode;
+        /**
+         * 渠道名称
+         */
+        private String channelName;
+        /**
+         * 物流商
+         */
+        private String supplierId;
+        /**
+         * 物流商名称
+         */
+        private String supplierName;
+        /**
+         * 时效
+         */
+        private String effectiveTime;
+
+        /**
+         * 时效单位
+         */
+        private String effectiveTimeUnit;
+        /**
+         * 匹配类型
+         */
+        private String type;
+        /**
+         * 匹配仓库
+         */
+        private String warehouseId;
+        /**
+         *运费超限打标比例
+         */
+        private BigDecimal shipmentOverLimitRate;
+
     }
 
     @Data

@@ -42,6 +42,10 @@ public class GoodCangResponse<T> implements Serializable {
     @JSONField(name = "cancel_status")
     private Integer cancelStatus;
 
+    //费用币种
+    @JSONField(name = "currency")
+    private String currency;
+
     public static <T> GoodCangResponse<T> error(String msg) {
         GoodCangResponse<T> apiResult = new GoodCangResponse<>();
         apiResult.setAsk("Failure");

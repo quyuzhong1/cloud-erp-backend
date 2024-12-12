@@ -572,11 +572,13 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
         String wait = PackageUploadStatusEnum.WAIT.getCode();
         //上传失败
         String failure = PackageUploadStatusEnum.UPLOAD_FAILURE.getCode();
-        List<String> uploadStatusList = Arrays.asList(wait, failure);
+        //已取消
+        String cancel = PackageUploadStatusEnum.CANCEL.getCode();
+        List<String> uploadStatusList = Arrays.asList(wait, failure, cancel);
         //上传状态
         String uploadStatus = entity.getUploadStatus();
         if (!uploadStatusList.contains(uploadStatus)) {
-            throw new ServiceException("仅待上传/上传失败可操作");
+            throw new ServiceException("仅待上传/上传失败/已取消可操作");
         }
         //物流地址
         LogisticsAddressEntity addressEntity = logisticsFeign.getLogisticsAddressById(collectAddressId);

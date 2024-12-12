@@ -1,14 +1,18 @@
 package com.erp.server.tms.controller.feign;
 
 import com.common.business.dto.base.BaseIdDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.utils.MathUtil;
 import com.erp.model.tms.dto.*;
 import com.erp.model.tms.entity.LogisticsAddressEntity;
 import com.erp.model.tms.entity.LogisticsChannelEntity;
 import com.erp.model.tms.vo.request.LogisticsQueryBaseVO;
 import com.erp.model.tms.vo.response.LogisticsOrderResponseVO;
 import com.erp.server.tms.service.*;
+import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -41,6 +45,9 @@ public class LogisticsFeignController {
     private LogisticsAddressService logisticsAddressService;
     @Resource
     private LogisticsTrackService logisticsTrackService;
+
+    @Resource
+    private ShippingCalculationService shippingCalculationService;
 
     @PostMapping("/queryOrderList")
     public List<LogisticsOrderResponseVO> queryOrderList(@RequestBody List<LogisticsQueryBaseVO> logisticsQueryVOList){
@@ -179,5 +186,22 @@ public class LogisticsFeignController {
     @PostMapping("/estimateIsOutOfRangeDelivery")
     public Boolean estimateIsOutOfRangeDelivery(@RequestParam("logisticsChannelId")String logisticsChannelId, @RequestParam("country")String country, @RequestParam("postCode")String postCode){
         return logisticsChannelService.estimateIsOutOfRangeDelivery(logisticsChannelId, country, postCode);
+    }
+
+    /**
+     * 更新销售订单预估运费
+     *
+     * @param pagingParamDTO
+     * @return void
+     * @author zdy
+     * @date: 2023/11/10 17:35
+     */
+    @PostMapping("/updateShippingCalculation")
+    public void updateShippingCalculation(@RequestBody @Validated ShippingCalculationDTO.PagingParamDTO pagingParamDTO) {
+        PagingDTO<ShippingCalculationDTO.PagingParamDTO> dto = new PagingDTO<>();
+        dto.setParams(pagingParamDTO);
+        dto.setPageSize(MathUtil.NUMBER_100);
+        dto.setCurrPage(MathUtil.ONE);
+        shippingCalculationService.paging(dto);
     }
 }

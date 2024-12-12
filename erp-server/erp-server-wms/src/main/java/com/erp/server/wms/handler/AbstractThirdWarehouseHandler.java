@@ -26,6 +26,9 @@ import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.sdk.oms.amz.spapi.client.StringUtil;
 import com.erp.server.wms.service.OverseasProviderService;
 import com.erp.server.wms.service.ThirdWarehouseService;
+import com.sdk.wms.antu.dto.request.AntuCalculateFeeReq;
+import com.sdk.wms.antu.dto.response.AntuCalculateFeeResp;
+import com.sdk.wms.antu.dto.response.AntuResponse;
 import io.seata.common.util.CollectionUtils;
 import io.seata.common.util.StringUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -119,6 +122,11 @@ public abstract class AbstractThirdWarehouseHandler extends BaseController imple
         return handleAndRemoveContext(() -> cancelOutboundBill(cancelOutboundReq), authId,SourceTypeEnum.THIRD_WAREHOUSE_CANCEL_OUTBOUND_BILL,cancelOutboundReq.getOrderCode());
     }
 
+    @Override
+    public ApiResult<List<ThirdWarehouseCalculateFeeResponse>> getCalculateFeeBatch(ThirdWarehouseCalculateFeeReq calculateFeeReq, String authId) {
+        return handleAndRemoveContext(() -> getCalculateFeeBatch(calculateFeeReq), authId,SourceTypeEnum.THIRD_WAREHOUSE_CALCULATE_FEE,calculateFeeReq.getCountryCode());
+    }
+
     protected abstract ApiResult<List<ThirdWarehouseSkuResp>> getSkuList(ThirdWarehouseProductReq productReq);
 
     protected abstract ApiResult<String> createInboundBill(ThirdWarehouseCreateInboundReq createInboundReq);
@@ -126,6 +134,7 @@ public abstract class AbstractThirdWarehouseHandler extends BaseController imple
     protected abstract ApiResult<String> editInboundBill(ThirdWarehouseCreateInboundReq createInboundReq);
 
     protected abstract ApiResult<String> cancelInboundBill(@Valid ThirdWarehouseCancelInboundReq cancelInboundReq);
+    protected abstract ApiResult<List<ThirdWarehouseCalculateFeeResponse>> getCalculateFeeBatch(@Valid ThirdWarehouseCalculateFeeReq calculateFeeReq);
 
     protected abstract ApiResult<String> createOutboundBill(ThirdWarehouseCreateOutboundReq createOutboundReq);
 
