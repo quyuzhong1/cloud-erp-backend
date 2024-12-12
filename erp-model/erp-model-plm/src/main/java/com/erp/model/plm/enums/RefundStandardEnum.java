@@ -36,4 +36,15 @@ public enum RefundStandardEnum implements EnumMessage {
         }
         return "";
     }
+
+    public static String getCodeByName(String name) {
+        if (StringUtils.isNotBlank(name)) {
+            for (RefundStandardEnum item : RefundStandardEnum.values()) {
+                if (name.equals(item.getName())) {
+                    return item.getCode();
+                }
+            }
+        }
+        return "";
+    }
 }

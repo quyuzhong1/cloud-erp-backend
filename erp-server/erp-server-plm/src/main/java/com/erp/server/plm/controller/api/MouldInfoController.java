@@ -9,17 +9,28 @@ import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.ApiError;
 import com.common.core.enums.LogActionEnum;
+import com.common.core.exception.ServiceException;
 import com.erp.model.plm.dto.MouldInfoDTO;
+import com.erp.model.plm.dto.MouldInfoImportDTO;
 import com.erp.model.plm.dto.MouldRefundVoucherDTO;
 import com.erp.model.plm.entity.MouldInfoEntity;
 import com.erp.server.plm.query.MouldInfoQueryHandler;
 import com.erp.server.plm.service.MouldInfoService;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.springframework.core.io.DefaultResourceLoader;
+import org.springframework.core.io.ResourceLoader;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -445,5 +456,41 @@ public class MouldInfoController extends BaseController {
     public ApiResult<Void> orderTrackingDetailExport(@RequestBody @Validated MouldInfoDTO.OrderTrackingDetailParamDTO dto) {
         mouldInfoService.orderTrackingDetailExport(dto);
         return success();
+    }
+
+    /**
+     * 导入
+     */
+    @PostMapping("/import")
+    public ApiResult<MouldInfoImportDTO> importExcel(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
+        MouldInfoImportDTO result = mouldInfoService.importExcel(excelFile, response);
+        return success(result);
+    }
+
+
+    /**
+     * 下载导入模板
+     *
+     */
+    @GetMapping("/exportTemplate")
+    public void exportTemplate(HttpServletResponse response) {
+        String path = "classpath:excel/mouldDetailTemplate.xlsx";
+        String excelName = "template.xlsx";
+        ResourceLoader resourceLoader = new DefaultResourceLoader();
+        try {
+            InputStream inputStream = resourceLoader.getResource(path).getInputStream();
+            XSSFWorkbook wb = new XSSFWorkbook(inputStream);
+            // 输出Excel文件
+            OutputStream output = response.getOutputStream();
+            response.reset();
+            // 设置文件头
+            response.setHeader("Content-Disposition",
+                    "attchement;filename=" + new String(excelName.getBytes("gb2312"), StandardCharsets.ISO_8859_1));
+            response.setContentType("application/msexcel");
+            wb.write(output);
+            wb.close();
+        } catch (Exception e) {
+            throw new ServiceException(ApiError.DEFAULT);
+        }
     }
 }

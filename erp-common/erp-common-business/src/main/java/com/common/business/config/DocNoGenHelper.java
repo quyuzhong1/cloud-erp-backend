@@ -122,7 +122,7 @@ public class DocNoGenHelper implements InitializingBean {
         Long currentIndex = redisTemplate.execute(redisScript, stringRedisSerializer, stringRedisSerializer, Lists.newArrayList(docNoKey), String.valueOf(1), String.valueOf(ONE_DAY_CACHE_TIME));
         int fillZeroDigit = 2;
         // 单据前缀+6位日期+5位顺序位
-        return CharSequenceUtil.format("{}{}{}", code, StrUtils.leftPadding(String.valueOf(currentIndex), fillZeroDigit, "0"));
+        return CharSequenceUtil.format("{}{}", code, StrUtils.leftPadding(String.valueOf(currentIndex), fillZeroDigit, "0"));
     }
 
 }
