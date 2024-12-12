@@ -113,7 +113,8 @@ public class PurchaseSuggestMergeServiceImpl extends SuperServiceImpl<PurchaseSu
     public BaseResultDTO.AddDTO addOrUpdate(PurchaseSuggestMergeDTO.AddOrUpdateDTO addOrUpdateDTO) {
         PurchaseSuggestMergeEntity purchaseSuggestMergeEntity = new PurchaseSuggestMergeEntity();
         BeanMapperUtils.copy(addOrUpdateDTO, purchaseSuggestMergeEntity);
-
+        //计划修正值默认给建议发货量
+        purchaseSuggestMergeEntity.setPlanPurchaseQty(ObjectUtil.isEmpty(purchaseSuggestMergeEntity.getSuggestPurchaseQty()) ? MathUtil.ZERO : purchaseSuggestMergeEntity.getSuggestPurchaseQty());
         // 数据处理
         handleData(purchaseSuggestMergeEntity);
 
