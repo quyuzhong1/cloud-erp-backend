@@ -1,5 +1,6 @@
 package com.erp.server.tms.service.impl;
 
+import cn.hutool.core.collection.CollUtil;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.dto.DmpSyncMqDTO;
 import com.common.business.enums.SourceTypeEnum;
@@ -14,6 +15,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -74,10 +76,17 @@ public class SyncTaskServiceImpl implements SyncTaskService {
         List<LogisticsBillEntity> entityList = logisticsBillService.listByIds(billIds);
 
         List<String> channelIds = entityList.stream().map(req -> req.getChannelId()).distinct().collect(Collectors.toList());
-        List<LogisticsChannelEntity> logisticsChannelEntities = logisticsChannelService.listByIds(channelIds);
+        List<LogisticsChannelEntity> logisticsChannelEntities = new ArrayList<>();
+        if (CollUtil.isNotEmpty(logisticsChannelEntities)) {
+            logisticsChannelEntities = logisticsChannelService.listByIds(channelIds);
+        }
 
         List<String> supplierIds = logisticsChannelEntities.stream().map(req -> req.getMainId()).distinct().collect(Collectors.toList());
-        List<LogisticsSupplierEntity> logisticsSupplierEntities = logisticsSupplierService.listByIds(supplierIds);
+
+        List<LogisticsSupplierEntity> logisticsSupplierEntities = new ArrayList<>();
+        if (CollUtil.isNotEmpty(logisticsSupplierEntities)) {
+            logisticsSupplierEntities = logisticsSupplierService.listByIds(supplierIds);
+        }
 
         for (DmpSyncMqDTO.SyncParamDetailDTO syncParamDetailDTO :  sourceDetailList) {
             String sourceId = syncParamDetailDTO.getSourceId();
