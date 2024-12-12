@@ -19,6 +19,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
+import org.springframework.util.ObjectUtils;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
@@ -91,6 +92,15 @@ public class CfgMouldSettingServiceImpl extends SuperServiceImpl<CfgMouldSetting
      * @param settingMap 参数
      */
     private void verifyMouldData(CfgMouldSettingDTO.AddDTO dto, Map<String, List<CfgMouldSettingEntity>> settingMap) {
+        String msg = dto.getMouldList().stream()
+                .collect(Collectors.groupingBy(CfgMouldSettingDTO.ParamDTO::getName, Collectors.counting())) // 分组统计每个元素的出现次数
+                .entrySet().stream()
+                .filter(entry -> entry.getValue() > 1) // 筛选出现次数大于 1 的元素
+                .map(Map.Entry::getKey) // 提取重复的元素
+                .collect(Collectors.joining(","));
+        if (!ObjectUtils.isEmpty(msg)) {
+            throw new ServiceException("文档类型【{}】重复", msg);
+        }
         List<CfgMouldSettingEntity> mouldList = settingMap.get(MouldSettingTypeEnum.MOULD.getCode());
         if (CollectionUtils.isEmpty(mouldList)) {
             return;
@@ -127,6 +137,15 @@ public class CfgMouldSettingServiceImpl extends SuperServiceImpl<CfgMouldSetting
      * @param settingMap 参数
      */
     private void verifyDocData(CfgMouldSettingDTO.AddDTO dto, Map<String, List<CfgMouldSettingEntity>> settingMap) {
+        String msg = dto.getDocList().stream()
+                .collect(Collectors.groupingBy(CfgMouldSettingDTO.ParamDTO::getName, Collectors.counting())) // 分组统计每个元素的出现次数
+                .entrySet().stream()
+                .filter(entry -> entry.getValue() > 1) // 筛选出现次数大于 1 的元素
+                .map(Map.Entry::getKey) // 提取重复的元素
+                .collect(Collectors.joining(","));
+        if (!ObjectUtils.isEmpty(msg)) {
+            throw new ServiceException("文档类型【{}】重复", msg);
+        }
         List<String> docIds = dto.getDocList()
                 .stream()
                 .map(CfgMouldSettingDTO.ParamDTO::getId)
