@@ -342,6 +342,13 @@ public class SoB2cEntity extends BaseEntity<SoB2cEntity> {
     @TableField("transaction_sub_type")
     private String transactionSubType = "onlineOrder";
 
+    /**
+     * 第三方编号
+     */
+    @TableField("third_code")
+    private String thirdCode = "thirdCode";
+
+
     public static final String CODE = "code";
 
     public static final String APPROVE_STATUS = "approve_status";
