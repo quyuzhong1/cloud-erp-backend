@@ -190,9 +190,9 @@
             vma.is_statistics AS isStatistics,
             COALESCE(iv.realQty, 0) AS realQty,
             COALESCE(vi.distributionQty, 0) AS distributionQty,
-            COALESCE(vit.toVirtualUsableQty, 0) AS toVirtualWarehouseUsableQty,
+            case when  vmad.to_virtual_warehouse_id = '' then null else COALESCE(vit.toVirtualUsableQty,0) end as toVirtualWarehouseUsableQty,
             COALESCE(vif.virtualRealQty, 0) AS virtualRealQty,
-            COALESCE(vif.fromVirtualUsableQty, 0) AS fromVirtualUsableQty,
+            case when  vmad.from_virtual_warehouse_id = '' then null else COALESCE(vif.fromVirtualUsableQty,0) end as fromVirtualWarehouseUsableQty,
             vim.totalMergeQty,
             COALESCE(iv.realQty, 0) - COALESCE(vi.distributionQty, 0) AS unDistributionQty,
             CASE
