@@ -474,6 +474,10 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         	}
         }
 
+        if("refund".equals(entity.getPayType()) && ReconciliationStatusEnum.ESTIMATE_CONFIRM.getCode().equals(reconciliationStatus)) {
+        	throw new ServiceException("退款费用类型不能修改为暂估确认");
+        }
+        
         //状态变更
         lambdaUpdate().eq(LogisticsBillCostEntity::getId, id)
         		.set(LogisticsBillCostEntity::getReconciliationStatus, reconciliationStatus)

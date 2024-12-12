@@ -112,6 +112,7 @@ public class TmsFirstMileReconciliationDTO implements Serializable {
          */
         @Dict(enumClass = SoB2cPayStatusEnum.class)
         private String payStatus;
+        private String PayStatusName;
 
         /**
          * 支付时间【可排序】
@@ -494,5 +495,10 @@ public class TmsFirstMileReconciliationDTO implements Serializable {
          */
         @StateEnumValue(clazz = SoB2cPayStatusEnum.class,message = "付款状态有误")
         private String payStatus;
+
+        /**
+         * 付款时间
+         */
+        private LocalDateTime payTime;
     }
 }

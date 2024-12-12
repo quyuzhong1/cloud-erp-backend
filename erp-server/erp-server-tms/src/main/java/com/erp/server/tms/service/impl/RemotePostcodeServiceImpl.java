@@ -121,7 +121,7 @@ public class RemotePostcodeServiceImpl extends SuperServiceImpl<RemotePostcodeMa
         // 数据处理
         for (RemotePostcodeDTO.ListDTO record : pageData.getRecords()) {
             //是否禁用
-            record.setDisabledName(Boolean.TRUE.equals(record.getDisabled()) ? "停用" : "启用");
+            record.setDisabledName(Boolean.TRUE.equals(record.getDisabled()) ? "禁用" : "启用");
         }
         return new PagingVO(pageData);
     }
@@ -166,7 +166,7 @@ public class RemotePostcodeServiceImpl extends SuperServiceImpl<RemotePostcodeMa
         DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
         for (RemotePostcodeDTO.ExportListDTO record : pageData.getRecords()) {
             //是否禁用
-            record.setDisabledName(Boolean.TRUE.equals(record.getDisabled()) ? "停用" : "启用");
+            record.setDisabledName(Boolean.TRUE.equals(record.getDisabled()) ? "禁用" : "启用");
             //城市名称
             record.setCityName(cityNameMap.getOrDefault(record.getCity(),""));
             // 匹配类型名称
