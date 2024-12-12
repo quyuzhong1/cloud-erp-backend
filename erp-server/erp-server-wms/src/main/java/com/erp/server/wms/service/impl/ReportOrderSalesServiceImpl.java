@@ -30,7 +30,6 @@ import com.erp.server.wms.mapper.ReportOrderSalesMapper;
 import com.erp.server.wms.service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.time.LocalDate;
@@ -73,7 +72,6 @@ public class ReportOrderSalesServiceImpl extends SuperServiceImpl<ReportOrderSal
 
 
 
-    @Transactional(rollbackFor = Exception.class)
     @Override
     public Boolean batchAddOrUpdate(List<ReportOrderSalesDTO.AddDTO> addOrUpdateList) {
         List<ReportOrderSalesEntity> list =  BeanMapperUtils.copyList(ReportOrderSalesEntity.class, addOrUpdateList);
