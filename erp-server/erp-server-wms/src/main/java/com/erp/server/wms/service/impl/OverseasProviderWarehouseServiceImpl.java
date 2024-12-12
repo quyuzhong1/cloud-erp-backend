@@ -10,6 +10,7 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
+import com.common.core.constant.EnumMessage;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
@@ -18,12 +19,15 @@ import com.erp.model.dmp.dto.ThirdWarehouseDTO;
 import com.erp.model.dmp.enums.ThirdSysTypeEnum;
 import com.erp.model.oms.dto.ListingInfoParamDTO;
 import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
+import com.erp.model.oms.dto.ShopInfoDTO;
+import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.enums.AuthStatusEnum;
 import com.erp.model.oms.enums.ListingMatchResultEnum;
 import com.erp.model.oms.enums.RuleTypeEnum;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.tms.enums.FmLogisticTrackStatusEnum;
 import com.erp.model.wms.dto.OverseasInventoryDTO;
 import com.erp.model.wms.dto.OverseasProviderDTO;
 import com.erp.model.wms.dto.OverseasProviderWarehouseDTO;
@@ -31,7 +35,9 @@ import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.entity.OverseasInventoryEntity;
 import com.erp.model.wms.entity.OverseasProviderEntity;
 import com.erp.model.wms.entity.OverseasProviderWarehouseEntity;
+import com.erp.model.wms.enums.ShopSiteEnum;
 import com.erp.rpc.dmp.feign.DmpThirdMappingFeign;
+import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.oms.feign.SkuMappingFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.convert.OverseasWarehouseConverter;
@@ -76,6 +82,8 @@ public class OverseasProviderWarehouseServiceImpl extends SuperServiceImpl<Overs
     private PlmTaskFeign plmTaskFeign;
     @Resource
     private OverseasInventoryService overseasInventoryService;
+    @Resource
+    private ShopInfoFeign shopInfoFeign;
     /**
      * 修改
      */
@@ -338,6 +346,11 @@ public class OverseasProviderWarehouseServiceImpl extends SuperServiceImpl<Overs
         if (CharSequenceUtil.isNotBlank(platformProductId)){
             dto.setPlatformSpuNoList(Collections.singletonList(platformProductId));
         }
+        //店铺id
+        List<String> shopIdList = getShopIdBySite(shippedDTO.getSite());
+        if (CollUtil.isNotEmpty(shopIdList)){
+            dto.setShopIdList(shopIdList);
+        }
         dto.setMatchResult(ListingMatchResultEnum.TRUE.getCode());
         dto.setIsExpire(false);
         List<ListingInfoWithSkuMappingDTO> listingInfoWithSkuMappingDTOS = skuMappingFeign.listingInfoWithSkuMappingList(dto);
@@ -346,7 +359,7 @@ public class OverseasProviderWarehouseServiceImpl extends SuperServiceImpl<Overs
         }
         ListingInfoWithSkuMappingDTO listingInfoWithSkuMappingDTO = listingInfoWithSkuMappingDTOS.get(0);
         //erp映射的sku
-        List<String> skuIds;
+        List<String> skuIds = null;
         //根据是否组合品获取子件
         List<BomChildrenSkuDTO> bomChildrenSkuList = plmTaskFeign.listBomChildBySkuIds(Collections.singletonList(listingInfoWithSkuMappingDTO.getProductSkuId()));
         if (CollUtil.isNotEmpty(bomChildrenSkuList)){
@@ -355,7 +368,8 @@ public class OverseasProviderWarehouseServiceImpl extends SuperServiceImpl<Overs
                             && BomTypeEnum.COMBINATION.getType().equals(req.getType())
                     ).collect(Collectors.toList());
             skuIds = bomChildren.stream().map(BomChildrenSkuDTO::getSkuId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
-        }else {
+        }
+        if (CollUtil.isEmpty(skuIds)){
             skuIds = Collections.singletonList(listingInfoWithSkuMappingDTO.getProductSkuId());
         }
         //查询三方仓库存
@@ -375,5 +389,23 @@ public class OverseasProviderWarehouseServiceImpl extends SuperServiceImpl<Overs
             return Collections.emptyList();
         }
         return OverseasWarehouseConverter.INSTANCE.inventoryToShipmentDTO(overseasInventoryEntities);
+    }
+
+    private List<String> getShopIdBySite(String site) {
+        if (CharSequenceUtil.isBlank(site)){
+            return Collections.emptyList();
+        }
+        String code = EnumMessage.getNameByCode(ShopSiteEnum.class, site);
+        if (CharSequenceUtil.isBlank(code)){
+            return Collections.emptyList();
+        }
+        ShopInfoDTO.ListParamDTO dto = new ShopInfoDTO.ListParamDTO();
+        dto.setAuthStatus(AuthStatusEnum.ALREADY.getCode());
+        dto.setDictPlatform(PlatformDictEnum.SHOPIFY.getCode());
+        List<ShopInfoEntity> shopInfoEntityList = shopInfoFeign.listByParams(dto);
+        if (CollUtil.isEmpty(shopInfoEntityList)){
+            return Collections.emptyList();
+        }
+        return shopInfoEntityList.stream().filter(e -> e.getDomain().equalsIgnoreCase(code)).map(ShopInfoEntity::getId).distinct().collect(Collectors.toList());
     }
 }
