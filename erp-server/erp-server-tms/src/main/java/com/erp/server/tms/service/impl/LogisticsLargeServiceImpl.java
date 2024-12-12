@@ -746,7 +746,7 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
         //如果是退款的金额转换成负数
         if (LogisticsBillCostPayTypeEnum.REFUND.getCode().equals(logisticsBillCostEntity.getPayType())) {
             addDTO.setBillTotalAmount(addDTO.getBillTotalAmount().negate());
-            addDTO.setLastMileFreightAmount(addDTO.getLastMileFreightAmount());
+            addDTO.setLastMileFreightAmount(addDTO.getLastMileFreightAmount().negate());
             addDTO.setLastMileFreightAmountTax(addDTO.getLastMileFreightAmountTax().negate());
             addDTO.setLastMileFreightVatAmount(addDTO.getLastMileFreightVatAmount().negate());
             addDTO.setEstimatedDestMiscFee(addDTO.getEstimatedDestMiscFee().negate());
