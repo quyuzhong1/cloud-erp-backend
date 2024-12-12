@@ -7,6 +7,7 @@ import com.common.business.enums.ConfirmStatusEnum;
 import com.common.business.vo.PagingVO;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.exception.ServiceException;
+import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.plm.dto.SearchPagingDTO;
 import com.erp.model.plm.vo.ProductChangePagingVO;
 import com.erp.model.tms.dto.FirstMileCostAllocationDTO;
@@ -15,6 +16,7 @@ import com.erp.model.tms.enums.DetailReconciliationTypeEnum;
 import com.erp.model.tms.enums.ReconciliationBillTypeEnum;
 import com.erp.model.wms.dto.SoOutstockDetailDTO;
 import com.erp.model.wms.entity.*;
+import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.rpc.wms.feign.SoOutstockFeign;
 import com.erp.rpc.wms.feign.WmsFirstMileDeliveryFeign;
 import com.erp.server.tms.query.LogisticsLargeQueryHandler;
@@ -97,6 +99,9 @@ public class LogisticsLargeController extends BaseController {
 
     @Resource
     private TransferDeclareCostAllocationMainService transferDeclareCostAllocationMainService;
+
+    @Resource
+    private SoB2cFeign soB2cFeign;
 
 
     /**
@@ -259,7 +264,7 @@ public class LogisticsLargeController extends BaseController {
         List<String> ids = entityList.stream().map(req -> req.getMainId()).distinct().collect(Collectors.toList());
         List<SmallBagCostAllocationMainEntity> list = smallBagCostAllocationMainService.listByIds(ids);
 
-        List<SmallBagCostAllocationEntity> costAllocationEntityList = smallBagCostAllocationService.lambdaQuery().eq(SmallBagCostAllocationEntity::getMainId, ids).list();
+        List<SmallBagCostAllocationEntity> costAllocationEntityList = smallBagCostAllocationService.lambdaQuery().in(SmallBagCostAllocationEntity::getMainId, ids).list();
         List<String> costAllocationIds = costAllocationEntityList.stream().map(req -> req.getId()).collect(Collectors.toList());
         List<SmallBagCostAllocationDetailEntity> smallBagCostAllocationDetailEntities = smallBagCostAllocationDetailService.listByMainIds(costAllocationIds);
 
@@ -273,6 +278,12 @@ public class LogisticsLargeController extends BaseController {
         List<SoOutstockEntity> soOutstockEntitylList = new ArrayList<>();
         if (CollUtil.isNotEmpty(outstockIds)) {
             soOutstockEntitylList = FeignQuery.create(SoOutstockEntity.class).in(SoOutstockEntity::getId, outstockIds).list();
+        }
+
+        List<String> soIds = soOutstockEntitylList.stream().map(req -> req.getSourceId()).distinct().collect(Collectors.toList());
+        List<SoB2cEntity> soB2cEntities = new ArrayList<>();
+        if (CollUtil.isNotEmpty(soIds)) {
+            soB2cEntities = soB2cFeign.listByIds(soIds);
         }
 
         //根据整单添加操作
@@ -299,7 +310,7 @@ public class LogisticsLargeController extends BaseController {
 
             BatchResultDTO result = null;
             try {
-                result = logisticsLargeService.generateSmallBagCostAllocationTable(entity, costAllocationEntities, costAllocationDetailEntityList, soOutstockEntity, soOutstockDetailEntities);
+                result = logisticsLargeService.generateSmallBagCostAllocationTable(entity, costAllocationEntities, costAllocationDetailEntityList, soOutstockEntity, soOutstockDetailEntities, soB2cEntities);
             } catch (Exception e) {
                 log.error("小包费用分摊生成物流大表失败{}", e);
                 result = BatchResultDTO.fail(entity.getId(), entity.getId(), e.getMessage());
@@ -322,8 +333,7 @@ public class LogisticsLargeController extends BaseController {
     @LogAction(value = LogActionEnum.INSERT, desc = "中转费用分摊生成物流大表")
     public ApiResult<List<BatchResultDTO>> generateTransferCostAllocationTable(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>();
-
-        List<TransferDeclareCostAllocationEntity> list = transferDeclareCostAllocationService.lambdaQuery().in(TransferDeclareCostAllocationEntity::getMainId, dto.getIds()).list();
+        List<TransferDeclareCostAllocationEntity> list = transferDeclareCostAllocationService.lambdaQuery().in(TransferDeclareCostAllocationEntity::getId, dto.getIds()).list();
         List<String> mainIds = list.stream().map(req -> req.getMainId()).distinct().collect(Collectors.toList());
         List<TransferDeclareCostAllocationMainEntity> transferDeclareCostAllocationMainEntities = transferDeclareCostAllocationMainService.listByIds(mainIds);
 
@@ -342,7 +352,7 @@ public class LogisticsLargeController extends BaseController {
         List<String> declareReconciliationIds = tmsB2cDeclareReconciliationDetailEntities.stream().map(req -> req.getMainId()).distinct().collect(Collectors.toList());
 
         List<TmsB2cDeclareReconciliationEntity> tmsB2cDeclareReconciliationEntities = new ArrayList<>();
-        if (CollUtil.isEmpty(declareReconciliationIds)) {
+        if (CollUtil.isNotEmpty(declareReconciliationIds)) {
             tmsB2cDeclareReconciliationEntities = tmsB2cDeclareReconciliationService.listByIds(declareReconciliationIds);
         }
         //销售出库
@@ -353,7 +363,7 @@ public class LogisticsLargeController extends BaseController {
         }
         List<String> soOutstockIds = soOutstockDetailEntityList.stream().map(SoOutstockDetailEntity::getMainId).distinct().collect(Collectors.toList());
         List<SoOutstockEntity> soOutstockEntities = new ArrayList<>();
-        if (CollUtil.isEmpty(soOutstockIds)) {
+        if (CollUtil.isNotEmpty(soOutstockIds)) {
             soOutstockEntities = soOutstockFeign.listByIds(soOutstockIds);
         }
 

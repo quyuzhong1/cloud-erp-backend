@@ -228,6 +228,33 @@ public interface ExportWmsFeign {
      */
     @PostMapping("/feign/export/listReportOrderSales")
     PagingVO<ReportOrderSalesDTO.ListDTO> listReportOrderSales(@RequestBody PagingDTO<ReportOrderSalesDTO.PagingParamDTO> dto);
+    /**
+     * 库龄分析导出
+     */
+    @PostMapping("/feign/export/virtualInventoryAgePaging")
+    PagingVO<VirtualInventoryAgeDTO.ListDTO> virtualInventoryAgePaging(PagingDTO<VirtualInventoryAgeDTO.SearchParamDTO> dto);
+    /**
+     * 历史库龄导出
+     */
+    @PostMapping("/feign/export/hisInventoryAgePaging")
+    PagingVO<VirtualInventoryAgeDTO.HisInventoryAgeDTO> hisInventoryAgePaging(PagingDTO<VirtualInventoryAgeDTO.HisInventoryAgeParamDTO> dto);
+
+    /**
+     * 历史库龄明细导出
+     */
+    @PostMapping("/feign/export/hisInventoryAgeDetailPaging")
+    PagingVO<VirtualInventoryAgeDTO.HisInventoryAgeDetailDTO> hisInventoryAgeDetailPaging(PagingDTO<VirtualInventoryAgeDTO.HisInventoryAgeDetailParamDTO> dto);
+
+    /**
+     * 库龄流水导出
+     */
+    @PostMapping("/feign/export/virtualTransFlowDetailPaging")
+    PagingVO<VirtualTransFlowDetailDTO.ListDTO> virtualTransFlowDetailPaging(PagingDTO<VirtualTransFlowDetailDTO.SearchParamDTO> dto);
+    /**
+     * 列表历史库龄明细导出
+     */
+    @PostMapping("/feign/export/framePaging")
+    PagingVO<VirtualInventoryAgeDTO.HisInventoryAgeDetailDTO> framePaging(PagingDTO<VirtualInventoryAgeDTO.FrameParamDTO> dto);
 
     /**
      * 偏远邮编导出

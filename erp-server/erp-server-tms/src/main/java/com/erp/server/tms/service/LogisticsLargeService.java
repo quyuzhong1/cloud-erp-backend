@@ -1,6 +1,7 @@
 package com.erp.server.tms.service;
 
 import com.common.business.vo.PagingVO;
+import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.tms.entity.*;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
@@ -114,7 +115,7 @@ public interface LogisticsLargeService extends SuperService<LogisticsLargeEntity
      * @param soOutstockDetailEntities
      * @return java.util.List<com.common.business.dto.base.BatchResultDTO>
      **/
-    BatchResultDTO generateSmallBagCostAllocationTable(SmallBagCostAllocationMainEntity smallBagCostAllocationMainEntity, List<SmallBagCostAllocationEntity> costAllocationEntities, List<SmallBagCostAllocationDetailEntity> costAllocationDetailEntityList, SoOutstockEntity soOutstockEntity, List<SoOutstockDetailEntity> soOutstockDetailEntities);
+    BatchResultDTO generateSmallBagCostAllocationTable(SmallBagCostAllocationMainEntity smallBagCostAllocationMainEntity, List<SmallBagCostAllocationEntity> costAllocationEntities, List<SmallBagCostAllocationDetailEntity> costAllocationDetailEntityList, SoOutstockEntity soOutstockEntity, List<SoOutstockDetailEntity> soOutstockDetailEntities, List<SoB2cEntity> soB2cEntities);
 
     /**
      * 中转费用分摊生成物流大表

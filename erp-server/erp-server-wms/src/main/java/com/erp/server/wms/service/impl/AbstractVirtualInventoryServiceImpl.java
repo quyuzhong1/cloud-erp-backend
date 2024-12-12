@@ -1,10 +1,9 @@
 package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson2.JSON;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.enums.BusinessNoTypeEnum;
@@ -15,10 +14,12 @@ import com.common.core.utils.ValidatorUtil;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.wms.dto.VirtualTransFlowDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
+import com.erp.model.wms.dto.WmsVirtualDetailMsgDTO;
 import com.erp.model.wms.dto.inventory.InventoryUnApproveDTO;
 import com.erp.model.wms.dto.inventory.VirtualInventoryStockDTO;
 import com.erp.model.wms.dto.inventory.VirtualTransRuleDTO;
 import com.erp.model.wms.entity.*;
+import com.erp.model.wms.enums.VirtualDetailMsgStatusEnum;
 import com.erp.model.wms.enums.inventory.*;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.service.*;
@@ -28,11 +29,11 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.redisson.RedissonMultiLock;
 import org.redisson.api.RLock;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -64,6 +65,9 @@ public abstract class AbstractVirtualInventoryServiceImpl implements VirtualInve
 
     @Resource
     private PlmTaskFeign plmTaskFeign;
+
+    @Resource
+    private WmsVirtualDetailMsgService wmsVirtualDetailMsgService;
 
     /**
      * 允许录入负数的库存业务单据（临时打开）
@@ -248,7 +252,28 @@ public abstract class AbstractVirtualInventoryServiceImpl implements VirtualInve
         VirtualTransFlowDTO.AddDTO transactionFlowDTO = wrapTransactionFlow(param, virtualInventoryEntity, businessType, inventoryStatusEnum, param.getQty(), warehouseInfo.getOrgId());
         transactionFlowDTO.setTransactionNo(transactionNo);
         transactionFlowDTO.setVirtualTransRuleId(transRuleId);
-        virtualTransFlowService.add(transactionFlowDTO, transRuleId, InventoryModeEnum.IN_STOCK);
+        VirtualTransFlowEntity transFlowEntity = virtualTransFlowService.add(transactionFlowDTO, transRuleId, InventoryModeEnum.IN_STOCK);
+        
+        if (InventoryStatusEnum.USABLE.equals(inventoryStatusEnum)) {
+            //入库添加本地任务表数据
+            addWmsVirtualDetailMsg(transFlowEntity);
+        }
+    }
+
+    /**
+     * 添加本地任务
+     * @author will
+     * @date 2024/12/9 18:28
+     * @param transFlowEntity
+     */
+    private void addWmsVirtualDetailMsg (VirtualTransFlowEntity transFlowEntity) {
+        //入库添加本地任务表数据
+        WmsVirtualDetailMsgDTO.AddDTO addDTO = new WmsVirtualDetailMsgDTO.AddDTO();
+        addDTO.setDataJson(JSONUtil.parseObj(transFlowEntity));
+        addDTO.setRemark("虚拟仓库存入库");
+        addDTO.setTradeTime(LocalDateTime.now());
+        addDTO.setStatus(VirtualDetailMsgStatusEnum.WAIT_HANDLE.getCode());
+        wmsVirtualDetailMsgService.add(addDTO);
     }
 
     /**
@@ -287,8 +312,13 @@ public abstract class AbstractVirtualInventoryServiceImpl implements VirtualInve
         // 登记交易流水（有可能一个操作产生多条，从多个库存明细中扣除）
         VirtualTransFlowDTO.AddDTO transactionFlowDTO = wrapTransactionFlow(param, virtualInventoryEntity, businessType, inventoryStatusEnum, param.getQty(), warehouseInfo.getOrgId());
         transactionFlowDTO.setTransactionNo(transactionNo);
-        virtualTransFlowService.add(transactionFlowDTO, transRuleId, InventoryModeEnum.OUT_STOCK);
+        VirtualTransFlowEntity transFlowEntity = virtualTransFlowService.add(transactionFlowDTO, transRuleId, InventoryModeEnum.OUT_STOCK);
 
+        if (InventoryStatusEnum.FROZEN.equals(inventoryStatusEnum)) {
+            //入库添加本地任务表数据
+            addWmsVirtualDetailMsg(transFlowEntity);
+        }
+        
         // 此处再次验证，防止变成负库存
         VirtualInventoryEntity curInventory = virtualInventoryService.getById(virtualInventoryEntity.getId());
         // 仓库库存判断是否小于0
