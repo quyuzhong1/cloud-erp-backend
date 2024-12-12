@@ -130,4 +130,32 @@ public class CfgSettingVirtualValueDTO implements Serializable {
         @NotNull(message = "是否拆分组合品不能为空")
         private Boolean isSplit;
     }
+
+    @Data
+    @NoArgsConstructor
+    public static class InventoryAgeTO {
+        /**
+         * 库龄统计天数集合
+         */
+        @NotEmpty(message = "库龄统计天数配置不能为空")
+        @Valid
+        private List<InventoryAgeDateTO> list;
+    }
+
+    /**
+     * 库龄统计
+     */
+    @Data
+    @NoArgsConstructor
+    public static class InventoryAgeDateTO {
+        /**
+         * 开始天数
+         */
+        @NotNull(message = "开始天数不能为空")
+        private Integer startDays;
+        /**
+         * 结束天数
+         */
+        private Integer endDays;
+    }
 }

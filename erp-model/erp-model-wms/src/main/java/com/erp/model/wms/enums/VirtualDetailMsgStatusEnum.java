@@ -4,11 +4,12 @@ import com.baomidou.mybatisplus.annotation.EnumValue;
 import com.common.core.constant.EnumMessage;
 import com.fasterxml.jackson.annotation.JsonValue;
 
-public enum CfgSettingVirtualEnum implements EnumMessage {
+public enum VirtualDetailMsgStatusEnum implements EnumMessage {
 
-    SALES_DASHBOARD("salesDashboard","销售看板"),
-    VIRTUAL_RULE("virtualRule","规则设置"),
-    INVENTORY_AGE_STATISTICS("INVENTORY_AGE_STATISTICS","库龄统计"),
+    WAIT_HANDLE("waitHandle","待处理"),
+    SUCCESS("success","成功"),
+    FAIL("fail","失败"),
+    DOING("doing","进行中")
     ;
 
     /**
@@ -23,7 +24,7 @@ public enum CfgSettingVirtualEnum implements EnumMessage {
     private String name;
 
 
-    CfgSettingVirtualEnum(String code, String name) {
+    VirtualDetailMsgStatusEnum(String code, String name) {
         this.code = code;
         this.name = name;
     }
@@ -39,7 +40,7 @@ public enum CfgSettingVirtualEnum implements EnumMessage {
     }
 
     public static String getName(String code) {
-        for (CfgSettingVirtualEnum settingEnum : CfgSettingVirtualEnum.values()) {
+        for (VirtualDetailMsgStatusEnum settingEnum : VirtualDetailMsgStatusEnum.values()) {
             if (code.equals(settingEnum.getCode())) {
                 return settingEnum.getName();
             }
@@ -47,8 +48,8 @@ public enum CfgSettingVirtualEnum implements EnumMessage {
         return "";
     }
 
-    public static CfgSettingVirtualEnum getEnum(String code) {
-        for (CfgSettingVirtualEnum settingEnum : CfgSettingVirtualEnum.values()) {
+    public static VirtualDetailMsgStatusEnum getEnum(String code) {
+        for (VirtualDetailMsgStatusEnum settingEnum : VirtualDetailMsgStatusEnum.values()) {
             if (code.equals(settingEnum.getCode())) {
                 return settingEnum;
             }
