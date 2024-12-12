@@ -255,6 +255,10 @@ public abstract class AbstractVirtualInventoryServiceImpl implements VirtualInve
         VirtualTransFlowEntity transFlowEntity = virtualTransFlowService.add(transactionFlowDTO, transRuleId, InventoryModeEnum.IN_STOCK);
         
         if (InventoryStatusEnum.USABLE.equals(inventoryStatusEnum)) {
+            //仅分货单计入库龄流水
+            if (!CharSequenceUtil.equals(InventorySourceTypeEnum.VIRTUAL_WAREHOUSE_ALLOCATION.getCode(),param.getSourceType().getCode())) {
+                 return;
+            }
             //入库添加本地任务表数据
             addWmsVirtualDetailMsg(transFlowEntity);
         }
@@ -314,17 +318,23 @@ public abstract class AbstractVirtualInventoryServiceImpl implements VirtualInve
         transactionFlowDTO.setTransactionNo(transactionNo);
         VirtualTransFlowEntity transFlowEntity = virtualTransFlowService.add(transactionFlowDTO, transRuleId, InventoryModeEnum.OUT_STOCK);
 
-        if (InventoryStatusEnum.FROZEN.equals(inventoryStatusEnum)) {
-            //入库添加本地任务表数据
-            addWmsVirtualDetailMsg(transFlowEntity);
-        }
-        
         // 此处再次验证，防止变成负库存
         VirtualInventoryEntity curInventory = virtualInventoryService.getById(virtualInventoryEntity.getId());
         // 仓库库存判断是否小于0
         if(curInventory.getQty() < 0 ) {
             log.warn("库存id:{}出库后的库存数量变为:{}，不允许出库", virtualInventoryEntity.getId(), curInventory.getQty());
             throw new ServiceException(ApiError.ERROR_VIRTUAL_INVENTORY_INSUFFICIENT.code, CharSequenceUtil.format(ApiError.ERROR_VIRTUAL_INVENTORY_INSUFFICIENT.msg, param.getSkuNo(),virtualWarehouseEntity.getName(), warehouseInfo.getName(), inventoryStatusName,curInventory.getQty(),param.getQty()));
+        }
+
+        //出库添加本地任务表数据
+        if (InventoryStatusEnum.USABLE.equals(inventoryStatusEnum)
+                && CharSequenceUtil.equals(transFlowEntity.getSourceType(),InventorySourceTypeEnum.VIRTUAL_WAREHOUSE_ALLOCATION.getCode())
+                && CharSequenceUtil.equals(transFlowEntity.getSourceType(),InventorySourceTypeEnum.VIRTUAL_WAREHOUSE_ALLOCATION.getCode())
+                && CharSequenceUtil.equals(transFlowEntity.getSourceType(),InventorySourceTypeEnum.VIRTUAL_WAREHOUSE_ALLOCATION.getCode())
+                && CharSequenceUtil.equals(transFlowEntity.getSourceType(),InventorySourceTypeEnum.VIRTUAL_WAREHOUSE_ALLOCATION.getCode())
+        ) {
+
+            addWmsVirtualDetailMsg(transFlowEntity);
         }
     }
 

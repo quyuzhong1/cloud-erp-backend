@@ -3,8 +3,10 @@ package com.erp.model.wms.entity;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
 
 import java.io.Serializable;
@@ -23,6 +25,8 @@ import java.time.LocalDateTime;
 @Data
 @EqualsAndHashCode(callSuper = true)
 @Accessors(chain = true)
+@AllArgsConstructor
+@NoArgsConstructor
 @TableName("virtual_trans_flow")
 public class VirtualTransFlowEntity extends BaseEntity<VirtualTransFlowEntity> {
 
@@ -131,6 +135,12 @@ public class VirtualTransFlowEntity extends BaseEntity<VirtualTransFlowEntity> {
     */
     @TableField("is_unapproved")
     private Boolean isUnapproved;
+
+
+    public VirtualTransFlowEntity(String id, Integer afterQty) {
+        super(id);
+        this.curInventoryQty = afterQty;
+    }
 
 
     public static final String VIRTUAL_INVENTORY_ID = "virtual_inventory_id";

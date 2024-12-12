@@ -167,6 +167,38 @@
         group by  vtf.sku_id,vtf.warehouse_id,vtf.virtual_warehouse_id,vtf.dict_inventory_status)
     </select>
 
+    <!-- 查询即时库存id -->
+    <select id="listVirtualInventoryId" resultType="java.lang.String">
+        select
+            distinct virtual_inventory_id
+        from virtual_trans_flow
+        where is_deleted = false
+        <if test="skuId != null and skuId != ''">
+            and sku_id = #{skuId}
+        </if>
+        <if test="virtualInventoryId != null and virtualInventoryId != ''">
+            and virtual_inventory_id = #{virtualInventoryId}
+        </if>
+        <if test="virtualWarehouseId != null and virtualWarehouseId != ''">
+            and virtual_warehouse_id = #{virtualWarehouseId}
+        </if>
+        <if test="warehouseId != null and warehouseId != ''">
+            and warehouse_id = #{warehouseId}
+        </if>
+        <if test="fromTable != null and fromTable != ''">
+            and virtual_inventory_id in (select virtual_inventory_id from virtual_inventory_temp)
+        </if>
+    </select>
+
+    <!-- 查询虚拟仓数量 -->
+    <select id="getVirtualQty" resultType="java.lang.Integer">
+        select
+            sum(qty) as virtualQty
+        from virtual_trans_flow
+        where is_deleted = false and virtual_inventory_id = #{virtualInvId} and #{startDate} > bill_date
+        group by virtual_inventory_id
+    </select>
+
     <!-- 更新流水状态为反审核 -->
     <update id="updateUnapprovedById">
         update virtual_trans_flow set is_unapproved = true,version = version + 1,

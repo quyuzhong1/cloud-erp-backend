@@ -32,7 +32,9 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_VIRTUAL_TRANS_FLOW_DETAIL;
 
@@ -100,6 +102,48 @@ public class VirtualTransFlowDetailServiceImpl extends SuperServiceImpl<VirtualT
         return Boolean.TRUE;
     }
 
+    @Override
+    public List<String> listVirtualInventoryDetailIdList(String virtualInventoryId, String virtualWarehouseId, String warehouseId, String skuId, Boolean fromTable) {
+        return baseMapper.listVirtualInventoryDetailIdList(virtualInventoryId,virtualWarehouseId,warehouseId,skuId,fromTable);
+    }
+
+    @Override
+    public void overrideVirtualTransFlowDetail(LocalDate startDate, String virtualInvDetailId) {
+        log.info("###VirtualTransFlowDetailServiceImpl:::overrideVirtualTransFlowDetail 库存流水重算开始 virtualInvId={}, start_time={}", virtualInvDetailId, LocalDateTime.now());
+        List<VirtualTransFlowDetailEntity> flowList = lambdaQuery()
+                .eq(VirtualTransFlowDetailEntity::getVirtualInventoryDetailId, virtualInvDetailId)
+                .ge(VirtualTransFlowDetailEntity::getBillDate, startDate)
+                .last("for update")
+                .list();
+        if(CollUtil.isEmpty(flowList)) {
+            log.warn("未找到需要重算的库存流水，库存id:{}, ", virtualInvDetailId);
+        }
+        flowList = flowList.stream().sorted(Comparator.comparing(VirtualTransFlowDetailEntity::getBillDate)
+                        .thenComparing(VirtualTransFlowDetailEntity::getTradeTime)
+                        .thenComparing(VirtualTransFlowDetailEntity::getId))
+                .collect(Collectors.toList());
+        Integer virtualDetailQty = this.baseMapper.virtualDetailQty(virtualInvDetailId, startDate);
+        // 重算库存流水
+        overrideFlowByVirtualInventoryDetailId(flowList,virtualDetailQty);
+        log.info("###VirtualTransFlowDetailServiceImpl:::overrideVirtualTransFlowDetail 库存流水重算完成 virtualInvId={}, end_time={}",  virtualInvDetailId, LocalDateTime.now());
+    }
+
+    /**
+     * 重算库存流水
+     * @author will
+     * @date 2024/12/12 12:17
+     * @param flowList
+     */
+    private void overrideFlowByVirtualInventoryDetailId(List<VirtualTransFlowDetailEntity> flowList,Integer virtualDetailQty) {
+        List<VirtualTransFlowDetailEntity> updateList = new ArrayList<>();
+        for (VirtualTransFlowDetailEntity flowEntity : flowList) {
+            Integer afterQty = virtualDetailQty + flowEntity.getQty();
+            updateList.add(new VirtualTransFlowDetailEntity(flowEntity.getId(), afterQty));
+            virtualDetailQty = afterQty;
+        }
+        updateBatchById(updateList);
+    }
+
     /**
      * 更新库存
      * @author will
@@ -112,7 +156,7 @@ public class VirtualTransFlowDetailServiceImpl extends SuperServiceImpl<VirtualT
             //生成批次库存数据
             VirtualInventoryDetailEntity inventoryDetailEntity =  addVirtualInventoryDetail(entity);
             //入库
-            instockVirtualTransFlowDetail(inventoryDetailEntity);
+            instockVirtualTransFlowDetail(entity,inventoryDetailEntity);
             return;
         }
         //出库
@@ -142,7 +186,8 @@ public class VirtualTransFlowDetailServiceImpl extends SuperServiceImpl<VirtualT
 
             VirtualTransFlowDetailDTO.AddDTO addDTO = new VirtualTransFlowDetailDTO.AddDTO();
             addDTO.setVirtualTransFlowId(entity.getId());
-            addDTO.setTradeTime(LocalDateTime.now());
+            addDTO.setBillDate(entity.getBillDate());
+            addDTO.setTradeTime(entity.getTradeTime());
             addDTO.setVirtualInventoryDetailId(detailEntity.getId());
             //批次库存数量是否大于剩余出库数量
             boolean isOver = detailEntity.getQty() > notOutQty;
@@ -187,13 +232,18 @@ public class VirtualTransFlowDetailServiceImpl extends SuperServiceImpl<VirtualT
      * 入库流水
      * @author will
      * @date 2024/12/10 16:01
+     * @param entity
      * @param inventoryDetailEntity
      * @return VirtualTransFlowDetailEntity
      */
-    private void instockVirtualTransFlowDetail (VirtualInventoryDetailEntity inventoryDetailEntity) {
+    private void instockVirtualTransFlowDetail (VirtualTransFlowEntity entity,VirtualInventoryDetailEntity inventoryDetailEntity) {
         VirtualTransFlowDetailDTO.AddDTO addDTO = new VirtualTransFlowDetailDTO.AddDTO();
-        BeanMapperUtils.copy(inventoryDetailEntity,addDTO);
-        addDTO.setVirtualTransFlowId(inventoryDetailEntity.getVirtualTransFlowId());
+        addDTO.setVirtualTransFlowId(entity.getId());
+        addDTO.setVirtualInventoryDetailId(inventoryDetailEntity.getId());
+        addDTO.setTradeTime(entity.getTradeTime());
+        addDTO.setQty(entity.getQty());
+        addDTO.setBillDate(entity.getBillDate());
+        addDTO.setCurInventoryQty(inventoryDetailEntity.getQty());
         this.batchAdd(Collections.singletonList(addDTO));
     }
 

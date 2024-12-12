@@ -3,12 +3,15 @@ package com.erp.model.wms.entity;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
 
 import java.io.Serializable;
 import java.time.LocalDate;
+import java.util.concurrent.atomic.AtomicReference;
 
 
 /**
@@ -22,6 +25,8 @@ import java.time.LocalDate;
 @Data
 @EqualsAndHashCode(callSuper = true)
 @Accessors(chain = true)
+@AllArgsConstructor
+@NoArgsConstructor
 @TableName("virtual_inventory_his")
 public class VirtualInventoryHisEntity extends BaseEntity<VirtualInventoryHisEntity> {
 
@@ -48,9 +53,20 @@ public class VirtualInventoryHisEntity extends BaseEntity<VirtualInventoryHisEnt
 
     public static final String QTY = "qty";
 
+    public VirtualInventoryHisEntity(String id, Integer curQty) {
+        super(id);
+        this.qty = curQty;
+    }
+
+    public VirtualInventoryHisEntity(AtomicReference<Integer> curQty, LocalDate date) {
+        this.qty = curQty.get();
+        this.date = date;
+    }
+
     @Override
     public Serializable pkVal() {
         return null;
     }
+
 
 }
