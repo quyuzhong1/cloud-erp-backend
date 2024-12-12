@@ -329,6 +329,7 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
             List<LogisticsLargeEntity> list = this.lambdaQuery()
                     .eq(LogisticsLargeEntity::getOutstockCode, outstockCode)
                     .eq(LogisticsLargeEntity::getSkuId, skuId)
+                    .eq(LogisticsLargeEntity::getSourceType, SourceTypeEnum.FIRST_MILE_COST_ALLOCATION.getCode())
                     .orderByDesc(LogisticsLargeEntity::getReconciliationMonth)
                     .list();
             List<LogisticsLargeEntity> estimatedList = list.stream().filter(req -> ReconciliationBillTypeEnum.ESTIMATED.getCode().equals(req.getReconciliationBillType())).collect(Collectors.toList());
@@ -602,6 +603,7 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
             List<LogisticsLargeEntity> list = this.lambdaQuery()
                     .eq(LogisticsLargeEntity::getOutstockCode, outstockCode)
                     .eq(LogisticsLargeEntity::getSkuId, skuId)
+                    .eq(LogisticsLargeEntity::getSourceType, SourceTypeEnum.SMALL_BAG_COST_ALLOCATION.getCode())
                     .le(LogisticsLargeEntity::getReconciliationMonth, LocalDate.parse(smallBagCostAllocationMainEntity.getReportDate(), formatter))
                     .list();
             List<LogisticsLargeEntity> estimatedList = list.stream()
@@ -880,7 +882,8 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
         //只能下推一个实际账单
         LogisticsLargeEntity logisticsLargeActualEntity = logisticsLargeEntities.stream()
                 .filter(req -> ReconciliationBillTypeEnum.ESTIMATED.getCode().equals(req.getReconciliationBillType())
-                        && soOutstockEntity.getCode().equals(req.getOutstockCode()))
+                        && soOutstockEntity.getCode().equals(req.getOutstockCode())
+                        && SourceTypeEnum.TRANSFER_DECLARE_COST_ALLOCATION.getCode().equals(req.getSourceType()))
                 .findFirst().orElse(null);
         if (logisticsLargeActualEntity != null) {
             throw new ServiceException(ApiError.ERROR_EXISTS_LOGISTICS_LARGE);
@@ -888,7 +891,8 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
         //预估账单只能推送一个
         LogisticsLargeEntity logisticsLargeEstimatedEntity = logisticsLargeEntities.stream()
                 .filter(req -> ReconciliationBillTypeEnum.ESTIMATED.getCode().equals(req.getReconciliationBillType())
-                        && soOutstockEntity.getCode().equals(req.getOutstockCode()))
+                        && soOutstockEntity.getCode().equals(req.getOutstockCode())
+                        && SourceTypeEnum.TRANSFER_DECLARE_COST_ALLOCATION.getCode().equals(req.getSourceType()))
                 .findFirst().orElse(null);
         if (logisticsLargeEstimatedEntity != null) {
             throw new ServiceException(ApiError.ERROR_EXISTS_ESTIMATED_LOGISTICS_LARGE);
