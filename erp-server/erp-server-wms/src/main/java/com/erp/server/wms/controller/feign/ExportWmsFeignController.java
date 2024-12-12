@@ -758,4 +758,22 @@ public class ExportWmsFeignController {
         return virtualInventoryDetailService.framePaging(dto);
     }
 
+
+    /**
+     * 导出分货统计
+     * @author will
+     * @date 2024/11/19 17:43
+     * @param dto
+     * @return PagingVO<ExportStatisticsDTO>
+     */
+    @PostMapping("/exportVirtualStatistics")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:virtualWarehouseAllocation:export",
+            serviceClass = VirtualWarehouseAllocationService.class,
+            keyIdName = "id")
+    @WebAdvanceQuery(handler = VirtualWarehouseAllocationQueryHandler.class)
+    public PagingVO<VirtualWarehouseAllocationDTO.ExportStatisticsDTO> exportVirtualStatistics(@RequestBody PagingDTO<VirtualWarehouseAllocationDTO.ExportDTO> dto) {
+        return virtualWarehouseAllocationService.exportVirtualStatistics(dto);
+    }
 }

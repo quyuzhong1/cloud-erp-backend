@@ -4,7 +4,6 @@ package com.erp.server.wms.service.impl;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -23,13 +22,11 @@ import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
-import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.FastDFSClientUtil;
 import com.common.core.utils.MathUtil;
-import com.common.core.utils.date.DateUtil;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.VirtualInventoryDTO;
@@ -48,8 +45,8 @@ import com.erp.model.wms.enums.VirtualWarehouseAllocationStatusEnum;
 import com.erp.model.wms.enums.VirtualWarehouseAllocationSyncStatusEnum;
 import com.erp.model.wms.enums.VirtualWarehouseAllocationTypeEnum;
 import com.erp.model.wms.enums.VwAllocationDirectionEnum;
-import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.constant.WmsConstant;
 import com.erp.server.wms.listener.VirtualWarehouseAllocationCancelExcelListener;
@@ -60,23 +57,22 @@ import com.erp.server.wms.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.FastArrayList;
-import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.support.TransactionSynchronizationAdapter;
-import org.springframework.transaction.support.TransactionSynchronizationManager;
+import org.springframework.util.CollectionUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.io.File;
 import java.io.IOException;
+import java.time.LocalDate;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_VIRTUAL_STATISTICS;
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_VIRTUAL_WAREHOUSE_ALLOCATION;
 import static java.util.stream.Collectors.groupingBy;
 
@@ -282,16 +278,19 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
     private void setInfo(List<VirtualWarehouseAllocationDTO.ListDTO> records) {
         List<String> skuIds = records.stream().map(record -> record.getSkuId()).collect(Collectors.toList());
         List<SkuVO> skuVOList = plmTaskFeign.listSkuProductByIds(skuIds);
-        if (CollectionUtils.isNotEmpty(skuVOList)) {
-            records.forEach(record -> {
-                SkuVO skuVO = skuVOList.stream().filter(item -> Objects.equals(item.getSkuId(), record.getSkuId())).findFirst().orElse(null);
-                if (Objects.nonNull(skuVO)) {
-                    record.setSkuName(skuVO.getSkuName());
-                    record.setImageUrl(skuVO.getSkuImagesUrl());
-                    record.setProductName(skuVO.getSkuName());
-                }
-                record.setSyncStatusName(VirtualWarehouseAllocationSyncStatusEnum.getNameByCode(record.getSyncStatus()));
-            });
+        if (CollectionUtils.isEmpty(skuVOList)) {
+            return;
+        }
+        for (VirtualWarehouseAllocationDTO.ListDTO record : records) {
+            SkuVO skuVO = skuVOList.stream().filter(item -> Objects.equals(item.getSkuId(), record.getSkuId())).findFirst().orElse(null);
+            if (Objects.nonNull(skuVO)) {
+                record.setSkuName(skuVO.getSkuName());
+                record.setImageUrl(skuVO.getSkuImagesUrl());
+                record.setProductName(skuVO.getSkuName());
+            }
+            record.setSyncStatusName(VirtualWarehouseAllocationSyncStatusEnum.getNameByCode(record.getSyncStatus()));
+            //是否统计名称
+            record.setIsStatisticsName(record.getIsStatistics() ? "是" : "否");
         }
     }
 
@@ -313,6 +312,7 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
         //校验明细数据
         checkDetail(allocationEntity);
         allocationEntity.setStatus(code);
+        allocationEntity.setHandleDate(LocalDate.now());
         this.updateById(allocationEntity);
         //变更明细同步状态
         virtualWarehouseAllocationDetailService.updateByMainId(allocationEntity.getId(), VirtualWarehouseAllocationSyncStatusEnum.IN_SYNC.getCode());
@@ -869,7 +869,7 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
     @Override
     public PagingVO<VirtualWarehouseAllocationDTO.ListDTO> exportVirtualWarehouseAllocation(PagingDTO<VirtualWarehouseAllocationDTO.ExportDTO> dto) {
         Page<VirtualWarehouseAllocationDTO.ListDTO> page = baseMapper.listExport(new Page<>(dto.getCurrPage(), dto.getPageSize()),dto.getParams());
-        if (CollectionUtils.isNotEmpty(page.getRecords())) {
+        if (!CollectionUtils.isEmpty(page.getRecords())) {
             //填充数据
             setInfo(page.getRecords());
         }
@@ -942,6 +942,43 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
             resultList.add(resultDTO);
         }
         return resultList;
+    }
+
+    @Override
+    public void exportStatistics(VirtualWarehouseAllocationDTO.ExportDTO dto) {
+        downloadTaskFeign.saveDownloadTask("分货统计导出", EXPORT_WMS_VIRTUAL_STATISTICS.getCode(), dto);
+    }
+
+    @Override
+    public PagingVO<VirtualWarehouseAllocationDTO.ExportStatisticsDTO> exportVirtualStatistics(PagingDTO<VirtualWarehouseAllocationDTO.ExportDTO> dto) {
+        dto.getParams().setPermissionSql(dto.getPermissionSql());
+        Page<VirtualWarehouseAllocationDTO.ExportDTO> query = new Page<>(dto.getCurrPage(), dto.getPageSize());
+        IPage<VirtualWarehouseAllocationDTO.ExportStatisticsDTO> pageData = this.baseMapper.exportVirtualStatistics(query, dto.getParams());
+        if (CollUtil.isEmpty(pageData.getRecords())) {
+            throw new ServiceException("未找到分货统计数据导出");
+        }
+        return new PagingVO(pageData);
+    }
+
+    @Override
+    public void updateIsStatistics(VirtualWarehouseAllocationDTO.UpdateIsStatisticsDTO dto) {
+        VirtualWarehouseAllocationEntity old = Optional.ofNullable(super.getById(dto.getId())).orElseThrow(() ->
+                new ServiceException(ApiError.NOT_EXIST_BILL, "分货单"));
+        VirtualWarehouseAllocationEntity virtualWarehouseAllocationEntity = BeanMapperUtils.map(VirtualWarehouseAllocationEntity.class, dto);
+        //字段值一致无需修改
+        if (dto.getIsStatistics().equals(old.getIsStatistics())) {
+            return;
+        }
+
+        log.info("编辑 开始修改分货单数据，单号：【{}】", old.getCode());
+        boolean save = super.updateById(virtualWarehouseAllocationEntity);
+        if (!save) {
+            throw new ServiceException("分货单保存失败");
+        }
+        // 记录主单操作日志
+        log.info("编辑 开始记录分货单日志数据，单号：【{}】", old.getCode());
+        String msg = CharSequenceUtil.format("是否统计由【{}】变更为【{}】", old.getIsStatistics(),dto.getIsStatistics());
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.VIRTUAL_WAREHOUSE_ALLOCATION.getCode(), old.getId(), "编辑操作");
     }
 
 }
