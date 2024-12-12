@@ -24,7 +24,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -119,6 +118,11 @@ public class WdtOtherInStockServiceImpl implements WdtOtherInStockService {
         if (response.getStatus() != 0) {
             log.error("推送旺店通其他出库单失败:{}", response.getMessage());
             throw new ServiceException(ApiError.ERROR_3000.code, String.format("推送旺店通其他入库单失败: %s", response.getMessage()));
+        }
+        Map<String, Object> data = response.getData();
+        if(ObjectUtils.isNotEmpty(data) && !data.get("status").equals("0")) {
+            log.error("推送旺店通其他出库单异常:{}", data.get("message"));
+            throw new ServiceException(ApiError.ERROR_3000.code, String.format("推送旺店通其他入库单异常: %s", data.get("message")));
         }
     }
 
