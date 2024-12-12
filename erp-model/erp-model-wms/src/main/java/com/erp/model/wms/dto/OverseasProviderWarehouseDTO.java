@@ -1,9 +1,14 @@
 package com.erp.model.wms.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import java.io.Serializable;
+
 import javax.validation.constraints.NotBlank;
+import java.io.Serializable;
+import java.util.List;
 
 /**
  * <p>
@@ -229,4 +234,79 @@ public class OverseasProviderWarehouseDTO implements Serializable {
         private String searchKeyword;
     }
 
+    /**
+     * 配送信息查询
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ShippedDTO {
+        /**
+         * 站点
+         */
+        private String site;
+        /**
+         * 平台产品ID spu
+         */
+        private String platformProductId;
+        /**
+         * 平台SKU
+         */
+        private String platformSku;
+        /**
+         * 仓库编码列表
+         */
+        private List<String> warehouseCodeList;
+    }
+
+    @Data
+    @Builder
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class ShippedViewDTO {
+        /**
+         * 平台SKU
+         */
+        private String platformSku;
+        /**
+         * 三方仓库编码
+         */
+        private String warehouseCode;
+        /**
+         * 发货在途数量
+         */
+        private Integer deliverOnwayQty;
+        /**
+         * 待上架数量
+         */
+        private Integer pendingQty;
+        /**
+         * 可售数量
+         */
+        private Integer sellableQty;
+        /**
+         * 不可售数量
+         */
+        private Integer unsellableQty;
+        /**
+         * 待出库数量
+         */
+        private Integer reservedQty;
+        /**
+         * 尾程在途
+         */
+        private Integer onwayQty;
+        /**
+         * 缺货数量
+         */
+        private Integer lackQty;
+        /**
+         * 冻结数量
+         */
+        private Integer frozenQty;
+        /**
+         * 历史出库数量
+         */
+        private Integer shippedQty;
+
+    }
 }

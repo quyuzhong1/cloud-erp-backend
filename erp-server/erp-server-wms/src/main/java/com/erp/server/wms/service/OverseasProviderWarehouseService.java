@@ -103,4 +103,11 @@ public interface OverseasProviderWarehouseService extends SuperService<OverseasP
      * @param compareCodeSplicingValueSql sql
      */
     List<String> listProviderWarehouseBySql(String compareCodeSplicingValueSql);
+
+    /**
+     * 独立站配送信息查询
+     * @param shippedDTO
+     * @return
+     */
+    List<OverseasProviderWarehouseDTO.ShippedViewDTO> getShippedInfo(OverseasProviderWarehouseDTO.ShippedDTO shippedDTO);
 }

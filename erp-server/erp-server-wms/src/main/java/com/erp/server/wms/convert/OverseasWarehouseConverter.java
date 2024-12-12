@@ -3,23 +3,18 @@ package com.erp.server.wms.convert;
 import com.common.business.dto.PlatformInventoryDTO;
 import com.common.business.dto.PlatformTransferWarehouseDTO;
 import com.common.business.dto.PlatformWarehouseDTO;
-import com.common.business.utils.ApplicationContextUtils;
-import com.common.business.utils.MD5Util;
-import com.erp.model.wms.dto.*;
+import com.erp.model.wms.dto.OverseasProviderWarehouseDTO;
 import com.erp.model.wms.entity.OverseasInventoryEntity;
 import com.erp.model.wms.entity.OverseasProviderWarehouseEntity;
 import com.erp.model.wms.entity.OverseasTransferWarehouseEntity;
-import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.convert.tool.TypeConversionWorker;
-import com.sdk.wms.goodcang.dto.response.GoodCangSkuResp;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.Mappings;
 import org.mapstruct.factory.Mappers;
 import org.springframework.stereotype.Component;
-import org.springframework.validation.beanvalidation.SpringValidatorAdapter;
 
-import javax.annotation.Resource;
+import java.util.List;
 
 /**
  * 海外仓
@@ -70,4 +65,7 @@ public interface OverseasWarehouseConverter {
             @Mapping(target = "downloadTime", source = "downloadTime"),
     })
     OverseasInventoryEntity inventoryDtoToDb(PlatformInventoryDTO dto);
+
+    OverseasProviderWarehouseDTO.ShippedViewDTO inventoryToShipmentDTO(OverseasInventoryEntity overseasInventory);
+    List<OverseasProviderWarehouseDTO.ShippedViewDTO> inventoryToShipmentDTO(List<OverseasInventoryEntity> overseasInventoryEntities);
 }

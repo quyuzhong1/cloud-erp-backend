@@ -337,4 +337,9 @@ public class OverseasInventoryServiceImpl extends SuperServiceImpl<OverseasInven
         return new PagingVO<>(page);
     }
 
+    @Override
+    public List<OverseasInventoryEntity> listBySkuAndWarehouseCode(OverseasInventoryDTO.QueryDTO queryDTO) {
+        return baseMapper.listBySkuAndWarehouseCode(queryDTO);
+    }
+
 }
