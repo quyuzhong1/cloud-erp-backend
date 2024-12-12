@@ -70,18 +70,17 @@ public interface LogisticsLargeService extends SuperService<LogisticsLargeEntity
 
     /**
      * 头程费用分摊下推物流大表
-     * @param skuCostAllocationDetailEntities
-     * @param deliveryEntities
-     * @param firstMileDeliveryDetailEntities
      * @param entity
      * @param skuCostAllocationEntityList
+     * @param firstMileDeliveryEntity
+     * @param firstMileDeliveryDetailEntities
      * @return
      */
-    BatchResultDTO generateFirstMileLogistics(List<FirstMileSkuCostAllocationDetailEntity> skuCostAllocationDetailEntities,
-                                                    List<FirstMileDeliveryEntity> deliveryEntities,
-                                                    List<FirstMileDeliveryDetailEntity> firstMileDeliveryDetailEntities,
-                                                    FirstMileCostAllocationEntity entity,
-                                                    List<FirstMileSkuCostAllocationEntity> skuCostAllocationEntityList);
+    BatchResultDTO generateFirstMileLogistics(FirstMileCostAllocationEntity entity,
+                                              List<FirstMileSkuCostAllocationEntity> skuCostAllocationEntityList,
+                                              List<FirstMileSkuCostAllocationDetailEntity> skuCostAllocationDetailEntities,
+                                              FirstMileDeliveryEntity firstMileDeliveryEntity,
+                                              List<FirstMileDeliveryDetailEntity> firstMileDeliveryDetailEntities);
 
     /**
      * 根据来源id查询物流大表

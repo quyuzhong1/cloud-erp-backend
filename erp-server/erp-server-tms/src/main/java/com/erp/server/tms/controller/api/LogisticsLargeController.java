@@ -1,11 +1,13 @@
 package com.erp.server.tms.controller.api;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.enums.ConfirmStatusEnum;
 import com.common.business.vo.PagingVO;
 import com.common.business.wrapper.FeignQuery;
+import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.plm.dto.SearchPagingDTO;
@@ -40,6 +42,7 @@ import com.common.business.enums.DataAttributeEnum;
 import com.erp.model.tms.dto.LogisticsLargeDTO;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -231,12 +234,58 @@ public class LogisticsLargeController extends BaseController {
 
         //按SKU的维度添加物流大表
         for (FirstMileCostAllocationEntity entity : costAllocationEntityList) {
-
             List<FirstMileSkuCostAllocationEntity> skuCostAllocationEntityList = skuCostAllocationEntityAllList.stream().filter(req -> req.getMainId().equals(entity.getId())).collect(Collectors.toList());
+
+            if (ConfirmStatusEnum.WAIT_CONFIRM.getCode().equals(entity.getStatus())) {
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getBusinessCode(), "只有已确认的单据可以生成物流大表数据"));
+
+            }
+            FirstMileDeliveryEntity deliveryEntity = deliveryEntities.stream().filter(req -> req.getId().equals(entity.getSourceId())).findFirst().orElse(null);
+            if (ObjectUtil.isEmpty(deliveryEntity)) {
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getBusinessCode(), "未找到关联的头程发货单信息"));
+
+            }
+            List<FirstMileDeliveryDetailEntity> deliveryDetailEntities = firstMileDeliveryDetailEntities.stream().filter(req -> req.getMainId().equals(deliveryEntity.getId())).collect(Collectors.toList());
+            List<LogisticsLargeEntity> logisticsLargeEntities = logisticsLargeService.listByIdOutstockCode(Arrays.asList(deliveryEntity.getCode()));
+
+            //已确认才能下推
+            if (!ConfirmStatusEnum.CONFIRM.getCode().equals(entity.getStatus())) {
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getBusinessCode(), ApiError.ERROR_SMALL_BAG_NOT_CONFIRMED.msg));
+                continue;
+            }
+
+            //只能下推一个实际账单
+            LogisticsLargeEntity logisticsLargeActualEntity = logisticsLargeEntities.stream()
+                    .filter(req -> ReconciliationBillTypeEnum.ACTUAL.getCode().equals(req.getReconciliationBillType())
+                            && CharSequenceUtil.isBlank(entity.getEstimatedBillId()))
+                    .findFirst().orElse(null);
+            if (logisticsLargeActualEntity != null) {
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getBusinessCode(), ApiError.ERROR_EXISTS_LOGISTICS_LARGE.msg));
+                continue;
+            }
+            //预估账单只能推送一个
+            LogisticsLargeEntity logisticsLargeEstimatedEntity = logisticsLargeEntities.stream()
+                    .filter(req -> ReconciliationBillTypeEnum.ESTIMATED.getCode().equals(req.getReconciliationBillType())
+                            && CharSequenceUtil.isNotBlank(entity.getEstimatedBillId()))
+                    .findFirst().orElse(null);
+            if (logisticsLargeEstimatedEntity != null) {
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getBusinessCode(), ApiError.ERROR_EXISTS_ESTIMATED_LOGISTICS_LARGE.msg));
+                continue;
+            }
+
+            //已经有实际账单不能再下推预估账单
+            LogisticsLargeEntity logisticsLargeEntity = logisticsLargeEntities.stream()
+                    .filter(req -> ReconciliationBillTypeEnum.ACTUAL.getCode().equals(req.getReconciliationBillType())
+                            && CharSequenceUtil.isBlank(entity.getEstimatedBillId()))
+                    .findFirst().orElse(null);
+            if (logisticsLargeEntity != null) {
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getBusinessCode(), ApiError.ERROR_EXISTS_ACTUAL_NOT_ESTIMATED.msg));
+                continue;
+            }
 
             BatchResultDTO result = null;
             try {
-                result = logisticsLargeService.generateFirstMileLogistics(skuCostAllocationDetailEntities, deliveryEntities, firstMileDeliveryDetailEntities, entity, skuCostAllocationEntityList);
+                result = logisticsLargeService.generateFirstMileLogistics(entity, skuCostAllocationEntityList, skuCostAllocationDetailEntities, deliveryEntity, deliveryDetailEntities);
             } catch (Exception e) {
                 log.error("头程费用分摊生成物流大表失败{}", e);
                 result = BatchResultDTO.fail(entity.getId(), entity.getBusinessCode(), e.getMessage());

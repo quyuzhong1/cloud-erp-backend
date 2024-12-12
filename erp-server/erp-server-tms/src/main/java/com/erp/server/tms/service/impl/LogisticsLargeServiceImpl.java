@@ -142,6 +142,9 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
     @Resource
     private ReportPeriodMonthService reportPeriodMonthService;
 
+    @Resource
+    private FirstMileEstimatedBillService firstMileEstimatedBillService;
+
 
     @Override
     public PagingVO<LogisticsLargeDTO.PagingViewDTO> paging(PagingDTO<LogisticsLargeDTO.PagingParamDTO> dto) {
@@ -246,38 +249,7 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
 
 
     private void firstMileLogisticsTableHandler(FirstMileCostAllocationEntity entity, FirstMileSkuCostAllocationEntity firstMileSkuCostAllocationEntity, List<FirstMileSkuCostAllocationDetailEntity> skuCostDetailEntityList, FirstMileDeliveryEntity deliveryEntity, List<FirstMileDeliveryDetailEntity> deliveryDetailEntities) {
-        List<LogisticsLargeEntity> logisticsLargeEntities = this.listByIdOutstockCode(Arrays.asList(deliveryEntity.getCode()));
 
-        //已确认才能下推
-        if (!ConfirmStatusEnum.CONFIRM.getCode().equals(entity.getStatus())) {
-            throw new ServiceException(ApiError.ERROR_SMALL_BAG_NOT_CONFIRMED);
-        }
-
-        //只能下推一个实际账单
-        LogisticsLargeEntity logisticsLargeActualEntity = logisticsLargeEntities.stream()
-                .filter(req -> ReconciliationBillTypeEnum.ACTUAL.getCode().equals(req.getReconciliationBillType())
-                        && CharSequenceUtil.isBlank(entity.getEstimatedBillId()))
-                .findFirst().orElse(null);
-        if (logisticsLargeActualEntity != null) {
-            throw new ServiceException(ApiError.ERROR_EXISTS_LOGISTICS_LARGE);
-        }
-        //预估账单只能推送一个
-        LogisticsLargeEntity logisticsLargeEstimatedEntity = logisticsLargeEntities.stream()
-                .filter(req -> ReconciliationBillTypeEnum.ESTIMATED.getCode().equals(req.getReconciliationBillType())
-                        && CharSequenceUtil.isNotBlank(entity.getEstimatedBillId()))
-                .findFirst().orElse(null);
-        if (logisticsLargeEstimatedEntity != null) {
-            throw new ServiceException(ApiError.ERROR_EXISTS_ESTIMATED_LOGISTICS_LARGE);
-        }
-
-        //已经有实际账单不能再下推预估账单
-        LogisticsLargeEntity logisticsLargeEntity = logisticsLargeEntities.stream()
-                .filter(req -> ReconciliationBillTypeEnum.ACTUAL.getCode().equals(req.getReconciliationBillType())
-                        && CharSequenceUtil.isBlank(entity.getEstimatedBillId()))
-                .findFirst().orElse(null);
-        if (logisticsLargeEntity != null) {
-            throw new ServiceException(ApiError.ERROR_EXISTS_ACTUAL_NOT_ESTIMATED);
-        }
 
         //查询物流单
         LogisticsBillEntity logisticsBillEntity = logisticsBillService.getById(entity.getLogisticsBillId());
@@ -295,11 +267,6 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
         //查询物流详情
         List<LogisticsBillDetailEntity> detailEntityList = logisticsBillDetailService.listByMainIds(Arrays.asList(logisticsBillEntity.getId()));
 
-        //头程对账单主信息
-        TmsFirstMileReconciliationEntity reconciliationEntity = tmsFirstMileReconciliationService.getById(entity.getReconciliationId());
-        if (ObjectUtil.isEmpty(reconciliationEntity)) {
-            throw new ServiceException("头程对账单主信息未找到");
-        }
         //查询仓库
         List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listWarehouseByIds(Arrays.asList(deliveryEntity.getDeliveryWarehouseId(), deliveryEntity.getDestWarehouseId()));
         ReportPeriodMonthEntity monthEntity = reportPeriodMonthService.getById(entity.getReportPeriodId());
@@ -313,6 +280,12 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
         addDTO.setOutstockTime(deliveryEntity.getApproveTime());
 
         if (ReconciliationBillTypeEnum.ACTUAL.getCode().equals(firstMileSkuCostAllocationEntity.getBillSourceType())) {
+            //头程对账单主信息
+            TmsFirstMileReconciliationEntity reconciliationEntity = tmsFirstMileReconciliationService.getById(entity.getReconciliationId());
+            if (ObjectUtil.isEmpty(reconciliationEntity)) {
+                throw new ServiceException("头程对账单主信息未找到");
+            }
+
             //实际账单
             addDTO.setReconciliationBillType(ReconciliationBillTypeEnum.ACTUAL.getCode());
 
@@ -323,9 +296,13 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
             addDTO.setOtherTaxPayStatus(reconciliationEntity.getPayStatus());
             addDTO.setDestMiscFeePayStatus(reconciliationEntity.getPayStatus());
 
+            addDTO.setDestMiscFeePayTime(reconciliationEntity.getPayTime());
+            addDTO.setDestTaxPayTime(reconciliationEntity.getPayTime());
+            addDTO.setOtherTaxPayTime(reconciliationEntity.getPayTime());
             //查询是否有预估账单
-            String outstockCode = logisticsLargeEntities.get(0).getOutstockCode();
-            String skuId = logisticsLargeEntities.get(0).getSkuId();
+            String outstockCode = deliveryEntity.getCode();
+            String skuId = firstMileSkuCostAllocationEntity.getSkuId();
+
             List<LogisticsLargeEntity> list = this.lambdaQuery()
                     .eq(LogisticsLargeEntity::getOutstockCode, outstockCode)
                     .eq(LogisticsLargeEntity::getSkuId, skuId)
@@ -400,7 +377,7 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
         addDTO.setBillTotalAmount(billTotalAmount);
 
         //头程运费
-        addDTO.setFreightCurrency(reconciliationEntity.getCurrency());
+        addDTO.setFreightCurrency(logisticsBillCostEntity.getCurrency());
         FirstMileSkuCostAllocationDetailEntity detailEntity = skuCostDetailEntityList.stream()
                 .filter(req -> AllocationFeeTypeEnum.SHIPPING_COST.getCode().equals(req.getFeeType()))
                 .findFirst().orElse(null);
@@ -424,12 +401,11 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
             addDTO.setDestMiscFeeFactor(otherCostDetailEntity.getAllocatedAmount().divide(otherCostDetailEntity.getAmount(), 4, RoundingMode.DOWN));
         }
         // TODO 暂时取物流单的 后期取大类的
-        addDTO.setMiscFeeCurrency(reconciliationEntity.getCurrency());
+        addDTO.setMiscFeeCurrency(logisticsBillCostEntity.getCurrency());
         if (ObjectUtil.isNotEmpty(otherCostDetailEntity)) {
             addDTO.setEstimatedDestMiscFee(otherCostDetailEntity.getAllocatedAmount().multiply(rate));
             addDTO.setActualDestMiscFee(otherCostDetailEntity.getAllocatedAmount().multiply(rate));
         }
-        addDTO.setDestMiscFeePayTime(reconciliationEntity.getPayTime());
 
         //关税
         FirstMileSkuCostAllocationDetailEntity declareCostDetailEntity = skuCostDetailEntityList.stream()
@@ -439,12 +415,11 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
             addDTO.setDutyCalculationFactor(declareCostDetailEntity.getAllocatedAmount().divide(declareCostDetailEntity.getAmount(), 4, RoundingMode.DOWN));
         }
         // TODO 暂时取物流单的 后期取大类的
-        addDTO.setDutyCurrency(reconciliationEntity.getCurrency());
+        addDTO.setDutyCurrency(logisticsBillCostEntity.getCurrency());
         if (ObjectUtil.isNotEmpty(declareCostDetailEntity)) {
             addDTO.setEstimatedDutyAmount(declareCostDetailEntity.getAllocatedAmount().multiply(rate));
             addDTO.setActualDutyAmount(declareCostDetailEntity.getAllocatedAmount().multiply(rate));
         }
-        addDTO.setDestTaxPayTime(reconciliationEntity.getPayTime());
 
         //其他税金
         FirstMileSkuCostAllocationDetailEntity otherTaxFeeDetailEntity = skuCostDetailEntityList.stream()
@@ -455,12 +430,11 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
         }
 
         // TODO 暂时取物流单的 后期取大类的
-        addDTO.setOtherTaxCurrency(reconciliationEntity.getCurrency());
+        addDTO.setOtherTaxCurrency(logisticsBillCostEntity.getCurrency());
         if (ObjectUtil.isNotEmpty(declareCostDetailEntity)) {
             addDTO.setEstimatedTaxOtherTax(declareCostDetailEntity.getAllocatedAmount().multiply(rate));
             addDTO.setActualTaxOtherTax(declareCostDetailEntity.getAllocatedAmount().multiply(rate));
         }
-        addDTO.setOtherTaxPayTime(reconciliationEntity.getPayTime());
 
         //添加
         this.add(addDTO);
@@ -468,11 +442,14 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public BatchResultDTO generateFirstMileLogistics(List<FirstMileSkuCostAllocationDetailEntity> skuCostAllocationDetailEntities,
-                                                     List<FirstMileDeliveryEntity> deliveryEntities,
-                                                     List<FirstMileDeliveryDetailEntity> firstMileDeliveryDetailEntities,
-                                                     FirstMileCostAllocationEntity entity,
-                                                     List<FirstMileSkuCostAllocationEntity> skuCostAllocationEntityList) {
+    public BatchResultDTO generateFirstMileLogistics(FirstMileCostAllocationEntity entity,
+                                                     List<FirstMileSkuCostAllocationEntity> skuCostAllocationEntityList,
+                                                     List<FirstMileSkuCostAllocationDetailEntity> skuCostAllocationDetailEntities,
+                                                     FirstMileDeliveryEntity firstMileDeliveryEntity,
+                                                     List<FirstMileDeliveryDetailEntity> firstMileDeliveryDetailEntities) {
+
+
+
 
         for (FirstMileSkuCostAllocationEntity firstMileSkuCostAllocationEntity : skuCostAllocationEntityList) {
 
@@ -482,18 +459,10 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
             if (ObjectUtil.isEmpty(detailEntityList)) {
                 throw new ServiceException("头程费用SKU分摊明细记录不存在");
             }
-            if (ConfirmStatusEnum.WAIT_CONFIRM.getCode().equals(entity.getStatus())) {
-                throw new ServiceException("只有已确认的单据可以生成物流大表数据");
-            }
-            FirstMileDeliveryEntity deliveryEntity = deliveryEntities.stream().filter(req -> req.getId().equals(entity.getSourceId())).findFirst().orElse(null);
-            if (ObjectUtil.isEmpty(deliveryEntity)) {
-                throw new ServiceException("未找到关联的头程发货单信息");
-            }
-            List<FirstMileDeliveryDetailEntity> deliveryDetailEntities = firstMileDeliveryDetailEntities.stream().filter(req -> req.getMainId().equals(deliveryEntity.getId())).collect(Collectors.toList());
 
-            this.firstMileLogisticsTableHandler(entity, firstMileSkuCostAllocationEntity, detailEntityList, deliveryEntity, deliveryDetailEntities);
+            this.firstMileLogisticsTableHandler(entity, firstMileSkuCostAllocationEntity, detailEntityList, firstMileDeliveryEntity, firstMileDeliveryDetailEntities);
         }
-        return BatchResultDTO.success(entity.getId(), entity.getBusinessCode(), OperationTypeEnum.UPDATE_STATUS);
+        return BatchResultDTO.success(entity.getId(), entity.getBusinessCode(), OperationTypeEnum.ADD);
     }
 
     @Override
