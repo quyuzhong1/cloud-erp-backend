@@ -111,7 +111,6 @@ public class CfgSettingVirtualValueDTO implements Serializable {
         /**
          * 单据状态集合
          */
-        @NotEmpty(message = "单据状态不能为空")
         private List<String> statusList;
 
         /**
