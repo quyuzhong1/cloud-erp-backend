@@ -16,15 +16,18 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.dmp.dto.ThirdMappingDTO;
 import com.erp.model.dmp.dto.ThirdMappingDTO.ThirdAddDTO;
+import com.erp.model.dmp.entity.ThirdLogisticsEntity;
 import com.erp.model.dmp.entity.ThirdMappingEntity;
 import com.erp.model.dmp.entity.ThirdShopEntity;
 import com.erp.model.dmp.entity.ThirdWarehouseEntity;
 import com.erp.model.dmp.enums.ThirdSysTypeEnum;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.tms.entity.LogisticsChannelEntity;
 import com.erp.model.wms.dto.OverseasProviderDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
+import com.erp.rpc.tms.feign.LogisticsFeign;
 import com.erp.rpc.wms.feign.OverseasProviderFeign;
 import com.erp.rpc.wms.feign.WmsWarehouseFeign;
 import com.erp.server.dmp.mapper.ThirdMappingMapper;
@@ -66,8 +69,13 @@ public class ThirdMappingServiceImpl extends SuperServiceImpl<ThirdMappingMapper
     private ThirdShopService thirdShopService;
     @Resource
     private ThirdWarehouseService thirdWarehouseService;
+    @Resource
+    private ThirdLogisticsService thirdLogisticsService;
 //    @Resource
 //    private ThirdMappingService thirdMappingService;
+
+    @Resource
+    private LogisticsFeign logisticsFeign;
 
     @Resource
     private OverseasProviderFeign overseasProviderFeign;
@@ -740,6 +748,13 @@ public class ThirdMappingServiceImpl extends SuperServiceImpl<ThirdMappingMapper
             case VIRTUAL_WAREHOUSE:
                 sysName = addDTO.getSysName();
                 break;
+            case LOGISTICS:
+                LogisticsChannelEntity logisticsChannelEntity = logisticsFeign.getChannelById(addDTO.getSysId());
+                if (Objects.isNull(logisticsChannelEntity)) {
+                    throw new ServiceException("系统渠道为空");
+                }
+                sysName = logisticsChannelEntity.getName();
+                break;
             default:
                 throw new ServiceException(ApiError.ERROR_400);
         }
@@ -848,6 +863,13 @@ public class ThirdMappingServiceImpl extends SuperServiceImpl<ThirdMappingMapper
                     thirdName = thirdWarehouseEntity.getName();
                     thirdAddDTO.setThirdInfoId(thirdWarehouseEntity.getId());
                     thirdAddDTO.setThirdCode(thirdWarehouseEntity.getCode());
+                    break;
+                case LOGISTICS:
+                    ThirdLogisticsEntity thirdLogisticsEntity = Optional.ofNullable(thirdLogisticsService.getById(thirdAddDTO.getThirdId()))
+                            .orElseThrow(() -> new ServiceException(ApiError.ERROR_THIRD_LOGISTICS_NOTFOUND));
+                    thirdName = thirdLogisticsEntity.getChannelName();
+                    thirdAddDTO.setThirdInfoId(thirdLogisticsEntity.getId());
+                    thirdAddDTO.setThirdCode(thirdLogisticsEntity.getChannelName());
                     break;
                 default:
                     throw new ServiceException(ApiError.ERROR_400);
