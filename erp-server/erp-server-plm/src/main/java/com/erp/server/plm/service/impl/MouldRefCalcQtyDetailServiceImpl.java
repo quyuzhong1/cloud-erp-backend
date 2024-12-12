@@ -22,6 +22,11 @@ public class MouldRefCalcQtyDetailServiceImpl extends SuperServiceImpl<MouldRefC
 
     @Override
     public List<MouldRefCalcQtyDetailEntity> listByMainId(String id) {
-        return list(Wrappers.lambdaQuery());
+        return list(Wrappers.<MouldRefCalcQtyDetailEntity>lambdaQuery().eq(MouldRefCalcQtyDetailEntity::getMainId, id));
+    }
+
+    @Override
+    public List<MouldRefCalcQtyDetailEntity> listByMainIds(List<String> mouldRefMouldRefIds) {
+        return list(Wrappers.<MouldRefCalcQtyDetailEntity>lambdaQuery().in(MouldRefCalcQtyDetailEntity::getMainId, mouldRefMouldRefIds));
     }
 }

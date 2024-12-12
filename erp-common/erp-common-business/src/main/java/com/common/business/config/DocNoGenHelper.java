@@ -103,7 +103,7 @@ public class DocNoGenHelper implements InitializingBean {
         // 拼接结果
         String currentDateStr = currentDate.getYear() % 100 + Integer.toHexString(currentDate.getMonthValue()).toUpperCase();
         //注意，不保证绝对有序，有可能中间某个单生成了单号，但是后面数据库报错不会回收
-        String docNoKey = BusinessNoTypeEnum.REDIS_GEN_KEY + ":" + BusinessNoTypeEnum.CODE_MOULD + ":" + code + ":"+ currentDateStr;
+        String docNoKey = "generate_mould_code:" + BusinessNoTypeEnum.CODE_MOULD + ":" + code + ":"+ currentDateStr;
         Long currentIndex = redisTemplate.execute(redisScript, stringRedisSerializer, stringRedisSerializer, Lists.newArrayList(docNoKey),String.valueOf(1),String.valueOf(ONE_DAY_CACHE_TIME));
         int fillZeroDigit = 2;
         // 单据前缀+6位日期+5位顺序位
@@ -118,7 +118,7 @@ public class DocNoGenHelper implements InitializingBean {
     public String generateMouldDetailCode(String code) {
 
         //注意，不保证绝对有序，有可能中间某个单生成了单号，但是后面数据库报错不会回收
-        String docNoKey = BusinessNoTypeEnum.REDIS_GEN_KEY + ":" + code;
+        String docNoKey = "generate_mould_detail_code:" + code;
         Long currentIndex = redisTemplate.execute(redisScript, stringRedisSerializer, stringRedisSerializer, Lists.newArrayList(docNoKey), String.valueOf(1), String.valueOf(ONE_DAY_CACHE_TIME));
         int fillZeroDigit = 2;
         // 单据前缀+6位日期+5位顺序位

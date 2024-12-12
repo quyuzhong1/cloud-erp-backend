@@ -23,4 +23,8 @@ public interface MouldRefCalcQtyService extends SuperService<MouldRefCalcQtyEnti
 
 
     MouldRefCalcQtyEntity getByDetailId(String mouldDetailId);
+
+
+    void calcRefundQty();
+
 }
