@@ -59,14 +59,16 @@
 			cast(j.actual_billing_weight AS NUMERIC(16, 4)) billingWeightLogistics,
 			cast(g.sku_weight AS NUMERIC(16, 4)) sku_weight,
 			h.fee_type,
-			cast(h.bill_amount_exchange AS NUMERIC(16, 4)) bill_amount,
-            cast(h.allocated_amount_exchange AS NUMERIC(16, 2)) allocated_amount,
-            cast(h.product_allocated_amount_exchange AS NUMERIC(16, 6)) product_allocated_amount,
+			cast(h.bill_amount_exchange AS NUMERIC(16, 4)) billAmount,
+            cast(h.allocated_amount_exchange AS NUMERIC(16, 2)) allocatedAmount,
+            cast(h.product_allocated_amount_exchange AS NUMERIC(16, 6)) productAllocatedAmount,
 			h.fee_allocation_type,
+			h.fee_allocation_type feeAllocationTypeName,
 			h.weight_allocation_type,
-			t.update_user_name,
-			t.update_time,
-			t.create_time,
+			h.weight_allocation_type weightAllocationTypeName,
+			t.update_user_name updateUserName,
+			t.update_time updateTime,
+			t.create_time createTime,
 			h.allocated_currency currency
         from transfer_declare_cost_allocation_main t
         left join transfer_declare_cost_allocation g on t.id = g.main_id and g.is_deleted = false
