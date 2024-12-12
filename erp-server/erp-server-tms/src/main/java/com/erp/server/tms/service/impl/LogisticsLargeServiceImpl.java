@@ -237,6 +237,12 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
 
         this.lambdaUpdate().eq(LogisticsLargeEntity::getId, id).remove();
 
+        if (SourceTypeEnum.TRANSFER_DECLARE_COST_ALLOCATION.getCode().equals(entity.getSourceType())) {
+            transferDeclareCostAllocationMainService.updateBigTableStatus(entity.getSourceId(), TransferDeclareCostAllocationMainBigTableStatusEnum.TODO.getCode());
+        } else if (SourceTypeEnum.SMALL_BAG_COST_ALLOCATION.getCode().equals(entity.getSourceType())) {
+            smallBagCostAllocationMainService.updateBigTableStatus(entity.getSourceId(), SmallBagCostAllocationMainBigTableStatusEnum.TODO.getCode());
+        }
+
         return BatchResultDTO.success(entity.getId(), entity.getOutstockCode(), OperationTypeEnum.DELETE);
     }
 
@@ -756,6 +762,8 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
     @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO generateSmallBagCostAllocationTable(SmallBagCostAllocationMainEntity mainEntity, List<SmallBagCostAllocationEntity> costAllocationEntityList, List<SmallBagCostAllocationDetailEntity> costAllocationDetailEntityList, SoOutstockEntity soOutstockEntity, List<SoOutstockDetailEntity> soOutstockDetailEntities, List<SoB2cEntity> soB2cEntities) {
 
+
+        mainEntity = smallBagCostAllocationMainService.getById(mainEntity.getId());
         //已确认才能下推
         if (!SmallBagCostAllocationReportStatusEnum.CONFIRMED.getCode().equals(mainEntity.getReportStatus())) {
             throw new ServiceException(ApiError.ERROR_SMALL_BAG_NOT_CONFIRMED);
@@ -844,7 +852,7 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
         mainEntity = transferDeclareCostAllocationMainService.getById(mainEntity.getId());
         //已确认才能下推
         if (!SmallBagCostAllocationReportStatusEnum.CONFIRMED.getCode().equals(mainEntity.getReportStatus())) {
-            throw new ServiceException(ApiError.ERROR_SMALL_BAG_NOT_CONFIRMED);
+            throw new ServiceException("中转费用分摊未确认，不能生成物流大表");
         }
         //已生成物流大表不能再次生成
         if (SmallBagCostAllocationBigTableStatusEnum.DONE.getCode().equals(mainEntity.getBigTableStatus())) {
@@ -852,11 +860,6 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
         }
 
         List<LogisticsLargeEntity> logisticsLargeEntities = this.listByIdSourceId(Arrays.asList(mainEntity.getId()));
-
-        //已确认才能下推
-        if (!SmallBagCostAllocationReportStatusEnum.CONFIRMED.getCode().equals(mainEntity.getReportStatus())) {
-            throw new ServiceException(ApiError.ERROR_SMALL_BAG_NOT_CONFIRMED);
-        }
 
         //只能下推一个实际账单
         LogisticsLargeEntity logisticsLargeActualEntity = logisticsLargeEntities.stream()
