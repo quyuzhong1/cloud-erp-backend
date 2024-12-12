@@ -7,9 +7,6 @@ import cn.hutool.json.JSONUtil;
 import com.common.message.constant.RocketMqConsumerGroup;
 import com.common.message.constant.RocketMqTopic;
 import com.erp.model.wms.entity.VirtualTransFlowEntity;
-import com.erp.rpc.dmp.feign.DmpMongoDbFeign;
-import com.erp.rpc.dmp.feign.DmpTaskFeign;
-import com.erp.server.wms.rocketmq.sync.SyncSoReturnService;
 import com.erp.server.wms.service.VirtualTransFlowDetailService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
@@ -27,10 +24,6 @@ public class WmsVirtualDetailMsgConsumer implements RocketMQListener<Object> {
 
     @Resource
     private VirtualTransFlowDetailService virtualTransFlowDetailService;
-    @Resource
-    private DmpMongoDbFeign dmpMongoDbFeign;
-    @Resource
-    private DmpTaskFeign dmpTaskFeign;
 
     @Override
     public void onMessage(Object ext) {
