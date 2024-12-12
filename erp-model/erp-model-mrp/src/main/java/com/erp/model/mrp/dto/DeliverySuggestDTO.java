@@ -1,5 +1,6 @@
 package com.erp.model.mrp.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import lombok.AllArgsConstructor;
@@ -406,6 +407,11 @@ public class DeliverySuggestDTO implements Serializable {
         */
         @NotBlank(message = "主键id不能为空")
         private String id;
+
+        /**
+         * 建议发货量
+         */
+        private Integer suggestDeliveryQty;
 
         /**
          * 计划发货量（计划修正值）
