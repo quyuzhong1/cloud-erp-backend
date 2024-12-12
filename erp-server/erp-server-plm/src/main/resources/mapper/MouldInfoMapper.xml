@@ -42,14 +42,15 @@
                md.enable_date,
                md.supplier_id,
                md.remark,
-               md.create_user_name,
+               mi.create_user_name,
+               mi.create_time,
                md.update_user_name,
                md.update_time
         from mould_info mi
                  left join mould_detail md on mi.id = md.main_id and md.is_deleted = false
         where ${params.sqlMap.default}
           and mi.is_deleted = false
-        order by md.create_time desc, md.id desc
+        order by mi.create_time desc, md.id desc
     </select>
     <select id="orderTracking" resultType="com.erp.model.plm.dto.MouldInfoDTO$OrderTrackingViewDTO">
         select mi.id,
@@ -148,7 +149,7 @@
                  left join mould_store_location msl on md.id = msl.mould_detail_id and msl.is_deleted = false
         where ${params.sqlMap.default}
           and mi.is_deleted = false
-        order by md.create_time desc, md.id desc
+        order by mi.create_time desc, md.id desc
     </select>
 
     <select id="exportOrderTracking" resultType="com.erp.model.plm.dto.MouldInfoDTO$OrderTrackingExportDTO">

@@ -429,9 +429,8 @@ public class MouldInfoServiceImpl extends SuperServiceImpl<MouldInfoMapper, Moul
     @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO updateStoreLocation(String id, MouldInfoDTO.StoreLocationDTO dto) {
         MouldDetailEntity detail = mouldDetailService.getByIdOpt(id).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "模具明细"));
-        MouldInfoEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到模具数据"));
-        MouldStoreLocationEntity old = mouldStoreLocationService.getByMouldDetailId(id);
-
+        MouldInfoEntity entity = super.getByIdOpt(detail.getMainId()).orElseThrow(() -> new ServiceException("未找到模具数据"));
+        MouldStoreLocationEntity old = Optional.ofNullable(mouldStoreLocationService.getByMouldDetailId(id)).orElse(new MouldStoreLocationEntity());
         MouldStoreLocationEntity storeLocation = new MouldStoreLocationEntity();
         storeLocation.setId(old.getId());
         storeLocation.setMouldDetailId(id);
