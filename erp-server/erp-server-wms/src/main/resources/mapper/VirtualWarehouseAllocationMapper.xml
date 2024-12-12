@@ -218,16 +218,14 @@
             main_id,
             sku_id,
             warehouse_id,
-            to_virtual_warehouse_id,
             from_virtual_warehouse_id
             FROM virtual_warehouse_allocation_detail
             WHERE is_deleted = FALSE
-            GROUP BY main_id, sku_id, warehouse_id, to_virtual_warehouse_id, from_virtual_warehouse_id
+            GROUP BY main_id, sku_id, warehouse_id, from_virtual_warehouse_id
         ) vim
         ON vmad.main_id = vim.main_id
         AND vmad.sku_id = vim.sku_id
         AND vmad.warehouse_id = vim.warehouse_id
-        AND vmad.to_virtual_warehouse_id = vim.to_virtual_warehouse_id
         AND vmad.from_virtual_warehouse_id = vim.from_virtual_warehouse_id
         where  vmad.is_deleted = false
         <if test="params.permissionSql!=null and params.permissionSql!=''">
