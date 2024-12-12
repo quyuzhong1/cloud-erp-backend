@@ -121,6 +121,8 @@ public class PurchaseSuggestServiceImpl extends SuperServiceImpl<PurchaseSuggest
         PurchaseSuggestEntity purchaseSuggestEntity = new PurchaseSuggestEntity();
         BeanMapperUtils.copy(addDTO, purchaseSuggestEntity);
 
+        //计划修正值默认给建议发货量
+        purchaseSuggestEntity.setPlanPurchaseQty(purchaseSuggestEntity.getSuggestPurchaseQty());
         // 数据处理
         handleData(purchaseSuggestEntity);
 
