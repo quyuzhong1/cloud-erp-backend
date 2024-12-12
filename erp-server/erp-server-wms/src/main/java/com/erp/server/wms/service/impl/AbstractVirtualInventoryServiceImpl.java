@@ -327,7 +327,13 @@ public abstract class AbstractVirtualInventoryServiceImpl implements VirtualInve
         }
 
         //出库添加本地任务表数据
-        if (InventoryStatusEnum.FROZEN.equals(inventoryStatusEnum)) {
+        if (InventoryStatusEnum.USABLE.equals(inventoryStatusEnum)
+                && CharSequenceUtil.equals(transFlowEntity.getSourceType(),InventorySourceTypeEnum.VIRTUAL_WAREHOUSE_ALLOCATION.getCode())
+                && CharSequenceUtil.equals(transFlowEntity.getSourceType(),InventorySourceTypeEnum.VIRTUAL_WAREHOUSE_ALLOCATION.getCode())
+                && CharSequenceUtil.equals(transFlowEntity.getSourceType(),InventorySourceTypeEnum.VIRTUAL_WAREHOUSE_ALLOCATION.getCode())
+                && CharSequenceUtil.equals(transFlowEntity.getSourceType(),InventorySourceTypeEnum.VIRTUAL_WAREHOUSE_ALLOCATION.getCode())
+        ) {
+
             addWmsVirtualDetailMsg(transFlowEntity);
         }
     }
