@@ -192,7 +192,6 @@
         sb2cr.post_code as postCode,
         sb2cr.receiver_tax_no as receiverTaxNo,
         si.country_name as countryName,
-        sbrc.categoryNames,
         sbd.create_time as createDeliveryTime,
 		sbd.finish_print_time as finishPrintTime
     </sql>
@@ -850,9 +849,6 @@
         inner join so_b2c_logistics sb2cl on sb2c.id = sb2cl.main_id and sb2cl.is_deleted = false
         inner join so_b2c_receiver sb2cr on sb2c.id = sb2cr.main_id and sb2cr.is_deleted = false
         inner join shop_info si on sb2c.shop_id = si.id and si.is_deleted = false
-        left join (
-            select so_b2c_id,array_to_string(array_agg(category_name), ',') as categoryNames from so_b2c_ref_category where is_deleted = false group by so_b2c_id
-        ) sbrc on sb2c.id = sbrc.so_b2c_id
         left join so_b2c_delivery sbd on sbd.source_id = sb2c.id and sb2c.is_deleted = false and sbd.status != 'cancelDelivery'
         <where>
             ${params.sqlMap.default}

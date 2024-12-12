@@ -181,6 +181,44 @@ public class WarehouseLocationMoveDTO implements Serializable {
         */
         private String createUserName;
 
+        /**
+         * 来源id
+         */
+        private String sourceId;
+
+        /**
+         * 来源编号
+         */
+        private String sourceCode;
+
+        /**
+         * 来源类型
+         */
+        private String sourceType;
+
+        /**
+         * 来源类型名称
+         */
+        private String sourceTypeName;
+
+        /**
+         * 上架仓位库存状态名称
+         */
+        private String inInventoryStatus;
+        /**
+         * 上架仓位库存状态名称
+         */
+        private String inInventoryStatusName;
+
+        /**
+         * 取出仓位库存状态名称
+         */
+        private String outInventoryStatus;
+        /**
+         * 取出仓位库存状态名称
+         */
+        private String outInventoryStatusName;
+
         public String getWarehouseId() {
             if (StringUtils.isBlank(warehouseId)){
                 return infoWarehouseId;
@@ -674,6 +712,14 @@ public class WarehouseLocationMoveDTO implements Serializable {
          * 仓位名称
          */
         private String inWarehouseLocationName;
+        /**
+         * 上架仓位库存状态名称
+         */
+        private String inInventoryStatus;
+        /**
+         * 上架仓位库存状态名称
+         */
+        private String inInventoryStatusName;
 
         /**
          * 取出仓位
@@ -684,6 +730,34 @@ public class WarehouseLocationMoveDTO implements Serializable {
          * 取出仓位名称
          */
         private String outWarehouseLocationName;
+        /**
+         * 取出仓位库存状态名称
+         */
+        private String outInventoryStatus;
+        /**
+         * 取出仓位库存状态名称
+         */
+        private String outInventoryStatusName;
+
+        /**
+         * 来源id
+         */
+        private String sourceId;
+
+        /**
+         * 来源编号
+         */
+        private String sourceCode;
+
+        /**
+         * 来源类型
+         */
+        private String sourceType;
+
+        /**
+         * 来源类型名称
+         */
+        private String sourceTypeName;
     }    /**
      * PDA:分页列表
      */

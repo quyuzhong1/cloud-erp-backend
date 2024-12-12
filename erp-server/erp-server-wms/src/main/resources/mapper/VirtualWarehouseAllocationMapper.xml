@@ -68,62 +68,168 @@
         </if>
     </select>
 
+    <!-- 导出分货统计 -->
+    <select id="exportVirtualStatistics"
+            resultType="com.erp.model.wms.dto.VirtualWarehouseAllocationDTO$ExportStatisticsDTO">
+        WITH allocation AS (
+            select
+                vmad.sku_id,
+                vmad.warehouse_id,
+                case when vwa.type = 'allocation' then vmad.to_virtual_warehouse_id else vmad.from_virtual_warehouse_id end as virtual_warehouse_id,
+                vwa.status,
+                vwa.type,
+                vmad.qty
+            from virtual_warehouse_allocation vwa
+            inner join virtual_warehouse_allocation_detail vmad on vwa.id = vmad.main_id and vmad.is_deleted = false
+            where vwa.is_deleted = false and vwa.status != 'invalid' and vwa.type in ('allocation','cancel') and vwa.is_statistics = true
+                <if test="params.permissionSql != null and params.permissionSql != ''">
+                    ${params.permissionSql}
+                </if>
+        )
+        select
+            al.sku_id,
+            pd.sku_no,
+            pd.name as productName,
+            al.warehouse_id,
+            wh.name as warehouseName,
+            al.virtual_warehouse_id as virtualWarehouseId,
+            vw.name as virtualWarehouseName,
+        SUM(CASE WHEN al.type = 'allocation' THEN al.qty WHEN al.type = 'cancel' THEN -al.qty else 0 end) as totalQty,
+        SUM(CASE WHEN al.status = 'waitSubmit' and al.type = 'allocation' THEN al.qty else 0 end) as submitAddAllocationQty,
+        SUM(CASE WHEN al.status = 'handle' and al.type = 'allocation' THEN al.qty else 0 end) as handleAddAllocationQty,
+        SUM(CASE WHEN al.status = 'waitSubmit' and al.type = 'cancel' THEN al.qty else 0 end) as submitCancelAllocationQty,
+        SUM(CASE WHEN al.status = 'handle' and al.type = 'cancel' THEN al.qty else 0 end) as handleCancelAllocationQty
+        from allocation al
+        left join product_detail pd on al.sku_id = pd.id and pd.is_deleted = false
+        left join warehouse wh on al.warehouse_id = wh.id and wh.is_deleted = false
+        left join virtual_warehouse vw on al.virtual_warehouse_id = vw.id and vw.is_deleted = false
+        group by al.sku_id,pd.sku_no,pd.name,al.warehouse_id,wh.name,al.virtual_warehouse_id,vw.name
+    </select>
+
     <sql id="list">
-        SELECT vma.id,
-        vmad.id as detailId,
-        vma.code,
-        vma.status,
-        vma.type,
-        vma.remark,
-        vmad.sku_id as skuId,
-        vmad.sku_no as skuNo,
-        vmad.product_name as productName,
-        vmad.warehouse_id as warehouseId,
-        vmad.warehouse_name,
-        vmad.from_virtual_warehouse_id as fromVirtualWarehouseId,
-        vmad.from_virtual_warehouse_name,
-        vmad.qty,
-        vmad.to_virtual_warehouse_id as toVirtualWarehouseId,
-        vmad.to_virtual_warehouse_name,
-        vmad.finish_description,
-        vma.invalid_description,
-        vmad.sync_status as syncStatus,
-        vmad.create_user_id,
-        vmad.create_user_name,
-        vmad.create_time,
-        vmad.update_user_id,
-        vmad.update_user_name,
-        vmad.update_time,
-        vmad.third_code as thirdCode,
-        vmad.sys_type,
-        vmad.sys_type_name,
-        vma.remark,
-        vmad.detail_remark detailRemark,
-        COALESCE(iv.realQty,0) - COALESCE(vi.distributionQty,0) as unDistributionQty,
-        case when  vmad.to_virtual_warehouse_id = '' then null else COALESCE(vit.toVirtualUsableQty,0) end as toVirtualWarehouseUsableQty,
-        case when  vmad.from_virtual_warehouse_id = '' then null else COALESCE(vif.fromVirtualUsableQty,0) end as fromVirtualWarehouseUsableQty,
-        case when vma.status = 'waitSubmit'and vma.type ='allocation'  then vmad.qty > COALESCE(iv.realQty,0) - COALESCE(vi.distributionQty,0)
-             when vma.status = 'waitSubmit'and vma.type ='transfer'  then vmad.qty > COALESCE(vif.fromVirtualUsableQty,0)
-             when vma.status = 'waitSubmit'and vma.type ='cancel'  then vmad.qty > COALESCE(vif.fromVirtualUsableQty,0)
-            else false
-        end isVirtualScarce
+        WITH inventory_data AS (
+            SELECT
+            sku_id,
+            warehouse_id,
+            SUM(qty) AS realQty
+            FROM inventory
+            WHERE is_deleted = FALSE
+            AND dict_inventory_status IN ('usable', 'frozen')
+            GROUP BY sku_id, warehouse_id
+        ),
+        virtual_inventory_data AS (
+            SELECT
+            sku_id,
+            warehouse_id,
+            SUM(qty) AS distributionQty
+            FROM virtual_inventory
+            WHERE is_deleted = FALSE
+            GROUP BY sku_id, warehouse_id
+        ),
+        virtual_inventory_usable AS (
+            SELECT
+            sku_id,
+            warehouse_id,
+            virtual_warehouse_id,
+            SUM(qty) AS toVirtualUsableQty
+            FROM virtual_inventory
+            WHERE is_deleted = FALSE
+            AND dict_inventory_status = 'usable'
+            GROUP BY sku_id, warehouse_id, virtual_warehouse_id
+        ),
+        virtual_inventory_stats AS (
+            SELECT
+            sku_id,
+            warehouse_id,
+            virtual_warehouse_id,
+            SUM(qty) AS virtualRealQty,
+            SUM(CASE WHEN dict_inventory_status = 'usable' THEN qty ELSE 0 END) AS fromVirtualUsableQty,
+            SUM(CASE WHEN dict_inventory_status = 'frozen' THEN qty ELSE 0 END) AS fromVirtualFrozenQty
+            FROM virtual_inventory
+            WHERE is_deleted = FALSE
+            GROUP BY sku_id, warehouse_id, virtual_warehouse_id
+        )
+        SELECT
+            vm.*,
+            CASE
+            WHEN vm.status = 'waitSubmit' AND vm.type = 'allocation' AND isVirtualScarce THEN vm.totalMergeQty - vm.unDistributionQty
+            WHEN vm.status = 'waitSubmit' AND vm.type = 'transfer' AND isVirtualScarce THEN vm.totalMergeQty - vm.fromVirtualWarehouseUsableQty
+            WHEN vm.status = 'waitSubmit' AND vm.type = 'cancel' AND isVirtualScarce THEN vm.totalMergeQty - vm.fromVirtualWarehouseUsableQty
+            ELSE 0
+            END AS virtualScarceQty
+        FROM (
+        SELECT
+            vma.id,
+            vmad.id AS detailId,
+            vma.code,
+            vma.status,
+            vma.type,
+            vma.remark,
+            vmad.sku_id AS skuId,
+            vmad.sku_no AS skuNo,
+            vmad.product_name AS productName,
+            vmad.warehouse_id AS warehouseId,
+            vmad.warehouse_name AS warehouseName,
+            vmad.from_virtual_warehouse_id AS fromVirtualWarehouseId,
+            vmad.from_virtual_warehouse_name AS fromVirtualWarehouseName,
+            vmad.qty,
+            vmad.to_virtual_warehouse_id AS toVirtualWarehouseId,
+            vmad.to_virtual_warehouse_name AS toVirtualWarehouseName,
+            vmad.finish_description AS finishDescription,
+            vma.invalid_description AS invalidDescription,
+            vmad.sync_status AS syncStatus,
+            vmad.create_user_id AS createUserId,
+            vmad.create_user_name AS createUserName,
+            vmad.create_time AS createTime,
+            vmad.update_user_id AS updateUserId,
+            vmad.update_user_name AS updateUserName,
+            vmad.update_time AS updateTime,
+            vmad.third_code AS thirdCode,
+            vmad.sys_type AS sysType,
+            vmad.sys_type_name AS sysTypeName,
+            vma.is_statistics AS isStatistics,
+            COALESCE(iv.realQty, 0) AS realQty,
+            COALESCE(vi.distributionQty, 0) AS distributionQty,
+            case when  vmad.to_virtual_warehouse_id = '' then null else COALESCE(vit.toVirtualUsableQty,0) end as toVirtualWarehouseUsableQty,
+            COALESCE(vif.virtualRealQty, 0) AS virtualRealQty,
+            case when  vmad.from_virtual_warehouse_id = '' then null else COALESCE(vif.fromVirtualUsableQty,0) end as fromVirtualWarehouseUsableQty,
+            vim.totalMergeQty,
+            COALESCE(iv.realQty, 0) - COALESCE(vi.distributionQty, 0) AS unDistributionQty,
+            CASE
+            WHEN vma.status = 'waitSubmit' AND vma.type = 'allocation' THEN vim.totalMergeQty > COALESCE(iv.realQty, 0) - COALESCE(vi.distributionQty, 0)
+            WHEN vma.status = 'waitSubmit' AND vma.type = 'transfer' THEN vim.totalMergeQty > COALESCE(vif.fromVirtualUsableQty, 0)
+            WHEN vma.status = 'waitSubmit' AND vma.type = 'cancel' THEN vim.totalMergeQty > COALESCE(vif.fromVirtualUsableQty, 0)
+            ELSE FALSE
+            END AS isVirtualScarce
         FROM virtual_warehouse_allocation_detail vmad
-        inner JOIN virtual_warehouse_allocation vma
-        on vma.id = vmad.main_id and vma.is_deleted = false
-        left join (
-            select sum(qty) as realQty,sku_id,warehouse_id from inventory where is_deleted = false and dict_inventory_status in('usable','frozen')  group by sku_id,warehouse_id
-        ) iv on vmad.sku_id = iv.sku_id  and vmad.warehouse_id = iv.warehouse_id
-        left join (
-            select sum(qty) as distributionQty,sku_id,warehouse_id from virtual_inventory where is_deleted = false  group by sku_id,warehouse_id
-        ) vi on vmad.sku_id = vi.sku_id  and vmad.warehouse_id = vi.warehouse_id
-        left join (
-            select sum(qty) as toVirtualUsableQty,sku_id,warehouse_id,virtual_warehouse_id from virtual_inventory where is_deleted = false and dict_inventory_status = 'usable' group by sku_id,warehouse_id,virtual_warehouse_id
-        ) vit on vmad.sku_id = vit.sku_id and vmad.warehouse_id = vit.warehouse_id and vmad.to_virtual_warehouse_id = vit.virtual_warehouse_id
-        left join (
-            select sum(qty) as fromVirtualUsableQty,sku_id,warehouse_id,virtual_warehouse_id from virtual_inventory where is_deleted = false and dict_inventory_status = 'usable' group by sku_id,warehouse_id,virtual_warehouse_id
-        ) vif on vmad.sku_id = vif.sku_id and vmad.warehouse_id = vif.warehouse_id and vmad.from_virtual_warehouse_id = vif.virtual_warehouse_id
-        where ${params.sqlMap.default}
-        and vmad.is_deleted = false
+        INNER JOIN virtual_warehouse_allocation vma
+        ON vma.id = vmad.main_id AND vma.is_deleted = FALSE
+        LEFT JOIN inventory_data iv
+        ON vmad.sku_id = iv.sku_id AND vmad.warehouse_id = iv.warehouse_id
+        LEFT JOIN virtual_inventory_data vi
+        ON vmad.sku_id = vi.sku_id AND vmad.warehouse_id = vi.warehouse_id
+        LEFT JOIN virtual_inventory_usable vit
+        ON vmad.sku_id = vit.sku_id AND vmad.warehouse_id = vit.warehouse_id AND vmad.to_virtual_warehouse_id = vit.virtual_warehouse_id
+        LEFT JOIN virtual_inventory_stats vif
+        ON vmad.sku_id = vif.sku_id AND vmad.warehouse_id = vif.warehouse_id AND vmad.from_virtual_warehouse_id = vif.virtual_warehouse_id
+        LEFT JOIN (
+            SELECT
+            SUM(qty) AS totalMergeQty,
+            main_id,
+            sku_id,
+            warehouse_id,
+            to_virtual_warehouse_id,
+            from_virtual_warehouse_id
+            FROM virtual_warehouse_allocation_detail
+            WHERE is_deleted = FALSE
+            GROUP BY main_id, sku_id, warehouse_id, to_virtual_warehouse_id, from_virtual_warehouse_id
+        ) vim
+        ON vmad.main_id = vim.main_id
+        AND vmad.sku_id = vim.sku_id
+        AND vmad.warehouse_id = vim.warehouse_id
+        AND vmad.to_virtual_warehouse_id = vim.to_virtual_warehouse_id
+        AND vmad.from_virtual_warehouse_id = vim.from_virtual_warehouse_id
+        where  vmad.is_deleted = false
         <if test="params.permissionSql!=null and params.permissionSql!=''">
             ${params.permissionSql}
         </if>
@@ -134,6 +240,7 @@
             </foreach>
         </if>
         vma.id desc,vmad.id asc
+        ) vm where 1 = 1 and ${params.sqlMap.default}
     </sql>
 
 </mapper>

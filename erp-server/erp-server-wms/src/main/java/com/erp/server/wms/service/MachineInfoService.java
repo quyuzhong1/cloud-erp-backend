@@ -1,6 +1,5 @@
 package com.erp.server.wms.service;
 
-import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
@@ -9,7 +8,6 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.wms.dto.MachineInfoDTO;
 import com.erp.model.wms.dto.MachineSubComponentsDTO;
 import com.erp.model.wms.entity.MachineInfoEntity;
-import com.erp.model.wms.entity.SoReturnReceiveEntity;
 
 import java.util.List;
 
@@ -190,4 +188,12 @@ public interface MachineInfoService extends SuperService<MachineInfoEntity> {
      * 导出
      */
     PagingVO<MachineInfoDTO.ListDTO> exportMachineInfo(PagingDTO<MachineInfoDTO.SearchParamDTO> dto);
+    /**
+     * 修复加工单明细id数据
+     * @author will
+     * @date 2024/11/27 14:28
+     * @param id
+     * @return BatchResultDTO
+     */
+    BatchResultDTO handleErrorData(String id);
 }

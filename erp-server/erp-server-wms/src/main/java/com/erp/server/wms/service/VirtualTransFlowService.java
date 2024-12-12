@@ -2,10 +2,12 @@ package com.erp.server.wms.service;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
+import com.erp.model.wms.dto.ReportOrderSalesDTO;
 import com.erp.model.wms.dto.VirtualTransFlowDTO;
 import com.erp.model.wms.entity.VirtualTransFlowEntity;
 import com.erp.model.wms.enums.inventory.InventoryModeEnum;
 
+import java.time.LocalDate;
 import java.util.List;
 
 /**
@@ -81,4 +83,24 @@ public interface VirtualTransFlowService extends SuperService<VirtualTransFlowEn
     Boolean exportExcel(VirtualTransFlowDTO.SearchParamDTO dto);
 
     PagingVO<VirtualTransFlowDTO.ListDTO> exportVirtualTransFlow(PagingDTO<VirtualTransFlowDTO.SearchParamDTO> dto);
+    /**
+     * 查询历史流水
+     * @author will
+     * @date 2024/11/8 16:11
+     * @param sourceDetailIdList
+     * @param sourceType
+     * @return List<VirtualTransFlowEntity>
+     */
+    List<VirtualTransFlowEntity> listHistoryFlow(List<String> sourceDetailIdList,String sourceType);
+    /**
+     * 查询指定天数最后一条流水
+     * @author will
+     * @date 2024/11/20 16:05
+     * @param skuIdList
+     * @param warehouseIdList
+     * @param virtualWarehouseIdList
+     * @param localDate
+     * @return List<LastVirtualQtyDTO>
+     */
+    List<ReportOrderSalesDTO.LastVirtualQtyDTO> listLastVirtualQty(List<String> skuIdList, List<String> warehouseIdList, List<String> virtualWarehouseIdList, LocalDate localDate);
 }

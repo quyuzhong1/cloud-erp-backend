@@ -67,17 +67,17 @@ public class MachineDetailDTO implements Serializable {
         private Integer index;
 
         /**
-         * 关联id，用于销售单下推
+         * 关联id
          */
         private String refId;
 
         /**
-         * 关联编码，用于销售单下推
+         * 关联编码
          */
         private String refCode;
 
         /**
-         * 关联明细id，用于销售单下推
+         * 关联明细id
          */
         private String refDetailId;
 

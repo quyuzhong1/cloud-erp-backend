@@ -1,7 +1,6 @@
 package com.erp.server.oms.service.impl;
 
 import cn.hutool.core.text.CharSequenceUtil;
-import cn.hutool.core.util.StrUtil;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.core.enums.ApiError;
@@ -155,5 +154,13 @@ public class SoB2cRefCategoryServiceImpl extends SuperServiceImpl<SoB2cRefCatego
             String categoryName = orderCategoryDetailList.stream().filter(obj -> obj.getId().equals(entity.getCategoryId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
             entity.setCategoryName(categoryName);
         }
+    }
+
+    @Override
+    public List<SoB2cRefCategoryDTO.CategoryNamesDTO> listCategoryNamesBySoIds(List<String> soIds) {
+        if (CollectionUtils.isEmpty(soIds)) {
+            return Collections.emptyList();
+        }
+        return baseMapper.listCategoryNamesBySoIds(soIds);
     }
 }

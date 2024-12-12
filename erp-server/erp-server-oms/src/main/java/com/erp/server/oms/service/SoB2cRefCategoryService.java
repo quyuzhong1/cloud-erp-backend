@@ -75,4 +75,10 @@ public interface SoB2cRefCategoryService extends SuperService<SoB2cRefCategoryEn
      * @param categoryIdList
      */
     void deleteByMainIdAndCategoryId(String mainId, List<String> categoryIdList);
+    /**
+     * @author jack
+     * @date: 2024-12-10
+     * @param soIds
+     */
+    List<SoB2cRefCategoryDTO.CategoryNamesDTO> listCategoryNamesBySoIds(List<String> soIds);
 }
