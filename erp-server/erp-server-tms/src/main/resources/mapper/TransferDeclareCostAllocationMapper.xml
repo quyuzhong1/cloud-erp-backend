@@ -46,7 +46,7 @@
 			concat(j.logistics_supplier_name , '-',j.logistics_channel_name ) supplierName,
 			j.so_code,
 			k.instock_forecast_date,
-			j.confirm_date confirmTime,
+			n.approve_date confirmTime,
 			j.shop_id,
 			j.country toCountry,
 			g.sku_id,
@@ -72,6 +72,7 @@
         left join transfer_declare_cost_allocation g on t.id = g.main_id and g.is_deleted = false
         left join transfer_declare_cost_allocation_detail h on h.main_id = g.id and h.is_deleted = false
         left join tms_b2c_declare_reconciliation_detail j on t.declare_reconciliation_detail_id = j.id and j.is_deleted = false
+        left join tms_b2c_declare_reconciliation n on n.id = j.main_id and n.is_deleted = false
         left join transfer_declare k on t.transfer_declare_id = k.id and k.is_deleted = false
         left join dict_basic l on h.fee_type = l.code and l.type = 'dictCostCategory'
 		<where>
