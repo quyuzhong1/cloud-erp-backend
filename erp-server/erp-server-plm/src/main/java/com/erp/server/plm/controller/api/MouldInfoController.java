@@ -335,8 +335,9 @@ public class MouldInfoController extends BaseController {
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出")
     @PostMapping("/export")
-    public void export(@RequestBody @Validated MouldInfoDTO.PagingParamDTO dto) {
+    public ApiResult<Void> export(@RequestBody @Validated MouldInfoDTO.PagingParamDTO dto) {
         mouldInfoService.export(dto);
+        return success();
     }
 
 
@@ -409,8 +410,9 @@ public class MouldInfoController extends BaseController {
      * @param dto 参数
      */
     @PostMapping("/orderTrackingExport")
-    public void orderTrackingExport(@RequestBody @Validated MouldInfoDTO.PagingParamDTO dto) {
+    public ApiResult<Void> orderTrackingExport(@RequestBody @Validated MouldInfoDTO.PagingParamDTO dto) {
         mouldInfoService.orderTrackingExport(dto);
+        return success();
     }
 
     /**
@@ -440,7 +442,8 @@ public class MouldInfoController extends BaseController {
      * @param dto 参数
      */
     @PostMapping("/orderTrackingDetailExport")
-    public void orderTrackingDetailExport(@RequestBody @Validated MouldInfoDTO.OrderTrackingDetailParamDTO dto) {
+    public ApiResult<Void> orderTrackingDetailExport(@RequestBody @Validated MouldInfoDTO.OrderTrackingDetailParamDTO dto) {
         mouldInfoService.orderTrackingDetailExport(dto);
+        return success();
     }
 }

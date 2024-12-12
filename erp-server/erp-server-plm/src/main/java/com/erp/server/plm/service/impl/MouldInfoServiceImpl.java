@@ -20,6 +20,7 @@ import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
+import com.common.business.wrapper.FeignQuery;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -28,9 +29,14 @@ import com.common.core.utils.StrUtils;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.*;
 import com.erp.model.plm.enums.MouldRefundStatusEnum;
+import com.erp.model.plm.enums.RefundStandardEnum;
 import com.erp.model.plm.enums.SysLogClassPathEnum;
+import com.erp.model.scm.entity.DictBasicEntity;
+import com.erp.model.scm.entity.KingdeePaymentConditionEntity;
+import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.wms.dto.WarehouseDTO;
+import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.model.wms.entity.WarehouseLocationEntity;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
@@ -42,6 +48,7 @@ import com.erp.server.plm.service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 
 import javax.annotation.Resource;
@@ -586,5 +593,132 @@ public class MouldInfoServiceImpl extends SuperServiceImpl<MouldInfoMapper, Moul
     @Override
     public void orderTrackingDetailExport(MouldInfoDTO.OrderTrackingDetailParamDTO dto) {
         downloadTaskFeign.saveDownloadTask("下单跟踪明细导出", EXPORT_PLM_ORDER_TRACKING_DETAIL.getCode(), dto);
+    }
+
+    @Override
+    public PagingVO<MouldInfoDTO.MouldInfoExportDTO> exportMouldInfo(PagingDTO<MouldInfoDTO.PagingParamDTO> dto) {
+        Page<MouldInfoDTO.MouldInfoExportDTO> page = baseMapper.exportMouldInfo(new Page<>(dto.getCurrPage(), dto.getPageSize()), dto.getParams());
+        if (CollectionUtils.isEmpty(page.getRecords())) {
+            return new PagingVO<>();
+        }
+        fillMouldInfo(page.getRecords());
+        return new PagingVO<>(page);
+    }
+
+    /**
+     * 处理数据
+     *
+     * @param records 记录
+     */
+    private void fillMouldInfo(List<MouldInfoDTO.MouldInfoExportDTO> records) {
+        List<String> warehouseIds = records.stream().map(MouldInfoDTO.MouldInfoExportDTO::getWarehouseId).distinct().collect(Collectors.toList());
+        List<String> typeIds = records.stream().map(MouldInfoDTO.MouldInfoExportDTO::getTypeId).distinct().collect(Collectors.toList());
+        List<String> supplierIds = records.stream().map(MouldInfoDTO.MouldInfoExportDTO::getSupplierId).distinct().collect(Collectors.toList());
+        List<WarehouseEntity> warehouseList = FeignQuery.getByIds(WarehouseEntity.class, warehouseIds);
+        Map<String, String> warehouseMap = warehouseList.stream()
+                .collect(Collectors.toMap(WarehouseEntity::getId, WarehouseEntity::getName, (o1, o2) -> o1));
+        List<SupplierEntity> supplierList = FeignQuery.getByIds(SupplierEntity.class, supplierIds);
+        Map<String, String> supplierMap = supplierList.stream()
+                .collect(Collectors.toMap(SupplierEntity::getId, SupplierEntity::getName, (o1, o2) -> o1));
+        List<CfgMouldSettingEntity> mouldSettingList = FeignQuery.getByIds(CfgMouldSettingEntity.class, typeIds);
+        Map<String, String> mouldSettingMap = mouldSettingList.stream()
+                .collect(Collectors.toMap(CfgMouldSettingEntity::getId, CfgMouldSettingEntity::getName, (o1, o2) -> o1));
+        List<WarehouseLocationEntity> warehouseLocationList = FeignQuery.create(WarehouseLocationEntity.class)
+                .in(WarehouseLocationEntity::getWarehouseId, warehouseIds)
+                .list();
+        Map<String, String> warehouseLocationMap = warehouseLocationList.stream()
+                .collect(Collectors.toMap(WarehouseLocationEntity::getCode, WarehouseLocationEntity::getName, (o1, o2) -> o1));
+        for (MouldInfoDTO.MouldInfoExportDTO dto : records) {
+            dto.setStatusName(ApproveStatusEnum.getName(dto.getStatus()));
+            dto.setWarehouseName(warehouseMap.get(dto.getWarehouseId()));
+            dto.setSupplierName(supplierMap.get(dto.getSupplierId()));
+            dto.setTypeName(mouldSettingMap.get(dto.getTypeId()));
+            dto.setWarehouseLocationName(warehouseLocationMap.get(dto.getWarehouseLocation()));
+            if (!ObjectUtils.isEmpty(dto.getImagesUrl())) {
+                dto.setImageUrl(dto.getImagesUrl().split(",")[0]);
+            }
+        }
+    }
+
+    @Override
+    public PagingVO<MouldInfoDTO.OrderTrackingExportDTO> exportOrderTracking(PagingDTO<MouldInfoDTO.PagingParamDTO> dto) {
+        Page<MouldInfoDTO.OrderTrackingExportDTO> page = baseMapper.exportOrderTracking(new Page<>(dto.getCurrPage(), dto.getPageSize()), dto.getParams());
+        if (CollectionUtils.isEmpty(page.getRecords())) {
+            return new PagingVO<>();
+        }
+        fillOrderTracking(page.getRecords());
+        return new PagingVO<>(page);
+    }
+
+    /**
+     * 处理数据
+     *
+     * @param records 记录
+     */
+    private void fillOrderTracking(List<MouldInfoDTO.OrderTrackingExportDTO> records) {
+        List<String> supplierIdList = new ArrayList<>();
+        List<String> supplierIds = records.stream().map(MouldInfoDTO.OrderTrackingExportDTO::getSupplierId).distinct().collect(Collectors.toList());
+        if (!CollectionUtils.isEmpty(supplierIds)) {
+            supplierIdList.addAll(supplierIds);
+        }
+        List<String> skuSupplierIds = records.stream().map(MouldInfoDTO.OrderTrackingExportDTO::getSkuSupplierId).distinct().collect(Collectors.toList());
+        if (!CollectionUtils.isEmpty(skuSupplierIds)) {
+            supplierIdList.addAll(skuSupplierIds);
+        }
+        List<SupplierEntity> supplierList = FeignQuery.getByIds(SupplierEntity.class, supplierIdList);
+        Map<String, String> supplierMap = supplierList.stream()
+                .collect(Collectors.toMap(SupplierEntity::getId, SupplierEntity::getName, (o1, o2) -> o1));
+        List<String> payMethodIds = records.stream().map(MouldInfoDTO.OrderTrackingExportDTO::getPayMethodId).distinct().collect(Collectors.toList());
+        List<DictBasicEntity> dictBasicList = FeignQuery.getByIds(DictBasicEntity.class, payMethodIds);
+        Map<String, String> dictBasicMap = dictBasicList.stream()
+                .collect(Collectors.toMap(DictBasicEntity::getId, DictBasicEntity::getValue, (o1, o2) -> o1));
+        List<String> paymentConditions = records.stream().map(MouldInfoDTO.OrderTrackingExportDTO::getPaymentCondition).distinct().collect(Collectors.toList());
+        List<KingdeePaymentConditionEntity> paymentConditionList = FeignQuery.getByIds(KingdeePaymentConditionEntity.class, paymentConditions);
+        Map<String, String> paymentConditionMap = paymentConditionList.stream()
+                .collect(Collectors.toMap(KingdeePaymentConditionEntity::getId, KingdeePaymentConditionEntity::getName, (o1, o2) -> o1));
+        for (MouldInfoDTO.OrderTrackingExportDTO dto : records) {
+            dto.setStatusName(ApproveStatusEnum.getName(dto.getStatus()));
+            dto.setSupplierName(supplierMap.get(dto.getSupplierId()));
+            dto.setSkuSupplierName(supplierMap.get(dto.getSkuSupplierId()));
+            dto.setIsNeedRefundName(Boolean.TRUE.equals(dto.getIsNeedRefund()) ? "是" : "否");
+            dto.setRefundStandardName(RefundStandardEnum.getName(dto.getRefundStandard()));
+            dto.setRefundStatusName(MouldRefundStatusEnum.getName(dto.getRefundStatus()));
+            dto.setPayMethodName(dictBasicMap.get(dto.getPayMethodId()));
+            dto.setPaymentConditionName(paymentConditionMap.get(dto.getPaymentCondition()));
+        }
+    }
+
+    @Override
+    public PagingVO<MouldInfoDTO.OrderTrackingDetailExportDTO> exportOrderTrackingDetail(PagingDTO<MouldInfoDTO.OrderTrackingDetailParamDTO> dto) {
+        Page<MouldInfoDTO.OrderTrackingDetailExportDTO> page = baseMapper.exportOrderTrackingDetail(new Page<>(dto.getCurrPage(), dto.getPageSize()), dto.getParams());
+        if (CollectionUtils.isEmpty(page.getRecords())) {
+            return new PagingVO<>();
+        }
+        fillOrderTrackingDetail(page.getRecords());
+        return new PagingVO<>(page);
+    }
+
+    /**
+     * 处理数据
+     *
+     * @param records 记录
+     */
+    private void fillOrderTrackingDetail(List<MouldInfoDTO.OrderTrackingDetailExportDTO> records) {
+        List<String> supplierIdList = new ArrayList<>();
+        List<String> supplierIds = records.stream().map(MouldInfoDTO.OrderTrackingDetailExportDTO::getMouldSupplierId).distinct().collect(Collectors.toList());
+        if (!CollectionUtils.isEmpty(supplierIds)) {
+            supplierIdList.addAll(supplierIds);
+        }
+        List<String> skuSupplierIds = records.stream().map(MouldInfoDTO.OrderTrackingDetailExportDTO::getSupplierId).distinct().collect(Collectors.toList());
+        if (!CollectionUtils.isEmpty(skuSupplierIds)) {
+            supplierIdList.addAll(skuSupplierIds);
+        }
+        List<SupplierEntity> supplierList = FeignQuery.getByIds(SupplierEntity.class, supplierIdList);
+        Map<String, String> supplierMap = supplierList.stream()
+                .collect(Collectors.toMap(SupplierEntity::getId, SupplierEntity::getName, (o1, o2) -> o1));
+        for (MouldInfoDTO.OrderTrackingDetailExportDTO dto : records) {
+            dto.setSupplierName(supplierMap.get(dto.getSupplierId()));
+            dto.setMouldSupplierName(supplierMap.get(dto.getMouldSupplierId()));
+        }
     }
 }
