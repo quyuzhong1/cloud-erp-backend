@@ -8,7 +8,9 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 
 
 /**
@@ -62,4 +64,25 @@ public interface VirtualTransFlowMapper extends BaseMapper<VirtualTransFlowEntit
      * @return IPage<InventoryDetailDTO>
      */
     IPage<VirtualTransFlowDTO.InventoryDetailDTO> detailPaging(Page query,@Param("params") VirtualTransFlowDTO.InventoryDetailParamDTO params);
+    /**
+     * 查询虚拟仓即时库存id
+     * @author will
+     * @date 2024/12/12 11:47
+     * @param virtualInventoryId
+     * @param virtualWarehouseId
+     * @param warehouseId
+     * @param skuId
+     * @param fromTable
+     * @return List<String>
+     */
+    List<String> listVirtualInventoryId(@Param("virtualInventoryId")String virtualInventoryId,@Param("virtualWarehouseId") String virtualWarehouseId,@Param("warehouseId") String warehouseId,@Param("skuId") String skuId,@Param("fromTable") Boolean fromTable);
+    /**
+     * 查询流水虚拟仓库存数量
+     * @author will
+     * @date 2024/12/12 14:34
+     * @param virtualInvId
+     * @param startDate
+     * @return Integer
+     */
+    Integer getVirtualQty(@Param("virtualInvId")String virtualInvId,@Param("startDate") LocalDate startDate);
 }

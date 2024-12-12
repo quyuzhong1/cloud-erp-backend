@@ -6,6 +6,7 @@ import com.erp.model.wms.dto.VirtualTransFlowDTO;
 import com.erp.model.wms.entity.VirtualTransFlowEntity;
 import com.erp.model.wms.enums.inventory.InventoryModeEnum;
 
+import java.time.LocalDate;
 import java.util.List;
 
 /**
@@ -81,4 +82,24 @@ public interface VirtualTransFlowService extends SuperService<VirtualTransFlowEn
     Boolean exportExcel(VirtualTransFlowDTO.SearchParamDTO dto);
 
     PagingVO<VirtualTransFlowDTO.ListDTO> exportVirtualTransFlow(PagingDTO<VirtualTransFlowDTO.SearchParamDTO> dto);
+    /**
+     * 查询虚拟仓即时库存id
+     * @author will
+     * @date 2024/12/12 11:44
+     * @param virtualInventoryId
+     * @param virtualWarehouseId
+     * @param warehouseId
+     * @param skuId
+     * @param fromTable
+     * @return List<String>
+     */
+    List<String> listVirtualInventoryId(String virtualInventoryId, String virtualWarehouseId, String warehouseId, String skuId, Boolean fromTable);
+    /**
+     * 重算虚拟仓库存流水
+     * @author will
+     * @date 2024/12/12 12:06
+     * @param startDate
+     * @param virtualInvId
+     */
+    void overrideVirtualTransFlow(LocalDate startDate,String virtualInvId);
 }

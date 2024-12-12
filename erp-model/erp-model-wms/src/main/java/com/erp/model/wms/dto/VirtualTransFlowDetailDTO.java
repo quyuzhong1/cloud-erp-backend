@@ -232,6 +232,12 @@ public class VirtualTransFlowDetailDTO implements Serializable {
         private Integer qty;
 
         /**
+         * 单据日期
+         */
+        @NotNull(message = "单据日期不能为空")
+        private LocalDate billDate;
+
+        /**
         * 后数量
         */
         @NotNull(message = "后数量不能为空")

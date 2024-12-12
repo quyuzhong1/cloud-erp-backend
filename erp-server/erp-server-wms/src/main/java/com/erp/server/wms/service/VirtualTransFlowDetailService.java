@@ -6,6 +6,7 @@ import com.common.business.dto.base.*;
 import com.erp.model.wms.dto.VirtualTransFlowDetailDTO;
 import com.erp.model.wms.entity.VirtualTransFlowEntity;
 
+import java.time.LocalDate;
 import java.util.List;
 
 /**
@@ -52,4 +53,24 @@ public interface VirtualTransFlowDetailService extends SuperService<VirtualTrans
      * @return Boolean
      */
     Boolean consumeMessage(VirtualTransFlowEntity virtualTransFlowEntity);
+    /**
+     * 查询虚拟仓库存明细id集合
+     * @author will
+     * @date 2024/12/12 14:52
+     * @param virtualInventoryId
+     * @param virtualWarehouseId
+     * @param warehouseId
+     * @param skuId
+     * @param fromTable
+     * @return List<String>
+     */
+    List<String> listVirtualInventoryDetailIdList(String virtualInventoryId, String virtualWarehouseId, String warehouseId, String skuId, Boolean fromTable);
+    /**
+     * 重算虚拟仓流水
+     * @author will
+     * @date 2024/12/12 14:57
+     * @param startDate
+     * @param virtualInvDetailId
+     */
+    void overrideVirtualTransFlowDetail(LocalDate startDate, String virtualInvDetailId);
 }
