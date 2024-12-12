@@ -251,7 +251,11 @@ public class OverseasInventoryServiceImpl extends SuperServiceImpl<OverseasInven
                 .eq(OverseasInventoryEntity::getPlatformSku, entity.getPlatformSku());
         OverseasInventoryEntity existingEntity = this.getOne(queryWrapper);
         if (existingEntity == null || entity.getDownloadTime().isAfter(existingEntity.getDownloadTime())) {
-            return this.saveOrUpdate(entity,queryWrapper);
+            boolean flag = this.saveOrUpdate(entity, queryWrapper);
+            if(existingEntity != null){
+                entity.setId(existingEntity.getId());
+            }
+            return flag;
         }
         return false;
     }
