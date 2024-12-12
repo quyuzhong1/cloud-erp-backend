@@ -155,7 +155,7 @@ public class DmpOutputSdyRefundHandler extends DmpOutputTaskHandler {
      * 解析订单数据
      **/
     public List<ShudiyunB2cOrderDTO> convert(DmpSoRefundInfoEntity dmpSoRefundEntity, List<DmpSoRefundDetailEntity> dmpSoRefundDetailEntityList) {
-        if (CollUtil.isEmpty(dmpSoRefundDetailEntityList)) {
+        if (CollUtil.isEmpty(dmpSoRefundDetailEntityList) || dmpSoRefundEntity == null) {
             return Collections.emptyList();
         }
         DateTimeFormatter localDateTime = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
@@ -163,6 +163,9 @@ public class DmpOutputSdyRefundHandler extends DmpOutputTaskHandler {
         List<ShudiyunB2cOrderDTO> sdyListDTO = new ArrayList<>();
 
         for (DmpSoRefundDetailEntity dmpSoRefundDetailEntity : dmpSoRefundDetailEntityList) {
+        	if(dmpSoRefundDetailEntity == null) {
+        		continue;
+        	}
             ShudiyunB2cOrderDTO sdyDTO = new ShudiyunB2cOrderDTO();
             sdyDTO.setBiz_uni_key(dmpSoRefundEntity.getId() + dmpSoRefundDetailEntity.getId());
             sdyDTO.setBiz_no(dmpSoRefundEntity.getThirdCode());
