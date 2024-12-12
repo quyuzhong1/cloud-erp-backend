@@ -445,6 +445,31 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
         }
     }
 
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public void writeProductPurchaseBackByWork(String id) {
+        //审批通过 回写产品管理--采购信息--一级和二级供应商
+        List<PilotApplicationDetailEntity> detailList = pilotApplicationDetailService.lambdaQuery().eq(PilotApplicationDetailEntity::getMainId, id).list();
+        if (CollectionUtils.isNotEmpty(detailList)) {
+            for (PilotApplicationDetailEntity detailEntity : detailList) {
+                productPurchaseService.lambdaUpdate()
+                        .eq(ProductPurchaseEntity::getSkuId, detailEntity.getSkuId())
+                        .set(ProductPurchaseEntity::getMainSupplier, detailEntity.getMainSupplierId())
+                        .set(ProductPurchaseEntity::getSecondSupplier, detailEntity.getSecondSupplierId())
+                        .update();
+            }
+        }
+    }
+
+    @Override
+    public void approvePilotApplicationNoticeByWork(String id) {
+        PilotApplicationDTO.ApprovePilotNoticeDTO approvePilotNoticeDTO = this.getPilotApplicationNoticeData(id);
+        if (null != approvePilotNoticeDTO) {
+            noticeMessageService.approvePilotApplicationNotice(approvePilotNoticeDTO.getUserName(), approvePilotNoticeDTO, Boolean.TRUE);
+        }
+    }
+
+
 
     /**
      * 审核流程处理
