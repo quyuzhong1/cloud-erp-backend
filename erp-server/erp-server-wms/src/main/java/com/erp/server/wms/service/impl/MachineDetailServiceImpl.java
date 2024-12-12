@@ -1,11 +1,9 @@
 package com.erp.server.wms.service.impl;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
-import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
-import com.baomidou.mybatisplus.core.toolkit.StringUtils;
-import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -20,7 +18,10 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.MachineDetailDTO;
 import com.erp.model.wms.dto.MachineRefSoDTO;
 import com.erp.model.wms.dto.MachineSubComponentsDTO;
-import com.erp.model.wms.entity.*;
+import com.erp.model.wms.entity.MachineDetailEntity;
+import com.erp.model.wms.entity.MachineInfoEntity;
+import com.erp.model.wms.entity.MachineRefSoEntity;
+import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.mapper.MachineDetailMapper;
@@ -34,7 +35,6 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -315,18 +315,32 @@ public class MachineDetailServiceImpl extends SuperServiceImpl<MachineDetailMapp
         if (ObjectUtils.isEmpty(machineInfoEntity)) {
             throw new ServiceException(ApiError.ERROR_99052);
         }
-        if (!SourceTypeEnum.SO_INFO.getCode().equals(machineInfoEntity.getSourceType())) {
-            return;
+        List<String> refDetailIdList = list.stream().map(MachineDetailEntity::getRefDetailId).collect(Collectors.toList());
+        List<MachineRefSoEntity> oldRefList = machineRefSoService.listBySoDetailIdList(refDetailIdList);
+        if (CollectionUtils.isNotEmpty(oldRefList)) {
+            //存在下推的销售订单明细id集合
+            List<String> soDetailIdList = oldRefList.stream().map(MachineRefSoEntity::getSoDetailId).collect(Collectors.toList());
+            //销售订单号
+            String soCodes = oldRefList.stream().map(MachineRefSoEntity::getSoCode).collect(Collectors.joining(","));
+            //SKU编号
+            String skuNoList = list.stream().filter(obj -> soDetailIdList.contains(obj.getRefDetailId())).map(MachineDetailEntity::getSkuNo).collect(Collectors.joining(","));
+            throw new ServiceException(ApiError.ERROR_SO_PUSH_MACHINE,soCodes,skuNoList);
         }
         List<MachineRefSoDTO.AddDTO> refAddList = new ArrayList<>();
         for (MachineDetailEntity detailEntity: list) {
             MachineRefSoDTO.AddDTO addDTO = new MachineRefSoDTO.AddDTO();
+            if (CharSequenceUtil.isBlank(detailEntity.getRefId()) || CharSequenceUtil.isBlank(detailEntity.getRefCode()) || CharSequenceUtil.isBlank(detailEntity.getRefDetailId())) {
+                continue;
+            }
             addDTO.setSoId(detailEntity.getRefId());
             addDTO.setSoCode(detailEntity.getRefCode());
             addDTO.setSoDetailId(detailEntity.getRefDetailId());
             addDTO.setMachineId(mainId);
             addDTO.setMachineDetailId(detailEntity.getId());
             refAddList.add(addDTO);
+        }
+        if (CollUtil.isEmpty(refAddList)) {
+            return;
         }
         List<MachineRefSoEntity> machineRefSoList = BeanMapperUtils.copyList(MachineRefSoEntity.class, refAddList);
         machineRefSoService.saveBatch(machineRefSoList);

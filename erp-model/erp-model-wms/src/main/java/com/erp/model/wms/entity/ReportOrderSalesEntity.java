@@ -120,6 +120,21 @@ public class ReportOrderSalesEntity extends BaseEntity<ReportOrderSalesEntity> {
     @TableField("total_qty")
     private Integer totalQty;
     /**
+     * b2b需求总数
+     */
+    @TableField("b2b_qty")
+    private Integer b2bQty;
+    /**
+     * b2c需求总数
+     */
+    @TableField("b2c_qty")
+    private Integer b2cQty;
+    /**
+     * 头程需求总数
+     */
+    @TableField("first_mile_qty")
+    private Integer firstMileQty;
+    /**
     * 虚拟仓可用库存
     */
     @TableField("virtual_usable_qty")
@@ -134,17 +149,18 @@ public class ReportOrderSalesEntity extends BaseEntity<ReportOrderSalesEntity> {
     */
     @TableField("virtual_total_qty")
     private Integer virtualTotalQty;
-    /**
-    * 已出库数量
-    */
-    @TableField("delivery_qty")
-    private Integer deliveryQty;
-    /**
-    * 已分配数量
-    */
-    @TableField("distribution_qty")
-    private Integer distributionQty;
 
+    /**
+     * 近30天虚拟仓库存
+     */
+    @TableField("thirty_days_virtual_qty")
+    private Integer thirtyDaysVirtualQty;
+
+    /**
+     * 实体仓未分配
+     */
+    @TableField("un_distribution_qty")
+    private Integer unDistributionQty;
 
     public static final String WAREHOUSE_ID = "warehouse_id";
 
@@ -185,10 +201,6 @@ public class ReportOrderSalesEntity extends BaseEntity<ReportOrderSalesEntity> {
     public static final String VIRTUAL_FROZEN_QTY = "virtual_frozen_qty";
 
     public static final String VIRTUAL_TOTAL_QTY = "virtual_total_qty";
-
-    public static final String DELIVERY_QTY = "delivery_qty";
-
-    public static final String DISTRIBUTION_QTY = "distribution_qty";
 
     @Override
     public Serializable pkVal() {

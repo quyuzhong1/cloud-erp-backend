@@ -1546,7 +1546,7 @@ public enum ApiError implements Serializable {
     ERROR_SUGGEST_LOCKING(97017,"仅草稿数据支持锁定操作"),
     ERROR_SUGGEST_INVALID(97018,"已下推数据不支持作废操作"),
     ERROR_SUGGEST_UPDATE_REMARK(97019,"仅未作废的草稿和待确认数据支持更新备注操作"),
-    ERROR_SUGGEST_UPDATE(97020,"仅未作废的草稿和待确认数据支持更新备货操作"),
+    ERROR_SUGGEST_UPDATE(97020,"仅未作废的草稿和待确认数据支持更新操作"),
     ERROR_DELIVERY_SUGGEST_PUSH(97021,"发货建议【{}】非已完成不支持下推"),
     ERROR_DELIVERY_SUGGEST_PUSH_INVALID(97021,"发货建议【{}】已作废不支持下推"),
     ERROR_NOT_EXIST_CALC_DATA(97030,"不存在符合的试算数据"),

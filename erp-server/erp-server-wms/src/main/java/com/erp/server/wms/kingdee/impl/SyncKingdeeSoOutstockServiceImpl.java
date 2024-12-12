@@ -434,6 +434,7 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
             dmpOrderItemEntity.setDeliveryDetailId(entity.getId());
             dmpOrderItemEntity.setSaleOrderNo(finalSoId);
             dmpOrderItemEntity.setPlatformOrderId(finalSoCode);
+            dmpOrderItemEntity.setStockName(soOutstockEntity.getWarehouseName());
             ProductDetailEntity productDetailEntity = idProductDetailMap.get(soOutstockDetailEntity.getSkuId());
             if (productDetailEntity != null) {
                 dmpOrderItemEntity.setItemName(productDetailEntity.getName());
@@ -1154,8 +1155,8 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
             if (customerInfo.getCurrency() != null) {
                 CurrencyDTO.ViewDTO viewDTO = currencyList.stream().filter(req -> req.getId().equals(customerInfo.getCurrency())).findFirst().orElse(null);
                 if (ObjectUtil.isNotEmpty(viewDTO)) {
-                    shudiyunB2cOrderDTO.setTransaction_currency_code(viewDTO.getId());
-                    shudiyunB2cOrderDTO.setTransaction_currency(viewDTO.getName());
+                    shudiyunB2cOrderDTO.setSettlement_currency_code(viewDTO.getId());
+                    shudiyunB2cOrderDTO.setSettlement_currency(viewDTO.getName());
                 }
             }
             if (customerInfo.getTradeCurrency() != null) {
@@ -1174,13 +1175,6 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
         if (ObjectUtil.isNotEmpty(shopInfoEntity)) {
             shudiyunB2cOrderDTO.setSubplatform_no(shopInfoEntity.getDictPlatform());
             shudiyunB2cOrderDTO.setSubplatform_name(PlatformDictEnum.getNameByCode(shopInfoEntity.getDictPlatform()));
-
-            CurrencyDTO.ViewDTO viewDTO = currencyList.stream().filter(req -> req.getId().equals(shopInfoEntity.getSettlementCurrency())).findFirst().orElse(null);
-            if (ObjectUtil.isNotEmpty(viewDTO)) {
-                shudiyunB2cOrderDTO.setSettlement_currency_code(viewDTO.getId());
-                shudiyunB2cOrderDTO.setSettlement_currency(viewDTO.getName());
-            }
-
         }
         shudiyunB2cOrderDTO.setShop_no(entity.getCustomerId());
         shudiyunB2cOrderDTO.setShop_name(entity.getCustomerName());

@@ -50,6 +50,7 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.DictCountryDTO;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.sys.entity.SysPostEntity;
+import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.tms.dto.AutoGenerateBillDTO;
 import com.erp.model.tms.dto.LogisticsChannelDTO;
 import com.erp.model.tms.dto.TmsDeclareBillDTO;
@@ -1543,6 +1544,9 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
                 addDetailDTO.setWarehouseLocation(view.getWarehouseLocation());
                 addDetailDTO.setQty(view.getAssembleQty());
                 addDetailDTO.setReferenceVersion(view.getBomVersion());
+                addDetailDTO.setRefId(view.getMainId());
+                addDetailDTO.setRefCode(view.getCode());
+                addDetailDTO.setRefDetailId(view.getId());
                 List<MachineSubComponentsDTO.AddDTO> subComponentsList = new ArrayList<>();
                 //子件信息
                 List<FirstMileDeliveryDTO.SonItem> sonItemList = view.getSonItemList();

@@ -89,6 +89,11 @@ public enum VirtualInventoryBusinessTypeEnum {
      * 发货通知单新增，加冻结
      */
     SO_DELIVERY_NOTICE_ADD("so_delivery_notice_add", "16","发货通知单新增加冻结"),
+
+    /**
+     * 加工单子件出库，减冻结
+     */
+    MACHINE_INFO_CHILD_OUT("machine_info_child_out", "17","加工单子件出库"),
     ;
 
     private String code;

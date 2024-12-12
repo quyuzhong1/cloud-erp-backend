@@ -1,6 +1,7 @@
 package com.erp.server.wms.mapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.erp.model.wms.dto.ReportOrderSalesDTO;
 import com.erp.model.wms.dto.VirtualTransFlowDTO;
 import com.erp.model.wms.entity.VirtualTransFlowEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
@@ -8,7 +9,9 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 
 
 /**
@@ -62,4 +65,15 @@ public interface VirtualTransFlowMapper extends BaseMapper<VirtualTransFlowEntit
      * @return IPage<InventoryDetailDTO>
      */
     IPage<VirtualTransFlowDTO.InventoryDetailDTO> detailPaging(Page query,@Param("params") VirtualTransFlowDTO.InventoryDetailParamDTO params);
+    /**
+     * 查询指定天数最后一条流水
+     * @author will
+     * @date 2024/11/20 16:11
+     * @param skuIdList
+     * @param warehouseIdList
+     * @param virtualWarehouseIdList
+     * @param localDate
+     * @return List<LastVirtualQtyDTO>
+     */
+    List<ReportOrderSalesDTO.LastVirtualQtyDTO> listLastVirtualQty(@Param("skuIdList")List<String> skuIdList,@Param("warehouseIdList") List<String> warehouseIdList,@Param("virtualWarehouseIdList") List<String> virtualWarehouseIdList,@Param("localDate") LocalDate localDate);
 }
