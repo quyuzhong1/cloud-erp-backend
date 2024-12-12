@@ -3,6 +3,7 @@ package com.erp.server.plm.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.dto.base.BaseIdDTO;
+import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -174,7 +175,7 @@ public class PlmAttachmentServiceImpl extends SuperServiceImpl<PlmAttachmentMapp
             return new ArrayList<>();
         }
         List<String> ids = productDetailEntities.stream().map(v->v.getId()).collect(Collectors.toList());
-        List<PlmAttachmentEntity> entities = this.lambdaQuery().in(PlmAttachmentEntity::getBusinessId, ids).list();
+        List<PlmAttachmentEntity> entities = this.lambdaQuery().in(PlmAttachmentEntity::getBusinessId, ids).eq(PlmAttachmentEntity::getType, SourceTypeEnum.PRODUCT_DETAIL.getTableName()).list();
         if(CollectionUtils.isEmpty(entities)){
             return new ArrayList<>();
         }
