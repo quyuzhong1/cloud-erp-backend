@@ -23,14 +23,12 @@ import com.erp.model.wms.dto.OverseasInventoryAgeDetailDTO;
 import com.erp.model.wms.dto.OverseasInventoryDTO;
 import com.erp.model.wms.dto.OverseasProviderDTO;
 import com.erp.model.wms.entity.OverseasInventoryEntity;
+import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.oms.feign.SkuMappingFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.mapper.OverseasInventoryMapper;
-import com.erp.server.wms.service.OperateLogService;
-import com.erp.server.wms.service.OverseasInventoryAgeDetailService;
-import com.erp.server.wms.service.OverseasInventoryService;
-import com.erp.server.wms.service.OverseasProviderService;
+import com.erp.server.wms.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
@@ -70,6 +68,8 @@ public class OverseasInventoryServiceImpl extends SuperServiceImpl<OverseasInven
     private DownloadTaskFeign downloadTaskFeign;
     @Resource
     private OverseasInventoryAgeDetailService overseasInventoryAgeDetailService;
+    @Resource
+    private WarehouseService warehouseService;
 
 
     @GlobalTransactional(rollbackFor = Exception.class)
@@ -141,10 +141,13 @@ public class OverseasInventoryServiceImpl extends SuperServiceImpl<OverseasInven
         // 查询关联仓库ID
         if (CollectionUtils.isNotEmpty(dto.getParams().getWarehouseIdList())){
             List<OverseasProviderDTO.WarehouseDTO> warehouseDTOList = overseasProviderService.listProviderWarehouseByIds(dto.getParams().getWarehouseIdList());
-            if (CollectionUtils.isEmpty(warehouseDTOList)){
+            List<WarehouseEntity> warehouseEntities = warehouseService.listByIds(dto.getParams().getWarehouseIdList());
+            if (CollectionUtils.isEmpty(warehouseDTOList) && CollectionUtils.isEmpty(warehouseEntities)){
                 return new PagingVO<>(new Page<>());
             }
             List<String> codeList = warehouseDTOList.stream().map(OverseasProviderDTO.WarehouseDTO::getPlatformWarehouseCode).distinct().collect(Collectors.toList());
+            List<String> kingdeeWarehouseCodeList = warehouseEntities.stream().map(WarehouseEntity::getKingdeeWarehouseCode).distinct().collect(Collectors.toList());
+            codeList.addAll(kingdeeWarehouseCodeList);
             params.setPlatformWarehouseCodeList(codeList);
         }
         dto.getParams().setSortFlag(true);
@@ -330,10 +333,13 @@ public class OverseasInventoryServiceImpl extends SuperServiceImpl<OverseasInven
         // 查询关联仓库ID
         if (CollectionUtils.isNotEmpty(dto.getParams().getWarehouseIdList())){
             List<OverseasProviderDTO.WarehouseDTO> warehouseDTOList = overseasProviderService.listProviderWarehouseByIds(dto.getParams().getWarehouseIdList());
-            if (CollectionUtils.isEmpty(warehouseDTOList)){
+            List<WarehouseEntity> warehouseEntities = warehouseService.listByIds(dto.getParams().getWarehouseIdList());
+            if (CollectionUtils.isEmpty(warehouseDTOList) && CollectionUtils.isEmpty(warehouseEntities)){
                 return new PagingVO<>(new Page<>());
             }
             List<String> codeList = warehouseDTOList.stream().map(OverseasProviderDTO.WarehouseDTO::getPlatformWarehouseCode).distinct().collect(Collectors.toList());
+            List<String> kingdeeWarehouseCodeList = warehouseEntities.stream().map(WarehouseEntity::getKingdeeWarehouseCode).distinct().collect(Collectors.toList());
+            codeList.addAll(kingdeeWarehouseCodeList);
             params.setPlatformWarehouseCodeList(codeList);
         }
         Page<OverseasInventoryDTO.ListDTO> page = baseMapper.listByParams(new Page<>(dto.getCurrPage(), dto.getPageSize()), params);
