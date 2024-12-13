@@ -53,7 +53,7 @@ public class MouldDetailServiceImpl extends SuperServiceImpl<MouldDetailMapper, 
     public void add(List<MouldDetailDTO.UpdateDTO> detailList, MouldInfoEntity entity) {
         List<MouldDetailEntity> mouldDetailList = list(Wrappers.<MouldDetailEntity>lambdaQuery().eq(MouldDetailEntity::getMainId, entity.getId()));
         List<String> detailIds = mouldDetailList.stream().map(MouldDetailEntity::getId).collect(Collectors.toList());
-        if (!CollectionUtils.isEmpty(detailList)) {
+        if (!CollectionUtils.isEmpty(detailIds)) {
             mouldProductService.remove(Wrappers.<MouldProductEntity>lambdaQuery().in(MouldProductEntity::getMouldDetailId, detailIds));
             mouldPurchasePriceService.remove(Wrappers.<MouldPurchasePriceEntity>lambdaQuery().in(MouldPurchasePriceEntity::getMouldDetailId, detailIds));
             mouldRefundAgreementService.remove(Wrappers.<MouldRefundAgreementEntity>lambdaQuery().in(MouldRefundAgreementEntity::getMouldDetailId, detailIds));
