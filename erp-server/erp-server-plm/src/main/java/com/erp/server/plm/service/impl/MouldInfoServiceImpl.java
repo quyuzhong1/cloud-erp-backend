@@ -5,6 +5,8 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
+import com.alibaba.excel.EasyExcel;
+import com.alibaba.excel.exception.ExcelCommonException;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
@@ -25,6 +27,8 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.ExcelUtil;
+import com.common.core.utils.FastDFSClientUtil;
 import com.common.core.utils.StrUtils;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.*;
@@ -43,6 +47,7 @@ import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.wms.feign.WarehouseLocationFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
+import com.erp.server.plm.listener.MouldInfoExcelListener;
 import com.erp.server.plm.mapper.MouldInfoMapper;
 import com.erp.server.plm.service.*;
 import lombok.extern.slf4j.Slf4j;
@@ -50,8 +55,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
+import java.io.File;
+import java.io.IOException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -115,6 +124,8 @@ public class MouldInfoServiceImpl extends SuperServiceImpl<MouldInfoMapper, Moul
 
     @Resource
     private MouldRefCalcQtyService mouldRefCalcQtyService;
+    @Resource
+    private CfgMouldSettingService cfgMouldSettingService;
 
     @Resource
     private WorkflowFeign workflowFeign;
@@ -232,7 +243,7 @@ public class MouldInfoServiceImpl extends SuperServiceImpl<MouldInfoMapper, Moul
     public BatchResultDTO submit(String id) {
         MouldInfoEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到模具数据"));
         // 待提交或审核不通过并且未作废允许提交
-        if (!ApproveStatusEnum.allowUpdateStatus(ApproveStatusEnum.getByStatus(entity.getStatus()))) {
+        if (Boolean.FALSE.equals(ApproveStatusEnum.allowUpdateStatus(ApproveStatusEnum.getByStatus(entity.getStatus())))) {
             throw new ServiceException(ApiError.ERROR_98010);
         }
         log.info("提交 开始启动模具表流程，id=：【{}】", entity.getId());
@@ -338,7 +349,7 @@ public class MouldInfoServiceImpl extends SuperServiceImpl<MouldInfoMapper, Moul
             throw new ServiceException(ApiError.ERROR_94006);
         }
         ProcessManagementDTO.ApproveResultDTO data = approveResult.getData();
-        if (ObjectUtil.isEmpty(data.getIsExistProcess()) || !data.getIsExistProcess()) {
+        if (ObjectUtil.isEmpty(data.getIsExistProcess()) || Boolean.TRUE.equals(!data.getIsExistProcess())) {
             // 无需走流程的数据则直接更新状态
             approveEnd(dto, entity);
         }
@@ -379,7 +390,7 @@ public class MouldInfoServiceImpl extends SuperServiceImpl<MouldInfoMapper, Moul
     public BatchResultDTO invalid(String id, String remark) {
         MouldInfoEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到模具数据"));
         // 待提交或审核不通过并且未作废允许作废
-        if (!ApproveStatusEnum.allowUpdateStatus(ApproveStatusEnum.getByStatus(entity.getStatus()))) {
+        if (Boolean.FALSE.equals(ApproveStatusEnum.allowUpdateStatus(ApproveStatusEnum.getByStatus(entity.getStatus())))) {
             throw new ServiceException(ApiError.ERROR_98005);
         }
         //已作废数据不支持作废
@@ -417,14 +428,14 @@ public class MouldInfoServiceImpl extends SuperServiceImpl<MouldInfoMapper, Moul
     @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO updateStoreLocation(String id, MouldInfoDTO.StoreLocationDTO dto) {
         MouldDetailEntity detail = mouldDetailService.getByIdOpt(id).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "模具明细"));
-        MouldInfoEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到模具数据"));
-        MouldStoreLocationEntity old = mouldStoreLocationService.getByMouldDetailId(id);
-
+        MouldInfoEntity entity = super.getByIdOpt(detail.getMainId()).orElseThrow(() -> new ServiceException("未找到模具数据"));
+        MouldStoreLocationEntity old = Optional.ofNullable(mouldStoreLocationService.getByMouldDetailId(id)).orElse(new MouldStoreLocationEntity());
         MouldStoreLocationEntity storeLocation = new MouldStoreLocationEntity();
         storeLocation.setId(old.getId());
         storeLocation.setMouldDetailId(id);
         storeLocation.setWarehouseLocation(dto.getWarehouseLocation());
         storeLocation.setWarehouseId(dto.getWarehouseId());
+        storeLocation.setAddress(dto.getAddress());
         mouldStoreLocationService.saveOrUpdate(storeLocation);
         //记录变更日志
         List<WarehouseLocationEntity> locationList = warehouseLocationFeign.listByWarehouseIds(Arrays.asList(dto.getWarehouseId(), old.getWarehouseId()));
@@ -696,6 +707,47 @@ public class MouldInfoServiceImpl extends SuperServiceImpl<MouldInfoMapper, Moul
         }
         fillOrderTrackingDetail(page.getRecords());
         return new PagingVO<>(page);
+    }
+
+    @Override
+    public MouldInfoImportDTO importExcel(MultipartFile excelFile, HttpServletResponse response) {
+        MouldInfoImportDTO importDTO = new MouldInfoImportDTO();
+        List<DictBasicEntity> dictBasicList = FeignQuery.list(DictBasicEntity.class);
+        Map<String, String> dictBasicNameMap = dictBasicList.stream()
+                .collect(Collectors.toMap(DictBasicEntity::getValue, DictBasicEntity::getId, (o1, o2) -> o1));
+        List<KingdeePaymentConditionEntity> paymentConditionList = FeignQuery.list(KingdeePaymentConditionEntity.class);
+        Map<String, String> paymentConditionNameMap = paymentConditionList.stream()
+                .collect(Collectors.toMap(KingdeePaymentConditionEntity::getName, KingdeePaymentConditionEntity::getId, (o1, o2) -> o1));
+        List<CfgMouldSettingEntity> cfgMouldSettingList = cfgMouldSettingService.mouldList();
+        Map<String, String> typeNameMap = cfgMouldSettingList.stream().collect(Collectors.toMap(CfgMouldSettingEntity::getName, CfgMouldSettingEntity::getId, (o1, o2) -> o1));
+        MouldInfoExcelListener excelListenerUtil = new MouldInfoExcelListener(typeNameMap,dictBasicNameMap,paymentConditionNameMap);
+        try {
+            EasyExcel.read(excelFile.getInputStream(), MouldInfoImportDTO.MouldInfoExcelDTO.class, excelListenerUtil).sheet(0).doRead();
+        } catch (IOException e) {
+            log.error("导入错误！", e);
+            throw new ServiceException(ApiError.ERROR_95124);
+        } catch (ExcelCommonException e) {
+            log.error("导入格式错误！", e);
+            throw new ServiceException(ApiError.ERROR_1016);
+        }
+        //验证导入数据是否为空
+        List<MouldInfoImportDTO.MouldInfoExcelDTO> allList = excelListenerUtil.getAllList();
+        if (CollectionUtils.isEmpty(allList)) {
+            throw new ServiceException(ApiError.ERROR_95123);
+        }
+        List<MouldDetailDTO.ViewDTO> successList = excelListenerUtil.getSuccessList();
+        String url = "";
+        List<MouldInfoImportDTO.MouldInfoExcelDTO> errorList = excelListenerUtil.getErrorList();
+        if (!CollectionUtils.isEmpty(errorList)) {
+            String fileName = "模具导入错误信息.xlsx";
+            File file = ExcelUtil.exportFile(fileName, "模具导入错误信息", errorList, MouldInfoImportDTO.MouldInfoExcelDTO.class);
+            if (!file.isDirectory()) {
+                url = FastDFSClientUtil.uploadFile(file, fileName);
+            }
+        }
+        importDTO.setSuccessList(successList);
+        importDTO.setErrorUrl(url);
+        return importDTO;
     }
 
     /**

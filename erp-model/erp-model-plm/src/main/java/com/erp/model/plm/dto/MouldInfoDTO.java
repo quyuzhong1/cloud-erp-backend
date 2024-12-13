@@ -144,6 +144,10 @@ public class MouldInfoDTO implements Serializable {
          */
         private String createUserName;
         /**
+         * 创建时间
+         */
+        private LocalDateTime createTime;
+        /**
          * 修改人名称
          */
         private String updateUserName;
@@ -324,7 +328,7 @@ public class MouldInfoDTO implements Serializable {
          * 明细id
          */
         @Size(min = 1, message = "明细不能为空")
-        private List<String> detailId;
+        private List<String> detailIdList;
         /**
          * 仓库id
          */

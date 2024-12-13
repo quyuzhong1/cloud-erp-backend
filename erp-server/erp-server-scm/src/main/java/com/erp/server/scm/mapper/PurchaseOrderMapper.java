@@ -205,4 +205,9 @@ public interface PurchaseOrderMapper extends BaseMapper<PurchaseOrderEntity> {
      * @return IPage<SourceCodeDTO>
      */
     IPage<PurchaseOrderDTO.SourceCodeDTO> purchaseCodePaging(Page query,@Param("params") PurchaseOrderDTO.SourceCodeParamDTO params);
+
+    /**
+     * 通过sku 供应商查询所有采购订单
+     */
+    List<PurchaseOrderDTO.PurchaseCalcQtyDTO> listAllPurchaseBySkuIdAndSupplier(@Param("skuIdList") List<String> skuIdList,@Param("supplierIdList") List<String> supplierIdList);
 }

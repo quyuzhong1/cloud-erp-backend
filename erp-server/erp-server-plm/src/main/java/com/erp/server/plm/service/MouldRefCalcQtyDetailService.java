@@ -15,5 +15,15 @@ import java.util.List;
  */
 public interface MouldRefCalcQtyDetailService extends SuperService<MouldRefCalcQtyDetailEntity> {
 
+    /**
+     * 根据主表id查明细
+     * @param id id
+     */
     List<MouldRefCalcQtyDetailEntity> listByMainId(String id);
+
+    /**
+     * 根据主表id查明细
+     * @param mouldRefMouldRefIds id
+     */
+    List<MouldRefCalcQtyDetailEntity> listByMainIds(List<String> mouldRefMouldRefIds);
 }

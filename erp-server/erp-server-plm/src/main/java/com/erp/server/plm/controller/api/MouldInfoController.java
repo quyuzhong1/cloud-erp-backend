@@ -5,25 +5,33 @@ import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.*;
 import com.common.business.vo.PagingVO;
-import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
-import com.common.core.enums.LogActionEnum;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
 import com.erp.model.plm.dto.MouldInfoDTO;
+import com.erp.model.plm.dto.MouldInfoImportDTO;
 import com.erp.model.plm.dto.MouldRefundVoucherDTO;
+import com.erp.model.plm.entity.MouldDetailEntity;
 import com.erp.model.plm.entity.MouldInfoEntity;
 import com.erp.server.plm.query.MouldInfoQueryHandler;
+import com.erp.server.plm.service.MouldDetailService;
 import com.erp.server.plm.service.MouldInfoService;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.springframework.core.io.DefaultResourceLoader;
+import org.springframework.core.io.ResourceLoader;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import javax.servlet.http.HttpServletResponse;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
+import java.util.*;
 
 /**
  * 模具主表
@@ -39,6 +47,9 @@ public class MouldInfoController extends BaseController {
 
     @Resource
     private MouldInfoService mouldInfoService;
+
+    @Resource
+    private MouldDetailService mouldDetailService;
 
     /**
      * 分页列表
@@ -71,7 +82,6 @@ public class MouldInfoController extends BaseController {
      * @return ApiResult<String>
      */
     @PostMapping("/draft")
-    @LogAction(value = LogActionEnum.INSERT, desc = "暂存模具")
     public ApiResult<BatchResultDTO> draft(@RequestBody @Validated MouldInfoDTO.CommonDTO dto) {
         return success(mouldInfoService.draft(dto));
     }
@@ -83,7 +93,6 @@ public class MouldInfoController extends BaseController {
      * @return ApiResult<String>
      */
     @PostMapping("/addAndSubmit")
-    @LogAction(value = LogActionEnum.INSERT, desc = "模具保存并提交")
     public ApiResult<BatchResultDTO> addAndSubmit(@RequestBody @Validated MouldInfoDTO.UpdateDTO dto) {
         return success(mouldInfoService.addAndSubmit(dto));
     }
@@ -97,7 +106,6 @@ public class MouldInfoController extends BaseController {
      * @return ApiResult<List<BatchResultDTO>>
      */
     @PostMapping("/submit")
-    @LogAction(value = LogActionEnum.SUBMIT, desc = "模具提交审核")
     public ApiResult<List<BatchResultDTO>> submit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         Set<String> ids = new HashSet<>(dto.getIds());
@@ -127,7 +135,6 @@ public class MouldInfoController extends BaseController {
      * @param dto 参数
      */
     @PostMapping("/cancelProcess")
-    @LogAction(value = LogActionEnum.CANCEL, desc = "模具撤销")
     public ApiResult<List<BatchResultDTO>> cancelProcess(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         Set<String> ids = new HashSet<>(dto.getIds());
@@ -157,7 +164,6 @@ public class MouldInfoController extends BaseController {
      * @param dto 参数
      */
     @PostMapping("/approve")
-    @LogAction(value = LogActionEnum.APPROVE, desc = "模具审核")
     public ApiResult<List<BatchResultDTO>> approve(@RequestBody @Validated BaseApproveParamDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         Set<String> ids = new HashSet<>(dto.getIds());
@@ -187,7 +193,6 @@ public class MouldInfoController extends BaseController {
      * @param dto 参数
      */
     @PostMapping("/disApprove")
-    @LogAction(value = LogActionEnum.DISAPPROVE, desc = "模具反审核")
     public ApiResult<List<BatchResultDTO>> disApprove(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         Set<String> ids = new HashSet<>(dto.getIds());
@@ -217,7 +222,6 @@ public class MouldInfoController extends BaseController {
      * @param dto 参数
      */
     @PostMapping("/invalid")
-    @LogAction(value = LogActionEnum.INVALID, desc = "作废")
     public ApiResult<List<BatchResultDTO>> invalid(@RequestBody @Validated BaseIdsDTO.RemarkDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         Set<String> ids = new HashSet<>(dto.getIds());
@@ -247,7 +251,6 @@ public class MouldInfoController extends BaseController {
      * @param dto 参数
      */
     @PostMapping("/updateRemark")
-    @LogAction(value = LogActionEnum.UPDATE, desc = "更新备注")
     public ApiResult<List<BatchResultDTO>> updateRemark(@RequestBody @Validated BaseIdsDTO.RemarkDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {
@@ -256,7 +259,8 @@ public class MouldInfoController extends BaseController {
                 resultDTO = mouldInfoService.updateRemark(id, dto.getRemark());
             }catch (Exception e){
                 log.error("模具更新备注失败",e);
-                MouldInfoEntity entity = mouldInfoService.getById(id);
+                MouldDetailEntity mouldDetail = Optional.ofNullable(mouldDetailService.getById(id)).orElse(new MouldDetailEntity());
+                MouldInfoEntity entity = mouldInfoService.getById(mouldDetail.getMainId());
                 if (ObjectUtil.isEmpty(entity)) {
                     resultDTO = BatchResultDTO.fail(id, id, "模具不存在, 更新备注失败");
                     resultDTOS.add(resultDTO);
@@ -276,16 +280,16 @@ public class MouldInfoController extends BaseController {
      * @param dto 参数
      */
     @PostMapping("/updateStoreLocation")
-    @LogAction(value = LogActionEnum.UPDATE, desc = "更新存放位置")
     public ApiResult<List<BatchResultDTO>> updateStoreLocation(@RequestBody @Validated MouldInfoDTO.StoreLocationDTO dto) {
-        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getDetailId().size());
-        for (String id : dto.getDetailId()) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getDetailIdList().size());
+        for (String id : dto.getDetailIdList()) {
             BatchResultDTO resultDTO;
             try {
                 resultDTO = mouldInfoService.updateStoreLocation(id, dto);
             }catch (Exception e){
                 log.error("模具更新存放位置失败",e);
-                MouldInfoEntity entity = mouldInfoService.getById(id);
+                MouldDetailEntity mouldDetail = Optional.ofNullable(mouldDetailService.getById(id)).orElse(new MouldDetailEntity());
+                MouldInfoEntity entity = mouldInfoService.getById(mouldDetail.getMainId());
                 if (ObjectUtil.isEmpty(entity)) {
                     resultDTO = BatchResultDTO.fail(id, id, "模具不存在, 更新存放位置失败");
                     resultDTOS.add(resultDTO);
@@ -305,7 +309,6 @@ public class MouldInfoController extends BaseController {
      * @param dto 参数
      */
     @PostMapping("/updateEnableTime")
-    @LogAction(value = LogActionEnum.UPDATE, desc = "更新启用时间")
     public ApiResult<List<BatchResultDTO>> updateEnableTime(@RequestBody @Validated MouldInfoDTO.EnableTimeDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getDetailIdList().size());
         for (String id : dto.getDetailIdList()) {
@@ -314,7 +317,8 @@ public class MouldInfoController extends BaseController {
                 resultDTO = mouldInfoService.updateEnableTime(id, dto.getEnableTime());
             }catch (Exception e){
                 log.error("模具更新启用时间失败",e);
-                MouldInfoEntity entity = mouldInfoService.getById(id);
+                MouldDetailEntity mouldDetail = Optional.ofNullable(mouldDetailService.getById(id)).orElse(new MouldDetailEntity());
+                MouldInfoEntity entity = mouldInfoService.getById(mouldDetail.getMainId());
                 if (ObjectUtil.isEmpty(entity)) {
                     resultDTO = BatchResultDTO.fail(id, id, "模具不存在, 更新启用时间失败");
                     resultDTOS.add(resultDTO);
@@ -333,7 +337,6 @@ public class MouldInfoController extends BaseController {
      * date:  2024-12-03
      * @param dto 参数
      */
-    @LogAction(value = LogActionEnum.EXPORT, desc = "导出")
     @PostMapping("/export")
     public ApiResult<Void> export(@RequestBody @Validated MouldInfoDTO.PagingParamDTO dto) {
         mouldInfoService.export(dto);
@@ -445,5 +448,41 @@ public class MouldInfoController extends BaseController {
     public ApiResult<Void> orderTrackingDetailExport(@RequestBody @Validated MouldInfoDTO.OrderTrackingDetailParamDTO dto) {
         mouldInfoService.orderTrackingDetailExport(dto);
         return success();
+    }
+
+    /**
+     * 导入
+     */
+    @PostMapping("/import")
+    public ApiResult<MouldInfoImportDTO> importExcel(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
+        MouldInfoImportDTO result = mouldInfoService.importExcel(excelFile, response);
+        return success(result);
+    }
+
+
+    /**
+     * 下载导入模板
+     *
+     */
+    @GetMapping("/exportTemplate")
+    public void exportTemplate(HttpServletResponse response) {
+        String path = "classpath:excel/mouldDetailTemplate.xlsx";
+        String excelName = "template.xlsx";
+        ResourceLoader resourceLoader = new DefaultResourceLoader();
+        try {
+            InputStream inputStream = resourceLoader.getResource(path).getInputStream();
+            XSSFWorkbook wb = new XSSFWorkbook(inputStream);
+            // 输出Excel文件
+            OutputStream output = response.getOutputStream();
+            response.reset();
+            // 设置文件头
+            response.setHeader("Content-Disposition",
+                    "attchement;filename=" + new String(excelName.getBytes("gb2312"), StandardCharsets.ISO_8859_1));
+            response.setContentType("application/msexcel");
+            wb.write(output);
+            wb.close();
+        } catch (Exception e) {
+            throw new ServiceException(ApiError.DEFAULT);
+        }
     }
 }

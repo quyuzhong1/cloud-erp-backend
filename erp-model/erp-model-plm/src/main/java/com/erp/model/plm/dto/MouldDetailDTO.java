@@ -297,20 +297,17 @@ public class MouldDetailDTO implements Serializable {
         /**
          * 返还标准
          */
-        @NotBlank(message = "返还标准不能为空")
         @Size(max = 255,message = "返还标准最大长度不能超过255位")
         private String refundStandard;
 
         /**
          * 退款单量
          */
-        @NotNull(message = "退款单量不能为空")
         private Integer refundOrderQty;
 
         /**
          * 返还金额
          */
-        @NotNull(message = "返还金额不能为空")
         @Digits(integer = 12, fraction = 4, message = "返还金额整数位不能超过12位，小数位不能超过4位")
         private BigDecimal refundAmount;
 

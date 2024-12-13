@@ -7,9 +7,12 @@ import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.plm.dto.MouldInfoDTO;
+import com.erp.model.plm.dto.MouldInfoImportDTO;
 import com.erp.model.plm.dto.MouldRefundVoucherDTO;
 import com.erp.model.plm.entity.MouldInfoEntity;
+import org.springframework.web.multipart.MultipartFile;
 
+import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -178,4 +181,10 @@ public interface MouldInfoService extends SuperService<MouldInfoEntity> {
      * @param dto 参数
      */
     PagingVO<MouldInfoDTO.OrderTrackingDetailExportDTO> exportOrderTrackingDetail(PagingDTO<MouldInfoDTO.OrderTrackingDetailParamDTO> dto);
+
+    /**
+     * 导入
+     * @param excelFile 文件
+     */
+    MouldInfoImportDTO importExcel(MultipartFile excelFile, HttpServletResponse response);
 }
