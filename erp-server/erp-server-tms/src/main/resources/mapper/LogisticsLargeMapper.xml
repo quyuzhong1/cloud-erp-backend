@@ -156,7 +156,7 @@
         ll.create_time AS createTime
         FROM logistics_large ll
         LEFT JOIN logistics_bill lb ON ll.logistics_bill_id = lb.id AND lb.is_deleted=false
-        LEFT JOIN logistics_bill_detail lbd ON lbd.id = lbd.main_id AND lbd.is_deleted=false
+        LEFT JOIN logistics_bill_detail lbd ON lb.id = lbd.main_id AND lbd.is_deleted=false
         WHERE
         ${params.sqlMap.default}
         and ll.is_deleted=false

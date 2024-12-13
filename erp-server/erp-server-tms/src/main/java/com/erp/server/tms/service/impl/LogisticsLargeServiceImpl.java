@@ -182,6 +182,11 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
                 pagingViewDTO.setSkuNo(productDetailEntity.getSkuNo());
             }
             pagingViewDTO.setShippingMethodName(LogisticsLargeShippingMethodEnum.getName(pagingViewDTO.getShippingMethod()));
+            pagingViewDTO.setPayStatus(SoB2cPayStatusEnum.getName(pagingViewDTO.getPayStatus()));
+            pagingViewDTO.setDeductibleTaxPayStatus(SoB2cPayStatusEnum.getName(pagingViewDTO.getDeductibleTaxPayStatus()));
+            pagingViewDTO.setDestDutyPayStatus(SoB2cPayStatusEnum.getName(pagingViewDTO.getOtherTaxPayStatus()));
+            pagingViewDTO.setOtherTaxPayStatus(SoB2cPayStatusEnum.getName(pagingViewDTO.getOtherTaxPayStatus()));
+            pagingViewDTO.setDestMiscFeePayStatus(SoB2cPayStatusEnum.getName(pagingViewDTO.getDestMiscFeePayStatus()));
         }
     }
 
@@ -372,14 +377,16 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
             addDTO.setFreightCalculationFactor(detailEntity.getAllocatedAmount().divide(detailEntity.getAmount(), 4, RoundingMode.DOWN));
         }
 
+        //税率
+        BigDecimal taxRate = addDTO.getTaxRate().divide(MathUtil.BigDecimal_100);
 
         BigDecimal rate = dmpTaskFeign.getRate(monthEntity.getMonth().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), logisticsBillCostEntity.getCurrency());
         if (ObjectUtil.isNotEmpty(detailEntity)) {
-            BigDecimal firstMileFreightAmount = detailEntity.getAllocatedAmount().divide(rate);
-            addDTO.setFirstMileEstimatedFreightTax(detailEntity.getAllocatedAmount().divide(rate));
-            addDTO.setFirstMileEstimatedFreight(firstMileFreightAmount.divide(BigDecimal.ONE.add(addDTO.getTaxRate()), 4, RoundingMode.DOWN));
-            addDTO.setFirstMileActualFreightTax(detailEntity.getAllocatedAmount().divide(rate));
-            addDTO.setFirstMileActualFreight(firstMileFreightAmount.divide(BigDecimal.ONE.add(addDTO.getTaxRate()), 4, RoundingMode.DOWN).multiply(addDTO.getTaxRate()));
+            BigDecimal firstMileFreightAmount = detailEntity.getAllocatedAmount().divide(rate, 4, RoundingMode.DOWN);
+            addDTO.setFirstMileEstimatedFreightTax(detailEntity.getAllocatedAmount().divide(rate, 4, RoundingMode.DOWN));
+            addDTO.setFirstMileEstimatedFreight(firstMileFreightAmount.divide(BigDecimal.ONE.add(taxRate), 4, RoundingMode.DOWN));
+            addDTO.setFirstMileActualFreightTax(detailEntity.getAllocatedAmount().divide(rate, 4, RoundingMode.DOWN));
+            addDTO.setFirstMileActualFreight(firstMileFreightAmount.divide(BigDecimal.ONE.add(taxRate), 4, RoundingMode.DOWN).multiply(taxRate));
         }
 
         //杂费
@@ -686,6 +693,9 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
         BigDecimal billAmountTotal = costAllocationDetailEntities.stream().map(SmallBagCostAllocationDetailEntity::getBillAmount).reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
         addDTO.setBillTotalAmount(billAmountTotal);
 
+        //税率
+        BigDecimal taxRate = addDTO.getTaxRate().divide(MathUtil.BigDecimal_100);
+
         //运费
         addDTO.setFreightCurrency(logisticsBillCostEntity.getCurrency());
         SmallBagCostAllocationDetailEntity detailEntity = costAllocationDetailEntities.stream()
@@ -697,8 +707,8 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
         if (ObjectUtil.isNotEmpty(detailEntity)) {
             BigDecimal lastMileFreightAmount = detailEntity.getAllocatedAmount();
             addDTO.setLastMileFreightAmountTax(detailEntity.getAllocatedAmount());
-            addDTO.setLastMileFreightAmount(lastMileFreightAmount.divide(BigDecimal.ONE.add(addDTO.getTaxRate()), 4, RoundingMode.DOWN));
-            addDTO.setLastMileFreightVatAmount(lastMileFreightAmount.divide(BigDecimal.ONE.add(addDTO.getTaxRate()), 4, RoundingMode.DOWN).multiply(addDTO.getTaxRate()));
+            addDTO.setLastMileFreightAmount(lastMileFreightAmount.divide(BigDecimal.ONE.add(taxRate), 4, RoundingMode.DOWN));
+            addDTO.setLastMileFreightVatAmount(lastMileFreightAmount.divide(BigDecimal.ONE.add(taxRate), 4, RoundingMode.DOWN).multiply(taxRate));
         }
 
         //杂费
@@ -821,7 +831,7 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
                     .collect(Collectors.toList());
 
             SoOutstockDetailEntity soOutstockDetailEntity = soOutstockDetailEntities.stream().filter(req -> req.getId().equals(costAllocationEntity.getOutstockDetailId())).findFirst().orElse(null);
-            SoB2cEntity soB2cEntity = soB2cEntities.stream().filter(req -> req.getId().equals(soOutstockEntity.getSourceId())).findFirst().orElse(null);
+            SoB2cEntity soB2cEntity = soB2cEntities.stream().filter(req -> req.getId().equals(soOutstockEntity.getSoId())).findFirst().orElse(null);
             this.smallBagCostAllocationHandler(mainEntity, costAllocationEntity, costAllocationDetailEntities, soOutstockEntity, soOutstockDetailEntity, soB2cEntity);
         }
 
@@ -1100,12 +1110,16 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
         if (shippingCostDetailEntity != null && shippingCostDetailEntity.getBillAmount().compareTo(BigDecimal.ZERO) > 0) {
             addDTO.setFreightCalculationFactor(shippingCostDetailEntity.getAllocatedAmount().divide(shippingCostDetailEntity.getBillAmount(), 4, RoundingMode.DOWN));
         }
+
+        //税率
+        BigDecimal taxRate = addDTO.getTaxRate().divide(MathUtil.BigDecimal_100);
+
         addDTO.setFreightCurrency(logisticsBillCostEntity.getCurrency());
         if (ObjectUtil.isNotEmpty(shippingCostDetailEntity)) {
             BigDecimal lastMileFreightAmount = shippingCostDetailEntity.getAllocatedAmount();
             addDTO.setLastMileFreightAmountTax(shippingCostDetailEntity.getAllocatedAmount());
-            addDTO.setLastMileFreightAmount(lastMileFreightAmount.divide(BigDecimal.ONE.add(addDTO.getTaxRate()), 4, RoundingMode.DOWN));
-            addDTO.setLastMileFreightVatAmount(lastMileFreightAmount.divide(BigDecimal.ONE.add(addDTO.getTaxRate()), 4, RoundingMode.DOWN).multiply(addDTO.getTaxRate()));
+            addDTO.setLastMileFreightAmount(lastMileFreightAmount.divide(BigDecimal.ONE.add(taxRate), 4, RoundingMode.DOWN));
+            addDTO.setLastMileFreightVatAmount(lastMileFreightAmount.divide(BigDecimal.ONE.add(taxRate), 4, RoundingMode.DOWN).multiply(taxRate));
         }
 
         //杂费
