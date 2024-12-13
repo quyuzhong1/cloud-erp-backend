@@ -304,53 +304,6 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
         addDTO.setShippingMethod(logisticsBillEntity.getShippingMethod());
         addDTO.setTransportNo(logisticsBillEntity.getCounterNo());
 
-        if (ReconciliationBillTypeEnum.ACTUAL.getCode().equals(firstMileSkuCostAllocationEntity.getBillSourceType())) {
-            //头程对账单主信息
-            TmsFirstMileReconciliationEntity reconciliationEntity = tmsFirstMileReconciliationService.getById(entity.getReconciliationId());
-            if (ObjectUtil.isEmpty(reconciliationEntity)) {
-                throw new ServiceException("头程对账单主信息未找到");
-            }
-
-            //实际账单
-            addDTO.setReconciliationBillType(ReconciliationBillTypeEnum.ACTUAL.getCode());
-
-            //付款状态
-            addDTO.setPayStatus(reconciliationEntity.getPayStatus());
-            addDTO.setDeductibleTaxPayStatus(reconciliationEntity.getPayStatus());
-            addDTO.setDestDutyPayStatus(reconciliationEntity.getPayStatus());
-            addDTO.setOtherTaxPayStatus(reconciliationEntity.getPayStatus());
-            addDTO.setDestMiscFeePayStatus(reconciliationEntity.getPayStatus());
-
-            addDTO.setDestMiscFeePayTime(reconciliationEntity.getPayTime());
-            addDTO.setDestTaxPayTime(reconciliationEntity.getPayTime());
-            addDTO.setOtherTaxPayTime(reconciliationEntity.getPayTime());
-            //查询是否有预估账单
-            String outstockCode = deliveryEntity.getCode();
-            String skuId = firstMileSkuCostAllocationEntity.getSkuId();
-
-            List<LogisticsLargeEntity> list = this.lambdaQuery()
-                    .eq(LogisticsLargeEntity::getOutstockCode, outstockCode)
-                    .eq(LogisticsLargeEntity::getSkuId, skuId)
-                    .eq(LogisticsLargeEntity::getSourceType, SourceTypeEnum.FIRST_MILE_COST_ALLOCATION.getCode())
-                    .orderByDesc(LogisticsLargeEntity::getReconciliationMonth)
-                    .list();
-            List<LogisticsLargeEntity> estimatedList = list.stream().filter(req -> ReconciliationBillTypeEnum.ESTIMATED.getCode().equals(req.getReconciliationBillType())).collect(Collectors.toList());
-            if (CollUtil.isNotEmpty(estimatedList)) {
-                //如果有需要生成负数的对冲预估账单
-                hedgingEstimated(estimatedList.get(0), addDTO.getReconciliationMonth());
-            }
-        } else {
-            //预估账单
-            addDTO.setReconciliationBillType(ReconciliationBillTypeEnum.ESTIMATED.getCode());
-
-            //付款状态
-            addDTO.setPayStatus(SoB2cPayStatusEnum.ENUM_PAYMENT.getCode());
-            addDTO.setDeductibleTaxPayStatus(SoB2cPayStatusEnum.ENUM_PAYMENT.getCode());
-            addDTO.setDestDutyPayStatus(SoB2cPayStatusEnum.ENUM_PAYMENT.getCode());
-            addDTO.setOtherTaxPayStatus(SoB2cPayStatusEnum.ENUM_PAYMENT.getCode());
-            addDTO.setDestMiscFeePayStatus(SoB2cPayStatusEnum.ENUM_PAYMENT.getCode());
-        }
-
         //付款方式
         LogisticsChannelEntity channelEntity = logisticsChannelService.getById(logisticsBillEntity.getChannelId());
         if (ObjectUtil.isNotEmpty(channelEntity)) {
@@ -465,6 +418,60 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
             addDTO.setActualTaxOtherTax(declareCostDetailEntity.getAllocatedAmount().multiply(rate));
         }
 
+        if (ReconciliationBillTypeEnum.ACTUAL.getCode().equals(firstMileSkuCostAllocationEntity.getBillSourceType())) {
+            //头程对账单主信息
+            TmsFirstMileReconciliationEntity reconciliationEntity = tmsFirstMileReconciliationService.getById(entity.getReconciliationId());
+            if (ObjectUtil.isEmpty(reconciliationEntity)) {
+                throw new ServiceException("头程对账单主信息未找到");
+            }
+
+            //实际账单
+            addDTO.setReconciliationBillType(ReconciliationBillTypeEnum.ACTUAL.getCode());
+
+            //付款状态
+            addDTO.setPayStatus(reconciliationEntity.getPayStatus());
+            addDTO.setDeductibleTaxPayStatus(reconciliationEntity.getPayStatus());
+            addDTO.setDestDutyPayStatus(reconciliationEntity.getPayStatus());
+            addDTO.setOtherTaxPayStatus(reconciliationEntity.getPayStatus());
+            addDTO.setDestMiscFeePayStatus(reconciliationEntity.getPayStatus());
+
+            addDTO.setDestMiscFeePayTime(reconciliationEntity.getPayTime());
+            addDTO.setDestTaxPayTime(reconciliationEntity.getPayTime());
+            addDTO.setOtherTaxPayTime(reconciliationEntity.getPayTime());
+            //查询是否有预估账单
+            String outstockCode = deliveryEntity.getCode();
+            String skuId = firstMileSkuCostAllocationEntity.getSkuId();
+
+            List<LogisticsLargeEntity> list = this.lambdaQuery()
+                    .eq(LogisticsLargeEntity::getOutstockCode, outstockCode)
+                    .eq(LogisticsLargeEntity::getSkuId, skuId)
+                    .eq(LogisticsLargeEntity::getSourceType, SourceTypeEnum.FIRST_MILE_COST_ALLOCATION.getCode())
+                    .orderByDesc(LogisticsLargeEntity::getReconciliationMonth)
+                    .list();
+            List<LogisticsLargeEntity> estimatedList = list.stream().filter(req -> ReconciliationBillTypeEnum.ESTIMATED.getCode().equals(req.getReconciliationBillType())).collect(Collectors.toList());
+            if (CollUtil.isNotEmpty(estimatedList)) {
+                //如果有需要生成负数的对冲预估账单
+                hedgingEstimated(estimatedList.get(0), addDTO.getReconciliationMonth());
+            }
+        } else {
+            //预估账单
+            addDTO.setReconciliationBillType(ReconciliationBillTypeEnum.ESTIMATED.getCode());
+
+            //付款状态
+            addDTO.setPayStatus(SoB2cPayStatusEnum.ENUM_PAYMENT.getCode());
+            addDTO.setDeductibleTaxPayStatus(SoB2cPayStatusEnum.ENUM_PAYMENT.getCode());
+            addDTO.setDestDutyPayStatus(SoB2cPayStatusEnum.ENUM_PAYMENT.getCode());
+            addDTO.setOtherTaxPayStatus(SoB2cPayStatusEnum.ENUM_PAYMENT.getCode());
+            addDTO.setDestMiscFeePayStatus(SoB2cPayStatusEnum.ENUM_PAYMENT.getCode());
+
+            //预估账单不需要实际的金额
+            addDTO.setFirstMileActualFreightTax(BigDecimal.ZERO);
+            addDTO.setFirstMileActualFreight(BigDecimal.ZERO);
+            addDTO.setActualDestMiscFee(BigDecimal.ZERO);
+            addDTO.setActualDutyAmount(BigDecimal.ZERO);
+            addDTO.setActualTaxOtherTax(BigDecimal.ZERO);
+        }
+
         //添加
         this.add(addDTO);
     }
@@ -573,29 +580,6 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
             throw new ServiceException("平台仓发货不需要推送物流大表");
         }
         addDTO.setLogisticsBillId(logisticsBillEntity.getId());
-
-        if (SmallBagCostAllocationMainFeeSourceEnum.CONFIRMED.getCode().equals(smallBagCostAllocationMainEntity.getFeeSource())) {
-            //实际账单
-            addDTO.setReconciliationBillType(ReconciliationBillTypeEnum.ACTUAL.getCode());
-
-            //付款状态
-            addDTO.setPayStatus(logisticsBillCostEntity.getPayStatus());
-            addDTO.setDeductibleTaxPayStatus(logisticsBillCostEntity.getPayStatus());
-            addDTO.setDestDutyPayStatus(logisticsBillCostEntity.getPayStatus());
-            addDTO.setOtherTaxPayStatus(logisticsBillCostEntity.getPayStatus());
-            addDTO.setDestMiscFeePayStatus(logisticsBillCostEntity.getPayStatus());
-
-        } else {
-            //预估账单
-            addDTO.setReconciliationBillType(ReconciliationBillTypeEnum.ESTIMATED.getCode());
-
-            //付款状态
-            addDTO.setPayStatus(SoB2cPayStatusEnum.ENUM_PAYMENT.getCode());
-            addDTO.setDeductibleTaxPayStatus(SoB2cPayStatusEnum.ENUM_PAYMENT.getCode());
-            addDTO.setDestDutyPayStatus(SoB2cPayStatusEnum.ENUM_PAYMENT.getCode());
-            addDTO.setOtherTaxPayStatus(SoB2cPayStatusEnum.ENUM_PAYMENT.getCode());
-            addDTO.setDestMiscFeePayStatus(SoB2cPayStatusEnum.ENUM_PAYMENT.getCode());
-        }
 
         //付款方式
         LogisticsChannelEntity channelEntity = logisticsChannelService.getById(soOutstockEntity.getLogisticsChannelId());
@@ -783,6 +767,34 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
             addDTO.setActualDeductibleTax(addDTO.getActualDeductibleTax().negate());
         }
 
+
+
+        if (SmallBagCostAllocationMainFeeSourceEnum.CONFIRMED.getCode().equals(smallBagCostAllocationMainEntity.getFeeSource())) {
+            //实际账单
+            addDTO.setReconciliationBillType(ReconciliationBillTypeEnum.ACTUAL.getCode());
+            //付款状态
+            addDTO.setPayStatus(logisticsBillCostEntity.getPayStatus());
+            addDTO.setDeductibleTaxPayStatus(logisticsBillCostEntity.getPayStatus());
+            addDTO.setDestDutyPayStatus(logisticsBillCostEntity.getPayStatus());
+            addDTO.setOtherTaxPayStatus(logisticsBillCostEntity.getPayStatus());
+            addDTO.setDestMiscFeePayStatus(logisticsBillCostEntity.getPayStatus());
+
+        } else {
+            //预估账单
+            addDTO.setReconciliationBillType(ReconciliationBillTypeEnum.ESTIMATED.getCode());
+            //付款状态
+            addDTO.setPayStatus(SoB2cPayStatusEnum.ENUM_PAYMENT.getCode());
+            addDTO.setDeductibleTaxPayStatus(SoB2cPayStatusEnum.ENUM_PAYMENT.getCode());
+            addDTO.setDestDutyPayStatus(SoB2cPayStatusEnum.ENUM_PAYMENT.getCode());
+            addDTO.setOtherTaxPayStatus(SoB2cPayStatusEnum.ENUM_PAYMENT.getCode());
+            addDTO.setDestMiscFeePayStatus(SoB2cPayStatusEnum.ENUM_PAYMENT.getCode());
+            //预估账单不需要实际的金额
+            addDTO.setActualDestMiscFee(otherCostDetailEntity.getAllocatedAmount());
+            addDTO.setActualDutyAmount(BigDecimal.ZERO);
+            addDTO.setActualDeductibleTax(BigDecimal.ZERO);
+
+        }
+
         //添加
         this.add(addDTO);
     }
@@ -918,6 +930,12 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
             //处理数据
             this.generateTransferCostAllocationHandler(mainEntity, entity, costAllocationDetailEntities, reconciliationEntity, reconciliationDetailEntity, soOutstockEntity);
         }
+
+
+
+        //更新中转费用分摊生成大表状态
+        transferDeclareCostAllocationMainService.updateBigTableStatus(mainEntity.getId(), SmallBagCostAllocationBigTableStatusEnum.DONE.getCode());
+
         return BatchResultDTO.success(mainEntity.getId(), soOutstockEntity.getCode(), OperationTypeEnum.ADD);
     }
 
@@ -1121,9 +1139,6 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
 
         //添加
         this.add(addDTO);
-
-        //更新中转费用分摊生成大表状态
-        transferDeclareCostAllocationMainService.updateBigTableStatus(mainEntity.getId(), SmallBagCostAllocationBigTableStatusEnum.DONE.getCode());
     }
 
     @Override
