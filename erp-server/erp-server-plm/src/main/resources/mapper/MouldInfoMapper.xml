@@ -200,7 +200,7 @@
         md.update_time as updateTime,
         mrp.sku_id,
         mrp.sku_no,
-        mrp.supplier_id                      as skuSupplierId,
+        mrp.supplier_id                      as skuSupplierId
         from mould_info mi
                  inner join mould_detail md on mi.id = md.main_id and md.is_deleted = false
                  left join public.mould_purchase_price mpp on md.id = mpp.mould_detail_id and mpp.is_deleted = false
