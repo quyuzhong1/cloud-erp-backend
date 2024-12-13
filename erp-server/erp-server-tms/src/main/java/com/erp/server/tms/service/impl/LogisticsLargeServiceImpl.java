@@ -698,10 +698,9 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
         if (detailEntity !=null && detailEntity.getBillAmount().compareTo(BigDecimal.ZERO) > 0) {
             addDTO.setFreightCalculationFactor(detailEntity.getAllocatedAmount().divide(detailEntity.getBillAmount(), 4, RoundingMode.DOWN));
         }
-        BigDecimal rate = dmpTaskFeign.getRate(logisticsBillEntity.getCreateTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), logisticsBillCostEntity.getCurrency());
         if (ObjectUtil.isNotEmpty(detailEntity)) {
-            BigDecimal lastMileFreightAmount = detailEntity.getAllocatedAmount().multiply(rate);
-            addDTO.setLastMileFreightAmount(detailEntity.getAllocatedAmount().multiply(rate));
+            BigDecimal lastMileFreightAmount = detailEntity.getAllocatedAmount();
+            addDTO.setLastMileFreightAmount(detailEntity.getAllocatedAmount());
             addDTO.setLastMileFreightAmountTax(lastMileFreightAmount.divide(BigDecimal.ONE.add(addDTO.getTaxRate()), 4, RoundingMode.DOWN));
             addDTO.setLastMileFreightVatAmount(lastMileFreightAmount.divide(BigDecimal.ONE.add(addDTO.getTaxRate()), 4, RoundingMode.DOWN).multiply(addDTO.getTaxRate()));
         }
@@ -716,8 +715,8 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
         // TODO 暂时取物流单的 后期取大类的
         addDTO.setMiscFeeCurrency(logisticsBillCostEntity.getCurrency());
         if (ObjectUtil.isNotEmpty(otherCostDetailEntity)) {
-            addDTO.setEstimatedDestMiscFee(otherCostDetailEntity.getAllocatedAmount().multiply(rate));
-            addDTO.setActualDestMiscFee(otherCostDetailEntity.getAllocatedAmount().multiply(rate));
+            addDTO.setEstimatedDestMiscFee(otherCostDetailEntity.getAllocatedAmount());
+            addDTO.setActualDestMiscFee(otherCostDetailEntity.getAllocatedAmount());
         }
         addDTO.setDestMiscFeePayTime(logisticsBillCostEntity.getPayTime());
 
@@ -731,8 +730,8 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
         // TODO 暂时取物流单的 后期取大类的
         addDTO.setDutyCurrency(logisticsBillCostEntity.getCurrency());
         if (ObjectUtil.isNotEmpty(declareCostDetailEntity)) {
-            addDTO.setEstimatedDutyAmount(declareCostDetailEntity.getAllocatedAmount().multiply(rate));
-            addDTO.setActualDutyAmount(declareCostDetailEntity.getAllocatedAmount().multiply(rate));
+            addDTO.setEstimatedDutyAmount(declareCostDetailEntity.getAllocatedAmount());
+            addDTO.setActualDutyAmount(declareCostDetailEntity.getAllocatedAmount());
         }
         addDTO.setDestTaxPayTime(logisticsBillCostEntity.getPayTime());
 
@@ -746,8 +745,8 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
         // TODO 暂时取物流单的 后期取大类的
         addDTO.setDeductibleTaxCurrency(logisticsBillCostEntity.getCurrency());
         if (ObjectUtil.isNotEmpty(deductibleTaxDetailEntity)) {
-            addDTO.setEstimatedDeductibleTax(deductibleTaxDetailEntity.getAllocatedAmount().multiply(rate));
-            addDTO.setActualDeductibleTax(deductibleTaxDetailEntity.getAllocatedAmount().multiply(rate));
+            addDTO.setEstimatedDeductibleTax(deductibleTaxDetailEntity.getAllocatedAmount());
+            addDTO.setActualDeductibleTax(deductibleTaxDetailEntity.getAllocatedAmount());
         }
         addDTO.setDeductibleTaxPayTime(logisticsBillCostEntity.getPayTime());
 
