@@ -2,9 +2,7 @@ package com.erp.server.tms.controller.feign;
 
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.PagingDTO;
-import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogSystemModule;
-import com.common.core.controller.vo.ApiResult;
 import com.common.core.utils.MathUtil;
 import com.erp.model.tms.dto.*;
 import com.erp.model.tms.entity.LogisticsAddressEntity;
@@ -12,7 +10,6 @@ import com.erp.model.tms.entity.LogisticsChannelEntity;
 import com.erp.model.tms.vo.request.LogisticsQueryBaseVO;
 import com.erp.model.tms.vo.response.LogisticsOrderResponseVO;
 import com.erp.server.tms.service.*;
-import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -183,7 +180,7 @@ public class LogisticsFeignController {
      * @param
      * @return
      */
-    @PostMapping("/estimateIsOutOfRangeDelivery")
+    @GetMapping("/estimateIsOutOfRangeDelivery")
     public Boolean estimateIsOutOfRangeDelivery(@RequestParam("logisticsChannelId")String logisticsChannelId, @RequestParam("country")String country, @RequestParam("postCode")String postCode){
         return logisticsChannelService.estimateIsOutOfRangeDelivery(logisticsChannelId, country, postCode);
     }
