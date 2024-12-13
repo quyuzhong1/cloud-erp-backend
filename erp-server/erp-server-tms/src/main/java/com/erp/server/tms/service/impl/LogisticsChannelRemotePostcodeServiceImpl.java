@@ -58,14 +58,13 @@ public class LogisticsChannelRemotePostcodeServiceImpl extends SuperServiceImpl<
     @Override
     @Transactional(rollbackFor = Exception.class)
     public BaseResultDTO.AddDTO batchUpdate(String channelId, List<String> remotePostcodeIdList) {
+        //删除
+        this.removeByChannelIdList(Arrays.asList(channelId));
         if(CollUtil.isNotEmpty(remotePostcodeIdList)){
             LogisticsChannelRemotePostcodeDTO.ViewDTO oldDTO = getByChannelId(channelId);
             List<LogisticsChannelRemotePostcodeDTO.AddDTO> addList = new ArrayList<>();
             List<LogisticsChannelRemotePostcodeDTO.AddDTO> warehouseList = remotePostcodeIdList.stream().map(e -> new LogisticsChannelRemotePostcodeDTO.AddDTO(e, channelId)).collect(Collectors.toList());
             addList.addAll(warehouseList);
-
-            //删除
-            this.removeByChannelIdList(Arrays.asList(channelId));
             //新增
             if (CollectionUtils.isNotEmpty(addList)) {
                 List<LogisticsChannelRemotePostcodeEntity> resultList = BeanMapperUtils.copyList(LogisticsChannelRemotePostcodeEntity.class, addList);
