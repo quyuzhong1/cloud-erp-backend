@@ -398,7 +398,7 @@ public class MouldInfoController extends BaseController {
     }
 
     /**
-     * 费用返还确认
+     * 费用返还确认详情
      * @param detailId 参数
      */
     @GetMapping("/returnConfirmDetail")
