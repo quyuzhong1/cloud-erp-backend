@@ -663,25 +663,14 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
                 }
             }
         }
-        List<DictCountryDTO.ListDTO> countryList = sysUserFeign.countryList();
-        if (CharSequenceUtil.isNotBlank(soOutstockEntity.getCustomerId())) {
-            List<CustomerInfoEntity> customerList = FeignQuery.create(CustomerInfoEntity.class).eq(CustomerInfoEntity::getId, soOutstockEntity.getCustomerId()).list();
-            if (CollUtil.isNotEmpty(customerList)) {
-                String countryName = countryList.stream().filter(obj -> obj.getId().equals(customerList.get(0).getCountryId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getNameCn())).orElse("");
-                if (CharSequenceUtil.isNotBlank(countryName)) {
-                    addDTO.setDestinationPort(countryName);
-                } else {
-                    addDTO.setDestinationPort(customerList.get(0).getMailAddress());
-                }
-            }
-        } else {
-            String countryName = countryList.stream().filter(obj -> obj.getId().equals(logisticsBillEntity.getToCountry())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getNameCn())).orElse("");
-            addDTO.setDestinationPort(countryName);
-        }
+
         List<LogisticsChannelAddressDTO.ViewDTO> viewDTOS = logisticsChannelAddressService.listByChannelId(soOutstockEntity.getLogisticsChannelId());
         LogisticsChannelAddressDTO.ViewDTO viewDTO = viewDTOS.stream().filter(req -> LogisticsAddressTypeEnum.DELIVER.getCode().equals(req.getLogisticsAddressType())).findFirst().orElse(null);
         if (viewDTO != null) {
-            addDTO.setPickupAddress(viewDTO.getLogisticsAddressName());
+            LogisticsAddressEntity addressEntity = logisticsAddressService.getById(viewDTO.getAddressId());
+            if (ObjectUtil.isNotEmpty(addressEntity)) {
+                addDTO.setPickupAddress(addressEntity.getAddressFirst());
+            }
         }
         addDTO.setPickupTime(soOutstockEntity.getBillDate().atStartOfDay());
         List<LogisticsBillDetailEntity> detailEntityList = logisticsBillDetailService.listByMainIds(Arrays.asList(logisticsBillEntity.getId()));
