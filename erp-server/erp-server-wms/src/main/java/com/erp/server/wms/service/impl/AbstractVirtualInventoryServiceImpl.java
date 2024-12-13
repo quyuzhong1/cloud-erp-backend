@@ -3,7 +3,6 @@ package com.erp.server.wms.service.impl;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson2.JSON;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.enums.BusinessNoTypeEnum;
@@ -273,11 +272,11 @@ public abstract class AbstractVirtualInventoryServiceImpl implements VirtualInve
     private void addWmsVirtualDetailMsg (VirtualTransFlowEntity transFlowEntity) {
         //入库添加本地任务表数据
         WmsVirtualDetailMsgDTO.AddDTO addDTO = new WmsVirtualDetailMsgDTO.AddDTO();
-        addDTO.setDataJson(JSONUtil.parseObj(transFlowEntity));
+        addDTO.setTransFlowEntity(transFlowEntity);
         addDTO.setRemark("虚拟仓库存入库");
         addDTO.setTradeTime(LocalDateTime.now());
         addDTO.setStatus(VirtualDetailMsgStatusEnum.WAIT_HANDLE.getCode());
-        //wmsVirtualDetailMsgService.add(addDTO);
+        wmsVirtualDetailMsgService.add(addDTO);
     }
 
     /**
