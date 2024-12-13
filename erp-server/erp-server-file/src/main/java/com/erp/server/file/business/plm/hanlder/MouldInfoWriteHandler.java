@@ -17,6 +17,7 @@ import java.util.List;
 @Slf4j
 public class MouldInfoWriteHandler extends AbstractCellWriteHandler {
 
+
     @Override
     public void afterCellDispose(WriteSheetHolder writeSheetHolder, WriteTableHolder writeTableHolder, List<CellData> cellDataList, Cell cell, Head head, Integer relativeRowIndex, Boolean isHead) {
         if (Boolean.TRUE.equals(isHead) || cell == null) {
