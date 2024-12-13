@@ -2,7 +2,6 @@ package com.erp.server.plm.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.common.business.vo.PagingVO;
 import com.erp.model.plm.dto.MouldInfoDTO;
 import com.erp.model.plm.entity.MouldInfoEntity;
 import org.apache.ibatis.annotations.Mapper;
@@ -42,7 +41,7 @@ public interface MouldInfoMapper extends BaseMapper<MouldInfoEntity> {
      * @param page   分页参数
      * @param params 参数
      */
-    PagingVO<MouldInfoDTO.OrderTrackingDetailDTO> orderTrackingDetail(@Param("page") Page<MouldInfoDTO.OrderTrackingDetailDTO> page,
+    Page<MouldInfoDTO.OrderTrackingDetailDTO> orderTrackingDetail(@Param("page") Page<MouldInfoDTO.OrderTrackingDetailDTO> page,
                                                                       @Param("params") MouldInfoDTO.OrderTrackingDetailParamDTO params);
 
     /**

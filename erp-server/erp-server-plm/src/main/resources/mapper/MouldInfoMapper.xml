@@ -80,7 +80,7 @@
                mrcqd.receive_qty,
                mrcqd.stock_in_qty,
                mrcqd.purchase_order_code,
-               mrcqd.po_create_time,
+               mrcqd.po_create_time as createTime,
                mrcqd.sku_id,
                mrcqd.sku_no,
                mrcqd.supplier_id

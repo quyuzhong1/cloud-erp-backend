@@ -579,7 +579,8 @@ public class MouldInfoServiceImpl extends SuperServiceImpl<MouldInfoMapper, Moul
 
     @Override
     public PagingVO<MouldInfoDTO.OrderTrackingDetailDTO> orderTrackingDetail(PagingDTO<MouldInfoDTO.OrderTrackingDetailParamDTO> dto) {
-        return baseMapper.orderTrackingDetail(new Page<>(dto.getCurrPage(), dto.getPageSize()), dto.getParams());
+        Page<MouldInfoDTO.OrderTrackingDetailDTO> page = baseMapper.orderTrackingDetail(new Page<>(dto.getCurrPage(), dto.getPageSize()), dto.getParams());
+        return new PagingVO<>(page);
     }
 
     @Override
