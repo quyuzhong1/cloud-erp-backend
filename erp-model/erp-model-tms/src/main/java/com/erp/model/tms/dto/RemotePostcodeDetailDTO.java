@@ -92,6 +92,10 @@ public class RemotePostcodeDetailDTO implements Serializable {
         * 城市
         */
         private String city;
+        /**
+         * 城市名称
+         */
+        private String cityName;
 
         /**
         * 匹配类型dict_basic表matchType: preciseMatch=精准匹配, prefixMatch=匹配前缀, suffixMatch=匹配后缀, fuzzyMatch=模糊匹配
@@ -190,7 +194,6 @@ public class RemotePostcodeDetailDTO implements Serializable {
         /**
         * 主键id
         */
-        @NotBlank(message = "主键id不能为空")
         private String id;
     }
 

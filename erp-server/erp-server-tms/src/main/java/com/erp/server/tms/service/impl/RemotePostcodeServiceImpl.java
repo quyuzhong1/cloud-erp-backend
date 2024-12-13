@@ -117,8 +117,12 @@ public class RemotePostcodeServiceImpl extends SuperServiceImpl<RemotePostcodeMa
             throw new ServiceException("偏远邮编组保存失败");
         }
         // 记录主单操作日志
-        operateLogService.addModuleOperateLogByObj(old, remotePostcodeEntity, ModuleTypeEnum.REMOTE_POSTCODE.getCode(), remotePostcodeEntity.getId(), "","");
+        operateLogService.addModuleOperateLogByObj(old, remotePostcodeEntity, ModuleTypeEnum.REMOTE_POSTCODE.getCode(), remotePostcodeEntity.getId(),"编辑操作");
+        if(Boolean.FALSE.equals(old.getDisabled().equals(remotePostcodeEntity.getDisabled()))){
+            String msg = StrUtil.format("变更了偏远地区邮编组【{}】为{}", remotePostcodeEntity.getName(),Boolean.TRUE.equals(remotePostcodeEntity.getDisabled()) ? "禁用" : "启用");
+            operateLogService.addModuleOperateLog(msg,ModuleTypeEnum.REMOTE_POSTCODE.getCode(), remotePostcodeEntity.getId(), "状态变更");
 
+        }
         //更新明细
         remotePostcodeDetailService.update(updateDTO,remotePostcodeEntity.getId());
         return Boolean.TRUE;
