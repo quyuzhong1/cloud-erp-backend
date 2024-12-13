@@ -1174,14 +1174,31 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
             return Boolean.FALSE;
         }
 
-        return this.lambdaUpdate()
-                .set(LogisticsLargeEntity::getPayStatus, status)
-                .set(LogisticsLargeEntity::getDeductibleTaxPayStatus, status)
-                .set(LogisticsLargeEntity::getDestDutyPayStatus, status)
-                .set(LogisticsLargeEntity::getOtherTaxPayStatus, status)
-                .set(LogisticsLargeEntity::getDestMiscFeePayStatus, status)
-                .in(LogisticsLargeEntity::getSourceId, sourceIds)
-                .update();
+        if (SoB2cPayStatusEnum.ENUM_PAYMENT.getCode().equals(status)) {
+            return this.lambdaUpdate()
+                    .set(LogisticsLargeEntity::getPayStatus, status)
+                    .set(LogisticsLargeEntity::getDeductibleTaxPayStatus, status)
+                    .set(LogisticsLargeEntity::getDestDutyPayStatus, status)
+                    .set(LogisticsLargeEntity::getOtherTaxPayStatus, status)
+                    .set(LogisticsLargeEntity::getDestMiscFeePayStatus, status)
+                    .set(LogisticsLargeEntity::getDeductibleTaxPayTime, null)
+                    .set(LogisticsLargeEntity::getDestTaxPayTime, null)
+                    .set(LogisticsLargeEntity::getFirstMilePayTime, null)
+                    .set(LogisticsLargeEntity::getOtherTaxPayTime, null)
+                    .set(LogisticsLargeEntity::getDestMiscFeePayTime, null)
+                    .in(LogisticsLargeEntity::getSourceId, sourceIds)
+                    .update();
+        } else {
+            return this.lambdaUpdate()
+                    .set(LogisticsLargeEntity::getPayStatus, status)
+                    .set(LogisticsLargeEntity::getDeductibleTaxPayStatus, status)
+                    .set(LogisticsLargeEntity::getDestDutyPayStatus, status)
+                    .set(LogisticsLargeEntity::getOtherTaxPayStatus, status)
+                    .set(LogisticsLargeEntity::getDestMiscFeePayStatus, status)
+                    .in(LogisticsLargeEntity::getSourceId, sourceIds)
+                    .update();
+        }
+
     }
 
     @Override
