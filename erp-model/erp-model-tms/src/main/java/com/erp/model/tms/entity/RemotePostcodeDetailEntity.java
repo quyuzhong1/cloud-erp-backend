@@ -40,6 +40,11 @@ public class RemotePostcodeDetailEntity extends BaseEntity<RemotePostcodeDetailE
     @TableField("city")
     private String city;
     /**
+     * 城市名称
+     */
+    @TableField("city_name")
+    private String cityName;
+    /**
     * 匹配类型dict_basic表matchType: preciseMatch=精准匹配, prefixMatch=匹配前缀, suffixMatch=匹配后缀, fuzzyMatch=模糊匹配  枚举：RemotePostcodeDetailMatchTypeEnum
     */
     @TableField("match_type")
