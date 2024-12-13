@@ -43,7 +43,7 @@ public class MouldDocInfoDTO implements Serializable {
         * 文档类型id
         */
         @Dict(tableName = "cfg_mould_setting", queryFieldName = "id")
-        private String typeId;
+        private String docTypeId;
 
         /**
         * 版本号
@@ -105,7 +105,7 @@ public class MouldDocInfoDTO implements Serializable {
         * 文档类型id
         */
         @Size(max = 19,message = "文档类型id最大长度不能超过19位")
-        private String typeId;
+        private String docTypeId;
 
         /**
         * 版本号
