@@ -2006,7 +2006,6 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
      * @param packingTaskEntity
      */
     @Override
-    @DataIdempotent(keyIdName = "taskId", waitTime = 20, businessType = "updatePackingStatus")
     public void updatePackingStatus(List<WmsCartonSpecDTO.GroupSkuDTO> groupSkuList, PackingTaskEntity packingTaskEntity) {
         if (null == packingTaskEntity || CollectionUtils.isEmpty(groupSkuList)){
             return;
