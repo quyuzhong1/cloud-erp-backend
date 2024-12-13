@@ -4,24 +4,26 @@ package com.erp.server.wms.service.impl;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjUtil;
+import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.common.business.annotation.DistributeLocker;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
+import com.common.message.constant.RedisKeyConstant;
 import com.erp.model.wms.dto.VirtualInventoryDetailDTO;
 import com.erp.model.wms.dto.VirtualTransFlowDetailDTO;
 import com.erp.model.wms.entity.VirtualInventoryDetailEntity;
 import com.erp.model.wms.entity.VirtualTransFlowDetailEntity;
 import com.erp.model.wms.entity.VirtualTransFlowEntity;
+import com.erp.model.wms.entity.WmsVirtualDetailMsgEntity;
+import com.erp.model.wms.enums.VirtualDetailMsgStatusEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.wms.mapper.VirtualTransFlowDetailMapper;
-import com.erp.server.wms.service.OperateLogService;
-import com.erp.server.wms.service.VirtualInventoryDetailService;
-import com.erp.server.wms.service.VirtualTransFlowDetailService;
-import com.erp.server.wms.service.VirtualTransFlowService;
+import com.erp.server.wms.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -61,6 +63,8 @@ public class VirtualTransFlowDetailServiceImpl extends SuperServiceImpl<VirtualT
     @Autowired
     private VirtualInventoryDetailService virtualInventoryDetailService;
 
+    @Autowired
+    private WmsVirtualDetailMsgService wmsVirtualDetailMsgService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -93,10 +97,16 @@ public class VirtualTransFlowDetailServiceImpl extends SuperServiceImpl<VirtualT
     }
 
     @Override
-    public Boolean consumeMessage(VirtualTransFlowEntity virtualTransFlowEntity) {
+    @Transactional(rollbackFor = Exception.class)
+    @DistributeLocker(businessType = RedisKeyConstant.WMS_VIRTUAL_DETAIL_MSG_KEY,keyName = "msgId",waiteTime = 60)
+    public Boolean consumeMessage(VirtualTransFlowEntity virtualTransFlowEntity,String msgId) {
         VirtualTransFlowEntity entity = virtualTransFlowService.getById(virtualTransFlowEntity.getId());
         if (ObjUtil.isEmpty(entity)) {
             throw new ServiceException("未找到流水数据");
+        }
+        WmsVirtualDetailMsgEntity virtualDetailMsgEntity = wmsVirtualDetailMsgService.getById(msgId);
+        if (ObjectUtil.isEmpty(virtualDetailMsgEntity) || !CharSequenceUtil.equals(virtualDetailMsgEntity.getStatus(), VirtualDetailMsgStatusEnum.DOING.getCode())) {
+            throw new ServiceException("非进行中任务不支持消费");
         }
         handleVirtualTransFlow(entity);
         return Boolean.TRUE;
