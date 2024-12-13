@@ -303,7 +303,8 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
         addDTO.setLogisticsBillId(logisticsBillEntity.getId());
         addDTO.setShippingMethod(logisticsBillEntity.getShippingMethod());
         addDTO.setTransportNo(logisticsBillEntity.getCounterNo());
-
+        addDTO.setWeight(firstMileSkuCostAllocationEntity.getAllocatedWeight());
+        addDTO.setLogisticsBillingWeight(firstMileSkuCostAllocationEntity.getAllocatedWeight());
         //付款方式
         LogisticsChannelEntity channelEntity = logisticsChannelService.getById(logisticsBillEntity.getChannelId());
         if (ObjectUtil.isNotEmpty(channelEntity)) {
