@@ -148,6 +148,9 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
     @Resource
     private FirstMileEstimatedBillService firstMileEstimatedBillService;
 
+    @Resource
+    private LogisticsAddressService logisticsAddressService;
+
 
     @Override
     public PagingVO<LogisticsLargeDTO.PagingViewDTO> paging(PagingDTO<LogisticsLargeDTO.PagingParamDTO> dto) {
@@ -1033,7 +1036,11 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
         List<LogisticsChannelAddressDTO.ViewDTO> viewDTOS = logisticsChannelAddressService.listByChannelId(soOutstockEntity.getLogisticsChannelId());
         LogisticsChannelAddressDTO.ViewDTO viewDTO = viewDTOS.stream().filter(req -> LogisticsAddressTypeEnum.DELIVER.getCode().equals(req.getLogisticsAddressType())).findFirst().orElse(null);
         if (viewDTO != null) {
-            addDTO.setPickupAddress(viewDTO.getLogisticsAddressName());
+            LogisticsAddressEntity addressEntity = logisticsAddressService.getById(viewDTO.getAddressId());
+
+            if (ObjectUtil.isNotEmpty(addressEntity)) {
+                addDTO.setPickupAddress(addressEntity.getAddressFirst());
+            }
         }
         addDTO.setPickupTime(soOutstockEntity.getBillDate().atStartOfDay());
         if (CollUtil.isNotEmpty(billDetailEntities)) {
