@@ -245,21 +245,21 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
     }
 
     @Override
-    public BatchResultDTO delete(String id) {
-        LogisticsLargeEntity entity = this.getById(id);
-        if (ObjectUtil.isEmpty(entity)) {
+    public BatchResultDTO deleteBySourceId(String sourceId) {
+        List<LogisticsLargeEntity> list = this.lambdaQuery().eq(LogisticsLargeEntity::getSourceId, sourceId).list();
+        if (CollUtil.isEmpty(list)) {
             throw new ServiceException("单据未存在!");
         }
 
-        this.lambdaUpdate().eq(LogisticsLargeEntity::getId, id).remove();
+        this.lambdaUpdate().eq(LogisticsLargeEntity::getSourceId, sourceId).remove();
 
-        if (SourceTypeEnum.TRANSFER_DECLARE_COST_ALLOCATION.getCode().equals(entity.getSourceType())) {
-            transferDeclareCostAllocationMainService.updateBigTableStatus(entity.getSourceId(), TransferDeclareCostAllocationMainBigTableStatusEnum.TODO.getCode());
-        } else if (SourceTypeEnum.SMALL_BAG_COST_ALLOCATION.getCode().equals(entity.getSourceType())) {
-            smallBagCostAllocationMainService.updateBigTableStatus(entity.getSourceId(), SmallBagCostAllocationMainBigTableStatusEnum.TODO.getCode());
+        if (SourceTypeEnum.TRANSFER_DECLARE_COST_ALLOCATION.getCode().equals(list.get(0).getSourceType())) {
+            transferDeclareCostAllocationMainService.updateBigTableStatus(list.get(0).getSourceId(), TransferDeclareCostAllocationMainBigTableStatusEnum.TODO.getCode());
+        } else if (SourceTypeEnum.SMALL_BAG_COST_ALLOCATION.getCode().equals(list.get(0).getSourceType())) {
+            smallBagCostAllocationMainService.updateBigTableStatus(list.get(0).getSourceId(), SmallBagCostAllocationMainBigTableStatusEnum.TODO.getCode());
         }
 
-        return BatchResultDTO.success(entity.getId(), entity.getOutstockCode(), OperationTypeEnum.DELETE);
+        return BatchResultDTO.success(list.get(0).getId(), list.get(0).getOutstockCode(), OperationTypeEnum.DELETE);
     }
 
     /**

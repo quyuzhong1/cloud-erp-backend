@@ -144,10 +144,13 @@ public class LogisticsLargeController extends BaseController {
     @PostMapping("/delete")
     public ApiResult<List<BatchResultDTO>> delete(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
-        for (String id : dto.getIds()) {
+        List<LogisticsLargeEntity> largeEntityList = logisticsLargeService.listByIds(dto.getIds());
+        List<String> sourceIds = largeEntityList.stream().map(req -> req.getSourceId()).distinct().collect(Collectors.toList());
+
+        for (String id : sourceIds) {
             BatchResultDTO deleteResult;
             try {
-                deleteResult = logisticsLargeService.delete(id);
+                deleteResult = logisticsLargeService.deleteBySourceId(id);
             } catch (Exception e) {
                 log.error("删除失败===>{}", e);
                 LogisticsLargeEntity entity = logisticsLargeService.getById(id);
