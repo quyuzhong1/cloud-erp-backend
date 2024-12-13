@@ -90,6 +90,11 @@ public class OverseasInventoryDTO implements Serializable {
         private List<String> platformWarehouseCodeList;
 
         private Boolean sortFlag = false;
+
+        /**
+         * 仓库名称
+         */
+        private List<String> warehouseNameList;
     }
 
 
@@ -192,7 +197,7 @@ public class OverseasInventoryDTO implements Serializable {
         /**
          * 销退在途数量
          */
-        private Integer saleReturnInTransitQty;
+        private Integer saleReturnInTransitQty = 0;
 
         /**
          * 平台下载更新时间 (更新时间)
