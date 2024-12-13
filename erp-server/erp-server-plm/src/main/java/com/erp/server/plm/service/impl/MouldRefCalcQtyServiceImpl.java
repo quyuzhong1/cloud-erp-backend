@@ -4,10 +4,10 @@ import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.utils.ApplicationContextUtils;
+import com.common.core.utils.MathUtil;
 import com.erp.model.plm.dto.MouldRefCalcQtyDTO;
-import com.erp.model.plm.entity.MouldRefCalcQtyDetailEntity;
-import com.erp.model.plm.entity.MouldRefCalcQtyEntity;
-import com.erp.model.plm.entity.MouldRefProductEntity;
+import com.erp.model.plm.entity.*;
+import com.erp.model.plm.enums.MouldRefundStatusEnum;
 import com.erp.model.plm.enums.RefundStandardEnum;
 import com.erp.model.scm.dto.PurchaseOrderDTO;
 import com.erp.rpc.scm.feign.PurchaseOrderFeign;
@@ -15,6 +15,7 @@ import com.erp.server.plm.mapper.MouldRefCalcQtyMapper;
 import com.erp.server.plm.service.MouldRefCalcQtyDetailService;
 import com.erp.server.plm.service.MouldRefCalcQtyService;
 import com.erp.server.plm.service.MouldRefProductService;
+import com.erp.server.plm.service.MouldRefundAgreementService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
@@ -45,6 +46,9 @@ public class MouldRefCalcQtyServiceImpl extends SuperServiceImpl<MouldRefCalcQty
     @Resource
     private MouldRefCalcQtyDetailService mouldRefCalcQtyDetailService;
 
+    @Resource
+    private MouldRefundAgreementService mouldRefundAgreementService;
+
     @Override
     public List<MouldRefCalcQtyEntity> listByMouldDetailIdList(List<String> detailIds) {
         return list(Wrappers.<MouldRefCalcQtyEntity>lambdaQuery().in(MouldRefCalcQtyEntity::getMouldDetailId, detailIds));
@@ -60,22 +64,24 @@ public class MouldRefCalcQtyServiceImpl extends SuperServiceImpl<MouldRefCalcQty
     public void calcRefundQty() {
         List<MouldRefCalcQtyDTO> mouldRefCalcQtyDTOList = baseMapper.getNeedCalcData();
         List<String> detailIds = mouldRefCalcQtyDTOList.stream().map(MouldRefCalcQtyDTO::getDetailId).distinct().collect(Collectors.toList());
-        List<MouldRefCalcQtyEntity> mouldRefList = listByMouldDetailIdList(detailIds);
+        List<MouldRefundAgreementEntity> agreementEntityList = mouldRefundAgreementService.listByMouldDetailIdList(detailIds);
+        removeOldData(detailIds);
         List<MouldRefProductEntity> mouldRefProductList = mouldRefProductService.listByMouldDetailIdList(detailIds);
-        List<String> mouldRefMouldRefIds = mouldRefProductList.stream().map(MouldRefProductEntity::getId).distinct().collect(Collectors.toList());
-        List<MouldRefCalcQtyDetailEntity> mouldRefDetailList = mouldRefCalcQtyDetailService.listByMainIds(mouldRefMouldRefIds);
         Map<String, List<String>> detailIdMap = mouldRefProductList.stream()
                 .collect(Collectors.groupingBy(MouldRefProductEntity::getMouldDetailId, Collectors.mapping(v -> v.getSkuId() + "-" + v.getSupplierId(), Collectors.toList())));
         List<String> skuIdList = mouldRefProductList.stream().map(MouldRefProductEntity::getSkuId).distinct().collect(Collectors.toList());
         List<String> supplierIdList = mouldRefProductList.stream().map(MouldRefProductEntity::getSupplierId).distinct().collect(Collectors.toList());
         List<PurchaseOrderDTO.PurchaseCalcQtyDTO> purchaseOrderDetailList = purchaseOrderFeign.listAllPurchaseBySkuIdAndSupplier(new PurchaseOrderDTO.PurchaseCalcQtyParamsDTO(skuIdList, supplierIdList));
         List<MouldRefCalcQtyEntity> mouldRefCalcQtyList = new ArrayList<>();
+        List<MouldRefundAgreementEntity> mouldRefundAgreementList = new ArrayList<>();
         List<MouldRefCalcQtyDetailEntity> mouldRefCalcQtyDetailList = new ArrayList<>();
         for (MouldRefCalcQtyDTO dto : mouldRefCalcQtyDTOList) {
-            MouldRefCalcQtyEntity mouldRefCalcQty = mouldRefList.stream()
+            MouldRefCalcQtyEntity mouldRefCalcQty = new MouldRefCalcQtyEntity();
+            MouldRefundAgreementEntity agreement = agreementEntityList.stream()
                     .filter(v -> v.getMouldDetailId().equals(dto.getDetailId()))
                     .findFirst()
-                    .orElse(new MouldRefCalcQtyEntity());
+                    .orElse(new MouldRefundAgreementEntity());
+            agreement.setMouldDetailId(dto.getDetailId());
             mouldRefCalcQty.setMouldDetailId(dto.getDetailId());
             mouldRefCalcQty.setId(ObjectUtils.isEmpty(mouldRefCalcQty.getId()) ? IdWorker.getIdStr() : mouldRefCalcQty.getId());
             List<String> skuSupplierList = detailIdMap.get(dto.getDetailId());
@@ -84,7 +90,7 @@ public class MouldRefCalcQtyServiceImpl extends SuperServiceImpl<MouldRefCalcQty
                 mouldRefCalcQty.setReceiveQty(0);
                 mouldRefCalcQty.setStockInQty(0);
                 mouldRefCalcQty.setCalcQty(0);
-                mouldRefCalcQtyList.add(mouldRefCalcQty);
+                agreement.setRefundStatus(MouldRefundStatusEnum.NOT_REACHED.getCode());
             } else {
                 List<PurchaseOrderDTO.PurchaseCalcQtyDTO> dtos = purchaseOrderDetailList.stream()
                         .filter(v -> skuSupplierList.contains(v.getSkuId() + "-" + v.getSupplierId()))
@@ -94,7 +100,7 @@ public class MouldRefCalcQtyServiceImpl extends SuperServiceImpl<MouldRefCalcQty
                 int receiveQty = 0;
                 int stockInQty = 0;
                 for (PurchaseOrderDTO.PurchaseCalcQtyDTO calcQtyDTO : dtos) {
-                    MouldRefCalcQtyDetailEntity detailEntity = getMouldRefCalcQtyDetailEntity(calcQtyDTO, mouldRefCalcQty, mouldRefDetailList);
+                    MouldRefCalcQtyDetailEntity detailEntity = getMouldRefCalcQtyDetailEntity(calcQtyDTO, mouldRefCalcQty);
                     mouldRefCalcQtyDetailList.add(detailEntity);
                     purchaseQty += calcQtyDTO.getPurchaseQty();
                     receiveQty += calcQtyDTO.getReceiveQty();
@@ -103,18 +109,34 @@ public class MouldRefCalcQtyServiceImpl extends SuperServiceImpl<MouldRefCalcQty
                 mouldRefCalcQty.setPurchaseQty(purchaseQty);
                 mouldRefCalcQty.setReceiveQty(receiveQty);
                 mouldRefCalcQty.setStockInQty(stockInQty);
+                int calcQty;
                 if (RefundStandardEnum.PURCHASE_ORDERS.getCode().equals(dto.getRefundStandard())) {
-                    mouldRefCalcQty.setCalcQty(purchaseQty);
+                    calcQty = purchaseQty;
                 } else if (RefundStandardEnum.RECEIVING.getCode().equals(dto.getRefundStandard())) {
-                    mouldRefCalcQty.setCalcQty(receiveQty);
+                    calcQty = receiveQty;
                 } else {
-                    mouldRefCalcQty.setCalcQty(stockInQty);
+                    calcQty = stockInQty;
                 }
-                mouldRefCalcQtyList.add(mouldRefCalcQty);
+                mouldRefCalcQty.setCalcQty(calcQty);
+                agreement.setRefundStatus(MathUtil.compareTo(calcQty, agreement.getRefundOrderQty()) >= MathUtil.ZERO ? MouldRefundStatusEnum.TO_BE_RETURNED.getCode() : MouldRefundStatusEnum.NOT_REACHED.getCode());
             }
+            mouldRefundAgreementList.add(agreement);
+            mouldRefCalcQtyList.add(mouldRefCalcQty);
         }
         ApplicationContextUtils.getBean(MouldRefCalcQtyServiceImpl.class).saveOrUpdateBatch(mouldRefCalcQtyList);
         mouldRefCalcQtyDetailService.saveOrUpdateBatch(mouldRefCalcQtyDetailList);
+        mouldRefundAgreementService.updateBatchById(mouldRefundAgreementList);
+    }
+
+    /**
+     * 删除旧数据
+     * @param detailIds id
+     */
+    private void removeOldData(List<String> detailIds) {
+        List<MouldRefCalcQtyEntity> list = listByMouldDetailIdList(detailIds);
+        List<String> calcQtyIds = list.stream().map(MouldRefCalcQtyEntity::getId).collect(Collectors.toList());
+        removeByIds(calcQtyIds);
+        mouldRefCalcQtyDetailService.remove(Wrappers.<MouldRefCalcQtyDetailEntity>lambdaQuery().in(MouldRefCalcQtyDetailEntity::getMainId, calcQtyIds));
     }
 
     /**
@@ -122,17 +144,10 @@ public class MouldRefCalcQtyServiceImpl extends SuperServiceImpl<MouldRefCalcQty
      *
      * @param calcQtyDTO         采购参数
      * @param mouldRefCalcQty    计算参数
-     * @param mouldRefDetailList 明细数据
      */
-    private static MouldRefCalcQtyDetailEntity getMouldRefCalcQtyDetailEntity(PurchaseOrderDTO.PurchaseCalcQtyDTO calcQtyDTO, MouldRefCalcQtyEntity mouldRefCalcQty, List<MouldRefCalcQtyDetailEntity> mouldRefDetailList) {
+    private static MouldRefCalcQtyDetailEntity getMouldRefCalcQtyDetailEntity(PurchaseOrderDTO.PurchaseCalcQtyDTO calcQtyDTO, MouldRefCalcQtyEntity mouldRefCalcQty) {
 
-        MouldRefCalcQtyDetailEntity detailEntity = mouldRefDetailList.stream()
-                .filter(v -> v.getMainId().equals(mouldRefCalcQty.getId()))
-                .filter(v -> v.getPurchaseOrderCode().equals(calcQtyDTO.getCode()))
-                .filter(v -> v.getSkuId().equals(calcQtyDTO.getSkuId()))
-                .filter(v -> v.getSupplierId().equals(calcQtyDTO.getSupplierId()))
-                .findFirst()
-                .orElse(new MouldRefCalcQtyDetailEntity());
+        MouldRefCalcQtyDetailEntity detailEntity = new MouldRefCalcQtyDetailEntity();
         detailEntity.setMainId(mouldRefCalcQty.getId());
         detailEntity.setPurchaseQty(calcQtyDTO.getPurchaseQty());
         detailEntity.setReceiveQty(calcQtyDTO.getReceiveQty());
