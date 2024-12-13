@@ -1422,7 +1422,11 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
 		resultMap.put("biz_uni_key", entity.getId());
 		resultMap.put("mapping_system_attribute", "主数据来源");
 		resultMap.put("mapping_system_mdm_type", "msku");
-		resultMap.put("map_product_code", listingInfoEntity.getPlatformSkuNo());
+		String platformSkuNo = listingInfoEntity.getPlatformSkuNo();
+		if(StringUtils.isBlank(platformSkuNo)) {
+			platformSkuNo = entity.getProductSkuNo();
+		}
+		resultMap.put("map_product_code", platformSkuNo);
 		String platformSkuName = listingInfoEntity.getPlatformSkuName();
 		if(StringUtils.isBlank(platformSkuName)) {
 			platformSkuName = productName;
