@@ -356,9 +356,15 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
         BigDecimal billTotalAmount = skuCostDetailEntityList.stream().map(FirstMileSkuCostAllocationDetailEntity::getAllocatedAmount).reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
         addDTO.setBillTotalAmount(billTotalAmount);
 
+        List<FirstMileSkuCostAllocationDetailEntity> costAllocationDetailEntities = skuCostDetailEntityList.stream()
+                .filter(req -> req.getCostMainId().equals(firstMileSkuCostAllocationEntity.getId()))
+                .collect(Collectors.toList());
+        if (ObjectUtil.isEmpty(detailEntityList)) {
+            throw new ServiceException("头程费用SKU分摊明细记录不存在");
+        }
         //头程运费
         addDTO.setFreightCurrency(logisticsBillCostEntity.getCurrency());
-        FirstMileSkuCostAllocationDetailEntity detailEntity = skuCostDetailEntityList.stream()
+        FirstMileSkuCostAllocationDetailEntity detailEntity = costAllocationDetailEntities.stream()
                 .filter(req -> AllocationFeeTypeEnum.SHIPPING_COST.getCode().equals(req.getFeeType()))
                 .findFirst().orElse(null);
         if (detailEntity != null && detailEntity.getAmount().compareTo(BigDecimal.ZERO) > 0) {
@@ -376,7 +382,7 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
         }
 
         //杂费
-        FirstMileSkuCostAllocationDetailEntity otherCostDetailEntity = skuCostDetailEntityList.stream()
+        FirstMileSkuCostAllocationDetailEntity otherCostDetailEntity = costAllocationDetailEntities.stream()
                 .filter(req -> AllocationFeeTypeEnum.OTHER_COST.getCode().equals(req.getFeeType()))
                 .findFirst().orElse(null);
         if (otherCostDetailEntity != null && otherCostDetailEntity.getAmount().compareTo(BigDecimal.ZERO) > 0) {
@@ -390,7 +396,7 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
         }
 
         //关税
-        FirstMileSkuCostAllocationDetailEntity declareCostDetailEntity = skuCostDetailEntityList.stream()
+        FirstMileSkuCostAllocationDetailEntity declareCostDetailEntity = costAllocationDetailEntities.stream()
                 .filter(req -> AllocationFeeTypeEnum.DECLARE_COST.getCode().equals(req.getFeeType()))
                 .findFirst().orElse(null);
         if (declareCostDetailEntity != null && declareCostDetailEntity.getAmount().compareTo(BigDecimal.ZERO) > 0) {
@@ -404,7 +410,7 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
         }
 
         //其他税金
-        FirstMileSkuCostAllocationDetailEntity otherTaxFeeDetailEntity = skuCostDetailEntityList.stream()
+        FirstMileSkuCostAllocationDetailEntity otherTaxFeeDetailEntity = costAllocationDetailEntities.stream()
                 .filter(req -> AllocationFeeTypeEnum.OTHER_TAX_FEE.getCode().equals(req.getFeeType()))
                 .findFirst().orElse(null);
         if (otherTaxFeeDetailEntity != null && otherTaxFeeDetailEntity.getAmount().compareTo(BigDecimal.ZERO) > 0) {
@@ -489,14 +495,8 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
 
         for (FirstMileSkuCostAllocationEntity firstMileSkuCostAllocationEntity : skuCostAllocationEntityList) {
 
-            List<FirstMileSkuCostAllocationDetailEntity> detailEntityList = skuCostAllocationDetailEntities.stream()
-                    .filter(req -> req.getCostMainId().equals(firstMileSkuCostAllocationEntity.getId()))
-                    .collect(Collectors.toList());
-            if (ObjectUtil.isEmpty(detailEntityList)) {
-                throw new ServiceException("头程费用SKU分摊明细记录不存在");
-            }
 
-            this.firstMileLogisticsTableHandler(entity, firstMileSkuCostAllocationEntity, detailEntityList, firstMileDeliveryEntity, firstMileDeliveryDetailEntities);
+            this.firstMileLogisticsTableHandler(entity, firstMileSkuCostAllocationEntity, skuCostAllocationDetailEntities, firstMileDeliveryEntity, firstMileDeliveryDetailEntities);
         }
         return BatchResultDTO.success(entity.getId(), entity.getBusinessCode(), OperationTypeEnum.ADD);
     }
