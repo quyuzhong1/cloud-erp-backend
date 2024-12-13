@@ -182,6 +182,11 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
                 pagingViewDTO.setSkuNo(productDetailEntity.getSkuNo());
             }
             pagingViewDTO.setShippingMethodName(LogisticsLargeShippingMethodEnum.getName(pagingViewDTO.getShippingMethod()));
+            pagingViewDTO.setPayStatus(SoB2cPayStatusEnum.getName(pagingViewDTO.getPayStatus()));
+            pagingViewDTO.setDeductibleTaxPayStatus(SoB2cPayStatusEnum.getName(pagingViewDTO.getDeductibleTaxPayStatus()));
+            pagingViewDTO.setDestDutyPayStatus(SoB2cPayStatusEnum.getName(pagingViewDTO.getOtherTaxPayStatus()));
+            pagingViewDTO.setOtherTaxPayStatus(SoB2cPayStatusEnum.getName(pagingViewDTO.getOtherTaxPayStatus()));
+            pagingViewDTO.setDestMiscFeePayStatus(SoB2cPayStatusEnum.getName(pagingViewDTO.getDestMiscFeePayStatus()));
         }
     }
 
@@ -377,10 +382,10 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
 
         BigDecimal rate = dmpTaskFeign.getRate(monthEntity.getMonth().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), logisticsBillCostEntity.getCurrency());
         if (ObjectUtil.isNotEmpty(detailEntity)) {
-            BigDecimal firstMileFreightAmount = detailEntity.getAllocatedAmount().divide(rate);
-            addDTO.setFirstMileEstimatedFreightTax(detailEntity.getAllocatedAmount().divide(rate));
+            BigDecimal firstMileFreightAmount = detailEntity.getAllocatedAmount().divide(rate, 4, RoundingMode.DOWN);
+            addDTO.setFirstMileEstimatedFreightTax(detailEntity.getAllocatedAmount().divide(rate, 4, RoundingMode.DOWN));
             addDTO.setFirstMileEstimatedFreight(firstMileFreightAmount.divide(BigDecimal.ONE.add(taxRate), 4, RoundingMode.DOWN));
-            addDTO.setFirstMileActualFreightTax(detailEntity.getAllocatedAmount().divide(rate));
+            addDTO.setFirstMileActualFreightTax(detailEntity.getAllocatedAmount().divide(rate, 4, RoundingMode.DOWN));
             addDTO.setFirstMileActualFreight(firstMileFreightAmount.divide(BigDecimal.ONE.add(taxRate), 4, RoundingMode.DOWN).multiply(taxRate));
         }
 
@@ -826,7 +831,7 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
                     .collect(Collectors.toList());
 
             SoOutstockDetailEntity soOutstockDetailEntity = soOutstockDetailEntities.stream().filter(req -> req.getId().equals(costAllocationEntity.getOutstockDetailId())).findFirst().orElse(null);
-            SoB2cEntity soB2cEntity = soB2cEntities.stream().filter(req -> req.getId().equals(soOutstockEntity.getSourceId())).findFirst().orElse(null);
+            SoB2cEntity soB2cEntity = soB2cEntities.stream().filter(req -> req.getId().equals(soOutstockEntity.getSoId())).findFirst().orElse(null);
             this.smallBagCostAllocationHandler(mainEntity, costAllocationEntity, costAllocationDetailEntities, soOutstockEntity, soOutstockDetailEntity, soB2cEntity);
         }
 
