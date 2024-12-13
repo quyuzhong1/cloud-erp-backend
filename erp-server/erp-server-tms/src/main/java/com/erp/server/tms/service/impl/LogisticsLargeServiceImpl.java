@@ -356,11 +356,16 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
             addDTO.setActualDeliveryTime(detailEntityList.get(0).getSignTime());
         }
 
-        //金额
 
+        //税率
+        BigDecimal taxRate = addDTO.getTaxRate().divide(MathUtil.BigDecimal_100);
+        //汇率
+        BigDecimal rate = dmpTaskFeign.getRate(monthEntity.getMonth().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), logisticsBillCostEntity.getCurrency());
+
+        //金额
         //总金额
         BigDecimal billTotalAmount = skuCostDetailEntityList.stream().map(FirstMileSkuCostAllocationDetailEntity::getAllocatedAmount).reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
-        addDTO.setBillTotalAmount(billTotalAmount);
+        addDTO.setBillTotalAmount(billTotalAmount.divide(rate, 4, RoundingMode.DOWN));
 
         List<FirstMileSkuCostAllocationDetailEntity> costAllocationDetailEntities = skuCostDetailEntityList.stream()
                 .filter(req -> req.getCostMainId().equals(firstMileSkuCostAllocationEntity.getId()))
@@ -377,10 +382,7 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
             addDTO.setFreightCalculationFactor(detailEntity.getAllocatedAmount().divide(detailEntity.getAmount(), 4, RoundingMode.DOWN));
         }
 
-        //税率
-        BigDecimal taxRate = addDTO.getTaxRate().divide(MathUtil.BigDecimal_100);
 
-        BigDecimal rate = dmpTaskFeign.getRate(monthEntity.getMonth().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), logisticsBillCostEntity.getCurrency());
         if (ObjectUtil.isNotEmpty(detailEntity)) {
             BigDecimal firstMileFreightAmount = detailEntity.getAllocatedAmount().divide(rate, 4, RoundingMode.DOWN);
             addDTO.setFirstMileEstimatedFreightTax(detailEntity.getAllocatedAmount().divide(rate, 4, RoundingMode.DOWN));
@@ -399,8 +401,8 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
         // TODO 暂时取物流单的 后期取大类的
         addDTO.setMiscFeeCurrency(logisticsBillCostEntity.getCurrency());
         if (ObjectUtil.isNotEmpty(otherCostDetailEntity)) {
-            addDTO.setEstimatedDestMiscFee(otherCostDetailEntity.getAllocatedAmount().multiply(rate));
-            addDTO.setActualDestMiscFee(otherCostDetailEntity.getAllocatedAmount().multiply(rate));
+            addDTO.setEstimatedDestMiscFee(otherCostDetailEntity.getAllocatedAmount().divide(rate, 4, RoundingMode.DOWN));
+            addDTO.setActualDestMiscFee(otherCostDetailEntity.getAllocatedAmount().divide(rate, 4, RoundingMode.DOWN));
         }
 
         //关税
@@ -413,8 +415,8 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
         // TODO 暂时取物流单的 后期取大类的
         addDTO.setDutyCurrency(logisticsBillCostEntity.getCurrency());
         if (ObjectUtil.isNotEmpty(declareCostDetailEntity)) {
-            addDTO.setEstimatedDutyAmount(declareCostDetailEntity.getAllocatedAmount().multiply(rate));
-            addDTO.setActualDutyAmount(declareCostDetailEntity.getAllocatedAmount().multiply(rate));
+            addDTO.setEstimatedDutyAmount(declareCostDetailEntity.getAllocatedAmount().divide(rate, 4, RoundingMode.DOWN));
+            addDTO.setActualDutyAmount(declareCostDetailEntity.getAllocatedAmount().divide(rate, 4, RoundingMode.DOWN));
         }
 
         //其他税金
@@ -428,8 +430,8 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
         // TODO 暂时取物流单的 后期取大类的
         addDTO.setOtherTaxCurrency(logisticsBillCostEntity.getCurrency());
         if (ObjectUtil.isNotEmpty(declareCostDetailEntity)) {
-            addDTO.setEstimatedTaxOtherTax(declareCostDetailEntity.getAllocatedAmount().multiply(rate));
-            addDTO.setActualTaxOtherTax(declareCostDetailEntity.getAllocatedAmount().multiply(rate));
+            addDTO.setEstimatedTaxOtherTax(declareCostDetailEntity.getAllocatedAmount().divide(rate, 4, RoundingMode.DOWN));
+            addDTO.setActualTaxOtherTax(declareCostDetailEntity.getAllocatedAmount().divide(rate, 4, RoundingMode.DOWN));
         }
 
         if (ReconciliationBillTypeEnum.ACTUAL.getCode().equals(firstMileSkuCostAllocationEntity.getBillSourceType())) {
