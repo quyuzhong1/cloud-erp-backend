@@ -16,11 +16,10 @@ import com.common.core.enums.LogActionEnum;
 import com.common.core.utils.BeanMapper;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.dto.WarehouseDTO.WarehouseUpdateStateDTO;
-import com.erp.server.wms.query.WarehouseQueryHandler;
 import com.erp.model.wms.entity.WarehouseEntity;
+import com.erp.server.wms.query.WarehouseQueryHandler;
 import com.erp.server.wms.service.WarehouseService;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -365,8 +364,8 @@ public class WarehouseController extends BaseController {
      * @date 2023-11-29
      */
     @GetMapping("/listOverseasWarehouse")
-    public ApiResult<List<WarehouseDTO.ListDTO>> listOverseasWarehouse() {
-        List<WarehouseDTO.ListDTO> list = warehouseService.listOverseasWarehouse();
+    public ApiResult<List<WarehouseDTO.PullDownDTO>> listOverseasWarehouse() {
+        List<WarehouseDTO.PullDownDTO> list = warehouseService.listOverseasWarehouse();
         return success(list);
     }
 
