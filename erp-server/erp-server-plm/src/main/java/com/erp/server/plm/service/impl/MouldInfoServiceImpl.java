@@ -40,7 +40,6 @@ import com.erp.model.scm.entity.KingdeePaymentConditionEntity;
 import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.wms.dto.WarehouseDTO;
-import com.erp.model.wms.dto.excel.VwAllocationAllocationExcelDTO;
 import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.model.wms.entity.WarehouseLocationEntity;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
@@ -134,10 +133,11 @@ public class MouldInfoServiceImpl extends SuperServiceImpl<MouldInfoMapper, Moul
 
     @Override
     public PagingVO<MouldInfoDTO.PagingViewDTO> paging(PagingDTO<MouldInfoDTO.PagingParamDTO> dto) {
-
-        Page<MouldInfoDTO.PagingViewDTO> page = baseMapper.paging(new Page<>(dto.getCurrPage(), dto.getPageSize()), dto.getParams());
+        Page<MouldInfoDTO.PagingViewDTO> page1 = new Page<>(dto.getCurrPage(), dto.getPageSize());
+        page1.setOptimizeCountSql(false);
+        Page<MouldInfoDTO.PagingViewDTO> page = baseMapper.paging(page1, dto.getParams());
         if (CollUtil.isEmpty(page.getRecords())) {
-            return new PagingVO<>();
+            return new PagingVO<>(page);
         }
         // 数据处理
         fillList(page.getRecords());
@@ -436,6 +436,7 @@ public class MouldInfoServiceImpl extends SuperServiceImpl<MouldInfoMapper, Moul
         storeLocation.setMouldDetailId(id);
         storeLocation.setWarehouseLocation(dto.getWarehouseLocation());
         storeLocation.setWarehouseId(dto.getWarehouseId());
+        storeLocation.setAddress(dto.getAddress());
         mouldStoreLocationService.saveOrUpdate(storeLocation);
         //记录变更日志
         List<WarehouseLocationEntity> locationList = warehouseLocationFeign.listByWarehouseIds(Arrays.asList(dto.getWarehouseId(), old.getWarehouseId()));
@@ -740,7 +741,7 @@ public class MouldInfoServiceImpl extends SuperServiceImpl<MouldInfoMapper, Moul
         List<MouldInfoImportDTO.MouldInfoExcelDTO> errorList = excelListenerUtil.getErrorList();
         if (!CollectionUtils.isEmpty(errorList)) {
             String fileName = "模具导入错误信息.xlsx";
-            File file = ExcelUtil.exportFile(fileName, "模具导入错误信息", errorList, VwAllocationAllocationExcelDTO.class);
+            File file = ExcelUtil.exportFile(fileName, "模具导入错误信息", errorList, MouldInfoImportDTO.MouldInfoExcelDTO.class);
             if (!file.isDirectory()) {
                 url = FastDFSClientUtil.uploadFile(file, fileName);
             }

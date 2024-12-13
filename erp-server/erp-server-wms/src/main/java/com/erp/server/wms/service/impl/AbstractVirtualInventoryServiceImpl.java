@@ -327,13 +327,15 @@ public abstract class AbstractVirtualInventoryServiceImpl implements VirtualInve
         }
 
         //出库添加本地任务表数据
-        if (InventoryStatusEnum.USABLE.equals(inventoryStatusEnum)
+        if ((InventoryStatusEnum.USABLE.equals(inventoryStatusEnum)
                 && CharSequenceUtil.equals(transFlowEntity.getSourceType(),InventorySourceTypeEnum.VIRTUAL_WAREHOUSE_ALLOCATION.getCode())
-                && CharSequenceUtil.equals(transFlowEntity.getSourceType(),InventorySourceTypeEnum.VIRTUAL_WAREHOUSE_ALLOCATION.getCode())
-                && CharSequenceUtil.equals(transFlowEntity.getSourceType(),InventorySourceTypeEnum.VIRTUAL_WAREHOUSE_ALLOCATION.getCode())
-                && CharSequenceUtil.equals(transFlowEntity.getSourceType(),InventorySourceTypeEnum.VIRTUAL_WAREHOUSE_ALLOCATION.getCode())
-        ) {
-
+                && CharSequenceUtil.equals(transFlowEntity.getSourceType(),InventorySourceTypeEnum.SO_OUTSTOCK.getCode()))
+                || (InventoryStatusEnum.FROZEN.equals(inventoryStatusEnum)
+                && CharSequenceUtil.equals(transFlowEntity.getSourceType(),InventorySourceTypeEnum.MACHINE_INFO.getCode())
+                && CharSequenceUtil.equals(transFlowEntity.getSourceType(),InventorySourceTypeEnum.TRANSFER_INFO.getCode())
+                && CharSequenceUtil.equals(transFlowEntity.getSourceType(),InventorySourceTypeEnum.SO_B2C_DELIVERY.getCode())
+                && CharSequenceUtil.equals(transFlowEntity.getSourceType(),InventorySourceTypeEnum.SO_OUTSTOCK.getCode())
+        )) {
             addWmsVirtualDetailMsg(transFlowEntity);
         }
     }
