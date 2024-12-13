@@ -29,4 +29,11 @@ public interface WmsVirtualDetailMsgService extends SuperService<WmsVirtualDetai
      * @date 2024/12/9 19:22
      */
     void virtualDetailMsgJob();
+    /**
+     * 更新状态
+     * @author will
+     * @date 2024/12/13 16:50
+     * @param entity
+     */
+    void updateStatus(WmsVirtualDetailMsgEntity entity);
 }

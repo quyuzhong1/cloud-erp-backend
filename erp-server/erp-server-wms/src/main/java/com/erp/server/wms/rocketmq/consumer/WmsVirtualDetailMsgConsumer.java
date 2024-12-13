@@ -47,10 +47,10 @@ public class WmsVirtualDetailMsgConsumer implements RocketMQListener<Object> {
         } catch (Exception e) {
             entity.setRemark(e.getMessage());
             entity.setStatus(VirtualDetailMsgStatusEnum.FAIL.getCode());
-            wmsVirtualDetailMsgService.updateById(entity);
+            wmsVirtualDetailMsgService.updateStatus(entity);
             return;
         }
         entity.setStatus(VirtualDetailMsgStatusEnum.SUCCESS.getCode());
-        wmsVirtualDetailMsgService.updateById(entity);
+        wmsVirtualDetailMsgService.updateStatus(entity);
     }
 }
