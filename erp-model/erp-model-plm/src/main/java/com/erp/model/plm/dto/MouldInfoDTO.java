@@ -17,6 +17,7 @@ import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -553,12 +554,12 @@ public class MouldInfoDTO implements Serializable {
         /**
          * 文件地址
          */
-        private List<String> fileUrl;
+        private List<String> fileUrl = new ArrayList<>();
 
         /**
          * 文件名字
          */
-        private List<String> fileName;
+        private List<String> fileName = new ArrayList<>();
 
         /**
          * 备注
