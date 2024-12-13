@@ -87,88 +87,92 @@
         outstock_code, outstock_time, pay_status, pay_terms_days, sku_id, sku_no, delivery_qty, platform_order_code, weight, logistics_billing_weight, shipping_method, logistics_supplier_id, logistics_supplier_name, payment_company_name, transport_no, origin_port, transit_port, destination_port, pickup_address, delivery_address, pickup_time, actual_delivery_time, freight_calculation_factor, freight_currency, bill_total_amount, first_mile_estimated_freight_tax, first_mile_estimated_freight, first_mile_actual_freight_tax, first_mile_actual_freight, tax_rate, first_mile_freight_vat_amount, first_mile_pay_time, last_mile_freight_amount_tax, last_mile_freight_amount, last_mile_freight_vat_amount, dest_misc_fee_factor, dest_misc_fee_pay_status, misc_fee_currency, estimated_dest_misc_fee, actual_dest_misc_fee, dest_misc_fee_pay_time, duty_calculation_factor, dest_duty_pay_status, duty_currency, estimated_duty_amount, actual_duty_amount, dest_tax_pay_time, deductible_tax_factor, deductible_tax_pay_status, deductible_tax_currency, estimated_deductible_tax, actual_deductible_tax, deductible_tax_pay_time, other_tax_calculation_factor, other_tax_pay_status, other_tax_currency, estimated_tax_other_tax, actual_tax_other_tax, other_tax_pay_time
     </sql>
 
-   <select id="paging" resultType="com.erp.model.tms.dto.LogisticsLargeDTO$PagingViewDTO">
-      SELECT
-          id,
-          outstock_code,
-          outstock_time,
-          pay_status,
-          pay_terms_days,
-          sku_id,
-          sku_no,
-          delivery_qty,
-          platform_order_code,
-          weight,
-          logistics_billing_weight,
-          shipping_method,
-          logistics_supplier_name,
-          payment_company_name,
-          transport_no,
-          origin_port,
-          transit_port,
-          destination_port,
-          pickup_address,
-          delivery_address,
-          pickup_time,
-          actual_delivery_time,
-          freight_calculation_factor,
-          freight_currency,
-          bill_total_amount,
-          first_mile_estimated_freight_tax,
-          first_mile_estimated_freight,
-          first_mile_actual_freight_tax,
-          first_mile_actual_freight,
-          tax_rate,
-          first_mile_freight_vat_amount,
-          first_mile_pay_time,
-          last_mile_freight_amount_tax,
-          last_mile_freight_amount,
-          last_mile_freight_vat_amount,
-          dest_misc_fee_factor,
-          dest_misc_fee_pay_status,
-          misc_fee_currency,
-          estimated_dest_misc_fee,
-          actual_dest_misc_fee,
-          dest_misc_fee_pay_time,
-          duty_calculation_factor,
-          dest_duty_pay_status,
-          duty_currency,
-          estimated_duty_amount,
-          actual_duty_amount,
-          dest_tax_pay_time,
-          deductible_tax_factor,
-          deductible_tax_pay_status,
-          deductible_tax_currency,
-          estimated_deductible_tax,
-          actual_deductible_tax,
-          deductible_tax_pay_time,
-          other_tax_calculation_factor,
-          other_tax_pay_status,
-          other_tax_currency,
-          estimated_tax_other_tax,
-          actual_tax_other_tax,
-          other_tax_pay_time,
-          source_id,
-          source_type,
-          source_detail_id,
-          reconciliation_bill_type,
-          reconciliation_month,
-          create_time
-      FROM logistics_large ll
-      WHERE
-      ${params.sqlMap.default}
-      and is_deleted=false
-      <!--权限-->
-      <if test="params.permissionSql!=null and params.permissionSql!=''">
-         ${params.permissionSql}
-      </if>
-      ORDER BY
-      <if test="params.sortList != null and params.sortList.size > 0">
-         <foreach collection="params.sortList" item="item" separator="," close=",">
-            ${item.field} ${item.sort}
-         </foreach>
-      </if>
-      create_time desc
+    <select id="paging" resultType="com.erp.model.tms.dto.LogisticsLargeDTO$PagingViewDTO">
+        SELECT
+        ll.id AS id,
+        ll.outstock_code AS outstockCode,
+        ll.outstock_time AS outstockTime,
+        ll.pay_status AS payStatus,
+        ll.pay_terms_days AS payTermsDays,
+        ll.sku_id AS skuId,
+        ll.sku_no AS skuNo,
+        ll.delivery_qty AS deliveryQty,
+        ll.platform_order_code AS platformOrderCode,
+        ll.weight AS weight,
+        ll.logistics_billing_weight AS logisticsBillingWeight,
+        ll.shipping_method AS shippingMethod,
+        ll.logistics_supplier_name AS logisticsSupplierName,
+        ll.payment_company_name AS paymentCompanyName,
+        ll.transport_no AS transportNo,
+        ll.origin_port AS originPort,
+        ll.transit_port AS transitPort,
+        ll.destination_port AS destinationPort,
+        ll.pickup_address AS pickupAddress,
+        ll.delivery_address AS deliveryAddress,
+        ll.pickup_time AS pickupTime,
+        lbd.sign_time AS actualDeliveryTime,
+        ll.freight_calculation_factor AS freightCalculationFactor,
+        ll.freight_currency AS freightCurrency,
+        ll.bill_total_amount AS billTotalAmount,
+        ll.first_mile_estimated_freight_tax AS firstMileEstimatedFreightTax,
+        ll.first_mile_estimated_freight AS firstMileEstimatedFreight,
+        ll.first_mile_actual_freight_tax AS firstMileActualFreightTax,
+        ll.first_mile_actual_freight AS firstMileActualFreight,
+        ll.tax_rate AS taxRate,
+        ll.first_mile_freight_vat_amount AS firstMileFreightVatAmount,
+        ll.first_mile_pay_time AS firstMilePayTime,
+        ll.last_mile_freight_amount_tax AS lastMileFreightAmountTax,
+        ll.last_mile_freight_amount AS lastMileFreightAmount,
+        ll.last_mile_freight_vat_amount AS lastMileFreightVatAmount,
+        ll.dest_misc_fee_factor AS destMiscFeeFactor,
+        ll.dest_misc_fee_pay_status AS destMiscFeePayStatus,
+        ll.misc_fee_currency AS miscFeeCurrency,
+        ll.estimated_dest_misc_fee AS estimatedDestMiscFee,
+        ll.actual_dest_misc_fee AS actualDestMiscFee,
+        ll.dest_misc_fee_pay_time AS destMiscFeePayTime,
+        ll.duty_calculation_factor AS dutyCalculationFactor,
+        ll.dest_duty_pay_status AS destDutyPayStatus,
+        ll.duty_currency AS dutyCurrency,
+        ll.estimated_duty_amount AS estimatedDutyAmount,
+        ll.actual_duty_amount AS actualDutyAmount,
+        ll.dest_tax_pay_time AS destTaxPayTime,
+        ll.deductible_tax_factor AS deductibleTaxFactor,
+        ll.deductible_tax_pay_status AS deductibleTaxPayStatus,
+        ll.deductible_tax_currency AS deductibleTaxCurrency,
+        ll.estimated_deductible_tax AS estimatedDeductibleTax,
+        ll.actual_deductible_tax AS actualDeductibleTax,
+        ll.deductible_tax_pay_time AS deductibleTaxPayTime,
+        ll.other_tax_calculation_factor AS otherTaxCalculationFactor,
+        ll.other_tax_pay_status AS otherTaxPayStatus,
+        ll.other_tax_currency AS otherTaxCurrency,
+        ll.estimated_tax_other_tax AS estimatedTaxOtherTax,
+        ll.actual_tax_other_tax AS actualTaxOtherTax,
+        ll.other_tax_pay_time AS otherTaxPayTime,
+        ll.source_id AS sourceId,
+        ll.source_type AS sourceType,
+        ll.source_detail_id AS sourceDetailId,
+        ll.reconciliation_bill_type AS reconciliationBillType,
+        TO_CHAR(ll.reconciliation_month, 'YYYY-MM') AS reconciliationMonth, -- 格式化日期为年-月
+        ll.create_time AS createTime
+        FROM logistics_large ll
+        LEFT JOIN logistics_bill lb ON ll.logistics_bill_id = lb.id
+        LEFT JOIN logistics_bill_detail lbd ON lbd.id = lbd.main_id
+        WHERE
+        ${params.sqlMap.default}
+        and ll.is_deleted=false
+        and lb.is_deleted=false
+        and lld.is_deleted=false
+        <!--权限-->
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        create_time desc
    </select>
 
     <!-- 根据状态分组查询数量 -->

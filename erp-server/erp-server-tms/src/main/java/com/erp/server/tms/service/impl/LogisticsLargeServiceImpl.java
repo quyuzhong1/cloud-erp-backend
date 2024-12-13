@@ -107,6 +107,9 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
     private LogisticsSupplierService logisticsSupplierService;
 
     @Resource
+    private TransferLogisticsSupplierService transferLogisticsSupplierService;
+
+    @Resource
     private SupplierFeign supplierFeign;
 
     @Resource
@@ -284,7 +287,7 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
         addDTO.setReconciliationMonth(monthEntity.getMonth());
         addDTO.setOutstockCode(deliveryEntity.getCode());
         addDTO.setOutstockTime(deliveryEntity.getApproveTime());
-
+        addDTO.setLogisticsBillId(logisticsBillEntity.getId());
         if (ReconciliationBillTypeEnum.ACTUAL.getCode().equals(firstMileSkuCostAllocationEntity.getBillSourceType())) {
             //头程对账单主信息
             TmsFirstMileReconciliationEntity reconciliationEntity = tmsFirstMileReconciliationService.getById(entity.getReconciliationId());
@@ -549,7 +552,7 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
         if (ShipmentTypeEnum.PLATFORM_DELIVER.getCode().equals(logisticsBillEntity.getShipmentType())) {
             throw new ServiceException("平台仓发货不需要推送物流大表");
         }
-
+        addDTO.setLogisticsBillId(logisticsBillEntity.getId());
 
         if (SmallBagCostAllocationMainFeeSourceEnum.CONFIRMED.getCode().equals(smallBagCostAllocationMainEntity.getFeeSource())) {
             //实际账单
@@ -604,7 +607,6 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
                 || SourceTypeEnum.SO_B2C_DELIVERY.getCode().equals(soOutstockEntity.getSourceType())
                 || SourceTypeEnum.THIRD_WAREHOUSE_CREATE_OUTBOUND_BILL.getCode().equals(soOutstockEntity.getSourceType())
         ) {
-            String sourceId = soOutstockEntity.getSourceId();
             if (ObjectUtil.isNotEmpty(soB2cEntity)) {
                 platformCode = soB2cEntity.getPlatformCode();
 
@@ -916,6 +918,7 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
         addDTO.setSourceId(mainEntity.getId());
         addDTO.setSourceType(SourceTypeEnum.TRANSFER_DECLARE_COST_ALLOCATION.getCode());
         addDTO.setSourceDetailId(entity.getId());
+        addDTO.setLogisticsBillId(logisticsBillEntity.getId());
         if (CharSequenceUtil.isNotBlank(mainEntity.getReportDate())) {
             // 在日期字符串末尾添加"01"来补充日期部分
             String dateWithDay = mainEntity.getReportDate() + "-01";
@@ -944,12 +947,14 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
                     }
                 }
             }
+            addDTO.setLogisticsSupplierId(declareReconciliationDetailEntity.getLogisticsSupplierId());
+            addDTO.setLogisticsSupplierName(declareReconciliationDetailEntity.getLogisticsSupplierName());
+
+
 
             //供应商信息
-            LogisticsSupplierEntity logisticsSupplierEntity = logisticsSupplierService.getById(channelEntity.getMainId());
+            TransferLogisticsSupplierEntity logisticsSupplierEntity = transferLogisticsSupplierService.getById(declareReconciliationDetailEntity.getLogisticsSupplierId());
             if (ObjectUtil.isNotEmpty(logisticsSupplierEntity)) {
-                addDTO.setLogisticsSupplierId(logisticsSupplierEntity.getId());
-                addDTO.setLogisticsSupplierName(logisticsSupplierEntity.getSupplierName());
                 SupplierEntity supplierEntity = supplierFeign.getSupplierById(logisticsSupplierEntity.getSupplierId());
                 if (ObjectUtil.isNotEmpty(supplierEntity)) {
                     List<BaseDropDownDTO.DisabledDTO> disabledDTOS = scmTaskFeign.listPaymentCondition();
@@ -971,8 +976,8 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
                 || SourceTypeEnum.SO_B2C_DELIVERY.getCode().equals(soOutstockEntity.getSourceType())
                 || SourceTypeEnum.THIRD_WAREHOUSE_CREATE_OUTBOUND_BILL.getCode().equals(soOutstockEntity.getSourceType())
         ) {
-            String sourceId = soOutstockEntity.getSourceId();
-            SoB2cEntity soB2cEntity = soB2cFeign.getById(sourceId);
+            String soId = soOutstockEntity.getSoId();
+            SoB2cEntity soB2cEntity = soB2cFeign.getById(soId);
             if (ObjectUtil.isNotEmpty(soB2cEntity)) {
                 platformCode = soB2cEntity.getPlatformCode();
 
@@ -1049,12 +1054,11 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
         if (shippingCostDetailEntity != null && shippingCostDetailEntity.getBillAmount().compareTo(BigDecimal.ZERO) > 0) {
             addDTO.setFreightCalculationFactor(shippingCostDetailEntity.getAllocatedAmount().divide(shippingCostDetailEntity.getBillAmount(), 4, RoundingMode.DOWN));
         }
-        BigDecimal rate = dmpTaskFeign.getRate(logisticsBillEntity.getCreateTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), logisticsBillCostEntity.getCurrency());
         addDTO.setFreightCurrency(logisticsBillCostEntity.getCurrency());
         if (ObjectUtil.isNotEmpty(shippingCostDetailEntity)) {
-            BigDecimal lastMileFreightAmount = shippingCostDetailEntity.getAllocatedAmount().multiply(rate);
-            addDTO.setLastMileFreightAmount(shippingCostDetailEntity.getAllocatedAmount().multiply(rate));
-            addDTO.setLastMileFreightAmountTax(lastMileFreightAmount.divide(BigDecimal.ONE.add(addDTO.getTaxRate()), 4, RoundingMode.DOWN));
+            BigDecimal lastMileFreightAmount = shippingCostDetailEntity.getAllocatedAmount();
+            addDTO.setLastMileFreightAmountTax(shippingCostDetailEntity.getAllocatedAmount());
+            addDTO.setLastMileFreightAmount(lastMileFreightAmount.divide(BigDecimal.ONE.add(addDTO.getTaxRate()), 4, RoundingMode.DOWN));
             addDTO.setLastMileFreightVatAmount(lastMileFreightAmount.divide(BigDecimal.ONE.add(addDTO.getTaxRate()), 4, RoundingMode.DOWN).multiply(addDTO.getTaxRate()));
         }
 
@@ -1068,8 +1072,8 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
         // TODO 暂时取物流单的 后期取大类的
         addDTO.setMiscFeeCurrency(logisticsBillCostEntity.getCurrency());
         if (ObjectUtil.isNotEmpty(otherCostDetailEntity)) {
-            addDTO.setEstimatedDestMiscFee(otherCostDetailEntity.getAllocatedAmount().multiply(rate));
-            addDTO.setActualDestMiscFee(otherCostDetailEntity.getAllocatedAmount().multiply(rate));
+            addDTO.setEstimatedDestMiscFee(otherCostDetailEntity.getAllocatedAmount());
+            addDTO.setActualDestMiscFee(otherCostDetailEntity.getAllocatedAmount());
         }
         addDTO.setDestMiscFeePayTime(logisticsBillCostEntity.getPayTime());
 
@@ -1083,8 +1087,8 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
         // TODO 暂时取物流单的 后期取大类的
         addDTO.setDutyCurrency(logisticsBillCostEntity.getCurrency());
         if (ObjectUtil.isNotEmpty(declareCostDetailEntity)) {
-            addDTO.setEstimatedDutyAmount(declareCostDetailEntity.getAllocatedAmount().multiply(rate));
-            addDTO.setActualDutyAmount(declareCostDetailEntity.getAllocatedAmount().multiply(rate));
+            addDTO.setEstimatedDutyAmount(declareCostDetailEntity.getAllocatedAmount());
+            addDTO.setActualDutyAmount(declareCostDetailEntity.getAllocatedAmount());
         }
         addDTO.setDestTaxPayTime(logisticsBillCostEntity.getPayTime());
 
@@ -1104,5 +1108,22 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
     @Override
     public List<String> listFirstMileCostAllocationIsExists() {
         return baseMapper.listFirstMileCostAllocationIsExists();
+    }
+
+
+    @Override
+    public Boolean updatePayStatusBySourceId(List<String> sourceIds, String status) {
+        if (CollUtil.isEmpty(sourceIds)) {
+            return Boolean.FALSE;
+        }
+
+        return this.lambdaUpdate()
+                .set(LogisticsLargeEntity::getPayStatus, status)
+                .set(LogisticsLargeEntity::getDeductibleTaxPayStatus, status)
+                .set(LogisticsLargeEntity::getDestDutyPayStatus, status)
+                .set(LogisticsLargeEntity::getOtherTaxPayStatus, status)
+                .set(LogisticsLargeEntity::getDestMiscFeePayStatus, status)
+                .in(LogisticsLargeEntity::getSourceId, sourceIds)
+                .update();
     }
 }

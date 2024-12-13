@@ -798,6 +798,11 @@ public class LogisticsLargeDTO implements Serializable {
          */
         @NotBlank(message = "对账单类型不能为空")
         private String reconciliationBillType;
+        /**
+         * 物流单id
+         */
+        @NotBlank(message = "物流单id")
+        private String logisticsBillId;
     }
 
 
@@ -1161,7 +1166,7 @@ public class LogisticsLargeDTO implements Serializable {
         /**
          * 财务期间【可排序】
          */
-        private LocalDate reconciliationMonth;
+        private String reconciliationMonth;
 
         /**
          * 出库单号【可排序】
