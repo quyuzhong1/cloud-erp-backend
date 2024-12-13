@@ -85,6 +85,9 @@ public class RuleLogisticsServiceImpl extends SuperServiceImpl<RuleLogisticsMapp
         RuleLogisticsEntity ruleLogisticsEntity = new RuleLogisticsEntity();
         BeanMapperUtils.copy(addDTO, ruleLogisticsEntity);
         handleData(ruleLogisticsEntity);
+        if(Boolean.TRUE.equals(ruleLogisticsEntity.getAutoGetTrackNo()) && Boolean.TRUE.equals(ruleLogisticsEntity.getAutoGetTrackNotOfRangeDelivery())){
+            throw new ServiceException(ApiError.ERROR_92163);
+        }
         boolean save = super.save(ruleLogisticsEntity);
         if (!save) {
             throw new ServiceException("物流规则单保存失败");
@@ -108,6 +111,7 @@ public class RuleLogisticsServiceImpl extends SuperServiceImpl<RuleLogisticsMapp
         String id = updateDTO.getId();
         RuleLogisticsEntity old = super.getById(id);
         isExist(old);
+
         List<RuleConditionDTO.UpdateDTO> conditionList = updateDTO.getConditionList();
         List<ConditionElement> conditionElementList = conditionList.stream().
                 map(c -> new ConditionElement(c.getLeftBracket(), c.getField(),
@@ -122,6 +126,9 @@ public class RuleLogisticsServiceImpl extends SuperServiceImpl<RuleLogisticsMapp
         RuleLogisticsEntity ruleLogisticsEntity = BeanMapperUtils.map(RuleLogisticsEntity.class, updateDTO);
         // 数据处理
         handleData(ruleLogisticsEntity);
+        if(Boolean.TRUE.equals(ruleLogisticsEntity.getAutoGetTrackNo()) && Boolean.TRUE.equals(ruleLogisticsEntity.getAutoGetTrackNotOfRangeDelivery())){
+            throw new ServiceException(ApiError.ERROR_92163);
+        }
         boolean save = super.updateById(ruleLogisticsEntity);
         if (!save) {
             throw new ServiceException("物流规则单保存失败");
