@@ -220,7 +220,7 @@ public class MouldInfoServiceImpl extends SuperServiceImpl<MouldInfoMapper, Moul
             String code = docNoGenHelper.generateMouldCode(category.getCode());
             mouldInfoEntity.setMouldCategoryCode(code);
         }
-        save(mouldInfoEntity);
+        ApplicationContextUtils.getBean(MouldInfoServiceImpl.class).saveOrUpdate(mouldInfoEntity);
         mouldDetailService.add(dto.getDetailList(), mouldInfoEntity);
         mouldDocInfoService.add(dto.getDocList(), mouldInfoEntity.getId());
         // 记录操作日志
