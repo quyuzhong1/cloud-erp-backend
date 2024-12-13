@@ -52,7 +52,7 @@ public interface VirtualTransFlowDetailService extends SuperService<VirtualTrans
      * @param virtualTransFlowEntity
      * @return Boolean
      */
-    Boolean consumeMessage(VirtualTransFlowEntity virtualTransFlowEntity);
+    Boolean consumeMessage(VirtualTransFlowEntity virtualTransFlowEntity,String msgId);
     /**
      * 查询虚拟仓库存明细id集合
      * @author will
