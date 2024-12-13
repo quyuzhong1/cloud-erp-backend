@@ -1291,6 +1291,11 @@ public class LogisticsLargeDTO implements Serializable {
         private String freightCurrency;
 
         /**
+         * 账单总金额【可排序】
+         */
+        private BigDecimal billTotalAmount;
+
+        /**
          * 头程预估运费（含税）【可排序】
          */
         private BigDecimal firstMileEstimatedFreightTax;

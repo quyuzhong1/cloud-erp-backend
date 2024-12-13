@@ -28,6 +28,7 @@ import com.erp.model.plm.entity.ProductPackEntity;
 import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.srm.entity.PoReconciliationEntity;
 import com.erp.model.sys.dto.DictCountryDTO;
+import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.tms.dto.*;
 import com.erp.model.tms.entity.*;
 import com.erp.model.tms.enums.*;
@@ -157,6 +158,8 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
     @Resource
     private SoInfoFeign soInfoFeign;
 
+    @Resource
+    private TransferLogisticsChannelService transferLogisticsChannelService;
 
     @Override
     public PagingVO<LogisticsLargeDTO.PagingViewDTO> paging(PagingDTO<LogisticsLargeDTO.PagingParamDTO> dto) {
@@ -654,10 +657,17 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
             if (OrderTypeEnum.B2C.getCode().equals(soOutstockEntity.getOrderType())) {
                 SoB2cDTO.CustomerDTO customerDTO = soB2cFeign.getB2cCustomerById(soOutstockEntity.getSoId());
                 addDTO.setDeliveryAddress(customerDTO.getReceiverAddress());
+                addDTO.setDestinationPort(customerDTO.getCountryName());
 
             } else {
                 SoInfoDTO.CustomerDTO customerDTO = soInfoFeign.getSoBaseById(soOutstockEntity.getSoId());
                 addDTO.setDeliveryAddress(customerDTO.getReceiveAddress());
+                if (CharSequenceUtil.isNotBlank(customerDTO.getCountryId())) {
+                    DictCountryEntity countryEntity = FeignQuery.getById(DictCountryEntity.class, customerDTO.getCountryId());
+                    if (ObjectUtil.isNotEmpty(countryEntity)) {
+                        addDTO.setDestinationPort(countryEntity.getNameCn());
+                    }
+                }
             }
         }
         List<DictCountryDTO.ListDTO> countryList = sysUserFeign.countryList();
@@ -993,20 +1003,22 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
                 || SourceTypeEnum.SO_B2C_DELIVERY.getCode().equals(soOutstockEntity.getSourceType())
                 || SourceTypeEnum.THIRD_WAREHOUSE_CREATE_OUTBOUND_BILL.getCode().equals(soOutstockEntity.getSourceType())
         ) {
-            String soId = soOutstockEntity.getSoId();
             if (ObjectUtil.isNotEmpty(soB2cEntity)) {
                 platformCode = soB2cEntity.getPlatformCode();
-
-                if (!TransferStatusEnum.NOT.getCode().equals(soB2cEntity.getTransferStatus())) {
-                    addDTO.setTransitPort("中国-香港");
-                }
             }
         } else {
             platformCode = soOutstockEntity.getSoCode();
-            addDTO.setTransitPort("中国");
         }
-        addDTO.setPlatformOrderCode(platformCode);
 
+        TransferLogisticsChannelEntity transferLogisticsChannelEntity = transferLogisticsChannelService.getById(declareReconciliationDetailEntity.getLogisticsChannelId());
+        if (ObjectUtil.isNotEmpty(transferLogisticsChannelEntity) && CharSequenceUtil.isNotBlank(transferLogisticsChannelEntity.getDeliveryCountry())) {
+            DictCountryEntity countryEntity = FeignQuery.getById(DictCountryEntity.class, transferLogisticsChannelEntity.getDeliveryCountry());
+            if (ObjectUtil.isNotEmpty(countryEntity)) {
+                addDTO.setTransitPort(countryEntity.getNameCn());
+            }
+        }
+
+        addDTO.setPlatformOrderCode(platformCode);
         if (declareReconciliationDetailEntity.getActualBillingWeight().compareTo(BigDecimal.ZERO) > 0) {
             addDTO.setWeight(declareReconciliationDetailEntity.getActualBillingWeight());
         } else {
@@ -1034,27 +1046,20 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
             if (OrderTypeEnum.B2C.getCode().equals(soOutstockEntity.getOrderType())) {
                 SoB2cDTO.CustomerDTO customerDTO = soB2cFeign.getB2cCustomerById(soOutstockEntity.getSoId());
                 addDTO.setDeliveryAddress(customerDTO.getReceiverAddress());
+                addDTO.setDestinationPort(customerDTO.getCountryName());
 
             } else {
                 SoInfoDTO.CustomerDTO customerDTO = soInfoFeign.getSoBaseById(soOutstockEntity.getSoId());
                 addDTO.setDeliveryAddress(customerDTO.getReceiveAddress());
-            }
-        }
-        List<DictCountryDTO.ListDTO> countryList = sysUserFeign.countryList();
-        if (CharSequenceUtil.isNotBlank(soOutstockEntity.getCustomerId())) {
-            List<CustomerInfoEntity> customerList = FeignQuery.create(CustomerInfoEntity.class).eq(CustomerInfoEntity::getId, soOutstockEntity.getCustomerId()).list();
-            if (CollUtil.isNotEmpty(customerList)) {
-                String countryName = countryList.stream().filter(obj -> obj.getId().equals(customerList.get(0).getCountryId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getNameCn())).orElse("");
-                if (CharSequenceUtil.isNotBlank(countryName)) {
-                    addDTO.setDestinationPort(countryName);
-                } else {
-                    addDTO.setDestinationPort(customerList.get(0).getMailAddress());
+                if (CharSequenceUtil.isNotBlank(customerDTO.getCountryId())) {
+                    DictCountryEntity countryEntity = FeignQuery.getById(DictCountryEntity.class, customerDTO.getCountryId());
+                    if (ObjectUtil.isNotEmpty(countryEntity)) {
+                        addDTO.setDestinationPort(countryEntity.getNameCn());
+                    }
                 }
             }
-        } else {
-            String countryName = countryList.stream().filter(obj -> obj.getId().equals(logisticsBillEntity.getToCountry())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getNameCn())).orElse("");
-            addDTO.setDestinationPort(countryName);
         }
+
         List<LogisticsChannelAddressDTO.ViewDTO> viewDTOS = logisticsChannelAddressService.listByChannelId(soOutstockEntity.getLogisticsChannelId());
         LogisticsChannelAddressDTO.ViewDTO viewDTO = viewDTOS.stream().filter(req -> LogisticsAddressTypeEnum.DELIVER.getCode().equals(req.getLogisticsAddressType())).findFirst().orElse(null);
         if (viewDTO != null) {
