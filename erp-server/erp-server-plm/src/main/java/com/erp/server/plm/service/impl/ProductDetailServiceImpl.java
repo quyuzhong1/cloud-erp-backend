@@ -7,7 +7,6 @@ import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.excel.exception.ExcelCommonException;
-import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -67,6 +66,7 @@ import com.erp.rpc.scm.feign.SupplierFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.tms.feign.CfgSettingFeign;
 import com.erp.rpc.wms.feign.InventoryFeign;
+import com.erp.server.plm.constant.ProductConstant;
 import com.erp.server.plm.constant.ProductManyDetailConstant;
 import com.erp.server.plm.listener.ProductDetailExcelListener;
 import com.erp.server.plm.mapper.ProductDetailMapper;
@@ -5159,6 +5159,36 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
     private void checkSizeAndWeight(ProductPackViewDTO productPackDTO) {
         if (ObjectUtils.isNotEmpty(productPackDTO)) {
+            StringBuilder errMsg = new StringBuilder();
+            //包装尺寸
+            if (MathUtil.compareTo(BigDecimal.ZERO, productPackDTO.getProductLength()) >= 0  || MathUtil.compareTo(BigDecimal.ZERO, productPackDTO.getProductWidth()) >= 0 || MathUtil.compareTo(BigDecimal.ZERO, productPackDTO.getProductHeight()) >= 0) {
+                errMsg.append(CharSequenceUtil.format(ApiError.ERROR_PRODUCT_SIZE_NOT_EXIST.msg, productPackDTO.getSkuNo())).append(ProductConstant.HTML_BR);
+            }
+            //箱规
+            if (MathUtil.compareTo(BigDecimal.ZERO, productPackDTO.getBoxLength()) >= 0 ||MathUtil.compareTo(BigDecimal.ZERO, productPackDTO.getBoxWidth()) >= 0 || MathUtil.compareTo(BigDecimal.ZERO, productPackDTO.getBoxHeight()) >= 0) {
+                errMsg.append(CharSequenceUtil.format(ApiError.ERROR_BOX_SIZE_NOT_EXIST.msg, productPackDTO.getSkuNo())).append(ProductConstant.HTML_BR);
+            }
+            //毛重
+            if (MathUtil.compareTo(productPackDTO.getGrossWeight(), MathUtil.ZERO) == MathUtil.ZERO) {
+                errMsg.append(CharSequenceUtil.format(ApiError.ERROR_GROSS_WEIGHT_NOT_EXIST.msg, productPackDTO.getSkuNo())).append(ProductConstant.HTML_BR);
+            }
+            //单箱重量
+            if (MathUtil.compareTo(productPackDTO.getBoxWeight(), MathUtil.ZERO) == MathUtil.ZERO) {
+                errMsg.append(CharSequenceUtil.format(ApiError.ERROR_BOX_WEIGHT_NOT_EXIST.msg, productPackDTO.getSkuNo())).append(ProductConstant.HTML_BR);
+            }
+            //净重
+            if (MathUtil.compareTo(productPackDTO.getNetWeight(), MathUtil.ZERO) == MathUtil.ZERO) {
+                errMsg.append(CharSequenceUtil.format(ApiError.ERROR_NET_WEIGHT_NOT_EXIST.msg, productPackDTO.getSkuNo())).append(ProductConstant.HTML_BR);
+            }
+            //单箱数量
+            if (MathUtil.compareTo(productPackDTO.getBoxQty(), MathUtil.ZERO) == MathUtil.ZERO) {
+                errMsg.append(CharSequenceUtil.format(ApiError.ERROR_BOX_QTY_NOT_EXIST.msg, productPackDTO.getSkuNo()));
+            }
+            if (CharSequenceUtil.isNotBlank(errMsg)) {
+                throw new ServiceException(errMsg.toString());
+            }
+
+
             compareDimensions(productPackDTO.getBoxLength(), productPackDTO.getProductLength(), ApiError.ERROR_LENGTH_BOX_LITTER_THAN_PRODUCT);
             compareDimensions(productPackDTO.getBoxWidth(), productPackDTO.getProductWidth(), ApiError.ERROR_WIDTH_BOX_LITTER_THAN_PRODUCT);
             compareDimensions(productPackDTO.getBoxHeight(), productPackDTO.getProductHeight(), ApiError.ERROR_HEIGHT_BOX_LITTER_THAN_PRODUCT);
