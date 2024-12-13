@@ -161,7 +161,7 @@
         ${params.sqlMap.default}
         and ll.is_deleted=false
         and lb.is_deleted=false
-        and lld.is_deleted=false
+        and lbd.is_deleted=false
         <!--权限-->
         <if test="params.permissionSql!=null and params.permissionSql!=''">
             ${params.permissionSql}
