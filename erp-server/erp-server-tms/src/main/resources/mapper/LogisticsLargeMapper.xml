@@ -172,7 +172,7 @@
                 ${item.field} ${item.sort}
             </foreach>
         </if>
-        ll. create_time desc
+        ll.create_time desc
    </select>
 
     <!-- 根据状态分组查询数量 -->
