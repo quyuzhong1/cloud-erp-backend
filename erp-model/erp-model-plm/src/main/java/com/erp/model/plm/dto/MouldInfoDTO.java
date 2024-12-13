@@ -404,6 +404,7 @@ public class MouldInfoDTO implements Serializable {
         /**
          * 状态
          */
+        @Dict(enumClass = ApproveStatusEnum.class)
         private String status;
         /**
          * 明细id

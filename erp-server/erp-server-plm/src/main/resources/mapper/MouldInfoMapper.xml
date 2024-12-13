@@ -53,26 +53,46 @@
         order by mi.create_time desc, md.id desc
     </select>
     <select id="orderTracking" resultType="com.erp.model.plm.dto.MouldInfoDTO$OrderTrackingViewDTO">
-        select mi.id,
-               mi.project_no,
-               mi.name,
-               mi.status,
-               md.id as detailId,
-               md.mould_no,
-               md.third_mould_no,
-               md.supplier_id,
-               md.update_time,
-               mra.is_need_refund,
-               mra.refund_standard,
-               mra.refund_order_qty,
-               mra.refund_amount,
-               mra.refund_status
+        select mi.id as id,
+        mi.project_no as projectNo,
+        mi.name as name,
+        mi.status,
+        md.id as detailId,
+        md.mould_no as mouldNo,
+        md.third_mould_no as thirdMouldNo,
+        md.supplier_id as supplierId,
+        mpp.qty as qty,
+        mpp.tax_price as taxPrice,
+        mpp.tax_rate as taxRate,
+        mpp.pay_method_id as payMethodId,
+        mpp.payment_condition as paymentCondition,
+        mpp.currency as currency,
+        mpp.exchange_rate as exchangeRate,
+        mra.is_need_refund as isNeedRefund,
+        mra.refund_standard as refundStandard,
+        mra.refund_order_qty as refundOrderQty,
+        mra.refund_amount as refundAmount,
+        mra.refund_status as refundStatus,
+        mrcq.purchase_qty as purchaseQty,
+        mrcq.receive_qty as receiveQty,
+        mrcq.stock_in_qty as stockInQty,
+        mrcq.calc_qty - mra.refund_order_qty AS diffQty,
+        md.update_time as updateTime
         from mould_info mi
-                 inner join mould_detail md on mi.id = md.main_id and md.is_deleted = false
-                 left join mould_refund_agreement mra on md.id = mra.mould_detail_id and mra.is_deleted = false
+        inner join mould_detail md on mi.id = md.main_id and md.is_deleted = false
+        left join public.mould_purchase_price mpp on md.id = mpp.mould_detail_id and mpp.is_deleted = false
+        left join public.mould_refund_agreement mra on md.id = mra.mould_detail_id and mra.is_deleted = false
+        left join public.mould_ref_calc_qty mrcq on md.id = mrcq.mould_detail_id and mrcq.is_deleted = false
         where ${params.sqlMap.default}
-          and mi.is_deleted = false
-        order by md.create_time desc, md.id desc
+        and mi.is_deleted = false
+        and mra.is_need_refund = true
+        order by
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        md.create_time desc, md.id desc
     </select>
 
     <select id="orderTrackingDetail" resultType="com.erp.model.plm.dto.MouldInfoDTO$OrderTrackingDetailDTO">
@@ -153,41 +173,50 @@
     </select>
 
     <select id="exportOrderTracking" resultType="com.erp.model.plm.dto.MouldInfoDTO$OrderTrackingExportDTO">
-        select mi.project_no,
-               mi.name,
-               mi.status,
-               md.mould_no,
-               md.third_mould_no,
-               md.supplier_id,
-               mpp.qty,
-               mpp.tax_price,
-               mpp.tax_rate,
-               mpp.pay_method_id,
-               mpp.payment_condition,
-               mpp.currency,
-               mpp.exchange_rate,
-               mrp.sku_id,
-               mrp.sku_no,
-               mrp.supplier_id                      as skuSupplierId,
-               mra.is_need_refund,
-               mra.refund_standard,
-               mra.refund_order_qty,
-               mra.refund_amount,
-               mra.refund_status,
-               mrcq.purchase_qty,
-               mrcq.receive_qty,
-               mrcq.stock_in_qty,
-               mrcq.calc_qty - mra.refund_order_qty AS diffQty,
-               md.update_time
+        select mi.id as id,
+        mi.project_no as projectNo,
+        mi.name as name,
+        mi.status,
+        md.id as detailId,
+        md.mould_no as mouldNo,
+        md.third_mould_no as thirdMouldNo,
+        md.supplier_id as supplierId,
+        mpp.qty as qty,
+        mpp.tax_price as taxPrice,
+        mpp.tax_rate as taxRate,
+        mpp.pay_method_id as payMethodId,
+        mpp.payment_condition as paymentCondition,
+        mpp.currency as currency,
+        mpp.exchange_rate as exchangeRate,
+        mra.is_need_refund as isNeedRefund,
+        mra.refund_standard as refundStandard,
+        mra.refund_order_qty as refundOrderQty,
+        mra.refund_amount as refundAmount,
+        mra.refund_status as refundStatus,
+        mrcq.purchase_qty as purchaseQty,
+        mrcq.receive_qty as receiveQty,
+        mrcq.stock_in_qty as stockInQty,
+        mrcq.calc_qty - mra.refund_order_qty AS diffQty,
+        md.update_time as updateTime,
+        mrp.sku_id,
+        mrp.sku_no,
+        mrp.supplier_id                      as skuSupplierId,
         from mould_info mi
-                 left join mould_detail md on mi.id = md.main_id and md.is_deleted = false
+                 inner join mould_detail md on mi.id = md.main_id and md.is_deleted = false
                  left join public.mould_purchase_price mpp on md.id = mpp.mould_detail_id and mpp.is_deleted = false
                  left join public.mould_refund_agreement mra on md.id = mra.mould_detail_id and mra.is_deleted = false
                  left join public.mould_ref_product mrp on md.id = mrp.mould_detail_id and mrp.is_deleted = false
                  left join public.mould_ref_calc_qty mrcq on md.id = mrcq.mould_detail_id and mrcq.is_deleted = false
         where ${params.sqlMap.default}
           and mi.is_deleted = false
-        order by md.create_time desc, md.id desc
+          and mra.is_need_refund = true
+        order by
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        md.create_time desc, md.id desc
     </select>
 
     <select id="exportOrderTrackingDetail"

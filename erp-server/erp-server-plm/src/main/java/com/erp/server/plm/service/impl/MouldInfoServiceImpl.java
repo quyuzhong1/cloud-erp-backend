@@ -20,6 +20,7 @@ import com.common.business.enums.OperationTypeEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
+import com.common.business.utils.ApplicationContextUtils;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.business.wrapper.FeignQuery;
@@ -197,7 +198,7 @@ public class MouldInfoServiceImpl extends SuperServiceImpl<MouldInfoMapper, Moul
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public BatchResultDTO draft(MouldInfoDTO.CommonDTO dto) {
+    public BatchResultDTO draft(MouldInfoDTO.UpdateDTO dto) {
         MouldInfoEntity mouldInfoEntity = new MouldInfoEntity();
         BeanMapperUtils.copy(dto, mouldInfoEntity);
         mouldInfoEntity.setStatus(ApproveStatusEnum.WAIT_SUBMIT.getStatus());
@@ -217,12 +218,11 @@ public class MouldInfoServiceImpl extends SuperServiceImpl<MouldInfoMapper, Moul
     @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO addAndSubmit(MouldInfoDTO.UpdateDTO dto) {
         MouldInfoEntity entity = getById(dto.getId());
-        boolean isExit = ObjectUtils.isEmpty(entity);
         //保存基本信息
         MouldInfoEntity mouldInfoEntity = new MouldInfoEntity();
         BeanMapperUtils.copy(dto, mouldInfoEntity);
-        BasicCategoryEntity category = basicCategoryService.getById(dto.getCategoryId());
-        if (isExit) {
+        if (ObjectUtils.isEmpty(dto.getId())) {
+            BasicCategoryEntity category = basicCategoryService.getById(dto.getCategoryId());
             mouldInfoEntity.setStatus(ApproveStatusEnum.WAIT_SUBMIT.getStatus());
             String code = docNoGenHelper.generateMouldCode(category.getCode());
             mouldInfoEntity.setMouldCategoryCode(code);
@@ -232,11 +232,11 @@ public class MouldInfoServiceImpl extends SuperServiceImpl<MouldInfoMapper, Moul
         mouldDocInfoService.add(dto.getDocList(), mouldInfoEntity.getId());
         // 记录操作日志
         String msg = null;
-        if (isExit) {
+        if ("1".equals("")) {
             msg = CharSequenceUtil.format("用户【{}】新增了单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), mouldInfoEntity.getMouldCategoryCode(), "模具");
         }
         sysLogService.addSysLogBySave(msg, SysLogClassPathEnum.MOULD_DETAIL_ENTITY.getDesc(), mouldInfoEntity.getId(), "");
-        return submit(mouldInfoEntity.getId());
+        return ApplicationContextUtils.getBean(MouldInfoServiceImpl.class).submit(mouldInfoEntity.getId());
     }
 
     @Override
@@ -494,51 +494,20 @@ public class MouldInfoServiceImpl extends SuperServiceImpl<MouldInfoMapper, Moul
 
     private void handlerList(List<MouldInfoDTO.OrderTrackingViewDTO> records) {
         List<String> detailIds = records.stream().map(MouldInfoDTO.OrderTrackingViewDTO::getDetailId).collect(Collectors.toList());
-        List<MouldPurchasePriceEntity> mouldPurchasePriceList = mouldPurchasePriceService.listByMouldDetailIdList(detailIds);
         List<MouldRefProductEntity> mouldRefProductList = mouldRefProductService.listByMouldDetailIdList(detailIds);
-        List<MouldRefundAgreementEntity> refundAgreementList = mouldRefundAgreementService.listByMouldDetailIdList(detailIds);
-        List<MouldRefCalcQtyEntity> mouldRefCalcQtyList = mouldRefCalcQtyService.listByMouldDetailIdList(detailIds);
-        for (MouldInfoDTO.OrderTrackingViewDTO record : records) {
+        for (MouldInfoDTO.OrderTrackingViewDTO dto : records) {
             List<MouldRefProductDTO.ViewDTO> list = mouldRefProductList.stream()
-                    .filter(v -> v.getMouldDetailId().equals(record.getDetailId()))
+                    .filter(v -> v.getMouldDetailId().equals(dto.getDetailId()))
                     .map(v -> BeanMapperUtils.map(MouldRefProductDTO.ViewDTO.class, v))
                     .collect(Collectors.toList());
-            MouldPurchasePriceEntity purchasePrice = mouldPurchasePriceList.stream()
-                    .filter(v -> v.getMouldDetailId().equals(record.getDetailId()))
-                    .findFirst()
-                    .orElse(new MouldPurchasePriceEntity());
-            MouldRefundAgreementEntity refundAgreement = refundAgreementList.stream()
-                    .filter(v -> v.getMouldDetailId().equals(record.getDetailId()))
-                    .findFirst()
-                    .orElse(new MouldRefundAgreementEntity());
-            MouldRefCalcQtyEntity refCalcQty = mouldRefCalcQtyList.stream()
-                    .filter(v -> v.getMouldDetailId().equals(record.getDetailId()))
-                    .findFirst()
-                    .orElse(new MouldRefCalcQtyEntity());
-            record.setQty(purchasePrice.getQty());
-            record.setTaxPrice(purchasePrice.getTaxPrice());
-            record.setTaxRate(purchasePrice.getTaxRate());
-            record.setPayMethodId(purchasePrice.getPayMethodId());
-            record.setPaymentCondition(purchasePrice.getPaymentCondition());
-            record.setCurrency(purchasePrice.getCurrency());
-            record.setExchangeRate(purchasePrice.getExchangeRate());
-            record.setTaxPrice(purchasePrice.getTaxPrice());
-            record.setIsNeedRefund(refundAgreement.getIsNeedRefund());
-            record.setRefundStandard(refundAgreement.getRefundStandard());
-            record.setRefundOrderQty(refundAgreement.getRefundOrderQty());
-            record.setRefundStatus(refundAgreement.getRefundStatus());
-            record.setRefundAmount(refundAgreement.getRefundAmount());
-            record.setPurchaseQty(refCalcQty.getPurchaseQty());
-            record.setReceiveQty(refCalcQty.getReceiveQty());
-            record.setStockInQty(refCalcQty.getStockInQty());
-            record.setDiffQty(refCalcQty.getCalcQty());
-            record.setRefProductList(list);
+            dto.setRefProductList(list);
         }
     }
 
     @Override
     public List<MouldInfoDTO.TabListDTO> tabList(PermissionsDTO dto) {
-        List<MouldRefundAgreementEntity> list = mouldRefundAgreementService.list();
+        List<MouldRefundAgreementEntity> list = mouldRefundAgreementService.list(Wrappers.<MouldRefundAgreementEntity>lambdaQuery()
+                .eq(MouldRefundAgreementEntity::getIsNeedRefund, true));
         Map<String, List<MouldRefundAgreementEntity>> map = list.stream()
                 .collect(Collectors.groupingBy(MouldRefundAgreementEntity::getRefundStatus));
         List<MouldInfoDTO.TabListDTO> tabListList = new ArrayList<>();
@@ -722,7 +691,7 @@ public class MouldInfoServiceImpl extends SuperServiceImpl<MouldInfoMapper, Moul
                 .collect(Collectors.toMap(KingdeePaymentConditionEntity::getName, KingdeePaymentConditionEntity::getId, (o1, o2) -> o1));
         List<CfgMouldSettingEntity> cfgMouldSettingList = cfgMouldSettingService.mouldList();
         Map<String, String> typeNameMap = cfgMouldSettingList.stream().collect(Collectors.toMap(CfgMouldSettingEntity::getName, CfgMouldSettingEntity::getId, (o1, o2) -> o1));
-        MouldInfoExcelListener excelListenerUtil = new MouldInfoExcelListener(typeNameMap,dictBasicNameMap,paymentConditionNameMap);
+        MouldInfoExcelListener excelListenerUtil = new MouldInfoExcelListener(typeNameMap, dictBasicNameMap, paymentConditionNameMap);
         try {
             EasyExcel.read(excelFile.getInputStream(), MouldInfoImportDTO.MouldInfoExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (IOException e) {
