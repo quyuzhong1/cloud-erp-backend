@@ -133,10 +133,11 @@ public class MouldInfoServiceImpl extends SuperServiceImpl<MouldInfoMapper, Moul
 
     @Override
     public PagingVO<MouldInfoDTO.PagingViewDTO> paging(PagingDTO<MouldInfoDTO.PagingParamDTO> dto) {
-
-        Page<MouldInfoDTO.PagingViewDTO> page = baseMapper.paging(new Page<>(dto.getCurrPage(), dto.getPageSize()), dto.getParams());
+        Page<MouldInfoDTO.PagingViewDTO> page1 = new Page<>(dto.getCurrPage(), dto.getPageSize());
+        page1.setOptimizeCountSql(false);
+        Page<MouldInfoDTO.PagingViewDTO> page = baseMapper.paging(page1, dto.getParams());
         if (CollUtil.isEmpty(page.getRecords())) {
-            return new PagingVO<>();
+            return new PagingVO<>(page);
         }
         // 数据处理
         fillList(page.getRecords());
