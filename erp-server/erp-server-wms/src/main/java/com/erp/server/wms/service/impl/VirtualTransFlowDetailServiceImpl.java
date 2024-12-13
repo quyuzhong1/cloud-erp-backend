@@ -70,8 +70,7 @@ public class VirtualTransFlowDetailServiceImpl extends SuperServiceImpl<VirtualT
     @Transactional(rollbackFor = Exception.class)
     @Override
     public Boolean batchAdd(List<VirtualTransFlowDetailDTO.AddDTO> addDTOList) {
-        List<VirtualTransFlowDetailEntity> list = new ArrayList<>();
-        BeanMapperUtils.copyList(VirtualTransFlowDetailEntity.class, addDTOList);
+        List<VirtualTransFlowDetailEntity> list = BeanMapperUtils.copyList(VirtualTransFlowDetailEntity.class, addDTOList);
 
         log.info("开始新增虚拟仓库存流水明细");
         boolean save = super.saveOrUpdateBatch(list);
@@ -230,9 +229,10 @@ public class VirtualTransFlowDetailServiceImpl extends SuperServiceImpl<VirtualT
      */
     private VirtualInventoryDetailEntity addVirtualInventoryDetail (VirtualTransFlowEntity entity) {
         VirtualInventoryDetailDTO.UpdateDTO  addOrUpdateDTO = new VirtualInventoryDetailDTO.UpdateDTO();
-        BeanMapperUtils.copy(addOrUpdateDTO,entity);
+        BeanMapperUtils.copy(entity,addOrUpdateDTO);
         addOrUpdateDTO.setVirtualTransFlowId(entity.getId());
         addOrUpdateDTO.setLastOutstockDate(LocalDate.now());
+        addOrUpdateDTO.setId(null);
         //新增入库批次
         VirtualInventoryDetailEntity inventoryDetailEntity = virtualInventoryDetailService.addOrUpdate(addOrUpdateDTO);
         return inventoryDetailEntity;

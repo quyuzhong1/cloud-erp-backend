@@ -79,10 +79,9 @@ public class VirtualInventoryHisServiceImpl extends SuperServiceImpl<VirtualInve
                             CharSequenceUtil.equals(obj.getVirtualInventoryId(), addDTO.getVirtualInventoryId())
                                     && obj.getDate().isEqual(addDTO.getDate()))
                     .findFirst().orElse(null);
-            if (ObjUtil.isEmpty(hisEntity)) {
-                continue;
+            if (ObjUtil.isNotEmpty(hisEntity)) {
+                addDTO.setId(hisEntity.getId());
             }
-            addDTO.setId(hisEntity.getId());
             this.addOrUpdate(addDTO);
         }
     }

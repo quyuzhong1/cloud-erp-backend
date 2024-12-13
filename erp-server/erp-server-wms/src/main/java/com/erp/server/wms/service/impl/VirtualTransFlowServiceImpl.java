@@ -3,6 +3,7 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.core.util.ObjUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseIdDTO;
@@ -16,10 +17,7 @@ import com.common.business.wrapper.FeignQuery;
 import com.common.core.constant.EnumMessage;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import com.common.core.utils.BeanMapper;
-import com.common.core.utils.BeanMapperUtils;
-import com.common.core.utils.StrUtils;
-import com.common.core.utils.ValidatorUtil;
+import com.common.core.utils.*;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.wms.dto.VirtualTransFlowDTO;
 import com.erp.model.wms.entity.VirtualTransFlowEntity;
@@ -190,7 +188,7 @@ public class VirtualTransFlowServiceImpl extends SuperServiceImpl<VirtualTransFl
                 .collect(Collectors.toList());
         Integer virtualQty = this.baseMapper.getVirtualQty(virtualInvId, startDate);
         // 重算库存流水
-        overrideFlowByVirtualInventoryId(flowList,virtualQty);
+        overrideFlowByVirtualInventoryId(flowList, ObjUtil.isNull(virtualQty) ? MathUtil.ZERO : virtualQty);
         log.info("###VirtualTransFlowServiceImpl:::overrideVirtualTransFlow 库存流水重算完成 virtualInvId={}, end_time={}",  virtualInvId, LocalDateTime.now());
     }
 

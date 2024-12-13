@@ -77,7 +77,6 @@ public class VirtualInventoryDetailHisServiceImpl extends SuperServiceImpl<Virtu
 
         //添加虚拟仓每日库存
         virtualInventoryHisService.addVirtualInventoryHis(localDate);
-
         //添加虚拟仓明细每日库存
         this.addVirtualInventoryDetailHis(localDate);
     }
