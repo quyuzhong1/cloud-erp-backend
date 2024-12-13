@@ -17,6 +17,8 @@ import com.common.core.anno.LogAction;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.oms.dto.CustomerDTO;
+import com.erp.model.oms.dto.SoB2cDTO;
+import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.oms.entity.CustomerInfoEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.enums.SoB2cPayStatusEnum;
@@ -35,6 +37,7 @@ import com.erp.model.wms.entity.*;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.oms.feign.SoB2cFeign;
+import com.erp.rpc.oms.feign.SoInfoFeign;
 import com.erp.rpc.scm.feign.ScmTaskFeign;
 import com.erp.rpc.scm.feign.SupplierFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
@@ -150,6 +153,9 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
 
     @Resource
     private LogisticsAddressService logisticsAddressService;
+
+    @Resource
+    private SoInfoFeign soInfoFeign;
 
 
     @Override
@@ -644,6 +650,16 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
         }
 
         //地址
+        if (CharSequenceUtil.isNotBlank(soOutstockEntity.getSoId())) {
+            if (OrderTypeEnum.B2C.getCode().equals(soOutstockEntity.getOrderType())) {
+                SoB2cDTO.CustomerDTO customerDTO = soB2cFeign.getB2cCustomerById(soOutstockEntity.getSoId());
+                addDTO.setDeliveryAddress(customerDTO.getReceiverAddress());
+
+            } else {
+                SoInfoDTO.CustomerDTO customerDTO = soInfoFeign.getSoBaseById(soOutstockEntity.getSoId());
+                addDTO.setDeliveryAddress(customerDTO.getReceiveAddress());
+            }
+        }
         List<DictCountryDTO.ListDTO> countryList = sysUserFeign.countryList();
         if (CharSequenceUtil.isNotBlank(soOutstockEntity.getCustomerId())) {
             List<CustomerInfoEntity> customerList = FeignQuery.create(CustomerInfoEntity.class).eq(CustomerInfoEntity::getId, soOutstockEntity.getCustomerId()).list();
@@ -654,8 +670,6 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
                 } else {
                     addDTO.setDestinationPort(customerList.get(0).getMailAddress());
                 }
-
-                addDTO.setDeliveryAddress(customerList.get(0).getMailAddress());
             }
         } else {
             String countryName = countryList.stream().filter(obj -> obj.getId().equals(logisticsBillEntity.getToCountry())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getNameCn())).orElse("");
@@ -973,6 +987,7 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
         addDTO.setDeliveryQty(entity.getDeliveryQty());
 
         //平台订单号
+        SoB2cEntity soB2cEntity = soB2cFeign.getById(soOutstockEntity.getSoId());
         String platformCode = "";
         if (SourceTypeEnum.PLATFORM_SO_OUT_STOCK.getCode().equals(soOutstockEntity.getSourceType())
                 || SourceTypeEnum.SO_B2C.getCode().equals(soOutstockEntity.getSourceType())
@@ -980,7 +995,6 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
                 || SourceTypeEnum.THIRD_WAREHOUSE_CREATE_OUTBOUND_BILL.getCode().equals(soOutstockEntity.getSourceType())
         ) {
             String soId = soOutstockEntity.getSoId();
-            SoB2cEntity soB2cEntity = soB2cFeign.getById(soId);
             if (ObjectUtil.isNotEmpty(soB2cEntity)) {
                 platformCode = soB2cEntity.getPlatformCode();
 
@@ -1015,7 +1029,18 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
                 addDTO.setOriginPort(list.get(0).getAddress());
             }
         }
+
         //地址
+        if (CharSequenceUtil.isNotBlank(soOutstockEntity.getSoId())) {
+            if (OrderTypeEnum.B2C.getCode().equals(soOutstockEntity.getOrderType())) {
+                SoB2cDTO.CustomerDTO customerDTO = soB2cFeign.getB2cCustomerById(soOutstockEntity.getSoId());
+                addDTO.setDeliveryAddress(customerDTO.getReceiverAddress());
+
+            } else {
+                SoInfoDTO.CustomerDTO customerDTO = soInfoFeign.getSoBaseById(soOutstockEntity.getSoId());
+                addDTO.setDeliveryAddress(customerDTO.getReceiveAddress());
+            }
+        }
         List<DictCountryDTO.ListDTO> countryList = sysUserFeign.countryList();
         if (CharSequenceUtil.isNotBlank(soOutstockEntity.getCustomerId())) {
             List<CustomerInfoEntity> customerList = FeignQuery.create(CustomerInfoEntity.class).eq(CustomerInfoEntity::getId, soOutstockEntity.getCustomerId()).list();
@@ -1026,8 +1051,6 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
                 } else {
                     addDTO.setDestinationPort(customerList.get(0).getMailAddress());
                 }
-
-                addDTO.setDeliveryAddress(customerList.get(0).getMailAddress());
             }
         } else {
             String countryName = countryList.stream().filter(obj -> obj.getId().equals(logisticsBillEntity.getToCountry())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getNameCn())).orElse("");
@@ -1037,7 +1060,6 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
         LogisticsChannelAddressDTO.ViewDTO viewDTO = viewDTOS.stream().filter(req -> LogisticsAddressTypeEnum.DELIVER.getCode().equals(req.getLogisticsAddressType())).findFirst().orElse(null);
         if (viewDTO != null) {
             LogisticsAddressEntity addressEntity = logisticsAddressService.getById(viewDTO.getAddressId());
-
             if (ObjectUtil.isNotEmpty(addressEntity)) {
                 addDTO.setPickupAddress(addressEntity.getAddressFirst());
             }
