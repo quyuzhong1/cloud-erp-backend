@@ -221,7 +221,7 @@ public class RemotePostcodeDetailDTO implements Serializable {
          * 国家
          */
         @ExcelProperty(value = "*国家二字码")
-        @FieldValid(fieldName = "*国家二字码",isNotBlank = true)
+        @FieldValid(fieldName = "国家二字码",isNotBlank = true)
         @Size(max = 32, message = "国家二字码最大长度不能超过32位")
         private String country;
 
@@ -232,7 +232,7 @@ public class RemotePostcodeDetailDTO implements Serializable {
          * 邮编
          */
         @ExcelProperty(value = "*邮编")
-        @FieldValid(fieldName = "*邮编",isNotBlank = true)
+        @FieldValid(fieldName = "邮编",isNotBlank = true)
         @Size(max = 32, message = "邮编二字码最大长度不能超过32位")
         private String postCode;
         /**

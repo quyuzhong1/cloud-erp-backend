@@ -322,12 +322,12 @@ public class RemotePostcodeDetailServiceImpl extends SuperServiceImpl<RemotePost
             Map<String, String> countryMap = listDTOS.stream().collect(Collectors.toMap(DictCountryDTO.ListDTO::getId, DictCountryDTO.ListDTO::getId));
             for (RemotePostcodeDetailDTO.ImportDTO dto : successList) {
                 if(Boolean.FALSE.equals(countryMap.containsKey(dto.getCountry()))){
-                    dto.setErrorMsg("国家二字码不存在");
+                    dto.setErrorMsg("1、国家二字码不存在");
                     errorList.add(dto);
                     continue;
                 }
                 if(StringUtils.isNotBlank(dto.getCityName()) && Boolean.FALSE.equals(cityMap.containsKey(dto.getCityName()))){
-                    dto.setErrorMsg("城市不存在");
+                    dto.setErrorMsg("1、城市不存在");
                     errorList.add(dto);
                     continue;
                 }
