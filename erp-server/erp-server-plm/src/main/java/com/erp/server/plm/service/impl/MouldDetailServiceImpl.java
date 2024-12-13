@@ -15,9 +15,9 @@ import com.erp.server.plm.service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
+import org.springframework.util.ObjectUtils;
 
 import javax.annotation.Resource;
-import javax.validation.Valid;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -50,8 +50,16 @@ public class MouldDetailServiceImpl extends SuperServiceImpl<MouldDetailMapper, 
     private MouldRefProductService mouldRefProductService;
 
     @Override
-    public void add(@Valid List<MouldDetailDTO.UpdateDTO> detailList, MouldInfoEntity entity) {
+    public void add(List<MouldDetailDTO.UpdateDTO> detailList, MouldInfoEntity entity) {
+        List<MouldDetailEntity> mouldDetailList = list(Wrappers.<MouldDetailEntity>lambdaQuery().eq(MouldDetailEntity::getMainId, entity.getId()));
+        List<String> detailIds = mouldDetailList.stream().map(MouldDetailEntity::getId).collect(Collectors.toList());
+        if (!CollectionUtils.isEmpty(detailList)) {
+            mouldProductService.remove(Wrappers.<MouldProductEntity>lambdaQuery().in(MouldProductEntity::getMouldDetailId, detailIds));
+            mouldPurchasePriceService.remove(Wrappers.<MouldPurchasePriceEntity>lambdaQuery().in(MouldPurchasePriceEntity::getMouldDetailId, detailIds));
+            mouldRefundAgreementService.remove(Wrappers.<MouldRefundAgreementEntity>lambdaQuery().in(MouldRefundAgreementEntity::getMouldDetailId, detailIds));
+            mouldRefProductService.remove(Wrappers.<MouldRefProductEntity>lambdaQuery().in(MouldRefProductEntity::getMouldDetailId, detailIds));
 
+        }
         List<MouldDetailEntity> details = new ArrayList<>();
         List<MouldRefundAgreementEntity> agreementList = new ArrayList<>();
         List<MouldPurchasePriceEntity> purchasePriceList = new ArrayList<>();
@@ -59,10 +67,12 @@ public class MouldDetailServiceImpl extends SuperServiceImpl<MouldDetailMapper, 
         List<MouldRefProductEntity> mouldRefProductList = new ArrayList<>();
         for (MouldDetailDTO.UpdateDTO dto : detailList) {
             MouldDetailEntity mouldDetail = BeanMapperUtils.map(MouldDetailEntity.class, dto);
-            mouldDetail.setMainId(entity.getId());
-            String code = docNoGenHelper.generateMouldDetailCode(entity.getMouldCategoryCode());
-            mouldDetail.setMouldNo(code);
-            mouldDetail.setId(IdWorker.getIdStr());
+            if (ObjectUtils.isEmpty(dto.getId())) {
+                mouldDetail.setMainId(entity.getId());
+                String code = docNoGenHelper.generateMouldDetailCode(entity.getMouldCategoryCode());
+                mouldDetail.setMouldNo(code);
+                mouldDetail.setId(IdWorker.getIdStr());
+            }
             details.add(mouldDetail);
             MouldRefundAgreementEntity agreement = BeanMapperUtils.map(MouldRefundAgreementEntity.class, dto);
             agreement.setMouldDetailId(mouldDetail.getId());
@@ -96,12 +106,11 @@ public class MouldDetailServiceImpl extends SuperServiceImpl<MouldDetailMapper, 
                     }).collect(Collectors.toList());
             mouldRefProductList.addAll(productEntityList);
         }
-        ApplicationContextUtils.getBean(MouldDetailServiceImpl.class).saveBatch(details);
-//        mouldRefundAgreementService.remove(Wrappers.<MouldRefundAgreementEntity>lambdaQuery().eq(MouldRefundAgreementEntity::getMouldDetailId, ));
-        mouldRefundAgreementService.saveOrUpdateBatch(agreementList);
-        mouldPurchasePriceService.saveOrUpdateBatch(purchasePriceList);
-        mouldProductService.saveOrUpdateBatch(productList);
-        mouldRefProductService.saveOrUpdateBatch(mouldRefProductList);
+        ApplicationContextUtils.getBean(MouldDetailServiceImpl.class).saveOrUpdateBatch(details);
+        mouldRefundAgreementService.saveBatch(agreementList);
+        mouldPurchasePriceService.saveBatch(purchasePriceList);
+        mouldProductService.saveBatch(productList);
+        mouldRefProductService.saveBatch(mouldRefProductList);
     }
 
     @Override

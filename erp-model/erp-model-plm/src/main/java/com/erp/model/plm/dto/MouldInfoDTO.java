@@ -464,6 +464,7 @@ public class MouldInfoDTO implements Serializable {
         /**
          * 关联产品
          */
+        @Dict
         private List<MouldRefProductDTO.ViewDTO> refProductList;
 
         /**
