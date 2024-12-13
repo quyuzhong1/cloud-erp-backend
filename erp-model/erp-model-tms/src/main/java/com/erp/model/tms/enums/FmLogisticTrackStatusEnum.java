@@ -19,12 +19,12 @@ import java.util.stream.Stream;
 public enum FmLogisticTrackStatusEnum implements EnumMessage {
     WAIT_ORDER("waitOrder","待下单"),
     ORDERED("ordered","已下单"),
+    PICKUP("pickup","已揽收"),
     INSPECTING("Inspecting","查验中"),
     TRACK_ING("trackIng","运输中"),
     ARRIVED("arrived","已到港"),
     SIGN("sign","已签收"),
     EXCEPTION("exception","运输异常"),
-    PICKUP("pickup","已揽收"),
     ;
 
 

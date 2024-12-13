@@ -203,7 +203,7 @@ public class RemotePostcodeDetailDTO implements Serializable {
         /**
          * 成功返回数据
          */
-        private List<ImportDTO> successList;
+        private List<AddDTO> successList;
 
         /**
          * 错误的url
@@ -221,28 +221,19 @@ public class RemotePostcodeDetailDTO implements Serializable {
          * 国家
          */
         @ExcelProperty(value = "*国家二字码")
-        @FieldValid(fieldName = "*国家二字码",isNotBlank = true)
+        @FieldValid(fieldName = "国家二字码",isNotBlank = true)
+        @Size(max = 32, message = "国家二字码最大长度不能超过32位")
         private String country;
 
-        /**
-         * 城市
-         */
-        private String city;
         @ExcelProperty(value = "城市")
         private String cityName;
-
-        /**
-         * 匹配类型dict_basic表matchType: preciseMatch=精准匹配, prefixMatch=匹配前缀, suffixMatch=匹配后缀, fuzzyMatch=模糊匹配
-         */
-        private String matchType = "preciseMatch";
-
-        private String matchTypeName = "精准匹配";
 
         /**
          * 邮编
          */
         @ExcelProperty(value = "*邮编")
-        @FieldValid(fieldName = "*邮编",isNotBlank = true)
+        @FieldValid(fieldName = "邮编",isNotBlank = true)
+        @Size(max = 32, message = "邮编二字码最大长度不能超过32位")
         private String postCode;
         /**
          * 错误信息
@@ -277,6 +268,8 @@ public class RemotePostcodeDetailDTO implements Serializable {
         */
         @NotBlank(message = "匹配类型dict_basic表matchType: preciseMatch=精准匹配, prefixMatch=匹配前缀, suffixMatch=匹配后缀, fuzzyMatch=模糊匹配不能为空")
         private String matchType;
+
+        private String matchTypeName;
 
         /**
         * 邮编

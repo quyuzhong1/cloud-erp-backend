@@ -76,4 +76,25 @@ public interface VirtualTransFlowMapper extends BaseMapper<VirtualTransFlowEntit
      * @return List<LastVirtualQtyDTO>
      */
     List<ReportOrderSalesDTO.LastVirtualQtyDTO> listLastVirtualQty(@Param("skuIdList")List<String> skuIdList,@Param("warehouseIdList") List<String> warehouseIdList,@Param("virtualWarehouseIdList") List<String> virtualWarehouseIdList,@Param("localDate") LocalDate localDate);
+    /**
+     * 查询虚拟仓即时库存id
+     * @author will
+     * @date 2024/12/12 11:47
+     * @param virtualInventoryId
+     * @param virtualWarehouseId
+     * @param warehouseId
+     * @param skuId
+     * @param fromTable
+     * @return List<String>
+     */
+    List<String> listVirtualInventoryId(@Param("virtualInventoryId")String virtualInventoryId,@Param("virtualWarehouseId") String virtualWarehouseId,@Param("warehouseId") String warehouseId,@Param("skuId") String skuId,@Param("fromTable") Boolean fromTable);
+    /**
+     * 查询流水虚拟仓库存数量
+     * @author will
+     * @date 2024/12/12 14:34
+     * @param virtualInvId
+     * @param startDate
+     * @return Integer
+     */
+    Integer getVirtualQty(@Param("virtualInvId")String virtualInvId,@Param("startDate") LocalDate startDate);
 }

@@ -72,6 +72,13 @@ public class RemotePostcodeServiceImpl extends SuperServiceImpl<RemotePostcodeMa
         RemotePostcodeEntity remotePostcodeEntity = new RemotePostcodeEntity();
         BeanMapperUtils.copy(addDTO, remotePostcodeEntity);
 
+        boolean exists = lambdaQuery()
+                .eq(RemotePostcodeEntity::getName, addDTO.getName())
+                .count() > 0;
+        if(Boolean.TRUE.equals(exists)) {
+            throw new ServiceException("已存在相同名称的邮编组");
+        }
+
         // 数据处理
         log.info("开始新增偏远邮编组");
         boolean save = super.save(remotePostcodeEntity);
@@ -92,6 +99,14 @@ public class RemotePostcodeServiceImpl extends SuperServiceImpl<RemotePostcodeMa
     @Transactional(rollbackFor = Exception.class)
     @Override
     public Boolean update(RemotePostcodeDTO.UpdateDTO updateDTO) {
+        boolean exists = lambdaQuery()
+                .eq(RemotePostcodeEntity::getName, updateDTO.getName())
+                .ne(RemotePostcodeEntity::getId, updateDTO.getId())
+                .count() > 0;
+        if(Boolean.TRUE.equals(exists)) {
+            throw new ServiceException("已存在相同名称的邮编组");
+        }
+
         RemotePostcodeEntity old = super.getById(updateDTO.getId());
         old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "偏远邮编组"));
         RemotePostcodeEntity remotePostcodeEntity =  BeanMapperUtils.map(RemotePostcodeEntity.class, updateDTO);
@@ -121,7 +136,7 @@ public class RemotePostcodeServiceImpl extends SuperServiceImpl<RemotePostcodeMa
         // 数据处理
         for (RemotePostcodeDTO.ListDTO record : pageData.getRecords()) {
             //是否禁用
-            record.setDisabledName(Boolean.TRUE.equals(record.getDisabled()) ? "停用" : "启用");
+            record.setDisabledName(Boolean.TRUE.equals(record.getDisabled()) ? "禁用" : "启用");
         }
         return new PagingVO(pageData);
     }
@@ -152,8 +167,9 @@ public class RemotePostcodeServiceImpl extends SuperServiceImpl<RemotePostcodeMa
     }
 
     @Override
-    public PagingVO<RemotePostcodeDTO.ExportListDTO> listExport(PagingDTO<RemotePostcodeDTO.PagingParamDTO> pagingParamDTO) {
-        Page<RemotePostcodeDTO.ExportListDTO> pageData = this.baseMapper.listExport(new Page<>(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize()), pagingParamDTO.getParams());
+    public PagingVO<RemotePostcodeDTO.ExportListDTO> listExport(PagingDTO<RemotePostcodeDTO.ExportDTO> pagingParamDTO) {
+        pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
+        IPage<RemotePostcodeDTO.ExportListDTO> pageData = this.baseMapper.listExport(new Page<>(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize()), pagingParamDTO.getParams());
         if(CollUtil.isEmpty(pageData.getRecords())) {
             return new PagingVO(pageData);
         }
@@ -166,7 +182,7 @@ public class RemotePostcodeServiceImpl extends SuperServiceImpl<RemotePostcodeMa
         DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
         for (RemotePostcodeDTO.ExportListDTO record : pageData.getRecords()) {
             //是否禁用
-            record.setDisabledName(Boolean.TRUE.equals(record.getDisabled()) ? "停用" : "启用");
+            record.setDisabledName(Boolean.TRUE.equals(record.getDisabled()) ? "禁用" : "启用");
             //城市名称
             record.setCityName(cityNameMap.getOrDefault(record.getCity(),""));
             // 匹配类型名称

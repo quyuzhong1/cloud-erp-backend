@@ -87,7 +87,6 @@ public class VirtualInventoryHisServiceImpl extends SuperServiceImpl<VirtualInve
         }
     }
 
-
     /**
     * 新增修改处理数据
     */

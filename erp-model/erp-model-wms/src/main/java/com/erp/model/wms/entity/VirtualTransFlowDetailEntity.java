@@ -1,14 +1,17 @@
 package com.erp.model.wms.entity;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
-import java.time.LocalDateTime;
-import com.baomidou.mybatisplus.annotation.TableField;
-import java.io.Serializable;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
-import com.common.business.enums.ApproveStatusEnum;
+
+import java.io.Serializable;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 
 /**
@@ -22,6 +25,8 @@ import com.common.business.enums.ApproveStatusEnum;
 @Data
 @EqualsAndHashCode(callSuper = true)
 @Accessors(chain = true)
+@AllArgsConstructor
+@NoArgsConstructor
 @TableName("virtual_trans_flow_detail")
 public class VirtualTransFlowDetailEntity extends BaseEntity<VirtualTransFlowDetailEntity> {
 
@@ -30,6 +35,11 @@ public class VirtualTransFlowDetailEntity extends BaseEntity<VirtualTransFlowDet
     */
     @TableField("qty")
     private Integer qty;
+    /**
+     * 单据日期
+     */
+    @TableField("bill_date")
+    private LocalDate billDate;
     /**
     * 后数量
     */
@@ -50,6 +60,11 @@ public class VirtualTransFlowDetailEntity extends BaseEntity<VirtualTransFlowDet
     */
     @TableField("trade_time")
     private LocalDateTime tradeTime;
+
+    public VirtualTransFlowDetailEntity(String id, Integer afterQty) {
+        super(id);
+        this.curInventoryQty = afterQty;
+    }
 
 
     public static final String QTY = "qty";

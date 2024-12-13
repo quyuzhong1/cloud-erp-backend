@@ -32,6 +32,7 @@ import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.mapper.VirtualTransFlowMapper;
+import com.erp.server.wms.service.VirtualInventoryHisService;
 import com.erp.server.wms.service.VirtualTransFlowService;
 import com.erp.server.wms.service.WarehouseService;
 import lombok.extern.slf4j.Slf4j;
@@ -41,6 +42,8 @@ import javax.annotation.Resource;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Collections;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -67,6 +70,10 @@ public class VirtualTransFlowServiceImpl extends SuperServiceImpl<VirtualTransFl
 
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
+
+    @Resource
+    private VirtualInventoryHisService virtualInventoryHisService;
+
 
     @Override
     public PagingVO<VirtualTransFlowDTO.ListDTO> paging(PagingDTO<VirtualTransFlowDTO.SearchParamDTO> dto) {
@@ -110,6 +117,9 @@ public class VirtualTransFlowServiceImpl extends SuperServiceImpl<VirtualTransFl
         virtualTransFlow.setCurInventoryQty(afterInventoryQty);
         virtualTransFlow.setTradeTime(LocalDateTime.now());
         virtualTransFlow.setUserId(Objects.nonNull(loginUser) ? loginUser.getUid() : "0");
+        virtualTransFlow.setUpdateUserId(loginUser.getUid());
+        virtualTransFlow.setUpdateUserName(loginUser.getUserName());
+        virtualTransFlow.setUpdateTime(LocalDateTime.now());
 
         // 个别参数设置空值
         virtualTransFlow.setId(null);
@@ -179,6 +189,48 @@ public class VirtualTransFlowServiceImpl extends SuperServiceImpl<VirtualTransFl
     @Override
     public List<ReportOrderSalesDTO.LastVirtualQtyDTO> listLastVirtualQty(List<String> skuIdList, List<String> warehouseIdList, List<String> virtualWarehouseIdList, LocalDate localDate) {
         return baseMapper.listLastVirtualQty(skuIdList,warehouseIdList,virtualWarehouseIdList,localDate);
+    }
+
+    @Override
+    public List<String> listVirtualInventoryId(String virtualInventoryId, String virtualWarehouseId, String warehouseId, String skuId, Boolean fromTable) {
+        return baseMapper.listVirtualInventoryId(virtualInventoryId,virtualWarehouseId,warehouseId,skuId,fromTable);
+    }
+
+    @Override
+    public void overrideVirtualTransFlow(LocalDate startDate, String virtualInvId) {
+        log.info("###VirtualTransFlowServiceImpl:::overrideVirtualTransFlow 库存流水重算开始 virtualInvId={}, start_time={}", virtualInvId, LocalDateTime.now());
+        List<VirtualTransFlowEntity> flowList = lambdaQuery()
+                .eq(VirtualTransFlowEntity::getVirtualInventoryId, virtualInvId)
+                .ge(VirtualTransFlowEntity::getBillDate, startDate)
+                .last("for update")
+                .list();
+        if(CollUtil.isEmpty(flowList)) {
+            log.warn("未找到需要重算的库存流水，库存id:{}, ", virtualInvId);
+        }
+        flowList = flowList.stream().sorted(Comparator.comparing(VirtualTransFlowEntity::getBillDate)
+                        .thenComparing(VirtualTransFlowEntity::getTradeTime)
+                        .thenComparing(VirtualTransFlowEntity::getId))
+                .collect(Collectors.toList());
+        Integer virtualQty = this.baseMapper.getVirtualQty(virtualInvId, startDate);
+        // 重算库存流水
+        overrideFlowByVirtualInventoryId(flowList,virtualQty);
+        log.info("###VirtualTransFlowServiceImpl:::overrideVirtualTransFlow 库存流水重算完成 virtualInvId={}, end_time={}",  virtualInvId, LocalDateTime.now());
+    }
+
+    /**
+     * 重算库存流水
+     * @author will
+     * @date 2024/12/12 12:17
+     * @param flowList
+     */
+    private void overrideFlowByVirtualInventoryId(List<VirtualTransFlowEntity> flowList,Integer virtualQty) {
+        List<VirtualTransFlowEntity> updateList = new ArrayList<>();
+        for (VirtualTransFlowEntity flowEntity : flowList) {
+            Integer afterQty = virtualQty + flowEntity.getQty();
+            updateList.add(new VirtualTransFlowEntity(flowEntity.getId(), afterQty));
+            virtualQty = afterQty;
+        }
+        updateBatchById(updateList);
     }
 
     /**

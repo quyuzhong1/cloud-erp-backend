@@ -113,7 +113,8 @@ public class PurchaseSuggestMergeServiceImpl extends SuperServiceImpl<PurchaseSu
     public BaseResultDTO.AddDTO addOrUpdate(PurchaseSuggestMergeDTO.AddOrUpdateDTO addOrUpdateDTO) {
         PurchaseSuggestMergeEntity purchaseSuggestMergeEntity = new PurchaseSuggestMergeEntity();
         BeanMapperUtils.copy(addOrUpdateDTO, purchaseSuggestMergeEntity);
-
+        //计划修正值默认给建议发货量
+        purchaseSuggestMergeEntity.setPlanPurchaseQty(ObjectUtil.isEmpty(purchaseSuggestMergeEntity.getSuggestPurchaseQty()) ? MathUtil.ZERO : purchaseSuggestMergeEntity.getSuggestPurchaseQty());
         // 数据处理
         handleData(purchaseSuggestMergeEntity);
 
@@ -151,6 +152,9 @@ public class PurchaseSuggestMergeServiceImpl extends SuperServiceImpl<PurchaseSu
         PurchaseSuggestMergeEntity old = Optional.ofNullable(super.getById(updateDTO.getId())).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "建议采购(合并后)"));
         PurchaseSuggestMergeEntity purchaseSuggestMergeEntity =  BeanMapperUtils.map(PurchaseSuggestMergeEntity.class, updateDTO);
 
+        if (!Arrays.asList(SuggestStatusEnum.DRAFT.getCode(),SuggestStatusEnum.WAIT_CONFIRM.getCode()).contains(old.getStatus()) || old.getInvalidStatus()) {
+            throw new ServiceException(ApiError.ERROR_SUGGEST_UPDATE);
+        }
         // 数据处理
         handleData(purchaseSuggestMergeEntity);
         log.info("编辑 开始修改建议采购(合并后)数据，单号：【{}】", old.getCode());
@@ -169,6 +173,9 @@ public class PurchaseSuggestMergeServiceImpl extends SuperServiceImpl<PurchaseSu
         PurchaseSuggestMergeEntity old =Optional.ofNullable(super.getById(updateDTO.getId())).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "建议采购(合并后)"));
         PurchaseSuggestMergeEntity purchaseSuggestMergeEntity =  BeanMapperUtils.map(PurchaseSuggestMergeEntity.class, updateDTO);
 
+        if (!Arrays.asList(SuggestStatusEnum.DRAFT.getCode(),SuggestStatusEnum.WAIT_CONFIRM.getCode()).contains(old.getStatus()) || old.getInvalidStatus()) {
+            throw new ServiceException(ApiError.ERROR_SUGGEST_UPDATE);
+        }
         // 数据处理
         handleData(purchaseSuggestMergeEntity);
         log.info("编辑 开始修改建议采购(合并后)数据，单号：【{}】", old.getCode());

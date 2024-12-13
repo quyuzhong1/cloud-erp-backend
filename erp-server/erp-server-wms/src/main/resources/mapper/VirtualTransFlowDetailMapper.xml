@@ -98,5 +98,37 @@
         batchNo asc
     </select>
 
+    <!-- 查询即时库存明细id -->
+    <select id="listVirtualInventoryDetailIdList" resultType="java.lang.String">
+        select
+            distinct virtual_inventory_detail_id
+        from virtual_trans_flow_detail
+        where is_deleted = false
+        <if test="skuId != null and skuId != ''">
+            and sku_id = #{skuId}
+        </if>
+        <if test="virtualInventoryDetailId != null and virtualInventoryDetailId != ''">
+            and virtual_inventory_detail_id = #{virtualInventoryDetailId}
+        </if>
+        <if test="virtualWarehouseId != null and virtualWarehouseId != ''">
+            and virtual_warehouse_id = #{virtualWarehouseId}
+        </if>
+        <if test="warehouseId != null and warehouseId != ''">
+            and warehouse_id = #{warehouseId}
+        </if>
+        <if test="fromTable != null and fromTable != ''">
+            and virtual_inventory_detail_id in (select virtual_inventory_detail_id from virtual_inventory_detail_temp)
+        </if>
+    </select>
+
+    <!-- 查询虚拟仓明细库存 -->
+    <select id="virtualDetailQty" resultType="java.lang.Integer">
+        select
+            sum(qty) as virtualDetailQty
+        from virtual_trans_flow_detail
+        where is_deleted = false and virtual_inventory_detail_id = #{virtualInvDetailId} and #{startDate} > bill_date
+        group by virtual_inventory_detail_id
+    </select>
+
 
 </mapper>

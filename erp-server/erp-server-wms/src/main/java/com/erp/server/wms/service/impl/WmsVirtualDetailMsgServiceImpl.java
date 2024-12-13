@@ -44,8 +44,6 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 public class WmsVirtualDetailMsgServiceImpl extends SuperServiceImpl<WmsVirtualDetailMsgMapper, WmsVirtualDetailMsgEntity> implements WmsVirtualDetailMsgService {
-    @Autowired
-    private OperateLogService operateLogService;
 
     @Resource
     private MQProducerService mqProducerService;
@@ -65,41 +63,7 @@ public class WmsVirtualDetailMsgServiceImpl extends SuperServiceImpl<WmsVirtualD
         if(!save) {
             throw new ServiceException("wms虚拟仓明细同步单保存失败");
         }
-
-        // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "wms虚拟仓明细同步单" , wmsVirtualDetailMsgEntity.getId());
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, wmsVirtualDetailMsgEntity.getId(), "新增操作");
-        // TODO 新增明细（如果有明细的话）
-
         return new BaseResultDTO.AddDTO(wmsVirtualDetailMsgEntity.getId(), wmsVirtualDetailMsgEntity.getId());
-    }
-
-    /**
-    * 修改
-    */
-    @Transactional(rollbackFor = Exception.class)
-    @Override
-    public Boolean update(WmsVirtualDetailMsgDTO.UpdateDTO updateDTO) {
-        WmsVirtualDetailMsgEntity old = super.getById(updateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "wms虚拟仓明细同步单"));
-        WmsVirtualDetailMsgEntity wmsVirtualDetailMsgEntity =  BeanMapperUtils.map(WmsVirtualDetailMsgEntity.class, updateDTO);
-
-        // 数据处理
-        handleData(wmsVirtualDetailMsgEntity);
-        log.info("编辑 开始修改wms虚拟仓明细同步单数据，id：【{}】", old.getId());
-        boolean save = super.updateById(wmsVirtualDetailMsgEntity);
-        if(!save) {
-            throw new ServiceException("wms虚拟仓明细同步单保存失败");
-        }
-        // TODO 修改明细数据（包含增删改）（如果有明细的话）
-
-        // 记录主单操作日志
-            log.info("编辑 开始记录wms虚拟仓明细同步单日志数据，id：【{}】", wmsVirtualDetailMsgEntity.getId());
-            String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), wmsVirtualDetailMsgEntity.getId(), "wms虚拟仓明细同步单");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLogByObj(old, wmsVirtualDetailMsgEntity, null, wmsVirtualDetailMsgEntity.getId(), msg);
-        return Boolean.TRUE;
     }
 
     @Override

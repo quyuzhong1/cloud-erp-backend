@@ -22,13 +22,13 @@ import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.FastDFSClientUtil;
 import com.common.core.utils.date.DateUtil;
-import com.erp.model.scm.dto.excel.PurchasePriceDetailImportExcelDTO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.DictCountryDTO;
 import com.erp.model.sys.entity.DictCityEntity;
 import com.erp.model.tms.dto.RemotePostcodeDTO;
 import com.erp.model.tms.dto.RemotePostcodeDetailDTO;
 import com.erp.model.tms.entity.RemotePostcodeDetailEntity;
+import com.erp.model.tms.enums.RemotePostcodeDetailMatchTypeEnum;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.tms.listener.RemotePostcodeDetailExcelListener;
 import com.erp.server.tms.mapper.RemotePostcodeDetailMapper;
@@ -310,24 +310,41 @@ public class RemotePostcodeDetailServiceImpl extends SuperServiceImpl<RemotePost
         RemotePostcodeDetailDTO.ImportResultDTO result = new RemotePostcodeDetailDTO.ImportResultDTO();
         //导入数据处理
         List<RemotePostcodeDetailDTO.ImportDTO> successList = excelListenerUtil.getSuccessList();
-        if(CollUtil.isNotEmpty(successList)){
-            List<String> cityNames = successList.stream().map(RemotePostcodeDetailDTO.ImportDTO::getCity).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
-            // 将城市信息转换为 Map，减少多次流式查找
-            Map<String, String> cityMap = getCityNameMap(cityNames);
-
-            for (RemotePostcodeDetailDTO.ImportDTO dto : successList) {
-                dto.setCity(cityMap.get(dto.getCityName()));
-            }
-        }
-        result.setSuccessList(successList);
-
         //导出错误数据
         List<RemotePostcodeDetailDTO.ImportDTO> errorList = excelListenerUtil.getErrorList();
-        result.setSuccessList(successList);
+        List<RemotePostcodeDetailDTO.AddDTO> resultList = new ArrayList<>();
+        if(CollUtil.isNotEmpty(successList)){
+            // 将城市信息转换为 Map，减少多次流式查找
+            List<String> cityNames = successList.stream().map(RemotePostcodeDetailDTO.ImportDTO::getCityName).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
+            Map<String, String> cityMap = getCityNameMap(cityNames);
+            // 将国家信息转换为 Map，减少多次流式查找
+            List<DictCountryDTO.ListDTO> listDTOS = sysUserFeign.countryList();
+            Map<String, String> countryMap = listDTOS.stream().collect(Collectors.toMap(DictCountryDTO.ListDTO::getId, DictCountryDTO.ListDTO::getId));
+            for (RemotePostcodeDetailDTO.ImportDTO dto : successList) {
+                if(Boolean.FALSE.equals(countryMap.containsKey(dto.getCountry()))){
+                    dto.setErrorMsg("1、国家二字码不存在");
+                    errorList.add(dto);
+                    continue;
+                }
+                if(StringUtils.isNotBlank(dto.getCityName()) && Boolean.FALSE.equals(cityMap.containsKey(dto.getCityName()))){
+                    dto.setErrorMsg("1、城市不存在");
+                    errorList.add(dto);
+                    continue;
+                }
+                RemotePostcodeDetailDTO.AddDTO addDTO = new RemotePostcodeDetailDTO.AddDTO();
+                BeanMapper.copy(dto,addDTO);
+                addDTO.setCity(cityMap.get(dto.getCityName()));
+                // 匹配类型名称
+                addDTO.setMatchType(RemotePostcodeDetailMatchTypeEnum.PRECISEMATCH.getCode());
+                addDTO.setMatchTypeName(RemotePostcodeDetailMatchTypeEnum.PRECISEMATCH.getName());
+                resultList.add(addDTO);
+            }
+        }
+        result.setSuccessList(resultList);
         String url = "";
         if (CollectionUtils.isNotEmpty(errorList)) {
             String fileName = "偏远邮编详情错误.xlsx";
-            File file = ExcelUtil.exportFile(fileName, "error", errorList, PurchasePriceDetailImportExcelDTO.class);
+            File file = ExcelUtil.exportFile(fileName, "error", errorList, RemotePostcodeDetailDTO.ImportDTO.class);
             if (file != null && !file.isDirectory()) {
                 url = FastDFSClientUtil.uploadFile(file, fileName);
             }

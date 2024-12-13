@@ -103,4 +103,24 @@ public interface VirtualTransFlowService extends SuperService<VirtualTransFlowEn
      * @return List<LastVirtualQtyDTO>
      */
     List<ReportOrderSalesDTO.LastVirtualQtyDTO> listLastVirtualQty(List<String> skuIdList, List<String> warehouseIdList, List<String> virtualWarehouseIdList, LocalDate localDate);
+    /**
+     * 查询虚拟仓即时库存id
+     * @author will
+     * @date 2024/12/12 11:44
+     * @param virtualInventoryId
+     * @param virtualWarehouseId
+     * @param warehouseId
+     * @param skuId
+     * @param fromTable
+     * @return List<String>
+     */
+    List<String> listVirtualInventoryId(String virtualInventoryId, String virtualWarehouseId, String warehouseId, String skuId, Boolean fromTable);
+    /**
+     * 重算虚拟仓库存流水
+     * @author will
+     * @date 2024/12/12 12:06
+     * @param startDate
+     * @param virtualInvId
+     */
+    void overrideVirtualTransFlow(LocalDate startDate,String virtualInvId);
 }

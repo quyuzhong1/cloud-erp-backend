@@ -209,7 +209,6 @@ public class RemotePostcodeDTO implements Serializable {
         /**
         * 备注
         */
-        @NotBlank(message = "备注不能为空")
         private String remark;
 
         /**
