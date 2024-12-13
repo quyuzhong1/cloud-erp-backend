@@ -7,8 +7,6 @@ import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.service.impl.SuperServiceImpl;
-import com.common.business.threadlocal.UserContext;
-import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.message.constant.RocketMqTopic;
@@ -18,19 +16,16 @@ import com.erp.model.wms.dto.WmsVirtualDetailMsgDTO;
 import com.erp.model.wms.entity.WmsVirtualDetailMsgEntity;
 import com.erp.model.wms.enums.VirtualDetailMsgStatusEnum;
 import com.erp.server.wms.mapper.WmsVirtualDetailMsgMapper;
-import com.erp.server.wms.service.OperateLogService;
 import com.erp.server.wms.service.WmsVirtualDetailMsgService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.client.producer.SendResult;
 import org.apache.rocketmq.client.producer.SendStatus;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
@@ -55,6 +50,7 @@ public class WmsVirtualDetailMsgServiceImpl extends SuperServiceImpl<WmsVirtualD
         WmsVirtualDetailMsgEntity wmsVirtualDetailMsgEntity = new WmsVirtualDetailMsgEntity();
         BeanMapperUtils.copy(addDTO, wmsVirtualDetailMsgEntity);
 
+        wmsVirtualDetailMsgEntity.setDataJson(JSONUtil.parseObj(addDTO.getTransFlowEntity()));
         // 数据处理
         handleData(wmsVirtualDetailMsgEntity);
 
