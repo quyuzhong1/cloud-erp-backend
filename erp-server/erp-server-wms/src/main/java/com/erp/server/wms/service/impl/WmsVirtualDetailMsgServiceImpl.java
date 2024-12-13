@@ -75,6 +75,9 @@ public class WmsVirtualDetailMsgServiceImpl extends SuperServiceImpl<WmsVirtualD
             if (!SendStatus.SEND_OK.equals(result.getSendStatus())) {
                 throw new ServiceException(StrUtil.format("发送MQ数据异常，{}", JSONUtil.toJsonStr(result)));
             }
+            //更新状态进行中
+            msg.setStatus(VirtualDetailMsgStatusEnum.DOING.getCode());
+            this.updateById(msg);
         }).collect(Collectors.toList());
         log.debug("gyyRefund发送数据为：{}" , JSON.toJSONString(mqList));
     }
