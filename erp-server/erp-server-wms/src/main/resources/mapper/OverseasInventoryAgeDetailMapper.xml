@@ -15,7 +15,12 @@
         overseas_inventory_age_detail oiad
         WHERE
         oiad.is_deleted = FALSE
-        AND oiad.pull_date = #{nowDate}
+        INNER JOIN
+        (SELECT main_id, MAX(pull_date) AS latest_pull_date
+        FROM overseas_inventory_age_detail
+        WHERE is_deleted = FALSE
+        GROUP BY main_id) latest_data
+        ON oiad.main_id = latest_data.main_id AND oiad.pull_date = latest_data.latest_pull_date
         <if test="mainIds != null and mainIds.size != ''">
             AND oiad.main_id in
             <foreach collection="mainIds" item="item" open="(" close=")" separator=",">
