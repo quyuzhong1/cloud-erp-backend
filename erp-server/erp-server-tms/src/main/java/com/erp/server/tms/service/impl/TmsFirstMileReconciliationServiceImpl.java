@@ -811,26 +811,20 @@ public class TmsFirstMileReconciliationServiceImpl extends SuperServiceImpl<TmsF
         if (entity.getPayStatus().equals(dto.getPayStatus())) {
             throw new ServiceException("修改前后支付状态一致");
         }
-
-        if (SoB2cPayStatusEnum.ENUM_PAID.getCode().equals(dto.getPayStatus())) {
-            lambdaUpdate()
-                    .set(TmsFirstMileReconciliationEntity::getPayStatus, dto.getPayStatus())
-                    .set(TmsFirstMileReconciliationEntity::getPayTime, dto.getPayTime())
-                    .eq(TmsFirstMileReconciliationEntity::getId, id)
-                    .update();
-        } else {
-            lambdaUpdate()
-                    .set(TmsFirstMileReconciliationEntity::getPayStatus, dto.getPayStatus())
-                    .set(TmsFirstMileReconciliationEntity::getPayTime, null)
-                    .in(TmsFirstMileReconciliationEntity::getId, id)
-                    .update();
+        LocalDateTime payTime = dto.getPayTime();
+        if (SoB2cPayStatusEnum.ENUM_PAYMENT.getCode().equals(dto.getPayStatus())) {
+            payTime = null;
         }
-
+        lambdaUpdate()
+                .set(TmsFirstMileReconciliationEntity::getPayStatus, dto.getPayStatus())
+                .set(TmsFirstMileReconciliationEntity::getPayTime, payTime)
+                .eq(TmsFirstMileReconciliationEntity::getId, id)
+                .update();
 
         List<FirstMileCostAllocationEntity> costAllocationEntityList = firstMileCostAllocationService.listByReconciliationIds(Arrays.asList(entity.getId()));
         List<String> ids = costAllocationEntityList.stream().map(req -> req.getId()).collect(Collectors.toList());
         if (CollUtil.isNotEmpty(ids)) {
-            logisticsLargeService.updatePayStatusBySourceId(ids, dto.getPayStatus());
+            logisticsLargeService.updatePayStatusBySourceId(ids, dto.getPayStatus(), payTime);
         }
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.CANCEL_PROCESS);
     }
