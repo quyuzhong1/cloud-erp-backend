@@ -286,147 +286,149 @@ public class DmpInoutController extends BaseController {
 
     /**
      * 获取旺店通库存不足单据
-     *
      * @return
      */
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @GetMapping("getWdtInsufficientInventory")
     public ApiResult<Collection<WdtInsufficientInventoryDTO>> getWdtInsufficientInventory() {
-        Collection<WdtInsufficientInventoryDTO> values = null;
-        String redisKey = "dmp:inout:wdt:inventory";
-        if (redisTemplate.opsForValue().setIfAbsent(redisKey, DateUtil.now(), 300, TimeUnit.SECONDS)) {
-            try {
-                List<DmpOutputTaskRecordEntity> dmpOutputTaskRecordEntityList = dmpOutputTaskRecordService.lambdaQuery()
-                        .in(DmpOutputTaskRecordEntity::getStatus, Arrays.asList(DmpOutputTaskRecordStatusEnum.ERROR.getCode()))
-                        .last(" and response_data like '旺店通出库消费数据失败%库存不足%' and response_data not like '%虚拟库存不足%' ")
-                        .list();
-                Map<String, WdtInsufficientInventoryDTO> map = new TreeMap<>();
-                if (CollUtil.isNotEmpty(dmpOutputTaskRecordEntityList)) {
-                    for (DmpOutputTaskRecordEntity dmpOutputTaskRecordEntity : dmpOutputTaskRecordEntityList) {
-                        String requestData = dmpOutputTaskRecordEntity.getResponseData();
-                        String[] split = requestData.split("sku=");
-                        for (int i = 1; i < split.length; i++) {
-                            String[] split2 = split[i].split(",仓库=");
-                            String skuNo = split2[0].replace("[", "").replace("]", "");
-                            String[] split3 = split2[1].split(",仓位=");
-                            String warehouseName = split3[0].replace("[", "").replace("]", "");
-                            String[] split4 = split3[1].split(",库存状态");
-                            String position = split4[0].replace("[", "").replace("]", "");
-                            String[] split5 = split4[1].split("缺少数：");
-                            String qty = split5[1].replace(" 库存不足：", "").split(",")[0].trim();
-
-                            String key = warehouseName + "_" + position + "_" + skuNo;
-                            WdtInsufficientInventoryDTO dto = map.get(key);
-                            if (dto == null) {
-                                dto = new WdtInsufficientInventoryDTO();
-                                dto.setWarehouse(warehouseName);
-                                dto.setPosition(position);
-                                dto.setSku(skuNo);
-                            }
-                            dto.setNum(dto.getNum() + Integer.valueOf(qty));
-                            map.put(key, dto);
-                        }
-                    }
-                }
-                values = map.values();
-                if (CollUtil.isNotEmpty(values)) {
-                    String warehouseName = "东莞塘厦仓";
-                    List<WdtInsufficientInventoryDTO> invertoryList = values.stream().filter(v -> v.getWarehouse().equals(warehouseName)).collect(Collectors.toList());
-                    if (CollUtil.isNotEmpty(invertoryList)) {
-                        List<WarehouseEntity> list = FeignQuery.create(WarehouseEntity.class).eq(WarehouseEntity::getName, warehouseName).list();
-                        if (CollUtil.isNotEmpty(list)) {
-                            WarehouseLocationMoveDTO.PcAddDTO addDto = new WarehouseLocationMoveDTO.PcAddDTO();
-                            addDto.setBillDate(LocalDate.now());
-                            List<WarehouseLocationMoveDetailDTO.AddDTO> detailList = new ArrayList<>();
-
-                            WarehouseEntity warehouseEntity = list.get(0);
-                            PagingDTO<WarehouseLocationDTO.SelectDTO> searchDTO = new PagingDTO<WarehouseLocationDTO.SelectDTO>();
-                            searchDTO.setPageSize(-1);
-                            searchDTO.setCurrPage(1);
-                            WarehouseLocationDTO.SelectDTO params = new WarehouseLocationDTO.SelectDTO();
-                            String warehouseId = warehouseEntity.getId();
-                            params.setWarehouseId(warehouseId);
-                            params.setFilterZero(true);
-                            searchDTO.setParams(params);
-
-                            List<ProductDetailEntity> productDetailList = FeignQuery.create(ProductDetailEntity.class)
-                                    .in(ProductDetailEntity::getSkuNo, invertoryList.stream().map(WdtInsufficientInventoryDTO::getSku).collect(Collectors.toList()))
-                                    .list();
-                            List<WarehouseLocationEntity> warehouseLocationList = FeignQuery.create(WarehouseLocationEntity.class)
-                                    .eq(WarehouseLocationEntity::getWarehouseId, warehouseId)
-                                    .in(WarehouseLocationEntity::getName, invertoryList.stream().map(WdtInsufficientInventoryDTO::getPosition).collect(Collectors.toList()))
-                                    .list();
-                            Map<String, String> skuIdNoMap = productDetailList.stream().collect(Collectors.toMap(ProductDetailEntity::getSkuNo, ProductDetailEntity::getId));
-                            Map<String, String> locationNameCodeMap = warehouseLocationList.stream().collect(Collectors.toMap(WarehouseLocationEntity::getName, WarehouseLocationEntity::getCode));
-                            for (WdtInsufficientInventoryDTO wdtInsufficientInventoryDTO : invertoryList) {
-                                String sku = wdtInsufficientInventoryDTO.getSku();
-                                params.setSkuNo(sku);
-                                PagingVO pagingVO = FeignQuery.invoke(PagingVO.class, "com.erp.server.wms.service.impl.WarehouseLocationServiceImpl", "pagingSelect", Arrays.asList(searchDTO));
-                                List dataList = pagingVO.getList();
-                                if (CollUtil.isNotEmpty(dataList)) {
-                                    Integer num = wdtInsufficientInventoryDTO.getNum();
-                                    List<WarehouseLocationDTO.LocationListDTO> locationList = JSON.parseArray(JSON.toJSONString(dataList), LocationListDTO.class);
-                                    String positionName = wdtInsufficientInventoryDTO.getPosition();
-                                    locationList.removeIf(l -> l.getName().equals(positionName));
-                                    LocationListDTO dto = locationList.stream().filter(l -> l.getCode().startsWith("3") && l.getUsableQty().compareTo(num) >= 0).sorted((l1, l2) -> l2.getUsableQty().compareTo(l1.getUsableQty())).findFirst().orElse(null);
-                                    if (dto == null) {
-                                        dto = locationList.stream().filter(l -> l.getCode().startsWith("2") && l.getUsableQty().compareTo(num) >= 0).sorted((l1, l2) -> l2.getUsableQty().compareTo(l1.getUsableQty())).findFirst().orElse(null);
-                                        if (dto == null) {
-                                            dto = locationList.stream().filter(l -> l.getCode().startsWith("4") && l.getUsableQty().compareTo(num) >= 0).sorted((l1, l2) -> l2.getUsableQty().compareTo(l1.getUsableQty())).findFirst().orElse(null);
-                                            if (dto == null) {
-                                                dto = locationList.stream().filter(l -> l.getCode().equals("") && l.getUsableQty().compareTo(num) >= 0).sorted((l1, l2) -> l2.getUsableQty().compareTo(l1.getUsableQty())).findFirst().orElse(null);
-                                            }
-                                        }
-                                    }
-                                    if (dto != null) {
-                                        WarehouseLocationMoveDetailDTO.AddDTO detailAddDto = new WarehouseLocationMoveDetailDTO.AddDTO();
-                                        detailAddDto.setSkuId(skuIdNoMap.get(sku));
-                                        detailAddDto.setSkuNo(sku);
-                                        detailAddDto.setQty(num);
-                                        detailAddDto.setOutWarehouseLocation(dto.getCode());
-                                        String position = wdtInsufficientInventoryDTO.getPosition();
-                                        if ("空仓位".equals(position)) {
-                                            position = "";
-                                        } else {
-                                            position = locationNameCodeMap.get(position);
-                                        }
-                                        if (position.equals(dto.getCode())) {
-                                            continue;
-                                        }
-                                        detailAddDto.setInWarehouseLocation(position);
-                                        detailAddDto.setOutInventoryStatus("usable");
-                                        detailAddDto.setInInventoryStatus("usable");
-                                        detailAddDto.setWarehouseId(warehouseId);
-                                        detailAddDto.setRemark("旺店通同步销售出库单库存不足自动仓位移动");
-
-                                        detailList.add(detailAddDto);
-                                    }
-                                }
-                            }
-                            if (CollUtil.isNotEmpty(detailList)) {
-                                addDto.setDetailList(detailList);
-                                FeignQuery.invoke("com.erp.server.wms.service.impl.WarehouseLocationMoveServiceImpl", "wdtAutoAdd", Arrays.asList(addDto));
-                                List<DmpOutputTaskRecordEntity> dealDmpOutputTaskRecordEntityList = dmpOutputTaskRecordService.lambdaQuery()
-                                        .eq(DmpOutputTaskRecordEntity::getStatus, DmpOutputTaskRecordStatusEnum.ERROR.getCode())
-                                        .last(" and response_data like '旺店通出库消费数据失败%库存不足%" + warehouseName + "%'")
-                                        .list();
-                                dealDmpOutputTaskRecordEntityList.forEach(d -> d.setStatus(DmpOutputTaskRecordStatusEnum.INIT.getCode()));
-                                dmpOutputTaskRecordService.updateBatchById(dealDmpOutputTaskRecordEntityList);
-                                dmpOutputTaskRecordService.batchSync(dealDmpOutputTaskRecordEntityList);
-                            }
-                        }
-                    }
-                }
-            } catch (Exception e) {
-                log.error("wdt库存不足失败", e);
-                throw e;
-            } finally {
-                redisTemplate.delete(redisKey);
-            }
-        } else {
-            throw new ServiceException("请勿重复点击");
-        }
-        return success(values);
+    	Collection<WdtInsufficientInventoryDTO> values = null;
+    	String redisKey = "dmp:inout:wdt:inventory";
+    	if(redisTemplate.opsForValue().setIfAbsent(redisKey, DateUtil.now(), 300, TimeUnit.SECONDS)) {
+    		try {
+				List<DmpOutputTaskRecordEntity> dmpOutputTaskRecordEntityList = dmpOutputTaskRecordService.lambdaQuery()
+				    	.in(DmpOutputTaskRecordEntity::getStatus, Arrays.asList(DmpOutputTaskRecordStatusEnum.ERROR.getCode()))
+				    	.last(" and response_data like '旺店通出库消费数据失败%库存不足%' and response_data not like '%虚拟库存不足%' ")
+				    	.list();
+					Map<String, WdtInsufficientInventoryDTO> map = new TreeMap<>();
+					if(CollUtil.isNotEmpty(dmpOutputTaskRecordEntityList)) {
+						for(DmpOutputTaskRecordEntity dmpOutputTaskRecordEntity : dmpOutputTaskRecordEntityList) {
+							String requestData = dmpOutputTaskRecordEntity.getResponseData();
+				            String[] split = requestData.split("sku=");
+				            for(int i = 1; i < split.length ; i++) {
+				            	String[] split2 = split[i].split(",仓库=");
+				                String skuNo = split2[0].replace("[", "").replace("]", "");
+				                String[] split3 = split2[1].split(",仓位=");
+				                String warehouseName = split3[0].replace("[", "").replace("]", "");
+				                String[] split4 = split3[1].split(",库存状态");
+				                String position = split4[0].replace("[", "").replace("]", "");
+				                String[] split5 = split4[1].split("缺少数：");
+				                String qty = split5[1].replace(" 库存不足：", "").split(",")[0].trim();
+				                
+				                String key = warehouseName + "_" + position + "_" + skuNo;
+				                WdtInsufficientInventoryDTO dto = map.get(key);
+				        		if(dto == null) {
+				        			dto = new WdtInsufficientInventoryDTO();
+				        			dto.setWarehouse(warehouseName);
+				        			dto.setPosition(position);
+				        			dto.setSku(skuNo);
+				        		}
+				        		dto.setNum(dto.getNum() + Integer.valueOf(qty));
+				        		map.put(key, dto);
+				            }
+						}
+					}
+					values = map.values();
+					if(CollUtil.isNotEmpty(values)) {
+						List<String> warehouseNames = Arrays.asList("东莞塘厦仓" , "奥莱仓");
+						for(String warehouseName : warehouseNames) {
+							List<WdtInsufficientInventoryDTO> invertoryList = values.stream().filter(v -> v.getWarehouse().equals(warehouseName)).collect(Collectors.toList());
+							if(CollUtil.isNotEmpty(invertoryList)) {
+								List<WarehouseEntity> list = FeignQuery.create(WarehouseEntity.class).eq(WarehouseEntity::getName, warehouseName).list();
+								if(CollUtil.isNotEmpty(list)) {
+									WarehouseLocationMoveDTO.PcAddDTO addDto = new WarehouseLocationMoveDTO.PcAddDTO();
+									addDto.setBillDate(LocalDate.now());
+									List<WarehouseLocationMoveDetailDTO.AddDTO> detailList = new ArrayList<>();
+									
+									WarehouseEntity warehouseEntity = list.get(0);
+									PagingDTO<WarehouseLocationDTO.SelectDTO> searchDTO = new PagingDTO<WarehouseLocationDTO.SelectDTO>();
+									searchDTO.setPageSize(-1);
+									searchDTO.setCurrPage(1);
+									WarehouseLocationDTO.SelectDTO params = new WarehouseLocationDTO.SelectDTO();
+									String warehouseId = warehouseEntity.getId();
+									params.setWarehouseId(warehouseId);
+									params.setFilterZero(true);
+									searchDTO.setParams(params);
+									
+									List<ProductDetailEntity> productDetailList = FeignQuery.create(ProductDetailEntity.class)
+					    				.in(ProductDetailEntity::getSkuNo, invertoryList.stream().map(WdtInsufficientInventoryDTO::getSku).collect(Collectors.toList()))
+					    				.list();
+									List<WarehouseLocationEntity> warehouseLocationList = FeignQuery.create(WarehouseLocationEntity.class)
+					    				.eq(WarehouseLocationEntity::getWarehouseId, warehouseId)
+					    				.in(WarehouseLocationEntity::getName, invertoryList.stream().map(WdtInsufficientInventoryDTO::getPosition).collect(Collectors.toList()))
+					    				.list();
+									Map<String, String> skuIdNoMap = productDetailList.stream().collect(Collectors.toMap(ProductDetailEntity::getSkuNo, ProductDetailEntity::getId));
+									Map<String, String> locationNameCodeMap = warehouseLocationList.stream().collect(Collectors.toMap(WarehouseLocationEntity::getName, WarehouseLocationEntity::getCode));
+									for(WdtInsufficientInventoryDTO wdtInsufficientInventoryDTO : invertoryList) {
+										String sku = wdtInsufficientInventoryDTO.getSku();
+										params.setSkuNo(sku);
+					    				PagingVO pagingVO = FeignQuery.invoke(PagingVO.class, "com.erp.server.wms.service.impl.WarehouseLocationServiceImpl", "pagingSelect", Arrays.asList(searchDTO));
+					    				List dataList = pagingVO.getList();
+					    				if(CollUtil.isNotEmpty(dataList)) {
+					    					Integer num = wdtInsufficientInventoryDTO.getNum();
+					    					List<WarehouseLocationDTO.LocationListDTO> locationList = JSON.parseArray(JSON.toJSONString(dataList), LocationListDTO.class);
+					    					String positionName = wdtInsufficientInventoryDTO.getPosition();
+					    					locationList.removeIf(l -> l.getName().equals(positionName));
+					    					LocationListDTO dto = locationList.stream().filter(l -> l.getCode().startsWith("3") && l.getUsableQty().compareTo(num) >= 0).sorted((l1 , l2) -> l2.getUsableQty().compareTo(l1.getUsableQty())).findFirst().orElse(null);
+					    					if(dto == null) {
+					    						dto = locationList.stream().filter(l -> l.getCode().startsWith("2") && l.getUsableQty().compareTo(num) >= 0).sorted((l1 , l2) -> l2.getUsableQty().compareTo(l1.getUsableQty())).findFirst().orElse(null);
+					    						if(dto == null) {
+					    							dto = locationList.stream().filter(l -> l.getCode().startsWith("4") && l.getUsableQty().compareTo(num) >= 0).sorted((l1 , l2) -> l2.getUsableQty().compareTo(l1.getUsableQty())).findFirst().orElse(null);
+					    							if(dto == null) {
+						    							dto = locationList.stream().filter(l -> l.getCode().equals("") && l.getUsableQty().compareTo(num) >= 0).sorted((l1 , l2) -> l2.getUsableQty().compareTo(l1.getUsableQty())).findFirst().orElse(null);
+						    						}
+					    						}
+					    					}
+					    					if(dto != null) {
+					    						WarehouseLocationMoveDetailDTO.AddDTO detailAddDto = new WarehouseLocationMoveDetailDTO.AddDTO();
+					    						detailAddDto.setSkuId(skuIdNoMap.get(sku));
+					    						detailAddDto.setSkuNo(sku);
+					    						detailAddDto.setQty(num);
+					    						detailAddDto.setOutWarehouseLocation(dto.getCode());
+					    						String position = wdtInsufficientInventoryDTO.getPosition();
+					    						if("空仓位".equals(position)) {
+					    							position = "";
+					    						}else {
+					    							position = locationNameCodeMap.get(position);
+					    						}
+					    						if(position.equals(dto.getCode())) {
+					    							continue;
+					    						}
+												detailAddDto.setInWarehouseLocation(position);
+					    						detailAddDto.setOutInventoryStatus("usable");
+					    						detailAddDto.setInInventoryStatus("usable");
+					    						detailAddDto.setWarehouseId(warehouseId);
+					    						detailAddDto.setRemark("旺店通同步销售出库单库存不足自动仓位移动");
+					    						
+					    						detailList.add(detailAddDto);
+					    					}
+					    				}
+									}
+									if(CollUtil.isNotEmpty(detailList)) {
+										addDto.setDetailList(detailList);
+										FeignQuery.invoke("com.erp.server.wms.service.impl.WarehouseLocationMoveServiceImpl", "wdtAutoAdd", Arrays.asList(addDto));
+										List<DmpOutputTaskRecordEntity> dealDmpOutputTaskRecordEntityList = dmpOutputTaskRecordService.lambdaQuery()
+					    					.eq(DmpOutputTaskRecordEntity::getStatus, DmpOutputTaskRecordStatusEnum.ERROR.getCode())
+					    			    	.last(" and response_data like '旺店通出库消费数据失败%库存不足%" + warehouseName + "%'")
+					    			    	.list();
+										dealDmpOutputTaskRecordEntityList.forEach(d -> d.setStatus(DmpOutputTaskRecordStatusEnum.INIT.getCode()));
+										dmpOutputTaskRecordService.updateBatchById(dealDmpOutputTaskRecordEntityList);
+										dmpOutputTaskRecordService.batchSync(dealDmpOutputTaskRecordEntityList);
+									}
+								}
+							}
+						
+						}
+					}
+			}catch (Exception e) {
+				log.error("wdt库存不足失败" , e);
+				throw e;
+			}finally {
+				redisTemplate.delete(redisKey);
+			}
+    	}else {
+    		throw new ServiceException("请勿重复点击");
+    	}
+		return success(values);
     }
 }
