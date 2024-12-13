@@ -647,7 +647,7 @@ public class TmsB2cDeclareReconciliationServiceImpl extends SuperServiceImpl<Tms
         List<TransferDeclareCostAllocationMainEntity> list = transferDeclareCostAllocationMainService.lambdaQuery().in(TransferDeclareCostAllocationMainEntity::getDeclareReconciliationDetailId, detailIds).list();
         List<String> ids = list.stream().map(req -> req.getId()).collect(Collectors.toList());
         if (CollUtil.isNotEmpty(ids)) {
-            logisticsLargeService.updatePayStatusBySourceId(ids, payStatus);
+            logisticsLargeService.updatePayStatusBySourceId(ids, payStatus, payTime);
         }
 		return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.UPDATE_STATUS);
 	}

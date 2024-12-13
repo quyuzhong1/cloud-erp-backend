@@ -146,7 +146,7 @@ public interface LogisticsLargeService extends SuperService<LogisticsLargeEntity
      * 根据来源id修改支付状态
      * @return
      */
-    Boolean updatePayStatusBySourceId(List<String> sourceIds, String status);
+    Boolean updatePayStatusBySourceId(List<String> sourceIds, String status, LocalDateTime payTime);
 
     /**
      * 根据来源类型修改揽收时间
