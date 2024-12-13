@@ -28,10 +28,6 @@ public class MouldInfoExcelListener extends AnalysisEventListener<MouldInfoImpor
      */
     private List<MouldDetailDTO.ViewDTO> successList = new ArrayList<>();
     /**
-     * 导入数据，用于判断导入是否为空
-     */
-    private final List<MouldInfoImportDTO.MouldInfoExcelDTO> allList = new ArrayList<>();
-    /**
      * 导入错误数据
      */
     private final List<MouldInfoImportDTO.MouldInfoExcelDTO> errorList = new ArrayList<>();
@@ -44,17 +40,10 @@ public class MouldInfoExcelListener extends AnalysisEventListener<MouldInfoImpor
 
     @Override
     public void invoke(MouldInfoImportDTO.MouldInfoExcelDTO data, AnalysisContext context) {
-        allList.add(data);
         //注解验证信息
         List<String> msgList = FieldValidUtil.fieldValid(data);
         if (!CollectionUtils.isEmpty(msgList)) {
             data.setErrorMsg(String.join(",", msgList));
-            errorList.add(data);
-            return;
-        }
-        //校验重复数据
-        if (allList.contains(data)) {
-            data.setErrorMsg("数据重复");
             errorList.add(data);
             return;
         }

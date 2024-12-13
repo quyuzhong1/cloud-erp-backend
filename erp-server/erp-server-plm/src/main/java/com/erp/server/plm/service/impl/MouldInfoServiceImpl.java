@@ -731,11 +731,6 @@ public class MouldInfoServiceImpl extends SuperServiceImpl<MouldInfoMapper, Moul
             log.error("导入格式错误！", e);
             throw new ServiceException(ApiError.ERROR_1016);
         }
-        //验证导入数据是否为空
-        List<MouldInfoImportDTO.MouldInfoExcelDTO> allList = excelListenerUtil.getAllList();
-        if (CollectionUtils.isEmpty(allList)) {
-            throw new ServiceException(ApiError.ERROR_95123);
-        }
         List<MouldDetailDTO.ViewDTO> successList = excelListenerUtil.getSuccessList();
         String url = "";
         List<MouldInfoImportDTO.MouldInfoExcelDTO> errorList = excelListenerUtil.getErrorList();

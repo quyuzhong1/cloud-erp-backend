@@ -23,7 +23,7 @@
         select md.id as detailId, md.enable_date, mra.refund_standard
         from mould_detail md
                  inner join public.mould_refund_agreement mra on md.id = mra.mould_detail_id
-        where is_need_refund = true
+        where is_need_refund = true and refund_status in ('not_reached','to_be_returned')
 
     </select>
 

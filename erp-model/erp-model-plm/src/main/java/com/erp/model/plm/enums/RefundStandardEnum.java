@@ -8,10 +8,9 @@ import org.apache.commons.lang3.StringUtils;
 @Getter
 @AllArgsConstructor
 public enum RefundStandardEnum implements EnumMessage {
-    PURCHASE_ORDERS("purchase_orders", "采购下单"),
-    RECEIVING("receiving", "采购收货"),
-    IN_STOCK("in_stock", "采购入库");
-
+    PURCHASE_ORDERS("purchase_orders", "以\"采购下单\"数量"),
+    RECEIVING("receiving", "以\"采购收货\"数量"),
+    IN_STOCK("in_stock", "以\"采购入库\"数量");
     private final String code;
 
     private final String name;
