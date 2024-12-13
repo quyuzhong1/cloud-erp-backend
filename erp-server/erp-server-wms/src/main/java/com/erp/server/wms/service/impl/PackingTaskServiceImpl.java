@@ -448,7 +448,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
         //根据主表id分组sku查询发货及待装箱数
         List<WmsCartonSpecDTO.GroupSkuDTO> groupSkuList = this.listGroupSkuById(dto.getTaskId());
         //更新主表状态
-        service.updatePackingStatus(groupSkuList, packingTask);
+        updatePackingStatus(groupSkuList, packingTask);
         //发送飞书通知
         this.sendNoticeMsg(dto.getTaskId(), dto.getOperation(), dto.getContent());
 
@@ -1338,7 +1338,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
             List<WmsCartonEntity> cartonEntityList = wmsCartonService.listByTaskIds(Collections.singletonList(addDTO.getTaskId()));
             wmsCartonEntity = cartonEntityList.stream().filter(e -> Objects.nonNull(e) && e.getSpecId().equals(specId)).findFirst().orElse(new WmsCartonEntity());
             //更新装箱状态
-            service.updatePackingStatus(listGroupSkuById(addDTO.getTaskId()),packingTaskEntity);
+            this.updatePackingStatus(listGroupSkuById(addDTO.getTaskId()),packingTaskEntity);
             //发送飞书通知
             this.sendNoticeMsg(addDTO.getTaskId(), addDTO.getOperation(), addDTO.getContent());
 
@@ -1349,7 +1349,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
             addDTO.setCartonId(cartonEntity.getId());
             String cartonId = wmsCartonService.add(addDTO,wmsCartonSpecEntity);
             //更新装箱状态
-            service.updatePackingStatus(listGroupSkuById(addDTO.getTaskId()),packingTaskEntity);
+            this.updatePackingStatus(listGroupSkuById(addDTO.getTaskId()),packingTaskEntity);
             //发送飞书通知
             this.sendNoticeMsg(addDTO.getTaskId(), addDTO.getOperation(), addDTO.getContent());
             wmsCartonEntity = wmsCartonService.getById(cartonId);
@@ -1441,7 +1441,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
         //更新调整数量
         Integer boxNo = updateAdjustData(dto);
         //更新装箱状态
-        service.updatePackingStatus(listGroupSkuById(dto.getTaskId()),packingTaskEntity);
+        this.updatePackingStatus(listGroupSkuById(dto.getTaskId()),packingTaskEntity);
         //发送飞书通知
         this.sendNoticeMsg(dto.getTaskId(), "装箱任务", "调整装箱-" + AdjustTypeEnum.getName(dto.getAdjustType()));
         return packingTaskEntity.getSourceCode() + "-" + boxNo;
@@ -1538,7 +1538,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
         //更新尺寸为空
         wmsCartonSpecService.updateSizeDataEmpty(cartonSpecEntity);
         //更新装箱状态
-        service.updatePackingStatus(listGroupSkuById(wmsCartonEntity.getPackingTaskId()),packingTaskEntity);
+        updatePackingStatus(listGroupSkuById(wmsCartonEntity.getPackingTaskId()),packingTaskEntity);
         return wmsCartonEntity.getBoxNo();
     }
 
@@ -2006,7 +2006,6 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
      * @param packingTaskEntity
      */
     @Override
-    @DataIdempotent(keyIdName = "packingTaskEntity.id", waitTime = 20, businessType = "updatePackingStatus")
     public void updatePackingStatus(List<WmsCartonSpecDTO.GroupSkuDTO> groupSkuList, PackingTaskEntity packingTaskEntity) {
         if (null == packingTaskEntity || CollectionUtils.isEmpty(groupSkuList)){
             return;
@@ -2045,7 +2044,6 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
     }
 
     @Override
-    @DataIdempotent(keyIdName = "packingTaskEntity.id", waitTime = 20, businessType = "updateWeightStatus")
     public void updateWeightStatus(PackingTaskEntity packingTaskEntity) {
         if(Objects.isNull(packingTaskEntity)){
             return;
@@ -2374,7 +2372,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
             packingTaskDetailService.updateBatchById(packingTaskDetailEntityList);
             if(isAdd){
                 //更新装箱状态
-                service.updatePackingStatus(listGroupSkuById(packingTaskEntity.getId()),packingTaskEntity);
+                this.updatePackingStatus(listGroupSkuById(packingTaskEntity.getId()),packingTaskEntity);
             }
         }else{
             PackingTaskEntity packingTaskEntity = PackingConverter.INSTANCE.requisitionToPackingTask(entity,sourceType);
@@ -2448,7 +2446,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
         });
         service.updateBatchById(packingTaskEntityList);
         packingTaskEntityList.forEach(v->{
-            service.updatePackingStatus(listGroupSkuById(v.getId()),v);
+            this.updatePackingStatus(listGroupSkuById(v.getId()),v);
         });
     }
 
@@ -2485,7 +2483,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
     @Override
     public void updatePackingStatusByTaskId(String taskId) {
         PackingTaskEntity packingTaskEntity = this.getById(taskId);
-        service.updatePackingStatus(listGroupSkuById(taskId),packingTaskEntity);
+        this.updatePackingStatus(listGroupSkuById(taskId),packingTaskEntity);
     }
 
     /**
