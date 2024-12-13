@@ -389,7 +389,7 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
     }
 
     @Override
-    public List<WarehouseDTO.ListDTO> listOverseasWarehouse() {
+    public List<WarehouseDTO.PullDownDTO> listOverseasWarehouse() {
         // 查询仓库关联服务商
         Map<String, List<OverseasProviderDTO.ListWithWarehouseDTO>> warehouseBindMap = overseasProviderService.mapByWarehouseIds();
         if (warehouseBindMap.isEmpty()) {
@@ -403,29 +403,19 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
         if (CollectionUtils.isEmpty(list)) {
             return Collections.emptyList();
         }
-        List<WarehouseDTO.ListDTO> resultList = BeanMapperUtils.copyList(WarehouseDTO.ListDTO.class, list);
-        // 填充其他信息
-        this.fillListData(resultList, warehouseBindMap);
-
+        List<WarehouseDTO.PullDownDTO> resultList = BeanMapperUtils.copyList(WarehouseDTO.PullDownDTO.class, list);
 
         //速卖通仓库映射
         List<WarehouseMappingDTO.MappingViewDTO> mappingViewDTOS = warehouseMappingService.listMappingViewByDictPlatform(PlatformDictEnum.ALI_EXPRESS.getCode());
         if (CollUtil.isNotEmpty(mappingViewDTOS)){
             for (WarehouseMappingDTO.MappingViewDTO viewDTO : mappingViewDTOS) {
-                WarehouseDTO.ListDTO add  = new WarehouseDTO.ListDTO();
+                WarehouseDTO.PullDownDTO add  = new WarehouseDTO.PullDownDTO();
                 add.setId(viewDTO.getWarehouseId());
-                add.setDictPlatform(PlatformDictEnum.ALI_EXPRESS.getCode());
-                add.setPlatformName(PlatformDictEnum.ALI_EXPRESS.getName());
                 add.setName(viewDTO.getWarehouseName());
-                add.setDisabled(Boolean.TRUE);
                 resultList.add(add);
             }
         }
-        return resultList.stream()
-                .sorted(Comparator.comparing(WarehouseDTO.ListDTO::getDisabled))
-                .collect(Collectors.toList());
-
-
+        return resultList.stream().distinct().collect(Collectors.toList());
     }
 
     @Override

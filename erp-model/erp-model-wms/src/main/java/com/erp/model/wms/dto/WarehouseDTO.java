@@ -1,16 +1,5 @@
 package com.erp.model.wms.dto;
 
-import java.io.Serializable;
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotEmpty;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Size;
-
 import com.common.business.annotation.Dict;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.PermissionsDTO;
@@ -18,9 +7,18 @@ import com.common.business.dto.base.SortDTO;
 import com.common.business.dto.base.UpdateStateDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.ServiceCodeNameEnum;
-
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
+import java.io.Serializable;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author Lambda
@@ -954,6 +952,25 @@ public class WarehouseDTO implements Serializable {
             this.warehouseLocation = viewDTO.getWarehouseLocation();
             this.warehouseName = viewDTO.getWarehouseName();
         }
+    }
+
+    /**
+     * 仓库列表
+     */
+    @Data
+    @NoArgsConstructor
+    public static class PullDownDTO {
+
+        /**
+         * id
+         */
+        private String id;
+
+        /**
+         * 名称
+         */
+        private String name;
+
     }
 
 }
