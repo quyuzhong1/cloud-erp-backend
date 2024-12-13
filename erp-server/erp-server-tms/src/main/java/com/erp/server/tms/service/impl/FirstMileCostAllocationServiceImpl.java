@@ -1597,4 +1597,12 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
         }
         return lambdaQuery().in(FirstMileCostAllocationEntity::getReconciliationId, reconciliationIds).list();
     }
+
+    @Override
+    public List<FirstMileCostAllocationEntity> listByLogisticsBillIds(List<String> logisticsBillIds) {
+        if (CollectionUtils.isEmpty(logisticsBillIds)) {
+            return Collections.emptyList();
+        }
+        return lambdaQuery().in(FirstMileCostAllocationEntity::getLogisticsBillId, logisticsBillIds).list();
+    }
 }

@@ -197,6 +197,10 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
     private OverseaWarehouseInboundFeign overseaWarehouseInboundFeign;
     @Resource
     private FirstMileDeliveryDetailFeign firstMileDeliveryDetailFeign;
+    @Resource
+    private LogisticsLargeService logisticsLargeService;
+    @Resource
+    private FirstMileCostAllocationService firstMileCostAllocationService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -919,6 +923,14 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
         if(CollectionUtils.isNotEmpty(updateBillList)){
             this.updateBatchById(updateBillList);
         }
+
+        //如果是已揽收，更新物流大表揽收时间
+        if (FmLogisticTrackStatusEnum.PICKUP.getCode().equals(statusEnum.getCode())) {
+            List<FirstMileCostAllocationEntity> costAllocationEntityList = firstMileCostAllocationService.listByLogisticsBillIds(dto.getIds());
+            List<String> ids = costAllocationEntityList.stream().map(req -> req.getId()).distinct().collect(Collectors.toList());
+            logisticsLargeService.updatePickupTimeBySourceId(ids, dto.getTime());
+        }
+
         List<Pair<String, String>> addPairList = logisticsBillEntityList.stream().map(obj -> new Pair<>(obj.getId(), obj.getId())).collect(Collectors.toList());
         operateLogService.batchAddModuleOperateLog(CharSequenceUtil.format("用户【{}】变更物流状态为【{}】",UserContext.getDefaultLoginUser().getUserName(),statusEnum.getName()), ModuleTypeEnum.LOGISTICS_BILL.getCode(), addPairList, "编辑操作");
 

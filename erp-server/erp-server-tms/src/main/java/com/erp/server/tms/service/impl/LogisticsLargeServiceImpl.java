@@ -181,6 +181,7 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
                 pagingViewDTO.setProductName(productDetailEntity.getName());
                 pagingViewDTO.setSkuNo(productDetailEntity.getSkuNo());
             }
+            pagingViewDTO.setShippingMethodName(LogisticsLargeShippingMethodEnum.getName(pagingViewDTO.getShippingMethod()));
         }
     }
 
@@ -300,6 +301,9 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
         addDTO.setOutstockCode(deliveryEntity.getCode());
         addDTO.setOutstockTime(deliveryEntity.getApproveTime());
         addDTO.setLogisticsBillId(logisticsBillEntity.getId());
+        addDTO.setShippingMethod(logisticsBillEntity.getShippingMethod());
+        addDTO.setTransportNo(logisticsBillEntity.getCounterNo());
+
         if (ReconciliationBillTypeEnum.ACTUAL.getCode().equals(firstMileSkuCostAllocationEntity.getBillSourceType())) {
             //头程对账单主信息
             TmsFirstMileReconciliationEntity reconciliationEntity = tmsFirstMileReconciliationService.getById(entity.getReconciliationId());
@@ -371,15 +375,17 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
         addDTO.setSkuNo(firstMileSkuCostAllocationEntity.getSkuNo());
         addDTO.setDeliveryQty(firstMileSkuCostAllocationEntity.getDeliveryQty());
 
+        //起运地
+        addDTO.setOriginPort("");
 
+        //目的港
+        addDTO.setDestinationPort("");
         WarehouseDTO.UpdateDTO deliveryWarehouse = warehouseList.stream().filter(req -> deliveryEntity.getDeliveryWarehouseId().equals(req.getId())).findFirst().orElse(null);
         if (deliveryWarehouse != null) {
-            addDTO.setOriginPort(deliveryWarehouse.getAddress());
             addDTO.setPickupAddress(deliveryWarehouse.getAddress());
         }
         WarehouseDTO.UpdateDTO destWarehouse = warehouseList.stream().filter(req -> deliveryEntity.getDestWarehouseId().equals(req.getId())).findFirst().orElse(null);
         if (destWarehouse != null) {
-            addDTO.setDestinationPort(destWarehouse.getAddress());
             addDTO.setDeliveryAddress(destWarehouse.getAddress());
         }
 
@@ -405,12 +411,14 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
         if (detailEntity != null && detailEntity.getAmount().compareTo(BigDecimal.ZERO) > 0) {
             addDTO.setFreightCalculationFactor(detailEntity.getAllocatedAmount().divide(detailEntity.getAmount(), 4, RoundingMode.DOWN));
         }
-        BigDecimal rate = dmpTaskFeign.getRate(logisticsBillEntity.getCreateTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), logisticsBillCostEntity.getCurrency());
+
+
+        BigDecimal rate = dmpTaskFeign.getRate(monthEntity.getMonth().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), logisticsBillCostEntity.getCurrency());
         if (ObjectUtil.isNotEmpty(detailEntity)) {
-            BigDecimal firstMileFreightAmount = detailEntity.getAllocatedAmount().multiply(rate);
-            addDTO.setFirstMileEstimatedFreightTax(detailEntity.getAllocatedAmount().multiply(rate));
+            BigDecimal firstMileFreightAmount = detailEntity.getAllocatedAmount().divide(rate);
+            addDTO.setFirstMileEstimatedFreightTax(detailEntity.getAllocatedAmount().divide(rate));
             addDTO.setFirstMileEstimatedFreight(firstMileFreightAmount.divide(BigDecimal.ONE.add(addDTO.getTaxRate()), 4, RoundingMode.DOWN));
-            addDTO.setFirstMileActualFreightTax(detailEntity.getAllocatedAmount().multiply(rate));
+            addDTO.setFirstMileActualFreightTax(detailEntity.getAllocatedAmount().divide(rate));
             addDTO.setFirstMileActualFreight(firstMileFreightAmount.divide(BigDecimal.ONE.add(addDTO.getTaxRate()), 4, RoundingMode.DOWN).multiply(addDTO.getTaxRate()));
         }
 
@@ -642,15 +650,8 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
             addDTO.setTransportNo(logisticsBillEntity.getTransportNo());
         }
 
-        //自发货是直发，默认东莞
-        if (ShipmentTypeEnum.SELF_DELIVER.getCode().equals(logisticsBillEntity.getShipmentType())) {
-            addDTO.setOriginPort("东莞");
-        } else {
-            List<WarehouseEntity> list = FeignQuery.create(WarehouseEntity.class).eq(WarehouseEntity::getId, soOutstockEntity.getWarehouseId()).list();
-            if (CollUtil.isNotEmpty(list)) {
-                addDTO.setOriginPort(list.get(0).getAddress());
-            }
-        }
+        //启运地
+        addDTO.setOriginPort("");
 
         //地址
         if (CharSequenceUtil.isNotBlank(soOutstockEntity.getSoId())) {
@@ -710,8 +711,8 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
         }
         if (ObjectUtil.isNotEmpty(detailEntity)) {
             BigDecimal lastMileFreightAmount = detailEntity.getAllocatedAmount();
-            addDTO.setLastMileFreightAmount(detailEntity.getAllocatedAmount());
-            addDTO.setLastMileFreightAmountTax(lastMileFreightAmount.divide(BigDecimal.ONE.add(addDTO.getTaxRate()), 4, RoundingMode.DOWN));
+            addDTO.setLastMileFreightAmountTax(detailEntity.getAllocatedAmount());
+            addDTO.setLastMileFreightAmount(lastMileFreightAmount.divide(BigDecimal.ONE.add(addDTO.getTaxRate()), 4, RoundingMode.DOWN));
             addDTO.setLastMileFreightVatAmount(lastMileFreightAmount.divide(BigDecimal.ONE.add(addDTO.getTaxRate()), 4, RoundingMode.DOWN).multiply(addDTO.getTaxRate()));
         }
 
@@ -1031,15 +1032,8 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
         addDTO.setShippingMethod(LogisticsLargeShippingMethodEnum.EXPRESS_DELIVERY.getCode());
 
 
-        //自发货是直发，默认东莞
-        if (ShipmentTypeEnum.SELF_DELIVER.getCode().equals(logisticsBillEntity.getShipmentType())) {
-            addDTO.setOriginPort("东莞");
-        } else {
-            List<WarehouseEntity> list = FeignQuery.create(WarehouseEntity.class).eq(WarehouseEntity::getId, soOutstockEntity.getWarehouseId()).list();
-            if (CollUtil.isNotEmpty(list)) {
-                addDTO.setOriginPort(list.get(0).getAddress());
-            }
-        }
+        //启运地
+        addDTO.setOriginPort("");
 
         //地址
         if (CharSequenceUtil.isNotBlank(soOutstockEntity.getSoId())) {
@@ -1156,6 +1150,18 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
                 .set(LogisticsLargeEntity::getDestDutyPayStatus, status)
                 .set(LogisticsLargeEntity::getOtherTaxPayStatus, status)
                 .set(LogisticsLargeEntity::getDestMiscFeePayStatus, status)
+                .in(LogisticsLargeEntity::getSourceId, sourceIds)
+                .update();
+    }
+
+    @Override
+    public Boolean updatePickupTimeBySourceId(List<String> sourceIds, LocalDateTime dateTime) {
+        if (CollUtil.isEmpty(sourceIds)) {
+            return Boolean.FALSE;
+        }
+
+        return this.lambdaUpdate()
+                .set(LogisticsLargeEntity::getPickupTime, dateTime)
                 .in(LogisticsLargeEntity::getSourceId, sourceIds)
                 .update();
     }

@@ -109,7 +109,7 @@
         ll.destination_port AS destinationPort,
         ll.pickup_address AS pickupAddress,
         ll.delivery_address AS deliveryAddress,
-        ll.pickup_time AS pickupTime,
+        CASE SHEN lbd. lbd.track_time AS pickupTime,
         lbd.sign_time AS actualDeliveryTime,
         ll.freight_calculation_factor AS freightCalculationFactor,
         ll.freight_currency AS freightCurrency,

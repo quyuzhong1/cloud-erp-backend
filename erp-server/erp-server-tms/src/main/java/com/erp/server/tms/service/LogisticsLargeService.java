@@ -11,6 +11,7 @@ import com.erp.model.wms.entity.FirstMileDeliveryEntity;
 import com.erp.model.wms.entity.SoOutstockDetailEntity;
 import com.erp.model.wms.entity.SoOutstockEntity;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -146,5 +147,13 @@ public interface LogisticsLargeService extends SuperService<LogisticsLargeEntity
      * @return
      */
     Boolean updatePayStatusBySourceId(List<String> sourceIds, String status);
+
+    /**
+     * 根据来源类型修改揽收时间
+     * @param sourceIds
+     * @param dateTime
+     * @return
+     */
+    Boolean updatePickupTimeBySourceId(List<String> sourceIds, LocalDateTime dateTime);
 
 }
