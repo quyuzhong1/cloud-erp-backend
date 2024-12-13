@@ -9,6 +9,7 @@ import com.erp.model.plm.entity.MouldDocInfoEntity;
 import com.erp.server.plm.mapper.MouldDocInfoMapper;
 import com.erp.server.plm.service.MouldDocInfoService;
 import com.common.business.service.impl.SuperServiceImpl;
+import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import lombok.extern.slf4j.Slf4j;
 
@@ -33,6 +34,7 @@ public class MouldDocInfoServiceImpl extends SuperServiceImpl<MouldDocInfoMapper
         List<MouldDocInfoEntity> docInfoEntityList = docList.stream()
                 .map(v -> {
                     MouldDocInfoEntity entity = BeanMapperUtils.map(MouldDocInfoEntity.class, v);
+                    entity.setTypeId(v.getDocTypeId());
                     entity.setMouldInfoId(id);
                     return entity;
                 }).collect(Collectors.toList());
@@ -42,6 +44,12 @@ public class MouldDocInfoServiceImpl extends SuperServiceImpl<MouldDocInfoMapper
     @Override
     public List<MouldDocInfoDTO.ViewDTO> listByMouldId(String id) {
         List<MouldDocInfoEntity> list = list(Wrappers.<MouldDocInfoEntity>lambdaQuery().eq(MouldDocInfoEntity::getMouldInfoId, id));
-        return BeanMapperUtils.copyList(MouldDocInfoDTO.ViewDTO.class, list);
+        return list.stream()
+                .map(v -> {
+                    MouldDocInfoDTO.ViewDTO dto = new MouldDocInfoDTO.ViewDTO();
+                    BeanUtils.copyProperties(v, dto);
+                    dto.setDocTypeId(v.getTypeId());
+                    return dto;
+                }).collect(Collectors.toList());
     }
 }
