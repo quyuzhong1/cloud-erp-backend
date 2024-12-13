@@ -141,4 +141,10 @@ public interface LogisticsLargeService extends SuperService<LogisticsLargeEntity
      */
     List<String> listFirstMileCostAllocationIsExists();
 
+    /**
+     * 根据来源id修改支付状态
+     * @return
+     */
+    Boolean updatePayStatusBySourceId(List<String> sourceIds, String status);
+
 }

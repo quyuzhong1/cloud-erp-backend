@@ -42,12 +42,7 @@ import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.tms.mapper.TmsB2cDeclareReconciliationMapper;
-import com.erp.server.tms.service.OperateLogService;
-import com.erp.server.tms.service.TmsB2cDeclareReconciliationDetailService;
-import com.erp.server.tms.service.TmsB2cDeclareReconciliationService;
-import com.erp.server.tms.service.TransferDeclareCostAllocationMainService;
-import com.erp.server.tms.service.TransferDeclareService;
-import com.erp.server.tms.service.TransferLogisticsSupplierService;
+import com.erp.server.tms.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -109,6 +104,8 @@ public class TmsB2cDeclareReconciliationServiceImpl extends SuperServiceImpl<Tms
     private TransferDeclareService transferDeclareService;
     @Resource
     private TransferDeclareCostAllocationMainService transferDeclareCostAllocationMainService;
+    @Resource
+    private LogisticsLargeService logisticsLargeService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -643,6 +640,15 @@ public class TmsB2cDeclareReconciliationServiceImpl extends SuperServiceImpl<Tms
 			        .set(TmsB2cDeclareReconciliationEntity::getPayStatus, payStatus)
 			        .set(TmsB2cDeclareReconciliationEntity::getPayTime, payTime)
 			        .update();
+
+        // 修改物流大表的支付状态
+        List<TmsB2cDeclareReconciliationDetailEntity> detailEntityList = tmsB2cDeclareReconciliationDetailService.lambdaQuery().eq(TmsB2cDeclareReconciliationDetailEntity::getMainId, id).list();
+        List<String> detailIds = detailEntityList.stream().map(req -> req.getId()).collect(Collectors.toList());
+        List<TransferDeclareCostAllocationMainEntity> list = transferDeclareCostAllocationMainService.lambdaQuery().in(TransferDeclareCostAllocationMainEntity::getDeclareReconciliationDetailId, detailIds).list();
+        List<String> ids = list.stream().map(req -> req.getId()).collect(Collectors.toList());
+        if (CollUtil.isNotEmpty(ids)) {
+            logisticsLargeService.updatePayStatusBySourceId(ids, payStatus);
+        }
 		return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.UPDATE_STATUS);
 	}
 }

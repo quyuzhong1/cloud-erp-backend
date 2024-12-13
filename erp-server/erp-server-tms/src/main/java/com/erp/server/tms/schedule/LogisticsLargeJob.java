@@ -112,7 +112,7 @@ public class LogisticsLargeJob {
             soOutstockEntitylList = FeignQuery.create(SoOutstockEntity.class).in(SoOutstockEntity::getId, outstockIds).list();
         }
 
-        List<String> soIds = soOutstockEntitylList.stream().map(req -> req.getSourceId()).distinct().collect(Collectors.toList());
+        List<String> soIds = soOutstockEntitylList.stream().map(req -> req.getSoId()).distinct().collect(Collectors.toList());
         List<SoB2cEntity> soB2cEntities = new ArrayList<>();
         if (CollUtil.isNotEmpty(soIds)) {
             soB2cEntities = soB2cFeign.listByIds(soIds);

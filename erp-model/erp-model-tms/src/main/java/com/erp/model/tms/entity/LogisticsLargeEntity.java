@@ -354,6 +354,11 @@ public class LogisticsLargeEntity extends BaseEntity<LogisticsLargeEntity> {
      */
     @TableField("is_hedging")
     private Boolean isHedging;
+    /**
+     * 物流单id
+     */
+    @TableField("logistics_bill_id")
+    private String logisticsBillId;
 
 
     public static final String OUTSTOCK_CODE = "outstock_code";

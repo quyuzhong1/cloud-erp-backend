@@ -9,7 +9,7 @@ public enum LogisticsLargeShippingMethodEnum implements EnumMessage {
     RAIL_TRANSPORT("railTransport","铁运"),
     OCEAN("ocean","海运"),
     AVIATION("aviation","空运"),
-    EXPRESS_DELIVERY("expressDelivery","商业运输"),
+    EXPRESS_DELIVERY("expressDelivery","商业快递"),
     ;
 
     /**
