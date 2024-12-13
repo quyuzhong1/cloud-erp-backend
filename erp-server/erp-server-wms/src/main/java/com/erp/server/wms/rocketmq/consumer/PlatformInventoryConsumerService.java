@@ -118,10 +118,8 @@ public class PlatformInventoryConsumerService<T extends DmpSyncTaskIdDTO> extend
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public ApiResult<?> handle(Object ext) {
+    public ApiResult<Object> handle(Object ext) {
         PlatformInventoryDTO dto = JSONUtil.toBean(ext.toString(), PlatformInventoryDTO.class);
-
-
         List<String> warehouseIds = null;
         if(dto.getPlatform().equals(PlatformDictEnum.ALI_EXPRESS.getCode())){
             //仓库映射
@@ -147,11 +145,10 @@ public class PlatformInventoryConsumerService<T extends DmpSyncTaskIdDTO> extend
             List<OverseasProviderDTO.ListWithWarehouseDTO> warehouseDTOS = overseasWareHouseList.stream()
                     .filter(e-> e.getCode().equalsIgnoreCase(dto.getPlatform()))
                     .collect(Collectors.toList());
-            if (CollectionUtils.isEmpty(warehouseDTOS)){
-                if (overseasWareHouseList.isEmpty()){
+            if (CollectionUtils.isEmpty(warehouseDTOS) && overseasWareHouseList.isEmpty()){
                     return ApiResult.success();
                 }
-            }
+
             OverseasProviderDTO.ListWithWarehouseDTO warehouseDTO = warehouseDTOS.stream()
                     .filter(e -> e.getPlatformWarehouseCode().equalsIgnoreCase(dto.getPlatformWarehouseCode()))
                     .findFirst().orElse(null);
@@ -163,12 +160,14 @@ public class PlatformInventoryConsumerService<T extends DmpSyncTaskIdDTO> extend
             warehouseIds = warehouseDTOS.stream().map(OverseasProviderDTO.ListWithWarehouseDTO::getWarehouseId).collect(Collectors.toList());
         }
         //海外仓
-        if(WarehousePlatformTypeEnum.OVERSEAS_WAREHOUSE.getCode().equals(dto.getWarehousePlatformType())){
+        if(WarehousePlatformTypeEnum.OVERSEAS_WAREHOUSE.getCode().equals(dto.getWarehousePlatformType()) || dto.getPlatform().equals(PlatformDictEnum.ALI_EXPRESS.getCode())){
             //转换成数据库实体对象
             OverseasInventoryEntity entity = OverseasWarehouseConverter.INSTANCE.inventoryDtoToDb(dto);
             if (CharSequenceUtil.isNotBlank(entity.getPlatformSku())){
                 ListingInfoParamDTO paramDTO = new ListingInfoParamDTO();
-                paramDTO.setPlatform(entity.getDictPlatform());
+                if(Boolean.FALSE.equals(dto.getPlatform().equals(PlatformDictEnum.ALI_EXPRESS.getCode()))){
+                    paramDTO.setPlatform(entity.getDictPlatform());
+                }
                 paramDTO.setWarehouseIdList(warehouseIds);
                 paramDTO.setPlatformSkuNoList(Collections.singletonList(entity.getPlatformSku()));
                 paramDTO.setType(RuleTypeEnum.WAREHOUSE.getCode());

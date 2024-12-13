@@ -96,7 +96,8 @@
     </select>
 
     <select id="orderTrackingDetail" resultType="com.erp.model.plm.dto.MouldInfoDTO$OrderTrackingDetailDTO">
-        select mrcqd.purchase_qty,
+        select mrcqd.id,
+               mrcqd.purchase_qty,
                mrcqd.receive_qty,
                mrcqd.stock_in_qty,
                mrcqd.purchase_order_code,

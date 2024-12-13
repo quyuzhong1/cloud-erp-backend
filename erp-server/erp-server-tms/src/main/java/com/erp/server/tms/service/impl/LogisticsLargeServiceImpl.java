@@ -182,6 +182,11 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
                 pagingViewDTO.setSkuNo(productDetailEntity.getSkuNo());
             }
             pagingViewDTO.setShippingMethodName(LogisticsLargeShippingMethodEnum.getName(pagingViewDTO.getShippingMethod()));
+            pagingViewDTO.setPayStatus(SoB2cPayStatusEnum.getName(pagingViewDTO.getPayStatus()));
+            pagingViewDTO.setDeductibleTaxPayStatus(SoB2cPayStatusEnum.getName(pagingViewDTO.getDeductibleTaxPayStatus()));
+            pagingViewDTO.setDestDutyPayStatus(SoB2cPayStatusEnum.getName(pagingViewDTO.getOtherTaxPayStatus()));
+            pagingViewDTO.setOtherTaxPayStatus(SoB2cPayStatusEnum.getName(pagingViewDTO.getOtherTaxPayStatus()));
+            pagingViewDTO.setDestMiscFeePayStatus(SoB2cPayStatusEnum.getName(pagingViewDTO.getDestMiscFeePayStatus()));
         }
     }
 
@@ -303,7 +308,8 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
         addDTO.setLogisticsBillId(logisticsBillEntity.getId());
         addDTO.setShippingMethod(logisticsBillEntity.getShippingMethod());
         addDTO.setTransportNo(logisticsBillEntity.getCounterNo());
-
+        addDTO.setWeight(firstMileSkuCostAllocationEntity.getAllocatedWeight());
+        addDTO.setLogisticsBillingWeight(firstMileSkuCostAllocationEntity.getAllocatedWeight());
         //付款方式
         LogisticsChannelEntity channelEntity = logisticsChannelService.getById(logisticsBillEntity.getChannelId());
         if (ObjectUtil.isNotEmpty(channelEntity)) {
@@ -371,14 +377,16 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
             addDTO.setFreightCalculationFactor(detailEntity.getAllocatedAmount().divide(detailEntity.getAmount(), 4, RoundingMode.DOWN));
         }
 
+        //税率
+        BigDecimal taxRate = addDTO.getTaxRate().divide(MathUtil.BigDecimal_100);
 
         BigDecimal rate = dmpTaskFeign.getRate(monthEntity.getMonth().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), logisticsBillCostEntity.getCurrency());
         if (ObjectUtil.isNotEmpty(detailEntity)) {
-            BigDecimal firstMileFreightAmount = detailEntity.getAllocatedAmount().divide(rate);
-            addDTO.setFirstMileEstimatedFreightTax(detailEntity.getAllocatedAmount().divide(rate));
-            addDTO.setFirstMileEstimatedFreight(firstMileFreightAmount.divide(BigDecimal.ONE.add(addDTO.getTaxRate()), 4, RoundingMode.DOWN));
-            addDTO.setFirstMileActualFreightTax(detailEntity.getAllocatedAmount().divide(rate));
-            addDTO.setFirstMileActualFreight(firstMileFreightAmount.divide(BigDecimal.ONE.add(addDTO.getTaxRate()), 4, RoundingMode.DOWN).multiply(addDTO.getTaxRate()));
+            BigDecimal firstMileFreightAmount = detailEntity.getAllocatedAmount().divide(rate, 4, RoundingMode.DOWN);
+            addDTO.setFirstMileEstimatedFreightTax(detailEntity.getAllocatedAmount().divide(rate, 4, RoundingMode.DOWN));
+            addDTO.setFirstMileEstimatedFreight(firstMileFreightAmount.divide(BigDecimal.ONE.add(taxRate), 4, RoundingMode.DOWN));
+            addDTO.setFirstMileActualFreightTax(detailEntity.getAllocatedAmount().divide(rate, 4, RoundingMode.DOWN));
+            addDTO.setFirstMileActualFreight(firstMileFreightAmount.divide(BigDecimal.ONE.add(taxRate), 4, RoundingMode.DOWN).multiply(taxRate));
         }
 
         //杂费
@@ -655,25 +663,14 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
                 }
             }
         }
-        List<DictCountryDTO.ListDTO> countryList = sysUserFeign.countryList();
-        if (CharSequenceUtil.isNotBlank(soOutstockEntity.getCustomerId())) {
-            List<CustomerInfoEntity> customerList = FeignQuery.create(CustomerInfoEntity.class).eq(CustomerInfoEntity::getId, soOutstockEntity.getCustomerId()).list();
-            if (CollUtil.isNotEmpty(customerList)) {
-                String countryName = countryList.stream().filter(obj -> obj.getId().equals(customerList.get(0).getCountryId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getNameCn())).orElse("");
-                if (CharSequenceUtil.isNotBlank(countryName)) {
-                    addDTO.setDestinationPort(countryName);
-                } else {
-                    addDTO.setDestinationPort(customerList.get(0).getMailAddress());
-                }
-            }
-        } else {
-            String countryName = countryList.stream().filter(obj -> obj.getId().equals(logisticsBillEntity.getToCountry())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getNameCn())).orElse("");
-            addDTO.setDestinationPort(countryName);
-        }
+
         List<LogisticsChannelAddressDTO.ViewDTO> viewDTOS = logisticsChannelAddressService.listByChannelId(soOutstockEntity.getLogisticsChannelId());
         LogisticsChannelAddressDTO.ViewDTO viewDTO = viewDTOS.stream().filter(req -> LogisticsAddressTypeEnum.DELIVER.getCode().equals(req.getLogisticsAddressType())).findFirst().orElse(null);
         if (viewDTO != null) {
-            addDTO.setPickupAddress(viewDTO.getLogisticsAddressName());
+            LogisticsAddressEntity addressEntity = logisticsAddressService.getById(viewDTO.getAddressId());
+            if (ObjectUtil.isNotEmpty(addressEntity)) {
+                addDTO.setPickupAddress(addressEntity.getAddressFirst());
+            }
         }
         addDTO.setPickupTime(soOutstockEntity.getBillDate().atStartOfDay());
         List<LogisticsBillDetailEntity> detailEntityList = logisticsBillDetailService.listByMainIds(Arrays.asList(logisticsBillEntity.getId()));
@@ -684,6 +681,9 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
         //账单总金额
         BigDecimal billAmountTotal = costAllocationDetailEntities.stream().map(SmallBagCostAllocationDetailEntity::getBillAmount).reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
         addDTO.setBillTotalAmount(billAmountTotal);
+
+        //税率
+        BigDecimal taxRate = addDTO.getTaxRate().divide(MathUtil.BigDecimal_100);
 
         //运费
         addDTO.setFreightCurrency(logisticsBillCostEntity.getCurrency());
@@ -696,8 +696,8 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
         if (ObjectUtil.isNotEmpty(detailEntity)) {
             BigDecimal lastMileFreightAmount = detailEntity.getAllocatedAmount();
             addDTO.setLastMileFreightAmountTax(detailEntity.getAllocatedAmount());
-            addDTO.setLastMileFreightAmount(lastMileFreightAmount.divide(BigDecimal.ONE.add(addDTO.getTaxRate()), 4, RoundingMode.DOWN));
-            addDTO.setLastMileFreightVatAmount(lastMileFreightAmount.divide(BigDecimal.ONE.add(addDTO.getTaxRate()), 4, RoundingMode.DOWN).multiply(addDTO.getTaxRate()));
+            addDTO.setLastMileFreightAmount(lastMileFreightAmount.divide(BigDecimal.ONE.add(taxRate), 4, RoundingMode.DOWN));
+            addDTO.setLastMileFreightVatAmount(lastMileFreightAmount.divide(BigDecimal.ONE.add(taxRate), 4, RoundingMode.DOWN).multiply(taxRate));
         }
 
         //杂费
@@ -820,7 +820,7 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
                     .collect(Collectors.toList());
 
             SoOutstockDetailEntity soOutstockDetailEntity = soOutstockDetailEntities.stream().filter(req -> req.getId().equals(costAllocationEntity.getOutstockDetailId())).findFirst().orElse(null);
-            SoB2cEntity soB2cEntity = soB2cEntities.stream().filter(req -> req.getId().equals(soOutstockEntity.getSourceId())).findFirst().orElse(null);
+            SoB2cEntity soB2cEntity = soB2cEntities.stream().filter(req -> req.getId().equals(soOutstockEntity.getSoId())).findFirst().orElse(null);
             this.smallBagCostAllocationHandler(mainEntity, costAllocationEntity, costAllocationDetailEntities, soOutstockEntity, soOutstockDetailEntity, soB2cEntity);
         }
 
@@ -1099,12 +1099,16 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
         if (shippingCostDetailEntity != null && shippingCostDetailEntity.getBillAmount().compareTo(BigDecimal.ZERO) > 0) {
             addDTO.setFreightCalculationFactor(shippingCostDetailEntity.getAllocatedAmount().divide(shippingCostDetailEntity.getBillAmount(), 4, RoundingMode.DOWN));
         }
+
+        //税率
+        BigDecimal taxRate = addDTO.getTaxRate().divide(MathUtil.BigDecimal_100);
+
         addDTO.setFreightCurrency(logisticsBillCostEntity.getCurrency());
         if (ObjectUtil.isNotEmpty(shippingCostDetailEntity)) {
             BigDecimal lastMileFreightAmount = shippingCostDetailEntity.getAllocatedAmount();
             addDTO.setLastMileFreightAmountTax(shippingCostDetailEntity.getAllocatedAmount());
-            addDTO.setLastMileFreightAmount(lastMileFreightAmount.divide(BigDecimal.ONE.add(addDTO.getTaxRate()), 4, RoundingMode.DOWN));
-            addDTO.setLastMileFreightVatAmount(lastMileFreightAmount.divide(BigDecimal.ONE.add(addDTO.getTaxRate()), 4, RoundingMode.DOWN).multiply(addDTO.getTaxRate()));
+            addDTO.setLastMileFreightAmount(lastMileFreightAmount.divide(BigDecimal.ONE.add(taxRate), 4, RoundingMode.DOWN));
+            addDTO.setLastMileFreightVatAmount(lastMileFreightAmount.divide(BigDecimal.ONE.add(taxRate), 4, RoundingMode.DOWN).multiply(taxRate));
         }
 
         //杂费
@@ -1159,14 +1163,31 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
             return Boolean.FALSE;
         }
 
-        return this.lambdaUpdate()
-                .set(LogisticsLargeEntity::getPayStatus, status)
-                .set(LogisticsLargeEntity::getDeductibleTaxPayStatus, status)
-                .set(LogisticsLargeEntity::getDestDutyPayStatus, status)
-                .set(LogisticsLargeEntity::getOtherTaxPayStatus, status)
-                .set(LogisticsLargeEntity::getDestMiscFeePayStatus, status)
-                .in(LogisticsLargeEntity::getSourceId, sourceIds)
-                .update();
+        if (SoB2cPayStatusEnum.ENUM_PAYMENT.getCode().equals(status)) {
+            return this.lambdaUpdate()
+                    .set(LogisticsLargeEntity::getPayStatus, status)
+                    .set(LogisticsLargeEntity::getDeductibleTaxPayStatus, status)
+                    .set(LogisticsLargeEntity::getDestDutyPayStatus, status)
+                    .set(LogisticsLargeEntity::getOtherTaxPayStatus, status)
+                    .set(LogisticsLargeEntity::getDestMiscFeePayStatus, status)
+                    .set(LogisticsLargeEntity::getDeductibleTaxPayTime, null)
+                    .set(LogisticsLargeEntity::getDestTaxPayTime, null)
+                    .set(LogisticsLargeEntity::getFirstMilePayTime, null)
+                    .set(LogisticsLargeEntity::getOtherTaxPayTime, null)
+                    .set(LogisticsLargeEntity::getDestMiscFeePayTime, null)
+                    .in(LogisticsLargeEntity::getSourceId, sourceIds)
+                    .update();
+        } else {
+            return this.lambdaUpdate()
+                    .set(LogisticsLargeEntity::getPayStatus, status)
+                    .set(LogisticsLargeEntity::getDeductibleTaxPayStatus, status)
+                    .set(LogisticsLargeEntity::getDestDutyPayStatus, status)
+                    .set(LogisticsLargeEntity::getOtherTaxPayStatus, status)
+                    .set(LogisticsLargeEntity::getDestMiscFeePayStatus, status)
+                    .in(LogisticsLargeEntity::getSourceId, sourceIds)
+                    .update();
+        }
+
     }
 
     @Override
