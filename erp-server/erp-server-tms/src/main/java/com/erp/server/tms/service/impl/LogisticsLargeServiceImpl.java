@@ -182,11 +182,11 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
                 pagingViewDTO.setSkuNo(productDetailEntity.getSkuNo());
             }
             pagingViewDTO.setShippingMethodName(LogisticsLargeShippingMethodEnum.getName(pagingViewDTO.getShippingMethod()));
-            pagingViewDTO.setPayStatus(SoB2cPayStatusEnum.getName(pagingViewDTO.getPayStatus()));
-            pagingViewDTO.setDeductibleTaxPayStatus(SoB2cPayStatusEnum.getName(pagingViewDTO.getDeductibleTaxPayStatus()));
-            pagingViewDTO.setDestDutyPayStatus(SoB2cPayStatusEnum.getName(pagingViewDTO.getOtherTaxPayStatus()));
-            pagingViewDTO.setOtherTaxPayStatus(SoB2cPayStatusEnum.getName(pagingViewDTO.getOtherTaxPayStatus()));
-            pagingViewDTO.setDestMiscFeePayStatus(SoB2cPayStatusEnum.getName(pagingViewDTO.getDestMiscFeePayStatus()));
+            pagingViewDTO.setPayStatusName(SoB2cPayStatusEnum.getName(pagingViewDTO.getPayStatus()));
+            pagingViewDTO.setDeductibleTaxPayStatusName(SoB2cPayStatusEnum.getName(pagingViewDTO.getDeductibleTaxPayStatus()));
+            pagingViewDTO.setDestDutyPayStatusName(SoB2cPayStatusEnum.getName(pagingViewDTO.getOtherTaxPayStatus()));
+            pagingViewDTO.setOtherTaxPayStatusName(SoB2cPayStatusEnum.getName(pagingViewDTO.getOtherTaxPayStatus()));
+            pagingViewDTO.setDestMiscFeePayStatusName(SoB2cPayStatusEnum.getName(pagingViewDTO.getDestMiscFeePayStatus()));
         }
     }
 

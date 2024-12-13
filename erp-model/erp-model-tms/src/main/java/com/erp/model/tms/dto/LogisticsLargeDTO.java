@@ -1181,8 +1181,8 @@ public class LogisticsLargeDTO implements Serializable {
         /**
          * 付款状态（待付款、已付款）
          */
-        @Dict(enumClass = SoB2cPayStatusEnum.class)
         private String payStatus;
+        private String payStatusName;
 
         /**
          * 应付账期(天)
@@ -1357,8 +1357,8 @@ public class LogisticsLargeDTO implements Serializable {
         /**
          * 目的地杂费付款状态
          */
-        @Dict(enumClass = LogisticsLargeShippingMethodEnum.class)
         private String destMiscFeePayStatus;
+        private String destMiscFeePayStatusName;
 
         /**
          * 杂费币别【可排序】
@@ -1388,8 +1388,8 @@ public class LogisticsLargeDTO implements Serializable {
         /**
          * 目的地关税付款状态
          */
-        @Dict(enumClass = LogisticsLargeShippingMethodEnum.class)
         private String destDutyPayStatus;
+        private String destDutyPayStatusName;
 
         /**
          * 关税币别【可排序】
@@ -1419,8 +1419,8 @@ public class LogisticsLargeDTO implements Serializable {
         /**
          * 可抵扣税金付款状态
          */
-        @Dict(enumClass = LogisticsLargeShippingMethodEnum.class)
         private String deductibleTaxPayStatus;
+        private String deductibleTaxPayStatusName;
 
         /**
          * 可抵扣税金币别【可排序】
@@ -1450,8 +1450,8 @@ public class LogisticsLargeDTO implements Serializable {
         /**
          * 其他税金付款状态
          */
-        @Dict(enumClass = LogisticsLargeShippingMethodEnum.class)
         private String otherTaxPayStatus;
+        private String otherTaxPayStatusName;
 
         /**
          * 其他税金币别【可排序】
