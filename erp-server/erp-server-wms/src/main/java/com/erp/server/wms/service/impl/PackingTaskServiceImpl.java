@@ -67,6 +67,8 @@ import com.erp.server.wms.convert.PackingConverter;
 import com.erp.server.wms.listener.PackingExcelListener;
 import com.erp.server.wms.mapper.PackingTaskMapper;
 import com.erp.server.wms.service.*;
+import io.seata.spring.annotation.GlobalTransactional;
+import lombok.Synchronized;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.context.annotation.Lazy;
@@ -1944,7 +1946,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
      * @param packingTaskEntity
      */
     @Override
-    @DataIdempotent(keyIdName = "taskId", waitTime = 20, businessType = "updatePackingStatus")
+    @Synchronized
     public void updatePackingStatus(List<WmsCartonSpecDTO.GroupSkuDTO> groupSkuList, PackingTaskEntity packingTaskEntity) {
         if (null == packingTaskEntity || CollectionUtils.isEmpty(groupSkuList)){
             return;
@@ -1983,6 +1985,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
     }
 
     @Override
+    @Synchronized
     public void updateWeightStatus(PackingTaskEntity packingTaskEntity) {
         if(Objects.isNull(packingTaskEntity)){
             return;
