@@ -119,12 +119,6 @@ public class MouldInfoServiceImpl extends SuperServiceImpl<MouldInfoMapper, Moul
 
     @Resource
     private MouldRefProductService mouldRefProductService;
-
-    @Resource
-    private MouldPurchasePriceService mouldPurchasePriceService;
-
-    @Resource
-    private MouldRefCalcQtyService mouldRefCalcQtyService;
     @Resource
     private CfgMouldSettingService cfgMouldSettingService;
 
@@ -217,7 +211,6 @@ public class MouldInfoServiceImpl extends SuperServiceImpl<MouldInfoMapper, Moul
     @Override
     @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO addAndSubmit(MouldInfoDTO.UpdateDTO dto) {
-        MouldInfoEntity entity = getById(dto.getId());
         //保存基本信息
         MouldInfoEntity mouldInfoEntity = new MouldInfoEntity();
         BeanMapperUtils.copy(dto, mouldInfoEntity);
@@ -232,9 +225,6 @@ public class MouldInfoServiceImpl extends SuperServiceImpl<MouldInfoMapper, Moul
         mouldDocInfoService.add(dto.getDocList(), mouldInfoEntity.getId());
         // 记录操作日志
         String msg = null;
-        if ("1".equals("")) {
-            msg = CharSequenceUtil.format("用户【{}】新增了单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), mouldInfoEntity.getMouldCategoryCode(), "模具");
-        }
         sysLogService.addSysLogBySave(msg, SysLogClassPathEnum.MOULD_DETAIL_ENTITY.getDesc(), mouldInfoEntity.getId(), "");
         return ApplicationContextUtils.getBean(MouldInfoServiceImpl.class).submit(mouldInfoEntity.getId());
     }

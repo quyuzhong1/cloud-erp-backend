@@ -54,9 +54,9 @@ public interface MouldInfoMapper extends BaseMapper<MouldInfoEntity> {
     /**
      * 下单跟踪明细合计
      *
-     * @param dto 参数
+     * @param params 参数
      */
-    MouldInfoDTO.OrderTrackingDetailTotalDTO orderTrackingDetailTotal(MouldInfoDTO.OrderTrackingDetailParamDTO dto);
+    MouldInfoDTO.OrderTrackingDetailTotalDTO orderTrackingDetailTotal(@Param("params") MouldInfoDTO.OrderTrackingDetailParamDTO params);
 
 
     /**
