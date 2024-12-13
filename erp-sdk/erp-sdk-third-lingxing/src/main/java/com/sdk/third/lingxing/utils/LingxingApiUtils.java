@@ -282,4 +282,22 @@ public class LingxingApiUtils {
         }
         return result;
     }
+
+    /**
+     * 请求领星接口
+     */
+    public static Result<Object> postRequestData(String apiType, TreeMap<String, Object> requestMap) {
+        Result<Object> result = LingxingApiUtils.postAndSign(apiType, requestMap);
+        if (! "0".equalsIgnoreCase(result.getCode()) && !"3001008".equalsIgnoreCase(result.getCode())) {
+            String errorMsg = StrUtil.format("请求领星{}接口:, result={}", apiType, JSONUtil.toJsonStr(result));
+            log.error(errorMsg);
+            throw new ServiceException(errorMsg);
+        }
+        if ("3001008".equalsIgnoreCase(result.getCode())) {
+            String errorMsg = StrUtil.format("请求领星触发限流不执行当前: result={}", JSONUtil.toJsonStr(result));
+            log.warn(errorMsg);
+            return null;
+        }
+        return result;
+    }
 }
