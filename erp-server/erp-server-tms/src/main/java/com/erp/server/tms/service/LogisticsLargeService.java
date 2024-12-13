@@ -67,7 +67,7 @@ public interface LogisticsLargeService extends SuperService<LogisticsLargeEntity
      * @param id
      * @return
      */
-    BatchResultDTO delete(String id);
+    BatchResultDTO deleteBySourceId(String id);
 
     /**
      * 头程费用分摊下推物流大表
