@@ -155,13 +155,11 @@
         TO_CHAR(ll.reconciliation_month, 'YYYY-MM') AS reconciliationMonth, -- 格式化日期为年-月
         ll.create_time AS createTime
         FROM logistics_large ll
-        LEFT JOIN logistics_bill lb ON ll.logistics_bill_id = lb.id
-        LEFT JOIN logistics_bill_detail lbd ON lbd.id = lbd.main_id
+        LEFT JOIN logistics_bill lb ON ll.logistics_bill_id = lb.id AND lb.is_deleted=false
+        LEFT JOIN logistics_bill_detail lbd ON lbd.id = lbd.main_id AND lbd.is_deleted=false
         WHERE
         ${params.sqlMap.default}
         and ll.is_deleted=false
-        and lb.is_deleted=false
-        and lbd.is_deleted=false
         <!--权限-->
         <if test="params.permissionSql!=null and params.permissionSql!=''">
             ${params.permissionSql}
