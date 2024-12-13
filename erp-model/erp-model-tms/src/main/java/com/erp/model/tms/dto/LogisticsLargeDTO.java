@@ -1227,8 +1227,12 @@ public class LogisticsLargeDTO implements Serializable {
         /**
          * 运输方式
          */
-        @Dict(enumClass = LogisticsLargeShippingMethodEnum.class)
         private String shippingMethod;
+
+        /**
+         * 运输方式中文
+         */
+        private String shippingMethodName;
 
         /**
          * 物流公司名称【可排序】

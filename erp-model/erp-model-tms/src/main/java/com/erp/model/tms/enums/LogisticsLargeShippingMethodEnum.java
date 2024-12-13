@@ -6,12 +6,14 @@ import com.fasterxml.jackson.annotation.JsonValue;
 import org.apache.commons.lang3.StringUtils;
 
 public enum LogisticsLargeShippingMethodEnum implements EnumMessage {
-    RAIL_TRANSPORT("railTransport","铁运"),
-    OCEAN("ocean","海运"),
-    AVIATION("aviation","空运"),
+    AIRFREIGHT("airfreight", "空运"),
+    EXPRESS("express", "快递"),
+    OCEAN_FREIGHT_BULK("oceanFreightBulk", "海运散装"),
+    OCEAN_FREIGHT_FCL("oceanFreightFCL", "海运整柜"),
+    RAILWAY_TRANSPORTATION_BULK("railwayTransportationBulk", "铁运散装"),
+    RAILWAY_TRANSPORTATION_FCL("railwayTransportationFCL", "铁运整柜"),
     EXPRESS_DELIVERY("expressDelivery","商业快递"),
     ;
-
     /**
      * 类型
      */

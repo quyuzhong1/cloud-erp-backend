@@ -96,6 +96,10 @@ public class TmsFirstMileReconciliationServiceImpl extends SuperServiceImpl<TmsF
     @Lazy
     private FirstMileSkuCostAllocationService firstMileSkuCostAllocationService;
     @Resource
+    @Lazy
+    private LogisticsLargeService logisticsLargeService;
+
+    @Resource
     private DmpTaskFeign dmpTaskFeign;
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -822,6 +826,12 @@ public class TmsFirstMileReconciliationServiceImpl extends SuperServiceImpl<TmsF
                     .update();
         }
 
+
+        List<FirstMileCostAllocationEntity> costAllocationEntityList = firstMileCostAllocationService.listByReconciliationIds(Arrays.asList(entity.getId()));
+        List<String> ids = costAllocationEntityList.stream().map(req -> req.getId()).collect(Collectors.toList());
+        if (CollUtil.isNotEmpty(ids)) {
+            logisticsLargeService.updatePayStatusBySourceId(ids, dto.getPayStatus());
+        }
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.CANCEL_PROCESS);
     }
 }

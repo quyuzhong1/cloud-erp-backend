@@ -110,8 +110,8 @@ public class TmsFirstMileReconciliationDTO implements Serializable {
         /**
          * 支付状态
          */
-        @Dict(enumClass = SoB2cPayStatusEnum.class)
         private String payStatus;
+
         private String PayStatusName;
 
         /**

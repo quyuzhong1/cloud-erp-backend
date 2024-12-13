@@ -238,21 +238,15 @@ public class LogisticsLargeController extends BaseController {
 
             if (ConfirmStatusEnum.WAIT_CONFIRM.getCode().equals(entity.getStatus())) {
                 resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getBusinessCode(), "只有已确认的单据可以生成物流大表数据"));
-
+                continue;
             }
             FirstMileDeliveryEntity deliveryEntity = deliveryEntities.stream().filter(req -> req.getId().equals(entity.getSourceId())).findFirst().orElse(null);
             if (ObjectUtil.isEmpty(deliveryEntity)) {
                 resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getBusinessCode(), "未找到关联的头程发货单信息"));
-
+                continue;
             }
             List<FirstMileDeliveryDetailEntity> deliveryDetailEntities = firstMileDeliveryDetailEntities.stream().filter(req -> req.getMainId().equals(deliveryEntity.getId())).collect(Collectors.toList());
             List<LogisticsLargeEntity> logisticsLargeEntities = logisticsLargeService.listByIdOutstockCode(Arrays.asList(deliveryEntity.getCode()));
-
-            //已确认才能下推
-            if (!ConfirmStatusEnum.CONFIRM.getCode().equals(entity.getStatus())) {
-                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getBusinessCode(), ApiError.ERROR_SMALL_BAG_NOT_CONFIRMED.msg));
-                continue;
-            }
 
             //只能下推一个实际账单
             LogisticsLargeEntity logisticsLargeActualEntity = logisticsLargeEntities.stream()
