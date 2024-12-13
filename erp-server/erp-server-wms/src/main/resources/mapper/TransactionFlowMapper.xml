@@ -59,9 +59,6 @@
         and t.is_deleted = false
         AND t.warehouse_id = #{params.warehouseId}
         AND t.sku_id = #{params.skuId}
-        <if test="params.sourceCode != null and params.sourceCode != ''">
-            and t.source_code = #{params.sourceCode}
-        </if>
         <if test="params.orgId != null and params.orgId != ''">
             AND t.org_id = #{params.orgId}
         </if>
