@@ -607,6 +607,11 @@ public class MouldInfoDTO implements Serializable {
     @Getter
     @Setter
     public static class OrderTrackingDetailDTO {
+
+        /**
+         * 明细id
+         */
+        private String id;
         /**
          * 采购单号
          */
