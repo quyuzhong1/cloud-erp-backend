@@ -1551,6 +1551,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             entity.setAbnormalType("");
             entity.setIsMatchLogisticsRule(Boolean.TRUE);
             this.updateById(entity);
+
+            //根据渠道和(国家+邮编）判断订单是否超范围配送
+            estimateIsOutOfRangeDelivery(entity.getId(), logisticsChannelId);
         }
 
         //仓库信息

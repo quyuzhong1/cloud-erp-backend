@@ -90,7 +90,7 @@ public class RemotePostcodeDetailServiceImpl extends SuperServiceImpl<RemotePost
                 throw new ServiceException("国家【"+detail.getCountry()+"】不存在");
             }
             //校验城市是否存在
-            if(Objects.nonNull(detail.getCityName()) && Boolean.FALSE.equals(cityNameMap.containsKey(detail.getCityName()))){
+            if(StringUtils.isNotBlank(detail.getCityName()) && Boolean.FALSE.equals(cityNameMap.containsKey(detail.getCityName()))){
                 throw new ServiceException("城市【"+detail.getCityName()+"】不存在");
             }
             RemotePostcodeDetailEntity remotePostcodeDetailEntity = new RemotePostcodeDetailEntity();
@@ -146,7 +146,7 @@ public class RemotePostcodeDetailServiceImpl extends SuperServiceImpl<RemotePost
                 throw new ServiceException("国家【"+detail.getCountry()+"】不存在");
             }
             //校验城市是否存在
-            if(Objects.nonNull(detail.getCityName()) && Boolean.FALSE.equals(cityNameMap.containsKey(detail.getCityName()))){
+            if(StringUtils.isNotBlank(detail.getCityName()) && Boolean.FALSE.equals(cityNameMap.containsKey(detail.getCityName()))){
                 throw new ServiceException("城市【"+detail.getCityName()+"】不存在");
             }
             RemotePostcodeDetailEntity remotePostcodeDetail = new RemotePostcodeDetailEntity();
@@ -198,9 +198,9 @@ public class RemotePostcodeDetailServiceImpl extends SuperServiceImpl<RemotePost
         for (RemotePostcodeDetailEntity entity : removeList) {
             Pair pair = null;
             if(StringUtils.isNotBlank(entity.getCityName())) {
-                pair = new Pair<>(entity.getId(),"【"+entity.getCountry() + "-" + entity.getCityName() + "-" + entity.getPostCode()+"】");
+                pair = new Pair<>(entity.getId(),entity.getCountry() + "-" + entity.getCityName() + "-" + entity.getPostCode());
             }else {
-                pair = new Pair<>(entity.getId(),"【"+entity.getCountry() + "-" + entity.getPostCode()+"】");
+                pair = new Pair<>(entity.getId(),entity.getCountry() + "-" + entity.getPostCode());
             }
             pairList.add(pair);
         }
