@@ -78,6 +78,7 @@ public class InventoryController extends BaseController {
      * @return
      */
     @PostMapping("/exportTransFlow")
+    @WebAdvanceQuery
     public ApiResult<Boolean> exportTransFlow(@RequestBody InventoryDTO.ExportInvFlowSearchParamDTO dto) {
         transactionFlowService.exportTransFlow(dto);
         return success(true);

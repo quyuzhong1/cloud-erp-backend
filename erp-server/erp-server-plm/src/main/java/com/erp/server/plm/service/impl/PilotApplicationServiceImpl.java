@@ -1375,4 +1375,39 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
         //单箱数量
         return MathUtil.compareTo(v.getBoxQty(), MathUtil.ZERO) == MathUtil.ZERO;
     }
+
+    @Override
+    public List<ProductPackViewDTO> listProductPackBySkuIds(List<String> ids) {
+        List<ProductPackViewDTO> dtos = productDetailService.listProductPackBySkuIds(ids);
+        return dtos.stream().filter(this::verifyComplete).collect(Collectors.toList());
+    }
+
+    /**
+     * 校验数据是否完整
+     * @param v 参数
+     */
+    private boolean verifyComplete(ProductPackViewDTO v) {
+        //包装尺寸
+        if (MathUtil.compareTo(BigDecimal.ZERO, v.getProductLength()) >= 0 || MathUtil.compareTo(BigDecimal.ZERO, v.getProductWidth()) >= 0 || MathUtil.compareTo(BigDecimal.ZERO, v.getProductHeight()) >= 0) {
+            return true;
+        }
+        //箱规
+        if (MathUtil.compareTo(BigDecimal.ZERO, v.getBoxLength()) >= 0 || MathUtil.compareTo(BigDecimal.ZERO, v.getBoxWidth()) >= 0 || MathUtil.compareTo(BigDecimal.ZERO, v.getBoxHeight()) >= 0) {
+            return true;
+        }
+        //毛重
+        if (MathUtil.compareTo(v.getGrossWeight(), MathUtil.ZERO) == MathUtil.ZERO) {
+            return true;
+        }
+        //单箱重量
+        if (MathUtil.compareTo(v.getBoxWeight(), MathUtil.ZERO) == MathUtil.ZERO) {
+            return true;
+        }
+        //净重
+        if (MathUtil.compareTo(v.getNetWeight(), MathUtil.ZERO) == MathUtil.ZERO) {
+            return true;
+        }
+        //单箱数量
+        return MathUtil.compareTo(v.getBoxQty(), MathUtil.ZERO) == MathUtil.ZERO;
+    }
 }
