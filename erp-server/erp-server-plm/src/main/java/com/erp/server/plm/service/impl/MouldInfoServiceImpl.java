@@ -27,10 +27,7 @@ import com.common.business.wrapper.FeignQuery;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import com.common.core.utils.BeanMapperUtils;
-import com.common.core.utils.ExcelUtil;
-import com.common.core.utils.FastDFSClientUtil;
-import com.common.core.utils.StrUtils;
+import com.common.core.utils.*;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.*;
 import com.erp.model.plm.enums.MouldRefundStatusEnum;
@@ -62,6 +59,7 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.io.File;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -192,25 +190,12 @@ public class MouldInfoServiceImpl extends SuperServiceImpl<MouldInfoMapper, Moul
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public BatchResultDTO draft(MouldInfoDTO.UpdateDTO dto) {
-        MouldInfoEntity mouldInfoEntity = new MouldInfoEntity();
-        BeanMapperUtils.copy(dto, mouldInfoEntity);
-        mouldInfoEntity.setStatus(ApproveStatusEnum.WAIT_SUBMIT.getStatus());
-        BasicCategoryEntity category = basicCategoryService.getById(dto.getCategoryId());
-        String code = docNoGenHelper.generateMouldCode(category.getCode());
-        mouldInfoEntity.setMouldCategoryCode(code);
-        boolean save = super.save(mouldInfoEntity);
-        if (!save) {
-            throw new ServiceException("模具主表保存失败");
-        }
-        String msg = CharSequenceUtil.format("用户【{}】暂存了单号为【{}】的【{}】单据", UserContext.getDefaultLoginUser().getUserName(), mouldInfoEntity.getMouldCategoryCode(), "模具");
-        sysLogService.addSysLogBySave(msg, SysLogClassPathEnum.MOULD_DETAIL_ENTITY.getDesc(), mouldInfoEntity.getId(), "");
-        return BatchResultDTO.success(mouldInfoEntity.getId(), mouldInfoEntity.getMouldCategoryCode());
+    public BatchResultDTO draft(MouldInfoDTO.DraftDTO dto) {
+        MouldInfoDTO.UpdateDTO updateDTO = BeanMapperUtils.map(MouldInfoDTO.UpdateDTO.class, dto);
+        return add(updateDTO);
     }
 
-    @Override
-    @Transactional(rollbackFor = Exception.class)
-    public BatchResultDTO addAndSubmit(MouldInfoDTO.UpdateDTO dto) {
+    public BatchResultDTO add(MouldInfoDTO.UpdateDTO dto) {
         //保存基本信息
         MouldInfoEntity mouldInfoEntity = new MouldInfoEntity();
         BeanMapperUtils.copy(dto, mouldInfoEntity);
@@ -221,14 +206,23 @@ public class MouldInfoServiceImpl extends SuperServiceImpl<MouldInfoMapper, Moul
             mouldInfoEntity.setMouldCategoryCode(code);
         }
         ApplicationContextUtils.getBean(MouldInfoServiceImpl.class).saveOrUpdate(mouldInfoEntity);
-        mouldDetailService.add(dto.getDetailList(), mouldInfoEntity);
+        if (!CollectionUtils.isEmpty(dto.getDetailList())) {
+            mouldDetailService.add(dto.getDetailList(), mouldInfoEntity);
+        }
         if (!CollectionUtils.isEmpty(dto.getDocList())) {
             mouldDocInfoService.add(dto.getDocList(), mouldInfoEntity.getId());
         }
         // 记录操作日志
         String msg = null;
         sysLogService.addSysLogBySave(msg, SysLogClassPathEnum.MOULD_DETAIL_ENTITY.getDesc(), mouldInfoEntity.getId(), "");
-        return ApplicationContextUtils.getBean(MouldInfoServiceImpl.class).submit(mouldInfoEntity.getId());
+        return BatchResultDTO.success(mouldInfoEntity.getId(), mouldInfoEntity.getMouldCategoryCode());
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public BatchResultDTO addAndSubmit(MouldInfoDTO.UpdateDTO dto) {
+        BatchResultDTO add = add(dto);
+        return ApplicationContextUtils.getBean(MouldInfoServiceImpl.class).submit(add.getId());
     }
 
     @Override
@@ -442,6 +436,7 @@ public class MouldInfoServiceImpl extends SuperServiceImpl<MouldInfoMapper, Moul
         oldLocation.setWarehouseName(warehouseMap.get(oldLocation.getWarehouseId()));
         oldLocation.setWarehouseLocationName(getLocationName(oldLocation.getWarehouseId(), oldLocation.getWarehouseLocation(), locationList));
         sysLogService.addSysLogByUpdate(oldLocation, newLocation, String.valueOf(MouldStoreLocationDTO.ChangeDTO.class), entity.getId(), "", CharSequenceUtil.format("模具【{}】的存放位置", detail.getMouldNo()));
+        mouldDetailService.updateById(detail);
         return BatchResultDTO.success(detail.getId(), detail.getMouldNo(), OperationTypeEnum.UPDATE);
     }
 
@@ -618,6 +613,9 @@ public class MouldInfoServiceImpl extends SuperServiceImpl<MouldInfoMapper, Moul
             dto.setSupplierName(supplierMap.get(dto.getSupplierId()));
             dto.setTypeName(mouldSettingMap.get(dto.getTypeId()));
             dto.setWarehouseLocationName(warehouseLocationMap.get(dto.getWarehouseLocation()));
+            dto.setLength(MathUtil.divide( dto.getLength(), new BigDecimal(10), 2));
+            dto.setWidth(MathUtil.divide( dto.getWidth(), new BigDecimal(10), 2));
+            dto.setHeight(MathUtil.divide( dto.getHeight(), new BigDecimal(10), 2));
             if (!ObjectUtils.isEmpty(dto.getImagesUrl())) {
                 dto.setImageUrl(dto.getImagesUrl().split(",")[0]);
             }
@@ -688,7 +686,7 @@ public class MouldInfoServiceImpl extends SuperServiceImpl<MouldInfoMapper, Moul
         MouldInfoImportDTO importDTO = new MouldInfoImportDTO();
         List<DictBasicEntity> dictBasicList = FeignQuery.list(DictBasicEntity.class);
         Map<String, String> dictBasicNameMap = dictBasicList.stream()
-                .collect(Collectors.toMap(DictBasicEntity::getValue, DictBasicEntity::getId, (o1, o2) -> o1));
+                .collect(Collectors.toMap(DictBasicEntity::getName, DictBasicEntity::getId, (o1, o2) -> o1));
         List<KingdeePaymentConditionEntity> paymentConditionList = FeignQuery.list(KingdeePaymentConditionEntity.class);
         Map<String, String> paymentConditionNameMap = paymentConditionList.stream()
                 .collect(Collectors.toMap(KingdeePaymentConditionEntity::getName, KingdeePaymentConditionEntity::getCode, (o1, o2) -> o1));
