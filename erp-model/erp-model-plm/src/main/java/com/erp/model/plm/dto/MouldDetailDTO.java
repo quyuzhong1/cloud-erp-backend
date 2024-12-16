@@ -146,7 +146,7 @@ public class MouldDetailDTO implements Serializable {
         /**
          * 付款条件
          */
-        @Dict(serviceCode = ServiceCodeNameEnum.SCM, tableName = "kingdee_payment_condition", queryFieldName = "id")
+        @Dict(serviceCode = ServiceCodeNameEnum.SCM, tableName = "kingdee_payment_condition", queryFieldName = "code")
         private String paymentCondition;
 
         /**
