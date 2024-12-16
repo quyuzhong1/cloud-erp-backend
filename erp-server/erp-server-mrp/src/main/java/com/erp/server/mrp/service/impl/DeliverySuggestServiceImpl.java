@@ -477,7 +477,9 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
         //补货计划
         List<WmsDeliveryPlanDetailEntity> deliveryPlanDetailList = deliveryPlanFeign.listBySourceIdList(ids);
 
-        DeliverySuggestEntity entity = deliverySuggestList.get(0);
+        //根据发货日期和创建日期排序取第一条
+        DeliverySuggestEntity entity = deliverySuggestList.stream().sorted(Comparator.comparing(DeliverySuggestEntity::getSuggestDeliveryDate).thenComparing(DeliverySuggestEntity::getCreateTime)).findFirst().orElse(new DeliverySuggestEntity());
+
         viewPushDeliveryPlanDTO.setShopId(entity.getShopId());
         boolean isOverseas = StrUtil.equals(deliverySuggestList.get(0).getPlatformType(), CfgRulePlatformTypeEnum.OVERSEAS.getCode());
         if (isOverseas) {

@@ -111,6 +111,10 @@ public class DeliverySuggestDTO implements Serializable {
          */
         private String  id;
         /**
+         * 平台类型
+         */
+        private String platformType;
+        /**
          * 平台
          */
         private String platform;
