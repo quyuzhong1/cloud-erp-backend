@@ -1,6 +1,7 @@
 package com.erp.server.tms.service.impl;
 
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
@@ -122,6 +123,8 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
     private FirstMileCostAllocationServiceImpl service;
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
+    @Resource
+    private LogisticsLargeService logisticsLargeService;
 
     private DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM");
 
@@ -1568,6 +1571,12 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
                 return BatchResultDTO.fail(entity.getId(), entity.getSourceCode(), "核算状态枚举值错误");
             }
         }
+
+        List<LogisticsLargeEntity> logisticsLargeEntities = logisticsLargeService.listByIdSourceId(Arrays.asList(entity.getSourceId()));
+        if (CollUtil.isNotEmpty(logisticsLargeEntities)) {
+            return BatchResultDTO.fail(entity.getId(), entity.getSourceCode(), "已生成物流大表禁止更新状态");
+        }
+
         ReportPeriodMonthEntity reportPeriodMonth = reportPeriodMonthService.getById(entity.getReportPeriodId());
         //是否存在后置数据
         List<FirstMileCostAllocationEntity> firstMileCostAllocationEntityList = listBySourceIds(Collections.singletonList(entity.getSourceId()), null);
