@@ -363,14 +363,9 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
             addDTO.setDeliveryAddress(destWarehouse.getAddress());
         }
 
-        LogisticsBillDetailEntity billDetailEntity = detailEntityList.stream().filter(req -> FmLogisticTrackStatusEnum.PICKUP.getCode().equals(req.getTrackStatus())).findFirst().orElse(null);
-        if (billDetailEntity != null) {
-            addDTO.setPickupTime(billDetailEntity.getTrackTime());
-        }
         if (CollUtil.isNotEmpty(detailEntityList)) {
             addDTO.setActualDeliveryTime(detailEntityList.get(0).getSignTime());
         }
-
 
         //税率
         BigDecimal taxRate = addDTO.getTaxRate().divide(MathUtil.BigDecimal_100);
