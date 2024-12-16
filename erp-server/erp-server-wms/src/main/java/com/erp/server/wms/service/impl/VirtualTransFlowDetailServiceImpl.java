@@ -8,6 +8,7 @@ import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.common.business.annotation.DistributeLocker;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
 import com.common.core.exception.ServiceException;
@@ -21,6 +22,7 @@ import com.erp.model.wms.entity.VirtualTransFlowDetailEntity;
 import com.erp.model.wms.entity.VirtualTransFlowEntity;
 import com.erp.model.wms.entity.WmsVirtualDetailMsgEntity;
 import com.erp.model.wms.enums.VirtualDetailMsgStatusEnum;
+import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.wms.mapper.VirtualTransFlowDetailMapper;
 import com.erp.server.wms.service.*;
@@ -262,6 +264,23 @@ public class VirtualTransFlowDetailServiceImpl extends SuperServiceImpl<VirtualT
      * 分页列表处理数据
      */
     private void fillPageData(List<VirtualTransFlowDetailDTO.ListDTO> detailList) {
-        // TODO 验证数据 & 数据赋值
+      if (CollUtil.isEmpty(detailList)) {
+          return;
+      }
+      for (VirtualTransFlowDetailDTO.ListDTO listDTO : detailList) {
+          listDTO.setDictInventoryStatusName(InventoryStatusEnum.getNameByCode(listDTO.getDictInventoryStatus()));
+          listDTO.setSourceTypeName(SourceTypeEnum.getName(listDTO.getSourceType()));
+          LocalDate now = LocalDate.now();
+          LocalDate lastOutstockDate = listDTO.getLastOutstockDate();
+          //库龄
+          if ("转结".equals(listDTO.getOperateTypeName())) {
+              listDTO.setInventoryAgeDays((int)(now.toEpochDay() - listDTO.getTradeTime().toLocalDate().toEpochDay()) + 1);
+          } else {
+              listDTO.setInventoryAgeDays((int)(listDTO.getDate().toEpochDay() - listDTO.getTradeTime().toLocalDate().toEpochDay()) + 1);
+              //仓储时长
+              Integer inStockDays = (int) ((lastOutstockDate.isBefore(now) ? now.toEpochDay() : listDTO.getLastOutstockDate().toEpochDay()) - listDTO.getTradeTime().toLocalDate().toEpochDay() + 1);
+              listDTO.setInStockDays(inStockDays);
+          }
+      }
     }
 }
