@@ -59,10 +59,7 @@
         <foreach collection="virtualInventoryIdList" open="(" close=")" separator="," item="item" >
             #{item}
         </foreach>
-        and date in
-        <foreach collection="dateList" open="(" close=")" separator="," item="item" >
-            #{item}
-        </foreach>
+        and date = #{localDate}
     </select>
 
     <!-- 查询快照历史库存合计 -->

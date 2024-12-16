@@ -115,8 +115,8 @@
             from virtual_inventory_detail_his vidh
             left join virtual_inventory_detail vid on vidh.virtual_inventory_detail_id = vid.id and vid.is_deleted = false
             where vidh.is_deleted = false
-            and vid.sku_id = #{dto.skuId} and vid.warehouse_id = #{dto.warehouseId}
-            and vid.virtual_warehouse_id = #{dto.virtualWarehouseId}
+            and vid.sku_id = #{params.skuId} and vid.warehouse_id = #{params.warehouseId}
+            and vid.virtual_warehouse_id = #{params.virtualWarehouseId}
             <if test="params.dateList != null and params.dateList.size > 0">
                 and vidh.date >= #{params.dateList[0]} and (#{params.dateList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > vidh.date
             </if>
@@ -134,8 +134,8 @@
             left join virtual_inventory vi on vih.virtual_inventory_id = vi.id and vi.is_deleted = false
             WHERE
             vih.is_deleted = false
-            and vi.sku_id = #{dto.skuId} and vi.warehouse_id = #{dto.warehouseId}
-            and vi.virtual_warehouse_id = #{dto.virtualWarehouseId}
+            and vi.sku_id = #{params.skuId} and vi.warehouse_id = #{params.warehouseId}
+            and vi.virtual_warehouse_id = #{params.virtualWarehouseId}
             <if test="params.dateList != null and params.dateList.size > 0">
                 and vih.date >= #{params.dateList[0]} and (#{params.dateList[1]}::TIMESTAMP + INTERVAL '1 DAY' ) > vih.date
             </if>
@@ -150,6 +150,7 @@
             vidh.warehouse_id,
             wh.name as warehouseName,
             vidh.virtual_warehouse_id,
+            vw.code as virtualWarehouseCode,
             vw.name as virtualWarehouseName,
             case when vih.virtualQty = 0 then 0 else vidh.inventoryAgeQty / virtualQty end as avgInventoryAgeDays,
             vih.virtualQty,
