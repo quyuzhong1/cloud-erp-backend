@@ -346,8 +346,13 @@ public class SoB2cEntity extends BaseEntity<SoB2cEntity> {
      * 第三方编号
      */
     @TableField("third_code")
-    private String thirdCode = "thirdCode";
+    private String thirdCode;
 
+    /**
+     * 第三方来源系统
+     */
+    @TableField("third_system")
+    private String thirdSystem;
 
     public static final String CODE = "code";
 
