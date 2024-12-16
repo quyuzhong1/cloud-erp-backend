@@ -1,8 +1,7 @@
 package com.erp.server.mrp.es.service;
 
-import com.erp.model.mrp.dto.LocalInventoryDTO;
+import cn.hutool.json.JSONArray;
 import com.erp.model.mrp.dto.ReplenishmentResultDTO;
-import com.erp.server.mrp.es.entity.OrderHistorySalesEsEntity;
 import com.erp.server.mrp.es.entity.OutStockHistorySalesEsEntity;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -36,7 +35,7 @@ public interface OutStockHistorySalesEsService {
      * @param startDate        开始日期
      * @param endDate          结束日期
      */
-    Map<String, Integer> countQtyByReplenishmentIdsAndDate(List<String> replenishmentIds, String orderType, LocalDate startDate, LocalDate endDate);
+    Map<String, Integer> countQtyByReplenishmentIdsAndDate(List<String> replenishmentIds, JSONArray orderType, LocalDate startDate, LocalDate endDate);
 
     /**
      * 查询历史数据
@@ -45,7 +44,7 @@ public interface OutStockHistorySalesEsService {
      * @param startDate        开始日期
      * @param endDate          结束日期
      */
-    List<ReplenishmentResultDTO.SalesHistoryDTO> listByReplenishmentIdsAndDate(List<String> suggestionIdList, String orderType, LocalDate startDate, LocalDate endDate);
+    List<ReplenishmentResultDTO.SalesHistoryDTO> listByReplenishmentIdsAndDate(List<String> suggestionIdList, JSONArray orderType, LocalDate startDate, LocalDate endDate);
 
     /**
      * 删除原数据
@@ -60,11 +59,11 @@ public interface OutStockHistorySalesEsService {
      * @param suggestionIds 建议id
      * @param orderType 订单类型
      */
-    List<OutStockHistorySalesEsEntity> getRecentSalesBySuggestionIds(Set<String> suggestionIds, String orderType);
+    List<OutStockHistorySalesEsEntity> getRecentSalesBySuggestionIds(Set<String> suggestionIds, JSONArray orderType);
 
     /**
      * 订单类型
      * @param orderType 订单类型
      */
-    Map<String, Integer> listByType(String orderType);
+    Map<String, Integer> listByType(JSONArray orderType);
 }
