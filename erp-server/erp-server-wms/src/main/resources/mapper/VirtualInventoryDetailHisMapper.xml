@@ -20,42 +20,44 @@
 
     <!-- 通用查询结果列 -->
     <sql id="Base_Column_List">
-        id,
-        create_user_id,
-        create_user_name,
-        create_time,
-        update_user_id,
-        update_user_name,
-        update_time,
-        version,
-        is_deleted,
-        date, qty, wait_qty, inventory_age_days
+        vih.id,
+        vih.create_user_id,
+        vih.create_user_name,
+        vih.create_time,
+        vih.update_user_id,
+        vih.update_user_name,
+        vih.update_time,
+        vih.version,
+        vih.is_deleted,
+        vih.date, vih.qty, vih.wait_qty, vih.inventory_age_days,vih.virtual_inventory_detail_id
     </sql>
 
     <!-- 根据sku、仓库、虚拟仓查询 -->
     <select id="listByParam" resultType="com.erp.model.wms.dto.VirtualInventoryAgeDTO$viewHisInventoryAgeDetailDTO">
         select
             <include refid="Base_Column_List" />
-        from virtual_inventory_his vih
+        ,vid.sku_id,vid.warehouse_id,vid.virtual_warehouse_id
+        from virtual_inventory_detail_his vih
+        left join virtual_inventory_detail vid on vih.virtual_inventory_detail_id = vid.id and vid.is_deleted = false
         <where>
             vih.is_deleted = false
             <if test="params.endDate != null">
                 and vih.date > #{params.endDate}
             </if>
             <if test="params.skuIdList != null and params.skuIdList.size > 0">
-                and vih.sku_id in
+                and vid.sku_id in
                 <foreach collection="params.skuIdList" item="item" separator="," open="(" close=")">
                     #{item}
                 </foreach>
             </if>
             <if test="params.warehouseIdList != null and params.warehouseIdList.size > 0">
-                and vih.warehouse_id in
+                and vid.warehouse_id in
                 <foreach collection="params.warehouseIdList" item="item" separator="," open="(" close=")">
                     #{item}
                 </foreach>
             </if>
             <if test="params.virtualWarehouseIdList != null and params.virtualWarehouseIdList.size > 0">
-                and vih.virtual_warehouse_id in
+                and vid.virtual_warehouse_id in
                 <foreach collection="params.virtualWarehouseIdList" item="item" separator="," open="(" close=")">
                     #{item}
                 </foreach>

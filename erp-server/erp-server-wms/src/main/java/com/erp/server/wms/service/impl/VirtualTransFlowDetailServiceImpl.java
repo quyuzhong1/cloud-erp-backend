@@ -5,6 +5,7 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.common.business.annotation.DistributeLocker;
 import com.common.business.dto.base.PagingDTO;
@@ -267,7 +268,8 @@ public class VirtualTransFlowDetailServiceImpl extends SuperServiceImpl<VirtualT
       if (CollUtil.isEmpty(detailList)) {
           return;
       }
-      for (VirtualTransFlowDetailDTO.ListDTO listDTO : detailList) {
+      List<String> uniqueKeyList = new ArrayList<>();
+        for (VirtualTransFlowDetailDTO.ListDTO listDTO : detailList) {
           listDTO.setDictInventoryStatusName(InventoryStatusEnum.getNameByCode(listDTO.getDictInventoryStatus()));
           listDTO.setSourceTypeName(SourceTypeEnum.getName(listDTO.getSourceType()));
           LocalDate now = LocalDate.now();
@@ -280,6 +282,15 @@ public class VirtualTransFlowDetailServiceImpl extends SuperServiceImpl<VirtualT
               //仓储时长
               Integer inStockDays = (int) ((lastOutstockDate.isBefore(now) ? now.toEpochDay() : listDTO.getLastOutstockDate().toEpochDay()) - listDTO.getTradeTime().toLocalDate().toEpochDay() + 1);
               listDTO.setInStockDays(inStockDays);
+          }
+          String uniqueKey = StrUtil.format("{}_{}_{}_{}",listDTO.getSkuId(),listDTO.getWarehouseId(),listDTO.getVirtualWarehouseId(),listDTO.getBatchNo());
+          if (uniqueKeyList.contains(uniqueKey)) {
+              listDTO.setSkuNo("");
+              listDTO.setProductName("");
+              listDTO.setWarehouseName("");
+              listDTO.setVirtualWarehouseCode("");
+              listDTO.setVirtualWarehouseName("");
+              listDTO.setTradeTime(null);
           }
       }
     }

@@ -363,7 +363,8 @@ public class VirtualInventoryDetailServiceImpl extends SuperServiceImpl<VirtualI
 
         for (VirtualInventoryAgeDTO.ListDTO listDTO :detailList) {
             //差异
-            listDTO.setIsDiff(MathUtil.compareTo(listDTO.getAvgInventoryAge(),listDTO.getBackAvgInventoryAge()) == MathUtil.ZERO);
+            boolean isDiff = MathUtil.compareTo(listDTO.getAvgInventoryAge(), listDTO.getBackAvgInventoryAge()) == MathUtil.ZERO;
+            listDTO.setIsDiff(isDiff?"是":"否");
 
             HashMap<String, VirtualInventoryAgeDTO.VirtualIntervalDTO> map = new HashMap<>();
             for (CfgSettingVirtualValueDTO.InventoryAgeDateTO inventoryAgeDateTO :list) {

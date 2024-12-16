@@ -129,7 +129,7 @@ public class VirtualInventoryDetailHisServiceImpl extends SuperServiceImpl<Virtu
 
                 //库龄,当前日期 - 入库日期
                 addDTO.setInventoryAgeDays((int)(localDate.toEpochDay() -  viewDTO.getBillDate().toEpochDay()));
-                addDTO.setDate(localDate);
+                addDTO.setDate(localDate.minusDays(1L));
                 this.addOrUpdate(addDTO);
             }
         }
