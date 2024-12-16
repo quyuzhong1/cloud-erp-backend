@@ -146,6 +146,8 @@ public class ExportWmsFeignController {
 
     @Resource
     private ReportOrderSalesService reportOrderSalesService;
+    @Resource
+    private FbaTransitCalculateReportService fbaTransitCalculateReportService;
 
     @PostMapping("/b2cDelivery")
     @DataPermission(operationType = DataAttributeEnum.LIST,
@@ -720,5 +722,14 @@ public class ExportWmsFeignController {
     @WebAdvanceQuery(handler = VirtualWarehouseAllocationQueryHandler.class)
     public PagingVO<VirtualWarehouseAllocationDTO.ExportStatisticsDTO> exportVirtualStatistics(@RequestBody PagingDTO<VirtualWarehouseAllocationDTO.ExportDTO> dto) {
         return virtualWarehouseAllocationService.exportVirtualStatistics(dto);
+    }
+
+    /**
+     * 导出FBA在途核对列表
+     */
+    @PostMapping("/exportFbaTransitReport")
+    @WebAdvanceQuery(handler = FbaTransitCalculateReportQueryHandler.class)
+    public PagingVO<FbaTransitCalculateReportDTO.ListDTO> exportFbaTransitReport(PagingDTO<FbaTransitCalculateReportDTO.PagingParamDTO> dto){
+        return fbaTransitCalculateReportService.paging(dto);
     }
 }

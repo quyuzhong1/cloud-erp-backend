@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.wms.mapper.FbaTransitCalculateReportMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.wms.entity.FbaTransitCalculateReportEntity">
+       <result column="id" property="id" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_time" property="createTime" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_time" property="updateTime" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="report_month" property="reportMonth" />
+       <result column="shipment_id" property="shipmentId" />
+       <result column="shipment_code" property="shipmentCode" />
+       <result column="shop_id" property="shopId" />
+       <result column="shop_name" property="shopName" />
+       <result column="customer_id" property="customerId" />
+       <result column="customer_name" property="customerName" />
+       <result column="warehouse_id" property="warehouseId" />
+       <result column="warehouse_name" property="warehouseName" />
+       <result column="shipment_status" property="shipmentStatus" />
+       <result column="shipment_create_time" property="shipmentCreateTime" />
+       <result column="shipment_receive_time" property="shipmentReceiveTime" />
+       <result column="transit_adjust_time" property="transitAdjustTime" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id,
+        create_user_id,
+        create_user_name,
+        create_time,
+        update_user_id,
+        update_user_name,
+        update_time,
+        version,
+        is_deleted,
+        report_month, shipment_id, shipment_code, shop_id, shop_name, customer_id, customer_name, warehouse_id, warehouse_name, shipment_status, shipment_create_time, shipment_receive_time, transit_adjust_time
+    </sql>
+
+    <select id="listByTransitAndReportMonth"
+            resultType="com.erp.model.wms.dto.FbaTransitCalculateReportDTO$CalculateDTO"
+            parameterType="java.time.LocalDate">
+        SELECT
+            ftcr.id,
+            ftcr.report_month,
+            ftcr.shipment_id,
+            ftcr.shipment_code,
+            ftcdr.asin,
+            ftcdr.msku,
+            ftcdr.fn_sku,
+            ftcdr.sku_id,
+            ftcdr.sku_no,
+            ftcdr.after_end_period_transit_qty
+        FROM
+            fba_transit_calculate_report ftcr
+                LEFT JOIN fba_transit_calculate_detail_report ftcdr ON ftcr.ID = ftcdr.main_id AND ftcdr.is_deleted = FALSE
+        WHERE
+            ftcr.is_deleted = FALSE
+          AND ftcr.report_month = #{lastReportMonth}
+          AND ftcdr.after_end_period_transit_qty > 0
+    </select>
+    <select id="paging" resultType="com.erp.model.wms.dto.FbaTransitCalculateReportDTO$ListDTO">
+        select
+        ftcr.id,
+        ftcr.report_month as reportMonth,
+        to_char(ftcr.report_month, 'YYYY-MM') AS reportMonthStr,
+        ftcr.shipment_code as shipmentCode,
+        ftcr.shop_name as shopName,
+        ftcr.customer_name as customerName,
+        ftcr.shipment_status as shipmentStatus,
+        ftcdr.id as detailId,
+        ftcdr.asin,
+        ftcdr.msku,
+        ftcdr.fn_sku as fnSku,
+        ftcdr.sku_no as skuNo,
+        ftcdr.warehouse_name as warehouseName,
+        ftcdr.declare_qty as declareQty,
+        ftcdr.delivery_qty as deliveryQty,
+        ftcdr.receive_qty as receiveQty,
+        ftcdr.diff_qty as diffQty,
+        ftcdr.shipment_create_time as shipmentCreateTime,
+        ftcdr.shipment_receive_time as shipmentReceiveTime,
+        ftcdr.adjust_time as adjustTime,
+        ftcdr.init_transit_qty as initTransitQty,
+        ftcdr.current_delivery_qty as currentDeliveryQty,
+        ftcdr.current_receive_qty as currentReceiveQty,
+        ftcdr.end_period_transit_qty as endPeriodTransitQty,
+        ftcdr.end_period_transit_adjust_qty as endPeriodTransitAdjustQty,
+        ftcdr.after_end_period_transit_qty as afterEndPeriodTransitQty,
+        ftcdr.adjust_reason as adjustReason
+        from
+        fba_transit_calculate_report ftcr
+        LEFT JOIN fba_transit_calculate_detail_report ftcdr ON ftcr.id = ftcdr.main_id and ftcdr.is_deleted = FALSE
+        where ftcr.is_deleted = FALSE
+        <!--数据权限-->
+        <if test="params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        <!--排序-->
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        ftcr.create_time desc,ftcr.shipment_code
+    </select>
+</mapper>

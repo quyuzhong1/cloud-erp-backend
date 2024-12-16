@@ -3,6 +3,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.erp.model.wms.dto.FbaShipmentDTO;
+import com.erp.model.wms.dto.FbaTransitCalculateReportDTO;
 import com.erp.model.wms.dto.WmsDataCompareTaskDTO;
 import com.erp.model.wms.entity.FbaShipmentEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
@@ -10,6 +11,7 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 
@@ -72,4 +74,7 @@ public interface FbaShipmentMapper extends BaseMapper<FbaShipmentEntity> {
     Integer getDataCompareByConditionCount(@Param("params") WmsDataCompareTaskDTO.FbaShipmentDTO params);
 
     IPage<FbaShipmentDTO.SearchResultDTO> search(Page query, @Param("params") FbaShipmentDTO.SearchDTO params);
+
+
+    List<FbaTransitCalculateReportDTO.FbaReceiveDTO> listByReceiveAndReportMonth(@Param("reportMonth") LocalDate reportMonth);
 }

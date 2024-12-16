@@ -93,6 +93,7 @@ import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.TemporalAdjusters;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -2418,6 +2419,14 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
             return Collections.emptyList();
         }
         return baseMapper.getDeliveryCodeByBusinessCodes(businessCodes);
+    }
+
+    @Override
+    public List<FbaTransitCalculateReportDTO.DeliveryDTO> listDeliveryByReportMonth(String approveStatus, String sourceType, LocalDate reportMonth) {
+        if (CharSequenceUtil.isAllBlank(approveStatus, sourceType) || Objects.isNull(reportMonth)){
+            return Collections.emptyList();
+        }
+        return baseMapper.listDeliveryByReportMonth(approveStatus, sourceType, reportMonth);
     }
 }
 

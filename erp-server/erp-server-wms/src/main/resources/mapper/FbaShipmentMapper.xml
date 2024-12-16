@@ -166,6 +166,35 @@
         </if>
     </select>
 
+    <select id="listByReceiveAndReportMonth"
+            resultType="com.erp.model.wms.dto.FbaTransitCalculateReportDTO$FbaReceiveDTO"
+            parameterType="java.time.LocalDate">
+        select
+            fs.id as shipmentId,
+            fs.code as shipmentCode,
+            fs.shop_id,
+            fs.shop_name,
+            fs.platform_shipment_status,
+            fsd.id as detailId,
+            fsd.asin,
+            fsd.msku,
+            fsd.fn_sku,
+            fsd.sku_id,
+            fsd.sku_no,
+            fsr.id as receiveId,
+            fsr.declare_qty,
+            fsr.delivery_qty,
+            fsr.diff_qty,
+            fsr.receive_qty,
+            fsr.receive_date,
+            fsr.source_type
+        from fba_shipment_receive fsr
+                 LEFT JOIN fba_shipment_detail fsd on fsd.id = fsr.detail_id and fsd.is_deleted = FALSE
+                 LEFT JOIN fba_shipment fs on fs.id = fsd.main_id and fs.is_deleted = FALSE
+        where fsr.is_deleted = FALSE
+          and fsr.receive_date BETWEEN '2024-09-01' and '2024-11-30'
+    </select>
+
     <sql id="FbaDataCompareByCondition">
     	WHERE
 			T.is_deleted = 'f' 

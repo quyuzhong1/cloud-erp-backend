@@ -9,6 +9,8 @@ import org.mapstruct.Mappings;
 import org.mapstruct.factory.Mappers;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalDate;
+
 /**
  * FBA货件实体映射工具
  * @Author Luo_WG
@@ -147,4 +149,13 @@ public interface FbaShipmentConverter {
             @Mapping(target = "platformSku", source = "msku"),
     })
     RequisitionApplicationDetailDTO.AddDTO DeliveryPlanDetailGRA(FbaShipmentDTO.GenerateRequisitionApplicationViewDTO dto);
+
+    @Mappings({
+
+            @Mapping(target = "customerId", ignore = true),
+            @Mapping(target = "customerName", ignore = true),
+            @Mapping(target = "shipmentId", source = "shipmentEntity.id"),
+            @Mapping(target = "shipmentStatus", source = "shipmentEntity.platformShipmentStatus")
+    })
+    FbaTransitCalculateReportEntity fbaShipmentToTransit(String shipmentCode, LocalDate reportMonth, FbaShipmentEntity shipmentEntity);
 }

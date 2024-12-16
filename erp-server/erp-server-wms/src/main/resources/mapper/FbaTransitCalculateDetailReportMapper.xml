@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.wms.mapper.FbaTransitCalculateDetailReportMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.wms.entity.FbaTransitCalculateDetailReportEntity">
+       <result column="id" property="id" />
+       <result column="create_time" property="createTime" />
+       <result column="update_time" property="updateTime" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="main_id" property="mainId" />
+       <result column="asin" property="asin" />
+       <result column="msku" property="msku" />
+       <result column="fn_sku" property="fnSku" />
+       <result column="sku_no" property="skuNo" />
+       <result column="declare_qty" property="declareQty" />
+       <result column="diff_qty" property="diffQty" />
+       <result column="receive_qty" property="receiveQty" />
+       <result column="delivery_qty" property="deliveryQty" />
+       <result column="init_transit_qty" property="initTransitQty" />
+       <result column="current_delivery_qty" property="currentDeliveryQty" />
+       <result column="current_receive_qty" property="currentReceiveQty" />
+       <result column="end_period_transit_qty" property="endPeriodTransitQty" />
+       <result column="end_period_transit_adjust_qty" property="endPeriodTransitAdjustQty" />
+       <result column="after_end_period_transit_qty" property="afterEndPeriodTransitQty" />
+       <result column="adjust_reason" property="adjustReason" />
+       <result column="adjust_time" property="adjustTime" />
+       <result column="adjust_user_name" property="adjustUserName" />
+       <result column="adjust_user_id" property="adjustUserId" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id,
+        create_time,
+        update_time,
+        create_user_name,
+        create_user_id,
+        update_user_name,
+        update_user_id,
+        version,
+        is_deleted,
+        main_id, asin, msku, fn_sku, sku_no, declare_qty, diff_qty, receive_qty, delivery_qty, init_transit_qty, current_delivery_qty, current_receive_qty, end_period_transit_qty, end_period_transit_adjust_qty, after_end_period_transit_qty, adjust_reason, adjust_time, adjust_user_name, adjust_user_id
+    </sql>
+    <select id="listTransitDetail" resultType="com.erp.model.wms.entity.FbaTransitCalculateDetailReportEntity">
+        select ftcdr.*
+        from fba_transit_calculate_detail_report ftcdr
+        left join fba_transit_calculate_report ftcr on ftcdr.main_id = ftcr.id and ftcr.is_deleted = false
+        where ftcdr.is_deleted = false
+        and ftcr.report_month = #{reportMonth}
+        and ftcr.shipment_code = #{shipmentCode}
+        and ftcr.asin = #{asin}
+        and ftcr.msku = #{msku}
+    </select>
+
+
+</mapper>

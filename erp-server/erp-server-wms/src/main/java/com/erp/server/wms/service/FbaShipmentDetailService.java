@@ -51,4 +51,13 @@ public interface FbaShipmentDetailService extends SuperService<FbaShipmentDetail
      * @return void
      **/
     Boolean removeByMainIds(List<String> mainIds);
+
+    /**
+     * 根据唯一值获取明细记录
+     * @param shipmentCode
+     * @param asin
+     * @param msku
+     * @return
+     */
+    FbaShipmentDetailEntity getDetail(String shipmentCode, String asin, String msku);
 }
