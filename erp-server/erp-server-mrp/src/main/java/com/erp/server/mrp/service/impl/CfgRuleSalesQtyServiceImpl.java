@@ -3,6 +3,7 @@ package com.erp.server.mrp.service.impl;
 
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.utils.ApplicationContextUtils;
@@ -23,6 +24,7 @@ import com.erp.server.mrp.mapper.CfgRuleSalesQtyMapper;
 import com.erp.server.mrp.service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -81,7 +83,9 @@ public class CfgRuleSalesQtyServiceImpl extends SuperServiceImpl<CfgRuleSalesQty
     @Transactional(rollbackFor = Exception.class)
     @Override
     public String update(CfgRuleSalesQtyDTO.UpdateDetailDTO updateDetailDTO) {
-        CfgRuleSalesQtyEntity cfgRuleSalesQtyEntity =  BeanMapperUtils.map(CfgRuleSalesQtyEntity.class, updateDetailDTO);
+        CfgRuleSalesQtyEntity cfgRuleSalesQtyEntity = new CfgRuleSalesQtyEntity();
+        BeanUtils.copyProperties(updateDetailDTO, cfgRuleSalesQtyEntity);
+        cfgRuleSalesQtyEntity.setOrderType(JSONUtil.parseArray(updateDetailDTO.getOrderType()));
         //旧数据
         List<CfgRuleSalesQtyEntity> oldList = this.getDefaultByPlatformType(updateDetailDTO.getPlatformType(),updateDetailDTO.getRefId(),updateDetailDTO.getType());
         if (CollectionUtils.isNotEmpty(oldList)) {
@@ -131,7 +135,8 @@ public class CfgRuleSalesQtyServiceImpl extends SuperServiceImpl<CfgRuleSalesQty
 
         for (CfgRuleSalesQtyEntity cfgRuleSalesQtyEntity : list) {
             CfgRuleSalesQtyDTO.ViewDetailDTO viewDetailDTO = new CfgRuleSalesQtyDTO.ViewDetailDTO();
-            BeanMapperUtils.copy(cfgRuleSalesQtyEntity,viewDetailDTO);
+            BeanUtils.copyProperties(cfgRuleSalesQtyEntity,viewDetailDTO);
+            viewDetailDTO.setOrderType(cfgRuleSalesQtyEntity.getOrderType().stream().map(Object::toString).collect(Collectors.toList()));
             //默认日销量
             CfgRuleSalesFormulaEntity defaultSalesFormula = salesFormulaList.stream().filter(obj ->
                     CharSequenceUtil.equals(obj.getType(), CfgRuleSalesFormulaTypeEnum.DEFAULT.getCode()) && CharSequenceUtil.equals(obj.getSalesQtyId(),cfgRuleSalesQtyEntity.getId())
@@ -375,7 +380,7 @@ public class CfgRuleSalesQtyServiceImpl extends SuperServiceImpl<CfgRuleSalesQty
             if (CharSequenceUtil.isBlank(cfgRuleSalesQtyEntity.getSalesQtyType())) {
                 cfgRuleSalesQtyEntity.setSalesQtyType(oldEntity.getSalesQtyType());
             }
-            if (CharSequenceUtil.isBlank(cfgRuleSalesQtyEntity.getOrderType())) {
+            if (CollectionUtils.isNotEmpty(cfgRuleSalesQtyEntity.getOrderType())) {
                 cfgRuleSalesQtyEntity.setOrderType(oldEntity.getOrderType());
             }
         }

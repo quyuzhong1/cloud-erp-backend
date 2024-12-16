@@ -1,5 +1,6 @@
 package com.erp.model.mrp.dto;
 
+import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.erp.model.mrp.entity.CfgRuleSalesDenoisingEntity;
@@ -85,7 +86,7 @@ public class CfgRuleSalesQtyDTO implements Serializable {
         /**
         * 订单类型，all:全部，fba:FBA,fbm:FBM
         */
-        private String orderType;
+        private List<String> orderType;
 
         /**
         * 平台类型(amazon Amazon、overseas 海外、internal 国内、b2b B2B)
@@ -219,7 +220,7 @@ public class CfgRuleSalesQtyDTO implements Serializable {
         * 订单类型，订单类型，亚马逊取FbaOrderTypeEnum，海外取OverseasOrderTypeEnum
         */
         @Size(max = 32,message = "订单类型，最大长度不能超过32位")
-        private String orderType;
+        private List<String> orderType;
 
         /**
         * 平台类型(amazon Amazon、overseas 海外、internal 国内、b2b B2B)
@@ -308,7 +309,7 @@ public class CfgRuleSalesQtyDTO implements Serializable {
         /**
          * 订单类型，all:全部，fba:FBA,fbm:FBM
          */
-        private String orderType;
+        private JSONArray orderType;
         /**
          * 平台类型(amazon Amazon、overseas 海外、internal 国内、b2b B2B)
          */

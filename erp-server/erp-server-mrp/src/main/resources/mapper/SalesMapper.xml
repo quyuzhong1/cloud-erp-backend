@@ -38,7 +38,10 @@
         SUM(sbd.qty) AS originalSalesQty,
         sb.shop_id AS shopId,
         sbd.sku_id AS skuId,
-        CASE WHEN sbd.warehouse_id in
+        CASE
+        WHEN ( sbd.warehouse_id IS NULL OR sbd.warehouse_id = '' ) THEN
+        'overseasOther'
+        WHEN sbd.warehouse_id in
         <foreach collection="localWarehouseId" item="id" open="(" separator="," close=")">
             #{id}
         </foreach>
@@ -61,7 +64,10 @@
         SUM(sod.actual_qty) AS originalSalesQty,
         sb.shop_id          AS shopId,
         sod.sku_id          AS skuId,
-        CASE WHEN so.warehouse_id in
+        CASE
+        WHEN ( sbd.warehouse_id IS NULL OR sbd.warehouse_id = '' ) THEN
+        'overseasOther'
+        WHEN so.warehouse_id in
         <foreach collection="localWarehouseId" item="id" open="(" separator="," close=")">
             #{id}
         </foreach>
