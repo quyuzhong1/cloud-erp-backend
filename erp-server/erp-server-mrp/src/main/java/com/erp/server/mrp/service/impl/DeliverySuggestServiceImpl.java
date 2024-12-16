@@ -497,7 +497,8 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
         Map<String, List<DeliverySuggestEntity>> map = deliverySuggestList.stream().collect(Collectors.groupingBy(DeliverySuggestEntity::getSkuId));
         for (Map.Entry<String, List<DeliverySuggestEntity>> entry : map.entrySet()) {
             List<DeliverySuggestEntity> value = entry.getValue();
-            DeliverySuggestEntity suggestEntity = value.get(0);
+            //根据发货日期和创建日期排序取第一条
+            DeliverySuggestEntity suggestEntity = value.stream().sorted(Comparator.comparing(DeliverySuggestEntity::getSuggestDeliveryDate).thenComparing(DeliverySuggestEntity::getCreateTime)).findFirst().orElse(new DeliverySuggestEntity());
 
             DeliverySuggestDTO.ViewPushDeliveryPlanDetailDTO detailDTO = new DeliverySuggestDTO.ViewPushDeliveryPlanDetailDTO();
             BeanMapperUtils.copy(suggestEntity,detailDTO);
