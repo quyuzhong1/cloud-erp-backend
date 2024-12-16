@@ -98,7 +98,7 @@ public class VirtualInventoryDetailHisServiceImpl extends SuperServiceImpl<Virtu
         //查询虚拟仓库存快照数据
         List<String> skuIdList = virtualInventoryHisList.stream().map(VirtualInventoryDetailHisDTO.ViewDTO::getSkuId).distinct().collect(Collectors.toList());
         List<String> warehouseIdList = virtualInventoryHisList.stream().map(VirtualInventoryDetailHisDTO.ViewDTO::getWarehouseId).distinct().collect(Collectors.toList());
-        List<String> virtualWarehouseIdList = virtualInventoryHisList.stream().map(VirtualInventoryDetailHisDTO.ViewDTO::getVirtualInventoryDetailId).distinct().collect(Collectors.toList());
+        List<String> virtualWarehouseIdList = virtualInventoryHisList.stream().map(VirtualInventoryDetailHisDTO.ViewDTO::getVirtualWarehouseId).distinct().collect(Collectors.toList());
         List<VirtualInventoryHisDTO.VirtualQtyDTO> virtualQtyList = virtualInventoryHisService.listInventoryQty(skuIdList, warehouseIdList, virtualWarehouseIdList,localDate.minusDays(1L));
 
         Map<String, List<VirtualInventoryDetailHisDTO.ViewDTO>> map = virtualInventoryHisList.stream().collect(Collectors.groupingBy(obj -> CharSequenceUtil.format("{}-{}-{}",obj.getSkuId(),obj.getWarehouseId(),obj.getVirtualWarehouseId())));
@@ -109,7 +109,7 @@ public class VirtualInventoryDetailHisServiceImpl extends SuperServiceImpl<Virtu
                     CharSequenceUtil.equals(obj.getSkuId(), value.get(0).getSkuId())
                             && CharSequenceUtil.equals(obj.getWarehouseId(), value.get(0).getWarehouseId())
                             && CharSequenceUtil.equals(obj.getVirtualWarehouseId(), value.get(0).getVirtualWarehouseId())
-                            && localDate.minusDays(1L).isEqual(value.get(0).getDate())
+                            && localDate.minusDays(1L).isEqual(obj.getDate())
             ).map(VirtualInventoryHisDTO.VirtualQtyDTO::getVirtualQty).findFirst().orElse(MathUtil.ZERO);
 
             for (VirtualInventoryDetailHisDTO.ViewDTO viewDTO : value) {

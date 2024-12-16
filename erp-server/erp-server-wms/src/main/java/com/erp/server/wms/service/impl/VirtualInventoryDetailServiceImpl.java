@@ -26,6 +26,7 @@ import com.erp.model.wms.dto.VirtualInventoryDetailDTO;
 import com.erp.model.wms.dto.VirtualInventoryDetailHisDTO;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.CfgSettingVirtualEnum;
+import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.wms.mapper.VirtualInventoryDetailMapper;
 import com.erp.server.wms.service.*;
@@ -172,6 +173,7 @@ public class VirtualInventoryDetailServiceImpl extends SuperServiceImpl<VirtualI
         }
         for (VirtualInventoryAgeDTO.HisInventoryAgeDetailDTO ageDetailDTO : list) {
             ageDetailDTO.setSourceTypeName(SourceTypeEnum.getName(ageDetailDTO.getSourceType()));
+            ageDetailDTO.setDictInventoryStatusName(InventoryStatusEnum.getNameByCode(ageDetailDTO.getDictInventoryStatus()));
         }
     }
 

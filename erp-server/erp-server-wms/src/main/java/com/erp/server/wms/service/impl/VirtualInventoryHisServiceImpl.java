@@ -68,16 +68,14 @@ public class VirtualInventoryHisServiceImpl extends SuperServiceImpl<VirtualInve
             return;
         }
         List<String> virtualInventoryIdList = list.stream().map(VirtualInventoryHisDTO.AddDTO::getVirtualInventoryId).distinct().collect(Collectors.toList());
-        List<LocalDate> dateList = list.stream().map(VirtualInventoryHisDTO.AddDTO::getDate).distinct().collect(Collectors.toList());
-        List<VirtualInventoryHisEntity> oldList =  baseMapper.listByVirtualInventoryIdList(virtualInventoryIdList,dateList);
+        List<VirtualInventoryHisEntity> oldList =  baseMapper.listByVirtualInventoryIdList(virtualInventoryIdList,localDate);
 
         for (VirtualInventoryHisDTO.AddDTO addDTO : list) {
             //传入时间减1
             addDTO.setDate(localDate.minusDays(1L));
             //查询是否已存在
             VirtualInventoryHisEntity hisEntity = oldList.stream().distinct().filter(obj ->
-                            CharSequenceUtil.equals(obj.getVirtualInventoryId(), addDTO.getVirtualInventoryId())
-                                    && obj.getDate().isEqual(addDTO.getDate()))
+                            CharSequenceUtil.equals(obj.getVirtualInventoryId(), addDTO.getVirtualInventoryId()))
                     .findFirst().orElse(null);
             if (ObjUtil.isNotEmpty(hisEntity)) {
                 addDTO.setId(hisEntity.getId());

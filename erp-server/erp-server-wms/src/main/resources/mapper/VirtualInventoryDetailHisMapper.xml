@@ -105,7 +105,7 @@
             left join virtual_inventory_detail vid on vidh.virtual_inventory_detail_id = vid.id and vid.is_deleted = false
             where vidh.is_deleted = false
                 and vid.sku_id = #{params.skuId} and vid.warehouse_id = #{params.warehouseId}
-                and vid.virtual_warehouse_id = #{params.virtualWarehouseId} and vidh.date = #{dto.date}
+                and vid.virtual_warehouse_id = #{params.virtualWarehouseId} and vidh.date = #{params.date}
             group by vid.sku_id,vid.warehouse_id,vid.virtual_warehouse_id
         ),VirtualInventoryHis AS (
             SELECT
@@ -120,8 +120,8 @@
                 left join virtual_inventory vi on vih.virtual_inventory_id = vi.id and vi.is_deleted = false
             WHERE
                 vih.is_deleted = false
-                and vid.sku_id = #{params.skuId} and vid.warehouse_id = #{params.warehouseId}
-                and vid.virtual_warehouse_id = #{params.virtualWarehouseId} and vidh.date = #{dto.date}
+                and vi.sku_id = #{params.skuId} and vi.warehouse_id = #{params.warehouseId}
+                and vi.virtual_warehouse_id = #{params.virtualWarehouseId} and vih.date = #{params.date}
             GROUP BY
             vi.sku_id, vi.warehouse_id, vi.virtual_warehouse_id
         )

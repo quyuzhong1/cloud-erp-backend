@@ -32,10 +32,10 @@ public interface VirtualInventoryHisMapper extends BaseMapper<VirtualInventoryHi
      * @author will
      * @date 2024/12/11 11:13
      * @param virtualInventoryIdList
-     * @param dateList
+     * @param localDate
      * @return List<VirtualInventoryHisEntity>
      */
-    List<VirtualInventoryHisEntity> listByVirtualInventoryIdList(@Param("virtualInventoryIdList")List<String> virtualInventoryIdList,@Param("dateList") List<LocalDate> dateList);
+    List<VirtualInventoryHisEntity> listByVirtualInventoryIdList(@Param("virtualInventoryIdList")List<String> virtualInventoryIdList,@Param("localDate") LocalDate localDate);
     /**
      * 根据sku、仓库、虚拟仓、快照日期查询库存
      * @author will

@@ -44,5 +44,5 @@ public interface VirtualInventoryDetailHisMapper extends BaseMapper<VirtualInven
      * @param dto
      * @return viewHisInventoryAgeDetailDTO
      */
-    VirtualInventoryAgeDTO.viewHisInventoryAgeDetailDTO getHisInventoryAgeDetail(@Param("params") VirtualInventoryAgeDTO.HisInventoryAgeDetailParamDTO dto);
+    VirtualInventoryAgeDTO.viewHisInventoryAgeDetailDTO getHisInventoryAgeDetail(@Param("params") VirtualInventoryAgeDTO.HisInventoryAgeDetailParamDTO params);
 }
