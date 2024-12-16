@@ -132,4 +132,10 @@ public interface DmpOutputTaskRecordService extends SuperService<DmpOutputTaskRe
     DmpPushTaskDTO.SyncInfoDTO getErrorData(DmpSyncTaskDTO.OneDTO oneDTO);
     
     List<DmpOutputTaskRecordEntity> getOutputErrorTask(String systemId , String size);
+    
+    void dmpInputMoveToHistoryTable(String beforeUpdateTime , String size);
+    
+    void dmpRelationMoveToHistoryTable(String beforeUpdateTime , String size);
+    
+    void dmpOutputMoveToHistoryTable(String beforeUpdateTime , String size);
 }
