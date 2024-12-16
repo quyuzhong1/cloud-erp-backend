@@ -2422,11 +2422,11 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
     }
 
     @Override
-    public List<FbaTransitCalculateReportDTO.DeliveryDTO> listDeliveryByReportMonth(String approveStatus, String sourceType, LocalDate reportMonth) {
+    public List<FbaTransitCalculateReportDTO.DeliveryDTO> listDeliveryByReportMonth(String approveStatus, String sourceType, LocalDate reportMonth, String shipmentCode, String asin, String msku) {
         if (CharSequenceUtil.isAllBlank(approveStatus, sourceType) || Objects.isNull(reportMonth)){
             return Collections.emptyList();
         }
-        return baseMapper.listDeliveryByReportMonth(approveStatus, sourceType, reportMonth);
+        return baseMapper.listDeliveryByReportMonth(approveStatus, sourceType, reportMonth,shipmentCode,asin,msku);
     }
 }
 

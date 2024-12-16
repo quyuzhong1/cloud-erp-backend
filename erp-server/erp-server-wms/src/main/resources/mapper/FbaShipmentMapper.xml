@@ -193,6 +193,15 @@
                  LEFT JOIN fba_shipment fs on fs.id = fsd.main_id and fs.is_deleted = FALSE
         where fsr.is_deleted = FALSE
           and fsr.receive_date BETWEEN (DATE_TRUNC('month', #{reportMonth})) AND (DATE_TRUNC('month', #{reportMonth}) + INTERVAL '1 month - 1 day')
+        <if test="shipmentCode != null and shipmentCode != ''">
+            AND fs.code = #{shipmentCode}
+        </if>
+        <if test="asin != null and asin != ''">
+            AND fsd.asin = #{asin}
+        </if>
+        <if test="msku != null and msku != ''">
+            AND fsd.msku = #{msku}
+        </if>
     </select>
 
     <sql id="FbaDataCompareByCondition">

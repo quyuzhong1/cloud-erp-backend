@@ -1823,10 +1823,10 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
     }
 
     @Override
-    public List<FbaTransitCalculateReportDTO.FbaReceiveDTO> listByReceiveAndReportMonth(LocalDate reportMonth) {
+    public List<FbaTransitCalculateReportDTO.FbaReceiveDTO> listByReceiveAndReportMonth(LocalDate reportMonth, String shipmentCode, String asin, String msku) {
         if (Objects.isNull(reportMonth)){
             return Collections.emptyList();
         }
-        return baseMapper.listByReceiveAndReportMonth(reportMonth);
+        return baseMapper.listByReceiveAndReportMonth(reportMonth,shipmentCode,asin,msku);
     }
 }

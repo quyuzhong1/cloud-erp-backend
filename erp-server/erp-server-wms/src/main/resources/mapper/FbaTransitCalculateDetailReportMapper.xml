@@ -53,8 +53,8 @@
         where ftcdr.is_deleted = false
         and ftcr.report_month = #{reportMonth}
         and ftcr.shipment_code = #{shipmentCode}
-        and ftcr.asin = #{asin}
-        and ftcr.msku = #{msku}
+        and ftcdr.asin = #{asin}
+        and ftcdr.msku = #{msku}
     </select>
 
 

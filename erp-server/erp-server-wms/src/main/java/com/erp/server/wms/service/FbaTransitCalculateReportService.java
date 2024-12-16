@@ -39,9 +39,12 @@ public interface FbaTransitCalculateReportService extends SuperService<FbaTransi
     /**
      * 获取上月存在期末在途数量的列表
      * @param reportMonth
+     * @param shipmentCode
+     * @param asin
+     * @param msku
      * @return
      */
-    List<FbaTransitCalculateReportDTO.CalculateDTO> listByTransitAndReportMonth(LocalDate reportMonth);
+    List<FbaTransitCalculateReportDTO.CalculateDTO> listByTransitAndReportMonth(LocalDate reportMonth, String shipmentCode, String asin, String msku);
 
     /**
      * 导入模板

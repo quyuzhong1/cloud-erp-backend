@@ -151,7 +151,15 @@ public interface FbaShipmentConverter {
     RequisitionApplicationDetailDTO.AddDTO DeliveryPlanDetailGRA(FbaShipmentDTO.GenerateRequisitionApplicationViewDTO dto);
 
     @Mappings({
-
+            @Mapping(target = "id", ignore = true),
+            @Mapping(target = "createTime", ignore = true),
+            @Mapping(target = "createUserId", ignore = true),
+            @Mapping(target = "createUserName", ignore = true),
+            @Mapping(target = "updateTime", ignore = true),
+            @Mapping(target = "updateUserId", ignore = true),
+            @Mapping(target = "updateUserName", ignore = true),
+            @Mapping(target = "isDeleted", ignore = true),
+            @Mapping(target = "version", ignore = true),
             @Mapping(target = "customerId", ignore = true),
             @Mapping(target = "customerName", ignore = true),
             @Mapping(target = "shipmentId", source = "shipmentEntity.id"),

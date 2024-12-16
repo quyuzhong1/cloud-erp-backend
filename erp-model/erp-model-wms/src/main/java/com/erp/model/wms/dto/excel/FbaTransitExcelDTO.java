@@ -1,12 +1,13 @@
 package com.erp.model.wms.dto.excel;
 
 import com.alibaba.excel.annotation.ExcelProperty;
+import com.common.business.utils.LocalDateStringConverter;
 import com.common.core.anno.FieldValid;
 import com.common.core.enums.FieldFormatPatternTypeEnum;
 import lombok.Data;
 
 import java.io.Serializable;
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 /**
  * @description: 期初头程分摊导入明细
@@ -19,9 +20,9 @@ public class FbaTransitExcelDTO implements Serializable {
     /**
      * 导入月份
      */
-    @ExcelProperty(value = "导入月份", index = 0)
-    @FieldValid(fieldName = "*导入月份",isNotBlank = true,formatPattern = FieldFormatPatternTypeEnum.YEARMONTH)
-    private LocalDate reportMonth;
+    @ExcelProperty(value = "导入月份", index = 0,converter= LocalDateStringConverter.class)
+    @FieldValid(fieldName = "*导入月份",isNotBlank = true)
+    private LocalDateTime reportMonth;
     /**
      * 货件单号
      */
@@ -49,6 +50,5 @@ public class FbaTransitExcelDTO implements Serializable {
     /**
      * 错误信息
      */
-    @ExcelProperty(value = "错误数据", index = 5)
     private String errorMsg;
 }

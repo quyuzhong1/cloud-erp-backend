@@ -65,7 +65,6 @@ public class FbaTransitExcelListener extends AnalysisEventListener<FbaTransitExc
     @Transactional(rollbackFor = Exception.class)
     public void invoke(FbaTransitExcelDTO excelDTO, AnalysisContext analysisContext) {
         List<String> errorMsgList = new ArrayList<>();
-        FbaTransitExcelDTO addDTO = new FbaTransitExcelDTO();
         //基础验证
         List<String> msgList = FieldValidUtil.fieldValid(excelDTO);
         if (CollectionUtils.isNotEmpty(msgList)) {
@@ -80,7 +79,7 @@ public class FbaTransitExcelListener extends AnalysisEventListener<FbaTransitExc
         if (Objects.isNull(detailEntity)){
             errorMsgList.add(CharSequenceUtil.format("货件单号【{}】ASIN【{}】MSKU【{}】记录不存在",excelDTO.getShipmentCode(),excelDTO.getAsin(),excelDTO.getMsku()));
         }
-        LocalDate reportMonth = excelDTO.getReportMonth();
+        LocalDate reportMonth = excelDTO.getReportMonth().toLocalDate().withDayOfMonth(1);
         //本月是否生成在途货件数据
         List<FbaTransitCalculateDetailReportEntity> transitCalculateDetailReportEntityList2 = fbaTransitCalculateDetailReportService.listTransitDetail(reportMonth, excelDTO.getShipmentCode(), excelDTO.getAsin(), excelDTO.getMsku());
         if (CollUtil.isNotEmpty(transitCalculateDetailReportEntityList2)){
@@ -108,7 +107,7 @@ public class FbaTransitExcelListener extends AnalysisEventListener<FbaTransitExc
             errorList.add(excelDTO);
             return;
         }
-        successList.add(addDTO);
+        successList.add(excelDTO);
     }
 
     public List<FbaTransitExcelDTO> getExcelDateList(){

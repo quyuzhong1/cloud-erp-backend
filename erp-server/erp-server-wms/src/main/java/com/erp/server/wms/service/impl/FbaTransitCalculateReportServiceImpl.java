@@ -112,13 +112,13 @@ public class FbaTransitCalculateReportServiceImpl extends SuperServiceImpl<FbaTr
     public void autoCalculateFbaShipment(LocalDate reportMonth) {
         //数据整理 获取本月待处理数据
         //有期初在途的货件
-        List<FbaTransitCalculateReportDTO.CalculateDTO> calculateDTOList = this.listByTransitAndReportMonth(reportMonth);
+        List<FbaTransitCalculateReportDTO.CalculateDTO> calculateDTOList = this.listByTransitAndReportMonth(reportMonth, null,null,null);
         Map<String, List<FbaTransitCalculateReportDTO.CalculateDTO>> calculateMap = calculateDTOList.stream().filter(e -> CharSequenceUtil.isAllNotBlank(e.getShipmentCode(), e.getAsin(), e.getMsku())).collect(Collectors.groupingBy(e -> e.getShipmentCode() + "-" + e.getMsku() + "-" + e.getAsin()));
         //本期发货的货件
-        List<FbaTransitCalculateReportDTO.DeliveryDTO> fbaDeliveryList = firstMileDeliveryService.listDeliveryByReportMonth(ApproveStatusEnum.APPROVE.getCode(), SourceTypeEnum.FBA_SHIPMENT.getCode(),reportMonth);
+        List<FbaTransitCalculateReportDTO.DeliveryDTO> fbaDeliveryList = firstMileDeliveryService.listDeliveryByReportMonth(ApproveStatusEnum.APPROVE.getCode(), SourceTypeEnum.FBA_SHIPMENT.getCode(),reportMonth, null,null,null);
         Map<String, List<FbaTransitCalculateReportDTO.DeliveryDTO>> fbaDeliveryMap = fbaDeliveryList.stream().filter(e -> CharSequenceUtil.isAllNotBlank(e.getShipmentCode(), e.getAsin(), e.getMsku())).collect(Collectors.groupingBy(e -> e.getShipmentCode() + "-" + e.getMsku() + "-" + e.getAsin()));
         //本期签收的货件
-        List<FbaTransitCalculateReportDTO.FbaReceiveDTO> receiveDTOList = fbaShipmentService.listByReceiveAndReportMonth(reportMonth);
+        List<FbaTransitCalculateReportDTO.FbaReceiveDTO> receiveDTOList = fbaShipmentService.listByReceiveAndReportMonth(reportMonth, null,null,null);
         Map<String, List<FbaTransitCalculateReportDTO.FbaReceiveDTO>> receiveMap = receiveDTOList.stream().filter(e -> CharSequenceUtil.isAllNotBlank(e.getShipmentCode(), e.getAsin(), e.getMsku())).collect(Collectors.groupingBy(e -> e.getShipmentCode() + "-" + e.getMsku() + "-" + e.getAsin()));
         //无期初在途和本期发货但是有本期签收的货件
         //获取所有需要进行在途报表生成的数据
@@ -130,7 +130,7 @@ public class FbaTransitCalculateReportServiceImpl extends SuperServiceImpl<FbaTr
         Set<String> shipmentCodeList = shipmentCodeMap.keySet();
         //货件列表
         List<FbaShipmentEntity> fbaShipmentEntityList = fbaShipmentService.listByCodes(new ArrayList<>(shipmentCodeList));
-        if (CollUtil.isNotEmpty(fbaShipmentEntityList)){
+        if (CollUtil.isEmpty(fbaShipmentEntityList)){
             return;
         }
         Map<String, FbaShipmentEntity> fbaShipmentEntityMap = fbaShipmentEntityList.stream().collect(Collectors.toMap(FbaShipmentEntity::getCode, Function.identity()));
@@ -244,18 +244,27 @@ public class FbaTransitCalculateReportServiceImpl extends SuperServiceImpl<FbaTr
     }
 
     private Integer getCurrentReceiveQty(String shipmentCode, String asin, String msku, String fnSku, List<FbaTransitCalculateReportDTO.FbaReceiveDTO> fbaReceiveDTOS) {
+        if (CollUtil.isEmpty(fbaReceiveDTOS)){
+            return MathUtil.ZERO;
+        }
         return fbaReceiveDTOS.stream().filter(e -> shipmentCode.equals(e.getShipmentCode()) && asin.equals(e.getAsin())
                         && msku.equals(e.getMsku()))
                 .mapToInt(FbaTransitCalculateReportDTO.FbaReceiveDTO::getReceiveQty).reduce(MathUtil.ZERO,Integer::sum);
     }
 
     private Integer getCurrentDeliveryQty(String shipmentCode, String asin, String msku, String fnSku, List<FbaTransitCalculateReportDTO.DeliveryDTO> deliveryDTOS) {
+        if (CollUtil.isEmpty(deliveryDTOS)){
+            return MathUtil.ZERO;
+        }
         return deliveryDTOS.stream().filter(e -> shipmentCode.equals(e.getShipmentCode()) && asin.equals(e.getAsin())
                         && msku.equals(e.getMsku()))
                 .mapToInt(FbaTransitCalculateReportDTO.DeliveryDTO::getDeliveryQty).reduce(MathUtil.ZERO,Integer::sum);
     }
 
     private Integer getInitTransitQty(String shipmentCode, String asin,String msku,String fnSku, List<FbaTransitCalculateReportDTO.CalculateDTO> calculateDTOS) {
+        if (CollUtil.isEmpty(calculateDTOS)){
+            return MathUtil.ZERO;
+        }
         //汇总上期末数量为本期初数据
         return calculateDTOS.stream().filter(e -> shipmentCode.equals(e.getShipmentCode()) && asin.equals(e.getAsin())
                 && msku.equals(e.getMsku()))
@@ -356,24 +365,29 @@ public class FbaTransitCalculateReportServiceImpl extends SuperServiceImpl<FbaTr
                                        String shipmentCode) {
         FbaTransitCalculateReportDTO.TransitDTO transitDTO = map.get(key);
         if (transitDTO == null) {
-            transitDTO = new FbaTransitCalculateReportDTO.TransitDTO();
-            transitDTO.setTransitKey(key);
-            transitDTO.setAsin(asin);
-            transitDTO.setMsku(msku);
-            transitDTO.setReportMonth(reportMonth);
-            transitDTO.setFnSku(fnSku);
-            transitDTO.setShipmentCode(shipmentCode);
+            transitDTO = getTransitDTO(key, asin, msku, reportMonth, fnSku, shipmentCode);
             map.put(key, transitDTO);
         }
     }
+
+    private static FbaTransitCalculateReportDTO.TransitDTO getTransitDTO(String key, String asin, String msku, LocalDate reportMonth, String fnSku, String shipmentCode) {
+        FbaTransitCalculateReportDTO.TransitDTO transitDTO = new FbaTransitCalculateReportDTO.TransitDTO();
+        transitDTO.setTransitKey(key);
+        transitDTO.setAsin(asin);
+        transitDTO.setMsku(msku);
+        transitDTO.setReportMonth(reportMonth);
+        transitDTO.setFnSku(fnSku);
+        transitDTO.setShipmentCode(shipmentCode);
+        return transitDTO;
+    }
     @Override
-    public List<FbaTransitCalculateReportDTO.CalculateDTO> listByTransitAndReportMonth(LocalDate reportMonth) {
+    public List<FbaTransitCalculateReportDTO.CalculateDTO> listByTransitAndReportMonth(LocalDate reportMonth, String shipmentCode, String asin, String msku) {
         if (Objects.isNull(reportMonth)){
             return Collections.emptyList();
         }
         //上个月的月份
         LocalDate lastReportMonth = reportMonth.minusMonths(1).withDayOfMonth(1);
-        return baseMapper.listByTransitAndReportMonth(lastReportMonth);
+        return baseMapper.listByTransitAndReportMonth(lastReportMonth,shipmentCode,asin,msku);
     }
 
     @Override
@@ -448,12 +462,101 @@ public class FbaTransitCalculateReportServiceImpl extends SuperServiceImpl<FbaTr
             return;
         }
         Map<String, FbaShipmentEntity> fbaShipmentEntityMap = fbaShipmentEntityList.stream().collect(Collectors.toMap(FbaShipmentEntity::getCode, Function.identity()));
+        List<String> shipmentIds = fbaShipmentEntityList.stream().map(FbaShipmentEntity::getId).distinct().collect(Collectors.toList());
+        List<FbaShipmentDetailEntity> fbaShipmentDetailEntityList = fbaShipmentDetailService.listByMainIds(shipmentIds);
+        //店铺信息查询
+        List<String> shopIds = fbaShipmentEntityList.stream().map(FbaShipmentEntity::getShopId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+        List<ShopInfoEntity> shopInfoEntityList = FeignQuery.getByIds(ShopInfoEntity.class, shopIds);
+        //客户查询
+        List<String> customerIds = shopInfoEntityList.stream().map(ShopInfoEntity::getCustomerId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+        List<CustomerInfoEntity> customerInfoEntityList = FeignQuery.getByIds(CustomerInfoEntity.class, customerIds);
+        //生成上期 期末数据
+        createLastTransitReport(shipmentCodeMap, fbaShipmentEntityMap, fbaShipmentDetailEntityList, shopInfoEntityList, customerInfoEntityList);
+        //生成本月在途记录
+        createCurrentTransitReport(shipmentCodeMap, fbaShipmentEntityMap, fbaShipmentDetailEntityList, shopInfoEntityList, customerInfoEntityList);
+    }
 
+    private void createCurrentTransitReport(Map<String, List<FbaTransitExcelDTO>> shipmentCodeMap, Map<String, FbaShipmentEntity> fbaShipmentEntityMap, List<FbaShipmentDetailEntity> fbaShipmentDetailEntityList, List<ShopInfoEntity> shopInfoEntityList, List<CustomerInfoEntity> customerInfoEntityList) {
         for (String shipmentCode : shipmentCodeMap.keySet()){
             FbaShipmentEntity shipmentEntity = fbaShipmentEntityMap.get(shipmentCode);
-
+            if (Objects.isNull(shipmentEntity)){
+                continue;
+            }
+            List<FbaTransitExcelDTO> fbaTransitExcelDTOS = shipmentCodeMap.get(shipmentCode);
+            if (CollUtil.isEmpty(fbaTransitExcelDTOS)){
+                continue;
+            }
+            List<FbaShipmentDetailEntity> shipmentDetailEntityList = fbaShipmentDetailEntityList.stream().filter(e -> shipmentEntity.getId().equals(e.getMainId())).collect(Collectors.toList());
+            List<FbaTransitCalculateDetailReportEntity> addDetailList = new ArrayList<>();
+            for (FbaTransitExcelDTO  fbaTransitExcelDTO : fbaTransitExcelDTOS){
+                LocalDate reportMonth = fbaTransitExcelDTO.getReportMonth().toLocalDate().withDayOfMonth(1);
+                String asin = fbaTransitExcelDTO.getAsin();
+                String msku = fbaTransitExcelDTO.getMsku();
+                Integer initTransitQty = fbaTransitExcelDTO.getInitTransitQty();
+                //判断是否存在多个月份
+                FbaTransitCalculateReportEntity entity = getReportEntity(shipmentCode,reportMonth,shipmentEntity, shopInfoEntityList, customerInfoEntityList);
+                //创建在途明细
+                List<FbaTransitCalculateReportDTO.CalculateDTO> calculateDTOS = this.listByTransitAndReportMonth(reportMonth, shipmentCode,asin,msku);
+                //本期发货的货件
+                List<FbaTransitCalculateReportDTO.DeliveryDTO> deliveryDTOS = firstMileDeliveryService.listDeliveryByReportMonth(ApproveStatusEnum.APPROVE.getCode(), SourceTypeEnum.FBA_SHIPMENT.getCode(),reportMonth,shipmentCode,asin,msku);
+                //本期签收的货件
+                List<FbaTransitCalculateReportDTO.FbaReceiveDTO> fbaReceiveDTOS = fbaShipmentService.listByReceiveAndReportMonth(reportMonth, shipmentCode,asin,msku);
+                //构建数据体
+                FbaTransitCalculateReportDTO.TransitDTO transitDTO = getTransitDTO(null,asin,msku,reportMonth,null,shipmentCode);
+                //创建明细
+                FbaTransitCalculateDetailReportEntity detailReportEntity = buildTransitCalculateDetail(entity, transitDTO, calculateDTOS, deliveryDTOS, fbaReceiveDTOS, shipmentDetailEntityList, shipmentEntity);
+                if (Objects.nonNull(detailReportEntity)){
+                    addDetailList.add(detailReportEntity);
+                }
+            }
+            if (CollUtil.isNotEmpty(addDetailList)){
+                //新增明细分摊记录
+                fbaTransitCalculateDetailReportService.saveOrUpdateBatch(addDetailList);
+            }
         }
+    }
 
+    private void createLastTransitReport(Map<String, List<FbaTransitExcelDTO>> shipmentCodeMap, Map<String, FbaShipmentEntity> fbaShipmentEntityMap, List<FbaShipmentDetailEntity> fbaShipmentDetailEntityList, List<ShopInfoEntity> shopInfoEntityList, List<CustomerInfoEntity> customerInfoEntityList) {
+        for (String shipmentCode : shipmentCodeMap.keySet()){
+            FbaShipmentEntity shipmentEntity = fbaShipmentEntityMap.get(shipmentCode);
+            if (Objects.isNull(shipmentEntity)){
+                continue;
+            }
+            List<FbaTransitExcelDTO> fbaTransitExcelDTOS = shipmentCodeMap.get(shipmentCode);
+            if (CollUtil.isEmpty(fbaTransitExcelDTOS)){
+                continue;
+            }
+            List<FbaShipmentDetailEntity> shipmentDetailEntityList = fbaShipmentDetailEntityList.stream().filter(e -> shipmentEntity.getId().equals(e.getMainId())).collect(Collectors.toList());
+            List<FbaTransitCalculateDetailReportEntity> addDetailList = new ArrayList<>();
+            for (FbaTransitExcelDTO  fbaTransitExcelDTO : fbaTransitExcelDTOS){
+                LocalDate reportMonth = fbaTransitExcelDTO.getReportMonth().toLocalDate().withDayOfMonth(1);
+                String asin = fbaTransitExcelDTO.getAsin();
+                String msku = fbaTransitExcelDTO.getMsku();
+                Integer initTransitQty = fbaTransitExcelDTO.getInitTransitQty();
+                //上个月
+                LocalDate lastMonth = reportMonth.minusMonths(1).withDayOfMonth(1);
+                //判断是否存在多个月份
+                FbaTransitCalculateReportEntity entity = getReportEntity(shipmentCode,lastMonth,shipmentEntity, shopInfoEntityList, customerInfoEntityList);
+                //创建在途明细
+                List<FbaTransitCalculateReportDTO.CalculateDTO> calculateDTOS = this.listByTransitAndReportMonth(lastMonth, shipmentCode,asin,msku);
+                //本期发货的货件
+                List<FbaTransitCalculateReportDTO.DeliveryDTO> deliveryDTOS = firstMileDeliveryService.listDeliveryByReportMonth(ApproveStatusEnum.APPROVE.getCode(), SourceTypeEnum.FBA_SHIPMENT.getCode(),lastMonth,shipmentCode,asin,msku);
+                //本期签收的货件
+                List<FbaTransitCalculateReportDTO.FbaReceiveDTO> fbaReceiveDTOS = fbaShipmentService.listByReceiveAndReportMonth(lastMonth, shipmentCode,asin,msku);
+                //构建数据体
+                FbaTransitCalculateReportDTO.TransitDTO transitDTO = getTransitDTO(null,asin,msku,lastMonth,null,shipmentCode);
+                //创建明细
+                FbaTransitCalculateDetailReportEntity detailReportEntity = buildTransitCalculateDetail(entity, transitDTO, calculateDTOS, deliveryDTOS, fbaReceiveDTOS, shipmentDetailEntityList, shipmentEntity);
+                if (Objects.nonNull(detailReportEntity)){
+                    detailReportEntity.setAfterEndPeriodTransitQty(initTransitQty);
+                    addDetailList.add(detailReportEntity);
+                }
+            }
+            if (CollUtil.isNotEmpty(addDetailList)){
+                //新增明细分摊记录
+                fbaTransitCalculateDetailReportService.saveOrUpdateBatch(addDetailList);
+            }
+        }
     }
 
     @Override

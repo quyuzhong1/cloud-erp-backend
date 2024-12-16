@@ -46,15 +46,15 @@
             parameterType="java.time.LocalDate">
         SELECT
             ftcr.id,
-            ftcr.report_month,
-            ftcr.shipment_id,
-            ftcr.shipment_code,
+            ftcr.report_month as reportMonth,
+            ftcr.shipment_id as shipmentId,
+            ftcr.shipment_code as shipmentCode,
             ftcdr.asin,
             ftcdr.msku,
-            ftcdr.fn_sku,
-            ftcdr.sku_id,
-            ftcdr.sku_no,
-            ftcdr.after_end_period_transit_qty
+            ftcdr.fn_sku as fnSku,
+            ftcdr.sku_id as skuId,
+            ftcdr.sku_no as skuNo,
+            ftcdr.after_end_period_transit_qty as afterEndPeriodTransitQty
         FROM
             fba_transit_calculate_report ftcr
                 LEFT JOIN fba_transit_calculate_detail_report ftcdr ON ftcr.ID = ftcdr.main_id AND ftcdr.is_deleted = FALSE
@@ -62,6 +62,15 @@
             ftcr.is_deleted = FALSE
           AND ftcr.report_month = #{lastReportMonth}
           AND ftcdr.after_end_period_transit_qty > 0
+        <if test="shipmentCode != null and shipmentCode != ''">
+            AND ftcr.shipment_code = #{shipmentCode}
+        </if>
+        <if test="asin != null and asin != ''">
+            AND ftcdr.asin = #{asin}
+        </if>
+        <if test="msku != null and msku != ''">
+            AND ftcdr.msku = #{msku}
+        </if>
     </select>
     <select id="paging" resultType="com.erp.model.wms.dto.FbaTransitCalculateReportDTO$ListDTO">
         select
@@ -72,12 +81,12 @@
         ftcr.shop_name as shopName,
         ftcr.customer_name as customerName,
         ftcr.shipment_status as shipmentStatus,
+        ftcr.warehouse_name as warehouseName,
         ftcdr.id as detailId,
         ftcdr.asin,
         ftcdr.msku,
         ftcdr.fn_sku as fnSku,
         ftcdr.sku_no as skuNo,
-        ftcdr.warehouse_name as warehouseName,
         ftcdr.declare_qty as declareQty,
         ftcdr.delivery_qty as deliveryQty,
         ftcdr.receive_qty as receiveQty,

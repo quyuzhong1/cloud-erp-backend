@@ -27,7 +27,7 @@ public interface FbaTransitCalculateReportMapper extends BaseMapper<FbaTransitCa
      * @param lastReportMonth
      * @return
      */
-    List<FbaTransitCalculateReportDTO.CalculateDTO> listByTransitAndReportMonth(@Param("lastReportMonth") LocalDate lastReportMonth);
+    List<FbaTransitCalculateReportDTO.CalculateDTO> listByTransitAndReportMonth(@Param("lastReportMonth") LocalDate lastReportMonth, @Param("shipmentCode") String shipmentCode, @Param("asin") String asin, @Param("msku") String msku);
 
     /**
      * 分页查询

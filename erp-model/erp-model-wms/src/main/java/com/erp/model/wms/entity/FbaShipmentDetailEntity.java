@@ -92,7 +92,7 @@ public class FbaShipmentDetailEntity extends BaseEntity<FbaShipmentDetailEntity>
      * 货件编码
      */
     @TableField(exist = false)
-    private Integer shipmentCode;
+    private String shipmentCode;
 
 
     public static final String MAIN_ID = "main_id";

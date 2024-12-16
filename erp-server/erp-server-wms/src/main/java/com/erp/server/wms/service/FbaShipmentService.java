@@ -259,7 +259,10 @@ public interface FbaShipmentService extends SuperService<FbaShipmentEntity> {
      * 本期签收的货件
      *
      * @param reportMonth
+     * @param shipmentCode
+     * @param asin
+     * @param msku
      * @return
      */
-    List<FbaTransitCalculateReportDTO.FbaReceiveDTO> listByReceiveAndReportMonth(LocalDate reportMonth);
+    List<FbaTransitCalculateReportDTO.FbaReceiveDTO> listByReceiveAndReportMonth(LocalDate reportMonth, String shipmentCode, String asin, String msku);
 }

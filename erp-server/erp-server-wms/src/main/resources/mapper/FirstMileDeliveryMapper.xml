@@ -591,6 +591,15 @@
           <if test="sourceType != null and sourceType != ''">
               and fmd.source_type = #{sourceType}
           </if>
+        <if test="shipmentCode != null and shipmentCode != ''">
+            AND fmd.source_code = #{shipmentCode}
+        </if>
+        <if test="asin != null and asin != ''">
+            AND fmdd.platform_spu_no = #{asin}
+        </if>
+        <if test="msku != null and msku != ''">
+            AND fmdd.platform_sku_no = #{msku}
+        </if>
           and fmd.approve_time BETWEEN (DATE_TRUNC('month', #{reportMonth})) AND (DATE_TRUNC('month', #{reportMonth}) + INTERVAL '1 month - 1 day')
         ORDER BY fmd.approve_time desc
     </select>
