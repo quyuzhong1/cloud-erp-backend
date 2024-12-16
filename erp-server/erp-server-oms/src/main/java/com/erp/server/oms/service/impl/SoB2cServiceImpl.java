@@ -567,6 +567,11 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             List<SoB2cRefCategoryDTO.AddDTO> addList = addDTO.getCategoryIdList().stream().map(obj -> new SoB2cRefCategoryDTO.AddDTO(soB2cEntity.getId(), obj)).collect(Collectors.toList());
             soB2cRefCategoryService.add(addList, soB2cEntity.getId());
         }
+        //根据渠道和(国家+邮编）判断订单是否超范围配送
+        estimateIsOutOfRangeDelivery( soB2cEntity.getId(),
+                addDTO.getReceiverDTO().getCountry(),
+                addDTO.getReceiverDTO().getPostCode(),
+                addDTO.getLogisticsDTO().getLogisticsChannelId());
 
         // 操作日志
         String msg = CharSequenceUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "B2C销售订单表", soB2cEntity.getCode());
@@ -1023,6 +1028,11 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         //修改订单分类
         soB2cRefCategoryService.update(updateDTO.getCategoryIdList(), soB2cEntity.getId());
 
+        //根据渠道和(国家+邮编）判断订单是否超范围配送
+        estimateIsOutOfRangeDelivery( soB2cEntity.getId(),
+                updateDTO.getReceiverDTO().getCountry(),
+                updateDTO.getReceiverDTO().getPostCode(),
+                updateDTO.getLogisticsDTO().getLogisticsChannelId());
 
         // 记录主单操作日志
         log.info("编辑 开始记录B2C销售订单表日志数据，单号：【{}】", soB2cEntity.getCode());
@@ -4685,12 +4695,20 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     private void estimateIsOutOfRangeDelivery(String soB2cId, String logisticsChannelId) {
         //根据渠道和(国家+邮编）判断订单是否超范围配送
         SoB2cReceiverEntity receiver = soB2cReceiverService.getByMainId(soB2cId);
+        Boolean isOutOfRangeDelivery = Boolean.FALSE;
         if(null != receiver){
-            Boolean isOutOfRangeDelivery =  logisticsFeign.estimateIsOutOfRangeDelivery(logisticsChannelId,receiver.getCountry(),receiver.getPostCode());
-            if(Boolean.TRUE.equals(isOutOfRangeDelivery)){
-                lambdaUpdate().set(SoB2cEntity::getIsOutOfRangeDelivery,isOutOfRangeDelivery).eq(SoB2cEntity::getId, soB2cId).update();
-            }
+            isOutOfRangeDelivery =  logisticsFeign.estimateIsOutOfRangeDelivery(logisticsChannelId,receiver.getCountry(),receiver.getPostCode());
         }
+        lambdaUpdate().set(SoB2cEntity::getIsOutOfRangeDelivery,isOutOfRangeDelivery).eq(SoB2cEntity::getId, soB2cId).update();
+    }
+
+    private void estimateIsOutOfRangeDelivery(String soB2cId , String country, String postCode ,String logisticsChannelId) {
+        Boolean isOutOfRangeDelivery = Boolean.FALSE;
+        //根据渠道和(国家+邮编）判断订单是否超范围配送
+        if(StringUtils.isNotBlank(country) && StringUtils.isNotBlank(postCode) && StringUtils.isNotBlank(logisticsChannelId)){
+            isOutOfRangeDelivery =  logisticsFeign.estimateIsOutOfRangeDelivery(logisticsChannelId,country,postCode);
+        }
+        lambdaUpdate().set(SoB2cEntity::getIsOutOfRangeDelivery,isOutOfRangeDelivery).eq(SoB2cEntity::getId, soB2cId).update();
     }
 
     private static void isExist(SoB2cEntity entity) {
