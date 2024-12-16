@@ -192,9 +192,10 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
                 .map(LogisticsLargeDTO.PagingViewDTO::getSourceId)
                 .distinct()
                 .collect(Collectors.toList());
-        List<SmallBagCostAllocationMainEntity> costAllocationMainEntities = smallBagCostAllocationMainService.listByIds(ids);
-        List<String> costId = costAllocationMainEntities.stream().map(req -> req.getCostId()).distinct().collect(Collectors.toList());
-
+        List<SmallBagCostAllocationMainEntity> costAllocationMainEntities = new ArrayList<>();
+        if (CollUtil.isNotEmpty(ids)) {
+            costAllocationMainEntities = smallBagCostAllocationMainService.listByIds(ids);
+        }
 
         Map<String, String> payStatusNameMap = new HashMap<>();
         payStatusNameMap.put("pay_payment", "待付款");
