@@ -6,6 +6,7 @@ import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.constant.SearchType;
 import com.common.business.dto.AdvanceQueryDTO;
@@ -178,30 +179,48 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
     private void fillPagingData(List<LogisticsLargeDTO.PagingViewDTO> list) {
         List<String> skuIds = list.stream().map(LogisticsLargeDTO.PagingViewDTO::getSkuId).distinct().collect(Collectors.toList());
         List<ProductDetailEntity> productDetailEntityList = FeignQuery.create(ProductDetailEntity.class).in(ProductDetailEntity::getId, skuIds).list();
+
+        List<String> logisticsBillIds = list.stream().map(req -> req.getLogisticsBillId()).distinct().collect(Collectors.toList());
+        List<LogisticsBillCostEntity> logisticsBillCostEntities = logisticsBillCostService.listByLogisticsBillIdList(logisticsBillIds);
+        Map<String, String> payStatusNameMap = new HashMap<>();
+        payStatusNameMap.put("pay_payment", "待付款");
+        payStatusNameMap.put("pay_paid", "已付款");
+        payStatusNameMap.put("refund_payment", "待退款");
+        payStatusNameMap.put("refund_paid", "已退款");
         for (LogisticsLargeDTO.PagingViewDTO pagingViewDTO : list) {
             ProductDetailEntity productDetailEntity = productDetailEntityList.stream().filter(req -> req.getId().equals(pagingViewDTO.getSkuId())).findFirst().orElse(null);
             if (productDetailEntity != null) {
                 pagingViewDTO.setProductName(productDetailEntity.getName());
                 pagingViewDTO.setSkuNo(productDetailEntity.getSkuNo());
             }
-            pagingViewDTO.setShippingMethodName(LogisticsLargeShippingMethodEnum.getName(pagingViewDTO.getShippingMethod()));
-            pagingViewDTO.setPayStatusName(SoB2cPayStatusEnum.getName(pagingViewDTO.getPayStatus()));
-            pagingViewDTO.setDeductibleTaxPayStatusName(SoB2cPayStatusEnum.getName(pagingViewDTO.getDeductibleTaxPayStatus()));
-            pagingViewDTO.setDestDutyPayStatusName(SoB2cPayStatusEnum.getName(pagingViewDTO.getDestDutyPayStatus()));
-            pagingViewDTO.setOtherTaxPayStatusName(SoB2cPayStatusEnum.getName(pagingViewDTO.getOtherTaxPayStatus()));
-            pagingViewDTO.setDestMiscFeePayStatusName(SoB2cPayStatusEnum.getName(pagingViewDTO.getDestMiscFeePayStatus()));
-
+            LogisticsBillCostEntity logisticsBillCostEntity = logisticsBillCostEntities.stream().filter(req -> req.getLogisticsBillId().equals(pagingViewDTO.getLogisticsBillId())).findFirst().orElse(null);
+            if (ObjectUtil.isNotEmpty(logisticsBillCostEntity)) {
+                pagingViewDTO.setShippingMethodName(LogisticsLargeShippingMethodEnum.getName(pagingViewDTO.getShippingMethod()));
+                pagingViewDTO.setPayStatusName(payStatusNameMap.get(logisticsBillCostEntity.getPayType() + "_" + pagingViewDTO.getPayStatus()));
+                pagingViewDTO.setDeductibleTaxPayStatusName(payStatusNameMap.get(logisticsBillCostEntity.getPayType() + "_" + pagingViewDTO.getDeductibleTaxPayStatus()));
+                pagingViewDTO.setDestDutyPayStatusName(payStatusNameMap.get(logisticsBillCostEntity.getPayType() + "_" + pagingViewDTO.getDestDutyPayStatus()));
+                pagingViewDTO.setOtherTaxPayStatusName(payStatusNameMap.get(logisticsBillCostEntity.getPayType() + "_" + pagingViewDTO.getOtherTaxPayStatus()));
+                pagingViewDTO.setDestMiscFeePayStatusName(payStatusNameMap.get(logisticsBillCostEntity.getPayType() + "_" + pagingViewDTO.getDestMiscFeePayStatus()));
+            }
             if (SourceTypeEnum.FIRST_MILE_COST_ALLOCATION.getCode().equals(pagingViewDTO.getSourceType())) {
                 pagingViewDTO.setDeductibleTaxPayStatusName("");
+                pagingViewDTO.setDeductibleTaxPayTime(null);
                 pagingViewDTO.setDeductibleTaxPayStatus("");
+                pagingViewDTO.setDeductibleTaxPayTime(null);
             } else if (SourceTypeEnum.TRANSFER_DECLARE_COST_ALLOCATION.getCode().equals(pagingViewDTO.getSourceType())) {
                 pagingViewDTO.setDeductibleTaxPayStatusName("");
+                pagingViewDTO.setDeductibleTaxPayTime(null);
                 pagingViewDTO.setDeductibleTaxPayStatus("");
+                pagingViewDTO.setDeductibleTaxPayTime(null);
                 pagingViewDTO.setOtherTaxPayStatusName("");
+                pagingViewDTO.setOtherTaxPayTime(null);
                 pagingViewDTO.setOtherTaxPayStatus("");
+                pagingViewDTO.setOtherTaxPayTime(null);
             } else {
                 pagingViewDTO.setOtherTaxPayStatusName("");
+                pagingViewDTO.setOtherTaxPayTime(null);
                 pagingViewDTO.setOtherTaxPayStatus("");
+                pagingViewDTO.setOtherTaxPayTime(null);
             }
         }
     }
@@ -810,6 +829,15 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
             addDTO.setOtherTaxPayStatus(logisticsBillCostEntity.getPayStatus());
             addDTO.setDestMiscFeePayStatus(logisticsBillCostEntity.getPayStatus());
 
+            if (logisticsBillCostEntity.getBillingWeightLogistics() == null || logisticsBillCostEntity.getBillingWeightLogistics().compareTo(BigDecimal.ZERO) <= 0) {
+                //重量
+                List<ProductPackEntity> packEntityList = FeignQuery.create(ProductPackEntity.class).eq(ProductPackEntity::getSkuId, costAllocationEntity.getSkuId()).list();
+                if (CollUtil.isNotEmpty(packEntityList)) {
+                    BigDecimal grossWeight = MathUtil.divide(MathUtil.multiply(packEntityList.get(0).getGrossWeight(), costAllocationEntity.getDeliveryQty()), MathUtil.BigDecimal_1000);
+                    addDTO.setWeight(grossWeight);
+                    addDTO.setLogisticsBillingWeight(grossWeight);
+                }
+            }
         } else {
             //预估账单
             addDTO.setReconciliationBillType(ReconciliationBillTypeEnum.ESTIMATED.getCode());
@@ -823,7 +851,12 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
             addDTO.setActualDestMiscFee(otherCostDetailEntity.getAllocatedAmount());
             addDTO.setActualDutyAmount(BigDecimal.ZERO);
             addDTO.setActualDeductibleTax(BigDecimal.ZERO);
-
+            //重量
+            List<ProductPackEntity> packEntityList = FeignQuery.create(ProductPackEntity.class).eq(ProductPackEntity::getSkuId, costAllocationEntity.getSkuId()).list();
+            if (CollUtil.isNotEmpty(packEntityList)) {
+                BigDecimal grossWeight = MathUtil.divide(MathUtil.multiply(packEntityList.get(0).getGrossWeight(), costAllocationEntity.getDeliveryQty()), MathUtil.BigDecimal_1000);
+                addDTO.setWeight(grossWeight);
+            }
         }
 
         //添加
@@ -1067,17 +1100,20 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
         }
 
         addDTO.setPlatformOrderCode(platformCode);
+        //重量
         if (declareReconciliationDetailEntity.getActualBillingWeight().compareTo(BigDecimal.ZERO) > 0) {
             addDTO.setWeight(declareReconciliationDetailEntity.getActualBillingWeight());
+            addDTO.setLogisticsBillingWeight(declareReconciliationDetailEntity.getActualBillingWeight());
+
         } else {
             List<ProductPackEntity> packEntityList = FeignQuery.create(ProductPackEntity.class).eq(ProductPackEntity::getSkuId, entity.getSkuId()).list();
             if (CollUtil.isNotEmpty(packEntityList)) {
-                addDTO.setWeight(packEntityList.get(0).getGrossWeight().multiply(MathUtil.valueOf(entity.getDeliveryQty())));
+                BigDecimal grossWeight = MathUtil.divide(MathUtil.multiply(packEntityList.get(0).getGrossWeight(), entity.getDeliveryQty()), MathUtil.BigDecimal_1000);
+                addDTO.setWeight(grossWeight);
+                addDTO.setLogisticsBillingWeight(grossWeight);
             }
         }
-        addDTO.setLogisticsBillingWeight(declareReconciliationDetailEntity.getActualBillingWeight());
         addDTO.setShippingMethod(LogisticsLargeShippingMethodEnum.EXPRESS_DELIVERY.getCode());
-
 
         //启运地
         addDTO.setOriginPort("");
