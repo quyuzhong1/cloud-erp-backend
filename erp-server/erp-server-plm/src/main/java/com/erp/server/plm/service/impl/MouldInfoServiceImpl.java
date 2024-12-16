@@ -222,7 +222,9 @@ public class MouldInfoServiceImpl extends SuperServiceImpl<MouldInfoMapper, Moul
         }
         ApplicationContextUtils.getBean(MouldInfoServiceImpl.class).saveOrUpdate(mouldInfoEntity);
         mouldDetailService.add(dto.getDetailList(), mouldInfoEntity);
-        mouldDocInfoService.add(dto.getDocList(), mouldInfoEntity.getId());
+        if (!CollectionUtils.isEmpty(dto.getDocList())) {
+            mouldDocInfoService.add(dto.getDocList(), mouldInfoEntity.getId());
+        }
         // 记录操作日志
         String msg = null;
         sysLogService.addSysLogBySave(msg, SysLogClassPathEnum.MOULD_DETAIL_ENTITY.getDesc(), mouldInfoEntity.getId(), "");
