@@ -185,5 +185,19 @@
         </where>
     </select>
 
+    <!-- tab数量 -->
+    <select id="tabList" resultType="java.lang.Integer">
+        select
+            count(distinct ds.id)
+        from delivery_suggest ds
+        <where>
+            ${params.sqlMap.default}
+            and ds.is_deleted = false
+            <if test="params.platformType != null and params.platformType != ''">
+                and ds.platform_type = #{params.platformType}
+            </if>
+        </where>
+    </select>
+
 
 </mapper>

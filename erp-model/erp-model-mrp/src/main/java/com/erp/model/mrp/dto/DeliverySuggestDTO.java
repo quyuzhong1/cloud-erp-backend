@@ -1,6 +1,5 @@
 package com.erp.model.mrp.dto;
 
-import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import lombok.AllArgsConstructor;
@@ -50,6 +49,40 @@ public class DeliverySuggestDTO implements Serializable {
          */
         @NotBlank(message = "平台类型不能为空")
         private String platformType;
+    }
+
+    /**
+     * tab参数
+     */
+    @Data
+    @NoArgsConstructor
+    public static class TabListParamDTO {
+
+        /**
+         * 平台类型
+         */
+        @NotBlank(message = "平台类型不能为空")
+        private String platformType;
+    }
+
+    /**
+     * tab
+     */
+    @Data
+    @NoArgsConstructor
+    public static class TabListDTO {
+
+        private String tabFlag;
+        /**
+         * 类型名称
+         */
+        private String tabFlagName;
+
+        /**
+         * 数量
+         */
+        private Integer count;
+
     }
 
     /**
