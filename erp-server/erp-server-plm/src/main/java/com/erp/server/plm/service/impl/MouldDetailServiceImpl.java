@@ -76,11 +76,13 @@ public class MouldDetailServiceImpl extends SuperServiceImpl<MouldDetailMapper, 
             details.add(mouldDetail);
             MouldRefundAgreementEntity agreement = BeanMapperUtils.map(MouldRefundAgreementEntity.class, dto);
             agreement.setMouldDetailId(mouldDetail.getId());
+            agreement.setId(null);
             agreementList.add(agreement);
             MouldPurchasePriceEntity price = BeanMapperUtils.map(MouldPurchasePriceEntity.class, dto);
             price.setMouldDetailId(mouldDetail.getId());
             price.setCurrency(CurrencyEnum.RMB.getCurrencyCode());
             price.setExchangeRate(BigDecimal.ONE);
+            price.setId(null);
             purchasePriceList.add(price);
             List<MouldProductEntity> mouldProductList = Optional.ofNullable(dto.getProductList())
                     .orElse(new ArrayList<>()).stream()
@@ -89,6 +91,7 @@ public class MouldDetailServiceImpl extends SuperServiceImpl<MouldDetailMapper, 
                         mouldProduct.setProductName(v.getProductName());
                         mouldProduct.setMouldDetailId(mouldDetail.getId());
                         mouldProduct.setImagesUrl(String.join(",", v.getImagesUrl()));
+                        mouldProduct.setId(null);
                         return mouldProduct;
                     }).collect(Collectors.toList());
             if (!CollectionUtils.isEmpty(mouldProductList)) {
@@ -102,6 +105,7 @@ public class MouldDetailServiceImpl extends SuperServiceImpl<MouldDetailMapper, 
                         product.setSkuId(v.getSkuId());
                         product.setSupplierId(v.getSupplierId());
                         product.setSkuNo(v.getSkuNo());
+                        product.setId(null);
                         return product;
                     }).collect(Collectors.toList());
             mouldRefProductList.addAll(productEntityList);
