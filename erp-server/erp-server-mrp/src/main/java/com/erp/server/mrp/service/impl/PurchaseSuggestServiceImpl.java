@@ -121,6 +121,8 @@ public class PurchaseSuggestServiceImpl extends SuperServiceImpl<PurchaseSuggest
         PurchaseSuggestEntity purchaseSuggestEntity = new PurchaseSuggestEntity();
         BeanMapperUtils.copy(addDTO, purchaseSuggestEntity);
 
+        //计划修正值默认给建议发货量
+        purchaseSuggestEntity.setPlanPurchaseQty(purchaseSuggestEntity.getSuggestPurchaseQty());
         // 数据处理
         handleData(purchaseSuggestEntity);
 
@@ -167,6 +169,9 @@ public class PurchaseSuggestServiceImpl extends SuperServiceImpl<PurchaseSuggest
         if (viewDTO.getIsSplit()) {
             throw new ServiceException("已开启集中采购策略，不支持编辑");
         }
+        if (!Arrays.asList(SuggestStatusEnum.DRAFT.getCode(),SuggestStatusEnum.WAIT_CONFIRM.getCode()).contains(old.getStatus()) || old.getInvalidStatus()) {
+            throw new ServiceException(ApiError.ERROR_SUGGEST_UPDATE);
+        }
         purchaseSuggestEntity.setSourceId(old.getSourceId());
         // 数据处理
         handleData(purchaseSuggestEntity);
@@ -189,6 +194,9 @@ public class PurchaseSuggestServiceImpl extends SuperServiceImpl<PurchaseSuggest
         CfgRuleOrderStrategyDTO.ViewDTO viewDTO = cfgRuleOrderStrategyService.view();
         if (viewDTO.getIsSplit()) {
             throw new ServiceException("已开启集中采购策略，不支持导入编辑");
+        }
+        if (!Arrays.asList(SuggestStatusEnum.DRAFT.getCode(),SuggestStatusEnum.WAIT_CONFIRM.getCode()).contains(old.getStatus()) || old.getInvalidStatus()) {
+            throw new ServiceException(ApiError.ERROR_SUGGEST_UPDATE);
         }
         log.info("编辑 开始修改采购计划数据，单号：【{}】", old.getCode());
         boolean save = super.updateById(purchaseSuggestEntity);

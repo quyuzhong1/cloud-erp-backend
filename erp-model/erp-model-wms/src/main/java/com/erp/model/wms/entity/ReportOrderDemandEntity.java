@@ -95,6 +95,12 @@ public class ReportOrderDemandEntity extends BaseEntity<ReportOrderDemandEntity>
     @TableField("virtual_scarce_qty")
     private Integer virtualScarceQty;
 
+    /**
+     * 实体仓未分配
+     */
+    @TableField("un_distribution_qty")
+    private Integer unDistributionQty;
+
 
     public static final String WAREHOUSE_ID = "warehouse_id";
 

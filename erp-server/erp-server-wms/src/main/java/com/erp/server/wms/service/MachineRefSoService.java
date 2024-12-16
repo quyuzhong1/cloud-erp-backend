@@ -66,4 +66,12 @@ public interface MachineRefSoService extends SuperService<MachineRefSoEntity> {
      * @return List<MachineRefSoEntity>
      */
     List<MachineRefSoEntity> listBySoIdList(List<String> soIds);
+    /**
+     * 根据明细id查询
+     * @author will
+     * @date 2024/11/18 15:25
+     * @param detailIdList
+     * @return List<MachineRefSoEntity>
+     */
+    List<MachineRefSoEntity> listByMachineDetailIdList(List<String> detailIdList);
 }
