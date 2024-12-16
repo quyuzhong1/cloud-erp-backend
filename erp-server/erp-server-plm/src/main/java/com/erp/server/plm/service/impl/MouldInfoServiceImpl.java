@@ -528,6 +528,16 @@ public class MouldInfoServiceImpl extends SuperServiceImpl<MouldInfoMapper, Moul
 
     @Override
     public void refProduct(MouldInfoDTO.RefProductDTO dto) {
+        List<MouldRefProductEntity> oldList = mouldRefProductService.listByMouldDetailIdList(Collections.singletonList(dto.getMouldDetailId()));
+        List<String> removeIds = Optional.ofNullable(oldList).orElse(new ArrayList<>())
+                .stream()
+                .map(MouldRefProductEntity::getId)
+                .filter(id -> dto.getRefProductList().stream().noneMatch(v -> v.getId().equals(id)))
+                .collect(Collectors.toList());
+        if (!CollectionUtils.isEmpty(removeIds)) {
+            mouldRefProductService.removeByIds(removeIds);
+        }
+
         List<MouldRefProductEntity> productList = dto.getRefProductList().stream()
                 .map(v -> {
                     MouldRefProductEntity refProduct = BeanMapperUtils.map(MouldRefProductEntity.class, v);

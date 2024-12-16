@@ -18,12 +18,12 @@ public class MouldRefundVoucherDTO {
     /**
      * 文件地址
      */
-    private List<String> fileUrl;
+    private List<String> fileUrlList;
 
     /**
      * 文件名字
      */
-    private List<String> fileName;
+    private List<String> fileNameList;
 
     /**
      * 备注

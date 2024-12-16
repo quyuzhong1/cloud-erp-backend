@@ -16,6 +16,7 @@ import com.erp.model.plm.dto.MouldRefundVoucherDTO;
 import com.erp.model.plm.entity.MouldDetailEntity;
 import com.erp.model.plm.entity.MouldInfoEntity;
 import com.erp.server.plm.query.MouldInfoQueryHandler;
+import com.erp.server.plm.query.OrderTrackingHandler;
 import com.erp.server.plm.service.MouldDetailService;
 import com.erp.server.plm.service.MouldInfoService;
 import lombok.extern.slf4j.Slf4j;
@@ -349,7 +350,7 @@ public class MouldInfoController extends BaseController {
      * @param dto 参数
      */
     @PostMapping("/orderTracking")
-    @WebAdvanceQuery
+    @WebAdvanceQuery(handler = OrderTrackingHandler.class)
     public ApiResult<PagingVO<MouldInfoDTO.OrderTrackingViewDTO>> orderTracking(@RequestBody @Validated PagingDTO<MouldInfoDTO.PagingParamDTO> dto) {
         PagingVO<MouldInfoDTO.OrderTrackingViewDTO> page = mouldInfoService.orderTracking(dto);
         return success(page);

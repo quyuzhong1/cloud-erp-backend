@@ -30,8 +30,8 @@ public class MouldRefundVoucherServiceImpl extends SuperServiceImpl<MouldRefundV
     public void returnConfirm(MouldInfoDTO.ReturnConfirmDTO dto) {
         MouldRefundVoucherEntity refundVoucher = new MouldRefundVoucherEntity();
         refundVoucher.setMouldDetailId(dto.getMouldDetailId());
-        refundVoucher.setFileName(String.join(",", dto.getFileName()));
-        refundVoucher.setFileUrl(String.join(",", dto.getFileUrl()));
+        refundVoucher.setFileName(String.join(",", dto.getFileNameList()));
+        refundVoucher.setFileUrl(String.join(",", dto.getFileUrlList()));
         refundVoucher.setRemark(dto.getRemark());
         save(refundVoucher);
     }
@@ -44,8 +44,8 @@ public class MouldRefundVoucherServiceImpl extends SuperServiceImpl<MouldRefundV
         }
         MouldRefundVoucherDTO dto = new MouldRefundVoucherDTO();
         dto.setMouldDetailId(entity.getMouldDetailId());
-        dto.setFileName(Arrays.asList(entity.getFileName().split(",")));
-        dto.setFileUrl(Arrays.asList(entity.getFileUrl().split(",")));
+        dto.setFileNameList(Arrays.asList(entity.getFileName().split(",")));
+        dto.setFileUrlList(Arrays.asList(entity.getFileUrl().split(",")));
         dto.setCreateUserName(entity.getCreateUserName());
         dto.setCreateTime(entity.getCreateTime());
         dto.setRemark(entity.getRemark());
