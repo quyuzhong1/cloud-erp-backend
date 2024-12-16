@@ -928,12 +928,20 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
             this.smallBagCostAllocationHandler(mainEntity, costAllocationEntity, costAllocationDetailEntities, soOutstockEntity, soOutstockDetailEntity, soB2cEntity);
         }
 
+
         if (SmallBagCostAllocationMainFeeSourceEnum.CONFIRMED.getCode().equals(mainEntity.getFeeSource())) {
             //查询是否有预估账单
             List<LogisticsLargeEntity> list = this.lambdaQuery()
                     .eq(LogisticsLargeEntity::getSourceId, mainEntity.getId())
                     .eq(LogisticsLargeEntity::getSourceType, SourceTypeEnum.SMALL_BAG_COST_ALLOCATION.getCode())
                     .list();
+            if (ObjectUtil.isNotEmpty(list)) {
+                list = this.lambdaQuery()
+                        .eq(LogisticsLargeEntity::getLogisticsBillId, list.get(0).getLogisticsBillId())
+                        .eq(LogisticsLargeEntity::getSourceType, SourceTypeEnum.SMALL_BAG_COST_ALLOCATION.getCode())
+                        .list();
+            }
+
             List<LogisticsLargeEntity> estimatedList = list.stream()
                     .filter(req -> ReconciliationBillTypeEnum.ESTIMATED.getCode().equals(req.getReconciliationBillType()))
                     .collect(Collectors.toList());
