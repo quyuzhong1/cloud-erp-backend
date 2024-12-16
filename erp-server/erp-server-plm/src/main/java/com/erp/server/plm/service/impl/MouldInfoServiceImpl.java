@@ -657,9 +657,10 @@ public class MouldInfoServiceImpl extends SuperServiceImpl<MouldInfoMapper, Moul
         Map<String, String> dictBasicMap = dictBasicList.stream()
                 .collect(Collectors.toMap(DictBasicEntity::getId, DictBasicEntity::getValue, (o1, o2) -> o1));
         List<String> paymentConditions = records.stream().map(MouldInfoDTO.OrderTrackingExportDTO::getPaymentCondition).distinct().collect(Collectors.toList());
-        List<KingdeePaymentConditionEntity> paymentConditionList = FeignQuery.getByIds(KingdeePaymentConditionEntity.class, paymentConditions);
+        List<KingdeePaymentConditionEntity> paymentConditionList = FeignQuery.list(FeignQuery.create(KingdeePaymentConditionEntity.class)
+                .in(KingdeePaymentConditionEntity::getCode, paymentConditions));
         Map<String, String> paymentConditionMap = paymentConditionList.stream()
-                .collect(Collectors.toMap(KingdeePaymentConditionEntity::getId, KingdeePaymentConditionEntity::getName, (o1, o2) -> o1));
+                .collect(Collectors.toMap(KingdeePaymentConditionEntity::getCode, KingdeePaymentConditionEntity::getName, (o1, o2) -> o1));
         for (MouldInfoDTO.OrderTrackingExportDTO dto : records) {
             dto.setStatusName(ApproveStatusEnum.getName(dto.getStatus()));
             dto.setSupplierName(supplierMap.get(dto.getSupplierId()));
@@ -690,7 +691,7 @@ public class MouldInfoServiceImpl extends SuperServiceImpl<MouldInfoMapper, Moul
                 .collect(Collectors.toMap(DictBasicEntity::getValue, DictBasicEntity::getId, (o1, o2) -> o1));
         List<KingdeePaymentConditionEntity> paymentConditionList = FeignQuery.list(KingdeePaymentConditionEntity.class);
         Map<String, String> paymentConditionNameMap = paymentConditionList.stream()
-                .collect(Collectors.toMap(KingdeePaymentConditionEntity::getName, KingdeePaymentConditionEntity::getId, (o1, o2) -> o1));
+                .collect(Collectors.toMap(KingdeePaymentConditionEntity::getName, KingdeePaymentConditionEntity::getCode, (o1, o2) -> o1));
         List<CfgMouldSettingEntity> cfgMouldSettingList = cfgMouldSettingService.mouldList();
         Map<String, String> typeNameMap = cfgMouldSettingList.stream().collect(Collectors.toMap(CfgMouldSettingEntity::getName, CfgMouldSettingEntity::getId, (o1, o2) -> o1));
         MouldInfoExcelListener excelListenerUtil = new MouldInfoExcelListener(typeNameMap, dictBasicNameMap, paymentConditionNameMap);
