@@ -424,7 +424,7 @@ public class MouldInfoController extends BaseController {
      * @param dto 参数
      */
     @PostMapping("/orderTrackingTotal")
-    @WebAdvanceQuery
+    @WebAdvanceQuery(handler = OrderTrackingHandler.class)
     public ApiResult<MouldInfoDTO.OrderTrackingTotalDTO> orderTrackingTotal(@RequestBody @Validated MouldInfoDTO.PagingParamDTO dto) {
         MouldInfoDTO.OrderTrackingTotalDTO trackingTotal = mouldInfoService.orderTrackingTotal(dto);
         return success(trackingTotal);

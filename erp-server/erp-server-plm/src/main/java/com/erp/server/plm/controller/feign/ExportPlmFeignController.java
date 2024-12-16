@@ -11,6 +11,7 @@ import com.erp.model.plm.vo.BomExportExcelVO;
 import com.erp.model.plm.vo.ProjectTaskTimeRecordPageVO;
 import com.erp.server.plm.query.BomInfoHandler;
 import com.erp.server.plm.query.MouldInfoQueryHandler;
+import com.erp.server.plm.query.OrderTrackingHandler;
 import com.erp.server.plm.query.PilotApplicationQueryHandler;
 import com.erp.server.plm.service.*;
 import org.springframework.validation.annotation.Validated;
@@ -105,7 +106,7 @@ public class ExportPlmFeignController {
     }
 
     @PostMapping("/orderTracking")
-    @WebAdvanceQuery
+    @WebAdvanceQuery(handler = OrderTrackingHandler.class)
     public PagingVO<MouldInfoDTO.OrderTrackingExportDTO> exportOrderTracking(@RequestBody PagingDTO<MouldInfoDTO.PagingParamDTO> dto) {
         return mouldInfoService.exportOrderTracking(dto);
     }
