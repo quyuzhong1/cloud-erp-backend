@@ -878,7 +878,6 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
                 if (CollUtil.isNotEmpty(packEntityList)) {
                     BigDecimal grossWeight = MathUtil.divide(MathUtil.multiply(packEntityList.get(0).getGrossWeight(), costAllocationEntity.getDeliveryQty()), MathUtil.BigDecimal_1000);
                     addDTO.setWeight(grossWeight);
-                    addDTO.setLogisticsBillingWeight(grossWeight);
                 }
             }
         } else {
@@ -1164,7 +1163,6 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
             if (CollUtil.isNotEmpty(packEntityList)) {
                 BigDecimal grossWeight = MathUtil.divide(MathUtil.multiply(packEntityList.get(0).getGrossWeight(), entity.getDeliveryQty()), MathUtil.BigDecimal_1000);
                 addDTO.setWeight(grossWeight);
-                addDTO.setLogisticsBillingWeight(grossWeight);
             }
         }
         addDTO.setShippingMethod(LogisticsLargeShippingMethodEnum.EXPRESS_DELIVERY.getCode());
