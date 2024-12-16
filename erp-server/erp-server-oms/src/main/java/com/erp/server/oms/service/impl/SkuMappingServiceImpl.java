@@ -1431,6 +1431,9 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
 		if(StringUtils.isBlank(platformSkuName)) {
 			platformSkuName = productName;
 		}
+		if(StringUtils.isBlank(productName)) {
+			productName = platformSkuName;
+		}
 		resultMap.put("map_product_name", platformSkuName);
 		resultMap.put("mdm_system", "SDC");
 		resultMap.put("product_code", entity.getProductSkuNo());
