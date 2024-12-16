@@ -37,7 +37,7 @@ public class MouldInfoWriteHandler extends AbstractCellWriteHandler {
 
                 Drawing<?> drawingPatriarch = writeSheetHolder.getSheet().createDrawingPatriarch();
                 CreationHelper helper = workbook.getCreationHelper();
-                ClientAnchor anchor = getClientAnchor(helper, cell.getColumnIndex(), relativeRowIndex);
+                ClientAnchor anchor = getClientAnchor(helper, cell.getColumnIndex(), cell.getRowIndex());
 
                 Picture picture = drawingPatriarch.createPicture(anchor, pictureIdx);
                 picture.resize(); // 自动调整图片大小
@@ -50,7 +50,7 @@ public class MouldInfoWriteHandler extends AbstractCellWriteHandler {
         ClientAnchor anchor = helper.createClientAnchor();
         anchor.setDx1(0);
         anchor.setDy1(0);
-        anchor.setDx2(255);
+        anchor.setDx2(1023);
         anchor.setDy2(255);
         anchor.setCol1(col1);
         anchor.setCol2(col1 + 1);

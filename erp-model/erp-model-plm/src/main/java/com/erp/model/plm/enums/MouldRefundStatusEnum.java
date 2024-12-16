@@ -29,7 +29,7 @@ public enum MouldRefundStatusEnum implements EnumMessage {
 
     public static String getName(String code) {
         if (StringUtils.isNotBlank(code)) {
-            for (RefundStandardEnum item : RefundStandardEnum.values()) {
+            for (MouldRefundStatusEnum item : MouldRefundStatusEnum.values()) {
                 if (code.equals(item.getCode())) {
                     return item.getName();
                 }
