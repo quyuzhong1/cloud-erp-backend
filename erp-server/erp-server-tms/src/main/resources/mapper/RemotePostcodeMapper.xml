@@ -68,12 +68,6 @@
             INNER JOIN remote_postcode_detail AS rpd on rp.id = rpd.main_id and rpd.is_deleted =FALSE
         WHERE
             rp.is_deleted = FALSE
-            <if test="params.ids != null and params.ids.size != ''">
-                and rp.id in
-                <foreach collection="params.ids" item="id" open="(" close=")" separator=",">
-                    #{id}
-                </foreach>
-            </if>
             <if test="params.sqlMap.default != null and params.sqlMap.default != ''">
                 and ${params.sqlMap.default}
             </if>

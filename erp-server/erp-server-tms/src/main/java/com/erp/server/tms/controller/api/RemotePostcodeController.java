@@ -177,6 +177,7 @@ public class RemotePostcodeController extends BaseController {
             tableAlias = ""
     )
     @LogAction(value = LogActionEnum.EXPORT, desc = "偏远邮编组导出Excel数据")
+    @WebAdvanceQuery
     public ApiResult<Object> exportList(@RequestBody @Validated RemotePostcodeDTO.ExportDTO dto, HttpServletResponse response) {
         Boolean flag = remotePostcodeService.exportList(dto, response);
         return flag == true ? success() : failure();
