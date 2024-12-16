@@ -554,12 +554,12 @@ public class MouldInfoDTO implements Serializable {
         /**
          * 文件地址
          */
-        private List<String> fileUrl = new ArrayList<>();
+        private List<String> fileUrlList = new ArrayList<>();
 
         /**
          * 文件名字
          */
-        private List<String> fileName = new ArrayList<>();
+        private List<String> fileNameList = new ArrayList<>();
 
         /**
          * 备注
