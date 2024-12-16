@@ -1572,7 +1572,7 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
             }
         }
 
-        List<LogisticsLargeEntity> logisticsLargeEntities = logisticsLargeService.listByIdSourceId(Arrays.asList(entity.getSourceId()));
+        List<LogisticsLargeEntity> logisticsLargeEntities = logisticsLargeService.listByIdSourceId(Arrays.asList(entity.getId()));
         if (CollUtil.isNotEmpty(logisticsLargeEntities)) {
             return BatchResultDTO.fail(entity.getId(), entity.getSourceCode(), "已生成物流大表禁止更新状态");
         }

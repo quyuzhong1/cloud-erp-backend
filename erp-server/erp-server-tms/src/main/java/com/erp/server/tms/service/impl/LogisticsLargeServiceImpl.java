@@ -872,7 +872,15 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
             addDTO.setOtherTaxPayStatus(logisticsBillCostEntity.getPayStatus());
             addDTO.setDestMiscFeePayStatus(logisticsBillCostEntity.getPayStatus());
 
-
+            if (logisticsBillCostEntity.getBillingWeightLogistics() == null || logisticsBillCostEntity.getBillingWeightLogistics().compareTo(BigDecimal.ZERO) <= 0) {
+                //重量
+                List<ProductPackEntity> packEntityList = FeignQuery.create(ProductPackEntity.class).eq(ProductPackEntity::getSkuId, costAllocationEntity.getSkuId()).list();
+                if (CollUtil.isNotEmpty(packEntityList)) {
+                    BigDecimal grossWeight = MathUtil.divide(MathUtil.multiply(packEntityList.get(0).getGrossWeight(), costAllocationEntity.getDeliveryQty()), MathUtil.BigDecimal_1000);
+                    addDTO.setWeight(grossWeight);
+                    addDTO.setLogisticsBillingWeight(grossWeight);
+                }
+            }
         } else {
             //预估账单
             addDTO.setReconciliationBillType(ReconciliationBillTypeEnum.ESTIMATED.getCode());
@@ -886,15 +894,14 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
             addDTO.setActualDestMiscFee(BigDecimal.ZERO);
             addDTO.setActualDutyAmount(BigDecimal.ZERO);
             addDTO.setActualDeductibleTax(BigDecimal.ZERO);
-        }
 
-        if (logisticsBillCostEntity.getBillingWeightLogistics() == null || logisticsBillCostEntity.getBillingWeightLogistics().compareTo(BigDecimal.ZERO) <= 0) {
-            //重量
-            List<ProductPackEntity> packEntityList = FeignQuery.create(ProductPackEntity.class).eq(ProductPackEntity::getSkuId, costAllocationEntity.getSkuId()).list();
-            if (CollUtil.isNotEmpty(packEntityList)) {
-                BigDecimal grossWeight = MathUtil.divide(MathUtil.multiply(packEntityList.get(0).getGrossWeight(), costAllocationEntity.getDeliveryQty()), MathUtil.BigDecimal_1000);
-                addDTO.setWeight(grossWeight);
-                addDTO.setLogisticsBillingWeight(grossWeight);
+            if (logisticsBillCostEntity.getBillingWeightLogistics() == null || logisticsBillCostEntity.getBillingWeightLogistics().compareTo(BigDecimal.ZERO) <= 0) {
+                //重量
+                List<ProductPackEntity> packEntityList = FeignQuery.create(ProductPackEntity.class).eq(ProductPackEntity::getSkuId, costAllocationEntity.getSkuId()).list();
+                if (CollUtil.isNotEmpty(packEntityList)) {
+                    BigDecimal grossWeight = MathUtil.divide(MathUtil.multiply(packEntityList.get(0).getGrossWeight(), costAllocationEntity.getDeliveryQty()), MathUtil.BigDecimal_1000);
+                    addDTO.setWeight(grossWeight);
+                }
             }
         }
 
