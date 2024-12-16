@@ -31,6 +31,8 @@ import java.util.stream.Collectors;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 
+import com.erp.model.tms.entity.*;
+import com.erp.server.tms.service.*;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -141,20 +143,6 @@ import com.erp.server.tms.listener.LogisticsBillCostExcelListener;
 import com.erp.server.tms.mapper.LogisticsBillCostMapper;
 import com.erp.server.tms.query.LogisticsBillCostQueryHandler;
 import com.erp.server.tms.query.LogisticsLastMileCostQueryHandler;
-import com.erp.server.tms.service.CfgSettingService;
-import com.erp.server.tms.service.DictBasicService;
-import com.erp.server.tms.service.InventorySkuCostDetailService;
-import com.erp.server.tms.service.InventorySkuCostService;
-import com.erp.server.tms.service.LogisticsBillCostService;
-import com.erp.server.tms.service.LogisticsBillDetailService;
-import com.erp.server.tms.service.LogisticsBillService;
-import com.erp.server.tms.service.LogisticsChannelService;
-import com.erp.server.tms.service.OperateLogService;
-import com.erp.server.tms.service.SmallBagCostAllocationDetailService;
-import com.erp.server.tms.service.SmallBagCostAllocationMainService;
-import com.erp.server.tms.service.SmallBagCostAllocationService;
-import com.erp.server.tms.service.TmsCfgCostService;
-import com.erp.server.tms.service.TmsCostDetailService;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
@@ -246,6 +234,9 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
     private InventorySkuCostService inventorySkuCostService;
     @Resource
     private InventorySkuCostDetailService inventorySkuCostDetailService;
+    @Resource
+    private LogisticsLargeService logisticsLargeService;
+
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -1473,6 +1464,15 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 			        .set(LogisticsBillCostEntity::getPayStatus, payStatus)
 			        .set(LogisticsBillCostEntity::getPayTime, payTime)
 			        .update();
+
+
+        // 修改物流大表的支付状态
+        List<SmallBagCostAllocationMainEntity> costAllocationMainEntities = smallBagCostAllocationMainService.lambdaQuery().eq(SmallBagCostAllocationMainEntity::getCostId, id).list();
+        List<String> ids = costAllocationMainEntities.stream().map(req -> req.getId()).distinct().collect(Collectors.toList());
+        if (CollUtil.isNotEmpty(ids)) {
+            logisticsLargeService.updatePayStatusBySourceId(ids, payStatus, payTime);
+        }
+
 		return BatchResultDTO.success(entity.getId(), entity.getTrackNo(), OperationTypeEnum.UPDATE_STATUS);
 	}
 

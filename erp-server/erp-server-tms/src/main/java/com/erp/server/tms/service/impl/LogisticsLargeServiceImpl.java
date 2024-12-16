@@ -161,6 +161,9 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
     @Resource
     private TransferLogisticsChannelService transferLogisticsChannelService;
 
+    @Resource
+    private TmsFirstMileReconciliationDetailService tmsFirstMileReconciliationDetailService;
+
     @Override
     public PagingVO<LogisticsLargeDTO.PagingViewDTO> paging(PagingDTO<LogisticsLargeDTO.PagingParamDTO> dto) {
         LogisticsLargeDTO.PagingParamDTO params = dto.getParams();
@@ -184,9 +187,22 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
             pagingViewDTO.setShippingMethodName(LogisticsLargeShippingMethodEnum.getName(pagingViewDTO.getShippingMethod()));
             pagingViewDTO.setPayStatusName(SoB2cPayStatusEnum.getName(pagingViewDTO.getPayStatus()));
             pagingViewDTO.setDeductibleTaxPayStatusName(SoB2cPayStatusEnum.getName(pagingViewDTO.getDeductibleTaxPayStatus()));
-            pagingViewDTO.setDestDutyPayStatusName(SoB2cPayStatusEnum.getName(pagingViewDTO.getOtherTaxPayStatus()));
+            pagingViewDTO.setDestDutyPayStatusName(SoB2cPayStatusEnum.getName(pagingViewDTO.getDestDutyPayStatus()));
             pagingViewDTO.setOtherTaxPayStatusName(SoB2cPayStatusEnum.getName(pagingViewDTO.getOtherTaxPayStatus()));
             pagingViewDTO.setDestMiscFeePayStatusName(SoB2cPayStatusEnum.getName(pagingViewDTO.getDestMiscFeePayStatus()));
+
+            if (SourceTypeEnum.FIRST_MILE_COST_ALLOCATION.getCode().equals(pagingViewDTO.getSourceType())) {
+                pagingViewDTO.setDeductibleTaxPayStatusName("");
+                pagingViewDTO.setDeductibleTaxPayStatus("");
+            } else if (SourceTypeEnum.TRANSFER_DECLARE_COST_ALLOCATION.getCode().equals(pagingViewDTO.getSourceType())) {
+                pagingViewDTO.setDeductibleTaxPayStatusName("");
+                pagingViewDTO.setDeductibleTaxPayStatus("");
+                pagingViewDTO.setOtherTaxPayStatusName("");
+                pagingViewDTO.setOtherTaxPayStatus("");
+            } else {
+                pagingViewDTO.setOtherTaxPayStatusName("");
+                pagingViewDTO.setOtherTaxPayStatus("");
+            }
         }
     }
 
@@ -308,8 +324,7 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
         addDTO.setLogisticsBillId(logisticsBillEntity.getId());
         addDTO.setShippingMethod(logisticsBillEntity.getShippingMethod());
         addDTO.setTransportNo(logisticsBillEntity.getCounterNo());
-        addDTO.setWeight(firstMileSkuCostAllocationEntity.getAllocatedWeight());
-        addDTO.setLogisticsBillingWeight(firstMileSkuCostAllocationEntity.getAllocatedWeight());
+
         //付款方式
         LogisticsChannelEntity channelEntity = logisticsChannelService.getById(logisticsBillEntity.getChannelId());
         if (ObjectUtil.isNotEmpty(channelEntity)) {
@@ -348,14 +363,9 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
             addDTO.setDeliveryAddress(destWarehouse.getAddress());
         }
 
-        LogisticsBillDetailEntity billDetailEntity = detailEntityList.stream().filter(req -> FmLogisticTrackStatusEnum.PICKUP.getCode().equals(req.getTrackStatus())).findFirst().orElse(null);
-        if (billDetailEntity != null) {
-            addDTO.setPickupTime(billDetailEntity.getTrackTime());
-        }
         if (CollUtil.isNotEmpty(detailEntityList)) {
             addDTO.setActualDeliveryTime(detailEntityList.get(0).getSignTime());
         }
-
 
         //税率
         BigDecimal taxRate = addDTO.getTaxRate().divide(MathUtil.BigDecimal_100);
@@ -385,10 +395,12 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
 
         if (ObjectUtil.isNotEmpty(detailEntity)) {
             BigDecimal firstMileFreightAmount = detailEntity.getAllocatedAmount().divide(rate, 4, RoundingMode.DOWN);
-            addDTO.setFirstMileEstimatedFreightTax(detailEntity.getAllocatedAmount().divide(rate, 4, RoundingMode.DOWN));
-            addDTO.setFirstMileEstimatedFreight(firstMileFreightAmount.divide(BigDecimal.ONE.add(taxRate), 4, RoundingMode.DOWN));
-            addDTO.setFirstMileActualFreightTax(detailEntity.getAllocatedAmount().divide(rate, 4, RoundingMode.DOWN));
-            addDTO.setFirstMileActualFreight(firstMileFreightAmount.divide(BigDecimal.ONE.add(taxRate), 4, RoundingMode.DOWN).multiply(taxRate));
+            addDTO.setFirstMileEstimatedFreightTax(firstMileFreightAmount.divide(rate, 4, RoundingMode.DOWN));
+            addDTO.setFirstMileEstimatedFreight(firstMileFreightAmount.divide(rate, 4, RoundingMode.DOWN).divide(BigDecimal.ONE.add(taxRate), 4, RoundingMode.DOWN));
+
+            addDTO.setFirstMileActualFreightTax(firstMileFreightAmount.divide(rate, 4, RoundingMode.DOWN));
+            addDTO.setFirstMileActualFreight(firstMileFreightAmount.divide(rate, 4, RoundingMode.DOWN).divide(BigDecimal.ONE.add(taxRate), 4, RoundingMode.DOWN));
+            addDTO.setFirstMileFreightVatAmount(firstMileFreightAmount.divide(rate, 4, RoundingMode.DOWN).divide(BigDecimal.ONE.add(taxRate), 4, RoundingMode.DOWN).multiply(taxRate));
         }
 
         //杂费
@@ -429,9 +441,9 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
 
         // TODO 暂时取物流单的 后期取大类的
         addDTO.setOtherTaxCurrency(logisticsBillCostEntity.getCurrency());
-        if (ObjectUtil.isNotEmpty(declareCostDetailEntity)) {
-            addDTO.setEstimatedTaxOtherTax(declareCostDetailEntity.getAllocatedAmount().divide(rate, 4, RoundingMode.DOWN));
-            addDTO.setActualTaxOtherTax(declareCostDetailEntity.getAllocatedAmount().divide(rate, 4, RoundingMode.DOWN));
+        if (ObjectUtil.isNotEmpty(otherTaxFeeDetailEntity)) {
+            addDTO.setEstimatedTaxOtherTax(otherTaxFeeDetailEntity.getAllocatedAmount().divide(rate, 4, RoundingMode.DOWN));
+            addDTO.setActualTaxOtherTax(otherTaxFeeDetailEntity.getAllocatedAmount().divide(rate, 4, RoundingMode.DOWN));
         }
 
         if (ReconciliationBillTypeEnum.ACTUAL.getCode().equals(firstMileSkuCostAllocationEntity.getBillSourceType())) {
@@ -440,9 +452,22 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
             if (ObjectUtil.isEmpty(reconciliationEntity)) {
                 throw new ServiceException("头程对账单主信息未找到");
             }
-
             //实际账单
             addDTO.setReconciliationBillType(ReconciliationBillTypeEnum.ACTUAL.getCode());
+
+            //重量
+            TmsFirstMileReconciliationDetailEntity reconciliationDetailEntity = tmsFirstMileReconciliationDetailService.getById(firstMileSkuCostAllocationEntity.getReconciliationDetailId());
+            if (ObjectUtil.isNotEmpty(reconciliationDetailEntity) &&  reconciliationDetailEntity.getBillingWeight().compareTo(BigDecimal.ZERO) > 0) {
+                addDTO.setWeight(reconciliationDetailEntity.getBillingWeight());
+                addDTO.setLogisticsBillingWeight(reconciliationDetailEntity.getBillingWeight());
+            } else {
+                List<ProductPackEntity> packEntityList = FeignQuery.create(ProductPackEntity.class).eq(ProductPackEntity::getSkuId, firstMileSkuCostAllocationEntity.getSkuId()).list();
+                if (CollUtil.isNotEmpty(packEntityList)) {
+                    BigDecimal grossWeight = MathUtil.divide(MathUtil.multiply(packEntityList.get(0).getGrossWeight(), firstMileSkuCostAllocationEntity.getDeliveryQty()), MathUtil.BigDecimal_1000);
+                    addDTO.setWeight(grossWeight);
+                    addDTO.setLogisticsBillingWeight(grossWeight);
+                }
+            }
 
             //付款状态
             addDTO.setPayStatus(reconciliationEntity.getPayStatus());
@@ -472,6 +497,13 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
         } else {
             //预估账单
             addDTO.setReconciliationBillType(ReconciliationBillTypeEnum.ESTIMATED.getCode());
+
+            //毛重
+            List<ProductPackEntity> packEntityList = FeignQuery.create(ProductPackEntity.class).eq(ProductPackEntity::getSkuId, firstMileSkuCostAllocationEntity.getSkuId()).list();
+            if (CollUtil.isNotEmpty(packEntityList)) {
+                BigDecimal grossWeight = MathUtil.divide(MathUtil.multiply(packEntityList.get(0).getGrossWeight(), firstMileSkuCostAllocationEntity.getDeliveryQty()), MathUtil.BigDecimal_1000);
+                addDTO.setWeight(grossWeight);
+            }
 
             //付款状态
             addDTO.setPayStatus(SoB2cPayStatusEnum.ENUM_PAYMENT.getCode());
