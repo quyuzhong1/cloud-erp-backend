@@ -268,9 +268,6 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     @Resource
     private PlmAttachmentService plmAttachmentService;
 
-    @Resource
-    private PlmAttachmentService plmAttachmentService;
-
     //变更财务人员审核
     @Value("${changeFinancialAudit}")
     private String financial;
@@ -5128,21 +5125,6 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             document.close();
         } catch (Exception e) {
             throw new ServiceException(ApiError.ERROR_1015, e.getMessage());
-        }
-    }
-
-    @Override
-    public void uploadSkuImage(UploadSkuDTO dto) {
-        ProductDetailEntity productDetailEntity = getBySkuNoOrEan(dto.getEan());
-        if(Objects.nonNull(productDetailEntity)){
-            PlmAttachmentEntity entity = new PlmAttachmentEntity();
-            entity.setAttachUrl(dto.getAttachUrl());
-            entity.setAttachName(dto.getAttachName());
-            Class<ProductDetailEntity> aClass = ProductDetailEntity.class;
-            TableName tableName = aClass.getDeclaredAnnotation(TableName.class);
-            entity.setType(tableName.value());
-            entity.setBusinessId(productDetailEntity.getId());
-            plmAttachmentService.save(entity);
         }
     }
 
