@@ -293,11 +293,41 @@ public class LingxingApiUtils {
             log.error(errorMsg);
             throw new ServiceException(errorMsg);
         }
-        if ("3001008".equalsIgnoreCase(result.getCode())) {
-            String errorMsg = StrUtil.format("请求领星触发限流不执行当前: result={}", JSONUtil.toJsonStr(result));
-            log.warn(errorMsg);
-            return null;
-        }
         return result;
+    }
+
+    /**
+     * 请求领星接口
+     */
+    public static Result<Object> postRequestDataAndRetry(String apiType, TreeMap<String, Object> requestMap) {
+        Result<Object> resultData = null;
+        long sleepTime = 1000;
+        // 限流最多请求10次
+        for (int count = 1; count <= 10; count++) {
+            resultData = LingxingApiUtils.postRequestData(apiType, requestMap);
+            // 限流重试
+            if ("3001008".equalsIgnoreCase(resultData.getCode())) {
+                if (10 == count) {
+                    throw new ServiceException("调用领星接口重试" + count + "失败：" + apiType);
+                }
+                try {
+                    Thread.sleep(sleepTime);
+                } catch (InterruptedException e) {
+                    log.error("拉取调用领星接口重试睡眠异常:e={}", ExceptionUtil.stacktraceToString(e));
+                    Thread.currentThread().interrupt();
+                }
+                sleepTime = sleepTime + 1000;
+                count = count + 1;
+            } else {
+                break;
+            }
+        }
+        try {
+            Thread.sleep(2000);
+        } catch (InterruptedException e) {
+            log.error("调用领星接口重试睡眠异常:e={}", ExceptionUtil.stacktraceToString(e));
+            Thread.currentThread().interrupt();
+        }
+        return resultData;
     }
 }
