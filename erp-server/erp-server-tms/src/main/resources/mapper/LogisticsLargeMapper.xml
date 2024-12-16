@@ -153,7 +153,8 @@
         ll.source_detail_id AS sourceDetailId,
         ll.reconciliation_bill_type AS reconciliationBillType,
         TO_CHAR(ll.reconciliation_month, 'YYYY-MM') AS reconciliationMonth, -- 格式化日期为年-月
-        ll.create_time AS createTime
+        ll.create_time AS createTime,
+        ll.logistics_bill_id
         FROM logistics_large ll
         LEFT JOIN logistics_bill lb ON ll.logistics_bill_id = lb.id AND lb.is_deleted=false
         LEFT JOIN logistics_bill_detail lbd ON lb.id = lbd.main_id AND lbd.is_deleted=false

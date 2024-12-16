@@ -1489,6 +1489,10 @@ public class LogisticsLargeDTO implements Serializable {
          * 创建时间【可排序】
          */
         private LocalDateTime createTime;
+        /**
+         * 物流单id
+         */
+        private String logisticsBillId;
     }
 
     @Data
