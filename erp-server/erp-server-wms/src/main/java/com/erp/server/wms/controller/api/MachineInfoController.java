@@ -2,6 +2,7 @@ package com.erp.server.wms.controller.api;
 
 
 import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.*;
@@ -16,16 +17,13 @@ import com.common.core.enums.LogActionEnum;
 import com.erp.model.wms.dto.MachineInfoDTO;
 import com.erp.model.wms.dto.MachineSubComponentsDTO;
 import com.erp.model.wms.entity.MachineInfoEntity;
-import com.erp.model.wms.entity.SoReturnReceiveEntity;
 import com.erp.server.wms.query.MachineInfoQueryHandler;
 import com.erp.server.wms.service.MachineInfoService;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
-import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 import java.util.ArrayList;
 import java.util.List;
@@ -361,5 +359,33 @@ public class MachineInfoController extends BaseController {
         return flag == true ? success() : failure();
     }
 
-
+    /**
+     * 处理数据
+     * @author will
+     * @date 2024/11/27 11:02
+     * @param dto
+     * @return ApiResult<List<BatchResultDTO>>
+     */
+    @PostMapping("/handleErrorData")
+    public ApiResult<List<BatchResultDTO>> handleErrorData(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        List<String> ids = dto.getIds();
+        for (String id : ids) {
+            BatchResultDTO resultDTO;
+            try {
+                resultDTO = machineInfoService.handleErrorData(id);
+            } catch (Exception e) {
+                log.error("加工单 处理数据失败", e);
+                MachineInfoEntity entity = machineInfoService.getById(id);
+                if (ObjectUtil.isEmpty(entity)) {
+                    resultDTO = BatchResultDTO.fail(id, id, "加工单不存在, 处理数据失败");
+                    resultDTOS.add(resultDTO);
+                    continue;
+                }
+                resultDTO = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
+            }
+            resultDTOS.add(resultDTO);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
 }

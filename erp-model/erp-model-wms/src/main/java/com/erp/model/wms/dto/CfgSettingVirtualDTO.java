@@ -56,6 +56,12 @@ public class CfgSettingVirtualDTO implements Serializable {
         private CfgSettingVirtualValueDTO.SalesDashboardDTO salesDashboardDTO;
 
         /**
+         * 缺货统计
+         */
+        @Valid
+        private CfgSettingVirtualValueDTO.ReportOrderDemandDTO reportOrderDemandDTO;
+
+        /**
          * 规则设置
          */
         @Valid

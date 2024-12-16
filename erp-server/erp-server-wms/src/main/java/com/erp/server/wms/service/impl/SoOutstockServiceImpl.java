@@ -6,6 +6,7 @@ import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -259,6 +260,8 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
     private WmsPushMsgService wmsPushMsgService;
 
 
+    @Resource
+    private VirtualTransFlowService virtualTransFlowService;
 
     @Override
     public List<SoOutstockEntity> listBySourceId(List<String> ids) {
@@ -830,16 +833,8 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             member.setLockWaitTime(20L);
         }
         if (CollectionUtils.isNotEmpty(members)) {
-            //无虚拟仓无需扣减库存
-            List<InOutStockDTO> virtualInOutStockList = members.stream().filter(obj -> CharSequenceUtil.isNotBlank(obj.getVirtualWarehouseId())).collect(Collectors.toList());
-            //B2C发货单下推的销售出库单无需扣库存
-            if (CollectionUtils.isNotEmpty(virtualInOutStockList) && !SourceTypeEnum.SO_B2C_DELIVERY.getCode().equals(entity.getSourceType())) {
-                VirtualInventoryStockDTO.StockParamDTO stockParamDTO = new VirtualInventoryStockDTO.StockParamDTO();
-                List<VirtualInventoryStockDTO.OutInStockDTO> outInStockDTOS = BeanMapperUtils.copyList(VirtualInventoryStockDTO.OutInStockDTO.class, virtualInOutStockList);
-                stockParamDTO.setParamList(outInStockDTOS);
-                stockParamDTO.setBusinessType(VirtualInventoryBusinessTypeEnum.OUT_USABLE.getCode());
-                virtualInventoryTransCoreService.approve(stockParamDTO);
-            }
+            //处理虚拟仓库存
+            handleVirtualInventory(members,entity);
             //扣实体仓库存
             inventoryInOutStockDTO.setParamList(members);
             inventoryTransCoreService.approveByType(inventoryInOutStockDTO);
@@ -848,6 +843,43 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         saveLogisticsBill(entity);
     }
 
+    /**
+     * 处理虚拟仓库存
+     * @author will
+     * @date 2024/11/11 15:38
+     * @param members
+     * @param entity
+     */
+    private void handleVirtualInventory (List<InOutStockDTO> members,SoOutstockEntity entity) {
+        //无虚拟仓无需扣减库存
+        List<InOutStockDTO> virtualInOutStockList = members.stream().filter(obj -> StrUtil.isNotBlank(obj.getVirtualWarehouseId()))
+                .collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(virtualInOutStockList)) {
+            return;
+        }
+        String businessType = VirtualInventoryBusinessTypeEnum.OUT_USABLE.getCode();
+        if (SourceTypeEnum.SO_B2C_DELIVERY.getCode().equals(entity.getSourceType())) {
+            businessType = VirtualInventoryBusinessTypeEnum.SO_OUT_STOCK.getCode();
+
+            //历史流水
+            List<SoOutstockDetailEntity> soOutstockDetailList = soOutstockDetailService.listByMainIds(Collections.singletonList(entity.getId()));
+            List<String> detailIdList = soOutstockDetailList.stream().map(SoOutstockDetailEntity::getSourceDetailId).distinct().collect(Collectors.toList());
+            List<VirtualTransFlowEntity> virtualTransFlowList = virtualTransFlowService.listHistoryFlow(detailIdList, InventorySourceTypeEnum.SO_B2C_DELIVERY.getCode());
+            //如果存在出冻结流水则无需再次扣减
+            long count = virtualTransFlowList.stream().filter(obj -> CharSequenceUtil.equals(obj.getDictBizType(), VirtualInventoryBusinessTypeEnum.SO_OUT_STOCK.getCode())).count();
+            if (count > 0) {
+                return;
+            }
+            if (CharSequenceUtil.isNotBlank(entity.getBatchNo())) {
+                return;
+            }
+        }
+        VirtualInventoryStockDTO.StockParamDTO stockParamDTO = new VirtualInventoryStockDTO.StockParamDTO();
+        List<VirtualInventoryStockDTO.OutInStockDTO> outInStockDTOS = BeanMapperUtils.copyList(VirtualInventoryStockDTO.OutInStockDTO.class, virtualInOutStockList);
+        stockParamDTO.setParamList(outInStockDTOS);
+        stockParamDTO.setBusinessType(businessType);
+        virtualInventoryTransCoreService.approve(stockParamDTO);
+    }
 
     /**
      * 审核更新审核信息

@@ -1,6 +1,8 @@
 package com.erp.server.wms.service.impl;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.core.util.ObjUtil;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
@@ -36,12 +38,15 @@ import com.erp.model.wms.dto.inventory.InOutStockDTO;
 import com.erp.model.wms.dto.inventory.InventoryInOutStockDTO;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
 import com.erp.model.wms.dto.inventory.InventoryUnApproveDTO;
+import com.erp.model.wms.dto.*;
+import com.erp.model.wms.dto.inventory.*;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.MachineSourceTypeEnum;
 import com.erp.model.wms.enums.WorkTypeEnum;
 import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
 import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
+import com.erp.model.wms.enums.inventory.VirtualInventoryBusinessTypeEnum;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
@@ -63,6 +68,7 @@ import org.springframework.transaction.support.TransactionSynchronizationAdapter
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import javax.annotation.Resource;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -132,9 +138,17 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
     private MachineInfoQueryHandler machineInfoQueryHandler;
 
     @Resource
+    private FirstMileDeliveryDetailService firstMileDeliveryDetailService;
+
+    @Resource
+    private RequisitionApplicationDetailService requisitionApplicationDetailService;
+
+    @Resource
     private DmpMqFeign dmpMqFeign;
+
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
+
     @Resource
     private WarehouseLocationService warehouseLocationService;
     @Lazy
@@ -142,6 +156,20 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
     private SoDeliveryNoticeService soDeliveryNoticeService;
     @Resource
     private SoOutstockService soOutstockService;
+
+    @Resource
+    private VirtualInventoryTransCoreService virtualInventoryTransCoreService;
+
+    @Resource
+    private FbaShipmentDetailService fbaShipmentDetailService;
+
+    @Resource
+    private RequisitionApplicationService requisitionApplicationService;
+
+
+    @Resource
+    private FirstMileDeliveryService firstMileDeliveryService;
+
     @Override
     public PagingVO<MachineInfoDTO.ListDTO> paging(PagingDTO<MachineInfoDTO.SearchParamDTO> pagingDTO) {
         pagingDTO.getParams().setPermissionSql(pagingDTO.getPermissionSql());
@@ -581,7 +609,7 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
             //更新单据(后面有流程了调用监听可删)
             updateApproveStatusForApprove(Collections.singletonList(entity.getId()), ApproveStatusEnum.APPROVE.getStatus());
             //更新库存
-            updateInventoryTransCore(Collections.singletonList(entity));
+            updateInventoryTransCore(entity);
             //审核发送金蝶
             sendPushTask(Collections.singletonList(entity),SyncOperateEnum.OPERATE_APPROVE.getCode());
             // 发送马帮
@@ -640,6 +668,9 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
         InventoryUnApproveDTO inventoryUnApproveDTO = new InventoryUnApproveDTO(InventorySourceTypeEnum.MACHINE_INFO,entity.getId());
         inventoryTransCoreService.unApprove(inventoryUnApproveDTO);
 
+        //虚拟仓回退库存
+        virtualInventoryTransCoreService.unApprove(inventoryUnApproveDTO);
+
         //反审核发送金蝶
         sendPushTask(Collections.singletonList(entity),SyncOperateEnum.OPERATE_DISAPPROVE.getCode());
         // 发送马帮
@@ -684,12 +715,11 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
      * @description: 更新加工单库存
      * @author Will
      * @date: 2023/5/18 12:11
-     * @param list
+     * @param entity
      */
-    private void updateInventoryTransCore (List<MachineInfoEntity> list) {
-        List<String> ids = list.stream().map(MachineInfoEntity::getId).collect(Collectors.toList());
+    private void updateInventoryTransCore (MachineInfoEntity entity) {
         //加工明细
-        List<MachineDetailEntity> detailList = machineDetailService.listByMainIds(ids);
+        List<MachineDetailEntity> detailList = machineDetailService.listByMainIds(Collections.singletonList(entity.getId()));
         if (CollectionUtils.isEmpty(detailList)) {
             throw new ServiceException(ApiError.ERROR_99053);
         }
@@ -699,18 +729,94 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
         if (CollectionUtils.isEmpty(machineSubComponentsList)) {
             throw new ServiceException(ApiError.ERROR_99056);
         }
-        for (MachineInfoEntity entity : list) {
-            //加工明细
-            List<MachineDetailEntity> resultDetails = detailList.stream().filter(obj -> obj.getMainId().equals(entity.getId())).collect(Collectors.toList());
-            if (CollectionUtils.isEmpty(resultDetails)) {
-                throw new ServiceException(ApiError.ERROR_99053);
-            }
-            //父级SKU库存更新
-            updateInventoryForMachineDetail(entity,resultDetails);
+        //父级SKU库存更新
+        updateInventoryForMachineDetail(entity,detailList);
 
-            //子件SKU库存更新
-            updateInventoryForMachineSubComponents(entity,resultDetails,machineSubComponentsList);
+        //子件SKU库存更新
+        updateInventoryForMachineSubComponents(entity,machineSubComponentsList);
+
+        //头程发货单下推子件虚拟仓出库
+        updateFirstMileVirtualInventory(entity,detailList);
+    }
+
+    /**
+     * 头程发货单下推子件虚拟仓出库
+     * @author will
+     * @date 2024/11/18 14:11
+     * @param entity
+     * @param detailList
+     */
+    private void updateFirstMileVirtualInventory (MachineInfoEntity entity,List<MachineDetailEntity> detailList) {
+        //头程发货单下推数据扣减虚拟仓库存
+        if (!CharSequenceUtil.equals(entity.getSourceType(),SourceTypeEnum.FIRST_MILE_DELIVERY.getCode())) {
+            return;
         }
+        List<String> detailIdList = detailList.stream().map(MachineDetailEntity::getId).distinct().collect(Collectors.toList());
+        List<MachineRefSoEntity> machineList = machineRefSoService.listByMachineDetailIdList(detailIdList);
+        if (CollectionUtils.isEmpty(machineList)) {
+            return;
+        }
+        //头程单据
+        List<String> firstMileDetailIdList = machineList.stream().map(MachineRefSoEntity::getSoDetailId).distinct().collect(Collectors.toList());
+        List<FirstMileDeliveryDetailDTO.listFirstMileDTO> firstMileDeliveryDetailList = firstMileDeliveryDetailService.listFirstMileSource(firstMileDetailIdList);
+        if (CollectionUtils.isEmpty(firstMileDeliveryDetailList)) {
+            return;
+        }
+        /**
+         * 根据备货类型判断：FBA或海外，需要根据类型查询要货申请明细找虚拟仓进行库存扣减
+         * FBA:发货单来源明细id存的货件明细id
+         * 海外：发货单来源明细id存的要货申请明细id
+         * 货件与要货申请明细关联，需要sku、msku对比
+         */
+
+        //要货申请明细
+        List<String> applicationIdList = firstMileDeliveryDetailList.stream().map(FirstMileDeliveryDetailDTO.listFirstMileDTO::getSourceId).distinct().collect(Collectors.toList());
+        List<RequisitionApplicationDetailEntity>  requisitionApplicationDetailList = requisitionApplicationDetailService.listByMainIds(applicationIdList);
+        if (CollUtil.isEmpty(requisitionApplicationDetailList)) {
+            throw new ServiceException("未找到要货申请明细");
+        }
+
+        List<VirtualInventoryStockDTO.OutInStockDTO>  outInStockList = new ArrayList<>();
+        for (MachineDetailEntity detailEntity : detailList) {
+
+            //头程发货单明细id
+            String refDetailId = machineList.stream().filter(obj -> CharSequenceUtil.equals(obj.getMachineDetailId(), detailEntity.getId()))
+                    .map(MachineRefSoEntity::getSoDetailId).findFirst().orElse("");
+
+            //头程发货单信息
+            FirstMileDeliveryDetailDTO.listFirstMileDTO listFirstMileDTO = firstMileDeliveryDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getDetailId(), refDetailId)).findFirst().orElse(null);
+            if (org.springframework.util.ObjectUtils.isEmpty(listFirstMileDTO)) {
+                continue;
+            }
+            //要货申请明细虚拟仓id
+            String  virtualWarehouseId = requisitionApplicationDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getPlatformSku(),listFirstMileDTO.getPlatformSkuNo()) && CharSequenceUtil.equals(obj.getSkuId(), listFirstMileDTO.getSkuId()))
+                    .map(RequisitionApplicationDetailEntity::getFromVirtualWarehouseId).findFirst().orElse("");
+            if (CharSequenceUtil.isBlank(virtualWarehouseId)) {
+                continue;
+            }
+            //操作请求实体
+            VirtualInventoryStockDTO.OutInStockDTO outInStockDTO = new VirtualInventoryStockDTO.OutInStockDTO();
+            outInStockDTO.setSkuId(detailEntity.getSkuId());
+            outInStockDTO.setSkuNo(detailEntity.getSkuNo());
+            outInStockDTO.setWarehouseId(entity.getWarehouseId());
+            outInStockDTO.setVirtualWarehouseId(virtualWarehouseId);
+            outInStockDTO.setBillDate(LocalDate.now());
+            outInStockDTO.setQty(detailEntity.getQty());
+            outInStockDTO.setSourceId(entity.getId());
+            outInStockDTO.setSourceCode(entity.getCode());
+            outInStockDTO.setSourceType(InventorySourceTypeEnum.MACHINE_INFO);
+            outInStockDTO.setSourceDetailId(detailEntity.getId());
+            outInStockDTO.setBomVersion(detailEntity.getReferenceVersion());
+            outInStockList.add(outInStockDTO);
+        }
+        if (CollUtil.isEmpty(outInStockList)) {
+            return;
+        }
+        //库存扣减
+        VirtualInventoryStockDTO.StockParamDTO stockParamDTO = new VirtualInventoryStockDTO.StockParamDTO();
+        stockParamDTO.setParamList(outInStockList);
+        stockParamDTO.setBusinessType(VirtualInventoryBusinessTypeEnum.MACHINE_INFO_CHILD_OUT.getCode());
+        virtualInventoryTransCoreService.approve(stockParamDTO);
     }
 
     /**
@@ -760,20 +866,13 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
      * @author Will
      * @date: 2023/5/18 12:10
      * @param entity
-     * @param resultDetails
      * @param machineSubComponentsList
      */
-    private void updateInventoryForMachineSubComponents (MachineInfoEntity entity ,List<MachineDetailEntity> resultDetails,List<MachineSubComponentsEntity> machineSubComponentsList) {
+    private void updateInventoryForMachineSubComponents (MachineInfoEntity entity ,List<MachineSubComponentsEntity> machineSubComponentsList) {
 
-        //子件SKU库存更新
-        List<String> resultDetailIds = resultDetails.stream().map(MachineDetailEntity::getId).collect(Collectors.toList());
-        List<MachineSubComponentsEntity> resultMachineSubComponents = machineSubComponentsList.stream().filter(obj -> resultDetailIds.contains(obj.getDetailId())).collect(Collectors.toList());
-        if (CollectionUtils.isEmpty(resultMachineSubComponents)) {
-            throw new ServiceException(ApiError.ERROR_99053);
-        }
         //父级SKU库存更新
         List<InOutStockDTO>  inOutStockList = new ArrayList<>();
-        for (MachineSubComponentsEntity detailEntity : resultMachineSubComponents) {
+        for (MachineSubComponentsEntity detailEntity : machineSubComponentsList) {
             //操作请求实体
             InOutStockDTO inOutStockDTO = new InOutStockDTO();
             inOutStockDTO.setSourceType(InventorySourceTypeEnum.MACHINE_INFO);
@@ -975,6 +1074,56 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
             doOpHandleData(page.getRecords(),true);
         }
         return new PagingVO<>(page);
+    }
+
+    @Override
+    public BatchResultDTO handleErrorData(String id) {
+        MachineInfoEntity entity = this.getById(id);
+        if (ObjUtil.isEmpty(entity)) {
+            return BatchResultDTO.fail(entity.getId(),entity.getCode(),"未找到加工单数据");
+        }
+        //加工单明细
+        List<MachineDetailEntity> detailEntityList = machineDetailService.listByMainId(id);
+        if (CollUtil.isEmpty(detailEntityList)) {
+            return BatchResultDTO.fail(entity.getId(),entity.getCode(),"未找到加工单明细数据");
+        }
+        //头程发货单
+        FirstMileDeliveryEntity firstMileDeliveryEntity = firstMileDeliveryService.getById(entity.getSourceId());
+
+        List<FirstMileDeliveryDetailEntity> deliveryDetailList = firstMileDeliveryDetailService.listDetailByMainId(entity.getSourceId());
+        if (CollUtil.isEmpty(deliveryDetailList)) {
+            return BatchResultDTO.fail(entity.getId(),entity.getCode(),"未找到头程发货明细数据");
+        }
+        List<MachineRefSoEntity> machineRefSoList = machineRefSoService.listBySoIdList(Collections.singletonList(entity.getSourceId()));
+        if (CollUtil.isNotEmpty(machineRefSoList)) {
+            return BatchResultDTO.fail(entity.getId(),entity.getCode(),"已关联头程发货单数据");
+        }
+
+        List<MachineRefSoEntity> refList = new ArrayList<>();
+        List<String> useIdList = new ArrayList<>();
+        for (MachineDetailEntity machineDetailEntity : detailEntityList) {
+            FirstMileDeliveryDetailEntity deliveryDetailEntity = deliveryDetailList.stream().filter(obj ->
+                    CharSequenceUtil.equals(obj.getSkuId(), machineDetailEntity.getSkuId())
+                            && CharSequenceUtil.equals(obj.getWarehouseLocation(), machineDetailEntity.getWarehouseLocation())
+                            && MathUtil.compareTo(obj.getDeliveryQty(), machineDetailEntity.getQty()) == MathUtil.ZERO
+                            && !useIdList.contains(obj.getId())
+            ).findFirst().orElse(null);
+            if (ObjUtil.isEmpty(deliveryDetailEntity)) {
+                return BatchResultDTO.fail(entity.getId(),entity.getCode(),CharSequenceUtil.format("id = {},未找到头程发货明细数据",machineDetailEntity.getId()));
+            }
+            MachineRefSoEntity refSoEntity = new MachineRefSoEntity();
+            refSoEntity.setMachineDetailId(machineDetailEntity.getId());
+            refSoEntity.setMachineId(id);
+            refSoEntity.setSoId(firstMileDeliveryEntity.getId());
+            refSoEntity.setSoCode(firstMileDeliveryEntity.getCode());
+            refSoEntity.setSoDetailId(deliveryDetailEntity.getId());
+            useIdList.add(deliveryDetailEntity.getId());
+            refList.add(refSoEntity);
+        }
+        if (CollUtil.isNotEmpty(refList)) {
+            machineRefSoService.saveBatch(refList);
+        }
+        return BatchResultDTO.success(entity.getId(),entity.getCode(),"修复成功");
     }
 
     /**

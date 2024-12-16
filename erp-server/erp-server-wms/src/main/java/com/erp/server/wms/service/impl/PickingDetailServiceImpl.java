@@ -1,5 +1,6 @@
 package com.erp.server.wms.service.impl;
 
+import cn.hutool.core.collection.CollUtil;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.utils.BeanMapperUtils;
@@ -113,5 +114,13 @@ public class PickingDetailServiceImpl extends SuperServiceImpl<PickingDetailMapp
             return;
         }
         this.updateBatchById(updatePickingList);
+    }
+
+    @Override
+    public List<PickingDetailEntity> listByMainIdList(List<String> mainIdList) {
+        if (CollUtil.isEmpty(mainIdList)) {
+            return Collections.emptyList();
+        }
+        return lambdaQuery().in(PickingDetailEntity::getMainId,mainIdList).list();
     }
 }

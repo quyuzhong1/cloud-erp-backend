@@ -29,4 +29,13 @@ public interface VirtualWarehouseAllocationMapper extends BaseMapper<VirtualWare
 
     Integer listCount(@Param("params")VirtualWarehouseAllocationDTO.PagingParamDTO pagingParamDTO);
     Integer listCountBySyncStatus(@Param("params")VirtualWarehouseAllocationDTO.PagingParamDTO pagingParamDTO);
+    /**
+     * 导出分货统计
+     * @author will
+     * @date 2024/11/19 17:47
+     * @param query
+     * @param params
+     * @return IPage<ExportStatisticsDTO>
+     */
+    IPage<VirtualWarehouseAllocationDTO.ExportStatisticsDTO> exportVirtualStatistics(Page<VirtualWarehouseAllocationDTO.ExportDTO> query,@Param("params") VirtualWarehouseAllocationDTO.ExportDTO params);
 }

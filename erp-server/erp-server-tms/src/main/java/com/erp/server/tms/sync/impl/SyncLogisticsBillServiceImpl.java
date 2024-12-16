@@ -17,10 +17,7 @@ import org.springframework.stereotype.Service;
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -51,7 +48,8 @@ public class SyncLogisticsBillServiceImpl implements SyncLogisticsBillService {
         ShudiyunB2cOrderDTO shudiyunB2cOrderDTO = new ShudiyunB2cOrderDTO();
 
         shudiyunB2cOrderDTO.setBiz_uni_key(entity.getId() + logisticsBillDetailEntity.getId());
-        shudiyunB2cOrderDTO.setBiz_no(CharSequenceUtil.isBlank(entity.getTransportNo()) ? logisticsBillDetailEntity.getTrackNo() : entity.getTransportNo());
+        String bizNo = CharSequenceUtil.isBlank(entity.getTransportNo()) ? logisticsBillDetailEntity.getTrackNo() : entity.getTransportNo();
+        shudiyunB2cOrderDTO.setBiz_no(bizNo);
         if (entity.getDeliveryTime() != null) {
             shudiyunB2cOrderDTO.setBiz_time(localDateTime.format(entity.getDeliveryTime()));
         }
@@ -106,11 +104,16 @@ public class SyncLogisticsBillServiceImpl implements SyncLogisticsBillService {
                               List<LogisticsSupplierEntity> logisticsSupplierEntities) {
 
         for (LogisticsBillDetailEntity billDetailEntity : detailEntityList) {
+            String sourceCode = CharSequenceUtil.isBlank(entity.getTransportNo()) ? billDetailEntity.getTrackNo() : entity.getTransportNo();
+            if (CharSequenceUtil.isBlank(sourceCode)) {
+                continue;
+            }
+
             TmsPushMsgEntity tmsPushMsgEntity = new TmsPushMsgEntity();
             tmsPushMsgEntity.setTargetPlatform(DmpBasicSystemCodeEnum.SDY.getCode());
             tmsPushMsgEntity.setSourceType(SourceTypeEnum.SDY_LOGISTICS_BILL.getCode());
             tmsPushMsgEntity.setSourceId(billDetailEntity.getId());
-            tmsPushMsgEntity.setSourceCode(CharSequenceUtil.isBlank(entity.getTransportNo()) ? billDetailEntity.getTrackNo() : entity.getTransportNo());
+            tmsPushMsgEntity.setSourceCode(sourceCode);
             tmsPushMsgEntity.setSyncOperate(operate);
             tmsPushMsgEntity.setPushData(JSON.toJSONString(this.syncDataToSdyFieldHandler(entity, billDetailEntity, operate, logisticsChannelEntities, logisticsSupplierEntities)));
             tmsPushMsgService.save(tmsPushMsgEntity);

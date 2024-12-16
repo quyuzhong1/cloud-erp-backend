@@ -389,6 +389,11 @@ public class PurchaseSuggestDTO implements Serializable {
         private String id;
 
         /**
+         * 采购建议量
+         */
+        private Integer suggestPurchaseQty;
+
+        /**
          * 计划采购量（计划修正值）
          */
         private Integer planPurchaseQty;

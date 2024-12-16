@@ -30,6 +30,23 @@
         is_deleted,
         so_b2c_id, category_id, category_name
     </sql>
+    <select id="listCategoryNamesBySoIds" resultType="com.erp.model.oms.dto.SoB2cRefCategoryDTO$CategoryNamesDTO">
+        SELECT
+            so_b2c_id as soB2cId,
+            array_to_string( ARRAY_AGG ( category_name ), ',' ) AS categoryNames
+        FROM
+            so_b2c_ref_category
+        WHERE
+            is_deleted = FALSE
+        <if test="soIds != null and soIds.size > 0">
+            and so_b2c_id in
+            <foreach collection="soIds" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        GROUP BY
+            so_b2c_id
+    </select>
 
 
 </mapper>

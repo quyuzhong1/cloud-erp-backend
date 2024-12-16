@@ -105,6 +105,25 @@ public class VirtualWarehouseAllocationController extends BaseController {
     }
 
     /**
+     * 分货单是否统计修改
+     * @author will
+     * @date 2024/11/22 18:23
+     * @param dto
+     * @return ApiResult<?>
+     */
+    @PostMapping("/updateIsStatistics")
+    @LogAction(value = LogActionEnum.UPDATE, desc = "分货单是否统计修改")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:virtualWarehouseAllocation:update",
+            serviceClass = VirtualWarehouseAllocationService.class,
+            keyIdName = "id")
+    public ApiResult<?> updateIsStatistics(@RequestBody @Validated VirtualWarehouseAllocationDTO.UpdateIsStatisticsDTO dto) {
+        virtualWarehouseAllocationService.updateIsStatistics(dto);
+        return success();
+    }
+
+    /**
      * 列表查询
      *
      * @param dto
@@ -326,6 +345,26 @@ public class VirtualWarehouseAllocationController extends BaseController {
     @PostMapping("/listVirtualInventory")
     public ApiResult<List<VirtualWarehouseAllocationDTO.VirtualInventoryQtyDTO>> getVirtualInventory(@RequestBody @Validated List<VirtualWarehouseAllocationDTO.VirtualInventoryQtyParamDTO> list){
         return success(virtualWarehouseAllocationService.listVirtualInventory(list));
+    }
+
+
+    /**
+     * 导出分货统计
+     * @author will
+     * @date 2024/11/19 8:55
+     * @param dto
+     * @return ApiResult<Boolean>
+     */
+    @LogAction(value = LogActionEnum.EXPORT, desc = "导出分货统计")
+    @PostMapping("/exportStatistics")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "wms:virtualWarehouseAllocation:paging",
+            tableAlias = "vma"
+    )
+    public ApiResult<Boolean> exportStatistics(@RequestBody VirtualWarehouseAllocationDTO.ExportDTO dto) {
+        virtualWarehouseAllocationService.exportStatistics(dto);
+        return success(true);
     }
 
 }

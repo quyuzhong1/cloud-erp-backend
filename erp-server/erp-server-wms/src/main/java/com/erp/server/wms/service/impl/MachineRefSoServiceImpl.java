@@ -12,7 +12,6 @@ import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.wms.dto.MachineRefSoDTO;
 import com.erp.model.wms.entity.MachineRefSoEntity;
 import com.erp.server.wms.mapper.MachineRefSoMapper;
-import com.erp.server.wms.service.CommonService;
 import com.erp.server.wms.service.MachineRefSoService;
 import com.erp.server.wms.service.OperateLogService;
 import io.seata.spring.annotation.GlobalTransactional;
@@ -118,6 +117,14 @@ public class MachineRefSoServiceImpl extends SuperServiceImpl<MachineRefSoMapper
             return Collections.emptyList();
         }
         return lambdaQuery().in(MachineRefSoEntity::getSoId,soIds).list();
+    }
+
+    @Override
+    public List<MachineRefSoEntity> listByMachineDetailIdList(List<String> detailIdList) {
+        if (CollectionUtils.isEmpty(detailIdList)) {
+            return Collections.emptyList();
+        }
+        return lambdaQuery().in(MachineRefSoEntity::getMachineDetailId, detailIdList).list();
     }
 
 

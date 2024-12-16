@@ -297,6 +297,11 @@ public class StocktakingProfitLossDTO implements Serializable {
         private String warehouseLocation;
 
         /**
+         * 库位名称
+         */
+        private String warehouseLocationName;
+
+        /**
          * 盘点数量
          */
         private Integer qty;
@@ -422,7 +427,10 @@ public class StocktakingProfitLossDTO implements Serializable {
          */
         private String warehouseLocation;
 
-
+        /**
+         * 库位名称
+         */
+        private String warehouseLocationName;
         /**
          * 盘点数量
          */

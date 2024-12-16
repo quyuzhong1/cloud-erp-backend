@@ -102,4 +102,12 @@ public interface VirtualWarehouseAllocationDetailService extends SuperService<Vi
      * @return List<AllocationDataDTO>
      */
     List<VirtualWarehouseAllocationDetailDTO.AllocationDataDTO> listAllocationData(List<String> skuIdList, List<String> warehouseIdList, List<String> virtualWarehouseIdList);
+    /**
+     * 根据主表id集合查询
+     * @author will
+     * @date 2024/11/18 19:45
+     * @param mainIdList
+     * @return List<VirtualWarehouseAllocationDetailEntity>
+     */
+    List<VirtualWarehouseAllocationDetailEntity> listByMainIdList(List<String> mainIdList);
 }

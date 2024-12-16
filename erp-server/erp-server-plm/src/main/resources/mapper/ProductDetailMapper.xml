@@ -2238,4 +2238,27 @@
                               inner join product_info pi ON pi.id = pd.product_id AND pi.is_deleted = FALSE
         where pd.is_deleted = false and pi.brand_id ${compareCodeSplicingValueSql}
     </select>
+    <select id="listProductPackBySkuIds" resultType="com.erp.model.plm.dto.ProductPackViewDTO">
+        select pp.id,
+        pp.sku_id,
+        pd.sku_no,
+        pd.name as productName,
+        pp.gross_weight,
+        pp.net_weight,
+        pp.box_weight,
+        pp.box_qty,
+        pp.product_length,
+        pp.product_width,
+        pp.product_height,
+        pp.box_length,
+        pp.box_width,
+        pp.box_height
+        from product_detail pd
+        left join product_pack pp on pd.id = pp.sku_id and pp.is_deleted = false
+        where pd.is_deleted = false
+        AND pd.id IN
+        <foreach collection="skuIds" item="skuId" open="(" separator="," close=")">
+            #{skuId}
+        </foreach>
+    </select>
 </mapper>

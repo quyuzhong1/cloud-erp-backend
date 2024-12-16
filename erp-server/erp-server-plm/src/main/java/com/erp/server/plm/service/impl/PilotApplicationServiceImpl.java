@@ -5,9 +5,12 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.BetweenFormatter;
 import cn.hutool.core.date.DateTime;
 import cn.hutool.core.date.DateUnit;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.FindUserDTO;
@@ -23,6 +26,7 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.MathUtil;
 import com.common.core.utils.StrUtils;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.plm.dto.*;
@@ -46,6 +50,7 @@ import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.rpc.workflow.ProcessTaskManagementFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
+import com.erp.server.plm.constant.ProductConstant;
 import com.erp.server.plm.mapper.PilotApplicationMapper;
 import com.erp.server.plm.mapper.ProductDetailMapper;
 import com.erp.server.plm.service.*;
@@ -129,6 +134,8 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
     private NoticeMessageService noticeMessageService;
     @Resource
     private ProductPurchaseService productPurchaseService;
+    @Resource
+    private ProductPackService productPackService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -901,6 +908,8 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
         if (!ApproveStatusEnum.allowUpdateStatus(entity.getApproveStatus())) {
             throw new ServiceException(ApiError.ERROR_98010);
         }
+        //校验包装信息是否完整
+        validateProductSize(entity.getId());
         //校验是否有采购价目表
         List<PilotApplicationDetailEntity> detailList = pilotApplicationDetailService.lambdaQuery().in(PilotApplicationDetailEntity::getMainId, entity.getId()).list();
         for (PilotApplicationDetailEntity detailEntity : detailList) {
@@ -925,6 +934,56 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
             if (!flag) {
                 throw new ServiceException("尚未提交供应商采购价目表，请联系采购开发提交后提审: sku：{}，数量：{}", detailEntity.getSkuNo(), detailEntity.getApplyQty());
             }
+        }
+    }
+
+    private void validateProductSize(String id) {
+
+        List<PilotApplicationDetailEntity> list = pilotApplicationDetailService.list(Wrappers.<PilotApplicationDetailEntity>lambdaQuery().eq(PilotApplicationDetailEntity::getMainId, id));
+        List<String> skuIdList = list.stream().map(PilotApplicationDetailEntity::getSkuId).distinct().collect(Collectors.toList());
+        List<ProductPackEntity> productPackList = productPackService.findBySkuIds(skuIdList);
+        List<ProductDetailEntity> entityList = productDetailService.listByIds(skuIdList);
+        StringBuilder msg = new StringBuilder();
+        for (ProductDetailEntity detailEntity : entityList) {
+            StringBuilder errMsg = new StringBuilder();
+            /**
+             * 当产品销售方式为商品时，包装尺寸、箱规 、毛重、单箱重量、净重、单箱数量不能为空
+             */
+            ProductPackEntity productPackEntity = productPackList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSkuId(), detailEntity.getId())).findFirst().orElse(null);
+            if (ObjectUtils.isEmpty(productPackEntity)) {
+                errMsg.append(CharSequenceUtil.format(ApiError.ERROR_PRODUCT_PACK_NOT_EXIST.msg,detailEntity.getSkuNo())).append(ProductConstant.HTML_BR);
+                continue;
+            }
+            //包装尺寸
+            if (MathUtil.compareTo(BigDecimal.ZERO, productPackEntity.getProductLength()) >= 0  || MathUtil.compareTo(BigDecimal.ZERO, productPackEntity.getProductWidth()) >= 0 || MathUtil.compareTo(BigDecimal.ZERO, productPackEntity.getProductHeight()) >= 0) {
+                errMsg.append(CharSequenceUtil.format(ApiError.ERROR_PRODUCT_SIZE_NOT_EXIST.msg, detailEntity.getSkuNo())).append(ProductConstant.HTML_BR);
+            }
+            //箱规
+            if (MathUtil.compareTo(BigDecimal.ZERO, productPackEntity.getBoxLength()) >= 0 ||MathUtil.compareTo(BigDecimal.ZERO, productPackEntity.getBoxWidth()) >= 0 || MathUtil.compareTo(BigDecimal.ZERO, productPackEntity.getBoxHeight()) >= 0) {
+                errMsg.append(CharSequenceUtil.format(ApiError.ERROR_BOX_SIZE_NOT_EXIST.msg, detailEntity.getSkuNo())).append(ProductConstant.HTML_BR);
+            }
+            //毛重
+            if (MathUtil.compareTo(productPackEntity.getGrossWeight(), MathUtil.ZERO) == MathUtil.ZERO) {
+                errMsg.append(CharSequenceUtil.format(ApiError.ERROR_GROSS_WEIGHT_NOT_EXIST.msg, detailEntity.getSkuNo())).append(ProductConstant.HTML_BR);
+            }
+            //单箱重量
+            if (MathUtil.compareTo(productPackEntity.getBoxWeight(), MathUtil.ZERO) == MathUtil.ZERO) {
+                errMsg.append(CharSequenceUtil.format(ApiError.ERROR_BOX_WEIGHT_NOT_EXIST.msg, detailEntity.getSkuNo())).append(ProductConstant.HTML_BR);
+            }
+            //净重
+            if (MathUtil.compareTo(productPackEntity.getNetWeight(), MathUtil.ZERO) == MathUtil.ZERO) {
+                errMsg.append(CharSequenceUtil.format(ApiError.ERROR_NET_WEIGHT_NOT_EXIST.msg, detailEntity.getSkuNo())).append(ProductConstant.HTML_BR);
+            }
+            //单箱数量
+            if (MathUtil.compareTo(productPackEntity.getBoxQty(), MathUtil.ZERO) == MathUtil.ZERO) {
+                errMsg.append(CharSequenceUtil.format(ApiError.ERROR_BOX_QTY_NOT_EXIST.msg, detailEntity.getSkuNo()));
+            }
+            if (CharSequenceUtil.isNotBlank(msg)) {
+                msg.append("SKU【").append(detailEntity.getSkuNo()).append("】").append(errMsg).append(",");
+            }
+        }
+        if (CharSequenceUtil.isNotBlank(msg)) {
+            throw new ServiceException(msg.toString());
         }
     }
 
@@ -1277,5 +1336,40 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
         if (null != approvePilotNoticeDTO) {
             noticeMessageService.approvePilotApplicationNotice(approvePilotNoticeDTO.getUserName(), approvePilotNoticeDTO, Boolean.TRUE);
         }
+    }
+
+    @Override
+    public List<ProductPackViewDTO> listProductPackBySkuIds(List<String> ids) {
+        List<ProductPackViewDTO> dtos = productDetailService.listProductPackBySkuIds(ids);
+        return dtos.stream().filter(this::verifyComplete).collect(Collectors.toList());
+    }
+
+    /**
+     * 校验数据是否完整
+     * @param v 参数
+     */
+    private boolean verifyComplete(ProductPackViewDTO v) {
+        //包装尺寸
+        if (MathUtil.compareTo(BigDecimal.ZERO, v.getProductLength()) >= 0 || MathUtil.compareTo(BigDecimal.ZERO, v.getProductWidth()) >= 0 || MathUtil.compareTo(BigDecimal.ZERO, v.getProductHeight()) >= 0) {
+            return true;
+        }
+        //箱规
+        if (MathUtil.compareTo(BigDecimal.ZERO, v.getBoxLength()) >= 0 || MathUtil.compareTo(BigDecimal.ZERO, v.getBoxWidth()) >= 0 || MathUtil.compareTo(BigDecimal.ZERO, v.getBoxHeight()) >= 0) {
+            return true;
+        }
+        //毛重
+        if (MathUtil.compareTo(v.getGrossWeight(), MathUtil.ZERO) == MathUtil.ZERO) {
+            return true;
+        }
+        //单箱重量
+        if (MathUtil.compareTo(v.getBoxWeight(), MathUtil.ZERO) == MathUtil.ZERO) {
+            return true;
+        }
+        //净重
+        if (MathUtil.compareTo(v.getNetWeight(), MathUtil.ZERO) == MathUtil.ZERO) {
+            return true;
+        }
+        //单箱数量
+        return MathUtil.compareTo(v.getBoxQty(), MathUtil.ZERO) == MathUtil.ZERO;
     }
 }

@@ -354,6 +354,9 @@
         FROM po_receive_detail wrd
         INNER JOIN po_receive wr ON wrd.main_id = wr.id AND wrd.is_deleted = FALSE
         WHERE wr.is_deleted = FALSE
+        <if test="params.code != null and params.code != ''">
+            and wr.code = #{params.code}
+        </if>
         <if test="params.ids != null and params.ids.size != ''">
             and wr.id in
             <foreach collection="params.ids" item="item" open="(" close=")" separator=",">
@@ -403,7 +406,12 @@
                 #{item}
             </foreach>
         </if>
-
+        <if test="params.inStockStatusList != null and params.inStockStatusList.size > 0">
+            and wrd.in_stock_status in
+            <foreach collection="params.inStockStatusList" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
         <if test="params.createUserIdList != null and params.createUserIdList.size > 0">
             and wr.create_user_id in
             <foreach collection="params.createUserIdList" item="item" open="(" close=")" separator=",">
