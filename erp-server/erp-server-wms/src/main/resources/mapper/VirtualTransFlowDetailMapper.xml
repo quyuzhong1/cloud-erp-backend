@@ -35,44 +35,31 @@
 
     <!-- 分页查询 -->
     <select id="paging" resultType="com.erp.model.wms.dto.VirtualTransFlowDetailDTO$ListDTO">
-       select vm.* from  (select
-            vtf.sku_id as skuId,
-            pd.sku_no as skuNo,
-            pd.name as productName,
-            vtf.warehouse_id as warehouseId,
-            wh.name as warehouseName,
-            vtf.virtual_warehouse_id as virtualWarehouseId,
-            vw.code as virtualWarehouseCode,
-            vw.name as virtualWarehosueName,
-            to_char(vtfd.trade_time, 'yyyy-mm-dd') as date,
-            vtf.transaction_no as transactionNo,
-            vtfd.trade_time as tradeTime,
-            vtf.source_type as sourceType,
-            vtf.source_code as sourceCode,
-            vtf.dict_inventory_status as dictInventoryStatus,
-            vtfd.qty,
-            case when vtfd.qty > 0 then '入库' else '出库' end as operateTypeName,
-            vid.batch_no as batchNo,
-            vid.qty as waitBatchQty,
-            vid.last_outstock_date,
-            vtfd.update_time as updateTime
+        select vm.*, pd.sku_no as skuNo,pd.name as productName, wh.name as warehouseName,  vw.code as virtualWarehouseCode,vw.name as virtualWarehosueName from  (select
+        vtf.sku_id as skuId,
+        vtf.warehouse_id as warehouseId,
+        vtf.virtual_warehouse_id as virtualWarehouseId,
+        to_char(vtfd.trade_time, 'yyyy-mm-dd') as date,
+        vtf.transaction_no as transactionNo,
+        vtfd.trade_time as tradeTime,
+        vtf.source_type as sourceType,
+        vtf.source_code as sourceCode,
+        vtf.dict_inventory_status as dictInventoryStatus,
+        vtfd.qty,
+        case when vtfd.qty > 0 then '入库' else '出库' end as operateTypeName,
+        vid.batch_no as batchNo,
+        vid.qty as waitBatchQty,
+        vid.last_outstock_date,
+        vtfd.update_time as updateTime
         from virtual_trans_flow_detail vtfd
         inner join virtual_trans_flow vtf on vtfd.virtual_trans_flow_id = vtf.id and vtf.is_deleted = false
         inner join virtual_inventory_detail vid on vtfd.virtual_inventory_detail_id = vid.id  and vid.is_deleted = false
-        left join product_detail pd on vtf.sku_id = pd.id and pd.is_deleted = false
-        left join warehouse wh on vtf.warehouse_id = wh.id and wh.is_deleted = false
-        left join virtual_warehouse vw on vtf.virtual_warehouse_id = vw.id and vw.is_deleted = false
         union all
         select
-        vi.sku_id as skuId,
-        '' as skuNo,
-        '' as productName,
-        vi.warehouse_id as warehouseId,
-        '' as warehouseName,
-        vi.virtual_warehouse_id as virtualWarehouseId,
-        '' as virtualWarehouseCode,
-        '' as virtualWarehosueName,
-        to_char(vih.date, 'yyyy-mm-dd') as date,
+        vid.sku_id as skuId,
+        vid.warehouse_id as warehouseId,
+        vid.virtual_warehouse_id as virtualWarehouseId,
+        to_char(vidh.date, 'yyyy-mm-dd') as date,
         '' as transactionNo,
         null as tradeTime,
         '' as sourceType,
@@ -80,13 +67,16 @@
         '' as dictInventoryStatus,
         null as qty,
         '转结' as operateTypeName,
-        '' as batchNo,
-        vih.qty as waitBatchQty,
+        vid.batch_no as batchNo,
+        vidh.qty as waitBatchQty,
         null as last_outstock_date,
-        vih.update_time as updateTime
-        from 	virtual_inventory_his vih
-        left join virtual_inventory vi on vih.virtual_inventory_id = vi.id and vi.is_deleted = false
-        where vih.is_deleted = false) vm
+        vidh.update_time as updateTime
+        from 	virtual_inventory_detail_his vidh
+        left join virtual_inventory_detail vid on vidh.virtual_inventory_detail_id = vid.id and vid.is_deleted = false
+        where vidh.is_deleted = false) vm
+        left join product_detail pd on vm.skuId = pd.id and pd.is_deleted = false
+        left join warehouse wh on vm.warehouseId = wh.id and wh.is_deleted = false
+        left join virtual_warehouse vw on vm.virtualWarehouseId = vw.id and vw.is_deleted = false
         <where>
             ${params.sqlMap.default}
         </where>
