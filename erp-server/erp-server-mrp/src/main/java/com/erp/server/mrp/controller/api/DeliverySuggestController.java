@@ -3,10 +3,7 @@ package com.erp.server.mrp.controller.api;
 
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.WebAdvanceQuery;
-import com.common.business.dto.base.BaseIdsDTO;
-import com.common.business.dto.base.BaseResultDTO;
-import com.common.business.dto.base.BatchResultDTO;
-import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.*;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
@@ -55,6 +52,19 @@ public class DeliverySuggestController extends BaseController {
     public ApiResult<PagingVO<DeliverySuggestDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<DeliverySuggestDTO.PagingParamDTO> dto) {
         PagingVO<DeliverySuggestDTO.ListDTO> pagingVO = deliverySuggestService.paging(dto);
         return success(pagingVO);
+    }
+
+    /**
+     * tab列表
+     * @author Will
+     * @date: 2024/12/16 10:48
+     * @param dto
+     * @return ApiResult<List<TabListDTO>>
+     */
+    @PostMapping("/tabList")
+    public ApiResult<List<DeliverySuggestDTO.TabListDTO>> tabList(@RequestBody DeliverySuggestDTO.TabListParamDTO dto) {
+        List<DeliverySuggestDTO.TabListDTO> tabList = deliverySuggestService.tabList(dto);
+        return success(tabList);
     }
 
     /**
