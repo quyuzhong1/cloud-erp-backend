@@ -81,10 +81,11 @@
             vid.sku_id,
             vid.warehouse_id,
             vid.virtual_warehouse_id,
-            vid.bill_date as billDate,
+            vtf.bill_date as billDate,
             vtfd.qty
         from virtual_inventory_detail vid
-        left join virtualTransFlowDetail vtfd on vid.id = vtfd.virtual_inventory_detail_id
+        inner join virtualTransFlowDetail vtfd on vid.id = vtfd.virtual_inventory_detail_id
+        left join  virtual_trans_flow vtf on vid.virtual_trans_flow_id = vtf.id and vtf.is_deleted = false
         where vid.is_deleted = false
         order by vid.id asc
     </select>

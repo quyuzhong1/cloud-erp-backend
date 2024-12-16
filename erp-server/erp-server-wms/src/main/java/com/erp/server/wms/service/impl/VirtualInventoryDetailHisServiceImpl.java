@@ -24,7 +24,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -126,10 +125,11 @@ public class VirtualInventoryDetailHisServiceImpl extends SuperServiceImpl<Virtu
                 //按先进先出扣减数量
                 boolean isOver = virtualQty > viewDTO.getQty();
                 addDTO.setWaitQty(isOver ? viewDTO.getQty() : virtualQty);
-                virtualQty = virtualQty - viewDTO.getWaitQty();
+                virtualQty = virtualQty - addDTO.getWaitQty();
 
                 //库龄,当前日期 - 入库日期
-                addDTO.setInventoryAgeDays((int) ChronoUnit.DAYS.between(localDate, viewDTO.getDate()));
+                addDTO.setInventoryAgeDays((int)(localDate.toEpochDay() -  viewDTO.getBillDate().toEpochDay()));
+                addDTO.setDate(localDate);
                 this.addOrUpdate(addDTO);
             }
         }
