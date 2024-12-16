@@ -840,4 +840,6 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
      * @param viewDTO 参数
      */
     BatchResultDTO updateProductPack(ProductPackViewDTO viewDTO);
+
+    void uploadSkuImage(UploadSkuDTO dto);
 }

@@ -1199,6 +1199,7 @@ public class SyncTaskServiceImpl implements SyncTaskService {
 
         //组织
         List<String> financialOrganization = customerInfoList.stream().map(req -> req.getFinancialOrganization()).distinct().collect(Collectors.toList());
+        financialOrganization.addAll(list.stream().map(SoReturnInstockEntity::getSalesOrgId).distinct().collect(Collectors.toList()));
         List<BaseIdDTO.CodeDTO> companyEntities = sysUserFeign.getAccountingCompanyList(financialOrganization);
 
         List<com.erp.model.oms.entity.DictBasicEntity> dictBasicEntityList = FeignQuery.create(com.erp.model.oms.entity.DictBasicEntity.class).eq(DictBasicEntity::getType, DictBasicTypeEnum.SALES_PLATFORM.getType()).list();
