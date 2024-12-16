@@ -89,15 +89,11 @@ public class RemotePostcodeDetailServiceImpl extends SuperServiceImpl<RemotePost
             if(Boolean.FALSE.equals(countryMap.containsKey(detail.getCountry()))){
                 throw new ServiceException("国家【"+detail.getCountry()+"】不存在");
             }
-            //校验城市是否存在
-            if(StringUtils.isNotBlank(detail.getCityName()) && Boolean.FALSE.equals(cityNameMap.containsKey(detail.getCityName()))){
-                throw new ServiceException("城市【"+detail.getCityName()+"】不存在");
-            }
             RemotePostcodeDetailEntity remotePostcodeDetailEntity = new RemotePostcodeDetailEntity();
             BeanMapper.copy(detail, remotePostcodeDetailEntity);
             //设置主表id
             remotePostcodeDetailEntity.setMainId(mainId);
-            remotePostcodeDetailEntity.setCity(cityNameMap.get(detail.getCityName()));
+            remotePostcodeDetailEntity.setCity(cityNameMap.getOrDefault(detail.getCityName(),""));
             addList.add(remotePostcodeDetailEntity);
         }
         boolean flag = this.saveBatch(addList);
@@ -145,14 +141,10 @@ public class RemotePostcodeDetailServiceImpl extends SuperServiceImpl<RemotePost
             if(Boolean.FALSE.equals(countryMap.containsKey(detail.getCountry()))){
                 throw new ServiceException("国家【"+detail.getCountry()+"】不存在");
             }
-            //校验城市是否存在
-            if(StringUtils.isNotBlank(detail.getCityName()) && Boolean.FALSE.equals(cityNameMap.containsKey(detail.getCityName()))){
-                throw new ServiceException("城市【"+detail.getCityName()+"】不存在");
-            }
             RemotePostcodeDetailEntity remotePostcodeDetail = new RemotePostcodeDetailEntity();
             BeanMapper.copy(detail, remotePostcodeDetail);
             remotePostcodeDetail.setMainId(mainId);
-            remotePostcodeDetail.setCity(cityNameMap.get(detail.getCityName()));
+            remotePostcodeDetail.setCity(cityNameMap.getOrDefault(detail.getCityName(),""));
             if(StringUtils.isBlank(remotePostcodeDetail.getId())){
                 //新增
                 addList.add(remotePostcodeDetail);
@@ -171,16 +163,16 @@ public class RemotePostcodeDetailServiceImpl extends SuperServiceImpl<RemotePost
             }
         }
         this.saveBatch(addList);
-        //添加操作日志
-        if (CollectionUtils.isNotEmpty(addList)) {
-            List<Pair<String, String>> addPairList = spliceOperateContent(addList);
-            for (Pair<String, String> pair : addPairList) {
-                sb.append(StrUtil.format("新增明细【{}】;",pair.getValue()));
-            }
-        }
-        if(StringUtils.isNotBlank(sb.toString())){
-            operateLogService.addModuleOperateLog(sb.toString(),ModuleTypeEnum.REMOTE_POSTCODE.getCode(), mainId, "编辑操作");
-        }
+//        //添加操作日志
+//        if (CollectionUtils.isNotEmpty(addList)) {
+//            List<Pair<String, String>> addPairList = spliceOperateContent(addList);
+//            for (Pair<String, String> pair : addPairList) {
+//                sb.append(StrUtil.format("新增明细【{}】;",pair.getValue()));
+//            }
+//        }
+//        if(StringUtils.isNotBlank(sb.toString())){
+//            operateLogService.addModuleOperateLog(sb.toString(),ModuleTypeEnum.REMOTE_POSTCODE.getCode(), mainId, "编辑操作");
+//        }
         return true;
     }
 
