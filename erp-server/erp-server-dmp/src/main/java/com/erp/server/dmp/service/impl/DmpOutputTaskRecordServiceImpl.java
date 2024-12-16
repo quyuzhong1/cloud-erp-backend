@@ -94,7 +94,7 @@ public class DmpOutputTaskRecordServiceImpl extends SuperServiceImpl<DmpOutputTa
 
     @Autowired
     private DmpPushTaskService dmpPushTaskService;
-
+    
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -224,6 +224,15 @@ public class DmpOutputTaskRecordServiceImpl extends SuperServiceImpl<DmpOutputTa
         black.setTabFlag(DmpPushMonitorTabEnum.BLACK.getCode());
         black.setCount(blackCount);
         result.add(black);
+        
+        Integer historyCount = baseMapper.listStatusCountHis(dto.getPermissionSql());
+        if(historyCount == null) {
+        	historyCount = 0;
+        }
+        DmpOutputTaskRecordDTO.TabListDTO history = new DmpOutputTaskRecordDTO.TabListDTO();
+        history.setTabFlag(DmpPushMonitorTabEnum.HISTORY.getCode());
+        history.setCount(historyCount);
+        result.add(history);
 
         return result;
     }
@@ -236,12 +245,14 @@ public class DmpOutputTaskRecordServiceImpl extends SuperServiceImpl<DmpOutputTa
         List<AdvanceQueryDTO> advanceQueryDTOList = params.getAdvanceQueryDTOList();
         IPage pageData = null;
         if(CollUtil.isNotEmpty(advanceQueryDTOList)) {
-        	if(advanceQueryDTOList.stream().anyMatch(a -> a.getField().equals("tab") && "black".equals(a.getValue()))) {
+        	if(advanceQueryDTOList.stream().anyMatch(a -> a.getField().equals("tab") && DmpPushMonitorTabEnum.BLACK.getCode().equals(a.getValue()))) {
         		String sql = params.getSqlMap().get("default");
         		if(StringUtils.isNotBlank(sql)) {
         			params.getSqlMap().put("default", sql.replace("t.source_code", "t.field_value"));
         		}
         		pageData = baseMapper.blackPaging(query, params);
+        	}else if(advanceQueryDTOList.stream().anyMatch(a -> a.getField().equals("tab") && DmpPushMonitorTabEnum.HISTORY.getCode().equals(a.getValue()))) {
+        		pageData = baseMapper.hisPaging(query, params);
         	}else {
         		pageData = baseMapper.paging(query, params);
         	}
@@ -605,5 +616,23 @@ public class DmpOutputTaskRecordServiceImpl extends SuperServiceImpl<DmpOutputTa
 			outputErrorTask = new ArrayList<>();
 		}
 		return outputErrorTask;
+	}
+
+	@Transactional(rollbackFor = Exception.class)
+	@Override
+	public void dmpInputMoveToHistoryTable(String beforeUpdateTime, String size) {
+		this.getBaseMapper().dmpInputMoveToHistoryTable(beforeUpdateTime, size);
+	}
+
+	@Transactional(rollbackFor = Exception.class)
+	@Override
+	public void dmpRelationMoveToHistoryTable(String beforeUpdateTime, String size) {
+		this.getBaseMapper().dmpRelationMoveToHistoryTable(beforeUpdateTime, size);
+	}
+
+	@Transactional(rollbackFor = Exception.class)
+	@Override
+	public void dmpOutputMoveToHistoryTable(String beforeUpdateTime, String size) {
+		this.getBaseMapper().dmpOutputMoveToHistoryTable(beforeUpdateTime, size);
 	}
 }
