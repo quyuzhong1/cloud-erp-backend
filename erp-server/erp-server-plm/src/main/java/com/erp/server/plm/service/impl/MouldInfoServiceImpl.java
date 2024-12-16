@@ -653,7 +653,7 @@ public class MouldInfoServiceImpl extends SuperServiceImpl<MouldInfoMapper, Moul
         List<String> payMethodIds = records.stream().map(MouldInfoDTO.OrderTrackingExportDTO::getPayMethodId).distinct().collect(Collectors.toList());
         List<DictBasicEntity> dictBasicList = FeignQuery.getByIds(DictBasicEntity.class, payMethodIds);
         Map<String, String> dictBasicMap = dictBasicList.stream()
-                .collect(Collectors.toMap(DictBasicEntity::getId, DictBasicEntity::getValue, (o1, o2) -> o1));
+                .collect(Collectors.toMap(DictBasicEntity::getId, DictBasicEntity::getName, (o1, o2) -> o1));
         List<String> paymentConditions = records.stream().map(MouldInfoDTO.OrderTrackingExportDTO::getPaymentCondition).distinct().collect(Collectors.toList());
         List<KingdeePaymentConditionEntity> paymentConditionList = FeignQuery.list(FeignQuery.create(KingdeePaymentConditionEntity.class)
                 .in(KingdeePaymentConditionEntity::getCode, paymentConditions));

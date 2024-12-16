@@ -166,6 +166,7 @@ public class MouldInfoDTO implements Serializable {
         /**
          * 存放位置
          */
+        @Dict
         private MouldStoreLocationDTO.ViewDTO storeLocation;
 
     }
