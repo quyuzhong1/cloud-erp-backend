@@ -82,6 +82,14 @@ public class WmsVirtualDetailMsgServiceImpl extends SuperServiceImpl<WmsVirtualD
         log.debug("gyyRefund发送数据为：{}" , JSON.toJSONString(mqList));
     }
 
+    @Override
+    public void updateStatus(WmsVirtualDetailMsgEntity entity) {
+        lambdaUpdate().eq(WmsVirtualDetailMsgEntity::getId,entity.getId())
+                .set(WmsVirtualDetailMsgEntity::getStatus,entity.getStatus())
+                .set(WmsVirtualDetailMsgEntity::getRemark,entity.getRemark())
+                .update();
+    }
+
     /**
      * 查询待处理任务
      * @author will

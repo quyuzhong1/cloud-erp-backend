@@ -64,27 +64,28 @@
         left join virtual_warehouse vw on vtf.virtual_warehouse_id = vw.id and vw.is_deleted = false
         union all
         select
-            vih.sku_id as skuId,
-            '' as skuNo,
-            '' as productName,
-            vih.warehouse_id as warehouseId,
-            '' as warehouseName,
-            vih.virtual_warehouse_id as virtualWarehouseId,
-            '' as virtualWarehouseCode,
-            '' as virtualWarehosueName,
-            to_char(vih.date, 'yyyy-mm-dd') as date,
-            '' as transactionNo,
-            null as tradeTime,
-            '' as sourceType,
-            '' as sourceCode,
-            '' as dictInventoryStatus,
-            null as qty,
-            '转结' as operateTypeName,
-            vih.batch_no as batchNo,
-            vih.qty as waitBatchQty,
-            null as last_outstock_date,
-            vih.update_time as updateTime
+        vi.sku_id as skuId,
+        '' as skuNo,
+        '' as productName,
+        vi.warehouse_id as warehouseId,
+        '' as warehouseName,
+        vi.virtual_warehouse_id as virtualWarehouseId,
+        '' as virtualWarehouseCode,
+        '' as virtualWarehosueName,
+        to_char(vih.date, 'yyyy-mm-dd') as date,
+        '' as transactionNo,
+        null as tradeTime,
+        '' as sourceType,
+        '' as sourceCode,
+        '' as dictInventoryStatus,
+        null as qty,
+        '转结' as operateTypeName,
+        '' as batchNo,
+        vih.qty as waitBatchQty,
+        null as last_outstock_date,
+        vih.update_time as updateTime
         from 	virtual_inventory_his vih
+        left join virtual_inventory vi on vih.virtual_inventory_id = vi.id and vi.is_deleted = false
         where vih.is_deleted = false) vm
         <where>
             ${params.sqlMap.default}
