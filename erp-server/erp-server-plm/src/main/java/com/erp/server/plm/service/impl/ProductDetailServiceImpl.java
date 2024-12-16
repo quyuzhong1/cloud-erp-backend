@@ -8,6 +8,7 @@ import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.excel.exception.ExcelCommonException;
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -60,6 +61,9 @@ import com.erp.model.tms.entity.CfgSettingEntity;
 import com.erp.model.tms.enums.CfgSettingEnum;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
 import com.erp.model.wms.entity.InventoryEntity;
+import com.erp.model.wms.entity.PackingTaskEntity;
+import com.erp.model.wms.entity.WmsAttachmentEntity;
+import com.erp.model.workflow.dto.StartProcessDTO;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.scm.feign.ScmTaskFeign;
@@ -5125,21 +5129,6 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     }
 
     @Override
-    public void uploadSkuImage(UploadSkuDTO dto) {
-        ProductDetailEntity productDetailEntity = getBySkuNoOrEan(dto.getEan());
-        if(Objects.nonNull(productDetailEntity)){
-            PlmAttachmentEntity entity = new PlmAttachmentEntity();
-            entity.setAttachUrl(dto.getAttachUrl());
-            entity.setAttachName(dto.getAttachName());
-            Class<ProductDetailEntity> aClass = ProductDetailEntity.class;
-            TableName tableName = aClass.getDeclaredAnnotation(TableName.class);
-            entity.setType(tableName.value());
-            entity.setBusinessId(productDetailEntity.getId());
-            plmAttachmentService.save(entity);
-        }
-    }
-
-    @Override
     public List<ProductPackViewDTO> listProductPackBySkuIds(List<String> ids) {
         List<String> skuIds = ids.stream()
                 .distinct()
@@ -5195,6 +5184,21 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             compareDimensions(productPackDTO.getBoxHeight(), productPackDTO.getProductHeight(), ApiError.ERROR_HEIGHT_BOX_LITTER_THAN_PRODUCT);
             //毛重大于等于净重
             compareDimensions(productPackDTO.getGrossWeight(), productPackDTO.getNetWeight(), ApiError.ERROR_WEIGHT_GROSS_LITTER_THAN_NET);
+        }
+    }
+
+    @Override
+    public void uploadSkuImage(UploadSkuDTO dto) {
+        ProductDetailEntity productDetailEntity = getBySkuNoOrEan(dto.getEan());
+        if(Objects.nonNull(productDetailEntity)){
+            PlmAttachmentEntity entity = new PlmAttachmentEntity();
+            entity.setAttachUrl(dto.getAttachUrl());
+            entity.setAttachName(dto.getAttachName());
+            Class<ProductDetailEntity> aClass = ProductDetailEntity.class;
+            TableName tableName = aClass.getDeclaredAnnotation(TableName.class);
+            entity.setType(tableName.value());
+            entity.setBusinessId(productDetailEntity.getId());
+            plmAttachmentService.save(entity);
         }
     }
 

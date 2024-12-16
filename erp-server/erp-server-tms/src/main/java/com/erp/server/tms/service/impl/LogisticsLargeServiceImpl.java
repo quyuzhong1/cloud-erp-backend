@@ -682,12 +682,10 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
         if (ObjectUtil.isNotEmpty(channelEntity)) {
             LogisticsSupplierEntity logisticsSupplierEntity = logisticsSupplierService.getById(channelEntity.getMainId());
             if (ObjectUtil.isNotEmpty(logisticsSupplierEntity)) {
-
-                addDTO.setLogisticsSupplierId(logisticsSupplierEntity.getId());
-                addDTO.setLogisticsSupplierName(logisticsSupplierEntity.getSupplierName());
-
                 SupplierEntity supplierEntity = supplierFeign.getSupplierById(logisticsSupplierEntity.getSupplierId());
                 if (ObjectUtil.isNotEmpty(supplierEntity)) {
+                    addDTO.setLogisticsSupplierId(supplierEntity.getId());
+                    addDTO.setLogisticsSupplierName(logisticsSupplierEntity.getSupplierName());
                     List<BaseDropDownDTO.DisabledDTO> disabledDTOS = scmTaskFeign.listPaymentCondition();
                     String paymentCondition = disabledDTOS.stream().filter(req -> supplierEntity.getPaymentCondition().equals(req.getCode())).map(BaseDropDownDTO.DisabledDTO::getValue).findFirst().orElse("");
                     addDTO.setPayTermsDays(paymentCondition);
@@ -697,6 +695,19 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
                 }
             }
         }
+        if (OrderTypeEnum.B2B.getCode().equals(soOutstockEntity.getOrderType())) {
+            SupplierEntity supplierEntity = supplierFeign.getSupplierById(soOutstockEntity.getCarrierId());
+            if (ObjectUtil.isNotEmpty(supplierEntity)) {
+                addDTO.setLogisticsSupplierId(supplierEntity.getId());
+                addDTO.setLogisticsSupplierName(supplierEntity.getName());
+                List<BaseDropDownDTO.DisabledDTO> disabledDTOS = scmTaskFeign.listPaymentCondition();
+                String paymentCondition = disabledDTOS.stream().filter(req -> supplierEntity.getPaymentCondition().equals(req.getCode())).map(BaseDropDownDTO.DisabledDTO::getValue).findFirst().orElse("");
+                addDTO.setPayTermsDays(paymentCondition);
+                addDTO.setPaymentCompanyName(supplierEntity.getPaymentCompanyName());
+                addDTO.setTaxRate(supplierEntity.getTaxRate());
+            }
+        }
+
         addDTO.setSkuId(soOutstockDetailEntity.getSkuId());
         addDTO.setSkuNo(soOutstockDetailEntity.getSkuNo());
         addDTO.setDeliveryQty(costAllocationEntity.getDeliveryQty());
@@ -709,18 +720,12 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
         ) {
             if (ObjectUtil.isNotEmpty(soB2cEntity)) {
                 platformCode = soB2cEntity.getPlatformCode();
-
-                if (!TransferStatusEnum.NOT.getCode().equals(soB2cEntity.getTransferStatus())) {
-                    addDTO.setTransitPort("中国-香港");
-                }
             }
         } else {
-            platformCode = soOutstockEntity.getSoCode();
-            addDTO.setTransitPort("中国");
+            platformCode = "";
         }
 
         addDTO.setPlatformOrderCode(platformCode);
-
         addDTO.setWeight(logisticsBillCostEntity.getBillingWeightLogistics());
         addDTO.setLogisticsBillingWeight(logisticsBillCostEntity.getBillingWeightLogistics());
         addDTO.setShippingMethod(LogisticsLargeShippingMethodEnum.EXPRESS_DELIVERY.getCode());
@@ -867,15 +872,7 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
             addDTO.setOtherTaxPayStatus(logisticsBillCostEntity.getPayStatus());
             addDTO.setDestMiscFeePayStatus(logisticsBillCostEntity.getPayStatus());
 
-            if (logisticsBillCostEntity.getBillingWeightLogistics() == null || logisticsBillCostEntity.getBillingWeightLogistics().compareTo(BigDecimal.ZERO) <= 0) {
-                //重量
-                List<ProductPackEntity> packEntityList = FeignQuery.create(ProductPackEntity.class).eq(ProductPackEntity::getSkuId, costAllocationEntity.getSkuId()).list();
-                if (CollUtil.isNotEmpty(packEntityList)) {
-                    BigDecimal grossWeight = MathUtil.divide(MathUtil.multiply(packEntityList.get(0).getGrossWeight(), costAllocationEntity.getDeliveryQty()), MathUtil.BigDecimal_1000);
-                    addDTO.setWeight(grossWeight);
-                    addDTO.setLogisticsBillingWeight(grossWeight);
-                }
-            }
+
         } else {
             //预估账单
             addDTO.setReconciliationBillType(ReconciliationBillTypeEnum.ESTIMATED.getCode());
@@ -889,13 +886,15 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
             addDTO.setActualDestMiscFee(BigDecimal.ZERO);
             addDTO.setActualDutyAmount(BigDecimal.ZERO);
             addDTO.setActualDeductibleTax(BigDecimal.ZERO);
+        }
 
-
+        if (logisticsBillCostEntity.getBillingWeightLogistics() == null || logisticsBillCostEntity.getBillingWeightLogistics().compareTo(BigDecimal.ZERO) <= 0) {
             //重量
             List<ProductPackEntity> packEntityList = FeignQuery.create(ProductPackEntity.class).eq(ProductPackEntity::getSkuId, costAllocationEntity.getSkuId()).list();
             if (CollUtil.isNotEmpty(packEntityList)) {
                 BigDecimal grossWeight = MathUtil.divide(MathUtil.multiply(packEntityList.get(0).getGrossWeight(), costAllocationEntity.getDeliveryQty()), MathUtil.BigDecimal_1000);
                 addDTO.setWeight(grossWeight);
+                addDTO.setLogisticsBillingWeight(grossWeight);
             }
         }
 
@@ -928,12 +927,20 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
             this.smallBagCostAllocationHandler(mainEntity, costAllocationEntity, costAllocationDetailEntities, soOutstockEntity, soOutstockDetailEntity, soB2cEntity);
         }
 
+
         if (SmallBagCostAllocationMainFeeSourceEnum.CONFIRMED.getCode().equals(mainEntity.getFeeSource())) {
             //查询是否有预估账单
             List<LogisticsLargeEntity> list = this.lambdaQuery()
                     .eq(LogisticsLargeEntity::getSourceId, mainEntity.getId())
                     .eq(LogisticsLargeEntity::getSourceType, SourceTypeEnum.SMALL_BAG_COST_ALLOCATION.getCode())
                     .list();
+            if (ObjectUtil.isNotEmpty(list)) {
+                list = this.lambdaQuery()
+                        .eq(LogisticsLargeEntity::getLogisticsBillId, list.get(0).getLogisticsBillId())
+                        .eq(LogisticsLargeEntity::getSourceType, SourceTypeEnum.SMALL_BAG_COST_ALLOCATION.getCode())
+                        .list();
+            }
+
             List<LogisticsLargeEntity> estimatedList = list.stream()
                     .filter(req -> ReconciliationBillTypeEnum.ESTIMATED.getCode().equals(req.getReconciliationBillType()))
                     .collect(Collectors.toList());
