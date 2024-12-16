@@ -443,7 +443,16 @@ public class FbaTransitCalculateReportServiceImpl extends SuperServiceImpl<FbaTr
             return;
         }
         Map<String, List<FbaTransitExcelDTO>> shipmentCodeMap = successList.stream().collect(Collectors.groupingBy(FbaTransitExcelDTO::getShipmentCode));
+        List<FbaShipmentEntity> fbaShipmentEntityList = fbaShipmentService.listByCodes(new ArrayList<>(shipmentCodeMap.keySet()));
+        if (CollUtil.isEmpty(fbaShipmentEntityList)){
+            return;
+        }
+        Map<String, FbaShipmentEntity> fbaShipmentEntityMap = fbaShipmentEntityList.stream().collect(Collectors.toMap(FbaShipmentEntity::getCode, Function.identity()));
 
+        for (String shipmentCode : shipmentCodeMap.keySet()){
+            FbaShipmentEntity shipmentEntity = fbaShipmentEntityMap.get(shipmentCode);
+
+        }
 
     }
 

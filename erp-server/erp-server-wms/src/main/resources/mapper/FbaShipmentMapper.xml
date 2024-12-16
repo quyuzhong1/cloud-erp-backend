@@ -192,7 +192,7 @@
                  LEFT JOIN fba_shipment_detail fsd on fsd.id = fsr.detail_id and fsd.is_deleted = FALSE
                  LEFT JOIN fba_shipment fs on fs.id = fsd.main_id and fs.is_deleted = FALSE
         where fsr.is_deleted = FALSE
-          and fsr.receive_date BETWEEN '2024-09-01' and '2024-11-30'
+          and fsr.receive_date BETWEEN (DATE_TRUNC('month', #{reportMonth})) AND (DATE_TRUNC('month', #{reportMonth}) + INTERVAL '1 month - 1 day')
     </select>
 
     <sql id="FbaDataCompareByCondition">

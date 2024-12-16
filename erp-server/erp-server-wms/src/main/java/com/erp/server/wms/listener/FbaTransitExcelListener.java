@@ -92,6 +92,14 @@ public class FbaTransitExcelListener extends AnalysisEventListener<FbaTransitExc
         if (CollUtil.isNotEmpty(transitCalculateDetailReportEntityList)){
             errorMsgList.add(CharSequenceUtil.format("上月【{}】在途货件单号【{}】ASIN【{}】MSKU【{}】记录已存在", lastMonth, excelDTO.getShipmentCode(), excelDTO.getAsin(), excelDTO.getMsku()));
         }
+        //判断记录是否已存在
+        FbaTransitExcelDTO fbaTransitExcelDTO = dataList.stream().filter(e -> CharSequenceUtil.isNotBlank(excelDTO.getShipmentCode()) && excelDTO.getShipmentCode().equals(e.getShipmentCode())
+                && CharSequenceUtil.isNotBlank(excelDTO.getAsin()) && excelDTO.getAsin().equals(e.getAsin())
+                && CharSequenceUtil.isNotBlank(excelDTO.getMsku()) && excelDTO.getMsku().equals(e.getMsku())
+        ).findFirst().orElse(null);
+        if (Objects.nonNull(fbaTransitExcelDTO)){
+            errorMsgList.add("重复记录");
+        }
         //添加数据用于判断是否为空
         dataList.add(excelDTO);
         //存在错误数据则直接返回
