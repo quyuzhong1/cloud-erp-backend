@@ -209,7 +209,6 @@ public class LogisticsLargeController extends BaseController {
         return result ? success() : failure();
     }
 
-
     /**
      * 头程费用分摊生成物流大表
      * @Author Luo_WG
