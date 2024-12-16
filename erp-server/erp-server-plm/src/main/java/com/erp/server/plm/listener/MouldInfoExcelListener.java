@@ -53,7 +53,7 @@ public class MouldInfoExcelListener extends AnalysisEventListener<MouldInfoImpor
             return;
         }
         if (!dictBasicNameMap.containsKey(data.getPayMethodName())) {
-            data.setErrorMsg("付款方式不存在");
+            data.setErrorMsg("结算方式不存在");
             errorList.add(data);
             return;
         }
