@@ -124,12 +124,34 @@ public class CalcSalesInfoDimServiceImpl extends SuperServiceImpl<CalcSalesInfoD
                 List<CalcSalesInfoEstimateEntity> calcSalesInfoEstimateList = calculationSalesEstimates(dto, avgTimePeriodSales, allSalesList);
                 //开始计算分时段预估
                 calculationTimePeriodSalesEstimates(dto.getStartCalcDate(), entity, calcSalesInfoEstimateList, dto.getSalesHistoryMap());
+                //计算吻合度
+                BigDecimal similarity = calculationSimilarity(dto, entity, calcSalesInfoEstimateList);
+                entity.setSimilarity(similarity);
                 calcSalesInfoDenoisingService.saveBatch(calculationSales);
                 calcSalesInfoEstimateService.saveBatch(calcSalesInfoEstimateList);
                 updateById(entity);
             }, threadPoolTaskExecutor);
         }
 
+    }
+
+    private BigDecimal calculationSimilarity(CalcSalesInfoDimDTO.CalcResultDTO dto, CalcSalesInfoDimEntity entity, List<CalcSalesInfoEstimateEntity> calcSalesInfoEstimateList) {
+
+        List<BigDecimal> calcList = calcSalesInfoEstimateList.stream()
+                .map(CalcSalesInfoEstimateEntity::getQty)
+                .collect(Collectors.toList());
+        List<OrderHistorySalesEsEntity> salesInfos = orderHistorySalesEsService.findByShopIdAndSkuIdAndDateBetween(entity.getShopId(), entity.getSkuId(),
+                dto.getStartCalcDate(), dto.getEndCalcDate());
+        Map<LocalDate, Integer> hisSalesMap = salesInfos.stream()
+                .collect(Collectors.toMap(OrderHistorySalesEsEntity::getDate, OrderHistorySalesEsEntity::getOriginalSalesQty, Integer::sum));
+        List<BigDecimal> basicData = new ArrayList<>();
+        //组装历史真实销量
+        LocalDate date = dto.getStartCalcDate();
+        while (date.isBefore(dto.getEndCalcDate())) {
+            basicData.add(new BigDecimal(Optional.ofNullable(hisSalesMap.get(date)).orElse(0)));
+            date = date.plusDays(1);
+        }
+        return DataDifferenceCalculator.calculateMatchRate(calcList, basicData, new BigDecimal(1), DataDifferenceCalculator.CalculationType.COSINE);
     }
 
     @Override
@@ -226,6 +248,7 @@ public class CalcSalesInfoDimServiceImpl extends SuperServiceImpl<CalcSalesInfoD
         salesEstimateDTO.setDateList(dates);
         salesEstimateDTO.setSalesEstimateList(salesEstimateList);
         salesEstimateDTO.setRealSalesList(realSalesList);
+        salesEstimateDTO.setSimilarity(entity.getSimilarity());
         return salesEstimateDTO;
     }
 
@@ -940,7 +963,7 @@ public class CalcSalesInfoDimServiceImpl extends SuperServiceImpl<CalcSalesInfoD
     /**
      * 计算销量
      */
-    private List<CalcSalesInfoDenoisingEntity>  calculationSales(CalcSalesInfoDimDTO.CalcResultDTO dto, List<CalcSalesInfoDenoisingEntity> allSalesList, CalcSalesInfoDimEntity entity) {
+    private List<CalcSalesInfoDenoisingEntity> calculationSales(CalcSalesInfoDimDTO.CalcResultDTO dto, List<CalcSalesInfoDenoisingEntity> allSalesList, CalcSalesInfoDimEntity entity) {
         List<CalcSalesInfoDenoisingEntity> calcSalesInfoList = new ArrayList<>();
         LocalDate startDate = dto.getStartCalcDate().minusDays(361);
         LocalDate endDate = dto.getStartCalcDate().minusDays(1);

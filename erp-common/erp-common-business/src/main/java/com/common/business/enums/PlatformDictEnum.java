@@ -46,6 +46,7 @@ public enum PlatformDictEnum implements EnumMessage {
     UNCONVENTIONAL("Unconventional", "非常规业务", "非常规业务", "032"),
     ALLEGRO("Allegro", "Allegro", "Allegro", "033"),
     CDISCOUNT("Cdiscount", "Cdiscount", "Cdiscount", "034"),
+    KUAI_SHOU("kuaishou", "快手", "快手", "035"),
 
     MERCADOLIBRE("mercadolibre", "美客多", "美客多", "033"),
     TIK_TOK("TikTok", "TikTok", "TikTok", "032"),

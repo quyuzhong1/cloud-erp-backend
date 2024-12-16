@@ -83,7 +83,7 @@ public class MouldInfoController extends BaseController {
      * @return ApiResult<String>
      */
     @PostMapping("/draft")
-    public ApiResult<BatchResultDTO> draft(@RequestBody @Validated MouldInfoDTO.UpdateDTO dto) {
+    public ApiResult<BatchResultDTO> draft(@RequestBody @Validated MouldInfoDTO.DraftDTO dto) {
         return success(mouldInfoService.draft(dto));
     }
 

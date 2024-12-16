@@ -1,5 +1,6 @@
 package com.erp.model.mrp.entity;
 
+import cn.hutool.json.JSONArray;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
@@ -44,7 +45,7 @@ public class CfgRuleSalesQtyEntity extends BaseEntity<CfgRuleSalesQtyEntity> {
     * 订单类型，亚马逊取FbaOrderTypeEnum，海外取OverseasOrderTypeEnum
     */
     @TableField("order_type")
-    private String orderType;
+    private JSONArray orderType;
     /**
     * 平台类型(amazon Amazon、overseas 海外、internal 国内、b2b B2B)
     */

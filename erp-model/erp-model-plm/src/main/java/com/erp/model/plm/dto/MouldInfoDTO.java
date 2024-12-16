@@ -275,6 +275,31 @@ public class MouldInfoDTO implements Serializable {
         private List<MouldDocInfoDTO.UpdateDTO> docList;
     }
 
+    /**
+     * 修改
+     */
+    @Getter
+    @Setter
+    public static class DraftDTO extends CommonDTO {
+
+        /**
+         * 主键id
+         */
+        private String id;
+
+        /**
+         * 明细数据
+         */
+        private List<MouldDetailDTO.UpdateDTO> detailList;
+
+        /**
+         * 文档数据
+         */
+        private List<MouldDocInfoDTO.UpdateDTO> docList;
+    }
+
+
+
     @Data
     @NoArgsConstructor
     public static class CommonDTO {

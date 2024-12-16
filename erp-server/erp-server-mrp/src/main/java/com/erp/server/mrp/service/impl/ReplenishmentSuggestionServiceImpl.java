@@ -3,6 +3,7 @@ package com.erp.server.mrp.service.impl;
 import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.TypeReference;
@@ -898,7 +899,7 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
 
             CfgRuleStrategyDTO cfgRuleStrategyDTO = JSON.parseObject(pagingView.getCfgRule(), CfgRuleStrategyDTO.class);
             CfgRuleSalesQtyDTO.StrategyResultDTO salesQtyResult = cfgRuleStrategyDTO.getSalesQtyResult();
-            convertMap.put("typeName",CharSequenceUtil.equals(salesQtyResult.getPlatformType(),CfgRulePlatformTypeEnum.OVERSEAS.getCode()) ? OverseasOrderTypeEnum.getNameByCode(salesQtyResult.getOrderType()) : FbaOrderTypeEnum.getNameByCode(salesQtyResult.getOrderType()));
+            convertMap.put("typeName",CharSequenceUtil.equals(salesQtyResult.getPlatformType(),CfgRulePlatformTypeEnum.OVERSEAS.getCode()) ? OverseasOrderTypeEnum.getStringByCode(salesQtyResult.getOrderType()) : FbaOrderTypeEnum.getStringByCode(salesQtyResult.getOrderType()));
             //历史销量
             dyHeadMap.keySet().forEach(obj ->{
                 ReplenishmentResultDTO.SalesHistoryDTO salesInfoEntity = historyDTOS.stream().filter(e -> CharSequenceUtil.equals(e.getDate().toString(), obj.toString())).findFirst().orElse(null);
@@ -1065,7 +1066,7 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
     }
 
     @Override
-    public List<ReplenishmentResultDTO> listAllCalculationData(String platformType, String salesQtyType, String orderType, LocalDate calculationDate) {
+    public List<ReplenishmentResultDTO> listAllCalculationData(String platformType, String salesQtyType, JSONArray orderType, LocalDate calculationDate) {
 
         List<ReplenishmentSuggestionEntity> entities = baseMapper.listAllCalculationData(platformType);
         List<String> suggestionIds = entities.stream().map(ReplenishmentSuggestionEntity::getId).collect(Collectors.toList());
@@ -1121,7 +1122,7 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
      * @param orderType    订单类型
      */
     @Override
-    public Map<String, Map<String, Integer>> getSalesHistoryMap(String salesQtyType, String orderType) {
+    public Map<String, Map<String, Integer>> getSalesHistoryMap(String salesQtyType, JSONArray orderType) {
         Map<String, Integer> salesMap;
         if (SalesQtyTypeEnum.BY_CREATE_TIME.getCode().equals(salesQtyType)) {
             salesMap = orderHistorySalesEsService.listByType(orderType);
@@ -1214,7 +1215,7 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
     }
 
     @Override
-    public List<ReplenishmentResultDTO.SalesHistoryDTO> listSalesHistory(List<String> replenishmentIds, String salesQtyType, String orderType, LocalDate startDate, LocalDate endDate) {
+    public List<ReplenishmentResultDTO.SalesHistoryDTO> listSalesHistory(List<String> replenishmentIds, String salesQtyType, JSONArray orderType, LocalDate startDate, LocalDate endDate) {
         List<List<String>> partition = Lists.partition(replenishmentIds, 1000);
         return partition.stream()
                 .map(suggestionIdList -> CompletableFuture.supplyAsync(() -> {
@@ -1231,7 +1232,7 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
     }
 
     @Override
-    public Map<LocalDate, Integer> listSalesHistoryMap(String replenishmentId, String salesQtyType, String orderType, LocalDate startDate, LocalDate endDate) {
+    public Map<LocalDate, Integer> listSalesHistoryMap(String replenishmentId, String salesQtyType, JSONArray orderType, LocalDate startDate, LocalDate endDate) {
         List<ReplenishmentResultDTO.SalesHistoryDTO> salesHistory;
         if (SalesQtyTypeEnum.BY_CREATE_TIME.getCode().equals(salesQtyType)) {
             salesHistory = orderHistorySalesEsService.listByReplenishmentIdsAndDate(Collections.singletonList(replenishmentId), orderType, startDate, endDate);
