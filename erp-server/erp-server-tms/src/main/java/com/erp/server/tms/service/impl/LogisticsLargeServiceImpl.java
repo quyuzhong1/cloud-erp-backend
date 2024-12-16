@@ -848,9 +848,11 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
             addDTO.setOtherTaxPayStatus(SoB2cPayStatusEnum.ENUM_PAYMENT.getCode());
             addDTO.setDestMiscFeePayStatus(SoB2cPayStatusEnum.ENUM_PAYMENT.getCode());
             //预估账单不需要实际的金额
-            addDTO.setActualDestMiscFee(otherCostDetailEntity.getAllocatedAmount());
+            addDTO.setActualDestMiscFee(BigDecimal.ZERO);
             addDTO.setActualDutyAmount(BigDecimal.ZERO);
             addDTO.setActualDeductibleTax(BigDecimal.ZERO);
+
+
             //重量
             List<ProductPackEntity> packEntityList = FeignQuery.create(ProductPackEntity.class).eq(ProductPackEntity::getSkuId, costAllocationEntity.getSkuId()).list();
             if (CollUtil.isNotEmpty(packEntityList)) {
