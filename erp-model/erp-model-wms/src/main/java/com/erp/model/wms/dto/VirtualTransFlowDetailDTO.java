@@ -34,51 +34,51 @@ public class VirtualTransFlowDetailDTO implements Serializable {
     @NoArgsConstructor
     public static class ListDTO {
         /**
-         * skuId
+         * skuId【可排序】
          */
         private String skuId;
         /**
-         * sku编号
+         * sku编号【可排序】
          */
         private String skuNo;
         /**
-         * 产品名称
+         * 产品名称【可排序】
          */
         private String productName;
         /**
-         * 仓库id
+         * 仓库id【可排序】
          */
         private String warehouseId;
         /**
-         * 仓库名称
+         * 仓库名称【可排序】
          */
         private String warehouseName;
         /**
-         * 虚拟仓id
+         * 虚拟仓id【可排序】
          */
         private String virtualWarehouseId;
         /**
-         * 虚拟仓编码
+         * 虚拟仓编码【可排序】
          */
         private String virtualWarehouseCode;
         /**
-         * 虚拟仓名称
+         * 虚拟仓名称【可排序】
          */
         private String virtualWarehouseName;
         /**
-         * 统计日期
+         * 统计日期【可排序】
          */
         private LocalDate date;
         /**
-         * 历史号
+         * 流水号【可排序】
          */
         private String transactionNo;
         /**
-         * 出入库时间
+         * 出入库时间【可排序】
          */
         private LocalDateTime tradeTime;
         /**
-         * 单据类型
+         * 单据类型【可排序】
          */
         private String sourceType;
         /**
@@ -86,11 +86,11 @@ public class VirtualTransFlowDetailDTO implements Serializable {
          */
         private String sourceTypeName;
         /**
-         * 单据编号
+         * 单据编号【可排序】
          */
         private String sourceCode;
         /**
-         * 库存状态
+         * 库存状态【可排序】
          */
         private String dictInventoryStatus;
         /**
@@ -98,7 +98,7 @@ public class VirtualTransFlowDetailDTO implements Serializable {
          */
         private String dictInventoryStatusName;
         /**
-         * 出入库数量
+         * 出入库数量【可排序】
          */
         private Integer qty;
         /**
@@ -107,15 +107,15 @@ public class VirtualTransFlowDetailDTO implements Serializable {
 
         private String operateType;
         /**
-         * 操作类型名称
+         * 操作类型名称【可排序】
          */
         private String operateTypeName;
         /**
-         * 批次号
+         * 批次号【可排序】
          */
         private String batchNo;
         /**
-         * 批次剩余数量
+         * 批次剩余数量【可排序】
          */
         private Integer waitBatchQty;
         /**
@@ -127,11 +127,11 @@ public class VirtualTransFlowDetailDTO implements Serializable {
          */
         private Integer inStockDays;
         /**
-         * 最后出库日期
+         * 最后出库日期【可排序】
          */
         private LocalDate lastOutstockDate;
         /**
-         * 更新时间
+         * 更新时间【可排序】
          */
         private LocalDateTime updateTime;
     }

@@ -35,11 +35,11 @@
 
     <!-- 分页查询 -->
     <select id="paging" resultType="com.erp.model.wms.dto.VirtualTransFlowDetailDTO$ListDTO">
-        select vm.*, pd.sku_no as skuNo,pd.name as productName, wh.name as warehouseName,  vw.code as virtualWarehouseCode,vw.name as virtualWarehosueName from  (select
+        select vm.*, pd.sku_no as skuNo,pd.name as productName, wh.name as warehouseName,  vw.code as virtualWarehouseCode,vw.name as virtualWarehouseName from  (select
         vtf.sku_id as skuId,
         vtf.warehouse_id as warehouseId,
         vtf.virtual_warehouse_id as virtualWarehouseId,
-        to_char(vtfd.trade_time, 'yyyy-MM-dd') as date,
+        vtfd.bill_date as date,
         vtf.transaction_no as transactionNo,
         vtfd.trade_time as tradeTime,
         vtf.source_type as sourceType,
@@ -59,9 +59,9 @@
         vid.sku_id as skuId,
         vid.warehouse_id as warehouseId,
         vid.virtual_warehouse_id as virtualWarehouseId,
-        to_char(vidh.date, 'yyyy-MM-dd') as date,
+        vidh.date as date,
         '' as transactionNo,
-        null as tradeTime,
+        vid.create_time as tradeTime,
         '' as sourceType,
         '' as sourceCode,
         '' as dictInventoryStatus,
@@ -69,7 +69,7 @@
         '转结' as operateTypeName,
         vid.batch_no as batchNo,
         vidh.qty as waitBatchQty,
-        null as last_outstock_date,
+        vid.last_outstock_date as last_outstock_date,
         vidh.update_time as updateTime
         from 	virtual_inventory_detail_his vidh
         left join virtual_inventory_detail vid on vidh.virtual_inventory_detail_id = vid.id and vid.is_deleted = false
@@ -86,7 +86,7 @@
                 ${item.field} ${item.sort}
             </foreach>
         </if>
-        batchNo asc
+        batchNo asc,case when operateTypeName = '转结' then 2 else 1 end,date asc
     </select>
 
     <!-- 查询即时库存明细id -->
