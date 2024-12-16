@@ -165,6 +165,9 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
     @Resource
     private TmsFirstMileReconciliationDetailService tmsFirstMileReconciliationDetailService;
 
+    @Resource
+    private LogisticsTrackService logisticsTrackService;
+
     @Override
     public PagingVO<LogisticsLargeDTO.PagingViewDTO> paging(PagingDTO<LogisticsLargeDTO.PagingParamDTO> dto) {
         LogisticsLargeDTO.PagingParamDTO params = dto.getParams();
@@ -182,6 +185,17 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
 
         List<String> logisticsBillIds = list.stream().map(req -> req.getLogisticsBillId()).distinct().collect(Collectors.toList());
         List<LogisticsBillCostEntity> logisticsBillCostEntities = logisticsBillCostService.listByLogisticsBillIdList(logisticsBillIds);
+
+
+        List<String> ids = list.stream()
+                .filter(req -> SourceTypeEnum.SMALL_BAG_COST_ALLOCATION.getCode().equals(req.getSourceType()))
+                .map(LogisticsLargeDTO.PagingViewDTO::getSourceId)
+                .distinct()
+                .collect(Collectors.toList());
+        List<SmallBagCostAllocationMainEntity> costAllocationMainEntities = smallBagCostAllocationMainService.listByIds(ids);
+        List<String> costId = costAllocationMainEntities.stream().map(req -> req.getCostId()).distinct().collect(Collectors.toList());
+
+
         Map<String, String> payStatusNameMap = new HashMap<>();
         payStatusNameMap.put("pay_payment", "待付款");
         payStatusNameMap.put("pay_paid", "已付款");
@@ -193,15 +207,31 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
                 pagingViewDTO.setProductName(productDetailEntity.getName());
                 pagingViewDTO.setSkuNo(productDetailEntity.getSkuNo());
             }
-            LogisticsBillCostEntity logisticsBillCostEntity = logisticsBillCostEntities.stream().filter(req -> req.getLogisticsBillId().equals(pagingViewDTO.getLogisticsBillId())).findFirst().orElse(null);
-            if (ObjectUtil.isNotEmpty(logisticsBillCostEntity)) {
-                pagingViewDTO.setShippingMethodName(LogisticsLargeShippingMethodEnum.getName(pagingViewDTO.getShippingMethod()));
-                pagingViewDTO.setPayStatusName(payStatusNameMap.get(logisticsBillCostEntity.getPayType() + "_" + pagingViewDTO.getPayStatus()));
-                pagingViewDTO.setDeductibleTaxPayStatusName(payStatusNameMap.get(logisticsBillCostEntity.getPayType() + "_" + pagingViewDTO.getDeductibleTaxPayStatus()));
-                pagingViewDTO.setDestDutyPayStatusName(payStatusNameMap.get(logisticsBillCostEntity.getPayType() + "_" + pagingViewDTO.getDestDutyPayStatus()));
-                pagingViewDTO.setOtherTaxPayStatusName(payStatusNameMap.get(logisticsBillCostEntity.getPayType() + "_" + pagingViewDTO.getOtherTaxPayStatus()));
-                pagingViewDTO.setDestMiscFeePayStatusName(payStatusNameMap.get(logisticsBillCostEntity.getPayType() + "_" + pagingViewDTO.getDestMiscFeePayStatus()));
+
+            if (SourceTypeEnum.SMALL_BAG_COST_ALLOCATION.getCode().equals(pagingViewDTO.getSourceType())) {
+                SmallBagCostAllocationMainEntity entity = costAllocationMainEntities.stream().filter(req -> req.getId().equals(pagingViewDTO.getSourceId())).findFirst().orElse(null);
+                if (ObjectUtil.isNotEmpty(entity)) {
+                    LogisticsBillCostEntity logisticsBillCostEntity = logisticsBillCostEntities.stream().filter(req -> req.getId().equals(entity.getCostId())).findFirst().orElse(null);
+                    pagingViewDTO.setShippingMethodName(LogisticsLargeShippingMethodEnum.getName(pagingViewDTO.getShippingMethod()));
+                    pagingViewDTO.setPayStatusName(payStatusNameMap.get(logisticsBillCostEntity.getPayType() + "_" + pagingViewDTO.getPayStatus()));
+                    pagingViewDTO.setDeductibleTaxPayStatusName(payStatusNameMap.get(logisticsBillCostEntity.getPayType() + "_" + pagingViewDTO.getDeductibleTaxPayStatus()));
+                    pagingViewDTO.setDestDutyPayStatusName(payStatusNameMap.get(logisticsBillCostEntity.getPayType() + "_" + pagingViewDTO.getDestDutyPayStatus()));
+                    pagingViewDTO.setOtherTaxPayStatusName(payStatusNameMap.get(logisticsBillCostEntity.getPayType() + "_" + pagingViewDTO.getOtherTaxPayStatus()));
+                    pagingViewDTO.setDestMiscFeePayStatusName(payStatusNameMap.get(logisticsBillCostEntity.getPayType() + "_" + pagingViewDTO.getDestMiscFeePayStatus()));
+                }
+            } else {
+                LogisticsBillCostEntity logisticsBillCostEntity = logisticsBillCostEntities.stream().filter(req -> req.getLogisticsBillId().equals(pagingViewDTO.getLogisticsBillId())).findFirst().orElse(null);
+                if (ObjectUtil.isNotEmpty(logisticsBillCostEntity)) {
+                    pagingViewDTO.setShippingMethodName(LogisticsLargeShippingMethodEnum.getName(pagingViewDTO.getShippingMethod()));
+                    pagingViewDTO.setPayStatusName(payStatusNameMap.get(logisticsBillCostEntity.getPayType() + "_" + pagingViewDTO.getPayStatus()));
+                    pagingViewDTO.setDeductibleTaxPayStatusName(payStatusNameMap.get(logisticsBillCostEntity.getPayType() + "_" + pagingViewDTO.getDeductibleTaxPayStatus()));
+                    pagingViewDTO.setDestDutyPayStatusName(payStatusNameMap.get(logisticsBillCostEntity.getPayType() + "_" + pagingViewDTO.getDestDutyPayStatus()));
+                    pagingViewDTO.setOtherTaxPayStatusName(payStatusNameMap.get(logisticsBillCostEntity.getPayType() + "_" + pagingViewDTO.getOtherTaxPayStatus()));
+                    pagingViewDTO.setDestMiscFeePayStatusName(payStatusNameMap.get(logisticsBillCostEntity.getPayType() + "_" + pagingViewDTO.getDestMiscFeePayStatus()));
+                }
             }
+
+
             if (SourceTypeEnum.FIRST_MILE_COST_ALLOCATION.getCode().equals(pagingViewDTO.getSourceType())) {
                 pagingViewDTO.setDeductibleTaxPayStatusName("");
                 pagingViewDTO.setDeductibleTaxPayTime(null);
@@ -343,6 +373,12 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
         addDTO.setLogisticsBillId(logisticsBillEntity.getId());
         addDTO.setShippingMethod(logisticsBillEntity.getShippingMethod());
         addDTO.setTransportNo(logisticsBillEntity.getCounterNo());
+
+        List<LogisticsTrackEntity> logisticsTrackEntities = logisticsTrackService.listByTrackNoList(Arrays.asList(logisticsBillEntity.getCounterNo()));
+        LogisticsTrackEntity logisticsTrackEntity = logisticsTrackEntities.stream().filter(req -> FmLogisticTrackStatusEnum.PICKUP.getCode().equals(req.getStatus())).findFirst().orElse(null);
+        if (ObjectUtil.isNotEmpty(logisticsTrackEntity)) {
+            addDTO.setPickupTime(logisticsTrackEntity.getTrackTime());
+        }
 
         //付款方式
         LogisticsChannelEntity channelEntity = logisticsChannelService.getById(logisticsBillEntity.getChannelId());
@@ -724,6 +760,7 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
             }
         }
         addDTO.setPickupTime(soOutstockEntity.getBillDate().atStartOfDay());
+
         List<LogisticsBillDetailEntity> detailEntityList = logisticsBillDetailService.listByMainIds(Arrays.asList(logisticsBillEntity.getId()));
         if (CollUtil.isNotEmpty(detailEntityList)) {
             addDTO.setActualDeliveryTime(detailEntityList.get(0).getSignTime());
