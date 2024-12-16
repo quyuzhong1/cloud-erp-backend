@@ -87,7 +87,7 @@ public class VirtualInventoryAgeDTO implements Serializable {
         /**
          * 库龄计算差异
          */
-        private Boolean isDiff;
+        private String isDiff;
         /**
          * 统计日期
          */
@@ -430,6 +430,10 @@ public class VirtualInventoryAgeDTO implements Serializable {
          */
         private Integer qty;
         /**
+         * 库龄（天）
+         */
+        private BigDecimal inventoryAgeDays;
+        /**
          * 平均库龄（天）
          */
         private BigDecimal avgInventoryAgeDays;
@@ -437,17 +441,5 @@ public class VirtualInventoryAgeDTO implements Serializable {
          * 平均库龄（天）(去零)
          */
         private String avgInventoryAgeDaysStr;
-        /**
-         * 虚拟仓库存
-         */
-        private Integer virtualQty;
-        /**
-         * 虚拟仓可用库存
-         */
-        private Integer virtualUsableQty;
-        /**
-         * 虚拟仓冻结库存
-         */
-        private Integer virtualFrozenQty;
     }
 }
