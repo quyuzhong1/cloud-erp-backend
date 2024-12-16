@@ -866,6 +866,19 @@ public class RequisitionApplicationDTO implements Serializable {
          * 装箱数量
          */
         private Integer packingQty;
+
+        /**
+         * 拣货单下推状态 not:未生成 part:部分生成 finish:已生成
+         */
+        private String pickPushDownStatus;
+
+        private String pickPushDownStatusName;
+        /**
+         * 发货单下推状态 not:未生成 part:部分生成 finish:已生成
+         */
+        private String deliveryPushDownStatus;
+
+        private String deliveryPushDownStatusName;
     }
 
     /**
