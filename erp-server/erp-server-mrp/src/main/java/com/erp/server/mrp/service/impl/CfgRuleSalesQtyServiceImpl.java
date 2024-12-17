@@ -17,8 +17,7 @@ import com.erp.model.mrp.entity.CfgRuleSalesDenoisingEntity;
 import com.erp.model.mrp.entity.CfgRuleSalesFormulaEntity;
 import com.erp.model.mrp.entity.CfgRuleSalesQtyEntity;
 import com.erp.model.mrp.entity.ReplenishmentSuggestionDetailEntity;
-import com.erp.model.mrp.enums.CfgRuleSalesFormulaTypeEnum;
-import com.erp.model.mrp.enums.CfgRuleStockingRatioTypeEnum;
+import com.erp.model.mrp.enums.*;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.server.mrp.mapper.CfgRuleSalesQtyMapper;
 import com.erp.server.mrp.service.*;
@@ -86,10 +85,12 @@ public class CfgRuleSalesQtyServiceImpl extends SuperServiceImpl<CfgRuleSalesQty
         CfgRuleSalesQtyEntity cfgRuleSalesQtyEntity = new CfgRuleSalesQtyEntity();
         BeanUtils.copyProperties(updateDetailDTO, cfgRuleSalesQtyEntity);
         cfgRuleSalesQtyEntity.setOrderType(JSONUtil.parseArray(updateDetailDTO.getOrderType()));
+        cfgRuleSalesQtyEntity.setOrderTypeName(getOrderTypeName(updateDetailDTO.getPlatformType(), updateDetailDTO.getOrderType()));
         //旧数据
         List<CfgRuleSalesQtyEntity> oldList = this.getDefaultByPlatformType(updateDetailDTO.getPlatformType(),updateDetailDTO.getRefId(),updateDetailDTO.getType());
         if (CollectionUtils.isNotEmpty(oldList)) {
             cfgRuleSalesQtyEntity.setId(oldList.get(0).getId());
+            oldList.get(0).setOrderTypeName(getOrderTypeName(oldList.get(0).getPlatformType(), oldList.get(0).getOrderType().stream().map(Object::toString).collect(Collectors.toList())));
         }
 
         // 数据处理
@@ -114,6 +115,26 @@ public class CfgRuleSalesQtyServiceImpl extends SuperServiceImpl<CfgRuleSalesQty
         log.info("编辑 开始记录销量（规则设置）日志数据，id：【{}】", cfgRuleSalesQtyEntity.getId());
         operateLogService.addModuleOperateLogByObj(oldList.get(0), cfgRuleSalesQtyEntity, ModuleTypeEnum.REPLENISHMENT_SUGGESTION.getCode(), CharSequenceUtil.blankToDefault(cfgRuleSalesQtyEntity.getRefId(),cfgRuleSalesQtyEntity.getId()), "");
         return cfgRuleSalesQtyEntity.getId();
+    }
+
+    /**
+     * 处理orderType日志
+     * @param platformType 平台类型
+     * @param orderType 订单类型
+     */
+    private String getOrderTypeName(String platformType, List<String> orderType) {
+
+        if (CfgRulePlatformTypeEnum.AMAZON.getCode().equals(platformType)) {
+            return orderType.stream()
+                    .map(FbaOrderTypeEnum::getNameByCode)
+                    .collect(Collectors.joining(","));
+
+        } else if (CfgRulePlatformTypeEnum.OVERSEAS.getCode().equals(platformType)) {
+            return orderType.stream()
+                    .map(OverseasOrderTypeEnum::getNameByCode)
+                    .collect(Collectors.joining(","));
+        }
+        return null;
     }
 
     @Override
