@@ -45,7 +45,9 @@ import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
+import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.dto.ProductDetailDTO;
+import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.plm.enums.CombinationDeclareTypeEnums;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.entity.SupplierEntity;
@@ -973,20 +975,39 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         }
         //虚拟仓冻结库存扣减,(来源发货通知单且非中转)
         if (CollectionUtils.isNotEmpty(members) && CharSequenceUtil.isBlank(entity.getBatchNo()) && CollectionUtils.isNotEmpty(noticeList)) {
-            //无虚拟仓无需扣减库存
-            List<InOutStockDTO> virtualInOutStockList = members.stream().filter(obj -> CharSequenceUtil.isNotBlank(obj.getVirtualWarehouseId())).collect(Collectors.toList());
-            if (CollectionUtils.isNotEmpty(virtualInOutStockList)) {
-                VirtualInventoryStockDTO.StockParamDTO stockParamDTO = new VirtualInventoryStockDTO.StockParamDTO();
-                List<VirtualInventoryStockDTO.OutInStockDTO> outInStockDTOS = BeanMapperUtils.copyList(VirtualInventoryStockDTO.OutInStockDTO.class, virtualInOutStockList);
-                stockParamDTO.setParamList(outInStockDTOS);
-                stockParamDTO.setBusinessType(VirtualInventoryBusinessTypeEnum.SO_OUT_STOCK.getCode());
-                virtualInventoryTransCoreService.approve(stockParamDTO);
-            }
+            b2BVirtualInventory(members);
         }
         //物流单添加
         saveLogisticsBill(entity);
 
     }
+
+    /**
+     * b2b虚拟仓数据
+     * @author will
+     * @date 2024/12/17 11:29
+     * @param members
+     */
+
+    private void b2BVirtualInventory (List<InOutStockDTO> members) {
+        //bom信息调整
+        List<String> skuIdList = members.stream().map(InOutStockDTO::getSkuId).distinct().collect(Collectors.toList());
+        List<BomChildrenSkuDTO> bomChildList = plmTaskFeign.listBomChildBySkuIds(skuIdList);
+        //无虚拟仓无需扣减库存
+        List<InOutStockDTO> virtualInOutStockList = members.stream().filter(obj ->
+                CharSequenceUtil.isNotBlank(obj.getVirtualWarehouseId())
+                || bomChildList.stream().filter(e -> CharSequenceUtil.equals(e.getType(), BomTypeEnum.COMBINATION.getType()) && CharSequenceUtil.equals(e.getParentSkuId(), obj.getSkuId())).count() > MathUtil.ZERO
+        ).collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(virtualInOutStockList)) {
+            return;
+        }
+        VirtualInventoryStockDTO.StockParamDTO stockParamDTO = new VirtualInventoryStockDTO.StockParamDTO();
+        List<VirtualInventoryStockDTO.OutInStockDTO> outInStockDTOS = BeanMapperUtils.copyList(VirtualInventoryStockDTO.OutInStockDTO.class, virtualInOutStockList);
+        stockParamDTO.setParamList(outInStockDTOS);
+        stockParamDTO.setBusinessType(VirtualInventoryBusinessTypeEnum.SO_OUT_STOCK.getCode());
+        virtualInventoryTransCoreService.approve(stockParamDTO);
+    }
+
 
     //TODO 物流单
 //    @Async("saveLogisticsBill")
