@@ -8,6 +8,7 @@ import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 /**
  * <p>
@@ -146,6 +147,7 @@ public class VirtualInventoryDetailDTO implements Serializable {
         /**
         * 单据日期
         */
+        @NotNull(message = "单据日期不能为空")
         private LocalDate billDate;
 
         /**
@@ -180,7 +182,11 @@ public class VirtualInventoryDetailDTO implements Serializable {
         */
         private LocalDate lastOutstockDate;
 
-
+        /**
+         * 操作时间
+         */
+        @NotNull(message = "入库时间不能为空")
+        private LocalDateTime tradeTime;
     }
 
 
