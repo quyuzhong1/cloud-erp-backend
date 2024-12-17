@@ -655,7 +655,9 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
             LogisticsBillCostEntity logisticsBillCostEntity = logisticsBillCostList.stream().filter(obj -> obj.getLogisticsBillId().equals(logisticsBillVo.getId())
                     && CharSequenceUtil.equals(obj.getLogisticsBillDetailId(),logisticsBillDetailEntity.getId()))
                     .findFirst().orElse(new LogisticsBillCostEntity());
-
+            if (Objects.isNull(logisticsBillCostEntity.getId())){
+                continue;
+            }
             //数据赋值
             LogisticsBillCostDTO.UpdateDTO updateDataDTO = new LogisticsBillCostDTO.UpdateDTO();
             updateDataDTO.setId(logisticsBillCostEntity.getId());
