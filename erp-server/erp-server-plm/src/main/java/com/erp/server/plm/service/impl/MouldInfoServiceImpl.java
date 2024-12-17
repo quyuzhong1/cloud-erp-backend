@@ -235,17 +235,19 @@ public class MouldInfoServiceImpl extends SuperServiceImpl<MouldInfoMapper, Moul
         // 记录操作日志
         String msg = null;
         sysLogService.addSysLogBySave(msg, SysLogClassPathEnum.MOULD_DETAIL_ENTITY.getDesc(), mouldInfoEntity.getId(), "");
-        //发送通知
-        Map<String, Object> data = new HashMap<>();
-        FindUserDTO productManager = sysUserFeign.getUserByUserId(mouldInfoEntity.getProductManagerId());
-        data.put("name", mouldInfoEntity.getName());
-        data.put("productManager", productManager.getUserName());
-        data.put("mouldCategoryCode", mouldInfoEntity.getMouldCategoryCode());
-        data.put("createUserName", mouldInfoEntity.getCreateUserName());
-        data.put("createTime", mouldInfoEntity.getCreateTime().format(DateTimeFormatter.ofPattern(DATE_FAMART)));
-        LoginUser user = UserContext.getDefaultLoginUser();
-        mouldInfoNotice(NoticeEnum.MOULD_CREATE, data, new MouldInfoDTO.NoticeDTO(mouldInfoEntity.getId(),
-                mouldInfoEntity.getName(), mouldInfoEntity.getProductManagerId(), user.getUid(), user.getUserName()),"mouldCreate.ftl");
+        if (ObjectUtils.isEmpty(dto.getId())) {
+            //发送通知
+            LoginUser user = UserContext.getDefaultLoginUser();
+            Map<String, Object> data = new HashMap<>();
+            FindUserDTO productManager = sysUserFeign.getUserByUserId(mouldInfoEntity.getProductManagerId());
+            data.put("name", mouldInfoEntity.getName());
+            data.put("productManager", productManager.getUserName());
+            data.put("mouldCategoryCode", mouldInfoEntity.getMouldCategoryCode());
+            data.put("createUserName", user.getUserName());
+            data.put("createTime", LocalDateTime.now().format(DateTimeFormatter.ofPattern(DATE_FAMART)));
+            mouldInfoNotice(NoticeEnum.MOULD_CREATE, data, new MouldInfoDTO.NoticeDTO(mouldInfoEntity.getId(),
+                    mouldInfoEntity.getName(), mouldInfoEntity.getProductManagerId(), user.getUid(), user.getUserName()),"mouldCreate.ftl");
+        }
         return BatchResultDTO.success(mouldInfoEntity.getId(), mouldInfoEntity.getMouldCategoryCode());
     }
 
@@ -282,7 +284,7 @@ public class MouldInfoServiceImpl extends SuperServiceImpl<MouldInfoMapper, Moul
             data.put("status", ApproveStatusEnum.getName(entity.getStatus()));
             data.put("approveRemark", entity.getApproveRemark());
             data.put("createTime", entity.getCreateTime().format(DateTimeFormatter.ofPattern(DATE_FAMART)));
-            data.put("approveTime", entity.getApproveTime().format(DateTimeFormatter.ofPattern(DATE_FAMART)));
+            data.put("approveTime", LocalDateTime.now().format(DateTimeFormatter.ofPattern(DATE_FAMART)));
             LoginUser user = UserContext.getDefaultLoginUser();
             mouldInfoNotice(NoticeEnum.MOULD_APPROVE, data, new MouldInfoDTO.NoticeDTO(entity.getId(),
                     entity.getName(), entity.getProductManagerId(), user.getUid(), user.getUserName()),"mouldApprove.ftl");
