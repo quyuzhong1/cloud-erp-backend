@@ -306,7 +306,7 @@ public class LogisticsLargeJob {
             }
 
             try {
-                logisticsLargeService.generateFirstMileLogistics(entity,  skuCostAllocationEntityList, skuCostAllocationDetailEntities, deliveryEntity, firstMileDeliveryDetailEntities);
+                logisticsLargeService.generateFirstMileLogistics(entity,  skuCostAllocationEntityList, skuCostAllocationDetailEntities, deliveryEntity, deliveryDetailEntities);
             } catch (Exception e) {
                 XxlJobHelper.log(e.getMessage());
             }
