@@ -562,4 +562,45 @@
             </foreach>
         </if>
     </select>
+    <select id="listDeliveryByReportMonth"
+            resultType="com.erp.model.wms.dto.FbaTransitCalculateReportDTO$DeliveryDTO">
+        select
+            fmd.id,
+            fmd.code,
+            fmd.approve_time,
+            fmd.source_id as shipmentId,
+            fmd.source_code as shipmentCode,
+            fmd.shop_id,
+            fmd.shop_name,
+            fmd.delivery_warehouse_id as warehouseId,
+            fmd.delivery_warehouse_name as warehouseName,
+            fmdd.id as detailId,
+            fmdd.platform_spu_no as asin,
+            fmdd.platform_sku_no as msku,
+            fmdd.fn_sku,
+            fmdd.sku_no,
+            fmdd.declare_qty,
+            fmdd.delivery_qty,
+            fmdd.fba_shipment_code
+        from first_mile_delivery fmd
+                 left JOIN first_mile_delivery_detail fmdd on fmd.id = fmdd.main_id and fmdd.is_deleted = false
+        where fmd.is_deleted = false
+          <if test="approveStatus != null and approveStatus != ''">
+              and fmd.approve_status = #{approveStatus}
+          </if>
+          <if test="sourceType != null and sourceType != ''">
+              and fmd.source_type = #{sourceType}
+          </if>
+        <if test="shipmentCode != null and shipmentCode != ''">
+            AND fmd.source_code = #{shipmentCode}
+        </if>
+        <if test="asin != null and asin != ''">
+            AND fmdd.platform_spu_no = #{asin}
+        </if>
+        <if test="msku != null and msku != ''">
+            AND fmdd.platform_sku_no = #{msku}
+        </if>
+          and fmd.approve_time BETWEEN (DATE_TRUNC('month', #{reportMonth})) AND (DATE_TRUNC('month', #{reportMonth}) + INTERVAL '1 month - 1 day')
+        ORDER BY fmd.approve_time desc
+    </select>
 </mapper>
