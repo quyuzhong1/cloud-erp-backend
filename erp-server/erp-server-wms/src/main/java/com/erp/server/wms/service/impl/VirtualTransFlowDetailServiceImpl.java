@@ -189,7 +189,7 @@ public class VirtualTransFlowDetailServiceImpl extends SuperServiceImpl<VirtualT
         }
         List<VirtualTransFlowDetailDTO.AddDTO> addDTOList = new ArrayList<>();
         List<VirtualInventoryDetailEntity> updateList = new ArrayList<>();
-        Integer notOutQty = entity.getQty();
+        Integer notOutQty = Math.abs(entity.getQty());
         for (VirtualInventoryDetailEntity detailEntity : list) {
             //当剩余出库数量为0时无需加流水
             if (MathUtil.compareTo(notOutQty,MathUtil.ZERO) == MathUtil.ZERO) {
@@ -203,13 +203,13 @@ public class VirtualTransFlowDetailServiceImpl extends SuperServiceImpl<VirtualT
             addDTO.setVirtualInventoryDetailId(detailEntity.getId());
             //批次库存数量是否大于剩余出库数量
             boolean isOver = detailEntity.getQty() > notOutQty;
-            addDTO.setQty(isOver ? notOutQty : detailEntity.getQty());
+            addDTO.setQty(isOver ? - notOutQty : detailEntity.getQty());
             addDTO.setCurInventoryQty(detailEntity.getQty() - addDTO.getQty());
             //剩余未出数量
-            notOutQty = notOutQty - addDTO.getQty();
+            notOutQty = notOutQty - Math.abs(addDTO.getQty());
             addDTOList.add(addDTO);
 
-            detailEntity.setQty(detailEntity.getQty() - addDTO.getQty());
+            detailEntity.setQty(detailEntity.getQty() - Math.abs(addDTO.getQty()));
             updateList.add(detailEntity);
         }
         if (CollUtil.isEmpty(addDTOList)) {
