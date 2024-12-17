@@ -937,7 +937,9 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
                     && CharSequenceUtil.equals(obj.getLogisticsBillDetailId(),logisticsBillDetailEntity.getId())
                     && CharSequenceUtil.equals(obj.getPayType(),billCostExcelDTO.getPayType()))
                     .findFirst().orElse(new LogisticsBillCostEntity());
-
+            if (Objects.isNull(logisticsBillCostEntity.getId())){
+                continue;
+            }
             //数据赋值
             LogisticsBillCostDTO.UpdateDTO updateDataDTO = new LogisticsBillCostDTO.UpdateDTO();
             updateDataDTO.setId(logisticsBillCostEntity.getId());
