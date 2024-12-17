@@ -305,8 +305,14 @@ public class LogisticsLargeJob {
                 continue;
             }
 
+            List<String> costAllocationIds = skuCostAllocationEntityList.stream().map(req -> req.getId()).distinct().collect(Collectors.toList());
+            List<FirstMileSkuCostAllocationDetailEntity> costAllocationDetailEntities = skuCostAllocationDetailEntities.stream()
+                    .filter(req -> costAllocationIds.contains(req.getMainId()))
+                    .collect(Collectors.toList());
+
+
             try {
-                logisticsLargeService.generateFirstMileLogistics(entity,  skuCostAllocationEntityList, skuCostAllocationDetailEntities, deliveryEntity, deliveryDetailEntities);
+                logisticsLargeService.generateFirstMileLogistics(entity,  skuCostAllocationEntityList, costAllocationDetailEntities, deliveryEntity, deliveryDetailEntities);
             } catch (Exception e) {
                 XxlJobHelper.log(e.getMessage());
             }
