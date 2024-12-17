@@ -385,7 +385,7 @@ public class VirtualInventoryDetailServiceImpl extends SuperServiceImpl<VirtualI
                         && CharSequenceUtil.equals(obj.getWarehouseId(),listDTO.getWarehouseId())
                         && CharSequenceUtil.equals(obj.getVirtualWarehouseId(),listDTO.getVirtualWarehouseId())
                         && obj.getDate().isAfter(endDate)
-                        && ObjUtil.isNull(startDate) ? Boolean.TRUE : obj.getDate().isBefore(startDate)
+                        && (ObjUtil.isNull(startDate) ? Boolean.TRUE : obj.getDate().isBefore(startDate))
                 ).map(VirtualInventoryAgeDTO.viewHisInventoryAgeDetailDTO::getQty).reduce(MathUtil.ZERO, Integer::sum);
                 //比例
                 BigDecimal ratio = MathUtil.compareTo(listDTO.getVirtualQty(),MathUtil.ZERO) == MathUtil.ZERO ? BigDecimal.ZERO : MathUtil.divide(MathUtil.valueOf(totalQty) ,BigDecimal.valueOf(listDTO.getVirtualQty()));
