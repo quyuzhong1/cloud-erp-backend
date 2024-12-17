@@ -96,7 +96,7 @@ public class WmsVirtualDetailMsgServiceImpl extends SuperServiceImpl<WmsVirtualD
      */
     private WmsVirtualDetailMsgEntity listVirtualDetailMsg() {
         List<WmsVirtualDetailMsgEntity> doingList = listVirtualDetailMsgDoing();
-        if (CollUtil.isEmpty(doingList)) {
+        if (CollUtil.isNotEmpty(doingList)) {
             return null;
         }
         return  lambdaQuery()
