@@ -22,6 +22,7 @@ import com.common.core.utils.*;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.wms.dto.ReportOrderSalesDTO;
 import com.erp.model.wms.dto.VirtualTransFlowDTO;
+import com.erp.model.wms.dto.VirtualTransFlowDetailDTO;
 import com.erp.model.wms.entity.VirtualTransFlowEntity;
 import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.model.wms.enums.inventory.InventoryModeEnum;
@@ -213,6 +214,15 @@ public class VirtualTransFlowServiceImpl extends SuperServiceImpl<VirtualTransFl
         // 重算库存流水
         overrideFlowByVirtualInventoryId(flowList, ObjUtil.isNull(virtualQty) ? MathUtil.ZERO : virtualQty);
         log.info("###VirtualTransFlowServiceImpl:::overrideVirtualTransFlow 库存流水重算完成 virtualInvId={}, end_time={}",  virtualInvId, LocalDateTime.now());
+    }
+
+    @Override
+    public List<VirtualTransFlowEntity> listHisVirtualTransFlow(VirtualTransFlowDetailDTO.HandleDTO dto) {
+        return  lambdaQuery().in(CollUtil.isNotEmpty(dto.getIds()),VirtualTransFlowEntity::getId,dto.getIds())
+                .ge(ObjUtil.isNotNull(dto.getStartDate()),VirtualTransFlowEntity::getBillDate,dto.getStartDate())
+                .orderByAsc(VirtualTransFlowEntity::getBillDate)
+                .orderByAsc(VirtualTransFlowEntity::getId)
+                .list();
     }
 
     /**
