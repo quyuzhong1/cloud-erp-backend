@@ -9309,10 +9309,14 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             if (Objects.isNull(logisticsDTO.getWeight())){
                 continue;
             }
+            if (CharSequenceUtil.isBlank(logisticsDTO.getWarehouseId()) || CharSequenceUtil.isBlank(logisticsDTO.getCountry())){
+                continue;
+            }
             ShippingCalculationDTO.PagingParamDTO pagingParamDTO = ShippingCalculationDTO.PagingParamDTO.builder()
                     .b2cSoId(logisticsDTO.getId()).fromWarehouseId(logisticsDTO.getWarehouseId())
                     .channelIdList(Collections.singletonList(logisticsDTO.getLogisticsChannelId()))
                     .weight(logisticsDTO.getWeight()).weightUnit(logisticsDTO.getWeightUnit()).postCode(logisticsDTO.getPostCode())
+                    .toCountryList(Collections.singletonList(logisticsDTO.getCountry()))
                     .build();
             try {
                 logisticsFeign.updateShippingCalculation(pagingParamDTO);

@@ -210,6 +210,9 @@ public class ShippingCalculationServiceImpl implements ShippingCalculationServic
         if (Objects.isNull(overseasProviderEntity)){
             return Collections.emptyList();
         }
+        if (CollUtil.isEmpty(params.getToCountryList())){
+            return Collections.emptyList();
+        }
         List<LogisticsChannelDTO.ChannelWarehouseDTO> channelWarehouseDTOList = logisticsChannelService.listChannelWarehouse(overseasProviderEntity.getCode(), AuthStatusEnum.ALREADY.getCode(), WarehousePlatformTypeEnum.OVERSEAS_WAREHOUSE.getCode(),Boolean.FALSE);
         List<DictCountryEntity> dictCountryEntityList = sysDictFeign.listCountryByIds(params.getToCountryList());
         //请求参数校验
