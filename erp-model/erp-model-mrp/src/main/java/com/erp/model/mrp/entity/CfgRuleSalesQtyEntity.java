@@ -67,6 +67,9 @@ public class CfgRuleSalesQtyEntity extends BaseEntity<CfgRuleSalesQtyEntity> {
     @TableField("type")
     private String type;
 
+    @TableField(exist = false)
+    private String orderTypeName;
+
 
     public static final String IS_CFG_SAME = "is_cfg_same";
 
