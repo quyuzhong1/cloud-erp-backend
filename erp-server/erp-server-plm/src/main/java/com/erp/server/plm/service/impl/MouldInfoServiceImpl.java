@@ -10,6 +10,7 @@ import com.alibaba.excel.exception.ExcelCommonException;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
+import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.ApproveOneDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -43,12 +44,17 @@ import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.model.wms.entity.WarehouseLocationEntity;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
+import com.erp.rpc.scm.feign.ScmTaskFeign;
+import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.WarehouseLocationFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.plm.listener.MouldInfoExcelListener;
 import com.erp.server.plm.mapper.MouldInfoMapper;
 import com.erp.server.plm.service.*;
+import freemarker.template.Configuration;
+import freemarker.template.Template;
+import freemarker.template.TemplateException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -60,9 +66,12 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.io.File;
 import java.io.IOException;
+import java.io.StringWriter;
 import java.math.BigDecimal;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -126,6 +135,13 @@ public class MouldInfoServiceImpl extends SuperServiceImpl<MouldInfoMapper, Moul
 
     @Resource
     private WorkflowFeign workflowFeign;
+
+    @Resource
+    private SysUserFeign sysUserFeign;
+    @Resource
+    private ScmTaskFeign scmTaskFeign;
+
+    private static final String DATE_FAMART = "yyyy-MM-dd HH:mm:ss";
 
 
     @Override
@@ -220,8 +236,57 @@ public class MouldInfoServiceImpl extends SuperServiceImpl<MouldInfoMapper, Moul
         String msg = null;
         sysLogService.addSysLogBySave(msg, SysLogClassPathEnum.MOULD_DETAIL_ENTITY.getDesc(), mouldInfoEntity.getId(), "");
         //发送通知
-        noticeMessageService.mouldInfoNotice(NoticeEnum.MOULD_CREATE, "");
+        Map<String, Object> data = new HashMap<>();
+        FindUserDTO productManager = sysUserFeign.getUserByUserId(mouldInfoEntity.getProductManagerId());
+        data.put("name", mouldInfoEntity.getName());
+        data.put("productManager", productManager.getUserName());
+        data.put("mouldCategoryCode", mouldInfoEntity.getMouldCategoryCode());
+        data.put("createUserName", mouldInfoEntity.getCreateUserName());
+        data.put("createTime", mouldInfoEntity.getCreateTime().format(DateTimeFormatter.ofPattern(DATE_FAMART)));
+        LoginUser user = UserContext.getDefaultLoginUser();
+        mouldInfoNotice(NoticeEnum.MOULD_CREATE, data, new MouldInfoDTO.NoticeDTO(mouldInfoEntity.getId(),
+                mouldInfoEntity.getName(), mouldInfoEntity.getProductManagerId(), user.getUid(), user.getUserName()),"mouldCreate.ftl");
         return BatchResultDTO.success(mouldInfoEntity.getId(), mouldInfoEntity.getMouldCategoryCode());
+    }
+
+    @Override
+    public void mouldInfoNotice(NoticeEnum noticeEnum, Map<String, Object> data, MouldInfoDTO.NoticeDTO noticeDTO, String ftlName) {
+        try {
+            Configuration configuration = new Configuration(Configuration.DEFAULT_INCOMPATIBLE_IMPROVEMENTS);
+            configuration.setDefaultEncoding(StandardCharsets.UTF_8.name());
+            // 设置模板文件的加载路径（可以是 classpath 或文件系统）
+            configuration.setClassLoaderForTemplateLoading(
+                    MouldInfoServiceImpl.class.getClassLoader(), "templates");
+            // 加载模板
+            Template template = configuration.getTemplate(ftlName);
+            // 渲染模板
+            StringWriter out = new StringWriter();
+            template.process(data, out);
+            noticeMessageService.mouldInfoNotice(noticeEnum, noticeDTO, out.toString());
+        } catch (IOException | TemplateException e) {
+            throw new ServiceException(e.getMessage());
+        }
+    }
+
+    @Override
+    public void sendApproveNotice(String id) {
+        MouldInfoEntity entity = getById(id);
+        if (ApproveStatusEnum.APPROVE.getStatus().equals(entity.getStatus())) {
+            Map<String, Object> data = new HashMap<>();
+            FindUserDTO productManager = sysUserFeign.getUserByUserId(entity.getProductManagerId());
+            data.put("name", entity.getName());
+            data.put("productManager", productManager.getUserName());
+            data.put("mouldCategoryCode", entity.getMouldCategoryCode());
+            data.put("createUserName", entity.getCreateUserName());
+            data.put("approveUserName", entity.getApproveUserName());
+            data.put("status", ApproveStatusEnum.getName(entity.getStatus()));
+            data.put("approveRemark", entity.getApproveRemark());
+            data.put("createTime", entity.getCreateTime().format(DateTimeFormatter.ofPattern(DATE_FAMART)));
+            data.put("approveTime", entity.getApproveTime().format(DateTimeFormatter.ofPattern(DATE_FAMART)));
+            LoginUser user = UserContext.getDefaultLoginUser();
+            mouldInfoNotice(NoticeEnum.MOULD_APPROVE, data, new MouldInfoDTO.NoticeDTO(entity.getId(),
+                    entity.getName(), entity.getProductManagerId(), user.getUid(), user.getUserName()),"mouldApprove.ftl");
+        }
     }
 
     @Override
@@ -243,10 +308,21 @@ public class MouldInfoServiceImpl extends SuperServiceImpl<MouldInfoMapper, Moul
         startProcess(entity);
         // 更新单据审核状态
         log.info("提交 开始修改模具表状态数据，id：【{}】", id);
-        this.updateApproveStatus(id, ApproveStatusEnum.APPROVE_ING.getStatus());
+        this.updateApproveStatus(id, ApproveStatusEnum.APPROVE_ING.getStatus(), null);
         // 记录操作日志
         String msg = CharSequenceUtil.format("用户【{}】单号为【{}】的【{}】单据提交审核 ", UserContext.getDefaultLoginUser().getUserName(), entity.getMouldCategoryCode(), "模具");
         sysLogService.addSysLogBySave(msg, SysLogClassPathEnum.MOULD_DETAIL_ENTITY.getDesc(), entity.getId(), "");
+        //发送通知
+        Map<String, Object> data = new HashMap<>();
+        FindUserDTO productManager = sysUserFeign.getUserByUserId(entity.getProductManagerId());
+        data.put("name", entity.getName());
+        data.put("productManager", productManager.getUserName());
+        data.put("mouldCategoryCode", entity.getMouldCategoryCode());
+        data.put("createUserName", entity.getCreateUserName());
+        data.put("createTime", entity.getCreateTime().format(DateTimeFormatter.ofPattern(DATE_FAMART)));
+        LoginUser user = UserContext.getDefaultLoginUser();
+        mouldInfoNotice(NoticeEnum.MOULD_SUBMIT, data, new MouldInfoDTO.NoticeDTO(entity.getId(),
+                entity.getName(), entity.getProductManagerId(), user.getUid(), user.getUserName()),"mouldSubmit.ftl");
         return BatchResultDTO.success(entity.getId(), entity.getMouldCategoryCode(), OperationTypeEnum.SUBMIT);
     }
 
@@ -256,9 +332,10 @@ public class MouldInfoServiceImpl extends SuperServiceImpl<MouldInfoMapper, Moul
      * @param id     id
      * @param status 状态
      */
-    private void updateApproveStatus(String id, String status) {
+    private void updateApproveStatus(String id, String status, String comment) {
         lambdaUpdate().eq(MouldInfoEntity::getId, id)
                 .set(MouldInfoEntity::getStatus, status)
+                .set(!ObjectUtils.isEmpty(comment), MouldInfoEntity::getApproveRemark, comment)
                 .update();
     }
 
@@ -291,7 +368,7 @@ public class MouldInfoServiceImpl extends SuperServiceImpl<MouldInfoMapper, Moul
         revokeDTO.setBusinessKey(SourceTypeEnum.MOULD_INFO.getCode());
         revokeDTO.setUserId(userId);
         workflowFeign.revokeProcess(revokeDTO);
-        this.updateApproveStatus(id, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
+        this.updateApproveStatus(id, ApproveStatusEnum.WAIT_SUBMIT.getStatus(), null);
         String msg = "模具【{}】撤销流程";
         sysLogService.addSysLogBySave(msg, SysLogClassPathEnum.MOULD_DETAIL_ENTITY.getDesc(), entity.getId(), "");
         return BatchResultDTO.success(entity.getId(), entity.getMouldCategoryCode(), "撤销流程");
@@ -360,7 +437,7 @@ public class MouldInfoServiceImpl extends SuperServiceImpl<MouldInfoMapper, Moul
             return;
         }
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(dto.getType());
-        updateApproveStatus(entity.getId(), approveStatus.getStatus());
+        updateApproveStatus(entity.getId(), approveStatus.getStatus(), dto.getComment());
         // 新增sku
     }
 
@@ -372,7 +449,7 @@ public class MouldInfoServiceImpl extends SuperServiceImpl<MouldInfoMapper, Moul
         if (!Objects.equals(ApproveStatusEnum.APPROVE.getStatus(), entity.getStatus())) {
             throw new ServiceException(ApiError.ERROR_98014);
         }
-        this.updateApproveStatus(id, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
+        this.updateApproveStatus(id, ApproveStatusEnum.WAIT_SUBMIT.getStatus(), null);
         String msg = "模具【{}】反审核流程";
         sysLogService.addSysLogBySave(msg, SysLogClassPathEnum.MOULD_DETAIL_ENTITY.getDesc(), entity.getId(), "");
         return BatchResultDTO.success(entity.getId(), entity.getMouldCategoryCode(), "反审核流程");
@@ -525,6 +602,19 @@ public class MouldInfoServiceImpl extends SuperServiceImpl<MouldInfoMapper, Moul
                 .orElseThrow(() -> new ServiceException("未找到模具数据"));
         agreement.setRefundStatus(MouldRefundStatusEnum.RETURNED.getCode());
         mouldRefundAgreementService.updateById(agreement);
+        MouldDetailEntity mouldDetail = mouldDetailService.getById(dto.getMouldDetailId());
+        MouldInfoEntity entity = getById(mouldDetail.getMainId());
+        SupplierEntity supplier = scmTaskFeign.getSupplierById(mouldDetail.getSupplierId());
+        Map<String, Object> data = new HashMap<>();
+        data.put("name", entity.getName());
+        data.put("mouldNo", mouldDetail.getMouldNo());
+        data.put("supplierName", supplier.getName());
+        data.put("refundAmount", agreement.getRefundAmount());
+        data.put("userName", UserContext.getDefaultLoginUser().getUserName());
+        data.put("updateTime", LocalDateTime.now().format(DateTimeFormatter.ofPattern(DATE_FAMART)));
+        LoginUser user = UserContext.getDefaultLoginUser();
+        mouldInfoNotice(NoticeEnum.MOULD_REFUND_CONFIRM, data, new MouldInfoDTO.NoticeDTO(entity.getId(),
+                entity.getName(), entity.getProductManagerId(), user.getUid(), user.getUserName()),"mouldRefundConfirm.ftl");
     }
 
     @Override
@@ -619,9 +709,9 @@ public class MouldInfoServiceImpl extends SuperServiceImpl<MouldInfoMapper, Moul
             dto.setSupplierName(supplierMap.get(dto.getSupplierId()));
             dto.setTypeName(mouldSettingMap.get(dto.getTypeId()));
             dto.setWarehouseLocationName(warehouseLocationMap.get(dto.getWarehouseLocation()));
-            dto.setLength(MathUtil.divide( dto.getLength(), new BigDecimal(10), 2));
-            dto.setWidth(MathUtil.divide( dto.getWidth(), new BigDecimal(10), 2));
-            dto.setHeight(MathUtil.divide( dto.getHeight(), new BigDecimal(10), 2));
+            dto.setLength(MathUtil.divide(dto.getLength(), new BigDecimal(10), 2));
+            dto.setWidth(MathUtil.divide(dto.getWidth(), new BigDecimal(10), 2));
+            dto.setHeight(MathUtil.divide(dto.getHeight(), new BigDecimal(10), 2));
             if (!ObjectUtils.isEmpty(dto.getImagesUrl())) {
                 dto.setImageUrl(dto.getImagesUrl().split(",")[0]);
             }

@@ -3,26 +3,36 @@ package com.erp.server.plm.service.impl;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.utils.ApplicationContextUtils;
+import com.common.business.vo.LoginUser;
 import com.common.core.utils.MathUtil;
+import com.erp.model.plm.dto.MouldInfoDTO;
 import com.erp.model.plm.dto.MouldRefCalcQtyDTO;
-import com.erp.model.plm.entity.*;
+import com.erp.model.plm.entity.MouldRefCalcQtyDetailEntity;
+import com.erp.model.plm.entity.MouldRefCalcQtyEntity;
+import com.erp.model.plm.entity.MouldRefProductEntity;
+import com.erp.model.plm.entity.MouldRefundAgreementEntity;
 import com.erp.model.plm.enums.MouldRefundStatusEnum;
+import com.erp.model.plm.enums.NoticeEnum;
 import com.erp.model.plm.enums.RefundStandardEnum;
 import com.erp.model.scm.dto.PurchaseOrderDTO;
+import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.rpc.scm.feign.PurchaseOrderFeign;
+import com.erp.rpc.scm.feign.ScmTaskFeign;
 import com.erp.server.plm.mapper.MouldRefCalcQtyMapper;
-import com.erp.server.plm.service.MouldRefCalcQtyDetailService;
-import com.erp.server.plm.service.MouldRefCalcQtyService;
-import com.erp.server.plm.service.MouldRefProductService;
-import com.erp.server.plm.service.MouldRefundAgreementService;
+import com.erp.server.plm.service.*;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 
 import javax.annotation.Resource;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -49,6 +59,13 @@ public class MouldRefCalcQtyServiceImpl extends SuperServiceImpl<MouldRefCalcQty
     @Resource
     private MouldRefundAgreementService mouldRefundAgreementService;
 
+    @Resource
+    @Lazy
+    private MouldInfoService mouldInfoService;
+
+    @Resource
+    private ScmTaskFeign scmTaskFeign;
+
     @Override
     public List<MouldRefCalcQtyEntity> listByMouldDetailIdList(List<String> detailIds) {
         return list(Wrappers.<MouldRefCalcQtyEntity>lambdaQuery().in(MouldRefCalcQtyEntity::getMouldDetailId, detailIds));
@@ -63,6 +80,7 @@ public class MouldRefCalcQtyServiceImpl extends SuperServiceImpl<MouldRefCalcQty
     @Transactional(rollbackFor = Exception.class)
     public void calcRefundQty() {
         List<MouldRefCalcQtyDTO> mouldRefCalcQtyDTOList = baseMapper.getNeedCalcData();
+        Map<String, String> supplierMap = getSupplierMap(mouldRefCalcQtyDTOList);
         List<String> detailIds = mouldRefCalcQtyDTOList.stream().map(MouldRefCalcQtyDTO::getDetailId).distinct().collect(Collectors.toList());
         List<MouldRefundAgreementEntity> agreementEntityList = mouldRefundAgreementService.listByMouldDetailIdList(detailIds);
         removeOldData(detailIds);
@@ -118,7 +136,12 @@ public class MouldRefCalcQtyServiceImpl extends SuperServiceImpl<MouldRefCalcQty
                     calcQty = stockInQty;
                 }
                 mouldRefCalcQty.setCalcQty(calcQty);
-                agreement.setRefundStatus(MathUtil.compareTo(calcQty, agreement.getRefundOrderQty()) >= MathUtil.ZERO ? MouldRefundStatusEnum.TO_BE_RETURNED.getCode() : MouldRefundStatusEnum.NOT_REACHED.getCode());
+                if (MathUtil.compareTo(calcQty, agreement.getRefundOrderQty()) >= MathUtil.ZERO) {
+                    agreement.setRefundStatus(MouldRefundStatusEnum.TO_BE_RETURNED.getCode());
+                    sendNotice(dto, supplierMap, agreement);
+                } else {
+                    agreement.setRefundStatus(MouldRefundStatusEnum.NOT_REACHED.getCode());
+                }
             }
             mouldRefundAgreementList.add(agreement);
             mouldRefCalcQtyList.add(mouldRefCalcQty);
@@ -126,6 +149,27 @@ public class MouldRefCalcQtyServiceImpl extends SuperServiceImpl<MouldRefCalcQty
         ApplicationContextUtils.getBean(MouldRefCalcQtyServiceImpl.class).saveOrUpdateBatch(mouldRefCalcQtyList);
         mouldRefCalcQtyDetailService.saveOrUpdateBatch(mouldRefCalcQtyDetailList);
         mouldRefundAgreementService.updateBatchById(mouldRefundAgreementList);
+    }
+
+    private void sendNotice(MouldRefCalcQtyDTO dto, Map<String, String> supplierMap, MouldRefundAgreementEntity agreement) {
+        Map<String, Object> data = new HashMap<>();
+        data.put("name", dto.getName());
+        data.put("mouldNo", dto.getMouldNo());
+        data.put("supplierName", supplierMap.get(dto.getSupplierId()));
+        data.put("refundAmount", agreement.getRefundAmount());
+        data.put("refundOrderQty", agreement.getRefundOrderQty());
+        data.put("updateTime", LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+        LoginUser user = UserContext.getDefaultLoginUser();
+        mouldInfoService.mouldInfoNotice(NoticeEnum.MOULD_REFUND_REACH, data, new MouldInfoDTO.NoticeDTO(dto.getId(),
+                dto.getName(), dto.getProductManagerId(), user.getUid(), user.getUserName()),"mouldRefundReach.ftl");
+    }
+
+    private Map<String, String> getSupplierMap(List<MouldRefCalcQtyDTO> mouldRefCalcQtyDTOList) {
+        List<String> mouldSupplierIdList = mouldRefCalcQtyDTOList.stream()
+                .map(MouldRefCalcQtyDTO::getSupplierId)
+                .distinct().collect(Collectors.toList());
+        List<SupplierEntity> supplierList = scmTaskFeign.getSupplierByIdList(mouldSupplierIdList);
+        return supplierList.stream().collect(Collectors.toMap(SupplierEntity::getId, SupplierEntity::getName, (o1, o2) -> o1));
     }
 
     /**

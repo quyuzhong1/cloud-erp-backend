@@ -31,11 +31,11 @@ public enum NoticeEnum {
     APPROVE_PRODUCT("approveProduct","审核产品"),
     AUDIT_PILOT_APPLICATION("auditPilotApplication","试产量产审核通知"),
     AUDIT_COMPLETED_PILOT_APPLICATION("auditCompletedPilotApplication","试产量产完成通知"),
-    MOULD_CREATE("mouldCreate", "模具创建"),
-    MOULD_SUBMIT("mouldSubmit", "模具提交"),
-    MOULD_APPROVE("mouldApprove", "模具审核"),
-    MOULD_REFUND_REACH("mouldRefundReach", "返还达量"),
-    MOULD_REFUND_CONFIRM("mouldRefundConfirm", "返还确认")
+    MOULD_CREATE("mouldCreate", "模具创建通知"),
+    MOULD_SUBMIT("mouldSubmit", "模具审核通知"),
+    MOULD_APPROVE("mouldApprove", "模具审核完成通知"),
+    MOULD_REFUND_REACH("mouldRefundReach", "模具达量通知"),
+    MOULD_REFUND_CONFIRM("mouldRefundConfirm", "模具费用返还确认通知")
     ;
 
 
