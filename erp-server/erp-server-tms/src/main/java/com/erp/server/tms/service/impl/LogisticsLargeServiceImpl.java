@@ -590,9 +590,9 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
 
 
         for (FirstMileSkuCostAllocationEntity firstMileSkuCostAllocationEntity : skuCostAllocationEntityList) {
+            List<FirstMileSkuCostAllocationDetailEntity> costAllocationDetailEntities = skuCostAllocationDetailEntities.stream().filter(req -> req.getMainId().equals(entity.getId())).collect(Collectors.toList());
 
-
-            this.firstMileLogisticsTableHandler(entity, firstMileSkuCostAllocationEntity, skuCostAllocationDetailEntities, firstMileDeliveryEntity, firstMileDeliveryDetailEntities);
+            this.firstMileLogisticsTableHandler(entity, firstMileSkuCostAllocationEntity, costAllocationDetailEntities, firstMileDeliveryEntity, firstMileDeliveryDetailEntities);
         }
         return BatchResultDTO.success(entity.getId(), entity.getBusinessCode(), OperationTypeEnum.ADD);
     }
