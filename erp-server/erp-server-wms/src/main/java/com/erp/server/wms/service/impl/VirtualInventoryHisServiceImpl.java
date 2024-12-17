@@ -68,7 +68,7 @@ public class VirtualInventoryHisServiceImpl extends SuperServiceImpl<VirtualInve
             return;
         }
         List<String> virtualInventoryIdList = list.stream().map(VirtualInventoryHisDTO.AddDTO::getVirtualInventoryId).distinct().collect(Collectors.toList());
-        List<VirtualInventoryHisEntity> oldList =  baseMapper.listByVirtualInventoryIdList(virtualInventoryIdList,localDate);
+        List<VirtualInventoryHisEntity> oldList =  baseMapper.listByVirtualInventoryIdList(virtualInventoryIdList,localDate.minusDays(1L));
 
         for (VirtualInventoryHisDTO.AddDTO addDTO : list) {
             //传入时间减1
