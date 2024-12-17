@@ -273,7 +273,7 @@ public abstract class AbstractVirtualInventoryServiceImpl implements VirtualInve
         //入库添加本地任务表数据
         WmsVirtualDetailMsgDTO.AddDTO addDTO = new WmsVirtualDetailMsgDTO.AddDTO();
         addDTO.setTransFlowEntity(transFlowEntity);
-        addDTO.setRemark("虚拟仓库存入库");
+        addDTO.setRemark("虚拟仓库存出入库");
         addDTO.setTradeTime(LocalDateTime.now());
         addDTO.setStatus(VirtualDetailMsgStatusEnum.WAIT_HANDLE.getCode());
         wmsVirtualDetailMsgService.add(addDTO);
@@ -327,14 +327,14 @@ public abstract class AbstractVirtualInventoryServiceImpl implements VirtualInve
 
         //出库添加本地任务表数据
         if ((InventoryStatusEnum.USABLE.equals(inventoryStatusEnum)
-                && CharSequenceUtil.equals(transFlowEntity.getSourceType(),InventorySourceTypeEnum.VIRTUAL_WAREHOUSE_ALLOCATION.getCode())
-                && CharSequenceUtil.equals(transFlowEntity.getSourceType(),InventorySourceTypeEnum.SO_OUTSTOCK.getCode()))
+                && (CharSequenceUtil.equals(transFlowEntity.getSourceType(),InventorySourceTypeEnum.VIRTUAL_WAREHOUSE_ALLOCATION.getCode())
+                || CharSequenceUtil.equals(transFlowEntity.getSourceType(),InventorySourceTypeEnum.SO_OUTSTOCK.getCode())))
                 || (InventoryStatusEnum.FROZEN.equals(inventoryStatusEnum)
-                && CharSequenceUtil.equals(transFlowEntity.getSourceType(),InventorySourceTypeEnum.MACHINE_INFO.getCode())
-                && CharSequenceUtil.equals(transFlowEntity.getSourceType(),InventorySourceTypeEnum.TRANSFER_INFO.getCode())
-                && CharSequenceUtil.equals(transFlowEntity.getSourceType(),InventorySourceTypeEnum.SO_B2C_DELIVERY.getCode())
-                && CharSequenceUtil.equals(transFlowEntity.getSourceType(),InventorySourceTypeEnum.SO_OUTSTOCK.getCode())
-        )) {
+                && (CharSequenceUtil.equals(transFlowEntity.getSourceType(),InventorySourceTypeEnum.MACHINE_INFO.getCode())
+                || CharSequenceUtil.equals(transFlowEntity.getSourceType(),InventorySourceTypeEnum.TRANSFER_INFO.getCode())
+                || CharSequenceUtil.equals(transFlowEntity.getSourceType(),InventorySourceTypeEnum.SO_B2C_DELIVERY.getCode())
+                || CharSequenceUtil.equals(transFlowEntity.getSourceType(),InventorySourceTypeEnum.SO_OUTSTOCK.getCode())))
+        ) {
             addWmsVirtualDetailMsg(transFlowEntity);
         }
     }
