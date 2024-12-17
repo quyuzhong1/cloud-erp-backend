@@ -17,12 +17,14 @@ import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
+import com.common.business.wrapper.FeignQuery;
 import com.common.core.constant.EnumMessage;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
+import com.erp.model.oms.entity.SoInfoEntity;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.enums.BomTypeEnum;
@@ -737,6 +739,53 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
 
         //头程发货单下推子件虚拟仓出库
         updateFirstMileVirtualInventory(entity,detailList);
+
+        //B2B发货来源子件冻结出库
+        updateB2BVirtualInventory(entity,detailList);
+    }
+
+    /**
+     * B2B发货来源子件冻结出库
+     * @author will
+     * @date 2024/12/17 10:13
+     * @param entity
+     * @param detailList
+     */
+    private void updateB2BVirtualInventory (MachineInfoEntity entity,List<MachineDetailEntity> detailList) {
+        //B2B发货来源子件冻结出库
+        if (!CharSequenceUtil.equals(entity.getSourceType(),SourceTypeEnum.SO_INFO.getCode())
+                && !CharSequenceUtil.equals(entity.getSourceType(),SourceTypeEnum.SO_DELIVERY_NOTICE.getCode())) {
+            return;
+        }
+        SoInfoEntity soInfoEntity;
+        if (CharSequenceUtil.equals(entity.getSourceType(),SourceTypeEnum.SO_INFO.getCode())) {
+            soInfoEntity = FeignQuery.getById(SoInfoEntity.class, entity.getSourceId());
+        } else {
+            SoDeliveryNoticeEntity soDeliveryNoticeEntity = FeignQuery.getById(SoDeliveryNoticeEntity.class, entity.getSourceId());
+            if (ObjUtil.isEmpty(soDeliveryNoticeEntity)) {
+                throw new ServiceException(ApiError.ERROR_SO_DELIVERY_NOTICE_NOT_EXIST);
+            }
+            soInfoEntity = FeignQuery.getById(SoInfoEntity.class, soDeliveryNoticeEntity.getSourceId());
+        }
+        if (ObjUtil.isEmpty(soInfoEntity)) {
+            throw new ServiceException(ApiError.ERROR_92016);
+        }
+        if (CharSequenceUtil.isBlank(soInfoEntity.getVirtualWarehouseId())) {
+            return;
+        }
+        List<VirtualInventoryStockDTO.OutInStockDTO>  outInStockList = new ArrayList<>();
+        for (MachineDetailEntity detailEntity : detailList) {
+            //添加虚拟仓库存数据
+            handleOutInStockDTO(entity,detailEntity,outInStockList,soInfoEntity.getVirtualWarehouseId());
+        }
+        if (CollUtil.isEmpty(outInStockList)) {
+            return;
+        }
+        //库存扣减
+        VirtualInventoryStockDTO.StockParamDTO stockParamDTO = new VirtualInventoryStockDTO.StockParamDTO();
+        stockParamDTO.setParamList(outInStockList);
+        stockParamDTO.setBusinessType(VirtualInventoryBusinessTypeEnum.MACHINE_INFO_CHILD_OUT.getCode());
+        virtualInventoryTransCoreService.approve(stockParamDTO);
     }
 
     /**
@@ -794,20 +843,7 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
             if (CharSequenceUtil.isBlank(virtualWarehouseId)) {
                 continue;
             }
-            //操作请求实体
-            VirtualInventoryStockDTO.OutInStockDTO outInStockDTO = new VirtualInventoryStockDTO.OutInStockDTO();
-            outInStockDTO.setSkuId(detailEntity.getSkuId());
-            outInStockDTO.setSkuNo(detailEntity.getSkuNo());
-            outInStockDTO.setWarehouseId(entity.getWarehouseId());
-            outInStockDTO.setVirtualWarehouseId(virtualWarehouseId);
-            outInStockDTO.setBillDate(LocalDate.now());
-            outInStockDTO.setQty(detailEntity.getQty());
-            outInStockDTO.setSourceId(entity.getId());
-            outInStockDTO.setSourceCode(entity.getCode());
-            outInStockDTO.setSourceType(InventorySourceTypeEnum.MACHINE_INFO);
-            outInStockDTO.setSourceDetailId(detailEntity.getId());
-            outInStockDTO.setBomVersion(detailEntity.getReferenceVersion());
-            outInStockList.add(outInStockDTO);
+            handleOutInStockDTO(entity,detailEntity,outInStockList,virtualWarehouseId);
         }
         if (CollUtil.isEmpty(outInStockList)) {
             return;
@@ -817,6 +853,33 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
         stockParamDTO.setParamList(outInStockList);
         stockParamDTO.setBusinessType(VirtualInventoryBusinessTypeEnum.MACHINE_INFO_CHILD_OUT.getCode());
         virtualInventoryTransCoreService.approve(stockParamDTO);
+    }
+
+    /**
+     * 虚拟仓数据
+     * @author will
+     * @date 2024/12/17 10:27
+     * @param entity
+     * @param detailEntity
+     * @param virtualWarehouseId
+     * @return OutInStockDTO
+     */
+    private void handleOutInStockDTO (MachineInfoEntity entity,MachineDetailEntity detailEntity
+            ,List<VirtualInventoryStockDTO.OutInStockDTO>  outInStockList,String virtualWarehouseId) {
+        //操作请求实体，因为虚拟仓库存扣减会自动拆分组合品，则直接传明细父级sku即可
+        VirtualInventoryStockDTO.OutInStockDTO outInStockDTO = new VirtualInventoryStockDTO.OutInStockDTO();
+        outInStockDTO.setSkuId(detailEntity.getSkuId());
+        outInStockDTO.setSkuNo(detailEntity.getSkuNo());
+        outInStockDTO.setWarehouseId(entity.getWarehouseId());
+        outInStockDTO.setVirtualWarehouseId(virtualWarehouseId);
+        outInStockDTO.setBillDate(LocalDate.now());
+        outInStockDTO.setQty(detailEntity.getQty());
+        outInStockDTO.setSourceId(entity.getId());
+        outInStockDTO.setSourceCode(entity.getCode());
+        outInStockDTO.setSourceType(InventorySourceTypeEnum.MACHINE_INFO);
+        outInStockDTO.setSourceDetailId(detailEntity.getId());
+        outInStockDTO.setBomVersion(detailEntity.getReferenceVersion());
+        outInStockList.add(outInStockDTO);
     }
 
     /**
