@@ -96,6 +96,9 @@ public class LogisticsLargeJob {
                 .list();
 
         List<String> ids = allocationMainEntityList.stream().map(req -> req.getId()).distinct().collect(Collectors.toList());
+        if (CollUtil.isEmpty(ids)) {
+            return;
+        }
         List<SmallBagCostAllocationEntity> costAllocationEntityList = smallBagCostAllocationService.lambdaQuery().in(SmallBagCostAllocationEntity::getMainId, ids).list();
         List<String> costAllocationIds = costAllocationEntityList.stream().map(req -> req.getId()).collect(Collectors.toList());
         List<SmallBagCostAllocationDetailEntity> smallBagCostAllocationDetailEntities = smallBagCostAllocationDetailService.listByMainIds(costAllocationIds);
@@ -142,8 +145,11 @@ public class LogisticsLargeJob {
                 XxlJobHelper.log("销售出库详情不存在!");
                 continue;
             }
-
-            logisticsLargeService.generateSmallBagCostAllocationTable(entity, costAllocationEntities, costAllocationDetailEntityList, soOutstockEntity, soOutstockDetailEntities, soB2cEntities);
+            try {
+                logisticsLargeService.generateSmallBagCostAllocationTable(entity, costAllocationEntities, costAllocationDetailEntityList, soOutstockEntity, soOutstockDetailEntities, soB2cEntities);
+            } catch (Exception e) {
+                XxlJobHelper.log(e.getMessage());
+            }
         }
     }
 
@@ -162,6 +168,9 @@ public class LogisticsLargeJob {
 
 
         List<String> ids = allocationMainEntityList.stream().map(req -> req.getId()).collect(Collectors.toList());
+        if (CollUtil.isEmpty(ids)) {
+            return;
+        }
         List<TransferDeclareCostAllocationEntity> costAllocationEntities = transferDeclareCostAllocationService.lambdaQuery().in(TransferDeclareCostAllocationEntity::getMainId, ids).list();
         List<String> costAllocationId = costAllocationEntities.stream().map(req -> req.getId()).collect(Collectors.toList());
         List<TransferDeclareCostAllocationDetailEntity> costAllocationDetailEntities = transferDeclareCostAllocationDetailService.listByMainIds(costAllocationId);
@@ -221,7 +230,11 @@ public class LogisticsLargeJob {
                 XxlJobHelper.log("销售出库详情不存在!");
                 continue;
             }
-            logisticsLargeService.generateTransferCostAllocationTable(mainEntity, costAllocationEntityList, costAllocationDetailEntityList, reconciliationEntity, reconciliationDetailEntity, soOutstockEntity);
+            try {
+                logisticsLargeService.generateTransferCostAllocationTable(mainEntity, costAllocationEntityList, costAllocationDetailEntityList, reconciliationEntity, reconciliationDetailEntity, soOutstockEntity);
+            } catch (Exception e) {
+                XxlJobHelper.log(e.getMessage());
+            }
         }
     }
 
@@ -232,6 +245,9 @@ public class LogisticsLargeJob {
     @XxlJob("firstMileCostAllocationToLogisticsLarge")
     public void firstMileCostAllocationToLogisticsLarge() {
         List<String> ids = logisticsLargeService.listFirstMileCostAllocationIsExists();
+        if (CollUtil.isEmpty(ids)) {
+            return;
+        }
         List<FirstMileCostAllocationEntity> costAllocationEntityList = firstMileCostAllocationService.listByIds(ids);
 
         //头程费用SKU分摊信息
@@ -289,7 +305,11 @@ public class LogisticsLargeJob {
                 continue;
             }
 
-            logisticsLargeService.generateFirstMileLogistics(entity,  skuCostAllocationEntityList, skuCostAllocationDetailEntities, deliveryEntity, firstMileDeliveryDetailEntities);
+            try {
+                logisticsLargeService.generateFirstMileLogistics(entity,  skuCostAllocationEntityList, skuCostAllocationDetailEntities, deliveryEntity, firstMileDeliveryDetailEntities);
+            } catch (Exception e) {
+                XxlJobHelper.log(e.getMessage());
+            }
         }
     }
 }

@@ -234,7 +234,7 @@ public class LogisticsLargeEntity extends BaseEntity<LogisticsLargeEntity> {
     @TableField("dest_misc_fee_pay_time")
     private LocalDateTime destMiscFeePayTime;
     /**
-    * 目的杂费计算系数
+    * 关税计算系数
     */
     @TableField("duty_calculation_factor")
     private BigDecimal dutyCalculationFactor;
@@ -359,6 +359,11 @@ public class LogisticsLargeEntity extends BaseEntity<LogisticsLargeEntity> {
      */
     @TableField("logistics_bill_id")
     private String logisticsBillId;
+    /**
+     * 物流单费用id
+     */
+    @TableField("logistics_bill_cost_id")
+    private String logisticsBillCostId;
 
 
     public static final String OUTSTOCK_CODE = "outstock_code";

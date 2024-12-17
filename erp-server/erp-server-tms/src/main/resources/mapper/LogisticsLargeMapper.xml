@@ -196,7 +196,7 @@
             fmca.is_deleted = FALSE
             AND fmsca.is_deleted = FALSE
             AND fmca.status = 'confirm'
-            AND NOT EXISTS ( SELECT ll.ID FROM logistics_large ll WHERE ll.outstock_code = fmca.source_code AND fmsca.bill_source_type = ll.reconciliation_bill_type )
+            AND NOT EXISTS ( SELECT ll.ID FROM logistics_large ll WHERE ll.outstock_code = fmca.source_code AND fmsca.bill_source_type = ll.reconciliation_bill_type AND ll.is_deleted = FALSE )
         GROUP BY fmca.ID
 		ORDER BY fmca.ID
     </select>
