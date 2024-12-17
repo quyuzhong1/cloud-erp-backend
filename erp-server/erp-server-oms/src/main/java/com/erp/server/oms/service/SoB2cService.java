@@ -1015,9 +1015,9 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
 
     /**
      * 重算订单预估费用
-     * @param detailList
+     * @param sob2cIds
      */
-    void autoCalcEstimatedShippingCost(List<SoB2cDTO.SaveSoB2cDistributionDetailDTO> detailList);
+    void autoCalcEstimatedShippingCost(List<String> sob2cIds);
 
     /**
      * 更新 超过订单金额比例标识

@@ -1094,6 +1094,7 @@
             sb.amount,
             sb.currency,
             sb.exchange_rate,
+            sb.is_over_estimated_ship_cost,
             sbd.warehouse_id,
             sbl.logistics_channel_id,
             sbl.estimated_shipping_cost,
