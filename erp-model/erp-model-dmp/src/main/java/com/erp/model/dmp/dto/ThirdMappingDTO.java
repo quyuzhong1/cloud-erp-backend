@@ -90,6 +90,16 @@ public class ThirdMappingDTO implements Serializable {
         private String thirdLogisticsName;
 
         /**
+         * 第三方物流方式id
+         */
+        private String thirdLogisticsTypeId;
+
+        /**
+         * 第三方物流方式名称
+         */
+        private String thirdLogisticsTypeName;
+
+        /**
          * 第三方系统类型：lingxing领星，wangdian旺店通
          */
         private String sysType;

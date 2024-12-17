@@ -30,6 +30,8 @@ import com.erp.rpc.dmp.feign.DmpThirdMappingFeign;
 import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.rpc.tms.feign.LogisticsFeign;
 import com.erp.server.wms.service.DictBasicService;
+import com.sdk.third.lingxing.dto.OrderFastOutboundPackageDTO;
+import com.sdk.third.lingxing.utils.LingxingApiUtils;
 import io.seata.common.util.StringUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -84,8 +86,8 @@ public class TemuShipOrder extends AbstractShipOrder {
         if (null == mappingViewDTO || CollectionUtils.isEmpty(mappingViewDTO.getThirdList())) {
             throw new ServiceException("找不到渠道信息");
         }
-        ThirdMappingDTO.ViewDTO thirdList = mappingViewDTO.getThirdList().stream().filter(v->v.getSysType().equals(PlatformDictEnum.LING_XING.getCode())).findFirst().orElse(null);
-        if(Objects.isNull(thirdList)){
+        ThirdMappingDTO.ViewDTO thirdView = mappingViewDTO.getThirdList().stream().filter(v->v.getSysType().equals(PlatformDictEnum.LING_XING.getCode())).findFirst().orElse(null);
+        if(Objects.isNull(thirdView)){
             throw new ServiceException("未配置{}渠道信息",PlatformDictEnum.LING_XING.getName());
         }
 
@@ -106,7 +108,7 @@ public class TemuShipOrder extends AbstractShipOrder {
                     .collect(Collectors.toList());
             List<SoB2cDetailEntity> detailEntityList = super.handleSplit(currentDetailEntityList, dto.isFalseDeliveryFlag());
             if (CollectionUtils.isEmpty(detailEntityList)) {
-                log.warn("【TEMU标记发货】订单【{}】所有明细来源ID为空,不请求速卖通接口", mainEntity.getCode());
+                log.warn("【TEMU标记发货】订单【{}】所有明细来源ID为空,不请求领星接口", mainEntity.getCode());
                 continue;
             }
 
@@ -118,7 +120,11 @@ public class TemuShipOrder extends AbstractShipOrder {
                 throw new ServiceException("【TEMU标记发货】操作失败，渠道标发单号为空");
             }
             try {
-                //TODO:调用领星接口
+                OrderFastOutboundPackageDTO.PackageInfo packageInfo = new OrderFastOutboundPackageDTO.PackageInfo();
+                packageInfo.setGlobalOrderNo(mainEntity.getThirdCode());
+                packageInfo.setLogisticsTypeId(thirdView.getThirdLogisticsTypeId());
+                packageInfo.setWaybillNo(logisticsNo);
+                LingxingApiUtils.fastOutbound(Collections.singletonList(packageInfo));
                 signShippedDetailList.addAll(detailEntityList.stream().map(BaseEntity::getId).collect(Collectors.toList()));
             } catch (Exception e) {
                 log.error("【TEMU标记发货】销售订单【{}】,平台订单【{}】领星标记发货API提示异常 >>>>{}", mainEntity.getCode(), mainEntity.getPlatformCode(), ExceptionUtil.stacktraceToString(e));

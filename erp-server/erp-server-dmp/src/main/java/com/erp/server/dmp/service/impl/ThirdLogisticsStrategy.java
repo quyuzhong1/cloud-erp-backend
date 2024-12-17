@@ -137,6 +137,8 @@ public class ThirdLogisticsStrategy implements ThirdMappingStrategy {
             viewDTO.setName(thirdLogisticsEntity.getLogisticsSupplierName());
             viewDTO.setThirdLogisticsId(thirdLogisticsEntity.getChannelId());
             viewDTO.setThirdLogisticsName(thirdLogisticsEntity.getChannelName());
+            viewDTO.setThirdLogisticsTypeId(thirdLogisticsEntity.getLogisticsTypeId());
+            viewDTO.setThirdLogisticsTypeName(thirdLogisticsEntity.getLogisticsTypeName());
             viewDTO.setThirdId(thirdMappingEntity.getThirdId());
             viewDTO.setId(thirdMappingEntity.getId());
             viewDTO.setSysType(thirdMappingEntity.getThirdSysType());
