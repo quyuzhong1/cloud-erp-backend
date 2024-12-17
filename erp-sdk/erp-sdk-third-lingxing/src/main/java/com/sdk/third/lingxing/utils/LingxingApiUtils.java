@@ -359,7 +359,7 @@ public class LingxingApiUtils {
     public static Result<Object> fastOutbound(List<OrderFastOutboundPackageDTO.PackageInfo> packageList) {
         OrderFastOutboundPackageDTO orderFastOutboundPackageDTO = new OrderFastOutboundPackageDTO(packageList);
         Map<String, Object> requestMap = BeanUtil.beanToMap(orderFastOutboundPackageDTO);
-        Result<Object> result = LingxingApiUtils.postAndSign(LingxingApiUtils.CANCEL_ORDER_URI, requestMap);
+        Result<Object> result = LingxingApiUtils.postAndSign(LingxingApiUtils.FAST_OUTBOUND_URI, requestMap);
         if (!"0".equalsIgnoreCase(result.getCode())) {
             String errorMsg = StrUtil.format("请求领星标记订单快速出库失败:,request={}, result={}", requestMap, JSONUtil.toJsonStr(result));
             log.error(errorMsg);
@@ -377,7 +377,7 @@ public class LingxingApiUtils {
     public static Result<Object> updateOrder(List<UpdateOrderDTO.OrderInfo> orderList) {
         UpdateOrderDTO updateOrderDTO = new UpdateOrderDTO(orderList);
         Map<String, Object> requestMap = BeanUtil.beanToMap(updateOrderDTO);
-        Result<Object> result = LingxingApiUtils.postAndSign(LingxingApiUtils.CANCEL_ORDER_URI, requestMap);
+        Result<Object> result = LingxingApiUtils.postAndSign(LingxingApiUtils.UPDATE_ORDER_URI, requestMap);
         if (!"0".equalsIgnoreCase(result.getCode())) {
             String errorMsg = StrUtil.format("请求领星编辑/更新自发货订单失败:,request={}, result={}", requestMap, JSONUtil.toJsonStr(result));
             log.error(errorMsg);
