@@ -1384,6 +1384,13 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
     	Map<String, List<AddDataDTO>> sourceIdDtoMaps = dtoList.stream().collect(Collectors.groupingBy(LogisticsBillCostDTO.AddDataDTO::getSourceId));
     	for(Map.Entry<String, List<AddDataDTO>> sourceIdDtoMap : sourceIdDtoMaps.entrySet()) {
     		List<AddDataDTO> value = sourceIdDtoMap.getValue();
+    		
+    		value.forEach(v -> {
+    			if(CharSequenceUtil.isBlank(v.getCurrency())) {
+    				v.setCurrency(CurrencyEnum.CNY.getCurrencyCode());
+    			}
+    		});
+    		
 			AddDataDTO dto = value.get(0);
     		String sourceId = dto.getSourceId();
     		LogisticsBillCostEntity logisticsBillCostEntity = getById(sourceId);
@@ -1399,7 +1406,13 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
     		if(org.apache.commons.lang3.StringUtils.isBlank(currency)) {
     			currency = CurrencyEnum.CNY.getCurrencyCode();
     		}
+    		
     		addDTO.setCurrency(currency);
+    		
+    		if(value.stream().anyMatch(d -> !addDTO.getCurrency().equals(d.getCurrency()))) {
+            	throw new ServiceException("所有费用币种必须一致");
+            }
+    		
     		addDTO.setTrackNo(logisticsBillCostEntity.getTrackNo());
     		addDTO.setChannelId(logisticsBillCostEntity.getChannelId());
     		addDTO.setWeightLogistics(logisticsBillCostEntity.getWeightLogistics());
@@ -1508,15 +1521,26 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 		if(CollUtil.isEmpty(dtoList)) {
 			throw new ServiceException("不能移除所有费用");
 		}
+		
+		dtoList.forEach(d -> {
+			if(CharSequenceUtil.isBlank(d.getCurrency())) {
+				d.setCurrency(CurrencyEnum.CNY.getCurrencyCode());
+			}
+		});
+		
 		LogisticsBillCostDTO.UpdateDTO updateDataDTO = new LogisticsBillCostDTO.UpdateDTO();
 		EditDataDTO dto = dtoList.get(0);
 		updateDataDTO.setId(dto.getId());
         updateDataDTO.setBillingWeight(dto.getBillingWeight());
         updateDataDTO.setBillingWeightLogistics(dto.getBillingWeightLogistics());
         updateDataDTO.setCurrency(CharSequenceUtil.isBlank(dto.getCurrency()) ? CurrencyEnum.CNY.getCurrencyCode() : dto.getCurrency());
-
+        
+        if(dtoList.stream().anyMatch(d -> !updateDataDTO.getCurrency().equals(d.getCurrency()))) {
+        	throw new ServiceException("所有费用币种必须一致");
+        }
+        
         List<TmsCostDetailDTO.UpdateDTO> updateDetailList = new ArrayList<>();
-        for(DetailDTO detailDTO : dtoList) {
+        for(EditDataDTO detailDTO : dtoList) {
         	TmsCostDetailDTO.UpdateDTO updateDTO = new TmsCostDetailDTO.UpdateDTO();
             updateDTO.setCostValue(detailDTO.getCostValue());
             updateDTO.setType(LogisticsBillCostTypeEnum.ACTUAL.getCode());
