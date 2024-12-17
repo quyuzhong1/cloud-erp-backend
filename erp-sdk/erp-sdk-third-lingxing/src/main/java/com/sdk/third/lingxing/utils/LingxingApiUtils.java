@@ -13,10 +13,7 @@ import com.sdk.third.lingxing.core.Config;
 import com.sdk.third.lingxing.core.HttpMethod;
 import com.sdk.third.lingxing.core.HttpRequest;
 import com.sdk.third.lingxing.core.HttpResponse;
-import com.sdk.third.lingxing.dto.FbaReceiveReqDTO;
-import com.sdk.third.lingxing.dto.FbaShipmentReceiveDTO;
-import com.sdk.third.lingxing.dto.Result;
-import com.sdk.third.lingxing.dto.ShopInfoDTO;
+import com.sdk.third.lingxing.dto.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
@@ -24,11 +21,9 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Resource;
+import javax.validation.constraints.NotNull;
 import java.time.LocalDate;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
+import java.util.*;
 
 /**
  * 领星API 工具类
@@ -47,6 +42,12 @@ public class LingxingApiUtils {
     public static final String FBA_SHIPMENT_LIST_RUI = "erp/sc/data/fba_report/shipmentList";
     // FBA货件签收明细列表
     public static final String FBA_SHIPMENT_DETAIL_RUI = "erp/sc/data/fba_report/receivedInventory";
+    // 快速出库
+    public static final String FAST_OUTBOUND_URI = "pb/mp/order/v2/fastOutbound";
+    // 标记订单不发货
+    public static final String CANCEL_ORDER_URI = "pb/mp/order/v2/cancelOrder";
+    // 编辑/更新自发货订单
+    public static final String UPDATE_ORDER_URI = "pb/mp/order/v2/updateOrder";
 
     /**
      * 接口域名
@@ -293,11 +294,96 @@ public class LingxingApiUtils {
             log.error(errorMsg);
             throw new ServiceException(errorMsg);
         }
-        if ("3001008".equalsIgnoreCase(result.getCode())) {
-            String errorMsg = StrUtil.format("请求领星触发限流不执行当前: result={}", JSONUtil.toJsonStr(result));
-            log.warn(errorMsg);
-            return null;
+        return result;
+    }
+
+    /**
+     * 请求领星接口
+     */
+    public static Result<Object> postRequestDataAndRetry(String apiType, TreeMap<String, Object> requestMap) {
+        Result<Object> resultData = null;
+        long sleepTime = 1000;
+        // 限流最多请求10次
+        for (int count = 1; count <= 10; count++) {
+            resultData = LingxingApiUtils.postRequestData(apiType, requestMap);
+            // 限流重试
+            if ("3001008".equalsIgnoreCase(resultData.getCode())) {
+                if (10 == count) {
+                    throw new ServiceException("调用领星接口重试" + count + "失败：" + apiType);
+                }
+                try {
+                    Thread.sleep(sleepTime);
+                } catch (InterruptedException e) {
+                    log.error("拉取调用领星接口重试睡眠异常:e={}", ExceptionUtil.stacktraceToString(e));
+                    Thread.currentThread().interrupt();
+                }
+                sleepTime = sleepTime + 1000;
+                count = count + 1;
+            } else {
+                break;
+            }
+        }
+        try {
+            Thread.sleep(2000);
+        } catch (InterruptedException e) {
+            log.error("调用领星接口重试睡眠异常:e={}", ExceptionUtil.stacktraceToString(e));
+            Thread.currentThread().interrupt();
+        }
+        return resultData;
+    }
+
+
+    /**
+     * 标记订单不发货
+     * @param orderList 领星订单ID
+     * @return 响应
+     */
+    public static Result<Object> cancelOrderByOrderList(List<String> orderList) {
+        Map<String, Object> requestMap = new HashMap<>();
+        requestMap.put("order_list", orderList);
+        Result<Object> result = LingxingApiUtils.postAndSign(LingxingApiUtils.CANCEL_ORDER_URI, requestMap);
+        if (!"0".equalsIgnoreCase(result.getCode())) {
+            String errorMsg = StrUtil.format("请求领星标记订单不发货失败:,order_list={}, result={}", orderList, JSONUtil.toJsonStr(result));
+            log.error(errorMsg);
+            throw new ServiceException(errorMsg);
         }
         return result;
     }
+
+
+    /**
+     * 快速出库
+     * @param packageList 每个单对应出库信息-最多1000个订单
+     * @return 响应
+     */
+    public static Result<Object> fastOutbound(List<OrderFastOutboundPackageDTO.PackageInfo> packageList) {
+        OrderFastOutboundPackageDTO orderFastOutboundPackageDTO = new OrderFastOutboundPackageDTO(packageList);
+        Map<String, Object> requestMap = BeanUtil.beanToMap(orderFastOutboundPackageDTO);
+        Result<Object> result = LingxingApiUtils.postAndSign(LingxingApiUtils.CANCEL_ORDER_URI, requestMap);
+        if (!"0".equalsIgnoreCase(result.getCode())) {
+            String errorMsg = StrUtil.format("请求领星标记订单快速出库失败:,request={}, result={}", requestMap, JSONUtil.toJsonStr(result));
+            log.error(errorMsg);
+            throw new ServiceException(errorMsg);
+        }
+        return result;
+    }
+
+
+    /**
+     * 编辑/更新自发货订单
+     * @param orderList 更新的订单信息
+     * @return 响应
+     */
+    public static Result<Object> updateOrder(List<UpdateOrderDTO.OrderInfo> orderList) {
+        UpdateOrderDTO updateOrderDTO = new UpdateOrderDTO(orderList);
+        Map<String, Object> requestMap = BeanUtil.beanToMap(updateOrderDTO);
+        Result<Object> result = LingxingApiUtils.postAndSign(LingxingApiUtils.CANCEL_ORDER_URI, requestMap);
+        if (!"0".equalsIgnoreCase(result.getCode())) {
+            String errorMsg = StrUtil.format("请求领星编辑/更新自发货订单失败:,request={}, result={}", requestMap, JSONUtil.toJsonStr(result));
+            log.error(errorMsg);
+            throw new ServiceException(errorMsg);
+        }
+        return result;
+    }
+
 }
