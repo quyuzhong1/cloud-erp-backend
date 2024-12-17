@@ -176,7 +176,7 @@ public class LogisticsLargeJob {
         List<String> declareReconciliationIds = tmsB2cDeclareReconciliationDetailEntities.stream().map(req -> req.getMainId()).distinct().collect(Collectors.toList());
 
         List<TmsB2cDeclareReconciliationEntity> tmsB2cDeclareReconciliationEntities = new ArrayList<>();
-        if (CollUtil.isEmpty(declareReconciliationIds)) {
+        if (CollUtil.isNotEmpty(declareReconciliationIds)) {
             tmsB2cDeclareReconciliationEntities = tmsB2cDeclareReconciliationService.listByIds(declareReconciliationIds);
         }
         //销售出库
@@ -187,7 +187,7 @@ public class LogisticsLargeJob {
         }
         List<String> soOutstockIds = soOutstockDetailEntityList.stream().map(SoOutstockDetailEntity::getMainId).distinct().collect(Collectors.toList());
         List<SoOutstockEntity> soOutstockEntities = new ArrayList<>();
-        if (CollUtil.isEmpty(soOutstockIds)) {
+        if (CollUtil.isNotEmpty(soOutstockIds)) {
             soOutstockEntities = soOutstockFeign.listByIds(soOutstockIds);
         }
 
@@ -248,7 +248,6 @@ public class LogisticsLargeJob {
 
         for (FirstMileCostAllocationEntity entity : costAllocationEntityList) {
             List<FirstMileSkuCostAllocationEntity> skuCostAllocationEntityList = skuCostAllocationEntityAllList.stream().filter(req -> req.getMainId().equals(entity.getId())).collect(Collectors.toList());
-
             if (ConfirmStatusEnum.WAIT_CONFIRM.getCode().equals(entity.getStatus())) {
                 XxlJobHelper.log("只有已确认的单据可以生成物流大表数据");
                 continue;
@@ -258,13 +257,8 @@ public class LogisticsLargeJob {
                 XxlJobHelper.log("未找到关联的头程发货单信息");
                 continue;
             }
+            List<FirstMileDeliveryDetailEntity> deliveryDetailEntities = firstMileDeliveryDetailEntities.stream().filter(req -> req.getMainId().equals(deliveryEntity.getId())).collect(Collectors.toList());
             List<LogisticsLargeEntity> logisticsLargeEntities = logisticsLargeService.listByIdOutstockCode(Arrays.asList(deliveryEntity.getCode()));
-
-            //已确认才能下推
-            if (!ConfirmStatusEnum.CONFIRM.getCode().equals(entity.getStatus())) {
-                XxlJobHelper.log(ApiError.ERROR_SMALL_BAG_NOT_CONFIRMED.msg);
-                continue;
-            }
 
             //只能下推一个实际账单
             LogisticsLargeEntity logisticsLargeActualEntity = logisticsLargeEntities.stream()
@@ -294,6 +288,7 @@ public class LogisticsLargeJob {
                 XxlJobHelper.log(ApiError.ERROR_EXISTS_ACTUAL_NOT_ESTIMATED.msg);
                 continue;
             }
+
             logisticsLargeService.generateFirstMileLogistics(entity,  skuCostAllocationEntityList, skuCostAllocationDetailEntities, deliveryEntity, firstMileDeliveryDetailEntities);
         }
     }
