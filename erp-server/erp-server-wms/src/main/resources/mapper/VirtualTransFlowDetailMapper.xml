@@ -61,7 +61,7 @@
         vid.virtual_warehouse_id as virtualWarehouseId,
         vidh.date as date,
         '' as transactionNo,
-        vid.create_time as tradeTime,
+        vid.trade_time as tradeTime,
         '' as sourceType,
         '' as sourceCode,
         '' as dictInventoryStatus,
@@ -86,7 +86,7 @@
                 ${item.field} ${item.sort}
             </foreach>
         </if>
-        batchNo desc,case when operateTypeName = '转结' then 2 else 1 end,date asc
+        tradeTime desc,batchNo desc,case when operateTypeName = '转结' then 2 else 1 end,date asc
     </select>
 
     <!-- 查询即时库存明细id -->
