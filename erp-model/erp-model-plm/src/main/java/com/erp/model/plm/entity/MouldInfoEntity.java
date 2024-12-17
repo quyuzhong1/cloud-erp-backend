@@ -77,6 +77,12 @@ public class MouldInfoEntity extends BaseEntity<MouldInfoEntity> {
     private String approveUserId;
 
     /**
+     * 审核备注
+     */
+    @TableField("approve_remark")
+    private String approveRemark;
+
+    /**
      * 作废状态（false未作废，true已作废）
      */
     @TableField("invalid_status")
