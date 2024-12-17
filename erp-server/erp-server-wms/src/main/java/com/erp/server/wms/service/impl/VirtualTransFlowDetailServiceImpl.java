@@ -151,7 +151,7 @@ public class VirtualTransFlowDetailServiceImpl extends SuperServiceImpl<VirtualT
             WmsVirtualDetailMsgDTO.AddDTO addDTO = new WmsVirtualDetailMsgDTO.AddDTO();
             addDTO.setTransFlowEntity(entity);
             addDTO.setRemark("虚拟仓库存出入库");
-            addDTO.setTradeTime(LocalDateTime.now());
+            addDTO.setTradeTime(entity.getTradeTime());
             addDTO.setStatus(VirtualDetailMsgStatusEnum.WAIT_HANDLE.getCode());
             addDTO.setBusinessId(entity.getId());
             wmsVirtualDetailMsgService.add(addDTO);

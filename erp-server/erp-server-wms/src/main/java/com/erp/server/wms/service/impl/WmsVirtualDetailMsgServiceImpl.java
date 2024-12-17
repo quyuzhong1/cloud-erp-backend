@@ -106,6 +106,7 @@ public class WmsVirtualDetailMsgServiceImpl extends SuperServiceImpl<WmsVirtualD
         }
         return  lambdaQuery()
                 .in(WmsVirtualDetailMsgEntity::getStatus, Arrays.asList(VirtualDetailMsgStatusEnum.WAIT_HANDLE.getCode(),VirtualDetailMsgStatusEnum.FAIL.getCode()))
+                .orderByAsc(WmsVirtualDetailMsgEntity::getTradeTime)
                 .orderByAsc(WmsVirtualDetailMsgEntity::getId)
                 .last("limit 1")
                 .one();
