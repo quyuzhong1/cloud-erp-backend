@@ -520,6 +520,12 @@ public interface SoB2cFeign {
      **/
     @PostMapping("/feign/soB2cError/deleteAndAddErrorBatch")
     void deleteAndAddErrorBatch(@RequestBody SoB2cErrorDTO.AddAndDeleteDTO addAndDeleteDTO);
+    /**
+     * 获取销售订单全部异常汇总
+     * @return
+     */
+    @PostMapping("/feign/soB2cError/getB2CErrorReport")
+    List<SoB2cErrorDTO.TypeCountDTO> getB2CErrorReport(@RequestBody List<String> typeList);
 
     /**
      * @description: 订单拦截

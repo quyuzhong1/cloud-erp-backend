@@ -118,4 +118,12 @@ public class SoB2cErrorFeignController extends BaseController {
     void deleteAndAddErrorBatch(@RequestBody SoB2cErrorDTO.AddAndDeleteDTO addAndDeleteDTO) {
         soB2cErrorService.deleteAndAddErrorBatch(addAndDeleteDTO);
     }
+    /**
+     * 获取销售订单全部异常汇总
+     * @return
+     */
+    @PostMapping("/getB2CErrorReport")
+    public List<SoB2cErrorDTO.TypeCountDTO> getB2CErrorReport(@RequestBody List<String> typeList){
+        return soB2cErrorService.getB2CErrorReport(typeList);
+    }
 }
