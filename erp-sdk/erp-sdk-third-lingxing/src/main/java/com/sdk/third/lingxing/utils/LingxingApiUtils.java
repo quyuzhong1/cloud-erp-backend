@@ -36,18 +36,25 @@ import java.util.*;
 public class LingxingApiUtils {
 
 
+    // 领星ERP相关接口
     // 查询亚马逊店铺列表
     public static final String SHOP_LIST_URI = "erp/sc/data/seller/lists";
     // 查询FBA货件
     public static final String FBA_SHIPMENT_LIST_RUI = "erp/sc/data/fba_report/shipmentList";
     // FBA货件签收明细列表
     public static final String FBA_SHIPMENT_DETAIL_RUI = "erp/sc/data/fba_report/receivedInventory";
+    // 查询仓库列表
+    public static final String WAREHOUSE_URI = "erp/sc/data/local_inventory/warehouse";
+
+
+    // 领星多平台相关接口
     // 快速出库
     public static final String FAST_OUTBOUND_URI = "pb/mp/order/v2/fastOutbound";
     // 标记订单不发货
     public static final String CANCEL_ORDER_URI = "pb/mp/order/v2/cancelOrder";
     // 编辑/更新自发货订单
     public static final String UPDATE_ORDER_URI = "pb/mp/order/v2/updateOrder";
+
 
     /**
      * 接口域名
