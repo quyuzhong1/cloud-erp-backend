@@ -581,6 +581,7 @@ public class MouldInfoDTO implements Serializable {
         /**
          * 文件地址
          */
+        @Size(max = 10, message = "最大可上传10个凭证")
         private List<String> fileUrlList = new ArrayList<>();
 
         /**
@@ -1071,5 +1072,36 @@ public class MouldInfoDTO implements Serializable {
          * 创建时间
          */
         private LocalDateTime poCreateTime;
+    }
+
+    /**
+     * 模具通知DTO
+     */
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class NoticeDTO {
+
+        private String id;
+
+        /**
+         * 项目名称
+         */
+        private String name;
+        /**
+         * 产品经理
+         */
+        private String productManagerId;
+
+        /**
+         *负责人id
+         */
+        private String chargeId;
+
+        /**
+         *负责人名
+         */
+        private String chargeName;
     }
 }

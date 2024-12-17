@@ -4,6 +4,7 @@ import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.wms.dto.ReportOrderSalesDTO;
 import com.erp.model.wms.dto.VirtualTransFlowDTO;
+import com.erp.model.wms.dto.VirtualTransFlowDetailDTO;
 import com.erp.model.wms.entity.VirtualTransFlowEntity;
 import com.erp.model.wms.enums.inventory.InventoryModeEnum;
 
@@ -123,4 +124,12 @@ public interface VirtualTransFlowService extends SuperService<VirtualTransFlowEn
      * @param virtualInvId
      */
     void overrideVirtualTransFlow(LocalDate startDate,String virtualInvId);
+    /**
+     * 查询历史虚拟仓流水数据
+     * @author will
+     * @date 2024/12/17 17:47
+     * @param dto 
+     * @return List<VirtualTransFlowEntity>
+     */
+    List<VirtualTransFlowEntity> listHisVirtualTransFlow(VirtualTransFlowDetailDTO.HandleDTO dto);
 }

@@ -73,9 +73,15 @@ public class MouldInfoExcelListener extends AnalysisEventListener<MouldInfoImpor
         dto.setPaymentCondition(paymentConditionNameMap.get(data.getPaymentConditionName()));
         dto.setThirdMouldNo(data.getThirdMouldNo());
         dto.setMouldHoles(data.getMouldHoles());
-        dto.setLength(new BigDecimal(data.getLength()).multiply(new BigDecimal(10)));
-        dto.setWidth(new BigDecimal(data.getWidth()).multiply(new BigDecimal(10)));
-        dto.setHeight(new BigDecimal(data.getHeight()).multiply(new BigDecimal(10)));
+        if (!ObjectUtils.isEmpty(data.getLength())) {
+            dto.setLength(new BigDecimal(data.getLength()).multiply(new BigDecimal(10)));
+        }
+        if (!ObjectUtils.isEmpty(data.getWidth())) {
+            dto.setWidth(new BigDecimal(data.getWidth()).multiply(new BigDecimal(10)));
+        }
+        if (!ObjectUtils.isEmpty(data.getHeight())) {
+            dto.setHeight(new BigDecimal(data.getHeight()).multiply(new BigDecimal(10)));
+        }
         dto.setMaterial(data.getMaterial());
         dto.setLifeCycle(Integer.parseInt(data.getLifeCycle()));
         dto.setDevelopCycle(Integer.parseInt(data.getDevelopCycle()));

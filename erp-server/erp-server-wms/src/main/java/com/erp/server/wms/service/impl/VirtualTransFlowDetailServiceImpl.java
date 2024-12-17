@@ -18,6 +18,7 @@ import com.common.core.utils.MathUtil;
 import com.common.message.constant.RedisKeyConstant;
 import com.erp.model.wms.dto.VirtualInventoryDetailDTO;
 import com.erp.model.wms.dto.VirtualTransFlowDetailDTO;
+import com.erp.model.wms.dto.WmsVirtualDetailMsgDTO;
 import com.erp.model.wms.entity.VirtualInventoryDetailEntity;
 import com.erp.model.wms.entity.VirtualTransFlowDetailEntity;
 import com.erp.model.wms.entity.VirtualTransFlowEntity;
@@ -140,6 +141,23 @@ public class VirtualTransFlowDetailServiceImpl extends SuperServiceImpl<VirtualT
         log.info("###VirtualTransFlowDetailServiceImpl:::overrideVirtualTransFlowDetail 库存流水重算完成 virtualInvId={}, end_time={}",  virtualInvDetailId, LocalDateTime.now());
     }
 
+    @Override
+    public void handleHisVirtualTransFlowDetail(VirtualTransFlowDetailDTO.HandleDTO dto) {
+        List<VirtualTransFlowEntity> virtualTransFlowList = virtualTransFlowService.listHisVirtualTransFlow(dto);
+        if (CollUtil.isEmpty(virtualTransFlowList)) {
+            return ;
+        }
+        for (VirtualTransFlowEntity entity : virtualTransFlowList) {
+            WmsVirtualDetailMsgDTO.AddDTO addDTO = new WmsVirtualDetailMsgDTO.AddDTO();
+            addDTO.setTransFlowEntity(entity);
+            addDTO.setRemark("虚拟仓库存出入库");
+            addDTO.setTradeTime(entity.getTradeTime());
+            addDTO.setStatus(VirtualDetailMsgStatusEnum.WAIT_HANDLE.getCode());
+            addDTO.setBusinessId(entity.getId());
+            wmsVirtualDetailMsgService.add(addDTO);
+        }
+    }
+
     /**
      * 重算库存流水
      * @author will
@@ -189,7 +207,7 @@ public class VirtualTransFlowDetailServiceImpl extends SuperServiceImpl<VirtualT
         }
         List<VirtualTransFlowDetailDTO.AddDTO> addDTOList = new ArrayList<>();
         List<VirtualInventoryDetailEntity> updateList = new ArrayList<>();
-        Integer notOutQty = entity.getQty();
+        Integer notOutQty = Math.abs(entity.getQty());
         for (VirtualInventoryDetailEntity detailEntity : list) {
             //当剩余出库数量为0时无需加流水
             if (MathUtil.compareTo(notOutQty,MathUtil.ZERO) == MathUtil.ZERO) {
@@ -203,13 +221,13 @@ public class VirtualTransFlowDetailServiceImpl extends SuperServiceImpl<VirtualT
             addDTO.setVirtualInventoryDetailId(detailEntity.getId());
             //批次库存数量是否大于剩余出库数量
             boolean isOver = detailEntity.getQty() > notOutQty;
-            addDTO.setQty(isOver ? notOutQty : detailEntity.getQty());
-            addDTO.setCurInventoryQty(detailEntity.getQty() - addDTO.getQty());
+            addDTO.setQty(isOver ? - notOutQty : detailEntity.getQty());
+            addDTO.setCurInventoryQty(detailEntity.getQty() - Math.abs(addDTO.getQty()));
             //剩余未出数量
-            notOutQty = notOutQty - addDTO.getQty();
+            notOutQty = notOutQty - Math.abs(addDTO.getQty());
             addDTOList.add(addDTO);
 
-            detailEntity.setQty(detailEntity.getQty() - addDTO.getQty());
+            detailEntity.setQty(detailEntity.getQty() - Math.abs(addDTO.getQty()));
             updateList.add(detailEntity);
         }
         if (CollUtil.isEmpty(addDTOList)) {

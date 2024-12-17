@@ -172,6 +172,7 @@ public class MouldInfoController extends BaseController {
             BatchResultDTO approveResult;
             try {
                 approveResult = mouldInfoService.approve(new ApproveOneDTO(id, dto.getType(),dto.getComment()));
+                mouldInfoService.sendApproveNotice(id);
             }catch (Exception e){
                 log.error("模具审核失败",e);
                 MouldInfoEntity entity = mouldInfoService.getById(id);

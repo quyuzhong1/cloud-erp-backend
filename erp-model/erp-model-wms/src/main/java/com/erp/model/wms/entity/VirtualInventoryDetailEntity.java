@@ -1,14 +1,15 @@
 package com.erp.model.wms.entity;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
-import java.time.LocalDate;
-import com.baomidou.mybatisplus.annotation.TableField;
-import java.io.Serializable;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
-import com.common.business.enums.ApproveStatusEnum;
+
+import java.io.Serializable;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 
 /**
@@ -76,6 +77,11 @@ public class VirtualInventoryDetailEntity extends BaseEntity<VirtualInventoryDet
     @TableField("last_outstock_date")
     private LocalDate lastOutstockDate;
 
+    /**
+     * 操作时间
+     */
+    @TableField("trade_time")
+    private LocalDateTime tradeTime;
 
     public static final String WAREHOUSE_ID = "warehouse_id";
 

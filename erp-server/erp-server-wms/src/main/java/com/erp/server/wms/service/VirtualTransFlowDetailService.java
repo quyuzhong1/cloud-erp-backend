@@ -73,4 +73,11 @@ public interface VirtualTransFlowDetailService extends SuperService<VirtualTrans
      * @param virtualInvDetailId
      */
     void overrideVirtualTransFlowDetail(LocalDate startDate, String virtualInvDetailId);
+    /**
+     * 处理历史数据
+     * @author will
+     * @date 2024/12/17 17:44
+     * @param dto
+     */
+    void handleHisVirtualTransFlowDetail(VirtualTransFlowDetailDTO.HandleDTO dto);
 }
