@@ -92,7 +92,7 @@ public class LogisticsLargeJob {
         List<SmallBagCostAllocationMainEntity> allocationMainEntityList = smallBagCostAllocationMainService.lambdaQuery()
                 .eq(SmallBagCostAllocationMainEntity::getBigTableStatus, SmallBagCostAllocationMainBigTableStatusEnum.TODO.getCode())
                 .eq(SmallBagCostAllocationMainEntity::getReportStatus, SmallBagCostAllocationMainReportStatusEnum.CONFIRMED.getCode())
-                .orderByDesc(SmallBagCostAllocationMainEntity::getReportDate)
+                .orderByAsc(SmallBagCostAllocationMainEntity::getReportDate)
                 .list();
 
         List<String> ids = allocationMainEntityList.stream().map(req -> req.getId()).distinct().collect(Collectors.toList());
@@ -163,7 +163,7 @@ public class LogisticsLargeJob {
         List<TransferDeclareCostAllocationMainEntity> allocationMainEntityList = transferDeclareCostAllocationMainService.lambdaQuery()
                 .eq(TransferDeclareCostAllocationMainEntity::getBigTableStatus, SmallBagCostAllocationMainBigTableStatusEnum.TODO.getCode())
                 .eq(TransferDeclareCostAllocationMainEntity::getReportStatus, SmallBagCostAllocationMainReportStatusEnum.CONFIRMED.getCode())
-                .orderByDesc(TransferDeclareCostAllocationMainEntity::getReportDate)
+                .orderByAsc(TransferDeclareCostAllocationMainEntity::getReportDate)
                 .list();
 
 
