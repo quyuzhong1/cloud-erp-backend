@@ -92,14 +92,18 @@ public class VirtualInventoryDetailHisServiceImpl extends SuperServiceImpl<Virtu
         if (CollUtil.isEmpty(virtualInventoryHisList)) {
             return;
         }
+
+        //前一天日期
+        LocalDate minusDate = localDate.minusDays(1L);
+
         List<String> virtualDetailIdList = virtualInventoryHisList.stream().map(VirtualInventoryDetailHisDTO.ViewDTO::getVirtualInventoryDetailId).distinct().collect(Collectors.toList());
-        List<VirtualInventoryDetailHisEntity> oldList = listByVirtualInventoryDetailIdList(virtualDetailIdList,LocalDate.now());
+        List<VirtualInventoryDetailHisEntity> oldList = listByVirtualInventoryDetailIdList(virtualDetailIdList,minusDate);
 
         //查询虚拟仓库存快照数据
         List<String> skuIdList = virtualInventoryHisList.stream().map(VirtualInventoryDetailHisDTO.ViewDTO::getSkuId).distinct().collect(Collectors.toList());
         List<String> warehouseIdList = virtualInventoryHisList.stream().map(VirtualInventoryDetailHisDTO.ViewDTO::getWarehouseId).distinct().collect(Collectors.toList());
         List<String> virtualWarehouseIdList = virtualInventoryHisList.stream().map(VirtualInventoryDetailHisDTO.ViewDTO::getVirtualWarehouseId).distinct().collect(Collectors.toList());
-        List<VirtualInventoryHisDTO.VirtualQtyDTO> virtualQtyList = virtualInventoryHisService.listInventoryQty(skuIdList, warehouseIdList, virtualWarehouseIdList,localDate.minusDays(1L));
+        List<VirtualInventoryHisDTO.VirtualQtyDTO> virtualQtyList = virtualInventoryHisService.listInventoryQty(skuIdList, warehouseIdList, virtualWarehouseIdList,minusDate);
 
         Map<String, List<VirtualInventoryDetailHisDTO.ViewDTO>> map = virtualInventoryHisList.stream().collect(Collectors.groupingBy(obj -> CharSequenceUtil.format("{}-{}-{}",obj.getSkuId(),obj.getWarehouseId(),obj.getVirtualWarehouseId())));
         for (Map.Entry<String, List<VirtualInventoryDetailHisDTO.ViewDTO>> entry : map.entrySet()) {
@@ -109,7 +113,7 @@ public class VirtualInventoryDetailHisServiceImpl extends SuperServiceImpl<Virtu
                     CharSequenceUtil.equals(obj.getSkuId(), value.get(0).getSkuId())
                             && CharSequenceUtil.equals(obj.getWarehouseId(), value.get(0).getWarehouseId())
                             && CharSequenceUtil.equals(obj.getVirtualWarehouseId(), value.get(0).getVirtualWarehouseId())
-                            && localDate.minusDays(1L).isEqual(obj.getDate())
+                            && minusDate.isEqual(obj.getDate())
             ).map(VirtualInventoryHisDTO.VirtualQtyDTO::getVirtualQty).findFirst().orElse(MathUtil.ZERO);
 
             for (VirtualInventoryDetailHisDTO.ViewDTO viewDTO : value) {
@@ -118,7 +122,7 @@ public class VirtualInventoryDetailHisServiceImpl extends SuperServiceImpl<Virtu
                 //查询是否已有数据
                 String id = oldList.stream().filter(obj ->
                         CharSequenceUtil.equals(obj.getVirtualInventoryDetailId(), viewDTO.getVirtualInventoryDetailId())
-                                && obj.getDate().isEqual(LocalDate.now())
+                                && obj.getDate().isEqual(minusDate)
                 ).findFirst().map(VirtualInventoryDetailHisEntity::getId).orElse("");
                 addDTO.setId(id);
 
@@ -128,8 +132,8 @@ public class VirtualInventoryDetailHisServiceImpl extends SuperServiceImpl<Virtu
                 virtualQty = virtualQty - addDTO.getWaitQty();
 
                 //库龄,当前日期 - 入库日期
-                addDTO.setInventoryAgeDays((int)(localDate.toEpochDay() -  viewDTO.getBillDate().toEpochDay()));
-                addDTO.setDate(localDate.minusDays(1L));
+                addDTO.setInventoryAgeDays((int)(minusDate.toEpochDay() -  viewDTO.getBillDate().toEpochDay()) + 1);
+                addDTO.setDate(minusDate);
                 this.addOrUpdate(addDTO);
             }
         }
