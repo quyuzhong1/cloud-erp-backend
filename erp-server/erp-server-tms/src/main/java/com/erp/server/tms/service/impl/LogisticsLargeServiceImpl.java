@@ -452,11 +452,11 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
         if (ObjectUtil.isNotEmpty(detailEntity)) {
             BigDecimal firstMileFreightAmount = detailEntity.getAllocatedAmount().divide(rate, 4, RoundingMode.DOWN);
             addDTO.setFirstMileEstimatedFreightTax(firstMileFreightAmount);
-            addDTO.setFirstMileEstimatedFreight(firstMileFreightAmount.divide(rate, 4, RoundingMode.DOWN).divide(BigDecimal.ONE.add(taxRate), 4, RoundingMode.DOWN));
+            addDTO.setFirstMileEstimatedFreight(firstMileFreightAmount.divide(BigDecimal.ONE.add(taxRate), 4, RoundingMode.DOWN));
 
-            addDTO.setFirstMileActualFreightTax(firstMileFreightAmount.divide(rate, 4, RoundingMode.DOWN));
-            addDTO.setFirstMileActualFreight(firstMileFreightAmount.divide(rate, 4, RoundingMode.DOWN).divide(BigDecimal.ONE.add(taxRate), 4, RoundingMode.DOWN));
-            addDTO.setFirstMileFreightVatAmount(firstMileFreightAmount.divide(rate, 4, RoundingMode.DOWN).divide(BigDecimal.ONE.add(taxRate), 4, RoundingMode.DOWN).multiply(taxRate));
+            addDTO.setFirstMileActualFreightTax(firstMileFreightAmount);
+            addDTO.setFirstMileActualFreight(firstMileFreightAmount.divide(BigDecimal.ONE.add(taxRate), 4, RoundingMode.DOWN));
+            addDTO.setFirstMileFreightVatAmount(firstMileFreightAmount.divide(BigDecimal.ONE.add(taxRate), 4, RoundingMode.DOWN).multiply(taxRate));
         }
 
         //杂费
