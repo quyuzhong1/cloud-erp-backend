@@ -6277,6 +6277,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         Boolean isRuleMatch = ruleMatchResult.getIsRuleMatch();
         if (isRuleMatch) {
             entity.setBillStatus(SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode());
+            //自动计算预估运费到订单的预估运费字段
+            soB2cService.autoCalcEstimatedShippingCost(Collections.singletonList(entity.getId()));
         }
         this.updateById(entity);
         return isRuleMatch;
@@ -6492,7 +6494,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 }else  if (Objects.nonNull(autoGetTrackNo) && Boolean.TRUE.equals(autoGetTrackNo)) {
                     soB2cService.getLogisticsCode(id, true);
                 }
-
+                //自动计算预估运费到订单的预估运费字段
+                soB2cService.autoCalcEstimatedShippingCost(Collections.singletonList(id));
             }
         }
         return isMatch;
@@ -9282,9 +9285,11 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
     @Async
     @Override
-    public void autoCalcEstimatedShippingCost(List<SoB2cDTO.SaveSoB2cDistributionDetailDTO> detailList) {
-        List<String> soIds = detailList.stream().map(SoB2cDTO.SaveSoB2cDistributionDetailDTO::getId).distinct().collect(Collectors.toList());
-        List<SoB2cDTO.LogisticsDTO> list = this.getB2cLogisticsByIds(soIds);
+    public void autoCalcEstimatedShippingCost(List<String> sob2cIds) {
+        if(CollUtil.isEmpty(sob2cIds)){
+            return;
+        }
+        List<SoB2cDTO.LogisticsDTO> list = this.getB2cLogisticsByIds(sob2cIds);
         if (CollUtil.isEmpty(list)){
             return;
         }
@@ -9293,9 +9298,15 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 .filter(e -> CharSequenceUtil.isNotBlank(e.getWarehouseId()) && CharSequenceUtil.isNotBlank(e.getLogisticsChannelId()) && Objects.nonNull(e.getWeight()))
                 .collect(Collectors.toList());
         //根据发货仓库进行
-        for (String soId : soIds){
-            SoB2cDTO.LogisticsDTO logisticsDTO = logisticsDTOS.stream().filter(e -> soId.equals(e.getId())).findFirst().orElse(null);
+        for (String soId : sob2cIds){
+            SoB2cDTO.LogisticsDTO logisticsDTO = logisticsDTOS.stream().filter(e -> CharSequenceUtil.isNotBlank(soId) && soId.equals(e.getId())).findFirst().orElse(null);
             if (Objects.isNull(logisticsDTO)){
+                continue;
+            }
+            if (!CharSequenceUtil.isAllNotBlank(logisticsDTO.getWarehouseId(),logisticsDTO.getCountry(),logisticsDTO.getLogisticsChannelId(),logisticsDTO.getWeightUnit())){
+                continue;
+            }
+            if (Objects.isNull(logisticsDTO.getWeight())){
                 continue;
             }
             ShippingCalculationDTO.PagingParamDTO pagingParamDTO = ShippingCalculationDTO.PagingParamDTO.builder()

@@ -3294,6 +3294,10 @@ public class SoB2cDTO implements Serializable {
         private String currency;
         // 汇率
         private BigDecimal exchangeRate;
+        /**
+         * 是否预估运费超限，是：true  否：false
+         */
+        private Boolean isOverEstimatedShipCost;
         //渠道id
         private String logisticsChannelId;
         //发货仓库id

@@ -160,6 +160,8 @@ public class SoB2cController extends BaseController {
                 if (Objects.nonNull(autoGetTrackNo) && Boolean.TRUE.equals(autoGetTrackNo)) {
                     soB2cService.getLogisticsCode(id, autoGetTrackNo);
                 }
+                //自动计算预估运费到订单的预估运费字段
+                soB2cService.autoCalcEstimatedShippingCost(Collections.singletonList(id));
             }
 
         }
@@ -207,6 +209,8 @@ public class SoB2cController extends BaseController {
         soB2cService.update(dto);
         //检查是否备案并修改状态
         soB2cService.checkProductRegistrationAndUpdate(dto.getId(), "");
+        //自动计算预估运费到订单的预估运费字段
+        soB2cService.autoCalcEstimatedShippingCost(Collections.singletonList(dto.getId()));
         return success();
     }
 
@@ -607,7 +611,7 @@ public class SoB2cController extends BaseController {
             resultDTOS.add(result);
         }
         //自动计算预估运费到订单的预估运费字段
-        soB2cService.autoCalcEstimatedShippingCost(dto.getDetailList());
+        soB2cService.autoCalcEstimatedShippingCost(dto.getIds());
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 

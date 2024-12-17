@@ -147,6 +147,7 @@ public class ShippingCalculationServiceImpl implements ShippingCalculationServic
         BigDecimal amount = logisticsDTO.getAmount();
         String currency1 = logisticsDTO.getCurrency();
         BigDecimal exchangeRate = logisticsDTO.getExchangeRate();
+        Boolean isOverEstimatedShipCost = logisticsDTO.getIsOverEstimatedShipCost();
         //运费超限打标比例
         BigDecimal shipmentOverLimitRate = listDTO.getShipmentOverLimitRate();
         if (Objects.isNull(shipmentOverLimitRate) || shipmentOverLimitRate.compareTo(BigDecimal.ZERO) == 0) {
@@ -159,7 +160,6 @@ public class ShippingCalculationServiceImpl implements ShippingCalculationServic
         if(Objects.isNull(exchangeRate)){
             log.error("币别【{}】,汇率为空，请维护汇率后再提交",currency1);
             return;
-//            throw new ServiceException("汇率为空，请维护汇率后再提交");
         }
         BigDecimal estimatedExchangeRate = BigDecimal.ONE;
         if (!CurrencyEnum.CNY.getCurrencyCode().equals(currency)){
@@ -168,18 +168,15 @@ public class ShippingCalculationServiceImpl implements ShippingCalculationServic
         if(Objects.isNull(estimatedExchangeRate)){
             log.error("币别【{}】,汇率为空，请维护汇率后再提交",currency);
             return;
-//            throw new ServiceException("汇率为空，请维护汇率后再提交");
         }
         //订单金额本位币 -预估运费最大值
         BigDecimal orderAmount = MathUtil.divide(MathUtil.multiply(shipmentOverLimitRate, MathUtil.multiply(amount, exchangeRate)), MathUtil.BigDecimal_100);
         BigDecimal estimatedShippingCost = MathUtil.multiply(totalShippingCost, estimatedExchangeRate);
-        if (estimatedShippingCost.compareTo(orderAmount) > 0){
+        Boolean estimatedShippingCostFlag = estimatedShippingCost.compareTo(orderAmount) > 0 ? Boolean.TRUE : Boolean.FALSE;
+        if (!Objects.equals(isOverEstimatedShipCost,estimatedShippingCostFlag)){
             //超过订单金额比例
-            soB2cFeign.updateOverEstimatedShipCost(b2cSoId, Boolean.TRUE);
-        }else {
-            soB2cFeign.updateOverEstimatedShipCost(b2cSoId, Boolean.FALSE);
+            soB2cFeign.updateOverEstimatedShipCost(b2cSoId, estimatedShippingCostFlag);
         }
-
     }
 
     /**
