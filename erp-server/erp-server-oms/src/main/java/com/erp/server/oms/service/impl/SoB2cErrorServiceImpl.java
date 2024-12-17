@@ -1,4 +1,5 @@
 package com.erp.server.oms.service.impl;
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.exceptions.ExceptionUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -307,6 +308,18 @@ public class SoB2cErrorServiceImpl extends ServiceImpl<SoB2cErrorMapper, SoB2cEr
     @Override
     public List<SoB2cErrorDTO.TypeCountDTO> getTypeCountDTO() {
         return this.baseMapper.getTypeCountDTO();
+    }
+
+    @Override
+    public List<SoB2cErrorDTO.TypeCountDTO> getB2CErrorReport(List<String> typeList) {
+        List<SoB2cErrorDTO.TypeCountDTO> typeCountDTO = this.baseMapper.getB2CErrorReport(typeList);
+        if (CollUtil.isEmpty(typeCountDTO)){
+            return typeCountDTO;
+        }
+        typeCountDTO.forEach(e ->{
+            e.setTypeName(SoB2cErrorTypeEnum.getName(e.getType()));
+        });
+        return typeCountDTO;
     }
 
     /**
