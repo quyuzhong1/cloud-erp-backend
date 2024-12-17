@@ -2820,6 +2820,77 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
         }
         return resultList;
     }
+
+    @Override
+    public void mouldInfoNotice(NoticeEnum noticeEnum, String s) {
+
+//        //根据节点标示获取到通知消息实体
+//        NoticeMessageEntity notice = baseMapper.getByNodeFlag(noticeEnum.getFlag());
+//        if (!Objects.isNull(notice)) {
+//            String noticeMessageId = notice.getId();
+//            List<String> noticeUserIds = getSetPilotNotice(notice, entity, isCompeletd);
+//            //获取飞书的unionid 与用户关系
+//            List<ThirdUnionDTO> unionIdList = sysUserFeign.getThirdUnionId(ThirdConstants.FS_PLATFORM);
+//            //消息通知记录
+//            List<NoticeMessageRecordEntity> messageRecordList = new ArrayList<>();
+//            //排除关闭通知的人员 并去重
+//            List<String> noticeList = eliminateCloseNotice(notice.getId(), noticeUserIds);
+//            List<ThirdUnionDTO> noticeUnionList = getNoticeUnionIds(unionIdList, noticeList);
+//            FsBatchSendMessageDTO sendMessage = new FsBatchSendMessageDTO();
+//            List<String> unionIds = noticeUnionList.stream().map(ThirdUnionDTO::getThirdUnionId).distinct().collect(Collectors.toList());
+//            sendMessage.setUnionIds(unionIds);
+//            //标题
+//            String title = String.format("试产量产单【%s】已在数大臣提交审核，请尽快审核",entity.getCode());
+//            if(isCompeletd){
+//                title = String.format("试产量产单【%s】已在数大臣完成审核，请知悉",entity.getCode());
+//            }
+//            //消息内容
+//            String chargeName = Arrays.asList(entity.getChargeName().split(",")).stream().distinct().collect(Collectors.joining(";"));
+//            String skuNo = Arrays.asList(entity.getSkuNo().split(",")).stream().distinct().collect(Collectors.joining(";"));
+//            String message = String.format(NoticeMessageConstant.AUDIT_PILOT_MSG_CONTENT,isCompeletd ? NoticeEnum.AUDIT_COMPLETED_PILOT_APPLICATION.getName() : NoticeEnum.AUDIT_PILOT_APPLICATION.getName(),chargeName,skuNo);
+//            String url =fsAppUrl;
+//            PlmCfgSettingEntity pilotApplicationNoticeUrl = cfgSettingService.lambdaQuery().eq(PlmCfgSettingEntity::getKey, "pilotApplicationNoticeUrl").one();
+//            if(null != pilotApplicationNoticeUrl){
+//                Map<String, Object> dataJson = pilotApplicationNoticeUrl.getDataJson();
+//                boolean uat = BusinessCommonConstants.hasProfile("uat");
+//                boolean dev = BusinessCommonConstants.hasProfile("dev");
+//                boolean test = BusinessCommonConstants.hasProfile("test");
+//                boolean prod = BusinessCommonConstants.hasProfile("prod");
+//                if(uat){
+//                    url = String.valueOf(dataJson.get("uat"));
+//                }else  if(dev||test){
+//                    url = String.valueOf(dataJson.get("test"));
+//                }else if(prod){
+//                    url = String.valueOf(dataJson.get("prod"));
+//                }
+//            }
+//            Map<String,Object> contentMap = getCardMessageMap(title, message, url);
+//            sendMessage.setContentMap(contentMap);
+//            //发送消息的结果
+//            Boolean sendResult = fsService.sendMessage(sendMessage);
+//            //当发送成功后
+//            if (sendResult) {
+//                List<String> acceptUserIds = noticeUnionList.stream().map(ThirdUnionDTO::getUserId).distinct().collect(Collectors.toList());
+//                for (String userId : acceptUserIds) {
+//                    NoticeMessageRecordEntity recordEntity = new NoticeMessageRecordEntity();
+//                    recordEntity.setChargeId(entity.getChargeId());
+//                    recordEntity.setMessageContent(message);
+//                    recordEntity.setNoticeMessageId(noticeMessageId);
+//                    recordEntity.setNoticeNode(flag);
+//                    recordEntity.setNoticeUserId(userId);
+//                    recordEntity.setProductId(entity.getProductId());
+//                    recordEntity.setProductName(entity.getSpuName());
+//                    recordEntity.setTaskId("");
+//                    recordEntity.setTaskName("");
+//                    recordEntity.setIsTask(0);
+//                    recordEntity.setChargeName(entity.getChargeName());
+//                    messageRecordList.add(recordEntity);
+//                }
+//            }
+//            //保存发送消息通知记录
+//            noticeMessageRecordService.saveBatch(messageRecordList);
+//        }
+    }
 }
 
 

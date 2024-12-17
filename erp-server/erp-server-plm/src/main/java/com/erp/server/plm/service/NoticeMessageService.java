@@ -309,4 +309,8 @@ public interface NoticeMessageService extends IService<NoticeMessageEntity> {
 
     List<String> getSetPilotNotice(NoticeMessageEntity notice, PilotApplicationDTO.ApprovePilotNoticeDTO entity, Boolean isCompeletd);
 
+    /**
+     * 模具通知
+     */
+    void mouldInfoNotice(NoticeEnum noticeEnum, String s);
 }

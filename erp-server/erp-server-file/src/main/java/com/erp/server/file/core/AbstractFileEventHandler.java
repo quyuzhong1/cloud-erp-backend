@@ -1,6 +1,5 @@
 package com.erp.server.file.core;
 
-import com.alibaba.excel.write.handler.WriteHandler;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.FastDFSClientUtil;
@@ -11,7 +10,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Resource;
 import java.io.IOException;
@@ -36,13 +34,7 @@ public abstract class AbstractFileEventHandler<T> implements FileEventHandler {
         sb.append(name);
         sb.append(excelPath.substring(excelPath.lastIndexOf(".")));
         try {
-            List<WriteHandler> writeHandler = getWriteHandler();
-            byte[] bytes;
-            if (CollectionUtils.isEmpty(writeHandler)) {
-                bytes = new ExcelPrintUtils().patchExport(list, excelPath);
-            } else {
-                bytes = new ExcelPrintUtils().patchExport(list, excelPath, writeHandler.toArray(new WriteHandler[]{}));
-            }
+            byte[] bytes = new ExcelPrintUtils().patchExport(list, excelPath);
             String s = FastDFSClientUtil.uploadFile(bytes, sb.toString(), null);
             fileTask.setFileUrl(s);
         } catch (IOException e) {
