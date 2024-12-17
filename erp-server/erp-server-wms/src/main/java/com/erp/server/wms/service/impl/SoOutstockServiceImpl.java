@@ -995,7 +995,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         //无虚拟仓无需扣减库存
         List<InOutStockDTO> virtualInOutStockList = members.stream().filter(obj ->
                 CharSequenceUtil.isNotBlank(obj.getVirtualWarehouseId())
-                || bomChildList.stream().filter(e -> CharSequenceUtil.equals(e.getType(), BomTypeEnum.COMBINATION.getType()) && CharSequenceUtil.equals(e.getParentSkuId(), obj.getSkuId())).count() > MathUtil.ZERO
+                && bomChildList.stream().filter(e -> CharSequenceUtil.equals(e.getType(), BomTypeEnum.COMBINATION.getType()) && CharSequenceUtil.equals(e.getParentSkuId(), obj.getSkuId())).count() == MathUtil.ZERO
         ).collect(Collectors.toList());
         if (CollectionUtils.isEmpty(virtualInOutStockList)) {
             return;
