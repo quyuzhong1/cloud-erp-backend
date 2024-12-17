@@ -3,6 +3,7 @@ package com.erp.server.dmp.inout.handler.input.task.dmp;
 import cn.hutool.core.text.CharSequenceUtil;
 import com.common.core.anno.ParamData;
 import com.common.core.enums.PannoEnum;
+import com.common.core.exception.ServiceException;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -12,6 +13,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.util.*;
 
 /**
@@ -35,10 +37,14 @@ public class DmpInputAliExpressInventoryDmpHandler extends DmpInputDbConvertDmpH
         if (CollectionUtils.isEmpty(dmpInputMongoEntityList)){
             return dmpInputDataDmpRelationMaps;
         }
+        String requestAuthId = dmpInputMongoEntityList.get(0).getOrDefault(AUTH_ID, "").toString();
+        if (StringUtils.isBlank(requestAuthId)){
+            ServiceException.runError("来源信息异常无authId");
+        }
 
         // 查询子任务其他信息:
         List<ParamData> paramDataList = new ArrayList<>();
-        paramDataList.add(new ParamData(AUTH_ID, AUTH_ID, PannoEnum.EQ, dmpInputTaskEntity.getParentTaskId()));
+        paramDataList.add(new ParamData(AUTH_ID, AUTH_ID, PannoEnum.EQ, requestAuthId));
         List<Map<String, Object>> childFindMongoData = mongoService.findMongoData(paramDataList, ALIEXPRESS_INVENTORY_ON_WAY_DATA);
 
         // 合并结果authId,productSku,platformWarehouseCode
@@ -103,14 +109,14 @@ public class DmpInputAliExpressInventoryDmpHandler extends DmpInputDbConvertDmpH
             mongoMap.put("storeCode", storeCode);
             valueMap.put("productSku", scItemId);
             valueMap.put("authId", authId);
-            String quantity = mongoMap.getOrDefault("quantity", "0").toString();
+            String quantityStr = mongoMap.getOrDefault("quantity", "0").toString();
             //库存类型(1 采购在途，2 调拨在途，3 销售在途，4 销退在途)
             if ("1".equals(inventoryType)){
-                valueMap.put("transferOnway", Integer.parseInt(quantity));
-                mongoMap.put("transferOnway", Integer.parseInt(quantity));
+                valueMap.put("transferOnway", new BigDecimal(quantityStr).intValue());
+                mongoMap.put("transferOnway", new BigDecimal(quantityStr).intValue());
             } else if ("4".equals(inventoryType)){
-                valueMap.put("saleReturnInTransitQty", Integer.parseInt(quantity));
-                mongoMap.put("saleReturnInTransitQty", Integer.parseInt(quantity));
+                valueMap.put("saleReturnInTransitQty", new BigDecimal(quantityStr).intValue());
+                mongoMap.put("saleReturnInTransitQty", new BigDecimal(quantityStr).intValue());
             }
             String storeName = mongoMap.getOrDefault("inbound_store_name", "").toString();
             valueMap.put("platformWarehouseName", storeName);
