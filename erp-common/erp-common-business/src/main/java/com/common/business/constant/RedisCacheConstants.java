@@ -240,5 +240,10 @@ public interface RedisCacheConstants {
      * DMP物流跟踪记录分页查询缓存LastId
      */
     String DMP_LOGISTICS_TRACK = "dmp_logistics_track:last_page";
+    
+    /**
+     * 中台历史输出记录总数
+     */
+    String DMP_OUTPUT_RECORD_HIS_COUNT = "dmp:output:record:his:count";
 
 }
