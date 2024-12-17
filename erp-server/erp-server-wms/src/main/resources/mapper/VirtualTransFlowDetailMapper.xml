@@ -80,13 +80,13 @@
         <where>
             ${params.sqlMap.default}
         </where>
-        order by skuId asc,warehouseId asc ,virtualWarehouseId asc ,date asc,
+        order by
         <if test="params.sortList != null and params.sortList.size > 0">
             <foreach collection="params.sortList" item="item" separator="," close=",">
                 ${item.field} ${item.sort}
             </foreach>
         </if>
-        batchNo asc,case when operateTypeName = '转结' then 2 else 1 end,date asc
+        batchNo desc,case when operateTypeName = '转结' then 2 else 1 end,date asc
     </select>
 
     <!-- 查询即时库存明细id -->
