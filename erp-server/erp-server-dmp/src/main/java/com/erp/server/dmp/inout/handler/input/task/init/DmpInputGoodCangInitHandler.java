@@ -73,7 +73,7 @@ public class DmpInputGoodCangInitHandler extends DmpInputInitHandler{
 		}
 		ThirdWarehouseContext.setAuthMap(overseasProviderEntity.getAuthJson());
 		// 非线上环境拉取当天
-		if (!BusinessCommonConstants.hasProfile("prod")){
+		if (!BusinessCommonConstants.hasProfile("prod") && !"inventory".equalsIgnoreCase(dmpCfgInputEntity.getType())){
 			LocalDateTime startTime = dmpInputTaskEntity.getStartTime();
 			LocalDateTime endTime = dmpInputTaskEntity.getEndTime();
 			goodCangGetSkuReq.setProductUpdateTimeFrom(startTime.format(DateTimeFormatter.ofPattern(DATE_TIME_FORMAT)));

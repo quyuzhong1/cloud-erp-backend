@@ -253,6 +253,11 @@ public class FirstMileEstimatedBillServiceImpl extends SuperServiceImpl<FirstMil
                 continue;
             }
             FirstMileEstimatedBillDTO.LogisticsInfoDTO infoDTO = logisticsInfoList.stream().filter(item -> item.getTransportNo().equals(dto.getTransportNo())).findFirst().orElse(null);
+            if (!dto.getCurrency().equals(infoDTO.getCurrency())){
+                dto.setErrorMsg("导入币种与物流币种不一致，");
+                errorList.add(dto);
+                continue;
+            }
             if(! infoDTO.getEstimatedStatus().equals(ConfirmStatusEnum.WAIT_CONFIRM.getCode())){
                 dto.setErrorMsg("仅暂估账单状态为【待确认】允许导入费用，");
                 errorList.add(dto);
@@ -269,18 +274,13 @@ public class FirstMileEstimatedBillServiceImpl extends SuperServiceImpl<FirstMil
                 errorList.add(dto);
                 continue;
             }
-            List<FirstMileCostAllocationEntity> costAllocationList = firstMileCostAllocationList.stream().filter(item -> item.getLogisticsBillId().equals(infoDTO.getLogisticsBillId())).collect(Collectors.toList());
+            List<FirstMileCostAllocationEntity> costAllocationList = firstMileCostAllocationList.stream().filter(item -> item.getLogisticsBillId().equals(infoDTO.getLogisticsBillId()) && Objects.nonNull(item.getReportPeriodMonth())).collect(Collectors.toList());
             costAllocationList.sort((Comparator.comparing(FirstMileCostAllocationEntity::getReportPeriodMonth).reversed()));
             if(! costAllocationList.isEmpty() && costAllocationList.get(0).getStatus().equals("confirm")){
                 dto.setErrorMsg("费用分摊核算【已确认】不允许导入");
                 errorList.add(dto);
                 continue;
             }
-            /*if(!logisticsBillMap.containsKey(dto.getTransportNo())){
-                dto.setErrorMsg("物流运单号错误");
-                errorList.add(dto);
-                continue;
-            }*/
             TmsCfgCostEntity tmsCfgCostEntity = tmsCfgCostOptional.get();
             String costId = infoDTO.getCostId();
 
@@ -301,6 +301,7 @@ public class FirstMileEstimatedBillServiceImpl extends SuperServiceImpl<FirstMil
                 detailEntity.setExchangeRate(exchangeRate);
             }
             detailEntity.setCostValue(dto.getCostValue());
+            detailEntity.setSourceType(SourceTypeEnum.FIRST_MILE_LOGISTICS_BILL_COST.getCode());
             LambdaQueryWrapper<TmsCostDetailEntity> lambdaQueryWrapper = new LambdaQueryWrapper<TmsCostDetailEntity>()
                     .eq(TmsCostDetailEntity::getCfgCostId, detailEntity.getCfgCostId())
                     .eq(TmsCostDetailEntity::getMainId, detailEntity.getMainId());
@@ -321,25 +322,7 @@ public class FirstMileEstimatedBillServiceImpl extends SuperServiceImpl<FirstMil
 
     @Override
     public void exportExcel(FirstMileEstimatedBillDTO.ExportParam dto) {
-        /*List<FirstMileEstimatedBillDTO.View> viewList;
-        if(dto.getIds() == null || ArrayUtils.isEmpty(dto.getIds().toArray())){
-            viewList = baseMapper.listByParam(dto);
-        }else {
-            viewList = baseMapper.listByParamIds(dto.getIds());
-        }
-        fillData(viewList);
-        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-        StringBuilder builder = new StringBuilder();
-        builder.append("头程暂估账单导出").append(date);
-        try {
-            new ExcelPrintUtils().patchExport(viewList, response, builder.toString(), "excel/firstMileEstimatedBillExport.xlsx");
-        } catch (IOException e) {
-            throw new ServiceException(ApiError.ERROR_1015);
-        }*/
-        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-        StringBuilder builder = new StringBuilder();
-        builder.append("头程暂估账单导出").append(date);
-        downloadTaskFeign.saveDownloadTask(builder.toString(), EXPORT_TMS_FM_ESTIMATED_BILL.getCode(), dto);
+        downloadTaskFeign.saveDownloadTask("头程暂估账单导出", EXPORT_TMS_FM_ESTIMATED_BILL.getCode(), dto);
     }
 
     @Override
