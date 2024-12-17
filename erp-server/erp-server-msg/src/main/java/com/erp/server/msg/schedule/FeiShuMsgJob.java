@@ -5,6 +5,8 @@ import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.collection.ListUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.http.HttpUtil;
+import com.alibaba.fastjson.JSON;
 import com.common.business.enums.*;
 import com.common.core.utils.MathUtil;
 import com.erp.model.dmp.dto.DmpTaskMsgDTO;
@@ -12,11 +14,15 @@ import com.erp.model.dmp.entity.DmpPullTaskEntity;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.msg.dto.WarnMsgInfoDTO;
 import com.erp.model.msg.enums.WarnMsgTypeEnum;
+import com.erp.model.oms.dto.SoB2cErrorDTO;
+import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
 import com.erp.model.tms.dto.LogisticsBillDetailQueryDTO;
 import com.erp.model.tms.dto.LogisticsChannelDTO;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
+import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.rpc.tms.feign.LogisticsFeign;
 import com.erp.server.msg.config.MsgContext;
+import com.xxl.job.core.biz.model.ReturnT;
 import com.xxl.job.core.context.XxlJobHelper;
 import com.xxl.job.core.handler.annotation.XxlJob;
 import lombok.extern.slf4j.Slf4j;
@@ -26,8 +32,7 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 /**
  * SKU自动匹配JOB
@@ -44,6 +49,8 @@ public class FeiShuMsgJob {
     private DmpTaskFeign dmpTaskFeign;
     @Resource
     private LogisticsFeign logisticsFeign;
+    @Resource
+    private SoB2cFeign soB2cFeign;
 
     /**
      * 飞书预警消息汇总报告
@@ -220,5 +227,34 @@ public class FeiShuMsgJob {
             msgContext.routeSendWarnMsg(warnMsgInfo);
         }
         XxlJobHelper.log("物流轨迹更新预警汇总报告:end");
+    }
+    /**
+     * B2C销售订单异常订单汇总提醒
+     */
+    @XxlJob("sendFeiShuWarnMsgReportBySoB2C")
+    public void sendFeiShuWarnMsgReportBySoB2C() {
+        XxlJobHelper.log("====B2C销售订单异常订单汇总提醒:start====");
+        String jobParam = XxlJobHelper.getJobParam();
+        XxlJobHelper.log("{}:请求参数：{}",LocalDateTime.now(), jobParam);
+        List<String> typeList = CharSequenceUtil.isNotBlank(jobParam) ? Arrays.asList(jobParam.split(",")) : Collections.emptyList();
+        List<SoB2cErrorDTO.TypeCountDTO> list = soB2cFeign.getB2CErrorReport(typeList);
+        if (CollUtil.isNotEmpty(list)){
+            WarnMsgInfoDTO warnMsgInfo = new WarnMsgInfoDTO();
+            warnMsgInfo.setBizName("预警消息");
+            warnMsgInfo.setErpServerModuleEnum(ErpServerModuleEnum.ERP_SERVER_OMS);
+            warnMsgInfo.setTitle("B2C销售订单异常订单汇总提醒");
+            warnMsgInfo.setTableName("so_b2c_error");
+            warnMsgInfo.setTableId("");
+            warnMsgInfo.setHappenTime(LocalDateTime.now());
+            warnMsgInfo.setWarnMsgTypeEnum(WarnMsgTypeEnum.SYS_EXCEPTION);
+            List<String> keyInfoList = new ArrayList<>(list.size());
+            list.forEach(typeCountDTO -> {
+                String format = StrUtil.format("异常类型【{}】存在数量:{}", CharSequenceUtil.isBlank(typeCountDTO.getTypeName()) ? typeCountDTO.getType() : typeCountDTO.getTypeName(),typeCountDTO.getTypeCount());
+                keyInfoList.add(format);
+            });
+            warnMsgInfo.setKeyInfo(String.join("\n", keyInfoList));
+            msgContext.routeSendWarnMsg(warnMsgInfo);
+        }
+        XxlJobHelper.log("====B2C销售订单异常订单汇总提醒:end====");
     }
 }
