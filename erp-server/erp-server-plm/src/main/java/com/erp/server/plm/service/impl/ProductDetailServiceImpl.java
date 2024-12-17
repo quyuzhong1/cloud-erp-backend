@@ -2245,9 +2245,9 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 newCountry = CharSequenceUtil.isBlank(newCountry) || CommonConstants.DEFAULT.equals(newCountry) ? "默认" : customs.getCountry();
                 String msg = "";
                 if (isManual){
-                    msg = CharSequenceUtil.format("手动重算【{}】目的国申报价从【数值】为【{}】/手动修改【{}】目的国申报价从【数值】为【{}】", oldCountry, destDeclarePrice, newCountry,resultDestDeclarePrice);
+                    msg = CharSequenceUtil.format("手动重算【{}】国家从【{}】改为【{}】，目的国申报价从【{}】改为【{}】", productDetailEntity.getSkuNo(),oldCountry, newCountry,destDeclarePrice, resultDestDeclarePrice);
                 }else {
-                    msg = CharSequenceUtil.format("自动重算【{}】目的国申报价从【数值】为【{}】/手动修改【{}】目的国申报价从【数值】为【{}】", oldCountry, destDeclarePrice, newCountry,resultDestDeclarePrice);
+                    msg = CharSequenceUtil.format("自动重算【{}】国家从【{}】改为【{}】，目的国申报价从【{}】改为【{}】", productDetailEntity.getSkuNo(),oldCountry, newCountry,destDeclarePrice, resultDestDeclarePrice);
                 }
                 sysLogService.addSysLogByOther(new SysLogEntity().setClassPath(SKUCLASSPATH).setPid(productDetailEntity.getProductId())
                         .setBusinessId(productDetailEntity.getId()).setOperation("编辑操作").setContent(msg));
