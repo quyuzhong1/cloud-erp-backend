@@ -9,6 +9,7 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.constant.RedisCacheConstants;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.DmpSyncMqDTO;
 import com.common.business.dto.DmpSyncMqDTO.SyncParamDetailDTO;
@@ -24,6 +25,7 @@ import com.common.business.enums.SyncStatusEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.utils.ApplicationContextUtils;
+import com.common.business.utils.RedisUtil;
 import com.common.business.vo.PagingVO;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.enums.ApiError;
@@ -99,6 +101,9 @@ public class DmpOutputTaskRecordServiceImpl extends SuperServiceImpl<DmpOutputTa
 
     @Autowired
     private DmpPushTaskService dmpPushTaskService;
+    
+    @Resource
+    private RedisUtil redisUtil;
     
     @Autowired
 	@Qualifier("dmpTabListExecutorPool")
@@ -252,10 +257,17 @@ public class DmpOutputTaskRecordServiceImpl extends SuperServiceImpl<DmpOutputTa
         
         Future<List<TabListDTO>> submit4 = dmpTabListExecutorPool.submit(() -> {
         	List<DmpOutputTaskRecordDTO.TabListDTO> subList = new ArrayList<>(8);
-	        Integer historyCount = baseMapper.listStatusCountHis(dto.getPermissionSql());
-	        if(historyCount == null) {
-	        	historyCount = 0;
-	        }
+        	Integer historyCount = 0;
+        	Object redisCount = redisUtil.get(RedisCacheConstants.DMP_OUTPUT_RECORD_HIS_COUNT);
+        	if(redisCount != null) {
+        		historyCount = Integer.valueOf(redisCount.toString());
+        	}else {
+        		historyCount = baseMapper.listStatusCountHis(dto.getPermissionSql());
+    	        if(historyCount == null) {
+    	        	historyCount = 0;
+    	        }
+    	        redisUtil.set(RedisCacheConstants.DMP_OUTPUT_RECORD_HIS_COUNT, historyCount);
+        	}
 	        DmpOutputTaskRecordDTO.TabListDTO history = new DmpOutputTaskRecordDTO.TabListDTO();
 	        history.setTabFlag(DmpPushMonitorTabEnum.HISTORY.getCode());
 	        history.setCount(historyCount);
@@ -666,6 +678,7 @@ public class DmpOutputTaskRecordServiceImpl extends SuperServiceImpl<DmpOutputTa
 	@Override
 	public void dmpRelationMoveToHistoryTable(String beforeUpdateTime, String size) {
 		this.getBaseMapper().dmpRelationMoveToHistoryTable(beforeUpdateTime, size);
+		redisUtil.del(RedisCacheConstants.DMP_OUTPUT_RECORD_HIS_COUNT);
 	}
 
 	@Transactional(rollbackFor = Exception.class)
