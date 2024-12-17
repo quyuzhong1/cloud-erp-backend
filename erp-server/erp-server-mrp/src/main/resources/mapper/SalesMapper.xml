@@ -65,7 +65,7 @@
         sb.shop_id          AS shopId,
         sod.sku_id          AS skuId,
         CASE
-        WHEN ( so.warehouse_id IS NULL OR sbd.warehouse_id = '' ) THEN
+        WHEN ( so.warehouse_id IS NULL OR so.warehouse_id = '' ) THEN
         'overseasOther'
         WHEN so.warehouse_id in
         <foreach collection="localWarehouseId" item="id" open="(" separator="," close=")">
