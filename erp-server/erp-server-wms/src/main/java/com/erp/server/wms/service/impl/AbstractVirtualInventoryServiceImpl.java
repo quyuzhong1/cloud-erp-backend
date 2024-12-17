@@ -276,6 +276,7 @@ public abstract class AbstractVirtualInventoryServiceImpl implements VirtualInve
         addDTO.setRemark("虚拟仓库存出入库");
         addDTO.setTradeTime(LocalDateTime.now());
         addDTO.setStatus(VirtualDetailMsgStatusEnum.WAIT_HANDLE.getCode());
+        addDTO.setBusinessId(transFlowEntity.getId());
         wmsVirtualDetailMsgService.add(addDTO);
     }
 

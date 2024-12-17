@@ -48,6 +48,12 @@ public class WmsVirtualDetailMsgEntity extends BaseEntity<WmsVirtualDetailMsgEnt
     @TableField("status")
     private String status;
 
+    /**
+     * 业务id
+     */
+    @TableField("business_id")
+    private String businessId;
+
 
     public static final String DATA_JSON = "data_json";
 
@@ -56,6 +62,8 @@ public class WmsVirtualDetailMsgEntity extends BaseEntity<WmsVirtualDetailMsgEnt
     public static final String TRADE_TIME = "trade_time";
 
     public static final String STATUS = "status";
+
+    public static final String BUSINESS_ID = "business_id";
 
     @Override
     public Serializable pkVal() {

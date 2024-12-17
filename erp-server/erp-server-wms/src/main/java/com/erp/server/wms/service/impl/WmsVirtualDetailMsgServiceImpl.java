@@ -50,7 +50,12 @@ public class WmsVirtualDetailMsgServiceImpl extends SuperServiceImpl<WmsVirtualD
     public BaseResultDTO.AddDTO add(WmsVirtualDetailMsgDTO.AddDTO addDTO) {
         WmsVirtualDetailMsgEntity wmsVirtualDetailMsgEntity = new WmsVirtualDetailMsgEntity();
         BeanMapperUtils.copy(addDTO, wmsVirtualDetailMsgEntity);
-
+        //查询是否已存在任务
+        WmsVirtualDetailMsgEntity old = getByBusinessId(wmsVirtualDetailMsgEntity.getBusinessId());
+        if (ObjUtil.isNotNull(old)) {
+            log.warn("业务id = {}，已生成任务",wmsVirtualDetailMsgEntity.getBusinessId());
+            return new BaseResultDTO.AddDTO(old.getId(), old.getId());
+        }
         wmsVirtualDetailMsgEntity.setDataJson(JSONUtil.parseObj(addDTO.getTransFlowEntity()));
         // 数据处理
         handleData(wmsVirtualDetailMsgEntity);
@@ -119,9 +124,20 @@ public class WmsVirtualDetailMsgServiceImpl extends SuperServiceImpl<WmsVirtualD
     }
 
     /**
+     * 根据业务id查询
+     * @author will
+     * @date 2024/12/17 18:05
+     * @param businessId
+     * @return WmsVirtualDetailMsgEntity
+     */
+    private WmsVirtualDetailMsgEntity getByBusinessId(String businessId) {
+       return lambdaQuery().eq(WmsVirtualDetailMsgEntity::getBusinessId,businessId).last("limit 1").one();
+    }
+
+    /**
     * 新增修改处理数据
     */
     private void handleData(WmsVirtualDetailMsgEntity wmsVirtualDetailMsgEntity) {
-    // TODO 验证数据 & 数据赋值
+
     }
 }

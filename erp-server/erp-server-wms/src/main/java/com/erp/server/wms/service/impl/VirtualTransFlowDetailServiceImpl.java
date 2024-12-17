@@ -18,6 +18,7 @@ import com.common.core.utils.MathUtil;
 import com.common.message.constant.RedisKeyConstant;
 import com.erp.model.wms.dto.VirtualInventoryDetailDTO;
 import com.erp.model.wms.dto.VirtualTransFlowDetailDTO;
+import com.erp.model.wms.dto.WmsVirtualDetailMsgDTO;
 import com.erp.model.wms.entity.VirtualInventoryDetailEntity;
 import com.erp.model.wms.entity.VirtualTransFlowDetailEntity;
 import com.erp.model.wms.entity.VirtualTransFlowEntity;
@@ -138,6 +139,23 @@ public class VirtualTransFlowDetailServiceImpl extends SuperServiceImpl<VirtualT
         // 重算库存流水
         overrideFlowByVirtualInventoryDetailId(flowList,virtualDetailQty);
         log.info("###VirtualTransFlowDetailServiceImpl:::overrideVirtualTransFlowDetail 库存流水重算完成 virtualInvId={}, end_time={}",  virtualInvDetailId, LocalDateTime.now());
+    }
+
+    @Override
+    public void handleHisVirtualTransFlowDetail(VirtualTransFlowDetailDTO.HandleDTO dto) {
+        List<VirtualTransFlowEntity> virtualTransFlowList = virtualTransFlowService.listHisVirtualTransFlow(dto);
+        if (CollUtil.isEmpty(virtualTransFlowList)) {
+            return ;
+        }
+        for (VirtualTransFlowEntity entity : virtualTransFlowList) {
+            WmsVirtualDetailMsgDTO.AddDTO addDTO = new WmsVirtualDetailMsgDTO.AddDTO();
+            addDTO.setTransFlowEntity(entity);
+            addDTO.setRemark("虚拟仓库存出入库");
+            addDTO.setTradeTime(LocalDateTime.now());
+            addDTO.setStatus(VirtualDetailMsgStatusEnum.WAIT_HANDLE.getCode());
+            addDTO.setBusinessId(entity.getId());
+            wmsVirtualDetailMsgService.add(addDTO);
+        }
     }
 
     /**
