@@ -61,4 +61,10 @@ public interface SoB2cErrorMapper extends BaseMapper<SoB2cErrorEntity> {
     Boolean deleteByMainIds(@Param("mainIds") List<String> mainIds);
 
     List<SoB2cErrorDTO.TypeCountDTO> getTypeCountDTO();
+
+    /**
+     * 获取销售订单全部异常汇总
+     * @return
+     */
+    List<SoB2cErrorDTO.TypeCountDTO> getB2CErrorReport(@Param("typeList") List<String> typeList);
 }

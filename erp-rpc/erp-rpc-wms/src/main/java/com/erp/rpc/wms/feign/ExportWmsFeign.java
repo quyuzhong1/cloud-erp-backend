@@ -268,4 +268,9 @@ public interface ExportWmsFeign {
      */
     @PostMapping("/feign/export/exportVirtualStatistics")
     PagingVO<VirtualWarehouseAllocationDTO.ExportStatisticsDTO> exportVirtualStatistics(PagingDTO<VirtualWarehouseAllocationDTO.ExportDTO> dto);
+    /**
+     * 导出FBA在途核对列表
+     */
+    @PostMapping("/feign/export/exportFbaTransitReport")
+    PagingVO<FbaTransitCalculateReportDTO.ListDTO> exportFbaTransitReport(PagingDTO<FbaTransitCalculateReportDTO.PagingParamDTO> dto);
 }
