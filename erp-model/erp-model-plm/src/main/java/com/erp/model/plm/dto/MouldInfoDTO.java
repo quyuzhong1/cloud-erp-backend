@@ -268,6 +268,7 @@ public class MouldInfoDTO implements Serializable {
          * 明细数据
          */
         @Valid
+        @Size(min = 1, message = "模具信息不能为空")
         private List<MouldDetailDTO.UpdateDTO> detailList;
 
         /**

@@ -31,6 +31,7 @@ import com.common.core.utils.*;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.*;
 import com.erp.model.plm.enums.MouldRefundStatusEnum;
+import com.erp.model.plm.enums.NoticeEnum;
 import com.erp.model.plm.enums.RefundStandardEnum;
 import com.erp.model.plm.enums.SysLogClassPathEnum;
 import com.erp.model.scm.entity.DictBasicEntity;
@@ -119,6 +120,9 @@ public class MouldInfoServiceImpl extends SuperServiceImpl<MouldInfoMapper, Moul
     private MouldRefProductService mouldRefProductService;
     @Resource
     private CfgMouldSettingService cfgMouldSettingService;
+
+    @Resource
+    private NoticeMessageService noticeMessageService;
 
     @Resource
     private WorkflowFeign workflowFeign;
@@ -215,6 +219,8 @@ public class MouldInfoServiceImpl extends SuperServiceImpl<MouldInfoMapper, Moul
         // 记录操作日志
         String msg = null;
         sysLogService.addSysLogBySave(msg, SysLogClassPathEnum.MOULD_DETAIL_ENTITY.getDesc(), mouldInfoEntity.getId(), "");
+        //发送通知
+        noticeMessageService.mouldInfoNotice(NoticeEnum.MOULD_CREATE, "");
         return BatchResultDTO.success(mouldInfoEntity.getId(), mouldInfoEntity.getMouldCategoryCode());
     }
 
@@ -472,7 +478,7 @@ public class MouldInfoServiceImpl extends SuperServiceImpl<MouldInfoMapper, Moul
     public PagingVO<MouldInfoDTO.OrderTrackingViewDTO> orderTracking(PagingDTO<MouldInfoDTO.PagingParamDTO> dto) {
         Page<MouldInfoDTO.OrderTrackingViewDTO> page = baseMapper.orderTracking(new Page<>(dto.getCurrPage(), dto.getPageSize()), dto.getParams());
         if (CollUtil.isEmpty(page.getRecords())) {
-            return new PagingVO<>();
+            return new PagingVO<>(page);
         }
         // 数据处理
         handlerList(page.getRecords());
@@ -578,7 +584,7 @@ public class MouldInfoServiceImpl extends SuperServiceImpl<MouldInfoMapper, Moul
     public PagingVO<MouldInfoDTO.MouldInfoExportDTO> exportMouldInfo(PagingDTO<MouldInfoDTO.PagingParamDTO> dto) {
         Page<MouldInfoDTO.MouldInfoExportDTO> page = baseMapper.exportMouldInfo(new Page<>(dto.getCurrPage(), dto.getPageSize()), dto.getParams());
         if (CollectionUtils.isEmpty(page.getRecords())) {
-            return new PagingVO<>();
+            return new PagingVO<>(page);
         }
         fillMouldInfo(page.getRecords());
         return new PagingVO<>(page);
