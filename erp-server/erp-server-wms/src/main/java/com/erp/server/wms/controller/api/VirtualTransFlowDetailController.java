@@ -60,4 +60,17 @@ public class VirtualTransFlowDetailController extends BaseController {
         Boolean flag = virtualTransFlowDetailService.exportExcel(dto);
         return flag == true ? success() : failure();
     }
+
+    /**
+     * 处理历史数据
+     * @author will
+     * @date 2024/12/17 17:34
+     * @param dto 
+     * @return ApiResult
+     */
+    @PostMapping("/handleHisVirtualTransFlowDetail")
+    public ApiResult handleHisVirtualTransFlowDetail(@RequestBody VirtualTransFlowDetailDTO.HandleDTO dto) {
+        virtualTransFlowDetailService.handleHisVirtualTransFlowDetail(dto);
+        return success() ;
+    }
 }
