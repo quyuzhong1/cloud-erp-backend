@@ -33,6 +33,7 @@ import com.common.core.utils.MathUtil;
 import com.erp.model.dmp.constant.DmpConstant;
 import com.erp.model.dmp.dto.DmpCfgOutputBlackDTO;
 import com.erp.model.dmp.dto.DmpOutputTaskRecordDTO;
+import com.erp.model.dmp.dto.DmpOutputTaskRecordDTO.TabListDTO;
 import com.erp.model.dmp.dto.DmpPushTaskDTO;
 import com.erp.model.dmp.entity.*;
 import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
@@ -50,12 +51,16 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.lang.reflect.Method;
 import java.util.*;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_NEW_DMP_PUSH_TASK;
@@ -95,6 +100,9 @@ public class DmpOutputTaskRecordServiceImpl extends SuperServiceImpl<DmpOutputTa
     @Autowired
     private DmpPushTaskService dmpPushTaskService;
     
+    @Autowired
+	@Qualifier("dmpTabListExecutorPool")
+	private ExecutorService dmpTabListExecutorPool;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -156,83 +164,113 @@ public class DmpOutputTaskRecordServiceImpl extends SuperServiceImpl<DmpOutputTa
 
     @Override
     public List<DmpOutputTaskRecordDTO.TabListDTO> tabList(PermissionsDTO dto) {
-        List<DmpOutputTaskRecordDTO.TabListDTO> result = new ArrayList<>(4);
-        List<DmpOutputTaskRecordDTO.TabListDTO> countList = baseMapper.listStatusCount(dto.getPermissionSql());
-        //全部
-        int allCount = countList.stream().mapToInt(DmpOutputTaskRecordDTO.TabListDTO::getCount).sum();
-        DmpOutputTaskRecordDTO.TabListDTO all = new DmpOutputTaskRecordDTO.TabListDTO();
-        all.setCount(allCount);
-        all.setTabFlag(DmpConstant.ALL);
-        result.add(all);
-
-        //待推送
-        DmpOutputTaskRecordDTO.TabListDTO inif = new DmpOutputTaskRecordDTO.TabListDTO();
-        inif.setTabFlag(DmpPushMonitorTabEnum.INIT.getCode());
-        int inifCount = countList.stream().filter(a -> a.getTabFlag().equals(DmpOutputTaskRecordStatusEnum.INIT.getCode())).findFirst().
-                flatMap(obj -> Optional.ofNullable(obj.getCount())).orElse(0);
-        inif.setCount(inifCount);
-        result.add(inif);
-
-
-        //推送中
-        DmpOutputTaskRecordDTO.TabListDTO pushIng = new DmpOutputTaskRecordDTO.TabListDTO();
-        pushIng.setTabFlag(DmpPushMonitorTabEnum.PUSH_ING.getCode());
-        int pushIngCount = countList.stream().filter(a -> a.getTabFlag().equals(DmpOutputTaskRecordStatusEnum.MQSUCCESS.getCode())
-                || DmpOutputTaskRecordStatusEnum.MQERROR.getCode().equals(a.getTabFlag())
-                || DmpOutputTaskRecordStatusEnum.COSUMERERROR.getCode().equals(a.getTabFlag())
-        ).map(req -> req.getCount()).reduce(MathUtil.ZERO, Integer::sum);
-        pushIng.setCount(pushIngCount);
-        result.add(pushIng);
-
-        //同步失败
-        DmpOutputTaskRecordDTO.TabListDTO failed = new DmpOutputTaskRecordDTO.TabListDTO();
-        failed.setTabFlag(DmpPushMonitorTabEnum.ERROR.getCode());
-        int failedCount = countList.stream().filter(a -> a.getTabFlag().equals(DmpOutputTaskRecordStatusEnum.ERROR.getCode())
-        ).findFirst().
-                flatMap(obj -> Optional.ofNullable(obj.getCount())).orElse(0);
-        failed.setCount(failedCount);
-        result.add(failed);
-
-        //同步成功
-        DmpOutputTaskRecordDTO.TabListDTO finish = new DmpOutputTaskRecordDTO.TabListDTO();
-        finish.setTabFlag(DmpPushMonitorTabEnum.FINISH.getCode());
-        int finishCount = countList.stream().filter(a -> DmpOutputTaskRecordStatusEnum.FINISH.getCode().equals(a.getTabFlag())
-        ).mapToInt(DmpOutputTaskRecordDTO.TabListDTO::getCount).sum();
-        finish.setCount(finishCount);
-        result.add(finish);
-
-        //无需同步
-        Integer count = this.lambdaQuery()
-                .eq(DmpOutputTaskRecordEntity::getStatus, DmpOutputTaskRecordStatusEnum.FINISH.getCode())
-                .eq(DmpOutputTaskRecordEntity::getIsNeedSync, Boolean.FALSE)
-                .count();
-        DmpOutputTaskRecordDTO.TabListDTO noNeedSync = new DmpOutputTaskRecordDTO.TabListDTO();
-        noNeedSync.setTabFlag(DmpPushMonitorTabEnum.NO_NEED_SYNC.getCode());
-        noNeedSync.setCount(count);
-        result.add(noNeedSync);
-
-        DmpOutputTaskRecordDTO.PagingParamDTO params = new DmpOutputTaskRecordDTO.PagingParamDTO();
-        Map<String,String> sqlMap = new HashMap<>();
-        sqlMap.put("default", "1 = 1");
-        params.setSqlMap(sqlMap);
-        params.setPermissionSql(dto.getPermissionSql());
-        Page query = new Page(1, -1);
-        IPage blackPaging = baseMapper.blackPaging(query, params);
-        //黑名单
-        Integer blackCount = blackPaging.getRecords().size();
-        DmpOutputTaskRecordDTO.TabListDTO black = new DmpOutputTaskRecordDTO.TabListDTO();
-        black.setTabFlag(DmpPushMonitorTabEnum.BLACK.getCode());
-        black.setCount(blackCount);
-        result.add(black);
+        List<DmpOutputTaskRecordDTO.TabListDTO> result = new ArrayList<>(8);
+        List<Future<List<TabListDTO>>> submitList = new ArrayList<>(8);
         
-        Integer historyCount = baseMapper.listStatusCountHis(dto.getPermissionSql());
-        if(historyCount == null) {
-        	historyCount = 0;
+        Future<List<TabListDTO>> submit1 = dmpTabListExecutorPool.submit(() -> {
+        	List<DmpOutputTaskRecordDTO.TabListDTO> subList = new ArrayList<>(8);
+        	List<DmpOutputTaskRecordDTO.TabListDTO> countList = baseMapper.listStatusCount(dto.getPermissionSql());
+            //全部
+            int allCount = countList.stream().mapToInt(DmpOutputTaskRecordDTO.TabListDTO::getCount).sum();
+            DmpOutputTaskRecordDTO.TabListDTO all = new DmpOutputTaskRecordDTO.TabListDTO();
+            all.setCount(allCount);
+            all.setTabFlag(DmpConstant.ALL);
+            subList.add(all);
+
+            //待推送
+            DmpOutputTaskRecordDTO.TabListDTO inif = new DmpOutputTaskRecordDTO.TabListDTO();
+            inif.setTabFlag(DmpPushMonitorTabEnum.INIT.getCode());
+            int inifCount = countList.stream().filter(a -> a.getTabFlag().equals(DmpOutputTaskRecordStatusEnum.INIT.getCode())).findFirst().
+                    flatMap(obj -> Optional.ofNullable(obj.getCount())).orElse(0);
+            inif.setCount(inifCount);
+            subList.add(inif);
+
+
+            //推送中
+            DmpOutputTaskRecordDTO.TabListDTO pushIng = new DmpOutputTaskRecordDTO.TabListDTO();
+            pushIng.setTabFlag(DmpPushMonitorTabEnum.PUSH_ING.getCode());
+            int pushIngCount = countList.stream().filter(a -> a.getTabFlag().equals(DmpOutputTaskRecordStatusEnum.MQSUCCESS.getCode())
+                    || DmpOutputTaskRecordStatusEnum.MQERROR.getCode().equals(a.getTabFlag())
+                    || DmpOutputTaskRecordStatusEnum.COSUMERERROR.getCode().equals(a.getTabFlag())
+            ).map(req -> req.getCount()).reduce(MathUtil.ZERO, Integer::sum);
+            pushIng.setCount(pushIngCount);
+            subList.add(pushIng);
+
+            //同步失败
+            DmpOutputTaskRecordDTO.TabListDTO failed = new DmpOutputTaskRecordDTO.TabListDTO();
+            failed.setTabFlag(DmpPushMonitorTabEnum.ERROR.getCode());
+            int failedCount = countList.stream().filter(a -> a.getTabFlag().equals(DmpOutputTaskRecordStatusEnum.ERROR.getCode())
+            ).findFirst().
+                    flatMap(obj -> Optional.ofNullable(obj.getCount())).orElse(0);
+            failed.setCount(failedCount);
+            subList.add(failed);
+
+            //同步成功
+            DmpOutputTaskRecordDTO.TabListDTO finish = new DmpOutputTaskRecordDTO.TabListDTO();
+            finish.setTabFlag(DmpPushMonitorTabEnum.FINISH.getCode());
+            int finishCount = countList.stream().filter(a -> DmpOutputTaskRecordStatusEnum.FINISH.getCode().equals(a.getTabFlag())
+            ).mapToInt(DmpOutputTaskRecordDTO.TabListDTO::getCount).sum();
+            finish.setCount(finishCount);
+            subList.add(finish);
+            return subList;
+        });
+        submitList.add(submit1);
+        
+        Future<List<TabListDTO>> submit2 = dmpTabListExecutorPool.submit(() -> {
+        	List<DmpOutputTaskRecordDTO.TabListDTO> subList = new ArrayList<>(8);
+        	//无需同步
+            Integer count = this.lambdaQuery()
+                    .eq(DmpOutputTaskRecordEntity::getStatus, DmpOutputTaskRecordStatusEnum.FINISH.getCode())
+                    .eq(DmpOutputTaskRecordEntity::getIsNeedSync, Boolean.FALSE)
+                    .count();
+            DmpOutputTaskRecordDTO.TabListDTO noNeedSync = new DmpOutputTaskRecordDTO.TabListDTO();
+            noNeedSync.setTabFlag(DmpPushMonitorTabEnum.NO_NEED_SYNC.getCode());
+            noNeedSync.setCount(count);
+            subList.add(noNeedSync);
+            return subList;
+        });
+        submitList.add(submit2);
+
+        Future<List<TabListDTO>> submit3 = dmpTabListExecutorPool.submit(() -> {
+        	List<DmpOutputTaskRecordDTO.TabListDTO> subList = new ArrayList<>(8);
+	        DmpOutputTaskRecordDTO.PagingParamDTO params = new DmpOutputTaskRecordDTO.PagingParamDTO();
+	        Map<String,String> sqlMap = new HashMap<>();
+	        sqlMap.put("default", "1 = 1");
+	        params.setSqlMap(sqlMap);
+	        params.setPermissionSql(dto.getPermissionSql());
+	        Page query = new Page(1, -1);
+	        IPage blackPaging = baseMapper.blackPaging(query, params);
+	        //黑名单
+	        Integer blackCount = blackPaging.getRecords().size();
+	        DmpOutputTaskRecordDTO.TabListDTO black = new DmpOutputTaskRecordDTO.TabListDTO();
+	        black.setTabFlag(DmpPushMonitorTabEnum.BLACK.getCode());
+	        black.setCount(blackCount);
+	        subList.add(black);
+	        return subList;
+        });
+        submitList.add(submit3);
+        
+        Future<List<TabListDTO>> submit4 = dmpTabListExecutorPool.submit(() -> {
+        	List<DmpOutputTaskRecordDTO.TabListDTO> subList = new ArrayList<>(8);
+	        Integer historyCount = baseMapper.listStatusCountHis(dto.getPermissionSql());
+	        if(historyCount == null) {
+	        	historyCount = 0;
+	        }
+	        DmpOutputTaskRecordDTO.TabListDTO history = new DmpOutputTaskRecordDTO.TabListDTO();
+	        history.setTabFlag(DmpPushMonitorTabEnum.HISTORY.getCode());
+	        history.setCount(historyCount);
+	        subList.add(history);
+	        return subList;
+        });
+        submitList.add(submit4);
+        
+        for(Future<List<TabListDTO>> s : submitList) {
+        	try {
+        		result.addAll(s.get());
+			} catch (Exception e) {
+				log.error("并发获取tab失败" , e);
+			}
         }
-        DmpOutputTaskRecordDTO.TabListDTO history = new DmpOutputTaskRecordDTO.TabListDTO();
-        history.setTabFlag(DmpPushMonitorTabEnum.HISTORY.getCode());
-        history.setCount(historyCount);
-        result.add(history);
 
         return result;
     }
