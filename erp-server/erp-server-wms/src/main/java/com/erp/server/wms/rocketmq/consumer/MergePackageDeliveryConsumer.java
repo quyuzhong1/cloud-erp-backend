@@ -2,7 +2,6 @@ package com.erp.server.wms.rocketmq.consumer;
 
 
 import cn.hutool.core.text.CharSequenceUtil;
-import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.common.business.constant.RedisCacheConstants;
 import com.common.business.enums.DistributedLockEnum;
@@ -209,7 +208,7 @@ public class MergePackageDeliveryConsumer implements RocketMQListener<String> {
                     soB2cEntity.getDictPlatform(),
                     soB2cEntity.convertSubmitPlatformUniqueKey(),
                     curDeliveryEntity.getId(),
-                    businessDesc, false);
+                    businessDesc, false, false);
         } else {
             log.warn("【组包预报虚假标记发货】【{}】未达到条件:忽略标记平台发货", soB2cEntity.getCode());
         }

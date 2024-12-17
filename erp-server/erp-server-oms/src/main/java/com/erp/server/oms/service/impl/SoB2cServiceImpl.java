@@ -8586,6 +8586,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                     platformShipOrderDTO.setSoB2cId(soB2cEntity.getId());
                     platformShipOrderDTO.setSubmitPlatformUniqueKey(soB2cEntity.convertSubmitPlatformUniqueKey());
                     platformShipOrderDTO.setDictPlatform(soB2cEntity.getDictPlatform());
+                    platformShipOrderDTO.setHasNotOutStock(true);
                     soB2cDeliveryFeign.shipOrder(platformShipOrderDTO);
                     updateList.add(soB2cEntity);
                 } catch (Exception e) {
