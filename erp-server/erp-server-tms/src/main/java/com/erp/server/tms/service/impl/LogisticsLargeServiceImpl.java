@@ -451,7 +451,7 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
 
         if (ObjectUtil.isNotEmpty(detailEntity)) {
             BigDecimal firstMileFreightAmount = detailEntity.getAllocatedAmount().divide(rate, 4, RoundingMode.DOWN);
-            addDTO.setFirstMileEstimatedFreightTax(firstMileFreightAmount.divide(rate, 4, RoundingMode.DOWN));
+            addDTO.setFirstMileEstimatedFreightTax(firstMileFreightAmount);
             addDTO.setFirstMileEstimatedFreight(firstMileFreightAmount.divide(rate, 4, RoundingMode.DOWN).divide(BigDecimal.ONE.add(taxRate), 4, RoundingMode.DOWN));
 
             addDTO.setFirstMileActualFreightTax(firstMileFreightAmount.divide(rate, 4, RoundingMode.DOWN));
