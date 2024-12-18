@@ -275,17 +275,18 @@ public class MouldInfoServiceImpl extends SuperServiceImpl<MouldInfoMapper, Moul
         MouldInfoEntity entity = getById(id);
         if (ApproveStatusEnum.APPROVE.getStatus().equals(entity.getStatus())) {
             Map<String, Object> data = new HashMap<>();
+            LoginUser user = UserContext.getDefaultLoginUser();
             FindUserDTO productManager = sysUserFeign.getUserByUserId(entity.getProductManagerId());
             data.put("name", entity.getName());
             data.put("productManager", productManager.getUserName());
             data.put("mouldCategoryCode", entity.getMouldCategoryCode());
             data.put("createUserName", entity.getCreateUserName());
-            data.put("approveUserName", entity.getApproveUserName());
+            data.put("approveUserName", user.getUserName());
             data.put("status", ApproveStatusEnum.getName(entity.getStatus()));
             data.put("approveRemark", entity.getApproveRemark());
             data.put("createTime", entity.getCreateTime().format(DateTimeFormatter.ofPattern(DATE_FAMART)));
             data.put("approveTime", LocalDateTime.now().format(DateTimeFormatter.ofPattern(DATE_FAMART)));
-            LoginUser user = UserContext.getDefaultLoginUser();
+
             mouldInfoNotice(NoticeEnum.MOULD_APPROVE, data, new MouldInfoDTO.NoticeDTO(entity.getId(),
                     entity.getName(), entity.getProductManagerId(), user.getUid(), user.getUserName()),"mouldApprove.ftl");
         }
