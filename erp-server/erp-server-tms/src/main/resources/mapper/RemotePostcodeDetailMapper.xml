@@ -16,7 +16,7 @@
        <result column="approve_status" property="approveStatus" />
        <result column="code" property="code" />
        <result column="country" property="country" />
-       <result column="city" property="city" />
+       <result column="city_name" property="cityName" />
        <result column="match_type" property="matchType" />
        <result column="post_code" property="postCode" />
     </resultMap>
@@ -32,7 +32,7 @@
         update_time,
         version,
         is_deleted,
-        main_id, approve_status, code, country, city, match_type, post_code
+        main_id, approve_status, code, country,city_name, match_type, post_code
     </sql>
 
     <select id="paging" resultType="com.erp.model.tms.dto.RemotePostcodeDetailDTO$ListDTO">

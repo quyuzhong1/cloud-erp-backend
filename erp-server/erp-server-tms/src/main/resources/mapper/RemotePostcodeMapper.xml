@@ -60,7 +60,7 @@
             rp.remark,
             rp.disabled,
             rpd.country,
-            rpd.city,
+            rpd.city_name,
             rpd.match_type,
             rpd.post_code
         FROM

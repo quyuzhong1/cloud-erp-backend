@@ -18,7 +18,9 @@ import java.util.List;
  */
 public interface OverseasInventoryAgeDetailService extends SuperService<OverseasInventoryAgeDetailEntity> {
 
-        List<OverseasInventoryAgeDetailDTO.AgeRangeViewDTO> getAgeRangeViewByMainIds(List<String> mainIds);
+    List<OverseasInventoryAgeDetailDTO.AgeRangeViewDTO> getAgeRangeViewByMainIds(List<String> mainIds);
 
-        PagingVO<OverseasInventoryAgeDetailDTO.ListDTO> pagingSelect(PagingDTO<OverseasInventoryAgeDetailDTO.PagingParamDTO> dto);
+    PagingVO<OverseasInventoryAgeDetailDTO.ListDTO> pagingSelect(PagingDTO<OverseasInventoryAgeDetailDTO.PagingParamDTO> dto);
+
+    List<OverseasInventoryAgeDetailEntity> getAgeDetail();
 }

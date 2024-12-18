@@ -87,11 +87,6 @@ public class RemotePostcodeDetailDTO implements Serializable {
         * 国家
         */
         private String country;
-
-        /**
-        * 城市
-        */
-        private String city;
         /**
          * 城市名称
          */
@@ -151,11 +146,6 @@ public class RemotePostcodeDetailDTO implements Serializable {
         * 国家
         */
         private String country;
-
-        /**
-        * 城市
-        */
-        private String city;
 
         /**
          * 城市
@@ -262,8 +252,6 @@ public class RemotePostcodeDetailDTO implements Serializable {
         /**
         * 城市
         */
-        private String city;
-
         private String cityName;
 
         /**

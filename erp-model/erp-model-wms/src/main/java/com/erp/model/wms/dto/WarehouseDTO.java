@@ -389,6 +389,22 @@ public class WarehouseDTO implements Serializable {
         private List<String> warehouseIdList;
 
         private Boolean isSupplier;
+        /**
+         * 仓库类型 字典 warehouseType
+         * factory	生产工厂
+         * supplier	供应商仓库
+         * selfSupport	普通仓库
+         * hwc	海外仓
+         * gnzyc	国内自营仓
+         * gwzyc	海外自营仓
+         * wlzzc	物流中转仓
+         * qdc	渠道仓
+         * fcspc	发出商品仓
+         * ztc	在途仓
+         * FBA	平台仓
+         * overseas	海外第三方仓
+         */
+        private List<String> typeCodeList;
 
     }
 

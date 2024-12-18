@@ -274,23 +274,29 @@
         </if>
     </select>
     <select id="estimateIsOutOfRangeDelivery" resultType="java.lang.Boolean">
-        SELECT EXISTS (
-            SELECT
-                lc.id
-            FROM
-                logistics_channel lc
-                    INNER JOIN logistics_channel_remote_postcode lcrp ON lc.ID = lcrp.logistics_channel_id 	AND lcrp.is_deleted = FALSE
-                    INNER JOIN remote_postcode rp on rp.id = lcrp.remote_postcode_id and rp.is_deleted = FALSE and rp.disabled = FALSE
-                    INNER JOIN remote_postcode_detail rpd on rpd.main_id = rp.id and rpd.is_deleted = FALSE
-            WHERE
-                lc.is_deleted = FALSE
-                    and lc.id = #{logisticsChannelId}
-                    and
-                (rpd.match_type = 'preciseMatch' and  rpd.country = #{country} and rpd.post_code =  #{postCode} )
-               or (rpd.match_type = 'prefixMatch' and rpd.post_code like concat(#{postCode},'%'))
-               or (rpd.match_type = 'suffixMatch' and rpd.post_code like concat('%',#{postCode}) )
-               or (rpd.match_type = 'fuzzyMatch' and rpd.post_code like concat('%',#{postCode},'%'))
-            limit 1
-        )
+        SELECT EXISTS
+                   (
+                       SELECT
+                           lc.ID
+                       FROM
+                           logistics_channel lc
+                               INNER JOIN logistics_channel_remote_postcode lcrp ON lc.ID = lcrp.logistics_channel_id
+                               AND lcrp.is_deleted =
+                                   FALSE INNER JOIN remote_postcode rp ON rp.ID = lcrp.remote_postcode_id
+                               AND rp.is_deleted = FALSE
+                               AND rp.disabled =
+                                   FALSE INNER JOIN remote_postcode_detail rpd ON rpd.main_id = rp.ID
+                               AND rpd.is_deleted = FALSE
+                       WHERE
+                           lc.is_deleted = FALSE
+                         AND lc.ID = #{ logisticsChannelId }
+                         AND (
+                           ( rpd.match_type = 'preciseMatch' AND rpd.country = #{ country } AND rpd.post_code = #{ postCode } )
+                               OR ( rpd.match_type = 'prefixMatch' AND #{ postCode } LIKE concat ( rpd.post_code, '%' ) )
+                               OR ( rpd.match_type = 'suffixMatch' AND #{ postCode } LIKE concat ( '%', rpd.post_code ) )
+                               OR ( rpd.match_type = 'fuzzyMatch' AND #{ postCode } LIKE concat ( '%', rpd.post_code, '%' ) )
+                           )
+                       LIMIT 1
+                   )
     </select>
 </mapper>
