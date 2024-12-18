@@ -200,7 +200,7 @@ public class PlatformInventoryConsumerService<T extends DmpSyncTaskIdDTO> extend
                         .list();
                 for (PlatformInventoryDTO.PlatformInventoryAgeDTO ageDTO : dto.getAgeInfoList()) {
                     // 计算日期差
-                    int daysBetween = (int) ChronoUnit.DAYS.between(ageDTO.getPutAwayDate(), ageDTO.getPullDate());
+                    int daysBetween = (int) ChronoUnit.DAYS.between(ageDTO.getPutAwayDate(), LocalDate.now());
 
                     OverseasInventoryAgeDetailEntity oldDetail = oldDetails.stream().filter(v -> v.getPutAwayDate().equals(ageDTO.getPutAwayDate())).findFirst().orElse(null);
                     if(null == oldDetail){

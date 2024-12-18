@@ -35,11 +35,6 @@ public class RemotePostcodeDetailEntity extends BaseEntity<RemotePostcodeDetailE
     @TableField("country")
     private String country;
     /**
-    * 城市
-    */
-    @TableField("city")
-    private String city;
-    /**
      * 城市名称
      */
     @TableField("city_name")

@@ -13,13 +13,11 @@ import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.FileTaskEventEnum;
 import com.common.business.enums.OperationTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
-import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.scm.enums.ModuleTypeEnum;
-import com.erp.model.sys.entity.DictCityEntity;
 import com.erp.model.tms.dto.RemotePostcodeDTO;
 import com.erp.model.tms.dto.RemotePostcodeDetailDTO;
 import com.erp.model.tms.entity.RemotePostcodeEntity;
@@ -32,7 +30,6 @@ import com.erp.server.tms.service.RemotePostcodeDetailService;
 import com.erp.server.tms.service.RemotePostcodeService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -41,7 +38,6 @@ import javax.servlet.http.HttpServletResponse;
 import java.time.format.DateTimeFormatter;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -78,7 +74,6 @@ public class RemotePostcodeServiceImpl extends SuperServiceImpl<RemotePostcodeMa
         if(Boolean.TRUE.equals(exists)) {
             throw new ServiceException("已存在相同名称的邮编组");
         }
-
         // 数据处理
         log.info("开始新增偏远邮编组");
         boolean save = super.save(remotePostcodeEntity);
@@ -118,10 +113,6 @@ public class RemotePostcodeServiceImpl extends SuperServiceImpl<RemotePostcodeMa
         }
         // 记录主单操作日志
         operateLogService.addModuleOperateLogByObj(old, remotePostcodeEntity, ModuleTypeEnum.REMOTE_POSTCODE.getCode(), remotePostcodeEntity.getId(),"编辑操作");
-        if(Boolean.FALSE.equals(old.getDisabled().equals(remotePostcodeEntity.getDisabled()))){
-            String msg = StrUtil.format("变更了偏远地区邮编组【{}】为{}", remotePostcodeEntity.getName(),Boolean.TRUE.equals(remotePostcodeEntity.getDisabled()) ? "禁用" : "启用");
-            operateLogService.addModuleOperateLog(msg,ModuleTypeEnum.REMOTE_POSTCODE.getCode(), remotePostcodeEntity.getId(), "状态变更");
-        }
         //更新明细
         remotePostcodeDetailService.update(updateDTO,remotePostcodeEntity.getId());
         return Boolean.TRUE;
@@ -176,18 +167,10 @@ public class RemotePostcodeServiceImpl extends SuperServiceImpl<RemotePostcodeMa
         if(CollUtil.isEmpty(pageData.getRecords())) {
             return new PagingVO(pageData);
         }
-        // 数据处理
-        List<String> citys = pageData.getRecords().stream().map(RemotePostcodeDTO.ExportListDTO::getCity).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
-        List<DictCityEntity> dictCityEntities = sysUserFeign.listCityByIds(citys);
-        // 将城市信息转换为 Map，减少多次流式查找
-        Map<String, String> cityNameMap = dictCityEntities.stream()
-                .collect(Collectors.toMap(DictCityEntity::getId, DictCityEntity::getName));
         DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
         for (RemotePostcodeDTO.ExportListDTO record : pageData.getRecords()) {
             //是否禁用
             record.setDisabledName(Boolean.TRUE.equals(record.getDisabled()) ? "禁用" : "启用");
-            //城市名称
-            record.setCityName(cityNameMap.getOrDefault(record.getCity(),""));
             // 匹配类型名称
             record.setMatchTypeName(RemotePostcodeDetailMatchTypeEnum.getName(record.getMatchType()));
             record.setUpdateTimeStr(record.getUpdateTime().format(dateTimeFormatter));
@@ -202,8 +185,8 @@ public class RemotePostcodeServiceImpl extends SuperServiceImpl<RemotePostcodeMa
         // 删除主单数据
         super.removeById(id);
         remotePostcodeDetailService.removeByMainIds(Collections.singletonList(id));
-        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据删除操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getId(), "偏远邮编组");
-        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.REMOTE_POSTCODE.getCode(), entity.getId(), "删除偏远邮编组数据");
+        String msg = StrUtil.format("删除偏远地区邮编组【{}】成功", entity.getName());
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.REMOTE_POSTCODE.getCode(), entity.getId(), "删除操作");
         return BatchResultDTO.success(entity.getId(), entity.getId(), OperationTypeEnum.DELETE);
     }
 
@@ -213,20 +196,9 @@ public class RemotePostcodeServiceImpl extends SuperServiceImpl<RemotePostcodeMa
         RemotePostcodeDTO.ViewDTO data = BeanMapperUtils.map(RemotePostcodeDTO.ViewDTO.class, remotePostcodeEntity);
         // 数据填充处理
         List<RemotePostcodeDetailDTO.ViewDTO> details = remotePostcodeDetailService.listByMainIds(Collections.singletonList(id));
-
-        List<String> citys = details.stream().map(RemotePostcodeDetailDTO.ViewDTO::getCity).filter(StringUtils::isNotBlank).collect(Collectors.toList());
-        List<DictCityEntity> dictCityEntities = sysUserFeign.listCityByIds(citys);
-        // 将城市信息转换为 Map，减少多次流式查找
-        Map<String, String> cityNameMap = dictCityEntities.stream()
-                .collect(Collectors.toMap(DictCityEntity::getId, DictCityEntity::getName));
-
         details.forEach(detail -> {
             // 匹配类型名称
             detail.setMatchTypeName(RemotePostcodeDetailMatchTypeEnum.getName(detail.getMatchType()));
-
-            // 设置城市名称
-            String cityName = cityNameMap.getOrDefault(detail.getCity(), "");
-            detail.setCityName(cityName);
         });
         data.setDetails(details);
         return data;

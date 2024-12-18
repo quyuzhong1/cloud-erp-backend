@@ -149,6 +149,7 @@ public class SoB2cController extends BaseController {
             if (warehouseRuleMatch) {
                 SoB2cDTO.RuleResultDTO logisticsRuleResult = soB2cService.logisticsRule(id, new HashMap<>(), false);
                 Boolean autoGetTrackNo = logisticsRuleResult.getAutoGetTrackNo();
+                Boolean autoGetTrackNotOfRangeDelivery = logisticsRuleResult.getAutoGetTrackNotOfRangeDelivery();
                 Boolean isRuleMatch = logisticsRuleResult.getIsRuleMatch();
                 //表示成功
                 if(isRuleMatch){
@@ -157,7 +158,7 @@ public class SoB2cController extends BaseController {
                     //申报信息规则
                     soB2cService.declareRule(id, new HashMap<>(), Boolean.FALSE, false);
                 }
-                if (Objects.nonNull(autoGetTrackNo) && Boolean.TRUE.equals(autoGetTrackNo)) {
+                if ((Objects.nonNull(autoGetTrackNo) && Boolean.TRUE.equals(autoGetTrackNo)) || (Objects.nonNull(autoGetTrackNotOfRangeDelivery) && Boolean.TRUE.equals(autoGetTrackNotOfRangeDelivery))) {
                     soB2cService.getLogisticsCode(id, autoGetTrackNo);
                 }
             }
@@ -283,7 +284,8 @@ public class SoB2cController extends BaseController {
                             }
 
                             Boolean autoGetTrackNo = logisticsRuleResult.getAutoGetTrackNo();
-                            if (Objects.nonNull(autoGetTrackNo) && autoGetTrackNo) {
+                            Boolean autoGetTrackNotOfRangeDelivery = logisticsRuleResult.getAutoGetTrackNotOfRangeDelivery();
+                            if ((Objects.nonNull(autoGetTrackNo) && Boolean.TRUE.equals(autoGetTrackNo)) || (Objects.nonNull(autoGetTrackNotOfRangeDelivery) && Boolean.TRUE.equals(autoGetTrackNotOfRangeDelivery))) {
                                 soB2cService.getLogisticsCode(id, autoGetTrackNo);
                             }
                         }

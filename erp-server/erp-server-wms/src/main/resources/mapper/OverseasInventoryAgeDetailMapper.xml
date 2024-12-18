@@ -78,4 +78,25 @@
         </if>
         order by oiad.inventory_age
     </select>
+
+
+    <select id="getAgeDetail"   resultType="com.erp.model.wms.entity.OverseasInventoryAgeDetailEntity">
+        SELECT
+        oiad.id,
+        oiad.main_id,
+        oiad.pull_date,
+        oiad.put_away_date,
+        oiad.inventory_qty,
+        oiad.inventory_age
+        FROM
+        overseas_inventory_age_detail oiad
+        INNER JOIN
+        (SELECT main_id, MAX(pull_date) AS latest_pull_date
+        FROM overseas_inventory_age_detail
+        WHERE is_deleted = FALSE
+        GROUP BY main_id) latest_data
+        ON oiad.main_id = latest_data.main_id AND oiad.pull_date = latest_data.latest_pull_date
+        WHERE
+        oiad.is_deleted = FALSE
+    </select>
 </mapper>
