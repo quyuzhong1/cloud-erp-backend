@@ -212,10 +212,10 @@ public class MouldInfoServiceImpl extends SuperServiceImpl<MouldInfoMapper, Moul
     @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO draft(MouldInfoDTO.DraftDTO dto) {
         MouldInfoDTO.UpdateDTO updateDTO = BeanMapperUtils.map(MouldInfoDTO.UpdateDTO.class, dto);
-        return add(updateDTO);
+        return add(updateDTO, true);
     }
 
-    public BatchResultDTO add(MouldInfoDTO.UpdateDTO dto) {
+    public BatchResultDTO add(MouldInfoDTO.UpdateDTO dto, boolean isDraft) {
         //保存基本信息
         MouldInfoEntity mouldInfoEntity = new MouldInfoEntity();
         BeanMapperUtils.copy(dto, mouldInfoEntity);
@@ -227,7 +227,7 @@ public class MouldInfoServiceImpl extends SuperServiceImpl<MouldInfoMapper, Moul
         }
         ApplicationContextUtils.getBean(MouldInfoServiceImpl.class).saveOrUpdate(mouldInfoEntity);
         if (!CollectionUtils.isEmpty(dto.getDetailList())) {
-            mouldDetailService.add(dto.getDetailList(), mouldInfoEntity);
+            mouldDetailService.add(dto.getDetailList(), mouldInfoEntity, isDraft);
         }
         if (!CollectionUtils.isEmpty(dto.getDocList())) {
             mouldDocInfoService.add(dto.getDocList(), mouldInfoEntity.getId());
@@ -295,7 +295,7 @@ public class MouldInfoServiceImpl extends SuperServiceImpl<MouldInfoMapper, Moul
     @Override
     @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO addAndSubmit(MouldInfoDTO.UpdateDTO dto) {
-        BatchResultDTO add = add(dto);
+        BatchResultDTO add = add(dto, false);
         return ApplicationContextUtils.getBean(MouldInfoServiceImpl.class).submit(add.getId());
     }
 
@@ -303,6 +303,10 @@ public class MouldInfoServiceImpl extends SuperServiceImpl<MouldInfoMapper, Moul
     @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO submit(String id) {
         MouldInfoEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到模具数据"));
+        List<MouldDetailDTO.ViewDTO> viewDTOS = mouldDetailService.listByMouldId(entity.getId());
+        if (CollectionUtils.isEmpty(viewDTOS)) {
+            throw new ServiceException(ApiError.ERROR_1041, entity.getName());
+        }
         // 待提交或审核不通过并且未作废允许提交
         if (Boolean.FALSE.equals(ApproveStatusEnum.allowUpdateStatus(ApproveStatusEnum.getByStatus(entity.getStatus())))
                 || Boolean.TRUE.equals(entity.getInvalidStatus())) {

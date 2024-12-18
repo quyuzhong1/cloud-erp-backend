@@ -74,13 +74,13 @@ public class MouldInfoExcelListener extends AnalysisEventListener<MouldInfoImpor
         dto.setThirdMouldNo(data.getThirdMouldNo());
         dto.setMouldHoles(data.getMouldHoles());
         if (!ObjectUtils.isEmpty(data.getLength())) {
-            dto.setLength(new BigDecimal(data.getLength()).multiply(new BigDecimal(10)));
+            dto.setLength(new BigDecimal(data.getLength()));
         }
         if (!ObjectUtils.isEmpty(data.getWidth())) {
-            dto.setWidth(new BigDecimal(data.getWidth()).multiply(new BigDecimal(10)));
+            dto.setWidth(new BigDecimal(data.getWidth()));
         }
         if (!ObjectUtils.isEmpty(data.getHeight())) {
-            dto.setHeight(new BigDecimal(data.getHeight()).multiply(new BigDecimal(10)));
+            dto.setHeight(new BigDecimal(data.getHeight()));
         }
         dto.setMaterial(data.getMaterial());
         dto.setLifeCycle(Integer.parseInt(data.getLifeCycle()));
@@ -149,6 +149,7 @@ public class MouldInfoExcelListener extends AnalysisEventListener<MouldInfoImpor
                     MouldDetailDTO.ViewDTO dto = entry.getValue().stream()
                             .findFirst()
                             .orElse(new MouldDetailDTO.ViewDTO());
+                    dto.setMouldNo(null);
                     // 设置合并后的产品列表
                     dto.setProductList(dtos);
                     return dto;
