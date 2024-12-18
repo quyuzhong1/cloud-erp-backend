@@ -39,12 +39,7 @@
             t.status AS tabFlag,
             COUNT(t.id) AS count
         FROM dmp_output_task_record t
-        LEFT JOIN dmp_output_task g ON t.main_id = g.id
-        LEFT JOIN dmp_cfg_output h ON g.cfg_output_id = h.id
-        LEFT JOIN dmp_cfg_output_black dcob ON t.source_code = dcob.field_value
-            AND h.id = dcob.main_id
-            AND dcob.is_deleted = FALSE
-        WHERE t.is_deleted = false and (dcob.id is null or dcob.field_value = '')  
+        WHERE t.is_deleted = false
         <if test="permissionSql != null and permissionSql != ''">
             ${permissionSql}
         </if>
@@ -55,12 +50,7 @@
         SELECT
             COUNT(t.id) AS count
         FROM dmp_output_task_record_his t
-        LEFT JOIN dmp_output_task_his g ON t.main_id = g.id
-        LEFT JOIN dmp_cfg_output h ON g.cfg_output_id = h.id
-        LEFT JOIN dmp_cfg_output_black dcob ON t.source_code = dcob.field_value
-            AND h.id = dcob.main_id
-            AND dcob.is_deleted = FALSE
-        WHERE t.is_deleted = false and (dcob.id is null or dcob.field_value = '')  
+        WHERE t.is_deleted = false
         <if test="permissionSql != null and permissionSql != ''">
             ${permissionSql}
         </if>
@@ -70,13 +60,18 @@
     <select id="listBlackCount" resultType="java.lang.Integer">
         SELECT
             COUNT(t.id) AS count
-        FROM dmp_output_task_record t
-        LEFT JOIN dmp_output_task g ON t.main_id = g.id
-        LEFT JOIN dmp_cfg_output h ON g.cfg_output_id = h.id
-        LEFT JOIN dmp_cfg_output_black dcob ON t.source_code = dcob.field_value
-            AND h.id = dcob.main_id
-            AND dcob.is_deleted = FALSE
-        WHERE t.is_deleted = false 
+        from 
+(select id,main_id,create_time,field_value,remark,cfg_output_id,source_code,t4.update_time,status,is_need_sync from dmp_cfg_output_black t1 
+left join 
+(select t2.is_need_sync,t3.cfg_output_id,t2.source_code,t2.update_time,t2.status from dmp_output_task_record t2 left join dmp_output_task t3 on t2.main_id = t3.id where t2.is_deleted = 'f' and t3.is_deleted = 'f') t4 
+on t1.main_id = t4.cfg_output_id and t1.field_value = t4.source_code
+where t1.field_value != '' and t1.compare_sign = 'eq' and t1.create_user_id != '' and t1.is_deleted = 'f') t
+LEFT JOIN dmp_cfg_output h ON t.main_id = h.id
+				LEFT JOIN dmp_cfg_input_convert j ON h.input_convert_id = j.id
+        LEFT JOIN dmp_cfg_input k ON j.main_id = k.id
+				LEFT JOIN dmp_basic_system l ON k.system_id = l.id
+        LEFT JOIN dmp_basic_system i ON h.system_id = i.id 
+        where ${params.sqlMap.default}
         <if test="permissionSql != null and permissionSql != ''">
             ${permissionSql}
         </if>
