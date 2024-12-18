@@ -52,8 +52,8 @@ public class MouldDetailServiceImpl extends SuperServiceImpl<MouldDetailMapper, 
     private MouldRefProductService mouldRefProductService;
 
     @Override
-    public void add(List<MouldDetailDTO.UpdateDTO> detailList, MouldInfoEntity entity) {
-        verifyData(detailList);
+    public void add(List<MouldDetailDTO.UpdateDTO> detailList, MouldInfoEntity entity, boolean isDraft) {
+        verifyData(detailList, isDraft);
         List<MouldDetailEntity> mouldDetailList = list(Wrappers.<MouldDetailEntity>lambdaQuery().eq(MouldDetailEntity::getMainId, entity.getId()));
         List<String> detailIds = mouldDetailList.stream().map(MouldDetailEntity::getId).collect(Collectors.toList());
         //过滤已返的数据编辑合同返还约定
@@ -127,9 +127,9 @@ public class MouldDetailServiceImpl extends SuperServiceImpl<MouldDetailMapper, 
         mouldRefProductService.saveBatch(mouldRefProductList);
     }
 
-    private void verifyData(List<MouldDetailDTO.UpdateDTO> detailList) {
+    private void verifyData(List<MouldDetailDTO.UpdateDTO> detailList, boolean isDraft) {
         for (MouldDetailDTO.UpdateDTO dto : detailList) {
-            if (Boolean.TRUE.equals(dto.getIsNeedRefund())) {
+            if (Boolean.TRUE.equals(dto.getIsNeedRefund()) && Boolean.FALSE.equals(isDraft)) {
                 StringBuilder sb = new StringBuilder();
                 if (CollectionUtils.isEmpty(dto.getRefProductList())) {
                     sb.append("关联下单sku不能为空，");
