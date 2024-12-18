@@ -306,6 +306,15 @@ public class CalcSalesInfoDimDTO implements Serializable {
     public static class CalcResultDTO {
 
         /**
+         * sku id
+         */
+        private String skuId;
+        /**
+         * 店铺
+         */
+        private String shopId;
+
+        /**
          * sku_id
          */
         private String calcSalesInfoDimId;

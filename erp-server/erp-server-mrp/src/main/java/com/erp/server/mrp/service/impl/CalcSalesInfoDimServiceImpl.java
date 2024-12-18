@@ -125,7 +125,7 @@ public class CalcSalesInfoDimServiceImpl extends SuperServiceImpl<CalcSalesInfoD
                 //开始计算分时段预估
                 calculationTimePeriodSalesEstimates(dto.getStartCalcDate(), entity, calcSalesInfoEstimateList, dto.getSalesHistoryMap());
                 //计算吻合度
-                BigDecimal similarity = calculationSimilarity(dto, entity, calcSalesInfoEstimateList);
+                BigDecimal similarity = calculationSimilarity(dto, calcSalesInfoEstimateList);
                 entity.setSimilarity(similarity);
                 calcSalesInfoDenoisingService.saveBatch(calculationSales);
                 calcSalesInfoEstimateService.saveBatch(calcSalesInfoEstimateList);
@@ -135,19 +135,19 @@ public class CalcSalesInfoDimServiceImpl extends SuperServiceImpl<CalcSalesInfoD
 
     }
 
-    private BigDecimal calculationSimilarity(CalcSalesInfoDimDTO.CalcResultDTO dto, CalcSalesInfoDimEntity entity, List<CalcSalesInfoEstimateEntity> calcSalesInfoEstimateList) {
+    private BigDecimal calculationSimilarity(CalcSalesInfoDimDTO.CalcResultDTO dto, List<CalcSalesInfoEstimateEntity> calcSalesInfoEstimateList) {
 
         List<BigDecimal> calcList = calcSalesInfoEstimateList.stream()
                 .map(CalcSalesInfoEstimateEntity::getQty)
                 .collect(Collectors.toList());
-        List<OrderHistorySalesEsEntity> salesInfos = orderHistorySalesEsService.findByShopIdAndSkuIdAndDateBetween(entity.getShopId(), entity.getSkuId(),
+        List<OrderHistorySalesEsEntity> salesInfos = orderHistorySalesEsService.findByShopIdAndSkuIdAndDateBetween(dto.getShopId(), dto.getSkuId(),
                 dto.getStartCalcDate(), dto.getEndCalcDate());
         Map<LocalDate, Integer> hisSalesMap = salesInfos.stream()
                 .collect(Collectors.toMap(OrderHistorySalesEsEntity::getDate, OrderHistorySalesEsEntity::getOriginalSalesQty, Integer::sum));
         List<BigDecimal> basicData = new ArrayList<>();
         //组装历史真实销量
         LocalDate date = dto.getStartCalcDate();
-        while (date.isBefore(dto.getEndCalcDate())) {
+        while (!date.isAfter(dto.getEndCalcDate())) {
             basicData.add(new BigDecimal(Optional.ofNullable(hisSalesMap.get(date)).orElse(0)));
             date = date.plusDays(1);
         }
@@ -430,7 +430,7 @@ public class CalcSalesInfoDimServiceImpl extends SuperServiceImpl<CalcSalesInfoD
         List<LocalDate> dateList = new ArrayList<>();
         //组装历史真实销量
         LocalDate date = startCalcDate;
-        while (date.isBefore(endCalcDate)) {
+        while (!date.isAfter(endCalcDate)) {
             basicData.add(new BigDecimal(Optional.ofNullable(hisSalesMap.get(date)).orElse(0)));
             dateList.add(date);
             date = date.plusDays(1);
