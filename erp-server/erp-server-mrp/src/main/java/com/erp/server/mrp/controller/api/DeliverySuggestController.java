@@ -55,6 +55,19 @@ public class DeliverySuggestController extends BaseController {
     }
 
     /**
+     * 平台类型下的平台数据
+     * @author will
+     * @date 2024/12/18 9:20
+     * @param dto
+     * @return ApiResult<List<PlatformDTO>>
+     */
+    @PostMapping("/listPlatformByPlatformType")
+    public ApiResult<List<DeliverySuggestDTO.PlatformDTO>> listPlatformByPlatformType(@RequestBody DeliverySuggestDTO.PlatformTypeParamDTO dto) {
+        List<DeliverySuggestDTO.PlatformDTO> tabList = deliverySuggestService.listPlatformByPlatformType(dto);
+        return success(tabList);
+    }
+
+    /**
      * tab列表
      * @author Will
      * @date: 2024/12/16 10:48
