@@ -80,21 +80,21 @@ public class MouldInfoImportDTO {
          */
         @ColumnWidth(25)
         @ExcelProperty(value = "模具尺寸.长(cm)", index = 5)
-        @FieldValid(fieldName = "模具尺寸.长(cm)", maxLength = 9, formatPattern = FieldFormatPatternTypeEnum.AMOUNT2)
+        @FieldValid(fieldName = "模具尺寸.长(cm)", maxLength = 9, formatPattern = FieldFormatPatternTypeEnum.POSITIVEINTEGER)
         private String length;
         /**
          * 模具尺寸.宽(cm)
          */
         @ColumnWidth(25)
         @ExcelProperty(value = "模具尺寸.宽(cm)", index = 6)
-        @FieldValid(fieldName = "模具尺寸.宽(cm)", maxLength = 9, formatPattern = FieldFormatPatternTypeEnum.AMOUNT2)
+        @FieldValid(fieldName = "模具尺寸.宽(cm)", maxLength = 9, formatPattern = FieldFormatPatternTypeEnum.POSITIVEINTEGER)
         private String width;
         /**
          * 模具尺寸.高(cm)
          */
         @ColumnWidth(25)
         @ExcelProperty(value = "模具尺寸.高(cm)", index = 7)
-        @FieldValid(fieldName = "模具尺寸.高(cm)", maxLength = 9, formatPattern = FieldFormatPatternTypeEnum.AMOUNT2)
+        @FieldValid(fieldName = "模具尺寸.高(cm)", maxLength = 9, formatPattern = FieldFormatPatternTypeEnum.POSITIVEINTEGER)
         private String height;
         /**
          * 模具材质
