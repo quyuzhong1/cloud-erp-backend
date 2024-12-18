@@ -292,6 +292,8 @@ public class SoB2cController extends BaseController {
                         soB2cService.removeSignError(entity.getId(), SoB2cErrorTypeEnum.ORDER_FORECAST.getCode());
                         soB2cErrorService.removeErrorOrder(entity.getId(), SoB2cErrorTypeEnum.ORDER_FORECAST.getCode());
                     }
+                    //自动计算预估运费到订单的预估运费字段
+                    soB2cService.autoCalcEstimatedShippingCost(Collections.singletonList(id));
                 }
             } catch (Exception e) {
                 log.error("B2C销售订单审核失败", e);
