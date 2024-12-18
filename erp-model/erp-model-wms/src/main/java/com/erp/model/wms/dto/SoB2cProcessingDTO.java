@@ -72,6 +72,10 @@ public class SoB2cProcessingDTO implements Serializable {
          */
         private String deliveryStatus;
         /**
+         * 发货单状态名称
+         */
+        private String deliveryStatusName;
+        /**
          * 发货数量
          */
         private String deliveryQty;
@@ -124,13 +128,17 @@ public class SoB2cProcessingDTO implements Serializable {
          */
         private String outstockOrderCode;
         /**
-         * 出库单据类型（同sourceType）
+         * 出库单据类型名称（同sourceType）
          */
-        private String outstockOrderType;
+        private String outstockOrderTypeName;
         /**
          * 出库单据状态
          */
         private String outstockOrderStatus;
+        /**
+         * 出库单据状态名称
+         */
+        private String outstockOrderStatusName;
         /**
          * 出库单据时间
          */

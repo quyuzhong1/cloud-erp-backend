@@ -67,6 +67,10 @@ public class SoB2bProcessingDTO implements Serializable {
          */
         private String soApproveStatus;
         /**
+         * 销售订单状态名称
+         */
+        private String soApproveStatusName;
+        /**
          * 销售数量
          */
         private String soQty;
@@ -82,6 +86,10 @@ public class SoB2bProcessingDTO implements Serializable {
          * 发货通知单审核状态
          */
         private String deliveryNoticeApproveStatus;
+        /**
+         * 发货通知单审核状态
+         */
+        private String approveStatusName;
         /**
          * 发货数量
          */
@@ -139,9 +147,17 @@ public class SoB2bProcessingDTO implements Serializable {
          */
         private String outstockOrderType;
         /**
+         * 出库单据类型名称（同sourceType）
+         */
+        private String outstockOrderTypeName;
+        /**
          * 出库单据状态
          */
         private String outstockOrderStatus;
+        /**
+         * 出库单据状态名称
+         */
+        private String outstockOrderStatusName;
         /**
          * 出库单据时间
          */

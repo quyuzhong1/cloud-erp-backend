@@ -44,25 +44,25 @@
         sbp.update_time,
         sbp.version,
         sbp.is_deleted,
-        sbp.b2c_so_id,
-        sbp.b2c_so_code,
-        sbp.delivery_id,
-        sbp.delivery_code,
-        sbp.delivery_status,
-        sbp.delivery_qty,
-        sbp.sku_id,
-        sbp.warehouse_id,
-        sbp.virtual_warehouse_id,
-        sbp.frozen_time,
-        sbp.frozen_qty,
-        sbp.outstock_order_id,
-        sbp.outstock_order_code,
-        sbp.outstock_order_type,
-        sbp.outstock_order_status,
-        sbp.outstock_order_time,
-        sbp.outstock_qty,
-        sbp.parent_sku_id,
-        sbp.bom_version,
+        sbp.b2c_so_id as b2cSoId,
+        sbp.b2c_so_code as b2cSoCode,
+        sbp.delivery_id as deliveryId ,
+        sbp.delivery_code as deliveryCode,
+        sbp.delivery_status as deliveryStatus,
+        sbp.delivery_qty as deliveryQty,
+        sbp.sku_id as skuId,
+        sbp.warehouse_id as warehouseId,
+        sbp.virtual_warehouse_id as virtualWarehouseId,
+        sbp.frozen_time as frozenTime,
+        sbp.frozen_qty as frozenQty,
+        sbp.outstock_order_id as outstockOrderId,
+        sbp.outstock_order_code as outstockOrderCode,
+        sbp.outstock_order_type as outstockOrderType,
+        sbp.outstock_order_status as outstockOrderStatus,
+        sbp.outstock_order_time as outstockOrderTime,
+        sbp.outstock_qty as outstockQty,
+        sbp.parent_sku_id as parentSkuId,
+        sbp.bom_version as bomVersion,
         pd.sku_no as skuNo,
         pd.name as productName,
         wh.name as warehouseName,
@@ -70,7 +70,7 @@
     </sql>
 
     <!-- 分页查询 -->
-    <select id="paging" resultType="com.erp.model.wms.dto.SoB2bProcessingDTO$ListDTO">
+    <select id="paging" resultType="com.erp.model.wms.dto.SoB2cProcessingDTO$ListDTO">
         select
         <include refid="Base_Column_List" />
         from so_b2c_processing sbp
@@ -78,7 +78,7 @@
         left join warehouse wh on sbp.warehouse_id = wh.id and wh.is_deleted = false
         left join virtual_warehouse vw on sbp.virtual_warehosue_id = vw.id and vw.is_deleted = false
         where ${params.sqlMap.default}
-        and is_deleted = false
+        and sbp.is_deleted = false
         ORDER BY
         <if test="params.sortList != null and params.sortList.size > 0">
             <foreach collection="params.sortList" item="item" separator="," close=",">
