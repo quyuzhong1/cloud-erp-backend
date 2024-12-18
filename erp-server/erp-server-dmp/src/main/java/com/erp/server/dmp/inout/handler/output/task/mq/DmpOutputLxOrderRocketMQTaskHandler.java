@@ -131,18 +131,20 @@ public class DmpOutputLxOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHa
         orderDTO.setSourceId(dmpSoInfoEntity.getPlatformCode());
         // 来源编码
         orderDTO.setSourceCode("");
+        // 第三方来源系统
+        orderDTO.setThirdSystem(dmpSoInfoEntity.getSourceSystem());
+        // 第三方编号
+        orderDTO.setThirdCode(dmpSoInfoEntity.getThirdCode());
         // 标签json
         orderDTO.setLabelJson(dmpSoInfoEntity.getExtendData());
-
         // 订单日期
         orderDTO.setBillDate(dmpSoInfoEntity.getPlatformCreateTime().toLocalDate());
         // 平台订单创建时间
         orderDTO.setPlatformOrderCreateTime(dmpSoInfoEntity.getPlatformCreateTime());
-
         // 平台订单号
         orderDTO.setPlatformCode(dmpSoInfoEntity.getPlatformCode());
         // 销售平台
-        orderDTO.setDictPlatform(PlatformDictEnum.AMAZON.getCode());
+        orderDTO.setDictPlatform(dmpSoInfoEntity.getSourcePlatform());
         // 店铺ID
         orderDTO.setShopId(dmpSoInfoEntity.getShopId());
 
@@ -203,18 +205,20 @@ public class DmpOutputLxOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHa
         // 1=详情数据已更新(发送MQ)
         orderDTO.setDownloadStatus(1);
 
-
         // 记录详情
         if (!CollectionUtils.isEmpty(dmpSoDetailEntityList)) {
             List<PlatformOrderDetailDTO> detailDTO = dmpSoDetailEntityList.stream()
-                    .map(req -> intPlatformOrderDetailDTO(req))
+                    .map(this::intPlatformOrderDetailDTO)
                     .collect(Collectors.toList());
             orderDTO.setDetails(detailDTO);
             orderDTO.setDownloadStatus(1);
         }
 
         //总优惠
-        BigDecimal discount = dmpSoDetailEntityList.stream().filter(req -> req.getDiscount() != null).map(req -> req.getDiscount()).reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
+        BigDecimal discount = dmpSoDetailEntityList.stream()
+                .map(DmpSoDetailEntity::getDiscount)
+                .filter(Objects::nonNull)
+                .reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
         orderDTO.setTotalDiscount(discount);
 
         // 订单财务信息
@@ -265,7 +269,7 @@ public class DmpOutputLxOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHa
 
     @Override
     protected List<String> getSourceCodeKeys() {
-        return Arrays.asList("platformCode", "shopId");
+        return Collections.singletonList("thirdCode");
     }
 
 
@@ -290,7 +294,6 @@ public class DmpOutputLxOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHa
         detailDTO.setWarehouseSkuNo("");
         detailDTO.setWarehouseName("");
         // 仓库名称
-        // 库存是否扣除
         detailDTO.setWarehouseId("");
         // 数量
         detailDTO.setQty(item.getQty());
@@ -311,6 +314,8 @@ public class DmpOutputLxOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHa
         detailDTO.setTaxCost(BigDecimal.ZERO);
         // 来源明细id
         detailDTO.setSourceDetailId(item.getPlatformDetailId());
+        // 第三方明细id/编号
+        detailDTO.setSourceDetailId(item.getThirdDetailId());
         // 标签json
         detailDTO.setLabelJson("");
         // 库存组织id
