@@ -15,7 +15,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDate;
 import java.util.Collections;
 import java.util.List;
 
@@ -36,7 +35,7 @@ public class OverseasInventoryAgeDetailServiceImpl extends SuperServiceImpl<Over
         if(CollUtil.isEmpty(mainIds)){
             return Collections.emptyList();
         }
-        return this.baseMapper.getAgeRangeViewByMainIds(mainIds, LocalDate.now());
+        return this.baseMapper.getAgeRangeViewByMainIds(mainIds);
     }
 
     @Override
@@ -49,5 +48,11 @@ public class OverseasInventoryAgeDetailServiceImpl extends SuperServiceImpl<Over
             new PagingVO<>(pageData);
         }
         return new PagingVO<>(pageData);
+    }
+
+
+    @Override
+    public List<OverseasInventoryAgeDetailEntity> getAgeDetail() {
+        return this.baseMapper.getAgeDetail();
     }
 }

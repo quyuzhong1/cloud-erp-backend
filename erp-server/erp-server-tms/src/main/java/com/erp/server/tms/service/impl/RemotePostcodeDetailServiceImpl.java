@@ -4,7 +4,6 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.excel.EasyExcel;
 import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -24,7 +23,6 @@ import com.common.core.utils.FastDFSClientUtil;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.DictCountryDTO;
-import com.erp.model.sys.entity.DictCityEntity;
 import com.erp.model.tms.dto.RemotePostcodeDTO;
 import com.erp.model.tms.dto.RemotePostcodeDetailDTO;
 import com.erp.model.tms.entity.RemotePostcodeDetailEntity;
@@ -76,13 +74,8 @@ public class RemotePostcodeDetailServiceImpl extends SuperServiceImpl<RemotePost
     @Override
     public Boolean add(RemotePostcodeDTO.AddDTO addDTO, String mainId) {
         List<RemotePostcodeDetailDTO.AddDTO> details = addDTO.getDetails();
-
         List<DictCountryDTO.ListDTO> listDTOS = sysUserFeign.countryList();
         Map<String, String> countryMap = listDTOS.stream().collect(Collectors.toMap(DictCountryDTO.ListDTO::getId, DictCountryDTO.ListDTO::getId));
-
-        List<String> cityNames = details.stream().map(RemotePostcodeDetailDTO.AddDTO::getCityName).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
-        // 将城市信息转换为 Map
-        Map<String, String> cityNameMap = getCityNameMap(cityNames);
         List<RemotePostcodeDetailEntity> addList = new ArrayList<>();
         for (RemotePostcodeDetailDTO.AddDTO detail : details) {
             //校验国家是否存在
@@ -93,10 +86,9 @@ public class RemotePostcodeDetailServiceImpl extends SuperServiceImpl<RemotePost
             BeanMapper.copy(detail, remotePostcodeDetailEntity);
             //设置主表id
             remotePostcodeDetailEntity.setMainId(mainId);
-            remotePostcodeDetailEntity.setCity(cityNameMap.getOrDefault(detail.getCityName(),""));
             addList.add(remotePostcodeDetailEntity);
         }
-        boolean flag = this.saveBatch(addList);
+        boolean flag = saveBatch(addList);
         List<Pair<String, String>> addPairList = spliceOperateContent(addList);
         StringBuilder sb = new StringBuilder();
         for (Pair<String, String> pair : addPairList) {
@@ -114,18 +106,13 @@ public class RemotePostcodeDetailServiceImpl extends SuperServiceImpl<RemotePost
     @Transactional(rollbackFor = Exception.class)
     @Override
     public Boolean update(RemotePostcodeDTO.UpdateDTO dto,String mainId) {
-        List<String> cityNames = dto.getDetails().stream().map(RemotePostcodeDetailDTO.UpdateDTO::getCityName).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
-        // 将城市信息转换为 Map
-        Map<String, String> cityNameMap = getCityNameMap(cityNames);
-
         List<DictCountryDTO.ListDTO> listDTOS = sysUserFeign.countryList();
         Map<String, String> countryMap = listDTOS.stream().collect(Collectors.toMap(DictCountryDTO.ListDTO::getId, DictCountryDTO.ListDTO::getId));
-
-        StringBuilder sb = new StringBuilder();
         //原数据明细
         List<RemotePostcodeDetailEntity> oldList = lambdaQuery().eq(RemotePostcodeDetailEntity::getMainId, mainId).list();
         List<String> deleteIds = getDeleteIds(dto.getDetails(), oldList);
         if (CollectionUtils.isNotEmpty(deleteIds)) {
+            StringBuilder sb = new StringBuilder();
             List<RemotePostcodeDetailEntity> removeList = oldList.stream().filter(obj -> deleteIds.contains(obj.getId())).collect(Collectors.toList());
             List<Pair<String, String>> pairList = spliceOperateContent(removeList);
             //操作日志
@@ -133,6 +120,7 @@ public class RemotePostcodeDetailServiceImpl extends SuperServiceImpl<RemotePost
                 sb.append(StrUtil.format("删除了明细【{}】;",pair.getValue()));
             }
             this.removeByIds(deleteIds);
+            operateLogService.addModuleOperateLog(sb.toString(),ModuleTypeEnum.REMOTE_POSTCODE.getCode(), mainId, "编辑操作");
         }
         Map<String, RemotePostcodeDetailEntity> detailEntityMap = oldList.stream().collect(Collectors.toMap(RemotePostcodeDetailEntity::getId, obj -> obj));
         List<RemotePostcodeDetailEntity> addList = new ArrayList<>();
@@ -144,55 +132,42 @@ public class RemotePostcodeDetailServiceImpl extends SuperServiceImpl<RemotePost
             RemotePostcodeDetailEntity remotePostcodeDetail = new RemotePostcodeDetailEntity();
             BeanMapper.copy(detail, remotePostcodeDetail);
             remotePostcodeDetail.setMainId(mainId);
-            remotePostcodeDetail.setCity(cityNameMap.getOrDefault(detail.getCityName(),""));
             if(StringUtils.isBlank(remotePostcodeDetail.getId())){
                 //新增
                 addList.add(remotePostcodeDetail);
             }else{
+                RemotePostcodeDetailEntity old = getById(remotePostcodeDetail.getId());
                 //修改
-                RemotePostcodeDetailEntity old = detailEntityMap.get(remotePostcodeDetail.getId());
-                if (ObjectUtils.isEmpty(old)) {
-                    throw new ServiceException(ApiError.ERROR_98002);
-                }
                 this.updateById(remotePostcodeDetail);
-                //操作日志
-                List<Pair<String, String>> updatePairList = spliceOperateContent(Collections.singletonList(remotePostcodeDetail));
-                for (Pair<String, String> pair : updatePairList) {
-                    sb.append(StrUtil.format("修改明细【{}】;",pair.getValue()));
+                List<Pair<String, String>> addPairList = spliceOperateContent(Collections.singletonList(old));
+                String msg ="";
+                for (Pair<String, String> pair : addPairList) {
+                    msg =StrUtil.format("修改明细【{}】,",pair.getValue());
                 }
+                //操作日志
+                operateLogService.addModuleOperateLogByObj(old,remotePostcodeDetail,ModuleTypeEnum.REMOTE_POSTCODE.getCode(),mainId,msg);
             }
         }
-        this.saveBatch(addList);
-//        //添加操作日志
-//        if (CollectionUtils.isNotEmpty(addList)) {
-//            List<Pair<String, String>> addPairList = spliceOperateContent(addList);
-//            for (Pair<String, String> pair : addPairList) {
-//                sb.append(StrUtil.format("新增明细【{}】;",pair.getValue()));
-//            }
-//        }
-//        if(StringUtils.isNotBlank(sb.toString())){
-//            operateLogService.addModuleOperateLog(sb.toString(),ModuleTypeEnum.REMOTE_POSTCODE.getCode(), mainId, "编辑操作");
-//        }
+        if(CollUtil.isNotEmpty(addList)){
+            this.saveBatch(addList);
+            StringBuilder sb = new StringBuilder();
+            List<Pair<String, String>> addPairList = spliceOperateContent(addList);
+            for (Pair<String, String> pair : addPairList) {
+                sb.append(StrUtil.format("新增明细【{}】;",pair.getValue()));
+            }
+            operateLogService.addModuleOperateLog(sb.toString(),ModuleTypeEnum.REMOTE_POSTCODE.getCode(), mainId, "编辑操作");
+        }
         return true;
     }
-
-    @NotNull
-    private Map<String, String> getCityNameMap(List<String> cityNames) {
-        List<DictCityEntity> dictCityEntities = sysUserFeign.listCityByNames(cityNames);
-        // 将城市信息转换为 Map，减少多次流式查找
-        return dictCityEntities.stream()
-                .collect(Collectors.toMap(DictCityEntity::getName, DictCityEntity::getId));
-    }
-
     @NotNull
     private static List<Pair<String, String>> spliceOperateContent(List<RemotePostcodeDetailEntity> removeList) {
         List<Pair<String, String>> pairList = new ArrayList<>();
         for (RemotePostcodeDetailEntity entity : removeList) {
             Pair pair = null;
             if(StringUtils.isNotBlank(entity.getCityName())) {
-                pair = new Pair<>(entity.getId(),entity.getCountry() + "-" + entity.getCityName() + "-" + entity.getPostCode());
+                pair = new Pair<>(entity.getId(),entity.getCountry() + "-" + entity.getCityName() + "-" + entity.getPostCode()+ "-" + RemotePostcodeDetailMatchTypeEnum.getName(entity.getMatchType()));
             }else {
-                pair = new Pair<>(entity.getId(),entity.getCountry() + "-" + entity.getPostCode());
+                pair = new Pair<>(entity.getId(),entity.getCountry() + "-" + entity.getPostCode()+ "-" + RemotePostcodeDetailMatchTypeEnum.getName(entity.getMatchType()));
             }
             pairList.add(pair);
         }
@@ -245,8 +220,6 @@ public class RemotePostcodeDetailServiceImpl extends SuperServiceImpl<RemotePost
         if(CollUtil.isEmpty(list)) {
            return;
         }
-        // 数据处理
-
         // 导出数据
         StringBuffer sb = new StringBuffer();
         String excelPath = "excel/remotePostcodeDetail.xlsx";
@@ -331,9 +304,6 @@ public class RemotePostcodeDetailServiceImpl extends SuperServiceImpl<RemotePost
         List<RemotePostcodeDetailDTO.ImportDTO> errorList = excelListenerUtil.getErrorList();
         List<RemotePostcodeDetailDTO.AddDTO> resultList = new ArrayList<>();
         if(CollUtil.isNotEmpty(successList)){
-            // 将城市信息转换为 Map，减少多次流式查找
-            List<String> cityNames = successList.stream().map(RemotePostcodeDetailDTO.ImportDTO::getCityName).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
-            Map<String, String> cityMap = getCityNameMap(cityNames);
             // 将国家信息转换为 Map，减少多次流式查找
             List<DictCountryDTO.ListDTO> listDTOS = sysUserFeign.countryList();
             Map<String, String> countryMap = listDTOS.stream().collect(Collectors.toMap(DictCountryDTO.ListDTO::getId, DictCountryDTO.ListDTO::getId));
@@ -343,14 +313,8 @@ public class RemotePostcodeDetailServiceImpl extends SuperServiceImpl<RemotePost
                     errorList.add(dto);
                     continue;
                 }
-                if(StringUtils.isNotBlank(dto.getCityName()) && Boolean.FALSE.equals(cityMap.containsKey(dto.getCityName()))){
-                    dto.setErrorMsg("1、城市不存在");
-                    errorList.add(dto);
-                    continue;
-                }
                 RemotePostcodeDetailDTO.AddDTO addDTO = new RemotePostcodeDetailDTO.AddDTO();
                 BeanMapper.copy(dto,addDTO);
-                addDTO.setCity(cityMap.get(dto.getCityName()));
                 // 匹配类型名称
                 addDTO.setMatchType(RemotePostcodeDetailMatchTypeEnum.PRECISEMATCH.getCode());
                 addDTO.setMatchTypeName(RemotePostcodeDetailMatchTypeEnum.PRECISEMATCH.getName());

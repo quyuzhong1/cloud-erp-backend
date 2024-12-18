@@ -591,7 +591,8 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
                         log.error("{}物流规则异常",entity.getCode(),e);
                     }
                     Boolean autoGetTrackNo = logisticsRuleResult.getAutoGetTrackNo();
-                    if (Objects.nonNull(autoGetTrackNo) && autoGetTrackNo) {
+                    Boolean autoGetTrackNotOfRangeDelivery = logisticsRuleResult.getAutoGetTrackNotOfRangeDelivery();
+                    if ((Objects.nonNull(autoGetTrackNo) && Boolean.TRUE.equals(autoGetTrackNo)) || (Objects.nonNull(autoGetTrackNotOfRangeDelivery) && Boolean.TRUE.equals(autoGetTrackNotOfRangeDelivery))) {
                         soB2cService.getLogisticsCode(entity.getId(), true);
                     }
                 }
