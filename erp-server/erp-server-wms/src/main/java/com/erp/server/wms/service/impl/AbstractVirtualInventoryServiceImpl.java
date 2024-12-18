@@ -32,7 +32,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -274,8 +273,9 @@ public abstract class AbstractVirtualInventoryServiceImpl implements VirtualInve
         WmsVirtualDetailMsgDTO.AddDTO addDTO = new WmsVirtualDetailMsgDTO.AddDTO();
         addDTO.setTransFlowEntity(transFlowEntity);
         addDTO.setRemark("虚拟仓库存出入库");
-        addDTO.setTradeTime(LocalDateTime.now());
+        addDTO.setTradeTime(transFlowEntity.getTradeTime());
         addDTO.setStatus(VirtualDetailMsgStatusEnum.WAIT_HANDLE.getCode());
+        addDTO.setBusinessId(transFlowEntity.getId());
         wmsVirtualDetailMsgService.add(addDTO);
     }
 

@@ -36,6 +36,7 @@ public class MouldDocInfoServiceImpl extends SuperServiceImpl<MouldDocInfoMapper
                     MouldDocInfoEntity entity = BeanMapperUtils.map(MouldDocInfoEntity.class, v);
                     entity.setTypeId(v.getDocTypeId());
                     entity.setMouldInfoId(id);
+                    entity.setId(null);
                     return entity;
                 }).collect(Collectors.toList());
         ApplicationContextUtils.getBean(MouldDocInfoServiceImpl.class).saveOrUpdateBatch(docInfoEntityList);

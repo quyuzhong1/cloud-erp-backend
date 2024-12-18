@@ -113,7 +113,10 @@ public class WmsVirtualDetailMsgDTO implements Serializable {
         @Size(max = 32,message = "waitHandle待处理，success成功，fail失败，doing进行中最大长度不能超过32位")
         private String status;
 
-
+        /**
+         * 业务id
+         */
+        private String businessId;
     }
 
 
