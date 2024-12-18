@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.wms.mapper.FirstMileProcessingMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.wms.entity.FirstMileProcessingEntity">
+       <result column="id" property="id" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_time" property="createTime" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_time" property="updateTime" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="requisition_application_id" property="requisitionApplicationId" />
+       <result column="requisition_application_code" property="requisitionApplicationCode" />
+       <result column="first_mile_delivery_id" property="firstMileDeliveryId" />
+       <result column="first_mile_delivery_code" property="firstMileDeliveryCode" />
+       <result column="delivery_approve_status" property="deliveryApproveStatus" />
+       <result column="delivery_qty" property="deliveryQty" />
+       <result column="sku_id" property="skuId" />
+       <result column="warehouse_id" property="warehouseId" />
+       <result column="virtual_warehouse_id" property="virtualWarehouseId" />
+       <result column="frozen_time" property="frozenTime" />
+       <result column="frozen_qty" property="frozenQty" />
+       <result column="outstock_order_id" property="outstockOrderId" />
+       <result column="outstock_order_code" property="outstockOrderCode" />
+       <result column="outstock_order_type" property="outstockOrderType" />
+       <result column="outstock_order_status" property="outstockOrderStatus" />
+       <result column="outstock_order_time" property="outstockOrderTime" />
+       <result column="outstock_qty" property="outstockQty" />
+       <result column="parent_sku_id" property="parentSkuId" />
+       <result column="bom_version" property="bomVersion" />
+       <result column="approve_qty" property="approveQty" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id,
+        create_user_id,
+        create_user_name,
+        create_time,
+        update_user_id,
+        update_user_name,
+        update_time,
+        version,
+        is_deleted,
+        requisition_application_id, requisition_application_code, first_mile_delivery_id, first_mile_delivery_code, delivery_approve_status, delivery_qty, sku_id, warehouse_id, virtual_warehouse_id, frozen_time, frozen_qty, outstock_order_id, outstock_order_code, outstock_order_type, outstock_order_status, outstock_order_time, outstock_qty, parent_sku_id, bom_version, approve_qty
+    </sql>
+
+    <!-- 分页查询 -->
+    <select id="paging" resultType="com.erp.model.wms.dto.FirstMileProcessingDTO$ListDTO">
+        select
+        <include refid="Base_Column_List" />
+        from so_b2c_processing sbp
+        left join product_detail pd on sbp.sku_id = pd.id and pd.is_deleted = false
+        left join warehouse wh on sbp.warehouse_id = wh.id and wh.is_deleted = false
+        left join virtual_warehouse vw on sbp.virtual_warehosue_id = vw.id and vw.is_deleted = false
+        where ${params.sqlMap.default}
+        and is_deleted = false
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        sbp.id DESC
+    </select>
+
+
+</mapper>

@@ -233,4 +233,19 @@ public interface ExportWmsFeign {
      */
     @PostMapping("/feign/export/exportVirtualStatistics")
     PagingVO<VirtualWarehouseAllocationDTO.ExportStatisticsDTO> exportVirtualStatistics(PagingDTO<VirtualWarehouseAllocationDTO.ExportDTO> dto);
+    /**
+     * 导出b2b销售订单虚拟仓订单跟踪
+     */
+    @PostMapping("/feign/export/exportSoB2bProcessing")
+    PagingVO<SoB2bProcessingDTO.ListDTO> exportSoB2bProcessing(PagingDTO<SoB2bProcessingDTO.PagingParamDTO> dto);
+    /**
+     * 导出b2c销售订单虚拟仓订单跟踪
+     */
+    @PostMapping("/feign/export/exportSoB2cProcessing")
+    PagingVO<SoB2cProcessingDTO.ListDTO> exportSoB2cProcessing(PagingDTO<SoB2cProcessingDTO.PagingParamDTO> dto);
+    /**
+     * 导出头程销售订单虚拟仓订单跟踪
+     */
+    @PostMapping("/feign/export/exportFirstMileProcessing")
+    PagingVO<FirstMileProcessingDTO.ListDTO> exportFirstMileProcessing(PagingDTO<FirstMileProcessingDTO.PagingParamDTO> dto);
 }
