@@ -83,16 +83,34 @@ public class MouldInfoExcelListener extends AnalysisEventListener<MouldInfoImpor
             dto.setHeight(new BigDecimal(data.getHeight()));
         }
         dto.setMaterial(data.getMaterial());
-        dto.setLifeCycle(Integer.parseInt(data.getLifeCycle()));
+        if (!ObjectUtils.isEmpty(data.getLifeCycle())) {
+            dto.setLifeCycle(Integer.parseInt(data.getLifeCycle()));
+        }
+        if (!ObjectUtils.isEmpty(data.getDevelopCycle())) {
         dto.setDevelopCycle(Integer.parseInt(data.getDevelopCycle()));
-        dto.setEnableDate(LocalDateUtil.parseStrToLocalDate(data.getEnableDate()));
-        dto.setQty(Integer.parseInt(data.getQty()));
-        dto.setTaxPrice(new BigDecimal(data.getTaxPrice()));
-        dto.setTaxRate(new BigDecimal(data.getTaxRate()));
+        }
+        if (!ObjectUtils.isEmpty(data.getEnableDate())) {
+            dto.setEnableDate(LocalDateUtil.parseStrToLocalDate(data.getEnableDate()));
+        }
+        if (!ObjectUtils.isEmpty(data.getQty())) {
+            dto.setQty(Integer.parseInt(data.getQty()));
+        }
+        if (!ObjectUtils.isEmpty(data.getTaxPrice())) {
+            dto.setTaxPrice(new BigDecimal(data.getTaxPrice()));
+        }
+        if (!ObjectUtils.isEmpty(data.getTaxRate())) {
+            dto.setTaxRate(new BigDecimal(data.getTaxRate()));
+        }
         dto.setIsNeedRefund("是".equals(data.getIsNeedRefundName()));
-        dto.setRefundStandard(RefundStandardEnum.getCodeByName(data.getRefundStandardName()));
-        dto.setRefundOrderQty(Integer.parseInt(data.getRefundOrderQty()));
-        dto.setRefundAmount(new BigDecimal(data.getRefundAmount()));
+        if (!ObjectUtils.isEmpty(data.getRefundStandardName())) {
+            dto.setRefundStandard(RefundStandardEnum.getCodeByName(data.getRefundStandardName()));
+        }
+        if (!ObjectUtils.isEmpty(data.getRefundOrderQty())) {
+            dto.setRefundOrderQty(Integer.parseInt(data.getRefundOrderQty()));
+        }
+        if (!ObjectUtils.isEmpty(data.getRefundAmount())) {
+            dto.setRefundAmount(new BigDecimal(data.getRefundAmount()));
+        }
         MouldProductDTO.ViewDTO viewDTO = new MouldProductDTO.ViewDTO();
         viewDTO.setProductName(data.getProductName());
         dto.setProductList(Collections.singletonList(viewDTO));
