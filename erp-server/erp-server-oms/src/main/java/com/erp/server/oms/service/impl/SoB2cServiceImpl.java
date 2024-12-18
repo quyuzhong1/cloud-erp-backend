@@ -1588,19 +1588,13 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
-    public BatchResultDTO getLogisticsCodeInner(String id, Boolean isDelivery,Boolean remoteNotDlivery) {
+    public BatchResultDTO getLogisticsCodeInner(String id, Boolean isDelivery) {
         String message = "";
         //B2C销售订单主表信息
         SoB2cEntity entity = this.getById(id);
         if (ObjectUtils.isEmpty(entity)) {
             throw new ServiceException(ApiError.ERROR_SO_B2C_NOT_EXIST);
         }
-        //判断订单是否是超范围派送并且需要排除超范围派送
-        Boolean isOutOfRangeDelivery = entity.getIsOutOfRangeDelivery();
-        if(Boolean.TRUE.equals(isOutOfRangeDelivery) && Boolean.TRUE.equals(remoteNotDlivery)){
-            isDelivery = false ;
-        }
-
         String paramJson = "";
         String returnJson = "";
 
@@ -1927,12 +1921,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     @Override
     @DistributeLocker(businessType = RedisKeyConstant.SO_B2C_ORDER_KEY, keyName = "id", waiteTime = 60)
     public BatchResultDTO getLogisticsCode(String id, Boolean isDelivery) {
-        return soB2cService.getLogisticsCodeInner(id,isDelivery,false);
-    }
-
-    @DistributeLocker(businessType = RedisKeyConstant.SO_B2C_ORDER_KEY,keyName = "id",waiteTime = 60)
-    public BatchResultDTO getLogisticsCodeNotRemote(String id, Boolean isDelivery) {
-        return soB2cService.getLogisticsCodeInner(id,isDelivery,true);
+        return soB2cService.getLogisticsCodeInner(id,isDelivery);
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -6482,9 +6471,12 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                     //申报信息规则
                     declareRule(id, new HashMap<>(), Boolean.FALSE, false);
                 }
+                SoB2cEntity entity = soB2cService.getById(id);
                 Boolean autoGetTrackNo = logisticsRuleResult.getAutoGetTrackNo();
                 Boolean autoGetTrackNotOfRangeDelivery = logisticsRuleResult.getAutoGetTrackNotOfRangeDelivery();
-                if ((Objects.nonNull(autoGetTrackNo) && Boolean.TRUE.equals(autoGetTrackNo)) || (Objects.nonNull(autoGetTrackNotOfRangeDelivery) && Boolean.TRUE.equals(autoGetTrackNotOfRangeDelivery))) {
+                Boolean isOutOfRangeDelivery = entity.getIsOutOfRangeDelivery();
+                if ((Objects.nonNull(autoGetTrackNo) && Boolean.TRUE.equals(autoGetTrackNo))
+                        || (Boolean.FALSE.equals(isOutOfRangeDelivery) && Objects.nonNull(autoGetTrackNotOfRangeDelivery) && Boolean.TRUE.equals(autoGetTrackNotOfRangeDelivery))) {
                     soB2cService.getLogisticsCode(id, true);
                 }
             }
