@@ -1,6 +1,5 @@
 package com.erp.server.mrp.es.service;
 
-import com.erp.model.mrp.dto.LocalInventoryDTO;
 import com.erp.model.mrp.dto.ReplenishmentResultDTO;
 import com.erp.server.mrp.es.entity.OrderHistorySalesEsEntity;
 import org.springframework.data.domain.Page;
@@ -87,4 +86,14 @@ public interface OrderHistorySalesEsService {
      */
     Page<OrderHistorySalesEsEntity> findByShopIdInAndSkuIdInAndDateBetween(List<String> shopIds, List<String> skuIds, LocalDate startDate, LocalDate endDate, Pageable pageable);
 
+
+    /**
+     * 根据sku和店铺id查询一个范围内的销量
+     *
+     * @param skuId    skuId
+     * @param shopId   店铺
+     * @param startDate 开始时间
+     * @param endDate   结束时间
+     */
+    List<OrderHistorySalesEsEntity> findByShopIdAndSkuIdAndDateBetween(String shopId, String skuId, LocalDate startDate, LocalDate endDate);
 }

@@ -807,6 +807,9 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
 
     @Override
     public List<SoReturnReceiveEntity> listByIds(List<String> ids) {
+        if (CollectionUtils.isEmpty(ids)) {
+            return Collections.emptyList();
+        }
         return lambdaQuery().in(SoReturnReceiveEntity::getId, ids).list();
     }
 

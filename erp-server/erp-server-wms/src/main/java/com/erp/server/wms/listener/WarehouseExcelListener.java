@@ -1,5 +1,8 @@
 package com.erp.server.wms.listener;
 
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.date.DateUtil;
+import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
@@ -9,7 +12,9 @@ import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.PlatformDictEnum;
+import com.common.business.wrapper.FeignQuery;
 import com.common.core.enums.ApiError;
+import com.common.core.utils.BeanMapper;
 import com.common.core.utils.FieldValidUtil;
 import com.erp.model.wms.dto.DictBasicDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
@@ -23,6 +28,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -201,6 +207,51 @@ public class WarehouseExcelListener extends AnalysisEventListener<WarehouseExcel
         //状态
         String enabled = warehouseExcelDTO.getEnabled();
         addDTO.setDisabled(!"启用".equals(enabled));
+        
+        //所属渠道
+        String channelAffiliationName = warehouseExcelDTO.getChannelAffiliation();
+        if(StringUtils.isNotBlank(channelAffiliationName)) {
+            List<com.erp.model.oms.entity.DictBasicEntity> channelAffiliationList = FeignQuery.create(com.erp.model.oms.entity.DictBasicEntity.class)
+            		.eq(com.erp.model.oms.entity.DictBasicEntity::getName, channelAffiliationName).list();
+            if(CollUtil.isEmpty(channelAffiliationList)) {
+            	errorMsgList.add("所属渠道不存在");
+            }
+            addDTO.setChannelAffiliation(channelAffiliationList.get(0).getValue());	
+        }
+        
+        //发货组织
+        String shippingOrganizationName = warehouseExcelDTO.getShippingOrganization();
+        String shippingOrganization = orgList.stream().filter(d -> d.getName().equals(shippingOrganizationName)).findFirst().
+                flatMap(obj -> Optional.ofNullable(obj.getId())).orElse("");
+        if (StringUtils.isBlank(shippingOrganization)) {
+            errorMsgList.add("发货组织不存在");
+        }
+        addDTO.setShippingOrganization(shippingOrganization);
+        
+        //财务组织
+        String financialOrganizationName = warehouseExcelDTO.getFinancialOrganization();
+        String financialOrganization = orgList.stream().filter(d -> d.getName().equals(financialOrganizationName)).findFirst().
+        		flatMap(obj -> Optional.ofNullable(obj.getId())).orElse("");
+        if (StringUtils.isBlank(financialOrganization)) {
+        	errorMsgList.add("财务组织不存在");
+        }
+        addDTO.setFinancialOrganization(financialOrganization);
+        
+        String openTimeStr = warehouseExcelDTO.getOpenTime();
+        if(StringUtils.isNotBlank(openTimeStr)) {
+        	LocalDateTime openTime = this.getDateValue(openTimeStr);
+            if(openTime == null) {
+            	errorMsgList.add("启用时间格式错误");
+            }
+            addDTO.setOpenTime(openTime);
+        }
+        
+        WarehouseEntity warehouse = new WarehouseEntity();
+        BeanMapper.copy(addDTO, warehouse);
+        if(warehouseService.checkOpenCloseTime(warehouse)) {
+        	errorMsgList.add(ApiError.OPEN_STATUS_OPEN_TIME_NOT_NULL.msg);
+        }
+        
         //存在错误数据则直接返回
         if (errorMsgList.size() > 0) {
             warehouseExcelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
@@ -238,4 +289,16 @@ public class WarehouseExcelListener extends AnalysisEventListener<WarehouseExcel
     public List<WarehouseExcelDTO> getErrorList() {
         return errorList;
     }
+    
+    private LocalDateTime getDateValue(String value) {
+		try {
+			return DateUtil.parse(value).toLocalDateTime();
+		} catch (Exception e) {
+			try {
+				return DateUtil.parse(value, "MM/dd/yyyy").toLocalDateTime();
+			} catch (Exception e1) {
+			}
+		}
+		return null;
+	}
 }

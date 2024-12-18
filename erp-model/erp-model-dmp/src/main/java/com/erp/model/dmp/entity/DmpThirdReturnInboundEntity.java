@@ -124,6 +124,11 @@ public class DmpThirdReturnInboundEntity extends BaseEntity<DmpThirdReturnInboun
      */
     @TableField("auth_id")
     private String authId;
+    /**
+     * 来源单据id
+     */
+    @TableField("source_id")
+    private String sourceId = "";
 
 
     public static final String WAREHOUSE_PLATFORM_TYPE = "warehouse_platform_type";

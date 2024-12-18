@@ -8,6 +8,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
+import java.time.LocalDateTime;
 import java.util.List;
 
 
@@ -23,5 +24,17 @@ public class PlatformGenerateSoOutstockDTO implements Serializable {
     private List<PlatformDeliveryDetailDTO> platformDeliveryDetailDTOList;
 
     private SoOutstockDTO.GenerateB2cDTO generateB2cDTO;
+    /**
+     * 第三方编号
+     */
+    private String thirdCode;
+    /**
+     * 发货时间
+     */
+    private LocalDateTime deliveryTime;
+    /**
+     * 物流单号
+     */
+    private String trackNo;
 
 }

@@ -15,6 +15,7 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.common.core.utils.BeanMapper;
 import com.erp.model.wms.dto.WarehouseDTO;
+import com.erp.model.wms.dto.WarehouseDTO.WarehouseUpdateStateDTO;
 import com.erp.server.wms.query.WarehouseQueryHandler;
 import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.server.wms.service.WarehouseService;
@@ -128,7 +129,7 @@ public class WarehouseController extends BaseController {
      */
     @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "启用仓库:id={id},状态值={state}(true=禁用,false=启用)")
     @PostMapping("/updateStatus")
-    public ApiResult updateStatus(@RequestBody @Validated UpdateStateDTO dto) {
+    public ApiResult updateStatus(@RequestBody @Validated WarehouseUpdateStateDTO dto) {
         Boolean result = warehouseService.updateStatus(dto);
         return result == true ? success() : failure();
     }

@@ -62,35 +62,35 @@ public enum TimePeriodEnum implements EnumMessage {
         return THREE.getName() +
                 "*" +
                 Optional.ofNullable(dto.getThreeDaysRatio()).orElse(0) +
-                "%" +
+                "% + " +
                 SEVEN.getName() +
                 "*" +
                 Optional.ofNullable(dto.getSevenDaysRatio()).orElse(0) +
-                "%" +
+                "% + " +
                 FOURTEEN.getName() +
                 "*" +
                 Optional.ofNullable(dto.getFourteenDaysRatio()).orElse(0) +
-                "%" +
+                "% + " +
                 THIRTY.getName() +
                 "*" +
                 Optional.ofNullable(dto.getThirtyDaysRatio()).orElse(0) +
-                "%" +
+                "% + " +
                 SIXTY.getName() +
                 "*" +
                 Optional.ofNullable(dto.getSixtyDaysRatio()).orElse(0) +
-                "%" +
+                "% + " +
                 NINETY.getName() +
                 "*" +
                 Optional.ofNullable(dto.getNinetyDaysRatio()).orElse(0) +
-                "%" +
+                "% + " +
                 ONE_HUNDRED_AND_EIGHTY.getName() +
                 "*" +
                 Optional.ofNullable(dto.getOneHundredEightyDaysRatio()).orElse(0) +
-                "%" +
+                "% + " +
                 TWO_HUNDRED_AND_SEVENTY.getName() +
                 "*" +
                 Optional.ofNullable(dto.getTwoHundredSeventyDaysRatio()).orElse(0) +
-                "%" +
+                "% + " +
                 THREE_HUNDRED_AND_SIXTY.getName() +
                 "*" +
                 Optional.ofNullable(dto.getThreeHundredSixtyDaysRatio()).orElse(0) +

@@ -346,7 +346,9 @@
             tfmrd.transport_no,
             tfmrd.reconciliation_count,
             tfmrd.reconciliation_type,
-            tfmr.reconciliation_month
+            tfmr.reconciliation_month,
+            tfmr.currency,
+            tfmr.exchange_rate
         from tms_first_mile_reconciliation_detail tfmrd
         left join tms_first_mile_reconciliation tfmr on tfmrd.main_id = tfmr.id and tfmr.is_deleted = false
         where tfmrd.is_deleted = false

@@ -15,11 +15,6 @@ import java.math.BigDecimal;
 public class PlatformDeliveryDetailDTO {
 
     /**
-     * erp 主记录id
-     */
-    private String mainId;
-
-    /**
      * skuId
      */
     private String skuId;
@@ -78,6 +73,4 @@ public class PlatformDeliveryDetailDTO {
      *来源平台
      */
     private String sourcePlatform = "thirdPlatform";
-
-
 }

@@ -51,6 +51,11 @@ public class ExportMrpHistorySalesCalcHandler  extends AbstractPageFileEventHand
     }
 
     @Override
+    protected int getFirstPage() {
+        return 0;
+    }
+
+    @Override
     public FileTaskEventEnum getEvent() {
         return EXPORT_MRP_HISTORY_SALES_CALC;
     }

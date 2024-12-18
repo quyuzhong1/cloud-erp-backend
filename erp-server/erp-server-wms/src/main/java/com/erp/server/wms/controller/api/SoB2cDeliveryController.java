@@ -19,6 +19,7 @@ import com.erp.model.wms.enums.DeliverTypeEnum;
 import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.server.wms.query.SoB2cDeliveryQueryHandler;
 import com.erp.server.wms.service.SoB2cDeliveryService;
+import com.erp.server.wms.service.WaveListService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -42,6 +43,8 @@ public class SoB2cDeliveryController extends BaseController {
 
     @Resource
     private SoB2cDeliveryService soB2cDeliveryService;
+    @Resource
+    private WaveListService waveListService;
 
     @Resource
     private SoB2cFeign soB2cFeign;
@@ -157,6 +160,8 @@ public class SoB2cDeliveryController extends BaseController {
                 Boolean isSuccess = result.getSuccess();
                 SoB2cDeliveryEntity entity = soB2cDeliveryService.getById(id);
                 if (isManual && isSuccess) {
+                    //波次列表波次状态自动变更
+                    waveListService.waveListStatusAutoChange(id);
                     //生成销售出库单
                     Boolean isOutStock = soB2cDeliveryService.pushTransferInfoError(entity);
                     if (isOutStock) {
@@ -309,7 +314,6 @@ public class SoB2cDeliveryController extends BaseController {
      * @Author Luo_WG
      * @Date 2023/12/13 20:13
      **/
-
     @PostMapping("/printLogisticsBillConfirm")
     @Idempotent
     public void printLogisticsBillConfirm(@RequestBody @Validated SoB2cDeliveryDTO.PrintLogisticsBillConfirmDTO dto, HttpServletResponse response) {

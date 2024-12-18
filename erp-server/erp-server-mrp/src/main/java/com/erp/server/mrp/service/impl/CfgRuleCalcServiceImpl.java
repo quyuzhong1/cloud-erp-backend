@@ -10,12 +10,13 @@ import com.alibaba.excel.exception.ExcelCommonException;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.common.business.config.DocNoGenHelper;
-import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.FileTaskEventEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
+import com.common.business.wrapper.FeignQuery;
 import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
@@ -30,7 +31,9 @@ import com.erp.model.mrp.enums.CfgRuleSalesDenoisingDenoisingTypeEnum;
 import com.erp.model.mrp.enums.CfgRuleSalesFormulaDefaultTypeEnum;
 import com.erp.model.mrp.enums.CfgRuleSalesFormulaTypeEnum;
 import com.erp.model.mrp.enums.HistorySalesTypeEnum;
+import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
+import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
@@ -92,7 +95,8 @@ public class CfgRuleCalcServiceImpl extends SuperServiceImpl<CfgRuleCalcMapper, 
 
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public BaseResultDTO.AddDTO add(CfgRuleCalcDTO.AddDTO addDTO, HttpServletResponse response) {
+    public BatchResultDTO add(CfgRuleCalcDTO.AddDTO addDTO) {
+        verifyDate(addDTO);
         List<SkuVO> skuVOS = plmTaskFeign.listSkuProductByIds(addDTO.getSkuIds());
         Map<String, String> skuMap = skuVOS.stream()
                 .collect(Collectors.toMap(SkuVO::getSkuId, SkuVO::getSkuNo, (o1, o2) -> o1));
@@ -101,23 +105,27 @@ public class CfgRuleCalcServiceImpl extends SuperServiceImpl<CfgRuleCalcMapper, 
                 .collect(Collectors.toMap(ShopInfoEntity::getId, v -> v, (o1, o2) -> o1));
         CfgRuleCalcEntity entity = CfgRuleCalcDTO.AddDTO.buildCfgRuleCalcEntity(addDTO);
         entity.setId(IdWorker.getIdStr());
+        String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_XLSS);
+        entity.setCode(code);
         List<CalcSalesInfoHisEsEntity> historySaleList;
         if (HistorySalesTypeEnum.SYSTEM.getCode().equals(addDTO.getSaleType())) {
             historySaleList = getSysHistorySalesQty(addDTO, entity.getId(), skuMap, shopMap);
         } else {
-            HistorySalesQtyExcelListener excelListener = new HistorySalesQtyExcelListener(skuVOS, shopInfoList, entity);
+            Map<String, String> platformMap = getPlatformMap();
+            HistorySalesQtyExcelListener excelListener = new HistorySalesQtyExcelListener(skuVOS, shopInfoList, platformMap, entity);
             try {
                 EasyExcelFactory.read(FastDFSClientUtil.getInputStream(addDTO.getFileUrl()), CfgRuleCalcDTO.HistorySaleImportDTO.class, excelListener).headRowNumber(1).sheet(0).doRead();
                 //导出错误数据
-                exportErrorExcel(response,excelListener.getErrorList());
+                if (!CollectionUtils.isEmpty(excelListener.getErrorList())) {
+                    String url = exportErrorExcel(excelListener.getErrorList());
+                    return BatchResultDTO.fail(entity.getId(), code, url);
+                }
                 historySaleList = excelListener.getDataList();
             } catch (ExcelCommonException e) {
                 log.error("导入格式错误！", e);
                 throw new ServiceException(ApiError.ERROR_1016);
             }
         }
-        String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_XLSS);
-        entity.setCode(code);
         save(entity);
         List<CfgRuleSalesFormulaCalcEntity> formulaCalcEntities = handleSalesFormula(addDTO, entity.getId());
         cfgRuleSalesFormulaCalcService.saveBatch(formulaCalcEntities);
@@ -129,24 +137,49 @@ public class CfgRuleCalcServiceImpl extends SuperServiceImpl<CfgRuleCalcMapper, 
                 skuMap, formulaCalcEntities, salesDenoising, calcResultList);
         calcSalesInfoDimService.saveBatch(calcSalesInfoDimList);
         calcSalesInfoDimService.calcSalesInfo(calcResultList);
-        return new BaseResultDTO.AddDTO(entity.getId(), code);
+        return BatchResultDTO.success(entity.getId(), code);
     }
 
-    private void exportErrorExcel(HttpServletResponse response, List<CfgRuleCalcDTO.HistorySaleImportDTO> errorList) {
-        if (CollectionUtils.isEmpty(errorList)) {
-            return;
+    /**
+     * 获取平台名字
+     */
+    private static Map<String, String> getPlatformMap() {
+        List<com.erp.model.oms.entity.DictBasicEntity> salesPlatformList = FeignQuery.create(com.erp.model.oms.entity.DictBasicEntity.class)
+                .eq(com.erp.model.oms.entity.DictBasicEntity::getType, DictBasicTypeEnum.SALES_PLATFORM.getType())
+                .eq(com.erp.model.oms.entity.DictBasicEntity::getStatus, Boolean.TRUE)
+                .eq(com.erp.model.oms.entity.DictBasicEntity::getIsDeleted, Boolean.FALSE)
+                .list();
+        return salesPlatformList.stream()
+                .collect(Collectors.toMap(com.erp.model.oms.entity.DictBasicEntity::getName, DictBasicEntity::getValue, (o1,o2) -> o1));
+    }
+
+    /**
+     * 校验日期
+     * @param addDTO 参数
+     */
+    private void verifyDate(CfgRuleCalcDTO.AddDTO addDTO) {
+        if (addDTO.getStartCalcDate().isAfter(LocalDate.now())) {
+            throw new ServiceException(ApiError.ERROR_VERIFY_START_CALC_DATE);
         }
+        if (addDTO.getStartCalcDate().isAfter(addDTO.getEndCalcDate())) {
+            throw new ServiceException(ApiError.ERROR__VERIFY_END_CALC_DATE);
+        }
+    }
+
+    private String exportErrorExcel(List<CfgRuleCalcDTO.HistorySaleImportDTO> errorList) {
         String name = "试算历史销量错误数据";
         StringBuilder sb = new StringBuilder();
         String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
         sb.append(date);
         sb.append(name);
         String excelPath = "excel/calcHistorySaleQtyError.xlsx";
+        sb.append(".xlsx");
         try {
-            new ExcelPrintUtils().patchExport(errorList, response, sb.toString(), excelPath);
+            byte[] bytes = new ExcelPrintUtils().patchExport(errorList, excelPath);
+            return FastDFSClientUtil.uploadFile(bytes, sb.toString(), null);
         } catch (IOException e) {
-            log.error("导出失败 原因{}", e.getMessage(), e);
-            throw new ServiceException("试算历史销量错误数据导出失败");
+            log.error("上传文件失败{}", e.getMessage(), e);
+            throw new ServiceException(e.getMessage());
         }
     }
 
@@ -247,6 +280,11 @@ public class CfgRuleCalcServiceImpl extends SuperServiceImpl<CfgRuleCalcMapper, 
         CfgRuleCalcDTO.ViewDTO dto = BeanMapperUtils.map(CfgRuleCalcDTO.ViewDTO.class, cfgRuleCalc);
         dto.setSkuIds(cfgRuleCalc.getSkuJson().toList(String.class));
         dto.setShopIds(cfgRuleCalc.getShopJson().toList(String.class));
+        List<SkuVO> skuVOS = plmTaskFeign.listSkuProductByIds(dto.getSkuIds());
+        List<CfgRuleCalcDTO.SkuDTO> skuDTOList = skuVOS.stream()
+                .map(v -> new CfgRuleCalcDTO.SkuDTO(v.getSkuId(), v.getSkuNo()))
+                .collect(Collectors.toList());
+        dto.setSkuList(skuDTOList);
         List<CfgRuleSalesFormulaCalcEntity> formulaList = cfgRuleSalesFormulaCalcService.listByCfgRuleCalcId(id);
 
         //默认日销量
@@ -298,7 +336,7 @@ public class CfgRuleCalcServiceImpl extends SuperServiceImpl<CfgRuleCalcMapper, 
         LoginUser user = UserContext.getDefaultLoginUser();
         calcSalesInfoFavoriteService.remove(Wrappers.<CalcSalesInfoFavoriteEntity>lambdaQuery()
                 .eq(CalcSalesInfoFavoriteEntity::getUserId, user.getUid())
-                .in(CalcSalesInfoFavoriteEntity::getCfgRuleCalcId, dto.getCfgRuleCalcId()));
+                .eq(CalcSalesInfoFavoriteEntity::getCfgRuleCalcId, dto.getCfgRuleCalcId()));
     }
 
 

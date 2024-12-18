@@ -9,6 +9,7 @@ import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.dto.DmpPushTaskFeignDTO;
 import com.common.business.dto.FindUserDTO;
+import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.SyncOperateEnum;
 import com.common.business.wrapper.FeignQuery;
@@ -23,6 +24,7 @@ import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.dmp.enums.SettingEnum;
 import com.erp.model.plm.entity.*;
+import com.erp.model.plm.enums.ProductDetailStatusEnum;
 import com.erp.model.sys.dto.PlmCfgSettingDTO;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
@@ -36,6 +38,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -84,6 +89,9 @@ public class SyncKingdeeProductDetailServiceImpl implements SyncKingdeeProductDe
     
     @Resource
     private PlmPushMsgService plmPushMsgService;
+    
+    @Resource
+    private ProductDetailService productDetailService;
 
     /**
      * 组装数据发送到金蝶
@@ -313,5 +321,58 @@ public class SyncKingdeeProductDetailServiceImpl implements SyncKingdeeProductDe
             resultMap.put("allowInventory", Boolean.FALSE);
         }
         return resultMap;
+	}
+
+
+	@Override
+	public void syncDataToSdy(ProductDetailEntity entity, String operate) {
+		String id = entity.getId();
+		PlmPushMsgEntity plmPushMsgEntity = new PlmPushMsgEntity();
+        plmPushMsgEntity.setTargetPlatform(DmpBasicSystemCodeEnum.SDY.getCode());
+        plmPushMsgEntity.setSourceType(SourceTypeEnum.SDY_PRODUCT_DETAIL.getCode());
+		plmPushMsgEntity.setSourceId(id);
+        plmPushMsgEntity.setSourceCode(entity.getSkuNo());
+        plmPushMsgEntity.setSyncOperate(operate);
+        plmPushMsgEntity.setPushData(JSON.toJSONString(this.newSyncDataToSdy(productDetailService.getById(id), operate)));
+        
+        plmPushMsgService.save(plmPushMsgEntity);
+	}
+
+
+	@Override
+	public Map<String, Object> newSyncDataToSdy(ProductDetailEntity entity, String operate) {
+		ProductCostEntity productCostEntity = productCostService.getBySkuId(entity.getId());
+		
+		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'");
+		
+		Map<String, Object> resultMap = new HashMap<>();
+		resultMap.put("data_source_system", "SDC");
+		resultMap.put("biz_uni_key", entity.getId());
+		resultMap.put("goods_code", entity.getSkuNo());
+		resultMap.put("goods_name", entity.getName());
+		if(productCostEntity != null) {
+			BigDecimal retailPrice = productCostEntity.getRetailPrice();
+			if(retailPrice != null) {
+				resultMap.put("uni_retail_price", retailPrice.toString());
+			}
+		}
+		resultMap.put("main_unit", entity.getUnitName());
+		LocalDateTime createTime = entity.getCreateTime();
+		if(createTime != null) {
+			resultMap.put("created_time", createTime.format(formatter));
+		}
+		resultMap.put("latest_update_time", LocalDateTime.now());
+		LocalDateTime enableTime = entity.getEnableTime();
+		if(enableTime != null) {
+			resultMap.put("enable_time", enableTime.format(formatter));
+		}
+		resultMap.put("out_system_code", "SDC");
+		
+		if(SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
+			resultMap.put("status", "已删除");
+		}else {
+			resultMap.put("status", ProductDetailStatusEnum.getName(entity.getStatus()));
+		}
+		return resultMap;
 	}
 }

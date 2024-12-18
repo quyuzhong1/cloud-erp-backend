@@ -4,10 +4,10 @@ import com.google.gson.annotations.SerializedName;
 
 public class ShippingFeeAmountBean {
     /**
-     * buyer_paid_return_shipping_fee : 0
+     * buyer_paid_return_shipping_fee : 0.1
      * currency : USD
-     * platform_paid_return_shipping_fee : 0
-     * seller_paid_return_shipping_fee : 0
+     * platform_paid_return_shipping_fee : 0.1
+     * seller_paid_return_shipping_fee : 0.1
      */
 
     @SerializedName("buyer_paid_return_shipping_fee")

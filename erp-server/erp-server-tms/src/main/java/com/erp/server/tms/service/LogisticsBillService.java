@@ -14,6 +14,7 @@ import com.erp.model.tms.entity.LogisticsBillEntity;
 import com.erp.model.tms.vo.response.CancelResponseVO;
 import com.erp.model.tms.vo.response.InterceptResponseVO;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -251,4 +252,13 @@ public interface LogisticsBillService extends SuperService<LogisticsBillEntity> 
      * 同步业务单号到物流单
      */
     void initLogisticsBillBusinessCode();
+
+    /**
+     * 同步速递云销售出库单
+     * @param entity
+     * @param operateEnum
+     */
+    void pushSdyFieldHandler(LogisticsBillEntity entity, String operateEnum);
+
+    List<LogisticsBillEntity> queryToSdy(LocalDateTime startTime, LocalDateTime endTime, Integer pageSize, int offset);
 }

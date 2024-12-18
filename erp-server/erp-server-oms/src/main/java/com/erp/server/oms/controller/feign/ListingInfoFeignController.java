@@ -1,6 +1,8 @@
 package com.erp.server.oms.controller.feign;
 
 
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.erp.model.oms.dto.ListingInfoDTO;
 import com.erp.model.oms.dto.ListingInfoParamDTO;
@@ -10,7 +12,10 @@ import com.erp.model.wms.dto.FbaShipmentDTO;
 import com.erp.server.oms.service.ListingInfoService;
 import com.erp.server.oms.service.SkuMappingService;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
 import java.util.List;
@@ -31,8 +36,6 @@ public class ListingInfoFeignController extends BaseController {
 
     @Resource
     private SkuMappingService skuMappingService;
-
-
 
     /**
      * 根据产品sku查询库存sku
@@ -77,4 +80,11 @@ public class ListingInfoFeignController extends BaseController {
         return listingInfoService.checkAndUpdateFnsku(dto);
     }
 
+    /**
+     * listing 分页
+     **/
+    @PostMapping("/paging")
+    public PagingVO<ListingInfoDTO.PageDTO> paging(@RequestBody @Validated PagingDTO<ListingInfoDTO.PagingParamDTO> dto) {
+        return listingInfoService.paging(dto);
+    }
 }

@@ -12,6 +12,7 @@ import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 
@@ -129,4 +130,6 @@ public interface LogisticsBillMapper extends BaseMapper<LogisticsBillEntity> {
     LogisticsBillDTO.BaseDTO getByTrackNoOrTransportNo(@Param("logisticsCode") String logisticsCode);
 
     List<TmsFirstMileLogisticDTO.WeightAllocationDTO> assembleFirstMileEstimatedList(@Param("ids") List<String> ids);
+
+    List<LogisticsBillEntity> queryToSdy(@Param("startTime") LocalDateTime startTime, @Param("endTime")LocalDateTime endTime, @Param("pageSize")Integer pageSize, @Param("offset")int offset);
 }

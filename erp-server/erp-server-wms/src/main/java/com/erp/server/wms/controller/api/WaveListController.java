@@ -1,5 +1,6 @@
 package com.erp.server.wms.controller.api;
 
+import cn.hutool.core.collection.CollectionUtil;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.BatchResultDTO;
@@ -98,5 +99,20 @@ public class WaveListController extends BaseController {
     @PostMapping("/printFinish")
     public ApiResult<?> printFinish(@RequestBody BaseIdsDTO.IdsDTO idsDTO){
         return waveListService.printFinish(idsDTO);
+    }
+
+    /**
+     * 手动标记波次状态为完成
+     * @author jack
+     * @date 2024/9/29
+     * @param idsDTO
+     * @return List<WaveListEntity>
+     */
+    @PostMapping("/updateWaveStatus")
+    public ApiResult<?> updateWaveStatus(@RequestBody BaseIdsDTO.IdsDTO idsDTO){
+        if(CollectionUtil.isEmpty(idsDTO.getIds())){
+            return failure();
+        }
+        return waveListService.updateWaveStatus(idsDTO.getIds());
     }
 }

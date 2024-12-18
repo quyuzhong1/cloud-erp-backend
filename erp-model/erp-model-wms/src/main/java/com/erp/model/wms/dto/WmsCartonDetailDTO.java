@@ -138,6 +138,21 @@ public class WmsCartonDetailDTO implements Serializable {
     }
 
     /**
+     * 装箱清单产品信息--统计装箱总数量
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ListPackingDetailPackQtyDTO {
+        /**
+         * 箱子id
+         */
+        private String id;
+
+        private Integer packQty;
+
+    }
+
+    /**
      * 装箱清单产品信息
      */
     @Data

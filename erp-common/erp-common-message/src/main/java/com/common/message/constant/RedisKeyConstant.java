@@ -82,4 +82,9 @@ public class RedisKeyConstant {
      * 重试任务key
      */
     public static final String SOB2C_RETRY_JOB = "SOB2C_RETRY_JOB:{}";
+
+    /**
+     * 虚拟仓报表数据缓存
+     */
+    public static final String REPORT_VIRTUAL_ORDER_DATA = "REPORT_VIRTUAL_ORDER_DATA";
 }

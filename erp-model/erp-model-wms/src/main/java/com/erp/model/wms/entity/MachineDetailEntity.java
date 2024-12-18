@@ -79,6 +79,12 @@ public class MachineDetailEntity extends BaseEntity<MachineDetailEntity> {
     @TableField("bom_history_id")
     private String bomHistoryId;
 
+    /**
+     * 来源明细Id
+     */
+    @TableField("source_detail_id")
+    private String sourceDetailId;
+
     @TableField(exist = false)
     private List<MachineSubComponentsDTO.UpdateDTO> subComponentsList;
 

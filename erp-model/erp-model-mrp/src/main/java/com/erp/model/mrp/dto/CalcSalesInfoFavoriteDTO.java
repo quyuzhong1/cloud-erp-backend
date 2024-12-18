@@ -4,11 +4,10 @@ import lombok.Data;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.validator.constraints.Length;
 
 import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.Size;
 import java.io.Serializable;
-import java.util.List;
 
 /**
  * <p>
@@ -33,7 +32,6 @@ public class CalcSalesInfoFavoriteDTO implements Serializable {
          * 试算id
          */
         @NotBlank(message = "试算模板id不能为空")
-        @Size(max = 19, message = "试算id最大长度不能超过19位")
         private String cfgRuleCalcId;
 
     }
@@ -48,8 +46,8 @@ public class CalcSalesInfoFavoriteDTO implements Serializable {
         /**
          * 试算id
          */
-        @Size(min = 1, message = "试算模板id不能为空")
-        private List<String> cfgRuleCalcId;
+        @NotBlank(message = "试算模板id不能为空")
+        private String cfgRuleCalcId;
 
     }
 

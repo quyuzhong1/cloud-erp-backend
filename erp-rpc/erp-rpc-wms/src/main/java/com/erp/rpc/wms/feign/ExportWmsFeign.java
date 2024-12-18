@@ -37,6 +37,9 @@ public interface ExportWmsFeign {
     @PostMapping("/feign/export/requisitionApplication")
     PagingVO<RequisitionApplicationDTO.ListDTO> exportRequisitionApplication(@RequestBody PagingDTO<RequisitionApplicationDTO.PagingParamDTO> dto);
 
+    @PostMapping("/feign/export/requisitionApplicationChange")
+    PagingVO<RequisitionApplicationChangeDTO.ListDTO> exportRequisitionApplicationChange(@RequestBody PagingDTO<RequisitionApplicationChangeDTO.PagingParamDTO> dto);
+
     @PostMapping("/feign/export/warehouseLocationSafetyInventory")
     PagingVO<WarehouseLocationSafetyInventoryDTO.ViewDTO> exportWarehouseLocationSafetyInventory(@RequestBody PagingDTO<WarehouseLocationSafetyInventoryDTO.exportParamDTO> dto);
 
@@ -224,4 +227,10 @@ public interface ExportWmsFeign {
      */
     @PostMapping("/feign/export/listReportOrderSales")
     PagingVO<ReportOrderSalesDTO.ListDTO> listReportOrderSales(@RequestBody PagingDTO<ReportOrderSalesDTO.PagingParamDTO> dto);
+
+    /**
+     * 导出虚拟仓分货
+     */
+    @PostMapping("/feign/export/exportVirtualStatistics")
+    PagingVO<VirtualWarehouseAllocationDTO.ExportStatisticsDTO> exportVirtualStatistics(PagingDTO<VirtualWarehouseAllocationDTO.ExportDTO> dto);
 }

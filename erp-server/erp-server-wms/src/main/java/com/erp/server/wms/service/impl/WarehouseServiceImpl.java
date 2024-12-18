@@ -20,6 +20,7 @@ import com.common.business.enums.SyncOperateEnum;
 import com.common.business.service.impl.RedisService;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
+import com.common.business.wrapper.FeignQuery;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.*;
@@ -30,6 +31,7 @@ import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.wms.dto.*;
+import com.erp.model.wms.dto.WarehouseDTO.WarehouseUpdateStateDTO;
 import com.erp.model.wms.dto.excel.WarehouseExcelDTO;
 import com.erp.model.wms.dto.excel.WarehouseExportExcelDTO;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
@@ -73,6 +75,7 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.time.LocalDateTime;
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
@@ -480,7 +483,14 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
             //获取用户信息
             List<FindUserDTO> userList = sysUserFeign.getUserListByUserIds(userIdList);
             List<String> orgIdList = page.getRecords().stream().map(WarehouseDTO.PagingViewDTO::getOrgId).collect(Collectors.toList());
+            orgIdList.addAll(page.getRecords().stream().map(WarehouseDTO.PagingViewDTO::getShippingOrganization).collect(Collectors.toList()));
+            orgIdList.addAll(page.getRecords().stream().map(WarehouseDTO.PagingViewDTO::getFinancialOrganization).collect(Collectors.toList()));
             List<BaseIdDTO.CodeDTO> orgList = sysUserFeign.getAccountingCompanyList(orgIdList);
+            
+            List<com.erp.model.oms.entity.DictBasicEntity> channelAffiliationList = FeignQuery.create(com.erp.model.oms.entity.DictBasicEntity.class)
+            		.in(com.erp.model.oms.entity.DictBasicEntity::getValue, page.getRecords().stream().map(WarehouseDTO.PagingViewDTO::getChannelAffiliation).collect(Collectors.toList()))
+            		.in(com.erp.model.oms.entity.DictBasicEntity::getType, "salesPlatform")
+            		.list();
 
             List<String> warehouseIds = page.getRecords().stream().map(WarehouseDTO.PagingViewDTO::getId).distinct().collect(Collectors.toList());
             List<WarehouseMappingDTO.MappingViewDTO> mappingViewDTOS = warehouseMappingService.listMappingViewByWarehouseIds(warehouseIds);
@@ -528,6 +538,14 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
                         map(DictBasicEntity::getName).findFirst().orElse("");
                 excelDTO.setGeographyLocationName(geographyLocationName);
 
+                
+                excelDTO.setChannelAffiliationName(channelAffiliationList.stream().filter(o -> o.getValue().equals(item.getChannelAffiliation())).findFirst().
+                        flatMap(obj -> Optional.ofNullable(obj.getName())).orElse(""));
+                excelDTO.setShippingOrganizationName(orgList.stream().filter(o -> o.getId().equals(item.getShippingOrganization())).findFirst().
+                        flatMap(obj -> Optional.ofNullable(obj.getName())).orElse(""));
+                excelDTO.setFinancialOrganizationName(orgList.stream().filter(o -> o.getId().equals(item.getFinancialOrganization())).findFirst().
+                        flatMap(obj -> Optional.ofNullable(obj.getName())).orElse(""));
+                
                 resultList.add(excelDTO);
             }
         }
@@ -609,7 +627,7 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
         checkKingdeeWarehouseCode("", dto.getKingdeeWarehouseCode());
         WarehouseEntity warehouse = new WarehouseEntity();
         BeanMapper.copy(dto, warehouse);
-
+        this.validateOpenCloseTime(warehouse);
         //如果设置了在途仓，获取匹配在途仓名称
         if (CharSequenceUtil.isNotBlank(dto.getOnwayWarehouseId())) {
             WarehouseEntity entity = this.getById(dto.getOnwayWarehouseId());
@@ -671,6 +689,7 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
 //            checkDmpThirdMapping(warehouseId,warehouse.getName());
 //        }
         BeanMapper.copy(dto, warehouse);
+        this.validateOpenCloseTime(warehouse);
 
         //如果设置了在途仓，获取匹配在途仓名称
         if (CharSequenceUtil.isNotBlank(dto.getOnwayWarehouseId())) {
@@ -680,7 +699,9 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
             }
             warehouse.setOnwayWarehouseName(entity.getName());
         }
-
+        if(dto.getChannelAffiliation() == null) {
+        	warehouse.setChannelAffiliation("");
+        }
         Boolean result = this.updateById(warehouse);
         if (result) {
             //如果设置了第三方仓绑定
@@ -779,7 +800,7 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
-    public Boolean updateStatus(UpdateStateDTO dto) {
+    public Boolean updateStatus(WarehouseUpdateStateDTO dto) {
         // 删除缓存
         removeCache(Collections.singletonList(dto.getId()));
         //仓库id
@@ -793,12 +814,17 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
 //        if (Objects.nonNull(dto.getState()) && !Objects.equals(dto.getState(), warehouse.getDisabled()) && Objects.equals(dto.getState(), true)) {
 //            checkDmpThirdMapping(warehouseId,warehouse.getName());
 //        }
-        warehouse.setDisabled(dto.getState());
+        Boolean state = dto.getState();
+		if(Boolean.FALSE.equals(state)) {
+        	warehouse.setOpenTime(dto.getEnableTime());
+        }
+        warehouse.setDisabled(state);
+        this.validateOpenCloseTime(warehouse);
         this.updateById(warehouse);
 
         //发送金蝶
         String operate = SyncOperateEnum.OPERATE_ENABLE.getCode();
-        if (dto.getState()) {
+        if (state) {
             //Delete by Edison.qu 2024-07-23 去除不必要的限制:仓库绑定店铺，不允许禁用
 //            List<ShopInfoEntity> shopInfoEntities = shopInfoFeign.listShopInfoByWarehouseIds(Collections.singletonList(dto.getId()));
 //            if (CollectionUtils.isNotEmpty(shopInfoEntities)) {
@@ -1376,6 +1402,7 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
         List<DmpPushTaskEntity> resultList = new ArrayList<>();
         list.forEach(obj -> {
             DmpPushTaskEntity pushTaskEntity = syncKingdeeWarehouseService.syncDataToKingdee(obj, operate);
+            syncKingdeeWarehouseService.syncDataToSdy(obj, operate);
             resultList.add(pushTaskEntity);
         });
         //推送金蝶
@@ -1386,4 +1413,19 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
             }
         });
     }
+
+    @Override
+	public boolean checkOpenCloseTime(WarehouseEntity warehouseEntity) {
+		Boolean disabled = warehouseEntity.getDisabled();
+        if(Boolean.TRUE.equals(disabled)) {
+        	warehouseEntity.setCloseTime(LocalDateTime.now());
+        }
+        return Boolean.FALSE.equals(disabled) && warehouseEntity.getOpenTime() == null;
+	}
+	
+	private void validateOpenCloseTime(WarehouseEntity warehouseEntity) {
+		if(this.checkOpenCloseTime(warehouseEntity)) {
+			throw new ServiceException(ApiError.OPEN_STATUS_OPEN_TIME_NOT_NULL);
+		}
+	}
 }

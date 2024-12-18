@@ -795,7 +795,7 @@ public class AmazonDownloadServiceImpl implements AmazonDownloadService {
                     fillWarehouseInfo(e, warehouseMap, shopInfo);
                 } else {
                     // 仓储中心配置为空
-                    if (org.apache.commons.lang.StringUtils.isBlank(centerEntity.getCountry())){
+                    if (StringUtils.isBlank(centerEntity.getCountry())){
                         // 补充仓库信息
                         fillWarehouseInfo(e, warehouseMap, shopInfo);
                     }

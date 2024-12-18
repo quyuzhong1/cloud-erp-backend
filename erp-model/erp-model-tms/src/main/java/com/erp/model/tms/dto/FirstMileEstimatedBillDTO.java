@@ -149,6 +149,10 @@ public class FirstMileEstimatedBillDTO implements Serializable {
          * 结算币种【可排序】
          */
         private String currency;
+        /**
+         * 汇率
+         */
+        private BigDecimal exchangeRate;
 
         /**
          * 币种符号
@@ -260,7 +264,7 @@ public class FirstMileEstimatedBillDTO implements Serializable {
          */
         private String dictCostCategory;
         /**
-         * 分类费用合计
+         * 分类费用合计(人民币)
          */
         private BigDecimal costValue = BigDecimal.ZERO;
     }

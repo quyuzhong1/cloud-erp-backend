@@ -1,14 +1,16 @@
 package com.erp.model.wms.entity;
 
+import java.io.Serializable;
+import java.time.LocalDateTime;
+
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.core.entity.BaseEntity;
+
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
-
-import java.io.Serializable;
 
 /**
  * <p>
@@ -148,6 +150,36 @@ public class WarehouseEntity extends BaseEntity<WarehouseEntity> {
      */
     @TableField("index")
     private Integer index;
+    
+    /**
+     * 所属渠道
+     */
+    @TableField("channel_affiliation")
+    private String channelAffiliation;
+    
+    /**
+     * 发货组织
+     */
+    @TableField("shipping_organization")
+    private String shippingOrganization;
+    
+    /**
+     * 财务组织
+     */
+    @TableField("financial_organization")
+    private String financialOrganization;
+    
+    /**
+     * 启用日期
+     */
+    @TableField("open_time")
+    private LocalDateTime openTime;
+    
+    /**
+     * 停用日期
+     */
+    @TableField("close_time")
+    private LocalDateTime closeTime;
 
     @Override
     public Serializable pkVal() {

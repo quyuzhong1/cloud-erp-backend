@@ -1,14 +1,23 @@
 package com.erp.model.oms.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
+import com.common.business.annotation.Dict;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
+import com.common.business.dto.base.UpdateStateDTO.BatchUpdateDTO;
 import com.common.business.enums.ApproveStatusEnum;
+import com.common.business.enums.ServiceCodeNameEnum;
+import com.erp.model.oms.enums.CustomerInfoBusinessModeEnum;
+import com.erp.model.oms.enums.CustomerInfoCheckTypeEnum;
+import com.erp.model.oms.enums.CustomerInfoPeriodSettingEnum;
+import com.erp.model.oms.enums.CustomerInfoTransactionalModeEnum;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.time.LocalDateTime;
@@ -164,6 +173,52 @@ public class CustomerDTO implements Serializable {
         private LocalDateTime createTime;
 
         /**
+         * 结算币别 
+         */
+        @Dict(serviceCode = ServiceCodeNameEnum.SYS , queryFieldName = "id" , returnFieldName = "name" , tableName = "dict_currency")
+        private String currency;
+        private String currencyName;
+        
+         /**
+         * 财务组织 名称字段financialOrganizationName
+         */
+         @Dict(serviceCode = ServiceCodeNameEnum.SYS , queryFieldName = "id" , returnFieldName = "company_name" , tableName = "sys_accounting_company")
+         private String financialOrganization;
+         private String financialOrganizationName;
+         /**
+         * 启用时间
+         */
+         private LocalDateTime enableTime;
+         /**
+          * 停用时间
+          */
+          private LocalDateTime downTime;
+         /**
+         * 交易币别 
+         */
+         @Dict(serviceCode = ServiceCodeNameEnum.SYS , queryFieldName = "id" , returnFieldName = "name" , tableName = "dict_currency")
+         private String tradeCurrency;
+         /**
+         * 平台类型: 名称字段businessModeName
+         */
+         @Dict(enumClass = CustomerInfoBusinessModeEnum.class)
+         private String businessMode;
+         /**
+         * 交易模式:名称字段transactionalModeName
+         */
+         @Dict(enumClass = CustomerInfoTransactionalModeEnum.class)
+         private String transactionalMode;
+         /**
+         * 账期设置：名称字段periodSettingName
+         */
+         @Dict(enumClass = CustomerInfoPeriodSettingEnum.class)
+         private String periodSetting;
+         /**
+         * 确收方式: 名称字段checkTypeName
+         */
+         @Dict(enumClass = CustomerInfoCheckTypeEnum.class)
+         private String checkType;
+         /**
          * 国家id
          */
         private String countryId;
@@ -393,7 +448,41 @@ public class CustomerDTO implements Serializable {
         @Valid
         private List<InvoiceDTO.AddDTO> invoiceList;
 
-
+         /**
+         * 财务组织 http://172.16.100.11:3002/project/36/interface/api/30795
+         */
+        @NotBlank(message = "财务组织不能为空")
+         private String financialOrganization;
+         /**
+         * 启用时间
+         */
+        @NotNull(message = "启用时间不能为空")
+         private LocalDateTime enableTime;
+         /**
+         * 交易币别 http://172.16.100.11:3002/project/36/interface/api/8485
+         */
+        @NotBlank(message = "交易币别不能为空")
+         private String tradeCurrency;
+         /**
+         * 平台类型: http://172.16.100.11:3002/project/110/interface/api/13480 type=CustomerInfoBusinessMode
+         */
+        @NotBlank(message = "平台类型不能为空")
+         private String businessMode;
+         /**
+         * 交易模式: http://172.16.100.11:3002/project/110/interface/api/13480 type=CustomerInfoTransactionalMode
+         */
+        @NotBlank(message = "交易模式不能为空")
+         private String transactionalMode;
+         /**
+         * 账期设置：http://172.16.100.11:3002/project/110/interface/api/13480 type=CustomerInfoPeriodSetting
+         */
+        @NotBlank(message = "账期设置不能为空")
+         private String periodSetting;
+         /**
+         * 确收方式: http://172.16.100.11:3002/project/110/interface/api/13480 type=CustomerInfoCheckType
+         */
+        @NotBlank(message = "确收方式不能为空")
+         private String checkType;
     }
 
     /**
@@ -501,6 +590,10 @@ public class CustomerDTO implements Serializable {
          * 销售员id
          */
         private String sellerId;
+        /**
+         * 销售员名称
+         */
+        private String sellerName;
 
         /**
          * 付款方
@@ -594,6 +687,45 @@ public class CustomerDTO implements Serializable {
          * 销售员信息
          */
         private List<SellerDTO.ViewDTO> sellerList;
+        
+         /**
+         * 财务组织 名称字段financialOrganizationName
+         */
+         @Dict(serviceCode = ServiceCodeNameEnum.SYS , queryFieldName = "id" , returnFieldName = "company_name" , tableName = "sys_accounting_company")
+         private String financialOrganization;
+         /**
+         * 启用时间
+         */
+         private LocalDateTime enableTime;
+         /**
+          * 停用时间
+          */
+          private LocalDateTime downTime;
+         /**
+         * 交易币别 
+         */
+         private String tradeCurrency;
+         /**
+         * 平台类型: 名称字段businessModeName
+         */
+         @Dict(enumClass = CustomerInfoBusinessModeEnum.class)
+         private String businessMode;
+         /**
+         * 交易模式:名称字段transactionalModeName
+         */
+         @Dict(enumClass = CustomerInfoTransactionalModeEnum.class)
+         private String transactionalMode;
+         /**
+         * 账期设置：名称字段periodSettingName
+         */
+         @Dict(enumClass = CustomerInfoPeriodSettingEnum.class)
+         private String periodSetting;
+         /**
+         * 确收方式: 名称字段checkTypeName
+         */
+         @Dict(enumClass = CustomerInfoCheckTypeEnum.class)
+         private String checkType;
+               
     }
 
 
@@ -602,7 +734,18 @@ public class CustomerDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
-    public static class UpdateDTO {
+    public static class CustomerBatchUpdateDTO extends BatchUpdateDTO{
+    	/**
+         * 启用时间
+         */
+         private LocalDateTime enableTime;
+    }
+    	/**
+    	 * 修改
+    	 */
+    	@Data
+    	@NoArgsConstructor
+    	public static class UpdateDTO {
 
         /**
          * id
@@ -757,7 +900,41 @@ public class CustomerDTO implements Serializable {
          */
         private List<InvoiceDTO.ViewDTO> invoiceList;
 
-
+         /**
+         * 财务组织 http://172.16.100.11:3002/project/36/interface/api/30795
+         */
+        @NotBlank(message = "财务组织不能为空")
+         private String financialOrganization;
+         /**
+         * 启用时间
+         */
+        @NotNull(message = "启用时间不能为空")
+         private LocalDateTime enableTime;
+         /**
+         * 交易币别 http://172.16.100.11:3002/project/36/interface/api/8485
+         */
+        @NotBlank(message = "交易币别不能为空")
+         private String tradeCurrency;
+         /**
+         * 平台类型: http://172.16.100.11:3002/project/110/interface/api/13480 type=CustomerInfoBusinessMode
+         */
+        @NotBlank(message = "平台类型不能为空")
+         private String businessMode;
+         /**
+         * 交易模式: http://172.16.100.11:3002/project/110/interface/api/13480 type=CustomerInfoTransactionalMode
+         */
+        @NotBlank(message = "交易模式不能为空")
+         private String transactionalMode;
+         /**
+         * 账期设置：http://172.16.100.11:3002/project/110/interface/api/13480 type=CustomerInfoPeriodSetting
+         */
+        @NotBlank(message = "账期设置不能为空")
+         private String periodSetting;
+         /**
+         * 确收方式: http://172.16.100.11:3002/project/110/interface/api/13480 type=CustomerInfoCheckType
+         */
+        @NotBlank(message = "确收方式不能为空")
+         private String checkType;
     }
 
     @Data

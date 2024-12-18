@@ -194,6 +194,9 @@ public enum ApiError implements Serializable {
     ERROR_THIRD_WAREHOUSE_NOTFOUND(80011,"第三方仓库不存在"),
     ERROR_THIRD_SYS_TYPE_BINDING(80012,"同一个第三方平台只能绑定一个{}"),
     ERROR_SYS_TYPE_NOTFOUND(80013,"{}不存在"),
+    ERROR_SDY_NOT_FOUND_SHOP_MAPPING(80014,"旺店通退货同步数帝云单据未找到对应的店铺映射【{}】"),
+    ERROR_SDY_NOT_FOUND_SHOP(80015,"数据同步数帝云未找到店铺信息，店铺id【{}】"),
+    ERROR_SDY_NOT_FOUND_CUSTOMER(80016,"店铺未绑定客户信息，店铺id【{}】"),
 
     /**
      * 工作流错误 workflow
@@ -625,7 +628,7 @@ public enum ApiError implements Serializable {
     ERROR_INTERVAL_DIFFERENT(98048,"区间从,区间到 两个值不能相同"),
     ERROR_INTERVAL_SIZE(98050,"区间从值不能大于区间到值"),
     ERROR_PRICE_ZERO_SKUNO(98102,"以下SKU【{}】价格不能为零"),
-    ERROR_MACHINE_EXIST_TRANSFER_INFO(98102,"加工单【{}】已存在下推直接调拨单，不支持反审核"),
+    ERROR_MACHINE_EXIST_TRANSFER_INFO(98102,"【{}】已存在下推直接调拨单，不支持反审核"),
     ERROR_MACHINE_EXIST_PURCHASE_RETURN(98102,"加工单【{}】已存在下推采购退货单，不支持反审核"),
     ERROR_USER_NOT_REL_SUPPLIER(98102,"用户未关联供应商"),
     ERROR_USER_NOT_REL_OTHER_SUPPLIER(98051,"只能导入当前供应商用户"),
@@ -970,6 +973,7 @@ public enum ApiError implements Serializable {
     SHOP_INFO_EXIST_WAREHOUSE_NOT_DISABLE(99120,"仓库已绑定店铺【{}】不允许禁用"),
     SHOP_INFO_EXIST_WAREHOUSE_NOT_DISAPPROVE(99121,"仓库已绑定店铺【{}】不允许反审核"),
     WAIT_HANDLE_IS_CANCEL_PROCESS(99122,"只有待处理，处理中，已处理的单据允许撤销"),
+    OPEN_STATUS_OPEN_TIME_NOT_NULL(99222,"仓库状态为启用，启用日期不能空"),
 
     OVERSEAS_WAREHOUSE_INBOUND_DETAIL_NOT_EXIST(99121,"海外仓入库单详情不存在"),
     OVERSEAS_WAREHOUSE_INBOUND_NOT_EXIST(99122,"海外仓入库单不存在"),
@@ -1171,6 +1175,7 @@ public enum ApiError implements Serializable {
     ERROR_SO_DELIVERY_NOTICE_DETAIL_NOT_EXIST(92248,"销售通知单明细未找到"),
 
     ERROR_92248(92248,"中转规则自动产生的直接调拨单,不支持修改"),
+    ERROR_92249(92249,"打印FNSKU标签失败"),
     /**
      * OMS 错误
      * 从92000 开始  以端口号
@@ -1400,6 +1405,12 @@ public enum ApiError implements Serializable {
     ERROR_92160(92160,"本地推送消息单"),
     ERROR_92161(92161,"退款订单明细"),
     ERROR_92162(92162,"合并后的平台订单后过长"),
+
+
+    TRANSACTION_SUB_TYPE_NOT_NULL(92154,"【{}】手工单的单据子类型不能为空"),
+
+
+
     /**
      * TMS 错误
      * 从94000 开始
@@ -1535,9 +1546,16 @@ public enum ApiError implements Serializable {
     ERROR_SUGGEST_LOCKING(97017,"仅草稿数据支持锁定操作"),
     ERROR_SUGGEST_INVALID(97018,"已下推数据不支持作废操作"),
     ERROR_SUGGEST_UPDATE_REMARK(97019,"仅未作废的草稿和待确认数据支持更新备注操作"),
-    ERROR_SUGGEST_UPDATE(97020,"仅未作废的草稿和待确认数据支持更新备货操作"),
+    ERROR_SUGGEST_UPDATE(97020,"仅未作废的草稿和待确认数据支持更新操作"),
     ERROR_DELIVERY_SUGGEST_PUSH(97021,"发货建议【{}】非已完成不支持下推"),
     ERROR_DELIVERY_SUGGEST_PUSH_INVALID(97021,"发货建议【{}】已作废不支持下推"),
+    ERROR_NOT_EXIST_CALC_DATA(97030,"不存在符合的试算数据"),
+    ERROR_DATA_IS_DIFFERENT(97031,"选中的数据，存在sku/店铺/试算开始时间不一致，无法进行比较"),
+    ERROR_HIS_SALES_IS_DIFFERENT(97032,"选中的数据，历史销量不一致，无法进行比较"),
+    ERROR_VERIFY_START_CALC_DATE(97033,"试算开始日期不能晚于当前日期"),
+    ERROR__VERIFY_END_CALC_DATE(97034,"试算结束日期不能晚于试算开始日期"),
+    ERROR__VERIFY_END_DATE(97034,"结束日期不能晚于选中数据最小试算结束日期"),
+    ERROR__VERIFY_START_DATE(97034,"开始日期不能早于选中数据试算开始日期"),
 
 
 

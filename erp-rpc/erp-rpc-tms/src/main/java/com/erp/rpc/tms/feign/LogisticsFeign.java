@@ -3,10 +3,7 @@ package com.erp.rpc.tms.feign;
 import com.common.business.config.FeignErrorDecoder;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.core.controller.vo.ApiResult;
-import com.erp.model.tms.dto.LogisticsAddressDTO;
-import com.erp.model.tms.dto.LogisticsBillDetailQueryDTO;
-import com.erp.model.tms.dto.LogisticsChannelDTO;
-import com.erp.model.tms.dto.LogisticsSupplierDTO;
+import com.erp.model.tms.dto.*;
 import com.erp.model.tms.entity.LogisticsAddressEntity;
 import com.erp.model.tms.entity.LogisticsChannelEntity;
 import com.erp.model.tms.vo.request.LogisticsQueryBaseVO;
@@ -101,5 +98,12 @@ public interface LogisticsFeign {
      * @return
      */
     @PostMapping("/feign/logistics/getWarnReportByChannel")
-    public List<LogisticsChannelDTO.WarnReportDTO> getWarnReportByChannel(@RequestBody LogisticsBillDetailQueryDTO query);
+    List<LogisticsChannelDTO.WarnReportDTO> getWarnReportByChannel(@RequestBody LogisticsBillDetailQueryDTO query);
+
+    /**
+     * 接收track123物流轨迹同步数据
+     * @return
+     */
+    @PostMapping("/feign/logistics/webhookByTrack123")
+    void webhookByTrack123(@RequestBody LogisticsTrackDTO.TrackWebHookDTO dto);
 }

@@ -23,7 +23,6 @@ import com.erp.server.tms.mapper.TransferDeclareDetailMapper;
 import com.erp.server.tms.service.LogisticsChannelService;
 import com.erp.server.tms.service.OperateLogService;
 import com.erp.server.tms.service.TransferDeclareDetailService;
-import com.erp.server.tms.service.TransferDeclareProductService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -57,8 +56,6 @@ public class TransferDeclareDetailServiceImpl extends SuperServiceImpl<TransferD
     @Resource
     private SoB2cFeign soB2cFeign;
     @Resource
-    private TransferDeclareProductService transferDeclareProductService;
-    @Resource
     private SoOutstockFeign soOutstockFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class)
@@ -72,8 +69,7 @@ public class TransferDeclareDetailServiceImpl extends SuperServiceImpl<TransferD
 
         //批量新增
         boolean save = this.saveBatch(transferDeclareDetailEntities);
-        //拆分订单sku并新增报关明细
-        transferDeclareProductService.saveOrUpdateTransferDeclareProducts(transferDeclareDetailEntities);
+
         log.info("开始新增中转报关详情");
         if(!save) {
             throw new ServiceException("中转报关详情保存失败");
@@ -102,8 +98,6 @@ public class TransferDeclareDetailServiceImpl extends SuperServiceImpl<TransferD
             List<Pair<String, String>> pairList = removeList.stream().map(obj -> new Pair<>(obj.getMainId(), obj.getSoCode())).collect(Collectors.toList());
             operateLogService.batchAddModuleOperateLog("删除了一个订单【%s】", ModuleTypeEnum.TRANSFER_DECLARE.getCode(), pairList, "编辑操作");
             this.removeByIds(deleteIds);
-            //删除明细对应的sku拆分记录
-            transferDeclareProductService.removeByDeclareDetailIds(deleteIds);
 
         }
 
@@ -112,7 +106,6 @@ public class TransferDeclareDetailServiceImpl extends SuperServiceImpl<TransferD
 
         //批量新增
         boolean save = this.saveOrUpdateBatch(transferDeclareDetailEntities);
-        transferDeclareProductService.saveOrUpdateTransferDeclareProducts(transferDeclareDetailEntities);
         log.info("开始修改中转报关详情");
         if(!save) {
             throw new ServiceException("中转报关详情修改失败");
@@ -130,16 +123,6 @@ public class TransferDeclareDetailServiceImpl extends SuperServiceImpl<TransferD
     @Override
     public List<TransferDeclareDetailDTO.ViewDTO> viewDetailList(TransferDeclareDTO.ViewDetailParamDTO dto) {
         return baseMapper.viewDetailList(dto);
-    }
-
-    @Override
-    public Boolean updateOrderUploadStatus(String id, String status, String shippingOrderNo, String failureReason) {
-        return lambdaUpdate()
-                .eq(TransferDeclareDetailEntity::getId, id)
-                .set(TransferDeclareDetailEntity::getOrderUploadStatus, status)
-                .set(TransferDeclareDetailEntity::getShippingOrderNo, shippingOrderNo)
-                .set(TransferDeclareDetailEntity::getFailureReason, failureReason)
-                .update();
     }
 
     @Override
@@ -169,10 +152,6 @@ public class TransferDeclareDetailServiceImpl extends SuperServiceImpl<TransferD
 
         //删除明细
         lambdaUpdate().in(TransferDeclareDetailEntity::getMainId, mainIds).remove();
-
-        //删除明细对应的sku拆分记录
-        List<String> ids = detailEntities.stream().map(req -> req.getId()).collect(Collectors.toList());
-        transferDeclareProductService.removeByDeclareDetailIds(ids);
     }
 
 

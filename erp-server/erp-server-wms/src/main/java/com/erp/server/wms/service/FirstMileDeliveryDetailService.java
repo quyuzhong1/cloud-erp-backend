@@ -1,5 +1,6 @@
 package com.erp.server.wms.service;
 import com.erp.model.wms.dto.FirstMileDeliveryDTO;
+import com.erp.model.wms.dto.FirstMileDeliveryDetailDTO;
 import com.erp.model.wms.entity.FirstMileDeliveryDetailEntity;
 import com.common.business.service.SuperService;
 
@@ -84,4 +85,12 @@ public interface FirstMileDeliveryDetailService extends SuperService<FirstMileDe
      * @return
      */
     List<FirstMileDeliveryDetailEntity> listByFbaShipmentCodes(List<String> shipmentCodes);
+    /**
+     * 根据明细id找来源
+     * @author will
+     * @date 2024/11/20 18:01
+     * @param firstMileDetailIdList
+     * @return List<listFirstMileDTO>
+     */
+    List<FirstMileDeliveryDetailDTO.listFirstMileDTO> listFirstMileSource(List<String> firstMileDetailIdList);
 }

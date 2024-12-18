@@ -4,6 +4,7 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.json.JSONUtil;
 import com.common.business.enums.ApproveStatusEnum;
+import com.common.core.utils.MathUtil;
 import com.erp.model.dmp.entity.*;
 import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
@@ -12,6 +13,7 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -125,6 +127,14 @@ public class TikTokReturnDmpHandler extends DmpInputDbConvertDmpHandler {
                     dmpDataMap.put("allAmount", paymentMap.get("refundTotal"));
                     dmpDataMap.put("currencyCode", paymentMap.get("currency"));
                     dmpDataMap.put("refundTax", paymentMap.get("refundTax"));
+                }
+
+                //折扣信息
+                Object discountAmountObj = dmpDataMap.get("discountAmount");
+                if (discountAmountObj != null) {
+                    List<Map<String, Object>> discountAmountList = (List<Map<String, Object>>) discountAmountObj;
+                    dmpDataMap.put("shippingFeeSellerDiscount", discountAmountList.stream().map(req -> MathUtil.valueOf(req.get("shippingFeeSellerDiscount"))).reduce(BigDecimal::add).orElse(BigDecimal.ZERO));
+                    dmpDataMap.put("shippingFeePlatformDiscount", discountAmountList.stream().map(req -> MathUtil.valueOf(req.get("shippingFeePlatformDiscount"))).reduce(BigDecimal::add).orElse(BigDecimal.ZERO));
                 }
             }
         }

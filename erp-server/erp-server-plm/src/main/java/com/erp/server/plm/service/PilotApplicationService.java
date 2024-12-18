@@ -227,4 +227,22 @@ public interface PilotApplicationService extends SuperService<PilotApplicationEn
      * @date: 2024-09-23
      */
     void writeProductPurchaseBack(String id);
+
+    /**
+     * 工作流审核通过处理
+     * @param id id
+     */
+    void writeProductPurchaseBackByWork(String id);
+
+    /**
+     * 工作流审核通过处理
+     * @param id id
+     */
+    void approvePilotApplicationNoticeByWork(String id);
+
+    /**
+     * 根据skuIds获取产品包装尺寸明细,过滤包装数据完整的数据
+     * @param ids 参数
+     */
+    List<ProductPackViewDTO> listProductPackBySkuIds(List<String> ids);
 }

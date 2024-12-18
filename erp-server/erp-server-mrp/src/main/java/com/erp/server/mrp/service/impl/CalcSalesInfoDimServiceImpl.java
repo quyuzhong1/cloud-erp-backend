@@ -1,19 +1,29 @@
 package com.erp.server.mrp.service.impl;
 
 
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.TypeReference;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.FileTaskEventEnum;
+import com.common.business.enums.OperationTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
+import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.enums.ApiError;
+import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
+import com.common.core.utils.Md5Util;
+import com.common.core.utils.date.DateUtil;
 import com.erp.model.mrp.dto.*;
 import com.erp.model.mrp.entity.*;
 import com.erp.model.mrp.enums.CfgRuleSalesDenoisingDenoisingTypeEnum;
@@ -35,6 +45,7 @@ import com.erp.server.mrp.es.service.CalcSalesInfoHisEsService;
 import com.erp.server.mrp.es.service.OrderHistorySalesEsService;
 import com.erp.server.mrp.mapper.CalcSalesInfoDimMapper;
 import com.erp.server.mrp.service.*;
+import com.erp.server.mrp.utils.DataDifferenceCalculator;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Service;
@@ -42,6 +53,8 @@ import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
@@ -93,6 +106,9 @@ public class CalcSalesInfoDimServiceImpl extends SuperServiceImpl<CalcSalesInfoD
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
 
+    @Resource
+    private CalcSalesInfoFavoriteService calcSalesInfoFavoriteService;
+
     @Override
     public void calcSalesInfo(List<CalcSalesInfoDimDTO.CalcResultDTO> calcResultList) {
         for (CalcSalesInfoDimDTO.CalcResultDTO dto : calcResultList) {
@@ -101,7 +117,7 @@ public class CalcSalesInfoDimServiceImpl extends SuperServiceImpl<CalcSalesInfoD
                 entity.setId(dto.getCalcSalesInfoDimId());
                 List<CalcSalesInfoDenoisingEntity> allSalesList = new ArrayList<>();
                 //开始计算去噪销量
-                List<CalcSalesInfoDenoisingEntity> calculationSales = calculationSales(dto, allSalesList);
+                List<CalcSalesInfoDenoisingEntity> calculationSales = calculationSales(dto, allSalesList, entity);
                 //开始计算分时段销量和日均
                 List<CalcSalesInfoDimDTO.TimePeriodSalesDTO> avgTimePeriodSales = calculationTimePeriodSales(dto, allSalesList, entity);
                 //开始计算销量预估
@@ -127,6 +143,7 @@ public class CalcSalesInfoDimServiceImpl extends SuperServiceImpl<CalcSalesInfoD
 
     @Override
     public CalcSalesInfoDimDTO.ViewDTO view(String id) {
+        List<String> cfgRuleCalcIdList = calcSalesInfoFavoriteService.listByUserId(UserContext.getDefaultLoginUser().getUid());
         CalcSalesInfoDimDTO.ViewDTO view = baseMapper.view(id);
         List<DictCountryEntity> countryList = sysDictFeign.listCountryByIds(Collections.singletonList(view.getCountry()));
         List<SkuVO> skuVOS = plmTaskFeign.listSkuProductByIds(Collections.singletonList(view.getSkuId()));
@@ -138,15 +155,9 @@ public class CalcSalesInfoDimServiceImpl extends SuperServiceImpl<CalcSalesInfoD
         view.setProductName(skuVO.getSkuName());
         view.setCountryName(dictCountry.getNameCn());
         view.setShopName(shopInfoEntity.getName());
-        List<DictBasicEntity> salesPlatformList = FeignQuery.create(DictBasicEntity.class)
-                .eq(DictBasicEntity::getType, DictBasicTypeEnum.SALES_PLATFORM.getType())
-                .eq(DictBasicEntity::getStatus, Boolean.TRUE)
-                .eq(DictBasicEntity::getIsDeleted, Boolean.FALSE)
-                .eq(DictBasicEntity::getValue, view.getPlatform())
-                .list();
-        Map<String, String> dictBasicMap = salesPlatformList.stream()
-                .collect(Collectors.toMap(DictBasicEntity::getValue, DictBasicEntity::getName));
+        Map<String, String> dictBasicMap = getPlatformMap();
         view.setPlatform(dictBasicMap.get(view.getPlatform()));
+        view.setFavorite(cfgRuleCalcIdList.contains(view.getCfgRuleCalcId()));
         return view;
     }
 
@@ -195,10 +206,10 @@ public class CalcSalesInfoDimServiceImpl extends SuperServiceImpl<CalcSalesInfoD
             startDate = cfgRuleCalc.getStartCalcDate();
             endDate = cfgRuleCalc.getEndCalcDate();
         }
-        List<OrderHistorySalesEsEntity> orderHistorySalesList = orderHistorySalesEsService.findByShopIdInAndSkuIdInAndDateBetween(Collections.singletonList(entity.getShopId()),
-                Collections.singletonList(entity.getShopId()), startDate, endDate);
+        List<OrderHistorySalesEsEntity> orderHistorySalesList = orderHistorySalesEsService.findByShopIdAndSkuIdAndDateBetween(entity.getShopId(),
+                entity.getSkuId(), startDate, endDate);
         Map<LocalDate, Integer> orderHistorySalesMap = orderHistorySalesList.stream()
-                .collect(Collectors.toMap(OrderHistorySalesEsEntity::getDate, OrderHistorySalesEsEntity::getOriginalSalesQty));
+                .collect(Collectors.toMap(OrderHistorySalesEsEntity::getDate, OrderHistorySalesEsEntity::getOriginalSalesQty, Integer::sum));
         List<CalcSalesInfoEstimateEntity> calcSalesInfoEstimateList = calcSalesInfoEstimateService.listByCalcSalesInfoIds(Collections.singletonList(dto.getId()));
         Map<LocalDate, BigDecimal> calcSalesInfoEstimateMap = calcSalesInfoEstimateList.stream()
                 .collect(Collectors.toMap(CalcSalesInfoEstimateEntity::getDate, CalcSalesInfoEstimateEntity::getQty));
@@ -234,6 +245,311 @@ public class CalcSalesInfoDimServiceImpl extends SuperServiceImpl<CalcSalesInfoD
         return new PagingVO<>(results, (int) page.getTotal(), dto.getPageSize(), dto.getCurrPage());
     }
 
+    @Override
+    public PagingVO<CalcSalesInfoDimDTO.DetailViewDTO> pagingDetail(PagingDTO<CalcSalesInfoDimDTO.ParamDTO> params) {
+        LoginUser user = UserContext.getDefaultLoginUser();
+        Page<CalcSalesInfoDimDTO.DetailViewDTO> page = baseMapper.pagingDetail(new Page<>(params.getCurrPage(), params.getPageSize()), params.getParams(), user.getUid());
+        if (!CollectionUtils.isEmpty(page.getRecords())) {
+            processDetailData(page.getRecords(), user.getUid());
+        }
+        return new PagingVO<>(page);
+    }
+
+    /**
+     * 处理分页参数
+     *
+     * @param records 记录
+     * @param uid     用户id
+     */
+
+    private void processDetailData(List<CalcSalesInfoDimDTO.DetailViewDTO> records, String uid) {
+        List<String> cfgRuleCalcIdList = calcSalesInfoFavoriteService.listByUserId(uid);
+        List<String> skuIds = records.stream().map(CalcSalesInfoDimDTO.DetailViewDTO::getSkuId).distinct().collect(Collectors.toList());
+        List<String> ids = records.stream().map(CalcSalesInfoDimDTO.DetailViewDTO::getId).distinct().collect(Collectors.toList());
+        List<CalcSalesInfoEstimateEntity> salesInfoEstimateList = calcSalesInfoEstimateService.listByCalcSalesInfoIds(ids);
+        List<String> shopIds = records.stream().map(CalcSalesInfoDimDTO.DetailViewDTO::getShopId).distinct().collect(Collectors.toList());
+        List<String> country = records.stream().map(CalcSalesInfoDimDTO.DetailViewDTO::getCountry).distinct().collect(Collectors.toList());
+        List<DictCountryEntity> countryList = new ArrayList<>();
+        if (!CollectionUtils.isEmpty(country)) {
+            countryList = sysDictFeign.listCountryByIds(country);
+        }
+        List<SkuVO> skuVOS = plmTaskFeign.listSkuCategoryByIds(skuIds);
+        List<ShopInfoEntity> shopInfos = shopInfoFeign.listShopInfoByIds(shopIds);
+        List<String> cfgRuleCalcIds = records.stream().map(CalcSalesInfoDimDTO.DetailViewDTO::getCfgRuleCalcId).distinct().collect(Collectors.toList());
+        List<CfgRuleCalcEntity> cfgRuleCalcList = cfgRuleCalcService.listByIds(cfgRuleCalcIds);
+        Map<String, String> dictBasicMap = getPlatformMap();
+        for (CalcSalesInfoDimDTO.DetailViewDTO record : records) {
+            SkuVO skuVO = skuVOS.stream().filter(v -> v.getSkuId().equals(record.getSkuId())).findFirst().orElse(new SkuVO());
+            ShopInfoEntity shopInfoEntity = shopInfos.stream().filter(v -> v.getId().equals(record.getShopId())).findFirst().orElse(new ShopInfoEntity());
+            DictCountryEntity dictCountry = countryList.stream().filter(v -> v.getId().equals(record.getCountry())).findFirst().orElse(new DictCountryEntity());
+            record.setProductName(skuVO.getSkuName());
+            record.setSkuImgUrl(skuVO.getSkuImagesUrl());
+            record.setCountryName(dictCountry.getNameCn());
+            record.setCountryImgUrl(dictCountry.getFlagUrl());
+            record.setPlatform(dictBasicMap.get(record.getPlatform()));
+            record.setShopName(shopInfoEntity.getName());
+            record.setSalesQtyList(JSON.parseObject(record.getSalesQtyJson(), new TypeReference<List<CalcSalesInfoDimDTO.SalesVO>>() {
+            }));
+            record.setAvgSalesQtyList(JSON.parseObject(record.getAvgSalesQtyJson(), new TypeReference<List<CalcSalesInfoDimDTO.SalesVO>>() {
+            }));
+            record.setMonthSalesEstimateQtyList(JSON.parseObject(record.getMonthSalesEstimateQtyJson(), new TypeReference<List<CalcSalesInfoDimDTO.MonthSalesVO>>() {
+            }));
+            record.setMonthRealSalesQtyList(JSON.parseObject(record.getMonthRealSalesQtyJson(), new TypeReference<List<CalcSalesInfoDimDTO.MonthSalesVO>>() {
+            }));
+            CfgRuleCalcEntity cfgRuleCalc = cfgRuleCalcList.stream()
+                    .filter(v -> v.getId().equals(record.getCfgRuleCalcId()))
+                    .findFirst()
+                    .orElse(null);
+            if (!ObjectUtils.isEmpty(cfgRuleCalc)) {
+                Map<LocalDate, BigDecimal> estimateMap = salesInfoEstimateList.stream()
+                        .filter(v -> v.getCalcSalesInfoDimId().equals(record.getId()))
+                        .collect(Collectors.toMap(CalcSalesInfoEstimateEntity::getDate, CalcSalesInfoEstimateEntity::getQty));
+                LocalDate startCalcDate = cfgRuleCalc.getStartCalcDate();
+                LocalDate endDate = startCalcDate.plusDays(14);
+                List<LocalDate> dates = new ArrayList<>();
+                List<BigDecimal> qty = new ArrayList<>();
+                while (!startCalcDate.isAfter(endDate)) {
+                    dates.add(startCalcDate);
+                    qty.add(Optional.ofNullable(estimateMap.get(startCalcDate)).orElse(BigDecimal.ZERO));
+                    startCalcDate = startCalcDate.plusDays(1);
+                }
+                record.setSalesEstimateVO(new CalcSalesInfoDimDTO.SalesEstimateVO(dates, qty));
+
+            }
+            record.setFavorite(cfgRuleCalcIdList.contains(record.getCfgRuleCalcId()));
+        }
+
+    }
+
+    /**
+     * 获取平台名字
+     */
+    private static Map<String, String> getPlatformMap() {
+        List<DictBasicEntity> salesPlatformList = FeignQuery.create(DictBasicEntity.class)
+                .eq(DictBasicEntity::getType, DictBasicTypeEnum.SALES_PLATFORM.getType())
+                .eq(DictBasicEntity::getStatus, Boolean.TRUE)
+                .eq(DictBasicEntity::getIsDeleted, Boolean.FALSE)
+                .list();
+        return salesPlatformList.stream()
+                .collect(Collectors.toMap(DictBasicEntity::getValue, DictBasicEntity::getName));
+    }
+
+    @Override
+    public PagingVO<CalcSalesInfoDimDTO.TemplateViewDTO> pagingTemplate(PagingDTO<CalcSalesInfoDimDTO.ParamDTO> params) {
+        LoginUser user = UserContext.getDefaultLoginUser();
+        Page<CalcSalesInfoDimDTO.TemplateViewDTO> page = baseMapper.pagingTemplate(new Page<>(params.getCurrPage(), params.getPageSize()), params.getParams(), user.getUid());
+        if (!CollectionUtils.isEmpty(page.getRecords())) {
+            processTemplateData(page.getRecords(), user.getUid());
+        }
+        return new PagingVO<>(page);
+    }
+
+    @Override
+    public BatchResultDTO updateRemark(String id, String remark) {
+        //新建对象
+        CalcSalesInfoDimEntity entity = new CalcSalesInfoDimEntity();
+        entity.setId(id);
+        entity.setRemark(remark);
+        this.updateById(entity);
+        return BatchResultDTO.success(entity.getId(), entity.getSkuNo(), OperationTypeEnum.UPDATE);
+    }
+
+    @Override
+    public void downloadHistorySales(String calcSalesInfoDimId, HttpServletResponse response) {
+        CalcSalesInfoDimEntity entity = Optional.ofNullable(getById(calcSalesInfoDimId)).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST, "销量试算"));
+        List<CalcSalesInfoHisEsEntity> calcSalesInfoHisList = calcSalesInfoHisEsService.findByCfgRuleCalcIdAndShopIdAndSkuId(entity.getCfgRuleCalcId(), entity.getShopId(), entity.getSkuId());
+        List<CfgRuleCalcDTO.HistorySaleDTO> list = new ArrayList<>();
+        if (!ObjectUtil.isEmpty(calcSalesInfoHisList)) {
+            ShopInfoEntity shopInfo = shopInfoFeign.getShopInfoById(entity.getShopId());
+            Map<String, String> platformMap = getPlatformMap();
+            for (CalcSalesInfoHisEsEntity calcSalesInfoHis : calcSalesInfoHisList) {
+                CfgRuleCalcDTO.HistorySaleDTO dto = BeanMapperUtils.map(CfgRuleCalcDTO.HistorySaleDTO.class, calcSalesInfoHis);
+                dto.setPlatform(platformMap.get(shopInfo.getDictPlatform()));
+                dto.setBillDate(calcSalesInfoHis.getDate());
+                list.add(dto);
+            }
+        }
+        StringBuilder sb = new StringBuilder();
+        String excelPath = "excel/historySaleQty.xlsx";
+        String name = "系统试算历史销量";
+        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
+        sb.append(date);
+        sb.append(name);
+        try {
+            new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
+        } catch (IOException e) {
+            throw new ServiceException(ApiError.ERROR_95125);
+        }
+    }
+
+    @Override
+    public CalcSalesInfoDimDTO.CalcCompareDTO calcCompare(CalcSalesInfoDimDTO.CalcCompareParamsDTO dto) {
+        List<CalcSalesInfoDimDTO.CompareResultDTO> list;
+        //查询对应数据
+        if (CollectionUtils.isEmpty(dto.getIds())) {
+            list = baseMapper.listBySkuAndShopAndDate(dto);
+        } else {
+            list = baseMapper.listCompareByIds(dto.getIds());
+        }
+        verifyData(list, dto.getStartDate());
+        LocalDate endDate = list.stream().min(Comparator.comparing(CalcSalesInfoDimDTO.CompareResultDTO::getEndCalcDate))
+                .map(CalcSalesInfoDimDTO.CompareResultDTO::getEndCalcDate).orElse(LocalDate.now());
+        LocalDate endCalcDate = verifyEndDate(endDate, dto.getEndDate());
+        //获取真实销量
+        CalcSalesInfoDimDTO.CompareResultDTO resultDTO = list.get(0);
+        LocalDate startCalcDate = ObjectUtils.isEmpty(dto.getStartDate()) ? resultDTO.getStartCalcDate() : dto.getStartDate();
+        Map<String, String> calcNameMap = list.stream().collect(Collectors.toMap(CalcSalesInfoDimDTO.CompareResultDTO::getId, CalcSalesInfoDimDTO.CompareResultDTO::getName));
+        List<OrderHistorySalesEsEntity> salesInfos = orderHistorySalesEsService.findByShopIdAndSkuIdAndDateBetween(resultDTO.getShopId(), resultDTO.getSkuId(),
+                startCalcDate, endCalcDate);
+        Map<LocalDate, Integer> hisSalesMap = salesInfos.stream()
+                .collect(Collectors.toMap(OrderHistorySalesEsEntity::getDate, OrderHistorySalesEsEntity::getOriginalSalesQty, Integer::sum));
+        List<BigDecimal> basicData = new ArrayList<>();
+        List<LocalDate> dateList = new ArrayList<>();
+        //组装历史真实销量
+        LocalDate date = startCalcDate;
+        while (date.isBefore(endCalcDate)) {
+            basicData.add(new BigDecimal(Optional.ofNullable(hisSalesMap.get(date)).orElse(0)));
+            dateList.add(date);
+            date = date.plusDays(1);
+        }
+        List<String> dimIds = list.stream().map(CalcSalesInfoDimDTO.CompareResultDTO::getId).distinct().collect(Collectors.toList());
+        //查询预估销量
+        List<CalcSalesInfoEstimateEntity> calcSalesInfoEstimateList = calcSalesInfoEstimateService.listByCalcSalesInfoIdsAndDate(dimIds, startCalcDate, endCalcDate);
+        Map<String, List<BigDecimal>> calcDataList = calcSalesInfoEstimateList.stream()
+                .sorted(Comparator.comparing(CalcSalesInfoEstimateEntity::getDate))
+                .collect(Collectors.groupingBy(CalcSalesInfoEstimateEntity::getCalcSalesInfoDimId,
+                        Collectors.mapping(CalcSalesInfoEstimateEntity::getQty, Collectors.toList())));
+        List<CalcSalesInfoDimDTO.LineDTO> calcList = new ArrayList<>();
+        for (Map.Entry<String, List<BigDecimal>> entry : calcDataList.entrySet()) {
+            CalcSalesInfoDimDTO.LineDTO lineDTO = new CalcSalesInfoDimDTO.LineDTO();
+            lineDTO.setName(calcNameMap.get(entry.getKey()));
+            lineDTO.setQty(entry.getValue());
+            calcList.add(lineDTO);
+        }
+        List<CalcSalesInfoDimDTO.LineDTO> lineDTOS = DataDifferenceCalculator.calculateMatchRates(calcList, basicData, new BigDecimal(1), DataDifferenceCalculator.CalculationType.COSINE);
+        List<CalcSalesInfoDimDTO.LineDTO> lineList = new ArrayList<>();
+        lineList.add(new CalcSalesInfoDimDTO.LineDTO("真实销量", new BigDecimal(100), basicData));
+        lineList.addAll(lineDTOS);
+        CalcSalesInfoDimDTO.CalcCompareDTO calcCompareDTO = new CalcSalesInfoDimDTO.CalcCompareDTO();
+        calcCompareDTO.setDateList(dateList);
+        calcCompareDTO.setLineList(lineList);
+        return calcCompareDTO;
+    }
+
+    private LocalDate verifyEndDate(LocalDate endDate, LocalDate endDate1) {
+        if (ObjectUtils.isEmpty(endDate1)) {
+            return endDate;
+        }
+        if (endDate1.isAfter(endDate)) {
+            throw new ServiceException(ApiError.ERROR__VERIFY_END_DATE);
+        }
+        return endDate1;
+    }
+
+    @Override
+    public CalcSalesInfoDimDTO.CalcCompareDataDTO calcCompareData(CalcSalesInfoDimDTO.CalcCompareParamsDTO dto) {
+        List<CalcSalesInfoDimDTO.CompareResultDTO> list;
+        //查询对应数据
+        if (CollectionUtils.isEmpty(dto.getIds())) {
+            list = baseMapper.listBySkuAndShopAndDate(dto);
+        } else {
+            list = baseMapper.listCompareByIds(dto.getIds());
+        }
+        verifyData(list, dto.getStartDate());
+        CalcSalesInfoDimDTO.CalcCompareDataDTO viewDTO = new CalcSalesInfoDimDTO.CalcCompareDataDTO();
+        CalcSalesInfoDimDTO.CompareResultDTO resultDTO = list.get(0);
+        List<SkuVO> skuVOS = plmTaskFeign.listSkuProductByIds(Collections.singletonList(resultDTO.getSkuId()));
+        List<DictCountryEntity> countryList = sysDictFeign.listCountryByIds(Collections.singletonList(resultDTO.getCountry()));
+        SkuVO skuVO = skuVOS.stream().filter(v -> v.getSkuId().equals(resultDTO.getSkuId())).findFirst().orElse(new SkuVO());
+        List<ShopInfoEntity> shopInfos = shopInfoFeign.listShopInfoByIds(Collections.singletonList(resultDTO.getShopId()));
+        DictCountryEntity dictCountry = countryList.stream().filter(v -> v.getId().equals(resultDTO.getCountry())).findFirst().orElse(new DictCountryEntity());
+        ShopInfoEntity shopInfoEntity = shopInfos.stream().filter(v -> v.getId().equals(resultDTO.getShopId())).findFirst().orElse(new ShopInfoEntity());
+        Map<String, String> dictBasicMap = getPlatformMap();
+        viewDTO.setSkuNo(resultDTO.getSkuNo());
+        viewDTO.setProductName(skuVO.getSkuName());
+        viewDTO.setSkuImgUrl(skuVO.getSkuImagesUrl());
+        viewDTO.setShopName(shopInfoEntity.getName());
+        viewDTO.setPlatform(dictBasicMap.get(resultDTO.getPlatform()));
+        viewDTO.setCountryName(dictCountry.getNameCn());
+        viewDTO.setStartCalcDate(resultDTO.getStartCalcDate());
+        return viewDTO;
+    }
+
+    @Override
+    public void downloadTemplateHistorySales(String cfgRuleCalcId, HttpServletResponse response) {
+        List<CalcSalesInfoHisEsEntity> calcSalesInfoHisList = calcSalesInfoHisEsService.findByCfgRuleCalcIdIn(Collections.singletonList(cfgRuleCalcId));
+        List<CfgRuleCalcDTO.HistorySaleDTO> list = new ArrayList<>();
+        if (!ObjectUtil.isEmpty(calcSalesInfoHisList)) {
+            List<String> shopIds = calcSalesInfoHisList.stream().map(CalcSalesInfoHisEsEntity::getShopId).distinct().collect(Collectors.toList());
+            List<ShopInfoEntity> shopInfoList = shopInfoFeign.listShopInfoByIds(shopIds);
+            Map<String, String> platformMap = getPlatformMap();
+            for (CalcSalesInfoHisEsEntity calcSalesInfoHis : calcSalesInfoHisList) {
+                ShopInfoEntity info = shopInfoList.stream().filter(v -> v.getId().equals(calcSalesInfoHis.getShopId())).findFirst().orElse(new ShopInfoEntity());
+                CfgRuleCalcDTO.HistorySaleDTO dto = BeanMapperUtils.map(CfgRuleCalcDTO.HistorySaleDTO.class, calcSalesInfoHis);
+                dto.setPlatform(platformMap.get(info.getDictPlatform()));
+                dto.setBillDate(calcSalesInfoHis.getDate());
+                list.add(dto);
+            }
+        }
+        StringBuilder sb = new StringBuilder();
+        String excelPath = "excel/historySaleQty.xlsx";
+        String name = "系统试算历史销量";
+        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
+        sb.append(date);
+        sb.append(name);
+        try {
+            new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
+        } catch (IOException e) {
+            throw new ServiceException(ApiError.ERROR_95125);
+        }
+    }
+
+    /**
+     * 校验数据合法性
+     *
+     * @param list 参数
+     */
+    private void verifyData(List<CalcSalesInfoDimDTO.CompareResultDTO> list, LocalDate startDate) {
+        if (CollectionUtils.isEmpty(list)) {
+            throw new ServiceException(ApiError.ERROR_NOT_EXIST_CALC_DATA);
+        }
+        // 校验是否是相同sku 店铺 试算开始时间
+        long count = list.stream().map(v -> v.getSkuId() + "-" + v.getShopId() + "-" + v.getStartCalcDate())
+                .distinct().count();
+        if (count > 1) {
+            throw new ServiceException(ApiError.ERROR_DATA_IS_DIFFERENT);
+        }
+        // 校验历史销量是否一致
+        long md5Count = list.stream().map(CalcSalesInfoDimDTO.CompareResultDTO::getHisDataMd5)
+                .distinct().count();
+        if (md5Count > 1) {
+            throw new ServiceException(ApiError.ERROR_HIS_SALES_IS_DIFFERENT);
+        }
+        LocalDate startCalcDate = list.get(0).getStartCalcDate();
+        if (!ObjectUtils.isEmpty(startDate) && startDate.isBefore(startCalcDate)) {
+            throw new ServiceException(ApiError.ERROR__VERIFY_START_DATE);
+        }
+    }
+
+
+    /**
+     * 处理分页参数
+     *
+     * @param records 记录
+     * @param uid     用户id
+     */
+    private void processTemplateData(List<CalcSalesInfoDimDTO.TemplateViewDTO> records, String uid) {
+        List<String> cfgRuleCalcIds = records.stream().map(CalcSalesInfoDimDTO.TemplateViewDTO::getCfgRuleCalcId).distinct().collect(Collectors.toList());
+        List<CalcSalesInfoDimEntity> list = list(Wrappers.<CalcSalesInfoDimEntity>lambdaQuery().in(CalcSalesInfoDimEntity::getCfgRuleCalcId, cfgRuleCalcIds));
+        Map<String, List<String>> listMap = list.stream()
+                .collect(Collectors.groupingBy(CalcSalesInfoDimEntity::getCfgRuleCalcId, Collectors.mapping(CalcSalesInfoDimEntity::getId, Collectors.toList())));
+        List<String> cfgRuleCalcIdList = calcSalesInfoFavoriteService.listByUserId(uid);
+        for (CalcSalesInfoDimDTO.TemplateViewDTO record : records) {
+            record.setFavorite(cfgRuleCalcIdList.contains(record.getCfgRuleCalcId()));
+            record.setCalcSalesInfoDimIds(listMap.get(record.getCfgRuleCalcId()));
+        }
+    }
+
     /**
      * 处理数据
      *
@@ -250,13 +566,7 @@ public class CalcSalesInfoDimServiceImpl extends SuperServiceImpl<CalcSalesInfoD
         List<CalcSalesInfoDenoisingEntity> calcSalesInfoDenoisingList = calcSalesInfoDenoisingService.listByCalcSalesInfoIds(ids);
         List<ShopInfoEntity> shopInfoList = shopInfoFeign.listShopInfoByIds(shopIds);
         Map<String, ShopInfoEntity> shopMap = shopInfoList.stream().collect(Collectors.toMap(ShopInfoEntity::getId, v -> v, (o1, o2) -> o1));
-        List<DictBasicEntity> salesPlatformList = FeignQuery.create(DictBasicEntity.class)
-                .eq(DictBasicEntity::getType, DictBasicTypeEnum.SALES_PLATFORM.getType())
-                .eq(DictBasicEntity::getStatus, Boolean.TRUE)
-                .eq(DictBasicEntity::getIsDeleted, Boolean.FALSE)
-                .list();
-        Map<String, String> dictBasicMap = salesPlatformList.stream()
-                .collect(Collectors.toMap(DictBasicEntity::getValue, DictBasicEntity::getName));
+        Map<String, String> dictBasicMap = getPlatformMap();
         List<CalcSalesInfoDimDTO.ExportResultDTO> results = new ArrayList<>();
         for (CalcSalesInfoDimDTO.ExportDTO record : records) {
             CalcSalesInfoDimDTO.ExportResultDTO result = new CalcSalesInfoDimDTO.ExportResultDTO();
@@ -379,18 +689,15 @@ public class CalcSalesInfoDimServiceImpl extends SuperServiceImpl<CalcSalesInfoD
         List<CalcSalesInfoEstimateEntity> salesInfoEstimateList = calcSalesInfoEstimateService.listByCalcSalesInfoIds(ids);
         List<String> shopIds = records.stream().map(CalcSalesInfoDimDTO.PagingView::getShopId).distinct().collect(Collectors.toList());
         List<String> country = records.stream().map(CalcSalesInfoDimDTO.PagingView::getCountry).distinct().collect(Collectors.toList());
-        List<DictCountryEntity> countryList = sysDictFeign.listCountryByIds(country);
+        List<DictCountryEntity> countryList = new ArrayList<>();
+        if (!CollectionUtils.isEmpty(country)) {
+            countryList = sysDictFeign.listCountryByIds(country);
+        }
         List<SkuVO> skuVOS = plmTaskFeign.listSkuCategoryByIds(skuIds);
         List<ShopInfoEntity> shopInfos = shopInfoFeign.listShopInfoByIds(shopIds);
         List<String> cfgRuleCalcIds = records.stream().map(CalcSalesInfoDimDTO.PagingView::getCfgRuleCalcId).distinct().collect(Collectors.toList());
         List<CfgRuleCalcEntity> cfgRuleCalcList = cfgRuleCalcService.listByIds(cfgRuleCalcIds);
-        List<DictBasicEntity> salesPlatformList = FeignQuery.create(DictBasicEntity.class)
-                .eq(DictBasicEntity::getType, DictBasicTypeEnum.SALES_PLATFORM.getType())
-                .eq(DictBasicEntity::getStatus, Boolean.TRUE)
-                .eq(DictBasicEntity::getIsDeleted, Boolean.FALSE)
-                .list();
-        Map<String, String> dictBasicMap = salesPlatformList.stream()
-                .collect(Collectors.toMap(DictBasicEntity::getValue, DictBasicEntity::getName));
+        Map<String, String> dictBasicMap = getPlatformMap();
         for (CalcSalesInfoDimDTO.PagingView view : records) {
             SkuVO skuVO = skuVOS.stream().filter(v -> v.getSkuId().equals(view.getSkuId())).findFirst().orElse(new SkuVO());
             ShopInfoEntity shopInfoEntity = shopInfos.stream().filter(v -> v.getId().equals(view.getShopId())).findFirst().orElse(new ShopInfoEntity());
@@ -445,15 +752,13 @@ public class CalcSalesInfoDimServiceImpl extends SuperServiceImpl<CalcSalesInfoD
         while (!startCalcDate.isAfter(dto.getEndCalcDate())) {
             CfgRuleSalesFormulaCalcEntity formulaResult = getStrategyFormulaResultDTO(dto.getFormulaCalcEntities(), startCalcDate);
             if (ObjectUtils.isEmpty(formulaResult)) {
+                startCalcDate = startCalcDate.plusDays(1);
                 continue;
             }
             BigDecimal saleQty = getSaleQty(allSalesList, avgTimePeriodSales, formulaResult, dto.getStartCalcDate());
-            if (saleQty.equals(BigDecimal.ZERO)) {
-                continue;
-            }
             CalcSalesInfoEstimateEntity entity = new CalcSalesInfoEstimateEntity();
             entity.setCalcSalesInfoDimId(dto.getCalcSalesInfoDimId());
-            entity.setQty(saleQty);
+            entity.setQty(saleQty.setScale(2, RoundingMode.HALF_UP));
             entity.setDate(startCalcDate);
             entity.setMonth(startCalcDate.format(DateTimeFormatter.ofPattern("yyyy-MM")));
             entity.setType(formulaResult.getType());
@@ -502,7 +807,7 @@ public class CalcSalesInfoDimServiceImpl extends SuperServiceImpl<CalcSalesInfoD
         LocalDate current = startCalcDate.withDayOfMonth(1);
         while (!current.isAfter(endDate)) {
             YearMonth currentMonth = YearMonth.from(current);
-            LocalDate calcStartDate = currentMonth.equals(YearMonth.from(endDate)) ? startCalcDate : current;
+            LocalDate calcStartDate = currentMonth.equals(YearMonth.from(startCalcDate)) ? startCalcDate : current;
             LocalDate calcEndDate = currentMonth.equals(YearMonth.from(endDate)) ? endDate : current.with(TemporalAdjusters.lastDayOfMonth());
             BigDecimal followingSales = salesEstimates.stream()
                     .filter(v -> !calcStartDate.isAfter(v.getDate()) && !calcEndDate.isBefore(v.getDate()))
@@ -607,7 +912,7 @@ public class CalcSalesInfoDimServiceImpl extends SuperServiceImpl<CalcSalesInfoD
         List<CalcSalesInfoDimDTO.TimePeriodSalesDTO> timePeriodSales = new ArrayList<>();
         //分时段日均销量
         List<CalcSalesInfoDimDTO.TimePeriodSalesDTO> avgTimePeriodSales = new ArrayList<>();
-        LocalDate endDate = dto.getEndCalcDate().minusDays(1);
+        LocalDate endDate = dto.getStartCalcDate().minusDays(1);
         for (TimePeriodEnum value : TimePeriodEnum.values()) {
             BigDecimal qty = calculationSales.stream()
                     .filter(v -> !endDate.minusDays(value.getDays()).isAfter(v.getDate()) && endDate.isAfter(v.getDate()))
@@ -635,10 +940,11 @@ public class CalcSalesInfoDimServiceImpl extends SuperServiceImpl<CalcSalesInfoD
     /**
      * 计算销量
      */
-    private List<CalcSalesInfoDenoisingEntity> calculationSales(CalcSalesInfoDimDTO.CalcResultDTO dto, List<CalcSalesInfoDenoisingEntity> allSalesList) {
+    private List<CalcSalesInfoDenoisingEntity>  calculationSales(CalcSalesInfoDimDTO.CalcResultDTO dto, List<CalcSalesInfoDenoisingEntity> allSalesList, CalcSalesInfoDimEntity entity) {
         List<CalcSalesInfoDenoisingEntity> calcSalesInfoList = new ArrayList<>();
         LocalDate startDate = dto.getStartCalcDate().minusDays(361);
         LocalDate endDate = dto.getStartCalcDate().minusDays(1);
+        List<CalcSalesInfoDimDTO.HisSalesDTO> list = new ArrayList<>();
         while (!startDate.isAfter(endDate)) {
             LocalDate date = startDate;
             CalcSalesInfoDenoisingEntity salesInfoDTO = new CalcSalesInfoDenoisingEntity();
@@ -651,6 +957,7 @@ public class CalcSalesInfoDimServiceImpl extends SuperServiceImpl<CalcSalesInfoD
                     .max(Comparator.comparing(CfgRuleSalesDenoisingCalcEntity::getIndex))
                     .orElse(null);
             int originalSalesQty = Optional.ofNullable(dto.getSalesHistoryMap().get(date)).orElse(0);
+            list.add(new CalcSalesInfoDimDTO.HisSalesDTO(date, originalSalesQty));
             if (ObjectUtils.isEmpty(denoisingResult)) {
                 salesInfoDTO.setQty(new BigDecimal(originalSalesQty));
             } else {
@@ -663,6 +970,8 @@ public class CalcSalesInfoDimServiceImpl extends SuperServiceImpl<CalcSalesInfoD
             allSalesList.add(salesInfoDTO);
             startDate = startDate.plusDays(1);
         }
+        String md5 = Md5Util.md5(JSONUtil.toJsonStr(list));
+        entity.setHisDataMd5(md5);
         return calcSalesInfoList;
     }
 

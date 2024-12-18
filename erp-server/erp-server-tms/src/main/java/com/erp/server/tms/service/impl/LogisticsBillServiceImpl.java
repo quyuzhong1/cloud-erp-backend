@@ -30,6 +30,7 @@ import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.FileUtil;
 import com.common.core.utils.MathUtil;
+import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
 import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
@@ -37,6 +38,7 @@ import com.erp.model.oms.entity.SoB2cLogisticsEntity;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.sys.entity.DictCountryOrgEntity;
+import com.erp.model.sys.enums.ChargeSuperiorEnum;
 import com.erp.model.tms.dto.*;
 import com.erp.model.tms.entity.*;
 import com.erp.model.tms.enums.*;
@@ -46,12 +48,12 @@ import com.erp.model.tms.vo.response.InterceptResponseVO;
 import com.erp.model.tms.vo.response.LogisticsOrderResponseVO;
 import com.erp.model.tms.vo.response.LogisticsPrintLabelResponse;
 import com.erp.model.wms.dto.FirstMileDeliveryDTO;
+import com.common.business.dto.ShudiyunB2cOrderDTO;
 import com.erp.model.wms.entity.SoOutstockEntity;
 import com.erp.model.wms.enums.B2cDeliveryLogisticTypeEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.oms.feign.CfgRuleFeign;
 import com.erp.rpc.oms.feign.SoB2cFeign;
-import com.erp.rpc.oms.feign.SoInfoFeign;
 import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.rpc.wms.feign.WmsFirstMileDeliveryFeign;
 import com.erp.server.tms.constant.TmsConstant;
@@ -59,6 +61,7 @@ import com.erp.server.tms.convert.LogisticsBillConverter;
 import com.erp.server.tms.handler.LogisticsRegistry;
 import com.erp.server.tms.mapper.LogisticsBillMapper;
 import com.erp.server.tms.service.*;
+import com.erp.server.tms.sync.SyncLogisticsBillService;
 import com.sdk.oms.mercado.service.MercadoSdkClientService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
@@ -71,6 +74,7 @@ import javax.annotation.Resource;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -94,9 +98,6 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
 
     @Resource
     private DictBasicService dictBasicService;
-
-    @Resource
-    private LogisticsTrackService logisticsTrackService;
 
     @Resource
     private LogisticsBillCostService logisticsBillCostService;
@@ -136,15 +137,8 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
     @Resource
     private LogisticsBillService logisticsBillService;
 
-
     @Resource
     private MercadoSdkClientService mercadoSdkClientService;
-
-    @Resource
-    private LogisticsOperateService logisticsOperateService;
-
-    @Resource
-    private SoInfoFeign soInfoFeign;
 
     @Resource
     private CfgRuleFeign cfgRuleFeign;
@@ -154,10 +148,23 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
     private DownloadTaskFeign downloadTaskFeign;
     @Resource
     private WmsFirstMileDeliveryFeign wmsFirstMileDeliveryFeign;
+    @Resource
+    private LogisticsSupplierService logisticsSupplierService;
+
+    @Resource
+    private TmsPushMsgService tmsPushMsgService;
+
+    @Resource
+    private SyncLogisticsBillService syncLogisticsBillService;
 
     @Transactional(rollbackFor = Exception.class)
     @Override
     public Boolean add(LogisticsBillDTO.AddDTO addDTO) {
+        //发货单+物流单是否已存在 存在则不再新增
+        List<LogisticsBillEntity> list = this.lambdaQuery().eq(LogisticsBillEntity::getOutstockId, addDTO.getOutstockId()).eq(LogisticsBillEntity::getTransportNo, addDTO.getTransportNo()).list();
+        if (CollUtil.isNotEmpty(list)){
+            return Boolean.TRUE;
+        }
         LogisticsBillEntity logisticsBillEntity = new LogisticsBillEntity();
         BeanMapperUtils.copy(addDTO, logisticsBillEntity);
         // 数据处理
@@ -169,7 +176,8 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
 
         logisticsBillDetailService.add(logisticsBillEntity, addDTO.getDetailList(),true);
 
-
+        //同步速递云运单
+        pushSdyFieldHandler(logisticsBillEntity,SyncOperateEnum.OPERATE_APPROVE.getCode());
         return save;
     }
 
@@ -194,6 +202,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         // 记录主单操作日志
         String msg = CharSequenceUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), logisticsBillEntity.getId(), "物流单");
         operateLogService.addModuleOperateLogByObj(old, logisticsBillEntity, null, logisticsBillEntity.getId(), msg);
+
         return Boolean.TRUE;
     }
 
@@ -208,9 +217,14 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         List<LogisticsBillEntity> billEntityList = listByOutstockIds(outstockIdList);
         if (CollectionUtils.isNotEmpty(billEntityList)) {
             List<String> ids = billEntityList.stream().map(LogisticsBillEntity::getId).collect(Collectors.toList());
+            List<LogisticsBillEntity> logisticsBillEntityList = this.listByIds(ids);
+            //同步速递云运单
+            logisticsBillEntityList.forEach(req -> pushSdyFieldHandler(req, SyncOperateEnum.OPERATE_DELETE.getCode()));
+
             logisticsBillDetailService.removeByMainIds(ids,true);
             return this.removeByIds(ids);
         }
+
         return Boolean.FALSE;
     }
 
@@ -275,6 +289,9 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
             logisticsBillDetailService.saveOrUpdateBatch(detailEntityList);
             //新增物流费用单
             addLogisticsBillCost(saveEntity,detailEntityList);
+
+            //同步速递云运单
+            pushSdyFieldHandler(saveEntity, SyncOperateEnum.OPERATE_APPROVE.getCode());
         }
         return Boolean.TRUE;
     }
@@ -1273,5 +1290,31 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
                 this.lambdaUpdate().eq(LogisticsBillEntity::getId, entity.getId()).set(LogisticsBillEntity::getBusinessCode, businessCode).update();
             }
         }
+    }
+
+    /**
+     * 同步速递云销售出库单
+     * @param entity
+     * @param operateEnum
+     */
+    public void pushSdyFieldHandler(LogisticsBillEntity entity, String operateEnum) {
+        List<LogisticsBillDetailEntity> detailEntityList = logisticsBillDetailService.listByMainIds(Arrays.asList(entity.getId()));
+        List<LogisticsChannelEntity> logisticsChannelEntities = new ArrayList<>();
+        if (CharSequenceUtil.isNotEmpty(entity.getChannelId())) {
+            logisticsChannelEntities = logisticsChannelService.listByIds(Arrays.asList(entity.getChannelId()));
+        }
+
+        List<String> supplierIds = logisticsChannelEntities.stream().map(req -> req.getMainId()).distinct().collect(Collectors.toList());
+        List<LogisticsSupplierEntity> logisticsSupplierEntities = new ArrayList<>();
+        if (CollUtil.isNotEmpty(logisticsSupplierEntities)) {
+            logisticsSupplierEntities = logisticsSupplierService.listByIds(supplierIds);
+        }
+
+        syncLogisticsBillService.syncDataToSdy(entity, detailEntityList, operateEnum, logisticsChannelEntities, logisticsSupplierEntities);
+    }
+
+    @Override
+    public List<LogisticsBillEntity> queryToSdy(LocalDateTime startTime, LocalDateTime endTime, Integer pageSize, int offset) {
+        return baseMapper.queryToSdy(startTime, endTime, pageSize, offset);
     }
 }

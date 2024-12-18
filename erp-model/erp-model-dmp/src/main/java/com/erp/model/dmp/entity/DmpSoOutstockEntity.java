@@ -224,6 +224,11 @@ public class DmpSoOutstockEntity extends BaseEntity<DmpSoOutstockEntity> {
      */
      @TableField(value = "next_level_id")
      private String nextLevelId;
+    /**
+     * 运单号
+     */
+    @TableField(value = "transport_no")
+    private String transportNo;
 
 
     public static final String PLATFORM_CREATE_TIME = "platform_create_time";

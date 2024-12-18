@@ -20,6 +20,7 @@ import java.util.Map;
 @Scope("prototype")
 public class DmpInputAmzOrderDetailDmpHandler extends DmpInputAmzOrderDoChildDmpHandler {
 
+
     @Override
     protected List<Map<String, Object>> afterDoDmpInputMongoChildEntityList(List<Map<String, Object>> dmpInputMongoChildList) {
         if (CollUtil.isEmpty(dmpInputMongoChildList)) {
@@ -49,8 +50,15 @@ public class DmpInputAmzOrderDetailDmpHandler extends DmpInputAmzOrderDoChildDmp
                 }
             }
 
+            //优惠
+            Object promotionDiscountObj = dmpInputMongoChild.get("promotionDiscount");
+            if (promotionDiscountObj != null) {
+                Map<String, Object> promotionDiscountMap = (Map<String, Object>) promotionDiscountObj;
+                dmpInputMongoChild.put("discount", promotionDiscountMap.get("amount"));
+
+            }
         }
         return dmpInputMongoChildList;
-    }
 
+    }
 }

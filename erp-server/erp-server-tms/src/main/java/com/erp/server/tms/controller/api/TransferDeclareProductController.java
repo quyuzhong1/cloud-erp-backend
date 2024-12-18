@@ -74,11 +74,4 @@ public class TransferDeclareProductController extends BaseController {
         return success();
     }
 
-    @GetMapping("/getSkuInfoByTransferDeclare")
-    public ApiResult<Object>getSkuInfo(@RequestParam("id") String id){
-        List<TransferDeclareDetailEntity> transferDeclareDetailEntities = transferDeclareDetailService.listByMainIds(Collections.singletonList(id));
-        Boolean aBoolean = transferDeclareProductService.saveOrUpdateTransferDeclareProducts(transferDeclareDetailEntities);
-        return success(aBoolean);
-    }
-
 }

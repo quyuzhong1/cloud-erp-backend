@@ -1,7 +1,6 @@
 package com.erp.server.wms.service;
 
 import com.common.business.dto.base.BatchResultDTO;
-import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.service.SuperService;
@@ -289,4 +288,6 @@ public interface SoDeliveryNoticeService extends SuperService<SoDeliveryNoticeEn
      */
     BatchResultDTO updateTransferWarehouse(SoDeliveryNoticeEntity entity, List<String> changeIds);
     void updateByNoticeChange(List<SoDeliveryNoticeDetailEntity> addList, List<SoDeliveryNoticeDetailEntity> updateList, List<SoDeliveryNoticeDetailEntity> deleteList);
+
+    Boolean generateMachineInfo(List<String> ids);
 }

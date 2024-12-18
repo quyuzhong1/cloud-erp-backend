@@ -105,7 +105,11 @@ public class LogisticsBillCostEntity extends BaseEntity<LogisticsBillCostEntity>
     */
     @TableField("currency")
     private String currency;
-
+    /**
+     * 汇率
+     */
+    @TableField("exchange_rate")
+    private BigDecimal exchangeRate;
     /**
     * 备注
     */

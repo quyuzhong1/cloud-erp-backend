@@ -1,9 +1,18 @@
 package com.erp.server.dmp.inout.handler.input.task.dmp;
 
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
+import com.common.core.anno.ParamData;
+import com.common.core.enums.PannoEnum;
+import com.erp.server.dmp.inout.handler.input.task.mongo.DmpInputMongoHandler;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
@@ -22,7 +31,26 @@ import cn.hutool.core.collection.CollUtil;
 @Service
 @Scope("prototype")
 public class DmpInputAliExpressOrderSoOutStockDmpHandler extends DmpInputAliExpressOrderDoChildDmpHandler{
-	
+
+
+	public static final String DELIVERY_TIME = "deliveryTime";
+	public static final String SEND_FULFILL_TIME = "send_fulfill_time";
+
+
+	@Override
+	protected List<Map<String, Object>> afterDoDmpInputMongoChildEntityList(List<Map<String, Object>> dmpInputMongoChildList){
+		if(CollectionUtils.isNotEmpty(dmpInputMongoChildList)) {
+			for(Map<String, Object> dmpInputMongoChild : dmpInputMongoChildList) {
+				Object sendFulfillTimeObj = dmpInputMongoChild.get(SEND_FULFILL_TIME);
+				if (null != sendFulfillTimeObj){
+					LocalDateTime deliveryTime = LocalDateTime.ofInstant(Instant.ofEpochMilli((Long) sendFulfillTimeObj), ZoneId.systemDefault());
+					dmpInputMongoChild.put(DELIVERY_TIME, deliveryTime);
+				}
+			}
+		}
+		return dmpInputMongoChildList;
+	}
+
 	@Override
 	protected void putDmpId(List<Map<String, Object>> dmpInputMongoChildEntityList) {
 		DmpCfgInputConvertEntity mainConvertId = this.getMainConvertId();

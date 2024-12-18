@@ -4,14 +4,14 @@ import com.google.gson.annotations.SerializedName;
 
 public class ReturnLineItemsBean {
     /**
-     * order_line_item_id : 576636726506918456
-     * product_image : {"height":200,"url":"https://p16-oec-sg.ibyteimg.com/tos-alisg-i-aphluv4xwc-sg/10d1df26601e46fab0683718196bc57d~tplv-aphluv4xwc-origin-jpeg.jpeg?from=4246405447","width":200}
-     * product_name : Ulanzi MT-44 Extendable Vlog Tripod
-     * refund_amount : {"currency":"USD","refund_shipping_fee":"7.99","refund_subtotal":"20.47","refund_tax":"1.62","refund_total":"28.46"}
-     * return_line_item_id : 4035240645898834488
-     * seller_sku : 2502B
-     * sku_id : 1729466135589327821
-     * sku_name : Black
+     * order_line_item_id : 576473917261451851
+     * product_image : {"height":200,"url":"https://p16-oec-va.ibyteimg.com/tos-maliva-i-o3syd03w52-us/004797ebfd8c4d3da2df1cc4bfdb0614~tplv-o3syd03w52-origin-jpeg.jpeg?from=4246405447","width":200}
+     * product_name : (SP) [PROMO BUNDLING] NICE Tissue Facial 180s x 5 pcs
+     * refund_amount : {"buyer_service_fee":"0.1","currency":"USD","refund_shipping_fee":"0.2","refund_subtotal":"1","refund_tax":"0.03","refund_total":"1.23","retail_delivery_fee":"0.1"}
+     * return_line_item_id : 4035227657962164811
+     * seller_sku : PUTIH 1 TALI
+     * sku_id : 2729382476852921560
+     * sku_name : 1#, Standard
      */
 
     @SerializedName("order_line_item_id")

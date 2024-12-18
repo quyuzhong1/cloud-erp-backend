@@ -26,6 +26,14 @@ public interface TransferDeclareFeign {
     BaseResultDTO.AddDTO add(@RequestBody TransferDeclareDTO.AddDTO dto);
 
     /**
+     * 批量新增中转报关单
+     * @param dtoList
+     * @return
+     */
+    @PostMapping("/feign/transferDeclare/batchAdd")
+    List<BaseResultDTO.AddDTO> batchAdd(@RequestBody List<TransferDeclareDTO.AddDTO> dtoList);
+
+    /**
      * @description 根据销售订单id 获取中转报关信息
      * @param soId 销售订单id
      * @author Lambda

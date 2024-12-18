@@ -17,5 +17,9 @@ public class FileTemplateConstant {
      * 采购订单
      */
     public static final String PO_CONTRACT_PDF = "采购合同";
+    /**
+     * 要货申请FNSKU
+     */
+    public static final String FNSKU = "FNSKU";
 
 }

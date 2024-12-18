@@ -79,6 +79,18 @@ public class WaveListEntity extends BaseEntity<WaveListEntity> implements Serial
     private String printTime;
 
     /**
+     * 拣货单打印状态
+     */
+    @TableField("picking_print_status")
+    private String pickingPrintStatus;
+
+    /**
+     * 拣货单打印时间
+     */
+    @TableField("picking_print_time")
+    private String pickingPrintTime;
+
+    /**
      * 拣货人
      */
     @TableField("picking_user_id")

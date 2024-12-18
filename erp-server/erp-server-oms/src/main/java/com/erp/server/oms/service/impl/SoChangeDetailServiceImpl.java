@@ -896,4 +896,12 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
                 eq(SoChangeDetailEntity::getChangeType, SoChangeTypeEnum.ADD).count();
         return count > 0;
     }
+
+    @Override
+    public List<SoChangeDetailEntity> listBySoDetailIdList(List<String> soDetailIds) {
+        if (CollectionUtils.isEmpty(soDetailIds)) {
+            return Collections.emptyList();
+        }
+        return lambdaQuery().in(SoChangeDetailEntity::getSoDetailId, soDetailIds).list();
+    }
 }

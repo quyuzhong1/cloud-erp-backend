@@ -66,7 +66,6 @@ public class ReportOrderDemandDetailServiceImpl extends SuperServiceImpl<ReportO
     private VirtualWarehouseService virtualWarehouseService;
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
     public Boolean batchAddOrUpdate(List<ReportOrderDemandDetailDTO.AddDTO> addOrUpdateList) {
         List<ReportOrderDemandDetailEntity> list =  BeanUtil.copyToList(addOrUpdateList,ReportOrderDemandDetailEntity.class);
         //删除原数据

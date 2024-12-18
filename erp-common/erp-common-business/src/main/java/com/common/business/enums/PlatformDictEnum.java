@@ -31,7 +31,7 @@ public enum PlatformDictEnum implements EnumMessage {
     ALIBABA_ABROAD("AlibabaAbroad", "1688-国外", "1688-国外", "028"),
     YOU_ZAN("YouZan", "有赞微商城", "有赞微商城", "015"),
     OTHER_PLATFORM("Other", "Other", "其他平台", "999"),
-    //B2B_INTERNAL("B2B_INTERNAL", "B2B线下-国内", "B2B", "020"),
+    B2B_INTERNAL("B2B_INTERNAL", "B2B线下-国内", "B2B", "020"),
     B2B_FOREIGN("B2B_FOREIGN", "B2B", "B2B", "021"),
     LITTLE_RED_BOOK("RedBook", "小红书", "RED", "014"),
     PDD("PDD", "拼多多", "Temu", "009"),
@@ -43,6 +43,10 @@ public enum PlatformDictEnum implements EnumMessage {
     OFFLINE_STORE_INTERNAL("OFFLINE_STORE_INTERNAL", "线下门店-国内", "线下门店-国内", "029"),
     ONLINE_STORE_FOREIGN("ONLINE_STORE_FOREIGN", "线下门店-国外", "线下门店-国外", "030"),
     XIAN_YU("Xianyu", "闲鱼", "闲鱼", "031"),
+    UNCONVENTIONAL("Unconventional", "非常规业务", "非常规业务", "032"),
+    ALLEGRO("Allegro", "Allegro", "Allegro", "033"),
+    CDISCOUNT("Cdiscount", "Cdiscount", "Cdiscount", "034"),
+    KUAI_SHOU("kuaishou", "快手", "快手", "035"),
 
     MERCADOLIBRE("mercadolibre", "美客多", "美客多", "033"),
     TIK_TOK("TikTok", "TikTok", "TikTok", "032"),
@@ -114,7 +118,7 @@ public enum PlatformDictEnum implements EnumMessage {
     public static String getNameByCode(String code) {
         PlatformDictEnum[] values = values();
         for (PlatformDictEnum value : values) {
-            if (value.code.equals(code) ) {
+            if (value.code.equalsIgnoreCase(code) ) {
                 return value.getName();
             }
         }

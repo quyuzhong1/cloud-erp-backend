@@ -2,6 +2,7 @@ package com.erp.server.oms.rocketmq.consumer;
 
 import cn.hutool.json.JSONUtil;
 import com.common.business.dto.PlatformReturnOrderDTO;
+import com.common.business.enums.PlatformDictEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.wrapper.FeignQuery;
 import com.common.message.constant.RocketMqNewConsumerGroup;
@@ -90,6 +91,7 @@ public class NewPlatformReturnOrderConsumerService extends AbstractNewPlatformCo
 			soB2cDetailEntityList = soB2cDetailService.listByMainIds(soIds);
 		}
 		if(Objects.isNull(soB2cEntity)){
+			log.warn("平台退货单消费:订单不存在:{}", dto.getPlatformOrderNo());
 			return;
 		}
 		SoB2cReturnEntity soB2cReturnEntity = this.buildReturn(dto,soB2cEntity);
@@ -173,7 +175,12 @@ public class NewPlatformReturnOrderConsumerService extends AbstractNewPlatformCo
 		soB2cReturnEntity.setType(SoB2cReturnTypeEnum.CUSTOMER_RETURNS.code);
 		soB2cReturnEntity.setReason(dto.getReason());
 		soB2cReturnEntity.setStatus(SoB2cReturnStatusEnum.RETURNED.code);
-		soB2cReturnEntity.setSysReturnTime(LocalDateTime.now());
+		if (PlatformDictEnum.AMAZON.getCode().equalsIgnoreCase(dto.getPlatform())){
+			// 亚马逊默认空
+			soB2cReturnEntity.setSysReturnTime(null);
+		} else {
+			soB2cReturnEntity.setSysReturnTime(LocalDateTime.now());
+		}
 		soB2cReturnEntity.setSourceType(SoB2cReturnSourceTypeEnum.AUTO_ADD.code);
 		return soB2cReturnEntity;
 	}

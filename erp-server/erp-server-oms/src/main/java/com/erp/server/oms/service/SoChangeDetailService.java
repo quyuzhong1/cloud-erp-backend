@@ -125,4 +125,13 @@ public interface SoChangeDetailService extends SuperService<SoChangeDetailEntity
      */
     Boolean existAdd(String mainId);
 
+    /**
+     * 根据订单详情id查询变更明细
+     * @Author Luo_WG
+     * @Date 2024/11/13 11:59
+     * @param soDetailIds
+     * @return java.util.List<com.erp.model.oms.entity.SoChangeDetailEntity>
+     **/
+    List<SoChangeDetailEntity> listBySoDetailIdList(List<String> soDetailIds);
+
 }

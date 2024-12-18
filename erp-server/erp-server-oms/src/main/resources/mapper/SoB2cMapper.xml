@@ -182,7 +182,6 @@
         sb2cr.post_code as postCode,
         sb2cr.receiver_tax_no as receiverTaxNo,
         si.country_name as countryName,
-        sbrc.categoryNames,
         sbd.create_time as createDeliveryTime,
 		sbd.finish_print_time as finishPrintTime
     </sql>
@@ -228,7 +227,7 @@
     <!-- 列表数量查询 -->
     <select id="listCount" resultType="java.lang.Integer">
         select
-        count(distinct sb2c.id)
+        count(sb2c.id)
         from so_b2c sb2c 
         inner join so_b2c_logistics sb2cl on sb2c.id = sb2cl.main_id and sb2cl.is_deleted = false
         inner join so_b2c_receiver sb2cr on sb2c.id = sb2cr.main_id and sb2cr.is_deleted = false
@@ -309,7 +308,7 @@
     <!-- 合并列表数量查询 -->
     <select id="mergePagingCount" resultType="java.lang.Integer">
         select
-        count(distinct sb2c.id)
+        count(sb2c.id)
         from so_b2c sb2c
         inner join so_b2c_detail sb2cd on sb2c.id = sb2cd.main_id and sb2cd.is_deleted = false
         inner join so_b2c_logistics sb2cl on sb2c.id = sb2cl.main_id and sb2cl.is_deleted = false
@@ -689,7 +688,7 @@
                                 ON sb.id = sbl.main_id
                                     AND sbl.is_deleted = FALSE
             WHERE sb.is_deleted = FALSE
-              and  #{code} = ANY(string_to_array(sbl.track_no,','))
+              and  #{code} = sbl.track_no
             LIMIT 1
         )
         UNION ALL
@@ -840,9 +839,6 @@
         inner join so_b2c_logistics sb2cl on sb2c.id = sb2cl.main_id and sb2cl.is_deleted = false
         inner join so_b2c_receiver sb2cr on sb2c.id = sb2cr.main_id and sb2cr.is_deleted = false
         inner join shop_info si on sb2c.shop_id = si.id and si.is_deleted = false
-        left join (
-            select so_b2c_id,array_to_string(array_agg(category_name), ',') as categoryNames from so_b2c_ref_category where is_deleted = false group by so_b2c_id
-        ) sbrc on sb2c.id = sbrc.so_b2c_id
         left join so_b2c_delivery sbd on sbd.source_id = sb2c.id and sb2c.is_deleted = false and sbd.status != 'cancelDelivery'
         <where>
             ${params.sqlMap.default}
@@ -1045,7 +1041,7 @@
             select
             '${item.tabFlag}' as tabFlag,
             '${item.tabFlagName}' as tabFlagName,
-            count(distinct sb2c.id) as count
+            count(sb2c.id) as count
             from so_b2c sb2c
             inner join so_b2c_logistics sb2cl on sb2c.id = sb2cl.main_id and sb2cl.is_deleted = false
             inner join so_b2c_receiver sb2cr on sb2c.id = sb2cr.main_id and sb2cr.is_deleted = false
@@ -1096,4 +1092,16 @@
         platform_package_id = #{platformPackageId}
         WHERE id = #{id}
     </update>
+
+    <select id="queryToSdy" resultType="com.erp.model.oms.entity.SoB2cEntity">
+        SELECT DISTINCT so.* FROM so_b2c so
+        LEFT JOIN so_b2c_detail sod ON so.id = sod.main_id
+        WHERE so.bill_date >= #{startDate}
+        AND so.bill_date &lt;= #{endDate}
+        AND so.approve_status = 'approve'
+        AND so.is_deleted = FALSE
+        AND sod.is_deleted = FALSE
+        AND NOT EXISTS (SELECT * FROM oms_push_msg WHERE source_id = sod.id)
+        LIMIT #{pageSize} OFFSET #{offset}
+    </select>
 </mapper>

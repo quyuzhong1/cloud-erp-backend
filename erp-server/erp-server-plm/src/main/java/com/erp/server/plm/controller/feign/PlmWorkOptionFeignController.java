@@ -151,6 +151,7 @@ public class PlmWorkOptionFeignController {
     @PostMapping("/pilotApprovalPass")
     public void pilotApprovalPass(@RequestBody @Validated ApproveOneDTO dto) {
         PilotApplicationDTO.ApproveDTO approveDTO = new PilotApplicationDTO.ApproveDTO();
-        pilotApplicationService.approve(dto,approveDTO);
+        pilotApplicationService.approve(dto, approveDTO);
+        pilotApplicationService.approvePilotApplicationNotice(dto.getId());
     }
 }

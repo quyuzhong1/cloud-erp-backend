@@ -1,9 +1,11 @@
 package com.erp.model.oms.dto;
 
+import com.common.business.annotation.Dict;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.erp.model.oms.entity.*;
+import com.erp.model.oms.enums.OrderSubTypeEnum;
 import com.erp.model.oms.enums.SoB2cCategoryTypeEnum;
 import com.erp.model.oms.enums.SoB2cOptionTypeEnum;
 import lombok.AllArgsConstructor;
@@ -791,6 +793,11 @@ public class SoB2cDTO implements Serializable {
          */
         private String extendData;
         /**
+         * 单据子类型
+         */
+        @Dict(enumClass = OrderSubTypeEnum.class)
+        private String transactionSubType;
+        /**
          * 物流信息
          */
         private SoB2cLogisticsDTO.ViewDTO logisticsDTO;
@@ -1055,6 +1062,13 @@ public class SoB2cDTO implements Serializable {
          * SoB2cOptionTypeEnum枚举（拆分、合并）
          */
         private SoB2cOptionTypeEnum operateType;
+
+        /**
+         * 订单子类型
+         * 接口：oms/common/enumDropDown?type=OrderSubType
+         */
+        private String transactionSubType;
+
     }
 
 
@@ -1099,6 +1113,12 @@ public class SoB2cDTO implements Serializable {
          * 主键id
          */
         private String id;
+
+        /**
+         * 订单子类型
+         * 接口：oms/common/enumDropDown?type=OrderSubType
+         */
+        private String transactionSubType;
 
         /**
          * 物流信息

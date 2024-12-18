@@ -3,14 +3,12 @@ package com.erp.server.wms.kingdee.impl;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.text.CharSequenceUtil;
-import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 
 import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
-import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.business.dto.DmpPushTaskFeignDTO;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseIdDTO;
@@ -85,9 +83,9 @@ public class SyncKingdeeTransferInfoServiceImpl implements SyncKingdeeTransferIn
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
-    public DmpPushTaskEntity syncDataToKingdee(TransferInfoEntity entity, String operate) {
+    public DmpPushTaskEntity syncDataToKingdee(TransferInfoEntity entity, List<TransferInfoDetailEntity> detailList, String operate) {
         //生成任务
-        return saveTask(entity,operate,this.newSyncDataToKingdee(entity, operate));
+        return saveTask(entity,operate,this.newSyncDataToKingdee(entity, detailList,operate));
     }
 
     /**
@@ -134,7 +132,7 @@ public class SyncKingdeeTransferInfoServiceImpl implements SyncKingdeeTransferIn
     }
 
 	@Override
-	public Map<String, Object> newSyncDataToKingdee(TransferInfoEntity entity, String operate) {
+	public Map<String, Object> newSyncDataToKingdee(TransferInfoEntity entity, List<TransferInfoDetailEntity> detailList, String operate) {
 		//第三方马帮拉取数据无推送
         if (ThirdPartySystemEnum.ENUM_MB.getCode().equals(entity.getThirdPartySystem())) {
             return null;
@@ -187,8 +185,6 @@ public class SyncKingdeeTransferInfoServiceImpl implements SyncKingdeeTransferIn
                 .findFirst().flatMap(obj -> Optional.ofNullable(obj.getCode())).orElse(null);
         resultMap.put("outOrgCode", outOrgCode);
 
-
-        List<TransferInfoDetailEntity> detailList = transferInfoDetailService.listByMainId(entity.getId());
         if (CollectionUtils.isEmpty(detailList)) {
             throw new ServiceException(ApiError.ERROR_99048);
         }

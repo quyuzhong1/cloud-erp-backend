@@ -53,4 +53,14 @@ public interface OrderHistorySalesEsRepository extends ElasticsearchRepository<O
      * @param pageable  分页
      */
     Page<OrderHistorySalesEsEntity> findByShopIdInAndSkuIdInAndDateBetween(List<String> skuIds, List<String> shopIds, LocalDate startDate, LocalDate endDate, Pageable pageable);
+
+    /**
+     * 根据sku和店铺id查询一个范围内的销量
+     *
+     * @param skuId    skuId
+     * @param shopId   店铺
+     * @param startDate 开始时间
+     * @param endDate   结束时间
+     */
+    List<OrderHistorySalesEsEntity> findByShopIdAndSkuIdAndDateBetween(String shopId, String skuId, LocalDate startDate, LocalDate endDate);
 }

@@ -123,9 +123,9 @@ public class DmpInputTaskFactory{
 			if(maxRetryCount < 0) {
 				errorFlag = false;
 			}
-			if(DmpInputTaskTaskTypeEnum.HOTFIX.getCode().equals(dmpInputTaskEntity.getTaskType())) {
+		/*	if(DmpInputTaskTaskTypeEnum.HOTFIX.getCode().equals(dmpInputTaskEntity.getTaskType())) {
 				errorFlag = true;
-			}
+			}*/
 			dmpInputTaskService.updateErrorStatus(dmpInputTaskEntity.getId(), errorFlag, errorCount, e);
 			throw e;
 		}

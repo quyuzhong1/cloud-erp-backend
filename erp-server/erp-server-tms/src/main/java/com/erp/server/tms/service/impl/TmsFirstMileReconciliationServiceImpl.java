@@ -2,6 +2,7 @@ package com.erp.server.tms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.collection.ListUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -17,6 +18,7 @@ import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
+import com.common.core.enums.CurrencyEnum;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.StrUtils;
@@ -29,6 +31,7 @@ import com.erp.model.tms.entity.*;
 import com.erp.model.tms.enums.DetailReconciliationTypeEnum;
 import com.erp.model.tms.enums.ReconciliationStatusEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
+import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
@@ -44,6 +47,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Resource;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -85,6 +89,8 @@ public class TmsFirstMileReconciliationServiceImpl extends SuperServiceImpl<TmsF
     @Resource
     @Lazy
     private FirstMileSkuCostAllocationService firstMileSkuCostAllocationService;
+    @Resource
+    private DmpTaskFeign dmpTaskFeign;
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -755,5 +761,32 @@ public class TmsFirstMileReconciliationServiceImpl extends SuperServiceImpl<TmsF
             return Collections.emptyList();
         }
         return this.lambdaQuery().in(TmsFirstMileReconciliationEntity::getCode,codeList).list();
+    }
+
+    @Override
+    public void initExchangeRate() {
+        List<TmsFirstMileReconciliationEntity> list = this.lambdaQuery()
+                .select(TmsFirstMileReconciliationEntity::getId,TmsFirstMileReconciliationEntity::getCurrency,TmsFirstMileReconciliationEntity::getExchangeRate,TmsFirstMileReconciliationEntity::getCreateTime)
+                .eq(TmsFirstMileReconciliationEntity::getExchangeRate, BigDecimal.ZERO).list();
+        if (CollUtil.isEmpty(list)){
+            return;
+        }
+        List<List<TmsFirstMileReconciliationEntity>> partition = ListUtil.partition(list, 100);
+        for (List<TmsFirstMileReconciliationEntity> entityList : partition){
+            if (CollUtil.isEmpty(entityList)){
+                continue;
+            }
+            for (TmsFirstMileReconciliationEntity entity : entityList){
+                if (CurrencyEnum.CNY.getCurrencyCode().equals(entity.getCurrency())){
+                    this.lambdaUpdate().set(TmsFirstMileReconciliationEntity::getExchangeRate, BigDecimal.ONE).eq(TmsFirstMileReconciliationEntity::getId, entity.getId()).update();
+                }else {
+                    String currentDate = entity.getCreateTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+                    BigDecimal rate = dmpTaskFeign.getRate(currentDate, entity.getCurrency());
+                    if (Objects.nonNull(rate)){
+                        this.lambdaUpdate().set(TmsFirstMileReconciliationEntity::getExchangeRate, rate).eq(TmsFirstMileReconciliationEntity::getId, entity.getId()).update();
+                    }
+                }
+            }
+        }
     }
 }

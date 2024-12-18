@@ -13,6 +13,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.BeanUtils;
@@ -293,11 +294,15 @@ public class DictCore {
         if (fieldValueMap.size() > 0) {
             BeanGenerator beanGenerator = new BeanGenerator();
             //设置类的class
-            beanGenerator.setSuperclass(record.getClass());
+            Class<? extends Object> recordClass = record.getClass();
+            Set<String> fieldSet = Stream.of(recordClass.getDeclaredFields()).map(Field::getName).collect(Collectors.toSet());
+			beanGenerator.setSuperclass(recordClass);
             //增加新的_dictText字段
             for (Map.Entry<String, Object> entry : fieldValueMap.entrySet()) {
                 String key = entry.getKey();
-                beanGenerator.addProperty(key, Object.class);
+                if(!fieldSet.contains(key)) {
+                	beanGenerator.addProperty(key, Object.class);
+                }
             }
             //创建拥有_dictText字段的类
             Object objHasDictText = beanGenerator.create();

@@ -1,5 +1,6 @@
 package com.erp.model.wms.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import java.io.Serializable;
@@ -111,6 +112,11 @@ public class AliexpressDeliveryDetailDTO implements Serializable {
          */
         private String skuId;
 
+        /**
+         * 平台发货状态
+         * AliexpressDeliveryOrderStatusEnum
+         */
+        private String platformDeliveryStatus;
     }
 
 

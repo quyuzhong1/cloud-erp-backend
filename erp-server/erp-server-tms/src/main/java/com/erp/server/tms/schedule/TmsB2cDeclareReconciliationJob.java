@@ -50,7 +50,7 @@ public class TmsB2cDeclareReconciliationJob extends BaseController {
         //查询系统配置
         CfgSettingEntity cfgSettingEntity = cfgSettingService.getByKey(CfgSettingEnum.RECONCILIATION_CYCLE.getCode());
         if (ObjectUtil.isEmpty(cfgSettingEntity) || ObjectUtil.isEmpty(cfgSettingEntity.getDataJson())) {
-            XxlJobHelper.log("无生成对账单数据");
+            XxlJobHelper.log("无生成对账单配置数据");
             return ReturnT.SUCCESS;
         }
         CfgSettingValueDTO.ReconciliationCycleDTO dto = BeanUtil.toBean(cfgSettingEntity.getDataJson(), CfgSettingValueDTO.ReconciliationCycleDTO.class);
@@ -58,6 +58,7 @@ public class TmsB2cDeclareReconciliationJob extends BaseController {
         if (ReconciliationTypeEnum.CREAT_BY_MONTH.getCode().equals(dto.getDeclareReconciliationType())) {
             int dayOfMonth = LocalDate.now().getDayOfMonth();
             if (dayOfMonth != MathUtil.ONE.intValue()) {
+                XxlJobHelper.log("自然月生成仅每月1号执行任务");
                 return ReturnT.SUCCESS;
             }
             LocalDate startDate = LocalDate.now().minusMonths(1).with(TemporalAdjusters.firstDayOfMonth());
@@ -66,6 +67,7 @@ public class TmsB2cDeclareReconciliationJob extends BaseController {
         } else {
             int dayOfMonth = LocalDate.now().getDayOfMonth();
             if (dayOfMonth != dto.getDeclareReconciliationDate().intValue() ) {
+                XxlJobHelper.log("未达到任务配置执行天【{}】，无需执行任务",dayOfMonth);
                 return ReturnT.SUCCESS;
             }
             LocalDate endDate = LocalDate.now().minusDays(1);

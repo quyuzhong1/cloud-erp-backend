@@ -128,6 +128,9 @@ public class DmpInputTaskServiceImpl extends SuperServiceImpl<DmpInputTaskMapper
     	DmpInputTaskEntity dmpInputTaskEntity = null;
     	if(errorFlag) {
     		dmpInputTaskEntity = getById(id);
+    		if(dmpInputTaskEntity == null) {
+    			return true;
+    		}
 			errorBeforeStatus = dmpInputTaskEntity.getStatus() + "@@";
     	}
     	String errorMessage = errorBeforeStatus + "traceId=【" + MDC.get("traceId") + "】" + ExceptionUtil.stacktraceToString(e);

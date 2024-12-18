@@ -10,6 +10,7 @@ import com.common.core.anno.LogAction;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
+import com.erp.model.wms.dto.PickingDetailDTO;
 import com.erp.model.wms.dto.pickingstrategy.PickingListsDTO;
 import com.erp.server.wms.service.PickingListsService;
 import org.springframework.validation.annotation.Validated;
@@ -55,6 +56,17 @@ public class PickingListsController extends BaseController {
     public ApiResult<String> update(@RequestBody @Validated PickingListsDTO.UpdateDTO dto) {
         pickingListsService.update(dto);
         return success();
+    }
+
+
+    /**
+     * 修改数量弹窗
+     *
+     * @param dto 编辑参数
+     **/
+    @PostMapping("/changeQtyView")
+    public ApiResult<List<PickingDetailDTO.ChangeQtyView>> generateRequisitionChange(@RequestBody @Validated PickingListsDTO.UpdateDTO dto) {
+        return success(pickingListsService.generateRequisitionChange(dto));
     }
 
     /**

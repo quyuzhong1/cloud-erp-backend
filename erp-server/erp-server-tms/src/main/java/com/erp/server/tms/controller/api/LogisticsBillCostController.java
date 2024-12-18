@@ -192,5 +192,13 @@ public class LogisticsBillCostController extends BaseController {
         Boolean flag = logisticsBillCostService.exportExcel(dto);
         return flag == true ? success() : failure();
     }
-
+    /**
+     * 初始化头程对账单汇率
+     * @return
+     */
+    @PostMapping("/initExchangeRate")
+    public ApiResult initExchangeRate(){
+        logisticsBillCostService.initExchangeRate();
+        return success();
+    }
 }

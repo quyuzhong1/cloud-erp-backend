@@ -123,4 +123,9 @@ public class RocketMqTopic {
      */
     public static final String ASYNC_MERGE_PACKAGE_DELIVERY_TOPIC = "${spring.cloud.nacos.discovery.namespace}-async_merge_package_delivery_topic";
 
+    /**
+     * 推送数据到数帝云
+     */
+    public static final String SYNC_SUDUYUN_ERP_TOPIC = "${spring.cloud.nacos.discovery.namespace}-sync_sudiyun_erp_topic";
+
 }

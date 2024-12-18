@@ -88,6 +88,7 @@ public class YunTuService {
      *  订单拦截
      */
     public YunTuResponse<YunTuInterceptOrder> interceptOrder(@Valid YunTuInterceptOrderRequest request,Map<String, String> authMap){
+        log.warn("云途拦截物流单：{}",JSON.toJSONString(request));
         String appKey = authMap.get(CLIENT_ID);
         String appSecret = authMap.get(CLIENT_SECRET);
         String url = authMap.get("url");
@@ -101,6 +102,7 @@ public class YunTuService {
      *  订单删除
      */
     public YunTuResponse<YunTuCancelOrder> cancelOrder(@Valid YunTuCancelOrderRequest request,Map<String, String> authMap){
+        log.warn("云途取消物流单：{}",JSON.toJSONString(request));
         String appKey = authMap.get(CLIENT_ID);
         String appSecret = authMap.get(CLIENT_SECRET);
         String url = authMap.get("url");

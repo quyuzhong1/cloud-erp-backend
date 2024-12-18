@@ -30,6 +30,7 @@ import com.erp.server.wms.service.CfgRuleOutService;
 import com.erp.server.wms.service.CfgSettingService;
 import com.erp.server.wms.service.SoB2cDeliveryService;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -58,7 +59,7 @@ public class CfgRuleOutServiceImpl extends SuperServiceImpl<CfgRuleOutMapper, Cf
 
     @Resource
     private SpElServer spElServer;
-
+    @Lazy
     @Resource
     private SoB2cDeliveryService soB2cDeliveryService;
 

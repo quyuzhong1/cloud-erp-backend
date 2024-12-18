@@ -194,4 +194,11 @@ public interface TransferDeclareService extends SuperService<TransferDeclareEnti
     ApiResult<String> cancelOrderForecast(TransferDeclareDTO.CancelOrderForecastDTO cancelOrderForecastDTO);
 
     PagingVO<TransferDeclareDTO.ExportListDTO> exportTransferDeclare(PagingDTO<TransferDeclareDTO.PagingParamDTO> dto);
+
+    /**
+     * 批量新增
+     * @param dtoList
+     * @return
+     */
+    List<BaseResultDTO.AddDTO> batchAdd(List<TransferDeclareDTO.AddDTO> dtoList);
 }

@@ -32,7 +32,9 @@ public interface DmpOutputTaskRecordMapper extends BaseMapper<DmpOutputTaskRecor
      * @return java.util.List<com.erp.model.dmp.dto.DmpOutputTaskRecordDTO.TabListDTO>
      **/
     List<DmpOutputTaskRecordDTO.TabListDTO> listStatusCount(@Param("permissionSql")String permissionSql);
-
+    
+    Integer listStatusCountHis(@Param("permissionSql")String permissionSql);
+    
     /**
      * 添加进黑名单的数量
      * @Author Luo_WG
@@ -49,6 +51,8 @@ public interface DmpOutputTaskRecordMapper extends BaseMapper<DmpOutputTaskRecor
      * @return com.common.business.vo.PagingVO<com.erp.model.dmp.dto.DmpOutputTaskRecordDTO.PagingDTO>
      **/
     IPage<DmpOutputTaskRecordDTO.PagingDTO> paging(Page query, @Param("params") DmpOutputTaskRecordDTO.PagingParamDTO params);
+    
+    IPage<DmpOutputTaskRecordDTO.PagingDTO> hisPaging(Page query, @Param("params") DmpOutputTaskRecordDTO.PagingParamDTO params);
     
     IPage<DmpOutputTaskRecordDTO.PagingDTO> blackPaging(Page query, @Param("params") DmpOutputTaskRecordDTO.PagingParamDTO params);
 
@@ -69,4 +73,12 @@ public interface DmpOutputTaskRecordMapper extends BaseMapper<DmpOutputTaskRecor
      * @return SyncInfoDTO
      */
     DmpPushTaskDTO.SyncInfoDTO getErrorData(@Param("params") DmpSyncTaskDTO.OneDTO params);
+    
+    List<DmpOutputTaskRecordEntity> getOutputErrorTask(@Param("systemId") String systemId , @Param("size") String size);
+    
+    void dmpOutputMoveToHistoryTable(@Param("beforeUpdateTime") String beforeUpdateTime , @Param("size") String size);
+    
+    void dmpRelationMoveToHistoryTable(@Param("beforeUpdateTime") String beforeUpdateTime , @Param("size") String size);
+    
+    void dmpInputMoveToHistoryTable(@Param("beforeUpdateTime") String beforeUpdateTime , @Param("size") String size);
 }

@@ -89,7 +89,7 @@ public class DmpSoDetailEntity extends BaseEntity<DmpSoDetailEntity> {
     * 是否赠品：true/false
     */
     @TableField("is_gift")
-    private Boolean isGift;
+    private Boolean isGift = false;
     /**
     * 仓库编码
     */
@@ -134,7 +134,7 @@ public class DmpSoDetailEntity extends BaseEntity<DmpSoDetailEntity> {
     * 折扣后订单总金额
     */
     @TableField("after_amount")
-    private BigDecimal afterAmount;
+    private BigDecimal afterAmount = BigDecimal.ZERO;
     /**
     * 运费
     */
@@ -180,6 +180,41 @@ public class DmpSoDetailEntity extends BaseEntity<DmpSoDetailEntity> {
      */
     @TableField("platform_package_id")
     private String platformPackageId;
+    /**
+     * 优惠额（亚马逊）
+     */
+    @TableField("discount")
+    private BigDecimal discount;
+    /**
+     * 商品状态：shipped 已发货、cancel 已取消、unShipped未发货
+     * 枚举：SoB2cItemStatusEnum
+     */
+    @TableField("item_status")
+    private String itemStatus;
+
+    /**
+     * 子单平台状态
+     */
+    @TableField("platform_status")
+    private String platformStatus;
+
+    /**
+     * 售后退款数量
+     */
+    @TableField("refund_num")
+    private BigDecimal refundNum;
+
+    /**
+     * 平台货品名称
+     */
+    @TableField("api_goods_name")
+    private String apiGoodsName;
+
+    /**
+     * 平台规格名称
+     */
+    @TableField("api_spec_name")
+    private String apiSpecName;
 
     public static final String MAIN_ID = "main_id";
 

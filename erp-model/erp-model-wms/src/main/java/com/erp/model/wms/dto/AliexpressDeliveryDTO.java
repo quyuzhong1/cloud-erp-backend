@@ -2,6 +2,8 @@ package com.erp.model.wms.dto;
 
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -107,6 +109,20 @@ public class AliexpressDeliveryDTO implements Serializable {
         @NotBlank(message = "平台订单号不能为空")
         @Size(max = 64,message = "平台订单号最大长度不能超过64位")
         private String platformCode;
+        /**
+         * 平台发货状态
+         * AliexpressDeliveryOrderStatusEnum
+         */
+        private String platformDeliveryStatus;
+
+        /**
+         * 平台发货单号
+         */
+        private String platformDeliveryCode;
+        /**
+         * 系统已出库
+         */
+        private Boolean isOutstock;
 
         /**
         * 销售单id
@@ -142,6 +158,10 @@ public class AliexpressDeliveryDTO implements Serializable {
         @NotBlank(message = "物流跟踪号不能为空")
         @Size(max = 255,message = "物流跟踪号最大长度不能超过255位")
         private String trackNo;
+        /**
+         * 物流运单号
+         */
+        private String transportNo;
 
         /**
         * 订单创建时间
@@ -250,5 +270,24 @@ public class AliexpressDeliveryDTO implements Serializable {
          * sqlMap 默认key default
          */
         private Map<String, String> sqlMap;
+    }
+
+    @Data
+    @Builder
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class StatusDTO {
+        /**
+         * 销售订单id
+         */
+        private String soId;
+        /**
+         * 平台发货单
+         */
+        private String platformDeliveryCode;
+        /**
+         * 是否销售出库
+         */
+        private Boolean isOutstock;
     }
 }

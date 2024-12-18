@@ -53,7 +53,7 @@ public class CfgRuleOrderStrategyServiceImpl extends SuperServiceImpl<CfgRuleOrd
         }
         // 记录主单操作日志
         log.info("编辑 开始记录策略（规则设置）日志数据，id：【{}】", orderStrategyEntity.getId());
-        String msg = StrUtil.format("设置采购建议策略:【{}】",updateDTO.getIsSplit() ? "单品/组合品 分开采购" : "组合品拆分为单品,集中采购");
+        String msg = StrUtil.format("设置采购建议策略:【{}】",updateDTO.getIsSplit() ? "组合品拆分为单品,集中采购" : "单品/组合品 分开采购" );
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.REPLENISHMENT_SUGGESTION.getCode(), orderStrategyEntity.getId(), "策略");
         return Boolean.TRUE;
     }

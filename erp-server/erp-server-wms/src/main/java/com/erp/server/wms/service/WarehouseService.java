@@ -9,6 +9,7 @@ import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.scm.entity.PurchasePriceChangeEntity;
 import com.erp.model.wms.dto.WarehouseDTO;
+import com.erp.model.wms.dto.WarehouseDTO.WarehouseUpdateStateDTO;
 import com.erp.model.wms.dto.excel.WarehouseExportExcelDTO;
 import com.erp.model.wms.entity.WarehouseEntity;
 import org.springframework.web.multipart.MultipartFile;
@@ -100,7 +101,7 @@ public interface WarehouseService extends SuperService<WarehouseEntity> {
      * @param dto
      * @return java.lang.Boolean
      */
-    Boolean updateStatus(UpdateStateDTO dto);
+    Boolean updateStatus(WarehouseUpdateStateDTO dto);
 
     /**
      * 审核仓库
@@ -299,4 +300,10 @@ public interface WarehouseService extends SuperService<WarehouseEntity> {
 
 
     PagingVO<WarehouseExportExcelDTO> exportWarehouse(PagingDTO<WarehouseDTO.ExportDTO> dto);
+    
+    /**
+     * 检验启用和禁用时间
+     * @param warehouseEntity
+     */
+    boolean checkOpenCloseTime(WarehouseEntity warehouseEntity);
 }

@@ -4,6 +4,7 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.json.JSONUtil;
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.enums.ApproveStatusEnum;
@@ -18,10 +19,12 @@ import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
 import com.erp.model.oms.enums.MercadoOrderLogisticTypeEnum;
 import com.erp.model.oms.enums.OrderLogisticTypeEnum;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
+import com.erp.sdk.oms.amz.spapi.model.orders.Order;
 import com.erp.server.dmp.inout.handler.input.task.mongo.DmpInputMongoHandler;
 import com.erp.server.dmp.service.DmpSoDetailService;
 import com.erp.server.dmp.service.DmpSoInfoService;
 import com.erp.server.dmp.service.DmpSoReceiverService;
+import com.sdk.oms.mercado.dto.MercadoOrderDTO;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
@@ -119,8 +122,6 @@ public class MercadoOrderDmpHandler extends MercadoDmpHandler {
 
                 Map<String, Object> shipmentIdMap = (Map<String, Object>) dmpDataMap.get("shipping");
 
-
-
                 Object shipmentId = shipmentIdMap.get("fid");
                 if (shipmentId != null) {
                     Map<String, Object> shipmentMap = dmpInputMongoChildList.stream().filter(req -> req.get("fid").equals(shipmentId)).findFirst().orElse(null);
@@ -161,36 +162,10 @@ public class MercadoOrderDmpHandler extends MercadoDmpHandler {
                     Object statusObj = shipmentMap.get("status");
                     if (statusObj != null) {
                         String status = String.valueOf(statusObj);
-                        if ("cancelled".equalsIgnoreCase(status)) {
-                            dmpDataMap.put("invalidStatus", Boolean.TRUE);
-                            dmpDataMap.put("orderStatus", ApproveStatusEnum.WAIT_SUBMIT.getCode());
-                            dmpDataMap.put("deliveryStatus", SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode());
-                        } else if ("shipped".equalsIgnoreCase(status)) {
-                            dmpDataMap.put("orderStatus", ApproveStatusEnum.APPROVE.getCode());
-                            dmpDataMap.put("deliveryStatus", SoB2cBillStatusEnum.ENUM_SHIPPED.getCode());
-                        } else if ("delivered".equalsIgnoreCase(status)) {
-                            dmpDataMap.put("orderStatus", ApproveStatusEnum.APPROVE.getCode());
-                            dmpDataMap.put("deliveryStatus", SoB2cBillStatusEnum.ENUM_SHIPPED.getCode());
-                        } else if ("not_delivered".equalsIgnoreCase(status)) {
-                            dmpDataMap.put("orderStatus", ApproveStatusEnum.APPROVE.getCode());
-                            dmpDataMap.put("deliveryStatus", SoB2cBillStatusEnum.ENUM_SHIPPED.getCode());
-                        } else if ("handling".equalsIgnoreCase(status)) {
-                            dmpDataMap.put("orderStatus", ApproveStatusEnum.WAIT_SUBMIT.getCode());
-                            if (logisticType.equals(OrderLogisticTypeEnum.PLATFORM_WAREHOUSE.getCode())) {
-                                dmpDataMap.put("orderStatus", ApproveStatusEnum.APPROVE.getCode());
-                                dmpDataMap.put("deliveryStatus", SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode());
-                            } else {
-                                dmpDataMap.put("deliveryStatus", SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode());
-                            }
-                        } else if ("ready_to_ship".equalsIgnoreCase(status)) {
-                            dmpDataMap.put("orderStatus", ApproveStatusEnum.WAIT_SUBMIT.getCode());
-                            if (logisticType.equals(OrderLogisticTypeEnum.PLATFORM_WAREHOUSE.getCode())) {
-                                dmpDataMap.put("orderStatus", ApproveStatusEnum.APPROVE.getCode());
-                                dmpDataMap.put("deliveryStatus", SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode());
-                            } else {
-                                dmpDataMap.put("deliveryStatus", SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode());
-                            }
-                        }
+
+                        dmpDataMap.put("invalidStatus", this.convertCancel(status));
+                        dmpDataMap.put("orderStatus", this.convertOrderStatus(status, logisticType));
+                        dmpDataMap.put("deliveryStatus", this.convertBillStatus(status, logisticType));
 
                         //订单状态
                         String orderStatus = String.valueOf(statusObj);
@@ -210,7 +185,9 @@ public class MercadoOrderDmpHandler extends MercadoDmpHandler {
 
                     }
                     Object packId = dmpDataMap.get("platformCode");
-                    if (packId == null) {
+                    if (packId != null) {
+                        dmpDataMap.put("thirdCode", dmpDataMap.get("platformCode"));
+                    } else {
                         dmpDataMap.put("platformCode", dmpDataMap.get("thirdCode"));
                     }
 
@@ -232,9 +209,10 @@ public class MercadoOrderDmpHandler extends MercadoDmpHandler {
                             dmpDataMap.put("allAmount", transactionAmount);
                             BigDecimal shippingAmount = feedbackList.stream().map(req -> MathUtil.valueOf(req.get("shippingAmount"))).reduce(BigDecimal.ZERO, BigDecimal::add);
                             dmpDataMap.put("shippingCost", shippingAmount);
+                            BigDecimal totalDiscount = feedbackList.stream().map(req -> MathUtil.valueOf(req.get("couponAmount"))).reduce(BigDecimal.ZERO, BigDecimal::add);
+                            dmpDataMap.put("totalDiscount", totalDiscount);
 
                             BigDecimal taxesAmount = feedbackList.stream().map(req -> MathUtil.valueOf(req.get("taxesAmount"))).reduce(BigDecimal.ZERO, BigDecimal::add);
-
                             lableMap.put("taxesAmount", taxesAmount);
 
                         }
@@ -270,6 +248,68 @@ public class MercadoOrderDmpHandler extends MercadoDmpHandler {
                     dmpDataMap.put("extendData", JSONUtil.toJsonStr(lableMap));
                 }
             }
+        }
+    }
+
+
+    public String convertBillStatus(String status, String logisticType) {
+        if ("cancelled".equalsIgnoreCase(status)) {
+            return SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode();
+        } else if ("shipped".equalsIgnoreCase(status)) {
+            return SoB2cBillStatusEnum.ENUM_SHIPPED.getCode();
+        } else if ("delivered".equalsIgnoreCase(status)) {
+            return SoB2cBillStatusEnum.ENUM_SHIPPED.getCode();
+        } else if ("not_delivered".equalsIgnoreCase(status)) {
+            return SoB2cBillStatusEnum.ENUM_SHIPPED.getCode();
+        } else if ("handling".equalsIgnoreCase(status)) {
+            if (logisticType.equals(OrderLogisticTypeEnum.PLATFORM_WAREHOUSE.getCode())) {
+                return SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode();
+            } else {
+                return SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode();
+            }
+        } else if ("ready_to_ship".equalsIgnoreCase(status)) {
+            if (logisticType.equals(OrderLogisticTypeEnum.PLATFORM_WAREHOUSE.getCode())) {
+                return SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode();
+            } else {
+                return SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode();
+            }
+        } else {
+            return SoB2cBillStatusEnum.ENUM_EXCEPTION.getCode();
+        }
+
+    }
+
+    public boolean convertCancel(String status) {
+        if ("cancelled".equalsIgnoreCase(status)) {
+            return Boolean.TRUE;
+        } else {
+            return Boolean.FALSE;
+        }
+    }
+
+    public String convertOrderStatus(String status, String logisticType) {
+        if ("cancelled".equalsIgnoreCase(status)) {
+            return ApproveStatusEnum.WAIT_SUBMIT.getCode();
+        } else if ("shipped".equalsIgnoreCase(status)) {
+            return ApproveStatusEnum.APPROVE.getCode();
+        } else if ("delivered".equalsIgnoreCase(status)) {
+            return ApproveStatusEnum.APPROVE.getCode();
+        } else if ("not_delivered".equalsIgnoreCase(status)) {
+            return ApproveStatusEnum.APPROVE.getCode();
+        } else if ("handling".equalsIgnoreCase(status)) {
+            if (logisticType.equals(OrderLogisticTypeEnum.PLATFORM_WAREHOUSE.getCode())) {
+                return ApproveStatusEnum.APPROVE.getCode();
+            } else {
+                return ApproveStatusEnum.WAIT_SUBMIT.getCode();
+            }
+        } else if ("ready_to_ship".equalsIgnoreCase(status)) {
+            if (logisticType.equals(OrderLogisticTypeEnum.PLATFORM_WAREHOUSE.getCode())) {
+                return ApproveStatusEnum.APPROVE.getCode();
+            } else {
+                return ApproveStatusEnum.WAIT_SUBMIT.getCode();
+            }
+        } else {
+            return ApproveStatusEnum.WAIT_SUBMIT.getCode();
         }
     }
 }

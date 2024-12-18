@@ -4,6 +4,7 @@ import com.common.business.dto.base.*;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.oms.dto.CustomerDTO;
+import com.erp.model.oms.dto.CustomerDTO.CustomerBatchUpdateDTO;
 import com.erp.model.oms.entity.CustomerInfoEntity;
 import com.erp.model.oms.vo.CustomerInfoVO;
 import org.springframework.web.multipart.MultipartFile;
@@ -196,7 +197,7 @@ public interface CustomerInfoService extends SuperService<CustomerInfoEntity> {
      * @author yl
      * @date 2023-05-15 15:30
      */
-    Boolean updateStatus(UpdateStateDTO.BatchUpdateDTO dto);
+    Boolean updateStatus(CustomerBatchUpdateDTO dto);
 
 
     /**

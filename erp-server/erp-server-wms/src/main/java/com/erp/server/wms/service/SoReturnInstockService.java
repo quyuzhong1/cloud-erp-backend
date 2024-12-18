@@ -9,11 +9,13 @@ import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
 import com.erp.model.wms.dto.SoReturnInstockDTO;
 import com.erp.model.wms.dto.SoReturnReceiveDTO;
+import com.erp.model.wms.entity.SoOutstockEntity;
 import com.erp.model.wms.entity.SoReturnInstockDetailEntity;
 import com.erp.model.wms.entity.SoReturnInstockEntity;
 import com.erp.model.wms.entity.SoReturnNoticeEntity;
 import org.springframework.web.bind.annotation.RequestBody;
 
+import java.time.LocalDate;
 import java.util.List;
 
 /**
@@ -305,4 +307,6 @@ public interface SoReturnInstockService extends SuperService<SoReturnInstockEnti
     SoReturnInstockEntity getByThirdCode(String thirdCode);
 
     void addByThirdWarehouse(SoReturnInstockEntity soReturnInstockEntity, List<SoReturnInstockDetailEntity> detailEntityList);
+
+    List<SoReturnInstockEntity> queryToSdy(LocalDate toLocalDate, LocalDate toLocalDate1, Integer pageSize, int offset);
 }

@@ -2,7 +2,6 @@ package com.erp.server.wms.service.impl;
 
 
 import cn.hutool.core.text.CharSequenceUtil;
-import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.conditions.update.LambdaUpdateChainWrapper;
@@ -18,6 +17,7 @@ import com.erp.model.wms.dto.RequisitionApplicationDTO;
 import com.erp.model.wms.dto.RequisitionApplicationDetailDTO;
 import com.erp.model.wms.entity.RequisitionApplicationDetailEntity;
 import com.erp.model.wms.entity.VirtualWarehouseEntity;
+import com.erp.model.wms.enums.RequisitionApplicationTypeEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.convert.RequisitionApplicationConverter;
 import com.erp.server.wms.mapper.RequisitionApplicationDetailMapper;
@@ -28,12 +28,14 @@ import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.math3.util.Pair;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 /**
  * <p>
@@ -63,6 +65,38 @@ public class RequisitionApplicationDetailServiceImpl extends SuperServiceImpl<Re
         // 数据处理
         handleData(list, mainId, Boolean.FALSE);
 
+        //校验是否重复
+        String type = addDTO.getType();
+        if (RequisitionApplicationTypeEnum.FBA.getCode().equals(type)) {
+            // 分组并检查 FBA 类型的唯一性
+            Map<String, List<RequisitionApplicationDetailEntity>> fbaGroup = list.stream()
+                    .collect(Collectors.groupingBy(detail -> detail.getPlatformSku() + detail.getPlatformFnSku() + detail.getSkuNo()));
+
+            for (Map.Entry<String, List<RequisitionApplicationDetailEntity>> entry : fbaGroup.entrySet()) {
+                if (entry.getValue().size() > 1) {
+                    String duplicateSkus = entry.getValue().stream()
+                            .map(detail -> detail.getPlatformSku() + "+" + detail.getPlatformFnSku() + "+" + detail.getSkuNo())
+                            .distinct()
+                            .collect(Collectors.joining(", "));
+                    throw new ServiceException("FBA 类型的 MSKU+FNSKU+SKU 必须唯一 ,重复的组合:" + duplicateSkus);
+                }
+            }
+        } else if (RequisitionApplicationTypeEnum.THIRD_WAREHOUSE.getCode().equals(type)) {
+            Map<String, List<RequisitionApplicationDetailEntity>> thirdPartyGroup = list.stream()
+                    .collect(Collectors.groupingBy(detail -> detail.getPlatformSku() + detail.getSkuNo()));
+
+            for (Map.Entry<String, List<RequisitionApplicationDetailEntity>> entry : thirdPartyGroup.entrySet()) {
+                if (entry.getValue().size() > 1) {
+                    String duplicateSkus = entry.getValue().stream()
+                            .map(detail -> detail.getPlatformSku() + "+" + detail.getSkuNo())
+                            .distinct()
+                            .collect(Collectors.joining(", "));
+                    throw new ServiceException("三方仓类型的 三方仓SKU+SKU 必须唯一，重复的组合: " + duplicateSkus);
+                }
+            }
+        } else {
+            throw new ServiceException("未知的类型: " + type);
+        }
         log.info("开始新增要货申请单明细单");
         boolean save = super.saveBatch(list);
         if(!save) {
@@ -92,7 +126,38 @@ public class RequisitionApplicationDetailServiceImpl extends SuperServiceImpl<Re
 
         // 数据处理
         handleData(list, mainId, Boolean.TRUE);
+        //校验是否重复
+        String type = updateDTO.getType();
+        if (RequisitionApplicationTypeEnum.FBA.getCode().equals(type)) {
+            // 分组并检查 FBA 类型的唯一性
+            Map<String, List<RequisitionApplicationDetailEntity>> fbaGroup = list.stream()
+                    .collect(Collectors.groupingBy(detail -> detail.getPlatformSku() + detail.getPlatformFnSku() + detail.getSkuNo()));
 
+            for (Map.Entry<String, List<RequisitionApplicationDetailEntity>> entry : fbaGroup.entrySet()) {
+                if (entry.getValue().size() > 1) {
+                    String duplicateSkus = entry.getValue().stream()
+                            .map(detail -> detail.getPlatformSku() + "+" + detail.getPlatformFnSku() + "+" + detail.getSkuNo())
+                            .distinct()
+                            .collect(Collectors.joining(", "));
+                    throw new ServiceException("FBA 类型的 MSKU+FNSKU+SKU 必须唯一 ,重复的组合:" + duplicateSkus);
+                }
+            }
+        } else if (RequisitionApplicationTypeEnum.THIRD_WAREHOUSE.getCode().equals(type)) {
+            Map<String, List<RequisitionApplicationDetailEntity>> thirdPartyGroup = list.stream()
+                    .collect(Collectors.groupingBy(detail -> detail.getPlatformSku() + detail.getSkuNo()));
+
+            for (Map.Entry<String, List<RequisitionApplicationDetailEntity>> entry : thirdPartyGroup.entrySet()) {
+                if (entry.getValue().size() > 1) {
+                    String duplicateSkus = entry.getValue().stream()
+                            .map(detail -> detail.getPlatformSku() + "+" + detail.getSkuNo())
+                            .distinct()
+                            .collect(Collectors.joining(", "));
+                    throw new ServiceException("三方仓类型的 三方仓SKU+SKU 必须唯一，重复的组合: " + duplicateSkus);
+                }
+            }
+        } else {
+            throw new ServiceException("未知的类型: " + type);
+        }
         boolean save = super.saveOrUpdateBatch(list);
         if(!save) {
             throw new ServiceException("要货申请单明细单保存失败");

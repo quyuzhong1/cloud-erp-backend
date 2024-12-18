@@ -211,6 +211,10 @@ public class VirtualInventoryDiffDTO implements Serializable {
          */
         private String skuId;
         /**
+         * SKU编码
+         */
+        private String skuNo;
+        /**
          * 实体仓库【可排序】
          */
         private String warehouseId;

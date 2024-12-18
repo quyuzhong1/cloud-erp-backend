@@ -30,6 +30,7 @@ import com.erp.model.dmp.entity.DmpCfgInputDetailEntity;
 import com.erp.model.dmp.entity.DmpCfgInputEntity;
 import com.erp.model.dmp.entity.DmpCfgMqEntity;
 import com.erp.model.dmp.entity.DmpCfgOutputBlackEntity;
+import com.erp.model.dmp.entity.DmpCfgOutputEntity;
 import com.erp.model.dmp.enums.DmpCfgMqMqTypeEnum;
 import com.erp.model.oms.enums.AuthStatusEnum;
 import com.erp.model.sys.entity.DictCountryEntity;
@@ -43,6 +44,7 @@ import com.erp.server.dmp.service.DmpCfgInputDetailService;
 import com.erp.server.dmp.service.DmpCfgInputService;
 import com.erp.server.dmp.service.DmpCfgMqService;
 import com.erp.server.dmp.service.DmpCfgOutputBlackService;
+import com.erp.server.dmp.service.DmpCfgOutputService;
 import com.netflix.client.ClientException;
 
 import cn.hutool.core.collection.CollUtil;
@@ -85,6 +87,8 @@ public class DmpHandlerCache implements CommandLineRunner{
 	private List<OverseasProviderEntity> overseasProviderEntityCache;
 	
 	private List<DmpCfgApiEntity> dmpCfgApiEntityCache;
+	
+	private List<DmpCfgOutputEntity> dmpCfgOutputEntityCache;
 
 	@Autowired
 	private DmpBasicSystemService dmpBasicSystemService;
@@ -104,6 +108,8 @@ public class DmpHandlerCache implements CommandLineRunner{
 	private DmpCfgOutputBlackService dmpCfgOutputBlackService;
 	@Autowired
 	private DmpCfgApiService dmpCfgApiService;
+	@Autowired
+	private DmpCfgOutputService dmpCfgOutputService;
 	
 	public List<DmpBasicSystemEntity> getDmpBasicSystemEntityList(Predicate<? super DmpBasicSystemEntity> paramPredicate) {
 		if(dmpBasicSystemCache == null) {
@@ -190,6 +196,14 @@ public class DmpHandlerCache implements CommandLineRunner{
 		return dmpCfgOutputBlackCache.stream().filter(paramPredicate).collect(Collectors.toList());
 	}
 	
+	public List<DmpCfgOutputEntity> getDmpCfgOutputEntityList(Predicate<? super DmpCfgOutputEntity> paramPredicate) {
+		if(dmpCfgOutputEntityCache == null) {
+			dmpCfgOutputEntityCache = dmpCfgOutputService.lambdaQuery()
+					.eq(DmpCfgOutputEntity::getDisabled, false).list();
+		}
+		return dmpCfgOutputEntityCache.stream().filter(paramPredicate).collect(Collectors.toList());
+	}
+	
 	public List<OverseasProviderEntity> getOverseasProviderEntityList(Predicate<? super OverseasProviderEntity> paramPredicate) {
 		int i = 0;
 		while(overseasProviderEntityCache == null) {
@@ -274,6 +288,9 @@ public class DmpHandlerCache implements CommandLineRunner{
 		
 		dmpCfgApiEntityCache = dmpCfgApiService.lambdaQuery()
 				.eq(DmpCfgApiEntity::getDisabled, false).list();
+		
+		dmpCfgOutputEntityCache = dmpCfgOutputService.lambdaQuery()
+				.eq(DmpCfgOutputEntity::getDisabled, false).list();
 		
 		try {
 			overseasProviderEntityCache = FeignQuery.create(OverseasProviderEntity.class)
@@ -409,6 +426,19 @@ public class DmpHandlerCache implements CommandLineRunner{
 				}
 				
 			}, 2, freshCacheTime, TimeUnit.SECONDS);
+			
+			Executors.newScheduledThreadPool(1).scheduleAtFixedRate(() -> {
+				List<DmpCfgOutputEntity> dmpCfgOutputEntityFreshList = dmpCfgOutputService.lambdaQuery()
+						.gt(DmpCfgOutputEntity::getUpdateTime, DateUtil.offsetSecond(new Date(), -(freshCacheTime + 1)))
+						.list();
+				if(CollUtil.isNotEmpty(dmpCfgOutputEntityFreshList)) {
+					List<String> newIds = dmpCfgOutputEntityFreshList.stream().map(DmpCfgOutputEntity::getId).collect(Collectors.toList());
+					dmpCfgOutputEntityCache.removeIf(d -> newIds.contains(d.getId()));
+					dmpCfgOutputEntityCache.addAll(dmpCfgOutputEntityFreshList.stream()
+							.filter(d -> Boolean.FALSE.equals(d.getDisabled())).collect(Collectors.toList()));
+				}
+				
+			}, 3, freshCacheTime, TimeUnit.SECONDS);
 
 		}
 	}

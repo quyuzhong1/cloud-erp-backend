@@ -102,7 +102,7 @@ public class DeliverySuggestHandler extends AbstractSkuCalculationHandler {
                         suggestDTO.setSuggestDeliveryQty(Math.max(0, getSuggestDeliveryQty(calcDate, salesEstimates, stockingRatioResults, stockingRatio, now) - inventory));
                     }
                     return suggestDTO;
-                }).collect(Collectors.toList());
+                }).filter(v -> v.getSuggestDeliveryQty() > 0).collect(Collectors.toList());
         replenishmentResultDTO.setDeliverySuggests(deliverySuggests);
     }
 

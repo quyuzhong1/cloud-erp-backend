@@ -9,6 +9,7 @@ import com.erp.server.mrp.service.CfgRuleSalesDenoisingCalcService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -31,8 +32,12 @@ public class CfgRuleSalesDenoisingCalcServiceImpl extends SuperServiceImpl<CfgRu
 
     @Override
     public List<CfgRuleSalesDenoisingCalcEntity> listByCfgRuleCalcIds(List<String> cfgRuleCalcIds) {
-        return list(Wrappers.<CfgRuleSalesDenoisingCalcEntity>lambdaQuery()
-                .in(CfgRuleSalesDenoisingCalcEntity::getCfgRuleCalcId,cfgRuleCalcIds)
+        List<CfgRuleSalesDenoisingCalcEntity> list = list(Wrappers.<CfgRuleSalesDenoisingCalcEntity>lambdaQuery()
+                .in(CfgRuleSalesDenoisingCalcEntity::getCfgRuleCalcId, cfgRuleCalcIds)
                 .orderByAsc(CfgRuleSalesDenoisingCalcEntity::getIndex));
+        for (CfgRuleSalesDenoisingCalcEntity entity : list) {
+            entity.setDateList(Arrays.asList(entity.getStartDate(), entity.getEndDate()));
+        }
+        return list;
     }
 }

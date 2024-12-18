@@ -6,6 +6,7 @@ import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -30,6 +31,7 @@ import com.erp.model.dmp.entity.DmpCfgInputEntity;
 import com.erp.model.dmp.entity.DmpCfgOutputEntity;
 import com.erp.model.dmp.entity.DmpOutputTaskRecordEntity;
 import com.erp.model.dmp.entity.DmpPushMsgEntity;
+import com.erp.model.dmp.entity.DmpPushMsgHisEntity;
 import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
 import com.erp.model.dmp.enums.DmpCfgOutputTypeEnum;
 import com.erp.model.dmp.enums.DmpOutputTaskRecordStatusEnum;
@@ -37,6 +39,8 @@ import com.erp.server.dmp.inout.dto.request.DmpOutputTaskRequest;
 import com.erp.server.dmp.inout.dto.response.DmpOutputTaskResponse;
 import com.erp.server.dmp.inout.handler.output.task.DmpOutputTaskHandler;
 import com.erp.server.dmp.inout.utils.DmpHandlerUtils;
+import com.erp.server.dmp.push.service.sdy.SdyCommonService;
+import com.erp.server.dmp.service.DmpPushMsgHisService;
 import com.erp.server.dmp.service.DmpPushMsgService;
 
 import cn.hutool.core.collection.CollUtil;
@@ -50,6 +54,8 @@ public class DmpOutputErpPushTaskHandler extends DmpOutputTaskHandler{
 
 	@Autowired
 	private DmpPushMsgService dmpPushMsgService;
+	@Autowired
+	private DmpPushMsgHisService dmpPushMsgHisService;
 	
 	@Override
 	public List<DmpOutputTaskRecordEntity> outputData(DmpOutputTaskRequest dmpRequest, DmpOutputTaskResponse dmpResponse) {
@@ -164,6 +170,7 @@ public class DmpOutputErpPushTaskHandler extends DmpOutputTaskHandler{
 						.eq(DmpPushMsgEntity::getSourceId, s)
 						.eq(DmpPushMsgEntity::getTargetPlatform, systemCode)
 						.eq(DmpPushMsgEntity::getSyncOperate, syncOperate)
+						.select(DmpPushMsgEntity::getId)
 						.orderByDesc(DmpPushMsgEntity::getMessageUpdateTime)
 						.list();
 				if(CollUtil.isEmpty(list)) {
@@ -225,13 +232,23 @@ public class DmpOutputErpPushTaskHandler extends DmpOutputTaskHandler{
 					} catch (Exception e) {
 						log.error("处理上游单据失败" , e);
 					}
-					dmpOutputTaskRecordService.lambdaUpdate()
-						.set(DmpOutputTaskRecordEntity::getResponseData, "上游单据未拉取到")
-						.set(DmpOutputTaskRecordEntity::getUpdateTime, LocalDateTime.now())
-						.eq(DmpOutputTaskRecordEntity::getId, dmpOutputTaskRecordEntity.getId())
-						.ne(DmpOutputTaskRecordEntity::getStatus, DmpOutputTaskRecordStatusEnum.FINISH.getCode())
-						.update();
-					return;
+					
+					List<DmpPushMsgHisEntity> histList = dmpPushMsgHisService.lambdaQuery()
+							.eq(DmpPushMsgHisEntity::getSourceId, s)
+							.eq(DmpPushMsgHisEntity::getTargetPlatform, systemCode)
+							.eq(DmpPushMsgHisEntity::getSyncOperate, syncOperate)
+							.select(DmpPushMsgHisEntity::getId)
+							.orderByDesc(DmpPushMsgHisEntity::getMessageUpdateTime)
+							.list();
+					if(CollUtil.isEmpty(histList)) {
+						dmpOutputTaskRecordService.lambdaUpdate()
+							.set(DmpOutputTaskRecordEntity::getResponseData, "上游单据未拉取到")
+							.set(DmpOutputTaskRecordEntity::getUpdateTime, LocalDateTime.now())
+							.eq(DmpOutputTaskRecordEntity::getId, dmpOutputTaskRecordEntity.getId())
+							.ne(DmpOutputTaskRecordEntity::getStatus, DmpOutputTaskRecordStatusEnum.FINISH.getCode())
+							.update();
+						return;
+					}
 				}
 				
 				List<DmpOutputTaskRecordEntity> parentOutputList = dmpOutputTaskRecordService.lambdaQuery()
@@ -267,6 +284,13 @@ public class DmpOutputErpPushTaskHandler extends DmpOutputTaskHandler{
 		String responseData = "";
 		String message = "";
 		if(StringUtils.isNotBlank(requestData) && !"null".equals(requestData)) {
+			if(systemCode.equals(DmpBasicSystemCodeEnum.SDY.getCode())) {
+				Map<String, String> sdyObject = new HashMap<>();
+				sdyObject.put(SdyCommonService.REQUEST_URL, outputMethod);
+				sdyObject.put(SdyCommonService.REQUEST_DATA, requestData);
+				requestData = JSON.toJSONString(sdyObject);
+				outputMethod = SdyCommonService.REQUEST_SDY;
+			}
 			try {
 				method = bean.getClass().getMethod(outputMethod, Object.class);
 			} catch (NoSuchMethodException | SecurityException e) {

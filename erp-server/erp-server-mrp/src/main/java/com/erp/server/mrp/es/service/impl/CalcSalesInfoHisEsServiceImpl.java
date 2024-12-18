@@ -55,4 +55,9 @@ public class CalcSalesInfoHisEsServiceImpl implements CalcSalesInfoHisEsService 
         return calcSalesInfoHisList;
     }
 
+    @Override
+    public List<CalcSalesInfoHisEsEntity> findByCfgRuleCalcIdAndShopIdAndSkuId(String cfgRuleCalcId, String shopId, String skuId) {
+        return calcSalesInfoHisEsRepository.findByCfgRuleCalcIdAndShopIdAndSkuId(cfgRuleCalcId, shopId, skuId);
+    }
+
 }

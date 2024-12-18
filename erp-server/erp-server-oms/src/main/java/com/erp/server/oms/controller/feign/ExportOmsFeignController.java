@@ -40,7 +40,7 @@ public class ExportOmsFeignController {
     private SoInfoService soInfoService;
 
     @Resource
-    private RefundOrderService refundOrderService;
+    private SoB2cRefundService soB2cRefundService;
 
     @Resource
     private SoB2cReturnService soB2cReturnService;
@@ -126,8 +126,8 @@ public class ExportOmsFeignController {
 
     @PostMapping("/exportRefund")
     @WebAdvanceQuery
-    public PagingVO<RefundOrderDTO.PagingViewDTO> exportRefund(@RequestBody PagingDTO<RefundOrderDTO.PagingParamDTO> dto) {
-        return refundOrderService.exportRefund(dto);
+    public PagingVO<SoB2cRefundDTO.PagingViewDTO> exportRefund(@RequestBody PagingDTO<SoB2cRefundDTO.PagingParamDTO> dto) {
+        return soB2cRefundService.exportRefund(dto);
     }
 
     @PostMapping("/exportSoB2cReturn")

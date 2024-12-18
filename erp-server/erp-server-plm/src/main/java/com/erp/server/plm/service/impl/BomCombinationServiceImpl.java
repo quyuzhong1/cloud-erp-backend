@@ -356,6 +356,12 @@ public class BomCombinationServiceImpl implements BomCombinationService {
         //组合产品不能输入中文
         checkSkuNo(dto.getSkuNo());
 
+        Map<String, List<BomCombinationDetailDTO.AddDTO>> map = dto.getDetailList().stream().collect(Collectors.groupingBy(obj -> obj.getSkuId()));
+        long count = map.entrySet().stream().filter(obj -> obj.getValue().size() > MathUtil.ONE).count();
+        if (count > MathUtil.ZERO) {
+            throw new ServiceException("组合品子件不能重复");
+        }
+
         Map<String, String> params = new HashMap<>();
         params.put("skuNo",dto.getSkuNo());
         ProductDetailDTO productDetailDTO = productDetailService.getSkuByParam(params);
@@ -364,7 +370,6 @@ public class BomCombinationServiceImpl implements BomCombinationService {
             log.info("已存在SKU【{}】",dto.getSkuNo());
            throw new ServiceException(ApiError.ERROR_BOM_COMBINATION_SKU,dto.getSkuNo());
         }
-
 
         List<BomCombinationDetailDTO.AddDTO> detailList = dto.getDetailList();
         //新增产品信息
@@ -390,6 +395,12 @@ public class BomCombinationServiceImpl implements BomCombinationService {
         }
         //组合产品不能输入中文
         checkSkuNo(dto.getSkuNo());
+
+        Map<String, List<BomCombinationDetailDTO.UpdateDTO>> map = dto.getDetailList().stream().collect(Collectors.groupingBy(obj -> obj.getSkuId()));
+        long count = map.entrySet().stream().filter(obj -> obj.getValue().size() > MathUtil.ONE).count();
+        if (count > MathUtil.ZERO) {
+            throw new ServiceException("组合品子件不能重复");
+        }
 
         Map<String, String> params = new HashMap<>();
         params.put("skuNo",dto.getSkuNo());

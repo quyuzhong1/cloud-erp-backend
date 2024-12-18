@@ -5,7 +5,7 @@ import com.google.gson.annotations.SerializedName;
 public class ProductImageBean {
     /**
      * height : 200
-     * url : https://p16-oec-sg.ibyteimg.com/tos-alisg-i-aphluv4xwc-sg/10d1df26601e46fab0683718196bc57d~tplv-aphluv4xwc-origin-jpeg.jpeg?from=4246405447
+     * url : https://p16-oec-va.ibyteimg.com/tos-maliva-i-o3syd03w52-us/004797ebfd8c4d3da2df1cc4bfdb0614~tplv-o3syd03w52-origin-jpeg.jpeg?from=4246405447
      * width : 200
      */
 

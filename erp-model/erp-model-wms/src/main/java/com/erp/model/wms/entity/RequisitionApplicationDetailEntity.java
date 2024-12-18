@@ -130,6 +130,9 @@ public class RequisitionApplicationDetailEntity extends BaseEntity<RequisitionAp
     @TableField("platform_fn_sku")
     private String platformFnSku;
 
+    @TableField(exist = false)
+    private Integer changeBeforeQty;
+
     public static final String MAIN_ID = "main_id";
 
     public static final String SKU_ID = "sku_id";

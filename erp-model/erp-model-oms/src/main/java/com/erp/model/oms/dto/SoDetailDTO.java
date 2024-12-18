@@ -149,6 +149,11 @@ public class SoDetailDTO implements Serializable {
          */
         private String id;
 
+        /**
+         * 销售订单主表id
+         */
+        private String mainId;
+
 
         /**
          * 第三方仓SKU
@@ -372,6 +377,20 @@ public class SoDetailDTO implements Serializable {
          * 客户PO号
          */
         private String customerPO;
+        /**
+         * 发货状态 unShipped 未发货  partialShipment 部分发货  completeShipment 已发货
+         */
+        private String deliveryStatus;
+
+        /**
+         * 版本（数帝云用）
+         */
+        private Integer version;
+
+        /**
+         * 删除状态（数帝云用）
+         */
+        private Boolean isDeleted;
     }
 
     /**

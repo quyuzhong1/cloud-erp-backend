@@ -41,6 +41,8 @@ public class ExportWmsFeignController {
     @Resource
     private RequisitionApplicationService requisitionApplicationService;
     @Resource
+    private RequisitionApplicationChangeService requisitionApplicationChangeService;
+    @Resource
     private WarehouseLocationSafetyInventoryService warehouseLocationSafetyInventoryService;
     @Resource
     private VirtualInventoryDiffService virtualInventoryDiffService;
@@ -184,6 +186,18 @@ public class ExportWmsFeignController {
         return requisitionApplicationService.exportRequisitionApplication(dto);
     }
 
+    @PostMapping("/requisitionApplicationChange")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "wms:requisitionApplication:exportExcel",
+            tableAlias = "rac"
+    )
+    @WebAdvanceQuery
+    public PagingVO<RequisitionApplicationChangeDTO.ListDTO> exportRequisitionApplicationChange(@RequestBody PagingDTO<RequisitionApplicationChangeDTO.PagingParamDTO> dto) {
+        return requisitionApplicationChangeService.paging(dto);
+    }
+
+
     @PostMapping("/warehouseLocationSafetyInventory")
     public PagingVO<WarehouseLocationSafetyInventoryDTO.ViewDTO> exportWarehouseLocationSafetyInventory(@RequestBody PagingDTO<WarehouseLocationSafetyInventoryDTO.exportParamDTO> dto) {
         return warehouseLocationSafetyInventoryService.exportWarehouseLocationSafetyInventory(dto);
@@ -298,6 +312,7 @@ public class ExportWmsFeignController {
     }
 
     @PostMapping("/inventoryTransFlow")
+    @WebAdvanceQuery
     public PagingVO<InventoryDTO.TransFlowPagingViewDTO> exportInventoryTransFlow(@RequestBody PagingDTO<InventoryDTO.ExportInvFlowSearchParamDTO> dto) {
         return transactionFlowService.exportInventoryTransFlow(dto);
     }
@@ -688,5 +703,23 @@ public class ExportWmsFeignController {
     @WebAdvanceQuery
     public PagingVO<ReportOrderSalesDTO.ListDTO> listReportOrderSales(@RequestBody PagingDTO<ReportOrderSalesDTO.PagingParamDTO> dto){
         return reportOrderSalesService.listReportOrderSales(dto);
+    }
+
+    /**
+     * 导出分货统计
+     * @author will
+     * @date 2024/11/19 17:43
+     * @param dto
+     * @return PagingVO<ExportStatisticsDTO>
+     */
+    @PostMapping("/exportVirtualStatistics")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:virtualWarehouseAllocation:export",
+            serviceClass = VirtualWarehouseAllocationService.class,
+            keyIdName = "id")
+    @WebAdvanceQuery(handler = VirtualWarehouseAllocationQueryHandler.class)
+    public PagingVO<VirtualWarehouseAllocationDTO.ExportStatisticsDTO> exportVirtualStatistics(@RequestBody PagingDTO<VirtualWarehouseAllocationDTO.ExportDTO> dto) {
+        return virtualWarehouseAllocationService.exportVirtualStatistics(dto);
     }
 }

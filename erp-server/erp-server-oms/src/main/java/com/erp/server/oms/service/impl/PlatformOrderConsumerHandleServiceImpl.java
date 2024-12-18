@@ -8,6 +8,7 @@ import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.enums.SyncOperateEnum;
 import com.common.core.enums.ApiError;
+import com.common.business.enums.*;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.LengthConverterUtil;
 import com.common.core.utils.MathUtil;
@@ -27,6 +28,7 @@ import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.rpc.dmp.feign.DmpMongoDbFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysDictFeign;
+import com.erp.server.oms.kingdee.SyncSoB2cService;
 import com.erp.server.oms.rocketmq.consumer.NewPlatformRefundOrderConsumerService;
 import com.erp.server.oms.rocketmq.consumer.NewPlatformReturnOrderConsumerService;
 import com.erp.server.oms.service.*;
@@ -99,10 +101,22 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
     @Resource
     private SoB2cErrorService soB2cErrorService;
 
+    @Resource
+    private SyncSoB2cService syncSoB2cService;
+
 
 
     @Override
     public void handleAll(PlatformOrderDTO dto) {
+        // 跳过未作废的自发货无地址的订单
+        if ( notPlatformOrderNotExistAddress(dto)
+                && null != dto.getInvalidStatus()
+                && !dto.getInvalidStatus()
+        ) {
+            log.warn("卖家自发货订单无地址暂不新增：单号={}", dto.getPlatformCode());
+            return;
+        }
+
         SoB2cDTO.PullOrderResultDTO resultDTO = platformOrderConsumerHandleService.checkAndSaveAll(dto);
         SoB2cEntity mainEntity = resultDTO.getSoB2cEntity();
         //平台仓订单
@@ -170,10 +184,8 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
                 SoB2cHandler.handleRule(mainEntity);
             }
         }
-
         // 销售出库单处理(分平台)
         SoB2cHandler.handleSoOutStock(dto, resultDTO, mainEntity);
-
         //平台取消订单后自动取消预报
         if(Objects.nonNull(mainEntity.getIsCancel()) && mainEntity.getIsCancel()){
             soB2cService.autoCancelOrderForecast(mainEntity);
@@ -233,8 +245,6 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
     }
 
     @Override
-//    @Transactional(rollbackFor = Exception.class)
-//    @GlobalTransactional(rollbackFor = Exception.class)
     public void handleRule(SoB2cEntity mainEntity) {
         //订单状态
         String billStatus = mainEntity.getBillStatus();
@@ -366,6 +376,15 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
 //        if (!soB2cReceiverService.saveOrUpdate(receiverEntity)) {
 //            throw new ServiceException("[SoB2cReceiverEntity] 保存失败");
 //        }
+
+
+        //如果是已支付的订单
+        if (SoB2cPayStatusEnum.ENUM_PAID.getCode().equals(mainEntity.getPayStatus()) ) {
+            //同步数帝云
+            List<SoB2cDetailEntity> soB2cDetailEntityList = soB2cDetailService.listByMainId(mainEntity.getId());
+            syncSoB2cService.syncDataToSdy(mainEntity, soB2cDetailEntityList, SyncOperateEnum.OPERATE_UPDATE.getCode());
+        }
+
         return resultDTO;
     }
 
@@ -450,4 +469,6 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
         }
         return false;
     }
+
+
 }

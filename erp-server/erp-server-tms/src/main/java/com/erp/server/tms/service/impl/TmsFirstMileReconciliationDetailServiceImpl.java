@@ -15,10 +15,7 @@ import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
-import com.common.business.enums.ApproveStatusEnum;
-import com.common.business.enums.BusinessNoTypeEnum;
-import com.common.business.enums.OperationTypeEnum;
-import com.common.business.enums.SourceTypeEnum;
+import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
@@ -125,6 +122,8 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
     private LogisticsBillService logisticsBillService;
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
+    @Resource
+    private LogisticsBillDetailService logisticsBillDetailService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -314,8 +313,6 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
         Map<String, TmsFirstMileReconciliationDetailEntity> actualMap = handleUpdateData(list, mainId, oldList);
 
         List<String> deleteIds = getDeleteIds(list, oldList);
-        // 需要移除的物流单
-//        List<String> deleteSourceIds = new LinkedList<>();
 
         if (!CollectionUtils.isEmpty(deleteIds)) {
             List<TmsFirstMileReconciliationDetailEntity> deleteList = oldList.stream().filter(obj -> deleteIds.contains(obj.getId())).collect(Collectors.toList());
@@ -325,10 +322,8 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
             //更新主表id
             if (!CollectionUtils.isEmpty(deleteList)) {
                 deleteList.forEach(obj -> {
-//                    obj.setMainId("");
                     //更新其他对账单对账次数
                     updateReconciliationDetailCount(obj.getId(),obj.getSourceId(),obj.getReconciliationCount());
-//                    obj.setReconciliationCount(0);
                     //这里不移除物流费用单中的对账单id是为了不让对账单中的数据影响 物流单关联其他对账单时重新创建物流单费用记录
                     this.lambdaUpdate().eq(TmsFirstMileReconciliationDetailEntity::getId, obj.getId()).remove();
                     if (1== obj.getReconciliationCount()){
@@ -339,12 +334,7 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
                         logisticsBillCostService.removeByReconciliationIds(mainEntity.getId(), Collections.singletonList(obj.getSourceId()));
                     }
                 });
-//                list.addAll(deleteList);
             }
-            // 需要移除的物流单
-//            deleteSourceIds = deleteList.stream()
-//                    .map(TmsFirstMileReconciliationDetailEntity::getSourceId)
-//                    .collect(Collectors.toList());
         }
 
         // 更新总数
@@ -361,66 +351,18 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
         if (!save) {
             throw new ServiceException("头程对账单明细保存或更新失败");
         }
-//        Map<String, List<TmsFirstMileReconciliationDetailDTO.UpdateDTO>> dtoMap = detailList.stream().collect(Collectors.groupingBy(TmsFirstMileReconciliationDetailDTO.CommonDTO::getSourceId));
-
         // 需要变动的物流单
         List<String> billIds = list.stream()
                 .filter(e -> e.getType().equalsIgnoreCase(DetailReconciliationTypeEnum.ESTIMATED.getCode()))
                 .map(TmsFirstMileReconciliationDetailEntity::getSourceId)
                 .distinct()
                 .collect(Collectors.toList());
-//        if (!CollectionUtils.isEmpty(deleteSourceIds)) {
-//            billIds.addAll(deleteSourceIds);
-//        }
         List<LogisticsBillCostEntity> billEntityList = logisticsBillCostService.listByLogisticsBillIdList(billIds);
+        List<LogisticsBillDetailEntity> logisticsBillDetailEntityList = logisticsBillDetailService.listByMainIds(billIds);
         List<LogisticsBillEntity> logisticsBillEntityList = logisticsBillService.listByIds(billIds);
         //过滤首次对账时账单/已存在对账单账单
         //不存在费用表记录，新增一个费用列表
-        List<LogisticsBillCostEntity> updateBillList = new ArrayList<>();
-        for (String billId : billIds){
-            LogisticsBillEntity logisticsBillEntity = logisticsBillEntityList.stream().filter(e -> Objects.equals(billId, e.getId())).findFirst().orElse(null);
-            if (Objects.isNull(logisticsBillEntity)){
-                continue;
-            }
-            LogisticsBillCostEntity entity = billEntityList.stream()
-                    .filter(e -> Objects.nonNull(e) &&  Objects.equals(billId, e.getLogisticsBillId())
-                            && (CharSequenceUtil.isBlank(e.getReconciliationId()) || Objects.equals(mainId, e.getReconciliationId()))).findFirst().orElse(new LogisticsBillCostEntity());
-            entity.setLogisticsBillId(billId);
-
-            TmsFirstMileReconciliationDetailEntity actualDetailEntity = actualMap.get(entity.getLogisticsBillId());
-            if (null == actualDetailEntity) {
-                // 移除
-                entity.setReconciliationStatus(ReconciliationStatusEnum.TO_BE_GENERATED.getCode());
-                continue;
-            }
-            // 更新实际重量和体积重, 计费重
-            entity.setVolumeWeightLogistics(actualDetailEntity.getVolumeWeight());
-            entity.setWeightLogistics(actualDetailEntity.getActualWeight());
-            // 费用重取最大
-            entity.setBillingWeight(actualDetailEntity.getVolumeWeight().max(actualDetailEntity.getActualWeight()));
-            // 设置实际费用明细
-            if (!CollectionUtils.isEmpty(actualDetailEntity.getUpdateList())) {
-                List<TmsCostDetailDTO.UpdateDTO> updateList = BeanMapperUtils.copyList(TmsCostDetailDTO.UpdateDTO.class, actualDetailEntity.getUpdateList());
-                updateList.forEach(e -> e.setSourceType(SourceTypeEnum.FIRST_MILE_LOGISTICS_BILL_COST.getCode()));
-                entity.setUpdateList(updateList);
-            }
-
-//            if (deleteSourceIds.contains(entity.getLogisticsBillId())) {
-//                entity.setReconciliationStatus(ReconciliationStatusEnum.TO_BE_GENERATED.getCode());
-//                continue;
-//            }
-            entity.setReconciliationStatus(actualDetailEntity.getStatus());
-            //填充下推对账单id
-            entity.setReconciliationId(mainId);
-            //获取对应明细数据
-            TmsFirstMileReconciliationDetailEntity tmsFirstMileReconciliationDetailEntity = list.stream().filter(e -> Objects.nonNull(e) && Objects.equals(e.getTransportNo(), logisticsBillEntity.getTransportNo())).findFirst().orElse(null);
-            if (Objects.isNull(tmsFirstMileReconciliationDetailEntity)){
-                continue;
-            }
-            entity.setChannelId(tmsFirstMileReconciliationDetailEntity.getLogisticsChannelId()).setCurrency(mainEntity.getCurrency()).setTransportNo(logisticsBillEntity.getTransportNo()).setType(DictCostAttributionEnum.FIRST_MILE.getCode());
-            logisticsBillCostService.handleData(entity);
-            updateBillList.add(entity);
-        }
+        List<LogisticsBillCostEntity> updateBillList = getBillCostList(mainEntity, billIds, logisticsBillEntityList, billEntityList, mainId, actualMap, list);
         // 批量更新物流单状态
         if (!CollectionUtils.isEmpty(updateBillList)) {
             // 更新费用信息
@@ -450,6 +392,74 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
         this.addOrUpdateCost(list);
 
         return Boolean.TRUE;
+    }
+
+    private List<LogisticsBillCostEntity> getBillCostList(TmsFirstMileReconciliationEntity mainEntity, List<String> billIds, List<LogisticsBillEntity> logisticsBillEntityList, List<LogisticsBillCostEntity> billEntityList, String mainId, Map<String, TmsFirstMileReconciliationDetailEntity> actualMap, List<TmsFirstMileReconciliationDetailEntity> list) {
+        if (CollUtil.isEmpty(billIds)) {
+            return Collections.emptyList();
+        }
+        Map<String, ShopInfoEntity> shopMap = null;
+        if (CollUtil.isNotEmpty(logisticsBillEntityList)) {
+            List<String> shopIds = logisticsBillEntityList.stream().map(LogisticsBillEntity::getShopId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+            if (CollUtil.isNotEmpty(shopIds)) {
+                List<ShopInfoEntity> shopInfoEntityList = shopInfoFeign.listShopInfoByIds(shopIds);
+                if (CollUtil.isNotEmpty(shopInfoEntityList)) {
+                    shopMap = shopInfoEntityList.stream().collect(Collectors.toMap(ShopInfoEntity::getId, Function.identity()));
+                }
+            }
+        }
+        List<LogisticsBillCostEntity> updateBillList = new ArrayList<>(billIds.size());
+        for (String billId : billIds) {
+            LogisticsBillEntity logisticsBillEntity = logisticsBillEntityList.stream().filter(e -> Objects.equals(billId, e.getId())).findFirst().orElse(null);
+            if (Objects.isNull(logisticsBillEntity)) {
+                continue;
+            }
+            LogisticsBillCostEntity entity = billEntityList.stream()
+                    .filter(e -> Objects.nonNull(e) && Objects.equals(billId, e.getLogisticsBillId())
+                            && (CharSequenceUtil.isBlank(e.getReconciliationId()) || Objects.equals(mainId, e.getReconciliationId()))).findFirst().orElse(new LogisticsBillCostEntity());
+            entity.setLogisticsBillId(billId);
+            entity.setTransportNo(logisticsBillEntity.getTransportNo());
+            TmsFirstMileReconciliationDetailEntity actualDetailEntity = actualMap.get(entity.getLogisticsBillId());
+            if (null == actualDetailEntity) {
+                // 移除
+                entity.setReconciliationStatus(ReconciliationStatusEnum.TO_BE_GENERATED.getCode());
+                continue;
+            }
+            // 更新实际重量和体积重, 计费重
+            entity.setVolumeWeightLogistics(actualDetailEntity.getVolumeWeight());
+            entity.setWeightLogistics(actualDetailEntity.getActualWeight());
+            // 费用重取最大
+            entity.setBillingWeight(actualDetailEntity.getVolumeWeight().max(actualDetailEntity.getActualWeight()));
+            //默认kg
+            entity.setWeightUnit(CharSequenceUtil.isBlank(actualDetailEntity.getActualWeightUnit()) ? UnitEnum.WeightUnitEnum.KG.code : actualDetailEntity.getActualWeightUnit());
+            // 设置实际费用明细
+            if (!CollectionUtils.isEmpty(actualDetailEntity.getUpdateList())) {
+                List<TmsCostDetailDTO.UpdateDTO> updateList = BeanMapperUtils.copyList(TmsCostDetailDTO.UpdateDTO.class, actualDetailEntity.getUpdateList());
+                updateList.forEach(e -> e.setSourceType(SourceTypeEnum.FIRST_MILE_LOGISTICS_BILL_COST.getCode()));
+                entity.setUpdateList(updateList);
+            }
+
+            entity.setReconciliationStatus(actualDetailEntity.getStatus());
+            //填充下推对账单id
+            entity.setReconciliationId(mainId);
+            //获取对应明细数据
+            TmsFirstMileReconciliationDetailEntity tmsFirstMileReconciliationDetailEntity = list.stream().filter(e -> Objects.nonNull(e) && Objects.equals(e.getTransportNo(), logisticsBillEntity.getTransportNo())).findFirst().orElse(null);
+            if (Objects.isNull(tmsFirstMileReconciliationDetailEntity)) {
+                continue;
+            }
+            entity.setChannelId(tmsFirstMileReconciliationDetailEntity.getLogisticsChannelId()).setCurrency(mainEntity.getCurrency()).setTransportNo(logisticsBillEntity.getTransportNo()).setType(DictCostAttributionEnum.FIRST_MILE.getCode());
+            //店铺信息
+            if (CharSequenceUtil.isNotBlank(logisticsBillEntity.getShopId()) && Objects.nonNull(shopMap)) {
+                ShopInfoEntity shopInfoEntity = shopMap.get(logisticsBillEntity.getShopId());
+                if (Objects.nonNull(shopInfoEntity)) {
+                    entity.setShopChargeId(shopInfoEntity.getChargeId());
+                    entity.setShopChargeName(shopInfoEntity.getChargeName());
+                }
+            }
+            entity.setType(DictCostAttributionEnum.FIRST_MILE.getCode());
+            updateBillList.add(entity);
+        }
+        return updateBillList;
     }
 
     @Transactional(rollbackFor = Exception.class)

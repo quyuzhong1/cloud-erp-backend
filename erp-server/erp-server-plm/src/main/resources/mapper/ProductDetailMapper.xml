@@ -772,7 +772,8 @@
         ppk.box_qty as boxQty,
         ppk.gross_weight as grossWeight,
         ppk.net_weight,
-        pd.warehouse_location_large
+        pd.warehouse_location_large,
+        pc.retail_price AS retailPrice
         FROM  product_detail pd
         LEFT JOIN product_info pi ON pi.id = pd.product_id AND pi.is_deleted = FALSE
         left join product_logistics pl on pd.id = pl.sku_id AND pl.is_deleted = FALSE
@@ -1194,7 +1195,7 @@
 
     <select id="logisticsProductPaging" resultType="com.erp.model.plm.dto.LogisticsProductDTO$PagingVO">
         SELECT
-            pd.id,
+            DISTINCT pd.id,
             pd.id AS skuId,
             pd.sku_no AS skuNo,
             pd.name AS productName,
@@ -1368,7 +1369,7 @@
     <!--导出-->
     <select id="listExport" resultType="com.erp.model.plm.dto.LogisticsProductDTO$ExportInfoDTO">
         SELECT
-            pd.id AS skuId,
+            DISTINCT pd.id AS skuId,
             pd.sku_no AS skuNo,
             pd.name AS productName,
             pd.status AS approveStatus,
@@ -2236,5 +2237,28 @@
         select pd.id from product_detail pd
                               inner join product_info pi ON pi.id = pd.product_id AND pi.is_deleted = FALSE
         where pd.is_deleted = false and pi.brand_id ${compareCodeSplicingValueSql}
+    </select>
+    <select id="listProductPackBySkuIds" resultType="com.erp.model.plm.dto.ProductPackViewDTO">
+        select pp.id,
+        pp.sku_id,
+        pd.sku_no,
+        pd.name as productName,
+        NULLIF(pp.gross_weight, 0) grossWeight,
+        NULLIF(pp.net_weight ,0) netWeight,
+        NULLIF(pp.box_weight , 0) boxWeight,
+        NULLIF(pp.box_qty , 0) boxQty,
+        NULLIF(pp.product_length , 0) productLength,
+        NULLIF(pp.product_width , 0) productWidth,
+        NULLIF(pp.product_height , 0) productHeight,
+        NULLIF(pp.box_length , 0) boxLength,
+        NULLIF(pp.box_width , 0) boxWidth,
+        NULLIF(pp.box_height , 0) boxHeight
+        from product_detail pd
+        left join product_pack pp on pd.id = pp.sku_id and pp.is_deleted = false
+        where pd.is_deleted = false
+        AND pd.id IN
+        <foreach collection="skuIds" item="skuId" open="(" separator="," close=")">
+            #{skuId}
+        </foreach>
     </select>
 </mapper>

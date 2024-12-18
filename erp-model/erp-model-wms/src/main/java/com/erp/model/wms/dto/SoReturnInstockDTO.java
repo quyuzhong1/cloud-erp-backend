@@ -268,6 +268,10 @@ public class SoReturnInstockDTO {
          */
         private String warehouseLocation;
         /**
+         * 来源类型
+         */
+        private String sourceType;
+        /**
          * 比重
          */
         private String currency;

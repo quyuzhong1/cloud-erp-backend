@@ -1,11 +1,9 @@
 package com.erp.server.wms.service.impl;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
-import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
-import com.baomidou.mybatisplus.core.toolkit.StringUtils;
-import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -20,7 +18,10 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.MachineDetailDTO;
 import com.erp.model.wms.dto.MachineRefSoDTO;
 import com.erp.model.wms.dto.MachineSubComponentsDTO;
-import com.erp.model.wms.entity.*;
+import com.erp.model.wms.entity.MachineDetailEntity;
+import com.erp.model.wms.entity.MachineInfoEntity;
+import com.erp.model.wms.entity.MachineRefSoEntity;
+import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.mapper.MachineDetailMapper;
@@ -153,6 +154,14 @@ public class MachineDetailServiceImpl extends SuperServiceImpl<MachineDetailMapp
     }
 
     @Override
+    public List<MachineDetailEntity> listBySourceDetailIds(List<String> detailIds) {
+        if(CollectionUtils.isEmpty(detailIds)){
+            return new ArrayList<>();
+        }
+        return this.lambdaQuery().in(MachineDetailEntity::getSourceDetailId,detailIds).list();
+    }
+
+    @Override
     public List<MachineDetailEntity> listByMainId(String mainId) {
         return lambdaQuery()
                 .eq(MachineDetailEntity::getMainId,mainId)
@@ -215,7 +224,9 @@ public class MachineDetailServiceImpl extends SuperServiceImpl<MachineDetailMapp
         //仓位必填验证
         checkWarehouseLocation(warehouseEntity,newList);
 
-        for (MachineDetailEntity detail:newList) {
+        for (int i = 0; i < newList.size(); i++) {
+            MachineDetailEntity detail = newList.get(i);
+            detail.setIndex(i+1);
             //验证子件数量
             checkBomChildrenSku(bomChildrenSkuList,detail);
 
@@ -304,9 +315,6 @@ public class MachineDetailServiceImpl extends SuperServiceImpl<MachineDetailMapp
         if (ObjectUtils.isEmpty(machineInfoEntity)) {
             throw new ServiceException(ApiError.ERROR_99052);
         }
-        if (!SourceTypeEnum.SO_INFO.getCode().equals(machineInfoEntity.getSourceType())) {
-            return;
-        }
         List<String> refDetailIdList = list.stream().map(MachineDetailEntity::getRefDetailId).collect(Collectors.toList());
         List<MachineRefSoEntity> oldRefList = machineRefSoService.listBySoDetailIdList(refDetailIdList);
         if (CollectionUtils.isNotEmpty(oldRefList)) {
@@ -321,12 +329,18 @@ public class MachineDetailServiceImpl extends SuperServiceImpl<MachineDetailMapp
         List<MachineRefSoDTO.AddDTO> refAddList = new ArrayList<>();
         for (MachineDetailEntity detailEntity: list) {
             MachineRefSoDTO.AddDTO addDTO = new MachineRefSoDTO.AddDTO();
+            if (CharSequenceUtil.isBlank(detailEntity.getRefId()) || CharSequenceUtil.isBlank(detailEntity.getRefCode()) || CharSequenceUtil.isBlank(detailEntity.getRefDetailId())) {
+                continue;
+            }
             addDTO.setSoId(detailEntity.getRefId());
             addDTO.setSoCode(detailEntity.getRefCode());
             addDTO.setSoDetailId(detailEntity.getRefDetailId());
             addDTO.setMachineId(mainId);
             addDTO.setMachineDetailId(detailEntity.getId());
             refAddList.add(addDTO);
+        }
+        if (CollUtil.isEmpty(refAddList)) {
+            return;
         }
         List<MachineRefSoEntity> machineRefSoList = BeanMapperUtils.copyList(MachineRefSoEntity.class, refAddList);
         machineRefSoService.saveBatch(machineRefSoList);

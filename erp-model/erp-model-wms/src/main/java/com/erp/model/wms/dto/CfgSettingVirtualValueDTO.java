@@ -26,7 +26,7 @@ public class CfgSettingVirtualValueDTO implements Serializable {
     public static class SalesDashboardDTO{
 
         /**
-         * 订单类型，b2b,b2c
+         * 订单类型，b2b,b2c,firstMile
          */
         @NotEmpty(message = "订单类型不能为空")
         private List<String> orderTypeList;
@@ -42,6 +42,12 @@ public class CfgSettingVirtualValueDTO implements Serializable {
          */
         @Valid
         private StatusDTO b2cStatusDTO;
+
+        /**
+         * 头程订单状态
+         */
+        @Valid
+        private StatusDTO firstMileStatusDTO;
 
         /**
          * 统计时长集合
@@ -64,6 +70,38 @@ public class CfgSettingVirtualValueDTO implements Serializable {
     }
 
     /**
+     * 销售看板DTO
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ReportOrderDemandDTO{
+
+        /**
+         * 订单类型，b2b,b2c,firstMile
+         */
+        @NotEmpty(message = "订单类型不能为空")
+        private List<String> orderTypeList;
+
+        /**
+         * b2b销售订单状态
+         */
+        @Valid
+        private StatusDTO b2bStatusDTO;
+
+        /**
+         * b2c销售订单状态
+         */
+        @Valid
+        private StatusDTO b2cStatusDTO;
+
+        /**
+         * 头程订单状态
+         */
+        @Valid
+        private StatusDTO firstMileStatusDTO;
+    }
+
+    /**
      * 状态DTO
      */
     @Data
@@ -73,7 +111,6 @@ public class CfgSettingVirtualValueDTO implements Serializable {
         /**
          * 单据状态集合
          */
-        @NotEmpty(message = "单据状态不能为空")
         private List<String> statusList;
 
         /**
@@ -85,7 +122,6 @@ public class CfgSettingVirtualValueDTO implements Serializable {
         /**
          * 审核状态集合
          */
-        @NotEmpty(message = "审核状态不能为空")
         private List<String> approveStatusList;
     }
 

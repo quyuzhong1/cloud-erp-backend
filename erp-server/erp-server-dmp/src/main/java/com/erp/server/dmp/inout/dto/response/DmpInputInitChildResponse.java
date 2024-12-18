@@ -16,7 +16,7 @@ public class DmpInputInitChildResponse<T> {
     /**
      * 执行后续handler
      */
-    private boolean doNextChain = true;
+    private boolean doNextStatus = true;
 
 
     /**

@@ -28,17 +28,13 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.tms.dto.LogisticsBillDTO;
 import com.erp.model.tms.entity.TransferDeclareDetailEntity;
 import com.erp.model.tms.enums.TransferDeclareUploadStatusEnum;
-import com.erp.model.wms.entity.CfgAmzFulfillmentCenterEntity;
 import com.erp.model.wms.entity.SoB2cDeliveryEntity;
 import com.erp.model.wms.enums.ShipmentMarkTypeEnum;
 import com.erp.model.wms.enums.SoB2cDeliveryStatusEnum;
 import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.rpc.tms.feign.LogisticsBillFeign;
 import com.erp.rpc.tms.feign.TransferDeclareFeign;
-import com.erp.server.wms.service.AsyncService;
-import com.erp.server.wms.service.OperateLogService;
-import com.erp.server.wms.service.SoB2cDeliveryService;
-import com.erp.server.wms.service.SoOutstockService;
+import com.erp.server.wms.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -82,6 +78,8 @@ public class AsyncServiceImpl implements AsyncService {
 
     @Resource
     private SoOutstockService soOutstockService;
+    @Resource
+    private WaveListService waveListService;
 
     @Resource
     @Lazy
@@ -242,15 +240,13 @@ public class AsyncServiceImpl implements AsyncService {
             return;
         }
         asyncService.soB2cDeliveryAutoOut(soB2cEntity,entity);
-        //扣减冻结库存
-        Boolean isOut = soB2cDeliveryService.generateOutFreezeError(entity);
-        if (isOut) {
-            //生成直接调拨单
-            Boolean isPush = soB2cDeliveryService.pushTransferInfoError(entity);
-            if (isPush) {
-                //出库
-                soB2cDeliveryService.generateB2cSoOutstock(entity);
-            }
+        //波次列表波次状态自动变更
+        waveListService.waveListStatusAutoChange(entity.getId());
+        //生成直接调拨单
+        Boolean isPush = soB2cDeliveryService.pushTransferInfoError(entity);
+        if (isPush) {
+            //出库
+            soB2cDeliveryService.generateB2cSoOutstock(entity);
         }
     }
     /**
@@ -259,15 +255,11 @@ public class AsyncServiceImpl implements AsyncService {
     @Override
     @Async("wmsErpExecutor")
     public void syncAutoOut(SoB2cDeliveryEntity entity) {
-        //扣减冻结库存
-        Boolean isOut = soB2cDeliveryService.generateOutFreezeError(entity);
-        if (isOut) {
-            //生成直接调拨单
-            Boolean isPush = soB2cDeliveryService.pushTransferInfoError(entity);
-            if (isPush) {
-                //出库
-                soB2cDeliveryService.generateB2cSoOutstock(entity);
-            }
+        //生成直接调拨单
+        Boolean isPush = soB2cDeliveryService.pushTransferInfoError(entity);
+        if (isPush) {
+            //出库
+            soB2cDeliveryService.generateB2cSoOutstock(entity);
         }
     }
 

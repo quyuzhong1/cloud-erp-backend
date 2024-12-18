@@ -2,18 +2,13 @@ package com.erp.server.tms.controller.feign;
 
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.core.anno.LogSystemModule;
-import com.erp.model.tms.dto.LogisticsAddressDTO;
-import com.erp.model.tms.dto.LogisticsBillDetailQueryDTO;
-import com.erp.model.tms.dto.LogisticsChannelDTO;
-import com.erp.model.tms.dto.LogisticsSupplierDTO;
+import com.common.core.controller.vo.ApiResult;
+import com.erp.model.tms.dto.*;
 import com.erp.model.tms.entity.LogisticsAddressEntity;
 import com.erp.model.tms.entity.LogisticsChannelEntity;
 import com.erp.model.tms.vo.request.LogisticsQueryBaseVO;
 import com.erp.model.tms.vo.response.LogisticsOrderResponseVO;
-import com.erp.server.tms.service.LogisticsAddressService;
-import com.erp.server.tms.service.LogisticsBaseService;
-import com.erp.server.tms.service.LogisticsChannelService;
-import com.erp.server.tms.service.LogisticsSupplierService;
+import com.erp.server.tms.service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -44,6 +39,8 @@ public class LogisticsFeignController {
 
     @Resource
     private LogisticsAddressService logisticsAddressService;
+    @Resource
+    private LogisticsTrackService logisticsTrackService;
 
     @PostMapping("/queryOrderList")
     public List<LogisticsOrderResponseVO> queryOrderList(@RequestBody List<LogisticsQueryBaseVO> logisticsQueryVOList){
@@ -164,5 +161,14 @@ public class LogisticsFeignController {
     @PostMapping("/getWarnReportByChannel")
     public List<LogisticsChannelDTO.WarnReportDTO> getWarnReportByChannel(@RequestBody LogisticsBillDetailQueryDTO query){
         return logisticsChannelService.getWarnReportByChannel(query);
+    }
+
+    /**
+     * 接收track123物流轨迹同步数据
+     * @return
+     */
+    @PostMapping("/webhookByTrack123")
+    public void webhookByTrack123(@RequestBody LogisticsTrackDTO.TrackWebHookDTO dto){
+        logisticsTrackService.webhookByTrack123(dto);
     }
 }

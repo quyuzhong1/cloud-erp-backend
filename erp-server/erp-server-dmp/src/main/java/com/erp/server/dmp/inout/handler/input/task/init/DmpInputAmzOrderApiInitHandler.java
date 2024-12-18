@@ -73,7 +73,7 @@ public class DmpInputAmzOrderApiInitHandler extends DmpInputInitHandler {
         if (null != limitObj) {
             log.warn("【订单拉取】 PlatformShopCode={},存在429等待恢复:放弃当前请求任务", shopInfoDTO.getPlatformShopCode());
             DmpInputInitResponse initDmpResponse = (DmpInputInitResponse) dmpResponse;
-            initDmpResponse.setDoNextChain(false);
+            initDmpResponse.setDoNextStatus(false);
             return Collections.emptyList();
         }
 
@@ -128,7 +128,7 @@ public class DmpInputAmzOrderApiInitHandler extends DmpInputInitHandler {
                 // 设置动态速率，失效时间=1/limit
                 BigDecimal timeOut = BigDecimal.ONE.max(BigDecimal.ONE.divide(new BigDecimal(rateLimitStr), 8, RoundingMode.DOWN));
                 redisUtil.set(limitKey, rateLimitStr, timeOut.longValue());
-                dmpResponse.setDoNextChain(false);
+                dmpResponse.setDoNextStatus(false);
                 return Collections.emptyList();
             }
             throw new ServiceException("根据订单IDS请求亚马逊SP-APi订单失败 异常失败,body=" + JSONUtil.toJsonStr(e));
@@ -188,7 +188,7 @@ public class DmpInputAmzOrderApiInitHandler extends DmpInputInitHandler {
                 // 设置动态速率，失效时间=1/limit
                 BigDecimal timeOut = BigDecimal.ONE.max(BigDecimal.ONE.divide(new BigDecimal(rateLimitStr), 8, RoundingMode.DOWN));
                 redisUtil.set(limitKey, rateLimitStr, timeOut.longValue());
-                dmpResponse.setDoNextChain(false);
+                dmpResponse.setDoNextStatus(false);
                 return Collections.emptyList();
             }
             throw new ServiceException("请求亚马逊SP-APi订单api异常失败,body=" + JSONUtil.toJsonStr(e));

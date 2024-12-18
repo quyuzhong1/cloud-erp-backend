@@ -2,6 +2,7 @@ package com.erp.server.dmp.inout.handler.input.task.init;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.exceptions.ExceptionUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
@@ -84,9 +85,14 @@ public class DmpInputAmzOrderDetailInitHandler extends DmpInputAmzCommonInitHand
 
         for (Map<String, Object> findMongo : findMongoData) {
             String amazonOrderId = checkAndGetMongoValue(findMongo, "amazonOrderId");
+            // 主表店铺ID(已解析成功的ID)
+            String currentShopId = checkAndGetMongoValue(findMongo, "shopId");
+            // 唯一键
+            String uniqueId = CharSequenceUtil.format("{}_{}", amazonOrderId, shopId);
+
             // 检查来源
             // 缓存获取结果
-            String amazonOrderIdResultKey = StrUtil.format(RedisCacheConstants.AMZ_SP_API_RESULT_PREFIX, AmazonRequestTypeRateLimiterEnum.ORDER_ITEMS.getBusinessTypeName(), amazonOrderId);
+            String amazonOrderIdResultKey = StrUtil.format(RedisCacheConstants.AMZ_SP_API_RESULT_PREFIX, AmazonRequestTypeRateLimiterEnum.ORDER_ITEMS.getBusinessTypeName(), uniqueId);
             Object resultObj = redisUtil.get(amazonOrderIdResultKey);
             if (null != resultObj) {
                 List<JSONObject> curItemList = JSONUtil.toList(resultObj.toString(), JSONObject.class);
@@ -103,7 +109,7 @@ public class DmpInputAmzOrderDetailInitHandler extends DmpInputAmzCommonInitHand
             if (null != limitObj) {
                 log.warn("【订单明细拉取】 amazonOrderId={}, platformShopCode={},存在429等待恢复:放弃当前请求任务", amazonOrderId, shopInfoDTO.getPlatformShopCode());
                 DmpInputInitResponse initDmpResponse = (DmpInputInitResponse) dmpResponse;
-                initDmpResponse.setDoNextChain(false);
+                initDmpResponse.setDoNextStatus(false);
                 return Collections.emptyList();
             }
             String rateLimitStr = requestTypeRateLimiterEnum.getRateLimit();
@@ -136,7 +142,7 @@ public class DmpInputAmzOrderDetailInitHandler extends DmpInputAmzCommonInitHand
                     redisUtil.set(limitKey, rateLimitStr, timeOut.longValue());
                     log.warn("【DmpInputAmzOrderDetailInitHandler】查询亚马逊订单详情本次首次429限流:{}", shopInfoDTO.getPlatformShopCode());
                     DmpInputInitResponse initDmpResponse = (DmpInputInitResponse) dmpResponse;
-                    initDmpResponse.setDoNextChain(false);
+                    initDmpResponse.setDoNextStatus(false);
                     return Collections.emptyList();
                 }
                 throw new ServiceException("查询亚马逊订单详情失败：API异常：" + JSONUtil.toJsonStr(e));
@@ -146,7 +152,7 @@ public class DmpInputAmzOrderDetailInitHandler extends DmpInputAmzCommonInitHand
             if (CollectionUtils.isEmpty(curOrderItems)) {
                 continue;
             }
-            List<JSONObject> curJsonList = curOrderItems.stream().map(e -> setAmazonOrderIdAndToJsonObject(e, amazonOrderId, shopInfoDTO.getPlatformShopCode())).collect(Collectors.toList());
+            List<JSONObject> curJsonList = curOrderItems.stream().map(e -> setAmazonOrderIdAndToJsonObject(e, amazonOrderId, shopInfoDTO.getPlatformShopCode(), currentShopId)).collect(Collectors.toList());
             dmpInputTaskInitDTOList.add(DmpInputTaskInitDTO.initMsg(JSON.toJSONString(curJsonList)));
             // 缓存倒redis
             redisUtil.set(amazonOrderIdResultKey, JSONArray.toJSONString(curJsonList), 600);
@@ -158,10 +164,11 @@ public class DmpInputAmzOrderDetailInitHandler extends DmpInputAmzCommonInitHand
     /**
      * 设置亚马逊订单ID和转换JSON
      */
-    private JSONObject setAmazonOrderIdAndToJsonObject(OrderItem orderItem, String amazonOrderId, String platformShopCode) {
+    private JSONObject setAmazonOrderIdAndToJsonObject(OrderItem orderItem, String amazonOrderId, String platformShopCode, String currentShopId) {
         JSONObject json = (JSONObject) JSON.toJSON(orderItem);
         json.put("amazonOrderId", amazonOrderId);
         json.put("platformShopCode", platformShopCode);
+        json.put("shopId", currentShopId);
         return json;
     }
 

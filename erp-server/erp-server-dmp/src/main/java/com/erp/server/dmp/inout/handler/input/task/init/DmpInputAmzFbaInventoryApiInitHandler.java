@@ -77,7 +77,7 @@ public class DmpInputAmzFbaInventoryApiInitHandler extends DmpInputInitHandler {
             log.warn("【亚马逊FBA库存查询】 platformShopCode={},存在429等待恢复:放弃当前请求任务", shopInfoDTO.getPlatformShopCode());
             // 触发限流不执行当前
             DmpInputInitResponse initDmpResponse = (DmpInputInitResponse) dmpResponse;
-            initDmpResponse.setDoNextChain(false);
+            initDmpResponse.setDoNextStatus(false);
             return Collections.emptyList();
         }
         String rateLimitStr = requestTypeRateLimiterEnum.getRateLimit();
@@ -111,7 +111,7 @@ public class DmpInputAmzFbaInventoryApiInitHandler extends DmpInputInitHandler {
                 log.warn("【亚马逊FBA库存查询】 platformShopCode={},当前触发429限流:放弃当前请求任务", shopInfoDTO.getPlatformShopCode());
                 // 触发限流不执行当前
                 DmpInputInitResponse initDmpResponse = (DmpInputInitResponse) dmpResponse;
-                initDmpResponse.setDoNextChain(false);
+                initDmpResponse.setDoNextStatus(false);
                 return Collections.emptyList();
             }
             if (!StringUtils.isBlank(e.getMessage())){

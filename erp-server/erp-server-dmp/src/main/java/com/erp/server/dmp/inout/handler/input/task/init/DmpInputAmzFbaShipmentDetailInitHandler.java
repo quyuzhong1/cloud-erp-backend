@@ -101,7 +101,7 @@ public class DmpInputAmzFbaShipmentDetailInitHandler extends DmpInputAmzCommonIn
                 log.warn("【FBA货件明细拉取】 platformShopCode={},存在429等待恢复:放弃当前请求任务", shopInfoDTO.getPlatformShopCode());
                 // 触发限流不执行当前
                 DmpInputInitResponse initDmpResponse = (DmpInputInitResponse) dmpResponse;
-                initDmpResponse.setDoNextChain(false);
+                initDmpResponse.setDoNextStatus(false);
                 return Collections.emptyList();
             }
             String rateLimitStr = requestTypeRateLimiterEnum.getRateLimit();
@@ -121,7 +121,7 @@ public class DmpInputAmzFbaShipmentDetailInitHandler extends DmpInputAmzCommonIn
                     log.warn("【FBA货件明细拉取】 platformShopCode={},首次429等待恢复:放弃当前请求任务", shopInfoDTO.getPlatformShopCode());
                     // 触发限流不执行当前
                     DmpInputInitResponse initDmpResponse = (DmpInputInitResponse) dmpResponse;
-                    initDmpResponse.setDoNextChain(false);
+                    initDmpResponse.setDoNextStatus(false);
                     return Collections.emptyList();
                 }
                 throw new ServiceException("[Amazon SP-APi] 查询FBA货件item失败" + e);

@@ -1,8 +1,20 @@
 package com.erp.server.dmp.service.impl;
 
 
-import java.util.Optional;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.util.*;
 
+import cn.hutool.core.util.ObjectUtil;
+import com.common.business.enums.PlatformDictEnum;
+import com.common.business.wrapper.FeignQuery;
+import com.common.core.utils.MathUtil;
+import com.erp.model.dmp.entity.DmpSoDetailEntity;
+import com.erp.model.oms.entity.ShopInfoEntity;
+import com.erp.model.oms.enums.OrderSubTypeEnum;
+import com.erp.model.oms.enums.SoB2cBillStatusEnum;
+import com.common.business.dto.ShudiyunB2cOrderDTO;
+import com.erp.server.dmp.service.DmpSoDetailService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,6 +32,9 @@ import com.erp.server.dmp.service.DmpSoInfoService;
 import cn.hutool.core.util.StrUtil;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
+
+import javax.annotation.Resource;
+
 /**
  * <p>
  * 中台销售订单表 服务实现类
@@ -31,6 +46,9 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @Service
 public class DmpSoInfoServiceImpl extends SuperServiceImpl<DmpSoInfoMapper, DmpSoInfoEntity> implements DmpSoInfoService {
+
+    @Resource
+    private DmpSoDetailService dmpSoDetailService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)

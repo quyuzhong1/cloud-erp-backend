@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.dmp.mapper.DmpAmzSoOutstockDetailMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.dmp.entity.DmpAmzSoOutstockDetailEntity">
+       <result column="id" property="id" />
+       <result column="create_time" property="createTime" />
+       <result column="update_time" property="updateTime" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="platform_create_time" property="platformCreateTime" />
+       <result column="platform_update_time" property="platformUpdateTime" />
+       <result column="input_task_id" property="inputTaskId" />
+       <result column="convert_id" property="convertId" />
+       <result column="next_level_id" property="nextLevelId" />
+       <result column="unique_encrypt" property="uniqueEncrypt" />
+       <result column="data_encrypt" property="dataEncrypt" />
+       <result column="amazon_order_id" property="amazonOrderId" />
+       <result column="amazon_order_item_id" property="amazonOrderItemId" />
+       <result column="bill_address1" property="billAddress1" />
+       <result column="bill_address2" property="billAddress2" />
+       <result column="bill_address3" property="billAddress3" />
+       <result column="bill_city" property="billCity" />
+       <result column="bill_country" property="billCountry" />
+       <result column="bill_postal_code" property="billPostalCode" />
+       <result column="bill_state" property="billState" />
+       <result column="buyer_email" property="buyerEmail" />
+       <result column="buyer_name" property="buyerName" />
+       <result column="buyer_phone_number" property="buyerPhoneNumber" />
+       <result column="carrier" property="carrier" />
+       <result column="currency" property="currency" />
+       <result column="estimated_arrival_date" property="estimatedArrivalDate" />
+       <result column="fulfillment_center_id" property="fulfillmentCenterId" />
+       <result column="fulfillment_channel" property="fulfillmentChannel" />
+       <result column="gift_wrap_price" property="giftWrapPrice" />
+       <result column="gift_wrap_tax" property="giftWrapTax" />
+       <result column="item_price" property="itemPrice" />
+       <result column="item_promotion_discount" property="itemPromotionDiscount" />
+       <result column="item_tax" property="itemTax" />
+       <result column="merchant_order_Id" property="merchantOrderId" />
+       <result column="merchant_order_Item_Id" property="merchantOrderItemId" />
+       <result column="payments_date" property="paymentsDate" />
+       <result column="platform_shop_code" property="platformShopCode" />
+       <result column="product_name" property="productName" />
+       <result column="purchase_date" property="purchaseDate" />
+       <result column="quantity_shipped" property="quantityShipped" />
+       <result column="recipient_name" property="recipientName" />
+       <result column="sales_channel" property="salesChannel" />
+       <result column="ship_address1" property="shipAddress1" />
+       <result column="ship_address2" property="shipAddress2" />
+       <result column="ship_address3" property="shipAddress3" />
+       <result column="ship_city" property="shipCity" />
+       <result column="ship_country" property="shipCountry" />
+       <result column="ship_phone_number" property="shipPhoneNumber" />
+       <result column="ship_postal_code" property="shipPostalCode" />
+       <result column="ship_promotion_discount" property="shipPromotionDiscount" />
+       <result column="ship_service_level" property="shipServiceLevel" />
+       <result column="ship_state" property="shipState" />
+       <result column="shipment_date" property="shipmentDate" />
+       <result column="shipment_id" property="shipmentId" />
+       <result column="shipment_item_id" property="shipmentItemId" />
+       <result column="shipping_price" property="shippingPrice" />
+       <result column="shipping_tax" property="shippingTax" />
+       <result column="sku" property="sku" />
+       <result column="tracking_number" property="trackingNumber" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id,
+        create_time,
+        update_time,
+        create_user_name,
+        create_user_id,
+        update_user_name,
+        update_user_id,
+        version,
+        is_deleted,
+        platform_create_time, platform_update_time, input_task_id, convert_id, next_level_id, unique_encrypt, data_encrypt, amazon_order_id, amazon_order_item_id, bill_address1, bill_address2, bill_address3, bill_city, bill_country, bill_postal_code, bill_state, buyer_email, buyer_name, buyer_phone_number, carrier, currency, estimated_arrival_date, fulfillment_center_id, fulfillment_channel, gift_wrap_price, gift_wrap_tax, item_price, item_promotion_discount, item_tax, merchant_order_Id, merchant_order_Item_Id, payments_date, platform_shop_code, product_name, purchase_date, quantity_shipped, recipient_name, sales_channel, ship_address1, ship_address2, ship_address3, ship_city, ship_country, ship_phone_number, ship_postal_code, ship_promotion_discount, ship_service_level, ship_state, shipment_date, shipment_id, shipment_item_id, shipping_price, shipping_tax, sku, tracking_number
+    </sql>
+
+
+</mapper>

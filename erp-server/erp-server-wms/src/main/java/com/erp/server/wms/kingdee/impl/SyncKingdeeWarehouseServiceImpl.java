@@ -10,6 +10,7 @@ import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.dto.DmpPushTaskFeignDTO;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseIdDTO;
+import com.common.business.dto.base.BaseIdDTO.CodeDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.SyncOperateEnum;
@@ -37,10 +38,15 @@ import com.erp.server.wms.service.WmsPushMsgService;
 
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
+
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -225,4 +231,76 @@ public class SyncKingdeeWarehouseServiceImpl implements SyncKingdeeWarehouseServ
         }
         return resultMap;
 	}
+
+	@Transactional(rollbackFor = Exception.class)
+	@Override
+	public void syncDataToSdy(WarehouseEntity paramEntity, String operate) {
+		WarehouseEntity entity = warehouseService.getById(paramEntity.getId());
+		if(entity.getOpenTime() == null) {
+			log.warn("{}仓库启用时间为空，不推送数帝云" , entity.getKingdeeWarehouseCode());
+			return;
+		}
+		WmsPushMsgEntity wmsPushMsgEntity = new WmsPushMsgEntity();
+        wmsPushMsgEntity.setTargetPlatform(DmpBasicSystemCodeEnum.SDY.getCode());
+        wmsPushMsgEntity.setSourceType(SourceTypeEnum.SDY_WAREHOUSE.getCode());
+        wmsPushMsgEntity.setSourceId(entity.getId());
+        wmsPushMsgEntity.setSourceCode(entity.getKingdeeWarehouseCode());
+        wmsPushMsgEntity.setSyncOperate(operate);
+        wmsPushMsgEntity.setPushData(JSON.toJSONString(this.newSyncDataToSdy(entity, operate)));
+        
+        wmsPushMsgService.save(wmsPushMsgEntity);
+	}
+
+	@Override
+	public Map<String, Object> newSyncDataToSdy(WarehouseEntity entity, String operate) {
+		String orgId = entity.getOrgId();
+		String shippingOrganization = entity.getShippingOrganization();
+		String financialOrganization = entity.getFinancialOrganization();
+		Map<String, BaseIdDTO.CodeDTO> idCodeMap = sysUserFeign.getAccountingCompanyList(Arrays.asList(orgId , shippingOrganization , financialOrganization))
+				.stream().collect(Collectors.toMap(BaseIdDTO.CodeDTO::getId, t -> t));
+		
+		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'");
+		
+		Map<String, Object> resultMap = new HashMap<>();
+		resultMap.put("biz_uni_key", entity.getId());
+		CodeDTO invertoryDto = idCodeMap.get(orgId);
+		if(invertoryDto != null) {
+			resultMap.put("inventory_org_code", invertoryDto.getCode());
+			resultMap.put("inventory_org_name", invertoryDto.getName());
+		}
+		resultMap.put("warehouse_code", entity.getKingdeeWarehouseCode());
+		resultMap.put("warehouse_name", entity.getName());
+		String channelAffiliation = entity.getChannelAffiliation();
+		if(StringUtils.isNotBlank(channelAffiliation)) {
+			List<com.erp.model.oms.entity.DictBasicEntity> dictBasicEntityList = FeignQuery.create(com.erp.model.oms.entity.DictBasicEntity.class)
+					.eq(com.erp.model.oms.entity.DictBasicEntity::getValue, channelAffiliation)
+					.eq(com.erp.model.oms.entity.DictBasicEntity::getType, "salesPlatform")
+					.list();
+			resultMap.put("channel_affiliation",  dictBasicEntityList.get(0).getName());
+		}
+		CodeDTO shippingDto = idCodeMap.get(shippingOrganization);
+		if(shippingDto != null) {
+			resultMap.put("shipping_organization", shippingDto.getCode());
+		}
+		CodeDTO finanDto = idCodeMap.get(financialOrganization);
+		if(finanDto != null) {
+			resultMap.put("financial_organization", finanDto.getCode());
+		}
+		resultMap.put("warehouse_type", dictBasicService.getById(entity.getTypeId()).getName());
+		LocalDateTime openTime = entity.getOpenTime();
+		if(openTime != null) {
+			resultMap.put("created_time", openTime.format(formatter));
+		}
+		LocalDateTime closeTime = entity.getCloseTime();
+		if(closeTime != null) {
+			resultMap.put("modified_time", closeTime.format(formatter));
+		}
+		if(SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
+			resultMap.put("status", "已删除");
+		}else {
+			resultMap.put("status", entity.getApproveStatus().getName());
+		}
+		return resultMap;
+	}
+	
 }

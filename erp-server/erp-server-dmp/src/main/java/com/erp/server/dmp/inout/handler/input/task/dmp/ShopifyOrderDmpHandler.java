@@ -128,6 +128,11 @@ public class ShopifyOrderDmpHandler extends ShopifyDmpHandler {
                     dmpDataMap.put("buyerRemark", customerMap.get("note"));
                 }
 
+                //总优惠
+                Object totalDiscountsObj = dmpDataMap.get("totalDiscounts");
+                if (totalDiscountsObj != null) {
+                    dmpDataMap.put("totalDiscount", totalDiscountsObj);
+                }
 
                 //交易信息
                 Map<String, Object> transactionsMap = dmpInputTransactionsMongoChildList.stream()

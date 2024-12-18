@@ -19,15 +19,12 @@ import net.sf.jasperreports.export.SimpleExporterInput;
 import net.sf.jasperreports.export.SimpleOutputStreamExporterOutput;
 import net.sf.jasperreports.export.SimpleXlsxReportConfiguration;
 import net.sf.jasperreports.j2ee.servlets.BaseHttpServlet;
-import net.sf.jasperreports.j2ee.servlets.ImageServlet;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.*;
 import java.lang.reflect.Field;
 import java.net.URLEncoder;
-import java.nio.file.DirectoryNotEmptyException;
-import java.nio.file.NoSuchFileException;
 import java.sql.Connection;
 import java.time.LocalDate;
 import java.util.*;
@@ -351,6 +348,27 @@ public class JasperHelperUtil {
         }
         if(!file1.delete()){
             log.info("file1.delete() delete --------------");
+        }
+    }
+
+
+    /**
+     * 按照类型导出不同格式文件
+     *
+     * @param is         jasper文件输入流
+     * @param parameters 参数
+     */
+    public static byte[] exportToPdfStream(InputStream is, Map<String, Object> parameters) {
+        JasperPrint jasperPrint = null;
+        try {
+            JasperReport jasperReport = (JasperReport) JRLoader.loadObject(is);
+            prepareReport(jasperReport, FileTypeEnum.PDF.getCode());
+            jasperPrint = JasperFillManager.fillReport(jasperReport, parameters);
+            return JasperExportManager.exportReportToPdf(jasperPrint);
+        } catch (Exception e) {
+            log.error("（按照类型导出不同格式文件）方法：exportToPdfStream " + e.getMessage());
+            log.info("按照类型导出不同格式文件错误>>>>>>>>入参: parameters=={}", parameters);
+            throw new ServiceException(ApiError.ERROR_1015);
         }
     }
 }

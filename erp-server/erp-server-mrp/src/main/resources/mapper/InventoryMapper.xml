@@ -198,77 +198,72 @@
         virtual_warehouse_id,sku_id
     </select>
 
-    <select id="listPurchasePlan" resultType="com.erp.model.mrp.dto.ReplenishmentResultDTO$EstimatedPurchaseDetailDTO">
-        SELECT
-        pa.approve_status AS status,
-        pa.code AS sourceCode,
+    <select id="listPurchasePlan" resultType="com.erp.model.mrp.dto.ReplenishmentInventoryDTO$EstimatedPurchaseDTO">
+        SELECT pad.sku_id,
+        MAX ( pa.approve_status ) AS status,
+        MAX ( pa.code ) AS sourceCode,
         pa.id AS sourceId,
         pad.dest_warehouse_id AS warehouseId,
-        pad.apply_qty AS qty,
-        pad.create_po_type AS createPoType,
-        COALESCE(pa.approve_time,pa.create_time) AS estimatedPutAwayDate,
-        pad.id AS detailId,
+        SUM ( pad.apply_qty ) AS qty,
+        MAX ( pad.create_po_type ) AS createPoType,
+        MAX ( COALESCE ( pa.approve_time, pa.create_time ) ) AS estimatedPutAwayDate,
+        MAX ( pad.id ) AS detailId,
         'purchaseApplication' AS sourceType
         FROM
         ${tableName} AS pa
         INNER JOIN ${tableDetailName} AS pad ON pad.is_deleted = FALSE
-        AND pad.purchase_application_id = pa."id"
-        WHERE
-        pad.sku_id = #{skuId}
-          and pad.dest_warehouse_id in
-        <foreach collection="localWarehouseIds" item="item" open="(" close=")" separator=",">
-            #{item}
-        </foreach>
-        <if test="codes != null and !codes.isEmpty()">
-            <!-- 当 codes 包含 'approve' 时，处理特殊条件 -->
-            <if test="codes.size() == 1 and 'approve' in codes">
-                AND pa.approve_status = 'approve'
-                AND pad.create_po_type IN ('0', '1')
-            </if>
-            <!-- 当 codes 包含 'approve' 以及其他状态时 -->
-            <if test="codes.size() > 1 and 'approve' in codes">
-                AND (
-                (pa.approve_status = 'approve' AND pad.create_po_type IN ('0', '1'))
-                OR pa.approve_status IN
-                <foreach item="code" collection="codes" open="(" separator="," close=")">
-                    <if test="code != 'approve'">
+        AND pad.purchase_application_id = pa.id
+        <where>
+            <if test="codes != null and !codes.isEmpty()">
+                <!-- 当 codes 包含 'approve' 时，处理特殊条件 -->
+                <if test="codes.size() == 1 and 'approve' in codes">
+                    AND pa.approve_status = 'approve'
+                    AND pad.create_po_type IN ('0', '1')
+                </if>
+                <!-- 当 codes 包含 'approve' 以及其他状态时 -->
+                <if test="codes.size() > 1 and 'approve' in codes">
+                    AND (
+                    (pa.approve_status = 'approve' AND pad.create_po_type IN ('0', '1'))
+                    OR pa.approve_status IN
+                    <foreach item="code" collection="codes" open="(" separator="," close=")">
+                        <if test="code != 'approve'">
+                            #{code}
+                        </if>
+                    </foreach>
+                    )
+                </if>
+                <!-- 当 codes 不包含 'approve' 时，使用 IN 查询 -->
+                <if test="'approve' not in codes">
+                    AND pa.approve_status IN
+                    <foreach item="code" collection="codes" open="(" separator="," close=")">
                         #{code}
-                    </if>
-                </foreach>
-                )
+                    </foreach>
+                </if>
             </if>
-            <!-- 当 codes 不包含 'approve' 时，使用 IN 查询 -->
-            <if test="'approve' not in codes">
-                AND pa.approve_status IN
-                <foreach item="code" collection="codes" open="(" separator="," close=")">
-                    #{code}
-                </foreach>
-            </if>
-        </if>
+        </where>
+        GROUP BY
+        pad.sku_id,pad.dest_warehouse_id,pa.id
     </select>
-    <select id="listPurchase" resultType="com.erp.model.mrp.dto.ReplenishmentResultDTO$EstimatedPurchaseDetailDTO">
+    <select id="listPurchase" resultType="com.erp.model.mrp.dto.ReplenishmentInventoryDTO$EstimatedPurchaseDTO">
         SELECT
-        po.code AS sourceCode,
+        pod.sku_id,
+        max(po.code) AS sourceCode,
         po.id AS sourceId,
-        po.create_time AS estimatedPutAwayDate,
-        po.approve_status AS status,
-        pod.purchase_qty AS qty,
+        max(po.create_time) AS estimatedPutAwayDate,
+        max(po.approve_status) AS status,
+        sum(pod.purchase_qty) AS qty,
         po.delivery_warehouse_id AS warehouseId,
         'purchaseOrder' AS sourceType
         FROM
         ${tableName} AS po
         INNER JOIN ${tableDetailName} AS pod ON pod.is_deleted = FALSE
-        AND pod.purchase_order_id = po."id"
-        WHERE
-        pod.sku_id = #{skuId}
-        AND po.approve_status IN
+        AND pod.purchase_order_id = po.id
+        WHERE po.invalid_status = false and po.is_deleted = false and
+        po.approve_status IN
         <foreach item="code" collection="codes" open="(" separator="," close=")">
             #{code}
         </foreach>
-        and po.delivery_warehouse_id in
-        <foreach collection="localWarehouseIds" item="item" open="(" close=")" separator=",">
-            #{item}
-        </foreach>
+        GROUP BY pod.sku_id,po.delivery_warehouse_id,po.id
     </select>
     <select id="listPurchaseApplicationRefPo"
             resultType="com.erp.model.scm.dto.PurchaseApplicationRefPoDTO$ListDTO">
@@ -616,5 +611,57 @@
         ) m
         ) n where n.transport_qty > 0
     </select>
+    <select id="getReplenishmentPurchasePlan"
+            resultType="com.erp.model.mrp.dto.ReplenishmentInventoryDTO$ReplenishmentPurchaseDTO">
+        SELECT
+        ps.id AS sourceId,
+        MAX ( ps.code ) AS sourceCode,
+        MAX ( ps.status ) AS status,
+        SUM ( CASE WHEN ps.status = 'draft' THEN 0 WHEN ps.status = 'waitConfirm' THEN ps.suggest_purchase_qty ELSE ps.plan_purchase_qty END ) AS qty,
+        MAX ( ps.estimate_instock_date ) AS estimatedPutAwayDate,
+        MAX ( ps.estimate_sales_date ) AS estimateSalesDate,
+        'replenishment_plan' AS sourceType,
+        ps.sku_id,
+        ps.shop_id
+        FROM
+        ${tableName} ps
+        WHERE
+        ps.invalid_status = FALSE
+        AND ps.status IN
+        <foreach item="code" collection="codes" open="(" separator="," close=")">
+            #{code}
+        </foreach>
+        GROUP BY
+        ps.sku_id,
+        ps.shop_id,
+        ps.id
+
+    </select>
+    <select id="getReplenishmentPurchaseMergePlan"
+            resultType="com.erp.model.mrp.dto.ReplenishmentInventoryDTO$ReplenishmentPurchaseDTO">
+        SELECT
+        ps.id AS sourceId,
+        MAX ( ps.code ) AS sourceCode,
+        MAX ( ps.status ) AS status,
+        SUM ( CASE WHEN ps.status = 'draft' THEN 0 WHEN ps.status = 'waitConfirm' THEN ps.suggest_purchase_qty ELSE ps.plan_purchase_qty END ) AS qty,
+        MAX ( ps.estimate_instock_date ) AS estimatedPutAwayDate,
+        MAX ( ps.estimate_sales_date ) AS estimateSalesDate,
+        'replenishment_plan' AS sourceType,
+        ps.sku_id,
+        ps.shop_id
+        FROM
+        ${tableName} ps
+        WHERE
+        ps.invalid_status = FALSE
+        AND ps.status IN
+        <foreach item="code" collection="codes" open="(" separator="," close=")">
+            #{code}
+        </foreach>
+        GROUP BY
+        ps.sku_id,
+        ps.shop_id,
+        ps.id
+    </select>
+
 
 </mapper>

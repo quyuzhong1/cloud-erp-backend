@@ -14,6 +14,7 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.WmsDeliveryPlanDTO;
 import com.erp.model.wms.dto.WmsDeliveryPlanDetailDTO;
 import com.erp.model.wms.entity.WmsDeliveryPlanDetailEntity;
+import com.erp.model.wms.enums.DeliveryPlanTypeEnum;
 import com.erp.rpc.oms.feign.OmsListingInfoFeign;
 import com.erp.rpc.oms.feign.SkuMappingFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
@@ -32,6 +33,10 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.annotation.Resource;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -64,6 +69,39 @@ public class WmsDeliveryPlanDetailServiceImpl extends SuperServiceImpl<WmsDelive
         // 数据处理
         handleData(list, mainId, Boolean.FALSE, addDTO.getToWarehouseId());
 
+        //校验是否重复
+        String type = addDTO.getType();
+        if (DeliveryPlanTypeEnum.FBA.getCode().equals(type)) {
+            // 分组并检查 FBA 类型的唯一性
+            Map<String, List<WmsDeliveryPlanDetailEntity>> fbaGroup = list.stream()
+                    .collect(Collectors.groupingBy(detail -> detail.getPlatformSku() + detail.getPlatformFnSku() + detail.getSkuNo()));
+
+            for (Map.Entry<String, List<WmsDeliveryPlanDetailEntity>> entry : fbaGroup.entrySet()) {
+                if (entry.getValue().size() > 1) {
+                    String duplicateSkus = entry.getValue().stream()
+                            .map(detail -> detail.getPlatformSku() + "+" + detail.getPlatformFnSku() + "+" + detail.getSkuNo())
+                            .distinct()
+                            .collect(Collectors.joining(", "));
+                    throw new ServiceException("FBA 类型的 MSKU+FNSKU+SKU 必须唯一 ,重复的组合:" + duplicateSkus);
+                }
+            }
+        } else if (DeliveryPlanTypeEnum.THIRD_WAREHOUSE.getCode().equals(type)) {
+            Map<String, List<WmsDeliveryPlanDetailEntity>> thirdPartyGroup = list.stream()
+                    .collect(Collectors.groupingBy(detail -> detail.getPlatformSku() + detail.getSkuNo()));
+
+            for (Map.Entry<String, List<WmsDeliveryPlanDetailEntity>> entry : thirdPartyGroup.entrySet()) {
+                if (entry.getValue().size() > 1) {
+                    String duplicateSkus = entry.getValue().stream()
+                            .map(detail -> detail.getPlatformSku() + "+" + detail.getSkuNo())
+                            .distinct()
+                            .collect(Collectors.joining(", "));
+                    throw new ServiceException("三方仓类型的 三方仓SKU+SKU 必须唯一，重复的组合: " + duplicateSkus);
+                }
+            }
+        } else {
+            throw new ServiceException("未知的类型: " + type);
+        }
+
         log.info("开始新增发货计划详情单");
         boolean save = super.saveBatch(list);
         if(!save) {
@@ -95,6 +133,39 @@ public class WmsDeliveryPlanDetailServiceImpl extends SuperServiceImpl<WmsDelive
         // 数据处理
         handleData(list, mainId, Boolean.TRUE, updateDTO.getToWarehouseId());
 
+
+        //校验是否重复
+        String type = updateDTO.getType();
+        if (DeliveryPlanTypeEnum.FBA.getCode().equals(type)) {
+            // 分组并检查 FBA 类型的唯一性
+            Map<String, List<WmsDeliveryPlanDetailEntity>> fbaGroup = list.stream()
+                    .collect(Collectors.groupingBy(detail -> detail.getPlatformSku() + detail.getPlatformFnSku() + detail.getSkuNo()));
+
+            for (Map.Entry<String, List<WmsDeliveryPlanDetailEntity>> entry : fbaGroup.entrySet()) {
+                if (entry.getValue().size() > 1) {
+                    String duplicateSkus = entry.getValue().stream()
+                            .map(detail -> detail.getPlatformSku() + "+" + detail.getPlatformFnSku() + "+" + detail.getSkuNo())
+                            .distinct()
+                            .collect(Collectors.joining(", "));
+                    throw new ServiceException("FBA 类型的 MSKU+FNSKU+SKU 必须唯一 ,重复的组合:" + duplicateSkus);
+                }
+            }
+        } else if (DeliveryPlanTypeEnum.THIRD_WAREHOUSE.getCode().equals(type)) {
+            Map<String, List<WmsDeliveryPlanDetailEntity>> thirdPartyGroup = list.stream()
+                    .collect(Collectors.groupingBy(detail -> detail.getPlatformSku() + detail.getSkuNo()));
+
+            for (Map.Entry<String, List<WmsDeliveryPlanDetailEntity>> entry : thirdPartyGroup.entrySet()) {
+                if (entry.getValue().size() > 1) {
+                    String duplicateSkus = entry.getValue().stream()
+                            .map(detail -> detail.getPlatformSku() + "+" + detail.getSkuNo())
+                            .distinct()
+                            .collect(Collectors.joining(", "));
+                    throw new ServiceException("三方仓类型的 三方仓SKU+SKU 必须唯一，重复的组合: " + duplicateSkus);
+                }
+            }
+        } else {
+            throw new ServiceException("未知的类型: " + type);
+        }
         log.info("开始修改发货计划详情单");
         boolean save = super.saveOrUpdateBatch(list);
         if(!save) {

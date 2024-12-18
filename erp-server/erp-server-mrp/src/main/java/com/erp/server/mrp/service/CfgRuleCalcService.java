@@ -20,11 +20,11 @@ public interface CfgRuleCalcService extends SuperService<CfgRuleCalcEntity> {
     /**
      * 新增
      *
-     * @param dto      参数
+     * @param dto 参数
      * @author liaohui
      * @date: 2024-11-11
      */
-    BaseResultDTO.AddDTO add(CfgRuleCalcDTO.AddDTO dto, HttpServletResponse response);
+    BatchResultDTO add(CfgRuleCalcDTO.AddDTO dto);
 
     /**
      * 下载历史销量

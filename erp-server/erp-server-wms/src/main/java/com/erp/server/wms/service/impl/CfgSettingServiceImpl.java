@@ -4,10 +4,8 @@ package com.erp.server.wms.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
-import com.alibaba.nacos.api.utils.StringUtils;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.enums.ApiError;
@@ -25,7 +23,6 @@ import com.erp.server.wms.service.DictBasicService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -235,6 +232,12 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Cf
             case FS_FIRSTMILEDELIVERY_WAITHANDLE_NOTICE:
                 jsonObject = JSONUtil.parseObj(addDTO.getFsFirstMileDeliveryWaitHandleNoticeDTO());
                 break;
+            case FS_REQUISITION_CHANGE_SUBMIT_NOTICE:
+                jsonObject = JSONUtil.parseObj(addDTO.getFsRequisitionChangeSubmitNoticeDTO());
+                break;
+            case FS_REQUISITION_CHANGE_APPROVE_NOTICE:
+                jsonObject = JSONUtil.parseObj(addDTO.getFsRequisitionChangeApproveNoticeDTO());
+                break;
             case FS_WAREHOUSE_LOCATION_REPLENISH_NOTICE:
                 jsonObject = JSONUtil.parseObj(addDTO.getFsWlrNoticeDTO());
                 break;
@@ -337,6 +340,14 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Cf
             case FS_FIRSTMILEDELIVERY_WAITHANDLE_NOTICE:
                 CfgSettingValueDTO.FsRequisitionNoticeDTO fsFirstMileDeliveryWaitHandleNotice = BeanUtil.toBean(cfgSetting.getDataJson(), CfgSettingValueDTO.FsRequisitionNoticeDTO.class);
                 viewDTO.setFsFirstMileDeliveryWaitHandleNoticeDTO(fsFirstMileDeliveryWaitHandleNotice);
+                break;
+            case FS_REQUISITION_CHANGE_SUBMIT_NOTICE:
+                CfgSettingValueDTO.FsRequisitionNoticeDTO fsRequisitionChangeSubmitHandleNotice = BeanUtil.toBean(cfgSetting.getDataJson(), CfgSettingValueDTO.FsRequisitionNoticeDTO.class);
+                viewDTO.setFsRequisitionChangeSubmitNoticeDTO(fsRequisitionChangeSubmitHandleNotice);
+                break;
+            case FS_REQUISITION_CHANGE_APPROVE_NOTICE:
+                CfgSettingValueDTO.FsRequisitionNoticeDTO fsRequisitionChangeApproveHandleNotice = BeanUtil.toBean(cfgSetting.getDataJson(), CfgSettingValueDTO.FsRequisitionNoticeDTO.class);
+                viewDTO.setFsRequisitionChangeApproveNoticeDTO(fsRequisitionChangeApproveHandleNotice);
                 break;
             default:
                 break;

@@ -19,6 +19,7 @@ import com.erp.server.tms.service.TransferDeclareProductService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -112,13 +113,12 @@ public class TransferDeclareProductServiceImpl extends SuperServiceImpl<Transfer
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
-    public Boolean saveOrUpdateTransferDeclareProducts(List<TransferDeclareDetailEntity> transferDeclareDetailEntities) {
+    public void saveOrUpdateTransferDeclareProducts(List<TransferDeclareDetailEntity> transferDeclareDetailEntities) {
         List<String> soIds = transferDeclareDetailEntities.stream().map(TransferDeclareDetailEntity::getSoId).collect(Collectors.toList());
         Map<String, TransferDeclareDetailEntity> detailEntityMap = transferDeclareDetailEntities.stream().collect(Collectors.toMap(TransferDeclareDetailEntity::getSoId, Function.identity()));
         List<com.erp.model.oms.dto.TransferDeclareProductDTO> productDTOS = soB2cFeign.getTransferDeclareProductBySoIds(soIds);
         if (CollectionUtils.isEmpty(productDTOS)){
-            return Boolean.TRUE;
+            return;
         }
         productDTOS.forEach(transferDeclareProductDTO -> {
             TransferDeclareProductEntity entity = new TransferDeclareProductEntity();
@@ -135,7 +135,6 @@ public class TransferDeclareProductServiceImpl extends SuperServiceImpl<Transfer
             //检查记录是否已存在
             saveOrUpdateProduct(entity);
         });
-        return Boolean.TRUE;
     }
 
     @Override

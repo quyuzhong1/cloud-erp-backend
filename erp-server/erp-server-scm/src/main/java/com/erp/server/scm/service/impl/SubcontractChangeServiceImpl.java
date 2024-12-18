@@ -646,7 +646,7 @@ public class SubcontractChangeServiceImpl extends SuperServiceImpl<SubcontractCh
         if (CollectionUtils.isNotEmpty(resultLust)) {
             ValidList<SubcontractOrderDTO.GeneratePoDTO> validList = new ValidList<>();
             validList.setList(resultLust);
-            subcontractOrderService.generatePo(validList,Boolean.TRUE);
+            subcontractOrderService.generatePo(validList);
         }
 
     }

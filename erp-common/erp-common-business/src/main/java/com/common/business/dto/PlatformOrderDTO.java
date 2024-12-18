@@ -67,6 +67,7 @@ public class PlatformOrderDTO extends UniqueDto {
      */
     private String payStatus;
 
+
     /**
      * 订单金额
      */
@@ -209,9 +210,9 @@ public class PlatformOrderDTO extends UniqueDto {
     private List<PlatformOrderDetailDTO> details;
 
     /**
-     * 发货明细
+     * 订单发货明细（1个订单存在多个发货单）
      */
-    private List<PlatformDeliveryDetailDTO> deliveryDetailDTOList;
+    private List<PlatformDeliveryDTO> deliveryDTOList;
 
     /**
      * 订单财务信息
@@ -254,6 +255,21 @@ public class PlatformOrderDTO extends UniqueDto {
      * 退款单
      */
     private List<PlatformRefundOrderDTO> refundDTOList;
+
+    /**
+     * 总优惠金额
+     */
+    private BigDecimal totalDiscount;
+
+    /**
+     * 取消商品总价
+     */
+    private BigDecimal totalCancelGoodsAmount;
+
+    /**
+     * 取消商品币别
+     */
+    private String cancelGoodsCurrency;
 
     /**
      * 检查订单新增作废状态

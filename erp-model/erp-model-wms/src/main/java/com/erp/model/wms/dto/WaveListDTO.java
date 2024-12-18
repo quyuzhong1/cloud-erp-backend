@@ -194,7 +194,21 @@ public class WaveListDTO implements Serializable {
         /**
          * 打印时间
          */
-        private LocalDateTime printTime;
+        private String printTime;
+        /**
+         * 拣货单打印状态
+         */
+        private String pickingPrintStatus;
+        /**
+         * 打印状态
+         */
+        private String pickingPrintStatusName;
+
+
+        /**
+         * 拣货单打印时间
+         */
+        private String pickingPrintTime;
     }
 
     @Data
@@ -239,6 +253,18 @@ public class WaveListDTO implements Serializable {
         private String waveCode;
 
         private String deliveryId;
+
+    }
+
+    @Getter
+    @Setter
+    public static class WaveDeliveryStatusDTO {
+
+        private String id;
+
+        private String deliveryId;
+
+        private String status;
 
     }
 }

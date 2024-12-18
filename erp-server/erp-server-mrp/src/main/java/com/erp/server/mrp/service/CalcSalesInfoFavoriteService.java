@@ -1,8 +1,9 @@
 package com.erp.server.mrp.service;
-import com.erp.model.mrp.entity.CalcSalesInfoFavoriteEntity;
+
 import com.common.business.service.SuperService;
-import com.common.business.dto.base.*;
-import com.erp.model.mrp.dto.CalcSalesInfoFavoriteDTO;
+import com.erp.model.mrp.entity.CalcSalesInfoFavoriteEntity;
+
+import java.util.List;
 
 /**
  * <p>
@@ -15,4 +16,9 @@ import com.erp.model.mrp.dto.CalcSalesInfoFavoriteDTO;
 public interface CalcSalesInfoFavoriteService extends SuperService<CalcSalesInfoFavoriteEntity> {
 
 
+    /**
+     * 获取当前登录用户关注的模板
+     * @param uid 用户id
+     */
+    List<String> listByUserId(String uid);
 }
