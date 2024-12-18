@@ -6267,6 +6267,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (isRuleMatch) {
             entity.setBillStatus(SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode());
         }
+        //自动计算预估运费到订单的预估运费字段
+        soB2cService.autoCalcEstimatedShippingCost(Collections.singletonList(entity.getId()));
         this.updateById(entity);
         return isRuleMatch;
     }
@@ -9282,6 +9284,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         List<SoB2cDTO.LogisticsDTO> logisticsDTOS = list.stream()
                 .filter(e -> CharSequenceUtil.isNotBlank(e.getWarehouseId()) && CharSequenceUtil.isNotBlank(e.getLogisticsChannelId()) && Objects.nonNull(e.getWeight()))
                 .collect(Collectors.toList());
+        if (CollUtil.isEmpty(logisticsDTOS)){
+            return;
+        }
         //根据发货仓库进行
         for (String soId : sob2cIds){
             SoB2cDTO.LogisticsDTO logisticsDTO = logisticsDTOS.stream().filter(e -> CharSequenceUtil.isNotBlank(soId) && soId.equals(e.getId())).findFirst().orElse(null);
