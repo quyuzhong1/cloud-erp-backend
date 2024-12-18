@@ -11,6 +11,7 @@ import com.erp.server.file.core.AbstractPageFileEventHandler;
 import com.erp.server.file.entity.FileTask;
 import com.fasterxml.jackson.core.type.TypeReference;
 import org.springframework.stereotype.Component;
+import org.springframework.util.ObjectUtils;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
@@ -32,7 +33,7 @@ public class ExportPlmMouldInfoHandler extends AbstractPageFileEventHandler<Moul
         List<String> mouldIdList = new ArrayList<>();
         List<MouldInfoDTO.MouldInfoExportDTO> dtos = listSeqData(dto);
         for (MouldInfoDTO.MouldInfoExportDTO exportDTO : dtos) {
-            if (mouldIdList.contains(exportDTO.getDetailId())) {
+            if (!ObjectUtils.isEmpty(exportDTO.getDetailId()) && mouldIdList.contains(exportDTO.getDetailId())) {
                 exportDTO.setProjectNo("");
                 exportDTO.setName("");
                 exportDTO.setMouldNo("");
