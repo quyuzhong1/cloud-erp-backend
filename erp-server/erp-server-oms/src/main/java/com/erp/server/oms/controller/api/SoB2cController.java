@@ -160,11 +160,10 @@ public class SoB2cController extends BaseController {
                 if (Objects.nonNull(autoGetTrackNo) && Boolean.TRUE.equals(autoGetTrackNo)) {
                     soB2cService.getLogisticsCode(id, autoGetTrackNo);
                 }
-                //自动计算预估运费到订单的预估运费字段
-                soB2cService.autoCalcEstimatedShippingCost(Collections.singletonList(id));
             }
-
         }
+        //自动计算预估运费到订单的预估运费字段
+        soB2cService.autoCalcEstimatedShippingCost(Collections.singletonList(id));
         return success(add.getCode());
     }
 
