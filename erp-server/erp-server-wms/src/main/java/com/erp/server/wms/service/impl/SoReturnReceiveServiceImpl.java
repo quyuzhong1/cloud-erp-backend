@@ -3,7 +3,6 @@ package com.erp.server.wms.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -52,7 +51,6 @@ import com.erp.server.wms.mapper.SoReturnReceiveMapper;
 import com.erp.server.wms.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -121,6 +119,8 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
     private DocNoGenHelper docNoGenHelper;
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
+    @Resource
+    private SoReturnNoticeDetailService soReturnNoticeDetailService;
 
     @Override
     public PagingVO<SoReturnReceiveDTO.PagingView> paging(PagingDTO<SoReturnReceiveDTO.PagingParam> pagingParamDTO) {
@@ -206,7 +206,6 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
     @Transactional(rollbackFor = Exception.class)
     public String add(SoReturnReceiveDTO.Add dto) {
         //生成单号
-//        String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.THQS, BusinessNoTypeEnum.CODE_THQS.getCode()));
         String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_THQS);
         //获取组织信息
         List<BaseIdDTO.CodeDTO> orgList = sysUserFeign.getAccountingCompanyList(Collections.singletonList(dto.getSalesOrgId()));
@@ -278,6 +277,9 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
                 flatMap(obj -> Optional.ofNullable(obj.getUserName())).orElse("");
         entity.setWarehouseKeeperId(dto.getWarehouseKeeperId());
         entity.setWarehouseKeeperName(warehouseKeeperUserName);
+        //币种
+        entity.setCurrency(dto.getCurrency());
+        entity.setCurrencySymbol(dto.getCurrencySymbol());
         this.save(entity);
         //操作日志
         operateLogService.addModuleOperateLog(String.format("新增了一个销售退货签收单【%s】", code), ModuleTypeEnum.SO_RETURN_RECEIVE.getCode(), entity.getId(), "新增操作");
@@ -366,6 +368,7 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
                     }
                 }
             }
+            viewDTO.setExchangeRate(detailEntity.getExchangeRate());
             detailViewDTOS.add(detailView);
         }
         viewDTO.setDetailList(detailViewDTOS);
@@ -667,6 +670,11 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
         if (count > 0) {
             throw new ServiceException(ApiError.ERROR_92021);
         }
+
+        //退货单明细
+        List<String> soReturnIdList = list.stream().map(SoReturnNoticeDTO.GenerateSoReturnReceiveView::getSourceId).distinct().collect(Collectors.toList());
+        List<SoReturnDetailEntity> soReturnDetailEntities = soReturnFeign.listDetailByMainIds(soReturnIdList);
+
         for (String id : soReturnNoticeIdList) {
             List<SoReturnNoticeDTO.GenerateSoReturnReceiveView> viewList = list.stream().filter(req -> req.getMainId().equals(id)).collect(Collectors.toList());
             SoReturnNoticeEntity noticeEntity = soReturnNoticeService.getById(id);
@@ -686,6 +694,10 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
             dto.setSellerName(noticeEntity.getSellerName());
             List<SoReturnReceiveDetailDTO.Add> detailList = new ArrayList<>();
             for (SoReturnNoticeDTO.GenerateSoReturnReceiveView view : viewList) {
+                SoReturnDetailEntity soReturnDetailEntity = soReturnDetailEntities.stream()
+                        .filter(v -> v.getId().equals(view.getSourceDetailId()))
+                        .findFirst().orElse(new SoReturnDetailEntity());
+
                 dto.setSourceId(view.getSourceId());
                 SoReturnReceiveDetailDTO.Add detailAddDTO = new SoReturnReceiveDetailDTO.Add();
                 detailAddDTO.setSkuId(view.getSkuId());
@@ -695,6 +707,16 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
                 detailAddDTO.setRemark(view.getRemark());
                 detailAddDTO.setSourceDetailId(view.getSourceDetailId());
                 detailAddDTO.setNoticeDetailId(view.getId());
+                detailAddDTO.setReturnReasonDict(view.getReturnReasonDict());
+                detailAddDTO.setReturnTypeDict(view.getReturnTypeDict());
+                detailAddDTO.setExchangeRate(soReturnDetailEntity.getExchangeRate());
+                detailAddDTO.setReturnAmount(soReturnNoticeService.calReturnAmount(soReturnDetailEntity.getReturnAmount(),soReturnDetailEntity.getReturnQty(),view.getReturnQty()));
+                detailAddDTO.setTaxReturnAmount(soReturnNoticeService.calReturnAmount(soReturnDetailEntity.getTaxReturnAmount(),soReturnDetailEntity.getReturnQty(),view.getReturnQty()));
+                detailAddDTO.setReturnAmountLocalCurrency(soReturnNoticeService.calLocalCurrency(soReturnDetailEntity.getExchangeRate(), detailAddDTO.getReturnAmount()));
+                detailAddDTO.setTaxReturnAmountLocalCurrency(soReturnNoticeService.calLocalCurrency(soReturnDetailEntity.getExchangeRate(), detailAddDTO.getTaxReturnAmount()));
+                dto.setCurrency(noticeEntity.getCurrency());
+                dto.setCurrencySymbol(noticeEntity.getCurrencySymbol());
+                dto.setCustomerId(view.getCustomerId());
                 detailList.add(detailAddDTO);
             }
             dto.setDetailList(detailList);
@@ -730,13 +752,6 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
         if (receiveCount > 0) {
             throw new ServiceException(ApiError.ERROR_99081);
         }
-
-/*        List<QcInfoEntity> qcInfoEntities = qcInfoService.listQCBySourceIds(ids);
-        long qcCount = qcInfoEntities.stream().filter(req -> QcBillStatusEnum.FINISH_QC.equals(req.getQcStatus()) || QcBillStatusEnum.EXEMPTION.equals(req.getQcStatus())).count();
-        if (qcCount != qcInfoEntities.size()) {
-            throw new ServiceException(ApiError.ERROR_99082);
-        }*/
-
         List<CustomerInfoEntity> customerInfoEntities = customerFeign.listCustomer();
         //获取sku的id集合
         List<String> skuIdList = list.stream().map(SoReturnReceiveDTO.ReceiveGenerateSoReturnInstockView::getSkuId).collect(Collectors.toList());

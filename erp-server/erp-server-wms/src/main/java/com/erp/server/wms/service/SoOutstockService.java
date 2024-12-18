@@ -546,4 +546,6 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
 
 
     List<SoOutstockEntity> queryToSdy(LocalDate startDate, LocalDate endDate, Integer pageSize, Integer offset);
+
+    List<SoOutstockDTO.AmountDTO> listAmountBySkuIds(SoOutstockDTO.ListAmountParamDTO params);
 }
