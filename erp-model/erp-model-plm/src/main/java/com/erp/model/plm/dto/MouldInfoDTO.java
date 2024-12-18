@@ -365,12 +365,12 @@ public class MouldInfoDTO implements Serializable {
         /**
          * 仓库id
          */
-        @NotBlank(message = "仓库id")
+        @NotBlank(message = "仓库不能为空")
         private String warehouseId;
         /**
          * 库位
          */
-        @NotBlank(message = "库位")
+        @NotNull(message = "库位不能为空")
         private String warehouseLocation;
         /**
          * 明细地址
