@@ -1,10 +1,12 @@
 package com.erp.server.tms.service.impl;
 
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
+import com.common.business.wrapper.FeignQuery;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
@@ -13,7 +15,10 @@ import com.erp.model.tms.dto.InventorySkuCostDTO;
 import com.erp.model.tms.dto.InventorySkuCostDetailDTO;
 import com.erp.model.tms.entity.InventorySkuCostDetailEntity;
 import com.erp.model.tms.entity.InventorySkuCostEntity;
+import com.erp.model.wms.dto.WarehouseDTO;
+import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.rpc.wms.feign.WmsWarehouseFeign;
 import com.erp.server.tms.mapper.InventorySkuCostDetailMapper;
 import com.erp.server.tms.service.InventorySkuCostDetailService;
 import com.erp.server.tms.service.OperateLogService;
@@ -45,6 +50,8 @@ public class InventorySkuCostDetailServiceImpl extends SuperServiceImpl<Inventor
     private OperateLogService operateLogService;
     @Resource
     private PlmTaskFeign plmTaskFeign;
+    @Resource
+    private WmsWarehouseFeign wmsWarehouseFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -150,6 +157,8 @@ public class InventorySkuCostDetailServiceImpl extends SuperServiceImpl<Inventor
             this.removeByIds(notExistDetailIds);
         }
         List<SkuVO> skuVOList = plmTaskFeign.listSkuProductByIds(skuIds);
+        List<String> warehouseIds = detailEntityList.stream().map(InventorySkuCostDetailEntity::getWarehouseId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+        List<WarehouseEntity> warehouseList = CollUtil.isNotEmpty(warehouseIds) ? FeignQuery.getByIds(WarehouseEntity.class, warehouseIds) :Collections.emptyList();
         detailEntityList.forEach(inventorySkuCostDetailEntity -> {
             inventorySkuCostDetailEntity.setMainId(entity.getId());
             if (CharSequenceUtil.isBlank(inventorySkuCostDetailEntity.getUnit())){
@@ -159,6 +168,9 @@ public class InventorySkuCostDetailServiceImpl extends SuperServiceImpl<Inventor
             if (Objects.nonNull(skuVO)){
                 inventorySkuCostDetailEntity.setProductName(skuVO.getSkuName());
             }
+            WarehouseEntity warehouseEntity = warehouseList.stream().filter(e -> Objects.nonNull(e) && CharSequenceUtil.isNotBlank(inventorySkuCostDetailEntity.getWarehouseId())
+                    && inventorySkuCostDetailEntity.getWarehouseId().equals(e.getId())).findFirst().orElse(null);
+            inventorySkuCostDetailEntity.setWarehouseName(Objects.nonNull(warehouseEntity) ? warehouseEntity.getName() : CharSequenceUtil.EMPTY);
         });
         this.saveOrUpdateBatch(detailEntityList);
     }

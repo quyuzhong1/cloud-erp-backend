@@ -306,4 +306,11 @@ public interface WarehouseService extends SuperService<WarehouseEntity> {
      * @param warehouseEntity
      */
     boolean checkOpenCloseTime(WarehouseEntity warehouseEntity);
+
+    /**
+     * 根据仓库名称获取仓库信息
+     * @param warehouseNameList
+     * @return
+     */
+    List<WarehouseEntity> listByWarehouseNameList(List<String> warehouseNameList);
 }

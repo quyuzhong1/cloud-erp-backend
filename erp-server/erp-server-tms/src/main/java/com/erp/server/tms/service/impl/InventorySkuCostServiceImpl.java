@@ -1,6 +1,7 @@
 package com.erp.server.tms.service.impl;
 
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
@@ -121,7 +122,7 @@ public class InventorySkuCostServiceImpl extends SuperServiceImpl<InventorySkuCo
         //  此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.INVENTORY_SKU_COST.getCode(), inventorySkuCostEntity.getId(), "新增操作");
         // 新增明细
-        if (!CollectionUtils.isEmpty(addDTO.getDetailList())) {
+        if (CollUtil.isNotEmpty(addDTO.getDetailList())) {
             List<InventorySkuCostDetailEntity> detailEntityList = InventorySkuCostConverter.INSTANCE.addToDetail(addDTO.getDetailList());
             inventorySkuCostDetailService.buildDetail(detailEntityList, inventorySkuCostEntity);
         }
@@ -146,7 +147,7 @@ public class InventorySkuCostServiceImpl extends SuperServiceImpl<InventorySkuCo
             throw new ServiceException("SKU成本保存失败");
         }
         // 修改明细
-        if (!CollectionUtils.isEmpty(updateDTO.getDetailList())) {
+        if (CollUtil.isNotEmpty(updateDTO.getDetailList())) {
             List<InventorySkuCostDetailEntity> detailEntityList = InventorySkuCostConverter.INSTANCE.updateToDetail(updateDTO.getDetailList());
             inventorySkuCostDetailService.buildDetail(detailEntityList, inventorySkuCostEntity);
         }else {
@@ -196,6 +197,8 @@ public class InventorySkuCostServiceImpl extends SuperServiceImpl<InventorySkuCo
                 e.setProductName(skuVO.getSkuName());
             }
             e.setProductCostStr(e.getCurrencySymbol()+e.getProductCost());
+            e.setFirstMileShippingCostStr(e.getCurrencySymbol()+e.getFirstMileShippingCost());
+            e.setClearanceCustomsTaxStr(e.getCurrencySymbol()+e.getClearanceCustomsTax());
         });
     }
 

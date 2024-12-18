@@ -290,11 +290,11 @@ public class InventorySkuCostDTO implements Serializable {
          */
         private String unit;
         /**
-         * 单位成本【可排序】
+         * 材料成本【可排序】
          */
         private String productCost;
         /**
-         * 单位成本【导出使用】
+         * 材料成本【导出使用】
          */
         private String productCostStr;
         /**
@@ -305,6 +305,30 @@ public class InventorySkuCostDTO implements Serializable {
          * 创建时间【可排序】
          */
         private LocalDate createTime;
+        /**
+         * 仓库id
+         */
+        private String warehouseId;
+        /**
+         * 仓库名称
+         */
+        private String warehouseName;
+        /**
+         * 头程运费（6位小数）
+         */
+        private String firstMileShippingCost;
+        /**
+         * 头程运费 【导出使用】
+         */
+        private String firstMileShippingCostStr;
+        /**
+         * 清关税费（6位小数）
+         */
+        private String clearanceCustomsTax;
+        /**
+         * 清关税费 【导出使用】
+         */
+        private String clearanceCustomsTaxStr;
     }
 
     /**
