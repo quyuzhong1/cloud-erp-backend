@@ -66,7 +66,12 @@ public class MouldDetailServiceImpl extends SuperServiceImpl<MouldDetailMapper, 
                     .notIn(!CollectionUtils.isEmpty(refundIds), MouldRefundAgreementEntity::getMouldDetailId, refundIds)
                     .in(MouldRefundAgreementEntity::getMouldDetailId, detailIds));
             mouldRefProductService.remove(Wrappers.<MouldRefProductEntity>lambdaQuery().in(MouldRefProductEntity::getMouldDetailId, detailIds));
-
+            List<String> removeIds = detailIds.stream().
+                    filter(id -> detailList.stream().noneMatch(v -> v.getId().equals(id)))
+                    .collect(Collectors.toList());
+            if (!CollectionUtils.isEmpty(removeIds)) {
+                removeByIds(removeIds);
+            }
         }
         List<MouldDetailEntity> details = new ArrayList<>();
         List<MouldRefundAgreementEntity> agreementList = new ArrayList<>();
