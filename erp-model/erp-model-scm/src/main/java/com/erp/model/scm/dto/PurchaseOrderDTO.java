@@ -1214,6 +1214,10 @@ public class PurchaseOrderDTO implements Serializable {
          * 采购员
          */
         private String  purchaseUserName;
+        /**
+         * 采购数量
+         */
+        private Integer purchaseQty;
     }
 
     @Data
