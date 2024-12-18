@@ -60,6 +60,11 @@ public class MouldInfoDTO implements Serializable {
          */
         @Dict(enumClass = ApproveStatusEnum.class)
         private String status;
+
+        /**
+         * 作废状态
+         */
+        private Boolean invalidStatus;
         /**
          * 审核时间
          */
@@ -701,6 +706,7 @@ public class MouldInfoDTO implements Serializable {
     @Setter
     public static class MouldInfoExportDTO {
 
+        private String detailId;
         /**
          * 项目编号
          */

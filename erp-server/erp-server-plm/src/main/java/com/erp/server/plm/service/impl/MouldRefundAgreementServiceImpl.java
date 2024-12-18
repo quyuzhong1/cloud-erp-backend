@@ -12,6 +12,7 @@ import org.springframework.util.CollectionUtils;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -31,5 +32,16 @@ public class MouldRefundAgreementServiceImpl extends SuperServiceImpl<MouldRefun
             return Collections.emptyList();
         }
         return list(Wrappers.<MouldRefundAgreementEntity>lambdaQuery().in(MouldRefundAgreementEntity::getMouldDetailId, detailIds));
+    }
+
+    @Override
+    public List<String> listByMouldDetailIdListAndStatus(List<String> detailIds, String code) {
+        if (CollectionUtils.isEmpty(detailIds)) {
+            return Collections.emptyList();
+        }
+        List<MouldRefundAgreementEntity> list = list(Wrappers.<MouldRefundAgreementEntity>lambdaQuery()
+                .eq(MouldRefundAgreementEntity::getRefundStatus, code)
+                .in(MouldRefundAgreementEntity::getMouldDetailId, detailIds));
+        return list.stream().map(MouldRefundAgreementEntity::getMouldDetailId).collect(Collectors.toList());
     }
 }
