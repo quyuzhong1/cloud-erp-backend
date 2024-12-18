@@ -58,7 +58,7 @@ public class ExportDmpFeignController {
 
     @PostMapping("/exportNewDmpPushTask")
     @WebAdvanceQuery(handler = DmpOutputTaskRecordQueryHandler.class)
-    public PagingVO<DmpOutputTaskRecordDTO.PagingDTO> exportNewDmpPushTask(@RequestBody PagingDTO<DmpOutputTaskRecordDTO.ExpotParamDTO> dto) {
-        return dmpOutputTaskRecordService.exportNewDmpPushTask(dto);
+    public PagingVO<DmpOutputTaskRecordDTO.PagingDTO> exportNewDmpPushTask(@RequestBody PagingDTO<DmpOutputTaskRecordDTO.PagingParamDTO> dto) {
+        return dmpOutputTaskRecordService.paging(dto);
     }
 }
