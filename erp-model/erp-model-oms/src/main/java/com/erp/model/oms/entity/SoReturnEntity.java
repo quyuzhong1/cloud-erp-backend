@@ -3,14 +3,13 @@ package com.erp.model.oms.entity;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.experimental.Accessors;
 
 import java.io.Serializable;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.Date;
-import lombok.Getter;
-import lombok.Setter;
-import lombok.experimental.Accessors;
 
 /**
  * <p>
@@ -223,8 +222,6 @@ public class SoReturnEntity extends BaseEntity<SoReturnEntity> {
      */
     @TableField("sync_kingdee_id")
     private String syncKingdeeId;
-
-    
 
     public static final String APPROVE_STATUS = "approve_status";
 

@@ -11,6 +11,7 @@ import com.erp.model.oms.entity.ListingInfoEntity;
 import com.erp.model.oms.entity.OmsPushMsgEntity;
 import com.erp.model.oms.entity.SkuMappingEntity;
 import com.erp.model.oms.enums.RuleTypeEnum;
+import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.scm.dto.OperateLogDTO;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -294,6 +295,8 @@ public interface SkuMappingService extends SuperService<SkuMappingEntity> {
     void syncPlatformProduct(List<String> ids);
 
     void syncWarehouseProduct(List<String> ids);
+
+    List<SkuMappingDTO.ProductSkuInfoDTO> listSkuBySkuNos(SkuMappingDTO.SkuParamDTO skuParamDTO);
 
     /**
      * 根据参数获取映射列表

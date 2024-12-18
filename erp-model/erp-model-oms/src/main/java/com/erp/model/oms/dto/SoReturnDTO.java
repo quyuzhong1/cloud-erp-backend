@@ -2,9 +2,14 @@ package com.erp.model.oms.dto;
 
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
+import com.erp.model.oms.entity.SoReturnEntity;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import javax.validation.constraints.Max;
+import javax.validation.constraints.Min;
+import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.NotNull;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -171,6 +176,26 @@ public class SoReturnDTO {
          * 创建时间
          */
         private LocalDateTime createTime;
+        /**
+         * 汇率
+         */
+        private BigDecimal exchangeRate;
+        /**
+         *退货金额
+         */
+        private BigDecimal returnAmount;
+        /**
+         *含税退货金额
+         */
+        private BigDecimal taxReturnAmount;
+        /**
+         *退货金额（本位币）
+         */
+        private BigDecimal returnAmountLocalCurrency;
+        /**
+         *含税退货金额（本位币）
+         */
+        private BigDecimal taxReturnAmountLocalCurrency;
     }
 
     /**
@@ -226,6 +251,19 @@ public class SoReturnDTO {
          * 明细信息
          */
         private List<SoReturnDetailDTO.Add> detailList;
+        /**
+         * 汇率
+         */
+        private BigDecimal exchangeRate;
+        /**
+         * 币种
+         */
+        private String currency;
+
+        /**
+         * 币种符号
+         */
+        private String currencySymbol;
     }
 
     /**
@@ -258,6 +296,19 @@ public class SoReturnDTO {
          * 明细信息
          */
         private List<SoReturnDetailDTO.Update> detailList;
+        /**
+         * 汇率
+         */
+        private BigDecimal exchangeRate;
+        /**
+         * 币种
+         */
+        private String currency;
+
+        /**
+         * 币种符号
+         */
+        private String currencySymbol;
     }
 
     /**
@@ -412,9 +463,17 @@ public class SoReturnDTO {
          */
         private Boolean canChangeSoInfo;
         /**
+         * 汇率
+         */
+        private BigDecimal exchangeRate;
+        /**
          * 详情信息
          */
         private List<SoReturnDetailDTO.View> detailList;
+        /**
+         * 创建时间
+         */
+        private LocalDateTime createTime;
     }
 
     /**
@@ -591,5 +650,98 @@ public class SoReturnDTO {
          * 客户id
          */
         private String customerId;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class SkuParamDTO {
+
+       @NotEmpty(message = "sku不能为空")
+       private List<ReturnSkuDTO> skuDTOList;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class ReturnSkuDTO {
+
+        /**
+         * 销售订单明细id
+         */
+        private String soDetailId;
+        /**
+         * 退货订单id
+         */
+        private String returnId;
+        /**
+         * 退货单明细id
+         */
+        private String ReturnDetailId;
+        /**
+         * skuId
+         */
+        @NotNull(message = "sku不能为空")
+        private String skuId;
+        /**
+         * 客户id
+         */
+        @NotNull(message = "客户不能为空")
+        private String customerId;
+        /**
+         * 币种
+         */
+        @NotNull(message = "币种不能为空")
+        private String currency;
+        /**
+         * 汇率
+         */
+        @NotNull(message = "汇率不能为空")
+        private BigDecimal exchangeRate;
+        /**
+         * 退货数量
+         */
+        @NotNull(message = "退货数量不能为空")
+        @Min(value = 1, message = "退货数量最小值为1")
+        @Max(value = 999999999, message = "退货数量最大值为999999999")
+        private Integer returnQty;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class SoReturnAmoutDTO {
+        /**
+         * skuId
+         */
+        private String skuId;
+        /**
+         * 客户id
+         */
+        private String customerId;
+        /**
+         *退货金额
+         */
+        private BigDecimal returnAmount;
+        /**
+         *含税退货金额
+         */
+        private BigDecimal taxReturnAmount;
+        /**
+         *退货金额（本位币）
+         */
+        private BigDecimal returnAmountLocalCurrency;
+        /**
+         *含税退货金额（本位币）
+         */
+        private BigDecimal taxReturnAmountLocalCurrency;
+    }
+
+
+    @Data
+    @NoArgsConstructor
+    public static class SoReturnEntityDTO extends SoReturnEntity {
+        /**
+         * 汇率
+         */
+        private BigDecimal exchangeRate;
+
     }
 }

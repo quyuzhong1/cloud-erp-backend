@@ -202,7 +202,8 @@
             sod.is_reissue AS isReissue,
             sod.is_close AS isClose,
             sod.platform_sku_no AS platformSkuNo,
-            sod.frozen_qty as frozenQty
+            sod.frozen_qty as frozenQty,
+            sod.customer_po
         FROM so_detail sod
         INNER JOIN so_info si
         ON sod.main_id =si.id AND si.is_deleted=false
@@ -293,7 +294,12 @@
         sd.main_id AS soId,
         sd.sku_id,
         sd.sku_no,
-        sd.qty AS salesQty
+        sd.qty AS salesQty,
+        si.currency,
+        si.currency_symbol,
+        sd.amount,
+        sd.tax_amount,
+        sd.exchange_rate
         FROM so_info si
         LEFT JOIN so_detail sd ON si.id = sd.main_id AND si.is_deleted = FALSE
         WHERE sd.is_deleted = FALSE

@@ -3598,4 +3598,13 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
     public List<SoOutstockEntity> queryToSdy(LocalDate startDate, LocalDate endDate, Integer pageSize, Integer offset) {
         return baseMapper.queryToSdy(startDate, endDate, pageSize, offset);
     }
+
+
+    @Override
+    public List<SoOutstockDTO.AmountDTO> listAmountBySkuIds(SoOutstockDTO.ListAmountParamDTO params) {
+        if(null == params || params.getSkuIds().isEmpty() || null == params.getReturnCreateDate()){
+            return Collections.emptyList();
+        }
+        return this.baseMapper.listAmountBySkuIds(params);
+    }
 }

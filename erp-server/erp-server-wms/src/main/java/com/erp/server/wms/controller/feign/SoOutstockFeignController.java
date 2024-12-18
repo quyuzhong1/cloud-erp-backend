@@ -1,7 +1,6 @@
 package com.erp.server.wms.controller.feign;
 
 import cn.hutool.core.text.CharSequenceUtil;
-import cn.hutool.core.util.StrUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.AdvanceQueryContainer;
@@ -22,7 +21,6 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -229,6 +227,18 @@ public class SoOutstockFeignController {
     @PostMapping("/updateSoOutPrice")
     Boolean updateSoOutPrice(@RequestBody List<SoDetailEntity> soDetailEntityList) {
         return soOutstockDetailService.updateSoOutPrice(soDetailEntityList);
+    }
+
+    /**
+     * B2B退货订单没有关联订单时的计算规则
+     * @author jack
+     * @date: 2024-11-25
+     * @param params
+     * @return SoOutstockDTO.AmountDTO
+     */
+    @PostMapping("/listAmountBySkuIds")
+    List<SoOutstockDTO.AmountDTO> listAmountBySkuIds(@RequestBody SoOutstockDTO.ListAmountParamDTO params){
+        return soOutstockService.listAmountBySkuIds(params);
     }
 }
 
