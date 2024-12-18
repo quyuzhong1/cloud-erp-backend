@@ -58,7 +58,7 @@ public interface FbaTransitCalculateReportService extends SuperService<FbaTransi
      * @param response
      * @return
      */
-    FbaTransitCalculateReportDTO.ImportDTO importFile(MultipartFile excelFile, HttpServletResponse response);
+    Boolean importFile(MultipartFile excelFile, HttpServletResponse response);
 
     /**
      * 异步生成上月份期末数据
