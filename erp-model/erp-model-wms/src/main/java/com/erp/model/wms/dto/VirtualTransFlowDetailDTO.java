@@ -265,5 +265,20 @@ public class VirtualTransFlowDetailDTO implements Serializable {
 
     }
 
+    /**
+     * 处理数据DTO
+     */
+    @Data
+    @NoArgsConstructor
+    public static class HandleDTO {
+        /**
+         * 主键ids
+         */
+        private List<String> ids;
 
+        /**
+         * 开始日期
+         */
+        private LocalDate startDate;
+    }
 }
