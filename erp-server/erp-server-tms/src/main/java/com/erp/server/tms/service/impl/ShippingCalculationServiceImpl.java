@@ -139,7 +139,7 @@ public class ShippingCalculationServiceImpl implements ShippingCalculationServic
         String currency = listDTO.getCurrency();
         //比较数值是否相同 不相同就更新
         SoB2cDTO.LogisticsDTO logisticsDTO = logisticsDTOList.get(0);
-        if (Objects.isNull(logisticsDTO.getEstimatedShippingCost()) || totalShippingCost.compareTo(logisticsDTO.getEstimatedShippingCost()) != 0){
+        if (Objects.isNull(logisticsDTO.getEstimatedShippingCost()) || totalShippingCost.compareTo(logisticsDTO.getEstimatedShippingCost()) != 0 || Objects.equals(currency,logisticsDTO.getEstimatedShippingCurrency())){
             //更新物流预估费用
             soB2cFeign.updateLogisticsFee(b2cSoId,totalShippingCost,currency);
         }
@@ -233,8 +233,6 @@ public class ShippingCalculationServiceImpl implements ShippingCalculationServic
      * 构建第三方返回参数
      *
      * @param calculateFeeBatch
-     * @param params
-     * @param overseasProviderEntity
      * @param channelWarehouseDTOList
      * @param countryList
      */
@@ -300,9 +298,6 @@ public class ShippingCalculationServiceImpl implements ShippingCalculationServic
             if (CollUtil.isEmpty(params.getToCountryList())){
                 throw new ServiceException(ApiError.ERROR_92264);
             }
-        }
-        if ("g".equals(params.getWeightUnit())){
-            params.setWeight(MathUtil.divide(params.getWeight(), BigDecimal.valueOf(1000)));
         }
     }
 

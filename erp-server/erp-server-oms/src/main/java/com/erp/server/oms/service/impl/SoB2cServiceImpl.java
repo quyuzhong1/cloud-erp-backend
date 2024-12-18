@@ -6277,8 +6277,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         Boolean isRuleMatch = ruleMatchResult.getIsRuleMatch();
         if (isRuleMatch) {
             entity.setBillStatus(SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode());
-            //自动计算预估运费到订单的预估运费字段
-            soB2cService.autoCalcEstimatedShippingCost(Collections.singletonList(entity.getId()));
         }
         this.updateById(entity);
         return isRuleMatch;
@@ -6471,9 +6469,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
      */
     @Override
     public Boolean pullOrderHandle(String id, List<SoB2cDetailEntity> detailList, Map<String, Object> map) {
-//        Map<String, Boolean> orderRule = this.approveRule(id, detailList, map);
-//        Boolean isMatch = orderRule.getOrDefault("isMatch", Boolean.FALSE);
-//        Boolean isPass = orderRule.getOrDefault("isPass", Boolean.FALSE);
         SoB2cDTO.RuleResultDTO ruleResultDTO = soB2cService.orderRule(id);
         Boolean isMatch = ruleResultDTO.getIsRuleMatch();
         Boolean isPass = ruleResultDTO.getIsPass();
@@ -6494,10 +6489,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 }else  if (Objects.nonNull(autoGetTrackNo) && Boolean.TRUE.equals(autoGetTrackNo)) {
                     soB2cService.getLogisticsCode(id, true);
                 }
-                //自动计算预估运费到订单的预估运费字段
-                soB2cService.autoCalcEstimatedShippingCost(Collections.singletonList(id));
             }
         }
+        //自动计算预估运费到订单的预估运费字段
+        soB2cService.autoCalcEstimatedShippingCost(Collections.singletonList(id));
         return isMatch;
     }
 
@@ -9316,6 +9311,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                     .b2cSoId(logisticsDTO.getId()).fromWarehouseId(logisticsDTO.getWarehouseId())
                     .channelIdList(Collections.singletonList(logisticsDTO.getLogisticsChannelId()))
                     .weight(logisticsDTO.getWeight()).weightUnit(logisticsDTO.getWeightUnit()).postCode(logisticsDTO.getPostCode())
+                    .length(logisticsDTO.getLength()).width(logisticsDTO.getWidth()).height(logisticsDTO.getHeight())
                     .toCountryList(Collections.singletonList(logisticsDTO.getCountry()))
                     .build();
             try {

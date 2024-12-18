@@ -3302,6 +3302,12 @@ public class SoB2cDTO implements Serializable {
         private String logisticsChannelId;
         //发货仓库id
         private String warehouseId;
+        //长
+        private BigDecimal length;
+        //宽
+        private BigDecimal width;
+        //高
+        private BigDecimal height;
         //重量
         private BigDecimal weight;
         //重量单位
