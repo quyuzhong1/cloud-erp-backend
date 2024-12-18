@@ -3,7 +3,10 @@ package com.erp.server.mrp.controller.api;
 
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.WebAdvanceQuery;
-import com.common.business.dto.base.*;
+import com.common.business.dto.base.BaseIdsDTO;
+import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.dto.base.BatchResultDTO;
+import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
@@ -13,7 +16,6 @@ import com.common.core.enums.LogActionEnum;
 import com.erp.model.mrp.dto.DeliverySuggestDTO;
 import com.erp.model.mrp.entity.DeliverySuggestEntity;
 import com.erp.server.mrp.handler.DeliverySuggestionQueryHandler;
-import com.erp.server.mrp.handler.ReplenishmentSuggestionQueryHandler;
 import com.erp.server.mrp.service.DeliverySuggestService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
@@ -280,7 +282,7 @@ public class DeliverySuggestController extends BaseController {
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出发货建议")
     @PostMapping(value = "/export")
-    @WebAdvanceQuery(handler = ReplenishmentSuggestionQueryHandler.class)
+    @WebAdvanceQuery(handler = DeliverySuggestionQueryHandler.class)
     public ApiResult<String> export(@RequestBody DeliverySuggestDTO.PagingParamDTO pagingParamDTO) {
         Boolean flag = deliverySuggestService.export(pagingParamDTO);
         return Boolean.TRUE.equals(flag) ? success() : failure();
