@@ -28,6 +28,7 @@
                mi.status,
                mi.approve_user_name,
                mi.approve_time,
+               mi.invalid_status,
                md.id as detailId,
                md.mould_no,
                md.third_mould_no,
@@ -139,7 +140,8 @@
     </select>
 
     <select id="exportMouldInfo" resultType="com.erp.model.plm.dto.MouldInfoDTO$MouldInfoExportDTO">
-        select mi.project_no,
+        select md.id detailId,
+               mi.project_no,
                mi.name,
                mi.status,
                md.mould_no,

@@ -13,6 +13,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -28,7 +29,37 @@ public class ExportPlmMouldInfoHandler extends AbstractPageFileEventHandler<Moul
     protected List<MouldInfoDTO.MouldInfoExportDTO> getData(FileTask fileTask) {
         MouldInfoDTO.PagingParamDTO dto = readValue(fileTask.getMetaInfo(), new TypeReference<MouldInfoDTO.PagingParamDTO>() {
         });
-        return listSeqData(dto);
+        List<String> mouldIdList = new ArrayList<>();
+        List<MouldInfoDTO.MouldInfoExportDTO> dtos = listSeqData(dto);
+        for (MouldInfoDTO.MouldInfoExportDTO exportDTO : dtos) {
+            if (mouldIdList.contains(exportDTO.getDetailId())) {
+                exportDTO.setProjectNo("");
+                exportDTO.setName("");
+                exportDTO.setMouldNo("");
+                exportDTO.setThirdMouldNo("");
+                exportDTO.setStatusName("");
+                exportDTO.setTypeName("");
+                exportDTO.setMouldHoles("");
+                exportDTO.setLength(null);
+                exportDTO.setWidth(null);
+                exportDTO.setHeight(null);
+                exportDTO.setMaterial("");
+                exportDTO.setLifeCycle(null);
+                exportDTO.setDevelopCycle(null);
+                exportDTO.setEnableDate(null);
+                exportDTO.setSupplierName("");
+                exportDTO.setWarehouseName("");
+                exportDTO.setWarehouseLocationName("");
+                exportDTO.setAddress("");
+                exportDTO.setRemark("");
+                exportDTO.setCreateUserName("");
+                exportDTO.setCreateTime(null);
+                exportDTO.setUpdateUserName("");
+                exportDTO.setUpdateTime(null);
+            }
+            mouldIdList.add(exportDTO.getDetailId());
+        }
+        return dtos;
     }
 
     @Override

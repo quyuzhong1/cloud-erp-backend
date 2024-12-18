@@ -303,7 +303,8 @@ public class MouldInfoServiceImpl extends SuperServiceImpl<MouldInfoMapper, Moul
     public BatchResultDTO submit(String id) {
         MouldInfoEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到模具数据"));
         // 待提交或审核不通过并且未作废允许提交
-        if (Boolean.FALSE.equals(ApproveStatusEnum.allowUpdateStatus(ApproveStatusEnum.getByStatus(entity.getStatus())))) {
+        if (Boolean.FALSE.equals(ApproveStatusEnum.allowUpdateStatus(ApproveStatusEnum.getByStatus(entity.getStatus())))
+                || Boolean.TRUE.equals(entity.getInvalidStatus())) {
             throw new ServiceException(ApiError.ERROR_98010);
         }
         log.info("提交 开始启动模具表流程，id=：【{}】", entity.getId());
@@ -487,6 +488,9 @@ public class MouldInfoServiceImpl extends SuperServiceImpl<MouldInfoMapper, Moul
     public BatchResultDTO updateRemark(String id, String remark) {
         MouldDetailEntity detail = mouldDetailService.getByIdOpt(id).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "模具明细"));
         MouldInfoEntity entity = super.getByIdOpt(detail.getMainId()).orElseThrow(() -> new ServiceException("未找到模具数据"));
+        if (Boolean.TRUE.equals(entity.getInvalidStatus())) {
+            throw new ServiceException(ApiError.ERROR_95285);
+        }
         //更新备注
         detail.setRemark(remark);
         mouldDetailService.updateById(detail);
@@ -501,6 +505,9 @@ public class MouldInfoServiceImpl extends SuperServiceImpl<MouldInfoMapper, Moul
     public BatchResultDTO updateStoreLocation(String id, MouldInfoDTO.StoreLocationDTO dto) {
         MouldDetailEntity detail = mouldDetailService.getByIdOpt(id).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "模具明细"));
         MouldInfoEntity entity = super.getByIdOpt(detail.getMainId()).orElseThrow(() -> new ServiceException("未找到模具数据"));
+        if (Boolean.TRUE.equals(entity.getInvalidStatus())) {
+            throw new ServiceException(ApiError.ERROR_95285);
+        }
         MouldStoreLocationEntity old = Optional.ofNullable(mouldStoreLocationService.getByMouldDetailId(id)).orElse(new MouldStoreLocationEntity());
         MouldStoreLocationEntity storeLocation = new MouldStoreLocationEntity();
         storeLocation.setId(old.getId());
@@ -539,6 +546,9 @@ public class MouldInfoServiceImpl extends SuperServiceImpl<MouldInfoMapper, Moul
     public BatchResultDTO updateEnableTime(String id, LocalDate enableTime) {
         MouldDetailEntity detail = mouldDetailService.getByIdOpt(id).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "模具明细"));
         MouldInfoEntity entity = super.getByIdOpt(detail.getMainId()).orElseThrow(() -> new ServiceException("未找到模具数据"));
+        if (Boolean.TRUE.equals(entity.getInvalidStatus())) {
+            throw new ServiceException(ApiError.ERROR_95285);
+        }
         //更新启用时间
         detail.setEnableDate(enableTime);
         mouldDetailService.updateById(detail);
