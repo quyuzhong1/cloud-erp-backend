@@ -113,16 +113,25 @@ public class MouldInfoExcelListener extends AnalysisEventListener<MouldInfoImpor
      */
     private boolean checkFieldEquals(MouldDetailDTO.ViewDTO viewDTO1, MouldDetailDTO.ViewDTO dto) {
 
-        return viewDTO1.getTypeId().equals(dto.getTypeId()) && viewDTO1.getPayMethodId().equals(dto.getPayMethodId()) &&
-                viewDTO1.getPaymentCondition().equals(dto.getPaymentCondition()) && viewDTO1.getThirdMouldNo().equals(dto.getThirdMouldNo()) &&
-                viewDTO1.getMouldHoles().equals(dto.getMouldHoles()) && viewDTO1.getLength().equals(dto.getLength()) &&
-                viewDTO1.getWidth().equals(dto.getWidth()) && viewDTO1.getHeight().equals(dto.getHeight()) &&
-                viewDTO1.getMaterial().equals(dto.getMaterial()) && viewDTO1.getLifeCycle().equals(dto.getLifeCycle()) &&
-                viewDTO1.getDevelopCycle().equals(dto.getDevelopCycle()) && viewDTO1.getEnableDate().equals(dto.getEnableDate()) &&
-                viewDTO1.getQty().equals(dto.getQty()) && viewDTO1.getTaxPrice().equals(dto.getTaxPrice()) &&
-                viewDTO1.getTaxRate().equals(dto.getTaxRate()) && viewDTO1.getIsNeedRefund().equals(dto.getIsNeedRefund()) &&
-                viewDTO1.getRefundStandard().equals(dto.getRefundStandard()) && viewDTO1.getRefundOrderQty().equals(dto.getRefundOrderQty()) &&
-                viewDTO1.getRefundAmount().equals(dto.getRefundAmount());
+        return Objects.equals(viewDTO1.getTypeId(), dto.getTypeId()) &&
+                Objects.equals(viewDTO1.getPayMethodId(), dto.getPayMethodId()) &&
+                Objects.equals(viewDTO1.getPaymentCondition(), dto.getPaymentCondition()) &&
+                Objects.equals(viewDTO1.getThirdMouldNo(), dto.getThirdMouldNo()) &&
+                Objects.equals(viewDTO1.getMouldHoles(), dto.getMouldHoles()) &&
+                Objects.equals(viewDTO1.getLength(), dto.getLength()) &&
+                Objects.equals(viewDTO1.getWidth(), dto.getWidth()) &&
+                Objects.equals(viewDTO1.getHeight(), dto.getHeight()) &&
+                Objects.equals(viewDTO1.getMaterial(), dto.getMaterial()) &&
+                Objects.equals(viewDTO1.getLifeCycle(), dto.getLifeCycle()) &&
+                Objects.equals(viewDTO1.getDevelopCycle(), dto.getDevelopCycle()) &&
+                Objects.equals(viewDTO1.getEnableDate(), dto.getEnableDate()) &&
+                Objects.equals(viewDTO1.getQty(), dto.getQty()) &&
+                Objects.equals(viewDTO1.getTaxPrice(), dto.getTaxPrice()) &&
+                Objects.equals(viewDTO1.getTaxRate(), dto.getTaxRate()) &&
+                Objects.equals(viewDTO1.getIsNeedRefund(), dto.getIsNeedRefund()) &&
+                Objects.equals(viewDTO1.getRefundStandard(), dto.getRefundStandard()) &&
+                Objects.equals(viewDTO1.getRefundOrderQty(), dto.getRefundOrderQty()) &&
+                Objects.equals(viewDTO1.getRefundAmount(), dto.getRefundAmount());
     }
 
     @Override
