@@ -16,6 +16,7 @@ import com.sdk.third.lingxing.dto.Result;
 import com.sdk.third.lingxing.utils.LingxingApiUtils;
 import jnr.ffi.annotations.In;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
@@ -45,23 +46,41 @@ public class DmpInputLxApiInitHandler extends DmpInputInitHandler {
             requestMap = JSON.parseObject(extendJson, TreeMap.class);
         }
 
-        Result<Object> result = LingxingApiUtils.postRequestData(apiType, requestMap);
-        Object data = result.getData();
-        if (null == data){
+        // 结果
+        JSONArray resultList = new JSONArray();
+        // 分页参数
+        int page = 0;
+        int pageSize = 200;
+        requestMap.put("offset", page);
+        requestMap.put("length", pageSize);
+        // 首次请求
+        Result<Object> result = LingxingApiUtils.postRequestDataAndRetry(apiType, requestMap);
+
+        Map<String, Object> dataResultMap = (Map<String, Object>) result.getData();
+        Object totalObj = dataResultMap.get("total");
+        int total =  Integer.parseInt(totalObj.toString());
+        Object listObj = dataResultMap.get("list");
+        JSONArray jsonArray = JSONArray.parseArray(JSON.toJSONString(listObj));
+        if (CollectionUtils.isEmpty(jsonArray) || 0 == total) {
             return Collections.emptyList();
         }
-        Map<String, Object> dataResultMap = (Map<String, Object>) data;
-        Object totalObj = dataResultMap.get("total");
-        Object listObj = dataResultMap.get("list");
+        resultList.addAll(jsonArray);
 
-        List<JSONObject> resultList = new LinkedList<>();
-        JSONArray jsonArray = JSONArray.parseArray(JSON.toJSONString(totalObj));
-
-        int total = Integer.parseInt(listObj.toString());
-
+        if (500 <= total){
+            int totalPageSize = (total + pageSize - 1) / pageSize; // 计算总页数
+            for (int i = 1; i < totalPageSize; i++) {
+                // 从第二页开始请求
+                requestMap.put("offset", i);
+                // 当前请求
+                Result<Object> curResult = LingxingApiUtils.postRequestDataAndRetry(apiType, requestMap);
+                Map<String, Object> curDataResultMap = (Map<String, Object>) curResult.getData();
+                Object curListObj = curDataResultMap.get("list");
+                JSONArray curJsonArray = JSONArray.parseArray(JSON.toJSONString(curListObj));
+                resultList.addAll(curJsonArray);
+            }
+        }
         return Collections.singletonList(DmpInputTaskInitDTO.initMsg(JSON.toJSONString(listObj)));
     }
-
 
 
 }

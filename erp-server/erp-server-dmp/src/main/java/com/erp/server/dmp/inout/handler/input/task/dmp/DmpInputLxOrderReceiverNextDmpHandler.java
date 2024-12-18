@@ -24,21 +24,11 @@ public class DmpInputLxOrderReceiverNextDmpHandler extends DmpInputDoNextDmpHand
 
     @Override
     protected List<Map<String, Object>> getDetailList(Map<String, Object> dmpInputMongoEntity) {
-        Object detailListObj = dmpInputMongoEntity.get("address_info");
-        if (null == detailListObj) {
+        Object addressObj = dmpInputMongoEntity.get("address_info");
+        if (null == addressObj) {
             return Collections.emptyList();
         }
-        // 退货/退款信息
-        JSONArray jsonArray = JSON.parseArray(JSON.toJSONString(detailListObj));
-        if (CollectionUtils.isEmpty(jsonArray)) {
-            return Collections.emptyList();
-        }
-        List<Map<String, Object>> resultList = new LinkedList<>();
-
-        for (Object detailObj : jsonArray) {
-            JSONObject jsonObject = (JSONObject) JSON.toJSON(detailObj);
-            resultList.add(jsonObject);
-        }
-        return resultList;
+        Map<String, Object> addressMap = (Map<String, Object>) addressObj;
+        return Collections.singletonList(addressMap);
     }
 }
