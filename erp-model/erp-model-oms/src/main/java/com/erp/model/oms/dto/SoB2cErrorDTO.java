@@ -307,6 +307,10 @@ public class SoB2cErrorDTO implements Serializable {
          * 异常类型
          */
         private String type;
+        /**
+         * 异常类型名称
+         */
+        private String typeName;
 
     }
 }
