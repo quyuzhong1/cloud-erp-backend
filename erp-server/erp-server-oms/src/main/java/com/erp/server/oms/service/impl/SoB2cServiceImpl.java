@@ -9348,12 +9348,12 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     }
 
     @Override
-    public void writeBackSoOutstockDate(String soId, LocalDate soOutstockDate) {
+    public void writeBackSoOutstockDate(String soId, String soOutstockDate) {
         if(StringUtils.isBlank(soId) || null == soOutstockDate){
             return ;
         }
         lambdaUpdate()
-                .set(SoB2cEntity::getSoOutstockDate,soOutstockDate)
+                .set(SoB2cEntity::getSoOutstockDate,DateTimeFormatter.ofPattern("yyyy-MM-dd").parse(soOutstockDate))
                 .eq(SoB2cEntity::getId,soId)
                 .update();
     }

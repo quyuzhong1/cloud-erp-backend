@@ -24,7 +24,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.util.List;
 
 @FeignClient(name = "erp-oms", contextId = "soB2c")
@@ -691,5 +690,5 @@ public interface SoB2cFeign {
      * @param soOutstockDate
      */
     @GetMapping("feign/soB2c/writeBackSoOutstockDate")
-    void writeBackSoOutstockDate(@RequestParam("soId") String soId, @RequestParam("soOutstockDate") LocalDate soOutstockDate);
+    void writeBackSoOutstockDate(@RequestParam("soId") String soId, @RequestParam("soOutstockDate") String soOutstockDate);
 }
