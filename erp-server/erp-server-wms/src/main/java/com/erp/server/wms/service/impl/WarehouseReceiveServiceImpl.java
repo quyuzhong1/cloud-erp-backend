@@ -159,9 +159,6 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
     public PagingVO<WarehouseReceiveDTO.PagingViewDTO> paging(PagingDTO<WarehouseReceiveDTO.PagingParamDTO> pagingParamDTO) {
         pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
         Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
-        if (CollectionUtils.isNotEmpty(pagingParamDTO.getParams().getApproveStatusList())) {
-            pagingParamDTO.getParams().setInvalidStatus(Boolean.FALSE);
-        }
         IPage<WarehouseReceiveDTO.PagingViewDTO> pageData = this.baseMapper.paging(query, pagingParamDTO.getParams());
         if (CollectionUtils.isEmpty(pageData.getRecords())) {
             return new PagingVO(new Page());
@@ -222,33 +219,33 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
      **/
     @Override
     public List<WarehouseReceiveDTO.WarehouseReceiveCountDTO> listCount(PermissionsDTO dto) {
-        PageListTypeEnum[] values = PageListTypeEnum.values();
+        List<WarehouseReceiveDTO.WarehouseReceiveCountDTO> dbList = this.baseMapper.listCount(dto);
         List<WarehouseReceiveDTO.WarehouseReceiveCountDTO> list = new ArrayList<>();
+        PageListTypeEnum[] values = PageListTypeEnum.values();
         for (PageListTypeEnum item : values) {
-            WarehouseReceiveDTO.PagingParamDTO pagingParamDTO = new WarehouseReceiveDTO.PagingParamDTO();
-            pagingParamDTO.setPermissionSql(dto.getPermissionSql());
-            pagingParamDTO.setInvalidStatus(Boolean.FALSE);
-            WarehouseReceiveDTO.WarehouseReceiveCountDTO resultDTO = new WarehouseReceiveDTO.WarehouseReceiveCountDTO();
-            Integer count = MathUtil.ZERO;
+            String dbStatus = "";
             if (PageListTypeEnum.WAIT_SUBMIT.getCode().equals(item.getCode())) {
-                pagingParamDTO.setApproveStatusList(Collections.singletonList(ApproveStatusEnum.WAIT_SUBMIT.getStatus()));
-                count = this.baseMapper.listCount(pagingParamDTO);
+                dbStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
             }
             if (PageListTypeEnum.TO_BE_APPROVE.getCode().equals(item.getCode())) {
-                pagingParamDTO.setApproveStatusList(Collections.singletonList(ApproveStatusEnum.APPROVE_ING.getStatus()));
-                count = this.baseMapper.listCount(pagingParamDTO);
+                dbStatus = ApproveStatusEnum.APPROVE_ING.getStatus();
             }
             if (PageListTypeEnum.APPROVE.getCode().equals(item.getCode())) {
-                pagingParamDTO.setApproveStatusList(Collections.singletonList(ApproveStatusEnum.APPROVE.getStatus()));
-                count = this.baseMapper.listCount(pagingParamDTO);
+                dbStatus = ApproveStatusEnum.APPROVE.getStatus();
             }
             if (PageListTypeEnum.REJECT.getCode().equals(item.getCode())) {
-                pagingParamDTO.setApproveStatusList(Collections.singletonList(ApproveStatusEnum.REJECT.getStatus()));
-                count = this.baseMapper.listCount(pagingParamDTO);
+                dbStatus = ApproveStatusEnum.REJECT.getStatus();
             }
-            resultDTO.setCount(ObjectUtils.isEmpty(count) ? MathUtil.ZERO : count);
-            resultDTO.setType(item.getCode());
-            list.add(resultDTO);
+            String finalDbStatus = dbStatus;
+            WarehouseReceiveDTO.WarehouseReceiveCountDTO dbDTO = dbList.stream().filter(v->v.getType().equals(finalDbStatus)).findFirst().orElse(null);
+            WarehouseReceiveDTO.WarehouseReceiveCountDTO result =new WarehouseReceiveDTO.WarehouseReceiveCountDTO();
+            result.setType(item.getCode());
+            if(Objects.nonNull(dbDTO)){
+                result.setCount(dbDTO.getCount());
+            }else{
+                result.setCount(0);
+            }
+            list.add(result);
         }
         return list;
     }
@@ -542,7 +539,6 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
     /**
      * 批量审核
      *
-     * @param baseApproveParamDTO baseApproveParamDTO
      * @return com.common.core.controller.vo.ApiResult
      * @Author Luo_WG
      * @Date 2023/4/6 19:06
@@ -1294,36 +1290,33 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
 
     @Override
     public List<WarehouseReceiveDTO.PdaPoReceiveCountDTO> pdaListCount(PermissionsDTO dto) {
-        LocalDate endDate = LocalDate.now();
-        LocalDate startDate = endDate.minusDays(30);
-        PdaTabFlagEnum[] values = PdaTabFlagEnum.values();
+
+        List<WarehouseReceiveDTO.WarehouseReceiveCountDTO> dbList = this.baseMapper.listCount(dto);
         List<WarehouseReceiveDTO.PdaPoReceiveCountDTO> list = new ArrayList<>();
+        PdaTabFlagEnum[] values = PdaTabFlagEnum.values();
         for (PdaTabFlagEnum item : values) {
-            WarehouseReceiveDTO.PagingParamDTO pagingParamDTO = new WarehouseReceiveDTO.PagingParamDTO();
-            pagingParamDTO.setPermissionSql(dto.getPermissionSql());
-            pagingParamDTO.setInvalidStatus(Boolean.FALSE);
-            WarehouseReceiveDTO.PdaPoReceiveCountDTO resultDTO = new WarehouseReceiveDTO.PdaPoReceiveCountDTO();
-            Integer count = MathUtil.ZERO;
+            List<String> dbStatusList = new ArrayList<>();
             if (PdaTabFlagEnum.WAIT_SUBMIT_AND_REJECT.getCode().equals(item.getCode())) {
-                pagingParamDTO.setApproveStatusList(Arrays.asList(ApproveStatusEnum.WAIT_SUBMIT.getStatus(), ApproveStatusEnum.REJECT.getStatus()));
-                count = this.baseMapper.pdaListCount(pagingParamDTO);
+                dbStatusList = Arrays.asList(ApproveStatusEnum.WAIT_SUBMIT.getStatus(), ApproveStatusEnum.REJECT.getStatus());
             }
             if (PdaTabFlagEnum.APPROVE_ING.getCode().equals(item.getCode())) {
-                pagingParamDTO.setApproveStatusList(Collections.singletonList(ApproveStatusEnum.APPROVE_ING.getStatus()));
-                count = this.baseMapper.pdaListCount(pagingParamDTO);
+                dbStatusList = Collections.singletonList(ApproveStatusEnum.APPROVE_ING.getStatus());
             }
             if (PdaTabFlagEnum.APPROVE.getCode().equals(item.getCode())) {
-                pagingParamDTO.setApproveStatusList(Collections.singletonList(ApproveStatusEnum.APPROVE.getStatus()));
-                List<LocalDate> dateList = new ArrayList<>();
-                dateList.add(startDate);
-                dateList.add(endDate);
-                pagingParamDTO.setBillDate(dateList);
-                count = this.baseMapper.pdaListCount(pagingParamDTO);
+                dbStatusList =Collections.singletonList(ApproveStatusEnum.APPROVE.getStatus());
             }
-            resultDTO.setCount(ObjectUtils.isEmpty(count) ? MathUtil.ZERO : count);
-            resultDTO.setTabFlag(item.getCode());
-            list.add(resultDTO);
+            List<String> finalDbStatusList = dbStatusList;
+            List<WarehouseReceiveDTO.WarehouseReceiveCountDTO> dbDTO = dbList.stream().filter(v-> finalDbStatusList.contains(v.getType())).collect(Collectors.toList());
+            WarehouseReceiveDTO.PdaPoReceiveCountDTO result =new WarehouseReceiveDTO.PdaPoReceiveCountDTO();
+            result.setTabFlag(item.getCode());
+            if(CollectionUtils.isNotEmpty(dbDTO)){
+                result.setCount(dbDTO.stream().mapToInt(WarehouseReceiveDTO.WarehouseReceiveCountDTO::getCount).sum());
+            }else{
+                result.setCount(0);
+            }
+            list.add(result);
         }
+
         return list;
     }
 

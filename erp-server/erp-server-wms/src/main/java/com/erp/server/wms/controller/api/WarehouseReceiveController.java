@@ -2,6 +2,7 @@ package com.erp.server.wms.controller.api;
 
 import cn.hutool.core.text.CharSequenceUtil;
 import com.common.business.annotation.DataPermission;
+import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
@@ -61,6 +62,7 @@ public class WarehouseReceiveController extends BaseController {
             menuCode = "wms:warehouseReceive:paging",
             tableAlias = "wr"
     )
+    @WebAdvanceQuery
     public ApiResult<PagingVO<WarehouseReceiveDTO.PagingViewDTO>> paging(@RequestBody @Validated PagingDTO<WarehouseReceiveDTO.PagingParamDTO> dto) {
         PagingVO<WarehouseReceiveDTO.PagingViewDTO> pagingVO = warehouseReceiveService.paging(dto);
         return success(pagingVO);
