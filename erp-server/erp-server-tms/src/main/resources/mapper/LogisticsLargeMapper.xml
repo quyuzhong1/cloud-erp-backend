@@ -152,7 +152,7 @@
         ll.source_type AS sourceType,
         ll.source_detail_id AS sourceDetailId,
         ll.reconciliation_bill_type AS reconciliationBillType,
-        TO_CHAR(ll.reconciliation_month, 'YYYY-MM') AS reconciliationMonth, -- 格式化日期为年-月
+        ll.reconciliation_month AS reconciliationMonth,
         ll.create_time AS createTime,
         ll.logistics_bill_id
         FROM logistics_large ll
