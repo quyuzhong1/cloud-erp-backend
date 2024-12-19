@@ -221,7 +221,7 @@ public class VirtualTransFlowDetailServiceImpl extends SuperServiceImpl<VirtualT
             addDTO.setVirtualInventoryDetailId(detailEntity.getId());
             //批次库存数量是否大于剩余出库数量
             boolean isOver = detailEntity.getQty() > notOutQty;
-            addDTO.setQty(isOver ? - notOutQty : detailEntity.getQty());
+            addDTO.setQty(isOver ? - notOutQty : - detailEntity.getQty());
             addDTO.setCurInventoryQty(detailEntity.getQty() - Math.abs(addDTO.getQty()));
             //剩余未出数量
             notOutQty = notOutQty - Math.abs(addDTO.getQty());
