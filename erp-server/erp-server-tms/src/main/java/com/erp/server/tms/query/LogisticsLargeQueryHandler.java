@@ -10,10 +10,7 @@ public class LogisticsLargeQueryHandler extends AbstractQueryHandler {
 
     @Override
     protected String handleSqlLogic(String field, Object value, String compareCodeSplicingValueSql) {
-        if ("ll.reconciliation_month".equals(field)) {
-            super.buildDefaultDTO("TO_CHAR(ll.reconciliation_month, 'yyyy-MM')", value);
-        }
-        return super.getSplicingSQL();
+        return null;
     }
 
 
