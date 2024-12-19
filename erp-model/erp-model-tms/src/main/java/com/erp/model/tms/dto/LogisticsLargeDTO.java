@@ -380,7 +380,7 @@ public class LogisticsLargeDTO implements Serializable {
         /**
         * 财务期间
         */
-        private LocalDate reconciliationMonth;
+        private String reconciliationMonth;
 
         /**
         * 出库单号

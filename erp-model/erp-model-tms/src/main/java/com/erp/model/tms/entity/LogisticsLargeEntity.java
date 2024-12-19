@@ -348,7 +348,7 @@ public class LogisticsLargeEntity extends BaseEntity<LogisticsLargeEntity> {
      * 财务期间
      */
     @TableField("reconciliation_month")
-    private LocalDate reconciliationMonth;
+    private String reconciliationMonth;
     /**
      * 是否是对冲预估账单的数据标识
      */

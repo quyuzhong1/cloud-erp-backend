@@ -92,7 +92,8 @@ import static com.common.core.controller.vo.ApiResult.success;
 @Service
 public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMapper, LogisticsLargeEntity> implements LogisticsLargeService {
     DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-
+    // 定义日期时间格式
+    DateTimeFormatter formatterM = DateTimeFormatter.ofPattern("yyyy-MM");
     @Autowired
     private OperateLogService operateLogService;
 
@@ -368,7 +369,7 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
         addDTO.setSourceId(entity.getId());
         addDTO.setSourceType(SourceTypeEnum.FIRST_MILE_COST_ALLOCATION.getCode());
         addDTO.setSourceDetailId(firstMileSkuCostAllocationEntity.getSourceDetailId());
-        addDTO.setReconciliationMonth(monthEntity.getMonth());
+        addDTO.setReconciliationMonth(monthEntity.getMonth().format(formatterM));
         addDTO.setOutstockCode(deliveryEntity.getCode());
         addDTO.setOutstockTime(deliveryEntity.getApproveTime());
         addDTO.setLogisticsBillId(logisticsBillEntity.getId());
@@ -653,11 +654,8 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
 
 
         if (CharSequenceUtil.isNotBlank(smallBagCostAllocationMainEntity.getReportDate())) {
-            // 在日期字符串末尾添加"01"来补充日期部分
-            String dateWithDay = smallBagCostAllocationMainEntity.getReportDate() + "-01";
-            // 解析字符串并转换为LocalDate
-            LocalDate reconciliationMonth = LocalDate.parse(dateWithDay, formatter);
-            addDTO.setReconciliationMonth(reconciliationMonth);
+
+            addDTO.setReconciliationMonth(smallBagCostAllocationMainEntity.getReportDate());
         }
 
         addDTO.setOutstockCode(soOutstockEntity.getCode());
@@ -959,14 +957,8 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
             //如果有需要生成负数的对冲预估账单
             if (CollUtil.isNotEmpty(estimatedList)) {
                 for (LogisticsLargeEntity logisticsLargeEntity : estimatedList) {
-                    LocalDate reconciliationMonth = logisticsLargeEntity.getReconciliationMonth();
-                    //对冲的财务区间取实际账单的
-                    if (CharSequenceUtil.isNotBlank(mainEntity.getReportDate())) {
-                        String dateWithDay = mainEntity.getReportDate() + "-01";
-                        reconciliationMonth = LocalDate.parse(dateWithDay, formatter);
-                    }
                     //冲预估账单
-                    hedgingEstimated(logisticsLargeEntity, reconciliationMonth);
+                    hedgingEstimated(logisticsLargeEntity, logisticsLargeEntity.getReconciliationMonth());
                 }
             }
         }
@@ -980,7 +972,7 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
     /**
      * 对冲物流大表预估账单
      */
-    private void hedgingEstimated(LogisticsLargeEntity entity, LocalDate reconciliationMonth) {
+    private void hedgingEstimated(LogisticsLargeEntity entity, String reconciliationMonth) {
         entity.setId(null);
         entity.setReconciliationMonth(reconciliationMonth);
         entity.setBillTotalAmount(entity.getBillTotalAmount().negate());
@@ -1088,11 +1080,7 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
         addDTO.setLogisticsBillId(logisticsBillEntity.getId());
         addDTO.setLogisticsBillCostId(logisticsBillCostEntity.getId());
         if (CharSequenceUtil.isNotBlank(mainEntity.getReportDate())) {
-            // 在日期字符串末尾添加"01"来补充日期部分
-            String dateWithDay = mainEntity.getReportDate() + "-01";
-            // 解析字符串并转换为LocalDate
-            LocalDate reconciliationMonth = LocalDate.parse(dateWithDay, formatter);
-            addDTO.setReconciliationMonth(reconciliationMonth);
+            addDTO.setReconciliationMonth(mainEntity.getReportDate());
         }
 
         addDTO.setReconciliationBillType(ReconciliationBillTypeEnum.ACTUAL.getCode());
