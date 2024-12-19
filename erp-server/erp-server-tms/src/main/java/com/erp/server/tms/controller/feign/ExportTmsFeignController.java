@@ -71,9 +71,9 @@ public class ExportTmsFeignController {
     @Resource
     private FirstMileWeightAllocationService firstMileWeightAllocationService;
     @Resource
-    private LogisticsLargeService logisticsLargeService;
-    @Resource
     private RemotePostcodeService remotePostcodeService;
+    @Resource
+    private LogisticsLargeService logisticsLargeService;
 
     @PostMapping("/b2BDeclareBill")
     @WebAdvanceQuery(handler = TmsB2BDeclareQueryHandler.class)
@@ -296,7 +296,14 @@ public class ExportTmsFeignController {
     public PagingVO<FirstMileWeightAllocationDTO.ViewDTO> exportFirstMileWeightAllocation(@RequestBody @Valid PagingDTO<FirstMileWeightAllocationDTO.PagingParamDTO> dto) {
         return firstMileWeightAllocationService.paging(dto);
     }
-
+    /**
+     * 偏远邮编到处
+     */
+    @PostMapping("/exportRemotePostcode")
+    @WebAdvanceQuery
+    public PagingVO<RemotePostcodeDTO.ExportListDTO> exportRemotePostcode(@RequestBody @Valid PagingDTO<RemotePostcodeDTO.ExportDTO> dto) {
+        return remotePostcodeService.listExport(dto);
+    }
     /**
      * 物流大表
      * @param dto
@@ -306,13 +313,5 @@ public class ExportTmsFeignController {
     @WebAdvanceQuery(handler = LogisticsLargeQueryHandler.class)
     public PagingVO<LogisticsLargeDTO.PagingViewDTO> exportLogisticsLarge(@RequestBody @Valid PagingDTO<LogisticsLargeDTO.PagingParamDTO> dto) {
         return logisticsLargeService.paging(dto);
-    }
-    /**
-     * 偏远邮编到处
-     */
-    @PostMapping("/exportRemotePostcode")
-    @WebAdvanceQuery
-    public PagingVO<RemotePostcodeDTO.ExportListDTO> exportRemotePostcode(@RequestBody @Valid PagingDTO<RemotePostcodeDTO.ExportDTO> dto) {
-        return remotePostcodeService.listExport(dto);
     }
 }

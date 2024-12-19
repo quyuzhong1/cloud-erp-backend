@@ -98,20 +98,6 @@ import com.erp.model.tms.dto.TmsCostDetailDTO.UpdateDTO;
 import com.erp.model.tms.dto.excel.LogisticsBillCostExcelDTO;
 import com.erp.model.tms.entity.*;
 import com.erp.model.tms.enums.*;
-import com.erp.model.tms.entity.CfgSettingEntity;
-import com.erp.model.tms.entity.InventorySkuCostDetailEntity;
-import com.erp.model.tms.entity.InventorySkuCostEntity;
-import com.erp.model.tms.entity.LogisticsBillCostEntity;
-import com.erp.model.tms.entity.LogisticsBillDetailEntity;
-import com.erp.model.tms.entity.LogisticsBillEntity;
-import com.erp.model.tms.entity.LogisticsChannelEntity;
-import com.erp.model.tms.entity.SmallBagCostAllocationDetailEntity;
-import com.erp.model.tms.entity.SmallBagCostAllocationEntity;
-import com.erp.model.tms.entity.SmallBagCostAllocationMainEntity;
-import com.erp.model.tms.entity.TmsCfgCostEntity;
-import com.erp.model.tms.entity.TmsCostDetailEntity;
-import com.erp.model.tms.entity.TmsFirstMileReconciliationDetailEntity;
-import com.erp.model.tms.entity.TmsFirstMileReconciliationEntity;
 import com.erp.model.tms.enums.AllocationFeeTypeEnum;
 import com.erp.model.tms.enums.CfgSettingEnum;
 import com.erp.model.tms.enums.CostAllocationEnum;
@@ -727,7 +713,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
                 }
                 entity.setExchangeRate(rate);
             }
-
+        }
         String sourceId = logisticsBillEntity.getSourceId();
         if(StringUtils.isNotBlank(sourceId)) {
         	List<SoB2cLogisticsEntity> soB2cLogisticsList = FeignQuery.create(SoB2cLogisticsEntity.class).eq(SoB2cLogisticsEntity::getMainId, sourceId).list();
@@ -935,7 +921,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
             //物流费用单
             LogisticsBillCostEntity logisticsBillCostEntity = logisticsBillCostList.stream().filter(obj -> obj.getLogisticsBillId().equals(logisticsBillVo.getId())
                     && CharSequenceUtil.equals(obj.getLogisticsBillDetailId(),logisticsBillDetailEntity.getId())
-                    && CharSequenceUtil.equals(obj.getPayType(),billCostExcelDTO.getPayType()))
+            		&& CharSequenceUtil.equals(obj.getPayType(),billCostExcelDTO.getPayType()))
                     .findFirst().orElse(new LogisticsBillCostEntity());
             if (Objects.isNull(logisticsBillCostEntity.getId())){
                 continue;
@@ -1310,8 +1296,12 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
                     }
             	}
             }
-            if (Objects.nonNull(logisticsBillCostEntity)){
-                if (!CharSequenceUtil.equals(excelDTO.getCurrency(),logisticsBillCostEntity.getCurrency())) {
+
+            if (ObjectUtil.isNotEmpty(logisticsBillCostEntity)){
+                String currency = CharSequenceUtil.isBlank(excelDTO.getCurrency()) ? logisticsBillCostEntity.getCurrency() : excelDTO.getCurrency();
+				excelDTO.setCurrency(currency);
+
+                if (ObjectUtil.isNotEmpty(logisticsBillCostEntity) && !CharSequenceUtil.equals(excelDTO.getCurrency(),logisticsBillCostEntity.getCurrency())) {
                     errorMsgList.add("导入币别与物流费用单币别不一致");
                 }
                 if (ReconciliationStatusEnum.CONFIRMED.getCode().equals(logisticsBillCostEntity.getReconciliationStatus())

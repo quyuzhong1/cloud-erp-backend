@@ -96,11 +96,11 @@ public class TmsFirstMileReconciliationServiceImpl extends SuperServiceImpl<TmsF
     @Lazy
     private FirstMileSkuCostAllocationService firstMileSkuCostAllocationService;
     @Resource
+    private DmpTaskFeign dmpTaskFeign;
     @Lazy
+    @Resource
     private LogisticsLargeService logisticsLargeService;
 
-    @Resource
-    private DmpTaskFeign dmpTaskFeign;
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -775,33 +775,6 @@ public class TmsFirstMileReconciliationServiceImpl extends SuperServiceImpl<TmsF
     }
 
     @Override
-    public void initExchangeRate() {
-        List<TmsFirstMileReconciliationEntity> list = this.lambdaQuery()
-                .select(TmsFirstMileReconciliationEntity::getId,TmsFirstMileReconciliationEntity::getCurrency,TmsFirstMileReconciliationEntity::getExchangeRate,TmsFirstMileReconciliationEntity::getCreateTime)
-                .eq(TmsFirstMileReconciliationEntity::getExchangeRate, BigDecimal.ZERO).list();
-        if (CollUtil.isEmpty(list)){
-            return;
-        }
-        List<List<TmsFirstMileReconciliationEntity>> partition = ListUtil.partition(list, 100);
-        for (List<TmsFirstMileReconciliationEntity> entityList : partition){
-            if (CollUtil.isEmpty(entityList)){
-                continue;
-            }
-            for (TmsFirstMileReconciliationEntity entity : entityList){
-                if (CurrencyEnum.CNY.getCurrencyCode().equals(entity.getCurrency())){
-                    this.lambdaUpdate().set(TmsFirstMileReconciliationEntity::getExchangeRate, BigDecimal.ONE).eq(TmsFirstMileReconciliationEntity::getId, entity.getId()).update();
-                }else {
-                    String currentDate = entity.getCreateTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
-                    BigDecimal rate = dmpTaskFeign.getRate(currentDate, entity.getCurrency());
-                    if (Objects.nonNull(rate)){
-                        this.lambdaUpdate().set(TmsFirstMileReconciliationEntity::getExchangeRate, rate).eq(TmsFirstMileReconciliationEntity::getId, entity.getId()).update();
-                    }
-                }
-            }
-        }
-    }
-
-    @Override
     public BatchResultDTO updatePayStatus(TmsFirstMileReconciliationDTO.UpdatePayStatusDTO dto, String id) {
         if (CollUtil.isEmpty(dto.getIds())) {
             throw new ServiceException(ApiError.ERROR_98004);
@@ -827,5 +800,32 @@ public class TmsFirstMileReconciliationServiceImpl extends SuperServiceImpl<TmsF
             logisticsLargeService.updatePayStatusBySourceId(ids, dto.getPayStatus(), payTime);
         }
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.CANCEL_PROCESS);
+    }
+
+    @Override
+    public void initExchangeRate() {
+        List<TmsFirstMileReconciliationEntity> list = this.lambdaQuery()
+                .select(TmsFirstMileReconciliationEntity::getId,TmsFirstMileReconciliationEntity::getCurrency,TmsFirstMileReconciliationEntity::getExchangeRate,TmsFirstMileReconciliationEntity::getCreateTime)
+                .eq(TmsFirstMileReconciliationEntity::getExchangeRate, BigDecimal.ZERO).list();
+        if (CollUtil.isEmpty(list)){
+            return;
+        }
+        List<List<TmsFirstMileReconciliationEntity>> partition = ListUtil.partition(list, 100);
+        for (List<TmsFirstMileReconciliationEntity> entityList : partition){
+            if (CollUtil.isEmpty(entityList)){
+                continue;
+            }
+            for (TmsFirstMileReconciliationEntity entity : entityList){
+                if (CurrencyEnum.CNY.getCurrencyCode().equals(entity.getCurrency())){
+                    this.lambdaUpdate().set(TmsFirstMileReconciliationEntity::getExchangeRate, BigDecimal.ONE).eq(TmsFirstMileReconciliationEntity::getId, entity.getId()).update();
+                }else {
+                    String currentDate = entity.getCreateTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+                    BigDecimal rate = dmpTaskFeign.getRate(currentDate, entity.getCurrency());
+                    if (Objects.nonNull(rate)){
+                        this.lambdaUpdate().set(TmsFirstMileReconciliationEntity::getExchangeRate, rate).eq(TmsFirstMileReconciliationEntity::getId, entity.getId()).update();
+                    }
+                }
+            }
+        }
     }
 }
