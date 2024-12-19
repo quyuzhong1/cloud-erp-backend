@@ -126,6 +126,10 @@ public class SoDetailDTO implements Serializable {
          */
         private BigDecimal taxAmountBefore;
 
+        /**
+         * 客户PO号
+         */
+        private String customerPO;
     }
 
 
@@ -370,6 +374,10 @@ public class SoDetailDTO implements Serializable {
         private BigDecimal taxPriceLc;
 
         /**
+         * 客户PO号
+         */
+        private String customerPO;
+        /**
          * 发货状态 unShipped 未发货  partialShipment 部分发货  completeShipment 已发货
          */
         private String deliveryStatus;
@@ -568,6 +576,10 @@ public class SoDetailDTO implements Serializable {
          */
         @Size(max = 200, message = "备注最大200字符")
         private String remark;
+        /**
+         * 客户PO号
+         */
+        private String customerPO;
     }
 
 
@@ -1012,6 +1024,26 @@ public class SoDetailDTO implements Serializable {
          * 是否子sku
          */
         private Boolean isChildSkuNo = false;
+        /**
+         *退货金额
+         */
+        private BigDecimal returnAmount;
+        /**
+         *含税退货金额
+         */
+        private BigDecimal taxReturnAmount;
+        /**
+         *退货金额（本位币）
+         */
+        private BigDecimal returnAmountLocalCurrency;
+        /**
+         *含税退货金额（本位币）
+         */
+        private BigDecimal taxReturnAmountLocalCurrency;
+        /**
+         *汇率
+         */
+        private BigDecimal exchangeRate;
     }
 
 

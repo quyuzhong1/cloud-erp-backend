@@ -7,9 +7,11 @@ import com.common.business.config.DocNoGenHelper;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.utils.ApplicationContextUtils;
 import com.common.core.enums.CurrencyEnum;
+import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.plm.dto.MouldDetailDTO;
 import com.erp.model.plm.entity.*;
+import com.erp.model.plm.enums.MouldRefundStatusEnum;
 import com.erp.server.plm.mapper.MouldDetailMapper;
 import com.erp.server.plm.service.*;
 import lombok.extern.slf4j.Slf4j;
@@ -50,15 +52,26 @@ public class MouldDetailServiceImpl extends SuperServiceImpl<MouldDetailMapper, 
     private MouldRefProductService mouldRefProductService;
 
     @Override
-    public void add(List<MouldDetailDTO.UpdateDTO> detailList, MouldInfoEntity entity) {
+    public void add(List<MouldDetailDTO.UpdateDTO> detailList, MouldInfoEntity entity, boolean isDraft) {
+        verifyData(detailList, isDraft);
         List<MouldDetailEntity> mouldDetailList = list(Wrappers.<MouldDetailEntity>lambdaQuery().eq(MouldDetailEntity::getMainId, entity.getId()));
         List<String> detailIds = mouldDetailList.stream().map(MouldDetailEntity::getId).collect(Collectors.toList());
+        //过滤已返的数据编辑合同返还约定
+        List<String> refundIds = mouldRefundAgreementService.listByMouldDetailIdListAndStatus(detailIds, MouldRefundStatusEnum.RETURNED.getCode());
         if (!CollectionUtils.isEmpty(detailIds)) {
             mouldProductService.remove(Wrappers.<MouldProductEntity>lambdaQuery().in(MouldProductEntity::getMouldDetailId, detailIds));
             mouldPurchasePriceService.remove(Wrappers.<MouldPurchasePriceEntity>lambdaQuery().in(MouldPurchasePriceEntity::getMouldDetailId, detailIds));
-            mouldRefundAgreementService.remove(Wrappers.<MouldRefundAgreementEntity>lambdaQuery().in(MouldRefundAgreementEntity::getMouldDetailId, detailIds));
+            mouldRefundAgreementService.remove(Wrappers.<MouldRefundAgreementEntity>lambdaQuery()
+                    .ne(MouldRefundAgreementEntity::getRefundStatus, MouldRefundStatusEnum.RETURNED.getCode())
+                    .notIn(!CollectionUtils.isEmpty(refundIds), MouldRefundAgreementEntity::getMouldDetailId, refundIds)
+                    .in(MouldRefundAgreementEntity::getMouldDetailId, detailIds));
             mouldRefProductService.remove(Wrappers.<MouldRefProductEntity>lambdaQuery().in(MouldRefProductEntity::getMouldDetailId, detailIds));
-
+            List<String> removeIds = detailIds.stream().
+                    filter(id -> detailList.stream().noneMatch(v -> v.getId().equals(id)))
+                    .collect(Collectors.toList());
+            if (!CollectionUtils.isEmpty(removeIds)) {
+                removeByIds(removeIds);
+            }
         }
         List<MouldDetailEntity> details = new ArrayList<>();
         List<MouldRefundAgreementEntity> agreementList = new ArrayList<>();
@@ -74,10 +87,12 @@ public class MouldDetailServiceImpl extends SuperServiceImpl<MouldDetailMapper, 
                 mouldDetail.setId(IdWorker.getIdStr());
             }
             details.add(mouldDetail);
-            MouldRefundAgreementEntity agreement = BeanMapperUtils.map(MouldRefundAgreementEntity.class, dto);
-            agreement.setMouldDetailId(mouldDetail.getId());
-            agreement.setId(null);
-            agreementList.add(agreement);
+            if (!refundIds.contains(dto.getId())) {
+                MouldRefundAgreementEntity agreement = BeanMapperUtils.map(MouldRefundAgreementEntity.class, dto);
+                agreement.setMouldDetailId(mouldDetail.getId());
+                agreement.setId(null);
+                agreementList.add(agreement);
+            }
             MouldPurchasePriceEntity price = BeanMapperUtils.map(MouldPurchasePriceEntity.class, dto);
             price.setMouldDetailId(mouldDetail.getId());
             price.setCurrency(CurrencyEnum.RMB.getCurrencyCode());
@@ -115,6 +130,29 @@ public class MouldDetailServiceImpl extends SuperServiceImpl<MouldDetailMapper, 
         mouldPurchasePriceService.saveBatch(purchasePriceList);
         mouldProductService.saveBatch(productList);
         mouldRefProductService.saveBatch(mouldRefProductList);
+    }
+
+    private void verifyData(List<MouldDetailDTO.UpdateDTO> detailList, boolean isDraft) {
+        for (MouldDetailDTO.UpdateDTO dto : detailList) {
+            if (Boolean.TRUE.equals(dto.getIsNeedRefund()) && Boolean.FALSE.equals(isDraft)) {
+                StringBuilder sb = new StringBuilder();
+                if (CollectionUtils.isEmpty(dto.getRefProductList())) {
+                    sb.append("关联下单sku不能为空，");
+                }
+                if (ObjectUtils.isEmpty(dto.getRefundAmount())) {
+                    sb.append("返还金额不能为空，");
+                }
+                if (ObjectUtils.isEmpty(dto.getRefundOrderQty())) {
+                    sb.append("返还单量不能为空，");
+                }
+                if (ObjectUtils.isEmpty(dto.getRefundStandard())) {
+                    sb.append("返还标准不能为空，");
+                }
+                if (!ObjectUtils.isEmpty(sb.toString())) {
+                    throw new ServiceException(sb.insert(0, "费用返还为是时").toString());
+                }
+            }
+        }
     }
 
     @Override

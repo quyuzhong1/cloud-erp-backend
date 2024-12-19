@@ -17,4 +17,11 @@ public interface MouldRefundAgreementService extends SuperService<MouldRefundAgr
 
 
     List<MouldRefundAgreementEntity> listByMouldDetailIdList(List<String> detailIds);
+
+    /**
+     * 根据状态和模具明细id查询
+     * @param detailIds 明细id
+     * @param code 状态
+     */
+    List<String> listByMouldDetailIdListAndStatus(List<String> detailIds, String code);
 }

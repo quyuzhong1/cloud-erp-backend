@@ -58,6 +58,7 @@ import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.entity.OverseasProviderEntity;
 import com.erp.rpc.dmp.feign.DmpInoutTaskFeign;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
+import com.erp.rpc.plm.feign.BomSkuFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.wms.feign.OverseasProviderFeign;
 import com.erp.rpc.wms.feign.WmsOverseasWarehouseFeign;
@@ -72,6 +73,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.ss.formula.functions.T;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.checkerframework.checker.units.qual.C;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
@@ -141,6 +143,9 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
 
     @Resource
     private DmpInoutTaskFeign dmpInoutTaskFeign;
+
+    @Resource
+    private BomSkuFeign bomSkuFeign;
 
     @Override
     public void downloadTemplate(String type, HttpServletResponse response) {
@@ -1523,6 +1528,14 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
             createDTOList.add(dto);
         }
         Boolean result = dmpInoutTaskFeign.doInputTask(createDTOList);
+    }
+
+    @Override
+    public List<SkuMappingDTO.ProductSkuInfoDTO> listSkuBySkuNos(SkuMappingDTO.SkuParamDTO skuParamDTO) {
+        if(null ==  skuParamDTO || StringUtils.isBlank(skuParamDTO.getCutomerId())){
+            throw new ServiceException("客户id不能为空");
+        }
+        return this.baseMapper.listSkuBySkuNos(skuParamDTO);
     }
 
     @Override

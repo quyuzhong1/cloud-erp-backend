@@ -20,10 +20,12 @@ public interface MouldDetailService extends SuperService<MouldDetailEntity> {
 
     /**
      * 新增详情
+     *
      * @param detailList 详情
      * @param entity     主表
+     * @param isDraft    是否暂存
      */
-    void add(List<MouldDetailDTO.UpdateDTO> detailList, MouldInfoEntity entity);
+    void add(List<MouldDetailDTO.UpdateDTO> detailList, MouldInfoEntity entity, boolean isDraft);
 
     /**
      * 根据模具查询明细

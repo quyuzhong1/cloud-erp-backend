@@ -33,7 +33,7 @@ import java.util.Map;
  * @Date 2022-07-08 16:52
  * @Created by yl
  */
-@FeignClient(name = "erp-sys",configuration = {FeignErrorDecoder.class})
+@FeignClient(name = "erp-sys", configuration = {FeignErrorDecoder.class})
 public interface SysUserFeign {
 
     /**

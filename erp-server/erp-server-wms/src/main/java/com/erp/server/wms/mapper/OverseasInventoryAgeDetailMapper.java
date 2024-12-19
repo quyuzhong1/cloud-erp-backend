@@ -8,7 +8,6 @@ import com.erp.model.wms.entity.OverseasInventoryAgeDetailEntity;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
-import java.time.LocalDate;
 import java.util.List;
 
 
@@ -23,7 +22,9 @@ import java.util.List;
 @Mapper
 public interface OverseasInventoryAgeDetailMapper extends BaseMapper<OverseasInventoryAgeDetailEntity> {
 
-    List<OverseasInventoryAgeDetailDTO.AgeRangeViewDTO> getAgeRangeViewByMainIds(@Param(value = "mainIds")List<String> mainIds,@Param(value = "nowDate") LocalDate nowDate);
+    List<OverseasInventoryAgeDetailDTO.AgeRangeViewDTO> getAgeRangeViewByMainIds(@Param(value = "mainIds")List<String> mainIds);
 
     IPage<OverseasInventoryAgeDetailDTO.ListDTO> paging(Page<?> query, @Param(value = "params")OverseasInventoryAgeDetailDTO.PagingParamDTO params);
+
+    List<OverseasInventoryAgeDetailEntity> getAgeDetail();
 }

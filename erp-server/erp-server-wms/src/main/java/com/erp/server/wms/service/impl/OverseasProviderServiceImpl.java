@@ -12,6 +12,7 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.BusinessTypeEnum;
 import com.common.business.enums.OmsPlatformEnum;
 import com.common.business.enums.PlatformDictEnum;
+import com.common.business.enums.UnitEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
@@ -20,6 +21,7 @@ import com.common.core.entity.BaseEntity;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.MathUtil;
 import com.erp.model.dmp.dto.DmpInoutDTO;
 import com.erp.model.dmp.dto.PlatformTaskDTO;
 import com.erp.model.oms.dto.SkuMappingDTO;
@@ -50,6 +52,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
@@ -403,13 +406,17 @@ public class OverseasProviderServiceImpl extends SuperServiceImpl<OverseasProvid
         List<ThirdWarehouseCalculateFeeReq> list = new ArrayList<>();
         List<String> toCountryList = params.getToCountryList().stream().filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
         List<String> channelCodeList = params.getChannelCodeList();
+        BigDecimal weight = params.getWeight();
+        if ("g".equals(params.getWeightUnit())){
+            weight = MathUtil.divide(params.getWeight(), BigDecimal.valueOf(1000));
+        }
         for (String country : toCountryList){
             list.add(ThirdWarehouseCalculateFeeReq.builder()
                     .warehouseCode(providerWarehouseEntity.getPlatformWarehouseCode())
                     .countryCode(country)
                     .shippingMethod(channelCodeList)
                     .postCode(params.getPostCode())
-                    .weight(params.getWeight())
+                    .weight(weight)
                     .length(params.getLength())
                     .width(params.getWidth())
                     .height(params.getHeight())
@@ -424,13 +431,17 @@ public class OverseasProviderServiceImpl extends SuperServiceImpl<OverseasProvid
         List<String> toCountryList = params.getToCountryList().stream().filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
         List<String> channelCodeList = params.getChannelCodeList();
         String channelCode = CollUtil.isNotEmpty(channelCodeList) && 1 == channelCodeList.size() ? channelCodeList.get(0) : null;
+        BigDecimal weight = params.getWeight();
+        if ("g".equals(params.getWeightUnit())){
+            weight = MathUtil.divide(params.getWeight(), BigDecimal.valueOf(1000));
+        }
         for (String country : toCountryList){
             list.add(ThirdWarehouseCalculateFeeReq.builder()
                             .warehouseCode(providerWarehouseEntity.getPlatformWarehouseCode())
                             .countryCode(country)
                             .channelCode(channelCode)
                             .postCode(params.getPostCode())
-                            .weight(params.getWeight())
+                            .weight(weight)
                             .length(params.getLength())
                             .width(params.getWidth())
                             .height(params.getHeight())

@@ -137,6 +137,9 @@
             <if test="params.platformType != null and params.platformType != ''">
                 and ds.platform_type = #{params.platformType}
             </if>
+            <if test="params.platform != null and params.platform != ''">
+                and ds.platform = #{params.platform}
+            </if>
         </where>
         ORDER BY
         <if test="params.sortList != null and params.sortList.size > 0">
@@ -165,6 +168,9 @@
             </if>
             <if test="params.platformType != null and params.platformType != ''">
                 and ds.platform_type =  #{params.platformType}
+            </if>
+            <if test="params.platform != null and params.platform != ''">
+                and ds.platform = #{params.platform}
             </if>
         </where>
         ORDER BY
@@ -197,7 +203,18 @@
             <if test="params.platformType != null and params.platformType != ''">
                 and ds.platform_type = #{params.platformType}
             </if>
+            <if test="params.platform != null and params.platform != ''">
+                and ds.platform = #{params.platform}
+            </if>
         </where>
+    </select>
+
+    <!-- 根据平台类型查询平台 -->
+    <select id="listPlatformByPlatformType" resultType="com.erp.model.mrp.dto.DeliverySuggestDTO$PlatformDTO">
+        select
+            distinct ds.platform
+        from delivery_suggest ds
+        where ds.is_deleted = false and platform_type = #{params.platformType}
     </select>
 
 

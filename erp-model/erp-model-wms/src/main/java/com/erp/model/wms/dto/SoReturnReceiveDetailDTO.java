@@ -7,6 +7,7 @@ import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
 import java.io.Serializable;
+import java.math.BigDecimal;
 
 @Data
 @NoArgsConstructor
@@ -16,7 +17,7 @@ public class SoReturnReceiveDetailDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
-    public static class Add {
+    public static class Add   extends Common{
         /**
          * skuId
          */
@@ -70,7 +71,7 @@ public class SoReturnReceiveDetailDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
-    public static class Update {
+    public static class Update   extends Common{
         /**
          * skuId
          */
@@ -123,7 +124,7 @@ public class SoReturnReceiveDetailDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
-    public static class View {
+    public static class View  extends Common {
         /**
          * id
          */
@@ -186,4 +187,42 @@ public class SoReturnReceiveDetailDTO implements Serializable {
          */
         private String sourceDetailId;
     }
+
+    /**
+     *
+     */
+    @Data
+    @NoArgsConstructor
+    public static class Common {
+        /**
+         * 平台sku
+         */
+        private String platformSkuNo;
+        /**
+         * 是否子sku
+         */
+        private Boolean isChildSkuNo;
+        /**
+         *退货金额
+         */
+        private BigDecimal returnAmount;
+        /**
+         *含税退货金额
+         */
+        private BigDecimal taxReturnAmount;
+        /**
+         *退货金额（本位币）
+         */
+        private BigDecimal returnAmountLocalCurrency;
+        /**
+         *含税退货金额（本位币）
+         */
+        private BigDecimal taxReturnAmountLocalCurrency;
+        /**
+         *汇率
+         */
+        private BigDecimal exchangeRate;
+
+    }
+
 }

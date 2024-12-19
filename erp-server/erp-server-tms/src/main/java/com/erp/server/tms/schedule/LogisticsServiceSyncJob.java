@@ -83,9 +83,9 @@ public class LogisticsServiceSyncJob {
                 if (apiResult.isSuccess()) {
                     List<LogisticsServiceResponseVO> responseList = apiResult.getData();
                     List<LogisticsSaleChannelEntity> dbList = logisticsSaleChannelService.listByLogisticsPlatform(logisticsPlatform,"oms");
-                    List<String> serviceNameList = dbList.stream().map(LogisticsSaleChannelEntity::getCode).collect(Collectors.toList());
+                    List<String> codeList = dbList.stream().map(LogisticsSaleChannelEntity::getCode).collect(Collectors.toList());
                     List<LogisticsServiceResponseVO> needList = responseList.stream().
-                            filter(r -> !serviceNameList.contains(r.getServiceName())).collect(Collectors.toList());
+                            filter(r -> !codeList.contains(r.getLogisticsType())).collect(Collectors.toList());
                     List<LogisticsSaleChannelEntity> addList = LogisticsServiceConverter.INSTANCE.convertLogisticsService(needList);
                     addList.forEach(obj->{
                         obj.setServicePlatform("oms");

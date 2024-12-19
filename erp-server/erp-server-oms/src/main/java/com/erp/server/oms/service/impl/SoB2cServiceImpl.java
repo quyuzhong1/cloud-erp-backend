@@ -568,10 +568,11 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             soB2cRefCategoryService.add(addList, soB2cEntity.getId());
         }
         //根据渠道和(国家+邮编）判断订单是否超范围配送
-        estimateIsOutOfRangeDelivery( soB2cEntity.getId(),
+        Boolean isOutOfRangeDelivery = estimateIsOutOfRangeDelivery(soB2cEntity.getId(),
                 addDTO.getReceiverDTO().getCountry(),
                 addDTO.getReceiverDTO().getPostCode(),
                 addDTO.getLogisticsDTO().getLogisticsChannelId());
+        soB2cEntity.setIsOutOfRangeDelivery(isOutOfRangeDelivery);
 
         // 操作日志
         String msg = CharSequenceUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "B2C销售订单表", soB2cEntity.getCode());
@@ -1029,11 +1030,11 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         soB2cRefCategoryService.update(updateDTO.getCategoryIdList(), soB2cEntity.getId());
 
         //根据渠道和(国家+邮编）判断订单是否超范围配送
-        estimateIsOutOfRangeDelivery( soB2cEntity.getId(),
+        Boolean isOutOfRangeDelivery = estimateIsOutOfRangeDelivery(soB2cEntity.getId(),
                 updateDTO.getReceiverDTO().getCountry(),
                 updateDTO.getReceiverDTO().getPostCode(),
                 updateDTO.getLogisticsDTO().getLogisticsChannelId());
-
+        soB2cEntity.setIsOutOfRangeDelivery(isOutOfRangeDelivery);
         // 记录主单操作日志
         log.info("编辑 开始记录B2C销售订单表日志数据，单号：【{}】", soB2cEntity.getCode());
         //店铺信息
@@ -1563,7 +1564,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             this.updateById(entity);
 
             //根据渠道和(国家+邮编）判断订单是否超范围配送
-            estimateIsOutOfRangeDelivery(entity.getId(), logisticsChannelId);
+            Boolean isOutOfRangeDelivery = estimateIsOutOfRangeDelivery(entity.getId(), logisticsChannelId);
+            entity.setIsOutOfRangeDelivery(isOutOfRangeDelivery);
         }
 
         //仓库信息
@@ -1588,19 +1590,13 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
-    public BatchResultDTO getLogisticsCodeInner(String id, Boolean isDelivery,Boolean remoteNotDlivery) {
+    public BatchResultDTO getLogisticsCodeInner(String id, Boolean isDelivery) {
         String message = "";
         //B2C销售订单主表信息
         SoB2cEntity entity = this.getById(id);
         if (ObjectUtils.isEmpty(entity)) {
             throw new ServiceException(ApiError.ERROR_SO_B2C_NOT_EXIST);
         }
-        //判断订单是否是超范围派送并且需要排除超范围派送
-        Boolean isOutOfRangeDelivery = entity.getIsOutOfRangeDelivery();
-        if(Boolean.TRUE.equals(isOutOfRangeDelivery) && Boolean.TRUE.equals(remoteNotDlivery)){
-            isDelivery = false ;
-        }
-
         String paramJson = "";
         String returnJson = "";
 
@@ -1927,12 +1923,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     @Override
     @DistributeLocker(businessType = RedisKeyConstant.SO_B2C_ORDER_KEY, keyName = "id", waiteTime = 60)
     public BatchResultDTO getLogisticsCode(String id, Boolean isDelivery) {
-        return soB2cService.getLogisticsCodeInner(id,isDelivery,false);
-    }
-
-    @DistributeLocker(businessType = RedisKeyConstant.SO_B2C_ORDER_KEY,keyName = "id",waiteTime = 60)
-    public BatchResultDTO getLogisticsCodeNotRemote(String id, Boolean isDelivery) {
-        return soB2cService.getLogisticsCodeInner(id,isDelivery,true);
+        return soB2cService.getLogisticsCodeInner(id,isDelivery);
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -4670,7 +4661,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                     }
                 }
                 //根据渠道和(国家+邮编）判断订单是否超范围配送
-                estimateIsOutOfRangeDelivery(entity.getId(), logisticsChannelId);
+                Boolean isOutOfRangeDelivery = estimateIsOutOfRangeDelivery(entity.getId(), logisticsChannelId);
+                entity.setIsOutOfRangeDelivery(isOutOfRangeDelivery);
             }
             if (StringUtils.isNotBlank(matchResult.getName())) {
                 String msg = CharSequenceUtil.format("自动匹配物流规则成功，规则名称：{}", matchResult.getName());
@@ -4692,7 +4684,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         return resultDTO;
     }
 
-    private void estimateIsOutOfRangeDelivery(String soB2cId, String logisticsChannelId) {
+    private Boolean estimateIsOutOfRangeDelivery(String soB2cId, String logisticsChannelId) {
         //根据渠道和(国家+邮编）判断订单是否超范围配送
         SoB2cReceiverEntity receiver = soB2cReceiverService.getByMainId(soB2cId);
         Boolean isOutOfRangeDelivery = Boolean.FALSE;
@@ -4700,15 +4692,17 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             isOutOfRangeDelivery =  logisticsFeign.estimateIsOutOfRangeDelivery(logisticsChannelId,receiver.getCountry(),receiver.getPostCode());
         }
         lambdaUpdate().set(SoB2cEntity::getIsOutOfRangeDelivery,isOutOfRangeDelivery).eq(SoB2cEntity::getId, soB2cId).update();
+        return isOutOfRangeDelivery;
     }
 
-    private void estimateIsOutOfRangeDelivery(String soB2cId , String country, String postCode ,String logisticsChannelId) {
+    private Boolean estimateIsOutOfRangeDelivery(String soB2cId , String country, String postCode ,String logisticsChannelId) {
         Boolean isOutOfRangeDelivery = Boolean.FALSE;
         //根据渠道和(国家+邮编）判断订单是否超范围配送
         if(StringUtils.isNotBlank(country) && StringUtils.isNotBlank(postCode) && StringUtils.isNotBlank(logisticsChannelId)){
             isOutOfRangeDelivery =  logisticsFeign.estimateIsOutOfRangeDelivery(logisticsChannelId,country,postCode);
         }
         lambdaUpdate().set(SoB2cEntity::getIsOutOfRangeDelivery,isOutOfRangeDelivery).eq(SoB2cEntity::getId, soB2cId).update();
+        return isOutOfRangeDelivery;
     }
 
     private static void isExist(SoB2cEntity entity) {
@@ -6277,9 +6271,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         Boolean isRuleMatch = ruleMatchResult.getIsRuleMatch();
         if (isRuleMatch) {
             entity.setBillStatus(SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode());
-            //自动计算预估运费到订单的预估运费字段
-            soB2cService.autoCalcEstimatedShippingCost(Collections.singletonList(entity.getId()));
         }
+        //自动计算预估运费到订单的预估运费字段
+        soB2cService.autoCalcEstimatedShippingCost(Collections.singletonList(entity.getId()));
         this.updateById(entity);
         return isRuleMatch;
     }
@@ -6471,9 +6465,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
      */
     @Override
     public Boolean pullOrderHandle(String id, List<SoB2cDetailEntity> detailList, Map<String, Object> map) {
-//        Map<String, Boolean> orderRule = this.approveRule(id, detailList, map);
-//        Boolean isMatch = orderRule.getOrDefault("isMatch", Boolean.FALSE);
-//        Boolean isPass = orderRule.getOrDefault("isPass", Boolean.FALSE);
         SoB2cDTO.RuleResultDTO ruleResultDTO = soB2cService.orderRule(id);
         Boolean isMatch = ruleResultDTO.getIsRuleMatch();
         Boolean isPass = ruleResultDTO.getIsPass();
@@ -6487,17 +6478,18 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                     //申报信息规则
                     declareRule(id, new HashMap<>(), Boolean.FALSE, false);
                 }
+                SoB2cEntity entity = soB2cService.getById(id);
                 Boolean autoGetTrackNo = logisticsRuleResult.getAutoGetTrackNo();
                 Boolean autoGetTrackNotOfRangeDelivery = logisticsRuleResult.getAutoGetTrackNotOfRangeDelivery();
-                if (Objects.nonNull(autoGetTrackNotOfRangeDelivery) && Boolean.TRUE.equals(autoGetTrackNotOfRangeDelivery)) {
-                    soB2cService.getLogisticsCodeNotRemote(id, true);
-                }else  if (Objects.nonNull(autoGetTrackNo) && Boolean.TRUE.equals(autoGetTrackNo)) {
-                    soB2cService.getLogisticsCode(id, true);
+                Boolean isOutOfRangeDelivery = entity.getIsOutOfRangeDelivery();
+                if ((Objects.nonNull(autoGetTrackNo) && Boolean.TRUE.equals(autoGetTrackNo))
+                        || (Boolean.FALSE.equals(isOutOfRangeDelivery) && Objects.nonNull(autoGetTrackNotOfRangeDelivery) && Boolean.TRUE.equals(autoGetTrackNotOfRangeDelivery))) {
+                    soB2cService.getLogisticsCode(id,  Boolean.TRUE);
                 }
-                //自动计算预估运费到订单的预估运费字段
-                soB2cService.autoCalcEstimatedShippingCost(Collections.singletonList(id));
             }
         }
+        //自动计算预估运费到订单的预估运费字段
+        soB2cService.autoCalcEstimatedShippingCost(Collections.singletonList(id));
         return isMatch;
     }
 
@@ -9297,6 +9289,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         List<SoB2cDTO.LogisticsDTO> logisticsDTOS = list.stream()
                 .filter(e -> CharSequenceUtil.isNotBlank(e.getWarehouseId()) && CharSequenceUtil.isNotBlank(e.getLogisticsChannelId()) && Objects.nonNull(e.getWeight()))
                 .collect(Collectors.toList());
+        if (CollUtil.isEmpty(logisticsDTOS)){
+            return;
+        }
         //根据发货仓库进行
         for (String soId : sob2cIds){
             SoB2cDTO.LogisticsDTO logisticsDTO = logisticsDTOS.stream().filter(e -> CharSequenceUtil.isNotBlank(soId) && soId.equals(e.getId())).findFirst().orElse(null);
@@ -9316,6 +9311,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                     .b2cSoId(logisticsDTO.getId()).fromWarehouseId(logisticsDTO.getWarehouseId())
                     .channelIdList(Collections.singletonList(logisticsDTO.getLogisticsChannelId()))
                     .weight(logisticsDTO.getWeight()).weightUnit(logisticsDTO.getWeightUnit()).postCode(logisticsDTO.getPostCode())
+                    .length(logisticsDTO.getLength()).width(logisticsDTO.getWidth()).height(logisticsDTO.getHeight())
                     .toCountryList(Collections.singletonList(logisticsDTO.getCountry()))
                     .build();
             try {

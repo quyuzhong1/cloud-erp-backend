@@ -677,6 +677,8 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 }
             }
         }
+        //销售出库单单据日期需要回写到B2C销售订单中
+        soB2cFeign.writeBackSoOutstockDate(entity.getSoId(),entity.getBillDate());
         // 调用流程审核
         approveProcess(entity, dto);
         String msg = CharSequenceUtil.format("用户【{}】单号为【{}】的【{}】单据审核操作  审核结果：【{}】 审核意见 ：【{}】", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "销售出库单", approveType.getName(), dto.getComment());
@@ -2606,9 +2608,6 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
     public Boolean generateB2cSoOutstock(SoOutstockDTO.GenerateB2cDTO generateB2cDTO) {
         Boolean result = createB2cSoOutstock(generateB2cDTO);
         if (result) {
-            //销售出库单单据日期需要回写到B2C销售订单中
-            soB2cFeign.writeBackSoOutstockDate(generateB2cDTO.getSoId(),generateB2cDTO.getBillDate());
-
             this.removeSoB2cOutstockError(generateB2cDTO.getSoId());
         }
         return result;
@@ -3597,5 +3596,14 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
     @Override
     public List<SoOutstockEntity> queryToSdy(LocalDate startDate, LocalDate endDate, Integer pageSize, Integer offset) {
         return baseMapper.queryToSdy(startDate, endDate, pageSize, offset);
+    }
+
+
+    @Override
+    public List<SoOutstockDTO.AmountDTO> listAmountBySkuIds(SoOutstockDTO.ListAmountParamDTO params) {
+        if(null == params || params.getSkuIds().isEmpty() || null == params.getReturnCreateDate()){
+            return Collections.emptyList();
+        }
+        return this.baseMapper.listAmountBySkuIds(params);
     }
 }

@@ -74,25 +74,43 @@ public class MouldInfoExcelListener extends AnalysisEventListener<MouldInfoImpor
         dto.setThirdMouldNo(data.getThirdMouldNo());
         dto.setMouldHoles(data.getMouldHoles());
         if (!ObjectUtils.isEmpty(data.getLength())) {
-            dto.setLength(new BigDecimal(data.getLength()).multiply(new BigDecimal(10)));
+            dto.setLength(new BigDecimal(data.getLength()));
         }
         if (!ObjectUtils.isEmpty(data.getWidth())) {
-            dto.setWidth(new BigDecimal(data.getWidth()).multiply(new BigDecimal(10)));
+            dto.setWidth(new BigDecimal(data.getWidth()));
         }
         if (!ObjectUtils.isEmpty(data.getHeight())) {
-            dto.setHeight(new BigDecimal(data.getHeight()).multiply(new BigDecimal(10)));
+            dto.setHeight(new BigDecimal(data.getHeight()));
         }
         dto.setMaterial(data.getMaterial());
-        dto.setLifeCycle(Integer.parseInt(data.getLifeCycle()));
+        if (!ObjectUtils.isEmpty(data.getLifeCycle())) {
+            dto.setLifeCycle(Integer.parseInt(data.getLifeCycle()));
+        }
+        if (!ObjectUtils.isEmpty(data.getDevelopCycle())) {
         dto.setDevelopCycle(Integer.parseInt(data.getDevelopCycle()));
-        dto.setEnableDate(LocalDateUtil.parseStrToLocalDate(data.getEnableDate()));
-        dto.setQty(Integer.parseInt(data.getQty()));
-        dto.setTaxPrice(new BigDecimal(data.getTaxPrice()));
-        dto.setTaxRate(new BigDecimal(data.getTaxRate()));
+        }
+        if (!ObjectUtils.isEmpty(data.getEnableDate())) {
+            dto.setEnableDate(LocalDateUtil.parseStrToLocalDate(data.getEnableDate()));
+        }
+        if (!ObjectUtils.isEmpty(data.getQty())) {
+            dto.setQty(Integer.parseInt(data.getQty()));
+        }
+        if (!ObjectUtils.isEmpty(data.getTaxPrice())) {
+            dto.setTaxPrice(new BigDecimal(data.getTaxPrice()));
+        }
+        if (!ObjectUtils.isEmpty(data.getTaxRate())) {
+            dto.setTaxRate(new BigDecimal(data.getTaxRate()));
+        }
         dto.setIsNeedRefund("是".equals(data.getIsNeedRefundName()));
-        dto.setRefundStandard(RefundStandardEnum.getCodeByName(data.getRefundStandardName()));
-        dto.setRefundOrderQty(Integer.parseInt(data.getRefundOrderQty()));
-        dto.setRefundAmount(new BigDecimal(data.getRefundAmount()));
+        if (!ObjectUtils.isEmpty(data.getRefundStandardName())) {
+            dto.setRefundStandard(RefundStandardEnum.getCodeByName(data.getRefundStandardName()));
+        }
+        if (!ObjectUtils.isEmpty(data.getRefundOrderQty())) {
+            dto.setRefundOrderQty(Integer.parseInt(data.getRefundOrderQty()));
+        }
+        if (!ObjectUtils.isEmpty(data.getRefundAmount())) {
+            dto.setRefundAmount(new BigDecimal(data.getRefundAmount()));
+        }
         MouldProductDTO.ViewDTO viewDTO = new MouldProductDTO.ViewDTO();
         viewDTO.setProductName(data.getProductName());
         dto.setProductList(Collections.singletonList(viewDTO));
@@ -113,16 +131,25 @@ public class MouldInfoExcelListener extends AnalysisEventListener<MouldInfoImpor
      */
     private boolean checkFieldEquals(MouldDetailDTO.ViewDTO viewDTO1, MouldDetailDTO.ViewDTO dto) {
 
-        return viewDTO1.getTypeId().equals(dto.getTypeId()) && viewDTO1.getPayMethodId().equals(dto.getPayMethodId()) &&
-                viewDTO1.getPaymentCondition().equals(dto.getPaymentCondition()) && viewDTO1.getThirdMouldNo().equals(dto.getThirdMouldNo()) &&
-                viewDTO1.getMouldHoles().equals(dto.getMouldHoles()) && viewDTO1.getLength().equals(dto.getLength()) &&
-                viewDTO1.getWidth().equals(dto.getWidth()) && viewDTO1.getHeight().equals(dto.getHeight()) &&
-                viewDTO1.getMaterial().equals(dto.getMaterial()) && viewDTO1.getLifeCycle().equals(dto.getLifeCycle()) &&
-                viewDTO1.getDevelopCycle().equals(dto.getDevelopCycle()) && viewDTO1.getEnableDate().equals(dto.getEnableDate()) &&
-                viewDTO1.getQty().equals(dto.getQty()) && viewDTO1.getTaxPrice().equals(dto.getTaxPrice()) &&
-                viewDTO1.getTaxRate().equals(dto.getTaxRate()) && viewDTO1.getIsNeedRefund().equals(dto.getIsNeedRefund()) &&
-                viewDTO1.getRefundStandard().equals(dto.getRefundStandard()) && viewDTO1.getRefundOrderQty().equals(dto.getRefundOrderQty()) &&
-                viewDTO1.getRefundAmount().equals(dto.getRefundAmount());
+        return Objects.equals(viewDTO1.getTypeId(), dto.getTypeId()) &&
+                Objects.equals(viewDTO1.getPayMethodId(), dto.getPayMethodId()) &&
+                Objects.equals(viewDTO1.getPaymentCondition(), dto.getPaymentCondition()) &&
+                Objects.equals(viewDTO1.getThirdMouldNo(), dto.getThirdMouldNo()) &&
+                Objects.equals(viewDTO1.getMouldHoles(), dto.getMouldHoles()) &&
+                Objects.equals(viewDTO1.getLength(), dto.getLength()) &&
+                Objects.equals(viewDTO1.getWidth(), dto.getWidth()) &&
+                Objects.equals(viewDTO1.getHeight(), dto.getHeight()) &&
+                Objects.equals(viewDTO1.getMaterial(), dto.getMaterial()) &&
+                Objects.equals(viewDTO1.getLifeCycle(), dto.getLifeCycle()) &&
+                Objects.equals(viewDTO1.getDevelopCycle(), dto.getDevelopCycle()) &&
+                Objects.equals(viewDTO1.getEnableDate(), dto.getEnableDate()) &&
+                Objects.equals(viewDTO1.getQty(), dto.getQty()) &&
+                Objects.equals(viewDTO1.getTaxPrice(), dto.getTaxPrice()) &&
+                Objects.equals(viewDTO1.getTaxRate(), dto.getTaxRate()) &&
+                Objects.equals(viewDTO1.getIsNeedRefund(), dto.getIsNeedRefund()) &&
+                Objects.equals(viewDTO1.getRefundStandard(), dto.getRefundStandard()) &&
+                Objects.equals(viewDTO1.getRefundOrderQty(), dto.getRefundOrderQty()) &&
+                Objects.equals(viewDTO1.getRefundAmount(), dto.getRefundAmount());
     }
 
     @Override
@@ -140,6 +167,7 @@ public class MouldInfoExcelListener extends AnalysisEventListener<MouldInfoImpor
                     MouldDetailDTO.ViewDTO dto = entry.getValue().stream()
                             .findFirst()
                             .orElse(new MouldDetailDTO.ViewDTO());
+                    dto.setMouldNo(null);
                     // 设置合并后的产品列表
                     dto.setProductList(dtos);
                     return dto;

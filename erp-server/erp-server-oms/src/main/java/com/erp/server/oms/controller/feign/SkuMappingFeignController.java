@@ -4,6 +4,7 @@ import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.AdvanceQueryContainer;
 import com.common.business.validator.ValidList;
 import com.common.core.controller.BaseController;
+import com.common.core.controller.vo.ApiResult;
 import com.erp.model.oms.dto.ListingAdvanceQueryDTO;
 import com.erp.model.oms.dto.ListingInfoParamDTO;
 import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
@@ -91,5 +92,16 @@ public class SkuMappingFeignController extends BaseController {
     @WebAdvanceQuery
     public  List<ListingAdvanceQueryDTO> advanceQuerySku(@RequestBody AdvanceQueryContainer advanceQueryContainer){
         return skuMappingService.advanceQuerySku(advanceQueryContainer);
+    }
+
+    /**
+     * 根据customerId和skuno 关联查询平台sku
+     * @author jack
+     * @date: 2024-11-07
+     * @param skuParamDTO
+     */
+    @PostMapping("/listSkuBySkuNos")
+    public List<SkuMappingDTO.ProductSkuInfoDTO> listSkuBySkuNos(@RequestBody SkuMappingDTO.SkuParamDTO skuParamDTO) {
+        return skuMappingService.listSkuBySkuNos(skuParamDTO);
     }
 }

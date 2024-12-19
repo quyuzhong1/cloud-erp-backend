@@ -117,4 +117,6 @@ public interface SoOutstockMapper extends BaseMapper<SoOutstockEntity> {
     List<SoOutstockDetailEntity> listApproveBySourceDetailIds(@Param("ids") List<String> ids);
 
     List<SoOutstockEntity> queryToSdy(@Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate, @Param("pageSize") Integer pageSize, @Param("offset") Integer offset);
+
+    List<SoOutstockDTO.AmountDTO> listAmountBySkuIds(@Param("params") SoOutstockDTO.ListAmountParamDTO params);
 }

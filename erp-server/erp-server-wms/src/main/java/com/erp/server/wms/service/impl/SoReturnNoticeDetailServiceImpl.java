@@ -3,12 +3,15 @@ package com.erp.server.wms.service.impl;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
+import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapper;
 import com.common.core.utils.MathUtil;
 import com.erp.model.oms.entity.SoB2cReturnDetailEntity;
 import com.erp.model.oms.entity.SoReturnDetailEntity;
+import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.SoReturnNoticeDTO;
@@ -20,13 +23,11 @@ import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.mapper.SoReturnNoticeDetailMapper;
 import com.erp.server.wms.service.OperateLogService;
 import com.erp.server.wms.service.SoReturnNoticeDetailService;
-import com.common.business.service.impl.SuperServiceImpl;
 import com.google.common.collect.Lists;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -69,32 +70,54 @@ public class SoReturnNoticeDetailServiceImpl extends SuperServiceImpl<SoReturnNo
         if(CollUtil.isNotEmpty(ignoreInventorySkuList)) {
             ignoreInventorySkuIds = ignoreInventorySkuList.stream().map(SkuVO::getSkuId).distinct().collect(Collectors.toList());
         }
-
+        //查询sku
+        List<String> skuIds = dto.getDetailList().stream().map(SoReturnNoticeDetailDTO.Add::getSkuId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
+        List<ProductDetailEntity> productDetailEntitys = plmTaskFeign.getByIdList(skuIds);
         for (SoReturnNoticeDetailDTO.Add detailDto : dto.getDetailList()) {
             SoReturnNoticeDetailEntity detailEntity = new SoReturnNoticeDetailEntity();
-            SoReturnDetailEntity soReturnDetailEntity = soReturnDetailEntities.stream().filter(req -> req.getId().equals(detailDto.getSourceDetailId())).findFirst().orElse(null);
-            if (ObjectUtil.isEmpty(soReturnDetailEntity)) {
-                throw new ServiceException(ApiError.ERROR_92023);
-            }
-            //退货通知单数量
-            Integer returnNoticeQty = noticeDetailEntities.stream().filter(req -> req.getSourceDetailId().equals(detailDto.getSourceDetailId())).map(SoReturnNoticeDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
-            //退货单数量
-            Integer returnQty = soReturnDetailEntities.stream().filter(req -> req.getId().equals(detailDto.getSourceDetailId())).map(SoReturnDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
-
-            if(ignoreInventorySkuIds.contains(detailEntity.getSkuId())) {
-                log.warn("sku id: {}，sku编号：{}产品属性是费用或服务，不参与库存出入库，不做库存验证", soReturnDetailEntity.getSkuId(), soReturnDetailEntity.getSkuNo());
-            } else {
-                if (returnQty <  detailDto.getReturnQty() + returnNoticeQty) {
-                    throw new ServiceException(ApiError.ERROR_92024);
-                }
-            }
+            BeanMapper.copy(detailDto, detailEntity);
             detailEntity.setMainId(id);
-            detailEntity.setSkuId(soReturnDetailEntity.getSkuId());
-            detailEntity.setSkuNo(soReturnDetailEntity.getSkuNo());
             detailEntity.setReturnQty(detailDto.getReturnQty());
             detailEntity.setRemark(detailDto.getRemark());
-            detailEntity.setRemark(detailDto.getRemark());
-            detailEntity.setSourceDetailId(detailDto.getSourceDetailId());
+            detailEntity.setPlatformSkuNo(detailDto.getPlatformSkuNo());
+            if(StringUtils.isNotBlank(detailDto.getSourceDetailId())){
+                //下推通知单
+                SoReturnDetailEntity soReturnDetailEntity = soReturnDetailEntities.stream().filter(req -> req.getId().equals(detailDto.getSourceDetailId())).findFirst().orElse(null);
+                if (ObjectUtil.isEmpty(soReturnDetailEntity)) {
+                    throw new ServiceException(ApiError.ERROR_92023);
+                }
+                detailEntity.setSkuId(soReturnDetailEntity.getSkuId());
+                detailEntity.setSkuNo(soReturnDetailEntity.getSkuNo());
+                detailEntity.setReturnReasonDict(soReturnDetailEntity.getReturnReasonDict());
+                detailEntity.setReturnTypeDict(soReturnDetailEntity.getReturnTypeDict());
+                detailEntity.setSourceDetailId(detailDto.getSourceDetailId());
+            }else {
+                ProductDetailEntity productDetailEntity = productDetailEntitys.stream().filter(v -> v.getId().equals(detailDto.getSkuId())).findFirst().orElse(new ProductDetailEntity());
+                detailEntity.setSkuNo(productDetailEntity.getSkuNo());
+                detailEntity.setIsChildSkuNo(detailDto.getIsChildSkuNo());
+                detailEntity.setReturnReasonDict(detailDto.getReturnReasonDict());
+                detailEntity.setReturnTypeDict(detailDto.getReturnTypeDict());
+            }
+            detailEntity.setReturnAmount(detailDto.getReturnAmount());
+            detailEntity.setTaxReturnAmount(detailDto.getTaxReturnAmount());
+            detailEntity.setReturnAmountLocalCurrency(detailDto.getReturnAmountLocalCurrency());
+            detailEntity.setTaxReturnAmountLocalCurrency(detailDto.getTaxReturnAmountLocalCurrency());
+            if(null == detailDto.getExchangeRate()){
+                detailEntity.setExchangeRate(dto.getExchangeRate());
+            }
+            if(ignoreInventorySkuIds.contains(detailEntity.getSkuId())) {
+                log.warn("sku id: {}，sku编号：{}产品属性是费用或服务，不参与库存出入库，不做库存验证", detailEntity.getSkuId(), detailEntity.getSkuNo());
+            } else {
+                if(StringUtils.isNotBlank(detailDto.getSourceDetailId())){
+                    //退货通知单数量
+                    Integer returnNoticeQty = noticeDetailEntities.stream().filter(req -> req.getSourceDetailId().equals(detailDto.getSourceDetailId())).map(SoReturnNoticeDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
+                    //退货单数量
+                    Integer returnQty = soReturnDetailEntities.stream().filter(req -> req.getId().equals(detailDto.getSourceDetailId())).map(SoReturnDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
+                    if (returnQty <  detailDto.getReturnQty() + returnNoticeQty) {
+                        throw new ServiceException(ApiError.ERROR_92024);
+                    }
+                }
+            }
             list.add(detailEntity);
         }
         return this.saveBatch(list);
@@ -140,6 +163,7 @@ public class SoReturnNoticeDetailServiceImpl extends SuperServiceImpl<SoReturnNo
             detailEntity.setReturnQty(detailDto.getReturnQty());
             detailEntity.setRemark(detailDto.getRemark());
             detailEntity.setSourceDetailId(detailDto.getSourceDetailId());
+            detailEntity.setPlatformSkuNo(detailDto.getPlatformSkuNo());
             list.add(detailEntity);
         }
         return this.saveBatch(list);
@@ -155,7 +179,7 @@ public class SoReturnNoticeDetailServiceImpl extends SuperServiceImpl<SoReturnNo
         List<SoB2cReturnDetailEntity> soB2cReturnDetailEntityList = FeignQuery.getByIds(SoB2cReturnDetailEntity.class,returnDetailIds);
 
         List<SoReturnNoticeDetailEntity> list = new ArrayList<>();
-        List<SoReturnNoticeDetailEntity> noticeDetailEntities = this.listDetailBySourceDetailIds(returnDetailIds);
+        List<SoReturnNoticeDetailEntity> noticeDetailEntities = this.listDetailByMainId(entity.getId());
         //原明细数据
         List<SoReturnNoticeDetailEntity> oldList = this.listDetailByMainId(dto.getId());
         List<String> deleteIds = getDeleteIds(dto.getDetailList(), oldList);
@@ -166,6 +190,10 @@ public class SoReturnNoticeDetailServiceImpl extends SuperServiceImpl<SoReturnNo
             operateLogService.batchAddModuleOperateLog("删除了一个SKU【%s】", ModuleTypeEnum.SO_RETURN_NOTICE.getCode(),pairList,"编辑操作");
             this.removeByIds(deleteIds);
         }
+        //查询sku
+        List<String> skuIds = dto.getDetailList().stream().map(SoReturnNoticeDetailDTO.Update::getSkuId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
+        List<ProductDetailEntity> productDetailEntitys = plmTaskFeign.getByIdList(skuIds);
+
         for (SoReturnNoticeDetailDTO.Update detailDto : dto.getDetailList()) {
             SoReturnNoticeDetailEntity detailEntity = new SoReturnNoticeDetailEntity();
             //退货通知单数量
@@ -186,24 +214,41 @@ public class SoReturnNoticeDetailServiceImpl extends SuperServiceImpl<SoReturnNo
                 }
                 detailEntity.setSkuId(soReturnDetailEntity.getSkuId());
                 detailEntity.setSkuNo(soReturnDetailEntity.getSkuNo());
+                detailEntity.setPlatformSkuNo(soReturnDetailEntity.getPlatformSkuNo());
             }else{
-                SoReturnDetailEntity soReturnDetailEntity = soReturnDetailEntities.stream().filter(req -> req.getId().equals(detailDto.getSourceDetailId())).findFirst().orElse(null);
-                if (ObjectUtil.isEmpty(soReturnDetailEntity)) {
-                    throw new ServiceException(ApiError.ERROR_92023);
+                if(StringUtils.isNotBlank(detailDto.getSourceDetailId())){
+                    SoReturnDetailEntity soReturnDetailEntity = soReturnDetailEntities.stream().filter(req -> req.getId().equals(detailDto.getSourceDetailId())).findFirst().orElse(null);
+                    if (ObjectUtil.isEmpty(soReturnDetailEntity)) {
+                        throw new ServiceException(ApiError.ERROR_92023);
+                    }
+                    //退货单数量
+                    Integer returnQty = soReturnDetailEntities.stream().filter(req -> req.getId().equals(detailDto.getSourceDetailId())).map(SoReturnDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
+                    if (returnQty <  detailDto.getReturnQty() + returnNoticeQty) {
+                        throw new ServiceException(ApiError.ERROR_92024);
+                    }
+//                    detailEntity.setReturnAmount(soReturnDetailEntity.getReturnAmount());
+//                    detailEntity.setTaxReturnAmount(soReturnDetailEntity.getTaxReturnAmount());
+//                    detailEntity.setReturnAmountLocalCurrency(soReturnDetailEntity.getReturnAmountLocalCurrency());
+//                    detailEntity.setTaxReturnAmountLocalCurrency(soReturnDetailEntity.getTaxReturnAmountLocalCurrency());
+//                    detailEntity.setExchangeRate(soReturnDetailEntity.getExchangeRate());
                 }
-                //退货单数量
-                Integer returnQty = soReturnDetailEntities.stream().filter(req -> req.getId().equals(detailDto.getSourceDetailId())).map(SoReturnDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
-                if (returnQty <  detailDto.getReturnQty() + returnNoticeQty) {
-                    throw new ServiceException(ApiError.ERROR_92024);
+                detailEntity.setReturnAmount(detailDto.getReturnAmount());
+                detailEntity.setTaxReturnAmount(detailDto.getTaxReturnAmount());
+                detailEntity.setReturnAmountLocalCurrency(detailDto.getReturnAmountLocalCurrency());
+                detailEntity.setTaxReturnAmountLocalCurrency(detailDto.getTaxReturnAmountLocalCurrency());
+                if(null == detailDto.getExchangeRate()){
+                    detailEntity.setExchangeRate(dto.getExchangeRate());
                 }
-                detailEntity.setSkuId(soReturnDetailEntity.getSkuId());
-                detailEntity.setSkuNo(soReturnDetailEntity.getSkuNo());
+                detailEntity.setSkuId(detailDto.getSkuId());
+                ProductDetailEntity productDetailEntity = productDetailEntitys.stream().filter(v -> v.getId().equals(detailDto.getSkuId())).findFirst().orElse(new ProductDetailEntity());
+                detailEntity.setSkuNo(productDetailEntity.getSkuNo());
+                detailEntity.setPlatformSkuNo(detailDto.getPlatformSkuNo());
             }
-
             detailEntity.setMainId(dto.getId());
             detailEntity.setReturnQty(detailDto.getReturnQty());
             detailEntity.setRemark(detailDto.getRemark());
             detailEntity.setSourceDetailId(detailDto.getSourceDetailId());
+            detailEntity.setIsChildSkuNo(detailDto.getIsChildSkuNo());
             list.add(detailEntity);
             //修改操作日志
             if (CharSequenceUtil.isNotBlank(detailEntity.getId())) {
