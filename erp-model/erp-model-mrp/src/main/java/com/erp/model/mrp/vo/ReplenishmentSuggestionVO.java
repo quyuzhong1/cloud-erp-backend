@@ -1,5 +1,6 @@
 package com.erp.model.mrp.vo;
 
+import cn.hutool.json.JSONArray;
 import com.common.business.annotation.Dict;
 import com.erp.model.mrp.enums.ReplenishmentTypeEnum;
 import lombok.*;
@@ -640,6 +641,6 @@ public class ReplenishmentSuggestionVO {
         /**
          * 订单类型，all:全部，fba:FBA,fbm:FBM
          */
-        private String orderType;
+        private JSONArray orderType;
     }
 }

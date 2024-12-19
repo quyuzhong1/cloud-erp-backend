@@ -1,5 +1,6 @@
 package com.erp.server.mrp.service;
 
+import cn.hutool.json.JSONArray;
 import com.common.business.dto.DynamicExcelDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -282,7 +283,7 @@ public interface ReplenishmentSuggestionService extends SuperService<Replenishme
      * @param orderType       订单类型
      * @param calculationDate 计算日
      */
-    List<ReplenishmentResultDTO> listAllCalculationData(String platformType,String salesQtyType, String orderType, LocalDate calculationDate);
+    List<ReplenishmentResultDTO> listAllCalculationData(String platformType,String salesQtyType, JSONArray orderType, LocalDate calculationDate);
 
     /**
      * 根据数据类型和订单类型查询历史销量
@@ -293,7 +294,7 @@ public interface ReplenishmentSuggestionService extends SuperService<Replenishme
      * @param startDate        开始时间
      * @param endDate          结束时间
      */
-    List<ReplenishmentResultDTO.SalesHistoryDTO> listSalesHistory(List<String> replenishmentIds, String salesQtyType, String orderType, LocalDate startDate, LocalDate endDate);
+    List<ReplenishmentResultDTO.SalesHistoryDTO> listSalesHistory(List<String> replenishmentIds, String salesQtyType, JSONArray orderType, LocalDate startDate, LocalDate endDate);
 
     /**
      * 根据数据类型和订单类型查询历史销量
@@ -304,7 +305,7 @@ public interface ReplenishmentSuggestionService extends SuperService<Replenishme
      * @param startDate       开始时间
      * @param endDate         结束时间
      */
-    Map<LocalDate, Integer> listSalesHistoryMap(String replenishmentId, String salesQtyType, String orderType, LocalDate startDate, LocalDate endDate);
+    Map<LocalDate, Integer> listSalesHistoryMap(String replenishmentId, String salesQtyType, JSONArray orderType, LocalDate startDate, LocalDate endDate);
 
 
     /**
@@ -357,7 +358,7 @@ public interface ReplenishmentSuggestionService extends SuperService<Replenishme
      * @param salesQtyType 销量类型
      * @param orderType   订单类型
      */
-    Map<String, Map<String, Integer>> getSalesHistoryMap(String salesQtyType, String orderType);
+    Map<String, Map<String, Integer>> getSalesHistoryMap(String salesQtyType, JSONArray orderType);
 
     /**
      * 导出历史销量

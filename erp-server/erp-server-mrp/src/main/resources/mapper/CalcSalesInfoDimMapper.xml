@@ -117,7 +117,8 @@
         csic.cfg_rule_calc_id,
         csic.update_time,
         csic.update_user_name,
-        csic.remark
+        csic.remark,
+        csic.similarity
         from calc_sales_info_dim csic
         inner join cfg_rule_calc crc on csic.cfg_rule_calc_id = crc.id and crc.is_deleted = false
         where ${params.sqlMap.default}

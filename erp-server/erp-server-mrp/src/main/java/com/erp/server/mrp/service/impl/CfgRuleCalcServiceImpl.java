@@ -219,6 +219,8 @@ public class CfgRuleCalcServiceImpl extends SuperServiceImpl<CfgRuleCalcMapper, 
                 calcSalesInfoDimList.add(salesInfoDimEntity);
                 CalcSalesInfoDimDTO.CalcResultDTO resultDTO = new CalcSalesInfoDimDTO.CalcResultDTO();
                 resultDTO.setCalcSalesInfoDimId(salesInfoDimEntity.getId());
+                resultDTO.setSkuId(salesInfoDimEntity.getSkuId());
+                resultDTO.setShopId(salesInfoDimEntity.getShopId());
                 resultDTO.setStartCalcDate(addDTO.getStartCalcDate());
                 resultDTO.setEndCalcDate(addDTO.getEndCalcDate());
                 resultDTO.setSalesHistoryMap(historySaleMap);
