@@ -579,31 +579,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
                 throw new ServiceException("存在未审核的变更单，无法审核通知单");
             }
             List<SoDeliveryNoticeDetailEntity> soDeliveryNoticeDetailEntityList = soDeliveryNoticeDetailService.listDetailByMainId(entity.getId());
-            //包含组合产品的发货通知单，必须有关联的下推的加工组装单且加工单审核通过
-            List<String> skuIds = soDeliveryNoticeDetailEntityList.stream().map(SoDeliveryNoticeDetailEntity::getSkuId).collect(Collectors.toList());
-            List<BomChildrenSkuDTO> bomChildrenList = plmTaskFeign.listBomChildBySkuIds(skuIds);
-            List<String> existSkuId = bomChildrenList.stream().filter(v->BomTypeEnum.COMBINATION.getType().equals(v.getType())).map(BomChildrenSkuDTO::getParentSkuId).collect(Collectors.toList());
-            soDeliveryNoticeDetailEntityList = soDeliveryNoticeDetailEntityList.stream().filter(v->existSkuId.contains(v.getSkuId())).collect(Collectors.toList());
-            if(CollectionUtils.isNotEmpty(soDeliveryNoticeDetailEntityList)){
-                List<MachineInfoEntity> machineInfoEntityList = machineInfoService.listBySourceIds(Collections.singletonList(entity.getId()));
-                List<MachineInfoEntity> approveMachineInfoEntityList = machineInfoEntityList.stream().filter(req -> ApproveStatusEnum.APPROVE.getStatus().equals(req.getApproveStatus())).collect(Collectors.toList());
-                if(CollectionUtils.isEmpty(approveMachineInfoEntityList)){
-                    throw new ServiceException("存在组合产品，必须有关联的加工组装单且加工单审核通过");
-                }
-                List<MachineDetailEntity> machineDetailEntityList = machineDetailService.listByMainIds(approveMachineInfoEntityList.stream().map(BaseEntity::getId).collect(Collectors.toList()));
-                //key 为sourceDetailId, value为qty求和
-                Map<String,Integer> alreadyMachineQtyMap = machineDetailEntityList.stream().collect(Collectors.groupingBy(MachineDetailEntity::getSourceDetailId,Collectors.summingInt(MachineDetailEntity::getQty)));
-                List<String> errorSkuNoList = new ArrayList<>();
-                for (SoDeliveryNoticeDetailEntity soDeliveryNoticeDetailEntity : soDeliveryNoticeDetailEntityList) {
-                    Integer machineQty = alreadyMachineQtyMap.getOrDefault(soDeliveryNoticeDetailEntity.getId(),0);
-                    if(soDeliveryNoticeDetailEntity.getPickingQty() > machineQty){
-                        errorSkuNoList.add(soDeliveryNoticeDetailEntity.getSkuNo());
-                    }
-                }
-                if(CollectionUtils.isNotEmpty(errorSkuNoList)){
-                    throw new ServiceException("发货通知单{}中存在组合产品，未完全下推加工单或加工单未审核通过{}",entity.getCode(),errorSkuNoList);
-                }
-            }
+
 
             LoginUser userInfo = UserContext.getDefaultLoginUser();
             //审核通过
@@ -825,6 +801,33 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         if (Boolean.FALSE.equals(allNoInventorySku) && CollectionUtils.isEmpty(views)) {
             throw new ServiceException(ApiError.ERROR_99101, entity.getCode());
         }
+        List<SoDeliveryNoticeDetailEntity> soDeliveryNoticeDetailEntityList = soDeliveryNoticeDetailService.listDetailByMainId(entity.getId());
+        //包含组合产品的发货通知单，必须有关联的下推的加工组装单且加工单审核通过
+        List<String> skuIds = soDeliveryNoticeDetailEntityList.stream().map(SoDeliveryNoticeDetailEntity::getSkuId).collect(Collectors.toList());
+        List<BomChildrenSkuDTO> bomChildrenList = plmTaskFeign.listBomChildBySkuIds(skuIds);
+        List<String> existSkuId = bomChildrenList.stream().filter(v->BomTypeEnum.COMBINATION.getType().equals(v.getType())).map(BomChildrenSkuDTO::getParentSkuId).collect(Collectors.toList());
+        soDeliveryNoticeDetailEntityList = soDeliveryNoticeDetailEntityList.stream().filter(v->existSkuId.contains(v.getSkuId())).collect(Collectors.toList());
+        if(CollectionUtils.isNotEmpty(soDeliveryNoticeDetailEntityList)){
+            List<MachineInfoEntity> machineInfoEntityList = machineInfoService.listBySourceIds(Collections.singletonList(entity.getId()));
+            List<MachineInfoEntity> approveMachineInfoEntityList = machineInfoEntityList.stream().filter(req -> ApproveStatusEnum.APPROVE.getStatus().equals(req.getApproveStatus())).collect(Collectors.toList());
+            if(CollectionUtils.isEmpty(approveMachineInfoEntityList)){
+                throw new ServiceException("存在组合产品，必须有关联的加工组装单且加工单审核通过");
+            }
+            List<MachineDetailEntity> machineDetailEntityList = machineDetailService.listByMainIds(approveMachineInfoEntityList.stream().map(BaseEntity::getId).collect(Collectors.toList()));
+            //key 为sourceDetailId, value为qty求和
+            Map<String,Integer> alreadyMachineQtyMap = machineDetailEntityList.stream().collect(Collectors.groupingBy(MachineDetailEntity::getSourceDetailId,Collectors.summingInt(MachineDetailEntity::getQty)));
+            List<String> errorSkuNoList = new ArrayList<>();
+            for (SoDeliveryNoticeDetailEntity soDeliveryNoticeDetailEntity : soDeliveryNoticeDetailEntityList) {
+                Integer machineQty = alreadyMachineQtyMap.getOrDefault(soDeliveryNoticeDetailEntity.getId(),0);
+                if(soDeliveryNoticeDetailEntity.getPickingQty() > machineQty){
+                    errorSkuNoList.add(soDeliveryNoticeDetailEntity.getSkuNo());
+                }
+            }
+            if(CollectionUtils.isNotEmpty(errorSkuNoList)){
+                throw new ServiceException("发货通知单{}中存在组合产品，未完全下推加工单或加工单未审核通过{}",entity.getCode(),errorSkuNoList);
+            }
+        }
+
         List<CfgRulePickingStagingEntity> warehouseStagingList = cfgRulePickingStagingService.list();
         SoOutstockDTO.AddDTO addDTO = new SoOutstockDTO.AddDTO();
         String batchNo = "";
