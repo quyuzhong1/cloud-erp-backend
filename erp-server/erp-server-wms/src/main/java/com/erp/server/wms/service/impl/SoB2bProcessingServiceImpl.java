@@ -10,7 +10,6 @@ import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
-import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.wms.dto.SoB2bProcessingDTO;
 import com.erp.model.wms.entity.SoB2bProcessingEntity;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
@@ -18,6 +17,7 @@ import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.mapper.SoB2bProcessingMapper;
 import com.erp.server.wms.service.OperateLogService;
 import com.erp.server.wms.service.SoB2bProcessingService;
+import com.erp.server.wms.service.TransferInfoDetailService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -50,6 +50,10 @@ public class SoB2bProcessingServiceImpl extends SuperServiceImpl<SoB2bProcessing
 
     @Autowired
     private PlmTaskFeign plmTaskFeign;
+
+    @Autowired
+    private TransferInfoDetailService transferInfoDetailService;
+
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -110,10 +114,13 @@ public class SoB2bProcessingServiceImpl extends SuperServiceImpl<SoB2bProcessing
        if (CollUtil.isEmpty(list)) {
            return;
        }
-        List<String> skuIdList = list.stream().map(SoB2bProcessingEntity::getSkuId).distinct().collect(Collectors.toList());
-        List<BomChildrenSkuDTO> bomChildrenList = plmTaskFeign.listBomChildBySkuIds(skuIdList);
 
-
+        /**
+         * 1、b2b非组合品订单中转走直接调拨单出库，非中转走销售出库单出库
+         * 2、b2b组合品走加工单出库
+         */
+        //查询加工单数据
+        List<String> deliveryNoticeIdList = list.stream().map(SoB2bProcessingEntity::getDeliveryNoticeId).distinct().collect(Collectors.toList());
 
     }
 
