@@ -14,7 +14,7 @@
                  INNER JOIN ${tableDetailName} AS sod ON so.id = sod.main_id AND sod.is_deleted = FALSE
                  INNER JOIN ${soB2cName} AS sb ON sb.is_deleted = FALSE AND sb.id = so.so_id
         WHERE so.is_deleted = FALSE AND sb.dict_platform = 'Amazon'
-          AND sb.bill_date between #{startDate} AND #{endDate}
+          AND sb.bill_date between #{startDate} AND #{endDate} and sb.invalid_status = false and sb.is_cancel = false
         GROUP BY so.bill_date, sod.sku_id, sb.shop_id, orderType
     </select>
     <select id="listAllAmzSalesBySob2c" resultType="com.erp.model.mrp.dto.ReplenishmentResultDTO$SalesInfoAllDTO">
@@ -27,7 +27,7 @@
         FROM ${tableName} AS sb
                  INNER JOIN ${tableDetailName} sbd ON sbd.is_deleted = FALSE
             AND sb.id = sbd.main_id
-        WHERE sb.is_deleted = FALSE AND sb.dict_platform = 'Amazon'
+        WHERE sb.is_deleted = FALSE AND sb.dict_platform = 'Amazon' and sb.invalid_status = false and sb.is_cancel = false
           AND sb.platform_order_create_time between #{startDate} AND #{endDate}
         GROUP BY sb.platform_order_create_time::DATE, sb.shop_id, sbd.sku_id, orderType
 
@@ -50,7 +50,7 @@
         FROM ${tableName} AS sb
         INNER JOIN ${tableDetailName} sbd ON sbd.is_deleted = FALSE
         AND sb.id = sbd.main_id
-        WHERE sb.is_deleted = FALSE
+        WHERE sb.is_deleted = FALSE and sb.invalid_status = false and sb.is_cancel = false
         AND sb.dict_platform IN
         <foreach collection="platforms" item="platform" open="(" separator="," close=")">
             #{platform}
@@ -76,7 +76,7 @@
         FROM ${tableName} AS so
         INNER JOIN ${tableDetailName} AS sod ON so.id = sod.main_id AND sod.is_deleted = FALSE
         INNER JOIN ${soB2cName} AS sb ON sb.is_deleted = FALSE AND sb.id = so.so_id
-        WHERE so.is_deleted = FALSE
+        WHERE so.is_deleted = FALSE and sb.invalid_status = false and sb.is_cancel = false
         AND sb.dict_platform IN
         <foreach collection="platforms" item="platform" open="(" separator="," close=")">
             #{platform}
