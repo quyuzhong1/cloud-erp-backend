@@ -82,6 +82,9 @@
         <if test="params.sqlMap.default != null and params.sqlMap.default != ''">
             and ${params.sqlMap.default}
         </if>
+        <if test="params.sqlMap.detail != null and params.sqlMap.detail != ''">
+            and ${params.sqlMap.detail}
+        </if>
         <!--权限-->
         <if test="params.permissionSql!=null and params.permissionSql!=''">
             ${params.permissionSql}
