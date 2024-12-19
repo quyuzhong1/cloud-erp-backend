@@ -25,6 +25,7 @@ import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.FbaTransitCalculateReportDTO;
 import com.erp.model.wms.dto.excel.FbaTransitExcelDTO;
+import com.erp.model.wms.dto.excel.PackingExcelDTO;
 import com.erp.model.wms.entity.FbaShipmentDetailEntity;
 import com.erp.model.wms.entity.FbaShipmentEntity;
 import com.erp.model.wms.entity.FbaTransitCalculateDetailReportEntity;
@@ -414,7 +415,7 @@ public class FbaTransitCalculateReportServiceImpl extends SuperServiceImpl<FbaTr
     }
 
     @Override
-    public FbaTransitCalculateReportDTO.ImportDTO importFile(MultipartFile excelFile, HttpServletResponse response) {
+    public Boolean importFile(MultipartFile excelFile, HttpServletResponse response) {
         FbaTransitExcelListener excelListenerUtil = new FbaTransitExcelListener();
         try {
             EasyExcel.read(excelFile.getInputStream(), FbaTransitExcelDTO.class, excelListenerUtil).sheet(0).doRead();
@@ -432,22 +433,15 @@ public class FbaTransitCalculateReportServiceImpl extends SuperServiceImpl<FbaTr
             throw new ServiceException(ApiError.ERROR_95123);
         }
         List<FbaTransitExcelDTO> errorList = excelListenerUtil.getErrorList();
-
         List<FbaTransitExcelDTO> successList = excelListenerUtil.getSuccessList();
         //异步生成上月期末数据
         service.asyncCreateTransitCalculateReport(successList);
-        FbaTransitCalculateReportDTO.ImportDTO importDTO = new FbaTransitCalculateReportDTO.ImportDTO();
-        String url = "";
         if (CollUtil.isNotEmpty(errorList)) {
             String fileName = "FBA期初在途错误数据.xlsx";
-            File file = ExcelUtil.exportFile(fileName, "error", errorList, FbaTransitExcelDTO.class);
-            if (!file.isDirectory()) {
-                url = FastDFSClientUtil.uploadFile(file, fileName);
-            }
+            ExcelUtil.export(fileName, "error", errorList, FbaTransitExcelDTO.class, response);
+            return Boolean.FALSE;
         }
-        importDTO.setSuccessList(successList);
-        importDTO.setErrorUrl(url);
-        return importDTO;
+        return true;
     }
 
     @Async
