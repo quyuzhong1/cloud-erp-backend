@@ -743,6 +743,11 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 
         //实际金额
         List<String> mainIdList = records.stream().map(LogisticsBillCostDTO.ListDTO::getId).collect(Collectors.toList());
+        Map<String, String> detailIdStatus = new HashMap<>();
+        List<String> logisticsBillDetailIdList = records.stream().map(LogisticsBillCostDTO.ListDTO::getLogisticsBillDetailId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
+        if(CollUtil.isNotEmpty(logisticsBillDetailIdList)) {
+        	detailIdStatus = logisticsBillDetailService.listByIds(logisticsBillDetailIdList).stream().collect(Collectors.toMap(LogisticsBillDetailEntity::getId, LogisticsBillDetailEntity::getTrackStatus));
+        }
         List<TmsCostDetailDTO.CostViewDTO> costList = tmsCostDetailService.listCostByMainIdList(mainIdList);
 
         Map<String, String> payStatusNameMap = new HashMap<>();
@@ -760,6 +765,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
             listDTO.setOrderTypeName(OrderTypeEnum.getName(listDTO.getOrderType()));
             listDTO.setSourceTypeName(SourceTypeEnum.getName(listDTO.getSourceType()));
             listDTO.setReconciliationStatusName(ReconciliationStatusEnum.getName(listDTO.getReconciliationStatus()));
+            listDTO.setTransportStatus(detailIdStatus.get(listDTO.getLogisticsBillDetailId()));
             //运输状态
             String name = transportStatusList.stream().filter(obj -> obj.getCode().equals(listDTO.getTransportStatus())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
             listDTO.setTransportStatusName(name);
