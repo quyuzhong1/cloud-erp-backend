@@ -1199,6 +1199,8 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
 					}
 				
 					dealSoOutstockDetailEntityList.sort((s1 , s2) -> s1.getActualQty().compareTo(s2.getActualQty()));
+					boolean skuCostFlag = false;
+					List<TransferDeclareCostAllocationDetailEntity> subAddTransferDeclareCostAllocationDetailEntityList = new ArrayList<>();
 				for(SoOutstockDetailEntity soOutstockDetailEntity : dealSoOutstockDetailEntityList) {
 					i = i + 1;
 					TransferDeclareCostAllocationEntity transferDeclareCostAllocationEntity = new TransferDeclareCostAllocationEntity();
@@ -1225,7 +1227,9 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
 						transferDeclareCostAllocationEntity.setUnitCost(skuCost);
 						transferDeclareCostAllocationEntity.setUnitCurrency(idEntityMaps.get(inventorySkuCostDetailEntity.getMainId()).getCurrency());
 					}else {
-						throw new ServiceException(orgName + reportDate + "月份下sku=" + skuNo + "未配置分摊成本");
+						skuCostFlag = true;
+						transferDeclareCostAllocationEntity.setUnitCost(BigDecimal.ZERO);
+						transferDeclareCostAllocationEntity.setUnitCurrency("CNY");
 					}
 					BigDecimal skuWeightCostPre = BigDecimal.ZERO;
 					BigDecimal skuWeightCost = skuWeightCostMaps.get(skuId);
@@ -1298,9 +1302,9 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
 								transferDeclareCostAllocationDetailEntity.setAllocatedAmountExchange(billAmountExchange.multiply(skuCostPre).setScale(2, RoundingMode.DOWN));
 							}
 						}else {
-							transferDeclareCostAllocationDetailEntity.setAllocatedAmount(costValueSum.subtract(addTransferDeclareCostAllocationDetailEntityList.stream()
+							transferDeclareCostAllocationDetailEntity.setAllocatedAmount(costValueSum.subtract(subAddTransferDeclareCostAllocationDetailEntityList.stream()
 									.filter(a -> a.getFeeType().equals(feeType)).map(TransferDeclareCostAllocationDetailEntity::getAllocatedAmount).reduce(BigDecimal::add).orElse(BigDecimal.ZERO)).setScale(2, RoundingMode.DOWN));
-							transferDeclareCostAllocationDetailEntity.setAllocatedAmountExchange(billAmountExchange.subtract(addTransferDeclareCostAllocationDetailEntityList.stream()
+							transferDeclareCostAllocationDetailEntity.setAllocatedAmountExchange(billAmountExchange.subtract(subAddTransferDeclareCostAllocationDetailEntityList.stream()
 									.filter(a -> a.getFeeType().equals(feeType)).map(TransferDeclareCostAllocationDetailEntity::getAllocatedAmountExchange).reduce(BigDecimal::add).orElse(BigDecimal.ZERO)).setScale(2, RoundingMode.DOWN));
 						}
 						transferDeclareCostAllocationDetailEntity.setProductAllocatedAmount(transferDeclareCostAllocationDetailEntity.getAllocatedAmount()
@@ -1310,8 +1314,25 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
 						transferDeclareCostAllocationDetailEntity.setFeeAllocationType(feeAllocationType);
 						transferDeclareCostAllocationDetailEntity.setAllocatedCurrency(allocatedCurrency);
 						transferDeclareCostAllocationDetailEntity.setWeightAllocationType(transferAllocation);
-						addTransferDeclareCostAllocationDetailEntityList.add(transferDeclareCostAllocationDetailEntity);
+						subAddTransferDeclareCostAllocationDetailEntityList.add(transferDeclareCostAllocationDetailEntity);
 					}
+				}
+				if(CollUtil.isNotEmpty(subAddTransferDeclareCostAllocationDetailEntityList)) {
+					if(skuCostFlag) {
+						for(Map.Entry<String, String> feeTypeSettingMap : feeTypeSettingMaps.entrySet()) {
+							if(CostAllocationEnum.COST_ALLOCATION.getCode().equals(feeTypeSettingMap.getValue())) {
+								subAddTransferDeclareCostAllocationDetailEntityList.forEach(a -> {
+									if(a.getFeeType().equals(feeTypeSettingMap.getKey())) {
+										a.setAllocatedAmount(BigDecimal.ZERO);
+										a.setAllocatedAmountExchange(BigDecimal.ZERO);
+										a.setProductAllocatedAmount(BigDecimal.ZERO);
+										a.setProductAllocatedAmountExchange(BigDecimal.ZERO);
+									}
+								});
+							}
+						}
+					}
+					addTransferDeclareCostAllocationDetailEntityList.addAll(subAddTransferDeclareCostAllocationDetailEntityList);
 				}
 			}
 		}

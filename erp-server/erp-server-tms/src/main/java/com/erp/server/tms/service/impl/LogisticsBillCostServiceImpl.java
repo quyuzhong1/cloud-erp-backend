@@ -718,7 +718,19 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         	List<SoB2cLogisticsEntity> soB2cLogisticsList = FeignQuery.create(SoB2cLogisticsEntity.class).eq(SoB2cLogisticsEntity::getMainId, sourceId).list();
         	if(CollUtil.isNotEmpty(soB2cLogisticsList)) {
         		SoB2cLogisticsEntity soB2cLogisticsEntity = soB2cLogisticsList.get(0);
-				entity.setVolume(soB2cLogisticsEntity.getLength() + "*" + soB2cLogisticsEntity.getWidth() + "*" + soB2cLogisticsEntity.getHeight());
+				BigDecimal length = soB2cLogisticsEntity.getLength();
+				if(length != null) {
+					length = length.setScale(1, RoundingMode.HALF_UP);
+				}
+				BigDecimal width = soB2cLogisticsEntity.getWidth();
+				if(width != null) {
+					width = width.setScale(1, RoundingMode.HALF_UP);
+				}
+				BigDecimal height = soB2cLogisticsEntity.getHeight();
+				if(height != null) {
+					height = height.setScale(1, RoundingMode.HALF_UP);
+				}
+				entity.setVolume(length + "*" + width + "*" + height);
         	}
         }
     }
@@ -762,7 +774,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         		listDTO.setPayStatusName(payStatusNameMap.get(payType + "_" + payStatus));
         	}
         	listDTO.setCheckStatusName(LogisticsBillCostCheckStatusEnum.getName(listDTO.getCheckStatus()));
-            listDTO.setOrderTypeName(OrderTypeEnum.getName(listDTO.getOrderType()));
+            listDTO.setOrderTypeName(CostBillTypeEnum.getName(listDTO.getOrderType()));
             listDTO.setSourceTypeName(SourceTypeEnum.getName(listDTO.getSourceType()));
             listDTO.setReconciliationStatusName(ReconciliationStatusEnum.getName(listDTO.getReconciliationStatus()));
             listDTO.setTransportStatus(detailIdStatus.get(listDTO.getLogisticsBillDetailId()));
@@ -1760,6 +1772,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 		}
 		
 		Map<String, BigDecimal> rateMap = new HashMap<>();
+		boolean skuCostFlag = false;
 		for(SoOutstockDetailEntity soOutstockDetailEntity : soOutstockDetailEntityList) {
 			i = i + 1;
 			String skuId = soOutstockDetailEntity.getSkuId();
@@ -1777,6 +1790,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 			
 			Integer actualQty = soOutstockDetailEntity.getActualQty();
 			BigDecimal skuCostPre = BigDecimal.ZERO;
+			
 			InventorySkuCostDetailEntity inventorySkuCostDetailEntity = unInventorySkuCostMap.get(orgId + "_" + skuId);
 			if(inventorySkuCostDetailEntity != null) {
 				BigDecimal skuCost = inventorySkuCostDetailEntity.getProductCost();
@@ -1786,7 +1800,9 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 				smallBagCostAllocationEntity.setUnitCost(skuCost);
 				smallBagCostAllocationEntity.setUnitCurrency(idEntityMaps.get(inventorySkuCostDetailEntity.getMainId()).getCurrency());
 			}else {
-				throw new ServiceException(orgName + reportDate + "月份下sku=" + skuNo + "未配置分摊成本");
+				skuCostFlag = true;
+				smallBagCostAllocationEntity.setUnitCost(BigDecimal.ZERO);
+				smallBagCostAllocationEntity.setUnitCurrency("CNY");
 			}
 			BigDecimal skuWeightCostPre = BigDecimal.ZERO;
 			BigDecimal skuWeightCost = skuWeightCostMaps.get(skuId);
@@ -1890,6 +1906,20 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 			smallBagCostAllocationService.saveBatch(addSmallBagCostAllocationEntityList);
 		}
 		if(CollUtil.isNotEmpty(addSmallBagCostAllocationDetailEntityList)) {
+			if(skuCostFlag) {
+				for(Map.Entry<String, String> feeTypeSettingMap : feeTypeSettingMaps.entrySet()) {
+					if(CostAllocationEnum.COST_ALLOCATION.getCode().equals(feeTypeSettingMap.getValue())) {
+						addSmallBagCostAllocationDetailEntityList.forEach(a -> {
+							if(a.getFeeType().equals(feeTypeSettingMap.getKey())) {
+								a.setAllocatedAmount(BigDecimal.ZERO);
+								a.setAllocatedAmountExchange(BigDecimal.ZERO);
+								a.setProductAllocatedAmount(BigDecimal.ZERO);
+								a.setProductAllocatedAmountExchange(BigDecimal.ZERO);
+							}
+						});
+					}
+				}
+			}
 			smallBagCostAllocationDetailService.saveBatch(addSmallBagCostAllocationDetailEntityList);
 		}
 		
