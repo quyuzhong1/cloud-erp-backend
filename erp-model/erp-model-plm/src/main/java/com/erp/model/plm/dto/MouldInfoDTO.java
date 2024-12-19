@@ -864,6 +864,11 @@ public class MouldInfoDTO implements Serializable {
     public static class OrderTrackingExportDTO {
 
         /**
+         * 明细id
+         */
+        private String detailId;
+
+        /**
          * 项目编号
          */
         private String projectNo;
@@ -1109,5 +1114,194 @@ public class MouldInfoDTO implements Serializable {
          *负责人名
          */
         private String chargeName;
+    }
+
+    @Getter
+    @Setter
+    public static class LogDTO {
+        /**
+         * 项目编号
+         */
+        private String projectNo;
+        /**
+         * 项目名称
+         */
+        private String name;
+        /**
+         * 产品经理
+         */
+        private String productManagerName;
+        /**
+         * 备注
+         */
+        private String remark;
+        /**
+         * 分类id
+         */
+        private String categoryName;
+    }
+
+    @Getter
+    @Setter
+    public static class LogDetailDTO {
+        /**
+         * 外部模具编号(供应商)
+         */
+        private String thirdMouldNo;
+
+        /**
+         * 模具类型
+         */
+        private String typeName;
+
+        /**
+         * 模具穴数
+         */
+        private String mouldHoles;
+
+        /**
+         * 模具长
+         */
+        private BigDecimal length;
+
+        /**
+         * 模具宽
+         */
+        private BigDecimal width;
+
+        /**
+         * 模具高
+         */
+        private BigDecimal height;
+
+        /**
+         * 模具材质
+         */
+        private String material;
+
+        /**
+         * 模具寿命(万)(啤)
+         */
+        private Integer lifeCycle;
+
+        /**
+         * 开模周期(自然日)
+         */
+        private Integer developCycle;
+
+        /**
+         * 启用时间
+         */
+        private LocalDate enableDate;
+
+        /**
+         * 供应商id
+         */
+        private String supplierName;
+
+        /**
+         * 备注
+         */
+        private String remark;
+
+        /**
+         * 数量
+         */
+        private Integer qty;
+
+        /**
+         * 含税单价
+         */
+        private BigDecimal taxPrice;
+
+        /**
+         * 税率
+         */
+        private BigDecimal taxRate;
+
+        /**
+         * 结算方式
+         */
+        private String payMethodName;
+
+        /**
+         * 付款条件
+         */
+        private String paymentConditionName;
+
+        /**
+         * 币种
+         */
+        private String currency;
+
+        /**
+         * 汇率
+         */
+        private BigDecimal exchangeRate;
+        /**
+         * 是否费用返还
+         */
+        private Boolean isNeedRefund;
+
+        /**
+         * 返还标准
+         */
+        private String refundStandardName;
+
+        /**
+         * 退款单量
+         */
+        private Integer refundOrderQty;
+
+        /**
+         * 返还金额
+         */
+        private BigDecimal refundAmount;
+
+        /**
+         * 产品信息
+         */
+        private List<MouldProductDTO.ViewDTO> productList;
+
+        /**
+         * 关联产品
+         */
+        private List<MouldRefProductDTO.ViewDTO> refProductList;
+    }
+
+    @Getter
+    @Setter
+    public static class LogDocDTO {
+        /**
+         * 文档类型id
+         */
+        private String docTypeName;
+
+        /**
+         * 版本号
+         */
+        private String docVersion;
+
+        /**
+         * 文件地址
+         */
+        private String docUrl;
+
+        /**
+         * 文档名字
+         */
+        private String docName;
+
+        /**
+         * 外部链接
+         */
+        private String extLink;
+
+        /**
+         * 备注
+         */
+        private String remark;
+
+
     }
 }

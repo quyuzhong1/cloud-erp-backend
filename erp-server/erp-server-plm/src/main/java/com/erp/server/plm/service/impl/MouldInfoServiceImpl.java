@@ -5,7 +5,7 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
-import com.alibaba.excel.EasyExcel;
+import com.alibaba.excel.EasyExcelFactory;
 import com.alibaba.excel.exception.ExcelCommonException;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -141,7 +141,7 @@ public class MouldInfoServiceImpl extends SuperServiceImpl<MouldInfoMapper, Moul
     @Resource
     private ScmTaskFeign scmTaskFeign;
 
-    private static final String DATE_FAMART = "yyyy-MM-dd HH:mm:ss";
+    private static final String DATE_FORMAT = "yyyy-MM-dd HH:mm:ss";
 
 
     @Override
@@ -216,6 +216,10 @@ public class MouldInfoServiceImpl extends SuperServiceImpl<MouldInfoMapper, Moul
     }
 
     public BatchResultDTO add(MouldInfoDTO.UpdateDTO dto, boolean isDraft) {
+        MouldInfoDTO.ViewDTO view = new MouldInfoDTO.ViewDTO();
+        if (!ObjectUtils.isEmpty(dto.getId())) {
+            view = view(dto.getId());
+        }
         //保存基本信息
         MouldInfoEntity mouldInfoEntity = new MouldInfoEntity();
         BeanMapperUtils.copy(dto, mouldInfoEntity);
@@ -232,23 +236,73 @@ public class MouldInfoServiceImpl extends SuperServiceImpl<MouldInfoMapper, Moul
         if (!CollectionUtils.isEmpty(dto.getDocList())) {
             mouldDocInfoService.add(dto.getDocList(), mouldInfoEntity.getId());
         }
-        // 记录操作日志
-        String msg = null;
-        sysLogService.addSysLogBySave(msg, SysLogClassPathEnum.MOULD_DETAIL_ENTITY.getDesc(), mouldInfoEntity.getId(), "");
         if (ObjectUtils.isEmpty(dto.getId())) {
             //发送通知
             LoginUser user = UserContext.getDefaultLoginUser();
             Map<String, Object> data = new HashMap<>();
             FindUserDTO productManager = sysUserFeign.getUserByUserId(mouldInfoEntity.getProductManagerId());
-            data.put("name", mouldInfoEntity.getName());
+            data.put(MouldInfoEntity.NAME, mouldInfoEntity.getName());
             data.put("productManager", productManager.getUserName());
             data.put("mouldCategoryCode", mouldInfoEntity.getMouldCategoryCode());
             data.put("createUserName", user.getUserName());
-            data.put("createTime", LocalDateTime.now().format(DateTimeFormatter.ofPattern(DATE_FAMART)));
+            data.put("createTime", LocalDateTime.now().format(DateTimeFormatter.ofPattern(DATE_FORMAT)));
             mouldInfoNotice(NoticeEnum.MOULD_CREATE, data, new MouldInfoDTO.NoticeDTO(mouldInfoEntity.getId(),
                     mouldInfoEntity.getName(), mouldInfoEntity.getProductManagerId(), user.getUid(), user.getUserName()),"mouldCreate.ftl");
         }
+        // 记录操作日志
+        getUpdateLog(view, dto, mouldInfoEntity.getId());
         return BatchResultDTO.success(mouldInfoEntity.getId(), mouldInfoEntity.getMouldCategoryCode());
+    }
+
+
+    private void getUpdateLog(MouldInfoDTO.ViewDTO view, MouldInfoDTO.UpdateDTO dto, String id) {
+        List<BasicCategoryEntity> categoryList = basicCategoryService.getCategoryList();
+        Map<String, String> categoryMap = categoryList.stream()
+                .collect(Collectors.toMap(BasicCategoryEntity::getId, BasicCategoryEntity::getName, (o1, o2) -> o1));
+        Map<String, String> userMap = sysUserFeign.getUserList()
+                .stream()
+                .collect(Collectors.toMap(FindUserDTO::getUserId, FindUserDTO::getUserName, (o1, o2) -> o1));
+        //构建历史日志数据
+        MouldInfoDTO.LogDTO oldLogDTO = new MouldInfoDTO.LogDTO();
+        oldLogDTO.setName(view.getName());
+        oldLogDTO.setRemark(view.getRemark());
+        oldLogDTO.setProjectNo(view.getProjectNo());
+        oldLogDTO.setCategoryName(categoryMap.get(view.getCategoryId()));
+        oldLogDTO.setProductManagerName(userMap.get(view.getProductManagerId()));
+        MouldInfoDTO.LogDTO logDTO = new MouldInfoDTO.LogDTO();
+        logDTO.setName(dto.getName());
+        logDTO.setRemark(dto.getRemark());
+        logDTO.setProjectNo(dto.getProjectNo());
+        logDTO.setCategoryName(categoryMap.get(dto.getCategoryId()));
+        logDTO.setProductManagerName(userMap.get(dto.getProductManagerId()));
+        sysLogService.addSysLogByUpdate(oldLogDTO, logDTO, String.valueOf(MouldInfoDTO.LogDTO.class), id, "", "模具信息");
+
+        if (!CollectionUtils.isEmpty(view.getDetailList())) {
+            //新增
+
+
+            //删除数据
+
+            //修改数据
+
+
+        } else {
+            for (MouldDetailDTO.UpdateDTO updateDTO : dto.getDetailList()) {
+                sysLogService.addSysLogBySave(CharSequenceUtil.format("新增了明细{}", updateDTO.getMouldNo()), String.valueOf(MouldDetailDTO.UpdateDTO.class), id, "");
+            }
+        }
+        if (!CollectionUtils.isEmpty(view.getDocList())) {
+            //新增
+//
+            //删除数据
+
+            //修改数据
+
+        } else {
+            for (MouldDocInfoDTO.UpdateDTO updateDTO : dto.getDocList()) {
+                sysLogService.addSysLogBySave(CharSequenceUtil.format("新增了文件信息{}", updateDTO.getDocName()), String.valueOf(MouldDocInfoDTO.UpdateDTO.class), id, "");
+            }
+        }
     }
 
     @Override
@@ -277,15 +331,15 @@ public class MouldInfoServiceImpl extends SuperServiceImpl<MouldInfoMapper, Moul
             Map<String, Object> data = new HashMap<>();
             LoginUser user = UserContext.getDefaultLoginUser();
             FindUserDTO productManager = sysUserFeign.getUserByUserId(entity.getProductManagerId());
-            data.put("name", entity.getName());
+            data.put(MouldInfoEntity.NAME, entity.getName());
             data.put("productManager", productManager.getUserName());
             data.put("mouldCategoryCode", entity.getMouldCategoryCode());
             data.put("createUserName", entity.getCreateUserName());
             data.put("approveUserName", user.getUserName());
             data.put("status", ApproveStatusEnum.getName(entity.getStatus()));
             data.put("approveRemark", entity.getApproveRemark());
-            data.put("createTime", entity.getCreateTime().format(DateTimeFormatter.ofPattern(DATE_FAMART)));
-            data.put("approveTime", LocalDateTime.now().format(DateTimeFormatter.ofPattern(DATE_FAMART)));
+            data.put("createTime", entity.getCreateTime().format(DateTimeFormatter.ofPattern(DATE_FORMAT)));
+            data.put("approveTime", LocalDateTime.now().format(DateTimeFormatter.ofPattern(DATE_FORMAT)));
 
             mouldInfoNotice(NoticeEnum.MOULD_APPROVE, data, new MouldInfoDTO.NoticeDTO(entity.getId(),
                     entity.getName(), entity.getProductManagerId(), user.getUid(), user.getUserName()),"mouldApprove.ftl");
@@ -307,6 +361,7 @@ public class MouldInfoServiceImpl extends SuperServiceImpl<MouldInfoMapper, Moul
         if (CollectionUtils.isEmpty(viewDTOS)) {
             throw new ServiceException(ApiError.ERROR_1041, entity.getName());
         }
+        verifyData(viewDTOS);
         // 待提交或审核不通过并且未作废允许提交
         if (Boolean.FALSE.equals(ApproveStatusEnum.allowUpdateStatus(ApproveStatusEnum.getByStatus(entity.getStatus())))
                 || Boolean.TRUE.equals(entity.getInvalidStatus())) {
@@ -323,15 +378,64 @@ public class MouldInfoServiceImpl extends SuperServiceImpl<MouldInfoMapper, Moul
         //发送通知
         Map<String, Object> data = new HashMap<>();
         FindUserDTO productManager = sysUserFeign.getUserByUserId(entity.getProductManagerId());
-        data.put("name", entity.getName());
+        data.put(MouldInfoEntity.NAME, entity.getName());
         data.put("productManager", productManager.getUserName());
         data.put("mouldCategoryCode", entity.getMouldCategoryCode());
         data.put("createUserName", entity.getCreateUserName());
-        data.put("createTime", entity.getCreateTime().format(DateTimeFormatter.ofPattern(DATE_FAMART)));
+        data.put("createTime", entity.getCreateTime().format(DateTimeFormatter.ofPattern(DATE_FORMAT)));
         LoginUser user = UserContext.getDefaultLoginUser();
         mouldInfoNotice(NoticeEnum.MOULD_SUBMIT, data, new MouldInfoDTO.NoticeDTO(entity.getId(),
                 entity.getName(), entity.getProductManagerId(), user.getUid(), user.getUserName()),"mouldSubmit.ftl");
         return BatchResultDTO.success(entity.getId(), entity.getMouldCategoryCode(), OperationTypeEnum.SUBMIT);
+    }
+
+    private void verifyData(List<MouldDetailDTO.ViewDTO> viewDTOS) {
+        for (MouldDetailDTO.ViewDTO viewDTO : viewDTOS) {
+            StringBuilder msg = new StringBuilder();
+            if (ObjectUtils.isEmpty(viewDTO.getQty())) {
+                msg.append("数量不能为空,");
+            }
+            if (ObjectUtils.isEmpty(viewDTO.getTaxPrice())) {
+                msg.append("含税单价不能为,");
+            }
+            if (ObjectUtils.isEmpty(viewDTO.getTaxRate())) {
+                msg.append("税率不能为空,");
+            }
+            if (ObjectUtils.isEmpty(viewDTO.getPayMethodId())) {
+                msg.append("结算方式不能为空,");
+            }
+            if (ObjectUtils.isEmpty(viewDTO.getPaymentCondition())) {
+                msg.append("付款条件不能为空,");
+            }
+            if (ObjectUtils.isEmpty(viewDTO.getIsNeedRefund())) {
+                msg.append("是否费用返还不能为空,");
+            }
+            if (Boolean.TRUE.equals(viewDTO.getIsNeedRefund())) {
+                StringBuilder sb = new StringBuilder();
+                if (CollectionUtils.isEmpty(viewDTO.getRefProductList())) {
+                    sb.append("关联下单sku不能为空,");
+                }
+                if (ObjectUtils.isEmpty(viewDTO.getRefundOrderQty())) {
+                    sb.append("返还单量不能为空,");
+                }
+                if (ObjectUtils.isEmpty(viewDTO.getRefundAmount())) {
+                    sb.append("返还金额不能为空,");
+                }
+                if (ObjectUtils.isEmpty(viewDTO.getRefundStandard())) {
+                    sb.append("返还标准不能为空,");
+                }
+                if (!ObjectUtils.isEmpty(sb.toString())) {
+                    sb.insert(0, "费用返还为是时");
+                    msg.append(sb);
+                }
+            }
+            if (!ObjectUtils.isEmpty(msg.toString())) {
+
+                throw new ServiceException(msg.insert(0, viewDTO.getMouldNo()).toString());
+            }
+        }
+
+
     }
 
     /**
@@ -377,7 +481,7 @@ public class MouldInfoServiceImpl extends SuperServiceImpl<MouldInfoMapper, Moul
         revokeDTO.setUserId(userId);
         workflowFeign.revokeProcess(revokeDTO);
         this.updateApproveStatus(id, ApproveStatusEnum.WAIT_SUBMIT.getStatus(), null);
-        String msg = "模具【{}】撤销流程";
+        String msg = CharSequenceUtil.format("模具【{}】撤销流程", entity.getMouldCategoryCode());
         sysLogService.addSysLogBySave(msg, SysLogClassPathEnum.MOULD_DETAIL_ENTITY.getDesc(), entity.getId(), "");
         return BatchResultDTO.success(entity.getId(), entity.getMouldCategoryCode(), "撤销流程");
     }
@@ -458,7 +562,7 @@ public class MouldInfoServiceImpl extends SuperServiceImpl<MouldInfoMapper, Moul
             throw new ServiceException(ApiError.ERROR_98014);
         }
         this.updateApproveStatus(id, ApproveStatusEnum.WAIT_SUBMIT.getStatus(), null);
-        String msg = "模具【{}】反审核流程";
+        String msg = CharSequenceUtil.format("模具【{}】反审核流程", entity.getMouldCategoryCode());
         sysLogService.addSysLogBySave(msg, SysLogClassPathEnum.MOULD_DETAIL_ENTITY.getDesc(), entity.getId(), "");
         return BatchResultDTO.success(entity.getId(), entity.getMouldCategoryCode(), "反审核流程");
     }
@@ -623,12 +727,12 @@ public class MouldInfoServiceImpl extends SuperServiceImpl<MouldInfoMapper, Moul
         MouldInfoEntity entity = getById(mouldDetail.getMainId());
         SupplierEntity supplier = scmTaskFeign.getSupplierById(mouldDetail.getSupplierId());
         Map<String, Object> data = new HashMap<>();
-        data.put("name", entity.getName());
+        data.put(MouldInfoEntity.NAME, entity.getName());
         data.put("mouldNo", mouldDetail.getMouldNo());
         data.put("supplierName", supplier.getName());
         data.put("refundAmount", agreement.getRefundAmount());
         data.put("userName", UserContext.getDefaultLoginUser().getUserName());
-        data.put("updateTime", LocalDateTime.now().format(DateTimeFormatter.ofPattern(DATE_FAMART)));
+        data.put("updateTime", LocalDateTime.now().format(DateTimeFormatter.ofPattern(DATE_FORMAT)));
         LoginUser user = UserContext.getDefaultLoginUser();
         mouldInfoNotice(NoticeEnum.MOULD_REFUND_CONFIRM, data, new MouldInfoDTO.NoticeDTO(entity.getId(),
                 entity.getName(), entity.getProductManagerId(), user.getUid(), user.getUserName()),"mouldRefundConfirm.ftl");
@@ -807,7 +911,7 @@ public class MouldInfoServiceImpl extends SuperServiceImpl<MouldInfoMapper, Moul
         Map<String, String> typeNameMap = cfgMouldSettingList.stream().collect(Collectors.toMap(CfgMouldSettingEntity::getName, CfgMouldSettingEntity::getId, (o1, o2) -> o1));
         MouldInfoExcelListener excelListenerUtil = new MouldInfoExcelListener(typeNameMap, dictBasicNameMap, paymentConditionNameMap);
         try {
-            EasyExcel.read(excelFile.getInputStream(), MouldInfoImportDTO.MouldInfoExcelDTO.class, excelListenerUtil).sheet(0).doRead();
+            EasyExcelFactory.read(excelFile.getInputStream(), MouldInfoImportDTO.MouldInfoExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (IOException e) {
             log.error("导入错误！", e);
             throw new ServiceException(ApiError.ERROR_95124);
