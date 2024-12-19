@@ -314,6 +314,7 @@ public class ExportWmsFeignController {
     }
 
     @PostMapping("/inventoryTransFlow")
+    @WebAdvanceQuery
     public PagingVO<InventoryDTO.TransFlowPagingViewDTO> exportInventoryTransFlow(@RequestBody PagingDTO<InventoryDTO.ExportInvFlowSearchParamDTO> dto) {
         return transactionFlowService.exportInventoryTransFlow(dto);
     }

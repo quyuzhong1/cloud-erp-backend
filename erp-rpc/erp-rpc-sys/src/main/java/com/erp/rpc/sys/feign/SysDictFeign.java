@@ -45,6 +45,14 @@ public interface SysDictFeign {
     List<DictCountryEntity> listCountryByNames(@RequestBody List<String> names);
 
     /**
+     * 根据国家名/Id 集合 获取到国家列表
+     * @param codeList
+     * @return
+     */
+    @PostMapping("feign/dictCountry/listCountryByNamesOrIds")
+    List<DictCountryEntity> listCountryByNamesOrIds(@RequestBody List<String> codeList);
+
+    /**
      * 根据组织编码获取国家组织关系列表
      * @param orgCode
      * @return

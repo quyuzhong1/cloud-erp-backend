@@ -1077,6 +1077,9 @@ public enum ApiError implements Serializable {
     ERROR_92261(92261,"无关联采购时,退款单价不能为空"),
     ERROR_92262(92262,"采购退货单【{}】无关联采购时,SKU【{}】退款单价不能为空"),
     ERROR_92263(92263,"未找到【{}】仓库"),
+    ERROR_92264(92264,"目的国家不能为空"),
+    ERROR_92265(92265,"重量不能为空"),
+    ERROR_92267(92267,"邮编不能为空"),
 
     ERROR_SUBCONTRACT_ISSUE_NOT_EXIST(92124,"委外发料单不存在"),
     ERROR_SUBCONTRACT_ISSUE_DETAIL_NOT_EXIST(92125,"委外发料单明细不存在"),
@@ -1405,7 +1408,7 @@ public enum ApiError implements Serializable {
     ERROR_92160(92160,"本地推送消息单"),
     ERROR_92161(92161,"退款订单明细"),
     ERROR_92162(92162,"合并后的平台订单后过长"),
-
+    ERROR_92163(92163,"只能勾选一个自动提交发货选项"),
 
     TRANSACTION_SUB_TYPE_NOT_NULL(92154,"【{}】手工单的单据子类型不能为空"),
 
@@ -1546,7 +1549,7 @@ public enum ApiError implements Serializable {
     ERROR_SUGGEST_LOCKING(97017,"仅草稿数据支持锁定操作"),
     ERROR_SUGGEST_INVALID(97018,"已下推数据不支持作废操作"),
     ERROR_SUGGEST_UPDATE_REMARK(97019,"仅未作废的草稿和待确认数据支持更新备注操作"),
-    ERROR_SUGGEST_UPDATE(97020,"仅未作废的草稿和待确认数据支持更新备货操作"),
+    ERROR_SUGGEST_UPDATE(97020,"仅未作废的草稿和待确认数据支持更新操作"),
     ERROR_DELIVERY_SUGGEST_PUSH(97021,"发货建议【{}】非已完成不支持下推"),
     ERROR_DELIVERY_SUGGEST_PUSH_INVALID(97021,"发货建议【{}】已作废不支持下推"),
     ERROR_NOT_EXIST_CALC_DATA(97030,"不存在符合的试算数据"),

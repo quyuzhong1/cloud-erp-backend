@@ -1,20 +1,24 @@
 package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.collection.CollUtil;
 import com.common.business.enums.OmsPlatformEnum;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.exception.ServiceException;
+import com.common.core.utils.MathUtil;
 import com.erp.model.wms.dto.third.*;
 import com.erp.model.wms.enums.ThirdWarehouseCancelResultEnum;
 import com.erp.server.wms.convert.OverseasWarehouseInboundConverter;
+import com.erp.server.wms.convert.ThirdWarehouseConverter;
 import com.erp.server.wms.handler.AbstractThirdWarehouseHandler;
+import com.sdk.wms.goodcang.dto.request.GoodCangCalculateDeliveryFeeReq;
 import com.sdk.wms.goodcang.dto.request.GoodCangCreateInboundReq;
 import com.sdk.wms.goodcang.dto.request.GoodCangCreateOutboundReq;
 import com.sdk.wms.goodcang.dto.request.GoodCangGetSkuReq;
+import com.sdk.wms.goodcang.dto.response.GoodCangCalculateDeliveryFeeResp;
 import com.sdk.wms.goodcang.dto.response.GoodCangResponse;
 import com.sdk.wms.goodcang.dto.response.GoodCangSkuResp;
 import com.sdk.wms.goodcang.dto.response.GoodCangWarehouseResp;
-import com.sdk.wms.goodcang.enums.GoodCangEnums;
 import com.sdk.wms.goodcang.service.GoodCangService;
 import io.seata.common.util.CollectionUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -22,6 +26,7 @@ import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import javax.validation.Valid;
+import java.math.BigDecimal;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -90,6 +95,53 @@ public class GoodCangHandlerServiceImpl extends AbstractThirdWarehouseHandler {
     public ApiResult<String> cancelInboundBill(@Valid ThirdWarehouseCancelInboundReq cancelInboundReq) {
         GoodCangResponse<String> response = goodCangService.cancelInboundBill(cancelInboundReq.getReceivingCode());
         return isSuccess(response.getAsk()) ? success(response.getData()) : failure(response.getMessage());
+    }
+    @Override
+    public ApiResult<List<ThirdWarehouseCalculateFeeResponse>> getCalculateFeeBatch(@Valid ThirdWarehouseCalculateFeeReq calculateFeeReq) {
+        GoodCangCalculateDeliveryFeeReq goodCangCalculateDeliveryFeeReq = ThirdWarehouseConverter.INSTANCE.reqToGucangCalculateFeeReq(calculateFeeReq);
+        GoodCangResponse<List<GoodCangCalculateDeliveryFeeResp>> response = goodCangService.getCalculateDeliveryFee(goodCangCalculateDeliveryFeeReq);
+        List<GoodCangCalculateDeliveryFeeResp> goodCangCalculateDeliveryFeeRespList = response.getData();
+        String currency = response.getCurrency();
+        List<ThirdWarehouseCalculateFeeResponse> dataList = convertCalculateDeliveryFeeResp(currency, goodCangCalculateDeliveryFeeRespList);
+        return isSuccess(response.getAsk()) ? success(dataList) : failure(response.getMessage());
+    }
+
+    private List<ThirdWarehouseCalculateFeeResponse> convertCalculateDeliveryFeeResp(String currency, List<GoodCangCalculateDeliveryFeeResp> goodCangCalculateDeliveryFeeRespList) {
+        if (CollUtil.isEmpty(goodCangCalculateDeliveryFeeRespList)){
+            return Collections.emptyList();
+        }
+        List<ThirdWarehouseCalculateFeeResponse> list = new ArrayList<>();
+        for (GoodCangCalculateDeliveryFeeResp resp : goodCangCalculateDeliveryFeeRespList){
+            ThirdWarehouseCalculateFeeResponse response = ThirdWarehouseConverter.INSTANCE.gucangResToThirdWarehouseResponse(resp);
+            response.setCurrency(currency);
+            List<GoodCangCalculateDeliveryFeeResp.Income> income = resp.getIncome();
+            //设置其他费用
+            setOtherCostByIncome(response, income);
+            list.add(response);
+        }
+        return list;
+    }
+
+    private void setOtherCostByIncome(ThirdWarehouseCalculateFeeResponse response, List<GoodCangCalculateDeliveryFeeResp.Income> income) {
+        if(CollUtil.isEmpty(income)){
+            response.setShippingCost(BigDecimal.ZERO);
+            response.setDeclareCost(BigDecimal.ZERO);
+            response.setOtherCost(BigDecimal.ZERO);
+            response.setRegistrationCost(BigDecimal.ZERO);
+            response.setOperatingCost(BigDecimal.ZERO);
+        }else {
+            for (GoodCangCalculateDeliveryFeeResp.Income cost : income){
+                if (cost.getName().contains("运输费")){
+                    response.setShippingCost(new BigDecimal(cost.getAmount()));
+                }else if (cost.getName().contains("关税") || cost.getName().contains("报关费") || cost.getName().contains("偏远住宅费") || cost.getName().contains("附加费")){
+                    BigDecimal amount = new BigDecimal(cost.getAmount());
+                    BigDecimal declareCost = Objects.nonNull(response.getDeclareCost()) ? response.getDeclareCost() : BigDecimal.ZERO;
+                    response.setDeclareCost(MathUtil.add(amount, declareCost));
+                }else if (cost.getName().contains("操作费")){
+                    response.setOperatingCost(new BigDecimal(cost.getAmount()));
+                }
+            }
+        }
     }
 
     @Override

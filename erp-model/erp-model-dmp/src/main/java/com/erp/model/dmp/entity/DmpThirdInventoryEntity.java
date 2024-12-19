@@ -139,6 +139,12 @@ public class DmpThirdInventoryEntity extends BaseEntity<DmpThirdInventoryEntity>
     */
     @TableField("data_encrypt")
     private String dataEncrypt;
+    /**
+     * 销退在途数量
+     */
+    @TableField("sale_return_in_transit_qty")
+    private Integer saleReturnInTransitQty;
+
 
 
     public static final String WAREHOUSE_PLATFORM_TYPE = "warehouse_platform_type";

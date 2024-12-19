@@ -82,51 +82,6 @@
         <if test="params.sqlMap.default != null and params.sqlMap.default != ''">
             and ${params.sqlMap.default}
         </if>
-        <if test="params.sqlMap.detail != null and params.sqlMap.detail != ''">
-            and ${params.sqlMap.detail}
-        </if>
-<!--        <if test="params.name !=null and params.name!='' ">-->
-<!--            AND ls.supplier_name ILIKE concat('%',#{params.name}::text,'%')-->
-<!--        </if>-->
-<!--        <if test="params.shortName !=null and params.shortName!='' ">-->
-<!--            AND ls.short_name ILIKE concat('%',#{params.shortName}::text,'%')-->
-<!--        </if>-->
-<!--        <if test="params.type !=null and params.type!='' ">-->
-<!--            AND ls.type =#{params.type}-->
-<!--        </if>-->
-<!--        &lt;!&ndash;创建人&ndash;&gt;-->
-<!--        <if test="params.createUserIdList!=null and params.createUserIdList.size>0">-->
-<!--            AND ls.create_user_id IN-->
-<!--            <foreach collection="params.createUserIdList" item="item" open="(" separator="," close=")">-->
-<!--                #{item}-->
-<!--            </foreach>-->
-<!--        </if>-->
-<!--        &lt;!&ndash;授权状态&ndash;&gt;-->
-<!--        <if test="params.authStatusList!=null and params.authStatusList.size>0">-->
-<!--            AND ls.auth_status IN-->
-<!--            <foreach collection="params.authStatusList" item="item" open="(" separator="," close=")">-->
-<!--                #{item}-->
-<!--            </foreach>-->
-<!--        </if>-->
-<!--        &lt;!&ndash;启用状态&ndash;&gt;-->
-<!--        <if test="params.disabledList!=null and params.disabledList.size>0">-->
-<!--            AND ls.disabled IN-->
-<!--            <foreach collection="params.disabledList" item="item" open="(" separator="," close=")">-->
-<!--                #{item}-->
-<!--            </foreach>-->
-<!--        </if>-->
-<!--        &lt;!&ndash;创建时间&ndash;&gt;-->
-<!--        <if test="params.createTimeList !=null and params.createTimeList.size>0">-->
-<!--            AND ls.create_time >= #{params.createTimeList[0]} and-->
-<!--            (#{params.createTimeList[1]}::TIMESTAMP + INTERVAL '1-->
-<!--            DAY' ) > ls.create_time-->
-<!--        </if>-->
-<!--        &lt;!&ndash;更新时间&ndash;&gt;-->
-<!--        <if test="params.updateTimeList !=null and params.updateTimeList.size>0">-->
-<!--            AND ls.update_time >= #{params.updateTimeList[0]} and-->
-<!--            (#{params.updateTimeList[1]}::TIMESTAMP + INTERVAL '1-->
-<!--            DAY' ) > ls.update_time-->
-<!--        </if>-->
         <!--权限-->
         <if test="params.permissionSql!=null and params.permissionSql!=''">
             ${params.permissionSql}

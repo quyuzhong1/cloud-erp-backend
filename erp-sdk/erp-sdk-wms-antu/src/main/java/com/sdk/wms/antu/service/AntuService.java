@@ -182,5 +182,12 @@ public class AntuService {
         log.debug("安兔退货入库单:{}", response);
         return JSON.parseObject(response,new TypeReference<AntuResponse<List<AntuReturnResp>>>() {}.getType());
     }
-
+    /**
+     * 批量运费试算
+     */
+    public AntuResponse<List<AntuCalculateFeeResp>> getCalculateFeeBatch(@Valid AntuCalculateFeeReq antuCalculateFeeReq){
+        String response = AntuUtils.callService(AntuConstants.GET_CALCULATE_FEE_BATCH,antuCalculateFeeReq);
+        log.debug("批量运费试算:{}", response);
+        return JSON.parseObject(response,new TypeReference<AntuResponse<List<AntuCalculateFeeResp>>>() {}.getType());
+    }
 }

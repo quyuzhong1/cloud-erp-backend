@@ -110,6 +110,9 @@ public class VirtualTransFlowServiceImpl extends SuperServiceImpl<VirtualTransFl
         virtualTransFlow.setCurInventoryQty(afterInventoryQty);
         virtualTransFlow.setTradeTime(LocalDateTime.now());
         virtualTransFlow.setUserId(Objects.nonNull(loginUser) ? loginUser.getUid() : "0");
+        virtualTransFlow.setUpdateUserId(loginUser.getUid());
+        virtualTransFlow.setUpdateUserName(loginUser.getUserName());
+        virtualTransFlow.setUpdateTime(LocalDateTime.now());
 
         // 个别参数设置空值
         virtualTransFlow.setId(null);

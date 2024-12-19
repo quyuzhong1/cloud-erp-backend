@@ -693,8 +693,9 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
     /**
      * 重算目的国申报单价
      * @param details
+     * @param isManual 是否手动计算
      */
-    void recalDestDeclarePrice(List<ProductDetailEntity> details);
+    List<BatchResultDTO> resetDestDeclarePrice(List<ProductDetailEntity> details, Boolean isManual);
 
     /**
      * 历史数据sku 增加默认值 并且把已存在目的国海关编码值移到custom中
@@ -825,4 +826,15 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
      * @param response    响应
      */
     void printEan(PrintEanDTO printEanDTO, HttpServletResponse response);
+
+    /**
+     * 根据skuIds获取产品包装尺寸明细
+     * @param ids skuIds
+     */
+    List<ProductPackViewDTO> listProductPackBySkuIds(List<String> ids);
+    /**
+     * 修改产品包装尺寸
+     * @param viewDTO 参数
+     */
+    BatchResultDTO updateProductPack(ProductPackViewDTO viewDTO);
 }

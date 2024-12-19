@@ -16,10 +16,7 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.dto.excel.ProductWarehouseLocationExcelDTO;
-import com.erp.model.plm.entity.ProductDetailApproverEntity;
-import com.erp.model.plm.entity.ProductDetailEntity;
-import com.erp.model.plm.entity.ProductPurchaseRemarkEntity;
-import com.erp.model.plm.entity.ProductUnitEntity;
+import com.erp.model.plm.entity.*;
 import com.erp.model.plm.enums.ProductDetailStatusEnum;
 import com.erp.model.plm.vo.SkuSimpleVO;
 import com.erp.model.plm.vo.SkuVO;
@@ -45,6 +42,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * 产品管理
@@ -1287,5 +1285,47 @@ public class ProductDetailController extends BaseController {
     @PostMapping("/printEan")
     public void printEan(@RequestBody PrintEanDTO printEanDTO, HttpServletResponse response) {
         productDetailService.printEan(printEanDTO, response);
+    }
+
+    /**
+     * 目的国申报价重算
+     * @param dto
+     * @return
+     */
+    @PostMapping("/resetDestDeclarePrice")
+    public ApiResult<List<BatchResultDTO>> resetDestDeclarePrice(@RequestBody @Validated BaseIdsDTO.IdsDTO dto){
+        List<String> ids = dto.getIds().stream().distinct().collect(Collectors.toList());
+        List<ProductDetailEntity> productDetailEntityList = productDetailService.listByIds(ids);
+        List<BatchResultDTO> resultDTOS = productDetailService.resetDestDeclarePrice(productDetailEntityList, Boolean.TRUE);
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+
+
+    /**
+     * 根据skuIds获取产品包装尺寸明细
+     * @param dto 参数
+     */
+    @PostMapping("/listProductPackBySkuIds")
+    public ApiResult<List<ProductPackViewDTO>> listProductPackBySkuIds(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<ProductPackViewDTO> productPackViewDTOS = productDetailService.listProductPackBySkuIds(dto.getIds());
+        return success(productPackViewDTOS);
+    }
+
+    /**
+     * 修改产品包装尺寸
+     * @param dto 参数
+     */
+    @PostMapping("/batchUpdateProductPack")
+    public ApiResult<List<BatchResultDTO>> batchUpdateProductPack(@RequestBody @Validated BatchParamsDTO<ProductPackViewDTO> dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>();
+        for (ProductPackViewDTO viewDTO : dto.getParams()) {
+            try {
+                resultDTOS.add(productDetailService.updateProductPack(viewDTO));
+            } catch (Exception e) {
+                log.error("产品sku修改包装尺寸失败", e);
+                resultDTOS.add(BatchResultDTO.fail(viewDTO.getSkuId(), viewDTO.getSkuNo(), e.getMessage()));
+            }
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 }

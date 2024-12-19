@@ -15,6 +15,7 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.plm.dto.PilotApplicationDTO;
 import com.erp.model.plm.dto.PilotApplicationRefTaskDTO;
+import com.erp.model.plm.dto.ProductPackViewDTO;
 import com.erp.model.plm.dto.ProductSearchDTO;
 import com.erp.model.plm.entity.PilotApplicationEntity;
 import com.erp.server.plm.query.PilotApplicationQueryHandler;
@@ -469,5 +470,15 @@ public class PilotApplicationController extends BaseController {
     public ApiResult<List<ProductSearchDTO.SkuListDTO>> listSkuBySkuNos(@RequestBody ProductSearchDTO.SkuParamDTO skuParamDTO) {
         List<ProductSearchDTO.SkuListDTO> list = pilotApplicationService.listSkuBySkuNos(skuParamDTO);
         return this.success(list);
+    }
+
+    /**
+     * 根据skuIds获取产品包装尺寸明细,过滤包装数据完整的数据
+     * @param dto 参数
+     */
+    @PostMapping("/listProductPackBySkuIds")
+    public ApiResult<List<ProductPackViewDTO>> listProductPackBySkuIds(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<ProductPackViewDTO> productPackViewDTOS = pilotApplicationService.listProductPackBySkuIds(dto.getIds());
+        return success(productPackViewDTOS);
     }
 }

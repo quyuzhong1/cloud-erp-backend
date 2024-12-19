@@ -1,10 +1,8 @@
 package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.excel.EasyExcel;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -12,7 +10,9 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.FindUserDTO;
-import com.common.business.dto.base.*;
+import com.common.business.dto.base.BaseIdDTO;
+import com.common.business.dto.base.BatchResultDTO;
+import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.OmsPlatformEnum;
 import com.common.business.enums.PlatformDictEnum;
@@ -61,8 +61,6 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.ibatis.annotations.Param;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
@@ -75,15 +73,13 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.time.LocalDateTime;
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
-import static com.rtfparserkit.rtf.Command.list;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_WAREHOUSE;
 
@@ -393,7 +389,7 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
     }
 
     @Override
-    public List<WarehouseDTO.ListDTO> listOverseasWarehouse() {
+    public List<WarehouseDTO.PullDownDTO> listOverseasWarehouse() {
         // 查询仓库关联服务商
         Map<String, List<OverseasProviderDTO.ListWithWarehouseDTO>> warehouseBindMap = overseasProviderService.mapByWarehouseIds();
         if (warehouseBindMap.isEmpty()) {
@@ -407,15 +403,19 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
         if (CollectionUtils.isEmpty(list)) {
             return Collections.emptyList();
         }
-        List<WarehouseDTO.ListDTO> resultList = BeanMapperUtils.copyList(WarehouseDTO.ListDTO.class, list);
-        // 填充其他信息
-        this.fillListData(resultList, warehouseBindMap);
+        List<WarehouseDTO.PullDownDTO> resultList = BeanMapperUtils.copyList(WarehouseDTO.PullDownDTO.class, list);
 
-        return resultList.stream()
-                .sorted(Comparator.comparing(WarehouseDTO.ListDTO::getDisabled))
-                .collect(Collectors.toList());
-
-
+        //速卖通仓库映射
+        List<WarehouseMappingDTO.MappingViewDTO> mappingViewDTOS = warehouseMappingService.listMappingViewByDictPlatform(PlatformDictEnum.ALI_EXPRESS.getCode());
+        if (CollUtil.isNotEmpty(mappingViewDTOS)){
+            for (WarehouseMappingDTO.MappingViewDTO viewDTO : mappingViewDTOS) {
+                WarehouseDTO.PullDownDTO add  = new WarehouseDTO.PullDownDTO();
+                add.setId(viewDTO.getWarehouseId());
+                add.setName(viewDTO.getWarehouseName());
+                resultList.add(add);
+            }
+        }
+        return resultList.stream().distinct().collect(Collectors.toList());
     }
 
     @Override
@@ -1201,10 +1201,16 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
 
     @Override
     public List<WarehouseDTO.ListDTO> listWarehouseByParams(WarehouseDTO.ListParamDTO dto) {
+        List<String> typeIdList = null;
+        if (CollUtil.isNotEmpty(dto.getTypeCodeList())){
+            List<DictBasicDTO.ListDTO> dictList = dictBasicService.getByKey(DictBasicEnum.WAREHOUSE_TYPE.getKey());
+            typeIdList = dictList.stream().filter(e -> dto.getTypeCodeList().contains(e.getValue())).map(DictBasicDTO.ListDTO::getId).distinct().collect(Collectors.toList());
+        }
         List<WarehouseEntity> list = lambdaQuery()
                 .eq(CharSequenceUtil.isNotBlank(dto.getWarehouseName()), WarehouseEntity::getName, dto.getWarehouseName())
                 .in(CollectionUtils.isNotEmpty(dto.getOrgIdList()), WarehouseEntity::getOrgId, dto.getOrgIdList())
                 .in(CollectionUtils.isNotEmpty(dto.getWarehouseIdList()), WarehouseEntity::getId, dto.getWarehouseIdList())
+                .in(CollectionUtils.isNotEmpty(typeIdList), WarehouseEntity::getTypeId, typeIdList)
                 .list();
         if (CollectionUtils.isEmpty(list)) {
             return Collections.emptyList();
@@ -1217,9 +1223,7 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
         this.fillListData(resultList, warehouseBindMap);
 
         return resultList.stream()
-                .filter(e -> CharSequenceUtil.isBlank(dto.getDictPlatform()) ||
-                        (CharSequenceUtil.isNotBlank(dto.getDictPlatform()) && e.getDictPlatform().equalsIgnoreCase(dto.getDictPlatform()))
-                )
+                .filter(e -> CharSequenceUtil.isBlank(dto.getDictPlatform()) || (CharSequenceUtil.isNotBlank(dto.getDictPlatform()) && e.getDictPlatform().equalsIgnoreCase(dto.getDictPlatform())))
                 .filter(e -> ObjectUtil.isEmpty(dto.getIsSupplier()) || (Boolean.TRUE.equals(dto.getIsSupplier()) && e.getTypeId().equals(basic.getId())))
                 .sorted(Comparator.comparing(WarehouseDTO.ListDTO::getDisabled))
                 .collect(Collectors.toList());

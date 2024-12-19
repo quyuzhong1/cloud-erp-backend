@@ -933,6 +933,7 @@ public class ReplenishmentResultDTO {
             entity.setDataType(dto.getDataType());
             entity.setSuggestDeliveryQty(dto.getSuggestDeliveryQty());
             entity.setSuggestDeliveryDate(dto.getSuggestDeliveryDate());
+            entity.setPlanDeliveryQty(entity.getSuggestDeliveryQty());
             entity.setLogisticsMethod(dto.getLogisticsMethod());
             entity.setLogisticsDays(dto.getLogisticsDays());
             entity.setEstimateSalesDate(dto.getEstimateSalesDate());
@@ -1040,6 +1041,7 @@ public class ReplenishmentResultDTO {
             entity.setDataType(dto.getDataType());
             entity.setSuggestPurchaseQty(dto.getSuggestPurchaseQty());
             entity.setSuggestPurchaseDate(dto.getSuggestPurchaseDate());
+            entity.setPlanPurchaseQty(entity.getSuggestPurchaseQty());
             entity.setLogisticsMethod(dto.getLogisticsMethod());
             entity.setLogisticsDays(dto.getLogisticsDays());
             entity.setEstimateInstockDate(dto.getEstimateInstockDate());

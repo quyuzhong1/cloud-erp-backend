@@ -60,10 +60,8 @@ import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
 import com.erp.model.wms.entity.InventoryEntity;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
-import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.scm.feign.ScmTaskFeign;
 import com.erp.rpc.scm.feign.SupplierFeign;
-import com.erp.rpc.sys.feign.FileTemplateFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.tms.feign.CfgSettingFeign;
 import com.erp.rpc.wms.feign.InventoryFeign;
@@ -259,11 +257,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
     @Resource
     private InventoryFeign inventoryFeign;
-    @Resource
-    private DownloadTaskFeign downloadTaskFeign;
 
-    @Resource
-    private FileTemplateFeign fileTemplateFeign;
 
     //变更财务人员审核
     @Value("${changeFinancialAudit}")
@@ -2138,7 +2132,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         //TODO 2023-03-30 暂时取消审核流程 只改状态
 
         //审核通过 重算目的国申报单价
-        recalDestDeclarePrice(Collections.singletonList(entity));
+        resetDestDeclarePrice(Collections.singletonList(entity), Boolean.FALSE);
         //查询审核任务下所有待办
         Integer code = ProductDetailStatusEnum.APPROVAL_PASS.getCode();
         //更新产品信息状态
@@ -2162,26 +2156,31 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     }
 
     /**
-     * 重算目的国申报价
+     * 重算目的国申报价（定时任务）
      * @param details
+     * @param isManual 是否手动计算
      */
     @Override
-    public void recalDestDeclarePrice(List<ProductDetailEntity> details) {
-        log.info("recalDestDeclarePrice start======{}",details.size());
+    public List<BatchResultDTO> resetDestDeclarePrice(List<ProductDetailEntity> details, Boolean isManual) {
+        List<BatchResultDTO> batchResultDTOList = new ArrayList<>();
+        log.info("resetDestDeclarePrice start======{}",details.size());
         if (CollectionUtils.isEmpty(details)) {
-            return;
+            batchResultDTOList.add(BatchResultDTO.fail("","","重算产品明细为空"));
+            return batchResultDTOList;
         }
         List<String> skuIds = details.stream().filter(Objects::nonNull).map(ProductDetailEntity::getId).distinct().collect(Collectors.toList());
         List<String> skuNoList = details.stream().filter(Objects::nonNull).map(ProductDetailEntity::getSkuNo).distinct().collect(Collectors.toList());
         if (isEmpty(skuIds)) {
-            return;
+            batchResultDTOList.add(BatchResultDTO.fail("","","重算产品SKU明细不存在"));
+            return batchResultDTOList;
         }
         //目的国申报信息
         List<ProductCustomsEntity> customsEntityList = productCustomsService.listBySkuIds(skuIds, CommonConstants.DEFAULT);
         //系统配置
         CfgSettingEntity setting = cfgSettingFeign.getByKey(CfgSettingEnum.LOGISTICS_PRODUCT_DEST_DECLARE_PRICE.getCode());
         if (Objects.isNull(setting) || Objects.isNull(setting.getDataJson()) || CollectionUtils.isEmpty(setting.getDataJson().getJSONArray("data"))) {
-            return;
+            batchResultDTOList.add(BatchResultDTO.fail("","","目的国申报价配置不存在"));
+            return batchResultDTOList;
         }
         List<CfgSettingValueDTO.LogisticsProductDestDeclarePrice> data = JSONUtil.toList(setting.getDataJson().getJSONArray("data"), CfgSettingValueDTO.LogisticsProductDestDeclarePrice.class);
         log.info("CfgSettingValueDTO: {}", JSONUtil.toJsonStr(data));
@@ -2189,21 +2188,23 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         List<DmpSkuCostEntity> skuCostList = dmpTaskFeign.listRedisBySkuNoList(skuNoList);
         BigDecimal usdRate = dmpTaskFeign.getRate(LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), CurrencyEnum.USD.getCurrencyCode());
         if (Objects.isNull(usdRate)) {
-            return;
+            batchResultDTOList.add(BatchResultDTO.fail("",String.join(",", skuNoList),"USD兑换CNY汇率不存在"));
+            return batchResultDTOList;
         }
         List<ProductCustomsEntity> addList = new ArrayList<>();
         List<ProductCustomsEntity> updateList = new ArrayList<>();
         for(String skuId : skuIds){
+            ProductDetailEntity productDetailEntity = details.stream().filter(e -> Objects.equals(skuId, e.getId())).findFirst().orElse(new ProductDetailEntity());
             //目的国申报信息 默认
             ProductCustomsEntity customs = customsEntityList.stream().filter(e -> Objects.nonNull(e) && e.getSkuId().equals(skuId)).findFirst().orElse(new ProductCustomsEntity());
-
             log.info("recalDestDeclarePrice : skuId:{},destDeclarePrice:{}", skuId,customs.getToDeclarePrice());
             //是否重算目的国申报价
             BigDecimal destDeclarePrice = Objects.isNull(customs.getToDeclarePrice()) ? BigDecimal.ZERO: customs.getToDeclarePrice();
-            if (destDeclarePrice.compareTo(BigDecimal.ZERO) == 0) {
+            if (destDeclarePrice.compareTo(BigDecimal.ZERO) == 0 || isManual) {
                 DmpSkuCostEntity skuCostDTO = skuCostList.stream().filter(e -> e.getSkuId().equals(skuId)).findFirst().orElse(null);
                 log.info("skuCostDTO: {}", JSONUtil.toJsonStr(skuCostDTO));
                 if (Objects.isNull(skuCostDTO)) {
+                    batchResultDTOList.add(BatchResultDTO.fail(skuId,productDetailEntity.getSkuNo(),CharSequenceUtil.format("SKU【{}】中【{}】兑换【{}】汇率不存在",productDetailEntity.getSkuNo(), CurrencyEnum.USD.getCurrencyCode(),CurrencyEnum.CNY.getCurrencyCode() )));
                     continue;
                 }
                 //含税成本 默认是人民币
@@ -2218,6 +2219,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 CfgSettingValueDTO.LogisticsProductDestDeclarePrice declarePrice = data.stream().filter(e -> e.getStartPrice().compareTo(actualTaxCostUsd) < 0 && e.getEndPrice().compareTo(actualTaxCostUsd) >= 0).findFirst().orElse(null);
                 log.info("declarePrice: {}", JSONUtil.toJsonStr(declarePrice));
                 if (Objects.isNull(declarePrice) || Objects.isNull(declarePrice.getRate())) {
+                    batchResultDTOList.add(BatchResultDTO.fail(skuId,productDetailEntity.getSkuNo(),"申报配置汇率不存在"));
                     continue;
                 }
                 BigDecimal resultDestDeclarePrice = actualTaxCostUsd.multiply(declarePrice.getRate()).divide(MathUtil.BigDecimal_100, 4, RoundingMode.HALF_UP);
@@ -2225,13 +2227,31 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 customs.setToDeclarePrice(resultDestDeclarePrice);
                 customs.setToCurrency(CurrencyEnum.USD.getCurrencyCode());
                 customs.setToCurrencySymbol(CurrencyEnum.USD.getCurrencySymbol());
+                String oldCountry = CharSequenceUtil.isBlank(customs.getCountry()) || CommonConstants.DEFAULT.equals(customs.getCountry()) ? "默认" : customs.getCountry();
+                String newCountry = "";
                 if (Objects.isNull(customs.getId())){
+                    customs.setSkuId(skuId);
+                    customs.setSkuNo(productDetailEntity.getSkuNo());
+                    customs.setImagesUrl(productDetailEntity.getImagesUrl());
                     customs.setCountry(CommonConstants.DEFAULT);
+                    newCountry = CommonConstants.DEFAULT;
                     addList.add(customs);
                 }else {
+                    if (CharSequenceUtil.isBlank(customs.getCountry())){
+                        customs.setCountry(CommonConstants.DEFAULT);
+                    }
                     updateList.add(customs);
                 }
-
+                newCountry = CharSequenceUtil.isBlank(newCountry) || CommonConstants.DEFAULT.equals(newCountry) ? "默认" : customs.getCountry();
+                String msg = "";
+                if (isManual){
+                    msg = CharSequenceUtil.format("手动重算【{}】国家从【{}】改为【{}】，目的国申报价从【{}】改为【{}】", productDetailEntity.getSkuNo(),oldCountry, newCountry,destDeclarePrice, resultDestDeclarePrice);
+                }else {
+                    msg = CharSequenceUtil.format("自动重算【{}】国家从【{}】改为【{}】，目的国申报价从【{}】改为【{}】", productDetailEntity.getSkuNo(),oldCountry, newCountry,destDeclarePrice, resultDestDeclarePrice);
+                }
+                sysLogService.addSysLogByOther(new SysLogEntity().setClassPath(SKUCLASSPATH).setPid(productDetailEntity.getProductId())
+                        .setBusinessId(productDetailEntity.getId()).setOperation("编辑操作").setContent(msg));
+                batchResultDTOList.add(BatchResultDTO.success(skuId,productDetailEntity.getSkuNo(),msg));
                 log.info("更新目的国申报价 sku:{},目的国申报价：{}",skuCostDTO.getSkuNo(), resultDestDeclarePrice);
             }
         }
@@ -2243,7 +2263,8 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             log.info("addList: {}", JSONUtil.toJsonStr(addList));
             productCustomsService.saveBatch(addList);
         }
-        log.info("recalDestDeclarePrice end======");
+        log.info("resetDestDeclarePrice end======");
+        return batchResultDTOList;
     }
 
     @Override
@@ -4085,10 +4106,6 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         List<String> productIdList = entityList.stream().map(ProductDetailEntity::getProductId).collect(Collectors.toList());
         List<ProductInfoEntity> productInfoList = productInfoService.listByIds(productIdList);
 
-        //包装信息
-        List<String> skuIdList = entityList.stream().map(ProductDetailEntity::getId).collect(Collectors.toList());
-        List<ProductPackEntity> productPackList = productPackService.listBySkuIdList(skuIdList);
-
         for (ProductDetailEntity detailEntity : entityList) {
             StringBuilder errMsg = new StringBuilder("");
 
@@ -4099,38 +4116,6 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             }
             if (ObjectUtil.isEmpty(productInfo.getSaleMethod() )|| (!productInfo.getSaleMethod().contains(SaleMethodEnum.GOODS.getName()) && !productInfo.getSaleMethod().contains(SaleMethodEnum.GIFT.getName()))) {
                 continue;
-            }
-            /**
-             * 当产品销售方式为商品时，包装尺寸、箱规 、毛重、单箱重量、净重、单箱数量不能为空
-             */
-            ProductPackEntity productPackEntity = productPackList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSkuId(), detailEntity.getId())).findFirst().orElse(null);
-            if (ObjectUtils.isEmpty(productPackEntity)) {
-                errMsg.append(format(ApiError.ERROR_PRODUCT_PACK_NOT_EXIST.msg,detailEntity.getSkuNo())).append(ProductConstant.HTML_BR);
-                continue;
-            }
-            //包装尺寸
-            if (MathUtil.compareTo(BigDecimal.ZERO, productPackEntity.getProductLength()) >= 0  || MathUtil.compareTo(BigDecimal.ZERO, productPackEntity.getProductWidth()) >= 0 || MathUtil.compareTo(BigDecimal.ZERO, productPackEntity.getProductHeight()) >= 0) {
-                errMsg.append(format(ApiError.ERROR_PRODUCT_SIZE_NOT_EXIST.msg, detailEntity.getSkuNo())).append(ProductConstant.HTML_BR);
-            }
-            //箱规
-            if (MathUtil.compareTo(BigDecimal.ZERO, productPackEntity.getBoxLength()) >= 0 ||MathUtil.compareTo(BigDecimal.ZERO, productPackEntity.getBoxWidth()) >= 0 || MathUtil.compareTo(BigDecimal.ZERO, productPackEntity.getBoxHeight()) >= 0) {
-                errMsg.append(format(ApiError.ERROR_BOX_SIZE_NOT_EXIST.msg, detailEntity.getSkuNo())).append(ProductConstant.HTML_BR);
-            }
-            //毛重
-            if (MathUtil.compareTo(productPackEntity.getGrossWeight(), MathUtil.ZERO) == MathUtil.ZERO) {
-                errMsg.append(format(ApiError.ERROR_GROSS_WEIGHT_NOT_EXIST.msg, detailEntity.getSkuNo())).append(ProductConstant.HTML_BR);
-            }
-            //单箱重量
-            if (MathUtil.compareTo(productPackEntity.getBoxWeight(), MathUtil.ZERO) == MathUtil.ZERO) {
-                errMsg.append(format(ApiError.ERROR_BOX_WEIGHT_NOT_EXIST.msg, detailEntity.getSkuNo())).append(ProductConstant.HTML_BR);
-            }
-            //净重
-            if (MathUtil.compareTo(productPackEntity.getNetWeight(), MathUtil.ZERO) == MathUtil.ZERO) {
-                errMsg.append(format(ApiError.ERROR_NET_WEIGHT_NOT_EXIST.msg, detailEntity.getSkuNo())).append(ProductConstant.HTML_BR);
-            }
-            //单箱数量
-            if (MathUtil.compareTo(productPackEntity.getBoxQty(), MathUtil.ZERO) == MathUtil.ZERO) {
-                errMsg.append(format(ApiError.ERROR_BOX_QTY_NOT_EXIST.msg, detailEntity.getSkuNo()));
             }
             if (CharSequenceUtil.isNotBlank(errMsg)) {
                 throw new ServiceException(errMsg.toString());
@@ -5131,6 +5116,65 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             document.close();
         } catch (Exception e) {
             throw new ServiceException(ApiError.ERROR_1015, e.getMessage());
+        }
+    }
+
+    @Override
+    public List<ProductPackViewDTO> listProductPackBySkuIds(List<String> ids) {
+        List<String> skuIds = ids.stream()
+                .distinct()
+                .collect(Collectors.toList());
+        return baseMapper.listProductPackBySkuIds(skuIds);
+    }
+
+    @Override
+    public BatchResultDTO updateProductPack(ProductPackViewDTO viewDTO) {
+        //校验 【箱规-长宽高】必须大于等于【包装尺寸-长宽高】【为空则忽略不校验】【长，宽，高分开校验】
+        checkSizeAndWeight(viewDTO);
+        ProductPackEntity entity = new ProductPackEntity();
+        BeanUtils.copyProperties(viewDTO, entity);
+        productPackService.saveOrUpdate(entity);
+        return BatchResultDTO.success(viewDTO.getSkuId(), viewDTO.getSkuNo(), "操作成功");
+    }
+
+
+    private void checkSizeAndWeight(ProductPackViewDTO productPackDTO) {
+        if (ObjectUtils.isNotEmpty(productPackDTO)) {
+            StringBuilder errMsg = new StringBuilder();
+            //包装尺寸
+            if (MathUtil.compareTo(BigDecimal.ZERO, productPackDTO.getProductLength()) >= 0  || MathUtil.compareTo(BigDecimal.ZERO, productPackDTO.getProductWidth()) >= 0 || MathUtil.compareTo(BigDecimal.ZERO, productPackDTO.getProductHeight()) >= 0) {
+                errMsg.append(CharSequenceUtil.format(ApiError.ERROR_PRODUCT_SIZE_NOT_EXIST.msg, productPackDTO.getSkuNo())).append(ProductConstant.HTML_BR);
+            }
+            //箱规
+            if (MathUtil.compareTo(BigDecimal.ZERO, productPackDTO.getBoxLength()) >= 0 ||MathUtil.compareTo(BigDecimal.ZERO, productPackDTO.getBoxWidth()) >= 0 || MathUtil.compareTo(BigDecimal.ZERO, productPackDTO.getBoxHeight()) >= 0) {
+                errMsg.append(CharSequenceUtil.format(ApiError.ERROR_BOX_SIZE_NOT_EXIST.msg, productPackDTO.getSkuNo())).append(ProductConstant.HTML_BR);
+            }
+            //毛重
+            if (MathUtil.compareTo(productPackDTO.getGrossWeight(), MathUtil.ZERO) == MathUtil.ZERO) {
+                errMsg.append(CharSequenceUtil.format(ApiError.ERROR_GROSS_WEIGHT_NOT_EXIST.msg, productPackDTO.getSkuNo())).append(ProductConstant.HTML_BR);
+            }
+            //单箱重量
+            if (MathUtil.compareTo(productPackDTO.getBoxWeight(), MathUtil.ZERO) == MathUtil.ZERO) {
+                errMsg.append(CharSequenceUtil.format(ApiError.ERROR_BOX_WEIGHT_NOT_EXIST.msg, productPackDTO.getSkuNo())).append(ProductConstant.HTML_BR);
+            }
+            //净重
+            if (MathUtil.compareTo(productPackDTO.getNetWeight(), MathUtil.ZERO) == MathUtil.ZERO) {
+                errMsg.append(CharSequenceUtil.format(ApiError.ERROR_NET_WEIGHT_NOT_EXIST.msg, productPackDTO.getSkuNo())).append(ProductConstant.HTML_BR);
+            }
+            //单箱数量
+            if (MathUtil.compareTo(productPackDTO.getBoxQty(), MathUtil.ZERO) == MathUtil.ZERO) {
+                errMsg.append(CharSequenceUtil.format(ApiError.ERROR_BOX_QTY_NOT_EXIST.msg, productPackDTO.getSkuNo()));
+            }
+            if (CharSequenceUtil.isNotBlank(errMsg)) {
+                throw new ServiceException(errMsg.toString());
+            }
+
+
+            compareDimensions(productPackDTO.getBoxLength(), productPackDTO.getProductLength(), ApiError.ERROR_LENGTH_BOX_LITTER_THAN_PRODUCT);
+            compareDimensions(productPackDTO.getBoxWidth(), productPackDTO.getProductWidth(), ApiError.ERROR_WIDTH_BOX_LITTER_THAN_PRODUCT);
+            compareDimensions(productPackDTO.getBoxHeight(), productPackDTO.getProductHeight(), ApiError.ERROR_HEIGHT_BOX_LITTER_THAN_PRODUCT);
+            //毛重大于等于净重
+            compareDimensions(productPackDTO.getGrossWeight(), productPackDTO.getNetWeight(), ApiError.ERROR_WEIGHT_GROSS_LITTER_THAN_NET);
         }
     }
 

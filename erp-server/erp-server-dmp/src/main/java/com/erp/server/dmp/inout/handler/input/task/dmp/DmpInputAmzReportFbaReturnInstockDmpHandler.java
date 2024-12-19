@@ -11,6 +11,7 @@ import com.erp.model.dmp.entity.DmpSoReturnInfoEntity;
 import com.erp.model.dmp.entity.DmpThirdReturnInboundEntity;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
@@ -47,7 +48,15 @@ public class DmpInputAmzReportFbaReturnInstockDmpHandler extends DmpInputDoNextD
 		}
 		for (List<TreeMap<String, Object>> dmpInputMongoList : dmpInputDataDmpRelationMaps.values()) {
 			for (TreeMap<String, Object> detailMap : dmpInputMongoList) {
-				String returnOrderId = CharSequenceUtil.format("{}_{}", detailMap.get("orderId").toString(), detailMap.get("platformShopCode").toString());
+				String orderId = detailMap.getOrDefault("orderId", "").toString();
+				if (StringUtils.isBlank(orderId)){
+					orderId = detailMap.getOrDefault("platformOrderNo", "").toString();
+				}
+				String platformShopCode = detailMap.getOrDefault("platformShopCode","").toString();
+				if (StringUtils.isBlank(platformShopCode)){
+					platformShopCode = detailMap.getOrDefault("authId", "").toString();
+				}
+				String returnOrderId = CharSequenceUtil.format("{}_{}", orderId, platformShopCode);
 				String dmpId = dmpReturnIdMap.get(returnOrderId);
 				detailMap.put("source_id", dmpId);
 			}
