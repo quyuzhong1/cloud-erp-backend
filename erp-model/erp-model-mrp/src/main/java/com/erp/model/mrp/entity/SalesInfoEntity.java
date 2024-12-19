@@ -59,6 +59,12 @@ public class SalesInfoEntity extends BaseEntity<SalesInfoEntity> {
     private String salesQtyType;
 
     /**
+     * 有效值
+     */
+    @TableField("effective_value")
+    private Integer effectiveValue;
+
+    /**
      * 计算版本  所有子表加   根据单号生成规则
      */
     @TableField("calc_version")

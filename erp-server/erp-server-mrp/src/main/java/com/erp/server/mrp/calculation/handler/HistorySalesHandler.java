@@ -53,8 +53,10 @@ public class HistorySalesHandler extends AbstractSkuCalculationHandler {
 
         //分时段销量
         List<ReplenishmentResultDTO.TimePeriodSalesDTO> timePeriodSales = new ArrayList<>();
+        List<ReplenishmentResultDTO.TimePeriodSalesDTO> realSaleQty = new ArrayList<>();
         //分时段日均销量
         List<ReplenishmentResultDTO.TimePeriodSalesDTO> avgTimePeriodSales = new ArrayList<>();
+        Map<LocalDate, Integer> historySalesList = replenishmentResultDTO.getHistorySalesList();
         List<ReplenishmentResultDTO.SalesInfoDTO> salesInfos = replenishmentResultDTO.getSalesInfos();
         LocalDate now = LocalDate.parse(replenishmentResultDTO.getReplenishmentDetail().getCalcDate(), DateTimeFormatter.BASIC_ISO_DATE);
         LocalDate endDate = now.minusDays(1);
@@ -75,9 +77,18 @@ public class HistorySalesHandler extends AbstractSkuCalculationHandler {
                 avgQty = qty.divide(BigDecimal.valueOf(count), 2, RoundingMode.HALF_UP);
             }
             avgTimePeriodSales.add(new ReplenishmentResultDTO.TimePeriodSalesDTO(value, avgQty));
+
+            BigDecimal realQty = historySalesList.entrySet().stream()
+                    .filter(v -> !endDate.minusDays(value.getDays()).isAfter(v.getKey()) && endDate.isAfter(v.getKey()))
+                    .map(Map.Entry::getValue)
+                    .map(BigDecimal::new)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add)
+                    .setScale(0, RoundingMode.CEILING);
+            realSaleQty.add(new ReplenishmentResultDTO.TimePeriodSalesDTO(value, realQty));
         }
         replenishmentResultDTO.setTimePeriodSales(timePeriodSales);
         replenishmentResultDTO.setAvgTimePeriodSales(avgTimePeriodSales);
+        replenishmentResultDTO.setRealSaleQty(realSaleQty);
     }
 
     /**
@@ -137,6 +148,7 @@ public class HistorySalesHandler extends AbstractSkuCalculationHandler {
                     }
                     salesInfoDTO.setSalesQty(salesQty);
                     salesInfoDTO.setDenoisingType(denoisingResult.getDenoisingType());
+                    salesInfoDTO.setEffectiveValue(denoisingResult.getEffectiveValue());
                     salesInfoList.add(salesInfoDTO);
                 }
             }
