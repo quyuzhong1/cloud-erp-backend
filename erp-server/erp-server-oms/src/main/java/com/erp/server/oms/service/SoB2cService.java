@@ -21,7 +21,6 @@ import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.model.wms.dto.WmsDataCompareTaskDTO;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
@@ -1039,5 +1038,5 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * @param soId
      * @param soOutstockDate
      */
-    void writeBackSoOutstockDate(String soId, LocalDate soOutstockDate);
+    void writeBackSoOutstockDate(String soId, String soOutstockDate);
 }

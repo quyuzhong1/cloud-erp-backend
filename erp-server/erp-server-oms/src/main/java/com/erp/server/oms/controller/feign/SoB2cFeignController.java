@@ -899,7 +899,7 @@ public class SoB2cFeignController extends BaseController {
      * @param soOutstockDate
      */
     @GetMapping("/writeBackSoOutstockDate")
-    public void writeBackSoOutstockDate(@RequestParam("soId") String soId, @RequestParam("soOutstockDate") LocalDate soOutstockDate) {
+    public void writeBackSoOutstockDate(@RequestParam("soId") String soId, @RequestParam("soOutstockDate") String soOutstockDate) {
         soB2cService.writeBackSoOutstockDate(soId, soOutstockDate);
     }
 }

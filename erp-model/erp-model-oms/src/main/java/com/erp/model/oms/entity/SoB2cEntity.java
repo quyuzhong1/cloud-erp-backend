@@ -358,7 +358,7 @@ public class SoB2cEntity extends BaseEntity<SoB2cEntity> {
      * 销售出库时间  来源：销售出库单的bill_date
      */
     @TableField("so_outstock_date")
-    private String soOutstockDate;
+    private LocalDate soOutstockDate;
 
     public static final String CODE = "code";
 
