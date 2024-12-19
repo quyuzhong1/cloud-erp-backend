@@ -1,13 +1,11 @@
 package com.erp.server.dmp.inout.handler.input.task.dmp;
 
+import cn.hutool.core.collection.CollUtil;
 import com.erp.server.dmp.utils.MapCountUtils;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
+import java.util.*;
 
 /**
  * 订单详情字段映射转换
@@ -19,9 +17,13 @@ public class MabangOrderNextDmpHandler extends MabangOrderGetDetailDmpHandler {
 	@Override
 	protected List<Map<String, Object>> getDetailList(Map<String, Object> dmpInputMongoEntity){
 		List<Map<String, Object>> detailList = super.getDetailList(dmpInputMongoEntity);
-		detailList.forEach(d -> {
-			d.put("platformOrderId", dmpInputMongoEntity.get("platformOrderId"));
-		});
+		if (CollUtil.isNotEmpty(detailList)) {
+			detailList.forEach(d -> {
+				d.put("platformOrderId", dmpInputMongoEntity.get("platformOrderId"));
+			});
+		} else {
+			detailList = new ArrayList<>();
+		}
 		return detailList;
 	}
 

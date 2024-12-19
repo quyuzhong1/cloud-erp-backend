@@ -1,5 +1,6 @@
 package com.erp.server.dmp.inout.handler.input.task.init.api.mabang;
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
@@ -43,55 +44,23 @@ public class MabangOrderHistoryMongoApiInitHandler implements DmpInputApiInitHan
 
 	@Override
 	public List<DmpInputTaskInitDTO> getApiData(DmpInputApiInitRequest dmpInputApiInitRequest) {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
 		List<DmpInputTaskInitDTO> dmpInputTaskInitDTOList = new ArrayList<>();
 
         String requestParam = dmpInputApiInitRequest.getRequestParam();
         Map<String, Object> paramMap = JSON.parseObject(requestParam, Map.class);
 
-
-/*
-
-        DmpInputTaskEntity dmpInputTaskEntity = list.stream().filter(req -> "1816384798088779541".equals(req.getCfgInputId())).findFirst().orElse(null);
-
         List<ParamData> paramDataList = new ArrayList<>();
-        paramDataList.add(new ParamData("", DmpInputMongoHandler.MONGO_BASE_INPUTTASKID, PannoEnum.EQ, dmpInputTaskEntity.getId()));
-        List<Map<String, Object>> dmpInputMongoChildList = mongoService.findMongoData(paramDataList, "mercadolibre_shipment_data");
-*/
+        paramDataList.add(new ParamData("createDate", "createDate", PannoEnum.GT, dmpInputApiInitRequest.getStartTime().format(formatter)));
+        paramDataList.add(new ParamData("createDate", "createDate", PannoEnum.LT, dmpInputApiInitRequest.getEndTime().format(formatter)));
+        List<Map<String, Object>> dmpInputMongoChildList = mongoService.findMongoData(paramDataList, "original_mabang_order");
+        // 直接将 List 转换为 JSON 字符串
+        String jsonString = JSON.toJSONString(dmpInputMongoChildList);
 
-
-
-        String pageSize = "1000";
-        String pageIndex = "";
-        //总页数
-        Boolean hasNext = true;
-        List<OrderEntity> infoArrayList = new ArrayList<>();
-        DateTimeFormatter sdf = DateTimeFormatter.ofPattern(EnumTimePattern.y_m_d.toTimePattern());
-        while (hasNext ) {
-            if (StrUtil.isNotBlank(pageIndex)){
-                paramMap.put("cursor", pageIndex);
-            }
-//            params.put("paidTime", sdf.format(endDate));
-            paramMap.put("pageSize", pageSize);
-            ParamHeaderVO paramVo = MabangTool.getParamMap(dmpInputApiInitRequest.getApiType(), 0, paramMap);
-            JSONObject responseMap = HttpCommonUtil.sendOkhttp(UrlContant.MABANG_HOST, paramVo.getParamsStr(), null, paramVo.getHeaderMap(), RequestMethod.POST);
-            if (!Objects.equals(responseMap.getInteger("code"), 200)) {
-                log.error("调用url={} param={} {}马帮历史销售订单数据失败 responseMap={}",UrlContant.MABANG_HOST, paramVo.getParamsStr(), JSONUtil.toJsonStr(responseMap));
-                throw new RuntimeException(StrUtil.format("调用url={} param={} {}马帮历史销售订单数据失败 responseMap={}",
-                        UrlContant.MABANG_HOST, paramVo.getParamsStr(), JSONUtil.toJsonStr(responseMap)));
-            }
-            JSONObject dataJson = JSONObject.parseObject(responseMap.getString("data"));
-
-//            List<OrderEntity> dataList = JSONObject.parseArray(dataJson.getString("list"), OrderEntity.class);
-            hasNext = null != dataJson.getBoolean("hasNext") ?dataJson.getBoolean("hasNext"):Boolean.FALSE;
-            pageIndex = dataJson.getString("nextCursor");
-
-
-            JSONArray data = dataJson.getJSONArray("list");
-            DmpInputTaskInitDTO dmpInputTaskInitDTO = new DmpInputTaskInitDTO();
-            dmpInputTaskInitDTO.setMsg(data.toJSONString());
-            dmpInputTaskInitDTOList.add(dmpInputTaskInitDTO);
-        }
+        DmpInputTaskInitDTO dmpInputTaskInitDTO = new DmpInputTaskInitDTO();
+        dmpInputTaskInitDTO.setMsg(jsonString);
+        dmpInputTaskInitDTOList.add(dmpInputTaskInitDTO);
         return dmpInputTaskInitDTOList;
 	}
 
