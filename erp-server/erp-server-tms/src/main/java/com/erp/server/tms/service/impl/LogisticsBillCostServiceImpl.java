@@ -1772,6 +1772,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 		}
 		
 		Map<String, BigDecimal> rateMap = new HashMap<>();
+		boolean skuCostFlag = false;
 		for(SoOutstockDetailEntity soOutstockDetailEntity : soOutstockDetailEntityList) {
 			i = i + 1;
 			String skuId = soOutstockDetailEntity.getSkuId();
@@ -1789,6 +1790,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 			
 			Integer actualQty = soOutstockDetailEntity.getActualQty();
 			BigDecimal skuCostPre = BigDecimal.ZERO;
+			
 			InventorySkuCostDetailEntity inventorySkuCostDetailEntity = unInventorySkuCostMap.get(orgId + "_" + skuId);
 			if(inventorySkuCostDetailEntity != null) {
 				BigDecimal skuCost = inventorySkuCostDetailEntity.getProductCost();
@@ -1798,9 +1800,9 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 				smallBagCostAllocationEntity.setUnitCost(skuCost);
 				smallBagCostAllocationEntity.setUnitCurrency(idEntityMaps.get(inventorySkuCostDetailEntity.getMainId()).getCurrency());
 			}else {
+				skuCostFlag = true;
 				smallBagCostAllocationEntity.setUnitCost(BigDecimal.ZERO);
 				smallBagCostAllocationEntity.setUnitCurrency("CNY");
-//				throw new ServiceException(orgName + reportDate + "月份下sku=" + skuNo + "未配置分摊成本");
 			}
 			BigDecimal skuWeightCostPre = BigDecimal.ZERO;
 			BigDecimal skuWeightCost = skuWeightCostMaps.get(skuId);
@@ -1904,6 +1906,20 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 			smallBagCostAllocationService.saveBatch(addSmallBagCostAllocationEntityList);
 		}
 		if(CollUtil.isNotEmpty(addSmallBagCostAllocationDetailEntityList)) {
+			if(skuCostFlag) {
+				for(Map.Entry<String, String> feeTypeSettingMap : feeTypeSettingMaps.entrySet()) {
+					if(CostAllocationEnum.COST_ALLOCATION.getCode().equals(feeTypeSettingMap.getValue())) {
+						addSmallBagCostAllocationDetailEntityList.forEach(a -> {
+							if(a.getFeeType().equals(feeTypeSettingMap.getKey())) {
+								a.setAllocatedAmount(BigDecimal.ZERO);
+								a.setAllocatedAmountExchange(BigDecimal.ZERO);
+								a.setProductAllocatedAmount(BigDecimal.ZERO);
+								a.setProductAllocatedAmountExchange(BigDecimal.ZERO);
+							}
+						});
+					}
+				}
+			}
 			smallBagCostAllocationDetailService.saveBatch(addSmallBagCostAllocationDetailEntityList);
 		}
 		
