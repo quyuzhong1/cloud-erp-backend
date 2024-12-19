@@ -42,7 +42,7 @@
     <!-- tab列表 -->
     <select id="listCount" resultType="java.lang.Integer">
         select
-        count(distinct lbc.id)
+        count( lbc.id)
         from logistics_bill_cost lbc
         <where>
             ${params.sqlMap.default}
