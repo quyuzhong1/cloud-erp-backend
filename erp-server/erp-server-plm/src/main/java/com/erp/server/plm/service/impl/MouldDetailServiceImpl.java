@@ -21,10 +21,7 @@ import org.springframework.util.ObjectUtils;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -67,7 +64,7 @@ public class MouldDetailServiceImpl extends SuperServiceImpl<MouldDetailMapper, 
                     .in(MouldRefundAgreementEntity::getMouldDetailId, detailIds));
             mouldRefProductService.remove(Wrappers.<MouldRefProductEntity>lambdaQuery().in(MouldRefProductEntity::getMouldDetailId, detailIds));
             List<String> removeIds = detailIds.stream().
-                    filter(id -> detailList.stream().noneMatch(v -> v.getId().equals(id)))
+                    filter(id -> detailList.stream().noneMatch(v -> Objects.equals(v.getId(), id)))
                     .collect(Collectors.toList());
             if (!CollectionUtils.isEmpty(removeIds)) {
                 removeByIds(removeIds);

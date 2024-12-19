@@ -1230,15 +1230,6 @@ public class MouldInfoDTO implements Serializable {
         private String paymentConditionName;
 
         /**
-         * 币种
-         */
-        private String currency;
-
-        /**
-         * 汇率
-         */
-        private BigDecimal exchangeRate;
-        /**
          * 是否费用返还
          */
         private Boolean isNeedRefund;
@@ -1246,7 +1237,7 @@ public class MouldInfoDTO implements Serializable {
         /**
          * 返还标准
          */
-        private String refundStandardName;
+        private String refundStandard;
 
         /**
          * 退款单量
@@ -1261,12 +1252,12 @@ public class MouldInfoDTO implements Serializable {
         /**
          * 产品信息
          */
-        private List<MouldProductDTO.ViewDTO> productList;
+        private String productList;
 
         /**
          * 关联产品
          */
-        private List<MouldRefProductDTO.ViewDTO> refProductList;
+        private String refProductList;
     }
 
     @Getter
