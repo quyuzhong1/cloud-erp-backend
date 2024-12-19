@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.core.entity.BaseEntity;
+import jnr.ffi.annotations.In;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -28,6 +29,38 @@ import java.util.Map;
 public class WarehouseReceiveDTO implements Serializable {
     private static final long serialVersionUID = 1905122041950251207L;
     /**
+     * 合计
+     */
+    @Data
+    @NoArgsConstructor
+    public static class PagingTotalDTO {
+
+        /**
+         * 收货数量
+         */
+        private Integer receiveQty;
+
+        /**
+         * 采购数量
+         */
+        private Integer purchaseQty;
+
+        /**
+         * 赠品数量
+         */
+        private Integer giftQty;
+
+        /**
+         * 入库数量
+         */
+        private Integer stockInQty;
+
+        /**
+         * 退货数量
+         */
+        private Integer returnQty;
+    }
+    /**
      * 添加
      */
     @Data
@@ -49,6 +82,10 @@ public class WarehouseReceiveDTO implements Serializable {
          */
         private String sourceId;
 
+        /**
+         * 来源code
+         */
+        private String sourceCode;
         /**
          * 来源类型
          */
@@ -455,6 +492,27 @@ public class WarehouseReceiveDTO implements Serializable {
          * 创建时间
          */
         private LocalDateTime createTime;
+        /**
+         * 采购组织id
+         */
+        private String purchaseOrgId;
+
+        /**
+         * 采购组织名
+         */
+        private String purchaseOrgName;
+        /**
+         * 收料组织id
+         */
+        private String receiveOrgId;
+        /**
+         * 收料组织名
+         */
+        private String receiveOrgName;
+        /**
+         * 送货单号
+         */
+        private String deliveryCode;
     }
 
     @Data

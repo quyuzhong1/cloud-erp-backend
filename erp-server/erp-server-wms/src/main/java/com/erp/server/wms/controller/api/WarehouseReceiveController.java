@@ -69,6 +69,19 @@ public class WarehouseReceiveController extends BaseController {
     }
 
     /**
+     * 合计
+     **/
+    @PostMapping("/pagingTotal")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "receive_user_id",
+            menuCode = "wms:warehouseReceive:paging",
+            tableAlias = "wr"
+    )
+    @WebAdvanceQuery
+    public ApiResult<WarehouseReceiveDTO.PagingTotalDTO> pagingTotal(@RequestBody @Validated WarehouseReceiveDTO.PagingParamDTO dto) {
+        return success(warehouseReceiveService.pagingTotal(dto));
+    }
+    /**
      * 列表状态数量统计
      * @Author Luo_WG
      * @Date 2023/4/17 13:14

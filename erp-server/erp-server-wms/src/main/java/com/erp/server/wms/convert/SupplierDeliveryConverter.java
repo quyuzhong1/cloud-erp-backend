@@ -20,6 +20,7 @@ public interface SupplierDeliveryConverter {
 
     @Mappings({
             @Mapping(target = "sourceId", source = "deliveryOrderEntity.id"),
+            @Mapping(target = "sourceCode", source = "deliveryOrderEntity.code"),
             @Mapping(target = "sourceType", expression = "java(com.erp.model.wms.enums.PoReceiveSourceTypeEnum.DELIVERY_ORDER.getCode())"),
             @Mapping(target = "purchaseOrderId", source = "deliveryOrderEntity.sourceId"),
             @Mapping(target = "purchaseOrderCode", source = "deliveryOrderEntity.sourceCode"),

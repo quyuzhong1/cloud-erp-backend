@@ -317,6 +317,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         warehouseReceiveEntity.setPurchaseUserId(purchaseOrderEntity.getPurchaseUserId());
         warehouseReceiveEntity.setPurchaseUserName(purchaseOrderEntity.getPurchaseUserName());
         warehouseReceiveEntity.setSourceId(dto.getSourceId());
+        warehouseReceiveEntity.setSourceCode(dto.getSourceCode());
         warehouseReceiveEntity.setSourceType(dto.getSourceType());
         //保存主表信息
         this.save(warehouseReceiveEntity);
@@ -1939,6 +1940,13 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
             exportExcelDTOS.add(warehouseReceiveExportExcelDTO);
         });
         return new PagingVO<>(exportExcelDTOS, (int) page.getTotal(), dto.getPageSize(), dto.getCurrPage());
+    }
+
+    @Override
+    public WarehouseReceiveDTO.PagingTotalDTO pagingTotal(WarehouseReceiveDTO.PagingParamDTO dto) {
+        dto.setPermissionSql(dto.getPermissionSql());
+        WarehouseReceiveDTO.PagingTotalDTO pagingTotalDTO = this.baseMapper.pagingTotal(dto);
+        return pagingTotalDTO;
     }
 
 }
