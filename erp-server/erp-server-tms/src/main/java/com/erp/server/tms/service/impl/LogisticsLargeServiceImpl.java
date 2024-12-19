@@ -393,7 +393,11 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
                 SupplierEntity supplierEntity = supplierFeign.getSupplierById(logisticsSupplierEntity.getSupplierId());
                 if (ObjectUtil.isNotEmpty(supplierEntity)) {
                     List<BaseDropDownDTO.DisabledDTO> disabledDTOS = scmTaskFeign.listPaymentCondition();
-                    String paymentCondition = disabledDTOS.stream().filter(req -> supplierEntity.getPaymentCondition().equals(req.getCode())).map(BaseDropDownDTO.DisabledDTO::getValue).findFirst().orElse("");
+                    String paymentCondition = disabledDTOS.stream().
+                            filter(req -> supplierEntity.getPaymentCondition() != null
+                                    && supplierEntity.getPaymentCondition().equals(req.getCode()))
+                            .map(BaseDropDownDTO.DisabledDTO::getValue)
+                            .findFirst().orElse("");
                     addDTO.setPayTermsDays(paymentCondition);
                     addDTO.setPaymentCompanyName(supplierEntity.getPaymentCompanyName());
                     addDTO.setTaxRate(supplierEntity.getTaxRate());
@@ -688,7 +692,11 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
                     addDTO.setLogisticsSupplierId(supplierEntity.getId());
                     addDTO.setLogisticsSupplierName(logisticsSupplierEntity.getSupplierName());
                     List<BaseDropDownDTO.DisabledDTO> disabledDTOS = scmTaskFeign.listPaymentCondition();
-                    String paymentCondition = disabledDTOS.stream().filter(req -> supplierEntity.getPaymentCondition().equals(req.getCode())).map(BaseDropDownDTO.DisabledDTO::getValue).findFirst().orElse("");
+                    String paymentCondition = disabledDTOS.stream().
+                            filter(req -> supplierEntity.getPaymentCondition() != null
+                                    && supplierEntity.getPaymentCondition().equals(req.getCode()))
+                            .map(BaseDropDownDTO.DisabledDTO::getValue)
+                            .findFirst().orElse("");
                     addDTO.setPayTermsDays(paymentCondition);
                     addDTO.setPaymentCompanyName(supplierEntity.getPaymentCompanyName());
                     addDTO.setTaxRate(supplierEntity.getTaxRate());
@@ -702,7 +710,11 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
                 addDTO.setLogisticsSupplierId(supplierEntity.getId());
                 addDTO.setLogisticsSupplierName(supplierEntity.getName());
                 List<BaseDropDownDTO.DisabledDTO> disabledDTOS = scmTaskFeign.listPaymentCondition();
-                String paymentCondition = disabledDTOS.stream().filter(req -> supplierEntity.getPaymentCondition().equals(req.getCode())).map(BaseDropDownDTO.DisabledDTO::getValue).findFirst().orElse("");
+                String paymentCondition = disabledDTOS.stream().
+                        filter(req -> supplierEntity.getPaymentCondition() != null
+                                && supplierEntity.getPaymentCondition().equals(req.getCode()))
+                        .map(BaseDropDownDTO.DisabledDTO::getValue)
+                        .findFirst().orElse("");
                 addDTO.setPayTermsDays(paymentCondition);
                 addDTO.setPaymentCompanyName(supplierEntity.getPaymentCompanyName());
                 addDTO.setTaxRate(supplierEntity.getTaxRate());
@@ -1113,7 +1125,11 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
                 SupplierEntity supplierEntity = supplierFeign.getSupplierById(logisticsSupplierEntity.getSupplierId());
                 if (ObjectUtil.isNotEmpty(supplierEntity)) {
                     List<BaseDropDownDTO.DisabledDTO> disabledDTOS = scmTaskFeign.listPaymentCondition();
-                    String paymentCondition = disabledDTOS.stream().filter(req -> supplierEntity.getPaymentCondition().equals(req.getCode())).map(BaseDropDownDTO.DisabledDTO::getValue).findFirst().orElse("");
+                    String paymentCondition = disabledDTOS.stream().
+                            filter(req -> supplierEntity.getPaymentCondition() != null
+                                    && supplierEntity.getPaymentCondition().equals(req.getCode()))
+                            .map(BaseDropDownDTO.DisabledDTO::getValue)
+                            .findFirst().orElse("");
                     addDTO.setPayTermsDays(paymentCondition);
                     addDTO.setPaymentCompanyName(supplierEntity.getPaymentCompanyName());
                     addDTO.setTaxRate(supplierEntity.getTaxRate());
