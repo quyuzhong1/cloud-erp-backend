@@ -1,13 +1,10 @@
 package com.erp.server.wms.query;
 
 import com.common.business.constant.SearchType;
-import com.common.business.dto.AdvanceQueryContainer;
-import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.QueryConditionEnum;
 import com.common.business.enums.QueryDataTypeEnum;
 import com.common.business.query.AbstractQueryHandler;
-import com.common.business.threadlocal.AdvanceQueryContext;
 import com.erp.model.oms.entity.CustomerInfoEntity;
 import com.erp.rpc.oms.feign.CustomerFeign;
 import com.erp.rpc.tms.feign.LogisticsBillFeign;
@@ -15,8 +12,6 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
-import java.lang.reflect.Array;
-import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -68,6 +63,9 @@ public class SoOutstockQueryHandler extends AbstractQueryHandler {
             if (ApproveStatusEnum.REJECT.getStatus().equals(searchType)) {
                 super.buildDefaultDTO("so.approve_status", ApproveStatusEnum.REJECT.getStatus());
             }
+        }
+        if("ci.platform_type".equals(field)){
+            return " EXISTS (SELECT 1 from customer_info ci where so.customer_id = ci.id AND ci.is_deleted = FALSE AND ci.platform_type "+ compareCodeSplicingValueSql +" ) ";
         }
         return null;
     }
