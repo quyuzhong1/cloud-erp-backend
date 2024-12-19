@@ -5572,6 +5572,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             // 检查新增自动作废
             // Shopify全退款的订单新增自动作废
             entity.setInvalidStatus(dto.checkInsertInvalidStatus());
+            if(entity.getInvalidStatus()){
+                entity.setInvalidType(SoB2cInvalidTypeEnum.ENUM_AUTOMATIC.getCode());
+            }
             // 生成单号
             String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_XSDD);
             entity.setCode(code);
@@ -5729,7 +5732,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             // 保留历史作废状态
             if (oldEntity.getInvalidStatus()) {
                 dto.setInvalidStatus(true);
-                dto.setInvalidRemark("平台取消或退款");
+                dto.setInvalidRemark(oldEntity.getInvalidRemark());
+                dto.setInvalidType(oldEntity.getInvalidType());
             }
 
             // 只替换更新信息
