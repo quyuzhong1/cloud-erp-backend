@@ -735,7 +735,6 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         	}
         }
     }
-   }
 
 
 
