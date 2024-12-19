@@ -1,9 +1,12 @@
 package com.erp.server.wms.service;
-import com.common.business.vo.PagingVO;
-import com.erp.model.wms.entity.SoB2cProcessingEntity;
+import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.SuperService;
-import com.common.business.dto.base.*;
+import com.common.business.vo.PagingVO;
 import com.erp.model.wms.dto.SoB2cProcessingDTO;
+import com.erp.model.wms.entity.SoB2cProcessingEntity;
+
+import java.time.LocalDate;
 
 /**
  * <p>
@@ -49,4 +52,11 @@ public interface SoB2cProcessingService extends SuperService<SoB2cProcessingEnti
      * @return Boolean
      */
     Boolean exportExcel(SoB2cProcessingDTO.PagingParamDTO dto);
+    /**
+     * 自动更新b2c销售订单跟踪
+     * @author will
+     * @date 2024/12/18 18:30
+     * @param startDate
+     */
+    void autoUpdateSoB2cProcessing(LocalDate startDate);
 }

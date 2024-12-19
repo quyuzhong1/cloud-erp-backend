@@ -1,12 +1,15 @@
 package com.erp.server.wms.mapper;
+
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.erp.model.wms.dto.FirstMileProcessingDTO;
 import com.erp.model.wms.entity.FirstMileProcessingEntity;
-import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
+
+import java.time.LocalDate;
+import java.util.List;
 
 
 /**
@@ -28,4 +31,12 @@ public interface FirstMileProcessingMapper extends BaseMapper<FirstMileProcessin
      * @return IPage<ListDTO>
      */
     IPage<FirstMileProcessingDTO.ListDTO> paging(Page<FirstMileProcessingDTO.PagingParamDTO> page,@Param("params") FirstMileProcessingDTO.PagingParamDTO params);
+    /**
+     * 查询头程跟踪信息
+     * @author will
+     * @date 2024/12/19 10:20
+     * @param startDate
+     * @return List<FirstMileProcessingEntity>
+     */
+    List<FirstMileProcessingEntity> listFirstMileProcessing(@Param("startDate")LocalDate startDate);
 }

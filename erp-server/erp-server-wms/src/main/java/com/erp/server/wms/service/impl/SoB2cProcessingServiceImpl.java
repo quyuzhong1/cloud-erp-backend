@@ -23,6 +23,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -111,6 +112,11 @@ public class SoB2cProcessingServiceImpl extends SuperServiceImpl<SoB2cProcessing
     public Boolean exportExcel(SoB2cProcessingDTO.PagingParamDTO dto) {
         downloadTaskFeign.saveDownloadTask("B2C虚拟仓列表信息", EXPORT_WMS_SO_B2C_PROCESSING.getCode(), dto);
         return Boolean.TRUE;
+    }
+
+    @Override
+    public void autoUpdateSoB2cProcessing(LocalDate startDate) {
+          List<SoB2cProcessingEntity> list = baseMapper.listSoB2cProcessing(startDate);
     }
 
 

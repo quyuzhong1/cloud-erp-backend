@@ -147,6 +147,11 @@ public class SoB2cProcessingDTO implements Serializable {
          * 出库数量
          */
         private String outstockQty;
+
+        /**
+         * 标签
+         */
+        private List<String> labelList;
     }
 
 

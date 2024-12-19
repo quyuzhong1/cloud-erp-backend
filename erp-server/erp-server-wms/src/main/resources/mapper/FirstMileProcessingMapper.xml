@@ -90,5 +90,30 @@
         fmp.id DESC
     </select>
 
+    <!-- 头程订单跟踪信息 -->
+    <select id="listFirstMileProcessing" resultType="com.erp.model.wms.entity.FirstMileProcessingEntity">
+        select
+            ra.id as requisitionApplicationId,
+            ra.code as requisitionApplicationCode,
+            fmd.id as firstMileDeliveryId,
+            fmd.code as firstMileDeliveryCode,
+            fmd.status as deliveryApproveStatus,
+            fmdd.qty as deliveryQty,
+            pmdd.sku_id as skuId,
+            fmd.warehosue_id,
+            fmd.virtual_warehouseId,
+            ra.handle_time as frozenTime,
+            rad.picking_qty as frozenQty,
+            rad.approve_qty as approveQty
+        from first_mile_delivery fmd
+        inner join first_mile_delivery_detail fmdd on fmd.id = fmdd.main_id and fmdd.is_deleted = false
+        inner join requisition_application ra on fmd.source_id = ra.id and ra.is_deleted = false
+        inner join requisition_application_detail rad on ra.id = rad.main_id and rad.is_deleted = false
+        where fmd.is_deleted = false and fmd.invalid_status = false and rad.from_virtual_warehouse_id != ''
+        <if test="startTime != null">
+            and fmd.create_time > #{startDate}
+        </if>
+    </select>
+
 
 </mapper>

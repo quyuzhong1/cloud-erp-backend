@@ -1,19 +1,20 @@
 package com.erp.server.wms.service.impl;
 
 
-import cn.hutool.core.util.StrUtil;
+import cn.hutool.core.collection.CollUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.impl.SuperServiceImpl;
-import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
+import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.wms.dto.SoB2bProcessingDTO;
 import com.erp.model.wms.entity.SoB2bProcessingEntity;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
+import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.mapper.SoB2bProcessingMapper;
 import com.erp.server.wms.service.OperateLogService;
 import com.erp.server.wms.service.SoB2bProcessingService;
@@ -23,8 +24,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_SO_B2B_PROCESSING;
 
@@ -45,6 +48,8 @@ public class SoB2bProcessingServiceImpl extends SuperServiceImpl<SoB2bProcessing
     @Autowired
     private DownloadTaskFeign downloadTaskFeign;
 
+    @Autowired
+    private PlmTaskFeign plmTaskFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -97,6 +102,19 @@ public class SoB2bProcessingServiceImpl extends SuperServiceImpl<SoB2bProcessing
     public Boolean exportExcel(SoB2bProcessingDTO.PagingParamDTO dto) {
         downloadTaskFeign.saveDownloadTask("B2B虚拟仓列表信息", EXPORT_WMS_SO_B2B_PROCESSING.getCode(), dto);
         return Boolean.TRUE;
+    }
+
+    @Override
+    public void autoUpdateSoB2bProcessing(LocalDate startDate) {
+       List<SoB2bProcessingEntity> list = baseMapper.listSoB2bProcessing(startDate);
+       if (CollUtil.isEmpty(list)) {
+           return;
+       }
+        List<String> skuIdList = list.stream().map(SoB2bProcessingEntity::getSkuId).distinct().collect(Collectors.toList());
+        List<BomChildrenSkuDTO> bomChildrenList = plmTaskFeign.listBomChildBySkuIds(skuIdList);
+
+
+
     }
 
 

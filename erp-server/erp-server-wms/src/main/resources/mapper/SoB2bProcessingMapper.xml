@@ -92,5 +92,31 @@
         sbp.id DESC
     </select>
 
+    <!-- b2b销售订单 -->
+    <select id="listSoB2bProcessing" resultType="com.erp.model.wms.entity.SoB2bProcessingEntity">
+        select
+            si.id as soId,
+            si.code as soCode,
+            si.approve_status as soApproveStatus,
+            sd.qty as soQty,
+            sdn.id as deliveryNoticeId,
+            sdn.code as deliveryNoticeCode,
+            sdn.approveStatus as deliveryNoticeApproveStatus,
+            sdnd.qty as deliveryQty,
+            sdnd.sku_id as skuId,
+            sdn.warehouse_id as warehouseId,
+            sdn.virtual_warehosue_id as virtualWarehosueId,
+            sdn.create_time as frozenTime,
+            sd.frozen_qty as frozenQty
+        from so_delivery_notice sdn
+        inner join so_delivery_notice_detail sdnd on sdn.id = sdnd.main_id and sdnd.is_deleted = false
+        inner join so_info si on sdn.source_id = si.id and si.is_deleted = false
+        inner join so_detail sd on sdnd.source_detail_id = sd.id and sd.is_deleted = false
+        where sdn.is_deleted = false and sdn.invalid_status = false and sdn.virtual_warehouse_id != ''
+            <if test="startTime != null">
+               and sdn.create_time > #{startDate}
+            </if>
+    </select>
+
 
 </mapper>

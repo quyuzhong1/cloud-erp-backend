@@ -7,6 +7,9 @@ import com.erp.model.wms.entity.SoB2cProcessingEntity;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import java.time.LocalDate;
+import java.util.List;
+
 
 /**
  * <p>
@@ -27,4 +30,12 @@ public interface SoB2cProcessingMapper extends BaseMapper<SoB2cProcessingEntity>
      * @return IPage<ListDTO>
      */
     IPage<SoB2cProcessingDTO.ListDTO> paging(Page<SoB2cProcessingDTO.PagingParamDTO> page,@Param("params") SoB2cProcessingDTO.PagingParamDTO params);
+    /**
+     * 查询b2c订单跟踪
+     * @author will
+     * @date 2024/12/19 10:02
+     * @param startDate
+     * @return List<SoB2cProcessingEntity>
+     */
+    List<SoB2cProcessingEntity> listSoB2cProcessing(@Param("startDate")LocalDate startDate);
 }

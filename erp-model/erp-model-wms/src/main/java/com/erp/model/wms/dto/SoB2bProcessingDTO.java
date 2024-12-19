@@ -167,6 +167,10 @@ public class SoB2bProcessingDTO implements Serializable {
          */
         private String outstockQty;
 
+        /**
+         * 标签
+         */
+        private List<String> labelList;
     }
 
     /**

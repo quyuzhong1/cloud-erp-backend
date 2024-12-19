@@ -23,6 +23,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -110,6 +111,11 @@ public class FirstMileProcessingServiceImpl extends SuperServiceImpl<FirstMilePr
     public Boolean exportExcel(FirstMileProcessingDTO.PagingParamDTO dto) {
         downloadTaskFeign.saveDownloadTask("头程虚拟仓列表信息", EXPORT_WMS_SO_B2C_PROCESSING.getCode(), dto);
         return Boolean.TRUE;
+    }
+
+    @Override
+    public void autoUpdateFirstMileProcessing(LocalDate startDate) {
+            baseMapper.listFirstMileProcessing(startDate);
     }
 
 

@@ -161,6 +161,10 @@ public class FirstMileProcessingDTO implements Serializable {
          */
         private String outstockQty;
 
+        /**
+         * 标签
+         */
+        private List<String> labelList;
     }
 
     /**

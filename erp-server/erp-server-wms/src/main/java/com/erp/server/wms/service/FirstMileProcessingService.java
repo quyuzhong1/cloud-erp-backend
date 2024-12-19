@@ -1,9 +1,12 @@
 package com.erp.server.wms.service;
-import com.common.business.vo.PagingVO;
-import com.erp.model.wms.entity.FirstMileProcessingEntity;
+import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.SuperService;
-import com.common.business.dto.base.*;
+import com.common.business.vo.PagingVO;
 import com.erp.model.wms.dto.FirstMileProcessingDTO;
+import com.erp.model.wms.entity.FirstMileProcessingEntity;
+
+import java.time.LocalDate;
 
 /**
  * <p>
@@ -49,4 +52,11 @@ public interface FirstMileProcessingService extends SuperService<FirstMileProces
      * @return Boolean
      */
     Boolean exportExcel(FirstMileProcessingDTO.PagingParamDTO dto);
+    /**
+     * 自动更新头程订单跟踪
+     * @author will
+     * @date 2024/12/18 18:30
+     * @param startDate
+     */
+    void autoUpdateFirstMileProcessing(LocalDate startDate);
 }

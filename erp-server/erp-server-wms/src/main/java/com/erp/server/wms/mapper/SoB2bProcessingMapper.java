@@ -1,12 +1,14 @@
 package com.erp.server.wms.mapper;
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.erp.model.wms.dto.SoB2bProcessingDTO;
 import com.erp.model.wms.entity.SoB2bProcessingEntity;
-import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
+
+import java.time.LocalDate;
+import java.util.List;
 
 
 /**
@@ -28,4 +30,12 @@ public interface SoB2bProcessingMapper extends BaseMapper<SoB2bProcessingEntity>
      * @return IPage<ListDTO>
      */
     IPage<SoB2bProcessingDTO.ListDTO> paging(Page<SoB2bProcessingDTO.PagingParamDTO> page,@Param("params") SoB2bProcessingDTO.PagingParamDTO params);
+    /**
+     * 查询b2b销售订单跟踪数据
+     * @author will
+     * @date 2024/12/18 18:44
+     * @param startDate
+     * @return List<SoB2bProcessingEntity>
+     */
+    List<SoB2bProcessingEntity> listSoB2bProcessing(@Param("startDate") LocalDate startDate);
 }
