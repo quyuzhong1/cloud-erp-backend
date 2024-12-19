@@ -256,6 +256,15 @@ public class MouldInfoServiceImpl extends SuperServiceImpl<MouldInfoMapper, Moul
 
 
     private void getUpdateLog(MouldInfoDTO.ViewDTO view, MouldInfoDTO.UpdateDTO dto, String id) {
+
+        Map<String, String> supplierMap = FeignQuery.list(SupplierEntity.class).stream()
+                .collect(Collectors.toMap(SupplierEntity::getId, SupplierEntity::getName, (o1, o2) -> o1));
+        Map<String, String> docTypeMap = cfgMouldSettingService.docList()
+                .stream()
+                .collect(Collectors.toMap(CfgMouldSettingEntity::getId, CfgMouldSettingEntity::getName, (o1, o2) -> o1));
+        Map<String, String> mouldTypeMap = cfgMouldSettingService.mouldList()
+                .stream()
+                .collect(Collectors.toMap(CfgMouldSettingEntity::getId, CfgMouldSettingEntity::getName, (o1, o2) -> o1));
         List<BasicCategoryEntity> categoryList = basicCategoryService.getCategoryList();
         Map<String, String> categoryMap = categoryList.stream()
                 .collect(Collectors.toMap(BasicCategoryEntity::getId, BasicCategoryEntity::getName, (o1, o2) -> o1));
@@ -277,30 +286,123 @@ public class MouldInfoServiceImpl extends SuperServiceImpl<MouldInfoMapper, Moul
         logDTO.setProductManagerName(userMap.get(dto.getProductManagerId()));
         sysLogService.addSysLogByUpdate(oldLogDTO, logDTO, String.valueOf(MouldInfoDTO.LogDTO.class), id, "", "模具信息");
 
-        if (!CollectionUtils.isEmpty(view.getDetailList())) {
-            //新增
-
-
-            //删除数据
-
-            //修改数据
-
-
-        } else {
-            for (MouldDetailDTO.UpdateDTO updateDTO : dto.getDetailList()) {
+        List<MouldDetailDTO.ViewDTO> viewDTOList = Optional.ofNullable(view.getDetailList()).orElse(new ArrayList<>()).stream()
+                .filter(v -> dto.getDetailList().stream().noneMatch(e -> Objects.equals(v.getId(), e.getId())))
+                .collect(Collectors.toList());
+        for (MouldDetailDTO.ViewDTO viewDTO : viewDTOList) {
+            sysLogService.addSysLogBySave(CharSequenceUtil.format("删除了明细{}", viewDTO.getMouldNo()), String.valueOf(MouldDetailDTO.ViewDTO.class), id, "");
+        }
+        for (MouldDetailDTO.UpdateDTO updateDTO : dto.getDetailList()) {
+            if (ObjectUtils.isEmpty(updateDTO.getId())) {
                 sysLogService.addSysLogBySave(CharSequenceUtil.format("新增了明细{}", updateDTO.getMouldNo()), String.valueOf(MouldDetailDTO.UpdateDTO.class), id, "");
+            } else {
+                MouldDetailDTO.ViewDTO viewDTO = Optional.ofNullable(view.getDetailList()).orElse(new ArrayList<>())
+                        .stream()
+                        .filter(v -> Objects.equals(v.getId(), updateDTO.getId()))
+                        .findFirst()
+                        .orElse(null);
+                if (!ObjectUtils.isEmpty(viewDTO)) {
+                    MouldInfoDTO.LogDetailDTO oldDetailDTO = new MouldInfoDTO.LogDetailDTO();
+                    oldDetailDTO.setThirdMouldNo(viewDTO.getThirdMouldNo());
+                    oldDetailDTO.setTypeName(mouldTypeMap.get(viewDTO.getTypeId()));
+                    oldDetailDTO.setMouldHoles(viewDTO.getMouldHoles());
+                    oldDetailDTO.setLength(viewDTO.getLength());
+                    oldDetailDTO.setWidth(viewDTO.getWidth());
+                    oldDetailDTO.setHeight(viewDTO.getHeight());
+                    oldDetailDTO.setMaterial(viewDTO.getMaterial());
+                    oldDetailDTO.setLifeCycle(viewDTO.getLifeCycle());
+                    oldDetailDTO.setDevelopCycle(viewDTO.getDevelopCycle());
+                    oldDetailDTO.setEnableDate(viewDTO.getEnableDate());
+                    oldDetailDTO.setSupplierName(supplierMap.get(viewDTO.getSupplierId()));
+                    oldDetailDTO.setRemark(viewDTO.getRemark());
+                    oldDetailDTO.setQty(viewDTO.getQty());
+                    oldDetailDTO.setTaxPrice(viewDTO.getTaxPrice());
+                    oldDetailDTO.setTaxRate(viewDTO.getTaxRate());
+                    oldDetailDTO.setPayMethodName(viewDTO.getThirdMouldNo());
+                    oldDetailDTO.setPaymentConditionName(viewDTO.getThirdMouldNo());
+                    oldDetailDTO.setIsNeedRefund(viewDTO.getIsNeedRefund());
+                    oldDetailDTO.setRefundStandard(viewDTO.getRefundStandard());
+                    oldDetailDTO.setRefundOrderQty(viewDTO.getRefundOrderQty());
+                    oldDetailDTO.setRefundAmount(viewDTO.getRefundAmount());
+                    String oldProductList = Optional.ofNullable(viewDTO.getProductList()).orElse(new ArrayList<>())
+                            .stream()
+                            .map(v -> "产品名称" + v.getProductName() + "：图片地址" + v.getImagesUrl())
+                            .collect(Collectors.joining(","));
+                    oldDetailDTO.setProductList(oldProductList);
+                    String oldRefProductList = Optional.ofNullable(viewDTO.getRefProductList()).orElse(new ArrayList<>())
+                            .stream()
+                            .map(v -> "SKU" + v.getSkuNo() + "：供应商" + supplierMap.get(v.getSupplierId()))
+                            .collect(Collectors.joining(","));
+                    oldDetailDTO.setRefProductList(oldRefProductList);
+                    MouldInfoDTO.LogDetailDTO logDetailDTO = new MouldInfoDTO.LogDetailDTO();
+                    logDetailDTO.setThirdMouldNo(updateDTO.getThirdMouldNo());
+                    logDetailDTO.setTypeName(mouldTypeMap.get(updateDTO.getTypeId()));
+                    logDetailDTO.setMouldHoles(updateDTO.getMouldHoles());
+                    logDetailDTO.setLength(updateDTO.getLength());
+                    logDetailDTO.setWidth(updateDTO.getWidth());
+                    logDetailDTO.setHeight(updateDTO.getHeight());
+                    logDetailDTO.setMaterial(updateDTO.getMaterial());
+                    logDetailDTO.setLifeCycle(updateDTO.getLifeCycle());
+                    logDetailDTO.setDevelopCycle(updateDTO.getDevelopCycle());
+                    logDetailDTO.setEnableDate(updateDTO.getEnableDate());
+                    logDetailDTO.setSupplierName(supplierMap.get(updateDTO.getSupplierId()));
+                    logDetailDTO.setRemark(updateDTO.getRemark());
+                    logDetailDTO.setQty(updateDTO.getQty());
+                    logDetailDTO.setTaxPrice(updateDTO.getTaxPrice());
+                    logDetailDTO.setTaxRate(updateDTO.getTaxRate());
+                    logDetailDTO.setPayMethodName(updateDTO.getThirdMouldNo());
+                    logDetailDTO.setPaymentConditionName(updateDTO.getThirdMouldNo());
+                    logDetailDTO.setIsNeedRefund(updateDTO.getIsNeedRefund());
+                    logDetailDTO.setRefundStandard(updateDTO.getRefundStandard());
+                    logDetailDTO.setRefundOrderQty(updateDTO.getRefundOrderQty());
+                    logDetailDTO.setRefundAmount(updateDTO.getRefundAmount());
+                    String productList = Optional.ofNullable(updateDTO.getProductList()).orElse(new ArrayList<>())
+                            .stream()
+                            .map(v -> "产品名称" + v.getProductName() + "：图片地址" + v.getImagesUrl())
+                            .collect(Collectors.joining(","));
+                    logDetailDTO.setProductList(productList);
+                    String refProductList = Optional.ofNullable(updateDTO.getRefProductList()).orElse(new ArrayList<>())
+                            .stream()
+                            .map(v -> "SKU" + v.getSkuNo() + "：供应商" + supplierMap.get(v.getSupplierId()))
+                            .collect(Collectors.joining(","));
+                    logDetailDTO.setRefProductList(refProductList);
+
+                    sysLogService.addSysLogByUpdate(oldDetailDTO, logDetailDTO, String.valueOf(MouldInfoDTO.LogDetailDTO.class), id, "", "模具明细信息");
+                }
             }
         }
-        if (!CollectionUtils.isEmpty(view.getDocList())) {
-            //新增
-//
-            //删除数据
-
-            //修改数据
-
-        } else {
-            for (MouldDocInfoDTO.UpdateDTO updateDTO : dto.getDocList()) {
-                sysLogService.addSysLogBySave(CharSequenceUtil.format("新增了文件信息{}", updateDTO.getDocName()), String.valueOf(MouldDocInfoDTO.UpdateDTO.class), id, "");
+        List<MouldDocInfoDTO.ViewDTO> docDTOList = Optional.ofNullable(view.getDocList()).orElse(new ArrayList<>()).stream()
+                .filter(v -> dto.getDetailList().stream().noneMatch(e -> Objects.equals(v.getId(), e.getId())))
+                .collect(Collectors.toList());
+        for (MouldDocInfoDTO.ViewDTO viewDTO : docDTOList) {
+            sysLogService.addSysLogBySave(CharSequenceUtil.format("删除了明细{}", viewDTO.getDocName()), String.valueOf(MouldDocInfoDTO.ViewDTO.class), id, "");
+        }
+        for (MouldDocInfoDTO.UpdateDTO updateDTO : dto.getDocList()) {
+            if (ObjectUtils.isEmpty(updateDTO.getId())) {
+                sysLogService.addSysLogBySave(CharSequenceUtil.format("新增了明细{}", updateDTO.getDocName()), String.valueOf(MouldDocInfoDTO.UpdateDTO.class), id, "");
+            } else {
+                MouldDocInfoDTO.ViewDTO viewDTO = Optional.ofNullable(view.getDocList()).orElse(new ArrayList<>())
+                        .stream()
+                        .filter(v -> Objects.equals(v.getId(), updateDTO.getId()))
+                        .findFirst()
+                        .orElse(null);
+                if (!ObjectUtils.isEmpty(viewDTO)) {
+                    MouldInfoDTO.LogDocDTO oldDocDTO = new MouldInfoDTO.LogDocDTO();
+                    oldDocDTO.setDocTypeName(docTypeMap.get(viewDTO.getDocTypeId()));
+                    oldDocDTO.setDocVersion(viewDTO.getDocVersion());
+                    oldDocDTO.setDocUrl(viewDTO.getDocUrl());
+                    oldDocDTO.setDocName(viewDTO.getDocName());
+                    oldDocDTO.setExtLink(viewDTO.getExtLink());
+                    oldDocDTO.setRemark(viewDTO.getRemark());
+                    MouldInfoDTO.LogDocDTO docDTO = new MouldInfoDTO.LogDocDTO();
+                    docDTO.setDocTypeName(docTypeMap.get(updateDTO.getDocTypeId()));
+                    docDTO.setDocVersion(updateDTO.getDocVersion());
+                    docDTO.setDocUrl(updateDTO.getDocUrl());
+                    docDTO.setDocName(updateDTO.getDocName());
+                    docDTO.setExtLink(updateDTO.getExtLink());
+                    docDTO.setRemark(updateDTO.getRemark());
+                    sysLogService.addSysLogByUpdate(oldDocDTO, docDTO, String.valueOf(MouldInfoDTO.LogDocDTO.class), id, "", "模具文档信息");
+                }
             }
         }
     }
