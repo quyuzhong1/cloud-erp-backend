@@ -6,6 +6,7 @@ import lombok.NoArgsConstructor;
 import javax.validation.Valid;
 import javax.validation.constraints.*;
 import java.io.Serializable;
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -143,5 +144,51 @@ public class MachineDetailDTO implements Serializable {
          * 明细子件
          */
         private List<MachineSubComponentsDTO.ViewDTO> subComponentsList;
+    }
+
+
+    @Data
+    @NoArgsConstructor
+    public static class MachineResponseDTO {
+        /**
+         * id
+         */
+        private String id;
+        /**
+         * 编码
+         */
+        private String code;
+        /**
+         * 审核状态
+         */
+        private String approveStatus;
+        /**
+         * 审核时间
+         */
+        private LocalDateTime approveTime;
+        /**
+         * 明细id
+         */
+        private String detailId;
+        /**
+         * skuId
+         */
+        private String skuId;
+        /**
+         * 数量
+         */
+        private String qty;
+        /**
+         * bom版本
+         */
+        private String bomVersion;
+        /**
+         * 来源id
+         */
+        private String sourceId;
+        /**
+         * 来源id
+         */
+        private String sourceDetailId;
     }
 }

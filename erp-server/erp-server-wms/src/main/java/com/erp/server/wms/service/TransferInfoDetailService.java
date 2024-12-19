@@ -71,4 +71,12 @@ public interface TransferInfoDetailService extends SuperService<TransferInfoDeta
      * @return
      */
     Map<String, List<TransferInfoDetailDTO.ApproveDTO>> listApproveByMainIds(List<String> mainIds, Boolean isApprove);
+    /**
+     * 根据来源明细id查询
+     * @author will
+     * @date 2024/12/19 17:07
+     * @param sourceDetailIdList
+     * @return List<TransferResponseDTO>
+     */
+    List<TransferInfoDetailDTO.TransferResponseDTO> listTransferBySourceDetailIdList(List<String> sourceDetailIdList);
 }

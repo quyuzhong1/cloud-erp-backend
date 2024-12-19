@@ -56,4 +56,12 @@ public interface MachineDetailService extends SuperService<MachineDetailEntity> 
     void removeByMainIds(List<String> mainIds);
 
     List<MachineDetailEntity> listBySourceDetailIds(List<String> detailIds);
+    /**
+     * 根据来源id查询数据
+     * @author will
+     * @date 2024/12/19 16:47
+     * @param sourceDetailIdList
+     * @return List<MachineResponseDTO>
+     */
+    List<MachineDetailDTO.MachineResponseDTO> listMachineBySourceDetailIdList(List<String> sourceDetailIdList);
 }

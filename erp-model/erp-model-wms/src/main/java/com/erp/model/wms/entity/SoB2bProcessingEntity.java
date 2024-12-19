@@ -1,14 +1,14 @@
 package com.erp.model.wms.entity;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
-import java.time.LocalDateTime;
-import com.baomidou.mybatisplus.annotation.TableField;
-import java.io.Serializable;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
-import com.common.business.enums.ApproveStatusEnum;
+
+import java.io.Serializable;
+import java.time.LocalDateTime;
 
 
 /**
@@ -60,6 +60,13 @@ public class SoB2bProcessingEntity extends BaseEntity<SoB2bProcessingEntity> {
     */
     @TableField("delivery_notice_approve_status")
     private String deliveryNoticeApproveStatus;
+
+    /**
+     * 发货通知单明细id
+     */
+    @TableField("delivery_notice_detail_id")
+    private String deliveryNoticeDetailId;
+
     /**
     * 发货数量
     */
@@ -91,27 +98,27 @@ public class SoB2bProcessingEntity extends BaseEntity<SoB2bProcessingEntity> {
     @TableField("frozen_qty")
     private Integer frozenQty;
     /**
-    * |出库单据id
+    * 出库单据id
     */
     @TableField("outstock_order_id")
     private String outstockOrderId;
     /**
-    * |出库单据编码
+    * 出库单据编码
     */
     @TableField("outstock_order_code")
     private String outstockOrderCode;
     /**
-    * |出库单据类型（同sourceType）
+    * 出库单据类型（同sourceType）
     */
     @TableField("outstock_order_type")
     private String outstockOrderType;
     /**
-    * |出库单据状态
+    * 出库单据状态
     */
     @TableField("outstock_order_status")
     private String outstockOrderStatus;
     /**
-    * |出库单据时间
+    * 出库单据时间
     */
     @TableField("outstock_order_time")
     private LocalDateTime outstockOrderTime;

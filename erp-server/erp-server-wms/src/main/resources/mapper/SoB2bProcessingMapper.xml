@@ -102,6 +102,7 @@
             sdn.id as deliveryNoticeId,
             sdn.code as deliveryNoticeCode,
             sdn.approveStatus as deliveryNoticeApproveStatus,
+            sdnd.id as deliveryNoticeDetailId,
             sdnd.qty as deliveryQty,
             sdnd.sku_id as skuId,
             sdn.warehouse_id as warehouseId,

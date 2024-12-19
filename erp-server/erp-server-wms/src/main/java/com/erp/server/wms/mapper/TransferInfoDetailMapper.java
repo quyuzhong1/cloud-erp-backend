@@ -34,4 +34,12 @@ public interface TransferInfoDetailMapper extends BaseMapper<TransferInfoDetailE
      * @return
      */
     List<TransferInfoDetailDTO.ApproveDTO> listApproveByMainIds(@Param("mainIds")List<String> mainIds, @Param("isApprove")Boolean isApprove);
+    /**
+     * 根据来源明细id集合查询
+     * @author will
+     * @date 2024/12/19 17:12
+     * @param sourceDetailIdList
+     * @return List<TransferResponseDTO>
+     */
+    List<TransferInfoDetailDTO.TransferResponseDTO> listTransferBySourceDetailIdList(@Param("sourceDetailIdList")List<String> sourceDetailIdList);
 }

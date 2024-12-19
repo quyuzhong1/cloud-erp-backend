@@ -1,10 +1,8 @@
 package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.text.CharSequenceUtil;
-import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
-import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.enums.ApiError;
@@ -35,7 +33,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -150,6 +147,11 @@ public class TransferInfoDetailServiceImpl extends SuperServiceImpl<TransferInfo
         return approveDTOS.stream()
                 .collect(Collectors.groupingBy(TransferInfoDetailDTO.ApproveDTO::getMainId));
 
+    }
+
+    @Override
+    public List<TransferInfoDetailDTO.TransferResponseDTO> listTransferBySourceDetailIdList(List<String> sourceDetailIdList) {
+        return baseMapper.listTransferBySourceDetailIdList(sourceDetailIdList);
     }
 
     /**
