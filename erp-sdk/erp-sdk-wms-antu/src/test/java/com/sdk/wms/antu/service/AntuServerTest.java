@@ -189,4 +189,20 @@ public class AntuServerTest {
         AntuResponse<List<AntuReturnResp>> response = antuService.getReturnInstock(antuGetReturnReq);
         System.out.println(JSONUtil.toJsonStr(response));
     }
+
+    @Test
+    public void getCalculateFeeBatch() {
+        AntuCalculateFeeReq antuCalculateFeeReq = AntuCalculateFeeReq.builder()
+                .warehouseCode("HRBW")
+                .countryCode("RU")
+                .shippingMethod(Arrays.asList("FF","US"))
+                .postcode("456145615")
+                .weight(0.2F)
+//                .length(1F)
+//                .width(1F)
+//                .height(1F)
+                .build();
+        AntuResponse<List<AntuCalculateFeeResp>> response = antuService.getCalculateFeeBatch(antuCalculateFeeReq);
+        System.out.println(JSONUtil.toJsonStr(response));
+    }
 }

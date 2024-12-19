@@ -35,6 +35,9 @@ import cn.hutool.core.collection.CollUtil;
 @Scope("prototype")
 public class AntuInitHandler extends DmpInputInitHandler {
 
+	public static final String SOURCE_PLATFORM = "sourcePlatform";
+	public static final String AUTH_ID = "authId";
+
 	@Override
 	public List<DmpInputTaskInitDTO> getInitData(DmpInputInitRequest dmpRequest, DmpInputTaskResponse dmpResponse) {
 		List<DmpInputTaskInitDTO> resultList = new ArrayList<>();
@@ -89,7 +92,8 @@ public class AntuInitHandler extends DmpInputInitHandler {
 			JSONArray parseArray = JSON.parseArray(JSONObject.toJSONString(allResult));
 			parseArray.forEach(p -> {
 				JSONObject j = (JSONObject)p;
-				j.put("authId", id);
+				j.put(AUTH_ID, id);
+				j.put(SOURCE_PLATFORM, DmpBasicSystemCodeEnum.ANTU.getCode());
 			});
 			dmpInputTaskInitDTO.setMsg(parseArray.toJSONString());
 

@@ -468,7 +468,7 @@ public class ShippingTemplateServiceImpl extends SuperServiceImpl<ShippingTempla
 
         //查询国家数据
         List<String> countryNameList = successList.stream().flatMap(obj -> Stream.of(obj.getFromCountry(), obj.getToCountry())).distinct().collect(Collectors.toList());
-        List<DictCountryEntity> dictCountryList = sysDictFeign.listCountryByNames(countryNameList);
+        List<DictCountryEntity> dictCountryList = sysDictFeign.listCountryByNamesOrIds(countryNameList);
 
         Map<String, List<ShippingTemplateExcelDTO>> map = successList.stream().collect(Collectors.groupingBy(ShippingTemplateExcelDTO::getName));
 
@@ -497,15 +497,18 @@ public class ShippingTemplateServiceImpl extends SuperServiceImpl<ShippingTempla
                 }
                 ShippingTemplateRuleDTO.AddDTO ruleAddDTO = new ShippingTemplateRuleDTO.AddDTO();
                 //起始国
-                String fromCountry = dictCountryList.stream().filter(obj -> obj.getNameCn().equals(excelDTO.getFromCountry())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getId())).orElse("");
+                String fromCountry = dictCountryList.stream().filter(obj -> obj.getId().equals(excelDTO.getFromCountry()) || obj.getNameCn().equals(excelDTO.getFromCountry())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getId())).orElse("");
                 ruleAddDTO.setFromCountry(fromCountry);
                 //目的国
                 if (CharSequenceUtil.isNotBlank(excelDTO.getToCountry())) {
-                    String toCountry = dictCountryList.stream().filter(obj -> obj.getNameCn().equals(excelDTO.getToCountry())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getId())).orElse("");
+                    String toCountry = dictCountryList.stream().filter(obj -> obj.getId().equals(excelDTO.getToCountry()) || obj.getNameCn().equals(excelDTO.getToCountry())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getId())).orElse("");
                     ruleAddDTO.setToCountry(toCountry);
                 }
                 ruleAddDTO.setRegion(excelDTO.getRegion());
-                List<String> cityList = citySuccessList.stream().filter(obj -> obj.getCountry().equals(excelDTO.getToCountry()) && obj.getRegion().equals(excelDTO.getRegion())).map(ShippingTemplateCityExcelDTO::getCity).collect(Collectors.toList());
+                DictCountryEntity toCountry = dictCountryList.stream().filter(obj -> Objects.equals(excelDTO.getToCountry(), obj.getNameCn()) || Objects.equals(excelDTO.getToCountry(), obj.getId())).findFirst().orElse(null);
+                String toCountryName = Objects.nonNull(toCountry) ? toCountry.getNameCn() : CharSequenceUtil.EMPTY;
+                String toCountryId = Objects.nonNull(toCountry) ? toCountry.getId() : CharSequenceUtil.EMPTY;
+                List<String> cityList = citySuccessList.stream().filter(obj -> (toCountryId.equals(obj.getCountry()) || toCountryName.equals(obj.getCountry())) && obj.getRegion().equals(excelDTO.getRegion())).map(ShippingTemplateCityExcelDTO::getCity).collect(Collectors.toList());
                 if (CollectionUtils.isNotEmpty(cityList)) {
                     ruleAddDTO.setCityList(cityList);
                 }
@@ -536,8 +539,11 @@ public class ShippingTemplateServiceImpl extends SuperServiceImpl<ShippingTempla
         }
         //添加城市错误信息
         for (ShippingTemplateExcelDTO excelDTO :errorList) {
+            DictCountryEntity toCountry = dictCountryList.stream().filter(obj -> Objects.equals(excelDTO.getToCountry(), obj.getNameCn()) || Objects.equals(excelDTO.getToCountry(), obj.getId())).findFirst().orElse(null);
+            String toCountryName = Objects.nonNull(toCountry) ? toCountry.getNameCn() : CharSequenceUtil.EMPTY;
+            String toCountryId = Objects.nonNull(toCountry) ? toCountry.getId() : CharSequenceUtil.EMPTY;
             //城市信息
-            List<ShippingTemplateCityExcelDTO> cityExcelList = citySuccessList.stream().filter(obj -> obj.getCountry().equals(excelDTO.getToCountry()) && obj.getRegion().equals(excelDTO.getRegion())).distinct().collect(Collectors.toList());
+            List<ShippingTemplateCityExcelDTO> cityExcelList = citySuccessList.stream().filter(obj -> (toCountryId.equals(obj.getCountry()) || toCountryName.equals(obj.getCountry())) && obj.getRegion().equals(excelDTO.getRegion())).distinct().collect(Collectors.toList());
             cityErrorList.addAll(cityExcelList);
         }
     }
@@ -837,7 +843,7 @@ public class ShippingTemplateServiceImpl extends SuperServiceImpl<ShippingTempla
             errorMsgList.add("已存在相同模板");
         }
 
-        String fromCountry = dictCountryList.stream().filter(obj -> obj.getNameCn().equals(addDTO.getFromCountry())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getId())).orElse("");
+        String fromCountry = dictCountryList.stream().filter(obj -> Objects.equals(addDTO.getFromCountry(), obj.getNameCn()) || Objects.equals(addDTO.getFromCountry(), obj.getId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getId())).orElse("");
         if (CharSequenceUtil.isBlank(fromCountry)) {
             errorMsgList.add("系统中未找起始国家");
         }
@@ -847,7 +853,7 @@ public class ShippingTemplateServiceImpl extends SuperServiceImpl<ShippingTempla
                 errorMsgList.add("目的地不能为空");
             }
             if (CharSequenceUtil.isNotBlank(addDTO.getToCountry())) {
-                String toCountry = dictCountryList.stream().filter(obj -> obj.getNameCn().equals(addDTO.getToCountry())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getId())).orElse("");
+                String toCountry = dictCountryList.stream().filter(obj -> Objects.equals(addDTO.getToCountry(), obj.getNameCn()) || Objects.equals(addDTO.getToCountry(), obj.getId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getId())).orElse("");
                 if (CharSequenceUtil.isBlank(toCountry)) {
                     errorMsgList.add("系统中未找目的地");
                 }
@@ -860,7 +866,10 @@ public class ShippingTemplateServiceImpl extends SuperServiceImpl<ShippingTempla
             if (ObjectUtil.isEmpty(addDTO.getRegion())) {
                 errorMsgList.add("城市分区不能为空");
             }
-            List<ShippingTemplateCityExcelDTO> cityExcelList = citySuccessList.stream().filter(obj -> obj.getCountry().equals(addDTO.getToCountry()) && obj.getRegion().equals(addDTO.getRegion())).collect(Collectors.toList());
+            DictCountryEntity toCountry = dictCountryList.stream().filter(obj -> Objects.equals(addDTO.getToCountry(), obj.getNameCn()) || Objects.equals(addDTO.getToCountry(), obj.getId())).findFirst().orElse(null);
+            String toCountryName = Objects.nonNull(toCountry) ? toCountry.getNameCn() : CharSequenceUtil.EMPTY;
+            String toCountryId = Objects.nonNull(toCountry) ? toCountry.getId() : CharSequenceUtil.EMPTY;
+            List<ShippingTemplateCityExcelDTO> cityExcelList = citySuccessList.stream().filter(obj -> (toCountryId.equals(obj.getCountry()) || toCountryName.equals(obj.getCountry())) && obj.getRegion().equals(addDTO.getRegion())).collect(Collectors.toList());
             if (CollectionUtils.isEmpty(cityExcelList)) {
                 errorMsgList.add("未找到城市分区下城市信息");
             }

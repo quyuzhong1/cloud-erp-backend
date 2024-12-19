@@ -68,6 +68,7 @@ public interface OverseasWarehouseConverter {
             @Mapping(target = "frozenQty", source = "piFreeze"),
             @Mapping(target = "shippedQty", source = "shipped"),
             @Mapping(target = "downloadTime", source = "downloadTime"),
+            @Mapping(target = "saleReturnInTransitQty", source = "saleReturnInTransitQty"),
     })
     OverseasInventoryEntity inventoryDtoToDb(PlatformInventoryDTO dto);
 }

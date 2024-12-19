@@ -1,6 +1,5 @@
 package com.erp.server.srm.controller.api;
 
-import com.common.business.annotation.Idempotent;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -12,17 +11,14 @@ import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
-import com.erp.model.scm.dto.ListStatusCountDTO;
 import com.erp.model.scm.dto.PurchaseOrderDTO;
 import com.erp.model.scm.dto.PurchaseOrderSrmDTO;
 import com.erp.model.srm.dto.DeliveryOrderDTO;
 import com.erp.rpc.scm.feign.PurchaseOrderFeign;
 import com.erp.server.srm.query.WaitDeliveryQueryHandler;
 import com.erp.server.srm.service.DeliveryOrderService;
-import com.erp.server.srm.service.PurchaseOrderDetailService;
 import com.erp.server.srm.service.UserService;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -54,8 +50,6 @@ public class WaitDeliveryController extends BaseController {
     private PurchaseOrderFeign purchaseOrderFeign;
     @Resource
     private DeliveryOrderService deliveryOrderService;
-    @Resource
-    private PurchaseOrderDetailService purchaseOrderDetailService;
 
     /**
      * srm待发货列表统计

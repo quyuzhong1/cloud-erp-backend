@@ -593,4 +593,12 @@ public class DictCountryServiceImpl extends SuperServiceImpl<DictCountryMapper, 
         }
         updateBatchById(list);
     }
+
+    @Override
+    public List<DictCountryEntity> listCountryByNamesOrIds(List<String> codeList) {
+        if(CollectionUtils.isEmpty(codeList)){
+            return Collections.emptyList();
+        }
+        return this.lambdaQuery().in(DictCountryEntity::getNameCn,codeList).or().in(DictCountryEntity::getId, codeList).list();
+    }
 }

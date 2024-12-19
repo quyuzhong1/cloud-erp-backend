@@ -401,6 +401,11 @@ public class DictCityServiceImpl extends SuperServiceImpl<DictCityMapper, DictCi
         return new PagingVO<>(page);
     }
 
+    @Override
+    public List<DictCityEntity> listCityByNames(List<String> names) {
+        return lambdaQuery().in(DictCityEntity::getName,names).list();
+    }
+
     public void handleData(DictCityEntity entity) {
         String id = entity.getId();
         Integer level = entity.getLevel();

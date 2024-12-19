@@ -16,7 +16,6 @@ import com.common.core.enums.LogActionEnum;
 import com.erp.model.mrp.dto.DeliverySuggestDTO;
 import com.erp.model.mrp.entity.DeliverySuggestEntity;
 import com.erp.server.mrp.handler.DeliverySuggestionQueryHandler;
-import com.erp.server.mrp.handler.ReplenishmentSuggestionQueryHandler;
 import com.erp.server.mrp.service.DeliverySuggestService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
@@ -55,6 +54,19 @@ public class DeliverySuggestController extends BaseController {
     public ApiResult<PagingVO<DeliverySuggestDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<DeliverySuggestDTO.PagingParamDTO> dto) {
         PagingVO<DeliverySuggestDTO.ListDTO> pagingVO = deliverySuggestService.paging(dto);
         return success(pagingVO);
+    }
+
+    /**
+     * tab列表
+     * @author Will
+     * @date: 2024/12/16 10:48
+     * @param dto
+     * @return ApiResult<List<TabListDTO>>
+     */
+    @PostMapping("/tabList")
+    public ApiResult<List<DeliverySuggestDTO.TabListDTO>> tabList(@RequestBody DeliverySuggestDTO.TabListParamDTO dto) {
+        List<DeliverySuggestDTO.TabListDTO> tabList = deliverySuggestService.tabList(dto);
+        return success(tabList);
     }
 
     /**
@@ -257,7 +269,7 @@ public class DeliverySuggestController extends BaseController {
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出发货建议")
     @PostMapping(value = "/export")
-    @WebAdvanceQuery(handler = ReplenishmentSuggestionQueryHandler.class)
+    @WebAdvanceQuery(handler = DeliverySuggestionQueryHandler.class)
     public ApiResult<String> export(@RequestBody DeliverySuggestDTO.PagingParamDTO pagingParamDTO) {
         Boolean flag = deliverySuggestService.export(pagingParamDTO);
         return Boolean.TRUE.equals(flag) ? success() : failure();

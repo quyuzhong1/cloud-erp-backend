@@ -304,6 +304,9 @@ select id from dmp_output_task t where update_time <![CDATA[ < ]]> #{beforeUpdat
 
 insert into dmp_output_task_his select * from dmp_output_task t where update_time <![CDATA[ < ]]> #{beforeUpdateTime} and status = 'finish' and not exists (select 1 from dmp_output_task_record g where g.status != 'finish' and g.main_id = t.id ) order by t.update_time limit #{size};
 delete from dmp_output_task where id in (select id from dmp_output_task t where update_time <![CDATA[ < ]]> #{beforeUpdateTime} and status = 'finish' and not exists (select 1 from dmp_output_task_record g where g.status != 'finish' and g.main_id = t.id ) order by t.update_time limit #{size});
+
+insert into dmp_output_task_his select * from dmp_output_task g where not exists (select 1 from dmp_output_task_record t where t.main_id = g.id);
+delete from dmp_output_task g where not exists (select 1 from dmp_output_task_record t where t.main_id = g.id);
 	</delete>
     
 </mapper>

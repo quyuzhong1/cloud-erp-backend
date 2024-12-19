@@ -540,6 +540,11 @@ public enum ApiError implements Serializable {
     CALL_THIRD_LOGISTICS_PLATFORM_ERROR(96000, "调用第三方物流平台接口异常"),
     BATCH_UPDATE_TRACK_INFO_HAS_EMPTY(96001, "物流单号不能为空"),
     LABEL_TYPE_NOT_EMPTY(96002, "标签类型不能为空"),
+    ERROR_EXISTS_LOGISTICS_LARGE(96003, "已生成物流大表不能重复生成"),
+    ERROR_EXISTS_ESTIMATED_LOGISTICS_LARGE(96004, "已存在预估账单的物流大表信息，请不要重复下推"),
+    ERROR_SMALL_BAG_NOT_CONFIRMED(96005, "小包费用分摊未确认，不能生成物流大表"),
+    ERROR_NOT_EXISTS(96006, "自发货费用不存在"),
+    ERROR_EXISTS_ACTUAL_NOT_ESTIMATED(96007, "已存在实际账单，不能再下推实际账单"),
 
     /**
      * bi 错误
@@ -1050,7 +1055,7 @@ public enum ApiError implements Serializable {
     ERROR_92136(92136,"发货通知单【{}】配置的发货仓库不能为空"),
     ERROR_92137(92137,"B2C发货单【{}】配置的发货仓库不能为空"),
     ERROR_92138(92138,"存在已审核调拨单【{}】不能修改中转仓"),
-    ERROR_SO_OUTSTOCK_BILL_COST_NOT_DIS_APPROVE(92138,"销售出库单【{}】 自发货费用单据已确认状态下,不允许反审核"),
+    ERROR_SO_OUTSTOCK_BILL_COST_NOT_DIS_APPROVE(92138,"销售出库单【{}】 已生成物流单,不允许反审核"),
     ERROR_DELIVERY_INTERCEPT_READY_PACKAGED(92139,"销售订单号【{}】已组包不支持拦截操作"),
     ERROR_92140(92140,"关联单号【{}】已审核不能修改装箱"),
     ERROR_92141(92141,"装箱任务记录不存在"),
@@ -1077,6 +1082,9 @@ public enum ApiError implements Serializable {
     ERROR_92261(92261,"无关联采购时,退款单价不能为空"),
     ERROR_92262(92262,"采购退货单【{}】无关联采购时,SKU【{}】退款单价不能为空"),
     ERROR_92263(92263,"未找到【{}】仓库"),
+    ERROR_92264(92264,"目的国家不能为空"),
+    ERROR_92265(92265,"重量不能为空"),
+    ERROR_92267(92267,"邮编不能为空"),
 
     ERROR_SUBCONTRACT_ISSUE_NOT_EXIST(92124,"委外发料单不存在"),
     ERROR_SUBCONTRACT_ISSUE_DETAIL_NOT_EXIST(92125,"委外发料单明细不存在"),
@@ -1405,7 +1413,7 @@ public enum ApiError implements Serializable {
     ERROR_92160(92160,"本地推送消息单"),
     ERROR_92161(92161,"退款订单明细"),
     ERROR_92162(92162,"合并后的平台订单后过长"),
-
+    ERROR_92163(92163,"只能勾选一个自动提交发货选项"),
 
     TRANSACTION_SUB_TYPE_NOT_NULL(92154,"【{}】手工单的单据子类型不能为空"),
 

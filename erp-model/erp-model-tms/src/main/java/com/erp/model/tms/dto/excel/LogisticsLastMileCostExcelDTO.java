@@ -35,11 +35,18 @@ public class LogisticsLastMileCostExcelDTO implements Serializable {
     @ExcelProperty(value = "*计费重[物流商]", index = 2)
     @FieldValid(fieldName = "计费重[物流商]", isNotBlank = true ,formatPattern = FieldFormatPatternTypeEnum.AMOUNT)
     private String billingWeightStr;
+    
+    /**
+     * 类型
+     */
+    @ExcelProperty(value = "*对账类型", index = 3)
+    @FieldValid(fieldName = "对账类型",isNotBlank = true,fieldValues = "付款,退款")
+    private String  payType;
 
     /**
      * 币种
      */
-    @ExcelProperty(value = "币种[默认￥]", index = 3)
+    @ExcelProperty(value = "币种[默认￥]", index = 4)
     @FieldValid(fieldName = "币种", maxLength = 32)
     private String currency;
 

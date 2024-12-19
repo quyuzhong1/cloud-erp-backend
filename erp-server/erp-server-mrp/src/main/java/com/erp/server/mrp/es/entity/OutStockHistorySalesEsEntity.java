@@ -50,7 +50,7 @@ public class OutStockHistorySalesEsEntity extends BaseEsEntity {
     @Field(type = FieldType.Keyword)
     private String orderType;
 
-    public static OutStockHistorySalesEsEntity createOutStockHistorySales(String replenishmentId, LocalDate billDate, Integer qty, String skuId, String shopId) {
+    public static OutStockHistorySalesEsEntity createOutStockHistorySales(String replenishmentId, String orderType, LocalDate billDate, Integer qty, String skuId, String shopId) {
         OutStockHistorySalesEsEntity entity = new OutStockHistorySalesEsEntity();
         entity.setId(IdWorker.getIdStr());
         entity.setReplenishmentId(replenishmentId);
@@ -58,6 +58,7 @@ public class OutStockHistorySalesEsEntity extends BaseEsEntity {
         entity.setOriginalSalesQty(qty);
         entity.setSkuId(skuId);
         entity.setShopId(shopId);
+        entity.setOrderType(orderType);
         return entity;
     }
 }
