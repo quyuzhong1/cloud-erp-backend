@@ -374,7 +374,7 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
         addDTO.setLogisticsBillId(logisticsBillEntity.getId());
         addDTO.setShippingMethod(logisticsBillEntity.getShippingMethod());
         addDTO.setTransportNo(logisticsBillEntity.getCounterNo());
-
+        addDTO.setLogisticsBillCostId(logisticsBillCostEntity.getId());
         List<LogisticsTrackEntity> logisticsTrackEntities = logisticsTrackService.listByTrackNoList(Arrays.asList(logisticsBillEntity.getCounterNo()));
         LogisticsTrackEntity logisticsTrackEntity = logisticsTrackEntities.stream().filter(req -> FmLogisticTrackStatusEnum.PICKUP.getCode().equals(req.getStatus())).findFirst().orElse(null);
         if (ObjectUtil.isNotEmpty(logisticsTrackEntity)) {
@@ -451,12 +451,12 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
 
         if (ObjectUtil.isNotEmpty(detailEntity)) {
             BigDecimal firstMileFreightAmount = detailEntity.getAllocatedAmount().divide(rate, 4, RoundingMode.DOWN);
-            addDTO.setFirstMileEstimatedFreightTax(firstMileFreightAmount.divide(rate, 4, RoundingMode.DOWN));
-            addDTO.setFirstMileEstimatedFreight(firstMileFreightAmount.divide(rate, 4, RoundingMode.DOWN).divide(BigDecimal.ONE.add(taxRate), 4, RoundingMode.DOWN));
+            addDTO.setFirstMileEstimatedFreightTax(firstMileFreightAmount);
+            addDTO.setFirstMileEstimatedFreight(firstMileFreightAmount.divide(BigDecimal.ONE.add(taxRate), 4, RoundingMode.DOWN));
 
-            addDTO.setFirstMileActualFreightTax(firstMileFreightAmount.divide(rate, 4, RoundingMode.DOWN));
-            addDTO.setFirstMileActualFreight(firstMileFreightAmount.divide(rate, 4, RoundingMode.DOWN).divide(BigDecimal.ONE.add(taxRate), 4, RoundingMode.DOWN));
-            addDTO.setFirstMileFreightVatAmount(firstMileFreightAmount.divide(rate, 4, RoundingMode.DOWN).divide(BigDecimal.ONE.add(taxRate), 4, RoundingMode.DOWN).multiply(taxRate));
+            addDTO.setFirstMileActualFreightTax(firstMileFreightAmount);
+            addDTO.setFirstMileActualFreight(firstMileFreightAmount.divide(BigDecimal.ONE.add(taxRate), 4, RoundingMode.DOWN));
+            addDTO.setFirstMileFreightVatAmount(firstMileFreightAmount.divide(BigDecimal.ONE.add(taxRate), 4, RoundingMode.DOWN).multiply(taxRate));
         }
 
         //杂费
@@ -590,9 +590,9 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
 
 
         for (FirstMileSkuCostAllocationEntity firstMileSkuCostAllocationEntity : skuCostAllocationEntityList) {
+            List<FirstMileSkuCostAllocationDetailEntity> costAllocationDetailEntities = skuCostAllocationDetailEntities.stream().filter(req -> req.getMainId().equals(entity.getId())).collect(Collectors.toList());
 
-
-            this.firstMileLogisticsTableHandler(entity, firstMileSkuCostAllocationEntity, skuCostAllocationDetailEntities, firstMileDeliveryEntity, firstMileDeliveryDetailEntities);
+            this.firstMileLogisticsTableHandler(entity, firstMileSkuCostAllocationEntity, costAllocationDetailEntities, firstMileDeliveryEntity, firstMileDeliveryDetailEntities);
         }
         return BatchResultDTO.success(entity.getId(), entity.getBusinessCode(), OperationTypeEnum.ADD);
     }
@@ -663,6 +663,7 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
         if (ObjectUtil.isEmpty(logisticsBillCostEntity)) {
             throw new ServiceException("物流单费用信息未找到");
         }
+        addDTO.setLogisticsBillCostId(logisticsBillCostEntity.getId());
         LogisticsBillEntity logisticsBillEntity = logisticsBillService.getById(logisticsBillCostEntity.getLogisticsBillId());
         if (ObjectUtil.isEmpty(logisticsBillCostEntity)) {
             throw new ServiceException("物流单信息未找到");
@@ -933,19 +934,12 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
             this.smallBagCostAllocationHandler(mainEntity, costAllocationEntity, costAllocationDetailEntities, soOutstockEntity, soOutstockDetailEntity, soB2cEntity);
         }
 
-
         if (SmallBagCostAllocationMainFeeSourceEnum.CONFIRMED.getCode().equals(mainEntity.getFeeSource())) {
             //查询是否有预估账单
             List<LogisticsLargeEntity> list = this.lambdaQuery()
-                    .eq(LogisticsLargeEntity::getSourceId, mainEntity.getId())
+                    .eq(LogisticsLargeEntity::getLogisticsBillCostId, mainEntity.getCostId())
                     .eq(LogisticsLargeEntity::getSourceType, SourceTypeEnum.SMALL_BAG_COST_ALLOCATION.getCode())
                     .list();
-            if (ObjectUtil.isNotEmpty(list)) {
-                list = this.lambdaQuery()
-                        .eq(LogisticsLargeEntity::getLogisticsBillId, list.get(0).getLogisticsBillId())
-                        .eq(LogisticsLargeEntity::getSourceType, SourceTypeEnum.SMALL_BAG_COST_ALLOCATION.getCode())
-                        .list();
-            }
 
             List<LogisticsLargeEntity> estimatedList = list.stream()
                     .filter(req -> ReconciliationBillTypeEnum.ESTIMATED.getCode().equals(req.getReconciliationBillType()))
@@ -1080,6 +1074,7 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
         addDTO.setSourceType(SourceTypeEnum.TRANSFER_DECLARE_COST_ALLOCATION.getCode());
         addDTO.setSourceDetailId(entity.getId());
         addDTO.setLogisticsBillId(logisticsBillEntity.getId());
+        addDTO.setLogisticsBillCostId(logisticsBillCostEntity.getId());
         if (CharSequenceUtil.isNotBlank(mainEntity.getReportDate())) {
             // 在日期字符串末尾添加"01"来补充日期部分
             String dateWithDay = mainEntity.getReportDate() + "-01";

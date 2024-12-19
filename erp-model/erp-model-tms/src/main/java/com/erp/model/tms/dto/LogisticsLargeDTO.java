@@ -256,7 +256,7 @@ public class LogisticsLargeDTO implements Serializable {
         private LocalDateTime destMiscFeePayTime;
 
         /**
-        * 目的杂费计算系数
+        * 关税计算系数
         */
         private BigDecimal dutyCalculationFactor;
 
@@ -660,10 +660,10 @@ public class LogisticsLargeDTO implements Serializable {
         private LocalDateTime destMiscFeePayTime;
 
         /**
-        * 目的杂费计算系数
+        * 关税计算系数
         */
         @NotNull(message = "目的杂费计算系数不能为空")
-        @Digits(integer = 10, fraction = 6, message = "目的杂费计算系数整数位不能超过10位，小数位不能超过6位")
+        @Digits(integer = 10, fraction = 6, message = "关税计算系数整数位不能超过10位，小数位不能超过6位")
         private BigDecimal dutyCalculationFactor;
 
         /**
@@ -803,6 +803,11 @@ public class LogisticsLargeDTO implements Serializable {
          */
         @NotBlank(message = "物流单id")
         private String logisticsBillId;
+        /**
+         * 物流单费用id
+         */
+        @NotBlank(message = "物流单费用id")
+        private String logisticsBillCostId;
     }
 
 
@@ -1006,10 +1011,10 @@ public class LogisticsLargeDTO implements Serializable {
         private LocalDateTime destMiscFeePayTime;
 
         /**
-         * 目的杂费计算系数
+         * 关税计算系数
          */
-        @NotNull(message = "目的杂费计算系数不能为空")
-        @Digits(integer = 10, fraction = 6, message = "目的杂费计算系数整数位不能超过10位，小数位不能超过6位")
+        @NotNull(message = "关税计算系数不能为空")
+        @Digits(integer = 10, fraction = 6, message = "关税计算系数整数位不能超过10位，小数位不能超过6位")
         private BigDecimal dutyCalculationFactor;
 
         /**
@@ -1381,7 +1386,7 @@ public class LogisticsLargeDTO implements Serializable {
         private LocalDateTime destMiscFeePayTime;
 
         /**
-         * 目的杂费计算系数【可排序】
+         * 关税计算系数【可排序】
          */
         private BigDecimal dutyCalculationFactor;
 
