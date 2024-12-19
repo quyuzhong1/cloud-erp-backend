@@ -48,7 +48,7 @@
         vtfd.qty,
         case when vtfd.qty > 0 then '入库' else '出库' end as operateTypeName,
         vid.batch_no as batchNo,
-        vid.qty as waitBatchQty,
+        vtfd.cur_inventory_qty as waitBatchQty,
         vid.last_outstock_date,
         vtfd.update_time as updateTime
         from virtual_trans_flow_detail vtfd
