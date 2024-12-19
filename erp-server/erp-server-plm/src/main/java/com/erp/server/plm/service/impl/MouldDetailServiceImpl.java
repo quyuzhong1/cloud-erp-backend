@@ -84,6 +84,7 @@ public class MouldDetailServiceImpl extends SuperServiceImpl<MouldDetailMapper, 
                 mouldDetail.setMainId(entity.getId());
                 String code = docNoGenHelper.generateMouldDetailCode(entity.getMouldCategoryCode());
                 mouldDetail.setMouldNo(code);
+                dto.setMouldNo(code);
                 mouldDetail.setId(IdWorker.getIdStr());
             }
             details.add(mouldDetail);

@@ -177,6 +177,7 @@
 
     <select id="exportOrderTracking" resultType="com.erp.model.plm.dto.MouldInfoDTO$OrderTrackingExportDTO">
         select mi.id as id,
+        md.id as detailId,
         mi.project_no as projectNo,
         mi.name as name,
         mi.status,
@@ -203,16 +204,16 @@
         md.update_time as updateTime,
         mrp.sku_id,
         mrp.sku_no,
-        mrp.supplier_id                      as skuSupplierId
+        mrp.supplier_id as skuSupplierId
         from mould_info mi
-                 inner join mould_detail md on mi.id = md.main_id and md.is_deleted = false
-                 left join public.mould_purchase_price mpp on md.id = mpp.mould_detail_id and mpp.is_deleted = false
-                 left join public.mould_refund_agreement mra on md.id = mra.mould_detail_id and mra.is_deleted = false
-                 left join public.mould_ref_product mrp on md.id = mrp.mould_detail_id and mrp.is_deleted = false
-                 left join public.mould_ref_calc_qty mrcq on md.id = mrcq.mould_detail_id and mrcq.is_deleted = false
+        inner join mould_detail md on mi.id = md.main_id and md.is_deleted = false
+        left join public.mould_purchase_price mpp on md.id = mpp.mould_detail_id and mpp.is_deleted = false
+        left join public.mould_refund_agreement mra on md.id = mra.mould_detail_id and mra.is_deleted = false
+        left join public.mould_ref_product mrp on md.id = mrp.mould_detail_id and mrp.is_deleted = false
+        left join public.mould_ref_calc_qty mrcq on md.id = mrcq.mould_detail_id and mrcq.is_deleted = false
         where ${params.sqlMap.default}
-          and mi.is_deleted = false
-          and mra.is_need_refund = true
+        and mi.is_deleted = false
+        and mra.is_need_refund = true
         order by
         <if test="params.sortList != null and params.sortList.size > 0">
             <foreach collection="params.sortList" item="item" separator="," close=",">
