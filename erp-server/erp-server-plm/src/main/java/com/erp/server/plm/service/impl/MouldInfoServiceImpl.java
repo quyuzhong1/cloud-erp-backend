@@ -60,6 +60,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
+import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
@@ -494,6 +495,27 @@ public class MouldInfoServiceImpl extends SuperServiceImpl<MouldInfoMapper, Moul
     private void verifyData(List<MouldDetailDTO.ViewDTO> viewDTOS) {
         for (MouldDetailDTO.ViewDTO viewDTO : viewDTOS) {
             StringBuilder msg = new StringBuilder();
+            if (StringUtils.isEmpty(viewDTO.getTypeId())) {
+                msg.append("模具类型不能为空,");
+            }
+            if (StringUtils.isEmpty(viewDTO.getMouldHoles())) {
+                msg.append("模具穴数不能为空,");
+            }
+            if (StringUtils.isEmpty(viewDTO.getMaterial())) {
+                msg.append("模具材质不能为空,");
+            }
+            if (ObjectUtils.isEmpty(viewDTO.getLifeCycle())) {
+                msg.append("模具寿命(万)(啤)不能为空,");
+            }
+            if (ObjectUtils.isEmpty(viewDTO.getDevelopCycle())) {
+                msg.append("开模周期(自然日)不能为空,");
+            }
+            if (ObjectUtils.isEmpty(viewDTO.getEnableDate())) {
+                msg.append("启用时间不能为空,");
+            }
+            if (ObjectUtils.isEmpty(viewDTO.getSupplierId())) {
+                msg.append("供应商不能为空,");
+            }
             if (ObjectUtils.isEmpty(viewDTO.getQty())) {
                 msg.append("数量不能为空,");
             }
@@ -503,7 +525,7 @@ public class MouldInfoServiceImpl extends SuperServiceImpl<MouldInfoMapper, Moul
             if (ObjectUtils.isEmpty(viewDTO.getTaxRate())) {
                 msg.append("税率不能为空,");
             }
-            if (ObjectUtils.isEmpty(viewDTO.getPayMethodId())) {
+            if (StringUtils.isEmpty(viewDTO.getPayMethodId())) {
                 msg.append("结算方式不能为空,");
             }
             if (ObjectUtils.isEmpty(viewDTO.getPaymentCondition())) {
@@ -532,7 +554,6 @@ public class MouldInfoServiceImpl extends SuperServiceImpl<MouldInfoMapper, Moul
                 }
             }
             if (!ObjectUtils.isEmpty(msg.toString())) {
-
                 throw new ServiceException(msg.insert(0, viewDTO.getMouldNo()).toString());
             }
         }
