@@ -660,6 +660,11 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                     }
                 }
             }
+        }else{
+            //销售出库单单据日期需要回写到B2C销售订单中
+            if(null != entity.getBillDate()){
+                soB2cFeign.writeBackSoOutstockDate(entity.getSoId(),entity.getBillDate());
+            }
         }
         //销售出库单反审核后修改出库日期审核时，需要校验是否有关联的中转调拨单
         if (CharSequenceUtil.isNotBlank(entity.getSourceId())){
@@ -677,8 +682,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 }
             }
         }
-        //销售出库单单据日期需要回写到B2C销售订单中
-        soB2cFeign.writeBackSoOutstockDate(entity.getSoId(),entity.getBillDate());
+
         // 调用流程审核
         approveProcess(entity, dto);
         String msg = CharSequenceUtil.format("用户【{}】单号为【{}】的【{}】单据审核操作  审核结果：【{}】 审核意见 ：【{}】", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "销售出库单", approveType.getName(), dto.getComment());
