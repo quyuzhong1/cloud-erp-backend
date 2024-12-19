@@ -1,16 +1,23 @@
 package com.erp.model.tms.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
+import com.common.business.annotation.Dict;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
+import com.erp.model.tms.enums.LogisticsBillCostCheckStatusEnum;
+import com.erp.model.tms.enums.LogisticsBillCostPayTypeEnum;
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -93,7 +100,7 @@ public class LogisticsBillCostDTO implements Serializable {
         private String  channelName;
 
         /**
-         * 物流单号【可排序】
+         * 物流运单号【可排序】
          */
         private String  transportNo;
 
@@ -162,12 +169,12 @@ public class LogisticsBillCostDTO implements Serializable {
         private BigDecimal actualShippingCost;
 
         /**
-         * 实际报关费【可排序】
+         * 实际报关费
          */
         private BigDecimal actualDeclareCost;
 
         /**
-         * 实际其他费【可排序】
+         * 实际其他费
          */
         private BigDecimal actualOtherCost;
 
@@ -261,6 +268,46 @@ public class LogisticsBillCostDTO implements Serializable {
          * 账单确认时间【可排序】
          */
         private LocalDateTime confirmTime;
+        
+        /**
+         * 体积 【可排序】
+         */
+        private String volume;
+
+        /**
+         * 退付款类型，pay=付款，refund=退款
+         */
+        private String payType;
+
+        /**
+         * 支付状态，payment=未支付，paid=已支付 【可排序】
+         */
+        private String payStatus;
+        /**
+         * 支付状态名称
+         */
+        private String payStatusName;
+
+        /**
+         *付款/退款时间 【可排序】
+         */
+        private LocalDateTime payTime;
+
+        /**
+         * 核算状态，checking=待生成，checked=已生成，confirm=已确认，名称为 checkStatusName 字段 【可排序】
+         */
+        private String checkStatus;
+        private String checkStatusName;
+        
+        /**
+         * 预估可抵扣税金
+         */
+        private BigDecimal estimatedDeductibleTax;
+
+        /**
+         * 实际可抵扣税金
+         */
+        private BigDecimal actualDeductibleTax;
     }
 
     /**
@@ -396,7 +443,112 @@ public class LogisticsBillCostDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class AddDTO extends CommonDTO {
-
+    	/**
+         * 对账类型   http://172.16.100.11:3002/project/128/interface/api/25522 key=logisticsBillCostPayType
+         */
+         private String payType = LogisticsBillCostPayTypeEnum.PAY.getCode();
+    }
+    
+    /**
+     * 新增付款/退款，仅创建
+     */
+    @Data
+    @NoArgsConstructor
+    public static class AddDataDTO extends DataDTO{
+    	/**
+    	 * 对账类型   http://172.16.100.11:3002/project/128/interface/api/25522 key=logisticsBillCostPayType
+    	 */
+    	@NotBlank(message = "对账类型不能为空")
+    	private String payType;
+    	
+    	/**
+    	 * 选择单据id
+    	 */
+    	@NotBlank(message = "选择单据不能为空")
+    	private String sourceId;
+    	
+    }
+    
+    /**
+     * 新增付款/退款，仅创建
+     */
+    @Data
+    @NoArgsConstructor
+    public static class EditDataDTO extends DataDTO{
+    	/**
+    	 * id
+    	 */
+    	@NotBlank(message = "id不能为空")
+    	private String id;
+    	
+    }
+    
+    /**
+     * 新增付款/退款，仅创建
+     */
+    @Data
+    @NoArgsConstructor
+    public static class EditViewDTO extends DataDTO{
+    	/**
+    	 * id
+    	 */
+    	private String id;
+    	
+    	/**
+    	 * 对账类型
+    	 */
+    	private String payType;
+    	
+    	/**
+    	 * 对账类型名称
+    	 */
+    	private String payTypeName;
+    	
+    	/**
+    	 * 物流单号
+    	 */
+    	private String trackNo;
+    }
+    
+    /**
+     * 新增付款/退款，仅创建
+     */
+    @Data
+    @NoArgsConstructor
+    public static class DataDTO extends TmsCostDetailDTO.DetailDTO{
+    	
+    	/**
+    	 * 计费重[预估]
+    	 */
+    	private BigDecimal billingWeight;
+    	
+    	/**
+    	 * 计费重[物流商]
+    	 */
+    	private BigDecimal billingWeightLogistics;
+    	
+    	/**
+    	 * 币别
+    	 */
+    	private String currency;
+    	
+    }
+    
+    /**
+     * 新增付款/退款，对账已确认
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ConfirmAddDataDTO{
+    	/**
+    	 * 对账确认时间
+    	 */
+    	private LocalDateTime confirmTime;
+    	
+    	/**
+    	 * 新增付款/退款数据
+    	 */
+    	private List<AddDataDTO> addDataDTOList;
     }
 
     /**
@@ -456,6 +608,11 @@ public class LogisticsBillCostDTO implements Serializable {
         private String logisticsBillDetailId;
 
         private String trackNo;
+        
+        /**
+    	 * 计费重[预估]
+    	 */
+    	private BigDecimal billingWeight;
     }
 
     @Data
@@ -528,6 +685,11 @@ public class LogisticsBillCostDTO implements Serializable {
          * 实重(物流商)
          */
         private BigDecimal weightLogistics;
+        
+        /**
+    	 * 计费重[物流商]
+    	 */
+    	private BigDecimal billingWeightLogistics;
 
         /**
          * 费用明细
@@ -578,10 +740,59 @@ public class LogisticsBillCostDTO implements Serializable {
         private List<String> ids;
 
         /**
-         * 状态
+         * 状态 对账类型   http://172.16.100.11:3002/project/128/interface/api/25522 key=reconciliationStatus
          */
         private String reconciliationStatus;
+        
+        /**
+         * 对账确认时间
+         */
+        private LocalDateTime confirmTime;
 
+    }
+    
+    /**
+     * 支付状态
+     */
+    @Data
+    @NoArgsConstructor
+    public static class PayStatusDTO {
+    	
+    	/**
+    	 * ids
+    	 */
+    	private List<String> ids;
+    	
+    	/**
+    	 * 支付状态	根据列表payType字段，pay=付款，refund=退款，支付状态的 paid=已付款/已退款	payment=待付款/待退款
+    	 */
+    	private String payStatus;
+    	
+    	/**
+    	 *付款/退款时间
+    	 */
+    	private LocalDateTime payTime;
+    	
+    }
+    
+    /**
+     * 支付状态
+     */
+    @Data
+    @NoArgsConstructor
+    public static class PushDTO {
+    	
+    	/**
+    	 * ids
+    	 */
+    	private List<String> ids;
+    	
+    	/**
+    	 *核算日期
+    	 */
+    	@NotBlank(message = "核算日期不能为空")
+    	private String reportDate;
+    	
     }
     @Data
     @NoArgsConstructor

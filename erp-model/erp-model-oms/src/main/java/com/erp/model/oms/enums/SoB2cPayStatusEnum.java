@@ -1,6 +1,7 @@
 package com.erp.model.oms.enums;
 
 import com.baomidou.mybatisplus.annotation.EnumValue;
+import com.common.core.constant.EnumMessage;
 import com.fasterxml.jackson.annotation.JsonValue;
 import org.apache.commons.lang3.StringUtils;
 
@@ -12,7 +13,7 @@ import java.util.Arrays;
  * @description: 付款状态
  * @date 2023/8/21 11:59
  */
-public enum SoB2cPayStatusEnum {
+public enum SoB2cPayStatusEnum implements EnumMessage {
 
     ENUM_PAYMENT("payment",  "待付款"),
     ENUM_PAID("paid",  "已付款"),

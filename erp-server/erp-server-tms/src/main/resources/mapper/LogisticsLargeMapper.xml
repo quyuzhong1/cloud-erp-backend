@@ -1,0 +1,203 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.tms.mapper.LogisticsLargeMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.tms.entity.LogisticsLargeEntity">
+       <result column="id" property="id" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_time" property="createTime" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_time" property="updateTime" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="outstock_code" property="outstockCode" />
+       <result column="outstock_time" property="outstockTime" />
+       <result column="pay_status" property="payStatus" />
+       <result column="pay_terms_days" property="payTermsDays" />
+       <result column="sku_id" property="skuId" />
+       <result column="sku_no" property="skuNo" />
+       <result column="delivery_qty" property="deliveryQty" />
+       <result column="platform_order_code" property="platformOrderCode" />
+       <result column="weight" property="weight" />
+       <result column="logistics_billing_weight" property="logisticsBillingWeight" />
+       <result column="shipping_method" property="shippingMethod" />
+       <result column="logistics_supplier_id" property="logisticsSupplierId" />
+       <result column="logistics_supplier_name" property="logisticsSupplierName" />
+       <result column="payment_company_name" property="paymentCompanyName" />
+       <result column="transport_no" property="transportNo" />
+       <result column="origin_port" property="originPort" />
+       <result column="transit_port" property="transitPort" />
+       <result column="destination_port" property="destinationPort" />
+       <result column="pickup_address" property="pickupAddress" />
+       <result column="delivery_address" property="deliveryAddress" />
+       <result column="pickup_time" property="pickupTime" />
+       <result column="actual_delivery_time" property="actualDeliveryTime" />
+       <result column="freight_calculation_factor" property="freightCalculationFactor" />
+       <result column="freight_currency" property="freightCurrency" />
+       <result column="bill_total_amount" property="billTotalAmount" />
+       <result column="first_mile_estimated_freight_tax" property="firstMileEstimatedFreightTax" />
+       <result column="first_mile_estimated_freight" property="firstMileEstimatedFreight" />
+       <result column="first_mile_actual_freight_tax" property="firstMileActualFreightTax" />
+       <result column="first_mile_actual_freight" property="firstMileActualFreight" />
+       <result column="tax_rate" property="taxRate" />
+       <result column="first_mile_freight_vat_amount" property="firstMileFreightVatAmount" />
+       <result column="first_mile_pay_time" property="firstMilePayTime" />
+       <result column="last_mile_freight_amount_tax" property="lastMileFreightAmountTax" />
+       <result column="last_mile_freight_amount" property="lastMileFreightAmount" />
+       <result column="last_mile_freight_vat_amount" property="lastMileFreightVatAmount" />
+       <result column="dest_misc_fee_factor" property="destMiscFeeFactor" />
+       <result column="dest_misc_fee_pay_status" property="destMiscFeePayStatus" />
+       <result column="misc_fee_currency" property="miscFeeCurrency" />
+       <result column="estimated_dest_misc_fee" property="estimatedDestMiscFee" />
+       <result column="actual_dest_misc_fee" property="actualDestMiscFee" />
+       <result column="dest_misc_fee_pay_time" property="destMiscFeePayTime" />
+       <result column="duty_calculation_factor" property="dutyCalculationFactor" />
+       <result column="dest_duty_pay_status" property="destDutyPayStatus" />
+       <result column="duty_currency" property="dutyCurrency" />
+       <result column="estimated_duty_amount" property="estimatedDutyAmount" />
+       <result column="actual_duty_amount" property="actualDutyAmount" />
+       <result column="dest_tax_pay_time" property="destTaxPayTime" />
+       <result column="deductible_tax_factor" property="deductibleTaxFactor" />
+       <result column="deductible_tax_pay_status" property="deductibleTaxPayStatus" />
+       <result column="deductible_tax_currency" property="deductibleTaxCurrency" />
+       <result column="estimated_deductible_tax" property="estimatedDeductibleTax" />
+       <result column="actual_deductible_tax" property="actualDeductibleTax" />
+       <result column="deductible_tax_pay_time" property="deductibleTaxPayTime" />
+       <result column="other_tax_calculation_factor" property="otherTaxCalculationFactor" />
+       <result column="other_tax_pay_status" property="otherTaxPayStatus" />
+       <result column="other_tax_currency" property="otherTaxCurrency" />
+       <result column="estimated_tax_other_tax" property="estimatedTaxOtherTax" />
+       <result column="actual_tax_other_tax" property="actualTaxOtherTax" />
+       <result column="other_tax_pay_time" property="otherTaxPayTime" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id,
+        create_user_id,
+        create_user_name,
+        create_time,
+        update_user_id,
+        update_user_name,
+        update_time,
+        version,
+        is_deleted,
+        outstock_code, outstock_time, pay_status, pay_terms_days, sku_id, sku_no, delivery_qty, platform_order_code, weight, logistics_billing_weight, shipping_method, logistics_supplier_id, logistics_supplier_name, payment_company_name, transport_no, origin_port, transit_port, destination_port, pickup_address, delivery_address, pickup_time, actual_delivery_time, freight_calculation_factor, freight_currency, bill_total_amount, first_mile_estimated_freight_tax, first_mile_estimated_freight, first_mile_actual_freight_tax, first_mile_actual_freight, tax_rate, first_mile_freight_vat_amount, first_mile_pay_time, last_mile_freight_amount_tax, last_mile_freight_amount, last_mile_freight_vat_amount, dest_misc_fee_factor, dest_misc_fee_pay_status, misc_fee_currency, estimated_dest_misc_fee, actual_dest_misc_fee, dest_misc_fee_pay_time, duty_calculation_factor, dest_duty_pay_status, duty_currency, estimated_duty_amount, actual_duty_amount, dest_tax_pay_time, deductible_tax_factor, deductible_tax_pay_status, deductible_tax_currency, estimated_deductible_tax, actual_deductible_tax, deductible_tax_pay_time, other_tax_calculation_factor, other_tax_pay_status, other_tax_currency, estimated_tax_other_tax, actual_tax_other_tax, other_tax_pay_time
+    </sql>
+
+    <select id="paging" resultType="com.erp.model.tms.dto.LogisticsLargeDTO$PagingViewDTO">
+        SELECT
+        ll.id AS id,
+        ll.outstock_code AS outstockCode,
+        ll.outstock_time AS outstockTime,
+        ll.pay_status AS payStatus,
+        ll.pay_terms_days AS payTermsDays,
+        ll.sku_id AS skuId,
+        ll.sku_no AS skuNo,
+        ll.delivery_qty AS deliveryQty,
+        ll.platform_order_code AS platformOrderCode,
+        ll.weight AS weight,
+        ll.logistics_billing_weight AS logisticsBillingWeight,
+        ll.shipping_method AS shippingMethod,
+        ll.logistics_supplier_name AS logisticsSupplierName,
+        ll.payment_company_name AS paymentCompanyName,
+        ll.transport_no AS transportNo,
+        ll.origin_port AS originPort,
+        ll.transit_port AS transitPort,
+        ll.destination_port AS destinationPort,
+        ll.pickup_address AS pickupAddress,
+        ll.delivery_address AS deliveryAddress,
+        ll.pickup_time AS pickupTime,
+        lbd.sign_time AS actualDeliveryTime,
+        ll.freight_calculation_factor AS freightCalculationFactor,
+        ll.freight_currency AS freightCurrency,
+        ll.bill_total_amount AS billTotalAmount,
+        ll.first_mile_estimated_freight_tax AS firstMileEstimatedFreightTax,
+        ll.first_mile_estimated_freight AS firstMileEstimatedFreight,
+        ll.first_mile_actual_freight_tax AS firstMileActualFreightTax,
+        ll.first_mile_actual_freight AS firstMileActualFreight,
+        ll.tax_rate AS taxRate,
+        ll.first_mile_freight_vat_amount AS firstMileFreightVatAmount,
+        ll.first_mile_pay_time AS firstMilePayTime,
+        ll.last_mile_freight_amount_tax AS lastMileFreightAmountTax,
+        ll.last_mile_freight_amount AS lastMileFreightAmount,
+        ll.last_mile_freight_vat_amount AS lastMileFreightVatAmount,
+        ll.dest_misc_fee_factor AS destMiscFeeFactor,
+        ll.dest_misc_fee_pay_status AS destMiscFeePayStatus,
+        ll.misc_fee_currency AS miscFeeCurrency,
+        ll.estimated_dest_misc_fee AS estimatedDestMiscFee,
+        ll.actual_dest_misc_fee AS actualDestMiscFee,
+        ll.dest_misc_fee_pay_time AS destMiscFeePayTime,
+        ll.duty_calculation_factor AS dutyCalculationFactor,
+        ll.dest_duty_pay_status AS destDutyPayStatus,
+        ll.duty_currency AS dutyCurrency,
+        ll.estimated_duty_amount AS estimatedDutyAmount,
+        ll.actual_duty_amount AS actualDutyAmount,
+        ll.dest_tax_pay_time AS destTaxPayTime,
+        ll.deductible_tax_factor AS deductibleTaxFactor,
+        ll.deductible_tax_pay_status AS deductibleTaxPayStatus,
+        ll.deductible_tax_currency AS deductibleTaxCurrency,
+        ll.estimated_deductible_tax AS estimatedDeductibleTax,
+        ll.actual_deductible_tax AS actualDeductibleTax,
+        ll.deductible_tax_pay_time AS deductibleTaxPayTime,
+        ll.other_tax_calculation_factor AS otherTaxCalculationFactor,
+        ll.other_tax_pay_status AS otherTaxPayStatus,
+        ll.other_tax_currency AS otherTaxCurrency,
+        ll.estimated_tax_other_tax AS estimatedTaxOtherTax,
+        ll.actual_tax_other_tax AS actualTaxOtherTax,
+        ll.other_tax_pay_time AS otherTaxPayTime,
+        ll.source_id AS sourceId,
+        ll.source_type AS sourceType,
+        ll.source_detail_id AS sourceDetailId,
+        ll.reconciliation_bill_type AS reconciliationBillType,
+        TO_CHAR(ll.reconciliation_month, 'YYYY-MM') AS reconciliationMonth, -- 格式化日期为年-月
+        ll.create_time AS createTime,
+        ll.logistics_bill_id
+        FROM logistics_large ll
+        LEFT JOIN logistics_bill lb ON ll.logistics_bill_id = lb.id AND lb.is_deleted=false
+        LEFT JOIN logistics_bill_detail lbd ON lb.id = lbd.main_id AND lbd.is_deleted=false
+        WHERE
+        ${params.sqlMap.default}
+        and ll.is_deleted=false
+        <!--权限-->
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        ll.create_time desc
+   </select>
+
+    <!-- 根据状态分组查询数量 -->
+    <select id="listTabCount" resultType="com.erp.model.tms.dto.LogisticsLargeDTO$TabListDTO">
+        select
+        count(ll.id) as count
+        from logistics_large ll
+        where ll.is_deleted = false
+        <if test="permissionSql != null and permissionSql != ''">
+            ${permissionSql}
+        </if>
+    </select>
+
+    <!--查询不存在物流大表里的头程费用分摊主表id-->
+    <select id="listFirstMileCostAllocationIsExists" resultType="string">
+        SELECT
+            fmca.ID
+        FROM
+            first_mile_cost_allocation fmca
+            INNER JOIN first_mile_sku_cost_allocation fmsca ON fmca.ID = fmsca.main_id
+        WHERE
+            fmca.is_deleted = FALSE
+            AND fmsca.is_deleted = FALSE
+            AND fmca.status = 'confirm'
+            AND NOT EXISTS ( SELECT ll.ID FROM logistics_large ll WHERE ll.outstock_code = fmca.source_code AND fmsca.bill_source_type = ll.reconciliation_bill_type )
+        GROUP BY fmca.ID
+		ORDER BY fmca.ID
+    </select>
+</mapper>
