@@ -130,6 +130,8 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
         DeliverySuggestEntity deliverySuggestEntity = new DeliverySuggestEntity();
         BeanMapperUtils.copy(addDTO, deliverySuggestEntity);
 
+        //计划修正值默认给建议发货量
+        deliverySuggestEntity.setPlanDeliveryQty(deliverySuggestEntity.getSuggestDeliveryQty());
         // 数据处理
         handleData(deliverySuggestEntity);
         log.info("开始新增补货计划");

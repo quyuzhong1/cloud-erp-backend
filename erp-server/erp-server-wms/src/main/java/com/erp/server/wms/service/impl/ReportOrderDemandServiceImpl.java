@@ -77,7 +77,6 @@ public class ReportOrderDemandServiceImpl extends SuperServiceImpl<ReportOrderDe
     private ReportOrderSalesService reportOrderSalesService;
 
 
-    @Transactional(rollbackFor = Exception.class)
     @Override
     public Boolean batchAddOrUpdate(List<ReportOrderDemandDTO.AddDTO> addOrUpdateList) {
         List<ReportOrderDemandEntity> list =  BeanMapperUtils.copyList(ReportOrderDemandEntity.class, addOrUpdateList);

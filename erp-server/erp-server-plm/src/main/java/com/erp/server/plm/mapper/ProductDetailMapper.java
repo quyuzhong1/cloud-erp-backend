@@ -349,6 +349,10 @@ public interface ProductDetailMapper extends BaseMapper<ProductDetailEntity> {
 
     List<String> getBrandByQuerySql(@Param("compareCodeSplicingValueSql") String compareCodeSplicingValueSql);
 
+    /**
+     * 根据skuIds获取产品包装尺寸明细
+     */
+    List<ProductPackViewDTO> listProductPackBySkuIds(@Param("skuIds") List<String> skuIds);
 }
 
 

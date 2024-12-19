@@ -31,6 +31,7 @@ import com.erp.model.dmp.entity.DmpCfgInputEntity;
 import com.erp.model.dmp.entity.DmpCfgOutputEntity;
 import com.erp.model.dmp.entity.DmpOutputTaskRecordEntity;
 import com.erp.model.dmp.entity.DmpPushMsgEntity;
+import com.erp.model.dmp.entity.DmpPushMsgHisEntity;
 import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
 import com.erp.model.dmp.enums.DmpCfgOutputTypeEnum;
 import com.erp.model.dmp.enums.DmpOutputTaskRecordStatusEnum;
@@ -39,6 +40,7 @@ import com.erp.server.dmp.inout.dto.response.DmpOutputTaskResponse;
 import com.erp.server.dmp.inout.handler.output.task.DmpOutputTaskHandler;
 import com.erp.server.dmp.inout.utils.DmpHandlerUtils;
 import com.erp.server.dmp.push.service.sdy.SdyCommonService;
+import com.erp.server.dmp.service.DmpPushMsgHisService;
 import com.erp.server.dmp.service.DmpPushMsgService;
 
 import cn.hutool.core.collection.CollUtil;
@@ -52,6 +54,8 @@ public class DmpOutputErpPushTaskHandler extends DmpOutputTaskHandler{
 
 	@Autowired
 	private DmpPushMsgService dmpPushMsgService;
+	@Autowired
+	private DmpPushMsgHisService dmpPushMsgHisService;
 	
 	@Override
 	public List<DmpOutputTaskRecordEntity> outputData(DmpOutputTaskRequest dmpRequest, DmpOutputTaskResponse dmpResponse) {
@@ -166,6 +170,7 @@ public class DmpOutputErpPushTaskHandler extends DmpOutputTaskHandler{
 						.eq(DmpPushMsgEntity::getSourceId, s)
 						.eq(DmpPushMsgEntity::getTargetPlatform, systemCode)
 						.eq(DmpPushMsgEntity::getSyncOperate, syncOperate)
+						.select(DmpPushMsgEntity::getId)
 						.orderByDesc(DmpPushMsgEntity::getMessageUpdateTime)
 						.list();
 				if(CollUtil.isEmpty(list)) {
@@ -227,27 +232,37 @@ public class DmpOutputErpPushTaskHandler extends DmpOutputTaskHandler{
 					} catch (Exception e) {
 						log.error("处理上游单据失败" , e);
 					}
-					dmpOutputTaskRecordService.lambdaUpdate()
-						.set(DmpOutputTaskRecordEntity::getResponseData, "上游单据未拉取到")
-						.set(DmpOutputTaskRecordEntity::getUpdateTime, LocalDateTime.now())
-						.eq(DmpOutputTaskRecordEntity::getId, dmpOutputTaskRecordEntity.getId())
-						.ne(DmpOutputTaskRecordEntity::getStatus, DmpOutputTaskRecordStatusEnum.FINISH.getCode())
-						.update();
-					return;
-				}
-				
-				List<DmpOutputTaskRecordEntity> parentOutputList = dmpOutputTaskRecordService.lambdaQuery()
-						.in(DmpOutputTaskRecordEntity::getDataId, list.stream().map(DmpPushMsgEntity::getId).collect(Collectors.toList()))
-						.ne(DmpOutputTaskRecordEntity::getStatus, DmpOutputTaskRecordStatusEnum.FINISH.getCode())
-						.list();
-				if(CollUtil.isNotEmpty(parentOutputList)) {
-					dmpOutputTaskRecordService.lambdaUpdate()
-						.set(DmpOutputTaskRecordEntity::getResponseData, "上游单据未推送成功")
-						.set(DmpOutputTaskRecordEntity::getUpdateTime, LocalDateTime.now())
-						.eq(DmpOutputTaskRecordEntity::getId, dmpOutputTaskRecordEntity.getId())
-						.ne(DmpOutputTaskRecordEntity::getStatus, DmpOutputTaskRecordStatusEnum.FINISH.getCode())
-						.update();
-					return;
+					
+					List<DmpPushMsgHisEntity> histList = dmpPushMsgHisService.lambdaQuery()
+							.eq(DmpPushMsgHisEntity::getSourceId, s)
+							.eq(DmpPushMsgHisEntity::getTargetPlatform, systemCode)
+							.eq(DmpPushMsgHisEntity::getSyncOperate, syncOperate)
+							.select(DmpPushMsgHisEntity::getId)
+							.orderByDesc(DmpPushMsgHisEntity::getMessageUpdateTime)
+							.list();
+					if(CollUtil.isEmpty(histList)) {
+						dmpOutputTaskRecordService.lambdaUpdate()
+							.set(DmpOutputTaskRecordEntity::getResponseData, "上游单据未拉取到")
+							.set(DmpOutputTaskRecordEntity::getUpdateTime, LocalDateTime.now())
+							.eq(DmpOutputTaskRecordEntity::getId, dmpOutputTaskRecordEntity.getId())
+							.ne(DmpOutputTaskRecordEntity::getStatus, DmpOutputTaskRecordStatusEnum.FINISH.getCode())
+							.update();
+						return;
+					}
+				}else {
+					List<DmpOutputTaskRecordEntity> parentOutputList = dmpOutputTaskRecordService.lambdaQuery()
+							.in(DmpOutputTaskRecordEntity::getDataId, list.stream().map(DmpPushMsgEntity::getId).collect(Collectors.toList()))
+							.ne(DmpOutputTaskRecordEntity::getStatus, DmpOutputTaskRecordStatusEnum.FINISH.getCode())
+							.list();
+					if(CollUtil.isNotEmpty(parentOutputList)) {
+						dmpOutputTaskRecordService.lambdaUpdate()
+							.set(DmpOutputTaskRecordEntity::getResponseData, "上游单据未推送成功")
+							.set(DmpOutputTaskRecordEntity::getUpdateTime, LocalDateTime.now())
+							.eq(DmpOutputTaskRecordEntity::getId, dmpOutputTaskRecordEntity.getId())
+							.ne(DmpOutputTaskRecordEntity::getStatus, DmpOutputTaskRecordStatusEnum.FINISH.getCode())
+							.update();
+						return;
+					}
 				}
 			}
 			List<DmpOutputTaskRecordEntity> erpQuerySync = dmpOutputTaskRecordService.erpQuerySync(dmpCfgOutputEntity, Arrays.asList(dmpOutputTaskRecordEntity));
