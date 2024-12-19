@@ -62,6 +62,9 @@ public class LogisticsLastMileCostQueryHandler extends AbstractQueryHandler {
             	super.buildDefaultDTO("lbc.pay_status", payStatusList);
         	}
         }
+        if ("lbd.transportStatus".equals(field) && ObjectUtil.isNotEmpty(value)) {
+        	return "EXISTS (select 1 from logistics_bill_detail lbd where is_deleted = false and lb.id = lbd.main_id and lbd.track_status "+ compareCodeSplicingValueSql +" ) ";
+        }
         return null;
     }
 

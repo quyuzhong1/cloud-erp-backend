@@ -1225,7 +1225,9 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
 						transferDeclareCostAllocationEntity.setUnitCost(skuCost);
 						transferDeclareCostAllocationEntity.setUnitCurrency(idEntityMaps.get(inventorySkuCostDetailEntity.getMainId()).getCurrency());
 					}else {
-						throw new ServiceException(orgName + reportDate + "月份下sku=" + skuNo + "未配置分摊成本");
+						transferDeclareCostAllocationEntity.setUnitCost(BigDecimal.ZERO);
+						transferDeclareCostAllocationEntity.setUnitCurrency("CNY");
+//						throw new ServiceException(orgName + reportDate + "月份下sku=" + skuNo + "未配置分摊成本");
 					}
 					BigDecimal skuWeightCostPre = BigDecimal.ZERO;
 					BigDecimal skuWeightCost = skuWeightCostMaps.get(skuId);

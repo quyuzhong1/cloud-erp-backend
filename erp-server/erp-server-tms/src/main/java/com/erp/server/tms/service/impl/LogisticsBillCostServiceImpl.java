@@ -719,7 +719,19 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         	List<SoB2cLogisticsEntity> soB2cLogisticsList = FeignQuery.create(SoB2cLogisticsEntity.class).eq(SoB2cLogisticsEntity::getMainId, sourceId).list();
         	if(CollUtil.isNotEmpty(soB2cLogisticsList)) {
         		SoB2cLogisticsEntity soB2cLogisticsEntity = soB2cLogisticsList.get(0);
-				entity.setVolume(soB2cLogisticsEntity.getLength() + "*" + soB2cLogisticsEntity.getWidth() + "*" + soB2cLogisticsEntity.getHeight());
+				BigDecimal length = soB2cLogisticsEntity.getLength();
+				if(length != null) {
+					length = length.setScale(1, RoundingMode.HALF_UP);
+				}
+				BigDecimal width = soB2cLogisticsEntity.getWidth();
+				if(width != null) {
+					width = width.setScale(1, RoundingMode.HALF_UP);
+				}
+				BigDecimal height = soB2cLogisticsEntity.getHeight();
+				if(height != null) {
+					height = height.setScale(1, RoundingMode.HALF_UP);
+				}
+				entity.setVolume(length + "*" + width + "*" + height);
         	}
         }
     }
@@ -745,6 +757,11 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 
         //实际金额
         List<String> mainIdList = records.stream().map(LogisticsBillCostDTO.ListDTO::getId).collect(Collectors.toList());
+        Map<String, String> detailIdStatus = new HashMap<>();
+        List<String> logisticsBillDetailIdList = records.stream().map(LogisticsBillCostDTO.ListDTO::getLogisticsBillDetailId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
+        if(CollUtil.isNotEmpty(logisticsBillDetailIdList)) {
+        	detailIdStatus = logisticsBillDetailService.listByIds(logisticsBillDetailIdList).stream().collect(Collectors.toMap(LogisticsBillDetailEntity::getId, LogisticsBillDetailEntity::getTrackStatus));
+        }
         List<TmsCostDetailDTO.CostViewDTO> costList = tmsCostDetailService.listCostByMainIdList(mainIdList);
 
         Map<String, String> payStatusNameMap = new HashMap<>();
@@ -759,9 +776,10 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         		listDTO.setPayStatusName(payStatusNameMap.get(payType + "_" + payStatus));
         	}
         	listDTO.setCheckStatusName(LogisticsBillCostCheckStatusEnum.getName(listDTO.getCheckStatus()));
-            listDTO.setOrderTypeName(OrderTypeEnum.getName(listDTO.getOrderType()));
+            listDTO.setOrderTypeName(CostBillTypeEnum.getName(listDTO.getOrderType()));
             listDTO.setSourceTypeName(SourceTypeEnum.getName(listDTO.getSourceType()));
             listDTO.setReconciliationStatusName(ReconciliationStatusEnum.getName(listDTO.getReconciliationStatus()));
+            listDTO.setTransportStatus(detailIdStatus.get(listDTO.getLogisticsBillDetailId()));
             //运输状态
             String name = transportStatusList.stream().filter(obj -> obj.getCode().equals(listDTO.getTransportStatus())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
             listDTO.setTransportStatusName(name);
@@ -1782,7 +1800,9 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 				smallBagCostAllocationEntity.setUnitCost(skuCost);
 				smallBagCostAllocationEntity.setUnitCurrency(idEntityMaps.get(inventorySkuCostDetailEntity.getMainId()).getCurrency());
 			}else {
-				throw new ServiceException(orgName + reportDate + "月份下sku=" + skuNo + "未配置分摊成本");
+				smallBagCostAllocationEntity.setUnitCost(BigDecimal.ZERO);
+				smallBagCostAllocationEntity.setUnitCurrency("CNY");
+//				throw new ServiceException(orgName + reportDate + "月份下sku=" + skuNo + "未配置分摊成本");
 			}
 			BigDecimal skuWeightCostPre = BigDecimal.ZERO;
 			BigDecimal skuWeightCost = skuWeightCostMaps.get(skuId);

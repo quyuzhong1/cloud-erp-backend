@@ -308,6 +308,8 @@ public class LogisticsBillCostDTO implements Serializable {
          * 实际可抵扣税金
          */
         private BigDecimal actualDeductibleTax;
+        
+        private String logisticsBillDetailId;
     }
 
     /**
