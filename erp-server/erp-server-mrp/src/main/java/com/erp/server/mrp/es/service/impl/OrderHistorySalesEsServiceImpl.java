@@ -18,7 +18,9 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.elasticsearch.core.ElasticsearchRestTemplate;
+import org.springframework.data.elasticsearch.core.SearchHits;
 import org.springframework.data.elasticsearch.core.document.DocumentAdapters;
+import org.springframework.data.elasticsearch.core.query.FetchSourceFilter;
 import org.springframework.data.elasticsearch.core.query.NativeSearchQuery;
 import org.springframework.data.elasticsearch.core.query.NativeSearchQueryBuilder;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
@@ -201,5 +203,42 @@ public class OrderHistorySalesEsServiceImpl implements OrderHistorySalesEsServic
     @Override
     public List<OrderHistorySalesEsEntity> findByShopIdAndSkuIdAndDateBetween(String shopId, String skuId, LocalDate startDate, LocalDate endDate) {
         return orderHistorySalesEsRepository.findByShopIdAndSkuIdAndDateBetween(shopId, skuId, startDate, endDate);
+    }
+
+    @Override
+    public List<String> hasSalesShopBySku(List<String> params) {
+        BoolQueryBuilder queryBuilder = QueryBuilders.boolQuery()
+                .must(QueryBuilders.termsQuery("skuId", params));
+        NativeSearchQuery searchQuery = new NativeSearchQueryBuilder()
+                .withQuery(queryBuilder)
+                .withSourceFilter(new FetchSourceFilter(new String[]{"shopId"}, new String[]{}))
+                .build();
+        // 执行查询
+        SearchHits<OrderHistorySalesEsEntity> searchHits = elasticsearchRestTemplate.search(searchQuery, OrderHistorySalesEsEntity.class);
+
+        // 提取 shopId 并去重
+        return searchHits.getSearchHits().stream()
+                .map(hit -> hit.getContent().getShopId())
+                .distinct()
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<String> hasSalesSkuByShop(List<String> params) {
+
+        BoolQueryBuilder queryBuilder = QueryBuilders.boolQuery()
+                .must(QueryBuilders.termsQuery("shopId", params));
+        NativeSearchQuery searchQuery = new NativeSearchQueryBuilder()
+                .withQuery(queryBuilder)
+                .withSourceFilter(new FetchSourceFilter(new String[]{"skuId"}, new String[]{}))
+                .build();
+        // 执行查询
+        SearchHits<OrderHistorySalesEsEntity> searchHits = elasticsearchRestTemplate.search(searchQuery, OrderHistorySalesEsEntity.class);
+
+        // 提取 shopId 并去重
+        return searchHits.getSearchHits().stream()
+                .map(hit -> hit.getContent().getSkuId())
+                .distinct()
+                .collect(Collectors.toList());
     }
 }

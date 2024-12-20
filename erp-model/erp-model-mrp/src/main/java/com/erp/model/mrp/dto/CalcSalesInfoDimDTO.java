@@ -177,6 +177,11 @@ public class CalcSalesInfoDimDTO implements Serializable {
          * 试算配置id
          */
         private String cfgRuleCalcId;
+
+        /**
+         * 相似度
+         */
+        private BigDecimal similarity;
     }
 
     @Getter

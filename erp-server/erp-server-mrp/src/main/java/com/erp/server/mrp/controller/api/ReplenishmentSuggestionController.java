@@ -3,6 +3,7 @@ package com.erp.server.mrp.controller.api;
 
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -731,5 +732,15 @@ public class ReplenishmentSuggestionController extends BaseController {
         List<ReplenishmentSuggestionEntity> suggestionList = replenishmentSuggestionService.listByPlatform(platformType);
         basicReplenishmentDataService.cleanHistorySalesByOutStock(LocalDate.now(), suggestionList, CfgRulePlatformTypeEnum.getEnum(platformType), cleanDay);
         return success();
+    }
+
+    /**
+     * 历史销量近365天
+     * @param dto 参数
+     */
+    @PostMapping("/listSalesInfo")
+    public ApiResult<List<ReplenishmentSuggestionVO.SalesInfoVO>> listSalesInfo(@RequestBody @Validated BaseIdDTO dto) {
+        List<ReplenishmentSuggestionVO.SalesInfoVO> page = replenishmentSuggestionService.listSalesInfo(dto);
+        return success(page);
     }
 }

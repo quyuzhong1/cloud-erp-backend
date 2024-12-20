@@ -643,4 +643,34 @@ public class ReplenishmentSuggestionVO {
          */
         private JSONArray orderType;
     }
+
+    @Getter
+    @Setter
+    public static class SalesInfoVO {
+
+        /**
+         * 日期
+         */
+        private LocalDate date;
+
+        /**
+         * 历史销量
+         */
+        private Integer hisSalesQty;
+
+        /**
+         * 去噪类型，percentage百分比去噪：fixedValue=固定值去噪，completely=完全去噪
+         */
+        private String denoisingType;
+
+        /**
+         * 去噪参数
+         */
+        private String effectiveValue;
+
+        /**
+         * 去噪销量
+         */
+        private BigDecimal denoisingQty;
+    }
 }
