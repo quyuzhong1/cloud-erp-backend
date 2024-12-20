@@ -97,4 +97,17 @@ public interface OrderHistorySalesEsService {
      * @param endDate   结束时间
      */
     List<OrderHistorySalesEsEntity> findByShopIdAndSkuIdAndDateBetween(String shopId, String skuId, LocalDate startDate, LocalDate endDate);
+
+    /**
+     * 根据sku查询有销量店铺
+     * @param params 参数
+     */
+    List<String> hasSalesShopBySku(List<String> params);
+
+    /**
+     * 根据店铺查询有销量sku
+     * @param params 参数
+     */
+    List<String> hasSalesSkuByShop(List<String> params);
+
 }

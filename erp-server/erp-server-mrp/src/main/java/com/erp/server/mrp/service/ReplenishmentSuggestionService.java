@@ -2,6 +2,7 @@ package com.erp.server.mrp.service;
 
 import cn.hutool.json.JSONArray;
 import com.common.business.dto.DynamicExcelDTO;
+import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.SuperService;
@@ -365,4 +366,10 @@ public interface ReplenishmentSuggestionService extends SuperService<Replenishme
      * @param dto 参数
      */
     PagingVO<CfgRuleCalcDTO.HistorySaleDTO> exportCalcHistorySale(PagingDTO<CfgRuleCalcDTO.DownloadDTO> dto);
+
+    /**
+     * 历史销量近365天
+     * @param dto 参数
+     */
+    List<ReplenishmentSuggestionVO.SalesInfoVO> listSalesInfo(BaseIdDTO dto);
 }
