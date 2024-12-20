@@ -3,7 +3,6 @@ package com.erp.server.wms.service.impl;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -423,11 +422,12 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
     @Override
     @Transactional(rollbackFor = Exception.class)
     @CacheEvict(cacheNames = "cache:wms:listByWarehouseIds", allEntries = true)
-    public void addArea(WarehouseAreaDTO.Add dto) {
+    public String addArea(WarehouseAreaDTO.Add dto) {
         existCode(dto.getCode(), null, WarehouseLocationTypeEnum.AREA.getCode(), dto.getWarehouseId());
         existName(dto.getName(), null, WarehouseLocationTypeEnum.AREA.getCode(), dto.getWarehouseId());
         WarehouseLocationEntity entity = dto.getWarehouseAreaInfo();
         save(entity);
+        return entity.getId();
     }
 
     @Override
