@@ -2,7 +2,6 @@ package com.erp.server.tms.controller.feign;
 
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.core.anno.LogSystemModule;
-import com.common.core.controller.vo.ApiResult;
 import com.erp.model.tms.dto.*;
 import com.erp.model.tms.entity.LogisticsAddressEntity;
 import com.erp.model.tms.entity.LogisticsChannelEntity;
@@ -41,6 +40,8 @@ public class LogisticsFeignController {
     private LogisticsAddressService logisticsAddressService;
     @Resource
     private LogisticsTrackService logisticsTrackService;
+    @Resource
+    private InventorySkuCostService inventorySkuCostService;
 
     @PostMapping("/queryOrderList")
     public List<LogisticsOrderResponseVO> queryOrderList(@RequestBody List<LogisticsQueryBaseVO> logisticsQueryVOList){
@@ -170,5 +171,24 @@ public class LogisticsFeignController {
     @PostMapping("/webhookByTrack123")
     public void webhookByTrack123(@RequestBody LogisticsTrackDTO.TrackWebHookDTO dto){
         logisticsTrackService.webhookByTrack123(dto);
+    }
+
+    /**
+     * sku成本B2B
+     * @param queryB2BDTO
+     * @return
+     */
+    @PostMapping("/listSkuCostBySkuIds")
+    public List<InventorySkuCostDTO.SkuCostDTO> listSkuCostBySkuIds(@RequestBody InventorySkuCostDTO.QueryB2BDTO queryB2BDTO) {
+        return inventorySkuCostService.listSkuCostBySkuIds(queryB2BDTO);
+    }
+    /**
+     * sku成本B2C
+     * @param queryB2CDTO
+     * @return
+     */
+    @PostMapping("/listSkuCostByDetail")
+    public List<InventorySkuCostDTO.SkuCostDTO> listSkuCostByDetail(@RequestBody InventorySkuCostDTO.QueryB2CDTO queryB2CDTO) {
+        return inventorySkuCostService.listSkuCostByDetail(queryB2CDTO);
     }
 }

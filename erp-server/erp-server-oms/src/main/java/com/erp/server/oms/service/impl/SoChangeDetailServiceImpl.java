@@ -557,12 +557,6 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
                 this.handleDetailAmountByChange(saveOrUpdateList, soInfoMap, closeSoDetailIdList);
                 List<String> skuIdList = saveOrUpdateList.stream().map(SoDetailEntity::getSkuId).collect(Collectors.toList());
                 List<SkuVO> skuList = plmTaskFeign.listSkuCostByIds(skuIdList);
-                // 供应商id集合
-//                List<String> supplierIds = skuList.stream().filter(r -> StrUtil.isNotEmpty(r.getSupplierId())).map(SkuVO::getSupplierId).distinct().collect(Collectors.toList());
-//                List<PurchasePriceDTO.SupplierSkuPrice> purchasePriceList = Lists.newArrayList();
-//                if (CollUtil.isNotEmpty(supplierIds)) {
-//                    purchasePriceList = scmTaskFeign.listSupplierSkuPrice(supplierIds);
-//                }
                 Map<String, List<SoDetailEntity>> soDetailSaveMap = saveOrUpdateList.stream().collect(Collectors.groupingBy(SoDetailEntity::getMainId));
                 for (Map.Entry<String, List<SoDetailEntity>> soEntry : soDetailSaveMap.entrySet()) {
                     // 金额信息加上折扣额计算

@@ -27,6 +27,8 @@ import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.FastDFSClientUtil;
 import com.common.core.utils.MathUtil;
+import com.erp.model.plm.dto.BomChildrenSkuDTO;
+import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.entity.DictCurrencyEntity;
@@ -68,6 +70,7 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_TMS_INVENTORY_SKU_COST;
 
@@ -382,6 +385,108 @@ public class InventorySkuCostServiceImpl extends SuperServiceImpl<InventorySkuCo
             return Collections.emptyList();
         }
         return baseMapper.listDetailByOrgIdAndSkuIds(orgId,skuIds,status,month);
+    }
+
+    @Override
+    public List<InventorySkuCostDTO.SkuCostDTO> listSkuCostBySkuIds(InventorySkuCostDTO.QueryB2BDTO queryB2BDTO) {
+        if (CollUtil.isEmpty(queryB2BDTO.getSkuIds()) || CharSequenceUtil.isEmpty(queryB2BDTO.getWarehouseId()) || CharSequenceUtil.isEmpty(queryB2BDTO.getSalesOrgId())){
+            return Collections.emptyList();
+        }
+        List<String> skuIds = queryB2BDTO.getSkuIds();
+        //根据sku进行获取子件 然后根据bom进行累加组合品
+        List<BomChildrenSkuDTO> bomChildrenList = plmTaskFeign.listBomChildBySkuIds(queryB2BDTO.getSkuIds());
+        List<String> childSkuIds = bomChildrenList.stream().map(BomChildrenSkuDTO::getSkuId).collect(Collectors.toList());
+        List<String> skuIds2 = Stream.concat(childSkuIds.stream(), queryB2BDTO.getSkuIds().stream()).distinct().collect(Collectors.toList());
+        List<InventorySkuCostDTO.SkuCostDTO> skuCostDTOS = baseMapper.listSkuCost(skuIds2, Collections.singletonList(queryB2BDTO.getWarehouseId()), Collections.singletonList(queryB2BDTO.getSalesOrgId()));
+        if (CollUtil.isEmpty(skuCostDTOS)){
+            return Collections.emptyList();
+        }
+        //根据sku重新组合
+        List<InventorySkuCostDTO.SkuCostDTO> skuCostDTOList = new ArrayList<>();
+        String combination = BomTypeEnum.COMBINATION.getType();
+        for (String skuId: skuIds){
+            List<BomChildrenSkuDTO> childrenSkuDTOS = bomChildrenList.stream().filter(e -> combination.equals(e.getType()) && e.getParentSkuId().equals(skuId)).collect(Collectors.toList());
+            if (CollUtil.isEmpty(childrenSkuDTOS)){
+                InventorySkuCostDTO.SkuCostDTO skuCostDTO = skuCostDTOS.stream().filter(e -> e.getSkuId().equals(skuId)).findFirst().orElse(null);
+                if (Objects.isNull(skuCostDTO)){
+                    continue;
+                }
+                skuCostDTOList.add(skuCostDTO);
+            }else {
+                InventorySkuCostDTO.SkuCostDTO skuCostDTO = new InventorySkuCostDTO.SkuCostDTO();
+                skuCostDTO.setSkuId(skuId);
+                skuCostDTO.setWarehouseId(queryB2BDTO.getWarehouseId());
+                addProductCost(childrenSkuDTOS,skuCostDTOS,skuCostDTO);
+                skuCostDTOList.add(skuCostDTO);
+            }
+        }
+        return skuCostDTOList;
+    }
+
+    @Override
+    public List<InventorySkuCostDTO.SkuCostDTO> listSkuCostByDetail(InventorySkuCostDTO.QueryB2CDTO queryB2CDTO) {
+        if (CharSequenceUtil.isBlank(queryB2CDTO.getSalesOrgId()) || CollUtil.isEmpty(queryB2CDTO.getDetailDTOS())){
+            return Collections.emptyList();
+        }
+        List<InventorySkuCostDTO.QueryB2CDetailDTO> detailDTOS = queryB2CDTO.getDetailDTOS();
+        List<String> skuIds = detailDTOS.stream().map(InventorySkuCostDTO.QueryB2CDetailDTO::getSkuId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+        List<String> warehouseIds = detailDTOS.stream().map(InventorySkuCostDTO.QueryB2CDetailDTO::getWarehouseId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+        if (CollUtil.isEmpty(skuIds) || CollUtil.isEmpty(warehouseIds)){
+            return Collections.emptyList();
+        }
+        //根据sku进行获取子件 然后根据bom进行累加组合品
+        List<BomChildrenSkuDTO> bomChildrenList = plmTaskFeign.listBomChildBySkuIds(skuIds);
+        List<String> childSkuIds = bomChildrenList.stream().map(BomChildrenSkuDTO::getSkuId).collect(Collectors.toList());
+        List<String> skuIds2 = Stream.concat(childSkuIds.stream(), skuIds.stream()).distinct().collect(Collectors.toList());
+        List<InventorySkuCostDTO.SkuCostDTO> skuCostDTOS = baseMapper.listSkuCost(skuIds2, warehouseIds, Collections.singletonList(queryB2CDTO.getSalesOrgId()));
+        if (CollUtil.isEmpty(skuCostDTOS)){
+            return Collections.emptyList();
+        }
+        //根据sku重新组合
+        List<InventorySkuCostDTO.SkuCostDTO> skuCostDTOList = new ArrayList<>();
+        String combination = BomTypeEnum.COMBINATION.getType();
+        for (InventorySkuCostDTO.QueryB2CDetailDTO queryB2CDetailDTO: detailDTOS){
+            List<BomChildrenSkuDTO> childrenSkuDTOS = bomChildrenList.stream().filter(e -> CharSequenceUtil.isNotBlank(queryB2CDetailDTO.getSkuId()) &&
+                    combination.equals(e.getType()) && e.getParentSkuId().equals(queryB2CDetailDTO.getSkuId())).collect(Collectors.toList());
+            if (CollUtil.isEmpty(childrenSkuDTOS)){
+                InventorySkuCostDTO.SkuCostDTO skuCostDTO = skuCostDTOS.stream().filter(e -> CharSequenceUtil.isNotBlank(queryB2CDetailDTO.getSkuId()) &&
+                        e.getSkuId().equals(queryB2CDetailDTO.getSkuId())).findFirst().orElse(null);
+                if (Objects.isNull(skuCostDTO)){
+                    continue;
+                }
+                skuCostDTOList.add(skuCostDTO);
+            }else {
+                InventorySkuCostDTO.SkuCostDTO skuCostDTO = new InventorySkuCostDTO.SkuCostDTO();
+                skuCostDTO.setSkuId(queryB2CDetailDTO.getSkuId());
+                skuCostDTO.setWarehouseId(queryB2CDetailDTO.getWarehouseId());
+                addProductCost(childrenSkuDTOS,skuCostDTOS,skuCostDTO);
+                skuCostDTOList.add(skuCostDTO);
+            }
+        }
+        return skuCostDTOList;
+    }
+
+    private void addProductCost(List<BomChildrenSkuDTO> childrenSkuDTOS, List<InventorySkuCostDTO.SkuCostDTO> skuCostDTOS, InventorySkuCostDTO.SkuCostDTO newSkuCostDTO) {
+        for (BomChildrenSkuDTO bomChildrenSkuDTO : childrenSkuDTOS){
+            InventorySkuCostDTO.SkuCostDTO skuCostDTO = skuCostDTOS.stream().filter(f -> f.getSkuId().equals(bomChildrenSkuDTO.getSkuId())).findFirst().orElse(null);
+            if (Objects.nonNull(skuCostDTO)){
+                //材料成本
+                BigDecimal cost = MathUtil.multiply(skuCostDTO.getProductCost(),bomChildrenSkuDTO.getQuantity());
+                BigDecimal productCost = Objects.nonNull(newSkuCostDTO.getProductCost()) ? newSkuCostDTO.getProductCost() : BigDecimal.ZERO;
+                newSkuCostDTO.setProductCost(MathUtil.add(cost, productCost));
+                //头程运费
+                BigDecimal firstMileShipingCost = MathUtil.multiply(skuCostDTO.getFirstMileShipingCost(),bomChildrenSkuDTO.getQuantity());
+                BigDecimal newFirstMileShipingCost = Objects.nonNull(newSkuCostDTO.getFirstMileShipingCost()) ? newSkuCostDTO.getFirstMileShipingCost() : BigDecimal.ZERO;
+                newSkuCostDTO.setProductCost(MathUtil.add(firstMileShipingCost, newFirstMileShipingCost));
+                //清关税费
+                BigDecimal clearanceCustomsTax = MathUtil.multiply(skuCostDTO.getClearanceCustomsTax(),bomChildrenSkuDTO.getQuantity());
+                BigDecimal newClearanceCustomsTax = Objects.nonNull(newSkuCostDTO.getClearanceCustomsTax()) ? newSkuCostDTO.getClearanceCustomsTax() : BigDecimal.ZERO;
+                newSkuCostDTO.setProductCost(MathUtil.add(clearanceCustomsTax, newClearanceCustomsTax));
+                
+                newSkuCostDTO.setAllocatedMonth(skuCostDTO.getAllocatedMonth());
+                newSkuCostDTO.setCurrency(skuCostDTO.getCurrency());
+            }
+        }
     }
 
 

@@ -106,4 +106,19 @@ public interface LogisticsFeign {
      */
     @PostMapping("/feign/logistics/webhookByTrack123")
     void webhookByTrack123(@RequestBody LogisticsTrackDTO.TrackWebHookDTO dto);
+
+    /**
+     *sku成本
+     * @param queryB2BDTO
+     * @return
+     */
+    @PostMapping("/feign/logistics/listSkuCostBySkuIds")
+    List<InventorySkuCostDTO.SkuCostDTO> listSkuCostBySkuIds(@RequestBody InventorySkuCostDTO.QueryB2BDTO queryB2BDTO);
+    /**
+     * sku成本B2C
+     * @param queryB2CDTO
+     * @return
+     */
+    @PostMapping("/feign/logistics/listSkuCostByDetail")
+    List<InventorySkuCostDTO.SkuCostDTO> listSkuCostByDetail(@RequestBody InventorySkuCostDTO.QueryB2CDTO queryB2CDTO);
 }

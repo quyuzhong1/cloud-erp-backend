@@ -213,6 +213,11 @@ public class SoDetailEntity extends BaseEntity<SoDetailEntity> {
      */
     @TableField(value = "bom_version")
     private String bomVersion;
+    /**
+     * 成本来源
+     */
+    @TableField(value = "cost_source")
+    private String costSource;
 
 
     @TableField(exist = false)

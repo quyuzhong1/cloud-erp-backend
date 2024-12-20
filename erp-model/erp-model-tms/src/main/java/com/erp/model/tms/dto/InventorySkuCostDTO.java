@@ -375,4 +375,72 @@ public class InventorySkuCostDTO implements Serializable {
          */
         private List<InventorySkuCostDetailDTO.AddDTO> detailList;
     }
+
+    @Data
+    @NoArgsConstructor
+    public static class SkuCostDTO {
+        //核算月份
+        private LocalDate allocatedMonth;
+        //币种
+        private String currency;
+        //skuId
+        private String skuId;
+        //材料成本
+        private BigDecimal productCost;
+        //头程
+        private BigDecimal firstMileShipingCost;
+        //清关税费
+        private BigDecimal clearanceCustomsTax;
+        //仓库
+        private String warehouseId;
+        //组织
+        private String salesOrgId;
+    }
+
+    @Data
+    @Builder
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class QueryB2BDTO {
+        /**
+         * sku集合
+         */
+        private List<String> skuIds;
+        /**
+         * 仓库列表
+         */
+        private String warehouseId;
+        /**
+         * 销售组织列表
+         */
+        private String salesOrgId;
+    }
+    @Data
+    @Builder
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class QueryB2CDTO {
+        /**
+         * sku集合
+         */
+        private List<QueryB2CDetailDTO> detailDTOS;
+        /**
+         * 销售组织列表
+         */
+        private String salesOrgId;
+    }
+    @Data
+    @Builder
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class QueryB2CDetailDTO{
+        /**
+         * 仓库列表
+         */
+        private String warehouseId;
+        /**
+         * skuId
+         */
+        private String skuId;
+    }
 }

@@ -182,6 +182,16 @@ public class SkuVO implements Serializable {
      * 成本价格（不含税）
      */
     private BigDecimal notTaxCostPrice;
+    /**
+     * 成本价格来源
+     */
+    private String costSource;
+    //材料成本
+    private BigDecimal productCost;
+    //头程运费
+    private BigDecimal firstMileShipingCost;
+    //清关税费
+    private BigDecimal clearanceCustomsTax;
 
     /**
      * 标准零售价

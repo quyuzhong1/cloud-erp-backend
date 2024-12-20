@@ -136,4 +136,18 @@ public interface InventorySkuCostService extends SuperService<InventorySkuCostEn
      * @return
      */
     List<InventorySkuCostDTO.PagingVO> listDetailByOrgIdAndSkuIds(String orgId, List<String> skuIds, String status, LocalDate month);
+
+    /**
+     * 获取sku成本 b2b
+     * @param queryB2BDTO
+     * @return
+     */
+    List<InventorySkuCostDTO.SkuCostDTO> listSkuCostBySkuIds(InventorySkuCostDTO.QueryB2BDTO queryB2BDTO);
+
+    /**
+     * 获取sku成本 b2c
+     * @param queryB2CDTO
+     * @return
+     */
+    List<InventorySkuCostDTO.SkuCostDTO> listSkuCostByDetail(InventorySkuCostDTO.QueryB2CDTO queryB2CDTO);
 }
