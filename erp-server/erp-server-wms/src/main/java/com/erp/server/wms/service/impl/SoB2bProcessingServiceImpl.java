@@ -12,6 +12,7 @@ import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.MathUtil;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.wms.dto.SoB2bProcessingDTO;
 import com.erp.model.wms.entity.SoB2bProcessingEntity;
@@ -154,10 +155,10 @@ public class SoB2bProcessingServiceImpl extends SuperServiceImpl<SoB2bProcessing
                 BeanMapperUtils.copy(entity,addDTO);
                 addDTO.setSkuId(childrenSkuDTO.getSkuId());
                 addDTO.setParentSkuId(childrenSkuDTO.getParentSkuId());
-                addDTO.setOutstockQty(addDTO.getOutstockQty() * childrenSkuDTO.getQuantity());
-                addDTO.setFrozenQty(addDTO.getFrozenQty() * childrenSkuDTO.getQuantity());
-                addDTO.setSoQty(addDTO.getSoQty() * childrenSkuDTO.getQuantity());
-                addDTO.setDeliveryQty(addDTO.getDeliveryQty() * childrenSkuDTO.getQuantity());
+                addDTO.setOutstockQty(ObjectUtil.isEmpty(addDTO.getOutstockQty()) ? MathUtil.ZERO : addDTO.getOutstockQty() * childrenSkuDTO.getQuantity());
+                addDTO.setFrozenQty(ObjectUtil.isEmpty(addDTO.getFrozenQty()) ? MathUtil.ZERO :addDTO.getFrozenQty() * childrenSkuDTO.getQuantity());
+                addDTO.setSoQty(ObjectUtil.isEmpty(addDTO.getSoQty()) ? MathUtil.ZERO :addDTO.getSoQty() * childrenSkuDTO.getQuantity());
+                addDTO.setDeliveryQty(ObjectUtil.isEmpty(addDTO.getDeliveryQty()) ? MathUtil.ZERO :addDTO.getDeliveryQty() * childrenSkuDTO.getQuantity());
                 addList.add(addDTO);
             }
         }
