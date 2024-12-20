@@ -129,7 +129,7 @@ public class SoB2bProcessingServiceImpl extends SuperServiceImpl<SoB2bProcessing
             //直接调拨单
             SoB2bProcessingDTO.ResponseDTO transferResponseDTO = transferList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSourceDetailId(), entity.getDeliveryNoticeDetailId()))
                     .findFirst().orElse(null);
-            if (ObjectUtil.isNotEmpty(machineResponseDTO)) {
+            if (ObjectUtil.isNotEmpty(transferResponseDTO)) {
                 handleOutstock (entity,transferResponseDTO, SourceTypeEnum.TRANSFER_INFO.getCode());
             }
             //销售出库单

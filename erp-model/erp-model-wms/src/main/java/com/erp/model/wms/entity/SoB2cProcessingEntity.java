@@ -41,6 +41,11 @@ public class SoB2cProcessingEntity extends BaseEntity<SoB2cProcessingEntity> {
     @TableField("delivery_id")
     private String deliveryId;
     /**
+     * 发货单明细id
+     */
+    @TableField("delivery_detail_id")
+    private String deliveryDetailId;
+    /**
     * 发货单号
     */
     @TableField("delivery_code")

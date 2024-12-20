@@ -280,12 +280,11 @@ public class SoB2cProcessingDTO implements Serializable {
     */
     @Data
     @NoArgsConstructor
-    public static class UpdateDTO extends CommonDTO {
+    public static class AddOrUpdateDTO extends CommonDTO {
 
         /**
         * 主键id
         */
-        @NotBlank(message = "主键id不能为空")
         private String id;
 
     }

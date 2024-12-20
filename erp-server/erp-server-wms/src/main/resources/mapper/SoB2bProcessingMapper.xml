@@ -80,7 +80,7 @@
         from so_b2b_processing sbp
         left join product_detail pd on sbp.sku_id = pd.id and pd.is_deleted = false
         left join warehouse wh on sbp.warehouse_id = wh.id and wh.is_deleted = false
-        left join virtual_warehouse vw on sbp.virtual_warehosue_id = vw.id and vw.is_deleted = false
+        left join virtual_warehouse vw on sbp.virtual_warehouse_id = vw.id and vw.is_deleted = false
         where ${params.sqlMap.default}
         and sbp.is_deleted = false
         ORDER BY
@@ -106,7 +106,7 @@
             sdnd.qty as deliveryQty,
             sdnd.sku_id as skuId,
             sdn.warehouse_id as warehouseId,
-            sdn.virtual_warehosue_id as virtualWarehosueId,
+            sdn.virtual_warehouse_id as virtualWarehosueId,
             sdn.create_time as frozenTime,
             sd.frozen_qty as frozenQty
         from so_delivery_notice sdn

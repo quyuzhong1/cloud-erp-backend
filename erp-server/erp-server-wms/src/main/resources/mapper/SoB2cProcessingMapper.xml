@@ -76,7 +76,7 @@
         from so_b2c_processing sbp
         left join product_detail pd on sbp.sku_id = pd.id and pd.is_deleted = false
         left join warehouse wh on sbp.warehouse_id = wh.id and wh.is_deleted = false
-        left join virtual_warehouse vw on sbp.virtual_warehosue_id = vw.id and vw.is_deleted = false
+        left join virtual_warehouse vw on sbp.virtual_warehouse_id = vw.id and vw.is_deleted = false
         where ${params.sqlMap.default}
         and sbp.is_deleted = false
         ORDER BY

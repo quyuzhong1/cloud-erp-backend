@@ -78,7 +78,7 @@
         from first_mile_processing fmp
         left join product_detail pd on fmp.sku_id = pd.id and pd.is_deleted = false
         left join warehouse wh on fmp.warehouse_id = wh.id and wh.is_deleted = false
-        left join virtual_warehouse vw on fmp.virtual_warehosue_id = vw.id and vw.is_deleted = false
+        left join virtual_warehouse vw on fmp.virtual_warehouse_id = vw.id and vw.is_deleted = false
         where ${params.sqlMap.default}
         and fmp.is_deleted = false
         ORDER BY
@@ -100,7 +100,7 @@
             fmd.status as deliveryApproveStatus,
             fmdd.qty as deliveryQty,
             pmdd.sku_id as skuId,
-            fmd.warehosue_id,
+            fmd.warehouse_id,
             fmd.virtual_warehouseId,
             ra.handle_time as frozenTime,
             rad.picking_qty as frozenQty,
