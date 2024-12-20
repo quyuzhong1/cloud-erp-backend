@@ -18,6 +18,7 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.MachineDetailDTO;
 import com.erp.model.wms.dto.MachineRefSoDTO;
 import com.erp.model.wms.dto.MachineSubComponentsDTO;
+import com.erp.model.wms.dto.SoB2bProcessingDTO;
 import com.erp.model.wms.entity.MachineDetailEntity;
 import com.erp.model.wms.entity.MachineInfoEntity;
 import com.erp.model.wms.entity.MachineRefSoEntity;
@@ -163,7 +164,7 @@ public class MachineDetailServiceImpl extends SuperServiceImpl<MachineDetailMapp
     }
 
     @Override
-    public List<MachineDetailDTO.MachineResponseDTO> listMachineBySourceDetailIdList(List<String> sourceDetailIdList) {
+    public List<SoB2bProcessingDTO.ResponseDTO> listMachineBySourceDetailIdList(List<String> sourceDetailIdList) {
         if (CollectionUtils.isEmpty(sourceDetailIdList)) {
             return Collections.EMPTY_LIST;
         }

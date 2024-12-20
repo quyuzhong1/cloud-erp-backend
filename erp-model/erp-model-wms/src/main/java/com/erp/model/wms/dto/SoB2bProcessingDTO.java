@@ -293,27 +293,17 @@ public class SoB2bProcessingDTO implements Serializable {
 
     }
 
-    /**
-    * 新增
-    */
-    @Data
-    @NoArgsConstructor
-    public static class AddDTO extends CommonDTO {
-
-
-    }
 
     /**
     * 修改
     */
     @Data
     @NoArgsConstructor
-    public static class UpdateDTO extends CommonDTO {
+    public static class AddOrUpdateDTO extends CommonDTO {
 
         /**
         * 主键id
         */
-        @NotBlank(message = "主键id不能为空")
         private String id;
 
     }
@@ -459,5 +449,48 @@ public class SoB2bProcessingDTO implements Serializable {
 
     }
 
-
+    @Data
+    @NoArgsConstructor
+    public static class ResponseDTO {
+        /**
+         * id
+         */
+        private String id;
+        /**
+         * 编码
+         */
+        private String code;
+        /**
+         * 审核状态
+         */
+        private String approveStatus;
+        /**
+         * 审核时间
+         */
+        private LocalDateTime approveTime;
+        /**
+         * 明细id
+         */
+        private String detailId;
+        /**
+         * skuId
+         */
+        private String skuId;
+        /**
+         * 数量
+         */
+        private Integer qty;
+        /**
+         * bom版本
+         */
+        private String bomVersion;
+        /**
+         * 来源id
+         */
+        private String sourceId;
+        /**
+         * 来源id
+         */
+        private String sourceDetailId;
+    }
 }

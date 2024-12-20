@@ -2,6 +2,7 @@ package com.erp.server.wms.service;
 
 import com.common.business.service.SuperService;
 import com.erp.model.wms.dto.MachineDetailDTO;
+import com.erp.model.wms.dto.SoB2bProcessingDTO;
 import com.erp.model.wms.entity.MachineDetailEntity;
 
 import java.util.List;
@@ -61,7 +62,7 @@ public interface MachineDetailService extends SuperService<MachineDetailEntity> 
      * @author will
      * @date 2024/12/19 16:47
      * @param sourceDetailIdList
-     * @return List<MachineResponseDTO>
+     * @return List<ResponseDTO>
      */
-    List<MachineDetailDTO.MachineResponseDTO> listMachineBySourceDetailIdList(List<String> sourceDetailIdList);
+    List<SoB2bProcessingDTO.ResponseDTO> listMachineBySourceDetailIdList(List<String> sourceDetailIdList);
 }

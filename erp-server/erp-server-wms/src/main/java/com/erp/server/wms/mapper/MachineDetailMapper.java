@@ -1,8 +1,8 @@
 package com.erp.server.wms.mapper;
 
-import com.erp.model.wms.dto.MachineDetailDTO;
-import com.erp.model.wms.entity.MachineDetailEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.erp.model.wms.dto.SoB2bProcessingDTO;
+import com.erp.model.wms.entity.MachineDetailEntity;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -23,7 +23,7 @@ public interface MachineDetailMapper extends BaseMapper<MachineDetailEntity> {
      * @author will
      * @date 2024/12/19 16:48
      * @param sourceDetailIdList
-     * @return List<MachineResponseDTO>
+     * @return List<ResponseDTO>
      */
-    List<MachineDetailDTO.MachineResponseDTO> listMachineBySourceDetailIdList(@Param("sourceDetailIdList") List<String> sourceDetailIdList);
+    List<SoB2bProcessingDTO.ResponseDTO> listMachineBySourceDetailIdList(@Param("sourceDetailIdList") List<String> sourceDetailIdList);
 }

@@ -1,6 +1,7 @@
 package com.erp.server.wms.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.erp.model.wms.dto.SoB2bProcessingDTO;
 import com.erp.model.wms.dto.TransferInfoDetailDTO;
 import com.erp.model.wms.entity.TransferInfoDetailEntity;
 import org.apache.ibatis.annotations.Mapper;
@@ -39,7 +40,7 @@ public interface TransferInfoDetailMapper extends BaseMapper<TransferInfoDetailE
      * @author will
      * @date 2024/12/19 17:12
      * @param sourceDetailIdList
-     * @return List<TransferResponseDTO>
+     * @return List<ResponseDTO>
      */
-    List<TransferInfoDetailDTO.TransferResponseDTO> listTransferBySourceDetailIdList(@Param("sourceDetailIdList")List<String> sourceDetailIdList);
+    List<SoB2bProcessingDTO.ResponseDTO> listTransferBySourceDetailIdList(@Param("sourceDetailIdList")List<String> sourceDetailIdList);
 }

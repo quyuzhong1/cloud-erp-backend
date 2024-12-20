@@ -2,34 +2,30 @@ package com.erp.server.wms.service.impl;
 
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
-import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
-import com.erp.model.wms.dto.MachineDetailDTO;
+import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.wms.dto.SoB2bProcessingDTO;
-import com.erp.model.wms.dto.TransferInfoDetailDTO;
 import com.erp.model.wms.entity.SoB2bProcessingEntity;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.mapper.SoB2bProcessingMapper;
-import com.erp.server.wms.service.MachineDetailService;
-import com.erp.server.wms.service.OperateLogService;
-import com.erp.server.wms.service.SoB2bProcessingService;
-import com.erp.server.wms.service.TransferInfoDetailService;
-import io.seata.spring.annotation.GlobalTransactional;
+import com.erp.server.wms.service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_SO_B2B_PROCESSING;
@@ -60,38 +56,23 @@ public class SoB2bProcessingServiceImpl extends SuperServiceImpl<SoB2bProcessing
     @Autowired
     private MachineDetailService machineDetailService;
 
-    @GlobalTransactional(rollbackFor = Exception.class)
-    @Transactional(rollbackFor = Exception.class)
-    @Override
-    public BaseResultDTO.AddDTO add(SoB2bProcessingDTO.AddDTO addDTO) {
-        SoB2bProcessingEntity soB2bProcessingEntity = new SoB2bProcessingEntity();
-        BeanMapperUtils.copy(addDTO, soB2bProcessingEntity);
+    @Autowired
+    private SoOutstockDetailService soOutstockDetailService;
 
-        // 数据处理
-        handleData(soB2bProcessingEntity);
-
-        log.info("开始新增B2B虚拟仓订单跟踪");
-        boolean save = super.save(soB2bProcessingEntity);
-        if(!save) {
-            throw new ServiceException("B2B虚拟仓订单跟踪保存失败");
-        }
-        return new BaseResultDTO.AddDTO(soB2bProcessingEntity.getId(), soB2bProcessingEntity.getId());
-    }
 
     /**
     * 修改
     */
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public Boolean update(SoB2bProcessingDTO.UpdateDTO updateDTO) {
-        SoB2bProcessingEntity old = super.getById(updateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "B2B虚拟仓订单跟踪"));
-        SoB2bProcessingEntity soB2bProcessingEntity =  BeanMapperUtils.map(SoB2bProcessingEntity.class, updateDTO);
-
+    public Boolean update(List<SoB2bProcessingDTO.AddOrUpdateDTO> list) {
+        if (CollUtil.isEmpty(list)) {
+            lambdaUpdate().remove();
+            return Boolean.TRUE;
+        }
         // 数据处理
-        handleData(soB2bProcessingEntity);
-        log.info("编辑 开始修改B2B虚拟仓订单跟踪数据，id：【{}】", old.getId());
-        boolean save = super.updateById(soB2bProcessingEntity);
+        List<SoB2bProcessingEntity> soB2bProcessingList =  handleData(list);
+        boolean save = super.saveOrUpdateBatch(soB2bProcessingList);
         if(!save) {
             throw new ServiceException("B2B虚拟仓订单跟踪保存失败");
         }
@@ -119,6 +100,8 @@ public class SoB2bProcessingServiceImpl extends SuperServiceImpl<SoB2bProcessing
        if (CollUtil.isEmpty(list)) {
            return;
        }
+        List<String> skuIdList = list.stream().map(SoB2bProcessingEntity::getSkuId).distinct().collect(Collectors.toList());
+        List<BomChildrenSkuDTO> bomChildrenSkuList = plmTaskFeign.listBomChildBySkuIds(skuIdList);
 
         /**
          * 1、b2b非组合品订单中转走直接调拨单出库，非中转走销售出库单出库
@@ -126,18 +109,81 @@ public class SoB2bProcessingServiceImpl extends SuperServiceImpl<SoB2bProcessing
          */
         //查询加工单数据
         List<String> deliveryNoticeDetailIdList = list.stream().map(SoB2bProcessingEntity::getDeliveryNoticeDetailId).distinct().collect(Collectors.toList());
-        List<MachineDetailDTO.MachineResponseDTO> machineList = machineDetailService.listMachineBySourceDetailIdList(deliveryNoticeDetailIdList);
+        List<SoB2bProcessingDTO.ResponseDTO> machineList = machineDetailService.listMachineBySourceDetailIdList(deliveryNoticeDetailIdList);
 
         //直接调拨单数据
-        List<TransferInfoDetailDTO.TransferResponseDTO> transferList = transferInfoDetailService.listTransferBySourceDetailIdList(deliveryNoticeDetailIdList);
+        List<SoB2bProcessingDTO.ResponseDTO> transferList = transferInfoDetailService.listTransferBySourceDetailIdList(deliveryNoticeDetailIdList);
+
+        //销售出库单数据
+        List<SoB2bProcessingDTO.ResponseDTO> soOutstockList = soOutstockDetailService.listSoOutstockBySourceDetailIdList(deliveryNoticeDetailIdList);
+
+        List<SoB2bProcessingDTO.AddOrUpdateDTO> addList = new ArrayList<>();
+        for (SoB2bProcessingEntity entity :list) {
+
+            //加工单
+            SoB2bProcessingDTO.ResponseDTO machineResponseDTO = machineList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSourceDetailId(), entity.getDeliveryNoticeDetailId()))
+                    .findFirst().orElse(null);
+            if (ObjectUtil.isNotEmpty(machineResponseDTO)) {
+                handleOutstock (entity,machineResponseDTO, SourceTypeEnum.MACHINE_INFO.getCode());
+            }
+            //直接调拨单
+            SoB2bProcessingDTO.ResponseDTO transferResponseDTO = transferList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSourceDetailId(), entity.getDeliveryNoticeDetailId()))
+                    .findFirst().orElse(null);
+            if (ObjectUtil.isNotEmpty(machineResponseDTO)) {
+                handleOutstock (entity,transferResponseDTO, SourceTypeEnum.TRANSFER_INFO.getCode());
+            }
+            //销售出库单
+            SoB2bProcessingDTO.ResponseDTO soOutstockResponseDTO = soOutstockList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSourceDetailId(), entity.getDeliveryNoticeDetailId()))
+                    .findFirst().orElse(null);
+            if (ObjectUtil.isNotEmpty(soOutstockResponseDTO)) {
+                handleOutstock (entity,soOutstockResponseDTO, SourceTypeEnum.SO_OUTSTOCK.getCode());
+            }
+            //bom信息
+            List<BomChildrenSkuDTO> childList = bomChildrenSkuList.stream().filter(obj -> CharSequenceUtil.equals(obj.getParentSkuId(), entity.getSkuId())).collect(Collectors.toList());
+            if (CollUtil.isEmpty(childList)) {
+                SoB2bProcessingDTO.AddOrUpdateDTO addDTO = new SoB2bProcessingDTO.AddOrUpdateDTO();
+                BeanMapperUtils.copy(entity,addDTO);
+                addList.add(addDTO);
+                continue;
+            }
+            for (BomChildrenSkuDTO childrenSkuDTO : childList) {
+                SoB2bProcessingDTO.AddOrUpdateDTO addDTO = new SoB2bProcessingDTO.AddOrUpdateDTO();
+                BeanMapperUtils.copy(entity,addDTO);
+                addDTO.setSkuId(childrenSkuDTO.getSkuId());
+                addDTO.setParentSkuId(childrenSkuDTO.getParentSkuId());
+                addDTO.setOutstockQty(addDTO.getOutstockQty() * childrenSkuDTO.getQuantity());
+                addDTO.setFrozenQty(addDTO.getFrozenQty() * childrenSkuDTO.getQuantity());
+                addDTO.setSoQty(addDTO.getSoQty() * childrenSkuDTO.getQuantity());
+                addDTO.setDeliveryQty(addDTO.getDeliveryQty() * childrenSkuDTO.getQuantity());
+                addList.add(addDTO);
+            }
+        }
+        this.update(addList);
     }
 
+    /**
+     * 出库字段赋值
+     * @author will
+     * @date 2024/12/19 20:56
+     * @param entity
+     * @param responseDTO
+     * @param sourceType
+     */
+    private void handleOutstock (SoB2bProcessingEntity entity, SoB2bProcessingDTO.ResponseDTO responseDTO,String sourceType) {
+        entity.setOutstockOrderId(responseDTO.getId());
+        entity.setOutstockOrderStatus(responseDTO.getApproveStatus());
+        entity.setOutstockQty(responseDTO.getQty());
+        entity.setOutstockOrderCode(responseDTO.getCode());
+        entity.setOutstockOrderTime(responseDTO.getApproveTime());
+        entity.setOutstockOrderType(sourceType);
+    }
 
     /**
     * 新增修改处理数据
     */
-    private void handleData(SoB2bProcessingEntity soB2bProcessingEntity) {
-    // TODO 验证数据 & 数据赋值
+    private List<SoB2bProcessingEntity> handleData(List<SoB2bProcessingDTO.AddOrUpdateDTO> list) {
+        List<SoB2bProcessingEntity> soB2bProcessingList = BeanMapperUtils.copyList(SoB2bProcessingEntity.class, list);
+        return soB2bProcessingList;
     }
 
     /**

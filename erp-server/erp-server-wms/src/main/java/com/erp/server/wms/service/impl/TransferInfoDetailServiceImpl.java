@@ -14,6 +14,7 @@ import com.erp.model.dmp.dto.CfgApiAuthDTO;
 import com.erp.model.dmp.entity.CfgApiAuthEntity;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.wms.dto.SoB2bProcessingDTO;
 import com.erp.model.wms.dto.TransferInfoDetailDTO;
 import com.erp.model.wms.dto.WarehouseLocationDTO;
 import com.erp.model.wms.entity.*;
@@ -150,7 +151,7 @@ public class TransferInfoDetailServiceImpl extends SuperServiceImpl<TransferInfo
     }
 
     @Override
-    public List<TransferInfoDetailDTO.TransferResponseDTO> listTransferBySourceDetailIdList(List<String> sourceDetailIdList) {
+    public List<SoB2bProcessingDTO.ResponseDTO> listTransferBySourceDetailIdList(List<String> sourceDetailIdList) {
         return baseMapper.listTransferBySourceDetailIdList(sourceDetailIdList);
     }
 

@@ -28,7 +28,7 @@
 
     <!-- 根据来源id查询数据 -->
     <select id="listMachineBySourceDetailIdList"
-            resultType="com.erp.model.wms.dto.MachineDetailDTO$MachineResponseDTO">
+            resultType="com.erp.model.wms.dto.SoB2bProcessingDTO$ResponseDTO">
         select
             mi.id,
             mi.code,

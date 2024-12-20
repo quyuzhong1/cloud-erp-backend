@@ -1,6 +1,7 @@
 package com.erp.server.wms.service;
 
 import com.common.business.service.SuperService;
+import com.erp.model.wms.dto.SoB2bProcessingDTO;
 import com.erp.model.wms.dto.TransferInfoDetailDTO;
 import com.erp.model.wms.entity.TransferInfoDetailEntity;
 
@@ -76,7 +77,7 @@ public interface TransferInfoDetailService extends SuperService<TransferInfoDeta
      * @author will
      * @date 2024/12/19 17:07
      * @param sourceDetailIdList
-     * @return List<TransferResponseDTO>
+     * @return List<ResponseDTO>
      */
-    List<TransferInfoDetailDTO.TransferResponseDTO> listTransferBySourceDetailIdList(List<String> sourceDetailIdList);
+    List<SoB2bProcessingDTO.ResponseDTO> listTransferBySourceDetailIdList(List<String> sourceDetailIdList);
 }

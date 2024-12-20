@@ -1,5 +1,5 @@
 package com.erp.server.wms.service;
-import com.common.business.dto.base.BaseResultDTO;
+
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
@@ -7,6 +7,7 @@ import com.erp.model.wms.dto.SoB2bProcessingDTO;
 import com.erp.model.wms.entity.SoB2bProcessingEntity;
 
 import java.time.LocalDate;
+import java.util.List;
 
 /**
  * <p>
@@ -18,23 +19,15 @@ import java.time.LocalDate;
  */
 public interface SoB2bProcessingService extends SuperService<SoB2bProcessingEntity> {
 
-    /**
-    * 新增
-    * @author will
-    * @date: 2024-12-18
-    * @param dto
-    * @return
-    */
-    BaseResultDTO.AddDTO add(SoB2bProcessingDTO.AddDTO dto);
 
     /**
     * 修改
     * @author will
     * @date: 2024-12-18
-    * @param dto
+    * @param list
     * @return
     */
-    Boolean update(SoB2bProcessingDTO.UpdateDTO dto);
+    Boolean update(List<SoB2bProcessingDTO.AddOrUpdateDTO> list);
 
     /**
      * 分页查询

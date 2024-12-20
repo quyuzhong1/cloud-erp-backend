@@ -100,4 +100,27 @@
         sod.sku_id,
         sod.sku_no
     </select>
+
+    <!-- 根据销售订单明细id查询 -->
+    <select id="listSoOutstockBySourceDetailIdList"
+            resultType="com.erp.model.wms.dto.SoB2bProcessingDTO$ResponseDTO">
+        select
+            so.id,
+            so.code,
+            so.approve_status,
+            so.approve_time,
+            sod.source_id,
+            sod.id as detailId,
+            sod.sku_id as skuId,
+            sod.actual_qty as qty,
+            sod.source_detail_id
+        from so_outstock so
+        inner join so_outstock_detail sod on so.id = sod.main_id and sod.is_deleted = false
+        where so.is_deleted = false and so.invalid_status = false and so.virtual_warehouse_id != ''
+        and sod.source_detail_id in
+        <foreach collection="sourceDetailIdList" item="item" open="(" close=")" separator=",">
+            #{item}
+        </foreach>
+    </select>
+
 </mapper>
