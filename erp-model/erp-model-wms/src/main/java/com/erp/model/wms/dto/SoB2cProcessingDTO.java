@@ -315,6 +315,13 @@ public class SoB2cProcessingDTO implements Serializable {
         private String deliveryId;
 
         /**
+         * 发货单明显id
+         */
+        @NotBlank(message = "发货单明显id不能为空")
+        @Size(max = 19,message = "发货单明显id最大长度不能超过19位")
+        private String deliveryDetailId;
+
+        /**
         * 发货单号
         */
         @NotBlank(message = "发货单号不能为空")

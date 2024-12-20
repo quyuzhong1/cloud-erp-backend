@@ -109,14 +109,14 @@
             so.code,
             so.approve_status,
             so.approve_time,
-            sod.source_id,
+            so.source_id,
             sod.id as detailId,
             sod.sku_id as skuId,
             sod.actual_qty as qty,
             sod.source_detail_id
         from so_outstock so
         inner join so_outstock_detail sod on so.id = sod.main_id and sod.is_deleted = false
-        where so.is_deleted = false and so.invalid_status = false and so.virtual_warehouse_id != ''
+        where so.is_deleted = false and so.invalid_status = false and sod.virtual_warehouse_id != ''
         and sod.source_detail_id in
         <foreach collection="sourceDetailIdList" item="item" open="(" close=")" separator=",">
             #{item}

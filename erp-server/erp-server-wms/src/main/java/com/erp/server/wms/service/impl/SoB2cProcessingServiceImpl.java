@@ -22,12 +22,14 @@ import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.mapper.SoB2cProcessingMapper;
 import com.erp.server.wms.service.*;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -191,9 +193,48 @@ public class SoB2cProcessingServiceImpl extends SuperServiceImpl<SoB2cProcessing
     * 新增修改处理数据
     */
     private List<SoB2cProcessingEntity> handleData(List<SoB2cProcessingDTO.AddOrUpdateDTO> list) {
-        List<SoB2cProcessingEntity> soB2cProcessingList = BeanMapperUtils.copyList(SoB2cProcessingEntity.class, list);
-        return soB2cProcessingList;
+        List<String> deliveryDetailIdList = list.stream().map(SoB2cProcessingDTO.AddOrUpdateDTO::getDeliveryDetailId).distinct().collect(Collectors.toList());
+        List<SoB2cProcessingEntity> oldList = this.listByDeliveryDetailIdList(deliveryDetailIdList);
+        List<String> deleteIds = getDeleteIds(list, oldList);
+        if (CollUtil.isNotEmpty(deleteIds)) {
+            this.removeByIds(deleteIds);
+        }
+        List<SoB2cProcessingEntity> newList = new ArrayList<>();
+        for (SoB2cProcessingDTO.AddOrUpdateDTO addOrUpdateDTO :list) {
+            SoB2cProcessingEntity entity = new SoB2cProcessingEntity();
+            BeanMapperUtils.copy(addOrUpdateDTO,entity);
+            //旧数据
+            SoB2cProcessingEntity old = oldList.stream().filter(obj -> StrUtil.equals(obj.getDeliveryDetailId(), addOrUpdateDTO.getDeliveryDetailId())).findFirst().orElse(null);
+            entity.setId(old.getId());
+            newList.add(entity);
+        }
+        return newList;
     }
+
+    /**
+     * 查询需要删除的数据
+     */
+    private List<String> getDeleteIds(List<SoB2cProcessingDTO.AddOrUpdateDTO> newList, List<SoB2cProcessingEntity> oldList) {
+        List<String> newIds = newList.stream().filter(g -> StringUtils.isNotBlank(g.getId())).
+                map(SoB2cProcessingDTO.AddOrUpdateDTO::getId).collect(Collectors.toList());
+        List<String> oldIds = oldList.stream().map(SoB2cProcessingEntity::getId).collect(Collectors.toList());
+        return oldIds.stream().filter(s -> !newIds.contains(s)).collect(Collectors.toList());
+    }
+
+    /**
+     * 根据发货单明细id查询
+     * @author will
+     * @date 2024/12/20 10:17
+     * @param deliveryDetailIdList
+     * @return List<SoB2bProcessingEntity>
+     */
+    private List<SoB2cProcessingEntity> listByDeliveryDetailIdList (List<String> deliveryDetailIdList) {
+        if (CollUtil.isEmpty(deliveryDetailIdList)) {
+            return Collections.EMPTY_LIST;
+        }
+        return lambdaQuery().in(SoB2cProcessingEntity::getDeliveryDetailId,deliveryDetailIdList).list();
+    }
+
 
     /**
      * 分页查询

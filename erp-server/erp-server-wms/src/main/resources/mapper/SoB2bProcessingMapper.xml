@@ -101,9 +101,9 @@
             sd.qty as soQty,
             sdn.id as deliveryNoticeId,
             sdn.code as deliveryNoticeCode,
-            sdn.approveStatus as deliveryNoticeApproveStatus,
+            sdn.approve_status as deliveryNoticeApproveStatus,
             sdnd.id as deliveryNoticeDetailId,
-            sdnd.qty as deliveryQty,
+            sdnd.delivery_qty as deliveryQty,
             sdnd.sku_id as skuId,
             sdn.warehouse_id as warehouseId,
             sdn.virtual_warehouse_id as virtualWarehosueId,
@@ -114,7 +114,7 @@
         inner join so_info si on sdn.source_id = si.id and si.is_deleted = false
         inner join so_detail sd on sdnd.source_detail_id = sd.id and sd.is_deleted = false
         where sdn.is_deleted = false and sdn.invalid_status = false and sdn.virtual_warehouse_id != ''
-            <if test="startTime != null">
+            <if test="startDate != null">
                and sdn.create_time > #{startDate}
             </if>
     </select>
