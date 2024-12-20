@@ -4,6 +4,7 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -314,6 +315,9 @@ public class MachineDetailServiceImpl extends SuperServiceImpl<MachineDetailMapp
         MachineInfoEntity machineInfoEntity = machineInfoService.getById(mainId);
         if (ObjectUtils.isEmpty(machineInfoEntity)) {
             throw new ServiceException(ApiError.ERROR_99052);
+        }
+        if (SourceTypeEnum.SO_DELIVERY_NOTICE.getCode().equals(machineInfoEntity.getSourceType())) {
+            return;
         }
         List<String> refDetailIdList = list.stream().map(MachineDetailEntity::getRefDetailId).collect(Collectors.toList());
         List<MachineRefSoEntity> oldRefList = machineRefSoService.listBySoDetailIdList(refDetailIdList);
