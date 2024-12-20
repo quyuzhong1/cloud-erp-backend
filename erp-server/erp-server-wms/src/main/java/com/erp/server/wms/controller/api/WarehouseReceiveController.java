@@ -78,7 +78,7 @@ public class WarehouseReceiveController extends BaseController {
             menuCode = "wms:warehouseReceive:paging",
             tableAlias = "wr"
     )
-    @WebAdvanceQuery
+    @WebAdvanceQuery(handler = WarehouseReceiveQueryHandler.class)
     public ApiResult<WarehouseReceiveDTO.PagingTotalDTO> pagingTotal(@RequestBody @Validated WarehouseReceiveDTO.PagingParamDTO dto) {
         return success(warehouseReceiveService.pagingTotal(dto));
     }
