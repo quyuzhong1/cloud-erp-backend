@@ -68,5 +68,11 @@ public class DmpSoInfoController extends BaseController {
     }
 
 
+    @GetMapping("/addGyyOrder")
+    public ApiResult<?> addGyyOrder() {
+        dmpSoInfoService.update();
+        return success();
+    }
+
 
 }
