@@ -9367,9 +9367,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             return ;
         }
         lambdaUpdate()
-                .set(SoB2cEntity::getSoOutstockDate,DateTimeFormatter.ofPattern("yyyy-MM-dd").parse(soOutstockDate))
-                .set(SoB2cEntity::getUpdateTime,LocalDate.now())
-                .set(SoB2cEntity::getVersion,String.format("{}={}+1", BaseEntity.FIELD_VERSION, BaseEntity.FIELD_VERSION))
+                .set(SoB2cEntity::getSoOutstockDate,LocalDate.parse(soOutstockDate))
                 .eq(SoB2cEntity::getId,soId)
                 .update();
     }
