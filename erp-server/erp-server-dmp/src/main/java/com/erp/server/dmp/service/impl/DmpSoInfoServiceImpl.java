@@ -4,16 +4,23 @@ package com.erp.server.dmp.service.impl;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.*;
+import java.util.stream.Collectors;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
+import com.common.business.constant.MongoTableNameContant;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.wrapper.FeignQuery;
+import com.common.core.anno.ParamData;
+import com.common.core.enums.PannoEnum;
 import com.common.core.utils.MathUtil;
 import com.erp.model.dmp.entity.DmpSoDetailEntity;
+import com.erp.model.dmp.gyy.GyyOrderEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.enums.OrderSubTypeEnum;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.common.business.dto.ShudiyunB2cOrderDTO;
+import com.erp.server.dmp.pull.mongo.MongoService;
 import com.erp.server.dmp.service.DmpSoDetailService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -49,6 +56,9 @@ public class DmpSoInfoServiceImpl extends SuperServiceImpl<DmpSoInfoMapper, DmpS
 
     @Resource
     private DmpSoDetailService dmpSoDetailService;
+
+    @Resource
+    private MongoService mongoService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -106,5 +116,22 @@ public class DmpSoInfoServiceImpl extends SuperServiceImpl<DmpSoInfoMapper, DmpS
     */
     private void handleData(DmpSoInfoEntity dmpSoInfoEntity) {
     // TODO 验证数据 & 数据赋值
+    }
+
+    @Override
+    public void addGyyOrder(DmpSoInfoDTO.addGyyOrderDTO dto) {
+        Integer page = 0;
+        while(true) {
+            List<GyyOrderEntity> mongoData = mongoService.findMongoData(dto, page, 1000, MongoTableNameContant.ORIGINAL_GYY_ORDER, GyyOrderEntity.class);
+            if (CollUtil.isEmpty(mongoData)) {
+                return;
+            }
+            List<String> platformCodeList = mongoData.stream().map(req -> req.getPlatformCode()).distinct().collect(Collectors.toList());
+            this.lambdaQuery().notIn(DmpSoInfoEntity::getThirdCode, platformCodeList);
+
+
+            page++;
+        }
+//        List<Map<String, Object>> dmpInputMongoChildList = mongoService.findMongoData(paramDataList, "original_mabang_order");
     }
 }

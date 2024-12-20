@@ -1,16 +1,22 @@
 package com.erp.server.dmp.inout.handler.input.task.dmp;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
+import com.erp.model.dmp.entity.DmpSoDetailEntity;
+import com.erp.model.dmp.entity.DmpSoInfoEntity;
+import com.erp.model.dmp.entity.DmpSoReceiverEntity;
+import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
 import com.erp.model.dmp.enums.DmpOrderReturnStatusEnum;
 import com.erp.model.dmp.enums.MabangOriginalOrderStatusEnum;
 import com.erp.model.dmp.enums.MabangSourcePlatformEnum;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
+import com.erp.server.dmp.service.DmpSoInfoService;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
+import javax.annotation.Resource;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * 订单主表字段映射转换
@@ -18,12 +24,39 @@ import java.util.TreeMap;
 @Service
 @Scope("prototype")
 public class MabangOrderDmpHandler extends MabangDmpHandler {
+    @Resource
+    private DmpSoInfoService dmpSoInfoService;
 
     @Override
     protected void afterConvertData(Map<List<Map<String, Object>>, List<TreeMap<String, Object>>> dmpInputDataDmpRelationMaps) {
+        List<DmpSoInfoEntity> soInfoEntityList = new ArrayList<>();
+        Set<List<Map<String, Object>>> keySet = dmpInputDataDmpRelationMaps.keySet();
+        if (CollUtil.isNotEmpty(keySet)) {
+            List<String> orderIdList = new ArrayList<>();
+            for (List<Map<String, Object>> key : keySet) {
+                orderIdList.addAll(key.stream().map(f -> f.get("fid").toString()).collect(Collectors.toList()));
+            }
+
+            soInfoEntityList = dmpSoInfoService.lambdaQuery()
+                    .in(DmpSoInfoEntity::getThirdCode, orderIdList)
+                    .select(DmpSoInfoEntity::getThirdCode)
+                    .list();
+
+        }
+        List<String> thirdCodeList = soInfoEntityList.stream().map(req -> req.getThirdCode()).distinct().collect(Collectors.toList());
         for (Map.Entry<List<Map<String, Object>>, List<TreeMap<String, Object>>> dmpInputDataDmpRelationMap : dmpInputDataDmpRelationMaps.entrySet()) {
             List<TreeMap<String, Object>> dmpDataMaps = dmpInputDataDmpRelationMap.getValue();
             for (TreeMap<String, Object> dmpDataMap : dmpDataMaps) {
+                //平台单号
+                Object thirdCodeObj = dmpDataMap.get("thirdCode");
+                if (thirdCodeObj != null) {
+                    String thirdCode = String.valueOf(thirdCodeObj);
+                    if (thirdCodeList.contains(thirdCodeObj)) {
+                        continue;
+                    }
+                    dmpDataMap.put("platformCode", thirdCode);
+                }
+
                 //销售平台
                 Object platformId = dmpDataMap.get("platformId");
                 if (platformId != null) {
@@ -38,13 +71,6 @@ public class MabangOrderDmpHandler extends MabangDmpHandler {
                     }
                     dmpDataMap.put("sourcePlatform", platformEnum == null ? platform : platformEnum.getErpPlatformCode());
                 }
-                //平台单号
-                Object thirdCodeObj = dmpDataMap.get("thirdCode");
-                if (thirdCodeObj != null) {
-                    String thirdCode = String.valueOf(thirdCodeObj);
-                    dmpDataMap.put("platformCode", thirdCode);
-                }
-
                 //销售原始订单状态
                 Object orderStatus = dmpDataMap.get("orderStatus");
                 if (orderStatus != null) {
