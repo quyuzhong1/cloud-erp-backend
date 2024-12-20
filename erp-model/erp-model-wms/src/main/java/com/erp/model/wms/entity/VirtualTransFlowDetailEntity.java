@@ -61,6 +61,12 @@ public class VirtualTransFlowDetailEntity extends BaseEntity<VirtualTransFlowDet
     @TableField("trade_time")
     private LocalDateTime tradeTime;
 
+    /**
+     * 是否已经反审核，默认为false
+     */
+    @TableField("is_unapproved")
+    private Boolean isUnapproved;
+
     public VirtualTransFlowDetailEntity(String id, Integer afterQty) {
         super(id);
         this.curInventoryQty = afterQty;

@@ -216,6 +216,9 @@ public class VirtualTransFlowDetailServiceImpl extends SuperServiceImpl<VirtualT
         if (CollUtil.isEmpty(oldFlowDetailList)) {
             throw new ServiceException("未找到原虚拟仓出库库龄流水信息");
         }
+        oldFlowDetailList.forEach(obj -> obj.setIsUnapproved(Boolean.TRUE));
+        this.updateBatchById(oldFlowDetailList);
+
         //根据sku、仓库id、虚拟仓id查询被删除的出库流水后的批次流水信息
         List<VirtualTransFlowDetailEntity> flowDetailList = baseMapper.listHisByOldParam(new VirtualTransFlowDetailDTO.ParamDTO(oldTransFlowEntity.getSkuId(), oldTransFlowEntity.getWarehouseId(), oldTransFlowEntity.getVirtualWarehouseId(), oldTransFlowEntity.getTradeTime()));
         List<String> oldVirtualTransFlowIdList = flowDetailList.stream().map(VirtualTransFlowDetailEntity::getVirtualTransFlowId).distinct().collect(Collectors.toList());
@@ -256,7 +259,7 @@ public class VirtualTransFlowDetailServiceImpl extends SuperServiceImpl<VirtualT
             detailEntity.setQty(MathUtil.add(detailEntity.getQty(),totalQty));
         }
         virtualInventoryDetailService.updateBatchById(virtualInventoryDetailList);
-        
+
         //删除流水
         List<String> oldDetailIdList = oldFlowDetailList.stream().map(VirtualTransFlowDetailEntity::getId).distinct().collect(Collectors.toList());
         this.removeByIds(oldDetailIdList);
