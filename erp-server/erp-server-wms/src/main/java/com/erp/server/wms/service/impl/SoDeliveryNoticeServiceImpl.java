@@ -1870,7 +1870,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
                 if(isAllPush){
                     throw new ServiceException("组合明细已经加工完成");
                 }else{
-                    throw new ServiceException("{}未找到需要加工的明细",soDeliveryNoticeEntity.getCode());
+                    throw new ServiceException("未找到需要加工的明细");
                 }
             }
             addDTO.setDetailList(detailList);
