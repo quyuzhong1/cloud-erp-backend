@@ -42,7 +42,7 @@ public class OverseasInventoryCalAgeJob {
             LocalDate now = LocalDate.now();
             for (OverseasInventoryAgeDetailEntity ageDTO : ageDetail) {
                 // 计算日期差
-                int daysBetween = (int) ChronoUnit.DAYS.between(ageDTO.getPutAwayDate(), now);
+                int daysBetween = (int) ChronoUnit.DAYS.between(ageDTO.getPutAwayDate(), now) + 1;
                 ageDTO.setInventoryAge(daysBetween);
             }
 

@@ -103,8 +103,7 @@ public abstract class DmpInputAmzCommonInitHandler extends DmpInputInitHandler {
      * 订单明细后
      * 检查是否执行下一步请求
      */
-    protected boolean orderOtherCheckCanDoNextRequest(List<Map<String, Object>>  mainMongoDataList, String amazonOrderId) {
-        Map<String, Object> mainMongo = checkAndGetMainMongoMap(mainMongoDataList, amazonOrderId);
+    protected boolean orderOtherCheckCanDoNextRequest(Map<String, Object>  mainMongo, String amazonOrderId) {
         // 配送渠道
         String fulfillmentChannel = checkAndGetMongoValue(mainMongo, "fulfillmentChannel");
         // 销售渠道
