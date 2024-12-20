@@ -1,7 +1,7 @@
 package com.erp.server.mrp.es.service.impl;
 
+import cn.hutool.json.JSONArray;
 import com.erp.model.mrp.dto.ReplenishmentResultDTO;
-import com.erp.model.mrp.enums.FbaOrderTypeEnum;
 import com.erp.server.mrp.es.entity.OrderHistorySalesEsEntity;
 import com.erp.server.mrp.es.repository.OrderHistorySalesEsRepository;
 import com.erp.server.mrp.es.service.OrderHistorySalesEsService;
@@ -17,14 +17,13 @@ import org.elasticsearch.search.sort.SortOrder;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.elasticsearch.core.document.DocumentAdapters;
-import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.data.elasticsearch.core.ElasticsearchRestTemplate;
+import org.springframework.data.elasticsearch.core.document.DocumentAdapters;
 import org.springframework.data.elasticsearch.core.query.NativeSearchQuery;
 import org.springframework.data.elasticsearch.core.query.NativeSearchQueryBuilder;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
-import org.springframework.util.ObjectUtils;
 
 import javax.annotation.Resource;
 import java.time.LocalDate;
@@ -60,7 +59,7 @@ public class OrderHistorySalesEsServiceImpl implements OrderHistorySalesEsServic
     }
 
     @Override
-    public Map<String, Integer> countQtyByReplenishmentIdsAndDate(List<String> replenishmentIds, String orderType, LocalDate startDate, LocalDate endDate) {
+    public Map<String, Integer> countQtyByReplenishmentIdsAndDate(List<String> replenishmentIds, JSONArray orderType, LocalDate startDate, LocalDate endDate) {
         List<OrderHistorySalesEsEntity> orderHistorySalesList = getOrderHistorySales(replenishmentIds, orderType, startDate, endDate);
         return orderHistorySalesList.stream()
                 .collect(Collectors.toMap(OrderHistorySalesEsEntity::getReplenishmentId, OrderHistorySalesEsEntity::getOriginalSalesQty, Integer::sum));
@@ -75,15 +74,15 @@ public class OrderHistorySalesEsServiceImpl implements OrderHistorySalesEsServic
      * @param startDate        开始日期
      * @param endDate          结束日期
      */
-    private List<OrderHistorySalesEsEntity> getOrderHistorySales(List<String> replenishmentIds, String orderType, LocalDate startDate, LocalDate endDate) {
+    private List<OrderHistorySalesEsEntity> getOrderHistorySales(List<String> replenishmentIds, JSONArray orderType, LocalDate startDate, LocalDate endDate) {
         List<OrderHistorySalesEsEntity> orderHistorySalesList = new ArrayList<>();
         Page<OrderHistorySalesEsEntity> orderHistorySalesPage;
         int page = 0;
         do {
-            if (ObjectUtils.isEmpty(orderType) || FbaOrderTypeEnum.ALL.getCode().equals(orderType)) {
+            if (CollectionUtils.isEmpty(orderType)) {
                 orderHistorySalesPage = orderHistorySalesEsRepository.findByReplenishmentIdInAndDateBetween(replenishmentIds, startDate, endDate, PageRequest.of(page, 10000));
             } else {
-                orderHistorySalesPage = orderHistorySalesEsRepository.findByReplenishmentIdInAndOrderTypeAndDateBetween(replenishmentIds, orderType, startDate, endDate, PageRequest.of(page, 10000));
+                orderHistorySalesPage = orderHistorySalesEsRepository.findByReplenishmentIdInAndOrderTypeInAndDateBetween(replenishmentIds, orderType, startDate, endDate, PageRequest.of(page, 10000));
             }
             orderHistorySalesList.addAll(orderHistorySalesPage.toList());
             page++;
@@ -92,7 +91,7 @@ public class OrderHistorySalesEsServiceImpl implements OrderHistorySalesEsServic
     }
 
     @Override
-    public List<ReplenishmentResultDTO.SalesHistoryDTO> listByReplenishmentIdsAndDate(List<String> suggestionIdList, String orderType, LocalDate startDate, LocalDate endDate) {
+    public List<ReplenishmentResultDTO.SalesHistoryDTO> listByReplenishmentIdsAndDate(List<String> suggestionIdList, JSONArray orderType, LocalDate startDate, LocalDate endDate) {
         List<OrderHistorySalesEsEntity> historySales = getOrderHistorySales(suggestionIdList, orderType, startDate, endDate);
         return historySales.stream()
                 .map(v -> ReplenishmentResultDTO.SalesHistoryDTO.buildSalesHistory(v.getReplenishmentId(), v.getDate(), v.getOriginalSalesQty()))
@@ -109,11 +108,11 @@ public class OrderHistorySalesEsServiceImpl implements OrderHistorySalesEsServic
     }
 
     @Override
-    public List<OrderHistorySalesEsEntity> getRecentSalesBySuggestionIds(Set<String> suggestionIds, String orderType) {
+    public List<OrderHistorySalesEsEntity> getRecentSalesBySuggestionIds(Set<String> suggestionIds, JSONArray orderType) {
         BoolQueryBuilder queryBuilder = QueryBuilders.boolQuery()
                 .must(QueryBuilders.termsQuery("replenishmentId", suggestionIds))
                 .must(QueryBuilders.existsQuery("originalSalesQty"));
-        if (!ObjectUtils.isEmpty(orderType) && !FbaOrderTypeEnum.ALL.getCode().equals(orderType)) {
+        if (!CollectionUtils.isEmpty(orderType)) {
             queryBuilder.must(QueryBuilders.termsQuery("orderType", orderType));
         }
         NativeSearchQuery searchQuery = new NativeSearchQueryBuilder()
@@ -139,14 +138,14 @@ public class OrderHistorySalesEsServiceImpl implements OrderHistorySalesEsServic
     }
 
     @Override
-    public Map<String, Integer> listByType(String orderType) {
+    public Map<String, Integer> listByType(JSONArray orderType) {
         Map<String, Integer> result = new HashMap<>();
         int pageSize = 10000;
         for (int page = 0; ; page++) {
             // 构建查询条件
             BoolQueryBuilder queryBuilder = QueryBuilders.boolQuery()
                     .must(QueryBuilders.existsQuery("originalSalesQty"));
-            if (!ObjectUtils.isEmpty(orderType) && !FbaOrderTypeEnum.ALL.getCode().equals(orderType)) {
+            if (!CollectionUtils.isEmpty(orderType)) {
                 queryBuilder.must(QueryBuilders.termsQuery("orderType", orderType));
             }
             NativeSearchQuery searchQuery = new NativeSearchQueryBuilder()

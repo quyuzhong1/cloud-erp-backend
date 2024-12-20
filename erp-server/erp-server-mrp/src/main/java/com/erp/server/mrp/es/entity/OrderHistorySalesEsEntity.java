@@ -52,7 +52,7 @@ public class OrderHistorySalesEsEntity extends BaseEsEntity {
     @Field(type = FieldType.Keyword)
     private String orderType;
 
-    public static OrderHistorySalesEsEntity createOrderHistorySales(String replenishmentId, LocalDate billDate, Integer qty, String skuId, String shopId) {
+    public static OrderHistorySalesEsEntity createOrderHistorySales(String replenishmentId, String orderType, LocalDate billDate, Integer qty, String skuId, String shopId) {
         OrderHistorySalesEsEntity entity = new OrderHistorySalesEsEntity();
         entity.setId(IdWorker.getIdStr());
         entity.setReplenishmentId(replenishmentId);
@@ -60,6 +60,7 @@ public class OrderHistorySalesEsEntity extends BaseEsEntity {
         entity.setOriginalSalesQty(qty);
         entity.setSkuId(skuId);
         entity.setShopId(shopId);
+        entity.setOrderType(orderType);
         return entity;
     }
 

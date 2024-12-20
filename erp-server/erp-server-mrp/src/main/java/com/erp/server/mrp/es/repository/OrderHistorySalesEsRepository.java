@@ -1,5 +1,6 @@
 package com.erp.server.mrp.es.repository;
 
+import cn.hutool.json.JSONArray;
 import com.erp.server.mrp.es.entity.OrderHistorySalesEsEntity;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -31,7 +32,7 @@ public interface OrderHistorySalesEsRepository extends ElasticsearchRepository<O
      * @param endDate          结束时间
      * @param pageable         分页参数
      */
-    Page<OrderHistorySalesEsEntity> findByReplenishmentIdInAndOrderTypeAndDateBetween(List<String> replenishmentIds, String orderType, LocalDate startDate, LocalDate endDate, Pageable pageable);
+    Page<OrderHistorySalesEsEntity> findByReplenishmentIdInAndOrderTypeInAndDateBetween(List<String> replenishmentIds, JSONArray orderType, LocalDate startDate, LocalDate endDate, Pageable pageable);
 
     /**
      * 根据开始结束时间，建议id删除数据

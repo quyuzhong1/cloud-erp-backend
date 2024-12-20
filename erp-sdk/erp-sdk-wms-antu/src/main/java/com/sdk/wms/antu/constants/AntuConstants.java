@@ -29,4 +29,5 @@ public class AntuConstants {
     public static final String GET_ORDER_LIST = "getOrderList";
 
     public static final String GET_SPECIAL_ORDERS_LIST = "getSpecialOrdersList";
+    public static final String GET_CALCULATE_FEE_BATCH = "getCalculateFeeBatch";
 }

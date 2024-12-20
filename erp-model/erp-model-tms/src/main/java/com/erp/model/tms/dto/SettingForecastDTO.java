@@ -98,6 +98,15 @@ public class SettingForecastDTO implements Serializable {
          */
         private Boolean isAutoForecast;
 
+        /**
+         * 东莞仓运费  true 是
+         */
+        private Boolean dgWarseHouse = Boolean.FALSE;
+        
+        /**
+         * 香港仓运费  true 是
+         */
+        private Boolean xgWarseHouse = Boolean.FALSE;
     }
 
 
@@ -153,6 +162,16 @@ public class SettingForecastDTO implements Serializable {
          */
         @NotNull(message = "是否自动预报不能为空")
         private Boolean isAutoForecast;
+        
+        /**
+         * 东莞仓运费  true 是
+         */
+        private Boolean dgWarseHouse = Boolean.FALSE;
+        
+        /**
+         * 香港仓运费  true 是
+         */
+        private Boolean xgWarseHouse = Boolean.FALSE;
 
     }
 
