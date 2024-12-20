@@ -40,11 +40,7 @@ import org.springframework.stereotype.Service;
 import javax.annotation.Resource;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.Collections;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_VIRTUAL_TRANS_FLOW;
@@ -222,6 +218,17 @@ public class VirtualTransFlowServiceImpl extends SuperServiceImpl<VirtualTransFl
                 .ge(ObjUtil.isNotNull(dto.getStartDate()),VirtualTransFlowEntity::getBillDate,dto.getStartDate())
                 .orderByAsc(VirtualTransFlowEntity::getBillDate)
                 .orderByAsc(VirtualTransFlowEntity::getId)
+                .list();
+    }
+
+    @Override
+    public List<VirtualTransFlowEntity> listApproveByIds(List<String> oldVirtualTransFlowIdList) {
+        if (CollUtil.isEmpty(oldVirtualTransFlowIdList)) {
+            return Collections.EMPTY_LIST;
+        }
+        return lambdaQuery().in(VirtualTransFlowEntity::getId,oldVirtualTransFlowIdList)
+                .eq(VirtualTransFlowEntity::getIsUnapproved,Boolean.FALSE)
+                .lt(VirtualTransFlowEntity::getQty,MathUtil.ZERO)
                 .list();
     }
 
