@@ -102,7 +102,7 @@ public class VirtualTransFlowServiceImpl extends SuperServiceImpl<VirtualTransFl
     }
 
     @Override
-    public Boolean add(VirtualTransFlowEntity param, Integer afterInventoryQty) {
+    public VirtualTransFlowEntity add(VirtualTransFlowEntity param, Integer afterInventoryQty) {
         // 记录交易流水
         LoginUser loginUser = UserContext.getDefaultLoginUser();
 
@@ -118,7 +118,7 @@ public class VirtualTransFlowServiceImpl extends SuperServiceImpl<VirtualTransFl
         virtualTransFlow.setId(null);
         boolean save = super.save(virtualTransFlow);
         ValidatorUtil.isTrue(save, ()->new ServiceException("虚拟库存数据保存失败"));
-        return save;
+        return virtualTransFlow;
     }
 
     @Override

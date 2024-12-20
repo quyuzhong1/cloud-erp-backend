@@ -194,11 +194,14 @@ public abstract class AbstractVirtualInventoryServiceImpl implements VirtualInve
             }
             //添加流水
             VirtualInventoryEntity entity = virtualInventoryService.getById(virtualInventoryEntity.getId());
-            virtualTransFlowService.add(txnFlow, entity.getQty());
+            VirtualTransFlowEntity transFlowEntity = virtualTransFlowService.add(txnFlow, entity.getQty());
 
             // 6,更新原交易流水为已反审核
             virtualTransFlowService.updateUnapprovedById(txnFlow.getId(), txnFlow.getVersion());
             log.warn("结束库存交易，耗时【{}】秒", stopwatch.elapsed(TimeUnit.SECONDS));
+
+            //7,库龄流水反审
+            //addWmsVirtualDetailMsg(transFlowEntity);
         });
     }
 

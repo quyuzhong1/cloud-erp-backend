@@ -45,7 +45,7 @@ public interface VirtualTransFlowService extends SuperService<VirtualTransFlowEn
      * @param afterInventoryQty
      * @return Boolean
      */
-    Boolean add(VirtualTransFlowEntity param, Integer afterInventoryQty);
+    VirtualTransFlowEntity add(VirtualTransFlowEntity param, Integer afterInventoryQty);
     /**
      * 根据单据来源和单据id查询出库存交易流水
      * @author will
