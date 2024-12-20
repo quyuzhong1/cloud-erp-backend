@@ -13,6 +13,9 @@ public class WarehouseReceiveQueryHandler extends AbstractQueryHandler {
         if("tab".equals(field)){
             return getTabSql(value);
         }
+        if("qcStatus".equals(field)){
+
+        }
         return null;
     }
 

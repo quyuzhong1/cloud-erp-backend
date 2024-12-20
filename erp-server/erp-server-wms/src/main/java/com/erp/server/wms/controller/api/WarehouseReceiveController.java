@@ -17,6 +17,7 @@ import com.erp.model.wms.dto.WarehouseReceiveDTO;
 import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.model.wms.entity.WarehouseReceiveDetailEntity;
 import com.erp.model.wms.entity.WarehouseReceiveEntity;
+import com.erp.server.wms.query.WarehouseReceiveQueryHandler;
 import com.erp.server.wms.service.WarehouseReceiveDetailService;
 import com.erp.server.wms.service.WarehouseReceiveService;
 import lombok.extern.slf4j.Slf4j;
@@ -62,7 +63,7 @@ public class WarehouseReceiveController extends BaseController {
             menuCode = "wms:warehouseReceive:paging",
             tableAlias = "wr"
     )
-    @WebAdvanceQuery
+    @WebAdvanceQuery(handler = WarehouseReceiveQueryHandler.class)
     public ApiResult<PagingVO<WarehouseReceiveDTO.PagingViewDTO>> paging(@RequestBody @Validated PagingDTO<WarehouseReceiveDTO.PagingParamDTO> dto) {
         PagingVO<WarehouseReceiveDTO.PagingViewDTO> pagingVO = warehouseReceiveService.paging(dto);
         return success(pagingVO);
