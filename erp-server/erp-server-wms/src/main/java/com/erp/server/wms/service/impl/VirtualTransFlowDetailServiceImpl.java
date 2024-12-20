@@ -294,9 +294,9 @@ public class VirtualTransFlowDetailServiceImpl extends SuperServiceImpl<VirtualT
           LocalDate lastOutstockDate = listDTO.getLastOutstockDate();
           //库龄
           if ("转结".equals(listDTO.getOperateTypeName())) {
-              listDTO.setInventoryAgeDays((int)(now.toEpochDay() - listDTO.getTradeTime().toLocalDate().toEpochDay()) + 1);
-          } else {
               listDTO.setInventoryAgeDays((int)(listDTO.getDate().toEpochDay() - listDTO.getTradeTime().toLocalDate().toEpochDay()) + 1);
+          } else {
+              listDTO.setInventoryAgeDays((int)(now.toEpochDay() - listDTO.getTradeTime().toLocalDate().toEpochDay()) + 1);
               //仓储时长
               Integer inStockDays = (int) ((lastOutstockDate.isBefore(now) ? now.toEpochDay() : listDTO.getLastOutstockDate().toEpochDay()) - listDTO.getTradeTime().toLocalDate().toEpochDay() + 1);
               listDTO.setInStockDays(inStockDays);
