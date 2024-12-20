@@ -35,13 +35,12 @@ import com.erp.model.wms.dto.WarehouseDTO.WarehouseUpdateStateDTO;
 import com.erp.model.wms.dto.excel.WarehouseExcelDTO;
 import com.erp.model.wms.dto.excel.WarehouseExportExcelDTO;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
+import com.erp.model.wms.dto.pickingstrategy.WarehouseAreaDTO;
 import com.erp.model.wms.entity.DictBasicEntity;
 import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.model.wms.entity.WarehouseLocationEntity;
 import com.erp.model.wms.entity.WarehouseMappingEntity;
-import com.erp.model.wms.enums.DictBasicEnum;
-import com.erp.model.wms.enums.WarehouseManageTypeEnum;
-import com.erp.model.wms.enums.WmsRedisKeyEnum;
+import com.erp.model.wms.enums.*;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.dmp.feign.DmpThirdMappingFeign;
@@ -654,9 +653,26 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
                 warehouseMappingService.add(addDTO);
             }
 
+            //自动创建库区，仓位
+            autoAddAreaAndLocation(warehouse);
             return warehouse.getId();
         }
         return "";
+    }
+
+    private void autoAddAreaAndLocation(WarehouseEntity warehouse) {
+        WarehouseAreaDTO.Add areaAddDTO = new WarehouseAreaDTO.Add();
+        areaAddDTO.setAreaType(WarehouseLocationTypeEnum.AREA.getCode());
+        areaAddDTO.setWarehouseId(warehouse.getId());
+        areaAddDTO.setCode(WarehouseLocationAreaTypeEnum.PICK.getCode());
+        areaAddDTO.setName(WarehouseAreaTypeEnum.STAGING_AREA.getName());
+        String areaId = warehouseLocationService.addArea(areaAddDTO);
+        WarehouseLocationDTO.AddDTO addDTO = new WarehouseLocationDTO.AddDTO();
+        addDTO.setWarehouseId(warehouse.getId());
+        addDTO.setWarehouseAreaId(areaId);
+        addDTO.setCode("");
+        addDTO.setName("空仓位");
+        warehouseLocationService.add(addDTO);
     }
 
 
