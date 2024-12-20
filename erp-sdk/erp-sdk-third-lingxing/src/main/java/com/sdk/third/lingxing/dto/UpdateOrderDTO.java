@@ -32,7 +32,7 @@ public class UpdateOrderDTO implements Serializable {
          * 全局系统单号
          */
         @NotNull(message = "全局系统单号不能为空")
-        private Integer globalOrderNo;
+        private String globalOrderNo;
 
         /**
          * 物流信息

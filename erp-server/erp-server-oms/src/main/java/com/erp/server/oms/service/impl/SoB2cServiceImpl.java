@@ -1,4 +1,5 @@
-package com.erp.server.oms.service.impl;
+
+ackage com.erp.server.oms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
@@ -121,6 +122,8 @@ import com.erp.server.oms.mapper.SoB2cMapper;
 import com.erp.server.oms.query.SoB2cQueryHandler;
 import com.erp.server.oms.service.*;
 import com.sdk.oms.tiktok.service.TikTokSdkClientService;
+import com.sdk.third.lingxing.dto.UpdateOrderDTO;
+import com.sdk.third.lingxing.utils.LingxingApiUtils;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -5850,35 +5853,25 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             //操作日志
             operateLogService.addModuleOperateLog(String.format("映射了一个sku【%s】", simpleVO.getSkuNo()), ModuleTypeEnum.SO_B2C.getCode(), entity.getId(), "编辑信息");
         }
+        //如果是领星订单，更新领星订单信息
+        if(entity.getThirdSystem().equals(PlatformDictEnum.LING_XING.getCode())){
+            updateLingXingOrder(entity, detailEntity,handleDetailEntity.getSkuNo());
+        }
         return flag;
+    }
 
-//        ListingInfoParamDTO paramDTO = new ListingInfoParamDTO();
-//        paramDTO.setPlatform(salesPlatform);
-//        paramDTO.setShopIdList(Collections.singletonList(soB2cEntity.getShopId()));
-//        paramDTO.setType(typeCode);
-//        paramDTO.setPlatformSkuNoList(Collections.singletonList(platformSkuNo));
-//        paramDTO.setLastExpireDate(soB2cEntity.getPlatformOrderCreateTime());
-//        List<ListingInfoWithSkuMappingDTO> skuMappingList = skuMappingService.findListDto(paramDTO);
-//        if (CollectionUtils.isEmpty(skuMappingList)) {
-//            throw new ServiceException(ApiError.ERROR_LISTING_NOT_EXIST);
-//        }
-//        ListingInfoWithSkuMappingDTO skuMapping = skuMappingList.get(0);
-//        String listingId = skuMapping.getListingId();
-//        listingInfoService.updateMatchResult(listingId, Boolean.TRUE);
-//
-//        SkuMappingDTO.UpdateSkuMappingDTO updateSkuMappingDTO = new SkuMappingDTO.UpdateSkuMappingDTO();
-//        String skuNo = skuEntity.getSkuNo();
-//        updateSkuMappingDTO.setProductName(skuEntity.getName());
-//        updateSkuMappingDTO.setProductSkuId(skuEntity.getId());
-//        updateSkuMappingDTO.setProductSkuNo(skuNo);
-//        updateSkuMappingDTO.setListingId(skuMapping.getListingId());
-//        updateSkuMappingDTO.setIsExpire(Boolean.FALSE);
-//
-//        detailEntity.setSkuId(skuEntity.getId());
-//        detailEntity.setSkuNo(skuNo);
-//        //更新明细
-//        soB2cDetailService.updateById(detailEntity);
-//        return skuMappingService.updateSkuMapping(updateSkuMappingDTO);
+    private static void updateLingXingOrder(SoB2cEntity entity, SoB2cDetailEntity detailEntity,String skuNo) {
+        UpdateOrderDTO.OrderInfo orderInfo = new UpdateOrderDTO.OrderInfo();
+        orderInfo.setGlobalOrderNo(entity.getThirdCode());
+        List<UpdateOrderDTO.OrderItem> orderItemList = new ArrayList<>();
+        UpdateOrderDTO.OrderItem orderItem = new UpdateOrderDTO.OrderItem();
+        orderItem.setMark(detailEntity.getPlatformSkuNo());
+        orderItem.setSku(skuNo);
+        orderItem.setId(detailEntity.getThirdDetailId());
+        orderItem.setType(3);
+        orderItemList.add(orderItem);
+        orderInfo.setOrderItemList(orderItemList);
+        LingxingApiUtils.updateOrder(Arrays.asList(orderInfo));
     }
 
     /**
@@ -7531,6 +7524,14 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             logisticsEntity.setWidth(maxWidth);
             logisticsEntity.setHeight(totalHeight);
             soB2cLogisticsService.updateById(logisticsEntity);
+        }
+        //如果是领星订单，更新领星订单信息
+        if(entity.getThirdSystem().equals(PlatformDictEnum.LING_XING.getCode())){
+            UpdateOrderDTO.OrderInfo orderInfo = new UpdateOrderDTO.OrderInfo();
+            orderInfo.setGlobalOrderNo(entity.getThirdCode());
+            List<UpdateOrderDTO.OrderItem> orderItemList = new ArrayList<>();
+            orderInfo.setOrderItemList(orderItemList);
+            LingxingApiUtils.updateOrder(Arrays.asList(orderInfo));
         }
         return BatchResultDTO.success(entity.getId(), entity.getCode(), "更新成功！");
     }
