@@ -1,6 +1,8 @@
 package com.erp.server.dmp.service;
+import com.erp.model.dmp.dto.DmpSkuCostDTO;
 import com.erp.model.dmp.entity.DmpSkuCostEntity;
 import com.common.business.service.SuperService;
+import com.erp.model.scm.dto.SkuCostDTO;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -22,7 +24,7 @@ public interface DmpSkuCostService extends SuperService<DmpSkuCostEntity> {
      * @Date 2023/9/13 18:30
      * @return void
      **/
-    void syncPurchaseOrderSkuCost(List<LocalDate> localDateList);
+    void syncPurchaseOrderSkuCost(SkuCostDTO.QueryPurchaseDTO queryPurchaseDTO);
 
     /**
      * @description: 根据sku编码集合清洗成本数据

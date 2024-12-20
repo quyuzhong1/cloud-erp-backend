@@ -205,7 +205,7 @@ public class LogisticsFeignController {
     }
 
     /**
-     * sku成本B2B
+     * sku成本根据sku查询
      * @param queryB2BDTO
      * @return
      */
@@ -214,7 +214,7 @@ public class LogisticsFeignController {
         return inventorySkuCostService.listSkuCostBySkuIds(queryB2BDTO);
     }
     /**
-     * sku成本B2C
+     * sku成本根据订单明细查询
      * @param queryB2CDTO
      * @return
      */

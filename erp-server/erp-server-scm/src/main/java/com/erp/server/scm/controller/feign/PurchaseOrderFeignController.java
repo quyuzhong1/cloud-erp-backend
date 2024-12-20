@@ -346,12 +346,12 @@ public class PurchaseOrderFeignController {
      * 根据采购日期查询采购采购单
      * @Author Luo_WG
      * @Date 2023/9/13 18:21
-     * @param purchaseDateList
+     * @param queryPurchaseDTO
      * @return java.util.List<com.erp.model.scm.entity.PurchaseOrderEntity>
      **/
     @PostMapping("/listPurchaseOrderByPurchaseDate")
-    public List<SkuCostDTO> listPurchaseOrderByPurchaseDate(@RequestBody List<LocalDate> purchaseDateList) {
-        return purchaseOrderService.listPurchaseOrderByPurchaseDate(purchaseDateList);
+    public List<SkuCostDTO> listPurchaseOrderByPurchaseDate(@RequestBody SkuCostDTO.QueryPurchaseDTO queryPurchaseDTO) {
+        return purchaseOrderService.listPurchaseOrderByPurchaseDate(queryPurchaseDTO);
     }
 
     /**

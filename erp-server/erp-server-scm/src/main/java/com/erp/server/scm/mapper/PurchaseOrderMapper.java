@@ -142,7 +142,7 @@ public interface PurchaseOrderMapper extends BaseMapper<PurchaseOrderEntity> {
      * @param purchaseDateList
      * @return java.util.List<com.erp.model.scm.dto.SkuCostDTO>
      **/
-    List<SkuCostDTO> listPurchaseOrderByPurchaseDate(@Param("purchaseDateList") List<LocalDate> purchaseDateList);
+    List<SkuCostDTO> listPurchaseOrderByPurchaseDate(@Param("purchaseDateList") List<LocalDate> purchaseDateList, @Param("purchaseOrderIds") List<String> purchaseOrderIds, @Param("supplierIds") List<String> supplierIds);
 
     /**
      * 获取首批采购日期

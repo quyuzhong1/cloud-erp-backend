@@ -368,10 +368,10 @@ public interface PurchaseOrderService extends SuperService<PurchaseOrderEntity> 
      * 根据采购日期查询采购采购单
      * @Author Luo_WG
      * @Date 2023/9/13 18:21
-     * @param purchaseDateList
+     * @param queryPurchaseDTO
      * @return java.util.List<com.erp.model.scm.entity.PurchaseOrderEntity>
      **/
-    List<SkuCostDTO> listPurchaseOrderByPurchaseDate(List<LocalDate> purchaseDateList);
+    List<SkuCostDTO> listPurchaseOrderByPurchaseDate(SkuCostDTO.QueryPurchaseDTO queryPurchaseDTO);
     /**
      * @description: 根据skuId集合查询采购成本数据
      * @author Will
