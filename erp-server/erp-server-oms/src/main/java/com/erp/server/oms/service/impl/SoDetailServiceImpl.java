@@ -1588,6 +1588,9 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
         updateWrapper.set(SoDetailEntity::getIsClose, Boolean.TRUE);
         updateWrapper.set(SoDetailEntity::getDiscountAmount,BigDecimal.ZERO);
         updateWrapper.in(SoDetailEntity::getId, closeSoDetailIdList);
+
+        // 更新 qty 字段为 deliveryQty
+        updateWrapper.setSql(" qty = delivery_qty ");
         this.update(updateWrapper);
 
     }

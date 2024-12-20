@@ -1,8 +1,8 @@
 package com.erp.server.wms.service.impl;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
@@ -29,9 +29,7 @@ import com.erp.server.wms.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -85,6 +83,9 @@ public class SoDeliveryNoticeDetailServiceImpl extends SuperServiceImpl<SoDelive
 
     @Resource
     private VirtualInventoryTransCoreService virtualInventoryTransCoreService;
+
+    @Resource
+    private SoOutstockService soOutstockService;
 
 
     @Override
@@ -466,15 +467,34 @@ public class SoDeliveryNoticeDetailServiceImpl extends SuperServiceImpl<SoDelive
      * @date 2023-05-25 10:30
      */
     @Override
-    public Integer getPushDownBySoDetailIds(List<String> soDetailIds) {
+    public List<SoDeliveryNoticeDetailDTO.PushDownDTO> getPushDownBySoDetailIds(List<String> soDetailIds) {
         if (CollectionUtils.isEmpty(soDetailIds)) {
-            return 0;
+            return new ArrayList<>();
         }
-        //发货通知的
-        Integer deliveryNoticeCount = this.lambdaQuery().in(SoDeliveryNoticeDetailEntity::getSourceDetailId, soDetailIds).count();
 
-        Integer soOutstockCount = soOutstockDetailService.getPushDownCountBySoDetailIds(soDetailIds);
-        return deliveryNoticeCount + soOutstockCount;
+        List<SoDeliveryNoticeDetailDTO.PushDownDTO> result = new ArrayList<>();
+
+        //发货通知的
+        List<SoDeliveryNoticeDetailEntity> soDeliveryNoticeDetailEntityList = this.lambdaQuery()
+                .in(SoDeliveryNoticeDetailEntity::getSourceDetailId, soDetailIds)
+                .eq(SoDeliveryNoticeDetailEntity::getInvalidStatus,Boolean.FALSE)
+                .list();
+
+        if(CollUtil.isNotEmpty(soDeliveryNoticeDetailEntityList)){
+            for (SoDeliveryNoticeDetailEntity detailEntity : soDeliveryNoticeDetailEntityList) {
+                SoDeliveryNoticeDetailDTO.PushDownDTO pushDownDTO = new SoDeliveryNoticeDetailDTO.PushDownDTO();
+                pushDownDTO.setSoDetailId(detailEntity.getSourceDetailId());
+                pushDownDTO.setSkuId(detailEntity.getSkuId());
+                pushDownDTO.setSkuNo(detailEntity.getSkuNo());
+                result.add(pushDownDTO);
+            }
+        }
+
+        List<SoDeliveryNoticeDetailDTO.PushDownDTO> soOutstockDetailEntityList = soOutstockDetailService.getPushDownBySoDetailIds(soDetailIds);
+        if(CollUtil.isNotEmpty(soOutstockDetailEntityList)){
+            result.addAll(soOutstockDetailEntityList);
+        }
+        return result;
     }
 
 
@@ -493,8 +513,8 @@ public class SoDeliveryNoticeDetailServiceImpl extends SuperServiceImpl<SoDelive
         if (CollectionUtils.isNotEmpty(soDetailIds)) {
             this.lambdaUpdate().set(SoDeliveryNoticeDetailEntity::getIsClose, Boolean.TRUE).
                     set(SoDeliveryNoticeDetailEntity::getIsChangeClose, Boolean.TRUE).
-                    in(SoDeliveryNoticeDetailEntity::getSourceDetailId, soDetailIds).update();
-
+                    in(SoDeliveryNoticeDetailEntity::getSourceDetailId, soDetailIds)
+                    .update();
             soOutstockDetailService.closeBySoDetailIds(soDetailIds);
         }
 

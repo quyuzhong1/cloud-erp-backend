@@ -239,4 +239,20 @@ public class CfgSettingValueDTO implements Serializable {
          */
         private String autoInStockSetting;
     }
+
+    /**
+     * 仓库
+     */
+    @Data
+    @NoArgsConstructor
+    public static class SoWarehouseDTO{
+        /**
+         * 仓库id
+         */
+        private String warehouseId;
+        /**
+         * 仓库名称
+         */
+        private String warehouseName;
+    }
 }
