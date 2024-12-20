@@ -24,6 +24,7 @@ import com.erp.model.wms.entity.VirtualTransFlowDetailEntity;
 import com.erp.model.wms.entity.VirtualTransFlowEntity;
 import com.erp.model.wms.entity.WmsVirtualDetailMsgEntity;
 import com.erp.model.wms.enums.VirtualDetailMsgStatusEnum;
+import com.erp.model.wms.enums.inventory.InventoryOperationModeEnum;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.wms.mapper.VirtualTransFlowDetailMapper;
@@ -111,12 +112,13 @@ public class VirtualTransFlowDetailServiceImpl extends SuperServiceImpl<VirtualT
         if (ObjUtil.isEmpty(entity)) {
             throw new ServiceException("未找到流水数据");
         }
+        entity.setParentVirtualTransFlowId(virtualTransFlowEntity.getParentVirtualTransFlowId());
         WmsVirtualDetailMsgEntity virtualDetailMsgEntity = wmsVirtualDetailMsgService.getById(msgId);
         if (ObjectUtil.isEmpty(virtualDetailMsgEntity) || !CharSequenceUtil.equals(virtualDetailMsgEntity.getStatus(), VirtualDetailMsgStatusEnum.DOING.getCode())) {
             throw new ServiceException("非进行中任务不支持消费");
         }
         //反审
-        if (entity.getIsUnapproved()) {
+        if (InventoryOperationModeEnum.UN_APPROVE.getCode().equals(entity.getOperationMode())) {
             handleVirtualTransFlowUnapproved(entity);
         } else {
             handleVirtualTransFlow(entity);

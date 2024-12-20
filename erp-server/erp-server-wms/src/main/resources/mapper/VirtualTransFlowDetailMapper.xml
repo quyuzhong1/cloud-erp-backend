@@ -21,16 +21,16 @@
 
     <!-- 通用查询结果列 -->
     <sql id="Base_Column_List">
-        id,
-        create_user_id,
-        create_user_name,
-        create_time,
-        update_user_id,
-        update_user_name,
-        update_time,
-        version,
-        is_deleted,
-        qty, cur_inventory_qty, virtual_trans_flow_id, virtual_inventory_detail_id, trade_time
+        vtfd.id,
+        vtfd.create_user_id,
+        vtfd.create_user_name,
+        vtfd.create_time,
+        vtfd.update_user_id,
+        vtfd.update_user_name,
+        vtfd.update_time,
+        vtfd.version,
+        vtfd.is_deleted,
+        vtfd.qty, vtfd.cur_inventory_qty, vtfd.virtual_trans_flow_id, vtfd.virtual_inventory_detail_id, vtfd.trade_time
     </sql>
 
     <!-- 分页查询 -->
@@ -126,8 +126,10 @@
         select
             <include refid="Base_Column_List" />
         from virtual_trans_flow_detail vtfd
-        where vtfd.is_deleted = false and vtfd.sku_id = #{paramDTO.skuId} and vtfd.warehouse_id = #{paramDTO.warehouseId}
-        and vtfd.virtual_warehouse_id = #{paramDTO.virtualWarehouseId} and #{paramDTO.tradeTime} >= trade_time
+        left join virtual_inventory_detail vid on vtfd.virtual_inventory_detail_id = vid.id and vid.is_deleted = false
+        where vtfd.is_deleted = false and  0 > vtfd.qty
+        and vid.sku_id = #{paramDTO.skuId} and vid.warehouse_id = #{paramDTO.warehouseId}
+        and vid.virtual_warehouse_id = #{paramDTO.virtualWarehouseId} and #{paramDTO.tradeTime} >= vtfd.trade_time
     </select>
 
 

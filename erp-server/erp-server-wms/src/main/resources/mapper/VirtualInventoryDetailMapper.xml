@@ -191,7 +191,7 @@
                 and vidh.inventory_age_days > #{params.daysList[0]}
             </if>
             <if test="params.daysList != null and params.daysList.size == 2">
-                and  #{params.dateList[1] >= #{params.daysList[1]}
+                and  #{params.daysList[1]} >= vidh.inventory_age_days
             </if>
         </where>
         order by vtf.trade_time desc

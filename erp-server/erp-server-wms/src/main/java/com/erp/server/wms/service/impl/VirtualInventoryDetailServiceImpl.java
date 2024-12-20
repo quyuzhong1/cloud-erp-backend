@@ -185,7 +185,7 @@ public class VirtualInventoryDetailServiceImpl extends SuperServiceImpl<VirtualI
         VirtualInventoryAgeDTO.FrameParamDTO params = dto.getParams();
         VirtualInventoryAgeDTO.HisInventoryAgeDetailParamDTO paramDTO = BeanMapperUtils.map(VirtualInventoryAgeDTO.HisInventoryAgeDetailParamDTO.class, params);
         paramDTO.setDaysList(daysList);
-        paramDTO.setDate(LocalDate.now());
+        paramDTO.setDate(LocalDate.now().minusDays(1L));
         IPage<VirtualInventoryAgeDTO.HisInventoryAgeDetailDTO> pageData = this.baseMapper.hisInventoryAgeDetailPaging(dto.page(), paramDTO);
         handleHisInventoryAgeDetail(pageData.getRecords());
         return new PagingVO<>(pageData);
