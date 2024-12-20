@@ -112,6 +112,7 @@ public class VirtualTransFlowDetailServiceImpl extends SuperServiceImpl<VirtualT
         if (ObjUtil.isEmpty(entity)) {
             throw new ServiceException("未找到流水数据");
         }
+
         entity.setParentVirtualTransFlowId(virtualTransFlowEntity.getParentVirtualTransFlowId());
         WmsVirtualDetailMsgEntity virtualDetailMsgEntity = wmsVirtualDetailMsgService.getById(msgId);
         if (ObjectUtil.isEmpty(virtualDetailMsgEntity) || !CharSequenceUtil.equals(virtualDetailMsgEntity.getStatus(), VirtualDetailMsgStatusEnum.DOING.getCode())) {
@@ -225,7 +226,7 @@ public class VirtualTransFlowDetailServiceImpl extends SuperServiceImpl<VirtualT
         //退回批次流水库龄库存
         returnVirtualInventory(flowDetailList);
 
-        //出库流水（非反审核流水），重新先进先出
+        //出库流水，重新先进先出
         List<VirtualTransFlowEntity> virtualTransFlowList = virtualTransFlowService.listApproveByIds(oldVirtualTransFlowIdList);
         if (CollUtil.isEmpty(virtualTransFlowList)) {
             return;

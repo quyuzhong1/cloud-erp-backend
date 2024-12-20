@@ -205,7 +205,6 @@ public class VirtualTransFlowServiceImpl extends SuperServiceImpl<VirtualTransFl
             return Collections.EMPTY_LIST;
         }
         return lambdaQuery().in(VirtualTransFlowEntity::getId,oldVirtualTransFlowIdList)
-                .eq(VirtualTransFlowEntity::getIsUnapproved,Boolean.FALSE)
                 .lt(VirtualTransFlowEntity::getQty,MathUtil.ZERO)
                 .list();
     }
