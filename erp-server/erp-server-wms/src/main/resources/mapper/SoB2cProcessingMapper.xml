@@ -96,6 +96,7 @@
             sbd.id as deliveryId,
             sbd.code as deliveryCode,
             sbd.status as deliveryStatus,
+            sbd.delivery_time as deliveryTime,
             sbdd.qty as deliveryQty,
             sbdd.sku_id as skuId,
             sbdd.warehouse_id as warehouseId,

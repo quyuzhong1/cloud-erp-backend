@@ -29,6 +29,7 @@ import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.model.wms.enums.inventory.InventoryModeEnum;
 import com.erp.model.wms.enums.inventory.InventoryOperationModeEnum;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
+import com.erp.model.wms.enums.inventory.VirtualInventoryBusinessTypeEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.mapper.VirtualTransFlowMapper;
@@ -182,6 +183,16 @@ public class VirtualTransFlowServiceImpl extends SuperServiceImpl<VirtualTransFl
     @Override
     public List<ReportOrderSalesDTO.LastVirtualQtyDTO> listLastVirtualQty(List<String> skuIdList, List<String> warehouseIdList, List<String> virtualWarehouseIdList, LocalDate localDate) {
         return baseMapper.listLastVirtualQty(skuIdList,warehouseIdList,virtualWarehouseIdList,localDate);
+    }
+
+    @Override
+    public List<VirtualTransFlowEntity> listBySourceDetailIdList(List<String> deliveryDetailIdList) {
+        if (CollUtil.isEmpty(deliveryDetailIdList)) {
+            throw new ServiceException("B2C发货单明细id不能为空");
+        }
+        return  lambdaQuery().in(VirtualTransFlowEntity::getSourceDetailId,deliveryDetailIdList)
+                .eq(VirtualTransFlowEntity::getDictBizType,VirtualInventoryBusinessTypeEnum.SO_OUT_STOCK.getCode())
+                .list();
     }
 
     /**

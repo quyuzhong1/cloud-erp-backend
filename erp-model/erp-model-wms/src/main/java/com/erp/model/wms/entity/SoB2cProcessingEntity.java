@@ -126,6 +126,11 @@ public class SoB2cProcessingEntity extends BaseEntity<SoB2cProcessingEntity> {
     @TableField("bom_version")
     private String bomVersion;
 
+    /**
+     * 发货时间
+     */
+    @TableField(exist = false)
+    private LocalDateTime deliveryTime;
 
     public static final String B2C_SO_ID = "b2c_so_id";
 

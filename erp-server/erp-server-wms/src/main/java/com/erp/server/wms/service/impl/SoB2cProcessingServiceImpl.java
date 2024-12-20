@@ -4,6 +4,7 @@ package com.erp.server.wms.service.impl;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.SourceTypeEnum;
@@ -15,13 +16,11 @@ import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.wms.dto.SoB2bProcessingDTO;
 import com.erp.model.wms.dto.SoB2cProcessingDTO;
 import com.erp.model.wms.entity.SoB2cProcessingEntity;
+import com.erp.model.wms.entity.VirtualTransFlowEntity;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.mapper.SoB2cProcessingMapper;
-import com.erp.server.wms.service.OperateLogService;
-import com.erp.server.wms.service.SoB2cProcessingService;
-import com.erp.server.wms.service.SoOutstockDetailService;
-import com.erp.server.wms.service.TransferInfoDetailService;
+import com.erp.server.wms.service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -59,6 +58,9 @@ public class SoB2cProcessingServiceImpl extends SuperServiceImpl<SoB2cProcessing
 
     @Autowired
     private SoOutstockDetailService soOutstockDetailService;
+
+    @Autowired
+    private VirtualTransFlowService virtualTransFlowService;
 
     /**
     * 修改
@@ -109,6 +111,8 @@ public class SoB2cProcessingServiceImpl extends SuperServiceImpl<SoB2cProcessing
          */
         //查询加工单数据
         List<String> deliveryDetailIdList = list.stream().map(SoB2cProcessingEntity::getDeliveryId).distinct().collect(Collectors.toList());
+        //查询发货单出库流水
+        List<VirtualTransFlowEntity> virtualTransFlowList = virtualTransFlowService.listBySourceDetailIdList(deliveryDetailIdList);
 
         //直接调拨单数据
         List<SoB2bProcessingDTO.ResponseDTO> transferList = transferInfoDetailService.listTransferBySourceDetailIdList(deliveryDetailIdList);
@@ -118,7 +122,6 @@ public class SoB2cProcessingServiceImpl extends SuperServiceImpl<SoB2cProcessing
 
         List<SoB2cProcessingDTO.AddOrUpdateDTO> addList = new ArrayList<>();
         for (SoB2cProcessingEntity entity :list) {
-
 
             //直接调拨单
             SoB2bProcessingDTO.ResponseDTO transferResponseDTO = transferList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSourceDetailId(), entity.getDeliveryDetailId()))
@@ -132,6 +135,18 @@ public class SoB2cProcessingServiceImpl extends SuperServiceImpl<SoB2cProcessing
             if (ObjectUtil.isNotEmpty(soOutstockResponseDTO)) {
                 handleOutstock (entity,soOutstockResponseDTO, SourceTypeEnum.SO_OUTSTOCK.getCode());
             }
+
+            //发货单出库流水
+            long count = virtualTransFlowList.stream().filter(obj -> StrUtil.equals(obj.getSourceDetailId(), entity.getDeliveryDetailId())).count();
+            if (count > 0) {
+                entity.setOutstockOrderId(entity.getId());
+                entity.setOutstockOrderStatus(entity.getDeliveryStatus());
+                entity.setOutstockQty(entity.getDeliveryQty());
+                entity.setOutstockOrderCode(entity.getDeliveryCode());
+                entity.setOutstockOrderTime(entity.getDeliveryTime());
+                entity.setOutstockOrderType(SourceTypeEnum.SO_B2C_DELIVERY.getCode());
+            }
+
             //bom信息
             List<BomChildrenSkuDTO> childList = bomChildrenSkuList.stream().filter(obj -> CharSequenceUtil.equals(obj.getParentSkuId(), entity.getSkuId())).collect(Collectors.toList());
             if (CollUtil.isEmpty(childList)) {

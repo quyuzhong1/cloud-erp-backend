@@ -47,6 +47,7 @@
         fmp.is_deleted,
         fmp.requisition_application_id as requisitionApplicationId,
         fmp.requisition_application_code as requisitionApplicationCode,
+        fmp.requisition_application_status as requisitionApplicationStatus,
         fmp.first_mile_delivery_id as firstMileDeliveryId,
         fmp.first_mile_delivery_code as firstMileDeliveryCode,
         fmp.delivery_approve_status as deliveryApproveStatus,
@@ -95,6 +96,7 @@
         select
             ra.id as requisitionApplicationId,
             ra.code as requisitionApplicationCode,
+            ra.status as requisitionApplicationStatus,
             fmd.id as firstMileDeliveryId,
             fmd.code as firstMileDeliveryCode,
             fmd.status as deliveryApproveStatus,
