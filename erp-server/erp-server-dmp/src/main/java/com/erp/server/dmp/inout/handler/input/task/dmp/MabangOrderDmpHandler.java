@@ -29,31 +29,13 @@ public class MabangOrderDmpHandler extends MabangDmpHandler {
 
     @Override
     protected void afterConvertData(Map<List<Map<String, Object>>, List<TreeMap<String, Object>>> dmpInputDataDmpRelationMaps) {
-        List<DmpSoInfoEntity> soInfoEntityList = new ArrayList<>();
-        Set<List<Map<String, Object>>> keySet = dmpInputDataDmpRelationMaps.keySet();
-        if (CollUtil.isNotEmpty(keySet)) {
-            List<String> orderIdList = new ArrayList<>();
-            for (List<Map<String, Object>> key : keySet) {
-                orderIdList.addAll(key.stream().map(f -> f.get("fid").toString()).collect(Collectors.toList()));
-            }
-
-            soInfoEntityList = dmpSoInfoService.lambdaQuery()
-                    .in(DmpSoInfoEntity::getThirdCode, orderIdList)
-                    .select(DmpSoInfoEntity::getThirdCode)
-                    .list();
-
-        }
-        List<String> thirdCodeList = soInfoEntityList.stream().map(req -> req.getThirdCode()).distinct().collect(Collectors.toList());
-        for (Map.Entry<List<Map<String, Object>>, List<TreeMap<String, Object>>> dmpInputDataDmpRelationMap : dmpInputDataDmpRelationMaps.entrySet()) {
+           for (Map.Entry<List<Map<String, Object>>, List<TreeMap<String, Object>>> dmpInputDataDmpRelationMap : dmpInputDataDmpRelationMaps.entrySet()) {
             List<TreeMap<String, Object>> dmpDataMaps = dmpInputDataDmpRelationMap.getValue();
             for (TreeMap<String, Object> dmpDataMap : dmpDataMaps) {
                 //平台单号
                 Object thirdCodeObj = dmpDataMap.get("thirdCode");
                 if (thirdCodeObj != null) {
                     String thirdCode = String.valueOf(thirdCodeObj);
-                    if (thirdCodeList.contains(thirdCodeObj)) {
-                        continue;
-                    }
                     dmpDataMap.put("platformCode", thirdCode);
                 }
 
