@@ -70,6 +70,10 @@ public class VirtualTransFlowDetailServiceImpl extends SuperServiceImpl<VirtualT
     @Autowired
     private WmsVirtualDetailMsgService wmsVirtualDetailMsgService;
 
+    @Autowired
+    private VirtualInventoryDetailHisService virtualInventoryDetailHisService;
+
+
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -111,7 +115,12 @@ public class VirtualTransFlowDetailServiceImpl extends SuperServiceImpl<VirtualT
         if (ObjectUtil.isEmpty(virtualDetailMsgEntity) || !CharSequenceUtil.equals(virtualDetailMsgEntity.getStatus(), VirtualDetailMsgStatusEnum.DOING.getCode())) {
             throw new ServiceException("非进行中任务不支持消费");
         }
-        handleVirtualTransFlow(entity);
+        //反审
+        if (entity.getIsUnapproved()) {
+            handleVirtualTransFlowUnapproved(entity);
+        } else {
+            handleVirtualTransFlow(entity);
+        }
         return Boolean.TRUE;
     }
 
@@ -158,6 +167,11 @@ public class VirtualTransFlowDetailServiceImpl extends SuperServiceImpl<VirtualT
         }
     }
 
+    @Override
+    public List<VirtualTransFlowDetailEntity> listByVirtualTransFlowId(String parentVirtualTransFlowId) {
+        return lambdaQuery().eq(VirtualTransFlowDetailEntity::getVirtualTransFlowId,parentVirtualTransFlowId).list();
+    }
+
     /**
      * 重算库存流水
      * @author will
@@ -172,6 +186,78 @@ public class VirtualTransFlowDetailServiceImpl extends SuperServiceImpl<VirtualT
             virtualDetailQty = afterQty;
         }
         updateBatchById(updateList);
+    }
+
+    /**
+     * 更新反审核流水数据
+     * @author will
+     * @date 2024/12/20 11:15
+     * @param entity
+     */
+    private void handleVirtualTransFlowUnapproved(VirtualTransFlowEntity entity) {
+        //目前只有出库反审
+        if (entity.getQty() < MathUtil.ZERO) {
+            throw new ServiceException("暂未入库反审，不支持消费");
+        }
+        VirtualTransFlowEntity oldTransFlowEntity = virtualTransFlowService.getById(entity.getParentVirtualTransFlowId());
+        if (ObjUtil.isEmpty(oldTransFlowEntity)) {
+            throw new ServiceException("未找到原虚拟仓出库库存流水信息");
+        }
+        /**
+         * 1、删除原有出库流水出库时间后所有的库龄流水信息
+         * 2、退回原流水库龄库存
+         * 3、重新先进先出（除反审核的单）
+         * 4、重算原出库流水时间后的结余
+         */
+        //删除原有出库库龄流水信息
+        List<VirtualTransFlowDetailEntity> oldFlowDetailList = this.listByVirtualTransFlowId(entity.getParentVirtualTransFlowId());
+        if (CollUtil.isEmpty(oldFlowDetailList)) {
+            throw new ServiceException("未找到原虚拟仓出库库龄流水信息");
+        }
+        //根据sku、仓库id、虚拟仓id查询被删除的出库流水后的批次流水信息
+        List<VirtualTransFlowDetailEntity> flowDetailList = baseMapper.listHisByOldParam(new VirtualTransFlowDetailDTO.ParamDTO(oldTransFlowEntity.getSkuId(), oldTransFlowEntity.getWarehouseId(), oldTransFlowEntity.getVirtualWarehouseId(), oldTransFlowEntity.getTradeTime()));
+        List<String> oldVirtualTransFlowIdList = flowDetailList.stream().map(VirtualTransFlowDetailEntity::getVirtualTransFlowId).distinct().collect(Collectors.toList());
+        //退回批次流水库龄库存
+        returnVirtualInventory(flowDetailList);
+
+        //出库流水（非反审核流水），重新先进先出
+        List<VirtualTransFlowEntity> virtualTransFlowList = virtualTransFlowService.listApproveByIds(oldVirtualTransFlowIdList);
+        if (CollUtil.isEmpty(virtualTransFlowList)) {
+            return;
+        }
+        //更新库存
+        for (VirtualTransFlowEntity flowEntity :virtualTransFlowList) {
+            handleVirtualTransFlow(flowEntity);
+        }
+        //重算原出库流水时间后的结余
+        virtualInventoryDetailHisService.addVirtualInventoryDetailHis(oldTransFlowEntity.getBillDate());
+    }
+
+
+    /**
+     * 退回库龄库存
+     * @author will
+     * @date 2024/12/20 11:43
+     * @param oldFlowDetailList
+     */
+    private void returnVirtualInventory (List<VirtualTransFlowDetailEntity> oldFlowDetailList) {
+        List<String> virtualInventoryDetailIdList = oldFlowDetailList.stream().map(VirtualTransFlowDetailEntity::getVirtualInventoryDetailId).distinct().collect(Collectors.toList());
+        List<VirtualInventoryDetailEntity> virtualInventoryDetailList = virtualInventoryDetailService.listByIds(virtualInventoryDetailIdList);
+        if (CollUtil.isEmpty(virtualInventoryDetailList)) {
+            throw new ServiceException("未找到库龄库存数据");
+        }
+        for (VirtualInventoryDetailEntity detailEntity : virtualInventoryDetailList) {
+            //合计数量
+            Integer totalQty = oldFlowDetailList.stream().filter(obj -> StrUtil.equals(obj.getVirtualInventoryDetailId(), detailEntity.getId()))
+                    .map(VirtualTransFlowDetailEntity::getQty)
+                    .reduce(MathUtil.ZERO, Integer::sum);
+            detailEntity.setQty(MathUtil.add(detailEntity.getQty(),totalQty));
+        }
+        virtualInventoryDetailService.updateBatchById(virtualInventoryDetailList);
+        
+        //删除流水
+        List<String> oldDetailIdList = oldFlowDetailList.stream().map(VirtualTransFlowDetailEntity::getId).distinct().collect(Collectors.toList());
+        this.removeByIds(oldDetailIdList);
     }
 
     /**

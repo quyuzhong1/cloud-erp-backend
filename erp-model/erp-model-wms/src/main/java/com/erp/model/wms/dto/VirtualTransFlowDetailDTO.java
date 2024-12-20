@@ -2,6 +2,7 @@ package com.erp.model.wms.dto;
 
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -280,5 +281,30 @@ public class VirtualTransFlowDetailDTO implements Serializable {
          * 开始日期
          */
         private LocalDate startDate;
+    }
+
+    /**
+     * 参数DTO
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ParamDTO {
+        /**
+         * skuId
+         */
+        private String skuId;
+        /**
+         * 仓库id
+         */
+        private String warehouseId;
+        /**
+         * 虚拟仓id
+         */
+        private String virtualWarehouseId;
+        /**
+         * 时间
+         */
+        private LocalDateTime tradeTime;
     }
 }

@@ -80,4 +80,12 @@ public interface VirtualTransFlowDetailService extends SuperService<VirtualTrans
      * @param dto
      */
     void handleHisVirtualTransFlowDetail(VirtualTransFlowDetailDTO.HandleDTO dto);
+    /**
+     * 根据虚拟仓库存流水查询
+     * @author will
+     * @date 2024/12/20 11:38
+     * @param parentVirtualTransFlowId
+     * @return List<VirtualTransFlowDetailEntity>
+     */
+    List<VirtualTransFlowDetailEntity> listByVirtualTransFlowId(String parentVirtualTransFlowId);
 }

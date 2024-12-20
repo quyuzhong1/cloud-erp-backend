@@ -6,6 +6,7 @@ import com.erp.model.wms.dto.VirtualInventoryAgeDTO;
 import com.erp.model.wms.dto.VirtualInventoryDetailHisDTO;
 import com.erp.model.wms.entity.VirtualInventoryDetailHisEntity;
 
+import java.time.LocalDate;
 import java.util.List;
 
 /**
@@ -50,4 +51,11 @@ public interface VirtualInventoryDetailHisService extends SuperService<VirtualIn
      * @return viewHisInventoryAgeDetailDTO
      */
     VirtualInventoryAgeDTO.viewHisInventoryAgeDetailDTO getHisInventoryAgeDetail(VirtualInventoryAgeDTO.HisInventoryAgeDetailParamDTO dto);
+    /**
+     * 添加每日库存结余
+     * @author will
+     * @date 2024/12/20 14:05
+     * @param localDate
+     */
+     void addVirtualInventoryDetailHis (LocalDate localDate);
 }

@@ -51,4 +51,12 @@ public interface VirtualTransFlowDetailMapper extends BaseMapper<VirtualTransFlo
      * @return Integer
      */
     Integer virtualDetailQty(@Param("virtualInvDetailId")String virtualInvDetailId,@Param("startDate") LocalDate startDate);
+    /**
+     * 查询历史
+     * @author will
+     * @date 2024/12/20 12:03
+     * @param paramDTO
+     * @return List<VirtualTransFlowDetailDTO.ParamDTO>
+     */
+    List<VirtualTransFlowDetailEntity> listHisByOldParam(@Param("paramDTO")VirtualTransFlowDetailDTO.ParamDTO paramDTO);
 }

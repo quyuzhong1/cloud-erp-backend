@@ -69,6 +69,7 @@ public class VirtualInventoryDetailHisServiceImpl extends SuperServiceImpl<Virtu
         return baseMapper.listByParam(paramDTO);
     }
 
+
     @Override
     public void hisVirtualInventoryJob(String jobParam) {
         //时间
@@ -86,7 +87,8 @@ public class VirtualInventoryDetailHisServiceImpl extends SuperServiceImpl<Virtu
      * @date 2024/12/11 12:13
      * @param localDate
      */
-    private void addVirtualInventoryDetailHis (LocalDate localDate) {
+    @Override
+    public void addVirtualInventoryDetailHis (LocalDate localDate) {
         //查询数据
         List<VirtualInventoryDetailHisDTO.ViewDTO> virtualInventoryHisList = baseMapper.listVirtualInventoryHisJobData(localDate);
         if (CollUtil.isEmpty(virtualInventoryHisList)) {

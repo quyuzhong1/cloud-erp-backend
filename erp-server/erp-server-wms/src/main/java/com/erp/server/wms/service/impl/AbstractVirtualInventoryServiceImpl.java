@@ -201,7 +201,12 @@ public abstract class AbstractVirtualInventoryServiceImpl implements VirtualInve
             log.warn("结束库存交易，耗时【{}】秒", stopwatch.elapsed(TimeUnit.SECONDS));
 
             //7,库龄流水反审
-            //addWmsVirtualDetailMsg(transFlowEntity);
+            if (CharSequenceUtil.equals(transFlowEntity.getSourceType(),InventorySourceTypeEnum.MACHINE_INFO.getCode())
+                    || CharSequenceUtil.equals(transFlowEntity.getSourceType(),InventorySourceTypeEnum.TRANSFER_INFO.getCode())
+                    || CharSequenceUtil.equals(transFlowEntity.getSourceType(),InventorySourceTypeEnum.SO_OUTSTOCK.getCode())) {
+                transFlowEntity.setParentVirtualTransFlowId(txnFlow.getId());
+                addWmsVirtualDetailMsg(transFlowEntity);
+            }
         });
     }
 
@@ -335,7 +340,6 @@ public abstract class AbstractVirtualInventoryServiceImpl implements VirtualInve
                 || (InventoryStatusEnum.FROZEN.equals(inventoryStatusEnum)
                 && (CharSequenceUtil.equals(transFlowEntity.getSourceType(),InventorySourceTypeEnum.MACHINE_INFO.getCode())
                 || CharSequenceUtil.equals(transFlowEntity.getSourceType(),InventorySourceTypeEnum.TRANSFER_INFO.getCode())
-                || CharSequenceUtil.equals(transFlowEntity.getSourceType(),InventorySourceTypeEnum.SO_B2C_DELIVERY.getCode())
                 || CharSequenceUtil.equals(transFlowEntity.getSourceType(),InventorySourceTypeEnum.SO_OUTSTOCK.getCode())))
         ) {
             addWmsVirtualDetailMsg(transFlowEntity);

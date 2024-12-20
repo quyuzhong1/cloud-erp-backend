@@ -121,5 +121,14 @@
         group by virtual_inventory_detail_id
     </select>
 
+    <!-- 查询历史库龄库存 -->
+    <select id="listHisByOldParam" resultType="com.erp.model.wms.entity.VirtualTransFlowDetailEntity">
+        select
+            <include refid="Base_Column_List" />
+        from virtual_trans_flow_detail vtfd
+        where vtfd.is_deleted = false and vtfd.sku_id = #{paramDTO.skuId} and vtfd.warehouse_id = #{paramDTO.warehouseId}
+        and vtfd.virtual_warehouse_id = #{paramDTO.virtualWarehouseId} and #{paramDTO.tradeTime} >= trade_time
+    </select>
+
 
 </mapper>
