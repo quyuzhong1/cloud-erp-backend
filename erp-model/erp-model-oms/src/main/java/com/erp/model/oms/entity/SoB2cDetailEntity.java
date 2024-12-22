@@ -195,6 +195,11 @@ public class SoB2cDetailEntity extends BaseEntity<SoB2cDetailEntity> {
     @TableField("is_sign_shipped")
     private Boolean isSignShipped;
     /**
+     * 成本来源
+     */
+    @TableField("cost_source")
+    private String costSource;
+    /**
      * 材料成本（本位币）
      */
     @TableField("product_cost")
