@@ -2,11 +2,9 @@ package com.erp.server.scm.controller.feign;
 
 
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
-import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
-import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.erp.model.scm.dto.*;
@@ -18,7 +16,6 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
-import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDate;
 import java.util.Collections;
 import java.util.List;
@@ -531,5 +528,14 @@ public class PurchaseOrderFeignController {
     @PostMapping("/viewGenerateStockIn")
     public List<PurchaseOrderDTO.ViewGenerateStockInDTO> viewGenerateStockIn(@RequestBody @Validated List<String>  purchaseDetailIdList) {
         return purchaseOrderService.viewGenerateStockIn(purchaseDetailIdList);
+    }
+
+    /**
+     * 通过sku 供应商查询所有采购订单
+     * @param purchaseCalcQtyParamsDTO 参数
+     */
+    @PostMapping("/listAllPurchaseBySkuIdAndSupplier")
+    public List<PurchaseOrderDTO.PurchaseCalcQtyDTO> listAllPurchaseBySkuIdAndSupplier(@RequestBody PurchaseOrderDTO.PurchaseCalcQtyParamsDTO purchaseCalcQtyParamsDTO) {
+        return purchaseOrderService.listAllPurchaseBySkuIdAndSupplier(purchaseCalcQtyParamsDTO);
     }
 }

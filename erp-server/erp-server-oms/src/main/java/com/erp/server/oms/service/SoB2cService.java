@@ -21,7 +21,6 @@ import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.model.wms.dto.WmsDataCompareTaskDTO;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
@@ -1034,4 +1033,10 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
     void syncSdyOrderHandler(String soId, String operateEnum);
 
     List<SoB2cEntity> queryToSdy(LocalDate startDate, LocalDate endDate, Integer pageSize, int offset);
+    /**
+     * 同步销售出库单的单据日期
+     * @param soId
+     * @param soOutstockDate
+     */
+    void writeBackSoOutstockDate(String soId, String soOutstockDate);
 }

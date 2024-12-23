@@ -354,6 +354,12 @@ public class SoB2cEntity extends BaseEntity<SoB2cEntity> {
     @TableField("is_over_estimated_ship_cost")
     private Boolean isOverEstimatedShipCost;
 
+    /**
+     * 销售出库时间  来源：销售出库单的bill_date
+     */
+    @TableField("so_outstock_date")
+    private LocalDate soOutstockDate;
+
     public static final String CODE = "code";
 
     public static final String APPROVE_STATUS = "approve_status";

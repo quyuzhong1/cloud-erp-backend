@@ -1364,11 +1364,10 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
                 if (customerInfo.getCurrency() != null) {
                     CurrencyDTO.ViewDTO viewDTO = currencyList.stream().filter(req -> req.getId().equals(customerInfo.getCurrency())).findFirst().orElse(null);
                     if (ObjectUtil.isNotEmpty(viewDTO)) {
-                        shudiyunB2cOrderDTO.setTransaction_currency_code(viewDTO.getId());
-                        shudiyunB2cOrderDTO.setTransaction_currency(viewDTO.getName());
+                        shudiyunB2cOrderDTO.setSettlement_currency_code(viewDTO.getId());
+                        shudiyunB2cOrderDTO.setSettlement_currency(viewDTO.getName());
                     }
                 }
-
                 if (customerInfo.getTradeCurrency() != null) {
                     CurrencyDTO.ViewDTO viewDTO = currencyList.stream().filter(req -> req.getId().equals(customerInfo.getTradeCurrency())).findFirst().orElse(null);
                     if (ObjectUtil.isNotEmpty(viewDTO)) {
@@ -1379,23 +1378,15 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
                 shudiyunB2cOrderDTO.setPlatform_id(customerInfo.getPlatformType());
                 String platformName = dictBasicEntityList.stream().filter(req -> req.getValue().equals(customerInfo.getPlatformType())).map(DictBasicEntity::getName).findFirst().orElse("");
                 shudiyunB2cOrderDTO.setPlatform_name(platformName);
-
-
-                //店铺信息
-                ShopInfoEntity shopInfoEntity = shopInfoList.stream().filter(req -> req.getCustomerId().equals(customerInfo.getId())).findFirst().orElse(null);
-                if (ObjectUtil.isNotEmpty(shopInfoEntity)) {
-                    shudiyunB2cOrderDTO.setSubplatform_no(shopInfoEntity.getDictPlatform());
-                    shudiyunB2cOrderDTO.setSubplatform_name(PlatformDictEnum.getNameByCode(shopInfoEntity.getDictPlatform()));
-
-                    CurrencyDTO.ViewDTO viewDTO = currencyList.stream().filter(req -> req.getId().equals(shopInfoEntity.getSettlementCurrency())).findFirst().orElse(null);
-                    if (ObjectUtil.isNotEmpty(viewDTO)) {
-                        shudiyunB2cOrderDTO.setSettlement_currency_code(viewDTO.getId());
-                        shudiyunB2cOrderDTO.setSettlement_currency(viewDTO.getName());
-                    }
-                }
             }
 
-
+            //店铺信息
+            String finalCustomerId = customerId;
+            ShopInfoEntity shopInfoEntity = shopInfoList.stream().filter(req -> finalCustomerId.equals(req.getCustomerId())).findFirst().orElse(null);
+            if (ObjectUtil.isNotEmpty(shopInfoEntity)) {
+                shudiyunB2cOrderDTO.setSubplatform_no(shopInfoEntity.getDictPlatform());
+                shudiyunB2cOrderDTO.setSubplatform_name(PlatformDictEnum.getNameByCode(shopInfoEntity.getDictPlatform()));
+            }
             shudiyunB2cOrderDTO.setShop_no(entity.getCustomerId());
             shudiyunB2cOrderDTO.setShop_name(entity.getCustomerName());
             shudiyunB2cOrderDTO.setRoot_node_no(entity.getCode());
