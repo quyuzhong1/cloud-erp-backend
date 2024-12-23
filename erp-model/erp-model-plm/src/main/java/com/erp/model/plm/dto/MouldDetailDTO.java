@@ -207,6 +207,8 @@ public class MouldDetailDTO implements Serializable {
                 productDto.setProductName(viewDTO.getProductName());
                 if (StringUtils.hasText(viewDTO.getImagesUrl())) {
                     productDto.setImagesUrl(Arrays.asList(viewDTO.getImagesUrl().split(",")));
+                } else {
+                    productDto.setImagesUrl(new ArrayList<>());
                 }
                 mouldProductList.add(productDto);
             }
