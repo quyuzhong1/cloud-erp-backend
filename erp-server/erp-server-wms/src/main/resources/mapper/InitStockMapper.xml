@@ -41,7 +41,8 @@
             isd.warehouse_location AS warehouseLocation,
             isd.qty,
             pi.spu_no AS spuNo,
-            ps.sale_state AS saleState
+            ps.sale_state AS saleState,
+            ism.create_time AS createTime
             from init_stock_detail isd
             inner join init_stock ism on ism.id = isd.main_id and ism.is_deleted = false and ism.dict_trade_type = '00'
             left join product_detail pd on pd.id = isd.sku_id
