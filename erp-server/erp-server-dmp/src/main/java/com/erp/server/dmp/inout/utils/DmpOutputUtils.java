@@ -41,6 +41,9 @@ public class DmpOutputUtils{
 		Integer errorCount = null;
 		String code = "";
 		String systemName = "";
+		if(responseData == null) {
+			responseData = "";
+		}
 		if(status.contains(DmpOutputTaskRecordStatusEnum.ERROR.getCode())) {
 			DmpOutputTaskRecordEntity dmpOutputTaskRecordEntity = dmpOutputTaskRecordService.getById(id);
 			errorCount = dmpOutputTaskRecordEntity.getErrorCount();
@@ -54,7 +57,7 @@ public class DmpOutputUtils{
 					systemName = dmpBasicSystemEntityList.get(0).getName();
 				}
 			}
-			if(!responseData.contains("数据已被他人锁住，为避免数据错误，请稍后再试")) {
+			if(!(responseData.contains("数据已被他人锁住，为避免数据错误，请稍后再试") || responseData.contains("获取锁失败,请求超时"))) {
 				errorCount = errorCount + 1;
 				if(errorCount >= 3 && errorCount%3 == 0) {
 					status = DmpOutputTaskRecordStatusEnum.ERROR.getCode();

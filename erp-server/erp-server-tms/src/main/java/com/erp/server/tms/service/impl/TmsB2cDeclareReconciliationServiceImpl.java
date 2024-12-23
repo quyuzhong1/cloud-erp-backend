@@ -624,8 +624,7 @@ public class TmsB2cDeclareReconciliationServiceImpl extends SuperServiceImpl<Tms
 
     @Override
 	public BatchResultDTO updatePayStatus(String id, String payStatus, LocalDateTime payTime) {
-		TmsB2cDeclareReconciliationEntity entity = super.getById(id);
-        Optional.ofNullable(entity).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "b2c报关对账单"));
+        TmsB2cDeclareReconciliationEntity entity = Optional.ofNullable(super.getById(id)).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "b2c报关对账单"));
         if(payStatus.equals(entity.getPayStatus())) {
         	throw new ServiceException("修改前后支付状态一致");
         }
