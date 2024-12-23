@@ -9,6 +9,7 @@ import javax.validation.Valid;
 import javax.validation.constraints.*;
 import java.io.Serializable;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -260,6 +261,11 @@ public class InitStockDTO implements Serializable {
          * 仓位名称
          */
         private String warehouseLocationName;
+
+        /**
+         * 创建时间
+         */
+        private LocalDateTime createTime;
 
     }
 

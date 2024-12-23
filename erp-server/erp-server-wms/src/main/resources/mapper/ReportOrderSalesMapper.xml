@@ -69,7 +69,8 @@
         ros.virtual_usable_qty as virtualUsableQty,
         ros.virtual_frozen_qty as virtualFrozenQty,
         ros.virtual_total_qty as virtualTotalQty,
-        ros.un_distribution_qty as unDistributionQty
+        ros.un_distribution_qty as unDistributionQty,
+        ros.create_time as createTime
     </sql>
 
     <!-- 删除数据 -->
