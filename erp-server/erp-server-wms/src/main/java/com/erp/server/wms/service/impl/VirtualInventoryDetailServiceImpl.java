@@ -314,7 +314,7 @@ public class VirtualInventoryDetailServiceImpl extends SuperServiceImpl<VirtualI
         }
         List<LocalDate> dateList = list.stream().map(VirtualInventoryAgeDTO.HisInventoryAgeDTO::getDate).collect(Collectors.toList());
         chartDTO.setDateList(dateList);
-        List<String> avgInventoryAgeDaysList = list.stream().map(obj -> obj.getAvgInventoryAgeDays().stripTrailingZeros().toPlainString()).collect(Collectors.toList());
+        List<String> avgInventoryAgeDaysList = list.stream().map(obj -> MathUtil.setScale(obj.getAvgInventoryAgeDays(),4).stripTrailingZeros().toPlainString()).collect(Collectors.toList());
         chartDTO.setAvgInventoryAgeList(avgInventoryAgeDaysList);
         return chartDTO;
     }
