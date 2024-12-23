@@ -477,16 +477,18 @@ public class SoDeliveryNoticeDetailServiceImpl extends SuperServiceImpl<SoDelive
         //发货通知的
         List<SoDeliveryNoticeDetailEntity> soDeliveryNoticeDetailEntityList = this.lambdaQuery()
                 .in(SoDeliveryNoticeDetailEntity::getSourceDetailId, soDetailIds)
-                .eq(SoDeliveryNoticeDetailEntity::getInvalidStatus,Boolean.FALSE)
                 .list();
 
         if(CollUtil.isNotEmpty(soDeliveryNoticeDetailEntityList)){
-            for (SoDeliveryNoticeDetailEntity detailEntity : soDeliveryNoticeDetailEntityList) {
-                SoDeliveryNoticeDetailDTO.PushDownDTO pushDownDTO = new SoDeliveryNoticeDetailDTO.PushDownDTO();
-                pushDownDTO.setSoDetailId(detailEntity.getSourceDetailId());
-                pushDownDTO.setSkuId(detailEntity.getSkuId());
-                pushDownDTO.setSkuNo(detailEntity.getSkuNo());
-                result.add(pushDownDTO);
+            Integer count = soDeliveryNoticeService.lambdaQuery().eq(SoDeliveryNoticeEntity::getId, soDeliveryNoticeDetailEntityList.get(0).getMainId()).eq(SoDeliveryNoticeEntity::getInvalidStatus, Boolean.FALSE).count();
+            if(count > 0){
+                for (SoDeliveryNoticeDetailEntity detailEntity : soDeliveryNoticeDetailEntityList) {
+                    SoDeliveryNoticeDetailDTO.PushDownDTO pushDownDTO = new SoDeliveryNoticeDetailDTO.PushDownDTO();
+                    pushDownDTO.setSoDetailId(detailEntity.getSourceDetailId());
+                    pushDownDTO.setSkuId(detailEntity.getSkuId());
+                    pushDownDTO.setSkuNo(detailEntity.getSkuNo());
+                    result.add(pushDownDTO);
+                }
             }
         }
 
