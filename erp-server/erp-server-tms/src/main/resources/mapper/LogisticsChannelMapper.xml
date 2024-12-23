@@ -253,6 +253,8 @@
         inner join logistics_channel lc on ls.id = lc.main_id and lc.is_deleted = false
         where ${params.sqlMap.default}
         and ls.is_deleted = false
+        and lc.disabled = false
+        and ls.disabled = false
         <if test="params.permissionSql != null and params.permissionSql != ''">
             ${params.permissionSql}
         </if>
