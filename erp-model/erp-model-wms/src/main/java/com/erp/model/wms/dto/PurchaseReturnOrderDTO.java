@@ -581,6 +581,30 @@ public class PurchaseReturnOrderDTO {
         private Integer deductAmountQty;
 
         /**
+         * 补货数量
+         */
+        private Integer replenishQty;
+
+        /**
+         * 采购组织
+         */
+        private String purchaseOrgId;
+
+        /**
+         * 采购组织Name
+         */
+        private String purchaseOrgName;
+
+        /**
+         * 退货组织
+         */
+        private String returnOrgId;
+
+        /**
+         * 退货组织Name
+         */
+        private String returnOrgName;
+        /**
          * 退款金额
          */
         private BigDecimal deductAmountAmount;

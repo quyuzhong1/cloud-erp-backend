@@ -48,7 +48,12 @@
         po.source_id as purchaseSourceId,
         po.source_code as purchaseSourceCode,
         po.source_type as purchaseSourceType,
-        po.subcontract_type as subcontractType
+        po.subcontract_type as subcontractType,
+        pro.purchase_org_id as purchaseOrgId,
+        pro.purchase_org_name as purchaseOrgName,
+        pro.return_org_id as returnOrgId,
+        pro.return_org_name as returnOrgName,
+        prod.replenish_qty as replenishQty
         FROM po_return_detail prod
         INNER JOIN po_return pro ON prod.main_id = pro.id AND pro.is_deleted = FALSE
         LEFT JOIN purchase_order po ON pro.purchase_order_id = po.id AND po.is_deleted = FALSE
