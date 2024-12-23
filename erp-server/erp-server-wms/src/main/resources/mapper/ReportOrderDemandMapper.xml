@@ -31,7 +31,7 @@
     <!-- 通用查询结果列 -->
     <sql id="Base_Column_List">
         rod.id,
-        rod.create_time,
+        rod.create_time as createTime,
         rod.update_time as updateTime,
         rod.create_user_name,
         rod.create_user_id,
