@@ -251,6 +251,6 @@ public class CfgSettingValueDTO implements Serializable {
          * 自动入库配置
          * manual 不自动 auto 自动  semiAuto 部分自动
          */
-        private String autoReturnStockSetting;
+        private String autoReturnStockSetting = "semiAuto";
     }
 }

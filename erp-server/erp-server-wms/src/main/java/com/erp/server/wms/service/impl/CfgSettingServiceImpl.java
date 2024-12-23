@@ -154,11 +154,11 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Cf
     public String getSubcontractReturnStockSetting() {
         CfgSettingEntity entity = baseMapper.getByKey(CfgSettingEnum.SUBCONTRACT_RETURN_STOCK.getCode());
         if (ObjectUtil.isEmpty(entity) || ObjectUtil.isEmpty(entity.getDataJson())) {
-            return "auto";
+            return "semiAuto";
         }
         CfgSettingValueDTO.SubcontractInStock dto = BeanUtil.toBean(entity.getDataJson(), CfgSettingValueDTO.SubcontractInStock.class);
         if(Objects.isNull(dto) || CharSequenceUtil.isBlank(dto.getAutoInStockSetting())){
-            return "auto";
+            return "semiAuto";
         }
         return dto.getAutoInStockSetting();
     }
