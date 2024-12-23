@@ -155,10 +155,17 @@ public class ThirdMappingServiceImpl extends SuperServiceImpl<ThirdMappingMapper
         List<ThirdMappingEntity> deleteList = addDTO.getDeleteList();
         if (CollectionUtils.isNotEmpty(deleteList)) {
             deleteList.forEach(existMapping -> {
-                // 操作日志
-                String msg = StrUtil.format("编辑了【{}】的仓库由【{}】到【{}】", EnumMessage.getNameByCode(PlatformDictEnum.class, existMapping.getThirdSysType()),
-                        existMapping.getThirdName(), "");
-                operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.DMP_THIRD_MAPPING.getCode(), existMapping.getSysId(), "编辑操作");
+                if("logistics".equals(existMapping.getType())){
+                    // 操作日志
+                    String msg = StrUtil.format("编辑了【{}】的渠道由【{}】到【{}】", EnumMessage.getNameByCode(PlatformDictEnum.class, existMapping.getThirdSysType()),
+                            existMapping.getThirdName(), "");
+                    operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.DMP_THIRD_MAPPING.getCode(), existMapping.getSysId(), "编辑操作");
+                }else{
+                    // 操作日志
+                    String msg = StrUtil.format("编辑了【{}】的仓库由【{}】到【{}】", EnumMessage.getNameByCode(PlatformDictEnum.class, existMapping.getThirdSysType()),
+                            existMapping.getThirdName(), "");
+                    operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.DMP_THIRD_MAPPING.getCode(), existMapping.getSysId(), "编辑操作");
+                }
             });
             baseMapper.deleteBatchIds(deleteList.stream().map(ThirdMappingEntity::getId).collect(Collectors.toList()));
             //如果包含iml谷仓 需要通知海外仓解除绑定
@@ -175,10 +182,17 @@ public class ThirdMappingServiceImpl extends SuperServiceImpl<ThirdMappingMapper
             List<ThirdMappingEntity> oldList = this.listByIds(updateList.stream().map(ThirdMappingEntity::getId).collect(Collectors.toList()));
             updateList.forEach(existMapping -> {
                 ThirdMappingEntity oldEntity = oldList.stream().filter(item -> Objects.equals(item.getId(), existMapping.getId())).findFirst().orElseThrow(() -> new ServiceException(ApiError.ERROR_THIRD_WAREHOUSE_NOTFOUND));
-                // 操作日志
-                String msg = StrUtil.format("编辑了【{}】的仓库由【{}】到【{}】", EnumMessage.getNameByCode(PlatformDictEnum.class, existMapping.getThirdSysType()),
-                        oldEntity.getThirdName(), existMapping.getThirdName());
-                operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.DMP_THIRD_MAPPING.getCode(), existMapping.getSysId(), "编辑操作");
+                if("logistics".equals(oldEntity.getType())){
+                    // 操作日志
+                    String msg = StrUtil.format("编辑了【{}】的渠道由【{}】到【{}】", EnumMessage.getNameByCode(PlatformDictEnum.class, existMapping.getThirdSysType()),
+                            oldEntity.getThirdName(), existMapping.getThirdName());
+                    operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.DMP_THIRD_MAPPING.getCode(), existMapping.getSysId(), "编辑操作");
+                }else{
+                    // 操作日志
+                    String msg = StrUtil.format("编辑了【{}】的仓库由【{}】到【{}】", EnumMessage.getNameByCode(PlatformDictEnum.class, existMapping.getThirdSysType()),
+                            oldEntity.getThirdName(), existMapping.getThirdName());
+                    operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.DMP_THIRD_MAPPING.getCode(), existMapping.getSysId(), "编辑操作");
+                }
                 this.updateById(existMapping);
                 if (ThirdSysTypeEnum.WAREHOUSE.getCode().equals(addDTO.getType())) {
                     if (OmsPlatformEnum.getByCode(existMapping.getThirdSysType()) != null) {
@@ -191,10 +205,17 @@ public class ThirdMappingServiceImpl extends SuperServiceImpl<ThirdMappingMapper
         List<ThirdMappingEntity> saveList = addDTO.getSaveList();
         if (CollectionUtils.isNotEmpty(saveList)) {
             saveList.forEach(newEntity -> {
-                // 操作日志
-                String msg = StrUtil.format("编辑了【{}】的仓库由【{}】到【{}】", EnumMessage.getNameByCode(PlatformDictEnum.class, newEntity.getThirdSysType()),
-                        "", newEntity.getThirdName());
-                operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.DMP_THIRD_MAPPING.getCode(), newEntity.getSysId(), "新增操作");
+                if("logistics".equals(newEntity.getType())){
+                    // 操作日志
+                    String msg = StrUtil.format("编辑了【{}】的渠道由【{}】到【{}】", EnumMessage.getNameByCode(PlatformDictEnum.class, newEntity.getThirdSysType()),
+                            "", newEntity.getThirdName());
+                    operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.DMP_THIRD_MAPPING.getCode(), newEntity.getSysId(), "新增操作");
+                }else{
+                    // 操作日志
+                    String msg = StrUtil.format("编辑了【{}】的仓库由【{}】到【{}】", EnumMessage.getNameByCode(PlatformDictEnum.class, newEntity.getThirdSysType()),
+                            "", newEntity.getThirdName());
+                    operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.DMP_THIRD_MAPPING.getCode(), newEntity.getSysId(), "新增操作");
+                }
                 this.save(newEntity);
                 if (ThirdSysTypeEnum.WAREHOUSE.getCode().equals(addDTO.getType())) {
                     if (OmsPlatformEnum.getByCode(newEntity.getThirdSysType()) != null) {
