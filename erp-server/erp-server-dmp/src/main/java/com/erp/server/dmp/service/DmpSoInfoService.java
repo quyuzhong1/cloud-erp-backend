@@ -34,4 +34,6 @@ public interface DmpSoInfoService extends SuperService<DmpSoInfoEntity> {
     * @return
     */
     Boolean update(DmpSoInfoDTO.UpdateDTO dto);
+
+    void addGyyOrder(DmpSoInfoDTO.addGyyOrderDTO dto);
 }

@@ -185,12 +185,6 @@ public class DmpSoDetailEntity extends BaseEntity<DmpSoDetailEntity> {
      */
     @TableField("discount")
     private BigDecimal discount;
-    /**
-     * 商品状态：shipped 已发货、cancel 已取消、unShipped未发货
-     * 枚举：SoB2cItemStatusEnum
-     */
-    @TableField("item_status")
-    private String itemStatus;
 
     /**
      * 子单平台状态

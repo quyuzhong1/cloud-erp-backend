@@ -3,18 +3,37 @@ package com.erp.server.dmp.service.impl;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.stream.Collectors;
 
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.json.JSONUtil;
+import com.baomidou.mybatisplus.core.toolkit.IdWorker;
+import com.common.business.constant.MongoTableNameContant;
+import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.wrapper.FeignQuery;
+import com.common.core.anno.ParamData;
+import com.common.core.enums.CurrencyEnum;
+import com.common.core.enums.PannoEnum;
 import com.common.core.utils.MathUtil;
 import com.erp.model.dmp.entity.DmpSoDetailEntity;
+import com.erp.model.dmp.entity.DmpSoReceiverEntity;
+import com.erp.model.dmp.enums.DmpOrderReturnStatusEnum;
+import com.erp.model.dmp.gyy.GyyOrderEntity;
+import com.erp.model.dmp.gyy.bean.DeliverysBean;
+import com.erp.model.dmp.gyy.bean.DetailsBean;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.enums.OrderSubTypeEnum;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.common.business.dto.ShudiyunB2cOrderDTO;
+import com.erp.server.dmp.pull.mongo.MongoService;
 import com.erp.server.dmp.service.DmpSoDetailService;
+import com.erp.server.dmp.service.DmpSoReceiverService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -49,6 +68,10 @@ public class DmpSoInfoServiceImpl extends SuperServiceImpl<DmpSoInfoMapper, DmpS
 
     @Resource
     private DmpSoDetailService dmpSoDetailService;
+    @Resource
+    private DmpSoReceiverService dmpSoReceiverService;
+    @Resource
+    private MongoService mongoService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -107,4 +130,161 @@ public class DmpSoInfoServiceImpl extends SuperServiceImpl<DmpSoInfoMapper, DmpS
     private void handleData(DmpSoInfoEntity dmpSoInfoEntity) {
     // TODO 验证数据 & 数据赋值
     }
+
+    @Override
+    public void addGyyOrder(DmpSoInfoDTO.addGyyOrderDTO dto) {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+
+        Integer page = 1;
+        while(true) {
+            List<GyyOrderEntity> mongoData = mongoService.findMongoData(dto, page, 1000, MongoTableNameContant.ORIGINAL_GYY_ORDER, GyyOrderEntity.class);
+            if (CollUtil.isEmpty(mongoData)) {
+                return;
+            }
+            for (GyyOrderEntity gyyOrderEntity : mongoData) {
+                DmpSoInfoEntity entity = new DmpSoInfoEntity();
+                if (!"销售订单".equals(gyyOrderEntity.getOrderTypeName())) {
+                    continue;
+                }
+                String mainId = IdWorker.getIdStr();
+                entity.setId(mainId);
+                if (CharSequenceUtil.isNotBlank(gyyOrderEntity.getCreatetime())) {
+                    entity.setPlatformCreateTime(LocalDateTime.parse(gyyOrderEntity.getCreatetime(), formatter));
+                }
+                if (CharSequenceUtil.isNotBlank(gyyOrderEntity.getModifytime())) {
+                    entity.setPlatformUpdateTime(LocalDateTime.parse(gyyOrderEntity.getModifytime(), formatter));
+                }
+                entity.setSourceSystem("gyy");
+                entity.setSourcePlatform("gyy");
+                entity.setThirdCode(gyyOrderEntity.getCode());
+                entity.setPlatformCode(gyyOrderEntity.getPlatformCode());
+                entity.setInvalidStatus(gyyOrderEntity.getCancle());
+                entity.setApproveStatus(ApproveStatusEnum.APPROVE.getStatus());
+                if (gyyOrderEntity.getDeliveryState() == 1) {
+                    entity.setDeliveryStatus(SoB2cBillStatusEnum.ENUM_PARTIAL_SHIPPED.getCode());
+                } else if (gyyOrderEntity.getDeliveryState() == 2) {
+                    entity.setDeliveryStatus(SoB2cBillStatusEnum.ENUM_SHIPPED.getCode());
+                } else {
+                    entity.setDeliveryStatus(SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode());
+                }
+
+                if (gyyOrderEntity.getRefundState() == 1) {
+                    entity.setReturnStatus(DmpOrderReturnStatusEnum.PARTIAL_RETURN.getCode());
+                } else if (gyyOrderEntity.getDeliveryState() == 2) {
+                    entity.setReturnStatus(DmpOrderReturnStatusEnum.ORDER_RETURN.getCode());
+                } else {
+                    entity.setReturnStatus(DmpOrderReturnStatusEnum.NOT_RETURN.getCode());
+                }
+
+                entity.setPlatformOriginalStatus(String.valueOf(gyyOrderEntity.getDeliveryState()));
+                entity.setShopId(gyyOrderEntity.getShopCode());
+                entity.setShopName(gyyOrderEntity.getShopName());
+                entity.setSellRemark(gyyOrderEntity.getSellerMemo());
+                entity.setBuyerRemark(gyyOrderEntity.getBuyerMemo());
+                if (CharSequenceUtil.isNotBlank(gyyOrderEntity.getPaytime())) {
+                    entity.setPayTime(LocalDateTime.parse(gyyOrderEntity.getPaytime(), formatter));
+                }
+                entity.setPayStatus(Boolean.TRUE);
+                entity.setPayMethod("");
+                entity.setCurrencyCode(CurrencyEnum.CNY.getCurrencyCode());
+                entity.setExchangeRate(BigDecimal.ZERO);
+                entity.setPayAmount(gyyOrderEntity.getPayment());
+                entity.setAllAmount(gyyOrderEntity.getPaymentAmount());
+                entity.setShippingAmount(gyyOrderEntity.getPostFee());
+                entity.setPlatformCost(gyyOrderEntity.getOtherServiceFee());
+                entity.setDeliveryTime(null);
+                List<DeliverysBean> deliverys = gyyOrderEntity.getDeliverys();
+                if(CollUtil.isNotEmpty(deliverys)) {
+                    entity.setLogisticsCode(deliverys.get(0).getMailNo());
+                }
+                entity.setLogisticsName(gyyOrderEntity.getExpressName());
+                if (gyyOrderEntity.getApprove()) {
+                    entity.setApproveStatus(ApproveStatusEnum.APPROVE.getStatus());
+                } else {
+                    entity.setApproveStatus(ApproveStatusEnum.WAIT_SUBMIT.getStatus());
+                }
+                entity.setTotalDiscount(gyyOrderEntity.getDiscountFee());
+                BigDecimal totalCancelGoodsAmount = gyyOrderEntity.getDetails().stream()
+                        .filter(req -> req.getRefund() == 1 || req.getCancel())
+                        .map(req -> req.getPrice().multiply(MathUtil.valueOf(req.getQty())))
+                        .reduce(BigDecimal::add)
+                        .orElse(BigDecimal.ZERO);
+                entity.setTotalCancelGoodsAmount(totalCancelGoodsAmount);
+                entity.setCancelGoodsCurrency("CNY");
+                try {
+                    this.save(entity);
+                } catch (Exception e) {
+                    log.error("数据：" + JSONUtil.toJsonStr(entity));
+                    e.printStackTrace();
+                    return;
+                }
+                try {
+                    dmpSoReceiverService.save(this.receiverHandler(gyyOrderEntity, mainId));
+                } catch (Exception e) {
+                    log.error("数据：" + JSONUtil.toJsonStr(gyyOrderEntity));
+                    e.printStackTrace();
+                    return;
+                }
+                try {
+                    dmpSoDetailService.saveBatch(this.detailHandler(gyyOrderEntity.getDetails(), mainId));
+                } catch (Exception e) {
+                    log.error("数据：" + JSONUtil.toJsonStr(entity));
+                    e.printStackTrace();
+                    return;
+                }
+            }
+            page++;
+        }
+    }
+
+    private List<DmpSoDetailEntity> detailHandler(List<DetailsBean> detailsBeans, String mainId) {
+        List<DmpSoDetailEntity> list = new ArrayList<>();
+        for (DetailsBean detailsBean : detailsBeans) {
+            DmpSoDetailEntity dmpSoDetailEntity = new DmpSoDetailEntity();
+            dmpSoDetailEntity.setMainId(mainId);
+            dmpSoDetailEntity.setThirdDetailId(detailsBean.getItemCode());
+            dmpSoDetailEntity.setSkuNo(detailsBean.getSkuCode());
+            dmpSoDetailEntity.setPlatformSku(detailsBean.getSkuCode());
+            dmpSoDetailEntity.setQty(detailsBean.getQty());
+            dmpSoDetailEntity.setSkuName(detailsBean.getSkuName());
+            dmpSoDetailEntity.setIsGift(detailsBean.getIsGift());
+            dmpSoDetailEntity.setItemRemark(detailsBean.getNote());
+            dmpSoDetailEntity.setExchangeRate(detailsBean.getExchangeRate());
+            dmpSoDetailEntity.setSellPriceOrigin(detailsBean.getPrice());
+            dmpSoDetailEntity.setDiscountAmount(detailsBean.getDiscountFee());
+            dmpSoDetailEntity.setSellPrice(detailsBean.getPrice().subtract((detailsBean.getDiscountFee().divide(MathUtil.valueOf(detailsBean.getQty()), 4, RoundingMode.DOWN))));
+            dmpSoDetailEntity.setAfterAmount(detailsBean.getAmountAfter());
+            dmpSoDetailEntity.setShippingCost(detailsBean.getPostFee());
+            dmpSoDetailEntity.setCurrencyCode("CNY");
+        }
+        return list;
+    }
+
+    private DmpSoReceiverEntity receiverHandler(GyyOrderEntity gyyOrderEntity, String mainId) {
+        DmpSoReceiverEntity soReceiverEntity = new DmpSoReceiverEntity();
+        soReceiverEntity.setMainId(mainId);
+        soReceiverEntity.setCountry("CN");
+        soReceiverEntity.setBuyerId(gyyOrderEntity.getVipCode());
+        soReceiverEntity.setBuyerName(gyyOrderEntity.getVipName());
+        soReceiverEntity.setReceiverName(gyyOrderEntity.getReceiverName());
+        soReceiverEntity.setReceiverTelNumber(gyyOrderEntity.getReceiverMobile());
+        soReceiverEntity.setPostCode(gyyOrderEntity.getReceiverZip());
+        if (CharSequenceUtil.isNotBlank(gyyOrderEntity.getReceiverArea())) {
+            String[] split = gyyOrderEntity.getReceiverArea().split("-");
+            if (split.length > 0) {
+                soReceiverEntity.setProvince(split[0]);
+            }
+            if (split.length > 1) {
+                soReceiverEntity.setCity(split[1]);
+            }
+            if (split.length > 2) {
+                soReceiverEntity.setDistrict(split[2]);
+            }
+        }
+        soReceiverEntity.setFullAddress(gyyOrderEntity.getReceiverAddress());
+        soReceiverEntity.setMainStreet(gyyOrderEntity.getReceiverAddress());
+        soReceiverEntity.setEmail(gyyOrderEntity.getVipEmail());
+        return soReceiverEntity;
+    }
+
 }
