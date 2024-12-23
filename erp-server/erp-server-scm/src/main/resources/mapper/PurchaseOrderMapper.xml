@@ -752,4 +752,32 @@
             </if>
         </where>
     </select>
+    <select id="listAllPurchaseBySkuIdAndSupplier"
+            resultType="com.erp.model.scm.dto.PurchaseOrderDTO$PurchaseCalcQtyDTO">
+        select
+        po.id,
+        pod.id as purchaseDetailId,
+        po.code,
+        pos.supplier_id as supplierId,
+        pod.sku_id as skuId,
+        pod.sku_no as skuNo,
+        pod.purchase_qty as purchaseQty,
+        po.create_time as createTime
+        from purchase_order po
+        inner join purchase_order_detail pod on po.id = pod.purchase_order_id and pod.is_deleted = false
+        left join purchase_order_supplier pos on po.id = pos.purchase_order_id and pos.is_deleted = false
+        where po.invalid_status = false and po.is_deleted = false
+        <if test="skuIdList != null and skuIdList.size > 0">
+            AND pod.sku_id IN
+            <foreach collection="skuIdList" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="supplierIdList != null and supplierIdList.size > 0">
+            AND pos.supplier_id IN
+            <foreach collection="supplierIdList" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+    </select>
 </mapper>
