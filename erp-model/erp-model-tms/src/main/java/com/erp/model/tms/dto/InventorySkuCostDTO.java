@@ -8,6 +8,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.validation.Valid;
 import javax.validation.constraints.Digits;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
@@ -114,6 +115,7 @@ public class InventorySkuCostDTO implements Serializable {
         /**
          * 明细记录
          */
+        @Valid
         List<InventorySkuCostDetailDTO.AddDTO> detailList;
     }
 
