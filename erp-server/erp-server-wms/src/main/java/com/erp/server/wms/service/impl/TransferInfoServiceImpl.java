@@ -780,7 +780,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
             }
 
             //如果存在出冻结流水则无需再次扣减
-            long count = virtualTransFlowList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSourceDetailId(), detailEntity.getId())
+            long count = virtualTransFlowList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSourceDetailId(), soB2cDeliveryDetailId)
                     && CharSequenceUtil.equals(obj.getDictBizType(), VirtualInventoryBusinessTypeEnum.SO_OUT_STOCK.getCode())).count();
             if (count > 0) {
                 return;
