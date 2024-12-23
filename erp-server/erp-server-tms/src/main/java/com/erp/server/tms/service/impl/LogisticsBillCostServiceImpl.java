@@ -1466,8 +1466,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 
 	@Override
 	public BatchResultDTO updatePayStatus(String id, String payStatus, LocalDateTime payTime) {
-		LogisticsBillCostEntity entity = super.getById(id);
-        Optional.ofNullable(entity).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "自发货费用"));
+        LogisticsBillCostEntity entity = Optional.ofNullable(super.getById(id)).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "自发货费用"));
         if(payStatus.equals(entity.getPayStatus())) {
         	throw new ServiceException("修改前后支付状态一致");
         }
