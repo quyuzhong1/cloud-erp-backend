@@ -289,6 +289,7 @@ public class DmpOutputTaskRecordServiceImpl extends SuperServiceImpl<DmpOutputTa
             		result.addAll(s.get());
     			} catch (Exception e) {
     				log.error("并发获取tab失败" , e);
+    				Thread.currentThread().interrupt();
     			}
             }
             redisUtil.set(RedisCacheConstants.DMP_OUTPUT_RECORD_ALL_COUNT , JSON.toJSONString(result));
