@@ -1160,4 +1160,101 @@ public class CalcSalesInfoDimDTO implements Serializable {
          */
         private LocalDate startCalcDate;
     }
+
+    /**
+     * 列表导出
+     */
+    @Getter
+    @Setter
+    public static class ExportSalesInfoListDTO {
+        /**
+         * 试算配置编号
+         */
+        private String code;
+        /**
+         * 试算配置名称
+         */
+        private String name;
+
+        /**
+         * 试算开始日期
+         */
+        private LocalDate startCalcDate;
+
+        /**
+         * 试算结束日期
+         */
+        private LocalDate endCalcDate;
+
+        /**
+         * 历史销量类型
+         */
+        private String saleType;
+
+        /**
+         * 历史销量类型
+         */
+        private String saleTypeName;
+
+        /**
+         * sku id
+         */
+        private String skuId;
+
+        /**
+         * sku
+         */
+        private String skuNo;
+        /**
+         * 品名
+         */
+        private String productName;
+        /**
+         * 店铺
+         */
+        private String shopId;
+        /**
+         * 店铺名字
+         */
+        private String shopName;
+        /**
+         * 国家
+         */
+        private String country;
+        /**
+         * 国家名字
+         */
+        private String countryName;
+        /**
+         * 平台
+         */
+        private String platform;
+        /**
+         * 相似度
+         */
+        private BigDecimal similarity;
+
+        /**
+         * 修改人名称
+         */
+        private String updateUserName;
+        /**
+         * 更新时间
+         */
+        private LocalDateTime updateTime;
+
+        /**
+         * 创建人名称
+         */
+        private String createUserName;
+
+        /**
+         * 创建时间
+         */
+        private LocalDateTime createTime;
+        /**
+         * 备注
+         */
+        private String remark;
+    }
 }

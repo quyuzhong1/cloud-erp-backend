@@ -207,4 +207,32 @@
         </foreach>
 
     </select>
+    <select id="exportMrpSalesCalcList"
+            resultType="com.erp.model.mrp.dto.CalcSalesInfoDimDTO$ExportSalesInfoListDTO">
+        select crc.code as code,
+               crc.name as name,
+               crc.start_calc_date as startCalcDate,
+               crc.end_calc_date as endCalcDate,
+               csid.sku_id as skuId,
+               csid.sku_no,
+               csid.shop_id as shopId,
+               csid.platform,
+               csid.country,
+               crc.sale_type as saleType,
+               csid.similarity,
+               csid.remark,
+               crc.create_user_name,
+               crc.create_time as createTime,
+               csid.update_time as updateTime,
+               csid.update_user_name
+        from calc_sales_info_dim csid
+                 inner join cfg_rule_calc crc on csid.cfg_rule_calc_id = crc.id and crc.is_deleted = false
+        where ${params.sqlMap.default}
+        and csid.is_deleted = FALSE
+        <if test="params.favorite != null and params.favorite ">
+            and exists (select id from calc_sales_info_favorite where is_deleted = false and cfg_rule_calc_id = crc.id
+            and user_id = #{uid})
+        </if>
+        order by csid.update_time desc,csid.id desc
+    </select>
 </mapper>
