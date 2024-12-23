@@ -35,7 +35,8 @@
                source_type,
                source_code,
                sku_total,
-               location_total
+               location_total,
+               create_time as createTime
         from picking_lists
         where ${params.sqlMap.default}
           and source_type = #{params.sourceType}

@@ -127,6 +127,11 @@ public class ReportOrderDemandDetailDTO implements Serializable {
          */
         private Boolean isSplit;
 
+        /**
+         * 创建时间
+         */
+        private LocalDateTime createTime;
+
     }
 
 
