@@ -191,4 +191,14 @@ public class ExportMrpFeignController {
     public PagingVO<VirtualInventoryHistoryDTO.ListDTO> getVirtualInventory(@RequestBody PagingDTO<VirtualInventoryHistoryDTO.SearchParamDTO> dto){
         return virtualInventoryHistoryService.getVirtualInventory(dto);
     }
+
+    /**
+     * 导出试算列表
+     * @param dto 参数
+     */
+    @PostMapping("/exportMrpSalesCalcList")
+    @WebAdvanceQuery
+    public PagingVO<CalcSalesInfoDimDTO.ExportSalesInfoListDTO> exportMrpSalesCalcList(@RequestBody PagingDTO<CalcSalesInfoDimDTO.ParamDTO> dto) {
+        return calcSalesInfoDimService.exportMrpSalesCalcList(dto);
+    }
 }

@@ -26,10 +26,7 @@ import com.common.core.utils.Md5Util;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.mrp.dto.*;
 import com.erp.model.mrp.entity.*;
-import com.erp.model.mrp.enums.CfgRuleSalesDenoisingDenoisingTypeEnum;
-import com.erp.model.mrp.enums.CfgRuleSalesFormulaDefaultTypeEnum;
-import com.erp.model.mrp.enums.CfgRuleSalesFormulaTypeEnum;
-import com.erp.model.mrp.enums.TimePeriodEnum;
+import com.erp.model.mrp.enums.*;
 import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
@@ -524,6 +521,45 @@ public class CalcSalesInfoDimServiceImpl extends SuperServiceImpl<CalcSalesInfoD
             new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
         } catch (IOException e) {
             throw new ServiceException(ApiError.ERROR_95125);
+        }
+    }
+
+    @Override
+    public void exportSalesInfoList(CalcSalesInfoDimDTO.ParamDTO dto) {
+        downloadTaskFeign.saveDownloadTask("销量试算列表导出", FileTaskEventEnum.EXPORT_MRP_SALES_CALC_LIST.getCode(), dto);
+    }
+
+    @Override
+    public PagingVO<CalcSalesInfoDimDTO.ExportSalesInfoListDTO> exportMrpSalesCalcList(PagingDTO<CalcSalesInfoDimDTO.ParamDTO> dto) {
+        LoginUser user = UserContext.getDefaultLoginUser();
+        Page<CalcSalesInfoDimDTO.ExportSalesInfoListDTO> page = baseMapper.exportMrpSalesCalcList(new Page<>(dto.getCurrPage(), dto.getPageSize()), dto.getParams(), user.getUid());
+        if (CollectionUtils.isEmpty(page.getRecords())) {
+            return new PagingVO<>(page);
+        }
+        processListData(page.getRecords());
+        return new PagingVO<>(page);
+    }
+
+    private void processListData(List<CalcSalesInfoDimDTO.ExportSalesInfoListDTO> records) {
+        List<String> skuIds = records.stream().map(CalcSalesInfoDimDTO.ExportSalesInfoListDTO::getSkuId).distinct().collect(Collectors.toList());
+        List<String> shopIds = records.stream().map(CalcSalesInfoDimDTO.ExportSalesInfoListDTO::getShopId).distinct().collect(Collectors.toList());
+        List<String> country = records.stream().map(CalcSalesInfoDimDTO.ExportSalesInfoListDTO::getCountry).distinct().collect(Collectors.toList());
+        List<DictCountryEntity> countryList = new ArrayList<>();
+        if (!CollectionUtils.isEmpty(country)) {
+            countryList = sysDictFeign.listCountryByIds(country);
+        }
+        List<SkuVO> skuVOS = plmTaskFeign.listSkuCategoryByIds(skuIds);
+        List<ShopInfoEntity> shopInfos = shopInfoFeign.listShopInfoByIds(shopIds);
+        Map<String, String> dictBasicMap = getPlatformMap();
+        for (CalcSalesInfoDimDTO.ExportSalesInfoListDTO dto : records) {
+            dto.setSaleTypeName(HistorySalesTypeEnum.getNameByCode(dto.getSaleType()));
+            ShopInfoEntity shopInfoEntity = shopInfos.stream().filter(v -> v.getId().equals(dto.getShopId())).findFirst().orElse(new ShopInfoEntity());
+            SkuVO skuVO = skuVOS.stream().filter(v -> v.getSkuId().equals(dto.getSkuId())).findFirst().orElse(new SkuVO());
+            DictCountryEntity dictCountry = countryList.stream().filter(v -> v.getId().equals(dto.getCountry())).findFirst().orElse(new DictCountryEntity());
+            dto.setPlatform(dictBasicMap.get(dto.getPlatform()));
+            dto.setProductName(skuVO.getSkuName());
+            dto.setCountryName(dictCountry.getNameCn());
+            dto.setShopName(shopInfoEntity.getName());
         }
     }
 

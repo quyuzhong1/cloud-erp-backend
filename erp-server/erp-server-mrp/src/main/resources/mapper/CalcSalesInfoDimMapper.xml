@@ -81,22 +81,22 @@
     </select>
     <select id="exportData" resultType="com.erp.model.mrp.dto.CalcSalesInfoDimDTO$ExportDTO">
         select csic.id,
-               csic.sku_id,
-               csic.sku_no,
-               csic.country,
-               csic.shop_id,
-               csic.platform,
-               csic.sales_qty_json,
-               csic.avg_sales_qty_json,
-               csic.cfg_rule_calc_id,
-               crc.start_calc_date,
-               crc.end_calc_date
+        csic.sku_id,
+        csic.sku_no,
+        csic.country,
+        csic.shop_id,
+        csic.platform,
+        csic.sales_qty_json,
+        csic.avg_sales_qty_json,
+        csic.cfg_rule_calc_id,
+        crc.start_calc_date,
+        crc.end_calc_date
         from calc_sales_info_dim csic
-                 inner join cfg_rule_calc crc on csic.cfg_rule_calc_id = crc.id and crc.is_deleted = false
+        inner join cfg_rule_calc crc on csic.cfg_rule_calc_id = crc.id and crc.is_deleted = false
         where ${params.sqlMap.default}
-          and csic.is_deleted = FALSE
+        and csic.is_deleted = FALSE
         <if test="params.cfgRuleCalcId != null and params.cfgRuleCalcId != ''">
-           and csic.cfg_rule_calc_id = #{params.cfgRuleCalcId}
+            and csic.cfg_rule_calc_id = #{params.cfgRuleCalcId}
         </if>
     </select>
 
@@ -182,28 +182,58 @@
                crc.name
         from calc_sales_info_dim csid
                  inner join cfg_rule_calc crc on csid.cfg_rule_calc_id = crc.id and crc.is_deleted = false
-        where csid.is_deleted = false and csid.sku_id = #{dto.skuId}
-          and csid.shop_id = #{dto.shopId} and crc.start_calc_date = #{dto.startCalcDate}
+        where csid.is_deleted = false
+          and csid.sku_id = #{dto.skuId}
+          and csid.shop_id = #{dto.shopId}
+          and crc.start_calc_date = #{dto.startCalcDate}
     </select>
     <select id="listCompareByIds" resultType="com.erp.model.mrp.dto.CalcSalesInfoDimDTO$CompareResultDTO">
         select csid.id,
-               csid.sku_id,
-               csid.sku_no,
-               csid.shop_id,
-               csid.platform,
-               csid.country,
-               csid.cfg_rule_calc_id,
-               csid.his_data_md5,
-               crc.start_calc_date,
-               crc.end_calc_date,
-               crc.name
+        csid.sku_id,
+        csid.sku_no,
+        csid.shop_id,
+        csid.platform,
+        csid.country,
+        csid.cfg_rule_calc_id,
+        csid.his_data_md5,
+        crc.start_calc_date,
+        crc.end_calc_date,
+        crc.name
         from calc_sales_info_dim csid
-                 inner join cfg_rule_calc crc on csid.cfg_rule_calc_id = crc.id and crc.is_deleted = false
+        inner join cfg_rule_calc crc on csid.cfg_rule_calc_id = crc.id and crc.is_deleted = false
         where csid.is_deleted = false
         and csid.id in
         <foreach collection="ids" item="id" open="(" close=")" separator=",">
             #{id}
         </foreach>
 
+    </select>
+    <select id="exportMrpSalesCalcList"
+            resultType="com.erp.model.mrp.dto.CalcSalesInfoDimDTO$ExportSalesInfoListDTO">
+        select crc.code as code,
+        crc.name as name,
+        crc.start_calc_date as startCalcDate,
+        crc.end_calc_date as endCalcDate,
+        csic.sku_id as skuId,
+        csic.sku_no,
+        csic.shop_id as shopId,
+        csic.platform,
+        csic.country,
+        crc.sale_type as saleType,
+        csic.similarity,
+        csic.remark,
+        crc.create_user_name,
+        crc.create_time as createTime,
+        csic.update_time as updateTime,
+        csic.update_user_name
+        from calc_sales_info_dim csic
+        inner join cfg_rule_calc crc on csic.cfg_rule_calc_id = crc.id and crc.is_deleted = false
+        where ${params.sqlMap.default}
+        and csic.is_deleted = FALSE
+        <if test="params.favorite != null and params.favorite ">
+            and exists (select id from calc_sales_info_favorite where is_deleted = false and cfg_rule_calc_id = crc.id
+            and user_id = #{uid})
+        </if>
+        order by csic.update_time desc,csic.id desc
     </select>
 </mapper>

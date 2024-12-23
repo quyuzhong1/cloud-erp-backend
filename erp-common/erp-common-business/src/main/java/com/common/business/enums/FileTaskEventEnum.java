@@ -217,6 +217,7 @@ public enum FileTaskEventEnum implements EnumMessage {
     EXPORT_MRP_DELIVERY_SUGGESTION_ENTITY("EXPORT_MRP_DELIVERY_SUGGESTION_ENTITY", "补货建议"),
 
     EXPORT_MRP_SALES_CALC("EXPORT_MRP_SALES_CALC", "销量试算"),
+    EXPORT_MRP_SALES_CALC_LIST("EXPORT_MRP_SALES_CALC_LIST", "销量试算列表"),
 
 
     //workflow
