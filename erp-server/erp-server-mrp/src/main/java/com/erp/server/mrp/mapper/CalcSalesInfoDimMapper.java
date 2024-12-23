@@ -63,4 +63,11 @@ public interface CalcSalesInfoDimMapper extends BaseMapper<CalcSalesInfoDimEntit
      * @param ids id
      */
     List<CalcSalesInfoDimDTO.CompareResultDTO> listCompareByIds(@Param("ids") List<String> ids);
+
+    /**
+     * 导出
+     * @param page   分页
+     * @param params 参数
+     */
+    Page<CalcSalesInfoDimDTO.ExportSalesInfoListDTO> exportMrpSalesCalcList(@Param("page") Page<CalcSalesInfoDimDTO.ExportSalesInfoListDTO> page,@Param("params") CalcSalesInfoDimDTO.ParamDTO params,  @Param("uid") String uid);
 }

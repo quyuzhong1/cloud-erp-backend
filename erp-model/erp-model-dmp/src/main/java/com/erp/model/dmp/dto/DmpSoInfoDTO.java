@@ -2,6 +2,9 @@ package com.erp.model.dmp.dto;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+
+import com.common.core.anno.Panno;
+import com.common.core.enums.PannoEnum;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
@@ -473,4 +476,24 @@ public class DmpSoInfoDTO implements Serializable {
     }
 
 
+    /**
+     * 添加管易订单入参
+     */
+    @Data
+    @NoArgsConstructor
+    public static class addGyyOrderDTO{
+
+        /**
+         * 开始时间
+         */
+        @Panno(findType = PannoEnum.GTE,field = "createtime")
+        private String startTime;
+
+        /**
+         * 结算时间
+         */
+        @Panno(findType = PannoEnum.LTE,field = "createtime")
+        private String endTime;
+
+    }
 }
