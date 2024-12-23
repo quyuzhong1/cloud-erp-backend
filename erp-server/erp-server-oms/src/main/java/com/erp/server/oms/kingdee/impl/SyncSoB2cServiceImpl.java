@@ -282,7 +282,12 @@ public class SyncSoB2cServiceImpl implements SyncSoB2cService {
 
     @Override
     public void syncDataToSdy(SoB2cEntity soB2cEntity, List<SoB2cDetailEntity> soB2cDetailEntityList, String operate) {
-        this.syncDataToSdyFieldHandlerBatch(soB2cEntity, soB2cDetailEntityList, operate);
+    	if(CollUtil.isNotEmpty(soB2cDetailEntityList)) {
+    		List<SoB2cDetailEntity> newSoB2cDetailEntityList = soB2cDetailEntityList.stream().filter(s -> StringUtils.isNotBlank(s.getSkuId())).collect(Collectors.toList());
+    		if(CollUtil.isNotEmpty(newSoB2cDetailEntityList)) {
+    			this.syncDataToSdyFieldHandlerBatch(soB2cEntity, newSoB2cDetailEntityList, operate);
+    		}
+    	}
 
     }
 
