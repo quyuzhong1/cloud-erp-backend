@@ -7,6 +7,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * 数据幂等性注解 支持参数标记
  */
+@Deprecated
 @Target({ElementType.METHOD, ElementType.PARAMETER})
 @Retention(RetentionPolicy.RUNTIME)
 @Documented
