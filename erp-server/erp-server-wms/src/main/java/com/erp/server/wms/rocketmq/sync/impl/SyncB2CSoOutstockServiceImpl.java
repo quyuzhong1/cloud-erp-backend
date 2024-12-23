@@ -7,6 +7,7 @@ import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.common.business.annotation.DataIdempotent;
+import com.common.business.annotation.DistributeLocker;
 import com.common.business.dto.WdtSoOutStockDTO;
 import com.common.business.dto.WdtSoOutStockDetailDTO;
 import com.common.business.dto.base.BaseIdDTO;
@@ -183,7 +184,7 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @DataIdempotent(keyIdName = "entity.code")
+    @DistributeLocker(keyName = "entity.code")
     public void syncWdtSoOutStock(WdtSoOutStockDTO entity) {
         SoOutstockEntity soOutstockEntity = soOutstockService.getOne(Wrappers.<SoOutstockEntity>lambdaQuery()
                 .eq(SoOutstockEntity::getThirdCode, entity.getThirdCode()));

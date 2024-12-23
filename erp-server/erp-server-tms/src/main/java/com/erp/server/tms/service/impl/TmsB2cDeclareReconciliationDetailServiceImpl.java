@@ -215,7 +215,7 @@ public class TmsB2cDeclareReconciliationDetailServiceImpl extends SuperServiceIm
         for (TmsB2cDeclareReconciliationDetailEntity detailEntity : allNewDetailList) {
         	BigDecimal estimateWeight = detailEntity.getEstimateWeight();
         	if(estimateWeight != null) {
-        		if(detailEntity.getEstimateWeightUnit() == "kg") {
+        		if(detailEntity.getEstimateWeightUnit().equals("kg")) {
         			estimateWeight = estimateWeight.multiply(new BigDecimal("1000"));
         		}
         		String logisticsChannelId = detailEntity.getLogisticsChannelId();
@@ -255,7 +255,7 @@ public class TmsB2cDeclareReconciliationDetailServiceImpl extends SuperServiceIm
             BigDecimal estimateWeight = detailEntity.getEstimateWeight();
             if(estimateWeight != null) {
             	String logisticsChannelId = detailEntity.getLogisticsChannelId();
-            	if(detailEntity.getEstimateWeightUnit() == "kg") {
+            	if(detailEntity.getEstimateWeightUnit().equals("kg")) {
         			estimateWeight = estimateWeight.multiply(new BigDecimal("1000"));
         		}
             	String sourceDetailId = detailEntity.getSourceDetailId();
