@@ -2051,7 +2051,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         list.forEach(obj -> {
             List<TransferInfoDetailEntity> transferInfoDetailEntityList1 = transferDetailMap.get(obj.getId());
             transferInfoDetailEntityList1 = CollUtil.isNotEmpty(transferInfoDetailEntityList1) ? transferInfoDetailEntityList1.stream().filter(e -> !ignoreInventorySkuIds.contains(e.getSkuId())).collect(Collectors.toList()) : Collections.emptyList();
-            if (CollUtil.isNotEmpty(transferInfoDetailEntityList1)){
+            if (SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate) || CollUtil.isNotEmpty(transferInfoDetailEntityList1)){
                 DmpPushTaskEntity pushTaskEntity = syncKingdeeTransferInfoService.syncDataToKingdee(obj,transferInfoDetailEntityList1, operate);
                 resultList.add(pushTaskEntity);
             }
