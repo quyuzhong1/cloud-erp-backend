@@ -28,6 +28,7 @@
         rsd.total_inventory_qty totalInventoryQty,
         rsd.sales_qty as salesQtyJson,
         rsd.avg_sales_qty as avgSalesQtyJson,
+        rsd.real_sale_qty as realSalesQtyJson,
         rsd.sales_estimate_qty as salesEstimateQtyJson,
         rsd.avg_sales_estimate_qty as avgSalesEstimateQtyJson,
         rsd.purchase_approve_days,

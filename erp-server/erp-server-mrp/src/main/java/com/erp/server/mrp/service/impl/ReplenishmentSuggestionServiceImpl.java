@@ -231,6 +231,8 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
             view.setShopName(shopInfoEntity.getName());
             view.setAvgSalesQty(JSON.parseObject(view.getAvgSalesQtyJson(), new TypeReference<List<ReplenishmentSuggestionVO.SalesVO>>() {
             }));
+            view.setRealSalesQty(JSON.parseObject(view.getRealSalesQtyJson(), new TypeReference<List<ReplenishmentSuggestionVO.SalesVO>>() {
+            }));
             view.setSalesQty(JSON.parseObject(view.getSalesQtyJson(), new TypeReference<List<ReplenishmentSuggestionVO.SalesVO>>() {
             }));
             view.setSalesEstimateQty(JSON.parseObject(view.getSalesEstimateQtyJson(), new TypeReference<List<ReplenishmentSuggestionVO.SalesVO>>() {
