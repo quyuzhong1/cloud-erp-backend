@@ -52,6 +52,11 @@ public class FirstMileProcessingEntity extends BaseEntity<FirstMileProcessingEnt
     @TableField("first_mile_delivery_code")
     private String firstMileDeliveryCode;
     /**
+     * 头程发货单明显id
+     */
+    @TableField("first_mile_delivery_detail_id")
+    private String firstMileDeliveryDetailId;
+    /**
     * 头程发货单审核状态
     */
     @TableField("delivery_approve_status")

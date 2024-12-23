@@ -1,5 +1,6 @@
 package com.erp.model.wms.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import lombok.Data;
@@ -282,27 +283,18 @@ public class FirstMileProcessingDTO implements Serializable {
 
     }
 
-    /**
-    * 新增
-    */
-    @Data
-    @NoArgsConstructor
-    public static class AddDTO extends CommonDTO {
 
-
-    }
 
     /**
     * 修改
     */
     @Data
     @NoArgsConstructor
-    public static class UpdateDTO extends CommonDTO {
+    public static class AddOrUpdateDTO extends CommonDTO {
 
         /**
         * 主键id
         */
-        @NotBlank(message = "主键id不能为空")
         private String id;
 
     }
@@ -326,6 +318,11 @@ public class FirstMileProcessingDTO implements Serializable {
         private String requisitionApplicationCode;
 
         /**
+         * 要货申请状态
+         */
+        private String requisitionApplicationStatus;
+
+        /**
         * 头程发货单id
         */
         @NotBlank(message = "头程发货单id不能为空")
@@ -338,6 +335,13 @@ public class FirstMileProcessingDTO implements Serializable {
         @NotBlank(message = "头程发货单编码不能为空")
         @Size(max = 32,message = "头程发货单编码最大长度不能超过32位")
         private String firstMileDeliveryCode;
+
+        /**
+         * 头程发货单明细id
+         */
+        @NotBlank(message = "头程发货单明细id不能为空")
+        @Size(max = 19,message = "头程发货单明细id最大长度不能超过19位")
+        private String firstMileDeliveryDetailId;
 
         /**
         * 头程发货单审核状态

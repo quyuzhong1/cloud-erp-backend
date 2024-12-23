@@ -97,7 +97,8 @@
             sbd.code as deliveryCode,
             sbd.status as deliveryStatus,
             sbd.delivery_time as deliveryTime,
-            sbdd.qty as deliveryQty,
+            sbdd.id as deliveryDetailId,
+            sbdd.delivery_qty as deliveryQty,
             sbdd.sku_id as skuId,
             sbdd.warehouse_id as warehouseId,
             sbdd.virtual_warehouse_id as virtualWarehouseId,
@@ -105,7 +106,7 @@
             sbdd.delivery_qty as frozenQty
         from so_b2c_delivery sbd
         inner join so_b2c_delivery_detail sbdd on sbd.id = sbdd.main_id and sbdd.is_deleted = false
-        where sbd.is_deleted = false
+        where sbd.is_deleted = false and sbdd.virtual_warehouse_id != ''
         <if test="startDate != null">
             and sbd.create_time > #{startDate}
         </if>

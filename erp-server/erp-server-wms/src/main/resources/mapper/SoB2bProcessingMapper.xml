@@ -106,7 +106,7 @@
             sdnd.delivery_qty as deliveryQty,
             sdnd.sku_id as skuId,
             sdn.warehouse_id as warehouseId,
-            sdn.virtual_warehouse_id as virtualWarehosueId,
+            sdn.virtual_warehouse_id as virtualWarehouseId,
             sdn.create_time as frozenTime,
             sd.frozen_qty as frozenQty
         from so_delivery_notice sdn

@@ -1,5 +1,5 @@
 package com.erp.server.wms.service;
-import com.common.business.dto.base.BaseResultDTO;
+
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
@@ -7,6 +7,7 @@ import com.erp.model.wms.dto.FirstMileProcessingDTO;
 import com.erp.model.wms.entity.FirstMileProcessingEntity;
 
 import java.time.LocalDate;
+import java.util.List;
 
 /**
  * <p>
@@ -19,22 +20,13 @@ import java.time.LocalDate;
 public interface FirstMileProcessingService extends SuperService<FirstMileProcessingEntity> {
 
     /**
-    * 新增
-    * @author will
-    * @date: 2024-12-18
-    * @param dto
-    * @return
-    */
-    BaseResultDTO.AddDTO add(FirstMileProcessingDTO.AddDTO dto);
-
-    /**
     * 修改
     * @author will
     * @date: 2024-12-18
-    * @param dto
+    * @param list
     * @return
     */
-    Boolean update(FirstMileProcessingDTO.UpdateDTO dto);
+    Boolean update(List<FirstMileProcessingDTO.AddOrUpdateDTO> list);
 
     /**
      * 分页查询

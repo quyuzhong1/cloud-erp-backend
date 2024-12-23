@@ -3,6 +3,7 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -10,7 +11,6 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
-import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
@@ -77,9 +77,13 @@ public class SoB2cProcessingServiceImpl extends SuperServiceImpl<SoB2cProcessing
         }
         // 数据处理
         List<SoB2cProcessingEntity> soB2cProcessingList =  handleData(list);
-        boolean save = super.saveOrUpdateBatch(soB2cProcessingList);
-        if(!save) {
-            throw new ServiceException("B2C虚拟仓订单跟踪保存失败");
+        List<SoB2cProcessingEntity> addList = soB2cProcessingList.stream().filter(obj -> CharSequenceUtil.isBlank(obj.getId())).collect(Collectors.toList());
+        List<SoB2cProcessingEntity> updateList = soB2cProcessingList.stream().filter(obj -> CharSequenceUtil.isNotBlank(obj.getId())).collect(Collectors.toList());
+        if (CollUtil.isNotEmpty(addList)) {
+            super.saveBatch(addList);
+        }
+        if (CollUtil.isNotEmpty(updateList)) {
+            super.updateBatchById(updateList);
         }
         return Boolean.TRUE;
     }
@@ -166,6 +170,7 @@ public class SoB2cProcessingServiceImpl extends SuperServiceImpl<SoB2cProcessing
                 addDTO.setOutstockQty(ObjectUtil.isEmpty(addDTO.getOutstockQty()) ? MathUtil.ZERO : addDTO.getOutstockQty() * childrenSkuDTO.getQuantity());
                 addDTO.setFrozenQty(ObjectUtil.isEmpty(addDTO.getFrozenQty()) ? MathUtil.ZERO :addDTO.getFrozenQty() * childrenSkuDTO.getQuantity());
                 addDTO.setDeliveryQty(ObjectUtil.isEmpty(addDTO.getDeliveryQty()) ? MathUtil.ZERO :addDTO.getDeliveryQty() * childrenSkuDTO.getQuantity());
+                addDTO.setBomVersion(childrenSkuDTO.getBomVersion());
                 addList.add(addDTO);
             }
         }
@@ -206,7 +211,9 @@ public class SoB2cProcessingServiceImpl extends SuperServiceImpl<SoB2cProcessing
             BeanMapperUtils.copy(addOrUpdateDTO,entity);
             //旧数据
             SoB2cProcessingEntity old = oldList.stream().filter(obj -> StrUtil.equals(obj.getDeliveryDetailId(), addOrUpdateDTO.getDeliveryDetailId())).findFirst().orElse(null);
-            entity.setId(old.getId());
+            if (ObjUtil.isNotNull(old)) {
+                entity.setId(old.getId());
+            }
             newList.add(entity);
         }
         return newList;

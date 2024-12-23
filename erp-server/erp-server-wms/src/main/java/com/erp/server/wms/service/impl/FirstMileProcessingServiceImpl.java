@@ -1,31 +1,36 @@
 package com.erp.server.wms.service.impl;
 
 
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
-import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
-import com.common.core.enums.ApiError;
-import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.MathUtil;
+import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.wms.dto.FirstMileProcessingDTO;
+import com.erp.model.wms.dto.SoB2bProcessingDTO;
 import com.erp.model.wms.entity.FirstMileProcessingEntity;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
+import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.mapper.FirstMileProcessingMapper;
-import com.erp.server.wms.service.FirstMileProcessingService;
-import com.erp.server.wms.service.OperateLogService;
-import io.seata.spring.annotation.GlobalTransactional;
+import com.erp.server.wms.service.*;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.Resource;
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
+import java.util.stream.Collectors;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_SO_B2C_PROCESSING;
 
@@ -40,61 +45,45 @@ import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_SO_B2C_PROC
 @Slf4j
 @Service
 public class FirstMileProcessingServiceImpl extends SuperServiceImpl<FirstMileProcessingMapper, FirstMileProcessingEntity> implements FirstMileProcessingService {
-    @Autowired
+    @Resource
     private OperateLogService operateLogService;
 
-    @Autowired
+    @Resource
     private DownloadTaskFeign downloadTaskFeign;
 
-    @GlobalTransactional(rollbackFor = Exception.class)
-    @Transactional(rollbackFor = Exception.class)
-    @Override
-    public BaseResultDTO.AddDTO add(FirstMileProcessingDTO.AddDTO addDTO) {
-        FirstMileProcessingEntity firstMileProcessingEntity = new FirstMileProcessingEntity();
-        BeanMapperUtils.copy(addDTO, firstMileProcessingEntity);
+    @Resource
+    private PlmTaskFeign plmTaskFeign;
 
-        // 数据处理
-        handleData(firstMileProcessingEntity);
+    @Resource
+    private MachineDetailService machineDetailService;
 
-        log.info("开始新增头程虚拟仓订单跟踪");
-        boolean save = super.save(firstMileProcessingEntity);
-        if(!save) {
-            throw new ServiceException("头程虚拟仓订单跟踪保存失败");
-        }
+    @Resource
+    private TransferInfoDetailService transferInfoDetailService;
 
-        // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "头程虚拟仓订单跟踪" , firstMileProcessingEntity.getId());
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, firstMileProcessingEntity.getId(), "新增操作");
-        // TODO 新增明细（如果有明细的话）
+    @Resource
+    private SoOutstockDetailService soOutstockDetailService;
 
-        return new BaseResultDTO.AddDTO(firstMileProcessingEntity.getId(), firstMileProcessingEntity.getId());
-    }
 
     /**
     * 修改
     */
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public Boolean update(FirstMileProcessingDTO.UpdateDTO updateDTO) {
-        FirstMileProcessingEntity old = super.getById(updateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "头程虚拟仓订单跟踪"));
-        FirstMileProcessingEntity firstMileProcessingEntity =  BeanMapperUtils.map(FirstMileProcessingEntity.class, updateDTO);
-
-        // 数据处理
-        handleData(firstMileProcessingEntity);
-        log.info("编辑 开始修改头程虚拟仓订单跟踪数据，id：【{}】", old.getId());
-        boolean save = super.updateById(firstMileProcessingEntity);
-        if(!save) {
-            throw new ServiceException("头程虚拟仓订单跟踪保存失败");
+    public Boolean update(List<FirstMileProcessingDTO.AddOrUpdateDTO> list) {
+        if (CollUtil.isEmpty(list)) {
+            lambdaUpdate().remove();
+            return Boolean.TRUE;
         }
-        // TODO 修改明细数据（包含增删改）（如果有明细的话）
-
-        // 记录主单操作日志
-            log.info("编辑 开始记录头程虚拟仓订单跟踪日志数据，id：【{}】", firstMileProcessingEntity.getId());
-            String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), firstMileProcessingEntity.getId(), "头程虚拟仓订单跟踪");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLogByObj(old, firstMileProcessingEntity, null, firstMileProcessingEntity.getId(), msg);
+        // 数据处理
+        List<FirstMileProcessingEntity> firstMileProcessingList =  handleData(list);
+        List<FirstMileProcessingEntity> addList = firstMileProcessingList.stream().filter(obj -> CharSequenceUtil.isBlank(obj.getId())).collect(Collectors.toList());
+        List<FirstMileProcessingEntity> updateList = firstMileProcessingList.stream().filter(obj -> CharSequenceUtil.isNotBlank(obj.getId())).collect(Collectors.toList());
+        if (CollUtil.isNotEmpty(addList)) {
+            super.saveBatch(addList);
+        }
+        if (CollUtil.isNotEmpty(updateList)) {
+            super.updateBatchById(updateList);
+        }
         return Boolean.TRUE;
     }
 
@@ -115,15 +104,136 @@ public class FirstMileProcessingServiceImpl extends SuperServiceImpl<FirstMilePr
 
     @Override
     public void autoUpdateFirstMileProcessing(LocalDate startDate) {
-            baseMapper.listFirstMileProcessing(startDate);
+        List<FirstMileProcessingEntity> list = baseMapper.listFirstMileProcessing(startDate);
+        if (CollUtil.isEmpty(list)) {
+            return;
+        }
+        List<String> skuIdList = list.stream().map(FirstMileProcessingEntity::getSkuId).distinct().collect(Collectors.toList());
+        List<BomChildrenSkuDTO> bomChildrenSkuList = plmTaskFeign.listBomChildBySkuIds(skuIdList);
+
+        /**
+         * 1、头程非组合品订单中转走直接调拨单出库，非中转走销售出库单出库
+         * 2、头程组合品走加工单出库
+         */
+        //查询加工单数据
+        List<String> detailIdList = list.stream().map(FirstMileProcessingEntity::getFirstMileDeliveryDetailId).distinct().collect(Collectors.toList());
+        List<SoB2bProcessingDTO.ResponseDTO> machineList = machineDetailService.listMachineBySourceDetailIdList(detailIdList);
+
+        //直接调拨单数据
+        List<SoB2bProcessingDTO.ResponseDTO> transferList = transferInfoDetailService.listTransferBySourceDetailIdList(detailIdList);
+
+        //销售出库单数据
+        List<SoB2bProcessingDTO.ResponseDTO> soOutstockList = soOutstockDetailService.listSoOutstockBySourceDetailIdList(detailIdList);
+
+        List<FirstMileProcessingDTO.AddOrUpdateDTO> addList = new ArrayList<>();
+        for (FirstMileProcessingEntity entity :list) {
+
+            //加工单
+            SoB2bProcessingDTO.ResponseDTO machineResponseDTO = machineList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSourceDetailId(), entity.getFirstMileDeliveryDetailId()))
+                    .findFirst().orElse(null);
+            if (ObjectUtil.isNotEmpty(machineResponseDTO)) {
+                handleOutstock (entity,machineResponseDTO, SourceTypeEnum.MACHINE_INFO.getCode());
+            }
+            //直接调拨单
+            SoB2bProcessingDTO.ResponseDTO transferResponseDTO = transferList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSourceDetailId(), entity.getFirstMileDeliveryDetailId()))
+                    .findFirst().orElse(null);
+            if (ObjectUtil.isNotEmpty(transferResponseDTO)) {
+                handleOutstock (entity,transferResponseDTO, SourceTypeEnum.TRANSFER_INFO.getCode());
+            }
+            //销售出库单
+            SoB2bProcessingDTO.ResponseDTO soOutstockResponseDTO = soOutstockList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSourceDetailId(), entity.getFirstMileDeliveryDetailId()))
+                    .findFirst().orElse(null);
+            if (ObjectUtil.isNotEmpty(soOutstockResponseDTO)) {
+                handleOutstock (entity,soOutstockResponseDTO, SourceTypeEnum.SO_OUTSTOCK.getCode());
+            }
+            //bom信息
+            List<BomChildrenSkuDTO> childList = bomChildrenSkuList.stream().filter(obj -> CharSequenceUtil.equals(obj.getParentSkuId(), entity.getSkuId())).collect(Collectors.toList());
+            if (CollUtil.isEmpty(childList)) {
+                FirstMileProcessingDTO.AddOrUpdateDTO addDTO = new FirstMileProcessingDTO.AddOrUpdateDTO();
+                BeanMapperUtils.copy(entity,addDTO);
+                addList.add(addDTO);
+                continue;
+            }
+            for (BomChildrenSkuDTO childrenSkuDTO : childList) {
+                FirstMileProcessingDTO.AddOrUpdateDTO addOrUpdateDTO = new FirstMileProcessingDTO.AddOrUpdateDTO();
+                BeanMapperUtils.copy(entity,addOrUpdateDTO);
+                addOrUpdateDTO.setSkuId(childrenSkuDTO.getSkuId());
+                addOrUpdateDTO.setParentSkuId(childrenSkuDTO.getParentSkuId());
+                addOrUpdateDTO.setOutstockQty(ObjectUtil.isEmpty(addOrUpdateDTO.getOutstockQty()) ? MathUtil.ZERO : addOrUpdateDTO.getOutstockQty() * childrenSkuDTO.getQuantity());
+                addOrUpdateDTO.setFrozenQty(ObjectUtil.isEmpty(addOrUpdateDTO.getFrozenQty()) ? MathUtil.ZERO :addOrUpdateDTO.getFrozenQty() * childrenSkuDTO.getQuantity());
+                addOrUpdateDTO.setApproveQty(ObjectUtil.isEmpty(addOrUpdateDTO.getDeliveryQty()) ? MathUtil.ZERO :addOrUpdateDTO.getApproveQty() * childrenSkuDTO.getQuantity());
+                addOrUpdateDTO.setDeliveryQty(ObjectUtil.isEmpty(addOrUpdateDTO.getDeliveryQty()) ? MathUtil.ZERO :addOrUpdateDTO.getDeliveryQty() * childrenSkuDTO.getQuantity());
+                addOrUpdateDTO.setBomVersion(childrenSkuDTO.getBomVersion());
+                addList.add(addOrUpdateDTO);
+            }
+        }
+        this.update(addList);
     }
 
 
     /**
-    * 新增修改处理数据
-    */
-    private void handleData(FirstMileProcessingEntity firstMileProcessingEntity) {
-    // TODO 验证数据 & 数据赋值
+     * 新增修改处理数据
+     */
+    private List<FirstMileProcessingEntity> handleData(List<FirstMileProcessingDTO.AddOrUpdateDTO> list) {
+        List<String> detailIdList = list.stream().map(FirstMileProcessingDTO.AddOrUpdateDTO::getFirstMileDeliveryDetailId).distinct().collect(Collectors.toList());
+        List<FirstMileProcessingEntity> oldList = this.listByFirstMileDeliveryDetailIdList(detailIdList);
+        List<String> deleteIds = getDeleteIds(list, oldList);
+        if (CollUtil.isNotEmpty(deleteIds)) {
+            this.removeByIds(deleteIds);
+        }
+        List<FirstMileProcessingEntity> newList = new ArrayList<>();
+        for (FirstMileProcessingDTO.AddOrUpdateDTO addOrUpdateDTO :list) {
+            FirstMileProcessingEntity entity = new FirstMileProcessingEntity();
+            BeanMapperUtils.copy(addOrUpdateDTO,entity);
+            //旧数据
+            FirstMileProcessingEntity old = oldList.stream().filter(obj -> StrUtil.equals(obj.getFirstMileDeliveryDetailId(), addOrUpdateDTO.getFirstMileDeliveryDetailId())).findFirst().orElse(null);
+            if (ObjectUtil.isNotEmpty(old)) {
+                entity.setId(old.getId());
+            }
+            newList.add(entity);
+        }
+        return newList;
+    }
+
+    /**
+     * 查询需要删除的数据
+     */
+    private List<String> getDeleteIds(List<FirstMileProcessingDTO.AddOrUpdateDTO> newList, List<FirstMileProcessingEntity> oldList) {
+        List<String> newIds = newList.stream().filter(g -> StringUtils.isNotBlank(g.getId())).
+                map(FirstMileProcessingDTO.AddOrUpdateDTO::getId).collect(Collectors.toList());
+        List<String> oldIds = oldList.stream().map(FirstMileProcessingEntity::getId).collect(Collectors.toList());
+        return oldIds.stream().filter(s -> !newIds.contains(s)).collect(Collectors.toList());
+    }
+
+    /**
+     * 出库字段赋值
+     * @author will
+     * @date 2024/12/19 20:56
+     * @param entity
+     * @param responseDTO
+     * @param sourceType
+     */
+    private void handleOutstock (FirstMileProcessingEntity entity, SoB2bProcessingDTO.ResponseDTO responseDTO,String sourceType) {
+        entity.setOutstockOrderId(responseDTO.getId());
+        entity.setOutstockOrderStatus(responseDTO.getApproveStatus());
+        entity.setOutstockQty(responseDTO.getQty());
+        entity.setOutstockOrderCode(responseDTO.getCode());
+        entity.setOutstockOrderTime(responseDTO.getApproveTime());
+        entity.setOutstockOrderType(sourceType);
+    }
+
+    /**
+     * 根据发货通知单明细id查询
+     * @author will
+     * @date 2024/12/20 10:17
+     * @param firstMileDeliveryDetailIdList
+     * @return List<FirstMileProcessingEntity>
+     */
+    private List<FirstMileProcessingEntity> listByFirstMileDeliveryDetailIdList (List<String> firstMileDeliveryDetailIdList) {
+        if (CollUtil.isEmpty(firstMileDeliveryDetailIdList)) {
+            return Collections.EMPTY_LIST;
+        }
+        return lambdaQuery().in(FirstMileProcessingEntity::getFirstMileDeliveryDetailId,firstMileDeliveryDetailIdList).list();
     }
 
     /**

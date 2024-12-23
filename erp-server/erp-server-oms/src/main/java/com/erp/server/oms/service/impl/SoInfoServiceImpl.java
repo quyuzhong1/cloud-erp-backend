@@ -9,7 +9,6 @@ import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
-import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
@@ -20,7 +19,6 @@ import com.common.business.constant.ApproveType;
 import com.common.business.constant.FileTemplateConstant;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.FindUserDTO;
-import com.common.business.dto.ShudiyunB2cOrderDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -41,7 +39,6 @@ import com.common.core.utils.date.DateUtil;
 import com.common.core.utils.date.LocalDateUtil;
 import com.erp.model.dmp.dto.KingdeeDTO;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
-import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
 import com.erp.model.dmp.enums.KingdeePushModuleEnum;
 import com.erp.model.oms.dto.*;
 import com.erp.model.oms.dto.excel.B2BSoImportExcelDTO;
@@ -95,7 +92,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
 import org.apache.poi.ss.formula.functions.T;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-import org.apache.xpath.operations.Bool;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.ResourceLoader;
@@ -111,7 +107,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.net.SocketTimeoutException;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
@@ -3228,6 +3223,9 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         if (!resultDTO.getSuccess()) {
             throw new ServiceException(resultDTO.getMsg());
         }
+        //添加日志
+        String content = String.format("操作了整单释放锁定库存");
+        addModuleOperateLog(content, ModuleTypeEnum.SO.getCode(), id, "释放锁定操作");
         return Boolean.TRUE;
     }
 

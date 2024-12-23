@@ -10,7 +10,6 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
-import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
@@ -76,9 +75,13 @@ public class SoB2bProcessingServiceImpl extends SuperServiceImpl<SoB2bProcessing
         }
         // 数据处理
         List<SoB2bProcessingEntity> soB2bProcessingList =  handleData(list);
-        boolean save = super.saveOrUpdateBatch(soB2bProcessingList);
-        if(!save) {
-            throw new ServiceException("B2B虚拟仓订单跟踪保存失败");
+        List<SoB2bProcessingEntity> addList = soB2bProcessingList.stream().filter(obj -> CharSequenceUtil.isBlank(obj.getId())).collect(Collectors.toList());
+        List<SoB2bProcessingEntity> updateList = soB2bProcessingList.stream().filter(obj -> CharSequenceUtil.isNotBlank(obj.getId())).collect(Collectors.toList());
+        if (CollUtil.isNotEmpty(addList)) {
+            super.saveBatch(addList);
+        }
+        if (CollUtil.isNotEmpty(updateList)) {
+            super.updateBatchById(updateList);
         }
         return Boolean.TRUE;
     }
@@ -159,6 +162,7 @@ public class SoB2bProcessingServiceImpl extends SuperServiceImpl<SoB2bProcessing
                 addDTO.setFrozenQty(ObjectUtil.isEmpty(addDTO.getFrozenQty()) ? MathUtil.ZERO :addDTO.getFrozenQty() * childrenSkuDTO.getQuantity());
                 addDTO.setSoQty(ObjectUtil.isEmpty(addDTO.getSoQty()) ? MathUtil.ZERO :addDTO.getSoQty() * childrenSkuDTO.getQuantity());
                 addDTO.setDeliveryQty(ObjectUtil.isEmpty(addDTO.getDeliveryQty()) ? MathUtil.ZERO :addDTO.getDeliveryQty() * childrenSkuDTO.getQuantity());
+                addDTO.setBomVersion(childrenSkuDTO.getBomVersion());
                 addList.add(addDTO);
             }
         }
@@ -198,7 +202,9 @@ public class SoB2bProcessingServiceImpl extends SuperServiceImpl<SoB2bProcessing
             BeanMapperUtils.copy(addOrUpdateDTO,entity);
             //旧数据
             SoB2bProcessingEntity old = oldList.stream().filter(obj -> StrUtil.equals(obj.getDeliveryNoticeDetailId(), addOrUpdateDTO.getDeliveryNoticeDetailId())).findFirst().orElse(null);
-            entity.setId(old.getId());
+            if (ObjectUtil.isNotEmpty(old)) {
+                entity.setId(old.getId());
+            }
             newList.add(entity);
         }
         return newList;
