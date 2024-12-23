@@ -10,6 +10,7 @@ import lombok.Data;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.springframework.util.StringUtils;
 
 import javax.validation.Valid;
 import javax.validation.constraints.Digits;
@@ -204,7 +205,9 @@ public class MouldDetailDTO implements Serializable {
                 MouldProductDTO.ViewDTO productDto = new MouldProductDTO.ViewDTO();
                 productDto.setMouldDetailId(viewDTO.getMouldDetailId());
                 productDto.setProductName(viewDTO.getProductName());
-                productDto.setImagesUrl(Arrays.asList(viewDTO.getImagesUrl().split(",")));
+                if (StringUtils.hasText(viewDTO.getImagesUrl())) {
+                    productDto.setImagesUrl(Arrays.asList(viewDTO.getImagesUrl().split(",")));
+                }
                 mouldProductList.add(productDto);
             }
             List<MouldRefProductDTO.ViewDTO> mouldRefList = BeanMapperUtils.copyList(MouldRefProductDTO.ViewDTO.class, refList);

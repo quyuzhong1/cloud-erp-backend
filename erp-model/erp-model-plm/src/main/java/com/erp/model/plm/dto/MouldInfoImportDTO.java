@@ -185,8 +185,8 @@ public class MouldInfoImportDTO {
          * 返还单量
          */
         @ColumnWidth(25)
-        @ExcelProperty(value = "返还单量", index = 20)
-        @FieldValid(fieldName = "返还单量", maxLength = 9, formatPattern = FieldFormatPatternTypeEnum.POSITIVEINTEGER)
+        @ExcelProperty(value = "返还数量", index = 20)
+        @FieldValid(fieldName = "返还数量", maxLength = 9, formatPattern = FieldFormatPatternTypeEnum.POSITIVEINTEGER)
         private String refundOrderQty;
 
         /**
