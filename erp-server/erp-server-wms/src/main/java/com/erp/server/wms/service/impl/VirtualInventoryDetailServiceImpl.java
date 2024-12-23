@@ -361,8 +361,8 @@ public class VirtualInventoryDetailServiceImpl extends SuperServiceImpl<VirtualI
         Integer endDays = list.stream().max(Comparator.comparingInt(CfgSettingVirtualValueDTO.InventoryAgeDateTO::getStartDays)).map(CfgSettingVirtualValueDTO.InventoryAgeDateTO::getEndDays).orElse(null);
         LocalDate minStartDate = ObjUtil.isNull(endDays) ? null : LocalDate.now().minusDays(endDays);
         List<VirtualInventoryAgeDTO.viewHisInventoryAgeDetailDTO> virtualInventoryHisList = virtualInventoryDetailHisService.listByParam(new VirtualInventoryDetailHisDTO.ParamDTO(skuIdList, warehouseIdList, virtualWarehouseIdList, minStartDate));
-
-
+        //总数量
+        Integer totalQty = virtualInventoryHisList.stream().map(VirtualInventoryAgeDTO.viewHisInventoryAgeDetailDTO::getQty).reduce(MathUtil.ZERO, Integer::sum);
         for (VirtualInventoryAgeDTO.ListDTO listDTO :detailList) {
             //差异
             boolean isDiff = MathUtil.compareTo(listDTO.getAvgInventoryAge(), listDTO.getBackAvgInventoryAge()) != MathUtil.ZERO;
@@ -377,19 +377,16 @@ public class VirtualInventoryDetailServiceImpl extends SuperServiceImpl<VirtualI
                 } else {
                     ageDateInterval = CharSequenceUtil.format("{}~{}天", inventoryAgeDateTO.getStartDays(), inventoryAgeDateTO.getEndDays());
                 }
-                LocalDate nowDate = LocalDate.now();
-                LocalDate endDate = nowDate.minusDays(inventoryAgeDateTO.getStartDays());
-                LocalDate startDate = ObjUtil.isNull(inventoryAgeDateTO.getEndDays()) ? null : nowDate.minusDays(inventoryAgeDateTO.getEndDays());
-                Integer totalQty = virtualInventoryHisList.stream().filter(obj ->
+                Integer qty = virtualInventoryHisList.stream().filter(obj ->
                         CharSequenceUtil.equals(obj.getSkuId(),listDTO.getSkuId())
                         && CharSequenceUtil.equals(obj.getWarehouseId(),listDTO.getWarehouseId())
                         && CharSequenceUtil.equals(obj.getVirtualWarehouseId(),listDTO.getVirtualWarehouseId())
-                        && obj.getDate().isAfter(endDate)
-                        && (ObjUtil.isNull(startDate) ? Boolean.TRUE : obj.getDate().isBefore(startDate))
+                        && obj.getInventoryAgeDays() > inventoryAgeDateTO.getStartDays()
+                        && ( ObjUtil.isEmpty(inventoryAgeDateTO.getEndDays()) || inventoryAgeDateTO.getEndDays() >= obj.getInventoryAgeDays())
                 ).map(VirtualInventoryAgeDTO.viewHisInventoryAgeDetailDTO::getQty).reduce(MathUtil.ZERO, Integer::sum);
                 //比例
-                BigDecimal ratio = MathUtil.compareTo(listDTO.getVirtualQty(),MathUtil.ZERO) == MathUtil.ZERO ? BigDecimal.ZERO : MathUtil.divide(MathUtil.valueOf(totalQty) ,BigDecimal.valueOf(listDTO.getVirtualQty()));
-                map.put(ageDateInterval,new VirtualInventoryAgeDTO.VirtualIntervalDTO(totalQty,StrUtil.format("{}%",ratio.stripTrailingZeros().toPlainString()) ));
+                BigDecimal ratio =  MathUtil.divide(MathUtil.valueOf(qty) ,MathUtil.valueOf(totalQty)).multiply(MathUtil.BigDecimal_100);
+                map.put(ageDateInterval,new VirtualInventoryAgeDTO.VirtualIntervalDTO(qty,StrUtil.format("{}%",ratio.stripTrailingZeros().toPlainString()) ));
                 listDTO.setMap(map);
             }
         }

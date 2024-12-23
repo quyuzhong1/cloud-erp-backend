@@ -432,7 +432,7 @@ public class VirtualInventoryAgeDTO implements Serializable {
         /**
          * 库龄（天）
          */
-        private BigDecimal inventoryAgeDays;
+        private Integer inventoryAgeDays;
         /**
          * 平均库龄（天）
          */
