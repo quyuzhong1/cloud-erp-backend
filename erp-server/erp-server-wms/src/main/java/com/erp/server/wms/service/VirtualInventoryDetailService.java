@@ -1,5 +1,6 @@
 package com.erp.server.wms.service;
 
+import com.common.business.dto.DynamicExcelDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
@@ -143,4 +144,12 @@ public interface VirtualInventoryDetailService extends SuperService<VirtualInven
      * @return Boolean
      */
     Boolean frameExportExcel(VirtualInventoryAgeDTO.FrameParamDTO dto);
+    /**
+     * 库龄分析导出
+     * @author will
+     * @date 2024/12/23 15:28
+     * @param dto
+     * @return PagingVO<DynamicExcelDTO>
+     */
+    PagingVO<DynamicExcelDTO> exportWmsVirtualInventoryAge(PagingDTO<VirtualInventoryAgeDTO.SearchParamDTO> dto);
 }
