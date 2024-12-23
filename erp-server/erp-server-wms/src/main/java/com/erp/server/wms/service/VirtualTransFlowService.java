@@ -140,4 +140,12 @@ public interface VirtualTransFlowService extends SuperService<VirtualTransFlowEn
      * @return List<VirtualTransFlowEntity>
      */
     List<VirtualTransFlowEntity> listApproveByIds(List<String> oldVirtualTransFlowIdList);
+    /**
+     * 查询流水
+     * @author will
+     * @date 2024/12/20 9:50
+     * @param deliveryDetailIdList
+     * @return List<VirtualTransFlowEntity>
+     */
+    List<VirtualTransFlowEntity> listBySourceDetailIdList(List<String> deliveryDetailIdList);
 }

@@ -26,4 +26,27 @@
         <result column="remark" property="remark" />
     </resultMap>
 
+    <!-- 根据来源id查询数据 -->
+    <select id="listMachineBySourceDetailIdList"
+            resultType="com.erp.model.wms.dto.SoB2bProcessingDTO$ResponseDTO">
+        select
+            mi.id,
+            mi.code,
+            mi.approve_status,
+            mi.approve_time,
+            mi.source_id,
+            md.id as detailId,
+            md.sku_id,
+            md.qty,
+            md.reference_version as bomVersion,
+            md.source_detail_id
+        from machine_info mi
+        inner join machine_detail md on md.main_id = mi.id and md.is_deleted = false
+        where mi.is_deleted = false and mi.invalid_status = false
+        and md.source_detail_id in
+        <foreach collection="sourceDetailIdList" open="(" close=")" separator="," item="item" >
+            #{item}
+        </foreach>
+    </select>
+
 </mapper>

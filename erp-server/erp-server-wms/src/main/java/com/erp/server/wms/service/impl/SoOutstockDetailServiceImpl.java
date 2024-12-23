@@ -994,4 +994,9 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
         
         return true;
     }
+
+    @Override
+    public List<SoB2bProcessingDTO.ResponseDTO> listSoOutstockBySourceDetailIdList(List<String> sourceDetailIdList) {
+        return baseMapper.listSoOutstockBySourceDetailIdList(sourceDetailIdList);
+    }
 }

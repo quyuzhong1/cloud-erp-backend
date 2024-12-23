@@ -70,4 +70,26 @@
 
     </select>
 
+    <!-- 根据来源明细id查询 -->
+    <select id="listTransferBySourceDetailIdList"
+            resultType="com.erp.model.wms.dto.SoB2bProcessingDTO$ResponseDTO">
+        select
+            ti.id,
+            ti.code,
+            ti.approve_status,
+            ti.approve_time,
+            ti.source_id,
+            tid.sku_id,
+            tid.id as detailId,
+            tid.qty,
+            tid.source_detail_id
+        from transfer_info ti
+        inner join transfer_info_detail tid on ti.id = tid.main_id and tid.is_deleted = false
+        where ti.is_deleted = false and ti.invalid_status = false
+        and tid.source_detail_id in
+        <foreach collection="sourceDetailIdList" open="(" close=")" item="item" separator=",">
+            #{item}
+        </foreach>
+    </select>
+
 </mapper>
