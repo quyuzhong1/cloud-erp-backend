@@ -124,6 +124,7 @@ public enum SourceTypeEnum {
     PRODUCT_CHANGE("productChange", "变更管理","product_change"),
     BASIC_CATEGORY("basicCategory", "产品分类","basic_category"),
     PRODUCT_LOGISTICS("ProductLogistics", "物流产品","product_logistics"),
+    MOULD_INFO("mouldInfo", "模具管理","mould_info"),
 
 
     //SYS
@@ -149,6 +150,12 @@ public enum SourceTypeEnum {
 
     LOGISTICS_BILL("logisticsBill", "物流单","logistics_bill"),
     TMS_FIRST_MILE_RECONCILIATION("tmsFirstMileReconciliation", "头程对账单","tms_first_mile_reconciliation"),
+
+    SMALL_BAG_COST_ALLOCATION("smallBagCostAllocation", "小包费用分摊","small_bag_cost_allocation"),
+    TRANSFER_DECLARE_COST_ALLOCATION("transferDeclareCostAllocation", "中转费用分摊","transfer_declare_cost_allocation"),
+    FIRST_MILE_COST_ALLOCATION("firstMileCostAllocation", "头程费用分摊","first_mile_cost_allocation"),
+
+
 
     //MRP
     REPLENISHMENT_SUGGESTION("replenishmentSuggestion", "补货建议","replenishment_suggestion"),

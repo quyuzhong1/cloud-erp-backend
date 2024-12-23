@@ -1,5 +1,11 @@
 package com.erp.server.tms.config;
 
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.RejectedExecutionHandler;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
@@ -49,5 +55,16 @@ public class ThreadPoolConfig {
         // 初始化
         executor.initialize();
         return executor;
+    }
+    
+    @Bean(name = "costAllocationPool")
+    public ExecutorService costAllocationPool() {
+        ThreadPoolExecutor service = new ThreadPoolExecutor(1, 10,
+                60L, TimeUnit.SECONDS,
+                new LinkedBlockingQueue<Runnable>(Integer.MAX_VALUE));
+        //设置线城池的饱和策略
+        RejectedExecutionHandler handler = new ThreadPoolExecutor.CallerRunsPolicy();
+        service.setRejectedExecutionHandler(handler);
+        return service;
     }
 }

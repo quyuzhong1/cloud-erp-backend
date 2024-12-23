@@ -134,6 +134,36 @@ public class DataDifferenceCalculator {
         return results;
     }
 
+    // 计算与基准数据的吻合率
+    public static BigDecimal calculateMatchRate(
+            List<BigDecimal> calcList, List<BigDecimal> baseData, BigDecimal factor, CalculationType type) {
+
+        validateFactor(factor);
+
+        BigDecimal[] baseArray = baseData.toArray(new BigDecimal[0]);
+        BigDecimal[] maxValues = calculateMaxValues(baseArray, factor);
+        BigDecimal[] minValues = calculateMinValues(baseArray, factor);
+
+        BigDecimal maxEuclideanDistance = calculateEuclideanDistance(minValues, maxValues);
+        BigDecimal maxManhattanDistance = calculateManhattanDistance(minValues, maxValues);
+
+        BigDecimal[] dataArray = calcList.toArray(new BigDecimal[0]);
+        if (type == CalculationType.EUCLIDEAN) {
+            BigDecimal euclideanDistance = calculateEuclideanDistance(baseArray, dataArray);
+            return BigDecimal.ONE.subtract(
+                    euclideanDistance.divide(maxEuclideanDistance, 4, RoundingMode.HALF_UP)).multiply(new BigDecimal(100));
+        }
+        if (type == CalculationType.MANHATTAN) {
+            BigDecimal manhattanDistance = calculateManhattanDistance(baseArray, dataArray);
+            return BigDecimal.ONE.subtract(
+                    manhattanDistance.divide(maxManhattanDistance, 4, RoundingMode.HALF_UP)).multiply(new BigDecimal(100));
+        }
+        if (type == CalculationType.COSINE) {
+            return calculateCosineSimilarity(baseArray, dataArray);
+        }
+        return BigDecimal.ZERO;
+    }
+
     public static void main(String[] args) {
         List<CalcSalesInfoDimDTO.LineDTO> calcList = Arrays.asList(
                 createLine("A", Arrays.asList(new BigDecimal("10"), new BigDecimal("20"), new BigDecimal("30"))),

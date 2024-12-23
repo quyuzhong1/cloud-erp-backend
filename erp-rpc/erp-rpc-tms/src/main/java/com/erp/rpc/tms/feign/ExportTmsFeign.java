@@ -36,6 +36,10 @@ public interface ExportTmsFeign {
     PagingVO<LogisticsAddressDTO.PagingViewDTO> exportLogisticsAddress(@RequestBody PagingDTO<LogisticsAddressDTO.ExportDTO> dto);
     @PostMapping("/feign/export/logisticsBillCost")
     PagingVO<LogisticsBillCostDTO.ListDTO> exportLogisticsBillCost(@RequestBody PagingDTO<LogisticsBillCostDTO.PagingParamDTO> dto);
+    @PostMapping("/feign/export/smallBagCostAllocation")
+    PagingVO<SmallBagCostAllocationDTO.ListDTO> exportSmallBagCostAllocation(@RequestBody PagingDTO<SmallBagCostAllocationDTO.PagingParamDTO> dto);
+    @PostMapping("/feign/export/transferDeclareCostAllocation")
+    PagingVO<TransferDeclareCostAllocationDTO.ListDTO> exportTransferDeclareCostAllocation(@RequestBody PagingDTO<TransferDeclareCostAllocationDTO.PagingParamDTO> dto);
     @PostMapping("/feign/export/logisticsBill")
     PagingVO<LogisticsBillDTO.PagingVO> exportLogisticsBill(@RequestBody PagingDTO<LogisticsBillDTO.PagingParamDTO> dto);
     @PostMapping("/feign/export/logisticsLastMileCost")
@@ -66,4 +70,6 @@ public interface ExportTmsFeign {
     PagingVO<FirstMileWeightAllocationDTO.ViewDTO> exportFirstMileWeightAllocation(@RequestBody @Valid PagingDTO<FirstMileWeightAllocationDTO.PagingParamDTO> dto);
     @PostMapping("/feign/export/exportRemotePostcode")
     PagingVO<RemotePostcodeDTO.ExportListDTO> exportRemotePostcode(@RequestBody PagingDTO<RemotePostcodeDTO.ExportDTO> dto);
+    @PostMapping("/feign/export/exportLogisticsLarge")
+    PagingVO<LogisticsLargeDTO.PagingViewDTO> exportLogisticsLarge(@RequestBody PagingDTO<LogisticsLargeDTO.PagingParamDTO> dto);
 }

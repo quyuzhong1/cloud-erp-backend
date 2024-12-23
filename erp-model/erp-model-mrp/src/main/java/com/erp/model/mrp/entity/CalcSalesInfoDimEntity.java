@@ -9,6 +9,7 @@ import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
 
 
 /**
@@ -80,6 +81,12 @@ public class CalcSalesInfoDimEntity extends BaseEntity<CalcSalesInfoDimEntity> {
     */
     @TableField("remark")
     private String remark;
+
+    /**
+     * 相似度
+     */
+    @TableField("similarity")
+    private BigDecimal similarity;
 
     /**
      * 历史数据base

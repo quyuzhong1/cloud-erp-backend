@@ -1,10 +1,11 @@
 package com.erp.server.mrp.es.service.impl;
 
+import cn.hutool.json.JSONArray;
 import com.erp.model.mrp.dto.ReplenishmentResultDTO;
-import com.erp.model.mrp.enums.FbaOrderTypeEnum;
 import com.erp.server.mrp.es.entity.OutStockHistorySalesEsEntity;
 import com.erp.server.mrp.es.repository.OutStockHistorySalesEsRepository;
 import com.erp.server.mrp.es.service.OutStockHistorySalesEsService;
+import com.google.common.collect.Lists;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.aggregations.AggregationBuilders;
@@ -13,7 +14,6 @@ import org.elasticsearch.search.aggregations.bucket.terms.Terms;
 import org.elasticsearch.search.aggregations.metrics.TopHits;
 import org.elasticsearch.search.sort.SortBuilders;
 import org.elasticsearch.search.sort.SortOrder;
-import com.google.common.collect.Lists;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -23,6 +23,7 @@ import org.springframework.data.elasticsearch.core.query.NativeSearchQuery;
 import org.springframework.data.elasticsearch.core.query.NativeSearchQueryBuilder;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 
 import javax.annotation.Resource;
@@ -58,7 +59,7 @@ public class OutStockHistorySalesEsServiceImpl implements OutStockHistorySalesEs
     }
 
     @Override
-    public Map<String, Integer> countQtyByReplenishmentIdsAndDate(List<String> replenishmentIds, String orderType, LocalDate startDate, LocalDate endDate) {
+    public Map<String, Integer> countQtyByReplenishmentIdsAndDate(List<String> replenishmentIds, JSONArray orderType, LocalDate startDate, LocalDate endDate) {
         List<OutStockHistorySalesEsEntity> outStockHistorySalesList = getOutStockHistorySales(replenishmentIds, orderType, startDate, endDate);
         return outStockHistorySalesList.stream()
                 .collect(Collectors.toMap(OutStockHistorySalesEsEntity::getReplenishmentId, OutStockHistorySalesEsEntity::getOriginalSalesQty, Integer::sum));
@@ -72,15 +73,15 @@ public class OutStockHistorySalesEsServiceImpl implements OutStockHistorySalesEs
      * @param startDate        开始日期
      * @param endDate          结束日期
      */
-    private List<OutStockHistorySalesEsEntity> getOutStockHistorySales(List<String> replenishmentIds, String orderType, LocalDate startDate, LocalDate endDate) {
+    private List<OutStockHistorySalesEsEntity> getOutStockHistorySales(List<String> replenishmentIds, JSONArray orderType, LocalDate startDate, LocalDate endDate) {
         List<OutStockHistorySalesEsEntity> outStockHistorySalesList = new ArrayList<>();
         Page<OutStockHistorySalesEsEntity> outStockHistorySalesPage;
         int page = 0;
         do {
-            if (ObjectUtils.isEmpty(orderType) || FbaOrderTypeEnum.ALL.getCode().equals(orderType)) {
+            if (CollectionUtils.isEmpty(orderType)) {
                 outStockHistorySalesPage = outStockHistorySalesEsRepository.findByReplenishmentIdInAndDateBetween(replenishmentIds, startDate, endDate, PageRequest.of(page, 10000));
             } else {
-                outStockHistorySalesPage = outStockHistorySalesEsRepository.findByReplenishmentIdInAndOrderTypeAndDateBetween(replenishmentIds, orderType, startDate, endDate, PageRequest.of(page, 10000));
+                outStockHistorySalesPage = outStockHistorySalesEsRepository.findByReplenishmentIdInAndOrderTypeInAndDateBetween(replenishmentIds, orderType, startDate, endDate, PageRequest.of(page, 10000));
             }
             outStockHistorySalesList.addAll(outStockHistorySalesPage.toList());
             page++;
@@ -89,7 +90,7 @@ public class OutStockHistorySalesEsServiceImpl implements OutStockHistorySalesEs
     }
 
     @Override
-    public List<ReplenishmentResultDTO.SalesHistoryDTO> listByReplenishmentIdsAndDate(List<String> suggestionIdList, String orderType, LocalDate startDate, LocalDate endDate) {
+    public List<ReplenishmentResultDTO.SalesHistoryDTO> listByReplenishmentIdsAndDate(List<String> suggestionIdList, JSONArray orderType, LocalDate startDate, LocalDate endDate) {
         List<OutStockHistorySalesEsEntity> historySales = getOutStockHistorySales(suggestionIdList, orderType, startDate, endDate);
         return historySales.stream()
                 .map(v -> ReplenishmentResultDTO.SalesHistoryDTO.buildSalesHistory(v.getReplenishmentId(), v.getDate(), v.getOriginalSalesQty()))
@@ -106,11 +107,11 @@ public class OutStockHistorySalesEsServiceImpl implements OutStockHistorySalesEs
     }
 
     @Override
-    public List<OutStockHistorySalesEsEntity> getRecentSalesBySuggestionIds(Set<String> suggestionIds, String orderType) {
+    public List<OutStockHistorySalesEsEntity> getRecentSalesBySuggestionIds(Set<String> suggestionIds, JSONArray orderType) {
         BoolQueryBuilder queryBuilder = QueryBuilders.boolQuery()
                 .must(QueryBuilders.existsQuery("originalSalesQty"))
                 .must(QueryBuilders.termsQuery("replenishmentId", suggestionIds));
-        if (!ObjectUtils.isEmpty(orderType) && !FbaOrderTypeEnum.ALL.getCode().equals(orderType)) {
+        if (!CollectionUtils.isEmpty(orderType)) {
             queryBuilder.must(QueryBuilders.termsQuery("orderType", orderType));
         }
         NativeSearchQuery searchQuery = new NativeSearchQueryBuilder()
@@ -136,13 +137,13 @@ public class OutStockHistorySalesEsServiceImpl implements OutStockHistorySalesEs
     }
 
     @Override
-    public Map<String, Integer> listByType(String orderType) {
+    public Map<String, Integer> listByType(JSONArray orderType) {
         Map<String, Integer> result = new HashMap<>();
         int pageSize = 10000;
         for (int page = 0; ; page++) {
             BoolQueryBuilder queryBuilder = QueryBuilders.boolQuery()
                     .must(QueryBuilders.existsQuery("originalSalesQty"));
-            if (!ObjectUtils.isEmpty(orderType) && !FbaOrderTypeEnum.ALL.getCode().equals(orderType)) {
+            if (!CollectionUtils.isEmpty(orderType)) {
                 queryBuilder.must(QueryBuilders.termsQuery("orderType", orderType));
             }
             // 构建查询条件

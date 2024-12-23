@@ -45,7 +45,9 @@ import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
+import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.dto.ProductDetailDTO;
+import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.plm.enums.CombinationDeclareTypeEnums;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.entity.SupplierEntity;
@@ -56,6 +58,7 @@ import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.sys.entity.SysDepartmentEntity;
 import com.erp.model.tms.dto.*;
+import com.erp.model.tms.entity.LogisticsBillEntity;
 import com.erp.model.tms.entity.TmsDeclareBillEntity;
 import com.erp.model.tms.enums.BillGenerateTimingEnum;
 import com.erp.model.tms.enums.ReconciliationStatusEnum;
@@ -972,25 +975,48 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         }
         //虚拟仓冻结库存扣减,(来源发货通知单且非中转)
         if (CollectionUtils.isNotEmpty(members) && CharSequenceUtil.isBlank(entity.getBatchNo()) && CollectionUtils.isNotEmpty(noticeList)) {
-            //无虚拟仓无需扣减库存
-            List<InOutStockDTO> virtualInOutStockList = members.stream().filter(obj -> CharSequenceUtil.isNotBlank(obj.getVirtualWarehouseId())).collect(Collectors.toList());
-            if (CollectionUtils.isNotEmpty(virtualInOutStockList)) {
-                VirtualInventoryStockDTO.StockParamDTO stockParamDTO = new VirtualInventoryStockDTO.StockParamDTO();
-                List<VirtualInventoryStockDTO.OutInStockDTO> outInStockDTOS = BeanMapperUtils.copyList(VirtualInventoryStockDTO.OutInStockDTO.class, virtualInOutStockList);
-                stockParamDTO.setParamList(outInStockDTOS);
-                stockParamDTO.setBusinessType(VirtualInventoryBusinessTypeEnum.SO_OUT_STOCK.getCode());
-                virtualInventoryTransCoreService.approve(stockParamDTO);
-            }
+            b2BVirtualInventory(members);
         }
         //物流单添加
         saveLogisticsBill(entity);
 
     }
 
+    /**
+     * b2b虚拟仓数据
+     * @author will
+     * @date 2024/12/17 11:29
+     * @param members
+     */
+
+    private void b2BVirtualInventory (List<InOutStockDTO> members) {
+        //bom信息调整
+        List<String> skuIdList = members.stream().map(InOutStockDTO::getSkuId).distinct().collect(Collectors.toList());
+        List<BomChildrenSkuDTO> bomChildList = plmTaskFeign.listBomChildBySkuIds(skuIdList);
+        //无虚拟仓无需扣减库存
+        List<InOutStockDTO> virtualInOutStockList = members.stream().filter(obj ->
+                CharSequenceUtil.isNotBlank(obj.getVirtualWarehouseId())
+                && bomChildList.stream().filter(e -> CharSequenceUtil.equals(e.getType(), BomTypeEnum.COMBINATION.getType()) && CharSequenceUtil.equals(e.getParentSkuId(), obj.getSkuId())).count() == MathUtil.ZERO
+        ).collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(virtualInOutStockList)) {
+            return;
+        }
+        VirtualInventoryStockDTO.StockParamDTO stockParamDTO = new VirtualInventoryStockDTO.StockParamDTO();
+        List<VirtualInventoryStockDTO.OutInStockDTO> outInStockDTOS = BeanMapperUtils.copyList(VirtualInventoryStockDTO.OutInStockDTO.class, virtualInOutStockList);
+        stockParamDTO.setParamList(outInStockDTOS);
+        stockParamDTO.setBusinessType(VirtualInventoryBusinessTypeEnum.SO_OUT_STOCK.getCode());
+        virtualInventoryTransCoreService.approve(stockParamDTO);
+    }
+
+
     //TODO 物流单
 //    @Async("saveLogisticsBill")
     @Override
+    @DataIdempotent(keyIdName = "entity.code" , businessType = "saveLogisticsBill")
     public void saveLogisticsBill(SoOutstockEntity entity) {
+    		if(CollUtil.isNotEmpty(FeignQuery.create(LogisticsBillEntity.class).eq(LogisticsBillEntity::getOutstockId, entity.getId()).list())) {
+    			throw new ServiceException("小包物流单已生成");
+    		}
             LogisticsBillDTO.AddDTO addDTO = new LogisticsBillDTO.AddDTO();
             addDTO.setOutstockId(entity.getId());
             addDTO.setOutstockCode(entity.getCode());
@@ -1175,11 +1201,8 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         //审核通过
         // 增加 出库单关联的自发货费用单据已确认状态下，不允许出库单反审核
         List<LogisticsBillCostDTO.OutStockDTO> outStockDTOS = logisticsBillFeign.listBillCostByOutstockIds(Collections.singletonList(entity.getId()));
-        List<LogisticsBillCostDTO.OutStockDTO> outStockDTOList = outStockDTOS.stream().filter(e -> StringUtils.isNotEmpty(e.getReconciliationStatus())
-                        && ReconciliationStatusEnum.CONFIRMED.getCode().equals(e.getReconciliationStatus()))
-                .collect(Collectors.toList());
-        if (CollectionUtils.isNotEmpty(outStockDTOList)){
-            String code = outStockDTOList.stream().map(LogisticsBillCostDTO.OutStockDTO::getOutstockCode).distinct().collect(Collectors.joining(","));
+        if (CollectionUtils.isNotEmpty(outStockDTOS)){
+            String code = outStockDTOS.stream().map(LogisticsBillCostDTO.OutStockDTO::getOutstockCode).distinct().collect(Collectors.joining(","));
             throw new ServiceException(ApiError.ERROR_SO_OUTSTOCK_BILL_COST_NOT_DIS_APPROVE, code);
         }
         //待提交

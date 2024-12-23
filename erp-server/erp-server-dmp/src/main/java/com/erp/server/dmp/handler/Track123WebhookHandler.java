@@ -31,7 +31,7 @@ public class Track123WebhookHandler implements WebhookHandler{
     // 预先约定的Secret
     private static final String SECRET_KEY = "9fa500686633410a84ff0b00daed555e";
     // 允许的时间偏差（秒）
-    private static final long MAX_AGE = 5 * 60; // 5 minutes
+    private static final long MAX_AGE = 5 * 60L; // 5 minutes
 
     private final LogisticsFeign logisticsFeign = SpringUtil.getBean(LogisticsFeign.class);
     @Override

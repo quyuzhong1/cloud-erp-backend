@@ -871,10 +871,23 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         //发货通知单
         List<String> noticeIdList = transferInfoList.stream().map(TransferInfoEntity::getSourceId).distinct().collect(Collectors.toList());
         List<SoDeliveryNoticeEntity> soDeliveryNoticeList = soDeliveryNoticeService.listByIds(noticeIdList);
+
+        //bom信息
+        List<String> skuIdList = pushDetailList.stream().map(TransferInfoDetailEntity::getSkuId).distinct().collect(Collectors.toList());
+        List<BomChildrenSkuDTO> bomChildList = plmTaskFeign.listBomChildBySkuIds(skuIdList);
+
         //出冻结库存
         List<VirtualInventoryStockDTO.OutInStockDTO> outList = new ArrayList<>();
 
         for (TransferInfoDetailEntity transferInfoDetailEntity : pushDetailList) {
+
+            //过滤组合品
+            long count = bomChildList.stream().filter(obj -> CharSequenceUtil.equals(obj.getType(), BomTypeEnum.COMBINATION.getType())
+                    && CharSequenceUtil.equals(obj.getParentSkuId(), transferInfoDetailEntity.getSkuId())).count();
+            if (count > 0) {
+                continue;
+            }
+
             //直接调拨单
             TransferInfoEntity transferInfoEntity = transferInfoList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), transferInfoDetailEntity.getMainId())).findFirst().orElse(null);
             if (ObjectUtil.isEmpty(transferInfoEntity)) {
@@ -902,12 +915,13 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
             outInStockDTO.setQty(transferInfoDetailEntity.getQty());
             outList.add(outInStockDTO);
         }
-        if (CollectionUtils.isNotEmpty(outList)) {
-            VirtualInventoryStockDTO.StockParamDTO stockParamDTO = new VirtualInventoryStockDTO.StockParamDTO();
-            stockParamDTO.setBusinessType(VirtualInventoryBusinessTypeEnum.TRANSFER_INFO_APPROVE.getCode());
-            stockParamDTO.setParamList(outList);
-            virtualInventoryTransCoreService.approve(stockParamDTO);
+        if (CollectionUtils.isEmpty(outList)) {
+            return;
         }
+        VirtualInventoryStockDTO.StockParamDTO stockParamDTO = new VirtualInventoryStockDTO.StockParamDTO();
+        stockParamDTO.setBusinessType(VirtualInventoryBusinessTypeEnum.TRANSFER_INFO_APPROVE.getCode());
+        stockParamDTO.setParamList(outList);
+        virtualInventoryTransCoreService.approve(stockParamDTO);
     }
 
 
@@ -2037,7 +2051,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         list.forEach(obj -> {
             List<TransferInfoDetailEntity> transferInfoDetailEntityList1 = transferDetailMap.get(obj.getId());
             transferInfoDetailEntityList1 = CollUtil.isNotEmpty(transferInfoDetailEntityList1) ? transferInfoDetailEntityList1.stream().filter(e -> !ignoreInventorySkuIds.contains(e.getSkuId())).collect(Collectors.toList()) : Collections.emptyList();
-            if (CollUtil.isNotEmpty(transferInfoDetailEntityList1)){
+            if (SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate) || CollUtil.isNotEmpty(transferInfoDetailEntityList1)){
                 DmpPushTaskEntity pushTaskEntity = syncKingdeeTransferInfoService.syncDataToKingdee(obj,transferInfoDetailEntityList1, operate);
                 resultList.add(pushTaskEntity);
             }

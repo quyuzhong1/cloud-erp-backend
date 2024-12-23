@@ -63,11 +63,15 @@ public class AntuReturnInventoryAgeDmpHandler extends DmpInputDoNextDmpHandler {
             String ibFifoTime = batchInfoMap.getOrDefault("ib_fifo_time", "1970-01-01 00:00:00").toString();
 
             LocalDateTime parse = LocalDateTime.parse(ibFifoTime, DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
-            batchInfoMap.put("put_away_date", parse.toLocalDate());
+            batchInfoMap.put("putAwayDate", parse.toLocalDate());
 
             // 补充主单信息定位mainId
-            batchInfoMap.put("warehouse_code", dmpInputMongoEntity.getOrDefault("warehouse_code", "").toString());
-            batchInfoMap.put("product_sku", dmpInputMongoEntity.getOrDefault("product_sku", "").toString());
+            String warehouseCode = dmpInputMongoEntity.getOrDefault("warehouse_code", "").toString();
+            batchInfoMap.put("warehouse_code", warehouseCode);
+            batchInfoMap.put("warehouseCode", warehouseCode);
+            String productSku = dmpInputMongoEntity.getOrDefault("product_sku", "").toString();
+            batchInfoMap.put("product_sku", productSku);
+            batchInfoMap.put("productSku", productSku);
             batchInfoMap.put("authId", dmpInputMongoEntity.getOrDefault("authId", "").toString());
             resultList.add(batchInfoMap);
         }

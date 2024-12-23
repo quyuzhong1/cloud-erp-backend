@@ -146,4 +146,24 @@ public class TransferLogisticsChannelDTO implements Serializable {
          */
         private Boolean disabled;
     }
+
+
+    @Data
+    @NoArgsConstructor
+    public static class EditDeliveryCountryDTO {
+        /**
+         * 主键id
+         */
+        private String id;
+
+        /**
+         * 发货国家编码
+         */
+        private String countryCode;
+
+        /**
+         * 发货国家名称
+         */
+        private String countryName;
+    }
 }
