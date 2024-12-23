@@ -27,6 +27,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import java.time.LocalDate;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -67,6 +68,18 @@ public class LingxingApiTest {
         LocalDate receivedDate = LocalDate.of(2024,1,20);
         List<FbaShipmentReceiveDTO> data = LingxingApiUtils.getAllReceivedInventory(sid, receivedDate);
         System.out.println("FBA货件明细列表");
+        System.out.println(JSONUtil.toJsonStr(data));
+    }
+
+
+    @Test
+    public void warehouseList(){
+        Map<String, Object> objectMap = new HashMap<>();
+        Result<Object> result = LingxingApiUtils.postAndSign(LingxingApiUtils.WAREHOUSE_URI, objectMap);
+        System.out.println("领星仓库总结果");
+        System.out.println(JSONUtil.toJsonStr(result));
+        Object data = result.getData();
+        System.out.println("领星仓库数据结果");
         System.out.println(JSONUtil.toJsonStr(data));
     }
 }

@@ -70,6 +70,17 @@ public class ThirdLogisticsEntity extends BaseEntity<ThirdLogisticsEntity> {
     */
     @TableField("platform_create_time")
     private LocalDateTime platformCreateTime;
+    /**
+     * 物流方式id
+     */
+    @TableField("logistics_type_id")
+    private String logisticsTypeId;
+
+    /**
+     * 物流方式名称
+     */
+    @TableField("logistics_type_name")
+    private String logisticsTypeName;
 
 
     public static final String DISABLED = "disabled";

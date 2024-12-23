@@ -360,6 +360,18 @@ public class SoB2cEntity extends BaseEntity<SoB2cEntity> {
     @TableField("is_over_estimated_ship_cost")
     private Boolean isOverEstimatedShipCost;
 
+    /**
+     * 第三方编号
+     */
+    @TableField("third_code")
+    private String thirdCode;
+
+    /**
+     * 第三方来源系统
+     */
+    @TableField("third_system")
+    private String thirdSystem;
+
     public static final String CODE = "code";
 
     public static final String APPROVE_STATUS = "approve_status";
