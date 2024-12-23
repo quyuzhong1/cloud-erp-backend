@@ -11,6 +11,7 @@ import java.util.stream.Collectors;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.common.business.constant.MongoTableNameContant;
 import com.common.business.enums.ApproveStatusEnum;
@@ -21,6 +22,7 @@ import com.common.core.enums.CurrencyEnum;
 import com.common.core.enums.PannoEnum;
 import com.common.core.utils.MathUtil;
 import com.erp.model.dmp.entity.DmpSoDetailEntity;
+import com.erp.model.dmp.entity.DmpSoReceiverEntity;
 import com.erp.model.dmp.enums.DmpOrderReturnStatusEnum;
 import com.erp.model.dmp.gyy.GyyOrderEntity;
 import com.erp.model.dmp.gyy.bean.DeliverysBean;
@@ -31,6 +33,7 @@ import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.common.business.dto.ShudiyunB2cOrderDTO;
 import com.erp.server.dmp.pull.mongo.MongoService;
 import com.erp.server.dmp.service.DmpSoDetailService;
+import com.erp.server.dmp.service.DmpSoReceiverService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -65,7 +68,8 @@ public class DmpSoInfoServiceImpl extends SuperServiceImpl<DmpSoInfoMapper, DmpS
 
     @Resource
     private DmpSoDetailService dmpSoDetailService;
-
+    @Resource
+    private DmpSoReceiverService dmpSoReceiverService;
     @Resource
     private MongoService mongoService;
 
@@ -131,7 +135,7 @@ public class DmpSoInfoServiceImpl extends SuperServiceImpl<DmpSoInfoMapper, DmpS
     public void addGyyOrder(DmpSoInfoDTO.addGyyOrderDTO dto) {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
-        Integer page = 0;
+        Integer page = 1;
         while(true) {
             List<GyyOrderEntity> mongoData = mongoService.findMongoData(dto, page, 1000, MongoTableNameContant.ORIGINAL_GYY_ORDER, GyyOrderEntity.class);
             if (CollUtil.isEmpty(mongoData)) {
@@ -188,7 +192,6 @@ public class DmpSoInfoServiceImpl extends SuperServiceImpl<DmpSoInfoMapper, DmpS
                 entity.setAllAmount(gyyOrderEntity.getPaymentAmount());
                 entity.setShippingAmount(gyyOrderEntity.getPostFee());
                 entity.setPlatformCost(gyyOrderEntity.getOtherServiceFee());
-                entity.setSubsidyAmount(gyyOrderEntity.getDiscountFee());
                 entity.setDeliveryTime(null);
                 List<DeliverysBean> deliverys = gyyOrderEntity.getDeliverys();
                 if(CollUtil.isNotEmpty(deliverys)) {
@@ -200,26 +203,38 @@ public class DmpSoInfoServiceImpl extends SuperServiceImpl<DmpSoInfoMapper, DmpS
                 } else {
                     entity.setApproveStatus(ApproveStatusEnum.WAIT_SUBMIT.getStatus());
                 }
-                BigDecimal discount = gyyOrderEntity.getDetails().stream().map(req -> req.getDiscount()).reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
-                BigDecimal platDiscountAmount = gyyOrderEntity.getDetails().stream().map(req -> req.getPlatDiscountAmount()).reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
-                entity.setTotalDiscount(discount.add(platDiscountAmount));
+                entity.setTotalDiscount(gyyOrderEntity.getDiscountFee());
                 BigDecimal totalCancelGoodsAmount = gyyOrderEntity.getDetails().stream()
                         .filter(req -> req.getRefund() == 1 || req.getCancel())
-                        .map(req -> req.getCostPrice().multiply(MathUtil.valueOf(req.getQty())))
+                        .map(req -> req.getPrice().multiply(MathUtil.valueOf(req.getQty())))
                         .reduce(BigDecimal::add)
                         .orElse(BigDecimal.ZERO);
                 entity.setTotalCancelGoodsAmount(totalCancelGoodsAmount);
                 entity.setCancelGoodsCurrency("CNY");
-                this.save(entity);
-
-                dmpSoDetailService.saveBatch(detailHandler(gyyOrderEntity.getDetails(), mainId));
+                try {
+                    this.save(entity);
+                } catch (Exception e) {
+                    log.error("数据：" + JSONUtil.toJsonStr(entity));
+                    e.printStackTrace();
+                    return;
+                }
+                try {
+                    dmpSoReceiverService.save(this.receiverHandler(gyyOrderEntity, mainId));
+                } catch (Exception e) {
+                    log.error("数据：" + JSONUtil.toJsonStr(gyyOrderEntity));
+                    e.printStackTrace();
+                    return;
+                }
+                try {
+                    dmpSoDetailService.saveBatch(this.detailHandler(gyyOrderEntity.getDetails(), mainId));
+                } catch (Exception e) {
+                    log.error("数据：" + JSONUtil.toJsonStr(entity));
+                    e.printStackTrace();
+                    return;
+                }
             }
-
-
-
             page++;
         }
-//        List<Map<String, Object>> dmpInputMongoChildList = mongoService.findMongoData(paramDataList, "original_mabang_order");
     }
 
     private List<DmpSoDetailEntity> detailHandler(List<DetailsBean> detailsBeans, String mainId) {
@@ -227,9 +242,49 @@ public class DmpSoInfoServiceImpl extends SuperServiceImpl<DmpSoInfoMapper, DmpS
         for (DetailsBean detailsBean : detailsBeans) {
             DmpSoDetailEntity dmpSoDetailEntity = new DmpSoDetailEntity();
             dmpSoDetailEntity.setMainId(mainId);
-//            dmpSoDetailEntity.setThirdDetailId();
-
+            dmpSoDetailEntity.setThirdDetailId(detailsBean.getItemCode());
+            dmpSoDetailEntity.setSkuNo(detailsBean.getSkuCode());
+            dmpSoDetailEntity.setPlatformSku(detailsBean.getSkuCode());
+            dmpSoDetailEntity.setQty(detailsBean.getQty());
+            dmpSoDetailEntity.setSkuName(detailsBean.getSkuName());
+            dmpSoDetailEntity.setIsGift(detailsBean.getIsGift());
+            dmpSoDetailEntity.setItemRemark(detailsBean.getNote());
+            dmpSoDetailEntity.setExchangeRate(detailsBean.getExchangeRate());
+            dmpSoDetailEntity.setSellPriceOrigin(detailsBean.getPrice());
+            dmpSoDetailEntity.setDiscountAmount(detailsBean.getDiscountFee());
+            dmpSoDetailEntity.setSellPrice(detailsBean.getPrice().subtract((detailsBean.getDiscountFee().divide(MathUtil.valueOf(detailsBean.getQty()), 4, RoundingMode.DOWN))));
+            dmpSoDetailEntity.setAfterAmount(detailsBean.getAmountAfter());
+            dmpSoDetailEntity.setShippingCost(detailsBean.getPostFee());
+            dmpSoDetailEntity.setCurrencyCode("CNY");
         }
         return list;
     }
+
+    private DmpSoReceiverEntity receiverHandler(GyyOrderEntity gyyOrderEntity, String mainId) {
+        DmpSoReceiverEntity soReceiverEntity = new DmpSoReceiverEntity();
+        soReceiverEntity.setMainId(mainId);
+        soReceiverEntity.setCountry("CN");
+        soReceiverEntity.setBuyerId(gyyOrderEntity.getVipCode());
+        soReceiverEntity.setBuyerName(gyyOrderEntity.getVipName());
+        soReceiverEntity.setReceiverName(gyyOrderEntity.getReceiverName());
+        soReceiverEntity.setReceiverTelNumber(gyyOrderEntity.getReceiverMobile());
+        soReceiverEntity.setPostCode(gyyOrderEntity.getReceiverZip());
+        if (CharSequenceUtil.isNotBlank(gyyOrderEntity.getReceiverArea())) {
+            String[] split = gyyOrderEntity.getReceiverArea().split("-");
+            if (split.length > 0) {
+                soReceiverEntity.setProvince(split[0]);
+            }
+            if (split.length > 1) {
+                soReceiverEntity.setCity(split[1]);
+            }
+            if (split.length > 2) {
+                soReceiverEntity.setDistrict(split[2]);
+            }
+        }
+        soReceiverEntity.setFullAddress(gyyOrderEntity.getReceiverAddress());
+        soReceiverEntity.setMainStreet(gyyOrderEntity.getReceiverAddress());
+        soReceiverEntity.setEmail(gyyOrderEntity.getVipEmail());
+        return soReceiverEntity;
+    }
+
 }

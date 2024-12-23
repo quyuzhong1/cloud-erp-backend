@@ -68,8 +68,8 @@ public class DmpSoInfoController extends BaseController {
     }
 
 
-    @GetMapping("/addGyyOrder")
-    public ApiResult<?> addGyyOrder(DmpSoInfoDTO.addGyyOrderDTO dto) {
+    @PostMapping("/addGyyOrder")
+    public ApiResult<?> addGyyOrder(@RequestBody DmpSoInfoDTO.addGyyOrderDTO dto) {
         dmpSoInfoService.addGyyOrder(dto);
         return success();
     }

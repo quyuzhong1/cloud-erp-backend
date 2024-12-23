@@ -486,13 +486,13 @@ public class DmpSoInfoDTO implements Serializable {
         /**
          * 开始时间
          */
-        @Panno(findType = PannoEnum.GTE,field = "downloadTime")
+        @Panno(findType = PannoEnum.GTE,field = "createtime")
         private String startTime;
 
         /**
          * 结算时间
          */
-        @Panno(findType = PannoEnum.LTE,field = "downloadTime")
+        @Panno(findType = PannoEnum.LTE,field = "createtime")
         private String endTime;
 
     }
