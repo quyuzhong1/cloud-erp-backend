@@ -54,6 +54,7 @@
         from virtual_trans_flow_detail vtfd
         inner join virtual_trans_flow vtf on vtfd.virtual_trans_flow_id = vtf.id and vtf.is_deleted = false
         inner join virtual_inventory_detail vid on vtfd.virtual_inventory_detail_id = vid.id  and vid.is_deleted = false
+        where vtfd.is_deleted = false
         union all
         select
         vid.sku_id as skuId,
@@ -129,7 +130,7 @@
         left join virtual_inventory_detail vid on vtfd.virtual_inventory_detail_id = vid.id and vid.is_deleted = false
         where vtfd.is_deleted = false and  0 > vtfd.qty
         and vid.sku_id = #{paramDTO.skuId} and vid.warehouse_id = #{paramDTO.warehouseId}
-        and vid.virtual_warehouse_id = #{paramDTO.virtualWarehouseId} and #{paramDTO.tradeTime} >= vtfd.trade_time
+        and vid.virtual_warehouse_id = #{paramDTO.virtualWarehouseId} and  vtfd.trade_time >= #{paramDTO.tradeTime}
     </select>
 
 
