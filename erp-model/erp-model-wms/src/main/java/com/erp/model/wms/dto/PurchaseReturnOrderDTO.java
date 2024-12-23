@@ -74,6 +74,11 @@ public class PurchaseReturnOrderDTO {
         private String returnWarehouseId;
 
         /**
+         * 采购订单的交货仓库
+         */
+        private String deliveryWarehouseId;
+
+        /**
          * 退货仓库库位
          */
         private String warehouseLocation;
