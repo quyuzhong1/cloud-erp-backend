@@ -150,6 +150,19 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Cf
         return dto.getAutoInStockSetting();
     }
 
+    @Override
+    public String getSubcontractReturnStockSetting() {
+        CfgSettingEntity entity = baseMapper.getByKey(CfgSettingEnum.SUBCONTRACT_RETURN_STOCK.getCode());
+        if (ObjectUtil.isEmpty(entity) || ObjectUtil.isEmpty(entity.getDataJson())) {
+            return "auto";
+        }
+        CfgSettingValueDTO.SubcontractInStock dto = BeanUtil.toBean(entity.getDataJson(), CfgSettingValueDTO.SubcontractInStock.class);
+        if(Objects.isNull(dto) || CharSequenceUtil.isBlank(dto.getAutoInStockSetting())){
+            return "auto";
+        }
+        return dto.getAutoInStockSetting();
+    }
+
     /**
     * 新增修改处理数据
     */
@@ -216,6 +229,9 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Cf
                 break;
             case SUBCONTRACT_IN_STOCK:
                 jsonObject = JSONUtil.parseObj(addDTO.getSubcontractInStock());
+                break;
+            case SUBCONTRACT_RETURN_STOCK:
+                jsonObject = JSONUtil.parseObj(addDTO.getSubcontractReturnStock());
                 break;
             case FS_REQUISITION_NOTICE:
                 jsonObject = JSONUtil.parseObj(addDTO.getFsRequisitionNoticeDTO());
@@ -320,6 +336,10 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Cf
             case SUBCONTRACT_IN_STOCK:
                 CfgSettingValueDTO.SubcontractInStock subcontractInStock = BeanUtil.toBean(cfgSetting.getDataJson(), CfgSettingValueDTO.SubcontractInStock.class);
                 viewDTO.setSubcontractInStock(subcontractInStock);
+                break;
+            case SUBCONTRACT_RETURN_STOCK:
+                CfgSettingValueDTO.SubcontractReturnStock subcontractReturnStock = BeanUtil.toBean(cfgSetting.getDataJson(), CfgSettingValueDTO.SubcontractReturnStock.class);
+                viewDTO.setSubcontractReturnStock(subcontractReturnStock);
                 break;
             case FS_WAREHOUSE_LOCATION_REPLENISH_NOTICE:
                 CfgSettingValueDTO.FsQcNoticeDTO fsWlrNoticeDTO = BeanUtil.toBean(cfgSetting.getDataJson(), CfgSettingValueDTO.FsQcNoticeDTO.class);

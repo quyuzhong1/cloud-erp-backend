@@ -201,8 +201,6 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
     private PurchaseOrderDetailService purchaseOrderDetailService;
     @Resource
     private PurchaseOrderSupplierService purchaseOrderSupplierService;
-//    @Resource
-//    private PoReturnService service;
     /**
      * 主页分页查询
      *
@@ -869,6 +867,11 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
         if (SourceTypeEnum.QC_INFO.getCode().equals(entity.getSourceType())) {
             return null;
         }
+        //查询配置判断是否自动生成
+        String returnCfg = cfgSettingService.getSubcontractReturnStockSetting();
+        if(CfgSettingSubcontractTypeEnum.MANUAL.getCode().equals(returnCfg)){
+            return null;
+        }
 
         //查询委外订单记录
         String sourceId = purchaseOrderEntity.getSourceId();
@@ -942,9 +945,14 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
             }
             //构建委外退料单
             SubcontractReturnDTO.AddDTO addDTO = buildSubcontractReturnAddDTO(entity,poReturnDetailList,orderEntity,subcontractOrderEntity,purchaseOrderSupplierEntity,detailEntityList,subcontractOrderDetailEntityList1, bomList, parentSubcontractOrderDetailList);
-            addDTOS.add(addDTO);
             //构建采购退货单
             PurchaseReturnOrderDTO.AddDTO addDTO1 = buildPoReturnAddDTO(entity, poReturnDetailList, orderEntity, subcontractOrderEntity, purchaseOrderSupplierEntity, detailEntityList, subcontractOrderDetailEntityList1, bomList, parentSubcontractOrderDetailList);
+            //如果配置为部分自动并且不符合条件则跳过
+            if(CfgSettingSubcontractTypeEnum.SEMI_AUTO.getCode().equals(returnCfg) && !addDTO.getSupplierId().equals(addDTO1.getSupplierId())){
+                continue;
+            }
+
+            addDTOS.add(addDTO);
             addDTO1.setChildSubcontractCode(addDTO.getCode());
             returnAddDTOList.add(addDTO1);
         }
