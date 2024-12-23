@@ -224,7 +224,7 @@ public class VirtualTransFlowDetailServiceImpl extends SuperServiceImpl<VirtualT
         List<VirtualTransFlowDetailEntity> flowDetailList = baseMapper.listHisByOldParam(new VirtualTransFlowDetailDTO.ParamDTO(oldTransFlowEntity.getSkuId(), oldTransFlowEntity.getWarehouseId(), oldTransFlowEntity.getVirtualWarehouseId(), oldTransFlowEntity.getTradeTime()));
         List<String> oldVirtualTransFlowIdList = flowDetailList.stream().map(VirtualTransFlowDetailEntity::getVirtualTransFlowId).distinct().collect(Collectors.toList());
         //退回批次流水库龄库存
-        returnVirtualInventory(flowDetailList);
+        returnVirtualInventory(flowDetailList,oldTransFlowEntity.getTradeTime());
 
         //出库流水，重新先进先出
         List<VirtualTransFlowEntity> virtualTransFlowList = virtualTransFlowService.listApproveByIds(oldVirtualTransFlowIdList);
@@ -246,7 +246,7 @@ public class VirtualTransFlowDetailServiceImpl extends SuperServiceImpl<VirtualT
      * @date 2024/12/20 11:43
      * @param oldFlowDetailList
      */
-    private void returnVirtualInventory (List<VirtualTransFlowDetailEntity> oldFlowDetailList) {
+    private void returnVirtualInventory (List<VirtualTransFlowDetailEntity> oldFlowDetailList, LocalDateTime tradeTime) {
         List<String> virtualInventoryDetailIdList = oldFlowDetailList.stream().map(VirtualTransFlowDetailEntity::getVirtualInventoryDetailId).distinct().collect(Collectors.toList());
         List<VirtualInventoryDetailEntity> virtualInventoryDetailList = virtualInventoryDetailService.listByIds(virtualInventoryDetailIdList);
         if (CollUtil.isEmpty(virtualInventoryDetailList)) {
@@ -255,7 +255,7 @@ public class VirtualTransFlowDetailServiceImpl extends SuperServiceImpl<VirtualT
         for (VirtualInventoryDetailEntity detailEntity : virtualInventoryDetailList) {
             //合计数量
             Integer totalQty = oldFlowDetailList.stream().filter(obj -> StrUtil.equals(obj.getVirtualInventoryDetailId(), detailEntity.getId()))
-                    .map(VirtualTransFlowDetailEntity::getQty)
+                    .map(obj -> Math.abs(obj.getQty()))
                     .reduce(MathUtil.ZERO, Integer::sum);
             detailEntity.setQty(MathUtil.add(detailEntity.getQty(),totalQty));
         }
