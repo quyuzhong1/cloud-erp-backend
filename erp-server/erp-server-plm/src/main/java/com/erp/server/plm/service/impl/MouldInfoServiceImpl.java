@@ -307,9 +307,9 @@ public class MouldInfoServiceImpl extends SuperServiceImpl<MouldInfoMapper, Moul
                     oldDetailDTO.setThirdMouldNo(viewDTO.getThirdMouldNo());
                     oldDetailDTO.setTypeName(mouldTypeMap.get(viewDTO.getTypeId()));
                     oldDetailDTO.setMouldHoles(viewDTO.getMouldHoles());
-                    oldDetailDTO.setLength(viewDTO.getLength());
-                    oldDetailDTO.setWidth(viewDTO.getWidth());
-                    oldDetailDTO.setHeight(viewDTO.getHeight());
+                    oldDetailDTO.setLength(MathUtil.divide(viewDTO.getLength(), new BigDecimal(10), 2));
+                    oldDetailDTO.setWidth(MathUtil.divide(viewDTO.getWidth(), new BigDecimal(10), 2));
+                    oldDetailDTO.setHeight(MathUtil.divide(viewDTO.getHeight(), new BigDecimal(10), 2));
                     oldDetailDTO.setMaterial(viewDTO.getMaterial());
                     oldDetailDTO.setLifeCycle(viewDTO.getLifeCycle());
                     oldDetailDTO.setDevelopCycle(viewDTO.getDevelopCycle());
@@ -339,9 +339,9 @@ public class MouldInfoServiceImpl extends SuperServiceImpl<MouldInfoMapper, Moul
                     logDetailDTO.setThirdMouldNo(updateDTO.getThirdMouldNo());
                     logDetailDTO.setTypeName(mouldTypeMap.get(updateDTO.getTypeId()));
                     logDetailDTO.setMouldHoles(updateDTO.getMouldHoles());
-                    logDetailDTO.setLength(updateDTO.getLength());
-                    logDetailDTO.setWidth(updateDTO.getWidth());
-                    logDetailDTO.setHeight(updateDTO.getHeight());
+                    logDetailDTO.setLength(MathUtil.divide(updateDTO.getLength(), new BigDecimal(10), 2));
+                    logDetailDTO.setWidth(MathUtil.divide(updateDTO.getWidth(), new BigDecimal(10), 2));
+                    logDetailDTO.setHeight(MathUtil.divide(updateDTO.getHeight(), new BigDecimal(10), 2));
                     logDetailDTO.setMaterial(updateDTO.getMaterial());
                     logDetailDTO.setLifeCycle(updateDTO.getLifeCycle());
                     logDetailDTO.setDevelopCycle(updateDTO.getDevelopCycle());
@@ -368,7 +368,7 @@ public class MouldInfoServiceImpl extends SuperServiceImpl<MouldInfoMapper, Moul
                             .collect(Collectors.joining(","));
                     logDetailDTO.setRefProductList(refProductList);
 
-                    sysLogService.addSysLogByUpdate(oldDetailDTO, logDetailDTO, String.valueOf(MouldInfoDTO.LogDetailDTO.class), id, "", "模具明细信息");
+                    sysLogService.addSysLogByUpdate(oldDetailDTO, logDetailDTO, String.valueOf(MouldInfoDTO.LogDetailDTO.class), id, "", CharSequenceUtil.format("模具明细信息{}", updateDTO.getMouldNo()));
                 }
             }
         }
@@ -376,11 +376,11 @@ public class MouldInfoServiceImpl extends SuperServiceImpl<MouldInfoMapper, Moul
                 .filter(v -> dto.getDetailList().stream().noneMatch(e -> Objects.equals(v.getId(), e.getId())))
                 .collect(Collectors.toList());
         for (MouldDocInfoDTO.ViewDTO viewDTO : docDTOList) {
-            sysLogService.addSysLogBySave(CharSequenceUtil.format("删除了明细{}", viewDTO.getDocName()), String.valueOf(MouldDocInfoDTO.ViewDTO.class), id, "");
+            sysLogService.addSysLogBySave(CharSequenceUtil.format("删除了文件{}", viewDTO.getDocName()), String.valueOf(MouldDocInfoDTO.ViewDTO.class), id, "");
         }
         for (MouldDocInfoDTO.UpdateDTO updateDTO : dto.getDocList()) {
             if (ObjectUtils.isEmpty(updateDTO.getId())) {
-                sysLogService.addSysLogBySave(CharSequenceUtil.format("新增了明细{}", updateDTO.getDocName()), String.valueOf(MouldDocInfoDTO.UpdateDTO.class), id, "");
+                sysLogService.addSysLogBySave(CharSequenceUtil.format("新增了文件{}", updateDTO.getDocName()), String.valueOf(MouldDocInfoDTO.UpdateDTO.class), id, "");
             } else {
                 MouldDocInfoDTO.ViewDTO viewDTO = Optional.ofNullable(view.getDocList()).orElse(new ArrayList<>())
                         .stream()
