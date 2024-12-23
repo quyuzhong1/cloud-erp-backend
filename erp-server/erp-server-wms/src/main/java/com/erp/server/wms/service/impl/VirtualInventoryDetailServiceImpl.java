@@ -9,6 +9,7 @@ import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.common.business.config.DocNoGenHelper;
+import com.common.business.dto.DynamicExcelDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.SourceTypeEnum;
@@ -17,19 +18,27 @@ import com.common.business.vo.PagingVO;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapUtil;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
+import com.common.core.utils.StrUtils;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.wms.dto.CfgSettingVirtualValueDTO;
 import com.erp.model.wms.dto.VirtualInventoryAgeDTO;
 import com.erp.model.wms.dto.VirtualInventoryDetailDTO;
 import com.erp.model.wms.dto.VirtualInventoryDetailHisDTO;
-import com.erp.model.wms.entity.*;
+import com.erp.model.wms.entity.CfgSettingEntity;
+import com.erp.model.wms.entity.VirtualInventoryDetailEntity;
+import com.erp.model.wms.entity.VirtualWarehouseEntity;
+import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.model.wms.enums.CfgSettingVirtualEnum;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
+import com.erp.model.wms.enums.inventory.VirtualInventoryAgeTitleEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.wms.mapper.VirtualInventoryDetailMapper;
 import com.erp.server.wms.service.*;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -233,6 +242,63 @@ public class VirtualInventoryDetailServiceImpl extends SuperServiceImpl<VirtualI
     public Boolean frameExportExcel(VirtualInventoryAgeDTO.FrameParamDTO dto) {
         downloadTaskFeign.saveDownloadTask("列表历史库龄明细", EXPORT_WMS_FRAME_VIRTUAL_HIS_INVENTORY_AGE_DETAIL.getCode(), dto);
         return Boolean.TRUE;
+    }
+
+    @Override
+    public PagingVO<DynamicExcelDTO> exportWmsVirtualInventoryAge(PagingDTO<VirtualInventoryAgeDTO.SearchParamDTO> dto) {
+        IPage<VirtualInventoryAgeDTO.ListDTO> pageData = this.baseMapper.paging(dto.page(), dto.getParams());
+        // 标题及值赋值
+        List<LinkedHashMap> resultList = fillVirtualInventoryAgePageData(pageData.getRecords());
+        LinkedHashMap headMap = (LinkedHashMap) resultList.get(0).get("head");
+        List<LinkedHashMap<String ,Object>> convertDataList = (List<LinkedHashMap<String ,Object>>) resultList.get(0).get("data");
+        DynamicExcelDTO excelDTO = new DynamicExcelDTO();
+        excelDTO.setHeaders(headMap);
+        excelDTO.setData(convertDataList);
+        return new PagingVO<>(Collections.singletonList(excelDTO), (int) pageData.getTotal(), dto.getPageSize(), dto.getCurrPage());
+    }
+
+    /**
+     * 导出数据处理
+     * @author will
+     * @date 2024/12/23 15:54
+     * @param list
+     * @return List<LinkedHashMap>
+     */
+    private List<LinkedHashMap> fillVirtualInventoryAgePageData(List<VirtualInventoryAgeDTO.ListDTO> list) {
+        List<LinkedHashMap> resultList = Lists.newArrayList();
+        LinkedHashMap<String, Object> resultMap = Maps.newLinkedHashMap();
+        // 标题
+        LinkedHashMap headMap = Maps.newLinkedHashMap();
+
+        List<Map<String, Object>> mapList = BeanMapUtil.beanToMapList(list);
+        // 结果集
+        List<LinkedHashMap> convertDataList = Lists.newArrayListWithExpectedSize(mapList.size());
+
+        // 公共标题字段
+        Arrays.asList(VirtualInventoryAgeTitleEnum.values()).forEach(inventoryAgeTitleEnum -> {
+            headMap.put(inventoryAgeTitleEnum.getCode(), inventoryAgeTitleEnum.getName());
+        });
+
+        // 动态字段标题
+        List<String> cfgHeadList = getCfgHead();
+        if (CollUtil.isNotEmpty(list)) {
+            cfgHeadList.forEach(obj -> headMap.put(obj, obj));
+        }
+        // 结果集字段转驼峰
+        if (CollUtil.isNotEmpty(mapList)) {
+            mapList.forEach(record -> {
+                LinkedHashMap<String, Object> convertMap = new LinkedHashMap<>();
+                record.forEach((fieldKey, fieldVal) -> {
+                    String camelKey = StrUtil.toCamelCase(StrUtils.null2EmptyWithTrim(fieldKey));
+                    convertMap.put(camelKey, fieldVal);
+                });
+                convertDataList.add(convertMap);
+            });
+        }
+        resultMap.put("head", headMap);
+        resultMap.put("data", convertDataList);
+        resultList.add(resultMap);
+        return resultList;
     }
 
 

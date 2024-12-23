@@ -227,8 +227,8 @@ public interface ExportWmsFeign {
     /**
      * 库龄分析导出
      */
-    @PostMapping("/feign/export/virtualInventoryAgePaging")
-    PagingVO<VirtualInventoryAgeDTO.ListDTO> virtualInventoryAgePaging(PagingDTO<VirtualInventoryAgeDTO.SearchParamDTO> dto);
+    @PostMapping("/feign/export/exportWmsVirtualInventoryAge")
+    PagingVO<DynamicExcelDTO> exportWmsVirtualInventoryAge(PagingDTO<VirtualInventoryAgeDTO.SearchParamDTO> dto);
     /**
      * 历史库龄导出
      */
