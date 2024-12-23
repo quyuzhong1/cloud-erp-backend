@@ -388,7 +388,7 @@ public class InventorySkuCostDTO implements Serializable {
         //材料成本
         private BigDecimal productCost;
         //头程
-        private BigDecimal firstMileShipingCost;
+        private BigDecimal firstMileShippingCost;
         //清关税费
         private BigDecimal clearanceCustomsTax;
         //仓库

@@ -207,8 +207,8 @@ public class SoB2cDetailEntity extends BaseEntity<SoB2cDetailEntity> {
     /**
      * 头程运费（本位币）
      */
-    @TableField("first_mile_shiping_cost")
-    private BigDecimal firstMileShipingCost;
+    @TableField("first_mile_shipping_cost")
+    private BigDecimal firstMileShippingCost;
     /**
      * 清关税费（本位币）
      */

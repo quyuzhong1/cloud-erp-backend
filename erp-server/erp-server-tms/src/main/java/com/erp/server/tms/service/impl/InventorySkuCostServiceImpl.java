@@ -475,8 +475,8 @@ public class InventorySkuCostServiceImpl extends SuperServiceImpl<InventorySkuCo
                 BigDecimal productCost = Objects.nonNull(newSkuCostDTO.getProductCost()) ? newSkuCostDTO.getProductCost() : BigDecimal.ZERO;
                 newSkuCostDTO.setProductCost(MathUtil.add(cost, productCost));
                 //头程运费
-                BigDecimal firstMileShipingCost = MathUtil.multiply(skuCostDTO.getFirstMileShipingCost(),bomChildrenSkuDTO.getQuantity());
-                BigDecimal newFirstMileShipingCost = Objects.nonNull(newSkuCostDTO.getFirstMileShipingCost()) ? newSkuCostDTO.getFirstMileShipingCost() : BigDecimal.ZERO;
+                BigDecimal firstMileShipingCost = MathUtil.multiply(skuCostDTO.getFirstMileShippingCost(),bomChildrenSkuDTO.getQuantity());
+                BigDecimal newFirstMileShipingCost = Objects.nonNull(newSkuCostDTO.getFirstMileShippingCost()) ? newSkuCostDTO.getFirstMileShippingCost() : BigDecimal.ZERO;
                 newSkuCostDTO.setProductCost(MathUtil.add(firstMileShipingCost, newFirstMileShipingCost));
                 //清关税费
                 BigDecimal clearanceCustomsTax = MathUtil.multiply(skuCostDTO.getClearanceCustomsTax(),bomChildrenSkuDTO.getQuantity());

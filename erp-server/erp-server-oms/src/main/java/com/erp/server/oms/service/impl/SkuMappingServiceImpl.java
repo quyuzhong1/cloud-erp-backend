@@ -724,7 +724,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
             SkuMappingDTO.ListSkuDTO listSkuDTO = new SkuMappingDTO.ListSkuDTO();
             listSkuDTO.setCostSource(CharSequenceUtil.isBlank(skuVO.getCostSource()) ? "采购平均成本" : skuVO.getCostSource());
             listSkuDTO.setProductCost(skuVO.getProductCost());
-            listSkuDTO.setFirstMileShipingCost(skuVO.getFirstMileShipingCost());
+            listSkuDTO.setFirstMileShippingCost(skuVO.getFirstMileShippingCost());
             listSkuDTO.setClearanceCustomsTax(skuVO.getClearanceCustomsTax());
             listSkuDTO.setProductSkuId(StringUtils.isBlank(skuVO.getSkuId()) ? "" : skuVO.getSkuId());
             listSkuDTO.setProductSkuNo(listSkuParamDTO.getSkuNo());
@@ -843,7 +843,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
                 continue;
             }
             skuVO.setNotTaxCostPrice(MathUtil.multiply(skuCostDTO.getProductCost(),rate));
-            BigDecimal actualTaxCost = MathUtil.add(skuCostDTO.getProductCost(), skuCostDTO.getFirstMileShipingCost()).add(skuCostDTO.getClearanceCustomsTax());
+            BigDecimal actualTaxCost = MathUtil.add(skuCostDTO.getProductCost(), skuCostDTO.getFirstMileShippingCost()).add(skuCostDTO.getClearanceCustomsTax());
             skuVO.setActualTaxCost(MathUtil.multiply(actualTaxCost,rate));
             skuVO.setCostSource(skuCostDTO.getAllocatedMonth().format(DateTimeFormatter.ofPattern("yyyy-MM")) + "财务导入成本");
         }

@@ -5315,7 +5315,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         BeanMapperUtils.copy(soB2cFinanceEntity, financialInfoDTO);
 
         //商品成本,汇总{商品成本}取值SKU所有{材料成本+头程运费+清关税费}*数量累加
-        BigDecimal itemCost = soB2cDetailList.stream().map(obj -> MathUtil.multiply(MathUtil.add(obj.getProductCost(),obj.getFirstMileShipingCost().add(obj.getClearanceCustomsTax())), obj.getQty())).reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal itemCost = soB2cDetailList.stream().map(obj -> MathUtil.multiply(MathUtil.add(obj.getProductCost(),obj.getFirstMileShippingCost().add(obj.getClearanceCustomsTax())), obj.getQty())).reduce(BigDecimal.ZERO, BigDecimal::add);
 
         //商品金额
         BigDecimal totalAmount = soB2cDetailList.stream().map(SoB2cDetailEntity::getAmount).filter(Objects::nonNull).reduce(BigDecimal.ZERO, BigDecimal::add);
