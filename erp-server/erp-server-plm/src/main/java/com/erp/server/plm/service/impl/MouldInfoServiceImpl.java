@@ -178,6 +178,8 @@ public class MouldInfoServiceImpl extends SuperServiceImpl<MouldInfoMapper, Moul
                         viewDTO.setMouldDetailId(v.getMouldDetailId());
                         if (StringUtils.hasText(v.getImagesUrl())) {
                             viewDTO.setImagesUrl(Arrays.asList(v.getImagesUrl().split(",")));
+                        } else {
+                            viewDTO.setImagesUrl(new ArrayList<>());
                         }
                         viewDTO.setProductName(v.getProductName());
                         return viewDTO;
