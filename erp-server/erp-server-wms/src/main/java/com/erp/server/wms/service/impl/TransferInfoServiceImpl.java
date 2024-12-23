@@ -758,7 +758,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
 
         //历史流水
         List<String> detailIdList = soB2cDeliveryDetailList.stream().map(SoB2cDeliveryDetailEntity::getId).distinct().collect(Collectors.toList());
-        List<VirtualTransFlowEntity> virtualTransFlowList = virtualTransFlowService.listHistoryFlow(detailIdList, InventorySourceTypeEnum.SO_B2C_DELIVERY.getCode());
+        List<VirtualTransFlowEntity> virtualTransFlowList = virtualTransFlowService.listHistoryFlow(deliveryDetailIdList, InventorySourceTypeEnum.SO_B2C_DELIVERY.getCode());
 
         //出冻结库存
         List<VirtualInventoryStockDTO.OutInStockDTO> outList = new ArrayList<>();
