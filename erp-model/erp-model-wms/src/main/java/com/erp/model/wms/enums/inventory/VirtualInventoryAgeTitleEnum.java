@@ -20,7 +20,7 @@ public enum VirtualInventoryAgeTitleEnum {
     VIRTUAL_USABLE_QTY("virtualUsableQty", "虚拟仓可用"),
     VIRTUAL_FROZEN_QTY("virtualFrozenQty", "虚拟仓冻结"),
     BACK_AVG_INVENTORY_AGE("backAvgInventoryAge", "平均库龄(天)"),
-
+    DATE("date", "统计日期"),
     ;
     private String code;
     private String name;

@@ -27,6 +27,7 @@ import com.erp.model.wms.dto.CfgSettingVirtualValueDTO;
 import com.erp.model.wms.dto.VirtualInventoryAgeDTO;
 import com.erp.model.wms.dto.VirtualInventoryDetailDTO;
 import com.erp.model.wms.dto.VirtualInventoryDetailHisDTO;
+import com.erp.model.wms.dto.excel.VirtualInventoryAgeExcelDTO;
 import com.erp.model.wms.entity.CfgSettingEntity;
 import com.erp.model.wms.entity.VirtualInventoryDetailEntity;
 import com.erp.model.wms.entity.VirtualWarehouseEntity;
@@ -246,7 +247,10 @@ public class VirtualInventoryDetailServiceImpl extends SuperServiceImpl<VirtualI
 
     @Override
     public PagingVO<DynamicExcelDTO> exportWmsVirtualInventoryAge(PagingDTO<VirtualInventoryAgeDTO.SearchParamDTO> dto) {
+        dto.getParams().setPermissionSql(dto.getPermissionSql());
+        dto.getParams().setDate(LocalDate.now().minusDays(1L));
         IPage<VirtualInventoryAgeDTO.ListDTO> pageData = this.baseMapper.paging(dto.page(), dto.getParams());
+        fillPageData(pageData.getRecords());
         // 标题及值赋值
         List<LinkedHashMap> resultList = fillVirtualInventoryAgePageData(pageData.getRecords());
         LinkedHashMap headMap = (LinkedHashMap) resultList.get(0).get("head");
@@ -265,12 +269,14 @@ public class VirtualInventoryDetailServiceImpl extends SuperServiceImpl<VirtualI
      * @return List<LinkedHashMap>
      */
     private List<LinkedHashMap> fillVirtualInventoryAgePageData(List<VirtualInventoryAgeDTO.ListDTO> list) {
+
         List<LinkedHashMap> resultList = Lists.newArrayList();
         LinkedHashMap<String, Object> resultMap = Maps.newLinkedHashMap();
         // 标题
         LinkedHashMap headMap = Maps.newLinkedHashMap();
-
-        List<Map<String, Object>> mapList = BeanMapUtil.beanToMapList(list);
+        //取需要导出的数据转成map
+        List<VirtualInventoryAgeExcelDTO> dateList = CollUtil.isEmpty(list) ? Collections.EMPTY_LIST : BeanMapperUtils.copyList(VirtualInventoryAgeExcelDTO.class, list);
+        List<Map<String, Object>> mapList = BeanMapUtil.beanToMapList(dateList);
         // 结果集
         List<LinkedHashMap> convertDataList = Lists.newArrayListWithExpectedSize(mapList.size());
 
@@ -278,19 +284,28 @@ public class VirtualInventoryDetailServiceImpl extends SuperServiceImpl<VirtualI
         Arrays.asList(VirtualInventoryAgeTitleEnum.values()).forEach(inventoryAgeTitleEnum -> {
             headMap.put(inventoryAgeTitleEnum.getCode(), inventoryAgeTitleEnum.getName());
         });
+        List<String> titleList = Arrays.stream(VirtualInventoryAgeTitleEnum.values()).map(obj -> obj.getCode()).collect(Collectors.toList());
 
         // 动态字段标题
         List<String> cfgHeadList = getCfgHead();
-        if (CollUtil.isNotEmpty(list)) {
+        if (CollUtil.isNotEmpty(cfgHeadList)) {
             cfgHeadList.forEach(obj -> headMap.put(obj, obj));
         }
         // 结果集字段转驼峰
         if (CollUtil.isNotEmpty(mapList)) {
             mapList.forEach(record -> {
                 LinkedHashMap<String, Object> convertMap = new LinkedHashMap<>();
-                record.forEach((fieldKey, fieldVal) -> {
+                headMap.forEach((fieldKey, fieldVal) -> {
                     String camelKey = StrUtil.toCamelCase(StrUtils.null2EmptyWithTrim(fieldKey));
-                    convertMap.put(camelKey, fieldVal);
+                    //动态表头值
+                    if (!titleList.contains(fieldKey)) {
+                        Map<String, VirtualInventoryAgeDTO.VirtualIntervalDTO> map = (Map)record.get("map");
+                        VirtualInventoryAgeDTO.VirtualIntervalDTO virtualIntervalDTO = BeanUtil.toBean(map.get(fieldKey),VirtualInventoryAgeDTO.VirtualIntervalDTO.class) ;
+                        convertMap.put(fieldKey.toString(), virtualIntervalDTO.getQty());
+                        return;
+                    }
+                    //固定表头值
+                    convertMap.put(record.get(camelKey).toString(), fieldVal);
                 });
                 convertDataList.add(convertMap);
             });

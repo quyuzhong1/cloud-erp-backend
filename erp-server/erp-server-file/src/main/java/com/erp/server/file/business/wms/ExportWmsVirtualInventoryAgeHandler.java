@@ -5,7 +5,6 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.FileTaskEventEnum;
 import com.common.business.vo.PagingVO;
 import com.erp.model.wms.dto.VirtualInventoryAgeDTO;
-import com.erp.model.wms.dto.inventory.InventoryReportDTO;
 import com.erp.rpc.wms.feign.ExportWmsFeign;
 import com.erp.server.file.core.AbstractDynamicHeadersFileEventHandler;
 import com.erp.server.file.entity.FileTask;
@@ -15,7 +14,7 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
 
-import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_INVENTORY_AGE;
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_VIRTUAL_INVENTORY_AGE;
 
 @Component
 @Slf4j
@@ -39,6 +38,6 @@ public class ExportWmsVirtualInventoryAgeHandler extends AbstractDynamicHeadersF
 
     @Override
     public FileTaskEventEnum getEvent() {
-        return EXPORT_WMS_INVENTORY_AGE;
+        return EXPORT_WMS_VIRTUAL_INVENTORY_AGE;
     }
 }
