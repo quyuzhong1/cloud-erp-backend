@@ -305,7 +305,7 @@ public class VirtualInventoryDetailServiceImpl extends SuperServiceImpl<VirtualI
                         return;
                     }
                     //固定表头值
-                    convertMap.put(record.get(camelKey).toString(), fieldVal);
+                    convertMap.put(fieldVal.toString(),record.get(camelKey));
                 });
                 convertDataList.add(convertMap);
             });
