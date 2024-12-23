@@ -178,6 +178,9 @@ public class MouldRefCalcQtyServiceImpl extends SuperServiceImpl<MouldRefCalcQty
      */
     private void removeOldData(List<String> detailIds) {
         List<MouldRefCalcQtyEntity> list = listByMouldDetailIdList(detailIds);
+        if (CollectionUtils.isEmpty(list)) {
+            return;
+        }
         List<String> calcQtyIds = list.stream().map(MouldRefCalcQtyEntity::getId).collect(Collectors.toList());
         removeByIds(calcQtyIds);
         mouldRefCalcQtyDetailService.remove(Wrappers.<MouldRefCalcQtyDetailEntity>lambdaQuery().in(MouldRefCalcQtyDetailEntity::getMainId, calcQtyIds));

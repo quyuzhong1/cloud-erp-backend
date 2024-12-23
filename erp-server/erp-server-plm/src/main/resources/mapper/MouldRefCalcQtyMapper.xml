@@ -29,7 +29,7 @@
                mi.id,
                mi.product_manager_id
         from mould_detail md
-                 inner join public.mould_refund_agreement mra on md.id = mra.mould_detail_id
+                 inner join public.mould_refund_agreement mra on md.id = mra.mould_detail_id and mra.is_deleted = false
                  inner join mould_info mi on mi.id = md.main_id and mi.is_deleted = false
         where is_need_refund = true
           and refund_status in ('not_reached', 'to_be_returned')
