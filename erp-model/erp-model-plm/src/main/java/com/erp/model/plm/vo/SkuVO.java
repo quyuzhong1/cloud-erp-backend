@@ -179,6 +179,10 @@ public class SkuVO implements Serializable {
      */
     private BigDecimal actualTaxCost;
     /**
+     * 税率
+     */
+    private BigDecimal taxRate;
+    /**
      * 成本价格（不含税）
      */
     private BigDecimal notTaxCostPrice;

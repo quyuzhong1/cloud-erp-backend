@@ -378,6 +378,16 @@ public class SoB2cDetailDTO implements Serializable {
          * 还原id
          */
         private String revertId;
+        /**
+         * 成本价格来源
+         */
+        private String costSource;
+        //材料成本
+        private BigDecimal productCost;
+        //头程运费
+        private BigDecimal firstMileShippingCost;
+        //清关税费
+        private BigDecimal clearanceCustomsTax;
     }
 
     /**

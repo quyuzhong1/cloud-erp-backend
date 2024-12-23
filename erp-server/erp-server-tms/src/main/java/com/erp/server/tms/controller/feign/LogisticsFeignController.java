@@ -222,4 +222,13 @@ public class LogisticsFeignController {
     public List<InventorySkuCostDTO.SkuCostDTO> listSkuCostByDetail(@RequestBody InventorySkuCostDTO.QueryB2CDTO queryB2CDTO) {
         return inventorySkuCostService.listSkuCostByDetail(queryB2CDTO);
     }
+    /**
+     * sku成本 单个明细
+     * @param queryDetailDTOList
+     * @return
+     */
+    @PostMapping("/listSkuCostByDetailList")
+    public List<InventorySkuCostDTO.SkuCostDTO> listSkuCostByDetailList(@RequestBody List<InventorySkuCostDTO.QueryDetailDTO> queryDetailDTOList){
+        return inventorySkuCostService.listSkuCostByDetailList(queryDetailDTOList);
+    }
 }

@@ -466,6 +466,47 @@ public class InventorySkuCostServiceImpl extends SuperServiceImpl<InventorySkuCo
         return skuCostDTOList;
     }
 
+    @Override
+    public List<InventorySkuCostDTO.SkuCostDTO> listSkuCostByDetailList(List<InventorySkuCostDTO.QueryDetailDTO> queryDetailDTOList) {
+        List<String> salesOrgIds = queryDetailDTOList.stream().map(InventorySkuCostDTO.QueryDetailDTO::getSalesOrgId).filter(CharSequenceUtil::isNotBlank).collect(Collectors.toList());
+        List<String> skuIds = queryDetailDTOList.stream().map(InventorySkuCostDTO.QueryDetailDTO::getSkuId).filter(CharSequenceUtil::isNotBlank).collect(Collectors.toList());
+        List<String> warehouseIds = queryDetailDTOList.stream().map(InventorySkuCostDTO.QueryDetailDTO::getWarehouseId).filter(CharSequenceUtil::isNotBlank).collect(Collectors.toList());
+        if (CollUtil.isEmpty(salesOrgIds) || CollUtil.isEmpty(skuIds) || CollUtil.isEmpty(warehouseIds)){
+            return Collections.emptyList();
+        }
+
+        //根据sku进行获取子件 然后根据bom进行累加组合品
+        List<BomChildrenSkuDTO> bomChildrenList = plmTaskFeign.listBomChildBySkuIds(skuIds);
+        List<String> childSkuIds = bomChildrenList.stream().map(BomChildrenSkuDTO::getSkuId).collect(Collectors.toList());
+        List<String> skuIds2 = Stream.concat(childSkuIds.stream(), skuIds.stream()).distinct().collect(Collectors.toList());
+        List<InventorySkuCostDTO.SkuCostDTO> skuCostDTOS = baseMapper.listSkuCost(skuIds2, warehouseIds, salesOrgIds);
+        if (CollUtil.isEmpty(skuCostDTOS)){
+            return Collections.emptyList();
+        }
+        //根据sku重新组合
+        List<InventorySkuCostDTO.SkuCostDTO> skuCostDTOList = new ArrayList<>();
+        String combination = BomTypeEnum.COMBINATION.getType();
+        for (InventorySkuCostDTO.QueryDetailDTO queryB2CDetailDTO: queryDetailDTOList){
+            List<BomChildrenSkuDTO> childrenSkuDTOS = bomChildrenList.stream().filter(e -> CharSequenceUtil.isNotBlank(queryB2CDetailDTO.getSkuId()) &&
+                    combination.equals(e.getType()) && e.getParentSkuId().equals(queryB2CDetailDTO.getSkuId())).collect(Collectors.toList());
+            if (CollUtil.isEmpty(childrenSkuDTOS)){
+                InventorySkuCostDTO.SkuCostDTO skuCostDTO = skuCostDTOS.stream().filter(e -> CharSequenceUtil.isNotBlank(queryB2CDetailDTO.getSkuId()) &&
+                        e.getSkuId().equals(queryB2CDetailDTO.getSkuId())).findFirst().orElse(null);
+                if (Objects.isNull(skuCostDTO)){
+                    continue;
+                }
+                skuCostDTOList.add(skuCostDTO);
+            }else {
+                InventorySkuCostDTO.SkuCostDTO skuCostDTO = new InventorySkuCostDTO.SkuCostDTO();
+                skuCostDTO.setSkuId(queryB2CDetailDTO.getSkuId());
+                skuCostDTO.setWarehouseId(queryB2CDetailDTO.getWarehouseId());
+                addProductCost(childrenSkuDTOS,skuCostDTOS,skuCostDTO);
+                skuCostDTOList.add(skuCostDTO);
+            }
+        }
+        return skuCostDTOList;
+    }
+
     private void addProductCost(List<BomChildrenSkuDTO> childrenSkuDTOS, List<InventorySkuCostDTO.SkuCostDTO> skuCostDTOS, InventorySkuCostDTO.SkuCostDTO newSkuCostDTO) {
         for (BomChildrenSkuDTO bomChildrenSkuDTO : childrenSkuDTOS){
             InventorySkuCostDTO.SkuCostDTO skuCostDTO = skuCostDTOS.stream().filter(f -> f.getSkuId().equals(bomChildrenSkuDTO.getSkuId())).findFirst().orElse(null);

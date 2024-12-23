@@ -443,4 +443,23 @@ public class InventorySkuCostDTO implements Serializable {
          */
         private String skuId;
     }
+    @Data
+    @Builder
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class QueryDetailDTO{
+        private String shopId;
+        /**
+         * 销售组织列表
+         */
+        private String salesOrgId;
+        /**
+         * 仓库列表
+         */
+        private String warehouseId;
+        /**
+         * skuId
+         */
+        private String skuId;
+    }
 }
