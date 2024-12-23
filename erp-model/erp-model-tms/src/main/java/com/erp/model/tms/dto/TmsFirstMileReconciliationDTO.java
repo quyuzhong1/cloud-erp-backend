@@ -244,6 +244,16 @@ public class TmsFirstMileReconciliationDTO implements Serializable {
          * 实际重量单位【可排序】
          */
         private String actualWeightUnit;
+
+        /**
+         * 创建时间
+         */
+        private LocalDateTime createTime;
+
+        /**
+         * 更新时间
+         */
+        private LocalDateTime updateTime;
     }
 
     /**

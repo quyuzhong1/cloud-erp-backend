@@ -247,6 +247,10 @@ public class LogisticsBillDTO implements Serializable {
          * 物流轨迹更新时间
          */
         private LocalDateTime trackTime;
+        /**
+         * 创建时间
+         */
+        private LocalDateTime createTime;
 
     }
 
