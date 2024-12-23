@@ -533,6 +533,8 @@ public enum ApiError implements Serializable {
     ERROR_NO_INVENTORY_SKU_NOT_EXIST(95272, "除服务、费用SKU外,不存在其他SKU信息！"),
     ERROR_95273(95273, "仅支持审核中的单据支持催办提醒"),
     ERROR_95274(95274, "%s已催办，间隔时间30min内请勿重复操作"),
+    ERROR_95280(95280,"【{}】属性已被使用，则不允许被删除"),
+    ERROR_95285(95285,"单据已作废，不支持编辑功能"),
     /**
      * TMS 错误
      * 从96000 开始
@@ -540,6 +542,11 @@ public enum ApiError implements Serializable {
     CALL_THIRD_LOGISTICS_PLATFORM_ERROR(96000, "调用第三方物流平台接口异常"),
     BATCH_UPDATE_TRACK_INFO_HAS_EMPTY(96001, "物流单号不能为空"),
     LABEL_TYPE_NOT_EMPTY(96002, "标签类型不能为空"),
+    ERROR_EXISTS_LOGISTICS_LARGE(96003, "已生成物流大表不能重复生成"),
+    ERROR_EXISTS_ESTIMATED_LOGISTICS_LARGE(96004, "已存在预估账单的物流大表信息，请不要重复下推"),
+    ERROR_SMALL_BAG_NOT_CONFIRMED(96005, "小包费用分摊未确认，不能生成物流大表"),
+    ERROR_NOT_EXISTS(96006, "自发货费用不存在"),
+    ERROR_EXISTS_ACTUAL_NOT_ESTIMATED(96007, "已存在实际账单，不能再下推实际账单"),
 
     /**
      * bi 错误
@@ -1050,7 +1057,7 @@ public enum ApiError implements Serializable {
     ERROR_92136(92136,"发货通知单【{}】配置的发货仓库不能为空"),
     ERROR_92137(92137,"B2C发货单【{}】配置的发货仓库不能为空"),
     ERROR_92138(92138,"存在已审核调拨单【{}】不能修改中转仓"),
-    ERROR_SO_OUTSTOCK_BILL_COST_NOT_DIS_APPROVE(92138,"销售出库单【{}】 自发货费用单据已确认状态下,不允许反审核"),
+    ERROR_SO_OUTSTOCK_BILL_COST_NOT_DIS_APPROVE(92138,"销售出库单【{}】 已生成物流单,不允许反审核"),
     ERROR_DELIVERY_INTERCEPT_READY_PACKAGED(92139,"销售订单号【{}】已组包不支持拦截操作"),
     ERROR_92140(92140,"关联单号【{}】已审核不能修改装箱"),
     ERROR_92141(92141,"装箱任务记录不存在"),
@@ -1077,6 +1084,9 @@ public enum ApiError implements Serializable {
     ERROR_92261(92261,"无关联采购时,退款单价不能为空"),
     ERROR_92262(92262,"采购退货单【{}】无关联采购时,SKU【{}】退款单价不能为空"),
     ERROR_92263(92263,"未找到【{}】仓库"),
+    ERROR_92264(92264,"目的国家不能为空"),
+    ERROR_92265(92265,"重量不能为空"),
+    ERROR_92267(92267,"邮编不能为空"),
 
     ERROR_SUBCONTRACT_ISSUE_NOT_EXIST(92124,"委外发料单不存在"),
     ERROR_SUBCONTRACT_ISSUE_DETAIL_NOT_EXIST(92125,"委外发料单明细不存在"),
@@ -1405,7 +1415,8 @@ public enum ApiError implements Serializable {
     ERROR_92160(92160,"本地推送消息单"),
     ERROR_92161(92161,"退款订单明细"),
     ERROR_92162(92162,"合并后的平台订单后过长"),
-    ERROR_92163(92163,"【{}】已生成销售出库单，无法终止；"),
+    ERROR_92163(92163,"只能勾选一个自动提交发货选项"),
+    ERROR_92166(92166,"【{}】已生成销售出库单，无法终止；"),
 
     TRANSACTION_SUB_TYPE_NOT_NULL(92154,"【{}】手工单的单据子类型不能为空"),
 
@@ -1546,7 +1557,7 @@ public enum ApiError implements Serializable {
     ERROR_SUGGEST_LOCKING(97017,"仅草稿数据支持锁定操作"),
     ERROR_SUGGEST_INVALID(97018,"已下推数据不支持作废操作"),
     ERROR_SUGGEST_UPDATE_REMARK(97019,"仅未作废的草稿和待确认数据支持更新备注操作"),
-    ERROR_SUGGEST_UPDATE(97020,"仅未作废的草稿和待确认数据支持更新备货操作"),
+    ERROR_SUGGEST_UPDATE(97020,"仅未作废的草稿和待确认数据支持更新操作"),
     ERROR_DELIVERY_SUGGEST_PUSH(97021,"发货建议【{}】非已完成不支持下推"),
     ERROR_DELIVERY_SUGGEST_PUSH_INVALID(97021,"发货建议【{}】已作废不支持下推"),
     ERROR_NOT_EXIST_CALC_DATA(97030,"不存在符合的试算数据"),

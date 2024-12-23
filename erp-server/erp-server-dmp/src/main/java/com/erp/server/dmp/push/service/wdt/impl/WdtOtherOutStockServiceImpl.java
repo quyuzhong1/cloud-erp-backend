@@ -14,7 +14,6 @@ import com.erp.server.dmp.push.service.wdt.WdtOtherOutStockService;
 import com.sdk.wangdian.sdk.Pager;
 import com.sdk.wangdian.sdk.WdtErpException;
 import com.sdk.wangdian.sdk.api.wms.external.out.*;
-import com.sdk.wangdian.sdk.api.wms.stockin.dto.CreateOtherStockinRequest;
 import com.sdk.wangdian.sdk.api.wms.stockout.StockoutAPI;
 import com.sdk.wangdian.sdk.api.wms.stockout.dto.CreateOtherStockoutRequest;
 import com.sdk.wangdian.sdk.api.wms.stockout.dto.CreateOtherStockoutResponse;
@@ -117,6 +116,11 @@ public class WdtOtherOutStockServiceImpl implements WdtOtherOutStockService {
         if(response.getStatus() != 0){
             log.error("推送旺店通其他出库单失败:{}", response.getMessage());
             throw new ServiceException(ApiError.ERROR_3000.code, String.format("推送旺店通其他出库单失败: %s", response.getMessage()));
+        }
+        Map<String, Object> data = response.getData();
+        if(ObjectUtils.isNotEmpty(data) && !data.get("status").equals("0")) {
+            log.error("推送旺店通其他出库单异常:{}", data.get("message"));
+            throw new ServiceException(ApiError.ERROR_3000.code, String.format("推送旺店通其他入库单异常: %s", data.get("message")));
         }
     }
 

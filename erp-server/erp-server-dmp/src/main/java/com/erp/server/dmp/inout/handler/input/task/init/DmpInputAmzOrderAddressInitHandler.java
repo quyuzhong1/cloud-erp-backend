@@ -19,10 +19,7 @@ import com.erp.sdk.oms.amz.spapi.client.ApiException;
 import com.erp.sdk.oms.amz.spapi.client.ApiResponse;
 import com.erp.sdk.oms.amz.spapi.enums.AmazonRequestTypeRateLimiterEnum;
 import com.erp.sdk.oms.amz.spapi.handler.AmazonOrderHandler;
-import com.erp.sdk.oms.amz.spapi.model.orders.Address;
-import com.erp.sdk.oms.amz.spapi.model.orders.GetOrderAddressResponse;
-import com.erp.sdk.oms.amz.spapi.model.orders.GetOrderBuyerInfoResponse;
-import com.erp.sdk.oms.amz.spapi.model.orders.OrderBuyerInfo;
+import com.erp.sdk.oms.amz.spapi.model.orders.*;
 import com.erp.sdk.oms.amz.spapi.utils.AmazonSpApiInitUtils;
 import com.erp.server.dmp.inout.dto.base.DmpInputTaskInitDTO;
 import com.erp.server.dmp.inout.dto.request.DmpInputInitRequest;
@@ -88,9 +85,16 @@ public class DmpInputAmzOrderAddressInitHandler extends DmpInputAmzCommonInitHan
         for (Map<String, Object> mongoData : findMongoData) {
             // 主单ID
             String amazonOrderId = checkAndGetMongoValue(mongoData, "amazonOrderId");
+            // 主单mongo信息
+            Map<String, Object> mainMongo = checkAndGetMainMongoMap(mainMongoDataList, amazonOrderId);
             // 检查是否查询
-            if (orderOtherCheckCanDoNextRequest(mainMongoDataList, amazonOrderId)) {
-                log.warn("FBA或多渠道订单不获取地址信息:{}", amazonOrderId);
+            if (orderOtherCheckCanDoNextRequest(mainMongo, amazonOrderId)) {
+                log.warn("FBA或多渠道订单不请求接口获取地址信息:{}", amazonOrderId);
+                // 解析主单买家信息和地址
+                JSONObject jsonObject = parseBuyerAndAddressByOrder(mainMongo, amazonOrderId, shopInfoDTO.getPlatformShopCode());
+                if (null != jsonObject){
+                    dmpInputTaskInitDTOList.add(DmpInputTaskInitDTO.initMsg(JSON.toJSONString(jsonObject)));
+                }
                 continue;
             }
 
@@ -316,5 +320,24 @@ public class DmpInputAmzOrderAddressInitHandler extends DmpInputAmzCommonInitHan
         } catch (Exception e) {
             throw new ServiceException("查询亚马逊订单地址失败：" + JSONUtil.toJsonStr(e));
         }
+    }
+
+
+    /**
+     * 解析单买家信息和地址
+     */
+    private JSONObject parseBuyerAndAddressByOrder(Map<String, Object> mainMongo, String amazonOrderId, String platformShopCode) {
+        Object addressObj = mainMongo.get("shippingAddress");
+        // 未支付订单无地址
+        if (null == addressObj){
+            return null;
+        }
+        Address shippingAddress = JSON.parseObject(JSON.toJSONString(addressObj), Address.class);
+        OrderBuyerInfo buyerInfo = null;
+        Object buyerInfoObj = mainMongo.get("buyerInfo");
+        if (null != buyerInfoObj){
+            buyerInfo = JSON.parseObject(JSON.toJSONString(buyerInfoObj), OrderBuyerInfo.class);
+        }
+        return setAmazonOrderIdAndToJsonObject(shippingAddress, buyerInfo, amazonOrderId, platformShopCode);
     }
 }

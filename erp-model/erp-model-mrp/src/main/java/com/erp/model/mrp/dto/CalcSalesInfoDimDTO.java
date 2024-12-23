@@ -306,6 +306,15 @@ public class CalcSalesInfoDimDTO implements Serializable {
     public static class CalcResultDTO {
 
         /**
+         * sku id
+         */
+        private String skuId;
+        /**
+         * 店铺
+         */
+        private String shopId;
+
+        /**
          * sku_id
          */
         private String calcSalesInfoDimId;
@@ -382,6 +391,12 @@ public class CalcSalesInfoDimDTO implements Serializable {
          * 真实销量数量
          */
         private List<Integer> realSalesList;
+
+        /**
+         * 相似度
+         */
+        private BigDecimal similarity;
+
     }
 
     @Getter
@@ -601,6 +616,11 @@ public class CalcSalesInfoDimDTO implements Serializable {
          */
         private BigDecimal threeHundredAndSixtySalesQty;
 
+        /**
+         * 相似度
+         */
+        private BigDecimal similarity;
+
         public static SalesInfoEstimateDTO buildSalesInfoEstimateDTO(CalcSalesInfoEstimateEntity entity, ExportDTO record, String shopName, String platform) {
             StringBuilder salesInfoEstimateType = new StringBuilder();
             String rule;
@@ -657,6 +677,7 @@ public class CalcSalesInfoDimDTO implements Serializable {
             dto.setOneHundredAndEightySalesQty(salesQtyMap.get(TimePeriodEnum.ONE_HUNDRED_AND_EIGHTY.getName()));
             dto.setTwoHundredAndSeventySalesQty(salesQtyMap.get(TimePeriodEnum.TWO_HUNDRED_AND_SEVENTY.getName()));
             dto.setThreeHundredAndSixtySalesQty(salesQtyMap.get(TimePeriodEnum.THREE_HUNDRED_AND_SIXTY.getName()));
+            dto.setSimilarity(record.getSimilarity());
             return dto;
         }
     }
@@ -728,6 +749,11 @@ public class CalcSalesInfoDimDTO implements Serializable {
          * 试算结束日期
          */
         private LocalDate endCalcDate;
+
+        /**
+         * 相似度
+         */
+        private BigDecimal similarity;
     }
 
     @Getter
@@ -888,6 +914,10 @@ public class CalcSalesInfoDimDTO implements Serializable {
          * 是否关注
          */
         private Boolean favorite;
+        /**
+         * 相似度
+         */
+        private BigDecimal similarity;
     }
 
     @Getter

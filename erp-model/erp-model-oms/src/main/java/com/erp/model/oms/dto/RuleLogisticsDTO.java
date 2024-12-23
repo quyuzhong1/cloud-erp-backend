@@ -127,6 +127,11 @@ public class RuleLogisticsDTO implements Serializable {
          * 规则名称
          */
         private String name;
+
+        /**
+         *是否自动获取跟踪号提交发货（非超范围派送订单）
+         */
+        private Boolean autoGetTrackNotOfRangeDelivery;
     }
 
 
@@ -201,6 +206,10 @@ public class RuleLogisticsDTO implements Serializable {
          * 条件
          */
         private List<RuleConditionDTO.ViewDTO> conditionList;
+        /**
+         *是否自动获取跟踪号提交发货（非超范围派送订单）
+         */
+        private Boolean autoGetTrackNotOfRangeDelivery;
     }
 
     /**
@@ -285,7 +294,11 @@ public class RuleLogisticsDTO implements Serializable {
         @NotNull(message = "是否自动获取物流单号 不能为空")
         private Boolean autoGetTrackNo;
 
-
+        /**
+         *是否自动获取跟踪号提交发货（非超范围派送订单）
+         */
+        @NotNull(message = "是否自动获取物流单号（非超范围派送订单）不能为空")
+        private Boolean autoGetTrackNotOfRangeDelivery;
     }
 
 

@@ -520,6 +520,12 @@ public interface SoB2cFeign {
      **/
     @PostMapping("/feign/soB2cError/deleteAndAddErrorBatch")
     void deleteAndAddErrorBatch(@RequestBody SoB2cErrorDTO.AddAndDeleteDTO addAndDeleteDTO);
+    /**
+     * 获取销售订单全部异常汇总
+     * @return
+     */
+    @PostMapping("/feign/soB2cError/getB2CErrorReport")
+    List<SoB2cErrorDTO.TypeCountDTO> getB2CErrorReport(@RequestBody List<String> typeList);
 
     /**
      * @description: 订单拦截
@@ -641,6 +647,35 @@ public interface SoB2cFeign {
      */
     @GetMapping("feign/soB2c/listAllVirtualSoB2cDetail")
     List<ReportOrderDataDTO.ViewDTO> listAllVirtualSoB2cDetail();
+
+    /**
+     * 根据销售订单id获取订单 渠道+仓库+重量 基础信息
+     * @param ids
+     * @return
+     */
+    @PostMapping("feign/soB2c/getB2cLogisticsByIds")
+    List<SoB2cDTO.LogisticsDTO> getB2cLogisticsByIds(@RequestBody List<String> ids);
+
+    /**
+     * 更新物流预估费用
+     *
+     * @param b2cSoId
+     * @param totalShippingCost
+     * @param currency
+     */
+    @GetMapping("feign/soB2c/updateLogisticsFee")
+    void updateLogisticsFee(@RequestParam(value = "b2cSoId")String b2cSoId,
+                            @RequestParam(value = "totalShippingCost") BigDecimal totalShippingCost,
+                            @RequestParam(value = "currency") String currency);
+
+    /**
+     * 更新 超过订单金额比例标识
+     * @param b2cSoId
+     * @param isOverEstimatedShipCost
+     */
+    @GetMapping("feign/soB2c/updateOverEstimatedShipCost")
+    void updateOverEstimatedShipCost(@RequestParam(value = "b2cSoId") String b2cSoId,
+                                     @RequestParam(value = "isOverEstimatedShipCost") Boolean isOverEstimatedShipCost);
 
     /**
      * 同步速递云线上订单/配货单

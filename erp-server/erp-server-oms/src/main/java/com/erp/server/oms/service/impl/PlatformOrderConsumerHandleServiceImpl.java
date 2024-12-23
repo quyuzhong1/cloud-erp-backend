@@ -185,7 +185,7 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
             }
         }
         // 销售出库单处理(分平台)
-        Boolean handled = SoB2cHandler.handleSoOutStock(dto, resultDTO, mainEntity);
+        SoB2cHandler.handleSoOutStock(dto, resultDTO, mainEntity);
         //平台取消订单后自动取消预报
         if(Objects.nonNull(mainEntity.getIsCancel()) && mainEntity.getIsCancel()){
             soB2cService.autoCancelOrderForecast(mainEntity);
@@ -223,10 +223,6 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
             dto.getRefundDTOList().forEach(e->{
                 newPlatformRefundOrderConsumerService.handle(JSON.toJSONString(e));
             });
-        }
-        //销售出库单消费异常抛出
-        if (Objects.nonNull(handled) && !handled){
-            throw new ServiceException("平台【{}】销售订单【{}】销售出库单处理失败",mainEntity.getDictPlatform(), mainEntity.getCode());
         }
     }
 

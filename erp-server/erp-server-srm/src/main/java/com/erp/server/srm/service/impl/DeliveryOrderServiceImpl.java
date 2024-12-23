@@ -118,8 +118,6 @@ public class DeliveryOrderServiceImpl extends SuperServiceImpl<DeliveryOrderMapp
     private ScmTaskFeign scmTaskFeign;
     @Resource
     private PoReconciliationDetailScmService poReconciliationDetailScmService;
-    @Resource
-    private PurchaseOrderDetailService purchaseOrderDetailService;
 
     @Override
     public PagingVO<DeliveryOrderDTO.ListDTO> paging(PagingDTO<DeliveryOrderDTO.ParamDTO> dto) {
@@ -646,28 +644,6 @@ public class DeliveryOrderServiceImpl extends SuperServiceImpl<DeliveryOrderMapp
             detailViewDTO.setUnReceiveQty(detailViewDTO.getOrderQty() + returnQty - receiveQty);
         }
         return viewDTO;
-    }
-
-    @Override
-    public List<DeliveryOrderDTO.WaitDeliveryCountDTO> buildSrmWaitDeliveryCount() {
-        WaitDeliveryCycleEnum[] values = WaitDeliveryCycleEnum.values();
-        List<DeliveryOrderDTO.WaitDeliveryCountDTO> dtos = new ArrayList<>(values.length);
-        String supplierId = userService.getSupplierId();
-        for (WaitDeliveryCycleEnum item : values) {
-            dtos.add(new DeliveryOrderDTO.WaitDeliveryCountDTO(item.getCode(),item.getName(),purchaseOrderDetailService.srmWaitDeliveryCount(supplierId, item.getCode())));
-        }
-        return dtos;
-    }
-
-    @Override
-    public List<DeliveryOrderDTO.WaitDeliveryCountDTO> buildSrmWaitDeliveryCount(PurchaseOrderSrmDTO.WaitDeliveryCountDTO waitDeliveryCountDTO) {
-        List<DeliveryOrderDTO.WaitDeliveryCountDTO> dtos = new ArrayList<>();
-        dtos.add(new DeliveryOrderDTO.WaitDeliveryCountDTO(WaitDeliveryCycleEnum.EXPIRED.getCode(),WaitDeliveryCycleEnum.EXPIRED.getName(),waitDeliveryCountDTO.getExpiredCount()));
-        dtos.add(new DeliveryOrderDTO.WaitDeliveryCountDTO(WaitDeliveryCycleEnum.ALMOST_OVERDUE.getCode(),WaitDeliveryCycleEnum.ALMOST_OVERDUE.getName(),waitDeliveryCountDTO.getAlmostOverdueCount()));
-        dtos.add(new DeliveryOrderDTO.WaitDeliveryCountDTO(WaitDeliveryCycleEnum.IN_ONE_MONTH.getCode(),WaitDeliveryCycleEnum.IN_ONE_MONTH.getName(),waitDeliveryCountDTO.getInOneMonthCount()));
-        dtos.add(new DeliveryOrderDTO.WaitDeliveryCountDTO(WaitDeliveryCycleEnum.IN_TWO_MONTH.getCode(),WaitDeliveryCycleEnum.IN_TWO_MONTH.getName(),waitDeliveryCountDTO.getInTwoMonthCount()));
-        dtos.add(new DeliveryOrderDTO.WaitDeliveryCountDTO(WaitDeliveryCycleEnum.TWO_MONTH_LATER.getCode(),WaitDeliveryCycleEnum.TWO_MONTH_LATER.getName(),waitDeliveryCountDTO.getTwoMonthLaterCount()));
-        return dtos;
     }
 
     @Override

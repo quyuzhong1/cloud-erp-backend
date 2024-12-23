@@ -52,6 +52,40 @@ public class DeliverySuggestDTO implements Serializable {
     }
 
     /**
+     * tab参数
+     */
+    @Data
+    @NoArgsConstructor
+    public static class TabListParamDTO {
+
+        /**
+         * 平台类型
+         */
+        @NotBlank(message = "平台类型不能为空")
+        private String platformType;
+    }
+
+    /**
+     * tab
+     */
+    @Data
+    @NoArgsConstructor
+    public static class TabListDTO {
+
+        private String tabFlag;
+        /**
+         * 类型名称
+         */
+        private String tabFlagName;
+
+        /**
+         * 数量
+         */
+        private Integer count;
+
+    }
+
+    /**
      * 列表参数
      */
     @Data
@@ -76,6 +110,10 @@ public class DeliverySuggestDTO implements Serializable {
          * 主键id
          */
         private String  id;
+        /**
+         * 平台类型
+         */
+        private String platformType;
         /**
          * 平台
          */
@@ -406,6 +444,11 @@ public class DeliverySuggestDTO implements Serializable {
         */
         @NotBlank(message = "主键id不能为空")
         private String id;
+
+        /**
+         * 建议发货量
+         */
+        private Integer suggestDeliveryQty;
 
         /**
          * 计划发货量（计划修正值）

@@ -160,21 +160,19 @@ public class MercadoOrderDmpHandler extends MercadoDmpHandler {
                     dmpDataMap.put("logisticType", logisticType);
                     //作废状态
                     Object statusObj = shipmentMap.get("status");
-                    if (statusObj != null) {
-                        String status = String.valueOf(statusObj);
+                    String status = String.valueOf(statusObj);
 
-                        dmpDataMap.put("invalidStatus", this.convertCancel(status));
-                        dmpDataMap.put("orderStatus", this.convertOrderStatus(status, logisticType));
-                        dmpDataMap.put("deliveryStatus", this.convertBillStatus(status, logisticType));
+                    dmpDataMap.put("invalidStatus", this.convertCancel(status));
+                    dmpDataMap.put("orderStatus", this.convertOrderStatus(status, logisticType));
+                    dmpDataMap.put("deliveryStatus", this.convertBillStatus(status, logisticType));
 
-                        //订单状态
-                        String orderStatus = String.valueOf(statusObj);
-                        dmpDataMap.put("platformOriginalStatus", orderStatus);
-                        if ("invalid".equalsIgnoreCase(orderStatus)) {
-                            dmpDataMap.put("invalidStatus", Boolean.TRUE);
-                        } else if ("cancelled".equalsIgnoreCase(orderStatus)) {
-                            dmpDataMap.put("invalidStatus", Boolean.TRUE);
-                        }
+                    //订单状态
+                    String orderStatus = String.valueOf(statusObj);
+                    dmpDataMap.put("platformOriginalStatus", orderStatus);
+                    if ("invalid".equalsIgnoreCase(orderStatus)) {
+                        dmpDataMap.put("invalidStatus", Boolean.TRUE);
+                    } else if ("cancelled".equalsIgnoreCase(orderStatus)) {
+                        dmpDataMap.put("invalidStatus", Boolean.TRUE);
                     }
 
                     //买家备注

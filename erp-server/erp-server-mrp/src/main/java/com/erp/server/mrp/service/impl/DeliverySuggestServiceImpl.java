@@ -11,6 +11,7 @@ import cn.hutool.json.JSONUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
@@ -61,6 +62,7 @@ import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.DeliveryPlanFeign;
+import com.erp.server.mrp.handler.DeliverySuggestionQueryHandler;
 import com.erp.server.mrp.listener.DeliverySuggestImportExcelListener;
 import com.erp.server.mrp.mapper.DeliverySuggestMapper;
 import com.erp.server.mrp.service.*;
@@ -122,6 +124,9 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
     @Resource
     private CfgRuleWarehouseDetailService cfgRuleWarehouseDetailService;
 
+    @Resource
+    private DeliverySuggestionQueryHandler deliverySuggestionQueryHandler;
+
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -130,6 +135,8 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
         DeliverySuggestEntity deliverySuggestEntity = new DeliverySuggestEntity();
         BeanMapperUtils.copy(addDTO, deliverySuggestEntity);
 
+        //计划修正值默认给建议发货量
+        deliverySuggestEntity.setPlanDeliveryQty(deliverySuggestEntity.getSuggestDeliveryQty());
         // 数据处理
         handleData(deliverySuggestEntity);
         log.info("开始新增补货计划");
@@ -280,6 +287,27 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
             resultList = resultList.stream().distinct().collect(Collectors.toList());
         }
         return resultList;
+    }
+
+    @Override
+    public List<DeliverySuggestDTO.TabListDTO> tabList(DeliverySuggestDTO.TabListParamDTO dto) {
+        DeliverySuggestDTO.PagingParamDTO pagingParamDTO = new DeliverySuggestDTO.PagingParamDTO();
+        DeliverySuggestTabEnum[] values =  DeliverySuggestTabEnum.values();
+        List<DeliverySuggestDTO.TabListDTO> list = new ArrayList<>();
+        for (DeliverySuggestTabEnum item : values) {
+            DeliverySuggestDTO.TabListDTO resultDTO = new DeliverySuggestDTO.TabListDTO();
+            String tabSql = deliverySuggestionQueryHandler.getTabSql(item.getCode());
+            HashMap<String,String> map = new HashMap<>();
+            map.put("default",tabSql);
+            pagingParamDTO.setSqlMap(map);
+            pagingParamDTO.setPlatformType(dto.getPlatformType());
+            Integer count = this.baseMapper.tabList(pagingParamDTO);
+            resultDTO.setCount(ObjectUtils.isEmpty(count) ? MathUtil.ZERO : count);
+            resultDTO.setTabFlag(item.getCode());
+            resultDTO.setTabFlagName(item.getName());
+            list.add(resultDTO);
+        }
+        return list;
     }
 
     @Override
@@ -449,7 +477,9 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
         //补货计划
         List<WmsDeliveryPlanDetailEntity> deliveryPlanDetailList = deliveryPlanFeign.listBySourceIdList(ids);
 
-        DeliverySuggestEntity entity = deliverySuggestList.get(0);
+        //根据发货日期和创建日期排序取第一条
+        DeliverySuggestEntity entity = deliverySuggestList.stream().sorted(Comparator.comparing(DeliverySuggestEntity::getSuggestDeliveryDate).thenComparing(DeliverySuggestEntity::getCreateTime)).findFirst().orElse(new DeliverySuggestEntity());
+
         viewPushDeliveryPlanDTO.setShopId(entity.getShopId());
         boolean isOverseas = StrUtil.equals(deliverySuggestList.get(0).getPlatformType(), CfgRulePlatformTypeEnum.OVERSEAS.getCode());
         if (isOverseas) {
@@ -469,7 +499,8 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
         Map<String, List<DeliverySuggestEntity>> map = deliverySuggestList.stream().collect(Collectors.groupingBy(DeliverySuggestEntity::getSkuId));
         for (Map.Entry<String, List<DeliverySuggestEntity>> entry : map.entrySet()) {
             List<DeliverySuggestEntity> value = entry.getValue();
-            DeliverySuggestEntity suggestEntity = value.get(0);
+            //根据发货日期和创建日期排序取第一条
+            DeliverySuggestEntity suggestEntity = value.stream().sorted(Comparator.comparing(DeliverySuggestEntity::getSuggestDeliveryDate).thenComparing(DeliverySuggestEntity::getCreateTime)).findFirst().orElse(new DeliverySuggestEntity());
 
             DeliverySuggestDTO.ViewPushDeliveryPlanDetailDTO detailDTO = new DeliverySuggestDTO.ViewPushDeliveryPlanDetailDTO();
             BeanMapperUtils.copy(suggestEntity,detailDTO);

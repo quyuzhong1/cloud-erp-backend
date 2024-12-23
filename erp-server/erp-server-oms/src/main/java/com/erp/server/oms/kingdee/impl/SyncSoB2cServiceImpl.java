@@ -282,13 +282,21 @@ public class SyncSoB2cServiceImpl implements SyncSoB2cService {
 
     @Override
     public void syncDataToSdy(SoB2cEntity soB2cEntity, List<SoB2cDetailEntity> soB2cDetailEntityList, String operate) {
-        this.syncDataToSdyFieldHandlerBatch(soB2cEntity, soB2cDetailEntityList, operate);
+    	if(CollUtil.isNotEmpty(soB2cDetailEntityList)) {
+    		List<SoB2cDetailEntity> newSoB2cDetailEntityList = soB2cDetailEntityList.stream().filter(s -> StringUtils.isNotBlank(s.getSkuId())).collect(Collectors.toList());
+    		if(CollUtil.isNotEmpty(newSoB2cDetailEntityList)) {
+    			this.syncDataToSdyFieldHandlerBatch(soB2cEntity, newSoB2cDetailEntityList, operate);
+    		}
+    	}
 
     }
 
     @Override
     public void syncDataToSdy(SoB2cEntity soB2cEntity, List<SoB2cDetailEntity> detailEntityList, String operate, List<SkuVO> skuVOList, List<BomChildrenSkuDTO> bomChildrenSkuDTOS, List<ProductDetailEntity> parentSkuList, List<ListingInfoEntity> listingInfoEntities, List<CurrencyDTO.ViewDTO> currencyList, List<DictCurrencyEntity> dictCurrencyEntities, List<ShopInfoEntity> shopInfoList, List<CustomerInfoEntity> customerInfoList, List<BaseIdDTO.CodeDTO> companyEntities, List<DictBasicEntity> dictBasicEntityList, List<DictBasicEntity> dictList) {
         for (SoB2cDetailEntity soB2cDetailEntity : detailEntityList) {
+        	if(StringUtils.isBlank(soB2cDetailEntity.getSkuId()) || StringUtils.isBlank(soB2cDetailEntity.getSkuNo())) {
+        		continue;
+        	}
             //同步配货单
             OmsPushMsgEntity omsPushMsgEntity = new OmsPushMsgEntity();
             omsPushMsgEntity.setTargetPlatform(DmpBasicSystemCodeEnum.SDY.getCode());

@@ -3,8 +3,7 @@ package com.erp.model.tms.dto;
 import com.common.business.dto.base.SortDTO;
 import com.erp.model.tms.entity.ShippingTemplateEntity;
 import com.erp.model.tms.entity.ShippingTemplateRuleEntity;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
@@ -27,7 +26,10 @@ public class ShippingCalculationDTO {
     /**
      * 查询条件
      */
+    @EqualsAndHashCode(callSuper = true)
     @Data
+    @Builder
+    @AllArgsConstructor
     @NoArgsConstructor
     public static class PagingParamDTO extends SortDTO {
 
@@ -55,11 +57,19 @@ public class ShippingCalculationDTO {
          * 城市
          */
         private String city;
+        /**
+         * 省/州
+         */
+        private String province;
 
         /**
          * 物流渠道id集合
          */
         private List<String> channelIdList;
+        /**
+         * 渠道编码
+         */
+        private List<String> channelCodeList;
 
         /**
          * 重量
@@ -92,6 +102,20 @@ public class ShippingCalculationDTO {
          * 体积
          */
         private BigDecimal volume;
+
+        /**
+         * 发货仓库id(自发货类型下必填)
+         * http://172.16.100.11:3002/project/128/interface/api/25567
+         */
+        private String fromWarehouseId;
+        /**
+         * 销售订单id
+         */
+        private String b2cSoId;
+        /**
+         * 邮编
+         */
+        private String postCode;
     }
 
     /**
@@ -115,6 +139,10 @@ public class ShippingCalculationDTO {
          * 物流渠道id
          */
         private String channelId;
+        /**
+         * 渠道编码
+         */
+        private String channelCode;
 
         /**
          * 计费规则
@@ -140,6 +168,10 @@ public class ShippingCalculationDTO {
          * 目的地
          */
         private String toCountry;
+        /**
+         * 目的国家名称
+         */
+        private String toCountryName;
 
         /**
          * 分区
@@ -150,6 +182,22 @@ public class ShippingCalculationDTO {
          * 有效期
          */
         private String effectivePeriod;
+        /**
+         * 时效
+         */
+        private String effectiveTime;
+        /**
+         * 时效单位
+         */
+        private String effectiveTimeUnit;
+        /**
+         * 时效  时效取值为“物流渠道管理”对应渠道的时效 effective_time_unit
+         */
+        private String effectiveTimeStr;
+        /**
+         * 运费超限打标比例
+         */
+        private BigDecimal shipmentOverLimitRate;
 
         /**
          * 生效日期
