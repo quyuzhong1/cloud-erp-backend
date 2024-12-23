@@ -114,7 +114,7 @@ public class ExportOmsFeignController {
 
     @PostMapping("/customer")
     @WebAdvanceQuery(handler = CustomerInfoQueryHandler.class)
-    public PagingVO<CustomerDTO.PagingViewDTO> exportCustomer(@RequestBody PagingDTO<CustomerDTO.ExportDTO> dto) {
+    public PagingVO<CustomerDTO.PagingExportDTO> exportCustomer(@RequestBody PagingDTO<CustomerDTO.ExportDTO> dto) {
         return customerInfoService.exportCustomer(dto);
     }
 

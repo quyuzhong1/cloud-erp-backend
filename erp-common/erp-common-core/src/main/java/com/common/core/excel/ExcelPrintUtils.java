@@ -750,8 +750,7 @@ public class ExcelPrintUtils {
 	}
 
 	public byte[] sheetPatchExport(List<Pair<Integer,List<?>>> pairList , String fileName, String excelPath) throws IOException {
-		try (ByteArrayOutputStream out = new ByteArrayOutputStream();
-			 BufferedOutputStream bos = new BufferedOutputStream(out)) {
+		try (ByteArrayOutputStream out = new ByteArrayOutputStream();BufferedOutputStream bos = new BufferedOutputStream(out)) {
 			//模板的路径
 			ClassPathResource classPathResource = new ClassPathResource(excelPath);
 			InputStream inputStream = classPathResource.getInputStream();
