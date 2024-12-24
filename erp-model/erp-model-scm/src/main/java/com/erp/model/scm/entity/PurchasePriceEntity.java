@@ -114,8 +114,8 @@ public class PurchasePriceEntity extends BaseEntity<PurchasePriceEntity> {
     /**
      * 外部平台单号
      */
-    @TableField("out_platform_code")
-    private String outPlatformCode;
+    @TableField("voucher_no")
+    private String voucherNo;
 
     /**
      * 明细ids

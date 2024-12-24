@@ -1067,7 +1067,7 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
         }
         this.lambdaUpdate()
                 .in(PurchasePriceEntity::getId, ids)
-                .set(PurchasePriceEntity::getOutPlatformCode, outPlatformCode)
+                .set(PurchasePriceEntity::getVoucherNo, outPlatformCode)
                 .update(new PurchasePriceEntity());
         ids.forEach(v->{
             String content = StrUtil.format("更新外部平台单号为：{}", outPlatformCode);

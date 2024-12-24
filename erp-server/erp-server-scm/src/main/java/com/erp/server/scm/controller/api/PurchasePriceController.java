@@ -352,7 +352,7 @@ public class PurchasePriceController extends BaseController {
     /**
      * 更新外部平台单号
      */
-    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "更新明细备注采购价目:ids={ids},外部平台单号={outPlatformCode}")
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "更新明细备注采购价目:ids={ids},外部平台单号={voucherNo}")
     @PostMapping("/updateOutPlatformCode")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "pricing_user_id",
@@ -361,7 +361,7 @@ public class PurchasePriceController extends BaseController {
             keyIdName = "ids"
     )
     public ApiResult updateOutPlatformCode(@RequestBody @Valid PurchasePriceDTO.OutPlatformCodeDTO dto) {
-        Boolean result = purchasePriceService.updateOutPlatformCode(dto.getIds(),dto.getOutPlatformCode());
+        Boolean result = purchasePriceService.updateOutPlatformCode(dto.getIds(),dto.getVoucherNo());
         return result ? success() : failure();
     }
     /**

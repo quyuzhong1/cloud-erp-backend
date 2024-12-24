@@ -202,7 +202,7 @@ public class PurchasePriceDTO implements Serializable {
         /**
          * 外部平台单号
          */
-        private String outPlatformCode;
+        private String voucherNo;
         /**
          * 报价人id
          */
@@ -268,7 +268,7 @@ public class PurchasePriceDTO implements Serializable {
         /**
          * 外部平台单号
          */
-        private String outPlatformCode;
+        private String voucherNo;
         /**
          * 审核状态
          */
@@ -353,7 +353,7 @@ public class PurchasePriceDTO implements Serializable {
         /**
          * 外部平台单号
          */
-        private String outPlatformCode;
+        private String voucherNo;
         /**
          * 报价日期
          */
@@ -422,7 +422,7 @@ public class PurchasePriceDTO implements Serializable {
         /**
          * 外部平台单号
          */
-        private String outPlatformCode;
+        private String voucherNo;
         /**
          * 供应商id
          */
@@ -737,7 +737,7 @@ public class PurchasePriceDTO implements Serializable {
 
         @NotBlank(message = "外部平台单号")
         @Size(max = 255,message = "填写信息不能超过255字符")
-        private String outPlatformCode;
+        private String voucherNo;
 
     }
 
