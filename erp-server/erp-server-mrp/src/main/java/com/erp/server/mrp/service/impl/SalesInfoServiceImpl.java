@@ -99,9 +99,9 @@ public class SalesInfoServiceImpl extends SuperServiceImpl<SalesInfoMapper, Sale
         orderHistorySalesEsService.deleteByDateBetween(LocalDate.of(2023, 12, 1), LocalDate.of(2024, 8, 31));
         List<List<OtherHistorySaleQtyDTO>> partition = Lists.partition(otherHistorySaleQtyList, 1000);
         CompletableFuture.allOf(partition.stream()
-                .map(shopInfo -> CompletableFuture.runAsync(() -> {
+                .map(dtoList -> CompletableFuture.runAsync(() -> {
                     List<OrderHistorySalesEsEntity> historySales = new ArrayList<>();
-                    for (OtherHistorySaleQtyDTO dto : otherHistorySaleQtyList) {
+                    for (OtherHistorySaleQtyDTO dto : dtoList) {
                         String skuId = skuMap.get(dto.getSkuNo());
                         if (ObjectUtils.isEmpty(skuId)) {
                             continue;
