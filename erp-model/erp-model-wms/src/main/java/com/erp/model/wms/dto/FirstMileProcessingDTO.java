@@ -68,6 +68,15 @@ public class FirstMileProcessingDTO implements Serializable {
          * 要货申请编码
          */
         private String requisitionApplicationCode;
+
+        /**
+         * 要货申请状态
+         */
+        private String requisitionApplicationStatus;
+        /**
+         * 要货申请状态名称
+         */
+        private String requisitionApplicationStatusName;
         /**
          * 批准数量
          */

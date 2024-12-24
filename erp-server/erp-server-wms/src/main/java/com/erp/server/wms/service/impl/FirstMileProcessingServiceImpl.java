@@ -18,6 +18,7 @@ import com.erp.model.wms.dto.FirstMileProcessingDTO;
 import com.erp.model.wms.dto.SoB2bProcessingDTO;
 import com.erp.model.wms.entity.FirstMileProcessingEntity;
 import com.erp.model.wms.enums.OrderProcessingLableEnum;
+import com.erp.model.wms.enums.RequisitionApplicationStatusEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.mapper.FirstMileProcessingMapper;
@@ -251,6 +252,8 @@ public class FirstMileProcessingServiceImpl extends SuperServiceImpl<FirstMilePr
         for (FirstMileProcessingDTO.ListDTO listDTO : list) {
             //发货单审核状态名称
             listDTO.setDeliveryApproveStatusName(ApproveStatusEnum.getName(listDTO.getDeliveryApproveStatus()));
+            //要货申请状态名称
+            listDTO.setRequisitionApplicationStatusName(RequisitionApplicationStatusEnum.getName(listDTO.getRequisitionApplicationStatus()));
             //标签
             List<String> labelList = new ArrayList<>();
             if (CharSequenceUtil.isNotBlank(listDTO.getOutstockOrderId())) {
@@ -258,6 +261,9 @@ public class FirstMileProcessingServiceImpl extends SuperServiceImpl<FirstMilePr
             }
             if (MathUtil.compareTo(listDTO.getDeliveryQty(),listDTO.getFrozenQty()) != MathUtil.ZERO && CharSequenceUtil.isNotBlank(listDTO.getFirstMileDeliveryId())) {
                 labelList.add(OrderProcessingLableEnum.FROZEN.getCode());
+            }
+            if (CharSequenceUtil.isBlank(listDTO.getOutstockOrderId()) && ObjectUtil.isNotEmpty(listDTO.getFrozenTime()) && (LocalDate.now().toEpochDay() - listDTO.getFrozenTime().toLocalDate().toEpochDay() >= 7)) {
+                labelList.add(OrderProcessingLableEnum.UN_SHIPPED.getCode());
             }
             listDTO.setLabelList(labelList);
         }

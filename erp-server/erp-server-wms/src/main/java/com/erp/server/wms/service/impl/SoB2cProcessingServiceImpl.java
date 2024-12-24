@@ -266,6 +266,9 @@ public class SoB2cProcessingServiceImpl extends SuperServiceImpl<SoB2cProcessing
             if (MathUtil.compareTo(listDTO.getDeliveryQty(),listDTO.getFrozenQty()) != MathUtil.ZERO && CharSequenceUtil.isNotBlank(listDTO.getDeliveryId())) {
                 labelList.add(OrderProcessingLableEnum.FROZEN.getCode());
             }
+            if (CharSequenceUtil.isBlank(listDTO.getOutstockOrderId()) && ObjectUtil.isNotEmpty(listDTO.getFrozenTime()) && (LocalDate.now().toEpochDay() - listDTO.getFrozenTime().toLocalDate().toEpochDay() >= 7)) {
+                labelList.add(OrderProcessingLableEnum.UN_SHIPPED.getCode());
+            }
             listDTO.setLabelList(labelList);
         }
     }
