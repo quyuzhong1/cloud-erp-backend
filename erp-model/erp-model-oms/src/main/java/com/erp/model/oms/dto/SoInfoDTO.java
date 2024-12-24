@@ -384,6 +384,10 @@ public class SoInfoDTO implements Serializable {
          * 备注
          */
         private String remark;
+        /**
+         * 成本来源
+         */
+        private String costSource;
 
         /**
          * 明细备注
@@ -2482,7 +2486,10 @@ public class SoInfoDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class CalCostProfitDTO {
-
+        @NotNull(message = "销售组织不能为空")
+        private String salesOrgId;
+        @NotBlank(message = "仓库不能为空")
+        private String warehouseId;
         /**
          * 单据日期
          */

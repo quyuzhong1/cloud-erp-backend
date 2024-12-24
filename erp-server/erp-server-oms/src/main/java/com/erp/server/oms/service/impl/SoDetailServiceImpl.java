@@ -524,13 +524,6 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
         //币种列表
         List<String> currencyList = detailList.stream().map(SoDetailDTO.UpdateDTO::getCurrency).collect(Collectors.toList());
         List<CurrencyDTO.ViewDTO> currencyViewList = sysUserFeign.listByCurrency(currencyList);
-        // 供应商id集合
-//        List<String> supplierIds = skuList.stream().filter(r -> StrUtil.isNotEmpty(r.getSupplierId())).map(SkuVO::getSupplierId).distinct().collect(Collectors.toList());
-//        List<PurchasePriceDTO.SupplierSkuPrice> purchasePriceList = Lists.newArrayList();
-//        if (CollUtil.isNotEmpty(supplierIds)) {
-//            purchasePriceList = scmTaskFeign.listSupplierSkuPrice(supplierIds);
-//        }
-
         for (SoDetailEntity item : saveOrUpdateList) {
             item.setMainId(mainId);
             String skuId = item.getSkuId();
@@ -1184,14 +1177,6 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
         //币种列表
         List<String> currencyList = detailList.stream().map(SoDetailDTO.AddDTO::getCurrency).collect(Collectors.toList());
         List<CurrencyDTO.ViewDTO> currencyViewList = sysUserFeign.listByCurrency(currencyList);
-
-        // 供应商id集合
-//        List<String> supplierIds = skuList.stream().filter(r -> StrUtil.isNotEmpty(r.getSupplierId())).map(SkuVO::getSupplierId).distinct().collect(Collectors.toList());
-//        List<PurchasePriceDTO.SupplierSkuPrice> purchasePriceList = Lists.newArrayList();
-//        if (CollUtil.isNotEmpty(supplierIds)) {
-//            purchasePriceList = scmTaskFeign.listSupplierSkuPrice(supplierIds);
-//        }
-
         SoInfoEntity soInfoEntity = soInfoService.getById(mainId);
         for (int i = 0; i < saveOrUpdateList.size(); i++) {
             SoDetailEntity item = saveOrUpdateList.get(i);
@@ -1281,46 +1266,12 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
         // sku对应的一级供应商
         SkuVO skuVO = skuList.stream().filter(r -> Objects.equals(r.getSkuId(), skuId)).findFirst().orElse(null);
         log.warn("SKU编号【{}】对应的一级供应商id：【{}】", item.getSkuNo(), Objects.isNull(skuVO)? "":skuVO.getSupplierId());
-        /*// 一级供应商+SKU对应的采购价目信息
-        PurchasePriceDTO.SupplierSkuPrice supplierSkuPrice = null;
-        if (StrUtil.isNotEmpty(skuId) && StrUtil.isNotEmpty(supplierId)) {
-            supplierSkuPrice = purchasePriceList.stream().filter(r -> Objects.equals(r.getSkuId(), skuId) && Objects.equals(r.getSupplierId(), supplierId)).findFirst().orElse(null);
-        }
-        BigDecimal purchasePrice = BigDecimal.ZERO;
-        if (Objects.nonNull(supplierSkuPrice)) {
-            purchasePrice = supplierSkuPrice.getTaxPrice();
-            BigDecimal purchaseTaxRate = supplierSkuPrice.getTaxRate();
-            //不含税单价（不含税价格=含税价格/（1+增值税税率））
-            purchasePrice = MathUtil.divide(purchasePrice, MathUtil.add(BigDecimal.ONE, purchaseTaxRate));
-
-        }
-
-        // 最新的采购单价币制转换（非人民币）
-        if (Objects.nonNull(purchasePrice) &&
-                purchasePrice.compareTo(BigDecimal.ZERO) == 1 &&
-                !Objects.equals(supplierSkuPrice.getCurrency(), "CNY")) {
-            String billDate = saleOrderBillDate.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
-            BigDecimal rate = dmpTaskFeign.getRate(billDate, supplierSkuPrice.getCurrency());
-            log.info("找到的最新的采购价目的币制：{}，含税单价：【{}】, 销售订单日期：{}，转换后汇率：{}", supplierSkuPrice.getCurrency(), supplierSkuPrice.getTaxPrice(), rate);
-            // 未找到汇率直接返回
-            if (Objects.isNull(rate) || rate.compareTo(BigDecimal.ZERO) <= 0) {
-                purchasePrice = BigDecimal.ZERO;
-                log.warn("汇率日期【{}】，币制【{}】", billDate, supplierSkuPrice.getCurrency());
-                throw new ServiceException( CharSequenceUtil.format("未找到币制对应的汇率，请联系系统管理员配置"));
-            } else {
-                // item.setExchangeRate(rate);
-                // 转换成人民币采购单价
-                purchasePrice = rate.multiply(purchasePrice).setScale(4, BigDecimal.ROUND_HALF_UP);
-            }
-        }*/
-
-//        List<DmpSkuCostEntity> dmpSkuCostList = dmpTaskFeign.listRedisBySkuNoList(Arrays.asList(item.getSkuNo()));
         BigDecimal purchasePrice = BigDecimal.ZERO;
         String currency = CurrencyEnum.CNY.getCurrencyCode();
         if (Objects.nonNull(skuVO)) {
             purchasePrice = skuVO.getNotTaxCostPrice();
         }
-
+        item.setCostSource(Objects.isNull(skuVO) ? "" : skuVO.getCostSource());
         // 销售金额转换
         BigDecimal saleAmount = item.getAmount();
         // 价税合计（折后）转换

@@ -1,5 +1,7 @@
 package com.erp.server.dmp.service.impl;
 
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
@@ -11,6 +13,7 @@ import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.common.message.constant.RedisKeyConstant;
 import com.common.message.service.mq.MQProducerService;
+import com.erp.model.dmp.dto.DictBasicDTO;
 import com.erp.model.dmp.entity.DmpSkuCostCustomEntity;
 import com.erp.model.dmp.entity.DmpSkuCostEntity;
 import com.erp.model.msg.dto.WarnMsgInfoDTO;
@@ -18,10 +21,10 @@ import com.erp.model.msg.enums.WarnMsgTypeEnum;
 import com.erp.model.plm.dto.BomSkuPageDTO;
 import com.erp.model.scm.dto.SkuCostDTO;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
-import com.erp.rpc.plm.feign.LogisticsProductFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.scm.feign.ScmTaskFeign;
 import com.erp.server.dmp.mapper.DmpSkuCostMapper;
+import com.erp.server.dmp.service.DictBasicService;
 import com.erp.server.dmp.service.DmpSkuCostCustomService;
 import com.erp.server.dmp.service.DmpSkuCostService;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -33,7 +36,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -69,7 +71,7 @@ public class DmpSkuCostServiceImpl extends SuperServiceImpl<DmpSkuCostMapper, Dm
     private DmpSkuCostCustomService dmpSkuCostCustomService;
 
     @Resource
-    private LogisticsProductFeign logisticsProductFeign;
+    private DictBasicService dictBasicService;
     /**
      * 同步采购单sku成本信息
      * @Author Luo_WG
@@ -78,20 +80,20 @@ public class DmpSkuCostServiceImpl extends SuperServiceImpl<DmpSkuCostMapper, Dm
      **/
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void syncPurchaseOrderSkuCost(List<LocalDate> localDateList) {
-        List<SkuCostDTO> skuCostList = scmTaskFeign.listPurchaseOrderByPurchaseDate(localDateList);
+    public void syncPurchaseOrderSkuCost(SkuCostDTO.QueryPurchaseDTO queryPurchaseDTO) {
+        List<SkuCostDTO> skuCostList = scmTaskFeign.listPurchaseOrderByPurchaseDate(queryPurchaseDTO);
         if (CollectionUtils.isEmpty(skuCostList)) {
-            log.warn("未发现进三个月成本信息，cleanSkuCostBySKuNos >>>>>> localDateList：{}",localDateList);
+            log.warn("未发现进三个月成本信息，cleanSkuCostBySKuNos >>>>>> localDateList：{}",queryPurchaseDTO.getLocalDateList());
             return;
         }
         List<String> skuNoList = skuCostList.stream().map(SkuCostDTO::getSkuNo).distinct().collect(Collectors.toList());
 
         //更新本身及上级SKU
-        cleanSkuCostBySKuNos (skuNoList);
+        cleanSkuCostBySKuNos (skuNoList, queryPurchaseDTO.getPurchaseOrderIds(), queryPurchaseDTO.getSupplierIds());
     }
 
     @Override
-    public void cleanSkuCostBySKuNos(List<String> skuNoList) {
+    public void cleanSkuCostBySKuNos(List<String> skuNoList, List<String> purchaseOrderIds, List<String> supplierIds) {
         if (CollectionUtils.isEmpty(skuNoList)) {
             log.warn("录入编码不能为空，cleanSkuCostBySKuNos >>>>>> skuNoList：{}",skuNoList);
             return;
@@ -117,6 +119,8 @@ public class DmpSkuCostServiceImpl extends SuperServiceImpl<DmpSkuCostMapper, Dm
         }
         SkuCostDTO.ParamDTO paramDTO = new SkuCostDTO.ParamDTO();
         paramDTO.setSkuNoList(resultSkuNoList);
+        paramDTO.setPurchaseOrderIds(purchaseOrderIds);
+        paramDTO.setSupplierIds(supplierIds);
         //查询所有子级SKU近三个月成本信息
         List<SkuCostDTO> skuCostList = scmTaskFeign.listPurchaseOrderCost(paramDTO);
         if (CollectionUtils.isEmpty(skuCostList)) {

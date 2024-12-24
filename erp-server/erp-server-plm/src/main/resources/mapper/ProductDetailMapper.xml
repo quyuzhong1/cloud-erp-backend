@@ -1850,6 +1850,7 @@
         pc.actual_tax_cost,
         pc.target_tax_cost,
         pc.retail_price,
+        pc.tax_rate,
         pp.moq,
         pp.main_supplier as supplierId,
         pp.main_supplier as mainSupplier,
