@@ -16,8 +16,9 @@ pipeline {
         stage('引用settings.xml') {
             steps {
                 script {
-                    def settingsXmlContect = managedFiles([file: 'settings-test'])[0].contect
-                    writeFile file: 'settings.xml', test: settingsXmlContect
+                    def settingsXmlContect = configFileProvider([configFile(id: 'settings-test', variable: 'MY_SETTINGS_XML']) {
+                        writeFile file: 'settings.xml', text: "${MY_SETTINGS_XML}"
+                    }
                 }
             }
         }
