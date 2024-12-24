@@ -51,7 +51,7 @@ public class SupplierPhaseController extends BaseController {
     @PostMapping("/tabList")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
-            menuCode = "tms:supplier:phase:paging",
+            menuCode = "scm:supplier:phase:paging",
             tableAlias = "sp"
     )
     public ApiResult<List<SupplierPhaseDTO.TabFlagDTO>> tabList(@RequestBody PermissionsDTO dto) {
