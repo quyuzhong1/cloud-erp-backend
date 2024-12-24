@@ -6,9 +6,6 @@ pipeline {
 		harborAddress = '172.16.100.92:5000'
 		harborRepo = 'sdc-erp'
 	}
-    tools {
-        jdk 'JDK 1.8.0'
-    }
 
     stages {
         stage('拉取git仓库代码') {
