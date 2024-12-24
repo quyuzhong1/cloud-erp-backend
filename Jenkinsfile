@@ -23,7 +23,9 @@ pipeline {
         }
         stage('通过Maven构建项目') {
             steps {
-                sh '/var/jenkins_home/tools/hudson.tasks.Maven_MavenInstallation/maven_3.5/bin/mvn -s $(pwd)/settings.xml clean install -U -pl com.erp.server:erp-server-admin -am -Pdev -Dmaven.test.skip=true'
+                script {
+                    sh '/var/jenkins_home/tools/hudson.tasks.Maven_MavenInstallation/maven_3.5/bin/mvn -s $(pwd)/settings.xml clean install -U -pl com.erp.server:erp-server-admin -am -Pdev -Dmaven.test.skip=true'
+                }
             }
         }
         stage('通过docker制作自定义镜像') {
