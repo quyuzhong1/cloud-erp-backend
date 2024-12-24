@@ -55,4 +55,12 @@ public class PlatformThirdLogisticsChannelDTO  extends UniqueDto {
      * 物流方式名称
      */
     private String logisticsTypeName;
+    /**
+     * 物流渠道id
+     */
+    private String channelId;
+    /**
+     * 物流渠道名称
+     */
+    private String channelName;
 }
