@@ -18,6 +18,8 @@ import com.erp.model.wms.dto.SoB2bProcessingDTO;
 import com.erp.model.wms.dto.SoB2cProcessingDTO;
 import com.erp.model.wms.entity.SoB2cProcessingEntity;
 import com.erp.model.wms.entity.VirtualTransFlowEntity;
+import com.erp.model.wms.enums.DeliveryStatusEnum;
+import com.erp.model.wms.enums.OrderProcessingLableEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.mapper.SoB2cProcessingMapper;
@@ -251,6 +253,23 @@ public class SoB2cProcessingServiceImpl extends SuperServiceImpl<SoB2cProcessing
      * @param list
      */
     private void fillPageData(List<SoB2cProcessingDTO.ListDTO> list) {
-        // TODO 验证数据 & 数据赋值
+        if (CollUtil.isEmpty(list)) {
+            return;
+        }
+        for (SoB2cProcessingDTO.ListDTO listDTO : list) {
+            listDTO.setDeliveryStatusName(DeliveryStatusEnum.getName(listDTO.getDeliveryStatus()));
+            //标签
+            List<String> labelList = new ArrayList<>();
+            if (CharSequenceUtil.isNotBlank(listDTO.getOutstockOrderId())) {
+                labelList.add(OrderProcessingLableEnum.OUTSTOCK.getCode());
+            }
+            if (MathUtil.compareTo(listDTO.getDeliveryQty(),listDTO.getFrozenQty()) != MathUtil.ZERO && CharSequenceUtil.isNotBlank(listDTO.getDeliveryId())) {
+                labelList.add(OrderProcessingLableEnum.FROZEN.getCode());
+            }
+            if (CharSequenceUtil.isBlank(listDTO.getOutstockOrderId()) && ObjectUtil.isNotEmpty(listDTO.getFrozenTime()) && (LocalDate.now().toEpochDay() - listDTO.getFrozenTime().toLocalDate().toEpochDay() >= 7)) {
+                labelList.add(OrderProcessingLableEnum.UN_SHIPPED.getCode());
+            }
+            listDTO.setLabelList(labelList);
+        }
     }
 }

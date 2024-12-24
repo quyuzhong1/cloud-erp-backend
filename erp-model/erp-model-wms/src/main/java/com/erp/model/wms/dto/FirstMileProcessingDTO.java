@@ -1,6 +1,5 @@
 package com.erp.model.wms.dto;
 
-import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import lombok.Data;
@@ -58,6 +57,10 @@ public class FirstMileProcessingDTO implements Serializable {
     @NoArgsConstructor
     public static class ListDTO {
         /**
+         * 主键id
+         */
+        private String id;
+        /**
          * 要货申请单id
          */
         private String requisitionApplicationId;
@@ -65,6 +68,15 @@ public class FirstMileProcessingDTO implements Serializable {
          * 要货申请编码
          */
         private String requisitionApplicationCode;
+
+        /**
+         * 要货申请状态
+         */
+        private String requisitionApplicationStatus;
+        /**
+         * 要货申请状态名称
+         */
+        private String requisitionApplicationStatusName;
         /**
          * 批准数量
          */
@@ -163,7 +175,7 @@ public class FirstMileProcessingDTO implements Serializable {
         private String outstockQty;
 
         /**
-         * 标签
+         * 标签,outstock出库,frozen发货冻结,unShipped七日未发
          */
         private List<String> labelList;
     }

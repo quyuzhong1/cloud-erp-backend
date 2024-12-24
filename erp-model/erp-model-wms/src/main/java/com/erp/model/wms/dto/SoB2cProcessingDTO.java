@@ -56,6 +56,10 @@ public class SoB2cProcessingDTO implements Serializable {
     @NoArgsConstructor
     public static class ListDTO {
         /**
+         * 主键id
+         */
+        private String id;
+        /**
          * b2c销售订单编号
          */
         private String b2cSoCode;
@@ -149,7 +153,7 @@ public class SoB2cProcessingDTO implements Serializable {
         private String outstockQty;
 
         /**
-         * 标签
+         * 标签，outstock出库,frozen发货冻结,unShipped七日未发
          */
         private List<String> labelList;
     }
