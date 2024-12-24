@@ -14,7 +14,7 @@
             update_user_name AS updateUserName,
             update_time AS updateTime
          FROM qc_rule
-         where is_deleted=false
+         where ${params.sqlMap.default} and is_deleted=false
          <if test="params.searchKeyword!=null and params.searchKeyword !=''">
             AND code ILIKE concat('%',#{params.searchKeyword}::text,'%')
          </if>
