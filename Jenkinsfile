@@ -15,18 +15,9 @@ pipeline {
         }
         stage('引用settings.xml') {
             steps {
-                script {
-                    // 获取 Managed File 中的 settings.xml 内容
-                    def settingsXmlContent = managedFiles([file: '06ffcde1-6631-4338-a346-9b040decb468'])[0].content
-
-                    // 将 content 写入工作空间中的 settings.xml 文件
-                    writeFile file: 'settings.xml', text: settingsXmlContent
+                withMaven(maven: 'settings-test') {
+                    sh '/var/jenkins_home/tools/hudson.tasks.Maven_MavenInstallation/maven_3.5/bin/mvn -f pom.xml clean install -U -pl com.erp.server:erp-server-admin -am -Pdev -Dmaven.test.skip=true'
                 }
-            }
-        }
-        stage('通过Maven构建项目') {
-            steps {
-                sh '/var/jenkins_home/tools/hudson.tasks.Maven_MavenInstallation/maven_3.5/bin/mvn -f pom.xml clean install -U -pl com.erp.server:erp-server-admin -am -Pdev -Dmaven.test.skip=true'
             }
         }
         stage('通过docker制作自定义镜像') {
