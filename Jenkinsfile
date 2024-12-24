@@ -10,6 +10,11 @@ pipeline {
     stages {
         stage('拉取git仓库代码') {
             steps {
+                checkout scmGit(branches: [[name: '${TAG}']], extensions: [], userRemoteConfigs: [[credentialsId: '7843edca-11b6-441e-8222-0d1f21ae600f', url: 'http://172.16.100.11:8993/erp-group/cloud-erp-backend.git']])
+            }
+        }
+        stage('引用settings.xml') {
+            steps {
                 script {
                     // 获取 Managed File 中的 settings.xml 内容
                     def settingsXmlContent = managedFiles([file: 'settings.test'])[0].content
@@ -19,10 +24,6 @@ pipeline {
                 }
             }
         }
-        stage('引用settings.xml') {
-            steps {
-                sh '/var/jenkins_home/tools/hudson.tasks.Maven_MavenInstallation/maven_3.5/bin/mvn -s $(pwd)/settings.xml clean install -U -pl com.erp.server:erp-server-admin -am -Pdev -Dmaven.test.skip=true'
-            }
         stage('通过Maven构建项目') {
             steps {
                 sh '/var/jenkins_home/tools/hudson.tasks.Maven_MavenInstallation/maven_3.5/bin/mvn -f pom.xml clean install -U -pl com.erp.server:erp-server-admin -am -Pdev -Dmaven.test.skip=true'
