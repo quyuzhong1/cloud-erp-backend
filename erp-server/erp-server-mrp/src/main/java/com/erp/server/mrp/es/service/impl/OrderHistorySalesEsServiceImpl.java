@@ -241,4 +241,9 @@ public class OrderHistorySalesEsServiceImpl implements OrderHistorySalesEsServic
                 .distinct()
                 .collect(Collectors.toList());
     }
+
+    @Override
+    public void deleteByDateBetween(LocalDate startDate, LocalDate endDate) {
+        orderHistorySalesEsRepository.deleteByDateBetween(startDate, endDate);
+    }
 }

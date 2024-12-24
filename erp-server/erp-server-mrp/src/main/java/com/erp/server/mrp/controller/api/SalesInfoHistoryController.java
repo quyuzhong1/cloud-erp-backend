@@ -1,10 +1,16 @@
 package com.erp.server.mrp.controller.api;
 
 
+import com.common.core.controller.vo.ApiResult;
+import com.erp.server.mrp.service.SalesInfoService;
+import lombok.Getter;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 import org.springframework.web.bind.annotation.RestController;
 import com.common.core.controller.BaseController;
+
+import javax.annotation.Resource;
 
 /**
  * <p>
@@ -17,5 +23,15 @@ import com.common.core.controller.BaseController;
 @RestController
 @RequestMapping("/sales-info-history")
 public class SalesInfoHistoryController extends BaseController {
+
+    @Resource
+    private SalesInfoService salesInfoService;
+
+    @GetMapping("/dealHistorySaleQty")
+    public ApiResult<String> dealHistorySaleQty() {
+
+        salesInfoService.dealHistorySaleQty();
+        return success();
+    }
 
 }

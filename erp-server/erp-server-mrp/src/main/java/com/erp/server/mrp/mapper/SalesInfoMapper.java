@@ -1,5 +1,6 @@
 package com.erp.server.mrp.mapper;
 
+import com.erp.model.mrp.dto.OtherHistorySaleQtyDTO;
 import com.erp.model.mrp.entity.SalesInfoEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Mapper;
@@ -25,4 +26,7 @@ public interface SalesInfoMapper extends BaseMapper<SalesInfoEntity> {
      * @return List<SalesInfoEntity>
      */
     List<SalesInfoEntity> listHistorySalesInfo(@Param("detailIdList") List<String> detailIdList);
+
+    List<OtherHistorySaleQtyDTO> listHistorySaleQty();
+
 }
