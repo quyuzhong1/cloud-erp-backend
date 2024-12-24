@@ -10,7 +10,7 @@ pipeline {
     stages {
         stage('拉取git仓库代码') {
             steps {
-                checkout scmGit(branches: [[name: '${TAG}']], extensions: [], userRemoteConfigs: [[credentialsId: '7843edca-11b6-441e-8222-0d1f21ae600f', url: 'http://172.16.100.11:8993/erp-group/cloud-erp-backend.git']])
+                checkout scmGit(branches: [[name: '*/feature/uat-k8s-deploy']], extensions: [], userRemoteConfigs: [[credentialsId: '7843edca-11b6-441e-8222-0d1f21ae600f', url: 'http://172.16.100.11:8993/erp-group/cloud-erp-backend.git']])
             }
         }
         stage('通过Maven构建项目') {
