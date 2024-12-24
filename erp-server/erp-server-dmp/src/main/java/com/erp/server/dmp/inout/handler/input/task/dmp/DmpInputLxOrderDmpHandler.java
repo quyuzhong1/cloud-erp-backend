@@ -2,6 +2,7 @@ package com.erp.server.dmp.inout.handler.input.task.dmp;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.CurrencyUtil;
@@ -124,9 +125,9 @@ public class DmpInputLxOrderDmpHandler extends DmpInputDbConvertDmpHandler {
                     JSONArray transactionInfoJsonArray = JSON.parseArray(JSON.toJSONString(transactionInfoObj));
                     if (CollectionUtils.isNotEmpty(transactionInfoJsonArray)) {
                         Object transactionInfoObjIndex1 = transactionInfoJsonArray.get(0);
-                        Map<String, String> transactionInfoMap = (Map<String, String>) transactionInfoObjIndex1;
-                        for (Map.Entry<String, String> entry : transactionInfoMap.entrySet()) {
-                            dmpDataMap.put(entry.getKey(), CurrencyUtil.parseAmount(entry.getValue()));
+                        Map<String, Object> transactionInfoMap = (JSONObject) transactionInfoObjIndex1;
+                        for (Map.Entry<String, Object> entry : transactionInfoMap.entrySet()) {
+                            dmpDataMap.put(entry.getKey(), CurrencyUtil.parseAmount(entry.getValue().toString()));
                         }
                     }
                 }
@@ -138,7 +139,7 @@ public class DmpInputLxOrderDmpHandler extends DmpInputDbConvertDmpHandler {
                     JSONArray jsonArray = JSON.parseArray(JSON.toJSONString(platformInfoListObj));
                     if (CollectionUtils.isNotEmpty(jsonArray)) {
                         Object platformInfoObjIndex1 = jsonArray.get(0);
-                        Map<String, Object> platformInfoMap = (Map<String, Object>) platformInfoObjIndex1;
+                        Map<String, Object> platformInfoMap = (JSONObject) platformInfoObjIndex1;
                         String platformOriginalStatus = platformInfoMap.getOrDefault("status", "").toString();
                         dmpDataMap.put("platformOriginalStatus", platformOriginalStatus);
 
