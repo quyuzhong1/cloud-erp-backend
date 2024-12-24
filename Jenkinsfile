@@ -7,7 +7,7 @@ pipeline {
 		harborRepo = 'sdc-erp'
 	}
     tools {
-        jdk 'JDK 8'
+        jdk 'JDK 1.8.0'
     }
 
     stages {
@@ -20,7 +20,7 @@ pipeline {
             steps {
                 script {
                     configFileProvider([configFile(fileId: '06ffcde1-6631-4338-a346-9b040decb468', variable: 'MY_SETTINGS_XML')]) {
-                        sh "${tool 'JDK 8'}"/bin/java -version
+                        sh "${tool 'JDK 1.8.0'}"/bin/java -version
                         sh "/var/jenkins_home/tools/hudson.tasks.Maven_MavenInstallation/maven_3.5/bin/mvn -s ${env.MY_SETTINGS_XML} clean install -U -pl com.erp.server:erp-server-admin -am -Pdev -Dmaven.test.skip=true"
                     }
                 }
