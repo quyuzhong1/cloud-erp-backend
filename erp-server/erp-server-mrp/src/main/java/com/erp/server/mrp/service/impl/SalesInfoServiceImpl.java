@@ -28,7 +28,6 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 /**
@@ -98,30 +97,29 @@ public class SalesInfoServiceImpl extends SuperServiceImpl<SalesInfoMapper, Sale
         // 清除历史数据
         orderHistorySalesEsService.deleteByDateBetween(LocalDate.of(2023, 12, 1), LocalDate.of(2024, 8, 31));
         List<List<OtherHistorySaleQtyDTO>> partition = Lists.partition(otherHistorySaleQtyList, 1000);
-        CompletableFuture.allOf(partition.stream()
-                .map(dtoList -> CompletableFuture.runAsync(() -> {
-                    List<OrderHistorySalesEsEntity> historySales = new ArrayList<>();
-                    for (OtherHistorySaleQtyDTO dto : dtoList) {
-                        String skuId = skuMap.get(dto.getSkuNo());
-                        if (ObjectUtils.isEmpty(skuId)) {
-                            continue;
-                        }
-                        OrderHistorySalesEsEntity entity = new OrderHistorySalesEsEntity();
-                        entity.setOriginalSalesQty(dto.getQty());
-                        entity.setShopId(dto.getShopId());
-                        entity.setSkuId(skuId);
-                        entity.setDate(dto.getOrderDate());
-                        String type = stringMap.get(dto.getPlatform());
-                        if (PlatformMappingTypeEnum.AMAZON_PLATFORM.getCode().equals(type)) {
-                            entity.setOrderType(FbaOrderTypeEnum.FBA.getCode());
-                        } else {
-                            entity.setOrderType(OverseasOrderTypeEnum.OVERSEAS_WAREHOUSE.getCode());
-                        }
-                        entity.setReplenishmentId(suggestionMap.get(skuId + "-" + dto.getShopId()));
-                        historySales.add(entity);
-                    }
-                    orderHistorySalesEsService.saveAll(historySales);
-                }, threadPoolTaskExecutor)).toArray(CompletableFuture[]::new)).join();
+        for (List<OtherHistorySaleQtyDTO> dtos : partition) {
+            List<OrderHistorySalesEsEntity> historySales = new ArrayList<>();
+            for (OtherHistorySaleQtyDTO dto : dtos) {
+                String skuId = skuMap.get(dto.getSkuNo());
+                if (ObjectUtils.isEmpty(skuId)) {
+                    continue;
+                }
+                OrderHistorySalesEsEntity entity = new OrderHistorySalesEsEntity();
+                entity.setOriginalSalesQty(dto.getQty());
+                entity.setShopId(dto.getShopId());
+                entity.setSkuId(skuId);
+                entity.setDate(dto.getOrderDate());
+                String type = stringMap.get(dto.getPlatform());
+                if (PlatformMappingTypeEnum.AMAZON_PLATFORM.getCode().equals(type)) {
+                    entity.setOrderType(FbaOrderTypeEnum.FBA.getCode());
+                } else {
+                    entity.setOrderType(OverseasOrderTypeEnum.OVERSEAS_WAREHOUSE.getCode());
+                }
+                entity.setReplenishmentId(suggestionMap.get(skuId + "-" + dto.getShopId()));
+                historySales.add(entity);
+            }
+            orderHistorySalesEsService.saveAll(historySales);
+        }
     }
 
 }
