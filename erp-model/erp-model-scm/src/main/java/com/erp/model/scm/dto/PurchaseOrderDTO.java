@@ -251,6 +251,17 @@ public class PurchaseOrderDTO implements Serializable {
         private Integer returnQty;
 
         /**
+         * 质检退货数量
+         */
+        private Integer qcReturnQty;
+
+        /**
+         * 库存退货数量
+         */
+        private Integer stockReturnQty;
+
+
+        /**
          * srm协同（true 未开启，false 已开启）
          */
         private Boolean srmDisabled;
@@ -339,6 +350,11 @@ public class PurchaseOrderDTO implements Serializable {
          * 交货周期标识 true 红色  false 无
          */
         private Boolean deliveryCycleFlag;
+
+        /**
+         * 仓位
+         */
+        private String warehouseLocation;
 
         /**
          * 采购申请单id集合
