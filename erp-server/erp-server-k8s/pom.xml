@@ -10,9 +10,9 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.erp.server</groupId>
-    <artifactId>erp-server-admin</artifactId>
+    <artifactId>erp-server-k8s</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <name>erp-server-admin</name>
+    <name>erp-server-k8s</name>
     <description>管理后台服务</description>
 
     <properties>
