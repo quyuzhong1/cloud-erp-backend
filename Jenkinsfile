@@ -16,9 +16,8 @@ pipeline {
         stage('引用settings.xml') {
             steps {
                 script {
-                    configFileProvider([configFile(id: '06ffcde1-6631-4338-a346-9b040decb468', variable: 'MY_SETTINGS_XML')]) {
-                        writeFile file: 'settings.xml', text: "${MY_SETTINGS_XML}"
-                    }
+                    def configFile = configFileProvider.getConfigFile('settings-test')
+                    writeFile file: 'settings.xml', text: configFile
                 }
             }
         }
