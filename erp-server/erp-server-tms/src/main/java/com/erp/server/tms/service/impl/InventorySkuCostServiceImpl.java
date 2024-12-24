@@ -466,10 +466,10 @@ public class InventorySkuCostServiceImpl extends SuperServiceImpl<InventorySkuCo
 
     @Override
     public List<InventorySkuCostDTO.SkuCostDTO> listSkuCostByDetailList(List<InventorySkuCostDTO.QueryDetailDTO> queryDetailDTOList) {
-        List<String> salesOrgIds = queryDetailDTOList.stream().map(InventorySkuCostDTO.QueryDetailDTO::getSalesOrgId).filter(CharSequenceUtil::isNotBlank).collect(Collectors.toList());
-        List<String> skuIds = queryDetailDTOList.stream().map(InventorySkuCostDTO.QueryDetailDTO::getSkuId).filter(CharSequenceUtil::isNotBlank).collect(Collectors.toList());
-        List<String> warehouseIds = queryDetailDTOList.stream().map(InventorySkuCostDTO.QueryDetailDTO::getWarehouseId).filter(CharSequenceUtil::isNotBlank).collect(Collectors.toList());
-        List<String> shopIds = queryDetailDTOList.stream().map(InventorySkuCostDTO.QueryDetailDTO::getShopId).filter(CharSequenceUtil::isNotBlank).collect(Collectors.toList());
+        List<String> salesOrgIds = queryDetailDTOList.stream().map(InventorySkuCostDTO.QueryDetailDTO::getSalesOrgId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+        List<String> skuIds = queryDetailDTOList.stream().map(InventorySkuCostDTO.QueryDetailDTO::getSkuId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+        List<String> warehouseIds = queryDetailDTOList.stream().map(InventorySkuCostDTO.QueryDetailDTO::getWarehouseId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+        List<String> shopIds = queryDetailDTOList.stream().map(InventorySkuCostDTO.QueryDetailDTO::getShopId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
         if (CollUtil.isEmpty(salesOrgIds) && CollUtil.isNotEmpty(shopIds)){
             List<ShopInfoEntity> shopInfoEntityList = shopInfoFeign.listShopInfoByIds(shopIds);
             salesOrgIds = shopInfoEntityList.stream().map(ShopInfoEntity::getSalesOrgId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());

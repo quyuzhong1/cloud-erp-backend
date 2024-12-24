@@ -2220,17 +2220,8 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             //是否重算目的国申报价
             BigDecimal destDeclarePrice = Objects.isNull(customs.getToDeclarePrice()) ? BigDecimal.ZERO: customs.getToDeclarePrice();
             if (destDeclarePrice.compareTo(BigDecimal.ZERO) == 0 || isManual) {
-                DmpSkuCostEntity skuCostDTO = skuCostList.stream().filter(e -> e.getSkuId().equals(skuId)).findFirst().orElse(null);
-                log.info("skuCostDTO: {}", JSONUtil.toJsonStr(skuCostDTO));
-                if (Objects.isNull(skuCostDTO)) {
-                    batchResultDTOList.add(BatchResultDTO.fail(skuId,productDetailEntity.getSkuNo(),CharSequenceUtil.format("SKU【{}】中【{}】兑换【{}】汇率不存在",productDetailEntity.getSkuNo(), CurrencyEnum.USD.getCurrencyCode(),CurrencyEnum.CNY.getCurrencyCode() )));
-                    continue;
-                }
                 //含税成本 默认是人民币
                 BigDecimal actualTaxCost = BigDecimal.ZERO;
-                if (Objects.nonNull(skuCostDTO.getCostPrice())) {
-                    actualTaxCost = skuCostDTO.getCostPrice();
-                }
                 //SKU成本覆盖含税成本
                 InventorySkuCostDTO.SkuCostDTO skuCostDTO2 = skuCostDTOS.stream().filter(e -> e.getSkuId().equals(skuId)).findFirst().orElse(null);
                 if (Objects.nonNull(skuCostDTO2)){
@@ -2241,9 +2232,21 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                     if (Objects.nonNull(rate) && Objects.nonNull(taxRate)){
                         //本位币
                         BigDecimal actualNoTaxCost =  MathUtil.multiply(rate,skuCostDTO2.getProductCost());
-                        actualTaxCost = MathUtil.multiply(actualNoTaxCost, MathUtil.add(BigDecimal.valueOf(1), taxRate));
+                        BigDecimal percentRate = MathUtil.divide(taxRate, MathUtil.BigDecimal_100);
+                        actualTaxCost = MathUtil.multiply(actualNoTaxCost, MathUtil.add(BigDecimal.valueOf(1), percentRate));
+                    }
+                }else {
+                    DmpSkuCostEntity skuCostDTO = skuCostList.stream().filter(e -> e.getSkuId().equals(skuId)).findFirst().orElse(null);
+                    log.info("skuCostDTO: {}", JSONUtil.toJsonStr(skuCostDTO));
+                    if (Objects.isNull(skuCostDTO)) {
+                        batchResultDTOList.add(BatchResultDTO.fail(skuId,productDetailEntity.getSkuNo(),CharSequenceUtil.format("SKU【{}】中中台Bom关系表不存",productDetailEntity.getSkuNo())));
+                        continue;
+                    }
+                    if (Objects.nonNull(skuCostDTO.getCostPrice())) {
+                        actualTaxCost = skuCostDTO.getCostPrice();
                     }
                 }
+
                 //统一换算成美元汇率
                 BigDecimal actualTaxCostUsd = MathUtil.divide(actualTaxCost, usdRate);
                 log.info("actualTaxCostUsd: {}", actualTaxCostUsd);
@@ -2284,7 +2287,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 sysLogService.addSysLogByOther(new SysLogEntity().setClassPath(SKUCLASSPATH).setPid(productDetailEntity.getProductId())
                         .setBusinessId(productDetailEntity.getId()).setOperation("编辑操作").setContent(msg));
                 batchResultDTOList.add(BatchResultDTO.success(skuId,productDetailEntity.getSkuNo(),msg));
-                log.info("更新目的国申报价 sku:{},目的国申报价：{}",skuCostDTO.getSkuNo(), resultDestDeclarePrice);
+                log.info("更新目的国申报价 sku:{},目的国申报价：{}",productDetailEntity.getSkuNo(), resultDestDeclarePrice);
             }
         }
         if (CollectionUtils.isNotEmpty(updateList)){

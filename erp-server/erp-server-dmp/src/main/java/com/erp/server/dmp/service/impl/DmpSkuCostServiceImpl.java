@@ -14,7 +14,6 @@ import com.common.core.utils.MathUtil;
 import com.common.message.constant.RedisKeyConstant;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.dto.DictBasicDTO;
-import com.erp.model.dmp.dto.DmpSkuCostDTO;
 import com.erp.model.dmp.entity.DmpSkuCostCustomEntity;
 import com.erp.model.dmp.entity.DmpSkuCostEntity;
 import com.erp.model.msg.dto.WarnMsgInfoDTO;
@@ -22,7 +21,6 @@ import com.erp.model.msg.enums.WarnMsgTypeEnum;
 import com.erp.model.plm.dto.BomSkuPageDTO;
 import com.erp.model.scm.dto.SkuCostDTO;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
-import com.erp.rpc.plm.feign.LogisticsProductFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.scm.feign.ScmTaskFeign;
 import com.erp.server.dmp.mapper.DmpSkuCostMapper;
@@ -38,7 +36,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -92,11 +89,11 @@ public class DmpSkuCostServiceImpl extends SuperServiceImpl<DmpSkuCostMapper, Dm
         List<String> skuNoList = skuCostList.stream().map(SkuCostDTO::getSkuNo).distinct().collect(Collectors.toList());
 
         //更新本身及上级SKU
-        cleanSkuCostBySKuNos (skuNoList);
+        cleanSkuCostBySKuNos (skuNoList, queryPurchaseDTO.getPurchaseOrderIds(), queryPurchaseDTO.getSupplierIds());
     }
 
     @Override
-    public void cleanSkuCostBySKuNos(List<String> skuNoList) {
+    public void cleanSkuCostBySKuNos(List<String> skuNoList, List<String> purchaseOrderIds, List<String> supplierIds) {
         if (CollectionUtils.isEmpty(skuNoList)) {
             log.warn("录入编码不能为空，cleanSkuCostBySKuNos >>>>>> skuNoList：{}",skuNoList);
             return;
@@ -119,16 +116,6 @@ public class DmpSkuCostServiceImpl extends SuperServiceImpl<DmpSkuCostMapper, Dm
         List<String> notBomSkuNoList = skuNoList.stream().filter(obj -> !parentSkuNoList.contains(obj) && !childSkuNoList.contains(obj)).distinct().collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(notBomSkuNoList)) {
             resultSkuNoList.addAll(notBomSkuNoList);
-        }
-        List<String> purchaseOrderIds = new ArrayList<>();
-        List<DictBasicDTO.ViewDTO> skuCostPurchaseOrderIds = dictBasicService.getByKey("skuCostPurchaseOrderIds");
-        if (CollUtil.isNotEmpty(skuCostPurchaseOrderIds)){
-            purchaseOrderIds = skuCostPurchaseOrderIds.stream().map(DictBasicDTO.ViewDTO::getValue).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
-        }
-        List<String> supplierIds = new ArrayList<>();
-        List<DictBasicDTO.ViewDTO> skuCostSupplierIds = dictBasicService.getByKey("skuCostSupplierIds");
-        if (CollUtil.isNotEmpty(skuCostSupplierIds)){
-            supplierIds = skuCostSupplierIds.stream().map(DictBasicDTO.ViewDTO::getValue).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
         }
         SkuCostDTO.ParamDTO paramDTO = new SkuCostDTO.ParamDTO();
         paramDTO.setSkuNoList(resultSkuNoList);

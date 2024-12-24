@@ -105,8 +105,36 @@ public class CleanJob {
             return ReturnT.FAIL;
         }
         XxlJobHelper.log("cleanSkuCostBySKuNos jobParam:{}", jobParam);
-        List<String> skuNoList = Arrays.stream(jobParam.split(",")).collect(Collectors.toList());
-        dmpSkuCostService.cleanSkuCostBySKuNos(skuNoList);
+        List<String> skuNoList = new ArrayList<>();
+        List<String> purchaseOrderIds = new ArrayList<>();
+        List<String> supplierIds = new ArrayList<>();
+        if(StrUtil.isNotBlank(jobParam)){
+            XxlJobHelper.log("DmpPushTaskJob jobParam:{}", jobParam);
+            JSONObject jsonObject = new JSONObject(jobParam);
+            String skuNoList1 = jsonObject.getStr("skuNoList");
+            if (CharSequenceUtil.isNotBlank(skuNoList1)){
+                skuNoList = Arrays.stream(skuNoList1.split(",")).collect(Collectors.toList());
+            }
+
+            String purchaseOrderIds1 = jsonObject.getStr("purchaseOrderIds");
+            if (CharSequenceUtil.isNotBlank(purchaseOrderIds1)){
+                purchaseOrderIds = Arrays.asList(purchaseOrderIds1.split(","));
+            }
+            String supplierIds1 = jsonObject.getStr("supplierIds");
+            if (CharSequenceUtil.isNotBlank(supplierIds1)){
+                supplierIds = Arrays.asList(supplierIds1.split(","));
+            }
+        }else {
+            List<DictBasicDTO.ViewDTO> skuCostPurchaseOrderIds = dictBasicService.getByKey("skuCostPurchaseOrderIds");
+            if (CollUtil.isNotEmpty(skuCostPurchaseOrderIds)){
+                purchaseOrderIds = skuCostPurchaseOrderIds.stream().map(DictBasicDTO.ViewDTO::getValue).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+            }
+            List<DictBasicDTO.ViewDTO> skuCostSupplierIds = dictBasicService.getByKey("skuCostSupplierIds");
+            if (CollUtil.isNotEmpty(skuCostSupplierIds)){
+                supplierIds = skuCostSupplierIds.stream().map(DictBasicDTO.ViewDTO::getValue).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+            }
+        }
+        dmpSkuCostService.cleanSkuCostBySKuNos(skuNoList,purchaseOrderIds,supplierIds);
         return ReturnT.SUCCESS;
     }
 
