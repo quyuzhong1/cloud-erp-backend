@@ -521,11 +521,11 @@ public class InventorySkuCostServiceImpl extends SuperServiceImpl<InventorySkuCo
                 //头程运费
                 BigDecimal firstMileShipingCost = MathUtil.multiply(skuCostDTO.getFirstMileShippingCost(),bomChildrenSkuDTO.getQuantity());
                 BigDecimal newFirstMileShipingCost = Objects.nonNull(newSkuCostDTO.getFirstMileShippingCost()) ? newSkuCostDTO.getFirstMileShippingCost() : BigDecimal.ZERO;
-                newSkuCostDTO.setProductCost(MathUtil.add(firstMileShipingCost, newFirstMileShipingCost));
+                newSkuCostDTO.setFirstMileShippingCost(MathUtil.add(firstMileShipingCost, newFirstMileShipingCost));
                 //清关税费
                 BigDecimal clearanceCustomsTax = MathUtil.multiply(skuCostDTO.getClearanceCustomsTax(),bomChildrenSkuDTO.getQuantity());
                 BigDecimal newClearanceCustomsTax = Objects.nonNull(newSkuCostDTO.getClearanceCustomsTax()) ? newSkuCostDTO.getClearanceCustomsTax() : BigDecimal.ZERO;
-                newSkuCostDTO.setProductCost(MathUtil.add(clearanceCustomsTax, newClearanceCustomsTax));
+                newSkuCostDTO.setClearanceCustomsTax(MathUtil.add(clearanceCustomsTax, newClearanceCustomsTax));
                 
                 newSkuCostDTO.setAllocatedMonth(skuCostDTO.getAllocatedMonth());
                 newSkuCostDTO.setCurrency(skuCostDTO.getCurrency());
