@@ -17,7 +17,7 @@ pipeline {
             steps {
                 script {
                     // 获取 Managed File 中的 settings.xml 内容
-                    def settingsXmlContent = managedFiles([file: 'settings.test'])[0].content
+                    def settingsXmlContent = managedFiles([file: '06ffcde1-6631-4338-a346-9b040decb468'])[0].content
 
                     // 将 content 写入工作空间中的 settings.xml 文件
                     writeFile file: 'settings.xml', text: settingsXmlContent
