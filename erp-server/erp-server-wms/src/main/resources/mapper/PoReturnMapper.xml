@@ -414,4 +414,33 @@
         WHERE
         row_num = 1
     </select>
+    <select id="pushDownPurchaseView" resultType="com.erp.model.scm.dto.PurchasePriceDTO$PushDownPurchaseView">
+        SELECT
+            pro.id,
+            pro.supplier_contact_id as supplierContactId,
+            pro.code,
+            pro.purchase_order_id as purchaseId,
+            prod.currency,
+            prod.currency_symbol as currencySymbol,
+            prod.id as detailId,
+            pro.supplier_id as supplierId,
+            pro.supplier_name as supplierName,
+            pro.return_org_id as purchaseOrgId,
+            pro.return_org_name as purchaseOrgName,
+        pro.return_warehouse_id as deliveryWarehouseId,
+        pro.return_warehouse_name as deliveryWarehouseName,
+        pro.return_org_id as receiveOrgId,
+        pro.return_org_name as receiveOrgName,
+        prod.sku_id as skuId,
+        prod.sku_no as skuNo,
+        prod.return_price as taxPrice,
+        prod.replenish_qty as replenishQty
+        FROM po_return_detail prod
+        INNER JOIN po_return pro ON prod.main_id = pro.id AND pro.is_deleted = FALSE
+        WHERE  prod.is_deleted = FALSE
+        and prod.id in
+        <foreach collection="detailIds" item="item" open="(" close=")" separator=",">
+            #{item}
+        </foreach>
+    </select>
 </mapper>
