@@ -27,8 +27,7 @@ pipeline {
         }
         stage('通过docker制作自定义镜像') {
             steps {
-                sh '''docker rmi ${harborAddress}/${harborRepo}/erp-server-admin:${TAG}
-                cd /var/jenkins_home/workspace/${JOB_NAME}/erp-server/erp-server-admin/ && \\
+                sh '''cd /var/jenkins_home/workspace/${JOB_NAME}/erp-server/erp-server-admin/ && \\
     docker build -t ${harborAddress}/${harborRepo}/erp-server-admin:${TAG} ."'''
             }
         }
