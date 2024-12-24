@@ -32,6 +32,7 @@
         <module>erp-server-srm</module>
         <module>erp-server-mrp</module>
         <module>erp-server-file</module>
+        <module>erp-server-k8s</module>
     </modules>
     <dependencies>
         <dependency>
