@@ -2,6 +2,7 @@ package com.erp.server.scm.controller.api;
 
 
 import com.common.business.annotation.DataPermission;
+import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
@@ -12,6 +13,10 @@ import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.scm.dto.SupplierPhaseDTO;
+import com.erp.model.tms.dto.LogisticsBillCostDTO;
+import com.erp.model.tms.enums.DictCostAttributionEnum;
+import com.erp.server.scm.query.PurchaseApplicationQueryHandler;
+import com.erp.server.scm.query.SupplierPhaseQueryHandler;
 import com.erp.server.scm.service.SupplierPhaseService;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.validation.annotation.Validated;
@@ -39,6 +44,20 @@ public class SupplierPhaseController extends BaseController {
     @Resource
     private SupplierPhaseService supplierPhaseService;
 
+    /**
+     * tab列表
+     *
+     */
+    @PostMapping("/tabList")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "tms:supplier:phase:paging",
+            tableAlias = "sp"
+    )
+    public ApiResult<List<SupplierPhaseDTO.TabFlagDTO>> tabList(@RequestBody PermissionsDTO dto) {
+        List<SupplierPhaseDTO.TabFlagDTO> tabList = supplierPhaseService.tabList(dto);
+        return success(tabList);
+    }
 
     /**
      * 供应商阶段分页列表
@@ -51,6 +70,7 @@ public class SupplierPhaseController extends BaseController {
             menuCode = "scm:supplier:phase:paging",
             tableAlias = "sp"
     )
+    @WebAdvanceQuery(handler = SupplierPhaseQueryHandler.class)
     public ApiResult<PagingVO<SupplierPhaseDTO.PagingViewDTO>> paging(@RequestBody @Validated PagingDTO<SupplierPhaseDTO.PagingParamDTO> dto) {
         PagingVO<SupplierPhaseDTO.PagingViewDTO> pagingVO = supplierPhaseService.paging(dto);
         return success(pagingVO);
