@@ -31,7 +31,6 @@ public interface SkuMappingConverter {
     })
     SkuMappingExtendEntity copySkuMappingExtendEntity(SkuMappingExtendEntity entity);
 
-    @Mapping(target = "productSkuId", source = "skuId")
     @Mapping(target = "productSkuNo", source = "skuNo")
     SkuMappingDTO.ListSkuDTO convertSkuDTO(SkuMappingDTO.ListSkuParamDTO dataList);
     List<SkuMappingDTO.ListSkuDTO> convertSkuDTO(List<SkuMappingDTO.ListSkuParamDTO> dataList);
