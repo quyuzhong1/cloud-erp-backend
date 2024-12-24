@@ -202,4 +202,10 @@ public class OrderHistorySalesEsServiceImpl implements OrderHistorySalesEsServic
     public List<OrderHistorySalesEsEntity> findByShopIdAndSkuIdAndDateBetween(String shopId, String skuId, LocalDate startDate, LocalDate endDate) {
         return orderHistorySalesEsRepository.findByShopIdAndSkuIdAndDateBetween(shopId, skuId, startDate, endDate);
     }
+
+
+    @Override
+    public void deleteByDateBetween(LocalDate startDate, LocalDate endDate) {
+        orderHistorySalesEsRepository.deleteByDateBetween(startDate, endDate);
+    }
 }
