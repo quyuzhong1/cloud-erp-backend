@@ -374,7 +374,7 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
 
                 //封装平台sku信息
                 //SKU对照表信息
-                List<SkuMappingDTO.ListSkuParamDTO> listParamList = addDetailList.stream().map(obj -> new SkuMappingDTO.ListSkuParamDTO(obj.getSkuNo(), detailEntity.getWarehouseId(),soB2cEntity.getDictPlatform(),soB2cEntity.getShopId(),soB2cEntity.getBillDate())).collect(Collectors.toList());
+                List<SkuMappingDTO.ListSkuParamDTO> listParamList = addDetailList.stream().map(obj -> new SkuMappingDTO.ListSkuParamDTO(obj.getSkuNo(), detailEntity.getWarehouseId(),soB2cEntity.getDictPlatform(),soB2cEntity.getShopId(), soB2cEntity.getBillDate().atStartOfDay())).collect(Collectors.toList());
                 ValidList<SkuMappingDTO.ListSkuParamDTO> listSkuParamList = new ValidList<>();
                 listSkuParamList.setList(listParamList);
                 List<SkuMappingDTO.ListSkuDTO> SkuMappingList = skuMappingService.listBySkuNoList(listSkuParamList);

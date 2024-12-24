@@ -27,6 +27,7 @@ import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.FastDFSClientUtil;
 import com.common.core.utils.MathUtil;
+import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
@@ -41,6 +42,7 @@ import com.erp.model.tms.entity.InventorySkuCostDetailEntity;
 import com.erp.model.tms.entity.InventorySkuCostEntity;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
+import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.tms.convert.InventorySkuCostConverter;
@@ -97,16 +99,12 @@ public class InventorySkuCostServiceImpl extends SuperServiceImpl<InventorySkuCo
     private PlmTaskFeign plmTaskFeign;
     @Resource
     private SysUserFeign sysUserFeign;
-    @Lazy
-    @Resource
-    private FirstMileCostAllocationService firstMileCostAllocationService;
-    @Lazy
-    @Resource
-    private FirstMileSkuCostAllocationService firstMileSkuCostAllocationService;
     @Resource
     private FirstMileSkuCostRefService firstMileSkuCostRefService;
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
+    @Resource
+    private ShopInfoFeign shopInfoFeign;
 
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -471,6 +469,11 @@ public class InventorySkuCostServiceImpl extends SuperServiceImpl<InventorySkuCo
         List<String> salesOrgIds = queryDetailDTOList.stream().map(InventorySkuCostDTO.QueryDetailDTO::getSalesOrgId).filter(CharSequenceUtil::isNotBlank).collect(Collectors.toList());
         List<String> skuIds = queryDetailDTOList.stream().map(InventorySkuCostDTO.QueryDetailDTO::getSkuId).filter(CharSequenceUtil::isNotBlank).collect(Collectors.toList());
         List<String> warehouseIds = queryDetailDTOList.stream().map(InventorySkuCostDTO.QueryDetailDTO::getWarehouseId).filter(CharSequenceUtil::isNotBlank).collect(Collectors.toList());
+        List<String> shopIds = queryDetailDTOList.stream().map(InventorySkuCostDTO.QueryDetailDTO::getShopId).filter(CharSequenceUtil::isNotBlank).collect(Collectors.toList());
+        if (CollUtil.isEmpty(salesOrgIds) && CollUtil.isNotEmpty(shopIds)){
+            List<ShopInfoEntity> shopInfoEntityList = shopInfoFeign.listShopInfoByIds(shopIds);
+            salesOrgIds = shopInfoEntityList.stream().map(ShopInfoEntity::getSalesOrgId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+        }
         if (CollUtil.isEmpty(salesOrgIds) || CollUtil.isEmpty(skuIds) || CollUtil.isEmpty(warehouseIds)){
             return Collections.emptyList();
         }

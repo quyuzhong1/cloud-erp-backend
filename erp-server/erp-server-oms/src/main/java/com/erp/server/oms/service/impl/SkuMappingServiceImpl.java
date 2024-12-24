@@ -57,6 +57,7 @@ import com.erp.rpc.tms.feign.LogisticsFeign;
 import com.erp.rpc.wms.feign.WmsOverseasWarehouseFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.rpc.wms.feign.WmsWarehouseFeign;
+import com.erp.server.oms.convert.SkuMappingConverter;
 import com.erp.server.oms.listener.SkuMappingExcelListener;
 import com.erp.server.oms.listener.SkuMappingWarehouseExcelListener;
 import com.erp.server.oms.mapper.SkuMappingMapper;
@@ -696,7 +697,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         List<String> skuNoList = dataList.stream().map(SkuMappingDTO.ListSkuParamDTO::getSkuNo).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
         List<SkuVO> skuList = plmTaskFeign.listBySkuNoList(skuNoList);
         if (CollectionUtils.isEmpty(skuList)) {
-            return Collections.EMPTY_LIST;
+            return SkuMappingConverter.INSTANCE.convertSkuDTO(dataList);
         }
         //重置sku含税成本
         resetSkuVo(skuList,dataList);
@@ -858,7 +859,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
             return null;
         }
         String shopId = dataList.stream().map(SkuMappingDTO.ListSkuParamDTO::getShopId).filter(CharSequenceUtil::isNotBlank).findFirst().orElse(CharSequenceUtil.EMPTY);
-        LocalDate billDate = dataList.stream().map(SkuMappingDTO.ListSkuParamDTO::getBillDate).filter(Objects::nonNull).findFirst().orElse(null);
+        LocalDateTime billDate = dataList.stream().map(SkuMappingDTO.ListSkuParamDTO::getBillDate).filter(Objects::nonNull).findFirst().orElse(null);
         if (CharSequenceUtil.isBlank(shopId) || Objects.isNull(billDate)){
             return null;
         }
@@ -866,11 +867,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         if (Objects.isNull(shopInfo) || CharSequenceUtil.isBlank(shopInfo.getCustomerId())){
             return null;
         }
-        String customerId = shopInfo.getCustomerId();
-        CustomerInfoEntity customerInfo = customerInfoService.getById(customerId);
-        if (Objects.isNull(customerInfo) || CharSequenceUtil.isBlank(customerInfo.getUseOrgId())){
-            return null;
-        }
+        String salesOrgId = shopInfo.getSalesOrgId();
         //数据整理
         List<InventorySkuCostDTO.QueryB2CDetailDTO> detailDTOS = new ArrayList<>();
         for (SkuMappingDTO.ListSkuParamDTO skuParamDTO : dataList){
@@ -890,7 +887,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
             return null;
         }
         InventorySkuCostDTO.QueryB2CDTO queryB2CDTO = new InventorySkuCostDTO.QueryB2CDTO();
-        queryB2CDTO.setSalesOrgId(customerInfo.getUseOrgId());
+        queryB2CDTO.setSalesOrgId(salesOrgId);
         queryB2CDTO.setDetailDTOS(detailDTOS);
         return queryB2CDTO;
     }

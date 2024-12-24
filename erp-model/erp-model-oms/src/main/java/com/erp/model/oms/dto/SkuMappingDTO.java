@@ -687,7 +687,7 @@ public class SkuMappingDTO implements Serializable {
         /**
          * 订单日期
          */
-        private LocalDate billDate;
+        private LocalDateTime billDate;
 
         public ListSkuParamDTO(String skuNo, String warehouseId, String dictPlatform) {
             this.skuNo = skuNo;
