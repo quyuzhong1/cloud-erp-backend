@@ -1060,6 +1060,22 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
         return updateList;
     }
 
+    @Override
+    public Boolean updateOutPlatformCode(List<String> ids, String outPlatformCode) {
+        if (CollectionUtils.isEmpty(ids)) {
+            return Boolean.TRUE;
+        }
+        this.lambdaUpdate()
+                .in(PurchasePriceEntity::getId, ids)
+                .set(PurchasePriceEntity::getOutPlatformCode, outPlatformCode)
+                .update(new PurchasePriceEntity());
+        ids.forEach(v->{
+            String content = StrUtil.format("更新外部平台单号为：{}", outPlatformCode);
+            moduleOperateLogService.addModuleOperateLog(content, ModuleTypeEnum.PURCHASE_PRICE.getCode(), v, "更新外部平台单号");
+        });
+        return Boolean.TRUE;
+    }
+
     /**
      * @description: 提交流程
      * @author Will

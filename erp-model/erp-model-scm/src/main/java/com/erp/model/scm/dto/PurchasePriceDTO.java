@@ -1,9 +1,8 @@
 package com.erp.model.scm.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.AdvanceQueryDTO;
-import com.common.business.dto.base.BatchResultDTO;
-import com.common.business.dto.base.PermissionsDTO;
-import com.common.business.dto.base.SortDTO;
+import com.common.business.dto.base.*;
 import com.common.business.enums.ApproveStatusEnum;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -200,7 +199,10 @@ public class PurchasePriceDTO implements Serializable {
          */
         @NotBlank(message = "币种不能为空")
         private String currency;
-
+        /**
+         * 外部平台单号
+         */
+        private String outPlatformCode;
         /**
          * 报价人id
          */
@@ -263,7 +265,10 @@ public class PurchasePriceDTO implements Serializable {
          */
         @NotNull(message = "报价日期不能为空")
         private LocalDate quotedDate;
-
+        /**
+         * 外部平台单号
+         */
+        private String outPlatformCode;
         /**
          * 审核状态
          */
@@ -345,7 +350,10 @@ public class PurchasePriceDTO implements Serializable {
          */
         @NotBlank(message = "供应商不能为空")
         private String supplierId;
-
+        /**
+         * 外部平台单号
+         */
+        private String outPlatformCode;
         /**
          * 报价日期
          */
@@ -411,7 +419,10 @@ public class PurchasePriceDTO implements Serializable {
          */
         private String code;
 
-
+        /**
+         * 外部平台单号
+         */
+        private String outPlatformCode;
         /**
          * 供应商id
          */
@@ -720,6 +731,15 @@ public class PurchasePriceDTO implements Serializable {
 
     }
 
+    @Data
+    @NoArgsConstructor
+    public static class OutPlatformCodeDTO extends BaseIdsDTO.IdsDTO {
+
+        @NotBlank(message = "外部平台单号")
+        @Size(max = 255,message = "填写信息不能超过255字符")
+        private String outPlatformCode;
+
+    }
 
     @Data
     @Builder

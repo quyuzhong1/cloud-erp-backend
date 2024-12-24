@@ -713,6 +713,7 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
     private List<PurchasePriceDetailEntity> getListByPurchasePriceId(String purchasePriceId) {
         LambdaQueryWrapper<PurchasePriceDetailEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(PurchasePriceDetailEntity::getPurchasePriceId, purchasePriceId);
+        queryWrapper.orderByDesc(PurchasePriceDetailEntity::getId);
         return this.list(queryWrapper);
 
     }
