@@ -78,6 +78,7 @@ public class YunTuLogisticsHandlerImpl extends AbstractLogisticsHandler {
         YunTuCreateOrderRequest request = LogisticsOrderConverter.INSTANCE.orderRequestByYunTu(logisticsOrderVO);
         request.setTaxNumber(getTaxNumberByCountry(logisticsOrderVO.getCountry(), logisticsOrderVO.getVoecTaxNo(), request.getTaxNumber()));
         ValidatorUtil.validateEntity(request);
+        String iossCode = request.getIossCode();
         try {
             YunTuResponse<List<YunTuCreateOrder>> yunTuResponse = yunTuService.createOrder(Collections.singletonList(request),logisticsOrderVO.getAuthMap());
             if(isFailure(yunTuResponse.getCode())){
@@ -101,6 +102,7 @@ public class YunTuLogisticsHandlerImpl extends AbstractLogisticsHandler {
                     .transportNo(yunTuCreateOrder.getWayBillNumber())
                     .deliveryNo(yunTuCreateOrder.getCustomerOrderNumber())
                     .trackNo(yunTuCreateOrder.getTrackingNumber())
+                    .iossTaxNo(iossCode)
                     .build());
         }catch (Exception e){
             logisticsOperateService.pushOperateLog(logisticsOrderVO.getSourceId(),

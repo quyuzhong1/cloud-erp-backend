@@ -659,6 +659,10 @@ public class SoB2cDTO implements Serializable {
          * 是否超出范围派送
          */
         private Boolean isOutOfRangeDelivery;
+        /**
+         * ioss税号
+         */
+        private String iossTaxNo;
     }
 
     @Data
@@ -2837,6 +2841,10 @@ public class SoB2cDTO implements Serializable {
          * 高
          */
         private BigDecimal height;
+        /**
+         * ioss税号
+         */
+        private String iossTaxNo;
 
         //-------------------------------------------- 买家信息 ---------------------------------------------------------------------------------------
 
