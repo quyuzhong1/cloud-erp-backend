@@ -186,7 +186,7 @@ public class DmpOutputLxOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHa
         // 买家备注
         orderDTO.setBuyerRemark("");
         // 订单备注
-        orderDTO.setRemark("");
+        orderDTO.setRemark(dmpSoInfoEntity.getSellRemark());
         // 销售组织id
         orderDTO.setOrgId("");
         // 销售组织名称
