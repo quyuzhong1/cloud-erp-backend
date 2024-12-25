@@ -1,6 +1,7 @@
 package com.erp.server.plm.controller.api;
 
 import com.common.business.annotation.DataPermission;
+import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.DataAttributeEnum;
@@ -56,6 +57,7 @@ public class ProductCertificateController extends BaseController {
             tableField = "create_user_id",
             menuCode = "plm:productCertificate:paging",
             tableAlias = "pc")
+    @WebAdvanceQuery
     public ApiResult<PagingVO<ProductCertificateDTO.ListDTO>> queryByPage(@RequestBody @Validated PagingDTO<ProductCertificateDTO.SearchParamDTO> dto) {
         PagingVO<ProductCertificateDTO.ListDTO> pagingVO = productCertificateService.paging(dto);
         return success(pagingVO);
