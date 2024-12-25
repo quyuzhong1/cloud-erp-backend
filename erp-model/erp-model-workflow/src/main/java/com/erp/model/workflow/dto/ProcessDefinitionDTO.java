@@ -3,6 +3,7 @@ package com.erp.model.workflow.dto;
 import com.alibaba.excel.annotation.ExcelIgnore;
 import com.alibaba.excel.annotation.ExcelProperty;
 import com.alibaba.excel.annotation.write.style.ColumnWidth;
+import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.erp.model.workflow.entity.ProcessDefinitionEntity;
 import com.erp.model.workflow.enums.DictBasicEnum;
@@ -16,6 +17,7 @@ import java.io.Serializable;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @Classname 流程定义参数
@@ -97,6 +99,15 @@ public class ProcessDefinitionDTO {
          */
         private Boolean isDeploy;
 
+        /**
+         * 页面高级查询
+         */
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
+
+        /**
+         * sqlMap 默认key default
+         */
+        private Map<String, String> sqlMap;
     }
 
     @Data
