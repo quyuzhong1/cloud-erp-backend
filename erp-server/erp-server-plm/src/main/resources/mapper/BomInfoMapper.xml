@@ -215,6 +215,7 @@
             COALESCE(pc.target_tax_cost,0) as targetTaxCost,
             pbi.update_user_name as updateUserName,
             pbi.update_time as updateTime,
+            pbi.create_time as createTime,
             pp.main_supplier as mainSupplierId
         from product_bom_info pbi
         inner join product_bom_sku pbs on pbi.id = pbs.bom_id and pbs.is_deleted = false
