@@ -194,6 +194,7 @@ public class InventoryController extends BaseController {
      * @return
      */
     @PostMapping("/inventoryAge/paging")
+    @WebAdvanceQuery
     public ApiResult<PagingVO<LinkedHashMap>> inventoryAgePaging(@RequestBody @Validated PagingDTO<InventoryReportDTO.InventoryAgeSearchParamDTO> dto) {
         return success(inventoryService.inventoryAgePaging(dto));
     }
