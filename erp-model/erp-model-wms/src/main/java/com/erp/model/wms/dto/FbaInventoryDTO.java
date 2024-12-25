@@ -463,6 +463,11 @@ public class FbaInventoryDTO implements Serializable {
         private Integer inventoryAge365PlusDays;
 
         /**
+         * 创建时间
+         */
+        private LocalDateTime createTime;
+
+        /**
          * 更新时间
          */
         private LocalDateTime updateTime;
