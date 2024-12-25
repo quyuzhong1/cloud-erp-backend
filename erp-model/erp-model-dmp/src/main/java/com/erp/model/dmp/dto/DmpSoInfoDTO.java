@@ -495,5 +495,8 @@ public class DmpSoInfoDTO implements Serializable {
         @Panno(findType = PannoEnum.LTE,field = "createtime")
         private String endTime;
 
+
+        private Integer page;
+
     }
 }
