@@ -174,5 +174,10 @@ public class SysUserInfoDTO implements Serializable {
          * 店铺
          */
         private String shopNames;
+
+        /**
+         * 创建时间
+         */
+        private LocalDateTime createTime;
     }
 }
