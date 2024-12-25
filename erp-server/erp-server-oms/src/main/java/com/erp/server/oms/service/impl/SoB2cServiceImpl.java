@@ -1053,19 +1053,16 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public BatchResultDTO submit(String id, Boolean isProcess) {
-        SoB2cEntity entity = getById(id);
+    public BatchResultDTO submit(SoB2cEntity entity, SoB2cErrorEntity error,SoB2cLogisticsEntity soB2cLogisticsEntity, Boolean isProcess) {
         if (ObjectUtil.isEmpty(entity)) {
             throw new ServiceException("未找到B2C销售订单表数据");
         }
-        SoB2cErrorEntity error = soB2cErrorService.getByMainIdAndType(id, SoB2cErrorTypeEnum.ORDER_FETCH.getCode());
-        if (null != error) {
+        if (Objects.nonNull(error)) {
             throw new ServiceException("订单拉取失败，请手动重试刷新订单后操作");
         }
         validateSubmit(entity);
-
+        String id = entity.getId();
         //物流信息
-        SoB2cLogisticsEntity soB2cLogisticsEntity = soB2cLogisticsService.getByMainId(id);
         if (ObjectUtil.isEmpty(soB2cLogisticsEntity)) {
             throw new ServiceException(ApiError.ERROR_SO_B2C_LOGISTICS_NOT_EXIST);
         }
@@ -1073,7 +1070,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         boolean isCleanError = CharSequenceUtil.isNotBlank(soB2cLogisticsEntity.getCode());
         if (isCleanError) {
             //清除异常订单的类型和异常订单表数据
-            soB2cErrorService.deleteByMainIds(Arrays.asList(id));
+            soB2cErrorService.deleteByMainIds(Collections.singletonList(id));
         }
 
         // 更新单据审核状态
@@ -1094,7 +1091,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             if (entity.getIsFrozen()) {
                 interceptUpdateOrderDTO.setIsFrozen(Boolean.FALSE);
             }
-            interceptUpdateOrderDTO.setIds(Arrays.asList(entity.getId()));
+            interceptUpdateOrderDTO.setIds(Collections.singletonList(entity.getId()));
             this.updateIntercept(interceptUpdateOrderDTO);
         }
         //如果有第三方仓出库异常，清除该异常
@@ -3149,7 +3146,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
      * @return void
      * @Date 2023/7/4 10:07
      **/
-
     public void startProcess(SoB2cEntity entity) {
         ProcessManagementDTO.StartDTO startDTO = new ProcessManagementDTO.StartDTO();
         startDTO.setBusinessId(entity.getId());
@@ -4138,7 +4134,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             //更新流转状态和分类信息
             soB2cRefCategoryService.update(ruleOrderMatchResult.getCategoryDetailIdList(), id);
             //自动提交
-            BatchResultDTO submit = soB2cService.submit(id, Boolean.FALSE);
+            SoB2cErrorEntity error = soB2cErrorService.getByMainIdAndType(id, SoB2cErrorTypeEnum.ORDER_FETCH.getCode());
+            SoB2cLogisticsEntity soB2cLogisticsEntity = soB2cLogisticsService.getByMainId(id);
+            BatchResultDTO submit = soB2cService.submit(entity, error,soB2cLogisticsEntity, Boolean.FALSE);
             if (!submit.getSuccess()) {
                 throw new ServiceException(ApiError.ERROR_1042);
             }
