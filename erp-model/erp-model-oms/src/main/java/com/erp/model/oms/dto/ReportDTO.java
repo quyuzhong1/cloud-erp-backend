@@ -6,6 +6,7 @@ package com.erp.model.oms.dto;/**
  * @Created by yl
  */
 
+import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
@@ -17,6 +18,7 @@ import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @Description TODO
@@ -63,7 +65,14 @@ public class ReportDTO implements Serializable {
         @Size(min = 2,message = "订单创建时间不能为空")
         @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
         private List<LocalDateTime> orderCreateTimeList;
-
+        /**
+         * 页面高级查询
+         */
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
+        /**
+         * sqlMap 默认key default
+         */
+        private Map<String, String> sqlMap;
 
     }
 

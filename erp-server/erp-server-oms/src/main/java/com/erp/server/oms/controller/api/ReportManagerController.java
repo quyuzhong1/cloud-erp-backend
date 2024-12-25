@@ -1,5 +1,6 @@
 package com.erp.server.oms.controller.api;
 
+import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
@@ -36,6 +37,7 @@ public class ReportManagerController extends BaseController {
      * @return
      */
     @PostMapping("/productSalesPaging")
+    @WebAdvanceQuery
     public ApiResult<PagingVO<ReportDTO.ProductSalesPagingViewDTO>> queryProductSalesByPage(@RequestBody @Validated PagingDTO<ReportDTO.ProductSalesPagingParamDTO> dto) {
         PagingVO<ReportDTO.ProductSalesPagingViewDTO> pagingVO = soB2cService.productSalesPaging(dto);
         return success(pagingVO);
