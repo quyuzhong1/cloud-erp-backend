@@ -1,5 +1,6 @@
 package com.erp.model.wms.dto;
 
+import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -12,6 +13,7 @@ import java.io.Serializable;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 /**
  * <p>
@@ -95,6 +97,15 @@ public class OverseasInventoryDTO implements Serializable {
          * 仓库名称
          */
         private List<String> warehouseNameList;
+        /**
+         * 页面高级查询
+         */
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
+        /**
+         * sqlMap 默认key default
+         */
+        private Map<String, String> sqlMap;
+
     }
 
 
