@@ -19,6 +19,7 @@ import com.erp.model.wms.dto.StocktakingTaskDTO;
 import com.erp.model.wms.dto.StocktakingTaskDetailDTO;
 import com.erp.model.wms.entity.StocktakingProfitLossEntity;
 import com.erp.model.wms.entity.StocktakingTaskEntity;
+import com.erp.server.wms.query.StocktakingTaskQueryHandler;
 import com.erp.server.wms.service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
@@ -83,7 +84,7 @@ public class StocktakingTaskController extends BaseController {
             menuCode = "wms:stocktakingTask:paging",
             tableAlias = "st"
     )
-    @WebAdvanceQuery
+    @WebAdvanceQuery(handler = StocktakingTaskQueryHandler.class)
     public ApiResult<PagingVO<StocktakingTaskDTO.PagingViewDTO>> queryByPage(@RequestBody @Validated PagingDTO<StocktakingTaskDTO.PagingParamDTO> dto) {
         PagingVO<StocktakingTaskDTO.PagingViewDTO> pagingVO = stocktakingTaskService.paging(dto);
         return success(pagingVO);

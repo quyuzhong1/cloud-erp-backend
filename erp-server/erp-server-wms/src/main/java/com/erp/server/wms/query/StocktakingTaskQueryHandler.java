@@ -2,6 +2,7 @@ package com.erp.server.wms.query;
 
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.query.AbstractQueryHandler;
+import com.erp.model.dmp.enums.DmpPushMonitorTabEnum;
 import org.springframework.stereotype.Component;
 
 import java.util.Collections;
@@ -17,6 +18,9 @@ public class StocktakingTaskQueryHandler extends AbstractQueryHandler {
     protected String handleSqlLogic(String field, Object value, String compareCodeSplicingValueSql) {
         if ("tab".equals(field)) {
             return getTabSql(value);
+        }
+        if ("std.warehouse_id".equals(field)) {
+            return " EXISTS (SELECT 1 from stocktaking_task_detail as std where std.main_id = st.id AND std.is_deleted = FALSE AND std.warehouse_id " + compareCodeSplicingValueSql + " ) ";
         }
         return null;
     }

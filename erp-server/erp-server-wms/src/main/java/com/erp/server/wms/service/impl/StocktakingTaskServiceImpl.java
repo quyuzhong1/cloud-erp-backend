@@ -141,12 +141,12 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
         StocktakingTaskDTO.PagingParamDTO params = dto.getParams();
         params.setPermissionSql(dto.getPermissionSql());
         Page query = new Page<>(dto.getCurrPage(), dto.getPageSize());
-        String tabFlag = params.getTabFlag();
-        //对应tab的状态
-        List<String> tabList = new ArrayList<>(1);
-        if (!WmsConstant.ALL.equals(tabFlag)) {
-            tabList.add(tabFlag);
-        }
+//        String tabFlag = params.getTabFlag();
+//        //对应tab的状态
+//        List<String> tabList = new ArrayList<>(1);
+//        if (!WmsConstant.ALL.equals(tabFlag)) {
+//            tabList.add(tabFlag);
+//        }
         List<String> mainIdList = new ArrayList<>();
         //仓库id
         String warehouseId = params.getWarehouseId();
@@ -158,7 +158,7 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
             }
             mainIdList.addAll(mainIds);
         }
-        IPage pageData = baseMapper.paging(query, params, tabList, mainIdList);
+        IPage pageData = baseMapper.paging(query, params, null, mainIdList);
         List<StocktakingTaskDTO.PagingViewDTO> list = pageData.getRecords();
         if (CollectionUtils.isEmpty(list)) {
             return new PagingVO<>(pageData);
