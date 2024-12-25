@@ -12,7 +12,7 @@
         use_org_name,group_id,group_name,
         create_user_name,create_time
         FROM customer_b2c ci
-        WHERE ci.is_deleted=FALSE
+        WHERE ${params.sqlMap.default} and ci.is_deleted=FALSE
         <if test="params.code !=null and params.code!=''">
             AND ci.code ILIKE concat('%',#{params.code}::text,'%')
         </if>

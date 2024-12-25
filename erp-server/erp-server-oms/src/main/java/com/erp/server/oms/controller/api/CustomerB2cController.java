@@ -2,6 +2,7 @@ package com.erp.server.oms.controller.api;
 
 
 import com.common.business.annotation.DataPermission;
+import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
@@ -12,6 +13,7 @@ import com.erp.model.oms.dto.CustomerAddressDTO;
 import com.erp.model.oms.dto.CustomerB2CDTO;
 import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.entity.CustomerB2cEntity;
+import com.erp.server.oms.query.CustomerB2cQueryHandler;
 import com.erp.server.oms.service.CustomerB2cAddressService;
 import com.erp.server.oms.service.CustomerB2cService;
 import lombok.extern.slf4j.Slf4j;
@@ -73,6 +75,7 @@ public class CustomerB2cController extends BaseController {
             menuCode = "oms:customerB2c:paging",
             tableAlias = "ci"
     )
+    @WebAdvanceQuery(handler = CustomerB2cQueryHandler.class)
     public ApiResult<PagingVO<CustomerB2CDTO.PagingViewDTO>> queryByPage(@RequestBody @Validated PagingDTO<CustomerB2CDTO.PagingParamDTO> dto) {
         PagingVO<CustomerB2CDTO.PagingViewDTO> pagingVO = customerB2cService.paging(dto);
         return success(pagingVO);
