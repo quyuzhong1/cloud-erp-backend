@@ -34,7 +34,7 @@ pipeline {
                 sh '''
                 
                 ssh -tt root@172.16.100.90 "cd /home/dockers/jenkins/jenkins_home/workspace/${JOB_NAME}/erp-server/erp-server-admin/ && \\
-                docker build -t ${harborAddress}/${harborRepo}/erp-server-admin:${TAG} ."
+                docker build -t ${harborAddress}/${harborRepo}/erp-server-admin:${TAG} ."       //制作erp-server-k8s镜像
 
                 //制作erp-server-k8s镜像
                 ssh -tt root@172.16.100.90 "cd /home/dockers/jenkins/jenkins_home/workspace/${JOB_NAME}/erp-server/erp-server-k8s/ && \\
