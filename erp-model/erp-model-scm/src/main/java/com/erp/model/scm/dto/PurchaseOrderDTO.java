@@ -357,6 +357,10 @@ public class PurchaseOrderDTO implements Serializable {
         private String warehouseLocation;
 
         /**
+         * 仓位名称
+         */
+        private String warehouseLocationName;
+        /**
          * 采购申请单id集合
          */
         @JsonIgnore
