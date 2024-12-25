@@ -439,17 +439,21 @@ public class VirtualInventoryDetailServiceImpl extends SuperServiceImpl<VirtualI
         //虚拟仓
         List<String> virtualWarehouseIdList = detailList.stream().map(VirtualInventoryAgeDTO.ListDTO::getVirtualWarehouseId).distinct().collect(Collectors.toList());
         //查询库龄历史
-        Integer endDays = list.stream().max(Comparator.comparingInt(CfgSettingVirtualValueDTO.InventoryAgeDateTO::getStartDays)).map(CfgSettingVirtualValueDTO.InventoryAgeDateTO::getEndDays).orElse(null);
-        LocalDate minStartDate = ObjUtil.isNull(endDays) ? null : LocalDate.now().minusDays(endDays);
-        List<VirtualInventoryAgeDTO.viewHisInventoryAgeDetailDTO> virtualInventoryHisList = virtualInventoryDetailHisService.listByParam(new VirtualInventoryDetailHisDTO.ParamDTO(skuIdList, warehouseIdList, virtualWarehouseIdList, minStartDate));
-        //总数量
-        Integer totalQty = virtualInventoryHisList.stream().map(VirtualInventoryAgeDTO.viewHisInventoryAgeDetailDTO::getQty).reduce(MathUtil.ZERO, Integer::sum);
+        List<VirtualInventoryAgeDTO.viewHisInventoryAgeDetailDTO> virtualInventoryHisList = virtualInventoryDetailHisService.listByParam(new VirtualInventoryDetailHisDTO.ParamDTO(skuIdList, warehouseIdList, virtualWarehouseIdList, LocalDate.now().minusDays(1L)));
+
         for (VirtualInventoryAgeDTO.ListDTO listDTO :detailList) {
             //差异
             boolean isDiff = MathUtil.compareTo(listDTO.getAvgInventoryAge(), listDTO.getBackAvgInventoryAge()) != MathUtil.ZERO;
             listDTO.setIsDiff(isDiff?"是":"否");
 
             HashMap<String, VirtualInventoryAgeDTO.VirtualIntervalDTO> map = new HashMap<>();
+            //总数量
+            Integer totalQty = virtualInventoryHisList.stream().filter(obj ->
+                            CharSequenceUtil.equals(obj.getSkuId(),listDTO.getSkuId())
+                            && CharSequenceUtil.equals(obj.getWarehouseId(),listDTO.getWarehouseId())
+                            && CharSequenceUtil.equals(obj.getVirtualWarehouseId(),listDTO.getVirtualWarehouseId()))
+                    .map(VirtualInventoryAgeDTO.viewHisInventoryAgeDetailDTO::getQty).reduce(MathUtil.ZERO, Integer::sum);
+
             for (CfgSettingVirtualValueDTO.InventoryAgeDateTO inventoryAgeDateTO :list) {
                 String ageDateInterval = "";
                 //区间字段
