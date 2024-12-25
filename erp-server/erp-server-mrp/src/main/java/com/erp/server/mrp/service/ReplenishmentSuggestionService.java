@@ -174,7 +174,7 @@ public interface ReplenishmentSuggestionService extends SuperService<Replenishme
     /**
      * 获取所有sku和店铺
      */
-    List<ReplenishmentSuggestionEntity> listAllSkuAndShop();
+    List<ReplenishmentSuggestionEntity> listAllSkuAndShop(String type);
 
     /**
      * 根据唯一键查询（平台、店铺、sku）

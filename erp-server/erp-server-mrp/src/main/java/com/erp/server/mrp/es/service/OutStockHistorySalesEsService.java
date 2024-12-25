@@ -66,4 +66,10 @@ public interface OutStockHistorySalesEsService {
      * @param orderType 订单类型
      */
     Map<String, Integer> listByType(JSONArray orderType);
+
+    /**
+     * 根据店铺查询有销量sku
+     * @param shopIds 店铺
+     */
+    Map<String, List<String>> listSkuByShopId(Set<String> shopIds);
 }

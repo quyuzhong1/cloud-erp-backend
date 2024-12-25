@@ -730,8 +730,9 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
     }
 
     @Override
-    public List<ReplenishmentSuggestionEntity> listAllSkuAndShop() {
+    public List<ReplenishmentSuggestionEntity> listAllSkuAndShop(String type) {
         return list(Wrappers.<ReplenishmentSuggestionEntity>lambdaQuery()
+                .eq(ReplenishmentSuggestionEntity::getPlatformType, type)
                 .select(ReplenishmentSuggestionEntity::getSkuId,
                         ReplenishmentSuggestionEntity::getSkuNo,
                         ReplenishmentSuggestionEntity::getShopId,
@@ -1230,7 +1231,9 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
             salesInfoVOS.add(infoVO);
             date = date.plusDays(1);
         }
-        return salesInfoVOS;
+        return salesInfoVOS.stream()
+                .sorted(Comparator.comparing(ReplenishmentSuggestionVO.SalesInfoVO::getDate)
+                        .reversed()).collect(Collectors.toList());
     }
 
     /**

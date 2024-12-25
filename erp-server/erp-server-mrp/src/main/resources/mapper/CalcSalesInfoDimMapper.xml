@@ -51,7 +51,7 @@
                csic.month_sales_estimate_qty_json,
                csic.month_real_sales_qty_json,
                csic.cfg_rule_calc_id,
-               csic.similarity similarity
+               csic.similarity as similarity
         from calc_sales_info_dim csic
         where ${params.sqlMap.default}
           and csic.is_deleted = FALSE

@@ -18,6 +18,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.elasticsearch.core.ElasticsearchRestTemplate;
+import org.springframework.data.elasticsearch.core.SearchHit;
 import org.springframework.data.elasticsearch.core.SearchHits;
 import org.springframework.data.elasticsearch.core.document.DocumentAdapters;
 import org.springframework.data.elasticsearch.core.query.FetchSourceFilter;
@@ -245,5 +246,20 @@ public class OrderHistorySalesEsServiceImpl implements OrderHistorySalesEsServic
     @Override
     public void deleteByDateBetween(LocalDate startDate, LocalDate endDate) {
         orderHistorySalesEsRepository.deleteByDateBetween(startDate, endDate);
+    }
+
+    @Override
+    public Map<String, List<String>> listSkuByShopId(Set<String> shopIds) {
+        BoolQueryBuilder queryBuilder = QueryBuilders.boolQuery()
+                .must(QueryBuilders.termsQuery("shopId", shopIds));
+        NativeSearchQuery searchQuery = new NativeSearchQueryBuilder()
+                .withQuery(queryBuilder)
+                .withSourceFilter(new FetchSourceFilter(new String[]{"skuId"}, new String[]{}))
+                .build();
+        // 执行查询
+        SearchHits<OrderHistorySalesEsEntity> searchHits = elasticsearchRestTemplate.search(searchQuery, OrderHistorySalesEsEntity.class);
+        return searchHits.getSearchHits().stream()
+                .map(SearchHit::getContent)
+                .collect(Collectors.groupingBy(OrderHistorySalesEsEntity::getShopId, Collectors.mapping(OrderHistorySalesEsEntity::getSkuId, Collectors.toList())));
     }
 }
