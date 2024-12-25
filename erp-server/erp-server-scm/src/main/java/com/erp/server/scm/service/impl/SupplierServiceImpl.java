@@ -1431,6 +1431,22 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         return new PagingVO<>(resultList, (int) page.getTotal(), dto.getPageSize(), dto.getCurrPage());
     }
 
+    @Override
+    public Boolean updateVoucherNo(List<String> ids, String voucherNo) {
+        if (CollectionUtils.isEmpty(ids)) {
+            return Boolean.TRUE;
+        }
+        this.lambdaUpdate()
+                .in(SupplierEntity::getId, ids)
+                .set(SupplierEntity::getVoucherNo, voucherNo)
+                .update(new SupplierEntity());
+        ids.forEach(v->{
+            String content = StrUtil.format("更新外部平台单号为：{}", voucherNo);
+            moduleOperateLogService.addModuleOperateLog(content, ModuleTypeEnum.SUPPLIER.getCode(), v, "更新外部平台单号");
+        });
+        return Boolean.TRUE;
+    }
+
     /**
      * @description: 更新状态
      * @author Will

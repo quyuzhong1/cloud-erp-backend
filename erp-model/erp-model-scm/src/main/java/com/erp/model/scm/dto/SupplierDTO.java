@@ -2,6 +2,7 @@ package com.erp.model.scm.dto;
 
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.AdvanceQueryDTO;
+import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.ApproveStatusEnum;
@@ -38,6 +39,16 @@ import java.util.Map;
  * @Created by yl
  */
 public class SupplierDTO implements Serializable {
+    @Data
+    @NoArgsConstructor
+    public static class VoucherNoDTO extends BaseIdsDTO.IdsDTO {
+
+        @NotBlank(message = "外部平台单号")
+        @Size(max = 255,message = "填写信息不能超过255字符")
+        private String voucherNo;
+
+    }
+
     /**
      * 批量修改供应商分类
      */
