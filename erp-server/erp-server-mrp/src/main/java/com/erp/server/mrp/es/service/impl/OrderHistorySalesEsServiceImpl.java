@@ -254,7 +254,6 @@ public class OrderHistorySalesEsServiceImpl implements OrderHistorySalesEsServic
                 .must(QueryBuilders.termsQuery("shopId", shopIds));
         NativeSearchQuery searchQuery = new NativeSearchQueryBuilder()
                 .withQuery(queryBuilder)
-                .withSourceFilter(new FetchSourceFilter(new String[]{"skuId"}, new String[]{}))
                 .build();
         // 执行查询
         SearchHits<OrderHistorySalesEsEntity> searchHits = elasticsearchRestTemplate.search(searchQuery, OrderHistorySalesEsEntity.class);
