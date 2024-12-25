@@ -43,7 +43,7 @@ public class DataIdempotentAspect {
     @Resource
     private RedissonClient redissonClient;
 
-    private static final ThreadLocal<List<RLock>> LOCK_THREAD = new ThreadLocal<>();
+//    private static final ThreadLocal<List<RLock>> LOCK_THREAD = new ThreadLocal<>();
 
     @Pointcut("@annotation(com.common.business.annotation.DataIdempotent)")
     public void dataPointCut() {
