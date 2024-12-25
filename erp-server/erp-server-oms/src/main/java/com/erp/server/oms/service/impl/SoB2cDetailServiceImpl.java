@@ -326,6 +326,7 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
                     continue;
                 }
                 BigDecimal taxRate = Objects.nonNull(skuVO.getTaxRate()) ? skuVO.getTaxRate() : BigDecimal.ZERO;
+                BigDecimal percentRate = MathUtil.divide(taxRate, MathUtil.BigDecimal_100);
                 LocalDate billDate = entity.getBillDate();
                 BigDecimal rate = dmpTaskFeign.getRate(billDate.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), currency);
                 if (Objects.isNull(rate)){
@@ -336,7 +337,7 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
                 detailEntity.setClearanceCustomsTax(MathUtil.multiply(rate,clearanceCustomsTax));
                 detailEntity.setTaxCost(MathUtil.multiply(rate,productCost));
                 BigDecimal actualTaxCost = MathUtil.add(productCost, firstMileShippingCost).add(clearanceCustomsTax);
-                detailEntity.setTaxCost(MathUtil.multiply(MathUtil.multiply(actualTaxCost,rate), MathUtil.add(BigDecimal.valueOf(1), taxRate)));
+                detailEntity.setTaxCost(MathUtil.multiply(MathUtil.multiply(actualTaxCost,rate), MathUtil.add(BigDecimal.valueOf(1), percentRate)));
                 detailEntity.setCostSource(skuCostDTO.getAllocatedMonth().format(DateTimeFormatter.ofPattern("yyyy-MM")) + "财务导入成本");
             }
 

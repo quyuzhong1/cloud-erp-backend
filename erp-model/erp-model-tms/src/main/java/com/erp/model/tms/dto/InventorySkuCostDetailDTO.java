@@ -82,11 +82,11 @@ public class InventorySkuCostDetailDTO implements Serializable {
         /**
          * 头程运费（6位小数）
          */
-        private BigDecimal firstMileShippingCost;
+        private String firstMileShippingCost;
         /**
          * 清关税费（6位小数）
          */
-        private BigDecimal clearanceCustomsTax;
+        private String clearanceCustomsTax;
     }
 
     /**

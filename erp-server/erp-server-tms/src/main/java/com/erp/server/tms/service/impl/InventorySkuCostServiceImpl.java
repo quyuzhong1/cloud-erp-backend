@@ -52,7 +52,6 @@ import com.erp.server.tms.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
@@ -415,6 +414,9 @@ public class InventorySkuCostServiceImpl extends SuperServiceImpl<InventorySkuCo
                 skuCostDTO.setSkuId(skuId);
                 skuCostDTO.setWarehouseId(queryB2BDTO.getWarehouseId());
                 addProductCost(childrenSkuDTOS,skuCostDTOS,skuCostDTO);
+                if (Objects.nonNull(skuCostDTO.getCountAllChild()) && !skuCostDTO.getCountAllChild()){
+                    continue;
+                }
                 skuCostDTOList.add(skuCostDTO);
             }
         }
@@ -458,6 +460,9 @@ public class InventorySkuCostServiceImpl extends SuperServiceImpl<InventorySkuCo
                 skuCostDTO.setSkuId(queryB2CDetailDTO.getSkuId());
                 skuCostDTO.setWarehouseId(queryB2CDetailDTO.getWarehouseId());
                 addProductCost(childrenSkuDTOS,skuCostDTOS,skuCostDTO);
+                if (Objects.nonNull(skuCostDTO.getCountAllChild()) && !skuCostDTO.getCountAllChild()){
+                    continue;
+                }
                 skuCostDTOList.add(skuCostDTO);
             }
         }
@@ -504,6 +509,9 @@ public class InventorySkuCostServiceImpl extends SuperServiceImpl<InventorySkuCo
                 skuCostDTO.setSkuId(queryB2CDetailDTO.getSkuId());
                 skuCostDTO.setWarehouseId(queryB2CDetailDTO.getWarehouseId());
                 addProductCost(childrenSkuDTOS,skuCostDTOS,skuCostDTO);
+                if (Objects.nonNull(skuCostDTO.getCountAllChild()) && !skuCostDTO.getCountAllChild()){
+                    continue;
+                }
                 skuCostDTOList.add(skuCostDTO);
             }
         }
@@ -529,6 +537,8 @@ public class InventorySkuCostServiceImpl extends SuperServiceImpl<InventorySkuCo
                 
                 newSkuCostDTO.setAllocatedMonth(skuCostDTO.getAllocatedMonth());
                 newSkuCostDTO.setCurrency(skuCostDTO.getCurrency());
+            }else {
+                newSkuCostDTO.setCountAllChild(Boolean.FALSE);
             }
         }
     }

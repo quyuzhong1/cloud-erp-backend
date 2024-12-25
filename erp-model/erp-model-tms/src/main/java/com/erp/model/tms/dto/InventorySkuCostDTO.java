@@ -397,6 +397,8 @@ public class InventorySkuCostDTO implements Serializable {
         private String warehouseId;
         //组织
         private String salesOrgId;
+        //汇总所有子件
+        private Boolean countAllChild;
     }
 
     @Data
