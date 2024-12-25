@@ -1,6 +1,8 @@
 package com.erp.model.workflow.dto;
 
 import cn.hutool.core.text.CharSequenceUtil;
+import com.common.business.dto.AdvanceQueryDTO;
+import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.ApproveTypeEnum;
 import com.erp.model.workflow.enums.DictBasicEnum;
@@ -656,7 +658,7 @@ public class ProcessManagementDTO {
 
     @Data
     @NoArgsConstructor
-    public static class SearchDTO{
+    public static class SearchDTO extends SortDTO {
 
         private List<String> businessNames;
 
@@ -666,6 +668,15 @@ public class ProcessManagementDTO {
 
         private String processName;
 
+        /**
+         * 页面高级查询
+         */
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
+
+        /**
+         * sqlMap 默认key default
+         */
+        private Map<String, String> sqlMap;
     }
 
     @Data
