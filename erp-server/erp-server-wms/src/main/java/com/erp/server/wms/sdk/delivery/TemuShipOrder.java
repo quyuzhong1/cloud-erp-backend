@@ -92,6 +92,8 @@ public class TemuShipOrder extends AbstractShipOrder {
         }
 
         List<String> signShippedDetailList = new ArrayList<>();
+        List<DictBasicDTO.ListDTO> widList = dictBasicService.getByKey("LingXingWid");
+        String wid = CollectionUtils.isNotEmpty(widList)?widList.get(0).getValue():"";
         for (SoB2cEntity mainEntity : sourceOrderList) {
             //检查销售订单详情是否存在
             List<SoB2cDetailEntity> currentDetailEntityList = soB2cDetailEntityListMap.get(mainEntity.getId());
@@ -124,6 +126,7 @@ public class TemuShipOrder extends AbstractShipOrder {
                 packageInfo.setGlobalOrderNo(mainEntity.getThirdCode());
                 packageInfo.setLogisticsTypeId(thirdView.getThirdLogisticsId());
                 packageInfo.setWaybillNo(logisticsNo);
+                packageInfo.setWid(Long.valueOf(wid));
                 LingxingApiUtils.fastOutbound(Collections.singletonList(packageInfo));
                 signShippedDetailList.addAll(detailEntityList.stream().map(BaseEntity::getId).collect(Collectors.toList()));
             } catch (Exception e) {

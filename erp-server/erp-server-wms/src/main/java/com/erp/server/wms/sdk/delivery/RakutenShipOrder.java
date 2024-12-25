@@ -19,6 +19,7 @@ import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoB2cLogisticsEntity;
 import com.erp.model.tms.dto.LogisticsChannelDTO;
+import com.erp.model.wms.dto.DictBasicDTO;
 import com.erp.rpc.dmp.feign.DmpThirdMappingFeign;
 import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.rpc.tms.feign.LogisticsFeign;
@@ -81,7 +82,8 @@ public class RakutenShipOrder extends AbstractShipOrder {
         if(Objects.isNull(thirdView)){
             throw new ServiceException("未配置{}渠道信息",PlatformDictEnum.LING_XING.getName());
         }
-
+        List<DictBasicDTO.ListDTO> widList = dictBasicService.getByKey("LingXingWid");
+        String wid = CollectionUtils.isNotEmpty(widList)?widList.get(0).getValue():"";
         List<String> signShippedDetailList = new ArrayList<>();
         for (SoB2cEntity mainEntity : sourceOrderList) {
             //检查销售订单详情是否存在
@@ -115,6 +117,7 @@ public class RakutenShipOrder extends AbstractShipOrder {
                 packageInfo.setGlobalOrderNo(mainEntity.getThirdCode());
                 packageInfo.setLogisticsTypeId(thirdView.getThirdLogisticsId());
                 packageInfo.setWaybillNo(logisticsNo);
+                packageInfo.setWid(Long.valueOf(wid));
                 LingxingApiUtils.fastOutbound(Collections.singletonList(packageInfo));
                 signShippedDetailList.addAll(detailEntityList.stream().map(BaseEntity::getId).collect(Collectors.toList()));
             } catch (Exception e) {
