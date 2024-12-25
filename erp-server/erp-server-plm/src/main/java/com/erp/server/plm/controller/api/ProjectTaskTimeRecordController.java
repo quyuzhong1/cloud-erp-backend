@@ -1,6 +1,7 @@
 package com.erp.server.plm.controller.api;
 
 
+import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
@@ -43,6 +44,7 @@ public class ProjectTaskTimeRecordController extends BaseController {
 //            tableField = "charge_id",
 //            menuCode = "plm:task:time:record:paging",
 //            tableAlias = "pt")
+    @WebAdvanceQuery
     public ApiResult<PagingVO<ProjectTaskTimeRecordPageVO>> pageTaskTimeRecord(@RequestBody PagingDTO<ProjectTaskTimeRecordDTO.PageRecordDto> dto){
         PagingVO<ProjectTaskTimeRecordPageVO>  pageVO = projectTaskTimeRecordService.pageRecord(dto);
         return success(pageVO);
