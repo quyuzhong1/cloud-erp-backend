@@ -1,5 +1,6 @@
 package com.erp.model.tms.dto;
 
+import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.core.anno.RegularValid;
 import com.common.core.enums.FieldFormatPatternTypeEnum;
@@ -11,6 +12,7 @@ import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
 import java.util.List;
+import java.util.Map;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
@@ -129,6 +131,15 @@ public class LogisticsAddressDTO implements Serializable {
 
 
         private String address;
+
+        /**
+         * 页面高级查询
+         */
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
+        /**
+         * sqlMap 默认key default
+         */
+        private Map<String, String> sqlMap;
 
     }
 

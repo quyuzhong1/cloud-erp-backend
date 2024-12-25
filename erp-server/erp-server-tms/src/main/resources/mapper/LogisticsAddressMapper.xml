@@ -69,7 +69,7 @@
         address_second AS addressSecond,
         zip_code AS zipCode
         FROM logistics_address la
-        WHERE la.is_deleted=FALSE
+        WHERE ${params.sqlMap.default} and la.is_deleted=FALSE
         <if test="params.typeList!=null and params.typeList.size>0">
             AND la.type IN
              <foreach collection="params.typeList" item="item" open="(" separator="," close=")">
