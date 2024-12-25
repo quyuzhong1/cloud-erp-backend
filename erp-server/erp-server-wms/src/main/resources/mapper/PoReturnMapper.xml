@@ -434,7 +434,8 @@
         prod.sku_id as skuId,
         prod.sku_no as skuNo,
         prod.return_price as taxPrice,
-        prod.replenish_qty as replenishQty
+        prod.replenish_qty as replenishQty,
+        prod.deduct_amount_qty as deductAmountQty
         FROM po_return_detail prod
         INNER JOIN po_return pro ON prod.main_id = pro.id AND pro.is_deleted = FALSE
         WHERE  prod.is_deleted = FALSE

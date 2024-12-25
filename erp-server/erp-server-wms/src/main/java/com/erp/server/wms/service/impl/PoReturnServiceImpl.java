@@ -3086,7 +3086,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
             }
             List<PurchaseOrderDetailEntity> currentPurchaseDetailList = purchaseOrderDetailEntityList.stream().filter(v->v.getSourceDetailId().equals(pushDownPurchaseView.getDetailId())).collect(Collectors.toList());
             Integer alreadyPurchaseQty = currentPurchaseDetailList.stream().map(PurchaseOrderDetailEntity::getPurchaseQty).reduce(Integer::sum).orElse(0);
-            pushDownPurchaseView.setPurchaseQty(pushDownPurchaseView.getReplenishQty() - alreadyPurchaseQty);
+            pushDownPurchaseView.setPurchaseQty(pushDownPurchaseView.getDeductAmountQty() - alreadyPurchaseQty);
             pushDownPurchaseView.setTotalTaxAmount(pushDownPurchaseView.getTaxPrice().multiply(new BigDecimal(pushDownPurchaseView.getPurchaseQty())).setScale(4, RoundingMode.HALF_UP));
             pushDownPurchaseView.setPlanDeliveryDate(LocalDate.now());
         }

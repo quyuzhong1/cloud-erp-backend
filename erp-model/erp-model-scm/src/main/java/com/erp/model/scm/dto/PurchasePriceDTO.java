@@ -109,6 +109,10 @@ public class PurchasePriceDTO implements Serializable {
         private String skuId;
 
         /**
+         * 扣款数量
+         */
+        private Integer deductAmountQty;
+        /**
          * 币别
          */
         private String currency;
