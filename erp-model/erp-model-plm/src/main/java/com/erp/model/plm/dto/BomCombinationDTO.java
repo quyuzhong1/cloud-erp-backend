@@ -64,6 +64,11 @@ public class BomCombinationDTO implements Serializable {
          * 子级SKu
          */
         private List<ChildDTO> childList;
+
+        /**
+         * 创建时间
+         */
+        private LocalDateTime createTime;
     }
 
     @Data
