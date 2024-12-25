@@ -5,6 +5,7 @@ import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.common.business.annotation.DataPermission;
+import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.*;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.ApproveTypeEnum;
@@ -82,6 +83,7 @@ public class StocktakingTaskController extends BaseController {
             menuCode = "wms:stocktakingTask:paging",
             tableAlias = "st"
     )
+    @WebAdvanceQuery
     public ApiResult<PagingVO<StocktakingTaskDTO.PagingViewDTO>> queryByPage(@RequestBody @Validated PagingDTO<StocktakingTaskDTO.PagingParamDTO> dto) {
         PagingVO<StocktakingTaskDTO.PagingViewDTO> pagingVO = stocktakingTaskService.paging(dto);
         return success(pagingVO);
