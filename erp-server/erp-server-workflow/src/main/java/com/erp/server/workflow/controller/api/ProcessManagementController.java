@@ -1,6 +1,7 @@
 package com.erp.server.workflow.controller.api;
 
 
+import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
@@ -134,6 +135,7 @@ public class ProcessManagementController extends BaseController {
      * 流程管理分页列表
      */
     @PostMapping("/paging")
+    @WebAdvanceQuery
     public ApiResult<PagingVO<ProcessManagementDTO.PagingResultDTO>> paging(@RequestBody @Valid PagingDTO<ProcessManagementDTO.SearchDTO> dto) {
         PagingVO<ProcessManagementDTO.PagingResultDTO> resultList = processManagementService.paging(dto);
         return success(resultList);
