@@ -765,6 +765,7 @@
         pc.actual_tax_cost,
         pc.target_tax_cost,
         pc.retail_price,
+        pc.tax_rate,
         ppk.product_length as productLength,
         ppk.product_width as productWidth,
         ppk.product_height as productHeight,

@@ -386,9 +386,10 @@ public class InventorySkuCostServiceImpl extends SuperServiceImpl<InventorySkuCo
 
     @Override
     public List<InventorySkuCostDTO.SkuCostDTO> listSkuCostBySkuIds(InventorySkuCostDTO.QueryB2BDTO queryB2BDTO) {
-        if (CollUtil.isEmpty(queryB2BDTO.getSkuIds()) || CharSequenceUtil.isEmpty(queryB2BDTO.getWarehouseId()) || CharSequenceUtil.isEmpty(queryB2BDTO.getSalesOrgId())){
+        if (CollUtil.isEmpty(queryB2BDTO.getSkuIds()) || CharSequenceUtil.isEmpty(queryB2BDTO.getWarehouseId()) || CharSequenceUtil.isEmpty(queryB2BDTO.getSalesOrgId()) || Objects.isNull(queryB2BDTO.getBillDate())){
             return Collections.emptyList();
         }
+        LocalDate billDate = queryB2BDTO.getBillDate();
         List<String> skuIds = queryB2BDTO.getSkuIds();
         //根据sku进行获取子件 然后根据bom进行累加组合品
         List<BomChildrenSkuDTO> bomChildrenList = plmTaskFeign.listBomChildBySkuIds(queryB2BDTO.getSkuIds());
@@ -408,12 +409,20 @@ public class InventorySkuCostServiceImpl extends SuperServiceImpl<InventorySkuCo
                 if (Objects.isNull(skuCostDTO)){
                     continue;
                 }
+                BigDecimal rate = dmpTaskFeign.getRate(billDate.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), skuCostDTO.getCurrency());
+                if (Objects.isNull(rate)){
+                    continue;
+                }
+                skuCostDTO.setProductCost(MathUtil.multiply(rate, skuCostDTO.getProductCost(),4));
+                skuCostDTO.setFirstMileShippingCost(MathUtil.multiply(rate, skuCostDTO.getProductCost(),4));
+                skuCostDTO.setClearanceCustomsTax(MathUtil.multiply(rate, skuCostDTO.getProductCost(),4));
+                skuCostDTO.setCurrency(CurrencyEnum.CNY.getCurrencyCode());
                 skuCostDTOList.add(skuCostDTO);
             }else {
                 InventorySkuCostDTO.SkuCostDTO skuCostDTO = new InventorySkuCostDTO.SkuCostDTO();
                 skuCostDTO.setSkuId(skuId);
                 skuCostDTO.setWarehouseId(queryB2BDTO.getWarehouseId());
-                addProductCost(childrenSkuDTOS,skuCostDTOS,skuCostDTO);
+                addProductCost(childrenSkuDTOS,skuCostDTOS,skuCostDTO, billDate);
                 if (Objects.nonNull(skuCostDTO.getCountAllChild()) && !skuCostDTO.getCountAllChild()){
                     continue;
                 }
@@ -425,15 +434,17 @@ public class InventorySkuCostServiceImpl extends SuperServiceImpl<InventorySkuCo
 
     @Override
     public List<InventorySkuCostDTO.SkuCostDTO> listSkuCostByDetail(InventorySkuCostDTO.QueryB2CDTO queryB2CDTO) {
-        if (CharSequenceUtil.isBlank(queryB2CDTO.getSalesOrgId()) || CollUtil.isEmpty(queryB2CDTO.getDetailDTOS())){
+        if (CharSequenceUtil.isBlank(queryB2CDTO.getSalesOrgId()) || CollUtil.isEmpty(queryB2CDTO.getDetailDTOS()) || Objects.isNull(queryB2CDTO.getBillDate())){
             return Collections.emptyList();
         }
         List<InventorySkuCostDTO.QueryB2CDetailDTO> detailDTOS = queryB2CDTO.getDetailDTOS();
         List<String> skuIds = detailDTOS.stream().map(InventorySkuCostDTO.QueryB2CDetailDTO::getSkuId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
         List<String> warehouseIds = detailDTOS.stream().map(InventorySkuCostDTO.QueryB2CDetailDTO::getWarehouseId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+        LocalDate billDate = queryB2CDTO.getBillDate();
         if (CollUtil.isEmpty(skuIds) || CollUtil.isEmpty(warehouseIds)){
             return Collections.emptyList();
         }
+
         //根据sku进行获取子件 然后根据bom进行累加组合品
         List<BomChildrenSkuDTO> bomChildrenList = plmTaskFeign.listBomChildBySkuIds(skuIds);
         List<String> childSkuIds = bomChildrenList.stream().map(BomChildrenSkuDTO::getSkuId).collect(Collectors.toList());
@@ -454,12 +465,20 @@ public class InventorySkuCostServiceImpl extends SuperServiceImpl<InventorySkuCo
                 if (Objects.isNull(skuCostDTO)){
                     continue;
                 }
+                BigDecimal rate = dmpTaskFeign.getRate(billDate.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), skuCostDTO.getCurrency());
+                if (Objects.isNull(rate)){
+                    continue;
+                }
+                skuCostDTO.setProductCost(MathUtil.multiply(rate, skuCostDTO.getProductCost(),4));
+                skuCostDTO.setFirstMileShippingCost(MathUtil.multiply(rate, skuCostDTO.getProductCost(),4));
+                skuCostDTO.setClearanceCustomsTax(MathUtil.multiply(rate, skuCostDTO.getProductCost(),4));
+                skuCostDTO.setCurrency(CurrencyEnum.CNY.getCurrencyCode());
                 skuCostDTOList.add(skuCostDTO);
             }else {
                 InventorySkuCostDTO.SkuCostDTO skuCostDTO = new InventorySkuCostDTO.SkuCostDTO();
                 skuCostDTO.setSkuId(queryB2CDetailDTO.getSkuId());
                 skuCostDTO.setWarehouseId(queryB2CDetailDTO.getWarehouseId());
-                addProductCost(childrenSkuDTOS,skuCostDTOS,skuCostDTO);
+                addProductCost(childrenSkuDTOS,skuCostDTOS,skuCostDTO, billDate);
                 if (Objects.nonNull(skuCostDTO.getCountAllChild()) && !skuCostDTO.getCountAllChild()){
                     continue;
                 }
@@ -495,6 +514,10 @@ public class InventorySkuCostServiceImpl extends SuperServiceImpl<InventorySkuCo
         List<InventorySkuCostDTO.SkuCostDTO> skuCostDTOList = new ArrayList<>();
         String combination = BomTypeEnum.COMBINATION.getType();
         for (InventorySkuCostDTO.QueryDetailDTO queryB2CDetailDTO: queryDetailDTOList){
+            LocalDate billDate = queryB2CDetailDTO.getBillDate();
+            if (Objects.isNull(billDate)){
+                continue;
+            }
             List<BomChildrenSkuDTO> childrenSkuDTOS = bomChildrenList.stream().filter(e -> CharSequenceUtil.isNotBlank(queryB2CDetailDTO.getSkuId()) &&
                     combination.equals(e.getType()) && e.getParentSkuId().equals(queryB2CDetailDTO.getSkuId())).collect(Collectors.toList());
             if (CollUtil.isEmpty(childrenSkuDTOS)){
@@ -503,12 +526,20 @@ public class InventorySkuCostServiceImpl extends SuperServiceImpl<InventorySkuCo
                 if (Objects.isNull(skuCostDTO)){
                     continue;
                 }
+                BigDecimal rate = dmpTaskFeign.getRate(billDate.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), skuCostDTO.getCurrency());
+                if (Objects.isNull(rate)){
+                    continue;
+                }
+                skuCostDTO.setProductCost(MathUtil.multiply(rate, skuCostDTO.getProductCost(),4));
+                skuCostDTO.setFirstMileShippingCost(MathUtil.multiply(rate, skuCostDTO.getProductCost(),4));
+                skuCostDTO.setClearanceCustomsTax(MathUtil.multiply(rate, skuCostDTO.getProductCost(),4));
+                skuCostDTO.setCurrency(CurrencyEnum.CNY.getCurrencyCode());
                 skuCostDTOList.add(skuCostDTO);
             }else {
                 InventorySkuCostDTO.SkuCostDTO skuCostDTO = new InventorySkuCostDTO.SkuCostDTO();
                 skuCostDTO.setSkuId(queryB2CDetailDTO.getSkuId());
                 skuCostDTO.setWarehouseId(queryB2CDetailDTO.getWarehouseId());
-                addProductCost(childrenSkuDTOS,skuCostDTOS,skuCostDTO);
+                addProductCost(childrenSkuDTOS,skuCostDTOS,skuCostDTO,billDate);
                 if (Objects.nonNull(skuCostDTO.getCountAllChild()) && !skuCostDTO.getCountAllChild()){
                     continue;
                 }
@@ -518,10 +549,19 @@ public class InventorySkuCostServiceImpl extends SuperServiceImpl<InventorySkuCo
         return skuCostDTOList;
     }
 
-    private void addProductCost(List<BomChildrenSkuDTO> childrenSkuDTOS, List<InventorySkuCostDTO.SkuCostDTO> skuCostDTOS, InventorySkuCostDTO.SkuCostDTO newSkuCostDTO) {
+    private void addProductCost(List<BomChildrenSkuDTO> childrenSkuDTOS, List<InventorySkuCostDTO.SkuCostDTO> skuCostDTOS, InventorySkuCostDTO.SkuCostDTO newSkuCostDTO, LocalDate billDate) {
         for (BomChildrenSkuDTO bomChildrenSkuDTO : childrenSkuDTOS){
             InventorySkuCostDTO.SkuCostDTO skuCostDTO = skuCostDTOS.stream().filter(f -> f.getSkuId().equals(bomChildrenSkuDTO.getSkuId())).findFirst().orElse(null);
             if (Objects.nonNull(skuCostDTO)){
+                BigDecimal rate = dmpTaskFeign.getRate(billDate.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), skuCostDTO.getCurrency());
+                if (Objects.isNull(rate)){
+                    newSkuCostDTO.setCountAllChild(Boolean.FALSE);
+                    continue;
+                }
+                skuCostDTO.setProductCost(MathUtil.multiply(rate, skuCostDTO.getProductCost(),4));
+                skuCostDTO.setFirstMileShippingCost(MathUtil.multiply(rate, skuCostDTO.getProductCost(),4));
+                skuCostDTO.setClearanceCustomsTax(MathUtil.multiply(rate, skuCostDTO.getProductCost(),4));
+                skuCostDTO.setCurrency(CurrencyEnum.CNY.getCurrencyCode());
                 //材料成本
                 BigDecimal cost = MathUtil.multiply(skuCostDTO.getProductCost(),bomChildrenSkuDTO.getQuantity());
                 BigDecimal productCost = Objects.nonNull(newSkuCostDTO.getProductCost()) ? newSkuCostDTO.getProductCost() : BigDecimal.ZERO;

@@ -73,7 +73,7 @@ public class ProductCostServiceImpl extends ServiceImpl<ProductCostMapper, Produ
             List<BasicDictEntity> basicDictEntities = basicDictService.listByTypeList(Arrays.asList(SKU_COST_SALE_ORG_ID, SKU_COST_WAREHOUSE));
             String skuCostSaleOrgId = basicDictEntities.stream().filter(e -> e.getType().equals(SKU_COST_SALE_ORG_ID)).map(BasicDictEntity::getValue).findFirst().orElse("");
             String skuCostWarehouseId = basicDictEntities.stream().filter(e -> e.getType().equals(SKU_COST_WAREHOUSE)).map(BasicDictEntity::getValue).findFirst().orElse("");
-            InventorySkuCostDTO.QueryB2BDTO queryB2BDTO = InventorySkuCostDTO.QueryB2BDTO.builder().salesOrgId(skuCostSaleOrgId).warehouseId(skuCostWarehouseId).skuIds(skuIds).build();
+            InventorySkuCostDTO.QueryB2BDTO queryB2BDTO = InventorySkuCostDTO.QueryB2BDTO.builder().salesOrgId(skuCostSaleOrgId).warehouseId(skuCostWarehouseId).skuIds(skuIds).billDate(LocalDate.now()).build();
             List<InventorySkuCostDTO.SkuCostDTO> skuCostDTOS = logisticsFeign.listSkuCostBySkuIds(queryB2BDTO);
             for (ProductCostShowDTO productCostShowDTO : productCostShowDTOList) {
                 //成本信息
@@ -88,10 +88,10 @@ public class ProductCostServiceImpl extends ServiceImpl<ProductCostMapper, Produ
                 InventorySkuCostDTO.SkuCostDTO skuCostDTO = skuCostDTOS.stream().filter(e -> e.getSkuId().equals(productCostShowDTO.getSkuId())).findFirst().orElse(null);
                 if (Objects.nonNull(skuCostDTO)){
                     BigDecimal rate = dmpTaskFeign.getRate(LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), skuCostDTO.getCurrency());
-                    actualNoTaxCost =  MathUtil.multiply(rate,skuCostDTO.getProductCost());
+                    actualNoTaxCost =  MathUtil.multiply(rate,skuCostDTO.getProductCost(),4);
                     BigDecimal taxRate = productCostShowDTO.getTaxRate();
                     BigDecimal percentRate = MathUtil.divide(taxRate, MathUtil.BigDecimal_100);
-                    actualTaxCost = MathUtil.multiply(actualNoTaxCost, MathUtil.add(BigDecimal.valueOf(1), percentRate));
+                    actualTaxCost = MathUtil.multiply(actualNoTaxCost, MathUtil.add(BigDecimal.valueOf(1), percentRate),4);
                 }
                 //含税单价
                 productCostShowDTO.setActualTaxCost(actualTaxCost);
