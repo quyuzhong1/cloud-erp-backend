@@ -54,6 +54,14 @@ public class InventoryReportDTO implements Serializable {
          * 库存组织 接口地址： /sys/company/list
          */
         private List<String> orgIdList;
+        /**
+         * 页面高级查询
+         */
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
+        /**
+         * sqlMap 默认key default
+         */
+        private Map<String, String> sqlMap;
 
     }
 

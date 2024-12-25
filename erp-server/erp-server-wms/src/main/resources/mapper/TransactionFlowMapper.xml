@@ -470,7 +470,7 @@
             left join product_info pi on pd.product_id = pi.id
             left join product_sale ps on ps.sku_id = pd.id
             <where>
-                       tf.is_deleted = false
+                        ${params.sqlMap.default} and tf.is_deleted = false
                        <if test="params.skuNoList != null and params.skuNoList.size != ''">
                             and tf.sku_no in
                             <foreach collection="params.skuNoList" item="item" open="(" close=")" separator=",">
