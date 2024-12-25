@@ -8,6 +8,7 @@ import cn.hutool.json.JSONUtil;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
+import com.common.core.utils.MathUtil;
 import com.erp.model.wms.dto.CfgSettingVirtualDTO;
 import com.erp.model.wms.dto.CfgSettingVirtualValueDTO;
 import com.erp.model.wms.dto.DictBasicDTO;
@@ -129,6 +130,7 @@ public class CfgSettingVirtualServiceImpl implements CfgSettingVirtualService {
                 jsonObject = ObjectUtil.isEmpty(addDTO.getVirtualRuleDTO()) ? null : JSONUtil.parseObj(addDTO.getVirtualRuleDTO());
                 break;
             case INVENTORY_AGE_STATISTICS:
+                checkInventoryAge(addDTO.getInventoryAgeTO());
                 jsonObject = ObjectUtil.isEmpty(addDTO.getInventoryAgeTO()) ? null : JSONUtil.parseObj(addDTO.getInventoryAgeTO());
                 break;
             default:
@@ -146,6 +148,32 @@ public class CfgSettingVirtualServiceImpl implements CfgSettingVirtualService {
         return entity;
     }
 
+    /**
+     * 验证库龄配置信息
+     * @author will
+     * @date 2024/12/25 14:56
+     * @param inventoryAgeTO
+     */
+    private void checkInventoryAge (CfgSettingVirtualValueDTO.InventoryAgeTO inventoryAgeTO) {
+        if (ObjectUtil.isEmpty(inventoryAgeTO)) {
+            return;
+        }
+        List<CfgSettingVirtualValueDTO.InventoryAgeDateTO> list = inventoryAgeTO.getList();
+        for (int i = 0; i < list.size() ;i++) {
+            CfgSettingVirtualValueDTO.InventoryAgeDateTO inventoryAgeDateTO = list.get(i);
+            //结束数量和开始数量验证
+            if (ObjectUtil.isNotEmpty(inventoryAgeDateTO.getEndDays()) && MathUtil.compareTo(inventoryAgeDateTO.getStartDays(),inventoryAgeDateTO.getEndDays()) >= MathUtil.ZERO) {
+                throw new ServiceException("结束天数【{}】必须大于开始天数【{}】",inventoryAgeDateTO.getEndDays(),inventoryAgeDateTO.getStartDays());
+            }
+            //当i>0时需要验证开始天数必须等于上一条数据的结束天数
+            if (i > 0) {
+               Boolean isEquals = MathUtil.compareTo(inventoryAgeDateTO.getStartDays(),list.get(i-1).getEndDays()) == MathUtil.ZERO;
+               if (!isEquals) {
+                   throw new ServiceException("开始数量【{}】必须和上一条结束数量【{}】一致",inventoryAgeDateTO.getStartDays(),list.get(i-1).getEndDays());
+               }
+            }
+        }
+    }
 
     /**
      * 查看详情数据处理
