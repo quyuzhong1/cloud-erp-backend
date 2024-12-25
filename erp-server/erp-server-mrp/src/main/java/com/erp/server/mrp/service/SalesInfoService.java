@@ -37,4 +37,7 @@ public interface SalesInfoService extends SuperService<SalesInfoEntity> {
      * @param ids 补货建议明细id
      */
     List<SalesInfoEntity> listByReplenishmentDetailIds(List<String> ids);
+
+    void dealHistorySaleQty();
+
 }

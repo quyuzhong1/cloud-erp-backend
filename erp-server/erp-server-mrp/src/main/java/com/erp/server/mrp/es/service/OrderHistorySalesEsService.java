@@ -110,4 +110,16 @@ public interface OrderHistorySalesEsService {
      */
     List<String> hasSalesSkuByShop(List<String> params);
 
+    /**
+     * 删除历史数据
+     * @param startDate 开始日期
+     * @param endDate 结束日期
+     */
+    void deleteByDateBetween(LocalDate startDate, LocalDate endDate);
+
+    /**
+     * 根据店铺查询有销量sku
+     * @param shopIds 店铺
+     */
+    Map<String, List<String>> listSkuByShopId(Set<String> shopIds);
 }

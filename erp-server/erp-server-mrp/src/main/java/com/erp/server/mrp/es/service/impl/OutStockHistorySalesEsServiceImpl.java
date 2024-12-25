@@ -18,7 +18,10 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.elasticsearch.core.ElasticsearchRestTemplate;
+import org.springframework.data.elasticsearch.core.SearchHit;
+import org.springframework.data.elasticsearch.core.SearchHits;
 import org.springframework.data.elasticsearch.core.document.DocumentAdapters;
+import org.springframework.data.elasticsearch.core.query.FetchSourceFilter;
 import org.springframework.data.elasticsearch.core.query.NativeSearchQuery;
 import org.springframework.data.elasticsearch.core.query.NativeSearchQueryBuilder;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
@@ -177,5 +180,21 @@ public class OutStockHistorySalesEsServiceImpl implements OutStockHistorySalesEs
             }
         }
         return result;
+    }
+
+
+    @Override
+    public Map<String, List<String>> listSkuByShopId(Set<String> shopIds) {
+        BoolQueryBuilder queryBuilder = QueryBuilders.boolQuery()
+                .must(QueryBuilders.termsQuery("shopId", shopIds));
+        NativeSearchQuery searchQuery = new NativeSearchQueryBuilder()
+                .withQuery(queryBuilder)
+                .withSourceFilter(new FetchSourceFilter(new String[]{"skuId"}, new String[]{}))
+                .build();
+        // 执行查询
+        SearchHits<OutStockHistorySalesEsEntity> searchHits = elasticsearchRestTemplate.search(searchQuery, OutStockHistorySalesEsEntity.class);
+        return searchHits.getSearchHits().stream()
+                .map(SearchHit::getContent)
+                .collect(Collectors.groupingBy(OutStockHistorySalesEsEntity::getShopId, Collectors.mapping(OutStockHistorySalesEsEntity::getSkuId, Collectors.toList())));
     }
 }
