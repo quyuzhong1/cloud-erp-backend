@@ -205,6 +205,10 @@ public class ProcessDefinitionDTO {
          */
         private LocalDateTime createTime;
 
+        /**
+         * 更新时间
+         */
+        private LocalDateTime updateTime;
     }
 
     @Data
