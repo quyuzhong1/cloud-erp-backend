@@ -2,6 +2,7 @@ package com.erp.model.wms.dto;
 
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -249,6 +250,16 @@ public class OverseasInventoryDTO implements Serializable {
          * 库龄 365 天以上的可售商品数量
          */
         private Integer inventoryAge365PlusDays = 0 ;
+
+        /**
+         * 创建时间
+         */
+        private LocalDateTime createTime;
+
+        /**
+         * 更新时间
+         */
+        private LocalDateTime updateTime;
     }
 
 
