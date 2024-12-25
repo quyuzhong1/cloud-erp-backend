@@ -40,7 +40,7 @@
         LEFT JOIN product_info  pi on pt.product_id = pi.id AND pi.is_deleted = FALSE
         LEFT JOIN project_task_time_record pttr on pt.id = pttr.project_task_id AND pttr.is_deleted = FALSE
         <where>
-            pt.is_deleted = FALSE
+            ${params.sqlMap.default} and pt.is_deleted = FALSE
             <if test="null != params and null != params.searchKeyword and '' != params.searchKeyword">
                and (pi."name" ILIKE concat('%',#{params.searchKeyword}::text ,'%') or pi.spu_no ILIKE concat('%',#{params.searchKeyword}::text ,'%'))
             </if>
