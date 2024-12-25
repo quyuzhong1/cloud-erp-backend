@@ -2010,6 +2010,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         }
         //库存验证
         checkInventory(entity, list, deliveryWarehouseIdList, warehouseManageType);
+        //如果是领星订单，更新领星订单信息
+        if(entity.getThirdSystem().equals(PlatformDictEnum.LING_XING.getCode())){
+            updateLingXingOrder(entity, list);
+        }
         /**
          * 如果是API 对接的仓库
          * 下出库单的命令
@@ -5852,23 +5856,21 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             //操作日志
             operateLogService.addModuleOperateLog(String.format("映射了一个sku【%s】", simpleVO.getSkuNo()), ModuleTypeEnum.SO_B2C.getCode(), entity.getId(), "编辑信息");
         }
-        //如果是领星订单，更新领星订单信息
-        if(entity.getThirdSystem().equals(PlatformDictEnum.LING_XING.getCode())){
-            updateLingXingOrder(entity, detailEntity,handleDetailEntity.getSkuNo());
-        }
         return flag;
     }
 
-    private static void updateLingXingOrder(SoB2cEntity entity, SoB2cDetailEntity detailEntity,String skuNo) {
+    private static void updateLingXingOrder(SoB2cEntity entity, List<SoB2cDetailEntity> detailEntityList) {
         UpdateOrderDTO.OrderInfo orderInfo = new UpdateOrderDTO.OrderInfo();
         orderInfo.setGlobalOrderNo(entity.getThirdCode());
         List<UpdateOrderDTO.OrderItem> orderItemList = new ArrayList<>();
-        UpdateOrderDTO.OrderItem orderItem = new UpdateOrderDTO.OrderItem();
-        orderItem.setMark(detailEntity.getPlatformSkuNo());
-        orderItem.setSku(skuNo);
-        orderItem.setId(detailEntity.getThirdDetailId());
-        orderItem.setType(3);
-        orderItemList.add(orderItem);
+        detailEntityList.forEach(detailEntity -> {
+            UpdateOrderDTO.OrderItem orderItem = new UpdateOrderDTO.OrderItem();
+            orderItem.setMark(detailEntity.getPlatformSkuNo());
+            orderItem.setSku(detailEntity.getSkuNo());
+            orderItem.setId(detailEntity.getThirdDetailId());
+            orderItem.setType(3);
+            orderItemList.add(orderItem);
+        });
         orderInfo.setOrderItemList(orderItemList);
         LingxingApiUtils.updateOrder(Arrays.asList(orderInfo));
     }
