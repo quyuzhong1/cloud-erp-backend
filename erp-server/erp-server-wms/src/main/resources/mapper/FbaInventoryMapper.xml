@@ -44,7 +44,8 @@
         fi.inventory_age_181_to_270_days,
         fi.inventory_age_271_to_365_days,
         fi.inventory_age_365_plus_days,
-        fi.update_time
+        fi.update_time as updateTime,
+        fi.create_time as createTime
         FROM fba_inventory fi
         WHERE ${params.sqlMap.default} and fi.is_deleted = FALSE
         <!--仓库-->
