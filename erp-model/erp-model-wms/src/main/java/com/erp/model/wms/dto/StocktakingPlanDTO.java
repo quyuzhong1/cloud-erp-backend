@@ -1,6 +1,8 @@
 package com.erp.model.wms.dto;
 
 import java.time.LocalDateTime;
+
+import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import java.util.List;
 
@@ -13,6 +15,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import java.io.Serializable;
+import java.util.Map;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.NotBlank;
@@ -49,6 +52,11 @@ public class StocktakingPlanDTO implements Serializable {
          * 数量
          */
          private Integer count;
+
+         /**
+          * 类型
+          */
+         private String tabFlagName;
 
      }
      /**
@@ -99,8 +107,14 @@ public class StocktakingPlanDTO implements Serializable {
           * tab标识
           */
          private String tabFlag;
-
-
+         /**
+          * 页面高级查询
+          */
+         private List<AdvanceQueryDTO> advanceQueryDTOList;
+         /**
+          * sqlMap 默认key default
+          */
+         private Map<String, String> sqlMap;
      }
     /**
     * 分页列表
