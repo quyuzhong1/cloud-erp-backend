@@ -196,7 +196,7 @@
     <select id="paging" resultType="com.erp.model.wms.dto.OverseasInventoryDTO$ListDTO">
         SELECT
         oi.id,
-        oi.create_time,
+        oi.create_time as createTime,
         oi.update_time as updateTime,
         oi.create_user_name,
         oi.create_user_id,
