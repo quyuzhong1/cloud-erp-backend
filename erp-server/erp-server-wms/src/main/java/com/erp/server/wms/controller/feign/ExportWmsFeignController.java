@@ -702,7 +702,7 @@ public class ExportWmsFeignController {
      * 库龄分析数据导出
      */
     @PostMapping("/exportWmsVirtualInventoryAge")
-    @WebAdvanceQuery
+    @WebAdvanceQuery(handler = VirtualInventoryAgeQueryHandler.class)
     public PagingVO<DynamicExcelDTO> exportWmsVirtualInventoryAge(@RequestBody PagingDTO<VirtualInventoryAgeDTO.SearchParamDTO> dto){
         return virtualInventoryDetailService.exportWmsVirtualInventoryAge(dto);
     }

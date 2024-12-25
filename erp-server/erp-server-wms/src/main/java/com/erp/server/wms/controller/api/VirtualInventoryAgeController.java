@@ -9,6 +9,7 @@ import com.common.core.anno.LogViewService;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.wms.dto.VirtualInventoryAgeDTO;
+import com.erp.server.wms.query.VirtualInventoryAgeQueryHandler;
 import com.erp.server.wms.service.VirtualInventoryDetailService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
@@ -51,7 +52,7 @@ public class VirtualInventoryAgeController extends BaseController {
      * @return ApiResult<PagingVO<ListDTO>>
      */
     @PostMapping("/paging")
-    @WebAdvanceQuery
+    @WebAdvanceQuery(handler = VirtualInventoryAgeQueryHandler.class)
     public ApiResult<PagingVO<VirtualInventoryAgeDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<VirtualInventoryAgeDTO.SearchParamDTO> dto) {
         return success(virtualInventoryDetailService.paging(dto));
     }
@@ -79,7 +80,7 @@ public class VirtualInventoryAgeController extends BaseController {
      * @return ApiResult
      */
     @PostMapping("/exportExcel")
-    @WebAdvanceQuery
+    @WebAdvanceQuery(handler = VirtualInventoryAgeQueryHandler.class)
     public ApiResult exportExcel(@RequestBody VirtualInventoryAgeDTO.SearchParamDTO dto) {
         Boolean flag = virtualInventoryDetailService.exportExcel(dto);
         return flag == true ? success() : failure();
