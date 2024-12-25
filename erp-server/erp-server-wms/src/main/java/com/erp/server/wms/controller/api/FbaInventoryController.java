@@ -2,6 +2,7 @@ package com.erp.server.wms.controller.api;
 
 
 import com.common.business.annotation.DataPermission;
+import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
@@ -47,6 +48,7 @@ public class FbaInventoryController extends BaseController {
             menuCode = "wms:fbaInventory:paging",
             tableAlias = "fi"
     )
+    @WebAdvanceQuery
     public ApiResult<PagingVO<FbaInventoryDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<FbaInventoryDTO.PagingParamDTO> dto) {
         PagingVO<FbaInventoryDTO.ListDTO> list = fbaInventoryService.paging(dto);
         return success(list);
