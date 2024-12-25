@@ -29,9 +29,11 @@ pipeline {
         stage('通过docker制作自定义镜像') {
             steps {
                 sh '''
+                ssh -tt root@172.16.100.90 "docker rmi ${harborAddress}/${harborRepo}/erp-server-admin:${TAG} || true"
                 ssh -tt root@172.16.100.90 "cd /home/dockers/jenkins/jenkins_home/workspace/${JOB_NAME}/erp-server/erp-server-admin/ && \\
                 docker build -t ${harborAddress}/${harborRepo}/erp-server-admin:${TAG} ."
 
+                ssh -tt root@172.16.100.90 "docker rmi ${harborAddress}/${harborRepo}/erp-server-k8s:${TAG} || true"
                 ssh -tt root@172.16.100.90 "cd /home/dockers/jenkins/jenkins_home/workspace/${JOB_NAME}/erp-server/erp-server-k8s/ && \\
                 docker build -t ${harborAddress}/${harborRepo}/erp-server-k8s:${TAG} ."
                 '''
