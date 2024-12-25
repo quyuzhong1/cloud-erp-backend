@@ -50,17 +50,16 @@ pipeline {
         stage('远程执行k8s-master的kubectl命令') {
             steps {
                 sh '''
-                    scp /var/jenkins_home/workspace/${JOB_NAME}/erp-server/erp-server-admin/service.yaml root@172.16.100.60:/k8s-yaml/erp-server-admin
-                    ssh -tt root@172.16.100.60 "sed -i \\"s|\\\\\\${tag}|${TAG}|g\\" /k8s-yaml/erp-server-admin/service.yaml"
-                    ssh -tt root@172.16.100.60 "sed -i \\"s|\\\\\\${namespace}|${NAMESPACE}|g\\" /k8s-yaml/erp-server-admin/service.yaml"
-                    ssh -tt root@172.16.100.60 "/usr/bin/kubectl delete -f /k8s-yaml/erp-server-admin/service.yaml || true"
-                    ssh -tt root@172.16.100.60 "/usr/bin/kubectl apply -f /k8s-yaml/erp-server-admin/service.yaml"
+                    scp /var/jenkins_home/workspace/${JOB_NAME}/erp-server/erp-server-admin/erp-server-admin.yaml root@172.16.100.60:/k8s-yaml/erp-server
+                    scp /var/jenkins_home/workspace/${JOB_NAME}/erp-server/erp-server-k8s/erp-server-k8s.yaml root@172.16.100.60:/k8s-yaml/erp-server
+                    ssh -tt root@172.16.100.60 "sed -i \\"s|\\\\\\${tag}|${TAG}|g\\" /k8s-yaml/erp-server/erp-server-admin.yaml"
+                    ssh -tt root@172.16.100.60 "sed -i \\"s|\\\\\\${namespace}|${NAMESPACE}|g\\" /k8s-yaml/erp-server/erp-server-admin.yaml"
 
-                    scp /var/jenkins_home/workspace/${JOB_NAME}/erp-server/erp-server-k8s/service.yaml root@172.16.100.60:/k8s-yaml/erp-server-k8s
-                    ssh -tt root@172.16.100.60 "sed -i \\"s|\\\\\\${tag}|${TAG}|g\\" /k8s-yaml/erp-server-k8s/service.yaml"
-                    ssh -tt root@172.16.100.60 "sed -i \\"s|\\\\\\${namespace}|${NAMESPACE}|g\\" /k8s-yaml/erp-server-k8s/service.yaml"
-                    ssh -tt root@172.16.100.60 "/usr/bin/kubectl delete -f /k8s-yaml/erp-server-k8s/service.yaml || true"
-                    ssh -tt root@172.16.100.60 "/usr/bin/kubectl apply -f /k8s-yaml/erp-server-k8s/service.yaml"
+                    ssh -tt root@172.16.100.60 "sed -i \\"s|\\\\\\${tag}|${TAG}|g\\" /k8s-yaml/erp-server/erp-server-k8s.yaml"
+                    ssh -tt root@172.16.100.60 "sed -i \\"s|\\\\\\${namespace}|${NAMESPACE}|g\\" /k8s-yaml/erp-server/erp-server-k8s.yaml"
+
+                    ssh -tt root@172.16.100.60 "/usr/bin/kubectl delete -f /k8s-yaml/erp-server/erp-server-admin.yaml -f /k8s-yaml/erp-server/erp-server-k8s.yaml || true"
+                    ssh -tt root@172.16.100.60 "/usr/bin/kubectl apply -f /k8s-yaml/erp-server/erp-server-admin.yaml -f /k8s-yaml/erp-server/erp-server-k8s.yaml"
                     '''
             }
         }
