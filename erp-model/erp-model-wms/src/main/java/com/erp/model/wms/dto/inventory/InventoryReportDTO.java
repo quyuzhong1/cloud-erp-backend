@@ -345,12 +345,14 @@ public class InventoryReportDTO implements Serializable {
         private List<InventoryAgeRangeDTO> userRangeList;
 
         /**
-         * 结束入库日期
+         * 页面高级查询
          */
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
+
         /**
-        @JsonIgnore
-        private LocalDate endDate;
-        */
+         * sqlMap 默认key default
+         */
+        private Map<String, String> sqlMap;
 
     }
 
