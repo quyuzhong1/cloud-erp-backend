@@ -104,25 +104,19 @@
     <select id="listSkuCost" resultType="com.erp.model.tms.dto.InventorySkuCostDTO$SkuCostDTO">
         WITH recent_costs AS (
         SELECT
-        isc.company_id as salesOrgId,
-        isc.allocated_month as allocatedMonth,
-        isc.currency,
-        iscd.sku_id as skuId,
-        iscd.product_cost as productCost,
-        iscd.first_mile_shipping_cost as firstMileShippingCost,
-        iscd.clearance_customs_tax as clearanceCustomsTax,
-        iscd.warehouse_id as warehouseId,
-        ROW_NUMBER() OVER (
-        PARTITION BY iscd.sku_id, iscd.warehouse_id
-        ORDER BY isc.allocated_month DESC
-        ) as rn
+            isc.company_id as salesOrgId,
+            isc.allocated_month as allocatedMonth,
+            isc.currency,
+            iscd.sku_id as skuId,
+            iscd.product_cost as productCost,
+            iscd.first_mile_shipping_cost as firstMileShippingCost,
+            iscd.clearance_customs_tax as clearanceCustomsTax,
+            iscd.warehouse_id as warehouseId,
+            ROW_NUMBER() OVER (PARTITION BY iscd.sku_id, iscd.warehouse_id ORDER BY isc.allocated_month DESC) as rn
         FROM
-        inventory_sku_cost isc
-        LEFT JOIN
-        inventory_sku_cost_detail iscd
-        ON
-        iscd.main_id = isc.id
-        WHERE iscd.is_deleted = FALSE
+            inventory_sku_cost isc
+        LEFT JOIN inventory_sku_cost_detail iscd ON iscd.main_id = isc.id
+        WHERE iscd.is_deleted = FALSE and isc.status = 'approve'
         AND isc.allocated_month >= (CURRENT_DATE - INTERVAL '3 months')
         <if test="skuIds != null and skuIds.size > 0">
             and iscd.sku_id in
@@ -144,18 +138,17 @@
         </if>
         )
         SELECT
-        salesOrgId,
-        allocatedMonth,
-        currency,
-        skuId,
-        productCost,
-        firstMileShippingCost,
-        clearanceCustomsTax,
-        warehouseId
+            salesOrgId,
+            allocatedMonth,
+            currency,
+            skuId,
+            productCost,
+            firstMileShippingCost,
+            clearanceCustomsTax,
+            warehouseId
         FROM
-        recent_costs
-        WHERE
-        rn = 1
+            recent_costs
+        WHERE rn = 1
     </select>
 
 </mapper>

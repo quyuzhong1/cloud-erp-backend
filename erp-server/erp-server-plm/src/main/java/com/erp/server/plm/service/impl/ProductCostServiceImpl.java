@@ -89,7 +89,9 @@ public class ProductCostServiceImpl extends ServiceImpl<ProductCostMapper, Produ
                 if (Objects.nonNull(skuCostDTO)){
                     BigDecimal rate = dmpTaskFeign.getRate(LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), skuCostDTO.getCurrency());
                     actualNoTaxCost =  MathUtil.multiply(rate,skuCostDTO.getProductCost());
-                    actualTaxCost = MathUtil.multiply(actualNoTaxCost, MathUtil.add(BigDecimal.valueOf(1), productCostShowDTO.getTaxRate()));
+                    BigDecimal taxRate = productCostShowDTO.getTaxRate();
+                    BigDecimal percentRate = MathUtil.divide(taxRate, MathUtil.BigDecimal_100);
+                    actualTaxCost = MathUtil.multiply(actualNoTaxCost, MathUtil.add(BigDecimal.valueOf(1), percentRate));
                 }
                 //含税单价
                 productCostShowDTO.setActualTaxCost(actualTaxCost);
