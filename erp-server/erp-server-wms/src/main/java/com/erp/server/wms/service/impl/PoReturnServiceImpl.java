@@ -950,7 +950,9 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
             //构建采购退货单
             PurchaseReturnOrderDTO.AddDTO addDTO1 = buildPoReturnAddDTO(entity, poReturnDetailList, orderEntity, subcontractOrderEntity, purchaseOrderSupplierEntity, detailEntityList, subcontractOrderDetailEntityList1, bomList, parentSubcontractOrderDetailList);
             //如果配置为部分自动并且不符合条件则跳过
-            if(CfgSettingSubcontractTypeEnum.SEMI_AUTO.getCode().equals(returnCfg) && !addDTO.getSupplierId().equals(addDTO1.getSupplierId())){
+            if(CfgSettingSubcontractTypeEnum.SEMI_AUTO.getCode().equals(returnCfg) &&
+                    (!entity.getSupplierId().equals(addDTO.getSupplierId())
+                    || !entity.getSupplierId().equals(addDTO1.getSupplierId()))){
                 continue;
             }
 
