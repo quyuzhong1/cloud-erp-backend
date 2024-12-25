@@ -179,6 +179,12 @@ public class SupplierEntity extends BaseEntity<SupplierEntity> {
     @TableField("srm_operate_user_name")
     private String srmOperateUserName;
 
+    /**
+     * 凭证号
+     */
+    @TableField("voucher_no")
+    private String voucherNo;
+
     @Override
     public Serializable pkVal() {
         return null;

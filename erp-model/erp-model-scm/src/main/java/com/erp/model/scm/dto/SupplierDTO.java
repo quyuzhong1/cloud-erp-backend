@@ -252,6 +252,15 @@ public class SupplierDTO implements Serializable {
          */
         private String name;
 
+        /**
+         * 供应商编码
+         */
+        private String code;
+
+        /**
+         * 外部平台编号
+         */
+        private String voucherNo;
 
         /**
          * 分类id
@@ -377,6 +386,10 @@ public class SupplierDTO implements Serializable {
         @NotBlank(message = "供应商名称不能为空")
         @Size(max = 50, message = "供应商名称最大50字符")
         private String name;
+        /**
+         * 外部平台编号
+         */
+        private String voucherNo;
 
 
         /**
@@ -525,6 +538,10 @@ public class SupplierDTO implements Serializable {
          */
         private String code;
 
+        /**
+         * 外部平台编号
+         */
+        private String voucherNo;
 
         /**
          * 阶段

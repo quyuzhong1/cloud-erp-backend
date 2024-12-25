@@ -1372,6 +1372,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
             SupplierExportExcelDTO exportExcel = new SupplierExportExcelDTO();
             exportExcel.setName(item.getName());
             exportExcel.setCode(item.getCode());
+            exportExcel.setVoucherNo(item.getVoucherNo());
             //禁用状态 true 禁用
             boolean disabled = Objects.nonNull(item.getDisabled()) ? item.getDisabled() : true;
             exportExcel.setEnableStatus(disabled ? "停用" : "启用");
