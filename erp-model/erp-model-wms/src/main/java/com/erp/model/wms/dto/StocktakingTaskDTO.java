@@ -1,5 +1,6 @@
 package com.erp.model.wms.dto;
 
+import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.core.anno.StateEnumValue;
@@ -18,6 +19,7 @@ import java.io.Serializable;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 盘点任务
@@ -46,6 +48,10 @@ public class StocktakingTaskDTO implements Serializable {
          * 数量
          */
         private Integer count;
+        /**
+         * 标识
+         */
+        private String tabFlagName;
 
     }
 
@@ -144,10 +150,17 @@ public class StocktakingTaskDTO implements Serializable {
         /**
          * 标识
          */
-        @StateEnumValue(strValues = {"all", "waitSubmit", "waitApprove", "approveIng", "approve"}, message = "tab类型有误")
-        @NotBlank(message = "tab不能为空")
+//        @StateEnumValue(strValues = {"all", "waitSubmit", "waitApprove", "approveIng", "approve"}, message = "tab类型有误")
+//        @NotBlank(message = "tab不能为空")
         private String tabFlag;
-
+        /**
+         * 页面高级查询
+         */
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
+        /**
+         * sqlMap 默认key default
+         */
+        private Map<String, String> sqlMap;
     }
 
     /**
