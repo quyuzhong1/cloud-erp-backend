@@ -50,7 +50,8 @@
         vid.batch_no as batchNo,
         vtfd.cur_inventory_qty as waitBatchQty,
         vid.last_outstock_date,
-        vtfd.update_time as updateTime
+        vtfd.update_time as updateTime,
+        vid.bill_date
         from virtual_trans_flow_detail vtfd
         inner join virtual_trans_flow vtf on vtfd.virtual_trans_flow_id = vtf.id and vtf.is_deleted = false
         inner join virtual_inventory_detail vid on vtfd.virtual_inventory_detail_id = vid.id  and vid.is_deleted = false
@@ -71,7 +72,8 @@
         vid.batch_no as batchNo,
         vidh.qty as waitBatchQty,
         vid.last_outstock_date as last_outstock_date,
-        vidh.update_time as updateTime
+        vidh.update_time as updateTime,
+        vid.bill_date
         from 	virtual_inventory_detail_his vidh
         left join virtual_inventory_detail vid on vidh.virtual_inventory_detail_id = vid.id and vid.is_deleted = false
         where vidh.is_deleted = false) vm

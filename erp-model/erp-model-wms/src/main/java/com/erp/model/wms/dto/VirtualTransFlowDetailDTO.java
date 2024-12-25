@@ -105,7 +105,6 @@ public class VirtualTransFlowDetailDTO implements Serializable {
         /**
          * 操作类型
          */
-
         private String operateType;
         /**
          * 操作类型名称【可排序】
@@ -135,6 +134,11 @@ public class VirtualTransFlowDetailDTO implements Serializable {
          * 更新时间【可排序】
          */
         private LocalDateTime updateTime;
+
+        /**
+         * 批次对应入库时间【可排序】
+         */
+        private LocalDate billDate;
     }
 
 
