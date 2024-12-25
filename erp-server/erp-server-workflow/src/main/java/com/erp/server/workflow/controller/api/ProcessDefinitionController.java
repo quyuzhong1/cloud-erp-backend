@@ -1,6 +1,7 @@
 package com.erp.server.workflow.controller.api;
 
 
+import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
@@ -57,6 +58,7 @@ public class ProcessDefinitionController extends BaseController {
      * @return ApiResult<Boolean>
      */
     @PostMapping("/page")
+    @WebAdvanceQuery
     public ApiResult<PagingVO<ProcessDefinitionDTO.ListDTO>> page(@RequestBody PagingDTO<ProcessDefinitionDTO.QueryDTO> dto) {
         PagingVO<ProcessDefinitionDTO.ListDTO> pagingVO = processDefinitionService.paging(dto);
         return success(pagingVO);
