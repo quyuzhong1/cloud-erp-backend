@@ -750,6 +750,9 @@
             <if test="params.searchKeyword != null and params.searchKeyword != ''">
                 and (po.id = #{params.searchKeyword} or po.code  ilike concat('%',#{params.searchKeyword}::text,'%'))
             </if>
+            <if test="params.approveStatus != null and params.approveStatus != ''">
+                and po.approve_status = #{params.approveStatus}
+            </if>
         </where>
     </select>
     <select id="listAllPurchaseBySkuIdAndSupplier"
