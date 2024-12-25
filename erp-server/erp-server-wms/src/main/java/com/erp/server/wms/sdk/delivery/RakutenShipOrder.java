@@ -36,8 +36,8 @@ import java.util.stream.Collectors;
 
 @Slf4j
 @Component
-@PlatformShipOrderAnno(method = PlatformDictEnum.LE_TIAN)
-public class LeTianShipOrder extends AbstractShipOrder {
+@PlatformShipOrderAnno(method = PlatformDictEnum.RAKUTEN)
+public class RakutenShipOrder extends AbstractShipOrder {
 
     @Resource
     private SoB2cFeign soB2cFeign;
@@ -64,7 +64,7 @@ public class LeTianShipOrder extends AbstractShipOrder {
         //获取销售渠道信息
         LogisticsChannelDTO.SignShipDTO tmsSignShipDTO = logisticsFeign.getScaleChannelByChannelById(
                 channelId,
-                PlatformDictEnum.LE_TIAN.getCode()
+                PlatformDictEnum.RAKUTEN.getCode()
         );
         if (null == tmsSignShipDTO) {
             throw new ServiceException("找不到渠道信息");
