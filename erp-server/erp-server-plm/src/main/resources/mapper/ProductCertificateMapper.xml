@@ -34,7 +34,7 @@
             where id in ( select max(id) from attachment where is_deleted = false group by business_id )
         ) att on pc.id = att.business_id
         <where>
-            pc.is_deleted = false
+            ${params.sqlMap.default} and pc.is_deleted = false
 
             <if test="params.skuName != null and params.skuName != ''">
                 and pd.name ILIKE concat('%',#{params.skuName}::text,'%')
