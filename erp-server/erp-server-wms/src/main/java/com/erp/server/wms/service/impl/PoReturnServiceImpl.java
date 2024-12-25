@@ -3065,7 +3065,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
         List<PurchasePriceDTO.PriceDTO> viewDTOList = scmTaskFeign.batchGetPurchasePrice(priceList);
         List<String> ids = pushDownPurchaseViews.stream().map(v->v.getId()).collect(Collectors.toList());
         List<PurchaseOrderEntity> purchaseOrderEntityList = scmTaskFeign.listPoBySourceIds(ids);
-        purchaseOrderEntityList = purchaseOrderEntityList.stream().filter(v->!v.getInvalidStatus() && !v.getApproveStatus().equals(ApproveStatusEnum.REJECT.getStatus())).collect(Collectors.toList());
+        purchaseOrderEntityList = purchaseOrderEntityList.stream().filter(v->!v.getInvalidStatus()).collect(Collectors.toList());
         List<PurchaseOrderDetailEntity> purchaseOrderDetailEntityList = new ArrayList<>();
         if(CollectionUtils.isNotEmpty(purchaseOrderEntityList)){
             List<String> poIds = purchaseOrderEntityList.stream().map(PurchaseOrderEntity::getId).collect(Collectors.toList());
