@@ -64,6 +64,14 @@ public class BasicDictServiceImpl extends ServiceImpl<BasicDictMapper, BasicDict
     }
 
     @Override
+    public List<BasicDictEntity> listByTypeList(List<String> typeList) {
+        if (CollUtil.isEmpty(typeList)){
+            return Collections.emptyList();
+        }
+        return this.lambdaQuery().in(BasicDictEntity::getType,typeList).list();
+    }
+
+    @Override
     public Map<String, String> mapByType(String type) {
         return  this.list(new LambdaQueryWrapper<BasicDictEntity>().eq(BasicDictEntity::getType, type).orderByDesc(BasicDictEntity::getOrderIndex)).stream().collect(Collectors.toMap(BasicDictEntity::getValue, BasicDictEntity::getName, (v1, v2) -> v1));
     }

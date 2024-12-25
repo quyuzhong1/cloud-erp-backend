@@ -1,27 +1,23 @@
 package com.erp.server.dmp.inout.handler.input.task.init;
 
-import cn.hutool.core.bean.BeanUtil;
-import cn.hutool.core.util.StrUtil;
-import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
-import com.alibaba.fastjson.JSONObject;
-import com.common.core.exception.ServiceException;
 import com.erp.model.dmp.entity.DmpCfgApiEntity;
 import com.erp.server.dmp.inout.dto.base.DmpInputTaskInitDTO;
 import com.erp.server.dmp.inout.dto.request.DmpInputInitRequest;
 import com.erp.server.dmp.inout.dto.response.DmpInputTaskResponse;
-import com.sdk.third.lingxing.dto.FbaReceiveReqDTO;
 import com.sdk.third.lingxing.dto.Result;
 import com.sdk.third.lingxing.utils.LingxingApiUtils;
-import jnr.ffi.annotations.In;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 
 /**
  * dmp输入init任务基础处理器下的api获取数据方式
@@ -30,7 +26,7 @@ import java.util.*;
 @Slf4j
 @Service
 @Scope("prototype")
-public class DmpInputLxApiInitHandler extends DmpInputInitHandler {
+public class DmpInputLxApiDataWithoutTotalInitHandler extends DmpInputInitHandler {
 
     /**
      * 公共入库
@@ -52,7 +48,7 @@ public class DmpInputLxApiInitHandler extends DmpInputInitHandler {
         int page = 0;
         requestMap.put("offset", page);
         // 默认:200
-        int pageSize = 2;
+        int pageSize = 200;
         // 配置优先
         Object lengthObj = requestMap.get("length");
         if (null != lengthObj){
@@ -64,11 +60,8 @@ public class DmpInputLxApiInitHandler extends DmpInputInitHandler {
         // 首次请求
         Result<Object> result = LingxingApiUtils.postRequestDataAndRetry(apiType, requestMap);
 
-        Map<String, Object> dataResultMap = (Map<String, Object>) result.getData();
-        Object totalObj = dataResultMap.get("total");
-        int total =  Integer.parseInt(totalObj.toString());
-        Object listObj = dataResultMap.get("list");
-        JSONArray jsonArray = JSONArray.parseArray(JSON.toJSONString(listObj));
+        Integer total = result.getTotal();
+        JSONArray jsonArray = JSONArray.parseArray(JSON.toJSONString(result.getData()));
         if (CollectionUtils.isEmpty(jsonArray) || 0 == total) {
             return Collections.emptyList();
         }
@@ -81,9 +74,7 @@ public class DmpInputLxApiInitHandler extends DmpInputInitHandler {
                 requestMap.put("offset", i);
                 // 当前请求
                 Result<Object> curResult = LingxingApiUtils.postRequestDataAndRetry(apiType, requestMap);
-                Map<String, Object> curDataResultMap = (Map<String, Object>) curResult.getData();
-                Object curListObj = curDataResultMap.get("list");
-                JSONArray curJsonArray = JSONArray.parseArray(JSON.toJSONString(curListObj));
+                JSONArray curJsonArray = JSONArray.parseArray(JSON.toJSONString(curResult.getData()));
                 resultList.addAll(curJsonArray);
             }
         }

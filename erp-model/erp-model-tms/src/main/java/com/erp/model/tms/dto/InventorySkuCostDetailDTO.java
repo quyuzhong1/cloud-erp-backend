@@ -8,6 +8,7 @@ import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
+import java.math.BigDecimal;
 
 /**
  * <p>
@@ -67,11 +68,25 @@ public class InventorySkuCostDetailDTO implements Serializable {
         private String unit;
 
         /**
-        * 产品成本（6位小数）
+        * 材料成本（6位小数）
         */
         private String productCost;
-
-
+        /**
+         * 仓库id
+         */
+        private String warehouseId;
+        /**
+         * 仓库名称
+         */
+        private String warehouseName;
+        /**
+         * 头程运费（6位小数）
+         */
+        private BigDecimal firstMileShippingCost;
+        /**
+         * 清关税费（6位小数）
+         */
+        private BigDecimal clearanceCustomsTax;
     }
 
     /**
@@ -146,14 +161,29 @@ public class InventorySkuCostDetailDTO implements Serializable {
         private String unit;
 
         /**
-        * 产品成本（6位小数）
+        * 材料成本（6位小数）
         */
-        @NotNull(message = "产品成本（6位小数）不能为空")
-        @Digits(integer = 12, fraction = 6, message = "产品成本（6位小数）整数位不能超过12位，小数位不能超过6位")
+        @NotNull(message = "材料成本（6位小数）不能为空")
+        @Digits(integer = 12, fraction = 6, message = "材料成本（6位小数）整数位不能超过12位，小数位不能超过6位")
         private String productCost;
-
-
+        /**
+         * 仓库id
+         */
+        @NotBlank(message = "仓库id不能为空")
+        private String warehouseId;
+        /**
+         * 仓库名称
+         */
+        private String warehouseName;
+        /**
+         * 头程运费（6位小数）
+         */
+        @Digits(integer = 12, fraction = 6, message = "头程运费（6位小数）整数位不能超过12位，小数位不能超过6位")
+        private BigDecimal firstMileShippingCost;
+        /**
+         * 清关税费（6位小数）
+         */
+        @Digits(integer = 12, fraction = 6, message = "清关税费（6位小数）整数位不能超过12位，小数位不能超过6位")
+        private BigDecimal clearanceCustomsTax;
     }
-
-
 }

@@ -5876,9 +5876,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
         //更新明细
         soB2cDetailService.updateById(handleDetailEntity);
-        
+
         syncSoB2cService.syncDataToSdy(entity, Arrays.asList(handleDetailEntity), SyncOperateEnum.OPERATE_APPROVE.getCode());
-        
+
         // 更新映射
         FbaShipmentDTO.SkuMappingParamDTO updateDTO = new FbaShipmentDTO.SkuMappingParamDTO();
         //映射sku
@@ -7511,7 +7511,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         // 设置其他处理
         soB2cDetailService.consumerHandleDetailList(detailList, entity, skuList);
         Boolean needRecalSize = Boolean.FALSE;//是否重算尺寸
-        
+
         List<SoB2cDetailEntity> updateSoB2cDetailEntityList = new ArrayList<>();
         for (SoB2cDetailEntity detailEntity : detailList) {
             SoB2cDetailEntity old = new SoB2cDetailEntity();
@@ -7543,11 +7543,11 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 return BatchResultDTO.fail(detailEntity.getId(), detailEntity.getPlatformSkuNo(), "更新失败，无对照关系！");
             }
         }
-        
+
         if(CollUtil.isNotEmpty(updateSoB2cDetailEntityList)) {
         	syncSoB2cService.syncDataToSdy(entity, updateSoB2cDetailEntityList, SyncOperateEnum.OPERATE_APPROVE.getCode());
         }
-        
+
         if (needRecalSize) {
             //长宽高计算
             BigDecimal maxLength = BigDecimal.ZERO;

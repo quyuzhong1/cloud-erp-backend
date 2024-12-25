@@ -599,18 +599,6 @@ public class SoInfoController extends BaseController {
         List<SoInfoDTO.GenerateSoReturnView> list = soInfoService.calReturnAmountByQty(calDTO.getDetails());
         return success(list);
     }
-
-    /**
-     * 根据sku id和数量计算成本毛利
-     *
-     * @param costParam
-     * @return
-     */
-    @PostMapping("/getSkuCostProfit")
-    public ApiResult<SkuCostProfitDTO.SkuCostProfitResult> getSkuCostProfit(@RequestBody @Validated SkuCostProfitDTO.SkuCostProfitParam costParam) {
-        return success(soInfoService.getSkuCostProfit(costParam));
-    }
-
     /**
      * 补录销售订单毛利历史数据
      *

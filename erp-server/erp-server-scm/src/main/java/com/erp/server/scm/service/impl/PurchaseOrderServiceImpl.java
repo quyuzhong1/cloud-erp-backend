@@ -2249,11 +2249,11 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
     }
 
     @Override
-    public List<SkuCostDTO> listPurchaseOrderByPurchaseDate(List<LocalDate> purchaseDateList) {
-        if (purchaseDateList.size() != 2){
+    public List<SkuCostDTO> listPurchaseOrderByPurchaseDate(SkuCostDTO.QueryPurchaseDTO queryPurchaseDTO) {
+        if (queryPurchaseDTO.getLocalDateList().size() != 2){
             return Collections.emptyList();
         }
-        List<SkuCostDTO> list = baseMapper.listPurchaseOrderByPurchaseDate(purchaseDateList);
+        List<SkuCostDTO> list = baseMapper.listPurchaseOrderByPurchaseDate(queryPurchaseDTO.getLocalDateList(),queryPurchaseDTO.getPurchaseOrderIds(),queryPurchaseDTO.getSupplierIds());
         return list;
     }
 

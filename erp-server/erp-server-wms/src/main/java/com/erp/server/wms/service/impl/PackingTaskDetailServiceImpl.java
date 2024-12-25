@@ -2,10 +2,7 @@ package com.erp.server.wms.service.impl;
 
 
 import cn.hutool.core.text.CharSequenceUtil;
-import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseResultDTO;
-import com.erp.model.scm.enums.ModuleTypeEnum;
-import com.erp.model.wms.dto.OperateLogDTO;
 import com.erp.model.wms.dto.PackingTaskDTO;
 import com.erp.model.wms.entity.PackingTaskDetailEntity;
 import com.erp.server.wms.mapper.PackingTaskDetailMapper;
@@ -13,11 +10,9 @@ import com.erp.server.wms.service.PackingTaskDetailService;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.erp.server.wms.service.OperateLogService;
-import com.erp.server.wms.service.CommonService;
 import com.common.core.exception.ServiceException;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
@@ -135,15 +130,17 @@ public class PackingTaskDetailServiceImpl extends SuperServiceImpl<PackingTaskDe
 
     /**
      * 模糊搜索装箱任务明细
+     *
      * @param searchKey
+     * @param searchMode
      * @return
      */
     @Override
-    public List<PackingTaskDetailDTO.ViewDTO> searchProductBySearchKey(String taskId, String searchKey) {
+    public List<PackingTaskDetailDTO.ViewDTO> searchProductBySearchKey(String taskId, String searchKey, String searchMode) {
         if (CharSequenceUtil.isBlank(searchKey)){
             return Collections.emptyList();
         }
-        return baseMapper.searchProductBySearchKey(taskId, searchKey);
+        return baseMapper.searchProductBySearchKey(taskId, searchKey,searchMode);
     }
 
     @Override

@@ -117,7 +117,7 @@ public class EBayShipOrder extends AbstractShipOrder {
                 }else{
                     OrderFastOutboundPackageDTO.PackageInfo packageInfo = new OrderFastOutboundPackageDTO.PackageInfo();
                     packageInfo.setGlobalOrderNo(mainEntity.getThirdCode());
-                    packageInfo.setLogisticsTypeId(thirdView.getThirdLogisticsTypeId());
+                    packageInfo.setLogisticsTypeId(thirdView.getThirdLogisticsId());
                     packageInfo.setWaybillNo(logisticsNo);
                     LingxingApiUtils.fastOutbound(Collections.singletonList(packageInfo));
                 }
