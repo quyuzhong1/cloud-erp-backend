@@ -32,6 +32,7 @@ pipeline {
         //打包erp-server-admin里的pom.xml
         stage('通过docker制作自定义镜像') {
             steps {
+                //打包erp-server-admin里的pom.xml
                 sh '''
                 //打包erp-server-admin里的pom.xml
                 ssh -tt root@172.16.100.90 "cd /home/dockers/jenkins/jenkins_home/workspace/${JOB_NAME}/erp-server/erp-server-admin/ && \\
