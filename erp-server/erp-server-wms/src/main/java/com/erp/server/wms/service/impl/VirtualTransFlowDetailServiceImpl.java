@@ -320,6 +320,7 @@ public class VirtualTransFlowDetailServiceImpl extends SuperServiceImpl<VirtualT
             addDTOList.add(addDTO);
 
             detailEntity.setQty(detailEntity.getQty() - Math.abs(addDTO.getQty()));
+            detailEntity.setLastOutstockDate(entity.getBillDate());
             updateList.add(detailEntity);
         }
         if (CollUtil.isEmpty(addDTOList)) {
@@ -344,7 +345,7 @@ public class VirtualTransFlowDetailServiceImpl extends SuperServiceImpl<VirtualT
         VirtualInventoryDetailDTO.UpdateDTO  addOrUpdateDTO = new VirtualInventoryDetailDTO.UpdateDTO();
         BeanMapperUtils.copy(entity,addOrUpdateDTO);
         addOrUpdateDTO.setVirtualTransFlowId(entity.getId());
-        addOrUpdateDTO.setLastOutstockDate(LocalDate.now());
+        addOrUpdateDTO.setLastOutstockDate(entity.getBillDate());
         addOrUpdateDTO.setId(null);
         //新增入库批次
         VirtualInventoryDetailEntity inventoryDetailEntity = virtualInventoryDetailService.addOrUpdate(addOrUpdateDTO);
@@ -386,11 +387,11 @@ public class VirtualTransFlowDetailServiceImpl extends SuperServiceImpl<VirtualT
           LocalDate lastOutstockDate = listDTO.getLastOutstockDate();
           //库龄
           if ("转结".equals(listDTO.getOperateTypeName())) {
-              listDTO.setInventoryAgeDays((int)(listDTO.getDate().toEpochDay() - listDTO.getTradeTime().toLocalDate().toEpochDay()) + 1);
+              listDTO.setInventoryAgeDays((int)(listDTO.getDate().toEpochDay() - listDTO.getBillDate().toEpochDay()) + 1);
           } else {
-              listDTO.setInventoryAgeDays((int)(now.toEpochDay() - listDTO.getTradeTime().toLocalDate().toEpochDay()) + 1);
+              listDTO.setInventoryAgeDays((int)(now.toEpochDay() - listDTO.getBillDate().toEpochDay()) + 1);
               //仓储时长
-              Integer inStockDays = (int) ((lastOutstockDate.isBefore(now) ? now.toEpochDay() : listDTO.getLastOutstockDate().toEpochDay()) - listDTO.getTradeTime().toLocalDate().toEpochDay() + 1);
+              Integer inStockDays = (int) (listDTO.getTradeTime().toLocalDate().toEpochDay()- listDTO.getBillDate().toEpochDay() + 1);
               listDTO.setInStockDays(inStockDays);
           }
           String uniqueKey = StrUtil.format("{}_{}_{}_{}",listDTO.getSkuId(),listDTO.getWarehouseId(),listDTO.getVirtualWarehouseId(),listDTO.getBatchNo());
