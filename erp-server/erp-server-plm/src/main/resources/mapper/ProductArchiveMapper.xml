@@ -10,7 +10,7 @@
         ON p.id=pi.product_id AND pi.is_deleted = FALSE
         INNER JOIN product_archive pa
         ON pa.product_id=p.id AND pa.is_deleted = FALSE
-        WHERE p.is_deleted = FALSE
+        WHERE ${params.sqlMap.default} and p.is_deleted = FALSE
             <if test="params.categoryId!=null and params.categoryId!=''  ">
                 AND P.category_id=#{params.categoryId}
             </if>
