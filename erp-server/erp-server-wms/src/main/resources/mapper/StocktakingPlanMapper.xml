@@ -60,7 +60,9 @@
         approve_user_name AS approveUserName,
         approve_time AS approveTime,
         start_time AS startTime,
-        end_time AS endTime
+        end_time AS endTime,
+        create_time AS createTime,
+        update_time AS updateTime
         FROM  stocktaking_plan
         WHERE ${params.sqlMap.default} and is_deleted=FALSE
         <if test="params.code!=null and params.code!=''">
