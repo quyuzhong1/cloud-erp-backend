@@ -2649,14 +2649,15 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
     }
 
     private void resetSkuCost(SoInfoDTO.CalCostProfitDTO calCostProfitDTO, List<String> skuIdList, List<SkuVO> skuList) {
-        InventorySkuCostDTO.QueryB2BDTO queryB2BDTO = InventorySkuCostDTO.QueryB2BDTO.builder().skuIds(skuIdList)
-                .salesOrgId(calCostProfitDTO.getSalesOrgId()).warehouseId(calCostProfitDTO.getWarehouseId()).build();
-        //根据sku获取 人民币材料成本
-        List<InventorySkuCostDTO.SkuCostDTO> skuCostDTOS = logisticsFeign.listSkuCostBySkuIds(queryB2BDTO);
         LocalDate billDate = calCostProfitDTO.getBillDate();
         if (Objects.isNull(billDate)){
             return;
         }
+        InventorySkuCostDTO.QueryB2BDTO queryB2BDTO = InventorySkuCostDTO.QueryB2BDTO.builder().skuIds(skuIdList)
+                .salesOrgId(calCostProfitDTO.getSalesOrgId()).warehouseId(calCostProfitDTO.getWarehouseId()).billDate(billDate).build();
+        //根据sku获取 人民币材料成本
+        List<InventorySkuCostDTO.SkuCostDTO> skuCostDTOS = logisticsFeign.listSkuCostBySkuIds(queryB2BDTO);
+
         //重置sku采购单价
         for (SkuVO skuVO : skuList){
             if (CollUtil.isEmpty(skuCostDTOS)){
@@ -2669,7 +2670,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                 continue;
             }
             BigDecimal rate = dmpTaskFeign.getRate(billDate.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), skuCostDTO.getCurrency());
-            skuVO.setNotTaxCostPrice(MathUtil.multiply(rate,skuCostDTO.getProductCost()));
+            skuVO.setNotTaxCostPrice(MathUtil.multiply(rate,skuCostDTO.getProductCost(),4));
             skuVO.setCostSource(skuCostDTO.getAllocatedMonth().format(DateTimeFormatter.ofPattern("yyyy-MM")) + "财务导入成本");
         }
     }

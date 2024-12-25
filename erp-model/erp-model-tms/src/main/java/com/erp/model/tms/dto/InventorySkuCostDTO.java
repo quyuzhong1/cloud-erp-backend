@@ -16,6 +16,7 @@ import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -418,6 +419,10 @@ public class InventorySkuCostDTO implements Serializable {
          * 销售组织列表
          */
         private String salesOrgId;
+        /**
+         * 账单日期
+         */
+        private LocalDate billDate;
     }
     @Data
     @Builder
@@ -432,6 +437,10 @@ public class InventorySkuCostDTO implements Serializable {
          * 销售组织列表
          */
         private String salesOrgId;
+        /**
+         * 账单日期
+         */
+        private LocalDate billDate;
     }
     @Data
     @Builder
@@ -465,5 +474,9 @@ public class InventorySkuCostDTO implements Serializable {
          * skuId
          */
         private String skuId;
+        /**
+         * 账单日期
+         */
+        private LocalDate billDate;
     }
 }
