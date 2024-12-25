@@ -430,6 +430,18 @@ public class VirtualInventoryAgeDTO implements Serializable {
          */
         private Integer qty;
         /**
+         * 虚拟仓数量
+         */
+        private Integer virtualQty;
+        /**
+         * 虚拟仓可用数量
+         */
+        private Integer virtualUsableQty;
+        /**
+         * 虚拟仓冻结数量
+         */
+        private Integer virtualFrozenQty;
+        /**
          * 库龄（天）
          */
         private Integer inventoryAgeDays;
