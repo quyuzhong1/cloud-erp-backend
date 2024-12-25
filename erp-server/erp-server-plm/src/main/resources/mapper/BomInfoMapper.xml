@@ -223,7 +223,7 @@
         left join product_cost pc on cpd.id = pc.sku_id and pc.is_deleted = false
         left join product_purchase pp on cpd.id = pp.sku_id and pp.is_deleted = false
         <where>
-            pbi.is_deleted = false and pbi.source_type = 'productCombination'
+            ${params.sqlMap.default} and pbi.is_deleted = false and pbi.source_type = 'productCombination'
             <if test="params.skuNo != null and params.skuNo != ''">
                 and pbs.parent_sku_no iLIKE concat('%', #{params.skuNo}::text,'%')
             </if>
