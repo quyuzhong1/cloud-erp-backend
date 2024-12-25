@@ -106,6 +106,11 @@ public class ProductCertificateDTO implements Serializable {
          * 更新时间【可排序】
          */
         private LocalDateTime updateTime;
+
+        /**
+         * 创建时间【可排序】
+         */
+        private LocalDateTime createTime;
     }
 
     /**
