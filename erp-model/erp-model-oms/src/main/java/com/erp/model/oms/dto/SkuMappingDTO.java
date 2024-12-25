@@ -399,6 +399,10 @@ public class SkuMappingDTO implements Serializable {
          * 平台更新时间
          */
         private LocalDateTime platformUpdateTime;
+        /**
+         * 系统创建时间
+         */
+        private LocalDateTime systemCreateTime;
 
 
         /**
