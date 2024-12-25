@@ -51,19 +51,19 @@ public class DataArchivingServiceImpl implements DataArchivingService {
             try {
                 calculationDate = ObjectUtils.isEmpty(calculationDate) ? LocalDate.now() : calculationDate;
                 cleanDay = ObjectUtils.isEmpty(cleanDay) ? 361 : cleanDay;
-                List<CfgDataArchivingEntity> effectiveData = cfgDataArchivingService.getEffectiveData();
-                log.warn("开始处理归档数据,时间{}", System.currentTimeMillis());
-                for (CfgDataArchivingEntity config : effectiveData) {
-                    // 执行归档逻辑
-                    cfgDataArchivingService.archiveData(config);
-                }
-                //归档建议
-                cfgDataArchivingService.dataArchivingSuggestion(null);
+//                List<CfgDataArchivingEntity> effectiveData = cfgDataArchivingService.getEffectiveData();
+//                log.warn("开始处理归档数据,时间{}", System.currentTimeMillis());
+//                for (CfgDataArchivingEntity config : effectiveData) {
+//                    // 执行归档逻辑
+//                    cfgDataArchivingService.archiveData(config);
+//                }
+//                //归档建议
+//                cfgDataArchivingService.dataArchivingSuggestion(null);
                 List<CfgPlatformMappingEntity> mappings = cfgPlatformMappingService.listByEffective();
                 log.warn("完成处理归档数据,时间{}", System.currentTimeMillis());
                 String calcDate = calculationDate.format(DateTimeFormatter.BASIC_ISO_DATE);
                 inventoryService.checkAllTableExists(calcDate);
-                inventoryService.saveAllHistoryInventory(calculationDate, calcDate);
+//                inventoryService.saveAllHistoryInventory(calculationDate, calcDate);
                 Map<String, List<String>> platformMap = mappings.stream().collect(Collectors.groupingBy(CfgPlatformMappingEntity::getType, Collectors.mapping(CfgPlatformMappingEntity::getPlatform, Collectors.toList())));
                 List<String> typeList = mappings.stream()
                         .map(CfgPlatformMappingEntity::getType)
