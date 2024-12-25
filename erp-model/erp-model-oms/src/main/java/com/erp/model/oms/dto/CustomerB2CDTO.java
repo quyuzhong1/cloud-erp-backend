@@ -1,6 +1,7 @@
 package com.erp.model.oms.dto;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.vo.PagingVO;
@@ -16,6 +17,7 @@ import java.io.Serializable;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Lambda
@@ -93,7 +95,14 @@ public class CustomerB2CDTO implements Serializable {
          * 创建时间
          */
         private List<LocalDate> createTimeList;
-
+        /**
+         * 页面高级查询
+         */
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
+        /**
+         * sqlMap 默认key default
+         */
+        private Map<String, String> sqlMap;
     }
 
 
@@ -104,9 +113,19 @@ public class CustomerB2CDTO implements Serializable {
     @NoArgsConstructor
     public static class TabListDTO {
 
-        private String searchType;
+        /**
+         * 类型(toBeApprove 待审核，reject 审核不通过，approve 已审核)
+         */
+        private String tabFlag;
 
+        /**
+         * tab名称
+         */
+        private String tabFlagName;
 
+        /**
+         * 数量
+         */
         private Integer count;
 
     }
