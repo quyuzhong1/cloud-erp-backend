@@ -14,7 +14,7 @@ pipeline {
             }
         }
         stage('maven部署项目') {
-            steps {
+            steps {//打包erp-server-admin里的pom.xml
                 script {
                     configFileProvider([configFile(fileId: '06ffcde1-6631-4338-a346-9b040decb468', variable: 'MY_SETTINGS_XML')]) {
                         withEnv(["JAVA_HOME=/var/jenkins_home/tools/jdk1.8.0_301"]) {
@@ -29,6 +29,7 @@ pipeline {
                 }
             }
         }
+        //打包erp-server-admin里的pom.xml
         stage('通过docker制作自定义镜像') {
             steps {
                 sh '''
