@@ -52,11 +52,9 @@ pipeline {
                 sh '''
                     scp /var/jenkins_home/workspace/${JOB_NAME}/erp-server/erp-server-admin/erp-server-admin.yaml root@172.16.100.60:/k8s-yaml/erp-server
                     scp /var/jenkins_home/workspace/${JOB_NAME}/erp-server/erp-server-k8s/erp-server-k8s.yaml root@172.16.100.60:/k8s-yaml/erp-server
-                    ssh -tt root@172.16.100.60 "sed -i \\"s|\\\\\\${tag}|${TAG}|g\\" /k8s-yaml/erp-server/erp-server-admin.yaml"
-                    ssh -tt root@172.16.100.60 "sed -i \\"s|\\\\\\${namespace}|${NAMESPACE}|g\\" /k8s-yaml/erp-server/erp-server-admin.yaml"
+                    ssh -tt root@172.16.100.60 "sed -i -e \\"s|\\\\\\${tag}|${TAG}|g\\" -e \\"s|\\\\\\${namespace}|${NAMESPACE}|g\\" /k8s-yaml/erp-server/erp-server-admin.yaml"
 
-                    ssh -tt root@172.16.100.60 "sed -i \\"s|\\\\\\${tag}|${TAG}|g\\" /k8s-yaml/erp-server/erp-server-k8s.yaml"
-                    ssh -tt root@172.16.100.60 "sed -i \\"s|\\\\\\${namespace}|${NAMESPACE}|g\\" /k8s-yaml/erp-server/erp-server-k8s.yaml"
+                    ssh -tt root@172.16.100.60 "sed -i -e \\"s|\\\\\\${tag}|${TAG}|g\\" -e \\"s|\\\\\\${namespace}|${NAMESPACE}|g\\" /k8s-yaml/erp-server/erp-server-k8s.yaml"
 
                     ssh -tt root@172.16.100.60 "/usr/bin/kubectl delete -f /k8s-yaml/erp-server/erp-server-admin.yaml -f /k8s-yaml/erp-server/erp-server-k8s.yaml || true"
                     ssh -tt root@172.16.100.60 "/usr/bin/kubectl apply -f /k8s-yaml/erp-server/erp-server-admin.yaml -f /k8s-yaml/erp-server/erp-server-k8s.yaml"
