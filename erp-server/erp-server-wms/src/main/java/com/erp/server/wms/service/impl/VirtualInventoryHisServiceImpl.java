@@ -75,7 +75,7 @@ public class VirtualInventoryHisServiceImpl extends SuperServiceImpl<VirtualInve
             addDTO.setDate(localDate.minusDays(1L));
             //查询是否已存在
             VirtualInventoryHisEntity hisEntity = oldList.stream().distinct().filter(obj ->
-                            CharSequenceUtil.equals(obj.getVirtualInventoryId(), addDTO.getVirtualInventoryId()))
+                            CharSequenceUtil.equals(obj.getVirtualInventoryId(), addDTO.getVirtualInventoryId()) && obj.getDate().isEqual(addDTO.getDate()))
                     .findFirst().orElse(null);
             if (ObjUtil.isNotEmpty(hisEntity)) {
                 addDTO.setId(hisEntity.getId());

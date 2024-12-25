@@ -42,7 +42,7 @@
         <where>
             vih.is_deleted = false
             <if test="params.endDate != null">
-                and vih.date > #{params.endDate}
+                and vih.date = #{params.endDate}
             </if>
             <if test="params.skuIdList != null and params.skuIdList.size > 0">
                 and vid.sku_id in
