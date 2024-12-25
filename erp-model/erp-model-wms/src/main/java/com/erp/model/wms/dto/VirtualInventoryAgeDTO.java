@@ -93,6 +93,10 @@ public class VirtualInventoryAgeDTO implements Serializable {
          */
         private LocalDate date;
         /**
+         * 更新时间
+         */
+        private LocalDateTime updateTime;
+        /**
          * 区间信息
          */
         private HashMap<String,VirtualIntervalDTO> map;
