@@ -46,6 +46,7 @@
         WITH virtualInventoryDetailHis AS (
             select
                 max(vidh.date) as date,
+                max(vidh.update_time) as updateTime,
                 vid.sku_id,
                 vid.warehouse_id,
                 vid.virtual_warehouse_id,
@@ -82,6 +83,7 @@
             vidh.virtual_warehouse_id as virtualWarehouseId,
             vw.code as virtualWarehouseCode,
             vw.name as virtualWarehouseName,
+            vidh.updateTime,
             vih.virtualQty,
             vih.virtualUsableQty,
             vih.virtualFrozenQty,
