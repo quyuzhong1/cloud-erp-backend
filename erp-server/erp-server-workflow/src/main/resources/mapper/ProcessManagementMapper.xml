@@ -79,7 +79,8 @@
             ptm.task_status,
             ptm.cur_approve_name AS cur_approve_name,
             concat(wm.detail_url,pm.business_id) as detail_url,
-            pm.create_time as create_time
+            pm.create_time as createTime,
+            pm.update_time as updateTime
         FROM process_task_management AS ptm
                  LEFT JOIN process_management AS pm  on pm.process_instance_id = ptm.process_instance_id AND pm.is_deleted = false
                  LEFT JOIN work_menu AS wm on pm.business_key = wm.module_code AND wm.is_deleted = false
