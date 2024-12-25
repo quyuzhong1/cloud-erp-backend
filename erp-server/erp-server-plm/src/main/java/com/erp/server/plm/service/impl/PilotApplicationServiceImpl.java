@@ -1134,6 +1134,7 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
                 PilotApplicationEntity entity = pilotMap.get(detailEntity.getMainId());
                 dto.setCode(entity.getCode());
             }
+            dto.setApplyQty(detailEntity.getApplyQty());
             dto.setApproveQty(detailEntity.getApproveQty());
             dto.setDetailId(detailEntity.getId());
             dto.setSkuId(detailEntity.getSkuId());

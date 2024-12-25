@@ -227,4 +227,6 @@ public interface PurchasePriceService extends SuperService<PurchasePriceEntity> 
     PagingVO<PurchasePriceExportExcelDTO> exportPurchasePrice(PagingDTO<PurchasePriceDTO.PagingParamDTO> dto);
 
     List<PurchasePriceDTO.PriceDTO> batchGetPurchasePrice(List<PurchasePriceDTO.PriceDTO> list);
+
+    Boolean updateOutPlatformCode(List<String> ids, String outPlatformCode);
 }

@@ -231,6 +231,8 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
             view.setShopName(shopInfoEntity.getName());
             view.setAvgSalesQty(JSON.parseObject(view.getAvgSalesQtyJson(), new TypeReference<List<ReplenishmentSuggestionVO.SalesVO>>() {
             }));
+            view.setRealSalesQty(JSON.parseObject(view.getRealSalesQtyJson(), new TypeReference<List<ReplenishmentSuggestionVO.SalesVO>>() {
+            }));
             view.setSalesQty(JSON.parseObject(view.getSalesQtyJson(), new TypeReference<List<ReplenishmentSuggestionVO.SalesVO>>() {
             }));
             view.setSalesEstimateQty(JSON.parseObject(view.getSalesEstimateQtyJson(), new TypeReference<List<ReplenishmentSuggestionVO.SalesVO>>() {
@@ -728,8 +730,9 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
     }
 
     @Override
-    public List<ReplenishmentSuggestionEntity> listAllSkuAndShop() {
+    public List<ReplenishmentSuggestionEntity> listAllSkuAndShop(String type) {
         return list(Wrappers.<ReplenishmentSuggestionEntity>lambdaQuery()
+                .eq(ReplenishmentSuggestionEntity::getPlatformType, type)
                 .select(ReplenishmentSuggestionEntity::getSkuId,
                         ReplenishmentSuggestionEntity::getSkuNo,
                         ReplenishmentSuggestionEntity::getShopId,
@@ -1228,7 +1231,9 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
             salesInfoVOS.add(infoVO);
             date = date.plusDays(1);
         }
-        return salesInfoVOS;
+        return salesInfoVOS.stream()
+                .sorted(Comparator.comparing(ReplenishmentSuggestionVO.SalesInfoVO::getDate)
+                        .reversed()).collect(Collectors.toList());
     }
 
     /**

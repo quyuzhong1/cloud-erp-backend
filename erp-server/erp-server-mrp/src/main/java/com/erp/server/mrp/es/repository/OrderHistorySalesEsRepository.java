@@ -64,4 +64,6 @@ public interface OrderHistorySalesEsRepository extends ElasticsearchRepository<O
      * @param endDate   结束时间
      */
     List<OrderHistorySalesEsEntity> findByShopIdAndSkuIdAndDateBetween(String shopId, String skuId, LocalDate startDate, LocalDate endDate);
+
+    void deleteByDateBetween(LocalDate startDate, LocalDate endDate);
 }

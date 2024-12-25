@@ -33,6 +33,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 
 import javax.annotation.Resource;
@@ -102,49 +103,73 @@ public class BasicReplenishmentDataService {
     /**
      * 增量变动建议补货基础数据
      */
-    public void initReplenishmentSku(LocalDate calculationDate, List<CfgPlatformMappingEntity> mappings) {
-        String calcDate = calculationDate.format(DateTimeFormatter.BASIC_ISO_DATE);
-        inventoryService.checkAllTableExists(calcDate);
-        inventoryService.saveAllHistoryInventory(calculationDate, calcDate);
-        //获取所有已审核且存在上市时间得非费用服务类sku
-        List<SkuVO> vos = plmTaskFeign.listApproveAndListingSku();
-        //获取已生成补货基础数据得信息
-        List<ReplenishmentSuggestionEntity> replenishmentSuggestion = replenishmentSuggestionService.listAllSkuAndShop();
-        Map<String, ReplenishmentSuggestionEntity> oldReplenishmentMap = replenishmentSuggestion.stream()
-                .collect(Collectors.toMap(v -> v.getSkuId() + ":" + v.getShopId(), v -> v, (o1, o2) -> o1));
+    public void initReplenishmentSku(CfgRulePlatformTypeEnum type, List<String> platformList) {
+
+        if (CollectionUtils.isEmpty(platformList)) {
+            return;
+        }
         //获取所有店铺
         ApiResult<List<ShopInfoEntity>> allShopResult = shopInfoFeign.list();
         if (!allShopResult.isSuccess()) {
             throw new ServiceException(allShopResult.getMsg());
         }
-        Map<String, String> mappingMap = mappings.stream().collect(Collectors.toMap(CfgPlatformMappingEntity::getPlatform, CfgPlatformMappingEntity::getType, (o1, o2) -> o1));
-        // 等待所有任务执行完毕
-        CompletableFuture.allOf(allShopResult.getData().stream()
-                .map(shopInfo -> CompletableFuture.runAsync(() -> {
-                    List<ReplenishmentSuggestionEntity> suggestionLists = new ArrayList<>();
-                    String platFormMapping = mappingMap.get(shopInfo.getDictPlatform());
-                    if (ObjectUtils.isEmpty(platFormMapping)) {
-                        return;
-                    }
-                    for (SkuVO vo : vos) {
-                        ReplenishmentSuggestionEntity entity = Optional.ofNullable(oldReplenishmentMap.get(vo.getSkuId() + ":" + shopInfo.getId())).orElse(new ReplenishmentSuggestionEntity());
-                        // 过滤掉已生成建议且 sku_no 未发生变化的 SKU，或未启用的平台
-                        if (!ObjectUtils.isEmpty(entity.getId()) && entity.getSkuNo().equals(vo.getSkuNo())) {
-                            continue;
-                        }
-                        entity.setShopId(shopInfo.getId());
-                        entity.setArea(shopInfo.getDictAreaCode());
-                        entity.setFbaWarehouseId(shopInfo.getWarehouseId());
-                        entity.setCountry(shopInfo.getDictCountryCode());
-                        entity.setPlatformType(PlatformMappingTypeEnum.getEnum(platFormMapping).getPlatformType().getCode());
-                        entity.setPlatform(shopInfo.getDictPlatform());
-                        entity.setSkuId(vo.getSkuId());
-                        entity.setSkuNo(vo.getSkuNo());
-                        entity.setReplenishmentType(ReplenishmentTypeEnum.NORMAL.getCode());
-                        suggestionLists.add(entity);
-                    }
-                    replenishmentSuggestionService.saveOrUpdateBatch(suggestionLists);
-                }, threadPoolTaskExecutor)).toArray(CompletableFuture[]::new)).join();
+        List<ShopInfoEntity> shopInfoList = allShopResult.getData().stream()
+                .filter(v -> platformList.contains(v.getDictPlatform()))
+                .collect(Collectors.toList());
+        Map<String, ShopInfoEntity> shopInfoMap = shopInfoList.stream()
+                .collect(Collectors.toMap(ShopInfoEntity::getId, v -> v, (o1, o2) -> o1));
+        List<CfgRuleSalesQtyEntity> defaultCfgRuleSalesQty = cfgRuleSalesQtyService.listDefaultCfgRuleSalesQty(type.getCode());
+        //查询店铺有销量的sku
+        Map<String, List<String>> shopSkuMap;
+        String salesQtyType = defaultCfgRuleSalesQty.get(0).getSalesQtyType();
+        if (SalesQtyTypeEnum.BY_CREATE_TIME.getCode().equals(salesQtyType)) {
+            shopSkuMap = orderHistorySalesEsService.listSkuByShopId(shopInfoMap.keySet());
+        } else {
+            shopSkuMap = outStockHistorySalesEsService.listSkuByShopId(shopInfoMap.keySet());
+        }
+        List<String> skuIds = shopSkuMap.values()
+                .stream()
+                .flatMap(Collection::stream)
+                .distinct()
+                .collect(Collectors.toList());
+        List<SkuVO> skuVOS = plmTaskFeign.listSkuProductByIds(skuIds);
+        Map<String, String> skuMap = skuVOS.stream().collect(Collectors.toMap(SkuVO::getSkuId, SkuVO::getSkuNo, (o1, o2) -> o1));
+        //获取已生成补货基础数据得信息
+        List<ReplenishmentSuggestionEntity> replenishmentSuggestion = replenishmentSuggestionService.listAllSkuAndShop(type.getCode());
+        Map<String, ReplenishmentSuggestionEntity> oldReplenishmentMap = replenishmentSuggestion.stream()
+                .collect(Collectors.toMap(v -> v.getSkuId() + ":" + v.getShopId(), v -> v, (o1, o2) -> o1));
+        List<ReplenishmentSuggestionEntity> suggestions = shopSkuMap.entrySet().stream()
+                .map(v -> CompletableFuture.supplyAsync(
+                        () -> {
+                            List<ReplenishmentSuggestionEntity> suggestionLists = new ArrayList<>();
+                            for (String skuId : v.getValue()) {
+                                ReplenishmentSuggestionEntity entity = Optional.ofNullable(oldReplenishmentMap.get(skuId + ":" + v.getKey())).orElse(new ReplenishmentSuggestionEntity());
+                                String skuNo = skuMap.get(skuId);
+                                // 过滤掉已生成建议且 sku_no 未发生变化的 SKU，或未启用的平台
+                                if (!ObjectUtils.isEmpty(entity.getId()) && entity.getSkuNo().equals(skuNo)) {
+                                    continue;
+                                }
+                                ShopInfoEntity shopInfo = shopInfoMap.get(v.getKey());
+                                entity.setShopId(shopInfo.getId());
+                                entity.setArea(shopInfo.getDictAreaCode());
+                                entity.setFbaWarehouseId(shopInfo.getWarehouseId());
+                                entity.setCountry(shopInfo.getDictCountryCode());
+                                entity.setPlatformType(type.getCode());
+                                entity.setPlatform(shopInfo.getDictPlatform());
+                                entity.setSkuId(skuId);
+                                entity.setSkuNo(skuNo);
+                                entity.setReplenishmentType(ReplenishmentTypeEnum.NORMAL.getCode());
+                                suggestionLists.add(entity);
+                            }
+                            return suggestionLists;
+                        },
+                        threadPoolTaskExecutor))
+                .collect(Collectors.toList())
+                .stream()
+                .map(CompletableFuture::join)  // 等待每个 CompletableFuture 完成
+                .flatMap(List::stream)
+                .collect(Collectors.toList());
+        replenishmentSuggestionService.saveOrUpdateBatch(suggestions);
     }
 
 
@@ -450,7 +475,8 @@ public class BasicReplenishmentDataService {
                         boolean isOver180Days = sale.getListingTime().plusDays(replenishmentDays.getStart()).isBefore(calculationDate);
                         int saleQty = Optional.ofNullable(historySalesMap.get(entity.getId())).orElse(0);
                         details.add(detail);
-                        if (Boolean.TRUE.equals(isOver180Days) && saleQty == 0) {
+                        if (Boolean.TRUE.equals(isOver180Days) && saleQty == 0 &&
+                                ReplenishmentTypeEnum.NORMAL.getCode().equals(entity.getReplenishmentType())) {
                             notRestockingId.add(entity.getId());
                         } else {
                             suggestionIds.add(entity.getId());

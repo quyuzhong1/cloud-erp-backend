@@ -25,6 +25,7 @@ import com.common.business.utils.PdfUtil;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
+import com.common.business.wrapper.FeignQuery;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
@@ -1415,7 +1416,14 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
 
         // 采购申请单id集合
         List<String> purchaseApplicationIds = Lists.newArrayList();
+        List<String> warehouseLocationList = records.stream().map(v->v.getWarehouseLocation()).filter(StringUtils::isNotBlank).collect(Collectors.toList());
+        List<WarehouseLocationEntity> warehouseLocationEntityList = new ArrayList<>();
+        if(CollectionUtils.isNotEmpty(warehouseLocationList)){
+            warehouseLocationEntityList = FeignQuery.create(WarehouseLocationEntity.class).in(WarehouseLocationEntity::getCode,warehouseLocationEntityList).list();
+        }
         for (PurchaseOrderDTO.ListDTO obj : records) {
+            WarehouseLocationEntity warehouseLocationEntity = warehouseLocationEntityList.stream().filter(v->v.getCode().equals(obj.getWarehouseLocation())).findFirst().orElse(new WarehouseLocationEntity());
+            obj.setWarehouseLocationName(warehouseLocationEntity.getName());
             SkuVO skuVO = skuList.stream().filter(e -> e.getSkuId().equals(obj.getSkuId())).findFirst().orElse(null);
             if (Objects.nonNull(skuVO)){
                 obj.setDeclareModel(skuVO.getDeclareModel());
@@ -1472,6 +1480,21 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
                     .map(PoReturnDetailEntity::getReturnQty)
                     .reduce(MathUtil.ZERO, Integer::sum);
             obj.setReturnQty(returnQtyt);
+            //退货补货数量
+            Integer qcReturnQty = purchaseReturnOrderDetailList.stream().filter(req -> req.getPurchaseOrderDetailId().equals(obj.getPurchaseDetailId())
+                            && req.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())
+                            && ReturnOrderSourceEnum.QC.getCode().equals(req.getSourceType()))
+                    .map(PoReturnDetailEntity::getReturnQty)
+                    .reduce(MathUtil.ZERO, Integer::sum);
+            obj.setQcReturnQty(qcReturnQty);
+            //库存补货数量
+            Integer stockReturnQty = purchaseReturnOrderDetailList.stream().filter(req -> req.getPurchaseOrderDetailId().equals(obj.getPurchaseDetailId())
+                            && req.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())
+                            && !ReturnOrderSourceEnum.QC.getCode().equals(req.getSourceType()))
+                    .map(PoReturnDetailEntity::getReturnQty)
+                    .reduce(MathUtil.ZERO, Integer::sum);
+            obj.setStockReturnQty(stockReturnQty);
+
             obj.setStockInQty(stockInQty);
             obj.setTaxRateStr(MathUtil.multiply(obj.getTaxRate(),MathUtil.BigDecimal_100).toString().concat("%"));
 

@@ -39,10 +39,14 @@
     </sql>
 
     <!-- 分页查询 -->
+
+
+
     <select id="paging" resultType="com.erp.model.wms.dto.VirtualInventoryAgeDTO$ListDTO">
         WITH virtualInventoryDetailHis AS (
             select
                 max(vidh.date) as date,
+                max(vidh.update_time) as updateTime,
                 vid.sku_id,
                 vid.warehouse_id,
                 vid.virtual_warehouse_id,
@@ -79,6 +83,7 @@
             vidh.virtual_warehouse_id as virtualWarehouseId,
             vw.code as virtualWarehouseCode,
             vw.name as virtualWarehouseName,
+            vidh.updateTime,
             vih.virtualQty,
             vih.virtualUsableQty,
             vih.virtualFrozenQty,
@@ -191,7 +196,7 @@
                 and vidh.inventory_age_days > #{params.daysList[0]}
             </if>
             <if test="params.daysList != null and params.daysList.size == 2">
-                and  #{params.daysList[1]} >= vidh.inventory_age_days
+                and vidh.inventory_age_days > #{params.daysList[0]} and  #{params.daysList[1]} >= vidh.inventory_age_days
             </if>
         </where>
         order by vtf.trade_time desc
