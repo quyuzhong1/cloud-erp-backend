@@ -3,6 +3,7 @@ package com.erp.server.tms.controller.api;
 
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.DataPermission;
+import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
@@ -53,6 +54,7 @@ public class LogisticsAddressController extends BaseController {
             menuCode = "tms:logisticsAddress:paging",
             tableAlias = "la"
     )
+    @WebAdvanceQuery
     public ApiResult<PagingVO<LogisticsAddressDTO.PagingViewDTO>> queryByPage(@RequestBody @Validated PagingDTO<LogisticsAddressDTO.PagingParamDTO> dto) {
         PagingVO<LogisticsAddressDTO.PagingViewDTO> pagingVO = logisticsAddressService.paging(dto);
         return success(pagingVO);
