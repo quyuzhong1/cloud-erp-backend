@@ -24,7 +24,8 @@
             att.attach_url as attachUrl,
             pc.remark,
             pc.update_user_name as updateUserName,
-            pc.update_time as updateTime
+            pc.update_time as updateTime,
+            pc.create_time as createTime
         from product_certificate pc
         inner join product_detail pd on pc.sku_id = pd.id and pd.is_deleted = false
         inner join (
