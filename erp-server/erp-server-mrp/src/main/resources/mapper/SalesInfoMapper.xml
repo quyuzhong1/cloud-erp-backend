@@ -38,5 +38,19 @@
         </where>
         order by si.date desc
     </select>
+    <select id="listHistorySaleQty" resultType="com.erp.model.mrp.dto.OtherHistorySaleQtyDTO">
+        SELECT
+            order_date orderDate,
+            platform,
+            shop_name,
+            shop_id shopId,
+            sku_assemby AS skuNo,
+            SUM ( order_qty )  qty
+        FROM
+            sales_data
+        where shop_id is not null and order_date &lt; '2024-09-01'
+        group by order_date,platform,shop_name,shop_id,sku_assemby
+        order by order_date,platform,shop_name,shop_id,sku_assemby;
+    </select>
 
 </mapper>

@@ -97,4 +97,11 @@ public interface OrderHistorySalesEsService {
      * @param endDate   结束时间
      */
     List<OrderHistorySalesEsEntity> findByShopIdAndSkuIdAndDateBetween(String shopId, String skuId, LocalDate startDate, LocalDate endDate);
+
+    /**
+     * 删除历史数据
+     * @param startDate 开始日期
+     * @param endDate 结束日期
+     */
+    void deleteByDateBetween(LocalDate startDate, LocalDate endDate);
 }

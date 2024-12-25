@@ -1661,6 +1661,11 @@ public class PurchaseOrderDTO implements Serializable {
          * 关键词
          */
         private String searchKeyword;
+
+        /**
+         * 审核状态
+         */
+        private String approveStatus;
     }
 
     @Data
