@@ -433,6 +433,12 @@ public class VirtualInventoryAgeDTO implements Serializable {
          * 批次剩余数量
          */
         private Integer qty;
+
+        /**
+         * 批次剩余数量(逆推)
+         */
+        private Integer waitQty;
+
         /**
          * 虚拟仓数量
          */
