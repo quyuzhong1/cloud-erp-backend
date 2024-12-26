@@ -91,6 +91,7 @@ public class InventoryController extends BaseController {
      * @return
      */
     @PostMapping("/pageInOutStock")
+    @WebAdvanceQuery
     public ApiResult<PagingVO<InventoryDTO.InOutStockTransFlowPagingViewDTO>> pageInOutStock(@RequestBody @Validated PagingDTO<InventoryDTO.InOutStockTransFlowSearchParamDTO> dto) {
         return success(transactionFlowService.paging(dto));
     }
@@ -113,6 +114,7 @@ public class InventoryController extends BaseController {
      * @return
      */
     @PostMapping("/pageInOutStockSummary")
+    @WebAdvanceQuery
     public ApiResult<PagingVO<InventoryDTO.InOutStockSummaryPagingViewDTO>> pageInOutStockSummary(@RequestBody @Validated PagingDTO<InventoryDTO.InOutStockSummarySearchParamDTO> dto) {
         return success(transactionFlowService.pagingSummary(dto));
     }

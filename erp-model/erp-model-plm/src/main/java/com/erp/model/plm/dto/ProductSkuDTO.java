@@ -1,11 +1,13 @@
 package com.erp.model.plm.dto;
 
+import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @Description 产品信息-主页列表-查询
@@ -187,6 +189,16 @@ public class ProductSkuDTO extends PermissionsDTO {
      */
     private List<String> applicationCategoryIds;
 
+
+    /**
+     * 页面高级查询
+     */
+    private List<AdvanceQueryDTO> advanceQueryDTOList;
+
+    /**
+     * sqlMap 默认key default
+     */
+    private Map<String, String> sqlMap;
 }
 
 
