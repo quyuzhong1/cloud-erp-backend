@@ -32,6 +32,8 @@ public class PurchasePriceDTO implements Serializable {
          */
         @NotBlank(message = "id不能为空")
         private String id;
+
+        private String approveStatus;
         /**
          * detailId
          */

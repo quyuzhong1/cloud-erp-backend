@@ -233,8 +233,12 @@ public class VirtualInventoryDetailServiceImpl extends SuperServiceImpl<VirtualI
             if(!equals) {
                 continue;
             }
+            //开始日期
             daysList.add(inventoryAgeDateTO.getStartDays());
-            daysList.add(inventoryAgeDateTO.getEndDays());
+            //结束日期
+            if (ObjUtil.isNotNull(inventoryAgeDateTO.getEndDays())) {
+                daysList.add(inventoryAgeDateTO.getEndDays());
+            }
         }
         return daysList;
     }
@@ -346,6 +350,8 @@ public class VirtualInventoryDetailServiceImpl extends SuperServiceImpl<VirtualI
         VirtualInventoryAgeDTO.viewHisInventoryAgeDetailDTO viewHisInventoryAgeDetailDTO = this.viewHisInventoryAgeDetail(dto);
 
         for (VirtualInventoryAgeDTO.HisInventoryAgeDetailDTO ageDetailDTO : list) {
+            //对象中都有库龄字段，防止被清空先赋值
+            viewHisInventoryAgeDetailDTO.setInventoryAgeDays(ageDetailDTO.getInventoryAgeDays());
             BeanMapperUtils.copy(viewHisInventoryAgeDetailDTO,ageDetailDTO);
             ageDetailDTO.setSourceTypeName(SourceTypeEnum.getName(ageDetailDTO.getSourceType()));
             ageDetailDTO.setDictInventoryStatusName(InventoryStatusEnum.getNameByCode(ageDetailDTO.getDictInventoryStatus()));

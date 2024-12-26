@@ -416,6 +416,7 @@
     </select>
     <select id="pushDownPurchaseView" resultType="com.erp.model.scm.dto.PurchasePriceDTO$PushDownPurchaseView">
         SELECT
+            pro.approve_status as approveStatus,
             pro.id,
             pro.supplier_contact_id as supplierContactId,
             pro.code,
@@ -425,8 +426,8 @@
             prod.id as detailId,
             pro.supplier_id as supplierId,
             pro.supplier_name as supplierName,
-            pro.return_org_id as purchaseOrgId,
-            pro.return_org_name as purchaseOrgName,
+        pro.purchase_org_id AS purchaseOrgId,
+        pro.purchase_org_name AS purchaseOrgName,
         pro.return_warehouse_id as deliveryWarehouseId,
         pro.return_warehouse_name as deliveryWarehouseName,
         pro.return_org_id as receiveOrgId,
