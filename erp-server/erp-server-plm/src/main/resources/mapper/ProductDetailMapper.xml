@@ -2128,7 +2128,7 @@
         WHERE
             pd.is_deleted = FALSE
           AND pd.status = '2'
-          AND pc.to_declare_price = 0
+          AND (pc.to_declare_price = 0 or pc.to_declare_price is null)
     </select>
 
     <select id="listSkuPurchaseBySkuIds" resultType="com.erp.model.plm.vo.SkuVO">

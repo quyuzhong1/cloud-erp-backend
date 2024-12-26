@@ -414,8 +414,8 @@ public class InventorySkuCostServiceImpl extends SuperServiceImpl<InventorySkuCo
                     continue;
                 }
                 skuCostDTO.setProductCost(MathUtil.multiply(rate, skuCostDTO.getProductCost(),4));
-                skuCostDTO.setFirstMileShippingCost(MathUtil.multiply(rate, skuCostDTO.getProductCost(),4));
-                skuCostDTO.setClearanceCustomsTax(MathUtil.multiply(rate, skuCostDTO.getProductCost(),4));
+                skuCostDTO.setFirstMileShippingCost(MathUtil.multiply(rate, skuCostDTO.getFirstMileShippingCost(),4));
+                skuCostDTO.setClearanceCustomsTax(MathUtil.multiply(rate, skuCostDTO.getClearanceCustomsTax(),4));
                 skuCostDTO.setCurrency(CurrencyEnum.CNY.getCurrencyCode());
                 skuCostDTOList.add(skuCostDTO);
             }else {
@@ -470,8 +470,8 @@ public class InventorySkuCostServiceImpl extends SuperServiceImpl<InventorySkuCo
                     continue;
                 }
                 skuCostDTO.setProductCost(MathUtil.multiply(rate, skuCostDTO.getProductCost(),4));
-                skuCostDTO.setFirstMileShippingCost(MathUtil.multiply(rate, skuCostDTO.getProductCost(),4));
-                skuCostDTO.setClearanceCustomsTax(MathUtil.multiply(rate, skuCostDTO.getProductCost(),4));
+                skuCostDTO.setFirstMileShippingCost(MathUtil.multiply(rate, skuCostDTO.getFirstMileShippingCost(),4));
+                skuCostDTO.setClearanceCustomsTax(MathUtil.multiply(rate, skuCostDTO.getClearanceCustomsTax(),4));
                 skuCostDTO.setCurrency(CurrencyEnum.CNY.getCurrencyCode());
                 skuCostDTOList.add(skuCostDTO);
             }else {
@@ -531,8 +531,8 @@ public class InventorySkuCostServiceImpl extends SuperServiceImpl<InventorySkuCo
                     continue;
                 }
                 skuCostDTO.setProductCost(MathUtil.multiply(rate, skuCostDTO.getProductCost(),4));
-                skuCostDTO.setFirstMileShippingCost(MathUtil.multiply(rate, skuCostDTO.getProductCost(),4));
-                skuCostDTO.setClearanceCustomsTax(MathUtil.multiply(rate, skuCostDTO.getProductCost(),4));
+                skuCostDTO.setFirstMileShippingCost(MathUtil.multiply(rate, skuCostDTO.getFirstMileShippingCost(),4));
+                skuCostDTO.setClearanceCustomsTax(MathUtil.multiply(rate, skuCostDTO.getClearanceCustomsTax(),4));
                 skuCostDTO.setCurrency(CurrencyEnum.CNY.getCurrencyCode());
                 skuCostDTOList.add(skuCostDTO);
             }else {
@@ -559,8 +559,8 @@ public class InventorySkuCostServiceImpl extends SuperServiceImpl<InventorySkuCo
                     continue;
                 }
                 skuCostDTO.setProductCost(MathUtil.multiply(rate, skuCostDTO.getProductCost(),4));
-                skuCostDTO.setFirstMileShippingCost(MathUtil.multiply(rate, skuCostDTO.getProductCost(),4));
-                skuCostDTO.setClearanceCustomsTax(MathUtil.multiply(rate, skuCostDTO.getProductCost(),4));
+                skuCostDTO.setFirstMileShippingCost(MathUtil.multiply(rate, skuCostDTO.getFirstMileShippingCost(),4));
+                skuCostDTO.setClearanceCustomsTax(MathUtil.multiply(rate, skuCostDTO.getClearanceCustomsTax(),4));
                 skuCostDTO.setCurrency(CurrencyEnum.CNY.getCurrencyCode());
                 //材料成本
                 BigDecimal cost = MathUtil.multiply(skuCostDTO.getProductCost(),bomChildrenSkuDTO.getQuantity());
