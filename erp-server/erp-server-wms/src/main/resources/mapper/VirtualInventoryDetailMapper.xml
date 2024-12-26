@@ -87,8 +87,8 @@
             vih.virtualQty,
             vih.virtualUsableQty,
             vih.virtualFrozenQty,
-            case when vih.virtualQty = 0 then 0 else vidh.inventoryAgeQty / vih.virtualQty end as avgInventoryAge,
-            case when vih.virtualQty = 0 then 0 else vidh.backInventoryAgeQty / vih.virtualQty end as backAvgInventoryAge
+            case when vih.virtualQty = 0 then 0 else round(vidh.inventoryAgeQty * 1.0 / vih.virtualQty,4) end as avgInventoryAge,
+            case when vih.virtualQty = 0 then 0 else round(vidh.backInventoryAgeQty / vih.virtualQty,4) end as backAvgInventoryAge
         from virtualInventoryDetailHis vidh
         left join VirtualInventoryHis vih on vidh.sku_id = vih.sku_id
         and vidh.warehouse_id = vih.warehouse_id and vidh.virtual_warehouse_id = vih.virtual_warehouse_id

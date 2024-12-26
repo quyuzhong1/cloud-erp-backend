@@ -10,9 +10,9 @@ public class VirtualInventoryAgeQueryHandler extends AbstractQueryHandler {
     protected String handleSqlLogic(String field, Object value, String compareCodeSplicingValueSql) {
         if("isDiff".equals(field)) {
             if ((Boolean) value) {
-                return "(case when vih.virtualQty = 0 then 0.00 else vidh.inventoryAgeQty / vih.virtualQty end) != (case when vih.virtualQty = 0 then 0.00 else vidh.backInventoryAgeQty / vih.virtualQty end)";
+                return "(case when vih.virtualQty = 0 then 0.00 else round(vidh.inventoryAgeQty * 1.0 / vih.virtualQty,4) end) != (case when vih.virtualQty = 0 then 0.00 else round(vidh.backInventoryAgeQty / vih.virtualQty,4) end)";
             } else {
-                return "(case when vih.virtualQty = 0 then 0.00 else vidh.inventoryAgeQty / vih.virtualQty end) = (case when vih.virtualQty = 0 then 0.00 else vidh.backInventoryAgeQty / vih.virtualQty end)";
+                return "(case when vih.virtualQty = 0 then 0.00 else round(vidh.inventoryAgeQty * 1.0 / vih.virtualQty,4) end) = (case when vih.virtualQty = 0 then 0.00 else round(vidh.backInventoryAgeQty / vih.virtualQty,4) end)";
             }
         }
         return null;
