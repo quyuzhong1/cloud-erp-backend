@@ -1,6 +1,7 @@
 package com.erp.server.plm.controller.api;
 
 import com.common.business.annotation.DataPermission;
+import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.DataAttributeEnum;
@@ -62,6 +63,7 @@ public class ProjectScheduleController extends BaseController {
             menuCode = "plm:product:schedule:paging",
             tableAlias = "pp"
     )
+    @WebAdvanceQuery
     public ApiResult<PagingVO<SchedulePagingVO>> queryByPage(@RequestBody @Validated PagingDTO<SearchPagingDTO> dto) {
         PagingVO<SchedulePagingVO> pagingVO = projectPlanService.paging(dto);
         return success(pagingVO);
