@@ -85,24 +85,24 @@
                  LEFT JOIN process_management AS pm  on pm.process_instance_id = ptm.process_instance_id AND pm.is_deleted = false
                  LEFT JOIN work_menu AS wm on pm.business_key = wm.module_code AND wm.is_deleted = false
                  LEFT JOIN process_definition pd on pd.id = pm.process_definition_id and pd.is_deleted = false
-        where ${params.sqlMap.default} and ptm.is_deleted = false
-          <if test="null != param.processName and param.processName != ''">
+        where ${param.sqlMap.default} and ptm.is_deleted = false
+          <if test="null != param and null != param.processName and param.processName != ''">
               and pd.process_name ilike concat('%', #{param.processName}::text,'%')
           </if>
-          <if test="null != param.businessNames and param.businessNames.size() > 0">
+          <if test="null != param and null != param.businessNames and param.businessNames.size() > 0">
               and pm.business_name in
               <foreach collection="param.businessNames" item="businessName" open="(" separator="," close=")">
                   #{businessName}
               </foreach>
           </if>
-          <if test="null != param.processVersion">
+          <if test="null != param and null != param.processVersion">
               and pm.process_version = #{param.processVersion}
           </if>
-          <if test="null == param.processStatus or param.processStatus.size() == 0">
+          <if test="null != param and null == param.processStatus or param.processStatus.size() == 0">
               and ptm.task_status = 'approveIng'
           </if>
 
-          <if test="null != param.processStatus and param.processStatus.size() > 0">
+          <if test="null != param and null != param.processStatus and param.processStatus.size() > 0">
           and pm.process_status in
             <foreach collection="param.processStatus" item="processStatus" open="(" separator="," close=")">
                 #{processStatus}
