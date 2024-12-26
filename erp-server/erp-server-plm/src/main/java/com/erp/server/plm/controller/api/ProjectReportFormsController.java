@@ -1,5 +1,6 @@
 package com.erp.server.plm.controller.api;
 
+import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
@@ -37,6 +38,7 @@ public class ProjectReportFormsController extends BaseController {
      * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.scm.dto.PurchaseBusinessGatherTableDTO.PagingViewDTO>>
      **/
     @PostMapping(value = "/purchaseBusinessGatherTable")
+    @WebAdvanceQuery
     public ApiResult<PagingVO<ProjectReportFormsDTO.PagingView>> projectReportFormsPaging(@RequestBody PagingDTO<ProjectReportFormsDTO.PagingParam> dto) {
         PagingVO<ProjectReportFormsDTO.PagingView> listPagingVO = projectReportFormsService.projectReportFormsPaging(dto);
         return success(listPagingVO);
