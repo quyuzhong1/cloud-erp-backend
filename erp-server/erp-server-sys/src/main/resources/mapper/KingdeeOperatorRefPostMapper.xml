@@ -38,7 +38,8 @@
                krp.kingdee_department_id  AS kingdeeDepartmentId,
                kd.kingdee_dept_name       AS kingdeeDepartmentName,
                kp.name                    AS userPostName,
-               su.user_name               AS userName
+               su.user_name               AS userName,
+               ko.code as operatorCode
         FROM kingdee_operator_ref_post ko
                  LEFT JOIN kingdee_user_ref_post krp
                            ON krp.id = ko.user_post_id AND krp.is_deleted = FALSE
