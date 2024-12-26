@@ -236,10 +236,10 @@ public class DmpSoInfoServiceImpl extends SuperServiceImpl<DmpSoInfoMapper, DmpS
             DmpSoDetailEntity dmpSoDetailEntity = new DmpSoDetailEntity();
             dmpSoDetailEntity.setMainId(mainId);
             dmpSoDetailEntity.setThirdDetailId(detailsBean.getItemCode());
-            dmpSoDetailEntity.setSkuNo(detailsBean.getSkuCode());
-            dmpSoDetailEntity.setPlatformSku(detailsBean.getSkuCode());
+            dmpSoDetailEntity.setSkuNo(detailsBean.getItemCode());
+            dmpSoDetailEntity.setPlatformSku(detailsBean.getItemCode());
             dmpSoDetailEntity.setQty(detailsBean.getQty());
-            dmpSoDetailEntity.setSkuName(detailsBean.getSkuName());
+            dmpSoDetailEntity.setSkuName(detailsBean.getItemName());
             dmpSoDetailEntity.setIsGift(detailsBean.getIsGift());
             dmpSoDetailEntity.setItemRemark(detailsBean.getNote());
             dmpSoDetailEntity.setExchangeRate(detailsBean.getExchangeRate());
