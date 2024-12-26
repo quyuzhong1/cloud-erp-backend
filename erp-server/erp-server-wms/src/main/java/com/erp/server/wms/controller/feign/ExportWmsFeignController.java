@@ -682,6 +682,7 @@ public class ExportWmsFeignController {
             menuCode = "wms:warehouseReceive:paging",
             tableAlias = "wr"
     )
+    @WebAdvanceQuery(handler = WarehouseReceiveQueryHandler.class)
     public PagingVO<WarehouseReceiveExportExcelDTO> exportWarehouseReceive(@RequestBody PagingDTO<WarehouseReceiveDTO.PagingParamDTO> dto) {
         return warehouseReceiveService.exportWarehouseReceive(dto);
     }
