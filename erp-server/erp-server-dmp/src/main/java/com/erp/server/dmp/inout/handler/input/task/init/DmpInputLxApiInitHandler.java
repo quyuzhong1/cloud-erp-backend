@@ -65,16 +65,25 @@ public class DmpInputLxApiInitHandler extends DmpInputInitHandler {
         Result<Object> result = LingxingApiUtils.postRequestDataAndRetry(apiType, requestMap);
 
         Map<String, Object> dataResultMap = (Map<String, Object>) result.getData();
+        // 兼容不同接口返回不同个数
         Object totalObj = dataResultMap.get("total");
-        int total =  Integer.parseInt(totalObj.toString());
+        Object countObj = dataResultMap.get("count");
+        Integer total = null;
+        if (null != totalObj){
+            total = Integer.parseInt(totalObj.toString());
+        }
+        if (null != countObj) {
+            total = Integer.parseInt(countObj.toString());
+        }
+
         Object listObj = dataResultMap.get("list");
         JSONArray jsonArray = JSONArray.parseArray(JSON.toJSONString(listObj));
-        if (CollectionUtils.isEmpty(jsonArray) || 0 == total) {
+        if (CollectionUtils.isEmpty(jsonArray) || (null!= total && 0 == total)) {
             return Collections.emptyList();
         }
         resultList.addAll(jsonArray);
 
-        if (500 <= total){
+        if (null != total && 500 <= total){
             int totalPageSize = (total + pageSize - 1) / pageSize; // 计算总页数
             for (int i = 1; i < totalPageSize; i++) {
                 // 从第二页开始请求
