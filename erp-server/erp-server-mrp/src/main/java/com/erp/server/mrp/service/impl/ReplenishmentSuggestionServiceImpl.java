@@ -823,12 +823,12 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
         Page<ReplenishmentSuggestionVO.PagingView> pagingVO = baseMapper.paging(new Page<>(params.getCurrPage(), params.getPageSize()), params.getParams(), user.getUid());
         List<ReplenishmentSuggestionVO.PagingView> list = pagingVO.getRecords();
         if (CollectionUtils.isEmpty(list)) {
-            throw new ServiceException("未找到历史销量数据");
+            return new PagingVO<>();
         }
         //历史销量数据处理
         List<LinkedHashMap> resultList = handleHistorySalesQty(list);
         if (CollectionUtils.isEmpty(resultList)) {
-            throw new ServiceException("未找到历史销量数据");
+            return new PagingVO<>();
         }
         LinkedHashMap headMap = (LinkedHashMap) resultList.get(0).get("head");
         List<LinkedHashMap<String, Object>> convertDataList = (List<LinkedHashMap<String, Object>>) resultList.get(0).get("data");
