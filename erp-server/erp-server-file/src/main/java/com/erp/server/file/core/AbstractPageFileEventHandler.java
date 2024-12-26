@@ -35,14 +35,8 @@ public abstract class AbstractPageFileEventHandler<T, P> extends AbstractFileEve
             if (totalCount == 0) {
                 totalCount = data.getTotalCount();
             }
-            if (1 == getFirstPage()) {
-                if (totalCount <= dto.getCurrPage() * getPageSize()) {
-                    hasNext = false;
-                }
-            } else {
-                if (totalCount <= (dto.getCurrPage() + 1) * getPageSize()) {
-                    hasNext = false;
-                }
+            if (totalCount <= dto.getCurrPage() * getPageSize()) {
+                hasNext = false;
             }
             dto.setCurrPage(dto.getCurrPage() + 1);
         }
