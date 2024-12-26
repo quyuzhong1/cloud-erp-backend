@@ -30,6 +30,7 @@ import com.erp.model.mrp.entity.*;
 import com.erp.model.mrp.enums.*;
 import com.erp.model.mrp.vo.*;
 import com.erp.model.oms.dto.DictBasicDTO;
+import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.plm.entity.ProductDetailEntity;
@@ -1174,6 +1175,7 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
         List<String> skuIds = historySales.stream().map(OrderHistorySalesEsEntity::getSkuId).distinct().collect(Collectors.toList());
         List<ShopInfoEntity> shopInfo = shopInfoFeign.listShopInfoByIds(shopIds);
         List<SkuVO> skuVOS = plmTaskFeign.listSkuProductByIds(skuIds);
+        Map<String, String> platformMap = getPlatformMap();
         Map<String, String> skuMap = skuVOS.stream().collect(Collectors.toMap(SkuVO::getSkuId, SkuVO::getSkuNo, (o1, o2) -> o1));
         for (OrderHistorySalesEsEntity entity : historySales) {
             ShopInfoEntity info = shopInfo.stream()
@@ -1186,7 +1188,7 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
             saleDTO.setShopId(entity.getShopId());
             saleDTO.setShopName(info.getName());
             saleDTO.setQty(entity.getOriginalSalesQty());
-            saleDTO.setPlatform(info.getDictPlatform());
+            saleDTO.setPlatform(platformMap.get(info.getDictPlatform()));
             saleDTO.setBillDate(entity.getDate());
             saleDTO.setEsId(entity.getId());
             list.add(saleDTO);
@@ -1194,6 +1196,18 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
         return list;
     }
 
+    /**
+     * 获取平台名字
+     */
+    private static Map<String, String> getPlatformMap() {
+        List<com.erp.model.oms.entity.DictBasicEntity> salesPlatformList = FeignQuery.create(com.erp.model.oms.entity.DictBasicEntity.class)
+                .eq(com.erp.model.oms.entity.DictBasicEntity::getType, DictBasicTypeEnum.SALES_PLATFORM.getType())
+                .eq(com.erp.model.oms.entity.DictBasicEntity::getStatus, Boolean.TRUE)
+                .eq(com.erp.model.oms.entity.DictBasicEntity::getIsDeleted, Boolean.FALSE)
+                .list();
+        return salesPlatformList.stream()
+                .collect(Collectors.toMap(com.erp.model.oms.entity.DictBasicEntity::getName, DictBasicEntity::getValue, (o1, o2) -> o1));
+    }
 
     @Override
     public List<ReplenishmentSuggestionVO.SalesInfoVO> listSalesInfo(BaseIdDTO dto) {
