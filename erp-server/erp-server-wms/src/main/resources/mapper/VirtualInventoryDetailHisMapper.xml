@@ -127,15 +127,22 @@
         )
         select
             vidh.sku_id,
+            pd.sku_no,
+            pd.name as productName,
+            wh.name as warehouseName,
+            vw.code as virtualWarehouseCode,
+            vw.name as virtualWarehouseName,
             vidh.warehouse_id,
             vidh.virtual_warehouse_id,
-            case when vih.virtualQty = 0 then 0 else vidh.inventoryAgeQty / virtualQty end as avgInventoryAgeDays,
+            case when vih.virtualQty = 0 then 0 else round(vidh.inventoryAgeQty * 1.0 / virtualQty,4) end as avgInventoryAgeDays,
             vih.virtualQty,
             vih.virtualUsableQty ,
             vih.virtualFrozenQty
         from virtualInventoryDetailHis vidh
-        left join VirtualInventoryHis vih on vidh.sku_id = vih.sku_id
-        and vidh.warehouse_id = vih.warehouse_id and vidh.virtual_warehouse_id = vih.virtual_warehouse_id
+        left join VirtualInventoryHis vih on vidh.sku_id = vih.sku_id and vidh.warehouse_id = vih.warehouse_id and vidh.virtual_warehouse_id = vih.virtual_warehouse_id
+        left join product_detail pd on vidh.sku_id = pd.id and pd.is_deleted = false
+        left join warehouse wh on vidh.warehouse_id = wh.id and wh.is_deleted = false
+        left join virtual_warehouse vw on vidh.virtual_warehouse_id = vw.id and vw.is_deleted = false
     </select>
 
 
