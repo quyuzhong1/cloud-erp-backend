@@ -295,7 +295,7 @@
             vid.is_deleted = false and vid.qty > 0 and vid.sku_id = #{skuId}
             and vid.warehouse_id = #{warehouseId} and vid.virtual_warehouse_id = #{virtualWarehouseId}
         </where>
-        order by vid.bill_date asc
+        order by vid.bill_date asc,vid.trade_time asc
     </select>
 
 
