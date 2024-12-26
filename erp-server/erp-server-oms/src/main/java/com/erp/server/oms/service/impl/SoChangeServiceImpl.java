@@ -887,7 +887,7 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
                 pushTaskList.add(pushTaskEntity);
 
 
-                soInfoService.sdyFieldOrderHandler(obj.getSoId(), SyncOperateEnum.OPERATE_APPROVE.getCode(), "");
+                soInfoService.sdyFieldOrderHandler(obj.getSoId(), SyncOperateEnum.OPERATE_APPROVE.getCode());
             });
         }
 
