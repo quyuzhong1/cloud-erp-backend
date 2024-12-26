@@ -179,7 +179,7 @@
             vtf.source_type,
             vtf.source_code,
             vtf.dict_inventory_status,
-            vidh.qty as batchQty,
+            vtf.qty as batchQty,
             vidh.wait_qty as waitBatchQty,
             vidh.inventory_age_days,
             vidh.update_time

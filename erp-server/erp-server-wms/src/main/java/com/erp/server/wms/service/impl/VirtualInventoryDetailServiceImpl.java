@@ -452,7 +452,7 @@ public class VirtualInventoryDetailServiceImpl extends SuperServiceImpl<VirtualI
                             CharSequenceUtil.equals(obj.getSkuId(),listDTO.getSkuId())
                             && CharSequenceUtil.equals(obj.getWarehouseId(),listDTO.getWarehouseId())
                             && CharSequenceUtil.equals(obj.getVirtualWarehouseId(),listDTO.getVirtualWarehouseId()))
-                    .map(VirtualInventoryAgeDTO.viewHisInventoryAgeDetailDTO::getQty).reduce(MathUtil.ZERO, Integer::sum);
+                    .map(VirtualInventoryAgeDTO.viewHisInventoryAgeDetailDTO::getWaitQty).reduce(MathUtil.ZERO, Integer::sum);
 
             for (CfgSettingVirtualValueDTO.InventoryAgeDateTO inventoryAgeDateTO :list) {
                 String ageDateInterval = "";
@@ -468,7 +468,7 @@ public class VirtualInventoryDetailServiceImpl extends SuperServiceImpl<VirtualI
                         && CharSequenceUtil.equals(obj.getVirtualWarehouseId(),listDTO.getVirtualWarehouseId())
                         && obj.getInventoryAgeDays() > inventoryAgeDateTO.getStartDays()
                         && ( ObjUtil.isEmpty(inventoryAgeDateTO.getEndDays()) || inventoryAgeDateTO.getEndDays() >= obj.getInventoryAgeDays())
-                ).map(VirtualInventoryAgeDTO.viewHisInventoryAgeDetailDTO::getQty).reduce(MathUtil.ZERO, Integer::sum);
+                ).map(VirtualInventoryAgeDTO.viewHisInventoryAgeDetailDTO::getWaitQty).reduce(MathUtil.ZERO, Integer::sum);
                 //比例
                 BigDecimal ratio =  MathUtil.divide(MathUtil.valueOf(qty) ,MathUtil.valueOf(totalQty)).multiply(MathUtil.BigDecimal_100);
                 map.put(ageDateInterval,new VirtualInventoryAgeDTO.VirtualIntervalDTO(qty,StrUtil.format("{}%",ratio.stripTrailingZeros().toPlainString()) ));
