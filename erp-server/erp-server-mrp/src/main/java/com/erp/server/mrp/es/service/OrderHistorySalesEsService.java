@@ -85,7 +85,7 @@ public interface OrderHistorySalesEsService {
      * @param startDate 开始时间
      * @param endDate   结束时间
      */
-    Page<OrderHistorySalesEsEntity> findByShopIdInAndSkuIdInAndDateBetween(List<String> shopIds, List<String> skuIds, LocalDate startDate, LocalDate endDate, Pageable pageable);
+    List<OrderHistorySalesEsEntity> findByShopIdInAndSkuIdInAndDateBetween(List<String> shopIds, List<String> skuIds, LocalDate startDate, LocalDate endDate, Object[] searchAfterValues);
 
 
     /**
