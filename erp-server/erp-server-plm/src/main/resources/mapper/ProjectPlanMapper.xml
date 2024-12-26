@@ -16,7 +16,7 @@
           pp.remark
           FROM project_plan PP LEFT JOIN product_info pi
           ON PP.product_id =pi.id AND pi.is_deleted = FALSE
-          WHERE PP.is_deleted=false
+          WHERE ${params.sqlMap.default} and PP.is_deleted=false
           <if test="params.searchKeyword !=null and params.searchKeyword!=''">
                AND
                pi.name ILIKE concat('%',#{params.searchKeyword}::text,'%')
