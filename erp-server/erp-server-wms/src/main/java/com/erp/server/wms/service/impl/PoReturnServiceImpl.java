@@ -3051,6 +3051,9 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
         if(pushDownPurchaseViews.stream().anyMatch(v->StringUtils.isNotBlank(v.getPurchaseId()))){
             throw new ServiceException("无采购订单关联才可以下推采购订单");
         }
+        if(pushDownPurchaseViews.stream().anyMatch(v->!v.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus()))){
+            throw new ServiceException("只有审批通过的才可以下推采购订单");
+        }
         List<String> skuIdList = pushDownPurchaseViews.stream().map(PurchasePriceDTO.PushDownPurchaseView::getSkuId).collect(Collectors.toList());
         List<ProductDetailEntity> detailEntityList = plmTaskFeign.getByIdList(skuIdList);
         //价目查询
@@ -3168,6 +3171,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
                 addDetailDTO.setRemark(detailView.getRemark());
                 addDetailDTO.setCurrency(detailView.getCurrency());
                 addDetailDTO.setCurrencySymbol(detailView.getCurrencySymbol());
+                addDetailDTO.setIsGift(detailView.getIsGift());
                 addDetailList.add(addDetailDTO);
             }
             addDTO.setDetails(addDetailList);
