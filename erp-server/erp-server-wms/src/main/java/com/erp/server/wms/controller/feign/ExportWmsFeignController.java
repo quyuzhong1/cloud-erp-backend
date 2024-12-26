@@ -743,7 +743,6 @@ public class ExportWmsFeignController {
      * 历史库龄明细数据导出
      */
     @PostMapping("/hisInventoryAgeDetailPaging")
-    @WebAdvanceQuery
     public PagingVO<VirtualInventoryAgeDTO.HisInventoryAgeDetailDTO> hisInventoryAgeDetailPaging(@RequestBody PagingDTO<VirtualInventoryAgeDTO.HisInventoryAgeDetailParamDTO> dto){
         return virtualInventoryDetailService.exportHisInventoryAgeDetailPaging(dto);
     }
