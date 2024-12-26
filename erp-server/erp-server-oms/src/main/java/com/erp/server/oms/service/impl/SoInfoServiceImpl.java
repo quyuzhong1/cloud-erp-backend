@@ -3908,11 +3908,11 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
     }
 
     @Override
-    public void sdyFieldOrderHandler(String soId, String operateEnum, String deliveryStatus) {
+    public void sdyFieldOrderHandler(String soId, String operateEnum) {
         //同步数帝云
         SoInfoDTO.ViewDTO view = this.view(soId);
         List<SoDetailEntity> soDetailEntities = soDetailService.listBaseByMainId(view.getId());
-        syncKingdeeSoService.syncDataToSdy(view, soDetailEntities, operateEnum, deliveryStatus);
+        syncKingdeeSoService.syncDataToSdy(view, soDetailEntities, operateEnum);
     }
 
     @Override
