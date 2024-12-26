@@ -750,6 +750,7 @@ public class ThirdMappingServiceImpl extends SuperServiceImpl<ThirdMappingMapper
         //获取仓库信息
         String sysName = null;
         String kingDeeCode = null;
+        String dictPlatform = "";
         switch (ThirdSysTypeEnum.getByCode(addDTO.getType())) {
             case WAREHOUSE:
                 WarehouseDTO.ListDTO warehouse = wmsWarehouseFeign.listByIds(Collections.singletonList(addDTO.getSysId())).stream().findFirst().orElse(null);
@@ -765,6 +766,7 @@ public class ThirdMappingServiceImpl extends SuperServiceImpl<ThirdMappingMapper
                     throw new ServiceException(ApiError.ERROR_SYS_TYPE_NOTFOUND, ThirdSysTypeEnum.getNameByCode(addDTO.getType()));
                 }
                 sysName = shopInfo.getName();
+                dictPlatform = shopInfo.getDictPlatform();
                 break;
             case VIRTUAL_WAREHOUSE:
                 sysName = addDTO.getSysName();
@@ -792,7 +794,7 @@ public class ThirdMappingServiceImpl extends SuperServiceImpl<ThirdMappingMapper
             return kingDeeCode;
         }
         //校验第三方仓库
-        checkThirdAddList(thirdList, sysName, addDTO);
+        checkThirdAddList(thirdList, sysName, addDTO,dictPlatform );
         //查看当前平台sysId绑定的第三方信息
         List<ThirdMappingEntity> existMappingList = getList(addDTO.getType(), addDTO.getSysId());
         //如果当前平台没有绑定第三方数据，直接添加
@@ -841,7 +843,7 @@ public class ThirdMappingServiceImpl extends SuperServiceImpl<ThirdMappingMapper
         return kingDeeCode;
     }
 
-    private void checkThirdAddList(List<ThirdMappingDTO.ThirdAddDTO> thirdList, String sysName, ThirdMappingDTO.AddDTO addDTO) {
+    private void checkThirdAddList(List<ThirdAddDTO> thirdList, String sysName, ThirdMappingDTO.AddDTO addDTO, String dictPlatform) {
         String type = addDTO.getType();
         String sysId = addDTO.getSysId();
         thirdList.forEach(thirdAddDTO -> {
@@ -876,6 +878,9 @@ public class ThirdMappingServiceImpl extends SuperServiceImpl<ThirdMappingMapper
                     thirdName = thirdShopEntity.getName();
                     thirdAddDTO.setThirdInfoId(thirdShopEntity.getId());
                     thirdAddDTO.setThirdCode(thirdShopEntity.getCode());
+                    if(PlatformDictEnum.LING_XING.getCode().equals(addDTO.getThirdSysType()) && !dictPlatform.equals(thirdShopEntity.getGroupId())){
+                        throw new ServiceException("ERP店铺平台【{}】与领星店铺平台【{}】不一致",dictPlatform,thirdShopEntity.getGroupId());
+                    }
                     break;
                 case VIRTUAL_WAREHOUSE:
                     //校验第三方仓库是否存在

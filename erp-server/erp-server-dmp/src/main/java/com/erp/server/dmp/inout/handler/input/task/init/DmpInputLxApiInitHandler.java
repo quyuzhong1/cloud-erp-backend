@@ -52,7 +52,7 @@ public class DmpInputLxApiInitHandler extends DmpInputInitHandler {
         int page = 0;
         requestMap.put("offset", page);
         // 默认:200
-        int pageSize = 2;
+        int pageSize = 200;
         // 配置优先
         Object lengthObj = requestMap.get("length");
         if (null != lengthObj){

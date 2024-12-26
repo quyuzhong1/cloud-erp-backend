@@ -21,6 +21,7 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -127,7 +128,15 @@ public class DmpInputLxOrderDmpHandler extends DmpInputDbConvertDmpHandler {
                         Object transactionInfoObjIndex1 = transactionInfoJsonArray.get(0);
                         Map<String, Object> transactionInfoMap = (JSONObject) transactionInfoObjIndex1;
                         for (Map.Entry<String, Object> entry : transactionInfoMap.entrySet()) {
-                            dmpDataMap.put(entry.getKey(), CurrencyUtil.parseAmount(entry.getValue().toString()));
+                            BigDecimal amount = CurrencyUtil.parseAmount(entry.getValue().toString());
+                            dmpDataMap.put(entry.getKey(), amount);
+                            if ("order_total_amount".equalsIgnoreCase(entry.getKey())){
+                                dmpDataMap.put("payAmount", amount);
+                                dmpDataMap.put("allAmount", amount);
+                            }
+                            if ("customer_shipping_amount".equalsIgnoreCase(entry.getKey())){
+                                dmpDataMap.put("shippingAmount", amount);
+                            }
                         }
                     }
                 }
