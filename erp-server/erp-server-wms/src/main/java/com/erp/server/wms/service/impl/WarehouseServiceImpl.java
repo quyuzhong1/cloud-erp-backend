@@ -662,7 +662,7 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
 
     private void autoAddAreaAndLocation(WarehouseEntity warehouse) {
         WarehouseAreaDTO.Add areaAddDTO = new WarehouseAreaDTO.Add();
-        areaAddDTO.setAreaType(WarehouseLocationTypeEnum.AREA.getCode());
+        areaAddDTO.setAreaType(WarehouseAreaTypeEnum.STAGING_AREA.getCode());
         areaAddDTO.setWarehouseId(warehouse.getId());
         areaAddDTO.setCode(WarehouseLocationAreaTypeEnum.PICK.getCode());
         areaAddDTO.setName(WarehouseAreaTypeEnum.STAGING_AREA.getName());
