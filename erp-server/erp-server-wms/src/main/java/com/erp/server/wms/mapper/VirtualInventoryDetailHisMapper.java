@@ -41,7 +41,7 @@ public interface VirtualInventoryDetailHisMapper extends BaseMapper<VirtualInven
      * 查询历史平均库龄数据
      * @author will
      * @date 2024/12/10 17:36
-     * @param dto
+     * @param params
      * @return viewHisInventoryAgeDetailDTO
      */
     VirtualInventoryAgeDTO.viewHisInventoryAgeDetailDTO getHisInventoryAgeDetail(@Param("params") VirtualInventoryAgeDTO.HisInventoryAgeDetailParamDTO params);

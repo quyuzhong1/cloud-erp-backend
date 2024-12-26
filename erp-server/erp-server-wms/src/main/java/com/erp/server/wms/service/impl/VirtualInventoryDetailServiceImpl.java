@@ -325,42 +325,35 @@ public class VirtualInventoryDetailServiceImpl extends SuperServiceImpl<VirtualI
 
     @Override
     public PagingVO<VirtualInventoryAgeDTO.HisInventoryAgeDetailDTO> exportHisInventoryAgeDetailPaging(PagingDTO<VirtualInventoryAgeDTO.HisInventoryAgeDetailParamDTO> dto) {
-        IPage<VirtualInventoryAgeDTO.HisInventoryAgeDetailDTO> pageData = this.baseMapper.exportHisInventoryAgeDetailPaging(dto.page(), dto.getParams());
-        handleInventoryAgeDetail(pageData.getRecords(),dto.getParams());
+        IPage<VirtualInventoryAgeDTO.HisInventoryAgeDetailDTO> pageData = this.baseMapper.hisInventoryAgeDetailPaging(dto.page(), dto.getParams());
+        exportHisInventoryAgeDetail(pageData.getRecords(),dto.getParams());
         return new PagingVO<>(pageData);
     }
 
-
     /**
-     * 库龄明细导出数据处理
+     * 导出数据处理
      * @author will
-     * @date 2024/12/9 11:30
+     * @date 2024/12/26 16:52
      * @param list
-     * @param dto
+     * @param params
      */
-    private void handleInventoryAgeDetail (List<VirtualInventoryAgeDTO.HisInventoryAgeDetailDTO> list,VirtualInventoryAgeDTO.HisInventoryAgeDetailParamDTO dto) {
+    private void exportHisInventoryAgeDetail (List<VirtualInventoryAgeDTO.HisInventoryAgeDetailDTO> list,VirtualInventoryAgeDTO.HisInventoryAgeDetailParamDTO params) {
         if (CollUtil.isEmpty(list)) {
             return;
         }
+        VirtualInventoryAgeDTO.HisInventoryAgeDetailParamDTO dto = new VirtualInventoryAgeDTO.HisInventoryAgeDetailParamDTO();
+        BeanMapperUtils.copy(params,dto);
+        VirtualInventoryAgeDTO.viewHisInventoryAgeDetailDTO viewHisInventoryAgeDetailDTO = this.viewHisInventoryAgeDetail(dto);
 
-        //查询历史平均库龄
-        VirtualInventoryDetailHisDTO.ParamDTO paramDTO = new VirtualInventoryDetailHisDTO.ParamDTO();
-        paramDTO.setSkuIdList(Collections.singletonList(dto.getSkuId()));
-        paramDTO.setWarehouseIdList(Collections.singletonList(dto.getWarehouseId()));
-        paramDTO.setVirtualWarehouseIdList(Collections.singletonList(dto.getVirtualWarehouseId()));
-        paramDTO.setEndDate(dto.getDate());
-        List<VirtualInventoryAgeDTO.viewHisInventoryAgeDetailDTO> virtualInventoryHisList = virtualInventoryDetailHisService.listByParam(paramDTO);
-
-        for (VirtualInventoryAgeDTO.HisInventoryAgeDetailDTO detailDTO : list) {
-            //统计日期
-            detailDTO.setDate(dto.getDate());
-            //平均库龄
-            if (CollUtil.isNotEmpty(virtualInventoryHisList)) {
-                detailDTO.setAvgInventoryAgeDays(virtualInventoryHisList.get(0).getAvgInventoryAgeDays());
-                detailDTO.setAvgInventoryAgeDaysStr(virtualInventoryHisList.get(0).getAvgInventoryAgeDays().stripTrailingZeros().toPlainString());
-            }
+        for (VirtualInventoryAgeDTO.HisInventoryAgeDetailDTO ageDetailDTO : list) {
+            BeanMapperUtils.copy(viewHisInventoryAgeDetailDTO,ageDetailDTO);
+            ageDetailDTO.setSourceTypeName(SourceTypeEnum.getName(ageDetailDTO.getSourceType()));
+            ageDetailDTO.setDictInventoryStatusName(InventoryStatusEnum.getNameByCode(ageDetailDTO.getDictInventoryStatus()));
+            ageDetailDTO.setAvgInventoryAgeDaysStr(ageDetailDTO.getAvgInventoryAgeDays().stripTrailingZeros().toPlainString());
+            ageDetailDTO.setDate(dto.getDate());
         }
     }
+
 
     @Override
     public List<String> getCfgHead() {
