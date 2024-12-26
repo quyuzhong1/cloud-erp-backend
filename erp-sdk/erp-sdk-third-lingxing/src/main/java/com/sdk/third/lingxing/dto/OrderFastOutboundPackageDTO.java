@@ -10,17 +10,7 @@ import java.io.Serializable;
 import java.util.List;
 
 @Data
-@NoArgsConstructor
-@AllArgsConstructor
 public class OrderFastOutboundPackageDTO implements Serializable {
-
-    /**
-     * 每个单对应出库信息
-     * 	出库包裹信息，最多1000个订单
-     */
-    @NotNull(message = "出库信息不能为空")
-    @Size(max = 1000)
-    private List<@NotNull(message = "出库信息不能为空") PackageInfo> packageList;
 
 
     @Data
