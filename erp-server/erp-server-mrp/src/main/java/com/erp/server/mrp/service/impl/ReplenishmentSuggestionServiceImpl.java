@@ -1167,7 +1167,7 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
         LocalDate startDate = params.getStartCalcDate().minusDays(361);
         LocalDate endDate = params.getStartCalcDate().minusDays(1);
         org.springframework.data.domain.Page<OrderHistorySalesEsEntity> historySales = orderHistorySalesEsService.findByShopIdInAndSkuIdInAndDateBetween(params.getShopIds(), params.getSkuIds(), startDate, endDate,
-                PageRequest.of(dto.getCurrPage(), dto.getPageSize()));
+                PageRequest.of(dto.getCurrPage() + 1, dto.getPageSize()));
         if (ObjectUtil.isEmpty(historySales.toList())) {
             return new PagingVO<>();
         }
