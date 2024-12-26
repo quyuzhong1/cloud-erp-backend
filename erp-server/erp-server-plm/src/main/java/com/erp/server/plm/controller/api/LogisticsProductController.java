@@ -7,6 +7,7 @@ package com.erp.server.plm.controller.api;/**
  */
 
 import cn.hutool.core.util.ObjectUtil;
+import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.*;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
@@ -19,6 +20,7 @@ import com.common.core.enums.LogActionEnum;
 import com.common.core.exception.ServiceException;
 import com.erp.model.plm.dto.LogisticsProductDTO;
 import com.erp.model.plm.entity.ProductLogisticsEntity;
+import com.erp.server.plm.query.LogisticsProductQueryHandler;
 import com.erp.server.plm.service.LogisticsProductService;
 import com.erp.server.plm.service.ProductLogisticsService;
 import lombok.extern.slf4j.Slf4j;
@@ -63,6 +65,7 @@ public class LogisticsProductController extends BaseController {
      * @return
      */
     @PostMapping("/paging")
+    @WebAdvanceQuery(handler = LogisticsProductQueryHandler.class)
     public ApiResult<PagingVO<LogisticsProductDTO.PagingVO>> paging(@RequestBody @Valid PagingDTO<LogisticsProductDTO.PagingParamDTO> dto) {
         PagingVO<LogisticsProductDTO.PagingVO> pagingVO = logisticsProductService.paging(dto);
         return success(pagingVO);

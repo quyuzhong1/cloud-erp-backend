@@ -1233,7 +1233,7 @@
         ON ps.sku_id=pd.id AND ps.is_deleted= FALSE
         LEFT JOIN product_customs pc
         ON pc.sku_id=pd.id AND pc.is_deleted= FALSE and pc.country = 'default'
-        WHERE pd.is_deleted=FALSE
+        WHERE ${params.sqlMap.default} and pd.is_deleted=FALSE
         <if test="approveStatus!=null">
             AND pd.status=#{approveStatus}
         </if>

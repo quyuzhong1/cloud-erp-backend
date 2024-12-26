@@ -403,9 +403,9 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
         Integer approvalStatus = ProductDetailStatusEnum.APPROVAL_PASS.getCode();
         String permissionSql = dto.getPermissionSql();
         Integer updateCount = baseMapper.logisticsProductUpdateCount(approvalStatus, fieldList, permissionSql);
-        tab.setType("update");
+        tab.setTabFlag("update");
+        tab.setTabFlagName("更新");
         tab.setCount(updateCount);
-        list.add(tab);
         PageListTypeEnum[] values = PageListTypeEnum.values();
         for (PageListTypeEnum item : values) {
             LogisticsProductDTO.PagingParamDTO searchParamDTO = new LogisticsProductDTO.PagingParamDTO();
@@ -420,9 +420,11 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
                 count = this.baseMapper.listCount(searchParamDTO);
             }
             resultDTO.setCount(ObjectUtils.isEmpty(count) ? MathUtil.ZERO : count);
-            resultDTO.setType(item.getCode());
+            resultDTO.setTabFlag(item.getCode());
+            resultDTO.setTabFlagName(item.getName());
             list.add(resultDTO);
         }
+        list.add(tab);
         return list;
     }
 
