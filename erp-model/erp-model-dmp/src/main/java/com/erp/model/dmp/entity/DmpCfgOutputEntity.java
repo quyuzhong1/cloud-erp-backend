@@ -66,7 +66,6 @@ public class DmpCfgOutputEntity extends BaseEntity<DmpCfgOutputEntity> {
      @TableField("output_class")
      private String outputClass;
 
-
     public static final String SYSTEM_ID = "system_id";
 
     public static final String INPUT_CONVERT_ID = "input_convert_id";

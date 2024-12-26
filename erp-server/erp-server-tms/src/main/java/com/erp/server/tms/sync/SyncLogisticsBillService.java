@@ -20,4 +20,6 @@ public interface SyncLogisticsBillService {
 
     void syncDataToSdy(LogisticsBillEntity entity, List<LogisticsBillDetailEntity> detailEntityList, String operate, List<LogisticsChannelEntity> logisticsChannelEntities, List<LogisticsSupplierEntity> logisticsSupplierEntities);
 
+    void syncDataToSdy(LogisticsBillEntity entity, List<LogisticsBillDetailEntity> detailEntityList, String operate);
+
 }
