@@ -233,8 +233,12 @@ public class VirtualInventoryDetailServiceImpl extends SuperServiceImpl<VirtualI
             if(!equals) {
                 continue;
             }
+            //开始日期
             daysList.add(inventoryAgeDateTO.getStartDays());
-            daysList.add(inventoryAgeDateTO.getEndDays());
+            //结束日期
+            if (ObjUtil.isNotNull(inventoryAgeDateTO.getEndDays())) {
+                daysList.add(inventoryAgeDateTO.getEndDays());
+            }
         }
         return daysList;
     }
