@@ -162,6 +162,7 @@ public class InventoryController extends BaseController {
      * @return
      */
     @PostMapping("/transport/paging")
+    @WebAdvanceQuery
     public ApiResult<PagingVO<InventoryReportDTO.TransportPagingDTO>> transportPaging(@RequestBody @Validated PagingDTO<InventoryReportDTO.TransportSearchParamDTO> dto) {
         return success(transactionFlowService.transportPagingList(dto));
     }
@@ -231,6 +232,7 @@ public class InventoryController extends BaseController {
      * @return
      */
     @PostMapping("/dailyInventoryPaging")
+    @WebAdvanceQuery
     public ApiResult<PagingVO<InventoryReportDTO.ListDailyInventoryDTO>> dailyInventoryPaging(@RequestBody @Validated PagingDTO<InventoryReportDTO.DailyInventoryParamDTO> dto) {
         return success(transactionFlowService.dailyInventoryPaging(dto));
     }
