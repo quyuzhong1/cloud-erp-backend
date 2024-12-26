@@ -13,12 +13,11 @@
 package com.erp.server.dmp.lingxing;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
+import com.common.core.exception.ServiceException;
 import com.erp.server.dmp.ErpServerDmpApplication;
-import com.sdk.third.lingxing.dto.FbaReceiveReqDTO;
-import com.sdk.third.lingxing.dto.FbaShipmentReceiveDTO;
-import com.sdk.third.lingxing.dto.Result;
-import com.sdk.third.lingxing.dto.ShopInfoDTO;
+import com.sdk.third.lingxing.dto.*;
 import com.sdk.third.lingxing.utils.LingxingApiUtils;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -27,9 +26,11 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import java.time.LocalDate;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * API tests for Lingxing
@@ -81,5 +82,24 @@ public class LingxingApiTest {
         Object data = result.getData();
         System.out.println("领星仓库数据结果");
         System.out.println(JSONUtil.toJsonStr(data));
+    }
+
+    @Test
+    public void fastOutbound(){
+        OrderFastOutboundPackageDTO.PackageInfo packageInfo = new OrderFastOutboundPackageDTO.PackageInfo();
+        packageInfo.setGlobalOrderNo("103521548118516736");
+        packageInfo.setLogisticsTypeId("4-9");
+        packageInfo.setWaybillNo("SF7444493503348");
+        packageInfo.setWid(Long.valueOf("96"));
+        Result<Object> objectResult = LingxingApiUtils.fastOutbound(Collections.singletonList(packageInfo));
+        System.out.println("结果列表");
+        System.out.println(JSONUtil.toJsonStr(objectResult));
+    }
+
+    @Test
+    public void cancelOrderByOrderList(){
+        Result<Object> objectResult = LingxingApiUtils.cancelOrderByOrderList(Collections.singletonList("103522157705927168"));
+        System.out.println("结果列表");
+        System.out.println(JSONUtil.toJsonStr(objectResult));
     }
 }

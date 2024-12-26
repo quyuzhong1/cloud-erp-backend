@@ -3,6 +3,7 @@ package com.sdk.third.lingxing.utils;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.exceptions.ExceptionUtil;
+import cn.hutool.core.net.URLEncodeUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
@@ -22,8 +23,10 @@ import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Resource;
 import javax.validation.constraints.NotNull;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * 领星API 工具类
@@ -97,9 +100,10 @@ public class LingxingApiUtils {
     /**
      * 添加通用参数并签名和post请求请求参数
      */
-    public static Result postAndSign(String path, TreeMap<String, Object> requestBody) {
+    public static Result postAndSign(String path, TreeMap<String, Object> requestBody, boolean signParamListToStr) {
         // 组合请求参数并生成签名
-        TreeMap<String, Object> queryParam = combineQueryParams(requestBody);
+        TreeMap<String, Object> queryParam = combineQueryParams(requestBody, signParamListToStr);
+
         // 构建请求
         HttpRequest<Result> build = HttpRequest.builder(Result.class)
                 .method(HttpMethod.POST)
@@ -124,7 +128,7 @@ public class LingxingApiUtils {
      * 添加通用参数并签名和post请求请求参数
      */
     public static Result postAndSign(String path, Map<String, Object> requestBody) {
-        return postAndSign(path, new TreeMap<>(requestBody));
+        return postAndSign(path, new TreeMap<>(requestBody), false);
     }
 
     /**
@@ -132,7 +136,7 @@ public class LingxingApiUtils {
      */
     public static <T> Result<T> getAndSign(String path, TreeMap<String, Object> requestBody) {
         // 组合请求参数并生成签名
-        TreeMap<String, Object> queryParam = combineQueryParams(requestBody);
+        TreeMap<String, Object> queryParam = combineQueryParams(requestBody, false);
         // 构建请求
         HttpRequest<Result> build = HttpRequest.builder(Result.class)
                 .method(HttpMethod.GET)
@@ -162,7 +166,7 @@ public class LingxingApiUtils {
     /**
      * 组合请求参数并生成签名
      */
-    public static TreeMap<String, Object> combineQueryParams(TreeMap<String, Object> requestBody) {
+    public static TreeMap<String, Object> combineQueryParams(TreeMap<String, Object> requestBody, boolean signParamListToStr) {
         // 获取访问token
         String accessToken = getAccessToken();
         // 组合请求参数
@@ -174,13 +178,51 @@ public class LingxingApiUtils {
         TreeMap<String, Object> signMap = new TreeMap<>();
         signMap.putAll(queryParam);
         if (!CollectionUtils.isEmpty(requestBody)) {
-            signMap.putAll(requestBody);
+            if (signParamListToStr){
+                TreeMap<String, String> resultRequestBody = convertToTreeMapString(requestBody);
+                signMap.putAll(resultRequestBody);
+            } else {
+                signMap.putAll(requestBody);
+            }
         }
         // 生成签名
         String sign = LingxingApiSignUtils.sign(signMap, APP_ID);
         queryParam.put("sign", sign);
         log.debug("领星签名：sign={}", sign);
         return queryParam;
+    }
+
+    /**
+     * 转换TreeMap<String, Object>为TreeMap<String, String>
+     */
+    private static TreeMap<String, String> convertToTreeMapString(TreeMap<String, Object> requestBody) {
+        TreeMap<String, String> result = new TreeMap<>();
+        for (Map.Entry<String, Object> entry : requestBody.entrySet()) {
+            // 将 Object 转为 String，处理 null 情况
+            if (null == entry.getValue()){
+                continue;
+            }
+            Object valueObj = entry.getValue();
+            String value;
+            if (valueObj instanceof List){
+                // 数组转List
+                value = JSONUtil.toJsonStr(entry.getValue());
+            } else {
+                value = entry.getValue().toString();
+            }
+            result.put(entry.getKey(), value);
+        }
+        return result;
+    }
+
+    /**
+     * 更新-生成签名和post请求
+     * <a href="https://apidoc.lingxing.com/#/docs/Guidance/QA?id=_9-%e5%8f%82%e6%95%b0%e4%b8%8d%e5%90%88%e6%b3%95">调整原因</a>
+     * 原因：数组、List集合在生成sign过程中会将其数据类型转为string类型后传入body参数当中，而转义后的数据不符合接口文档传入参数类型的规范
+     * 解决方法：在生成sign之后，添加一段代码将body参数中对应的值重新以本身数组或List集合类型进行覆盖即可
+     */
+    public static Result postAndSignCheckListConvert(String path, Map<String, Object> requestBody) {
+        return postAndSign(path, new TreeMap<>(requestBody), true);
     }
 
 
@@ -348,7 +390,7 @@ public class LingxingApiUtils {
     public static Result<Object> cancelOrderByOrderList(List<String> orderList) {
         Map<String, Object> requestMap = new HashMap<>();
         requestMap.put("order_list", orderList);
-        Result<Object> result = LingxingApiUtils.postAndSign(LingxingApiUtils.CANCEL_ORDER_URI, requestMap);
+        Result<Object> result = LingxingApiUtils.postAndSignCheckListConvert(LingxingApiUtils.CANCEL_ORDER_URI, requestMap);
         if (!"0".equalsIgnoreCase(result.getCode())) {
             String errorMsg = StrUtil.format("请求领星标记订单不发货失败:,order_list={}, result={}", orderList, JSONUtil.toJsonStr(result));
             log.error(errorMsg);
@@ -364,9 +406,12 @@ public class LingxingApiUtils {
      * @return 响应
      */
     public static Result<Object> fastOutbound(List<OrderFastOutboundPackageDTO.PackageInfo> packageList) {
-        OrderFastOutboundPackageDTO orderFastOutboundPackageDTO = new OrderFastOutboundPackageDTO(packageList);
-        Map<String, Object> requestMap = BeanUtil.beanToMap(orderFastOutboundPackageDTO);
-        Result<Object> result = LingxingApiUtils.postAndSign(LingxingApiUtils.FAST_OUTBOUND_URI, requestMap);
+        List<Map<String, Object>> itemMap = packageList.stream()
+                .map(e -> new TreeMap<>(BeanUtil.beanToMap(e, true, true)))
+                .collect(Collectors.toList());
+        TreeMap<String, Object> requestMap = new TreeMap<>();
+        requestMap.put("package", itemMap);
+        Result<Object> result = LingxingApiUtils.postAndSignCheckListConvert(LingxingApiUtils.FAST_OUTBOUND_URI, requestMap);
         if (!"0".equalsIgnoreCase(result.getCode())) {
             String errorMsg = StrUtil.format("请求领星标记订单快速出库失败:,request={}, result={}", requestMap, JSONUtil.toJsonStr(result));
             log.error(errorMsg);
@@ -382,9 +427,12 @@ public class LingxingApiUtils {
      * @return 响应
      */
     public static Result<Object> updateOrder(List<UpdateOrderDTO.OrderInfo> orderList) {
-        UpdateOrderDTO updateOrderDTO = new UpdateOrderDTO(orderList);
-        Map<String, Object> requestMap = BeanUtil.beanToMap(updateOrderDTO);
-        Result<Object> result = LingxingApiUtils.postAndSign(LingxingApiUtils.UPDATE_ORDER_URI, requestMap);
+        Map<String, Object> requestMap = new HashMap<>();
+        List<Map<String, Object>> dataMap = orderList.stream()
+                .map(e -> new TreeMap<>(BeanUtil.beanToMap(e, true, true)))
+                .collect(Collectors.toList());
+        requestMap.put("order_list", dataMap);
+        Result<Object> result = LingxingApiUtils.postAndSignCheckListConvert(LingxingApiUtils.UPDATE_ORDER_URI, requestMap);
         if (!"0".equalsIgnoreCase(result.getCode())) {
             String errorMsg = StrUtil.format("请求领星编辑/更新自发货订单失败:,request={}, result={}", requestMap, JSONUtil.toJsonStr(result));
             log.error(errorMsg);
