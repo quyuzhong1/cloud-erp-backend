@@ -676,7 +676,7 @@
             max(tf.org_id) as orgId
             from transaction_flow tf
             <where>
-                tf.is_deleted = false and (tf.dict_inventory_status = 'frozen' or tf.dict_inventory_status = 'usable')
+                ${params.sqlMap.default} and tf.is_deleted = false and (tf.dict_inventory_status = 'frozen' or tf.dict_inventory_status = 'usable')
                 <if test="params.dateType != null and params.dateType != '' and params.dateType == 'approveDate'">
                     and (#{params.date}::TIMESTAMP + INTERVAL '1 DAY' ) > tf.trade_time
                 </if>
