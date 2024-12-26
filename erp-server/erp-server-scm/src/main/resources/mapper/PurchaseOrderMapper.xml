@@ -543,18 +543,6 @@
         LEFT JOIN purchase_order_supplier pos ON po.id = pos.purchase_order_id AND pos.is_deleted = FALSE
         WHERE po.is_deleted = FALSE and po.type = 'CGDD01_SYS' and po.invalid_status = false and po.approve_status = 'approve'
         AND purchase_date >= #{purchaseDateList[0]} and purchase_date &lt; #{purchaseDateList[1]}::TIMESTAMP + INTERVAL '1 DAY'
-        <if test="purchaseOrderIds != null and purchaseOrderIds.size > 0">
-            AND po.id not in
-            <foreach collection="purchaseOrderIds" item="id" open="(" close=")" separator=",">
-                #{id}
-            </foreach>
-        </if>
-        <if test="supplierIds != null and supplierIds.size > 0">
-            AND pos.supplier_id not in
-            <foreach collection="supplierIds" item="id" open="(" close=")" separator=",">
-                #{id}
-            </foreach>
-        </if>
         GROUP BY pod.sku_no ,pod.sku_id
     </select>
 
@@ -610,7 +598,20 @@
                 ON
                 T."sku_no" = D."sku_no"
                 AND S."purchase_date" >= T."LatestPurchaseDate" - INTERVAL '3 months'
+        LEFT JOIN purchase_order_supplier P ON S.id = P.purchase_order_id AND P.is_deleted = FALSE
         WHERE S.is_deleted = false and S.type = 'CGDD01_SYS' and S.invalid_status = false and S.approve_status = 'approve'
+        <if test="params.purchaseOrderIds != null and params.purchaseOrderIds.size > 0">
+            AND S.id not in
+            <foreach collection="params.purchaseOrderIds" item="id" open="(" close=")" separator=",">
+                #{id}
+            </foreach>
+        </if>
+        <if test="params.supplierIds != null and params.supplierIds.size > 0">
+            AND P.supplier_id not in
+            <foreach collection="params.supplierIds" item="id" open="(" close=")" separator=",">
+                #{id}
+            </foreach>
+        </if>
     </select>
 
     <select id="statisticsBySupplier" resultType="com.erp.model.scm.dto.PurchaseStatisticsDTO$StatisticsMonthDTO">

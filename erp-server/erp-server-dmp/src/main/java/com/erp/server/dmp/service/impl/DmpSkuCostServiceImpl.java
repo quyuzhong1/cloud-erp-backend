@@ -36,6 +36,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -123,6 +124,8 @@ public class DmpSkuCostServiceImpl extends SuperServiceImpl<DmpSkuCostMapper, Dm
         paramDTO.setSupplierIds(supplierIds);
         //查询所有子级SKU近三个月成本信息
         List<SkuCostDTO> skuCostList = scmTaskFeign.listPurchaseOrderCost(paramDTO);
+        //清除需要计算单过滤后没有成本信息的数据
+        clearNoSkuCostData(skuCostList,resultSkuNoList);
         if (CollectionUtils.isEmpty(skuCostList)) {
             log.warn("未发现进三个月成本信息，cleanSkuCostBySKuNos >>>>>> skuNoList：{}",skuNoList);
             return;
@@ -136,6 +139,22 @@ public class DmpSkuCostServiceImpl extends SuperServiceImpl<DmpSkuCostMapper, Dm
         addOrUpdateSkuCost(childSkuCostList);
     }
 
+    private void clearNoSkuCostData(List<SkuCostDTO> skuCostList, List<String> skuNoList) {
+        LocalDate localDate = LocalDate.now();
+        List<String> costSkuNoList = skuCostList.stream().map(SkuCostDTO::getSkuNo).distinct().collect(Collectors.toList());
+        List<String> skuNOList2 = skuNoList.stream().filter(e -> CollUtil.isNotEmpty(costSkuNoList) && !costSkuNoList.contains(e)).distinct().collect(Collectors.toList());
+        if (CollUtil.isNotEmpty(skuNOList2)){
+            this.lambdaUpdate().set(DmpSkuCostEntity::getIsDeleted, true).eq(DmpSkuCostEntity::getCostDate, localDate).in(DmpSkuCostEntity::getSkuNo, skuNOList2).update();
+            skuNOList2.forEach(skuNo ->{
+                String existKey = StrUtil.format(RedisKeyConstant.DMP_SKU_COST_CODE, skuNo);
+                boolean isHas = redisUtil.hasKey(existKey);
+                if (isHas) {
+                    //删除缓存
+                    redisUtil.keys(existKey).forEach(key -> redisUtil.del(key));
+                }
+            });
+        }
+    }
 
 
     @Override
