@@ -171,6 +171,7 @@
         group by virtual_inventory_id
     </select>
 
+
     <!-- 更新流水状态为反审核 -->
     <update id="updateUnapprovedById">
         update virtual_trans_flow set is_unapproved = true,version = version + 1,
@@ -178,4 +179,13 @@
         where id = #{id} and is_deleted = false
     </update>
 
+    <!-- 查询已审核可生成库龄流水的数据 -->
+    <select id="listApproveFlowDetail" resultType="com.erp.model.wms.entity.VirtualTransFlowEntity">
+        select
+            <include refid="Base_Column_List" />
+        from virtual_trans_flow vtf where is_deleted = false
+        and ((dict_inventory_status = 'usable' and qty > 0 and source_type != 'virtualWarehouseAllocation')
+                 or ((dict_inventory_status = 'usable' and source_type in ('virtualWarehouseAllocation','soOutstock')) or (dict_inventory_status = 'frozen' and source_type in ('machineInfo','transferInfo','soOutstock'))))
+
+    </select>
 </mapper>

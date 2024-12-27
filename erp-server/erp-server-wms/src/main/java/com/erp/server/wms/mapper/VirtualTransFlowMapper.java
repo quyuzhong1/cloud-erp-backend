@@ -2,6 +2,7 @@ package com.erp.server.wms.mapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.erp.model.wms.dto.VirtualTransFlowDTO;
+import com.erp.model.wms.dto.VirtualTransFlowDetailDTO;
 import com.erp.model.wms.entity.VirtualTransFlowEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
@@ -85,4 +86,12 @@ public interface VirtualTransFlowMapper extends BaseMapper<VirtualTransFlowEntit
      * @return Integer
      */
     Integer getVirtualQty(@Param("virtualInvId")String virtualInvId,@Param("startDate") LocalDate startDate);
+    /**
+     * 查询已审核可生成库龄流水的数据
+     * @author will
+     * @date 2024/12/27 21:06
+     * @param dto
+     * @return List<VirtualTransFlowEntity>
+     */
+    List<VirtualTransFlowEntity> listApproveFlowDetail(@Param("dto")VirtualTransFlowDetailDTO.HandleDTO dto);
 }

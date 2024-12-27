@@ -29,7 +29,7 @@ import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.mapper.VirtualTransFlowMapper;
-import com.erp.server.wms.service.VirtualInventoryHisService;
+import com.erp.server.wms.service.VirtualTransFlowDetailService;
 import com.erp.server.wms.service.VirtualTransFlowService;
 import com.erp.server.wms.service.WarehouseService;
 import lombok.extern.slf4j.Slf4j;
@@ -65,7 +65,7 @@ public class VirtualTransFlowServiceImpl extends SuperServiceImpl<VirtualTransFl
     private DownloadTaskFeign downloadTaskFeign;
 
     @Resource
-    private VirtualInventoryHisService virtualInventoryHisService;
+    private VirtualTransFlowDetailService virtualTransFlowDetailService;
 
 
     @Override
@@ -209,6 +209,30 @@ public class VirtualTransFlowServiceImpl extends SuperServiceImpl<VirtualTransFl
                 .eq(VirtualTransFlowEntity::getIsUnapproved,Boolean.FALSE)
                 .orderByAsc(VirtualTransFlowEntity::getBillDate)
                 .list();
+    }
+
+    @Override
+    public List<VirtualTransFlowEntity> listApproveFlowDetail(VirtualTransFlowDetailDTO.HandleDTO dto) {
+        List<VirtualTransFlowEntity> list = baseMapper.listApproveFlowDetail(dto);
+        return list;
+    }
+
+    @Override
+    public void handleAddDetail(VirtualTransFlowDetailDTO.HandleDTO dto) {
+        List<VirtualTransFlowEntity> virtualTransFlowList = this.listApproveFlowDetail(dto);
+        if (CollUtil.isEmpty(virtualTransFlowList)) {
+            return;
+        }
+        Map<String, List<VirtualTransFlowEntity>> map = virtualTransFlowList.stream().collect(Collectors.groupingBy(VirtualTransFlowEntity::getVirtualInventoryId));
+        for (Map.Entry<String, List<VirtualTransFlowEntity>> entry : map.entrySet()) {
+            List<VirtualTransFlowEntity> value = entry.getValue();
+            virtualTransFlowDetailService.handleAddTransFlowDetail(value);
+        }
+    }
+
+    @Override
+    public void updateRemark(String id, String remark) {
+        lambdaUpdate().eq(VirtualTransFlowEntity::getId,id).set(VirtualTransFlowEntity::getRemark,remark).update();
     }
 
     /**
