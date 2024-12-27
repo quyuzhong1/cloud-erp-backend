@@ -323,6 +323,9 @@ public class VirtualTransFlowDetailServiceImpl extends SuperServiceImpl<VirtualT
             detailEntity.setLastOutstockDate(entity.getBillDate());
             updateList.add(detailEntity);
         }
+        if (MathUtil.compareTo(notOutQty,MathUtil.ZERO) > MathUtil.ZERO) {
+            throw new ServiceException(StrUtil.format("单据【{}】库龄库存扣减失败",entity.getSourceCode()));
+        }
         if (CollUtil.isEmpty(addDTOList)) {
             throw new ServiceException("未找到库龄流水数据");
         }

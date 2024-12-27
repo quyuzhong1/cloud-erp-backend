@@ -9,6 +9,7 @@ import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * <p>
@@ -120,4 +121,16 @@ public class WmsVirtualDetailMsgDTO implements Serializable {
     }
 
 
+    @Data
+    @NoArgsConstructor
+    public static class ParamDTO {
+        /**
+         * 业务id
+         * @author will
+         * @date 2024/12/27 18:10
+         * @param null
+         * @return null
+         */
+        private List<String> businessIdList;
+    }
 }
