@@ -1424,6 +1424,9 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         for (PurchaseOrderDTO.ListDTO obj : records) {
             WarehouseLocationEntity warehouseLocationEntity = warehouseLocationEntityList.stream().filter(v->v.getCode().equals(obj.getWarehouseLocation())).findFirst().orElse(new WarehouseLocationEntity());
             obj.setWarehouseLocationName(warehouseLocationEntity.getName());
+            if(StringUtils.isBlank(obj.getWarehouseLocation())){
+                obj.setWarehouseLocationName("空仓位");
+            }
             SkuVO skuVO = skuList.stream().filter(e -> e.getSkuId().equals(obj.getSkuId())).findFirst().orElse(null);
             if (Objects.nonNull(skuVO)){
                 obj.setDeclareModel(skuVO.getDeclareModel());
