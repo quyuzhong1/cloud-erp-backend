@@ -18,7 +18,12 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.elasticsearch.core.ElasticsearchRestTemplate;
+import org.springframework.data.elasticsearch.core.SearchHit;
+import org.springframework.data.elasticsearch.core.SearchHits;
+import org.springframework.data.elasticsearch.core.SearchScrollHits;
 import org.springframework.data.elasticsearch.core.document.DocumentAdapters;
+import org.springframework.data.elasticsearch.core.mapping.IndexCoordinates;
+import org.springframework.data.elasticsearch.core.query.FetchSourceFilter;
 import org.springframework.data.elasticsearch.core.query.NativeSearchQuery;
 import org.springframework.data.elasticsearch.core.query.NativeSearchQueryBuilder;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
@@ -27,6 +32,7 @@ import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Resource;
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
@@ -194,8 +200,39 @@ public class OrderHistorySalesEsServiceImpl implements OrderHistorySalesEsServic
     }
 
     @Override
-    public Page<OrderHistorySalesEsEntity> findByShopIdInAndSkuIdInAndDateBetween(List<String> shopIds, List<String> skuIds, LocalDate startDate, LocalDate endDate, Pageable pageable) {
-        return orderHistorySalesEsRepository.findByShopIdInAndSkuIdInAndDateBetween(shopIds, skuIds, startDate, endDate, pageable);
+    public List<OrderHistorySalesEsEntity> findByShopIdInAndSkuIdInAndDateBetween(List<String> shopIds, List<String> skuIds, LocalDate startDate, LocalDate endDate, Object[] searchAfterValues) {
+
+        NativeSearchQuery searchQuery = new NativeSearchQueryBuilder()
+                .withQuery(QueryBuilders.boolQuery()
+                        .must(QueryBuilders.termsQuery("skuId", skuIds))
+                        .must(QueryBuilders.termsQuery("shopId", shopIds))
+                        .must(QueryBuilders.rangeQuery("date").gte(startDate.format(DateTimeFormatter.BASIC_ISO_DATE)).lte(endDate.format(DateTimeFormatter.BASIC_ISO_DATE))))
+                .withPageable(PageRequest.of(0, 10000))
+                .build();
+        List<String> scrollIdList = new ArrayList<>();
+        List<OrderHistorySalesEsEntity> result = new ArrayList<>();
+        SearchScrollHits<OrderHistorySalesEsEntity> orderHistorySales = elasticsearchRestTemplate.searchScrollStart(60000, searchQuery, OrderHistorySalesEsEntity.class, IndexCoordinates.of("order_history_sales"));
+        String scrollId = orderHistorySales.getScrollId();
+        scrollIdList.add(scrollId);
+        while (true) {
+            SearchScrollHits<OrderHistorySalesEsEntity> searchScrollHits = elasticsearchRestTemplate.searchScrollContinue(scrollId, 60000, OrderHistorySalesEsEntity.class, IndexCoordinates.of("order_history_sales"));
+            // 获取查询结果并收集到列表中
+            List<OrderHistorySalesEsEntity> products = searchScrollHits.getSearchHits().stream()
+                    .map(SearchHit::getContent)
+                    .collect(Collectors.toList());
+
+            if (products.isEmpty()) {
+                // 如果当前批次没有数据，表示所有数据已被检索完毕，退出循环
+                break;
+            }
+            // 将当前批次的结果添加到全部结果列表中
+            result.addAll(products);
+            // 更新 scrollId 为当前批次的 scrollId
+            scrollId = searchScrollHits.getScrollId();
+        }
+        elasticsearchRestTemplate.searchScrollClear(scrollIdList);
+        // 返回结果
+        return result;
     }
 
     @Override
@@ -203,9 +240,59 @@ public class OrderHistorySalesEsServiceImpl implements OrderHistorySalesEsServic
         return orderHistorySalesEsRepository.findByShopIdAndSkuIdAndDateBetween(shopId, skuId, startDate, endDate);
     }
 
+    @Override
+    public List<String> hasSalesShopBySku(List<String> params) {
+        BoolQueryBuilder queryBuilder = QueryBuilders.boolQuery()
+                .must(QueryBuilders.termsQuery("skuId", params));
+        NativeSearchQuery searchQuery = new NativeSearchQueryBuilder()
+                .withQuery(queryBuilder)
+                .withSourceFilter(new FetchSourceFilter(new String[]{"shopId"}, new String[]{}))
+                .build();
+        // 执行查询
+        SearchHits<OrderHistorySalesEsEntity> searchHits = elasticsearchRestTemplate.search(searchQuery, OrderHistorySalesEsEntity.class);
+
+        // 提取 shopId 并去重
+        return searchHits.getSearchHits().stream()
+                .map(hit -> hit.getContent().getShopId())
+                .distinct()
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<String> hasSalesSkuByShop(List<String> params) {
+
+        BoolQueryBuilder queryBuilder = QueryBuilders.boolQuery()
+                .must(QueryBuilders.termsQuery("shopId", params));
+        NativeSearchQuery searchQuery = new NativeSearchQueryBuilder()
+                .withQuery(queryBuilder)
+                .withSourceFilter(new FetchSourceFilter(new String[]{"skuId"}, new String[]{}))
+                .build();
+        // 执行查询
+        SearchHits<OrderHistorySalesEsEntity> searchHits = elasticsearchRestTemplate.search(searchQuery, OrderHistorySalesEsEntity.class);
+
+        // 提取 shopId 并去重
+        return searchHits.getSearchHits().stream()
+                .map(hit -> hit.getContent().getSkuId())
+                .distinct()
+                .collect(Collectors.toList());
+    }
 
     @Override
     public void deleteByDateBetween(LocalDate startDate, LocalDate endDate) {
         orderHistorySalesEsRepository.deleteByDateBetween(startDate, endDate);
+    }
+
+    @Override
+    public Map<String, List<String>> listSkuByShopId(Set<String> shopIds) {
+        BoolQueryBuilder queryBuilder = QueryBuilders.boolQuery()
+                .must(QueryBuilders.termsQuery("shopId", shopIds));
+        NativeSearchQuery searchQuery = new NativeSearchQueryBuilder()
+                .withQuery(queryBuilder)
+                .build();
+        // 执行查询
+        SearchHits<OrderHistorySalesEsEntity> searchHits = elasticsearchRestTemplate.search(searchQuery, OrderHistorySalesEsEntity.class);
+        return searchHits.getSearchHits().stream()
+                .map(SearchHit::getContent)
+                .collect(Collectors.groupingBy(OrderHistorySalesEsEntity::getShopId, Collectors.mapping(OrderHistorySalesEsEntity::getSkuId, Collectors.toList())));
     }
 }
