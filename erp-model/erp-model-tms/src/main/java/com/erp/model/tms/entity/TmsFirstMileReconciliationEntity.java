@@ -11,6 +11,7 @@ import lombok.experimental.Accessors;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 
 /**
@@ -108,6 +109,16 @@ public class TmsFirstMileReconciliationEntity extends BaseEntity<TmsFirstMileRec
      */
     @TableField("reconciliation_month")
     private LocalDate reconciliationMonth;
+    /**
+     * 付款状态（待付款、已付款）
+     */
+    @TableField("pay_status")
+    private String payStatus;
+    /**
+     * 付款时间
+     */
+    @TableField("pay_time")
+    private LocalDateTime payTime;
 
 
     public static final String FIELD_CODE = "code";

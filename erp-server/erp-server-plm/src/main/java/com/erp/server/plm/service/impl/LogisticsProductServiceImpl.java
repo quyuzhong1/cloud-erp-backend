@@ -1,6 +1,7 @@
 package com.erp.server.plm.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.alibaba.excel.exception.ExcelCommonException;
@@ -128,7 +129,9 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
     private ForecastFeign forecastFeign;
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
-
+    @Resource
+    private SysLogService sysLogService;
+    private static final String SKUCLASSPATH = String.valueOf(ProductDetailEntity.class);
 
     @Override
     public PagingVO<LogisticsProductDTO.PagingVO> paging(PagingDTO<LogisticsProductDTO.PagingParamDTO> dto) {
@@ -322,13 +325,28 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
         if (CollectionUtils.isNotEmpty(deleteIdList)) {
             productCustomsService.removeByIds(deleteIdList);
         }
+        List<String> customsIds = productCustomsList.stream().map(ProductCustomsEntity::getId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+        List<String> skuIds = productCustomsList.stream().map(ProductCustomsEntity::getSkuId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+        List<ProductCustomsEntity> productCustomsEntities = CollUtil.isNotEmpty(customsIds) ? productCustomsService.listByIds(customsIds) : Collections.emptyList();
+        List<ProductDetailEntity> productDetailEntityList = CollUtil.isNotEmpty(skuIds) ? productDetailService.listByIds(skuIds) : Collections.emptyList();
         productCustomsList.forEach(productCustomsEntity -> {
             if (StringUtils.isNotEmpty(productCustomsEntity.getToCurrency())){
                 productCustomsEntity.setToCurrencySymbol(CurrencyEnum.getSymbolByCode(productCustomsEntity.getToCurrency()));
             }
+            if (CharSequenceUtil.isNotBlank(productCustomsEntity.getId())){
+                ProductCustomsEntity customs = productCustomsEntities.stream().filter(e -> Objects.nonNull(e) && productCustomsEntity.getId().equals(e.getId())).findFirst().orElse(null);
+                ProductDetailEntity productDetailEntity = productDetailEntityList.stream().filter(e -> Objects.nonNull(e) && e.getId().equals(productCustomsEntity.getSkuId())).findFirst().orElse(new ProductDetailEntity());
+                if (Objects.nonNull(customs)){
+                    String msg = CharSequenceUtil.format("手动修改【{}】国家从【{}】改为【{}】，目的国申报价从【{}】改为【{}】", productCustomsEntity.getSkuNo(),customs.getCountry(), productCustomsEntity.getCountry(),customs.getToDeclarePrice(), productCustomsEntity.getToDeclarePrice());
+                    sysLogService.addSysLogByOther(new SysLogEntity().setClassPath(SKUCLASSPATH).setPid(productDetailEntity.getProductId())
+                            .setBusinessId(productCustomsEntity.getSkuId()).setOperation("编辑操作").setContent(msg));
+                }
+                productCustomsService.updateById(productCustomsEntity);
+            }else {
+                productCustomsService.save(productCustomsEntity);
+            }
         });
-        Boolean customsResult = productCustomsService.saveOrUpdateBatch(productCustomsList);
-        return logisticsResult && customsResult;
+        return logisticsResult;
     }
 
 

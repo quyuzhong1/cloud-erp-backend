@@ -4,6 +4,7 @@ import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.wms.dto.ReportOrderSalesDTO;
 import com.erp.model.wms.dto.VirtualTransFlowDTO;
+import com.erp.model.wms.dto.VirtualTransFlowDetailDTO;
 import com.erp.model.wms.entity.VirtualTransFlowEntity;
 import com.erp.model.wms.enums.inventory.InventoryModeEnum;
 
@@ -35,7 +36,7 @@ public interface VirtualTransFlowService extends SuperService<VirtualTransFlowEn
      * @param virtualTansRuleId
      * @param inventoryModeEnum
      */
-    Boolean add(VirtualTransFlowDTO.AddDTO addDTO, String virtualTansRuleId, InventoryModeEnum inventoryModeEnum);
+    VirtualTransFlowEntity add(VirtualTransFlowDTO.AddDTO addDTO, String virtualTansRuleId, InventoryModeEnum inventoryModeEnum);
 
     /**
      * 根据已存在的流水新增新的流水
@@ -45,7 +46,7 @@ public interface VirtualTransFlowService extends SuperService<VirtualTransFlowEn
      * @param afterInventoryQty
      * @return Boolean
      */
-    Boolean add(VirtualTransFlowEntity param, Integer afterInventoryQty);
+    VirtualTransFlowEntity add(VirtualTransFlowEntity param, Integer afterInventoryQty);
     /**
      * 根据单据来源和单据id查询出库存交易流水
      * @author will
@@ -103,4 +104,40 @@ public interface VirtualTransFlowService extends SuperService<VirtualTransFlowEn
      * @return List<LastVirtualQtyDTO>
      */
     List<ReportOrderSalesDTO.LastVirtualQtyDTO> listLastVirtualQty(List<String> skuIdList, List<String> warehouseIdList, List<String> virtualWarehouseIdList, LocalDate localDate);
+    /**
+     * 查询虚拟仓即时库存id
+     * @author will
+     * @date 2024/12/12 11:44
+     * @param virtualInventoryId
+     * @param virtualWarehouseId
+     * @param warehouseId
+     * @param skuId
+     * @param fromTable
+     * @return List<String>
+     */
+    List<String> listVirtualInventoryId(String virtualInventoryId, String virtualWarehouseId, String warehouseId, String skuId, Boolean fromTable);
+    /**
+     * 重算虚拟仓库存流水
+     * @author will
+     * @date 2024/12/12 12:06
+     * @param startDate
+     * @param virtualInvId
+     */
+    void overrideVirtualTransFlow(LocalDate startDate,String virtualInvId);
+    /**
+     * 查询历史虚拟仓流水数据
+     * @author will
+     * @date 2024/12/17 17:47
+     * @param dto
+     * @return List<VirtualTransFlowEntity>
+     */
+    List<VirtualTransFlowEntity> listHisVirtualTransFlow(VirtualTransFlowDetailDTO.HandleDTO dto);
+    /**
+     * 查询审核的流水
+     * @author will
+     * @date 2024/12/20 12:32
+     * @param oldVirtualTransFlowIdList
+     * @return List<VirtualTransFlowEntity>
+     */
+    List<VirtualTransFlowEntity> listApproveByIds(List<String> oldVirtualTransFlowIdList);
 }

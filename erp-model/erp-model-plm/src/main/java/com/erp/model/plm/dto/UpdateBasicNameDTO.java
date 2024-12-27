@@ -5,6 +5,7 @@ import lombok.NoArgsConstructor;
 import org.springframework.validation.annotation.Validated;
 
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.Size;
 
 /**
  * @Classname UpdateBasicCategoryDTO
@@ -41,6 +42,7 @@ public class UpdateBasicNameDTO {
     /**
      * 分类代码
      */
+    @Size(max = 4, message = "分类代码长度不能超过4个字符")
     private String code;
 
 }

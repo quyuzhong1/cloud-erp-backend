@@ -8,6 +8,7 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.scm.dto.PurchaseBusinessGatherTableDTO;
 import com.erp.model.srm.dto.DeliveryOrderDTO;
 import com.erp.model.srm.dto.excel.DeliveryOrderExportExcelDTO;
+import com.erp.model.tms.dto.RemotePostcodeDTO;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.excel.ExportQcReportExcelDTO;
 import com.erp.model.wms.dto.excel.QcBillExportExcelDTO;
@@ -229,8 +230,41 @@ public interface ExportWmsFeign {
     PagingVO<ReportOrderSalesDTO.ListDTO> listReportOrderSales(@RequestBody PagingDTO<ReportOrderSalesDTO.PagingParamDTO> dto);
 
     /**
+     * 偏远邮编导出
+     */
+    @PostMapping("/feign/export/exportRemotePostcode")
+    PagingVO<RemotePostcodeDTO.ExportListDTO> exportRemotePostcode(@RequestBody PagingDTO<RemotePostcodeDTO.PagingParamDTO> dto);
+
+    /**
      * 导出虚拟仓分货
      */
     @PostMapping("/feign/export/exportVirtualStatistics")
     PagingVO<VirtualWarehouseAllocationDTO.ExportStatisticsDTO> exportVirtualStatistics(PagingDTO<VirtualWarehouseAllocationDTO.ExportDTO> dto);
+    /**
+     * 库龄分析导出
+     */
+    @PostMapping("/feign/export/exportWmsVirtualInventoryAge")
+    PagingVO<DynamicExcelDTO> exportWmsVirtualInventoryAge(PagingDTO<VirtualInventoryAgeDTO.SearchParamDTO> dto);
+    /**
+     * 历史库龄导出
+     */
+    @PostMapping("/feign/export/hisInventoryAgePaging")
+    PagingVO<VirtualInventoryAgeDTO.HisInventoryAgeDTO> hisInventoryAgePaging(PagingDTO<VirtualInventoryAgeDTO.HisInventoryAgeParamDTO> dto);
+
+    /**
+     * 历史库龄明细导出
+     */
+    @PostMapping("/feign/export/hisInventoryAgeDetailPaging")
+    PagingVO<VirtualInventoryAgeDTO.HisInventoryAgeDetailDTO> hisInventoryAgeDetailPaging(PagingDTO<VirtualInventoryAgeDTO.HisInventoryAgeDetailParamDTO> dto);
+
+    /**
+     * 库龄流水导出
+     */
+    @PostMapping("/feign/export/virtualTransFlowDetailPaging")
+    PagingVO<VirtualTransFlowDetailDTO.ListDTO> virtualTransFlowDetailPaging(PagingDTO<VirtualTransFlowDetailDTO.SearchParamDTO> dto);
+    /**
+     * 列表历史库龄明细导出
+     */
+    @PostMapping("/feign/export/framePaging")
+    PagingVO<VirtualInventoryAgeDTO.HisInventoryAgeDetailDTO> framePaging(PagingDTO<VirtualInventoryAgeDTO.FrameParamDTO> dto);
 }

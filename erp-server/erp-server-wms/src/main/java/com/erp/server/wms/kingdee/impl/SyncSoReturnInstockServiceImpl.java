@@ -40,10 +40,7 @@ import org.springframework.stereotype.Service;
 import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -251,6 +248,26 @@ public class SyncSoReturnInstockServiceImpl implements SyncSoReturnInstockServic
             wmsPushMsgEntity.setSourceCode(entity.getCode() + "_" + detailEntity.getSkuNo());
             wmsPushMsgEntity.setSyncOperate(operate);
             wmsPushMsgEntity.setPushData(JSON.toJSONString(this.syncDataToSdyFieldHandler(entity, detailEntity, operate, skuVOList, bomChildrenSkuDTOS, currencyList, parentSkuList, customerInfoList, companyEntities, dictBasicEntityList, soReturnEntityList, soReturnReceiveEntityList, receiveReturnList)));
+            wmsPushMsgService.save(wmsPushMsgEntity);
+        }
+    }
+
+    @Override
+    public void syncDataToSdy(SoReturnInstockEntity entity,
+                              List<SoReturnInstockDetailEntity> detailEntities,
+                              String operate) {
+        for (SoReturnInstockDetailEntity detailEntity : detailEntities) {
+            WmsPushMsgEntity wmsPushMsgEntity = new WmsPushMsgEntity();
+            wmsPushMsgEntity.setTargetPlatform(DmpBasicSystemCodeEnum.SDY.getCode());
+            wmsPushMsgEntity.setSourceType(SourceTypeEnum.SDY_SO_RETURN_INSTOCK.getCode());
+            wmsPushMsgEntity.setSourceId(detailEntity.getId());
+            wmsPushMsgEntity.setSourceCode(entity.getCode() + "_" + detailEntity.getSkuNo());
+            wmsPushMsgEntity.setSyncOperate(operate);
+            Map<String, Object> map = new HashMap<>();
+            map.put("isQuerySync", Boolean.TRUE);
+            map.put("detailId", detailEntity.getId());
+            map.put("operate", operate);
+            wmsPushMsgEntity.setPushData(JSON.toJSONString(map));
             wmsPushMsgService.save(wmsPushMsgEntity);
         }
     }

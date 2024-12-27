@@ -4,6 +4,7 @@ import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.dmp.dto.DmpSoInfoDTO;
 import com.common.business.dto.ShudiyunB2cOrderDTO;
+import com.erp.model.dmp.gyy.GyyOrderEntity;
 
 import java.util.List;
 
@@ -34,4 +35,6 @@ public interface DmpSoInfoService extends SuperService<DmpSoInfoEntity> {
     * @return
     */
     Boolean update(DmpSoInfoDTO.UpdateDTO dto);
+
+    void addGyyOrder(List<GyyOrderEntity> mongoData);
 }

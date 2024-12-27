@@ -86,4 +86,13 @@ public interface ExportMrpFeign {
      */
     @PostMapping("/feign/export/getVirtualInventory")
     PagingVO<VirtualInventoryHistoryDTO.ListDTO> getVirtualInventory(@RequestBody PagingDTO<VirtualInventoryHistoryDTO.SearchParamDTO> dto);
+
+
+    /**
+     * 导出试算列表
+     * @param dto 参数
+     */
+    @PostMapping("/feign/export/exportMrpSalesCalcList")
+    PagingVO<CalcSalesInfoDimDTO.ExportSalesInfoListDTO> exportMrpSalesCalcList(@RequestBody PagingDTO<CalcSalesInfoDimDTO.ParamDTO> dto);
+
 }

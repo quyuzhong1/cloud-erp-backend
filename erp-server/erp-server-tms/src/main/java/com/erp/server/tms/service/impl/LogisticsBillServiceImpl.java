@@ -161,7 +161,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
     @Override
     public Boolean add(LogisticsBillDTO.AddDTO addDTO) {
         //发货单+物流单是否已存在 存在则不再新增
-        List<LogisticsBillEntity> list = this.lambdaQuery().eq(LogisticsBillEntity::getOutstockId, addDTO.getOutstockId()).eq(LogisticsBillEntity::getTransportNo, addDTO.getTransportNo()).list();
+        List<LogisticsBillEntity> list = this.lambdaQuery().eq(CharSequenceUtil.isNotBlank(addDTO.getOutstockCode()),LogisticsBillEntity::getOutstockCode, addDTO.getOutstockCode()).eq(LogisticsBillEntity::getTransportNo, addDTO.getTransportNo()).list();
         if (CollUtil.isNotEmpty(list)){
             return Boolean.TRUE;
         }
@@ -1299,18 +1299,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
      */
     public void pushSdyFieldHandler(LogisticsBillEntity entity, String operateEnum) {
         List<LogisticsBillDetailEntity> detailEntityList = logisticsBillDetailService.listByMainIds(Arrays.asList(entity.getId()));
-        List<LogisticsChannelEntity> logisticsChannelEntities = new ArrayList<>();
-        if (CharSequenceUtil.isNotEmpty(entity.getChannelId())) {
-            logisticsChannelEntities = logisticsChannelService.listByIds(Arrays.asList(entity.getChannelId()));
-        }
-
-        List<String> supplierIds = logisticsChannelEntities.stream().map(req -> req.getMainId()).distinct().collect(Collectors.toList());
-        List<LogisticsSupplierEntity> logisticsSupplierEntities = new ArrayList<>();
-        if (CollUtil.isNotEmpty(logisticsSupplierEntities)) {
-            logisticsSupplierEntities = logisticsSupplierService.listByIds(supplierIds);
-        }
-
-        syncLogisticsBillService.syncDataToSdy(entity, detailEntityList, operateEnum, logisticsChannelEntities, logisticsSupplierEntities);
+        syncLogisticsBillService.syncDataToSdy(entity, detailEntityList, operateEnum);
     }
 
     @Override

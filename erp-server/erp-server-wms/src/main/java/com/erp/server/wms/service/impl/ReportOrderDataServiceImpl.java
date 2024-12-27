@@ -142,7 +142,7 @@ public class ReportOrderDataServiceImpl extends SuperServiceImpl<ReportOrderData
           throw new ServiceException("已有任务进行中，请勿重复提交请求");
         }
         //添加缓存
-        redisUtil.set(existKey,isAuto, RedisCacheConstants.LOCK_DURATION_MINUTES * 10);
+        redisUtil.set(existKey,isAuto, (long) RedisCacheConstants.LOCK_DURATION_MINUTES * 10);
         //生成缺货统计、销售看板
         try {
             generateAllReport(viewDTO);

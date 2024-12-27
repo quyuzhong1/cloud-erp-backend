@@ -281,6 +281,15 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
         if (!ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(old.getApproveStatus()) && !ApproveStatusEnum.REJECT.getStatus().equals(old.getApproveStatus())) {
             throw new ServiceException(ApiError.ERROR_1029);
         }
+        if(SourceTypeEnum.SO_INFO.getCode().equals(old.getSourceType())){
+            throw new ServiceException("销售单生成的加工单不允许修改");
+        }
+        if(SourceTypeEnum.SO_DELIVERY_NOTICE.getCode().equals(old.getSourceType())){
+            throw new ServiceException("发货通知单生成的加工单不允许修改");
+        }
+        if(SourceTypeEnum.FIRST_MILE_DELIVERY.getCode().equals(old.getSourceType())){
+            throw new ServiceException("头程发货单生成的加工单不允许修改");
+        }
         List<String> checkSkuIdList=dto.getDetailList().stream().
                 map(MachineDetailDTO.UpdateDTO::getSkuId).collect(Collectors.toList());
         checkSkuIsCombination(checkSkuIdList);

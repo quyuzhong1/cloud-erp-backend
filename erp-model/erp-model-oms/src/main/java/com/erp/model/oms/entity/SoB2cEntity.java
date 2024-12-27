@@ -342,6 +342,24 @@ public class SoB2cEntity extends BaseEntity<SoB2cEntity> {
     @TableField("transaction_sub_type")
     private String transactionSubType = "onlineOrder";
 
+    /**
+     * 是否超范围派送，是：true  否：false
+     */
+    @TableField("is_out_of_range_delivery")
+    private Boolean isOutOfRangeDelivery;
+
+    /**
+     * 是否预估运费超限，是：true  否：false
+     */
+    @TableField("is_over_estimated_ship_cost")
+    private Boolean isOverEstimatedShipCost;
+
+    /**
+     * 销售出库时间  来源：销售出库单的bill_date
+     */
+    @TableField("so_outstock_date")
+    private LocalDate soOutstockDate;
+
     public static final String CODE = "code";
 
     public static final String APPROVE_STATUS = "approve_status";

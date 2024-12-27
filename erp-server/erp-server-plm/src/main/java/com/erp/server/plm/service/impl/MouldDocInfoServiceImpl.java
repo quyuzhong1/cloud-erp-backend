@@ -1,0 +1,56 @@
+package com.erp.server.plm.service.impl;
+
+
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
+import com.common.business.utils.ApplicationContextUtils;
+import com.common.core.utils.BeanMapperUtils;
+import com.erp.model.plm.dto.MouldDocInfoDTO;
+import com.erp.model.plm.entity.MouldDocInfoEntity;
+import com.erp.server.plm.mapper.MouldDocInfoMapper;
+import com.erp.server.plm.service.MouldDocInfoService;
+import com.common.business.service.impl.SuperServiceImpl;
+import org.springframework.beans.BeanUtils;
+import org.springframework.stereotype.Service;
+import lombok.extern.slf4j.Slf4j;
+
+import java.util.List;
+import java.util.stream.Collectors;
+
+/**
+ * <p>
+ * 模具文档信息 服务实现类
+ * </p>
+ *
+ * @author liaohui
+ * @since 2024-12-03
+ */
+@Slf4j
+@Service
+public class MouldDocInfoServiceImpl extends SuperServiceImpl<MouldDocInfoMapper, MouldDocInfoEntity> implements MouldDocInfoService {
+
+    @Override
+    public void add(List<MouldDocInfoDTO.UpdateDTO> docList, String id) {
+        remove(Wrappers.<MouldDocInfoEntity>lambdaQuery().eq(MouldDocInfoEntity::getMouldInfoId, id));
+        List<MouldDocInfoEntity> docInfoEntityList = docList.stream()
+                .map(v -> {
+                    MouldDocInfoEntity entity = BeanMapperUtils.map(MouldDocInfoEntity.class, v);
+                    entity.setTypeId(v.getDocTypeId());
+                    entity.setMouldInfoId(id);
+                    entity.setId(null);
+                    return entity;
+                }).collect(Collectors.toList());
+        ApplicationContextUtils.getBean(MouldDocInfoServiceImpl.class).saveOrUpdateBatch(docInfoEntityList);
+    }
+
+    @Override
+    public List<MouldDocInfoDTO.ViewDTO> listByMouldId(String id) {
+        List<MouldDocInfoEntity> list = list(Wrappers.<MouldDocInfoEntity>lambdaQuery().eq(MouldDocInfoEntity::getMouldInfoId, id));
+        return list.stream()
+                .map(v -> {
+                    MouldDocInfoDTO.ViewDTO dto = new MouldDocInfoDTO.ViewDTO();
+                    BeanUtils.copyProperties(v, dto);
+                    dto.setDocTypeId(v.getTypeId());
+                    return dto;
+                }).collect(Collectors.toList());
+    }
+}

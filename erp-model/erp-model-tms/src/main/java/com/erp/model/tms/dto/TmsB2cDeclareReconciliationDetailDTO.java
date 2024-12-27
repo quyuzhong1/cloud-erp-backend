@@ -380,7 +380,36 @@ public class TmsB2cDeclareReconciliationDetailDTO implements Serializable {
         * 确认人名称
         */
         private String confirmUserName;
+        
+        /**
+         * 实际物流运费币别
+         */
+         private String actualShippingCurrency;
 
+         /**
+         * 实际报关费币别
+         */
+         private String actualDeclareCurrency;
+
+         /**
+         * 实际其他费币别
+         */
+         private String actualOtherCurrency;
+         /**
+          * 实际物流运费币别符号
+          */
+         private String actualShippingCurrencySymbol;
+         
+         /**
+          * 实际报关费币别符号
+          */
+         private String actualDeclareCurrencySymbol;
+         
+         /**
+          * 实际其他费币别符号
+          */
+         private String actualOtherCurrencySymbol;
+         
         /**
          * 费用编辑（导入数据返回）
          */
@@ -435,6 +464,23 @@ public class TmsB2cDeclareReconciliationDetailDTO implements Serializable {
          * 实际计费重
          */
         private BigDecimal actualBillingWeight;
+        /**
+         * 实际计费重
+         */
+        private BigDecimal estimateWeight;
+        
+        /**
+         * 实际计费重
+         */
+        private String estimateWeightUnit;
+        /**
+         * 实际计费重
+         */
+        private String logisticsChannelId;
+        /**
+         * 实际计费重
+         */
+        private String sourceDetailId;
 
         /**
          * 费用编辑（导入数据返回）

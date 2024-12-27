@@ -24,23 +24,6 @@ import java.util.Map;
  * @since 2024-07-02
  */
 public interface PackingTaskService extends SuperService<PackingTaskEntity> {
-    /**
-    * 新增
-    * @author zdy
-    * @date: 2024-07-02
-    * @param dto
-    * @return
-    */
-    BaseResultDTO.AddDTO add(PackingTaskDTO.AddDTO dto);
-
-    /**
-    * 修改
-    * @author zdy
-    * @date: 2024-07-02
-    * @param dto
-    * @return
-    */
-    Boolean update(PackingTaskDTO.UpdateDTO dto);
 
     /**
      * 发货单转换成装箱任务实体
