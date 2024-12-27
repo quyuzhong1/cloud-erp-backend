@@ -119,4 +119,31 @@ public class SyncLogisticsBillServiceImpl implements SyncLogisticsBillService {
             tmsPushMsgService.save(tmsPushMsgEntity);
         }
     }
+
+
+    @Override
+    public void syncDataToSdy(LogisticsBillEntity entity,
+                              List<LogisticsBillDetailEntity> detailEntityList,
+                              String operate) {
+
+        for (LogisticsBillDetailEntity billDetailEntity : detailEntityList) {
+            String sourceCode = CharSequenceUtil.isBlank(entity.getTransportNo()) ? billDetailEntity.getTrackNo() : entity.getTransportNo();
+            if (CharSequenceUtil.isBlank(sourceCode)) {
+                continue;
+            }
+
+            TmsPushMsgEntity tmsPushMsgEntity = new TmsPushMsgEntity();
+            tmsPushMsgEntity.setTargetPlatform(DmpBasicSystemCodeEnum.SDY.getCode());
+            tmsPushMsgEntity.setSourceType(SourceTypeEnum.SDY_LOGISTICS_BILL.getCode());
+            tmsPushMsgEntity.setSourceId(billDetailEntity.getId());
+            tmsPushMsgEntity.setSourceCode(sourceCode);
+            tmsPushMsgEntity.setSyncOperate(operate);
+            Map<String, Object> map = new HashMap<>();
+            map.put("isQuerySync", Boolean.TRUE);
+            map.put("detailId", billDetailEntity.getId());
+            map.put("operate", operate);
+            tmsPushMsgEntity.setPushData(JSON.toJSONString(map));
+            tmsPushMsgService.save(tmsPushMsgEntity);
+        }
+    }
 }

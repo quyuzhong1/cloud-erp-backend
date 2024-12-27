@@ -1,5 +1,6 @@
 package com.erp.server.wms.service;
 
+import java.util.List;
 import java.util.Map;
 
 import com.common.business.dto.DmpSyncMqDTO;
@@ -28,4 +29,18 @@ public interface SyncTaskService {
      * @author: tanmujin
      */
     void findWdtDataSendSyncTask(DmpSyncMqDTO.SyncParamDTO syncParamDTO);
+
+    /**
+     * 数帝云销售出库单
+     * @param sourceDetailList
+     * @return
+     */
+    Map<String ,Map<String, Object>> newSdySyncSoOutstock(List<DmpSyncMqDTO.SyncParamDetailDTO> sourceDetailList);
+
+    /**
+     * 数帝云销售退货入库
+     * @param sourceDetailList
+     * @return
+     */
+    Map<String ,Map<String, Object>> newSdySyncSoReturnInstock(List<DmpSyncMqDTO.SyncParamDetailDTO> sourceDetailList);
 }
