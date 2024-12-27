@@ -26,6 +26,7 @@ public class PurchasePriceDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
+    @Valid
     public static class PushDownPurchaseView {
         /**
          * id
@@ -153,6 +154,8 @@ public class PurchasePriceDTO implements Serializable {
         private Integer purchaseQty;
 
         private Integer replenishQty;
+
+        private Integer oldPurchaseQty;
 
         /**
          * 价税合计

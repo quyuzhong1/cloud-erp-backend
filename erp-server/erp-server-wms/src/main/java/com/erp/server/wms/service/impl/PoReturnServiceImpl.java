@@ -3088,11 +3088,12 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
             if(Objects.nonNull(viewDTO)){
                 pushDownPurchaseView.setTaxRate(viewDTO.getTaxRate());
             }
-            List<PurchaseOrderDetailEntity> currentPurchaseDetailList = purchaseOrderDetailEntityList.stream().filter(v->v.getSourceDetailId().equals(pushDownPurchaseView.getDetailId())).collect(Collectors.toList());
+            List<PurchaseOrderDetailEntity> currentPurchaseDetailList = purchaseOrderDetailEntityList.stream().filter(v->v.getSourceDetailId().equals(pushDownPurchaseView.getDetailId()) && !v.getIsGift()).collect(Collectors.toList());
             Integer alreadyPurchaseQty = currentPurchaseDetailList.stream().map(PurchaseOrderDetailEntity::getPurchaseQty).reduce(Integer::sum).orElse(0);
             pushDownPurchaseView.setPurchaseQty(pushDownPurchaseView.getDeductAmountQty() - alreadyPurchaseQty);
             pushDownPurchaseView.setTotalTaxAmount(pushDownPurchaseView.getTaxPrice().multiply(new BigDecimal(pushDownPurchaseView.getPurchaseQty())).setScale(4, RoundingMode.HALF_UP));
             pushDownPurchaseView.setPlanDeliveryDate(LocalDate.now());
+            pushDownPurchaseView.setOldPurchaseQty(pushDownPurchaseView.getPurchaseQty());
         }
         return pushDownPurchaseViews;
     }
@@ -3101,6 +3102,14 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
     public Boolean pushDownPurchase(List<PurchasePriceDTO.PushDownPurchaseView> pushDownPurchaseViews) {
         if(CollectionUtils.isEmpty(pushDownPurchaseViews)){
             return true;
+        }
+        if(pushDownPurchaseViews.stream().anyMatch(v->v.getPurchaseQty()<=0)){
+            throw new ServiceException("采购数量不能小于等于0");
+        }
+        List<PurchasePriceDTO.PushDownPurchaseView> errorList = pushDownPurchaseViews.stream().filter(v->v.getPurchaseQty()>v.getOldPurchaseQty()).collect(Collectors.toList());
+        if(CollectionUtils.isNotEmpty(errorList)){
+            PurchasePriceDTO.PushDownPurchaseView pushDownPurchaseView = errorList.get(0);
+            throw new ServiceException("{}采购数量{}不能大于剩余可采购数量{}",pushDownPurchaseView.getSkuNo(),pushDownPurchaseView.getPurchaseQty(),pushDownPurchaseView.getOldPurchaseQty());
         }
         //供应商信息
         List<String> supplierIds = pushDownPurchaseViews.stream().filter(obj -> CharSequenceUtil.isNotBlank(obj.getSupplierId())).map(PurchasePriceDTO.PushDownPurchaseView::getSupplierId).collect(Collectors.toList());
@@ -3168,10 +3177,12 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
                 addDetailDTO.setSkuNo(detailView.getSkuNo());
                 addDetailDTO.setPurchaseQty(detailView.getPurchaseQty());
                 addDetailDTO.setPlanDeliveryDate(detailView.getPlanDeliveryDate());
+                addDetailDTO.setTaxRate(detailView.getTaxRate());
                 addDetailDTO.setRemark(detailView.getRemark());
                 addDetailDTO.setCurrency(detailView.getCurrency());
                 addDetailDTO.setCurrencySymbol(detailView.getCurrencySymbol());
                 addDetailDTO.setIsGift(detailView.getIsGift());
+                addDetailDTO.setIsUrgent(detailView.getIsUrgent());
                 addDetailList.add(addDetailDTO);
             }
             addDTO.setDetails(addDetailList);
