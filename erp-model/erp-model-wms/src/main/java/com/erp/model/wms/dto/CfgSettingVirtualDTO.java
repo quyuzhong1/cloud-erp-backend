@@ -5,6 +5,7 @@ import lombok.NoArgsConstructor;
 
 import javax.validation.Valid;
 import java.io.Serializable;
+import java.util.List;
 
 /**
  * 虚拟仓设置
@@ -14,11 +15,9 @@ import java.io.Serializable;
 public class CfgSettingVirtualDTO implements Serializable {
 
 
-
-
     /**
-    * 详情
-    */
+     * 详情
+     */
     @Data
     @NoArgsConstructor
     public static class ViewDTO extends CommonDTO {
@@ -27,8 +26,8 @@ public class CfgSettingVirtualDTO implements Serializable {
     }
 
     /**
-    * 新增
-    */
+     * 新增
+     */
     @Data
     @NoArgsConstructor
     public static class AddDTO extends CommonDTO {
@@ -37,8 +36,8 @@ public class CfgSettingVirtualDTO implements Serializable {
     }
 
     /**
-    * 修改
-    */
+     * 修改
+     */
     @Data
     @NoArgsConstructor
     public static class UpdateDTO extends CommonDTO {
@@ -67,6 +66,10 @@ public class CfgSettingVirtualDTO implements Serializable {
         @Valid
         private CfgSettingVirtualValueDTO.VirtualRuleDTO virtualRuleDTO;
 
+        /**
+         * 库龄分析配置
+         */
+        private CfgSettingVirtualValueDTO.InventoryAgeTO inventoryAgeTO;
     }
 
 

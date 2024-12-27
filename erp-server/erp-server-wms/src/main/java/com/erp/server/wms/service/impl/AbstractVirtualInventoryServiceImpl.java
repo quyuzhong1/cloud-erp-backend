@@ -1,10 +1,8 @@
 package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson2.JSON;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.enums.BusinessNoTypeEnum;
@@ -15,10 +13,12 @@ import com.common.core.utils.ValidatorUtil;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.wms.dto.VirtualTransFlowDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
+import com.erp.model.wms.dto.WmsVirtualDetailMsgDTO;
 import com.erp.model.wms.dto.inventory.InventoryUnApproveDTO;
 import com.erp.model.wms.dto.inventory.VirtualInventoryStockDTO;
 import com.erp.model.wms.dto.inventory.VirtualTransRuleDTO;
 import com.erp.model.wms.entity.*;
+import com.erp.model.wms.enums.VirtualDetailMsgStatusEnum;
 import com.erp.model.wms.enums.inventory.*;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.service.*;
@@ -28,7 +28,6 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.redisson.RedissonMultiLock;
 import org.redisson.api.RLock;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
@@ -64,6 +63,9 @@ public abstract class AbstractVirtualInventoryServiceImpl implements VirtualInve
 
     @Resource
     private PlmTaskFeign plmTaskFeign;
+
+    @Resource
+    private WmsVirtualDetailMsgService wmsVirtualDetailMsgService;
 
     /**
      * 允许录入负数的库存业务单据（临时打开）
@@ -192,11 +194,19 @@ public abstract class AbstractVirtualInventoryServiceImpl implements VirtualInve
             }
             //添加流水
             VirtualInventoryEntity entity = virtualInventoryService.getById(virtualInventoryEntity.getId());
-            virtualTransFlowService.add(txnFlow, entity.getQty());
+            VirtualTransFlowEntity transFlowEntity = virtualTransFlowService.add(txnFlow, entity.getQty());
 
             // 6,更新原交易流水为已反审核
             virtualTransFlowService.updateUnapprovedById(txnFlow.getId(), txnFlow.getVersion());
             log.warn("结束库存交易，耗时【{}】秒", stopwatch.elapsed(TimeUnit.SECONDS));
+
+            //7,库龄流水反审
+            if (CharSequenceUtil.equals(transFlowEntity.getSourceType(),InventorySourceTypeEnum.MACHINE_INFO.getCode())
+                    || CharSequenceUtil.equals(transFlowEntity.getSourceType(),InventorySourceTypeEnum.TRANSFER_INFO.getCode())
+                    || CharSequenceUtil.equals(transFlowEntity.getSourceType(),InventorySourceTypeEnum.SO_OUTSTOCK.getCode())) {
+                transFlowEntity.setParentVirtualTransFlowId(txnFlow.getId());
+                addWmsVirtualDetailMsg(transFlowEntity);
+            }
         });
     }
 
@@ -248,7 +258,33 @@ public abstract class AbstractVirtualInventoryServiceImpl implements VirtualInve
         VirtualTransFlowDTO.AddDTO transactionFlowDTO = wrapTransactionFlow(param, virtualInventoryEntity, businessType, inventoryStatusEnum, param.getQty(), warehouseInfo.getOrgId());
         transactionFlowDTO.setTransactionNo(transactionNo);
         transactionFlowDTO.setVirtualTransRuleId(transRuleId);
-        virtualTransFlowService.add(transactionFlowDTO, transRuleId, InventoryModeEnum.IN_STOCK);
+        VirtualTransFlowEntity transFlowEntity = virtualTransFlowService.add(transactionFlowDTO, transRuleId, InventoryModeEnum.IN_STOCK);
+        
+        if (InventoryStatusEnum.USABLE.equals(inventoryStatusEnum)) {
+            //仅分货单计入库龄流水
+            if (!CharSequenceUtil.equals(InventorySourceTypeEnum.VIRTUAL_WAREHOUSE_ALLOCATION.getCode(),param.getSourceType().getCode())) {
+                 return;
+            }
+            //入库添加本地任务表数据
+            addWmsVirtualDetailMsg(transFlowEntity);
+        }
+    }
+
+    /**
+     * 添加本地任务
+     * @author will
+     * @date 2024/12/9 18:28
+     * @param transFlowEntity
+     */
+    private void addWmsVirtualDetailMsg (VirtualTransFlowEntity transFlowEntity) {
+        //入库添加本地任务表数据
+        WmsVirtualDetailMsgDTO.AddDTO addDTO = new WmsVirtualDetailMsgDTO.AddDTO();
+        addDTO.setTransFlowEntity(transFlowEntity);
+        addDTO.setRemark("虚拟仓库存出入库");
+        addDTO.setTradeTime(transFlowEntity.getTradeTime());
+        addDTO.setStatus(VirtualDetailMsgStatusEnum.WAIT_HANDLE.getCode());
+        addDTO.setBusinessId(transFlowEntity.getId());
+        wmsVirtualDetailMsgService.add(addDTO);
     }
 
     /**
@@ -287,7 +323,7 @@ public abstract class AbstractVirtualInventoryServiceImpl implements VirtualInve
         // 登记交易流水（有可能一个操作产生多条，从多个库存明细中扣除）
         VirtualTransFlowDTO.AddDTO transactionFlowDTO = wrapTransactionFlow(param, virtualInventoryEntity, businessType, inventoryStatusEnum, param.getQty(), warehouseInfo.getOrgId());
         transactionFlowDTO.setTransactionNo(transactionNo);
-        virtualTransFlowService.add(transactionFlowDTO, transRuleId, InventoryModeEnum.OUT_STOCK);
+        VirtualTransFlowEntity transFlowEntity = virtualTransFlowService.add(transactionFlowDTO, transRuleId, InventoryModeEnum.OUT_STOCK);
 
         // 此处再次验证，防止变成负库存
         VirtualInventoryEntity curInventory = virtualInventoryService.getById(virtualInventoryEntity.getId());
@@ -295,6 +331,18 @@ public abstract class AbstractVirtualInventoryServiceImpl implements VirtualInve
         if(curInventory.getQty() < 0 ) {
             log.warn("库存id:{}出库后的库存数量变为:{}，不允许出库", virtualInventoryEntity.getId(), curInventory.getQty());
             throw new ServiceException(ApiError.ERROR_VIRTUAL_INVENTORY_INSUFFICIENT.code, CharSequenceUtil.format(ApiError.ERROR_VIRTUAL_INVENTORY_INSUFFICIENT.msg, param.getSkuNo(),virtualWarehouseEntity.getName(), warehouseInfo.getName(), inventoryStatusName,curInventory.getQty(),param.getQty()));
+        }
+
+        //出库添加本地任务表数据
+        if ((InventoryStatusEnum.USABLE.equals(inventoryStatusEnum)
+                && (CharSequenceUtil.equals(transFlowEntity.getSourceType(),InventorySourceTypeEnum.VIRTUAL_WAREHOUSE_ALLOCATION.getCode())
+                || CharSequenceUtil.equals(transFlowEntity.getSourceType(),InventorySourceTypeEnum.SO_OUTSTOCK.getCode())))
+                || (InventoryStatusEnum.FROZEN.equals(inventoryStatusEnum)
+                && (CharSequenceUtil.equals(transFlowEntity.getSourceType(),InventorySourceTypeEnum.MACHINE_INFO.getCode())
+                || CharSequenceUtil.equals(transFlowEntity.getSourceType(),InventorySourceTypeEnum.TRANSFER_INFO.getCode())
+                || CharSequenceUtil.equals(transFlowEntity.getSourceType(),InventorySourceTypeEnum.SO_OUTSTOCK.getCode())))
+        ) {
+            addWmsVirtualDetailMsg(transFlowEntity);
         }
     }
 
