@@ -103,12 +103,16 @@ public class RakutenShipOrder extends AbstractShipOrder {
                 throw new ServiceException("【乐天标记发货】操作失败，渠道标发单号为空");
             }
             try {
-                OrderFastOutboundPackageDTO.PackageInfo packageInfo = new OrderFastOutboundPackageDTO.PackageInfo();
-                packageInfo.setGlobalOrderNo(mainEntity.getThirdCode());
-                packageInfo.setLogisticsTypeId(thirdView.getThirdLogisticsId());
-                packageInfo.setWaybillNo(logisticsNo);
-                packageInfo.setWid(Long.valueOf(wid));
-                LingxingApiUtils.fastOutbound(Collections.singletonList(packageInfo));
+                if(dto.isHasNotOutStock()){
+                    LingxingApiUtils.cancelOrderByOrderList(Collections.singletonList(mainEntity.getThirdCode()));
+                }else{
+                    OrderFastOutboundPackageDTO.PackageInfo packageInfo = new OrderFastOutboundPackageDTO.PackageInfo();
+                    packageInfo.setGlobalOrderNo(mainEntity.getThirdCode());
+                    packageInfo.setLogisticsTypeId(thirdView.getThirdLogisticsId());
+                    packageInfo.setWaybillNo(logisticsNo);
+                    packageInfo.setWid(Long.valueOf(wid));
+                    LingxingApiUtils.fastOutbound(Collections.singletonList(packageInfo));
+                }
                 signShippedDetailList.addAll(detailEntityList.stream().map(BaseEntity::getId).collect(Collectors.toList()));
             } catch (Exception e) {
                 log.error("【乐天标记发货】销售订单【{}】,平台订单【{}】领星标记发货API提示异常 >>>>{}", mainEntity.getCode(), mainEntity.getPlatformCode(), ExceptionUtil.stacktraceToString(e));
