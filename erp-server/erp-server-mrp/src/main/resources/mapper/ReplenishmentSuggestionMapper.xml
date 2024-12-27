@@ -96,26 +96,26 @@
             <foreach collection="params.recentSort" item="item">
                 <choose>
                     <when test="item.field == 'outOfStockDay'">
-                        outOfStockDay ${item.sort},
+                        outOfStockDay ${item.sort} NULLS LAST,
                     </when>
                     <when test="item.field == 'suggestShippingDate'">
-                        suggestShippingDate ${item.sort},
+                        suggestShippingDate ${item.sort} NULLS LAST,
                     </when>
                     <when test="item.field == 'suggestShippingQty'">
-                        suggestShippingQty ${item.sort},
+                        suggestShippingQty ${item.sort} NULLS LAST,
                     </when>
                     <when test="item.field == 'suggestPurchaseDate'">
-                        suggestPurchaseDate ${item.sort},
+                        suggestPurchaseDate ${item.sort} NULLS LAST,
                     </when>
                     <when test="item.field == 'suggestPurchaseQty'">
-                        suggestPurchaseQty ${item.sort},
+                        suggestPurchaseQty ${item.sort} NULLS LAST,
                     </when>
                 </choose>
             </foreach>
         </if>
         <if test="params.sortList != null and params.sortList.size > 0">
             <foreach collection="params.sortList" item="item" separator="," close=",">
-                ${item.field} ${item.sort}
+                ${item.field} ${item.sort} NULLS LAST
             </foreach>
         </if>
         <if test="params.realSaleQtySort != null">
@@ -126,7 +126,7 @@
             WHERE value->>'type' = '30天'
             )::NUMERIC,
             0
-            ) ${params.realSaleQtySort.sort},
+            ) ${params.realSaleQtySort.sort} NULLS LAST,
         </if>
         <if test="params.stockingSort != null">
             COALESCE(
@@ -136,7 +136,7 @@
             WHERE value->>'type' = '备货期销量'
             )::NUMERIC,
             0
-            ) ${params.stockingSort.sort},
+            ) ${params.stockingSort.sort} NULLS LAST,
         </if>
         <if test="params.avgStockingSort != null">
         COALESCE(
@@ -146,7 +146,7 @@
             WHERE value->>'type' = '备货期日均'
             )::NUMERIC,
             0
-            ) ${params.avgStockingSort.sort},
+            ) ${params.avgStockingSort.sort} NULLS LAST,
         </if>
         rs.replenishment_type asc
     </select>
