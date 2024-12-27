@@ -3124,7 +3124,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             ListingInfoEntity listingInfoEntity = listingInfoEntityList.stream().filter(obj -> {
                 return v.getSourcePlatform().equals(SoB2cSourcePlatformEnum.ENUM_THIRD_PLATFORM.getCode())
                         && obj.getPlatformSkuNo().equals(v.getPlatformSkuNo()) && obj.getPlatform().equals(data.getDictPlatform())
-                        && (!data.getDictPlatform().equals(PlatformDictEnum.ALI_EXPRESS.getCode()) || obj.getPlatformSpuNo().equals(v.getPlatformSpuNo()));
+                        &&   obj.getPlatformSpuNo().equals(v.getPlatformSpuNo());
             }).findFirst().orElse(null);
             if (ObjectUtils.isNotEmpty(listingInfoEntity)) {
                 v.setImageUrl(listingInfoEntity.getProductImageUrl());

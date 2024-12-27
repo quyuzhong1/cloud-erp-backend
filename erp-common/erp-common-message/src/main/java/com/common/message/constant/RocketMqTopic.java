@@ -128,4 +128,9 @@ public class RocketMqTopic {
      */
     public static final String SYNC_SUDUYUN_ERP_TOPIC = "${spring.cloud.nacos.discovery.namespace}-sync_sudiyun_erp_topic";
 
+    /**
+     * 同步虚拟仓库存明细
+     */
+    public static final String WMS_VIRTUAL_DETAIL_MSG_TOPIC = "${spring.cloud.nacos.discovery.namespace}-wms_virtual_detail_msg_topic";
+
 }

@@ -1300,18 +1300,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
      */
     public void pushSdyFieldHandler(LogisticsBillEntity entity, String operateEnum) {
         List<LogisticsBillDetailEntity> detailEntityList = logisticsBillDetailService.listByMainIds(Arrays.asList(entity.getId()));
-        List<LogisticsChannelEntity> logisticsChannelEntities = new ArrayList<>();
-        if (CharSequenceUtil.isNotEmpty(entity.getChannelId())) {
-            logisticsChannelEntities = logisticsChannelService.listByIds(Arrays.asList(entity.getChannelId()));
-        }
-
-        List<String> supplierIds = logisticsChannelEntities.stream().map(req -> req.getMainId()).distinct().collect(Collectors.toList());
-        List<LogisticsSupplierEntity> logisticsSupplierEntities = new ArrayList<>();
-        if (CollUtil.isNotEmpty(logisticsSupplierEntities)) {
-            logisticsSupplierEntities = logisticsSupplierService.listByIds(supplierIds);
-        }
-
-        syncLogisticsBillService.syncDataToSdy(entity, detailEntityList, operateEnum, logisticsChannelEntities, logisticsSupplierEntities);
+        syncLogisticsBillService.syncDataToSdy(entity, detailEntityList, operateEnum);
     }
 
     @Override

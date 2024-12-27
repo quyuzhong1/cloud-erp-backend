@@ -479,6 +479,7 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
         }
         //取消失败
         if (!cancelResult.isSuccess() && cancelResult.getCode()!=-1) {
+            log.error("取消物流单失败,单号:【{}/{}】,{} ", soB2cLogisticsEntity.getCode(),soB2cLogisticsEntity.getTrackNo(),cancelResult.getMsg());
             return BatchResultDTO.fail(id,soB2cEntity.getCode(),cancelResult.getMsg());
         }else{
             String msg =  CharSequenceUtil.format("取消物流单单号成功,单号:【{}/{}】 ", soB2cLogisticsEntity.getCode(),soB2cLogisticsEntity.getTrackNo());

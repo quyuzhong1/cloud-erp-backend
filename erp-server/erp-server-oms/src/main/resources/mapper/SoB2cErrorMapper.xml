@@ -78,17 +78,25 @@
         GROUP BY type
     </select>
     <select id="getB2CErrorReport" resultType="com.erp.model.oms.dto.SoB2cErrorDTO$TypeCountDTO">
-        SELECT type, COUNT (1) AS typeCount
+        SELECT sb2c.sign_order_error as type, COUNT (1) AS typeCount
         FROM
-            so_b2c_error
-        WHERE
-            main_id != '' AND type != ''
+        so_b2c sb2c
+        INNER JOIN so_b2c_logistics sb2cl ON sb2c.ID = sb2cl.main_id AND sb2cl.is_deleted =FALSE
+        INNER JOIN so_b2c_receiver sb2cr ON sb2c.ID = sb2cr.main_id AND sb2cr.is_deleted =FALSE
+        INNER JOIN shop_info si ON sb2c.shop_id = si.ID AND si.is_deleted =FALSE
+        LEFT JOIN so_b2c_delivery sbd ON sbd.source_id = sb2c.ID AND sb2c.is_deleted = FALSE AND sbd.status != 'cancelDelivery'
+        WHERE sb2c.is_deleted = FALSE
+        AND sb2c.sign_order_error != ''
+        AND sb2c.invalid_status = FALSE
+        AND sb2c.pay_status IN ( 'paid' )
+        AND EXISTS ( SELECT 1 FROM so_b2c_detail sbd WHERE sbd.is_deleted = FALSE AND sbd.main_id = sb2c.ID )
+        AND sb2c.shop_id IN ( SELECT ID FROM shop_info WHERE is_deleted = FALSE )
         <if test="typeList != null and typeList.size > 0">
-            AND type IN
+            AND sb2c.sign_order_error IN
             <foreach collection="typeList" item="item" open="(" close=")" separator=",">
                 #{item}
             </foreach>
         </if>
-        GROUP BY type order by typeCount desc
+        GROUP BY sb2c.sign_order_error ORDER BY typeCount DESC
     </select>
 </mapper>

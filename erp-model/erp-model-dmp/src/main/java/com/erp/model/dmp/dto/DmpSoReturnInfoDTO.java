@@ -9,6 +9,10 @@ import java.io.Serializable;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
+
+import com.common.core.anno.Panno;
+import com.common.core.enums.PannoEnum;
+
 import javax.validation.constraints.Digits;
 
 /**
@@ -328,4 +332,59 @@ public class DmpSoReturnInfoDTO implements Serializable {
     }
 
 
+    /**
+     * 添加管易订单入参
+     */
+    @Data
+    @NoArgsConstructor
+    public static class AddGyyReturnOrderDTO{
+
+        /**
+         * 开始时间
+         */
+        @Panno(findType = PannoEnum.GTE,field = "createDate")
+        private String startTime;
+
+        /**
+         * 结算时间
+         */
+        @Panno(findType = PannoEnum.LTE,field = "createDate")
+        private String endTime;
+
+        /**
+         * 单号
+         */
+        @Panno(findType = PannoEnum.EQ,field = "code")
+        private String code;
+        
+        /**
+         * 平台单号
+         */
+        @Panno(findType = PannoEnum.EQ,field = "platformCode")
+        private String platformCode;
+        
+        private Integer page;
+    }
+    
+    /**
+     * 添加马帮订单入参
+     */
+    @Data
+    @NoArgsConstructor
+    public static class AddMabangReturnOrderDTO{
+    	
+    	/**
+    	 * 开始时间
+    	 */
+    	@Panno(findType = PannoEnum.GTE,field = "createTime")
+    	private String startTime;
+    	
+    	/**
+    	 * 结算时间
+    	 */
+    	@Panno(findType = PannoEnum.LTE,field = "createTime")
+    	private String endTime;
+    	
+    	
+    }
 }

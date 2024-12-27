@@ -4,6 +4,7 @@ package com.erp.server.wms.service.impl;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.core.util.ObjUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseIdDTO;
@@ -17,13 +18,11 @@ import com.common.business.wrapper.FeignQuery;
 import com.common.core.constant.EnumMessage;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import com.common.core.utils.BeanMapper;
-import com.common.core.utils.BeanMapperUtils;
-import com.common.core.utils.StrUtils;
-import com.common.core.utils.ValidatorUtil;
+import com.common.core.utils.*;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.wms.dto.ReportOrderSalesDTO;
 import com.erp.model.wms.dto.VirtualTransFlowDTO;
+import com.erp.model.wms.dto.VirtualTransFlowDetailDTO;
 import com.erp.model.wms.entity.VirtualTransFlowEntity;
 import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.model.wms.enums.inventory.InventoryModeEnum;
@@ -32,6 +31,7 @@ import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.mapper.VirtualTransFlowMapper;
+import com.erp.server.wms.service.VirtualInventoryHisService;
 import com.erp.server.wms.service.VirtualTransFlowService;
 import com.erp.server.wms.service.WarehouseService;
 import lombok.extern.slf4j.Slf4j;
@@ -43,6 +43,7 @@ import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_VIRTUAL_TRANS_FLOW;
@@ -68,6 +69,10 @@ public class VirtualTransFlowServiceImpl extends SuperServiceImpl<VirtualTransFl
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
 
+    @Resource
+    private VirtualInventoryHisService virtualInventoryHisService;
+
+
     @Override
     public PagingVO<VirtualTransFlowDTO.ListDTO> paging(PagingDTO<VirtualTransFlowDTO.SearchParamDTO> dto) {
         dto.getParams().setPermissionSql(dto.getPermissionSql());
@@ -79,7 +84,7 @@ public class VirtualTransFlowServiceImpl extends SuperServiceImpl<VirtualTransFl
     }
 
     @Override
-    public Boolean add(VirtualTransFlowDTO.AddDTO addDTO, String virtualTansRuleId,InventoryModeEnum inventoryModeEnum) {
+    public VirtualTransFlowEntity add(VirtualTransFlowDTO.AddDTO addDTO, String virtualTansRuleId,InventoryModeEnum inventoryModeEnum) {
         // 记录交易流水
         VirtualTransFlowEntity virtualTransFlowEntity = new VirtualTransFlowEntity();
         BeanMapperUtils.copy(addDTO,virtualTransFlowEntity);
@@ -95,11 +100,11 @@ public class VirtualTransFlowServiceImpl extends SuperServiceImpl<VirtualTransFl
         virtualTransFlowEntity.setQty(qty);
         boolean save = super.save(virtualTransFlowEntity);
         ValidatorUtil.isTrue(save, ()->new ServiceException("虚拟库存流水数据保存失败"));
-        return save;
+        return virtualTransFlowEntity;
     }
 
     @Override
-    public Boolean add(VirtualTransFlowEntity param, Integer afterInventoryQty) {
+    public VirtualTransFlowEntity add(VirtualTransFlowEntity param, Integer afterInventoryQty) {
         // 记录交易流水
         LoginUser loginUser = UserContext.getDefaultLoginUser();
 
@@ -118,7 +123,7 @@ public class VirtualTransFlowServiceImpl extends SuperServiceImpl<VirtualTransFl
         virtualTransFlow.setId(null);
         boolean save = super.save(virtualTransFlow);
         ValidatorUtil.isTrue(save, ()->new ServiceException("虚拟库存数据保存失败"));
-        return save;
+        return virtualTransFlow;
     }
 
     @Override
@@ -182,6 +187,69 @@ public class VirtualTransFlowServiceImpl extends SuperServiceImpl<VirtualTransFl
     @Override
     public List<ReportOrderSalesDTO.LastVirtualQtyDTO> listLastVirtualQty(List<String> skuIdList, List<String> warehouseIdList, List<String> virtualWarehouseIdList, LocalDate localDate) {
         return baseMapper.listLastVirtualQty(skuIdList,warehouseIdList,virtualWarehouseIdList,localDate);
+    }
+
+    @Override
+    public List<String> listVirtualInventoryId(String virtualInventoryId, String virtualWarehouseId, String warehouseId, String skuId, Boolean fromTable) {
+        return baseMapper.listVirtualInventoryId(virtualInventoryId,virtualWarehouseId,warehouseId,skuId,fromTable);
+    }
+
+    @Override
+    public void overrideVirtualTransFlow(LocalDate startDate, String virtualInvId) {
+        log.info("###VirtualTransFlowServiceImpl:::overrideVirtualTransFlow 库存流水重算开始 virtualInvId={}, start_time={}", virtualInvId, LocalDateTime.now());
+        List<VirtualTransFlowEntity> flowList = lambdaQuery()
+                .eq(VirtualTransFlowEntity::getVirtualInventoryId, virtualInvId)
+                .ge(VirtualTransFlowEntity::getBillDate, startDate)
+                .last("for update")
+                .list();
+        if(CollUtil.isEmpty(flowList)) {
+            log.warn("未找到需要重算的库存流水，库存id:{}, ", virtualInvId);
+        }
+        flowList = flowList.stream().sorted(Comparator.comparing(VirtualTransFlowEntity::getBillDate)
+                        .thenComparing(VirtualTransFlowEntity::getTradeTime)
+                        .thenComparing(VirtualTransFlowEntity::getId))
+                .collect(Collectors.toList());
+        Integer virtualQty = this.baseMapper.getVirtualQty(virtualInvId, startDate);
+        // 重算库存流水
+        overrideFlowByVirtualInventoryId(flowList, ObjUtil.isNull(virtualQty) ? MathUtil.ZERO : virtualQty);
+        log.info("###VirtualTransFlowServiceImpl:::overrideVirtualTransFlow 库存流水重算完成 virtualInvId={}, end_time={}",  virtualInvId, LocalDateTime.now());
+    }
+
+    @Override
+    public List<VirtualTransFlowEntity> listHisVirtualTransFlow(VirtualTransFlowDetailDTO.HandleDTO dto) {
+        return  lambdaQuery().in(CollUtil.isNotEmpty(dto.getIds()),VirtualTransFlowEntity::getId,dto.getIds())
+                .ge(ObjUtil.isNotNull(dto.getStartDate()),VirtualTransFlowEntity::getBillDate,dto.getStartDate())
+                .orderByAsc(VirtualTransFlowEntity::getBillDate)
+                .orderByAsc(VirtualTransFlowEntity::getId)
+                .list();
+    }
+
+    @Override
+    public List<VirtualTransFlowEntity> listApproveByIds(List<String> oldVirtualTransFlowIdList) {
+        if (CollUtil.isEmpty(oldVirtualTransFlowIdList)) {
+            return Collections.EMPTY_LIST;
+        }
+        return lambdaQuery().in(VirtualTransFlowEntity::getId,oldVirtualTransFlowIdList)
+                .lt(VirtualTransFlowEntity::getQty,MathUtil.ZERO)
+                .eq(VirtualTransFlowEntity::getIsUnapproved,Boolean.FALSE)
+                .orderByAsc(VirtualTransFlowEntity::getBillDate)
+                .list();
+    }
+
+    /**
+     * 重算库存流水
+     * @author will
+     * @date 2024/12/12 12:17
+     * @param flowList
+     */
+    private void overrideFlowByVirtualInventoryId(List<VirtualTransFlowEntity> flowList,Integer virtualQty) {
+        List<VirtualTransFlowEntity> updateList = new ArrayList<>();
+        for (VirtualTransFlowEntity flowEntity : flowList) {
+            Integer afterQty = virtualQty + flowEntity.getQty();
+            updateList.add(new VirtualTransFlowEntity(flowEntity.getId(), afterQty));
+            virtualQty = afterQty;
+        }
+        updateBatchById(updateList);
     }
 
     /**
