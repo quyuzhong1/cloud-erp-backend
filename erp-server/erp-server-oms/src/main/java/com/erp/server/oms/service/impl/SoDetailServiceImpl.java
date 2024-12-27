@@ -1642,7 +1642,7 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
         virtualInventoryFeign.approveByType(stockParamDTO);
 
         //添加日志
-        String content = String.format("操作了锁定库存，SKU【{}】 从【{}】到【{}}】",soDetailEntity.getSkuNo(),oldFrozenQty,frozenQty);
+        String content = StrUtil.format("操作了锁定库存，SKU【{}】 从【{}】到【{}}】",soDetailEntity.getSkuNo(),oldFrozenQty,frozenQty);
         operateLogService.addModuleOperateLog(content, ModuleTypeEnum.SO.getCode(), soInfoEntity.getId(), "锁定库存操作");
         return new BatchResultDTO(soDetailEntity.getId(), CharSequenceUtil.format("【{}】{}",soInfoEntity.getCode(),soDetailEntity.getSkuNo()),"库存锁定成功",Boolean.TRUE);
     }
@@ -1680,7 +1680,7 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
         this.updateById(soDetailEntity);
 
         //添加日志
-        String content = String.format("SKU【{}】操作了释放锁定库存",soDetailEntity.getSkuNo());
+        String content = StrUtil.format("SKU【{}】操作了释放锁定库存",soDetailEntity.getSkuNo());
         operateLogService.addModuleOperateLog(content, ModuleTypeEnum.SO.getCode(), soInfoEntity.getId(), "释放库存操作");
         return new BatchResultDTO(soDetailEntity.getId(), CharSequenceUtil.format("【{}】{}",soInfoEntity.getCode(),soDetailEntity.getSkuNo()),"释放库存成功",Boolean.TRUE);
     }
