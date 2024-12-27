@@ -3,6 +3,7 @@ package com.erp.server.tms.controller.api;
 
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.DataPermission;
+import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
@@ -74,6 +75,7 @@ public class ShippingTemplateController extends BaseController {
             menuCode = "tms:shippingTemplate:paging",
             tableAlias = "st"
     )
+    @WebAdvanceQuery
     public ApiResult<PagingVO<ShippingTemplateDTO.ListDTO>> queryByPage(@RequestBody @Validated PagingDTO<ShippingTemplateDTO.PagingParamDTO> dto) {
         PagingVO<ShippingTemplateDTO.ListDTO> pagingVO = shippingTemplateService.paging(dto);
         return success(pagingVO);

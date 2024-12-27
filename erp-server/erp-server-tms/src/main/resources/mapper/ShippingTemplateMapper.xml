@@ -79,7 +79,7 @@
         from
         shipping_template st
         <where>
-            st.is_deleted = false
+            ${params.sqlMap.default} and st.is_deleted = false
             <if test="params.name != null and params.name != ''">
                 and st.name iLIKE concat('%',#{params.name}::text,'%')
             </if>
