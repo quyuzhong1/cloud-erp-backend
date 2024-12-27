@@ -38,7 +38,7 @@ public class SubcontractOrderQueryHandler extends AbstractQueryHandler {
         if ("tab".equals(field)) {
             List<String> approveStatusList = new ArrayList<>(1);
             List<String> arrivalStatusList = new ArrayList<>(2);
-            if (PurchaseTableFlagEnum.TO_BE_APPROVE.getCode().equals(field)) {
+            if (PurchaseTableFlagEnum.TO_BE_APPROVE.getCode().equals(value)) {
                 approveStatusList.add(ApproveStatusEnum.APPROVE_ING.getStatus());
                 //需要审核的业务ids
                 List<String> businessIds = commonService.listProcessCurBusinessIds(SourceTypeEnum.SUBCONTRACT_ORDER.getCode());
@@ -47,22 +47,22 @@ public class SubcontractOrderQueryHandler extends AbstractQueryHandler {
                 }
             }
             // 待提交
-            if (PurchaseTableFlagEnum.WAIT_SUBMIT.getCode().equals(field)) {
+            if (PurchaseTableFlagEnum.WAIT_SUBMIT.getCode().equals(value)) {
                 approveStatusList.add(ApproveStatusEnum.WAIT_SUBMIT.getStatus());
             }
             //待到货
-            if (PurchaseTableFlagEnum.TO_BE_CREATE.getCode().equals(field)) {
+            if (PurchaseTableFlagEnum.TO_BE_CREATE.getCode().equals(value)) {
                 approveStatusList.add(ApproveStatusEnum.APPROVE.getStatus());
                 arrivalStatusList.add(ArrivalStatusEnum.NON_ARRIVAL.getCode());
                 arrivalStatusList.add(ArrivalStatusEnum.PARTIAL_ARRIVAL.getCode());
             }
             //已到货
-            if (PurchaseTableFlagEnum.CREATED.getCode().equals(field)) {
+            if (PurchaseTableFlagEnum.CREATED.getCode().equals(value)) {
                 approveStatusList.add(ApproveStatusEnum.APPROVE.getStatus());
                 arrivalStatusList.add(ArrivalStatusEnum.ARRIVED.getCode());
             }
             //不通过
-            if (PurchaseTableFlagEnum.REJECT.getCode().equals(field)) {
+            if (PurchaseTableFlagEnum.REJECT.getCode().equals(value)) {
                 approveStatusList.add(ApproveStatusEnum.REJECT.getStatus());
             }
             if (CollectionUtils.isNotEmpty(approveStatusList)) {
@@ -71,6 +71,7 @@ public class SubcontractOrderQueryHandler extends AbstractQueryHandler {
             if (CollectionUtils.isNotEmpty(arrivalStatusList)) {
                 super.buildDefaultDTO("so.arrival_status", arrivalStatusList);
             }
+
         }
         return null;
     }
