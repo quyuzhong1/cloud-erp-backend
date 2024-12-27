@@ -1925,9 +1925,25 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         List<String> skuIdList = page.getRecords().stream().map(WarehouseReceiveExcelDTO::getSkuId).collect(Collectors.toList());
         //根据ids查询sku信息
         List<ProductDetailEntity> detailEntityList = plmTaskFeign.getByIdList(skuIdList);
+        //查询质检单
+        List<String> receiveIds = page.getRecords().stream().map(WarehouseReceiveExcelDTO::getId).distinct().collect(Collectors.toList());
+        //质检信息
+        List<QcInfoEntity> qcInfoList = qcInfoService.listQCBySourceIdsAndType(receiveIds,SourceTypeEnum.PO_RECEIVE.getCode());
         List<WarehouseReceiveExportExcelDTO> exportExcelDTOS = new ArrayList<>();
         page.getRecords().forEach(obj -> {
-
+            //设置入库状态名称
+            obj.setInStockStatusName(InstockStatusEnum.getByCode(obj.getInStockStatus()));
+            List<QcInfoEntity> resultList = qcInfoList.stream().filter(v -> v.getSourceId().equals(obj.getId())).collect(Collectors.toList());
+            if(resultList.stream().allMatch(v->Objects.isNull(v.getQcStatus()) || QcBillStatusEnum.DRAFT.equals(v.getQcStatus())|| QcBillStatusEnum.WAIT_QC.equals(v.getQcStatus())|| QcBillStatusEnum.CANCEL.equals(v.getQcStatus()))){
+                obj.setQcStatus(PdaQclStatusEnum.WAIT_QC.getCode());
+                obj.setQcStatusName(PdaQclStatusEnum.WAIT_QC.getName());
+            }else if(resultList.stream().allMatch(v->QcBillStatusEnum.EXEMPTION.equals(v.getQcStatus()) || QcBillStatusEnum.FINISH_QC.equals(v.getQcStatus()))){
+                obj.setQcStatus(PdaQclStatusEnum.FINISH_QC.getCode());
+                obj.setQcStatusName(PdaQclStatusEnum.FINISH_QC.getName());
+            }else{
+                obj.setQcStatus(PdaQclStatusEnum.PARTIAL_QC.getCode());
+                obj.setQcStatusName(PdaQclStatusEnum.PARTIAL_QC.getName());
+            }
             ProductDetailEntity productDetailEntity = detailEntityList.stream().filter(entityClass -> entityClass.getId().equals(obj.getSkuId())).findFirst().orElse(null);
             if (ObjectUtil.isEmpty(productDetailEntity)) {
                 throw new ServiceException(ApiError.ERROR_95107);
