@@ -102,16 +102,19 @@ public class StocktakingPlanServiceImpl extends SuperServiceImpl<StocktakingPlan
         List<StocktakingPlanDTO.TabListDTO> list = baseMapper.tabList(searchParam);
         // 获取状态列表
         List<ApproveStatusEnum> statusList = Arrays.stream(ApproveStatusEnum.values()).collect(Collectors.toList());
-        // 不存在的状态赋值为0
-        List<String> existStatusList = list.stream().map(StocktakingPlanDTO.TabListDTO::getTabFlag).collect(Collectors.toList());
-        statusList.parallelStream().forEach(status -> {
-            if(!existStatusList.contains(status.getStatus())) {
-               list.add(new StocktakingPlanDTO.TabListDTO(status.getStatus(), 0, status.getName()));
+
+        List<StocktakingPlanDTO.TabListDTO> resultList = new LinkedList<>();
+        resultList.add(0, new StocktakingPlanDTO.TabListDTO("all", list.stream().mapToInt(StocktakingPlanDTO.TabListDTO::getCount).sum(), "全部"));
+        statusList.forEach(status -> {
+            StocktakingPlanDTO.TabListDTO tabListDTO = list.stream().filter(e -> e.getTabFlag().equalsIgnoreCase(status.getStatus())).findFirst().orElse(null);
+            if (null == tabListDTO){
+                resultList.add(new StocktakingPlanDTO.TabListDTO(status.getStatus(), 0, status.getName()));
+            } else {
+                resultList.add(new StocktakingPlanDTO.TabListDTO(status.getStatus(), tabListDTO.getCount(), status.getName()));
             }
         });
-        list.add(new StocktakingPlanDTO.TabListDTO("all", list.stream().mapToInt(StocktakingPlanDTO.TabListDTO::getCount).sum(), "全部"));
         // 计算合计数量
-        return list;
+        return resultList;
     }
 
     @Override
