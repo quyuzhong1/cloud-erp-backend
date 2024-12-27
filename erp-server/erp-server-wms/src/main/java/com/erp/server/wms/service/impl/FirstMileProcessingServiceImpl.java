@@ -35,6 +35,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_FIRST_MILE_PROCESSING;
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_SO_B2C_PROCESSING;
 
 /**
@@ -101,7 +102,7 @@ public class FirstMileProcessingServiceImpl extends SuperServiceImpl<FirstMilePr
 
     @Override
     public Boolean exportExcel(FirstMileProcessingDTO.PagingParamDTO dto) {
-        downloadTaskFeign.saveDownloadTask("头程虚拟仓列表信息", EXPORT_WMS_SO_B2C_PROCESSING.getCode(), dto);
+        downloadTaskFeign.saveDownloadTask("头程虚拟仓列表信息", EXPORT_WMS_FIRST_MILE_PROCESSING.getCode(), dto);
         return Boolean.TRUE;
     }
 
