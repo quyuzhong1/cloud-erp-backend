@@ -1,5 +1,6 @@
 package com.erp.model.plm.dto;
 
+import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -7,6 +8,7 @@ import lombok.NoArgsConstructor;
 import javax.validation.constraints.NotBlank;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Will
@@ -83,4 +85,14 @@ public class ProductPlanSearchDTO extends SortDTO {
      * 应用分类id
      */
     private List<String> applicationCategoryIds;
+
+    /**
+     * 页面高级查询
+     */
+    private List<AdvanceQueryDTO> advanceQueryDTOList;
+
+    /**
+     * sqlMap 默认key default
+     */
+    private Map<String, String> sqlMap;
 }
