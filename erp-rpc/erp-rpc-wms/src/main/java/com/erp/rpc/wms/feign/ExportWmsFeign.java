@@ -268,18 +268,7 @@ public interface ExportWmsFeign {
     @PostMapping("/feign/export/framePaging")
     PagingVO<VirtualInventoryAgeDTO.HisInventoryAgeDetailDTO> framePaging(PagingDTO<VirtualInventoryAgeDTO.FrameParamDTO> dto);
 
-    /**
-     * 偏远邮编导出
-     */
-    @PostMapping("/feign/export/exportRemotePostcode")
-    PagingVO<RemotePostcodeDTO.ExportListDTO> exportRemotePostcode(@RequestBody PagingDTO<RemotePostcodeDTO.PagingParamDTO> dto);
 
-
-    /**
-     * 导出虚拟仓分货
-     */
-    @PostMapping("/feign/export/exportVirtualStatistics")
-    PagingVO<VirtualWarehouseAllocationDTO.ExportStatisticsDTO> exportVirtualStatistics(PagingDTO<VirtualWarehouseAllocationDTO.ExportDTO> dto);
     /**
      * 导出FBA在途核对列表
      */
