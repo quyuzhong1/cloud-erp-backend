@@ -122,10 +122,14 @@ public class CalcSalesInfoDimServiceImpl extends SuperServiceImpl<CalcSalesInfoD
                 List<CalcSalesInfoDimDTO.TimePeriodSalesDTO> avgTimePeriodSales = calculationTimePeriodSales(dto, allSalesList, entity);
                 //开始计算销量预估
                 List<CalcSalesInfoEstimateEntity> calcSalesInfoEstimateList = calculationSalesEstimates(dto, avgTimePeriodSales, allSalesList);
+                List<OrderHistorySalesEsEntity> salesInfos = orderHistorySalesEsService.findByShopIdAndSkuIdAndDateBetween(entity.getShopId(), entity.getSkuId(),
+                        dto.getStartCalcDate(), dto.getEndCalcDate());
+                Map<LocalDate, Integer> hisSalesMap = salesInfos.stream()
+                        .collect(Collectors.toMap(OrderHistorySalesEsEntity::getDate, OrderHistorySalesEsEntity::getOriginalSalesQty, Integer::sum));
                 //开始计算分时段预估
-                calculationTimePeriodSalesEstimates(dto.getStartCalcDate(), entity, calcSalesInfoEstimateList, dto.getSalesHistoryMap());
+                calculationTimePeriodSalesEstimates(dto.getStartCalcDate(), entity, calcSalesInfoEstimateList, hisSalesMap);
                 //计算吻合度
-                BigDecimal similarity = calculationSimilarity(dto, entity, calcSalesInfoEstimateList);
+                BigDecimal similarity = calculationSimilarity(dto, calcSalesInfoEstimateList, hisSalesMap);
                 entity.setSimilarity(similarity);
                 calcSalesInfoDenoisingService.saveBatch(calculationSales);
                 calcSalesInfoEstimateService.saveBatch(calcSalesInfoEstimateList);
@@ -135,15 +139,17 @@ public class CalcSalesInfoDimServiceImpl extends SuperServiceImpl<CalcSalesInfoD
 
     }
 
-    private BigDecimal calculationSimilarity(CalcSalesInfoDimDTO.CalcResultDTO dto, CalcSalesInfoDimEntity entity, List<CalcSalesInfoEstimateEntity> calcSalesInfoEstimateList) {
+    /**
+     * 计算吻合度
+     * @param dto 参数
+     * @param calcSalesInfoEstimateList 参数
+     * @param hisSalesMap 参数
+     */
+    private BigDecimal calculationSimilarity(CalcSalesInfoDimDTO.CalcResultDTO dto, List<CalcSalesInfoEstimateEntity> calcSalesInfoEstimateList, Map<LocalDate, Integer> hisSalesMap) {
 
         List<BigDecimal> calcList = calcSalesInfoEstimateList.stream()
                 .map(CalcSalesInfoEstimateEntity::getQty)
                 .collect(Collectors.toList());
-        List<OrderHistorySalesEsEntity> salesInfos = orderHistorySalesEsService.findByShopIdAndSkuIdAndDateBetween(entity.getShopId(), entity.getSkuId(),
-                dto.getStartCalcDate(), dto.getEndCalcDate());
-        Map<LocalDate, Integer> hisSalesMap = salesInfos.stream()
-                .collect(Collectors.toMap(OrderHistorySalesEsEntity::getDate, OrderHistorySalesEsEntity::getOriginalSalesQty, Integer::sum));
         List<BigDecimal> basicData = new ArrayList<>();
         //组装历史真实销量
         LocalDate date = dto.getStartCalcDate();
