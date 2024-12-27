@@ -120,6 +120,7 @@ public class PurchasePriceDTO implements Serializable {
          */
         private String currency;
 
+        private String warehouseLocation;
         /**
          * 币别符号
          */

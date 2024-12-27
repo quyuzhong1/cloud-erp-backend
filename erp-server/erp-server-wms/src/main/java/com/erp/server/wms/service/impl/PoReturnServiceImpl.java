@@ -3183,6 +3183,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
                 addDetailDTO.setCurrencySymbol(detailView.getCurrencySymbol());
                 addDetailDTO.setIsGift(detailView.getIsGift());
                 addDetailDTO.setIsUrgent(detailView.getIsUrgent());
+                addDetailDTO.setWarehouseLocation(detailView.getWarehouseLocation());
                 addDetailList.add(addDetailDTO);
             }
             addDTO.setDetails(addDetailList);
