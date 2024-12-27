@@ -1,6 +1,10 @@
 package com.erp.server.dmp.controller.api;
 
 
+import cn.hutool.json.JSONUtil;
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
@@ -13,6 +17,7 @@ import com.erp.model.plm.vo.SkuVO;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.dmp.service.DmpAmzReportInfoService;
 import com.sdk.third.lingxing.dto.ProductInfo;
+import com.sdk.third.lingxing.dto.Result;
 import com.sdk.third.lingxing.utils.LingxingApiUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -23,6 +28,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
+import java.util.HashMap;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -54,11 +60,28 @@ public class DmpHistorySyncThirdController extends BaseController {
         } else {
             skuVOS = plmTaskFeign.listBySkuNoList(skuIdList);
         }
+        // 查询已有产品
+        Result<Object> result = LingxingApiUtils.getAndSign(LingxingApiUtils.PRODUCT_LIST_URI, new HashMap<>());
+        Object data = result.getData();
+        JSONArray jsonArray = new JSONArray();
+        if (null != data){
+            jsonArray = JSONArray.parseArray(JSON.toJSONString(data));
+        }
+
         List<ProductInfo> collect = skuVOS.stream().map(e -> new ProductInfo(
                 LingxingApiUtils.convertLxSku(e.getSkuNo()),
-                e.getSkuName(),
+                LingxingApiUtils.convertLxProductName(e.getSkuName()),
                 e.getSkuId())).collect(Collectors.toList());
         for (ProductInfo productInfo : collect) {
+            boolean exist = jsonArray.stream()
+                    .anyMatch(e -> productInfo.getSkuIdentifier().toString().equalsIgnoreCase(((JSONObject) e).getString("sku_identifier")));
+            if (exist){
+                continue;
+            }
+            if (productInfo.getSku().length() >= 50){
+                log.warn("SKU长度过长: 跳过：{}", JSONUtil.toJsonStr(productInfo));
+                continue;
+            }
             LingxingApiUtils.addOrUpdateProduct(productInfo);
         }
         return success();

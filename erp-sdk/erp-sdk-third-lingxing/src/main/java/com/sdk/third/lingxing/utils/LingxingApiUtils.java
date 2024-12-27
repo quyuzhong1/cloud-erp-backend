@@ -4,6 +4,7 @@ package com.sdk.third.lingxing.utils;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.net.URLEncodeUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
@@ -60,6 +61,8 @@ public class LingxingApiUtils {
 
     // 添加/编辑本地产品
     public static final String PRODUCT_SET_URI = "erp/sc/routing/storage/product/set";
+    // 查询本地产品列表
+    public static final String PRODUCT_LIST_URI = "erp/sc/routing/data/local_inventory/productList";
 
 
     /**
@@ -467,11 +470,13 @@ public class LingxingApiUtils {
      *
      */
     public static String convertLxSku(String sku){
-        return sku.replace("+", "-").replace("*", "#");
+        return CharSequenceUtil.replace(sku,"+", "-").replace("*", "#");
     }
 
-    public static void main(String[] args) {
-        String aa = convertLxSku("2544 + 5552 + 6522 *2");
-        System.out.println(aa);
+    /**
+     * 替换连续的空格
+     */
+    public static String convertLxProductName(String name){
+        return name.replaceAll( "\\s+", " ");
     }
 }
