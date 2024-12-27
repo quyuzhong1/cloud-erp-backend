@@ -433,7 +433,7 @@ public class LingxingApiUtils {
                 .collect(Collectors.toList());
         requestMap.put("order_list", dataMap);
         Result<Object> result = LingxingApiUtils.postAndSignCheckListConvert(LingxingApiUtils.UPDATE_ORDER_URI, requestMap);
-        if (!"0".equalsIgnoreCase(result.getCode())) {
+        if ("10000".equalsIgnoreCase(result.getCode())) {
             String errorMsg = StrUtil.format("请求领星编辑/更新自发货订单失败:,request={}, result={}", requestMap, JSONUtil.toJsonStr(result));
             log.error(errorMsg);
             throw new ServiceException(errorMsg);
