@@ -148,7 +148,7 @@ public class CalcSalesInfoDimServiceImpl extends SuperServiceImpl<CalcSalesInfoD
             basicData.add(new BigDecimal(Optional.ofNullable(hisSalesMap.get(date)).orElse(0)));
             date = date.plusDays(1);
         }
-        return DataDifferenceCalculator.calculateMatchRate(calcList, basicData, new BigDecimal(1), DataDifferenceCalculator.CalculationType.COSINE);
+        return DataDifferenceCalculator.computeMetrics(calcList, basicData, dto.getCalcSalesInfoDimId()).getMAPEScore();
     }
 
     @Override
@@ -446,10 +446,10 @@ public class CalcSalesInfoDimServiceImpl extends SuperServiceImpl<CalcSalesInfoD
             lineDTO.setQty(entry.getValue());
             calcList.add(lineDTO);
         }
-        List<CalcSalesInfoDimDTO.LineDTO> lineDTOS = DataDifferenceCalculator.calculateMatchRates(calcList, basicData, new BigDecimal(1), DataDifferenceCalculator.CalculationType.COSINE);
+        DataDifferenceCalculator.compareMultiplePredictions(calcList, basicData);
         List<CalcSalesInfoDimDTO.LineDTO> lineList = new ArrayList<>();
         lineList.add(new CalcSalesInfoDimDTO.LineDTO("真实销量", new BigDecimal(100), basicData));
-        lineList.addAll(lineDTOS);
+        lineList.addAll(calcList);
         CalcSalesInfoDimDTO.CalcCompareDTO calcCompareDTO = new CalcSalesInfoDimDTO.CalcCompareDTO();
         calcCompareDTO.setDateList(dateList);
         calcCompareDTO.setLineList(lineList);

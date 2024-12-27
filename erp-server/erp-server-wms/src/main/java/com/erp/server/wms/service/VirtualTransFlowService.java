@@ -128,7 +128,7 @@ public interface VirtualTransFlowService extends SuperService<VirtualTransFlowEn
      * 查询历史虚拟仓流水数据
      * @author will
      * @date 2024/12/17 17:47
-     * @param dto 
+     * @param dto
      * @return List<VirtualTransFlowEntity>
      */
     List<VirtualTransFlowEntity> listHisVirtualTransFlow(VirtualTransFlowDetailDTO.HandleDTO dto);
