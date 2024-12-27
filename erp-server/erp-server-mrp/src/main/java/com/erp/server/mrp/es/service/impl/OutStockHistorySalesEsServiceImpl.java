@@ -19,8 +19,9 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.elasticsearch.core.ElasticsearchRestTemplate;
 import org.springframework.data.elasticsearch.core.SearchHit;
-import org.springframework.data.elasticsearch.core.SearchHits;
+import org.springframework.data.elasticsearch.core.SearchScrollHits;
 import org.springframework.data.elasticsearch.core.document.DocumentAdapters;
+import org.springframework.data.elasticsearch.core.mapping.IndexCoordinates;
 import org.springframework.data.elasticsearch.core.query.NativeSearchQuery;
 import org.springframework.data.elasticsearch.core.query.NativeSearchQueryBuilder;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
@@ -183,16 +184,36 @@ public class OutStockHistorySalesEsServiceImpl implements OutStockHistorySalesEs
 
 
     @Override
-    public Map<String, List<String>> listSkuByShopId(Set<String> shopIds) {
-        BoolQueryBuilder queryBuilder = QueryBuilders.boolQuery()
-                .must(QueryBuilders.termsQuery("shopId", shopIds));
+    public Map<String, Set<String>> listSkuByShopId(Set<String> shopIds) {
+
         NativeSearchQuery searchQuery = new NativeSearchQueryBuilder()
-                .withQuery(queryBuilder)
+                .withQuery(QueryBuilders.boolQuery()
+                        .must(QueryBuilders.termsQuery("shopId", shopIds)))
+                .withPageable(PageRequest.of(0, 10000))
                 .build();
-        // 执行查询
-        SearchHits<OutStockHistorySalesEsEntity> searchHits = elasticsearchRestTemplate.search(searchQuery, OutStockHistorySalesEsEntity.class);
-        return searchHits.getSearchHits().stream()
-                .map(SearchHit::getContent)
-                .collect(Collectors.groupingBy(OutStockHistorySalesEsEntity::getShopId, Collectors.mapping(OutStockHistorySalesEsEntity::getSkuId, Collectors.toList())));
+        List<String> scrollIdList = new ArrayList<>();
+        List<OutStockHistorySalesEsEntity> result = new ArrayList<>();
+        SearchScrollHits<OutStockHistorySalesEsEntity> orderHistorySales = elasticsearchRestTemplate.searchScrollStart(60000, searchQuery, OutStockHistorySalesEsEntity.class, IndexCoordinates.of("out_stock_history_sales"));
+        String scrollId = orderHistorySales.getScrollId();
+        scrollIdList.add(scrollId);
+        while (true) {
+            SearchScrollHits<OutStockHistorySalesEsEntity> searchScrollHits = elasticsearchRestTemplate.searchScrollContinue(scrollId, 60000, OutStockHistorySalesEsEntity.class, IndexCoordinates.of("out_stock_history_sales"));
+            // 获取查询结果并收集到列表中
+            List<OutStockHistorySalesEsEntity> products = searchScrollHits.getSearchHits().stream()
+                    .map(SearchHit::getContent)
+                    .collect(Collectors.toList());
+
+            if (products.isEmpty()) {
+                // 如果当前批次没有数据，表示所有数据已被检索完毕，退出循环
+                break;
+            }
+            // 将当前批次的结果添加到全部结果列表中
+            result.addAll(products);
+            // 更新 scrollId 为当前批次的 scrollId
+            scrollId = searchScrollHits.getScrollId();
+        }
+        elasticsearchRestTemplate.searchScrollClear(scrollIdList);
+        return result.stream()
+                .collect(Collectors.groupingBy(OutStockHistorySalesEsEntity::getShopId, Collectors.mapping(OutStockHistorySalesEsEntity::getSkuId, Collectors.toSet())));
     }
 }
