@@ -272,7 +272,17 @@ public class DmpOutputErpPushTaskHandler extends DmpOutputTaskHandler{
 				return;
 			}
 		}
-		
+
+		Boolean isQuerySync = JSON.parseObject(requestData).getBoolean("isQuerySync");
+		if (isQuerySync) {
+			List<DmpOutputTaskRecordEntity> erpQuerySync = dmpOutputTaskRecordService.erpQuerySync(dmpCfgOutputEntity, Arrays.asList(dmpOutputTaskRecordEntity));
+			if(CollUtil.isNotEmpty(erpQuerySync)) {
+				requestData = erpQuerySync.get(0).getRequestData();
+			}else {
+				return;
+			}
+		}
+
 		String outputTypeId = dmpCfgOutputEntity.getTypeId();
 		DmpCfgApiEntity outputDmpCfgApiEntity = dmpHandlerCache.getDmpCfgApiEntityList(d -> d.getId().equals(outputTypeId)).get(0);
 		String apiClass = outputDmpCfgApiEntity.getApiClass();

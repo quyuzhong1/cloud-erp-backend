@@ -1776,67 +1776,11 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
     }
 
     public void syncToSdyHandler(List<SoReturnInstockEntity> list, String operate) {
-        List<String> ids = list.stream().map(req -> req.getId()).collect(Collectors.toList());
-        List<SoReturnInstockDetailEntity> detailEntityList = soReturnInstockDetailService.listDetailByMainIds(ids);
-
-        List<String> skuNos = detailEntityList.stream().map(req -> req.getSkuNo()).collect(Collectors.toList());
-        List<SkuVO> skuVOList = plmTaskFeign.listBySkuNoList(skuNos);
-        List<String> skuIds = detailEntityList.stream().map(req -> req.getSkuId()).collect(Collectors.toList());
-        List<BomChildrenSkuDTO> bomChildrenSkuDTOS = plmTaskFeign.listBomChildBySkuIds(skuIds);
-
-        List<String> currencyCodeList = detailEntityList.stream().map(req -> req.getCurrency()).distinct().collect(Collectors.toList());
-        List<CurrencyDTO.ViewDTO> currencyList = sysUserFeign.listByCurrency(currencyCodeList);
-        //父类产品
-        List<String> parentSkuId = bomChildrenSkuDTOS.stream().map(BomChildrenSkuDTO::getParentSkuId).distinct().collect(Collectors.toList());
-        List<ProductDetailEntity> parentSkuList = new ArrayList<>();
-        if (CollUtil.isNotEmpty(parentSkuId)) {
-            parentSkuList = FeignQuery.create(ProductDetailEntity.class)
-                    .in(ProductDetailEntity::getId, parentSkuId)
-                    .list();
-        }
-
-        //客户
-        List<String> customerIds = list.stream().map(req -> req.getCustomerId()).distinct().collect(Collectors.toList());
-        List<CustomerInfoEntity> customerInfoList = new ArrayList<>();
-        if (CollUtil.isNotEmpty(customerIds)) {
-            //组织
-            customerInfoList = FeignQuery.create(CustomerInfoEntity.class)
-                    .in(CustomerInfoEntity::getId, customerIds)
-                    .list();
-        }
-
-        //组织
-        List<String> financialOrganization = customerInfoList.stream().map(req -> req.getFinancialOrganization()).distinct().collect(Collectors.toList());
-        financialOrganization.addAll(list.stream().map(SoReturnInstockEntity::getSalesOrgId).distinct().collect(Collectors.toList()));
-        List<BaseIdDTO.CodeDTO> companyEntities = sysUserFeign.getAccountingCompanyList(financialOrganization);
-
-        List<DictBasicEntity> dictBasicEntityList = FeignQuery.create(DictBasicEntity.class).eq(DictBasicEntity::getType, DictBasicTypeEnum.SALES_PLATFORM.getType()).list();
-
-
-        List<String> soReturnIds = list.stream().filter(req -> SourceTypeEnum.SO_RETURN.getCode().equals(req.getSourceType())).map(req -> req.getSourceId()).distinct().collect(Collectors.toList());
-        List<SoReturnEntity> soReturnEntityList = soReturnFeign.listByIds(soReturnIds);
-
-        List<String> receiveIds = list.stream().filter(req -> SourceTypeEnum.SO_RETURN_RECEIVE.getCode().equals(req.getSourceType())).map(req -> req.getSourceId()).distinct().collect(Collectors.toList());
-        List<SoReturnReceiveEntity> soReturnReceiveEntityList = soReturnReceiveService.listByIds(receiveIds);
-
-        List<String> returnIds = list.stream().map(req -> req.getSourceId()).distinct().collect(Collectors.toList());
-        List<SoReturnEntity> receiveReturnList = soReturnFeign.listByIds(returnIds);
-
         for (SoReturnInstockEntity entity : list) {
             List<SoReturnInstockDetailEntity> detailEntities = soReturnInstockDetailService.listDetailByMainId(entity.getId());
             syncSoReturnInstockService.syncDataToSdy(entity,
                     detailEntities,
-                    operate,
-                    skuVOList,
-                    bomChildrenSkuDTOS,
-                    currencyList,
-                    parentSkuList,
-                    customerInfoList,
-                    companyEntities,
-                    dictBasicEntityList,
-                    soReturnEntityList,
-                    soReturnReceiveEntityList,
-                    receiveReturnList);
+                    operate);
         }
     }
     

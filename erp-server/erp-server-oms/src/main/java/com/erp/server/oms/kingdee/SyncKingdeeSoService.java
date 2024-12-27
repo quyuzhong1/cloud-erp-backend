@@ -45,7 +45,6 @@ public interface SyncKingdeeSoService {
                                                   List<DictBasicEntity> dictBasicEntityList,
                                                   List<CurrencyDTO.ViewDTO> currencyList,
                                                   List<SoChangeDetailEntity> soChangeDetailEntityList,
-                                                  String deliveryStatus,
                                                   List<DictBasicEntity> dictList);
 
     /**
@@ -53,9 +52,8 @@ public interface SyncKingdeeSoService {
      * @param view
      * @param soDetailEntityList
      * @param operate
-     * @param deliveryStatus
      */
-    void syncDataToSdy(SoInfoDTO.ViewDTO view, List<SoDetailEntity> soDetailEntityList, String operate, String deliveryStatus);
+    void syncDataToSdy(SoInfoDTO.ViewDTO view, List<SoDetailEntity> soDetailEntityList, String operate);
 
     void syncDataToSdy(SoInfoEntity soInfoEntity,
                        List<SoDetailEntity> detailEntityList,
@@ -68,7 +66,6 @@ public interface SyncKingdeeSoService {
                        List<DictBasicEntity> dictBasicEntityList,
                        List<CurrencyDTO.ViewDTO> currencyList,
                        List<SoChangeDetailEntity> soChangeDetailEntities,
-                       String deliveryStatus,
                        List<DictBasicEntity> dictList
     );
 

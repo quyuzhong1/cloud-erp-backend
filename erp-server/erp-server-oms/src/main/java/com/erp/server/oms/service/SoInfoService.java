@@ -474,9 +474,8 @@ public interface SoInfoService extends SuperService<SoInfoEntity> {
      * 同步数帝云
      * @param soId
      * @param operateEnum
-     * @param deliveryStatus
      */
-    void sdyFieldOrderHandler(String soId, String operateEnum, String deliveryStatus);
+    void sdyFieldOrderHandler(String soId, String operateEnum);
 
     List<SoInfoEntity> queryToSdy(LocalDate startDate, LocalDate endStart, Integer pageSize, int offset);
     /**
