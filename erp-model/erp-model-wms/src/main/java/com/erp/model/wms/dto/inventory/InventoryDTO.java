@@ -92,6 +92,16 @@ public class InventoryDTO implements Serializable {
          * SKU ID编码集合
          */
         private List<String> skuIdList;
+
+        /**
+         * 页面高级查询
+         */
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
+
+        /**
+         * sqlMap 默认key default
+         */
+        private Map<String, String> sqlMap;
     }
 
     /**
