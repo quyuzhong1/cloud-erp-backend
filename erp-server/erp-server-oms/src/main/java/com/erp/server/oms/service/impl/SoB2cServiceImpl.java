@@ -5865,9 +5865,12 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         List<UpdateOrderDTO.OrderItem> orderItemList = new ArrayList<>();
         detailEntityList.forEach(detailEntity -> {
             UpdateOrderDTO.OrderItem orderItem = new UpdateOrderDTO.OrderItem();
-            orderItem.setMark(detailEntity.getPlatformSkuNo());
+            orderItem.setMsku(detailEntity.getPlatformSkuNo());
             orderItem.setSku(detailEntity.getSkuNo());
+            orderItem.setQuantity(detailEntity.getQty());
             orderItem.setId(detailEntity.getThirdDetailId());
+            orderItem.setMark("更新订单");
+            orderItem.setPrice(0);
             orderItem.setType(3);
             orderItemList.add(orderItem);
         });
@@ -7525,14 +7528,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             logisticsEntity.setWidth(maxWidth);
             logisticsEntity.setHeight(totalHeight);
             soB2cLogisticsService.updateById(logisticsEntity);
-        }
-        //如果是领星订单，更新领星订单信息
-        if(entity.getThirdSystem().equals(PlatformDictEnum.LING_XING.getCode())){
-            UpdateOrderDTO.OrderInfo orderInfo = new UpdateOrderDTO.OrderInfo();
-            orderInfo.setGlobalOrderNo(entity.getThirdCode());
-            List<UpdateOrderDTO.OrderItem> orderItemList = new ArrayList<>();
-            orderInfo.setOrderItemList(orderItemList);
-            LingxingApiUtils.updateOrder(Arrays.asList(orderInfo));
         }
         return BatchResultDTO.success(entity.getId(), entity.getCode(), "更新成功！");
     }
