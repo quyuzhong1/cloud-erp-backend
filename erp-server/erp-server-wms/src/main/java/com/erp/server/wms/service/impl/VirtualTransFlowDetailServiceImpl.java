@@ -384,12 +384,11 @@ public class VirtualTransFlowDetailServiceImpl extends SuperServiceImpl<VirtualT
           listDTO.setDictInventoryStatusName(InventoryStatusEnum.getNameByCode(listDTO.getDictInventoryStatus()));
           listDTO.setSourceTypeName(SourceTypeEnum.getName(listDTO.getSourceType()));
           LocalDate now = LocalDate.now();
-          LocalDate lastOutstockDate = listDTO.getLastOutstockDate();
           //库龄
           if ("转结".equals(listDTO.getOperateTypeName())) {
               listDTO.setInventoryAgeDays((int)(listDTO.getDate().toEpochDay() - listDTO.getBillDate().toEpochDay()) + 1);
           } else {
-              listDTO.setInventoryAgeDays((int)(now.toEpochDay() - listDTO.getBillDate().toEpochDay()) + 1);
+              listDTO.setInventoryAgeDays((int)(listDTO.getDate().toEpochDay() - listDTO.getBillDate().toEpochDay()) + 1);
               //仓储时长
               Integer inStockDays = (int) (listDTO.getTradeTime().toLocalDate().toEpochDay()- listDTO.getBillDate().toEpochDay() + 1);
               listDTO.setInStockDays(inStockDays);
