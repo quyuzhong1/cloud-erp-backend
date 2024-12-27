@@ -2,6 +2,7 @@ package com.erp.server.plm.controller.api;
 
 
 import com.common.business.annotation.DataPermission;
+import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.DataAttributeEnum;
@@ -76,6 +77,7 @@ public class ProductInfoController extends BaseController {
      * @date 2023-06-12 14:54
      */
     @PostMapping("/myProject")
+    @WebAdvanceQuery
     public ApiResult<PagingVO<ProductShowDTO>> myProject(@RequestBody @Validated PagingDTO<ProductSearchDTO.PagingParamDTO> dto) {
         PagingVO<ProductShowDTO> pagingVO = productInfoService.myProject(dto);
         return success(pagingVO);
