@@ -4,6 +4,7 @@ package com.sdk.third.lingxing.utils;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.net.URLEncodeUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
@@ -57,6 +58,11 @@ public class LingxingApiUtils {
     public static final String CANCEL_ORDER_URI = "pb/mp/order/v2/cancelOrder";
     // 编辑/更新自发货订单
     public static final String UPDATE_ORDER_URI = "pb/mp/order/v2/updateOrder";
+
+    // 添加/编辑本地产品
+    public static final String PRODUCT_SET_URI = "erp/sc/routing/storage/product/set";
+    // 查询本地产品列表
+    public static final String PRODUCT_LIST_URI = "erp/sc/routing/data/local_inventory/productList";
 
 
     /**
@@ -433,7 +439,7 @@ public class LingxingApiUtils {
                 .collect(Collectors.toList());
         requestMap.put("order_list", dataMap);
         Result<Object> result = LingxingApiUtils.postAndSignCheckListConvert(LingxingApiUtils.UPDATE_ORDER_URI, requestMap);
-        if (!"0".equalsIgnoreCase(result.getCode())) {
+        if ("10000".equalsIgnoreCase(result.getCode())) {
             String errorMsg = StrUtil.format("请求领星编辑/更新自发货订单失败:,request={}, result={}", requestMap, JSONUtil.toJsonStr(result));
             log.error(errorMsg);
             throw new ServiceException(errorMsg);
@@ -441,4 +447,36 @@ public class LingxingApiUtils {
         return result;
     }
 
+
+    /**
+     * 添加/编辑本地产品
+     * @param productInfo 商品信息
+     * @return 响应
+     */
+    public static Result<Object> addOrUpdateProduct(ProductInfo productInfo) {
+        TreeMap<String, Object> requestMap = new TreeMap<>(BeanUtil.beanToMap(productInfo, true, true));
+        Result<Object> result = LingxingApiUtils.postAndSignCheckListConvert(LingxingApiUtils.PRODUCT_SET_URI, requestMap);
+        if (!"0".equalsIgnoreCase(result.getCode())) {
+            String errorMsg = StrUtil.format("请求领星添加/编辑本地产品失败:,request={}, result={}", requestMap, JSONUtil.toJsonStr(result));
+            log.error(errorMsg);
+            throw new ServiceException(errorMsg);
+        }
+        return result;
+    }
+
+    /**
+     * 领星SKU转换
+     * 只允许为:字母,数字,下划线(),短划线(-),英文点(.),并号(#)不限制大小写
+     *
+     */
+    public static String convertLxSku(String sku){
+        return CharSequenceUtil.replace(sku,"+", "-").replace("*", "#");
+    }
+
+    /**
+     * 替换连续的空格
+     */
+    public static String convertLxProductName(String name){
+        return name.replaceAll( "\\s+", " ");
+    }
 }

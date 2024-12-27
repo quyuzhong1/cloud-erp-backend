@@ -878,7 +878,7 @@ public class ThirdMappingServiceImpl extends SuperServiceImpl<ThirdMappingMapper
                     thirdName = thirdShopEntity.getName();
                     thirdAddDTO.setThirdInfoId(thirdShopEntity.getId());
                     thirdAddDTO.setThirdCode(thirdShopEntity.getCode());
-                    if(PlatformDictEnum.LING_XING.getCode().equals(addDTO.getThirdSysType()) && !dictPlatform.equals(thirdShopEntity.getGroupId())){
+                    if(PlatformDictEnum.LING_XING.getCode().equals(thirdAddDTO.getSysType()) && !dictPlatform.equals(thirdShopEntity.getGroupId())){
                         throw new ServiceException("ERP店铺平台【{}】与领星店铺平台【{}】不一致",dictPlatform,thirdShopEntity.getGroupId());
                     }
                     break;

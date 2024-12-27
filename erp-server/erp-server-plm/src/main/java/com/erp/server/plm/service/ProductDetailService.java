@@ -787,6 +787,7 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
 
     String dimensionalWeightMeasure(DimensionalWeightDTO dto);
     void initProductToWangDian(List<String> ids);
+    void initProductToLingXing(List<String> ids);
     PagingVO<SkuVO> pagingSelect(PagingDTO<SkuVO.SelectDTO> dto);
 
     /**

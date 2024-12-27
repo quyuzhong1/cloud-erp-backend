@@ -75,6 +75,7 @@ import com.erp.server.plm.listener.ProductDetailExcelListener;
 import com.erp.server.plm.mapper.ProductDetailMapper;
 import com.erp.server.plm.mapper.ProductInfoMapper;
 import com.erp.server.plm.rocketmq.sync.kingdee.SyncKingdeeProductDetailService;
+import com.erp.server.plm.rocketmq.sync.lingxing.SyncLingXingProductDetailService;
 import com.erp.server.plm.rocketmq.sync.wangdian.SyncWangDianProductDetailService;
 import com.erp.server.plm.service.*;
 import com.erp.server.plm.utils.UnitConverterUtil;
@@ -258,6 +259,9 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
     @Resource
     private SyncWangDianProductDetailService syncWangDianProductDetailService;
+
+    @Resource
+    private SyncLingXingProductDetailService syncLingXingProductDetailService;
 
     @Resource
     private InventoryFeign inventoryFeign;
@@ -1657,6 +1661,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         sendPushTask(Arrays.asList(oldEntity),SyncOperateEnum.OPERATE_DELETE.getCode());
         //增加一条虚假的同步任务记录
         syncWangDianProductDetailService.addPlmPushMsg(entity);
+        syncLingXingProductDetailService.addPlmPushMsg(entity);
         return this.remove(queryWrapper);
     }
 
@@ -2160,6 +2165,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         sendPushTask(Arrays.asList(entity),SyncOperateEnum.OPERATE_APPROVE.getCode());
         if (isCheck) {
             syncWangDianProductDetailService.syncDataToWangDian(entity);
+            syncLingXingProductDetailService.syncDataToLingxing(entity);
         }
         //增加缓存清除
         redisUtil.hdel(RedisKeyConstant.LIST_SKU_INFO, entity.getId());
@@ -2508,6 +2514,33 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         }
     }
 
+    @Override
+    public void initProductToLingXing(List<String> ids) {
+        int count = productInfoService.count();
+        int pageSize = 50;
+        int pageCount = count / pageSize + 1;
+        for (int i = 0; i < pageCount; i++) {
+            Page<ProductInfoEntity> page = productInfoService.page(new Page<>(i, pageSize), Wrappers.<ProductInfoEntity>lambdaQuery().in(CollUtil.isNotEmpty(ids), ProductInfoEntity::getId, ids));
+            List<ProductInfoEntity> records = page.getRecords();
+            if (CollectionUtils.isEmpty(records)) {
+                return;
+            }
+            List<String> infoIds = records.stream().map(ProductInfoEntity::getId).collect(Collectors.toList());
+            List<ProductDetailEntity> detailEntities = list(Wrappers.<ProductDetailEntity>lambdaQuery()
+                    .eq(ProductDetailEntity::getStatus, 2)
+                    .in(ProductDetailEntity::getProductId, infoIds));
+            for (ProductDetailEntity entity : detailEntities) {
+                RateLimiter limiter = RateLimiter.create(60, 1, TimeUnit.MINUTES);
+                if (limiter.tryAcquire()) {
+                    try {
+                        syncLingXingProductDetailService.syncDataToLingxing(entity);
+                    } catch (Exception e) {
+                        log.error("推送领星失败:{}", e.getMessage(), e);
+                    }
+                }
+            }
+        }
+    }
     @Override
     @Transactional
     public Boolean approvalReject(ProductDetailOperateDTO dto) {
@@ -3731,6 +3764,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             //发送金蝶
             sendSinglePushTask(entity, SyncOperateEnum.OPERATE_APPROVE.getCode());
             syncWangDianProductDetailService.syncDataToWangDian(entityList);
+            syncLingXingProductDetailService.syncDataToLingxing(entityList);
         } else {
             approveStatus = ProductDetailStatusEnum.APPROVAL_NO_PASS.getCode();
             //新增审核不通过意见

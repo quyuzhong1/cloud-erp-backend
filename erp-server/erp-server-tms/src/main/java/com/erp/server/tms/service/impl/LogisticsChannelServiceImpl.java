@@ -8,10 +8,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.*;
-import com.common.business.enums.LogisticsPlatformEnum;
-import com.common.business.enums.OperationTypeEnum;
-import com.common.business.enums.TrackQueryTypeEnum;
-import com.common.business.enums.UnitEnum;
+import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
@@ -679,6 +676,9 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
         }
         if (StringUtils.isBlank(dictPlatform)){
             throw new ServiceException("关联的销售平台不能为空");
+        }
+        if(dictPlatform.equals(PlatformDictEnum.TE_MU.getCode()) || dictPlatform.equals(PlatformDictEnum.RAKUTEN.getCode()) || dictPlatform.equals(PlatformDictEnum.EBAY.getCode())){
+            return new LogisticsChannelDTO.SignShipDTO();
         }
         List<LogisticsMappingDTO.ViewDTO> mappingList = logisticsMappingService.listByChannelId(logisticsChannelId);
         if (CollectionUtils.isEmpty(mappingList)){

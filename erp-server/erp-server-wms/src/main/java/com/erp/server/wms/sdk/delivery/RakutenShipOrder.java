@@ -62,14 +62,6 @@ public class RakutenShipOrder extends AbstractShipOrder {
         SoB2cLogisticsEntity logisticsEntity = tuple.get(2);
         //渠道
         String channelId = logisticsEntity.getLogisticsChannelId();
-        //获取销售渠道信息
-        LogisticsChannelDTO.SignShipDTO tmsSignShipDTO = logisticsFeign.getScaleChannelByChannelById(
-                channelId,
-                PlatformDictEnum.RAKUTEN.getCode()
-        );
-        if (null == tmsSignShipDTO) {
-            throw new ServiceException("找不到渠道信息");
-        }
         //获取中台配置的渠道信息
         ThirdMappingDTO.ViewParamDTO viewParamDTO = new ThirdMappingDTO.ViewParamDTO();
         viewParamDTO.setSysId(channelId);
@@ -106,19 +98,21 @@ public class RakutenShipOrder extends AbstractShipOrder {
             }
 
             //获取渠道标发单号
-            String standardOrderType = tmsSignShipDTO.checkAndGetOrderDeliveryMarkType();
-            String logisticsNo = CharSequenceUtil.equals(OrderDeliveryMarkTypeEnum.TRANSPORT_NO.getCode(), standardOrderType)
-                    ? logisticsEntity.getCode() : logisticsEntity.getTrackNo();
+            String logisticsNo =  logisticsEntity.getCode();
             if (CharSequenceUtil.isBlank(logisticsNo)) {
                 throw new ServiceException("【乐天标记发货】操作失败，渠道标发单号为空");
             }
             try {
-                OrderFastOutboundPackageDTO.PackageInfo packageInfo = new OrderFastOutboundPackageDTO.PackageInfo();
-                packageInfo.setGlobalOrderNo(mainEntity.getThirdCode());
-                packageInfo.setLogisticsTypeId(thirdView.getThirdLogisticsId());
-                packageInfo.setWaybillNo(logisticsNo);
-                packageInfo.setWid(Long.valueOf(wid));
-                LingxingApiUtils.fastOutbound(Collections.singletonList(packageInfo));
+                if(dto.isHasNotOutStock()){
+                    LingxingApiUtils.cancelOrderByOrderList(Collections.singletonList(mainEntity.getThirdCode()));
+                }else{
+                    OrderFastOutboundPackageDTO.PackageInfo packageInfo = new OrderFastOutboundPackageDTO.PackageInfo();
+                    packageInfo.setGlobalOrderNo(mainEntity.getThirdCode());
+                    packageInfo.setLogisticsTypeId(thirdView.getThirdLogisticsId());
+                    packageInfo.setWaybillNo(logisticsNo);
+                    packageInfo.setWid(Long.valueOf(wid));
+                    LingxingApiUtils.fastOutbound(Collections.singletonList(packageInfo));
+                }
                 signShippedDetailList.addAll(detailEntityList.stream().map(BaseEntity::getId).collect(Collectors.toList()));
             } catch (Exception e) {
                 log.error("【乐天标记发货】销售订单【{}】,平台订单【{}】领星标记发货API提示异常 >>>>{}", mainEntity.getCode(), mainEntity.getPlatformCode(), ExceptionUtil.stacktraceToString(e));
