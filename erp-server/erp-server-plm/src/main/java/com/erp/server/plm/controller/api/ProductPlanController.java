@@ -1,6 +1,7 @@
 package com.erp.server.plm.controller.api;
 
 import com.common.business.annotation.DataPermission;
+import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.DataAttributeEnum;
@@ -58,6 +59,7 @@ public class ProductPlanController extends BaseController {
      */
     @PostMapping("/paging")
     @DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "plm:product:plan:paging", tableAlias = "pp")
+    @WebAdvanceQuery
     public ApiResult<PagingVO<List<ProductPlanVO>>> queryByPage(@RequestBody @Validated PagingDTO<ProductPlanSearchDTO> dto) {
         PagingVO<List<ProductPlanVO>> pagingVO = productPlanService.paging(dto);
         return success(pagingVO);
