@@ -18,7 +18,7 @@
             inner join purchase_order po on po.id = pos.purchase_order_id and po.is_deleted = false and po.approve_status = 'approve'
             inner join purchase_order_detail pod on pod.purchase_order_id = po.id and pod.is_deleted = false
             <where>
-              sup.is_deleted = false
+                ${params.sqlMap.default} and sup.is_deleted = false
               <if test="params.supplierNameList != null and params.supplierNameList.size > 0">
                   AND sup.name IN
                   <foreach collection="params.supplierNameList" item="item" open="(" close=")" separator=",">

@@ -1,5 +1,6 @@
 package com.erp.model.scm.dto;
 
+import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
@@ -9,6 +10,7 @@ import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 /**
@@ -41,6 +43,16 @@ public class SupplierReportDTO implements Serializable {
          * 内外检类型  接口地址：/scm/common/enumDropDown?type=QcInsideType
          */
         private String qcType;
+
+        /**
+         * 页面高级查询
+         */
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
+
+        /**
+         * sqlMap 默认key default
+         */
+        private Map<String, String> sqlMap;
 
     }
 

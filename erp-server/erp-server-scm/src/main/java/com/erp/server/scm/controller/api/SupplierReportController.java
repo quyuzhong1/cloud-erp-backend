@@ -1,5 +1,6 @@
 package com.erp.server.scm.controller.api;
 
+import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
@@ -35,6 +36,7 @@ public class SupplierReportController extends BaseController {
      * @return
      */
     @PostMapping("paging")
+    @WebAdvanceQuery
     public ApiResult<PagingVO<SupplierReportDTO.PagingViewDTO>> paging(@RequestBody @Validated PagingDTO<SupplierReportDTO.PagingSearchParamDTO> dto) {
         return success(supplierReportService.supplierPaging(dto));
     }
