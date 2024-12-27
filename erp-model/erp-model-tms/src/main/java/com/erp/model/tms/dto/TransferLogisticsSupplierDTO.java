@@ -1,5 +1,6 @@
 package com.erp.model.tms.dto;
 
+import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -9,6 +10,7 @@ import java.io.Serializable;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 /**
  * <p>
@@ -36,6 +38,10 @@ public class TransferLogisticsSupplierDTO implements Serializable {
          */
         private Integer count;
 
+        /**
+         * tab名称
+         */
+        private String tabFlagName;
     }
 
 
@@ -81,6 +87,16 @@ public class TransferLogisticsSupplierDTO implements Serializable {
          * 更新时间
          */
         private List<LocalDate> updateTimeList;
+
+        /**
+         * 页面高级查询
+         */
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
+
+        /**
+         * sqlMap 默认key default
+         */
+        private Map<String, String> sqlMap;
 
 
     }
