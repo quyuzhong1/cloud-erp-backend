@@ -1223,7 +1223,7 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
         while (!date.isAfter(endDate)) {
             LocalDate finalDate = date;
             SalesInfoEntity info = infoEntities.stream()
-                    .filter(v -> v.getDate().isBefore(finalDate))
+                    .filter(v -> v.getDate().isEqual(finalDate))
                     .findFirst()
                     .orElse(null);
             ReplenishmentSuggestionVO.SalesInfoVO infoVO = new ReplenishmentSuggestionVO.SalesInfoVO();
