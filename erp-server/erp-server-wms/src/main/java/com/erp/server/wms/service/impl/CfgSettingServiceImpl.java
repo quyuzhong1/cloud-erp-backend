@@ -156,11 +156,11 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Cf
         if (ObjectUtil.isEmpty(entity) || ObjectUtil.isEmpty(entity.getDataJson())) {
             return "semiAuto";
         }
-        CfgSettingValueDTO.SubcontractInStock dto = BeanUtil.toBean(entity.getDataJson(), CfgSettingValueDTO.SubcontractInStock.class);
-        if(Objects.isNull(dto) || CharSequenceUtil.isBlank(dto.getAutoInStockSetting())){
+        CfgSettingValueDTO.SubcontractReturnStock dto = BeanUtil.toBean(entity.getDataJson(), CfgSettingValueDTO.SubcontractReturnStock.class);
+        if(Objects.isNull(dto) || CharSequenceUtil.isBlank(dto.getAutoReturnStockSetting())){
             return "semiAuto";
         }
-        return dto.getAutoInStockSetting();
+        return dto.getAutoReturnStockSetting();
     }
 
     /**

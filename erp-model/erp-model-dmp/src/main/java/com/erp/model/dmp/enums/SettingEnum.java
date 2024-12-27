@@ -65,6 +65,7 @@ public enum SettingEnum {
     PUSH_KINGDEE_WAREHOUSE_LOCATION_LIST("push_kingdee_warehouse_location",SettingEnum.PUSH_KINGDEE_WAREHOUSE_LOCATION,"支持推送仓位的金蝶仓库"),
     //是否支持金蝶基础性校验
     KINGDEE_BASE_CHECK_KEY("kingdee_base_check",SettingEnum.KINGDEE_BASE_CHECK,"是否支持金蝶基础性校验"),
+    IMG_UPLOAD_SIZE_KEY("img_upload_size",SettingEnum.IMG_UPLOAD_SIZE,"图片上传大小"),
 
 
     //oms_shopify_hmac
@@ -157,6 +158,11 @@ public enum SettingEnum {
      * 是否支持金蝶基础性校验
      */
     public static final String KINGDEE_BASE_CHECK = "kingdee_base_check";
+
+    /**
+     * 图片上传大小
+     */
+    public static final String IMG_UPLOAD_SIZE = "img_upload_size";
 
     SettingEnum(String key, String type, String value) {
         this.key = key;
