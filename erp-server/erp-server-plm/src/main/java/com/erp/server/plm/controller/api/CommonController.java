@@ -18,6 +18,7 @@ import com.erp.model.plm.dto.TaskConductDTO;
 import com.erp.model.plm.entity.ProductOperateRecordEntity;
 import com.erp.model.plm.enums.TaskStateEnum;
 import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.server.plm.service.CommonService;
 import com.erp.server.plm.service.ProductOperateRecordService;
 import com.erp.server.plm.service.ProjectMembersService;
 import com.google.common.collect.Maps;
@@ -51,6 +52,9 @@ public class CommonController extends BaseController {
 
     @Resource
     private ProjectMembersService projectMembersService;
+
+    @Resource
+    private CommonService commonService;
 
     /**
      * 获取用户
@@ -97,14 +101,14 @@ public class CommonController extends BaseController {
     }
 
     /**
-     * 上传图片
+     * 上传文件
      *
-     * @param multipartFile 图片流
+     * @param multipartFile 上传文件
      * @return com.common.core.vo.ApiResult
      * @Author Luo_WG
      * @Date 2022/10/9 17:35
      **/
-    @LogAction(value = LogActionEnum.UPLOAD, desc = "上传图片:文件名={name}")
+    @LogAction(value = LogActionEnum.UPLOAD, desc = "上传文件:文件名={name}")
     @PostMapping("/upload")
     public ApiResult<List<String>> upload(@RequestParam("multipartFile") MultipartFile[] multipartFile, HttpServletRequest request) {
         List<String> list = new ArrayList<>();
@@ -112,6 +116,21 @@ public class CommonController extends BaseController {
             String filePath = FastDFSClientUtil.uploadFile(file);
             list.add(filePath);
         }
+        return this.success(list);
+    }
+
+    /**
+     * 上传图片（自动压缩）
+     * @author will
+     * @date 2024/12/26 19:40
+     * @param multipartFile
+     * @param request
+     * @return ApiResult<List<String>>
+     */
+    @LogAction(value = LogActionEnum.UPLOAD, desc = "上传图片:文件名={name}")
+    @PostMapping("/uploadImg")
+    public ApiResult<List<String>> uploadImg(@RequestParam("multipartFile") MultipartFile[] multipartFile, HttpServletRequest request) {
+        List<String> list = commonService.uploadImg(multipartFile);
         return this.success(list);
     }
 

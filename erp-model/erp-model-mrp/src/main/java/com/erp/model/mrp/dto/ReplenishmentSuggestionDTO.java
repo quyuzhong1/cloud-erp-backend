@@ -2,6 +2,7 @@ package com.erp.model.mrp.dto;
 
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
+import com.common.business.dto.base.SortParamDTO;
 import com.erp.model.mrp.enums.ReplenishmentInventoryTypeEnum;
 import lombok.*;
 
@@ -47,6 +48,25 @@ public class ReplenishmentSuggestionDTO implements Serializable {
          * 是否关注
          */
         private Boolean favorite;
+
+        /**
+         * 最近日期排序
+         */
+        private List<SortParamDTO> recentSort;
+
+        /**
+         * 历史销量排序
+         */
+        private SortParamDTO realSaleQtySort;
+        /**
+         * 备货期日均排序
+         */
+        private SortParamDTO avgStockingSort;
+
+        /**
+         * 备货期排序
+         */
+        private SortParamDTO stockingSort;
     }
 
 

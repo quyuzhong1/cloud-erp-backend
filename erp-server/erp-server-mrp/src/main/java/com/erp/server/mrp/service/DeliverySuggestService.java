@@ -184,4 +184,12 @@ public interface DeliverySuggestService extends SuperService<DeliverySuggestEnti
      * @return List<TabListDTO>
      */
     List<DeliverySuggestDTO.TabListDTO> tabList(DeliverySuggestDTO.TabListParamDTO dto);
+    /**
+     * 平台类型下平台
+     * @author will
+     * @date 2024/12/18 9:21
+     * @param dto
+     * @return List<PlatformDTO>
+     */
+    List<DeliverySuggestDTO.PlatformDTO> listPlatformByPlatformType(DeliverySuggestDTO.PlatformTypeParamDTO dto);
 }

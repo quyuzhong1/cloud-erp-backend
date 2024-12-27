@@ -221,6 +221,8 @@ public class CfgRuleCalcDTO implements Serializable {
          */
         @Size(min = 1, message = "店铺不能为空")
         private List<String> shopIds;
+
+        private Object[] searchAfterValues;
     }
 
     @Getter
@@ -255,6 +257,10 @@ public class CfgRuleCalcDTO implements Serializable {
          */
         private Integer qty;
 
+        /**
+         * esid
+         */
+        private String esId;
     }
 
     @Getter

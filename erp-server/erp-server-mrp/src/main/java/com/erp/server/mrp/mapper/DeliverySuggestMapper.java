@@ -63,4 +63,12 @@ public interface DeliverySuggestMapper extends BaseMapper<DeliverySuggestEntity>
      * @return Integer
      */
     Integer tabList(@Param("params")DeliverySuggestDTO.PagingParamDTO params);
+    /**
+     * 根据平台类型查询下面平台
+     * @author will
+     * @date 2024/12/18 9:22
+     * @param params
+     * @return List<PlatformDTO>
+     */
+    List<DeliverySuggestDTO.PlatformDTO> listPlatformByPlatformType(@Param("params")DeliverySuggestDTO.PlatformTypeParamDTO params);
 }

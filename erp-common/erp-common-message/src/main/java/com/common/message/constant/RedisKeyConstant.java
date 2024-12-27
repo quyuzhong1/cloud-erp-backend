@@ -66,6 +66,7 @@ public class RedisKeyConstant {
     public static final String SO_B2C_ORDER_KEY = "SO_B2C_ORDER_KEY";
     public static final String SO_B2C_DELIVERY_KEY = "SO_B2C_DELIVERY_KEY";
     public static final String SO_B2C_DELIVERY_INTERCEPT_KEY = "SO_B2C_DELIVERY_INTERCEPT_KEY";
+    public static final String WMS_VIRTUAL_DETAIL_MSG_KEY = "WMS_VIRTUAL_DETAIL_MSG_KEY";
 
 
     /**

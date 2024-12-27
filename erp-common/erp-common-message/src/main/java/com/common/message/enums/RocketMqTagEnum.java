@@ -159,6 +159,11 @@ public enum RocketMqTagEnum {
      */
     LX_FBA_SHIPMENT_RECEIVE_TAG(29, RocketMqTagEnum.FBA_SHIPMENT,"lx_fba_shipment_receive_tag"),
 
+    /**
+     * 虚拟仓明细信息tag
+     */
+    WMS_VIRTUAL_DETAIL_MSG_TAG(30,RocketMqTagEnum.SYNC_WMS,"wms_virtual_detail_msg_tag"),
+
     //---------------------------------金蝶数据同步code从1001开始------------------------------------------------------------------------------------------
 
     /**
