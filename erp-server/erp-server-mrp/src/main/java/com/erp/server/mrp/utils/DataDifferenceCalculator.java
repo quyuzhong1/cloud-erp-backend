@@ -72,11 +72,16 @@ public class DataDifferenceCalculator {
         BigDecimal sumAbsErr = BigDecimal.ZERO;
         BigDecimal sumSqErr = BigDecimal.ZERO;
         BigDecimal sumMAPE = BigDecimal.ZERO;
+        int validCount = 0;
 
         // 1) 计算 MAE, MSE, MAPE
         for (int i = 0; i < n; i++) {
             BigDecimal x = predicted.get(i);
             BigDecimal y = actual.get(i);
+            if (x.compareTo(BigDecimal.ZERO) == 0 && y.compareTo(BigDecimal.ZERO) == 0) {
+                continue;
+            }
+            validCount ++;
             BigDecimal diff = x.subtract(y);
             sumAbsErr = sumAbsErr.add(diff.abs());
             sumSqErr = sumSqErr.add(diff.pow(2));
@@ -89,6 +94,9 @@ public class DataDifferenceCalculator {
             }
         }
 
+        if (validCount == 0) {
+            return result;
+        }
         BigDecimal mae = sumAbsErr.divide(new BigDecimal(n), 10, RoundingMode.HALF_UP);
         BigDecimal mse = sumSqErr.divide(new BigDecimal(n), 10, RoundingMode.HALF_UP);
         BigDecimal rmse = BigDecimal.valueOf(Math.sqrt(mse.doubleValue()));
