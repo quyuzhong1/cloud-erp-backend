@@ -18,6 +18,7 @@ import com.erp.model.oms.entity.ListingInfoEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.entity.SkuMappingEntity;
 import com.erp.model.oms.enums.ListingMatchResultEnum;
+import com.erp.model.oms.enums.ListingSourceTypeEnum;
 import com.erp.model.oms.enums.RuleTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
@@ -284,8 +285,10 @@ public class SkuMappingExcelListener extends AnalysisEventListener<SkuMappingImp
                     Pair<String, String> pair = new Pair<>(addSkuMapping.getListingId(),content);
                     updateLogPairList.add(pair);
                 }
-                listingInfoEntity.setMatchResult(ListingMatchResultEnum.TRUE.getCode());
-                updateListingInfoList.add(listingInfoEntity);
+                if (Objects.nonNull(listingInfoEntity)){
+                    listingInfoEntity.setMatchResult(ListingMatchResultEnum.TRUE.getCode());
+                    updateListingInfoList.add(listingInfoEntity);
+                }
                 return;
             }
             errorMsgList.add("平台sku已存在匹配关系");
@@ -317,6 +320,7 @@ public class SkuMappingExcelListener extends AnalysisEventListener<SkuMappingImp
             addListingInfoEntity.setPlatformSkuName(platformProductName);
             addListingInfoEntity.setMatchResult(ListingMatchResultEnum.TRUE.getCode());
             addListingInfoEntity.setPlatform(dictPlatform);
+            addListingInfoEntity.setSourceType(ListingSourceTypeEnum.SELF_ADD.getCode());
             addListingInfoEntityList.add(addListingInfoEntity);
         }
         LocalDateTime now = LocalDateTime.now();

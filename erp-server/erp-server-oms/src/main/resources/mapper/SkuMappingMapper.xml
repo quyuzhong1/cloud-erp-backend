@@ -67,6 +67,7 @@
         li.platform_spu_name,
         li.platform_fn_sku,
         li.create_time as systemCreateTime,
+        li.source_type as sourceType,
         sm.update_user_name,
         sm.effective_time,
         sm.expire_time,
