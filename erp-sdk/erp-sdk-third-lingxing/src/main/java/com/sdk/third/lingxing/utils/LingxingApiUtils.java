@@ -461,4 +461,17 @@ public class LingxingApiUtils {
         return result;
     }
 
+    /**
+     * 领星SKU转换
+     * 只允许为:字母,数字,下划线(),短划线(-),英文点(.),并号(#)不限制大小写
+     *
+     */
+    public static String convertLxSku(String sku){
+        return sku.replace("+", "-").replace("*", "#");
+    }
+
+    public static void main(String[] args) {
+        String aa = convertLxSku("2544 + 5552 + 6522 *2");
+        System.out.println(aa);
+    }
 }

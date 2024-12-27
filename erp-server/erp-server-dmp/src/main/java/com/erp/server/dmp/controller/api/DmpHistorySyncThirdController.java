@@ -54,7 +54,10 @@ public class DmpHistorySyncThirdController extends BaseController {
         } else {
             skuVOS = plmTaskFeign.listBySkuNoList(skuIdList);
         }
-        List<ProductInfo> collect = skuVOS.stream().map(e -> new ProductInfo(e.getSkuNo(), e.getSkuName(), e.getSkuId())).collect(Collectors.toList());
+        List<ProductInfo> collect = skuVOS.stream().map(e -> new ProductInfo(
+                LingxingApiUtils.convertLxSku(e.getSkuNo()),
+                e.getSkuName(),
+                e.getSkuId())).collect(Collectors.toList());
         for (ProductInfo productInfo : collect) {
             LingxingApiUtils.addOrUpdateProduct(productInfo);
         }
