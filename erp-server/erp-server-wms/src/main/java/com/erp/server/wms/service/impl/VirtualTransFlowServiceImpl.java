@@ -223,11 +223,7 @@ public class VirtualTransFlowServiceImpl extends SuperServiceImpl<VirtualTransFl
         if (CollUtil.isEmpty(virtualTransFlowList)) {
             return;
         }
-        Map<String, List<VirtualTransFlowEntity>> map = virtualTransFlowList.stream().collect(Collectors.groupingBy(VirtualTransFlowEntity::getVirtualInventoryId));
-        for (Map.Entry<String, List<VirtualTransFlowEntity>> entry : map.entrySet()) {
-            List<VirtualTransFlowEntity> value = entry.getValue();
-            virtualTransFlowDetailService.handleAddTransFlowDetail(value);
-        }
+        virtualTransFlowDetailService.handleAddTransFlowDetail(virtualTransFlowList);
     }
 
     @Override
