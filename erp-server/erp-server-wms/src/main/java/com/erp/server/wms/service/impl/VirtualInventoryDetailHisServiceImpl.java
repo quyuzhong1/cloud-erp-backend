@@ -3,17 +3,21 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.enums.ErpServerModuleEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
+import com.common.message.service.mq.MQProducerService;
+import com.erp.model.msg.dto.WarnMsgInfoDTO;
+import com.erp.model.msg.enums.WarnMsgTypeEnum;
 import com.erp.model.wms.dto.VirtualInventoryAgeDTO;
 import com.erp.model.wms.dto.VirtualInventoryDetailHisDTO;
 import com.erp.model.wms.dto.VirtualInventoryHisDTO;
 import com.erp.model.wms.entity.VirtualInventoryDetailHisEntity;
 import com.erp.server.wms.mapper.VirtualInventoryDetailHisMapper;
-import com.erp.server.wms.service.OperateLogService;
 import com.erp.server.wms.service.VirtualInventoryDetailHisService;
 import com.erp.server.wms.service.VirtualInventoryHisService;
 import io.seata.spring.annotation.GlobalTransactional;
@@ -24,6 +28,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -40,7 +46,7 @@ import java.util.stream.Collectors;
 @Service
 public class VirtualInventoryDetailHisServiceImpl extends SuperServiceImpl<VirtualInventoryDetailHisMapper, VirtualInventoryDetailHisEntity> implements VirtualInventoryDetailHisService {
     @Autowired
-    private OperateLogService operateLogService;
+    private MQProducerService mqProducerService;
 
     @Autowired
     private VirtualInventoryHisService virtualInventoryHisService;
@@ -73,12 +79,26 @@ public class VirtualInventoryDetailHisServiceImpl extends SuperServiceImpl<Virtu
     @Override
     public void hisVirtualInventoryJob(String jobParam) {
         //时间
-        LocalDate localDate = CharSequenceUtil.isBlank(jobParam) ? LocalDate.now() : LocalDate.parse(jobParam, DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+        LocalDate startDate = CharSequenceUtil.isBlank(jobParam) ? LocalDate.now() : LocalDate.parse(jobParam, DateTimeFormatter.ofPattern("yyyy-MM-dd"));
 
-        //添加虚拟仓每日库存
-        virtualInventoryHisService.addVirtualInventoryHis(localDate);
-        //添加虚拟仓明细每日库存
-        this.addVirtualInventoryDetailHis(localDate);
+        // 生成日期集合
+        List<LocalDate> dateList = new ArrayList<>();
+        // 获取天数差
+        long daysBetween = ChronoUnit.DAYS.between(startDate, LocalDate.now());
+        for (int i = 0; i <= daysBetween; i++) {
+            // 添加每一天的日期
+            dateList.add(startDate.plusDays(i));
+        }
+        for (LocalDate localDate : dateList) {
+            try {
+                //添加虚拟仓每日库存
+                virtualInventoryHisService.addVirtualInventoryHis(localDate);
+                //添加虚拟仓明细每日库存
+                this.addVirtualInventoryDetailHis(localDate);
+            } catch (Exception e) {
+                sendWarnMsg(localDate);
+            }
+        }
     }
 
     /**
@@ -165,4 +185,24 @@ public class VirtualInventoryDetailHisServiceImpl extends SuperServiceImpl<Virtu
     private void handleData(VirtualInventoryDetailHisEntity virtualInventoryDetailHisEntity) {
     // TODO 验证数据 & 数据赋值
     }
+
+    /**
+     * 预警
+     * @author will
+     * @date 2024/12/27 17:57
+     * @param localDate
+     */
+    public void sendWarnMsg(LocalDate localDate) {
+        WarnMsgInfoDTO warnMsgInfo = new WarnMsgInfoDTO();
+        warnMsgInfo.setBizName("虚拟仓结余生成");
+        warnMsgInfo.setErpServerModuleEnum(ErpServerModuleEnum.ERP_SERVER_DMP);
+        warnMsgInfo.setTitle("虚拟仓结余生成失败");
+        warnMsgInfo.setTableName("VirtualInventoryDetailHisEntity");
+        warnMsgInfo.setTableId(localDate.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")));
+        warnMsgInfo.setKeyInfo(StrUtil.format("{}生成库存结余失败",localDate.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"))));
+        warnMsgInfo.setWarnMsgTypeEnum(WarnMsgTypeEnum.SYS_EXCEPTION);
+        mqProducerService.sendWarnMsg(warnMsgInfo);
+    }
+
+
 }

@@ -14,9 +14,11 @@ import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.wms.dto.WmsVirtualDetailMsgDTO;
+import com.erp.model.wms.entity.VirtualTransFlowEntity;
 import com.erp.model.wms.entity.WmsVirtualDetailMsgEntity;
 import com.erp.model.wms.enums.VirtualDetailMsgStatusEnum;
 import com.erp.server.wms.mapper.WmsVirtualDetailMsgMapper;
+import com.erp.server.wms.service.VirtualTransFlowService;
 import com.erp.server.wms.service.WmsVirtualDetailMsgService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
@@ -27,6 +29,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -43,6 +46,10 @@ public class WmsVirtualDetailMsgServiceImpl extends SuperServiceImpl<WmsVirtualD
 
     @Resource
     private MQProducerService mqProducerService;
+
+    @Resource
+    private VirtualTransFlowService virtualTransFlowService;
+
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -122,6 +129,20 @@ public class WmsVirtualDetailMsgServiceImpl extends SuperServiceImpl<WmsVirtualD
         return  lambdaQuery()
                 .eq(WmsVirtualDetailMsgEntity::getStatus,VirtualDetailMsgStatusEnum.DOING.getCode())
                 .list();
+    }
+
+    /**
+     * 根据业务id集合查询
+     * @author will
+     * @date 2024/12/27 18:15
+     * @param businessIdList
+     * @return List<WmsVirtualDetailMsgEntity>
+     */
+    private List<WmsVirtualDetailMsgEntity> listByBusinessIdList(List<String> businessIdList) {
+        if(CollUtil.isEmpty(businessIdList)) {
+            return Collections.EMPTY_LIST;
+        }
+        return lambdaQuery().in(WmsVirtualDetailMsgEntity::getBusinessId,businessIdList).list();
     }
 
     /**

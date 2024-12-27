@@ -323,6 +323,9 @@ public class VirtualTransFlowDetailServiceImpl extends SuperServiceImpl<VirtualT
             detailEntity.setLastOutstockDate(entity.getBillDate());
             updateList.add(detailEntity);
         }
+        if (MathUtil.compareTo(notOutQty,MathUtil.ZERO) > MathUtil.ZERO) {
+            throw new ServiceException(StrUtil.format("单据【{}】库龄库存扣减失败",entity.getSourceCode()));
+        }
         if (CollUtil.isEmpty(addDTOList)) {
             throw new ServiceException("未找到库龄流水数据");
         }
@@ -384,12 +387,11 @@ public class VirtualTransFlowDetailServiceImpl extends SuperServiceImpl<VirtualT
           listDTO.setDictInventoryStatusName(InventoryStatusEnum.getNameByCode(listDTO.getDictInventoryStatus()));
           listDTO.setSourceTypeName(SourceTypeEnum.getName(listDTO.getSourceType()));
           LocalDate now = LocalDate.now();
-          LocalDate lastOutstockDate = listDTO.getLastOutstockDate();
           //库龄
           if ("转结".equals(listDTO.getOperateTypeName())) {
               listDTO.setInventoryAgeDays((int)(listDTO.getDate().toEpochDay() - listDTO.getBillDate().toEpochDay()) + 1);
           } else {
-              listDTO.setInventoryAgeDays((int)(now.toEpochDay() - listDTO.getBillDate().toEpochDay()) + 1);
+              listDTO.setInventoryAgeDays((int)(listDTO.getDate().toEpochDay() - listDTO.getBillDate().toEpochDay()) + 1);
               //仓储时长
               Integer inStockDays = (int) (listDTO.getTradeTime().toLocalDate().toEpochDay()- listDTO.getBillDate().toEpochDay() + 1);
               listDTO.setInStockDays(inStockDays);
