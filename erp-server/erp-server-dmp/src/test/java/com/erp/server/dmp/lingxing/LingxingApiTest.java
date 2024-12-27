@@ -102,4 +102,16 @@ public class LingxingApiTest {
         System.out.println("结果列表");
         System.out.println(JSONUtil.toJsonStr(objectResult));
     }
+
+
+    @Test
+    public void addOrUpdateProduct(){
+        ProductInfo productInfo = new ProductInfo();
+        productInfo.setSku("2667");
+        productInfo.setSkuIdentifier("1619184295035801601");
+        productInfo.setProductName("VIJIM P001 手机/平板夹支架");
+        Result<Object> objectResult = LingxingApiUtils.addOrUpdateProduct(productInfo);
+        System.out.println("商品同步结果");
+        System.out.println(JSONUtil.toJsonStr(objectResult));
+    }
 }

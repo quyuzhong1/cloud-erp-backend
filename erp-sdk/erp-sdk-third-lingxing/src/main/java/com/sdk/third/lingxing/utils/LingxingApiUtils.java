@@ -58,6 +58,9 @@ public class LingxingApiUtils {
     // 编辑/更新自发货订单
     public static final String UPDATE_ORDER_URI = "pb/mp/order/v2/updateOrder";
 
+    // 添加/编辑本地产品
+    public static final String PRODUCT_SET_URI = "erp/sc/routing/storage/product/set";
+
 
     /**
      * 接口域名
@@ -435,6 +438,23 @@ public class LingxingApiUtils {
         Result<Object> result = LingxingApiUtils.postAndSignCheckListConvert(LingxingApiUtils.UPDATE_ORDER_URI, requestMap);
         if ("10000".equalsIgnoreCase(result.getCode())) {
             String errorMsg = StrUtil.format("请求领星编辑/更新自发货订单失败:,request={}, result={}", requestMap, JSONUtil.toJsonStr(result));
+            log.error(errorMsg);
+            throw new ServiceException(errorMsg);
+        }
+        return result;
+    }
+
+
+    /**
+     * 添加/编辑本地产品
+     * @param productInfo 商品信息
+     * @return 响应
+     */
+    public static Result<Object> addOrUpdateProduct(ProductInfo productInfo) {
+        TreeMap<String, Object> requestMap = new TreeMap<>(BeanUtil.beanToMap(productInfo, true, true));
+        Result<Object> result = LingxingApiUtils.postAndSignCheckListConvert(LingxingApiUtils.PRODUCT_SET_URI, requestMap);
+        if (!"0".equalsIgnoreCase(result.getCode())) {
+            String errorMsg = StrUtil.format("请求领星添加/编辑本地产品失败:,request={}, result={}", requestMap, JSONUtil.toJsonStr(result));
             log.error(errorMsg);
             throw new ServiceException(errorMsg);
         }
