@@ -65,6 +65,11 @@ public class HistorySalesQtyExcelListener extends AnalysisEventListener<CfgRuleC
             return;
         }
         String dictPlatform = platformMap.get(data.getPlatform());
+        if (ObjectUtils.isEmpty(dictPlatform)) {
+            data.setErrorMsg("该平台不存在");
+            errorList.add(data);
+            return;
+        }
         ShopInfoEntity info = shopInfoList.stream()
                 .filter(v -> v.getName().equals(data.getShopName()))
                 .filter(v -> v.getDictPlatform().equals(dictPlatform))

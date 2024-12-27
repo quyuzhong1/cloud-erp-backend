@@ -30,6 +30,7 @@ import com.erp.model.mrp.entity.*;
 import com.erp.model.mrp.enums.*;
 import com.erp.model.mrp.vo.*;
 import com.erp.model.oms.dto.DictBasicDTO;
+import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.plm.entity.ProductDetailEntity;
@@ -58,7 +59,6 @@ import com.google.common.collect.Maps;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.math3.util.Pair;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -1162,23 +1162,22 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
     }
 
     @Override
-    public PagingVO<CfgRuleCalcDTO.HistorySaleDTO> exportCalcHistorySale(PagingDTO<CfgRuleCalcDTO.DownloadDTO> dto) {
-        CfgRuleCalcDTO.DownloadDTO params = dto.getParams();
+    public List<CfgRuleCalcDTO.HistorySaleDTO> exportCalcHistorySale(CfgRuleCalcDTO.DownloadDTO params, Object[] searchAfterValues) {
         LocalDate startDate = params.getStartCalcDate().minusDays(361);
         LocalDate endDate = params.getStartCalcDate().minusDays(1);
-        org.springframework.data.domain.Page<OrderHistorySalesEsEntity> historySales = orderHistorySalesEsService.findByShopIdInAndSkuIdInAndDateBetween(params.getShopIds(), params.getSkuIds(), startDate, endDate,
-                PageRequest.of(dto.getCurrPage(), dto.getPageSize()));
-        if (ObjectUtil.isEmpty(historySales.toList())) {
-            return new PagingVO<>();
+        List<OrderHistorySalesEsEntity> historySales = orderHistorySalesEsService.findByShopIdInAndSkuIdInAndDateBetween(params.getShopIds(), params.getSkuIds(), startDate, endDate,
+                searchAfterValues);
+        List<CfgRuleCalcDTO.HistorySaleDTO> list = new ArrayList<>();
+        if (ObjectUtil.isEmpty(historySales)) {
+            return list;
         }
         List<String> shopIds = historySales.stream().map(OrderHistorySalesEsEntity::getShopId).distinct().collect(Collectors.toList());
         List<String> skuIds = historySales.stream().map(OrderHistorySalesEsEntity::getSkuId).distinct().collect(Collectors.toList());
         List<ShopInfoEntity> shopInfo = shopInfoFeign.listShopInfoByIds(shopIds);
         List<SkuVO> skuVOS = plmTaskFeign.listSkuProductByIds(skuIds);
+        Map<String, String> platformMap = getPlatformMap();
         Map<String, String> skuMap = skuVOS.stream().collect(Collectors.toMap(SkuVO::getSkuId, SkuVO::getSkuNo, (o1, o2) -> o1));
-
-        List<CfgRuleCalcDTO.HistorySaleDTO> list = new ArrayList<>();
-        for (OrderHistorySalesEsEntity entity : historySales.toList()) {
+        for (OrderHistorySalesEsEntity entity : historySales) {
             ShopInfoEntity info = shopInfo.stream()
                     .filter(v -> v.getId().equals(entity.getShopId()))
                     .findFirst()
@@ -1189,13 +1188,26 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
             saleDTO.setShopId(entity.getShopId());
             saleDTO.setShopName(info.getName());
             saleDTO.setQty(entity.getOriginalSalesQty());
-            saleDTO.setPlatform(info.getDictPlatform());
+            saleDTO.setPlatform(platformMap.get(info.getDictPlatform()));
             saleDTO.setBillDate(entity.getDate());
+            saleDTO.setEsId(entity.getId());
             list.add(saleDTO);
         }
-        return new PagingVO<>(list, (int) historySales.getTotalElements(), dto.getPageSize(), dto.getCurrPage());
+        return list;
     }
 
+    /**
+     * 获取平台名字
+     */
+    private static Map<String, String> getPlatformMap() {
+        List<com.erp.model.oms.entity.DictBasicEntity> salesPlatformList = FeignQuery.create(com.erp.model.oms.entity.DictBasicEntity.class)
+                .eq(com.erp.model.oms.entity.DictBasicEntity::getType, DictBasicTypeEnum.SALES_PLATFORM.getType())
+                .eq(com.erp.model.oms.entity.DictBasicEntity::getStatus, Boolean.TRUE)
+                .eq(com.erp.model.oms.entity.DictBasicEntity::getIsDeleted, Boolean.FALSE)
+                .list();
+        return salesPlatformList.stream()
+                .collect(Collectors.toMap(com.erp.model.oms.entity.DictBasicEntity::getName, DictBasicEntity::getValue, (o1, o2) -> o1));
+    }
 
     @Override
     public List<ReplenishmentSuggestionVO.SalesInfoVO> listSalesInfo(BaseIdDTO dto) {

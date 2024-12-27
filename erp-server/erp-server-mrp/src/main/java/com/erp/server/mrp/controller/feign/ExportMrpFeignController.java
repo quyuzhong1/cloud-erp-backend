@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
+import java.util.List;
 
 @RestController
 @RequestMapping("/feign/export")
@@ -151,8 +152,8 @@ public class ExportMrpFeignController {
      * @param dto 参数
      */
     @PostMapping("/exportCalcHistorySale")
-    public PagingVO<CfgRuleCalcDTO.HistorySaleDTO> exportCalcHistorySale(@RequestBody PagingDTO<CfgRuleCalcDTO.DownloadDTO> dto) {
-        return replenishmentSuggestionService.exportCalcHistorySale(dto);
+    public List<CfgRuleCalcDTO.HistorySaleDTO> exportCalcHistorySale(@RequestBody CfgRuleCalcDTO.DownloadDTO dto) {
+        return replenishmentSuggestionService.exportCalcHistorySale(dto, dto.getSearchAfterValues());
     }
 
     /**
