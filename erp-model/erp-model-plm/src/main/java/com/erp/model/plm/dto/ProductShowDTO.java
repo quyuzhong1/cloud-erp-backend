@@ -275,4 +275,9 @@ public class ProductShowDTO implements Serializable {
      * 结项日期
      */
     private LocalDate projectFinishDate;
+
+    /**
+     * 更新时间
+     */
+    private LocalDateTime updateTime;
 }
