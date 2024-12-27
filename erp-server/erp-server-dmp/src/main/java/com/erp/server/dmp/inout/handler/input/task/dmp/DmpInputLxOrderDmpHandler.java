@@ -137,6 +137,12 @@ public class DmpInputLxOrderDmpHandler extends DmpInputDbConvertDmpHandler {
                             if ("customer_shipping_amount".equalsIgnoreCase(entry.getKey())){
                                 dmpDataMap.put("shippingAmount", amount);
                             }
+                            if ("transaction_fee_amount".equalsIgnoreCase(entry.getKey())){
+                                dmpDataMap.put("platformCost", amount);
+                            }
+                            if ("platform_tax_amount".equalsIgnoreCase(entry.getKey())){
+                                dmpDataMap.put("vatCost", amount);
+                            }
                         }
                     }
                 }
@@ -167,6 +173,14 @@ public class DmpInputLxOrderDmpHandler extends DmpInputDbConvertDmpHandler {
                             dmpDataMap.put("sourcePlatform", name);
                         }
                     }
+                }
+
+                // 买家信息
+                Object buyersInfoObj = dmpDataMap.get("buyers_info");
+                if (null != buyersInfoObj) {
+                    Map<String, Object> buyersInfoMap = (JSONObject) buyersInfoObj;
+                    String buyerNote = buyersInfoMap.getOrDefault("buyer_note", "").toString();
+                    dmpDataMap.put("buyerRemark", buyerNote);
                 }
             }
         }

@@ -27,7 +27,6 @@ public class DmpInputLxOrderDetailNextDmpHandler extends DmpInputDoNextDmpHandle
         if (null == detailListObj) {
             return Collections.emptyList();
         }
-        // 退货/退款信息
         JSONArray jsonArray = JSON.parseArray(JSON.toJSONString(detailListObj));
         if (CollectionUtils.isEmpty(jsonArray)) {
             return Collections.emptyList();
