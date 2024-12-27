@@ -1,5 +1,6 @@
 package com.sdk.third.lingxing.dto;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -9,6 +10,7 @@ import java.util.List;
 
 @Data
 @NoArgsConstructor
+@AllArgsConstructor
 public class ProductInfo implements Serializable {
 
     @NotNull
@@ -111,6 +113,12 @@ public class ProductInfo implements Serializable {
     private Declaration declaration;
 
     private Clearance clearance;
+
+    public ProductInfo(String sku, String productName, String skuIdentifier) {
+        this.sku = sku;
+        this.productName = productName;
+        this.skuIdentifier = skuIdentifier;
+    }
 
     @Data
     @NoArgsConstructor
