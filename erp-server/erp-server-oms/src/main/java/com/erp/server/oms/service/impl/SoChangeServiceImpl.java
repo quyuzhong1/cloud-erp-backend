@@ -867,7 +867,7 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
         if (!result) {
             throw new ServiceException(ApiError.ERROR_94006);
         }
-        List<SoInfoDTO.ViewDTO> viewList = new ArrayList<>();
+
         List<DmpPushTaskEntity> pushTaskList = new ArrayList<>();
         if (dto.getType().equals(ApproveType.PASS)) {
             //销售变更单校验
