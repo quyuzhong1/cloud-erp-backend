@@ -155,7 +155,7 @@
           st.approve_user_name AS approveUserName
         FROM stocktaking_task st
           LEFT JOIN stocktaking_plan sp
-          ON st.source_id=sp.id AND sp.is_deleted=FALSE
+          ON ${params.sqlMap.default} and st.source_id=sp.id AND sp.is_deleted=FALSE
         WHERE st.is_deleted=FALSE
         <choose>
             <when test="params.ids!=null and params.ids.size>0">
