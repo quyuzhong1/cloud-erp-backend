@@ -10,6 +10,9 @@ import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.aggregations.AggregationBuilders;
 import org.elasticsearch.search.aggregations.Aggregations;
+import org.elasticsearch.search.aggregations.bucket.composite.CompositeAggregationBuilder;
+import org.elasticsearch.search.aggregations.bucket.composite.ParsedComposite;
+import org.elasticsearch.search.aggregations.bucket.composite.TermsValuesSourceBuilder;
 import org.elasticsearch.search.aggregations.bucket.terms.Terms;
 import org.elasticsearch.search.aggregations.metrics.TopHits;
 import org.elasticsearch.search.sort.SortBuilders;
@@ -147,42 +150,50 @@ public class OrderHistorySalesEsServiceImpl implements OrderHistorySalesEsServic
     public Map<String, Integer> listByType(JSONArray orderType) {
         Map<String, Integer> result = new HashMap<>();
         int pageSize = 10000;
-        for (int page = 0; ; page++) {
+        Map<String, Object> afterKey = null;
+
+        do {
             // 构建查询条件
             BoolQueryBuilder queryBuilder = QueryBuilders.boolQuery()
                     .must(QueryBuilders.existsQuery("originalSalesQty"));
             if (!CollectionUtils.isEmpty(orderType)) {
                 queryBuilder.must(QueryBuilders.termsQuery("orderType", orderType));
             }
+
+            // 构建 composite 聚合
+            CompositeAggregationBuilder compositeAggregation = AggregationBuilders.composite("byReplenishmentId",
+                            Collections.singletonList(new TermsValuesSourceBuilder("replenishmentId").field("replenishmentId")))
+                    .size(pageSize)
+                    .subAggregation(AggregationBuilders.topHits("latest_sales")
+                            .sort(SortBuilders.fieldSort("date").order(SortOrder.DESC))
+                            .size(1));
+
+            // 设置分页参数
+            if (afterKey != null) {
+                compositeAggregation.aggregateAfter(afterKey);
+            }
+
             NativeSearchQuery searchQuery = new NativeSearchQueryBuilder()
                     .withQuery(queryBuilder)
-                    .addAggregation(AggregationBuilders.terms("byReplenishmentId")
-                            .field("replenishmentId")
-                            .size(pageSize)
-                            .subAggregation(AggregationBuilders.topHits("latest_sales")
-                                    .sort(SortBuilders.fieldSort("date").order(SortOrder.DESC))
-                                    .size(1)
-                            )
-                    )
-                    .withPageable(PageRequest.of(page, pageSize))
+                    .addAggregation(compositeAggregation)
                     .build();
+
             // 执行查询
             Aggregations aggregations = elasticsearchRestTemplate.search(searchQuery, OrderHistorySalesEsEntity.class)
                     .getAggregations();
-            // 获取 replenishmentId 的聚合结果
-            Terms byReplenishmentId = aggregations.get("byReplenishmentId");
-            for (Terms.Bucket bucket : byReplenishmentId.getBuckets()) {
+
+            // 获取 composite 聚合结果
+            ParsedComposite byReplenishmentId = aggregations.get("byReplenishmentId");
+            for (ParsedComposite.ParsedBucket bucket : byReplenishmentId.getBuckets()) {
                 TopHits topSales = bucket.getAggregations().get("latest_sales");
                 org.elasticsearch.search.SearchHit searchHit = topSales.getHits().getAt(0);
                 OrderHistorySalesEsEntity entity = elasticsearchRestTemplate.getElasticsearchConverter().read(OrderHistorySalesEsEntity.class, DocumentAdapters.from(searchHit));
                 result.put(entity.getReplenishmentId(), entity.getOriginalSalesQty());
             }
 
-            // 判断是否还有更多数据
-            if (byReplenishmentId.getBuckets().size() < pageSize) {
-                break; // 如果当前页的桶数少于 pageSize，说明没有更多数据
-            }
-        }
+            // 更新 afterKey，用于下一次查询
+            afterKey = byReplenishmentId.afterKey();
+        } while (afterKey != null);
         return result;
     }
 
