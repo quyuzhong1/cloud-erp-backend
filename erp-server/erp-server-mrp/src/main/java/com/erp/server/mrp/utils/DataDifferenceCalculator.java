@@ -41,14 +41,14 @@ public class DataDifferenceCalculator {
     }
 
     /**
-     * 将“越小越好”的误差映射到 (0,1]：
-     * 误差=0 => 得分=1，误差越大 => 得分越接近 0
+     * 将“越小越好”的误差映射到 (0,100]：
+     * 误差=0 => 得分=100，误差越大 => 得分越接近 0
      */
     private static BigDecimal errorToScore(BigDecimal error) {
         if (error.compareTo(BigDecimal.ZERO) <= 0) {
-            return BigDecimal.ONE;
+            return BigDecimal.valueOf(100);
         }
-        return BigDecimal.ONE.divide(BigDecimal.ONE.add(error), 10, RoundingMode.HALF_UP);
+        return BigDecimal.valueOf(100).divide(BigDecimal.ONE.add(error), 10, RoundingMode.HALF_UP);
     }
 
 
