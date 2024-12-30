@@ -22,7 +22,7 @@ import javax.servlet.http.HttpServletResponse;
  **/
 @Slf4j
 @Component
-@PlatformAnnotate(method = PlatformDictEnum.TE_MU)
+@PlatformAnnotate(method = PlatformDictEnum.RAKUTEN)
 public class RakutenAuthorize implements IShopAuthorizeService<T> {
 
     /**
