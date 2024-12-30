@@ -49,9 +49,9 @@ public class ReportManagerController extends BaseController {
      * @return
      */
     @PostMapping("/productSalesExport")
+    @WebAdvanceQuery
     public ApiResult<Object> productSalesExport(@RequestBody @Validated ReportDTO.ProductSalesPagingParamDTO dto) {
         Boolean result = soB2cService.productSalesExport(dto);
         return Boolean.TRUE.equals(result) ? success() : failure();
-
     }
 }

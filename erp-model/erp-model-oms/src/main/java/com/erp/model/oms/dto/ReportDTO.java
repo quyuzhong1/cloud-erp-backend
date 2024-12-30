@@ -61,8 +61,8 @@ public class ReportDTO implements Serializable {
         /**
          * 订单创建时间
          */
-        @NotNull(message = "订单创建时间不能为空")
-        @Size(min = 2,message = "订单创建时间不能为空")
+//        @NotNull(message = "订单创建时间不能为空")
+//        @Size(min = 2,message = "订单创建时间不能为空")
         @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
         private List<LocalDateTime> orderCreateTimeList;
         /**
