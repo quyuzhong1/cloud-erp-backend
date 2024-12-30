@@ -1,13 +1,18 @@
 package com.erp.server.wms.service.impl;
 
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONArray;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.ApproveStatusEnum;
+import com.common.business.enums.QueryConditionEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
+import com.common.core.exception.ServiceException;
 import com.common.core.utils.MathUtil;
 import com.erp.model.scm.dto.PurchaseBusinessGatherTableDTO;
 import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
@@ -21,6 +26,11 @@ import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.ZoneId;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -51,6 +61,33 @@ public class ReportFormsManageServiceImpl extends SuperServiceImpl<ReportFormsMa
     public PagingVO<List<PurchaseBusinessGatherTableDTO.PagingViewDTO>> purchaseBusinessGatherTablePaging(PagingDTO<PurchaseBusinessGatherTableDTO.PagingParamDTO> pagingDTO) {
         pagingDTO.getParams().setPermissionSql(pagingDTO.getPermissionSql());
         Page query = new Page(pagingDTO.getCurrPage(), pagingDTO.getPageSize());
+        //  单据日期范围
+        AdvanceQueryDTO advanceQueryDTO = pagingDTO.getParams().getAdvanceQueryDTOList().stream().filter(e -> "bill_date".equalsIgnoreCase(e.getField())).findFirst().orElse(null);
+        if(null != advanceQueryDTO){
+            // 单据开始时间
+            LocalDate startTime = null;
+            // 单据订单结束时间
+            LocalDate endTime = null;
+            if (QueryConditionEnum.GT.getCompareCode().equalsIgnoreCase(advanceQueryDTO.getCompare())
+                    || QueryConditionEnum.GE.getCompareCode().equalsIgnoreCase(advanceQueryDTO.getCompare())){
+                startTime = LocalDate.parse(advanceQueryDTO.getValue().toString());
+                endTime = LocalDate.now(ZoneId.systemDefault());
+            }
+
+            if (QueryConditionEnum.LT.getCompareCode().equalsIgnoreCase(advanceQueryDTO.getCompare())
+                    || QueryConditionEnum.LE.getCompareCode().equalsIgnoreCase(advanceQueryDTO.getCompare())){
+                startTime = LocalDate.of(1970, 1 , 1);
+                endTime = LocalDate.parse(advanceQueryDTO.getValue().toString());
+            }
+            if (QueryConditionEnum.BETWEEN.getCompareCode().equalsIgnoreCase(advanceQueryDTO.getCompare())) {
+                JSONArray dateJsonArray = JSONArray.parseArray(JSON.toJSONString(advanceQueryDTO.getValue()));
+                startTime = LocalDate.parse(dateJsonArray.get(0).toString());
+                endTime = LocalDate.parse(dateJsonArray.get(1).toString());
+            }
+            if (null != startTime && null != endTime){
+                pagingDTO.getParams().setBillDateList(Arrays.asList(startTime,endTime));
+            }
+        }
         IPage<PurchaseBusinessGatherTableDTO.PagingViewDTO> pageData = baseMapper.paging(query, pagingDTO.getParams());
         List<PurchaseBusinessGatherTableDTO.PagingViewDTO> pagingViewDTOList = pageData.getRecords();
         for (PurchaseBusinessGatherTableDTO.PagingViewDTO viewDTO : pagingViewDTOList) {

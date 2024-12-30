@@ -1,6 +1,7 @@
 package com.erp.server.wms.controller.api;
 
 import com.common.business.annotation.DataPermission;
+import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
@@ -11,6 +12,7 @@ import com.common.core.enums.LogActionEnum;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.scm.dto.PurchaseBusinessGatherTableDTO;
+import com.erp.server.wms.query.ReportFormsManageQueryHandler;
 import com.erp.server.wms.service.ReportFormsManageService;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -41,6 +43,7 @@ public class ReportFormsManageController extends BaseController {
      * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.scm.dto.PurchaseBusinessGatherTableDTO.PagingViewDTO>>
      **/
     @PostMapping(value = "/purchaseBusinessGatherTablePaging")
+    @WebAdvanceQuery(handler = ReportFormsManageQueryHandler.class)
     public ApiResult<PagingVO<List<PurchaseBusinessGatherTableDTO.PagingViewDTO>>> purchaseBusinessGatherTablePaging(@RequestBody PagingDTO<PurchaseBusinessGatherTableDTO.PagingParamDTO> dto) {
         PagingVO<List<PurchaseBusinessGatherTableDTO.PagingViewDTO>> listPagingVO = reportFormsManageService.purchaseBusinessGatherTablePaging(dto);
         return success(listPagingVO);
@@ -55,6 +58,7 @@ public class ReportFormsManageController extends BaseController {
      **/
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出采购业务汇总表")
     @PostMapping(value = "/exportExcelPurchaseBusiness")
+    @WebAdvanceQuery(handler = ReportFormsManageQueryHandler.class)
     public ApiResult exportExcelPurchaseBusiness(@RequestBody PurchaseBusinessGatherTableDTO.PagingParamDTO dto) {
         Boolean flag = reportFormsManageService.exportExcelPurchaseBusiness(dto);
         return flag == true ? success() : failure();
