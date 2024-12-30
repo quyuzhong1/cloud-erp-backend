@@ -46,7 +46,7 @@ public class SoB2cProcessingDTO implements Serializable {
         /**
          * 类型，alreadyOut已出，deliveryFreeze发货冻结，unDelivery7日未发
          */
-        private String type;
+        private String label;
     }
 
     /**

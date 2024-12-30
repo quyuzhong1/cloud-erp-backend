@@ -9,6 +9,7 @@ import lombok.experimental.Accessors;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
 /**
  * <p>
@@ -208,6 +209,12 @@ public class SoDetailEntity extends BaseEntity<SoDetailEntity> {
      */
     @TableField(value = "frozen_qty")
     private Integer frozenQty;
+
+    /**
+     * 冻结时间
+     */
+    @TableField(value = "frozen_time")
+    private LocalDateTime frozenTime;
     /**
      * bom 版本
      */

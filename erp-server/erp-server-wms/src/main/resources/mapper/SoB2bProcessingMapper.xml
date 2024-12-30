@@ -83,6 +83,18 @@
         left join virtual_warehouse vw on sbp.virtual_warehouse_id = vw.id and vw.is_deleted = false
         where ${params.sqlMap.default}
         and sbp.is_deleted = false
+        <if test="params.label != null and params.label == 'outstock'">
+            and sbp.outstock_order_id = ''
+        </if>
+        <if test="params.label != null and params.label == 'frozen'">
+            and sbp.delivery_qty != sbp.frozen_qty and sbp.delivery_notice_id != ''
+        </if>
+        <if test="params.label != null and params.label == 'unShipped'">
+            and sbp.outstock_order_id = ''
+        </if>
+        <if test="params.label != null and params.label == 'orderFrozen'">
+            and sbp.outstock_order_id = '' and sbp.frozen_time != null and EXTRACT(DAY FROM (now() - sbp.frozen_time)) >= 7
+        </if>
         ORDER BY
         <if test="params.sortList != null and params.sortList.size > 0">
             <foreach collection="params.sortList" item="item" separator="," close=",">
@@ -104,18 +116,18 @@
             sdn.approve_status as deliveryNoticeApproveStatus,
             sdnd.id as deliveryNoticeDetailId,
             sdnd.delivery_qty as deliveryQty,
-            sdnd.sku_id as skuId,
-            sdn.warehouse_id as warehouseId,
-            sdn.virtual_warehouse_id as virtualWarehouseId,
-            sdn.create_time as frozenTime,
-            sd.frozen_qty as frozenQty
-        from so_delivery_notice sdn
-        inner join so_delivery_notice_detail sdnd on sdn.id = sdnd.main_id and sdnd.is_deleted = false
-        inner join so_info si on sdn.source_id = si.id and si.is_deleted = false
-        inner join so_detail sd on sdnd.source_detail_id = sd.id and sd.is_deleted = false
-        where sdn.is_deleted = false and sdn.invalid_status = false and sdn.virtual_warehouse_id != ''
+            sd.sku_id as skuId,
+            si.warehouse_id as warehouseId,
+            si.virtual_warehouse_id as virtualWarehouseId,
+            COALESCE(sd.frozen_time,sdn.create_time) as frozenTime,
+            sd.frozen_qty + COALESCE(sdnd.delivery_qty,0)  as frozenQty
+        from  so_info si
+        inner join so_detail sd on si.id = sd.main_id and sd.is_deleted = false
+        left join so_delivery_notice_detail sdnd on sd.id = sdnd.source_detail_id and sdnd.is_deleted = false
+        left join so_delivery_notice sdn on sdn.id = sdnd.main_id and sdn.is_deleted = false and sdn.invalid_status = false
+        where si.is_deleted = false and si.invalid_status = false and si.virtual_warehouse_id != ''
             <if test="startDate != null">
-               and sdn.create_time > #{startDate}
+               and si.create_time > #{startDate}
             </if>
     </select>
 

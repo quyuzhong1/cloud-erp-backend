@@ -43,9 +43,9 @@ public class SoB2bProcessingDTO implements Serializable {
         private Map<String,String> sqlMap;
 
         /**
-         * 类型，alreadyOut已出，deliveryFreeze发货冻结，unDelivery7日未发
+         * 标签类型，alreadyOut已出，deliveryFreeze发货冻结，unDelivery7日未发,orderFrozen订单冻结
          */
-        private String type;
+        private String label;
     }
 
     /**
@@ -172,7 +172,7 @@ public class SoB2bProcessingDTO implements Serializable {
         private String outstockQty;
 
         /**
-         * 标签,outstock出库,frozen发货冻结,unShipped七日未发
+         * 标签类型，alreadyOut已出，deliveryFreeze发货冻结，unDelivery7日未发,orderFrozen订单冻结
          */
         private List<String> labelList;
     }
