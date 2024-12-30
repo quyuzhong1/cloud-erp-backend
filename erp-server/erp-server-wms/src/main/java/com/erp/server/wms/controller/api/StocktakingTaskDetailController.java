@@ -1,11 +1,13 @@
 package com.erp.server.wms.controller.api;
 
 
+import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.validator.ValidList;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.wms.dto.StocktakingTaskDetailDTO;
+import com.erp.server.wms.query.StocktakingTaskQueryHandler;
 import com.erp.server.wms.service.StocktakingTaskDetailService;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -38,6 +40,7 @@ public class StocktakingTaskDetailController extends BaseController {
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出盘点任务明细")
     @PostMapping("/export")
+    @WebAdvanceQuery(handler = StocktakingTaskQueryHandler.class)
     public ApiResult exportWarehouse(@RequestBody @Valid BaseIdDTO dto) {
         Boolean result = stocktakingTaskDetailService.exportExcel(dto);
         return result ? success() : failure();
