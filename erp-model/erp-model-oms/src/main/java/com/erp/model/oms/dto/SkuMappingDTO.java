@@ -207,6 +207,7 @@ public class SkuMappingDTO implements Serializable {
         /**
          * 店铺
          */
+        @NotBlank(message = "店铺ID不能为空")
         private String shopId;
 
         /**

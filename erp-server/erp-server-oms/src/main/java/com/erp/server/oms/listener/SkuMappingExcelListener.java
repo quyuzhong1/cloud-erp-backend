@@ -166,6 +166,7 @@ public class SkuMappingExcelListener extends AnalysisEventListener<SkuMappingImp
         paramDTO.setShopIdList(Collections.singletonList(shop.getId()));
         paramDTO.setType(RuleTypeEnum.PLATFORM.getCode());
         paramDTO.setPlatformSkuNoList(Collections.singletonList(skuMappingImportExcelDTO.getPlatformSkuNo()));
+        paramDTO.setPlatformSkuIdList(CharSequenceUtil.isNotBlank(skuMappingImportExcelDTO.getPlatformProductId()) ? Collections.singletonList(skuMappingImportExcelDTO.getPlatformProductId()) : null);
 //        paramDTO.setIsExpire(false);
         // 所有包含历史映射关系
         List<ListingInfoWithSkuMappingDTO> listDto = skuMappingService.findListDto(paramDTO);
@@ -232,6 +233,7 @@ public class SkuMappingExcelListener extends AnalysisEventListener<SkuMappingImp
         String platformSkuNo = skuMappingImportExcelDTO.getPlatformSkuNo();
 
         String platformProductName = skuMappingImportExcelDTO.getPlatformProductName();
+        String platformProductId = skuMappingImportExcelDTO.getPlatformProductId();
         String finalListingId1 = listingId;
         ListingInfoEntity listingInfoEntity = listingInfoEntityList.stream()
                 .filter(l -> l.getId().equalsIgnoreCase(finalListingId1))
@@ -317,6 +319,7 @@ public class SkuMappingExcelListener extends AnalysisEventListener<SkuMappingImp
             addListingInfoEntity.setId(listingId);
             addListingInfoEntity.setType(RuleTypeEnum.PLATFORM.getCode());
             addListingInfoEntity.setPlatformSkuNo(platformSkuNo);
+            addListingInfoEntity.setPlatformSkuId(platformProductId);
             addListingInfoEntity.setPlatformSkuName(platformProductName);
             addListingInfoEntity.setMatchResult(ListingMatchResultEnum.TRUE.getCode());
             addListingInfoEntity.setPlatform(dictPlatform);
