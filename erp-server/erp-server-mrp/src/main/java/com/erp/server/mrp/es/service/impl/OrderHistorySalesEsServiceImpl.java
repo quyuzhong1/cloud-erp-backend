@@ -213,6 +213,11 @@ public class OrderHistorySalesEsServiceImpl implements OrderHistorySalesEsServic
         List<OrderHistorySalesEsEntity> result = new ArrayList<>();
         SearchScrollHits<OrderHistorySalesEsEntity> orderHistorySales = elasticsearchRestTemplate.searchScrollStart(60000, searchQuery, OrderHistorySalesEsEntity.class, IndexCoordinates.of("order_history_sales"));
         String scrollId = orderHistorySales.getScrollId();
+        if (!CollectionUtils.isEmpty(orderHistorySales.getSearchHits())) {
+            result.addAll(orderHistorySales.getSearchHits().stream()
+                    .map(SearchHit::getContent)
+                    .collect(Collectors.toList()));
+        }
         scrollIdList.add(scrollId);
         while (true) {
             SearchScrollHits<OrderHistorySalesEsEntity> searchScrollHits = elasticsearchRestTemplate.searchScrollContinue(scrollId, 60000, OrderHistorySalesEsEntity.class, IndexCoordinates.of("order_history_sales"));
@@ -294,6 +299,11 @@ public class OrderHistorySalesEsServiceImpl implements OrderHistorySalesEsServic
         SearchScrollHits<OrderHistorySalesEsEntity> orderHistorySales = elasticsearchRestTemplate.searchScrollStart(60000, searchQuery, OrderHistorySalesEsEntity.class, IndexCoordinates.of("order_history_sales"));
         String scrollId = orderHistorySales.getScrollId();
         scrollIdList.add(scrollId);
+        if (!CollectionUtils.isEmpty(orderHistorySales.getSearchHits())) {
+            result.addAll(orderHistorySales.getSearchHits().stream()
+                    .map(SearchHit::getContent)
+                    .collect(Collectors.toList()));
+        }
         while (true) {
             SearchScrollHits<OrderHistorySalesEsEntity> searchScrollHits = elasticsearchRestTemplate.searchScrollContinue(scrollId, 60000, OrderHistorySalesEsEntity.class, IndexCoordinates.of("order_history_sales"));
             // 获取查询结果并收集到列表中
