@@ -8600,6 +8600,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             } else {
                 updateList.add(soB2cEntity);
             }
+            if(!dto.getPlatformShipFlag() && soB2cEntity.getThirdSystem().equals(PlatformDictEnum.LING_XING.getCode())){
+                LingxingApiUtils.cancelOrderByOrderList(Collections.singletonList(soB2cEntity.getThirdCode()));
+            }
             soB2cEntity.setSignOrderError("");
             deleteErrorIds.add(soB2cEntity.getId());
             //将仓库会写到订单的明细发货仓库
