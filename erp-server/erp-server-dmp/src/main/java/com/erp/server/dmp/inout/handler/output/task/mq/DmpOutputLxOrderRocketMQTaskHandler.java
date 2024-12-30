@@ -184,7 +184,7 @@ public class DmpOutputLxOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHa
         // 付款方式
         orderDTO.setDictPayMethod(dmpSoInfoEntity.getPayMethod());
         // 买家备注
-        orderDTO.setBuyerRemark("");
+        orderDTO.setBuyerRemark(dmpSoInfoEntity.getBuyerRemark());
         // 订单备注
         orderDTO.setRemark(dmpSoInfoEntity.getSellRemark());
         // 销售组织id
@@ -225,8 +225,8 @@ public class DmpOutputLxOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHa
         if (!CollectionUtils.isEmpty(dmpSoDetailEntityList)) {
             String currency = dmpSoDetailEntityList.stream().map(DmpSoDetailEntity::getCurrencyCode).distinct().findFirst().orElse("");
             PlatformOrderFinanceDTO financeDTO = new PlatformOrderFinanceDTO();
-            // 亚马逊物流费用不显示
-            financeDTO.setShippingCost(BigDecimal.ZERO);
+            financeDTO.setShippingCost(dmpSoInfoEntity.getShippingAmount());
+            financeDTO.setPlatformCost(dmpSoInfoEntity.getPlatformCost());
             financeDTO.setCurrency(currency);
             orderDTO.setFinances(financeDTO);
         }
