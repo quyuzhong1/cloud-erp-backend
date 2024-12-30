@@ -141,6 +141,28 @@ public interface VirtualTransFlowService extends SuperService<VirtualTransFlowEn
      */
     List<VirtualTransFlowEntity> listApproveByIds(List<String> oldVirtualTransFlowIdList);
     /**
+     * 查询
+     * @author will
+     * @date 2024/12/27 19:42
+     * @param dto
+     */
+    List<VirtualTransFlowEntity> listApproveFlowDetail(VirtualTransFlowDetailDTO.HandleDTO dto);
+    /**
+     * 添加流水
+     * @author will
+     * @date 2024/12/27 20:10
+     * @param dto
+     */
+    void handleAddDetail(VirtualTransFlowDetailDTO.HandleDTO dto);
+    /**
+     * 更新备注
+     * @author will
+     * @date 2024/12/27 20:44
+     * @param id
+     * @param remark
+     */
+    void updateRemark(String id, String remark);
+    /**
      * 查询流水
      * @author will
      * @date 2024/12/20 9:50

@@ -137,6 +137,12 @@ public class VirtualTransFlowEntity extends BaseEntity<VirtualTransFlowEntity> {
     private Boolean isUnapproved;
 
     /**
+     * 备注
+     */
+    @TableField("remark")
+    private String remark;
+
+    /**
      * 上一个流水id,反审核时候传
      */
     @TableField(exist = false)
