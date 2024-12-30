@@ -132,6 +132,10 @@ public class SoB2cProcessingDTO implements Serializable {
          */
         private String outstockOrderCode;
         /**
+         * 出库单据类型（同sourceType）
+         */
+        private String outstockOrderType;
+        /**
          * 出库单据类型名称（同sourceType）
          */
         private String outstockOrderTypeName;

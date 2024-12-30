@@ -259,7 +259,7 @@ public class FirstMileProcessingServiceImpl extends SuperServiceImpl<FirstMilePr
             listDTO.setDeliveryApproveStatusName(ApproveStatusEnum.getName(listDTO.getDeliveryApproveStatus()));
             //要货申请状态名称
             listDTO.setRequisitionApplicationStatusName(RequisitionApplicationStatusEnum.getName(listDTO.getRequisitionApplicationStatus()));
-
+            listDTO.setOutstockOrderTypeName(SourceTypeEnum.getName(listDTO.getOutstockOrderType()));
             //冻结时长
             listDTO.setFrozenDays(Math.toIntExact(LocalDate.now().toEpochDay() - listDTO.getFrozenTime().toLocalDate().toEpochDay()));
 
@@ -282,6 +282,13 @@ public class FirstMileProcessingServiceImpl extends SuperServiceImpl<FirstMilePr
                 listDTO.setFrozenDays(Math.toIntExact(LocalDate.now().toEpochDay() - listDTO.getFrozenTime().toLocalDate().toEpochDay()) + 1);
             }
             listDTO.setLabelList(labelList);
+
+            //出库状态
+            if (CharSequenceUtil.equals(listDTO.getOutstockOrderType(),SourceTypeEnum.TRANSFER_INFO.getCode())
+                    || CharSequenceUtil.equals(listDTO.getOutstockOrderType(),SourceTypeEnum.MACHINE_INFO.getCode())
+                    || CharSequenceUtil.equals(listDTO.getOutstockOrderType(),SourceTypeEnum.SO_OUTSTOCK.getCode())) {
+                listDTO.setOutstockOrderStatusName(ApproveStatusEnum.getName(listDTO.getOutstockOrderStatus()));
+            }
         }
     }
 }
