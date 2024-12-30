@@ -112,6 +112,7 @@ public class ImageUtil {
             System.out.println("目标尺寸已经小于配置大小无需压缩");
             ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
             Thumbnails.of(inputFile)
+                    .scale(1)
                     // 将原始图片写入流
                     .toOutputStream(byteArrayOutputStream);
             return byteArrayOutputStream;
