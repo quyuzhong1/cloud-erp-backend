@@ -185,7 +185,7 @@ public class LingxingApiUtils {
         TreeMap<String, Object> signMap = new TreeMap<>();
         signMap.putAll(queryParam);
         if (!CollectionUtils.isEmpty(requestBody)) {
-            if (signParamListToStr){
+            if (signParamListToStr) {
                 TreeMap<String, String> resultRequestBody = convertToTreeMapString(requestBody);
                 signMap.putAll(resultRequestBody);
             } else {
@@ -206,12 +206,12 @@ public class LingxingApiUtils {
         TreeMap<String, String> result = new TreeMap<>();
         for (Map.Entry<String, Object> entry : requestBody.entrySet()) {
             // 将 Object 转为 String，处理 null 情况
-            if (null == entry.getValue()){
+            if (null == entry.getValue()) {
                 continue;
             }
             Object valueObj = entry.getValue();
             String value;
-            if (valueObj instanceof List){
+            if (valueObj instanceof List) {
                 // 数组转List
                 value = JSONUtil.toJsonStr(entry.getValue());
             } else {
@@ -345,7 +345,7 @@ public class LingxingApiUtils {
      */
     public static Result<Object> postRequestData(String apiType, TreeMap<String, Object> requestMap) {
         Result<Object> result = LingxingApiUtils.postAndSign(apiType, requestMap);
-        if (! "0".equalsIgnoreCase(result.getCode()) && !"3001008".equalsIgnoreCase(result.getCode())) {
+        if (!"0".equalsIgnoreCase(result.getCode()) && !"3001008".equalsIgnoreCase(result.getCode())) {
             String errorMsg = StrUtil.format("请求领星{}接口:, result={}", apiType, JSONUtil.toJsonStr(result));
             log.error(errorMsg);
             throw new ServiceException(errorMsg);
@@ -391,6 +391,7 @@ public class LingxingApiUtils {
 
     /**
      * 标记订单不发货
+     *
      * @param orderList 领星订单ID
      * @return 响应
      */
@@ -409,6 +410,7 @@ public class LingxingApiUtils {
 
     /**
      * 快速出库
+     *
      * @param packageList 每个单对应出库信息-最多1000个订单
      * @return 响应
      */
@@ -430,6 +432,7 @@ public class LingxingApiUtils {
 
     /**
      * 编辑/更新自发货订单
+     *
      * @param orderList 更新的订单信息
      * @return 响应
      */
@@ -452,6 +455,7 @@ public class LingxingApiUtils {
 
     /**
      * 添加/编辑本地产品
+     *
      * @param productInfo 商品信息
      * @return 响应
      */
@@ -469,16 +473,24 @@ public class LingxingApiUtils {
     /**
      * 领星SKU转换
      * 只允许为:字母,数字,下划线(),短划线(-),英文点(.),并号(#)不限制大小写
-     *
      */
-    public static String convertLxSku(String sku){
-        return CharSequenceUtil.replace(sku,"+", "-").replace("*", "#");
+    public static String convertLxSku(String sku) {
+        return CharSequenceUtil.replace(sku, "+", "-").replace("*", "#");
     }
 
     /**
      * 替换连续的空格
      */
-    public static String convertLxProductName(String name){
-        return name.replaceAll( "\\s+", " ");
+    public static String convertLxProductName(String name) {
+        return name.replaceAll("\\s+", " ");
+    }
+
+
+    /**
+     * 公共推送
+     */
+    public static Result<Object> commonSync(String apiUri, Object requestObj) {
+        TreeMap<String, Object> requestMap = new TreeMap<>(BeanUtil.beanToMap(requestObj, true, true));
+        return LingxingApiUtils.postAndSignCheckListConvert(apiUri, requestMap);
     }
 }

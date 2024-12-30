@@ -74,7 +74,7 @@ public class SyncLingXingProductDetailServiceImpl implements SyncLingXingProduct
         productInfo.setProductName(entity.getName());
         SettingEnum settingEnum = SettingEnum.NEW_DMP_PUSH_SWTICH_LIST;
         List<CfgSettingEntity> list = FeignQuery.create(CfgSettingEntity.class)
-        		.eq(CfgSettingEntity::getKey, SourceTypeEnum.LINGXING_PRODUCT_DETAIL.getCode())
+        		.eq(CfgSettingEntity::getKey, SourceTypeEnum.LX_PRODUCT_DETAIL.getCode())
         		.eq(CfgSettingEntity::getType, settingEnum.getType())
         		.eq(CfgSettingEntity::getValue, "1")
         		.list();
@@ -95,7 +95,7 @@ public class SyncLingXingProductDetailServiceImpl implements SyncLingXingProduct
         
         PlmPushMsgEntity plmPushMsgEntity = new PlmPushMsgEntity();
         plmPushMsgEntity.setTargetPlatform(DmpBasicSystemCodeEnum.LING_XING.getCode());
-        plmPushMsgEntity.setSourceType(SourceTypeEnum.LINGXING_PRODUCT_DETAIL.getCode());
+        plmPushMsgEntity.setSourceType(SourceTypeEnum.LX_PRODUCT_DETAIL.getCode());
         plmPushMsgEntity.setSourceId(entity.getId());
         plmPushMsgEntity.setSourceCode(entity.getSkuNo());
         plmPushMsgEntity.setSyncOperate(SyncOperateEnum.OPERATE_APPROVE.getCode());
@@ -129,7 +129,7 @@ public class SyncLingXingProductDetailServiceImpl implements SyncLingXingProduct
         pushData.put("remark",String.format("【%s】删除，同步领星失败", entity.getSkuNo()));
         PlmPushMsgEntity plmPushMsgEntity = new PlmPushMsgEntity();
         plmPushMsgEntity.setTargetPlatform(DmpBasicSystemCodeEnum.LING_XING.getCode());
-        plmPushMsgEntity.setSourceType(SourceTypeEnum.LINGXING_PRODUCT_DETAIL.getCode());
+        plmPushMsgEntity.setSourceType(SourceTypeEnum.LX_PRODUCT_DETAIL.getCode());
         plmPushMsgEntity.setSourceId(entity.getId());
         plmPushMsgEntity.setSourceCode(entity.getSkuNo());
         plmPushMsgEntity.setSyncOperate(SyncOperateEnum.OPERATE_SYNC_ERROR.getCode());
