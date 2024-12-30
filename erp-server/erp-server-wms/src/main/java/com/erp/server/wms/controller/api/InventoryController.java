@@ -283,9 +283,9 @@ public class InventoryController extends BaseController {
         long countArea = inventoryService.countByArea();
         long countLocation = inventoryService.countByLocation();
 
-        list.add(new InventoryDTO.TabDto("warehouse", countWarehouse));
-        list.add(new InventoryDTO.TabDto("warehouseArea", countArea));
-        list.add(new InventoryDTO.TabDto("warehouseLocation", countLocation));
+        list.add(new InventoryDTO.TabDto("warehouse", countWarehouse, "按仓库"));
+        list.add(new InventoryDTO.TabDto("warehouseArea", countArea, "按库区"));
+        list.add(new InventoryDTO.TabDto("warehouseLocation", countLocation, "按仓位"));
 
         return ApiResult.success(list);
     }
