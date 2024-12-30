@@ -16,6 +16,7 @@ import com.common.core.enums.LogActionEnum;
 import com.erp.model.tms.dto.ShippingTemplateDTO;
 import com.erp.model.tms.dto.ShippingTemplateOtherCostDTO;
 import com.erp.model.tms.entity.ShippingTemplateEntity;
+import com.erp.server.tms.query.ShippingTemplateQueryHandler;
 import com.erp.server.tms.service.ShippingTemplateService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
@@ -75,7 +76,7 @@ public class ShippingTemplateController extends BaseController {
             menuCode = "tms:shippingTemplate:paging",
             tableAlias = "st"
     )
-    @WebAdvanceQuery
+    @WebAdvanceQuery(handler = ShippingTemplateQueryHandler.class)
     public ApiResult<PagingVO<ShippingTemplateDTO.ListDTO>> queryByPage(@RequestBody @Validated PagingDTO<ShippingTemplateDTO.PagingParamDTO> dto) {
         PagingVO<ShippingTemplateDTO.ListDTO> pagingVO = shippingTemplateService.paging(dto);
         return success(pagingVO);

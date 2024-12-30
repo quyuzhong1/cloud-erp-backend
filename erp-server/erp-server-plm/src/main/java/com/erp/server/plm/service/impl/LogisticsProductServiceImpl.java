@@ -398,6 +398,13 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
     @Override
     public List<LogisticsProductDTO.TabListDTO> tabList(PermissionsDTO dto) {
         List<LogisticsProductDTO.TabListDTO> list = new ArrayList<>();
+        Integer allCount = this.baseMapper.listCount(new LogisticsProductDTO.PagingParamDTO());
+        LogisticsProductDTO.TabListDTO allTab = new LogisticsProductDTO.TabListDTO();
+        allTab.setTabFlag("all");
+        allTab.setTabFlagName("全部");
+        allTab.setCount(allCount);
+        list.add(allTab);
+
         LogisticsProductDTO.TabListDTO tab = new LogisticsProductDTO.TabListDTO();
         List<String> fieldList = listField();
         Integer approvalStatus = ProductDetailStatusEnum.APPROVAL_PASS.getCode();
@@ -406,6 +413,7 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
         tab.setTabFlag("update");
         tab.setTabFlagName("更新");
         tab.setCount(updateCount);
+
         PageListTypeEnum[] values = PageListTypeEnum.values();
         for (PageListTypeEnum item : values) {
             LogisticsProductDTO.PagingParamDTO searchParamDTO = new LogisticsProductDTO.PagingParamDTO();

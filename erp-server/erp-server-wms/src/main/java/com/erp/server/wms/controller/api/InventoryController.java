@@ -69,7 +69,7 @@ public class InventoryController extends BaseController {
      * @return
      */
     @PostMapping("/pageTransFlow")
-    @WebAdvanceQuery
+    @WebAdvanceQuery(handler = WmsInventoryQueryHandler.class)
     public ApiResult<PagingVO<InventoryDTO.TransFlowPagingViewDTO>> pageTransFlow(@RequestBody @Validated PagingDTO<InventoryDTO.TransFlowSearchParamDTO> dto) {
         return success(transactionFlowService.pagingForInv(dto));
     }
@@ -80,7 +80,7 @@ public class InventoryController extends BaseController {
      * @return
      */
     @PostMapping("/exportTransFlow")
-    @WebAdvanceQuery
+    @WebAdvanceQuery(handler = WmsInventoryQueryHandler.class)
     public ApiResult<Boolean> exportTransFlow(@RequestBody InventoryDTO.ExportInvFlowSearchParamDTO dto) {
         transactionFlowService.exportTransFlow(dto);
         return success(true);
