@@ -158,6 +158,10 @@ public class PurchaseOrderDetailDTO implements Serializable {
          * 执行状态描述
          */
         private String executionStatusName;
+        /**
+         * 是否需要重新赋值税率
+         */
+        private Boolean isRevalueTaxRate;
     }
 
     @Data
