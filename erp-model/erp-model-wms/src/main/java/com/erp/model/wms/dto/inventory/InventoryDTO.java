@@ -1794,5 +1794,10 @@ public class InventoryDTO implements Serializable {
          * 数量
          */
         private long count;
+
+        /**
+         * 名称
+         */
+        private String tabFlagName;
     }
 }
