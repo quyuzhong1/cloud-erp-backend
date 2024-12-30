@@ -111,6 +111,11 @@ public class PurchasePriceEntity extends BaseEntity<PurchasePriceEntity> {
     @TableField("approve_user_id")
     private String approveUserId;
 
+    /**
+     * 外部平台单号
+     */
+    @TableField("voucher_no")
+    private String voucherNo;
 
     /**
      * 明细ids
