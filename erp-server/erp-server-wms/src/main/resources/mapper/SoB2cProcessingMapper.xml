@@ -80,13 +80,13 @@
         where ${params.sqlMap.default}
         and sbp.is_deleted = false
         <if test="params.label != null and params.label == 'outstock'">
-            and sbp.outstock_order_id = ''
+            and sbp.outstock_order_id != ''
         </if>
         <if test="params.label != null and params.label == 'frozen'">
             and sbp.delivery_qty != sbp.frozen_qty and sbp.delivery_id != ''
         </if>
         <if test="params.label != null and params.label == 'unShipped'">
-            and sbp.outstock_order_id = ''
+            and sbp.outstock_order_id = '' and sbp.frozen_time is not null and EXTRACT(DAY FROM (now() - sbp.frozen_time)) >= 7
         </if>
         ORDER BY
         <if test="params.sortList != null and params.sortList.size > 0">
