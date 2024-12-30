@@ -110,6 +110,7 @@
             si.id as soId,
             si.code as soCode,
             si.approve_status as soApproveStatus,
+            sd.id as soDetailId,
             sd.qty as soQty,
             sdn.id as deliveryNoticeId,
             sdn.code as deliveryNoticeCode,

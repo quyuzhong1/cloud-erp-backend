@@ -204,15 +204,16 @@ public class SoB2bProcessingServiceImpl extends SuperServiceImpl<SoB2bProcessing
     * 新增修改处理数据
     */
     private List<SoB2bProcessingEntity> handleData(List<SoB2bProcessingDTO.AddOrUpdateDTO> list) {
-        List<String> deliveryNoticeDetailIdList = list.stream().map(SoB2bProcessingDTO.AddOrUpdateDTO::getDeliveryNoticeDetailId).distinct().collect(Collectors.toList());
-        List<SoB2bProcessingEntity> oldList = this.listByDeliveryNoticeDetailIdList(deliveryNoticeDetailIdList);
+        List<String> soDetailIdList = list.stream().map(SoB2bProcessingDTO.AddOrUpdateDTO::getSoId).distinct().collect(Collectors.toList());
+        List<SoB2bProcessingEntity> oldList = this.listBySoDetailIdList(soDetailIdList);
         List<SoB2bProcessingEntity> newList = new ArrayList<>();
         for (SoB2bProcessingDTO.AddOrUpdateDTO addOrUpdateDTO :list) {
             SoB2bProcessingEntity entity = new SoB2bProcessingEntity();
             BeanMapperUtils.copy(addOrUpdateDTO,entity);
             //旧数据
             SoB2bProcessingEntity old = oldList.stream().filter(obj ->
-                    CharSequenceUtil.equals(obj.getDeliveryNoticeDetailId(), addOrUpdateDTO.getDeliveryNoticeDetailId())
+                    CharSequenceUtil.equals(obj.getSoDetailId(), addOrUpdateDTO.getSoDetailId())
+                    && CharSequenceUtil.equals(obj.getDeliveryNoticeDetailId(), addOrUpdateDTO.getDeliveryNoticeDetailId())
                     && CharSequenceUtil.equals(obj.getSkuId(),addOrUpdateDTO.getSkuId())).findFirst().orElse(null);
             if (ObjectUtil.isNotEmpty(old)) {
                 entity.setId(old.getId());
@@ -240,14 +241,14 @@ public class SoB2bProcessingServiceImpl extends SuperServiceImpl<SoB2bProcessing
      * 根据发货通知单明细id查询
      * @author will
      * @date 2024/12/20 10:17
-     * @param deliveryNoticeDetailIdList
+     * @param soDetailIdList
      * @return List<SoB2bProcessingEntity>
      */
-    private List<SoB2bProcessingEntity> listByDeliveryNoticeDetailIdList (List<String> deliveryNoticeDetailIdList) {
-        if (CollUtil.isEmpty(deliveryNoticeDetailIdList)) {
+    private List<SoB2bProcessingEntity> listBySoDetailIdList (List<String> soDetailIdList) {
+        if (CollUtil.isEmpty(soDetailIdList)) {
             return Collections.EMPTY_LIST;
         }
-        return lambdaQuery().in(SoB2bProcessingEntity::getDeliveryNoticeDetailId,deliveryNoticeDetailIdList).list();
+        return lambdaQuery().in(SoB2bProcessingEntity::getSoDetailId,soDetailIdList).list();
     }
 
     /**

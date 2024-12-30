@@ -327,6 +327,12 @@ public class FirstMileProcessingDTO implements Serializable {
         private String requisitionApplicationId;
 
         /**
+         * 要货申请单明细id
+         */
+        @NotBlank(message = "要货申请单明细id不能为空")
+        @Size(max = 19,message = "要货申请单明细id最大长度不能超过19位")
+        private String requisitionApplicationDetailId;
+        /**
         * 要货申请编码
         */
         @NotBlank(message = "要货申请编码不能为空")

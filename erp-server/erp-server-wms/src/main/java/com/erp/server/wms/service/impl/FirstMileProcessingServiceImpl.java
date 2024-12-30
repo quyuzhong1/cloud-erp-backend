@@ -188,15 +188,17 @@ public class FirstMileProcessingServiceImpl extends SuperServiceImpl<FirstMilePr
      * 新增修改处理数据
      */
     private List<FirstMileProcessingEntity> handleData(List<FirstMileProcessingDTO.AddOrUpdateDTO> list) {
-        List<String> detailIdList = list.stream().map(FirstMileProcessingDTO.AddOrUpdateDTO::getFirstMileDeliveryDetailId).distinct().collect(Collectors.toList());
-        List<FirstMileProcessingEntity> oldList = this.listByFirstMileDeliveryDetailIdList(detailIdList);
+        List<String> detailIdList = list.stream().map(FirstMileProcessingDTO.AddOrUpdateDTO::getRequisitionApplicationDetailId).distinct().collect(Collectors.toList());
+        List<FirstMileProcessingEntity> oldList = this.listByApplicationDetailIdList(detailIdList);
         List<FirstMileProcessingEntity> newList = new ArrayList<>();
         for (FirstMileProcessingDTO.AddOrUpdateDTO addOrUpdateDTO :list) {
             FirstMileProcessingEntity entity = new FirstMileProcessingEntity();
             BeanMapperUtils.copy(addOrUpdateDTO,entity);
             //旧数据
             FirstMileProcessingEntity old = oldList.stream().filter(obj ->
-                    CharSequenceUtil.equals(obj.getFirstMileDeliveryDetailId(), addOrUpdateDTO.getFirstMileDeliveryDetailId())
+                    CharSequenceUtil.equals(obj.getRequisitionApplicationId(), addOrUpdateDTO.getRequisitionApplicationId())
+                    && CharSequenceUtil.equals(obj.getRequisitionApplicationDetailId(), addOrUpdateDTO.getRequisitionApplicationDetailId())
+                    && CharSequenceUtil.equals(obj.getFirstMileDeliveryDetailId(), addOrUpdateDTO.getFirstMileDeliveryDetailId())
                     && CharSequenceUtil.equals(obj.getSkuId(),addOrUpdateDTO.getSkuId())).findFirst().orElse(null);
             if (ObjectUtil.isNotEmpty(old)) {
                 entity.setId(old.getId());
@@ -244,14 +246,14 @@ public class FirstMileProcessingServiceImpl extends SuperServiceImpl<FirstMilePr
      * 根据发货通知单明细id查询
      * @author will
      * @date 2024/12/20 10:17
-     * @param firstMileDeliveryDetailIdList
+     * @param applicationDetailIdList
      * @return List<FirstMileProcessingEntity>
      */
-    private List<FirstMileProcessingEntity> listByFirstMileDeliveryDetailIdList (List<String> firstMileDeliveryDetailIdList) {
-        if (CollUtil.isEmpty(firstMileDeliveryDetailIdList)) {
+    private List<FirstMileProcessingEntity> listByApplicationDetailIdList (List<String> applicationDetailIdList) {
+        if (CollUtil.isEmpty(applicationDetailIdList)) {
             return Collections.EMPTY_LIST;
         }
-        return lambdaQuery().in(FirstMileProcessingEntity::getFirstMileDeliveryDetailId,firstMileDeliveryDetailIdList).list();
+        return lambdaQuery().in(FirstMileProcessingEntity::getRequisitionApplicationDetailId,applicationDetailIdList).list();
     }
 
     /**
