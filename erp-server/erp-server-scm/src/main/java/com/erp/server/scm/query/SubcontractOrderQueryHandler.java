@@ -69,7 +69,7 @@ public class SubcontractOrderQueryHandler extends AbstractQueryHandler {
                 super.buildDefaultDTO("so.approve_status", approveStatusList);
             }
             if (CollectionUtils.isNotEmpty(arrivalStatusList)) {
-                super.buildDefaultDTO("so.arrival_status", arrivalStatusList);
+                super.buildDefaultDTO("sod.arrival_status", arrivalStatusList);
             }
             return super.getSplicingSQL();
         }
