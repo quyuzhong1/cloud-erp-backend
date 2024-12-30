@@ -14,6 +14,7 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.tms.dto.TransferLogisticsSupplierDTO;
 import com.erp.model.tms.entity.TransferLogisticsSupplierEntity;
+import com.erp.server.tms.query.TransferLogisticsSupplierQueryHandler;
 import com.erp.server.tms.service.TransferLogisticsSupplierService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
@@ -71,7 +72,7 @@ public class TransferLogisticsSupplierController extends BaseController {
             menuCode = "tms:transferLogisticsSupplier:paging",
             tableAlias = "ls"
     )
-    @WebAdvanceQuery
+    @WebAdvanceQuery(handler = TransferLogisticsSupplierQueryHandler.class)
     public ApiResult<PagingVO<TransferLogisticsSupplierDTO.PagingViewDTO>> paging(@RequestBody @Validated PagingDTO<TransferLogisticsSupplierDTO.PagingParamDTO> dto) {
         PagingVO<TransferLogisticsSupplierDTO.PagingViewDTO> pagingVO = transferLogisticsSupplierService.paging(dto);
         return success(pagingVO);
