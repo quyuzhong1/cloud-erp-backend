@@ -43,7 +43,7 @@
         sbp.create_time,
         sbp.update_user_id,
         sbp.update_user_name,
-        sbp.update_time,
+        sbp.update_time as updateTime,
         sbp.version,
         sbp.is_deleted,
         sbp.so_id as soId,

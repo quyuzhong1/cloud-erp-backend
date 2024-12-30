@@ -56,23 +56,23 @@ public class SoB2cProcessingDTO implements Serializable {
     @NoArgsConstructor
     public static class ListDTO {
         /**
-         * 主键id
+         * 主键id【可排序】
          */
         private String id;
         /**
-         * b2c销售订单编号
+         * b2c销售订单编号【可排序】
          */
         private String b2cSoCode;
         /**
-         * 发货单id
+         * 发货单id【可排序】
          */
         private String deliveryId;
         /**
-         * 发货单号
+         * 发货单号【可排序】
          */
         private String deliveryCode;
         /**
-         * 发货单状态
+         * 发货单状态【可排序】
          */
         private String deliveryStatus;
         /**
@@ -80,59 +80,59 @@ public class SoB2cProcessingDTO implements Serializable {
          */
         private String deliveryStatusName;
         /**
-         * 发货数量
+         * 发货数量【可排序】
          */
         private String deliveryQty;
         /**
-         * SKU
+         * SKU【可排序】
          */
         private String skuId;
         /**
-         * SKU编码
+         * SKU编码【可排序】
          */
         private String skuNo;
         /**
-         * 产品名称
+         * 产品名称【可排序】
          */
         private String productName;
         /**
-         * 仓库id
+         * 仓库id【可排序】
          */
         private String warehouseId;
         /**
-         * 仓库名称
+         * 仓库名称【可排序】
          */
         private String warehouseName;
         /**
-         * 虚拟仓id
+         * 虚拟仓id【可排序】
          */
         private String virtualWarehouseId;
         /**
-         * 虚拟仓名称
+         * 虚拟仓名称【可排序】
          */
         private String virtualWarehouseName;
         /**
-         * 冻结时间
+         * 冻结时间【可排序】
          */
         private LocalDateTime frozenTime;
         /**
-         * 剩余冻结数量
+         * 剩余冻结数量【可排序】
          */
         private Integer frozenQty;
         /**
-         * 冻结时长（天）
+         * 冻结时长（天）【可排序】
          */
         private Integer frozenDays;
         /**
-         * 出库单据id
+         * 出库单据id【可排序】
          */
         private String outstockOrderId;
         /**
-         * 出库单据编码
+         * 出库单据编码【可排序】
          */
         private String outstockOrderCode;
         /**
-         * 出库单据类型（同sourceType）
+         * 出库单据类型（同sourceType）【可排序】
          */
         private String outstockOrderType;
         /**
@@ -140,7 +140,7 @@ public class SoB2cProcessingDTO implements Serializable {
          */
         private String outstockOrderTypeName;
         /**
-         * 出库单据状态
+         * 出库单据状态【可排序】
          */
         private String outstockOrderStatus;
         /**
@@ -148,13 +148,18 @@ public class SoB2cProcessingDTO implements Serializable {
          */
         private String outstockOrderStatusName;
         /**
-         * 出库单据时间
+         * 出库单据时间【可排序】
          */
         private LocalDateTime outstockOrderTime;
         /**
-         * 出库数量
+         * 出库数量【可排序】
          */
         private String outstockQty;
+
+        /**
+         * 更新时间【可排序】
+         */
+        private LocalDateTime updateTime;
 
         /**
          * 标签，outstock出库,frozen发货冻结,unShipped七日未发
