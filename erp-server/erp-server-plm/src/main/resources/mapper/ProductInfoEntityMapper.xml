@@ -17,7 +17,7 @@
         p.type,
         p.approval_status,
         pi.charge_name AS projectChargeName,
-        p.create_time,
+        p.create_time AS createTime,
         p.progress_status,
         p.image_url,
         p.property,
@@ -40,7 +40,7 @@
         WHERE pt.is_deleted = FALSE
         GROUP BY pt.product_id) pp on p.id = pp.product_id
         LEFT JOIN project_phase pph on pp.product_id = pph.product_id and pp.seq = pph.seq AND pph.is_deleted = FALSE
-        WHERE p.is_finished_product_dev = 1 AND p.is_deleted = FALSE
+        WHERE ${params.sqlMap.default} and p.is_finished_product_dev = 1 AND p.is_deleted = FALSE
         AND P.id NOT IN (SELECT product_id FROM product_archive WHERE is_deleted=FALSE)
         <if test="categoryIdList!=null and categoryIdList.size >0 ">
             AND p.category_id IN

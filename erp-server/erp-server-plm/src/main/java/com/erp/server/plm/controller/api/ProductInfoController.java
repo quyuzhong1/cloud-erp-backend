@@ -63,6 +63,7 @@ public class ProductInfoController extends BaseController {
             menuCode = "plm:product:paging",
             tableAlias = "pt"
     )
+    @WebAdvanceQuery
     public ApiResult<PagingVO<ProductShowDTO>> paging(@RequestBody @Validated PagingDTO<ProductSearchDTO.PagingParamDTO> dto) {
         PagingVO<ProductShowDTO> pagingVO = productInfoService.paging(dto);
         return success(pagingVO);
@@ -159,6 +160,7 @@ public class ProductInfoController extends BaseController {
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "产品开发管理我的项目导出")
     @PostMapping("/myProjectExport")
+    @WebAdvanceQuery
     public ApiResult<Object> myProjectExport(@RequestBody @Validated ProductSearchDTO.ExportDTO dto) {
         Boolean result= productInfoService.myProjectExport(dto);
         return result ? success() : failure();
@@ -172,6 +174,7 @@ public class ProductInfoController extends BaseController {
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "产品开发管理收藏项目导出")
     @PostMapping("/collectExport")
+    @WebAdvanceQuery
     public ApiResult<Object> collectExport(@RequestBody @Validated ProductSearchDTO.ExportDTO dto) {
         Boolean result= productInfoService.collectExport(dto);
         return result ? success() : failure();
