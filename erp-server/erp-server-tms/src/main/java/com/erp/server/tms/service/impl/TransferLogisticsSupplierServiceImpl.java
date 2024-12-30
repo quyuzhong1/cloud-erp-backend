@@ -134,6 +134,7 @@ public class TransferLogisticsSupplierServiceImpl extends SuperServiceImpl<Trans
         all.setTabFlagName("全部");
         all.setTabFlag("all");
         all.setCount(list.size());
+        resultList.add(all);
         for (DictBasicDTO.ViewDTO item : typeList) {
             TransferLogisticsSupplierDTO.TabListDTO tab = new TransferLogisticsSupplierDTO.TabListDTO();
             String type = item.getCode();
