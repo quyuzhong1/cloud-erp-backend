@@ -230,6 +230,7 @@
                sui.update_time as createTime
         from sys_user_info sui
         inner join sys_department_user sdu on sdu.user_id = sui.uid
+        inner join sys_role_user sru on sui.uid = sru.role_id
         <where>
             ${params.sqlMap.default} and sui.delete_state = 1 and sui.user_type = 'erp'
             <if test="params.userName != null and params.userName != ''">
