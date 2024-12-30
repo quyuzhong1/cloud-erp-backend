@@ -256,7 +256,7 @@ public class SoB2bProcessingServiceImpl extends SuperServiceImpl<SoB2bProcessing
             listDTO.setApproveStatusName(ApproveStatusEnum.getName(listDTO.getDeliveryNoticeApproveStatus()));
             //销售订单审核状态名称
             listDTO.setSoApproveStatusName(ApproveStatusEnum.getName(listDTO.getSoApproveStatus()));
-
+            listDTO.setOutstockOrderTypeName(SourceTypeEnum.getName(listDTO.getOutstockOrderType()));
             //冻结时长
             listDTO.setFrozenDays(Math.toIntExact(LocalDate.now().toEpochDay() - listDTO.getFrozenTime().toLocalDate().toEpochDay()));
 
@@ -278,6 +278,12 @@ public class SoB2bProcessingServiceImpl extends SuperServiceImpl<SoB2bProcessing
                 listDTO.setFrozenDays(Math.toIntExact(LocalDate.now().toEpochDay() - listDTO.getFrozenTime().toLocalDate().toEpochDay()) + 1);
             }
             listDTO.setLabelList(labelList);
+            //出库状态
+            if (CharSequenceUtil.equals(listDTO.getOutstockOrderType(),SourceTypeEnum.TRANSFER_INFO.getCode())
+                    || CharSequenceUtil.equals(listDTO.getOutstockOrderType(),SourceTypeEnum.MACHINE_INFO.getCode())
+                    || CharSequenceUtil.equals(listDTO.getOutstockOrderType(),SourceTypeEnum.SO_OUTSTOCK.getCode())) {
+                listDTO.setOutstockOrderStatusName(ApproveStatusEnum.getName(listDTO.getOutstockOrderStatus()));
+            }
         }
     }
 }

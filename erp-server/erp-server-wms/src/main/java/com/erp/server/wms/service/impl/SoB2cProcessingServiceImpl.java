@@ -8,6 +8,7 @@ import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
@@ -262,6 +263,7 @@ public class SoB2cProcessingServiceImpl extends SuperServiceImpl<SoB2cProcessing
         }
         for (SoB2cProcessingDTO.ListDTO listDTO : list) {
             listDTO.setDeliveryStatusName(SoB2cDeliveryStatusEnum.getName(listDTO.getDeliveryStatus()));
+            listDTO.setOutstockOrderTypeName(SourceTypeEnum.getName(listDTO.getOutstockOrderType()));
             //冻结时长
             listDTO.setFrozenDays(Math.toIntExact(LocalDate.now().toEpochDay() - listDTO.getFrozenTime().toLocalDate().toEpochDay()));
             //标签
@@ -283,6 +285,13 @@ public class SoB2cProcessingServiceImpl extends SuperServiceImpl<SoB2cProcessing
                 listDTO.setFrozenDays(Math.toIntExact(LocalDate.now().toEpochDay() - listDTO.getFrozenTime().toLocalDate().toEpochDay()) + 1);
             }
             listDTO.setLabelList(labelList);
+            //出库状态
+            if (CharSequenceUtil.equals(listDTO.getOutstockOrderType(),SourceTypeEnum.TRANSFER_INFO.getCode())
+                    || CharSequenceUtil.equals(listDTO.getOutstockOrderType(),SourceTypeEnum.SO_OUTSTOCK.getCode())) {
+                listDTO.setOutstockOrderStatusName(ApproveStatusEnum.getName(listDTO.getOutstockOrderStatus()));
+            }  else if (CharSequenceUtil.equals(listDTO.getOutstockOrderType(),SourceTypeEnum.SO_B2C_DELIVERY.getCode())) {
+                listDTO.setOutstockOrderStatusName(SoB2cDeliveryStatusEnum.getName(listDTO.getOutstockOrderStatus()));
+            }
         }
     }
 }
