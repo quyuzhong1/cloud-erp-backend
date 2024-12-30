@@ -1016,6 +1016,9 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
         if (CollectionUtils.isNotEmpty(replenishmentResult.getLocalUsableDetail())) {
             replenishmentInventoryDetailService.saveInventoryDetail(replenishmentResult.getLocalUsableDetail(), replenishmentResult.getReplenishmentDetail().getDetailId(), replenishmentResult.getReplenishmentDetail().getCalcVersion());
         }
+        if (CollectionUtils.isNotEmpty(replenishmentResult.getLocalWaitQcDetail())) {
+            replenishmentInventoryDetailService.saveInventoryDetail(replenishmentResult.getLocalWaitQcDetail(), replenishmentResult.getReplenishmentDetail().getDetailId(), replenishmentResult.getReplenishmentDetail().getCalcVersion());
+        }
         if (CollectionUtils.isNotEmpty(replenishmentResult.getLocalInTransitDetails())) {
             List<LocalInTransitDetailEntity> localInTransitDetails = replenishmentResult.getLocalInTransitDetails().stream()
                     .map(v -> ReplenishmentResultDTO.LocalInTransitDetailDTO.buildLocalInTransitDetail(v, replenishmentResult.getReplenishmentDetail().getDetailId(), replenishmentResult.getReplenishmentDetail().getCalcVersion()))
