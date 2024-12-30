@@ -143,7 +143,6 @@ public class InventorySkuCostDetailDTO implements Serializable {
          * skuNo
          */
         @NotBlank(message = "skuNo不能为空")
-        @Size(max = 19,message = "skuNo最大长度不能超过19位")
         private String skuNo;
 
         /**
