@@ -140,6 +140,15 @@ public class ProcessDefinitionDTO {
          * 是否已发布
          */
         private Boolean isDeploy;
+        /**
+         * 页面高级查询
+         */
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
+
+        /**
+         * sqlMap 默认key default
+         */
+        private Map<String, String> sqlMap;
 
     }
 
