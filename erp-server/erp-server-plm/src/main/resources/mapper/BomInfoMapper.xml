@@ -8,6 +8,7 @@
         <result column="name" property="name"></result>
         <result column="updateUserName" property="updateUserName"></result>
         <result column="updateTime" property="updateTime"></result>
+        <result column="createTime" property="createTime"></result>
         <collection property="childList" ofType="com.erp.model.plm.dto.BomCombinationDTO$ChildDTO">
             <id column="detailId" property="id"></id>
             <result column="childSkuId" property="childSkuId"></result>
