@@ -1206,7 +1206,7 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
                 .eq(com.erp.model.oms.entity.DictBasicEntity::getIsDeleted, Boolean.FALSE)
                 .list();
         return salesPlatformList.stream()
-                .collect(Collectors.toMap(com.erp.model.oms.entity.DictBasicEntity::getValue, DictBasicEntity::getName, (o1, o2) -> o1));
+                .collect(Collectors.toMap(com.erp.model.oms.entity.DictBasicEntity::getName, DictBasicEntity::getValue, (o1, o2) -> o1));
     }
 
     @Override
