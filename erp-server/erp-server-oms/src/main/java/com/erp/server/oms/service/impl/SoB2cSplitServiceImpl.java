@@ -219,10 +219,11 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
         queryB2CDTO.setDetailDTOS(detailDTOS);
         queryB2CDTO.setBillDate(billDate);
         List<InventorySkuCostDTO.SkuCostDTO> skuCostDTOS = logisticsFeign.listSkuCostByDetail(queryB2CDTO);
-        if (CollUtil.isEmpty(skuCostDTOS)){
-            return;
-        }
         for (SkuVO skuVO : skuVOList){
+            skuVO.setProductCost(skuVO.getNotTaxCostPrice());
+            if (CollUtil.isEmpty(skuCostDTOS)){
+                continue;
+            }
             if (CharSequenceUtil.isBlank(warehouseId) || Objects.isNull(billDate)){
                 continue;
             }
@@ -251,7 +252,11 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
 
     @Override
     public void resetSkuVO(SoB2cEntity soB2cEntity, SoB2cDetailEntity detailEntity, SkuVO skuVO) {
-        if (Objects.isNull(skuVO) || Objects.isNull(soB2cEntity) || Objects.isNull(detailEntity)){
+        if(Objects.isNull(skuVO)){
+            return;
+        }
+        skuVO.setProductCost(skuVO.getNotTaxCostPrice());
+        if (Objects.isNull(soB2cEntity) || Objects.isNull(detailEntity)){
             return;
         }
         String orgId = soB2cEntity.getOrgId();
