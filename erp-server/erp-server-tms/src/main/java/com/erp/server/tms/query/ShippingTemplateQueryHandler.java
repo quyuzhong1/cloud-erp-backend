@@ -36,10 +36,10 @@ public class ShippingTemplateQueryHandler extends AbstractQueryHandler {
             return this.getQueryAllSql();
         }
         if("true".equals(value.toString())){
-            this.buildDefaultDTO("st.disabled",true);
+            super.buildSplicingSQLDTO("st.disabled", QueryConditionEnum.EQ,true, QueryDataTypeEnum.BOOLEAN);
         }
         if("false".equals(value.toString())){
-            this.buildDefaultDTO("st.disabled",false);
+            super.buildSplicingSQLDTO("st.disabled", QueryConditionEnum.EQ,false, QueryDataTypeEnum.BOOLEAN);
         }
         return super.getSplicingSQL();
     }
