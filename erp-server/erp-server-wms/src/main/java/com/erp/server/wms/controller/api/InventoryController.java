@@ -11,6 +11,7 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.wms.dto.inventory.InventoryDTO;
 import com.erp.model.wms.dto.inventory.InventoryReportDTO;
+import com.erp.server.wms.query.WmsInventoryQueryHandler;
 import com.erp.server.wms.service.InventoryService;
 import com.erp.server.wms.service.TransactionFlowService;
 import org.springframework.validation.annotation.Validated;
@@ -45,7 +46,7 @@ public class InventoryController extends BaseController {
      * @return
      */
     @PostMapping("/paging")
-    @WebAdvanceQuery
+    @WebAdvanceQuery(handler = WmsInventoryQueryHandler.class)
     public ApiResult<PagingVO<InventoryDTO.PagingViewDTO>> queryByPage(@RequestBody @Validated PagingDTO<InventoryDTO.SearchParamDTO> dto) {
         return success(inventoryService.paging(dto));
     }
