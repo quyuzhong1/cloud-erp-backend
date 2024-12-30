@@ -109,6 +109,7 @@
             ra.id as requisitionApplicationId,
             ra.code as requisitionApplicationCode,
             ra.status as requisitionApplicationStatus,
+            rad.id as requisitionApplicationDetailId,
             fmd.id as firstMileDeliveryId,
             fmd.code as firstMileDeliveryCode,
             fmd.approve_status as deliveryApproveStatus,

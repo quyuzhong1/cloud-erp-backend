@@ -31,6 +31,11 @@ public class FirstMileProcessingEntity extends BaseEntity<FirstMileProcessingEnt
     @TableField("requisition_application_id")
     private String requisitionApplicationId;
     /**
+     * 要货申请单明细id
+     */
+    @TableField("requisition_application_detail_id")
+    private String requisitionApplicationDetailId;
+    /**
     * 要货申请编码
     */
     @TableField("requisition_application_code")

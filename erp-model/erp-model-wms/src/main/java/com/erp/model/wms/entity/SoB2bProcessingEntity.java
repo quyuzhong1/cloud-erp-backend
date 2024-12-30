@@ -31,6 +31,11 @@ public class SoB2bProcessingEntity extends BaseEntity<SoB2bProcessingEntity> {
     @TableField("so_id")
     private String soId;
     /**
+     * 销售订单明细id
+     */
+    @TableField("so_detail_id")
+    private String soDetailId;
+    /**
     * 销售订单编码
     */
     @TableField("so_code")

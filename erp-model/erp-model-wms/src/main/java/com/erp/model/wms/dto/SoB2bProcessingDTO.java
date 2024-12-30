@@ -327,6 +327,11 @@ public class SoB2bProcessingDTO implements Serializable {
         private String soId;
 
         /**
+         * 销售订单明细id
+         */
+        private String soDetailId;
+
+        /**
         * 销售订单编码
         */
         @NotBlank(message = "销售订单编码不能为空")
