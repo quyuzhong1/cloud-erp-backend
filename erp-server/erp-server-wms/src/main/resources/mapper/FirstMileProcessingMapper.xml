@@ -83,13 +83,13 @@
         where ${params.sqlMap.default}
         and fmp.is_deleted = false
         <if test="params.label != null and params.label == 'outstock'">
-            and fmp.outstock_order_id = ''
+            and fmp.outstock_order_id != ''
         </if>
         <if test="params.label != null and params.label == 'frozen'">
             and fmp.delivery_qty != fmp.frozen_qty and fmp.first_mile_delivery_id != ''
         </if>
         <if test="params.label != null and params.label == 'unShipped'">
-            and fmp.outstock_order_id = ''
+            and fmp.outstock_order_id = '' and fmp.frozen_time is not null and EXTRACT(DAY FROM (now() - fmp.frozen_time)) >= 7
         </if>
         <if test="params.label != null and params.label == 'requisitionFrozen'">
             and fmp.first_mile_delivery_id = '' and fmp.requisition_application_status in ('handleIng','handle')
