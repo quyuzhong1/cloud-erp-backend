@@ -836,6 +836,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         }
         List<InventorySkuCostDTO.SkuCostDTO> skuCostDTOS = logisticsFeign.listSkuCostByDetail(queryB2CDTO);
         for(SkuVO skuVO : skuList){
+            skuVO.setProductCost(skuVO.getNotTaxCostPrice());
             SkuMappingDTO.ListSkuParamDTO paramDTO = dataList.stream().filter(e -> CharSequenceUtil.isNotBlank(e.getSkuNo()) && e.getSkuNo().equals(skuVO.getSkuNo())).findFirst().orElse(null);
             if (Objects.isNull(paramDTO) || CharSequenceUtil.isBlank(paramDTO.getWarehouseId()) || CharSequenceUtil.isBlank(paramDTO.getShopId()) || Objects.isNull(paramDTO.getBillDate())){
                 continue;

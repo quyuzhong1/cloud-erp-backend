@@ -311,6 +311,11 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
             List<SkuVO> skuVOList = plmTaskFeign.listSkuCostByIds(skuIds);
             List<InventorySkuCostDTO.SkuCostDTO> skuCostDTOS = logisticsFeign.listSkuCostByDetailList(queryDetailDTOList);
             for (SoB2cDetailEntity detailEntity : detailList){
+                SkuVO skuVO = skuVOList.stream().filter(e -> Objects.equals(e.getSkuId(), detailEntity.getSkuId())).findFirst().orElse(null);
+                if (Objects.isNull(skuVO)){
+                    continue;
+                }
+                detailEntity.setProductCost(skuVO.getNotTaxCostPrice());
                 String warehouseId = detailEntity.getWarehouseId();
                 String skuId = detailEntity.getSkuId();
                 InventorySkuCostDTO.SkuCostDTO skuCostDTO = skuCostDTOS.stream().filter(e -> CharSequenceUtil.isNotBlank(warehouseId) && CharSequenceUtil.isNotBlank(skuId) && e.getSkuId().equals(skuId) && Objects.equals(e.getWarehouseId(), warehouseId)).findFirst().orElse(null);
@@ -321,10 +326,6 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
                 BigDecimal firstMileShippingCost = Objects.nonNull(skuCostDTO.getFirstMileShippingCost()) ? skuCostDTO.getFirstMileShippingCost() : BigDecimal.ZERO;
                 BigDecimal clearanceCustomsTax = Objects.nonNull(skuCostDTO.getClearanceCustomsTax()) ? skuCostDTO.getClearanceCustomsTax() : BigDecimal.ZERO;
                 String currency = skuCostDTO.getCurrency();
-                SkuVO skuVO = skuVOList.stream().filter(e -> Objects.equals(e.getSkuId(), detailEntity.getSkuId())).findFirst().orElse(null);
-                if (Objects.isNull(skuVO)){
-                    continue;
-                }
                 BigDecimal taxRate = Objects.nonNull(skuVO.getTaxRate()) ? skuVO.getTaxRate() : BigDecimal.ZERO;
                 BigDecimal percentRate = MathUtil.divide(taxRate, MathUtil.BigDecimal_100);
                 LocalDate billDate = entity.getBillDate();
@@ -1055,6 +1056,7 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
         }
         List<InventorySkuCostDTO.SkuCostDTO> skuCostDTOS = logisticsFeign.listSkuCostByDetail(queryB2CDTO);
         for(SkuVO skuVO : skuList){
+            skuVO.setProductCost(skuVO.getNotTaxCostPrice());
             SoB2cDetailEntity paramDTO = list.stream().filter(e -> CharSequenceUtil.isNotBlank(e.getSkuId()) && e.getSkuId().equals(skuVO.getSkuId())).findFirst().orElse(null);
             if (Objects.isNull(paramDTO) || CharSequenceUtil.isBlank(paramDTO.getWarehouseId()) || CharSequenceUtil.isBlank(shopId) || Objects.isNull(billDate)){
                 continue;
