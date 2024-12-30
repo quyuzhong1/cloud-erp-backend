@@ -636,10 +636,10 @@ public class DmpOutputTaskRecordServiceImpl extends SuperServiceImpl<DmpOutputTa
 				log.error("查询同步调用erp服务报错" , e);
 			}
 		}else {
+			List<DmpOutputTaskRecordEntity> allUpdateList = new ArrayList<>();
 			Map<String, Map<String, Object>> invoke = FeignQuery.invoke(Map.class , "com.erp.server."+ system +".service.impl.SyncTaskServiceImpl", "newFindDataSendSyncTask", Arrays.asList(syncParamDTO));
 			if(invoke != null) {
 				Map<String, List<DmpOutputTaskRecordEntity>> dataIdOutputMaps = list.stream().collect(Collectors.groupingBy(DmpOutputTaskRecordEntity::getDataId));
-				List<DmpOutputTaskRecordEntity> allUpdateList = new ArrayList<>();
 				for(Map.Entry<String, Map<String, Object>> i : invoke.entrySet()) {
 					List<DmpOutputTaskRecordEntity> updateList = dataIdOutputMaps.get(i.getKey());
 					if(CollUtil.isNotEmpty(updateList)) {
@@ -652,8 +652,10 @@ public class DmpOutputTaskRecordServiceImpl extends SuperServiceImpl<DmpOutputTa
 						allUpdateList.addAll(updateList);
 					}
 				}
-				return allUpdateList;
 			}
+			List<String> updateIds = allUpdateList.stream().map(DmpOutputTaskRecordEntity::getId).collect(Collectors.toList());
+			allUpdateList.addAll(list.stream().filter(l -> !updateIds.contains(l.getId())).collect(Collectors.toList()));
+			return allUpdateList;
 		}
 		return new ArrayList<>();
     }

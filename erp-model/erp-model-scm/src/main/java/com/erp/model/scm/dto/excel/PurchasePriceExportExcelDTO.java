@@ -145,4 +145,5 @@ public class PurchasePriceExportExcelDTO implements Serializable {
     private LocalDateTime createTime;
 
 
+    private String voucherNo;
 }

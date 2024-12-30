@@ -2,6 +2,7 @@ package com.erp.model.mrp.vo;
 
 import cn.hutool.json.JSONArray;
 import com.common.business.annotation.Dict;
+import com.erp.model.mrp.enums.CfgRuleSalesDenoisingDenoisingTypeEnum;
 import com.erp.model.mrp.enums.ReplenishmentTypeEnum;
 import lombok.*;
 
@@ -150,6 +151,12 @@ public class ReplenishmentSuggestionVO {
          */
         private String avgSalesQtyJson;
         private List<SalesVO> avgSalesQty;
+
+        /**
+         * 真实销量
+         */
+        private String realSalesQtyJson;
+        private List<SalesVO> realSalesQty;
 
         /**
          * 预估销量
@@ -642,5 +649,36 @@ public class ReplenishmentSuggestionVO {
          * 订单类型，all:全部，fba:FBA,fbm:FBM
          */
         private JSONArray orderType;
+    }
+
+    @Getter
+    @Setter
+    public static class SalesInfoVO {
+
+        /**
+         * 日期
+         */
+        private LocalDate date;
+
+        /**
+         * 历史销量
+         */
+        private Integer hisSalesQty;
+
+        /**
+         * 去噪类型，percentage百分比去噪：fixedValue=固定值去噪，completely=完全去噪
+         */
+        @Dict(enumClass = CfgRuleSalesDenoisingDenoisingTypeEnum.class)
+        private String denoisingType;
+
+        /**
+         * 去噪参数
+         */
+        private String effectiveValue;
+
+        /**
+         * 去噪销量
+         */
+        private BigDecimal denoisingQty;
     }
 }

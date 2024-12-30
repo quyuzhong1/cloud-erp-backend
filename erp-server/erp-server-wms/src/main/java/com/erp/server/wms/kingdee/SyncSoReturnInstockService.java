@@ -47,4 +47,11 @@ public interface SyncSoReturnInstockService {
                        List<SoReturnEntity> soReturnEntityList,
                        List<SoReturnReceiveEntity> soReturnReceiveEntityList,
                        List<SoReturnEntity> receiveReturnList);
+
+    /**
+     * 同步数帝云
+     */
+    void syncDataToSdy(SoReturnInstockEntity entity,
+                       List<SoReturnInstockDetailEntity> detailEntities,
+                       String operate);
 }

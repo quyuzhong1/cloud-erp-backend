@@ -4,7 +4,6 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.StopWatch;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.common.business.enums.InventoryClosedRecordEnum;
@@ -12,10 +11,7 @@ import com.erp.model.wms.entity.InventoryClosedRecordEntity;
 import com.erp.model.wms.entity.InventoryEntity;
 import com.erp.model.wms.entity.InventoryFlowOverrideRecordEntity;
 import com.erp.model.wms.enums.InventoryFlowOverrideRecordTypeEnum;
-import com.erp.server.wms.service.InventoryClosedRecordService;
-import com.erp.server.wms.service.InventoryFlowOverrideRecordService;
-import com.erp.server.wms.service.InventoryService;
-import com.erp.server.wms.service.TransactionFlowService;
+import com.erp.server.wms.service.*;
 import com.xxl.job.core.biz.model.ReturnT;
 import com.xxl.job.core.context.XxlJobHelper;
 import com.xxl.job.core.handler.annotation.XxlJob;
@@ -49,6 +45,8 @@ public class InventoryFlowRecalculateJob {
     private InventoryFlowOverrideRecordService inventoryFlowOverrideRecordService;
     @Resource
     private InventoryClosedRecordService inventoryClosedRecordService;
+    @Resource
+    private InventoryHisService inventoryHisService;
 
     @XxlJob("inventoryFlowOverride")
     public ReturnT inventoryFlowOverride() {
@@ -112,11 +110,13 @@ public class InventoryFlowRecalculateJob {
             LocalDate startDate = ObjectUtil.isNotEmpty(startTime) ? startTime.toLocalDate() : orgStartTimeMap.getValue();
             // 1. 查询当前组织下所有存在流水的库存id
             List<String> inventoryIdList = transactionFlowService.listByOrgId(startDate, orgStartTimeMap.getKey(), inventoryId, fromTable);
-            if(CollUtil.isEmpty(inventoryIdList)) {
-                log.warn("未找到需要重算的库存流水，组织:{}, 库存id:{}, 开始时间:{}", orgName, inventoryId, startDate);
-                continue;
-            }
             try {
+                if(CollUtil.isEmpty(inventoryIdList)) {
+                    log.warn("未找到需要重算的库存流水，组织:{}, 库存id:{}, 开始时间:{}", orgName, inventoryId, startDate);
+                    // 流水不存在则删除历史库存
+                    inventoryHisService.removeByInventoryIds(Collections.singletonList(inventoryId), startDate);
+                    continue;
+                }
                 // 多线程更新库存流水
                 CompletableFuture<Void> allOf = CompletableFuture.allOf(inventoryIdList.stream()
                         .map(invId -> CompletableFuture.runAsync(() ->

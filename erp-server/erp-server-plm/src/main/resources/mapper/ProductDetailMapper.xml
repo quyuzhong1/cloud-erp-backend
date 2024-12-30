@@ -1763,6 +1763,12 @@
             <if test="params.saleMethod !=null and params.saleMethod != ''">
                 AND string_to_array(pi.sale_method,',') &amp;&amp; string_to_array(#{params.saleMethod},',')
             </if>
+            <if test="params.statusList != null and params.statusList.size > 0 ">
+                AND pd.status in
+                <foreach collection="params.statusList" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
             order by
                 case when pd.sku_no ILIKE concat(#{params.remoteSearchSku}::text,'%') THEN 1
                      when pd.sku_no ILIKE concat('%',#{params.remoteSearchSku}::text) THEN 2

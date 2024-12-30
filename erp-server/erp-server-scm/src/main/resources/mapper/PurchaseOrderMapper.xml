@@ -186,7 +186,8 @@
             pod.end_receive_time as endReceiveTime,
             so.code as subContractCode,
             po.source_id as sourceId,
-            po.source_type as sourceType
+            po.source_type as sourceType,
+            pod.warehouse_location as warehouseLocation
         from purchase_order po
         inner join purchase_order_detail pod on po.id = pod.purchase_order_id and pod.is_deleted = false
         left join purchase_order_supplier pos on po.id = pos.purchase_order_id and pos.is_deleted = false
@@ -259,7 +260,8 @@
             pod.end_receive_time as endReceiveTime,
             so.code as subContractCode,
             po.source_id as sourceId,
-            po.source_type as sourceType
+            po.source_type as sourceType,
+            pod.warehouse_location as warehouseLocation
         from purchase_order po
         inner join purchase_order_detail pod on po.id = pod.purchase_order_id and pod.is_deleted = false
         left join purchase_order_supplier pos on po.id = pos.purchase_order_id and pos.is_deleted = false
@@ -433,7 +435,8 @@
                 pod.plan_delivery_date as planDeliveryDate,
                 po.delivery_warehouse_name as deliveryWarehouseName,
                 po.purchase_user_name as purchaseUserName,
-                so.code as subContractCode
+                so.code as subContractCode,
+                pod.purchase_qty as purchaseQty
             from purchase_order po
             inner join purchase_order_detail pod on po.id = pod.purchase_order_id and pod.is_deleted = false
             inner join subcontract_order_detail sod on pod.source_detail_id = sod.id and sod.is_deleted = false
@@ -776,6 +779,9 @@
             po.is_deleted = false
             <if test="params.searchKeyword != null and params.searchKeyword != ''">
                 and (po.id = #{params.searchKeyword} or po.code  ilike concat('%',#{params.searchKeyword}::text,'%'))
+            </if>
+            <if test="params.approveStatus != null and params.approveStatus != ''">
+                and po.approve_status = #{params.approveStatus}
             </if>
         </where>
     </select>

@@ -155,7 +155,7 @@ public interface WarehouseLocationService extends SuperService<WarehouseLocation
      */
     PagingVO<WarehouseAreaDTO.PagingView> areaPaging(PagingDTO<WarehouseAreaDTO.PagingParam> dto);
 
-    void addArea(WarehouseAreaDTO.Add dto);
+    String addArea(WarehouseAreaDTO.Add dto);
 
     void updateArea(WarehouseAreaDTO.Update dto);
 

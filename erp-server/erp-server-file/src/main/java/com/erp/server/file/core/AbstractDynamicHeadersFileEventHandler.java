@@ -1,5 +1,6 @@
 package com.erp.server.file.core;
 
+import cn.hutool.core.collection.CollUtil;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.common.core.excel.ExcelPrintUtils;
@@ -28,6 +29,9 @@ public abstract class AbstractDynamicHeadersFileEventHandler<P> implements FileE
     public void handle(FileTask fileTask) {
         DynamicExcelDTO excelDTO = getData(fileTask);
         LinkedHashMap<String, String> headers = excelDTO.getHeaders();
+        if (CollUtil.isEmpty(headers)) {
+            throw new ServiceException("导出数据不能为空");
+        }
         List<List<String>> header = convertHeadList(headers.values());
         List<List<Object>> data = convertDataList(excelDTO.getData());
         fileTask.setCount(excelDTO.getData().size());

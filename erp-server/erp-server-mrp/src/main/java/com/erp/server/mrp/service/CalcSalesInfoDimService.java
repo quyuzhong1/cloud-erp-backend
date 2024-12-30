@@ -109,4 +109,16 @@ public interface CalcSalesInfoDimService extends SuperService<CalcSalesInfoDimEn
      * @param cfgRuleCalcId 参数
      */
     void downloadTemplateHistorySales(String cfgRuleCalcId, HttpServletResponse response);
+
+    /**
+     * 导出模具列表
+     * @param dto 参数
+     */
+    void exportSalesInfoList(CalcSalesInfoDimDTO.ParamDTO dto);
+
+    /**
+     * 导出试算列表
+     * @param dto 参数
+     */
+    PagingVO<CalcSalesInfoDimDTO.ExportSalesInfoListDTO> exportMrpSalesCalcList(PagingDTO<CalcSalesInfoDimDTO.ParamDTO> dto);
 }
