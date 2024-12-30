@@ -3056,17 +3056,6 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
         }
         List<String> skuIdList = pushDownPurchaseViews.stream().map(PurchasePriceDTO.PushDownPurchaseView::getSkuId).collect(Collectors.toList());
         List<ProductDetailEntity> detailEntityList = plmTaskFeign.getByIdList(skuIdList);
-        //价目查询
-        List<PurchasePriceDTO.PriceDTO> priceList = new ArrayList<>();
-        pushDownPurchaseViews.forEach(e -> {
-            priceList.add(PurchasePriceDTO.PriceDTO.builder()
-                    .purchaseOrgId(e.getPurchaseOrgId())
-                    .qty(e.getReplenishQty())
-                    .skuId(e.getSkuId())
-                    .supplierId(e.getSupplierId())
-                    .build());
-        });
-        List<PurchasePriceDTO.PriceDTO> viewDTOList = scmTaskFeign.batchGetPurchasePrice(priceList);
         List<String> ids = pushDownPurchaseViews.stream().map(v->v.getId()).collect(Collectors.toList());
         List<PurchaseOrderEntity> purchaseOrderEntityList = scmTaskFeign.listPoBySourceIds(ids);
         purchaseOrderEntityList = purchaseOrderEntityList.stream().filter(v->!v.getInvalidStatus()).collect(Collectors.toList());
@@ -3079,21 +3068,36 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
         for (PurchasePriceDTO.PushDownPurchaseView pushDownPurchaseView : pushDownPurchaseViews) {
             ProductDetailEntity productDetailEntity = detailEntityList.stream().filter(entityClass -> entityClass.getId().equals(pushDownPurchaseView.getSkuId())).findFirst().orElse(new ProductDetailEntity());
             pushDownPurchaseView.setProductName(productDetailEntity.getName());
-            PurchasePriceDTO.PriceDTO viewDTO = viewDTOList.stream().filter(obj ->
-                            obj.getSkuId().equals(pushDownPurchaseView.getSkuId())
-                                    && obj.getSupplierId().equals(pushDownPurchaseView.getSupplierId())
-                                    && obj.getQty().equals(pushDownPurchaseView.getReplenishQty())
-                                    && CharSequenceUtil.equals(obj.getPurchaseOrgId(),pushDownPurchaseView.getPurchaseOrgId()))
-                    .findFirst().orElse(null);
-            if(Objects.nonNull(viewDTO)){
-                pushDownPurchaseView.setTaxRate(viewDTO.getTaxRate());
-            }
+
             List<PurchaseOrderDetailEntity> currentPurchaseDetailList = purchaseOrderDetailEntityList.stream().filter(v->v.getSourceDetailId().equals(pushDownPurchaseView.getDetailId()) && !v.getIsGift()).collect(Collectors.toList());
             Integer alreadyPurchaseQty = currentPurchaseDetailList.stream().map(PurchaseOrderDetailEntity::getPurchaseQty).reduce(Integer::sum).orElse(0);
             pushDownPurchaseView.setPurchaseQty(pushDownPurchaseView.getDeductAmountQty() - alreadyPurchaseQty);
             pushDownPurchaseView.setTotalTaxAmount(pushDownPurchaseView.getTaxPrice().multiply(new BigDecimal(pushDownPurchaseView.getPurchaseQty())).setScale(4, RoundingMode.HALF_UP));
             pushDownPurchaseView.setPlanDeliveryDate(LocalDate.now());
             pushDownPurchaseView.setOldPurchaseQty(pushDownPurchaseView.getPurchaseQty());
+        }
+        //价目查询
+        List<PurchasePriceDTO.PriceDTO> priceList = new ArrayList<>();
+        pushDownPurchaseViews.forEach(e -> {
+            priceList.add(PurchasePriceDTO.PriceDTO.builder()
+                    .purchaseOrgId(e.getPurchaseOrgId())
+                    .qty(e.getPurchaseQty())
+                    .skuId(e.getSkuId())
+                    .supplierId(e.getSupplierId())
+                    .build());
+        });
+        List<PurchasePriceDTO.PriceDTO> viewDTOList = scmTaskFeign.batchGetPurchasePrice(priceList);
+
+        for (PurchasePriceDTO.PushDownPurchaseView pushDownPurchaseView : pushDownPurchaseViews) {
+            PurchasePriceDTO.PriceDTO viewDTO = viewDTOList.stream().filter(obj ->
+                            obj.getSkuId().equals(pushDownPurchaseView.getSkuId())
+                                    && obj.getSupplierId().equals(pushDownPurchaseView.getSupplierId())
+                                    && obj.getQty().equals(pushDownPurchaseView.getPurchaseQty())
+                                    && CharSequenceUtil.equals(obj.getPurchaseOrgId(),pushDownPurchaseView.getPurchaseOrgId()))
+                    .findFirst().orElse(null);
+            if(Objects.nonNull(viewDTO)){
+                pushDownPurchaseView.setTaxRate(viewDTO.getTaxRate());
+            }
         }
         return pushDownPurchaseViews;
     }
@@ -3178,12 +3182,15 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
                 addDetailDTO.setPurchaseQty(detailView.getPurchaseQty());
                 addDetailDTO.setPlanDeliveryDate(detailView.getPlanDeliveryDate());
                 addDetailDTO.setTaxRate(detailView.getTaxRate());
+                addDetailDTO.setTaxPrice(detailView.getTaxPrice());
                 addDetailDTO.setRemark(detailView.getRemark());
                 addDetailDTO.setCurrency(detailView.getCurrency());
                 addDetailDTO.setCurrencySymbol(detailView.getCurrencySymbol());
                 addDetailDTO.setIsGift(detailView.getIsGift());
                 addDetailDTO.setIsUrgent(detailView.getIsUrgent());
                 addDetailDTO.setWarehouseLocation(detailView.getWarehouseLocation());
+                addDetailDTO.setIsRevalueTaxRate(false);
+                addDetailDTO.setPurchaseAmount(detailView.getTotalTaxAmount());
                 addDetailList.add(addDetailDTO);
             }
             addDTO.setDetails(addDetailList);
