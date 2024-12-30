@@ -127,6 +127,12 @@ public class SoB2cProcessingEntity extends BaseEntity<SoB2cProcessingEntity> {
     private String bomVersion;
 
     /**
+     * 拣货明细id
+     */
+    @TableField(exist = false)
+    private String pickDetailId;
+
+    /**
      * 发货时间
      */
     @TableField(exist = false)

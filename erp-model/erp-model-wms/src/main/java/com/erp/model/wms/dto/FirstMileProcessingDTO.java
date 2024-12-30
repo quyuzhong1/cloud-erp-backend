@@ -57,20 +57,20 @@ public class FirstMileProcessingDTO implements Serializable {
     @NoArgsConstructor
     public static class ListDTO {
         /**
-         * 主键id
+         * 主键id【可排序】
          */
         private String id;
         /**
-         * 要货申请单id
+         * 要货申请单id【可排序】
          */
         private String requisitionApplicationId;
         /**
-         * 要货申请编码
+         * 要货申请编码【可排序】
          */
         private String requisitionApplicationCode;
 
         /**
-         * 要货申请状态
+         * 要货申请状态【可排序】
          */
         private String requisitionApplicationStatus;
         /**
@@ -78,19 +78,19 @@ public class FirstMileProcessingDTO implements Serializable {
          */
         private String requisitionApplicationStatusName;
         /**
-         * 批准数量
+         * 批准数量【可排序】
          */
         private String approveQty;
         /**
-         * 头程发货单id
+         * 头程发货单id【可排序】
          */
         private String firstMileDeliveryId;
         /**
-         * 头程发货单编码
+         * 头程发货单编码【可排序】
          */
         private String firstMileDeliveryCode;
         /**
-         * 头程发货单审核状态
+         * 头程发货单审核状态【可排序】
          */
         private String deliveryApproveStatus;
         /**
@@ -98,15 +98,15 @@ public class FirstMileProcessingDTO implements Serializable {
          */
         private String deliveryApproveStatusName;
         /**
-         * 发货数量
+         * 发货数量【可排序】
          */
         private String deliveryQty;
         /**
-         * SKU
+         * SKU【可排序】
          */
         private String skuId;
         /**
-         * SKU编码
+         * SKU编码【可排序】
          */
         private String skuNo;
         /**
@@ -114,43 +114,43 @@ public class FirstMileProcessingDTO implements Serializable {
          */
         private String productName;
         /**
-         * 仓库id
+         * 仓库id【可排序】
          */
         private String warehouseId;
         /**
-         * 仓库名称
+         * 仓库名称【可排序】
          */
         private String warehouseName;
         /**
-         * 虚拟仓id
+         * 虚拟仓id【可排序】
          */
         private String virtualWarehouseId;
         /**
-         * 虚拟仓名称
+         * 虚拟仓名称【可排序】
          */
         private String virtualWarehouseName;
         /**
-         * 冻结时间
+         * 冻结时间【可排序】
          */
         private LocalDateTime frozenTime;
         /**
-         * 剩余冻结数量
+         * 剩余冻结数量【可排序】
          */
         private Integer frozenQty;
         /**
-         * 冻结时长（天）
+         * 冻结时长（天）【可排序】
          */
         private Integer frozenDays;
         /**
-         * 出库单据id
+         * 出库单据id【可排序】
          */
         private String outstockOrderId;
         /**
-         * 出库单据编码
+         * 出库单据编码【可排序】
          */
         private String outstockOrderCode;
         /**
-         * 出库单据类型（同sourceType）
+         * 出库单据类型（同sourceType）【可排序】
          */
         private String outstockOrderType;
         /**
@@ -158,7 +158,7 @@ public class FirstMileProcessingDTO implements Serializable {
          */
         private String outstockOrderTypeName;
         /**
-         * 出库单据状态
+         * 出库单据状态【可排序】
          */
         private String outstockOrderStatus;
         /**
@@ -166,13 +166,17 @@ public class FirstMileProcessingDTO implements Serializable {
          */
         private String outstockOrderStatusName;
         /**
-         * 出库单据时间
+         * 出库单据时间【可排序】
          */
         private LocalDateTime outstockOrderTime;
         /**
-         * 出库数量
+         * 出库数量【可排序】
          */
         private String outstockQty;
+        /**
+         * 更新时间【可排序】
+         */
+        private LocalDateTime updateTime;
 
         /**
          * 标签,outstock出库,frozen发货冻结,unShipped七日未发

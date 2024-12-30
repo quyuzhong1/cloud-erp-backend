@@ -42,7 +42,7 @@
         fmp.create_time,
         fmp.update_user_id,
         fmp.update_user_name,
-        fmp.update_time,
+        fmp.update_time as updateTime,
         fmp.version,
         fmp.is_deleted,
         fmp.requisition_application_id as requisitionApplicationId,
