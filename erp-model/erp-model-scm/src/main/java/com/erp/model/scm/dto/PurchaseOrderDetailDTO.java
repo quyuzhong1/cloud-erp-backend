@@ -161,7 +161,7 @@ public class PurchaseOrderDetailDTO implements Serializable {
         /**
          * 是否需要重新赋值税率
          */
-        private Boolean isRevalueTaxRate;
+        private Boolean isRevalueTaxRate = true;
     }
 
     @Data
