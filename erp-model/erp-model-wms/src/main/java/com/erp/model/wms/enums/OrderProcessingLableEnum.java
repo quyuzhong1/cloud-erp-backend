@@ -13,6 +13,8 @@ public enum OrderProcessingLableEnum implements EnumMessage {
     OUTSTOCK("outstock", "出库"),
     FROZEN("frozen", "发货冻结"),
     UN_SHIPPED("unShipped", "七日未发"),
+    ORDER_FROZEN("orderFrozen", "订单冻结"),
+    REQUISITION_FROZEN("requisitionFrozen", "要货冻结"),
     ;
 
     @EnumValue

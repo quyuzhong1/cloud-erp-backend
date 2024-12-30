@@ -258,7 +258,7 @@ public class SoB2bProcessingServiceImpl extends SuperServiceImpl<SoB2bProcessing
             listDTO.setSoApproveStatusName(ApproveStatusEnum.getName(listDTO.getSoApproveStatus()));
             listDTO.setOutstockOrderTypeName(SourceTypeEnum.getName(listDTO.getOutstockOrderType()));
             //冻结时长
-            listDTO.setFrozenDays(Math.toIntExact(LocalDate.now().toEpochDay() - listDTO.getFrozenTime().toLocalDate().toEpochDay()));
+            listDTO.setFrozenDays(ObjectUtil.isEmpty(listDTO.getFrozenTime()) ? null : (Math.toIntExact(LocalDate.now().toEpochDay() - listDTO.getFrozenTime().toLocalDate().toEpochDay())));
 
             List<String> labelList = new ArrayList<>();
             if (CharSequenceUtil.isNotBlank(listDTO.getOutstockOrderId())) {
@@ -269,13 +269,14 @@ public class SoB2bProcessingServiceImpl extends SuperServiceImpl<SoB2bProcessing
             }
             if (MathUtil.compareTo(listDTO.getDeliveryQty(),listDTO.getFrozenQty()) != MathUtil.ZERO && CharSequenceUtil.isNotBlank(listDTO.getDeliveryNoticeId())) {
                 labelList.add(OrderProcessingLableEnum.FROZEN.getCode());
-                //冻结时长
-                listDTO.setFrozenDays(Math.toIntExact(LocalDate.now().toEpochDay() - listDTO.getFrozenTime().toLocalDate().toEpochDay()) + 1);
             }
             if (CharSequenceUtil.isBlank(listDTO.getOutstockOrderId()) && ObjectUtil.isNotEmpty(listDTO.getFrozenTime()) && (LocalDate.now().toEpochDay() - listDTO.getFrozenTime().toLocalDate().toEpochDay() >= 7)) {
                 labelList.add(OrderProcessingLableEnum.UN_SHIPPED.getCode());
-                //冻结时长
-                listDTO.setFrozenDays(Math.toIntExact(LocalDate.now().toEpochDay() - listDTO.getFrozenTime().toLocalDate().toEpochDay()) + 1);
+            }
+            //订单冻结
+            if (CharSequenceUtil.isBlank(listDTO.getDeliveryNoticeId())
+                    && ObjUtil.isNotNull(listDTO.getFrozenQty())) {
+                labelList.add(OrderProcessingLableEnum.ORDER_FROZEN.getCode());
             }
             listDTO.setLabelList(labelList);
             //出库状态

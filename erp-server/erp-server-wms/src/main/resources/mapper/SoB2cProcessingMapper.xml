@@ -79,6 +79,15 @@
         left join virtual_warehouse vw on sbp.virtual_warehouse_id = vw.id and vw.is_deleted = false
         where ${params.sqlMap.default}
         and sbp.is_deleted = false
+        <if test="params.label != null and params.label == 'outstock'">
+            and sbp.outstock_order_id = ''
+        </if>
+        <if test="params.label != null and params.label == 'frozen'">
+            and sbp.delivery_qty != sbp.frozen_qty and sbp.delivery_id != ''
+        </if>
+        <if test="params.label != null and params.label == 'unShipped'">
+            and sbp.outstock_order_id = ''
+        </if>
         ORDER BY
         <if test="params.sortList != null and params.sortList.size > 0">
             <foreach collection="params.sortList" item="item" separator="," close=",">

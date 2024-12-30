@@ -82,6 +82,18 @@
         left join virtual_warehouse vw on fmp.virtual_warehouse_id = vw.id and vw.is_deleted = false
         where ${params.sqlMap.default}
         and fmp.is_deleted = false
+        <if test="params.label != null and params.label == 'outstock'">
+            and fmp.outstock_order_id = ''
+        </if>
+        <if test="params.label != null and params.label == 'frozen'">
+            and fmp.delivery_qty != fmp.frozen_qty and fmp.first_mile_delivery_id != ''
+        </if>
+        <if test="params.label != null and params.label == 'unShipped'">
+            and fmp.outstock_order_id = ''
+        </if>
+        <if test="params.label != null and params.label == 'requisitionFrozen'">
+            and fmp.first_mile_delivery_id = '' and fmp.requisition_application_status in ('handleIng','handle')
+        </if>
         ORDER BY
         <if test="params.sortList != null and params.sortList.size > 0">
             <foreach collection="params.sortList" item="item" separator="," close=",">
@@ -102,19 +114,19 @@
             fmd.approve_status as deliveryApproveStatus,
             fmdd.id as firstMileDeliveryDetailId,
             fmdd.delivery_qty as deliveryQty,
-            fmdd.sku_id as skuId,
+            rad.sku_id as skuId,
             rad.from_warehouse_id as warehouseId,
             rad.from_virtual_warehouse_id as virtualWarehouseId,
             ra.handle_time as frozenTime,
             rad.picking_qty as frozenQty,
             rad.approve_qty as approveQty
-        from first_mile_delivery fmd
-        inner join first_mile_delivery_detail fmdd on fmd.id = fmdd.main_id and fmdd.is_deleted = false
-        inner join requisition_application ra on fmd.source_id = ra.id and ra.is_deleted = false
+        from requisition_application ra
         inner join requisition_application_detail rad on ra.id = rad.main_id and rad.is_deleted = false
-        where fmd.is_deleted = false and fmd.invalid_status = false and rad.from_virtual_warehouse_id != ''
+        left  join first_mile_delivery_detail fmdd on fmdd.source_detail_id = rad.id and fmdd.is_deleted = false
+        left join first_mile_delivery fmd on fmd.id = fmdd.main_id and fmdd.is_deleted = false and fmd.invalid_status = false
+        where ra.is_deleted = false and ra.invalid_status = 'false' and rad.from_virtual_warehouse_id != ''
         <if test="startDate != null">
-            and fmd.create_time > #{startDate}
+            and ra.create_time > #{startDate}
         </if>
     </select>
 
