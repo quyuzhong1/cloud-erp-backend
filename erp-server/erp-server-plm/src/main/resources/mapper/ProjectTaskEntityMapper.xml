@@ -1161,7 +1161,8 @@
         pt.distribution_type as distributionType,
         pt.related_sku_type as relatedSkuType,
         pt.work_period AS workPeriod,
-        pdi.spu_no AS spu_no
+        pdi.spu_no AS spu_no,
+        pt.create_time as createTime
         FROM project_task pt
         left join product_info pdi on pt.product_id = pdi.id AND pdi.is_deleted = FALSE
         where ${params.sqlMap.default} and  pdi.approval_status != 5 and pt.is_deleted=false
