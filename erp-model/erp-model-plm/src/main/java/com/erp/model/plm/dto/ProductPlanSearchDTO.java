@@ -90,4 +90,8 @@ public class ProductPlanSearchDTO extends SortDTO {
      * sqlMap 默认key default
      */
     private Map<String, String> sqlMap;
+
+    public ProductPlanSearchDTO(String type) {
+        this.type = type;
+    }
 }
