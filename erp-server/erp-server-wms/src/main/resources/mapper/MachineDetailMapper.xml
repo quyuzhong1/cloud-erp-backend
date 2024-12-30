@@ -27,7 +27,7 @@
     </resultMap>
 
     <!-- 根据来源id查询数据 -->
-    <select id="listMachineBySourceDetailIdList"
+    <select id="listMachineBySourceIdList"
             resultType="com.erp.model.wms.dto.SoB2bProcessingDTO$ResponseDTO">
         select
             mi.id,
@@ -39,12 +39,13 @@
             md.sku_id,
             md.qty,
             md.reference_version as bomVersion,
-            md.source_detail_id
+            mrs.so_detail_id as sourceDetailId
         from machine_info mi
         inner join machine_detail md on md.main_id = mi.id and md.is_deleted = false
+        left join machine_ref_so mrs on mi.id = mrs.machine_id and md.id = mrs.machine_detail_id and mrs.is_deleted = false
         where mi.is_deleted = false and mi.invalid_status = false
-        and md.source_detail_id in
-        <foreach collection="sourceDetailIdList" open="(" close=")" separator="," item="item" >
+        and mrs.so_id in
+        <foreach collection="sourceIdList" open="(" close=")" separator="," item="item" >
             #{item}
         </foreach>
     </select>

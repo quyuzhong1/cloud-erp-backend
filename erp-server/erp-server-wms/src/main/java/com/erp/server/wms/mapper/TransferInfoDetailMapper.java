@@ -39,8 +39,8 @@ public interface TransferInfoDetailMapper extends BaseMapper<TransferInfoDetailE
      * 根据来源明细id集合查询
      * @author will
      * @date 2024/12/19 17:12
-     * @param sourceDetailIdList
+     * @param sourceIdList
      * @return List<ResponseDTO>
      */
-    List<SoB2bProcessingDTO.ResponseDTO> listTransferBySourceDetailIdList(@Param("sourceDetailIdList")List<String> sourceDetailIdList);
+    List<SoB2bProcessingDTO.ResponseDTO> listTransferBySourceIdList(@Param("sourceIdList")List<String> sourceIdList);
 }

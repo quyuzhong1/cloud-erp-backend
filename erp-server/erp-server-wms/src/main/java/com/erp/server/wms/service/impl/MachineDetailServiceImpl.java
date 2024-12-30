@@ -165,11 +165,11 @@ public class MachineDetailServiceImpl extends SuperServiceImpl<MachineDetailMapp
     }
 
     @Override
-    public List<SoB2bProcessingDTO.ResponseDTO> listMachineBySourceDetailIdList(List<String> sourceDetailIdList) {
-        if (CollectionUtils.isEmpty(sourceDetailIdList)) {
+    public List<SoB2bProcessingDTO.ResponseDTO> listMachineBySourceIdList(List<String> sourceIdList) {
+        if (CollectionUtils.isEmpty(sourceIdList)) {
             return Collections.EMPTY_LIST;
         }
-        return baseMapper.listMachineBySourceDetailIdList(sourceDetailIdList);
+        return baseMapper.listMachineBySourceIdList(sourceIdList);
     }
 
     @Override

@@ -102,7 +102,7 @@
     </select>
 
     <!-- 根据销售订单明细id查询 -->
-    <select id="listSoOutstockBySourceDetailIdList"
+    <select id="listSoOutstockBySourceIdList"
             resultType="com.erp.model.wms.dto.SoB2bProcessingDTO$ResponseDTO">
         select
             so.id,
@@ -117,8 +117,8 @@
         from so_outstock so
         inner join so_outstock_detail sod on so.id = sod.main_id and sod.is_deleted = false
         where so.is_deleted = false and so.invalid_status = false and sod.virtual_warehouse_id != ''
-        and sod.source_detail_id in
-        <foreach collection="sourceDetailIdList" item="item" open="(" close=")" separator=",">
+        and so.source_id in
+        <foreach collection="sourceIdList" item="item" open="(" close=")" separator=",">
             #{item}
         </foreach>
     </select>
