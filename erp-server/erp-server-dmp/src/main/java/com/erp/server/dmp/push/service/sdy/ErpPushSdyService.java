@@ -82,23 +82,21 @@ public class ErpPushSdyService {
 				.eq(DmpOutputTaskRecordEntity::getSourceCode, sourceCode)
 				.orderByDesc(DmpOutputTaskRecordEntity::getCreateTime)
 				.list();
-
-		if (CollUtil.isEmpty(list)) {
-			return JSON.toJSONString(dto);
-		}
-		ShudiyunB2cOrderDTO shudiyunB2cOrderDTO = JSON.parseObject(list.get(0).getRequestData(), ShudiyunB2cOrderDTO.class);
-		if ("已删除".equals(shudiyunB2cOrderDTO.getStatus())) {
-			DmpOutputTaskRecordEntity taskRecordEntity = list.stream().filter(req -> DmpOutputTaskRecordStatusEnum.FINISH.getCode().equals(req.getStatus())).findFirst().orElse(null);
-			if (ObjectUtil.isNotEmpty(taskRecordEntity)) {
-				ShudiyunB2cOrderDTO shudiyunB2cOrderDTO1 = JSON.parseObject(taskRecordEntity.getRequestData(), ShudiyunB2cOrderDTO.class);
-				shudiyunB2cOrderDTO1.setStatus("已删除");
-				return JSON.toJSONString(shudiyunB2cOrderDTO1);
-			} else {
-				dmpOutputTaskRecordService.lambdaUpdate()
-						.set(DmpOutputTaskRecordEntity::getStatus, DmpOutputTaskRecordStatusEnum.FINISH.getCode())
-						.eq(DmpOutputTaskRecordEntity::getSourceCode, sourceCode)
-						.update();
-				return "";
+		for (DmpOutputTaskRecordEntity recordEntity : list) {
+			ShudiyunB2cOrderDTO shudiyunB2cOrderDTO = JSON.parseObject(recordEntity.getRequestData(), ShudiyunB2cOrderDTO.class);
+			if ("已删除".equals(shudiyunB2cOrderDTO.getStatus())) {
+				DmpOutputTaskRecordEntity taskRecordEntity = list.stream().filter(req -> DmpOutputTaskRecordStatusEnum.FINISH.getCode().equals(req.getStatus())).findFirst().orElse(null);
+				if (ObjectUtil.isNotEmpty(taskRecordEntity)) {
+					ShudiyunB2cOrderDTO shudiyunB2cOrderDTO1 = JSON.parseObject(recordEntity.getRequestData(), ShudiyunB2cOrderDTO.class);
+					shudiyunB2cOrderDTO1.setStatus("已删除");
+					return JSON.toJSONString(shudiyunB2cOrderDTO1);
+				} else {
+					dmpOutputTaskRecordService.lambdaUpdate()
+							.set(DmpOutputTaskRecordEntity::getStatus, DmpOutputTaskRecordStatusEnum.FINISH.getCode())
+							.eq(DmpOutputTaskRecordEntity::getSourceCode, sourceCode)
+							.update();
+					return "";
+				}
 			}
 		}
 		return JSON.toJSONString(dto);
