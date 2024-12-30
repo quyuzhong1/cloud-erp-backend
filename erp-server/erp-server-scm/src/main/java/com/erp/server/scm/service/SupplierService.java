@@ -338,4 +338,6 @@ public interface SupplierService extends SuperService<SupplierEntity> {
     PagingVO<BaseDropDownDTO.RemarkDTO> pagingSelect(PagingDTO<BaseDropDownDTO.SelectDTO> dto);
 
     PagingVO<SupplierExportExcelDTO> exportSupplier(PagingDTO<SupplierDTO.PagingParamDTO> dto);
+
+    Boolean updateVoucherNo(List<String> ids, String voucherNo);
 }

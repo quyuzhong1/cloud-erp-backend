@@ -65,6 +65,11 @@ public interface CfgSettingService extends SuperService<CfgSettingEntity> {
      * @return
      */
     String getSubcontractInStockSetting();
+    /**
+     * 获取委外 自动退货配置
+     * @return
+     */
+    String getSubcontractReturnStockSetting();
 
     /**
      * 查询配置

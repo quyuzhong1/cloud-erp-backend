@@ -346,4 +346,6 @@ public interface WarehouseReceiveService extends SuperService<WarehouseReceiveEn
     void instockStatusCleanJob();
 
     PagingVO<WarehouseReceiveExportExcelDTO> exportWarehouseReceive(PagingDTO<WarehouseReceiveDTO.PagingParamDTO> dto);
+
+    WarehouseReceiveDTO.PagingTotalDTO pagingTotal(WarehouseReceiveDTO.PagingParamDTO dto);
 }

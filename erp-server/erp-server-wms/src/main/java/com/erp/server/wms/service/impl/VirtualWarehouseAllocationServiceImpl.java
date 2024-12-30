@@ -291,6 +291,7 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
             record.setSyncStatusName(VirtualWarehouseAllocationSyncStatusEnum.getNameByCode(record.getSyncStatus()));
             //是否统计名称
             record.setIsStatisticsName(record.getIsStatistics() ? "是" : "否");
+            record.setIsVirtualScarceStr(record.getIsVirtualScarce()?"是":"否");
         }
     }
 

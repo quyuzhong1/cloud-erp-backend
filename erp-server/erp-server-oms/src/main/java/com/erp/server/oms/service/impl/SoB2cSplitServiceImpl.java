@@ -1,5 +1,6 @@
 package com.erp.server.oms.service.impl;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.bean.BeanUtil;
@@ -34,10 +35,12 @@ import com.erp.model.oms.enums.SoB2cOptionTypeEnum;
 import com.erp.model.oms.enums.SoB2cPayStatusEnum;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.enums.BomTypeEnum;
-import com.erp.model.plm.vo.SkuInfoSimpleVO;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.tms.dto.InventorySkuCostDTO;
+import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.rpc.tms.feign.LogisticsFeign;
 import com.erp.server.oms.convert.B2cOrderConverter;
 import com.erp.server.oms.mapper.SoB2cMapper;
 import com.erp.server.oms.service.*;
@@ -56,7 +59,10 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -102,6 +108,10 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
 
     @Resource
     private SoB2cRefCategoryService soB2cRefCategoryService;
+    @Resource
+    private LogisticsFeign logisticsFeign;
+    @Resource
+    private DmpTaskFeign dmpTaskFeign;
 
     @Override
     public List<SoB2cDetailDTO.ViewDTO> getBomSplitInfo(List<String> ids) {
@@ -109,6 +119,10 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
         if(CollectionUtils.isEmpty(detailEntityList)){
             throw new ServiceException("明细为空");
         }
+        List<String> mainIds = detailEntityList.stream().map(SoB2cDetailEntity::getMainId).distinct().collect(Collectors.toList());
+        List<SoB2cEntity> soB2cEntityList = soB2cService.listByIds(mainIds);
+        Map<String, SoB2cEntity> soB2cEntityMap = soB2cEntityList.stream().collect(Collectors.toMap(SoB2cEntity::getId, Function.identity()));
+
         List<String> skuIds = detailEntityList.stream().map(v->v.getSkuId()).collect(Collectors.toList());
         List<SoB2cDetailDTO.ViewDTO> resultList = new ArrayList<>();
         //根据SKU查询BOM判断是否是组合SKU
@@ -119,8 +133,11 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
             if(CollectionUtils.isEmpty(bomChildrenList)){
                 throw new ServiceException("不是销售套装组合品，无法拆分");
             }
-            List<String> childSkuList = bomChildrenList.stream().map(v->v.getSkuId()).collect(Collectors.toList());
-            List<SkuInfoSimpleVO> skuInfoSimpleVOList = plmTaskFeign.getSimpleSkuInfoByIds(childSkuList);
+            SoB2cEntity soB2cEntity = soB2cEntityMap.get(detailEntity.getMainId());
+            List<String> childSkuList = bomChildrenList.stream().map(BomChildrenSkuDTO::getSkuId).collect(Collectors.toList());
+            List<SkuVO> skuVOList = plmTaskFeign.listSkuCostByIds(childSkuList);
+            //重置sku含税成本
+            resetSkuVO(soB2cEntity, detailEntity, skuVOList, childSkuList);
             BigDecimal totalCostPrice = BigDecimal.ZERO;
             BigDecimal remainAmount = detailEntity.getAmount();
             BigDecimal remainAdvicePrice = detailEntity.getAdvicePrice();
@@ -138,9 +155,9 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
                 viewDTO.setWarehouseName(detailEntity.getWarehouseName());
                 viewDTO.setSourceDetailId(detailEntity.getSourceDetailId());
                 viewDTO.setExchangeRate(detailEntity.getExchangeRate());
-                SkuInfoSimpleVO skuInfoSimpleVO = skuInfoSimpleVOList.stream().filter(v->v.getSkuId().equals(bomChildrenSkuDTO.getSkuId())).findFirst().orElse(new SkuInfoSimpleVO());
+                SkuVO skuVO = skuVOList.stream().filter(v->v.getSkuId().equals(bomChildrenSkuDTO.getSkuId())).findFirst().orElse(new SkuVO());
                 //含税单价
-                BigDecimal costPrice = ObjectUtils.isEmpty(skuInfoSimpleVO.getActualTaxCost()) ? skuInfoSimpleVO.getTargetTaxCost() : skuInfoSimpleVO.getActualTaxCost();
+                BigDecimal costPrice = ObjectUtils.isEmpty(skuVO.getActualTaxCost()) ? skuVO.getTargetTaxCost() : skuVO.getActualTaxCost();
                 if(Objects.isNull(costPrice)){
                     costPrice = BigDecimal.ZERO;
                 }
@@ -149,6 +166,10 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
                 //平台SKU
                 viewDTO.setPlatformSkuNo(detailEntity.getPlatformSkuNo());
                 viewDTO.setPlatformSpuNo(detailEntity.getPlatformSpuNo());
+                viewDTO.setProductCost(skuVO.getProductCost());
+                viewDTO.setFirstMileShippingCost(skuVO.getFirstMileShippingCost());
+                viewDTO.setClearanceCustomsTax(skuVO.getClearanceCustomsTax());
+                viewDTO.setCostSource(CharSequenceUtil.isBlank(skuVO.getCostSource()) ? "采购平均成本" : skuVO.getCostSource());
                 resultList.add(viewDTO);
             }
             for (int i = 0; i < resultList.size(); i++) {
@@ -180,6 +201,102 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
     }
 
     @Override
+    public void resetSkuVO(SoB2cEntity soB2cEntity, SoB2cDetailEntity detailEntity, List<SkuVO> skuVOList, List<String> childSkuList) {
+        if (CollUtil.isEmpty(childSkuList) || CollUtil.isEmpty(skuVOList) || Objects.isNull(soB2cEntity) || Objects.isNull(detailEntity)){
+            return;
+        }
+        String orgId = soB2cEntity.getOrgId();
+        String warehouseId = detailEntity.getWarehouseId();
+        LocalDate billDate = soB2cEntity.getBillDate();
+        InventorySkuCostDTO.QueryB2CDTO queryB2CDTO = new InventorySkuCostDTO.QueryB2CDTO();
+        List<InventorySkuCostDTO.QueryB2CDetailDTO> detailDTOS = new ArrayList<>();
+        queryB2CDTO.setSalesOrgId(orgId);
+        for (String skuId : childSkuList){
+            detailDTOS.add(InventorySkuCostDTO.QueryB2CDetailDTO.builder()
+                    .skuId(skuId).warehouseId(warehouseId)
+                    .build());
+        }
+        queryB2CDTO.setDetailDTOS(detailDTOS);
+        queryB2CDTO.setBillDate(billDate);
+        List<InventorySkuCostDTO.SkuCostDTO> skuCostDTOS = logisticsFeign.listSkuCostByDetail(queryB2CDTO);
+        for (SkuVO skuVO : skuVOList){
+            skuVO.setProductCost(skuVO.getNotTaxCostPrice());
+            if (CollUtil.isEmpty(skuCostDTOS)){
+                continue;
+            }
+            if (CharSequenceUtil.isBlank(warehouseId) || Objects.isNull(billDate)){
+                continue;
+            }
+            if (!childSkuList.contains(skuVO.getSkuId())){
+                continue;
+            }
+            InventorySkuCostDTO.SkuCostDTO skuCostDTO = skuCostDTOS.stream().filter(e -> e.getSkuId().equals(skuVO.getSkuId())).findFirst().orElse(null);
+            if (Objects.isNull(skuCostDTO)){
+                continue;
+            }
+            BigDecimal rate = dmpTaskFeign.getRate(billDate.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), skuCostDTO.getCurrency());
+            if (Objects.isNull(rate)){
+                continue;
+            }
+            BigDecimal taxRate = Objects.nonNull(skuVO.getTaxRate()) ? skuVO.getTaxRate() : BigDecimal.ZERO;
+            BigDecimal percentRate = MathUtil.divide(taxRate, MathUtil.BigDecimal_100);
+            skuVO.setNotTaxCostPrice(MathUtil.multiply(skuCostDTO.getProductCost(),rate,4));
+            BigDecimal actualTaxCost = MathUtil.add(skuCostDTO.getProductCost(), skuCostDTO.getFirstMileShippingCost()).add(skuCostDTO.getClearanceCustomsTax());
+            skuVO.setActualTaxCost(MathUtil.multiply(MathUtil.multiply(actualTaxCost,rate,4), MathUtil.add(BigDecimal.valueOf(1), percentRate),4));
+            skuVO.setProductCost(MathUtil.multiply(skuCostDTO.getProductCost(),rate,4));
+            skuVO.setFirstMileShippingCost(MathUtil.multiply(skuCostDTO.getFirstMileShippingCost(),rate,4));
+            skuVO.setClearanceCustomsTax(MathUtil.multiply(skuCostDTO.getClearanceCustomsTax(),rate,4));
+            skuVO.setCostSource(skuCostDTO.getAllocatedMonth().format(DateTimeFormatter.ofPattern("yyyy-MM")) + "财务导入成本");
+        }
+    }
+
+    @Override
+    public void resetSkuVO(SoB2cEntity soB2cEntity, SoB2cDetailEntity detailEntity, SkuVO skuVO) {
+        if(Objects.isNull(skuVO)){
+            return;
+        }
+        skuVO.setProductCost(skuVO.getNotTaxCostPrice());
+        if (Objects.isNull(soB2cEntity) || Objects.isNull(detailEntity)){
+            return;
+        }
+        String orgId = soB2cEntity.getOrgId();
+        String warehouseId = detailEntity.getWarehouseId();
+        LocalDate billDate = soB2cEntity.getBillDate();
+        InventorySkuCostDTO.QueryB2CDTO queryB2CDTO = new InventorySkuCostDTO.QueryB2CDTO();
+        List<InventorySkuCostDTO.QueryB2CDetailDTO> detailDTOS = new ArrayList<>();
+        queryB2CDTO.setSalesOrgId(orgId);
+        detailDTOS.add(InventorySkuCostDTO.QueryB2CDetailDTO.builder()
+                    .skuId(skuVO.getSkuId()).warehouseId(warehouseId)
+                    .build());
+        queryB2CDTO.setDetailDTOS(detailDTOS);
+        queryB2CDTO.setBillDate(billDate);
+        List<InventorySkuCostDTO.SkuCostDTO> skuCostDTOS = logisticsFeign.listSkuCostByDetail(queryB2CDTO);
+        if (CollUtil.isEmpty(skuCostDTOS)){
+            return;
+        }
+        if (CharSequenceUtil.isBlank(warehouseId) || Objects.isNull(billDate)){
+            return;
+        }
+        InventorySkuCostDTO.SkuCostDTO skuCostDTO = skuCostDTOS.stream().filter(e -> e.getSkuId().equals(skuVO.getSkuId())).findFirst().orElse(null);
+        if (Objects.isNull(skuCostDTO)){
+            return;
+        }
+        BigDecimal rate = dmpTaskFeign.getRate(billDate.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), skuCostDTO.getCurrency());
+        if (Objects.isNull(rate)){
+            return;
+        }
+        BigDecimal taxRate = Objects.nonNull(skuVO.getTaxRate()) ? skuVO.getTaxRate() : BigDecimal.ZERO;
+        BigDecimal percentRate = MathUtil.divide(taxRate, MathUtil.BigDecimal_100);
+        skuVO.setNotTaxCostPrice(MathUtil.multiply(skuCostDTO.getProductCost(),rate,4));
+        BigDecimal actualTaxCost = MathUtil.add(skuCostDTO.getProductCost(), skuCostDTO.getFirstMileShippingCost()).add(skuCostDTO.getClearanceCustomsTax());
+        skuVO.setActualTaxCost(MathUtil.multiply(MathUtil.multiply(actualTaxCost,rate,4), MathUtil.add(BigDecimal.valueOf(1), percentRate),4));
+        skuVO.setProductCost(MathUtil.multiply(skuCostDTO.getProductCost(),rate,4));
+        skuVO.setFirstMileShippingCost(MathUtil.multiply(skuCostDTO.getFirstMileShippingCost(),rate,4));
+        skuVO.setClearanceCustomsTax(MathUtil.multiply(skuCostDTO.getClearanceCustomsTax(),rate,4));
+        skuVO.setCostSource(skuCostDTO.getAllocatedMonth().format(DateTimeFormatter.ofPattern("yyyy-MM")) + "财务导入成本");
+    }
+
+    @Override
     @DataIdempotent(keyIdName = "ids")
     public List<BatchResultDTO> bomSplitAndSave(List<String> ids) {
         List<SoB2cEntity> soB2cEntityList = this.listByIds(ids);
@@ -190,7 +307,7 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
         bomChildrenList = bomChildrenList.stream().filter(b ->  BomTypeEnum.COMBINATION.getType().equals(b.getType())).collect(Collectors.toList());
         List<String> isCombinationSkuIds = bomChildrenList.stream().map(BomChildrenSkuDTO::getParentSkuId).collect(Collectors.toList());
         List<String> childSkuList = bomChildrenList.stream().map(BomChildrenSkuDTO::getSkuId).collect(Collectors.toList());
-        List<SkuInfoSimpleVO> skuInfoSimpleVOList = plmTaskFeign.getSimpleSkuInfoByIds(childSkuList);
+        List<SkuVO> skuVOList = plmTaskFeign.listSkuCostByIds(childSkuList);
         soB2cDetailEntityList = soB2cDetailEntityList.stream().filter(v->isCombinationSkuIds.contains(v.getSkuId())).collect(Collectors.toList());
         List<BatchResultDTO> batchResultDTOList = new ArrayList<>();
         List<String> removeDetailIds = new ArrayList<>();
@@ -209,6 +326,8 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
             for(SoB2cDetailEntity detailEntity: detailList){
                 removeDetailIds.add(detailEntity.getId());
                 List<BomChildrenSkuDTO> bomChildrenSkuDTOList = bomChildrenList.stream().filter(b->b.getParentSkuId().equals(detailEntity.getSkuId())).collect(Collectors.toList());
+                List<String> childSkuIds = bomChildrenSkuDTOList.stream().map(BomChildrenSkuDTO::getSkuId).distinct().collect(Collectors.toList());
+                resetSkuVO(soB2cEntity,detailEntity,skuVOList,childSkuIds);
                 BigDecimal totalCostPrice = BigDecimal.ZERO;
                 BigDecimal remainAmount = detailEntity.getAmount();
                 BigDecimal remainAdvicePrice = detailEntity.getAdvicePrice();
@@ -223,13 +342,17 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
                     addDetailEntity.setPlatformSkuNo("");
                     addDetailEntity.setPlatformSpuNo("");
                     addDetailEntity.setWarehouseSkuNo("");
-                    SkuInfoSimpleVO skuInfoSimpleVO = skuInfoSimpleVOList.stream().filter(v->v.getSkuId().equals(bomChildrenSkuDTO.getSkuId())).findFirst().orElse(new SkuInfoSimpleVO());
+                    SkuVO skuVO = skuVOList.stream().filter(v->v.getSkuId().equals(bomChildrenSkuDTO.getSkuId())).findFirst().orElse(new SkuVO());
                     //含税单价
-                    BigDecimal costPrice = ObjectUtils.isEmpty(skuInfoSimpleVO.getActualTaxCost()) ? skuInfoSimpleVO.getTargetTaxCost() : skuInfoSimpleVO.getActualTaxCost();
+                    BigDecimal costPrice = ObjectUtils.isEmpty(skuVO.getActualTaxCost()) ? skuVO.getTargetTaxCost() : skuVO.getActualTaxCost();
                     if(Objects.isNull(costPrice)){
                         costPrice = BigDecimal.ZERO;
                     }
                     addDetailEntity.setTaxCost(costPrice);
+                    addDetailEntity.setProductCost(skuVO.getProductCost());
+                    addDetailEntity.setFirstMileShippingCost(skuVO.getFirstMileShippingCost());
+                    addDetailEntity.setClearanceCustomsTax(skuVO.getClearanceCustomsTax());
+                    addDetailEntity.setCostSource(CharSequenceUtil.isBlank(skuVO.getCostSource()) ? "采购平均成本" : skuVO.getCostSource());
                     totalCostPrice = totalCostPrice.add(costPrice);
                     addDetailList.add(addDetailEntity);
                 }
@@ -260,7 +383,7 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
 
                 //封装平台sku信息
                 //SKU对照表信息
-                List<SkuMappingDTO.ListSkuParamDTO> listParamList = addDetailList.stream().map(obj -> new SkuMappingDTO.ListSkuParamDTO(obj.getSkuNo(), detailEntity.getWarehouseId(),soB2cEntity.getDictPlatform(),soB2cEntity.getShopId())).collect(Collectors.toList());
+                List<SkuMappingDTO.ListSkuParamDTO> listParamList = addDetailList.stream().map(obj -> new SkuMappingDTO.ListSkuParamDTO(obj.getSkuNo(), detailEntity.getWarehouseId(),soB2cEntity.getDictPlatform(),soB2cEntity.getShopId(), soB2cEntity.getBillDate().atStartOfDay())).collect(Collectors.toList());
                 ValidList<SkuMappingDTO.ListSkuParamDTO> listSkuParamList = new ValidList<>();
                 listSkuParamList.setList(listParamList);
                 List<SkuMappingDTO.ListSkuDTO> SkuMappingList = skuMappingService.listBySkuNoList(listSkuParamList);

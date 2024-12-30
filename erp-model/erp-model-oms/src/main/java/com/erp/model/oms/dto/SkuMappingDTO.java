@@ -16,6 +16,7 @@ import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
@@ -683,6 +684,10 @@ public class SkuMappingDTO implements Serializable {
          * 店铺Id
          */
         private String shopId;
+        /**
+         * 订单日期
+         */
+        private LocalDateTime billDate;
 
         public ListSkuParamDTO(String skuNo, String warehouseId, String dictPlatform) {
             this.skuNo = skuNo;
@@ -891,6 +896,17 @@ public class SkuMappingDTO implements Serializable {
          * 净重
          */
         private BigDecimal netWeight;
+
+        /**
+         * 成本价格来源
+         */
+        private String costSource;
+        //材料成本
+        private BigDecimal productCost;
+        //头程运费
+        private BigDecimal firstMileShippingCost;
+        //清关税费
+        private BigDecimal clearanceCustomsTax;
     }
 
 

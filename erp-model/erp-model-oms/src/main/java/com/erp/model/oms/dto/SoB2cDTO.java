@@ -1,5 +1,6 @@
 package com.erp.model.oms.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.annotation.Dict;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
@@ -1961,6 +1962,22 @@ public class SoB2cDTO implements Serializable {
          * 仓库名称
          */
         private String warehouseName;
+        /**
+         * 成本来源
+         */
+        private String costSource;
+        /**
+         * 材料成本（本位币）
+         */
+        private BigDecimal productCost;
+        /**
+         * 头程运费（本位币）
+         */
+        private BigDecimal firstMileShippingCost;
+        /**
+         * 清关税费（本位币）
+         */
+        private BigDecimal clearanceCustomsTax;
     }
 
     /**

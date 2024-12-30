@@ -653,12 +653,9 @@ public class DmpOutputTaskRecordServiceImpl extends SuperServiceImpl<DmpOutputTa
 					}
 				}
 			}
-			if(CollUtil.isNotEmpty(allUpdateList)) {
-				List<String> updateIds = allUpdateList.stream().map(DmpOutputTaskRecordEntity::getId).collect(Collectors.toList());
-				list.removeIf(l -> updateIds.contains(l.getId()));
-				list.addAll(allUpdateList);
-			}
-			return list;
+			List<String> updateIds = allUpdateList.stream().map(DmpOutputTaskRecordEntity::getId).collect(Collectors.toList());
+			allUpdateList.addAll(list.stream().filter(l -> !updateIds.contains(l.getId())).collect(Collectors.toList()));
+			return allUpdateList;
 		}
 		return new ArrayList<>();
     }

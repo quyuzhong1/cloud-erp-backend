@@ -248,6 +248,8 @@
         SELECT
             qb.id,
             qb.code,
+            qb.source_code as sourceCode,
+            qb.source_type as sourceType,
             qb.qc_dept_id as qcDeptId,
             qb.qc_dept_name as qcDeptName,
             qb.qc_user_id as qcUserId,
