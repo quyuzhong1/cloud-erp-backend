@@ -29,11 +29,13 @@ public enum CfgRuleInventoryNodeEnum implements EnumMessage {
     OVERSEAS_DELIVERY_PLAN_BY_REPLENISHMENT("OVERSEAS_DELIVERY_PLAN_BY_REPLENISHMENT", "海外仓发货计划_补货计划下推"),
     OVERSEAS_DELIVERY_PLAN_BY_MANUAL("OVERSEAS_DELIVERY_PLAN_BY_MANUAL", "海外仓发货计划_手动新增"),
     LOCAL_USABLE("LOCAL_USABLE", "本地可用"),
+    LOCAL_WAIT_QC("LOCAL_WAIT_QC", "本地待检"),
     LOCAL_IN_TRANSIT("LOCAL_IN_TRANSIT", "本地在途"),
     LOCAL_IN_TRANSIT_PURCHASE("LOCAL_IN_TRANSIT_PURCHASE", "采购在途(采购订单:已审核)"),
     LOCAL_IN_TRANSIT_TRANSFER("LOCAL_IN_TRANSIT_TRANSFER", "调拨在途"),
     LOCAL_ESTIMATED_DELIVERY("LOCAL_ESTIMATED_DELIVERY", "预计采购"),
     LOCAL_REPLENISHMENT_PLAN("LOCAL_REPLENISHMENT_PLAN", "本地补货计划"),
+    LOCAL_REPLENISHMENT_PURCHASE_PLAN("LOCAL_REPLENISHMENT_PURCHASE_PLAN", "本地采购计划_补货计划下推"),
     LOCAL_PURCHASE_PLAN("LOCAL_PURCHASE_PLAN", "本地采购计划"),
     LOCAL_PURCHASE_ORDER("LOCAL_PURCHASE_ORDER", "本地采购单"),
     TOTAL_INVENTORY("TOTAL_INVENTORY", "总库存"),
@@ -47,6 +49,7 @@ public enum CfgRuleInventoryNodeEnum implements EnumMessage {
     TOTAL_OVERSEAS_ESTIMATED_DELIVERY("TOTAL_OVERSEAS_ESTIMATED_DELIVERY", "海外仓预计发货"),
     TOTAL_LOCAL_INVENTORY("TOTAL_LOCAL_INVENTORY", "本地库存(总)"),
     TOTAL_LOCAL_USABLE("TOTAL_LOCAL_USABLE", "本地可用"),
+    TOTAL_LOCAL_WAIT_QC("TOTAL_LOCAL_WAIT_QC", "本地待检"),
     TOTAL_LOCAL_IN_TRANSIT("TOTAL_LOCAL_IN_TRANSIT", "本地在途"),
     TOTAL_LOCAL_ESTIMATED_DELIVERY("TOTAL_LOCAL_ESTIMATED_DELIVERY", "预计采购"),
 
@@ -115,12 +118,21 @@ public enum CfgRuleInventoryNodeEnum implements EnumMessage {
         return String.join(":", LOCAL_INVENTORY.getCode(), LOCAL_USABLE.getCode());
     }
 
+    public static String getLocalWaitQc() {
+        return String.join(":", LOCAL_INVENTORY.getCode(), LOCAL_WAIT_QC.getCode());
+    }
+
     public static String getLocalInTransit() {
         return String.join(":", LOCAL_INVENTORY.getCode(), LOCAL_IN_TRANSIT.getCode());
     }
 
     public static String getLocalReplenishmentPlan() {
         return String.join(":", LOCAL_INVENTORY.getCode(), LOCAL_ESTIMATED_DELIVERY.getCode(), LOCAL_REPLENISHMENT_PLAN.getCode());
+    }
+
+
+    public static String getLocalReplenishmentPurchasePlan() {
+        return String.join(":", LOCAL_INVENTORY.getCode(), LOCAL_ESTIMATED_DELIVERY.getCode(), LOCAL_REPLENISHMENT_PURCHASE_PLAN.getCode());
     }
 
     public static String getLocalPurchasePlan() {

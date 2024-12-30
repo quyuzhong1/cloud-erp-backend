@@ -123,8 +123,8 @@
           AND wdpd.sku_id =
         #{result.replenishment.skuId}
         <choose>
-            <when test="sourceType == 'replenishment_plan'">
-              AND  wdp.source_type = 'replenishment_plan'
+            <when test="sourceType == 'replenishmentSuggestion'">
+              AND  wdp.source_type = 'deliverySuggestion'
             </when>
             <otherwise>
                 AND wdp.source_type = ''
@@ -207,13 +207,20 @@
         SUM ( pad.apply_qty ) AS qty,
         MAX ( pad.create_po_type ) AS createPoType,
         MAX ( COALESCE ( pa.approve_time, pa.create_time ) ) AS estimatedPutAwayDate,
-        MAX ( pad.id ) AS detailId,
-        'purchaseApplication' AS sourceType
+        MAX ( pad.id ) AS detailId
         FROM
         ${tableName} AS pa
         INNER JOIN ${tableDetailName} AS pad ON pad.is_deleted = FALSE
         AND pad.purchase_application_id = pa.id
         <where>
+            <choose>
+                <when test="sourceType == 'replenishmentSuggestion'">
+                    AND pa.source_type in ('purchaseSuggestion','purchaseSuggestionMerge')
+                </when>
+                <otherwise>
+                    AND pa.source_type not in ('purchaseSuggestion','purchaseSuggestionMerge')
+                </otherwise>
+            </choose>
             <if test="codes != null and !codes.isEmpty()">
                 <!-- 当 codes 包含 'approve' 时，处理特殊条件 -->
                 <if test="codes.size() == 1 and 'approve' in codes">
@@ -620,7 +627,7 @@
         SUM ( CASE WHEN ps.status = 'draft' THEN 0 WHEN ps.status = 'waitConfirm' THEN ps.suggest_purchase_qty ELSE ps.plan_purchase_qty END ) AS qty,
         MAX ( ps.estimate_instock_date ) AS estimatedPutAwayDate,
         MAX ( ps.estimate_sales_date ) AS estimateSalesDate,
-        'replenishment_plan' AS sourceType,
+        'replenishmentSuggestion' AS sourceType,
         ps.sku_id,
         ps.shop_id
         FROM
@@ -646,7 +653,7 @@
         SUM ( CASE WHEN ps.status = 'draft' THEN 0 WHEN ps.status = 'waitConfirm' THEN ps.suggest_purchase_qty ELSE ps.plan_purchase_qty END ) AS qty,
         MAX ( ps.estimate_instock_date ) AS estimatedPutAwayDate,
         MAX ( ps.estimate_sales_date ) AS estimateSalesDate,
-        'replenishment_plan' AS sourceType,
+        'replenishmentSuggestion' AS sourceType,
         ps.sku_id,
         ps.shop_id
         FROM
@@ -661,6 +668,21 @@
         ps.sku_id,
         ps.shop_id,
         ps.id
+    </select>
+    <select id="getLocalWaitQc" resultType="com.erp.model.mrp.dto.ReplenishmentInventoryDTO$LocalWaitQcDTO">
+        SELECT
+        sku_id,
+        warehouse_id AS warehouseId,
+        SUM ( qty ) AS qty
+        FROM
+        ${tableName}
+        WHERE is_deleted = false
+        AND dict_inventory_status IN
+        <foreach item="code" collection="codes" open="(" separator="," close=")">
+            #{code}
+        </foreach>
+        GROUP BY
+        warehouse_id,sku_id
     </select>
 
 

@@ -25,6 +25,11 @@ public class ReplenishmentInventoryDTO {
     private List<LocalUsableDTO> localUsableList;
 
     /**
+     * 本地待检
+     */
+    private List<LocalWaitQcDTO> localWaitQcList;
+
+    /**
      * 虚拟仓可用
      */
     private List<VirtualUsableDTO> virtualUsableList;
@@ -77,6 +82,23 @@ public class ReplenishmentInventoryDTO {
     @Getter
     @Setter
     public static class LocalUsableDTO {
+        /**
+         * sku
+         */
+        private String skuId;
+        /**
+         * 仓库
+         */
+        private String warehouseId;
+        /**
+         * 数量
+         */
+        private Integer qty;
+    }
+
+    @Getter
+    @Setter
+    public static class LocalWaitQcDTO {
         /**
          * sku
          */

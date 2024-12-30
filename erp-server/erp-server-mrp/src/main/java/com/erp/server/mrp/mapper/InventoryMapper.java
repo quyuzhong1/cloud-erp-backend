@@ -140,7 +140,7 @@ public interface InventoryMapper {
     /**
      * 查询采购计划
      */
-    List<ReplenishmentInventoryDTO.EstimatedPurchaseDTO> listPurchasePlan(@Param("codes") Set<String> codes, @Param("tableName") String tableName, @Param("tableDetailName") String tableDetailName);
+    List<ReplenishmentInventoryDTO.EstimatedPurchaseDTO> listPurchasePlan(@Param("codes") Set<String> codes, @Param("sourceType") String sourceType, @Param("tableName") String tableName, @Param("tableDetailName") String tableDetailName);
 
     /**
      * 查询补货计划预计采购
@@ -156,4 +156,9 @@ public interface InventoryMapper {
      * @param tableName 表
      */
     List<ReplenishmentInventoryDTO.ReplenishmentPurchaseDTO> getReplenishmentPurchaseMergePlan(@Param("codes") Set<String> codes, @Param("tableName") String tableName);
+
+    /**
+     * 查询待检库存
+     */
+    List<ReplenishmentInventoryDTO.LocalWaitQcDTO> getLocalWaitQc(@Param("codes") Set<String> codes, @Param("tableName") String tableName);
 }

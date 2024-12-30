@@ -70,6 +70,10 @@ public class ReplenishmentResultDTO {
      */
     private List<ReplenishmentInventoryDetailDTO> localUsableDetail;
     /**
+     * 本地可用库存明细
+     */
+    private List<ReplenishmentInventoryDetailDTO> localWaitQcDetail;
+    /**
      * 本地在途明细
      */
     private List<LocalInTransitDetailDTO> localInTransitDetails;
@@ -358,6 +362,11 @@ public class ReplenishmentResultDTO {
         private Integer localUsableQty;
 
         /**
+         * 本地仓待检
+         */
+        private Integer localWaitQcQty;
+
+        /**
          * 本地仓在途
          */
         private Integer localInTransitQty;
@@ -540,6 +549,7 @@ public class ReplenishmentResultDTO {
             detail.setOverseasInTransitQty(dto.getOverseasInTransitQty());
             detail.setOverseasPlanDeliveryQty(dto.getOverseasPlanDeliveryQty());
             detail.setLocalUsableQty(dto.getLocalUsableQty());
+            detail.setLocalWaitQcQty(dto.getLocalWaitQcQty());
             detail.setLocalInTransitQty(dto.getLocalInTransitQty());
             detail.setLocalPlanPurchaseQty(dto.getLocalPlanPurchaseQty());
             detail.setTotalInventoryQty(dto.getTotalInventoryQty());

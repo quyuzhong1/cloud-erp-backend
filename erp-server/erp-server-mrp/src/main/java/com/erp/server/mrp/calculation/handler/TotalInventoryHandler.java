@@ -60,6 +60,9 @@ public class TotalInventoryHandler extends AbstractSkuCalculationHandler {
             if (localResult.contains(TOTAL_LOCAL_USABLE.getCode()) && !ObjectUtils.isEmpty(replenishmentResultDTO.getReplenishmentDetail().getLocalUsableQty())) {
                 totalQty += replenishmentResultDTO.getReplenishmentDetail().getLocalUsableQty();
             }
+            if (localResult.contains(TOTAL_LOCAL_WAIT_QC.getCode()) && !ObjectUtils.isEmpty(replenishmentResultDTO.getReplenishmentDetail().getLocalWaitQcQty())) {
+                totalQty += replenishmentResultDTO.getReplenishmentDetail().getLocalWaitQcQty();
+            }
             if (localResult.contains(TOTAL_LOCAL_IN_TRANSIT.getCode()) && !ObjectUtils.isEmpty(replenishmentResultDTO.getReplenishmentDetail().getLocalInTransitQty())) {
                 totalQty += replenishmentResultDTO.getReplenishmentDetail().getLocalInTransitQty();
             }
