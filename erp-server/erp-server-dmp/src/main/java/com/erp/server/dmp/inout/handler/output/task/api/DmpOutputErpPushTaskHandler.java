@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import com.erp.server.dmp.push.service.lingxing.LxCommonService;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -276,6 +277,14 @@ public class DmpOutputErpPushTaskHandler extends DmpOutputTaskHandler{
 				requestData = JSON.toJSONString(sdyObject);
 				outputMethod = SdyCommonService.REQUEST_SDY;
 			}
+			if(systemCode.equals(DmpBasicSystemCodeEnum.LING_XING.getCode())) {
+				Map<String, String> syncObject = new HashMap<>();
+				syncObject.put(LxCommonService.REQUEST_URL, outputMethod);
+				syncObject.put(LxCommonService.REQUEST_DATA, requestData);
+				requestData = JSON.toJSONString(syncObject);
+				outputMethod = LxCommonService.REQUEST_LX;
+			}
+
 			try {
 				method = bean.getClass().getMethod(outputMethod, Object.class);
 			} catch (NoSuchMethodException | SecurityException e) {

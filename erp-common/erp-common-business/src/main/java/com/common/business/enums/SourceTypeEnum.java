@@ -120,11 +120,12 @@ public enum SourceTypeEnum {
     PRODUCT_DETAIL("productDetail", "产品管理","product_detail"),
     SDY_PRODUCT_DETAIL("sdy_productDetail", "产品管理","product_detail"),
     WDT_PRODUCT_DETAIL("wdtProductDetail", "产品管理","product_detail"),
-    LINGXING_PRODUCT_DETAIL("lingxingProductDetail", "产品管理","product_detail"),
     PROJECT_TASK("projectTask", "任务列表","project_task"),
     PRODUCT_CHANGE("productChange", "变更管理","product_change"),
     BASIC_CATEGORY("basicCategory", "产品分类","basic_category"),
     PRODUCT_LOGISTICS("ProductLogistics", "物流产品","product_logistics"),
+
+    LX_PRODUCT_DETAIL("lx_productDetail", "产品管理","product_detail"),
 
 
     //SYS

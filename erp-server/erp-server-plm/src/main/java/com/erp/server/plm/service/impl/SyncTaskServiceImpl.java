@@ -194,6 +194,9 @@ public class SyncTaskServiceImpl implements SyncTaskService {
             case SDY_PRODUCT_DETAIL:
             	resultList = newSyncSdyProductDetail(sourceDetailList);
                 break;
+            case LX_PRODUCT_DETAIL:
+                resultList = newSyncLxProductDetail(sourceDetailList);
+                break;
             case PRODUCT_BOM_INFO:
 //                resultList = newSyncBomInfo(sourceDetailList);
                 break;
@@ -302,4 +305,28 @@ public class SyncTaskServiceImpl implements SyncTaskService {
     	return resultList;
     }
 
+    /**
+     * 查询同步SKU到领星
+     */
+    private Map<String , Map<String, Object>> newSyncLxProductDetail (List<DmpSyncMqDTO.SyncParamDetailDTO> sourceDetailList) {
+        Map<String , Map<String, Object>> resultList = new HashMap<>();
+        List<String> sourceIdList = sourceDetailList.stream().map(DmpSyncMqDTO.SyncParamDetailDTO::getSourceId).collect(Collectors.toList());
+        List<ProductDetailEntity> list = productDetailService.listByIds(sourceIdList);
+        if (CollectionUtils.isEmpty(list)) {
+            log.error("newSyncLxProductDetail >>>> 未找到数据！");
+            return resultList;
+        }
+        for (DmpSyncMqDTO.SyncParamDetailDTO syncParamDetailDTO :  sourceDetailList) {
+            String sourceId = syncParamDetailDTO.getSourceId();
+            ProductDetailEntity productDetailEntity = list.stream()
+                    .filter(obj -> obj.getId().equals(sourceId))
+                    .findFirst()
+                    .orElse(null);
+            if (ObjectUtils.isEmpty(productDetailEntity)) {
+                continue;
+            }
+            resultList.put(syncParamDetailDTO.getDataId(), syncKingdeeProductDetailService.newSyncDataToSdy(productDetailEntity, syncParamDetailDTO.getSyncOperate()));
+        }
+        return resultList;
+    }
 }
