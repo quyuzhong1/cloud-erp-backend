@@ -62,7 +62,7 @@ public class VirtualTransFlowDetailController extends BaseController {
     }
 
     /**
-     * 处理历史数据
+     * 处理历史数据（添加任务）
      * @author will
      * @date 2024/12/17 17:34
      * @param dto 
@@ -73,4 +73,5 @@ public class VirtualTransFlowDetailController extends BaseController {
         virtualTransFlowDetailService.handleHisVirtualTransFlowDetail(dto);
         return success() ;
     }
+
 }

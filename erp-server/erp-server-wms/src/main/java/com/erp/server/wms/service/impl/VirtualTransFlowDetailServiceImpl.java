@@ -31,16 +31,13 @@ import com.erp.server.wms.mapper.VirtualTransFlowDetailMapper;
 import com.erp.server.wms.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.Resource;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_VIRTUAL_TRANS_FLOW_DETAIL;
@@ -56,22 +53,22 @@ import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_VIRTUAL_TRA
 @Slf4j
 @Service
 public class VirtualTransFlowDetailServiceImpl extends SuperServiceImpl<VirtualTransFlowDetailMapper, VirtualTransFlowDetailEntity> implements VirtualTransFlowDetailService {
-    @Autowired
+    @Resource
     private OperateLogService operateLogService;
 
-    @Autowired
+    @Resource
     private DownloadTaskFeign downloadTaskFeign;
 
-    @Autowired
+    @Resource
     private VirtualTransFlowService virtualTransFlowService;
 
-    @Autowired
+    @Resource
     private VirtualInventoryDetailService virtualInventoryDetailService;
 
-    @Autowired
+    @Resource
     private WmsVirtualDetailMsgService wmsVirtualDetailMsgService;
 
-    @Autowired
+    @Resource
     private VirtualInventoryDetailHisService virtualInventoryDetailHisService;
 
 
@@ -79,6 +76,9 @@ public class VirtualTransFlowDetailServiceImpl extends SuperServiceImpl<VirtualT
     @Transactional(rollbackFor = Exception.class)
     @Override
     public Boolean batchAdd(List<VirtualTransFlowDetailDTO.AddDTO> addDTOList) {
+        if (CollUtil.isEmpty(addDTOList)) {
+            return Boolean.TRUE;
+        }
         List<VirtualTransFlowDetailEntity> list = BeanMapperUtils.copyList(VirtualTransFlowDetailEntity.class, addDTOList);
 
         log.info("开始新增虚拟仓库存流水明细");
@@ -174,6 +174,82 @@ public class VirtualTransFlowDetailServiceImpl extends SuperServiceImpl<VirtualT
     public List<VirtualTransFlowDetailEntity> listByVirtualTransFlowId(String parentVirtualTransFlowId) {
         return lambdaQuery().eq(VirtualTransFlowDetailEntity::getVirtualTransFlowId,parentVirtualTransFlowId).list();
     }
+
+    @Override
+    public void handleAddTransFlowDetail(List<VirtualTransFlowEntity> value) {
+        List<VirtualTransFlowEntity> list = value.stream().sorted(Comparator.comparing(VirtualTransFlowEntity::getTradeTime)).collect(Collectors.toList());
+        for (VirtualTransFlowEntity entity : list) {
+            List<VirtualTransFlowDetailEntity> flowDetailList = this.listByVirtualTransFlowId(entity.getId());
+            if (CollUtil.isNotEmpty(flowDetailList)) {
+                continue;
+            }
+            try {
+                //入库
+                if (entity.getQty() > MathUtil.ZERO) {
+                    //生成批次库存数据
+                    VirtualInventoryDetailEntity inventoryDetailEntity =  addVirtualInventoryDetail(entity);
+                    //入库
+                    instockVirtualTransFlowDetail(entity,inventoryDetailEntity);
+                    continue;
+                }
+                //出库
+                handleOutstockVirtualTransFlowDetail(entity);
+            } catch (Exception e) {
+                virtualTransFlowService.updateRemark(entity.getId(),e.getMessage());
+            }
+        }
+    }
+    /**
+     * 数据处理
+     * @author will
+     * @date 2024/12/27 20:38
+     * @param entity
+     */
+    private void handleOutstockVirtualTransFlowDetail(VirtualTransFlowEntity entity) {
+        //出库按先进先出
+        List<VirtualInventoryDetailEntity> list = virtualInventoryDetailService.getByOutParam(entity.getSkuId(), entity.getWarehouseId(), entity.getVirtualWarehouseId());
+        if (CollUtil.isEmpty(list)) {
+            throw new ServiceException(CharSequenceUtil.format("流水id【{}】无可出库龄库存",entity.getId()));
+        }
+        List<VirtualTransFlowDetailDTO.AddDTO> addDTOList = new ArrayList<>();
+        List<VirtualInventoryDetailEntity> updateList = new ArrayList<>();
+        Integer notOutQty = Math.abs(entity.getQty());
+        for (int i = 0;i < list.size();i++ ) {
+            VirtualInventoryDetailEntity detailEntity = list.get(i);
+            //当剩余出库数量为0时无需加流水
+            if (MathUtil.compareTo(notOutQty,MathUtil.ZERO) == MathUtil.ZERO) {
+                continue;
+            }
+            VirtualTransFlowDetailDTO.AddDTO addDTO = new VirtualTransFlowDetailDTO.AddDTO();
+            addDTO.setVirtualTransFlowId(entity.getId());
+            addDTO.setBillDate(entity.getBillDate());
+            addDTO.setTradeTime(entity.getTradeTime());
+            addDTO.setVirtualInventoryDetailId(detailEntity.getId());
+            //批次库存数量是否大于剩余出库数量
+            boolean isOver = detailEntity.getQty() > notOutQty;
+            addDTO.setQty(isOver ? - notOutQty : - detailEntity.getQty());
+            addDTO.setCurInventoryQty(detailEntity.getQty() - Math.abs(addDTO.getQty()));
+            //剩余未出数量
+            notOutQty = notOutQty - Math.abs(addDTO.getQty());
+
+            //如果最后一条入库后还存在出库则添加在最后一个入库上
+            if (i == list.size() - 1 && notOutQty > 0) {
+                addDTO.setQty(addDTO.getQty() + notOutQty);
+                addDTO.setCurInventoryQty(detailEntity.getQty() - Math.abs(addDTO.getQty()));
+            }
+            addDTOList.add(addDTO);
+
+            detailEntity.setQty(detailEntity.getQty() - Math.abs(addDTO.getQty()));
+            detailEntity.setLastOutstockDate(entity.getBillDate());
+            updateList.add(detailEntity);
+        }
+        this.batchAdd(addDTOList);
+        if (CollUtil.isEmpty(updateList)) {
+            return;
+        }
+        virtualInventoryDetailService.updateBatchById(updateList);
+    }
+
 
     /**
      * 重算库存流水
@@ -322,6 +398,9 @@ public class VirtualTransFlowDetailServiceImpl extends SuperServiceImpl<VirtualT
             detailEntity.setQty(detailEntity.getQty() - Math.abs(addDTO.getQty()));
             detailEntity.setLastOutstockDate(entity.getBillDate());
             updateList.add(detailEntity);
+        }
+        if (MathUtil.compareTo(notOutQty,MathUtil.ZERO) > MathUtil.ZERO) {
+            throw new ServiceException(StrUtil.format("单据【{}】库龄库存扣减失败",entity.getSourceCode()));
         }
         if (CollUtil.isEmpty(addDTOList)) {
             throw new ServiceException("未找到库龄流水数据");
