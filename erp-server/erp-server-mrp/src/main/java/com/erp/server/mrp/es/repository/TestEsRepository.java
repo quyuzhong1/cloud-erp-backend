@@ -33,7 +33,7 @@ public interface TestEsRepository extends ElasticsearchRepository<TestEsEntity, 
 	 * @param pageable
 	 * @return
 	 */
-	Page<TestEsEntity> findByCode(String code , Pageable pageable);
+	Page<TestEsEntity> findByCodeOrderByNameDesc(String code , Pageable pageable);
 	
 	/**
 	 * 通过code字段In和在date字段Between查询es分页数据
@@ -44,4 +44,5 @@ public interface TestEsRepository extends ElasticsearchRepository<TestEsEntity, 
 	 * @return
 	 */
 	Page<TestEsEntity> findByCodeInAndDateBetween(List<String> codes, LocalDate startDate, LocalDate endDate, Pageable pageable);
+	
 }

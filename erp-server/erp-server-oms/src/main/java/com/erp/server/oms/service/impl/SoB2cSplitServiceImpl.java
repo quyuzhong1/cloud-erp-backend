@@ -112,6 +112,8 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
     private LogisticsFeign logisticsFeign;
     @Resource
     private DmpTaskFeign dmpTaskFeign;
+    @Resource
+    private ShopInfoService shopInfoService;
 
     @Override
     public List<SoB2cDetailDTO.ViewDTO> getBomSplitInfo(List<String> ids) {
@@ -205,12 +207,17 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
         if (CollUtil.isEmpty(childSkuList) || CollUtil.isEmpty(skuVOList) || Objects.isNull(soB2cEntity) || Objects.isNull(detailEntity)){
             return;
         }
-        String orgId = soB2cEntity.getOrgId();
+        String shopId = soB2cEntity.getShopId();
+        ShopInfoEntity shopInfo = shopInfoService.getById(shopId);
+        if (Objects.isNull(shopInfo)){
+            return;
+        }
+        String salesOrgId = shopInfo.getSalesOrgId();
         String warehouseId = detailEntity.getWarehouseId();
         LocalDate billDate = soB2cEntity.getBillDate();
         InventorySkuCostDTO.QueryB2CDTO queryB2CDTO = new InventorySkuCostDTO.QueryB2CDTO();
         List<InventorySkuCostDTO.QueryB2CDetailDTO> detailDTOS = new ArrayList<>();
-        queryB2CDTO.setSalesOrgId(orgId);
+        queryB2CDTO.setSalesOrgId(salesOrgId);
         for (String skuId : childSkuList){
             detailDTOS.add(InventorySkuCostDTO.QueryB2CDetailDTO.builder()
                     .skuId(skuId).warehouseId(warehouseId)
@@ -259,12 +266,17 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
         if (Objects.isNull(soB2cEntity) || Objects.isNull(detailEntity)){
             return;
         }
-        String orgId = soB2cEntity.getOrgId();
+        String shopId = soB2cEntity.getShopId();
+        ShopInfoEntity shopInfo = shopInfoService.getById(shopId);
+        if (Objects.isNull(shopInfo)){
+            return;
+        }
+        String salesOrgId = shopInfo.getSalesOrgId();
         String warehouseId = detailEntity.getWarehouseId();
         LocalDate billDate = soB2cEntity.getBillDate();
         InventorySkuCostDTO.QueryB2CDTO queryB2CDTO = new InventorySkuCostDTO.QueryB2CDTO();
         List<InventorySkuCostDTO.QueryB2CDetailDTO> detailDTOS = new ArrayList<>();
-        queryB2CDTO.setSalesOrgId(orgId);
+        queryB2CDTO.setSalesOrgId(salesOrgId);
         detailDTOS.add(InventorySkuCostDTO.QueryB2CDetailDTO.builder()
                     .skuId(skuVO.getSkuId()).warehouseId(warehouseId)
                     .build());

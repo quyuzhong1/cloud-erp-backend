@@ -275,7 +275,7 @@ public class DmpOutputErpPushTaskHandler extends DmpOutputTaskHandler{
 		}
 
 		Boolean isQuerySync = JSON.parseObject(requestData).getBoolean("isQuerySync");
-		if (isQuerySync) {
+		if (isQuerySync != null && isQuerySync) {
 			List<DmpOutputTaskRecordEntity> erpQuerySync = dmpOutputTaskRecordService.erpQuerySync(dmpCfgOutputEntity, Arrays.asList(dmpOutputTaskRecordEntity));
 			if(CollUtil.isNotEmpty(erpQuerySync)) {
 				requestData = erpQuerySync.get(0).getRequestData();

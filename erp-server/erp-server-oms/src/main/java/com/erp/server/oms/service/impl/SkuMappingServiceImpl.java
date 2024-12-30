@@ -871,7 +871,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
             return null;
         }
         ShopInfoEntity shopInfo = shopInfoService.getById(shopId);
-        if (Objects.isNull(shopInfo) || CharSequenceUtil.isBlank(shopInfo.getCustomerId())){
+        if (Objects.isNull(shopInfo)){
             return null;
         }
         String salesOrgId = shopInfo.getSalesOrgId();
