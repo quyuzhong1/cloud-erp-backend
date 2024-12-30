@@ -128,6 +128,9 @@ public class InventorySkuCostDetailServiceImpl extends SuperServiceImpl<Inventor
             lambdaUpdate().eq(InventorySkuCostDetailEntity::getMainId, entity.getId()).remove();
             return;
         }
+        if (hasSameDetail(detailEntityList)){
+            throw new ServiceException("不能存在相同SKU+仓库配置");
+        }
         List<String> newDetailIds = detailEntityList.stream().filter(e -> Objects.nonNull(e) && CharSequenceUtil.isNotBlank(e.getId())).map(InventorySkuCostDetailEntity::getId).distinct().collect(Collectors.toList());
         if (CollectionUtils.isEmpty(newDetailIds)) {
             //明细为空则清空
@@ -174,6 +177,11 @@ public class InventorySkuCostDetailServiceImpl extends SuperServiceImpl<Inventor
             inventorySkuCostDetailEntity.setWarehouseName(Objects.nonNull(warehouseEntity) ? warehouseEntity.getName() : CharSequenceUtil.EMPTY);
         });
         this.saveOrUpdateBatch(detailEntityList);
+    }
+
+    private Boolean hasSameDetail(List<InventorySkuCostDetailEntity> detailEntityList) {
+        long count = detailEntityList.stream().map(e -> e.getSkuId() + e.getWarehouseId()).distinct().count();
+        return count != detailEntityList.size();
     }
 
     @Override
