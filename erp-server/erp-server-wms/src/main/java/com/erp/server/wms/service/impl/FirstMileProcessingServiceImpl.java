@@ -3,6 +3,7 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -257,16 +258,27 @@ public class FirstMileProcessingServiceImpl extends SuperServiceImpl<FirstMilePr
             listDTO.setDeliveryApproveStatusName(ApproveStatusEnum.getName(listDTO.getDeliveryApproveStatus()));
             //要货申请状态名称
             listDTO.setRequisitionApplicationStatusName(RequisitionApplicationStatusEnum.getName(listDTO.getRequisitionApplicationStatus()));
+
+            //冻结时长
+            listDTO.setFrozenDays(Math.toIntExact(LocalDate.now().toEpochDay() - listDTO.getFrozenTime().toLocalDate().toEpochDay()));
+
             //标签
             List<String> labelList = new ArrayList<>();
             if (CharSequenceUtil.isNotBlank(listDTO.getOutstockOrderId())) {
                 labelList.add(OrderProcessingLableEnum.OUTSTOCK.getCode());
+                LocalDate localDate = ObjUtil.isEmpty(listDTO.getOutstockOrderTime()) ? LocalDate.now() : listDTO.getOutstockOrderTime().toLocalDate();
+                //冻结时长
+                listDTO.setFrozenDays(Math.toIntExact(localDate.toEpochDay() - listDTO.getFrozenTime().toLocalDate().toEpochDay()));
             }
             if (MathUtil.compareTo(listDTO.getDeliveryQty(),listDTO.getFrozenQty()) != MathUtil.ZERO && CharSequenceUtil.isNotBlank(listDTO.getFirstMileDeliveryId())) {
                 labelList.add(OrderProcessingLableEnum.FROZEN.getCode());
+                //冻结时长
+                listDTO.setFrozenDays(Math.toIntExact(LocalDate.now().toEpochDay() - listDTO.getFrozenTime().toLocalDate().toEpochDay()));
             }
             if (CharSequenceUtil.isBlank(listDTO.getOutstockOrderId()) && ObjectUtil.isNotEmpty(listDTO.getFrozenTime()) && (LocalDate.now().toEpochDay() - listDTO.getFrozenTime().toLocalDate().toEpochDay() >= 7)) {
                 labelList.add(OrderProcessingLableEnum.UN_SHIPPED.getCode());
+                //冻结时长
+                listDTO.setFrozenDays(Math.toIntExact(LocalDate.now().toEpochDay() - listDTO.getFrozenTime().toLocalDate().toEpochDay()));
             }
             listDTO.setLabelList(labelList);
         }

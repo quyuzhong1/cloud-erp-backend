@@ -19,8 +19,8 @@ import com.erp.model.wms.dto.SoB2bProcessingDTO;
 import com.erp.model.wms.dto.SoB2cProcessingDTO;
 import com.erp.model.wms.entity.SoB2cProcessingEntity;
 import com.erp.model.wms.entity.VirtualTransFlowEntity;
-import com.erp.model.wms.enums.DeliveryStatusEnum;
 import com.erp.model.wms.enums.OrderProcessingLableEnum;
+import com.erp.model.wms.enums.SoB2cDeliveryStatusEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.mapper.SoB2cProcessingMapper;
@@ -260,17 +260,26 @@ public class SoB2cProcessingServiceImpl extends SuperServiceImpl<SoB2cProcessing
             return;
         }
         for (SoB2cProcessingDTO.ListDTO listDTO : list) {
-            listDTO.setDeliveryStatusName(DeliveryStatusEnum.getName(listDTO.getDeliveryStatus()));
+            listDTO.setDeliveryStatusName(SoB2cDeliveryStatusEnum.getName(listDTO.getDeliveryStatus()));
+            //冻结时长
+            listDTO.setFrozenDays(Math.toIntExact(LocalDate.now().toEpochDay() - listDTO.getFrozenTime().toLocalDate().toEpochDay()));
             //标签
             List<String> labelList = new ArrayList<>();
             if (CharSequenceUtil.isNotBlank(listDTO.getOutstockOrderId())) {
                 labelList.add(OrderProcessingLableEnum.OUTSTOCK.getCode());
+                LocalDate localDate = ObjUtil.isEmpty(listDTO.getOutstockOrderTime()) ? LocalDate.now() : listDTO.getOutstockOrderTime().toLocalDate();
+                //冻结时长
+                listDTO.setFrozenDays(Math.toIntExact(localDate.toEpochDay() - listDTO.getFrozenTime().toLocalDate().toEpochDay()));
             }
             if (MathUtil.compareTo(listDTO.getDeliveryQty(),listDTO.getFrozenQty()) != MathUtil.ZERO && CharSequenceUtil.isNotBlank(listDTO.getDeliveryId())) {
                 labelList.add(OrderProcessingLableEnum.FROZEN.getCode());
+                //冻结时长
+                listDTO.setFrozenDays(Math.toIntExact(LocalDate.now().toEpochDay() - listDTO.getFrozenTime().toLocalDate().toEpochDay()));
             }
             if (CharSequenceUtil.isBlank(listDTO.getOutstockOrderId()) && ObjectUtil.isNotEmpty(listDTO.getFrozenTime()) && (LocalDate.now().toEpochDay() - listDTO.getFrozenTime().toLocalDate().toEpochDay() >= 7)) {
                 labelList.add(OrderProcessingLableEnum.UN_SHIPPED.getCode());
+                //冻结时长
+                listDTO.setFrozenDays(Math.toIntExact(LocalDate.now().toEpochDay() - listDTO.getFrozenTime().toLocalDate().toEpochDay()));
             }
             listDTO.setLabelList(labelList);
         }

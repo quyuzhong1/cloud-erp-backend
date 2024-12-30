@@ -165,7 +165,7 @@ public class SoB2bProcessingDTO implements Serializable {
         /**
          * 出库单据时间
          */
-        private String outstockOrderTime;
+        private LocalDateTime outstockOrderTime;
         /**
          * 出库数量
          */
