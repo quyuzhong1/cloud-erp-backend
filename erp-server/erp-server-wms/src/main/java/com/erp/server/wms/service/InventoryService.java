@@ -362,4 +362,6 @@ public interface InventoryService extends SuperService<InventoryEntity> {
     InventoryEntity getInventory(String skuId, String warehouseId, String warehouseLocation, String inventoryStatus);
 
     PagingVO<DynamicExcelDTO> exportWmsInventoryAge(PagingDTO<InventoryReportDTO.ExportInventoryAgeSearchParamDTO> dto);
+
+    List<InventoryEntity> listNegativeInventoryByWarehouseId(String warehouseId);
 }

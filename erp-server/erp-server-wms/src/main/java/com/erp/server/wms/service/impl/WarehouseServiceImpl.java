@@ -35,10 +35,7 @@ import com.erp.model.wms.dto.WarehouseDTO.WarehouseUpdateStateDTO;
 import com.erp.model.wms.dto.excel.WarehouseExcelDTO;
 import com.erp.model.wms.dto.excel.WarehouseExportExcelDTO;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
-import com.erp.model.wms.entity.DictBasicEntity;
-import com.erp.model.wms.entity.WarehouseEntity;
-import com.erp.model.wms.entity.WarehouseLocationEntity;
-import com.erp.model.wms.entity.WarehouseMappingEntity;
+import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.DictBasicEnum;
 import com.erp.model.wms.enums.WarehouseManageTypeEnum;
 import com.erp.model.wms.enums.WmsRedisKeyEnum;
@@ -683,6 +680,14 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
         String name = dto.getName();
         checkName(warehouseId, name);
         checkKingdeeWarehouseCode(warehouseId, code);
+        //负库存按钮调整，校验是否通过
+        if(!dto.getAllowNegativeInventory() && warehouse.getAllowNegativeInventory()){
+            List<InventoryEntity> negativeInventoryList =  inventoryService.listNegativeInventoryByWarehouseId(warehouseId);
+            if(CollectionUtils.isNotEmpty(negativeInventoryList)){
+                List<String> skuNos = negativeInventoryList.stream().map(InventoryEntity::getSkuNo).collect(Collectors.toList());
+                throw new ServiceException("仓库{}sku{}存在负库存，不允许修改为不允许负库存",warehouse.getName(),skuNos);
+            }
+        }
         //仓库下绑定第三方店铺不能修改为禁用状态
         //Delete by Edison.qu 2024-07-23 去除不必要的限制
 //        if (Objects.nonNull(dto.getDisabled()) && !Objects.equals(dto.getDisabled(), warehouse.getDisabled()) && Objects.equals(dto.getDisabled(), true)) {
