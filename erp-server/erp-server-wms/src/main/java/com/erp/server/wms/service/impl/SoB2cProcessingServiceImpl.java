@@ -14,6 +14,7 @@ import com.common.business.vo.PagingVO;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
+import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.wms.dto.SoB2bProcessingDTO;
 import com.erp.model.wms.dto.SoB2cProcessingDTO;
 import com.erp.model.wms.entity.SoB2cProcessingEntity;
@@ -157,7 +158,9 @@ public class SoB2cProcessingServiceImpl extends SuperServiceImpl<SoB2cProcessing
             }
 
             //bom信息
-            List<BomChildrenSkuDTO> childList = bomChildrenSkuList.stream().filter(obj -> CharSequenceUtil.equals(obj.getParentSkuId(), entity.getSkuId())).collect(Collectors.toList());
+            List<BomChildrenSkuDTO> childList = bomChildrenSkuList.stream().filter(obj ->
+                    CharSequenceUtil.equals(obj.getParentSkuId(), entity.getSkuId())
+                &&  CharSequenceUtil.equals(obj.getType(), BomTypeEnum.COMBINATION.getType())).collect(Collectors.toList());
             if (CollUtil.isEmpty(childList)) {
                 SoB2cProcessingDTO.AddOrUpdateDTO addDTO = new SoB2cProcessingDTO.AddOrUpdateDTO();
                 BeanMapperUtils.copy(entity,addDTO);

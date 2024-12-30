@@ -14,6 +14,7 @@ import com.common.business.vo.PagingVO;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
+import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.wms.dto.FirstMileProcessingDTO;
 import com.erp.model.wms.dto.SoB2bProcessingDTO;
 import com.erp.model.wms.entity.FirstMileProcessingEntity;
@@ -36,7 +37,6 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_FIRST_MILE_PROCESSING;
-import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_SO_B2C_PROCESSING;
 
 /**
  * <p>
@@ -151,7 +151,9 @@ public class FirstMileProcessingServiceImpl extends SuperServiceImpl<FirstMilePr
                 handleOutstock (entity,soOutstockResponseDTO, SourceTypeEnum.SO_OUTSTOCK.getCode());
             }
             //bom信息
-            List<BomChildrenSkuDTO> childList = bomChildrenSkuList.stream().filter(obj -> CharSequenceUtil.equals(obj.getParentSkuId(), entity.getSkuId())).collect(Collectors.toList());
+            List<BomChildrenSkuDTO> childList = bomChildrenSkuList.stream().filter(obj ->
+                    CharSequenceUtil.equals(obj.getParentSkuId(), entity.getSkuId())
+                    &&  CharSequenceUtil.equals(obj.getType(), BomTypeEnum.COMBINATION.getType())).collect(Collectors.toList());
             if (CollUtil.isEmpty(childList)) {
                 FirstMileProcessingDTO.AddOrUpdateDTO addDTO = new FirstMileProcessingDTO.AddOrUpdateDTO();
                 BeanMapperUtils.copy(entity,addDTO);
