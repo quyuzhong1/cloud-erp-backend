@@ -172,5 +172,5 @@ public interface SoOutstockDetailService extends SuperService<SoOutstockDetailEn
      * @param sourceDetailIdList
      * @return List<ResponseDTO>
      */
-    List<SoB2bProcessingDTO.ResponseDTO> listSoOutstockBySourceDetailIdList(List<String> sourceDetailIdList);
+    List<SoB2bProcessingDTO.ResponseDTO> listSoOutstockBySourceIdList(List<String> sourceDetailIdList);
 }

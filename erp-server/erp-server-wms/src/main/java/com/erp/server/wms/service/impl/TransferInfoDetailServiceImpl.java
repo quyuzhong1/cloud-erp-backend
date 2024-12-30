@@ -151,8 +151,8 @@ public class TransferInfoDetailServiceImpl extends SuperServiceImpl<TransferInfo
     }
 
     @Override
-    public List<SoB2bProcessingDTO.ResponseDTO> listTransferBySourceDetailIdList(List<String> sourceDetailIdList) {
-        return baseMapper.listTransferBySourceDetailIdList(sourceDetailIdList);
+    public List<SoB2bProcessingDTO.ResponseDTO> listTransferBySourceIdList(List<String> sourceIdList) {
+        return baseMapper.listTransferBySourceIdList(sourceIdList);
     }
 
     /**

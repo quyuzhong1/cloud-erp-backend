@@ -76,8 +76,8 @@ public interface TransferInfoDetailService extends SuperService<TransferInfoDeta
      * 根据来源明细id查询
      * @author will
      * @date 2024/12/19 17:07
-     * @param sourceDetailIdList
+     * @param sourceIdList
      * @return List<ResponseDTO>
      */
-    List<SoB2bProcessingDTO.ResponseDTO> listTransferBySourceDetailIdList(List<String> sourceDetailIdList);
+    List<SoB2bProcessingDTO.ResponseDTO> listTransferBySourceIdList(List<String> sourceIdList);
 }

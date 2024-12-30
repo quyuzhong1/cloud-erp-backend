@@ -57,8 +57,8 @@ public interface SoOutstockDetailMapper extends BaseMapper<SoOutstockDetailEntit
      * 根据来源明细id查询
      * @author will
      * @date 2024/12/19 18:27
-     * @param sourceDetailIdList
+     * @param sourceIdList
      * @return List<ResponseDTO>
      */
-    List<SoB2bProcessingDTO.ResponseDTO> listSoOutstockBySourceDetailIdList(@Param("sourceDetailIdList") List<String> sourceDetailIdList);
+    List<SoB2bProcessingDTO.ResponseDTO> listSoOutstockBySourceIdList(@Param("sourceIdList") List<String> sourceIdList);
 }
