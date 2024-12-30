@@ -113,6 +113,7 @@ public class EBayShipOrder extends AbstractShipOrder {
                     packageInfo.setGlobalOrderNo(mainEntity.getThirdCode());
                     packageInfo.setLogisticsTypeId(thirdView.getThirdLogisticsId());
                     packageInfo.setWaybillNo(logisticsNo);
+                    packageInfo.setTrackingNo(logisticsEntity.getTrackNo());
                     packageInfo.setWid(Long.valueOf(wid));
                     LingxingApiUtils.fastOutbound(Collections.singletonList(packageInfo));
                 }

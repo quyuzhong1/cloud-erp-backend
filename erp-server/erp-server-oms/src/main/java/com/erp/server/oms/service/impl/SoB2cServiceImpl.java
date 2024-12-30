@@ -5914,7 +5914,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         detailEntityList.forEach(detailEntity -> {
             UpdateOrderDTO.OrderItem orderItem = new UpdateOrderDTO.OrderItem();
             orderItem.setMsku(detailEntity.getPlatformSkuNo());
-            orderItem.setSku(detailEntity.getSkuNo());
+            orderItem.setSku(LingxingApiUtils.convertLxSku(detailEntity.getSkuNo()));
             orderItem.setQuantity(detailEntity.getQty());
             orderItem.setId(detailEntity.getThirdDetailId());
             orderItem.setMark("更新订单");

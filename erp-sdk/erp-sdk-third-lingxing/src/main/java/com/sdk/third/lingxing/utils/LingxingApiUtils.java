@@ -6,6 +6,7 @@ import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.net.URLEncodeUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSON;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.common.business.constant.RedisCacheConstants;
@@ -438,6 +439,7 @@ public class LingxingApiUtils {
                 .map(e -> new TreeMap<>(BeanUtil.beanToMap(e, true, true)))
                 .collect(Collectors.toList());
         requestMap.put("order_list", dataMap);
+        log.error("领星更新订单传参,{}", JSONUtil.toJsonStr(requestMap));
         Result<Object> result = LingxingApiUtils.postAndSignCheckListConvert(LingxingApiUtils.UPDATE_ORDER_URI, requestMap);
         if ("10000".equalsIgnoreCase(result.getCode())) {
             String errorMsg = StrUtil.format("请求领星编辑/更新自发货订单失败:,request={}, result={}", requestMap, JSONUtil.toJsonStr(result));
