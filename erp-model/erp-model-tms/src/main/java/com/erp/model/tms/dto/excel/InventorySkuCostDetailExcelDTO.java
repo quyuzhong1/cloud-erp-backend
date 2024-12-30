@@ -35,17 +35,17 @@ public class InventorySkuCostDetailExcelDTO implements Serializable {
     @FieldValid(fieldName = "单位",maxLength = 10)
     private String  unit;
     /**
-     * *产品成本
+     * *仓库
      */
-    @ExcelProperty(value = "*材料成本", index = 3)
-    @FieldValid(fieldName = "材料成本",isNotBlank = true,formatPattern = FieldFormatPatternTypeEnum.AMOUNT6)
-    private String productCost;
+    @ExcelProperty(value = "*仓库", index = 3)
+    @FieldValid(fieldName = "仓库",isNotBlank = true)
+    private String warehouseName;
     /**
      * *产品成本
      */
-    @ExcelProperty(value = "*仓库", index = 4)
-    @FieldValid(fieldName = "仓库",isNotBlank = true)
-    private String warehouseName;
+    @ExcelProperty(value = "*材料成本", index = 4)
+    @FieldValid(fieldName = "材料成本",isNotBlank = true,formatPattern = FieldFormatPatternTypeEnum.AMOUNT6)
+    private String productCost;
     /**
      * *头程运费
      */
