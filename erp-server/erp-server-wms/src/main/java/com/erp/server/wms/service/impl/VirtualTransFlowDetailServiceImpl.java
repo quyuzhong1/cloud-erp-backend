@@ -195,7 +195,8 @@ public class VirtualTransFlowDetailServiceImpl extends SuperServiceImpl<VirtualT
                 //出库
                 handleOutstockVirtualTransFlowDetail(entity);
             } catch (Exception e) {
-                virtualTransFlowService.updateRemark(entity.getId(),e.getMessage());
+                log.error("虚拟仓流水更新失败，msg = {}",e.getMessage());
+                virtualTransFlowService.updateRemark(entity.getId(),"虚拟仓流水更新失败");
             }
         }
     }
