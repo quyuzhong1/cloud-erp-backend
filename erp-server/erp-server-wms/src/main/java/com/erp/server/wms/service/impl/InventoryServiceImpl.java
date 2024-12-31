@@ -33,10 +33,7 @@ import com.erp.model.wms.dto.DictBasicDTO;
 import com.erp.model.wms.dto.PickingDetailDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.dto.WarehouseLocationDTO;
-import com.erp.model.wms.dto.inventory.InventoryDTO;
-import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
-import com.erp.model.wms.dto.inventory.InventoryReportDTO;
-import com.erp.model.wms.dto.inventory.InventorySaveDTO;
+import com.erp.model.wms.dto.inventory.*;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.StocktakingTypeEnum;
 import com.erp.model.wms.enums.inventory.InventoryAgeTitleEnum;
@@ -54,6 +51,7 @@ import com.erp.server.wms.service.WarehouseLocationService;
 import com.erp.server.wms.service.WarehouseService;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.io.IOUtils;
@@ -64,6 +62,7 @@ import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
@@ -1356,14 +1355,39 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
         return inventoryMapper.getQtyByLocation(warehouseId, warehouseLocation == null ? "" : warehouseLocation);
     }
     @Override
-    public InventoryEntity getInventory(String skuId, String warehouseId, String warehouseLocation, String inventoryStatus) {
+    @Transactional(rollbackFor = Exception.class, propagation = Propagation.REQUIRES_NEW)
+    @GlobalTransactional(rollbackFor = Exception.class, propagation = io.seata.tm.api.transaction.Propagation.REQUIRES_NEW)
+    public InventoryEntity getInventory(InventoryTransactionDTO transactionDTO) {
         LambdaQueryWrapper<InventoryEntity> wrapper = new LambdaQueryWrapper<>();
-        wrapper.eq(InventoryEntity::getSkuId, skuId)
-                .eq(InventoryEntity::getWarehouseId, warehouseId)
-                .eq(InventoryEntity::getWarehouseLocation, warehouseLocation)
-                .eq(InventoryEntity::getDictInventoryStatus, inventoryStatus)
+        wrapper.eq(InventoryEntity::getSkuId, transactionDTO.getSkuId())
+                .eq(InventoryEntity::getWarehouseId, transactionDTO.getWarehouseId())
+                .eq(InventoryEntity::getWarehouseLocation, transactionDTO.getWarehouseLocation())
+                .eq(InventoryEntity::getDictInventoryStatus, transactionDTO.getInventoryStatus())
                 .last("limit 1");
-        return this.getOne(wrapper);
+        InventoryEntity inventoryEntity = this.getOne(wrapper);
+        // 如果不存在库存数据则初始化一个
+        if (Objects.isNull(inventoryEntity)) {
+            inventoryEntity=new InventoryEntity();
+            inventoryEntity.setSkuId(transactionDTO.getSkuId());
+            inventoryEntity.setSkuNo(transactionDTO.getSkuNo());
+            inventoryEntity.setOrgId(transactionDTO.getOrgId());
+            inventoryEntity.setWarehouseId(transactionDTO.getWarehouseId());
+            inventoryEntity.setWarehouseLocation(transactionDTO.getWarehouseLocation());
+            inventoryEntity.setDictInventoryStatus(transactionDTO.getInventoryStatus());
+            inventoryEntity.setQty(transactionDTO.getQty());
+            inventoryEntity.setCreateTime(LocalDateTime.now());
+            inventoryEntity.setCreateUserId(transactionDTO.getUserId());
+            inventoryEntity.setCreateUserName(transactionDTO.getUserName());
+            inventoryEntity.setUpdateTime(LocalDateTime.now());
+            inventoryEntity.setUpdateUserId(transactionDTO.getUserId());
+            inventoryEntity.setUpdateUserName(transactionDTO.getUserName());
+            boolean save = save(inventoryEntity);
+            log.warn("库存数据不存在，初始化库存数据，{}", inventoryEntity);
+            if (!save) {
+                throw new ServiceException("库存数据保存失败");
+            }
+        }
+        return inventoryEntity;
     }
 
     @Override
