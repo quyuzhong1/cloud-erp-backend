@@ -81,6 +81,24 @@ public class EstimatedDeliveryDetailEntity extends BaseEntity<EstimatedDeliveryD
     @TableField("calc_version")
     private String calcVersion;
 
+    /**
+     * 收货渠道，店铺id/仓库id
+     */
+    @TableField("receiving_channel")
+    private String receivingChannel;
+
+    /**
+     * 发货仓库
+     */
+    @TableField("delivery_warehouse_id")
+    private String deliveryWarehouseId;
+
+    /**
+     * 预计发货日期
+     */
+    @TableField("plan_delivery_date")
+    private String planDeliveryDate;
+
 
     public static final String REPLENISHMENT_DETAIL_ID = "replenishment_detail_id";
 

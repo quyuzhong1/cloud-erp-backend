@@ -24,7 +24,7 @@
         <result column="calc_version" property="calcVersion" />
     </resultMap>
     <select id="estimatedDelivery" resultType="com.erp.model.mrp.vo.EstimatedDeliveryVO">
-        select status, qty, estimate_sales_date, type, source_id, source_code, source_type
+        select id,status, qty, estimate_sales_date, type, source_id, source_code, source_type, receiving_channel, delivery_warehouse_id, plan_delivery_date
         from estimated_delivery_detail
         where replenishment_detail_id = #{params.detailId}
           and type = #{params.type}

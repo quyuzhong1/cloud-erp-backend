@@ -87,7 +87,6 @@ public class OverseasInTransitDetailEntity extends BaseEntity<OverseasInTransitD
     @TableField("calc_version")
     private String calcVersion;
 
-
     public static final String REPLENISHMENT_DETAIL_ID = "replenishment_detail_id";
 
     public static final String DELIVERY_PLAN_ID = "delivery_plan_id";

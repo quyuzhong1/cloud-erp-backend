@@ -3,13 +3,11 @@ package com.erp.model.mrp.entity;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
-import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
 
 import java.io.Serializable;
-import java.math.BigDecimal;
 
 /**
  * <p>
@@ -17,18 +15,16 @@ import java.math.BigDecimal;
  * </p>
  *
  * @author liaohui
- * @since 2024-08-28
+ * @since 2024-12-31
  */
 @Getter
 @Setter
 @Accessors(chain = true)
-@TableName("shop_inventory_detail")
-@EqualsAndHashCode(callSuper = true)
-public class ShopInventoryDetailEntity extends BaseEntity<ShopInventoryDetailEntity> {
+@TableName("bill_shop_inventory_detail")
+public class BillShopInventoryDetailEntity extends BaseEntity<BillShopInventoryDetailEntity> {
 
-    private static final long serialVersionUID = 8105292331601711848L;
     /**
-     * 补货建议库存明细id
+     * 单据id
      */
     @TableField("main_id")
     private String mainId;
@@ -43,19 +39,13 @@ public class ShopInventoryDetailEntity extends BaseEntity<ShopInventoryDetailEnt
      * 数量
      */
     @TableField("qty")
-    private BigDecimal qty;
+    private Integer qty;
 
     /**
      * 计算版本  所有子表加   根据单号生成规则
      */
     @TableField("calc_version")
     private String calcVersion;
-
-    /**
-     * 店铺需求数
-     */
-    @TableField("shop_require_qty")
-    private Integer shopRequireQty;
 
 
     public static final String MAIN_ID = "main_id";

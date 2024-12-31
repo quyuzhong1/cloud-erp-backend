@@ -23,7 +23,8 @@
         <result column="source_type" property="sourceType"/>
     </resultMap>
     <select id="localInTransitDetail" resultType="com.erp.model.mrp.vo.LocalInTransitDetailVO">
-        select qty,
+        select id,
+        qty,
         plan_arrival_date,
         estimate_sales_date,
         source_id,

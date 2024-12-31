@@ -217,6 +217,17 @@ public class CfgRuleWarehouseServiceImpl extends SuperServiceImpl<CfgRuleWarehou
                 .map(obj -> new CfgRuleWarehouseDetailDTO.OverseasWarehouseDTO(obj.getWarehouseId(),obj.getWarehouseName())).distinct().collect(Collectors.toList());
     }
 
+    @Override
+    public Boolean getIsEnableVirtual(String platformType) {
+        //是否存在海外仓
+        CfgRuleWarehouseEntity cfgRuleWarehouseEntity = this.getByPlatformType(platformType);
+        Boolean isEnableOverseas = Boolean.FALSE;
+        if (ObjectUtil.isNotEmpty(cfgRuleWarehouseEntity) && Boolean.TRUE.equals(cfgRuleWarehouseEntity.getIsEnableVirtual())) {
+            isEnableOverseas = Boolean.TRUE;
+        }
+        return isEnableOverseas;
+    }
+
     /**
      * 处理验证店铺数据
      * @author will

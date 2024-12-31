@@ -217,6 +217,12 @@ public class ReplenishmentSuggestionDTO implements Serializable {
          * 预计可售日期
          */
         private LocalDate estimateSalesDate;
+
+        /**
+         * 店铺id
+         */
+        @NotBlank(message = "店铺不能为空")
+        private String shopId;
     }
 
     @Data

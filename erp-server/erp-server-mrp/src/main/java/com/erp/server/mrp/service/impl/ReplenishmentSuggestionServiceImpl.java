@@ -377,7 +377,10 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
 
     @Override
     public PagingVO<InventoryDetailVO> inventoryDetail(PagingDTO<InventoryTotalDTO> params) {
-        return replenishmentInventoryDetailService.inventoryDetail(params);
+        ReplenishmentSuggestionDetailEntity detailEntity = replenishmentSuggestionDetailService.getByIdOpt(params.getParams().getDetailId())
+                .orElseThrow(() -> new ServiceException("补货建议明细不存在"));
+        ReplenishmentSuggestionEntity suggestion = getByIdOpt(detailEntity.getMainId()).orElseThrow(() -> new ServiceException("补货建议不存在"));
+        return replenishmentInventoryDetailService.inventoryDetail(params, suggestion.getPlatformType());
     }
 
     @Override
@@ -1249,6 +1252,31 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
         return salesInfoVOS.stream()
                 .sorted(Comparator.comparing(ReplenishmentSuggestionVO.SalesInfoVO::getDate)
                         .reversed()).collect(Collectors.toList());
+    }
+
+    @Override
+    public Integer inventoryDetailTotal(InventoryDetailTotalDTO params) {
+        ReplenishmentInventoryTypeEnum inventoryType = ReplenishmentInventoryTypeEnum.of(params.getType());
+        int totalQty = 0;
+        switch (inventoryType) {
+            case FBA_ESTIMATED_DELIVERY:
+                totalQty = estimatedDeliveryDetailService.totalQtyByReplenishmentAndSourceType(params, ReplenishmentInventoryTypeEnum.FBA_ESTIMATED_DELIVERY);
+                break;
+            case OVERSEAS_IN_TRANSIT:
+                totalQty = overseasInTransitDetailService.totalQtyByReplenishmentAndSourceType(params);
+                break;
+            case OVERSEAS_ESTIMATED_DELIVERY:
+                totalQty = estimatedDeliveryDetailService.totalQtyByReplenishmentAndSourceType(params, ReplenishmentInventoryTypeEnum.OVERSEAS_ESTIMATED_DELIVERY);
+                break;
+            case LOCAL_IN_TRANSIT:
+                totalQty = localInTransitDetailService.totalQtyByReplenishmentAndSourceType(params);
+                break;
+            case LOCAL_ESTIMATED_DELIVERY:
+                totalQty = estimatedPurchaseDetailService.totalQtyByReplenishmentAndSourceType(params);
+                break;
+            default:
+        }
+        return totalQty;
     }
 
     /**

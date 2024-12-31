@@ -37,6 +37,7 @@
             rid.total_qty,
             rid.platform_qty,
             sid.shop_id,
+            sid.shop_require_qty,
             sid.qty
         FROM
             replenishment_inventory_detail AS rid

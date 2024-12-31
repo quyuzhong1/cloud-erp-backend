@@ -436,4 +436,11 @@ public interface ReplenishmentSuggestionService extends SuperService<Replenishme
      * @param dto 参数
      */
     List<ReplenishmentSuggestionVO.SalesInfoVO> listSalesInfo(BaseIdDTO dto);
+
+    /**
+     * 库存总数
+     *
+     * @param params 明细id
+     */
+    Integer inventoryDetailTotal(InventoryDetailTotalDTO params);
 }

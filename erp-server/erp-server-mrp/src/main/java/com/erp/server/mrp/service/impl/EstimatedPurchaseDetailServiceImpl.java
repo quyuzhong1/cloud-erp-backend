@@ -3,19 +3,25 @@ package com.erp.server.mrp.service.impl;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.PagingDTO;
-import com.common.business.enums.ApproveStatusEnum;
-import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
+import com.common.business.wrapper.FeignQuery;
+import com.erp.model.mrp.dto.InventoryDetailTotalDTO;
 import com.erp.model.mrp.dto.ReplenishmentSuggestionDTO;
 import com.erp.model.mrp.entity.EstimatedPurchaseDetailEntity;
-import com.erp.model.mrp.enums.SuggestStatusEnum;
+import com.erp.model.mrp.enums.CfgRuleInventoryNodeEnum;
 import com.erp.model.mrp.vo.EstimatedPurchaseVO;
+import com.erp.model.oms.entity.ShopInfoEntity;
+import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.server.mrp.mapper.EstimatedPurchaseDetailMapper;
+import com.erp.server.mrp.service.BillShopInventoryDetailService;
 import com.erp.server.mrp.service.EstimatedPurchaseDetailService;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.Resource;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -28,14 +34,33 @@ import java.util.List;
 @Service
 public class EstimatedPurchaseDetailServiceImpl extends SuperServiceImpl<EstimatedPurchaseDetailMapper, EstimatedPurchaseDetailEntity> implements EstimatedPurchaseDetailService {
 
+    @Resource
+    private BillShopInventoryDetailService billShopInventoryDetailService;
+
     @Override
     public PagingVO<EstimatedPurchaseVO> estimatedPurchase(PagingDTO<ReplenishmentSuggestionDTO.DetailParamDTO> params) {
         Page<EstimatedPurchaseVO> page = baseMapper.estimatedPurchase(new Page<>(params.getCurrPage(), params.getPageSize()), params.getParams());
+        List<String> ids = page.getRecords()
+                .stream()
+                .map(EstimatedPurchaseVO::getId)
+                .collect(Collectors.toList());
+        Map<String, Integer> shopInventoryMap = billShopInventoryDetailService.listByMainIdsAndShopId(ids, params.getParams().getShopId());
+        List<String> receivingChannelIds = page.getRecords()
+                .stream()
+                .map(EstimatedPurchaseVO::getReceivingChannel)
+                .collect(Collectors.toList());
+        List<ShopInfoEntity> shopInfos = FeignQuery.getByIds(ShopInfoEntity.class, receivingChannelIds);
+        Map<String, String> shopMap = shopInfos.stream()
+                .collect(Collectors.toMap(ShopInfoEntity::getId, ShopInfoEntity::getName, (o1, o2) -> o1));
+        List<WarehouseEntity> warehouseList = FeignQuery.getByIds(WarehouseEntity.class, receivingChannelIds);
+        Map<String, String> warehouseMap = warehouseList.stream()
+                .collect(Collectors.toMap(WarehouseEntity::getId, WarehouseEntity::getName, (o1, o2) -> o1));
         for (EstimatedPurchaseVO vo : page.getRecords()) {
-            if (SourceTypeEnum.REPLENISHMENT_SUGGESTION.getCode().equals(vo.getSourceType())) {
-                vo.setStatusName(SuggestStatusEnum.getName(vo.getStatus()));
-            } else {
-                vo.setStatusName(ApproveStatusEnum.getName(vo.getStatus()));
+            if (CfgRuleInventoryNodeEnum.LOCAL_REPLENISHMENT_PLAN.getCode().equals(params.getParams().getSourceType())) {
+                vo.setReceivingChannelName(shopMap.get(vo.getReceivingChannel()));
+            }else {
+                vo.setReceivingChannelName(warehouseMap.get(vo.getReceivingChannel()));
+                vo.setShopPrePurchase(shopInventoryMap.get(vo.getId()));
             }
         }
         return new PagingVO<>(page);
@@ -52,5 +77,15 @@ public class EstimatedPurchaseDetailServiceImpl extends SuperServiceImpl<Estimat
         return getByReplenishmentId(detailId).stream()
                 .map(EstimatedPurchaseDetailEntity::getQty)
                 .reduce(0, Math::addExact);
+    }
+
+    @Override
+    public int totalQtyByReplenishmentAndSourceType(InventoryDetailTotalDTO params) {
+        List<EstimatedPurchaseDetailEntity> list = list(Wrappers.<EstimatedPurchaseDetailEntity>lambdaQuery().eq(EstimatedPurchaseDetailEntity::getReplenishmentDetailId, params.getDetailId())
+                .eq(EstimatedPurchaseDetailEntity::getSourceType, params.getSourceType())
+        );
+        List<String> ids = list.stream().map(EstimatedPurchaseDetailEntity::getId)
+                .collect(Collectors.toList());
+        return billShopInventoryDetailService.totalByMainIdsAndShopId(ids, params.getShopId());
     }
 }

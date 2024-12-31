@@ -3,17 +3,21 @@ package com.erp.server.mrp.service.impl;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.PagingDTO;
-import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
+import com.erp.model.mrp.dto.InventoryDetailTotalDTO;
 import com.erp.model.mrp.dto.ReplenishmentSuggestionDTO;
 import com.erp.model.mrp.entity.OverseasInTransitDetailEntity;
 import com.erp.model.mrp.vo.OverseasInTransitDetailVO;
 import com.erp.server.mrp.mapper.OverseasInTransitDetailMapper;
+import com.erp.server.mrp.service.BillShopInventoryDetailService;
 import com.erp.server.mrp.service.OverseasInTransitDetailService;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.Resource;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -26,11 +30,19 @@ import java.util.List;
 @Service
 public class OverseasInTransitDetailServiceImpl extends SuperServiceImpl<OverseasInTransitDetailMapper, OverseasInTransitDetailEntity> implements OverseasInTransitDetailService {
 
+    @Resource
+    private BillShopInventoryDetailService billShopInventoryDetailService;
+
     @Override
     public PagingVO<OverseasInTransitDetailVO> overseasInTransitDetail(PagingDTO<ReplenishmentSuggestionDTO.DetailParamDTO> params) {
         Page<OverseasInTransitDetailVO> page = baseMapper.overseasInTransitDetail(new Page<>(params.getCurrPage(), params.getPageSize()), params.getParams());
+        List<String> ids = page.getRecords()
+                .stream()
+                .map(OverseasInTransitDetailVO::getId)
+                .collect(Collectors.toList());
+        Map<String, Integer> shopInventoryMap = billShopInventoryDetailService.listByMainIdsAndShopId(ids, params.getParams().getShopId());
         for (OverseasInTransitDetailVO vo : page.getRecords()) {
-            vo.setStatusName(ApproveStatusEnum.getName(vo.getStatus()));
+            vo.setShopInTransitQty(shopInventoryMap.get(vo.getId()));
         }
         return new PagingVO<>(page);
     }
@@ -45,5 +57,14 @@ public class OverseasInTransitDetailServiceImpl extends SuperServiceImpl<Oversea
         return getByReplenishmentId(detailId).stream()
                 .map(OverseasInTransitDetailEntity::getInTransitQty)
                 .reduce(0, Math::addExact);
+    }
+
+    @Override
+    public int totalQtyByReplenishmentAndSourceType(InventoryDetailTotalDTO params) {
+        List<OverseasInTransitDetailEntity> entities = getByReplenishmentId(params.getDetailId());
+        List<String> ids = entities.stream()
+                .map(OverseasInTransitDetailEntity::getId)
+                .collect(Collectors.toList());
+        return billShopInventoryDetailService.totalByMainIdsAndShopId(ids, params.getShopId());
     }
 }
