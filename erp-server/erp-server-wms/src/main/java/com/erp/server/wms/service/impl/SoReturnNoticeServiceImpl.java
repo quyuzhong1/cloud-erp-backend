@@ -726,10 +726,17 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
                     detailAddDTO.setPlatformSkuNo(productSkuInfoDTO.getPlatformSkuNo());
                 }
                 detailAddDTO.setExchangeRate(soReturnDetailEntity.getExchangeRate());
-                detailAddDTO.setReturnAmount(calReturnAmount(soReturnDetailEntity.getReturnAmount(),soReturnDetailEntity.getReturnQty(),view.getReturnQty()));
-                detailAddDTO.setTaxReturnAmount(calReturnAmount(soReturnDetailEntity.getTaxReturnAmount(),soReturnDetailEntity.getReturnQty(),view.getReturnQty()));
-                detailAddDTO.setReturnAmountLocalCurrency(calLocalCurrency(soReturnDetailEntity.getExchangeRate(), detailAddDTO.getReturnAmount()));
-                detailAddDTO.setTaxReturnAmountLocalCurrency(calLocalCurrency(soReturnDetailEntity.getExchangeRate(), detailAddDTO.getTaxReturnAmount()));
+                if(Objects.equals(soReturnDetailEntity.getReturnQty(), view.getReturnQty())){
+                    detailAddDTO.setReturnAmount(soReturnDetailEntity.getReturnAmount());
+                    detailAddDTO.setTaxReturnAmount(soReturnDetailEntity.getTaxReturnAmount());
+                    detailAddDTO.setReturnAmountLocalCurrency(soReturnDetailEntity.getReturnAmountLocalCurrency());
+                    detailAddDTO.setTaxReturnAmountLocalCurrency(soReturnDetailEntity.getTaxReturnAmountLocalCurrency());
+                }else {
+                    detailAddDTO.setReturnAmount(calReturnAmount(soReturnDetailEntity.getReturnAmount(),soReturnDetailEntity.getReturnQty(),view.getReturnQty()));
+                    detailAddDTO.setTaxReturnAmount(calReturnAmount(soReturnDetailEntity.getTaxReturnAmount(),soReturnDetailEntity.getReturnQty(),view.getReturnQty()));
+                    detailAddDTO.setReturnAmountLocalCurrency(calLocalCurrency(soReturnDetailEntity.getExchangeRate(), detailAddDTO.getReturnAmount()));
+                    detailAddDTO.setTaxReturnAmountLocalCurrency(calLocalCurrency(soReturnDetailEntity.getExchangeRate(), detailAddDTO.getTaxReturnAmount()));
+                }
                 dto.setCurrency(soReturnEntity.getCurrency());
                 dto.setCurrencySymbol(soReturnEntity.getCurrencySymbol());
                 detailList.add(detailAddDTO);
