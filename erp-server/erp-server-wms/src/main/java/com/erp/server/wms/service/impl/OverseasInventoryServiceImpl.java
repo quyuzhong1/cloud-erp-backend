@@ -1,6 +1,7 @@
 package com.erp.server.wms.service.impl;
 
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -36,10 +37,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -349,6 +347,9 @@ public class OverseasInventoryServiceImpl extends SuperServiceImpl<OverseasInven
 
     @Override
     public List<OverseasInventoryEntity> listBySkuAndWarehouseCode(OverseasInventoryDTO.QueryDTO queryDTO) {
+        if (CollUtil.isEmpty(queryDTO.getSkuIds()) || CollUtil.isEmpty(queryDTO.getPlatformWarehouseCodeList())){
+            return Collections.emptyList();
+        }
         return baseMapper.listBySkuAndWarehouseCode(queryDTO);
     }
 

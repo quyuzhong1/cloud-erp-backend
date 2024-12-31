@@ -375,9 +375,6 @@ public class OverseasProviderWarehouseServiceImpl extends SuperServiceImpl<Overs
         //查询三方仓库存
         OverseasInventoryDTO.QueryDTO queryDTO = new OverseasInventoryDTO.QueryDTO();
         queryDTO.setSkuIds(skuIds);
-        if (CollUtil.isNotEmpty(skuIds) && 1 == skuIds.size()){
-            queryDTO.setPlatformSku(platformSku);
-        }
         queryDTO.setPlatformWarehouseCodeList(warehouseCodeList);
         List<OverseasInventoryEntity> inventoryEntityList = overseasInventoryService.listBySkuAndWarehouseCode(queryDTO);
         if (CollUtil.isEmpty(inventoryEntityList)){
