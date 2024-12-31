@@ -5223,9 +5223,13 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                     .findFirst()
                     .orElse(null);
         }
-        if (null == advanceQueryDTO ){
+        if (null == advanceQueryDTO){
+            throw new ServiceException("订单创建时间必传");
+        }
+        if (null == advanceQueryDTO.getValue()){
             throw new ServiceException("订单创建时间不能为空");
         }
+
         // 销售订单开始时间
         LocalDateTime startTime = null;
         // 销售订单结束时间
@@ -5565,7 +5569,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             String shopName = shopInfoList.stream().filter(s -> s.getId().equals(shopId)).
                     findFirst().map(ShopInfoEntity::getName).orElse("");
             item.setShopName(shopName);
-            Integer qty = item.getQty();
+            int qty = null == item.getQty() ? 0 : item.getQty();
             Integer avgQty = Math.toIntExact(qty / diffDays);
             item.setAvgQty(avgQty);
             BigDecimal amount = item.getAmount();
