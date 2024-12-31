@@ -34,10 +34,7 @@ import com.erp.model.dmp.entity.BiReturnOrderInfoEntity;
 import com.erp.model.dmp.entity.BiReturnOrderItemEntity;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.dmp.enums.PlatformEnum;
-import com.erp.model.oms.dto.SkuMappingDTO;
-import com.erp.model.oms.dto.SoInfoDTO;
-import com.erp.model.oms.dto.SoReturnDTO;
-import com.erp.model.oms.dto.SoReturnDetailDTO;
+import com.erp.model.oms.dto.*;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.BillTypeEnum;
 import com.erp.model.oms.enums.SoReturnChangeListTypeEnum;
@@ -532,9 +529,15 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
         if(byIdOpt.isPresent()){
             soReturnEntity.setCustomerName(byIdOpt.get().getName());
         }
+        //收货地址
+        if(StringUtils.isNotBlank(soInfoEntity.getReceiveAddressId())){
+            CustomerAddressDTO.ViewDTO customerAddress = customerAddressService.getCustomerAddressById(soInfoEntity.getReceiveAddressId());
+            if(null != customerAddress){
+                soReturnEntity.setReceiveAddress(customerAddress.getAddress());
+            }
+        }
         soReturnEntity.setReceiverName(soInfoEntity.getReceiverName());
         soReturnEntity.setTelNumber(soInfoEntity.getTelNumber());
-        soReturnEntity.setReceiveAddress(soInfoEntity.getReceiveAddress());
         soReturnEntity.setDeliveryModeDict(soInfoEntity.getDeliveryMode());
         soReturnEntity.setIsTax(soInfoEntity.getIsTax());
         soReturnEntity.setAddressTypeDict(soInfoEntity.getAddressType());
@@ -597,7 +600,7 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
         soReturnEntity.setCustomerName(customerInfoEntity.getName());
         List<String> soIds = soDetailEntities.stream().map(SoDetailEntity::getMainId).distinct().collect(Collectors.toList());
         List<SoOutstockDetailEntity> soOutstockDetailEntities = soOutstockFeign.listDetailBySoIds(soIds);
-        CustomerAddressEntity customerAddressEntity = customerAddressService.getById(soReturnEntity.getReceiveAddress());
+        CustomerAddressEntity customerAddressEntity = customerAddressService.getById(soReturnEntity.getCustomerId());
         if (ObjectUtil.isNotEmpty(customerAddressEntity)) {
             viewDTO.setReceiveAddress(customerAddressEntity.getAddress());
         }
