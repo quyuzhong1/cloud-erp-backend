@@ -78,9 +78,9 @@ public class FbaTransitCalculateReportController extends BaseController {
      */
     @LogAction(value = LogActionEnum.IMPORT, desc = "导入Excel")
     @PostMapping("/importFile")
-    public ApiResult<FbaTransitCalculateReportDTO.ImportDTO> importFile(@ModelAttribute @Validated FbaTransitCalculateReportDTO.ExcelImportDTO excelImportDTO, HttpServletResponse response) {
-        FbaTransitCalculateReportDTO.ImportDTO dto = fbaTransitCalculateReportService.importFile(excelImportDTO.getExcelFile(),response);
-        return success(dto);
+    public ApiResult importFile(@ModelAttribute @Validated FbaTransitCalculateReportDTO.ExcelImportDTO excelImportDTO, HttpServletResponse response) {
+        Boolean result = fbaTransitCalculateReportService.importFile(excelImportDTO.getExcelFile(),response);
+        return result ? success() : failure();
     }
     /**
      *  导出Excel
