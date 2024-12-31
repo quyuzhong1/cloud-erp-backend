@@ -79,9 +79,11 @@
             ti.approve_status,
             ti.approve_time,
             ti.source_id,
+            ti.source_type,
             tid.sku_id,
             tid.id as detailId,
             tid.qty,
+            tid.out_warehouse_id as warehouseId,
             COALESCE(pd.source_detail_id,tid.source_detail_id) as sourceDetailId
         from transfer_info ti
         inner join transfer_info_detail tid on ti.id = tid.main_id and tid.is_deleted = false
