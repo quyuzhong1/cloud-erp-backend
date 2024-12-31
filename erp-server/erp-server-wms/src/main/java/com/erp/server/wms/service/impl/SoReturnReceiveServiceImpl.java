@@ -678,10 +678,10 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
         //退货单明细
         List<String> soReturnIdList = list.stream().map(SoReturnNoticeDTO.GenerateSoReturnReceiveView::getSourceId).distinct().collect(Collectors.toList());
         List<SoReturnDetailEntity> soReturnDetailEntities = soReturnFeign.listDetailByMainIds(soReturnIdList);
-
         for (String id : soReturnNoticeIdList) {
             List<SoReturnNoticeDTO.GenerateSoReturnReceiveView> viewList = list.stream().filter(req -> req.getMainId().equals(id)).collect(Collectors.toList());
             SoReturnNoticeEntity noticeEntity = soReturnNoticeService.getById(id);
+            List<SoReturnNoticeDetailEntity> soReturnNoticeDetailEntities = soReturnNoticeDetailService.listDetailByMainId(id);
             SoReturnReceiveDTO.Add dto = new SoReturnReceiveDTO.Add();
             dto.setSourceType(SourceTypeEnum.SO_RETURN_NOTICE.getCode());
             dto.setWarehouseId(noticeEntity.getWarehouseId());
@@ -700,8 +700,7 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
             for (SoReturnNoticeDTO.GenerateSoReturnReceiveView view : viewList) {
                 SoReturnDetailEntity soReturnDetailEntity = soReturnDetailEntities.stream()
                         .filter(v -> v.getId().equals(view.getSourceDetailId()))
-                        .findFirst().orElse(new SoReturnDetailEntity());
-
+                        .findFirst().orElse(null);
                 dto.setSourceId(view.getSourceId());
                 SoReturnReceiveDetailDTO.Add detailAddDTO = new SoReturnReceiveDetailDTO.Add();
                 detailAddDTO.setSkuId(view.getSkuId());
@@ -713,11 +712,20 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
                 detailAddDTO.setNoticeDetailId(view.getId());
                 detailAddDTO.setReturnReasonDict(view.getReturnReasonDict());
                 detailAddDTO.setReturnTypeDict(view.getReturnTypeDict());
-                detailAddDTO.setExchangeRate(soReturnDetailEntity.getExchangeRate());
-                detailAddDTO.setReturnAmount(soReturnNoticeService.calReturnAmount(soReturnDetailEntity.getReturnAmount(),soReturnDetailEntity.getReturnQty(),view.getReturnQty()));
-                detailAddDTO.setTaxReturnAmount(soReturnNoticeService.calReturnAmount(soReturnDetailEntity.getTaxReturnAmount(),soReturnDetailEntity.getReturnQty(),view.getReturnQty()));
-                detailAddDTO.setReturnAmountLocalCurrency(soReturnNoticeService.calLocalCurrency(soReturnDetailEntity.getExchangeRate(), detailAddDTO.getReturnAmount()));
-                detailAddDTO.setTaxReturnAmountLocalCurrency(soReturnNoticeService.calLocalCurrency(soReturnDetailEntity.getExchangeRate(), detailAddDTO.getTaxReturnAmount()));
+                if(null == soReturnDetailEntity){
+                    SoReturnNoticeDetailEntity soReturnNoticeDetailEntity = soReturnNoticeDetailEntities.stream().filter(v -> v.getId().equals(view.getId())).findFirst().orElse(null);
+                    detailAddDTO.setExchangeRate(soReturnNoticeDetailEntity.getExchangeRate());
+                    detailAddDTO.setReturnAmount(soReturnNoticeService.calReturnAmount(soReturnNoticeDetailEntity.getReturnAmount(),soReturnNoticeDetailEntity.getReturnQty(),view.getReturnQty()));
+                    detailAddDTO.setTaxReturnAmount(soReturnNoticeService.calReturnAmount(soReturnNoticeDetailEntity.getTaxReturnAmount(),soReturnNoticeDetailEntity.getReturnQty(),view.getReturnQty()));
+                    detailAddDTO.setReturnAmountLocalCurrency(soReturnNoticeService.calLocalCurrency(soReturnNoticeDetailEntity.getExchangeRate(), detailAddDTO.getReturnAmount()));
+                    detailAddDTO.setTaxReturnAmountLocalCurrency(soReturnNoticeService.calLocalCurrency(soReturnNoticeDetailEntity.getExchangeRate(), detailAddDTO.getTaxReturnAmount()));
+                }else {
+                    detailAddDTO.setExchangeRate(soReturnDetailEntity.getExchangeRate());
+                    detailAddDTO.setReturnAmount(soReturnNoticeService.calReturnAmount(soReturnDetailEntity.getReturnAmount(),soReturnDetailEntity.getReturnQty(),view.getReturnQty()));
+                    detailAddDTO.setTaxReturnAmount(soReturnNoticeService.calReturnAmount(soReturnDetailEntity.getTaxReturnAmount(),soReturnDetailEntity.getReturnQty(),view.getReturnQty()));
+                    detailAddDTO.setReturnAmountLocalCurrency(soReturnNoticeService.calLocalCurrency(soReturnDetailEntity.getExchangeRate(), detailAddDTO.getReturnAmount()));
+                    detailAddDTO.setTaxReturnAmountLocalCurrency(soReturnNoticeService.calLocalCurrency(soReturnDetailEntity.getExchangeRate(), detailAddDTO.getTaxReturnAmount()));
+                }
                 dto.setCurrency(noticeEntity.getCurrency());
                 dto.setCurrencySymbol(noticeEntity.getCurrencySymbol());
                 dto.setCustomerId(view.getCustomerId());
