@@ -54,6 +54,11 @@ public class SupplierReportDTO implements Serializable {
          */
         private Map<String, String> sqlMap;
 
+        /**
+         * 是否内检
+         */
+        private Boolean isInside;
+
     }
 
     /**
