@@ -49,7 +49,7 @@ public class LogisticsProductQueryHandler extends AbstractQueryHandler {
                 approveStatusList.add(ApproveStatusEnum.REJECT.getStatus());
             }
             if (!CollectionUtils.isEmpty(approveStatusList)) {
-                super.buildDefaultDTO("pd.approve_status", approveStatusList);
+                super.buildDefaultDTO("pi.approve_status", approveStatusList);
             }
             return super.getSplicingSQL();
         }
