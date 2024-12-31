@@ -2160,8 +2160,8 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         sendPushTask(Arrays.asList(entity),SyncOperateEnum.OPERATE_APPROVE.getCode());
         if (isCheck) {
             syncWangDianProductDetailService.syncDataToWangDian(entity);
-            syncLingXingProductDetailService.syncDataToLingxing(entity);
         }
+        syncLingXingProductDetailService.syncDataToLingxing(entity);
         //增加缓存清除
         redisUtil.hdel(RedisKeyConstant.LIST_SKU_INFO, entity.getId());
         return true;
