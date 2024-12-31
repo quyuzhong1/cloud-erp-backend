@@ -1382,7 +1382,7 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
             inventoryEntity.setUpdateUserId(transactionDTO.getUserId());
             inventoryEntity.setUpdateUserName(transactionDTO.getUserName());
             boolean save = save(inventoryEntity);
-            log.warn("库存数据不存在，初始化库存数据，{}", inventoryEntity);
+            log.warn("库存数据不存在，初始化库存数据：{}  save：{}", inventoryEntity, save);
             if (!save) {
                 throw new ServiceException("库存数据保存失败");
             }
