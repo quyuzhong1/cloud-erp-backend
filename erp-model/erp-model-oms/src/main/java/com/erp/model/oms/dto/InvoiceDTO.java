@@ -113,6 +113,7 @@ public class InvoiceDTO implements Serializable {
          * 类型
          */
         private String type;
+        private String typeName;
 
         /**
          * 银行名称
@@ -132,6 +133,7 @@ public class InvoiceDTO implements Serializable {
          * false 不是
          */
         private Boolean isDefault;
+        private String isDefaultName;
 
 
         /**

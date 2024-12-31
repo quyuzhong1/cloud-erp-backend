@@ -31,6 +31,9 @@ public class DmpOutputTaskRecordQueryHandler extends AbstractQueryHandler {
                 return " (dcob.id IS NULL or dcob.field_value = '') and t.status = '" + searchType + "' ";
             }
         }
+        if ("type".equals(field)) {
+            return this.getQueryAllSql();
+        }
 
 
         return null;

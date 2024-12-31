@@ -421,6 +421,11 @@ public interface SysUserFeign {
      */
     @PostMapping("feign/globalArea/getById")
     DictGlobalAreaEntity getGlobalAreaById(@RequestBody String id);
+    /**
+     * 根据ids查询区域
+     */
+    @PostMapping("feign/globalArea/listGlobalAreaByIds")
+    List<DictGlobalAreaEntity> listGlobalAreaByIds(@RequestBody List<String> ids);
 
     /**
      * 根据id查询省/市

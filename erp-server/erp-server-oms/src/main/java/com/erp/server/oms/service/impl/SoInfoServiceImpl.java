@@ -44,6 +44,7 @@ import com.erp.model.oms.dto.excel.B2BSoImportExcelDTO;
 import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.*;
+import com.erp.model.oms.enums.BillTypeEnum;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.entity.ProductSaleEntity;
@@ -59,10 +60,7 @@ import com.erp.model.tms.dto.InventorySkuCostDTO;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
 import com.erp.model.wms.entity.*;
-import com.erp.model.wms.enums.DeliveryStatusEnum;
-import com.erp.model.wms.enums.MachineTypeEnum;
-import com.erp.model.wms.enums.PickingBillTypeEnum;
-import com.erp.model.wms.enums.WorkTypeEnum;
+import com.erp.model.wms.enums.*;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.model.workflow.entity.ProcessTaskManagementEntity;
@@ -233,6 +231,9 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
 
     @Resource
     private LogisticsFeign logisticsFeign;
+
+    @Resource
+    private CfgSettingFeign fgSettingFeign;
 
     /**
      * 添加销售订单
@@ -2108,6 +2109,9 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         List<String> mainIds = soDetailEntities.stream().map(req -> req.getMainId()).distinct().collect(Collectors.toList());
         checkIfPushDown(mainIds);
         List<SoInfoDTO.GenerateSoReturnView> viewList = baseMapper.generateSoReturnView(detailIds);
+        //获取默认仓库 -- 东莞售后仓库
+        CfgSettingEntity cfgSettingEntity = fgSettingFeign.getByKey(CfgSettingEnum.WAREHOUSE_BY_SO_RETURN.getCode());
+        CfgSettingValueDTO.SoWarehouseDTO soWarehouseDTO = BeanUtil.toBean(cfgSettingEntity.getDataJson(), CfgSettingValueDTO.SoWarehouseDTO.class);
         //获取sku的id集合
         List<String> skuIdList = viewList.stream().map(SoInfoDTO.GenerateSoReturnView::getSkuId).collect(Collectors.toList());
         //根据ids查询sku信息
@@ -2127,6 +2131,8 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             view.setReturnDate(LocalDate.now());
             view.setReturnAmount(view.getAmount());
             view.setTaxReturnAmount(view.getTaxAmount());
+            view.setWarehouseId(soWarehouseDTO.getWarehouseId());
+            view.setWarehouseName(soWarehouseDTO.getWarehouseName());
         }
         return viewList;
     }
@@ -3026,7 +3032,11 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
 
     @Override
     public List<SoInfoDTO.GenerateSoOutView> generateSoOutView(List<String> ids) {
-        List<SoDetailEntity> soDetailEntityList = soDetailService.listSoDetailByIds(ids);
+        //删除和关闭状态的sku不可下推
+        List<SoDetailEntity> soDetailEntityList = soDetailService.listSoDetailByIds(ids)
+                .stream()
+                .filter(v -> Boolean.FALSE.equals(v.getIsClose()))
+                .collect(Collectors.toList());
         List<String> mainIds = soDetailEntityList.stream().map(SoDetailEntity::getMainId).distinct().collect(Collectors.toList());
         List<SoInfoEntity> soInfoEntityList = this.listByIds(mainIds);
         List<SoOutstockDetailDTO.DeliveryQtyDTO> allDeliveryQtyDTOList = soOutstockFeign.listDetailBySoDetailIds(ids);

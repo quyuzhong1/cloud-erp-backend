@@ -2303,6 +2303,10 @@ public class SoInfoDTO implements Serializable {
          */
         private String warehouseId;
         /**
+         * 仓库名称
+         */
+        private String warehouseName;
+        /**
          * 备注
          */
         private String remark;

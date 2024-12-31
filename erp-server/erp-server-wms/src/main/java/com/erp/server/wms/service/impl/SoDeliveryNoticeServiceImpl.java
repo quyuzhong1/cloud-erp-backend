@@ -789,13 +789,16 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         List<SkuVO> noInventorySku = plmTaskFeign.getNoInventorySku();
         List<String> noInventorySkuIds = noInventorySku.stream().map(SkuVO::getSkuId).collect(Collectors.toList());
         List<SoDeliveryNoticeDetailEntity> entityList = soDeliveryNoticeDetailService.listNoInventoryOrPicking(id, noInventorySkuIds);
-        long closeCount = entityList.stream().filter(SoDeliveryNoticeDetailEntity::getIsClose).count();
-        if (closeCount > 0) {
-            throw new ServiceException(ApiError.ERROR_98068);
-        }
+        entityList = entityList.stream().filter(v -> Boolean.FALSE.equals(v.getIsClose())).collect(Collectors.toList());
+//        long closeCount = entityList.stream().filter(SoDeliveryNoticeDetailEntity::getIsClose).count();
+//        if (closeCount > 0) {
+//            throw new ServiceException(ApiError.ERROR_98068);
+//        }
         boolean allNoInventorySku = Boolean.FALSE;
         if(CollectionUtils.isNotEmpty(entityList)){
             allNoInventorySku = entityList.stream().allMatch(v -> noInventorySkuIds.contains(v.getSkuId()));
+        }else {
+            throw new ServiceException(ApiError.ERROR_98068);
         }
         List<PickingListsDTO.SourceView> views = pickingListsService.listBySourceIds(Collections.singletonList(id));
         if (Boolean.FALSE.equals(allNoInventorySku) && CollectionUtils.isEmpty(views)) {

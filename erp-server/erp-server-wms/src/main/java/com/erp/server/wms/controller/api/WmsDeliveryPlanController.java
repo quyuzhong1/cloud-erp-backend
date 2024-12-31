@@ -507,7 +507,7 @@ public class WmsDeliveryPlanController extends BaseController {
     }
 
     /**
-     * 下载模板
+     * 下载第三方仓发货计划模板
      * @author Will
      * @date: 22023/3/15 18:22
      * @param request
@@ -516,6 +516,36 @@ public class WmsDeliveryPlanController extends BaseController {
     @GetMapping("/exportTemplate")
     public ApiResult exportTemplate(HttpServletRequest request, HttpServletResponse response) {
         String path = "classpath:excel/deliveryPlanDetailTemplate.xlsx";
+        String excelName = "template.xlsx";
+        ResourceLoader resourceLoader = new DefaultResourceLoader();
+        try {
+            InputStream inputStream = resourceLoader.getResource(path).getInputStream();
+            XSSFWorkbook wb = new XSSFWorkbook(inputStream);
+            // 输出Excel文件
+            OutputStream output = response.getOutputStream();
+            response.reset();
+            // 设置文件头
+            response.setHeader("Content-Disposition",
+                    "attchement;filename=" + new String(excelName.getBytes("gb2312"), StandardCharsets.ISO_8859_1));
+            response.setContentType("application/msexcel");
+            wb.write(output);
+            wb.close();
+        } catch (Exception e) {
+            throw new ServiceException(ApiError.ERROR_95131);
+        }
+        return success();
+    }
+
+    /**
+     * 下载FBA发货计划模板
+     * @author jack
+     * @date: 2024-12-16
+     * @param request
+     * @param response
+     */
+    @GetMapping("/exportFbaTemplate")
+    public ApiResult exportFbaTemplate(HttpServletRequest request, HttpServletResponse response) {
+        String path = "classpath:excel/deliveryPlanDetailFbaTemplate.xlsx";
         String excelName = "template.xlsx";
         ResourceLoader resourceLoader = new DefaultResourceLoader();
         try {

@@ -1419,4 +1419,12 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
         excelDTO.setData(convertDataList);
         return new PagingVO<>(Collections.singletonList(excelDTO), (int) page.getTotal(), dto.getPageSize(), dto.getCurrPage());
     }
+
+    @Override
+    public List<InventoryEntity> listNegativeInventoryByWarehouseId(String warehouseId) {
+        if(StringUtils.isBlank(warehouseId)){
+            return new ArrayList<>();
+        }
+        return lambdaQuery().eq(InventoryEntity::getWarehouseId, warehouseId).lt(InventoryEntity::getQty,0).list();
+    }
 }

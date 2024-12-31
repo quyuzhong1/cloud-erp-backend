@@ -93,6 +93,29 @@ public class TmsFirstMileLogisticQueryHandler extends AbstractQueryHandler {
             }
             super.buildSplicingSQLDTO("lb.id",QueryConditionEnum.IN_LIST,ids,QueryDataTypeEnum.STRING);
         }
+
+        if(field.equals("reconciliationStatus")){
+            return "EXISTS (\n" +
+                    "\tselect 1\n" +
+                    "        from (\n" +
+                    "            select\n" +
+                    "                bill.id,\n" +
+                    "                bill.logistics_bill_id,\n" +
+                    "                bill.reconciliation_status,\n" +
+                    "                bill.actual_weight,\n" +
+                    "                bill.volume_weight,\n" +
+                    "                bill.weight_logistics,\n" +
+                    "                bill.volume_weight_logistics,\n" +
+                    "                bill.weight_unit,\n" +
+                    "                bill.currency,\n" +
+                    "                ROW_NUMBER() OVER (PARTITION BY bill.logistics_bill_id ORDER BY bill.create_time) AS rn\n" +
+                    "            from logistics_bill_cost bill\n" +
+                    "            left join tms_first_mile_reconciliation_detail tfmrd\n" +
+                    "                on bill.reconciliation_id = tfmrd.main_id and tfmrd.is_deleted = false and tfmrd.\"type\" = 'actual' and tfmrd.reconciliation_count = 1\n" +
+                    "            where bill.is_deleted = false\n" +
+                    "                AND bill.logistics_bill_id = lb.id  \n" +
+                    "             ) as detail where rn = 1 and reconciliation_status "+compareCodeSplicingValueSql+"  ) ";
+        }
         return null;
     }
 }

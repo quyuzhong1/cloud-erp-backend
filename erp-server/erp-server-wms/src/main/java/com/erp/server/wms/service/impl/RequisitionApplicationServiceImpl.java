@@ -229,7 +229,8 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
     public BaseResultDTO.AddDTO add(RequisitionApplicationDTO.AddDTO addDTO) {
         RequisitionApplicationEntity requisitionApplicationEntity = new RequisitionApplicationEntity();
         BeanMapperUtils.copy(addDTO, requisitionApplicationEntity);
-
+        requisitionApplicationEntity.setPickPushDownStatus(BillPushDownStatusEnum.WAIT.getCode());
+        requisitionApplicationEntity.setDeliveryPushDownStatus(BillPushDownStatusEnum.WAIT.getCode());
         // 数据处理
         handleData(requisitionApplicationEntity);
 
@@ -1263,6 +1264,9 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         requisitionApplicationDetailService.updateBatchById(detailEntities);
         Map<String, Integer> qtyMap = detailEntities.stream().collect(Collectors.toMap(v->v.getId(),v->v.getPickingQty()));
         packingTaskService.updateDetailQty(qtyMap);
+
+        //回写要货申请（拣货单生成状态）
+        writeBackRequisitionPickPushDownStatus(detailEntities.get(0).getMainId());
     }
 
     @Override
@@ -1917,6 +1921,8 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
 
             addDTO.setDetailList(detailAddList);
             BaseResultDTO.AddDTO add = firstMileDeliveryService.add(addDTO);
+            //回写要货申请的头程发货单生成状态
+            writeBackRequisitionDeliveryPushDownStatus(addDTO.getSourceId());
             if (Boolean.TRUE.equals(isSubmit)) {
                 firstMileDeliveryService.submit(add.getId());
             }
@@ -1932,7 +1938,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         //判断是否存在下游单据，已有下游单据就不能再生成拣货单
         FirstMileDeliveryEntity firstMileDelivery = firstMileDeliveryService.findBySourceId(page.getParams().getId());
         if (ObjectUtil.isNotEmpty(firstMileDelivery)) {
-            throw new ServiceException(ApiError.ERROR_99110, "头程发货单");
+            throw new ServiceException(ApiError.ERROR_99104);
         }
         List<SkuVO> ignoreInventorySkuList = plmTaskFeign.getNoInventorySku();
         List<String> ignoreInventorySkus = ignoreInventorySkuList.stream().map(SkuVO::getSkuId).collect(Collectors.toList());
@@ -2012,7 +2018,120 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         requisitionApplicationDetailService.updateBatchById(updateDetails);
         //生成装箱任务
         packingTaskService.addPackingByRequisition(application);
+        //回写要货申请的拣货单生成状态
+        writeBackRequisitionPickPushDownStatus(application.getId());
         return Collections.emptyList();
+    }
+
+
+    /**
+     * 回写要货申请的拣货单生成状态
+     * @author jack
+     * @date 2024-12-16
+     * @param requisitionApplicationId
+     */
+    private void writeBackRequisitionPickPushDownStatus(String requisitionApplicationId) {
+        // 获取要货申请明细
+        List<RequisitionApplicationDetailEntity> oldDetails = requisitionApplicationDetailService.listByMainIds(Collections.singletonList(requisitionApplicationId));
+        List<String> oldDetailIds = oldDetails.stream()
+                .map(RequisitionApplicationDetailEntity::getId)
+                .collect(Collectors.toList());
+
+        // 获取拣货单明细
+        List<PickingDetailEntity> pickingDetailEntities = pickingDetailService.listPickingDetailBySourceDetailIds(oldDetailIds);
+        // 判断拣货单下推状态
+        String pickingPushDownStatus = BillPushDownStatusEnum.WAIT.getCode();
+        // 如果拣货单明细为空，直接返回 WAIT 状态
+        if (CollUtil.isNotEmpty(pickingDetailEntities)) {
+            // 计算拣货单的总数量
+            int totalQty = pickingDetailEntities.stream()
+                    .mapToInt(entity -> Optional.ofNullable(entity.getQty()).orElse(0))
+                    .sum();
+
+            // 如果总数量不为零，才进行进一步处理
+            if (totalQty > 0) {
+                // 统计每个明细的数量和
+                Map<String, Integer> requisitionDetailQtySumById = oldDetails.stream()
+                        .collect(Collectors.toMap(RequisitionApplicationDetailEntity::getId,
+                                RequisitionApplicationDetailEntity::getApproveQty,
+                                Integer::sum));
+
+                // 统计拣货单明细的数量和
+                Map<String, Integer> pickingDetailQtySumBySourceDetailId = pickingDetailEntities.stream()
+                        .collect(Collectors.toMap(PickingDetailEntity::getSourceDetailId,
+                                PickingDetailEntity::getQty,
+                                Integer::sum));
+
+                // 检查是否所有明细的数量一致
+                if (requisitionDetailQtySumById.entrySet().stream()
+                        .allMatch(e -> e.getValue().equals(pickingDetailQtySumBySourceDetailId.get(e.getKey())))) {
+                    pickingPushDownStatus = BillPushDownStatusEnum.FINISH.getCode();
+                } else {
+                    pickingPushDownStatus = BillPushDownStatusEnum.PART.getCode();
+                }
+            }
+        }
+        // 更新要货申请的发货单下推状态
+        lambdaUpdate().set(RequisitionApplicationEntity::getPickPushDownStatus, pickingPushDownStatus)
+                .eq(RequisitionApplicationEntity::getId, requisitionApplicationId)
+                .update();
+    }
+
+    /**
+     * 回写要货申请的头程发货单生成状态
+     * @author jack
+     * @date 2024-12-16
+     * @param requisitionApplicationId
+     */
+    private void writeBackRequisitionDeliveryPushDownStatus(String requisitionApplicationId) {
+        // 获取要货申请明细
+        List<RequisitionApplicationDetailEntity> oldDetails = requisitionApplicationDetailService.listByMainIds(Collections.singletonList(requisitionApplicationId));
+        List<String> oldDetailIds = oldDetails.stream()
+                .map(RequisitionApplicationDetailEntity::getId)
+                .collect(Collectors.toList());
+
+        // 获取拣货单明细
+        List<PickingDetailEntity> pickingDetailEntities = pickingDetailService.listPickingDetailBySourceDetailIds(oldDetailIds);
+        // 获取头程发货单明细
+        List<FirstMileDeliveryDetailEntity> firstMileDeliveryDetailEntityList = firstMileDeliveryDetailService.listBySourceDetailIds(oldDetailIds);
+
+        // 判断头程发货单下推状态
+        String deliveryPushDownStatus = BillPushDownStatusEnum.WAIT.getCode();
+
+        // 如果头程发货单明细为空，直接返回 WAIT 状态
+        if (CollUtil.isNotEmpty(firstMileDeliveryDetailEntityList)) {
+            // 计算发货单的发货总数量
+            int totalDeliveryQty = firstMileDeliveryDetailEntityList.stream()
+                    .mapToInt(entity -> Optional.ofNullable(entity.getDeliveryQty()).orElse(0))
+                    .sum();
+
+            // 如果总数量不为零，才进行进一步处理
+            if (totalDeliveryQty > 0) {
+                // 统计拣货单明细每个明细的实际拣货数量和
+                Map<String, Integer> pickingDetailQtySumBySourceDetailId = pickingDetailEntities.stream()
+                        .collect(Collectors.toMap(PickingDetailEntity::getSourceDetailId,
+                                PickingDetailEntity::getQty,
+                                Integer::sum));
+
+                // 统计头程发货单明细每个明细的发货数量和
+                Map<String, Integer> firstMileDeliveryDetailDeliveryQtySumById = firstMileDeliveryDetailEntityList.stream()
+                        .collect(Collectors.toMap(FirstMileDeliveryDetailEntity::getId,
+                                FirstMileDeliveryDetailEntity::getDeliveryQty,
+                                Integer::sum));
+
+                // 检查是否所有明细的数量一致
+                if (firstMileDeliveryDetailDeliveryQtySumById.entrySet().stream()
+                        .allMatch(e -> e.getValue().equals(pickingDetailQtySumBySourceDetailId.get(e.getKey())))) {
+                    deliveryPushDownStatus = BillPushDownStatusEnum.FINISH.getCode();
+                } else {
+                    deliveryPushDownStatus = BillPushDownStatusEnum.PART.getCode();
+                }
+            }
+        }
+        // 更新要货申请的发货单下推状态
+        lambdaUpdate().set(RequisitionApplicationEntity::getDeliveryPushDownStatus, deliveryPushDownStatus)
+                .eq(RequisitionApplicationEntity::getId, requisitionApplicationId)
+                .update();
     }
 
     /**
@@ -2319,6 +2438,10 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
                 FirstMileDeliveryDetailEntity firstMileDeliveryDetailEntity = firstMileDeliveryDetailEntityList.stream().filter(v->v.getMainId().equals(firstMileDeliveryEntity.getId())).findFirst().orElse(new FirstMileDeliveryDetailEntity());
                 listDTO.setFbaShipmentCode(firstMileDeliveryDetailEntity.getFbaShipmentCode());
             }
+            //拣货单下推状态
+            listDTO.setPickPushDownStatusName(BillPushDownStatusEnum.getNameByCode(listDTO.getPickPushDownStatus()));
+            //发货单下推状态
+            listDTO.setDeliveryPushDownStatusName(BillPushDownStatusEnum.getNameByCode(listDTO.getDeliveryPushDownStatus()));
         }
     }
 

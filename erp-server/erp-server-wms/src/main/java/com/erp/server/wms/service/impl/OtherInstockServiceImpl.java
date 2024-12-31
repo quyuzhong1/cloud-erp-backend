@@ -1288,6 +1288,7 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
         otherInstockEntity.setInventoryDirection(InventoryDirectionEnum.ORDINARY.getCode());
         otherInstockEntity.setWarehouseId(warehouseEntity.getId());
         otherInstockEntity.setWarehouseName(warehouseEntity.getName());
+        otherInstockEntity.setReturnLogisticCode(dto.getLogisticsNo());
         otherInstockEntity.setOrgId(warehouseEntity.getOrgId());
         otherInstockEntity.setApproveTime(dto.getCheckTime());
         otherInstockEntity.setOrgName(orgName);

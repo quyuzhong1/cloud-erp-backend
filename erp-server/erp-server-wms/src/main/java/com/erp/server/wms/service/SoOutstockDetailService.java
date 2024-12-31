@@ -2,6 +2,7 @@ package com.erp.server.wms.service;
 
 import com.common.business.service.SuperService;
 import com.erp.model.oms.entity.SoDetailEntity;
+import com.erp.model.wms.dto.SoDeliveryNoticeDetailDTO;
 import com.erp.model.wms.dto.SoB2bProcessingDTO;
 import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.model.wms.dto.SoOutstockDetailDTO;
@@ -173,4 +174,6 @@ public interface SoOutstockDetailService extends SuperService<SoOutstockDetailEn
      * @return List<ResponseDTO>
      */
     List<SoB2bProcessingDTO.ResponseDTO> listSoOutstockBySourceIdList(List<String> sourceDetailIdList);
+
+    List<SoDeliveryNoticeDetailDTO.PushDownDTO> getPushDownBySoDetailIds(List<String> soDetailIds);
 }
