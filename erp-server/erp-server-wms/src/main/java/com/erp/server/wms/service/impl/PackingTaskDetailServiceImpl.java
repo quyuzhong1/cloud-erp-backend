@@ -140,6 +140,7 @@ public class PackingTaskDetailServiceImpl extends SuperServiceImpl<PackingTaskDe
         if (CharSequenceUtil.isBlank(searchKey)){
             return Collections.emptyList();
         }
+        searchMode = "fuzzy";
         return baseMapper.searchProductBySearchKey(taskId, searchKey,searchMode);
     }
 
