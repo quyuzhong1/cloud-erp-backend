@@ -75,7 +75,7 @@ public class InventoryDTO implements Serializable {
          * 查询维度：warehouse仓库，warehouseArea库区，warehouseLocation仓位<br/>
          * 接口地址：/wms/dict/drop/down?type=inventoryDimension
          */
-        @NotBlank
+//        @NotBlank
         private String dimension;
 
         /**
