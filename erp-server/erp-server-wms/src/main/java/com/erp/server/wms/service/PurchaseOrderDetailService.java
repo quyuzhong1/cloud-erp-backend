@@ -24,4 +24,12 @@ public interface PurchaseOrderDetailService extends SuperService<PurchaseOrderDe
     Boolean saveOrUpdatePurchaseOrderDetail(List<PurchaseOrderDetailEntity> purchaseOrderDetailEntityList);
 
     List<PurchaseOrderDetailEntity> listByPurchaseOrderId(String purchaseOrderId);
+    /**
+     * 查询采购订单明细
+     * @author will
+     * @date 2024/12/30 19:38
+     * @param subDetailIdList
+     * @return List<PurchaseOrderDetailEntity>
+     */
+    List<PurchaseOrderDetailEntity> listBySourceDetailIdList(List<String> subDetailIdList);
 }
