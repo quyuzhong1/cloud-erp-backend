@@ -1257,7 +1257,7 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
             wmsPushMsgEntity.setSourceId(soOutstockDetailEntity.getId());
             wmsPushMsgEntity.setSourceCode(entity.getCode() + "_" + soOutstockDetailEntity.getSkuNo());
             wmsPushMsgEntity.setSyncOperate(operate);
-            map.put("isNewHandler", Boolean.TRUE);
+            map.put("isQuerySync", Boolean.TRUE);
             map.put("detailId", soOutstockDetailEntity.getId());
             map.put("operate", operate);
             wmsPushMsgEntity.setPushData(JSON.toJSONString(map));
