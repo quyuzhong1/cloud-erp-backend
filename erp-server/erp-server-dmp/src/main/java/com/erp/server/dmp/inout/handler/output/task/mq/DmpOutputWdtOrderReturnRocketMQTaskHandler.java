@@ -122,7 +122,8 @@ public class DmpOutputWdtOrderReturnRocketMQTaskHandler extends DmpOutputRocketM
         resultEntity.setSourceType(SourceTypeEnum.WDT_RETURN_ORDER.getCode());
         resultEntity.setSourceId(itemList.stream().map(DmpSoReturnDetailEntity::getPlatformOrderCode).distinct().collect(Collectors.joining(",")));
         resultEntity.setSourceCode(itemList.stream().map(DmpSoReturnDetailEntity::getThirdOrderCode).distinct().collect(Collectors.joining(",")));
-    	
+        resultEntity.setLogisticsNo(entity.getTrackingNumber());
+        
         return resultEntity;
     }
 
