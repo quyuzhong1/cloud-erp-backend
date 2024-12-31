@@ -158,6 +158,7 @@ public class TransferLogisticsSupplierController extends BaseController {
      **/
     @PostMapping("/export")
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出excel")
+    @WebAdvanceQuery(handler = TransferLogisticsSupplierQueryHandler.class)
     public ApiResult<Object>export(@RequestBody @Valid TransferLogisticsSupplierDTO.ExportDTO dto) {
         Boolean result = transferLogisticsSupplierService.export(dto);
         return result ? success() : failure();
