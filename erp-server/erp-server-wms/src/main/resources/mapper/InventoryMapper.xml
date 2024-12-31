@@ -365,7 +365,7 @@
         left join product_info pi on pd.product_id = pi.id
         left join product_sale ps on ps.sku_id = pd.id
         WHERE
-        ind.is_deleted = false
+        ${params.sqlMap.default} and ind.is_deleted = false
         AND inv.dict_inventory_status in('usable','frozen')
         AND ind.qty != 0
         <!--
