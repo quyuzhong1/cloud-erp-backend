@@ -65,4 +65,12 @@ public interface MachineDetailService extends SuperService<MachineDetailEntity> 
      * @return List<ResponseDTO>
      */
     List<SoB2bProcessingDTO.ResponseDTO> listMachineBySourceIdList(List<String> sourceIdList);
+    /**
+     * 根据来源id查询数据
+     * @author will
+     * @date 2024/12/19 16:47
+     * @param refIdList
+     * @return List<ResponseDTO>
+     */
+    List<SoB2bProcessingDTO.ResponseDTO> listMachineByRefIdList(List<String> refIdList);
 }

@@ -122,7 +122,7 @@ public class FirstMileProcessingServiceImpl extends SuperServiceImpl<FirstMilePr
          */
         //查询加工单数据
         List<String> deliveryIdList = list.stream().map(FirstMileProcessingEntity::getFirstMileDeliveryId).distinct().collect(Collectors.toList());
-        List<SoB2bProcessingDTO.ResponseDTO> machineList = machineDetailService.listMachineBySourceIdList(deliveryIdList);
+        List<SoB2bProcessingDTO.ResponseDTO> machineList = machineDetailService.listMachineByRefIdList(deliveryIdList);
 
         //直接调拨单数据
         List<SoB2bProcessingDTO.ResponseDTO> transferList = transferInfoDetailService.listTransferBySourceIdList(deliveryIdList);

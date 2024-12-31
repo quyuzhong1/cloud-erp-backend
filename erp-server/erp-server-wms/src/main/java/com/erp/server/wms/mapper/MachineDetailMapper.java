@@ -26,4 +26,12 @@ public interface MachineDetailMapper extends BaseMapper<MachineDetailEntity> {
      * @return List<ResponseDTO>
      */
     List<SoB2bProcessingDTO.ResponseDTO> listMachineBySourceIdList(@Param("sourceIdList") List<String> sourceIdList);
+    /**
+     * 根据来源id查询数据
+     * @author will
+     * @date 2024/12/19 16:48
+     * @param refIdList
+     * @return List<ResponseDTO>
+     */
+    List<SoB2bProcessingDTO.ResponseDTO> listMachineByRefIdList(@Param("refIdList") List<String> refIdList);
 }
