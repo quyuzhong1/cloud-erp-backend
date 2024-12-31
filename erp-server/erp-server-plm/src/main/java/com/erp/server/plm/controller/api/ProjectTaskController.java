@@ -581,6 +581,7 @@ public class ProjectTaskController extends BaseController {
             tableAlias = "pt"
     )
     @PostMapping("/all/paging")
+    @WebAdvanceQuery
     public ApiResult<PagingVO<TaskPagingShowDTO>> expertPaging(@Validated @RequestBody PagingDTO<TaskSearchParamDTO> searchParamDTO) {
         PagingVO<TaskPagingShowDTO> pagingVO = projectTaskService.expertPaging(searchParamDTO);
         return success(pagingVO);
