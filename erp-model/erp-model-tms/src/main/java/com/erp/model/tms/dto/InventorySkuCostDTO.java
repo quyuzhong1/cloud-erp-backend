@@ -307,7 +307,7 @@ public class InventorySkuCostDTO implements Serializable {
         /**
          * 创建时间【可排序】
          */
-        private LocalDate createTime;
+        private LocalDateTime createTime;
         /**
          * 仓库id
          */
