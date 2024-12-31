@@ -48,6 +48,7 @@
         pd.process_version,
         pd.create_user_name as createUserName,
         pd.create_time as createTime,
+        pd.update_time as updateTime,
         pd.bpmn_xml as bpmnXml,
         pd.is_deploy as isDeploy,
         pb.id as businessId,
@@ -58,7 +59,7 @@
         process_definition pd
         LEFT JOIN process_business pb on pd.id = pb.process_definition_id and pb.is_deleted = false
         LEFT JOIN work_menu wm on pb.business_key = wm.module_code and pb.is_deleted = false
-        where pd.is_deleted = false
+        where ${params.sqlMap.default} and pd.is_deleted = false
         <if test="null != params and params.id != null and params.id != ''">
             and pd.id ilike concat('%',#{params.id}::text,'%')
         </if>
@@ -83,7 +84,7 @@
         LEFT JOIN process_business pb on pd.id = pb.process_definition_id and pb.is_deleted = false
         LEFT JOIN work_menu wm on pb.business_key = wm.module_code and pb.is_deleted = false
         LEFT JOIN dict_basic db on db.value = pd.review_setting and db.is_deleted = false  and db.type = 'reviewSetting'
-        where pd.is_deleted = false
+        where ${params.sqlMap.default} and pd.is_deleted = false
         <if test="null != params and params.ids != null and params.ids.size() > 0">
             and pd.id in
             <foreach collection="params.ids" item="item" open="(" separator="," close=")">

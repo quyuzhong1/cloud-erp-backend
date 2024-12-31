@@ -1,5 +1,6 @@
 package com.erp.server.plm.controller.api;
 
+import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
@@ -34,6 +35,7 @@ public class BomCombinationController extends BaseController {
      * @return ApiResult<PagingVO<ListDTO>>
      */
     @PostMapping("/paging")
+    @WebAdvanceQuery
     public ApiResult<PagingVO<BomCombinationDTO.ListDTO>> queryByPage(@RequestBody @Validated PagingDTO<BomCombinationDTO.SearchParamDTO> dto) {
         PagingVO<BomCombinationDTO.ListDTO> pagingVO = bomCombinationService.paging(dto);
         return success(pagingVO);

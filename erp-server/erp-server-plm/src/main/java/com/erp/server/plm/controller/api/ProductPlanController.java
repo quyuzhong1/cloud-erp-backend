@@ -1,8 +1,11 @@
 package com.erp.server.plm.controller.api;
 
 import com.common.business.annotation.DataPermission;
+import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.dto.TabListDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.business.vo.SeriesVO;
@@ -18,6 +21,7 @@ import com.erp.model.plm.dto.*;
 import com.erp.model.plm.vo.ProductPlanGroupVO;
 import com.erp.model.plm.vo.ProductPlanStatisticsVO;
 import com.erp.model.plm.vo.ProductPlanVO;
+import com.erp.server.plm.query.ProductPlanQueryHandler;
 import com.erp.server.plm.service.ProductPlanService;
 import org.apache.ibatis.annotations.Param;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
@@ -58,9 +62,24 @@ public class ProductPlanController extends BaseController {
      */
     @PostMapping("/paging")
     @DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "plm:product:plan:paging", tableAlias = "pp")
+    @WebAdvanceQuery(handler = ProductPlanQueryHandler.class)
     public ApiResult<PagingVO<List<ProductPlanVO>>> queryByPage(@RequestBody @Validated PagingDTO<ProductPlanSearchDTO> dto) {
         PagingVO<List<ProductPlanVO>> pagingVO = productPlanService.paging(dto);
         return success(pagingVO);
+    }
+
+
+    /**
+     * 获取状态统计
+     */
+    @PostMapping("/tabList")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "plm:product:plan:paging",
+            tableAlias = "pp"
+    )
+    public ApiResult<List<TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
+        return success(productPlanService.tabList(dto));
     }
 
     /**
@@ -288,6 +307,7 @@ public class ProductPlanController extends BaseController {
     */
     @LogAction(value = LogActionEnum.EXPORT, desc = "产品规划-导出规划")
     @PostMapping(value = "/exportProductPlan")
+    @WebAdvanceQuery(handler = ProductPlanQueryHandler.class)
     public ApiResult exportProductPlan(@RequestBody ProductPlanSearchDTO productPlanSearchDTO) {
         Boolean flag = productPlanService.exportProductPlan(productPlanSearchDTO);
         return flag == true ? success() : failure();

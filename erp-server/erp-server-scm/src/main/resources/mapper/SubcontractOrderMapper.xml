@@ -69,7 +69,7 @@
             where po.is_deleted = false  group by pod.source_detail_id
         ) sub on sod.id = sub.source_detail_id
         <where>
-            so.is_deleted = false and sod.parent_id = ''
+            ${params.sqlMap.default} and so.is_deleted = false and sod.parent_id = ''
             <if test="params.code != null and params.code != ''">
                 and so.code ILIKE concat('%',#{params.code}::text,'%')
             </if>
@@ -191,7 +191,7 @@
             where po.is_deleted = false  group by pod.source_detail_id
         ) sub on sod.id = sub.source_detail_id
         <where>
-            so.is_deleted = false
+            ${params.sqlMap.default} and so.is_deleted = false
             <if test="params.ids != null and params.ids.size > 0">
                 and so.id in
                 <foreach collection="params.ids" item="item" open="(" close=")" separator=",">

@@ -22,7 +22,9 @@
         FROM supplier_phase sp
         INNER JOIN supplier su
         ON su.id=sp.supplier_id
-        WHERE sp.is_deleted=false
+        WHERE
+        ${params.sqlMap.default}
+        and sp.is_deleted=false
         <if test="params.operateType!=null and params.operateType!=''">
             AND sp.operate_type=#{params.operateType}
         </if>
@@ -62,5 +64,17 @@
             </foreach>
         </if>
             sp.create_time DESC
+    </select>
+
+    <select id="listApproveCount" resultType="com.erp.model.scm.dto.SupplierPhaseDTO$ApproveCountDTO">
+        SELECT
+        approve_status,
+        count(*)
+        FROM  supplier_phase sp
+        WHERE is_deleted=FALSE
+        <if test="permissionSql!=null and permissionSql!=''">
+            ${permissionSql}
+        </if>
+        GROUP BY approve_status
     </select>
 </mapper>

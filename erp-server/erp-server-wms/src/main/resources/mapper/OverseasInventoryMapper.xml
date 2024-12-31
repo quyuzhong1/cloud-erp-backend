@@ -113,7 +113,7 @@
         opw.is_deleted = false AND opw.disabled = false AND
     </sql>
     <sql id="where_sql">
-        oi.is_deleted = false	AND ( ( op.auth_status = 'already' ) OR ( oi.dict_platform = 'AliExpress' ) )
+        ${params.sqlMap.default} and oi.is_deleted = false	AND ( ( op.auth_status = 'already' ) OR ( oi.dict_platform = 'AliExpress' ) )
         <if test="params.skuNoList!=null and params.skuNoList.size > 0">
             AND oi.sku_no IN
             <foreach collection="params.skuNoList" item="skuNo" open="(" separator="," close=")">
@@ -196,7 +196,7 @@
     <select id="paging" resultType="com.erp.model.wms.dto.OverseasInventoryDTO$ListDTO">
         SELECT
         oi.id,
-        oi.create_time,
+        oi.create_time as createTime,
         oi.update_time as updateTime,
         oi.create_user_name,
         oi.create_user_id,
@@ -238,7 +238,7 @@
         INNER JOIN warehouse_mapping wm ON w.ID = wm.warehouse_id
         AND wm.is_deleted = FALSE
         WHERE
-        w.is_deleted = FALSE
+            w.is_deleted = FALSE
         AND wm.dict_Platform = 'AliExpress') as w  on oi.NAME = w.thirdWarehouseName and oi.dict_platform = 'AliExpress'
         <where>
             <include refid="where_sql"/>

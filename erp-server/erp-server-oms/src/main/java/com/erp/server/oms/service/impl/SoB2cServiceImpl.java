@@ -11,6 +11,7 @@ import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
@@ -134,10 +135,7 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.time.Duration;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
+import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
@@ -5221,6 +5219,47 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         ReportDTO.ProductSalesPagingParamDTO params = dto.getParams();
         params.setPermissionSql(dto.getPermissionSql());
         Page<T> query = new Page<>(dto.getCurrPage(), dto.getPageSize());
+        AdvanceQueryDTO advanceQueryDTO = dto.getParams().getAdvanceQueryDTOList().stream()
+                .filter(e -> "sb.platform_order_create_time".equals(e.getField()))
+                .findFirst()
+                .orElse(null);
+        if (null == advanceQueryDTO){
+            advanceQueryDTO = dto.getParams().getAdvanceQueryDTOList().stream()
+                    .filter(e -> "sb.create_time".equals(e.getField()))
+                    .findFirst()
+                    .orElse(null);
+        }
+        if (null == advanceQueryDTO){
+            throw new ServiceException("订单创建时间必传");
+        }
+        if (null == advanceQueryDTO.getValue()){
+            throw new ServiceException("订单创建时间不能为空");
+        }
+
+        // 销售订单开始时间
+        LocalDateTime startTime = null;
+        // 销售订单结束时间
+        LocalDateTime endTime = null;
+        if (QueryConditionEnum.GT.getCompareCode().equalsIgnoreCase(advanceQueryDTO.getCompare())
+                || QueryConditionEnum.GE.getCompareCode().equalsIgnoreCase(advanceQueryDTO.getCompare())){
+            startTime = LocalDateTime.of(LocalDate.parse(advanceQueryDTO.getValue().toString()), LocalTime.MIN);
+            endTime = LocalDateTime.now(ZoneId.systemDefault());
+        }
+
+        if (QueryConditionEnum.LT.getCompareCode().equalsIgnoreCase(advanceQueryDTO.getCompare())
+                || QueryConditionEnum.LE.getCompareCode().equalsIgnoreCase(advanceQueryDTO.getCompare())){
+            startTime = LocalDateTime.of(1970, 1 , 1,  0, 0, 0);
+            endTime = LocalDateTime.of(LocalDate.parse(advanceQueryDTO.getValue().toString()), LocalTime.MIN);;
+        }
+        if (QueryConditionEnum.BETWEEN.getCompareCode().equalsIgnoreCase(advanceQueryDTO.getCompare())) {
+            JSONArray dateJsonArray = JSONArray.parseArray(JSON.toJSONString(advanceQueryDTO.getValue()));
+            startTime = LocalDateTime.of(LocalDate.parse(dateJsonArray.get(0).toString()), LocalTime.MIN);
+            endTime = LocalDateTime.of(LocalDate.parse(dateJsonArray.get(1).toString()), LocalTime.MIN);
+        }
+        if (null == startTime || null == endTime){
+            ServiceException.runError("解析单创建时间失败");
+        }
+
         //sku 创建时间
         List<LocalDateTime> skuCreateTimeList = params.getSkuCreateTimeList();
         List<String> skuIdList = Lists.newArrayList();
@@ -5233,7 +5272,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         }
         IPage pageData = baseMapper.productSalesPaging(query, params, skuIdList);
         List<ReportDTO.ProductSalesPagingViewDTO> list = pageData.getRecords();
-        Duration between = LocalDateTimeUtil.between(params.getOrderCreateTimeList().get(0), params.getOrderCreateTimeList().get(1));
+        Duration between = LocalDateTimeUtil.between(startTime, endTime);
         long diffDays = between.toDays();
         if (diffDays == 0) {
             diffDays = 1;
@@ -5536,7 +5575,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             String shopName = shopInfoList.stream().filter(s -> s.getId().equals(shopId)).
                     findFirst().map(ShopInfoEntity::getName).orElse("");
             item.setShopName(shopName);
-            Integer qty = item.getQty();
+            int qty = null == item.getQty() ? 0 : item.getQty();
             Integer avgQty = Math.toIntExact(qty / diffDays);
             item.setAvgQty(avgQty);
             BigDecimal amount = item.getAmount();

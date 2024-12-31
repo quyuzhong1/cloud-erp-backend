@@ -2,6 +2,7 @@ package com.erp.server.scm.controller.api;
 
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.DataPermission;
+import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.validator.ValidList;
@@ -16,6 +17,7 @@ import com.erp.model.scm.dto.PurchaseOrderDTO;
 import com.erp.model.scm.dto.SubcontractChangeDTO;
 import com.erp.model.scm.dto.SubcontractOrderDTO;
 import com.erp.model.scm.entity.SubcontractOrderEntity;
+import com.erp.server.scm.query.SubcontractOrderQueryHandler;
 import com.erp.server.scm.service.SubcontractOrderService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -68,6 +70,7 @@ public class SubcontractOrderController extends BaseController {
             menuCode = "scm:subcontractOrder:paging",
             tableAlias = "so"
     )
+    @WebAdvanceQuery(handler = SubcontractOrderQueryHandler.class)
     public ApiResult<PagingVO<SubcontractOrderDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<SubcontractOrderDTO.PagingParamDTO> dto) {
         return success(subcontractOrderService.paging(dto));
     }

@@ -1,5 +1,6 @@
 package com.erp.model.plm.dto;
 
+import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -7,6 +8,7 @@ import lombok.NoArgsConstructor;
 import javax.validation.constraints.NotBlank;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Will
@@ -21,7 +23,7 @@ public class ProductPlanSearchDTO extends SortDTO {
     /**
      * 类型：0所有，1尚未开始，2已立项，3开发中
      */
-    @NotBlank(message = "类型不能为空")
+//    @NotBlank(message = "类型不能为空")
     private String type;
 
     /**
@@ -78,4 +80,18 @@ public class ProductPlanSearchDTO extends SortDTO {
      * 计划上市时间结束
      */
     private LocalDate planListingDateEnd;
+
+    /**
+     * 页面高级查询
+     */
+    private List<AdvanceQueryDTO> advanceQueryDTOList;
+
+    /**
+     * sqlMap 默认key default
+     */
+    private Map<String, String> sqlMap;
+
+    public ProductPlanSearchDTO(String type) {
+        this.type = type;
+    }
 }

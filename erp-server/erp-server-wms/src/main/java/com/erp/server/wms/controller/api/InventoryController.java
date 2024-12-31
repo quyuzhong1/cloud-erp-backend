@@ -11,6 +11,7 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.wms.dto.inventory.InventoryDTO;
 import com.erp.model.wms.dto.inventory.InventoryReportDTO;
+import com.erp.server.wms.query.WmsInventoryQueryHandler;
 import com.erp.server.wms.service.InventoryService;
 import com.erp.server.wms.service.TransactionFlowService;
 import org.springframework.validation.annotation.Validated;
@@ -45,6 +46,7 @@ public class InventoryController extends BaseController {
      * @return
      */
     @PostMapping("/paging")
+    @WebAdvanceQuery(handler = WmsInventoryQueryHandler.class)
     public ApiResult<PagingVO<InventoryDTO.PagingViewDTO>> queryByPage(@RequestBody @Validated PagingDTO<InventoryDTO.SearchParamDTO> dto) {
         return success(inventoryService.paging(dto));
     }
@@ -67,7 +69,7 @@ public class InventoryController extends BaseController {
      * @return
      */
     @PostMapping("/pageTransFlow")
-    @WebAdvanceQuery
+    @WebAdvanceQuery(handler = WmsInventoryQueryHandler.class)
     public ApiResult<PagingVO<InventoryDTO.TransFlowPagingViewDTO>> pageTransFlow(@RequestBody @Validated PagingDTO<InventoryDTO.TransFlowSearchParamDTO> dto) {
         return success(transactionFlowService.pagingForInv(dto));
     }
@@ -78,7 +80,7 @@ public class InventoryController extends BaseController {
      * @return
      */
     @PostMapping("/exportTransFlow")
-    @WebAdvanceQuery
+    @WebAdvanceQuery(handler = WmsInventoryQueryHandler.class)
     public ApiResult<Boolean> exportTransFlow(@RequestBody InventoryDTO.ExportInvFlowSearchParamDTO dto) {
         transactionFlowService.exportTransFlow(dto);
         return success(true);
@@ -91,6 +93,7 @@ public class InventoryController extends BaseController {
      * @return
      */
     @PostMapping("/pageInOutStock")
+    @WebAdvanceQuery
     public ApiResult<PagingVO<InventoryDTO.InOutStockTransFlowPagingViewDTO>> pageInOutStock(@RequestBody @Validated PagingDTO<InventoryDTO.InOutStockTransFlowSearchParamDTO> dto) {
         return success(transactionFlowService.paging(dto));
     }
@@ -113,6 +116,7 @@ public class InventoryController extends BaseController {
      * @return
      */
     @PostMapping("/pageInOutStockSummary")
+    @WebAdvanceQuery
     public ApiResult<PagingVO<InventoryDTO.InOutStockSummaryPagingViewDTO>> pageInOutStockSummary(@RequestBody @Validated PagingDTO<InventoryDTO.InOutStockSummarySearchParamDTO> dto) {
         return success(transactionFlowService.pagingSummary(dto));
     }
@@ -162,6 +166,7 @@ public class InventoryController extends BaseController {
      * @return
      */
     @PostMapping("/transport/paging")
+    @WebAdvanceQuery
     public ApiResult<PagingVO<InventoryReportDTO.TransportPagingDTO>> transportPaging(@RequestBody @Validated PagingDTO<InventoryReportDTO.TransportSearchParamDTO> dto) {
         return success(transactionFlowService.transportPagingList(dto));
     }
@@ -194,6 +199,7 @@ public class InventoryController extends BaseController {
      * @return
      */
     @PostMapping("/inventoryAge/paging")
+    @WebAdvanceQuery
     public ApiResult<PagingVO<LinkedHashMap>> inventoryAgePaging(@RequestBody @Validated PagingDTO<InventoryReportDTO.InventoryAgeSearchParamDTO> dto) {
         return success(inventoryService.inventoryAgePaging(dto));
     }
@@ -230,6 +236,7 @@ public class InventoryController extends BaseController {
      * @return
      */
     @PostMapping("/dailyInventoryPaging")
+    @WebAdvanceQuery
     public ApiResult<PagingVO<InventoryReportDTO.ListDailyInventoryDTO>> dailyInventoryPaging(@RequestBody @Validated PagingDTO<InventoryReportDTO.DailyInventoryParamDTO> dto) {
         return success(transactionFlowService.dailyInventoryPaging(dto));
     }
@@ -277,9 +284,9 @@ public class InventoryController extends BaseController {
         long countArea = inventoryService.countByArea();
         long countLocation = inventoryService.countByLocation();
 
-        list.add(new InventoryDTO.TabDto("warehouse", countWarehouse));
-        list.add(new InventoryDTO.TabDto("warehouseArea", countArea));
-        list.add(new InventoryDTO.TabDto("warehouseLocation", countLocation));
+        list.add(new InventoryDTO.TabDto("warehouse", countWarehouse, "按仓库"));
+        list.add(new InventoryDTO.TabDto("warehouseArea", countArea, "按库区"));
+        list.add(new InventoryDTO.TabDto("warehouseLocation", countLocation, "按仓位"));
 
         return ApiResult.success(list);
     }

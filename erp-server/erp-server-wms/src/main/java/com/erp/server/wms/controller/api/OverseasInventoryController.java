@@ -4,6 +4,7 @@ package com.erp.server.wms.controller.api;
 import com.common.business.annotation.DataPermission;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.DataAttributeEnum;
+import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
@@ -54,6 +55,7 @@ public class OverseasInventoryController extends BaseController {
             menuCode = "wms:overseasInventory:paging",
             tableAlias = "oi"
     )
+    @WebAdvanceQuery
     public ApiResult<PagingVO<OverseasInventoryDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<OverseasInventoryDTO.PagingParamDTO> dto) {
         PagingVO<OverseasInventoryDTO.ListDTO> result = overseasInventoryService.paging(dto);
         return success(result);

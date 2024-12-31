@@ -2,6 +2,7 @@ package com.erp.server.sys.controller.api;
 
 
 import com.common.business.annotation.DataIdempotent;
+import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.ForgotPasswordDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -219,6 +220,7 @@ public class SysUserInfoController extends BaseController {
      * @return
      */
     @RequestMapping("/shopAuthPaging")
+    @WebAdvanceQuery
     public ApiResult shopAuthPaging(@RequestBody @Validated PagingDTO<SysUserInfoDTO.ShopAuthPagingSearchDTO> dto) {
         PagingVO pagingVO = sysUserInfoService.shopAuthPaging(dto);
         return success(pagingVO);

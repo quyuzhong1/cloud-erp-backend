@@ -11,6 +11,7 @@ import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.DynamicExcelDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -472,13 +473,24 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
         pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
         Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
         IPage<InventoryDTO.PagingViewDTO> pageData = new Page<>();
-        if (pagingParamDTO.getParams().getDimension().equals(InventorySearchDimensionEnum.WAREHOUSE.getCode())) {
+        AdvanceQueryDTO advanceQueryDTO = pagingParamDTO.getParams().getAdvanceQueryDTOList().stream().filter(e -> "dimension".equalsIgnoreCase(e.getField())).findFirst().orElse(null);
+        if (null == advanceQueryDTO){
+            ServiceException.runError("advanceQueryDTOList.field=dimension不能为空");
+        }
+        pagingParamDTO.getParams().setDimension(advanceQueryDTO.getValue().toString());
+        if (InventorySearchDimensionEnum.WAREHOUSE.getCode().equalsIgnoreCase(pagingParamDTO.getParams().getDimension())) {
+            List<AdvanceQueryDTO> newQuery = pagingParamDTO.getParams().getAdvanceQueryDTOList().stream().filter(e -> "dimension".equalsIgnoreCase(e.getField())).collect(Collectors.toList());
+            pagingParamDTO.getParams().setAdvanceQueryDTOList(newQuery);
             pageData = this.baseMapper.page(query, pagingParamDTO.getParams());
         }
-        if (pagingParamDTO.getParams().getDimension().equals(InventorySearchDimensionEnum.WAREHOUSE_AREA.getCode())) {
+        if (InventorySearchDimensionEnum.WAREHOUSE_AREA.getCode().equalsIgnoreCase(pagingParamDTO.getParams().getDimension())) {
+            List<AdvanceQueryDTO> newQuery = pagingParamDTO.getParams().getAdvanceQueryDTOList().stream().filter(e -> "dimension".equalsIgnoreCase(e.getField())).collect(Collectors.toList());
+            pagingParamDTO.getParams().setAdvanceQueryDTOList(newQuery);
             pageData = this.baseMapper.pageByArea(query, pagingParamDTO.getParams());
         }
-        if (pagingParamDTO.getParams().getDimension().equals(InventorySearchDimensionEnum.WAREHOUSE_LOCATION.getCode())) {
+        if (InventorySearchDimensionEnum.WAREHOUSE_LOCATION.getCode().equalsIgnoreCase(pagingParamDTO.getParams().getDimension())) {
+            List<AdvanceQueryDTO> newQuery = pagingParamDTO.getParams().getAdvanceQueryDTOList().stream().filter(e -> "dimension".equalsIgnoreCase(e.getField())).collect(Collectors.toList());
+            pagingParamDTO.getParams().setAdvanceQueryDTOList(newQuery);
             if(CharSequenceUtil.isNotBlank(pagingParamDTO.getParams().getWarehouseLocationName())){
                 List<WarehouseLocationEntity> list = warehouseLocationService.listByLocationName(pagingParamDTO.getParams().getWarehouseLocationName());
                 if(!list.isEmpty()){
