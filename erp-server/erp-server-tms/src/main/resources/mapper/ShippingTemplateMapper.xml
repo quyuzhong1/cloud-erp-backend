@@ -135,7 +135,7 @@
         from
         shipping_template st
         <where>
-            st.is_deleted = false
+            ${params.sqlMap.default} and st.is_deleted = false
             <if test="params.ids != null and params.ids.size > 0">
                 and st.id in
                 <foreach collection="params.ids" item="item" open="(" close=")" separator=",">
