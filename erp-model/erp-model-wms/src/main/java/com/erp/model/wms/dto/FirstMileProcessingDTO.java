@@ -80,7 +80,7 @@ public class FirstMileProcessingDTO implements Serializable {
         /**
          * 批准数量【可排序】
          */
-        private String approveQty;
+        private Integer approveQty;
         /**
          * 头程发货单id【可排序】
          */
@@ -100,7 +100,7 @@ public class FirstMileProcessingDTO implements Serializable {
         /**
          * 发货数量【可排序】
          */
-        private String deliveryQty;
+        private Integer deliveryQty;
         /**
          * SKU【可排序】
          */
@@ -172,7 +172,7 @@ public class FirstMileProcessingDTO implements Serializable {
         /**
          * 出库数量【可排序】
          */
-        private String outstockQty;
+        private Integer outstockQty;
         /**
          * 更新时间【可排序】
          */

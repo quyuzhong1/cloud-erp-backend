@@ -133,38 +133,8 @@ public class SoB2cProcessingServiceImpl extends SuperServiceImpl<SoB2cProcessing
 
         List<SoB2cProcessingDTO.AddOrUpdateDTO> addList = new ArrayList<>();
         for (SoB2cProcessingEntity entity :list) {
-
-            //直接调拨单
-            SoB2bProcessingDTO.ResponseDTO transferResponseDTO = transferList.stream().filter(obj ->
-                            CharSequenceUtil.equals(obj.getSourceId(), entity.getDeliveryId())
-                            &&  CharSequenceUtil.equals(obj.getSourceDetailId(), entity.getDeliveryDetailId()))
-                    .findFirst().orElse(null);
-            if (ObjectUtil.isNotEmpty(transferResponseDTO)) {
-                handleOutstock (entity,transferResponseDTO, SourceTypeEnum.TRANSFER_INFO.getCode());
-            }
-            //销售出库单
-            SoB2bProcessingDTO.ResponseDTO soOutstockResponseDTO = soOutstockList.stream().filter(obj ->
-                            CharSequenceUtil.equals(obj.getSourceId(), entity.getDeliveryId())
-                            &&  CharSequenceUtil.equals(obj.getSourceDetailId(), entity.getDeliveryDetailId()))
-                    .findFirst().orElse(null);
-            if (ObjectUtil.isNotEmpty(soOutstockResponseDTO)) {
-                handleOutstock (entity,soOutstockResponseDTO, SourceTypeEnum.SO_OUTSTOCK.getCode());
-            }
-
-            //发货单出库流水
-            long count = virtualTransFlowList.stream().filter(obj -> StrUtil.equals(obj.getSourceDetailId(), entity.getDeliveryDetailId())).count();
-            if (count > 0) {
-                entity.setOutstockOrderId(entity.getId());
-                entity.setOutstockOrderStatus(entity.getDeliveryStatus());
-                entity.setOutstockQty(entity.getDeliveryQty());
-                entity.setOutstockOrderCode(entity.getDeliveryCode());
-                entity.setOutstockOrderTime(entity.getDeliveryTime());
-                entity.setOutstockOrderType(SourceTypeEnum.SO_B2C_DELIVERY.getCode());
-                if (SoB2cDeliveryStatusEnum.SHIPPED.getStatus().equals(entity.getDeliveryStatus())) {
-                    entity.setFrozenQty(MathUtil.valueOfZero(entity.getFrozenQty()) - MathUtil.valueOfZero(entity.getDeliveryQty()));
-                }
-            }
-
+            //根据类型更新出库数据
+            handleOutstockByType(virtualTransFlowList,transferList,soOutstockList,entity);
             //bom信息
             List<BomChildrenSkuDTO> childList = bomChildrenSkuList.stream().filter(obj ->
                     CharSequenceUtil.equals(obj.getParentSkuId(), entity.getSkuId())
@@ -188,6 +158,53 @@ public class SoB2cProcessingServiceImpl extends SuperServiceImpl<SoB2cProcessing
             }
         }
         this.addOrUpdate(addList);
+    }
+
+    /**
+     * 根据类型赋值出库数据
+     * @author will
+     * @date 2024/12/31 14:59
+     * @param virtualTransFlowList
+     * @param transferList
+     * @param soOutstockList
+     * @param entity
+     */
+    private void handleOutstockByType ( List<VirtualTransFlowEntity> virtualTransFlowList,List<SoB2bProcessingDTO.ResponseDTO> transferList,
+                                      List<SoB2bProcessingDTO.ResponseDTO> soOutstockList,SoB2cProcessingEntity entity) {
+        //发货单出库流水
+        long count = virtualTransFlowList.stream().filter(obj -> StrUtil.equals(obj.getSourceDetailId(), entity.getDeliveryDetailId())).count();
+        if (count > 0) {
+            entity.setOutstockOrderId(entity.getId());
+            entity.setOutstockOrderStatus(entity.getDeliveryStatus());
+            entity.setOutstockQty(entity.getDeliveryQty());
+            entity.setOutstockOrderCode(entity.getDeliveryCode());
+            entity.setOutstockOrderTime(entity.getDeliveryTime());
+            entity.setOutstockOrderType(SourceTypeEnum.SO_B2C_DELIVERY.getCode());
+            if (SoB2cDeliveryStatusEnum.SHIPPED.getStatus().equals(entity.getDeliveryStatus())) {
+                entity.setFrozenQty(MathUtil.valueOfZero(entity.getFrozenQty()) - MathUtil.valueOfZero(entity.getDeliveryQty()));
+            }
+            return;
+        }
+        //直接调拨单
+        SoB2bProcessingDTO.ResponseDTO transferResponseDTO = transferList.stream().filter(obj ->
+                        CharSequenceUtil.equals(obj.getSourceId(), entity.getDeliveryId())
+                                && CharSequenceUtil.equals(obj.getApproveStatus(),ApproveStatusEnum.APPROVE.getStatus())
+                                && CharSequenceUtil.equals(obj.getWarehouseId(), entity.getWarehouseId())
+                                &&  CharSequenceUtil.equals(obj.getSourceDetailId(), entity.getDeliveryDetailId()))
+                .findFirst().orElse(null);
+        if (ObjectUtil.isNotEmpty(transferResponseDTO)) {
+            handleOutstock (entity,transferResponseDTO, SourceTypeEnum.TRANSFER_INFO.getCode());
+            return;
+        }
+        //销售出库单
+        SoB2bProcessingDTO.ResponseDTO soOutstockResponseDTO = soOutstockList.stream().filter(obj ->
+                        CharSequenceUtil.equals(obj.getSourceId(), entity.getDeliveryId())
+                                && CharSequenceUtil.equals(obj.getApproveStatus(),ApproveStatusEnum.APPROVE.getStatus())
+                                &&  CharSequenceUtil.equals(obj.getSourceDetailId(), entity.getDeliveryDetailId()))
+                .findFirst().orElse(null);
+        if (ObjectUtil.isNotEmpty(soOutstockResponseDTO)) {
+            handleOutstock (entity,soOutstockResponseDTO, SourceTypeEnum.SO_OUTSTOCK.getCode());
+        }
     }
 
 
@@ -284,7 +301,7 @@ public class SoB2cProcessingServiceImpl extends SuperServiceImpl<SoB2cProcessing
                 //冻结时长
                 listDTO.setFrozenDays(Math.toIntExact(localDate.toEpochDay() - listDTO.getFrozenTime().toLocalDate().toEpochDay()) + 1);
             }
-            if (MathUtil.compareTo(listDTO.getFrozenQty(),MathUtil.ZERO) != MathUtil.ZERO && CharSequenceUtil.isNotBlank(listDTO.getDeliveryId())) {
+            if (MathUtil.compareTo(listDTO.getFrozenQty(),MathUtil.ZERO) != MathUtil.ZERO && CharSequenceUtil.isNotBlank(listDTO.getDeliveryId()) && CharSequenceUtil.isBlank(listDTO.getOutstockOrderId())) {
                 labelList.add(OrderProcessingLableEnum.FROZEN.getCode());
                 //冻结时长
                 listDTO.setFrozenDays(Math.toIntExact(LocalDate.now().toEpochDay() - listDTO.getFrozenTime().toLocalDate().toEpochDay()) + 1);

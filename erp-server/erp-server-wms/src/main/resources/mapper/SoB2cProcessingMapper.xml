@@ -83,7 +83,7 @@
             and sbp.outstock_order_id != ''
         </if>
         <if test="params.label != null and params.label == 'frozen'">
-            and sbp.delivery_qty != sbp.frozen_qty and sbp.delivery_id != ''
+            and sbp.frozen_qty != 0 and sbp.delivery_id != '' and sbp.outstock_order_id = ''
         </if>
         <if test="params.label != null and params.label == 'unShipped'">
             and sbp.outstock_order_id = '' and sbp.frozen_time is not null and EXTRACT(DAY FROM (now() - sbp.frozen_time)) >= 7

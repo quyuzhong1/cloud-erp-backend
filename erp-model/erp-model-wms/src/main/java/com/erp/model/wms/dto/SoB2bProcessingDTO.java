@@ -77,7 +77,7 @@ public class SoB2bProcessingDTO implements Serializable {
         /**
          * 销售数量【可排序】
          */
-        private String soQty;
+        private Integer soQty;
         /**
          * 发货通知单id【可排序】
          */
@@ -97,7 +97,7 @@ public class SoB2bProcessingDTO implements Serializable {
         /**
          * 发货数量【可排序】
          */
-        private String deliveryQty;
+        private Integer deliveryQty;
         /**
          * SKU【可排序】
          */
@@ -169,7 +169,7 @@ public class SoB2bProcessingDTO implements Serializable {
         /**
          * 出库数量【可排序】
          */
-        private String outstockQty;
+        private Integer outstockQty;
 
         /**
          * 更新时间【可排序】
@@ -497,6 +497,10 @@ public class SoB2bProcessingDTO implements Serializable {
          * skuId
          */
         private String skuId;
+        /**
+         * 仓库id
+         */
+        private String warehouseId;
         /**
          * 数量
          */
