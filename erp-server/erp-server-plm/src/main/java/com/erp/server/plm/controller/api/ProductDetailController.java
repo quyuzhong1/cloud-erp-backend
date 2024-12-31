@@ -22,6 +22,7 @@ import com.erp.model.plm.enums.ProductDetailStatusEnum;
 import com.erp.model.plm.vo.SkuSimpleVO;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.server.plm.listener.ProductWarehouseLocationListener;
+import com.erp.server.plm.query.ProductDetailQueryHandler;
 import com.erp.server.plm.service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -123,7 +124,7 @@ public class ProductDetailController extends BaseController {
      **/
     @PostMapping("/list")
     @DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "plm:product:detail:list", tableAlias = "pd")
-    @WebAdvanceQuery
+    @WebAdvanceQuery(handler = ProductDetailQueryHandler.class)
     public ApiResult<PagingVO<ProductDetailShowDTO>> list(@RequestBody PagingDTO<ProductSkuDTO> pagingDTO) {
         PagingVO<ProductDetailShowDTO> paging = productDetailService.paging(pagingDTO);
         return this.success(paging);
