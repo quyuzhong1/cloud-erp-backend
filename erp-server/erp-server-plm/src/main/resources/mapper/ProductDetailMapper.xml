@@ -555,7 +555,7 @@
         LEFT JOIN product_logistics pl ON pl.sku_id = pd."id" AND pl.is_deleted = FALSE
         LEFT JOIN product_unit unit ON pd.unit_id = unit.id AND unit.is_deleted = FALSE
         LEFT JOIN basic_dict dp ON pl.product_property_id = dp.id AND dp.is_deleted = FALSE
-        WHERE pi.is_deleted = FALSE
+        WHERE ${params.sqlMap.default} and pi.is_deleted = FALSE
         <if test="params.skuIds != null and params.skuIds.size>0">
             AND pd.id IN
             <foreach collection="params.skuIds" item="item" open="(" separator="," close=")">
