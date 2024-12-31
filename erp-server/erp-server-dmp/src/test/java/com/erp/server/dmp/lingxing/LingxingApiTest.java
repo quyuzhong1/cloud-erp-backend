@@ -26,10 +26,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import java.time.LocalDate;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -122,4 +119,15 @@ public class LingxingApiTest {
         System.out.println("结果");
         System.out.println(data);
     }
+
+    @Test
+    public void skuIdentifierList(){
+        TreeMap<String, Object> treeMap = new TreeMap<>();
+        treeMap.put("sku_identifier_list", Collections.singletonList("1619184295035801601"));
+        Result<Object> result = LingxingApiUtils.postAndSignCheckListConvert(LingxingApiUtils.PRODUCT_LIST_URI, treeMap);
+        Object data = result.getData();
+        System.out.println("结果");
+        System.out.println(data);
+    }
+
 }

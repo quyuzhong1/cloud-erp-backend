@@ -178,7 +178,7 @@ public class DmpInputLxOrderDmpHandler extends DmpInputDbConvertDmpHandler {
                 // 买家信息
                 Object buyersInfoObj = dmpDataMap.get("buyers_info");
                 if (null != buyersInfoObj) {
-                    Map<String, Object> buyersInfoMap = (JSONObject) buyersInfoObj;
+                    Map<String, Object> buyersInfoMap = JSON.parseObject(JSON.toJSONString(buyersInfoObj));
                     String buyerNote = buyersInfoMap.getOrDefault("buyer_note", "").toString();
                     dmpDataMap.put("buyerRemark", buyerNote);
                 }
