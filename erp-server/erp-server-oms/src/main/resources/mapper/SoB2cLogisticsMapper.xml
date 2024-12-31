@@ -76,10 +76,17 @@
        LEFT JOIN shop_auth sa
        ON sa.shop_id=sb2c.shop_id AND sa.is_deleted =false
        WHERE sb2cl.is_deleted=FALSE
+         AND sb2c.invalid_status = false
+         AND sb2c.is_cancel = false
+         AND sb2c.is_frozen = false
+         AND sb2c.is_intercept = false
+         AND sb2c.is_not_outbound = false
        AND sb2cl.track_no=''
        AND sb2cl.code!=''
        AND sb2cl.logistics_channel_id!=''
        AND sa.token !=''
+        AND sb2cl.update_time >= NOW() - INTERVAL '3 months'
+       ORDER BY sb2cl.update_time desc
     </select>
 
     <!-- 根据物流单号或者运单号查询 -->
