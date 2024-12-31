@@ -42,6 +42,8 @@ public class LogisticsFeignController {
     private LogisticsAddressService logisticsAddressService;
     @Resource
     private LogisticsTrackService logisticsTrackService;
+    @Resource
+    private InventorySkuCostService inventorySkuCostService;
 
     @Resource
     private ShippingCalculationService shippingCalculationService;
@@ -200,5 +202,33 @@ public class LogisticsFeignController {
         dto.setPageSize(MathUtil.NUMBER_100);
         dto.setCurrPage(MathUtil.ONE);
         shippingCalculationService.paging(dto);
+    }
+
+    /**
+     * sku成本根据sku查询
+     * @param queryB2BDTO
+     * @return
+     */
+    @PostMapping("/listSkuCostBySkuIds")
+    public List<InventorySkuCostDTO.SkuCostDTO> listSkuCostBySkuIds(@RequestBody InventorySkuCostDTO.QueryB2BDTO queryB2BDTO) {
+        return inventorySkuCostService.listSkuCostBySkuIds(queryB2BDTO);
+    }
+    /**
+     * sku成本根据订单明细查询
+     * @param queryB2CDTO
+     * @return
+     */
+    @PostMapping("/listSkuCostByDetail")
+    public List<InventorySkuCostDTO.SkuCostDTO> listSkuCostByDetail(@RequestBody InventorySkuCostDTO.QueryB2CDTO queryB2CDTO) {
+        return inventorySkuCostService.listSkuCostByDetail(queryB2CDTO);
+    }
+    /**
+     * sku成本 单个明细
+     * @param queryDetailDTOList
+     * @return
+     */
+    @PostMapping("/listSkuCostByDetailList")
+    public List<InventorySkuCostDTO.SkuCostDTO> listSkuCostByDetailList(@RequestBody List<InventorySkuCostDTO.QueryDetailDTO> queryDetailDTOList){
+        return inventorySkuCostService.listSkuCostByDetailList(queryDetailDTOList);
     }
 }

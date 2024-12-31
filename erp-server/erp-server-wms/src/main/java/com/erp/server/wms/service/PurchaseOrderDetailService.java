@@ -22,4 +22,6 @@ public interface PurchaseOrderDetailService extends SuperService<PurchaseOrderDe
      * @Date 2023/4/19 16:05
      **/
     Boolean saveOrUpdatePurchaseOrderDetail(List<PurchaseOrderDetailEntity> purchaseOrderDetailEntityList);
+
+    List<PurchaseOrderDetailEntity> listByPurchaseOrderId(String purchaseOrderId);
 }

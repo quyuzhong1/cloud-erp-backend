@@ -391,6 +391,11 @@ public class VirtualWarehouseAllocationDTO implements Serializable {
         private Boolean isVirtualScarce;
 
         /**
+         * 是否缺货（true是，false否）字符
+         */
+        private String isVirtualScarceStr;
+
+        /**
          * 缺货数量
          */
         private Integer virtualScarceQty;

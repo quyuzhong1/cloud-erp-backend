@@ -105,6 +105,10 @@ public class CfgSettingDTO implements Serializable {
          * 委外入库
          */
         private CfgSettingValueDTO.SubcontractInStock subcontractInStock;
+        /**
+         * 委外退货
+         */
+        private CfgSettingValueDTO.SubcontractReturnStock subcontractReturnStock;
 
         /**
          * 飞书仓位补货通知配置

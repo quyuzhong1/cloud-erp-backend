@@ -438,7 +438,10 @@ public class PilotApplicationDTO implements Serializable {
          * 试产量产单号
          */
         private String code;
-
+        /**
+         * 申请数量
+         */
+        private int applyQty;
         /**
          * 明细ID
          */

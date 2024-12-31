@@ -15,6 +15,9 @@ import java.time.LocalDateTime;
 @Data
 @NoArgsConstructor
 public class WarehouseReceiveExcelDTO {
+
+    private String id;
+
     /**
      * 签收单号
      */
@@ -129,4 +132,58 @@ public class WarehouseReceiveExcelDTO {
      * 采购单详情表id
      */
     private String purchaseOrderDetailId;
+
+    /**
+     * 入库状态（0未入库，1部分入库，2已入库）
+     */
+    private String inStockStatus;
+    /**
+     * 入库状态（0未入库，1部分入库，2已入库）
+     */
+    private String inStockStatusName;
+
+    /**
+     * 质检状态
+     */
+    private String qcStatus;
+
+    /**
+     * 质检状态名称
+     */
+    private String qcStatusName;
+    /**
+     * 入库数量
+     */
+    private Integer stockInQty = 0;
+    /**
+     * 退货数量
+     */
+    private Integer returnQty = 0;
+    /**
+     * 审核完成时间
+     */
+    private LocalDateTime approveTime;
+
+    /**
+     * 采购组织id
+     */
+    private String purchaseOrgId;
+
+    /**
+     * 采购组织名
+     */
+    private String purchaseOrgName;
+    /**
+     * 收料组织id
+     */
+    private String receiveOrgId;
+    /**
+     * 收料组织名
+     */
+    private String receiveOrgName;
+
+    /**
+     * 送货单号
+     */
+    private String deliveryCode;
 }

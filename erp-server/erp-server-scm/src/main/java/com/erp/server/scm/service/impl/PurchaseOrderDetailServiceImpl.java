@@ -415,6 +415,9 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
                     addDTO.setPurchaseAmount(MathUtil.multiply(viewDTO.getTaxPrice(),addDTO.getPurchaseQty()));
                 }
             }else if (PurchaseOrderTypeEnum.ENUM_RETURN.getCode().equals(entity.getType())){
+                if(!addDTO.getIsRevalueTaxRate()){
+                    continue;
+                }
                 PoReturnDetailEntity poReturnDetailEntity = poReturnDetailEntityList.stream().filter(e -> Objects.nonNull(e)
                         && StrUtil.isNotBlank(e.getSkuId()) && StrUtil.isNotBlank(addDTO.getSkuId()) && Objects.equals(e.getSkuId(), addDTO.getSkuId())
                         && StrUtil.isNotBlank(addDTO.getSourceDetailId()) && Objects.equals(e.getId(),addDTO.getSourceDetailId())).findFirst().orElse(null);

@@ -94,6 +94,11 @@ public class PurchaseReturnOrderDetailDTO {
          * 仓位
          */
         private String warehouseLocation;
+
+        /**
+         * 采购订单仓位
+         */
+        private String purchaseWarehouseLocation;
     }
 
     /**

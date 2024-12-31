@@ -1,5 +1,6 @@
 package com.erp.model.oms.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.validator.AddGroup;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -125,7 +126,10 @@ public class SoDetailDTO implements Serializable {
          * 价税合计（折前）
          */
         private BigDecimal taxAmountBefore;
-
+        /**
+         * 成本来源
+         */
+        private String costSource;
     }
 
 
@@ -383,6 +387,10 @@ public class SoDetailDTO implements Serializable {
          * 删除状态（数帝云用）
          */
         private Boolean isDeleted;
+        /**
+         * 成本来源
+         */
+        private String costSource;
     }
 
     /**
@@ -1451,7 +1459,10 @@ public class SoDetailDTO implements Serializable {
          * 销售金额（折后）本位币
          */
         private BigDecimal amountLocalCurrency;
-
+        /**
+         * 成本来源
+         */
+        private String costSource;
     }
 
     /**
