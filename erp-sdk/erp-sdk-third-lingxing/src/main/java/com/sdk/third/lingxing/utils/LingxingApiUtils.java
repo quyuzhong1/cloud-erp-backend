@@ -6,9 +6,10 @@ import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.net.URLEncodeUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
-import cn.hutool.json.JSON;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONArray;
 import com.common.business.constant.RedisCacheConstants;
 import com.common.business.utils.RedisUtil;
 import com.common.core.exception.ServiceException;
@@ -492,5 +493,24 @@ public class LingxingApiUtils {
     public static Result<Object> commonSync(String apiUri, Object requestObj) {
         TreeMap<String, Object> requestMap = new TreeMap<>(BeanUtil.beanToMap(requestObj, true, true));
         return LingxingApiUtils.postAndSignCheckListConvert(apiUri, requestMap);
+    }
+
+    /**
+     * 检查sku未同步领星
+     */
+    public static void checkSkuSyncLx(List<String> skuIds) {
+        TreeMap<String, Object> treeMap = new TreeMap<>();
+        treeMap.put("sku_identifier_list", skuIds);
+        Result<Object> result = LingxingApiUtils.postAndSignCheckListConvert(LingxingApiUtils.PRODUCT_LIST_URI, treeMap);
+        if (null == result.getData()){
+            ServiceException.runError("SKU未同步领星");
+        }
+        JSONArray jsonArray = JSONArray.parseArray(JSON.toJSONString(result.getData()));
+        List<String> skuIdentifierList = jsonArray.stream()
+                .map(e -> ((com.alibaba.fastjson.JSONObject) e).getString("sku_identifier")).collect(Collectors.toList());
+        boolean match = skuIds.stream().anyMatch(e -> !skuIdentifierList.contains(e));
+        if (match){
+            ServiceException.runError("存在SKU未同步领星");
+        }
     }
 }

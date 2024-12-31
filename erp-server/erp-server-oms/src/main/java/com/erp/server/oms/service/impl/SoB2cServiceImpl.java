@@ -11,6 +11,7 @@ import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
@@ -121,6 +122,7 @@ import com.erp.server.oms.mapper.SoB2cMapper;
 import com.erp.server.oms.query.SoB2cQueryHandler;
 import com.erp.server.oms.service.*;
 import com.sdk.oms.tiktok.service.TikTokSdkClientService;
+import com.sdk.third.lingxing.dto.Result;
 import com.sdk.third.lingxing.dto.UpdateOrderDTO;
 import com.sdk.third.lingxing.utils.LingxingApiUtils;
 import io.seata.spring.annotation.GlobalTransactional;
@@ -5860,6 +5862,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     }
 
     private void updateLingXingOrder(SoB2cEntity entity, List<SoB2cDetailEntity> detailEntityList) {
+        // 校验sku是否存在领星
+        List<String> skuIds = detailEntityList.stream().map(SoB2cDetailEntity::getSkuId).collect(Collectors.toList());
+        LingxingApiUtils.checkSkuSyncLx(skuIds);
+
         List<SoB2cDetailEntity> splitDetailList = detailEntityList.stream().filter(v->StringUtils.isNotBlank(v.getSplitDetailId())).collect(Collectors.toList());
         List<String> splitDetailIds =  splitDetailList.stream().map(SoB2cDetailEntity::getSplitDetailId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
         //原来
