@@ -749,6 +749,9 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
         interceptUpdateOrderDTO.setAbnormalType(SoB2cAbnormalTypeEnum.INTERCEPT_FAILURE_REJECT.getCode());
         if(!SoB2cDeliveryStatusEnum.SHIPPED.getStatus().equals(soB2cDelivery.getStatus()) && isAutoOut){
             soB2cDelivery.setStatus(SoB2cDeliveryStatusEnum.SHIPPED.getStatus());
+            if(Objects.isNull(soB2cDelivery.getDeliveryTime())){
+                soB2cDelivery.setDeliveryTime(LocalDateTime.now());
+            }
             soB2cDeliveryService.updateById(soB2cDelivery);
 
             //更新销售订单,在这里修改拦截状态，冻结状态，因为下面生成销售出库单依赖这个状态
