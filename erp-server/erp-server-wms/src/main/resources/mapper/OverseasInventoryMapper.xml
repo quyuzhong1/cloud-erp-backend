@@ -330,7 +330,7 @@
         from overseas_inventory
         where is_deleted = false
         <if test="query.platformSku != null and query.platformSku != ''">
-            platform_sku = #{query.platformSku}
+            and platform_sku = #{query.platformSku}
         </if>
         <if test="query.skuIds != null and query.skuIds.size > 0">
             and sku_id in
