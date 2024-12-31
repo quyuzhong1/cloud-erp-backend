@@ -129,7 +129,7 @@
         auth_status AS authStatus ,
         auth_time AS authTime
         FROM transfer_logistics_supplier ls
-        WHERE is_deleted=FALSE
+        WHERE ${params.sqlMap.default} and is_deleted=FALSE
         <if test="params.ids != null and params.ids.size != ''">
             and ls.id in
             <foreach collection="params.ids" item="item" open="(" close=")" separator=",">
