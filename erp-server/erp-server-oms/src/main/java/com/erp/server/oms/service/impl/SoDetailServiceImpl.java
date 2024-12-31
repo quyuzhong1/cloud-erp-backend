@@ -78,6 +78,7 @@ import java.io.OutputStream;
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -1617,6 +1618,7 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
             throw new ServiceException( CharSequenceUtil.format("销售订单【{}】SKU【{}】“销售数量【{}】不得小于锁定数量与发货通知单数量之和【{}】",soInfoEntity.getCode(),soDetailEntity.getSkuNo(),soDetailEntity.getQty(),totalNoticeQty + frozenQty));
         }
         soDetailEntity.setFrozenQty(frozenQty);
+        soDetailEntity.setFrozenTime(LocalDateTime.now());
         this.updateById(soDetailEntity);
 
         //库存扣减
@@ -1661,6 +1663,7 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
 
         //更新库存锁定数量
         soDetailEntity.setFrozenQty(MathUtil.ZERO);
+        soDetailEntity.setFrozenTime(LocalDateTime.now());
         this.updateById(soDetailEntity);
 
         //添加日志
@@ -1713,6 +1716,7 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
         for (SoDetailEntity soDetailEntity : soDetailEntityList) {
             Integer frozenQty = soParamList.stream().filter(obj -> CharSequenceUtil.equals(obj.getDetailId(), soDetailEntity.getId())).map(SoDetailDTO.UpdateFrozenQtyDTO::getFrozenQty).findFirst().orElse(MathUtil.ZERO);
             soDetailEntity.setFrozenQty(frozenQty);
+            soDetailEntity.setFrozenTime(LocalDateTime.now());
         }
         this.updateBatchById(soDetailEntityList);
     }
