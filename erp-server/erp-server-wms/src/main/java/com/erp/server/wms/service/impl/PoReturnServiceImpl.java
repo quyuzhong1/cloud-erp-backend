@@ -2627,6 +2627,11 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
                 log.warn("sku id: {}，sku编号：{}产品属性是费用或服务，不参与库存出入库，不做库存验证", detailEntity.getSkuId(), detailEntity.getSkuNo());
                 continue;
             }
+
+            //质检退货无需校验
+            if (CharSequenceUtil.equals(poReturnEntity.getSourceType(),SourceTypeEnum.QC_INFO.getCode())) {
+                continue;
+            }
             PurchaseOrderDetailEntity purchaseOrderDetailEntity = purchaseOrderDetailEntities.stream().filter(v->v.getId().equals(detailEntity.getPurchaseOrderDetailId())).findFirst().orElse(null);
             String returnMode = poReturnEntity.getReturnMode();
             String warehouseLocation = purchaseOrderDetailEntity!=null?purchaseOrderDetailEntity.getWarehouseLocation():detailEntity.getWarehouseLocation();
