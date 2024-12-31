@@ -253,11 +253,15 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
                 if (ObjectUtil.isEmpty(soReturnEntity)) {
                     throw new ServiceException(ApiError.ERROR_92023);
                 }
+                if(null != soReturnEntity){
+                    entity.setSourceCode(soReturnEntity.getCode());
+                }
                 //获取销售单信息
                 SoInfoEntity soInfoEntity = soInfoFeign.getSoInfoById(soReturnEntity.getSourceId());
-                entity.setSourceCode(soReturnEntity.getCode());
-                entity.setSoCode(soInfoEntity.getCode());
-                entity.setSoId(soInfoEntity.getId());
+                if (null != soInfoEntity) {
+                    entity.setSoCode(soInfoEntity.getCode());
+                    entity.setSoId(soInfoEntity.getId());
+                }
             }
         }
 
