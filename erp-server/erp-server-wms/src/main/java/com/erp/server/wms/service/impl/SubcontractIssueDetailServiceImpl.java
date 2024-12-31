@@ -283,7 +283,7 @@ public class SubcontractIssueDetailServiceImpl extends SuperServiceImpl<Subcontr
 
         //采购订单
         List<String> subDetailIdList = subcontractOrderDetailList.stream().map(SubcontractOrderDetailEntity::getId).distinct().collect(Collectors.toList());
-        List<PurchaseOrderDetailEntity> purchaseOrderDetailList = purchaseOrderDetailService.listBySourceDetailIdList(subDetailIdList);
+        List<PurchaseOrderDetailEntity> purchaseOrderDetailList = scmTaskFeign.listPodBySourceDetailIds(subDetailIdList);
 
         //采购退货单
         List<String> podIdList = purchaseOrderDetailList.stream().map(PurchaseOrderDetailEntity::getId).distinct().collect(Collectors.toList());
