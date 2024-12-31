@@ -5,6 +5,7 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -73,7 +74,7 @@ public class OverseasProviderWarehouseServiceImpl extends SuperServiceImpl<Overs
         //映射字段
         List<OverseasProviderWarehouseEntity> list = BeanMapperUtils.copyList(OverseasProviderWarehouseEntity.class, detailList);
         // 数据处理
-        handleData(list, mainId);
+        handleData(list, mainId, updateDTO);
         boolean save = this.updateBatchById(list);
         if (!save) {
             throw new ServiceException("海外物流商仓库保存失败");
@@ -201,11 +202,12 @@ public class OverseasProviderWarehouseServiceImpl extends SuperServiceImpl<Overs
     /**
      * 新增修改处理数据
      */
-    private void handleData(List<OverseasProviderWarehouseEntity> list, String mainId) {
+    private void handleData(List<OverseasProviderWarehouseEntity> list, String mainId, OverseasProviderDTO.UpdateDTO dto) {
         List<OverseasProviderWarehouseEntity> oldList = this.listByMainIds(Collections.singletonList(mainId));
         List<String> warehouseIds = list.stream().map(req -> req.getWarehouseId()).distinct().collect(Collectors.toList());
         List<WarehouseDTO.UpdateDTO> warehouseDtoList = warehouseService.listWarehouseByIds(warehouseIds);
-
+        List<OverseasProviderDTO.ListWithWarehouseDTO> allList = overseasProviderService.listAllMatch();
+        allList = allList.stream().filter(v->!v.getId().equals(mainId)).collect(Collectors.toList());
         //查询绑定的仓库
         List<OverseasProviderWarehouseEntity> overseasProviderWarehouseEntities = this.listByWarehouseIds(warehouseIds);
 
@@ -220,12 +222,17 @@ public class OverseasProviderWarehouseServiceImpl extends SuperServiceImpl<Overs
                 }
 
                 //已绑定第三方供应商仓，一个仓库只能绑定一个第三方仓
-                long warehouseCount = list.stream()
+                String sameWarehouse = list.stream()
                         .filter(req -> !req.getDisabled()
-                                && req.getWarehouseId().equals(detailEntity.getWarehouseId()))
-                        .count();
-                if (warehouseCount > 1) {
-                    throw new ServiceException(ApiError.WAREHOUSE_REPEAT_BINDING, updateDTO.getName());
+                                && req.getWarehouseId().equals(detailEntity.getWarehouseId())
+                                && !req.getPlatformWarehouseCode().equals(detailEntity.getPlatformWarehouseCode()))
+                        .map(OverseasProviderWarehouseEntity::getPlatformWarehouseName).findFirst().orElse(null);
+                if (StringUtils.isNotBlank(sameWarehouse)) {
+                    throw new ServiceException("系统仓库【{}】已映射【{}】-【{}】",detailEntity.getWarehouseName(),dto.getName(),sameWarehouse);
+                }
+                OverseasProviderDTO.ListWithWarehouseDTO other = allList.stream().filter(req -> !req.getDisabled()&& req.getWarehouseId().equals(detailEntity.getWarehouseId())).findFirst().orElse(null);
+                if (Objects.nonNull(other)) {
+                    throw new ServiceException("系统仓库【{}】已映射【{}】-【{}】",detailEntity.getWarehouseName(),other.getName(),other.getPlatformWarehouseName());
                 }
                 long count = overseasProviderWarehouseEntities.stream().filter(req -> !req.getDisabled()
                         && req.getWarehouseId().equals(detailEntity.getWarehouseId()) && !Objects.equals(req.getMainId(), mainId)).count();

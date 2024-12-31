@@ -160,6 +160,10 @@ public class OverseasProviderDTO implements Serializable {
         private String code;
 
         /**
+         * name
+         */
+        private String name;
+        /**
          * 详情
          */
         private List<OverseasProviderWarehouseDTO.UpdateDTO> detailList;
@@ -384,6 +388,10 @@ public class OverseasProviderDTO implements Serializable {
          * 国家中文
          */
         private String countryName;
+        /**
+         * 禁用状态
+         */
+        private Boolean disabled;
     }
 
     /**
