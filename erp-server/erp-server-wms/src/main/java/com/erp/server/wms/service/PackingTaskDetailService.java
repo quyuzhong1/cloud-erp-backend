@@ -4,7 +4,6 @@ import com.erp.model.wms.entity.PackingTaskDetailEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.wms.dto.PackingTaskDetailDTO;
-import com.erp.model.wms.entity.WmsCartonSpecEntity;
 
 import java.util.List;
 
@@ -65,11 +64,13 @@ public interface PackingTaskDetailService extends SuperService<PackingTaskDetail
 
     /**
      * 模糊搜索装箱任务明细
+     *
      * @param taskId
      * @param searchKey
+     * @param searchMode
      * @return
      */
-    List<PackingTaskDetailDTO.ViewDTO> searchProductBySearchKey(String taskId,String searchKey);
+    List<PackingTaskDetailDTO.ViewDTO> searchProductBySearchKey(String taskId, String searchKey, String searchMode);
 
     List<PackingTaskDetailEntity> listBySourceIds(List<String> sourceDetailIds);
 

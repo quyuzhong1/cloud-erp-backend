@@ -51,6 +51,11 @@ public class WmsCartonDTO {
          */
         private String searchKey;
         /**
+         * 匹配模式 默认精确 perfect
+         *精确 perfect 模糊 fuzzy
+         */
+        private String searchMode;
+        /**
          * 调整装箱类型
          * 接口地址： http://172.16.100.11:3002/project/92/interface/api/13147 type=packingAdjustType
          */
@@ -136,6 +141,11 @@ public class WmsCartonDTO {
          * 产品信息(输入SKU/FNSKU/EAN码)
          */
         private String searchKey;
+        /**
+         * 匹配模式 默认精确 perfect
+         *精确 perfect 模糊 fuzzy
+         */
+        private String searchMode;
         /**
          * 箱子ID
          */

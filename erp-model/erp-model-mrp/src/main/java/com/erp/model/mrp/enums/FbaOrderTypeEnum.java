@@ -1,9 +1,12 @@
 package com.erp.model.mrp.enums;
 
+import cn.hutool.json.JSONArray;
 import com.common.core.constant.EnumMessage;
 
+import java.util.Arrays;
+import java.util.stream.Collectors;
+
 public enum FbaOrderTypeEnum implements EnumMessage {
-    ALL("all", "全部（FBA+FBM）"),
     //fba
     FBA("fba", "FBA"),
     //fbm
@@ -16,6 +19,12 @@ public enum FbaOrderTypeEnum implements EnumMessage {
     FbaOrderTypeEnum(String code, String name) {
         this.code = code;
         this.name = name;
+    }
+
+    public static String getStringByCode(JSONArray orderType) {
+        return Arrays.stream(OverseasOrderTypeEnum.values()).filter(v -> orderType.contains(v.getCode()))
+                .map(OverseasOrderTypeEnum::getName)
+                .collect(Collectors.joining(","));
     }
 
 

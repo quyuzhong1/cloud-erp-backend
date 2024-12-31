@@ -23,6 +23,13 @@ public interface BasicDictService extends IService<BasicDictEntity> {
     List<BasicDictEntity>  listByType(String type);
 
     /**
+     * 批量获取字典
+     * @param typeList
+     * @return
+     */
+    List<BasicDictEntity>  listByTypeList(List<String> typeList);
+
+    /**
      * key = value,value = name
      * @param type
      * @return

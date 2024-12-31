@@ -1,15 +1,14 @@
 package com.erp.model.wms.dto.inventory;
 
 import cn.hutool.core.text.CharSequenceUtil;
-import cn.hutool.core.util.StrUtil;
 import com.common.business.validator.ValidGroup;
 import com.erp.model.wms.entity.PoReturnDetailEntity;
 import com.erp.model.wms.entity.PoReturnEntity;
-import com.erp.model.wms.entity.SoOutstockDetailEntity;
 import com.erp.model.wms.entity.SoOutstockEntity;
 import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import lombok.Data;
+import org.apache.commons.lang3.StringUtils;
 
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
@@ -73,7 +72,7 @@ public class InOutStockDTO extends InventoryStockBaseDTO implements Serializable
         private Long lockWaitTime;
 
 
-        public static InOutStockDTO initByReturnOrder(PoReturnEntity entity, PoReturnDetailEntity detail, InventorySourceTypeEnum sourceType, Integer qty, InventoryStatusEnum inventoryStatus) {
+        public static InOutStockDTO initByReturnOrder(PoReturnEntity entity, PoReturnDetailEntity detail, InventorySourceTypeEnum sourceType, Integer qty, InventoryStatusEnum inventoryStatus, Boolean isUsePurchase) {
                 InOutStockDTO inOutStockDTO = new InOutStockDTO();
                 inOutStockDTO.setSourceType(sourceType);
                 inOutStockDTO.setSourceId(entity.getId());
@@ -82,8 +81,13 @@ public class InOutStockDTO extends InventoryStockBaseDTO implements Serializable
                 inOutStockDTO.setBillDate(entity.getBillDate());
                 inOutStockDTO.setSkuId(detail.getSkuId());
                 inOutStockDTO.setSkuNo(detail.getSkuNo());
-                inOutStockDTO.setWarehouseId(entity.getReturnWarehouseId());
-                inOutStockDTO.setWarehouseLocation(detail.getWarehouseLocation());
+                if (isUsePurchase && StringUtils.isNotBlank(entity.getDeliveryWarehouseId())) {
+                        inOutStockDTO.setWarehouseId(entity.getDeliveryWarehouseId());
+                        inOutStockDTO.setWarehouseLocation(detail.getPurchaseWarehouseLocation());
+                }else{
+                        inOutStockDTO.setWarehouseId(entity.getReturnWarehouseId());
+                        inOutStockDTO.setWarehouseLocation(detail.getWarehouseLocation());
+                }
                 // 根据捕获数量增加在途
                 inOutStockDTO.setQty(qty);
                 inOutStockDTO.setInventoryStatus(inventoryStatus);

@@ -241,6 +241,33 @@ public interface ExportWmsFeign {
     @PostMapping("/feign/export/exportVirtualStatistics")
     PagingVO<VirtualWarehouseAllocationDTO.ExportStatisticsDTO> exportVirtualStatistics(PagingDTO<VirtualWarehouseAllocationDTO.ExportDTO> dto);
     /**
+     * 库龄分析导出
+     */
+    @PostMapping("/feign/export/exportWmsVirtualInventoryAge")
+    PagingVO<DynamicExcelDTO> exportWmsVirtualInventoryAge(PagingDTO<VirtualInventoryAgeDTO.SearchParamDTO> dto);
+    /**
+     * 历史库龄导出
+     */
+    @PostMapping("/feign/export/hisInventoryAgePaging")
+    PagingVO<VirtualInventoryAgeDTO.HisInventoryAgeDTO> hisInventoryAgePaging(PagingDTO<VirtualInventoryAgeDTO.HisInventoryAgeParamDTO> dto);
+
+    /**
+     * 历史库龄明细导出
+     */
+    @PostMapping("/feign/export/hisInventoryAgeDetailPaging")
+    PagingVO<VirtualInventoryAgeDTO.HisInventoryAgeDetailDTO> hisInventoryAgeDetailPaging(PagingDTO<VirtualInventoryAgeDTO.HisInventoryAgeDetailParamDTO> dto);
+
+    /**
+     * 库龄流水导出
+     */
+    @PostMapping("/feign/export/virtualTransFlowDetailPaging")
+    PagingVO<VirtualTransFlowDetailDTO.ListDTO> virtualTransFlowDetailPaging(PagingDTO<VirtualTransFlowDetailDTO.SearchParamDTO> dto);
+    /**
+     * 列表历史库龄明细导出
+     */
+    @PostMapping("/feign/export/framePaging")
+    PagingVO<VirtualInventoryAgeDTO.HisInventoryAgeDetailDTO> framePaging(PagingDTO<VirtualInventoryAgeDTO.FrameParamDTO> dto);
+    /**
      * 导出FBA在途核对列表
      */
     @PostMapping("/feign/export/exportFbaTransitReport")

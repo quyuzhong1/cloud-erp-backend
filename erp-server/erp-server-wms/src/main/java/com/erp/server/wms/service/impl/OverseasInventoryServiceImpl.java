@@ -338,9 +338,9 @@ public class OverseasInventoryServiceImpl extends SuperServiceImpl<OverseasInven
                 return new PagingVO<>(new Page<>());
             }
             List<String> codeList = warehouseDTOList.stream().map(OverseasProviderDTO.WarehouseDTO::getPlatformWarehouseCode).distinct().collect(Collectors.toList());
-            List<String> kingdeeWarehouseCodeList = warehouseEntities.stream().map(WarehouseEntity::getKingdeeWarehouseCode).distinct().collect(Collectors.toList());
-            codeList.addAll(kingdeeWarehouseCodeList);
+            List<String> warehouseNameList = warehouseEntities.stream().map(WarehouseEntity::getName).distinct().collect(Collectors.toList());
             params.setPlatformWarehouseCodeList(codeList);
+            params.setWarehouseNameList(warehouseNameList);
         }
         Page<OverseasInventoryDTO.ListDTO> page = baseMapper.listByParams(new Page<>(dto.getCurrPage(), dto.getPageSize()), params);
         filList(page.getRecords());

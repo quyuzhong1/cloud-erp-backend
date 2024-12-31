@@ -11,6 +11,7 @@ import lombok.Setter;
 import lombok.experimental.Accessors;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
@@ -178,6 +179,23 @@ public class SupplierEntity extends BaseEntity<SupplierEntity> {
      */
     @TableField("srm_operate_user_name")
     private String srmOperateUserName;
+
+    /**
+     * 税率
+     */
+    @TableField("tax_rate")
+    private BigDecimal taxRate;
+    /**
+     * 付款公司名称
+     */
+    @TableField("payment_company_name")
+    private String paymentCompanyName;
+
+    /**
+     * 凭证号
+     */
+    @TableField("voucher_no")
+    private String voucherNo;
 
     @Override
     public Serializable pkVal() {

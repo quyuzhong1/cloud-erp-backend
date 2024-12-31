@@ -765,6 +765,7 @@
         pc.actual_tax_cost,
         pc.target_tax_cost,
         pc.retail_price,
+        pc.tax_rate,
         ppk.product_length as productLength,
         ppk.product_width as productWidth,
         ppk.product_height as productHeight,
@@ -1762,6 +1763,12 @@
             <if test="params.saleMethod !=null and params.saleMethod != ''">
                 AND string_to_array(pi.sale_method,',') &amp;&amp; string_to_array(#{params.saleMethod},',')
             </if>
+            <if test="params.statusList != null and params.statusList.size > 0 ">
+                AND pd.status in
+                <foreach collection="params.statusList" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
             order by
                 case when pd.sku_no ILIKE concat(#{params.remoteSearchSku}::text,'%') THEN 1
                      when pd.sku_no ILIKE concat('%',#{params.remoteSearchSku}::text) THEN 2
@@ -1850,6 +1857,7 @@
         pc.actual_tax_cost,
         pc.target_tax_cost,
         pc.retail_price,
+        pc.tax_rate,
         pp.moq,
         pp.main_supplier as supplierId,
         pp.main_supplier as mainSupplier,
@@ -2126,7 +2134,7 @@
         WHERE
             pd.is_deleted = FALSE
           AND pd.status = '2'
-          AND pc.to_declare_price = 0
+          AND (pc.to_declare_price = 0 or pc.to_declare_price is null)
     </select>
 
     <select id="listSkuPurchaseBySkuIds" resultType="com.erp.model.plm.vo.SkuVO">

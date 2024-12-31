@@ -435,4 +435,21 @@ public class PoReturnController extends BaseController {
     public ApiResult<List<PurchasePriceDTO.PriceDTO>> batchGetPurchasePrice(@RequestBody List<PurchasePriceDTO.PriceDTO> list) {
         return success(poReturnService.batchGetPurchasePrice(list));
     }
+    /**
+     * 下推采购订单View
+     * @return
+     */
+    @PostMapping("/pushDownPurchaseView")
+    public ApiResult<List<PurchasePriceDTO.PushDownPurchaseView>> pushDownPurchaseView(@RequestBody @Validated BaseIdsDTO.IdsDTO baseIdsDTO) {
+        return success(poReturnService.pushDownPurchaseView(baseIdsDTO.getIds()));
+    }
+
+    /**
+     * 下推采购订单
+     * @return
+     */
+    @PostMapping("/pushDownPurchase")
+    public ApiResult<Boolean> pushDownPurchase(@RequestBody @Validated List<PurchasePriceDTO.PushDownPurchaseView> pushDownPurchaseViews) {
+        return success(poReturnService.pushDownPurchase(pushDownPurchaseViews));
+    }
 }

@@ -1,9 +1,8 @@
 package com.erp.model.scm.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.AdvanceQueryDTO;
-import com.common.business.dto.base.BatchResultDTO;
-import com.common.business.dto.base.PermissionsDTO;
-import com.common.business.dto.base.SortDTO;
+import com.common.business.dto.base.*;
 import com.common.business.enums.ApproveStatusEnum;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -22,6 +21,170 @@ import java.util.Map;
 
 public class PurchasePriceDTO implements Serializable {
 
+    /**
+     * 下推采购订单View
+     */
+    @Data
+    @NoArgsConstructor
+    @Valid
+    public static class PushDownPurchaseView {
+        /**
+         * id
+         */
+        @NotBlank(message = "id不能为空")
+        private String id;
+
+        private String approveStatus;
+        /**
+         * detailId
+         */
+        @NotBlank(message = "detailId不能为空")
+        private String detailId;
+        /**
+         * 供应商联系人表id
+         */
+        private String supplierContactId;
+
+        /**
+         * 采购日期
+         */
+        private LocalDate purchaseDate;
+        /**
+         * 采购员id
+         */
+        private String purchaseUserId;
+        /**
+         * purchaseId
+         */
+        private String purchaseId;
+        /**
+         * 单号
+         */
+        @NotBlank(message = "单号不能为空")
+        private String code;
+        /**
+         * 供应商表id
+         */
+        @NotBlank(message = "供应商不能为空")
+        private String supplierId;
+
+        /**
+         * 供应商名称
+         */
+        private String supplierName;
+
+        /**
+         * 采购组织
+         */
+        @NotBlank(message = "采购组织不能为空")
+        private String purchaseOrgId;
+
+        /**
+         * 采购组织名
+         */
+        @NotBlank(message = "采购组织不能为空")
+        private String purchaseOrgName;
+        /**
+         * 交货仓库
+         */
+        @NotBlank(message = "交货仓库不能为空")
+        private String deliveryWarehouseId;
+        /**
+         * 交货仓库名称
+         */
+        @NotBlank(message = "交货仓库不能为空")
+        private String deliveryWarehouseName;
+        /**
+         * 收料组织
+         */
+        @NotBlank(message = "收料组织不能为空")
+        private String receiveOrgId;
+        /**
+         * 收料组织名称
+         */
+        @NotBlank(message = "收料组织不能为空")
+        private String receiveOrgName;
+
+        /**
+         * sku
+         */
+        @NotBlank(message = "sku不能为空")
+        private String skuId;
+
+        /**
+         * 扣款数量
+         */
+        private Integer deductAmountQty;
+        /**
+         * 币别
+         */
+        private String currency;
+
+        private String warehouseLocation;
+        /**
+         * 币别符号
+         */
+        private String currencySymbol;
+        /**
+         * skuNo
+         */
+        @NotBlank(message = "skuNo不能为空")
+        private String skuNo;
+
+        /**
+         * 产品名称
+         */
+        private String productName;
+        /**
+         * 含税单价
+         */
+        @NotNull(message = "含税单价不能为空")
+        private BigDecimal taxPrice;
+        /**
+         * 税率
+         */
+        @NotNull(message = "税率不能为空")
+        private BigDecimal taxRate;
+
+        /**
+         * 采购数量
+         */
+        @NotNull(message = "采购数量不能为空")
+        @Min(value = 0,message = "采购数量最小值为0")
+        @Max(value = 999999999,message = "采购数量最大值为999999999")
+        private Integer purchaseQty;
+
+        private Integer replenishQty;
+
+        private Integer oldPurchaseQty;
+
+        /**
+         * 价税合计
+         */
+        @NotNull(message = "价税合计不能为空")
+        private BigDecimal totalTaxAmount;
+
+        /**
+         * 预计交货日期
+         */
+        @NotNull(message = "预计交货日期不能为空")
+        private LocalDate planDeliveryDate;
+        /**
+         * 是否赠品：true/false
+         */
+        @NotNull(message = "是否赠品不能为空")
+        private Boolean isGift = false;
+        /**
+         * 是否加急（false否，true是）
+         */
+        @NotNull(message = "是否加急不能为空")
+        private Boolean isUrgent = false;
+
+        /**
+         * 备注
+         */
+        private String remark;
+    }
 
     /**
      * 添加
@@ -46,7 +209,10 @@ public class PurchasePriceDTO implements Serializable {
          */
         @NotBlank(message = "币种不能为空")
         private String currency;
-
+        /**
+         * 外部平台单号
+         */
+        private String voucherNo;
         /**
          * 报价人id
          */
@@ -109,7 +275,10 @@ public class PurchasePriceDTO implements Serializable {
          */
         @NotNull(message = "报价日期不能为空")
         private LocalDate quotedDate;
-
+        /**
+         * 外部平台单号
+         */
+        private String voucherNo;
         /**
          * 审核状态
          */
@@ -191,7 +360,10 @@ public class PurchasePriceDTO implements Serializable {
          */
         @NotBlank(message = "供应商不能为空")
         private String supplierId;
-
+        /**
+         * 外部平台单号
+         */
+        private String voucherNo;
         /**
          * 报价日期
          */
@@ -257,7 +429,10 @@ public class PurchasePriceDTO implements Serializable {
          */
         private String code;
 
-
+        /**
+         * 外部平台单号
+         */
+        private String voucherNo;
         /**
          * 供应商id
          */
@@ -566,6 +741,15 @@ public class PurchasePriceDTO implements Serializable {
 
     }
 
+    @Data
+    @NoArgsConstructor
+    public static class OutPlatformCodeDTO extends BaseIdsDTO.IdsDTO {
+
+        @NotBlank(message = "外部平台单号")
+        @Size(max = 255,message = "填写信息不能超过255字符")
+        private String voucherNo;
+
+    }
 
     @Data
     @Builder

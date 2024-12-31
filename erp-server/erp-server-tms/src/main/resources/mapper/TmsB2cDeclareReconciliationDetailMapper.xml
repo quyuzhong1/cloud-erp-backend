@@ -144,6 +144,24 @@
             and (#{endDate}::TIMESTAMP + INTERVAL '1 DAY') > tbdrd.date
         </where>
     </select>
+    
+    <select id="listAutoGenerateCost"
+            resultType="com.erp.model.tms.entity.TmsB2cDeclareReconciliationDetailEntity">
+        SELECT 
+G.approve_date,
+	T.* 
+FROM
+	tms_b2c_declare_reconciliation_detail
+	T LEFT JOIN tms_b2c_declare_reconciliation G ON T.main_id = G.ID 
+        <where>
+        G.approve_status = 'approve' 
+	AND g.approve_date >= #{startDate}
+	AND #{endDate} > G.approve_date
+	AND NOT EXISTS ( SELECT 1 FROM transfer_declare_cost_allocation_main h WHERE h.declare_reconciliation_detail_id = T.ID AND h.is_deleted = 'f' )
+	AND G.is_deleted = 'f'
+	AND T.is_deleted = 'f'
+        </where>
+    </select>
 
 
 </mapper>

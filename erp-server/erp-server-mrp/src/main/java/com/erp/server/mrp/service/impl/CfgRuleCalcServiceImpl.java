@@ -34,6 +34,7 @@ import com.erp.model.mrp.enums.HistorySalesTypeEnum;
 import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
+import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
@@ -219,6 +220,8 @@ public class CfgRuleCalcServiceImpl extends SuperServiceImpl<CfgRuleCalcMapper, 
                 calcSalesInfoDimList.add(salesInfoDimEntity);
                 CalcSalesInfoDimDTO.CalcResultDTO resultDTO = new CalcSalesInfoDimDTO.CalcResultDTO();
                 resultDTO.setCalcSalesInfoDimId(salesInfoDimEntity.getId());
+                resultDTO.setSkuId(salesInfoDimEntity.getSkuId());
+                resultDTO.setShopId(salesInfoDimEntity.getShopId());
                 resultDTO.setStartCalcDate(addDTO.getStartCalcDate());
                 resultDTO.setEndCalcDate(addDTO.getEndCalcDate());
                 resultDTO.setSalesHistoryMap(historySaleMap);
@@ -337,6 +340,20 @@ public class CfgRuleCalcServiceImpl extends SuperServiceImpl<CfgRuleCalcMapper, 
         calcSalesInfoFavoriteService.remove(Wrappers.<CalcSalesInfoFavoriteEntity>lambdaQuery()
                 .eq(CalcSalesInfoFavoriteEntity::getUserId, user.getUid())
                 .eq(CalcSalesInfoFavoriteEntity::getCfgRuleCalcId, dto.getCfgRuleCalcId()));
+    }
+
+    @Override
+    public List<String> hasSalesShopBySku(List<String> params) {
+        return orderHistorySalesEsService.hasSalesShopBySku(params);
+    }
+
+    @Override
+    public List<CfgRuleCalcDTO.SkuDTO> hasSalesSkuByShop(List<String> params) {
+        List<String> skuIdList = orderHistorySalesEsService.hasSalesSkuByShop(params);
+        List<ProductDetailEntity> detailEntityList = plmTaskFeign.getByIdList(skuIdList);
+        return detailEntityList.stream()
+                .map(v -> new CfgRuleCalcDTO.SkuDTO(v.getId(), v.getSkuNo()))
+                .collect(Collectors.toList());
     }
 
 

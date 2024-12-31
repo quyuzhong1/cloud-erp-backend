@@ -24,4 +24,14 @@ public enum HistorySalesTypeEnum implements EnumMessage {
     public String getName() {
         return message;
     }
+
+    public static String getNameByCode(String code) {
+        HistorySalesTypeEnum[] stateEnums = values();
+        for (HistorySalesTypeEnum stateEnum : stateEnums) {
+            if (stateEnum.getCode().equals(code) ) {
+                return stateEnum.getName();
+            }
+        }
+        return "";
+    }
 }

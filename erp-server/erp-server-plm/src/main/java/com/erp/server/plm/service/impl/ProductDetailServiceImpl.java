@@ -6,7 +6,9 @@ import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.json.JSONUtil;
+import com.erp.model.tms.dto.InventorySkuCostDTO;
 import com.alibaba.excel.exception.ExcelCommonException;
+import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -53,6 +55,7 @@ import com.erp.model.sys.dto.DictCountryDTO;
 import com.erp.model.sys.dto.SysUserDeptDTO;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.sys.openapi.DimensionalWeightDTO;
+import com.erp.model.sys.openapi.UploadSkuDTO;
 import com.erp.model.tms.dto.CfgSettingValueDTO;
 import com.erp.model.tms.entity.CfgSettingEntity;
 import com.erp.model.tms.enums.CfgSettingEnum;
@@ -64,6 +67,7 @@ import com.erp.rpc.scm.feign.ScmTaskFeign;
 import com.erp.rpc.scm.feign.SupplierFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.tms.feign.CfgSettingFeign;
+import com.erp.rpc.tms.feign.LogisticsFeign;
 import com.erp.rpc.wms.feign.InventoryFeign;
 import com.erp.server.plm.constant.ProductConstant;
 import com.erp.server.plm.constant.ProductManyDetailConstant;
@@ -257,7 +261,12 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
     @Resource
     private InventoryFeign inventoryFeign;
+    @Resource
+    private LogisticsFeign logisticsFeign;
 
+
+    @Resource
+    private PlmAttachmentService plmAttachmentService;
 
     //变更财务人员审核
     @Value("${changeFinancialAudit}")
@@ -267,6 +276,8 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     private static final String SPUCLASSPATH = String.valueOf(ProductInfoEntity.class);
     private static final String SKUCLASSPATH = String.valueOf(ProductDetailEntity.class);
     DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy/M/d");
+    public static final String SKU_COST_SALE_ORG_ID = "skuCostSaleOrgId";
+    public static final String SKU_COST_WAREHOUSE = "skuCostWarehouse";
 
     /**
      * @param pagingDTO:查询参数
@@ -2191,6 +2202,14 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             batchResultDTOList.add(BatchResultDTO.fail("",String.join(",", skuNoList),"USD兑换CNY汇率不存在"));
             return batchResultDTOList;
         }
+        //获取SKU成本
+        List<BasicDictEntity> basicDictEntities = basicDictService.listByTypeList(Arrays.asList(SKU_COST_SALE_ORG_ID, SKU_COST_WAREHOUSE));
+        String skuCostSaleOrgId = basicDictEntities.stream().filter(e -> e.getType().equals(SKU_COST_SALE_ORG_ID)).map(BasicDictEntity::getValue).findFirst().orElse("");
+        String skuCostWarehouseId = basicDictEntities.stream().filter(e -> e.getType().equals(SKU_COST_WAREHOUSE)).map(BasicDictEntity::getValue).findFirst().orElse("");
+        InventorySkuCostDTO.QueryB2BDTO queryB2BDTO = InventorySkuCostDTO.QueryB2BDTO.builder().salesOrgId(skuCostSaleOrgId).warehouseId(skuCostWarehouseId).skuIds(skuIds).billDate(LocalDate.now()).build();
+        List<InventorySkuCostDTO.SkuCostDTO> skuCostDTOS = logisticsFeign.listSkuCostBySkuIds(queryB2BDTO);
+        //税率
+        List<ProductCostEntity> productCostEntityList = productCostService.listBySkuIds(skuIds);
         List<ProductCustomsEntity> addList = new ArrayList<>();
         List<ProductCustomsEntity> updateList = new ArrayList<>();
         for(String skuId : skuIds){
@@ -2201,17 +2220,33 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             //是否重算目的国申报价
             BigDecimal destDeclarePrice = Objects.isNull(customs.getToDeclarePrice()) ? BigDecimal.ZERO: customs.getToDeclarePrice();
             if (destDeclarePrice.compareTo(BigDecimal.ZERO) == 0 || isManual) {
-                DmpSkuCostEntity skuCostDTO = skuCostList.stream().filter(e -> e.getSkuId().equals(skuId)).findFirst().orElse(null);
-                log.info("skuCostDTO: {}", JSONUtil.toJsonStr(skuCostDTO));
-                if (Objects.isNull(skuCostDTO)) {
-                    batchResultDTOList.add(BatchResultDTO.fail(skuId,productDetailEntity.getSkuNo(),CharSequenceUtil.format("SKU【{}】中【{}】兑换【{}】汇率不存在",productDetailEntity.getSkuNo(), CurrencyEnum.USD.getCurrencyCode(),CurrencyEnum.CNY.getCurrencyCode() )));
-                    continue;
-                }
                 //含税成本 默认是人民币
                 BigDecimal actualTaxCost = BigDecimal.ZERO;
-                if (Objects.nonNull(skuCostDTO.getCostPrice())) {
-                    actualTaxCost = skuCostDTO.getCostPrice();
+                //SKU成本覆盖含税成本
+                InventorySkuCostDTO.SkuCostDTO skuCostDTO2 = skuCostDTOS.stream().filter(e -> e.getSkuId().equals(skuId)).findFirst().orElse(null);
+                if (Objects.nonNull(skuCostDTO2)){
+                    //汇率
+                    BigDecimal rate = dmpTaskFeign.getRate(LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), skuCostDTO2.getCurrency());
+                    //税率
+                    BigDecimal taxRate = productCostEntityList.stream().filter(e -> e.getSkuId().equals(skuId)).map(ProductCostEntity::getTaxRate).findFirst().orElse(null);
+                    if (Objects.nonNull(rate) && Objects.nonNull(taxRate)){
+                        //本位币
+                        BigDecimal actualNoTaxCost =  MathUtil.multiply(rate,skuCostDTO2.getProductCost(),4);
+                        BigDecimal percentRate = MathUtil.divide(taxRate, MathUtil.BigDecimal_100);
+                        actualTaxCost = MathUtil.multiply(actualNoTaxCost, MathUtil.add(BigDecimal.valueOf(1), percentRate));
+                    }
+                }else {
+                    DmpSkuCostEntity skuCostDTO = skuCostList.stream().filter(e -> e.getSkuId().equals(skuId)).findFirst().orElse(null);
+                    log.info("skuCostDTO: {}", JSONUtil.toJsonStr(skuCostDTO));
+                    if (Objects.isNull(skuCostDTO)) {
+                        batchResultDTOList.add(BatchResultDTO.fail(skuId,productDetailEntity.getSkuNo(),CharSequenceUtil.format("SKU【{}】中中台Bom关系表不存",productDetailEntity.getSkuNo())));
+                        continue;
+                    }
+                    if (Objects.nonNull(skuCostDTO.getCostPrice())) {
+                        actualTaxCost = skuCostDTO.getCostPrice();
+                    }
                 }
+
                 //统一换算成美元汇率
                 BigDecimal actualTaxCostUsd = MathUtil.divide(actualTaxCost, usdRate);
                 log.info("actualTaxCostUsd: {}", actualTaxCostUsd);
@@ -2252,7 +2287,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 sysLogService.addSysLogByOther(new SysLogEntity().setClassPath(SKUCLASSPATH).setPid(productDetailEntity.getProductId())
                         .setBusinessId(productDetailEntity.getId()).setOperation("编辑操作").setContent(msg));
                 batchResultDTOList.add(BatchResultDTO.success(skuId,productDetailEntity.getSkuNo(),msg));
-                log.info("更新目的国申报价 sku:{},目的国申报价：{}",skuCostDTO.getSkuNo(), resultDestDeclarePrice);
+                log.info("更新目的国申报价 sku:{},目的国申报价：{}",productDetailEntity.getSkuNo(), resultDestDeclarePrice);
             }
         }
         if (CollectionUtils.isNotEmpty(updateList)){
@@ -5175,6 +5210,21 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             compareDimensions(productPackDTO.getBoxHeight(), productPackDTO.getProductHeight(), ApiError.ERROR_HEIGHT_BOX_LITTER_THAN_PRODUCT);
             //毛重大于等于净重
             compareDimensions(productPackDTO.getGrossWeight(), productPackDTO.getNetWeight(), ApiError.ERROR_WEIGHT_GROSS_LITTER_THAN_NET);
+        }
+    }
+
+    @Override
+    public void uploadSkuImage(UploadSkuDTO dto) {
+        ProductDetailEntity productDetailEntity = getBySkuNoOrEan(dto.getEan());
+        if(Objects.nonNull(productDetailEntity)){
+            PlmAttachmentEntity entity = new PlmAttachmentEntity();
+            entity.setAttachUrl(dto.getAttachUrl());
+            entity.setAttachName(dto.getAttachName());
+            Class<ProductDetailEntity> aClass = ProductDetailEntity.class;
+            TableName tableName = aClass.getDeclaredAnnotation(TableName.class);
+            entity.setType(tableName.value());
+            entity.setBusinessId(productDetailEntity.getId());
+            plmAttachmentService.save(entity);
         }
     }
 

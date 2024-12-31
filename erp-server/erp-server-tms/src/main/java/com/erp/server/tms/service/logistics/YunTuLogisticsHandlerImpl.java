@@ -1,6 +1,7 @@
 package com.erp.server.tms.service.logistics;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.json.JSON;
 import cn.hutool.json.JSONUtil;
 import com.common.business.annotation.LogisticsPlatformType;
 import com.common.business.enums.LogisticsPlatformEnum;
@@ -299,6 +300,7 @@ public class YunTuLogisticsHandlerImpl extends AbstractLogisticsHandler {
                             RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(cancelOrderVO), JSONUtil.toJsonStr(yunTuResponse), false);
                 }
             }catch (Exception e){
+                log.error("云途取消物流单异常,传参：{}", JSONUtil.toJsonStr(request), e);
                 isSuccess = false;
                 cancelResponseVO.failure(getPlatForm().getName(),cancelOrderVO.getDeliveryNo(),e.getMessage());
                 logisticsOperateService.pushOperateLog(cancelOrderVO.getOrderId(),

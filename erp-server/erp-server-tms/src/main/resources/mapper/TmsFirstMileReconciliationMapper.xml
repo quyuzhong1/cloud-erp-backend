@@ -45,6 +45,8 @@
         tfmr.approve_status AS approveStatus,
         tfmr.approve_user_id AS approveUserId,
         tfmr.approve_user_name AS approveUserName,
+        tfmr.pay_status,
+        tfmr.pay_time,
         tfmr.reconciliation_date AS reconciliationDate,
         tfmr.submit_date AS submitDate,
         tfmr.approve_date AS approveDate,

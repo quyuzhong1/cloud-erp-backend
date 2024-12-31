@@ -15,6 +15,7 @@ import com.common.core.enums.ApiError;
 import com.common.core.enums.LogActionEnum;
 import com.common.core.exception.ServiceException;
 import com.erp.model.scm.dto.PurchaseOrderSupplierDTO;
+import com.erp.model.scm.dto.PurchasePriceDTO;
 import com.erp.model.scm.dto.SupplierDTO;
 import com.erp.model.scm.dto.SupplierTabCountDTO;
 import com.erp.model.scm.entity.SupplierEntity;
@@ -23,6 +24,7 @@ import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.scm.mapper.PurchaseOrderDetailMapper;
 import com.erp.server.scm.query.SupplierQueryHandler;
 import com.erp.server.scm.service.PurchaseOrderSupplierService;
+import com.erp.server.scm.service.PurchasePriceService;
 import com.erp.server.scm.service.SupplierService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -456,6 +458,17 @@ public class SupplierController extends BaseController {
     public ApiResult updateCategory(@RequestBody @Validated SupplierDTO.BatchUpdateCategoryDTO dto) {
         supplierService.updateCategory(dto);
         return success();
+    }
+
+
+    /**
+     * 更新外部平台单号
+     */
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "更新供应商外部平台编号:ids={ids},外部平台单号={outPlatformCode}")
+    @PostMapping("/updateVoucherNo")
+    public ApiResult updateVoucherNo(@RequestBody @Valid SupplierDTO.VoucherNoDTO dto) {
+        Boolean result = supplierService.updateVoucherNo(dto.getIds(),dto.getVoucherNo());
+        return result ? success() : failure();
     }
 
 }

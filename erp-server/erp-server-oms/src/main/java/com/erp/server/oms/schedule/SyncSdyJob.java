@@ -259,7 +259,6 @@ public class SyncSdyJob {
                         dictBasicEntityList,
                         currencyList,
                         soChangeDetailEntities,
-                        "",
                         dictList
                 );
             }

@@ -6,9 +6,7 @@ import com.common.business.dto.base.SortDTO;
 import com.common.core.anno.StateEnumValue;
 import com.erp.model.plm.vo.ProductVO;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import javax.validation.Valid;
 import javax.validation.constraints.*;
@@ -251,6 +249,17 @@ public class PurchaseOrderDTO implements Serializable {
         private Integer returnQty;
 
         /**
+         * 质检退货数量
+         */
+        private Integer qcReturnQty;
+
+        /**
+         * 库存退货数量
+         */
+        private Integer stockReturnQty;
+
+
+        /**
          * srm协同（true 未开启，false 已开启）
          */
         private Boolean srmDisabled;
@@ -340,6 +349,15 @@ public class PurchaseOrderDTO implements Serializable {
          */
         private Boolean deliveryCycleFlag;
 
+        /**
+         * 仓位
+         */
+        private String warehouseLocation;
+
+        /**
+         * 仓位名称
+         */
+        private String warehouseLocationName;
         /**
          * 采购申请单id集合
          */
@@ -1214,6 +1232,10 @@ public class PurchaseOrderDTO implements Serializable {
          * 采购员
          */
         private String  purchaseUserName;
+        /**
+         * 采购数量
+         */
+        private Integer purchaseQty;
     }
 
     @Data
@@ -1663,6 +1685,11 @@ public class PurchaseOrderDTO implements Serializable {
          * 关键词
          */
         private String searchKeyword;
+
+        /**
+         * 审核状态
+         */
+        private String approveStatus;
     }
 
     @Data
@@ -1677,4 +1704,74 @@ public class PurchaseOrderDTO implements Serializable {
          */
         private String code;
     }
+
+
+    @Data
+    @NoArgsConstructor
+    public static class PurchaseCalcQtyDTO {
+        /**
+         * 主键id
+         */
+        private String id;
+
+        /**
+         * 采购订单明细id
+         */
+        private String purchaseDetailId;
+        /**
+         * 采购单号
+         */
+        private String code;
+        /**
+         * 供应商id
+         */
+        private String supplierId;
+        /**
+         * skuId
+         */
+        private String skuId;
+
+        /**
+         * sku编码
+         */
+        private String skuNo;
+        /**
+         * 采购数量/订单数量
+         */
+        private Integer purchaseQty;
+
+        /**
+         * 签收数量/已送货数量/已收货数量（已签收）
+         */
+        private Integer receiveQty;
+
+        /**
+         * 入库数量/已收货数量
+         */
+        private Integer stockInQty;
+
+        /**
+         * 创建时间
+         */
+        private LocalDateTime createTime;
+
+    }
+
+
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class PurchaseCalcQtyParamsDTO {
+        /**
+         * sku
+         */
+        private List<String> skuIdList;
+
+        /**
+         * supplier
+         */
+        private List<String> supplierIdList;
+    }
+
 }

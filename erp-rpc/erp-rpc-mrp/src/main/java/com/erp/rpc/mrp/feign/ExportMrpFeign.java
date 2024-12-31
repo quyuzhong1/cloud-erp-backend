@@ -9,6 +9,8 @@ import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
+import java.util.List;
+
 @FeignClient(name = "erp-mrp", contextId = "exportMrpFeign", configuration = ExportFeignConfig.class)
 public interface ExportMrpFeign {
     /**
@@ -69,7 +71,7 @@ public interface ExportMrpFeign {
      * @param dto 参数
      */
     @PostMapping("/feign/export/exportCalcHistorySale")
-    PagingVO<CfgRuleCalcDTO.HistorySaleDTO> exportCalcHistorySale(@RequestBody PagingDTO<CfgRuleCalcDTO.DownloadDTO> dto);
+    List<CfgRuleCalcDTO.HistorySaleDTO> exportCalcHistorySale(@RequestBody CfgRuleCalcDTO.DownloadDTO dto);
 
     /**
      * 导出
@@ -84,4 +86,13 @@ public interface ExportMrpFeign {
      */
     @PostMapping("/feign/export/getVirtualInventory")
     PagingVO<VirtualInventoryHistoryDTO.ListDTO> getVirtualInventory(@RequestBody PagingDTO<VirtualInventoryHistoryDTO.SearchParamDTO> dto);
+
+
+    /**
+     * 导出试算列表
+     * @param dto 参数
+     */
+    @PostMapping("/feign/export/exportMrpSalesCalcList")
+    PagingVO<CalcSalesInfoDimDTO.ExportSalesInfoListDTO> exportMrpSalesCalcList(@RequestBody PagingDTO<CalcSalesInfoDimDTO.ParamDTO> dto);
+
 }

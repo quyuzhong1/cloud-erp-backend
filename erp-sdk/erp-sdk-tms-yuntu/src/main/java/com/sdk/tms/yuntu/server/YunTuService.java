@@ -109,6 +109,7 @@ public class YunTuService {
         validate(appKey,appSecret,url);
         Map<String, Object> paramsMap = BeanUtil.beanToMap(request);
         String response = YunTuUtils.sendPost(url,YunTuConstants.METHOD_CANCEL_ORDER,paramsMap,appKey,appSecret);
+        log.warn("云途取消物流单传参:{},回参:,{}",JSON.toJSONString(request),response);
         return JSON.parseObject(response,new TypeReference<YunTuResponse<YunTuCancelOrder>>() {}.getType());
     }
 

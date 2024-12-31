@@ -1,162 +1,152 @@
 package com.erp.server.mrp.utils;
 
 import com.erp.model.mrp.dto.CalcSalesInfoDimDTO;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Comparator;
 import java.util.List;
 
 public class DataDifferenceCalculator {
-    // 计算方式的枚举类型
-    public enum CalculationType {
-        EUCLIDEAN,
-        MANHATTAN,
-        COSINE
-    }
 
+    /**
+     * 封装单个预测列 vs. 实际列的误差结果
+     */
+    @Getter
+    @Setter
+    public static class MetricsResult {
+        /**
+         * 标识该列预测的名称（可自定义，如 "模型A", "模型B"）
+         */
+        private String predLabel;
 
-    // 计算欧氏距离
-    private static BigDecimal calculateEuclideanDistance(BigDecimal[] data1, BigDecimal[] data2) {
-        BigDecimal sum = BigDecimal.ZERO;
-        for (int i = 0; i < data1.length; i++) {
-            BigDecimal diff = data1[i].subtract(data2[i]);
-            sum = sum.add(diff.pow(2));
-        }
-        return sqrt(sum);
-    }
+        // 常见误差指标
+        private BigDecimal MAE;
+        private BigDecimal MSE;
+        private BigDecimal RMSE;
+        private BigDecimal MAPE;  // 以 0.16 表示 16%
+        private BigDecimal R2;
 
-    // 计算曼哈顿距离
-    private static BigDecimal calculateManhattanDistance(BigDecimal[] data1, BigDecimal[] data2) {
-        BigDecimal sum = BigDecimal.ZERO;
-        for (int i = 0; i < data1.length; i++) {
-            sum = sum.add(data1[i].subtract(data2[i]).abs());
-        }
-        return sum;
-    }
+        // 归一化得分
+        private BigDecimal MAEScore;
+        private BigDecimal MSEScore;
+        private BigDecimal RMSEScore;
+        private BigDecimal MAPEScore;
+        private BigDecimal R2Score;
 
-    // 计算余弦相似度
-    private static BigDecimal calculateCosineSimilarity(BigDecimal[] data1, BigDecimal[] data2) {
-        BigDecimal dotProduct = BigDecimal.ZERO;
-        BigDecimal normA = BigDecimal.ZERO;
-        BigDecimal normB = BigDecimal.ZERO;
-
-        for (int i = 0; i < data1.length; i++) {
-            dotProduct = dotProduct.add(data1[i].multiply(data2[i]));
-            normA = normA.add(data1[i].pow(2));
-            normB = normB.add(data2[i].pow(2));
-        }
-
-        normA = sqrt(normA);
-        normB = sqrt(normB);
-
-        if (normA.compareTo(BigDecimal.ZERO) == 0 || normB.compareTo(BigDecimal.ZERO) == 0) {
-            return BigDecimal.ZERO; // 防止除零错误
-        }
-
-        return dotProduct.divide(normA.multiply(normB), 4, RoundingMode.HALF_UP).multiply(new BigDecimal(100));
-    }
-
-    // 计算平方根
-    private static BigDecimal sqrt(BigDecimal value) {
-        BigDecimal x = BigDecimal.valueOf(Math.sqrt(value.doubleValue()));
-        return x.setScale(10, RoundingMode.HALF_UP);
-    }
-
-    // 动态计算上下界
-    private static BigDecimal[] calculateMinValues(BigDecimal[] baseData, BigDecimal factor) {
-        BigDecimal[] minValues = new BigDecimal[baseData.length];
-        for (int i = 0; i < baseData.length; i++) {
-            BigDecimal minValue = baseData[i].subtract(baseData[i].multiply(factor)).max(BigDecimal.ZERO);
-            minValues[i] = minValue;
-        }
-        return minValues;
-    }
-
-    // 校验倍数
-    private static void validateFactor(BigDecimal factor) {
-        if (factor.compareTo(BigDecimal.ZERO) < 0 || factor.compareTo(new BigDecimal("100")) > 0) {
-            throw new IllegalArgumentException("倍数必须在0到100之间");
-        }
-        if (factor.scale() > 4) {
-            throw new IllegalArgumentException("倍数小数位不能超过4位");
+        public MetricsResult(String predLabel) {
+            this.predLabel = predLabel;
         }
     }
 
-    private static BigDecimal[] calculateMaxValues(BigDecimal[] baseData, BigDecimal factor) {
-        BigDecimal[] maxValues = new BigDecimal[baseData.length];
-        for (int i = 0; i < baseData.length; i++) {
-            BigDecimal maxValue = baseData[i].add(baseData[i].multiply(factor));
-            maxValues[i] = maxValue;
+    /**
+     * 将“越小越好”的误差映射到 (0,100]：
+     * 误差=0 => 得分=100，误差越大 => 得分越接近 0
+     */
+    private static BigDecimal errorToScore(BigDecimal error) {
+        if (error.compareTo(BigDecimal.ZERO) <= 0) {
+            return BigDecimal.valueOf(100);
         }
-        return maxValues;
+        return BigDecimal.valueOf(100).divide(BigDecimal.ONE.add(error), 10, RoundingMode.HALF_UP);
     }
 
-    // 计算与基准数据的吻合率
-    public static List<CalcSalesInfoDimDTO.LineDTO> calculateMatchRates(
-            List<CalcSalesInfoDimDTO.LineDTO> calcList, List<BigDecimal> baseData, BigDecimal factor, CalculationType type) {
 
-        validateFactor(factor);
+    /**
+     * 核心方法：对【单列预测值】 vs. 【单列实际值】进行误差计算
+     *
+     * @param predicted 预测值列表
+     * @param actual    实际值列表
+     * @param label     给该预测列取一个名称
+     * @return 封装在 MetricsResult 对象中
+     */
+    public static MetricsResult computeMetrics(List<BigDecimal> predicted, List<BigDecimal> actual, String label) {
+        MetricsResult result = new MetricsResult(label);
 
-        BigDecimal[] baseArray = baseData.toArray(new BigDecimal[0]);
-        BigDecimal[] minValues = calculateMinValues(baseArray, factor);
-        BigDecimal[] maxValues = calculateMaxValues(baseArray, factor);
+        int n = predicted.size();
+        if (n == 0 || n != actual.size()) {
+            // 如果没有数据，或与 actual 大小不匹配，可按需处理
+            return result;
+        }
 
-        BigDecimal maxEuclideanDistance = calculateEuclideanDistance(minValues, maxValues);
-        BigDecimal maxManhattanDistance = calculateManhattanDistance(minValues, maxValues);
+        BigDecimal sumAbsErr = BigDecimal.ZERO;
+        BigDecimal sumSqErr = BigDecimal.ZERO;
+        BigDecimal sumMAPE = BigDecimal.ZERO;
+        int validCount = 0;
 
-        List<CalcSalesInfoDimDTO.LineDTO> results = new ArrayList<>();
-
-        for (CalcSalesInfoDimDTO.LineDTO line : calcList) {
-            BigDecimal[] dataArray = line.getQty().toArray(new BigDecimal[0]);
-            if (type == CalculationType.EUCLIDEAN) {
-                BigDecimal euclideanDistance = calculateEuclideanDistance(baseArray, dataArray);
-                BigDecimal euclideanMatchRate = BigDecimal.ONE.subtract(
-                        euclideanDistance.divide(maxEuclideanDistance, 4, RoundingMode.HALF_UP)).multiply(new BigDecimal(100));
-                line.setSimilarity(euclideanMatchRate);
+        // 1) 计算 MAE, MSE, MAPE
+        for (int i = 0; i < n; i++) {
+            BigDecimal x = predicted.get(i);
+            BigDecimal y = actual.get(i);
+            if (x.compareTo(BigDecimal.ZERO) == 0 && y.compareTo(BigDecimal.ZERO) == 0) {
+                continue;
             }
-            if (type == CalculationType.MANHATTAN) {
-                BigDecimal manhattanDistance = calculateManhattanDistance(baseArray, dataArray);
-                BigDecimal manhattanMatchRate = BigDecimal.ONE.subtract(
-                        manhattanDistance.divide(maxManhattanDistance, 4, RoundingMode.HALF_UP)).multiply(new BigDecimal(100));
-                line.setSimilarity(manhattanMatchRate);
+            validCount ++;
+            BigDecimal diff = x.subtract(y);
+            sumAbsErr = sumAbsErr.add(diff.abs());
+            sumSqErr = sumSqErr.add(diff.pow(2));
+
+            if (y.abs().compareTo(new BigDecimal("1E-12")) < 0) {
+                // 若实际值 y=0，可根据业务需求处理，这里简单+1
+                sumMAPE = sumMAPE.add(BigDecimal.ONE);
+            } else {
+                sumMAPE = sumMAPE.add(diff.abs().divide(y.abs(), 10, RoundingMode.HALF_UP));
             }
-            if (type == CalculationType.COSINE) {
-                BigDecimal cosineSimilarity = calculateCosineSimilarity(baseArray, dataArray);
-                line.setSimilarity(cosineSimilarity);
-            }
-            results.add(line);
         }
 
-        results.sort(Comparator.comparing(CalcSalesInfoDimDTO.LineDTO::getSimilarity).reversed());
-        return results;
+        if (validCount == 0) {
+            return result;
+        }
+        BigDecimal mae = sumAbsErr.divide(new BigDecimal(n), 10, RoundingMode.HALF_UP);
+        BigDecimal mse = sumSqErr.divide(new BigDecimal(n), 10, RoundingMode.HALF_UP);
+        BigDecimal rmse = BigDecimal.valueOf(Math.sqrt(mse.doubleValue()));
+        BigDecimal mape = sumMAPE.divide(new BigDecimal(n), 10, RoundingMode.HALF_UP);
+
+        // 2) 计算 R^2
+        BigDecimal ySum = actual.stream().reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal yMean = ySum.divide(new BigDecimal(n), 10, RoundingMode.HALF_UP);
+
+        BigDecimal sst = BigDecimal.ZERO;
+        for (BigDecimal val : actual) {
+            BigDecimal tmp = val.subtract(yMean);
+            sst = sst.add(tmp.pow(2));
+        }
+        BigDecimal sse = sumSqErr;
+        BigDecimal r2 = BigDecimal.ZERO;
+        if (sst.abs().compareTo(new BigDecimal("1E-12")) > 0) {
+            r2 = BigDecimal.ONE.subtract(sse.divide(sst, 10, RoundingMode.HALF_UP));
+        }
+
+        // 3) 填写结果
+        result.MAE = mae;
+        result.MSE = mse;
+        result.RMSE = rmse;
+        result.MAPE = mape;
+        result.R2 = r2;
+
+        // 4) 归一化分数
+        result.MAEScore = errorToScore(mae);
+        result.MSEScore = errorToScore(mse);
+        result.RMSEScore = errorToScore(rmse);
+        result.MAPEScore = errorToScore(mape);
+
+        // R^2 如果 < 0 => 0，否则取原值（也可根据需求改进）
+        result.R2Score = r2.compareTo(BigDecimal.ZERO) < 0 ? BigDecimal.ZERO : r2;
+
+        return result;
     }
 
-    public static void main(String[] args) {
-        List<CalcSalesInfoDimDTO.LineDTO> calcList = Arrays.asList(
-                createLine("A", Arrays.asList(new BigDecimal("10"), new BigDecimal("20"), new BigDecimal("30"))),
-                createLine("B", Arrays.asList(new BigDecimal("15"), new BigDecimal("25"), new BigDecimal("35"))),
-                createLine("C", Arrays.asList(new BigDecimal("5"), new BigDecimal("15"), new BigDecimal("25")))
-        );
-        List<BigDecimal> baseData = Arrays.asList(new BigDecimal("1.0"), new BigDecimal("2.0"), new BigDecimal("3.0"));
-        BigDecimal factor = new BigDecimal("1.0");
-        CalculationType type = CalculationType.COSINE;
-
-        List<CalcSalesInfoDimDTO.LineDTO> results = calculateMatchRates(calcList, baseData, factor, type);
-
-        results.forEach(result -> System.out.printf(
-                "模板名称：%s，相似度：%.2f%%%n",
-                result.getName(),
-                result.getSimilarity().multiply(new BigDecimal("100"))
-        ));
-    }
-
-    private static CalcSalesInfoDimDTO.LineDTO createLine(String name, List<BigDecimal> qty) {
-        CalcSalesInfoDimDTO.LineDTO line = new CalcSalesInfoDimDTO.LineDTO();
-        line.setName(name);
-        line.setQty(qty);
-        return line;
+    /**
+     * 扩展方法：对【多列预测值】 vs. 【单列实际值】分别进行比较
+     *
+     * @param actual      实际值列表
+     */
+    public static void compareMultiplePredictions(
+            List<CalcSalesInfoDimDTO.LineDTO> calcList,
+            List<BigDecimal> actual) {
+        for (CalcSalesInfoDimDTO.LineDTO dto : calcList) {
+            MetricsResult mr = computeMetrics(dto.getQty(), actual, dto.getName());
+            dto.setSimilarity(mr.getMAPEScore());
+        }
     }
 }

@@ -312,13 +312,6 @@ public interface SoInfoService extends SuperService<SoInfoEntity> {
     Boolean exportSoPI(String id, HttpServletResponse response);
 
     /**
-     * 根据sku id和数量计算成本毛利
-     * @param costParam
-     * @return
-     */
-    SkuCostProfitDTO.SkuCostProfitResult getSkuCostProfit(SkuCostProfitDTO.SkuCostProfitParam costParam);
-
-    /**
      * 重刷销售订单毛利成本数据
      * @param startDate
      * @param endDate
@@ -481,9 +474,8 @@ public interface SoInfoService extends SuperService<SoInfoEntity> {
      * 同步数帝云
      * @param soId
      * @param operateEnum
-     * @param deliveryStatus
      */
-    void sdyFieldOrderHandler(String soId, String operateEnum, String deliveryStatus);
+    void sdyFieldOrderHandler(String soId, String operateEnum);
 
     List<SoInfoEntity> queryToSdy(LocalDate startDate, LocalDate endStart, Integer pageSize, int offset);
 }

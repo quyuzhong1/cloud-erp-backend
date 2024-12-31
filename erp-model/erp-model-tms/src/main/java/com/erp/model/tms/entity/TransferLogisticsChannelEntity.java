@@ -49,6 +49,11 @@ public class TransferLogisticsChannelEntity extends BaseEntity<TransferLogistics
      */
     @TableField("logistics_platform")
     private String logisticsPlatform;
+    /**
+     * 发货国家二字码
+     */
+    @TableField("delivery_country")
+    private String deliveryCountry;
 
 
     public static final String FIELD_NAME = "name";

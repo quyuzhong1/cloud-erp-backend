@@ -326,16 +326,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         }
         QcInfoDTO.ViewDTO view = new QcInfoDTO.ViewDTO();
         BeanMapper.copy(bill, view);
-
-        // 退货签收单处理
-        if(Objects.equals(view.getSourceType(), SourceTypeEnum.SO_RETURN_RECEIVE.getCode())) {
-          SoReturnReceiveEntity soReturnReceiveEntity =  soReturnReceiveService.getById(view.getSourceId());
-          if(Objects.nonNull(soReturnReceiveEntity)) {
-              view.setPurchaseOrderCode(soReturnReceiveEntity.getCode());
-              view.setPurchaseOrderId("");
-          }
-        }
-
+        view.setSourceTypeName(SourceTypeEnum.getName(bill.getSourceType()));
         //产品信息
         QcProductDTO.ViewDTO qcProduct = qcProductService.getByMainId(id);
         view.setQcProduct(qcProduct);
@@ -384,12 +375,6 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         List<QcRemarkEntity> billRemarkList = qcRemarkService.getByMainIdList(billIdList);
 
         List<SkuVO> skuVOList = plmTaskFeign.listSkuProductByIds(skuIdList);
-        // 退货签收单单号显示
-        List<String> soReturnReceiveIds = list.stream().filter(r->Objects.equals(r.getSourceType(), SourceTypeEnum.SO_RETURN_RECEIVE.getCode())).map(QcInfoDTO.PagingViewDTO::getSourceId).distinct().collect(Collectors.toList());
-        List<SoReturnReceiveEntity> receiveReturnReceiveList = Lists.newArrayList();
-        if(CollUtil.isNotEmpty(soReturnReceiveIds)) {
-            receiveReturnReceiveList = soReturnReceiveService.listByIds(soReturnReceiveIds);
-        }
         for (QcInfoDTO.PagingViewDTO item : list) {
             QcBillStatusEnum billStatusEnum = item.getQcStatus();
             item.setQcStatusName(billStatusEnum != null ? billStatusEnum.getName() : "");
@@ -427,13 +412,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
             String qcSampleResult = QcReCheckResultEnum.getByCode(item.getQcSampleResult());
             item.setQcSampleResultName(StrUtils.isNotEmpty(qcSampleResult) ? qcSampleResult : "");
             item.setRemark(remark);
-
-            // 退换签收单号处理
-            if(Objects.equals(item.getSourceType(),  SourceTypeEnum.SO_RETURN_RECEIVE.getCode())) {
-                SoReturnReceiveEntity soReturnReceiveEntity =  receiveReturnReceiveList.stream().filter(req -> req.getId().equals(item.getSourceId())).findFirst().orElse(new SoReturnReceiveEntity());
-                item.setPurchaseOrderCode(soReturnReceiveEntity.getCode());
-            }
-
+            item.setSourceTypeName(SourceTypeEnum.getName(item.getSourceType()));
 
         }
         return new PagingVO<>(pageData);
@@ -2536,6 +2515,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
                 excelDTO.setIsInsideQcName(Objects.equals(item.getIsInsideQc(), Boolean.TRUE) ? "是" : "否");
                 String qcSampleResult = QcReCheckResultEnum.getByCode(item.getQcSampleResult());
                 excelDTO.setQcSampleResultName(StrUtils.isNotEmpty(qcSampleResult) ? qcSampleResult : "-");
+                excelDTO.setSourceTypeName(SourceTypeEnum.getName(item.getSourceType()));
                 resultList.add(excelDTO);
             }
 

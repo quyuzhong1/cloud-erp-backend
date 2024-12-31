@@ -7,15 +7,21 @@ import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.tms.dto.LogisticsBillCostDTO;
+import com.erp.model.tms.dto.LogisticsBillCostDTO.EditDataDTO;
+import com.erp.model.tms.dto.LogisticsBillCostDTO.EditViewDTO;
 import com.erp.model.tms.dto.excel.LogisticsBillCostExcelDTO;
 import com.erp.model.tms.entity.LogisticsBillCostEntity;
 import com.erp.model.tms.entity.TmsFirstMileReconciliationDetailEntity;
 import com.erp.model.tms.entity.TmsFirstMileReconciliationEntity;
 import com.erp.model.tms.enums.DictCostAttributionEnum;
+import com.erp.model.wms.entity.SoReturnInstockEntity;
+
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -37,6 +43,10 @@ public interface LogisticsBillCostService extends SuperService<LogisticsBillCost
     * @return
     */
     BaseResultDTO.AddDTO add(LogisticsBillCostDTO.AddDTO dto);
+    
+    List<BaseResultDTO.AddDTO> addPayAndRefund(List<LogisticsBillCostDTO.AddDataDTO> dtoList);
+    
+    void addPayAndRefundConfirm(LogisticsBillCostDTO.ConfirmAddDataDTO dto);
 
     /**
     * 修改
@@ -46,6 +56,10 @@ public interface LogisticsBillCostService extends SuperService<LogisticsBillCost
     * @return
     */
     Boolean update(LogisticsBillCostDTO.UpdateDTO dto,Boolean isImport);
+    
+    List<EditViewDTO> editView(String id);
+    
+    void edit(List<EditDataDTO> dtoList);
 
     /**
      * @description: tab列表
@@ -71,7 +85,12 @@ public interface LogisticsBillCostService extends SuperService<LogisticsBillCost
      * @param reconciliationStatus
      * @return BatchResultDTO
      */
-    BatchResultDTO updateReconciliationStatus(String id, String reconciliationStatus);
+    BatchResultDTO updateReconciliationStatus(String id, String reconciliationStatus , LocalDateTime confirmTime);
+    
+    BatchResultDTO updatePayStatus(String id, String payStatus , LocalDateTime payTime);
+    
+    BatchResultDTO delete(String id);
+    
     /**
      * @description: 下载模板
      * @author Will
@@ -207,4 +226,8 @@ public interface LogisticsBillCostService extends SuperService<LogisticsBillCost
      * 初始化头程对账单汇率
      */
     void initExchangeRate();
+    
+    void generateLogisticsBill(SoReturnInstockEntity entity);
+    
+    BatchResultDTO pushAllocation(String id , String reportDate);
 }

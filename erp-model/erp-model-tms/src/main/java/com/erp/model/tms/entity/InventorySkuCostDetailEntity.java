@@ -56,10 +56,30 @@ public class InventorySkuCostDetailEntity extends BaseEntity<InventorySkuCostDet
     @TableField("unit")
     private String unit;
     /**
-    * 产品成本（6位小数）
+    * 材料成本（6位小数）
     */
     @TableField("product_cost")
     private BigDecimal productCost;
+    /**
+     * 仓库id
+     */
+    @TableField("warehouse_id")
+    private String warehouseId;
+    /**
+     * 仓库名称
+     */
+    @TableField("warehouse_name")
+    private String warehouseName;
+    /**
+     * 头程运费（6位小数）
+     */
+    @TableField("first_mile_shipping_cost")
+    private BigDecimal firstMileShippingCost;
+    /**
+     * 清关税费（6位小数）
+     */
+    @TableField("clearance_customs_tax")
+    private BigDecimal clearanceCustomsTax;
 
 
     public static final String FIELD_REMARK = "remark";

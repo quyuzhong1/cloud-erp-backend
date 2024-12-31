@@ -140,4 +140,22 @@ public interface TransferLogisticsChannelService extends SuperService<TransferLo
 
 
     List<TransferLogisticsChannelDTO.ListSelectDTO> listByTransferChannelIds(List<String> channelIds);
+
+    /**
+     * 编辑物流商渠道的发货国家
+     * @Author Luo_WG
+     * @Date 2024/11/29 10:08
+     * @param id
+     * @return com.erp.model.tms.dto.TransferLogisticsChannelDTO.editDeliveryCountry
+     **/
+    TransferLogisticsChannelDTO.EditDeliveryCountryDTO editDeliveryCountry(String id);
+
+    /**
+     * 修改物流商发货国家
+     * @Author Luo_WG
+     * @Date 2024/11/29 10:42
+     * @param dto
+     * @return java.lang.Boolean
+     **/
+    Boolean updateDeliveryCountry(TransferLogisticsChannelDTO.EditDeliveryCountryDTO dto);
 }

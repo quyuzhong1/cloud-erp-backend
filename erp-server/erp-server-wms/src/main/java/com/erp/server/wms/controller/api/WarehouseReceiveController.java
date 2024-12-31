@@ -2,6 +2,7 @@ package com.erp.server.wms.controller.api;
 
 import cn.hutool.core.text.CharSequenceUtil;
 import com.common.business.annotation.DataPermission;
+import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
@@ -16,6 +17,7 @@ import com.erp.model.wms.dto.WarehouseReceiveDTO;
 import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.model.wms.entity.WarehouseReceiveDetailEntity;
 import com.erp.model.wms.entity.WarehouseReceiveEntity;
+import com.erp.server.wms.query.WarehouseReceiveQueryHandler;
 import com.erp.server.wms.service.WarehouseReceiveDetailService;
 import com.erp.server.wms.service.WarehouseReceiveService;
 import lombok.extern.slf4j.Slf4j;
@@ -61,11 +63,25 @@ public class WarehouseReceiveController extends BaseController {
             menuCode = "wms:warehouseReceive:paging",
             tableAlias = "wr"
     )
+    @WebAdvanceQuery(handler = WarehouseReceiveQueryHandler.class)
     public ApiResult<PagingVO<WarehouseReceiveDTO.PagingViewDTO>> paging(@RequestBody @Validated PagingDTO<WarehouseReceiveDTO.PagingParamDTO> dto) {
         PagingVO<WarehouseReceiveDTO.PagingViewDTO> pagingVO = warehouseReceiveService.paging(dto);
         return success(pagingVO);
     }
 
+    /**
+     * 合计
+     **/
+    @PostMapping("/pagingTotal")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "receive_user_id",
+            menuCode = "wms:warehouseReceive:paging",
+            tableAlias = "wr"
+    )
+    @WebAdvanceQuery(handler = WarehouseReceiveQueryHandler.class)
+    public ApiResult<WarehouseReceiveDTO.PagingTotalDTO> pagingTotal(@RequestBody @Validated WarehouseReceiveDTO.PagingParamDTO dto) {
+        return success(warehouseReceiveService.pagingTotal(dto));
+    }
     /**
      * 列表状态数量统计
      * @Author Luo_WG

@@ -14,6 +14,7 @@ import com.erp.model.plm.vo.SkuInfoSimpleVO;
 import com.erp.model.plm.vo.SkuSimpleVO;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.sys.openapi.DimensionalWeightDTO;
+import com.erp.model.sys.openapi.UploadSkuDTO;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
@@ -837,4 +838,6 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
      * @param viewDTO 参数
      */
     BatchResultDTO updateProductPack(ProductPackViewDTO viewDTO);
+
+    void uploadSkuImage(UploadSkuDTO dto);
 }
