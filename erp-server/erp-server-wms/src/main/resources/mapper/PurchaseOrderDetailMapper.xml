@@ -21,6 +21,30 @@
         </foreach>
     </select>
 
+    <!-- 根据来源明细id集合查询 -->
+    <select id="listBySourceDetailIdList" resultType="com.erp.model.scm.entity.PurchaseOrderDetailEntity">
+        select
+            pod.id,
+            pod.sku_id,
+            pod.purchase_order_id,
+            pod.tax_price,
+            pod.currency,
+            pod.purchase_qty,
+            pod.purchase_amount,
+            pod.plan_delivery_date,
+            pod.is_gift,
+            pod.tax_rate,
+            pod.source_detail_id,
+            pod.execution_status
+        from purchase_order po
+        left join purchase_order_detail pod on po.id = pod.purchase_order_id  and pod.is_deleted = false
+        where po.is_deleted = false and po.invalid_status = false and pod.source_detail_id in
+        <foreach collection="subDetailIdList" item="item" separator="," open="(" close=")">
+            #{item}
+        </foreach>
+
+    </select>
+
     <update id="updateBatchSelective" parameterType="java.util.List">
         <!--@mbg.generated-->
         update purchase_order_detail
