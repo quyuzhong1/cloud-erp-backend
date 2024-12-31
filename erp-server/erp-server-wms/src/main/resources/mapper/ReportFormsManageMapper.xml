@@ -193,27 +193,7 @@
     </select>
 
     <select id="paging" resultType="com.erp.model.scm.dto.PurchaseBusinessGatherTableDTO$PagingViewDTO">
-        SELECT
-		    t.purchase_org_name AS purchaseOrgName,
-            t.supplier_name AS supplierName,
-            t.images_url AS imagesUrl,
-            t.productName,
-            t.spu_no AS spuNo,
-			t.sku_no AS skuNo,
-			sum(t.orderQty) AS orderQty,
-		    sum(t.orderAmount) AS orderAmount,
-            round(CASE WHEN sum(t.orderAmount) = 0 THEN NULL ELSE sum(t.orderAmount) END / sum(t.purchaseQty)::numeric ,4) AS avgPrice,
-			sum(t.receiveQty) AS receiveQty,
-			sum(t.receiveGiftQty) AS receiveGiftQty,
-			sum(t.receiveAmount) AS receiveAmount,
-			sum(t.stockInQty) AS stockInQty,
-			sum(t.stockInGiftQty) AS stockInGiftQty,
-			sum(t.stockInAmount) AS stockInAmount,
-			sum(t.refundQty) AS refundQty,
-			sum(t.replenishQty) AS replenishQty,
-			sum(t.returnAmount) AS returnAmount,
-            MAX(createTime) AS createTime
-		FROM(
+        WITH t AS (
 		    SELECT
                 po.purchase_org_name,
                 pos.supplier_name,
@@ -472,7 +452,28 @@
                     #{item}
                 </foreach>
             </if>
-		) t
+		)
+        SELECT
+        t.purchase_org_name AS purchaseOrgName,
+        t.supplier_name AS supplierName,
+        t.images_url AS imagesUrl,
+        t.productName,
+        t.spu_no AS spuNo,
+        t.sku_no AS skuNo,
+        sum(t.orderQty) AS orderQty,
+        sum(t.orderAmount) AS orderAmount,
+        round(CASE WHEN sum(t.orderAmount) = 0 THEN NULL ELSE sum(t.orderAmount) END / sum(t.purchaseQty)::numeric ,4) AS avgPrice,
+        sum(t.receiveQty) AS receiveQty,
+        sum(t.receiveGiftQty) AS receiveGiftQty,
+        sum(t.receiveAmount) AS receiveAmount,
+        sum(t.stockInQty) AS stockInQty,
+        sum(t.stockInGiftQty) AS stockInGiftQty,
+        sum(t.stockInAmount) AS stockInAmount,
+        sum(t.refundQty) AS refundQty,
+        sum(t.replenishQty) AS replenishQty,
+        sum(t.returnAmount) AS returnAmount,
+        MAX(createTime) AS createTime
+        FROM t
 		group by
 		    t.purchase_org_name,
             t.supplier_name,
