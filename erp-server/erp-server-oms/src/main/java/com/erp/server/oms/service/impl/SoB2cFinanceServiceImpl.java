@@ -183,6 +183,9 @@ public class SoB2cFinanceServiceImpl extends SuperServiceImpl<SoB2cFinanceMapper
         if (null != financeDTO.getPlatformCost() && financeDTO.getPlatformCost().compareTo(BigDecimal.ZERO) > 0){
             newEntity.setPlatformCost(financeDTO.getPlatformCost());
         }
+        if (null != financeDTO.getShippingCost() && financeDTO.getShippingCost().compareTo(BigDecimal.ZERO) > 0){
+            newEntity.setShippingCost(financeDTO.getShippingCost());
+        }
     }
 
 
