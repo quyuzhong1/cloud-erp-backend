@@ -92,6 +92,7 @@ public class LogisticsProductController extends BaseController {
      * @return
      */
     @PostMapping("/update/paging")
+    @WebAdvanceQuery(handler = LogisticsProductQueryHandler.class)
     public ApiResult<PagingVO<LogisticsProductDTO.UpdatePagingDTO>> updatePaging(@RequestBody @Valid PagingDTO<LogisticsProductDTO.UpdatePagingParamDTO> dto) {
         PagingVO<LogisticsProductDTO.UpdatePagingDTO> pagingVO = logisticsProductService.updatePaging(dto);
         return success(pagingVO);
