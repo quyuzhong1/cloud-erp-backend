@@ -254,6 +254,7 @@ public class LogisticsProductController extends BaseController {
      * @return
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出物流产品信息")
+    @WebAdvanceQuery(handler = LogisticsProductQueryHandler.class)
     @PostMapping("/export")
     public ApiResult<Object> exportExcel(@RequestBody @Valid LogisticsProductDTO.ExportDTO dto) {
         Boolean result = logisticsProductService.exportExcel(dto);
