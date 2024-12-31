@@ -1478,11 +1478,21 @@ public class TmsFirstMileLogisticDTO implements Serializable {
          * 预估费用
          */
         private BigDecimal estimatedFee;
+        
+        /**
+         * 预估费用币种
+         */
+        private String estimatedCurrency;
 
         /**
          * 实际费用
          */
         private BigDecimal actualFee;
+        
+        /**
+         * 实际费用币种
+         */
+        private String actualCurrency;
 
         /**
          * 差异

@@ -16,14 +16,19 @@ import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.enums.CurrencyEnum;
 import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.FieldValidUtil;
 import com.erp.model.tms.dto.LogisticsBillCostDTO;
 import com.erp.model.tms.dto.TmsCostDetailDTO;
+import com.erp.model.tms.dto.TmsCostDetailDTO.UpdateDTO;
+import com.erp.model.tms.dto.excel.LogisticsBillCostExcelDTO;
 import com.erp.model.tms.dto.excel.LogisticsLastMileCostExcelDTO;
 import com.erp.model.tms.entity.LogisticsBillCostEntity;
 import com.erp.model.tms.entity.LogisticsBillDetailEntity;
 import com.erp.model.tms.entity.TmsCfgCostEntity;
+import com.erp.model.tms.entity.TmsCostDetailEntity;
+import com.erp.model.tms.enums.AllocationFeeTypeEnum;
 import com.erp.model.tms.enums.DictCostAttributionEnum;
 import com.erp.model.tms.enums.LogisticsBillCostTypeEnum;
 import com.erp.model.tms.enums.ReconciliationStatusEnum;
@@ -42,9 +47,12 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_TMS_LOGISTICS_LAST_MILE_COST;
@@ -73,6 +81,8 @@ public class LogisticsLastMileCostServiceImpl implements LogisticsLastMileCostSe
     private LogisticsBillService logisticsBillService;
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
+    @Resource
+    private TmsCostDetailService tmsCostDetailService;
 
     @Override
     public List<LogisticsBillCostDTO.TabListDTO> tabList(PermissionsDTO dto) {
@@ -132,7 +142,7 @@ public class LogisticsLastMileCostServiceImpl implements LogisticsLastMileCostSe
         headerNameList.add("*物流跟踪单号");
         headerNameList.add("*计费重[物流商]");
         headerNameList.add("*对账类型");
-        headerNameList.add("币种[默认￥]");
+        headerNameList.add("*币种");
         return headerNameList;
     }
 
@@ -148,7 +158,7 @@ public class LogisticsLastMileCostServiceImpl implements LogisticsLastMileCostSe
         jsonObject.set("*物流跟踪单号","trackNo");
         jsonObject.set("*计费重[物流商]","billingWeightStr");
         jsonObject.set("*对账类型","payType");
-        jsonObject.set("币种[默认￥]","currency");
+        jsonObject.set("*币种","currency");
         return jsonObject;
     }
 
@@ -227,7 +237,11 @@ public class LogisticsLastMileCostServiceImpl implements LogisticsLastMileCostSe
         //物流费用信息
         List<String> logisticsBillDetailIdList = logisticsBillDetailList.stream().map(LogisticsBillDetailEntity::getId).distinct().collect(Collectors.toList());
         List<LogisticsBillCostEntity> logisticsBillCostList = logisticsBillCostService.listByLogisticsBillDetailIdList(logisticsBillDetailIdList);
-
+        Map<String, List<TmsCostDetailEntity>> mainIdListMap = new HashMap<>();
+        if(CollUtil.isNotEmpty(logisticsBillCostList)) {
+        	List<TmsCostDetailEntity> listByMainIdList = tmsCostDetailService.listByMainIdList(logisticsBillCostList.stream().map(LogisticsBillCostEntity::getId).collect(Collectors.toList()));
+        	mainIdListMap = listByMainIdList.stream().collect(Collectors.groupingBy(TmsCostDetailEntity::getMainId));
+        }
         for (JSONObject jsonObject :  successList) {
             //主数据
             JSONObject successJson = new JSONObject();
@@ -265,6 +279,7 @@ public class LogisticsLastMileCostServiceImpl implements LogisticsLastMileCostSe
                     updateDTO.setCostValue(new BigDecimal(entry.getValue().toString()));
                     updateDTO.setType(LogisticsBillCostTypeEnum.ACTUAL.getCode());
                     updateDTO.setCfgCostId(tmsCfgCostEntity.getId());
+                    updateDTO.setDictCostCategory(tmsCfgCostEntity.getDictCostCategory());
                     updateDTO.setSourceType(SourceTypeEnum.LAST_MILE_LOGISTICS_BILL_COST.getCode());
                     updateList.add(updateDTO);
                 }
@@ -306,6 +321,32 @@ public class LogisticsLastMileCostServiceImpl implements LogisticsLastMileCostSe
             updateDataDTO.setId(logisticsBillCostEntity.getId());
             updateDataDTO.setBillingWeightLogistics(new BigDecimal(excelDTO.getBillingWeightStr()));
             updateDataDTO.setCurrency(CharSequenceUtil.isBlank(excelDTO.getCurrency()) ? CurrencyEnum.CNY.getCurrencyCode() : excelDTO.getCurrency());
+            
+            updateList.forEach(u -> u.setCurrency(updateDataDTO.getCurrency()));
+            List<TmsCostDetailEntity> validateList = BeanMapperUtils.copyList(TmsCostDetailEntity.class, updateList);
+            List<TmsCostDetailEntity> tmsCostDetailEntityList = mainIdListMap.get(logisticsBillCostEntity.getId());
+            if(CollUtil.isNotEmpty(tmsCostDetailEntityList)) {
+            	List<String> cfgCostIds = validateList.stream().map(TmsCostDetailEntity::getCfgCostId).collect(Collectors.toList());
+            	validateList.addAll(tmsCostDetailEntityList.stream().filter(t -> !cfgCostIds.contains(t.getCfgCostId())).collect(Collectors.toList()));
+            }
+            Map<String, String> validateCategoryCurrency = tmsCostDetailService.validateCategoryCurrency(validateList);
+            if(!validateCategoryCurrency.isEmpty()) {
+            	Map<String, String> costIdTypeListMap = new HashMap<>();
+            	for(Map.Entry<String, String> validateCategory : validateCategoryCurrency.entrySet()) {
+            		List<UpdateDTO> removeList = updateList.stream().filter(u -> u.getDictCostCategory().equals(validateCategory.getKey()) && u.getType().equals(validateCategory.getValue())).collect(Collectors.toList());
+            		for(UpdateDTO remove : removeList) {
+            			String costName = cfgCostList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), remove.getCfgCostId())).findFirst().orElse(null).getCostName();
+            			costIdTypeListMap.put(costName, AllocationFeeTypeEnum.getName(validateCategory.getKey()) + "-" + LogisticsBillCostTypeEnum.getName(validateCategory.getValue()) + "分类下所有费用币种必须一致");
+            		}
+            		updateList.removeIf(u -> u.getDictCostCategory().equals(validateCategory.getKey()) && u.getType().equals(validateCategory.getValue()));
+            	}
+            	if(!costIdTypeListMap.isEmpty()) {
+            		jsonObject.set(errorIndex.toString(),FieldValidUtil.getMsgSort(new ArrayList<>(costIdTypeListMap.values())));
+                    errorList.add(jsonObject);
+                    continue;
+            	}
+            }
+            
             updateDataDTO.setCostDetailList(updateList);
             this.update(updateDataDTO,Boolean.TRUE);
         }
@@ -350,9 +391,9 @@ public class LogisticsLastMileCostServiceImpl implements LogisticsLastMileCostSe
         }
         //币别为空则取费用单币别
         excelDTO.setCurrency(CharSequenceUtil.isBlank(excelDTO.getCurrency()) ? logisticsBillCostEntity.getCurrency() : excelDTO.getCurrency());
-        if (ObjectUtil.isNotEmpty(logisticsBillCostEntity) && !CharSequenceUtil.equals(excelDTO.getCurrency(),logisticsBillCostEntity.getCurrency())) {
-            errorMsgList.add("导入币别与尾程费用单币别不一致");
-        }
+//        if (ObjectUtil.isNotEmpty(logisticsBillCostEntity) && !CharSequenceUtil.equals(excelDTO.getCurrency(),logisticsBillCostEntity.getCurrency())) {
+//            errorMsgList.add("导入币别与尾程费用单币别不一致");
+//        }
         if (ReconciliationStatusEnum.CONFIRMED.getCode().equals(logisticsBillCostEntity.getReconciliationStatus())
                 || ReconciliationStatusEnum.INVALID.getCode().equals(logisticsBillCostEntity.getReconciliationStatus())) {
             errorMsgList.add("尾程费用单已确认或已作废不支持更新");

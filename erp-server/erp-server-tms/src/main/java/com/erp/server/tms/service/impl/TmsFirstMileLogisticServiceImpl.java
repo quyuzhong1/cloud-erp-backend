@@ -724,17 +724,40 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
         if(CollectionUtils.isNotEmpty(logisticsBillCostEntityList)){
             List<String> ids = logisticsBillCostEntityList.stream().map(LogisticsBillCostEntity::getId).distinct().collect(Collectors.toList());
             List<TmsCostDetailDTO.CostCompareDTO> costCompareDTOList = logisticsBillCostDetailService.getCostCompareListByIds(ids);
+            String date = logisticsBillCostEntityList.get(0).getCreateTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+			Map<String, BigDecimal> rateMap = new HashMap<>();
+            for(TmsCostDetailDTO.CostCompareDTO costCompareDTO : costCompareDTOList) {
+            	BigDecimal actualFee = costCompareDTO.getActualFee();
+            	String actualCurrency = costCompareDTO.getActualCurrency();
+            	BigDecimal estimatedFee = costCompareDTO.getEstimatedFee();
+            	String estimatedCurrency = costCompareDTO.getEstimatedCurrency();
+            	if(actualFee != null && estimatedFee != null) {
+            		BigDecimal rate = rateMap.get(actualCurrency);
+            		if(rate == null){
+            			rate = dmpTaskFeign.getRate(date, actualCurrency);
+            			if(rate == null) {
+            				throw new ServiceException(actualCurrency + "汇率为空，请维护汇率后再提交");
+            			}
+    	            }
+            		rateMap.put(actualCurrency, rate);
+            		actualFee = actualFee.multiply(rate);
+            		
+            		rate = rateMap.get(estimatedCurrency);
+            		if(rate == null){
+            			rate = dmpTaskFeign.getRate(date, estimatedCurrency);
+            			if(rate == null) {
+            				throw new ServiceException(estimatedCurrency + "汇率为空，请维护汇率后再提交");
+            			}
+    	            }
+            		rateMap.put(estimatedCurrency, rate);
+            		estimatedFee = estimatedFee.multiply(rate);
+            		costCompareDTO.setFeeDifference(actualFee.subtract(estimatedFee));
+            		costCompareDTO.setEstimatedFeeExchange(estimatedFee);
+            	}
+			}
             dto.setLogisticFeeList( BeanUtil.copyToList(costCompareDTOList,TmsFirstMileLogisticDTO.FeeViewDTO.class));
-            BigDecimal totalEstimatedFee = costCompareDTOList.stream().filter(e -> Objects.nonNull(e.getEstimatedFee())).map(TmsCostDetailDTO.CostCompareDTO::getEstimatedFee).reduce(BigDecimal.ZERO,BigDecimal::add);
-            if(dto.getCurrency().equals(CurrencyEnum.CNY.getCurrencyCode())){
-                dto.setTotalEstimatedFee(totalEstimatedFee);
-            }else{
-                //查询汇率
-                BigDecimal rate = CharSequenceUtil.isBlank(dto.getCurrency()) ? null : dmpTaskFeign.getRate(logisticsBillCostEntityList.get(0).getCreateTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), dto.getCurrency());
-                if(Objects.nonNull(rate)){
-                    dto.setTotalEstimatedFee(totalEstimatedFee.multiply(rate));
-                }
-            }
+            BigDecimal totalEstimatedFee = costCompareDTOList.stream().filter(e -> Objects.nonNull(e.getEstimatedFeeExchange())).map(TmsCostDetailDTO.CostCompareDTO::getEstimatedFeeExchange).reduce(BigDecimal.ZERO,BigDecimal::add);
+            dto.setTotalEstimatedFee(totalEstimatedFee);
         }else {
             dto.setLogisticFeeList(Collections.emptyList());
         }
