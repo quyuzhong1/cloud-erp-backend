@@ -1186,6 +1186,7 @@ public enum ApiError implements Serializable {
 
     ERROR_92248(92248,"中转规则自动产生的直接调拨单,不支持修改"),
     ERROR_92249(92249,"打印FNSKU标签失败"),
+    ERROR_INVENTORY_NOT_EXIST(92250, "仓库:【{}】,SKU:【{}】,库存状态:【{}】,库存不存在"),
     /**
      * OMS 错误
      * 从92000 开始  以端口号
