@@ -172,6 +172,14 @@ public class MachineDetailServiceImpl extends SuperServiceImpl<MachineDetailMapp
     }
 
     @Override
+    public List<SoB2bProcessingDTO.ResponseDTO> listMachineByRefIdList(List<String> refIdList) {
+        if (CollectionUtils.isEmpty(refIdList)) {
+            return Collections.EMPTY_LIST;
+        }
+        return baseMapper.listMachineByRefIdList(refIdList);
+    }
+
+    @Override
     public List<MachineDetailEntity> listByMainId(String mainId) {
         return lambdaQuery()
                 .eq(MachineDetailEntity::getMainId,mainId)
