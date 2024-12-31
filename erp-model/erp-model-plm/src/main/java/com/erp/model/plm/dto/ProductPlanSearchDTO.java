@@ -23,7 +23,7 @@ public class ProductPlanSearchDTO extends SortDTO {
     /**
      * 类型：0所有，1尚未开始，2已立项，3开发中
      */
-    @NotBlank(message = "类型不能为空")
+//    @NotBlank(message = "类型不能为空")
     private String type;
 
     /**
