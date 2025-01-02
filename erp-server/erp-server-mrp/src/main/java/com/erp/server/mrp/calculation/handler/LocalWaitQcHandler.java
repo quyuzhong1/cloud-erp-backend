@@ -1,6 +1,5 @@
 package com.erp.server.mrp.calculation.handler;
 
-import com.erp.model.mrp.dto.CfgRuleStrategyDTO;
 import com.erp.model.mrp.dto.LocalInventoryDTO;
 import com.erp.model.mrp.dto.ReplenishmentResultDTO;
 import com.erp.model.mrp.enums.CfgRuleWarehouseTypeEnum;
@@ -20,24 +19,25 @@ public class LocalWaitQcHandler extends AbstractSkuCalculationHandler {
     @Resource
     private InventoryService inventoryService;
 
+
     @Override
-    public SkuCalculationHandler getNextHandler(CfgRuleStrategyDTO cfgRuleStrategy, ReplenishmentResultDTO replenishmentResult) {
+    public SkuCalculationHandler getNextHandler(List<ReplenishmentResultDTO> r) {
         return localInTransitHandler;
     }
 
     @Override
-    public boolean shouldHandle(CfgRuleStrategyDTO cfgRuleStrategyDTO, ReplenishmentResultDTO replenishmentResultDTO) {
+    public boolean shouldHandle(ReplenishmentResultDTO dto) {
         return true;
     }
 
     @Override
-    public void doHandle(CfgRuleStrategyDTO cfgRuleStrategyDTO, ReplenishmentResultDTO replenishmentResultDTO) {
+    public void doHandle(ReplenishmentResultDTO replenishmentResultDTO, List<ReplenishmentResultDTO> r) {
         List<ReplenishmentResultDTO.ReplenishmentInventoryDetailDTO> localWaitQcDetail = new ArrayList<>();
         List<LocalInventoryDTO> inventoryList = replenishmentResultDTO.getInventoryDTO().getLocalWaitQcList()
                     .stream().filter(v -> v.getSkuId().equals(replenishmentResultDTO.getReplenishment().getSkuId()))
                     .map(v -> new LocalInventoryDTO(v.getWarehouseId(), v.getQty()))
                     .collect(Collectors.toList());
-        int qty = inventoryService.getAllocateQty(replenishmentResultDTO, cfgRuleStrategyDTO.getWarehouseResult().getLocalWarehouseList(),
+        int qty = inventoryService.getAllocateQty(replenishmentResultDTO, replenishmentResultDTO.getCfgRuleStrategy().getWarehouseResult().getLocalWarehouseList(),
                 inventoryList, localWaitQcDetail, ReplenishmentInventoryTypeEnum.LOCAL_WAIT_QC, CfgRuleWarehouseTypeEnum.LOCAL);
         replenishmentResultDTO.setLocalWaitQcDetail(localWaitQcDetail);
         replenishmentResultDTO.getReplenishmentDetail().setLocalWaitQcQty(qty);

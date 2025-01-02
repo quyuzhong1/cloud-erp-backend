@@ -327,10 +327,8 @@ public interface ReplenishmentSuggestionService extends SuperService<Replenishme
     /**
      * 保存建议
      *
-     * @param cfgRuleStrategy     配置值
-     * @param replenishmentResult 建议结果
      */
-    void saveReplenishment(CfgRuleStrategyDTO cfgRuleStrategy, ReplenishmentResultDTO replenishmentResult);
+    void saveReplenishment(List<ReplenishmentResultDTO> resultDTOS);
 
     /**
      * 查询需要计算的数据

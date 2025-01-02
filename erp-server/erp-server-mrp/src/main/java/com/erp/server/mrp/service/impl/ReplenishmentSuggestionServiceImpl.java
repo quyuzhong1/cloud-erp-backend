@@ -972,118 +972,120 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void saveReplenishment(CfgRuleStrategyDTO cfgRuleStrategy, ReplenishmentResultDTO replenishmentResult) {
-        ReplenishmentSuggestionDetailEntity entity = new ReplenishmentSuggestionDetailEntity();
-        ReplenishmentResultDTO.DetailDTO.setBasicAttributes(entity, replenishmentResult.getReplenishmentDetail());
-        ReplenishmentResultDTO.DetailDTO.setJsonAttributes(entity, replenishmentResult.getReplenishmentDetail(), replenishmentResult.getTimePeriodSalesEstimates(), replenishmentResult.getAvgTimePeriodSalesEstimates(), replenishmentResult.getTimePeriodSales(),
-                replenishmentResult.getAvgTimePeriodSales(), replenishmentResult.getRealSaleQty());
-        ReplenishmentResultDTO.DetailDTO.setOtherAttributes(entity, replenishmentResult.getReplenishmentDetail(), cfgRuleStrategy, replenishmentResult.getPurchasePrice(), replenishmentResult.getSalesPrice());
-        if (CollectionUtils.isNotEmpty(replenishmentResult.getFbaInTransitDetails())) {
-            List<FbaInTransitDetailEntity> fbaInTransitDetailEntities = replenishmentResult.getFbaInTransitDetails().stream()
-                    .map(v -> ReplenishmentResultDTO.FbaInTransitDetailDTO.buildFbaInTransitDetail(v, replenishmentResult.getReplenishmentDetail().getDetailId(), replenishmentResult.getReplenishmentDetail().getCalcVersion()))
-                    .collect(Collectors.toList());
-            fbaInTransitDetailService.saveBatch(fbaInTransitDetailEntities);
-        }
-        if (CollectionUtils.isNotEmpty(replenishmentResult.getFbaDeliveryDetails())) {
-            List<EstimatedDeliveryDetailEntity> fbaDeliveryDetails = replenishmentResult.getFbaDeliveryDetails().stream()
-                    .map(v -> ReplenishmentResultDTO.EstimatedDeliveryDetailDTO.buildEstimatedDeliveryDetail(v, replenishmentResult.getReplenishmentDetail().getDetailId(), replenishmentResult.getReplenishmentDetail().getCalcVersion()))
-                    .collect(Collectors.toList());
-            estimatedDeliveryDetailService.saveBatch(fbaDeliveryDetails);
-        }
-        if (CollectionUtils.isNotEmpty(replenishmentResult.getOverseasUsableDetail())) {
-            replenishmentInventoryDetailService.saveInventoryDetail(replenishmentResult.getOverseasUsableDetail(), replenishmentResult.getReplenishmentDetail().getDetailId(), replenishmentResult.getReplenishmentDetail().getCalcVersion());
-        }
-
-        if (CollectionUtils.isNotEmpty(replenishmentResult.getOverseasInTransitDetails())) {
-            List<OverseasInTransitDetailEntity> overseasInTransitDetails = replenishmentResult.getOverseasInTransitDetails().stream()
-                    .map(v -> ReplenishmentResultDTO.OverseasInTransitDetailDTO.buildOverseasInTransitDetail(v, replenishmentResult.getReplenishmentDetail().getDetailId(), replenishmentResult.getReplenishmentDetail().getCalcVersion()))
-                    .collect(Collectors.toList());
-            overseasInTransitDetailService.saveBatch(overseasInTransitDetails);
-        }
-
-        if (CollectionUtils.isNotEmpty(replenishmentResult.getOverseasInTransitDetail())) {
-            replenishmentInventoryDetailService.saveInventoryDetail(replenishmentResult.getOverseasInTransitDetail(), replenishmentResult.getReplenishmentDetail().getDetailId(), replenishmentResult.getReplenishmentDetail().getCalcVersion());
-        }
-
-        if (CollectionUtils.isNotEmpty(replenishmentResult.getOverseasDeliveryDetails())) {
-            List<EstimatedDeliveryDetailEntity> overseasDeliveryDetails = replenishmentResult.getOverseasDeliveryDetails().stream()
-                    .map(v -> ReplenishmentResultDTO.EstimatedDeliveryDetailDTO.buildEstimatedDeliveryDetail(v, replenishmentResult.getReplenishmentDetail().getDetailId(), replenishmentResult.getReplenishmentDetail().getCalcVersion()))
-                    .collect(Collectors.toList());
-            estimatedDeliveryDetailService.saveBatch(overseasDeliveryDetails);
-        }
-
-        if (CollectionUtils.isNotEmpty(replenishmentResult.getOverseasDeliveryDetail())) {
-            replenishmentInventoryDetailService.saveInventoryDetail(replenishmentResult.getOverseasDeliveryDetail(), replenishmentResult.getReplenishmentDetail().getDetailId(), replenishmentResult.getReplenishmentDetail().getCalcVersion());
-        }
-
-        if (CollectionUtils.isNotEmpty(replenishmentResult.getLocalUsableDetail())) {
-            replenishmentInventoryDetailService.saveInventoryDetail(replenishmentResult.getLocalUsableDetail(), replenishmentResult.getReplenishmentDetail().getDetailId(), replenishmentResult.getReplenishmentDetail().getCalcVersion());
-        }
-        if (CollectionUtils.isNotEmpty(replenishmentResult.getLocalWaitQcDetail())) {
-            replenishmentInventoryDetailService.saveInventoryDetail(replenishmentResult.getLocalWaitQcDetail(), replenishmentResult.getReplenishmentDetail().getDetailId(), replenishmentResult.getReplenishmentDetail().getCalcVersion());
-        }
-        if (CollectionUtils.isNotEmpty(replenishmentResult.getLocalInTransitDetails())) {
-            List<LocalInTransitDetailEntity> localInTransitDetails = replenishmentResult.getLocalInTransitDetails().stream()
-                    .map(v -> ReplenishmentResultDTO.LocalInTransitDetailDTO.buildLocalInTransitDetail(v, replenishmentResult.getReplenishmentDetail().getDetailId(), replenishmentResult.getReplenishmentDetail().getCalcVersion()))
-                    .collect(Collectors.toList());
-            localInTransitDetailService.saveBatch(localInTransitDetails);
-        }
-        if (CollectionUtils.isNotEmpty(replenishmentResult.getLocalInTransitDetail())) {
-            replenishmentInventoryDetailService.saveInventoryDetail(replenishmentResult.getLocalInTransitDetail(), replenishmentResult.getReplenishmentDetail().getDetailId(), replenishmentResult.getReplenishmentDetail().getCalcVersion());
-        }
-        if (CollectionUtils.isNotEmpty(replenishmentResult.getLocalPurchaseDetails())) {
-            List<EstimatedPurchaseDetailEntity> localPurchaseDetails = replenishmentResult.getLocalPurchaseDetails().stream()
-                    .map(v -> ReplenishmentResultDTO.EstimatedPurchaseDetailDTO.buildEstimatedPurchaseDetail(v, replenishmentResult.getReplenishmentDetail().getDetailId(), replenishmentResult.getReplenishmentDetail().getCalcVersion()))
-                    .collect(Collectors.toList());
-            estimatedPurchaseDetailService.saveBatch(localPurchaseDetails);
-        }
-        if (CollectionUtils.isNotEmpty(replenishmentResult.getLocalPurchaseDetail())) {
-            replenishmentInventoryDetailService.saveInventoryDetail(replenishmentResult.getLocalPurchaseDetail(), replenishmentResult.getReplenishmentDetail().getDetailId(), replenishmentResult.getReplenishmentDetail().getCalcVersion());
-        }
-        if (CollectionUtils.isNotEmpty(replenishmentResult.getRptOutOfStocks())) {
-            List<RptOutOfStockEntity> rptOutOfStocks = replenishmentResult.getRptOutOfStocks().stream()
-                    .map(v -> ReplenishmentResultDTO.RptOutOfStockDTO.buildRptOutOfStock(v, replenishmentResult.getReplenishmentDetail().getDetailId(), replenishmentResult.getReplenishmentDetail().getCalcVersion()))
-                    .collect(Collectors.toList());
-            rptOutOfStockService.saveBatch(rptOutOfStocks);
-        }
-        if (CollectionUtils.isNotEmpty(replenishmentResult.getSalesInfoList())) {
-            List<SalesInfoEntity> salesInfos = replenishmentResult.getSalesInfoList().stream()
-                    .map(v -> ReplenishmentResultDTO.SalesInfoDTO.buildSalesInfo(v, replenishmentResult.getReplenishmentDetail().getDetailId(), replenishmentResult.getReplenishmentDetail().getCalcVersion()))
-                    .collect(Collectors.toList());
-            salesInfoService.saveOrUpdateBatch(salesInfos);
-        }
-        if (CollectionUtils.isNotEmpty(replenishmentResult.getSalesEstimates())) {
-            List<SalesEstimateEntity> salesEstimates = replenishmentResult.getSalesEstimates().stream()
-                    .map(v -> ReplenishmentResultDTO.SalesEstimateDTO.buildSalesEstimate(v, replenishmentResult.getReplenishmentDetail().getDetailId(), replenishmentResult.getReplenishmentDetail().getCalcVersion()))
-                    .collect(Collectors.toList());
-            salesEstimateService.saveBatch(salesEstimates);
-        }
-        if (CollectionUtils.isNotEmpty(replenishmentResult.getDeliverySuggests())) {
-            List<DeliverySuggestEntity> deliverySuggests = replenishmentResult.getDeliverySuggests().stream()
-                    .map(ReplenishmentResultDTO.DeliverySuggestDTO::buildDeliverySuggest)
-                    .collect(Collectors.toList());
-            deliverySuggestService.saveBatch(deliverySuggests);
-            for (DeliverySuggestEntity deliverySuggest : deliverySuggests) {
-                deliverySuggestService.addDeliverySuggestSys(deliverySuggest);
+    public void saveReplenishment(List<ReplenishmentResultDTO> resultDTOS) {
+        for (ReplenishmentResultDTO replenishmentResult : resultDTOS) {
+            ReplenishmentSuggestionDetailEntity entity = new ReplenishmentSuggestionDetailEntity();
+            ReplenishmentResultDTO.DetailDTO.setBasicAttributes(entity, replenishmentResult.getReplenishmentDetail());
+            ReplenishmentResultDTO.DetailDTO.setJsonAttributes(entity, replenishmentResult.getReplenishmentDetail(), replenishmentResult.getTimePeriodSalesEstimates(), replenishmentResult.getAvgTimePeriodSalesEstimates(), replenishmentResult.getTimePeriodSales(),
+                    replenishmentResult.getAvgTimePeriodSales(), replenishmentResult.getRealSaleQty());
+            ReplenishmentResultDTO.DetailDTO.setOtherAttributes(entity, replenishmentResult.getReplenishmentDetail(), replenishmentResult.getCfgRuleStrategy(), replenishmentResult.getPurchasePrice(), replenishmentResult.getSalesPrice());
+            if (CollectionUtils.isNotEmpty(replenishmentResult.getFbaInTransitDetails())) {
+                List<FbaInTransitDetailEntity> fbaInTransitDetailEntities = replenishmentResult.getFbaInTransitDetails().stream()
+                        .map(v -> ReplenishmentResultDTO.FbaInTransitDetailDTO.buildFbaInTransitDetail(v, replenishmentResult.getReplenishmentDetail().getDetailId(), replenishmentResult.getReplenishmentDetail().getCalcVersion()))
+                        .collect(Collectors.toList());
+                fbaInTransitDetailService.saveBatch(fbaInTransitDetailEntities);
             }
-        }
-        if (CollectionUtils.isNotEmpty(replenishmentResult.getPurchaseSuggests())) {
-            List<PurchaseSuggestEntity> purchaseSuggests = replenishmentResult.getPurchaseSuggests().stream()
-                    .map(ReplenishmentResultDTO.PurchaseSuggestDTO::buildPurchaseSuggest)
-                    .collect(Collectors.toList());
-            purchaseSuggestService.saveBatch(purchaseSuggests);
-            for (PurchaseSuggestEntity purchaseSuggest : purchaseSuggests) {
-                purchaseSuggestService.addPurchaseSuggestSys(purchaseSuggest);
+            if (CollectionUtils.isNotEmpty(replenishmentResult.getFbaDeliveryDetails())) {
+                List<EstimatedDeliveryDetailEntity> fbaDeliveryDetails = replenishmentResult.getFbaDeliveryDetails().stream()
+                        .map(v -> ReplenishmentResultDTO.EstimatedDeliveryDetailDTO.buildEstimatedDeliveryDetail(v, replenishmentResult.getReplenishmentDetail().getDetailId(), replenishmentResult.getReplenishmentDetail().getCalcVersion()))
+                        .collect(Collectors.toList());
+                estimatedDeliveryDetailService.saveBatch(fbaDeliveryDetails);
             }
-            purchaseSuggestMergeService.generatePurchaseSuggestMerge("");
+            if (CollectionUtils.isNotEmpty(replenishmentResult.getOverseasUsableDetail())) {
+                replenishmentInventoryDetailService.saveInventoryDetail(replenishmentResult.getOverseasUsableDetail(), replenishmentResult.getReplenishmentDetail().getDetailId(), replenishmentResult.getReplenishmentDetail().getCalcVersion());
+            }
+
+            if (CollectionUtils.isNotEmpty(replenishmentResult.getOverseasInTransitDetails())) {
+                List<OverseasInTransitDetailEntity> overseasInTransitDetails = replenishmentResult.getOverseasInTransitDetails().stream()
+                        .map(v -> ReplenishmentResultDTO.OverseasInTransitDetailDTO.buildOverseasInTransitDetail(v, replenishmentResult.getReplenishmentDetail().getDetailId(), replenishmentResult.getReplenishmentDetail().getCalcVersion()))
+                        .collect(Collectors.toList());
+                overseasInTransitDetailService.saveBatch(overseasInTransitDetails);
+            }
+
+            if (CollectionUtils.isNotEmpty(replenishmentResult.getOverseasInTransitDetail())) {
+                replenishmentInventoryDetailService.saveInventoryDetail(replenishmentResult.getOverseasInTransitDetail(), replenishmentResult.getReplenishmentDetail().getDetailId(), replenishmentResult.getReplenishmentDetail().getCalcVersion());
+            }
+
+            if (CollectionUtils.isNotEmpty(replenishmentResult.getOverseasDeliveryDetails())) {
+                List<EstimatedDeliveryDetailEntity> overseasDeliveryDetails = replenishmentResult.getOverseasDeliveryDetails().stream()
+                        .map(v -> ReplenishmentResultDTO.EstimatedDeliveryDetailDTO.buildEstimatedDeliveryDetail(v, replenishmentResult.getReplenishmentDetail().getDetailId(), replenishmentResult.getReplenishmentDetail().getCalcVersion()))
+                        .collect(Collectors.toList());
+                estimatedDeliveryDetailService.saveBatch(overseasDeliveryDetails);
+            }
+
+            if (CollectionUtils.isNotEmpty(replenishmentResult.getOverseasDeliveryDetail())) {
+                replenishmentInventoryDetailService.saveInventoryDetail(replenishmentResult.getOverseasDeliveryDetail(), replenishmentResult.getReplenishmentDetail().getDetailId(), replenishmentResult.getReplenishmentDetail().getCalcVersion());
+            }
+
+            if (CollectionUtils.isNotEmpty(replenishmentResult.getLocalUsableDetail())) {
+                replenishmentInventoryDetailService.saveInventoryDetail(replenishmentResult.getLocalUsableDetail(), replenishmentResult.getReplenishmentDetail().getDetailId(), replenishmentResult.getReplenishmentDetail().getCalcVersion());
+            }
+            if (CollectionUtils.isNotEmpty(replenishmentResult.getLocalWaitQcDetail())) {
+                replenishmentInventoryDetailService.saveInventoryDetail(replenishmentResult.getLocalWaitQcDetail(), replenishmentResult.getReplenishmentDetail().getDetailId(), replenishmentResult.getReplenishmentDetail().getCalcVersion());
+            }
+            if (CollectionUtils.isNotEmpty(replenishmentResult.getLocalInTransitDetails())) {
+                List<LocalInTransitDetailEntity> localInTransitDetails = replenishmentResult.getLocalInTransitDetails().stream()
+                        .map(v -> ReplenishmentResultDTO.LocalInTransitDetailDTO.buildLocalInTransitDetail(v, replenishmentResult.getReplenishmentDetail().getDetailId(), replenishmentResult.getReplenishmentDetail().getCalcVersion()))
+                        .collect(Collectors.toList());
+                localInTransitDetailService.saveBatch(localInTransitDetails);
+            }
+            if (CollectionUtils.isNotEmpty(replenishmentResult.getLocalInTransitDetail())) {
+                replenishmentInventoryDetailService.saveInventoryDetail(replenishmentResult.getLocalInTransitDetail(), replenishmentResult.getReplenishmentDetail().getDetailId(), replenishmentResult.getReplenishmentDetail().getCalcVersion());
+            }
+            if (CollectionUtils.isNotEmpty(replenishmentResult.getLocalPurchaseDetails())) {
+                List<EstimatedPurchaseDetailEntity> localPurchaseDetails = replenishmentResult.getLocalPurchaseDetails().stream()
+                        .map(v -> ReplenishmentResultDTO.EstimatedPurchaseDetailDTO.buildEstimatedPurchaseDetail(v, replenishmentResult.getReplenishmentDetail().getDetailId(), replenishmentResult.getReplenishmentDetail().getCalcVersion()))
+                        .collect(Collectors.toList());
+                estimatedPurchaseDetailService.saveBatch(localPurchaseDetails);
+            }
+            if (CollectionUtils.isNotEmpty(replenishmentResult.getLocalPurchaseDetail())) {
+                replenishmentInventoryDetailService.saveInventoryDetail(replenishmentResult.getLocalPurchaseDetail(), replenishmentResult.getReplenishmentDetail().getDetailId(), replenishmentResult.getReplenishmentDetail().getCalcVersion());
+            }
+            if (CollectionUtils.isNotEmpty(replenishmentResult.getRptOutOfStocks())) {
+                List<RptOutOfStockEntity> rptOutOfStocks = replenishmentResult.getRptOutOfStocks().stream()
+                        .map(v -> ReplenishmentResultDTO.RptOutOfStockDTO.buildRptOutOfStock(v, replenishmentResult.getReplenishmentDetail().getDetailId(), replenishmentResult.getReplenishmentDetail().getCalcVersion()))
+                        .collect(Collectors.toList());
+                rptOutOfStockService.saveBatch(rptOutOfStocks);
+            }
+            if (CollectionUtils.isNotEmpty(replenishmentResult.getSalesInfoList())) {
+                List<SalesInfoEntity> salesInfos = replenishmentResult.getSalesInfoList().stream()
+                        .map(v -> ReplenishmentResultDTO.SalesInfoDTO.buildSalesInfo(v, replenishmentResult.getReplenishmentDetail().getDetailId(), replenishmentResult.getReplenishmentDetail().getCalcVersion()))
+                        .collect(Collectors.toList());
+                salesInfoService.saveOrUpdateBatch(salesInfos);
+            }
+            if (CollectionUtils.isNotEmpty(replenishmentResult.getSalesEstimates())) {
+                List<SalesEstimateEntity> salesEstimates = replenishmentResult.getSalesEstimates().stream()
+                        .map(v -> ReplenishmentResultDTO.SalesEstimateDTO.buildSalesEstimate(v, replenishmentResult.getReplenishmentDetail().getDetailId(), replenishmentResult.getReplenishmentDetail().getCalcVersion()))
+                        .collect(Collectors.toList());
+                salesEstimateService.saveBatch(salesEstimates);
+            }
+            if (CollectionUtils.isNotEmpty(replenishmentResult.getDeliverySuggests())) {
+                List<DeliverySuggestEntity> deliverySuggests = replenishmentResult.getDeliverySuggests().stream()
+                        .map(ReplenishmentResultDTO.DeliverySuggestDTO::buildDeliverySuggest)
+                        .collect(Collectors.toList());
+                deliverySuggestService.saveBatch(deliverySuggests);
+                for (DeliverySuggestEntity deliverySuggest : deliverySuggests) {
+                    deliverySuggestService.addDeliverySuggestSys(deliverySuggest);
+                }
+            }
+            if (CollectionUtils.isNotEmpty(replenishmentResult.getPurchaseSuggests())) {
+                List<PurchaseSuggestEntity> purchaseSuggests = replenishmentResult.getPurchaseSuggests().stream()
+                        .map(ReplenishmentResultDTO.PurchaseSuggestDTO::buildPurchaseSuggest)
+                        .collect(Collectors.toList());
+                purchaseSuggestService.saveBatch(purchaseSuggests);
+                for (PurchaseSuggestEntity purchaseSuggest : purchaseSuggests) {
+                    purchaseSuggestService.addPurchaseSuggestSys(purchaseSuggest);
+                }
+                purchaseSuggestMergeService.generatePurchaseSuggestMerge("");
+            }
+            if (CollectionUtils.isNotEmpty(replenishmentResult.getRecentSuggestions())) {
+                List<RecentSuggestionDetailEntity> recentSuggestionDetails = replenishmentResult.getRecentSuggestions().stream()
+                        .map(v -> ReplenishmentResultDTO.RecentSuggestionDTO.buildRecentSuggestionEntity(v, replenishmentResult.getReplenishmentDetail().getDetailId(), replenishmentResult.getReplenishmentDetail().getCalcVersion()))
+                        .collect(Collectors.toList());
+                recentSuggestionDetailService.saveBatch(recentSuggestionDetails);
+            }
+            replenishmentSuggestionDetailService.saveOrUpdate(entity);
         }
-        if (CollectionUtils.isNotEmpty(replenishmentResult.getRecentSuggestions())) {
-            List<RecentSuggestionDetailEntity> recentSuggestionDetails = replenishmentResult.getRecentSuggestions().stream()
-                    .map(v -> ReplenishmentResultDTO.RecentSuggestionDTO.buildRecentSuggestionEntity(v, replenishmentResult.getReplenishmentDetail().getDetailId(), replenishmentResult.getReplenishmentDetail().getCalcVersion()))
-                    .collect(Collectors.toList());
-            recentSuggestionDetailService.saveBatch(recentSuggestionDetails);
-        }
-        replenishmentSuggestionDetailService.saveOrUpdate(entity);
     }
 
     @Override
@@ -1105,7 +1107,6 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
         //获取历史数据
         List<ReplenishmentResultDTO.SalesHistoryDTO> listedSalesHistory = listSalesHistory(suggestionIds, salesQtyType, orderType, caleStartDate, caleEndDate);
         List<ReplenishmentResultDTO.InventoryHistoryDTO> historyInventoryList = historyInventoryEsService.listByReplenishmentIdsAndDate(suggestionIds, caleStartDate, caleEndDate);
-        Map<String, Map<String, Integer>> shopSalesHistoryMap = getSalesHistoryMap(salesQtyType, orderType);
         return entities.parallelStream()
                 .map(v -> {
                     ReplenishmentResultDTO resultDTO = new ReplenishmentResultDTO();
@@ -1130,7 +1131,6 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
                     resultDTO.setHistoryInventoryList(historyInventory);
                     resultDTO.setSalesPrice(detail.getSalesPrice());
                     resultDTO.setPurchasePrice(detail.getPurchasePrice());
-                    resultDTO.setShopSalesMap(shopSalesHistoryMap.get(v.getSkuId()));
                     resultDTO.setOverseasProviderWarehouseList(overseasProviderWarehouseList);
                     return resultDTO;
                 }).filter(Objects::nonNull)

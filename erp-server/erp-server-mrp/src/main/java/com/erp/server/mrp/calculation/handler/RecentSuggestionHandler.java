@@ -20,17 +20,18 @@ import java.util.concurrent.atomic.AtomicInteger;
 @Component
 public class RecentSuggestionHandler extends AbstractSkuCalculationHandler {
     @Override
-    public SkuCalculationHandler getNextHandler(CfgRuleStrategyDTO t, ReplenishmentResultDTO r) {
+    public SkuCalculationHandler getNextHandler(List<ReplenishmentResultDTO> r) {
         return null;
     }
 
     @Override
-    public boolean shouldHandle(CfgRuleStrategyDTO t, ReplenishmentResultDTO r) {
+    public boolean shouldHandle(ReplenishmentResultDTO dto) {
         return true;
     }
 
     @Override
-    public void doHandle(CfgRuleStrategyDTO cfgRuleStrategyDTO, ReplenishmentResultDTO resultDTO) {
+    public void doHandle(ReplenishmentResultDTO resultDTO, List<ReplenishmentResultDTO> r) {
+        CfgRuleStrategyDTO cfgRuleStrategyDTO = resultDTO.getCfgRuleStrategy();
         LocalDate now = LocalDate.parse(resultDTO.getReplenishmentDetail().getCalcDate(), DateTimeFormatter.BASIC_ISO_DATE);
         List<ReplenishmentResultDTO.RecentSuggestionDTO> recentSuggestions = new ArrayList<>();
         CfgRuleStockUpDTO.StrategyResultDTO stockUpResult = cfgRuleStrategyDTO.getStockUpResult();
