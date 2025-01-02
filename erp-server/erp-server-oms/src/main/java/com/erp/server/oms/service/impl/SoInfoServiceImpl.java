@@ -795,7 +795,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                 item.setVirtualUsableQty(virtuaParamScarceDTO.getVirtualUsableQty());
                 item.setChildScarceList(virtuaParamScarceDTO.getChildScarceList());
                 item.setIsVirtualScarce(virtuaParamScarceDTO.getIsVirtualScarce());
-                item.setVirtualScarceQty(virtuaParamScarceDTO.getVirtualScarceQty());
+                item.setVirtualScarceQty(ObjectUtil.isEmpty(virtuaParamScarceDTO.getVirtualScarceQty()) ? MathUtil.ZERO : virtuaParamScarceDTO.getVirtualScarceQty());
             }
 
             //作废状态
@@ -3778,7 +3778,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             Integer unFrozenQty = soDetailEntity.getQty() - totalNoticeQty - soDetailEntity.getFrozenQty();
             Integer toFrozenQty = detailDTO.getVirtualUsableQty() > unFrozenQty ? unFrozenQty : detailDTO.getVirtualUsableQty();
             detailDTO.setToFrozenQty(toFrozenQty + soDetailEntity.getFrozenQty());
-            detailDTO.setVirtualScarceQty(paramScarceDTO.getVirtualScarceQty());
+            detailDTO.setVirtualScarceQty(ObjectUtil.isEmpty(paramScarceDTO.getVirtualScarceQty()) ? MathUtil.ZERO : paramScarceDTO.getVirtualScarceQty());
 
             //销售出库单
             Integer outstockQty = deliveryQtyList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSourceDetailId(), soDetailEntity.getId())
