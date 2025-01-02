@@ -87,6 +87,7 @@ public class OverseasInventoryController extends BaseController {
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出海外仓库存")
     @PostMapping(value = "/exportExcel")
+    @WebAdvanceQuery
     public ApiResult<?> exportExcel(@RequestBody @Validated OverseasInventoryDTO.ExportDTO dto) {
         Boolean flag = overseasInventoryService.exportExcel(dto);
         return flag ? success() : failure();

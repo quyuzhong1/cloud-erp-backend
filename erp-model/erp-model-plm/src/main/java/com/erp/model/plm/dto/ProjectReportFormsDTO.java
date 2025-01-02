@@ -9,6 +9,7 @@ import lombok.NoArgsConstructor;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -271,6 +272,16 @@ public class ProjectReportFormsDTO implements Serializable {
          * 实际完成日期
          */
         private LocalDate actualFinishDate;
+
+        /**
+         * 创建日期
+         */
+        private LocalDateTime createTime;
+
+        /**
+         * 更新日期
+         */
+        private LocalDateTime updateTime;
 
         public PagingView() {
             this.approvalFinishTaskCount = 0;

@@ -573,7 +573,7 @@ public class ExportWmsFeignController {
     }
 
     @PostMapping("/stocktakingTaskDetail")
-    public PagingVO<StocktakingTaskDetailDTO.ExportDTO> exportStocktakingTaskDetail(@RequestBody PagingDTO<BaseIdDTO> dto) {
+    public PagingVO<StocktakingTaskDetailDTO.ExportDTO> exportStocktakingTaskDetail(@RequestBody PagingDTO<StocktakingTaskDTO.BaseIdDTO> dto) {
         return stocktakingTaskDetailService.exportStocktakingTaskDetail(dto);
     }
 

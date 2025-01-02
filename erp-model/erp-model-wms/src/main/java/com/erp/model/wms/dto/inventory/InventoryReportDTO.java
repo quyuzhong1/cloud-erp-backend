@@ -429,6 +429,16 @@ public class InventoryReportDTO implements Serializable {
         @JsonIgnore
         private List<String> skuIdList;
 
+        /**
+         * 页面高级查询
+         */
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
+
+        /**
+         * sqlMap 默认key default
+         */
+        private Map<String, String> sqlMap;
+
     }
 
     /**
@@ -470,7 +480,7 @@ public class InventoryReportDTO implements Serializable {
          * 日期类型 (approveDate审核日期，billDate单据日期)
          * /api/wms/dict/list，字典inventoryDate
          */
-        @NotBlank(message = "日期类型不能为空")
+//        @NotBlank(message = "日期类型不能为空")
         private String dateType;
 
         /**

@@ -211,6 +211,7 @@ public class InventoryController extends BaseController {
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "库龄计算表导出")
     @PostMapping(value = "/exportInventoryAge")
+    @WebAdvanceQuery
     public ApiResult<Boolean> exportInventoryAge(@RequestBody InventoryReportDTO.ExportInventoryAgeSearchParamDTO dto) {
         inventoryService.exportInventoryAge(dto);
         return success(true);
@@ -248,6 +249,7 @@ public class InventoryController extends BaseController {
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "每日库存导出")
     @PostMapping(value = "/exportDailyInventory")
+    @WebAdvanceQuery
     public ApiResult<Boolean> exportDailyInventory(@RequestBody InventoryReportDTO.DailyInventoryParamDTO dto) {
         transactionFlowService.exportDailyInventory(dto);
         return success(true);

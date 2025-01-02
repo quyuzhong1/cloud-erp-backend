@@ -311,7 +311,7 @@
         INNER JOIN warehouse_mapping wm ON w.ID = wm.warehouse_id
         AND wm.is_deleted = FALSE
         WHERE
-        w.is_deleted = FALSE
+            w.is_deleted = FALSE
         AND wm.dict_Platform = 'AliExpress') as w  on oi.NAME = w.thirdWarehouseName and oi.dict_platform = 'AliExpress'
         <where>
             <include refid="where_sql"/>
