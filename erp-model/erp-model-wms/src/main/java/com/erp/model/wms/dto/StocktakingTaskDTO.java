@@ -1,9 +1,13 @@
 package com.erp.model.wms.dto;
 
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONArray;
 import com.common.business.dto.AdvanceQueryDTO;
+import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.core.anno.StateEnumValue;
+import com.common.core.exception.ServiceException;
 import com.erp.model.wms.enums.SeparateRuleEnum;
 import com.erp.model.wms.enums.StocktakingModeEnum;
 import com.erp.model.wms.enums.StocktakingStatusEnum;
@@ -11,6 +15,8 @@ import com.erp.model.wms.enums.StocktakingTypeEnum;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
@@ -481,4 +487,38 @@ public class StocktakingTaskDTO implements Serializable {
         private Integer frozenQty;
     }
 
+    @Data
+    @NoArgsConstructor
+    public class BaseIdDTO extends PagingParamDTO {
+
+//        @NotBlank(message = "id不能为空")
+        private String id;
+
+        private String name;
+
+        public String checkAndGetMainId() {
+            String mainId = this.getId();
+            // 兼容前端高级查询传参
+            if (StringUtils.isBlank(mainId)){
+                Object idsObj = super.getAdvanceQueryDTOList()
+                        .stream()
+                        .filter(e -> "st.id".equalsIgnoreCase(e.getField()))
+                        .map(AdvanceQueryDTO::getValue)
+                        .findFirst().orElse(null);
+                if (null == idsObj){
+                    throw new ServiceException("盘点任务ID为空");
+                }
+                JSONArray jsonArray = JSONArray.parseArray(JSON.toJSONString(idsObj));
+                if (CollectionUtils.isEmpty(jsonArray)){
+                    throw new ServiceException("盘点任务IDS为空");
+                }
+                mainId = jsonArray.get(0).toString();
+            }
+            if (StringUtils.isBlank(mainId)){
+                throw new ServiceException("盘点任务ID不能为空");
+            }
+            return mainId;
+        }
+
+    }
 }
