@@ -13,6 +13,7 @@ import com.erp.model.wms.enums.StocktakingModeEnum;
 import com.erp.model.wms.enums.StocktakingStatusEnum;
 import com.erp.model.wms.enums.StocktakingTypeEnum;
 import com.fasterxml.jackson.annotation.JsonFormat;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.apache.commons.collections4.CollectionUtils;
@@ -488,13 +489,16 @@ public class StocktakingTaskDTO implements Serializable {
     }
 
     @Data
-    @NoArgsConstructor
+    @AllArgsConstructor
     public static class BaseIdDTO extends PagingParamDTO {
 
 //        @NotBlank(message = "id不能为空")
         private String id;
 
         private String name;
+
+        public BaseIdDTO() {
+        }
 
         public String checkAndGetMainId() {
             String mainId = this.getId();
