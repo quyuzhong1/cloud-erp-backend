@@ -29,6 +29,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StopWatch;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -75,6 +76,7 @@ public class SoB2bProcessingServiceImpl extends SuperServiceImpl<SoB2bProcessing
     @Override
     public Boolean update(List<SoB2bProcessingDTO.AddOrUpdateDTO> list) {
         if (CollUtil.isEmpty(list)) {
+            log.warn("删除数据！size= {}",list.size());
             lambdaUpdate().remove();
             return Boolean.TRUE;
         }
@@ -83,9 +85,11 @@ public class SoB2bProcessingServiceImpl extends SuperServiceImpl<SoB2bProcessing
         List<SoB2bProcessingEntity> addList = soB2bProcessingList.stream().filter(obj -> CharSequenceUtil.isBlank(obj.getId())).collect(Collectors.toList());
         List<SoB2bProcessingEntity> updateList = soB2bProcessingList.stream().filter(obj -> CharSequenceUtil.isNotBlank(obj.getId())).collect(Collectors.toList());
         if (CollUtil.isNotEmpty(addList)) {
+            log.warn("新增数据！size= {}",addList.size());
             super.saveBatch(addList);
         }
         if (CollUtil.isNotEmpty(updateList)) {
+            log.warn("更新数据！size= {}",updateList.size());
             super.updateBatchById(updateList);
         }
         return Boolean.TRUE;
@@ -146,15 +150,22 @@ public class SoB2bProcessingServiceImpl extends SuperServiceImpl<SoB2bProcessing
         }
         log.warn("查询b2b订单跟踪数据，machineList = {}，transferList = {}，soOutstockList = {}",machineList.size(),transferList.size(),soOutstockList.size());
         List<SoB2bProcessingDTO.AddOrUpdateDTO> addList = new ArrayList<>();
-        for (SoB2bProcessingEntity entity :list) {
 
+        StopWatch stopWatch = new StopWatch();
+        stopWatch.start();
+        for (SoB2bProcessingEntity entity :list) {
             //根据类型更新出库数据
             handleOutstockByType(machineList,transferList,soOutstockList,entity);
+            log.warn("根据类型处理成功！code = {}",entity.getSoCode());
 
             //新增数据
             addBomList(addList,entity,bomChildrenSkuList);
+            log.warn("按bom处理数据成功！code = {}",entity.getSoCode());
         }
+        stopWatch.stop();
+        log.warn("数据处理成功，耗时，time = {}",stopWatch.prettyPrint());
         this.update(addList);
+        log.warn("数据更新成功!");
     }
 
     /**
@@ -281,6 +292,7 @@ public class SoB2bProcessingServiceImpl extends SuperServiceImpl<SoB2bProcessing
         }
         List<String> deleteIds = getDeleteIds(newList, oldList);
         if (CollUtil.isNotEmpty(deleteIds)) {
+            log.warn("删除数据！size= {}",deleteIds.size());
             this.removeByIds(deleteIds);
         }
         return newList;

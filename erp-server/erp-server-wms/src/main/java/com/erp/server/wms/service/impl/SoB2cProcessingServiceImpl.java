@@ -33,6 +33,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StopWatch;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -78,6 +79,7 @@ public class SoB2cProcessingServiceImpl extends SuperServiceImpl<SoB2cProcessing
     @Override
     public Boolean addOrUpdate(List<SoB2cProcessingDTO.AddOrUpdateDTO> list) {
         if (CollUtil.isEmpty(list)) {
+            log.warn("删除数据！size= {}",list.size());
             lambdaUpdate().remove();
             return Boolean.TRUE;
         }
@@ -86,9 +88,11 @@ public class SoB2cProcessingServiceImpl extends SuperServiceImpl<SoB2cProcessing
         List<SoB2cProcessingEntity> addList = soB2cProcessingList.stream().filter(obj -> CharSequenceUtil.isBlank(obj.getId())).collect(Collectors.toList());
         List<SoB2cProcessingEntity> updateList = soB2cProcessingList.stream().filter(obj -> CharSequenceUtil.isNotBlank(obj.getId())).collect(Collectors.toList());
         if (CollUtil.isNotEmpty(addList)) {
+            log.warn("新增数据！size= {}",addList.size());
             super.saveBatch(addList);
         }
         if (CollUtil.isNotEmpty(updateList)) {
+            log.warn("更新数据！size= {}",updateList.size());
             super.updateBatchById(updateList);
         }
         return Boolean.TRUE;
@@ -150,20 +154,42 @@ public class SoB2cProcessingServiceImpl extends SuperServiceImpl<SoB2cProcessing
         }
         log.warn("查询b2c订单跟踪数据，virtualTransFlowList = {}，transferList = {}，soOutstockList = {}",virtualTransFlowList.size(),transferList.size(),soOutstockList.size());
         List<SoB2cProcessingDTO.AddOrUpdateDTO> addList = new ArrayList<>();
+
+        StopWatch stopWatch = new StopWatch();
+        stopWatch.start();
         for (SoB2cProcessingEntity entity :list) {
             //根据类型更新出库数据
-            handleOutstockByType(virtualTransFlowList,transferList,soOutstockList,entity);
+            handleOutstockByType(virtualTransFlowList, transferList, soOutstockList, entity);
+            log.warn("根据类型处理成功！code = {}",entity.getB2cSoCode());
+            //新增数据
+            addBomList(addList,entity,bomChildrenSkuList);
+            log.warn("按bom处理数据成功！code = {}",entity.getB2cSoCode());
+        }
+        stopWatch.stop();
+        log.warn("数据处理成功，耗时，time = {}",stopWatch.prettyPrint());
+        this.addOrUpdate(addList);
+        log.warn("数据更新成功!");
+    }
+    /**
+     * 添加bom数据
+     * @author will
+     * @date 2025/1/2 10:55
+     * @param addList
+     * @param entity
+     * @param bomChildrenSkuList
+     */
+    private void addBomList (List<SoB2cProcessingDTO.AddOrUpdateDTO> addList, SoB2cProcessingEntity entity, List<BomChildrenSkuDTO> bomChildrenSkuList) {
             //bom信息
             List<BomChildrenSkuDTO> childList = bomChildrenSkuList.stream().filter(obj ->
                     CharSequenceUtil.equals(obj.getParentSkuId(), entity.getSkuId())
-                &&  CharSequenceUtil.equals(obj.getType(), BomTypeEnum.COMBINATION.getType())).collect(Collectors.toList());
+                            &&  CharSequenceUtil.equals(obj.getType(), BomTypeEnum.COMBINATION.getType())).collect(Collectors.toList());
             if (CollUtil.isEmpty(childList)) {
                 SoB2cProcessingDTO.AddOrUpdateDTO addDTO = new SoB2cProcessingDTO.AddOrUpdateDTO();
                 BeanMapperUtils.copy(entity,addDTO);
                 addDTO.setParentSkuId("");
                 addDTO.setBomVersion("");
                 addList.add(addDTO);
-                continue;
+                return;
             }
             for (BomChildrenSkuDTO childrenSkuDTO : childList) {
                 SoB2cProcessingDTO.AddOrUpdateDTO addDTO = new SoB2cProcessingDTO.AddOrUpdateDTO();
@@ -176,19 +202,17 @@ public class SoB2cProcessingServiceImpl extends SuperServiceImpl<SoB2cProcessing
                 addDTO.setBomVersion(childrenSkuDTO.getBomVersion());
                 addList.add(addDTO);
             }
-        }
-        this.addOrUpdate(addList);
     }
 
-    /**
-     * 根据类型赋值出库数据
-     * @author will
-     * @date 2024/12/31 14:59
-     * @param virtualTransFlowList
-     * @param transferList
-     * @param soOutstockList
-     * @param entity
-     */
+        /**
+         * 根据类型赋值出库数据
+         * @author will
+         * @date 2024/12/31 14:59
+         * @param virtualTransFlowList
+         * @param transferList
+         * @param soOutstockList
+         * @param entity
+         */
     private void handleOutstockByType ( List<VirtualTransFlowEntity> virtualTransFlowList,List<SoB2bProcessingDTO.ResponseDTO> transferList,
                                       List<SoB2bProcessingDTO.ResponseDTO> soOutstockList,SoB2cProcessingEntity entity) {
         //发货单出库流水
@@ -266,6 +290,7 @@ public class SoB2cProcessingServiceImpl extends SuperServiceImpl<SoB2cProcessing
         }
         List<String> deleteIds = getDeleteIds(newList, oldList);
         if (CollUtil.isNotEmpty(deleteIds)) {
+            log.warn("删除数据！size= {}",deleteIds.size());
             this.removeByIds(deleteIds);
         }
         return newList;
