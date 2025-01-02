@@ -30,6 +30,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StopWatch;
 
 import javax.annotation.Resource;
 import java.time.LocalDate;
@@ -78,6 +79,7 @@ public class FirstMileProcessingServiceImpl extends SuperServiceImpl<FirstMilePr
     @Override
     public Boolean update(List<FirstMileProcessingDTO.AddOrUpdateDTO> list) {
         if (CollUtil.isEmpty(list)) {
+            log.warn("删除数据！size= {}",list.size());
             lambdaUpdate().remove();
             return Boolean.TRUE;
         }
@@ -86,9 +88,11 @@ public class FirstMileProcessingServiceImpl extends SuperServiceImpl<FirstMilePr
         List<FirstMileProcessingEntity> addList = firstMileProcessingList.stream().filter(obj -> CharSequenceUtil.isBlank(obj.getId())).collect(Collectors.toList());
         List<FirstMileProcessingEntity> updateList = firstMileProcessingList.stream().filter(obj -> CharSequenceUtil.isNotBlank(obj.getId())).collect(Collectors.toList());
         if (CollUtil.isNotEmpty(addList)) {
+            log.warn("新增数据！size= {}",addList.size());
             super.saveBatch(addList);
         }
         if (CollUtil.isNotEmpty(updateList)) {
+            log.warn("更新数据！size= {}",updateList.size());
             super.updateBatchById(updateList);
         }
         return Boolean.TRUE;
@@ -150,47 +154,67 @@ public class FirstMileProcessingServiceImpl extends SuperServiceImpl<FirstMilePr
         }
         log.warn("查询头程订单跟踪数据，machineList = {}，transferList = {}，soOutstockList = {}",machineList.size(),transferList.size(),soOutstockList.size());
         List<FirstMileProcessingDTO.AddOrUpdateDTO> addList = new ArrayList<>();
+
+
+        StopWatch stopWatch = new StopWatch();
+        stopWatch.start();
         for (FirstMileProcessingEntity entity :list) {
             //根据类型更新出库数据
             handleOutstockByType(machineList,transferList,soOutstockList,entity);
-            //bom信息
-            List<BomChildrenSkuDTO> childList = bomChildrenSkuList.stream().filter(obj ->
-                    CharSequenceUtil.equals(obj.getParentSkuId(), entity.getSkuId())
-                    &&  CharSequenceUtil.equals(obj.getType(), BomTypeEnum.COMBINATION.getType())).collect(Collectors.toList());
-            if (CollUtil.isEmpty(childList)) {
-                FirstMileProcessingDTO.AddOrUpdateDTO addDTO = new FirstMileProcessingDTO.AddOrUpdateDTO();
-                BeanMapperUtils.copy(entity,addDTO);
-                addDTO.setParentSkuId("");
-                addDTO.setBomVersion("");
-                addList.add(addDTO);
-                continue;
-            }
-            for (BomChildrenSkuDTO childrenSkuDTO : childList) {
-                FirstMileProcessingDTO.AddOrUpdateDTO addOrUpdateDTO = new FirstMileProcessingDTO.AddOrUpdateDTO();
-                BeanMapperUtils.copy(entity,addOrUpdateDTO);
-                addOrUpdateDTO.setSkuId(childrenSkuDTO.getSkuId());
-                addOrUpdateDTO.setParentSkuId(childrenSkuDTO.getParentSkuId());
-                addOrUpdateDTO.setOutstockQty(ObjectUtil.isEmpty(addOrUpdateDTO.getOutstockQty()) ? MathUtil.ZERO : addOrUpdateDTO.getOutstockQty() * childrenSkuDTO.getQuantity());
-                addOrUpdateDTO.setFrozenQty(ObjectUtil.isEmpty(addOrUpdateDTO.getFrozenQty()) ? MathUtil.ZERO :addOrUpdateDTO.getFrozenQty() * childrenSkuDTO.getQuantity());
-                addOrUpdateDTO.setApproveQty(ObjectUtil.isEmpty(addOrUpdateDTO.getApproveQty()) ? MathUtil.ZERO :addOrUpdateDTO.getApproveQty() * childrenSkuDTO.getQuantity());
-                addOrUpdateDTO.setDeliveryQty(ObjectUtil.isEmpty(addOrUpdateDTO.getDeliveryQty()) ? MathUtil.ZERO :addOrUpdateDTO.getDeliveryQty() * childrenSkuDTO.getQuantity());
-                addOrUpdateDTO.setBomVersion(childrenSkuDTO.getBomVersion());
-                addList.add(addOrUpdateDTO);
-            }
+            log.warn("根据类型处理成功！code = {}",entity.getRequisitionApplicationCode());
+            //新增数据
+            addBomList(addList,entity,bomChildrenSkuList);
+            log.warn("按bom处理数据成功！code = {}",entity.getRequisitionApplicationCode());
         }
+        stopWatch.stop();
+        log.warn("数据处理成功，耗时，time = {}",stopWatch.prettyPrint());
         this.update(addList);
+        log.warn("数据更新成功!");
+    }
+    /**
+     * 添加bom数据
+     * @author will
+     * @date 2025/1/2 10:55
+     * @param addList
+     * @param entity
+     * @param bomChildrenSkuList
+     */
+    private void addBomList (List<FirstMileProcessingDTO.AddOrUpdateDTO> addList, FirstMileProcessingEntity entity, List<BomChildrenSkuDTO> bomChildrenSkuList) {
+        //bom信息
+        List<BomChildrenSkuDTO> childList = bomChildrenSkuList.stream().filter(obj ->
+                CharSequenceUtil.equals(obj.getParentSkuId(), entity.getSkuId())
+                        &&  CharSequenceUtil.equals(obj.getType(), BomTypeEnum.COMBINATION.getType())).collect(Collectors.toList());
+        if (CollUtil.isEmpty(childList)) {
+            FirstMileProcessingDTO.AddOrUpdateDTO addDTO = new FirstMileProcessingDTO.AddOrUpdateDTO();
+            BeanMapperUtils.copy(entity,addDTO);
+            addDTO.setParentSkuId("");
+            addDTO.setBomVersion("");
+            addList.add(addDTO);
+            return;
+        }
+        for (BomChildrenSkuDTO childrenSkuDTO : childList) {
+            FirstMileProcessingDTO.AddOrUpdateDTO addOrUpdateDTO = new FirstMileProcessingDTO.AddOrUpdateDTO();
+            BeanMapperUtils.copy(entity,addOrUpdateDTO);
+            addOrUpdateDTO.setSkuId(childrenSkuDTO.getSkuId());
+            addOrUpdateDTO.setParentSkuId(childrenSkuDTO.getParentSkuId());
+            addOrUpdateDTO.setOutstockQty(ObjectUtil.isEmpty(addOrUpdateDTO.getOutstockQty()) ? MathUtil.ZERO : addOrUpdateDTO.getOutstockQty() * childrenSkuDTO.getQuantity());
+            addOrUpdateDTO.setFrozenQty(ObjectUtil.isEmpty(addOrUpdateDTO.getFrozenQty()) ? MathUtil.ZERO :addOrUpdateDTO.getFrozenQty() * childrenSkuDTO.getQuantity());
+            addOrUpdateDTO.setApproveQty(ObjectUtil.isEmpty(addOrUpdateDTO.getApproveQty()) ? MathUtil.ZERO :addOrUpdateDTO.getApproveQty() * childrenSkuDTO.getQuantity());
+            addOrUpdateDTO.setDeliveryQty(ObjectUtil.isEmpty(addOrUpdateDTO.getDeliveryQty()) ? MathUtil.ZERO :addOrUpdateDTO.getDeliveryQty() * childrenSkuDTO.getQuantity());
+            addOrUpdateDTO.setBomVersion(childrenSkuDTO.getBomVersion());
+            addList.add(addOrUpdateDTO);
+        }
     }
 
-
-    /**
-     * 根据类型赋值出库数据
-     * @author will
-     * @date 2024/12/31 14:59
-     * @param machineList
-     * @param transferList
-     * @param soOutstockList
-     * @param entity
-     */
+        /**
+         * 根据类型赋值出库数据
+         * @author will
+         * @date 2024/12/31 14:59
+         * @param machineList
+         * @param transferList
+         * @param soOutstockList
+         * @param entity
+         */
     private void handleOutstockByType (List<SoB2bProcessingDTO.ResponseDTO> machineList, List<SoB2bProcessingDTO.ResponseDTO> transferList,
                                        List<SoB2bProcessingDTO.ResponseDTO> soOutstockList, FirstMileProcessingEntity entity) {
         //加工单
@@ -248,6 +272,7 @@ public class FirstMileProcessingServiceImpl extends SuperServiceImpl<FirstMilePr
         }
         List<String> deleteIds = getDeleteIds(newList, oldList);
         if (CollUtil.isNotEmpty(deleteIds)) {
+            log.warn("删除数据！size= {}",deleteIds.size());
             this.removeByIds(deleteIds);
         }
         return newList;
