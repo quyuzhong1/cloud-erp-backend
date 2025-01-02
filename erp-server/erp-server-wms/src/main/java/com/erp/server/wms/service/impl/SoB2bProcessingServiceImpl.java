@@ -326,7 +326,7 @@ public class SoB2bProcessingServiceImpl extends SuperServiceImpl<SoB2bProcessing
             }
             //订单冻结
             if (CharSequenceUtil.isBlank(listDTO.getDeliveryNoticeId())
-                    && ObjUtil.isNotNull(listDTO.getFrozenQty())) {
+                    && MathUtil.compareTo(listDTO.getFrozenQty(),MathUtil.ZERO) == MathUtil.ZERO) {
                 labelList.add(OrderProcessingLableEnum.ORDER_FROZEN.getCode());
             }
             listDTO.setLabelList(labelList);
