@@ -151,7 +151,7 @@ public class FirstMileProcessingServiceImpl extends SuperServiceImpl<FirstMilePr
                 addOrUpdateDTO.setParentSkuId(childrenSkuDTO.getParentSkuId());
                 addOrUpdateDTO.setOutstockQty(ObjectUtil.isEmpty(addOrUpdateDTO.getOutstockQty()) ? MathUtil.ZERO : addOrUpdateDTO.getOutstockQty() * childrenSkuDTO.getQuantity());
                 addOrUpdateDTO.setFrozenQty(ObjectUtil.isEmpty(addOrUpdateDTO.getFrozenQty()) ? MathUtil.ZERO :addOrUpdateDTO.getFrozenQty() * childrenSkuDTO.getQuantity());
-                addOrUpdateDTO.setApproveQty(ObjectUtil.isEmpty(addOrUpdateDTO.getDeliveryQty()) ? MathUtil.ZERO :addOrUpdateDTO.getApproveQty() * childrenSkuDTO.getQuantity());
+                addOrUpdateDTO.setApproveQty(ObjectUtil.isEmpty(addOrUpdateDTO.getApproveQty()) ? MathUtil.ZERO :addOrUpdateDTO.getApproveQty() * childrenSkuDTO.getQuantity());
                 addOrUpdateDTO.setDeliveryQty(ObjectUtil.isEmpty(addOrUpdateDTO.getDeliveryQty()) ? MathUtil.ZERO :addOrUpdateDTO.getDeliveryQty() * childrenSkuDTO.getQuantity());
                 addOrUpdateDTO.setBomVersion(childrenSkuDTO.getBomVersion());
                 addList.add(addOrUpdateDTO);
