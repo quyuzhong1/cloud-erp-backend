@@ -146,6 +146,7 @@ public class ProcessManagementController extends BaseController {
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "流程管理导出")
     @PostMapping("/export")
+    @WebAdvanceQuery
     public ApiResult<Boolean> export(@RequestBody @Valid ProcessManagementDTO.ExportDTO dto) {
         processManagementService.export(dto);
         return ApiResult.success(true);
