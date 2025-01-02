@@ -148,7 +148,7 @@
         left join product_plan_sale pps on pp.id = pps.product_plan_id and pps.is_deleted = false
         left join (select product_plan_id,string_agg(remark,',') as remark from product_plan_remark where  is_deleted = false and remark != '' group by product_plan_id )ppr  on pp.id = ppr.product_plan_id
         <where>
-            pp.is_deleted = false
+            ${params.sqlMap.default} and pp.is_deleted = false
             <if test="params.type != null and params.type != '' and params.type == '1'.toString()">
                 and pp.product_status = ''
             </if>
