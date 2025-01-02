@@ -142,6 +142,8 @@ public class SoB2cProcessingServiceImpl extends SuperServiceImpl<SoB2cProcessing
             if (CollUtil.isEmpty(childList)) {
                 SoB2cProcessingDTO.AddOrUpdateDTO addDTO = new SoB2cProcessingDTO.AddOrUpdateDTO();
                 BeanMapperUtils.copy(entity,addDTO);
+                addDTO.setParentSkuId("");
+                addDTO.setBomVersion("");
                 addList.add(addDTO);
                 continue;
             }
@@ -223,9 +225,7 @@ public class SoB2cProcessingServiceImpl extends SuperServiceImpl<SoB2cProcessing
         entity.setOutstockOrderCode(responseDTO.getCode());
         entity.setOutstockOrderTime(responseDTO.getApproveTime());
         entity.setOutstockOrderType(sourceType);
-        if (ApproveStatusEnum.APPROVE.getStatus().equals(responseDTO.getApproveStatus())) {
-            entity.setFrozenQty(MathUtil.valueOfZero(entity.getFrozenQty()) - MathUtil.valueOfZero(responseDTO.getQty()));
-        }
+        entity.setFrozenQty(MathUtil.valueOfZero(entity.getFrozenQty()) - MathUtil.valueOfZero(responseDTO.getQty()));
     }
 
     /**

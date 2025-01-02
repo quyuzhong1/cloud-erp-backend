@@ -141,6 +141,8 @@ public class FirstMileProcessingServiceImpl extends SuperServiceImpl<FirstMilePr
             if (CollUtil.isEmpty(childList)) {
                 FirstMileProcessingDTO.AddOrUpdateDTO addDTO = new FirstMileProcessingDTO.AddOrUpdateDTO();
                 BeanMapperUtils.copy(entity,addDTO);
+                addDTO.setParentSkuId("");
+                addDTO.setBomVersion("");
                 addList.add(addDTO);
                 continue;
             }
@@ -175,7 +177,8 @@ public class FirstMileProcessingServiceImpl extends SuperServiceImpl<FirstMilePr
         //加工单
         SoB2bProcessingDTO.ResponseDTO machineResponseDTO = machineList.stream().filter(obj ->
                         CharSequenceUtil.equals(obj.getSourceId(), entity.getFirstMileDeliveryId())
-                                &&  CharSequenceUtil.equals(obj.getSourceDetailId(), entity.getFirstMileDeliveryDetailId()))
+                        && CharSequenceUtil.equals(obj.getApproveStatus(),ApproveStatusEnum.APPROVE.getStatus())
+                        &&  CharSequenceUtil.equals(obj.getSourceDetailId(), entity.getFirstMileDeliveryDetailId()))
                 .findFirst().orElse(null);
         if (ObjectUtil.isNotEmpty(machineResponseDTO)) {
             handleOutstock (entity,machineResponseDTO, SourceTypeEnum.MACHINE_INFO.getCode());
@@ -256,9 +259,7 @@ public class FirstMileProcessingServiceImpl extends SuperServiceImpl<FirstMilePr
         entity.setOutstockOrderCode(responseDTO.getCode());
         entity.setOutstockOrderTime(responseDTO.getApproveTime());
         entity.setOutstockOrderType(sourceType);
-        if (ApproveStatusEnum.APPROVE.getStatus().equals(responseDTO.getApproveStatus())) {
-            entity.setFrozenQty(MathUtil.valueOfZero(entity.getFrozenQty()) - MathUtil.valueOfZero(responseDTO.getQty()));
-        }
+        entity.setFrozenQty(MathUtil.valueOfZero(entity.getFrozenQty()) - MathUtil.valueOfZero(responseDTO.getQty()));
     }
 
     /**

@@ -100,7 +100,7 @@
                 ${item.field} ${item.sort}
             </foreach>
         </if>
-        fmp.id DESC
+        fmp.requisition_application_id DESC,fmp.first_mile_delivery_id desc
     </select>
 
     <!-- 头程订单跟踪信息 -->
@@ -120,7 +120,13 @@
             rad.from_virtual_warehouse_id as virtualWarehouseId,
             ra.handle_time as frozenTime,
             rad.picking_qty as frozenQty,
-            rad.approve_qty as approveQty
+            rad.approve_qty as approveQty,
+            '' as outstockOrderId,
+            '' as outstockOrderStatus,
+            0 as outstockQty,
+            '' as outstockOrderCode,
+            null as outstockOrderTime,
+            '' as outstockOrderType
         from requisition_application ra
         inner join requisition_application_detail rad on ra.id = rad.main_id and rad.is_deleted = false
         left  join first_mile_delivery_detail fmdd on fmdd.source_detail_id = rad.id and fmdd.is_deleted = false

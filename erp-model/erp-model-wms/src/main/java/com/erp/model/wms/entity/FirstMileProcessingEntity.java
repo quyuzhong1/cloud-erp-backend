@@ -1,5 +1,6 @@
 package com.erp.model.wms.entity;
 
+import com.baomidou.mybatisplus.annotation.FieldFill;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
@@ -89,7 +90,7 @@ public class FirstMileProcessingEntity extends BaseEntity<FirstMileProcessingEnt
     /**
     * 冻结时间
     */
-    @TableField("frozen_time")
+    @TableField(value = "frozen_time" , fill = FieldFill.INSERT_UPDATE)
     private LocalDateTime frozenTime;
     /**
     * 冻结数量
@@ -119,7 +120,7 @@ public class FirstMileProcessingEntity extends BaseEntity<FirstMileProcessingEnt
     /**
     * |出库单据时间
     */
-    @TableField("outstock_order_time")
+    @TableField(value = "outstock_order_time" , fill = FieldFill.INSERT_UPDATE)
     private LocalDateTime outstockOrderTime;
     /**
     * 出库数量
