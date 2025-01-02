@@ -2,7 +2,6 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.common.business.enums.UnitEnum;
 import com.common.business.threadlocal.UserContext;
@@ -32,7 +31,6 @@ import com.erp.server.wms.service.WeightingOutboundService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -42,7 +40,6 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -240,7 +237,7 @@ public class WeightingOutboundServiceImpl implements WeightingOutboundService {
                     soB2cEntity.getDictPlatform(),
                     soB2cEntity.convertSubmitPlatformUniqueKey(),
                     JSONUtil.toJsonStr(dto),
-                    businessDesc, false);
+                    businessDesc, false, false);
         } else {
             log.warn("【{}】未达到条件:忽略标记平台发货", soB2cEntity.getCode());
         }
