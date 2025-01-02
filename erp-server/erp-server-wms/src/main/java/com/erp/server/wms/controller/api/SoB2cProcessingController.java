@@ -54,6 +54,7 @@ public class SoB2cProcessingController extends BaseController {
      * @return ApiResult
      */
     @PostMapping("/exportExcel")
+    @WebAdvanceQuery
     public ApiResult exportExcel(@RequestBody SoB2cProcessingDTO.PagingParamDTO dto) {
         Boolean flag = soB2cProcessingService.exportExcel(dto);
         return flag == true ? success() : failure();
