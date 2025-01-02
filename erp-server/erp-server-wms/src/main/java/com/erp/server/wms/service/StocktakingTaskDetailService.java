@@ -28,7 +28,7 @@ public interface StocktakingTaskDetailService extends SuperService<StocktakingTa
      * @param dto
      * @return
      */
-    Boolean exportExcel(PagingDTO<StocktakingTaskDTO.BaseIdDTO> dto);
+    Boolean exportExcel(StocktakingTaskDTO.BaseIdDTO dto);
     /**
      * 导入明细
      * @author yl
