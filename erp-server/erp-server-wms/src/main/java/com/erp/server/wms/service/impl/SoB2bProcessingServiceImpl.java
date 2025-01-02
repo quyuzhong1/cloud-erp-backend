@@ -22,7 +22,9 @@ import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.mapper.SoB2bProcessingMapper;
 import com.erp.server.wms.service.*;
+import com.google.common.collect.Lists;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -110,6 +112,7 @@ public class SoB2bProcessingServiceImpl extends SuperServiceImpl<SoB2bProcessing
        if (CollUtil.isEmpty(list)) {
            return;
        }
+        log.warn("查询b2b订单跟踪数据，startDate = {}，size = {}",startDate,list.size());
         List<String> skuIdList = list.stream().map(SoB2bProcessingEntity::getSkuId).distinct().collect(Collectors.toList());
         List<BomChildrenSkuDTO> bomChildrenSkuList = plmTaskFeign.listBomChildBySkuIds(skuIdList);
 
@@ -117,16 +120,31 @@ public class SoB2bProcessingServiceImpl extends SuperServiceImpl<SoB2bProcessing
          * 1、b2b非组合品订单中转走直接调拨单出库，非中转走销售出库单出库
          * 2、b2b组合品走加工单出库
          */
-        //查询加工单数据
         List<String> deliveryNoticeIdList = list.stream().map(SoB2bProcessingEntity::getDeliveryNoticeId).distinct().collect(Collectors.toList());
-        List<SoB2bProcessingDTO.ResponseDTO> machineList = machineDetailService.listMachineBySourceIdList(deliveryNoticeIdList);
+        List<List<String>> sourceDetailIdListPartition = Lists.partition(deliveryNoticeIdList, 50000);
 
+        //查询加工单数据
+        List<SoB2bProcessingDTO.ResponseDTO> machineList = new ArrayList<>();
         //直接调拨单数据
-        List<SoB2bProcessingDTO.ResponseDTO> transferList = transferInfoDetailService.listTransferBySourceIdList(deliveryNoticeIdList);
-
+        List<SoB2bProcessingDTO.ResponseDTO> transferList = new ArrayList<>();
         //销售出库单数据
-        List<SoB2bProcessingDTO.ResponseDTO> soOutstockList = soOutstockDetailService.listSoOutstockBySourceIdList(deliveryNoticeIdList);
-
+        List<SoB2bProcessingDTO.ResponseDTO> soOutstockList = new ArrayList<>();
+        //分页查询数据
+        for (List<String> sourceDetailIdPartition : sourceDetailIdListPartition) {
+            List<SoB2bProcessingDTO.ResponseDTO> machinePageList = machineDetailService.listMachineBySourceIdList(sourceDetailIdPartition);
+            if (CollectionUtils.isNotEmpty(machinePageList)) {
+                machineList.addAll(machinePageList);
+            }
+            List<SoB2bProcessingDTO.ResponseDTO> transferPageList = transferInfoDetailService.listTransferBySourceIdList(sourceDetailIdPartition);
+            if (CollectionUtils.isNotEmpty(transferPageList)) {
+                transferList.addAll(transferPageList);
+            }
+            List<SoB2bProcessingDTO.ResponseDTO> soOutstockPageList = soOutstockDetailService.listSoOutstockBySourceIdList(sourceDetailIdPartition);
+            if (CollectionUtils.isNotEmpty(soOutstockPageList)) {
+                soOutstockList.addAll(soOutstockPageList);
+            }
+        }
+        log.warn("查询b2b订单跟踪数据，machineList = {}，transferList = {}，soOutstockList = {}",machineList.size(),transferList.size(),soOutstockList.size());
         List<SoB2bProcessingDTO.AddOrUpdateDTO> addList = new ArrayList<>();
         for (SoB2bProcessingEntity entity :list) {
 
@@ -326,7 +344,7 @@ public class SoB2bProcessingServiceImpl extends SuperServiceImpl<SoB2bProcessing
             }
             //订单冻结
             if (CharSequenceUtil.isBlank(listDTO.getDeliveryNoticeId())
-                    && MathUtil.compareTo(listDTO.getFrozenQty(),MathUtil.ZERO) == MathUtil.ZERO) {
+                    && MathUtil.compareTo(listDTO.getFrozenQty(),MathUtil.ZERO) != MathUtil.ZERO) {
                 labelList.add(OrderProcessingLableEnum.ORDER_FROZEN.getCode());
             }
             listDTO.setLabelList(labelList);

@@ -26,7 +26,9 @@ import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.mapper.SoB2cProcessingMapper;
 import com.erp.server.wms.service.*;
+import com.google.common.collect.Lists;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -113,6 +115,7 @@ public class SoB2cProcessingServiceImpl extends SuperServiceImpl<SoB2cProcessing
         if (CollUtil.isEmpty(list)) {
             return;
         }
+        log.warn("查询b2c订单跟踪数据，startDate = {}，size = {}",startDate,list.size());
         List<String> skuIdList = list.stream().map(SoB2cProcessingEntity::getSkuId).distinct().collect(Collectors.toList());
         List<BomChildrenSkuDTO> bomChildrenSkuList = plmTaskFeign.listBomChildBySkuIds(skuIdList);
 
@@ -122,15 +125,30 @@ public class SoB2cProcessingServiceImpl extends SuperServiceImpl<SoB2cProcessing
          */
         //查询加工单数据
         List<String> deliveryIdList = list.stream().map(SoB2cProcessingEntity::getDeliveryId).distinct().collect(Collectors.toList());
+        List<List<String>> sourceDetailIdListPartition = Lists.partition(deliveryIdList, 50000);
+
         //查询发货单出库流水
-        List<VirtualTransFlowEntity> virtualTransFlowList = virtualTransFlowService.listBySourceDetailIdList(deliveryIdList);
-
+        List<VirtualTransFlowEntity> virtualTransFlowList = new ArrayList<>();
         //直接调拨单数据
-        List<SoB2bProcessingDTO.ResponseDTO> transferList = transferInfoDetailService.listTransferBySourceIdList(deliveryIdList);
-
+        List<SoB2bProcessingDTO.ResponseDTO> transferList = new ArrayList<>();
         //销售出库单数据
-        List<SoB2bProcessingDTO.ResponseDTO> soOutstockList = soOutstockDetailService.listSoOutstockBySourceIdList(deliveryIdList);
-
+        List<SoB2bProcessingDTO.ResponseDTO> soOutstockList = new ArrayList<>();
+        //分页查询数据
+        for (List<String> sourceDetailIdPartition : sourceDetailIdListPartition) {
+            List<VirtualTransFlowEntity> virtualTransFlowPageList = virtualTransFlowService.listBySourceDetailIdList(sourceDetailIdPartition);
+            if (CollectionUtils.isNotEmpty(virtualTransFlowPageList)) {
+                virtualTransFlowList.addAll(virtualTransFlowPageList);
+            }
+            List<SoB2bProcessingDTO.ResponseDTO> transferPageList = transferInfoDetailService.listTransferBySourceIdList(sourceDetailIdPartition);
+            if (CollectionUtils.isNotEmpty(transferPageList)) {
+                transferList.addAll(transferPageList);
+            }
+            List<SoB2bProcessingDTO.ResponseDTO> soOutstockPageList = soOutstockDetailService.listSoOutstockBySourceIdList(sourceDetailIdPartition);
+            if (CollectionUtils.isNotEmpty(soOutstockPageList)) {
+                soOutstockList.addAll(soOutstockPageList);
+            }
+        }
+        log.warn("查询b2c订单跟踪数据，virtualTransFlowList = {}，transferList = {}，soOutstockList = {}",virtualTransFlowList.size(),transferList.size(),soOutstockList.size());
         List<SoB2cProcessingDTO.AddOrUpdateDTO> addList = new ArrayList<>();
         for (SoB2cProcessingEntity entity :list) {
             //根据类型更新出库数据
