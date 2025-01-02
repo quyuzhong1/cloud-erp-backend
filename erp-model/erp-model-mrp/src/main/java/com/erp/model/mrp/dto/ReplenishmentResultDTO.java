@@ -196,6 +196,11 @@ public class ReplenishmentResultDTO {
      */
     private List<OverseasProviderWarehouseDTO> overseasProviderWarehouseList;
 
+    /**
+     * 配置
+     */
+    private CfgRuleStrategyDTO cfgRuleStrategy;
+
     @Getter
     @Setter
     public static class BasicDTO {
@@ -1155,6 +1160,11 @@ public class ReplenishmentResultDTO {
          */
         private String warehouseId;
 
+        /**
+         * 店铺明细
+         */
+        private List<ShopInventoryDetailDTO> shopInventoryDetails;
+
 
         public static EstimatedDeliveryDetailEntity buildEstimatedDeliveryDetail(EstimatedDeliveryDetailDTO dto, String replenishmentDetailId, String calcVersion) {
             EstimatedDeliveryDetailEntity entity = new EstimatedDeliveryDetailEntity();
@@ -1218,6 +1228,11 @@ public class ReplenishmentResultDTO {
          * 仓库id
          */
         private String warehouseId;
+
+        /**
+         * 店铺明细
+         */
+        private List<ShopInventoryDetailDTO> shopInventoryDetails;
 
         public static EstimatedPurchaseDetailEntity buildEstimatedPurchaseDetail(EstimatedPurchaseDetailDTO dto, String replenishmentDetailId, String calcVersion) {
             EstimatedPurchaseDetailEntity entity = new EstimatedPurchaseDetailEntity();
@@ -1315,6 +1330,11 @@ public class ReplenishmentResultDTO {
          */
         private String warehouseId;
 
+        /**
+         * 店铺明细
+         */
+        private List<ShopInventoryDetailDTO> shopInventoryDetails;
+
         public static LocalInTransitDetailEntity buildLocalInTransitDetail(LocalInTransitDetailDTO dto, String replenishmentDetailId, String calcVersion) {
             LocalInTransitDetailEntity entity = new LocalInTransitDetailEntity();
             entity.setReplenishmentDetailId(replenishmentDetailId);
@@ -1377,6 +1397,11 @@ public class ReplenishmentResultDTO {
          * 仓库id
          */
         private String warehouseId;
+
+        /**
+         * 店铺明细
+         */
+        private List<ShopInventoryDetailDTO> shopInventoryDetails;
 
         public static OverseasInTransitDetailEntity buildOverseasInTransitDetail(OverseasInTransitDetailDTO dto, String replenishmentDetailId, String calcVersion) {
             OverseasInTransitDetailEntity entity = new OverseasInTransitDetailEntity();
