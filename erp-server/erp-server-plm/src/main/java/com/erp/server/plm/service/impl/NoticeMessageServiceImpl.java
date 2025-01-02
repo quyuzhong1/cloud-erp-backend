@@ -50,6 +50,8 @@ import java.time.ZoneId;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static com.erp.model.plm.enums.NoticeEnum.MOULD_APPROVE;
+
 /**
  *
  */
@@ -2813,6 +2815,110 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
                 //这个是审核人
                 if (!isCompeletd&&itemPeopleList.contains(NoticeItemPeopleEnum.AUDITOR.getFlag())) {
                     List<ProcessTaskManagementDTO.ApproveHistoryDTO> approveHistoryList = processTaskManagementFeign.listApproveHistory(entity.getId());
+                    List<String> collect = approveHistoryList.stream().filter(v -> v.getApproveStatus().equals(ApproveStatusEnum.APPROVE_ING.getStatus())).map(ProcessTaskManagementDTO.ApproveHistoryDTO::getCurApproveId).collect(Collectors.toList());
+                    resultList.addAll(collect);
+                }
+            }
+        }
+        return resultList;
+    }
+
+    @Override
+    public void mouldInfoNotice(NoticeEnum noticeEnum, MouldInfoDTO.NoticeDTO noticeDTO,String message) {
+
+        //根据节点标示获取到通知消息实体
+        NoticeMessageEntity notice = baseMapper.getByNodeFlag(noticeEnum.getFlag());
+        if (!Objects.isNull(notice)) {
+            String noticeMessageId = notice.getId();
+            List<String> noticeUserIds = getMouldUserNotice(notice, noticeDTO, noticeEnum);
+            //获取飞书的unionid 与用户关系
+            List<ThirdUnionDTO> unionIdList = sysUserFeign.getThirdUnionId(ThirdConstants.FS_PLATFORM);
+            //消息通知记录
+            List<NoticeMessageRecordEntity> messageRecordList = new ArrayList<>();
+            //排除关闭通知的人员 并去重
+            List<String> noticeList = eliminateCloseNotice(notice.getId(), noticeUserIds);
+            List<ThirdUnionDTO> noticeUnionList = getNoticeUnionIds(unionIdList, noticeList);
+            FsBatchSendMessageDTO sendMessage = new FsBatchSendMessageDTO();
+            List<String> unionIds = noticeUnionList.stream().map(ThirdUnionDTO::getThirdUnionId).distinct().collect(Collectors.toList());
+            sendMessage.setUnionIds(unionIds);
+            //标题
+            String title = noticeEnum.getName();
+            String url =fsAppUrl;
+            PlmCfgSettingEntity pilotApplicationNoticeUrl = cfgSettingService.lambdaQuery().eq(PlmCfgSettingEntity::getKey, "mouldNoticeUrl").one();
+            if(null != pilotApplicationNoticeUrl){
+                Map<String, Object> dataJson = pilotApplicationNoticeUrl.getDataJson();
+                boolean uat = BusinessCommonConstants.hasProfile("uat");
+                boolean dev = BusinessCommonConstants.hasProfile("dev");
+                boolean test = BusinessCommonConstants.hasProfile("test");
+                boolean prod = BusinessCommonConstants.hasProfile("prod");
+                if(uat){
+                    url = String.valueOf(dataJson.get("uat"));
+                }else  if(dev||test){
+                    url = String.valueOf(dataJson.get("test"));
+                }else if(prod){
+                    url = String.valueOf(dataJson.get("prod"));
+                }
+            }
+            Map<String,Object> contentMap = getCardMessageMap(title, message, url);
+            sendMessage.setContentMap(contentMap);
+            //发送消息的结果
+            Boolean sendResult = fsService.sendMessage(sendMessage);
+            //当发送成功后
+            if (Boolean.TRUE.equals(sendResult)) {
+                List<String> acceptUserIds = noticeUnionList.stream().map(ThirdUnionDTO::getUserId).distinct().collect(Collectors.toList());
+                for (String userId : acceptUserIds) {
+                    NoticeMessageRecordEntity recordEntity = new NoticeMessageRecordEntity();
+                    recordEntity.setChargeId(noticeDTO.getChargeId());
+                    recordEntity.setMessageContent(message);
+                    recordEntity.setNoticeMessageId(noticeMessageId);
+                    recordEntity.setNoticeNode(noticeEnum.getFlag());
+                    recordEntity.setNoticeUserId(userId);
+                    recordEntity.setProductId(noticeDTO.getId());
+                    recordEntity.setProductName(noticeDTO.getName());
+                    recordEntity.setTaskId("");
+                    recordEntity.setTaskName("");
+                    recordEntity.setIsTask(0);
+                    recordEntity.setChargeName(noticeDTO.getChargeName());
+                    messageRecordList.add(recordEntity);
+                }
+            }
+            //保存发送消息通知记录
+            noticeMessageRecordService.saveBatch(messageRecordList);
+        }
+    }
+
+
+    private List<String> getMouldUserNotice(NoticeMessageEntity notice, MouldInfoDTO.NoticeDTO noticeDTO, NoticeEnum noticeEnum) {
+        if (ObjectUtils.isEmpty(noticeDTO)) {
+            return Collections.emptyList();
+        }
+        List<String> resultList = new ArrayList<>();
+        if (!Objects.isNull(notice)) {
+            //其它人
+            String otherPeoples = notice.getOtherPeople();
+            if (StringUtils.isNotBlank(otherPeoples)) {
+                List<String> otherPeopleIds = Arrays.asList(otherPeoples.split(","));
+                resultList.addAll(otherPeopleIds);
+            }
+            //获取所有审核人员
+            if(MOULD_APPROVE.equals(noticeEnum)){
+                List<ProcessTaskManagementDTO.ApproveHistoryDTO> approveHistoryList = processTaskManagementFeign.listApproveHistory(noticeDTO.getId());
+                approveHistoryList = approveHistoryList.stream().filter(item -> item.getApproveUserName().equals(item.getCurApproveName())).collect(Collectors.toList());
+                List<String> all = approveHistoryList.stream().filter(item -> item.getApproveUserName().equals(item.getCurApproveName())).map(ProcessTaskManagementDTO.ApproveHistoryDTO::getApproveUserId).distinct().collect(Collectors.toList());
+                resultList.addAll(all);
+            }
+            //项目人员
+            String itemPeoples = notice.getItemPeople();
+            if (StringUtils.isNotEmpty(itemPeoples)) {
+                List<String> itemPeopleList = Arrays.asList(itemPeoples.split(","));
+                //这个是产品经理
+                if (itemPeopleList.contains(NoticeItemPeopleEnum.PRODUCT_MANAGER.getFlag())) {
+                    resultList.add(noticeDTO.getProductManagerId());
+                }
+
+                //这个是审核人
+                if (!MOULD_APPROVE.equals(noticeEnum)&&itemPeopleList.contains(NoticeItemPeopleEnum.AUDITOR.getFlag())) {
+                    List<ProcessTaskManagementDTO.ApproveHistoryDTO> approveHistoryList = processTaskManagementFeign.listApproveHistory(noticeDTO.getId());
                     List<String> collect = approveHistoryList.stream().filter(v -> v.getApproveStatus().equals(ApproveStatusEnum.APPROVE_ING.getStatus())).map(ProcessTaskManagementDTO.ApproveHistoryDTO::getCurApproveId).collect(Collectors.toList());
                     resultList.addAll(collect);
                 }

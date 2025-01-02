@@ -1,9 +1,15 @@
 package com.erp.server.dmp.pull.schedule;
 
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
+import com.erp.model.dmp.dto.DictBasicDTO;
+import com.erp.model.dmp.dto.DmpSkuCostDTO;
+import com.erp.model.scm.dto.SkuCostDTO;
+import com.erp.server.dmp.service.DictBasicService;
 import com.erp.server.dmp.service.DmpSkuCostService;
 import com.google.gson.Gson;
 import com.xxl.job.core.biz.model.ReturnT;
@@ -32,6 +38,8 @@ import java.util.stream.Collectors;
 public class CleanJob {
     @Resource
     private DmpSkuCostService dmpSkuCostService;
+    @Resource
+    private DictBasicService dictBasicService;
     /**
      * 成本数据清洗
      * @Author Luo_WG
@@ -44,19 +52,41 @@ public class CleanJob {
         //默认now表示用当前时间，不是now就用第二个参数的日期
         LocalDate startDate = LocalDate.now();
         LocalDate endDate = LocalDate.now();
+        List<String> purchaseOrderIds = new ArrayList<>();
+        List<String> supplierIds = new ArrayList<>();
         if(StrUtil.isNotBlank(jobParam)){
             XxlJobHelper.log("DmpPushTaskJob jobParam:{}", jobParam);
-            String[] listDateArray = jobParam.split(",");
-            if (1 == listDateArray.length) {
-                startDate = LocalDate.parse(listDateArray[0]);
+            JSONObject jsonObject = new JSONObject(jobParam);
+            String startDate1 = jsonObject.getStr("startDate");
+            if (CharSequenceUtil.isNotBlank(startDate1)){
+                startDate = LocalDate.parse(startDate1);
             }
-            if (listDateArray.length > 1) {
-                startDate = LocalDate.parse(listDateArray[0]);
-                endDate = LocalDate.parse(listDateArray[1]);
+            String endDate1 = jsonObject.getStr("endDate");
+            if (CharSequenceUtil.isNotBlank(endDate1)){
+                endDate = LocalDate.parse(endDate1);
+            }
+            String purchaseOrderIds1 = jsonObject.getStr("purchaseOrderIds");
+            if (CharSequenceUtil.isNotBlank(purchaseOrderIds1)){
+                purchaseOrderIds = Arrays.asList(purchaseOrderIds1.split(","));
+            }
+            String supplierIds1 = jsonObject.getStr("supplierIds");
+            if (CharSequenceUtil.isNotBlank(supplierIds1)){
+                supplierIds = Arrays.asList(supplierIds1.split(","));
+            }
+        }else {
+            List<DictBasicDTO.ViewDTO> skuCostPurchaseOrderIds = dictBasicService.getByKey("skuCostPurchaseOrderIds");
+            if (CollUtil.isNotEmpty(skuCostPurchaseOrderIds)){
+                purchaseOrderIds = skuCostPurchaseOrderIds.stream().map(DictBasicDTO.ViewDTO::getValue).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+            }
+            List<DictBasicDTO.ViewDTO> skuCostSupplierIds = dictBasicService.getByKey("skuCostSupplierIds");
+            if (CollUtil.isNotEmpty(skuCostSupplierIds)){
+                supplierIds = skuCostSupplierIds.stream().map(DictBasicDTO.ViewDTO::getValue).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
             }
         }
         List<LocalDate> localDateList = Arrays.asList(startDate, endDate);
-        dmpSkuCostService.syncPurchaseOrderSkuCost(localDateList);
+        SkuCostDTO.QueryPurchaseDTO queryPurchaseDTO = SkuCostDTO.QueryPurchaseDTO.builder()
+                .localDateList(localDateList).purchaseOrderIds(purchaseOrderIds).supplierIds(supplierIds).build();
+        dmpSkuCostService.syncPurchaseOrderSkuCost(queryPurchaseDTO);
         return ReturnT.SUCCESS;
     }
 
@@ -75,8 +105,36 @@ public class CleanJob {
             return ReturnT.FAIL;
         }
         XxlJobHelper.log("cleanSkuCostBySKuNos jobParam:{}", jobParam);
-        List<String> skuNoList = Arrays.stream(jobParam.split(",")).collect(Collectors.toList());
-        dmpSkuCostService.cleanSkuCostBySKuNos(skuNoList);
+        List<String> skuNoList = new ArrayList<>();
+        List<String> purchaseOrderIds = new ArrayList<>();
+        List<String> supplierIds = new ArrayList<>();
+        if(StrUtil.isNotBlank(jobParam)){
+            XxlJobHelper.log("DmpPushTaskJob jobParam:{}", jobParam);
+            JSONObject jsonObject = new JSONObject(jobParam);
+            String skuNoList1 = jsonObject.getStr("skuNoList");
+            if (CharSequenceUtil.isNotBlank(skuNoList1)){
+                skuNoList = Arrays.stream(skuNoList1.split(",")).collect(Collectors.toList());
+            }
+
+            String purchaseOrderIds1 = jsonObject.getStr("purchaseOrderIds");
+            if (CharSequenceUtil.isNotBlank(purchaseOrderIds1)){
+                purchaseOrderIds = Arrays.asList(purchaseOrderIds1.split(","));
+            }
+            String supplierIds1 = jsonObject.getStr("supplierIds");
+            if (CharSequenceUtil.isNotBlank(supplierIds1)){
+                supplierIds = Arrays.asList(supplierIds1.split(","));
+            }
+        }else {
+            List<DictBasicDTO.ViewDTO> skuCostPurchaseOrderIds = dictBasicService.getByKey("skuCostPurchaseOrderIds");
+            if (CollUtil.isNotEmpty(skuCostPurchaseOrderIds)){
+                purchaseOrderIds = skuCostPurchaseOrderIds.stream().map(DictBasicDTO.ViewDTO::getValue).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+            }
+            List<DictBasicDTO.ViewDTO> skuCostSupplierIds = dictBasicService.getByKey("skuCostSupplierIds");
+            if (CollUtil.isNotEmpty(skuCostSupplierIds)){
+                supplierIds = skuCostSupplierIds.stream().map(DictBasicDTO.ViewDTO::getValue).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+            }
+        }
+        dmpSkuCostService.cleanSkuCostBySKuNos(skuNoList,purchaseOrderIds,supplierIds);
         return ReturnT.SUCCESS;
     }
 

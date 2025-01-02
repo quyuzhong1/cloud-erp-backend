@@ -104,6 +104,11 @@ public class ReplenishmentResultDTO {
      * 分时段销量
      */
     private List<TimePeriodSalesDTO> timePeriodSales;
+
+    /**
+     * 真实销量
+     */
+    private List<TimePeriodSalesDTO> realSaleQty;
     /**
      * 分时段日均销量
      */
@@ -512,7 +517,7 @@ public class ReplenishmentResultDTO {
 
         public static void setJsonAttributes(ReplenishmentSuggestionDetailEntity detail, DetailDTO dto, List<TimePeriodSalesEstimateDTO> timePeriodSalesEstimates,
                                              List<TimePeriodSalesEstimateDTO> avgTimePeriodSalesEstimates, List<TimePeriodSalesDTO> timePeriodSales,
-                                             List<TimePeriodSalesDTO> avgTimePeriodSales) {
+                                             List<TimePeriodSalesDTO> avgTimePeriodSales, List<TimePeriodSalesDTO> realSaleQty) {
 
 
             // 设置销售数量
@@ -520,6 +525,7 @@ public class ReplenishmentResultDTO {
             detail.setAvgSalesQty(convertToSalesVOJson(avgTimePeriodSales));
             detail.setSalesEstimateQty(convertToSalesEstimateVOJson(timePeriodSalesEstimates, dto, false));
             detail.setAvgSalesEstimateQty(convertToSalesEstimateVOJson(avgTimePeriodSalesEstimates, dto, true));
+            detail.setRealSaleQty(convertToSalesVOJson(realSaleQty));
         }
 
         // 提取基础属性
@@ -801,6 +807,11 @@ public class ReplenishmentResultDTO {
          */
         private String denoisingType;
 
+        /**
+         * 有效值
+         */
+        private Integer effectiveValue;
+
 
         public static SalesInfoEntity buildSalesInfo(SalesInfoDTO dto, String replenishmentDetailId, String calcVersion) {
             SalesInfoEntity entity = new SalesInfoEntity();
@@ -811,6 +822,7 @@ public class ReplenishmentResultDTO {
             entity.setIsIgnoreOutOfStock(dto.getIsIgnoreOutOfStock());
             entity.setSalesQtyType(dto.getDenoisingType());
             entity.setCalcVersion(calcVersion);
+            entity.setEffectiveValue(dto.getEffectiveValue());
             return entity;
         }
     }

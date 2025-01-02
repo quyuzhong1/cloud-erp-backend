@@ -198,6 +198,7 @@
                lbc.reconciliation_status actualStatus,
                lbc.track_no trackNo,
                lbc.id costId,
+               lbc.currency,
                lb.id logisticsBillId
         from logistics_bill lb
                  inner join first_mile_estimated_bill eb on lb.id = eb.logistics_bill_id and eb.is_deleted = false

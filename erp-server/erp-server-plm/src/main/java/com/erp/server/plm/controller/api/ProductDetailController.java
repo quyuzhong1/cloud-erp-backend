@@ -42,6 +42,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * 产品管理
@@ -1263,6 +1264,16 @@ public class ProductDetailController extends BaseController {
     }
 
     /**
+     * 首次推送sku到领星
+     */
+    @GetMapping("/initProductToLingXing")
+    public ApiResult<String> initProductToLingXing(@RequestParam(required = false) List<String> ids){
+        productDetailService.initProductToLingXing(ids);
+        return success();
+    }
+
+
+    /**
      *初始化目的国海关信息
      *
      * @param skuIds  skuIds
@@ -1284,6 +1295,19 @@ public class ProductDetailController extends BaseController {
     @PostMapping("/printEan")
     public void printEan(@RequestBody PrintEanDTO printEanDTO, HttpServletResponse response) {
         productDetailService.printEan(printEanDTO, response);
+    }
+
+    /**
+     * 目的国申报价重算
+     * @param dto
+     * @return
+     */
+    @PostMapping("/resetDestDeclarePrice")
+    public ApiResult<List<BatchResultDTO>> resetDestDeclarePrice(@RequestBody @Validated BaseIdsDTO.IdsDTO dto){
+        List<String> ids = dto.getIds().stream().distinct().collect(Collectors.toList());
+        List<ProductDetailEntity> productDetailEntityList = productDetailService.listByIds(ids);
+        List<BatchResultDTO> resultDTOS = productDetailService.resetDestDeclarePrice(productDetailEntityList, Boolean.TRUE);
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
 

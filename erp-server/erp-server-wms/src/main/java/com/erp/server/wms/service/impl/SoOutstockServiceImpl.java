@@ -45,7 +45,9 @@ import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
+import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.dto.ProductDetailDTO;
+import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.plm.enums.CombinationDeclareTypeEnums;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.entity.SupplierEntity;
@@ -56,22 +58,17 @@ import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.sys.entity.SysDepartmentEntity;
 import com.erp.model.tms.dto.*;
+import com.erp.model.tms.entity.LogisticsBillEntity;
 import com.erp.model.tms.entity.TmsDeclareBillEntity;
 import com.erp.model.tms.enums.BillGenerateTimingEnum;
-import com.erp.model.tms.enums.ReconciliationStatusEnum;
 import com.erp.model.tms.enums.ShipmentTypeEnum;
 import com.erp.model.wms.dto.DictBasicDTO;
 import com.erp.model.wms.dto.*;
-import com.erp.model.wms.dto.inventory.InOutStockDTO;
-import com.erp.model.wms.dto.inventory.InventoryBatchUnApproveDTO;
-import com.erp.model.wms.dto.inventory.InventoryInOutStockDTO;
-import com.erp.model.wms.dto.inventory.VirtualInventoryStockDTO;
+import com.erp.model.wms.dto.inventory.*;
 import com.erp.model.wms.dto.pickingstrategy.PickingListsDTO;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.*;
-import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
-import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
-import com.erp.model.wms.enums.inventory.VirtualInventoryBusinessTypeEnum;
+import com.erp.model.wms.enums.inventory.*;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.dmp.feign.DmpPushWdtFeign;
@@ -259,6 +256,8 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
     @Resource
     private WmsPushMsgService wmsPushMsgService;
 
+    @Resource
+    private VirtualWarehouseChannelService virtualWarehouseChannelService;
 
     @Resource
     private VirtualTransFlowService virtualTransFlowService;
@@ -657,6 +656,11 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                     }
                 }
             }
+        }else {
+            //销售出库单单据日期需要回写到B2C销售订单中
+            if(null != entity.getBillDate()){
+                soB2cFeign.writeBackSoOutstockDate(entity.getSoId(),DateTimeFormatter.ofPattern("yyyy-MM-dd").format(entity.getBillDate()));
+            }
         }
         //销售出库单反审核后修改出库日期审核时，需要校验是否有关联的中转调拨单
         if (CharSequenceUtil.isNotBlank(entity.getSourceId())){
@@ -777,7 +781,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             //推送旺店通
             this.syncToWdt(entity,SyncOperateEnum.OPERATE_APPROVE);
             //推送数帝云
-//            this.syncToSdy(entity, SyncOperateEnum.OPERATE_APPROVE.getCode());
+            this.syncToSdy(entity, SyncOperateEnum.OPERATE_APPROVE.getCode());
 
         }
         if (!SourceTypeEnum.SAL_OUTSTOCK.getCode().equals(entity.getSourceType())) {
@@ -972,25 +976,48 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         }
         //虚拟仓冻结库存扣减,(来源发货通知单且非中转)
         if (CollectionUtils.isNotEmpty(members) && CharSequenceUtil.isBlank(entity.getBatchNo()) && CollectionUtils.isNotEmpty(noticeList)) {
-            //无虚拟仓无需扣减库存
-            List<InOutStockDTO> virtualInOutStockList = members.stream().filter(obj -> CharSequenceUtil.isNotBlank(obj.getVirtualWarehouseId())).collect(Collectors.toList());
-            if (CollectionUtils.isNotEmpty(virtualInOutStockList)) {
-                VirtualInventoryStockDTO.StockParamDTO stockParamDTO = new VirtualInventoryStockDTO.StockParamDTO();
-                List<VirtualInventoryStockDTO.OutInStockDTO> outInStockDTOS = BeanMapperUtils.copyList(VirtualInventoryStockDTO.OutInStockDTO.class, virtualInOutStockList);
-                stockParamDTO.setParamList(outInStockDTOS);
-                stockParamDTO.setBusinessType(VirtualInventoryBusinessTypeEnum.SO_OUT_STOCK.getCode());
-                virtualInventoryTransCoreService.approve(stockParamDTO);
-            }
+            b2BVirtualInventory(members);
         }
         //物流单添加
         saveLogisticsBill(entity);
 
     }
 
+    /**
+     * b2b虚拟仓数据
+     * @author will
+     * @date 2024/12/17 11:29
+     * @param members
+     */
+
+    private void b2BVirtualInventory (List<InOutStockDTO> members) {
+        //bom信息调整
+        List<String> skuIdList = members.stream().map(InOutStockDTO::getSkuId).distinct().collect(Collectors.toList());
+        List<BomChildrenSkuDTO> bomChildList = plmTaskFeign.listBomChildBySkuIds(skuIdList);
+        //无虚拟仓无需扣减库存
+        List<InOutStockDTO> virtualInOutStockList = members.stream().filter(obj ->
+                CharSequenceUtil.isNotBlank(obj.getVirtualWarehouseId())
+                && bomChildList.stream().filter(e -> CharSequenceUtil.equals(e.getType(), BomTypeEnum.COMBINATION.getType()) && CharSequenceUtil.equals(e.getParentSkuId(), obj.getSkuId())).count() == MathUtil.ZERO
+        ).collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(virtualInOutStockList)) {
+            return;
+        }
+        VirtualInventoryStockDTO.StockParamDTO stockParamDTO = new VirtualInventoryStockDTO.StockParamDTO();
+        List<VirtualInventoryStockDTO.OutInStockDTO> outInStockDTOS = BeanMapperUtils.copyList(VirtualInventoryStockDTO.OutInStockDTO.class, virtualInOutStockList);
+        stockParamDTO.setParamList(outInStockDTOS);
+        stockParamDTO.setBusinessType(VirtualInventoryBusinessTypeEnum.SO_OUT_STOCK.getCode());
+        virtualInventoryTransCoreService.approve(stockParamDTO);
+    }
+
+
     //TODO 物流单
 //    @Async("saveLogisticsBill")
     @Override
+    @DataIdempotent(keyIdName = "entity.code" , businessType = "saveLogisticsBill")
     public void saveLogisticsBill(SoOutstockEntity entity) {
+    		if(CollUtil.isNotEmpty(FeignQuery.create(LogisticsBillEntity.class).eq(LogisticsBillEntity::getOutstockId, entity.getId()).list())) {
+    			throw new ServiceException("小包物流单已生成");
+    		}
             LogisticsBillDTO.AddDTO addDTO = new LogisticsBillDTO.AddDTO();
             addDTO.setOutstockId(entity.getId());
             addDTO.setOutstockCode(entity.getCode());
@@ -1093,6 +1120,10 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                     addDetailDTO.setTrackNo(s);
                     detailList.add(addDetailDTO);
                 }
+            }else {
+            	LogisticsBillDetailDTO.AddDTO addDetailDTO = new LogisticsBillDetailDTO.AddDTO();
+                addDetailDTO.setTrackNo("");
+                detailList.add(addDetailDTO);
             }
             //非第三方仓和平台仓发货 则默认为自发货
             if (CharSequenceUtil.isBlank(addDTO.getShipmentType())){
@@ -1175,11 +1206,8 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         //审核通过
         // 增加 出库单关联的自发货费用单据已确认状态下，不允许出库单反审核
         List<LogisticsBillCostDTO.OutStockDTO> outStockDTOS = logisticsBillFeign.listBillCostByOutstockIds(Collections.singletonList(entity.getId()));
-        List<LogisticsBillCostDTO.OutStockDTO> outStockDTOList = outStockDTOS.stream().filter(e -> StringUtils.isNotEmpty(e.getReconciliationStatus())
-                        && ReconciliationStatusEnum.CONFIRMED.getCode().equals(e.getReconciliationStatus()))
-                .collect(Collectors.toList());
-        if (CollectionUtils.isNotEmpty(outStockDTOList)){
-            String code = outStockDTOList.stream().map(LogisticsBillCostDTO.OutStockDTO::getOutstockCode).distinct().collect(Collectors.joining(","));
+        if (CollectionUtils.isNotEmpty(outStockDTOS)){
+            String code = outStockDTOS.stream().map(LogisticsBillCostDTO.OutStockDTO::getOutstockCode).distinct().collect(Collectors.joining(","));
             throw new ServiceException(ApiError.ERROR_SO_OUTSTOCK_BILL_COST_NOT_DIS_APPROVE, code);
         }
         //待提交
@@ -1215,8 +1243,8 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             this.syncToWdt(entity,SyncOperateEnum.OPERATE_DISAPPROVE);
 
             //推送数帝云
-//            List<SoOutstockDetailEntity> soOutstockDetailEntityList = soOutstockDetailService.listByMainIds(Arrays.asList(entity.getId()));
-//            syncKingdeeSoOutstockService.syncDataToSdy(entity, soOutstockDetailEntityList, SyncOperateEnum.OPERATE_DISAPPROVE.getCode());
+            List<SoOutstockDetailEntity> soOutstockDetailEntityList = soOutstockDetailService.listByMainIds(Arrays.asList(entity.getId()));
+            syncKingdeeSoOutstockService.syncDataToSdy(entity, soOutstockDetailEntityList, SyncOperateEnum.OPERATE_DISAPPROVE.getCode());
         }
         return BatchResultDTO.success(entity.getId(),entity.getCode(), "反审核成功");
     }
@@ -1292,9 +1320,9 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             sendPushTask(list,SyncOperateEnum.OPERATE_DELETE.getCode());
 
             //推送数帝云
-           /* for (SoOutstockEntity outstockEntity : list) {
+            for (SoOutstockEntity outstockEntity : list) {
                 syncKingdeeSoOutstockService.syncDataToSdy(outstockEntity, soOutstockDetailAllList, SyncOperateEnum.OPERATE_DELETE.getCode());
-            }*/
+            }
 
 
         }
@@ -1514,6 +1542,12 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
 //        List<String> ids = list.stream().map(SoOutstockDTO.PagingViewDTO::getId).distinct().collect(Collectors.toList());
         //跟踪单号
 //        Map<String,List<String>> trackNoMAp = logisticsBillFeign.mapTrackNoAndSoOutId(ids);
+
+        //根据客户id集合查询客户信息
+        List<String> customerIds = list.stream().map(SoOutstockDTO.PagingViewDTO::getCustomerId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
+        List<CustomerInfoEntity> customerInfoEntities = customerFeign.listCustomerByIds(customerIds);
+        Map<String, String> customerPlatformTypeMap = customerInfoEntities.stream().collect(Collectors.toMap(CustomerInfoEntity::getId, CustomerInfoEntity::getPlatformType));
+
         for (SoOutstockDTO.PagingViewDTO item : list) {
             //设置跟踪单号
 //            if(trackNoMAp.containsKey(item.getId())){
@@ -1580,6 +1614,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             //装箱状态
             item.setPackingStatusName(PackingTaskStatusEnum.getName(item.getPackingStatus()));
             //销售平台名称
+            item.setDictPlatform(customerPlatformTypeMap.get(item.getCustomerId()));
             item.setDictPlatformName(salesPlatformMap.get(item.getDictPlatform()));
         }
     }
@@ -3571,5 +3606,105 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
     @Override
     public List<SoOutstockEntity> queryToSdy(LocalDate startDate, LocalDate endDate, Integer pageSize, Integer offset) {
         return baseMapper.queryToSdy(startDate, endDate, pageSize, offset);
+    }
+
+    @Override
+    public BatchResultDTO handleWdtData(String id) {
+        SoOutstockEntity entity = this.soOutstockService.getById(id);
+        if (ObjectUtil.isEmpty(entity)) {
+            return BatchResultDTO.success(entity.getId(), entity.getCode(), "无销售出库单数据");
+        }
+        List<SoOutstockDetailEntity> soOutstockDetailList = soOutstockDetailService.listByMainIds(Arrays.asList(id));
+        if (CollUtil.isEmpty(soOutstockDetailList)) {
+            return BatchResultDTO.success(entity.getId(), entity.getCode(), "无销售出库单明细数据");
+        }
+        String customerId = entity.getCustomerId();
+        List<ShopInfoEntity> list = FeignQuery.create(ShopInfoEntity.class).eq(ShopInfoEntity::getCustomerId, customerId).list();
+        if (CollUtil.isEmpty(list)) {
+            return BatchResultDTO.success(entity.getId(), entity.getCode(), "无店铺数据");
+        }
+        //更新虚拟仓id
+        String shopId = list.get(0).getId();
+        String dictPlatform = list.get(0).getDictPlatform();
+        String virtualWarehouseId = handleVirtualWarehouse(Collections.singletonList(entity.getWarehouseId()), dictPlatform, shopId);
+        soOutstockDetailList.stream().forEach(obj -> obj.setVirtualWarehouseId(virtualWarehouseId));
+        soOutstockDetailService.updateBatchById(soOutstockDetailList);
+
+        //已存在虚拟仓流水则无需处理
+        List<String> detailIdList = soOutstockDetailList.stream().map(SoOutstockDetailEntity::getId).distinct().collect(Collectors.toList());
+        List<VirtualTransFlowEntity> virtualTransFlowList = virtualTransFlowService.listHistoryFlow(detailIdList, InventorySourceTypeEnum.SO_OUTSTOCK.getCode());
+        if (CollUtil.isNotEmpty(virtualTransFlowList)) {
+            return BatchResultDTO.success(entity.getId(), entity.getCode(), "已生成流水无需处理");
+        }
+
+        //不需要管的sku
+        List<SkuVO> noInventorySkuList = plmTaskFeign.getNoInventorySku();
+        //对应不需要的验证的sku no list
+        List<String> noInventorySkuNoList = noInventorySkuList.stream().map(SkuVO::getSkuNo).collect(Collectors.toList());
+
+        List<InOutStockDTO> inOutStockList = new ArrayList<>();
+        for (SoOutstockDetailEntity detailEntity : soOutstockDetailList) {
+            //是否扣减库存 true 就要
+            boolean isDeduction = !noInventorySkuNoList.contains(detailEntity.getSkuNo());
+            if (Boolean.TRUE.equals(isDeduction)) {
+                //并且扣库存 才执行
+                buildInOutStock(id, detailEntity, entity, virtualWarehouseId, inOutStockList);
+            }
+        }
+        //无虚拟仓则不扣减虚拟库存
+        List<InOutStockDTO> virtualInOutList = inOutStockList.stream().filter(obj -> CharSequenceUtil.isNotBlank(obj.getVirtualWarehouseId())).collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(virtualInOutList)) {
+            //扣减虚拟仓库存
+            VirtualInventoryStockDTO.StockParamDTO dto = new VirtualInventoryStockDTO.StockParamDTO();
+            List<VirtualInventoryStockDTO.OutInStockDTO> stockParamDTOS = BeanMapperUtils.copyList(VirtualInventoryStockDTO.OutInStockDTO.class, virtualInOutList);
+            dto.setParamList(stockParamDTOS);
+            dto.setBusinessType(VirtualInventoryBusinessTypeEnum.OUT_USABLE.getCode());
+            virtualInventoryTransCoreService.approve(dto);
+        }
+        return BatchResultDTO.success(entity.getId(), entity.getCode(), "库存扣减成功");
+    }
+
+    /**
+     * 库存扣减数据格式化
+     * @author will
+     * @date 2024/12/31 19:09
+     * @param id
+     * @param detailEntity
+     * @param soOutstock
+     * @param virtualWarehouseId
+     * @param inOutStockList
+     */
+    private static void buildInOutStock(String id, SoOutstockDetailEntity detailEntity, SoOutstockEntity soOutstock, String virtualWarehouseId, List<InOutStockDTO> inOutStockList) {
+        InOutStockDTO inOutStock = new InOutStockDTO();
+        inOutStock.setSourceId(id);
+        inOutStock.setSourceDetailId(detailEntity.getId());
+        inOutStock.setSourceType(InventorySourceTypeEnum.SO_OUTSTOCK);
+        inOutStock.setBillDate(soOutstock.getBillDate());
+        inOutStock.setQty(detailEntity.getActualQty());
+        inOutStock.setSkuId(detailEntity.getSkuId());
+        inOutStock.setSkuNo(detailEntity.getSkuNo());
+        inOutStock.setSourceCode(soOutstock.getCode());
+        inOutStock.setWarehouseId(soOutstock.getWarehouseId());
+        inOutStock.setWarehouseLocation(detailEntity.getWarehouseLocation());
+        inOutStock.setVirtualWarehouseId(virtualWarehouseId);
+        inOutStockList.add(inOutStock);
+    }
+
+    /**
+     * 获取虚拟仓
+     * @author will
+     * @date 2024/6/13 12:07
+     * @param warehouseIdList
+     */
+    private String handleVirtualWarehouse (List<String> warehouseIdList,String  dictPlatform,String shopId) {
+        VirtualWarehouseChannelDTO.PlatformDTO platformDTO = new VirtualWarehouseChannelDTO.PlatformDTO();
+        platformDTO.setDictPlatform(dictPlatform);
+        platformDTO.setRelationId(shopId);
+        platformDTO.setWarehouseIdList(warehouseIdList);
+        List<VirtualWarehouseRelationEntity> virtualWarehouseList = virtualWarehouseChannelService.getVirtualWarehouse(platformDTO);
+        if (CollectionUtils.isEmpty(virtualWarehouseList)) {
+            return CharSequenceUtil.EMPTY;
+        }
+        return virtualWarehouseList.get(0).getVirtualWarehouseId();
     }
 }

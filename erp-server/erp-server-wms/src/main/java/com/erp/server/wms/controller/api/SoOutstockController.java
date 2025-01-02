@@ -6,6 +6,7 @@ import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.*;
+import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
@@ -15,9 +16,6 @@ import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.wms.dto.SoOutstockDTO;
-import com.erp.model.wms.dto.WmsCartonDTO;
-import com.erp.model.wms.entity.PoReturnDetailEntity;
-import com.erp.model.wms.entity.PoReturnEntity;
 import com.erp.model.wms.entity.SoOutstockEntity;
 import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.rpc.tms.feign.CfgSettingFeign;
@@ -25,7 +23,6 @@ import com.erp.rpc.tms.feign.TmsDeclareBillFeign;
 import com.erp.server.wms.query.SoOutstockQueryHandler;
 import com.erp.server.wms.service.SoOutstockService;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -34,7 +31,6 @@ import javax.validation.Valid;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
 
 /**
  * 销售出库-销售出库单
@@ -452,4 +448,63 @@ public class SoOutstockController extends BaseController {
 
         return success();
     }
+    
+    /**
+     * 下推物流单
+     */
+    @LogAction(value = LogActionEnum.UPDATE_STATUS, desc = "下推物流单")
+    @PostMapping("/saveLogisticsBill")
+    public ApiResult<List<BatchResultDTO>> saveLogisticsBill(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        List<SoOutstockEntity> entityList = soOutstockService.listByIds(dto.getIds());
+        for (String id : dto.getIds()) {
+            SoOutstockEntity entity = entityList.stream().filter(v->v.getId().equals(id)).findFirst().orElse(null);
+            if(Objects.isNull(entity)){
+                resultDTOS.add(BatchResultDTO.fail(id,id,"销售出库单记录不存在"));
+                continue;
+            }
+            if(ApproveStatusEnum.APPROVE != entity.getApproveStatus()) {
+            	resultDTOS.add(BatchResultDTO.fail(id,entity.getCode(),"销售出库单不是已审核，不允许下推物流单"));
+                continue;
+            }
+            try {
+            	soOutstockService.saveLogisticsBill(entity);
+                resultDTOS.add(BatchResultDTO.success(id, entity.getCode()));
+            }catch (Exception e){
+                log.error("销售出库单下推物流单失败",e);
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
+            }
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+
+    /**
+     * 修复数据
+     * @author will
+     * @date 2024/12/31 18:45
+     * @param dto
+     * @return ApiResult<List<BatchResultDTO>>
+     */
+    @PostMapping("/handleWdtData")
+    public ApiResult<List<BatchResultDTO>> handleWdtData(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        for (String id : dto.getIds()) {
+            BatchResultDTO resultDTO;
+            try {
+                resultDTO = soOutstockService.handleWdtData(id);
+            }catch (Exception e){
+                log.error("销售出库单 修复数据失败",e);
+                SoOutstockEntity entity = soOutstockService.getById(id);
+                if (ObjectUtil.isEmpty(entity)) {
+                    resultDTO = BatchResultDTO.fail(id, id, "销售出库单不存在, 修复数据失败");
+                    resultDTOS.add(resultDTO);
+                    continue;
+                }
+                resultDTO = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
+            }
+            resultDTOS.add(resultDTO);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+
 }

@@ -144,4 +144,10 @@ public interface SoB2cErrorService extends IService<SoB2cErrorEntity> {
     BatchResultDTO retryFalseDelivery(String soId);
 
     List<SoB2cErrorDTO.TypeCountDTO> getTypeCountDTO();
+
+    /**
+     * 获取销售订单全部异常汇总
+     * @return
+     */
+    List<SoB2cErrorDTO.TypeCountDTO> getB2CErrorReport(List<String> typeList);
 }

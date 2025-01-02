@@ -118,4 +118,9 @@ public class PlatformOrderDetailDTO {
      * 明细是否退款
      */
     private Boolean isDetailRefund = false;
+
+    /**
+     * 第三方明细ID/编号
+     */
+    private String thirdDetailId = "";
 }

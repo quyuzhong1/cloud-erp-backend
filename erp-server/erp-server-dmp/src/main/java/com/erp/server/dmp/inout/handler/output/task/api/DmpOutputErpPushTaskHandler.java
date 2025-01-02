@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import com.erp.server.dmp.push.service.lingxing.LxCommonService;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -249,20 +250,20 @@ public class DmpOutputErpPushTaskHandler extends DmpOutputTaskHandler{
 							.update();
 						return;
 					}
-				}
-				
-				List<DmpOutputTaskRecordEntity> parentOutputList = dmpOutputTaskRecordService.lambdaQuery()
-						.in(DmpOutputTaskRecordEntity::getDataId, list.stream().map(DmpPushMsgEntity::getId).collect(Collectors.toList()))
-						.ne(DmpOutputTaskRecordEntity::getStatus, DmpOutputTaskRecordStatusEnum.FINISH.getCode())
-						.list();
-				if(CollUtil.isNotEmpty(parentOutputList)) {
-					dmpOutputTaskRecordService.lambdaUpdate()
-						.set(DmpOutputTaskRecordEntity::getResponseData, "上游单据未推送成功")
-						.set(DmpOutputTaskRecordEntity::getUpdateTime, LocalDateTime.now())
-						.eq(DmpOutputTaskRecordEntity::getId, dmpOutputTaskRecordEntity.getId())
-						.ne(DmpOutputTaskRecordEntity::getStatus, DmpOutputTaskRecordStatusEnum.FINISH.getCode())
-						.update();
-					return;
+				}else {
+					List<DmpOutputTaskRecordEntity> parentOutputList = dmpOutputTaskRecordService.lambdaQuery()
+							.in(DmpOutputTaskRecordEntity::getDataId, list.stream().map(DmpPushMsgEntity::getId).collect(Collectors.toList()))
+							.ne(DmpOutputTaskRecordEntity::getStatus, DmpOutputTaskRecordStatusEnum.FINISH.getCode())
+							.list();
+					if(CollUtil.isNotEmpty(parentOutputList)) {
+						dmpOutputTaskRecordService.lambdaUpdate()
+							.set(DmpOutputTaskRecordEntity::getResponseData, "上游单据未推送成功")
+							.set(DmpOutputTaskRecordEntity::getUpdateTime, LocalDateTime.now())
+							.eq(DmpOutputTaskRecordEntity::getId, dmpOutputTaskRecordEntity.getId())
+							.ne(DmpOutputTaskRecordEntity::getStatus, DmpOutputTaskRecordStatusEnum.FINISH.getCode())
+							.update();
+						return;
+					}
 				}
 			}
 			List<DmpOutputTaskRecordEntity> erpQuerySync = dmpOutputTaskRecordService.erpQuerySync(dmpCfgOutputEntity, Arrays.asList(dmpOutputTaskRecordEntity));
@@ -272,7 +273,17 @@ public class DmpOutputErpPushTaskHandler extends DmpOutputTaskHandler{
 				return;
 			}
 		}
-		
+
+		Boolean isQuerySync = JSON.parseObject(requestData).getBoolean("isQuerySync");
+		if (isQuerySync != null && isQuerySync) {
+			List<DmpOutputTaskRecordEntity> erpQuerySync = dmpOutputTaskRecordService.erpQuerySync(dmpCfgOutputEntity, Arrays.asList(dmpOutputTaskRecordEntity));
+			if(CollUtil.isNotEmpty(erpQuerySync)) {
+				requestData = erpQuerySync.get(0).getRequestData();
+			}else {
+				return;
+			}
+		}
+
 		String outputTypeId = dmpCfgOutputEntity.getTypeId();
 		DmpCfgApiEntity outputDmpCfgApiEntity = dmpHandlerCache.getDmpCfgApiEntityList(d -> d.getId().equals(outputTypeId)).get(0);
 		String apiClass = outputDmpCfgApiEntity.getApiClass();
@@ -291,6 +302,14 @@ public class DmpOutputErpPushTaskHandler extends DmpOutputTaskHandler{
 				requestData = JSON.toJSONString(sdyObject);
 				outputMethod = SdyCommonService.REQUEST_SDY;
 			}
+			if(systemCode.equals(DmpBasicSystemCodeEnum.LING_XING.getCode())) {
+				Map<String, String> syncObject = new HashMap<>();
+				syncObject.put(LxCommonService.REQUEST_URL, outputMethod);
+				syncObject.put(LxCommonService.REQUEST_DATA, requestData);
+				requestData = JSON.toJSONString(syncObject);
+				outputMethod = LxCommonService.REQUEST_LX;
+			}
+
 			try {
 				method = bean.getClass().getMethod(outputMethod, Object.class);
 			} catch (NoSuchMethodException | SecurityException e) {

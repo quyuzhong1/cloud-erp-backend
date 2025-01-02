@@ -37,7 +37,7 @@ public class WebhookController extends BaseController {
     // 预先约定的Secret
     private static final String SECRET_KEY = "your_secret_key";
     // 允许的时间偏差（秒）
-    private static final long MAX_AGE = 5 * 60; // 5 minutes
+    private static final long MAX_AGE = 5 * 60L; // 5 minutes
     private final WebhookHandlerFactory webhookHandlerFactory;
 
     public WebhookController(WebhookHandlerFactory webhookHandlerFactory) {

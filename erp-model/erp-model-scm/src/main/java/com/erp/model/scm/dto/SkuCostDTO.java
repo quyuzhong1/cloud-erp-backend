@@ -1,5 +1,7 @@
 package com.erp.model.scm.dto;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -90,6 +92,10 @@ public class SkuCostDTO {
          * sku编号集合
          */
         private List<String> skuNoList;
+        //采购订单
+        private List<String> purchaseOrderIds;
+        //供应商id
+        private List<String> supplierIds;
 
     }
 
@@ -106,5 +112,17 @@ public class SkuCostDTO {
          * 币别
          */
         private String currency;
+    }
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class QueryPurchaseDTO{
+        //日期
+        private List<LocalDate> localDateList;
+        //采购订单id
+        private List<String> purchaseOrderIds;
+        //供应商id
+        private List<String> supplierIds;
     }
 }

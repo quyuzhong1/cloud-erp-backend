@@ -1,9 +1,6 @@
 package com.erp.server.wms.service;
 
-import com.common.business.dto.AdvanceQueryContainer;
-import com.common.business.dto.PlatformOutboundDTO;
-import com.common.business.dto.PlatformSoOutStockDTO;
-import com.common.business.dto.PlatformSoOutStockDetailDTO;
+import com.common.business.dto.*;
 import com.common.business.dto.base.*;
 import com.common.business.service.SuperService;
 import com.common.business.validator.ValidList;
@@ -546,4 +543,12 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
 
 
     List<SoOutstockEntity> queryToSdy(LocalDate startDate, LocalDate endDate, Integer pageSize, Integer offset);
+    /**
+     * 修复旺店通数据
+     * @author will
+     * @date 2024/12/31 18:45
+     * @param id
+     * @return BatchResultDTO
+     */
+    BatchResultDTO handleWdtData(String id);
 }

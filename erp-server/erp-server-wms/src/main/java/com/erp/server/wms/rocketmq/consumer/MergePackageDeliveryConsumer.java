@@ -173,7 +173,7 @@ public class MergePackageDeliveryConsumer implements RocketMQListener<String> {
         }
 
         // 生成销售出库单(独立事务)
-        log.debug("【组包预报】销售单【{}】生成销售出库单开始", curDeliveryEntity.getSoCode());
+        log.warn("【组包预报】销售单【{}】生成销售出库单开始", curDeliveryEntity.getSoCode());
         //出库
         try {
             //生成直接调拨单
@@ -187,7 +187,7 @@ public class MergePackageDeliveryConsumer implements RocketMQListener<String> {
                 redisTemplate.delete(soOutStockKeyList);
             }
         }
-        log.debug("【组包预报虚假标记发货】销售单【{}】生成销售出库单结束", curDeliveryEntity.getSoCode());
+        log.warn("【组包预报虚假标记发货】销售单【{}】生成销售出库单结束", curDeliveryEntity.getSoCode());
     }
 
     /**
@@ -205,7 +205,7 @@ public class MergePackageDeliveryConsumer implements RocketMQListener<String> {
                     soB2cEntity.getDictPlatform(),
                     soB2cEntity.convertSubmitPlatformUniqueKey(),
                     curDeliveryEntity.getId(),
-                    businessDesc, false);
+                    businessDesc, false, false);
         } else {
             log.warn("【组包预报虚假标记发货】【{}】未达到条件:忽略标记平台发货", soB2cEntity.getCode());
         }

@@ -25,6 +25,7 @@ import com.common.business.utils.PdfUtil;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
+import com.common.business.wrapper.FeignQuery;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
@@ -1415,7 +1416,17 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
 
         // 采购申请单id集合
         List<String> purchaseApplicationIds = Lists.newArrayList();
+        List<String> warehouseLocationList = records.stream().map(v->v.getWarehouseLocation()).filter(StringUtils::isNotBlank).collect(Collectors.toList());
+        List<WarehouseLocationEntity> warehouseLocationEntityList = new ArrayList<>();
+        if(CollectionUtils.isNotEmpty(warehouseLocationList)){
+            warehouseLocationEntityList = FeignQuery.create(WarehouseLocationEntity.class).in(WarehouseLocationEntity::getCode,warehouseLocationEntityList).list();
+        }
         for (PurchaseOrderDTO.ListDTO obj : records) {
+            WarehouseLocationEntity warehouseLocationEntity = warehouseLocationEntityList.stream().filter(v->v.getCode().equals(obj.getWarehouseLocation())).findFirst().orElse(new WarehouseLocationEntity());
+            obj.setWarehouseLocationName(warehouseLocationEntity.getName());
+            if(StringUtils.isBlank(obj.getWarehouseLocation())){
+                obj.setWarehouseLocationName("空仓位");
+            }
             SkuVO skuVO = skuList.stream().filter(e -> e.getSkuId().equals(obj.getSkuId())).findFirst().orElse(null);
             if (Objects.nonNull(skuVO)){
                 obj.setDeclareModel(skuVO.getDeclareModel());
@@ -1472,6 +1483,21 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
                     .map(PoReturnDetailEntity::getReturnQty)
                     .reduce(MathUtil.ZERO, Integer::sum);
             obj.setReturnQty(returnQtyt);
+            //退货补货数量
+            Integer qcReturnQty = purchaseReturnOrderDetailList.stream().filter(req -> req.getPurchaseOrderDetailId().equals(obj.getPurchaseDetailId())
+                            && req.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())
+                            && ReturnOrderSourceEnum.QC.getCode().equals(req.getSourceType()))
+                    .map(PoReturnDetailEntity::getReturnQty)
+                    .reduce(MathUtil.ZERO, Integer::sum);
+            obj.setQcReturnQty(qcReturnQty);
+            //库存补货数量
+            Integer stockReturnQty = purchaseReturnOrderDetailList.stream().filter(req -> req.getPurchaseOrderDetailId().equals(obj.getPurchaseDetailId())
+                            && req.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())
+                            && !ReturnOrderSourceEnum.QC.getCode().equals(req.getSourceType()))
+                    .map(PoReturnDetailEntity::getReturnQty)
+                    .reduce(MathUtil.ZERO, Integer::sum);
+            obj.setStockReturnQty(stockReturnQty);
+
             obj.setStockInQty(stockInQty);
             obj.setTaxRateStr(MathUtil.multiply(obj.getTaxRate(),MathUtil.BigDecimal_100).toString().concat("%"));
 
@@ -2249,11 +2275,11 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
     }
 
     @Override
-    public List<SkuCostDTO> listPurchaseOrderByPurchaseDate(List<LocalDate> purchaseDateList) {
-        if (purchaseDateList.size() != 2){
+    public List<SkuCostDTO> listPurchaseOrderByPurchaseDate(SkuCostDTO.QueryPurchaseDTO queryPurchaseDTO) {
+        if (queryPurchaseDTO.getLocalDateList().size() != 2){
             return Collections.emptyList();
         }
-        List<SkuCostDTO> list = baseMapper.listPurchaseOrderByPurchaseDate(purchaseDateList);
+        List<SkuCostDTO> list = baseMapper.listPurchaseOrderByPurchaseDate(queryPurchaseDTO.getLocalDateList());
         return list;
     }
 
@@ -3125,6 +3151,38 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         query.setOrders(buildOrders(pagingDTO.getParams().getSortList()));
         IPage<PurchaseOrderDTO.SourceCodeDTO> pageData = this.baseMapper.purchaseCodePaging(query, params);
         return new PagingVO(pageData);
+    }
+
+    @Override
+    public List<PurchaseOrderDTO.PurchaseCalcQtyDTO> listAllPurchaseBySkuIdAndSupplier(PurchaseOrderDTO.PurchaseCalcQtyParamsDTO purchaseCalcQtyParamsDTO) {
+
+        List<PurchaseOrderDTO.PurchaseCalcQtyDTO> result = baseMapper.listAllPurchaseBySkuIdAndSupplier(purchaseCalcQtyParamsDTO.getSkuIdList(), purchaseCalcQtyParamsDTO.getSupplierIdList());
+        // 采购订单明细id集合
+        List<String> podIds = result.stream().map(PurchaseOrderDTO.PurchaseCalcQtyDTO::getPurchaseDetailId).collect(Collectors.toList());
+        //入库信息
+        List<PoInstockDetailEntity> purchaseStockInDetailList = wmsTaskFeign.listPurchaseStockInDetailByPodIds(podIds);
+
+        //收货信息
+        List<WarehouseReceiveDetailEntity> receiveDetailList = wmsTaskFeign.listWarehouseReceiveDetailByPodIds(podIds);
+        for (PurchaseOrderDTO.PurchaseCalcQtyDTO obj : result) {
+            //已收货数量
+            Integer receiveQty = MathUtil.ZERO;
+            //收货数量
+            if (CollectionUtils.isNotEmpty(receiveDetailList)) {
+                receiveQty = receiveDetailList.stream().filter(e -> e.getPurchaseOrderDetailId().equals(obj.getPurchaseDetailId()) && ApproveStatusEnum.APPROVE.getStatus().equals(e.getApproveStatus()))
+                        .map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
+            }
+            //入库数量
+            Integer stockInQty = MathUtil.ZERO;
+            if (CollectionUtils.isNotEmpty(purchaseStockInDetailList)) {
+                stockInQty = purchaseStockInDetailList.stream().filter(e -> e.getPurchaseOrderDetailId().equals(obj.getPurchaseDetailId()) && ApproveStatusEnum.APPROVE.getStatus().equals(e.getApproveStatus()))
+                        .map(PoInstockDetailEntity::getStockInQty).reduce(MathUtil.ZERO, Integer::sum);
+            }
+            //已收货数量
+            obj.setReceiveQty(receiveQty);
+            obj.setStockInQty(stockInQty);
+        }
+        return result;
     }
 
     @Override

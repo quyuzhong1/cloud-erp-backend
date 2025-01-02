@@ -478,6 +478,7 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
         }
         //取消失败
         if (!cancelResult.isSuccess() && cancelResult.getCode()!=-1) {
+            log.error("取消物流单失败,单号:【{}/{}】,{} ", soB2cLogisticsEntity.getCode(),soB2cLogisticsEntity.getTrackNo(),cancelResult.getMsg());
             return BatchResultDTO.fail(id,soB2cEntity.getCode(),cancelResult.getMsg());
         }else{
             String msg =  CharSequenceUtil.format("取消物流单单号成功,单号:【{}/{}】 ", soB2cLogisticsEntity.getCode(),soB2cLogisticsEntity.getTrackNo());
@@ -509,6 +510,15 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
         if (CollectionUtils.isNotEmpty(trackDTOS)){
             baseMapper.updateTrackNoByTransportNo(trackDTOS);
         }
+    }
+
+    @Override
+    public void updateLogisticsFee(String b2cSoId, BigDecimal totalShippingCost, String currency) {
+        if (CharSequenceUtil.isBlank(b2cSoId) || Objects.isNull(totalShippingCost) || CharSequenceUtil.isBlank(currency)){
+            return;
+        }
+        this.lambdaUpdate().eq(SoB2cLogisticsEntity::getMainId, b2cSoId)
+                .set(SoB2cLogisticsEntity::getEstimatedShippingCost, totalShippingCost).set(SoB2cLogisticsEntity::getEstimatedShippingCurrency,currency).update();
     }
 
     private LogisticsBillDTO.AddDTO buildLogisticsBill(SoB2cLogisticsEntity entity, SoB2cEntity mainEntity) {

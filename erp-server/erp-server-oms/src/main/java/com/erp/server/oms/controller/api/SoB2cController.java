@@ -149,6 +149,7 @@ public class SoB2cController extends BaseController {
             if (warehouseRuleMatch) {
                 SoB2cDTO.RuleResultDTO logisticsRuleResult = soB2cService.logisticsRule(id, new HashMap<>(), false);
                 Boolean autoGetTrackNo = logisticsRuleResult.getAutoGetTrackNo();
+                Boolean autoGetTrackNotOfRangeDelivery = logisticsRuleResult.getAutoGetTrackNotOfRangeDelivery();
                 Boolean isRuleMatch = logisticsRuleResult.getIsRuleMatch();
                 //表示成功
                 if(isRuleMatch){
@@ -157,12 +158,16 @@ public class SoB2cController extends BaseController {
                     //申报信息规则
                     soB2cService.declareRule(id, new HashMap<>(), Boolean.FALSE, false);
                 }
-                if (Objects.nonNull(autoGetTrackNo) && Boolean.TRUE.equals(autoGetTrackNo)) {
-                    soB2cService.getLogisticsCode(id, autoGetTrackNo);
+                SoB2cEntity entity = soB2cService.getById(id);
+                Boolean isOutOfRangeDelivery = entity.getIsOutOfRangeDelivery();
+                if ((Objects.nonNull(autoGetTrackNo) && Boolean.TRUE.equals(autoGetTrackNo))
+                        || (Boolean.FALSE.equals(isOutOfRangeDelivery) && Objects.nonNull(autoGetTrackNotOfRangeDelivery) && Boolean.TRUE.equals(autoGetTrackNotOfRangeDelivery))) {
+                    soB2cService.getLogisticsCode(id,  Boolean.TRUE);
                 }
             }
-
         }
+        //自动计算预估运费到订单的预估运费字段
+        soB2cService.autoCalcEstimatedShippingCost(Collections.singletonList(id));
         return success(add.getCode());
     }
 
@@ -207,6 +212,8 @@ public class SoB2cController extends BaseController {
         soB2cService.update(dto);
         //检查是否备案并修改状态
         soB2cService.checkProductRegistrationAndUpdate(dto.getId(), "");
+        //自动计算预估运费到订单的预估运费字段
+        soB2cService.autoCalcEstimatedShippingCost(Collections.singletonList(dto.getId()));
         return success();
     }
 
@@ -280,8 +287,11 @@ public class SoB2cController extends BaseController {
                             }
 
                             Boolean autoGetTrackNo = logisticsRuleResult.getAutoGetTrackNo();
-                            if (Objects.nonNull(autoGetTrackNo) && autoGetTrackNo) {
-                                soB2cService.getLogisticsCode(id, autoGetTrackNo);
+                            Boolean autoGetTrackNotOfRangeDelivery = logisticsRuleResult.getAutoGetTrackNotOfRangeDelivery();
+                            Boolean isOutOfRangeDelivery = soB2cService.getById(id).getIsOutOfRangeDelivery();
+                            if ((Objects.nonNull(autoGetTrackNo) && Boolean.TRUE.equals(autoGetTrackNo))
+                                    || (Boolean.FALSE.equals(isOutOfRangeDelivery) && Objects.nonNull(autoGetTrackNotOfRangeDelivery) && Boolean.TRUE.equals(autoGetTrackNotOfRangeDelivery))) {
+                                soB2cService.getLogisticsCode(id,  Boolean.TRUE);
                             }
                         }
 
@@ -289,6 +299,8 @@ public class SoB2cController extends BaseController {
                         soB2cService.removeSignError(entity.getId(), SoB2cErrorTypeEnum.ORDER_FORECAST.getCode());
                         soB2cErrorService.removeErrorOrder(entity.getId(), SoB2cErrorTypeEnum.ORDER_FORECAST.getCode());
                     }
+                    //自动计算预估运费到订单的预估运费字段
+                    soB2cService.autoCalcEstimatedShippingCost(Collections.singletonList(id));
                 }
             } catch (Exception e) {
                 log.error("B2C销售订单审核失败", e);
@@ -606,6 +618,8 @@ public class SoB2cController extends BaseController {
             }
             resultDTOS.add(result);
         }
+        //自动计算预估运费到订单的预估运费字段
+        soB2cService.autoCalcEstimatedShippingCost(dto.getIds());
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
@@ -1424,6 +1438,8 @@ public class SoB2cController extends BaseController {
                 continue;
             }
             SkuVO skuVO = skuVOList.stream().filter(e -> Objects.nonNull(e) && Objects.equals(e.getSkuId(), dto.getTargetId())).findFirst().orElse(null);
+            //重置sku含税单价信息
+            soB2cSplitService.resetSkuVO(entity,detail,skuVO);
             if (Objects.isNull(skuVO)){
                 result = BatchResultDTO.fail(dto.getId(), entity.getCode(), StrUtil.format("更换SKU【{}】记录不存在",dto.getTargetId()));
                 resultDTOS.add(result);

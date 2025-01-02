@@ -17,7 +17,10 @@ import com.erp.model.wms.dto.third.*;
 import com.erp.model.wms.enums.ThirdWarehouseCancelResultEnum;
 import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.server.wms.convert.OverseasWarehouseInboundConverter;
+import com.erp.server.wms.convert.ThirdWarehouseConverter;
 import com.erp.server.wms.handler.AbstractThirdWarehouseHandler;
+import com.sdk.wms.antu.dto.request.AntuCalculateFeeReq;
+import com.sdk.wms.antu.dto.response.AntuCalculateFeeResp;
 import com.sdk.wms.antu.enums.AntuEnums;
 import com.sdk.wms.antu.service.AntuService;
 import com.sdk.wms.antu.dto.request.AntuBaseRequest;
@@ -91,7 +94,14 @@ public class AntuHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         AntuResponse<String> response = antuService.cancelInboundBill(cancelInboundReq.getReceivingCode());
         return isSuccess(response.getAsk()) ? success(response.getData()) : failure(response.getMessage());
     }
-
+    @Override
+    public ApiResult<List<ThirdWarehouseCalculateFeeResponse>> getCalculateFeeBatch(@Valid ThirdWarehouseCalculateFeeReq calculateFeeReq) {
+        AntuCalculateFeeReq antuCalculateFeeReq = ThirdWarehouseConverter.INSTANCE.reqToAntuCalculateFeeReq(calculateFeeReq);
+        AntuResponse<List<AntuCalculateFeeResp>> response = antuService.getCalculateFeeBatch(antuCalculateFeeReq);
+        List<AntuCalculateFeeResp> antuCalculateFeeRespList = response.getData();
+        List<ThirdWarehouseCalculateFeeResponse> dataList = ThirdWarehouseConverter.INSTANCE.antuResToThirdWarehouseResponse(antuCalculateFeeRespList);
+        return isSuccess(response.getAsk()) ? success(dataList) : failure(response.getMessage());
+    }
     @Override
     public ApiResult<String> createOutboundBill(ThirdWarehouseCreateOutboundReq createOutboundReq) {
         AntuCreateOutboundReq antuCreateOutboundReq = OverseasWarehouseInboundConverter.INSTANCE.outboundDtoToAntu(createOutboundReq);

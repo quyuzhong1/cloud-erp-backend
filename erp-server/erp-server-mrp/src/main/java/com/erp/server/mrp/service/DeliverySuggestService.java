@@ -176,4 +176,20 @@ public interface DeliverySuggestService extends SuperService<DeliverySuggestEnti
      * @return List<DeliverySuggestWarehouseDTO>
      */
     List<DeliverySuggestDTO.DeliverySuggestWarehouseDTO> listOverseasWarehouse(List<String> ids);
+    /**
+     * 添加tab列表
+     * @author will
+     * @date 2024/12/16 15:22
+     * @param dto
+     * @return List<TabListDTO>
+     */
+    List<DeliverySuggestDTO.TabListDTO> tabList(DeliverySuggestDTO.TabListParamDTO dto);
+    /**
+     * 平台类型下平台
+     * @author will
+     * @date 2024/12/18 9:21
+     * @param dto
+     * @return List<PlatformDTO>
+     */
+    List<DeliverySuggestDTO.PlatformDTO> listPlatformByPlatformType(DeliverySuggestDTO.PlatformTypeParamDTO dto);
 }

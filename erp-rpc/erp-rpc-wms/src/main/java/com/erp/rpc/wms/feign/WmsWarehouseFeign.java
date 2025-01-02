@@ -1,6 +1,7 @@
 package com.erp.rpc.wms.feign;
 
 import com.erp.model.wms.dto.WarehouseDTO;
+import com.erp.model.wms.entity.WarehouseEntity;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -25,6 +26,13 @@ public interface WmsWarehouseFeign {
      */
     @PostMapping("/listByIds")
     List<WarehouseDTO.ListDTO> listByIds(@RequestBody List<String> ids);
+    /**
+     * 根据仓库名称获取仓库信息
+     * @param warehouseNameList
+     * @return
+     */
+    @PostMapping("/listByWarehouseNameList")
+    List<WarehouseEntity> listByWarehouseNameList(@RequestBody List<String> warehouseNameList);
 }
 
 

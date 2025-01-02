@@ -74,19 +74,6 @@ public interface DeliveryOrderService extends SuperService<DeliveryOrderEntity> 
 
     DeliveryOrderDTO.ViewDTO viewByCode(String code);
 
-    /**
-     * 汇总待发货列表统计
-     * @param
-     * @return
-     */
-    List<DeliveryOrderDTO.WaitDeliveryCountDTO> buildSrmWaitDeliveryCount();
-    /**
-     * 汇总待发货列表统计
-     * @param waitDeliveryCountDTO
-     * @return
-     */
-    List<DeliveryOrderDTO.WaitDeliveryCountDTO> buildSrmWaitDeliveryCount(PurchaseOrderSrmDTO.WaitDeliveryCountDTO waitDeliveryCountDTO);
-
     Boolean importExcel(MultipartFile excelFile, HttpServletResponse response);
 
     void saveImport(List<Pair<DeliveryOrderEntity, List<DeliveryOrderDetailEntity>>> addList);

@@ -9,8 +9,11 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.tms.dto.LogisticsServicePlatformDTO;
+import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
 import com.erp.model.tms.entity.LogisticsServicePlatformEntity;
+import com.erp.server.tms.convert.LogisticsServiceConverter;
 import com.erp.server.tms.mapper.LogisticsServicePlatformMapper;
+import com.erp.server.tms.service.LogisticsSaleChannelService;
 import com.erp.server.tms.service.LogisticsServicePlatformService;
 import com.erp.server.tms.service.OperateLogService;
 import io.seata.spring.annotation.GlobalTransactional;
@@ -36,6 +39,8 @@ import java.util.stream.Collectors;
 public class LogisticsServicePlatformServiceImpl extends SuperServiceImpl<LogisticsServicePlatformMapper, LogisticsServicePlatformEntity> implements LogisticsServicePlatformService {
     @Resource
     private OperateLogService operateLogService;
+    @Resource
+    private LogisticsSaleChannelService logisticsSaleChannelService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -94,15 +99,9 @@ public class LogisticsServicePlatformServiceImpl extends SuperServiceImpl<Logist
 
     @Override
     public List<LogisticsServicePlatformDTO.ServiceNameDTO> listServiceNameByLogisticsPlatform(String logisticsPlatform) {
-        List<LogisticsServicePlatformEntity> dbList = listByPlatform(logisticsPlatform);
-        List<String> nameList = dbList.stream().map(LogisticsServicePlatformEntity::getServiceName).distinct().collect(Collectors.toList());
-        List<LogisticsServicePlatformDTO.ServiceNameDTO> list = new ArrayList<>(nameList.size());
-        for (String item : nameList) {
-            LogisticsServicePlatformDTO.ServiceNameDTO serviceNameDTO = new LogisticsServicePlatformDTO.ServiceNameDTO();
-            serviceNameDTO.setServiceName(item);
-            list.add(serviceNameDTO);
-        }
-        return list;
+        //获取原始渠道更新的渠道服务数据
+        List<LogisticsSaleChannelEntity> logisticsSaleChannelEntityList = logisticsSaleChannelService.listByLogisticsPlatform(logisticsPlatform, "oms");
+        return LogisticsServiceConverter.INSTANCE.convertToServiceName(logisticsSaleChannelEntityList);
     }
 
 

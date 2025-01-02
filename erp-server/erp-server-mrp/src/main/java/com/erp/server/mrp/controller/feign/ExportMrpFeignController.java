@@ -5,6 +5,7 @@ import com.common.business.dto.DynamicExcelDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.erp.model.mrp.dto.*;
+import com.erp.server.mrp.handler.DeliverySuggestionQueryHandler;
 import com.erp.server.mrp.handler.OverseasHistoryInventoryHandler;
 import com.erp.server.mrp.handler.ReplenishmentSuggestionQueryHandler;
 import com.erp.server.mrp.service.*;
@@ -14,6 +15,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
+import java.util.List;
 
 @RestController
 @RequestMapping("/feign/export")
@@ -129,7 +131,7 @@ public class ExportMrpFeignController {
      * @return PagingVO<ListDTO>
      */
     @PostMapping("/pagingDeliverySuggestion")
-    @WebAdvanceQuery
+    @WebAdvanceQuery(handler = DeliverySuggestionQueryHandler.class)
     public PagingVO<DeliverySuggestDTO.ListDTO> pagingDeliverySuggestion(@RequestBody PagingDTO<DeliverySuggestDTO.PagingParamDTO> dto) {
         return deliverySuggestService.paging(dto);
     }
@@ -150,8 +152,8 @@ public class ExportMrpFeignController {
      * @param dto 参数
      */
     @PostMapping("/exportCalcHistorySale")
-    public PagingVO<CfgRuleCalcDTO.HistorySaleDTO> exportCalcHistorySale(@RequestBody PagingDTO<CfgRuleCalcDTO.DownloadDTO> dto) {
-        return replenishmentSuggestionService.exportCalcHistorySale(dto);
+    public List<CfgRuleCalcDTO.HistorySaleDTO> exportCalcHistorySale(@RequestBody CfgRuleCalcDTO.DownloadDTO dto) {
+        return replenishmentSuggestionService.exportCalcHistorySale(dto, dto.getSearchAfterValues());
     }
 
     /**
@@ -189,5 +191,15 @@ public class ExportMrpFeignController {
     @WebAdvanceQuery
     public PagingVO<VirtualInventoryHistoryDTO.ListDTO> getVirtualInventory(@RequestBody PagingDTO<VirtualInventoryHistoryDTO.SearchParamDTO> dto){
         return virtualInventoryHistoryService.getVirtualInventory(dto);
+    }
+
+    /**
+     * 导出试算列表
+     * @param dto 参数
+     */
+    @PostMapping("/exportMrpSalesCalcList")
+    @WebAdvanceQuery
+    public PagingVO<CalcSalesInfoDimDTO.ExportSalesInfoListDTO> exportMrpSalesCalcList(@RequestBody PagingDTO<CalcSalesInfoDimDTO.ParamDTO> dto) {
+        return calcSalesInfoDimService.exportMrpSalesCalcList(dto);
     }
 }

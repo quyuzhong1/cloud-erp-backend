@@ -1,5 +1,6 @@
 package com.erp.model.oms.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.annotation.Dict;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
@@ -340,6 +341,26 @@ public class SoB2cDTO implements Serializable {
          * 国家代号
          */
         private String country;
+        /**
+         * 省份编码
+         */
+        private String province;
+        /**
+         * 省份名称
+         */
+        private String provinceName;
+        /**
+         * 城市编码
+         */
+        private String city;
+        /**
+         * 城市名称
+         */
+        private String cityName;
+        /**
+         * 邮编
+         */
+        private String postCode;
 
         /**
          * 是否对接了第三方海外仓
@@ -561,6 +582,26 @@ public class SoB2cDTO implements Serializable {
          */
         private String weightUnit;
         /**
+         * 包装长度单位
+         */
+        private String sizeUnit;
+        /**
+         * 包装 长
+         */
+        private BigDecimal length;
+        /**
+         * 包装 宽
+         */
+        private BigDecimal width;
+        /**
+         * 包装 高
+         */
+        private BigDecimal height;
+        /**
+         * 发货仓库id
+         */
+        private String fromWarehouseId;
+        /**
          * 审核时间
          */
         private LocalDateTime approveTime;
@@ -597,6 +638,10 @@ public class SoB2cDTO implements Serializable {
          */
         private Boolean isManualDelivery;
         /**
+         * 是否预估运费超限，是：true  否：false
+         */
+        private Boolean isOverEstimatedShipCost;
+        /**
          * 标签
          */
         private Boolean tag;
@@ -610,6 +655,11 @@ public class SoB2cDTO implements Serializable {
          * 面单打印时间
          */
         private LocalDateTime finishPrintTime;
+
+        /**
+         * 是否超出范围派送
+         */
+        private Boolean isOutOfRangeDelivery;
     }
 
     @Data
@@ -1068,7 +1118,15 @@ public class SoB2cDTO implements Serializable {
          * 接口：oms/common/enumDropDown?type=OrderSubType
          */
         private String transactionSubType;
+        /**
+         * 第三方编号
+         */
+        private String thirdCode;
 
+        /**
+         * 第三方来源系统
+         */
+        private String thirdSystem;
     }
 
 
@@ -1098,8 +1156,10 @@ public class SoB2cDTO implements Serializable {
          */
         private Boolean autoGetTrackNo;
 
-
-
+        /**
+         *是否自动获取跟踪号提交发货（非超范围派送订单）
+         */
+        private Boolean autoGetTrackNotOfRangeDelivery;
     }
 
     /**
@@ -1910,6 +1970,22 @@ public class SoB2cDTO implements Serializable {
          * 仓库名称
          */
         private String warehouseName;
+        /**
+         * 成本来源
+         */
+        private String costSource;
+        /**
+         * 材料成本（本位币）
+         */
+        private BigDecimal productCost;
+        /**
+         * 头程运费（本位币）
+         */
+        private BigDecimal firstMileShippingCost;
+        /**
+         * 清关税费（本位币）
+         */
+        private BigDecimal clearanceCustomsTax;
     }
 
     /**
@@ -3228,5 +3304,52 @@ public class SoB2cDTO implements Serializable {
          * skuNo
          */
         private String skuNo;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class LogisticsDTO {
+        //销售订单id
+        private String id;
+        //销售订单编码
+        private String code;
+        //订单金额
+        private BigDecimal amount;
+        //币别
+        private String currency;
+        // 汇率
+        private BigDecimal exchangeRate;
+        /**
+         * 是否预估运费超限，是：true  否：false
+         */
+        private Boolean isOverEstimatedShipCost;
+        //渠道id
+        private String logisticsChannelId;
+        //发货仓库id
+        private String warehouseId;
+        //长
+        private BigDecimal length;
+        //宽
+        private BigDecimal width;
+        //高
+        private BigDecimal height;
+        //重量
+        private BigDecimal weight;
+        //重量单位
+        private String weightUnit;
+        //预估运费
+        private BigDecimal estimatedShippingCost;
+        //预估运费币种
+        private String estimatedShippingCurrency;
+        //国家二字码
+        private String country;
+        //国家名称
+        private String countryName;
+        //城市名称
+        private String cityName;
+        //邮编
+        private String postCode;
+        //省
+        private String provinceName;
     }
 }

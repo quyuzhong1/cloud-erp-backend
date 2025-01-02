@@ -653,7 +653,6 @@ public class SyncTaskServiceImpl implements SyncTaskService {
 
         List<String> subPlatformType = customerInfoEntities.stream().map(req -> req.getPlatformType()).distinct().collect(Collectors.toList());
         List<DictBasicEntity> dictList = dictBasicService.lambdaQuery().eq(DictBasicEntity::getType, "sdySubPlatform").in(DictBasicEntity::getName, subPlatformType).list();
-
         for (DmpSyncMqDTO.SyncParamDetailDTO syncParamDetailDTO :  sourceDetailList) {
         	String sourceId = syncParamDetailDTO.getSourceId();
             SoDetailEntity soDetailEntity = soDetailEntityList.stream().filter(req -> req.getId().equalsIgnoreCase(sourceId)).findFirst().orElse(null);
@@ -668,7 +667,7 @@ public class SyncTaskServiceImpl implements SyncTaskService {
             if (CollUtil.isEmpty(detailEntityList)) {
                 continue;
             }
-            resultList.put(syncParamDetailDTO.getDataId(), syncKingdeeSoService.syncDataToSdyFieldHandler(soInfoEntity, soDetailEntity, detailEntityList, syncParamDetailDTO.getSyncOperate(), skuVOList, bomChildrenSkuDTOS, parentSkuList, customerInfoEntities, companyEntities, dictBasicEntityList, currencyList, soChangeDetailEntities, "", dictList));
+            resultList.put(syncParamDetailDTO.getDataId(), syncKingdeeSoService.syncDataToSdyFieldHandler(soInfoEntity, soDetailEntity, detailEntityList, syncParamDetailDTO.getSyncOperate(), skuVOList, bomChildrenSkuDTOS, parentSkuList, customerInfoEntities, companyEntities, dictBasicEntityList, currencyList, soChangeDetailEntities, dictList));
         }
         return resultList;
     }

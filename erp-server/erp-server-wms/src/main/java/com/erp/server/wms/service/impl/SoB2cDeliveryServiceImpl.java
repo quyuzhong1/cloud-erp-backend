@@ -378,7 +378,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
                         soB2cEntity.getDictPlatform(),
                         soB2cEntity.convertSubmitPlatformUniqueKey(),
                         id,
-                        businessDesc, false);
+                        businessDesc, false, false);
             } else {
                 log.warn("【{}】未达到条件:忽略标记平台发货", soB2cEntity.getCode());
             }
@@ -446,7 +446,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
                     soB2cEntity.getDictPlatform(),
                     soB2cEntity.convertSubmitPlatformUniqueKey(),
                     id,
-                    businessDesc, true);
+                    businessDesc, true, false);
         } else {
             log.warn("【{}】未达到条件:忽略标记平台发货", soB2cEntity.getCode());
         }
@@ -1226,7 +1226,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
                     soB2cEntity.getDictPlatform(),
                     soB2cEntity.convertSubmitPlatformUniqueKey(),
                     id,
-                    businessDesc, true);
+                    businessDesc, true, false);
         } else {
             log.warn("【{}】未达到条件:忽略标记平台发货", soB2cEntity.getCode());
         }
@@ -1644,7 +1644,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
                 platformShipOrderDTO.getDictPlatform(),
                 platformShipOrderDTO.getSoB2cId(),
                 platformShipOrderDTO.getSubmitPlatformUniqueKey(),
-                businessDesc, platformShipOrderDTO.isFalseDeliveryFlag());
+                businessDesc, platformShipOrderDTO.isFalseDeliveryFlag(), platformShipOrderDTO.isHasNotOutStock());
         return true;
     }
 
@@ -1997,6 +1997,8 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
             //提交发货冻结虚拟库存
             freezeVirtualInventory(soB2cDeliveryEntity,detailList);
         }
+        //发货出库
+        outFreezeVirtualInventory(soB2cDeliveryEntity);
         return BatchResultDTO.success(soB2cDeliveryEntity.getId(), soB2cDeliveryEntity.getCode(), "操作成功");
     }
 
@@ -2011,6 +2013,53 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         fillList(page.getRecords());
         return new PagingVO<>(page);
     }
+
+    /**
+     * 虚拟仓从冻结出库
+     * @author will
+     * @date 2024/7/17 11:06
+     * @param entity
+     */
+    private Boolean outFreezeVirtualInventory (SoB2cDeliveryEntity entity) {
+        List<SoB2cDeliveryDetailEntity> soB2cDeliveryDetailList = soB2cDeliveryDetailService.listByMainIds(Collections.singletonList(entity.getId()));
+        if (CollectionUtils.isEmpty(soB2cDeliveryDetailList)) {
+            throw new ServiceException(ApiError.TIME_NOT_NULL,"发货明细");
+        }
+        List<VirtualInventoryStockDTO.OutInStockDTO> paramList = new ArrayList<>();
+        for (SoB2cDeliveryDetailEntity detailEntity : soB2cDeliveryDetailList) {
+            VirtualInventoryStockDTO.OutInStockDTO outInStockDTO = new VirtualInventoryStockDTO.OutInStockDTO();
+            outInStockDTO.setSourceType(InventorySourceTypeEnum.SO_B2C_DELIVERY);
+            outInStockDTO.setSourceId(entity.getId());
+            outInStockDTO.setSourceCode(entity.getCode());
+            outInStockDTO.setSourceDetailId(detailEntity.getId());
+            //重试时需要按照发货单的发货时间调拨
+            if(entity.getDeliveryTime() == null){
+                throw new ServiceException("发货单发货时间不能为空");
+            }
+            outInStockDTO.setBillDate(entity.getDeliveryTime().toLocalDate());
+            outInStockDTO.setSkuId(detailEntity.getSkuId());
+            outInStockDTO.setSkuNo(detailEntity.getSkuNo());
+            outInStockDTO.setQty(detailEntity.getDeliveryQty());
+            outInStockDTO.setWarehouseId(detailEntity.getWarehouseId());
+            if (CharSequenceUtil.isBlank(detailEntity.getVirtualWarehouseId())) {
+                continue;
+            }
+            outInStockDTO.setVirtualWarehouseId(detailEntity.getVirtualWarehouseId());
+            paramList.add(outInStockDTO);
+        }
+        //无虚拟仓库不扣虚拟库存
+        if (CollectionUtils.isEmpty(paramList)) {
+            return Boolean.TRUE;
+        }
+        //减少冻结
+        VirtualInventoryStockDTO.StockParamDTO dto = new VirtualInventoryStockDTO.StockParamDTO();
+        dto.setParamList(paramList);
+        dto.setBusinessType(VirtualInventoryBusinessTypeEnum.SO_OUT_STOCK.getCode());
+        //更新库存
+        virtualInventoryTransCoreService.approve(dto);
+        return  Boolean.TRUE;
+    }
+
 
     /**
      * 生成直接调拨单

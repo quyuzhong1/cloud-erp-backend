@@ -7,10 +7,7 @@ import com.common.business.dto.base.BaseSearchDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.UpdateStateDTO;
 import com.common.business.vo.PagingVO;
-import com.erp.model.plm.dto.FlyingBookReminderDTO;
-import com.erp.model.plm.dto.NoticeMessageDTO;
-import com.erp.model.plm.dto.PilotApplicationDTO;
-import com.erp.model.plm.dto.UserNoticeNodeDTO;
+import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.NoticeMessageEntity;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.entity.ProjectTaskEntity;
@@ -309,4 +306,8 @@ public interface NoticeMessageService extends IService<NoticeMessageEntity> {
 
     List<String> getSetPilotNotice(NoticeMessageEntity notice, PilotApplicationDTO.ApprovePilotNoticeDTO entity, Boolean isCompeletd);
 
+    /**
+     * 模具通知
+     */
+    void mouldInfoNotice(NoticeEnum noticeEnum, MouldInfoDTO.NoticeDTO noticeDTO, String message);
 }

@@ -342,6 +342,36 @@ public class SoB2cEntity extends BaseEntity<SoB2cEntity> {
     @TableField("transaction_sub_type")
     private String transactionSubType = "onlineOrder";
 
+    /**
+     * 是否超范围派送，是：true  否：false
+     */
+    @TableField("is_out_of_range_delivery")
+    private Boolean isOutOfRangeDelivery;
+
+    /**
+     * 是否预估运费超限，是：true  否：false
+     */
+    @TableField("is_over_estimated_ship_cost")
+    private Boolean isOverEstimatedShipCost;
+
+    /**
+     * 销售出库时间  来源：销售出库单的bill_date
+     */
+    @TableField("so_outstock_date")
+    private LocalDate soOutstockDate;
+
+    /**
+     * 第三方编号
+     */
+    @TableField("third_code")
+    private String thirdCode;
+
+    /**
+     * 第三方来源系统
+     */
+    @TableField("third_system")
+    private String thirdSystem;
+
     public static final String CODE = "code";
 
     public static final String APPROVE_STATUS = "approve_status";
@@ -457,6 +487,18 @@ public class SoB2cEntity extends BaseEntity<SoB2cEntity> {
                 SoB2cDTO.LabelDTO labelJsonDTO = JSONUtil.toBean(this.labelJson, SoB2cDTO.LabelDTO.class);
                 //平台仓发货
                 return "fulfillment".equalsIgnoreCase(labelJsonDTO.getLogisticType());
+            }
+        }
+        if(PlatformDictEnum.TE_MU.getCode().equalsIgnoreCase(this.dictPlatform)
+        ||PlatformDictEnum.RAKUTEN.getCode().equalsIgnoreCase(this.dictPlatform)
+        ||PlatformDictEnum.EBAY.getCode().equalsIgnoreCase(this.dictPlatform)){
+            if (StrUtil.isNotBlank(this.labelJson)) {
+                SoB2cDTO.LabelDTO labelJsonDTO = JSONUtil.toBean(this.labelJson, SoB2cDTO.LabelDTO.class);
+                if(Objects.isNull(labelJsonDTO.getIsPlatformWarehouseOrder())){
+                    return false;
+                }
+                //平台仓发货
+                return labelJsonDTO.getIsPlatformWarehouseOrder();
             }
         }
         return false;

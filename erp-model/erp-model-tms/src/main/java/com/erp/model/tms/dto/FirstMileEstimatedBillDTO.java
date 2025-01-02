@@ -305,5 +305,9 @@ public class FirstMileEstimatedBillDTO implements Serializable {
          * 物流单ID
          */
         private String logisticsBillId;
+        /**
+         * 币种
+         */
+        private String currency;
     }
 }

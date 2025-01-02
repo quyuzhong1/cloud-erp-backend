@@ -2089,4 +2089,12 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
             this.lambdaUpdate().eq(TmsFirstMileReconciliationDetailEntity::getId, e.getId()).set(TmsFirstMileReconciliationDetailEntity::getTotalLogisticsCost, e.getTotalLogisticsCost()).update();
         });
     }
+
+    @Override
+    public List<TmsFirstMileReconciliationDetailEntity> listByRelationCode(List<String> relationCodeList) {
+        if (CollUtil.isEmpty(relationCodeList)) {
+            return Collections.emptyList();
+        }
+        return lambdaQuery().in(TmsFirstMileReconciliationDetailEntity::getRelationCode, relationCodeList).list();
+    }
 }

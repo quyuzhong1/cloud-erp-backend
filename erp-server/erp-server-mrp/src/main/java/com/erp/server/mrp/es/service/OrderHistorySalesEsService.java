@@ -1,5 +1,6 @@
 package com.erp.server.mrp.es.service;
 
+import cn.hutool.json.JSONArray;
 import com.erp.model.mrp.dto.ReplenishmentResultDTO;
 import com.erp.server.mrp.es.entity.OrderHistorySalesEsEntity;
 import org.springframework.data.domain.Page;
@@ -37,7 +38,7 @@ public interface OrderHistorySalesEsService {
      * @param startDate        开始日期
      * @param endDate          结束日期
      */
-    Map<String, Integer> countQtyByReplenishmentIdsAndDate(List<String> replenishmentIds, String orderType, LocalDate startDate, LocalDate endDate);
+    Map<String, Integer> countQtyByReplenishmentIdsAndDate(List<String> replenishmentIds, JSONArray orderType, LocalDate startDate, LocalDate endDate);
 
 
     /**
@@ -47,10 +48,10 @@ public interface OrderHistorySalesEsService {
      * @param startDate        开始日期
      * @param endDate          结束日期
      */
-    List<ReplenishmentResultDTO.SalesHistoryDTO> listByReplenishmentIdsAndDate(List<String> suggestionIdList, String orderType, LocalDate startDate, LocalDate endDate);
+    List<ReplenishmentResultDTO.SalesHistoryDTO> listByReplenishmentIdsAndDate(List<String> suggestionIdList, JSONArray orderType, LocalDate startDate, LocalDate endDate);
 
 
-    List<OrderHistorySalesEsEntity> getRecentSalesBySuggestionIds(Set<String> suggestionIds, String orderType);
+    List<OrderHistorySalesEsEntity> getRecentSalesBySuggestionIds(Set<String> suggestionIds, JSONArray orderType);
 
     /**
      * 删除原数据
@@ -64,7 +65,7 @@ public interface OrderHistorySalesEsService {
      * 获取最近有销量数据
      * @param orderType 订单类型
      */
-    Map<String, Integer> listByType(String orderType);
+    Map<String, Integer> listByType(JSONArray orderType);
 
 
     /**
@@ -84,7 +85,7 @@ public interface OrderHistorySalesEsService {
      * @param startDate 开始时间
      * @param endDate   结束时间
      */
-    Page<OrderHistorySalesEsEntity> findByShopIdInAndSkuIdInAndDateBetween(List<String> shopIds, List<String> skuIds, LocalDate startDate, LocalDate endDate, Pageable pageable);
+    List<OrderHistorySalesEsEntity> findByShopIdInAndSkuIdInAndDateBetween(List<String> shopIds, List<String> skuIds, LocalDate startDate, LocalDate endDate, Object[] searchAfterValues);
 
 
     /**
@@ -96,4 +97,29 @@ public interface OrderHistorySalesEsService {
      * @param endDate   结束时间
      */
     List<OrderHistorySalesEsEntity> findByShopIdAndSkuIdAndDateBetween(String shopId, String skuId, LocalDate startDate, LocalDate endDate);
+
+    /**
+     * 根据sku查询有销量店铺
+     * @param params 参数
+     */
+    List<String> hasSalesShopBySku(List<String> params);
+
+    /**
+     * 根据店铺查询有销量sku
+     * @param params 参数
+     */
+    List<String> hasSalesSkuByShop(List<String> params);
+
+    /**
+     * 删除历史数据
+     * @param startDate 开始日期
+     * @param endDate 结束日期
+     */
+    void deleteByDateBetween(LocalDate startDate, LocalDate endDate);
+
+    /**
+     * 根据店铺查询有销量sku
+     * @param shopIds 店铺
+     */
+    Map<String, Set<String>> listSkuByShopId(Set<String> shopIds);
 }

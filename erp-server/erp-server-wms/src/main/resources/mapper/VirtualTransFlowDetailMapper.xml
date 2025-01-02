@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.wms.mapper.VirtualTransFlowDetailMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.wms.entity.VirtualTransFlowDetailEntity">
+       <result column="id" property="id" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_time" property="createTime" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_time" property="updateTime" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="qty" property="qty" />
+       <result column="cur_inventory_qty" property="curInventoryQty" />
+       <result column="virtual_trans_flow_id" property="virtualTransFlowId" />
+       <result column="virtual_inventory_detail_id" property="virtualInventoryDetailId" />
+       <result column="trade_time" property="tradeTime" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        vtfd.id,
+        vtfd.create_user_id,
+        vtfd.create_user_name,
+        vtfd.create_time,
+        vtfd.update_user_id,
+        vtfd.update_user_name,
+        vtfd.update_time,
+        vtfd.version,
+        vtfd.is_deleted,
+        vtfd.qty, vtfd.cur_inventory_qty, vtfd.virtual_trans_flow_id, vtfd.virtual_inventory_detail_id, vtfd.trade_time
+    </sql>
+
+    <!-- 分页查询 -->
+    <select id="paging" resultType="com.erp.model.wms.dto.VirtualTransFlowDetailDTO$ListDTO">
+        select vm.*, pd.sku_no as skuNo,pd.name as productName, wh.name as warehouseName,  vw.code as virtualWarehouseCode,vw.name as virtualWarehouseName from  (select
+        vtf.sku_id as skuId,
+        vtf.warehouse_id as warehouseId,
+        vtf.virtual_warehouse_id as virtualWarehouseId,
+        vtfd.bill_date as date,
+        vtf.transaction_no as transactionNo,
+        vtfd.trade_time as tradeTime,
+        vtf.source_type as sourceType,
+        vtf.source_code as sourceCode,
+        vtf.dict_inventory_status as dictInventoryStatus,
+        vtfd.qty,
+        case when vtfd.qty > 0 then '入库' else '出库' end as operateTypeName,
+        vid.batch_no as batchNo,
+        vtfd.cur_inventory_qty as waitBatchQty,
+        vid.last_outstock_date,
+        vtfd.update_time as updateTime,
+        vid.bill_date
+        from virtual_trans_flow_detail vtfd
+        inner join virtual_trans_flow vtf on vtfd.virtual_trans_flow_id = vtf.id and vtf.is_deleted = false
+        inner join virtual_inventory_detail vid on vtfd.virtual_inventory_detail_id = vid.id  and vid.is_deleted = false
+        where vtfd.is_deleted = false
+        union all
+        select
+        vid.sku_id as skuId,
+        vid.warehouse_id as warehouseId,
+        vid.virtual_warehouse_id as virtualWarehouseId,
+        vidh.date as date,
+        '' as transactionNo,
+        vid.trade_time as tradeTime,
+        '' as sourceType,
+        '' as sourceCode,
+        '' as dictInventoryStatus,
+        null as qty,
+        '转结' as operateTypeName,
+        vid.batch_no as batchNo,
+        vidh.qty as waitBatchQty,
+        vid.last_outstock_date as last_outstock_date,
+        vidh.update_time as updateTime,
+        vid.bill_date
+        from 	virtual_inventory_detail_his vidh
+        left join virtual_inventory_detail vid on vidh.virtual_inventory_detail_id = vid.id and vid.is_deleted = false
+        where vidh.is_deleted = false) vm
+        left join product_detail pd on vm.skuId = pd.id and pd.is_deleted = false
+        left join warehouse wh on vm.warehouseId = wh.id and wh.is_deleted = false
+        left join virtual_warehouse vw on vm.virtualWarehouseId = vw.id and vw.is_deleted = false
+        <where>
+            ${params.sqlMap.default}
+        </where>
+        order by
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        tradeTime desc,batchNo desc,case when operateTypeName = '转结' then 2 else 1 end,date asc
+    </select>
+
+    <!-- 查询即时库存明细id -->
+    <select id="listVirtualInventoryDetailIdList" resultType="java.lang.String">
+        select
+            distinct virtual_inventory_detail_id
+        from virtual_trans_flow_detail
+        where is_deleted = false
+        <if test="skuId != null and skuId != ''">
+            and sku_id = #{skuId}
+        </if>
+        <if test="virtualInventoryDetailId != null and virtualInventoryDetailId != ''">
+            and virtual_inventory_detail_id = #{virtualInventoryDetailId}
+        </if>
+        <if test="virtualWarehouseId != null and virtualWarehouseId != ''">
+            and virtual_warehouse_id = #{virtualWarehouseId}
+        </if>
+        <if test="warehouseId != null and warehouseId != ''">
+            and warehouse_id = #{warehouseId}
+        </if>
+        <if test="fromTable != null and fromTable != ''">
+            and virtual_inventory_detail_id in (select virtual_inventory_detail_id from virtual_inventory_detail_temp)
+        </if>
+    </select>
+
+    <!-- 查询虚拟仓明细库存 -->
+    <select id="virtualDetailQty" resultType="java.lang.Integer">
+        select
+            sum(qty) as virtualDetailQty
+        from virtual_trans_flow_detail
+        where is_deleted = false and virtual_inventory_detail_id = #{virtualInvDetailId} and #{startDate} > bill_date
+        group by virtual_inventory_detail_id
+    </select>
+
+    <!-- 查询历史库龄库存 -->
+    <select id="listHisByOldParam" resultType="com.erp.model.wms.entity.VirtualTransFlowDetailEntity">
+        select
+            <include refid="Base_Column_List" />
+        from virtual_trans_flow_detail vtfd
+        left join virtual_inventory_detail vid on vtfd.virtual_inventory_detail_id = vid.id and vid.is_deleted = false
+        where vtfd.is_deleted = false and  0 > vtfd.qty
+        and vid.sku_id = #{paramDTO.skuId} and vid.warehouse_id = #{paramDTO.warehouseId}
+        and vid.virtual_warehouse_id = #{paramDTO.virtualWarehouseId} and  vtfd.trade_time >= #{paramDTO.tradeTime}
+    </select>
+
+
+</mapper>
