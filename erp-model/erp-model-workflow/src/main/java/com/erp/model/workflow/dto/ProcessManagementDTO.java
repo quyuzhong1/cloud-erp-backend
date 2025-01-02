@@ -2,6 +2,7 @@ package com.erp.model.workflow.dto;
 
 import cn.hutool.core.text.CharSequenceUtil;
 import com.common.business.dto.AdvanceQueryDTO;
+import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.ApproveTypeEnum;
@@ -692,6 +693,16 @@ public class ProcessManagementDTO {
         private String processName;
 
         private List<String> ids;
+
+        /**
+         * 页面高级查询
+         */
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
+
+        /**
+         * sqlMap 默认key default
+         */
+        private Map<String, String> sqlMap;
 
     }
     @Data
