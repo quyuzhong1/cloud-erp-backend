@@ -30,21 +30,22 @@ public interface AsyncService {
      * 异步标记发货
      * (包含成功单据去重)
      *
-     * @param soId              B2C订单ID
-     * @param soCode            B2C订单单号
-     * @param dictPlatform      平台
-     * @param submitPlatformUniqueKey    提交平台唯一key
-     * @param sourceDTOJson     来源DTO JSON
-     * @param businessDesc      当前触发的业务描述
+     * @param soId                    B2C订单ID
+     * @param soCode                  B2C订单单号
+     * @param dictPlatform            平台
+     * @param submitPlatformUniqueKey 提交平台唯一key
+     * @param sourceDTOJson           来源DTO JSON
+     * @param businessDesc            当前触发的业务描述
      * @param falseDeliveryFlag
+     * @param hasNotOutstock
      */
-    void asyncShipOrder(String soId, String soCode, String dictPlatform, String submitPlatformUniqueKey, String sourceDTOJson, String businessDesc, boolean falseDeliveryFlag);
+    void asyncShipOrder(String soId, String soCode, String dictPlatform, String submitPlatformUniqueKey, String sourceDTOJson, String businessDesc, boolean falseDeliveryFlag, boolean hasNotOutstock);
 
 
     /**
      * 提交平台标记发货
      */
-    List<String> submitShipOrder(String soId, String dictPlatform, boolean falseDeliveryFlag, String submitPlatformUniqueKey);
+    List<String> submitShipOrder(String soId, String dictPlatform, boolean falseDeliveryFlag, String submitPlatformUniqueKey,boolean hasNotOutStock);
     /**
      * 自动出库
      * @author will

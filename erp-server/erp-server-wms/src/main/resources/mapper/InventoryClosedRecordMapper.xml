@@ -32,5 +32,9 @@
         closed_date, inventory_org_id, inventory_org_name, inventory_org_desc
     </sql>
 
+    <select id="getMinClosedDate" resultType="java.time.LocalDate">
+        select min(closed_date) from inventory_closed_record where is_deleted = false and category = 'STK'
+    </select>
+
 
 </mapper>

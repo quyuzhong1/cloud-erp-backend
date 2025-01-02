@@ -272,6 +272,17 @@ public class PlatformOrderDTO extends UniqueDto {
     private String cancelGoodsCurrency;
 
     /**
+     * 第三方来源系统
+     */
+    private String thirdSystem = "";
+
+    /**
+     * 第三方编号
+     */
+    private String thirdCode = "";
+
+
+    /**
      * 检查订单新增作废状态
      */
     public Boolean checkInsertInvalidStatus() {

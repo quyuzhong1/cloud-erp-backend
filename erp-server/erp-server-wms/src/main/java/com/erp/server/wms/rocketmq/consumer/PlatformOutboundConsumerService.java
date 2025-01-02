@@ -1,8 +1,6 @@
 package com.erp.server.wms.rocketmq.consumer;
 
-import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.text.CharSequenceUtil;
-import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.common.business.constant.BusinessNoConstant;
 import com.common.business.dto.DmpSyncMqDTO;
@@ -29,15 +27,12 @@ import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.server.wms.service.AsyncService;
 import com.erp.server.wms.service.SoOutstockService;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.rocketmq.spring.annotation.ConsumeMode;
 import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import javax.json.JsonObject;
 import java.util.Objects;
 
 /**
@@ -149,7 +144,7 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
                             mainEntity.getDictPlatform(),
                             mainEntity.convertSubmitPlatformUniqueKey(),
                             JSONUtil.toJsonStr(dto),
-                            businessDesc, false);
+                            businessDesc, false, false);
                 }
             }
             //清除三方仓异常

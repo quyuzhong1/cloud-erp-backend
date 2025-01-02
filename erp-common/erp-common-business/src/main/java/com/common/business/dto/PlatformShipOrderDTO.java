@@ -40,4 +40,9 @@ public class PlatformShipOrderDTO {
      * 是否查询拆分前的原订单
      */
     private boolean hasFindSourcePlatformOrder = false;
+
+    /**
+     * 是否不出库发货
+     */
+    private boolean hasNotOutStock;
 }
