@@ -1019,6 +1019,9 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             //bom最小可用数
             Integer bomUsableQty = childScarceList.stream().min(Comparator.comparing(SoInfoDTO.VirtualChildScarceDTO::getParentUsableQty)).map(SoInfoDTO.VirtualChildScarceDTO::getParentUsableQty).get();
             item.setVirtualUsableQty(bomUsableQty);
+            //缺货数量
+            Integer virtualScarceQty = childScarceList.stream().max(Comparator.comparing(SoInfoDTO.VirtualChildScarceDTO::getVirtualScarceQty)).map(SoInfoDTO.VirtualChildScarceDTO::getVirtualScarceQty).get();
+            item.setVirtualScarceQty(virtualScarceQty);
         }
     }
 
