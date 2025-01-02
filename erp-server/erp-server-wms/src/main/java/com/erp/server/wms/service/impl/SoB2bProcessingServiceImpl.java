@@ -129,33 +129,49 @@ public class SoB2bProcessingServiceImpl extends SuperServiceImpl<SoB2bProcessing
 
         List<SoB2bProcessingDTO.AddOrUpdateDTO> addList = new ArrayList<>();
         for (SoB2bProcessingEntity entity :list) {
+
             //根据类型更新出库数据
             handleOutstockByType(machineList,transferList,soOutstockList,entity);
 
-            //bom信息
-            List<BomChildrenSkuDTO> childList = bomChildrenSkuList.stream().filter(obj ->
-                    CharSequenceUtil.equals(obj.getParentSkuId(), entity.getSkuId())
-                    &&  CharSequenceUtil.equals(obj.getType(), BomTypeEnum.COMBINATION.getType())).collect(Collectors.toList());
-            if (CollUtil.isEmpty(childList)) {
-                SoB2bProcessingDTO.AddOrUpdateDTO addDTO = new SoB2bProcessingDTO.AddOrUpdateDTO();
-                BeanMapperUtils.copy(entity,addDTO);
-                addList.add(addDTO);
-                continue;
-            }
-            for (BomChildrenSkuDTO childrenSkuDTO : childList) {
-                SoB2bProcessingDTO.AddOrUpdateDTO addDTO = new SoB2bProcessingDTO.AddOrUpdateDTO();
-                BeanMapperUtils.copy(entity,addDTO);
-                addDTO.setSkuId(childrenSkuDTO.getSkuId());
-                addDTO.setParentSkuId(childrenSkuDTO.getParentSkuId());
-                addDTO.setOutstockQty(ObjectUtil.isEmpty(addDTO.getOutstockQty()) ? MathUtil.ZERO : addDTO.getOutstockQty() * childrenSkuDTO.getQuantity());
-                addDTO.setFrozenQty(ObjectUtil.isEmpty(addDTO.getFrozenQty()) ? MathUtil.ZERO :addDTO.getFrozenQty() * childrenSkuDTO.getQuantity());
-                addDTO.setSoQty(ObjectUtil.isEmpty(addDTO.getSoQty()) ? MathUtil.ZERO :addDTO.getSoQty() * childrenSkuDTO.getQuantity());
-                addDTO.setDeliveryQty(ObjectUtil.isEmpty(addDTO.getDeliveryQty()) ? MathUtil.ZERO :addDTO.getDeliveryQty() * childrenSkuDTO.getQuantity());
-                addDTO.setBomVersion(childrenSkuDTO.getBomVersion());
-                addList.add(addDTO);
-            }
+            //新增数据
+            addBomList(addList,entity,bomChildrenSkuList);
         }
         this.update(addList);
+    }
+
+    /**
+     * 添加bom数据
+     * @author will
+     * @date 2025/1/2 10:55
+     * @param addList
+     * @param entity
+     * @param bomChildrenSkuList
+     */
+    private void addBomList (List<SoB2bProcessingDTO.AddOrUpdateDTO> addList,SoB2bProcessingEntity entity,List<BomChildrenSkuDTO> bomChildrenSkuList) {
+        //bom信息
+        List<BomChildrenSkuDTO> childList = bomChildrenSkuList.stream().filter(obj ->
+                CharSequenceUtil.equals(obj.getParentSkuId(), entity.getSkuId())
+                        &&  CharSequenceUtil.equals(obj.getType(), BomTypeEnum.COMBINATION.getType())).collect(Collectors.toList());
+        if (CollUtil.isEmpty(childList)) {
+            SoB2bProcessingDTO.AddOrUpdateDTO addDTO = new SoB2bProcessingDTO.AddOrUpdateDTO();
+            BeanMapperUtils.copy(entity,addDTO);
+            addDTO.setParentSkuId("");
+            addDTO.setBomVersion("");
+            addList.add(addDTO);
+            return;
+        }
+        for (BomChildrenSkuDTO childrenSkuDTO : childList) {
+            SoB2bProcessingDTO.AddOrUpdateDTO addDTO = new SoB2bProcessingDTO.AddOrUpdateDTO();
+            BeanMapperUtils.copy(entity,addDTO);
+            addDTO.setSkuId(childrenSkuDTO.getSkuId());
+            addDTO.setParentSkuId(childrenSkuDTO.getParentSkuId());
+            addDTO.setOutstockQty(ObjectUtil.isEmpty(addDTO.getOutstockQty()) ? MathUtil.ZERO : addDTO.getOutstockQty() * childrenSkuDTO.getQuantity());
+            addDTO.setFrozenQty(ObjectUtil.isEmpty(addDTO.getFrozenQty()) ? MathUtil.ZERO :addDTO.getFrozenQty() * childrenSkuDTO.getQuantity());
+            addDTO.setSoQty(ObjectUtil.isEmpty(addDTO.getSoQty()) ? MathUtil.ZERO :addDTO.getSoQty() * childrenSkuDTO.getQuantity());
+            addDTO.setDeliveryQty(ObjectUtil.isEmpty(addDTO.getDeliveryQty()) ? MathUtil.ZERO :addDTO.getDeliveryQty() * childrenSkuDTO.getQuantity());
+            addDTO.setBomVersion(childrenSkuDTO.getBomVersion());
+            addList.add(addDTO);
+        }
     }
 
     /**
@@ -172,7 +188,8 @@ public class SoB2bProcessingServiceImpl extends SuperServiceImpl<SoB2bProcessing
 
         //加工单
         SoB2bProcessingDTO.ResponseDTO machineResponseDTO = machineList.stream().filter(obj ->
-                        CharSequenceUtil.equals(obj.getSourceId(), entity.getDeliveryNoticeId())
+                        CharSequenceUtil.isNotBlank(entity.getDeliveryNoticeId())
+                        && CharSequenceUtil.equals(obj.getSourceId(), entity.getDeliveryNoticeId())
                         && CharSequenceUtil.equals(obj.getApproveStatus(),ApproveStatusEnum.APPROVE.getStatus())
                         &&  CharSequenceUtil.equals(obj.getSourceDetailId(), entity.getDeliveryNoticeDetailId()))
                 .findFirst().orElse(null);
@@ -183,7 +200,8 @@ public class SoB2bProcessingServiceImpl extends SuperServiceImpl<SoB2bProcessing
 
         //直接调拨单
         SoB2bProcessingDTO.ResponseDTO transferResponseDTO = transferList.stream().filter(obj ->
-                        CharSequenceUtil.equals(obj.getSourceId(), entity.getDeliveryNoticeId())
+                                CharSequenceUtil.isNotBlank(entity.getDeliveryNoticeId())
+                                && CharSequenceUtil.equals(obj.getSourceId(), entity.getDeliveryNoticeId())
                                 && CharSequenceUtil.equals(obj.getApproveStatus(),ApproveStatusEnum.APPROVE.getStatus())
                                 && CharSequenceUtil.equals(obj.getWarehouseId(), entity.getWarehouseId())
                                 &&  CharSequenceUtil.equals(obj.getSourceDetailId(), entity.getDeliveryNoticeDetailId()))
@@ -195,7 +213,8 @@ public class SoB2bProcessingServiceImpl extends SuperServiceImpl<SoB2bProcessing
 
         //销售出库单
         SoB2bProcessingDTO.ResponseDTO soOutstockResponseDTO = soOutstockList.stream().filter(obj ->
-                        CharSequenceUtil.equals(obj.getSourceId(), entity.getDeliveryNoticeId())
+                                CharSequenceUtil.isNotBlank(entity.getDeliveryNoticeId())
+                                && CharSequenceUtil.equals(obj.getSourceId(), entity.getDeliveryNoticeId())
                                 && CharSequenceUtil.equals(obj.getApproveStatus(),ApproveStatusEnum.APPROVE.getStatus())
                                 &&  CharSequenceUtil.equals(obj.getSourceDetailId(), entity.getDeliveryNoticeDetailId()))
                 .findFirst().orElse(null);
@@ -219,9 +238,7 @@ public class SoB2bProcessingServiceImpl extends SuperServiceImpl<SoB2bProcessing
         entity.setOutstockOrderCode(responseDTO.getCode());
         entity.setOutstockOrderTime(responseDTO.getApproveTime());
         entity.setOutstockOrderType(sourceType);
-        if (ApproveStatusEnum.APPROVE.getStatus().equals(responseDTO.getApproveStatus())) {
-            entity.setFrozenQty(MathUtil.valueOfZero(entity.getFrozenQty()) - MathUtil.valueOfZero(responseDTO.getQty()));
-        }
+        entity.setFrozenQty(MathUtil.valueOfZero(entity.getFrozenQty()) - MathUtil.valueOfZero(responseDTO.getQty()));
     }
 
     /**

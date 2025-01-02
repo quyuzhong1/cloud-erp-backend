@@ -101,7 +101,7 @@
                 ${item.field} ${item.sort}
             </foreach>
         </if>
-        sbp.id DESC
+        sbp.so_id DESC,sbp.delivery_notice_id desc
     </select>
 
     <!-- b2b销售订单 -->
@@ -121,15 +121,60 @@
             si.warehouse_id as warehouseId,
             si.virtual_warehouse_id as virtualWarehouseId,
             COALESCE(sd.frozen_time,sdn.create_time) as frozenTime,
-            sd.frozen_qty + COALESCE(sdnd.delivery_qty,0)  as frozenQty
+            sd.frozen_qty + COALESCE(sdnd.delivery_qty,0)  as frozenQty,
+            '' as outstockOrderId,
+            '' as outstockOrderStatus,
+            0 as outstockQty,
+            '' as outstockOrderCode,
+            null as outstockOrderTime,
+            '' as outstockOrderType
         from  so_info si
         inner join so_detail sd on si.id = sd.main_id and sd.is_deleted = false
         left join so_delivery_notice_detail sdnd on sd.id = sdnd.source_detail_id and sdnd.is_deleted = false
         left join so_delivery_notice sdn on sdn.id = sdnd.main_id and sdn.is_deleted = false and sdn.invalid_status = false
         where si.is_deleted = false and si.invalid_status = false and si.virtual_warehouse_id != ''
-            <if test="startDate != null">
-               and si.create_time > #{startDate}
-            </if>
+        <if test="startDate != null">
+            and si.create_time > #{startDate}
+        </if>
+        union all
+        (WITH deliveryNoticeDetail as (
+        select
+            sdnd.source_detail_id,
+            sum(sdnd.delivery_qty) as totalDeliveryQty
+        from so_delivery_notice sdn
+        inner join so_delivery_notice_detail sdnd on sdn.id = sdnd.main_id and sdnd.is_deleted = false
+        where sdn.invalid_status = false and sdn.approve_status = 'approve' group by sdnd.source_detail_id
+        )
+        select
+            si.id as soId,
+            si.code as soCode,
+            si.approve_status as soApproveStatus,
+            sd.id as soDetailId,
+            sd.qty as soQty,
+            '' as deliveryNoticeId,
+            '' as deliveryNoticeCode,
+            '' as deliveryNoticeApproveStatus,
+            '' as deliveryNoticeDetailId,
+            0 as deliveryQty,
+            sd.sku_id as skuId,
+            si.warehouse_id as warehouseId,
+            si.virtual_warehouse_id as virtualWarehouseId,
+            sd.frozen_time as frozenTime,
+            sd.qty - COALESCE(totalDeliveryQty,0) as frozenQty,
+            '' as outstockOrderId,
+            '' as outstockOrderStatus,
+            0 as outstockQty,
+            '' as outstockOrderCode,
+            null as outstockOrderTime,
+            '' as outstockOrderType
+        from  so_info si
+        inner join so_detail sd on si.id = sd.main_id and sd.is_deleted = false
+        inner join deliveryNoticeDetail dnd on sd.id = dnd.source_detail_id
+        where si.is_deleted = false and si.invalid_status = false and sd.qty  > dnd.totalDeliveryQty and si.virtual_warehouse_id != ''
+        <if test="startDate != null">
+            and si.create_time > #{startDate}
+        </if>
+        )
     </select>
 
 
