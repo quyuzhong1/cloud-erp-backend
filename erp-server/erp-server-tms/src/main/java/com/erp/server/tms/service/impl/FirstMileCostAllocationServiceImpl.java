@@ -17,6 +17,7 @@ import com.common.business.enums.UnitEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
+import com.common.business.wrapper.FeignQuery;
 import com.common.core.enums.ApiError;
 import com.common.core.enums.CurrencyEnum;
 import com.common.core.exception.ServiceException;
@@ -25,6 +26,7 @@ import com.common.core.utils.MathUtil;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.sys.entity.DictCurrencyEntity;
 import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.tms.dto.*;
 import com.erp.model.tms.entity.*;
@@ -1526,6 +1528,7 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
         if (CollectionUtils.isEmpty(list)) {
             return;
         }
+        Map<String, String> currencySymbolMap = FeignQuery.list(DictCurrencyEntity.class).stream().collect(Collectors.toMap(DictCurrencyEntity::getId, DictCurrencyEntity::getSymbol));
         //添加分摊明细
         list.forEach(e -> {
             e.setStatusName(ConfirmStatusEnum.getName(e.getStatus()));
@@ -1534,6 +1537,7 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
             e.setAllocationTypeName(CostAllocationEnum.getName(e.getAllocationType()));
             e.setProductCostStr(e.getProductCost());
             e.setProductAllocatedAmountStr(e.getProductAllocatedAmount());
+            e.setCurrencySymbol(currencySymbolMap.get(e.getCurrency()));
         });
     }
 

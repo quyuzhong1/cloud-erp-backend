@@ -14,12 +14,14 @@ import com.common.business.enums.ConfirmStatusEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
+import com.common.business.wrapper.FeignQuery;
 import com.common.core.enums.ApiError;
 import com.common.core.enums.CurrencyEnum;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.sys.entity.DictCountryEntity;
+import com.erp.model.sys.entity.DictCurrencyEntity;
 import com.erp.model.tms.dto.FirstMileEstimatedBillDTO;
 import com.erp.model.tms.dto.TmsFirstMileLogisticDTO;
 import com.erp.model.tms.dto.excel.FirstMileEstimatedBillExcelDTO;
@@ -102,6 +104,10 @@ public class FirstMileEstimatedBillServiceImpl extends SuperServiceImpl<FirstMil
         List<String> logisticsBillIds = records.stream().map(item -> item.getLogisticsBillId()).distinct().collect(Collectors.toList());
         List<FirstMileEstimatedBillDTO.EstimatedCost> estimatedCostList = this.baseMapper.listEstimatedCost(logisticsBillIds);
         Map<String, List<FirstMileEstimatedBillDTO.EstimatedCost>> estimatedCostMap = estimatedCostList.stream().collect(Collectors.groupingBy(item -> item.getLogisticsBillId()));
+        List<String> currencyIds = estimatedCostList.stream().map(FirstMileEstimatedBillDTO.EstimatedCost::getCurrency).collect(Collectors.toList());
+		Map<String, String> idSymbolMap = FeignQuery.getByIds(DictCurrencyEntity.class, currencyIds)
+        	.stream().collect(Collectors.toMap(DictCurrencyEntity::getId, DictCurrencyEntity::getSymbol));
+		Map<String, BigDecimal> rateMap = new HashMap<>();
         for (FirstMileEstimatedBillDTO.View item : records) {
             item.setStatusName(ConfirmStatusEnum.getName(item.getStatus()));
             item.setActualBillStatusName(ReconciliationStatusEnum.getName(item.getActualBillStatus()));
@@ -113,21 +119,98 @@ public class FirstMileEstimatedBillServiceImpl extends SuperServiceImpl<FirstMil
             //预计费用
             if(estimatedCostMap.containsKey(item.getLogisticsBillId())){
                 List<FirstMileEstimatedBillDTO.EstimatedCost> estimatedCosts = estimatedCostMap.get(item.getLogisticsBillId());
+                BigDecimal total = BigDecimal.ZERO;
+                BigDecimal rate = BigDecimal.ONE;
+                String date = item.getCreateTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
                 //物流运费
                 FirstMileEstimatedBillDTO.EstimatedCost logisticsDTO = estimatedCosts.stream().filter(v -> v.getDictCostCategory().equals(DictCostCategoryEnum.SHIPPING_COST.getCode())).findFirst().orElse(null);
                 item.setLogisticsCost(logisticsDTO != null ? logisticsDTO.getCostValue() : BigDecimal.ZERO);
+                if(logisticsDTO != null) {
+                	String currency = logisticsDTO.getCurrency();
+					item.setLogisticsCostCurrencySymbol(idSymbolMap.get(currency));
+                	
+					if(!"CNY".equals(currency)) {
+						String key = date + "_" + currency;
+	            		rate = rateMap.get(key);
+	            		if(rate == null){
+	            			rate = dmpTaskFeign.getRate(date, currency);
+	            			if(rate == null) {
+	            				throw new ServiceException(currency + "汇率为空，请维护汇率后再提交");
+	            			}
+	    	            }
+	            		rateMap.put(key, rate);
+	                	total = total.add(logisticsDTO.getCostValue().multiply(rate));
+					}else {
+						total = total.add(logisticsDTO.getCostValue());
+					}
+                }
                 //报关费
                 FirstMileEstimatedBillDTO.EstimatedCost declareDTO = estimatedCosts.stream().filter(v -> v.getDictCostCategory().equals(DictCostCategoryEnum.DECLARE_COST.getCode())).findFirst().orElse(null);
                 item.setCustomsClearanceCost(declareDTO != null ? declareDTO.getCostValue() : BigDecimal.ZERO);
+                if(declareDTO != null) {
+                	String currency = declareDTO.getCurrency();
+					item.setCustomsClearanceCostCurrencySymbol(idSymbolMap.get(currency));
+                	
+                	if(!"CNY".equals(currency)) {
+						String key = date + "_" + currency;
+	            		rate = rateMap.get(key);
+	            		if(rate == null){
+	            			rate = dmpTaskFeign.getRate(date, currency);
+	            			if(rate == null) {
+	            				throw new ServiceException(currency + "汇率为空，请维护汇率后再提交");
+	            			}
+	    	            }
+	            		rateMap.put(key, rate);
+	                	total = total.add(declareDTO.getCostValue().multiply(rate));
+					}else {
+						total = total.add(declareDTO.getCostValue());
+					}
+                }
                 //其它税费
                 FirstMileEstimatedBillDTO.EstimatedCost otherTaxDTO = estimatedCosts.stream().filter(v -> v.getDictCostCategory().equals(DictCostCategoryEnum.OTHER_TAX_FEE.getCode())).findFirst().orElse(null);
                 item.setOtherTaxCost(otherTaxDTO != null ? otherTaxDTO.getCostValue() : BigDecimal.ZERO);
+                if(otherTaxDTO != null) {
+                	String currency = otherTaxDTO.getCurrency();
+					item.setOtherTaxCostCurrencySymbol(idSymbolMap.get(currency));
+                	
+                	if(!"CNY".equals(currency)) {
+						String key = date + "_" + currency;
+	            		rate = rateMap.get(key);
+	            		if(rate == null){
+	            			rate = dmpTaskFeign.getRate(date, currency);
+	            			if(rate == null) {
+	            				throw new ServiceException(currency + "汇率为空，请维护汇率后再提交");
+	            			}
+	    	            }
+	            		rateMap.put(key, rate);
+	                	total = total.add(otherTaxDTO.getCostValue().multiply(rate));
+					}else {
+						total = total.add(otherTaxDTO.getCostValue());
+					}
+                }
                 //其它费用
                 FirstMileEstimatedBillDTO.EstimatedCost otherDTO = estimatedCosts.stream().filter(v -> v.getDictCostCategory().equals(DictCostCategoryEnum.OTHER_COST.getCode())).findFirst().orElse(null);
                 item.setOtherCost(otherDTO != null ? otherDTO.getCostValue() : BigDecimal.ZERO);
-                //总计
-                BigDecimal total = item.getLogisticsCost().add(item.getCustomsClearanceCost()).add(item.getOtherTaxCost()).add(item.getOtherCost());
-                item.setCostTotal(total);
+                if(otherDTO != null) {
+                	String currency = otherDTO.getCurrency();
+					item.setOtherCostCurrencySymbol(idSymbolMap.get(currency));
+                	
+                	if(!"CNY".equals(currency)) {
+						String key = date + "_" + currency;
+	            		rate = rateMap.get(key);
+	            		if(rate == null){
+	            			rate = dmpTaskFeign.getRate(date, currency);
+	            			if(rate == null) {
+	            				throw new ServiceException(currency + "汇率为空，请维护汇率后再提交");
+	            			}
+	    	            }
+	            		rateMap.put(key, rate);
+	                	total = total.add(otherDTO.getCostValue().multiply(rate));
+					}else {
+						total = total.add(otherDTO.getCostValue());
+					}
+                }
+                item.setCostTotal(total.setScale(4, RoundingMode.DOWN));
             }
 
             //预计重量

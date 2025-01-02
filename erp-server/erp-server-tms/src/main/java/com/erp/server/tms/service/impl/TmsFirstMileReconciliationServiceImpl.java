@@ -691,7 +691,7 @@ public class TmsFirstMileReconciliationServiceImpl extends SuperServiceImpl<TmsF
     public TmsFirstMileReconciliationEntity findByCycleAndSupplier(String supplier, String currency, LocalDate startDate, LocalDate endDate) {
         return lambdaQuery()
                 .eq(TmsFirstMileReconciliationEntity::getLogisticsSupplierId, supplier)
-                .eq(TmsFirstMileReconciliationEntity::getCurrency, currency)
+                .eq(TmsFirstMileReconciliationEntity::getApproveStatus, currency)
                 .eq(TmsFirstMileReconciliationEntity::getStartDate, startDate)
                 .eq(TmsFirstMileReconciliationEntity::getEndDate, endDate)
                 .last(" LIMIT 1 ")

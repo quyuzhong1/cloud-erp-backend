@@ -4,7 +4,6 @@ package com.erp.server.wms.service.impl;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -14,13 +13,12 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
-import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
 import com.erp.model.scm.entity.SubcontractOrderDetailEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.SubcontractIssueDetailDTO;
-import com.erp.model.wms.entity.PoReturnDetailEntity;
 import com.erp.model.wms.entity.SubcontractIssueDetailEntity;
 import com.erp.model.wms.entity.SubcontractIssueEntity;
+import com.erp.model.wms.entity.SubcontractReturnDetailEntity;
 import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.model.wms.enums.SubcontractIssueTypeEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
@@ -64,10 +62,7 @@ public class SubcontractIssueDetailServiceImpl extends SuperServiceImpl<Subcontr
     private SubcontractIssueService subcontractIssueService;
 
     @Resource
-    private PurchaseOrderDetailService purchaseOrderDetailService;
-
-    @Resource
-    private PoReturnDetailService poReturnDetailService;
+    private SubcontractReturnDetailService subcontractReturnDetailService;
 
 
     @GlobalTransactional(rollbackFor = Exception.class)
@@ -281,14 +276,8 @@ public class SubcontractIssueDetailServiceImpl extends SuperServiceImpl<Subcontr
         //委外明细已关联的委外发料
         List<SubcontractIssueDetailEntity> subcontractIssueDetailList = this.listBySubcontractOrderDetailIdList(subcontractOrderDetailIdList);
 
-        //采购订单
-        List<String> subDetailIdList = subcontractOrderDetailList.stream().map(SubcontractOrderDetailEntity::getId).distinct().collect(Collectors.toList());
-        List<PurchaseOrderDetailEntity> purchaseOrderDetailList = scmTaskFeign.listPodBySourceDetailIds(subDetailIdList);
-
-        //采购退货单
-        List<String> podIdList = purchaseOrderDetailList.stream().map(PurchaseOrderDetailEntity::getId).distinct().collect(Collectors.toList());
-        List<PoReturnDetailEntity> poReturnDetailList = poReturnDetailService.listReturnOrderDetailByPodIds(podIdList);
-
+        //委外退料
+        List<SubcontractReturnDetailEntity> subcontractReturnDetailList = subcontractReturnDetailService.listBySubcontractOrderDetailIdList(subcontractOrderDetailIdList);
 
         for (SubcontractIssueDetailEntity entity : list) {
             SubcontractOrderDetailEntity detailEntity = subcontractOrderDetailList.stream().filter(obj -> obj.getId().equals(entity.getSubcontractOrderDetailId())).findFirst().orElse(null);
@@ -302,11 +291,10 @@ public class SubcontractIssueDetailServiceImpl extends SuperServiceImpl<Subcontr
                 Integer totalIssueQty = subcontractIssueDetailList.stream().filter(obj -> obj.getSubcontractOrderDetailId().equals(entity.getSubcontractOrderDetailId())
                                 && SubcontractIssueTypeEnum.NORMAL.getCode().equals(obj.getType()) && !obj.getId().equals(entity.getId()))
                         .map(SubcontractIssueDetailEntity::getIssueQty).reduce(MathUtil.ZERO, Integer::sum);
-                //下推的退货数量
-                List<String> podIds = purchaseOrderDetailList.stream().filter(obj -> StrUtil.equals(obj.getSourceDetailId(), detailEntity.getId())).map(PurchaseOrderDetailEntity::getId).distinct().collect(Collectors.toList());
-                Integer returnQty = poReturnDetailList.stream().filter(obj -> podIds.contains(obj.getPurchaseOrderDetailId())).map(PoReturnDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
+                //下推的退料数量
+                Integer returnQty = subcontractReturnDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSubcontractOrderDetailId(),detailEntity.getId())).map(SubcontractReturnDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
                 /**
-                 * 发料数量 = 领料数量- 已发料数量 + 退货数量
+                 * 发料数量 = 领料数量- 已发料数量 + 退料数量
                  */
                 if (entity.getIssueQty() > detailEntity.getDeliveryQty() - totalIssueQty + returnQty ) {
                     throw new ServiceException(ApiError.ERROR_SUBCONTRACT_ISSUE_QTY_EXCEED,detailEntity.getSkuNo(),detailEntity.getDeliveryQty() - totalIssueQty + returnQty);

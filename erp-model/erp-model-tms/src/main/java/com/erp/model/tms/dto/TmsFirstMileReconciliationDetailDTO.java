@@ -354,6 +354,11 @@ public class TmsFirstMileReconciliationDetailDTO implements Serializable {
          * 总物流费用
          */
         private BigDecimal totalLogisticsCost;
+        
+        /**
+         * 总物流费用币别符号
+         */
+        private String totalLogisticsCostCurrencySymbol = "¥";
 
         /**
          * 实际重量【箱包装重量】
@@ -386,23 +391,60 @@ public class TmsFirstMileReconciliationDetailDTO implements Serializable {
         private String billingWeightUnit;
 
         /**
-         * 物流运费用【预计物流费用】
+         * 物流运费(总)
          */
         private BigDecimal shippingCost;
+        
+        /**
+         * 物流运费(总)币别
+         */
+        private String shippingCostCurrency;
+        /**
+         * 物流运费(总)币别符号
+         */
+        private String shippingCostCurrencySymbol;
 
         /**
-         * 报关费用【预计报关费用】
+         * 报关费用(总)
          */
         private BigDecimal declareCost;
+        
+        /**
+         * 物流运费(总)币别
+         */
+        private String declareCostCurrency;
+        /**
+         * 物流运费(总)币别符号
+         */
+        private String declareCostCurrencySymbol;
 
         /**
-         * 其他费用【预计其他费用】
+         * 其他费用(总)
          */
         private BigDecimal otherCost;
+        
         /**
-         * 其他税费【预计其他税费】
+         * 其他费用(总)币别
+         */
+        private String otherCostCurrency;
+        /**
+         * 其他费用(总)币别符号
+         */
+        private String otherCostCurrencySymbol;
+        
+        /**
+         * 其他税费(总)
          */
         private BigDecimal otherTaxCost;
+        
+        /**
+         * 其他税费(总)币别
+         */
+        private String otherTaxCurrency;
+        /**
+         * 其他税费(总)币别符号
+         */
+        private String otherTaxCurrencySymbol;
 
         /**
          * 备注

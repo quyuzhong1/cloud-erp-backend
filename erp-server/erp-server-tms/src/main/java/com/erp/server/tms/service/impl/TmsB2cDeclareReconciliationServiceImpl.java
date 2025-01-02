@@ -52,6 +52,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -477,10 +478,27 @@ public class TmsB2cDeclareReconciliationServiceImpl extends SuperServiceImpl<Tms
         currencyIds.add(data.getCurrency());
         //币别信息
         Map<String, String> currencyIdSymbolMap = sysUserFeign.listByCurrency(currencyIds).stream().collect(Collectors.toMap(CurrencyDTO.ViewDTO::getId, CurrencyDTO.ViewDTO::getSymbol));
-
+        
+        String date = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+        
+        Map<String, BigDecimal> rateMap = new HashMap<>();
+        for(String countryId : currencyIds) {
+        	BigDecimal rate = rateMap.get(countryId);
+        	if(rate == null) {
+        		rate = dmpTaskFeign.getRate(date, countryId);
+        		if(ObjectUtil.isEmpty(rate)){
+                    log.error("币别【{}】,汇率为空，请维护汇率",countryId);
+                    throw new ServiceException("汇率为空，请维护汇率");
+                }
+        	}
+        	rateMap.put(countryId, rate);
+        }
+        
         //物流费用总金额
-        BigDecimal totalCost = detailList.stream().map(obj -> obj.getActualShippingCost().add(obj.getActualDeclareCost()).add(obj.getActualOtherCost())).reduce(BigDecimal.ZERO, BigDecimal::add);
-        data.setTotalCost(totalCost);
+        BigDecimal totalCost = detailList.stream().map(obj -> obj.getActualShippingCost().multiply(rateMap.get(obj.getActualShippingCurrency()))
+        		.add(obj.getActualDeclareCost().multiply(rateMap.get(obj.getActualDeclareCurrency())))
+        		.add(obj.getActualOtherCost().multiply(rateMap.get(obj.getActualOtherCurrency())))).reduce(BigDecimal.ZERO, BigDecimal::add);
+        data.setTotalCost(totalCost.setScale(4, RoundingMode.DOWN));
 
         for (TmsB2cDeclareReconciliationDetailDTO.ViewDTO viewDTO : viewDTOList) {
             //店铺名称
