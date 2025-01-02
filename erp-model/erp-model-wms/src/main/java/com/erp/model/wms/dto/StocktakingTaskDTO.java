@@ -489,7 +489,7 @@ public class StocktakingTaskDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
-    public class BaseIdDTO extends PagingParamDTO {
+    public static class BaseIdDTO extends PagingParamDTO {
 
 //        @NotBlank(message = "id不能为空")
         private String id;
@@ -511,6 +511,9 @@ public class StocktakingTaskDTO implements Serializable {
                 JSONArray jsonArray = JSONArray.parseArray(JSON.toJSONString(idsObj));
                 if (CollectionUtils.isEmpty(jsonArray)){
                     throw new ServiceException("盘点任务IDS为空");
+                }
+                if (jsonArray.size() > 1){
+                    throw new ServiceException("盘点任务明细导出IDS数量不能超过1");
                 }
                 mainId = jsonArray.get(0).toString();
             }
