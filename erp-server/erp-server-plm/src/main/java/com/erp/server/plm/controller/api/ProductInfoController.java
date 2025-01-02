@@ -16,7 +16,7 @@ import com.common.core.enums.LogActionEnum;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.enums.ApprovalStatusEnum;
 import com.erp.model.plm.enums.ProductProgressStatusEnum;
-import com.erp.server.plm.query.ProductDetailQueryHandler;
+import com.erp.server.plm.query.ProductProjectQueryHandler;
 import com.erp.server.plm.service.ProductInfoService;
 import com.erp.server.plm.service.ProjectInfoService;
 import com.erp.server.plm.service.SysCodeService;
@@ -64,7 +64,7 @@ public class ProductInfoController extends BaseController {
             menuCode = "plm:product:paging",
             tableAlias = "pt"
     )
-    @WebAdvanceQuery(handler = ProductDetailQueryHandler.class)
+    @WebAdvanceQuery(handler = ProductProjectQueryHandler.class)
     public ApiResult<PagingVO<ProductShowDTO>> paging(@RequestBody @Validated PagingDTO<ProductSearchDTO.PagingParamDTO> dto) {
         PagingVO<ProductShowDTO> pagingVO = productInfoService.paging(dto);
         return success(pagingVO);
@@ -79,7 +79,7 @@ public class ProductInfoController extends BaseController {
      * @date 2023-06-12 14:54
      */
     @PostMapping("/myProject")
-    @WebAdvanceQuery(handler = ProductDetailQueryHandler.class)
+    @WebAdvanceQuery(handler = ProductProjectQueryHandler.class)
     public ApiResult<PagingVO<ProductShowDTO>> myProject(@RequestBody @Validated PagingDTO<ProductSearchDTO.PagingParamDTO> dto) {
         PagingVO<ProductShowDTO> pagingVO = productInfoService.myProject(dto);
         return success(pagingVO);
@@ -161,7 +161,7 @@ public class ProductInfoController extends BaseController {
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "产品开发管理我的项目导出")
     @PostMapping("/myProjectExport")
-    @WebAdvanceQuery(handler = ProductDetailQueryHandler.class)
+    @WebAdvanceQuery(handler = ProductProjectQueryHandler.class)
     public ApiResult<Object> myProjectExport(@RequestBody @Validated ProductSearchDTO.ExportDTO dto) {
         Boolean result= productInfoService.myProjectExport(dto);
         return result ? success() : failure();
@@ -175,7 +175,7 @@ public class ProductInfoController extends BaseController {
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "产品开发管理收藏项目导出")
     @PostMapping("/collectExport")
-    @WebAdvanceQuery(handler = ProductDetailQueryHandler.class)
+    @WebAdvanceQuery(handler = ProductProjectQueryHandler.class)
     public ApiResult<Object> collectExport(@RequestBody @Validated ProductSearchDTO.ExportDTO dto) {
         Boolean result= productInfoService.collectExport(dto);
         return result ? success() : failure();
