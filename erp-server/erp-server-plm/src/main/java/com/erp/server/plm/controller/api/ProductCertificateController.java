@@ -196,6 +196,7 @@ public class ProductCertificateController extends BaseController {
             menuCode = "plm:productCertificate:paging",
             tableAlias = "pc"
     )
+    @WebAdvanceQuery
     public ApiResult<Object> exportExcel(@RequestBody ProductCertificateDTO.ExportParamDTO dto) {
         Boolean flag = productCertificateService.exportExcel(dto);
         return flag == true ? success() : failure();
