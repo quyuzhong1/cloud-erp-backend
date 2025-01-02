@@ -480,7 +480,7 @@ public class InventoryReportDTO implements Serializable {
          * 日期类型 (approveDate审核日期，billDate单据日期)
          * /api/wms/dict/list，字典inventoryDate
          */
-        @NotBlank(message = "日期类型不能为空")
+//        @NotBlank(message = "日期类型不能为空")
         private String dateType;
 
         /**
