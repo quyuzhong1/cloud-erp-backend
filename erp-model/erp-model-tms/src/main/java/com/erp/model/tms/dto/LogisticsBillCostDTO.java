@@ -542,6 +542,11 @@ public class LogisticsBillCostDTO implements Serializable {
     	 * 物流单号
     	 */
     	private String trackNo;
+    	
+    	/**
+    	 * 费用分类
+    	 */
+    	private String dictCostCategory;
     }
     
     /**
