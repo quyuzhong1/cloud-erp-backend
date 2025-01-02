@@ -444,16 +444,15 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
         if (ObjectUtil.isEmpty(detailEntityList)) {
             throw new ServiceException("头程费用SKU分摊明细记录不存在");
         }
+
         //头程运费
-        addDTO.setFreightCurrency(logisticsBillCostEntity.getCurrency());
         FirstMileSkuCostAllocationDetailEntity detailEntity = costAllocationDetailEntities.stream()
                 .filter(req -> AllocationFeeTypeEnum.SHIPPING_COST.getCode().equals(req.getFeeType()))
                 .findFirst().orElse(null);
         if (detailEntity != null && detailEntity.getAmount().compareTo(BigDecimal.ZERO) > 0) {
             addDTO.setFreightCalculationFactor(detailEntity.getAllocatedAmount().divide(detailEntity.getAmount(), 4, RoundingMode.DOWN));
         }
-
-
+        addDTO.setFreightCurrency(logisticsBillCostEntity.getCurrency());
         if (ObjectUtil.isNotEmpty(detailEntity)) {
             BigDecimal firstMileFreightAmount = detailEntity.getAllocatedAmount().divide(rate, 4, RoundingMode.DOWN);
             addDTO.setFirstMileEstimatedFreightTax(firstMileFreightAmount);
@@ -791,13 +790,13 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
         BigDecimal taxRate = addDTO.getTaxRate().divide(MathUtil.BigDecimal_100);
 
         //运费
-        addDTO.setFreightCurrency(logisticsBillCostEntity.getCurrency());
         SmallBagCostAllocationDetailEntity detailEntity = costAllocationDetailEntities.stream()
                 .filter(req -> AllocationFeeTypeEnum.SHIPPING_COST.getCode().equals(req.getFeeType()))
                 .findFirst().orElse(null);
         if (detailEntity != null && detailEntity.getBillAmount().compareTo(BigDecimal.ZERO) > 0) {
             addDTO.setFreightCalculationFactor(detailEntity.getAllocatedAmount().divide(detailEntity.getBillAmount(), 4, RoundingMode.DOWN));
         }
+        addDTO.setFreightCurrency(detailEntity.getAllocatedCurrency());
         if (ObjectUtil.isNotEmpty(detailEntity)) {
             BigDecimal lastMileFreightAmount = detailEntity.getAllocatedAmount();
             addDTO.setLastMileFreightAmountTax(detailEntity.getAllocatedAmount());
@@ -812,8 +811,7 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
         if (otherCostDetailEntity != null && otherCostDetailEntity.getBillAmount().compareTo(BigDecimal.ZERO) > 0) {
             addDTO.setDestMiscFeeFactor(otherCostDetailEntity.getAllocatedAmount().divide(otherCostDetailEntity.getBillAmount(), 4, RoundingMode.DOWN));
         }
-        // TODO 暂时取物流单的 后期取大类的
-        addDTO.setMiscFeeCurrency(logisticsBillCostEntity.getCurrency());
+        addDTO.setMiscFeeCurrency(otherCostDetailEntity.getAllocatedCurrency());
         if (ObjectUtil.isNotEmpty(otherCostDetailEntity)) {
             addDTO.setEstimatedDestMiscFee(otherCostDetailEntity.getAllocatedAmount());
             addDTO.setActualDestMiscFee(otherCostDetailEntity.getAllocatedAmount());
@@ -827,8 +825,7 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
         if (declareCostDetailEntity.getBillAmount() != null && declareCostDetailEntity.getBillAmount().compareTo(BigDecimal.ZERO) > 0) {
             addDTO.setDutyCalculationFactor(declareCostDetailEntity.getAllocatedAmount().divide(declareCostDetailEntity.getBillAmount(), 4, RoundingMode.DOWN));
         }
-        // TODO 暂时取物流单的 后期取大类的
-        addDTO.setDutyCurrency(logisticsBillCostEntity.getCurrency());
+        addDTO.setDutyCurrency(declareCostDetailEntity.getAllocatedCurrency());
         if (ObjectUtil.isNotEmpty(declareCostDetailEntity)) {
             addDTO.setEstimatedDutyAmount(declareCostDetailEntity.getAllocatedAmount());
             addDTO.setActualDutyAmount(declareCostDetailEntity.getAllocatedAmount());
@@ -842,8 +839,7 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
         if (deductibleTaxDetailEntity != null && deductibleTaxDetailEntity.getBillAmount().compareTo(BigDecimal.ZERO) > 0) {
             addDTO.setDeductibleTaxFactor(deductibleTaxDetailEntity.getAllocatedAmount().divide(deductibleTaxDetailEntity.getBillAmount(), 4, RoundingMode.DOWN));
         }
-        // TODO 暂时取物流单的 后期取大类的
-        addDTO.setDeductibleTaxCurrency(logisticsBillCostEntity.getCurrency());
+        addDTO.setDeductibleTaxCurrency(deductibleTaxDetailEntity.getAllocatedCurrency());
         if (ObjectUtil.isNotEmpty(deductibleTaxDetailEntity)) {
             addDTO.setEstimatedDeductibleTax(deductibleTaxDetailEntity.getAllocatedAmount());
             addDTO.setActualDeductibleTax(deductibleTaxDetailEntity.getAllocatedAmount());
@@ -1215,11 +1211,9 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
         if (shippingCostDetailEntity != null && shippingCostDetailEntity.getBillAmount().compareTo(BigDecimal.ZERO) > 0) {
             addDTO.setFreightCalculationFactor(shippingCostDetailEntity.getAllocatedAmount().divide(shippingCostDetailEntity.getBillAmount(), 4, RoundingMode.DOWN));
         }
-
         //税率
         BigDecimal taxRate = addDTO.getTaxRate().divide(MathUtil.BigDecimal_100);
-
-        addDTO.setFreightCurrency(logisticsBillCostEntity.getCurrency());
+        addDTO.setFreightCurrency(shippingCostDetailEntity.getAllocatedCurrency());
         if (ObjectUtil.isNotEmpty(shippingCostDetailEntity)) {
             BigDecimal lastMileFreightAmount = shippingCostDetailEntity.getAllocatedAmount();
             addDTO.setLastMileFreightAmountTax(shippingCostDetailEntity.getAllocatedAmount());
@@ -1234,8 +1228,7 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
         if (otherCostDetailEntity != null && otherCostDetailEntity.getBillAmount().compareTo(BigDecimal.ZERO) > 0) {
             addDTO.setDestMiscFeeFactor(otherCostDetailEntity.getAllocatedAmount().divide(otherCostDetailEntity.getBillAmount(), 4, RoundingMode.DOWN));
         }
-        // TODO 暂时取物流单的 后期取大类的
-        addDTO.setMiscFeeCurrency(logisticsBillCostEntity.getCurrency());
+        addDTO.setMiscFeeCurrency(otherCostDetailEntity.getAllocatedCurrency());
         if (ObjectUtil.isNotEmpty(otherCostDetailEntity)) {
             addDTO.setEstimatedDestMiscFee(otherCostDetailEntity.getAllocatedAmount());
             addDTO.setActualDestMiscFee(otherCostDetailEntity.getAllocatedAmount());
@@ -1249,8 +1242,7 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
         if (declareCostDetailEntity != null && declareCostDetailEntity.getBillAmount().compareTo(BigDecimal.ZERO) > 0) {
             addDTO.setDutyCalculationFactor(declareCostDetailEntity.getAllocatedAmount().divide(declareCostDetailEntity.getBillAmount(), 4, RoundingMode.DOWN));
         }
-        // TODO 暂时取物流单的 后期取大类的
-        addDTO.setDutyCurrency(logisticsBillCostEntity.getCurrency());
+        addDTO.setDutyCurrency(declareCostDetailEntity.getAllocatedCurrency());
         if (ObjectUtil.isNotEmpty(declareCostDetailEntity)) {
             addDTO.setEstimatedDutyAmount(declareCostDetailEntity.getAllocatedAmount());
             addDTO.setActualDutyAmount(declareCostDetailEntity.getAllocatedAmount());
