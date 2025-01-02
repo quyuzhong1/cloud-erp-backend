@@ -537,7 +537,7 @@
         LEFT JOIN so_b2c_detail sbd ON sb.ID = sbd.main_id
         AND sbd.is_deleted = FALSE
         WHERE
-        sb.is_deleted = FALSE
+        ${params.sqlMap.default} and sb.is_deleted = FALSE
         <if test="params.skuNo!=null and params.skuNo!=''">
             AND ((
             sbd.sku_no ILIKE concat('%',#{params.skuNo}::text,'%')
