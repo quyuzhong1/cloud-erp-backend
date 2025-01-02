@@ -495,10 +495,10 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         String categoryId = params.getCategoryId();
         List<String> categoryIdList = basicCategoryService.getChildrenCategoryIds(categoryId);
         //部门处理
-        Boolean isFlag = handlePagingDept(params);
-        if (isFlag) {
-            return new PagingVO<>();
-        }
+//        Boolean isFlag = handlePagingDept(params);
+//        if (isFlag) {
+//            return new PagingVO<>();
+//        }
         IPage<ProductShowDTO> pageData = baseMapper.paging(query, params, categoryIdList);
         //填充分页数据
         fillPagingDb(pageData.getRecords());
@@ -548,7 +548,8 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
      * @param deptIdList
      * @return List<String>
      */
-    private List<String> handleDept(List<String> deptIdList) {
+    @Override
+    public List<String> handleDept(List<String> deptIdList) {
         if (CollectionUtils.isEmpty(deptIdList)) {
             return Collections.EMPTY_LIST;
         }
@@ -584,10 +585,10 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         String userId = UserContext.getDefaultLoginUser().getUid();
         //我的项目
         //部门处理
-        Boolean isFlag = handlePagingDept(params);
-        if (isFlag) {
-            return new PagingVO<>();
-        }
+//        Boolean isFlag = handlePagingDept(params);
+//        if (isFlag) {
+//            return new PagingVO<>();
+//        }
         IPage<ProductShowDTO> pageData = baseMapper.myProjectPaging(query, params, categoryIdList, userId);
         //填充分页数据
         fillPagingDb(pageData.getRecords());
@@ -618,10 +619,10 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         String userId = UserContext.getDefaultLoginUser().getUid();
         //收藏的项目
         //部门处理
-        Boolean isFlag = handlePagingDept(params);
-        if (isFlag) {
-            return new PagingVO<>();
-        }
+//        Boolean isFlag = handlePagingDept(params);
+//        if (isFlag) {
+//            return new PagingVO<>();
+//        }
         IPage<ProductShowDTO> pageData = baseMapper.collect(query, params, categoryIdList, userId);
         //填充分页数据
         fillPagingDb(pageData.getRecords());
@@ -933,10 +934,10 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         String categoryId = params.getCategoryId();
         List<String> categoryIdList = basicCategoryService.getChildrenCategoryIds(categoryId);
         //部门处理
-        Boolean isFlag = handlePagingDept(params);
-        if (isFlag) {
-            return dataList;
-        }
+//        Boolean isFlag = handlePagingDept(params);
+//        if (isFlag) {
+//            return dataList;
+//        }
         dataList = baseMapper.listNotPaging(params, archiveProductIds, categoryIdList);
         return dataList;
     }
@@ -2389,10 +2390,10 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         List<String> categoryIdList = basicCategoryService.getChildrenCategoryIds(categoryId);
 
         //部门处理
-        Boolean isFlag = handlePagingDept(params);
-        if (isFlag) {
-            throw new ServiceException(ApiError.TIME_NOT_NULL,"部门人员");
-        }
+//        Boolean isFlag = handlePagingDept(params);
+//        if (isFlag) {
+//            throw new ServiceException(ApiError.TIME_NOT_NULL,"部门人员");
+//        }
         //两个都是
         if (size == 2) {
             List<ProductShowDTO> list = baseMapper.listAllExport(params, categoryIdList);
@@ -2489,10 +2490,10 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
 
 
         //部门处理
-        Boolean isFlag = handlePagingDept(params);
-        if (isFlag) {
-            throw new ServiceException(ApiError.TIME_NOT_NULL,"部门人员");
-        }
+//        Boolean isFlag = handlePagingDept(params);
+//        if (isFlag) {
+//            throw new ServiceException(ApiError.TIME_NOT_NULL,"部门人员");
+//        }
         //两个都是
         if (size == 2) {
             List<ProductShowDTO> list = baseMapper.listMyProjectExport(params, categoryIdList, userId);
@@ -2585,10 +2586,10 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         List<String> categoryIdList = basicCategoryService.getChildrenCategoryIds(categoryId);
 
         //部门处理
-        Boolean isFlag = handlePagingDept(params);
-        if (isFlag) {
-            throw new ServiceException(ApiError.TIME_NOT_NULL,"部门人员");
-        }
+//        Boolean isFlag = handlePagingDept(params);
+//        if (isFlag) {
+//            throw new ServiceException(ApiError.TIME_NOT_NULL,"部门人员");
+//        }
 
         //两个都是
         if (size == 2) {

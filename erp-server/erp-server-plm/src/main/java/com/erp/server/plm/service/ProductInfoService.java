@@ -311,4 +311,9 @@ public interface ProductInfoService extends IService<ProductInfoEntity> {
      * @return List<ProductDTO>
      */
     List<ProductDetailDTO.ProductDTO> listProductBySkuIds(List<String> skuIds);
+
+    /**
+     * 部门信息校验和查询
+     */
+    List<String> handleDept(List<String> deptIdList);
 }
