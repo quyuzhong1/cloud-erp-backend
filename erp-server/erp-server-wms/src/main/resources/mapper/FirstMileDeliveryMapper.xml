@@ -568,8 +568,6 @@
             fmd.id,
             fmd.code,
             fmd.approve_time,
-            fmd.source_id as shipmentId,
-            fmd.source_code as shipmentCode,
             fmd.shop_id,
             fmd.shop_name,
             fmd.delivery_warehouse_id as warehouseId,
@@ -581,6 +579,7 @@
             fmdd.sku_no,
             fmdd.declare_qty,
             fmdd.delivery_qty,
+            fmdd.fba_shipment_code as shipmentCode,
             fmdd.fba_shipment_code
         from first_mile_delivery fmd
                  left JOIN first_mile_delivery_detail fmdd on fmd.id = fmdd.main_id and fmdd.is_deleted = false
@@ -592,7 +591,7 @@
               and fmd.source_type = #{sourceType}
           </if>
         <if test="shipmentCode != null and shipmentCode != ''">
-            AND fmd.source_code = #{shipmentCode}
+            AND fmdd.fba_shipment_code = #{shipmentCode}
         </if>
         <if test="asin != null and asin != ''">
             AND fmdd.platform_spu_no = #{asin}
