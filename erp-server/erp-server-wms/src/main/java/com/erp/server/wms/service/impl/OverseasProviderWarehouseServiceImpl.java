@@ -50,11 +50,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * <p>
@@ -360,6 +358,7 @@ public class OverseasProviderWarehouseServiceImpl extends SuperServiceImpl<Overs
         ListingInfoWithSkuMappingDTO listingInfoWithSkuMappingDTO = listingInfoWithSkuMappingDTOS.get(0);
         //erp映射的sku
         List<String> skuIds = null;
+        List<String> childSkuIds;
         //根据是否组合品获取子件
         List<BomChildrenSkuDTO> bomChildrenSkuList = plmTaskFeign.listBomChildBySkuIds(Collections.singletonList(listingInfoWithSkuMappingDTO.getProductSkuId()));
         if (CollUtil.isNotEmpty(bomChildrenSkuList)){
@@ -367,10 +366,15 @@ public class OverseasProviderWarehouseServiceImpl extends SuperServiceImpl<Overs
                     .filter(req -> req.getParentSkuId().equals(listingInfoWithSkuMappingDTO.getProductSkuId())
                             && BomTypeEnum.COMBINATION.getType().equals(req.getType())
                     ).collect(Collectors.toList());
-            skuIds = bomChildren.stream().map(BomChildrenSkuDTO::getSkuId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+            childSkuIds = bomChildren.stream().map(BomChildrenSkuDTO::getSkuId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+        } else {
+            childSkuIds = null;
         }
-        if (CollUtil.isEmpty(skuIds)){
+        //合并sku
+        if (CollUtil.isEmpty(childSkuIds)){
             skuIds = Collections.singletonList(listingInfoWithSkuMappingDTO.getProductSkuId());
+        }else {
+            skuIds = Stream.concat(childSkuIds.stream(), Stream.of(listingInfoWithSkuMappingDTO.getProductSkuId())).distinct().collect(Collectors.toList());
         }
         //查询三方仓库存
         OverseasInventoryDTO.QueryDTO queryDTO = new OverseasInventoryDTO.QueryDTO();
@@ -380,12 +384,31 @@ public class OverseasProviderWarehouseServiceImpl extends SuperServiceImpl<Overs
         if (CollUtil.isEmpty(inventoryEntityList)){
             return Collections.emptyList();
         }
-        //匹配存在库存的仓库
-        List<OverseasInventoryEntity> overseasInventoryEntities = inventoryEntityList.stream().filter(e -> Objects.nonNull(e.getSellableQty()) && e.getSellableQty() > 0 && warehouseCodeList.contains(e.getWarehouseCode())).collect(Collectors.toList());
-        if (CollUtil.isEmpty(overseasInventoryEntities)){
+        //先匹配产品skuId 匹配不到存在子件，取子件最小数量
+        OverseasInventoryEntity entity = inventoryEntityList.stream().filter(e -> Objects.nonNull(e.getSellableQty()) && e.getSellableQty() > 0 && warehouseCodeList.contains(e.getWarehouseCode())
+                && Objects.equals(listingInfoWithSkuMappingDTO.getProductSkuId(), e.getSkuId())).max(Comparator.comparing(OverseasInventoryEntity::getSellableQty)).orElse(null);
+        if (Objects.nonNull(entity)){
+            return Collections.singletonList(OverseasWarehouseConverter.INSTANCE.inventoryToShipmentDTO(entity));
+        }
+        if (CollUtil.isEmpty(childSkuIds)){
             return Collections.emptyList();
         }
-        return OverseasWarehouseConverter.INSTANCE.inventoryToShipmentDTO(overseasInventoryEntities);
+        //判断子件是否都有库存， 存在无库存子件 则返回空
+        for (String skuId : childSkuIds){
+            OverseasInventoryEntity entity2 = inventoryEntityList.stream().filter(e -> Objects.nonNull(e.getSellableQty()) && e.getSellableQty() > 0
+                    && warehouseCodeList.contains(e.getWarehouseCode())
+                    && Objects.equals(skuId,e.getSkuId())).min(Comparator.comparing(OverseasInventoryEntity::getSellableQty)).orElse(null);
+            if (Objects.isNull(entity2)){
+                return Collections.emptyList();
+            }
+        }
+        //都存在按照最小子件数量返回
+        OverseasInventoryEntity entity3 = inventoryEntityList.stream().filter(e -> Objects.nonNull(e.getSellableQty()) && e.getSellableQty() > 0 && warehouseCodeList.contains(e.getWarehouseCode())
+                && childSkuIds.contains(e.getSkuId())).min(Comparator.comparing(OverseasInventoryEntity::getSellableQty)).orElse(null);
+        if (Objects.isNull(entity3)){
+            return Collections.emptyList();
+        }
+        return Collections.singletonList(OverseasWarehouseConverter.INSTANCE.inventoryToShipmentDTO(entity3));
     }
 
     private List<String> getShopIdBySite(String site) {
