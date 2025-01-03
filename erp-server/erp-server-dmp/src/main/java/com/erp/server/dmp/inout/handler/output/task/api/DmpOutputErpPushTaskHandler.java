@@ -235,7 +235,7 @@ public class DmpOutputErpPushTaskHandler extends DmpOutputTaskHandler{
 					} catch (Exception e) {
 						log.error("处理上游单据失败" , e);
 					}
-					
+
 					List<DmpPushMsgHisEntity> histList = dmpPushMsgHisService.lambdaQuery()
 							.eq(DmpPushMsgHisEntity::getSourceId, s)
 							.eq(DmpPushMsgHisEntity::getTargetPlatform, systemCode)
@@ -314,6 +314,14 @@ public class DmpOutputErpPushTaskHandler extends DmpOutputTaskHandler{
 				requestData = JSON.toJSONString(sdyObject);
 				outputMethod = SdyCommonService.REQUEST_SDY;
 			}
+			if(systemCode.equals(DmpBasicSystemCodeEnum.LING_XING.getCode())) {
+				Map<String, String> syncObject = new HashMap<>();
+				syncObject.put(LxCommonService.REQUEST_URL, outputMethod);
+				syncObject.put(LxCommonService.REQUEST_DATA, requestData);
+				requestData = JSON.toJSONString(syncObject);
+				outputMethod = LxCommonService.REQUEST_LX;
+			}
+
 			try {
 				method = bean.getClass().getMethod(outputMethod, Object.class);
 			} catch (NoSuchMethodException | SecurityException e) {
