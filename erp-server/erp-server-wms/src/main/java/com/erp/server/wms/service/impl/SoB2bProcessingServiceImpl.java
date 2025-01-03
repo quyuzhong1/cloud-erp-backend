@@ -287,6 +287,9 @@ public class SoB2bProcessingServiceImpl extends SuperServiceImpl<SoB2bProcessing
         }
         List<SoB2bProcessingEntity> newList = new ArrayList<>();
         for (SoB2bProcessingDTO.AddOrUpdateDTO addOrUpdateDTO :list) {
+            if (ObjectUtil.isEmpty(addOrUpdateDTO)) {
+                continue;
+            }
             SoB2bProcessingEntity entity = SoB2bProcessingConverter.INSTANCE.addToEntity(addOrUpdateDTO);
             //旧数据
             SoB2bProcessingEntity old = oldList.stream().filter(obj ->

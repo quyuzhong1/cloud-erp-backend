@@ -38,6 +38,7 @@ import org.checkerframework.checker.units.qual.A;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -82,6 +83,9 @@ public class PlatformNewReturnInstockConsumerService extends AbstractNewPlatform
 
 	@Resource
 	private SoOutstockDetailService soOutstockDetailService;
+
+	@Resource
+	private InventoryClosedRecordService inventoryClosedRecordService;
 
 	@Override
 	public String getBizName() {
@@ -302,8 +306,6 @@ public class PlatformNewReturnInstockConsumerService extends AbstractNewPlatform
 			return;
 		}
 
-		SoOutstockEntity soOutstock = soOutstockList.get(0);
-
 		String returnWarehouse = StringUtils.isBlank(shopInfoEntity.getReturnWarehouse()) ? shopInfoEntity.getWarehouseId() : shopInfoEntity.getReturnWarehouse();
 		WarehouseEntity warehouseEntity = warehouseService.getById(returnWarehouse);
 
@@ -311,12 +313,21 @@ public class PlatformNewReturnInstockConsumerService extends AbstractNewPlatform
 		if(CollectionUtils.isEmpty(details)){
 			throw new ServiceException("明细为空");
 		}
-		SoReturnInstockEntity soReturnInstockEntity = this.buildPlatformSoReturnInstockEntity(dto, warehouseEntity, soB2cEntity, soOutstock, shopInfoEntity);
 
-		List<SoReturnInstockDetailEntity> detailEntityList = this.buildPlatformSoReturnInstockDetail(dto, warehouseEntity, soOutstock);
+		// 查询是否已关账
+		LocalDate closedLocalDate = inventoryClosedRecordService.checkClosed(warehouseEntity.getOrgId(), dto.getPutawayTime().toLocalDate());
+		if (null != closedLocalDate) {
+			// 已关账
+			log.warn("[退货入库单消费]:当前退货入库单消费日期【{}】因关账【{}】停止生成：单号={}", dto.getPutawayTime().toLocalDate(), closedLocalDate, dto.getPlatformOrderNo());
+			return;
+		}
+
+		List<SoReturnInstockDetailEntity> detailEntityList = this.buildPlatformSoReturnInstockDetail(dto, warehouseEntity, soOutstockList);
 		if(CollectionUtils.isEmpty(detailEntityList)){
 			throw new ServiceException("没有映射");
 		}
+		SoReturnInstockEntity soReturnInstockEntity = this.buildPlatformSoReturnInstockEntity(dto, warehouseEntity, soB2cEntity, soOutstockList, shopInfoEntity);
+
 		//关联销售退货单
 		this.matchSoReturn(soReturnInstockEntity,detailEntityList,dto, soB2cEntity);
 
@@ -324,16 +335,20 @@ public class PlatformNewReturnInstockConsumerService extends AbstractNewPlatform
 	}
 
 
-	private List<SoReturnInstockDetailEntity> buildPlatformSoReturnInstockDetail(PlatformReturnInstockDTO dto, WarehouseEntity warehouseEntity, SoOutstockEntity soOutstock) {
+	private List<SoReturnInstockDetailEntity> buildPlatformSoReturnInstockDetail(PlatformReturnInstockDTO dto, WarehouseEntity warehouseEntity, List<SoOutstockEntity> soOutstockList) {
 		List<PlatformReturnInstockDTO.Detail> details = dto.getProductDetailList();
 		if(CollectionUtils.isEmpty(details)){
 			throw new ServiceException("明细为空");
 		}
+		List<String> soOutstockIds = soOutstockList.stream().map(BaseEntity::getId).collect(Collectors.toList());
+
+		List<String> soIds = soOutstockList.stream().map(SoOutstockEntity::getSoId).collect(Collectors.toList());
+
 		// 对应销售出库明细
-		List<SoOutstockDetailEntity> soOutstockDetailEntityList = soOutstockDetailService.listByMainIds(Collections.singletonList(soOutstock.getId()));
+		List<SoOutstockDetailEntity> soOutstockDetailEntityList = soOutstockDetailService.listByMainIds(soOutstockIds);
 
 		// 销售订单明细
-		List<SoB2cDetailEntity> soDetailEntityList = soB2cFeign.listDetailByMainIds(Collections.singletonList(soOutstock.getSoId()));
+		List<SoB2cDetailEntity> soDetailEntityList = soB2cFeign.listDetailByMainIds(soIds);
 
 		List<SoReturnInstockDetailEntity> detailEntityList = new ArrayList<>();
 		for (PlatformReturnInstockDTO.Detail detail : details) {
@@ -366,7 +381,7 @@ public class PlatformNewReturnInstockConsumerService extends AbstractNewPlatform
 	private SoReturnInstockEntity buildPlatformSoReturnInstockEntity(PlatformReturnInstockDTO dto,
 															 WarehouseEntity warehouseEntity,
 															 SoB2cEntity soB2cEntity,
-															 SoOutstockEntity soOutstock,
+															 List<SoOutstockEntity> soOutstockList,
 															 ShopInfoEntity shopInfoEntity
 	){
 		SoReturnInstockEntity soReturnInstockEntity = new SoReturnInstockEntity();
@@ -393,7 +408,8 @@ public class PlatformNewReturnInstockConsumerService extends AbstractNewPlatform
 			soReturnInstockEntity.setSoCode(soB2cEntity.getCode());
 			soReturnInstockEntity.setSoId(soB2cEntity.getId());
 		}
-		if(Objects.nonNull(soOutstock)){
+		if(!CollectionUtils.isEmpty(soOutstockList)){
+			SoOutstockEntity soOutstock = soOutstockList.get(0);
 			SysDepartmentDTO department = sysUserFeign.getUserDeptById(soOutstock.getSalesDeptId());
 			soReturnInstockEntity.setSalesDeptId(soOutstock.getSalesDeptId());
 			soReturnInstockEntity.setSalesDeptName(department.getName());
