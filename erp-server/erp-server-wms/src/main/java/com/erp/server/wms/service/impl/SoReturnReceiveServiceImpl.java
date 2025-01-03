@@ -674,10 +674,6 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
         if (count > 0) {
             throw new ServiceException(ApiError.ERROR_92021);
         }
-
-        //退货单明细
-        List<String> soReturnIdList = list.stream().map(SoReturnNoticeDTO.GenerateSoReturnReceiveView::getSourceId).distinct().collect(Collectors.toList());
-        List<SoReturnDetailEntity> soReturnDetailEntities = soReturnFeign.listDetailByMainIds(soReturnIdList);
         for (String id : soReturnNoticeIdList) {
             List<SoReturnNoticeDTO.GenerateSoReturnReceiveView> viewList = list.stream().filter(req -> req.getMainId().equals(id)).collect(Collectors.toList());
             SoReturnNoticeEntity noticeEntity = soReturnNoticeService.getById(id);
@@ -698,9 +694,6 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
             dto.setSellerName(noticeEntity.getSellerName());
             List<SoReturnReceiveDetailDTO.Add> detailList = new ArrayList<>();
             for (SoReturnNoticeDTO.GenerateSoReturnReceiveView view : viewList) {
-                SoReturnDetailEntity soReturnDetailEntity = soReturnDetailEntities.stream()
-                        .filter(v -> v.getId().equals(view.getSourceDetailId()))
-                        .findFirst().orElse(null);
                 dto.setSourceId(view.getSourceId());
                 SoReturnReceiveDetailDTO.Add detailAddDTO = new SoReturnReceiveDetailDTO.Add();
                 detailAddDTO.setSkuId(view.getSkuId());
@@ -712,19 +705,18 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
                 detailAddDTO.setNoticeDetailId(view.getId());
                 detailAddDTO.setReturnReasonDict(view.getReturnReasonDict());
                 detailAddDTO.setReturnTypeDict(view.getReturnTypeDict());
-                if(null == soReturnDetailEntity){
-                    SoReturnNoticeDetailEntity soReturnNoticeDetailEntity = soReturnNoticeDetailEntities.stream().filter(v -> v.getId().equals(view.getId())).findFirst().orElse(null);
-                    detailAddDTO.setExchangeRate(soReturnNoticeDetailEntity.getExchangeRate());
-                    detailAddDTO.setReturnAmount(soReturnNoticeService.calReturnAmount(soReturnNoticeDetailEntity.getReturnAmount(),soReturnNoticeDetailEntity.getReturnQty(),view.getReturnQty()));
-                    detailAddDTO.setTaxReturnAmount(soReturnNoticeService.calReturnAmount(soReturnNoticeDetailEntity.getTaxReturnAmount(),soReturnNoticeDetailEntity.getReturnQty(),view.getReturnQty()));
+                SoReturnNoticeDetailEntity soReturnNoticeDetailEntity = soReturnNoticeDetailEntities.stream().filter(v -> v.getId().equals(view.getId())).findFirst().orElse(null);
+                detailAddDTO.setExchangeRate(soReturnNoticeDetailEntity.getExchangeRate());
+                if (Objects.equals(soReturnNoticeDetailEntity.getReturnQty(), view.getReceiveQty())) {
+                    detailAddDTO.setReturnAmount(soReturnNoticeDetailEntity.getReturnAmount());
+                    detailAddDTO.setTaxReturnAmount(soReturnNoticeDetailEntity.getTaxReturnAmount());
+                    detailAddDTO.setReturnAmountLocalCurrency(soReturnNoticeDetailEntity.getReturnAmountLocalCurrency());
+                    detailAddDTO.setTaxReturnAmountLocalCurrency(soReturnNoticeDetailEntity.getTaxReturnAmountLocalCurrency());
+                } else {
+                    detailAddDTO.setReturnAmount(soReturnNoticeService.calReturnAmount(soReturnNoticeDetailEntity.getReturnAmount(), soReturnNoticeDetailEntity.getReturnQty(), view.getReceiveQty()));
+                    detailAddDTO.setTaxReturnAmount(soReturnNoticeService.calReturnAmount(soReturnNoticeDetailEntity.getTaxReturnAmount(), soReturnNoticeDetailEntity.getReturnQty(), view.getReceiveQty()));
                     detailAddDTO.setReturnAmountLocalCurrency(soReturnNoticeService.calLocalCurrency(soReturnNoticeDetailEntity.getExchangeRate(), detailAddDTO.getReturnAmount()));
                     detailAddDTO.setTaxReturnAmountLocalCurrency(soReturnNoticeService.calLocalCurrency(soReturnNoticeDetailEntity.getExchangeRate(), detailAddDTO.getTaxReturnAmount()));
-                }else {
-                    detailAddDTO.setExchangeRate(soReturnDetailEntity.getExchangeRate());
-                    detailAddDTO.setReturnAmount(soReturnNoticeService.calReturnAmount(soReturnDetailEntity.getReturnAmount(),soReturnDetailEntity.getReturnQty(),view.getReturnQty()));
-                    detailAddDTO.setTaxReturnAmount(soReturnNoticeService.calReturnAmount(soReturnDetailEntity.getTaxReturnAmount(),soReturnDetailEntity.getReturnQty(),view.getReturnQty()));
-                    detailAddDTO.setReturnAmountLocalCurrency(soReturnNoticeService.calLocalCurrency(soReturnDetailEntity.getExchangeRate(), detailAddDTO.getReturnAmount()));
-                    detailAddDTO.setTaxReturnAmountLocalCurrency(soReturnNoticeService.calLocalCurrency(soReturnDetailEntity.getExchangeRate(), detailAddDTO.getTaxReturnAmount()));
                 }
                 dto.setCurrency(noticeEntity.getCurrency());
                 dto.setCurrencySymbol(noticeEntity.getCurrencySymbol());
@@ -785,6 +777,9 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
         List<SoReturnReceiveEntity> soReturnReceiveEntities = this.listByIds(receiveIds);
         List<String> returnIds = soReturnReceiveEntities.stream().map(SoReturnReceiveEntity::getSourceId).collect(Collectors.toList());
         List<SoReturnEntity> returnEntityList = soReturnFeign.listByIds(returnIds);
+        //退货入库单
+        List<SoReturnInstockDetailEntity> soReturnInstockDetailEntities = soReturnInstockDetailService.listDetailBySourceDetailIds(receiveDetailIds);
+
         //销售单id
         List<String> soIds = returnEntityList.stream().map(SoReturnEntity::getSourceId).collect(Collectors.toList());
         //根据销售单获取出库单
@@ -804,7 +799,7 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
             view.setWarehouseName(warehouseDto.getName());
             view.setInstockDate(LocalDate.now());
             SoReturnReceiveDetailEntity soReturnReceiveDetailEntity = soReturnReceiveDetailEntities.stream().filter(req -> req.getId().equals(view.getId())).findFirst().orElse(new SoReturnReceiveDetailEntity());
-
+            Integer realQty = soReturnInstockDetailEntities.stream().filter(r -> r.getSourceDetailId().equals(view.getId())).map(SoReturnInstockDetailEntity::getRealQty).reduce(MathUtil.ZERO, Integer::sum);
             SoReturnDetailEntity soReturnDetailEntity = returnDetailEntityList.stream().filter(req -> req.getId().equals(soReturnReceiveDetailEntity.getSourceDetailId())).findFirst().orElse(new SoReturnDetailEntity());
             SoDetailEntity soDetailEntity = soDetailEntities.stream().filter(req -> req.getId().equals(soReturnDetailEntity.getSourceDetailId())).findFirst().orElse(new SoDetailEntity());
             view.setSalesQty(soDetailEntity.getQty());
@@ -812,7 +807,7 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
             view.setDeliveryQty(actualQty);
             view.setMustQty(soReturnReceiveDetailEntity.getReturnQty());
             view.setReceiveQty(soReturnReceiveDetailEntity.getReceiveQty());
-            view.setRealQty(soReturnReceiveDetailEntity.getReceiveQty());
+            view.setRealQty(soReturnReceiveDetailEntity.getReceiveQty() - realQty);
         }
         return list;
     }

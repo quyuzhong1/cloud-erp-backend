@@ -15,6 +15,7 @@ import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.SoReturnReceiveDTO;
 import com.erp.model.wms.dto.SoReturnReceiveDetailDTO;
+import com.erp.model.wms.entity.SoReturnNoticeDetailEntity;
 import com.erp.model.wms.entity.SoReturnReceiveDetailEntity;
 import com.erp.rpc.oms.feign.SkuMappingFeign;
 import com.erp.rpc.oms.feign.SoInfoFeign;
@@ -30,6 +31,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -72,16 +74,21 @@ public class SoReturnReceiveDetailServiceImpl extends SuperServiceImpl<SoReturnR
     @GlobalTransactional(rollbackFor = Exception.class)
     public Boolean add(SoReturnReceiveDTO.Add dto, String id) {
         List<SoReturnReceiveDetailEntity> list = new ArrayList<>();
-        //如果有退货订单号
+        //无退货订单号
         if (CharSequenceUtil.isBlank(dto.getSourceId())) {
             return notReturnOrderAdd(dto, id);
         } else {
+            //退货订单明细id
             List<String> returnDetailIds = dto.getDetailList().stream().map(SoReturnReceiveDetailDTO.Add::getSourceDetailId).collect(Collectors.toList());
             List<SoReturnDetailEntity> soReturnDetailEntities = soReturnFeign.listDetailByIds(returnDetailIds);
             SoB2cReturnEntity soB2cReturnEntity = FeignQuery.getById(SoB2cReturnEntity.class,dto.getSourceId());
             List<SoB2cReturnDetailEntity> soB2cReturnDetailEntityList = FeignQuery.getByIds(SoB2cReturnDetailEntity.class,returnDetailIds);
+            //退货签收单明细
             List<SoReturnReceiveDetailEntity> soReturnReceiveDetailEntities = this.listDetailBySourceIds(Collections.singletonList(dto.getSourceId()));
-
+            //退货通知单明细 id
+            List<String> noticeDetailIds = dto.getDetailList().stream().map(SoReturnReceiveDetailDTO.Add::getNoticeDetailId).collect(Collectors.toList());
+            List<SoReturnNoticeDetailEntity> soReturnNoticeDetailEntities = soReturnNoticeDetailService.listByIds(noticeDetailIds);
+            //sku
             List<String> skuIds = dto.getDetailList().stream().map(SoReturnReceiveDetailDTO.Add::getSkuId).collect(Collectors.toList());
             List<SkuVO> skuInfoByIds = plmTaskFeign.listSkuProductByIds(skuIds);
             //sku映射表
@@ -104,16 +111,6 @@ public class SoReturnReceiveDetailServiceImpl extends SuperServiceImpl<SoReturnR
                 Integer returnQty = soReturnDetailEntities.stream().filter(req -> req.getId().equals(detailDto.getSourceDetailId())).map(SoReturnDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
                 if("B2C".equals(dto.getType())){
                     returnQty = soB2cReturnDetailEntityList.stream().filter(v->v.getId().equals(detailDto.getSourceDetailId())).map(SoB2cReturnDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
-                }
-                //子产品无需校验
-                if(StringUtils.isNotBlank(detailDto.getSourceDetailId())){
-                    //此单历史签收数量
-                    Integer historyReceiveQty = soReturnReceiveDetailEntities.stream().filter(req -> req.getSourceDetailId().equals(detailDto.getSourceDetailId())).map(SoReturnReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
-                    if (detailDto.getReceiveQty() + historyReceiveQty > returnQty) {
-                        throw new ServiceException(ApiError.ERROR_92020);
-                    }
-                }
-                if("B2C".equals(dto.getType())){
                     if(Objects.nonNull(soB2cReturnEntity)){
                         detailEntity.setReturnTypeDict(soB2cReturnEntity.getType());
                         detailEntity.setReturnReasonDict(soB2cReturnEntity.getReason());
@@ -135,13 +132,39 @@ public class SoReturnReceiveDetailServiceImpl extends SuperServiceImpl<SoReturnR
                 }else {
                     detailEntity.setPlatformSkuNo(detailDto.getPlatformSkuNo());
                 }
-
                 detailEntity.setReturnAmount(detailDto.getReturnAmount());
                 detailEntity.setTaxReturnAmount(detailDto.getTaxReturnAmount());
                 detailEntity.setReturnAmountLocalCurrency(detailDto.getReturnAmountLocalCurrency());
                 detailEntity.setTaxReturnAmountLocalCurrency(detailDto.getTaxReturnAmountLocalCurrency());
                 if(null == detailDto.getExchangeRate()){
                     detailEntity.setExchangeRate(dto.getExchangeRate());
+                }
+                //子产品无需校验
+                if(StringUtils.isNotBlank(detailDto.getSourceDetailId())){
+                    //此单历史签收数量
+                    Integer historyReceiveQty = soReturnReceiveDetailEntities.stream().filter(req -> req.getSourceDetailId().equals(detailDto.getSourceDetailId())).map(SoReturnReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
+                    if (returnQty < detailDto.getReceiveQty() + historyReceiveQty) {
+                        throw new ServiceException(ApiError.ERROR_92020);
+                    }else if(historyReceiveQty > 0 && returnQty == detailDto.getReceiveQty() + historyReceiveQty){
+                        // 退货签收单的数量之和等于退货通知单数量，则需要对退货金额CNY，含税退货金额CNY，退货金额（本位币），含税退货金额（本位币）调整差值。
+                        SoReturnNoticeDetailEntity soReturnNoticeDetailEntity = soReturnNoticeDetailEntities.stream().filter(req -> req.getId().equals(detailDto.getNoticeDetailId())).findFirst().orElse(null);
+                        BigDecimal returnAmount = soReturnNoticeDetailEntity.getReturnAmount();
+                        BigDecimal taxReturnAmount = soReturnNoticeDetailEntity.getTaxReturnAmount();
+                        BigDecimal returnAmountLocalCurrency = soReturnNoticeDetailEntity.getReturnAmountLocalCurrency();
+                        BigDecimal taxReturnAmountLocalCurrency = soReturnNoticeDetailEntity.getTaxReturnAmountLocalCurrency();
+
+                        List<SoReturnReceiveDetailEntity> soReturnReceiveDetailEntityList = soReturnReceiveDetailEntities.stream().filter(req -> req.getSourceDetailId().equals(detailDto.getSourceDetailId())).collect(Collectors.toList());
+                        for (SoReturnReceiveDetailEntity soReturnReceiveDetail : soReturnReceiveDetailEntityList) {
+                            returnAmount = returnAmount.subtract(soReturnReceiveDetail.getReturnAmount()) ;
+                            taxReturnAmount = taxReturnAmount.subtract(soReturnReceiveDetail.getTaxReturnAmount());
+                            returnAmountLocalCurrency = returnAmountLocalCurrency.subtract(soReturnReceiveDetail.getReturnAmountLocalCurrency());
+                            taxReturnAmountLocalCurrency = taxReturnAmountLocalCurrency.subtract(soReturnReceiveDetail.getTaxReturnAmountLocalCurrency());
+                        }
+                        detailEntity.setReturnAmount(returnAmount);
+                        detailEntity.setTaxReturnAmount(taxReturnAmount);
+                        detailEntity.setReturnAmountLocalCurrency(returnAmountLocalCurrency);
+                        detailEntity.setTaxReturnAmountLocalCurrency(taxReturnAmountLocalCurrency);
+                    }
                 }
                 list.add(detailEntity);
             }
