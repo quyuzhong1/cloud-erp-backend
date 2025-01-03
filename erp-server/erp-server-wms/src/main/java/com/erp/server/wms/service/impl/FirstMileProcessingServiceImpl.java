@@ -248,16 +248,9 @@ public class FirstMileProcessingServiceImpl extends SuperServiceImpl<FirstMilePr
      * 新增修改处理数据
      */
     private List<FirstMileProcessingEntity> handleData(List<FirstMileProcessingDTO.AddOrUpdateDTO> list) {
-        List<String> detailIdList = list.stream().filter(obj -> ObjectUtil.isNotEmpty(obj) && CharSequenceUtil.isNotBlank(obj.getRequisitionApplicationDetailId())).map(FirstMileProcessingDTO.AddOrUpdateDTO::getRequisitionApplicationDetailId).distinct().collect(Collectors.toList());
-        List<List<String>> sourceDetailIdListPartition = Lists.partition(detailIdList, 50000);
-        //原订单数据
-        List<FirstMileProcessingEntity> oldList = new ArrayList<>();
-        for (List<String> sourceDetailIdPartition : sourceDetailIdListPartition) {
-            List<FirstMileProcessingEntity> oldPageList = this.listByApplicationDetailIdList(sourceDetailIdPartition);
-            if (CollectionUtils.isNotEmpty(oldPageList)) {
-                oldList.addAll(oldPageList);
-            }
-        }
+        //查询已存在的数据，判断哪些需要删除和更新
+        List<FirstMileProcessingEntity> oldList = this.list();
+
         List<FirstMileProcessingEntity> newList = new ArrayList<>();
         for (FirstMileProcessingDTO.AddOrUpdateDTO addOrUpdateDTO :list) {
             if (ObjectUtil.isEmpty(addOrUpdateDTO)) {
@@ -367,7 +360,7 @@ public class FirstMileProcessingServiceImpl extends SuperServiceImpl<FirstMilePr
             //要货冻结
             if (CharSequenceUtil.isBlank(listDTO.getFirstMileDeliveryId())
                     && Arrays.asList(RequisitionApplicationStatusEnum.HANDLE_ING.getStatus(),RequisitionApplicationStatusEnum.HANDLE.getStatus()).contains(listDTO.getRequisitionApplicationStatus())
-                    && MathUtil.compareTo(MathUtil.ZERO,listDTO.getFrozenQty()) > MathUtil.ZERO) {
+                    && MathUtil.compareTo(listDTO.getFrozenQty(),MathUtil.ZERO) > MathUtil.ZERO) {
                 labelList.add(OrderProcessingLableEnum.REQUISITION_FROZEN.getCode());
             }
 
