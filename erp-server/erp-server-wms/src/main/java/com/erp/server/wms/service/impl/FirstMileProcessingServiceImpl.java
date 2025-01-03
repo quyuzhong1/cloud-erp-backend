@@ -11,7 +11,6 @@ import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
-import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.enums.BomTypeEnum;
@@ -22,6 +21,7 @@ import com.erp.model.wms.enums.OrderProcessingLableEnum;
 import com.erp.model.wms.enums.RequisitionApplicationStatusEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.server.wms.convert.FirstMileProcessingConverter;
 import com.erp.server.wms.mapper.FirstMileProcessingMapper;
 import com.erp.server.wms.service.*;
 import com.google.common.collect.Lists;
@@ -34,10 +34,7 @@ import org.springframework.util.StopWatch;
 
 import javax.annotation.Resource;
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_FIRST_MILE_PROCESSING;
@@ -86,7 +83,7 @@ public class FirstMileProcessingServiceImpl extends SuperServiceImpl<FirstMilePr
         // 数据处理
         List<FirstMileProcessingEntity> firstMileProcessingList =  handleData(list);
         List<FirstMileProcessingEntity> addList = firstMileProcessingList.stream().filter(obj -> CharSequenceUtil.isBlank(obj.getId())).collect(Collectors.toList());
-        List<FirstMileProcessingEntity> updateList = firstMileProcessingList.stream().filter(obj -> CharSequenceUtil.isNotBlank(obj.getId())).collect(Collectors.toList());
+        List<FirstMileProcessingEntity> updateList = firstMileProcessingList.stream().filter(obj -> CharSequenceUtil.isNotBlank(obj.getId()) && !obj.getIsDiff()).collect(Collectors.toList());
         if (CollUtil.isNotEmpty(addList)) {
             log.warn("新增数据！size= {}",addList.size());
             super.saveBatch(addList);
@@ -122,7 +119,8 @@ public class FirstMileProcessingServiceImpl extends SuperServiceImpl<FirstMilePr
         log.warn("查询头程订单跟踪数据，startDate = {}，size = {}",startDate,list.size());
         List<String> skuIdList = list.stream().map(FirstMileProcessingEntity::getSkuId).distinct().collect(Collectors.toList());
         List<BomChildrenSkuDTO> bomChildrenSkuList = plmTaskFeign.listBomChildBySkuIds(skuIdList);
-
+        Map<String, List<BomChildrenSkuDTO>> bomMap = bomChildrenSkuList.stream()
+                .collect(Collectors.groupingBy(obj -> CharSequenceUtil.format("{}_{}", obj.getParentSkuId(), obj.getType())));
         /**
          * 1、头程非组合品订单中转走直接调拨单出库，非中转走销售出库单出库
          * 2、头程组合品走加工单出库
@@ -154,18 +152,20 @@ public class FirstMileProcessingServiceImpl extends SuperServiceImpl<FirstMilePr
         }
         log.warn("查询头程订单跟踪数据，machineList = {}，transferList = {}，soOutstockList = {}",machineList.size(),transferList.size(),soOutstockList.size());
         List<FirstMileProcessingDTO.AddOrUpdateDTO> addList = new ArrayList<>();
-
-
         StopWatch stopWatch = new StopWatch();
         stopWatch.start();
-        for (FirstMileProcessingEntity entity :list) {
+        List<List<FirstMileProcessingDTO.AddOrUpdateDTO>> result = list.parallelStream().map(entity -> {
             //根据类型更新出库数据
             handleOutstockByType(machineList,transferList,soOutstockList,entity);
             log.warn("根据类型处理成功！code = {}",entity.getRequisitionApplicationCode());
-            //新增数据
-            addBomList(addList,entity,bomChildrenSkuList);
+            // 新增数据
+            List<FirstMileProcessingDTO.AddOrUpdateDTO> localList = new ArrayList<>();
+            addBomList(localList,entity,bomMap.get(CharSequenceUtil.format("{}_{}",entity.getSkuId(),BomTypeEnum.COMBINATION.getType())));
             log.warn("按bom处理数据成功！code = {}",entity.getRequisitionApplicationCode());
-        }
+            return localList;
+        }).collect(Collectors.toList());
+        // 合并所有局部列表
+        result.forEach(addList::addAll);
         stopWatch.stop();
         log.warn("数据处理成功，耗时，time = {}",stopWatch.prettyPrint());
         this.update(addList);
@@ -180,21 +180,15 @@ public class FirstMileProcessingServiceImpl extends SuperServiceImpl<FirstMilePr
      * @param bomChildrenSkuList
      */
     private void addBomList (List<FirstMileProcessingDTO.AddOrUpdateDTO> addList, FirstMileProcessingEntity entity, List<BomChildrenSkuDTO> bomChildrenSkuList) {
-        //bom信息
-        List<BomChildrenSkuDTO> childList = bomChildrenSkuList.stream().filter(obj ->
-                CharSequenceUtil.equals(obj.getParentSkuId(), entity.getSkuId())
-                        &&  CharSequenceUtil.equals(obj.getType(), BomTypeEnum.COMBINATION.getType())).collect(Collectors.toList());
-        if (CollUtil.isEmpty(childList)) {
-            FirstMileProcessingDTO.AddOrUpdateDTO addDTO = new FirstMileProcessingDTO.AddOrUpdateDTO();
-            BeanMapperUtils.copy(entity,addDTO);
+        if (CollUtil.isEmpty(bomChildrenSkuList)) {
+            FirstMileProcessingDTO.AddOrUpdateDTO addDTO = FirstMileProcessingConverter.INSTANCE.entityToAdd(entity);
             addDTO.setParentSkuId("");
             addDTO.setBomVersion("");
             addList.add(addDTO);
             return;
         }
-        for (BomChildrenSkuDTO childrenSkuDTO : childList) {
-            FirstMileProcessingDTO.AddOrUpdateDTO addOrUpdateDTO = new FirstMileProcessingDTO.AddOrUpdateDTO();
-            BeanMapperUtils.copy(entity,addOrUpdateDTO);
+        for (BomChildrenSkuDTO childrenSkuDTO : bomChildrenSkuList) {
+            FirstMileProcessingDTO.AddOrUpdateDTO addOrUpdateDTO = FirstMileProcessingConverter.INSTANCE.entityToAdd(entity);
             addOrUpdateDTO.setSkuId(childrenSkuDTO.getSkuId());
             addOrUpdateDTO.setParentSkuId(childrenSkuDTO.getParentSkuId());
             addOrUpdateDTO.setOutstockQty(ObjectUtil.isEmpty(addOrUpdateDTO.getOutstockQty()) ? MathUtil.ZERO : addOrUpdateDTO.getOutstockQty() * childrenSkuDTO.getQuantity());
@@ -253,12 +247,11 @@ public class FirstMileProcessingServiceImpl extends SuperServiceImpl<FirstMilePr
      * 新增修改处理数据
      */
     private List<FirstMileProcessingEntity> handleData(List<FirstMileProcessingDTO.AddOrUpdateDTO> list) {
-        List<String> detailIdList = list.stream().map(FirstMileProcessingDTO.AddOrUpdateDTO::getRequisitionApplicationDetailId).distinct().collect(Collectors.toList());
+        List<String> detailIdList = list.stream().filter(obj -> ObjectUtil.isNotEmpty(obj) && CharSequenceUtil.isNotBlank(obj.getRequisitionApplicationDetailId())).map(FirstMileProcessingDTO.AddOrUpdateDTO::getRequisitionApplicationDetailId).distinct().collect(Collectors.toList());
         List<FirstMileProcessingEntity> oldList = this.listByApplicationDetailIdList(detailIdList);
         List<FirstMileProcessingEntity> newList = new ArrayList<>();
         for (FirstMileProcessingDTO.AddOrUpdateDTO addOrUpdateDTO :list) {
-            FirstMileProcessingEntity entity = new FirstMileProcessingEntity();
-            BeanMapperUtils.copy(addOrUpdateDTO,entity);
+            FirstMileProcessingEntity entity = FirstMileProcessingConverter.INSTANCE.addToEntity(addOrUpdateDTO);
             //旧数据
             FirstMileProcessingEntity old = oldList.stream().filter(obj ->
                     CharSequenceUtil.equals(obj.getRequisitionApplicationId(), addOrUpdateDTO.getRequisitionApplicationId())
@@ -266,6 +259,9 @@ public class FirstMileProcessingServiceImpl extends SuperServiceImpl<FirstMilePr
                     && CharSequenceUtil.equals(obj.getFirstMileDeliveryDetailId(), addOrUpdateDTO.getFirstMileDeliveryDetailId())
                     && CharSequenceUtil.equals(obj.getSkuId(),addOrUpdateDTO.getSkuId())).findFirst().orElse(null);
             if (ObjectUtil.isNotEmpty(old)) {
+                //校验数据是否一样
+                boolean isDiff = CharSequenceUtil.equals(entity.toString(), old.toString());
+                entity.setIsDiff(isDiff);
                 entity.setId(old.getId());
             }
             newList.add(entity);
