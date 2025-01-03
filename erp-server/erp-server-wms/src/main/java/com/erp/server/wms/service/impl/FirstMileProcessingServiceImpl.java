@@ -10,6 +10,7 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.utils.ApplicationContextUtils;
 import com.common.business.vo.PagingVO;
 import com.common.core.utils.MathUtil;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
@@ -74,7 +75,7 @@ public class FirstMileProcessingServiceImpl extends SuperServiceImpl<FirstMilePr
     */
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public Boolean update(List<FirstMileProcessingDTO.AddOrUpdateDTO> list) {
+    public Boolean addOrupdate(List<FirstMileProcessingDTO.AddOrUpdateDTO> list) {
         if (CollUtil.isEmpty(list)) {
             log.warn("删除数据！size= {}",list.size());
             lambdaUpdate().remove();
@@ -168,7 +169,7 @@ public class FirstMileProcessingServiceImpl extends SuperServiceImpl<FirstMilePr
         result.forEach(addList::addAll);
         stopWatch.stop();
         log.warn("数据处理成功，耗时，time = {}",stopWatch.prettyPrint());
-        this.update(addList);
+        ApplicationContextUtils.getBean(FirstMileProcessingServiceImpl.class).addOrupdate(addList);
         log.warn("数据更新成功!");
     }
     /**
@@ -248,7 +249,15 @@ public class FirstMileProcessingServiceImpl extends SuperServiceImpl<FirstMilePr
      */
     private List<FirstMileProcessingEntity> handleData(List<FirstMileProcessingDTO.AddOrUpdateDTO> list) {
         List<String> detailIdList = list.stream().filter(obj -> ObjectUtil.isNotEmpty(obj) && CharSequenceUtil.isNotBlank(obj.getRequisitionApplicationDetailId())).map(FirstMileProcessingDTO.AddOrUpdateDTO::getRequisitionApplicationDetailId).distinct().collect(Collectors.toList());
-        List<FirstMileProcessingEntity> oldList = this.listByApplicationDetailIdList(detailIdList);
+        List<List<String>> sourceDetailIdListPartition = Lists.partition(detailIdList, 50000);
+        //原订单数据
+        List<FirstMileProcessingEntity> oldList = new ArrayList<>();
+        for (List<String> sourceDetailIdPartition : sourceDetailIdListPartition) {
+            List<FirstMileProcessingEntity> oldPageList = this.listByApplicationDetailIdList(sourceDetailIdPartition);
+            if (CollectionUtils.isNotEmpty(oldPageList)) {
+                oldList.addAll(oldPageList);
+            }
+        }
         List<FirstMileProcessingEntity> newList = new ArrayList<>();
         for (FirstMileProcessingDTO.AddOrUpdateDTO addOrUpdateDTO :list) {
             FirstMileProcessingEntity entity = FirstMileProcessingConverter.INSTANCE.addToEntity(addOrUpdateDTO);

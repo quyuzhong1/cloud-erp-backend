@@ -10,6 +10,7 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.utils.ApplicationContextUtils;
 import com.common.business.vo.PagingVO;
 import com.common.core.utils.MathUtil;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
@@ -75,7 +76,7 @@ public class SoB2bProcessingServiceImpl extends SuperServiceImpl<SoB2bProcessing
     */
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public Boolean update(List<SoB2bProcessingDTO.AddOrUpdateDTO> list) {
+    public Boolean addOrUpdate(List<SoB2bProcessingDTO.AddOrUpdateDTO> list) {
         if (CollUtil.isEmpty(list)) {
             log.warn("删除数据！size= {}",list.size());
             lambdaUpdate().remove();
@@ -170,7 +171,7 @@ public class SoB2bProcessingServiceImpl extends SuperServiceImpl<SoB2bProcessing
         result.forEach(addList::addAll);
         stopWatch.stop();
         log.warn("数据处理成功，耗时，time = {}",stopWatch.prettyPrint());
-        this.update(addList);
+        ApplicationContextUtils.getBean(SoB2bProcessingServiceImpl.class).addOrUpdate(addList);
         log.warn("数据更新成功!");
     }
 
@@ -275,7 +276,15 @@ public class SoB2bProcessingServiceImpl extends SuperServiceImpl<SoB2bProcessing
     */
     private List<SoB2bProcessingEntity> handleData(List<SoB2bProcessingDTO.AddOrUpdateDTO> list) {
         List<String> soDetailIdList = list.stream().filter(obj -> ObjectUtil.isNotEmpty(obj) && CharSequenceUtil.isNotBlank(obj.getSoDetailId())).map(SoB2bProcessingDTO.AddOrUpdateDTO::getSoDetailId).distinct().collect(Collectors.toList());
-        List<SoB2bProcessingEntity> oldList = this.listBySoDetailIdList(soDetailIdList);
+        List<List<String>> sourceDetailIdListPartition = Lists.partition(soDetailIdList, 50000);
+        //原订单数据
+        List<SoB2bProcessingEntity> oldList = new ArrayList<>();
+        for (List<String> sourceDetailIdPartition : sourceDetailIdListPartition) {
+            List<SoB2bProcessingEntity> oldPageList = this.listBySoDetailIdList(sourceDetailIdPartition);
+            if (CollectionUtils.isNotEmpty(oldPageList)) {
+                oldList.addAll(oldPageList);
+            }
+        }
         List<SoB2bProcessingEntity> newList = new ArrayList<>();
         for (SoB2bProcessingDTO.AddOrUpdateDTO addOrUpdateDTO :list) {
             SoB2bProcessingEntity entity = SoB2bProcessingConverter.INSTANCE.addToEntity(addOrUpdateDTO);
