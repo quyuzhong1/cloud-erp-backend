@@ -366,7 +366,8 @@ public class FirstMileProcessingServiceImpl extends SuperServiceImpl<FirstMilePr
             }
             //要货冻结
             if (CharSequenceUtil.isBlank(listDTO.getFirstMileDeliveryId())
-                    && Arrays.asList(RequisitionApplicationStatusEnum.HANDLE_ING.getStatus(),RequisitionApplicationStatusEnum.HANDLE.getStatus()).contains(listDTO.getRequisitionApplicationStatus())) {
+                    && Arrays.asList(RequisitionApplicationStatusEnum.HANDLE_ING.getStatus(),RequisitionApplicationStatusEnum.HANDLE.getStatus()).contains(listDTO.getRequisitionApplicationStatus())
+                    && MathUtil.compareTo(MathUtil.ZERO,listDTO.getFrozenQty()) > MathUtil.ZERO) {
                 labelList.add(OrderProcessingLableEnum.REQUISITION_FROZEN.getCode());
             }
 
