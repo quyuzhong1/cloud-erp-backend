@@ -1114,7 +1114,7 @@ public class SyncTaskServiceImpl implements SyncTaskService {
         orgList.addAll(salesOrgId);
         List<String> financialOrganization = customerInfoList.stream().map(req -> req.getFinancialOrganization()).distinct().collect(Collectors.toList());
         orgList.addAll(financialOrganization);
-        List<String> salesOrgIds = b2cEntity.stream().map(req -> req.getSalesOrgId()).distinct().collect(Collectors.toList());
+        List<String> salesOrgIds = soOutstockEntities.stream().map(req -> req.getSalesOrgId()).distinct().collect(Collectors.toList());
         orgList.addAll(salesOrgIds);
         List<BaseIdDTO.CodeDTO> companyEntities = sysUserFeign.getAccountingCompanyList(orgList);
 
