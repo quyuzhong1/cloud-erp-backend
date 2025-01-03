@@ -12,6 +12,8 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import com.erp.server.dmp.push.service.lingxing.LxCommonService;
+import cn.hutool.core.util.ObjectUtil;
+import com.common.business.dto.ShudiyunB2cOrderDTO;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -233,7 +235,7 @@ public class DmpOutputErpPushTaskHandler extends DmpOutputTaskHandler{
 					} catch (Exception e) {
 						log.error("处理上游单据失败" , e);
 					}
-					
+
 					List<DmpPushMsgHisEntity> histList = dmpPushMsgHisService.lambdaQuery()
 							.eq(DmpPushMsgHisEntity::getSourceId, s)
 							.eq(DmpPushMsgHisEntity::getTargetPlatform, systemCode)
@@ -279,8 +281,18 @@ public class DmpOutputErpPushTaskHandler extends DmpOutputTaskHandler{
 			List<DmpOutputTaskRecordEntity> erpQuerySync = dmpOutputTaskRecordService.erpQuerySync(dmpCfgOutputEntity, Arrays.asList(dmpOutputTaskRecordEntity));
 			if(CollUtil.isNotEmpty(erpQuerySync)) {
 				requestData = erpQuerySync.get(0).getRequestData();
-			}else {
-				return;
+				//如果查询同步后还是没有数据，当删除处理
+				isQuerySync = JSON.parseObject(requestData).getBoolean("isQuerySync");
+				if (isQuerySync != null && isQuerySync) {
+					//查询是否之前有推送过数帝云
+					List<DmpOutputTaskRecordEntity> list = dmpOutputTaskRecordService.lambdaQuery()
+							.eq(DmpOutputTaskRecordEntity::getSourceCode, erpQuerySync.get(0).getSourceCode())
+							.orderByDesc(DmpOutputTaskRecordEntity::getCreateTime)
+							.list();
+					if (CollUtil.isNotEmpty(list)) {
+						requestData = isDeletedHandler(list, erpQuerySync.get(0).getSourceCode());
+					}
+				}
 			}
 		}
 
@@ -356,5 +368,28 @@ public class DmpOutputErpPushTaskHandler extends DmpOutputTaskHandler{
 	protected List<String> getSourceCodeKeys() {
 		return Arrays.asList("sourceCode");
 	}
-	
+
+	/**
+	 * 校验数据是否删除处理
+	 */
+	private String isDeletedHandler(List<DmpOutputTaskRecordEntity> list, String sourceCode) {
+		for (DmpOutputTaskRecordEntity recordEntity : list) {
+			JSONObject jsonObject = JSON.parseObject(recordEntity.getRequestData());
+			if ("已删除".equals(String.valueOf(jsonObject.get("status"))) || "operateDelete".equals(String.valueOf(jsonObject.get("operate")))) {
+				DmpOutputTaskRecordEntity taskRecordEntity = list.stream().filter(req -> DmpOutputTaskRecordStatusEnum.FINISH.getCode().equals(req.getStatus())).findFirst().orElse(null);
+				if (ObjectUtil.isNotEmpty(taskRecordEntity)) {
+					ShudiyunB2cOrderDTO shudiyunB2cOrderDTO1 = JSON.parseObject(recordEntity.getRequestData(), ShudiyunB2cOrderDTO.class);
+					shudiyunB2cOrderDTO1.setStatus("已删除");
+					return JSON.toJSONString(shudiyunB2cOrderDTO1);
+				} else {
+					dmpOutputTaskRecordService.lambdaUpdate()
+							.set(DmpOutputTaskRecordEntity::getStatus, DmpOutputTaskRecordStatusEnum.FINISH.getCode())
+							.eq(DmpOutputTaskRecordEntity::getSourceCode, sourceCode)
+							.update();
+					return "";
+				}
+			}
+		}
+		return "";
+	}
 }

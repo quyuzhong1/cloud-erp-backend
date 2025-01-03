@@ -270,11 +270,6 @@ public interface ExportWmsFeign {
 
 
     /**
-     * 导出FBA在途核对列表
-     */
-    @PostMapping("/feign/export/exportFbaTransitReport")
-    PagingVO<FbaTransitCalculateReportDTO.ListDTO> exportFbaTransitReport(PagingDTO<FbaTransitCalculateReportDTO.PagingParamDTO> dto);
-    /**
      * 导出b2b销售订单虚拟仓订单跟踪
      */
     @PostMapping("/feign/export/exportSoB2bProcessing")
@@ -289,4 +284,9 @@ public interface ExportWmsFeign {
      */
     @PostMapping("/feign/export/exportFirstMileProcessing")
     PagingVO<FirstMileProcessingDTO.ListDTO> exportFirstMileProcessing(PagingDTO<FirstMileProcessingDTO.PagingParamDTO> dto);
+    /**
+     * 导出FBA在途核对列表
+     */
+    @PostMapping("/feign/export/exportFbaTransitReport")
+    PagingVO<FbaTransitCalculateReportDTO.ListDTO> exportFbaTransitReport(PagingDTO<FbaTransitCalculateReportDTO.PagingParamDTO> dto);
 }

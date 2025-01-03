@@ -344,7 +344,7 @@
                 #{item}
             </foreach>
         </if>
-        ORDER BY sellable_qty desc limit 1
+        ORDER BY sellable_qty desc
     </select>
 
 
