@@ -21,7 +21,6 @@ import org.springframework.util.CollectionUtils;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -182,11 +181,6 @@ public class ReplenishmentResultDTO {
     private Map<String, List<String>> shopIdByPlatform;
 
     /**
-     * 店铺最近历史销量
-     */
-    private Map<String, Integer> shopSalesMap = new HashMap<>();
-
-    /**
      * 库存
      */
     private ReplenishmentInventoryDTO inventoryDTO;
@@ -200,6 +194,11 @@ public class ReplenishmentResultDTO {
      * 配置
      */
     private CfgRuleStrategyDTO cfgRuleStrategy;
+
+    /**
+     * 店铺需求数
+     */
+    private Integer shopDemandQty;
 
     @Getter
     @Setter
@@ -1161,9 +1160,25 @@ public class ReplenishmentResultDTO {
         private String warehouseId;
 
         /**
-         * 店铺明细
+         * 预计发货日期
          */
-        private List<BillShopInventoryDetailDTO> shopInventoryDetails;
+        private LocalDate planDeliveryDate;
+
+        /**
+         * 收货渠道，店铺id/仓库id
+         */
+        private String receivingChannel;
+
+        /**
+         * 发货仓库
+         */
+        private String deliveryWarehouseId;
+
+        /**
+         * 店铺预计数量
+         */
+        private Integer shopPreQty;
+
 
 
         public static EstimatedDeliveryDetailEntity buildEstimatedDeliveryDetail(EstimatedDeliveryDetailDTO dto, String replenishmentDetailId, String calcVersion) {
@@ -1176,6 +1191,7 @@ public class ReplenishmentResultDTO {
             entity.setSourceId(dto.getSourceId());
             entity.setSourceCode(dto.getSourceCode());
             entity.setSourceType(dto.getSourceType());
+            entity.setPlanDeliveryDate(dto.getPlanDeliveryDate());
             entity.setCalcVersion(calcVersion);
             return entity;
         }
@@ -1230,9 +1246,9 @@ public class ReplenishmentResultDTO {
         private String warehouseId;
 
         /**
-         * 店铺明细
+         * 店铺预计数量
          */
-        private List<BillShopInventoryDetailDTO> shopInventoryDetails;
+        private Integer shopPreQty;
 
         public static EstimatedPurchaseDetailEntity buildEstimatedPurchaseDetail(EstimatedPurchaseDetailDTO dto, String replenishmentDetailId, String calcVersion) {
             EstimatedPurchaseDetailEntity entity = new EstimatedPurchaseDetailEntity();
@@ -1331,9 +1347,9 @@ public class ReplenishmentResultDTO {
         private String warehouseId;
 
         /**
-         * 店铺明细
+         * 店铺预计数量
          */
-        private List<BillShopInventoryDetailDTO> shopInventoryDetails;
+        private Integer shopPreQty;
 
         public static LocalInTransitDetailEntity buildLocalInTransitDetail(LocalInTransitDetailDTO dto, String replenishmentDetailId, String calcVersion) {
             LocalInTransitDetailEntity entity = new LocalInTransitDetailEntity();
@@ -1399,9 +1415,9 @@ public class ReplenishmentResultDTO {
         private String warehouseId;
 
         /**
-         * 店铺明细
+         * 店铺预计数量
          */
-        private List<BillShopInventoryDetailDTO> shopInventoryDetails;
+        private Integer shopPreQty;
 
         public static OverseasInTransitDetailEntity buildOverseasInTransitDetail(OverseasInTransitDetailDTO dto, String replenishmentDetailId, String calcVersion) {
             OverseasInTransitDetailEntity entity = new OverseasInTransitDetailEntity();
@@ -1475,6 +1491,11 @@ public class ReplenishmentResultDTO {
         private Integer platformQty;
 
         /**
+         * 来源类型
+         */
+        private String sourceType;
+
+        /**
          * 店铺明细
          */
         private List<ShopInventoryDetailDTO> shopInventoryDetails;
@@ -1493,11 +1514,12 @@ public class ReplenishmentResultDTO {
             entity.setTotalQty(dto.getTotalQty());
             entity.setPlatformQty(dto.getPlatformQty());
             entity.setCalcVersion(calcVersion);
+            entity.setSourceType(dto.getSourceType());
             entity.setDictPlatform(dto.getDictPlatform());
             return entity;
         }
 
-        public static ReplenishmentInventoryDetailDTO buildReplenishmentInventoryDetailDTO(String inventoryType, CfgRuleWarehouseDTO.StrategyDetailResultDTO result, Integer totalQty,Integer platformQty, List<ShopInventoryDetailDTO> shopInventoryDetails) {
+        public static ReplenishmentInventoryDetailDTO buildReplenishmentInventoryDetailDTO(String inventoryType, CfgRuleWarehouseDTO.StrategyDetailResultDTO result, LocalInventoryDTO inventoryDTO,Integer platformQty, List<ShopInventoryDetailDTO> shopInventoryDetails) {
             ReplenishmentInventoryDetailDTO dto = new ReplenishmentInventoryDetailDTO();
             dto.setInventoryType(inventoryType);
             dto.setDictPlatform(result.getDictPlatform());
@@ -1507,16 +1529,18 @@ public class ReplenishmentResultDTO {
             dto.setChannelType(result.getChannelType());
             dto.setChannelIdJson(result.getChannelIdJson());
             dto.setInventoryAllocateType(result.getInventoryAllocateType());
-            dto.setTotalQty(totalQty);
+            dto.setTotalQty(inventoryDTO.getQty());
+            dto.setSourceType(inventoryDTO.getSourceType());
             dto.setPlatformQty(platformQty);
             dto.setShopInventoryDetails(shopInventoryDetails);
             return dto;
         }
 
-        public static ReplenishmentInventoryDetailDTO buildReplenishmentInventoryDetailDTO(String inventoryType,  Integer totalQty, List<ShopInventoryDetailDTO> shopInventoryDetails) {
+        public static ReplenishmentInventoryDetailDTO buildReplenishmentInventoryDetailDTO(String inventoryType, LocalInventoryDTO inventoryDTO, List<ShopInventoryDetailDTO> shopInventoryDetails) {
             ReplenishmentInventoryDetailDTO dto = new ReplenishmentInventoryDetailDTO();
             dto.setInventoryType(inventoryType);
-            dto.setTotalQty(totalQty);
+            dto.setTotalQty(inventoryDTO.getQty());
+            dto.setSourceType(inventoryDTO.getSourceType());
             dto.setShopInventoryDetails(shopInventoryDetails);
             return dto;
         }
@@ -1538,31 +1562,20 @@ public class ReplenishmentResultDTO {
          */
         private BigDecimal qty;
 
+        /**
+         * 店铺需求数
+         */
+        private Integer shopRequireQty;
+
         public static ShopInventoryDetailEntity buildShopInventoryDetail(ShopInventoryDetailDTO dto, String mainId, String calcVersion) {
             ShopInventoryDetailEntity entity = new ShopInventoryDetailEntity();
             entity.setMainId(mainId);
             entity.setShopId(dto.getShopId());
             entity.setQty(dto.getQty());
+            entity.setShopRequireQty(dto.getShopRequireQty());
             entity.setCalcVersion(calcVersion);
             return entity;
         }
-
-    }
-
-    @Getter
-    @Setter
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public static class BillShopInventoryDetailDTO {
-        /**
-         * 店铺id
-         */
-        private String shopId;
-
-        /**
-         * 数量
-         */
-        private Integer qty;
 
     }
 
