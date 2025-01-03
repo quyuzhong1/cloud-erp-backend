@@ -5,23 +5,15 @@ import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
-import com.common.business.dto.base.BaseResultDTO;
-import com.common.core.anno.LogAction;
-import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
-import com.common.core.enums.LogActionEnum;
-import com.erp.model.dmp.dto.DmpBasicSystemDTO;
-import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
-import com.erp.server.dmp.service.DmpAmzReportInfoService;
 import com.sdk.third.lingxing.dto.ProductInfo;
 import com.sdk.third.lingxing.dto.Result;
 import com.sdk.third.lingxing.utils.LingxingApiUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
-import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -76,13 +68,14 @@ public class DmpHistorySyncThirdController extends BaseController {
             boolean exist = jsonArray.stream()
                     .anyMatch(e -> productInfo.getSkuIdentifier().toString().equalsIgnoreCase(((JSONObject) e).getString("sku_identifier")));
             if (exist){
+                LingxingApiUtils.updateProduct(productInfo);
                 continue;
             }
             if (productInfo.getSku().length() >= 50){
                 log.warn("SKU长度过长: 跳过：{}", JSONUtil.toJsonStr(productInfo));
                 continue;
             }
-            LingxingApiUtils.addOrUpdateProduct(productInfo);
+            LingxingApiUtils.addProduct(productInfo);
         }
         return success();
     }

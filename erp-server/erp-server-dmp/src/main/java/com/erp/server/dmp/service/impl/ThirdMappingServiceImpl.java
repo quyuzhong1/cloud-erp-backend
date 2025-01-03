@@ -14,6 +14,7 @@ import com.common.core.constant.EnumMessage;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
+import com.erp.model.dmp.dto.DictBasicDTO;
 import com.erp.model.dmp.dto.ThirdMappingDTO;
 import com.erp.model.dmp.dto.ThirdMappingDTO.ThirdAddDTO;
 import com.erp.model.dmp.entity.ThirdLogisticsEntity;
@@ -41,6 +42,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.lang.reflect.Array;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -79,6 +81,8 @@ public class ThirdMappingServiceImpl extends SuperServiceImpl<ThirdMappingMapper
 
     @Resource
     private OverseasProviderFeign overseasProviderFeign;
+    @Resource
+    private DictBasicService dictBasicService;
 
 //    @GlobalTransactional(rollbackFor = Exception.class)
 //    @Transactional(rollbackFor = Exception.class)
@@ -878,8 +882,14 @@ public class ThirdMappingServiceImpl extends SuperServiceImpl<ThirdMappingMapper
                     thirdName = thirdShopEntity.getName();
                     thirdAddDTO.setThirdInfoId(thirdShopEntity.getId());
                     thirdAddDTO.setThirdCode(thirdShopEntity.getCode());
-                    if(PlatformDictEnum.LING_XING.getCode().equals(thirdAddDTO.getSysType()) && !dictPlatform.equals(thirdShopEntity.getGroupId())){
-                        throw new ServiceException("ERP店铺平台【{}】与领星店铺平台【{}】不一致",dictPlatform,thirdShopEntity.getGroupId());
+                    if(PlatformDictEnum.LING_XING.getCode().equals(thirdAddDTO.getSysType())){
+                        // 领星平台映射ERP平台关系
+                        List<DictBasicDTO.ViewDTO> dictbaseList = dictBasicService.getByKey("lingxingPlatformCode");
+                        if (dictbaseList.stream().noneMatch(e ->
+                                e.getValue().equalsIgnoreCase(thirdShopEntity.getPlatformId()) && dictPlatform.equalsIgnoreCase(e.getName()))
+                        ){
+                            throw new ServiceException("ERP店铺平台【{}】与领星店铺平台【{}】不一致",dictPlatform,thirdShopEntity.getGroupId());
+                        }
                     }
                     break;
                 case VIRTUAL_WAREHOUSE:

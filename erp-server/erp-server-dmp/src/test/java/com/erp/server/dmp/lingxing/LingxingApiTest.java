@@ -13,9 +13,7 @@
 package com.erp.server.dmp.lingxing;
 
 import cn.hutool.core.bean.BeanUtil;
-import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
-import com.common.core.exception.ServiceException;
 import com.erp.server.dmp.ErpServerDmpApplication;
 import com.sdk.third.lingxing.dto.*;
 import com.sdk.third.lingxing.utils.LingxingApiUtils;
@@ -27,7 +25,6 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 import java.time.LocalDate;
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * API tests for Lingxing
@@ -106,8 +103,8 @@ public class LingxingApiTest {
         ProductInfo productInfo = new ProductInfo();
         productInfo.setSku("2667");
         productInfo.setSkuIdentifier("1619184295035801601");
-        productInfo.setProductName("VIJIM P001 手机/平板夹支架");
-        Result<Object> objectResult = LingxingApiUtils.addOrUpdateProduct(productInfo);
+        productInfo.setProductName("VIJIM P001 手机/平板夹支架 2222");
+        Result<Object> objectResult = LingxingApiUtils.checkAddOrUpdateProduct(productInfo);
         System.out.println("商品同步结果");
         System.out.println(JSONUtil.toJsonStr(objectResult));
     }

@@ -139,6 +139,12 @@ public class SoB2cProcessingEntity extends BaseEntity<SoB2cProcessingEntity> {
     @TableField(exist = false)
     private LocalDateTime deliveryTime;
 
+    /**
+     * 是否存在差异
+     */
+    @TableField(exist = false)
+    private Boolean isDiff;
+
     public static final String B2C_SO_ID = "b2c_so_id";
 
     public static final String B2C_SO_CODE = "b2c_so_code";
@@ -182,4 +188,29 @@ public class SoB2cProcessingEntity extends BaseEntity<SoB2cProcessingEntity> {
         return null;
     }
 
+    @Override
+    public String toString() {
+        return "SoB2cProcessingEntity{" +
+                "b2cSoId='" + b2cSoId + '\'' +
+                ", b2cSoCode='" + b2cSoCode + '\'' +
+                ", deliveryId='" + deliveryId + '\'' +
+                ", deliveryDetailId='" + deliveryDetailId + '\'' +
+                ", deliveryCode='" + deliveryCode + '\'' +
+                ", deliveryStatus='" + deliveryStatus + '\'' +
+                ", deliveryQty=" + deliveryQty +
+                ", skuId='" + skuId + '\'' +
+                ", warehouseId='" + warehouseId + '\'' +
+                ", virtualWarehouseId='" + virtualWarehouseId + '\'' +
+                ", frozenTime=" + frozenTime +
+                ", frozenQty=" + frozenQty +
+                ", outstockOrderId='" + outstockOrderId + '\'' +
+                ", outstockOrderCode='" + outstockOrderCode + '\'' +
+                ", outstockOrderType='" + outstockOrderType + '\'' +
+                ", outstockOrderStatus='" + outstockOrderStatus + '\'' +
+                ", outstockOrderTime=" + outstockOrderTime +
+                ", outstockQty=" + outstockQty +
+                ", parentSkuId='" + parentSkuId + '\'' +
+                ", bomVersion='" + bomVersion + '\'' +
+                '}';
+    }
 }

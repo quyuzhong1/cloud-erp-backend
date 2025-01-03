@@ -13,7 +13,11 @@
             srnd.return_reason_dict,
             srnd.remark,
             srnd.source_detail_id,
-            srn.approve_status
+            srn.approve_status,
+            srnd.return_amount,
+            srnd.tax_return_amount,
+            srnd.return_amount_local_currency,
+            srnd.tax_return_amount_local_currency
         FROM so_return_notice_detail srnd
         INNER JOIN so_return_notice srn ON srn.id = srnd.main_id AND srnd.is_deleted = FALSE
         WHERE srn.is_deleted = FALSE
@@ -37,7 +41,11 @@
         srnd.return_reason_dict,
         srnd.remark,
         srnd.source_detail_id,
-        srn.approve_status
+        srn.approve_status,
+        srnd.return_amount,
+        srnd.tax_return_amount,
+        srnd.return_amount_local_currency,
+        srnd.tax_return_amount_local_currency
         FROM so_return_notice_detail srnd
         INNER JOIN so_return_notice srn ON srn.id = srnd.main_id AND srnd.is_deleted = FALSE
         WHERE srn.is_deleted = FALSE
