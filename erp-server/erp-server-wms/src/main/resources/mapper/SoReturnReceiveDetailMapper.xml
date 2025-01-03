@@ -16,7 +16,11 @@
         srrd.notice_detail_id,
         srr.approve_status,
         srrd.platform_sku_no,
-        srrd.is_child_sku_no
+        srrd.is_child_sku_no,
+        srrd.return_amount,
+        srrd.tax_return_amount,
+        srrd.return_amount_local_currency,
+        srrd.tax_return_amount_local_currency
         FROM so_return_receive_detail srrd
         INNER JOIN so_return_receive srr ON srrd.main_id = srr.id AND srrd.is_deleted = FALSE
         WHERE srr.is_deleted = FALSE
@@ -43,7 +47,11 @@
         srrd.source_detail_id,
         srr.approve_status,
         srrd.platform_sku_no,
-        srrd.is_child_sku_no
+        srrd.is_child_sku_no,
+        srrd.return_amount,
+        srrd.tax_return_amount,
+        srrd.return_amount_local_currency,
+        srrd.tax_return_amount_local_currency
         FROM so_return_receive_detail srrd
         INNER JOIN so_return_receive srr ON srrd.main_id = srr.id AND srrd.is_deleted = FALSE
         WHERE srr.is_deleted = FALSE
@@ -70,7 +78,11 @@
         srrd.source_detail_id,
         srr.approve_status,
         srrd.platform_sku_no,
-        srrd.is_child_sku_no
+        srrd.is_child_sku_no,
+        srrd.return_amount,
+        srrd.tax_return_amount,
+        srrd.return_amount_local_currency,
+        srrd.tax_return_amount_local_currency
         FROM so_return_receive_detail srrd
         INNER JOIN so_return_receive srr ON srrd.main_id = srr.id AND srrd.is_deleted = FALSE
         WHERE srr.is_deleted = FALSE
@@ -97,7 +109,11 @@
         srrd.source_detail_id,
         srr.approve_status,
         srrd.platform_sku_no,
-        srrd.is_child_sku_no
+        srrd.is_child_sku_no,
+        srrd.return_amount,
+        srrd.tax_return_amount,
+        srrd.return_amount_local_currency,
+        srrd.tax_return_amount_local_currency
         FROM so_return_receive_detail srrd
         INNER JOIN so_return_receive srr ON srrd.main_id = srr.id AND srrd.is_deleted = FALSE
         WHERE srr.is_deleted = FALSE

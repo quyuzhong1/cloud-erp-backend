@@ -17,7 +17,10 @@ import com.erp.model.sys.entity.CfgQueryConditionEntity;
 import com.erp.server.sys.mapper.CfgQueryConditionMapper;
 import com.erp.server.sys.service.CfgQueryConditionService;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 /**
@@ -33,7 +36,11 @@ import java.util.List;
 public class CfgQueryConditionServiceImpl extends SuperServiceImpl<CfgQueryConditionMapper, CfgQueryConditionEntity> implements CfgQueryConditionService {
 
 
+    public static final String CREATE_TIME_NAME = "创建时间";
+    public static final String CREATE_TIME = "create_time";
+
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean add(CfgQueryConditionDTO.AddDTO dto) {
         List<CfgQueryConditionEntity> dbEntityList = this.listByCode(dto.getCode());
         if(dbEntityList.stream().anyMatch(v->v.getValue().equals(dto.getValue()) && v.getDisplayType().equals(dto.getDisplayType()))){
@@ -47,15 +54,22 @@ public class CfgQueryConditionServiceImpl extends SuperServiceImpl<CfgQueryCondi
         }
         CfgQueryConditionEntity entity = new CfgQueryConditionEntity();
         BeanUtil.copyProperties(dto,entity);
-        return this.save(entity);
+        boolean save = this.save(entity);
+        // 查询相同页面编码记录重新排序
+        reIndexAndUpdate(dto, "");
+        return save;
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean update(CfgQueryConditionDTO.UpdateDTO dto) {
         CfgQueryConditionEntity entity = this.getById(dto.getId());
         BeanUtil.copyProperties(dto,entity,"id");
         List<CfgQueryConditionEntity> dbEntityList = this.listByCode(dto.getCode());
-        return this.updateById(entity);
+        boolean result = this.updateById(entity);
+        // 查询相同页面编码和大于序号的记录重新排序
+        reIndexAndUpdate(dto, dto.getId());
+        return result;
     }
 
     @Override
@@ -108,5 +122,59 @@ public class CfgQueryConditionServiceImpl extends SuperServiceImpl<CfgQueryCondi
         LambdaQueryWrapper<CfgQueryConditionEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(CfgQueryConditionEntity::getCode, code);
         return this.list(queryWrapper);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean reIndexAndUpdate(CfgQueryConditionDTO.CommonDTO dto, String id) {
+        List<CfgQueryConditionEntity> list = this.lambdaQuery()
+                .eq(CfgQueryConditionEntity::getCode, dto.getCode())
+                .ne(StringUtils.isNotBlank(id), CfgQueryConditionEntity::getId, id)
+                .orderByAsc(CfgQueryConditionEntity::getIndex)
+                .list();
+        if(CollectionUtils.isEmpty(list)){
+            return true;
+        }
+        // tab类型从1000开始
+        int tabIndex = 1000;
+        // 导出从2000开始
+        int exportIndex = 2000;
+        // 当前序号
+        int curIndex = 1;
+        // 提交的序号
+        int submitIndex = dto.getIndex();
+        // 存在创建时间
+        boolean hasCreateTime = (dto.getValue().contains(CREATE_TIME) && CREATE_TIME_NAME.equalsIgnoreCase(dto.getLabel()))
+                || list.stream().anyMatch(e-> e.getValue().contains(CREATE_TIME) && CREATE_TIME_NAME.equalsIgnoreCase(e.getLabel()));
+
+        // 重新排序
+        for (CfgQueryConditionEntity curEntity : list) {
+            // tab字段
+            if (curEntity.getIsExtend() && curEntity.getValue().contains("tab")){
+                curEntity.setIndex(tabIndex);
+                tabIndex ++ ;
+                continue;
+            }
+            // 导出字段
+            if ("export".equalsIgnoreCase(curEntity.getDisplayType())){
+                curEntity.setIndex(exportIndex);
+                exportIndex ++ ;
+                continue;
+            }
+
+            // 创建时间固定序号是3
+            if (curEntity.getValue().contains(CREATE_TIME) && CREATE_TIME_NAME.equalsIgnoreCase(curEntity.getLabel())){
+                curEntity.setIndex(3);
+                continue;
+            }
+
+            // 和提交的序号相同 + 1
+            if (curIndex == submitIndex || (hasCreateTime && 3 == curIndex)){
+                curIndex ++;
+            }
+            curEntity.setIndex(curIndex);
+            curIndex ++ ;
+        }
+        return updateBatchById(list);
     }
 }
