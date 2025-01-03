@@ -287,6 +287,9 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
                     .map(VirtualWarehouseRelationEntity::getVirtualWarehouseId).findFirst().orElse("");
             detailEntity.setVirtualWarehouseId(virtualWarehouseId);
 
+            if(StringUtils.isBlank(detailEntity.getSkuId())){
+                throw new ServiceException("明细sku不能为空");
+            }
             //库存SKU
             SkuMappingDTO.ListSkuDTO warehouseListSkuDTO = SkuMappingList.stream().filter(obj -> obj.getProductSkuId().equals(detailEntity.getSkuId()) && obj.getWarehouseId().equals(detailEntity.getWarehouseId())).findFirst().orElse(null);
             if (ObjectUtils.isNotEmpty(warehouseListSkuDTO)) {
