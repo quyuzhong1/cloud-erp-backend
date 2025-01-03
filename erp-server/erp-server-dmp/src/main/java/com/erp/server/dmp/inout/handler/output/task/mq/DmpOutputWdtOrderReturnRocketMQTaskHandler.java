@@ -106,6 +106,10 @@ public class DmpOutputWdtOrderReturnRocketMQTaskHandler extends DmpOutputRocketM
         resultEntity.setApproveStatus(ApproveStatusEnum.APPROVE.getCode());
         resultEntity.setType(OrderTypeEnum.B2C.getCode());
         LocalDateTime approveTime = entity.getReturnTime();
+        LocalDateTime platformCreateTime = entity.getPlatformCreateTime();
+        if(StringUtils.isNotBlank(entity.getThirdBillNo()) && platformCreateTime != null) {
+        	approveTime = platformCreateTime;
+        }
         resultEntity.setBillDate(approveTime.toLocalDate());
         resultEntity.setInvalidStatus(false);
         resultEntity.setApproveUserName("wangdiantong");
@@ -114,7 +118,7 @@ public class DmpOutputWdtOrderReturnRocketMQTaskHandler extends DmpOutputRocketM
         //店铺id
         resultEntity.setShopId(entity.getShopId());
         resultEntity.setShopName(entity.getShopName());
-        resultEntity.setCreated(entity.getPlatformCreateTime());
+		resultEntity.setCreated(platformCreateTime);
         resultEntity.setModified(entity.getPlatformUpdateTime());
         //仓库id
         resultEntity.setWarehouseId(itemList.stream().map(DmpSoReturnDetailEntity::getWarehouseId).filter(StringUtils::isNotBlank).findAny().orElse(""));
