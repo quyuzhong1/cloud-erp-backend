@@ -12,7 +12,6 @@ import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
-import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.enums.BomTypeEnum;
@@ -24,6 +23,7 @@ import com.erp.model.wms.enums.OrderProcessingLableEnum;
 import com.erp.model.wms.enums.SoB2cDeliveryStatusEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.server.wms.convert.SoB2cProcessingConverter;
 import com.erp.server.wms.mapper.SoB2cProcessingMapper;
 import com.erp.server.wms.service.*;
 import com.google.common.collect.Lists;
@@ -39,6 +39,7 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_SO_B2C_PROCESSING;
@@ -86,7 +87,7 @@ public class SoB2cProcessingServiceImpl extends SuperServiceImpl<SoB2cProcessing
         // 数据处理
         List<SoB2cProcessingEntity> soB2cProcessingList =  handleData(list);
         List<SoB2cProcessingEntity> addList = soB2cProcessingList.stream().filter(obj -> CharSequenceUtil.isBlank(obj.getId())).collect(Collectors.toList());
-        List<SoB2cProcessingEntity> updateList = soB2cProcessingList.stream().filter(obj -> CharSequenceUtil.isNotBlank(obj.getId())).collect(Collectors.toList());
+        List<SoB2cProcessingEntity> updateList = soB2cProcessingList.stream().filter(obj -> CharSequenceUtil.isNotBlank(obj.getId()) && !obj.getIsDiff()).collect(Collectors.toList());
         if (CollUtil.isNotEmpty(addList)) {
             log.warn("新增数据！size= {}",addList.size());
             super.saveBatch(addList);
@@ -122,6 +123,8 @@ public class SoB2cProcessingServiceImpl extends SuperServiceImpl<SoB2cProcessing
         log.warn("查询b2c订单跟踪数据，startDate = {}，size = {}",startDate,list.size());
         List<String> skuIdList = list.stream().map(SoB2cProcessingEntity::getSkuId).distinct().collect(Collectors.toList());
         List<BomChildrenSkuDTO> bomChildrenSkuList = plmTaskFeign.listBomChildBySkuIds(skuIdList);
+        Map<String, List<BomChildrenSkuDTO>> bomMap = bomChildrenSkuList.stream()
+                .collect(Collectors.groupingBy(obj -> CharSequenceUtil.format("{}_{}", obj.getParentSkuId(), obj.getType())));
 
         /**
          * 1、b2b非组合品订单中转走直接调拨单出库，非中转走销售出库单出库
@@ -157,14 +160,18 @@ public class SoB2cProcessingServiceImpl extends SuperServiceImpl<SoB2cProcessing
 
         StopWatch stopWatch = new StopWatch();
         stopWatch.start();
-        for (SoB2cProcessingEntity entity :list) {
+        List<List<SoB2cProcessingDTO.AddOrUpdateDTO>> result =   list.parallelStream().map(entity -> {
             //根据类型更新出库数据
             handleOutstockByType(virtualTransFlowList, transferList, soOutstockList, entity);
             log.warn("根据类型处理成功！code = {}",entity.getB2cSoCode());
-            //新增数据
-            addBomList(addList,entity,bomChildrenSkuList);
+            // 新增数据
+            List<SoB2cProcessingDTO.AddOrUpdateDTO> localList = new ArrayList<>();
+            addBomList(addList,entity,bomMap.get(CharSequenceUtil.format("{}_{}",entity.getSkuId(),BomTypeEnum.COMBINATION.getType())));
             log.warn("按bom处理数据成功！code = {}",entity.getB2cSoCode());
-        }
+            return localList;
+        }).collect(Collectors.toList());
+        // 合并所有局部列表
+        result.forEach(addList::addAll);
         stopWatch.stop();
         log.warn("数据处理成功，耗时，time = {}",stopWatch.prettyPrint());
         this.addOrUpdate(addList);
@@ -179,21 +186,15 @@ public class SoB2cProcessingServiceImpl extends SuperServiceImpl<SoB2cProcessing
      * @param bomChildrenSkuList
      */
     private void addBomList (List<SoB2cProcessingDTO.AddOrUpdateDTO> addList, SoB2cProcessingEntity entity, List<BomChildrenSkuDTO> bomChildrenSkuList) {
-            //bom信息
-            List<BomChildrenSkuDTO> childList = bomChildrenSkuList.stream().filter(obj ->
-                    CharSequenceUtil.equals(obj.getParentSkuId(), entity.getSkuId())
-                            &&  CharSequenceUtil.equals(obj.getType(), BomTypeEnum.COMBINATION.getType())).collect(Collectors.toList());
-            if (CollUtil.isEmpty(childList)) {
-                SoB2cProcessingDTO.AddOrUpdateDTO addDTO = new SoB2cProcessingDTO.AddOrUpdateDTO();
-                BeanMapperUtils.copy(entity,addDTO);
+            if (CollUtil.isEmpty(bomChildrenSkuList)) {
+                SoB2cProcessingDTO.AddOrUpdateDTO addDTO = SoB2cProcessingConverter.INSTANCE.entityToAdd(entity);
                 addDTO.setParentSkuId("");
                 addDTO.setBomVersion("");
                 addList.add(addDTO);
                 return;
             }
-            for (BomChildrenSkuDTO childrenSkuDTO : childList) {
-                SoB2cProcessingDTO.AddOrUpdateDTO addDTO = new SoB2cProcessingDTO.AddOrUpdateDTO();
-                BeanMapperUtils.copy(entity,addDTO);
+            for (BomChildrenSkuDTO childrenSkuDTO : bomChildrenSkuList) {
+                SoB2cProcessingDTO.AddOrUpdateDTO addDTO = SoB2cProcessingConverter.INSTANCE.entityToAdd(entity);
                 addDTO.setSkuId(childrenSkuDTO.getSkuId());
                 addDTO.setParentSkuId(childrenSkuDTO.getParentSkuId());
                 addDTO.setOutstockQty(ObjectUtil.isEmpty(addDTO.getOutstockQty()) ? MathUtil.ZERO : addDTO.getOutstockQty() * childrenSkuDTO.getQuantity());
@@ -274,16 +275,18 @@ public class SoB2cProcessingServiceImpl extends SuperServiceImpl<SoB2cProcessing
     * 新增修改处理数据
     */
     private List<SoB2cProcessingEntity> handleData(List<SoB2cProcessingDTO.AddOrUpdateDTO> list) {
-        List<String> deliveryDetailIdList = list.stream().map(SoB2cProcessingDTO.AddOrUpdateDTO::getDeliveryDetailId).distinct().collect(Collectors.toList());
+        List<String> deliveryDetailIdList = list.stream().filter(obj -> ObjectUtil.isNotEmpty(obj) && CharSequenceUtil.isNotBlank(obj.getDeliveryDetailId())).map(SoB2cProcessingDTO.AddOrUpdateDTO::getDeliveryDetailId).distinct().collect(Collectors.toList());
         List<SoB2cProcessingEntity> oldList = this.listByDeliveryDetailIdList(deliveryDetailIdList);
         List<SoB2cProcessingEntity> newList = new ArrayList<>();
         for (SoB2cProcessingDTO.AddOrUpdateDTO addOrUpdateDTO :list) {
-            SoB2cProcessingEntity entity = new SoB2cProcessingEntity();
-            BeanMapperUtils.copy(addOrUpdateDTO,entity);
+            SoB2cProcessingEntity entity = SoB2cProcessingConverter.INSTANCE.addToEntity(addOrUpdateDTO);
             //旧数据
             SoB2cProcessingEntity old = oldList.stream().filter(obj -> CharSequenceUtil.equals(obj.getDeliveryDetailId(), addOrUpdateDTO.getDeliveryDetailId())
                     && CharSequenceUtil.equals(obj.getSkuId(),addOrUpdateDTO.getSkuId())).findFirst().orElse(null);
             if (ObjUtil.isNotNull(old)) {
+                //校验数据是否一样
+                boolean isDiff = CharSequenceUtil.equals(entity.toString(), old.toString());
+                entity.setIsDiff(isDiff);
                 entity.setId(old.getId());
             }
             newList.add(entity);

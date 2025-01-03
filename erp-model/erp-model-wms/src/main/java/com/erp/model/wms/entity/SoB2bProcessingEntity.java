@@ -144,6 +144,13 @@ public class SoB2bProcessingEntity extends BaseEntity<SoB2bProcessingEntity> {
     @TableField("bom_version")
     private String bomVersion;
 
+
+    /**
+     * 是否存在差异
+     */
+    @TableField(exist = false)
+    private Boolean isDiff;
+
     public static final String SO_ID = "so_id";
 
     public static final String SO_CODE = "so_code";
@@ -191,4 +198,32 @@ public class SoB2bProcessingEntity extends BaseEntity<SoB2bProcessingEntity> {
         return null;
     }
 
+    @Override
+    public String toString() {
+        return "SoB2bProcessingEntity{" +
+                "soId='" + soId + '\'' +
+                ", soDetailId='" + soDetailId + '\'' +
+                ", soCode='" + soCode + '\'' +
+                ", soApproveStatus='" + soApproveStatus + '\'' +
+                ", soQty=" + soQty +
+                ", deliveryNoticeId='" + deliveryNoticeId + '\'' +
+                ", deliveryNoticeCode='" + deliveryNoticeCode + '\'' +
+                ", deliveryNoticeApproveStatus='" + deliveryNoticeApproveStatus + '\'' +
+                ", deliveryNoticeDetailId='" + deliveryNoticeDetailId + '\'' +
+                ", deliveryQty=" + deliveryQty +
+                ", skuId='" + skuId + '\'' +
+                ", warehouseId='" + warehouseId + '\'' +
+                ", virtualWarehouseId='" + virtualWarehouseId + '\'' +
+                ", frozenTime=" + frozenTime +
+                ", frozenQty=" + frozenQty +
+                ", outstockOrderId='" + outstockOrderId + '\'' +
+                ", outstockOrderCode='" + outstockOrderCode + '\'' +
+                ", outstockOrderType='" + outstockOrderType + '\'' +
+                ", outstockOrderStatus='" + outstockOrderStatus + '\'' +
+                ", outstockOrderTime=" + outstockOrderTime +
+                ", outstockQty=" + outstockQty +
+                ", parentSkuId='" + parentSkuId + '\'' +
+                ", bomVersion='" + bomVersion + '\'' +
+                '}';
+    }
 }

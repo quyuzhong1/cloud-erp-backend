@@ -27,8 +27,8 @@ import java.time.LocalDateTime;
 public class FirstMileProcessingEntity extends BaseEntity<FirstMileProcessingEntity> {
 
     /**
-    * 要货申请单id
-    */
+     * 要货申请单id
+     */
     @TableField("requisition_application_id")
     private String requisitionApplicationId;
     /**
@@ -37,8 +37,8 @@ public class FirstMileProcessingEntity extends BaseEntity<FirstMileProcessingEnt
     @TableField("requisition_application_detail_id")
     private String requisitionApplicationDetailId;
     /**
-    * 要货申请编码
-    */
+     * 要货申请编码
+     */
     @TableField("requisition_application_code")
     private String requisitionApplicationCode;
 
@@ -48,13 +48,13 @@ public class FirstMileProcessingEntity extends BaseEntity<FirstMileProcessingEnt
     @TableField("requisition_application_status")
     private String requisitionApplicationStatus;
     /**
-    * 头程发货单id
-    */
+     * 头程发货单id
+     */
     @TableField("first_mile_delivery_id")
     private String firstMileDeliveryId;
     /**
-    * 头程发货单编码
-    */
+     * 头程发货单编码
+     */
     @TableField("first_mile_delivery_code")
     private String firstMileDeliveryCode;
     /**
@@ -63,86 +63,91 @@ public class FirstMileProcessingEntity extends BaseEntity<FirstMileProcessingEnt
     @TableField("first_mile_delivery_detail_id")
     private String firstMileDeliveryDetailId;
     /**
-    * 头程发货单审核状态
-    */
+     * 头程发货单审核状态
+     */
     @TableField("delivery_approve_status")
     private String deliveryApproveStatus;
     /**
-    * 发货数量
-    */
+     * 发货数量
+     */
     @TableField("delivery_qty")
     private Integer deliveryQty;
     /**
-    * skuId
-    */
+     * skuId
+     */
     @TableField("sku_id")
     private String skuId;
     /**
-    * 仓库id
-    */
+     * 仓库id
+     */
     @TableField("warehouse_id")
     private String warehouseId;
     /**
-    * 虚拟仓id
-    */
+     * 虚拟仓id
+     */
     @TableField("virtual_warehouse_id")
     private String virtualWarehouseId;
     /**
-    * 冻结时间
-    */
-    @TableField(value = "frozen_time" , fill = FieldFill.INSERT_UPDATE)
+     * 冻结时间
+     */
+    @TableField(value = "frozen_time", fill = FieldFill.INSERT_UPDATE)
     private LocalDateTime frozenTime;
     /**
-    * 冻结数量
-    */
+     * 冻结数量
+     */
     @TableField("frozen_qty")
     private Integer frozenQty;
     /**
-    * |出库单据id
-    */
+     * |出库单据id
+     */
     @TableField("outstock_order_id")
     private String outstockOrderId;
     /**
-    * |出库单据编码
-    */
+     * |出库单据编码
+     */
     @TableField("outstock_order_code")
     private String outstockOrderCode;
     /**
-    * |出库单据类型（同sourceType）
-    */
+     * |出库单据类型（同sourceType）
+     */
     @TableField("outstock_order_type")
     private String outstockOrderType;
     /**
-    * |出库单据状态
-    */
+     * |出库单据状态
+     */
     @TableField("outstock_order_status")
     private String outstockOrderStatus;
     /**
-    * |出库单据时间
-    */
-    @TableField(value = "outstock_order_time" , fill = FieldFill.INSERT_UPDATE)
+     * |出库单据时间
+     */
+    @TableField(value = "outstock_order_time", fill = FieldFill.INSERT_UPDATE)
     private LocalDateTime outstockOrderTime;
     /**
-    * 出库数量
-    */
+     * 出库数量
+     */
     @TableField("outstock_qty")
     private Integer outstockQty;
     /**
-    * 父级skuId
-    */
+     * 父级skuId
+     */
     @TableField("parent_sku_id")
     private String parentSkuId;
     /**
-    * bom版本
-    */
+     * bom版本
+     */
     @TableField("bom_version")
     private String bomVersion;
     /**
-    * 批准数量
-    */
+     * 批准数量
+     */
     @TableField("approve_qty")
     private Integer approveQty;
 
+    /**
+     * 是否存在差异
+     */
+    @TableField(exist = false)
+    private Boolean isDiff;
 
     public static final String REQUISITION_APPLICATION_ID = "requisition_application_id";
 
@@ -189,4 +194,32 @@ public class FirstMileProcessingEntity extends BaseEntity<FirstMileProcessingEnt
         return null;
     }
 
+    @Override
+    public String toString() {
+        return "FirstMileProcessingEntity{" +
+                "requisitionApplicationId='" + requisitionApplicationId + '\'' +
+                ", requisitionApplicationDetailId='" + requisitionApplicationDetailId + '\'' +
+                ", requisitionApplicationCode='" + requisitionApplicationCode + '\'' +
+                ", requisitionApplicationStatus='" + requisitionApplicationStatus + '\'' +
+                ", firstMileDeliveryId='" + firstMileDeliveryId + '\'' +
+                ", firstMileDeliveryCode='" + firstMileDeliveryCode + '\'' +
+                ", firstMileDeliveryDetailId='" + firstMileDeliveryDetailId + '\'' +
+                ", deliveryApproveStatus='" + deliveryApproveStatus + '\'' +
+                ", deliveryQty=" + deliveryQty +
+                ", skuId='" + skuId + '\'' +
+                ", warehouseId='" + warehouseId + '\'' +
+                ", virtualWarehouseId='" + virtualWarehouseId + '\'' +
+                ", frozenTime=" + frozenTime +
+                ", frozenQty=" + frozenQty +
+                ", outstockOrderId='" + outstockOrderId + '\'' +
+                ", outstockOrderCode='" + outstockOrderCode + '\'' +
+                ", outstockOrderType='" + outstockOrderType + '\'' +
+                ", outstockOrderStatus='" + outstockOrderStatus + '\'' +
+                ", outstockOrderTime=" + outstockOrderTime +
+                ", outstockQty=" + outstockQty +
+                ", parentSkuId='" + parentSkuId + '\'' +
+                ", bomVersion='" + bomVersion + '\'' +
+                ", approveQty=" + approveQty +
+                '}';
+    }
 }
