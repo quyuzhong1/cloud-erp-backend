@@ -143,7 +143,7 @@
             sum(sdnd.delivery_qty) as totalDeliveryQty
         from so_delivery_notice sdn
         inner join so_delivery_notice_detail sdnd on sdn.id = sdnd.main_id and sdnd.is_deleted = false
-        where sdn.invalid_status = false and sdn.approve_status = 'approve' group by sdnd.source_detail_id
+        where sdn.invalid_status = false  group by sdnd.source_detail_id
         )
         select
             si.id as soId,
