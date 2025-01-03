@@ -38,4 +38,11 @@ public interface SoB2bProcessingMapper extends BaseMapper<SoB2bProcessingEntity>
      * @return List<SoB2bProcessingEntity>
      */
     List<SoB2bProcessingEntity> listSoB2bProcessing(@Param("startDate") LocalDate startDate);
+    /**
+     * 删除
+     * @author will
+     * @date 2025/1/3 18:26
+     * @param removeIds
+     */
+    void deleteByIdList(@Param("removeIds")List<String> removeIds);
 }

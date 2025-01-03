@@ -299,7 +299,11 @@ public class SoB2cProcessingServiceImpl extends SuperServiceImpl<SoB2cProcessing
         List<String> deleteIds = getDeleteIds(newList, oldList);
         if (CollUtil.isNotEmpty(deleteIds)) {
             log.warn("删除数据！size= {}",deleteIds.size());
-            this.removeByIds(deleteIds);
+            List<List<String>> detailIdListPartition = Lists.partition(deleteIds, 50000);
+            //查询加工单数据
+            for (List<String> removeIds : detailIdListPartition) {
+                this.baseMapper.deleteByIdList(removeIds);
+            }
         }
         return newList;
     }

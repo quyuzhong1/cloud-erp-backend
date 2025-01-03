@@ -69,6 +69,15 @@
         vw.name as virtualWarehouseName
     </sql>
 
+    <!-- 删除 -->
+    <delete id="deleteByIdList">
+        DELETE FROM so_b2b_processing WHERE is_deleted = false
+        and id in
+        <foreach collection="removeIds" open="(" close=")" item="item" separator=",">
+            #{item}
+        </foreach>
+    </delete>
+
     <!-- 分页查询 -->
     <select id="paging" resultType="com.erp.model.wms.dto.SoB2cProcessingDTO$ListDTO">
         select
