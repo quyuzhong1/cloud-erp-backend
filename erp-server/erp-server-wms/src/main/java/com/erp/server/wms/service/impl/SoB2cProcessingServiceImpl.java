@@ -276,16 +276,9 @@ public class SoB2cProcessingServiceImpl extends SuperServiceImpl<SoB2cProcessing
     * 新增修改处理数据
     */
     private List<SoB2cProcessingEntity> handleData(List<SoB2cProcessingDTO.AddOrUpdateDTO> list) {
-        List<String> deliveryDetailIdList = list.stream().filter(obj -> ObjectUtil.isNotEmpty(obj) && CharSequenceUtil.isNotBlank(obj.getDeliveryDetailId())).map(SoB2cProcessingDTO.AddOrUpdateDTO::getDeliveryDetailId).distinct().collect(Collectors.toList());
-        List<List<String>> sourceDetailIdListPartition = Lists.partition(deliveryDetailIdList, 50000);
-        //原订单数据
-        List<SoB2cProcessingEntity> oldList = new ArrayList<>();
-        for (List<String> sourceDetailIdPartition : sourceDetailIdListPartition) {
-            List<SoB2cProcessingEntity> oldPageList = this.listByDeliveryDetailIdList(sourceDetailIdPartition);
-            if (CollectionUtils.isNotEmpty(oldPageList)) {
-                oldList.addAll(oldPageList);
-            }
-        }
+        //查询已存在的数据，判断哪些需要删除和更新
+        List<SoB2cProcessingEntity> oldList = this.list();
+
         List<SoB2cProcessingEntity> newList = new ArrayList<>();
         for (SoB2cProcessingDTO.AddOrUpdateDTO addOrUpdateDTO :list) {
             if (ObjectUtil.isEmpty(addOrUpdateDTO)) {
