@@ -1,6 +1,8 @@
 package com.erp.server.sys.controller.api;
 
 
+import com.common.business.vo.PagingVO;
+import com.erp.model.plm.vo.SkuVO;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import javax.annotation.Resource;
@@ -19,6 +21,8 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.business.annotation.DataPermission;
 import com.common.business.enums.DataAttributeEnum;
 import com.erp.model.sys.dto.DictPartitionDTO;
+
+import java.util.List;
 
 /**
  * 分区表
@@ -67,6 +71,27 @@ public class DictPartitionController extends BaseController {
         return success();
     }
 
-
+    /**
+     * 获取分区下拉框-分页查询
+     *
+     * @return ApiResult<List < DictPartitionDTO.DictDTO>>
+     * @author zdy
+     */
+    @PostMapping("/pagingSelect")
+    public ApiResult<PagingVO<DictPartitionDTO.DictDTO>> pagingSelect(@RequestBody @Validated PagingDTO<DictPartitionDTO.SelectDTO> dto) {
+        PagingVO<DictPartitionDTO.DictDTO> list = dictPartitionService.pagingSelect(dto);
+        return success(list);
+    }
+    /**
+     * 获取分区下拉框-全量
+     *
+     * @return ApiResult<List < DictPartitionDTO.DictDTO>>
+     * @author hyj
+     */
+    @PostMapping("/drop/down")
+    public ApiResult<List<DictPartitionDTO.DictDTO>> dropDown(@RequestBody @Validated DictPartitionDTO.SelectDTO dto) {
+        List<DictPartitionDTO.DictDTO> list = dictPartitionService.dropDown(dto);
+        return success(list);
+    }
 
 }

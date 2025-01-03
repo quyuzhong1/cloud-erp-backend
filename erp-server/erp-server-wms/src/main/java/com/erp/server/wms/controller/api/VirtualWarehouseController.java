@@ -147,6 +147,20 @@ public class VirtualWarehouseController extends BaseController {
     public ApiResult<PagingVO<ShopDTO.ListDTO>> pagingSelect(@RequestBody @Validated PagingDTO<VirtualWarehouseDTO.ShopSelectDTO> dto){
         return success(virtualWarehouseService.pagingSelect(dto));
     }
+    /**
+     * 搜索平台
+     */
+    @PostMapping("/platform/pagingSelect")
+    public ApiResult<PagingVO<VirtualWarehouseDTO.ChildTree>> platformPagingSelect(@RequestBody @Validated PagingDTO<VirtualWarehouseDTO.PlatformSelectDTO> dto){
+        return success(virtualWarehouseService.platformPagingSelect(dto));
+    }
+    /**
+     * 搜索分区
+     */
+    @PostMapping("/partition/pagingSelect")
+    public ApiResult<PagingVO<VirtualWarehouseDTO.PartitionDTO>> partitionPagingSelect(@RequestBody @Validated PagingDTO<VirtualWarehouseDTO.PartitionSelectDTO> dto){
+        return success(virtualWarehouseService.partitionPagingSelect(dto));
+    }
 
     /**
      * 搜索虚拟仓库

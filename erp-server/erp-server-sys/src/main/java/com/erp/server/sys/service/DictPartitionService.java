@@ -1,8 +1,11 @@
 package com.erp.server.sys.service;
+import com.common.business.vo.PagingVO;
 import com.erp.model.sys.entity.DictPartitionEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.sys.dto.DictPartitionDTO;
+
+import java.util.List;
 
 /**
  * <p>
@@ -32,5 +35,17 @@ public interface DictPartitionService extends SuperService<DictPartitionEntity> 
     */
     Boolean update(DictPartitionDTO.UpdateDTO dto);
 
+    /**
+     * 搜索下拉框
+     * @param dto
+     * @return
+     */
+    PagingVO<DictPartitionDTO.DictDTO> pagingSelect(PagingDTO<DictPartitionDTO.SelectDTO> dto);
 
+    /**
+     * 下拉框
+     * @param dto
+     * @return
+     */
+    List<DictPartitionDTO.DictDTO> dropDown(DictPartitionDTO.SelectDTO dto);
 }

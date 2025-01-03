@@ -1,14 +1,20 @@
 package com.erp.server.sys.service.impl;
 
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
+import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
+import com.erp.model.dmp.dto.ThirdShopDTO;
 import com.erp.model.sys.dto.DictPartitionDTO;
 import com.erp.model.sys.entity.DictPartitionEntity;
 import com.erp.server.sys.mapper.DictPartitionMapper;
@@ -19,6 +25,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.Optional;
 /**
  * <p>
@@ -74,6 +81,21 @@ public class DictPartitionServiceImpl extends SuperServiceImpl<DictPartitionMapp
             throw new ServiceException("分区单保存失败");
         }
         return Boolean.TRUE;
+    }
+
+    @Override
+    public PagingVO<DictPartitionDTO.DictDTO> pagingSelect(PagingDTO<DictPartitionDTO.SelectDTO> dto) {
+        Page<DictPartitionDTO.ViewDTO> query = new Page<>(dto.getCurrPage(), dto.getPageSize());
+        IPage<DictPartitionDTO.DictDTO> pageData = this.baseMapper.pagingSelect(query, dto.getParams());
+        if (CollUtil.isEmpty(pageData.getRecords())) {
+            return new PagingVO<>(pageData);
+        }
+        return new PagingVO<>(pageData);
+    }
+
+    @Override
+    public List<DictPartitionDTO.DictDTO> dropDown(DictPartitionDTO.SelectDTO dto) {
+        return baseMapper.dropDown(dto);
     }
 
 

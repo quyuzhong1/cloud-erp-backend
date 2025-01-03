@@ -114,6 +114,14 @@ public class VirtualWarehouseChannelPartitionRefServiceImpl extends SuperService
         }
     }
 
+    @Override
+    public List<VirtualWarehouseChannelPartitionRefEntity> listByMainIds(List<String> mainIds) {
+        if (CollUtil.isEmpty(mainIds)){
+            return Collections.emptyList();
+        }
+        return this.lambdaQuery().in(VirtualWarehouseChannelPartitionRefEntity::getMainId, mainIds).list();
+    }
+
 
     /**
     * 新增修改处理数据

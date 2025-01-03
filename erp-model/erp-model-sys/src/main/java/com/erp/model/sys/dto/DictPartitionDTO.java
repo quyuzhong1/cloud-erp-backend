@@ -111,4 +111,51 @@ public class DictPartitionDTO implements Serializable {
     }
 
 
+    @Data
+    @NoArgsConstructor
+    public static class SelectDTO {
+        /**
+         * 关键词
+         */
+        private String searchKeyword;
+        /**
+         * 是否禁用
+         */
+        private Boolean disabled;
+    }
+    /**
+     * 详情
+     */
+    @Data
+    @NoArgsConstructor
+    public static class DictDTO {
+
+        /**
+         * 主键id
+         */
+        private String  id;
+
+        /**
+         * 是否禁用
+         */
+        private Boolean disabled;
+
+        /**
+         * 编码
+         */
+        private String code;
+
+        /**
+         * 名称
+         */
+        private String value;
+        private String name;
+
+        /**
+         * 排序字段
+         */
+        private Integer index;
+
+
+    }
 }

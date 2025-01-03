@@ -592,6 +592,12 @@ public class VirtualWarehouseServiceImpl extends SuperServiceImpl<VirtualWarehou
      */
     @Override
     public PagingVO<ShopDTO.ListDTO> pagingSelect(PagingDTO<VirtualWarehouseDTO.ShopSelectDTO> dto) {
+        //已有按平台，则不展示店铺下拉值
+        Integer count = virtualWarehouseChannelService.lambdaQuery().eq(VirtualWarehouseChannelEntity::getDictPlatform, dto.getParams().getDictPlatform())
+                .eq(VirtualWarehouseChannelEntity::getType, VitualWarehouseChannelTypeEnum.PLATFORM.getCode()).count();
+        if (Objects.nonNull(count) && count > 0){
+            return new PagingVO<>();
+        }
         PagingDTO<ShopDTO.SelectDTO> shopDto = new PagingDTO<>();
         shopDto.setPageSize(dto.getPageSize());
         shopDto.setCurrPage(dto.getCurrPage());
@@ -667,5 +673,15 @@ public class VirtualWarehouseServiceImpl extends SuperServiceImpl<VirtualWarehou
     @Override
     public List<String> listWarehouseBySql(String compareCodeSplicingValueSql) {
         return baseMapper.listWarehouseBySql(compareCodeSplicingValueSql);
+    }
+
+    @Override
+    public PagingVO<VirtualWarehouseDTO.PartitionDTO> partitionPagingSelect(PagingDTO<VirtualWarehouseDTO.PartitionSelectDTO> dto) {
+        return null;
+    }
+
+    @Override
+    public PagingVO<VirtualWarehouseDTO.ChildTree> platformPagingSelect(PagingDTO<VirtualWarehouseDTO.PlatformSelectDTO> dto) {
+        return null;
     }
 }

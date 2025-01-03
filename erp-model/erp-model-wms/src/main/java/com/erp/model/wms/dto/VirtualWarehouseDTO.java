@@ -269,6 +269,7 @@ public class VirtualWarehouseDTO implements Serializable {
         /**
          * 平台
          */
+        @NotBlank(message = "销售平台不能为空")
         private String dictPlatform;
         /**
          * 是否已授权
@@ -383,5 +384,50 @@ public class VirtualWarehouseDTO implements Serializable {
          */
         private List<String> relationIdList;
 
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class PartitionDTO {
+        //分区id
+        private String id;
+        /**
+         * 编码
+         */
+        private String code;
+        /**
+         * 值
+         */
+        private String value;
+        private Boolean disabled;
+        private Boolean platformDisabled;
+        private Boolean shopDisabled;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class PartitionSelectDTO {
+        //店铺id
+        private List<String> shopIds;
+        //平台
+        private String dictPlatform;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class PlatformSelectDTO {
+        /**
+         * 平台类型
+         * 国外 overseasSalesPlatform
+         * 国内 internalSalesPlatform
+         * 其他 otherSalesPlatform
+         * DictBasicTypeEnum
+         */
+        @NotBlank(message = "平台类型不能为空")
+        private String type;
+        /**
+         * 平台集合
+         */
+        private List<String> dictPlatformList;
     }
 }

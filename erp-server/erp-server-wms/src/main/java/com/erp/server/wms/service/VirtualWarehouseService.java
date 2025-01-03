@@ -99,4 +99,17 @@ public interface VirtualWarehouseService extends SuperService<VirtualWarehouseEn
      */
     List<String> listWarehouseBySql(String compareCodeSplicingValueSql);
 
+    /**
+     * 军区高级搜索
+     * @param dto
+     * @return
+     */
+    PagingVO<VirtualWarehouseDTO.PartitionDTO> partitionPagingSelect(PagingDTO<VirtualWarehouseDTO.PartitionSelectDTO> dto);
+
+    /**
+     * 平台下拉框
+     * @param dto
+     * @return
+     */
+    PagingVO<VirtualWarehouseDTO.ChildTree> platformPagingSelect(PagingDTO<VirtualWarehouseDTO.PlatformSelectDTO> dto);
 }
