@@ -7,11 +7,17 @@ import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.common.core.controller.vo.ApiResult;
+import com.sdk.third.lingxing.dto.ProductInfo;
 import com.sdk.third.lingxing.dto.Result;
 import com.sdk.third.lingxing.utils.LingxingApiUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
+
+import java.lang.reflect.Array;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 
 @Slf4j
@@ -35,7 +41,17 @@ public class LxCommonService {
         if (null == requestData || StringUtils.isBlank(apiUri)){
             return ApiResult.error("requestUrl或requestData为空", ext);
         }
-        Result<Object> responseData = LingxingApiUtils.commonSync(apiUri, requestData);
+        Result<Object> responseData = null;
+        if (LingxingApiUtils.PRODUCT_SET_URI.equalsIgnoreCase(apiUri)){
+            // 同步商品查询判断更新或新增
+            ProductInfo productInfo = JSON.parseObject(requestData.toJSONString(), ProductInfo.class);
+            responseData = LingxingApiUtils.checkAddOrUpdateProduct(productInfo);
+        } else {
+            responseData = LingxingApiUtils.commonSync(apiUri, requestData);
+        }
+
+
+
         log.warn("请求领星响应报文：{}", responseData);
         if (!"0".equalsIgnoreCase(responseData.getCode())) {
             String errorMsg = StrUtil.format("同步领星失败:path={},request={}, result={}", apiUri, ext, JSONUtil.toJsonStr(responseData));
