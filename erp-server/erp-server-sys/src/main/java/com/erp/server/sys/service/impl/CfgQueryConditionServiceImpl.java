@@ -36,6 +36,9 @@ import java.util.List;
 public class CfgQueryConditionServiceImpl extends SuperServiceImpl<CfgQueryConditionMapper, CfgQueryConditionEntity> implements CfgQueryConditionService {
 
 
+    public static final String CREATE_TIME_NAME = "创建时间";
+    public static final String CREATE_TIME = "create_time";
+
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean add(CfgQueryConditionDTO.AddDTO dto) {
@@ -141,7 +144,8 @@ public class CfgQueryConditionServiceImpl extends SuperServiceImpl<CfgQueryCondi
         // 提交的序号
         int submitIndex = dto.getIndex();
         // 存在创建时间
-        boolean hasCreateTime = dto.getValue().contains("create_time") || list.stream().anyMatch(e-> e.getValue().contains("create_time"));
+        boolean hasCreateTime = (dto.getValue().contains(CREATE_TIME) && CREATE_TIME_NAME.equalsIgnoreCase(dto.getLabel()))
+                || list.stream().anyMatch(e-> e.getValue().contains(CREATE_TIME) && CREATE_TIME_NAME.equalsIgnoreCase(e.getLabel()));
 
         // 重新排序
         for (CfgQueryConditionEntity curEntity : list) {
@@ -159,7 +163,7 @@ public class CfgQueryConditionServiceImpl extends SuperServiceImpl<CfgQueryCondi
             }
 
             // 创建时间固定序号是3
-            if (curEntity.getValue().contains("create_time")){
+            if (curEntity.getValue().contains(CREATE_TIME) && CREATE_TIME_NAME.equalsIgnoreCase(curEntity.getLabel())){
                 curEntity.setIndex(3);
                 continue;
             }
