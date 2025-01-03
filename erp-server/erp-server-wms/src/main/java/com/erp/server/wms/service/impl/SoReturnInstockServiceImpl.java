@@ -4,7 +4,6 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.json.JSONUtil;
-import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -12,7 +11,6 @@ import com.common.business.annotation.DataIdempotent;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.ApproveType;
 import com.common.business.dto.FindUserDTO;
-import com.common.business.dto.ShudiyunB2cOrderDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -33,16 +31,14 @@ import com.erp.model.dmp.dto.DmpPushWdtDTO;
 import com.erp.model.dmp.dto.DmpPushWdtDetailDTO;
 import com.erp.model.dmp.dto.ThirdMappingDTO;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
-import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
-import com.erp.model.oms.entity.*;
 import com.erp.model.oms.entity.DictBasicEntity;
+import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.BillTypeEnum;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.oms.enums.SoB2cReturnTypeEnum;
 import com.erp.model.oms.enums.SoReturnChangeListTypeEnum;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
-import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
@@ -87,7 +83,6 @@ import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -892,14 +887,13 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         if (count > 0) {
             throw new ServiceException(ApiError.ERROR_92032);
         }
-
-        //退货单明细
-        List<String> soReturnIdList = list.stream().map(SoReturnReceiveDTO.ReceiveGenerateSoReturnInstockView::getSourceId).distinct().collect(Collectors.toList());
-        List<SoReturnDetailEntity> soReturnDetailEntities = soReturnFeign.listDetailByMainIds(soReturnIdList);
-
+//        //退货单明细
+//        List<String> soReturnIdList = list.stream().map(SoReturnReceiveDTO.ReceiveGenerateSoReturnInstockView::getSourceId).distinct().collect(Collectors.toList());
+//        List<SoReturnDetailEntity> soReturnDetailEntities = soReturnFeign.listDetailByMainIds(soReturnIdList);
         for (String id : soReceiveIdList) {
             List<SoReturnReceiveDTO.ReceiveGenerateSoReturnInstockView> viewList = list.stream().filter(req -> req.getMainId().equals(id)).collect(Collectors.toList());
             SoReturnReceiveEntity soReturnReceiveEntity = soReturnReceiveService.getById(id);
+            List<SoReturnReceiveDetailEntity> soReturnReceiveDetailEntities = soReturnReceiveDetailService.listDetailByMainId(id);
             SoReturnInstockDTO.Add dto = new SoReturnInstockDTO.Add();
             dto.setSourceType(SourceTypeEnum.SO_RETURN_RECEIVE.getCode());
             dto.setSourceCode(soReturnReceiveEntity.getCode());
@@ -917,9 +911,9 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
 
             List<SoReturnInstockDetailDTO.Add> detailList = new ArrayList<>();
             for (SoReturnReceiveDTO.ReceiveGenerateSoReturnInstockView view : viewList) {
-                SoReturnDetailEntity soReturnDetailEntity = soReturnDetailEntities.stream()
-                        .filter(v -> v.getId().equals(view.getSourceDetailId()))
-                        .findFirst().orElse(new SoReturnDetailEntity());
+//                SoReturnDetailEntity soReturnDetailEntity = soReturnDetailEntities.stream()
+//                        .filter(v -> v.getId().equals(view.getSourceDetailId()))
+//                        .findFirst().orElse(new SoReturnDetailEntity());
 
                 dto.setBillDate(view.getInstockDate());
                 SoReturnInstockDetailDTO.Add detailAddDTO = new SoReturnInstockDetailDTO.Add();
@@ -936,11 +930,19 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                 }
                 detailAddDTO.setReturnTypeDict(view.getReturnTypeDict());
                 detailAddDTO.setReturnReasonDict(view.getReturnReasonDict());
-                detailAddDTO.setExchangeRate(soReturnDetailEntity.getExchangeRate());
-                detailAddDTO.setReturnAmount(soReturnNoticeService.calReturnAmount(soReturnDetailEntity.getReturnAmount(),soReturnDetailEntity.getReturnQty(),view.getReturnQty()));
-                detailAddDTO.setTaxReturnAmount(soReturnNoticeService.calReturnAmount(soReturnDetailEntity.getTaxReturnAmount(),soReturnDetailEntity.getReturnQty(),view.getReturnQty()));
-                detailAddDTO.setReturnAmountLocalCurrency(soReturnNoticeService.calLocalCurrency(soReturnDetailEntity.getExchangeRate(), detailAddDTO.getReturnAmount()));
-                detailAddDTO.setTaxReturnAmountLocalCurrency(soReturnNoticeService.calLocalCurrency(soReturnDetailEntity.getExchangeRate(), detailAddDTO.getTaxReturnAmount()));
+                SoReturnReceiveDetailEntity soReturnReceiveDetailEntity = soReturnReceiveDetailEntities.stream().filter(v -> v.getId().equals(view.getId())).findFirst().orElse(null);
+                detailAddDTO.setExchangeRate(soReturnReceiveDetailEntity.getExchangeRate());
+                if (Objects.equals(soReturnReceiveDetailEntity.getReceiveQty(), view.getRealQty())) {
+                    detailAddDTO.setReturnAmount(soReturnReceiveDetailEntity.getReturnAmount());
+                    detailAddDTO.setTaxReturnAmount(soReturnReceiveDetailEntity.getTaxReturnAmount());
+                    detailAddDTO.setReturnAmountLocalCurrency(soReturnReceiveDetailEntity.getReturnAmountLocalCurrency());
+                    detailAddDTO.setTaxReturnAmountLocalCurrency(soReturnReceiveDetailEntity.getTaxReturnAmountLocalCurrency());
+                } else {
+                    detailAddDTO.setReturnAmount(soReturnNoticeService.calReturnAmount(soReturnReceiveDetailEntity.getReturnAmount(), soReturnReceiveDetailEntity.getReceiveQty(), view.getRealQty()));
+                    detailAddDTO.setTaxReturnAmount(soReturnNoticeService.calReturnAmount(soReturnReceiveDetailEntity.getTaxReturnAmount(), soReturnReceiveDetailEntity.getReceiveQty(), view.getRealQty()));
+                    detailAddDTO.setReturnAmountLocalCurrency(soReturnNoticeService.calLocalCurrency(soReturnReceiveDetailEntity.getExchangeRate(), detailAddDTO.getReturnAmount()));
+                    detailAddDTO.setTaxReturnAmountLocalCurrency(soReturnNoticeService.calLocalCurrency(soReturnReceiveDetailEntity.getExchangeRate(), detailAddDTO.getTaxReturnAmount()));
+                }
                 dto.setCurrency(soReturnReceiveEntity.getCurrency());
                 dto.setCurrencySymbol(soReturnReceiveEntity.getCurrencySymbol());
                 dto.setCustomerId(view.getCustomerId());

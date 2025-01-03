@@ -36,6 +36,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -77,7 +78,10 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
     public Boolean add(SoReturnInstockDTO.Add dto, String id) {
-        if (CharSequenceUtil.isNotBlank(dto.getSoReturnId())) {
+        //无退货订单号
+        if (CharSequenceUtil.isBlank(dto.getSoReturnId())){
+            return notReturnOrderAdd(dto, id);
+        }else{
             //获取退货单详情表id
             List<String> returnDetailIds = dto.getDetailList().stream().map(SoReturnInstockDetailDTO.Add::getSoReturnDetailId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
             List<String> skuIds = dto.getDetailList().stream().map(SoReturnInstockDetailDTO.Add::getSkuId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
@@ -105,7 +109,7 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
             List<SoReturnInstockDetailEntity> list = new ArrayList<>();
             for (SoReturnInstockDetailDTO.Add detailDto : dto.getDetailList()) {
                 //获取平台sku
-                SoReturnReceiveDetailEntity soReturnReceiveDetailEntity = soReturnReceiveDetailEntities.stream().filter(req -> req.getSourceDetailId().equals(detailDto.getSoReturnDetailId())).findFirst().orElse(new SoReturnReceiveDetailEntity());
+                SoReturnReceiveDetailEntity soReturnReceiveDetailEntity = soReturnReceiveDetailEntities.stream().filter(req -> req.getId().equals(detailDto.getSourceDetailId())).findFirst().orElse(new SoReturnReceiveDetailEntity());
                 SkuVO skuVO = skuInfoByIds.stream().filter(req -> req.getSkuId().equals(detailDto.getSkuId())).findFirst().orElse(new SkuVO());
                 SoReturnInstockDetailEntity detailEntity = new SoReturnInstockDetailEntity();
                 detailEntity.setMainId(id);
@@ -136,13 +140,6 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
                     WarehouseDTO.UpdateDTO updateDTO = warehouseList.stream().filter(v->v.getId().equals(detailDto.getWarehouseId())).findFirst().orElse(new WarehouseDTO.UpdateDTO());
                     detailEntity.setWarehouseId(detailDto.getWarehouseId());
                     detailEntity.setWarehouseName(updateDTO.getName());
-                }
-                //实退数量
-                Integer realQty = soReturnInstockDetailEntities.stream().filter(req -> req.getSoReturnDetailId().equals(detailDto.getSoReturnDetailId())).map(SoReturnInstockDetailEntity::getRealQty).reduce(MathUtil.ZERO, Integer::sum);
-                //签收单数量
-                Integer receiveQty = soReturnReceiveDetailEntities.stream().filter(req -> req.getSourceDetailId().equals(detailDto.getSoReturnDetailId())).map(SoReturnReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
-                if (receiveQty < detailDto.getRealQty() + realQty) {
-                    throw new ServiceException(ApiError.ERROR_92045, skuVO.getSkuNo());
                 }
                 if("B2C".equals(dto.getType())){
                     if(Objects.nonNull(soB2cReturnEntity)){
@@ -176,13 +173,37 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
                 if(null == detailDto.getExchangeRate()){
                     detailEntity.setExchangeRate(dto.getExchangeRate());
                 }
+                //实退数量
+                Integer realQty = soReturnInstockDetailEntities.stream().filter(req -> req.getSoReturnDetailId().equals(detailDto.getSoReturnDetailId())).map(SoReturnInstockDetailEntity::getRealQty).reduce(MathUtil.ZERO, Integer::sum);
+                //签收单数量
+                Integer receiveQty = soReturnReceiveDetailEntities.stream().filter(req -> req.getSourceDetailId().equals(detailDto.getSoReturnDetailId())).map(SoReturnReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
+                if (receiveQty < detailDto.getRealQty() + realQty) {
+                    throw new ServiceException(ApiError.ERROR_92045, skuVO.getSkuNo());
+                }else if(realQty > 0 && receiveQty == detailDto.getRealQty() + realQty){
+                    //需要对退货金额CNY，含税退货金额CNY，退货金额（本位币），含税退货金额（本位币）调整差值。
+                    BigDecimal returnAmount = soReturnReceiveDetailEntity.getReturnAmount();
+                    BigDecimal taxReturnAmount = soReturnReceiveDetailEntity.getTaxReturnAmount();
+                    BigDecimal returnAmountLocalCurrency = soReturnReceiveDetailEntity.getReturnAmountLocalCurrency();
+                    BigDecimal taxReturnAmountLocalCurrency = soReturnReceiveDetailEntity.getTaxReturnAmountLocalCurrency();
+
+                    List<SoReturnInstockDetailEntity> soReturnInstockDetailEntityList = soReturnInstockDetailEntities.stream().filter(req -> req.getSoReturnDetailId().equals(detailDto.getSoReturnDetailId())).collect(Collectors.toList());
+                    for (SoReturnInstockDetailEntity soReturnInstockDetail : soReturnInstockDetailEntityList) {
+                        returnAmount = returnAmount.subtract(soReturnInstockDetail.getReturnAmount()) ;
+                        taxReturnAmount = taxReturnAmount.subtract(soReturnInstockDetail.getTaxReturnAmount());
+                        returnAmountLocalCurrency = returnAmountLocalCurrency.subtract(soReturnInstockDetail.getReturnAmountLocalCurrency());
+                        taxReturnAmountLocalCurrency = taxReturnAmountLocalCurrency.subtract(soReturnInstockDetail.getTaxReturnAmountLocalCurrency());
+                    }
+                    detailEntity.setReturnAmount(returnAmount);
+                    detailEntity.setTaxReturnAmount(taxReturnAmount);
+                    detailEntity.setReturnAmountLocalCurrency(returnAmountLocalCurrency);
+                    detailEntity.setTaxReturnAmountLocalCurrency(taxReturnAmountLocalCurrency);
+
+                }
                 list.add(detailEntity);
             }
             //更新委外标识
             updateSubContract(list);
             return this.saveBatch(list);
-        } else {
-            return notReturnOrderAdd(dto, id);
         }
     }
 

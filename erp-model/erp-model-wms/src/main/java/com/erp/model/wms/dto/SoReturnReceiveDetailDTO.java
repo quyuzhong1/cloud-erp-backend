@@ -17,7 +17,7 @@ public class SoReturnReceiveDetailDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
-    public static class Add   extends Common{
+    public static class Add extends Common{
         /**
          * skuId
          */

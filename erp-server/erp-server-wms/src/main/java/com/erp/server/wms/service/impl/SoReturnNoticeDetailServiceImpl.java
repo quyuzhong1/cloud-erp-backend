@@ -117,18 +117,18 @@ public class SoReturnNoticeDetailServiceImpl extends SuperServiceImpl<SoReturnNo
                     if (returnQty <  detailDto.getReturnQty() + returnNoticeQty) {
                         throw new ServiceException(ApiError.ERROR_92024);
                     }else if(returnNoticeQty > 0 && returnQty == detailDto.getReturnQty() + returnNoticeQty){
-                        // 退货通知单的数量之和等于退货订单数量，则需要对 退货金额CNY，含税退货金额CNY，退货金额（本位币），含税退货金额（本位币）调整差值。
+                        // 退货通知单的数量之和等于退货订单数量，则需要对退货金额CNY，含税退货金额CNY，退货金额（本位币），含税退货金额（本位币）调整差值。
                         SoReturnDetailEntity soReturnDetailEntity = soReturnDetailEntities.stream().filter(req -> req.getId().equals(detailDto.getSourceDetailId())).findFirst().orElse(null);
                         BigDecimal returnAmount = soReturnDetailEntity.getReturnAmount();
                         BigDecimal taxReturnAmount = soReturnDetailEntity.getTaxReturnAmount();
                         BigDecimal returnAmountLocalCurrency = soReturnDetailEntity.getReturnAmountLocalCurrency();
                         BigDecimal taxReturnAmountLocalCurrency = soReturnDetailEntity.getTaxReturnAmountLocalCurrency();
-                        List<SoReturnDetailEntity> soReturnDetailEntityList = soReturnDetailEntities.stream().filter(req -> req.getId().equals(detailDto.getSourceDetailId())).collect(Collectors.toList());
-                        for (SoReturnDetailEntity soReturnDetail : soReturnDetailEntityList) {
-                            returnAmount = returnAmount.subtract(soReturnDetail.getReturnAmount()) ;
-                            taxReturnAmount = taxReturnAmount.subtract(soReturnDetail.getTaxReturnAmount());
-                            returnAmountLocalCurrency = returnAmountLocalCurrency.subtract(soReturnDetail.getReturnAmountLocalCurrency());
-                            taxReturnAmountLocalCurrency = taxReturnAmountLocalCurrency.subtract(soReturnDetail.getTaxReturnAmountLocalCurrency());
+                        List<SoReturnNoticeDetailEntity> soReturnDetailEntityList = noticeDetailEntities.stream().filter(req -> req.getSourceDetailId().equals(detailDto.getSourceDetailId())).collect(Collectors.toList());
+                        for (SoReturnNoticeDetailEntity soReturnNoticeDetail : soReturnDetailEntityList) {
+                            returnAmount = returnAmount.subtract(soReturnNoticeDetail.getReturnAmount()) ;
+                            taxReturnAmount = taxReturnAmount.subtract(soReturnNoticeDetail.getTaxReturnAmount());
+                            returnAmountLocalCurrency = returnAmountLocalCurrency.subtract(soReturnNoticeDetail.getReturnAmountLocalCurrency());
+                            taxReturnAmountLocalCurrency = taxReturnAmountLocalCurrency.subtract(soReturnNoticeDetail.getTaxReturnAmountLocalCurrency());
                         }
                         detailEntity.setReturnAmount(returnAmount);
                         detailEntity.setTaxReturnAmount(taxReturnAmount);
