@@ -127,6 +127,7 @@ public class FirstMileEstimatedBillServiceImpl extends SuperServiceImpl<FirstMil
                 item.setLogisticsCost(logisticsDTO != null ? logisticsDTO.getCostValue() : BigDecimal.ZERO);
                 if(logisticsDTO != null) {
                 	String currency = logisticsDTO.getCurrency();
+                	item.setLogisticsCostCurrency(currency);
 					item.setLogisticsCostCurrencySymbol(idSymbolMap.get(currency));
                 	
 					if(!"CNY".equals(currency)) {
@@ -149,6 +150,7 @@ public class FirstMileEstimatedBillServiceImpl extends SuperServiceImpl<FirstMil
                 item.setCustomsClearanceCost(declareDTO != null ? declareDTO.getCostValue() : BigDecimal.ZERO);
                 if(declareDTO != null) {
                 	String currency = declareDTO.getCurrency();
+                	item.setCustomsClearanceCostCurrency(currency);
 					item.setCustomsClearanceCostCurrencySymbol(idSymbolMap.get(currency));
                 	
                 	if(!"CNY".equals(currency)) {
@@ -171,6 +173,7 @@ public class FirstMileEstimatedBillServiceImpl extends SuperServiceImpl<FirstMil
                 item.setOtherTaxCost(otherTaxDTO != null ? otherTaxDTO.getCostValue() : BigDecimal.ZERO);
                 if(otherTaxDTO != null) {
                 	String currency = otherTaxDTO.getCurrency();
+                	item.setOtherTaxCostCurrency(currency);
 					item.setOtherTaxCostCurrencySymbol(idSymbolMap.get(currency));
                 	
                 	if(!"CNY".equals(currency)) {
@@ -193,6 +196,7 @@ public class FirstMileEstimatedBillServiceImpl extends SuperServiceImpl<FirstMil
                 item.setOtherCost(otherDTO != null ? otherDTO.getCostValue() : BigDecimal.ZERO);
                 if(otherDTO != null) {
                 	String currency = otherDTO.getCurrency();
+                	item.setOtherCostCurrency(currency);
 					item.setOtherCostCurrencySymbol(idSymbolMap.get(currency));
                 	
                 	if(!"CNY".equals(currency)) {

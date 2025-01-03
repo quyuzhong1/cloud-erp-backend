@@ -18,9 +18,11 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
+import com.common.business.utils.ApplicationContextUtils;
 import com.common.business.vo.PagingVO;
 import com.common.core.entity.BaseEntity;
 import com.common.core.enums.ApiError;
+import com.common.core.enums.CurrencyEnum;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.*;
 import com.erp.model.oms.entity.ShopInfoEntity;
@@ -38,6 +40,7 @@ import com.erp.model.tms.enums.*;
 import com.erp.model.wms.dto.FirstMileDeliveryDTO;
 import com.erp.model.wms.entity.CfgAmzFulfillmentCenterEntity;
 import com.erp.model.wms.entity.FirstMileDeliveryEntity;
+import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.sys.feign.SysDictFeign;
@@ -66,8 +69,10 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.File;
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -716,28 +721,161 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
             TmsFirstMileReconciliationDetailDTO.ListDTO actualListDTO,
             TmsFirstMileReconciliationDetailDTO.ListDTO diffListDTO
     ) {
+    	String currentDate = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+        DmpTaskFeign dmpTaskFeign = ApplicationContextUtils.getBean(DmpTaskFeign.class);
+    	Map<String, BigDecimal> rateMap = new HashMap<>();
+    	rateMap.put("CNY", BigDecimal.ONE);
+    	
         BigDecimal actualShippingCost = Objects.nonNull(actualListDTO.getShippingCost())? actualListDTO.getShippingCost() : BigDecimal.ZERO;
+        BigDecimal actualShippingCostExchange = BigDecimal.ZERO;
+        String currency = actualListDTO.getShippingCostCurrency();
+        if(StringUtils.isBlank(currency)) {
+        	currency = "CNY";
+        	actualListDTO.setShippingCostCurrency(currency);
+        	BigDecimal rate = rateMap.get(currency);
+			if(rate == null) {
+				rate = dmpTaskFeign.getRate(currentDate, currency);
+				if(rate == null) {
+					log.error("币别【{}】,汇率为空，请维护汇率后再提交",currency);
+                    throw new ServiceException(currency + "汇率为空，请维护汇率后再提交");
+				}
+				rateMap.put(currency, rate);
+			}
+			actualShippingCostExchange = actualShippingCost.multiply(rate);
+        }
         BigDecimal actualDeclareCost = Objects.nonNull(actualListDTO.getDeclareCost()) ? actualListDTO.getDeclareCost():BigDecimal.ZERO;
+        BigDecimal actualDeclareCostExchange = BigDecimal.ZERO;
+        currency = actualListDTO.getDeclareCostCurrency();
+        if(StringUtils.isBlank(currency)) {
+        	currency = "CNY";
+        	actualListDTO.setDeclareCostCurrency(currency);
+        	BigDecimal rate = rateMap.get(currency);
+			if(rate == null) {
+				rate = dmpTaskFeign.getRate(currentDate, currency);
+				if(rate == null) {
+					log.error("币别【{}】,汇率为空，请维护汇率后再提交",currency);
+                    throw new ServiceException(currency + "汇率为空，请维护汇率后再提交");
+				}
+				rateMap.put(currency, rate);
+			}
+			actualDeclareCostExchange = actualDeclareCost.multiply(rate);
+        }
         BigDecimal actualOtherCost = Objects.nonNull(actualListDTO.getOtherCost()) ? actualListDTO.getOtherCost():BigDecimal.ZERO;
+        BigDecimal actualOtherCostExchange = BigDecimal.ZERO;
+        currency = actualListDTO.getOtherCostCurrency();
+        if(StringUtils.isBlank(currency)) {
+        	currency = "CNY";
+        	actualListDTO.setOtherCostCurrency(currency);
+        	BigDecimal rate = rateMap.get(currency);
+			if(rate == null) {
+				rate = dmpTaskFeign.getRate(currentDate, currency);
+				if(rate == null) {
+					log.error("币别【{}】,汇率为空，请维护汇率后再提交",currency);
+                    throw new ServiceException(currency + "汇率为空，请维护汇率后再提交");
+				}
+				rateMap.put(currency, rate);
+			}
+			actualOtherCostExchange = actualOtherCost.multiply(rate);
+        }
         BigDecimal actualOtherTaxCost = Objects.nonNull(actualListDTO.getOtherTaxCost()) ? actualListDTO.getOtherTaxCost():BigDecimal.ZERO;
+        BigDecimal actualOtherTaxCostExchange = BigDecimal.ZERO;
+        currency = actualListDTO.getOtherTaxCurrency();
+        if(StringUtils.isBlank(currency)) {
+        	currency = "CNY";
+        	actualListDTO.setOtherTaxCurrency(currency);
+        	BigDecimal rate = rateMap.get(currency);
+			if(rate == null) {
+				rate = dmpTaskFeign.getRate(currentDate, currency);
+				if(rate == null) {
+					log.error("币别【{}】,汇率为空，请维护汇率后再提交",currency);
+                    throw new ServiceException(currency + "汇率为空，请维护汇率后再提交");
+				}
+				rateMap.put(currency, rate);
+			}
+			actualOtherTaxCostExchange = actualOtherTaxCost.multiply(rate);
+        }
         BigDecimal actualWeight = Objects.nonNull(actualListDTO.getActualWeight()) ? actualListDTO.getActualWeight():BigDecimal.ZERO;
         BigDecimal actualVolumeWeight = Objects.nonNull(actualListDTO.getVolumeWeight()) ? actualListDTO.getVolumeWeight():BigDecimal.ZERO;
         BigDecimal actualBillingWeight = Objects.nonNull(actualListDTO.getBillingWeight()) ? actualListDTO.getBillingWeight():BigDecimal.ZERO;
 
         BigDecimal estimatedTotalLogisticsCost = Objects.nonNull(estimatedListDTO.getTotalLogisticsCost()) ? estimatedListDTO.getTotalLogisticsCost():BigDecimal.ZERO;
         BigDecimal estimatedShippingCost = Objects.nonNull(estimatedListDTO.getShippingCost()) ? estimatedListDTO.getShippingCost():BigDecimal.ZERO;
+        BigDecimal estimatedShippingCostExchange = BigDecimal.ZERO;
+        currency = estimatedListDTO.getShippingCostCurrency();
+        if(StringUtils.isBlank(currency)) {
+        	currency = "CNY";
+        	estimatedListDTO.setShippingCostCurrency(currency);
+        	BigDecimal rate = rateMap.get(currency);
+			if(rate == null) {
+				rate = dmpTaskFeign.getRate(currentDate, currency);
+				if(rate == null) {
+					log.error("币别【{}】,汇率为空，请维护汇率后再提交",currency);
+                    throw new ServiceException(currency + "汇率为空，请维护汇率后再提交");
+				}
+				rateMap.put(currency, rate);
+			}
+			estimatedShippingCostExchange = estimatedShippingCost.multiply(rate);
+        }
         BigDecimal estimatedDeclareCost = Objects.nonNull(estimatedListDTO.getDeclareCost()) ? estimatedListDTO.getDeclareCost():BigDecimal.ZERO;
+        BigDecimal estimatedDeclareCostExchange = BigDecimal.ZERO;
+        currency = estimatedListDTO.getDeclareCostCurrency();
+        if(StringUtils.isBlank(currency)) {
+        	currency = "CNY";
+        	estimatedListDTO.setDeclareCostCurrency(currency);
+        	BigDecimal rate = rateMap.get(currency);
+			if(rate == null) {
+				rate = dmpTaskFeign.getRate(currentDate, currency);
+				if(rate == null) {
+					log.error("币别【{}】,汇率为空，请维护汇率后再提交",currency);
+                    throw new ServiceException(currency + "汇率为空，请维护汇率后再提交");
+				}
+				rateMap.put(currency, rate);
+			}
+			estimatedDeclareCostExchange = estimatedDeclareCost.multiply(rate);
+        }
         BigDecimal estimatedOtherCost = Objects.nonNull(estimatedListDTO.getOtherCost()) ? estimatedListDTO.getOtherCost():BigDecimal.ZERO;
+        BigDecimal estimatedOtherCostExchange = BigDecimal.ZERO;
+        currency = estimatedListDTO.getOtherCostCurrency();
+        if(StringUtils.isBlank(currency)) {
+        	currency = "CNY";
+        	estimatedListDTO.setOtherCostCurrency(currency);
+        	BigDecimal rate = rateMap.get(currency);
+			if(rate == null) {
+				rate = dmpTaskFeign.getRate(currentDate, currency);
+				if(rate == null) {
+					log.error("币别【{}】,汇率为空，请维护汇率后再提交",currency);
+                    throw new ServiceException(currency + "汇率为空，请维护汇率后再提交");
+				}
+				rateMap.put(currency, rate);
+			}
+			estimatedOtherCostExchange = estimatedOtherCost.multiply(rate);
+        }
         BigDecimal estimatedOtherTaxCost = Objects.nonNull(estimatedListDTO.getOtherTaxCost()) ? estimatedListDTO.getOtherTaxCost():BigDecimal.ZERO;
+        BigDecimal estimatedOtherTaxCostExchange = BigDecimal.ZERO;
+        currency = estimatedListDTO.getOtherTaxCurrency();
+        if(StringUtils.isBlank(currency)) {
+        	currency = "CNY";
+        	estimatedListDTO.setOtherTaxCurrency(currency);
+        	BigDecimal rate = rateMap.get(currency);
+			if(rate == null) {
+				rate = dmpTaskFeign.getRate(currentDate, currency);
+				if(rate == null) {
+					log.error("币别【{}】,汇率为空，请维护汇率后再提交",currency);
+                    throw new ServiceException(currency + "汇率为空，请维护汇率后再提交");
+				}
+				rateMap.put(currency, rate);
+			}
+			estimatedOtherTaxCostExchange = estimatedOtherTaxCost.multiply(rate);
+        }
         BigDecimal estimatedWeight = Objects.nonNull(estimatedListDTO.getActualWeight()) ? estimatedListDTO.getActualWeight():BigDecimal.ZERO;
         BigDecimal estimatedVolumeWeight = Objects.nonNull(estimatedListDTO.getVolumeWeight()) ? estimatedListDTO.getVolumeWeight():BigDecimal.ZERO;
         BigDecimal estimatedBillingWeight = Objects.nonNull(estimatedListDTO.getBillingWeight()) ? estimatedListDTO.getBillingWeight():BigDecimal.ZERO;
 
         // 重新计算实际总数
-        actualListDTO.setTotalLogisticsCost(actualShippingCost.add(actualDeclareCost).add(actualOtherCost).add(actualOtherTaxCost));
+        actualListDTO.setTotalLogisticsCost(actualShippingCostExchange.add(actualDeclareCostExchange).add(actualOtherCostExchange).add(actualOtherTaxCostExchange).setScale(4, RoundingMode.DOWN));
+        estimatedListDTO.setTotalLogisticsCost(estimatedShippingCostExchange.add(estimatedDeclareCostExchange).add(estimatedOtherCostExchange).add(estimatedOtherTaxCostExchange).setScale(4, RoundingMode.DOWN));
         // 重新计算差异值
         // 总物流费用
-        diffListDTO.setTotalLogisticsCost(actualListDTO.getTotalLogisticsCost().subtract(estimatedTotalLogisticsCost));
         // 实际重量【箱包装重量】
         diffListDTO.setActualWeight(actualWeight.subtract(estimatedWeight));
         // 体积重
@@ -745,13 +883,18 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
         // 计费重
         diffListDTO.setBillingWeight(actualBillingWeight.subtract(estimatedBillingWeight));
         // 物流运费用【预计物流费用】
-        diffListDTO.setShippingCost(actualShippingCost.subtract(estimatedShippingCost));
+        diffListDTO.setShippingCost(actualShippingCostExchange.subtract(estimatedShippingCostExchange).setScale(4, RoundingMode.DOWN));
+        diffListDTO.setShippingCostCurrency("CNY");
         // 报关费用【预计报关费用】
-        diffListDTO.setDeclareCost(actualDeclareCost.subtract(estimatedDeclareCost));
+        diffListDTO.setDeclareCost(actualDeclareCostExchange.subtract(estimatedDeclareCostExchange).setScale(4, RoundingMode.DOWN));
+        diffListDTO.setDeclareCostCurrency("CNY");
         // 其他费用【预计其他费用】
-        diffListDTO.setOtherCost(actualOtherCost.subtract(estimatedOtherCost));
+        diffListDTO.setOtherCost(actualOtherCostExchange.subtract(estimatedOtherCostExchange).setScale(4, RoundingMode.DOWN));
+        diffListDTO.setOtherCostCurrency("CNY");
         //其他税费
-        diffListDTO.setOtherTaxCost(actualOtherTaxCost.subtract(estimatedOtherTaxCost));
+        diffListDTO.setOtherTaxCost(actualOtherTaxCostExchange.subtract(estimatedOtherTaxCostExchange).setScale(4, RoundingMode.DOWN));
+        diffListDTO.setOtherTaxCurrency("CNY");
+        diffListDTO.setTotalLogisticsCost(actualListDTO.getTotalLogisticsCost().subtract(estimatedTotalLogisticsCost));
     }
 
 
@@ -1099,6 +1242,10 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
                 .collect(Collectors.toList());
 
         BigDecimal totalCost = BigDecimal.ZERO;
+        String currentDate = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+        DmpTaskFeign dmpTaskFeign = ApplicationContextUtils.getBean(DmpTaskFeign.class);
+        Map<String, BigDecimal> rateMap = new HashMap<>();
+        rateMap.put("CNY", BigDecimal.ONE);
         // 物流运费
         List<String> shippingCostList = tmsCfgCostGroupMap.getOrDefault(DictCostCategoryEnum.SHIPPING_COST.getCode(), Collections.emptyList())
         		.stream().map(TmsCfgCostEntity::getId).collect(Collectors.toList());
@@ -1111,6 +1258,16 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
         if(CollUtil.isNotEmpty(costDetailList)) {
             String currency = costDetailList.get(0).getCurrency();
 			record.setShippingCostCurrency(currency);
+			BigDecimal rate = rateMap.get(currency);
+			if(rate == null) {
+				rate = dmpTaskFeign.getRate(currentDate, currency);
+				if(rate == null) {
+					log.error("币别【{}】,汇率为空，请维护汇率后再提交",currency);
+                    throw new ServiceException(currency + "汇率为空，请维护汇率后再提交");
+				}
+				rateMap.put(currency, rate);
+			}
+			totalCost = totalCost.add(shippingCost.multiply(rate));
         }else {
             record.setShippingCostCurrency("CNY");
         }
@@ -1125,7 +1282,18 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
                 .orElse(BigDecimal.ZERO);
         record.setDeclareCost(declareCost);
         if(CollUtil.isNotEmpty(costDetailList)) {
-            record.setDeclareCostCurrency(costDetailList.get(0).getCurrency());
+            String currency = costDetailList.get(0).getCurrency();
+			record.setDeclareCostCurrency(currency);
+			BigDecimal rate = rateMap.get(currency);
+			if(rate == null) {
+				rate = dmpTaskFeign.getRate(currentDate, currency);
+				if(rate == null) {
+					log.error("币别【{}】,汇率为空，请维护汇率后再提交",currency);
+                    throw new ServiceException(currency + "汇率为空，请维护汇率后再提交");
+				}
+				rateMap.put(currency, rate);
+			}
+			totalCost = totalCost.add(shippingCost.multiply(rate));
         }else {
             record.setDeclareCostCurrency("CNY");
         }
@@ -1140,7 +1308,18 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
                 .orElse(BigDecimal.ZERO);
         record.setOtherCost(otherCost);
         if(CollUtil.isNotEmpty(costDetailList)) {
-            record.setOtherCostCurrency(costDetailList.get(0).getCurrency());
+            String currency = costDetailList.get(0).getCurrency();
+			record.setOtherCostCurrency(currency);
+			BigDecimal rate = rateMap.get(currency);
+			if(rate == null) {
+				rate = dmpTaskFeign.getRate(currentDate, currency);
+				if(rate == null) {
+					log.error("币别【{}】,汇率为空，请维护汇率后再提交",currency);
+                    throw new ServiceException(currency + "汇率为空，请维护汇率后再提交");
+				}
+				rateMap.put(currency, rate);
+			}
+			totalCost = totalCost.add(shippingCost.multiply(rate));
         }else {
             record.setOtherCostCurrency("CNY");
         }
@@ -1155,13 +1334,24 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
                 .orElse(BigDecimal.ZERO);
         record.setOtherTaxCost(otherTaxCost);
         if(CollUtil.isNotEmpty(costDetailList)) {
-            record.setOtherTaxCurrency(costDetailList.get(0).getCurrency());
+            String currency = costDetailList.get(0).getCurrency();
+			record.setOtherTaxCurrency(currency);
+			BigDecimal rate = rateMap.get(currency);
+			if(rate == null) {
+				rate = dmpTaskFeign.getRate(currentDate, currency);
+				if(rate == null) {
+					log.error("币别【{}】,汇率为空，请维护汇率后再提交",currency);
+                    throw new ServiceException(currency + "汇率为空，请维护汇率后再提交");
+				}
+				rateMap.put(currency, rate);
+			}
+			totalCost = totalCost.add(shippingCost.multiply(rate));
         }else {
             record.setOtherTaxCurrency("CNY");
         }
 
         // 合计费用
-        record.setTotalLogisticsCost(totalCost);
+        record.setTotalLogisticsCost(totalCost.setScale(4, RoundingMode.DOWN));
     }
 
 
