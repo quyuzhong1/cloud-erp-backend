@@ -176,4 +176,5 @@ public class TransferInfoDetailDTO implements Serializable {
          */
         private String outWarehouseChargeId;
     }
+
 }

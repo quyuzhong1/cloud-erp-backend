@@ -1144,7 +1144,13 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
         //客户信息
         if (ObjectUtil.isNotEmpty(customerInfo)) {
             String salesOrgCode = companyEntities.stream().filter(req -> req.getId().equals(entity.getSalesOrgId())).map(req -> req.getCode()).findFirst().orElse("");
-            shudiyunB2cOrderDTO.setSales_company_code(salesOrgCode);
+            if (CharSequenceUtil.isNotBlank(salesOrgCode)) {
+                shudiyunB2cOrderDTO.setSales_company_code(salesOrgCode);
+            } else {
+                salesOrgCode = companyEntities.stream().filter(req -> req.getId().equals(customerInfo.getFinancialOrganization())).map(req -> req.getCode()).findFirst().orElse("");
+                shudiyunB2cOrderDTO.setSales_company_code(salesOrgCode);
+            }
+
             BaseIdDTO.CodeDTO sysAccountingCompanyEntity = companyEntities.stream().filter(req -> req.getId().equals(customerInfo.getFinancialOrganization())).findFirst().orElse(null);
             if (ObjectUtil.isNotEmpty(sysAccountingCompanyEntity)) {
                 shudiyunB2cOrderDTO.setReceiving_company_code(sysAccountingCompanyEntity.getCode());
@@ -1257,7 +1263,7 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
             wmsPushMsgEntity.setSourceId(soOutstockDetailEntity.getId());
             wmsPushMsgEntity.setSourceCode(entity.getCode() + "_" + soOutstockDetailEntity.getSkuNo());
             wmsPushMsgEntity.setSyncOperate(operate);
-            map.put("isNewHandler", Boolean.TRUE);
+            map.put("isQuerySync", Boolean.TRUE);
             map.put("detailId", soOutstockDetailEntity.getId());
             map.put("operate", operate);
             wmsPushMsgEntity.setPushData(JSON.toJSONString(map));

@@ -126,6 +126,8 @@ public enum SourceTypeEnum {
     PRODUCT_LOGISTICS("ProductLogistics", "物流产品","product_logistics"),
     MOULD_INFO("mouldInfo", "模具管理","mould_info"),
 
+    LX_PRODUCT_DETAIL("lx_productDetail", "产品管理","product_detail"),
+
 
     //SYS
     SYS_DEPARTMENT("sysDepartment", "部门","sys_department"),

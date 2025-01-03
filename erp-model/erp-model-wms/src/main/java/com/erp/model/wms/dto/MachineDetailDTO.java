@@ -6,6 +6,7 @@ import lombok.NoArgsConstructor;
 import javax.validation.Valid;
 import javax.validation.constraints.*;
 import java.io.Serializable;
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -144,4 +145,5 @@ public class MachineDetailDTO implements Serializable {
          */
         private List<MachineSubComponentsDTO.ViewDTO> subComponentsList;
     }
+
 }

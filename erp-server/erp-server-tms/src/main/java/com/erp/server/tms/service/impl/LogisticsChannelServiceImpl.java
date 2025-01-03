@@ -8,10 +8,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.*;
-import com.common.business.enums.LogisticsPlatformEnum;
-import com.common.business.enums.OperationTypeEnum;
-import com.common.business.enums.TrackQueryTypeEnum;
-import com.common.business.enums.UnitEnum;
+import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
@@ -454,6 +451,8 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
             baseDTO.setLogisticsSupplierName(supplierEntity.getSupplierName());
             baseDTO.setLogisticsSupplierShortName(supplierEntity.getShortName());
             baseDTO.setLogisticsSupplierId(supplierEntity.getSupplierId());
+            baseDTO.setLogisticsType(supplierEntity.getType().getCode());
+            baseDTO.setLogisticsTypeName(supplierEntity.getType().getName());
         }
         return baseDTO;
     }
@@ -678,6 +677,9 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
         if (StringUtils.isBlank(dictPlatform)){
             throw new ServiceException("关联的销售平台不能为空");
         }
+        if(dictPlatform.equals(PlatformDictEnum.TE_MU.getCode()) || dictPlatform.equals(PlatformDictEnum.RAKUTEN.getCode()) || dictPlatform.equals(PlatformDictEnum.EBAY.getCode())){
+            return new LogisticsChannelDTO.SignShipDTO();
+        }
         List<LogisticsMappingDTO.ViewDTO> mappingList = logisticsMappingService.listByChannelId(logisticsChannelId);
         if (CollectionUtils.isEmpty(mappingList)){
             throw new ServiceException("物流渠道关联的销售平台物流渠道为空");
@@ -779,5 +781,18 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
             return false;
         }
         return baseMapper.estimateIsOutOfRangeDelivery(logisticsChannelId,country,postCode);
+    }
+
+    @Override
+    public PagingVO<LogisticsChannelDTO.PagingViewDTO> paging(PagingDTO<LogisticsChannelDTO.PagingParamDTO> dto) {
+        LogisticsChannelDTO.PagingParamDTO params = dto.getParams();
+        params.setPermissionSql(dto.getPermissionSql());
+        Page<LogisticsChannelDTO.PagingViewDTO> query = new Page<>(dto.getCurrPage(), dto.getPageSize());
+        IPage<LogisticsChannelDTO.PagingViewDTO> pageData = baseMapper.paging(query, params);
+        List<LogisticsChannelDTO.PagingViewDTO> list = pageData.getRecords();
+        for (LogisticsChannelDTO.PagingViewDTO pagingViewDTO : list) {
+            pagingViewDTO.setTypeName(pagingViewDTO.getType().getName());
+        }
+        return new PagingVO<>(pageData);
     }
 }

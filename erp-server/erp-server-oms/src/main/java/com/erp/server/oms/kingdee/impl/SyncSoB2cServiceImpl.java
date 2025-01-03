@@ -289,7 +289,7 @@ public class SyncSoB2cServiceImpl implements SyncSoB2cService {
                     //同步B2B订单
                     OmsPushMsgEntity omsPushMsgEntity = new OmsPushMsgEntity();
                     omsPushMsgEntity.setTargetPlatform(DmpBasicSystemCodeEnum.SDY.getCode());
-                    omsPushMsgEntity.setSourceType(SourceTypeEnum.SDY_OFFLINE_ORDER.getCode());
+                    omsPushMsgEntity.setSourceType(SourceTypeEnum.SDY_DELIVERY_ORDER.getCode());
                     omsPushMsgEntity.setSourceId(soB2cDetailEntity.getId());
                     omsPushMsgEntity.setSourceCode(soB2cEntity.getCode() + "_" + soB2cDetailEntity.getSkuNo());
                     omsPushMsgEntity.setSyncOperate(operate);

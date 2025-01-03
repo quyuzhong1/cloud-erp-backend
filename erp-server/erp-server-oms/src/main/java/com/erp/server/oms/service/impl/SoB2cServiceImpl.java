@@ -11,6 +11,7 @@ import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
@@ -113,6 +114,9 @@ import com.erp.server.oms.mapper.SoB2cMapper;
 import com.erp.server.oms.query.SoB2cQueryHandler;
 import com.erp.server.oms.service.*;
 import com.sdk.oms.tiktok.service.TikTokSdkClientService;
+import com.sdk.third.lingxing.dto.Result;
+import com.sdk.third.lingxing.dto.UpdateOrderDTO;
+import com.sdk.third.lingxing.utils.LingxingApiUtils;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -1208,6 +1212,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 .set(SoB2cEntity::getInvalidType, soB2cInvalidTypeEnum.getCode())
                 .update();
 
+        //同步数帝云
+        List<SoB2cDetailEntity> soB2cDetailEntityList = soB2cDetailService.listByMainId(id);
+        syncSoB2cService.syncDataToSdy(entity, soB2cDetailEntityList, SyncOperateEnum.OPERATE_DELETE.getCode());
+
         log.info("作废 开始记录操作日志，id：【{}】", id);
         String msg = CharSequenceUtil.format("用户【{}】单号为【{}】的【{}】单据作废操作 作废原因：【{}】", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "B2C销售订单表", remark);
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C.getCode(), entity.getId(), "作废操作");
@@ -1234,6 +1242,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         lambdaUpdate().eq(SoB2cEntity::getId, id)
                 .set(SoB2cEntity::getInvalidStatus, InvalidStatusEnum.NOT_VOIDED.getStatus())
                 .update();
+
+        //同步数帝云
+        List<SoB2cDetailEntity> soB2cDetailEntityList = soB2cDetailService.listByMainId(id);
+        syncSoB2cService.syncDataToSdy(entity, soB2cDetailEntityList, SyncOperateEnum.OPERATE_APPROVE.getCode());
 
         log.info("反作废 开始记录操作日志，id：【{}】", id);
         String msg = CharSequenceUtil.format("用户【{}】单号为【{}】的【{}】单据反作废操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "B2C销售订单表");
@@ -2017,6 +2029,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         }
         //库存验证
         checkInventory(entity, list, deliveryWarehouseIdList, warehouseManageType);
+        //如果是领星订单，更新领星订单信息
+        if(entity.getThirdSystem().equals(PlatformDictEnum.LING_XING.getCode())){
+            updateLingXingOrder(entity, list);
+        }
         /**
          * 如果是API 对接的仓库
          * 下出库单的命令
@@ -2970,6 +2986,15 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         this.removeByIds(ids);
         //删除操作日志
         operateLogService.removeByBusinessIds(ids);
+
+
+        //同步数帝云
+        List<SoB2cEntity> soB2cEntities = this.listByIds(ids);
+        List<SoB2cDetailEntity> soB2cDetailEntityList = soB2cDetailService.listByMainIds(ids);
+        for (SoB2cEntity soB2cEntity : soB2cEntities) {
+            List<SoB2cDetailEntity> detailEntityList = soB2cDetailEntityList.stream().filter(req -> req.getMainId().equals(soB2cEntity.getId())).collect(Collectors.toList());
+            syncSoB2cService.syncDataToSdy(soB2cEntity, detailEntityList, SyncOperateEnum.OPERATE_DELETE.getCode());
+        }
     }
 
     /**
@@ -5892,34 +5917,36 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             operateLogService.addModuleOperateLog(String.format("映射了一个sku【%s】", simpleVO.getSkuNo()), ModuleTypeEnum.SO_B2C.getCode(), entity.getId(), "编辑信息");
         }
         return flag;
+    }
 
-//        ListingInfoParamDTO paramDTO = new ListingInfoParamDTO();
-//        paramDTO.setPlatform(salesPlatform);
-//        paramDTO.setShopIdList(Collections.singletonList(soB2cEntity.getShopId()));
-//        paramDTO.setType(typeCode);
-//        paramDTO.setPlatformSkuNoList(Collections.singletonList(platformSkuNo));
-//        paramDTO.setLastExpireDate(soB2cEntity.getPlatformOrderCreateTime());
-//        List<ListingInfoWithSkuMappingDTO> skuMappingList = skuMappingService.findListDto(paramDTO);
-//        if (CollectionUtils.isEmpty(skuMappingList)) {
-//            throw new ServiceException(ApiError.ERROR_LISTING_NOT_EXIST);
-//        }
-//        ListingInfoWithSkuMappingDTO skuMapping = skuMappingList.get(0);
-//        String listingId = skuMapping.getListingId();
-//        listingInfoService.updateMatchResult(listingId, Boolean.TRUE);
-//
-//        SkuMappingDTO.UpdateSkuMappingDTO updateSkuMappingDTO = new SkuMappingDTO.UpdateSkuMappingDTO();
-//        String skuNo = skuEntity.getSkuNo();
-//        updateSkuMappingDTO.setProductName(skuEntity.getName());
-//        updateSkuMappingDTO.setProductSkuId(skuEntity.getId());
-//        updateSkuMappingDTO.setProductSkuNo(skuNo);
-//        updateSkuMappingDTO.setListingId(skuMapping.getListingId());
-//        updateSkuMappingDTO.setIsExpire(Boolean.FALSE);
-//
-//        detailEntity.setSkuId(skuEntity.getId());
-//        detailEntity.setSkuNo(skuNo);
-//        //更新明细
-//        soB2cDetailService.updateById(detailEntity);
-//        return skuMappingService.updateSkuMapping(updateSkuMappingDTO);
+    private void updateLingXingOrder(SoB2cEntity entity, List<SoB2cDetailEntity> detailEntityList) {
+        // 校验sku是否存在领星
+        List<String> skuIds = detailEntityList.stream().map(SoB2cDetailEntity::getSkuId).collect(Collectors.toList());
+        LingxingApiUtils.checkSkuSyncLx(skuIds);
+
+        List<SoB2cDetailEntity> splitDetailList = detailEntityList.stream().filter(v->StringUtils.isNotBlank(v.getSplitDetailId())).collect(Collectors.toList());
+        List<String> splitDetailIds =  splitDetailList.stream().map(SoB2cDetailEntity::getSplitDetailId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
+        //原来
+        List<SoB2cDetailEntity> allOriginDetailList = soB2cDetailService.listContainDeleted(splitDetailIds);
+        detailEntityList = detailEntityList.stream().filter(v->StringUtils.isBlank(v.getSplitDetailId())).collect(Collectors.toList());
+        detailEntityList.addAll(allOriginDetailList);
+
+        UpdateOrderDTO.OrderInfo orderInfo = new UpdateOrderDTO.OrderInfo();
+        orderInfo.setGlobalOrderNo(entity.getThirdCode());
+        List<UpdateOrderDTO.OrderItem> orderItemList = new ArrayList<>();
+        detailEntityList.forEach(detailEntity -> {
+            UpdateOrderDTO.OrderItem orderItem = new UpdateOrderDTO.OrderItem();
+            orderItem.setMsku(detailEntity.getPlatformSkuNo());
+            orderItem.setSku(LingxingApiUtils.convertLxSku(detailEntity.getSkuNo()));
+            orderItem.setQuantity(detailEntity.getQty());
+            orderItem.setId(detailEntity.getThirdDetailId());
+            orderItem.setMark("更新订单");
+            orderItem.setPrice(0);
+            orderItem.setType(3);
+            orderItemList.add(orderItem);
+        });
+        orderInfo.setOrderItemList(orderItemList);
+        LingxingApiUtils.updateOrder(Arrays.asList(orderInfo));
     }
 
     /**
@@ -8646,6 +8673,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                     platformShipOrderDTO.setSoB2cId(soB2cEntity.getId());
                     platformShipOrderDTO.setSubmitPlatformUniqueKey(soB2cEntity.convertSubmitPlatformUniqueKey());
                     platformShipOrderDTO.setDictPlatform(soB2cEntity.getDictPlatform());
+                    platformShipOrderDTO.setHasNotOutStock(true);
                     soB2cDeliveryFeign.shipOrder(platformShipOrderDTO);
                     updateList.add(soB2cEntity);
                 } catch (Exception e) {
@@ -8654,6 +8682,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 }
             } else {
                 updateList.add(soB2cEntity);
+            }
+            if(!dto.getPlatformShipFlag() && soB2cEntity.getThirdSystem().equals(PlatformDictEnum.LING_XING.getCode())){
+                LingxingApiUtils.cancelOrderByOrderList(Collections.singletonList(soB2cEntity.getThirdCode()));
             }
             soB2cEntity.setSignOrderError("");
             deleteErrorIds.add(soB2cEntity.getId());

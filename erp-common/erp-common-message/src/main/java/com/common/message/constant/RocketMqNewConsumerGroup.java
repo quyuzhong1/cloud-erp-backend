@@ -157,5 +157,13 @@ public class RocketMqNewConsumerGroup {
      * 新中台平台退货入库
      */
     public static final String DMP_PLATFORM_REFUND_ORDER_TO_OMS_GROUP = "${spring.cloud.nacos.discovery.namespace}-dmp_platform_refund_order_to_oms_group";
+    /**
+     * 新中台领星店铺
+     */
+    public static final String DMP_LX_SELLER_SHOP_TO_DMP_GROUP = "${spring.cloud.nacos.discovery.namespace}-dmp_lx_seller_shop_to_dmp_group";
 
+    /**
+     * 新中台第三方物流渠道
+     */
+    public static final String DMP_THIRD_LOGISTICS_TO_DMP_GROUP = "${spring.cloud.nacos.discovery.namespace}-dmp_third_logistics_to_dmp_group";
 }
