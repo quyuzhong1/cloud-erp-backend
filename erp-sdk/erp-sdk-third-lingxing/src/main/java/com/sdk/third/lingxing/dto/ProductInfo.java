@@ -19,7 +19,10 @@ public class ProductInfo implements Serializable {
     @NotNull
     private String productName;
 
-    @NotNull
+    /**
+     * 添加时必传
+     * 编辑时不传
+     */
     private String skuIdentifier;
 
     private List<PictureInfo> pictureList;

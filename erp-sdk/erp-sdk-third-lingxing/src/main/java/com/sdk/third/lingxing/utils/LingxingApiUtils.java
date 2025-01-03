@@ -3,7 +3,6 @@ package com.sdk.third.lingxing.utils;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.exceptions.ExceptionUtil;
-import cn.hutool.core.net.URLEncodeUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
@@ -25,8 +24,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Resource;
-import javax.validation.constraints.NotNull;
-import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -460,7 +457,12 @@ public class LingxingApiUtils {
      * @param productInfo 商品信息
      * @return 响应
      */
-    public static Result<Object> addOrUpdateProduct(ProductInfo productInfo) {
+    public static Result<Object> checkAddOrUpdateProduct(ProductInfo productInfo) {
+        List<String> skuIdentifierList = queryLxExistSkuIds(Collections.singletonList(productInfo.getSkuIdentifier()));
+        // 更新sku识别码不允许传
+        if (!CollectionUtils.isEmpty(skuIdentifierList)){
+            productInfo.setSkuIdentifier(null);
+        }
         TreeMap<String, Object> requestMap = new TreeMap<>(BeanUtil.beanToMap(productInfo, true, true));
         Result<Object> result = LingxingApiUtils.postAndSignCheckListConvert(LingxingApiUtils.PRODUCT_SET_URI, requestMap);
         if (!"0".equalsIgnoreCase(result.getCode())) {
@@ -499,18 +501,71 @@ public class LingxingApiUtils {
      * 检查sku未同步领星
      */
     public static void checkSkuSyncLx(List<String> skuIds) {
-        TreeMap<String, Object> treeMap = new TreeMap<>();
-        treeMap.put("sku_identifier_list", skuIds);
-        Result<Object> result = LingxingApiUtils.postAndSignCheckListConvert(LingxingApiUtils.PRODUCT_LIST_URI, treeMap);
-        if (null == result.getData()){
-            ServiceException.runError("SKU未同步领星");
-        }
-        JSONArray jsonArray = JSONArray.parseArray(JSON.toJSONString(result.getData()));
-        List<String> skuIdentifierList = jsonArray.stream()
-                .map(e -> ((com.alibaba.fastjson.JSONObject) e).getString("sku_identifier")).collect(Collectors.toList());
+        List<String> skuIdentifierList = queryLxExistSkuIds(skuIds);
         boolean match = skuIds.stream().anyMatch(e -> !skuIdentifierList.contains(e));
         if (match){
             ServiceException.runError("存在SKU未同步领星");
         }
     }
+
+
+    /**
+     * 查询领星已存在的sku
+     */
+    public static List<String> queryLxExistSkuIds(List<String> skuIds) {
+        TreeMap<String, Object> treeMap = new TreeMap<>();
+        treeMap.put("sku_identifier_list", skuIds);
+        Result<Object> result = LingxingApiUtils.postAndSignCheckListConvert(LingxingApiUtils.PRODUCT_LIST_URI, treeMap);
+        if (!"0".equalsIgnoreCase(result.getCode())){
+            log.error("查询SKU是否同步领星失败:{}", JSONUtil.toJsonStr(result));
+            ServiceException.runError("查询SKU是否同步领星失败："+ JSONUtil.toJsonStr(result));
+        }
+        if (null == result.getData()){
+            log.error("查询到SKU未同步领星:{}", JSONUtil.toJsonStr(result));
+            ServiceException.runError("SKU未同步领星");
+        }
+        JSONArray jsonArray = JSONArray.parseArray(JSON.toJSONString(result.getData()));
+        return jsonArray.stream()
+                .map(e -> ((com.alibaba.fastjson.JSONObject) e).getString("sku_identifier")).collect(Collectors.toList());
+    }
+
+    /**
+     * 添加本地产品
+     *
+     * @param productInfo 商品信息
+     * @return 响应
+     */
+    public static Result<Object> addProduct(ProductInfo productInfo) {
+        if (StringUtils.isBlank(productInfo.getSkuIdentifier())){
+            ServiceException.runError("添加时识别码必传");
+        }
+        TreeMap<String, Object> requestMap = new TreeMap<>(BeanUtil.beanToMap(productInfo, true, true));
+        Result<Object> result = LingxingApiUtils.postAndSignCheckListConvert(LingxingApiUtils.PRODUCT_SET_URI, requestMap);
+        if (!"0".equalsIgnoreCase(result.getCode())) {
+            String errorMsg = StrUtil.format("请求领星添加/编辑本地产品失败:,request={}, result={}", requestMap, JSONUtil.toJsonStr(result));
+            log.error(errorMsg);
+            throw new ServiceException(errorMsg);
+        }
+        return result;
+    }
+
+    /**
+     * 编辑本地产品
+     *
+     * @param productInfo 商品信息
+     * @return 响应
+     */
+    public static Result<Object> updateProduct(ProductInfo productInfo) {
+        // 更新sku识别码不允许传
+        productInfo.setSkuIdentifier(null);;
+        TreeMap<String, Object> requestMap = new TreeMap<>(BeanUtil.beanToMap(productInfo, true, true));
+        Result<Object> result = LingxingApiUtils.postAndSignCheckListConvert(LingxingApiUtils.PRODUCT_SET_URI, requestMap);
+        if (!"0".equalsIgnoreCase(result.getCode())) {
+            String errorMsg = StrUtil.format("请求领星添加/编辑本地产品失败:,request={}, result={}", requestMap, JSONUtil.toJsonStr(result));
+            log.error(errorMsg);
+            throw new ServiceException(errorMsg);
+        }
+        return result;
+    }
+
 }
