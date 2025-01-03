@@ -819,8 +819,8 @@ public class ExportWmsFeignController {
      * 导出FBA在途核对列表
      */
     @PostMapping("/exportFbaTransitReport")
-    @WebAdvanceQuery(handler = FbaTransitCalculateReportQueryHandler.class)
-    public PagingVO<FbaTransitCalculateReportDTO.ListDTO> exportFbaTransitReport(PagingDTO<FbaTransitCalculateReportDTO.PagingParamDTO> dto){
+    @WebAdvanceQuery
+    public PagingVO<FbaTransitCalculateReportDTO.ListDTO> exportFbaTransitReport(@RequestBody PagingDTO<FbaTransitCalculateReportDTO.PagingParamDTO> dto){
         return fbaTransitCalculateReportService.paging(dto);
     }
 }

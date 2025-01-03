@@ -337,13 +337,9 @@ public class OverseasProviderWarehouseServiceImpl extends SuperServiceImpl<Overs
         dto.setPlatform(PlatformDictEnum.SHOPIFY.getCode());
 //        dto.setType(RuleTypeEnum.PLATFORM.code);
         String platformSku = shippedDTO.getPlatformSku();
-        if (CharSequenceUtil.isNotBlank(platformSku)){
-            dto.setPlatformSkuNoList(Collections.singletonList(platformSku));
-        }
+        dto.setPlatformSkuNoList(CharSequenceUtil.isNotBlank(platformSku) ? Collections.singletonList(platformSku) : Collections.singletonList(CharSequenceUtil.EMPTY));
         String platformProductId = shippedDTO.getPlatformProductId();
-        if (CharSequenceUtil.isNotBlank(platformProductId)){
-            dto.setPlatformSpuNoList(Collections.singletonList(platformProductId));
-        }
+        dto.setPlatformSpuNoList(CharSequenceUtil.isNotBlank(platformProductId) ? Collections.singletonList(platformProductId) : Collections.singletonList(CharSequenceUtil.EMPTY));
         //店铺id
         List<String> shopIdList = getShopIdBySite(shippedDTO.getSite());
         if (CollUtil.isNotEmpty(shopIdList)){

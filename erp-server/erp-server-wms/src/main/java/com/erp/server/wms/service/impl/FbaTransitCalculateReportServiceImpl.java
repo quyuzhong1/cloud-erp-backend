@@ -116,7 +116,7 @@ public class FbaTransitCalculateReportServiceImpl extends SuperServiceImpl<FbaTr
         List<FbaTransitCalculateReportDTO.CalculateDTO> calculateDTOList = this.listByTransitAndReportMonth(reportMonth, null,null,null);
         Map<String, List<FbaTransitCalculateReportDTO.CalculateDTO>> calculateMap = calculateDTOList.stream().filter(e -> CharSequenceUtil.isAllNotBlank(e.getShipmentCode(), e.getAsin(), e.getMsku())).collect(Collectors.groupingBy(e -> e.getShipmentCode() + "-" + e.getMsku() + "-" + e.getAsin()));
         //本期发货的货件
-        List<FbaTransitCalculateReportDTO.DeliveryDTO> fbaDeliveryList = firstMileDeliveryService.listDeliveryByReportMonth(ApproveStatusEnum.APPROVE.getCode(), SourceTypeEnum.FBA_SHIPMENT.getCode(),reportMonth, null,null,null);
+        List<FbaTransitCalculateReportDTO.DeliveryDTO> fbaDeliveryList = firstMileDeliveryService.listDeliveryByReportMonth(ApproveStatusEnum.APPROVE.getCode(), null,reportMonth, null,null,null);
         Map<String, List<FbaTransitCalculateReportDTO.DeliveryDTO>> fbaDeliveryMap = fbaDeliveryList.stream().filter(e -> CharSequenceUtil.isAllNotBlank(e.getShipmentCode(), e.getAsin(), e.getMsku())).collect(Collectors.groupingBy(e -> e.getShipmentCode() + "-" + e.getMsku() + "-" + e.getAsin()));
         //本期签收的货件
         List<FbaTransitCalculateReportDTO.FbaReceiveDTO> receiveDTOList = fbaShipmentService.listByReceiveAndReportMonth(reportMonth, null,null,null);

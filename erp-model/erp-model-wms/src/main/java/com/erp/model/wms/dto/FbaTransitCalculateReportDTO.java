@@ -459,7 +459,7 @@ public class FbaTransitCalculateReportDTO implements Serializable {
         //签收数量
         private Integer receiveQty;
         //签收日期
-        private Integer receiveDate;
+        private LocalDate receiveDate;
         //明细关联的fba货件编码
         private String sourceType;
     }

@@ -104,7 +104,7 @@
         from
         fba_transit_calculate_report ftcr
         LEFT JOIN fba_transit_calculate_detail_report ftcdr ON ftcr.id = ftcdr.main_id and ftcdr.is_deleted = FALSE
-        where ftcr.is_deleted = FALSE
+        where ${params.sqlMap.default} and ftcr.is_deleted = FALSE
         <!--数据权限-->
         <if test="params.permissionSql != null and params.permissionSql != ''">
             ${params.permissionSql}

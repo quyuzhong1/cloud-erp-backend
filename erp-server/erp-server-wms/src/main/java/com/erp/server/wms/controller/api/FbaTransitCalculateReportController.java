@@ -53,7 +53,7 @@ public class FbaTransitCalculateReportController extends BaseController {
             menuCode = "wms:fbaTransitCalculateReport:paging",
             tableAlias = "ftcr"
     )
-    @WebAdvanceQuery(handler = FbaTransitCalculateReportQueryHandler.class)
+    @WebAdvanceQuery
     public ApiResult<PagingVO<FbaTransitCalculateReportDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<FbaTransitCalculateReportDTO.PagingParamDTO> dto) {
         return success(fbaTransitCalculateReportService.paging(dto));
     }
