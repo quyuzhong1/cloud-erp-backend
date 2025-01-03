@@ -260,6 +260,9 @@ public class FirstMileProcessingServiceImpl extends SuperServiceImpl<FirstMilePr
         }
         List<FirstMileProcessingEntity> newList = new ArrayList<>();
         for (FirstMileProcessingDTO.AddOrUpdateDTO addOrUpdateDTO :list) {
+            if (ObjectUtil.isEmpty(addOrUpdateDTO)) {
+                continue;
+            }
             FirstMileProcessingEntity entity = FirstMileProcessingConverter.INSTANCE.addToEntity(addOrUpdateDTO);
             //旧数据
             FirstMileProcessingEntity old = oldList.stream().filter(obj ->
