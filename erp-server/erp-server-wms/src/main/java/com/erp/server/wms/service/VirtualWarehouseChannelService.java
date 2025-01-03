@@ -33,10 +33,10 @@ public interface VirtualWarehouseChannelService extends SuperService<VirtualWare
     /**
      * 批量新增
      *
-     * @param batchAddDTO
+     * @param batchUpdateDTO
      * @return
      */
-    BaseResultDTO.AddDTO batchAdd(VirtualWarehouseChannelDTO.BatchAddDTO batchAddDTO);
+    BaseResultDTO.AddDTO batchUpdate(VirtualWarehouseChannelDTO.BatchUpdateDTO batchUpdateDTO);
 
 
     /**
@@ -91,4 +91,11 @@ public interface VirtualWarehouseChannelService extends SuperService<VirtualWare
      * @return List<CfgRuleVirtualWarehouseDTO>
      */
     List<VirtualWarehouseDTO.CfgRuleVirtualWarehouseDTO> listCfgRuleVirtualWarehouse(List<String> platformList);
+
+    /**
+     * 获取渠道配置信息
+     * @param id
+     * @return
+     */
+    VirtualWarehouseChannelDTO.ViewDTO view(String id);
 }

@@ -1,8 +1,11 @@
 package com.erp.model.wms.dto;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
@@ -31,57 +34,25 @@ public class VirtualWarehouseChannelDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class ViewDTO {
-
         /**
-        * 主键id
-        */
-        private String  id;
-
+         * 虚拟仓id
+         */
+        private String  virtualWarehouseId;
         /**
-        * 是否失效 true 失效 false 未失效
-        */
-        private Boolean disabled;
-
+         * 虚拟仓编号
+         */
+        private String  virtualWarehouseCode;
         /**
-        * 虚拟仓id
-        */
-        private String virtualWarehouseId;
+         * 虚拟仓名称
+         */
+        private String  virtualWarehouseName;
 
-        /**
-        * 虚拟仓编码
-        */
-        private String virtualWarehouseCode;
-
-        /**
-        * 虚拟仓名称
-        */
-        private String virtualWarehouseName;
-
-        /**
-        * 平台的dict值
-        */
-        private String dictPlatform;
-
-        /**
-        * 关联类型：  platform 按平台 shop 按店铺
-        */
-        private String type;
-
-        /**
-        * 关联id（例如店铺）
-        */
-        private String relationId;
-
-        /**
-        * 关联名称
-        */
-        private String relationName;
-
-        /**
-        * 平台类型
-        */
-        private String dictPlatformType;
-
+        //海外 渠道列表
+        List<VirtualWarehouseChannelDTO.ChannelAddDTO> overseasChannelList;
+        //国内 渠道列表
+        List<VirtualWarehouseChannelDTO.ChannelAddDTO> internalChannelList;
+        //其他 渠道列表
+        List<VirtualWarehouseChannelDTO.ChannelAddDTO> otherChannelList;
 
     }
 
@@ -174,37 +145,37 @@ public class VirtualWarehouseChannelDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
-    public static class BatchAddDTO{
-        private List<VirtualWarehouseChannelDTO.ChannelAddDTO> channelList;
+    public static class BatchUpdateDTO {
+        /**
+         * 虚拟仓id
+         */
+        @NotBlank(message = "虚拟仓库id不能为空")
         private String virtualWarehouseId;
+        //海外 渠道列表
+        @Valid
+        List<VirtualWarehouseChannelDTO.ChannelAddDTO> overseasChannelList;
+        //国内 渠道列表
+        @Valid
+        List<VirtualWarehouseChannelDTO.ChannelAddDTO> internalChannelList;
+        //其他 渠道列表
+        @Valid
+        List<VirtualWarehouseChannelDTO.ChannelAddDTO> otherChannelList;
+
     }
     @Data
+    @Builder
+    @AllArgsConstructor
     @NoArgsConstructor
     public static class ChannelAddDTO{
         /**
-         * 平台类型
-         */
-        private String dictPlatformType;
-        /**
          * 平台的dict值
          */
-        @NotBlank(message = "渠道不能为空")
+        @NotBlank(message = "销售平台不能为空")
         private String dictPlatform;
-
         /**
-         * 关联类型：  platform 按平台 shop 按店铺
+         * 平台明细
          */
-        @NotBlank(message = "渠道类型不能为空")
-        private String type;
-
-        /**
-         * 关联id（例如店铺）
-         */
-        private List<String> relationList;
-        /**
-         * 是否失效 true 失效 false 未失效
-         */
-        private Boolean disabled=false;
+        private List<VirtualWarehouseChannelDTO.DetailDTO> detailDTOList;
     }
 
 
@@ -246,5 +217,25 @@ public class VirtualWarehouseChannelDTO implements Serializable {
          */
         @NotEmpty(message = "实体仓不能为空")
         private List<String> warehouseIdList;
+    }
+
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class DetailDTO {
+
+        /**
+         * 店铺集合 根据id排序后 加密【后端使用】
+         */
+        private String shopMd5;
+        /**
+         * 店铺id集合
+         */
+        private List<String> shopIdList;
+        /**
+         * 分区列表
+         */
+        private List<String> partitonIdList;
     }
 }

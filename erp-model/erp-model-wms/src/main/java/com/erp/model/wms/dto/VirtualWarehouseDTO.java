@@ -58,7 +58,7 @@ public class VirtualWarehouseDTO implements Serializable {
          */
         private String name;
 
-        private List<VirtualWarehouseChannelDTO.ChannelAddDTO> channelList;
+//        private List<VirtualWarehouseChannelDTO.ChannelAddDTO> channelList;
         private List<ThirdMappingDTO.ViewDTO> thirdMappingList;
         private List<String> warehouseIdList;
     }
@@ -116,8 +116,8 @@ public class VirtualWarehouseDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class AddDTO extends CommonDTO {
-        @Valid
-        private List<VirtualWarehouseChannelDTO.ChannelAddDTO> channelList;
+//        @Valid
+//        private List<VirtualWarehouseChannelDTO.ChannelAddDTO> channelList;
         //        @Valid
         private List<ThirdMappingDTO.AddDTO> thirdMappingList;
         private List<String> warehouseIdList;
@@ -136,7 +136,7 @@ public class VirtualWarehouseDTO implements Serializable {
         @NotBlank(message = "主键id不能为空")
         private String id;
 
-        private List<VirtualWarehouseChannelDTO.ChannelAddDTO> channelList;
+//        private List<VirtualWarehouseChannelDTO.ChannelAddDTO> channelList;
         private List<ThirdMappingDTO.AddDTO> thirdMappingList;
         private List<String> warehouseIdList;
 

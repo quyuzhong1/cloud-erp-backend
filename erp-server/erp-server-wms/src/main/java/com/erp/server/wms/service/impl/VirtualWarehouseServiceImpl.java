@@ -108,7 +108,7 @@ public class VirtualWarehouseServiceImpl extends SuperServiceImpl<VirtualWarehou
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.VIRTUAL_WAREHOUSE.getCode(), virtualWarehouseEntity.getId(), "新增操作");
         //绑定信息
         //新增关联渠道
-        virtualWarehouseChannelService.batchAdd(bindChannel(addDTO.getChannelList(), virtualWarehouseEntity.getId()));
+//        virtualWarehouseChannelService.batchAdd(bindChannel(addDTO.getChannelList(), virtualWarehouseEntity.getId()));
         //新增关联仓库
         virtualWarehouseRelationService.batchAdd(bindRelation(addDTO.getWarehouseIdList(), virtualWarehouseEntity.getId()));
         //新增关联外部仓
@@ -205,7 +205,7 @@ public class VirtualWarehouseServiceImpl extends SuperServiceImpl<VirtualWarehou
      * @param newChannelList
      * @param virtualWarehouseId
      */
-    private VirtualWarehouseChannelDTO.BatchAddDTO bindChannel(List<VirtualWarehouseChannelDTO.ChannelAddDTO> newChannelList, String virtualWarehouseId) {
+    private VirtualWarehouseChannelDTO.BatchUpdateDTO bindChannel(List<VirtualWarehouseChannelDTO.ChannelAddDTO> newChannelList, String virtualWarehouseId) {
         //校验一个渠道只能绑定一种类型：平台、店铺
         Map<String, List<VirtualWarehouseChannelDTO.ChannelAddDTO>> collect = newChannelList.stream().collect(Collectors.groupingBy(VirtualWarehouseChannelDTO.ChannelAddDTO::getDictPlatform));
         collect.forEach((k, v) -> {
@@ -242,10 +242,10 @@ public class VirtualWarehouseServiceImpl extends SuperServiceImpl<VirtualWarehou
             });
 
         }
-        VirtualWarehouseChannelDTO.BatchAddDTO batchAddDTO = new VirtualWarehouseChannelDTO.BatchAddDTO();
-        batchAddDTO.setVirtualWarehouseId(virtualWarehouseId);
-        batchAddDTO.setChannelList(newChannelList);
-        return batchAddDTO;
+        VirtualWarehouseChannelDTO.BatchUpdateDTO batchUpdateDTO = new VirtualWarehouseChannelDTO.BatchUpdateDTO();
+        batchUpdateDTO.setVirtualWarehouseId(virtualWarehouseId);
+//        batchUpdateDTO.setChannelList(newChannelList);
+        return batchUpdateDTO;
     }
 
 
@@ -272,7 +272,7 @@ public class VirtualWarehouseServiceImpl extends SuperServiceImpl<VirtualWarehou
         operateLogService.addModuleOperateLogByObj(old, virtualWarehouseEntity, ModuleTypeEnum.VIRTUAL_WAREHOUSE.getCode(), virtualWarehouseEntity.getId(), msg);
         //绑定信息
         //新增关联渠道
-        virtualWarehouseChannelService.batchAdd(bindChannel(updateDTO.getChannelList(), virtualWarehouseEntity.getId()));
+//        virtualWarehouseChannelService.batchAdd(bindChannel(updateDTO.getChannelList(), virtualWarehouseEntity.getId()));
         //新增关联仓库
         virtualWarehouseRelationService.batchAdd(bindRelation(updateDTO.getWarehouseIdList(), virtualWarehouseEntity.getId()));
 
@@ -466,22 +466,22 @@ public class VirtualWarehouseServiceImpl extends SuperServiceImpl<VirtualWarehou
         VirtualWarehouseEntity vmEntity = Optional.ofNullable(this.getById(id)).orElseThrow(() -> new ServiceException(ApiError.ERROR_VIRTUAL_WAREHOUSE_NOT_EXIST));
         VirtualWarehouseDTO.ViewDTO viewDTO = new VirtualWarehouseDTO.ViewDTO();
         BeanUtils.copyProperties(vmEntity, viewDTO);
-        //获取关联渠道
-        List<VirtualWarehouseChannelEntity> vmChannelEntityList = virtualWarehouseChannelService.getByVirtualWarehouseId(id);
-        Map<String, List<VirtualWarehouseChannelEntity>> collect = vmChannelEntityList.stream().collect(Collectors.groupingBy(VirtualWarehouseChannelEntity::getDictPlatform));
-        List<VirtualWarehouseChannelDTO.ChannelAddDTO> channelList = new ArrayList<>();
-        collect.forEach((key, list) -> {
-            VirtualWarehouseChannelDTO.ChannelAddDTO channelAddDTO = new VirtualWarehouseChannelDTO.ChannelAddDTO();
-            if (CollectionUtils.isEmpty(list)) {
-                channelAddDTO.setDictPlatform(key);
-            } else {
-                channelAddDTO.setDictPlatform(key);
-                channelAddDTO.setType(list.get(0).getType());
-                channelAddDTO.setRelationList(list.stream().map(VirtualWarehouseChannelEntity::getRelationId).filter(StringUtils::isNotBlank).collect(Collectors.toList()));
-            }
-            channelList.add(channelAddDTO);
-        });
-        viewDTO.setChannelList(channelList);
+//        //获取关联渠道
+//        List<VirtualWarehouseChannelEntity> vmChannelEntityList = virtualWarehouseChannelService.getByVirtualWarehouseId(id);
+//        Map<String, List<VirtualWarehouseChannelEntity>> collect = vmChannelEntityList.stream().collect(Collectors.groupingBy(VirtualWarehouseChannelEntity::getDictPlatform));
+//        List<VirtualWarehouseChannelDTO.ChannelAddDTO> channelList = new ArrayList<>();
+//        collect.forEach((key, list) -> {
+//            VirtualWarehouseChannelDTO.ChannelAddDTO channelAddDTO = new VirtualWarehouseChannelDTO.ChannelAddDTO();
+//            if (CollectionUtils.isEmpty(list)) {
+//                channelAddDTO.setDictPlatform(key);
+//            } else {
+//                channelAddDTO.setDictPlatform(key);
+//                channelAddDTO.setType(list.get(0).getType());
+//                channelAddDTO.setRelationList(list.stream().map(VirtualWarehouseChannelEntity::getRelationId).filter(StringUtils::isNotBlank).collect(Collectors.toList()));
+//            }
+//            channelList.add(channelAddDTO);
+//        });
+//        viewDTO.setChannelList(channelList);
         //获取关联仓库
         List<VirtualWarehouseRelationEntity> warehouseRelationList = virtualWarehouseRelationService.getByVirtualWarehouseId(id);
         viewDTO.setWarehouseIdList(warehouseRelationList.stream().map(VirtualWarehouseRelationEntity::getWarehouseId).collect(Collectors.toList()));
