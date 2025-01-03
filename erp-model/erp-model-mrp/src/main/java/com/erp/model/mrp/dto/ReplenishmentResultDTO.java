@@ -1193,6 +1193,7 @@ public class ReplenishmentResultDTO {
             entity.setSourceType(dto.getSourceType());
             entity.setPlanDeliveryDate(dto.getPlanDeliveryDate());
             entity.setCalcVersion(calcVersion);
+            entity.setShopPreQty(dto.getShopPreQty());
             return entity;
         }
     }
@@ -1261,6 +1262,7 @@ public class ReplenishmentResultDTO {
             entity.setSourceId(dto.getSourceId());
             entity.setSourceCode(dto.getSourceCode());
             entity.setSourceType(dto.getSourceType());
+            entity.setShopPreQty(entity.getShopPreQty());
             entity.setCalcVersion(calcVersion);
             return entity;
         }
@@ -1280,18 +1282,6 @@ public class ReplenishmentResultDTO {
             EstimatedPurchaseDetailDTO dto = new EstimatedPurchaseDetailDTO();
             dto.setStatus(purchaseDTO.getStatus());
             dto.setQty(purchaseDTO.getQty());
-            dto.setEstimatedPutAwayDate(purchaseDTO.getEstimatedPutAwayDate());
-            dto.setEstimateSalesDate(purchaseDTO.getEstimateSalesDate());
-            dto.setSourceId(purchaseDTO.getSourceId());
-            dto.setSourceCode(purchaseDTO.getSourceCode());
-            dto.setType(ReplenishmentInventoryTypeEnum.LOCAL_ESTIMATED_DELIVERY.getCode());
-            dto.setSourceType(purchaseDTO.getSourceType());
-            return dto;
-        }
-
-        public static EstimatedPurchaseDetailDTO buildEstimatedPurchaseDetailDTO(ReplenishmentInventoryDTO.ReplenishmentPurchaseMergeDTO purchaseDTO) {
-            EstimatedPurchaseDetailDTO dto = new EstimatedPurchaseDetailDTO();
-            dto.setStatus(purchaseDTO.getStatus());
             dto.setEstimatedPutAwayDate(purchaseDTO.getEstimatedPutAwayDate());
             dto.setEstimateSalesDate(purchaseDTO.getEstimateSalesDate());
             dto.setSourceId(purchaseDTO.getSourceId());
@@ -1362,6 +1352,7 @@ public class ReplenishmentResultDTO {
             entity.setSourceCode(dto.getSourceCode());
             entity.setSourceType(dto.getSourceType());
             entity.setCalcVersion(calcVersion);
+            entity.setShopPreQty(dto.getShopPreQty());
             return entity;
         }
     }
@@ -1431,6 +1422,7 @@ public class ReplenishmentResultDTO {
             entity.setInTransitQty(dto.getInTransitQty());
             entity.setEstimateSalesDate(dto.getEstimateSalesDate());
             entity.setCalcVersion(calcVersion);
+            entity.setShopPreQty(dto.getShopPreQty());
             return entity;
         }
 

@@ -16,8 +16,8 @@ public enum ReplenishmentBillStatusEnum implements EnumMessage {
     WAIT_SUBMIT("waitSubmit", "待提交"),
     APPROVE_ING("approveIng", "待审核"),
     APPROVE("approve", "已审核&未发货"),
-    TO_BE_CREATE("toBeCreate", "待生成"),
-    CREATED("created", "已生成"),
+    TO_BE_CREATE("toBeCreate", "已审核&待生成"),
+    PART_CREATED("partCreated", "已审核&部分生成"),
     ;
 
 

@@ -14,11 +14,9 @@ import com.erp.model.mrp.vo.EstimatedPurchaseVO;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.server.mrp.mapper.EstimatedPurchaseDetailMapper;
-import com.erp.server.mrp.service.BillShopInventoryDetailService;
 import com.erp.server.mrp.service.EstimatedPurchaseDetailService;
 import org.springframework.stereotype.Service;
 
-import javax.annotation.Resource;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -34,17 +32,9 @@ import java.util.stream.Collectors;
 @Service
 public class EstimatedPurchaseDetailServiceImpl extends SuperServiceImpl<EstimatedPurchaseDetailMapper, EstimatedPurchaseDetailEntity> implements EstimatedPurchaseDetailService {
 
-    @Resource
-    private BillShopInventoryDetailService billShopInventoryDetailService;
-
     @Override
     public PagingVO<EstimatedPurchaseVO> estimatedPurchase(PagingDTO<ReplenishmentSuggestionDTO.DetailParamDTO> params) {
         Page<EstimatedPurchaseVO> page = baseMapper.estimatedPurchase(new Page<>(params.getCurrPage(), params.getPageSize()), params.getParams());
-        List<String> ids = page.getRecords()
-                .stream()
-                .map(EstimatedPurchaseVO::getId)
-                .collect(Collectors.toList());
-        Map<String, Integer> shopInventoryMap = billShopInventoryDetailService.listByMainIdsAndShopId(ids, params.getParams().getShopId());
         List<String> receivingChannelIds = page.getRecords()
                 .stream()
                 .map(EstimatedPurchaseVO::getReceivingChannel)
@@ -60,7 +50,6 @@ public class EstimatedPurchaseDetailServiceImpl extends SuperServiceImpl<Estimat
                 vo.setReceivingChannelName(shopMap.get(vo.getReceivingChannel()));
             }else {
                 vo.setReceivingChannelName(warehouseMap.get(vo.getReceivingChannel()));
-                vo.setShopPrePurchase(shopInventoryMap.get(vo.getId()));
             }
         }
         return new PagingVO<>(page);
@@ -84,8 +73,8 @@ public class EstimatedPurchaseDetailServiceImpl extends SuperServiceImpl<Estimat
         List<EstimatedPurchaseDetailEntity> list = list(Wrappers.<EstimatedPurchaseDetailEntity>lambdaQuery().eq(EstimatedPurchaseDetailEntity::getReplenishmentDetailId, params.getDetailId())
                 .eq(EstimatedPurchaseDetailEntity::getSourceType, params.getSourceType())
         );
-        List<String> ids = list.stream().map(EstimatedPurchaseDetailEntity::getId)
-                .collect(Collectors.toList());
-        return billShopInventoryDetailService.totalByMainIdsAndShopId(ids, params.getShopId());
+        return list.stream()
+                .map(EstimatedPurchaseDetailEntity::getShopPreQty)
+                .reduce(0 ,Math::addExact);
     }
 }

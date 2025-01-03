@@ -380,6 +380,9 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
         ReplenishmentSuggestionDetailEntity detailEntity = replenishmentSuggestionDetailService.getByIdOpt(params.getParams().getDetailId())
                 .orElseThrow(() -> new ServiceException("补货建议明细不存在"));
         ReplenishmentSuggestionEntity suggestion = getByIdOpt(detailEntity.getMainId()).orElseThrow(() -> new ServiceException("补货建议不存在"));
+        if (Boolean.TRUE.equals(params.getParams().getCurrentShop())) {
+            params.getParams().setShopId(suggestion.getShopId());
+        }
         return replenishmentInventoryDetailService.inventoryDetail(params, suggestion.getPlatformType());
     }
 

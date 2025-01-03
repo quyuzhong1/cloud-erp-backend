@@ -34,7 +34,8 @@
         source_id,
         source_code,
         source_type,
-        receiving_channel
+        receiving_channel,
+        shop_pre_qty as shopPrePurchase
         from estimated_purchase_detail
         where replenishment_detail_id = #{params.detailId}
         and source_type = #{params.sourceType}

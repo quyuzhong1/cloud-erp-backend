@@ -81,6 +81,12 @@ public class LocalInTransitDetailEntity extends BaseEntity<LocalInTransitDetailE
     @TableField("warehouse_id")
     private String warehouseId;
 
+    /**
+     * 店铺预计数量
+     */
+    @TableField("shop_pre_qty")
+    private Integer shopPreQty;
+
 
     public static final String REPLENISHMENT_DETAIL_ID = "replenishment_detail_id";
 

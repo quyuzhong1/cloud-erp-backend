@@ -35,10 +35,10 @@ public class LocalWaitQcHandler extends AbstractSkuCalculationHandler {
         List<ReplenishmentResultDTO.ReplenishmentInventoryDetailDTO> localWaitQcDetail = new ArrayList<>();
         List<LocalInventoryDTO> inventoryList = replenishmentResultDTO.getInventoryDTO().getLocalWaitQcList()
                     .stream().filter(v -> v.getSkuId().equals(replenishmentResultDTO.getReplenishment().getSkuId()))
-                    .map(v -> new LocalInventoryDTO(v.getWarehouseId(), v.getQty()))
+                    .map(v -> new LocalInventoryDTO(v.getWarehouseId(), v.getQty(), null))
                     .collect(Collectors.toList());
         int qty = inventoryService.getAllocateQty(replenishmentResultDTO, replenishmentResultDTO.getCfgRuleStrategy().getWarehouseResult().getLocalWarehouseList(),
-                inventoryList, localWaitQcDetail, ReplenishmentInventoryTypeEnum.LOCAL_WAIT_QC, CfgRuleWarehouseTypeEnum.LOCAL);
+                inventoryList, localWaitQcDetail, inventoryService.getShopDemandQtyMap(r), ReplenishmentInventoryTypeEnum.LOCAL_WAIT_QC, CfgRuleWarehouseTypeEnum.LOCAL);
         replenishmentResultDTO.setLocalWaitQcDetail(localWaitQcDetail);
         replenishmentResultDTO.getReplenishmentDetail().setLocalWaitQcQty(qty);
     }

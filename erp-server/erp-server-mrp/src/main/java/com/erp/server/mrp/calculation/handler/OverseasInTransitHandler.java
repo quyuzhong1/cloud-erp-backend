@@ -40,7 +40,7 @@ public class OverseasInTransitHandler extends AbstractSkuCalculationHandler {
 
 
     @Override
-    public void doHandle(ReplenishmentResultDTO replenishmentResultDTO, List<ReplenishmentResultDTO> r) {
+    public void doHandle(ReplenishmentResultDTO replenishmentResultDTO, List<ReplenishmentResultDTO> dtoList) {
         CfgRuleStrategyDTO cfgRuleStrategyDTO = replenishmentResultDTO.getCfgRuleStrategy();
         List<CfgRuleCommonDTO.StrategyResultDTO> inventoryResult = cfgRuleStrategyDTO.getInventoryResult();
         String baseKey = CfgRuleCommonTypeEnum.getBaseInventoryRedisKey(replenishmentResultDTO.getReplenishment().getPlatformType());
@@ -49,7 +49,7 @@ public class OverseasInTransitHandler extends AbstractSkuCalculationHandler {
             replenishmentResultDTO.getReplenishmentDetail().setOverseasInTransitQty(0);
         }
         List<String> code = new ArrayList<>(codes);
-        int qty = inventoryService.getOverseasInTransit(replenishmentResultDTO, code.get(0), cfgRuleStrategyDTO);
+        int qty = inventoryService.getOverseasInTransit(replenishmentResultDTO, code.get(0), cfgRuleStrategyDTO, dtoList);
         replenishmentResultDTO.getReplenishmentDetail().setOverseasInTransitQty(qty);
     }
 }

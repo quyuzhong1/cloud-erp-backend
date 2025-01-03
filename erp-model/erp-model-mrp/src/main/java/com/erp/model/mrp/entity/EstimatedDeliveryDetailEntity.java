@@ -97,7 +97,13 @@ public class EstimatedDeliveryDetailEntity extends BaseEntity<EstimatedDeliveryD
      * 预计发货日期
      */
     @TableField("plan_delivery_date")
-    private String planDeliveryDate;
+    private LocalDate planDeliveryDate;
+
+    /**
+     * 店铺预计数量
+     */
+    @TableField("shop_pre_qty")
+    private Integer shopPreQty;
 
 
     public static final String REPLENISHMENT_DETAIL_ID = "replenishment_detail_id";

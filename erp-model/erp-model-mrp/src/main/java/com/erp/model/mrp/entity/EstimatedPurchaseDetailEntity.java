@@ -100,10 +100,10 @@ public class EstimatedPurchaseDetailEntity extends BaseEntity<EstimatedPurchaseD
     private String deliveryWarehouseId;
 
     /**
-     * 预计发货日期
+     * 店铺预计数量
      */
-    @TableField("plan_delivery_date")
-    private String planDeliveryDate;
+    @TableField("shop_pre_qty")
+    private Integer shopPreQty;
 
 
     public static final String REPLENISHMENT_DETAIL_ID = "replenishment_detail_id";

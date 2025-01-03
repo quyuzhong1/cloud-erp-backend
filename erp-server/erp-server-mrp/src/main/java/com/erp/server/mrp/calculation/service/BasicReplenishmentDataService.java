@@ -21,7 +21,6 @@ import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.mrp.calculation.factory.CfgSettingFactory;
 import com.erp.server.mrp.calculation.factory.PlatformCalculationFactory;
-import com.erp.server.mrp.calculation.handler.HistorySalesHandler;
 import com.erp.server.mrp.calculation.handler.StockingTimeHandler;
 import com.erp.server.mrp.calculation.strategy.CfgRuleSettingStrategy;
 import com.erp.server.mrp.calculation.strategy.platform.PlatformCalculationStrategy;
@@ -82,8 +81,6 @@ public class BasicReplenishmentDataService {
     private CfgRuleLogisticsService cfgRuleLogisticsService;
     @Resource
     private StockingTimeHandler stockingTimeHandler;
-    @Resource
-    private HistorySalesHandler historySalesHandler;
     @Resource
     private InventoryService inventoryService;
     @Resource
@@ -309,8 +306,6 @@ public class BasicReplenishmentDataService {
         CfgRuleSalesQtyEntity defaultSalesQty = cfgRuleSalesQtyService.getDefaultByPlatformAndSkuType(suggestion.getPlatformType(), detail.getSkuType());
         Map<LocalDate, Integer> salesHistoryMap = replenishmentSuggestionService.listSalesHistoryMap(id, defaultSalesQty.getSalesQtyType(), defaultSalesQty.getOrderType(), startDate, endDate);
         resultDTO.setHistorySalesList(salesHistoryMap);
-        Map<String, Map<String, Integer>> skuSalesHistoryMap = replenishmentSuggestionService.getSalesHistoryMap(defaultSalesQty.getSalesQtyType(), defaultSalesQty.getOrderType());
-        resultDTO.setShopSalesMap(skuSalesHistoryMap.get(suggestion.getSkuId()));
         Map<LocalDate, Integer> historyInventoryMap = historyInventoryEsService.findByReplenishmentIdAndDateBetweenMap(id, startDate, endDate);
         resultDTO.setHistoryInventoryList(historyInventoryMap);
         List<CfgRuleSalesFormulaEntity> defaultFormula = cfgRuleSalesFormulaService.listBySalesQtyIdList(Collections.singletonList(defaultSalesQty.getId()));

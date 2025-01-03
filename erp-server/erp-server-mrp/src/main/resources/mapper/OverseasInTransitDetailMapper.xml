@@ -33,7 +33,8 @@
         delivery_qty,
         receive_qty,
         in_transit_qty,
-        estimate_sales_date
+        estimate_sales_date,
+        shop_pre_qty as shopInTransitQty
         from overseas_in_transit_detail
         where replenishment_detail_id = #{params.detailId}
         and is_deleted = false

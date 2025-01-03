@@ -1,6 +1,5 @@
 package com.erp.server.mrp.calculation.handler;
 
-import com.common.business.enums.SourceTypeEnum;
 import com.erp.model.mrp.dto.CfgRuleCommonDTO;
 import com.erp.model.mrp.dto.CfgRuleStrategyDTO;
 import com.erp.model.mrp.dto.ReplenishmentResultDTO;
@@ -59,7 +58,7 @@ public class FbaPlanDeliveryHandler extends AbstractSkuCalculationHandler {
         Set<String> replenishmentDeliveryPlan = cfgRuleCommonService.findByKey(baseKey, inventoryResult, baseKey + ":" + CfgRuleInventoryNodeEnum.getFbaDeliveryPlanByReplenishment());
         if (!CollectionUtils.isEmpty(replenishmentDeliveryPlan)) {
             List<ReplenishmentResultDTO.EstimatedDeliveryDetailDTO> fbaPlanDelivery = inventoryService.getPlanDelivery(replenishmentResultDTO, replenishmentDeliveryPlan, cfgRuleStrategyDTO.getStockUpResult(),
-                    SourceTypeEnum.REPLENISHMENT_SUGGESTION.getCode(), ReplenishmentInventoryTypeEnum.FBA_ESTIMATED_DELIVERY, DeliveryPlanTypeEnum.FBA.getCode());
+                    CfgRuleInventoryNodeEnum.FBA_DELIVERY_PLAN_BY_REPLENISHMENT.getCode(), ReplenishmentInventoryTypeEnum.FBA_ESTIMATED_DELIVERY, DeliveryPlanTypeEnum.FBA.getCode());
             if (!CollectionUtils.isEmpty(fbaPlanDelivery)) {
                 estimatedDeliveryDetails.addAll(fbaPlanDelivery);
             }
@@ -68,7 +67,7 @@ public class FbaPlanDeliveryHandler extends AbstractSkuCalculationHandler {
         Set<String> codes = cfgRuleCommonService.findByKey(baseKey, inventoryResult, baseKey + ":" + CfgRuleInventoryNodeEnum.getFbaDeliveryPlanByManual());
         if (!CollectionUtils.isEmpty(codes)) {
             List<ReplenishmentResultDTO.EstimatedDeliveryDetailDTO> fbaPlanDelivery = inventoryService.getPlanDelivery(replenishmentResultDTO, codes,
-                    cfgRuleStrategyDTO.getStockUpResult(), SourceTypeEnum.DELIVERY_PLAN.getCode(), ReplenishmentInventoryTypeEnum.FBA_ESTIMATED_DELIVERY, DeliveryPlanTypeEnum.FBA.getCode());
+                    cfgRuleStrategyDTO.getStockUpResult(), CfgRuleInventoryNodeEnum.FBA_DELIVERY_PLAN_BY_MANUAL.getCode(), ReplenishmentInventoryTypeEnum.FBA_ESTIMATED_DELIVERY, DeliveryPlanTypeEnum.FBA.getCode());
             if (!CollectionUtils.isEmpty(fbaPlanDelivery)) {
                 estimatedDeliveryDetails.addAll(fbaPlanDelivery);
             }

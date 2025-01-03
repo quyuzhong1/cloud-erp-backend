@@ -98,7 +98,7 @@
         wdp.approve_status AS status,
         wdpd.qty AS qty,
         CASE WHEN wdp.approve_status = 'approve' THEN wdp.approve_time
-        ELSE wdp.create_time END AS estimateSalesDate,
+        ELSE wdp.create_time END AS planDeliveryDate,
         wdp.id AS sourceId,
         wdp.code AS sourceCode,
         wdp.to_warehouse_id AS warehouseId
@@ -123,7 +123,7 @@
           AND wdpd.sku_id =
         #{result.replenishment.skuId}
         <choose>
-            <when test="sourceType == 'replenishmentSuggestion'">
+            <when test="sourceType == 'FBA_DELIVERY_PLAN_BY_REPLENISHMENT' || sourceType == 'OVERSEAS_DELIVERY_PLAN_BY_REPLENISHMENT'">
               AND  wdp.source_type = 'deliverySuggestion'
             </when>
             <otherwise>
@@ -214,7 +214,7 @@
         AND pad.purchase_application_id = pa.id
         <where>
             <choose>
-                <when test="sourceType == 'replenishmentSuggestion'">
+                <when test="sourceType == 'LOCAL_REPLENISHMENT_PURCHASE_PLAN'">
                     AND pa.source_type in ('purchaseSuggestion','purchaseSuggestionMerge')
                 </when>
                 <otherwise>
@@ -256,11 +256,11 @@
         pod.sku_id,
         max(po.code) AS sourceCode,
         po.id AS sourceId,
-        max(po.create_time) AS estimatedPutAwayDate,
+        max(pod.plan_delivery_date) AS estimatedPutAwayDate,
         max(po.approve_status) AS status,
         sum(pod.purchase_qty) AS qty,
         po.delivery_warehouse_id AS warehouseId,
-        'purchaseOrder' AS sourceType
+        'LOCAL_PURCHASE_ORDER' AS sourceType
         FROM
         ${tableName} AS po
         INNER JOIN ${tableDetailName} AS pod ON pod.is_deleted = FALSE
@@ -499,7 +499,8 @@
         ds.code AS sourceCode,
         ds.status AS status,
         ds.suggest_delivery_qty AS qty,
-        ds.estimate_sales_date AS estimateSalesDate
+        ds.estimate_sales_date AS estimateSalesDate,
+        ds.shop_id AS receivingChannel
         FROM
             ${tableName} ds
         WHERE
@@ -624,10 +625,10 @@
         ps.id AS sourceId,
         MAX ( ps.code ) AS sourceCode,
         MAX ( ps.status ) AS status,
-        SUM ( CASE WHEN ps.status = 'draft' THEN 0 WHEN ps.status = 'waitConfirm' THEN ps.suggest_purchase_qty ELSE ps.plan_purchase_qty END ) AS qty,
+        SUM ( CASE WHEN ps.status = 'draft' THEN 0 WHEN ps.status = 'waitConfirm' THEN ps.suggest_purchase_qty ELSE ps.purchase_stock_up_qty END ) AS qty,
         MAX ( ps.estimate_instock_date ) AS estimatedPutAwayDate,
         MAX ( ps.estimate_sales_date ) AS estimateSalesDate,
-        'replenishmentSuggestion' AS sourceType,
+        'LOCAL_REPLENISHMENT_PLAN' AS sourceType,
         ps.sku_id,
         ps.shop_id
         FROM
@@ -650,10 +651,10 @@
         ps.id AS sourceId,
         MAX ( ps.code ) AS sourceCode,
         MAX ( ps.status ) AS status,
-        SUM ( CASE WHEN ps.status = 'draft' THEN 0 WHEN ps.status = 'waitConfirm' THEN ps.suggest_purchase_qty ELSE ps.plan_purchase_qty END ) AS qty,
+        SUM ( CASE WHEN ps.status = 'draft' THEN 0 WHEN ps.status = 'waitConfirm' THEN ps.suggest_purchase_qty ELSE ps.purchase_stock_up_qty END ) AS qty,
         MAX ( ps.estimate_instock_date ) AS estimatedPutAwayDate,
         MAX ( ps.estimate_sales_date ) AS estimateSalesDate,
-        'replenishmentSuggestion' AS sourceType,
+        'LOCAL_REPLENISHMENT_PLAN' AS sourceType,
         ps.sku_id,
         ps.shop_id
         FROM
@@ -683,6 +684,21 @@
         </foreach>
         GROUP BY
         warehouse_id,sku_id
+    </select>
+    <select id="getPurchaseOrder" resultType="com.erp.model.scm.dto.PurchaseOrderDTO$ViewSubcontractPoDTO">
+        select
+        po.code,
+        pod.plan_delivery_date as planDeliveryDate
+        from ${tableName} po
+        inner join ${tableDetailName} pod on po.id = pod.purchase_order_id and pod.is_deleted = false
+        <where>
+            pod.sku_id = #{skuId} and po.code IN
+            <foreach item="code" collection="sourceCodeList" open="(" separator="," close=")">
+                #{code}
+            </foreach>
+        </where>
+
+
     </select>
 
 

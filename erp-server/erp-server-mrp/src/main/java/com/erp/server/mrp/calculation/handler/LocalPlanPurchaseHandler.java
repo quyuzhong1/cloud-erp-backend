@@ -27,7 +27,7 @@ public class LocalPlanPurchaseHandler extends AbstractSkuCalculationHandler {
 
     @Override
     public void doHandle(ReplenishmentResultDTO replenishmentResultDTO, List<ReplenishmentResultDTO> r) {
-        int qty = inventoryService.getLocalPurchase(replenishmentResultDTO, replenishmentResultDTO.getCfgRuleStrategy());
+        int qty = inventoryService.getLocalPurchase(replenishmentResultDTO, replenishmentResultDTO.getCfgRuleStrategy(), r);
         replenishmentResultDTO.getReplenishmentDetail().setLocalPlanPurchaseQty(qty);
     }
 

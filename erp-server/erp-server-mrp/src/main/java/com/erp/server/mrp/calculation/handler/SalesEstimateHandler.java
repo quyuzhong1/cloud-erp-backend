@@ -24,11 +24,11 @@ import static com.erp.model.mrp.enums.RecentTimePeriodEnum.*;
 @Component
 public class SalesEstimateHandler extends AbstractSkuCalculationHandler {
     @Resource
-    private OverseasUsableHandler overseasUsableHandler;
+    private StockingDateSalesHandler stockingDateSalesHandler;
 
     @Override
     public SkuCalculationHandler getNextHandler(List<ReplenishmentResultDTO> r) {
-        return overseasUsableHandler;
+        return stockingDateSalesHandler;
     }
 
     @Override

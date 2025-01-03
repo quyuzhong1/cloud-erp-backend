@@ -15,11 +15,9 @@ import com.erp.model.mrp.vo.EstimatedDeliveryVO;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.server.mrp.mapper.EstimatedDeliveryDetailMapper;
-import com.erp.server.mrp.service.BillShopInventoryDetailService;
 import com.erp.server.mrp.service.EstimatedDeliveryDetailService;
 import org.springframework.stereotype.Service;
 
-import javax.annotation.Resource;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -35,18 +33,11 @@ import java.util.stream.Collectors;
 @Service
 public class EstimatedDeliveryDetailServiceImpl extends SuperServiceImpl<EstimatedDeliveryDetailMapper, EstimatedDeliveryDetailEntity> implements EstimatedDeliveryDetailService {
 
-    @Resource
-    private BillShopInventoryDetailService billShopInventoryDetailService;
-
     @Override
     public PagingVO<EstimatedDeliveryVO> estimatedDelivery(PagingDTO<ReplenishmentSuggestionDTO.DetailParamDTO> params) {
         Page<EstimatedDeliveryVO> page = baseMapper.estimatedDelivery(new Page<>(params.getCurrPage(), params.getPageSize()), params.getParams());
         if (ReplenishmentInventoryTypeEnum.OVERSEAS_ESTIMATED_DELIVERY.getCode().equals(params.getParams().getType())) {
-            List<String> ids = page.getRecords()
-                    .stream()
-                    .map(EstimatedDeliveryVO::getId)
-                    .collect(Collectors.toList());
-            Map<String, Integer> shopInventoryMap = billShopInventoryDetailService.listByMainIdsAndShopId(ids, params.getParams().getShopId());
+
             List<String> receivingChannelIds = page.getRecords()
                     .stream()
                     .map(EstimatedDeliveryVO::getReceivingChannel)
@@ -63,7 +54,6 @@ public class EstimatedDeliveryDetailServiceImpl extends SuperServiceImpl<Estimat
                 }else {
                     vo.setReceivingChannelName(warehouseMap.get(vo.getReceivingChannel()));
                 }
-                vo.setShopPreShipmentQty(shopInventoryMap.get(vo.getId()));
             }
         }
         return new PagingVO<>(page);
@@ -95,10 +85,9 @@ public class EstimatedDeliveryDetailServiceImpl extends SuperServiceImpl<Estimat
                     .map(EstimatedDeliveryDetailEntity::getQty)
                     .reduce(0, Math::addExact);
         }else {
-            List<String> ids = list.stream()
-                    .map(EstimatedDeliveryDetailEntity::getId)
-                    .collect(Collectors.toList());
-            return billShopInventoryDetailService.totalByMainIdsAndShopId(ids, params.getShopId());
+            return list.stream()
+                    .map(EstimatedDeliveryDetailEntity::getShopPreQty)
+                    .reduce(0, Math::addExact);
         }
     }
 }

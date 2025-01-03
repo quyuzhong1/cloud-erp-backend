@@ -43,7 +43,7 @@ public class LocalInTransitHandler extends AbstractSkuCalculationHandler {
         if (CollectionUtils.isEmpty(inTransit)) {
             replenishmentResultDTO.getReplenishmentDetail().setFbaInTransitQty(0);
         }
-        int qty = inventoryService.getLocalInTransit(replenishmentResultDTO, inTransit, cfgRuleStrategyDTO);
+        int qty = inventoryService.getLocalInTransit(replenishmentResultDTO, inTransit, cfgRuleStrategyDTO, r);
         replenishmentResultDTO.getReplenishmentDetail().setLocalInTransitQty(qty);
     }
 }

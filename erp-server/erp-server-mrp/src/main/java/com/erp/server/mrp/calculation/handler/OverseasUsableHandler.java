@@ -45,9 +45,12 @@ public class OverseasUsableHandler extends AbstractSkuCalculationHandler {
         List<LocalInventoryDTO> invetoryList = replenishmentResultDTO.getInventoryDTO().getOverseasUsableList()
                 .stream().filter(v -> v.getSkuId().equals(replenishmentResultDTO.getReplenishment().getSkuId()))
                 .filter(v -> codeMap.containsKey(v.getWarehouseCode()))
-                .map(v -> new LocalInventoryDTO(codeMap.get(v.getWarehouseCode()), v.getQty()))
+                .map(v -> new LocalInventoryDTO(codeMap.get(v.getWarehouseCode()), v.getQty(), null))
                 .collect(Collectors.toList());
+        Map<String, Integer> shopDemandQty = r.stream()
+                .collect(Collectors.toMap(v -> v.getReplenishment().getShopId(), ReplenishmentResultDTO::getShopDemandQty));
         int qty = inventoryService.getAllocateQty(replenishmentResultDTO, replenishmentResultDTO.getCfgRuleStrategy().getWarehouseResult().getOverseasWarehouseList(), invetoryList, overseasUsableDetail,
+                shopDemandQty,
                 ReplenishmentInventoryTypeEnum.OVERSEAS_USABLE, CfgRuleWarehouseTypeEnum.OVERSEAS);
         replenishmentResultDTO.setOverseasUsableDetail(overseasUsableDetail);
         replenishmentResultDTO.getReplenishmentDetail().setOverseasUsableQty(qty);

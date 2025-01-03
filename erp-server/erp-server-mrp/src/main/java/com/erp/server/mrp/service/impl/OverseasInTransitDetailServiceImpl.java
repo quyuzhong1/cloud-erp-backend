@@ -10,14 +10,10 @@ import com.erp.model.mrp.dto.ReplenishmentSuggestionDTO;
 import com.erp.model.mrp.entity.OverseasInTransitDetailEntity;
 import com.erp.model.mrp.vo.OverseasInTransitDetailVO;
 import com.erp.server.mrp.mapper.OverseasInTransitDetailMapper;
-import com.erp.server.mrp.service.BillShopInventoryDetailService;
 import com.erp.server.mrp.service.OverseasInTransitDetailService;
 import org.springframework.stereotype.Service;
 
-import javax.annotation.Resource;
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -30,20 +26,9 @@ import java.util.stream.Collectors;
 @Service
 public class OverseasInTransitDetailServiceImpl extends SuperServiceImpl<OverseasInTransitDetailMapper, OverseasInTransitDetailEntity> implements OverseasInTransitDetailService {
 
-    @Resource
-    private BillShopInventoryDetailService billShopInventoryDetailService;
-
     @Override
     public PagingVO<OverseasInTransitDetailVO> overseasInTransitDetail(PagingDTO<ReplenishmentSuggestionDTO.DetailParamDTO> params) {
         Page<OverseasInTransitDetailVO> page = baseMapper.overseasInTransitDetail(new Page<>(params.getCurrPage(), params.getPageSize()), params.getParams());
-        List<String> ids = page.getRecords()
-                .stream()
-                .map(OverseasInTransitDetailVO::getId)
-                .collect(Collectors.toList());
-        Map<String, Integer> shopInventoryMap = billShopInventoryDetailService.listByMainIdsAndShopId(ids, params.getParams().getShopId());
-        for (OverseasInTransitDetailVO vo : page.getRecords()) {
-            vo.setShopInTransitQty(shopInventoryMap.get(vo.getId()));
-        }
         return new PagingVO<>(page);
     }
 
@@ -62,9 +47,8 @@ public class OverseasInTransitDetailServiceImpl extends SuperServiceImpl<Oversea
     @Override
     public int totalQtyByReplenishmentAndSourceType(InventoryDetailTotalDTO params) {
         List<OverseasInTransitDetailEntity> entities = getByReplenishmentId(params.getDetailId());
-        List<String> ids = entities.stream()
-                .map(OverseasInTransitDetailEntity::getId)
-                .collect(Collectors.toList());
-        return billShopInventoryDetailService.totalByMainIdsAndShopId(ids, params.getShopId());
+        return entities.stream()
+                .map(OverseasInTransitDetailEntity::getShopPreQty)
+                .reduce(0 ,Math::addExact);
     }
 }

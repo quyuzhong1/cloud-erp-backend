@@ -28,7 +28,7 @@ public class OverseasPlanDeliveryHandler extends AbstractSkuCalculationHandler {
 
     @Override
     public void doHandle(ReplenishmentResultDTO replenishmentResultDTO, List<ReplenishmentResultDTO> r) {
-        int qty = inventoryService.getOverseasPlanDelivery(replenishmentResultDTO, replenishmentResultDTO.getCfgRuleStrategy());
+        int qty = inventoryService.getOverseasPlanDelivery(replenishmentResultDTO, replenishmentResultDTO.getCfgRuleStrategy(), r);
         replenishmentResultDTO.getReplenishmentDetail().setOverseasPlanDeliveryQty(qty);
     }
 }
