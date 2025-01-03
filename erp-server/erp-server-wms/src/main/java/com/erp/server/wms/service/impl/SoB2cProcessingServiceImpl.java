@@ -11,6 +11,7 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.utils.ApplicationContextUtils;
 import com.common.business.vo.PagingVO;
 import com.common.core.utils.MathUtil;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
@@ -174,7 +175,7 @@ public class SoB2cProcessingServiceImpl extends SuperServiceImpl<SoB2cProcessing
         result.forEach(addList::addAll);
         stopWatch.stop();
         log.warn("数据处理成功，耗时，time = {}",stopWatch.prettyPrint());
-        this.addOrUpdate(addList);
+        ApplicationContextUtils.getBean(SoB2cProcessingServiceImpl.class).addOrUpdate(addList);
         log.warn("数据更新成功!");
     }
     /**
@@ -276,7 +277,15 @@ public class SoB2cProcessingServiceImpl extends SuperServiceImpl<SoB2cProcessing
     */
     private List<SoB2cProcessingEntity> handleData(List<SoB2cProcessingDTO.AddOrUpdateDTO> list) {
         List<String> deliveryDetailIdList = list.stream().filter(obj -> ObjectUtil.isNotEmpty(obj) && CharSequenceUtil.isNotBlank(obj.getDeliveryDetailId())).map(SoB2cProcessingDTO.AddOrUpdateDTO::getDeliveryDetailId).distinct().collect(Collectors.toList());
-        List<SoB2cProcessingEntity> oldList = this.listByDeliveryDetailIdList(deliveryDetailIdList);
+        List<List<String>> sourceDetailIdListPartition = Lists.partition(deliveryDetailIdList, 50000);
+        //原订单数据
+        List<SoB2cProcessingEntity> oldList = new ArrayList<>();
+        for (List<String> sourceDetailIdPartition : sourceDetailIdListPartition) {
+            List<SoB2cProcessingEntity> oldPageList = this.listByDeliveryDetailIdList(sourceDetailIdPartition);
+            if (CollectionUtils.isNotEmpty(oldPageList)) {
+                oldList.addAll(oldPageList);
+            }
+        }
         List<SoB2cProcessingEntity> newList = new ArrayList<>();
         for (SoB2cProcessingDTO.AddOrUpdateDTO addOrUpdateDTO :list) {
             SoB2cProcessingEntity entity = SoB2cProcessingConverter.INSTANCE.addToEntity(addOrUpdateDTO);
