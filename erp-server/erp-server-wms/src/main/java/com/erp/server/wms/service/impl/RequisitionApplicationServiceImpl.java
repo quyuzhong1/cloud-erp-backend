@@ -1568,6 +1568,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
                 .filter(staging -> PickingBillTypeEnum.firstLegs().contains(staging.getBillType()))
                 .filter(staging -> staging.getWarehouseId().equals(detailEntity.getToWarehouseId()))
                 .findFirst().orElseThrow(() -> new ServiceException(ApiError.ERROR_99088));
+        List<RequisitionApplicationDetailEntity> updateDetailList = new ArrayList<>();
 
         for (FbaShipmentEntity fbaShipmentEntity : fbaShipmentEntityList) {
             //映射主表信息
@@ -1597,6 +1598,8 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
                     throw new ServiceException("货件明细关联不到要货申请明细,货件号{}，FNSKU：{}",fbaShipmentEntity.getCode(),fbaShipmentDetailEntity.getFnSku());
                 }
                 detailAddList.add(detailAddDto);
+                requisitionApplicationDetail.setDeliveryQty(detailAddDto.getDeliveryQty());
+                updateDetailList.add(requisitionApplicationDetail);
             }
             addDTO.setDetailList(detailAddList);
             BaseResultDTO.AddDTO add = firstMileDeliveryService.add(addDTO);
@@ -1607,6 +1610,9 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         }
         //生成FBA装箱数据
         fbaShipmentPackingService.generateByBindDTO(detailList);
+        if(CollectionUtils.isNotEmpty(updateDetailList)){
+            requisitionApplicationDetailService.updateBatchById(updateDetailList);
+        }
     }
 
     @Override
@@ -1848,6 +1854,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         //获取sku信息
         List<SkuVO> skuVOList = plmTaskFeign.listSkuPackByIds(skuIdList);
         List<RequisitionApplicationDetailEntity> detailEntities = requisitionApplicationDetailService.listByIds(sourceDetailIds);
+        List<RequisitionApplicationDetailEntity> updateDetailList = new ArrayList<>();
         for (Map.Entry<String, List<RequisitionApplicationDTO.GenerateDeliverViewDTO>> entry : map.entrySet()) {
             List<RequisitionApplicationDTO.GenerateDeliverViewDTO> value = entry.getValue();
             RequisitionApplicationDTO.GenerateDeliverViewDTO view = value.get(MathUtil.ZERO);
@@ -1904,12 +1911,17 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
                 }
                 detailAddDto.setFbaShipmentCode(viewDTO.getFbaShipmentCode());
                 detailAddList.add(detailAddDto);
+                detailEntity.setDeliveryQty(detailAddDto.getDeliveryQty());
+                updateDetailList.add(detailEntity);
             }
 
             addDTO.setDetailList(detailAddList);
             BaseResultDTO.AddDTO add = firstMileDeliveryService.add(addDTO);
             if (Boolean.TRUE.equals(isSubmit)) {
                 firstMileDeliveryService.submit(add.getId());
+            }
+            if(CollectionUtils.isNotEmpty(updateDetailList)){
+                requisitionApplicationDetailService.updateBatchById(updateDetailList);
             }
         }
         return Boolean.TRUE;

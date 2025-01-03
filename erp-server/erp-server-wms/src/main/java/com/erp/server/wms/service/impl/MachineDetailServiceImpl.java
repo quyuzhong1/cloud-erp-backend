@@ -19,6 +19,7 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.MachineDetailDTO;
 import com.erp.model.wms.dto.MachineRefSoDTO;
 import com.erp.model.wms.dto.MachineSubComponentsDTO;
+import com.erp.model.wms.dto.SoB2bProcessingDTO;
 import com.erp.model.wms.entity.MachineDetailEntity;
 import com.erp.model.wms.entity.MachineInfoEntity;
 import com.erp.model.wms.entity.MachineRefSoEntity;
@@ -36,6 +37,7 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -160,6 +162,22 @@ public class MachineDetailServiceImpl extends SuperServiceImpl<MachineDetailMapp
             return new ArrayList<>();
         }
         return this.lambdaQuery().in(MachineDetailEntity::getSourceDetailId,detailIds).list();
+    }
+
+    @Override
+    public List<SoB2bProcessingDTO.ResponseDTO> listMachineBySourceIdList(List<String> sourceIdList) {
+        if (CollectionUtils.isEmpty(sourceIdList)) {
+            return Collections.EMPTY_LIST;
+        }
+        return baseMapper.listMachineBySourceIdList(sourceIdList);
+    }
+
+    @Override
+    public List<SoB2bProcessingDTO.ResponseDTO> listMachineByRefIdList(List<String> refIdList) {
+        if (CollectionUtils.isEmpty(refIdList)) {
+            return Collections.EMPTY_LIST;
+        }
+        return baseMapper.listMachineByRefIdList(refIdList);
     }
 
     @Override

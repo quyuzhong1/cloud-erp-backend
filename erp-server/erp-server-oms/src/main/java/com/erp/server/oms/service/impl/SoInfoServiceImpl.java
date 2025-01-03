@@ -3125,6 +3125,9 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         if (!resultDTO.getSuccess()) {
             throw new ServiceException(resultDTO.getMsg());
         }
+        //添加日志
+        String content = String.format("操作了整单释放锁定库存");
+        addModuleOperateLog(content, ModuleTypeEnum.SO.getCode(), id, "释放锁定操作");
         return Boolean.TRUE;
     }
 

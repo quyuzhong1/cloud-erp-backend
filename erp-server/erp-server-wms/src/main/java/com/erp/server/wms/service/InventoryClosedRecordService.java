@@ -55,4 +55,11 @@ public interface InventoryClosedRecordService extends SuperService<InventoryClos
      * @return Map<String, InventoryClosedRecordEntity>
      */
     Map<String, InventoryClosedRecordEntity> mapByCategory(String category);
+    /**
+     * 查询最小关账时间
+     * @author will
+     * @date 2024/12/19 15:05
+     * @return LocalDate
+     */
+    LocalDate getMinClosedDate();
 }

@@ -1264,6 +1264,16 @@ public class ProductDetailController extends BaseController {
     }
 
     /**
+     * 首次推送sku到领星
+     */
+    @GetMapping("/initProductToLingXing")
+    public ApiResult<String> initProductToLingXing(@RequestParam(required = false) List<String> ids){
+        productDetailService.initProductToLingXing(ids);
+        return success();
+    }
+
+
+    /**
      *初始化目的国海关信息
      *
      * @param skuIds  skuIds
