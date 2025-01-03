@@ -39,4 +39,11 @@ public interface FirstMileProcessingMapper extends BaseMapper<FirstMileProcessin
      * @return List<FirstMileProcessingEntity>
      */
     List<FirstMileProcessingEntity> listFirstMileProcessing(@Param("startDate")LocalDate startDate);
+    /**
+     * 删除
+     * @author will
+     * @date 2025/1/3 18:26
+     * @param removeIds
+     */
+    void deleteByIdList(@Param("removeIds")List<String> removeIds);
 }
