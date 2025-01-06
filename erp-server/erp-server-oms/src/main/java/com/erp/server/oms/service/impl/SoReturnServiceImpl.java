@@ -475,6 +475,10 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
 
         soReturnEntity.setCustomerId(dto.getCustomerId());
         CustomerInfoEntity customerInfoEntity = customerInfoService.getById(dto.getCustomerId());
+        if(null != customerInfoEntity){
+            soReturnEntity.setCustomerId(customerInfoEntity.getId());
+            soReturnEntity.setCustomerName(customerInfoEntity.getName());
+        }
         List<CustomerAddressEntity> customerAddressList = customerAddressService.lambdaQuery()
                 .eq(CustomerAddressEntity::getMainId, dto.getCustomerId())
                 .eq(CustomerAddressEntity::getDisabled, Boolean.FALSE)
@@ -483,7 +487,6 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
         //客户信息
         if(CollectionUtils.isNotEmpty(customerAddressList)){
             CustomerAddressEntity customerAddressEntity = customerAddressList.stream().filter(v -> v.getIsDefault().equals(Boolean.TRUE)).findFirst().orElse(new CustomerAddressEntity());
-            soReturnEntity.setCustomerName(customerInfoEntity.getName());
             soReturnEntity.setReceiverName(customerAddressEntity.getPerson());
             soReturnEntity.setTelNumber(customerAddressEntity.getTelNumber());
             soReturnEntity.setReceiveAddress(customerAddressEntity.getAddress());
