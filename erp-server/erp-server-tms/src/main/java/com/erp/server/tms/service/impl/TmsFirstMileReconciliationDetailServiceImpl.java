@@ -34,6 +34,7 @@ import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.sys.entity.DictCurrencyEntity;
 import com.erp.model.tms.dto.CfgReconciliationFieldDTO;
 import com.erp.model.tms.dto.TmsCostDetailDTO;
+import com.erp.model.tms.dto.TmsCostDetailDTO.UpdateDTO;
 import com.erp.model.tms.dto.TmsFirstMileReconciliationDTO;
 import com.erp.model.tms.dto.TmsFirstMileReconciliationDetailDTO;
 import com.erp.model.tms.dto.excel.FirstMileReconciliationStandardExcelDTO;
@@ -1934,6 +1935,7 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
             // 需要处理的每一列
             Map<CfgReconciliationFieldDTO.ErpFieldViewDTO, String> handleColumnMap = new HashMap<>();
 
+            String detailCurrency = "CNY";
             for (Map.Entry<String, Object> entry : jsonObject.entrySet()) {
                 if (entry.getKey().equalsIgnoreCase(Integer.toString(transportNoIndex))) {
                     continue;
@@ -1954,11 +1956,19 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
                     errorMsgList.add(CharSequenceUtil.format("未找到该字段配置项【{}】", curFieldName));
                     break;
                 }
-                if (!StringUtils.isNumeric(columnValueObj.toString())) {
+                String erpFieldCode = erpFieldDropDownDTO.getErpFieldCode();
+                String columnValueStr = columnValueObj.toString();
+                if("currency".equals(erpFieldCode)) {
+                	if(StringUtils.isBlank(columnValueStr)) {
+                		errorMsgList.add("币种不能为空");
+                        break;
+                	}
+                	detailCurrency = columnValueStr;
+                	continue;
+                }else if (!StringUtils.isNumeric(columnValueStr)) {
                     errorMsgList.add(CharSequenceUtil.format("字段【{}】内容【{}】非数字", erpFieldDropDownDTO.getErpFieldName(), columnValueObj));
                     break;
                 }
-                String columnValueStr = columnValueObj.toString();
                 handleColumnMap.put(erpFieldDropDownDTO, columnValueStr);
             }
 
@@ -1982,7 +1992,9 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
             List<TmsFirstMileReconciliationDetailEntity> detailEntityList = tmsFirstMileReconciliationDetailService.listBySourceIds(sourceIds,DetailReconciliationTypeEnum.ACTUAL.getCode());
             // 先从结果集获取
             List<TmsFirstMileReconciliationDetailDTO.ListDTO> currentTrackNoList = resultMap.get(transportNo);
+            boolean currFlag = true;
             if (null == currentTrackNoList) {
+            	currFlag = false;
                 currentTrackNoList = oldDbGroupMap.get(transportNo);
                 if (CollectionUtils.isEmpty(currentTrackNoList)) {
                     // 生成当前物流单的所有明细
@@ -2055,12 +2067,32 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
                         } else {
                             oldUpdateDTO.setHasUpdate(true);
                             oldUpdateDTO.setCostValue(MathUtil.valueOf(columnValueStr));
+                            oldUpdateDTO.setCurrency(detailCurrency);
                             updateListMap.put(erpFieldDropDownDTO.getSourceId(), oldUpdateDTO);
                         }
                     } else {
                         // 历史不存在新增
                         TmsCostDetailDTO.UpdateDTO updateDTO = newCostUpdateDTO(categoryEnum, columnValueStr, erpFieldDropDownDTO.getSourceId());
+                        updateDTO.setCurrency(detailCurrency);
                         updateListMap.put(erpFieldDropDownDTO.getSourceId(), updateDTO);
+                    }
+                    if(currFlag) {
+                    	String feeCurrency = "";
+                        if(categoryEnum == DictCostCategoryEnum.SHIPPING_COST) {
+                        	feeCurrency = actualListDTO.getShippingCostCurrency();
+                        }else if(categoryEnum == DictCostCategoryEnum.DECLARE_COST) {
+                        	feeCurrency = actualListDTO.getDeclareCostCurrency();
+                        }else if(categoryEnum == DictCostCategoryEnum.OTHER_TAX_FEE) {
+                        	feeCurrency = actualListDTO.getOtherTaxCurrency();
+                        }else if(categoryEnum == DictCostCategoryEnum.OTHER_COST) {
+                        	feeCurrency = actualListDTO.getOtherCostCurrency();
+                        }
+                        if(!detailCurrency.equals(feeCurrency)) {
+                        	errorMsgList.add(categoryEnum.getName() + "分类下币别不一致");
+                            jsonObject.set("错误信息", FieldValidUtil.getMsgSort(errorMsgList));
+                            errorList.add(jsonObject);
+                            break;
+                        }
                     }
                     // 加成和设置实际值
                     checkAndUpdateCfgCostValue(updateListMap, categoryEnum, actualListDTO);
@@ -2104,24 +2136,28 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
     private static void checkAndUpdateCfgCostValue(Map<String, TmsCostDetailDTO.UpdateDTO> updateListMap,
                                                    DictCostCategoryEnum categoryEnum,
                                                    TmsFirstMileReconciliationDetailDTO.ListDTO actualListDTO) {
+    	List<UpdateDTO> dictList = updateListMap.values().stream().filter(updateDTO -> categoryEnum.getCode().equalsIgnoreCase(updateDTO.getDictCostCategory())).collect(Collectors.toList());
         // 当前的分类汇总的明细费用
-        BigDecimal curCategoryValue = updateListMap.values().stream()
-                .filter(updateDTO -> categoryEnum.getCode().equalsIgnoreCase(updateDTO.getDictCostCategory()))
+        BigDecimal curCategoryValue = dictList.stream()
                 .map(TmsCostDetailDTO.CommonDTO::getCostValue)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
-
+        String currency = dictList.get(0).getCurrency();
         switch (categoryEnum) {
             case SHIPPING_COST:
                 actualListDTO.setShippingCost(curCategoryValue);
+                actualListDTO.setShippingCostCurrency(currency);
                 break;
             case DECLARE_COST:
                 actualListDTO.setDeclareCost(curCategoryValue);
+                actualListDTO.setDeclareCostCurrency(currency);
                 break;
             case OTHER_TAX_FEE:
                 actualListDTO.setOtherTaxCost(curCategoryValue);
+                actualListDTO.setOtherTaxCurrency(currency);
                 break;
             case OTHER_COST:
                 actualListDTO.setOtherCost(curCategoryValue);
+                actualListDTO.setOtherCostCurrency(currency);
                 break;
             default:
         }
