@@ -19,7 +19,7 @@ pipeline {
                     configFileProvider([configFile(fileId: '06ffcde1-6631-4338-a346-9b040decb468', variable: 'MY_SETTINGS_XML')]) {
                         withEnv(["JAVA_HOME=/var/jenkins_home/tools/jdk1.8.0_301"]) {
                             sh "${JAVA_HOME}/bin/java -version"
-                            sh "/var/jenkins_home/tools/hudson.tasks.Maven_MavenInstallation/maven_3.5/bin/mvn -s ${env.MY_SETTINGS_XML} clean package -T 8C -U '-Dmaven.test.skip=true'"
+                            sh "/var/jenkins_home/tools/hudson.tasks.Maven_MavenInstallation/maven_3.5/bin/mvn -s ${env.MY_SETTINGS_XML} clean package -T 8C -U  -pl com.erp.server '-Dmaven.test.skip=true'"
                         }
                     }
                 }
