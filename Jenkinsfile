@@ -58,7 +58,7 @@ pipeline {
 
                 ssh -tt root@172.16.100.90 "docker rmi ${harborAddress}/${harborRepo}/erp-server-msg:${TAG} || true"
                 ssh -tt root@172.16.100.90 "cd /home/dockers/jenkins/jenkins_home/workspace/${JOB_NAME}/erp-server/erp-server-msg/ && \\
-                docker build -t ${harborAddress}/${harborRepo}/erp-server-msg{TAG} ."
+                docker build -t ${harborAddress}/${harborRepo}/erp-server-msg:${TAG} ."
 
                 ssh -tt root@172.16.100.90 "docker rmi ${harborAddress}/${harborRepo}/erp-server-oms:${TAG} || true"
                 ssh -tt root@172.16.100.90 "cd /home/dockers/jenkins/jenkins_home/workspace/${JOB_NAME}/erp-server/erp-server-oms/ && \\
