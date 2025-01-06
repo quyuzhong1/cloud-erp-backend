@@ -85,8 +85,9 @@ public class SoReturnReceiveDetailServiceImpl extends SuperServiceImpl<SoReturnR
             List<SoB2cReturnDetailEntity> soB2cReturnDetailEntityList = FeignQuery.getByIds(SoB2cReturnDetailEntity.class,returnDetailIds);
             //退货签收单明细
             List<SoReturnReceiveDetailEntity> soReturnReceiveDetailEntities = this.listDetailBySourceIds(Collections.singletonList(dto.getSourceId()));
-            //退货通知单明细 id
+            //退货通知单明细id
             List<String> noticeDetailIds = dto.getDetailList().stream().map(SoReturnReceiveDetailDTO.Add::getNoticeDetailId).collect(Collectors.toList());
+            //退货通知单明细
             List<SoReturnNoticeDetailEntity> soReturnNoticeDetailEntities = soReturnNoticeDetailService.listByIds(noticeDetailIds);
             //sku
             List<String> skuIds = dto.getDetailList().stream().map(SoReturnReceiveDetailDTO.Add::getSkuId).collect(Collectors.toList());
@@ -108,7 +109,7 @@ public class SoReturnReceiveDetailServiceImpl extends SuperServiceImpl<SoReturnR
                 detailEntity.setRemark(detailDto.getRemark());
                 detailEntity.setSourceDetailId(detailDto.getSourceDetailId());
                 detailEntity.setNoticeDetailId(detailDto.getNoticeDetailId());
-                Integer returnQty = soReturnDetailEntities.stream().filter(req -> req.getId().equals(detailDto.getSourceDetailId())).map(SoReturnDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
+                Integer returnQty = 0;
                 if("B2C".equals(dto.getType())){
                     returnQty = soB2cReturnDetailEntityList.stream().filter(v->v.getId().equals(detailDto.getSourceDetailId())).map(SoB2cReturnDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
                     if(Objects.nonNull(soB2cReturnEntity)){
@@ -116,6 +117,7 @@ public class SoReturnReceiveDetailServiceImpl extends SuperServiceImpl<SoReturnR
                         detailEntity.setReturnReasonDict(soB2cReturnEntity.getReason());
                     }
                 }else{
+                    returnQty = soReturnNoticeDetailEntities.stream().filter(req -> req.getId().equals(detailDto.getNoticeDetailId())).map(SoReturnNoticeDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
                     if(StringUtils.isNotBlank(detailDto.getSourceDetailId())){
                         SoReturnDetailEntity soReturnDetailEntity = soReturnDetailEntities.stream().filter(req -> req.getId().equals(detailDto.getSourceDetailId())).findFirst().orElse(null);
                         if (ObjectUtil.isEmpty(soReturnDetailEntity)) {
@@ -138,13 +140,15 @@ public class SoReturnReceiveDetailServiceImpl extends SuperServiceImpl<SoReturnR
                 detailEntity.setTaxReturnAmountLocalCurrency(detailDto.getTaxReturnAmountLocalCurrency());
                 if(null == detailDto.getExchangeRate()){
                     detailEntity.setExchangeRate(dto.getExchangeRate());
+                }else{
+                    detailEntity.setExchangeRate(detailDto.getExchangeRate());
                 }
                 //子产品无需校验
                 if(StringUtils.isNotBlank(detailDto.getSourceDetailId())){
                     //此单历史签收数量
                     Integer historyReceiveQty = soReturnReceiveDetailEntities.stream().filter(req -> req.getSourceDetailId().equals(detailDto.getSourceDetailId())).map(SoReturnReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
                     if (returnQty < detailDto.getReceiveQty() + historyReceiveQty) {
-                        throw new ServiceException(ApiError.ERROR_92020);
+                        throw new ServiceException(ApiError.ERROR_92020, skuVO.getSkuNo());
                     }else if(historyReceiveQty > 0 && returnQty == detailDto.getReceiveQty() + historyReceiveQty){
                         // 退货签收单的数量之和等于退货通知单数量，则需要对退货金额CNY，含税退货金额CNY，退货金额（本位币），含税退货金额（本位币）调整差值。
                         SoReturnNoticeDetailEntity soReturnNoticeDetailEntity = soReturnNoticeDetailEntities.stream().filter(req -> req.getId().equals(detailDto.getNoticeDetailId())).findFirst().orElse(null);
@@ -216,6 +220,8 @@ public class SoReturnReceiveDetailServiceImpl extends SuperServiceImpl<SoReturnR
             detailEntity.setTaxReturnAmountLocalCurrency(detailDto.getTaxReturnAmountLocalCurrency());
             if(null == detailDto.getExchangeRate()){
                 detailEntity.setExchangeRate(dto.getExchangeRate());
+            }else{
+                detailEntity.setExchangeRate(detailDto.getExchangeRate());
             }
             list.add(detailEntity);
         }
@@ -312,6 +318,8 @@ public class SoReturnReceiveDetailServiceImpl extends SuperServiceImpl<SoReturnR
                 detailEntity.setTaxReturnAmountLocalCurrency(detailDto.getTaxReturnAmountLocalCurrency());
                 if(null == detailDto.getExchangeRate()){
                     detailEntity.setExchangeRate(dto.getExchangeRate());
+                }else{
+                    detailEntity.setExchangeRate(detailDto.getExchangeRate());
                 }
                 list.add(detailEntity);
                 //修改操作日志
@@ -389,6 +397,8 @@ public class SoReturnReceiveDetailServiceImpl extends SuperServiceImpl<SoReturnR
             detailEntity.setTaxReturnAmountLocalCurrency(detailDto.getTaxReturnAmountLocalCurrency());
             if(null == detailDto.getExchangeRate()){
                 detailEntity.setExchangeRate(dto.getExchangeRate());
+            }else{
+                detailEntity.setExchangeRate(detailDto.getExchangeRate());
             }
             list.add(detailEntity);
             //修改操作日志

@@ -75,6 +75,7 @@ public class SoReturnNoticeDetailServiceImpl extends SuperServiceImpl<SoReturnNo
         List<String> skuIds = dto.getDetailList().stream().map(SoReturnNoticeDetailDTO.Add::getSkuId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
         List<ProductDetailEntity> productDetailEntitys = plmTaskFeign.getByIdList(skuIds);
         for (SoReturnNoticeDetailDTO.Add detailDto : dto.getDetailList()) {
+            ProductDetailEntity skuVO = productDetailEntitys.stream().filter(req -> req.getId().equals(detailDto.getSkuId())).findFirst().orElse(new ProductDetailEntity());
             SoReturnNoticeDetailEntity detailEntity = new SoReturnNoticeDetailEntity();
             BeanMapper.copy(detailDto, detailEntity);
             detailEntity.setMainId(id);
@@ -105,6 +106,8 @@ public class SoReturnNoticeDetailServiceImpl extends SuperServiceImpl<SoReturnNo
             detailEntity.setTaxReturnAmountLocalCurrency(detailDto.getTaxReturnAmountLocalCurrency());
             if(null == detailDto.getExchangeRate()){
                 detailEntity.setExchangeRate(dto.getExchangeRate());
+            }else{
+                detailEntity.setExchangeRate(detailDto.getExchangeRate());
             }
             if(ignoreInventorySkuIds.contains(detailEntity.getSkuId())) {
                 log.warn("sku id: {}，sku编号：{}产品属性是费用或服务，不参与库存出入库，不做库存验证", detailEntity.getSkuId(), detailEntity.getSkuNo());
@@ -115,7 +118,7 @@ public class SoReturnNoticeDetailServiceImpl extends SuperServiceImpl<SoReturnNo
                     //退货单数量
                     Integer returnQty = soReturnDetailEntities.stream().filter(req -> req.getId().equals(detailDto.getSourceDetailId())).map(SoReturnDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
                     if (returnQty <  detailDto.getReturnQty() + returnNoticeQty) {
-                        throw new ServiceException(ApiError.ERROR_92024);
+                        throw new ServiceException(ApiError.ERROR_92024, skuVO.getSkuNo());
                     }else if(returnNoticeQty > 0 && returnQty == detailDto.getReturnQty() + returnNoticeQty){
                         // 退货通知单的数量之和等于退货订单数量，则需要对退货金额CNY，含税退货金额CNY，退货金额（本位币），含税退货金额（本位币）调整差值。
                         SoReturnDetailEntity soReturnDetailEntity = soReturnDetailEntities.stream().filter(req -> req.getId().equals(detailDto.getSourceDetailId())).findFirst().orElse(null);
@@ -252,6 +255,8 @@ public class SoReturnNoticeDetailServiceImpl extends SuperServiceImpl<SoReturnNo
                 detailEntity.setTaxReturnAmountLocalCurrency(detailDto.getTaxReturnAmountLocalCurrency());
                 if(null == detailDto.getExchangeRate()){
                     detailEntity.setExchangeRate(dto.getExchangeRate());
+                }else{
+                    detailEntity.setExchangeRate(detailDto.getExchangeRate());
                 }
                 detailEntity.setSkuId(detailDto.getSkuId());
                 ProductDetailEntity productDetailEntity = productDetailEntitys.stream().filter(v -> v.getId().equals(detailDto.getSkuId())).findFirst().orElse(new ProductDetailEntity());

@@ -503,6 +503,8 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         if(Objects.nonNull(soB2cReturnEntity)){
             soIds.add(soB2cReturnEntity.getSoId());
         }
+        //汇率
+        viewDTO.setExchangeRate(detailEntityList.get(0).getExchangeRate());
         //根据销售单获取出库单
         List<SoOutstockDetailEntity> soOutstockDetailEntities = soOutstockDetailService.listDetailBySoIds(soIds);
         List<WarehouseLocationEntity> warehouseLocationEntities = warehouseLocationService.listByWarehouseIds(detailEntityList.stream().map(SoReturnInstockDetailEntity::getWarehouseId).filter(StringUtils::isNotBlank).collect(Collectors.toList()));
@@ -569,7 +571,6 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                     }
                 }
             }
-
             detailViewDTOS.add(detailView);
         }
         viewDTO.setDetailList(detailViewDTOS);
