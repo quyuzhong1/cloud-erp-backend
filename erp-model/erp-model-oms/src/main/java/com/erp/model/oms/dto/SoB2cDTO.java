@@ -3360,4 +3360,13 @@ public class SoB2cDTO implements Serializable {
         //省
         private String provinceName;
     }
+
+    @Data
+    @NoArgsConstructor
+    public static class QueryDTO {
+        /**
+         * 销售平台类型
+         */
+        List<String> dictPlatformList;
+    }
 }

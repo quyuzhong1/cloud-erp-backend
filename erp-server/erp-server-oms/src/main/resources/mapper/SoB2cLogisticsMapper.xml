@@ -86,6 +86,12 @@
        AND sb2cl.logistics_channel_id!=''
        AND sa.token !=''
         AND sb2cl.update_time >= NOW() - INTERVAL '3 months'
+       <if test="queryDTO != null and queryDTO.dictPlatformList != null and queryDTO.dictPlatformList.size > 0">
+           AND sb2c.dict_platform in
+           <foreach collection="queryDTO.dictPlatformList" item="item" open="(" separator="," close=")">
+               #{item}
+           </foreach>
+       </if>
        ORDER BY sb2cl.update_time desc
     </select>
 
