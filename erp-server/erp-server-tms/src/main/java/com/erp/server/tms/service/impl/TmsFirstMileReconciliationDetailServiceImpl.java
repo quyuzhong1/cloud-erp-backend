@@ -20,6 +20,7 @@ import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.utils.ApplicationContextUtils;
 import com.common.business.vo.PagingVO;
+import com.common.business.wrapper.FeignQuery;
 import com.common.core.entity.BaseEntity;
 import com.common.core.enums.ApiError;
 import com.common.core.enums.CurrencyEnum;
@@ -30,6 +31,7 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.sys.dto.DictCountryDTO;
 import com.erp.model.sys.entity.DictCountryEntity;
+import com.erp.model.sys.entity.DictCurrencyEntity;
 import com.erp.model.tms.dto.CfgReconciliationFieldDTO;
 import com.erp.model.tms.dto.TmsCostDetailDTO;
 import com.erp.model.tms.dto.TmsFirstMileReconciliationDTO;
@@ -494,6 +496,14 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
         if (CollectionUtils.isEmpty(viewDTOList)) {
             return;
         }
+        
+        List<String> currencyIds = viewDTOList.stream().map(TmsFirstMileReconciliationDetailDTO.ListDTO::getShippingCostCurrency).collect(Collectors.toList());
+        currencyIds.addAll(viewDTOList.stream().map(TmsFirstMileReconciliationDetailDTO.ListDTO::getDeclareCostCurrency).collect(Collectors.toList()));
+        currencyIds.addAll(viewDTOList.stream().map(TmsFirstMileReconciliationDetailDTO.ListDTO::getOtherCostCurrency).collect(Collectors.toList()));
+        currencyIds.addAll(viewDTOList.stream().map(TmsFirstMileReconciliationDetailDTO.ListDTO::getOtherTaxCurrency).collect(Collectors.toList()));
+        
+        Map<String, String> idSymbolMap = FeignQuery.getByIds(DictCurrencyEntity.class, currencyIds).stream().collect(Collectors.toMap(DictCurrencyEntity::getId, DictCurrencyEntity::getSymbol));
+        
         //店铺信息
         List<String> shopIdList = viewDTOList.stream()
                 .map(TmsFirstMileReconciliationDetailDTO.ListDTO::getShopId)
@@ -585,6 +595,10 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
             }else {
                 viewDTO.setBusinessCode("");
             }
+            viewDTO.setShippingCostCurrencySymbol(idSymbolMap.get(viewDTO.getShippingCostCurrency()));
+            viewDTO.setDeclareCostCurrencySymbol(idSymbolMap.get(viewDTO.getDeclareCostCurrency()));
+            viewDTO.setOtherCostCurrencySymbol(idSymbolMap.get(viewDTO.getOtherCostCurrency()));
+            viewDTO.setOtherTaxCurrencySymbol(idSymbolMap.get(viewDTO.getOtherTaxCurrency()));
         }
     }
 
@@ -726,6 +740,8 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
     	Map<String, BigDecimal> rateMap = new HashMap<>();
     	rateMap.put("CNY", BigDecimal.ONE);
     	
+    	Map<String, String> idSymbolMap = FeignQuery.list(DictCurrencyEntity.class).stream().collect(Collectors.toMap(DictCurrencyEntity::getId, DictCurrencyEntity::getSymbol));
+    	
         BigDecimal actualShippingCost = Objects.nonNull(actualListDTO.getShippingCost())? actualListDTO.getShippingCost() : BigDecimal.ZERO;
         BigDecimal actualShippingCostExchange = BigDecimal.ZERO;
         String currency = actualListDTO.getShippingCostCurrency();
@@ -742,6 +758,7 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
 				rateMap.put(currency, rate);
 			}
 			actualShippingCostExchange = actualShippingCost.multiply(rate);
+			actualListDTO.setShippingCostCurrencySymbol(idSymbolMap.get(currency));
         }
         BigDecimal actualDeclareCost = Objects.nonNull(actualListDTO.getDeclareCost()) ? actualListDTO.getDeclareCost():BigDecimal.ZERO;
         BigDecimal actualDeclareCostExchange = BigDecimal.ZERO;
@@ -759,6 +776,7 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
 				rateMap.put(currency, rate);
 			}
 			actualDeclareCostExchange = actualDeclareCost.multiply(rate);
+			actualListDTO.setDeclareCostCurrencySymbol(idSymbolMap.get(currency));
         }
         BigDecimal actualOtherCost = Objects.nonNull(actualListDTO.getOtherCost()) ? actualListDTO.getOtherCost():BigDecimal.ZERO;
         BigDecimal actualOtherCostExchange = BigDecimal.ZERO;
@@ -776,6 +794,7 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
 				rateMap.put(currency, rate);
 			}
 			actualOtherCostExchange = actualOtherCost.multiply(rate);
+			actualListDTO.setOtherCostCurrencySymbol(idSymbolMap.get(currency));
         }
         BigDecimal actualOtherTaxCost = Objects.nonNull(actualListDTO.getOtherTaxCost()) ? actualListDTO.getOtherTaxCost():BigDecimal.ZERO;
         BigDecimal actualOtherTaxCostExchange = BigDecimal.ZERO;
@@ -793,6 +812,7 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
 				rateMap.put(currency, rate);
 			}
 			actualOtherTaxCostExchange = actualOtherTaxCost.multiply(rate);
+			actualListDTO.setOtherTaxCurrencySymbol(idSymbolMap.get(currency));
         }
         BigDecimal actualWeight = Objects.nonNull(actualListDTO.getActualWeight()) ? actualListDTO.getActualWeight():BigDecimal.ZERO;
         BigDecimal actualVolumeWeight = Objects.nonNull(actualListDTO.getVolumeWeight()) ? actualListDTO.getVolumeWeight():BigDecimal.ZERO;
@@ -815,6 +835,7 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
 				rateMap.put(currency, rate);
 			}
 			estimatedShippingCostExchange = estimatedShippingCost.multiply(rate);
+			estimatedListDTO.setShippingCostCurrencySymbol(idSymbolMap.get(currency));
         }
         BigDecimal estimatedDeclareCost = Objects.nonNull(estimatedListDTO.getDeclareCost()) ? estimatedListDTO.getDeclareCost():BigDecimal.ZERO;
         BigDecimal estimatedDeclareCostExchange = BigDecimal.ZERO;
@@ -832,6 +853,7 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
 				rateMap.put(currency, rate);
 			}
 			estimatedDeclareCostExchange = estimatedDeclareCost.multiply(rate);
+			estimatedListDTO.setDeclareCostCurrencySymbol(idSymbolMap.get(currency));
         }
         BigDecimal estimatedOtherCost = Objects.nonNull(estimatedListDTO.getOtherCost()) ? estimatedListDTO.getOtherCost():BigDecimal.ZERO;
         BigDecimal estimatedOtherCostExchange = BigDecimal.ZERO;
@@ -849,6 +871,7 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
 				rateMap.put(currency, rate);
 			}
 			estimatedOtherCostExchange = estimatedOtherCost.multiply(rate);
+			estimatedListDTO.setOtherCostCurrencySymbol(idSymbolMap.get(currency));
         }
         BigDecimal estimatedOtherTaxCost = Objects.nonNull(estimatedListDTO.getOtherTaxCost()) ? estimatedListDTO.getOtherTaxCost():BigDecimal.ZERO;
         BigDecimal estimatedOtherTaxCostExchange = BigDecimal.ZERO;
@@ -866,6 +889,7 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
 				rateMap.put(currency, rate);
 			}
 			estimatedOtherTaxCostExchange = estimatedOtherTaxCost.multiply(rate);
+			estimatedListDTO.setOtherTaxCurrencySymbol(idSymbolMap.get(currency));
         }
         BigDecimal estimatedWeight = Objects.nonNull(estimatedListDTO.getActualWeight()) ? estimatedListDTO.getActualWeight():BigDecimal.ZERO;
         BigDecimal estimatedVolumeWeight = Objects.nonNull(estimatedListDTO.getVolumeWeight()) ? estimatedListDTO.getVolumeWeight():BigDecimal.ZERO;
@@ -885,15 +909,19 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
         // 物流运费用【预计物流费用】
         diffListDTO.setShippingCost(actualShippingCostExchange.subtract(estimatedShippingCostExchange).setScale(4, RoundingMode.DOWN));
         diffListDTO.setShippingCostCurrency("CNY");
+        diffListDTO.setShippingCostCurrencySymbol(idSymbolMap.get("CNY"));
         // 报关费用【预计报关费用】
         diffListDTO.setDeclareCost(actualDeclareCostExchange.subtract(estimatedDeclareCostExchange).setScale(4, RoundingMode.DOWN));
         diffListDTO.setDeclareCostCurrency("CNY");
+        diffListDTO.setDeclareCostCurrencySymbol(idSymbolMap.get("CNY"));
         // 其他费用【预计其他费用】
         diffListDTO.setOtherCost(actualOtherCostExchange.subtract(estimatedOtherCostExchange).setScale(4, RoundingMode.DOWN));
         diffListDTO.setOtherCostCurrency("CNY");
+        diffListDTO.setOtherCostCurrencySymbol(idSymbolMap.get("CNY"));
         //其他税费
         diffListDTO.setOtherTaxCost(actualOtherTaxCostExchange.subtract(estimatedOtherTaxCostExchange).setScale(4, RoundingMode.DOWN));
         diffListDTO.setOtherTaxCurrency("CNY");
+        diffListDTO.setOtherTaxCurrencySymbol(idSymbolMap.get("CNY"));
         diffListDTO.setTotalLogisticsCost(actualListDTO.getTotalLogisticsCost().subtract(estimatedTotalLogisticsCost));
     }
 
@@ -1473,6 +1501,26 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
         Map<String, List<CfgReconciliationFieldDTO.ErpFieldDropDownDTO>> sourceTypeGroupMap = cfgErpFieldMap.values()
                 .stream()
                 .collect(Collectors.groupingBy(CfgReconciliationFieldDTO.ErpFieldDropDownDTO::getSourceType));
+        
+        Map<String, List<FirstMileReconciliationStandardExcelDTO>> transportNoMaps = successList.stream().collect(Collectors.groupingBy(FirstMileReconciliationStandardExcelDTO::getTransportNo));
+        successList = new ArrayList<>();
+        for(Map.Entry<String, List<FirstMileReconciliationStandardExcelDTO>> transportNoMap : transportNoMaps.entrySet()) {
+        	String key = transportNoMap.getKey();
+        	List<FirstMileReconciliationStandardExcelDTO> value = transportNoMap.getValue();
+        	successList.addAll(value.stream().filter(v -> cfgErpFieldMap.get(v.getCostName()) == null).collect(Collectors.toList()));
+        	Map<String, List<FirstMileReconciliationStandardExcelDTO>> dictMaps = value.stream().filter(v -> cfgErpFieldMap.get(v.getCostName()) != null).collect(Collectors.groupingBy(v -> cfgErpFieldMap.get(v.getCostName()).getSourceCodeValue()));
+        	for(Map.Entry<String, List<FirstMileReconciliationStandardExcelDTO>> dictMap : dictMaps.entrySet()) {
+        		String dict = dictMap.getKey();
+        		List<FirstMileReconciliationStandardExcelDTO> dictList = dictMap.getValue();
+        		String currency = dictList.get(0).getCurrency();
+        		if(dictList.stream().allMatch(d -> currency.equals(d.getCurrency()))) {
+        			successList.addAll(dictList);
+        		}else {
+        			dictList.forEach(d -> d.setErrorMsg(CharSequenceUtil.format("物流运单号【{}】下的【{}】分类费用币种不一致", key , DictCostCategoryEnum.getByCode(dict))));
+        			errorList.addAll(dictList);
+        		}
+        	}
+        }
         for (FirstMileReconciliationStandardExcelDTO excelDTO : successList) {
             // 对应物流单
             List<TmsFirstMileReconciliationDetailDTO.ListDTO> sourceDetailDTO = sourceLogisticList.stream().filter(e -> Objects.nonNull(e) && Objects.equals(excelDTO.getTransportNo(),e.getTransportNo())).collect(Collectors.toList());
