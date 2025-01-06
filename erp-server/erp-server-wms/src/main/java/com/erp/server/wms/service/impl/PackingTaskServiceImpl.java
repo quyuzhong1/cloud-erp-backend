@@ -2240,7 +2240,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
                         printDTO.setChargeName(shopInfo.getChargeName());
                     }
                 }
-            }else if (Objects.nonNull(requisitionApplication) && CharSequenceUtil.isNotBlank(requisitionApplication.getChannelId())){
+            }else if (Objects.nonNull(requisitionApplication) && CharSequenceUtil.isNotBlank(requisitionApplication.getChannelId()) && Objects.equals(requisitionApplication.getType(),RequisitionApplicationTypeEnum.FBA.getCode())){
                 printDTO.setShopId(requisitionApplication.getChannelId());
                 printDTO.setShopName(requisitionApplication.getChannelName());
                 ShopInfoEntity shopInfo = shopInfoFeign.getShopInfoById(requisitionApplication.getChannelId());
