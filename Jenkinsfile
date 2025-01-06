@@ -111,7 +111,7 @@ pipeline {
                 docker push ${harborAddress}/${harborRepo}/erp-server-srm:${TAG}
                 docker push ${harborAddress}/${harborRepo}/erp-server-sys:${TAG}
                 docker push ${harborAddress}/${harborRepo}/erp-server-tms:${TAG}
-                docker push ${harborAddress}/${harborRepo}/erp-server-wms${TAG}
+                docker push ${harborAddress}/${harborRepo}/erp-server-wms:${TAG}
                 docker push ${harborAddress}/${harborRepo}/erp-server-workflow:${TAG}
                 '''
             }
