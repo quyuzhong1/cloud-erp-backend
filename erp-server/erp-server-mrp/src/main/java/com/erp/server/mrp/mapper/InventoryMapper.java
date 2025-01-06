@@ -3,6 +3,7 @@ package com.erp.server.mrp.mapper;
 import com.erp.model.mrp.dto.ReplenishmentInventoryDTO;
 import com.erp.model.mrp.dto.ReplenishmentResultDTO;
 import com.erp.model.scm.dto.PurchaseApplicationRefPoDTO;
+import com.erp.model.scm.dto.PurchaseOrderDTO;
 import com.erp.model.scm.entity.SubcontractOrderDetailEntity;
 import com.erp.model.tms.entity.LogisticsBillEntity;
 import com.erp.model.wms.dto.FirstMileDeliveryDTO;
@@ -140,7 +141,7 @@ public interface InventoryMapper {
     /**
      * 查询采购计划
      */
-    List<ReplenishmentInventoryDTO.EstimatedPurchaseDTO> listPurchasePlan(@Param("codes") Set<String> codes, @Param("tableName") String tableName, @Param("tableDetailName") String tableDetailName);
+    List<ReplenishmentInventoryDTO.EstimatedPurchaseDTO> listPurchasePlan(@Param("codes") Set<String> codes, @Param("sourceType") String sourceType, @Param("tableName") String tableName, @Param("tableDetailName") String tableDetailName);
 
     /**
      * 查询补货计划预计采购
@@ -156,4 +157,14 @@ public interface InventoryMapper {
      * @param tableName 表
      */
     List<ReplenishmentInventoryDTO.ReplenishmentPurchaseDTO> getReplenishmentPurchaseMergePlan(@Param("codes") Set<String> codes, @Param("tableName") String tableName);
+
+    /**
+     * 查询待检库存
+     */
+    List<ReplenishmentInventoryDTO.LocalWaitQcDTO> getLocalWaitQc(@Param("codes") Set<String> codes, @Param("tableName") String tableName);
+
+    /**
+     * 获取采购单交货时间
+     */
+    List<PurchaseOrderDTO.ViewSubcontractPoDTO> getPurchaseOrder(@Param("sourceCodeList") List<String> sourceCodeList, @Param("skuId") String skuId,  @Param("tableName") String tableName, @Param("tableDetailName") String tableDetailName);
 }

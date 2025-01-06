@@ -327,10 +327,8 @@ public interface ReplenishmentSuggestionService extends SuperService<Replenishme
     /**
      * 保存建议
      *
-     * @param cfgRuleStrategy     配置值
-     * @param replenishmentResult 建议结果
      */
-    void saveReplenishment(CfgRuleStrategyDTO cfgRuleStrategy, ReplenishmentResultDTO replenishmentResult);
+    void saveReplenishment(List<ReplenishmentResultDTO> resultDTOS);
 
     /**
      * 查询需要计算的数据
@@ -436,4 +434,11 @@ public interface ReplenishmentSuggestionService extends SuperService<Replenishme
      * @param dto 参数
      */
     List<ReplenishmentSuggestionVO.SalesInfoVO> listSalesInfo(BaseIdDTO dto);
+
+    /**
+     * 库存总数
+     *
+     * @param params 明细id
+     */
+    Integer inventoryDetailTotal(InventoryDetailTotalDTO params);
 }

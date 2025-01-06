@@ -7,7 +7,6 @@ import com.erp.model.mrp.dto.ReplenishmentResultDTO;
 import com.erp.model.mrp.enums.CfgRuleWarehouseTypeEnum;
 import com.erp.model.mrp.enums.ReplenishmentInventoryTypeEnum;
 import com.erp.server.mrp.calculation.service.InventoryService;
-import com.erp.server.mrp.service.CfgRuleCommonService;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
@@ -18,23 +17,24 @@ import java.util.stream.Collectors;
 @Component
 public class LocalUsableHandler extends AbstractSkuCalculationHandler {
     @Resource
-    private LocalInTransitHandler localInTransitHandler;
+    private LocalWaitQcHandler localWaitQcHandler;
     @Resource
     private InventoryService inventoryService;
-    @Resource
-    private CfgRuleCommonService cfgRuleCommonService;
+
+
     @Override
-    public SkuCalculationHandler getNextHandler(CfgRuleStrategyDTO cfgRuleStrategy, ReplenishmentResultDTO replenishmentResult) {
-        return localInTransitHandler;
+    public SkuCalculationHandler getNextHandler(List<ReplenishmentResultDTO> r) {
+        return localWaitQcHandler;
     }
 
     @Override
-    public boolean shouldHandle(CfgRuleStrategyDTO cfgRuleStrategyDTO, ReplenishmentResultDTO replenishmentResultDTO) {
+    public boolean shouldHandle(ReplenishmentResultDTO dto) {
         return true;
     }
 
     @Override
-    public void doHandle(CfgRuleStrategyDTO cfgRuleStrategyDTO, ReplenishmentResultDTO replenishmentResultDTO) {
+    public void doHandle(ReplenishmentResultDTO replenishmentResultDTO, List<ReplenishmentResultDTO> r) {
+        CfgRuleStrategyDTO cfgRuleStrategyDTO = replenishmentResultDTO.getCfgRuleStrategy();
         CfgRuleWarehouseDTO.StrategyResultDTO warehouseResult = cfgRuleStrategyDTO.getWarehouseResult();
         List<ReplenishmentResultDTO.ReplenishmentInventoryDetailDTO> localUsableDetail = new ArrayList<>();
         CfgRuleWarehouseTypeEnum warehouseType = Boolean.TRUE.equals(warehouseResult.getIsEnableVirtual()) ? CfgRuleWarehouseTypeEnum.VIRTUAL : CfgRuleWarehouseTypeEnum.LOCAL;
@@ -42,17 +42,17 @@ public class LocalUsableHandler extends AbstractSkuCalculationHandler {
         if (Boolean.TRUE.equals(warehouseResult.getIsEnableVirtual())) {
             inventoryList = replenishmentResultDTO.getInventoryDTO().getVirtualUsableList()
                     .stream().filter(v -> v.getSkuId().equals(replenishmentResultDTO.getReplenishment().getSkuId()))
-                    .map(v -> new LocalInventoryDTO(v.getVirtualWarehouseId(), v.getQty()))
+                    .map(v -> new LocalInventoryDTO(v.getVirtualWarehouseId(), v.getQty(), null))
                     .collect(Collectors.toList());
 
         } else {
             inventoryList = replenishmentResultDTO.getInventoryDTO().getLocalUsableList()
                     .stream().filter(v -> v.getSkuId().equals(replenishmentResultDTO.getReplenishment().getSkuId()))
-                    .map(v -> new LocalInventoryDTO(v.getWarehouseId(), v.getQty()))
+                    .map(v -> new LocalInventoryDTO(v.getWarehouseId(), v.getQty(), null))
                     .collect(Collectors.toList());
         }
         int qty = inventoryService.getAllocateQty(replenishmentResultDTO, cfgRuleStrategyDTO.getWarehouseResult().getLocalWarehouseList(),
-                inventoryList, localUsableDetail, ReplenishmentInventoryTypeEnum.LOCAL_USABLE, warehouseType);
+                inventoryList, localUsableDetail, inventoryService.getShopDemandQtyMap(r), ReplenishmentInventoryTypeEnum.LOCAL_USABLE, warehouseType);
         replenishmentResultDTO.setLocalUsableDetail(localUsableDetail);
         replenishmentResultDTO.getReplenishmentDetail().setLocalUsableQty(qty);
     }

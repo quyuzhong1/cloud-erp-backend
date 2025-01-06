@@ -84,6 +84,12 @@ public class ReplenishmentSuggestionDetailEntity extends BaseEntity<Replenishmen
     private Integer localUsableQty;
 
     /**
+     * 本地仓待检
+     */
+    @TableField("local_wait_qc_qty")
+    private Integer localWaitQcQty;
+
+    /**
      * 本地仓在途
      */
     @TableField("local_in_transit_qty")

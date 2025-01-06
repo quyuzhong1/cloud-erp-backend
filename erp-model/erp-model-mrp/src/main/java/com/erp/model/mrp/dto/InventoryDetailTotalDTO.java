@@ -8,7 +8,7 @@ import javax.validation.constraints.NotBlank;
 
 @Getter
 @Setter
-public class InventoryTotalDTO {
+public class InventoryDetailTotalDTO {
 
     /**
      * 类型
@@ -16,22 +16,18 @@ public class InventoryTotalDTO {
      */
     @NotBlank(message = "库存类型不能为空")
     private String type;
-    /**
-     * 详细id
-     */
-    private String detailId;
-    /**
-     * 来源类型
-     */
-    private String sourceType;
 
     /**
-     * 是否当前店铺
+     * 单据类型
      */
-    private Boolean currentShop;
+    private String sourceType;
 
     /**
      * 店铺id
      */
     private String shopId;
+    /**
+     * 详细id
+     */
+    private String detailId;
 }

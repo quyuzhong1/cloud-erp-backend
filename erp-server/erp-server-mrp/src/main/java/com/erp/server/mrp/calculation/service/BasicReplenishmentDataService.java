@@ -202,16 +202,21 @@ public class BasicReplenishmentDataService {
         //获取建议配置
         CfgRuleSettingStrategy<CfgRuleCommonDTO.StrategyDTO, List<CfgRuleCommonDTO.StrategyResultDTO>> suggestedStrategy = cfgSettingFactory.getCfgRuleSettingHandler(CfgRuleSettingEnum.GET_SUGGESTED_AMOUNT.getCode());
         List<CfgRuleCommonDTO.StrategyResultDTO> suggestResult = suggestedStrategy.process(new CfgRuleCommonDTO.StrategyDTO(platformType));
-        //查询所有需要计算得数据
         List<ReplenishmentResultDTO> suggestions = replenishmentSuggestionService.listAllCalculationData(platformType, defaultCfgRuleSalesQty.get(0).getSalesQtyType(), defaultCfgRuleSalesQty.get(0).getOrderType(), calculationDate);
-        List<List<ReplenishmentResultDTO>> partition = Lists.partition(suggestions, 1000);
-        for (List<ReplenishmentResultDTO> resultDTOS : partition) {
+        //以sku为维度分组
+        Map<String, List<ReplenishmentResultDTO>> listMap = suggestions.stream()
+                .collect(Collectors.groupingBy(v -> v.getReplenishment().getSkuId()));
+        //查询所有需要计算得数据
+        for (List<ReplenishmentResultDTO> resultDTOS : listMap.values()) {
             CompletableFuture.runAsync(() -> {
-                for (ReplenishmentResultDTO dto : resultDTOS) {
-                    try {
-                        replenishmentTaskService.updateStatus(dto.getReplenishment().getId(), SyncStatusEnum.IN_SYNC.getCode());
-                        ReplenishmentResultDTO.DetailDTO detail = dto.getReplenishmentDetail();
+                List<String> ids = resultDTOS.stream()
+                        .map(v -> v.getReplenishment().getId())
+                        .collect(Collectors.toList());
+                try {
+                    replenishmentTaskService.updateStatus(ids, SyncStatusEnum.IN_SYNC.getCode());
+                    for (ReplenishmentResultDTO dto : resultDTOS) {
                         ReplenishmentResultDTO.BasicDTO entity = dto.getReplenishment();
+                        ReplenishmentResultDTO.DetailDTO detail = dto.getReplenishmentDetail();
                         dto.setInventoryDTO(inventoryDTO);
                         dto.setShopIdByPlatform(shopIdByPlatform);
                         //初始化配置
@@ -250,19 +255,18 @@ public class BasicReplenishmentDataService {
                         cfgRuleStrategy.setStockUpResult(stockUpResult);
                         cfgRuleStrategy.setInventoryResult(inventoryResult);
                         cfgRuleStrategy.setSuggestAmountResult(suggestResult);
-                        stockingTimeHandler.handle(cfgRuleStrategy, dto);
-                        replenishmentSuggestionService.saveReplenishment(cfgRuleStrategy, dto);
-                        replenishmentTaskService.updateStatus(dto.getReplenishment().getId(), SyncStatusEnum.SUCCESS_SYNC.getCode());
-                    } catch (Exception e) {
-                        log.error("计算失败 sku{},店铺{}, 原因{}", dto.getReplenishment().getSkuNo(), dto.getReplenishment().getShopId(), e.getMessage(), e);
-                        replenishmentTaskService.updateStatus(dto.getReplenishment().getId(), SyncStatusEnum.FAILED_SYNC.getCode(), e.getMessage());
+                        dto.setCfgRuleStrategy(cfgRuleStrategy);
                     }
+                    stockingTimeHandler.handle(resultDTOS);
+                    replenishmentSuggestionService.saveReplenishment(resultDTOS);
+                    replenishmentTaskService.updateStatus(ids, SyncStatusEnum.SUCCESS_SYNC.getCode());
+                } catch (Exception e) {
+                    log.error("计算失败 sku{}, 原因{}", resultDTOS.get(0).getReplenishment().getSkuNo(), e.getMessage(), e);
+                    replenishmentTaskService.updateStatus(ids, SyncStatusEnum.FAILED_SYNC.getCode(), e.getMessage());
                 }
             }, threadPoolTaskExecutor);
         }
     }
-
-
 
 
     /**
@@ -302,8 +306,6 @@ public class BasicReplenishmentDataService {
         CfgRuleSalesQtyEntity defaultSalesQty = cfgRuleSalesQtyService.getDefaultByPlatformAndSkuType(suggestion.getPlatformType(), detail.getSkuType());
         Map<LocalDate, Integer> salesHistoryMap = replenishmentSuggestionService.listSalesHistoryMap(id, defaultSalesQty.getSalesQtyType(), defaultSalesQty.getOrderType(), startDate, endDate);
         resultDTO.setHistorySalesList(salesHistoryMap);
-        Map<String, Map<String, Integer>> skuSalesHistoryMap = replenishmentSuggestionService.getSalesHistoryMap(defaultSalesQty.getSalesQtyType(), defaultSalesQty.getOrderType());
-        resultDTO.setShopSalesMap(skuSalesHistoryMap.get(suggestion.getSkuId()));
         Map<LocalDate, Integer> historyInventoryMap = historyInventoryEsService.findByReplenishmentIdAndDateBetweenMap(id, startDate, endDate);
         resultDTO.setHistoryInventoryList(historyInventoryMap);
         List<CfgRuleSalesFormulaEntity> defaultFormula = cfgRuleSalesFormulaService.listBySalesQtyIdList(Collections.singletonList(defaultSalesQty.getId()));
@@ -334,8 +336,8 @@ public class BasicReplenishmentDataService {
         cfgRuleStrategy.setSuggestAmountResult(suggestResult);
         resultDTO.setInventoryDTO(inventoryDTO);
         resultDTO.setOverseasProviderWarehouseList(BeanMapperUtils.copyList(OverseasProviderWarehouseDTO.class, FeignQuery.list(OverseasProviderWarehouseEntity.class)));
-        stockingTimeHandler.handle(cfgRuleStrategy, resultDTO);
-        replenishmentSuggestionService.saveReplenishment(cfgRuleStrategy, resultDTO);
+//        stockingTimeHandler.handle(cfgRuleStrategy, resultDTO);
+//        replenishmentSuggestionService.saveReplenishment(cfgRuleStrategy, resultDTO);
         return BatchResultDTO.success(basicDTO.getId(), detailDTO.getCalcVersion());
     }
 

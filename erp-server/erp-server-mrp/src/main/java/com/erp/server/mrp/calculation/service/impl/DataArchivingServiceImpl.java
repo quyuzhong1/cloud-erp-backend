@@ -2,6 +2,7 @@ package com.erp.server.mrp.calculation.service.impl;
 
 import cn.hutool.core.date.DateUtil;
 import com.common.core.exception.ServiceException;
+import com.erp.model.mrp.dto.ReplenishmentResultDTO;
 import com.erp.model.mrp.entity.CfgDataArchivingEntity;
 import com.erp.model.mrp.entity.CfgPlatformMappingEntity;
 import com.erp.model.mrp.entity.ReplenishmentSuggestionEntity;
@@ -78,18 +79,20 @@ public class DataArchivingServiceImpl implements DataArchivingService {
                     //清洗历史销量和库存
                     log.warn("开始清洗{}历史库存数据,时间{}", platformType.getName(), System.currentTimeMillis());
                     replenishmentDataService.cleanHistoryInventory(calculationDate, suggestionList, platformType, cleanDay);
-                    log.warn("开始清洗{}历史库存数据,时间{}", platformType.getName(), System.currentTimeMillis());
+                    log.warn("完成清洗{}历史库存数据,时间{}", platformType.getName(), System.currentTimeMillis());
                     //清洗销售订单历史销量和库存
                     log.warn("开始清洗{}销售订单历史销量数据,时间{}", platformType.getName(), System.currentTimeMillis());
                     replenishmentDataService.cleanHistorySalesByOrder(calculationDate, suggestionList, platformType, cleanDay);
-                    log.warn("开始清洗{}销售订单历史销量数据,时间{}", platformType.getName(), System.currentTimeMillis());
+                    log.warn("完成清洗{}销售订单历史销量数据,时间{}", platformType.getName(), System.currentTimeMillis());
                     //清洗销售订单历史销量和库存
                     log.warn("开始清洗{}销售出库单历史销量数据,时间{}", platformType.getName(), System.currentTimeMillis());
                     replenishmentDataService.cleanHistorySalesByOutStock(calculationDate, suggestionList, platformType, cleanDay);
-                    log.warn("开始清洗{}销售出库单历史销量数据,时间{}", platformType.getName(), System.currentTimeMillis());
+                    log.warn("完成清洗{}销售出库单历史销量数据,时间{}", platformType.getName(), System.currentTimeMillis());
                     List<ReplenishmentSuggestionEntity> suggestions = replenishmentSuggestionService.listCalculationData(platformType.getCode());
                     //计算数据是否需要进行补货
+                    log.warn("开始清洗{}是否需要进行补货数据,时间{}", platformType.getName(), System.currentTimeMillis());
                     replenishmentDataService.isReplenishment(suggestions,platformType.getCode(), calculationDate);
+                    log.warn("完成清洗{}是否需要进行补货数据,时间{}", platformType.getName(), System.currentTimeMillis());
                     //计算明细数据
                     replenishmentDataService.calculationDetail(platformType.getCode(), calculationDate);
                 }

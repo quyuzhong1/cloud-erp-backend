@@ -69,6 +69,7 @@ public interface OutStockHistorySalesEsService {
 
     /**
      * 根据店铺查询有销量sku
+     *
      * @param shopIds 店铺
      */
     Map<String, Set<String>> listSkuByShopId(Set<String> shopIds);

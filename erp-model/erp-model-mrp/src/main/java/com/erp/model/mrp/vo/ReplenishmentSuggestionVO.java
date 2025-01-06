@@ -123,6 +123,11 @@ public class ReplenishmentSuggestionVO {
         private Integer localUsableQty;
 
         /**
+         * 本地仓待检
+         */
+        private Integer localWaitQcQty;
+
+        /**
          * 本地仓在途
          */
         private Integer localInTransitQty;
@@ -431,6 +436,11 @@ public class ReplenishmentSuggestionVO {
          * 本地仓可用
          */
         private Integer localUsableQty;
+
+        /**
+         * 本地仓待检
+         */
+        private Integer localWaitQcQty;
 
         /**
          * 本地仓在途

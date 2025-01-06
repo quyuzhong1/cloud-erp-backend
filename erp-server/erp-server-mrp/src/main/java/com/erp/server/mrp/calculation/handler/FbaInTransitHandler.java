@@ -1,7 +1,6 @@
 package com.erp.server.mrp.calculation.handler;
 
 import com.erp.model.mrp.dto.CfgRuleCommonDTO;
-import com.erp.model.mrp.dto.CfgRuleStrategyDTO;
 import com.erp.model.mrp.dto.ReplenishmentResultDTO;
 import com.erp.model.mrp.enums.CfgRuleCommonTypeEnum;
 import com.erp.model.mrp.enums.CfgRuleInventoryNodeEnum;
@@ -25,20 +24,21 @@ public class FbaInTransitHandler extends AbstractSkuCalculationHandler {
     @Resource
     private CfgRuleCommonService cfgRuleCommonService;
 
+
     @Override
-    public SkuCalculationHandler getNextHandler(CfgRuleStrategyDTO cfgRuleStrategy, ReplenishmentResultDTO replenishmentResult) {
+    public SkuCalculationHandler getNextHandler(List<ReplenishmentResultDTO> r) {
         return fbaPlanDeliveryHandler;
     }
 
     @Override
-    public boolean shouldHandle(CfgRuleStrategyDTO cfgRuleStrategyDTO, ReplenishmentResultDTO replenishmentResultDTO) {
+    public boolean shouldHandle(ReplenishmentResultDTO replenishmentResultDTO) {
         return CfgRulePlatformTypeEnum.AMAZON.getCode().equals(replenishmentResultDTO.getReplenishment().getPlatformType());
     }
 
     @Override
-    public void doHandle(CfgRuleStrategyDTO cfgRuleStrategyDTO, ReplenishmentResultDTO replenishmentResultDTO) {
+    public void doHandle(ReplenishmentResultDTO replenishmentResultDTO, List<ReplenishmentResultDTO> r) {
         //获取需要计算库存的FBA在途配置
-        List<CfgRuleCommonDTO.StrategyResultDTO> inventoryResult = cfgRuleStrategyDTO.getInventoryResult();
+        List<CfgRuleCommonDTO.StrategyResultDTO> inventoryResult = replenishmentResultDTO.getCfgRuleStrategy().getInventoryResult();
         String baseKey = CfgRuleCommonTypeEnum.getBaseInventoryRedisKey(replenishmentResultDTO.getReplenishment().getPlatformType());
         Set<String> codes = cfgRuleCommonService.findByKey(baseKey, inventoryResult, baseKey + ":" + CfgRuleInventoryNodeEnum.getFbaInTransit());
         if (CollectionUtils.isEmpty(codes)) {
@@ -46,7 +46,7 @@ public class FbaInTransitHandler extends AbstractSkuCalculationHandler {
         }
         List<String> code = new ArrayList<>(codes);
         replenishmentResultDTO.getReplenishmentDetail().setCfgFbaInTransit(code.get(0));
-        int qty = inventoryService.getFbaInTransit(replenishmentResultDTO, code.get(0), cfgRuleStrategyDTO.getStockUpResult());
+        int qty = inventoryService.getFbaInTransit(replenishmentResultDTO, code.get(0), replenishmentResultDTO.getCfgRuleStrategy().getStockUpResult());
         replenishmentResultDTO.getReplenishmentDetail().setFbaInTransitQty(qty);
     }
 }

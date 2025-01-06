@@ -1,5 +1,7 @@
 package com.erp.model.mrp.vo;
 
+import com.common.business.annotation.Dict;
+import com.common.business.enums.ServiceCodeNameEnum;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -9,6 +11,7 @@ import java.time.LocalDate;
 @Setter
 public class LocalInTransitDetailVO {
 
+    private String id;
     /**
      * 数量
      */
@@ -38,4 +41,15 @@ public class LocalInTransitDetailVO {
      * 来源类型
      */
     private String sourceType;
+
+    /**
+     * 仓库
+     */
+    @Dict(serviceCode = ServiceCodeNameEnum.WMS , queryFieldName = "id" , tableName = "warehouse")
+    private String warehouseId;
+
+    /**
+     * 店铺在途明细
+     */
+    private Integer shopInTransitQty;
 }

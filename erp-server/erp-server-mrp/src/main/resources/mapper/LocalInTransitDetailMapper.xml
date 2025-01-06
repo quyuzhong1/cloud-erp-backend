@@ -23,12 +23,14 @@
         <result column="source_type" property="sourceType"/>
     </resultMap>
     <select id="localInTransitDetail" resultType="com.erp.model.mrp.vo.LocalInTransitDetailVO">
-        select qty,
+        select id,
+        qty,
         plan_arrival_date,
         estimate_sales_date,
         source_id,
         source_code,
-        source_type
+        source_type,
+        shop_pre_qty as shopInTransitQty
         from local_in_transit_detail
         where replenishment_detail_id = #{params.detailId}
         and source_type = #{params.sourceType}

@@ -95,6 +95,15 @@ public class CfgRuleWarehouseController extends BaseController {
     }
 
     /**
+     * 查询是否启用虚拟仓
+     */
+    @GetMapping("/getIsEnableVirtual")
+    public ApiResult<Boolean> getIsEnableVirtual(@RequestParam("platformType") String platformType) {
+        Boolean isEnableOverseas = cfgRuleWarehouseService.getIsEnableVirtual(platformType);
+        return success(isEnableOverseas);
+    }
+
+    /**
      * 查询海外仓配置
      * @author will
      * @date 2024/10/29 11:26

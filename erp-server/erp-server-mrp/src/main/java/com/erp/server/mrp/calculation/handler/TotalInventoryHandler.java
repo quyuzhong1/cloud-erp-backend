@@ -23,18 +23,20 @@ public class TotalInventoryHandler extends AbstractSkuCalculationHandler {
     @Resource
     private CfgRuleCommonService cfgRuleCommonService;
 
+
     @Override
-    public SkuCalculationHandler getNextHandler(CfgRuleStrategyDTO cfgRuleStrategy, ReplenishmentResultDTO replenishmentResult) {
+    public SkuCalculationHandler getNextHandler(List<ReplenishmentResultDTO> r) {
         return sellableDaysHandler;
     }
 
     @Override
-    public boolean shouldHandle(CfgRuleStrategyDTO cfgRuleStrategyDTO, ReplenishmentResultDTO replenishmentResultDTO) {
+    public boolean shouldHandle(ReplenishmentResultDTO dto) {
         return true;
     }
 
     @Override
-    public void doHandle(CfgRuleStrategyDTO cfgRuleStrategyDTO, ReplenishmentResultDTO replenishmentResultDTO) {
+    public void doHandle(ReplenishmentResultDTO replenishmentResultDTO, List<ReplenishmentResultDTO> r) {
+        CfgRuleStrategyDTO cfgRuleStrategyDTO = replenishmentResultDTO.getCfgRuleStrategy();
         int totalQty = 0;
         List<CfgRuleCommonDTO.StrategyResultDTO> inventoryResult = cfgRuleStrategyDTO.getInventoryResult();
         String baseKey = CfgRuleCommonTypeEnum.getBaseInventoryRedisKey(replenishmentResultDTO.getReplenishment().getPlatformType());
@@ -59,6 +61,9 @@ public class TotalInventoryHandler extends AbstractSkuCalculationHandler {
         if (!ObjectUtils.isEmpty(localResult)) {
             if (localResult.contains(TOTAL_LOCAL_USABLE.getCode()) && !ObjectUtils.isEmpty(replenishmentResultDTO.getReplenishmentDetail().getLocalUsableQty())) {
                 totalQty += replenishmentResultDTO.getReplenishmentDetail().getLocalUsableQty();
+            }
+            if (localResult.contains(TOTAL_LOCAL_WAIT_QC.getCode()) && !ObjectUtils.isEmpty(replenishmentResultDTO.getReplenishmentDetail().getLocalWaitQcQty())) {
+                totalQty += replenishmentResultDTO.getReplenishmentDetail().getLocalWaitQcQty();
             }
             if (localResult.contains(TOTAL_LOCAL_IN_TRANSIT.getCode()) && !ObjectUtils.isEmpty(replenishmentResultDTO.getReplenishmentDetail().getLocalInTransitQty())) {
                 totalQty += replenishmentResultDTO.getReplenishmentDetail().getLocalInTransitQty();

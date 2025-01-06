@@ -1,5 +1,7 @@
 package com.erp.model.mrp.vo;
 
+import com.common.business.annotation.Dict;
+import com.erp.model.mrp.enums.ReplenishmentBillStatusEnum;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -9,14 +11,13 @@ import java.time.LocalDate;
 @Setter
 public class EstimatedPurchaseVO {
 
+    private String id;
+
     /**
      * 状态
      */
+    @Dict(enumClass = ReplenishmentBillStatusEnum.class)
     private String status;
-    /**
-     * 状态名字
-     */
-    private String statusName;
 
     /**
      * 数量
@@ -51,4 +52,19 @@ public class EstimatedPurchaseVO {
      * 来源类型
      */
     private String sourceType;
+
+    /**
+     * 收货渠道，店铺id/仓库id
+     */
+    private String receivingChannel;
+
+    /**
+     * 收货渠道，店铺id/仓库id
+     */
+    private String receivingChannelName;
+
+    /**
+     * 店铺预采
+     */
+    private Integer shopPrePurchase;
 }

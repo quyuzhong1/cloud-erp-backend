@@ -230,10 +230,6 @@ public enum SourceTypeEnum {
     THIRD_WAREHOUSE_RETURN_INSTOCK("third_warehouse_return_instock", "三方仓退货入库单","dmp_pull_task"),
 
 
-
-    //mrp
-    REPLENISHMENT_PLAN("replenishment_plan", "补货计划计划","replenishment_plan"),
-
     //速帝云
     SDY_DELIVERY_ORDER("sdyDeliveryOrder", "速帝云配货单","so_b2c"),
     SDY_OFFLINE_ORDER("sdyOfflineOrder", "速帝云B2B订单","so_info"),
