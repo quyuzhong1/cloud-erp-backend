@@ -118,7 +118,7 @@ public interface SoB2cLogisticsService extends SuperService<SoB2cLogisticsEntity
     * @return 
     * @create 2024-01-05 9:29
     */
-   List<SoB2cLogisticsDTO.TrackNoDTO> listTrackNoEmptyList();
+   List<SoB2cLogisticsDTO.TrackNoDTO> listTrackNoEmptyList(SoB2cDTO.QueryDTO queryDTO);
 
     /**
      * 根据主表id修改发货时间
