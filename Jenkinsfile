@@ -22,6 +22,19 @@ pipeline {
                             sh "/var/jenkins_home/tools/hudson.tasks.Maven_MavenInstallation/maven_3.5/bin/mvn -s ${env.MY_SETTINGS_XML} clean install -U -pl com.erp.server:erp-server-admin -am -Pdev -Dmaven.test.skip=true"
                             sh "/var/jenkins_home/tools/hudson.tasks.Maven_MavenInstallation/maven_3.5/bin/mvn -s ${env.MY_SETTINGS_XML} clean install -U -pl com.erp.server:erp-server-k8s -am -Pdev -Dmaven.test.skip=true"
                             sh "/var/jenkins_home/tools/hudson.tasks.Maven_MavenInstallation/maven_3.5/bin/mvn -s ${env.MY_SETTINGS_XML} clean install -U -pl com.erp.server:erp-server-bi -am -Pdev -Dmaven.test.skip=true"
+                            sh "/var/jenkins_home/tools/hudson.tasks.Maven_MavenInstallation/maven_3.5/bin/mvn -s ${env.MY_SETTINGS_XML} clean install -U -pl com.erp.server:erp-server-auth -am -Pdev -Dmaven.test.skip=true"
+                            sh "/var/jenkins_home/tools/hudson.tasks.Maven_MavenInstallation/maven_3.5/bin/mvn -s ${env.MY_SETTINGS_XML} clean install -U -pl com.erp.server:erp-server-dmp -am -Pdev -Dmaven.test.skip=true"
+                            sh "/var/jenkins_home/tools/hudson.tasks.Maven_MavenInstallation/maven_3.5/bin/mvn -s ${env.MY_SETTINGS_XML} clean install -U -pl com.erp.server:erp-server-file -am -Pdev -Dmaven.test.skip=true"
+                            sh "/var/jenkins_home/tools/hudson.tasks.Maven_MavenInstallation/maven_3.5/bin/mvn -s ${env.MY_SETTINGS_XML} clean install -U -pl com.erp.server:erp-server-mrp -am -Pdev -Dmaven.test.skip=true"
+                            sh "/var/jenkins_home/tools/hudson.tasks.Maven_MavenInstallation/maven_3.5/bin/mvn -s ${env.MY_SETTINGS_XML} clean install -U -pl com.erp.server:erp-server-msg -am -Pdev -Dmaven.test.skip=true"
+                            sh "/var/jenkins_home/tools/hudson.tasks.Maven_MavenInstallation/maven_3.5/bin/mvn -s ${env.MY_SETTINGS_XML} clean install -U -pl com.erp.server:erp-server-oms -am -Pdev -Dmaven.test.skip=true"
+                            sh "/var/jenkins_home/tools/hudson.tasks.Maven_MavenInstallation/maven_3.5/bin/mvn -s ${env.MY_SETTINGS_XML} clean install -U -pl com.erp.server:erp-server-plm -am -Pdev -Dmaven.test.skip=true"
+                            sh "/var/jenkins_home/tools/hudson.tasks.Maven_MavenInstallation/maven_3.5/bin/mvn -s ${env.MY_SETTINGS_XML} clean install -U -pl com.erp.server:erp-server-scm -am -Pdev -Dmaven.test.skip=true"
+                            sh "/var/jenkins_home/tools/hudson.tasks.Maven_MavenInstallation/maven_3.5/bin/mvn -s ${env.MY_SETTINGS_XML} clean install -U -pl com.erp.server:erp-server-srm -am -Pdev -Dmaven.test.skip=true"
+                            sh "/var/jenkins_home/tools/hudson.tasks.Maven_MavenInstallation/maven_3.5/bin/mvn -s ${env.MY_SETTINGS_XML} clean install -U -pl com.erp.server:erp-server-sys -am -Pdev -Dmaven.test.skip=true"
+                            sh "/var/jenkins_home/tools/hudson.tasks.Maven_MavenInstallation/maven_3.5/bin/mvn -s ${env.MY_SETTINGS_XML} clean install -U -pl com.erp.server:erp-server-tms -am -Pdev -Dmaven.test.skip=true"
+                            sh "/var/jenkins_home/tools/hudson.tasks.Maven_MavenInstallation/maven_3.5/bin/mvn -s ${env.MY_SETTINGS_XML} clean install -U -pl com.erp.server:erp-server-wms -am -Pdev -Dmaven.test.skip=true"
+                            sh "/var/jenkins_home/tools/hudson.tasks.Maven_MavenInstallation/maven_3.5/bin/mvn -s ${env.MY_SETTINGS_XML} clean install -U -pl com.erp.server:erp-server-workflow -am -Pdev -Dmaven.test.skip=true"
                         }
                     }
                 }
@@ -41,6 +54,58 @@ pipeline {
                 ssh -tt root@172.16.100.90 "docker rmi ${harborAddress}/${harborRepo}/erp-server-bi:${TAG} || true"
                 ssh -tt root@172.16.100.90 "cd /home/dockers/jenkins/jenkins_home/workspace/${JOB_NAME}/erp-server/erp-server-bi/ && \\
                 docker build -t ${harborAddress}/${harborRepo}/erp-server-bi:${TAG} ."
+
+                ssh -tt root@172.16.100.90 "docker rmi ${harborAddress}/${harborRepo}/erp-server-auth:${TAG} || true"
+                ssh -tt root@172.16.100.90 "cd /home/dockers/jenkins/jenkins_home/workspace/${JOB_NAME}/erp-server/erp-server-auth/ && \\
+                docker build -t ${harborAddress}/${harborRepo}/erp-server-auth:${TAG} ."
+
+                ssh -tt root@172.16.100.90 "docker rmi ${harborAddress}/${harborRepo}/erp-server-dmp:${TAG} || true"
+                ssh -tt root@172.16.100.90 "cd /home/dockers/jenkins/jenkins_home/workspace/${JOB_NAME}/erp-server/erp-server-dmp/ && \\
+                docker build -t ${harborAddress}/${harborRepo}/erp-server-dmp:${TAG} ."
+
+                ssh -tt root@172.16.100.90 "docker rmi ${harborAddress}/${harborRepo}/erp-server-file:${TAG} || true"
+                ssh -tt root@172.16.100.90 "cd /home/dockers/jenkins/jenkins_home/workspace/${JOB_NAME}/erp-server/erp-server-file/ && \\
+                docker build -t ${harborAddress}/${harborRepo}/erp-server-file:${TAG} ."
+
+                ssh -tt root@172.16.100.90 "docker rmi ${harborAddress}/${harborRepo}/erp-server-mrp:${TAG} || true"
+                ssh -tt root@172.16.100.90 "cd /home/dockers/jenkins/jenkins_home/workspace/${JOB_NAME}/erp-server/erp-server-mrp/ && \\
+                docker build -t ${harborAddress}/${harborRepo}/erp-server-mrp:${TAG} ."
+
+                ssh -tt root@172.16.100.90 "docker rmi ${harborAddress}/${harborRepo}/erp-server-msg:${TAG} || true"
+                ssh -tt root@172.16.100.90 "cd /home/dockers/jenkins/jenkins_home/workspace/${JOB_NAME}/erp-server/erp-server-msg/ && \\
+                docker build -t ${harborAddress}/${harborRepo}/erp-server-msg{TAG} ."
+
+                ssh -tt root@172.16.100.90 "docker rmi ${harborAddress}/${harborRepo}/erp-server-oms:${TAG} || true"
+                ssh -tt root@172.16.100.90 "cd /home/dockers/jenkins/jenkins_home/workspace/${JOB_NAME}/erp-server/erp-server-oms/ && \\
+                docker build -t ${harborAddress}/${harborRepo}/erp-server-oms:${TAG} ."
+
+                ssh -tt root@172.16.100.90 "docker rmi ${harborAddress}/${harborRepo}/erp-server-plm:${TAG} || true"
+                ssh -tt root@172.16.100.90 "cd /home/dockers/jenkins/jenkins_home/workspace/${JOB_NAME}/erp-server/erp-server-plm/ && \\
+                docker build -t ${harborAddress}/${harborRepo}/erp-server-plm:${TAG} ."
+
+                ssh -tt root@172.16.100.90 "docker rmi ${harborAddress}/${harborRepo}/erp-server-scm:${TAG} || true"
+                ssh -tt root@172.16.100.90 "cd /home/dockers/jenkins/jenkins_home/workspace/${JOB_NAME}/erp-server/erp-server-scm/ && \\
+                docker build -t ${harborAddress}/${harborRepo}/erp-server-scm:${TAG} ."
+
+                ssh -tt root@172.16.100.90 "docker rmi ${harborAddress}/${harborRepo}/erp-server-srm:${TAG} || true"
+                ssh -tt root@172.16.100.90 "cd /home/dockers/jenkins/jenkins_home/workspace/${JOB_NAME}/erp-server/erp-server-srm/ && \\
+                docker build -t ${harborAddress}/${harborRepo}/erp-server-srm:${TAG} ."
+
+                ssh -tt root@172.16.100.90 "docker rmi ${harborAddress}/${harborRepo}/erp-server-sys:${TAG} || true"
+                ssh -tt root@172.16.100.90 "cd /home/dockers/jenkins/jenkins_home/workspace/${JOB_NAME}/erp-server/erp-server-sys/ && \\
+                docker build -t ${harborAddress}/${harborRepo}/erp-server-sys:${TAG} ."
+
+                ssh -tt root@172.16.100.90 "docker rmi ${harborAddress}/${harborRepo}/erp-server-tms:${TAG} || true"
+                ssh -tt root@172.16.100.90 "cd /home/dockers/jenkins/jenkins_home/workspace/${JOB_NAME}/erp-server/erp-server-tms/ && \\
+                docker build -t ${harborAddress}/${harborRepo}/erp-server-tms:${TAG} ."
+
+                ssh -tt root@172.16.100.90 "docker rmi ${harborAddress}/${harborRepo}/erp-server-wms:${TAG} || true"
+                ssh -tt root@172.16.100.90 "cd /home/dockers/jenkins/jenkins_home/workspace/${JOB_NAME}/erp-server/erp-server-wms/ && \\
+                docker build -t ${harborAddress}/${harborRepo}/erp-server-wms:${TAG} ."
+
+                ssh -tt root@172.16.100.90 "docker rmi ${harborAddress}/${harborRepo}/erp-server-workflow:${TAG} || true"
+                ssh -tt root@172.16.100.90 "cd /home/dockers/jenkins/jenkins_home/workspace/${JOB_NAME}/erp-server/erp-server-workflow/ && \\
+                docker build -t ${harborAddress}/${harborRepo}/erp-server-workflow:${TAG} ."
                 '''
             }
         }
@@ -50,6 +115,19 @@ pipeline {
                 docker push ${harborAddress}/${harborRepo}/erp-server-admin:${TAG}
                 docker push ${harborAddress}/${harborRepo}/erp-server-k8s:${TAG}
                 docker push ${harborAddress}/${harborRepo}/erp-server-bi:${TAG}
+                docker push ${harborAddress}/${harborRepo}/erp-server-auth:${TAG}
+                docker push ${harborAddress}/${harborRepo}/erp-server-dmp:${TAG}
+                docker push ${harborAddress}/${harborRepo}/erp-server-file:${TAG}
+                docker push ${harborAddress}/${harborRepo}/erp-server-mrp:${TAG}
+                docker push ${harborAddress}/${harborRepo}/erp-server-msg:${TAG}
+                docker push ${harborAddress}/${harborRepo}/erp-server-oms:${TAG}
+                docker push ${harborAddress}/${harborRepo}/erp-server-plm:${TAG}
+                docker push ${harborAddress}/${harborRepo}/erp-server-scm:${TAG}
+                docker push ${harborAddress}/${harborRepo}/erp-server-srm:${TAG}
+                docker push ${harborAddress}/${harborRepo}/erp-server-sys:${TAG}
+                docker push ${harborAddress}/${harborRepo}/erp-server-tms:${TAG}
+                docker push ${harborAddress}/${harborRepo}/erp-server-wms${TAG}
+                docker push ${harborAddress}/${harborRepo}/erp-server-workflow:${TAG}
                 '''
             }
         }
@@ -58,14 +136,41 @@ pipeline {
                 sh '''
                     scp /var/jenkins_home/workspace/${JOB_NAME}/erp-server/erp-server-admin/erp-server-admin.yaml root@172.16.100.60:/k8s-yaml/erp-server
                     scp /var/jenkins_home/workspace/${JOB_NAME}/erp-server/erp-server-k8s/erp-server-k8s.yaml root@172.16.100.60:/k8s-yaml/erp-server
+                    scp /var/jenkins_home/workspace/${JOB_NAME}/erp-server/erp-server-auth/erp-server-auth.yaml root@172.16.100.60:/k8s-yaml/erp-server
+                    scp /var/jenkins_home/workspace/${JOB_NAME}/erp-server/erp-server-dmp/erp-server-dmp.yaml root@172.16.100.60:/k8s-yaml/erp-server
+                    scp /var/jenkins_home/workspace/${JOB_NAME}/erp-server/erp-server-file/erp-server-file.yaml root@172.16.100.60:/k8s-yaml/erp-server
+                    scp /var/jenkins_home/workspace/${JOB_NAME}/erp-server/erp-server-mrp/erp-server-mrp.yaml root@172.16.100.60:/k8s-yaml/erp-server
+                    scp /var/jenkins_home/workspace/${JOB_NAME}/erp-server/erp-server-msg/erp-server-msg.yaml root@172.16.100.60:/k8s-yaml/erp-server
+                    scp /var/jenkins_home/workspace/${JOB_NAME}/erp-server/erp-server-oms/erp-server-oms.yaml root@172.16.100.60:/k8s-yaml/erp-server
+                    scp /var/jenkins_home/workspace/${JOB_NAME}/erp-server/erp-server-plm/erp-server-plm.yaml root@172.16.100.60:/k8s-yaml/erp-server
+                    scp /var/jenkins_home/workspace/${JOB_NAME}/erp-server/erp-server-scm/erp-server-scm.yaml root@172.16.100.60:/k8s-yaml/erp-server
+                    scp /var/jenkins_home/workspace/${JOB_NAME}/erp-server/erp-server-srm/erp-server-srm.yaml root@172.16.100.60:/k8s-yaml/erp-server
+                    scp /var/jenkins_home/workspace/${JOB_NAME}/erp-server/erp-server-sys/erp-server-sys.yaml root@172.16.100.60:/k8s-yaml/erp-server
+                    scp /var/jenkins_home/workspace/${JOB_NAME}/erp-server/erp-server-tms/erp-server-tms.yaml root@172.16.100.60:/k8s-yaml/erp-server
+                    scp /var/jenkins_home/workspace/${JOB_NAME}/erp-server/erp-server-wms/erp-server-wms.yaml root@172.16.100.60:/k8s-yaml/erp-server
+                    scp /var/jenkins_home/workspace/${JOB_NAME}/erp-server/erp-server-workflow/erp-server-workflow.yaml root@172.16.100.60:/k8s-yaml/erp-server
                     scp /var/jenkins_home/workspace/${JOB_NAME}/erp-server/erp-server-bi/erp-server-bi.yaml root@172.16.100.60:/k8s-yaml/erp-server
 
                     ssh -tt root@172.16.100.60 "sed -i -e \\"s|\\\\\\${tag}|${TAG}|g\\" -e \\"s|\\\\\\${namespace}|${NAMESPACE}|g\\" /k8s-yaml/erp-server/erp-server-admin.yaml"
                     ssh -tt root@172.16.100.60 "sed -i -e \\"s|\\\\\\${tag}|${TAG}|g\\" -e \\"s|\\\\\\${namespace}|${NAMESPACE}|g\\" /k8s-yaml/erp-server/erp-server-k8s.yaml"
+                    ssh -tt root@172.16.100.60 "sed -i -e \\"s|\\\\\\${tag}|${TAG}|g\\" -e \\"s|\\\\\\${namespace}|${NAMESPACE}|g\\" /k8s-yaml/erp-server/erp-server-auth.yaml"
+                    ssh -tt root@172.16.100.60 "sed -i -e \\"s|\\\\\\${tag}|${TAG}|g\\" -e \\"s|\\\\\\${namespace}|${NAMESPACE}|g\\" /k8s-yaml/erp-server/erp-server-dmp.yaml"
+                    ssh -tt root@172.16.100.60 "sed -i -e \\"s|\\\\\\${tag}|${TAG}|g\\" -e \\"s|\\\\\\${namespace}|${NAMESPACE}|g\\" /k8s-yaml/erp-server/erp-server-file.yaml"
+                    ssh -tt root@172.16.100.60 "sed -i -e \\"s|\\\\\\${tag}|${TAG}|g\\" -e \\"s|\\\\\\${namespace}|${NAMESPACE}|g\\" /k8s-yaml/erp-server/erp-server-mrp.yaml"
+                    ssh -tt root@172.16.100.60 "sed -i -e \\"s|\\\\\\${tag}|${TAG}|g\\" -e \\"s|\\\\\\${namespace}|${NAMESPACE}|g\\" /k8s-yaml/erp-server/erp-server-msg.yaml"
+                    ssh -tt root@172.16.100.60 "sed -i -e \\"s|\\\\\\${tag}|${TAG}|g\\" -e \\"s|\\\\\\${namespace}|${NAMESPACE}|g\\" /k8s-yaml/erp-server/erp-server-oms.yaml"
+                    ssh -tt root@172.16.100.60 "sed -i -e \\"s|\\\\\\${tag}|${TAG}|g\\" -e \\"s|\\\\\\${namespace}|${NAMESPACE}|g\\" /k8s-yaml/erp-server/erp-server-plm.yaml"
+                    ssh -tt root@172.16.100.60 "sed -i -e \\"s|\\\\\\${tag}|${TAG}|g\\" -e \\"s|\\\\\\${namespace}|${NAMESPACE}|g\\" /k8s-yaml/erp-server/erp-server-scm.yaml"
+                    ssh -tt root@172.16.100.60 "sed -i -e \\"s|\\\\\\${tag}|${TAG}|g\\" -e \\"s|\\\\\\${namespace}|${NAMESPACE}|g\\" /k8s-yaml/erp-server/erp-server-srm.yaml"
+                    ssh -tt root@172.16.100.60 "sed -i -e \\"s|\\\\\\${tag}|${TAG}|g\\" -e \\"s|\\\\\\${namespace}|${NAMESPACE}|g\\" /k8s-yaml/erp-server/erp-server-sys.yaml"
+                    ssh -tt root@172.16.100.60 "sed -i -e \\"s|\\\\\\${tag}|${TAG}|g\\" -e \\"s|\\\\\\${namespace}|${NAMESPACE}|g\\" /k8s-yaml/erp-server/erp-server-tms.yaml"
+                    ssh -tt root@172.16.100.60 "sed -i -e \\"s|\\\\\\${tag}|${TAG}|g\\" -e \\"s|\\\\\\${namespace}|${NAMESPACE}|g\\" /k8s-yaml/erp-server/erp-server-wms.yaml"
+                    ssh -tt root@172.16.100.60 "sed -i -e \\"s|\\\\\\${tag}|${TAG}|g\\" -e \\"s|\\\\\\${namespace}|${NAMESPACE}|g\\" /k8s-yaml/erp-server/erp-server-workflow.yaml"
                     ssh -tt root@172.16.100.60 "sed -i -e \\"s|\\\\\\${tag}|${TAG}|g\\" -e \\"s|\\\\\\${namespace}|${NAMESPACE}|g\\" /k8s-yaml/erp-server/erp-server-bi.yaml"
 
-                    ssh -tt root@172.16.100.60 "/usr/bin/kubectl delete -f /k8s-yaml/erp-server/erp-server-admin.yaml -f /k8s-yaml/erp-server/erp-server-k8s.yaml -f /k8s-yaml/erp-server/erp-server-bi.yaml || true"
-                    ssh -tt root@172.16.100.60 "/usr/bin/kubectl apply -f /k8s-yaml/erp-server/erp-server-admin.yaml -f /k8s-yaml/erp-server/erp-server-k8s.yaml -f /k8s-yaml/erp-server/erp-server-bi.yaml"
+                    ssh -tt root@172.16.100.60 "/usr/bin/kubectl delete -f /k8s-yaml/erp-server/erp-server-admin.yaml -f /k8s-yaml/erp-server/erp-server-k8s.yaml -f /k8s-yaml/erp-server/erp-server-bi.yaml -f /k8s-yaml/erp-server/erp-server-auth.yaml -f /k8s-yaml/erp-server/erp-server-dmp.yaml -f /k8s-yaml/erp-server/erp-server-file.yaml -f /k8s-yaml/erp-server/erp-server-mrp.yaml -f /k8s-yaml/erp-server/erp-server-msg.yaml -f /k8s-yaml/erp-server/erp-server-oms.yaml -f /k8s-yaml/erp-server/erp-server-plm.yaml -f /k8s-yaml/erp-server/erp-server-scm.yaml -f /k8s-yaml/erp-server/erp-server-srm.yaml -f /k8s-yaml/erp-server/erp-server-sys.yaml -f /k8s-yaml/erp-server/erp-server-tms.yaml -f /k8s-yaml/erp-server/erp-server-wms.yaml -f /k8s-yaml/erp-server/erp-server-workflow.yaml|| true"
+                    
+                    ssh -tt root@172.16.100.60 "/usr/bin/kubectl apply -f /k8s-yaml/erp-server/erp-server-admin.yaml -f /k8s-yaml/erp-server/erp-server-k8s.yaml -f /k8s-yaml/erp-server/erp-server-bi.yaml -f /k8s-yaml/erp-server/erp-server-auth.yaml -f /k8s-yaml/erp-server/erp-server-dmp.yaml -f /k8s-yaml/erp-server/erp-server-file.yaml -f /k8s-yaml/erp-server/erp-server-mrp.yaml -f /k8s-yaml/erp-server/erp-server-msg.yaml -f /k8s-yaml/erp-server/erp-server-oms.yaml -f /k8s-yaml/erp-server/erp-server-plm.yaml -f /k8s-yaml/erp-server/erp-server-scm.yaml -f /k8s-yaml/erp-server/erp-server-srm.yaml -f /k8s-yaml/erp-server/erp-server-sys.yaml -f /k8s-yaml/erp-server/erp-server-tms.yaml -f /k8s-yaml/erp-server/erp-server-wms.yaml -f /k8s-yaml/erp-server/erp-server-workflow.yaml"
                     '''
             }
         }
