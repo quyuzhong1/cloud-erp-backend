@@ -674,14 +674,4 @@ public class VirtualWarehouseServiceImpl extends SuperServiceImpl<VirtualWarehou
     public List<String> listWarehouseBySql(String compareCodeSplicingValueSql) {
         return baseMapper.listWarehouseBySql(compareCodeSplicingValueSql);
     }
-
-    @Override
-    public PagingVO<VirtualWarehouseDTO.PartitionDTO> partitionPagingSelect(PagingDTO<VirtualWarehouseDTO.PartitionSelectDTO> dto) {
-        return null;
-    }
-
-    @Override
-    public PagingVO<VirtualWarehouseDTO.ChildTree> platformPagingSelect(PagingDTO<VirtualWarehouseDTO.PlatformSelectDTO> dto) {
-        return null;
-    }
 }

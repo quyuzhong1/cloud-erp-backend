@@ -1,35 +1,26 @@
 package com.erp.server.wms.controller.api;
 
 
+import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
-import com.erp.model.oms.dto.ShopDTO;
-import com.erp.model.wms.dto.WarehouseLocationMoveDTO;
-import com.erp.rpc.oms.feign.ShopInfoFeign;
-import com.erp.server.wms.query.MarehouseMoveInfoQueryHandler;
-import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.collections4.CollectionUtils;
-import org.springframework.beans.factory.annotation.Autowired;
-
-import javax.annotation.Resource;
-
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.*;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.anno.LogViewService;
-import com.common.core.enums.LogActionEnum;
-import com.common.business.dto.base.*;
-import org.springframework.web.bind.annotation.RestController;
-
 import com.common.core.controller.BaseController;
-import com.erp.server.wms.service.VirtualWarehouseService;
 import com.common.core.controller.vo.ApiResult;
-import com.common.business.annotation.DataPermission;
-import com.common.business.enums.DataAttributeEnum;
+import com.common.core.enums.LogActionEnum;
+import com.erp.model.oms.dto.ShopDTO;
 import com.erp.model.wms.dto.VirtualWarehouseDTO;
+import com.erp.server.wms.service.VirtualWarehouseService;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.*;
 
+import javax.annotation.Resource;
 import java.util.List;
 
 /**
@@ -146,20 +137,6 @@ public class VirtualWarehouseController extends BaseController {
     @PostMapping("/pagingSelect")
     public ApiResult<PagingVO<ShopDTO.ListDTO>> pagingSelect(@RequestBody @Validated PagingDTO<VirtualWarehouseDTO.ShopSelectDTO> dto){
         return success(virtualWarehouseService.pagingSelect(dto));
-    }
-    /**
-     * 搜索平台
-     */
-    @PostMapping("/platform/pagingSelect")
-    public ApiResult<PagingVO<VirtualWarehouseDTO.ChildTree>> platformPagingSelect(@RequestBody @Validated PagingDTO<VirtualWarehouseDTO.PlatformSelectDTO> dto){
-        return success(virtualWarehouseService.platformPagingSelect(dto));
-    }
-    /**
-     * 搜索分区
-     */
-    @PostMapping("/partition/pagingSelect")
-    public ApiResult<PagingVO<VirtualWarehouseDTO.PartitionDTO>> partitionPagingSelect(@RequestBody @Validated PagingDTO<VirtualWarehouseDTO.PartitionSelectDTO> dto){
-        return success(virtualWarehouseService.partitionPagingSelect(dto));
     }
 
     /**

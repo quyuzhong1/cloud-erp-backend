@@ -29,18 +29,6 @@ public interface VirtualWarehouseService extends SuperService<VirtualWarehouseEn
      * @date: 2024-06-02
      */
     BaseResultDTO.AddDTO add(VirtualWarehouseDTO.AddDTO dto);
-//    /**
-//     * 新增
-//     *
-//     * @param dto
-//     * @return
-//     * @author hyj
-//     * @date: 2024-06-02
-//     */
-//    BaseResultDTO.AddDTO addAndBind(VirtualWarehouseDTO.AddDTO dto);
-    //绑定信息
-//    void bindInfo(List<String> warehouseIdList, List<VirtualWarehouseChannelDTO.ChannelAddDTO> channelList,
-//                          List<ThirdMappingDTO.AddDTO> thirdMappingList, String virtualWarehouseEntityId);
     /**
      * 修改
      *
@@ -99,17 +87,4 @@ public interface VirtualWarehouseService extends SuperService<VirtualWarehouseEn
      */
     List<String> listWarehouseBySql(String compareCodeSplicingValueSql);
 
-    /**
-     * 军区高级搜索
-     * @param dto
-     * @return
-     */
-    PagingVO<VirtualWarehouseDTO.PartitionDTO> partitionPagingSelect(PagingDTO<VirtualWarehouseDTO.PartitionSelectDTO> dto);
-
-    /**
-     * 平台下拉框
-     * @param dto
-     * @return
-     */
-    PagingVO<VirtualWarehouseDTO.ChildTree> platformPagingSelect(PagingDTO<VirtualWarehouseDTO.PlatformSelectDTO> dto);
 }
