@@ -344,7 +344,7 @@ public class FbaTransitCalculateReportServiceImpl extends SuperServiceImpl<FbaTr
         String shipmentCode = dto.getShipmentCode();
         if (CharSequenceUtil.isAllNotBlank(shipmentCode, asin, msku)) {
             String key = shipmentCode + "-" + msku + "-" + asin;
-            List<String> keyList = shipmentCodeMap.get(key);
+            List<String> keyList = shipmentCodeMap.get(shipmentCode);
             if (CollUtil.isEmpty(keyList)){
                 shipmentCodeMap.put(shipmentCode, Collections.singletonList(key));
             }else {
