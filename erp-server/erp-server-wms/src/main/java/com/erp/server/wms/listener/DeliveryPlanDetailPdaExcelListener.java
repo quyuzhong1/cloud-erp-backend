@@ -68,14 +68,7 @@ public class DeliveryPlanDetailPdaExcelListener extends AnalysisEventListener<De
         }else if(StringUtils.isBlank(deliveryPlanDetailExportExcelDTO.getMsku()) && StringUtils.isBlank(deliveryPlanDetailExportExcelDTO.getFnsku())){
             errorMsgList.add("MSKU和FNSKU不能同时为空");
         } else {
-            ListingInfoWithSkuMappingDTO listingInfoWithSkuMappingDTO = allThirdWarehouseSkuList.stream()
-                    .filter(v -> {
-                        boolean matchSku = (deliveryPlanDetailExportExcelDTO.getMsku() == null || v.getPlatformSkuNo().equals(deliveryPlanDetailExportExcelDTO.getFnsku()));
-                        boolean matchFnSku = (deliveryPlanDetailExportExcelDTO.getMsku() == null || v.getPlatformFnSku().equals(deliveryPlanDetailExportExcelDTO.getFnsku()));
-                        return matchSku && matchFnSku;
-                    })
-                    .findFirst()
-                    .orElse(null);
+            ListingInfoWithSkuMappingDTO listingInfoWithSkuMappingDTO = getListingInfoWithSkuMappingDTO(deliveryPlanDetailExportExcelDTO);
             if (Objects.isNull(listingInfoWithSkuMappingDTO)) {
                 errorMsgList.add("系统中没有该店铺的sku");
             }else{
@@ -111,6 +104,28 @@ public class DeliveryPlanDetailPdaExcelListener extends AnalysisEventListener<De
             return;
         }
         successList.add(viewDTO);
+    }
+
+    private ListingInfoWithSkuMappingDTO getListingInfoWithSkuMappingDTO(DeliveryPlanDetailPdaExportExcelDTO deliveryPlanDetailExportExcelDTO) {
+        ListingInfoWithSkuMappingDTO listingInfoWithSkuMappingDTO = allThirdWarehouseSkuList.stream()
+                .filter(v -> {
+                    if(StringUtils.isNotBlank(deliveryPlanDetailExportExcelDTO.getMsku())
+                            && StringUtils.isNotBlank(deliveryPlanDetailExportExcelDTO.getFnsku())
+                            && v.getPlatformSkuNo().equals(deliveryPlanDetailExportExcelDTO.getMsku())
+                            && v.getPlatformFnSku().equals(deliveryPlanDetailExportExcelDTO.getFnsku())){
+                        return Boolean.TRUE;
+                    }else if(StringUtils.isNotBlank(deliveryPlanDetailExportExcelDTO.getMsku())
+                            && v.getPlatformSkuNo().equals(deliveryPlanDetailExportExcelDTO.getMsku())){
+                        return Boolean.TRUE;
+                    }else if(StringUtils.isNotBlank(deliveryPlanDetailExportExcelDTO.getFnsku())
+                            && v.getPlatformFnSku().equals(deliveryPlanDetailExportExcelDTO.getFnsku())){
+                        return Boolean.TRUE;
+                    }
+                    return Boolean.FALSE;
+                })
+                .findFirst()
+                .orElse(null);
+        return listingInfoWithSkuMappingDTO;
     }
 
     @Override
