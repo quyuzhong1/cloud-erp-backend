@@ -216,10 +216,10 @@ public class SoReturnNoticeDetailServiceImpl extends SuperServiceImpl<SoReturnNo
         for (SoReturnNoticeDetailDTO.Update detailDto : dto.getDetailList()) {
             SoReturnNoticeDetailEntity detailEntity = new SoReturnNoticeDetailEntity();
             //退货通知单数量
-            Integer returnNoticeQty = noticeDetailEntities.stream().filter(req -> req.getSourceDetailId().equals(detailDto.getSourceDetailId())).map(SoReturnNoticeDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
+            Integer returnNoticeQty = 0 ;
             if (CharSequenceUtil.isNotBlank(detailDto.getId())) {
                 detailEntity.setId(detailDto.getId());
-                returnNoticeQty = noticeDetailEntities.stream().filter(req -> req.getSourceDetailId().equals(detailDto.getSourceDetailId()) && !req.getId().equals(detailDto.getId())).map(SoReturnNoticeDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
+                returnNoticeQty = noticeDetailEntities.stream().filter(req -> req.getSourceDetailId().equals(detailDto.getSourceDetailId())).map(SoReturnNoticeDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
             }
             if("B2C".equals(entity.getType())){
                 SoB2cReturnDetailEntity soReturnDetailEntity = soB2cReturnDetailEntityList.stream().filter(req -> req.getId().equals(detailDto.getSourceDetailId())).findFirst().orElse(null);
@@ -245,11 +245,6 @@ public class SoReturnNoticeDetailServiceImpl extends SuperServiceImpl<SoReturnNo
                     if (returnQty <  detailDto.getReturnQty() + returnNoticeQty) {
                         throw new ServiceException(ApiError.ERROR_92024);
                     }
-//                    detailEntity.setReturnAmount(soReturnDetailEntity.getReturnAmount());
-//                    detailEntity.setTaxReturnAmount(soReturnDetailEntity.getTaxReturnAmount());
-//                    detailEntity.setReturnAmountLocalCurrency(soReturnDetailEntity.getReturnAmountLocalCurrency());
-//                    detailEntity.setTaxReturnAmountLocalCurrency(soReturnDetailEntity.getTaxReturnAmountLocalCurrency());
-//                    detailEntity.setExchangeRate(soReturnDetailEntity.getExchangeRate());
                 }
                 detailEntity.setReturnAmount(detailDto.getReturnAmount());
                 detailEntity.setTaxReturnAmount(detailDto.getTaxReturnAmount());

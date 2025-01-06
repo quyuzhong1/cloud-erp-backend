@@ -392,13 +392,14 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
                     operateLogService.addModuleOperateLogByObj(old, detailEntity, ModuleTypeEnum.SO_RETURN_INSTOCK.getCode(), dto.getId(), "", String.format("【%s】", old.getSkuNo()));
                 }
             }
+            boolean flag = this.saveOrUpdateBatch(list);
             //添加操作日志
             if (CollectionUtils.isNotEmpty(addList)) {
                 List<SoReturnInstockDetailEntity> returnInstockDetailEntities = this.listByIds(addList);
                 List<Pair<String, String>> addPairList = returnInstockDetailEntities.stream().map(obj -> new Pair<>(dto.getId(), obj.getSkuNo())).collect(Collectors.toList());
                 operateLogService.batchAddModuleOperateLog("添加了一个SKU【%s】", ModuleTypeEnum.SO_RETURN_INSTOCK.getCode(), addPairList, "编辑操作");
             }
-            return this.saveOrUpdateBatch(list);
+            return flag;
         } else {
             return notReturnOrderUpdate(dto);
         }
