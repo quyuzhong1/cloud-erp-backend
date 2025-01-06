@@ -1282,6 +1282,16 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
         return totalQty;
     }
 
+    @Override
+    public void exportCalcData(BaseIdDTO dto) {
+        downloadTaskFeign.saveDownloadTask("补货建议计算数据", FileTaskEventEnum.EXPORT_MRP_SUGGESTION_CALC_DATA.getCode(), dto);
+    }
+
+    @Override
+    public ReplenishmentSuggestionDTO.ExportResultDTO exportSuggestCalcData(BaseIdDTO dto) {
+        return null;
+    }
+
     /**
      * 异步获取主表数据
      *

@@ -753,4 +753,15 @@ public class ReplenishmentSuggestionController extends BaseController {
         List<ReplenishmentSuggestionVO.SalesInfoVO> page = replenishmentSuggestionService.listSalesInfo(dto);
         return success(page);
     }
+
+
+    /**
+     * 导出计算数据
+     * @param dto 参数
+     */
+    @PostMapping("/exportCalcData")
+    public ApiResult<String> exportCalcData(@RequestBody @Validated BaseIdDTO dto) {
+        replenishmentSuggestionService.exportCalcData(dto);
+        return success();
+    }
 }

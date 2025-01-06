@@ -94,12 +94,6 @@ public class EstimatedPurchaseDetailEntity extends BaseEntity<EstimatedPurchaseD
     private String receivingChannel;
 
     /**
-     * 发货仓库
-     */
-    @TableField("delivery_warehouse_id")
-    private String deliveryWarehouseId;
-
-    /**
      * 店铺预计数量
      */
     @TableField("shop_pre_qty")
