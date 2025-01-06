@@ -73,6 +73,7 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.DictCountryDTO;
 import com.erp.model.sys.dto.SysDepartmentUserNumberDTO;
 import com.erp.model.sys.entity.DictCountryEntity;
+import com.erp.model.sys.entity.DictPartitionEntity;
 import com.erp.model.tms.dto.*;
 import com.erp.model.tms.dto.transfer.TransferCancelOrderReq;
 import com.erp.model.tms.entity.*;
@@ -3086,6 +3087,13 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         SoB2cReceiverEntity soB2cReceiverEntity = soB2cReceiverService.getByMainId(id);
         if (ObjectUtils.isEmpty(soB2cReceiverEntity)) {
             throw new ServiceException(ApiError.ERROR_SO_B2C_RECEIVER_NOT_EXIST);
+        }
+        if(StringUtils.isNotBlank(soB2cReceiverEntity.getPartitionId())){
+            DictPartitionEntity dictPartitionEntity = FeignQuery.getById(DictPartitionEntity.class,soB2cReceiverEntity.getPartitionId());
+            if(Objects.nonNull(dictPartitionEntity)){
+                soB2cReceiverEntity.setPartitionName(dictPartitionEntity.getName());
+                soB2cReceiverEntity.setPartitionCode(dictPartitionEntity.getCode());
+            }
         }
         SoB2cReceiverDTO.ViewDTO receiverDTO = new SoB2cReceiverDTO.ViewDTO();
         BeanMapperUtils.copy(soB2cReceiverEntity, receiverDTO);
