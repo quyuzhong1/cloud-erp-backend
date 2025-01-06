@@ -121,6 +121,12 @@ public class SoB2cReceiverEntity extends BaseEntity<SoB2cReceiverEntity> {
     @TableField("receiver_tax_no")
     private String receiverTaxNo;
 
+    /**
+     * 分区id
+     */
+    @TableField("partition_id")
+    private String partitionId;
+
 
     public static final String MAIN_ID = "main_id";
 
