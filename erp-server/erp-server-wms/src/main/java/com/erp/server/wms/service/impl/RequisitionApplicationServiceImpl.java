@@ -2018,7 +2018,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
      * @date 2024-12-16
      * @param requisitionApplicationId
      */
-    private void writeBackRequisitionPickPushDownStatus(String requisitionApplicationId) {
+    public void writeBackRequisitionPickPushDownStatus(String requisitionApplicationId) {
         // 获取要货申请明细
         List<RequisitionApplicationDetailEntity> oldDetails = requisitionApplicationDetailService.listByMainIds(Collections.singletonList(requisitionApplicationId));
         List<String> oldDetailIds = oldDetails.stream()
@@ -2028,7 +2028,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         // 获取拣货单明细
         List<PickingDetailEntity> pickingDetailEntities = pickingDetailService.listPickingDetailBySourceDetailIds(oldDetailIds);
         // 判断拣货单下推状态
-        String pickingPushDownStatus = BillPushDownStatusEnum.WAIT.getCode();
+        String pickPushDownStatus = BillPushDownStatusEnum.WAIT.getCode();
         // 如果拣货单明细为空，直接返回 WAIT 状态
         if (CollUtil.isNotEmpty(pickingDetailEntities)) {
             // 计算拣货单的总数量
@@ -2053,14 +2053,14 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
                 // 检查是否所有明细的数量一致
                 if (requisitionDetailQtySumById.entrySet().stream()
                         .allMatch(e -> e.getValue().equals(pickingDetailQtySumBySourceDetailId.get(e.getKey())))) {
-                    pickingPushDownStatus = BillPushDownStatusEnum.FINISH.getCode();
+                    pickPushDownStatus = BillPushDownStatusEnum.FINISH.getCode();
                 } else {
-                    pickingPushDownStatus = BillPushDownStatusEnum.PART.getCode();
+                    pickPushDownStatus = BillPushDownStatusEnum.PART.getCode();
                 }
             }
         }
         // 更新要货申请的发货单下推状态
-        lambdaUpdate().set(RequisitionApplicationEntity::getPickPushDownStatus, pickingPushDownStatus)
+        lambdaUpdate().set(RequisitionApplicationEntity::getPickPushDownStatus, pickPushDownStatus)
                 .eq(RequisitionApplicationEntity::getId, requisitionApplicationId)
                 .update();
     }
@@ -2071,7 +2071,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
      * @date 2024-12-16
      * @param requisitionApplicationId
      */
-    private void writeBackRequisitionDeliveryPushDownStatus(String requisitionApplicationId) {
+    public void writeBackRequisitionDeliveryPushDownStatus(String requisitionApplicationId) {
         // 获取要货申请明细
         List<RequisitionApplicationDetailEntity> oldDetails = requisitionApplicationDetailService.listByMainIds(Collections.singletonList(requisitionApplicationId));
         List<String> oldDetailIds = oldDetails.stream()
@@ -2103,7 +2103,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
 
                 // 统计头程发货单明细每个明细的发货数量和
                 Map<String, Integer> firstMileDeliveryDetailDeliveryQtySumById = firstMileDeliveryDetailEntityList.stream()
-                        .collect(Collectors.toMap(FirstMileDeliveryDetailEntity::getId,
+                        .collect(Collectors.toMap(FirstMileDeliveryDetailEntity::getSourceDetailId,
                                 FirstMileDeliveryDetailEntity::getDeliveryQty,
                                 Integer::sum));
 
