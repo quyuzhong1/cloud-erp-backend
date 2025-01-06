@@ -2088,9 +2088,10 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
                         	feeCurrency = actualListDTO.getOtherCostCurrency();
                         }
                         if(!detailCurrency.equals(feeCurrency)) {
-                        	errorMsgList.add(categoryEnum.getName() + "分类下币别不一致");
+                        	errorMsgList.add(categoryEnum.getName() + "分类下【"+ erpFieldDropDownDTO.getSourceType() +"】费用币别不一致");
                             jsonObject.set("错误信息", FieldValidUtil.getMsgSort(errorMsgList));
                             errorList.add(jsonObject);
+                            updateListMap.remove(erpFieldDropDownDTO.getSourceId());
                             break;
                         }
                     }
