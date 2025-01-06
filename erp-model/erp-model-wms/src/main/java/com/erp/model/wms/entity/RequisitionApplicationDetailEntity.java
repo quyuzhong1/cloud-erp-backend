@@ -133,6 +133,12 @@ public class RequisitionApplicationDetailEntity extends BaseEntity<RequisitionAp
     @TableField(exist = false)
     private Integer changeBeforeQty;
 
+    /**
+     * 已发货数量
+     */
+    @TableField("delivery_qty")
+    private Integer deliveryQty;
+
     public static final String MAIN_ID = "main_id";
 
     public static final String SKU_ID = "sku_id";

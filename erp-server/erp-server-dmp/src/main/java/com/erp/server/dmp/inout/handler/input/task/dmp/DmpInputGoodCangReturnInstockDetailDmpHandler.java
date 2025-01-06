@@ -1,6 +1,7 @@
 package com.erp.server.dmp.inout.handler.input.task.dmp;
 
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.sdk.oms.shopify.api.rest.model.ShopifyLineItem;
 import com.sdk.oms.shopify.api.rest.model.ShopifyRefund;
@@ -39,6 +40,15 @@ public class DmpInputGoodCangReturnInstockDetailDmpHandler extends DmpInputDoNex
             JSONObject jsonObject = (JSONObject) JSON.toJSON(product);
             // 计算签收数量receive_qty
             jsonObject.put("receiveQty", receiveQty);
+            // 获取更换后的sku
+            JSONArray jsonArray = jsonObject.getJSONArray("sellable_detail");
+            if (CollectionUtils.isNotEmpty(jsonArray)){
+                Object changeDetail = jsonArray.get(0);
+                JSONObject changeDetailJsonObject = JSON.parseObject(JSON.toJSONString(changeDetail));
+                String newProductSku = changeDetailJsonObject.getString("new_product_sku");
+                jsonObject.put("product_sku", newProductSku);
+            }
+
             resultList.add(jsonObject);
         }
         return resultList;

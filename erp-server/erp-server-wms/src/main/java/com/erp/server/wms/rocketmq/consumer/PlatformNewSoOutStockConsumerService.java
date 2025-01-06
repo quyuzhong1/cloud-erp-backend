@@ -68,6 +68,10 @@ public class PlatformNewSoOutStockConsumerService extends AbstractNewPlatformCon
         // 亚马逊物流销售消费服务
         log.info("[新中台销售出库单消费] 消费:dto={}", JSONUtil.toJsonStr(ext));
         PlatformSoOutStockDTO dto = JSONObject.parseObject(ext, PlatformSoOutStockDTO.class);
+        if (StringUtils.isBlank(dto.getShopId())){
+            ServiceException.runError("【生成亚马逊销售出库单】销售订单：{} 对应店铺或站点不存在", dto.getPlatformCode());
+        }
+
         // 查询销售订单是否存在?
         // 忽略店铺
         List<SoB2cEntity> soB2cEntityList = soB2cFeign.getByPlatformCode(
