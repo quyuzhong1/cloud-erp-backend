@@ -300,7 +300,8 @@
         si.currency_symbol,
         sd.amount,
         sd.tax_amount,
-        sd.exchange_rate
+        sd.exchange_rate,
+        si.sales_org_id
         FROM so_info si
         LEFT JOIN so_detail sd ON si.id = sd.main_id AND si.is_deleted = FALSE
         WHERE sd.is_deleted = FALSE

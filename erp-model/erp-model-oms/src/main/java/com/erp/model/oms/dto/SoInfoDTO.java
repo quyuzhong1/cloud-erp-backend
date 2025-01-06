@@ -2340,6 +2340,10 @@ public class SoInfoDTO implements Serializable {
          *汇率
          */
         private BigDecimal exchangeRate;
+        /**
+         * 销售组织id
+         */
+        private String salesOrgId;
     }
 
     @Data
