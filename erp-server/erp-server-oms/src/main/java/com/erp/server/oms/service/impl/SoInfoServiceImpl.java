@@ -2132,8 +2132,11 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             CustomerInfoEntity customerInfoEntity = customerInfoEntities.stream().filter(req -> req.getId().equals(view.getCustomerId())).findFirst().orElse(new CustomerInfoEntity());
             view.setCustomerName(customerInfoEntity.getName());
             view.setReturnDate(LocalDate.now());
-            view.setWarehouseId(soWarehouseDTO.getWarehouseId());
-            view.setWarehouseName(soWarehouseDTO.getWarehouseName());
+            //限制销售组织下的
+            if(soWarehouseDTO.getOrgId().equals(view.getSalesOrgId())){
+                view.setWarehouseId(soWarehouseDTO.getWarehouseId());
+                view.setWarehouseName(soWarehouseDTO.getWarehouseName());
+            }
         }
         return viewList;
     }

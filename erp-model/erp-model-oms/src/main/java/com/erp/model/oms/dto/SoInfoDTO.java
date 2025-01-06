@@ -2302,6 +2302,10 @@ public class SoInfoDTO implements Serializable {
          * 备注
          */
         private String remark;
+        /**
+         * 销售组织id
+         */
+        private String salesOrgId;
     }
 
     @Data

@@ -254,5 +254,9 @@ public class CfgSettingValueDTO implements Serializable {
          * 仓库名称
          */
         private String warehouseName;
+        /**
+         * 销售组织id
+         */
+        private String orgId;
     }
 }
