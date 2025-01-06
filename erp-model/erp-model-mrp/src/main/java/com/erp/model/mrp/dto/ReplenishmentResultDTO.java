@@ -1353,6 +1353,7 @@ public class ReplenishmentResultDTO {
             entity.setSourceType(dto.getSourceType());
             entity.setCalcVersion(calcVersion);
             entity.setShopPreQty(dto.getShopPreQty());
+            entity.setWarehouseId(dto.getWarehouseId());
             return entity;
         }
     }
