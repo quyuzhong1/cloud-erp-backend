@@ -4,7 +4,6 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson2.JSON;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
@@ -139,6 +138,10 @@ public class InventoryTradingServiceImpl implements InventoryTradingService {
      * @param transactionDTO    交易记录
      */
     private void checkHasApproved(InventoryTransactionDTO transactionDTO) {
+        //采购订单结束交货不需要校验
+        if (CharSequenceUtil.equals(transactionDTO.getDictBizType(),InventoryBusinessTypeEnum.PURCHASE_ORDER_FINISH.getCode())) {
+            return;
+        }
         TransactionFlowEntity transactionFlow;
         LambdaQueryWrapper<TransactionFlowEntity> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(TransactionFlowEntity::getSourceType, transactionDTO.getSourceType())
