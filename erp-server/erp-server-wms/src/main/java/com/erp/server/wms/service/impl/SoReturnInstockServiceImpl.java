@@ -338,24 +338,25 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                 entity.setSoCode(soB2cReturnEntity.getSoCode());
             }else{
                 SoReturnEntity soReturn = soReturnFeign.getSoReturnById(soReturnId);
-                //对应的就是销售订单id
-                String soId = soReturn.getSourceId();
-                if (CharSequenceUtil.isNotBlank(soId)) {
-                    SoInfoEntity soInfo = soInfoFeign.getSoInfoById(soId);
-                    if (!Objects.isNull(soInfo)) {
-                        dto.setSellerId(soInfo.getSellerId());
-                        dto.setCustomerId(soInfo.getCustomerId());
-                        dto.setSalesDeptId(soInfo.getSalesDeptId());
-                        dto.setWarehouseId(soReturn.getWarehouseId());
-                        dto.setSalesOrgId(soInfo.getSalesOrgId());
-                        dto.setType(soInfo.getOrderType());
-                        entity.setSoId(soInfo.getId());
-                        entity.setSoCode(soInfo.getCode());
-                    }
-                }
                 if (!Objects.isNull(soReturn)) {
                     dto.setSoReturnId(soReturnId);
                     dto.setSoReturnCode(soReturn.getCode());
+                    dto.setSellerId(soReturn.getSellerId());
+                    dto.setCustomerId(soReturn.getCustomerId());
+                    dto.setSalesDeptId(soReturn.getSalesDeptId());
+                    dto.setWarehouseId(soReturn.getWarehouseId());
+                    dto.setSalesOrgId(soReturn.getSalesOrgId());
+                    dto.setType(soReturn.getType());
+
+                    //对应的就是销售订单id
+                    String soId = soReturn.getSourceId();
+                    if (CharSequenceUtil.isNotBlank(soId)) {
+                        SoInfoEntity soInfo = soInfoFeign.getSoInfoById(soId);
+                        if (!Objects.isNull(soInfo)) {
+                            entity.setSoId(soInfo.getId());
+                            entity.setSoCode(soInfo.getCode());
+                        }
+                    }
                 }
             }
         } else {
