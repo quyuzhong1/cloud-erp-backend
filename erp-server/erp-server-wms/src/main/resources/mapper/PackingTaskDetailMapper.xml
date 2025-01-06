@@ -73,14 +73,14 @@
             packing_task_detail ptd
                 LEFT JOIN product_purchase pp ON ptd.sku_id = pp.sku_id AND pp.is_deleted = FALSE
         where ptd.is_deleted = FALSE
-        <choose>
-            <when test="searchMode != null and searchMode == 'fuzzy'">
+        <if test="searchKey != null and searchKey != ''">
+            <if test="searchMode != null and searchMode == 'fuzzy'">
                 AND (COALESCE(ptd.third_barcode, '') || ' ' || COALESCE(ptd.sku_no, '') || ' ' || COALESCE(ptd.fn_sku, '') || ' ' || COALESCE(pp.ean, '')) ILIKE CONCAT('%', #{searchKey}::text,'%')
-            </when>
-            <otherwise>
+            </if>
+            <if test="searchMode != null and searchMode == 'perfect'">
                 AND (ptd.sku_no = #{searchKey}  OR ptd.fn_sku = #{searchKey}  OR pp.ean = #{searchKey} OR ptd.third_barcode = #{searchKey})
-            </otherwise>
-        </choose>
+            </if>
+        </if>
         <if test="taskId != null and taskId != ''">
             AND ptd.main_id = #{taskId}
         </if>
