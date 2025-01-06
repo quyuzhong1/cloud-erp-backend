@@ -2,6 +2,7 @@ package com.erp.server.wms.service;
 
 import com.common.business.service.SuperService;
 import com.erp.model.oms.entity.SoDetailEntity;
+import com.erp.model.wms.dto.SoB2bProcessingDTO;
 import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.model.wms.dto.SoOutstockDetailDTO;
 import com.erp.model.wms.entity.SoOutstockDetailEntity;
@@ -164,4 +165,12 @@ public interface SoOutstockDetailService extends SuperService<SoOutstockDetailEn
 //    List<SoOutstockDTO.GroupSkuDTO> listGroupSkuByMainId(String mainId);
 
     Boolean updateSoOutPrice(List<SoDetailEntity> soDetailEntityList);
+    /**
+     * 根据来源明细id查询
+     * @author will
+     * @date 2024/12/19 18:26
+     * @param sourceDetailIdList
+     * @return List<ResponseDTO>
+     */
+    List<SoB2bProcessingDTO.ResponseDTO> listSoOutstockBySourceIdList(List<String> sourceDetailIdList);
 }

@@ -5,10 +5,7 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.wms.dto.PickingDetailDTO;
-import com.erp.model.wms.dto.inventory.InventoryDTO;
-import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
-import com.erp.model.wms.dto.inventory.InventoryReportDTO;
-import com.erp.model.wms.dto.inventory.InventorySaveDTO;
+import com.erp.model.wms.dto.inventory.*;
 import com.erp.model.wms.entity.InventoryEntity;
 import com.erp.model.wms.entity.StocktakingPlanDetailEntity;
 import com.erp.model.wms.entity.StocktakingPlanEntity;
@@ -353,13 +350,10 @@ public interface InventoryService extends SuperService<InventoryEntity> {
     List<InventoryEntity> listInventoryBySkuIds(InventoryQtyDTO.InventoryBySkuDTO dto);
     /**
      * 根据skuId、仓库id、仓位、库存状态 获取库存信息
-     * @param skuId                 SKU ID
-     * @param warehouseId           仓库ID
-     * @param warehouseLocation     仓位
-     * @param inventoryStatus       库存状态
-     * @return                      库存信息
+     * @param transactionDTO
+     * @return InventoryEntity
      */
-    InventoryEntity getInventory(String skuId, String warehouseId, String warehouseLocation, String inventoryStatus);
+    InventoryEntity getInventory(InventoryTransactionDTO transactionDTO);
 
     PagingVO<DynamicExcelDTO> exportWmsInventoryAge(PagingDTO<InventoryReportDTO.ExportInventoryAgeSearchParamDTO> dto);
 }

@@ -360,6 +360,18 @@ public class SoB2cEntity extends BaseEntity<SoB2cEntity> {
     @TableField("so_outstock_date")
     private LocalDate soOutstockDate;
 
+    /**
+     * 第三方编号
+     */
+    @TableField("third_code")
+    private String thirdCode;
+
+    /**
+     * 第三方来源系统
+     */
+    @TableField("third_system")
+    private String thirdSystem;
+
     public static final String CODE = "code";
 
     public static final String APPROVE_STATUS = "approve_status";
@@ -475,6 +487,18 @@ public class SoB2cEntity extends BaseEntity<SoB2cEntity> {
                 SoB2cDTO.LabelDTO labelJsonDTO = JSONUtil.toBean(this.labelJson, SoB2cDTO.LabelDTO.class);
                 //平台仓发货
                 return "fulfillment".equalsIgnoreCase(labelJsonDTO.getLogisticType());
+            }
+        }
+        if(PlatformDictEnum.TE_MU.getCode().equalsIgnoreCase(this.dictPlatform)
+        ||PlatformDictEnum.RAKUTEN.getCode().equalsIgnoreCase(this.dictPlatform)
+        ||PlatformDictEnum.EBAY.getCode().equalsIgnoreCase(this.dictPlatform)){
+            if (StrUtil.isNotBlank(this.labelJson)) {
+                SoB2cDTO.LabelDTO labelJsonDTO = JSONUtil.toBean(this.labelJson, SoB2cDTO.LabelDTO.class);
+                if(Objects.isNull(labelJsonDTO.getIsPlatformWarehouseOrder())){
+                    return false;
+                }
+                //平台仓发货
+                return labelJsonDTO.getIsPlatformWarehouseOrder();
             }
         }
         return false;

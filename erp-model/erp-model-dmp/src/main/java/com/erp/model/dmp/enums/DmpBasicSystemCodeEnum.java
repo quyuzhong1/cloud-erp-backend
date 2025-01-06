@@ -27,6 +27,7 @@ public enum DmpBasicSystemCodeEnum implements EnumMessage {
     ANTU("antu", "安兔"),
     SHOPEE("shopee", "虾皮"),
     SDY("sdy", "数帝云"),
+    LING_XING("lingxing", "领星"),
     ;
     /**
      * 类型

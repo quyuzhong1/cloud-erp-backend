@@ -194,12 +194,38 @@ public class SoB2cDetailEntity extends BaseEntity<SoB2cDetailEntity> {
      */
     @TableField("is_sign_shipped")
     private Boolean isSignShipped;
+    /**
+     * 成本来源
+     */
+    @TableField("cost_source")
+    private String costSource;
+    /**
+     * 材料成本（本位币）
+     */
+    @TableField("product_cost")
+    private BigDecimal productCost;
+    /**
+     * 头程运费（本位币）
+     */
+    @TableField("first_mile_shipping_cost")
+    private BigDecimal firstMileShippingCost;
+    /**
+     * 清关税费（本位币）
+     */
+    @TableField("clearance_customs_tax")
+    private BigDecimal clearanceCustomsTax;
 
     /**
      * 还原id
      */
     @TableField(exist = false)
     private String revertId;
+
+    /**
+     * 第三方明细ID/编号
+     */
+    @TableField("third_detail_id")
+    private String thirdDetailId;
 
     public static final String MAIN_ID = "main_id";
 

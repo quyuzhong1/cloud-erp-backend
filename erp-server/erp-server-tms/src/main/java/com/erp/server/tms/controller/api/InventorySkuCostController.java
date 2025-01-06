@@ -128,11 +128,6 @@ public class InventorySkuCostController extends BaseController {
      */
     @LogAction(value = LogActionEnum.APPROVE, desc = "批量审核SKU成本")
     @PostMapping("/approve")
-//    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-//            tableField = "create_user_id",
-//            menuCode = "tms:inventorySkuCost:approve",
-//            serviceClass = inventorySkuCostService.class,
-//            keyIdName = "ids")
     public ApiResult<List<BatchResultDTO>> approve(@RequestBody @Validated BaseApproveParamDTO dto) {
         List<String> ids = dto.getIds().stream().distinct().collect(Collectors.toList());
         List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());

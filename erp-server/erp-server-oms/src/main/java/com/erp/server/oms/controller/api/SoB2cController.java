@@ -1470,6 +1470,8 @@ public class SoB2cController extends BaseController {
                 continue;
             }
             SkuVO skuVO = skuVOList.stream().filter(e -> Objects.nonNull(e) && Objects.equals(e.getSkuId(), dto.getTargetId())).findFirst().orElse(null);
+            //重置sku含税单价信息
+            soB2cSplitService.resetSkuVO(entity,detail,skuVO);
             if (Objects.isNull(skuVO)){
                 result = BatchResultDTO.fail(dto.getId(), entity.getCode(), StrUtil.format("更换SKU【{}】记录不存在",dto.getTargetId()));
                 resultDTOS.add(result);

@@ -246,11 +246,7 @@ public class InventoryTransCoreServiceImpl implements InventoryTransCoreService 
                 stockBaseDTO.setWarehouseId(flow.getWarehouseId());
                 stockBaseDTO.setWarehouseLocation(warehouseLocation);
                 stockBaseDTO.setInventoryStatus(rule.getInventoryStatus());
-                InventoryEntity inventoryEntity=inventoryService.getInventory(
-                        stockBaseDTO.getSkuId(),
-                        stockBaseDTO.getWarehouseId(),
-                        stockBaseDTO.getWarehouseLocation(),
-                        stockBaseDTO.getInventoryStatus().getCode());
+                InventoryEntity inventoryEntity=inventoryService.getInventory(InventoryTransactionDTO.getInventoryTransactionDTO(stockBaseDTO));
                 transactionDTO.setInventoryId(null==inventoryEntity?null:inventoryEntity.getId());
 
                 // 交易明细信息
@@ -334,24 +330,18 @@ public class InventoryTransCoreServiceImpl implements InventoryTransCoreService 
                 InventoryStockBaseDTO stockBaseDTO = new InventoryStockBaseDTO();
                 stockBaseDTO.setSkuId(flow.getSkuId());
                 stockBaseDTO.setSkuNo(flow.getSkuNo());
+                stockBaseDTO.setInventoryStatus(rule.getInventoryStatus());
                 if(rule.getWarehouseOption()==InventoryWarehouseOptionEnum.WAREHOUSE_CURRENT){
                     stockBaseDTO.setOrgId(getOrgIdFromWarehouse(warehouseEntityList,flow.getCurWarehouseId()));
                     stockBaseDTO.setWarehouseId(flow.getCurWarehouseId());
                     stockBaseDTO.setWarehouseLocation(flow.getCurWarehouseLocation());
-                    stockBaseDTO.setInventoryStatus(rule.getInventoryStatus()); // 调出仓的库存状态
-
                 }else {
                     stockBaseDTO.setOrgId(getOrgIdFromWarehouse(warehouseEntityList,flow.getTargetWarehouseId()));
                     stockBaseDTO.setWarehouseId(flow.getTargetWarehouseId());
                     stockBaseDTO.setWarehouseLocation(flow.getTargetWarehouseLocation());
-                    stockBaseDTO.setInventoryStatus(rule.getInventoryStatus()); // 调入仓的库存状态
                 }
-                InventoryEntity inventoryEntity=inventoryService.getInventory(
-                        stockBaseDTO.getSkuId(),
-                        stockBaseDTO.getWarehouseId(),
-                        stockBaseDTO.getWarehouseLocation(),
-                        stockBaseDTO.getInventoryStatus().getCode());
-                transactionDTO.setInventoryId(null==inventoryEntity?null:inventoryEntity.getId());
+                InventoryEntity inventoryEntity=inventoryService.getInventory(InventoryTransactionDTO.getInventoryTransactionDTO(stockBaseDTO));
+                transactionDTO.setInventoryId(null == inventoryEntity ? null : inventoryEntity.getId());
 
                 // 交易明细信息
                 transactionDTO.setSkuId(stockBaseDTO.getSkuId());

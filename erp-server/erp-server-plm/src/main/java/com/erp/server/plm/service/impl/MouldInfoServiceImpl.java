@@ -957,9 +957,9 @@ public class MouldInfoServiceImpl extends SuperServiceImpl<MouldInfoMapper, Moul
             dto.setSupplierName(supplierMap.get(dto.getSupplierId()));
             dto.setTypeName(mouldSettingMap.get(dto.getTypeId()));
             dto.setWarehouseLocationName(warehouseLocationMap.get(dto.getWarehouseLocation()));
-            dto.setLength(MathUtil.divide(dto.getLength(), new BigDecimal(10), 2));
-            dto.setWidth(MathUtil.divide(dto.getWidth(), new BigDecimal(10), 2));
-            dto.setHeight(MathUtil.divide(dto.getHeight(), new BigDecimal(10), 2));
+            dto.setLength(dto.getLength());
+            dto.setWidth(dto.getWidth());
+            dto.setHeight(dto.getHeight());
             if (!ObjectUtils.isEmpty(dto.getImagesUrl())) {
                 dto.setImageUrl(dto.getImagesUrl().split(",")[0]);
             }

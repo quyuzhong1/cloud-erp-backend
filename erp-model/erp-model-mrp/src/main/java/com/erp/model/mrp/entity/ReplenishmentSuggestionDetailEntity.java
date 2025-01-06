@@ -289,6 +289,12 @@ public class ReplenishmentSuggestionDetailEntity extends BaseEntity<Replenishmen
     private BigDecimal purchasePrice;
 
     /**
+     * 采购单价
+     */
+    @TableField("real_sale_qty")
+    private JSONArray realSaleQty;
+
+    /**
      * 销售价
      */
     @TableField("sales_price")

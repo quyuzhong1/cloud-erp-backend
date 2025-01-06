@@ -1382,6 +1382,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
             SupplierExportExcelDTO exportExcel = new SupplierExportExcelDTO();
             exportExcel.setName(item.getName());
             exportExcel.setCode(item.getCode());
+            exportExcel.setVoucherNo(item.getVoucherNo());
             //禁用状态 true 禁用
             boolean disabled = Objects.nonNull(item.getDisabled()) ? item.getDisabled() : true;
             exportExcel.setEnableStatus(disabled ? "停用" : "启用");
@@ -1438,6 +1439,22 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
 
         }
         return new PagingVO<>(resultList, (int) page.getTotal(), dto.getPageSize(), dto.getCurrPage());
+    }
+
+    @Override
+    public Boolean updateVoucherNo(List<String> ids, String voucherNo) {
+        if (CollectionUtils.isEmpty(ids)) {
+            return Boolean.TRUE;
+        }
+        this.lambdaUpdate()
+                .in(SupplierEntity::getId, ids)
+                .set(SupplierEntity::getVoucherNo, voucherNo)
+                .update(new SupplierEntity());
+        ids.forEach(v->{
+            String content = StrUtil.format("更新外部平台单号为：{}", voucherNo);
+            moduleOperateLogService.addModuleOperateLog(content, ModuleTypeEnum.SUPPLIER.getCode(), v, "更新外部平台单号");
+        });
+        return Boolean.TRUE;
     }
 
     /**

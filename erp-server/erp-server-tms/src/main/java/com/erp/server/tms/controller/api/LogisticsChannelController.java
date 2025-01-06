@@ -3,6 +3,7 @@ package com.erp.server.tms.controller.api;
 
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.DataPermission;
+import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
@@ -12,6 +13,7 @@ import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.tms.dto.LogisticsChannelDTO;
+import com.erp.model.tms.dto.LogisticsSupplierDTO;
 import com.erp.model.tms.entity.LogisticsChannelEntity;
 import com.erp.server.tms.service.LogisticsChannelService;
 import lombok.extern.slf4j.Slf4j;
@@ -242,4 +244,16 @@ public class LogisticsChannelController extends BaseController {
         logisticsChannelService.deliverySetting(dto);
         return success();
     }
+
+    /**
+     * paging
+     *
+     */
+    @PostMapping("/paging")
+    @WebAdvanceQuery
+    public ApiResult<PagingVO<LogisticsChannelDTO.PagingViewDTO>> paging(@RequestBody @Validated PagingDTO<LogisticsChannelDTO.PagingParamDTO> dto) {
+        PagingVO<LogisticsChannelDTO.PagingViewDTO> pagingVO = logisticsChannelService.paging(dto);
+        return success(pagingVO);
+    }
+
 }

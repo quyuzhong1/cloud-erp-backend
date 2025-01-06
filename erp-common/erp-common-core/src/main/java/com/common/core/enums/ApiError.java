@@ -197,6 +197,7 @@ public enum ApiError implements Serializable {
     ERROR_SDY_NOT_FOUND_SHOP_MAPPING(80014,"旺店通退货同步数帝云单据未找到对应的店铺映射【{}】"),
     ERROR_SDY_NOT_FOUND_SHOP(80015,"数据同步数帝云未找到店铺信息，店铺id【{}】"),
     ERROR_SDY_NOT_FOUND_CUSTOMER(80016,"店铺未绑定客户信息，店铺id【{}】"),
+    ERROR_THIRD_LOGISTICS_NOTFOUND(80017,"第三方渠道不存在"),
 
     /**
      * 工作流错误 workflow
@@ -1186,6 +1187,7 @@ public enum ApiError implements Serializable {
 
     ERROR_92248(92248,"中转规则自动产生的直接调拨单,不支持修改"),
     ERROR_92249(92249,"打印FNSKU标签失败"),
+    ERROR_INVENTORY_NOT_EXIST(92250, "仓库:【{}】,SKU:【{}】,库存状态:【{}】,库存不存在"),
     /**
      * OMS 错误
      * 从92000 开始  以端口号

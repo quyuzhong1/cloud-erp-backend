@@ -148,6 +148,15 @@ public class ExportWmsFeignController {
     private ReportOrderSalesService reportOrderSalesService;
 
     @Resource
+    private SoB2bProcessingService soB2bProcessingService;
+
+    @Resource
+    private SoB2cProcessingService soB2cProcessingService;
+
+    @Resource
+    private FirstMileProcessingService firstMileProcessingService;
+
+    @Resource
     private VirtualInventoryDetailService virtualInventoryDetailService;
 
     @Resource
@@ -673,6 +682,7 @@ public class ExportWmsFeignController {
             menuCode = "wms:warehouseReceive:paging",
             tableAlias = "wr"
     )
+    @WebAdvanceQuery(handler = WarehouseReceiveQueryHandler.class)
     public PagingVO<WarehouseReceiveExportExcelDTO> exportWarehouseReceive(@RequestBody PagingDTO<WarehouseReceiveDTO.PagingParamDTO> dto) {
         return warehouseReceiveService.exportWarehouseReceive(dto);
     }
@@ -729,6 +739,33 @@ public class ExportWmsFeignController {
     @WebAdvanceQuery(handler = VirtualWarehouseAllocationQueryHandler.class)
     public PagingVO<VirtualWarehouseAllocationDTO.ExportStatisticsDTO> exportVirtualStatistics(@RequestBody PagingDTO<VirtualWarehouseAllocationDTO.ExportDTO> dto) {
         return virtualWarehouseAllocationService.exportVirtualStatistics(dto);
+    }
+
+    /**
+     * 导出b2b销售订单虚拟仓订单跟踪
+     */
+    @PostMapping("/exportSoB2bProcessing")
+    @WebAdvanceQuery
+    public PagingVO<SoB2bProcessingDTO.ListDTO> exportSoB2bProcessing(@RequestBody PagingDTO<SoB2bProcessingDTO.PagingParamDTO> dto){
+        return soB2bProcessingService.paging(dto);
+    }
+
+    /**
+     * 导出b2c销售订单虚拟仓订单跟踪
+     */
+    @PostMapping("/exportSoB2cProcessing")
+    @WebAdvanceQuery
+    public PagingVO<SoB2cProcessingDTO.ListDTO> exportSoB2cProcessing(@RequestBody PagingDTO<SoB2cProcessingDTO.PagingParamDTO> dto){
+        return soB2cProcessingService.paging(dto);
+    }
+
+    /**
+     * 导出头程销售订单虚拟仓订单跟踪
+     */
+    @PostMapping("/exportFirstMileProcessing")
+    @WebAdvanceQuery
+    public PagingVO<FirstMileProcessingDTO.ListDTO> exportFirstMileProcessing(@RequestBody PagingDTO<FirstMileProcessingDTO.PagingParamDTO> dto){
+        return firstMileProcessingService.paging(dto);
     }
 
     /**

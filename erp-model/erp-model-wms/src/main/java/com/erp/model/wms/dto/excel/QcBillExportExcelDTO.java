@@ -218,4 +218,7 @@ public class QcBillExportExcelDTO  implements Serializable {
     @ExcelProperty(value = "创建时间", index = 25,converter= LocalDateStringConverter.class)
     private LocalDateTime createTime;
 
+    private String sourceTypeName;
+    private String sourceCode;
+
 }

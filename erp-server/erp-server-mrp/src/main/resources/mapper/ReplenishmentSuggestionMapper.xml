@@ -5,9 +5,9 @@
 
     <select id="paging" resultType="com.erp.model.mrp.vo.ReplenishmentSuggestionVO$PagingView">
         select rs.id,
-        rsd.update_time,
+        rsd.update_time updateTime,
         rs.platform_type,
-        rs.sku_id,
+        rs.sku_id skuId,
         rs.sku_no,
         rs.country,
         rs.shop_id,
@@ -16,18 +16,19 @@
         rs.remark,
         rsd.id as detailId,
         rsd.sku_type,
-        rsd.fba_usable_qty,
-        rsd.fba_in_transit_qty,
-        rsd.fba_plan_delivery_qty,
-        rsd.overseas_usable_qty,
-        rsd.overseas_in_transit_qty,
-        rsd.overseas_plan_delivery_qty,
-        rsd.local_usable_qty,
-        rsd.local_in_transit_qty,
-        rsd.local_plan_purchase_qty,
-        rsd.total_inventory_qty,
+        rsd.fba_usable_qty fbaUsableQty,
+        rsd.fba_in_transit_qty fbaInTransitQty,
+        rsd.fba_plan_delivery_qty fbaPlanDeliveryQty,
+        rsd.overseas_usable_qty overseasUsableQty,
+        rsd.overseas_in_transit_qty overseasInTransitQty,
+        rsd.overseas_plan_delivery_qty overseasPlanDeliveryQty,
+        rsd.local_usable_qty localUsableQty,
+        rsd.local_in_transit_qty localInTransitQty,
+        rsd.local_plan_purchase_qty localPlanPurchaseQty,
+        rsd.total_inventory_qty totalInventoryQty,
         rsd.sales_qty as salesQtyJson,
         rsd.avg_sales_qty as avgSalesQtyJson,
+        rsd.real_sale_qty as realSalesQtyJson,
         rsd.sales_estimate_qty as salesEstimateQtyJson,
         rsd.avg_sales_estimate_qty as avgSalesEstimateQtyJson,
         rsd.purchase_approve_days,
@@ -38,11 +39,11 @@
         rsd.purchase_cycle_days,
         rsd.safe_days,
         rsd.instock_days,
-        rsd.fba_sellable_days,
-        rsd.sellable_days,
-        rsd.overseas_sellable_days,
-        rsd.local_sellable_days,
-        rsd.total_sellable_days,
+        rsd.fba_sellable_days fbaSellableDays,
+        rsd.sellable_days sellableDays,
+        rsd.overseas_sellable_days overseasSellableDays,
+        rsd.local_sellable_days localSellableDays,
+        rsd.total_sellable_days totalSellableDays,
         rsd.delivery_min_days,
         rsd.delivery_default_days,
         rsd.delivery_max_days,
@@ -53,9 +54,30 @@
         rsd.logistics_method,
         rsd.logistics_max_method,
         rsd.stock_up_min_days,
-        rsd.stock_up_default_days,
+        rsd.stock_up_default_days stockUpDefaultDays,
         rsd.stock_up_max_days,
         rsd.cfg_fba_in_transit,
+        <if test="params.recentSort != null and params.recentSort.size > 0">
+            <foreach collection="params.recentSort" item="item">
+                <choose>
+                    <when test="item.field == 'outOfStockDay'">
+                        (SELECT date FROM recent_suggestion_detail WHERE replenishment_detail_id = rsd.id and "type" = 'RECENT_OUT_OF_STOCK'  and is_deleted = false) outOfStockDay,
+                    </when>
+                    <when test="item.field == 'suggestShippingDate'">
+                        (SELECT date FROM recent_suggestion_detail WHERE replenishment_detail_id = rsd.id and "type" = 'RECENT_DELIVERY'  and is_deleted = false) suggestShippingDate,
+                    </when>
+                    <when test="item.field == 'suggestShippingQty'">
+                        (SELECT qty FROM recent_suggestion_detail WHERE replenishment_detail_id = rsd.id and "type" = 'RECENT_DELIVERY'  and is_deleted = false) suggestShippingQty,
+                    </when>
+                    <when test="item.field == 'suggestPurchaseDate'">
+                        (SELECT date FROM recent_suggestion_detail WHERE replenishment_detail_id = rsd.id and "type" = 'RECENT_PURCHASE'  and is_deleted = false) suggestPurchaseDate,
+                    </when>
+                    <when test="item.field == 'suggestPurchaseQty'">
+                        (SELECT qty FROM recent_suggestion_detail WHERE replenishment_detail_id = rsd.id and "type" = 'RECENT_PURCHASE'  and is_deleted = false) suggestPurchaseQty,
+                    </when>
+                </choose>
+            </foreach>
+        </if>
         rsd.cfg_rule
         from replenishment_suggestion rs
         left join replenishment_suggestion_detail rsd on rs.id = rsd.main_id and rsd.is_deleted = false
@@ -69,7 +91,64 @@
                 and exists (select id from replenishment_suggestion_favorite where is_deleted = false and replenishment_suggestion_id =  rs.id and user_id = #{userId})
             </if>
         </where>
-        order by rs.replenishment_type asc
+        order by
+        <if test="params.recentSort != null and params.recentSort.size > 0">
+            <foreach collection="params.recentSort" item="item">
+                <choose>
+                    <when test="item.field == 'outOfStockDay'">
+                        outOfStockDay ${item.sort} NULLS LAST,
+                    </when>
+                    <when test="item.field == 'suggestShippingDate'">
+                        suggestShippingDate ${item.sort} NULLS LAST,
+                    </when>
+                    <when test="item.field == 'suggestShippingQty'">
+                        suggestShippingQty ${item.sort} NULLS LAST,
+                    </when>
+                    <when test="item.field == 'suggestPurchaseDate'">
+                        suggestPurchaseDate ${item.sort} NULLS LAST,
+                    </when>
+                    <when test="item.field == 'suggestPurchaseQty'">
+                        suggestPurchaseQty ${item.sort} NULLS LAST,
+                    </when>
+                </choose>
+            </foreach>
+        </if>
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort} NULLS LAST
+            </foreach>
+        </if>
+        <if test="params.realSaleQtySort != null">
+            COALESCE(
+            (
+            SELECT value->>'qty'
+            FROM jsonb_array_elements(real_sale_qty::jsonb) AS elements(value)
+            WHERE value->>'type' = '30天'
+            )::NUMERIC,
+            0
+            ) ${params.realSaleQtySort.sort} NULLS LAST,
+        </if>
+        <if test="params.stockingSort != null">
+            COALESCE(
+            (
+            SELECT value->>'qty'
+            FROM jsonb_array_elements(sales_estimate_qty::jsonb) AS elements(value)
+            WHERE value->>'type' = '备货期销量'
+            )::NUMERIC,
+            0
+            ) ${params.stockingSort.sort} NULLS LAST,
+        </if>
+        <if test="params.avgStockingSort != null">
+        COALESCE(
+            (
+            SELECT value->>'qty'
+            FROM jsonb_array_elements(avg_sales_estimate_qty::jsonb) AS elements(value)
+            WHERE value->>'type' = '备货期日均'
+            )::NUMERIC,
+            0
+            ) ${params.avgStockingSort.sort} NULLS LAST,
+        </if>
+        rs.replenishment_type asc
     </select>
 
     <select id="view" resultType="com.erp.model.mrp.vo.ReplenishmentSuggestionVO$View">

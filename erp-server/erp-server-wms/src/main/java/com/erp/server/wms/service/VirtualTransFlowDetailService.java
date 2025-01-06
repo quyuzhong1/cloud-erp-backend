@@ -88,4 +88,11 @@ public interface VirtualTransFlowDetailService extends SuperService<VirtualTrans
      * @return List<VirtualTransFlowDetailEntity>
      */
     List<VirtualTransFlowDetailEntity> listByVirtualTransFlowId(String parentVirtualTransFlowId);
+    /**
+     * 添加流水明细
+     * @author will
+     * @date 2024/12/27 20:12
+     * @param value
+     */
+    void handleAddTransFlowDetail(List<VirtualTransFlowEntity> value);
 }

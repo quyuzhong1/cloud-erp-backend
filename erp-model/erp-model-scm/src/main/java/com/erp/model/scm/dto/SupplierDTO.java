@@ -2,6 +2,7 @@ package com.erp.model.scm.dto;
 
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.AdvanceQueryDTO;
+import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.ApproveStatusEnum;
@@ -35,6 +36,16 @@ import java.util.Map;
  * @Created by yl
  */
 public class SupplierDTO implements Serializable {
+    @Data
+    @NoArgsConstructor
+    public static class VoucherNoDTO extends BaseIdsDTO.IdsDTO {
+
+        @NotBlank(message = "外部平台单号")
+        @Size(max = 255,message = "填写信息不能超过255字符")
+        private String voucherNo;
+
+    }
+
     /**
      * 批量修改供应商分类
      */
@@ -249,6 +260,15 @@ public class SupplierDTO implements Serializable {
          */
         private String name;
 
+        /**
+         * 供应商编码
+         */
+        private String code;
+
+        /**
+         * 外部平台编号
+         */
+        private String voucherNo;
 
         /**
          * 分类id
@@ -384,6 +404,10 @@ public class SupplierDTO implements Serializable {
         @NotBlank(message = "供应商名称不能为空")
         @Size(max = 50, message = "供应商名称最大50字符")
         private String name;
+        /**
+         * 外部平台编号
+         */
+        private String voucherNo;
 
 
         /**
@@ -543,6 +567,10 @@ public class SupplierDTO implements Serializable {
          */
         private String code;
 
+        /**
+         * 外部平台编号
+         */
+        private String voucherNo;
 
         /**
          * 阶段

@@ -85,7 +85,7 @@ public interface OrderHistorySalesEsService {
      * @param startDate 开始时间
      * @param endDate   结束时间
      */
-    Page<OrderHistorySalesEsEntity> findByShopIdInAndSkuIdInAndDateBetween(List<String> shopIds, List<String> skuIds, LocalDate startDate, LocalDate endDate, Pageable pageable);
+    List<OrderHistorySalesEsEntity> findByShopIdInAndSkuIdInAndDateBetween(List<String> shopIds, List<String> skuIds, LocalDate startDate, LocalDate endDate, Object[] searchAfterValues);
 
 
     /**
@@ -99,9 +99,27 @@ public interface OrderHistorySalesEsService {
     List<OrderHistorySalesEsEntity> findByShopIdAndSkuIdAndDateBetween(String shopId, String skuId, LocalDate startDate, LocalDate endDate);
 
     /**
+     * 根据sku查询有销量店铺
+     * @param params 参数
+     */
+    List<String> hasSalesShopBySku(List<String> params);
+
+    /**
+     * 根据店铺查询有销量sku
+     * @param params 参数
+     */
+    List<String> hasSalesSkuByShop(List<String> params);
+
+    /**
      * 删除历史数据
      * @param startDate 开始日期
      * @param endDate 结束日期
      */
     void deleteByDateBetween(LocalDate startDate, LocalDate endDate);
+
+    /**
+     * 根据店铺查询有销量sku
+     * @param shopIds 店铺
+     */
+    Map<String, Set<String>> listSkuByShopId(Set<String> shopIds);
 }

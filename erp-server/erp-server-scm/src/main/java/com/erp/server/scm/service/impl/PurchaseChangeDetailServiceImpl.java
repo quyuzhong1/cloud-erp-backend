@@ -325,7 +325,7 @@ public class PurchaseChangeDetailServiceImpl extends SuperServiceImpl<PurchaseCh
                             && obj.getSupplierId().equals(purchaseChangeEntity.getSupplierId())
                             && CharSequenceUtil.equals(obj.getPurchaseOrgId(),purchaseOrderEntity.getPurchaseOrgId()))
                     .findFirst().orElse(null);
-            BigDecimal taxRate = (org.springframework.util.ObjectUtils.isEmpty(priceDTO) || Objects.nonNull(priceDTO.getTaxRate())) ?  BigDecimal.ZERO : priceDTO.getTaxRate();
+            BigDecimal taxRate = (org.springframework.util.ObjectUtils.isEmpty(priceDTO) || Objects.isNull(priceDTO.getTaxRate())) ?  BigDecimal.ZERO : priceDTO.getTaxRate();
             purchaseChangeDetailEntity.setTaxRate(MathUtil.divide(taxRate,MathUtil.BigDecimal_100));
         }
     }

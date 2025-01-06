@@ -3,7 +3,6 @@ package com.erp.server.wms.service.impl;
 import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.common.business.annotation.DataIdempotent;
 import com.common.business.dto.PlatformOrderQueryDTO;
@@ -45,7 +44,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -112,10 +110,10 @@ public class AsyncServiceImpl implements AsyncService {
 
     @Async("wmsErpExecutor")
     @Override
-    public void asyncShipOrder(String soId, String soCode, String dictPlatform, String submitPlatformUniqueKey, String sourceDTOJson, String businessDesc, boolean falseDeliveryFlag) {
+    public void asyncShipOrder(String soId, String soCode, String dictPlatform, String submitPlatformUniqueKey, String sourceDTOJson, String businessDesc, boolean falseDeliveryFlag, boolean hasNotOutstock) {
         try {
             // 根据提交平台唯一key幂等提交
-            submitShipOrder(soId, dictPlatform, falseDeliveryFlag, submitPlatformUniqueKey);
+            submitShipOrder(soId, dictPlatform, falseDeliveryFlag, submitPlatformUniqueKey,hasNotOutstock);
         } catch (Exception e) {
             log.error("【{}】销售单【{}】 标记发货失败 >>>错误信息{}", businessDesc, soCode, ExceptionUtil.stacktraceToString(e));
             // 独立异常
@@ -141,7 +139,7 @@ public class AsyncServiceImpl implements AsyncService {
 
     @Override
     @DataIdempotent(keyIdName = "submitPlatformUniqueKey")
-    public List<String> submitShipOrder(String soId, String dictPlatform, boolean falseDeliveryFlag, String submitPlatformUniqueKey) {
+    public List<String> submitShipOrder(String soId, String dictPlatform, boolean falseDeliveryFlag, String submitPlatformUniqueKey,boolean hasNotOutstock) {
         log.info("【{}】销售单【{}】 标记发货开始 >>>提交平台唯一key:{}", dictPlatform, soId, submitPlatformUniqueKey);
         // 查询本单明细有已发货标记跳过触发
         List<SoB2cDetailEntity> detailEntityList =FeignQuery.create(SoB2cDetailEntity.class)
@@ -158,6 +156,7 @@ public class AsyncServiceImpl implements AsyncService {
         platformShipOrderDTO.setDictPlatform(dictPlatform);
         platformShipOrderDTO.setSubmitPlatformUniqueKey(submitPlatformUniqueKey);
         platformShipOrderDTO.setFalseDeliveryFlag(falseDeliveryFlag);
+        platformShipOrderDTO.setHasNotOutStock(hasNotOutstock);
         List<String> detailIds = PlatformSaveHandler.shipOrder(platformShipOrderDTO);
         //更新销售明细标识
         soB2cFeign.updateSignShippedByDetailId(detailIds);
@@ -212,7 +211,7 @@ public class AsyncServiceImpl implements AsyncService {
                     soB2cEntity.getDictPlatform(),
                     soB2cEntity.convertSubmitPlatformUniqueKey(),
                     JSONUtil.toJsonStr(entity),
-                    businessDesc, false);
+                    businessDesc, false, false);
         } else {
             log.warn("【{}】未达到条件:忽略标记平台发货", soB2cEntity.getCode());
         }
