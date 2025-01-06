@@ -583,7 +583,8 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         }
         view.setAreaName(areaName);
         view.setSubregionName(subregionName);
-        view.setSellerName(sysUserFeign.getSysUserById(view.getSellerId()).getRealName());
+
+        view.setSellerName(sysUserFeign.getUserByUserId(view.getSellerId()).getRealName());
         view.setApproveStatusName(customer.getApproveStatus().getName());
         List<OmsAttachmentDTO.UpdateDTO> attachmentList = omsAttachmentService.getByBusinessIds(Arrays.asList(id));
         List<String> attachmentUrlList = attachmentList.stream().
