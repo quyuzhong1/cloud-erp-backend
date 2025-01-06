@@ -1118,7 +1118,15 @@ public class SoB2cDTO implements Serializable {
          * 接口：oms/common/enumDropDown?type=OrderSubType
          */
         private String transactionSubType;
+        /**
+         * 第三方编号
+         */
+        private String thirdCode;
 
+        /**
+         * 第三方来源系统
+         */
+        private String thirdSystem;
     }
 
 

@@ -378,7 +378,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
                         soB2cEntity.getDictPlatform(),
                         soB2cEntity.convertSubmitPlatformUniqueKey(),
                         id,
-                        businessDesc, false);
+                        businessDesc, false, false);
             } else {
                 log.warn("【{}】未达到条件:忽略标记平台发货", soB2cEntity.getCode());
             }
@@ -446,7 +446,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
                     soB2cEntity.getDictPlatform(),
                     soB2cEntity.convertSubmitPlatformUniqueKey(),
                     id,
-                    businessDesc, true);
+                    businessDesc, true, false);
         } else {
             log.warn("【{}】未达到条件:忽略标记平台发货", soB2cEntity.getCode());
         }
@@ -1226,7 +1226,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
                     soB2cEntity.getDictPlatform(),
                     soB2cEntity.convertSubmitPlatformUniqueKey(),
                     id,
-                    businessDesc, true);
+                    businessDesc, true, false);
         } else {
             log.warn("【{}】未达到条件:忽略标记平台发货", soB2cEntity.getCode());
         }
@@ -1644,7 +1644,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
                 platformShipOrderDTO.getDictPlatform(),
                 platformShipOrderDTO.getSoB2cId(),
                 platformShipOrderDTO.getSubmitPlatformUniqueKey(),
-                businessDesc, platformShipOrderDTO.isFalseDeliveryFlag());
+                businessDesc, platformShipOrderDTO.isFalseDeliveryFlag(), platformShipOrderDTO.isHasNotOutStock());
         return true;
     }
 

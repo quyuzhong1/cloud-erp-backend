@@ -25,6 +25,11 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
     }
 
     @Override
+    public List<PurchaseOrderDetailEntity> listBySourceDetailIdList(List<String> subDetailIdList) {
+        return baseMapper.listBySourceDetailIdList(subDetailIdList);
+    }
+
+    @Override
     public List<PurchaseOrderDetailEntity> ListProductDetailEntityByIds(List<String> ids) {
         if (CollectionUtils.isEmpty(ids)) {
             return new ArrayList<>();

@@ -3,6 +3,7 @@ package com.erp.server.oms.service.impl;
 import com.common.business.annotation.PlatformAnnotate;
 import com.common.business.config.AbstractSparrowAnnotationBeanMap;
 import com.common.business.enums.PlatformDictEnum;
+import com.common.core.exception.ServiceException;
 import com.erp.model.oms.dto.CancelAuthorizeDTO;
 import com.erp.model.oms.dto.RefreshShopTokenDTO;
 import com.erp.model.oms.dto.ShopAuthorizeDTO;
@@ -15,6 +16,7 @@ import org.springframework.stereotype.Component;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.Map;
+import java.util.Objects;
 
 @Component
 @Slf4j
@@ -37,6 +39,9 @@ public class AuthSaveHandler extends AbstractSparrowAnnotationBeanMap<PlatformAn
      */
     public static String getShopAuthorizeUrl(ShopAuthorizeUrlDTO dto) {
         IShopAuthorizeService<T> service = PAY_MAP.get(PlatformDictEnum.getByCode(dto.getPlatformCode()));
+        if(Objects.isNull(service)){
+            throw new ServiceException("未对接授权平台");
+        }
         return service.getShopAuthorizeUrl(dto);
     }
 
@@ -47,6 +52,9 @@ public class AuthSaveHandler extends AbstractSparrowAnnotationBeanMap<PlatformAn
      */
     public static Boolean shopAuthorize(ShopAuthorizeDTO dto, HttpServletResponse response){
         IShopAuthorizeService<T> service = PAY_MAP.get(PlatformDictEnum.getByCode(dto.getPlatformCode()));
+        if(Objects.isNull(service)){
+            throw new ServiceException("未对接授权平台");
+        }
         return service.shopAuthorize(dto, response);
     }
 
@@ -56,6 +64,9 @@ public class AuthSaveHandler extends AbstractSparrowAnnotationBeanMap<PlatformAn
      */
     public static Boolean cleanShopAuthorize(CancelAuthorizeDTO dto) {
         IShopAuthorizeService<T> service = PAY_MAP.get(PlatformDictEnum.getByCode(dto.getPlatformCode()));
+        if(Objects.isNull(service)){
+            throw new ServiceException("未对接授权平台");
+        }
         return service.cancelAuthorize(dto);
     }
 
@@ -65,6 +76,9 @@ public class AuthSaveHandler extends AbstractSparrowAnnotationBeanMap<PlatformAn
      */
     public static Boolean refreshShopToken(RefreshShopTokenDTO dto) {
         IShopAuthorizeService<T> service = PAY_MAP.get(PlatformDictEnum.getByCode(dto.getPlatformCode()));
+        if(Objects.isNull(service)){
+            throw new ServiceException("未对接授权平台");
+        }
         return service.refreshToken(dto);
     }
 

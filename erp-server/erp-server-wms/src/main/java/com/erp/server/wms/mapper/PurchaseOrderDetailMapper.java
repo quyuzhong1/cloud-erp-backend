@@ -26,4 +26,12 @@ public interface PurchaseOrderDetailMapper extends BaseMapper<PurchaseOrderDetai
      * @return int
      **/
     int updateBatchSelective(List<PurchaseOrderDetailEntity> list);
+    /**
+     * 来源明细id集合查询
+     * @author will
+     * @date 2024/12/30 19:39
+     * @param subDetailIdList
+     * @return List<PurchaseOrderDetailEntity>
+     */
+    List<PurchaseOrderDetailEntity> listBySourceDetailIdList(@Param("subDetailIdList")List<String> subDetailIdList);
 }

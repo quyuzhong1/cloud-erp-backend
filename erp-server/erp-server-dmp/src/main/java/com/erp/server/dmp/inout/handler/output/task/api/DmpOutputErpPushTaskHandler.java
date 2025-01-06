@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import com.erp.server.dmp.push.service.lingxing.LxCommonService;
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.dto.ShudiyunB2cOrderDTO;
 import org.apache.commons.lang.StringUtils;
@@ -58,7 +59,7 @@ public class DmpOutputErpPushTaskHandler extends DmpOutputTaskHandler{
 	private DmpPushMsgService dmpPushMsgService;
 	@Autowired
 	private DmpPushMsgHisService dmpPushMsgHisService;
-	
+
 	@Override
 	public List<DmpOutputTaskRecordEntity> outputData(DmpOutputTaskRequest dmpRequest, DmpOutputTaskResponse dmpResponse) {
 		DmpCfgOutputEntity dmpCfgOutputEntity = dmpResponse.getDmpCfgOutputEntity();
@@ -66,17 +67,17 @@ public class DmpOutputErpPushTaskHandler extends DmpOutputTaskHandler{
 			throw new ServiceException("非api输出类型，请勿配置DmpOutputErpPushTaskHandler");
 		}
 		List<DmpOutputTaskRecordEntity> dmpOutputTaskRecordEntityList = new ArrayList<>();
-		
+
 		String cfgOutputId = dmpCfgOutputEntity.getId();
 		String mainId = dmpResponse.getDmpCfgInputConvertEntity().getMainId();
 		DmpCfgInputEntity dmpCfgInputEntity = dmpHandlerCache.getDmpCfgInputEntityList(d -> d.getId().equals(mainId)).get(0);
 		String typeId = dmpCfgInputEntity.getTypeId();
 		String apiType = dmpHandlerCache.getDmpCfgApiEntityList(d -> d.getId().equals(typeId)).get(0).getApiType();
 		List<String> apiTypeList = Arrays.asList(apiType.split(","));
-		
+
 		String systemId = dmpCfgOutputEntity.getSystemId();
 		String code = dmpHandlerCache.getDmpBasicSystemEntityList(d -> d.getId().equals(systemId)).get(0).getCode();
-		
+
 		List<DmpPushMsgEntity> dmpPushMsgEntityList = new ArrayList<>();
 		Map<DmpCfgInputConvertEntity, List<BaseEntity>> changeConvertInputDmpBaseEntityListMaps = dmpRequest.getChangeConvertInputDmpBaseEntityListMaps();
 		for(Map.Entry<DmpCfgInputConvertEntity, List<BaseEntity>> changeConvertInputDmpBaseEntityListMap : changeConvertInputDmpBaseEntityListMaps.entrySet()) {
@@ -97,7 +98,7 @@ public class DmpOutputErpPushTaskHandler extends DmpOutputTaskHandler{
 				}
 			}
 		}
-		
+
 		if(CollUtil.isNotEmpty(dmpPushMsgEntityList)) {
 			dmpPushMsgEntityList.sort((d1 , d2) -> d1.getMessageUpdateTime().compareTo(d2.getMessageUpdateTime()));
 			LocalDateTime now = LocalDateTime.now();
@@ -120,7 +121,7 @@ public class DmpOutputErpPushTaskHandler extends DmpOutputTaskHandler{
 				i = i + 1;
 			}
 		}
-		
+
 		return dmpOutputTaskRecordEntityList;
 	}
 
@@ -137,7 +138,7 @@ public class DmpOutputErpPushTaskHandler extends DmpOutputTaskHandler{
 			dmpOutputUtils.updateStatus(id, DmpOutputTaskRecordStatusEnum.ERROR.getCode(), responseData , responseData);
 			return;
 		}
-		
+
 		String systemCode = dmpHandlerCache.getDmpBasicSystemEntityList(d -> d.getId().equals(dmpCfgOutputEntity.getSystemId())).get(0).getCode();
 		String sourceId = dmpPushMsgEntity.getSourceId();
 		List<DmpPushMsgEntity> sourceList = dmpPushMsgService.lambdaQuery()
@@ -163,7 +164,7 @@ public class DmpOutputErpPushTaskHandler extends DmpOutputTaskHandler{
 				return;
 			}
 		}
-		
+
 		String parentId = dmpPushMsgEntity.getParentId();
 		if(StringUtils.isNotBlank(parentId) && SyncOperateEnum.OPERATE_APPROVE.getCode().equals(syncOperate)) {
 			String[] split = parentId.split(",");
@@ -234,7 +235,7 @@ public class DmpOutputErpPushTaskHandler extends DmpOutputTaskHandler{
 					} catch (Exception e) {
 						log.error("处理上游单据失败" , e);
 					}
-					
+
 					List<DmpPushMsgHisEntity> histList = dmpPushMsgHisService.lambdaQuery()
 							.eq(DmpPushMsgHisEntity::getSourceId, s)
 							.eq(DmpPushMsgHisEntity::getTargetPlatform, systemCode)
@@ -301,7 +302,7 @@ public class DmpOutputErpPushTaskHandler extends DmpOutputTaskHandler{
 		Object bean = ApplicationContextUtils.getBean(DmpHandlerUtils.dealBeanClass(apiClass));
 		String outputMethod = outputDmpCfgApiEntity.getApiType();
 		Method method = null;
-		
+
 		String status = DmpOutputTaskRecordStatusEnum.FINISH.getCode();
 		String responseData = "";
 		String message = "";
@@ -313,6 +314,14 @@ public class DmpOutputErpPushTaskHandler extends DmpOutputTaskHandler{
 				requestData = JSON.toJSONString(sdyObject);
 				outputMethod = SdyCommonService.REQUEST_SDY;
 			}
+			if(systemCode.equals(DmpBasicSystemCodeEnum.LING_XING.getCode())) {
+				Map<String, String> syncObject = new HashMap<>();
+				syncObject.put(LxCommonService.REQUEST_URL, outputMethod);
+				syncObject.put(LxCommonService.REQUEST_DATA, requestData);
+				requestData = JSON.toJSONString(syncObject);
+				outputMethod = LxCommonService.REQUEST_LX;
+			}
+
 			try {
 				method = bean.getClass().getMethod(outputMethod, Object.class);
 			} catch (NoSuchMethodException | SecurityException e) {
@@ -364,23 +373,17 @@ public class DmpOutputErpPushTaskHandler extends DmpOutputTaskHandler{
 	 * 校验数据是否删除处理
 	 */
 	private String isDeletedHandler(List<DmpOutputTaskRecordEntity> list, String sourceCode) {
-		for (DmpOutputTaskRecordEntity recordEntity : list) {
-			JSONObject jsonObject = JSON.parseObject(recordEntity.getRequestData());
-			if ("已删除".equals(String.valueOf(jsonObject.get("status"))) || "operateDelete".equals(String.valueOf(jsonObject.get("operate")))) {
-				DmpOutputTaskRecordEntity taskRecordEntity = list.stream().filter(req -> DmpOutputTaskRecordStatusEnum.FINISH.getCode().equals(req.getStatus())).findFirst().orElse(null);
-				if (ObjectUtil.isNotEmpty(taskRecordEntity)) {
-					ShudiyunB2cOrderDTO shudiyunB2cOrderDTO1 = JSON.parseObject(recordEntity.getRequestData(), ShudiyunB2cOrderDTO.class);
-					shudiyunB2cOrderDTO1.setStatus("已删除");
-					return JSON.toJSONString(shudiyunB2cOrderDTO1);
-				} else {
-					dmpOutputTaskRecordService.lambdaUpdate()
-							.set(DmpOutputTaskRecordEntity::getStatus, DmpOutputTaskRecordStatusEnum.FINISH.getCode())
-							.eq(DmpOutputTaskRecordEntity::getSourceCode, sourceCode)
-							.update();
-					return "";
-				}
-			}
+		DmpOutputTaskRecordEntity taskRecordEntity = list.stream().filter(req -> DmpOutputTaskRecordStatusEnum.FINISH.getCode().equals(req.getStatus())).findFirst().orElse(null);
+		if (ObjectUtil.isNotEmpty(taskRecordEntity)) {
+			ShudiyunB2cOrderDTO shudiyunB2cOrderDTO1 = JSON.parseObject(taskRecordEntity.getRequestData(), ShudiyunB2cOrderDTO.class);
+			shudiyunB2cOrderDTO1.setStatus("已删除");
+			return JSON.toJSONString(shudiyunB2cOrderDTO1);
+		} else {
+			dmpOutputTaskRecordService.lambdaUpdate()
+					.set(DmpOutputTaskRecordEntity::getStatus, DmpOutputTaskRecordStatusEnum.FINISH.getCode())
+					.eq(DmpOutputTaskRecordEntity::getSourceCode, sourceCode)
+					.update();
+			return "";
 		}
-		return "";
 	}
 }

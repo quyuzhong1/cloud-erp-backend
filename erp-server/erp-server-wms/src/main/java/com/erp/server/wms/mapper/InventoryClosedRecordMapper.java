@@ -4,6 +4,8 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
 import org.apache.ibatis.annotations.Mapper;
 
+import java.time.LocalDate;
+
 
 /**
  * <p>
@@ -15,5 +17,11 @@ import org.apache.ibatis.annotations.Mapper;
  */
 @Mapper
 public interface InventoryClosedRecordMapper extends BaseMapper<InventoryClosedRecordEntity> {
-
+    /**
+     * 查询最小关账时间
+     * @author will
+     * @date 2024/12/19 15:09
+     * @return LocalDate
+     */
+    LocalDate getMinClosedDate();
 }

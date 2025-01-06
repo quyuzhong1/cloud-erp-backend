@@ -6,6 +6,7 @@ import cn.hutool.core.util.ObjUtil;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.FindUserDTO;
@@ -644,7 +645,10 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
             return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_98014.msg);
         }
         //已存在直接调拨单
-        List<TransferInfoEntity> transferInfoList = transferInfoService.listBySourceIds(Arrays.asList(entity.getId(),entity.getSourceId()));
+        List<String> sourceIds = Stream.of(entity.getId(), entity.getSourceId())
+                .filter(id -> id != null && !id.isEmpty())
+                .collect(Collectors.toList());
+        List<TransferInfoEntity> transferInfoList = transferInfoService.listBySourceIds(sourceIds);
         if (CollectionUtils.isNotEmpty(transferInfoList)) {
             List<String> codes = transferInfoList.stream().map(TransferInfoEntity::getSourceCode).distinct().collect(Collectors.toList());
             throw new ServiceException(ApiError.ERROR_MACHINE_EXIST_TRANSFER_INFO,codes);
