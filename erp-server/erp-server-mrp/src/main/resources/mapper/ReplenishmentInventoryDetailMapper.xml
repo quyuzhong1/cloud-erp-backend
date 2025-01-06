@@ -44,11 +44,11 @@
                 LEFT JOIN shop_inventory_detail AS sid ON rid."id" = sid.main_id
                 AND sid.is_deleted = FALSE
         WHERE rid.replenishment_detail_id = #{param.detailId} AND rid.inventory_type = #{param.type}
-        <if test="params.shopId != null and params.shopId != ''">
-            and sid.shop_id = #{params.shopId}
+        <if test="param.shopId != null and param.shopId != ''">
+            and sid.shop_id = #{param.shopId}
         </if>
-        <if test="params.sourceType != null and params.sourceType != ''">
-            and rid.source_type = #{params.sourceType}
+        <if test="param.sourceType != null and param.sourceType != ''">
+            and rid.source_type = #{param.sourceType}
         </if>
     </select>
 

@@ -441,4 +441,16 @@ public interface ReplenishmentSuggestionService extends SuperService<Replenishme
      * @param params 明细id
      */
     Integer inventoryDetailTotal(InventoryDetailTotalDTO params);
+
+    /**
+     * 导出计算数据
+     * @param dto 参数
+     */
+    void exportCalcData(BaseIdDTO dto);
+
+    /**
+     * 导出库存预测依据
+     * @param dto 参数
+     */
+    ReplenishmentSuggestionDTO.ExportResultDTO exportSuggestCalcData(BaseIdDTO dto);
 }

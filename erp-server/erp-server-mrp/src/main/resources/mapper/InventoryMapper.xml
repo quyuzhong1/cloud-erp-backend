@@ -379,8 +379,8 @@
         case
         when tf.source_type in
         ('instockForcast', 'warehouseReceive', 'purchaseStockIn', 'purchaseReturnOrder')
-        then 'purchaseInTransit'
-        when tf.source_type in ('transferOut', 'transferIn') then 'transferInTransit'
+        then 'LOCAL_IN_TRANSIT_PURCHASE'
+        when tf.source_type in ('transferOut', 'transferIn') then 'LOCAL_IN_TRANSIT_TRANSFER'
         else '' end
         as source_type,
         case

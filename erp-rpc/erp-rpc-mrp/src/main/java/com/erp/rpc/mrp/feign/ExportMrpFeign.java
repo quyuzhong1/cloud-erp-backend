@@ -2,6 +2,7 @@ package com.erp.rpc.mrp.feign;
 
 import com.common.business.config.ExportFeignConfig;
 import com.common.business.dto.DynamicExcelDTO;
+import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.erp.model.mrp.dto.*;
@@ -95,4 +96,11 @@ public interface ExportMrpFeign {
     @PostMapping("/feign/export/exportMrpSalesCalcList")
     PagingVO<CalcSalesInfoDimDTO.ExportSalesInfoListDTO> exportMrpSalesCalcList(@RequestBody PagingDTO<CalcSalesInfoDimDTO.ParamDTO> dto);
 
+
+    /**
+     * 导出库存预测依据
+     * @param dto 参数
+     */
+    @PostMapping("/feign/export/exportSuggestCalcData")
+    ReplenishmentSuggestionDTO.ExportResultDTO exportSuggestCalcData(@RequestBody BaseIdDTO dto);
 }

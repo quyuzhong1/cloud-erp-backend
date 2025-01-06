@@ -1251,6 +1251,11 @@ public class ReplenishmentResultDTO {
          */
         private Integer shopPreQty;
 
+        /**
+         * 收货渠道
+         */
+        private String receivingChannel;
+
         public static EstimatedPurchaseDetailEntity buildEstimatedPurchaseDetail(EstimatedPurchaseDetailDTO dto, String replenishmentDetailId, String calcVersion) {
             EstimatedPurchaseDetailEntity entity = new EstimatedPurchaseDetailEntity();
             entity.setReplenishmentDetailId(replenishmentDetailId);
@@ -1263,6 +1268,7 @@ public class ReplenishmentResultDTO {
             entity.setSourceCode(dto.getSourceCode());
             entity.setSourceType(dto.getSourceType());
             entity.setShopPreQty(entity.getShopPreQty());
+            entity.setReceivingChannel(dto.getReceivingChannel());
             entity.setCalcVersion(calcVersion);
             return entity;
         }
@@ -1275,6 +1281,7 @@ public class ReplenishmentResultDTO {
             dto.setSourceId(purchaseDTO.getSourceId());
             dto.setSourceCode(purchaseDTO.getSourceCode());
             dto.setSourceType(purchaseDTO.getSourceType());
+            dto.setReceivingChannel(purchaseDTO.getWarehouseId());
             return dto;
         }
 
@@ -1288,6 +1295,7 @@ public class ReplenishmentResultDTO {
             dto.setSourceCode(purchaseDTO.getSourceCode());
             dto.setType(ReplenishmentInventoryTypeEnum.LOCAL_ESTIMATED_DELIVERY.getCode());
             dto.setSourceType(purchaseDTO.getSourceType());
+            dto.setReceivingChannel(purchaseDTO.getShopId());
             return dto;
         }
     }
@@ -1353,6 +1361,7 @@ public class ReplenishmentResultDTO {
             entity.setSourceType(dto.getSourceType());
             entity.setCalcVersion(calcVersion);
             entity.setShopPreQty(dto.getShopPreQty());
+            entity.setWarehouseId(dto.getWarehouseId());
             return entity;
         }
     }

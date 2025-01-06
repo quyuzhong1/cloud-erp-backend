@@ -3,8 +3,11 @@ package com.erp.model.mrp.dto;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.dto.base.SortParamDTO;
+import com.erp.model.mrp.entity.CalcSalesInfoDenoisingEntity;
+import com.erp.model.mrp.enums.CfgRuleSalesDenoisingDenoisingTypeEnum;
 import com.erp.model.mrp.enums.ReplenishmentInventoryTypeEnum;
 import lombok.*;
+import org.springframework.util.ObjectUtils;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
@@ -14,6 +17,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 public class ReplenishmentSuggestionDTO implements Serializable {
 
@@ -490,4 +494,307 @@ public class ReplenishmentSuggestionDTO implements Serializable {
 
         private String originalSalesQty;
     }
+
+    @Getter
+    @Setter
+    public static class SalesEstimateExportDTO {
+        /**
+         * 平台
+         */
+        private String platform;
+        /**
+         * 平台名称
+         */
+        private String platformName;
+        /**
+         * 店铺id
+         */
+        private String shopId;
+
+        /**
+         * 店铺
+         */
+        private String shopName;
+
+        /**
+         * SKU ID
+         */
+        private String skuId;
+        /**
+         * SKU
+         */
+        private String skuNo;
+
+        /**
+         * 日期
+         */
+        private LocalDate date;
+
+        /**
+         * 预估日销量类型
+         */
+        private String salesInfoEstimateType;
+
+        /**
+         * 规则
+         */
+        private String rule;
+        /**
+         * 预估销量
+         */
+        private BigDecimal estimateQty;
+        /**
+         * 近三日销量
+         */
+        private BigDecimal avgThreeSalesQty;
+        /**
+         * 近七日销量
+         */
+        private BigDecimal avgSevenSalesQty;
+        /**
+         * 近十四日销量
+         */
+        private BigDecimal avgFourteenSalesQty;
+        /**
+         * 近三十日销量
+         */
+        private BigDecimal avgThirtySalesQty;
+        /**
+         * 近六十日销量
+         */
+        private BigDecimal avgSixtySalesQty;
+        /**
+         * 近九十日销量
+         */
+        private BigDecimal avgNinetySalesQty;
+        /**
+         * 近一百八十日销量
+         */
+        private BigDecimal avgOneHundredAndEightySalesQty;
+        /**
+         * 近二百七十日销量
+         */
+        private BigDecimal avgTwoHundredAndSeventySalesQty;
+        /**
+         * 近三百六十日销量
+         */
+        private BigDecimal avgThreeHundredAndSixtySalesQty;
+        /**
+         * 近三日销量
+         */
+        private BigDecimal threeSalesQty;
+        /**
+         * 近七日销量
+         */
+        private BigDecimal sevenSalesQty;
+        /**
+         * 近十四日销量
+         */
+        private BigDecimal fourteenSalesQty;
+        /**
+         * 近三十日销量
+         */
+        private BigDecimal thirtySalesQty;
+        /**
+         * 近六十日销量
+         */
+        private BigDecimal sixtySalesQty;
+        /**
+         * 近九十日销量
+         */
+        private BigDecimal ninetySalesQty;
+        /**
+         * 近一百八十日销量
+         */
+        private BigDecimal oneHundredAndEightySalesQty;
+        /**
+         * 近二百七十日销量
+         */
+        private BigDecimal twoHundredAndSeventySalesQty;
+        /**
+         * 近三百六十日销量
+         */
+        private BigDecimal threeHundredAndSixtySalesQty;
+    }
+
+    @Setter
+    @Getter
+    public static class InventoryEstimateExportDTO {
+        /**
+         * 平台
+         */
+        private String platform;
+        /**
+         * 平台名称
+         */
+        private String platformName;
+        /**
+         * 店铺id
+         */
+        private String shopId;
+
+        /**
+         * 店铺
+         */
+        private String shopName;
+
+        /**
+         * SKU ID
+         */
+        private String skuId;
+        /**
+         * SKU
+         */
+        private String skuNo;
+        /**
+         * 日期
+         */
+        private String date;
+        /**
+         * 结余库存
+         */
+        private Integer balanceInventory;
+        /**
+         * 预估销量
+         */
+        private Integer salesQty;
+        /**
+         * 发货在途_到货量
+         */
+        private Integer inTransitQty;
+        /**
+         * 预计发货_到货量
+         */
+        private Integer deliveryQty;
+        /**
+         * 预估结余库存
+         */
+        private Integer estimatedBalanceInventory;
+        /**
+         * 是否断货
+         */
+        private Boolean isOutOfStock;
+
+    }
+
+    /**
+     * 历史销量，去噪销量
+     */
+    @Getter
+    @Setter
+    public static class SalesInfoDenoisingDTO {
+        /**
+         * sku id
+         */
+        private String skuId;
+        /**
+         * sku
+         */
+        private String skuNo;
+        /**
+         * 店铺
+         */
+        private String shopId;
+        /**
+         * 店铺名字
+         */
+        private String shopName;
+        /**
+         * 平台
+         */
+        private String platform;
+        /**
+         * 日期
+         */
+        private LocalDate date;
+        /**
+         * 历史销量
+         */
+        private Integer hisSalesQty;
+        /**
+         * 去噪类型，percentage百分比去噪：fixedValue=固定值去噪，completely=完全去噪  枚举：CfgRuleSalesDenoisingCalcDenoisingTypeEnum
+         */
+        private String denoisingType;
+        /**
+         * 去噪类型名字
+         */
+        private String denoisingTypeName;
+        /**
+         * 有效值（去噪后的）
+         */
+        private String effectiveValue;
+        /**
+         * 去噪销量
+         */
+        private BigDecimal denoisingQty;
+
+
+        public static CalcSalesInfoDimDTO.SalesInfoDenoisingDTO buildSalesInfoDenoisingDTO(CalcSalesInfoDimDTO.ExportDTO record, String shopName, String platform, LocalDate startDate,
+                                                                                           Map<LocalDate, CalcSalesInfoDenoisingEntity> calcDenoisingMap, Map<LocalDate, Integer> calcSalesInfoHisMap) {
+            CalcSalesInfoDimDTO.SalesInfoDenoisingDTO dto = new CalcSalesInfoDimDTO.SalesInfoDenoisingDTO();
+            dto.setSkuId(record.getSkuId());
+            dto.setSkuNo(record.getSkuNo());
+            dto.setShopId(record.getShopId());
+            dto.setShopName(shopName);
+            dto.setPlatform(platform);
+            dto.setDate(startDate);
+            Integer hisQty = Optional.ofNullable(calcSalesInfoHisMap.get(startDate)).orElse(0);
+            dto.setHisSalesQty(hisQty);
+            CalcSalesInfoDenoisingEntity entity = calcDenoisingMap.get(startDate);
+            if (ObjectUtils.isEmpty(entity)) {
+                dto.setDenoisingQty(new BigDecimal(hisQty));
+            } else {
+                dto.setDenoisingType(entity.getDenoisingType());
+                dto.setDenoisingTypeName(CfgRuleSalesDenoisingDenoisingTypeEnum.getName(entity.getDenoisingType()));
+                if (!ObjectUtils.isEmpty(entity.getEffectiveValue())) {
+                    if (CfgRuleSalesDenoisingDenoisingTypeEnum.PERCENTAGE.getCode().equals(entity.getDenoisingType())) {
+                        dto.setEffectiveValue(entity.getEffectiveValue() + "%");
+                    } else {
+                        dto.setEffectiveValue(String.valueOf(entity.getEffectiveValue()));
+                    }
+                }
+                dto.setDenoisingQty(entity.getQty());
+            }
+            return dto;
+        }
+
+    }
+    @Getter
+    @Setter
+    public static class ExportResultDTO {
+
+        /**
+         * 预估日销量
+         */
+        private List<ReplenishmentSuggestionDTO.SalesInfoDenoisingDTO> salesInfoDenoisingExportList;
+
+        /**
+         * 预估日销量
+         */
+        private List<ReplenishmentSuggestionDTO.SalesEstimateExportDTO> salesEstimateExportList;
+        /**
+         * 库存预测
+         */
+        private List<ReplenishmentSuggestionDTO.InventoryEstimateExportDTO> inventoryEstimateExportList;
+        /**
+         * 默认日销量导出
+         */
+        private List<CfgRuleSalesFormulaDTO.SalesFormulaExportDTO> defaultSalesQtyExportList;
+
+        /**
+         * 动态日销量导出
+         */
+        private List<CfgRuleSalesFormulaDTO.SalesFormulaExportDTO> dynamicSalesQtyExportList;
+
+        /**
+         * 固定日销量导出
+         */
+        private List<CfgRuleSalesFormulaDTO.SalesFormulaExportDTO> fixedSalesQtyExportList;
+
+        /**
+         * 销量去噪导出
+         */
+        private List<CfgRuleSalesDenoisingDTO.SalesDenoisingExportDTO> salesDenoisingExportList;
+    }
+
 }
