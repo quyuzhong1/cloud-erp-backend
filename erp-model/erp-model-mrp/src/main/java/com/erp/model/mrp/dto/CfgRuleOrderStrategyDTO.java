@@ -34,10 +34,13 @@ public class CfgRuleOrderStrategyDTO implements Serializable {
         private String  id;
 
         /**
-        * 采购建议策略
+        * 采购建议策略,true是，false否
         */
         private Boolean isSplit;
-
+        /**
+         * 是否合并SKU集中采购,true是，false否
+         */
+        private Boolean isMergeSku;
 
     }
 
@@ -66,12 +69,16 @@ public class CfgRuleOrderStrategyDTO implements Serializable {
     public static class CommonDTO {
 
         /**
-        * 采购建议策略,是否拆分,true是，false否
+        * 是否拆分组合品,true是，false否
         */
-        @NotNull(message = "采购建议策略,是否拆分不能为空")
+        @NotNull(message = "是否拆分组合品不能为空")
         private Boolean isSplit;
 
-
+        /**
+         * 是否合并SKU集中采购,true是，false否
+         */
+        @NotNull(message = "是否合并SKU集中采购不能为空")
+        private Boolean isMergeSku;
     }
 
 
