@@ -161,6 +161,17 @@ public class PurchaseSuggestEntity extends BaseEntity<PurchaseSuggestEntity> {
     @TableField("invalid_user_name")
     private String invalidUserName;
 
+    /**
+     * 上级id
+     */
+    @TableField("parent_id")
+    private String parentId;
+
+    /**
+     * 类型，spiltBefore拆分前，splitAfter拆分后
+     */
+    @TableField("type")
+    private String type;
 
     /**
      * bom版本
