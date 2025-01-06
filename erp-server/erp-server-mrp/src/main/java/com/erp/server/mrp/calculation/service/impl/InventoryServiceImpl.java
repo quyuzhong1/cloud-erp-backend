@@ -584,7 +584,7 @@ public class InventoryServiceImpl implements InventoryService {
         List<LocalInventoryDTO> invetoryList = getLocalInTransitInventory(replenishmentResultDTO, codes, cfgRuleStrategyDTO.getStockUpResult());
         int qty = getAllocateQty(replenishmentResultDTO, cfgRuleStrategyDTO.getWarehouseResult().getLocalWarehouseList(),
                 invetoryList, localInTransitDetail, getShopDemandQtyMap(dtoList), ReplenishmentInventoryTypeEnum.LOCAL_IN_TRANSIT, CfgRuleWarehouseTypeEnum.LOCAL);
-        Map<String, List<ReplenishmentResultDTO.LocalInTransitDetailDTO>> collect = replenishmentResultDTO.getLocalInTransitDetails()
+        Map<String, List<ReplenishmentResultDTO.LocalInTransitDetailDTO>> collect = Optional.ofNullable(replenishmentResultDTO.getLocalInTransitDetails()).orElse(new ArrayList<>())
                 .stream()
                 .filter(v -> !ObjectUtils.isEmpty(v.getWarehouseId()))
                 .collect(Collectors.groupingBy(ReplenishmentResultDTO.LocalInTransitDetailDTO::getWarehouseId));
@@ -688,7 +688,7 @@ public class InventoryServiceImpl implements InventoryService {
         List<LocalInventoryDTO> invetoryList = getEstimatedPurchaseInventory(replenishmentResultDTO, cfgRuleStrategyDTO);
         int qty = getAllocateQty(replenishmentResultDTO, cfgRuleStrategyDTO.getWarehouseResult().getLocalWarehouseList(),
                 invetoryList, localPurchaseDetail, getShopDemandQtyMap(dtoList), ReplenishmentInventoryTypeEnum.LOCAL_ESTIMATED_DELIVERY, CfgRuleWarehouseTypeEnum.LOCAL);
-        Map<String, List<ReplenishmentResultDTO.EstimatedPurchaseDetailDTO>> collect = replenishmentResultDTO.getLocalPurchaseDetails()
+        Map<String, List<ReplenishmentResultDTO.EstimatedPurchaseDetailDTO>> collect = Optional.ofNullable(replenishmentResultDTO.getLocalPurchaseDetails()).orElse(new ArrayList<>())
                 .stream()
                 .filter(v -> !ObjectUtils.isEmpty(v.getWarehouseId()))
                 .collect(Collectors.groupingBy(ReplenishmentResultDTO.EstimatedPurchaseDetailDTO::getWarehouseId));
@@ -806,7 +806,7 @@ public class InventoryServiceImpl implements InventoryService {
         List<LocalInventoryDTO> invetoryList = getOverseasInTransitInventory(replenishmentResultDTO, cfgRuleStrategyDTO.getStockUpResult());
         int qty = getAllocateQty(replenishmentResultDTO, cfgRuleStrategyDTO.getWarehouseResult().getOverseasWarehouseList(), invetoryList,
                 overseasInTransitDetail, shopDemandQty, ReplenishmentInventoryTypeEnum.OVERSEAS_IN_TRANSIT, CfgRuleWarehouseTypeEnum.OVERSEAS);
-        Map<String, List<ReplenishmentResultDTO.OverseasInTransitDetailDTO>> collect = replenishmentResultDTO.getOverseasInTransitDetails()
+        Map<String, List<ReplenishmentResultDTO.OverseasInTransitDetailDTO>> collect = Optional.ofNullable(replenishmentResultDTO.getOverseasInTransitDetails()).orElse(new ArrayList<>())
                 .stream()
                 .filter(v -> !ObjectUtils.isEmpty(v.getWarehouseId()))
                 .collect(Collectors.groupingBy(ReplenishmentResultDTO.OverseasInTransitDetailDTO::getWarehouseId));
@@ -849,7 +849,7 @@ public class InventoryServiceImpl implements InventoryService {
         List<LocalInventoryDTO> invetoryList = getOverseasPlanDeliveryInventory(replenishmentResultDTO, cfgRuleStrategyDTO);
         int qty = getAllocateQty(replenishmentResultDTO, cfgRuleStrategyDTO.getWarehouseResult().getOverseasWarehouseList(), invetoryList,
                 overseasPlanDeliveryDetail, shopDemandQty, ReplenishmentInventoryTypeEnum.OVERSEAS_ESTIMATED_DELIVERY, CfgRuleWarehouseTypeEnum.OVERSEAS);
-        Map<String, List<ReplenishmentResultDTO.EstimatedDeliveryDetailDTO>> collect = replenishmentResultDTO.getOverseasDeliveryDetails()
+        Map<String, List<ReplenishmentResultDTO.EstimatedDeliveryDetailDTO>> collect = Optional.ofNullable(replenishmentResultDTO.getOverseasDeliveryDetails()).orElse(new ArrayList<>())
                 .stream()
                 .filter(v -> !ObjectUtils.isEmpty(v.getWarehouseId()))
                 .collect(Collectors.groupingBy(ReplenishmentResultDTO.EstimatedDeliveryDetailDTO::getWarehouseId));

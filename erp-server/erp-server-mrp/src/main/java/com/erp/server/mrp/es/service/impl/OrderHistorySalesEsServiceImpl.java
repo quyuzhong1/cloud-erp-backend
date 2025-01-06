@@ -283,7 +283,7 @@ public class OrderHistorySalesEsServiceImpl implements OrderHistorySalesEsServic
     }
 
     @Override
-    public Map<String, List<String>> listSkuByShopId(Set<String> shopIds) {
+    public Map<String, Set<String>> listSkuByShopId(Set<String> shopIds) {
         BoolQueryBuilder queryBuilder = QueryBuilders.boolQuery()
                 .must(QueryBuilders.termsQuery("shopId", shopIds));
         NativeSearchQuery searchQuery = new NativeSearchQueryBuilder()
@@ -293,6 +293,6 @@ public class OrderHistorySalesEsServiceImpl implements OrderHistorySalesEsServic
         SearchHits<OrderHistorySalesEsEntity> searchHits = elasticsearchRestTemplate.search(searchQuery, OrderHistorySalesEsEntity.class);
         return searchHits.getSearchHits().stream()
                 .map(SearchHit::getContent)
-                .collect(Collectors.groupingBy(OrderHistorySalesEsEntity::getShopId, Collectors.mapping(OrderHistorySalesEsEntity::getSkuId, Collectors.toList())));
+                .collect(Collectors.groupingBy(OrderHistorySalesEsEntity::getShopId, Collectors.mapping(OrderHistorySalesEsEntity::getSkuId, Collectors.toSet())));
     }
 }

@@ -183,7 +183,7 @@ public class OutStockHistorySalesEsServiceImpl implements OutStockHistorySalesEs
 
 
     @Override
-    public Map<String, List<String>> listSkuByShopId(Set<String> shopIds) {
+    public Map<String, Set<String>> listSkuByShopId(Set<String> shopIds) {
         BoolQueryBuilder queryBuilder = QueryBuilders.boolQuery()
                 .must(QueryBuilders.termsQuery("shopId", shopIds));
         NativeSearchQuery searchQuery = new NativeSearchQueryBuilder()
@@ -193,6 +193,6 @@ public class OutStockHistorySalesEsServiceImpl implements OutStockHistorySalesEs
         SearchHits<OutStockHistorySalesEsEntity> searchHits = elasticsearchRestTemplate.search(searchQuery, OutStockHistorySalesEsEntity.class);
         return searchHits.getSearchHits().stream()
                 .map(SearchHit::getContent)
-                .collect(Collectors.groupingBy(OutStockHistorySalesEsEntity::getShopId, Collectors.mapping(OutStockHistorySalesEsEntity::getSkuId, Collectors.toList())));
+                .collect(Collectors.groupingBy(OutStockHistorySalesEsEntity::getShopId, Collectors.mapping(OutStockHistorySalesEsEntity::getSkuId, Collectors.toSet())));
     }
 }

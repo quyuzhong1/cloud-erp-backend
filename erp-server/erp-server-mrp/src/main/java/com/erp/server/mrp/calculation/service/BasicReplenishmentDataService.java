@@ -120,7 +120,7 @@ public class BasicReplenishmentDataService {
                 .collect(Collectors.toMap(ShopInfoEntity::getId, v -> v, (o1, o2) -> o1));
         List<CfgRuleSalesQtyEntity> defaultCfgRuleSalesQty = cfgRuleSalesQtyService.listDefaultCfgRuleSalesQty(type.getCode());
         //查询店铺有销量的sku
-        Map<String, List<String>> shopSkuMap;
+        Map<String, Set<String>> shopSkuMap;
         String salesQtyType = defaultCfgRuleSalesQty.get(0).getSalesQtyType();
         if (SalesQtyTypeEnum.BY_CREATE_TIME.getCode().equals(salesQtyType)) {
             shopSkuMap = orderHistorySalesEsService.listSkuByShopId(shopInfoMap.keySet());

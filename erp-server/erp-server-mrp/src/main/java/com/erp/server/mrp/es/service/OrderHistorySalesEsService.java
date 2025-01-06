@@ -121,5 +121,5 @@ public interface OrderHistorySalesEsService {
      * 根据店铺查询有销量sku
      * @param shopIds 店铺
      */
-    Map<String, List<String>> listSkuByShopId(Set<String> shopIds);
+    Map<String, Set<String>> listSkuByShopId(Set<String> shopIds);
 }
