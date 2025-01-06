@@ -13,7 +13,6 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.common.business.annotation.DataIdempotent;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.BusinessNoConstant;
 import com.common.business.constant.FileTemplateConstant;
@@ -67,7 +66,6 @@ import com.erp.server.wms.convert.PackingConverter;
 import com.erp.server.wms.listener.PackingExcelListener;
 import com.erp.server.wms.mapper.PackingTaskMapper;
 import com.erp.server.wms.service.*;
-import io.seata.spring.annotation.GlobalTransactional;
 import lombok.Synchronized;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
@@ -2237,7 +2235,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
                         printDTO.setChargeName(shopInfo.getChargeName());
                     }
                 }
-            }else if (Objects.nonNull(requisitionApplication) && CharSequenceUtil.isNotBlank(requisitionApplication.getChannelId())){
+            }else if (Objects.nonNull(requisitionApplication) && CharSequenceUtil.isNotBlank(requisitionApplication.getChannelId()) && Objects.equals(requisitionApplication.getType(),RequisitionApplicationTypeEnum.FBA.getCode())){
                 printDTO.setShopId(requisitionApplication.getChannelId());
                 printDTO.setShopName(requisitionApplication.getChannelName());
                 ShopInfoEntity shopInfo = shopInfoFeign.getShopInfoById(requisitionApplication.getChannelId());
