@@ -2745,6 +2745,17 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 soOutstockService.submitAndApprove(id);
             } catch (Exception e) {
                 log.error("B2C订单生成销售出库单提交或审核失败：error={}", ExceptionUtil.stacktraceToString(e));
+                //记录异常订单
+                String soB2cId = dto.getSoId();
+                String type = SoB2cErrorTypeEnum.GENERATE_OUTSTOCK.getCode();
+                String paramJson = JSONUtil.toJsonStr(dto);
+                String message = e.getMessage();
+                SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO();
+                addError.setType(type);
+                addError.setMainId(soB2cId);
+                addError.setMessage("销售出库单提交或审核失败"+message);
+                addError.setParamJson(paramJson);
+                soB2cFeign.addSoB2cError(addError);
                 // 记录明细(事务分开)
                 soOutstockDetailService.updateDetailRemark(id, e.getMessage(),false);
             }
