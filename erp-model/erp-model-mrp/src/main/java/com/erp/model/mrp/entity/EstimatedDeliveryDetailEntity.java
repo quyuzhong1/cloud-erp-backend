@@ -88,12 +88,6 @@ public class EstimatedDeliveryDetailEntity extends BaseEntity<EstimatedDeliveryD
     private String receivingChannel;
 
     /**
-     * 发货仓库
-     */
-    @TableField("delivery_warehouse_id")
-    private String deliveryWarehouseId;
-
-    /**
      * 预计发货日期
      */
     @TableField("plan_delivery_date")

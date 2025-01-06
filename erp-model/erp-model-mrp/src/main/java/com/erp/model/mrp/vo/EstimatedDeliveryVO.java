@@ -1,7 +1,6 @@
 package com.erp.model.mrp.vo;
 
 import com.common.business.annotation.Dict;
-import com.common.business.enums.ServiceCodeNameEnum;
 import com.erp.model.mrp.enums.ReplenishmentBillStatusEnum;
 import lombok.Getter;
 import lombok.Setter;
@@ -59,12 +58,6 @@ public class EstimatedDeliveryVO {
      * 收货渠道，店铺id/仓库id
      */
     private String receivingChannelName;
-
-    /**
-     * 发货仓库
-     */
-    @Dict(serviceCode = ServiceCodeNameEnum.WMS , queryFieldName = "id" , tableName = "warehouse")
-    private String deliveryWarehouseId;
 
     /**
      * 预计发货日期
