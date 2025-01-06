@@ -255,6 +255,8 @@ public class WmsCartonDTO {
          */
         private String fnSku;
         private String ean;
+        //唯一值
+        private String md5;
         /**
          * 发货数量
          */

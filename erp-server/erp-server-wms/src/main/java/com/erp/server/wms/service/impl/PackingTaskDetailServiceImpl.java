@@ -5,6 +5,7 @@ import cn.hutool.core.text.CharSequenceUtil;
 import com.common.business.dto.base.BaseResultDTO;
 import com.erp.model.wms.dto.PackingTaskDTO;
 import com.erp.model.wms.entity.PackingTaskDetailEntity;
+import com.erp.model.wms.enums.SearchModeEnum;
 import com.erp.server.wms.mapper.PackingTaskDetailMapper;
 import com.erp.server.wms.service.PackingTaskDetailService;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -140,7 +141,6 @@ public class PackingTaskDetailServiceImpl extends SuperServiceImpl<PackingTaskDe
         if (CharSequenceUtil.isBlank(searchKey)){
             return Collections.emptyList();
         }
-        searchMode = "fuzzy";
         return baseMapper.searchProductBySearchKey(taskId, searchKey,searchMode);
     }
 

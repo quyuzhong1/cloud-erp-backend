@@ -535,6 +535,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
             return LogisticsBillDTO.GenerateBillResultDTO.builder()
                     .trackNo(orderResult.getData().getTrackNo())
                     .transportNo(orderResult.getData().getTransportNo())
+                    .iossTaxNo(CharSequenceUtil.isNotBlank(orderResult.getData().getIossTaxNo()) ? orderResult.getData().getIossTaxNo() : CharSequenceUtil.EMPTY)
                     .build();
         } else {
             LogisticsOrderResponseVO responseVO = orderResult.getData();

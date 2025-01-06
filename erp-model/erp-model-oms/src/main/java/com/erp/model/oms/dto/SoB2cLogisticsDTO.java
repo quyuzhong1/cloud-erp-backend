@@ -219,7 +219,10 @@ public class SoB2cLogisticsDTO implements Serializable {
          */
         @Digits(integer = 12, fraction = 4, message = "高整数位不能超过12位，小数位不能超过4位")
         private BigDecimal height;
-
+        /**
+         * ioss税号
+         */
+        private String iossTaxNo;
     }
 
 

@@ -115,4 +115,11 @@ public interface SkuMappingMapper extends BaseMapper<SkuMappingEntity> {
      * @return
      */
     List<SkuMappingDTO.SkuMappingViewDTO> listSkuMappingByParams(@Param("params") ListingInfoDTO.QueryDTO params);
+
+    /**
+     * 根据参数获取数据列表
+     * @param params
+     * @return
+     */
+    List<SkuMappingDTO.PagingViewDTO> listByAccountAndDictPlatform(@Param("params") ListingInfoDTO.QueryPlatformDTO params);
 }

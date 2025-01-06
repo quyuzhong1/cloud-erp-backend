@@ -18,6 +18,7 @@ import com.erp.model.oms.entity.ListingInfoEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.entity.SkuMappingEntity;
 import com.erp.model.oms.enums.ListingMatchResultEnum;
+import com.erp.model.oms.enums.ListingSourceTypeEnum;
 import com.erp.model.oms.enums.RuleTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
@@ -165,6 +166,7 @@ public class SkuMappingExcelListener extends AnalysisEventListener<SkuMappingImp
         paramDTO.setShopIdList(Collections.singletonList(shop.getId()));
         paramDTO.setType(RuleTypeEnum.PLATFORM.getCode());
         paramDTO.setPlatformSkuNoList(Collections.singletonList(skuMappingImportExcelDTO.getPlatformSkuNo()));
+        paramDTO.setPlatformSkuIdList(CharSequenceUtil.isNotBlank(skuMappingImportExcelDTO.getPlatformProductId()) ? Collections.singletonList(skuMappingImportExcelDTO.getPlatformProductId()) : null);
 //        paramDTO.setIsExpire(false);
         // 所有包含历史映射关系
         List<ListingInfoWithSkuMappingDTO> listDto = skuMappingService.findListDto(paramDTO);
@@ -231,6 +233,7 @@ public class SkuMappingExcelListener extends AnalysisEventListener<SkuMappingImp
         String platformSkuNo = skuMappingImportExcelDTO.getPlatformSkuNo();
 
         String platformProductName = skuMappingImportExcelDTO.getPlatformProductName();
+        String platformProductId = skuMappingImportExcelDTO.getPlatformProductId();
         String finalListingId1 = listingId;
         ListingInfoEntity listingInfoEntity = listingInfoEntityList.stream()
                 .filter(l -> l.getId().equalsIgnoreCase(finalListingId1))
@@ -284,8 +287,10 @@ public class SkuMappingExcelListener extends AnalysisEventListener<SkuMappingImp
                     Pair<String, String> pair = new Pair<>(addSkuMapping.getListingId(),content);
                     updateLogPairList.add(pair);
                 }
-                listingInfoEntity.setMatchResult(ListingMatchResultEnum.TRUE.getCode());
-                updateListingInfoList.add(listingInfoEntity);
+                if (Objects.nonNull(listingInfoEntity)){
+                    listingInfoEntity.setMatchResult(ListingMatchResultEnum.TRUE.getCode());
+                    updateListingInfoList.add(listingInfoEntity);
+                }
                 return;
             }
             errorMsgList.add("平台sku已存在匹配关系");
@@ -314,9 +319,11 @@ public class SkuMappingExcelListener extends AnalysisEventListener<SkuMappingImp
             addListingInfoEntity.setId(listingId);
             addListingInfoEntity.setType(RuleTypeEnum.PLATFORM.getCode());
             addListingInfoEntity.setPlatformSkuNo(platformSkuNo);
+            addListingInfoEntity.setPlatformSkuId(platformProductId);
             addListingInfoEntity.setPlatformSkuName(platformProductName);
             addListingInfoEntity.setMatchResult(ListingMatchResultEnum.TRUE.getCode());
             addListingInfoEntity.setPlatform(dictPlatform);
+            addListingInfoEntity.setSourceType(ListingSourceTypeEnum.SELF_ADD.getCode());
             addListingInfoEntityList.add(addListingInfoEntity);
         }
         LocalDateTime now = LocalDateTime.now();

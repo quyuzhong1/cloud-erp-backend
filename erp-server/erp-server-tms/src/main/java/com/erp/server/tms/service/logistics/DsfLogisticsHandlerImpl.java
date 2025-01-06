@@ -156,6 +156,7 @@ public class DsfLogisticsHandlerImpl extends AbstractLogisticsHandler {
         //包裹信息封装
         orderRequest.setParcelList(getParcel(logisticsOrderVO));
         ValidatorUtil.validateEntity(orderRequest);
+        String iossNo = orderRequest.getIossNo();
         boolean success = true;
         try {
             ResponseMsg responseMsg = dsfShipperService.createOrder(logisticsOrderVO.getAuthMap(), orderRequest);
@@ -173,6 +174,7 @@ public class DsfLogisticsHandlerImpl extends AbstractLogisticsHandler {
                         .transportNo(orderResponse.getDs_consignment_no())
                         .logisticsChannelNo(orderResponse.getLogistics_channel_no())
                         .odaResultSign(orderResponse.getOda_result_sign())
+                        .iossTaxNo(iossNo)
                         .build();
                 logisticsOperateService.pushOperateLog(logisticsOrderVO.getSourceId(),
                         logisticsOrderVO.getDeliveryNo(), BusinessTypeEnum.CREATE_ORDER.getCode(), LogisticsPlatformEnum.DSF.getCode(),

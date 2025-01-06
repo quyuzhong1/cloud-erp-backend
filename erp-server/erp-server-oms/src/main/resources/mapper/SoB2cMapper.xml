@@ -71,15 +71,9 @@
         sb2c.is_not_outbound as isNotOutbound,
         sb2c.is_manual_delivery as isManualDelivery,
         sb2c.is_over_estimated_ship_cost as isOverEstimatedShipCost,
-        sb2cl.logistics_channel_name as logisticsChannelName,
-        case when sb2cl.actual_shipping_cost = 0 then sb2cl.estimated_shipping_cost
-             else sb2cl.actual_shipping_cost
-        end
-        as shippingCost,
-        case when sb2cl.actual_shipping_cost = 0 then sb2cl.estimated_shipping_currency
-             else sb2cl.actual_shipping_currency
-        end
-        as shippingCostCurrency,
+        sb2cl.ioss_tax_no as iossTaxNo,
+        case when sb2cl.actual_shipping_cost = 0 then sb2cl.estimated_shipping_cost else sb2cl.actual_shipping_cost end as shippingCost,
+        case when sb2cl.actual_shipping_cost = 0 then sb2cl.estimated_shipping_currency else sb2cl.actual_shipping_currency end as shippingCostCurrency,
         sb2cl.logistics_channel_id as logisticsChannelId,
         sb2cl.logistics_channel_name as logisticsChannelName,
         sb2cr.customer_id as buyerId,
@@ -114,14 +108,8 @@
         sb2c.code,
         sb2c.dict_platform as dictPlatform,
         si.name as shopName,
-        case when sb2cl.actual_shipping_cost = 0 then sb2cl.estimated_shipping_cost
-             else sb2cl.actual_shipping_cost
-        end
-        as shippingCost,
-        case when sb2cl.actual_shipping_cost = 0 then sb2cl.estimated_shipping_currency
-             else sb2cl.actual_shipping_currency
-        end
-        as shippingCostCurrency,
+        case when sb2cl.actual_shipping_cost = 0 then sb2cl.estimated_shipping_cost else sb2cl.actual_shipping_cost end as shippingCost,
+        case when sb2cl.actual_shipping_cost = 0 then sb2cl.estimated_shipping_currency else sb2cl.actual_shipping_currency end as shippingCostCurrency,
         sb2c.seller_order_code as sellerOrderCode,
         sb2c.platform_code as platformCode,
         sb2c.approve_status as approveStatus,
@@ -175,6 +163,7 @@
         sb2cl.length,
         sb2cl.width,
         sb2cl.height,
+        sb2cl.ioss_tax_no,
         sb2cr.login_id as loginId,
         sb2cr.name as buyerName,
         sb2cr.email,
@@ -266,7 +255,7 @@
         inner join so_b2c_receiver sb2cr on sb2c.id = sb2cr.main_id and sb2cr.is_deleted = false
         inner join shop_info si on sb2c.shop_id = si.id and si.is_deleted = false
         <where>
-            sb2c.is_deleted = false and sb2c.invalid_status = false and sb2c.pay_status = 'paid' and sb2c.is_not_merge = false and (sb2c.approve_status = 'waitSubmit' or sb2c.approve_status = 'reject') and sb2c.label_json !~ 'AFN' and sb2cd.label_json !~ 'U_TAXED'
+            sb2c.is_deleted = false and sb2c.invalid_status = false and sb2c.pay_status = 'paid' and sb2c.is_not_merge = false and sb2cl.code = '' and sb2c.label_json !~ 'AFN' and sb2cd.label_json !~ 'U_TAXED'
             and sb2cd.label_json !~ 'I_TAXED' and sb2cd.label_json !~ 'cainiaoInternationalWarehouse' and sb2c.dict_platform != 'Shopee' and sb2c.dict_platform != 'mercadolibre'
             and not exists (select id from so_b2c_ref where is_deleted = false and (target_id = sb2c.id or source_id = sb2c.id))
             and exists (select main_id from so_b2c_detail where is_deleted = false and sb2c.id = main_id group by main_id having  count(DISTINCT warehouse_id) = 1)
@@ -319,7 +308,7 @@
         inner join so_b2c_logistics sb2cl on sb2c.id = sb2cl.main_id and sb2cl.is_deleted = false
         inner join so_b2c_receiver sb2cr on sb2c.id = sb2cr.main_id and sb2cr.is_deleted = false
         <where>
-            sb2c.is_deleted = false and sb2c.invalid_status = false and sb2c.pay_status = 'paid' and sb2c.is_not_merge = false and (sb2c.approve_status = 'waitSubmit' or sb2c.approve_status = 'reject') and sb2c.label_json !~ 'AFN' and sb2cd.label_json !~ 'U_TAXED'
+            sb2c.is_deleted = false and sb2c.invalid_status = false and sb2c.pay_status = 'paid' and sb2c.is_not_merge = false and sb2cl.code = '' and sb2c.label_json !~ 'AFN' and sb2cd.label_json !~ 'U_TAXED'
             and sb2cd.label_json !~ 'I_TAXED' and sb2cd.label_json !~ 'cainiaoInternationalWarehouse' and sb2c.dict_platform != 'Shopee' and sb2c.dict_platform != 'mercadolibre'
             and not exists (select id from so_b2c_ref where is_deleted = false and (target_id = sb2c.id or source_id = sb2c.id))
             and exists (select main_id from so_b2c_detail where is_deleted = false and sb2c.id = main_id group by main_id having  count(DISTINCT warehouse_id) = 1)

@@ -749,8 +749,10 @@ public class LogisticsBillDTO implements Serializable {
          * 跟踪单号
          */
         private String trackNo;
-
-
+        /**
+         * ioss税号
+         */
+        private String iossTaxNo;
     }
 
 
