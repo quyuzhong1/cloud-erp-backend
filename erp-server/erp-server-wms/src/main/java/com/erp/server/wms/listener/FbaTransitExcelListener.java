@@ -23,12 +23,14 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.time.temporal.TemporalAdjuster;
 import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * 期初头程分摊
@@ -77,19 +79,41 @@ public class FbaTransitExcelListener extends AnalysisEventListener<FbaTransitExc
         //校验数据是否已存在
         FbaShipmentDetailEntity detailEntity = fbaShipmentDetailService.getDetail(excelDTO.getShipmentCode(),excelDTO.getAsin(),excelDTO.getMsku());
         if (Objects.isNull(detailEntity)){
-            errorMsgList.add(CharSequenceUtil.format("货件单号【{}】ASIN【{}】MSKU【{}】记录不存在",excelDTO.getShipmentCode(),excelDTO.getAsin(),excelDTO.getMsku()));
+            errorMsgList.add(CharSequenceUtil.format("货件单号【{}】ASIN【{}】MSKU【{}】拣货记录不存在",excelDTO.getShipmentCode(),excelDTO.getAsin(),excelDTO.getMsku()));
         }
-        LocalDate reportMonth = excelDTO.getReportMonth().toLocalDate().withDayOfMonth(1);
-        //本月是否生成在途货件数据
-        List<FbaTransitCalculateDetailReportEntity> transitCalculateDetailReportEntityList2 = fbaTransitCalculateDetailReportService.listTransitDetail(reportMonth, excelDTO.getShipmentCode(), excelDTO.getAsin(), excelDTO.getMsku());
-        if (CollUtil.isNotEmpty(transitCalculateDetailReportEntityList2)){
-            errorMsgList.add(CharSequenceUtil.format("本月【{}】在途货件单号【{}】ASIN【{}】MSKU【{}】记录已存在", reportMonth, excelDTO.getShipmentCode(), excelDTO.getAsin(), excelDTO.getMsku()));
+        String reportMonthStr = excelDTO.getReportMonth();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+        LocalDate reportMonth = null;
+        try {
+            reportMonth = LocalDate.parse(reportMonthStr,formatter).withDayOfMonth(1);
+        }catch (Exception e){
+            errorMsgList.add(CharSequenceUtil.format("导入月份格式【yyyy-MM-dd】错误:【{}】",reportMonthStr));
         }
-        //上月在途货件数据是否存在
-        LocalDate lastMonth = reportMonth.minusMonths(1).withDayOfMonth(1);
-        List<FbaTransitCalculateDetailReportEntity> transitCalculateDetailReportEntityList = fbaTransitCalculateDetailReportService.listTransitDetail(lastMonth, excelDTO.getShipmentCode(), excelDTO.getAsin(), excelDTO.getMsku());
-        if (CollUtil.isNotEmpty(transitCalculateDetailReportEntityList)){
-            errorMsgList.add(CharSequenceUtil.format("上月【{}】在途货件单号【{}】ASIN【{}】MSKU【{}】记录已存在", lastMonth, excelDTO.getShipmentCode(), excelDTO.getAsin(), excelDTO.getMsku()));
+        if (Objects.nonNull(reportMonth)){
+            List<FbaTransitCalculateDetailReportEntity> transitCalculateDetailReportEntityList = fbaTransitCalculateDetailReportService.listTransitDetail(null, excelDTO.getShipmentCode(), excelDTO.getAsin(), excelDTO.getMsku());
+            if (CollUtil.isNotEmpty(transitCalculateDetailReportEntityList)){
+                List<String> monthList = transitCalculateDetailReportEntityList.stream().map(FbaTransitCalculateDetailReportEntity::getReportMonthStr).distinct().collect(Collectors.toList());
+                errorMsgList.add(CharSequenceUtil.format("在途货件单号【{}】ASIN【{}】MSKU【{}】记录已存在【{}】在途数据", excelDTO.getShipmentCode(), excelDTO.getAsin(), excelDTO.getMsku(), String.join(",",monthList)));
+            }
+//            //本月是否生成在途货件数据
+//            String currentMonthStr = reportMonth.format(DateTimeFormatter.ofPattern("yyyy-MM"));
+//            List<FbaTransitCalculateDetailReportEntity> transitCalculateDetailReportEntityList1 = transitCalculateDetailReportEntityList.stream().filter(e -> Objects.equals(e.getReportMonthStr(), currentMonthStr)).collect(Collectors.toList());
+//            if (CollUtil.isNotEmpty(transitCalculateDetailReportEntityList1)){
+//                errorMsgList.add(CharSequenceUtil.format("本月【{}】在途货件单号【{}】ASIN【{}】MSKU【{}】记录已存在", currentMonthStr, excelDTO.getShipmentCode(), excelDTO.getAsin(), excelDTO.getMsku()));
+//            }
+//            //上月在途货件数据是否存在
+//            LocalDate lastMonth = reportMonth.minusMonths(1).withDayOfMonth(1);
+//            String lastMonthStr = lastMonth.format(DateTimeFormatter.ofPattern("yyyy-MM"));
+//            List<FbaTransitCalculateDetailReportEntity> transitCalculateDetailReportEntityList2 = transitCalculateDetailReportEntityList.stream().filter(e -> Objects.equals(e.getReportMonthStr(), lastMonthStr)).collect(Collectors.toList());
+//            if (CollUtil.isNotEmpty(transitCalculateDetailReportEntityList2)){
+//                errorMsgList.add(CharSequenceUtil.format("上月【{}】在途货件单号【{}】ASIN【{}】MSKU【{}】记录已存在", lastMonthStr, excelDTO.getShipmentCode(), excelDTO.getAsin(), excelDTO.getMsku()));
+//            }
+        }
+        String initTransitQty = excelDTO.getInitTransitQty();
+        try {
+            Integer i = Integer.valueOf(initTransitQty);
+        }catch (Exception e){
+            errorMsgList.add(CharSequenceUtil.format("期初在途数字类型错误:【{}】",initTransitQty));
         }
         //判断记录是否已存在
         FbaTransitExcelDTO fbaTransitExcelDTO = dataList.stream().filter(e -> CharSequenceUtil.isNotBlank(excelDTO.getShipmentCode()) && excelDTO.getShipmentCode().equals(e.getShipmentCode())

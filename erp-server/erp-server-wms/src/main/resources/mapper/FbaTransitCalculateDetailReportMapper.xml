@@ -47,11 +47,13 @@
         main_id, asin, msku, fn_sku, sku_no, declare_qty, diff_qty, receive_qty, delivery_qty, init_transit_qty, current_delivery_qty, current_receive_qty, end_period_transit_qty, end_period_transit_adjust_qty, after_end_period_transit_qty, adjust_reason, adjust_time, adjust_user_name, adjust_user_id
     </sql>
     <select id="listTransitDetail" resultType="com.erp.model.wms.entity.FbaTransitCalculateDetailReportEntity">
-        select ftcdr.*
+        select ftcdr.*,to_char(ftcr.report_month, 'YYYY-MM') AS reportMonthStr
         from fba_transit_calculate_detail_report ftcdr
         left join fba_transit_calculate_report ftcr on ftcdr.main_id = ftcr.id and ftcr.is_deleted = false
         where ftcdr.is_deleted = false
-        and ftcr.report_month = #{reportMonth}
+        <if test="reportMonth != null">
+            and ftcr.report_month = #{reportMonth}
+        </if>
         and ftcr.shipment_code = #{shipmentCode}
         and ftcdr.asin = #{asin}
         and ftcdr.msku = #{msku}

@@ -140,7 +140,11 @@ public class FbaTransitCalculateDetailReportEntity extends BaseEntity<FbaTransit
      */
     @TableField("shipment_receive_time")
     private LocalDateTime shipmentReceiveTime;
-
+    /**
+     * 核算月份
+     */
+    @TableField(exist = false)
+    private String reportMonthStr;
 
     public static final String MAIN_ID = "main_id";
 
