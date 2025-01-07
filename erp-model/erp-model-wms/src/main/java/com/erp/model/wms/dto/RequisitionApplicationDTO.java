@@ -64,7 +64,7 @@ public class RequisitionApplicationDTO implements Serializable {
 
         @NotEmpty(message = "详情不能为空")
         @Valid
-        private List<FbaBindShipmentViewDetailDTO> fbaBindShipmentViewDTOS;;
+        private List<FbaBindShipmentViewDetailDTO> fbaBindShipmentViewDTOS;
     }
     /**
      * fba下推发货单绑定货件View

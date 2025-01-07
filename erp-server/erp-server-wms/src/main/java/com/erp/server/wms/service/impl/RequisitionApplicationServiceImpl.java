@@ -1617,6 +1617,17 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         if(CollectionUtils.isNotEmpty(updateDetailList)){
             requisitionApplicationDetailService.updateBatchById(updateDetailList);
         }
+
+        //回写要货申请的头程发货单生成状态
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+            @Override
+            public void afterCommit() {
+                List<String> requisitionIds = dto.getFbaBindShipmentViewDTOS().stream().map(RequisitionApplicationDTO.FbaBindShipmentViewDetailDTO::getId).distinct().collect(Collectors.toList());
+                for (String requisitionId : requisitionIds) {
+                    writeBackRequisitionDeliveryPushDownStatus(requisitionId);
+                }
+            }
+        });
     }
 
     @Override
@@ -2089,11 +2100,10 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         List<String> oldDetailIds = oldDetails.stream()
                 .map(RequisitionApplicationDetailEntity::getId)
                 .collect(Collectors.toList());
-
         // 获取拣货单明细
-        List<PickingDetailEntity> pickingDetailEntities = pickingDetailService.listPickingDetailBySourceDetailIds(oldDetailIds);
+//        List<PickingDetailEntity> pickingDetailEntities = pickingDetailService.listPickingDetailBySourceDetailIds(oldDetailIds);
         // 获取头程发货单明细
-        List<FirstMileDeliveryDetailEntity> firstMileDeliveryDetailEntityList = firstMileDeliveryDetailService.listBySourceDetailIds(oldDetailIds);
+        List<FirstMileDeliveryDetailEntity> firstMileDeliveryDetailEntityList = firstMileDeliveryDetailService.listByRequisitionApplicationIds(Collections.singletonList(requisitionApplicationId));
 
         // 判断头程发货单下推状态
         String deliveryPushDownStatus = BillPushDownStatusEnum.WAIT.getCode();
@@ -2107,21 +2117,26 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
 
             // 如果总数量不为零，才进行进一步处理
             if (totalDeliveryQty > 0) {
-                // 统计拣货单明细每个明细的实际拣货数量和
-                Map<String, Integer> pickingDetailQtySumBySourceDetailId = pickingDetailEntities.stream()
-                        .collect(Collectors.toMap(PickingDetailEntity::getSourceDetailId,
-                                PickingDetailEntity::getQty,
+//                // 统计拣货单明细每个明细的实际拣货数量和
+//                Map<String, Integer> pickingDetailQtySumBySourceDetailId = pickingDetailEntities.stream()
+//                        .collect(Collectors.toMap(PickingDetailEntity::getSkuNo,
+//                                PickingDetailEntity::getQty,
+//                                Integer::sum));
+                // 统计要货申请每个明细的批准数量和
+                Map<String, Integer> requisitionDetailQtySumById = oldDetails.stream()
+                        .collect(Collectors.toMap(RequisitionApplicationDetailEntity::getSkuNo,
+                                RequisitionApplicationDetailEntity::getApproveQty,
                                 Integer::sum));
 
                 // 统计头程发货单明细每个明细的发货数量和
                 Map<String, Integer> firstMileDeliveryDetailDeliveryQtySumById = firstMileDeliveryDetailEntityList.stream()
-                        .collect(Collectors.toMap(FirstMileDeliveryDetailEntity::getSourceDetailId,
+                        .collect(Collectors.toMap(FirstMileDeliveryDetailEntity::getSkuNo,
                                 FirstMileDeliveryDetailEntity::getDeliveryQty,
                                 Integer::sum));
 
                 // 检查是否所有明细的数量一致
-                if (firstMileDeliveryDetailDeliveryQtySumById.entrySet().stream()
-                        .allMatch(e -> e.getValue().equals(pickingDetailQtySumBySourceDetailId.get(e.getKey())))) {
+                if (requisitionDetailQtySumById.entrySet().stream()
+                        .allMatch(e -> e.getValue().equals(firstMileDeliveryDetailDeliveryQtySumById.get(e.getKey())))) {
                     deliveryPushDownStatus = BillPushDownStatusEnum.FINISH.getCode();
                 } else {
                     deliveryPushDownStatus = BillPushDownStatusEnum.PART.getCode();

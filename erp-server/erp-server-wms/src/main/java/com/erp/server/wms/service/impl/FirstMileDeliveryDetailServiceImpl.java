@@ -5,6 +5,7 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.enums.ApproveStatusEnum;
+import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -24,7 +25,6 @@ import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.math3.util.Pair;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -261,5 +261,18 @@ public class FirstMileDeliveryDetailServiceImpl extends SuperServiceImpl<FirstMi
         List<String> oldIds = oldList.stream().map(FirstMileDeliveryDetailEntity
                 ::getId).collect(Collectors.toList());
         return oldIds.stream().filter(s -> !newIds.contains(s)).collect(Collectors.toList());
+    }
+
+    @Override
+    public List<FirstMileDeliveryDetailEntity> listByRequisitionApplicationIds(List<String> requisitionApplicationIds) {
+        List<FirstMileDeliveryEntity> firstMileDeliveryEntities = firstMileDeliveryService.lambdaQuery()
+                .eq(FirstMileDeliveryEntity::getSourceType, SourceTypeEnum.REQUISITION_APPLICATION.getCode())
+                .in(FirstMileDeliveryEntity::getSourceId, requisitionApplicationIds)
+                .list();
+        if(CollUtil.isEmpty(firstMileDeliveryEntities)){
+            return Collections.emptyList();
+        }
+        List<String> firstMileDeliveryIds = firstMileDeliveryEntities.stream().map(FirstMileDeliveryEntity::getId).collect(Collectors.toList());
+        return listByMainIds(firstMileDeliveryIds);
     }
 }
