@@ -127,6 +127,12 @@ public class SoB2cReceiverEntity extends BaseEntity<SoB2cReceiverEntity> {
     @TableField("partition_id")
     private String partitionId;
 
+    @TableField(exist = false)
+    private String partitionCode;
+
+    @TableField(exist = false)
+    private String partitionName;
+
 
     public static final String MAIN_ID = "main_id";
 
