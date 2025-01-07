@@ -869,7 +869,12 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
              * 销售数量-已出库数量
              */
             Integer waitQty = qty > deliveryQty ? qty - deliveryQty : 0;
+            //sku若关闭则等于0
+            if(Boolean.TRUE.equals(item.getIsClose())){
+                waitQty = 0;
+            }
             item.setWaitQty(waitQty);
+
             SkuVO sku = skuList.stream().filter(s -> s.getSkuId().equals(skuId)).findFirst().orElse(null);
             if (sku != null) {
                 item.setProductName(sku.getSkuName());
@@ -3041,8 +3046,12 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
     @Override
     public List<SoInfoDTO.GenerateSoOutView> generateSoOutView(List<String> ids) {
         //删除和关闭状态的sku不可下推
-        List<SoDetailEntity> soDetailEntityList = soDetailService.listSoDetailByIds(ids)
-                .stream()
+        List<SoDetailEntity> soDetailEntityList = soDetailService.listSoDetailByIds(ids);
+        long closeCount = soDetailEntityList.stream().filter(s -> s.getIsClose()).count();
+        if (closeCount > 0) {
+            throw new ServiceException(ApiError.ERROR_98068);
+        }
+        soDetailEntityList = soDetailEntityList.stream()
                 .filter(v -> Boolean.FALSE.equals(v.getIsClose()))
                 .collect(Collectors.toList());
         List<String> mainIds = soDetailEntityList.stream().map(SoDetailEntity::getMainId).distinct().collect(Collectors.toList());

@@ -671,6 +671,16 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
                 }
                 throw new ServiceException(sb.toString());
             }
+            //下推单据的数量
+            pushDownDTOList = soOutstockFeign.getPushDownBySoDetailIds(soDetailIdList);
+            if(CollUtil.isNotEmpty(pushDownDTOList)){
+                StringBuilder sb = new StringBuilder();
+                for (SoDeliveryNoticeDetailDTO.PushDownDTO pushDownDTO : pushDownDTOList) {
+                    sb.append(String.format(ApiError.ERROR_92166.msg, pushDownDTO.getSkuNo()));
+                    sb.append("<br>");
+                }
+                throw new ServiceException(sb.toString());
+            }
         }
         //这个是修改
         SoChangeTypeEnum update = SoChangeTypeEnum.UPDATE;
@@ -731,7 +741,6 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
             }
         }
     }
-
 
     private List<SoChangeDetailEntity> listBySoDetailIdList(List<String> soDetailIdList,SoChangeTypeEnum typeEnum) {
         if (CollectionUtils.isEmpty(soDetailIdList)) {
