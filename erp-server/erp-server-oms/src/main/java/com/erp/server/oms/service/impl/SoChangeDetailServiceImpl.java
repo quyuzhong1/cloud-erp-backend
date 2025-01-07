@@ -676,7 +676,7 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
             if(CollUtil.isNotEmpty(pushDownDTOList)){
                 StringBuilder sb = new StringBuilder();
                 for (SoDeliveryNoticeDetailDTO.PushDownDTO pushDownDTO : pushDownDTOList) {
-                    sb.append(String.format(ApiError.ERROR_92166.msg, pushDownDTO.getSkuNo()));
+                    sb.append(String.format(ApiError.ERROR_92037.msg, pushDownDTO.getSkuNo()));
                     sb.append("<br>");
                 }
                 throw new ServiceException(sb.toString());
