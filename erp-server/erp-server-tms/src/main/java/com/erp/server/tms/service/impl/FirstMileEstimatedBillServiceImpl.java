@@ -340,11 +340,11 @@ public class FirstMileEstimatedBillServiceImpl extends SuperServiceImpl<FirstMil
                 continue;
             }
             FirstMileEstimatedBillDTO.LogisticsInfoDTO infoDTO = logisticsInfoList.stream().filter(item -> item.getTransportNo().equals(dto.getTransportNo())).findFirst().orElse(null);
-            if (!dto.getCurrency().equals(infoDTO.getCurrency())){
-                dto.setErrorMsg("导入币种与物流币种不一致，");
-                errorList.add(dto);
-                continue;
-            }
+//            if (!dto.getCurrency().equals(infoDTO.getCurrency())){
+//                dto.setErrorMsg("导入币种与物流币种不一致，");
+//                errorList.add(dto);
+//                continue;
+//            }
             if(! infoDTO.getEstimatedStatus().equals(ConfirmStatusEnum.WAIT_CONFIRM.getCode())){
                 dto.setErrorMsg("仅暂估账单状态为【待确认】允许导入费用，");
                 errorList.add(dto);

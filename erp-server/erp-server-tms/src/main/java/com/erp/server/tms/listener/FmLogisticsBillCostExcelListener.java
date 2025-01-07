@@ -46,6 +46,11 @@ public class FmLogisticsBillCostExcelListener extends AnalysisEventListener<FmLo
             errorList.add(excelDTO);
             return;
         }
+        if(StringUtils.isBlank(excelDTO.getCurrency())) {
+        	excelDTO.setErrorMsg("币种不能都为空");
+            errorList.add(excelDTO);
+            return;
+        }
         dataList.add(excelDTO);
     }
 
