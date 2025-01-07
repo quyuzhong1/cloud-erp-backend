@@ -150,7 +150,7 @@ public class TmsCostDetailDTO implements Serializable {
     public static class DetailDTO {
     	
     	/**
-    	 * 费用类型id  http://172.16.100.11:3002/project/128/interface/api/31391  dictCostAttribution=selfDeliver
+    	 * 费用类型id  http://172.16.100.11:3002/project/128/interface/api/34948  dictCostAttribution=selfDeliver
     	 */
     	@NotNull(message = "费用类型不能为空")
     	private String cfgCostId;

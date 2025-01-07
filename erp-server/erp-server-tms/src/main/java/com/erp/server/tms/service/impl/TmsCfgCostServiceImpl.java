@@ -156,7 +156,6 @@ public class TmsCfgCostServiceImpl extends SuperServiceImpl<TmsCfgCostMapper, Tm
         if (CollectionUtil.isEmpty(list)) {
             return Collections.EMPTY_LIST;
         }
-        list.forEach(l -> l.setCostName(AllocationFeeTypeEnum.getName(l.getDictCostCategory()) + ">" + l.getCostName()));
         return BeanMapperUtils.copyList(TmsCfgCostDTO.DropDownDTO.class,list);
     }
 
