@@ -680,7 +680,7 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
                     shudiyunB2cOrderDTO.setSubplatform_name(dictBasicEntity.getName());
                 }
             }
-            shudiyunB2cOrderDTO.setShop_no(customerInfo.getId());
+            shudiyunB2cOrderDTO.setShop_no(customerInfo.getCode());
             shudiyunB2cOrderDTO.setShop_name(customerInfo.getName());
         }
 

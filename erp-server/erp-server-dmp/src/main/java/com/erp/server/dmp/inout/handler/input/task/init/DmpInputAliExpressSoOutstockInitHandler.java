@@ -89,32 +89,40 @@ public class DmpInputAliExpressSoOutstockInitHandler extends DmpInputInitHandler
 		
 		JSONArray result = new JSONArray();
 		for(List<String> p : partition) {
-			Map<String, Object> paramMap = new HashMap<>();
-	        paramMap.put("biz_type", 288000);
-	        paramMap.put("page_size", pageSize);
-			paramMap.put("customer_order_number_list", p);
-	        request.addApiParameter("fulfillment_forward_order_query", com.alibaba.fastjson.JSONObject.toJSONString(paramMap));
-	        
-	    	JSONObject data = null;
-	    	long sleepTime = 1000;
-	    	int count = 0;
-	    	while(data == null) {
-	    		data = this.execute(client, request, token, apiType);
-	    		if(data == null) {
-	    			if(count == 10) {
-        				throw new ServiceException("调用速卖通" + apiType + "接口重试" + count + "失败");
-        			}
-	    			try {
-						Thread.sleep(sleepTime);
-					} catch (InterruptedException e) {
-						Thread.currentThread().interrupt();
-					}
-	    			sleepTime = sleepTime + 1000;
-	    			count = count + 1;
-	    		}
-	    	}
-	    	
-	    	result.addAll(data.getJSONArray("data_list"));
+			Integer pageIndex = 1;
+			while(true) {
+				Map<String, Object> paramMap = new HashMap<>();
+		        paramMap.put("biz_type", 288000);
+		        paramMap.put("page_index", pageIndex);
+		        paramMap.put("page_size", pageSize);
+				paramMap.put("customer_order_number_list", p);
+		        request.addApiParameter("fulfillment_forward_order_query", com.alibaba.fastjson.JSONObject.toJSONString(paramMap));
+		        
+		    	JSONObject data = null;
+		    	long sleepTime = 1000;
+		    	int count = 0;
+		    	while(data == null) {
+		    		data = this.execute(client, request, token, apiType);
+		    		if(data == null) {
+		    			if(count == 10) {
+	        				throw new ServiceException("调用速卖通" + apiType + "接口重试" + count + "失败");
+	        			}
+		    			try {
+							Thread.sleep(sleepTime);
+						} catch (InterruptedException e) {
+							Thread.currentThread().interrupt();
+						}
+		    			sleepTime = sleepTime + 1000;
+		    			count = count + 1;
+		    		}
+		    	}
+		    	JSONArray dataList = data.getJSONArray("data_list");
+				result.addAll(dataList);
+				pageIndex = pageIndex + 1;
+				if(dataList.size() < pageSize) {
+					break;
+				}
+			}
 		}
         
 		DmpInputTaskInitDTO dmpInputTaskInitDTO = new DmpInputTaskInitDTO();

@@ -1175,6 +1175,8 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
             shudiyunB2cOrderDTO.setPlatform_id(customerInfo.getPlatformType());
             String platformName = dictBasicEntityList.stream().filter(req -> req.getValue().equals(customerInfo.getPlatformType())).map(DictBasicEntity::getName).findFirst().orElse("");
             shudiyunB2cOrderDTO.setPlatform_name(platformName);
+            shudiyunB2cOrderDTO.setShop_no(customerInfo.getCode());
+            shudiyunB2cOrderDTO.setShop_name(customerInfo.getName());
         }
 
         //店铺信息
@@ -1182,8 +1184,7 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
             shudiyunB2cOrderDTO.setSubplatform_no(shopInfoEntity.getDictPlatform());
             shudiyunB2cOrderDTO.setSubplatform_name(PlatformDictEnum.getNameByCode(shopInfoEntity.getDictPlatform()));
         }
-        shudiyunB2cOrderDTO.setShop_no(entity.getCustomerId());
-        shudiyunB2cOrderDTO.setShop_name(entity.getCustomerName());
+
         shudiyunB2cOrderDTO.setRoot_node_no(entity.getCode());
 
         //产品信息
