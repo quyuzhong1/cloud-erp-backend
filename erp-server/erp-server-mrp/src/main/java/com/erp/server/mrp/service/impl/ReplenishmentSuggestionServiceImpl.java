@@ -1339,7 +1339,7 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
         if (CollectionUtils.isNotEmpty(skuFormula)) {
             result.addAll(skuFormula);
         }
-        List<CfgRuleSalesDenoisingDTO.SalesDenoisingExportDTO> defaultFormula = cfgRuleStrategyDTO.getSalesQtyResult().getDenoisingResults().stream()
+        List<CfgRuleSalesDenoisingDTO.SalesDenoisingExportDTO> defaultFormula = cfgRuleStrategyDTO.getSalesQtyResult().getDefaultDenoisingResults().stream()
                 .map(CfgRuleSalesDenoisingDTO.SalesDenoisingExportDTO::buildExportDTO)
                 .collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(defaultFormula)) {
@@ -1368,7 +1368,7 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
             result.addAll(skuFormula);
         }
         List<CfgRuleSalesFormulaDTO.SalesFormulaExportDTO> defaultFormula = cfgRuleStrategyDTO.getSalesQtyResult().getDefaultFormulaResults().stream()
-                .filter(v -> CfgRuleSalesFormulaTypeEnum.DYNAMIC.getCode().equals(v.getDefaultType()))
+                .filter(v -> CfgRuleSalesFormulaTypeEnum.DYNAMIC.getCode().equals(v.getType()))
                 .map(CfgRuleSalesFormulaDTO.SalesFormulaExportDTO::buildExportDTO)
                 .collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(defaultFormula)) {
@@ -1387,7 +1387,7 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
             result.addAll(skuFormula);
         }
         List<CfgRuleSalesFormulaDTO.SalesFormulaExportDTO> defaultFormula = cfgRuleStrategyDTO.getSalesQtyResult().getDefaultFormulaResults().stream()
-                .filter(v -> CfgRuleSalesFormulaTypeEnum.DEFAULT.getCode().equals(v.getDefaultType()))
+                .filter(v -> CfgRuleSalesFormulaTypeEnum.DEFAULT.getCode().equals(v.getType()))
                 .map(CfgRuleSalesFormulaDTO.SalesFormulaExportDTO::buildExportDTO)
                 .collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(defaultFormula)) {
@@ -1460,7 +1460,7 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
             //库存等于结余库存-预计销量+到货数量
             balanceInventory = balanceInventory.subtract(estimate.getSalesQty()).add(inTransit).add(estimatedPurchase);
             exportDTO.setEstimatedBalanceInventory(balanceInventory);
-            exportDTO.setIsOutOfStock(balanceInventory.compareTo(BigDecimal.ZERO) <= 0);
+            exportDTO.setIsOutOfStock(Boolean.TRUE.equals(balanceInventory.compareTo(BigDecimal.ZERO) <= 0) ? "是" : "否");
             result.add(exportDTO);
         }
         return result;
@@ -1496,7 +1496,7 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
             //库存等于结余库存-预计销量+到货数量
             balanceInventory = balanceInventory.subtract(estimate.getSalesQty()).add(inTransit).add(estimatedPurchase);
             exportDTO.setEstimatedBalanceInventory(balanceInventory);
-            exportDTO.setIsOutOfStock(balanceInventory.compareTo(BigDecimal.ZERO) <= 0);
+            exportDTO.setIsOutOfStock(Boolean.TRUE.equals(balanceInventory.compareTo(BigDecimal.ZERO) <= 0) ? "是" : "否");
             result.add(exportDTO);
         }
         return result;
@@ -1531,7 +1531,7 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
             //库存等于结余库存-预计销量+到货数量
             balanceInventory = balanceInventory.subtract(estimate.getSalesQty()).add(inTransit).add(estimatedPurchase);
             exportDTO.setEstimatedBalanceInventory(balanceInventory);
-            exportDTO.setIsOutOfStock(balanceInventory.compareTo(BigDecimal.ZERO) <= 0);
+            exportDTO.setIsOutOfStock(Boolean.TRUE.equals(balanceInventory.compareTo(BigDecimal.ZERO) <= 0) ? "是" : "否");
             result.add(exportDTO);
         }
         return result;

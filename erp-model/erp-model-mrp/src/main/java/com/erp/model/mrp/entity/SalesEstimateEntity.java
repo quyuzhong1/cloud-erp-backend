@@ -4,7 +4,6 @@ import cn.hutool.json.JSONObject;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
-import com.erp.model.mrp.dto.CfgRuleSalesFormulaDTO;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
@@ -79,12 +78,6 @@ public class SalesEstimateEntity extends BaseEntity<SalesEstimateEntity> {
 
     @TableField(value = "percent_json", jdbcType = JdbcType.OTHER)
     private JSONObject percentJson;
-
-    /**
-     * 百分比对象
-     */
-    @TableField(exist = false)
-    private CfgRuleSalesFormulaDTO.PercentJsonDTO percentJsonDTO;
 
     public static final String REPLENISHMENT_DETAIL_ID = "replenishment_detail_id";
 
