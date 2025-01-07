@@ -197,57 +197,6 @@ public class VirtualWarehouseServiceImpl extends SuperServiceImpl<VirtualWarehou
         batchAddDTO.setVirtualWarehouseId(virtualWarehouseEntityId);
         return batchAddDTO;
     }
-
-    /**
-     * 新增关联渠道
-     *
-     * @param newChannelList
-     * @param virtualWarehouseId
-     */
-    private VirtualWarehouseChannelDTO.BatchUpdateDTO bindChannel(List<VirtualWarehouseChannelDTO.ChannelAddDTO> newChannelList, String virtualWarehouseId) {
-        //校验一个渠道只能绑定一种类型：平台、店铺
-        Map<String, List<VirtualWarehouseChannelDTO.ChannelAddDTO>> collect = newChannelList.stream().collect(Collectors.groupingBy(VirtualWarehouseChannelDTO.ChannelAddDTO::getDictPlatform));
-        collect.forEach((k, v) -> {
-            if (v.size() > 1) {
-                throw new ServiceException(ApiError.ERROR_ONLYONE);
-            }
-        });
-        //校验当前类型（平台、店铺）是否被其他虚拟仓占用
-        if (CollectionUtils.isNotEmpty(newChannelList)) {
-            StringBuilder stringBuilder = new StringBuilder();
-            newChannelList.forEach(newChannel -> {
-                List<VirtualWarehouseDTO.BindChannelDto> bindedDictPlatformList = virtualWarehouseChannelService.getByParams(newChannel);
-                if (CollectionUtils.isNotEmpty(bindedDictPlatformList)) {
-                    if (CharSequenceUtil.isNotBlank(virtualWarehouseId)) {
-                        bindedDictPlatformList.forEach(bindChannelDto -> {
-                            if (!Objects.equals(bindChannelDto.getVirtualWarehouseId(), virtualWarehouseId)) {
-                                VirtualWarehouseEntity virtualWarehouse = this.getById(bindChannelDto.getVirtualWarehouseId());
-                                if (VitualWarehouseChannelTypeEnum.PLATFORM.getCode().equals(bindChannelDto.getType())) {
-                                    stringBuilder.append(CharSequenceUtil.format(ApiError.ERROR_VW_CHANNEL_ERROR.msg, "渠道", omsDropDownFeign.getByTypeAndValue("salesPlatform", bindChannelDto.getDictPlatform()).getName(), virtualWarehouse.getName()));
-                                } else {
-                                    //获取绑定过的店铺
-                                    List<ShopInfoEntity> shopInfoEntities = shopInfoFeign.listShopInfoByIds(Collections.singletonList(bindChannelDto.getRelationId()));
-                                    if (CollectionUtils.isNotEmpty(shopInfoEntities)) {
-                                        stringBuilder.append(CharSequenceUtil.format(ApiError.ERROR_VW_CHANNEL_ERROR.msg, VitualWarehouseChannelTypeEnum.SHOP.getName(), shopInfoEntities.stream().map(ShopInfoEntity::getName).collect(Collectors.joining("、")), virtualWarehouse.getName()));
-                                    }
-                                }
-                            }
-                        });
-                    }
-                    if (CharSequenceUtil.isNotBlank(stringBuilder.toString())) {
-                        throw new ServiceException(stringBuilder.toString());
-                    }
-                }
-            });
-
-        }
-        VirtualWarehouseChannelDTO.BatchUpdateDTO batchUpdateDTO = new VirtualWarehouseChannelDTO.BatchUpdateDTO();
-        batchUpdateDTO.setVirtualWarehouseId(virtualWarehouseId);
-//        batchUpdateDTO.setChannelList(newChannelList);
-        return batchUpdateDTO;
-    }
-
-
     /**
      * 修改
      */
@@ -269,12 +218,8 @@ public class VirtualWarehouseServiceImpl extends SuperServiceImpl<VirtualWarehou
         log.info("编辑 开始记录虚拟仓日志数据，单号：【{}】", virtualWarehouseEntity.getCode());
         String msg = CharSequenceUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), old.getCode(), "虚拟仓");
         operateLogService.addModuleOperateLogByObj(old, virtualWarehouseEntity, ModuleTypeEnum.VIRTUAL_WAREHOUSE.getCode(), virtualWarehouseEntity.getId(), msg);
-        //绑定信息
-        //新增关联渠道
-//        virtualWarehouseChannelService.batchAdd(bindChannel(updateDTO.getChannelList(), virtualWarehouseEntity.getId()));
         //新增关联仓库
         virtualWarehouseRelationService.batchAdd(bindRelation(updateDTO.getWarehouseIdList(), virtualWarehouseEntity.getId()));
-
         //外部仓日志
         addThirdMappingOperateLog(updateDTO.getThirdMappingList(),old);
         //新增关联外部仓

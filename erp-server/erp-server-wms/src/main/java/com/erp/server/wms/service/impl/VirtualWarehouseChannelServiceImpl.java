@@ -286,7 +286,8 @@ public class VirtualWarehouseChannelServiceImpl extends SuperServiceImpl<Virtual
         String virtualWarehouseId = batchUpdateDTO.getVirtualWarehouseId();
         //新增数据
         dtoList.forEach(dto -> dto.getDetailDTOList().forEach(detailDTO -> {
-            if (CollUtil.isEmpty(detailDTO.getShopIdList())){
+            List<String> shopIds = CollUtil.isNotEmpty(detailDTO.getShopIdList()) ? detailDTO.getShopIdList().stream().filter(CharSequenceUtil::isNotBlank).collect(Collectors.toList()) : Collections.emptyList();
+            if (CollUtil.isEmpty(shopIds)){
                 //按平台
                 VirtualWarehouseChannelEntity channelEntity = new VirtualWarehouseChannelEntity()
                         .setVirtualWarehouseId(virtualWarehouseId)
@@ -297,7 +298,7 @@ public class VirtualWarehouseChannelServiceImpl extends SuperServiceImpl<Virtual
                 batchSaveDTOList.add(channelEntity);
             }else {
                 //按店铺
-                detailDTO.getShopIdList().forEach(shopId -> {
+                shopIds.forEach(shopId -> {
                     VirtualWarehouseChannelEntity channelEntity = new VirtualWarehouseChannelEntity()
                             .setVirtualWarehouseId(virtualWarehouseId)
                             .setType(VitualWarehouseChannelTypeEnum.SHOP.getCode())
@@ -590,16 +591,32 @@ public class VirtualWarehouseChannelServiceImpl extends SuperServiceImpl<Virtual
         List<DictBasicDTO.ViewDTO> dictBasicByKey = customerFeign.getDictBasicByKey(DictBasicTypeEnum.SALES_PLATFORM.getType());
         //字典平台名称
         Map<String, String> dictMap = dictBasicByKey.stream().collect(Collectors.toMap(DictBasicDTO.ViewDTO::getValue, DictBasicDTO.ViewDTO::getName));
-        return list1.stream().allMatch(e1 -> list2.stream().anyMatch(e2 -> isEntityContained(e1, e2,msg,dictMap.get(e2.getDictPlatform()), e2.getVirtualWarehouseName())))
-                && list2.stream().allMatch(e2 -> list1.stream().anyMatch(e1 -> isEntityContained(e2, e1, msg, dictMap.get(e2.getDictPlatform()), e2.getVirtualWarehouseName())));
+        //分区
+        List<DictPartitionEntity> partitionEntityList = FeignQuery.list(DictPartitionEntity.class);
+        Map<String, String> partitionMap = partitionEntityList.stream().collect(Collectors.toMap(DictPartitionEntity::getId, DictPartitionEntity::getName));
+        //店铺
+        List<ShopInfoEntity> shopInfoEntityList = FeignQuery.list(ShopInfoEntity.class);
+        Map<String, String> shopMap = shopInfoEntityList.stream().collect(Collectors.toMap(ShopInfoEntity::getId, ShopInfoEntity::getName));
+        return list1.stream().anyMatch(e1 -> list2.stream().anyMatch(e2 -> isEntityContained(e1, e2,msg,dictMap.get(e1.getDictPlatform()), e2.getVirtualWarehouseName(),shopMap.get(e1.getRelationId()), partitionMap.get(e1.getPartitionId()))));
     }
-    private boolean isEntityContained(VirtualWarehouseDTO.BindChannelDto e1, VirtualWarehouseDTO.BindChannelDto e2, StringBuilder msg, String dictPlatformName, String virtualWarehouseName) {
+
+    /**
+     * 比较包含
+     * @param e1
+     * @param e2
+     * @param msg
+     * @param dictPlatformName
+     * @param virtualWarehouseName
+     * @param partitionName
+     * @return
+     */
+    private boolean isEntityContained(VirtualWarehouseDTO.BindChannelDto e1, VirtualWarehouseDTO.BindChannelDto e2, StringBuilder msg, String dictPlatformName, String virtualWarehouseName,String shopName, String partitionName) {
         boolean isSame = (equalsOrWildcard(e1.getDictPlatform(), e2.getDictPlatform()) &&
-                equalsOrWildcard(e1.getVirtualWarehouseId(), e2.getVirtualWarehouseId()) &&
+                !equalsOrWildcard(e1.getVirtualWarehouseId(), e2.getVirtualWarehouseId()) &&
                 matchesOrWildcard(e1.getRelationId(), e2.getRelationId()) &&
                 matchesOrWildcard(e1.getPartitionId(), e2.getPartitionId()));
         if (isSame){
-            String format = CharSequenceUtil.format(ApiError.ERROR_VW_CHANNEL_ERROR.msg, "渠道", dictPlatformName, virtualWarehouseName);
+            String format = CharSequenceUtil.format(ApiError.ERROR_VW_CHANNEL_ERROR.msg,  dictPlatformName,CharSequenceUtil.isBlank(shopName) ? "全部" : shopName, CharSequenceUtil.isBlank(partitionName) ? "全部" : partitionName, virtualWarehouseName);
             if (!msg.toString().contains(format)){
                 msg.append(format);
             }
