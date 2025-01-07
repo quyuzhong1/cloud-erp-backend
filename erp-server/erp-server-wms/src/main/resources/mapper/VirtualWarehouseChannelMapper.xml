@@ -29,7 +29,7 @@
         vwc.update_time,
         vwc.version,
         vwc.is_deleted,
-        vwc.virtual_warehouse_id, vwc.dict_platform, vwc.type, vwc.relation_id
+        vwc.virtual_warehouse_id, vwc.dict_platform, vwc.type, vwc.relation_id,vwcpr.partition_id
     </sql>
     <select id="getBindedDictPlatform" resultType="com.erp.model.wms.dto.VirtualWarehouseDTO$BindChannelDto">
         SELECT vwc.dict_platform, vwc.type
@@ -40,11 +40,10 @@
         group by vwc.dict_platform, vwc.type
     </select>
     <select id="getBindedDictPlatformNoGroup" resultType="com.erp.model.wms.dto.VirtualWarehouseDTO$BindChannelDto">
-        SELECT vwc.dict_platform, vwc.type,vwc.virtual_warehouse_id,vwc.relation_id
-             ,vwc.virtual_warehouse_id
-        FROM "virtual_warehouse_channel" vwc
-                 inner join virtual_warehouse vw
-                            on vw.id = vwc.virtual_warehouse_id and vw.is_deleted = false and vw.disabled = false
+        SELECT vwc.dict_platform, vwc.type,vwc.virtual_warehouse_id,vw.name as virtualWarehouseName,vwc.relation_id,vwc.virtual_warehouse_id,vmcpr.partition_id
+        FROM virtual_warehouse_channel vwc
+        inner join virtual_warehouse vw on vw.id = vwc.virtual_warehouse_id and vw.is_deleted = false and vw.disabled = false
+        left join virtual_warehouse_channel_partition_ref vmcpr on vmcpr.main_id = vwc.id and vmcpr.is_deleted = false
         where vwc.is_deleted = false
         order by vwc.dict_platform
     </select>
@@ -65,6 +64,7 @@
                <include refid="Base_Column_List" />
         from  virtual_warehouse_channel vwc
         inner join  virtual_warehouse vw on vwc.virtual_warehouse_id = vw.id and vw.is_deleted = false
+        left join  virtual_warehouse_channel_partition_ref vwcpr on vwcpr.main_id = vwc.id and vwcpr.is_deleted = false
         <where>
             vwc.is_deleted = false and vw.disabled = false
             <if test="platformDTO.relationId != null and platformDTO.relationId != ''">
@@ -73,6 +73,9 @@
             </if>
             <if test="platformDTO.relationId != null and platformDTO.relationId == ''">
                 and vwc.type in('shop','platform')  and  vwc.dict_platform = #{platformDTO.dictPlatform}
+            </if>
+            <if test="params.partitionId != null and params.partitionId != ''">
+                and (vwcpr.partition_id = #{params.partitionId} or vwcpr.partition_id is null)
             </if>
             order by vwc.id limit 1
         </where>
@@ -85,6 +88,7 @@
         <include refid="Base_Column_List" />
         from  virtual_warehouse_channel vwc
         inner join  virtual_warehouse vw on vwc.virtual_warehouse_id = vw.id and vw.is_deleted = false
+        left join  virtual_warehouse_channel_partition_ref vwcpr on vwcpr.main_id = vwc.id and vwcpr.is_deleted = false
         <where>
             vwc.is_deleted = false and vw.disabled = false
             and vwc.dict_platform in

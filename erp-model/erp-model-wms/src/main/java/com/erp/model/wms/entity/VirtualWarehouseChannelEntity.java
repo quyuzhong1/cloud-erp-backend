@@ -50,6 +50,11 @@ public class VirtualWarehouseChannelEntity extends BaseEntity<VirtualWarehouseCh
     @TableField(exist = false)
     private List<String> partitionIds;
     /**
+     * 分区id
+     */
+    @TableField(exist = false)
+    private String partitionId;
+    /**
      * 对分区进行加密
      */
     @TableField(exist = false)

@@ -188,6 +188,11 @@ public class VirtualWarehouseChannelDTO implements Serializable {
          */
         @NotNull(message = "关联id不能为null")
         private String relationId;
+        /**
+         * 分区id
+         */
+        @NotNull(message = "分区id不能为null")
+        private String partitionId;
 
         /**
          * 平台

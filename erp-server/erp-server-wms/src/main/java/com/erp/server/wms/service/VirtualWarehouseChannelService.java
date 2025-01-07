@@ -21,33 +21,12 @@ import java.util.List;
 public interface VirtualWarehouseChannelService extends SuperService<VirtualWarehouseChannelEntity> {
 
     /**
-     * 新增
-     *
-     * @param dto
-     * @return
-     * @author hyj
-     * @date: 2024-06-02
-     */
-    BaseResultDTO.AddDTO add(VirtualWarehouseChannelDTO.AddDTO dto);
-
-    /**
      * 批量新增
      *
      * @param batchUpdateDTO
      * @return
      */
     BaseResultDTO.AddDTO batchUpdate(VirtualWarehouseChannelDTO.BatchUpdateDTO batchUpdateDTO);
-
-
-    /**
-     * 修改
-     *
-     * @param dto
-     * @return
-     * @author hyj
-     * @date: 2024-06-02
-     */
-    Boolean update(VirtualWarehouseChannelDTO.UpdateDTO dto);
 
     /**
      * 通过虚拟仓id获取关联渠道
@@ -98,4 +77,11 @@ public interface VirtualWarehouseChannelService extends SuperService<VirtualWare
      * @return
      */
     VirtualWarehouseChannelDTO.ViewDTO view(String id);
+
+    /**
+     * 校验已绑定的渠道不能重复绑定
+     * @param curChannelEntitieList
+     * @param hasPartitionIds
+     */
+    void checkBoundChannel(List<VirtualWarehouseChannelEntity> curChannelEntitieList, Boolean hasPartitionIds);
 }
