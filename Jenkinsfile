@@ -1,11 +1,11 @@
 pipeline {
-	agent any
-	environment {
-		harborUser = 'admin'
-		harborPassword = 'Root@1234cn'
-		harborAddress = '172.16.100.92:5000'
-		harborRepo = 'sdc-erp'
-	}
+    agent any
+    environment {
+        harborUser = 'admin'
+        harborPassword = 'Root@1234cn'
+        harborAddress = '172.16.100.92:5000'
+        harborRepo = 'sdc-erp'
+    }
 
     stages {
         stage('拉取git仓库代码') {
@@ -31,15 +31,17 @@ pipeline {
                     def erpfile = readFile('erp_file.txt')
                     def lines = erpfile.split("\n")
                     for (line in lines) {
-                        sh '''
-                        ssh -tt root@172.16.100.90 "docker rmi ${harborAddress}/${harborRepo}/$line:${TAG} || true"
-                        ssh -tt root@172.16.100.90 "cd /home/dockers/jenkins/jenkins_home/workspace/${JOB_NAME}/erp-server/$line/ && docker build -t ${harborAddress}/${harborRepo}/$line:${TAG} ."
-                        '''
+                        // 确保正确的插值
+                        sh """
+                        ssh -tt root@172.16.100.90 "docker rmi ${harborAddress}/${harborRepo}/${line}:${TAG} || true"
+                        ssh -tt root@172.16.100.90 "cd /home/dockers/jenkins/jenkins_home/workspace/${JOB_NAME}/erp-server/${line}/ && docker build -t ${harborAddress}/${harborRepo}/${line}:${TAG} ."
+                        """
                     }
-                sh '''
-                ssh -tt root@172.16.100.90 "docker rmi ${harborAddress}/${harborRepo}/erp-gateway:${TAG} || true"
-                ssh -tt root@172.16.100.90 "cd /home/dockers/jenkins/jenkins_home/workspace/${JOB_NAME}/erp-gateway && docker build -t ${harborAddress}/${harborRepo}/erp-gateway:${TAG} ."
-                '''
+                    // 最后构建erp-gateway镜像
+                    sh """
+                    ssh -tt root@172.16.100.90 "docker rmi ${harborAddress}/${harborRepo}/erp-gateway:${TAG} || true"
+                    ssh -tt root@172.16.100.90 "cd /home/dockers/jenkins/jenkins_home/workspace/${JOB_NAME}/erp-gateway && docker build -t ${harborAddress}/${harborRepo}/erp-gateway:${TAG} ."
+                    """
                 }
             }
         }
@@ -53,6 +55,7 @@ pipeline {
                         sh "docker push ${harborAddress}/${harborRepo}/${line}:${TAG}"
                     }
                 }
+                // 推送erp-gateway镜像
                 sh "docker push ${harborAddress}/${harborRepo}/erp-gateway:${TAG}"
             }
         }
@@ -62,18 +65,19 @@ pipeline {
                     def erpfile = readFile('erp_file.txt')
                     def lines = erpfile.split("\n")
                     for (line in lines) {
-                        sh '''
-                        scp /var/jenkins_home/workspace/${JOB_NAME}/erp-server/$line/$line.yaml root@172.16.100.60:/k8s-yaml/erp-server
-                        ssh -tt root@172.16.100.60 "sed -i -e \\"s|\\\\\\${tag}|${TAG}|g\\" -e \\"s|\\\\\\${namespace}|${NAMESPACE}|g\\" /k8s-yaml/erp-server/$line.yaml"
-                        '''
+                        sh """
+                        scp /var/jenkins_home/workspace/${JOB_NAME}/erp-server/${line}/${line}.yaml root@172.16.100.60:/k8s-yaml/erp-server
+                        ssh -tt root@172.16.100.60 "sed -i -e 's|\${tag}|${TAG}|g' -e 's|\${namespace}|${NAMESPACE}|g' /k8s-yaml/erp-server/${line}.yaml"
+                        """
                     }
                 }
-                sh '''
+                // 最后操作erp-gateway的yaml
+                sh """
                 scp /var/jenkins_home/workspace/${JOB_NAME}/erp-gateway/erp-gateway.yaml root@172.16.100.60:/k8s-yaml/erp-server
-                ssh -tt root@172.16.100.60 "sed -i -e \\"s|\\\\\\${tag}|${TAG}|g\\" -e \\"s|\\\\\\${namespace}|${NAMESPACE}|g\\" /k8s-yaml/erp-server/erp-gateway.yaml"
-                ssh -tt root@172.16.100.60 "/usr/bin/kubectl delete -f /k8s-yaml/erp-server/ || ture"
+                ssh -tt root@172.16.100.60 "sed -i -e 's|\${tag}|${TAG}|g' -e 's|\${namespace}|${NAMESPACE}|g' /k8s-yaml/erp-server/erp-gateway.yaml"
+                ssh -tt root@172.16.100.60 "/usr/bin/kubectl delete -f /k8s-yaml/erp-server/ || true"
                 ssh -tt root@172.16.100.60 "/usr/bin/kubectl apply -f /k8s-yaml/erp-server/"
-                '''
+                """
             }
         }
     }
