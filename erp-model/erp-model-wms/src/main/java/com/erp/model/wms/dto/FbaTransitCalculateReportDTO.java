@@ -16,9 +16,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Size;
+import javax.validation.constraints.*;
 
 /**
  * <p>
@@ -516,6 +514,8 @@ public class FbaTransitCalculateReportDTO implements Serializable {
         private String detailId;
         //调整数量
         @NotNull(message = "期末在途调整数量不能为空")
+        @Min(value = -999999999,message = "期末在途调整数量最小值为-999999999")
+        @Max(value = 999999999,message = "期末在途调整数量最大值为999999999")
         private Integer adjustQty;
         //调整原因
         @NotBlank(message = "调整原因不能为空")

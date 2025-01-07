@@ -36,7 +36,7 @@ public class FbaTransitCalculateDetailReportServiceImpl extends SuperServiceImpl
     private OperateLogService operateLogService;
     @Override
     public List<FbaTransitCalculateDetailReportEntity> listTransitDetail(LocalDate reportMonth, String shipmentCode, String asin, String msku) {
-        if (Objects.isNull(reportMonth) || CharSequenceUtil.isBlank(shipmentCode) || CharSequenceUtil.isBlank(asin) || CharSequenceUtil.isBlank(msku)){
+        if (CharSequenceUtil.isBlank(shipmentCode) || CharSequenceUtil.isBlank(asin) || CharSequenceUtil.isBlank(msku)){
             return Collections.emptyList();
         }
         return baseMapper.listTransitDetail(reportMonth, shipmentCode, asin, msku);
