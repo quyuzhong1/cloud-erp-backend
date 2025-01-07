@@ -1003,19 +1003,14 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
             return new ArrayList<>();
         }
         List<SoDeliveryNoticeDetailDTO.PushDownDTO> result = new ArrayList<>();
-        List<SoOutstockDetailEntity> soOutstockDetailEntityList = lambdaQuery()
-                .in(SoOutstockDetailEntity::getSourceDetailId, soDetailIds)
-                .list();
+        List<SoOutstockDetailEntity> soOutstockDetailEntityList = baseMapper.listBySoDetailIds(soDetailIds);
         if(CollUtil.isNotEmpty(soOutstockDetailEntityList)){
-            Integer count = soOutstockService.lambdaQuery().eq(SoOutstockEntity::getId, soOutstockDetailEntityList.get(0).getMainId()).eq(SoOutstockEntity::getInvalidStatus, Boolean.FALSE).count();
-            if(count > 0 ){
-                for (SoOutstockDetailEntity detailEntity : soOutstockDetailEntityList) {
-                    SoDeliveryNoticeDetailDTO.PushDownDTO pushDownDTO = new SoDeliveryNoticeDetailDTO.PushDownDTO();
-                    pushDownDTO.setSoDetailId(detailEntity.getSourceDetailId());
-                    pushDownDTO.setSkuId(detailEntity.getSkuId());
-                    pushDownDTO.setSkuNo(detailEntity.getSkuNo());
-                    result.add(pushDownDTO);
-                }
+            for (SoOutstockDetailEntity detailEntity : soOutstockDetailEntityList) {
+                SoDeliveryNoticeDetailDTO.PushDownDTO pushDownDTO = new SoDeliveryNoticeDetailDTO.PushDownDTO();
+                pushDownDTO.setSoDetailId(detailEntity.getSourceDetailId());
+                pushDownDTO.setSkuId(detailEntity.getSkuId());
+                pushDownDTO.setSkuNo(detailEntity.getSkuNo());
+                result.add(pushDownDTO);
             }
         }
         return result;

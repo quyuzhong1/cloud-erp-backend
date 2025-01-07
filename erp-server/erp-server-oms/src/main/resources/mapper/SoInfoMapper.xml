@@ -43,7 +43,8 @@
         sod.exchange_rate AS exchangeRate,
         sod.amount_local_currency AS amountLocalCurrency,
         sod.all_amount_local_currency AS allAmountLocalCurrency,
-        sod.frozen_qty as frozenQty
+        sod.frozen_qty as frozenQty,
+        sod.is_close
         FROM so_info si
         LEFT JOIN so_detail sod
         ON sod.main_id =si.id AND si.is_deleted=false
