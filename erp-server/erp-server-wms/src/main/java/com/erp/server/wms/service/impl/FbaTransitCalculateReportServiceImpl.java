@@ -225,7 +225,7 @@ public class FbaTransitCalculateReportServiceImpl extends SuperServiceImpl<FbaTr
         Integer currentReceiveQty = getCurrentReceiveQty(shipmentCode,asin,msku,fnSku,fbaReceiveDTOS);
         detailReportEntity.setCurrentReceiveQty(currentReceiveQty);
         //期末在途数量 期初在途数量+本期发货数量-本期签收数量
-        Integer endPeriodTransitQty = initTransitQty + currentDeliveryQty + currentReceiveQty;
+        Integer endPeriodTransitQty = initTransitQty + currentDeliveryQty - currentReceiveQty;
         detailReportEntity.setEndPeriodTransitQty(endPeriodTransitQty);
         //期末在途调整
         detailReportEntity.setEndPeriodTransitAdjustQty(MathUtil.ZERO);
