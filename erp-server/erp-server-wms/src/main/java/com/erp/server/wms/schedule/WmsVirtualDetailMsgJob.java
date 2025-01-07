@@ -50,13 +50,13 @@ public class WmsVirtualDetailMsgJob {
      */
     @XxlJob("hisVirtualInventoryJob")
     public ReturnT<String> hisVirtualInventoryJob() {
-        XxlJobHelper.log("=====自动执行生成虚拟仓批次流水 开始任务=====");
+        XxlJobHelper.log("=====自动执行生成虚拟仓流水结余 开始任务=====");
         long start = System.currentTimeMillis();
         String jobParam = XxlJobHelper.getJobParam();
         virtualInventoryDetailHisService.hisVirtualInventoryJob(jobParam);
         long end = System.currentTimeMillis();
         XxlJobHelper.log("主线程花费时间：{}", (end - start));
-        XxlJobHelper.log("=====自动执行生成虚拟仓批次流水 结束任务=====");
+        XxlJobHelper.log("=====自动执行生成虚拟仓流水结余 结束任务=====");
         return ReturnT.SUCCESS;
     }
 }
