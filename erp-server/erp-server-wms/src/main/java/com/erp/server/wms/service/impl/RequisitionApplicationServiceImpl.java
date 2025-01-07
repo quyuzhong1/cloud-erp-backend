@@ -1949,11 +1949,14 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         //判断是否存在下游单据，已有下游单据就不能再生成拣货单
         FirstMileDeliveryEntity firstMileDelivery = firstMileDeliveryService.findBySourceId(page.getParams().getId());
         if (ObjectUtil.isNotEmpty(firstMileDelivery)) {
-            throw new ServiceException(ApiError.ERROR_99104);
+            throw new ServiceException(ApiError.ERROR_99110, "头程发货单");
         }
         List<SkuVO> ignoreInventorySkuList = plmTaskFeign.getNoInventorySku();
         List<String> ignoreInventorySkus = ignoreInventorySkuList.stream().map(SkuVO::getSkuId).collect(Collectors.toList());
         IPage<RequisitionApplicationDTO.PickingViewDTO> picking = baseMapper.pagingPicking(new Page<>(page.getCurrPage(), page.getPageSize()), page.getParams(), ignoreInventorySkus);
+        if(CollUtil.isEmpty(picking.getRecords())){
+            throw new ServiceException(ApiError.ERROR_92167);
+        }
         return new PagingVO<>(picking);
     }
 
@@ -2035,6 +2038,45 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
     }
 
 
+
+    /**
+     * 要貨申請处理组合sku
+     */
+    private Map<String, Integer> requisitionApplicationDetailHandlingComboSku(List<RequisitionApplicationDetailEntity> details) {
+        Map<String, Integer> requisitionDetailQtySumBySkuNo = new HashMap<>();
+        if(CollUtil.isEmpty(details)){
+            return requisitionDetailQtySumBySkuNo;
+        }
+        List<String> skuIds = details.stream().map(RequisitionApplicationDetailEntity::getSkuId).collect(Collectors.toList());
+        //获取子SKU集合
+        List<BomChildrenSkuDTO> bomChildrenSkuList = plmTaskFeign.listHistoryBomChildBySkuIds(skuIds);
+        for (RequisitionApplicationDetailEntity detail : details) {
+            //查询sku是否存在子SKU
+            List<BomChildrenSkuDTO> sonSkuList = bomChildrenSkuList.stream()
+                    .filter(req -> req.getParentSkuId().equals(detail.getSkuId())
+                            && req.getBomVersion().equals(detail.getBomVersion())
+                            && BomTypeEnum.COMBINATION.getType().equals(req.getType())
+                    ).collect(Collectors.toList());
+
+            if (CollUtil.isNotEmpty(sonSkuList)) {
+                for (BomChildrenSkuDTO bomChildrenSkuDTO : sonSkuList) {
+                    Integer approveQty = detail.getApproveQty() != null && detail.getApproveQty() > 0 ? detail.getApproveQty() : 0;
+                    approveQty = approveQty * bomChildrenSkuDTO.getQuantity();
+                    if(Boolean.TRUE.equals(requisitionDetailQtySumBySkuNo.containsKey(bomChildrenSkuDTO.getSkuNo()))){
+                        approveQty = approveQty + requisitionDetailQtySumBySkuNo.get(bomChildrenSkuDTO.getSkuNo());
+                    }
+                    requisitionDetailQtySumBySkuNo.put(bomChildrenSkuDTO.getSkuNo(), approveQty);
+                }
+            }else {
+                Integer approveQty =  detail.getApproveQty() != null && detail.getApproveQty() > 0 ? detail.getApproveQty() : 0;
+                if(Boolean.TRUE.equals(requisitionDetailQtySumBySkuNo.containsKey(detail.getSkuNo()))){
+                    approveQty = approveQty + requisitionDetailQtySumBySkuNo.get(detail.getSkuNo());
+                }
+                requisitionDetailQtySumBySkuNo.put(detail.getSkuNo(), approveQty);
+            }
+        }
+        return requisitionDetailQtySumBySkuNo;
+    }
     /**
      * 回写要货申请的拣货单生成状态
      * @author jack
@@ -2047,6 +2089,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         List<String> oldDetailIds = oldDetails.stream()
                 .map(RequisitionApplicationDetailEntity::getId)
                 .collect(Collectors.toList());
+
 
         // 获取拣货单明细
         List<PickingDetailEntity> pickingDetailEntities = pickingDetailService.listPickingDetailBySourceDetailIds(oldDetailIds);
@@ -2062,20 +2105,17 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
             // 如果总数量不为零，才进行进一步处理
             if (totalQty > 0) {
                 // 统计每个明细的数量和
-                Map<String, Integer> requisitionDetailQtySumById = oldDetails.stream()
-                        .collect(Collectors.toMap(RequisitionApplicationDetailEntity::getId,
-                                RequisitionApplicationDetailEntity::getApproveQty,
-                                Integer::sum));
+                Map<String, Integer> requisitionDetailQtySumBySku = requisitionApplicationDetailHandlingComboSku(oldDetails);
 
                 // 统计拣货单明细的数量和
-                Map<String, Integer> pickingDetailQtySumBySourceDetailId = pickingDetailEntities.stream()
-                        .collect(Collectors.toMap(PickingDetailEntity::getSourceDetailId,
+                Map<String, Integer> pickingDetailQtySumBySku = pickingDetailEntities.stream()
+                        .collect(Collectors.toMap(PickingDetailEntity::getSkuNo,
                                 PickingDetailEntity::getQty,
                                 Integer::sum));
 
                 // 检查是否所有明细的数量一致
-                if (requisitionDetailQtySumById.entrySet().stream()
-                        .allMatch(e -> e.getValue().equals(pickingDetailQtySumBySourceDetailId.get(e.getKey())))) {
+                if (requisitionDetailQtySumBySku.entrySet().stream()
+                        .allMatch(e -> e.getValue().equals(pickingDetailQtySumBySku.get(e.getKey())))) {
                     pickPushDownStatus = BillPushDownStatusEnum.FINISH.getCode();
                 } else {
                     pickPushDownStatus = BillPushDownStatusEnum.PART.getCode();
@@ -2097,11 +2137,6 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
     public void writeBackRequisitionDeliveryPushDownStatus(String requisitionApplicationId) {
         // 获取要货申请明细
         List<RequisitionApplicationDetailEntity> oldDetails = requisitionApplicationDetailService.listByMainIds(Collections.singletonList(requisitionApplicationId));
-        List<String> oldDetailIds = oldDetails.stream()
-                .map(RequisitionApplicationDetailEntity::getId)
-                .collect(Collectors.toList());
-        // 获取拣货单明细
-//        List<PickingDetailEntity> pickingDetailEntities = pickingDetailService.listPickingDetailBySourceDetailIds(oldDetailIds);
         // 获取头程发货单明细
         List<FirstMileDeliveryDetailEntity> firstMileDeliveryDetailEntityList = firstMileDeliveryDetailService.listByRequisitionApplicationIds(Collections.singletonList(requisitionApplicationId));
 
@@ -2117,11 +2152,6 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
 
             // 如果总数量不为零，才进行进一步处理
             if (totalDeliveryQty > 0) {
-//                // 统计拣货单明细每个明细的实际拣货数量和
-//                Map<String, Integer> pickingDetailQtySumBySourceDetailId = pickingDetailEntities.stream()
-//                        .collect(Collectors.toMap(PickingDetailEntity::getSkuNo,
-//                                PickingDetailEntity::getQty,
-//                                Integer::sum));
                 // 统计要货申请每个明细的批准数量和
                 Map<String, Integer> requisitionDetailQtySumById = oldDetails.stream()
                         .collect(Collectors.toMap(RequisitionApplicationDetailEntity::getSkuNo,
