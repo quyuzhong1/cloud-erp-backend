@@ -1326,6 +1326,11 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
     public PagingVO<InventoryDTO.PagingViewDTO> getInventoryPageData(PagingDTO<InventoryDTO.ExportSearchParamDTO> dto) {
         // 如果是否选导出处理
         dealExportParams(dto.getParams());
+        AdvanceQueryDTO advanceQueryDTO = dto.getParams().getAdvanceQueryDTOList().stream().filter(e -> "dimension".equalsIgnoreCase(e.getField())).findFirst().orElse(null);
+        if (null == advanceQueryDTO){
+            ServiceException.runError("advanceQueryDTOList.field=dimension不能为空");
+        }
+        dto.getParams().setDimension(advanceQueryDTO.getValue().toString());
         InventoryDTO.SearchParamDTO searchParamDTO = BeanMapperUtils.map(InventoryDTO.SearchParamDTO.class, dto.getParams());
         Page<InventoryDTO.PagingViewDTO> dataList = new Page<>(dto.getPage(), dto.getPageSize());
         if (dto.getParams().getDimension().equals(InventorySearchDimensionEnum.WAREHOUSE.getCode())) {

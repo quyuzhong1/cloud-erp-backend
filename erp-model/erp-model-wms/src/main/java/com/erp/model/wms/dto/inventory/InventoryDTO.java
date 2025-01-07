@@ -270,6 +270,16 @@ public class InventoryDTO implements Serializable {
          * 产品名称
          */
         private String productName;
+
+        /**
+         * 页面高级查询
+         */
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
+
+        /**
+         * sqlMap 默认key default
+         */
+        private Map<String, String> sqlMap;
     }
 
     /**
