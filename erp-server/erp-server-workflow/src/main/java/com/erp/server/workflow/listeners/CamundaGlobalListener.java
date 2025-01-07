@@ -92,55 +92,12 @@ public class CamundaGlobalListener {
     int activityInstanceState = ((ExecutionEntity) executionDelegate).getActivityInstanceState();
     String type = (String) ((ExecutionEntity) executionDelegate).getEventSource().getProperties().toMap().get("type");
     List<String> endTypeList = Arrays.asList("endEvent", "noneEndEvent");
-    // && ActivityInstanceState.STARTING.getStateCode() == activityInstanceState
-    if (ExecutionListener.EVENTNAME_START.equals(executionDelegate.getEventName()) && ActivityInstanceState.STARTING.getStateCode() == activityInstanceState) {
-      // 任务创建时的逻辑处理
-      log.info("CamundaGlobalListener onTaskEvent Task created: {}", executionDelegate.getCurrentActivityName());
-
-    }else if(ExecutionListener.EVENTNAME_END.equals(executionDelegate.getEventName())) {
-      if ((ActivityInstanceState.CANCELED.getStateCode() == activityInstanceState && ObjectUtil.isEmpty(type)) || endTypeList.contains(type)) {
-        log.info("CamundaGlobalListener onTaskEvent Task completed: {} {} {} {}", executionDelegate.getEventName(), type, activityInstanceState, executionDelegate.getCurrentActivityName());
-        if (ActivityInstanceState.ENDING.getStateCode() == activityInstanceState) {
-          log.info("CamundaGlobalListener onTaskEvent Task completed: {}", executionDelegate.getCurrentActivityName());
-        }
-        // 任务完成时的逻辑处理
-        processManagementService.endExecutionHandle(executionDelegate.getProcessInstanceId());
-      }
-
-      Object nrOfInstancesObj = executionDelegate.getVariable("nrOfInstances");
-      Object loopCounterObj = executionDelegate.getVariable("loopCounter");
-      if(ObjectUtil.isEmpty(nrOfInstancesObj) || ObjectUtil.isEmpty(loopCounterObj)){
-        executionDelegate.removeVariable(MUL_USER_LIST);
-        executionDelegate.removeVariable("userList");
-      }else {
-        int nrOfInstances = (int) nrOfInstancesObj;
-        int loopCounter = (int) loopCounterObj;
-        if (nrOfInstances == loopCounter + 1) {
-          executionDelegate.removeVariable(MUL_USER_LIST);
-        }
-      }
-    }
-    // 获取多实例活动的属性和变量
-    // 执行take对下个节点赋值变量
-    if (executionDelegate.getEventName().equals(ExecutionListener.EVENTNAME_TAKE)) {
-      PvmActivity destination = ((ExecutionEntity) executionDelegate).getTransition().getDestination();
-      if(null == destination){
-        return;
-      }
-      Map<String, Object> nextActPropertiesMap = destination.getProperties().toMap();
-      String nextActType = (String) nextActPropertiesMap.get("type");
-      if (CharSequenceUtil.isBlank(nextActType) || !(CharSequenceUtil.equals(nextActType,"userTask") || CharSequenceUtil.equals(nextActType,"multiInstanceBody"))){
-        return;
-      }
-      Boolean isMultiInstance = null != nextActPropertiesMap.get("isMultiInstance") && Boolean.parseBoolean(nextActPropertiesMap.get("isMultiInstance").toString());
-      String startUserId = (String) executionDelegate.getVariable("creator");
-      List<String> candidateUsers = processManagementService.getCandidateByAct(destination, executionDelegate.getProcessDefinitionId(),startUserId);
-      if(Boolean.TRUE.equals(isMultiInstance) || CharSequenceUtil.equals(nextActType, "multiInstanceBody")){
-        executionDelegate.setVariable(MUL_USER_LIST, candidateUsers);
-      }else {
-        executionDelegate.setVariable("userList", candidateUsers);
-      }
-    }
+    // 处理开始事件
+    handleStartEvent(executionDelegate, activityInstanceState);
+    // 处理结束事件
+    handleEndEvent(executionDelegate, activityInstanceState, type, endTypeList);
+    // 处理take事件
+    handleTakeEvent(executionDelegate);
   }
   /**
    * This event is triggered when an execution is created, updated, or deleted. 1
@@ -166,5 +123,83 @@ public class CamundaGlobalListener {
 //     任务完成后，会触发该事件 eventType = complete
     log.debug("History event: {}",  JSONUtil.toJsonStr(historyEvent));
   }
- 
+
+  /**
+   * 处理开始事件
+   * @param executionDelegate  执行代理
+   * @param activityInstanceState  活动实例状态
+   */
+  private void handleStartEvent(DelegateExecution executionDelegate, int activityInstanceState) {
+    if (ExecutionListener.EVENTNAME_START.equals(executionDelegate.getEventName()) && ActivityInstanceState.STARTING.getStateCode() == activityInstanceState) {
+      log.info("CamundaGlobalListener onTaskEvent Task created: {}", executionDelegate.getCurrentActivityName());
+    }
+  }
+
+  /**
+   * 处理结束事件
+   * @param executionDelegate 执行代理
+   * @param activityInstanceState 活动实例状态
+   * @param type 类型
+   * @param endTypeList 结束类型列表
+   */
+  private void handleEndEvent(DelegateExecution executionDelegate, int activityInstanceState, String type, List<String> endTypeList) {
+    if (ExecutionListener.EVENTNAME_END.equals(executionDelegate.getEventName())) {
+      if ((ActivityInstanceState.CANCELED.getStateCode() == activityInstanceState && ObjectUtil.isEmpty(type)) || endTypeList.contains(type)) {
+        log.info("CamundaGlobalListener onTaskEvent Task completed: {} {} {} {}", executionDelegate.getEventName(), type, activityInstanceState, executionDelegate.getCurrentActivityName());
+        if (ActivityInstanceState.ENDING.getStateCode() == activityInstanceState) {
+          log.info("CamundaGlobalListener onTaskEvent Task completed: {}", executionDelegate.getCurrentActivityName());
+        }
+        // 流程取消，结束时的逻辑处理
+        processManagementService.endExecutionHandle(executionDelegate.getProcessInstanceId());
+      }
+      clearVariables(executionDelegate);
+    }
+  }
+
+  /**
+   * 清除变量 多实例结束时清除变量
+   * @param executionDelegate 执行代理
+   */
+  private void clearVariables(DelegateExecution executionDelegate) {
+    Object nrOfInstancesObj = executionDelegate.getVariable("nrOfInstances");
+    Object loopCounterObj = executionDelegate.getVariable("loopCounter");
+    if (ObjectUtil.isEmpty(nrOfInstancesObj) || ObjectUtil.isEmpty(loopCounterObj)) {
+      // 单实例
+      executionDelegate.removeVariable(MUL_USER_LIST);
+      executionDelegate.removeVariable("userList");
+    } else {
+      // 多实例
+      int nrOfInstances = (int) nrOfInstancesObj;
+      int loopCounter = (int) loopCounterObj;
+      if (nrOfInstances == loopCounter + 1) {
+        executionDelegate.removeVariable(MUL_USER_LIST);
+      }
+    }
+  }
+
+  /**
+   * 处理take事件 执行take对下个节点赋值变量
+   * @param executionDelegate 执行代理
+   */
+  private void handleTakeEvent(DelegateExecution executionDelegate) {
+    if (ExecutionListener.EVENTNAME_TAKE.equals(executionDelegate.getEventName())) {
+      PvmActivity destination = ((ExecutionEntity) executionDelegate).getTransition().getDestination();
+      if (destination == null) {
+        return;
+      }
+      Map<String, Object> nextActPropertiesMap = destination.getProperties().toMap();
+      String nextActType = (String) nextActPropertiesMap.get("type");
+      if (CharSequenceUtil.isBlank(nextActType) || !(CharSequenceUtil.equals(nextActType, "userTask") || CharSequenceUtil.equals(nextActType, "multiInstanceBody"))) {
+        return;
+      }
+      Boolean isMultiInstance = nextActPropertiesMap.get("isMultiInstance") != null && Boolean.parseBoolean(nextActPropertiesMap.get("isMultiInstance").toString());
+      String startUserId = (String) executionDelegate.getVariable("creator");
+      List<String> candidateUsers = processManagementService.getCandidateByAct(destination, executionDelegate, startUserId);
+      if (Boolean.TRUE.equals(isMultiInstance) || CharSequenceUtil.equals(nextActType, "multiInstanceBody")) {
+        executionDelegate.setVariable(MUL_USER_LIST, candidateUsers);
+      } else {
+        executionDelegate.setVariable("userList", candidateUsers);
+      }
+    }
+  }
 }
