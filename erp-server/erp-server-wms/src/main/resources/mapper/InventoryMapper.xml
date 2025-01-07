@@ -1169,7 +1169,7 @@
                     left join product_info pi on pd.product_id = pi.id  AND pi.is_deleted = FALSE
                     left join product_sale ps on ps.sku_id = pd.id AND  ps.is_deleted = FALSE
         <where>
-            it.is_deleted = false
+            ${params.sqlMap.default} and it.is_deleted = false
             <if test="params.productName != null and params.productName != ''">
                 and pd.name  ILIKE concat('%', #{params.productName}::text ,'%')
             </if>
@@ -1283,7 +1283,7 @@
                                                            on s.parent_id = wa.id and s.is_deleted = false and wa.is_deleted = false) wl
                                        on it.warehouse_location = wl.location_code and it.warehouse_id = wl.warehouse_id
                     <where>
-                        it.is_deleted = false
+                        ${params.sqlMap.default} and it.is_deleted = false
                         <if test="params.productName != null and params.productName != ''">
                             and pd.name  ILIKE concat('%', #{params.productName}::text ,'%')
                         </if>
@@ -1398,7 +1398,7 @@
                                 left join product_info pi on pd.product_id = pi.id AND pi.is_deleted = FALSE
                                 left join product_sale ps on ps.sku_id = pd.id AND ps.is_deleted = FALSE
         <where>
-            it.is_deleted = false
+            ${params.sqlMap.default} and it.is_deleted = false
             <if test="params.productName != null and params.productName != ''">
                 and pd.name  ILIKE concat('%', #{params.productName}::text ,'%')
             </if>

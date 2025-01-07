@@ -58,6 +58,7 @@ public class InventoryController extends BaseController {
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "即时库存导出")
     @PostMapping(value = "/exportInventoryExcel")
+    @WebAdvanceQuery(handler = WmsInventoryQueryHandler.class)
     public ApiResult<Boolean> exportInventoryExcel(@RequestBody InventoryDTO.ExportSearchParamDTO dto) {
         inventoryService.exportExcel(dto);
         return success(true);
