@@ -31,8 +31,8 @@ pipeline {
                     def erpfile = readFile('erp_file.txt')
                     def lines = erpfile.split("\n")
                     for (line in lines) {
-                        sh "ssh -tt root@172.16.100.90 "docker rmi ${harborAddress}/${harborRepo}/${line}:${TAG} || true""
-                        sh "ssh -tt root@172.16.100.90 "cd /home/dockers/jenkins/jenkins_home/workspace/${JOB_NAME}/erp-server/${line}/ && docker build -t ${harborAddress}/${harborRepo}/${line}:${TAG} .""
+                        sh "ssh -tt root@172.16.100.90 "docker rmi 172.16.100.92:5000/sdc-erp/${line}:${TAG} || true""
+                        sh "ssh -tt root@172.16.100.90 "cd /home/dockers/jenkins/jenkins_home/workspace/${JOB_NAME}/erp-server/${line}/ && docker build -t 172.16.100.92:5000/sdc-erp/${line}:${TAG} .""
                     }
                 sh '''
                 ssh -tt root@172.16.100.90 "docker rmi ${harborAddress}/${harborRepo}/erp-gateway:${TAG} || true"
