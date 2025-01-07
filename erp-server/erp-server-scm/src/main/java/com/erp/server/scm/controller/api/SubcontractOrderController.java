@@ -359,6 +359,7 @@ public class SubcontractOrderController extends BaseController {
             menuCode = "scm:subcontractOrder:export",
             tableAlias = "so"
     )
+    @WebAdvanceQuery(handler = SubcontractOrderQueryHandler.class)
     public void exportList(@RequestBody @Validated SubcontractOrderDTO.ExportDTO dto, HttpServletResponse response) {
         subcontractOrderService.exportList(dto, response);
     }
