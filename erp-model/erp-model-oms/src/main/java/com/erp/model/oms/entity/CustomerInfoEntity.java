@@ -243,6 +243,12 @@ public class CustomerInfoEntity extends BaseEntity<CustomerInfoEntity> {
      @TableField("check_type")
      private String checkType;
 
+    /**
+     * 分区id
+     */
+    @TableField("partition_id")
+    private String partitionId;
+
     public static final String CODE = "code";
 
     public static final String APPROVE_STATUS = "approve_status";

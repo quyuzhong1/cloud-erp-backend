@@ -40,6 +40,7 @@ public final class SoUtils {
         headMap.put("approveStatusName", "单据状态");
         headMap.put("invalidStatusName", "作废状态");
         headMap.put("customerName", "客户");
+        headMap.put("partitionName", "军区");
         headMap.put("countryName", "收货国家");
         headMap.put("salesOrgName", "销售组织");
         headMap.put("sellerName", "销售员");

@@ -365,6 +365,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         platformDTO.setDictPlatform(customerInfoEntity.getPlatformType());
         platformDTO.setWarehouseIdList(Arrays.asList(entity.getWarehouseId()));
         platformDTO.setRelationId("");
+        platformDTO.setPartitionId(entity.getPartitionId());
         List<VirtualWarehouseRelationEntity> virtualWarehouseList = wmsVirtualWarehouseFeign.getVirtualWarehouse(platformDTO);
         if (CollectionUtils.isEmpty(virtualWarehouseList)) {
             entity.setVirtualWarehouseId("");

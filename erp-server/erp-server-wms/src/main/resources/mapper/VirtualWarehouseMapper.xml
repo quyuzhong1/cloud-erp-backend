@@ -112,6 +112,7 @@
         SELECT  DISTINCT vw.id,vw.name,vw.code ,vw.disabled from virtual_warehouse vw
                           left join virtual_warehouse_relation vwr on vw.id = vwr.virtual_warehouse_id and vwr.is_deleted = false
                           left join virtual_warehouse_channel vwc on vwc.virtual_warehouse_id = vw.id and vwc.is_deleted = false
+                          left join virtual_warehouse_channel_partition_ref vwcpr on vwcpr.main_id = vwc.id and vwcpr.is_deleted = false
         where vw.is_deleted = false
         <if test="params.relationId != null and params.relationId != ''">
             and ((vwc.type = 'shop' and vwc.dict_platform = #{params.dictPlatform} and vwc.relation_id = #{params.relationId})
@@ -119,6 +120,9 @@
         </if>
         <if test="params.dictPlatform != null and params.dictPlatform != '' and (params.relationId == null or params.relationId == '')">
             and vwc.type = 'platform' and vwc.dict_platform = #{params.dictPlatform}
+        </if>
+        <if test="params.partitionId != null and params.partitionId != ''">
+            and (vwcpr.partition_id = #{params.partitionId} or vwcpr.partition_id is null)
         </if>
         <if test="params.warehouseId != null and params.warehouseId != ''">
             and vwr.warehouse_id = #{params.warehouseId}

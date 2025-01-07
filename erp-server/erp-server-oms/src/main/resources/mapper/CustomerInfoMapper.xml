@@ -5,13 +5,20 @@
 
     <select id="paging" resultType="com.erp.model.oms.dto.CustomerDTO$PagingViewDTO">
         SELECT
-        id,code,approve_status,
+        ci.id,
+        ci.code,
+        approve_status,
         seller_name,
         approve_user_name,
-        name,short_name,disabled,
-        use_org_name,group_id,group_name,
+        ci.name,
+        short_name,
+        ci.disabled,
+        use_org_name,
+        group_id,
+        group_name,
         use_org_id,
-        create_user_name,create_time,
+        ci.create_user_name,
+        ci.create_time,
         ci.platform_type as platformType,
         currency,
         financial_organization,
@@ -22,8 +29,12 @@
         transactional_mode,
         period_setting,
         check_type,
-        ci.country_id
+        ci.country_id,
+        fdp.id as partitionId,
+        fdp.code as partitionCode,
+        fdp.name as partitionName
         FROM customer_info ci
+        left join foreign_dict_partition fdp on fdp.id = ci.partition_id and fdp.is_deleted = false
         WHERE
 
         ${params.sqlMap.default}
@@ -38,34 +49,36 @@
 
     <select id="listExport" resultType="com.erp.model.oms.dto.CustomerDTO$PagingExportDTO">
         SELECT
-        ID,
-        code,
-        NAME,
-        short_name,
-        area_id,
-        country_id,
-        province_id,
-        city_id,
-        seller_id,
-        seller_name,
-        business_mode,
-        platform_type,
-        company_category_dict,
+        ci.id,
+        ci.code,
         approve_status,
-        disabled,
-        use_org_id,
-        use_org_name,
-        group_name,
-        inner_org_id,
-        inner_org_name,
-        customer_property,
-        mail_address,
+        seller_name,
         approve_user_name,
-        create_user_id,
-        create_user_name,
-        create_time
-        FROM
-        customer_info ci
+        ci.name,
+        short_name,
+        ci.disabled,
+        use_org_name,
+        group_id,
+        group_name,
+        use_org_id,
+        ci.create_user_name,
+        ci.create_time,
+        ci.platform_type as platformType,
+        currency,
+        financial_organization,
+        enable_time,
+        down_time,
+        trade_currency,
+        business_mode,
+        transactional_mode,
+        period_setting,
+        check_type,
+        ci.country_id,
+        fdp.id as partitionId,
+        fdp.code as partitionCode,
+        fdp.name as partitionName
+        FROM customer_info ci
+        left join foreign_dict_partition fdp on fdp.id = ci.partition_id and fdp.is_deleted = false
         WHERE
         ${params.sqlMap.default}
         and    ci.is_deleted=FALSE

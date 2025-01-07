@@ -22,6 +22,7 @@ import com.erp.model.oms.dto.*;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
+import com.erp.model.oms.entity.SoB2cReceiverEntity;
 import com.erp.model.oms.enums.*;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.enums.BomTypeEnum;
@@ -112,6 +113,8 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
 
     @Resource
     private ShopInfoService shopInfoService;
+    @Resource
+    private SoB2cReceiverService soB2cReceiverService;
 
     @Override
     public Boolean add(SoB2cDTO.AddDTO addDTO, String mainId) {
@@ -260,11 +263,13 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
         listSkuParamList.setList(listParamList);
         List<SkuMappingDTO.ListSkuDTO> SkuMappingList = skuMappingService.listBySkuNoList(listSkuParamList);
 
+        SoB2cReceiverEntity receiverEntity = soB2cReceiverService.getByMainId(entity.getId());
         //虚拟仓库查询
         VirtualWarehouseChannelDTO.PlatformDTO platformDTO = new VirtualWarehouseChannelDTO.PlatformDTO();
         platformDTO.setDictPlatform(entity.getDictPlatform());
         platformDTO.setRelationId(entity.getShopId());
         platformDTO.setWarehouseIdList(warehouseIdList);
+        platformDTO.setPartitionId(receiverEntity.getPartitionId());
         List<VirtualWarehouseRelationEntity> virtualWarehouseList = wmsVirtualWarehouseFeign.getVirtualWarehouse(platformDTO);
         List<InventorySkuCostDTO.QueryDetailDTO> queryDetailDTOList = new ArrayList<>();
         for (SoB2cDetailEntity detailEntity :detailList) {
@@ -837,12 +842,14 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
         ValidList<SkuMappingDTO.ListSkuParamDTO> listSkuParamList = new ValidList<>();
         listSkuParamList.setList(skuParamList);
         List<SkuMappingDTO.ListSkuDTO> skuMappingList = skuMappingService.listBySkuNoList(listSkuParamList);
+        SoB2cReceiverEntity receiverEntity = soB2cReceiverService.getByMainId(entity.getId());
 
         //虚拟仓库查询
         VirtualWarehouseChannelDTO.PlatformDTO platformDTO = new VirtualWarehouseChannelDTO.PlatformDTO();
         platformDTO.setDictPlatform(entity.getDictPlatform());
         platformDTO.setRelationId(entity.getShopId());
         platformDTO.setWarehouseIdList(warehouseIdList);
+        platformDTO.setPartitionId(receiverEntity.getPartitionId());
         List<VirtualWarehouseRelationEntity> virtualWarehouseList = wmsVirtualWarehouseFeign.getVirtualWarehouse(platformDTO);
 
         for (Pair<SoB2cDetailEntity,String> pair : updateWarehouseList) {
@@ -956,12 +963,14 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
             log.error("未找到核算公司，orgIdList = {}",orgIdList);
             throw new ServiceException(ApiError.ERROR_9014);
         }
+        SoB2cReceiverEntity receiverEntity = soB2cReceiverService.getByMainId(soB2cEntity.getId());
 
         //虚拟仓库查询
         VirtualWarehouseChannelDTO.PlatformDTO platformDTO = new VirtualWarehouseChannelDTO.PlatformDTO();
         platformDTO.setDictPlatform(soB2cEntity.getDictPlatform());
         platformDTO.setRelationId(soB2cEntity.getShopId());
         platformDTO.setWarehouseIdList(warehouseIdList);
+        platformDTO.setPartitionId(receiverEntity.getPartitionId());
         List<VirtualWarehouseRelationEntity> virtualWarehouseList = wmsVirtualWarehouseFeign.getVirtualWarehouse(platformDTO);
 
       /*  //SKU对照表信息
