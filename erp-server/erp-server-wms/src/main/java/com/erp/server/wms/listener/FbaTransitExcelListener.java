@@ -79,7 +79,7 @@ public class FbaTransitExcelListener extends AnalysisEventListener<FbaTransitExc
         //校验数据是否已存在
         FbaShipmentDetailEntity detailEntity = fbaShipmentDetailService.getDetail(excelDTO.getShipmentCode(),excelDTO.getAsin(),excelDTO.getMsku());
         if (Objects.isNull(detailEntity)){
-            errorMsgList.add(CharSequenceUtil.format("货件单号【{}】ASIN【{}】MSKU【{}】拣货记录不存在",excelDTO.getShipmentCode(),excelDTO.getAsin(),excelDTO.getMsku()));
+            errorMsgList.add(CharSequenceUtil.format("货件单号【{}】ASIN【{}】MSKU【{}】货件明细不存在",excelDTO.getShipmentCode(),excelDTO.getAsin(),excelDTO.getMsku()));
         }
         String reportMonthStr = excelDTO.getReportMonth();
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
