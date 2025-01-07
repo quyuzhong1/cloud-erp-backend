@@ -103,7 +103,18 @@ public class InvoiceDTO implements Serializable {
          * id
          */
         private String id;
-
+        /**
+         * mainId
+         */
+        private String mainId;
+        /**
+         * 客户编号
+         */
+        private String code;
+        /**
+         * 客户名称
+         */
+        private String name;
         /**
          * 发票抬头
          */
@@ -155,5 +166,6 @@ public class InvoiceDTO implements Serializable {
          * 开票通讯地址
          */
         private String invoiceAddress;
+
     }
 }

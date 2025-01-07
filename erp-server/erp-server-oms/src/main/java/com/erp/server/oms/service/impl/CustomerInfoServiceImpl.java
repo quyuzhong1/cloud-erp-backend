@@ -36,6 +36,7 @@ import com.erp.model.oms.dto.DictBasicDTO;
 import com.erp.model.oms.dto.CustomerDTO.CustomerBatchUpdateDTO;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.AddressTypeEnum;
+import com.erp.model.oms.enums.CustomerAddressTypeEnum;
 import com.erp.model.oms.enums.CustomerInfoBusinessModeEnum;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.oms.vo.CustomerInfoVO;
@@ -2126,7 +2127,7 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
 
         //发票信息
         List<InvoiceDTO.ViewDTO> invoiceList = customerInvoiceService.listByMainIds(customerIdList);
-        Map<String, List<InvoiceDTO.ViewDTO>> invoiceMap = invoiceList.stream().collect(Collectors.groupingBy(InvoiceDTO.ViewDTO::getId));
+        Map<String, List<InvoiceDTO.ViewDTO>> invoiceMap = invoiceList.stream().collect(Collectors.groupingBy(InvoiceDTO.ViewDTO::getMainId));
 
         //联系人信息
         //地址信息
@@ -2175,7 +2176,7 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         List<DictBasicDTO.ViewDTO> customerCategoryList = dictBasicService.getByKey("customerCompanyCategory");
         Map<String,String> customerCategoryMap = new HashMap<>();
         if(CollectionUtils.isNotEmpty(customerCategoryList)){
-            customerCategoryMap = customerCategoryList.stream().collect(Collectors.toMap(DictBasicDTO.ViewDTO::getId, DictBasicDTO.ViewDTO::getName));
+            customerCategoryMap = customerCategoryList.stream().collect(Collectors.toMap(DictBasicDTO.ViewDTO::getValue, DictBasicDTO.ViewDTO::getName));
         }
 
         for (CustomerDTO.PagingExportDTO item : records) {
@@ -2211,6 +2212,8 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
                 for (InvoiceDTO.ViewDTO view : invoiceViews) {
                     view.setIsDefaultName(view.getIsDefault() ? "是" : "否");
                     view.setTypeName(InvoiceTypeEnum.getName(view.getType()));
+                    view.setCode(item.getCode());
+                    view.setName(item.getName());
                 }
                 item.setInvoiceList(invoiceViews);
             }
@@ -2218,6 +2221,7 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
             List<CustomerDTO.PagingAddressContactExportDTO> addressContactViews = addressContactMap.get(item.getId());
             if(CollUtil.isNotEmpty(addressContactViews)){
                 for (CustomerDTO.PagingAddressContactExportDTO view : addressContactViews) {
+                    view.setTypeName(CustomerAddressTypeEnum.getName(view.getType()));
                     view.setPersonDisabledName(null == view.getPersonDisabled() || view.getPersonDisabled()? "停用" : "启用");
                     view.setPersonIsDefaultName(null == view.getPersonIsDefault() || view.getPersonIsDefault() ? "是" : "否");
                     view.setAddressDisabledName(null == view.getAddressDisabled() || view.getAddressDisabled()? "停用" : "启用");
