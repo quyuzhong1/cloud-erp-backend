@@ -479,6 +479,11 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
         }
         pagingParamDTO.getParams().setDimension(advanceQueryDTO.getValue().toString());
         if (InventorySearchDimensionEnum.WAREHOUSE.getCode().equalsIgnoreCase(pagingParamDTO.getParams().getDimension())) {
+            // 检查不支持库区
+            boolean hasAreaName = pagingParamDTO.getParams().getAdvanceQueryDTOList().stream().anyMatch(e -> "wl.area_name".equalsIgnoreCase(e.getField()));
+            if (hasAreaName){
+                ServiceException.runError("【按仓库】不支持库区查询");
+            }
             List<AdvanceQueryDTO> newQuery = pagingParamDTO.getParams().getAdvanceQueryDTOList().stream().filter(e -> "dimension".equalsIgnoreCase(e.getField())).collect(Collectors.toList());
             pagingParamDTO.getParams().setAdvanceQueryDTOList(newQuery);
             pageData = this.baseMapper.page(query, pagingParamDTO.getParams());
@@ -489,6 +494,11 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
             pageData = this.baseMapper.pageByArea(query, pagingParamDTO.getParams());
         }
         if (InventorySearchDimensionEnum.WAREHOUSE_LOCATION.getCode().equalsIgnoreCase(pagingParamDTO.getParams().getDimension())) {
+            // 检查不支持库区
+            boolean hasAreaName = pagingParamDTO.getParams().getAdvanceQueryDTOList().stream().anyMatch(e -> "wl.area_name".equalsIgnoreCase(e.getField()));
+            if (hasAreaName){
+                ServiceException.runError("【按仓位】不支持库区查询");
+            }
             List<AdvanceQueryDTO> newQuery = pagingParamDTO.getParams().getAdvanceQueryDTOList().stream().filter(e -> "dimension".equalsIgnoreCase(e.getField())).collect(Collectors.toList());
             pagingParamDTO.getParams().setAdvanceQueryDTOList(newQuery);
             if(CharSequenceUtil.isNotBlank(pagingParamDTO.getParams().getWarehouseLocationName())){
@@ -1326,6 +1336,11 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
     public PagingVO<InventoryDTO.PagingViewDTO> getInventoryPageData(PagingDTO<InventoryDTO.ExportSearchParamDTO> dto) {
         // 如果是否选导出处理
         dealExportParams(dto.getParams());
+        AdvanceQueryDTO advanceQueryDTO = dto.getParams().getAdvanceQueryDTOList().stream().filter(e -> "dimension".equalsIgnoreCase(e.getField())).findFirst().orElse(null);
+        if (null == advanceQueryDTO){
+            ServiceException.runError("advanceQueryDTOList.field=dimension不能为空");
+        }
+        dto.getParams().setDimension(advanceQueryDTO.getValue().toString());
         InventoryDTO.SearchParamDTO searchParamDTO = BeanMapperUtils.map(InventoryDTO.SearchParamDTO.class, dto.getParams());
         Page<InventoryDTO.PagingViewDTO> dataList = new Page<>(dto.getPage(), dto.getPageSize());
         if (dto.getParams().getDimension().equals(InventorySearchDimensionEnum.WAREHOUSE.getCode())) {
