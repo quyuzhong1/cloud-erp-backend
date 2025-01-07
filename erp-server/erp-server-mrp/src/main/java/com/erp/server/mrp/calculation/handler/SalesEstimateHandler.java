@@ -57,8 +57,7 @@ public class SalesEstimateHandler extends AbstractSkuCalculationHandler {
                 continue;
             }
             BigDecimal saleQty = getSaleQty(replenishmentResultDTO.getSalesInfos(), replenishmentResultDTO.getAvgTimePeriodSales(), formulaResult, basicCalcDate);
-            ReplenishmentResultDTO.SalesEstimateDTO salesEstimateDTO = new ReplenishmentResultDTO.SalesEstimateDTO(calcDate, saleQty,
-                    calcDate.format(DateTimeFormatter.ofPattern("yyyy-MM")));
+            ReplenishmentResultDTO.SalesEstimateDTO salesEstimateDTO = ReplenishmentResultDTO.SalesEstimateDTO.buildSalesEstimateDTO(calcDate, saleQty, formulaResult);
             salesEstimates.add(salesEstimateDTO);
         }
         replenishmentResultDTO.setSalesEstimates(salesEstimates);
