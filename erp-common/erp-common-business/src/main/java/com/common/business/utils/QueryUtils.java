@@ -194,4 +194,18 @@ public class QueryUtils {
         }
         return null;
     }
+
+    public static String listToStringValue(List<?> list, QueryDataTypeEnum dataTypeEnum){
+        if (CollectionUtils.isEmpty(list)){
+            return "";
+        }
+        StringBuilder warehouseNameListVal = new StringBuilder("(");
+        for (Object obj : list) {
+            warehouseNameListVal.append(QueryUtils.handleVal(obj, dataTypeEnum.getCode(), QueryConditionEnum.IN_LIST)).append(",");
+        }
+        //去掉最后一个,
+        warehouseNameListVal = new StringBuilder(warehouseNameListVal.substring(0, warehouseNameListVal.length() - 1));
+        warehouseNameListVal.append(")");
+        return warehouseNameListVal.toString();
+    }
 }
