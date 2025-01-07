@@ -13,6 +13,7 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.wms.dto.OverseasInventoryDTO;
 import com.erp.model.wms.dto.OverseasProviderWarehouseDTO;
+import com.erp.server.wms.query.OverseasInventoryQueryHandler;
 import com.erp.server.wms.service.OverseasInventoryService;
 import com.erp.server.wms.service.OverseasProviderWarehouseService;
 import lombok.extern.slf4j.Slf4j;
@@ -55,7 +56,7 @@ public class OverseasInventoryController extends BaseController {
             menuCode = "wms:overseasInventory:paging",
             tableAlias = "oi"
     )
-    @WebAdvanceQuery
+    @WebAdvanceQuery(handler = OverseasInventoryQueryHandler.class)
     public ApiResult<PagingVO<OverseasInventoryDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<OverseasInventoryDTO.PagingParamDTO> dto) {
         PagingVO<OverseasInventoryDTO.ListDTO> result = overseasInventoryService.paging(dto);
         return success(result);
