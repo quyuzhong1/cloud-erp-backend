@@ -54,6 +54,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -425,6 +426,9 @@ public class FbaTransitCalculateReportServiceImpl extends SuperServiceImpl<FbaTr
         } catch (ExcelCommonException e) {
             log.error("导入格式错误！", e);
             throw new ServiceException(ApiError.ERROR_1016);
+        }catch (Exception e){
+            log.error("导入数据错误！", e);
+            throw new ServiceException(ApiError.ERROR_1012);
         }
         List<FbaTransitExcelDTO> excelDateList = excelListenerUtil.getExcelDateList();
         if (CollectionUtils.isEmpty(excelDateList)) {
@@ -483,10 +487,18 @@ public class FbaTransitCalculateReportServiceImpl extends SuperServiceImpl<FbaTr
             List<FbaShipmentDetailEntity> shipmentDetailEntityList = fbaShipmentDetailEntityList.stream().filter(e -> shipmentEntity.getId().equals(e.getMainId())).collect(Collectors.toList());
             List<FbaTransitCalculateDetailReportEntity> addDetailList = new ArrayList<>();
             for (FbaTransitExcelDTO  fbaTransitExcelDTO : fbaTransitExcelDTOS){
-                LocalDate reportMonth = fbaTransitExcelDTO.getReportMonth().toLocalDate().withDayOfMonth(1);
+                String reportMonthStr = fbaTransitExcelDTO.getReportMonth();
+                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+                LocalDate reportMonth = null;
+                Integer initTransitQty = null;
+                try {
+                    reportMonth = LocalDate.parse(reportMonthStr,formatter).withDayOfMonth(1);
+                    initTransitQty = Integer.valueOf(fbaTransitExcelDTO.getInitTransitQty());
+                }catch (Exception e){
+                    continue;
+                }
                 String asin = fbaTransitExcelDTO.getAsin();
                 String msku = fbaTransitExcelDTO.getMsku();
-                Integer initTransitQty = fbaTransitExcelDTO.getInitTransitQty();
                 //判断是否存在多个月份
                 FbaTransitCalculateReportEntity entity = getReportEntity(shipmentCode,reportMonth,shipmentEntity, shopInfoEntityList, customerInfoEntityList);
                 //创建在途明细
@@ -523,10 +535,18 @@ public class FbaTransitCalculateReportServiceImpl extends SuperServiceImpl<FbaTr
             List<FbaShipmentDetailEntity> shipmentDetailEntityList = fbaShipmentDetailEntityList.stream().filter(e -> shipmentEntity.getId().equals(e.getMainId())).collect(Collectors.toList());
             List<FbaTransitCalculateDetailReportEntity> addDetailList = new ArrayList<>();
             for (FbaTransitExcelDTO  fbaTransitExcelDTO : fbaTransitExcelDTOS){
-                LocalDate reportMonth = fbaTransitExcelDTO.getReportMonth().toLocalDate().withDayOfMonth(1);
+                String reportMonthStr = fbaTransitExcelDTO.getReportMonth();
+                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+                LocalDate reportMonth = null;
+                Integer initTransitQty = null;
+                try {
+                    reportMonth = LocalDate.parse(reportMonthStr,formatter).withDayOfMonth(1);
+                    initTransitQty = Integer.valueOf(fbaTransitExcelDTO.getInitTransitQty());
+                }catch (Exception e){
+                    continue;
+                }
                 String asin = fbaTransitExcelDTO.getAsin();
                 String msku = fbaTransitExcelDTO.getMsku();
-                Integer initTransitQty = fbaTransitExcelDTO.getInitTransitQty();
                 //上个月
                 LocalDate lastMonth = reportMonth.minusMonths(1).withDayOfMonth(1);
                 //判断是否存在多个月份
@@ -577,7 +597,7 @@ public class FbaTransitCalculateReportServiceImpl extends SuperServiceImpl<FbaTr
         String msku = detailReportEntity.getMsku();
         List<FbaTransitCalculateDetailReportEntity> list = fbaTransitCalculateDetailReportService.listTransitDetail(nextMonth, shipmentCode, asin, msku);
         if (CollUtil.isNotEmpty(list)){
-            throw new ServiceException("存在【{}】在途核对数据，不能调整本月在途数量", nextMonth);
+            throw new ServiceException("存在【{}】在途核对数据，不能调整本月在途数量", nextMonth.format(DateTimeFormatter.ofPattern("yyyy-MM")));
         }
         fbaTransitCalculateDetailReportService.updateAdjustQty(adjustDTO,detailReportEntity);
         return Boolean.TRUE;

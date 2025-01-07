@@ -205,7 +205,9 @@
                rsd.stock_up_min_days,
                rsd.stock_up_default_days,
                rsd.stock_up_max_days,
-               rsd.cfg_fba_in_transit
+               rsd.cfg_fba_in_transit,
+               rsd.cfg_rule,
+               rsd.calc_date
         from replenishment_suggestion rs
                  inner join replenishment_suggestion_detail rsd on rs.id = rsd.main_id and rsd.is_deleted = false
         where rsd.id = #{detailId}

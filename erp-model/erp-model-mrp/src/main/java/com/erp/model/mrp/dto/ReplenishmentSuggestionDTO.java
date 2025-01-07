@@ -1,11 +1,15 @@
 package com.erp.model.mrp.dto;
 
+import cn.hutool.json.JSONUtil;
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.TypeReference;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.dto.base.SortParamDTO;
-import com.erp.model.mrp.entity.CalcSalesInfoDenoisingEntity;
-import com.erp.model.mrp.enums.CfgRuleSalesDenoisingDenoisingTypeEnum;
-import com.erp.model.mrp.enums.ReplenishmentInventoryTypeEnum;
+import com.erp.model.mrp.entity.SalesEstimateEntity;
+import com.erp.model.mrp.entity.SalesInfoEntity;
+import com.erp.model.mrp.enums.*;
+import com.erp.model.mrp.vo.ReplenishmentSuggestionVO;
 import lombok.*;
 import org.springframework.util.ObjectUtils;
 
@@ -18,6 +22,7 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 public class ReplenishmentSuggestionDTO implements Serializable {
 
@@ -615,6 +620,67 @@ public class ReplenishmentSuggestionDTO implements Serializable {
          * 近三百六十日销量
          */
         private BigDecimal threeHundredAndSixtySalesQty;
+
+
+        public static ReplenishmentSuggestionDTO.SalesEstimateExportDTO buildSalesInfoEstimateDTO(SalesEstimateEntity entity, ReplenishmentSuggestionVO.View view, String shopName, String platform) {
+            StringBuilder salesInfoEstimateType = new StringBuilder();
+            String rule;
+            String baseRuleName = "日销量";
+            CfgRuleSalesFormulaDTO.PercentJsonDTO percentJsonDTO = JSONUtil.toBean(entity.getPercentJson(), CfgRuleSalesFormulaDTO.PercentJsonDTO.class);
+            if (CfgRuleSalesFormulaTypeEnum.FIXED.getCode().equals(entity.getType())) {
+                salesInfoEstimateType.append(CfgRuleSalesFormulaTypeEnum.FIXED.getName()).append(baseRuleName);
+                rule = String.valueOf(entity.getFixedValue());
+            } else if (CfgRuleSalesFormulaTypeEnum.DYNAMIC.getCode().equals(entity.getType())) {
+                salesInfoEstimateType.append(CfgRuleSalesFormulaTypeEnum.DYNAMIC.getName()).append(baseRuleName);
+                rule = TimePeriodEnum.buildRule(percentJsonDTO);
+            } else {
+                salesInfoEstimateType.append(CfgRuleSalesFormulaTypeEnum.DEFAULT.getName()).append(baseRuleName);
+                if (CfgRuleSalesFormulaDefaultTypeEnum.FIXED.getCode().equals(entity.getDefaultType())) {
+                    salesInfoEstimateType.append("(").append(CfgRuleSalesFormulaDefaultTypeEnum.FIXED.getName()).append(")");
+                    rule = String.valueOf(entity.getFixedValue());
+                } else {
+                    salesInfoEstimateType.append("(").append(CfgRuleSalesFormulaDefaultTypeEnum.DYNAMIC.getName()).append(")");
+                    rule = TimePeriodEnum.buildRule(percentJsonDTO);
+                }
+            }
+            List<CalcSalesInfoDimDTO.SalesVO> salesQtyList = JSON.parseObject(view.getSalesQtyJson(), new TypeReference<List<CalcSalesInfoDimDTO.SalesVO>>() {
+            });
+            Map<String, BigDecimal> salesQtyMap = salesQtyList.stream()
+                    .collect(Collectors.toMap(CalcSalesInfoDimDTO.SalesVO::getType, CalcSalesInfoDimDTO.SalesVO::getQty, BigDecimal::add));
+            List<CalcSalesInfoDimDTO.SalesVO> avgSalesQtyList = JSON.parseObject(view.getAvgSalesQtyJson(), new TypeReference<List<CalcSalesInfoDimDTO.SalesVO>>() {
+            });
+            Map<String, BigDecimal> avgSalesQtyMap = avgSalesQtyList.stream()
+                    .collect(Collectors.toMap(CalcSalesInfoDimDTO.SalesVO::getType, CalcSalesInfoDimDTO.SalesVO::getQty, BigDecimal::add));
+            ReplenishmentSuggestionDTO.SalesEstimateExportDTO dto = new ReplenishmentSuggestionDTO.SalesEstimateExportDTO();
+            dto.setSkuId(view.getSkuId());
+            dto.setShopId(view.getShopId());
+            dto.setSkuNo(view.getSkuNo());
+            dto.setShopName(shopName);
+            dto.setPlatformName(platform);
+            dto.setDate(entity.getDate());
+            dto.setSalesInfoEstimateType(salesInfoEstimateType.toString());
+            dto.setRule(rule);
+            dto.setEstimateQty(entity.getSalesQty());
+            dto.setAvgThreeSalesQty(avgSalesQtyMap.get(TimePeriodEnum.THREE.getName()));
+            dto.setAvgSevenSalesQty(avgSalesQtyMap.get(TimePeriodEnum.SEVEN.getName()));
+            dto.setAvgThirtySalesQty(avgSalesQtyMap.get(TimePeriodEnum.THIRTY.getName()));
+            dto.setAvgFourteenSalesQty(avgSalesQtyMap.get(TimePeriodEnum.FOURTEEN.getName()));
+            dto.setAvgSixtySalesQty(avgSalesQtyMap.get(TimePeriodEnum.SIXTY.getName()));
+            dto.setAvgNinetySalesQty(avgSalesQtyMap.get(TimePeriodEnum.NINETY.getName()));
+            dto.setAvgOneHundredAndEightySalesQty(avgSalesQtyMap.get(TimePeriodEnum.ONE_HUNDRED_AND_EIGHTY.getName()));
+            dto.setAvgTwoHundredAndSeventySalesQty(avgSalesQtyMap.get(TimePeriodEnum.TWO_HUNDRED_AND_SEVENTY.getName()));
+            dto.setAvgThreeHundredAndSixtySalesQty(avgSalesQtyMap.get(TimePeriodEnum.THREE_HUNDRED_AND_SIXTY.getName()));
+            dto.setSevenSalesQty(salesQtyMap.get(TimePeriodEnum.SEVEN.getName()));
+            dto.setThreeSalesQty(salesQtyMap.get(TimePeriodEnum.THREE.getName()));
+            dto.setFourteenSalesQty(salesQtyMap.get(TimePeriodEnum.FOURTEEN.getName()));
+            dto.setThirtySalesQty(salesQtyMap.get(TimePeriodEnum.THIRTY.getName()));
+            dto.setNinetySalesQty(salesQtyMap.get(TimePeriodEnum.NINETY.getName()));
+            dto.setSixtySalesQty(salesQtyMap.get(TimePeriodEnum.SIXTY.getName()));
+            dto.setOneHundredAndEightySalesQty(salesQtyMap.get(TimePeriodEnum.ONE_HUNDRED_AND_EIGHTY.getName()));
+            dto.setTwoHundredAndSeventySalesQty(salesQtyMap.get(TimePeriodEnum.TWO_HUNDRED_AND_SEVENTY.getName()));
+            dto.setThreeHundredAndSixtySalesQty(salesQtyMap.get(TimePeriodEnum.THREE_HUNDRED_AND_SIXTY.getName()));
+            return dto;
+        }
     }
 
     @Setter
@@ -649,31 +715,31 @@ public class ReplenishmentSuggestionDTO implements Serializable {
         /**
          * 日期
          */
-        private String date;
+        private LocalDate date;
         /**
          * 结余库存
          */
-        private Integer balanceInventory;
+        private BigDecimal balanceInventory;
         /**
          * 预估销量
          */
-        private Integer salesQty;
+        private BigDecimal salesQty;
         /**
          * 发货在途_到货量
          */
-        private Integer inTransitQty;
+        private BigDecimal inTransitQty;
         /**
          * 预计发货_到货量
          */
-        private Integer deliveryQty;
+        private BigDecimal deliveryQty;
         /**
          * 预估结余库存
          */
-        private Integer estimatedBalanceInventory;
+        private BigDecimal estimatedBalanceInventory;
         /**
          * 是否断货
          */
-        private Boolean isOutOfStock;
+        private String isOutOfStock;
 
     }
 
@@ -703,6 +769,11 @@ public class ReplenishmentSuggestionDTO implements Serializable {
          * 平台
          */
         private String platform;
+
+        /**
+         * 平台
+         */
+        private String platformName;
         /**
          * 日期
          */
@@ -728,32 +799,34 @@ public class ReplenishmentSuggestionDTO implements Serializable {
          */
         private BigDecimal denoisingQty;
 
-
-        public static CalcSalesInfoDimDTO.SalesInfoDenoisingDTO buildSalesInfoDenoisingDTO(CalcSalesInfoDimDTO.ExportDTO record, String shopName, String platform, LocalDate startDate,
-                                                                                           Map<LocalDate, CalcSalesInfoDenoisingEntity> calcDenoisingMap, Map<LocalDate, Integer> calcSalesInfoHisMap) {
-            CalcSalesInfoDimDTO.SalesInfoDenoisingDTO dto = new CalcSalesInfoDimDTO.SalesInfoDenoisingDTO();
-            dto.setSkuId(record.getSkuId());
-            dto.setSkuNo(record.getSkuNo());
-            dto.setShopId(record.getShopId());
+        public static ReplenishmentSuggestionDTO.SalesInfoDenoisingDTO buildSalesInfoDenoisingDTO(ReplenishmentSuggestionVO.View view, String shopName, String platform, LocalDate startDate,
+                                                                                           Map<LocalDate, SalesInfoEntity> calcDenoisingMap, Map<LocalDate, Integer> calcSalesInfoHisMap) {
+            ReplenishmentSuggestionDTO.SalesInfoDenoisingDTO dto = new ReplenishmentSuggestionDTO.SalesInfoDenoisingDTO();
+            dto.setSkuId(view.getSkuId());
+            dto.setSkuNo(view.getSkuNo());
+            dto.setShopId(view.getShopId());
             dto.setShopName(shopName);
-            dto.setPlatform(platform);
+            dto.setPlatformName(platform);
             dto.setDate(startDate);
             Integer hisQty = Optional.ofNullable(calcSalesInfoHisMap.get(startDate)).orElse(0);
             dto.setHisSalesQty(hisQty);
-            CalcSalesInfoDenoisingEntity entity = calcDenoisingMap.get(startDate);
+            SalesInfoEntity entity = calcDenoisingMap.get(startDate);
             if (ObjectUtils.isEmpty(entity)) {
                 dto.setDenoisingQty(new BigDecimal(hisQty));
             } else {
-                dto.setDenoisingType(entity.getDenoisingType());
-                dto.setDenoisingTypeName(CfgRuleSalesDenoisingDenoisingTypeEnum.getName(entity.getDenoisingType()));
+                if (Boolean.TRUE.equals(entity.getIsIgnoreOutOfStock())) {
+                    dto.setDenoisingTypeName("断货排除");
+                } else {
+                    dto.setDenoisingTypeName(CfgRuleSalesDenoisingDenoisingTypeEnum.getName(entity.getSalesQtyType()));
+                }
                 if (!ObjectUtils.isEmpty(entity.getEffectiveValue())) {
-                    if (CfgRuleSalesDenoisingDenoisingTypeEnum.PERCENTAGE.getCode().equals(entity.getDenoisingType())) {
+                    if (CfgRuleSalesDenoisingDenoisingTypeEnum.PERCENTAGE.getCode().equals(entity.getSalesQtyType())) {
                         dto.setEffectiveValue(entity.getEffectiveValue() + "%");
                     } else {
                         dto.setEffectiveValue(String.valueOf(entity.getEffectiveValue()));
                     }
                 }
-                dto.setDenoisingQty(entity.getQty());
+                dto.setDenoisingQty(entity.getSalesQty());
             }
             return dto;
         }
@@ -764,7 +837,7 @@ public class ReplenishmentSuggestionDTO implements Serializable {
     public static class ExportResultDTO {
 
         /**
-         * 预估日销量
+         * 去噪销量
          */
         private List<ReplenishmentSuggestionDTO.SalesInfoDenoisingDTO> salesInfoDenoisingExportList;
 

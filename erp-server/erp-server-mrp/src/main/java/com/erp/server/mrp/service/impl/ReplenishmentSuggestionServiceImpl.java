@@ -1289,7 +1289,280 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
 
     @Override
     public ReplenishmentSuggestionDTO.ExportResultDTO exportSuggestCalcData(BaseIdDTO dto) {
-        return null;
+        ReplenishmentSuggestionDTO.ExportResultDTO result = new ReplenishmentSuggestionDTO.ExportResultDTO();
+        ReplenishmentSuggestionVO.View view = baseMapper.view(dto.getId());
+        CfgRuleStrategyDTO cfgRuleStrategyDTO = JSON.parseObject(view.getCfgRule(), CfgRuleStrategyDTO.class);
+        ShopInfoEntity shopInfo = shopInfoFeign.getShopInfoById(view.getShopId());
+        List<DictBasicEntity> salesPlatformList = FeignQuery.create(DictBasicEntity.class)
+                .eq(DictBasicEntity::getType, DictBasicTypeEnum.SALES_PLATFORM.getType())
+                .eq(DictBasicEntity::getValue, shopInfo.getDictPlatform())
+                .eq(DictBasicEntity::getStatus, Boolean.TRUE)
+                .eq(DictBasicEntity::getIsDeleted, Boolean.FALSE)
+                .list();
+        String platformName = salesPlatformList.stream()
+                .filter(v -> v.getValue().equals(shopInfo.getDictPlatform()))
+                .map(DictBasicEntity::getName)
+                .findFirst()
+                .orElse(null);
+        List<SalesEstimateEntity> entityList = salesEstimateService.listByReplenishmentId(view.getDetailId());
+        //去噪销量
+        List<ReplenishmentSuggestionDTO.SalesInfoDenoisingDTO> salesInfoDenoisingExportList = getSalesInfoDenoising(view, shopInfo.getName(), platformName, cfgRuleStrategyDTO);
+        //预估日销量
+        List<ReplenishmentSuggestionDTO.SalesEstimateExportDTO> salesEstimateExportList = getSalesEstimate(view, shopInfo.getName(), platformName, entityList);
+        //库存预测
+        List<ReplenishmentSuggestionDTO.InventoryEstimateExportDTO> inventoryEstimateExportList = getInventoryEstimate(view, shopInfo.getName(), platformName, entityList);
+        //默认日销量导出
+        List<CfgRuleSalesFormulaDTO.SalesFormulaExportDTO> defaultSalesQtyExportList = getDefaultSalesQty(cfgRuleStrategyDTO);
+        //动态日销量导出
+        List<CfgRuleSalesFormulaDTO.SalesFormulaExportDTO> dynamicSalesQtyExportList = getDynamicSalesQty(cfgRuleStrategyDTO);
+        //固定日销量导出
+        List<CfgRuleSalesFormulaDTO.SalesFormulaExportDTO> fixedSalesQtyExportList = getFixedSalesQty(cfgRuleStrategyDTO);
+        //销量去噪导出
+        List<CfgRuleSalesDenoisingDTO.SalesDenoisingExportDTO> salesDenoisingExportList = getSalesDenoising(cfgRuleStrategyDTO);
+        result.setSalesInfoDenoisingExportList(salesInfoDenoisingExportList);
+        result.setSalesEstimateExportList(salesEstimateExportList);
+        result.setInventoryEstimateExportList(inventoryEstimateExportList);
+        result.setDefaultSalesQtyExportList(defaultSalesQtyExportList);
+        result.setDynamicSalesQtyExportList(dynamicSalesQtyExportList);
+        result.setFixedSalesQtyExportList(fixedSalesQtyExportList);
+        result.setSalesDenoisingExportList(salesDenoisingExportList);
+        return result;
+    }
+
+
+    private List<CfgRuleSalesDenoisingDTO.SalesDenoisingExportDTO> getSalesDenoising(CfgRuleStrategyDTO cfgRuleStrategyDTO) {
+
+        List<CfgRuleSalesDenoisingDTO.SalesDenoisingExportDTO> result = new ArrayList<>();
+        List<CfgRuleSalesDenoisingDTO.SalesDenoisingExportDTO> skuFormula = cfgRuleStrategyDTO.getSalesQtyResult().getDenoisingResults().stream()
+                .map(CfgRuleSalesDenoisingDTO.SalesDenoisingExportDTO::buildExportDTO)
+                .collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(skuFormula)) {
+            result.addAll(skuFormula);
+        }
+        List<CfgRuleSalesDenoisingDTO.SalesDenoisingExportDTO> defaultFormula = cfgRuleStrategyDTO.getSalesQtyResult().getDefaultDenoisingResults().stream()
+                .map(CfgRuleSalesDenoisingDTO.SalesDenoisingExportDTO::buildExportDTO)
+                .collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(defaultFormula)) {
+            result.addAll(defaultFormula);
+        }
+        return result;
+    }
+
+
+    private List<CfgRuleSalesFormulaDTO.SalesFormulaExportDTO> getFixedSalesQty(CfgRuleStrategyDTO cfgRuleStrategyDTO) {
+
+        return cfgRuleStrategyDTO.getSalesQtyResult().getFormulaResults().stream()
+                .filter(v -> CfgRuleSalesFormulaTypeEnum.FIXED.getCode().equals(v.getType()))
+                .map(CfgRuleSalesFormulaDTO.SalesFormulaExportDTO::buildExportDTO)
+                .collect(Collectors.toList());
+    }
+
+
+    private List<CfgRuleSalesFormulaDTO.SalesFormulaExportDTO> getDynamicSalesQty(CfgRuleStrategyDTO cfgRuleStrategyDTO) {
+        List<CfgRuleSalesFormulaDTO.SalesFormulaExportDTO> result = new ArrayList<>();
+        List<CfgRuleSalesFormulaDTO.SalesFormulaExportDTO> skuFormula = cfgRuleStrategyDTO.getSalesQtyResult().getFormulaResults().stream()
+                .filter(v -> CfgRuleSalesFormulaTypeEnum.DYNAMIC.getCode().equals(v.getType()))
+                .map(CfgRuleSalesFormulaDTO.SalesFormulaExportDTO::buildExportDTO)
+                .collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(skuFormula)) {
+            result.addAll(skuFormula);
+        }
+        List<CfgRuleSalesFormulaDTO.SalesFormulaExportDTO> defaultFormula = cfgRuleStrategyDTO.getSalesQtyResult().getDefaultFormulaResults().stream()
+                .filter(v -> CfgRuleSalesFormulaTypeEnum.DYNAMIC.getCode().equals(v.getType()))
+                .map(CfgRuleSalesFormulaDTO.SalesFormulaExportDTO::buildExportDTO)
+                .collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(defaultFormula)) {
+            result.addAll(defaultFormula);
+        }
+        return result;
+    }
+
+    private List<CfgRuleSalesFormulaDTO.SalesFormulaExportDTO> getDefaultSalesQty(CfgRuleStrategyDTO cfgRuleStrategyDTO) {
+        List<CfgRuleSalesFormulaDTO.SalesFormulaExportDTO> result = new ArrayList<>();
+        List<CfgRuleSalesFormulaDTO.SalesFormulaExportDTO> skuFormula = cfgRuleStrategyDTO.getSalesQtyResult().getFormulaResults().stream()
+                .filter(v -> CfgRuleSalesFormulaTypeEnum.DEFAULT.getCode().equals(v.getType()))
+                .map(CfgRuleSalesFormulaDTO.SalesFormulaExportDTO::buildExportDTO)
+                .collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(skuFormula)) {
+            result.addAll(skuFormula);
+        }
+        List<CfgRuleSalesFormulaDTO.SalesFormulaExportDTO> defaultFormula = cfgRuleStrategyDTO.getSalesQtyResult().getDefaultFormulaResults().stream()
+                .filter(v -> CfgRuleSalesFormulaTypeEnum.DEFAULT.getCode().equals(v.getType()))
+                .map(CfgRuleSalesFormulaDTO.SalesFormulaExportDTO::buildExportDTO)
+                .collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(defaultFormula)) {
+            result.addAll(defaultFormula);
+        }
+        return result;
+    }
+
+    private List<ReplenishmentSuggestionDTO.InventoryEstimateExportDTO> getInventoryEstimate(ReplenishmentSuggestionVO.View view, String name, String platformName, List<SalesEstimateEntity> entityList) {
+
+        // 获取本地在途
+        List<LocalInTransitDetailEntity> localInTransitDetails = localInTransitDetailService.getByReplenishmentId(view.getDetailId());
+        Map<LocalDate, Integer> localInTransitDetailMap = localInTransitDetails.stream()
+                .collect(Collectors.toMap(LocalInTransitDetailEntity::getEstimateSalesDate, LocalInTransitDetailEntity::getShopPreQty, Integer::sum));
+        // 获取本地采购
+        List<EstimatedPurchaseDetailEntity> localEstimatedPurchase = estimatedPurchaseDetailService.getByReplenishmentId(view.getDetailId());
+        Map<LocalDate, Integer> localEstimatedPurchaseMap = localEstimatedPurchase.stream()
+                .collect(Collectors.toMap(EstimatedPurchaseDetailEntity::getEstimateSalesDate, EstimatedPurchaseDetailEntity::getShopPreQty, Integer::sum));
+        CfgRulePlatformTypeEnum platformType = CfgRulePlatformTypeEnum.getEnum(view.getPlatformType());
+        switch (Objects.requireNonNull(platformType)) {
+            case AMAZON:
+                return handlerFbaEstimate(localInTransitDetailMap, localEstimatedPurchaseMap, view, name, platformName, entityList);
+            case OVERSEAS:
+                return handlerOverseasEstimate(localInTransitDetailMap, localEstimatedPurchaseMap, view, name, platformName, entityList);
+            case B2B:
+            case INTERNAL:
+                return handlerLocalEstimate(localInTransitDetailMap, localEstimatedPurchaseMap, view, name, platformName, entityList);
+            default:
+        }
+        return Collections.emptyList();
+    }
+
+    private List<ReplenishmentSuggestionDTO.InventoryEstimateExportDTO> handlerFbaEstimate(Map<LocalDate, Integer> localInTransitDetailMap, Map<LocalDate, Integer> localEstimatedPurchaseMap, ReplenishmentSuggestionVO.View view, String name, String platformName, List<SalesEstimateEntity> entityList) {
+        // 获取Fba在途
+        List<FbaInTransitDetailEntity> fbaInTransitDetails = fbaInTransitDetailService.getByReplenishmentId(view.getDetailId());
+        Map<LocalDate, Integer> fbaInTransitDetailMap = fbaInTransitDetails.stream()
+                .collect(Collectors.toMap(FbaInTransitDetailEntity::getEstimateSalesDate, FbaInTransitDetailEntity::getInTransitQty, Integer::sum));
+        // 获取Fba预计发货
+        List<EstimatedDeliveryDetailEntity> fbaEstimatedDelivery = estimatedDeliveryDetailService.getByReplenishmentIdAndType(view.getDetailId(), ReplenishmentInventoryTypeEnum.FBA_ESTIMATED_DELIVERY);
+        Map<LocalDate, Integer> fbaEstimatedDeliveryMap = fbaEstimatedDelivery.stream()
+                .collect(Collectors.toMap(EstimatedDeliveryDetailEntity::getEstimateSalesDate, EstimatedDeliveryDetailEntity::getQty, Integer::sum));
+        // 获取海外仓在途
+        List<OverseasInTransitDetailEntity> overseasInTransitDetails = overseasInTransitDetailService.getByReplenishmentId(view.getDetailId());
+        Map<LocalDate, Integer> overseasInTransitDetailMap = overseasInTransitDetails.stream()
+                .collect(Collectors.toMap(OverseasInTransitDetailEntity::getEstimateSalesDate, OverseasInTransitDetailEntity::getShopPreQty, Integer::sum));
+        // 获取海外仓预计发货
+        List<EstimatedDeliveryDetailEntity> overseasEstimatedDelivery = estimatedDeliveryDetailService.getByReplenishmentIdAndType(view.getDetailId(), ReplenishmentInventoryTypeEnum.OVERSEAS_ESTIMATED_DELIVERY);
+        Map<LocalDate, Integer> overseasEstimatedDeliveryMap = overseasEstimatedDelivery.stream()
+                .collect(Collectors.toMap(EstimatedDeliveryDetailEntity::getEstimateSalesDate, EstimatedDeliveryDetailEntity::getShopPreQty, Integer::sum));
+        List<ReplenishmentSuggestionDTO.InventoryEstimateExportDTO> result = new ArrayList<>();
+        // 获取首日结余库存
+        BigDecimal balanceInventory = new BigDecimal(view.getLocalUsableQty());
+        for (SalesEstimateEntity estimate : entityList) {
+            ReplenishmentSuggestionDTO.InventoryEstimateExportDTO exportDTO = new ReplenishmentSuggestionDTO.InventoryEstimateExportDTO();
+            exportDTO.setShopName(name);
+            exportDTO.setPlatformName(platformName);
+            exportDTO.setDate(estimate.getDate());
+            exportDTO.setSkuId(view.getSkuId());
+            exportDTO.setSkuNo(view.getSkuNo());
+            exportDTO.setBalanceInventory(balanceInventory);
+            exportDTO.setSalesQty(estimate.getSalesQty());
+            BigDecimal inTransit = new BigDecimal(Optional.ofNullable(localInTransitDetailMap.get(estimate.getDate())).orElse(0))
+                    .add(new BigDecimal(Optional.ofNullable(overseasInTransitDetailMap.get(estimate.getDate())).orElse(0)))
+                    .add(new BigDecimal(Optional.ofNullable(fbaInTransitDetailMap.get(estimate.getDate())).orElse(0)));
+            exportDTO.setInTransitQty(inTransit);
+            BigDecimal estimatedPurchase = new BigDecimal(Optional.ofNullable(localEstimatedPurchaseMap.get(estimate.getDate())).orElse(0))
+                    .add(new BigDecimal(Optional.ofNullable(overseasEstimatedDeliveryMap.get(estimate.getDate())).orElse(0)))
+                    .add(new BigDecimal(Optional.ofNullable(fbaEstimatedDeliveryMap.get(estimate.getDate())).orElse(0)));
+            exportDTO.setDeliveryQty(estimatedPurchase);
+            //库存等于结余库存-预计销量+到货数量
+            balanceInventory = balanceInventory.subtract(estimate.getSalesQty()).add(inTransit).add(estimatedPurchase);
+            exportDTO.setEstimatedBalanceInventory(balanceInventory);
+            exportDTO.setIsOutOfStock(Boolean.TRUE.equals(balanceInventory.compareTo(BigDecimal.ZERO) <= 0) ? "是" : "否");
+            result.add(exportDTO);
+        }
+        return result;
+    }
+
+    private List<ReplenishmentSuggestionDTO.InventoryEstimateExportDTO> handlerOverseasEstimate(Map<LocalDate, Integer> localInTransitDetailMap, Map<LocalDate, Integer> localEstimatedPurchaseMap, ReplenishmentSuggestionVO.View view, String name, String platformName, List<SalesEstimateEntity> entityList) {
+        // 获取海外仓在途
+        List<OverseasInTransitDetailEntity> overseasInTransitDetails = overseasInTransitDetailService.getByReplenishmentId(view.getDetailId());
+        Map<LocalDate, Integer> overseasInTransitDetailMap = overseasInTransitDetails.stream()
+                .collect(Collectors.toMap(OverseasInTransitDetailEntity::getEstimateSalesDate, OverseasInTransitDetailEntity::getShopPreQty, Integer::sum));
+        // 获取海外仓预计发货
+        List<EstimatedDeliveryDetailEntity> overseasEstimatedDelivery = estimatedDeliveryDetailService.getByReplenishmentIdAndType(view.getDetailId(), ReplenishmentInventoryTypeEnum.OVERSEAS_ESTIMATED_DELIVERY);
+        Map<LocalDate, Integer> overseasEstimatedDeliveryMap = overseasEstimatedDelivery.stream()
+                .collect(Collectors.toMap(EstimatedDeliveryDetailEntity::getEstimateSalesDate, EstimatedDeliveryDetailEntity::getShopPreQty, Integer::sum));
+        List<ReplenishmentSuggestionDTO.InventoryEstimateExportDTO> result = new ArrayList<>();
+        // 获取首日结余库存
+        BigDecimal balanceInventory = new BigDecimal(view.getLocalUsableQty());
+        for (SalesEstimateEntity estimate : entityList) {
+            ReplenishmentSuggestionDTO.InventoryEstimateExportDTO exportDTO = new ReplenishmentSuggestionDTO.InventoryEstimateExportDTO();
+            exportDTO.setShopName(name);
+            exportDTO.setPlatformName(platformName);
+            exportDTO.setDate(estimate.getDate());
+            exportDTO.setSkuId(view.getSkuId());
+            exportDTO.setSkuNo(view.getSkuNo());
+            exportDTO.setBalanceInventory(balanceInventory);
+            exportDTO.setSalesQty(estimate.getSalesQty());
+            BigDecimal inTransit = new BigDecimal(Optional.ofNullable(localInTransitDetailMap.get(estimate.getDate())).orElse(0))
+                    .add(new BigDecimal(Optional.ofNullable(overseasInTransitDetailMap.get(estimate.getDate())).orElse(0)));
+            exportDTO.setInTransitQty(inTransit);
+            BigDecimal estimatedPurchase = new BigDecimal(Optional.ofNullable(localEstimatedPurchaseMap.get(estimate.getDate())).orElse(0))
+                    .add(new BigDecimal(Optional.ofNullable(overseasEstimatedDeliveryMap.get(estimate.getDate())).orElse(0)));
+            exportDTO.setDeliveryQty(estimatedPurchase);
+            //库存等于结余库存-预计销量+到货数量
+            balanceInventory = balanceInventory.subtract(estimate.getSalesQty()).add(inTransit).add(estimatedPurchase);
+            exportDTO.setEstimatedBalanceInventory(balanceInventory);
+            exportDTO.setIsOutOfStock(Boolean.TRUE.equals(balanceInventory.compareTo(BigDecimal.ZERO) <= 0) ? "是" : "否");
+            result.add(exportDTO);
+        }
+        return result;
+    }
+
+    /**
+     * 计算本地仓或B2B数据
+     * @param localInTransitDetailMap 本地在途
+     * @param localEstimatedPurchaseMap 本地采购
+     * @param view 明细数据
+     * @param name 店铺名
+     * @param platformName 平台名
+     * @param entityList 预估销量
+     */
+    private List<ReplenishmentSuggestionDTO.InventoryEstimateExportDTO> handlerLocalEstimate(Map<LocalDate, Integer> localInTransitDetailMap, Map<LocalDate, Integer> localEstimatedPurchaseMap, ReplenishmentSuggestionVO.View view, String name, String platformName, List<SalesEstimateEntity> entityList) {
+        List<ReplenishmentSuggestionDTO.InventoryEstimateExportDTO> result = new ArrayList<>();
+        // 获取首日结余库存
+        BigDecimal balanceInventory = new BigDecimal(view.getLocalUsableQty());
+        for (SalesEstimateEntity estimate : entityList) {
+            ReplenishmentSuggestionDTO.InventoryEstimateExportDTO exportDTO = new ReplenishmentSuggestionDTO.InventoryEstimateExportDTO();
+            exportDTO.setShopName(name);
+            exportDTO.setPlatformName(platformName);
+            exportDTO.setDate(estimate.getDate());
+            exportDTO.setSkuId(view.getSkuId());
+            exportDTO.setSkuNo(view.getSkuNo());
+            exportDTO.setBalanceInventory(balanceInventory);
+            exportDTO.setSalesQty(estimate.getSalesQty());
+            BigDecimal inTransit = new BigDecimal(Optional.ofNullable(localInTransitDetailMap.get(estimate.getDate())).orElse(0));
+            exportDTO.setInTransitQty(inTransit);
+            BigDecimal estimatedPurchase = new BigDecimal(Optional.ofNullable(localEstimatedPurchaseMap.get(estimate.getDate())).orElse(0));
+            exportDTO.setDeliveryQty(estimatedPurchase);
+            //库存等于结余库存-预计销量+到货数量
+            balanceInventory = balanceInventory.subtract(estimate.getSalesQty()).add(inTransit).add(estimatedPurchase);
+            exportDTO.setEstimatedBalanceInventory(balanceInventory);
+            exportDTO.setIsOutOfStock(Boolean.TRUE.equals(balanceInventory.compareTo(BigDecimal.ZERO) <= 0) ? "是" : "否");
+            result.add(exportDTO);
+        }
+        return result;
+    }
+
+    private List<ReplenishmentSuggestionDTO.SalesEstimateExportDTO> getSalesEstimate(ReplenishmentSuggestionVO.View view, String name, String platformName, List<SalesEstimateEntity> entityList) {
+        return entityList.stream()
+                .map(v -> ReplenishmentSuggestionDTO.SalesEstimateExportDTO.buildSalesInfoEstimateDTO(v, view, name, platformName))
+                .collect(Collectors.toList());
+    }
+
+
+    /**
+     * 去噪销量
+     */
+    private List<ReplenishmentSuggestionDTO.SalesInfoDenoisingDTO> getSalesInfoDenoising(ReplenishmentSuggestionVO.View view, String name, String platformName, CfgRuleStrategyDTO cfgRuleStrategyDTO) {
+        List<ReplenishmentSuggestionDTO.SalesInfoDenoisingDTO> result = new ArrayList<>();
+        CfgRuleSalesQtyDTO.StrategyResultDTO salesQtyResult = cfgRuleStrategyDTO.getSalesQtyResult();
+        LocalDate date = LocalDate.parse(view.getCalcDate(), DateTimeFormatter.BASIC_ISO_DATE);
+        LocalDate startDate = date.minusDays(361);
+        LocalDate endDate = date.minusDays(1);
+        Map<LocalDate, Integer> salesHistoryMap = listSalesHistoryMap(view.getId(), salesQtyResult.getSalesQtyType(), salesQtyResult.getOrderType(), startDate, endDate);
+        List<SalesInfoEntity> salesInfoList = salesInfoService.listByReplenishmentDetailIds(Collections.singletonList(view.getDetailId()));
+        Map<LocalDate, SalesInfoEntity> calcDenoisingMap = salesInfoList.stream()
+                .collect(Collectors.toMap(SalesInfoEntity::getDate, v -> v, (o1, o2) -> o1));
+        while (startDate.isBefore(endDate)) {
+            result.add(ReplenishmentSuggestionDTO.SalesInfoDenoisingDTO.buildSalesInfoDenoisingDTO(view, name,
+                    platformName, startDate, calcDenoisingMap, salesHistoryMap));
+            startDate = startDate.plusDays(1);
+        }
+        return result;
     }
 
     /**
@@ -1404,11 +1677,11 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
         // 获取本地在途
         List<LocalInTransitDetailEntity> localInTransitDetails = localInTransitDetailService.getByReplenishmentId(detail.getId());
         Map<LocalDate, Integer> localInTransitDetailMap = localInTransitDetails.stream()
-                .collect(Collectors.toMap(LocalInTransitDetailEntity::getEstimateSalesDate, LocalInTransitDetailEntity::getQty, Integer::sum));
+                .collect(Collectors.toMap(LocalInTransitDetailEntity::getEstimateSalesDate, LocalInTransitDetailEntity::getShopPreQty, Integer::sum));
         // 获取本地采购
         List<EstimatedPurchaseDetailEntity> localEstimatedPurchase = estimatedPurchaseDetailService.getByReplenishmentId(detail.getId());
         Map<LocalDate, Integer> localEstimatedPurchaseMap = localEstimatedPurchase.stream()
-                .collect(Collectors.toMap(EstimatedPurchaseDetailEntity::getEstimateSalesDate, EstimatedPurchaseDetailEntity::getQty, Integer::sum));
+                .collect(Collectors.toMap(EstimatedPurchaseDetailEntity::getEstimateSalesDate, EstimatedPurchaseDetailEntity::getShopPreQty, Integer::sum));
         // 获取首日结余库存
         BigDecimal balanceInventory = new BigDecimal(detail.getLocalUsableQty());
         BigDecimal calcBalanceInventory = new BigDecimal(detail.getLocalUsableQty());
@@ -1470,19 +1743,19 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
         // 获取海外仓在途
         List<OverseasInTransitDetailEntity> overseasInTransitDetails = overseasInTransitDetailService.getByReplenishmentId(detail.getId());
         Map<LocalDate, Integer> overseasInTransitDetailMap = overseasInTransitDetails.stream()
-                .collect(Collectors.toMap(OverseasInTransitDetailEntity::getEstimateSalesDate, OverseasInTransitDetailEntity::getInTransitQty, Integer::sum));
+                .collect(Collectors.toMap(OverseasInTransitDetailEntity::getEstimateSalesDate, OverseasInTransitDetailEntity::getShopPreQty, Integer::sum));
         // 获取海外仓预计发货
         List<EstimatedDeliveryDetailEntity> overseasEstimatedDelivery = estimatedDeliveryDetailService.getByReplenishmentIdAndType(detail.getId(), ReplenishmentInventoryTypeEnum.OVERSEAS_ESTIMATED_DELIVERY);
         Map<LocalDate, Integer> overseasEstimatedDeliveryMap = overseasEstimatedDelivery.stream()
-                .collect(Collectors.toMap(EstimatedDeliveryDetailEntity::getEstimateSalesDate, EstimatedDeliveryDetailEntity::getQty, Integer::sum));
+                .collect(Collectors.toMap(EstimatedDeliveryDetailEntity::getEstimateSalesDate, EstimatedDeliveryDetailEntity::getShopPreQty, Integer::sum));
         // 获取本地在途
         List<LocalInTransitDetailEntity> localInTransitDetails = localInTransitDetailService.getByReplenishmentId(detail.getId());
         Map<LocalDate, Integer> localInTransitDetailMap = localInTransitDetails.stream()
-                .collect(Collectors.toMap(LocalInTransitDetailEntity::getEstimateSalesDate, LocalInTransitDetailEntity::getQty, Integer::sum));
+                .collect(Collectors.toMap(LocalInTransitDetailEntity::getEstimateSalesDate, LocalInTransitDetailEntity::getShopPreQty, Integer::sum));
         // 获取本地采购
         List<EstimatedPurchaseDetailEntity> localEstimatedPurchase = estimatedPurchaseDetailService.getByReplenishmentId(detail.getId());
         Map<LocalDate, Integer> localEstimatedPurchaseMap = localEstimatedPurchase.stream()
-                .collect(Collectors.toMap(EstimatedPurchaseDetailEntity::getEstimateSalesDate, EstimatedPurchaseDetailEntity::getQty, Integer::sum));
+                .collect(Collectors.toMap(EstimatedPurchaseDetailEntity::getEstimateSalesDate, EstimatedPurchaseDetailEntity::getShopPreQty, Integer::sum));
         // 获取首日结余库存
         BigDecimal balanceInventory = new BigDecimal(detail.getOverseasUsableQty());
         BigDecimal calcBalanceInventory = new BigDecimal(detail.getOverseasUsableQty());
@@ -1554,19 +1827,19 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
         // 获取海外仓在途
         List<OverseasInTransitDetailEntity> overseasInTransitDetails = overseasInTransitDetailService.getByReplenishmentId(detail.getId());
         Map<LocalDate, Integer> overseasInTransitDetailMap = overseasInTransitDetails.stream()
-                .collect(Collectors.toMap(OverseasInTransitDetailEntity::getEstimateSalesDate, OverseasInTransitDetailEntity::getInTransitQty, Integer::sum));
+                .collect(Collectors.toMap(OverseasInTransitDetailEntity::getEstimateSalesDate, OverseasInTransitDetailEntity::getShopPreQty, Integer::sum));
         // 获取海外仓预计发货
         List<EstimatedDeliveryDetailEntity> overseasEstimatedDelivery = estimatedDeliveryDetailService.getByReplenishmentIdAndType(detail.getId(), ReplenishmentInventoryTypeEnum.OVERSEAS_ESTIMATED_DELIVERY);
         Map<LocalDate, Integer> overseasEstimatedDeliveryMap = overseasEstimatedDelivery.stream()
-                .collect(Collectors.toMap(EstimatedDeliveryDetailEntity::getEstimateSalesDate, EstimatedDeliveryDetailEntity::getQty, Integer::sum));
+                .collect(Collectors.toMap(EstimatedDeliveryDetailEntity::getEstimateSalesDate, EstimatedDeliveryDetailEntity::getShopPreQty, Integer::sum));
         // 获取本地在途
         List<LocalInTransitDetailEntity> localInTransitDetails = localInTransitDetailService.getByReplenishmentId(detail.getId());
         Map<LocalDate, Integer> localInTransitDetailMap = localInTransitDetails.stream()
-                .collect(Collectors.toMap(LocalInTransitDetailEntity::getEstimateSalesDate, LocalInTransitDetailEntity::getQty, Integer::sum));
+                .collect(Collectors.toMap(LocalInTransitDetailEntity::getEstimateSalesDate, LocalInTransitDetailEntity::getShopPreQty, Integer::sum));
         // 获取本地采购
         List<EstimatedPurchaseDetailEntity> localEstimatedPurchase = estimatedPurchaseDetailService.getByReplenishmentId(detail.getId());
         Map<LocalDate, Integer> localEstimatedPurchaseMap = localEstimatedPurchase.stream()
-                .collect(Collectors.toMap(EstimatedPurchaseDetailEntity::getEstimateSalesDate, EstimatedPurchaseDetailEntity::getQty, Integer::sum));
+                .collect(Collectors.toMap(EstimatedPurchaseDetailEntity::getEstimateSalesDate, EstimatedPurchaseDetailEntity::getShopPreQty, Integer::sum));
         // 获取首日结余库存
         BigDecimal balanceInventory = new BigDecimal(detail.getFbaUsableQty());
         BigDecimal calcBalanceInventory = new BigDecimal(detail.getFbaUsableQty());
@@ -1806,8 +2079,7 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
                 continue;
             }
             BigDecimal saleQty = salesEstimateHandler.getSaleQty(salesInfos, avgTimePeriodSales, formulaResult, basicCalcDate);
-            ReplenishmentResultDTO.SalesEstimateDTO salesEstimateDTO = new ReplenishmentResultDTO.SalesEstimateDTO(calcDate, saleQty,
-                    calcDate.format(DateTimeFormatter.ofPattern("yyyy-MM")));
+            ReplenishmentResultDTO.SalesEstimateDTO salesEstimateDTO = ReplenishmentResultDTO.SalesEstimateDTO.buildSalesEstimateDTO(calcDate, saleQty, formulaResult);
             salesEstimates.add(salesEstimateDTO);
         }
         return salesEstimates;
@@ -1942,11 +2214,11 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
         // 获取本地在途
         List<LocalInTransitDetailEntity> localInTransitDetails = localInTransitDetailService.getByReplenishmentId(detail.getId());
         Map<LocalDate, Integer> localInTransitDetailMap = localInTransitDetails.stream()
-                .collect(Collectors.toMap(LocalInTransitDetailEntity::getEstimateSalesDate, LocalInTransitDetailEntity::getQty, Integer::sum));
+                .collect(Collectors.toMap(LocalInTransitDetailEntity::getEstimateSalesDate, LocalInTransitDetailEntity::getShopPreQty, Integer::sum));
         // 获取本地采购
         List<EstimatedPurchaseDetailEntity> localEstimatedPurchase = estimatedPurchaseDetailService.getByReplenishmentId(detail.getId());
         Map<LocalDate, Integer> localEstimatedPurchaseMap = localEstimatedPurchase.stream()
-                .collect(Collectors.toMap(EstimatedPurchaseDetailEntity::getEstimateSalesDate, EstimatedPurchaseDetailEntity::getQty, Integer::sum));
+                .collect(Collectors.toMap(EstimatedPurchaseDetailEntity::getEstimateSalesDate, EstimatedPurchaseDetailEntity::getShopPreQty, Integer::sum));
         int localInTransitQty = 0;
         int localPlanPurchaseQty = 0;
         // 获取首日结余库存
@@ -1984,19 +2256,19 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
         // 获取海外仓在途
         List<OverseasInTransitDetailEntity> overseasInTransitDetails = overseasInTransitDetailService.getByReplenishmentId(detail.getId());
         Map<LocalDate, Integer> overseasInTransitDetailMap = overseasInTransitDetails.stream()
-                .collect(Collectors.toMap(OverseasInTransitDetailEntity::getEstimateSalesDate, OverseasInTransitDetailEntity::getInTransitQty, Integer::sum));
+                .collect(Collectors.toMap(OverseasInTransitDetailEntity::getEstimateSalesDate, OverseasInTransitDetailEntity::getShopPreQty, Integer::sum));
         // 获取海外仓预计发货
         List<EstimatedDeliveryDetailEntity> overseasEstimatedDelivery = estimatedDeliveryDetailService.getByReplenishmentIdAndType(detail.getId(), ReplenishmentInventoryTypeEnum.OVERSEAS_ESTIMATED_DELIVERY);
         Map<LocalDate, Integer> overseasEstimatedDeliveryMap = overseasEstimatedDelivery.stream()
-                .collect(Collectors.toMap(EstimatedDeliveryDetailEntity::getEstimateSalesDate, EstimatedDeliveryDetailEntity::getQty, Integer::sum));
+                .collect(Collectors.toMap(EstimatedDeliveryDetailEntity::getEstimateSalesDate, EstimatedDeliveryDetailEntity::getShopPreQty, Integer::sum));
         // 获取本地在途
         List<LocalInTransitDetailEntity> localInTransitDetails = localInTransitDetailService.getByReplenishmentId(detail.getId());
         Map<LocalDate, Integer> localInTransitDetailMap = localInTransitDetails.stream()
-                .collect(Collectors.toMap(LocalInTransitDetailEntity::getEstimateSalesDate, LocalInTransitDetailEntity::getQty, Integer::sum));
+                .collect(Collectors.toMap(LocalInTransitDetailEntity::getEstimateSalesDate, LocalInTransitDetailEntity::getShopPreQty, Integer::sum));
         // 获取本地采购
         List<EstimatedPurchaseDetailEntity> localEstimatedPurchase = estimatedPurchaseDetailService.getByReplenishmentId(detail.getId());
         Map<LocalDate, Integer> localEstimatedPurchaseMap = localEstimatedPurchase.stream()
-                .collect(Collectors.toMap(EstimatedPurchaseDetailEntity::getEstimateSalesDate, EstimatedPurchaseDetailEntity::getQty, Integer::sum));
+                .collect(Collectors.toMap(EstimatedPurchaseDetailEntity::getEstimateSalesDate, EstimatedPurchaseDetailEntity::getShopPreQty, Integer::sum));
         int overseasInTransitQty = 0;
         int overseasPlanDeliveryQty = 0;
         int localInTransitQty = 0;
@@ -2048,19 +2320,19 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
         // 获取海外仓在途
         List<OverseasInTransitDetailEntity> overseasInTransitDetails = overseasInTransitDetailService.getByReplenishmentId(detail.getId());
         Map<LocalDate, Integer> overseasInTransitDetailMap = overseasInTransitDetails.stream()
-                .collect(Collectors.toMap(OverseasInTransitDetailEntity::getEstimateSalesDate, OverseasInTransitDetailEntity::getInTransitQty, Integer::sum));
+                .collect(Collectors.toMap(OverseasInTransitDetailEntity::getEstimateSalesDate, OverseasInTransitDetailEntity::getShopPreQty, Integer::sum));
         // 获取海外仓预计发货
         List<EstimatedDeliveryDetailEntity> overseasEstimatedDelivery = estimatedDeliveryDetailService.getByReplenishmentIdAndType(detail.getId(), ReplenishmentInventoryTypeEnum.OVERSEAS_ESTIMATED_DELIVERY);
         Map<LocalDate, Integer> overseasEstimatedDeliveryMap = overseasEstimatedDelivery.stream()
-                .collect(Collectors.toMap(EstimatedDeliveryDetailEntity::getEstimateSalesDate, EstimatedDeliveryDetailEntity::getQty, Integer::sum));
+                .collect(Collectors.toMap(EstimatedDeliveryDetailEntity::getEstimateSalesDate, EstimatedDeliveryDetailEntity::getShopPreQty, Integer::sum));
         // 获取本地在途
         List<LocalInTransitDetailEntity> localInTransitDetails = localInTransitDetailService.getByReplenishmentId(detail.getId());
         Map<LocalDate, Integer> localInTransitDetailMap = localInTransitDetails.stream()
-                .collect(Collectors.toMap(LocalInTransitDetailEntity::getEstimateSalesDate, LocalInTransitDetailEntity::getQty, Integer::sum));
+                .collect(Collectors.toMap(LocalInTransitDetailEntity::getEstimateSalesDate, LocalInTransitDetailEntity::getShopPreQty, Integer::sum));
         // 获取本地采购
         List<EstimatedPurchaseDetailEntity> localEstimatedPurchase = estimatedPurchaseDetailService.getByReplenishmentId(detail.getId());
         Map<LocalDate, Integer> localEstimatedPurchaseMap = localEstimatedPurchase.stream()
-                .collect(Collectors.toMap(EstimatedPurchaseDetailEntity::getEstimateSalesDate, EstimatedPurchaseDetailEntity::getQty, Integer::sum));
+                .collect(Collectors.toMap(EstimatedPurchaseDetailEntity::getEstimateSalesDate, EstimatedPurchaseDetailEntity::getShopPreQty, Integer::sum));
         int fbaInTransitQty = 0;
         int fbaPlanDeliveryQty = 0;
         int overseasInTransitQty = 0;

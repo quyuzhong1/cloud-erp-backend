@@ -292,9 +292,11 @@ public class InventoryServiceImpl implements InventoryService {
 
         //采购订单
         Set<String> localPurchaseOrder = cfgRuleCommonService.findByKey(baseKey, inventoryResult, baseKey + ":" + CfgRuleInventoryNodeEnum.getLocalPurchaseOrder());
-        List<ReplenishmentInventoryDTO.EstimatedPurchaseDTO> purchaseDetails = inventoryMapper.listPurchase(localPurchaseOrder, getTableName(PURCHASE_ORDER, calcDate), getTableName(PURCHASE_ORDER_DETAIL, calcDate));
-        if (!CollectionUtils.isEmpty(purchaseDetails)) {
-            estimatedPurchaseList.addAll(purchaseDetails);
+        if (!CollectionUtils.isEmpty(localPurchaseOrder)) {
+            List<ReplenishmentInventoryDTO.EstimatedPurchaseDTO> purchaseDetails = inventoryMapper.listPurchase(localPurchaseOrder, getTableName(PURCHASE_ORDER, calcDate), getTableName(PURCHASE_ORDER_DETAIL, calcDate));
+            if (!CollectionUtils.isEmpty(purchaseDetails)) {
+                estimatedPurchaseList.addAll(purchaseDetails);
+            }
         }
         dto.setEstimatedPurchaseList(estimatedPurchaseList.stream()
                 .filter(v -> v.getQty() > 0)

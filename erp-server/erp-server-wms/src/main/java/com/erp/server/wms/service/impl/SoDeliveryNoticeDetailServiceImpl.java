@@ -471,31 +471,22 @@ public class SoDeliveryNoticeDetailServiceImpl extends SuperServiceImpl<SoDelive
         if (CollectionUtils.isEmpty(soDetailIds)) {
             return new ArrayList<>();
         }
-
         List<SoDeliveryNoticeDetailDTO.PushDownDTO> result = new ArrayList<>();
-
         //发货通知的
-        List<SoDeliveryNoticeDetailEntity> soDeliveryNoticeDetailEntityList = this.lambdaQuery()
-                .in(SoDeliveryNoticeDetailEntity::getSourceDetailId, soDetailIds)
-                .list();
-
-        if(CollUtil.isNotEmpty(soDeliveryNoticeDetailEntityList)){
-            Integer count = soDeliveryNoticeService.lambdaQuery().eq(SoDeliveryNoticeEntity::getId, soDeliveryNoticeDetailEntityList.get(0).getMainId()).eq(SoDeliveryNoticeEntity::getInvalidStatus, Boolean.FALSE).count();
-            if(count > 0){
-                for (SoDeliveryNoticeDetailEntity detailEntity : soDeliveryNoticeDetailEntityList) {
-                    SoDeliveryNoticeDetailDTO.PushDownDTO pushDownDTO = new SoDeliveryNoticeDetailDTO.PushDownDTO();
-                    pushDownDTO.setSoDetailId(detailEntity.getSourceDetailId());
-                    pushDownDTO.setSkuId(detailEntity.getSkuId());
-                    pushDownDTO.setSkuNo(detailEntity.getSkuNo());
-                    result.add(pushDownDTO);
-                }
+        List<SoDeliveryNoticeDetailDTO.ListDTO> listDTOS = baseMapper.listBySourceDetailIdList(soDetailIds);
+        if(CollUtil.isNotEmpty(listDTOS)){
+            for (SoDeliveryNoticeDetailDTO.ListDTO detailEntity : listDTOS) {
+                SoDeliveryNoticeDetailDTO.PushDownDTO pushDownDTO = new SoDeliveryNoticeDetailDTO.PushDownDTO();
+                pushDownDTO.setSoDetailId(detailEntity.getSourceDetailId());
+                pushDownDTO.setSkuId(detailEntity.getSkuId());
+                pushDownDTO.setSkuNo(detailEntity.getSkuNo());
+                result.add(pushDownDTO);
             }
         }
-
-        List<SoDeliveryNoticeDetailDTO.PushDownDTO> soOutstockDetailEntityList = soOutstockDetailService.getPushDownBySoDetailIds(soDetailIds);
-        if(CollUtil.isNotEmpty(soOutstockDetailEntityList)){
-            result.addAll(soOutstockDetailEntityList);
-        }
+//        List<SoDeliveryNoticeDetailDTO.PushDownDTO> soOutstockDetailEntityList = soOutstockDetailService.getPushDownBySoDetailIds(soDetailIds);
+//        if(CollUtil.isNotEmpty(soOutstockDetailEntityList)){
+//            result.addAll(soOutstockDetailEntityList);
+//        }
         return result;
     }
 

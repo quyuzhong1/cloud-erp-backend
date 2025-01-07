@@ -228,12 +228,10 @@ public class DmpOutputSdyReturnHandler extends DmpOutputTaskHandler {
                         .list();
                 if (CollectionUtils.isNotEmpty(shop)) {
                     ShopInfoEntity shopInfo = FeignQuery.getById(ShopInfoEntity.class, shop.get(0).getSysId());
-                    sdyDTO.setShop_no(shopInfo.getId());
-                    sdyDTO.setShop_name(shopInfo.getName());
-
                     CustomerInfoEntity customerInfo = FeignQuery.getById(CustomerInfoEntity.class, shopInfo.getCustomerId());
-
                     if (ObjectUtil.isNotEmpty(customerInfo)) {
+                        sdyDTO.setShop_no(customerInfo.getCode());
+                        sdyDTO.setShop_name(customerInfo.getName());
                         //组织编码
                         List<BaseIdDTO.CodeDTO> companyEntities = sysUserFeign.getAccountingCompanyList(Arrays.asList(customerInfo.getFinancialOrganization(), shopInfo.getSalesOrgId()));
                         //销售组织
@@ -294,8 +292,8 @@ public class DmpOutputSdyReturnHandler extends DmpOutputTaskHandler {
 
                 String salesOrgCode = companyEntities.stream().filter(req -> req.getId().equals(shopInfo.getSalesOrgId())).map(req -> req.getCode()).findFirst().orElse("");
                 sdyDTO.setSales_company_code(salesOrgCode);
-                sdyDTO.setShop_no(shopInfo.getId());
-                sdyDTO.setShop_name(shopInfo.getName());
+                sdyDTO.setShop_no(customerInfo.getCode());
+                sdyDTO.setShop_name(customerInfo.getName());
                 DictCurrencyEntity dictCurrencyEntity = FeignQuery.getById(DictCurrencyEntity.class, shopInfo.getTradeCurrency());
                 if (ObjectUtil.isNotEmpty(dictCurrencyEntity)) {
                     sdyDTO.setTransaction_currency(dictCurrencyEntity.getName());

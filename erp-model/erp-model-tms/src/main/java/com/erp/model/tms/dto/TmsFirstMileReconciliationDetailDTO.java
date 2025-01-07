@@ -987,23 +987,44 @@ public class TmsFirstMileReconciliationDetailDTO implements Serializable {
          */
         @Digits(integer = 12, fraction = 4, message = "实际物流运费用整数位不能超过12位，小数位不能超过4位")
         private BigDecimal shippingCost;
+        
+        /**
+         * 物流运费用币别
+         */
+        private String shippingCostCurrency;
 
         /**
          * 报关费用
          */
         @Digits(integer = 12, fraction = 4, message = "实际报关费用整数位不能超过12位，小数位不能超过4位")
         private BigDecimal declareCost;
+        
+        /**
+         * 报关费用币别
+         */
+        private String declareCostCurrency;
 
         /**
          * 其他费用
          */
         @Digits(integer = 12, fraction = 4, message = "实际其他费用整数位不能超过12位，小数位不能超过4位")
         private BigDecimal otherCost;
+        
+        /**
+         * 其他费用币别
+         */
+        private String otherCostCurrency;
+        
         /**
          * 其他税费
          */
         @Digits(integer = 12, fraction = 4, message = "实际其他税费整数位不能超过12位，小数位不能超过4位")
         private BigDecimal otherTaxCost;
+        
+        /**
+         * 其他税费币别
+         */
+        private String otherTaxCurrency;
 
         /**
          * 备注

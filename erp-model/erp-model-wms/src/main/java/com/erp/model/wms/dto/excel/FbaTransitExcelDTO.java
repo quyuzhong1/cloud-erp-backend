@@ -20,9 +20,9 @@ public class FbaTransitExcelDTO implements Serializable {
     /**
      * 导入月份
      */
-    @ExcelProperty(value = "导入月份", index = 0,converter= LocalDateStringConverter.class)
-    @FieldValid(fieldName = "*导入月份",isNotBlank = true)
-    private LocalDateTime reportMonth;
+    @ExcelProperty(value = "导入月份", index = 0)
+    @FieldValid(fieldName = "*导入月份",isNotBlank = true,formatPattern = FieldFormatPatternTypeEnum.DATE_)
+    private String reportMonth;
     /**
      * 货件单号
      */
@@ -46,7 +46,7 @@ public class FbaTransitExcelDTO implements Serializable {
      */
     @ExcelProperty(value = "期初在途", index = 4)
     @FieldValid(fieldName = "*期初在途）",isNotBlank = true, formatPattern = FieldFormatPatternTypeEnum.INTEGER)
-    private Integer  initTransitQty;
+    private String  initTransitQty;
     /**
      * 错误信息
      */

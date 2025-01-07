@@ -103,10 +103,11 @@ public class SyncSoReturnInstockServiceImpl implements SyncSoReturnInstockServic
             shudiyunB2cOrderDTO.setPlatform_id(customerInfo.getPlatformType());
             String platformName = dictBasicEntityList.stream().filter(req -> req.getValue().equals(customerInfo.getPlatformType())).map(DictBasicEntity::getName).findFirst().orElse("");
             shudiyunB2cOrderDTO.setPlatform_name(platformName);
+            shudiyunB2cOrderDTO.setShop_no(customerInfo.getCode());
+            shudiyunB2cOrderDTO.setShop_name(customerInfo.getName());
         }
 
-        shudiyunB2cOrderDTO.setShop_no(entity.getCustomerId());
-        shudiyunB2cOrderDTO.setShop_name(entity.getCustomerName());
+
         shudiyunB2cOrderDTO.setRoot_node_no(rootNodeNoInitial);
         shudiyunB2cOrderDTO.setGoods_no(detailEntity.getSkuNo());
         SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuId().equals(detailEntity.getSkuId())).findFirst().orElse(new SkuVO());

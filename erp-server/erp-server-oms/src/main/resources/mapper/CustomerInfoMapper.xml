@@ -163,10 +163,11 @@
             ca.disabled as addressDisabled,
             ca.remark as addressRemark
         from customer_info ci
-                 left join customer_address ca on ci.id = ca.main_id and ca.is_deleted = false
-                 left join customer_contact cc on ci.id = cc.main_id and cc.is_deleted = false
+        inner join customer_address ca on ci.id = ca.main_id and ca.is_deleted = false
+        inner join customer_contact cc on ci.id = cc.main_id and cc.is_deleted = false
         where
             ci.is_deleted = false
+        and cc.person = ca.person
         <if test="customerIdList != null and customerIdList.size > 0">
             and ci.id IN
             <foreach collection="customerIdList" item="id" open="(" separator="," close=")">
