@@ -114,10 +114,12 @@ public class DeliveryPlanDetailPdaExcelListener extends AnalysisEventListener<De
                             && v.getPlatformSkuNo().equals(deliveryPlanDetailExportExcelDTO.getMsku())
                             && v.getPlatformFnSku().equals(deliveryPlanDetailExportExcelDTO.getFnsku())){
                         return Boolean.TRUE;
-                    }else if(StringUtils.isNotBlank(deliveryPlanDetailExportExcelDTO.getMsku())
+                    }else if(StringUtils.isBlank(deliveryPlanDetailExportExcelDTO.getFnsku())
+                            && StringUtils.isNotBlank(deliveryPlanDetailExportExcelDTO.getMsku())
                             && v.getPlatformSkuNo().equals(deliveryPlanDetailExportExcelDTO.getMsku())){
                         return Boolean.TRUE;
-                    }else if(StringUtils.isNotBlank(deliveryPlanDetailExportExcelDTO.getFnsku())
+                    }else if(StringUtils.isBlank(deliveryPlanDetailExportExcelDTO.getMsku())
+                            && StringUtils.isNotBlank(deliveryPlanDetailExportExcelDTO.getFnsku())
                             && v.getPlatformFnSku().equals(deliveryPlanDetailExportExcelDTO.getFnsku())){
                         return Boolean.TRUE;
                     }
