@@ -1,5 +1,6 @@
 package com.erp.model.mrp.dto;
 
+import com.erp.model.mrp.enums.CfgRuleSalesDenoisingDenoisingTypeEnum;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -173,6 +174,20 @@ public class CfgRuleSalesDenoisingDTO implements Serializable {
          * 固定值去噪
          */
         private Integer fixedValue;
+
+        public static SalesDenoisingExportDTO buildExportDTO(CfgRuleSalesQtyDTO.StrategyDenoisingResultDTO resultDTO) {
+            SalesDenoisingExportDTO dto = new SalesDenoisingExportDTO();
+            dto.setName(resultDTO.getName());
+            dto.setStartDate(resultDTO.getStartDate());
+            dto.setEndDate(resultDTO.getEndDate());
+            dto.setDenoisingTypeName(CfgRuleSalesDenoisingDenoisingTypeEnum.getName(resultDTO.getDenoisingType()));
+            if (CfgRuleSalesDenoisingDenoisingTypeEnum.PERCENTAGE.getCode().equals(resultDTO.getDenoisingType())) {
+                dto.setPercentageValue(resultDTO.getEffectiveValue());
+            } else {
+                dto.setFixedValue(resultDTO.getEffectiveValue());
+            }
+            return dto;
+        }
     }
 
 }
