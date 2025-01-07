@@ -97,7 +97,7 @@ public class KingdeeOperatorRefPostServiceImpl extends SuperServiceImpl<KingdeeO
         addEntity.setUseOrgId(userPost.getUseOrgId());
         addEntity.setUseOrgName(userPost.getUseOrgName());
         addEntity.setCode(userPost.getCode());
-        handleDb(addEntity);
+//        handleDb(addEntity);
         Boolean result = this.save(addEntity);
         if (result) {
             DmpPushTaskEntity pushTaskEntity = syncKingdeeOperatorService.syncDataToKingdee(addEntity, SyncOperateEnum.OPERATE_ADD.getCode());
