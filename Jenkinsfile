@@ -31,8 +31,8 @@ pipeline {
                     def erpfile = readFile('erp_file.txt')
                     def lines = erpfile.split("\n")
                     for (line in lines) {
-                        sh "ssh -tt root@172.16.100.90 "docker rmi ${harborAddress}/${harborRepo}/$line:${TAG} || true""
-                        sh "ssh -tt root@172.16.100.90 "cd /home/dockers/jenkins/jenkins_home/workspace/${JOB_NAME}/erp-server/$line/ && docker build -t ${harborAddress}/${harborRepo}/$line:${TAG} .""
+                        sh "ssh -tt root@172.16.100.90 "docker rmi ${harborAddress}/${harborRepo}/${line}:${TAG} || true""
+                        sh "ssh -tt root@172.16.100.90 "cd /home/dockers/jenkins/jenkins_home/workspace/${JOB_NAME}/erp-server/${line}/ && docker build -t ${harborAddress}/${harborRepo}/${line}:${TAG} .""
                     }
                 sh '''
                 ssh -tt root@172.16.100.90 "docker rmi ${harborAddress}/${harborRepo}/erp-gateway:${TAG} || true"
@@ -48,7 +48,7 @@ pipeline {
                     def erpfile = readFile('erp_file.txt')
                     def lines = erpfile.split("\n")
                     for (line in lines) {
-                        sh "docker push ${harborAddress}/${harborRepo}/$line:${TAG}"
+                        sh "docker push ${harborAddress}/${harborRepo}/${line}:${TAG}"
                     }
                 }
                 sh "docker push ${harborAddress}/${harborRepo}/erp-gateway:${TAG}"
@@ -60,8 +60,8 @@ pipeline {
                     def erpfile = readFile('erp_file.txt')
                     def lines = erpfile.split("\n")
                     for (line in lines) {
-                        sh "scp /var/jenkins_home/workspace/${JOB_NAME}/erp-server/$line/$line.yaml root@172.16.100.60:/k8s-yaml/erp-server"
-                        sh "ssh -tt root@172.16.100.60 "sed -i -e \\"s|\\\\\\${tag}|${TAG}|g\\" -e \\"s|\\\\\\${namespace}|${NAMESPACE}|g\\" /k8s-yaml/erp-server/$line.yaml""
+                        sh "scp /var/jenkins_home/workspace/${JOB_NAME}/erp-server/${line}/${line}.yaml root@172.16.100.60:/k8s-yaml/erp-server"
+                        sh "ssh -tt root@172.16.100.60 "sed -i -e \\"s|\\\\\\${tag}|${TAG}|g\\" -e \\"s|\\\\\\${namespace}|${NAMESPACE}|g\\" /k8s-yaml/erp-server/${line}.yaml""
                     }
                 }
                 sh "scp /var/jenkins_home/workspace/${JOB_NAME}/erp-gateway/erp-gateway.yaml root@172.16.100.60:/k8s-yaml/erp-server"
