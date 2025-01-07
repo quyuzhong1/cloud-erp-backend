@@ -2153,9 +2153,9 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
             // 如果总数量不为零，才进行进一步处理
             if (totalDeliveryQty > 0) {
                 // 统计要货申请每个明细的批准数量和
-                Map<String, Integer> requisitionDetailQtySumById = oldDetails.stream()
+                Map<String, Integer> requisitionDetailQtySumById = oldDetails.stream().filter(v -> v.getPickingQty() > 0)
                         .collect(Collectors.toMap(RequisitionApplicationDetailEntity::getSkuNo,
-                                RequisitionApplicationDetailEntity::getApproveQty,
+                                RequisitionApplicationDetailEntity::getPickingQty,
                                 Integer::sum));
 
                 // 统计头程发货单明细每个明细的发货数量和
