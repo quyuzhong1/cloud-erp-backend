@@ -233,7 +233,7 @@ public class PurchaseSuggestIndependentServiceImpl extends SuperServiceImpl<Purc
 
             //采购申请
             PurchaseApplicationDetailDTO.PurchaseApplicationDTO purchaseApplicationDTO = purchaseApplicationList.stream().filter(obj ->
-                ObjectUtil.isNotEmpty(obj.getMergeIdJson())).findFirst().orElse(null);
+                ObjectUtil.isNotEmpty(obj.getSourceJson())).findFirst().orElse(null);
             if (ObjectUtil.isNotEmpty(purchaseApplicationDTO)) {
                 listDTO.setPurchaseApplicationCode(purchaseApplicationDTO.getCode());
                 listDTO.setIsPush(Boolean.TRUE);

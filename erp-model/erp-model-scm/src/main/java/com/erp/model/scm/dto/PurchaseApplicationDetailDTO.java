@@ -224,6 +224,6 @@ public class PurchaseApplicationDetailDTO implements Serializable {
         /**
          * 采购建议数据id
          */
-        private JSONArray mergeIdJson;
+        private JSONArray sourceJson;
     }
 }

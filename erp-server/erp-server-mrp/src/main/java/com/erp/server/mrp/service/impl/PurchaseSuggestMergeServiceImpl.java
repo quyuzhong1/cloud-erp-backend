@@ -611,7 +611,7 @@ public class PurchaseSuggestMergeServiceImpl extends SuperServiceImpl<PurchaseSu
             detailList.add(addDetailDTO);
         }
         purchaseApplicationDTO.setDetails(detailList);
-        if (dto.getIsApprove()) {
+        if (dto.getIsSubmit()) {
             purchaseApplicationFeign.addAndSubmit(purchaseApplicationDTO);
         } else {
             purchaseApplicationFeign.add(purchaseApplicationDTO);
@@ -860,7 +860,7 @@ public class PurchaseSuggestMergeServiceImpl extends SuperServiceImpl<PurchaseSu
 
                 //采购申请
                 PurchaseApplicationDetailDTO.PurchaseApplicationDTO purchaseApplicationDTO = purchaseApplicationList.stream().filter(obj ->
-                        ObjectUtil.isNotEmpty(obj.getMergeIdJson())).findFirst().orElse(null);
+                        ObjectUtil.isNotEmpty(obj.getSourceJson())).findFirst().orElse(null);
                 if (ObjectUtil.isNotEmpty(purchaseApplicationDTO)) {
                     listDTO.setPurchaseApplicationCode(purchaseApplicationDTO.getCode());
                     listDTO.setIsPush(Boolean.TRUE);
