@@ -295,7 +295,7 @@ public class ReplenishmentResultDTO {
         /**
          * 建议 id
          */
-        private String replenishmentId;
+        private String shopSkuIds;
         /**
          * 日期
          */
@@ -305,9 +305,9 @@ public class ReplenishmentResultDTO {
          */
         private Integer originalSalesQty;
 
-        public static SalesHistoryDTO buildSalesHistory(String replenishmentId, LocalDate date, Integer originalSalesQty) {
+        public static SalesHistoryDTO buildSalesHistory(String shopSkuIds, LocalDate date, Integer originalSalesQty) {
             SalesHistoryDTO dto = new SalesHistoryDTO();
-            dto.setReplenishmentId(replenishmentId);
+            dto.setShopSkuIds(shopSkuIds);
             dto.setDate(date);
             dto.setOriginalSalesQty(originalSalesQty);
             return dto;
