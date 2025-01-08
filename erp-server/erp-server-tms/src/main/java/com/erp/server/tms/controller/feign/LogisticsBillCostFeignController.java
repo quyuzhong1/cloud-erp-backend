@@ -2,6 +2,7 @@ package com.erp.server.tms.controller.feign;
 
 import com.common.core.anno.LogSystemModule;
 import com.erp.model.tms.dto.LogisticsBillCostDTO;
+import com.erp.model.wms.entity.SoReturnInstockEntity;
 import com.erp.server.tms.service.LogisticsBillCostService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -38,5 +39,10 @@ public class LogisticsBillCostFeignController {
     @PostMapping("/getActualLogisticCost")
     public BigDecimal getActualLogisticCost(@RequestBody String soId) {
         return logisticsBillCostService.getActualLogisticCost(soId);
+    }
+    
+    @PostMapping("/generateLogisticsBill")
+    public void generateLogisticsBill(@RequestBody SoReturnInstockEntity entity) {
+    	logisticsBillCostService.generateLogisticsBill(entity);
     }
 }

@@ -1,16 +1,5 @@
 package com.erp.model.wms.dto;
 
-import java.io.Serializable;
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotEmpty;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Size;
-
 import com.common.business.annotation.Dict;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.PermissionsDTO;
@@ -18,9 +7,18 @@ import com.common.business.dto.base.SortDTO;
 import com.common.business.dto.base.UpdateStateDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.ServiceCodeNameEnum;
-
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
+import java.io.Serializable;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author Lambda
@@ -391,6 +389,22 @@ public class WarehouseDTO implements Serializable {
         private List<String> warehouseIdList;
 
         private Boolean isSupplier;
+        /**
+         * 仓库类型 字典 warehouseType
+         * factory	生产工厂
+         * supplier	供应商仓库
+         * selfSupport	普通仓库
+         * hwc	海外仓
+         * gnzyc	国内自营仓
+         * gwzyc	海外自营仓
+         * wlzzc	物流中转仓
+         * qdc	渠道仓
+         * fcspc	发出商品仓
+         * ztc	在途仓
+         * FBA	平台仓
+         * overseas	海外第三方仓
+         */
+        private List<String> typeCodeList;
 
     }
 
@@ -954,6 +968,25 @@ public class WarehouseDTO implements Serializable {
             this.warehouseLocation = viewDTO.getWarehouseLocation();
             this.warehouseName = viewDTO.getWarehouseName();
         }
+    }
+
+    /**
+     * 仓库列表
+     */
+    @Data
+    @NoArgsConstructor
+    public static class PullDownDTO {
+
+        /**
+         * id
+         */
+        private String id;
+
+        /**
+         * 名称
+         */
+        private String name;
+
     }
 
 }

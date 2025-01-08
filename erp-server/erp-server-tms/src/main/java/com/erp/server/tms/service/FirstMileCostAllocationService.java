@@ -113,4 +113,11 @@ public interface FirstMileCostAllocationService extends SuperService<FirstMileCo
      * @return
      */
     List<FirstMileCostAllocationEntity> listByReconciliationIds(List<String> reconciliationIds);
+
+    /**
+     * 根据物流id查询分摊表
+     * @param logisticsBillIds
+     * @return
+     */
+    List<FirstMileCostAllocationEntity> listByLogisticsBillIds(List<String> logisticsBillIds);
 }

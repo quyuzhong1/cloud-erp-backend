@@ -1,6 +1,10 @@
 package com.erp.server.dmp.service;
 import com.erp.model.dmp.entity.DmpSoRefundInfoEntity;
+import com.erp.model.dmp.gyy.GyyRefundEntity;
 import com.common.business.service.SuperService;
+
+import java.util.List;
+
 import com.common.business.dto.base.*;
 import com.erp.model.dmp.dto.DmpSoRefundInfoDTO;
 
@@ -32,5 +36,5 @@ public interface DmpSoRefundInfoService extends SuperService<DmpSoRefundInfoEnti
     */
     Boolean update(DmpSoRefundInfoDTO.UpdateDTO dto);
 
-
+    void addGyyRefundOrder(List<GyyRefundEntity> mongoData);
 }

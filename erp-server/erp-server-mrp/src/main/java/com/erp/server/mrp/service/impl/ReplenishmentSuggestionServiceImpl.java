@@ -1163,7 +1163,7 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
                 .eq(com.erp.model.oms.entity.DictBasicEntity::getIsDeleted, Boolean.FALSE)
                 .list();
         return salesPlatformList.stream()
-                .collect(Collectors.toMap(com.erp.model.oms.entity.DictBasicEntity::getName, DictBasicEntity::getValue, (o1, o2) -> o1));
+                .collect(Collectors.toMap(com.erp.model.oms.entity.DictBasicEntity::getValue, DictBasicEntity::getName, (o1, o2) -> o1));
     }
 
     @Override
@@ -1181,7 +1181,7 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
         while (!date.isAfter(endDate)) {
             LocalDate finalDate = date;
             SalesInfoEntity info = infoEntities.stream()
-                    .filter(v -> v.getDate().isBefore(finalDate))
+                    .filter(v -> v.getDate().isEqual(finalDate))
                     .findFirst()
                     .orElse(null);
             ReplenishmentSuggestionVO.SalesInfoVO infoVO = new ReplenishmentSuggestionVO.SalesInfoVO();

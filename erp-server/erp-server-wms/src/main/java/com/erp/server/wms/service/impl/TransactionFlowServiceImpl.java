@@ -296,7 +296,10 @@ public class TransactionFlowServiceImpl extends SuperServiceImpl<TransactionFlow
                 .last("for update")
                 .list();
         if(CollUtil.isEmpty(flowList)) {
-            log.warn("未找到需要重算的库存流水，组织:{}, 库存id:{}, 开始时间:{}", orgName, inventoryId, startDate);
+            log.warn("###TransactionFlowServiceImpl>>>overrideInventoryFlow:::未找到需要重算的库存流水，组织:{}, 库存id:{}, 开始时间:{}", orgName, inventoryId, startDate);
+            // 流水不存在则删除历史库存
+            inventoryHisService.removeByInventoryIds(Collections.singletonList(inventoryId), startDate);
+            return;
         }
         flowList= flowList.stream().sorted(Comparator.comparing(TransactionFlowEntity::getBillDate)
                         .thenComparing(TransactionFlowEntity::getTradeTime)
@@ -448,7 +451,6 @@ public class TransactionFlowServiceImpl extends SuperServiceImpl<TransactionFlow
         flowList.stream().forEachOrdered(flow -> {
             afterQty.set(flow.getQty() + afterQty.get());
             updateList.add(new TransactionFlowEntity(flow.getId(), afterQty.get()));
-//            updateById(new TransactionFlowEntity(flow.getId(), afterQty.get()));
         });
         updateBatchById(updateList);
 

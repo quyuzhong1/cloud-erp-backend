@@ -1062,7 +1062,7 @@ public class SyncTaskServiceImpl implements SyncTaskService {
      * @param sourceDetailList
      * @return
      */
-    private Map<String ,Map<String, Object>> newSdySyncSoOutstock(List<DmpSyncMqDTO.SyncParamDetailDTO> sourceDetailList) {
+    public Map<String ,Map<String, Object>> newSdySyncSoOutstock(List<DmpSyncMqDTO.SyncParamDetailDTO> sourceDetailList) {
         Map<String , Map<String, Object>> resultList = new HashMap<>();
         List<String> sourceIdList = sourceDetailList.stream().map(DmpSyncMqDTO.SyncParamDetailDTO::getSourceId).collect(Collectors.toList());
         //订单同步数帝云是详情级别同步，所以查询详情
@@ -1159,7 +1159,7 @@ public class SyncTaskServiceImpl implements SyncTaskService {
      * @param sourceDetailList
      * @return
      */
-    private Map<String ,Map<String, Object>> newSdySyncSoReturnInstock(List<DmpSyncMqDTO.SyncParamDetailDTO> sourceDetailList) {
+    public Map<String ,Map<String, Object>> newSdySyncSoReturnInstock(List<DmpSyncMqDTO.SyncParamDetailDTO> sourceDetailList) {
         Map<String , Map<String, Object>> resultList = new HashMap<>();
         List<String> sourceIdList = sourceDetailList.stream().map(DmpSyncMqDTO.SyncParamDetailDTO::getSourceId).collect(Collectors.toList());
         //订单同步数帝云是详情级别同步，所以查询详情
@@ -1199,6 +1199,7 @@ public class SyncTaskServiceImpl implements SyncTaskService {
 
         //组织
         List<String> financialOrganization = customerInfoList.stream().map(req -> req.getFinancialOrganization()).distinct().collect(Collectors.toList());
+        financialOrganization.addAll(list.stream().map(SoReturnInstockEntity::getSalesOrgId).distinct().collect(Collectors.toList()));
         List<BaseIdDTO.CodeDTO> companyEntities = sysUserFeign.getAccountingCompanyList(financialOrganization);
 
         List<com.erp.model.oms.entity.DictBasicEntity> dictBasicEntityList = FeignQuery.create(com.erp.model.oms.entity.DictBasicEntity.class).eq(DictBasicEntity::getType, DictBasicTypeEnum.SALES_PLATFORM.getType()).list();

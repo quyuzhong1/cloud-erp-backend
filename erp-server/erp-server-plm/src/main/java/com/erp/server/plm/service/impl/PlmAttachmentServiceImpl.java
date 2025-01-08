@@ -1,7 +1,9 @@
 package com.erp.server.plm.service.impl;
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.dto.base.BaseIdDTO;
+import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -9,8 +11,10 @@ import com.common.core.utils.FastDFSClientUtil;
 import com.common.core.utils.FileUtil;
 import com.erp.model.plm.dto.AttachmentDTO;
 import com.erp.model.plm.entity.PlmAttachmentEntity;
+import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.server.plm.mapper.PlmAttachmentMapper;
 import com.erp.server.plm.service.PlmAttachmentService;
+import com.erp.server.plm.service.ProductDetailService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -18,11 +22,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.annotation.Resource;
 import java.io.File;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -36,6 +42,8 @@ import java.util.List;
 @Service
 public class PlmAttachmentServiceImpl extends SuperServiceImpl<PlmAttachmentMapper, PlmAttachmentEntity> implements PlmAttachmentService {
 
+    @Resource
+    private ProductDetailService productDetailService;
 
     /**
      * 批量保存附件信息
@@ -146,5 +154,31 @@ public class PlmAttachmentServiceImpl extends SuperServiceImpl<PlmAttachmentMapp
                 .eq(PlmAttachmentEntity::getAttachUrl, dto.getAttachUrl())
                 .eq(StringUtils.isNotBlank(dto.getBusinessId()), PlmAttachmentEntity::getBusinessId, dto.getBusinessId())
                 .remove();
+    }
+
+    @Override
+    public List<AttachmentDTO.CommonDTO> getUrlById(String id) {
+        List<PlmAttachmentEntity> entities = this.lambdaQuery().eq(PlmAttachmentEntity::getBusinessId, id).list();
+        if(CollectionUtils.isEmpty(entities)){
+            return new ArrayList<>();
+        }
+        return BeanUtil.copyToList(entities,AttachmentDTO.CommonDTO.class);
+    }
+
+    @Override
+    public List<AttachmentDTO.CommonDTO> getSkuUrlByPid(String id) {
+        if(StringUtils.isBlank(id)){
+            return Collections.emptyList();
+        }
+        List<ProductDetailEntity> productDetailEntities = productDetailService.getSkuListByProductId(id);
+        if(CollectionUtils.isEmpty(productDetailEntities)){
+            return new ArrayList<>();
+        }
+        List<String> ids = productDetailEntities.stream().map(v->v.getId()).collect(Collectors.toList());
+        List<PlmAttachmentEntity> entities = this.lambdaQuery().in(PlmAttachmentEntity::getBusinessId, ids).eq(PlmAttachmentEntity::getType, SourceTypeEnum.PRODUCT_DETAIL.getTableName()).list();
+        if(CollectionUtils.isEmpty(entities)){
+            return new ArrayList<>();
+        }
+        return BeanUtil.copyToList(entities,AttachmentDTO.CommonDTO.class);
     }
 }

@@ -6,6 +6,7 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.tms.dto.TmsB2cDeclareReconciliationDTO;
 import com.erp.model.tms.entity.TmsB2cDeclareReconciliationEntity;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -89,6 +90,8 @@ public interface TmsB2cDeclareReconciliationService extends SuperService<TmsB2cD
      * @return
      */
     BatchResultDTO submit(String id);
+    
+    BatchResultDTO updatePayStatus(String id , String payStatus , LocalDateTime payTime);
 
     /**
     * 审核

@@ -16,7 +16,8 @@ public enum AllocationFeeTypeEnum implements EnumMessage {
     SHIPPING_COST("shippingCost", "运费"),
     DECLARE_COST("declareCost", "关税"),
     OTHER_TAX_FEE("otherTaxFee", "其他税费"),
-    OTHER_COST("otherCost", "其他费用")
+    OTHER_COST("otherCost", "其他费用"),
+    DEDUCTIBLE_TAX("deductibleTax", "可抵扣税金"),
     ;
 
     /**

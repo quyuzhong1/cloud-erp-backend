@@ -3,6 +3,7 @@ package com.erp.server.dmp.inout.job;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.stream.Collectors;
@@ -22,6 +23,7 @@ import com.erp.model.dmp.enums.DmpOutputTaskRecordStatusEnum;
 import com.erp.server.dmp.controller.api.DmpInoutController;
 import com.erp.server.dmp.inout.dto.request.DmpOutputFinishRequest;
 import com.erp.server.dmp.inout.handler.factory.DmpOutputTaskFactory;
+import com.erp.server.dmp.inout.utils.DmpHandlerUtils;
 import com.erp.server.dmp.service.DmpCfgOutputService;
 import com.erp.server.dmp.service.DmpOutputTaskRecordService;
 import com.erp.server.dmp.service.DmpOutputTaskService;
@@ -30,8 +32,11 @@ import com.xxl.job.core.context.XxlJobHelper;
 import com.xxl.job.core.handler.annotation.XxlJob;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.date.LocalDateTimeUtil;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Component
 public class DmpOutputTaskJob {
 	@Autowired
@@ -118,6 +123,56 @@ public class DmpOutputTaskJob {
 	@XxlJob("wdtInsufficientInventoryTask")
     public ReturnT wdtInsufficientInventoryTask(){
 		dmpInoutController.getWdtInsufficientInventory();
+		return ReturnT.SUCCESS;
+	}
+	
+	@XxlJob("dmpMoveToHistoryTable")
+	public ReturnT dmpMoveToHistoryTable(){
+		JSONObject parseObject = null;
+		String param = XxlJobHelper.getJobParam();
+		if(StringUtils.isNotBlank(param)) {
+			parseObject = JSON.parseObject(param);
+		}
+		Date now = new Date();
+		Integer beforeDay = 60;
+		Integer size = 10000;
+		if(parseObject != null) {
+			beforeDay = parseObject.getInteger("inputDay");
+			size = parseObject.getInteger("inputSize");
+		}
+		try {
+			dmpOutputTaskRecordService.dmpInputMoveToHistoryTable(DateUtil.formatDateTime(DateUtil.offsetDay(now, beforeDay*-1)), size.toString());
+		} catch (Exception e) {
+			log.error("归档中台输入任务数据失败：" , e);
+			DmpHandlerUtils.sendFeiShuMsg("归档中台输入任务数据失败：" + "【" + e.getMessage() + "】");
+		}
+		
+		beforeDay = 60;
+		size = 50000;
+		if(parseObject != null) {
+			beforeDay = parseObject.getInteger("relationDay");
+			size = parseObject.getInteger("relationSize");
+		}
+		try {
+			dmpOutputTaskRecordService.dmpRelationMoveToHistoryTable(DateUtil.formatDateTime(DateUtil.offsetDay(now, beforeDay*-1)), size.toString());
+		} catch (Exception e) {
+			log.error("归档中台关系表数据失败：" , e);
+			DmpHandlerUtils.sendFeiShuMsg("归档中台关系表数据失败：" + "【" + e.getMessage() + "】");
+		}
+		
+		beforeDay = 60;
+		size = 10000;
+		if(parseObject != null) {
+			beforeDay = parseObject.getInteger("outputDay");
+			size = parseObject.getInteger("outputSize");
+		}
+		try {
+			dmpOutputTaskRecordService.dmpOutputMoveToHistoryTable(DateUtil.formatDateTime(DateUtil.offsetDay(now, beforeDay*-1)), size.toString());
+		} catch (Exception e) {
+			log.error("归档中台输出任务数据失败：" , e);
+			DmpHandlerUtils.sendFeiShuMsg("归档中台输出任务数据失败：" + "【" + e.getMessage() + "】");
+		}
+		
 		return ReturnT.SUCCESS;
 	}
 }

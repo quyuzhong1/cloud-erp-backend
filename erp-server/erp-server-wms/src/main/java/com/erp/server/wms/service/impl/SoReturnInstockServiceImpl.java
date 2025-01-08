@@ -8,6 +8,7 @@ import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.annotation.DataIdempotent;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.ApproveType;
 import com.common.business.dto.FindUserDTO;
@@ -47,6 +48,7 @@ import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.sys.entity.SysDepartmentEntity;
+import com.erp.model.tms.entity.LogisticsBillEntity;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.inventory.InOutStockDTO;
 import com.erp.model.wms.dto.inventory.InventoryBatchUnApproveDTO;
@@ -64,6 +66,7 @@ import com.erp.rpc.oms.feign.SoInfoFeign;
 import com.erp.rpc.oms.feign.SoReturnFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.rpc.tms.feign.LogisticsBillCostFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.wms.kingdee.SyncKingdeeSoReturnService;
 import com.erp.server.wms.kingdee.SyncSoReturnInstockService;
@@ -181,6 +184,9 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
 
     @Resource
     private SoOutstockService soOutstockService;
+    
+    @Resource
+    private LogisticsBillCostFeign logisticsBillCostFeign;
 
     @Resource
     private SyncSoReturnInstockService syncSoReturnInstockService;
@@ -1748,66 +1754,39 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
     }
 
     public void syncToSdyHandler(List<SoReturnInstockEntity> list, String operate) {
-        List<String> ids = list.stream().map(req -> req.getId()).collect(Collectors.toList());
-        List<SoReturnInstockDetailEntity> detailEntityList = soReturnInstockDetailService.listDetailByMainIds(ids);
-
-        List<String> skuNos = detailEntityList.stream().map(req -> req.getSkuNo()).collect(Collectors.toList());
-        List<SkuVO> skuVOList = plmTaskFeign.listBySkuNoList(skuNos);
-        List<String> skuIds = detailEntityList.stream().map(req -> req.getSkuId()).collect(Collectors.toList());
-        List<BomChildrenSkuDTO> bomChildrenSkuDTOS = plmTaskFeign.listBomChildBySkuIds(skuIds);
-
-        List<String> currencyCodeList = detailEntityList.stream().map(req -> req.getCurrency()).distinct().collect(Collectors.toList());
-        List<CurrencyDTO.ViewDTO> currencyList = sysUserFeign.listByCurrency(currencyCodeList);
-        //父类产品
-        List<String> parentSkuId = bomChildrenSkuDTOS.stream().map(BomChildrenSkuDTO::getParentSkuId).distinct().collect(Collectors.toList());
-        List<ProductDetailEntity> parentSkuList = new ArrayList<>();
-        if (CollUtil.isNotEmpty(parentSkuId)) {
-            parentSkuList = FeignQuery.create(ProductDetailEntity.class)
-                    .in(ProductDetailEntity::getId, parentSkuId)
-                    .list();
-        }
-
-        //客户
-        List<String> customerIds = list.stream().map(req -> req.getCustomerId()).distinct().collect(Collectors.toList());
-        List<CustomerInfoEntity> customerInfoList = new ArrayList<>();
-        if (CollUtil.isNotEmpty(customerIds)) {
-            //组织
-            customerInfoList = FeignQuery.create(CustomerInfoEntity.class)
-                    .in(CustomerInfoEntity::getId, customerIds)
-                    .list();
-        }
-
-        //组织
-        List<String> financialOrganization = customerInfoList.stream().map(req -> req.getFinancialOrganization()).distinct().collect(Collectors.toList());
-        List<BaseIdDTO.CodeDTO> companyEntities = sysUserFeign.getAccountingCompanyList(financialOrganization);
-
-        List<DictBasicEntity> dictBasicEntityList = FeignQuery.create(DictBasicEntity.class).eq(DictBasicEntity::getType, DictBasicTypeEnum.SALES_PLATFORM.getType()).list();
-
-
-        List<String> soReturnIds = list.stream().filter(req -> SourceTypeEnum.SO_RETURN.getCode().equals(req.getSourceType())).map(req -> req.getSourceId()).distinct().collect(Collectors.toList());
-        List<SoReturnEntity> soReturnEntityList = soReturnFeign.listByIds(soReturnIds);
-
-        List<String> receiveIds = list.stream().filter(req -> SourceTypeEnum.SO_RETURN_RECEIVE.getCode().equals(req.getSourceType())).map(req -> req.getSourceId()).distinct().collect(Collectors.toList());
-        List<SoReturnReceiveEntity> soReturnReceiveEntityList = soReturnReceiveService.listByIds(receiveIds);
-
-        List<String> returnIds = list.stream().map(req -> req.getSourceId()).distinct().collect(Collectors.toList());
-        List<SoReturnEntity> receiveReturnList = soReturnFeign.listByIds(returnIds);
-
         for (SoReturnInstockEntity entity : list) {
             List<SoReturnInstockDetailEntity> detailEntities = soReturnInstockDetailService.listDetailByMainId(entity.getId());
             syncSoReturnInstockService.syncDataToSdy(entity,
                     detailEntities,
-                    operate,
-                    skuVOList,
-                    bomChildrenSkuDTOS,
-                    currencyList,
-                    parentSkuList,
-                    customerInfoList,
-                    companyEntities,
-                    dictBasicEntityList,
-                    soReturnEntityList,
-                    soReturnReceiveEntityList,
-                    receiveReturnList);
+                    operate);
         }
+    }
+    
+    @Override
+    @DataIdempotent(keyIdName = "entity.code" , businessType = "generateLogisticsBill")
+    public BatchResultDTO generateLogisticsBill(SoReturnInstockEntity entity) {
+        String returnLogisticCode = entity.getReturnLogisticCode();
+    	if(StringUtils.isBlank(returnLogisticCode)) {
+    		return BatchResultDTO.fail(entity.getId(),entity.getCode(),"退货物流单号为空，不允许下推自发货费用");
+        }
+    	
+    	if(!entity.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getCode())) {
+    		return BatchResultDTO.fail(entity.getId(),entity.getCode(),"单据状态不为已审核，不允许下推自发货费用");
+    	}
+    	String id = entity.getId();
+		String sourceType = SourceTypeEnum.SO_RETURN_INSTOCK.getCode();
+		List<LogisticsBillEntity> logisticsBillEntityList = FeignQuery.create(LogisticsBillEntity.class)
+			.eq(LogisticsBillEntity::getOutstockId, id)
+			.eq(LogisticsBillEntity::getSourceType, sourceType)
+			.list();
+		if(CollUtil.isNotEmpty(logisticsBillEntityList)) {
+			 return BatchResultDTO.fail(entity.getId(),entity.getCode(),"已关联生成自发货费用，不允许重复下推");
+		}
+		
+		logisticsBillCostFeign.generateLogisticsBill(entity);
+    	
+        //操作日志
+        operateLogService.addModuleOperateLog(String.format("退货入库【%s】下推物流单",entity.getCode()), ModuleTypeEnum.SO_RETURN_NOTICE.getCode(), id, "下推操作");
+        return BatchResultDTO.success(id, entity.getCode(), "操作成功");
     }
 }

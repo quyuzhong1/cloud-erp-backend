@@ -6,6 +6,7 @@ import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.*;
+import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
@@ -451,5 +452,34 @@ public class SoOutstockController extends BaseController {
 
 
         return success();
+    }
+    
+    /**
+     * 下推物流单
+     */
+    @LogAction(value = LogActionEnum.UPDATE_STATUS, desc = "下推物流单")
+    @PostMapping("/saveLogisticsBill")
+    public ApiResult<List<BatchResultDTO>> saveLogisticsBill(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        List<SoOutstockEntity> entityList = soOutstockService.listByIds(dto.getIds());
+        for (String id : dto.getIds()) {
+            SoOutstockEntity entity = entityList.stream().filter(v->v.getId().equals(id)).findFirst().orElse(null);
+            if(Objects.isNull(entity)){
+                resultDTOS.add(BatchResultDTO.fail(id,id,"销售出库单记录不存在"));
+                continue;
+            }
+            if(ApproveStatusEnum.APPROVE != entity.getApproveStatus()) {
+            	resultDTOS.add(BatchResultDTO.fail(id,entity.getCode(),"销售出库单不是已审核，不允许下推物流单"));
+                continue;
+            }
+            try {
+            	soOutstockService.saveLogisticsBill(entity);
+                resultDTOS.add(BatchResultDTO.success(id, entity.getCode()));
+            }catch (Exception e){
+                log.error("销售出库单下推物流单失败",e);
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
+            }
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 }

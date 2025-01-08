@@ -758,7 +758,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
 
         //历史流水
         List<String> detailIdList = soB2cDeliveryDetailList.stream().map(SoB2cDeliveryDetailEntity::getId).distinct().collect(Collectors.toList());
-        List<VirtualTransFlowEntity> virtualTransFlowList = virtualTransFlowService.listHistoryFlow(detailIdList, InventorySourceTypeEnum.SO_B2C_DELIVERY.getCode());
+        List<VirtualTransFlowEntity> virtualTransFlowList = virtualTransFlowService.listHistoryFlow(deliveryDetailIdList, InventorySourceTypeEnum.SO_B2C_DELIVERY.getCode());
 
         //出冻结库存
         List<VirtualInventoryStockDTO.OutInStockDTO> outList = new ArrayList<>();
@@ -780,7 +780,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
             }
 
             //如果存在出冻结流水则无需再次扣减
-            long count = virtualTransFlowList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSourceDetailId(), detailEntity.getId())
+            long count = virtualTransFlowList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSourceDetailId(), soB2cDeliveryDetailId)
                     && CharSequenceUtil.equals(obj.getDictBizType(), VirtualInventoryBusinessTypeEnum.SO_OUT_STOCK.getCode())).count();
             if (count > 0) {
                 return;
@@ -2051,7 +2051,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         list.forEach(obj -> {
             List<TransferInfoDetailEntity> transferInfoDetailEntityList1 = transferDetailMap.get(obj.getId());
             transferInfoDetailEntityList1 = CollUtil.isNotEmpty(transferInfoDetailEntityList1) ? transferInfoDetailEntityList1.stream().filter(e -> !ignoreInventorySkuIds.contains(e.getSkuId())).collect(Collectors.toList()) : Collections.emptyList();
-            if (CollUtil.isNotEmpty(transferInfoDetailEntityList1)){
+            if (SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate) || CollUtil.isNotEmpty(transferInfoDetailEntityList1)){
                 DmpPushTaskEntity pushTaskEntity = syncKingdeeTransferInfoService.syncDataToKingdee(obj,transferInfoDetailEntityList1, operate);
                 resultList.add(pushTaskEntity);
             }

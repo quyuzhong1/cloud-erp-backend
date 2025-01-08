@@ -9,6 +9,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
+import java.util.List;
+import java.util.Map;
 
 /**
  * 推送数据
@@ -56,5 +58,15 @@ public class WmsSyncTaskController {
     @PostMapping("/findWdtDataSendSyncTask")
     void findWdtDataSendSyncTask(@RequestBody DmpSyncMqDTO.SyncParamDTO syncParamDTO){
         syncTaskService.findWdtDataSendSyncTask(syncParamDTO);
+    }
+
+    /**
+     * 新中台查询同步
+     * @param syncParamDTO
+     * @return
+     */
+    @PostMapping("/newFindDataSendSyncTask")
+    public Map<String, Map<String, Object>> newFindDataSendSyncTask(@RequestBody DmpSyncMqDTO.SyncParamDTO syncParamDTO) {
+        return syncTaskService.newFindDataSendSyncTask(syncParamDTO);
     }
 }

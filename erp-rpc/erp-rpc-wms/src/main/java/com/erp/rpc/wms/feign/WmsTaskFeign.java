@@ -375,4 +375,12 @@ public interface WmsTaskFeign {
      */
     @GetMapping("/feign/waveList/waveListStatusAutoChange")
     void waveListStatusAutoChange(@RequestParam("deliveryId") String deliveryId);
+
+    /**
+     * 新中台查询同步
+     * @param syncParamDTO
+     * @return
+     */
+    @PostMapping("/feign/wmsSyncTask/newFindDataSendSyncTask")
+    Map<String, Map<String, Object>> newFindDataSendSyncTask(@RequestBody DmpSyncMqDTO.SyncParamDTO syncParamDTO);
 }

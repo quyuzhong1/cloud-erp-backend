@@ -43,6 +43,10 @@ public enum PlatformDictEnum implements EnumMessage {
     OFFLINE_STORE_INTERNAL("OFFLINE_STORE_INTERNAL", "线下门店-国内", "线下门店-国内", "029"),
     ONLINE_STORE_FOREIGN("ONLINE_STORE_FOREIGN", "线下门店-国外", "线下门店-国外", "030"),
     XIAN_YU("Xianyu", "闲鱼", "闲鱼", "031"),
+    UNCONVENTIONAL("Unconventional", "非常规业务", "非常规业务", "032"),
+    ALLEGRO("Allegro", "Allegro", "Allegro", "033"),
+    CDISCOUNT("Cdiscount", "Cdiscount", "Cdiscount", "034"),
+    KUAI_SHOU("kuaishou", "快手", "快手", "035"),
 
     MERCADOLIBRE("mercadolibre", "美客多", "美客多", "033"),
     TIK_TOK("TikTok", "TikTok", "TikTok", "032"),

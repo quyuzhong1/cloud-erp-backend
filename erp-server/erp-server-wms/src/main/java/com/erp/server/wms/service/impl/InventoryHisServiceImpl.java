@@ -1,10 +1,8 @@
 package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -144,6 +142,14 @@ public class InventoryHisServiceImpl extends SuperServiceImpl<InventoryHisMapper
         if(CollUtil.isNotEmpty(removeHisIdList)){
             removeByIds(removeHisIdList);
         }
+    }
+
+    @Override
+    public void removeByInventoryIds(List<String> InventoryIds, LocalDate startDate) {
+        LambdaQueryWrapper<InventoryHisEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.in(InventoryHisEntity::getInfoId, InventoryIds);
+        queryWrapper.ge(InventoryHisEntity::getBillDate, startDate);
+        baseMapper.delete(queryWrapper);
     }
 
 

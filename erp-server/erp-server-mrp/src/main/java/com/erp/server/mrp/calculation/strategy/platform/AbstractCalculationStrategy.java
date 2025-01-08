@@ -63,7 +63,7 @@ public abstract class AbstractCalculationStrategy implements PlatformCalculation
     private List<OrderHistorySalesEsEntity> getOrderHistorySales(List<ReplenishmentResultDTO.SalesInfoAllDTO> salesInfoAllList) {
         List<OrderHistorySalesEsEntity> result = new ArrayList<>();
         for (ReplenishmentResultDTO.SalesInfoAllDTO dto : salesInfoAllList) {
-            result.add(OrderHistorySalesEsEntity.createOrderHistorySales(dto.getDate(), dto.getOriginalSalesQty(), dto.getSkuId(), dto.getShopId()));
+            result.add(OrderHistorySalesEsEntity.createOrderHistorySales(dto.getOrderType(), dto.getDate(), dto.getOriginalSalesQty(), dto.getSkuId(), dto.getShopId()));
         }
         return result;
     }
@@ -94,7 +94,7 @@ public abstract class AbstractCalculationStrategy implements PlatformCalculation
     private List<OutStockHistorySalesEsEntity> getOutStockHistorySales(List<ReplenishmentResultDTO.SalesInfoAllDTO> salesInfoAllList) {
         List<OutStockHistorySalesEsEntity> result = new ArrayList<>();
         for (ReplenishmentResultDTO.SalesInfoAllDTO dto : salesInfoAllList) {
-            result.add(OutStockHistorySalesEsEntity.createOutStockHistorySales(dto.getDate(), dto.getOriginalSalesQty(), dto.getSkuId(), dto.getShopId()));
+            result.add(OutStockHistorySalesEsEntity.createOutStockHistorySales(dto.getOrderType(), dto.getDate(), dto.getOriginalSalesQty(), dto.getSkuId(), dto.getShopId()));
         }
         return result;
     }

@@ -24,12 +24,12 @@ import com.erp.server.oms.service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.ibatis.annotations.Param;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -852,6 +852,38 @@ public class SoB2cFeignController extends BaseController {
     }
 
     /**
+     * 根据销售订单id获取订单 渠道+仓库+重量 基础信息
+     * @param ids
+     * @return
+     */
+    @PostMapping("/getB2cLogisticsByIds")
+    public List<SoB2cDTO.LogisticsDTO> getB2cLogisticsByIds(@RequestBody List<String> ids){
+        return soB2cService.getB2cLogisticsByIds(ids);
+    }
+    /**
+     * 更新物流预估费用
+     * @param b2cSoId
+     * @param totalShippingCost
+     */
+    @GetMapping("/updateLogisticsFee")
+    public void updateLogisticsFee(@RequestParam(value = "b2cSoId")String b2cSoId,
+                                   @RequestParam(value = "totalShippingCost") BigDecimal totalShippingCost,
+                                   @RequestParam(value = "currency") String currency){
+        soB2cLogisticsService.updateLogisticsFee(b2cSoId, totalShippingCost,currency);
+    }
+
+    /**
+     * 更新 超过订单金额比例标识
+     * @param b2cSoId
+     * @param isOverEstimatedShipCost
+     */
+    @GetMapping("/updateOverEstimatedShipCost")
+    public void updateOverEstimatedShipCost(@RequestParam(value = "b2cSoId") String b2cSoId,
+                                     @RequestParam(value = "isOverEstimatedShipCost") Boolean isOverEstimatedShipCost){
+        soB2cService.updateOverEstimatedShipCost(b2cSoId, isOverEstimatedShipCost);
+    }
+
+    /**
      * 同步速递云线上订单/配货单
      * @param soId
      * @param operateEnum
@@ -859,5 +891,15 @@ public class SoB2cFeignController extends BaseController {
     @GetMapping("/syncSdyOrderHandler")
     public void syncSdyOrderHandler(@RequestParam("soId") String soId, @RequestParam("operateEnum") String operateEnum) {
         soB2cService.syncSdyOrderHandler(soId, operateEnum);
+    }
+
+    /**
+     * 同步销售出库单的单据日期
+     * @param soId
+     * @param soOutstockDate
+     */
+    @GetMapping("/writeBackSoOutstockDate")
+    public void writeBackSoOutstockDate(@RequestParam("soId") String soId, @RequestParam("soOutstockDate") String soOutstockDate) {
+        soB2cService.writeBackSoOutstockDate(soId, soOutstockDate);
     }
 }
