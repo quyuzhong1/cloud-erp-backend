@@ -7,6 +7,9 @@ import com.common.business.enums.QueryConditionEnum;
 import com.common.business.enums.QueryDataTypeEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.query.AbstractQueryHandler;
+import com.common.business.threadlocal.AdvanceQueryContext;
+import com.common.business.utils.QueryUtils;
+import com.erp.model.dmp.dto.CfgOperateLogFieldDTO;
 import com.erp.model.plm.vo.ProductRefLabelVO;
 import com.erp.model.scm.enums.PageListTypeEnum;
 import com.erp.server.plm.service.CommonService;
@@ -28,17 +31,16 @@ public class ProductDetailQueryHandler extends AbstractQueryHandler {
 
     @Override
     protected String handleSqlLogic(String field, Object value, String compareCodeSplicingValueSql) {
+        QueryConditionEnum queryConditionEnum = AdvanceQueryContext.getCompareCode();
         if ("label".equals(field)) {
             if (null == value){
                 return this.getQueryAllSql();
             }
-            List<String> labelIds = JSONArray.parseArray(JSON.toJSONString(value))
-                    .stream().map(Object::toString)
-                    .distinct()
-                    .collect(Collectors.toList());
+            // 值
+            List<String> sourceValueIds = QueryUtils.parseValueToStrList(value, queryConditionEnum);
             List<String> labelProductIds = null;
-            if (!CollectionUtils.isEmpty(labelIds)) {
-                List<ProductRefLabelVO> productRefLabelVOS = productRefLabelService.getLabelListByIds(null, new HashSet<>(labelIds), null);
+            if (!CollectionUtils.isEmpty(sourceValueIds)) {
+                List<ProductRefLabelVO> productRefLabelVOS = productRefLabelService.getLabelListByIds(null, new HashSet<>(sourceValueIds), null);
                 if (!CollectionUtils.isEmpty(productRefLabelVOS)) {
                     labelProductIds = productRefLabelVOS.stream().map(ProductRefLabelVO::getProductId).collect(Collectors.toList());
                 } else {
@@ -46,10 +48,42 @@ public class ProductDetailQueryHandler extends AbstractQueryHandler {
                     labelProductIds.add("-1");
                 }
             }
-            if (!CollectionUtils.isEmpty(labelProductIds)){
-                super.buildSplicingSQLDTO("pi.id", QueryConditionEnum.IN_LIST, labelProductIds, QueryDataTypeEnum.STRING);
+            if (!org.apache.commons.collections4.CollectionUtils.isEmpty(labelProductIds)){
+                if (QueryConditionEnum.EQ.equals(queryConditionEnum) || QueryConditionEnum.IN_LIST.equals(queryConditionEnum)) {
+                    super.buildSplicingSQLDTO("pi.id", QueryConditionEnum.IN_LIST, labelProductIds, QueryDataTypeEnum.STRING);
+                } else {
+                    super.buildSplicingSQLDTO("pi.id", QueryConditionEnum.NOT_IN_LIST, labelProductIds, QueryDataTypeEnum.STRING);
+                }
             }
             return super.getSplicingSQL();
+        }
+
+        if ("ps.sale_state".equals(field)){
+            if (QueryConditionEnum.IS_NULL.equals(queryConditionEnum)){
+                return "ps.sale_state is null";
+            }
+            if (QueryConditionEnum.NOT_NULL.equals(queryConditionEnum)){
+                return "ps.sale_state is not null";
+            }
+            return " ps.sale_state " + compareCodeSplicingValueSql;
+        }
+        if ("pd.status".equals(field)){
+            if (QueryConditionEnum.IS_NULL.equals(queryConditionEnum)){
+                return "pd.status is null";
+            }
+            if (QueryConditionEnum.NOT_NULL.equals(queryConditionEnum)){
+                return "pd.status is not null";
+            }
+            return " pd.status " + compareCodeSplicingValueSql;
+        }
+        if ("pi.pirate_risk".equals(field)){
+            if (QueryConditionEnum.IS_NULL.equals(queryConditionEnum)){
+                return "pi.pirate_risk is null";
+            }
+            if (QueryConditionEnum.NOT_NULL.equals(queryConditionEnum)){
+                return "pi.pirate_risk is not null";
+            }
+            return " pi.pirate_risk " + compareCodeSplicingValueSql;
         }
         return null;
     }
