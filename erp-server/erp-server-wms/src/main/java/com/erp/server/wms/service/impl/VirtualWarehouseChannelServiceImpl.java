@@ -197,10 +197,6 @@ public class VirtualWarehouseChannelServiceImpl extends SuperServiceImpl<Virtual
      * @date 2024/7/18 14:49
      */
     private void addOperateLog(List<VirtualWarehouseChannelDTO.ChannelAddDTO> allChannelList, List<VirtualWarehouseChannelEntity> existChannelList, List<VirtualWarehouseChannelPartitionRefEntity> existRefList, String virtualWarehouseId) {
-
-        if(CollectionUtils.isEmpty(existChannelList)) {
-            return;
-        }
         Boolean isChange = Boolean.FALSE;
         List<String> oldChannelMsg = new ArrayList<>();
         List<String> newChannelMsg = new ArrayList<>();
@@ -217,18 +213,17 @@ public class VirtualWarehouseChannelServiceImpl extends SuperServiceImpl<Virtual
             for (VirtualWarehouseChannelDTO.DetailDTO detailDTO : detailDTOList){
                 List<String> shopIds = detailDTO.getShopIdList().stream().filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
                 List<String> partitionIds = detailDTO.getPartitonIdList().stream().filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
-                String shopName = CollectionUtils.isEmpty(shopIds) ? "全部" : shopList.stream().filter(obj -> shopIds.contains(obj.getId())).map(ShopInfoEntity::getName)
+                String shopName = CollUtil.isEmpty(shopIds) ? "全部" : shopList.stream().filter(obj -> shopIds.contains(obj.getId())).map(ShopInfoEntity::getName)
                         .distinct().sorted().collect(Collectors.joining(",")) ;
-                String partitionName = CollectionUtils.isEmpty(partitionIds) ? "全部" : partitionEntityList.stream().filter(obj -> partitionIds.contains(obj.getId())).map(DictPartitionEntity::getName)
+                String partitionName = CollUtil.isEmpty(partitionIds) ? "全部" : partitionEntityList.stream().filter(obj -> partitionIds.contains(obj.getId())).map(DictPartitionEntity::getName)
                         .distinct().sorted().collect(Collectors.joining(",")) ;
                 String msg;
                 //平台名称
                 String platformName = platformList.stream().filter(obj -> CharSequenceUtil.equals(obj.getValue(), channelAddDT.getDictPlatform())).map(DictBasicDTO.ViewDTO::getName).findFirst().orElse("");
-                String typeName = CollUtil.isEmpty(detailDTO.getShopIdList()) ? VitualWarehouseChannelTypeEnum.PLATFORM.getName() : VitualWarehouseChannelTypeEnum.SHOP.getName();
-                if (CharSequenceUtil.isBlank(shopName)) {
-                    msg = CharSequenceUtil.format("{},{},军区({})", platformName, "按"+ typeName, partitionName);
+                if (CollUtil.isEmpty(shopIds)) {
+                    msg = CharSequenceUtil.format("{},按平台,军区({})", platformName, partitionName);
                 } else {
-                    msg = CharSequenceUtil.format("{},{}({}),军区({})", platformName, "按"+ typeName, shopName, partitionName);
+                    msg = CharSequenceUtil.format("{},按店铺({}),军区({})", platformName, shopName, partitionName);
                 }
                 oldChannelMsg.add(msg);
             }
@@ -245,20 +240,20 @@ public class VirtualWarehouseChannelServiceImpl extends SuperServiceImpl<Virtual
             Map<String, List<VirtualWarehouseChannelEntity>> partitiomMd5Map = value.stream().collect(Collectors.groupingBy(VirtualWarehouseChannelEntity::getPartitionIdMd5));
             for (String partitionMd5 : partitiomMd5Map.keySet()){
                 List<VirtualWarehouseChannelEntity> virtualWarehouseChannelEntityList = partitiomMd5Map.get(partitionMd5);
-                List<String> relationIdList = virtualWarehouseChannelEntityList.stream().map(VirtualWarehouseChannelEntity::getRelationId).collect(Collectors.toList());
-                String shopName = CollectionUtils.isEmpty(relationIdList) ? "全部" : shopList.stream().filter(obj -> relationIdList.contains(obj.getId())).map(ShopInfoEntity::getName)
+                List<String> shopIds = virtualWarehouseChannelEntityList.stream().map(VirtualWarehouseChannelEntity::getRelationId).filter(CharSequenceUtil::isNotBlank).collect(Collectors.toList());
+                String shopName = CollUtil.isEmpty(shopIds) ? "全部" : shopList.stream().filter(obj -> shopIds.contains(obj.getId())).map(ShopInfoEntity::getName)
                         .distinct().sorted().collect(Collectors.joining(",")) ;
-                List<String> partitionIds = virtualWarehouseChannelEntityList.get(0).getPartitionIds();
-                String partitionName = CollectionUtils.isEmpty(partitionIds) ? "全部" : partitionEntityList.stream().filter(obj -> partitionIds.contains(obj.getId())).map(DictPartitionEntity::getName)
+                List<String> partitionIds = virtualWarehouseChannelEntityList.get(0).getPartitionIds().stream().filter(CharSequenceUtil::isNotBlank).collect(Collectors.toList());
+                String partitionName = CollUtil.isEmpty(partitionIds) ? "全部" : partitionEntityList.stream().filter(obj -> partitionIds.contains(obj.getId())).map(DictPartitionEntity::getName)
                         .distinct().sorted().collect(Collectors.joining(",")) ;
                 String msg ;
                 //平台名称
                 String platformName = platformList.stream().filter(obj -> CharSequenceUtil.equals(obj.getValue(), value.get(0).getDictPlatform())).map(DictBasicDTO.ViewDTO::getName).findFirst().orElse("");
 
-                if (CharSequenceUtil.isBlank(shopName)) {
-                    msg = CharSequenceUtil.format("{},{},军区({})", platformName, "按"+ VitualWarehouseChannelTypeEnum.getName(value.get(0).getType()),partitionName);
+                if (CollUtil.isEmpty(shopIds)) {
+                    msg = CharSequenceUtil.format("{},按平台,军区({})", platformName,partitionName);
                 } else {
-                    msg = CharSequenceUtil.format("{},{}({}),军区({})", platformName, "按"+ VitualWarehouseChannelTypeEnum.getName(value.get(0).getType()), shopName,partitionName);
+                    msg = CharSequenceUtil.format("{},按店铺({}),军区({})",shopName,partitionName);
                 }
                 newChannelMsg.add(msg);
                 if (!oldChannelMsg.contains(msg)) {
@@ -269,7 +264,8 @@ public class VirtualWarehouseChannelServiceImpl extends SuperServiceImpl<Virtual
         //size不一致或者有变更
         if (oldChannelMsg.size() != newChannelMsg.size() || isChange) {
             // 操作日志
-            String msg = CharSequenceUtil.format("关联渠道：从<br>【{}】<br>修改为<br>【{}】",StrUtil.join(";<br>",newChannelMsg.stream().sorted().collect(Collectors.toList())),StrUtil.join(";<br>",oldChannelMsg.stream().sorted().collect(Collectors.toList())));
+            String msg = CharSequenceUtil.format("关联渠道：从<br>【{}】<br>修改为<br>【{}】",StrUtil.join(";<br>",CollUtil.isEmpty(newChannelMsg) ? "无配置" : newChannelMsg.stream().sorted().collect(Collectors.toList())),
+                    StrUtil.join(";<br>",CollUtil.isEmpty(oldChannelMsg) ? "无配置" : oldChannelMsg.stream().sorted().collect(Collectors.toList())));
             operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.VIRTUAL_WAREHOUSE.getCode(), virtualWarehouseId, "编辑信息");
         }
     }
@@ -467,6 +463,9 @@ public class VirtualWarehouseChannelServiceImpl extends SuperServiceImpl<Virtual
         List<VirtualWarehouseChannelDTO.ChannelAddDTO> overseasChannelList = new ArrayList<>();
         //其他 渠道列表
         List<VirtualWarehouseChannelDTO.ChannelAddDTO> otherChannelList = new ArrayList<>();
+        //店铺信息
+        List<ShopInfoEntity> shopInfoEntityList = FeignQuery.list(ShopInfoEntity.class);
+        List<DictPartitionEntity> dictPartitionEntityList = FeignQuery.list(DictPartitionEntity.class);
         for (String dictPlatform : dictPlatformMap.keySet()){
             DictBasicDTO.ViewDTO dictDTO = platformList.stream().filter(e -> Objects.equals(e.getValue(), dictPlatform)).findFirst().orElse(null);
             if (Objects.isNull(dictDTO)){
@@ -474,7 +473,7 @@ public class VirtualWarehouseChannelServiceImpl extends SuperServiceImpl<Virtual
             }
             List<VirtualWarehouseChannelEntity> virtualWarehouseChannelEntities = dictPlatformMap.get(dictPlatform);
             //构建明细
-            List<VirtualWarehouseChannelDTO.DetailDTO> detailDTOList = buildChannelDetail(virtualWarehouseChannelEntities,refEntityList);
+            List<VirtualWarehouseChannelDTO.DetailDTO> detailDTOList = buildChannelDetail(virtualWarehouseChannelEntities,refEntityList,shopInfoEntityList,dictPartitionEntityList);
             if (DictBasicTypeEnum.SALES_PLATFORM_INTERNAL.getType().equals(dictDTO.getSubType())){
                 internalChannelList.add(VirtualWarehouseChannelDTO.ChannelAddDTO.builder().dictPlatform(dictPlatform).detailDTOList(detailDTOList).build());
             }else if (DictBasicTypeEnum.SALES_PLATFORM_OVERSEAS.getType().equals(dictDTO.getSubType())){
@@ -490,7 +489,7 @@ public class VirtualWarehouseChannelServiceImpl extends SuperServiceImpl<Virtual
         return viewDTO;
     }
 
-    private List<VirtualWarehouseChannelDTO.DetailDTO> buildChannelDetail(List<VirtualWarehouseChannelEntity> virtualWarehouseChannelEntities, List<VirtualWarehouseChannelPartitionRefEntity> refEntityList) {
+    private List<VirtualWarehouseChannelDTO.DetailDTO> buildChannelDetail(List<VirtualWarehouseChannelEntity> virtualWarehouseChannelEntities, List<VirtualWarehouseChannelPartitionRefEntity> refEntityList, List<ShopInfoEntity> shopInfoEntityList, List<DictPartitionEntity> dictPartitionEntityList) {
         if (CollUtil.isEmpty(virtualWarehouseChannelEntities)){
             return Collections.emptyList();
         }
@@ -499,8 +498,15 @@ public class VirtualWarehouseChannelServiceImpl extends SuperServiceImpl<Virtual
         List<VirtualWarehouseChannelDTO.DetailDTO> detailDTOList = new ArrayList<>();
         for (String partitionMd5 : partitiomMd5Map.keySet()){
             List<VirtualWarehouseChannelEntity> channelEntityList = partitiomMd5Map.get(partitionMd5);
+            //店铺
             List<String> shopIds = channelEntityList.stream().map(VirtualWarehouseChannelEntity::getRelationId).distinct().sorted().collect(Collectors.toList());
-            detailDTOList.add(VirtualWarehouseChannelDTO.DetailDTO.builder().shopIdList(shopIds).partitonIdList(CollUtil.isEmpty(channelEntityList) ? Collections.emptyList() : channelEntityList.get(0).getPartitionIds()).build());
+            List<String> shopNameList = shopInfoEntityList.stream().filter(e -> shopIds.contains(e.getId())).map(ShopInfoEntity::getName).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+            //分区
+            List<String> partitionIds = CollUtil.isEmpty(channelEntityList) ? Collections.emptyList() : channelEntityList.get(0).getPartitionIds();
+            List<String> partitionNameList = dictPartitionEntityList.stream().filter(e -> shopIds.contains(e.getId())).map(DictPartitionEntity::getName).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+
+            detailDTOList.add(VirtualWarehouseChannelDTO.DetailDTO.builder().shopIdList(shopIds).shopNameList(CollUtil.isEmpty(shopNameList) ? Collections.singletonList("全部") : shopNameList)
+                    .partitonIdList(partitionIds).partitonNameList(CollUtil.isEmpty(partitionNameList) ? Collections.singletonList("全部") : partitionNameList).build());
         }
         return detailDTOList;
     }
