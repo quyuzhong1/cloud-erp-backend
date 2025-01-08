@@ -999,6 +999,7 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
      * @date 2023-05-23 10:26
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void updateDeliveryStatus(List<SoDetailDTO.UpdateDeliveryStatusDTO> paramList) {
         if (CollectionUtils.isEmpty(paramList)) {
             return;
