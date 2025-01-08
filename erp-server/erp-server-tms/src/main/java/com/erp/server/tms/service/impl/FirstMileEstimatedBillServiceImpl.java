@@ -1,6 +1,7 @@
 package com.erp.server.tms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
@@ -23,6 +24,10 @@ import com.common.core.utils.date.DateUtil;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.sys.entity.DictCurrencyEntity;
 import com.erp.model.tms.dto.FirstMileEstimatedBillDTO;
+import com.erp.model.tms.dto.TmsCostDetailDTO;
+import com.erp.model.tms.dto.FirstMileEstimatedBillDTO.LogisticsInfoDTO;
+import com.erp.model.tms.dto.TmsCostDetailDTO.CostViewDTO;
+import com.erp.model.tms.dto.TmsCostDetailDTO.UpdateDTO;
 import com.erp.model.tms.dto.TmsFirstMileLogisticDTO;
 import com.erp.model.tms.dto.excel.FirstMileEstimatedBillExcelDTO;
 import com.erp.model.tms.entity.*;
@@ -366,34 +371,94 @@ public class FirstMileEstimatedBillServiceImpl extends SuperServiceImpl<FirstMil
             if(! costAllocationList.isEmpty() && costAllocationList.get(0).getStatus().equals("confirm")){
                 dto.setErrorMsg("费用分摊核算【已确认】不允许导入");
                 errorList.add(dto);
-                continue;
             }
-            TmsCfgCostEntity tmsCfgCostEntity = tmsCfgCostOptional.get();
-            String costId = infoDTO.getCostId();
-
-            TmsCostDetailEntity detailEntity = new TmsCostDetailEntity();
-            detailEntity.setCfgCostId(tmsCfgCostEntity.getId());
-            detailEntity.setMainId(costId);
-            detailEntity.setSourceType(SourceTypeEnum.FIRST_MILE_ESTIMATED.getCode());
-            detailEntity.setType("estimated");
-            detailEntity.setCurrency(dto.getCurrency());
-            if (CurrencyEnum.CNY.getCurrencyCode().equals(dto.getCurrency())){
-                detailEntity.setExchangeRate(BigDecimal.ONE);
-            }else {
-                BigDecimal exchangeRate = dmpTaskFeign.getRate(LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), dto.getCurrency());
-                if(Objects.isNull(exchangeRate)){
-                    log.error("币别【{}】,汇率为空，请维护汇率后再提交",dto.getCurrency());
-                    throw new ServiceException("汇率为空，请维护汇率后再提交");
-                }
-                detailEntity.setExchangeRate(exchangeRate);
-            }
-            detailEntity.setCostValue(dto.getCostValue());
-            detailEntity.setSourceType(SourceTypeEnum.FIRST_MILE_LOGISTICS_BILL_COST.getCode());
-            LambdaQueryWrapper<TmsCostDetailEntity> lambdaQueryWrapper = new LambdaQueryWrapper<TmsCostDetailEntity>()
-                    .eq(TmsCostDetailEntity::getCfgCostId, detailEntity.getCfgCostId())
-                    .eq(TmsCostDetailEntity::getMainId, detailEntity.getMainId());
-            tmsCostDetailService.saveOrUpdate(detailEntity, lambdaQueryWrapper);
         }
+        
+        List<FirstMileEstimatedBillExcelDTO> lastSuccessList = successList.stream().filter(s -> StringUtils.isBlank(s.getErrorMsg())).collect(Collectors.toList());
+        
+        Map<String, List<FirstMileEstimatedBillExcelDTO>> transportNoMaps = lastSuccessList.stream().collect(Collectors.groupingBy(FirstMileEstimatedBillExcelDTO::getTransportNo));
+        Map<String, String> transportNoInfoMap = logisticsInfoList.stream().filter(l -> transportNoMaps.keySet().contains(l.getTransportNo()))
+    			.collect(Collectors.toMap(FirstMileEstimatedBillDTO.LogisticsInfoDTO::getTransportNo, FirstMileEstimatedBillDTO.LogisticsInfoDTO::getCostId , (v1 , v2) -> v1));
+        Map<String, TmsCfgCostEntity> costNameIdMap = tmsCfgCostList.stream().collect(Collectors.toMap(TmsCfgCostEntity::getCostName, t -> t , (v1 , v2) -> v1));
+        if(CollUtil.isNotEmpty(lastSuccessList)) {
+        	Map<String, List<String>> errorTransportNoDictMap = new HashMap<>();
+        	Map<String, List<CostViewDTO>> mainCostMaps = tmsCostDetailService.listCostByMainIdList(new ArrayList<>(transportNoInfoMap.values())).stream()
+        			.collect(Collectors.groupingBy(CostViewDTO::getMainId));
+        	for(Map.Entry<String, List<FirstMileEstimatedBillExcelDTO>> transportNoMap : transportNoMaps.entrySet()) {
+        		String key = transportNoMap.getKey();
+        		String mainId = transportNoInfoMap.get(key);
+        		Map<String, String> dictCurrency = new HashMap<>();
+        		List<FirstMileEstimatedBillExcelDTO> value = transportNoMap.getValue();
+        		List<String> errorDictList = errorTransportNoDictMap.get(key);
+        		if(errorDictList == null) {
+        			errorDictList = new ArrayList<>();
+        		}
+        		for(FirstMileEstimatedBillExcelDTO v : value) {
+        			TmsCfgCostEntity tmsCfgCostEntity = costNameIdMap.get(v.getCostName());
+        			String dictCostCategory = tmsCfgCostEntity.getDictCostCategory();
+        			if(errorDictList.contains(dictCostCategory)) {
+        				continue;
+        			}
+        			String currency = dictCurrency.get(dictCostCategory);
+        			if(StringUtils.isBlank(currency)) {
+        				dictCurrency.put(dictCostCategory, v.getCurrency());
+        			}else {
+        				if(!currency.equals(v.getCurrency())) {
+        					errorDictList.add(dictCostCategory);
+        				}
+        			}
+        		}
+    			List<CostViewDTO> list = mainCostMaps.get(mainId);
+        		if(CollUtil.isNotEmpty(list)) {
+        			Map<String, String> dictCurrencyMaps = list.stream().filter(l -> dictCurrency.containsKey(l.getCurrency()))
+        					.collect(Collectors.toMap(CostViewDTO::getDictCostCategory , CostViewDTO::getCurrency , (c1 , c2) -> c1));
+        			for(Map.Entry<String, String> dictCostListMap : dictCurrencyMaps.entrySet()) {
+        				String dictCostCategory = dictCostListMap.getKey();
+        				if(errorDictList.contains(dictCostCategory)) {
+        					continue;
+        				}
+        				String currency = dictCurrency.get(dictCostCategory);
+            			if(!currency.equals(dictCostListMap.getValue())) {
+        					errorDictList.add(dictCostCategory);
+            			}
+        			}
+        		}
+        		errorTransportNoDictMap.put(key, errorDictList);
+        	}
+        	
+        	Map<String, List<TmsCostDetailDTO.UpdateDTO>> updateMaps = new HashMap<>();
+        	for (FirstMileEstimatedBillExcelDTO dto : lastSuccessList) {
+        		String transportNo = dto.getTransportNo();
+        		List<String> errorDictList = errorTransportNoDictMap.get(transportNo);
+        		TmsCfgCostEntity tmsCfgCostEntity = costNameIdMap.get(dto.getCostName());
+        		String dictCostCategory = tmsCfgCostEntity.getDictCostCategory();
+				if(CollUtil.isNotEmpty(errorDictList) && errorDictList.contains(dictCostCategory)) {
+					dto.setErrorMsg("物流单【" + transportNo + "】"+ DictCostCategoryEnum.getName(dictCostCategory) +"费用分类下的币别不一致");
+	                errorList.add(dto);
+	                continue;
+        		}
+        		
+        		String mainId = transportNoInfoMap.get(transportNo);
+        		List<UpdateDTO> list = updateMaps.get(mainId);
+        		if(CollUtil.isEmpty(list)) {
+        			list = new ArrayList<>();
+        		}
+        		TmsCostDetailDTO.UpdateDTO updateDTO = new TmsCostDetailDTO.UpdateDTO();
+                updateDTO.setCostValue(dto.getCostValue());
+                updateDTO.setType(LogisticsBillCostTypeEnum.ESTIMATED.getCode());
+                updateDTO.setCfgCostId(tmsCfgCostEntity.getId());
+                updateDTO.setSourceType(SourceTypeEnum.FIRST_MILE_ESTIMATED.getCode());
+                updateDTO.setCurrency(dto.getCurrency());
+				updateDTO.setDictCostCategory(dictCostCategory);
+                list.add(updateDTO);
+                updateMaps.put(mainId, list);
+        	}
+        	for(Map.Entry<String, List<TmsCostDetailDTO.UpdateDTO>> updateMap : updateMaps.entrySet()) {
+        		tmsCostDetailService.batchUpdate(updateMap.getValue(), updateMap.getKey(), DictCostAttributionEnum.FIRST_MILE, false);
+        	}
+        }
+        
+        
         if(! errorList.isEmpty()){
             try {
                 String fileName = "头程暂估账单-导入错误" + DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
