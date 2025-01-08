@@ -215,20 +215,19 @@ public class SoReturnNoticeDetailServiceImpl extends SuperServiceImpl<SoReturnNo
         //查询sku
         List<String> skuIds = dto.getDetailList().stream().map(SoReturnNoticeDetailDTO.Update::getSkuId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
         List<ProductDetailEntity> productDetailEntitys = plmTaskFeign.getByIdList(skuIds);
-
         for (SoReturnNoticeDetailDTO.Update detailDto : dto.getDetailList()) {
             SoReturnNoticeDetailEntity detailEntity = new SoReturnNoticeDetailEntity();
-            //退货通知单数量
-            Integer returnNoticeQty = 0 ;
+
             if (CharSequenceUtil.isNotBlank(detailDto.getId())) {
                 detailEntity.setId(detailDto.getId());
-                returnNoticeQty = noticeDetailEntities.stream().filter(req -> req.getSourceDetailId().equals(detailDto.getSourceDetailId())).map(SoReturnNoticeDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
             }
             if("B2C".equals(entity.getType())){
                 SoB2cReturnDetailEntity soReturnDetailEntity = soB2cReturnDetailEntityList.stream().filter(req -> req.getId().equals(detailDto.getSourceDetailId())).findFirst().orElse(null);
                 if (ObjectUtil.isEmpty(soReturnDetailEntity)) {
                     throw new ServiceException(ApiError.ERROR_92023);
                 }
+                //退货通知单数量
+                Integer returnNoticeQty = noticeDetailEntities.stream().filter(req -> !req.getId().equals(detailDto.getId()) && req.getSourceDetailId().equals(detailDto.getSourceDetailId())).map(SoReturnNoticeDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
                 //退货单数量
                 Integer returnQty = soB2cReturnDetailEntityList.stream().filter(req -> req.getId().equals(detailDto.getSourceDetailId())).map(SoB2cReturnDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
                 if (returnQty <  detailDto.getReturnQty() + returnNoticeQty) {
@@ -243,6 +242,8 @@ public class SoReturnNoticeDetailServiceImpl extends SuperServiceImpl<SoReturnNo
                     if (ObjectUtil.isEmpty(soReturnDetailEntity)) {
                         throw new ServiceException(ApiError.ERROR_92023);
                     }
+                    //退货通知单数量
+                    Integer returnNoticeQty = noticeDetailEntities.stream().filter(req -> !req.getId().equals(detailDto.getId()) && req.getSourceDetailId().equals(detailDto.getSourceDetailId())).map(SoReturnNoticeDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
                     //退货单数量
                     Integer returnQty = soReturnDetailEntities.stream().filter(req -> req.getId().equals(detailDto.getSourceDetailId())).map(SoReturnDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
                     if (returnQty <  detailDto.getReturnQty() + returnNoticeQty) {
