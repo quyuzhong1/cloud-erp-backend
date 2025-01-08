@@ -288,7 +288,7 @@ public class DmpOutputSdyOrderHandler extends DmpOutputTaskHandler {
                                 List<DictBasicEntity> dictList = FeignQuery.create(DictBasicEntity.class).eq(DictBasicEntity::getType, "sdySubPlatform").eq(DictBasicEntity::getName, subPlatformType).list();
                                 if(CollUtil.isNotEmpty(dictList)) {
                                     shudiyunB2cOrderDTO.setSubplatform_no(dictList.get(0).getValue());
-                                    shudiyunB2cOrderDTO.setSubplatform_name(dictList.get(0).getName());
+                                    shudiyunB2cOrderDTO.setSubplatform_name(dictList.get(0).getValue());
                                 }
                             }
 
@@ -433,7 +433,11 @@ public class DmpOutputSdyOrderHandler extends DmpOutputTaskHandler {
                     shudiyunB2cOrderDTO.setPrice(dmpSoDetailEntity.getAfterAmount().subtract((totalDiscount.subtract(shareTotalDiscount))).divide(MathUtil.valueOf(dmpSoDetailEntity.getQty()), 4, RoundingMode.DOWN));
                     shudiyunB2cOrderDTO.setGoods_transaction_amount(dmpSoDetailEntity.getAfterAmount().subtract((totalDiscount.subtract(shareTotalDiscount))));
                 } else {
-                    shudiyunB2cOrderDTO.setPrice(dmpSoDetailEntity.getAfterAmount().subtract(shareDiscount).divide(MathUtil.valueOf(dmpSoDetailEntity.getQty()), 4, RoundingMode.DOWN));
+                    if (dmpSoDetailEntity.getQty() == 0) {
+                        shudiyunB2cOrderDTO.setPrice(BigDecimal.ZERO);
+                    } else {
+                        shudiyunB2cOrderDTO.setPrice(dmpSoDetailEntity.getAfterAmount().subtract(shareDiscount).divide(MathUtil.valueOf(dmpSoDetailEntity.getQty()), 4, RoundingMode.DOWN));
+                    }
                     shudiyunB2cOrderDTO.setGoods_transaction_amount(dmpSoDetailEntity.getAfterAmount().subtract(shareDiscount));
                 }
                 shareTotalDiscount = shareTotalDiscount.add(shareDiscount);
