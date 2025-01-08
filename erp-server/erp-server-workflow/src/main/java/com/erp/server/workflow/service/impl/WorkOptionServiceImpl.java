@@ -8,6 +8,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.ApproveOneDTO;
 import com.common.business.dto.base.BaseApproveParamDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.ApproveTypeEnum;
@@ -16,6 +17,7 @@ import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
+import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
@@ -575,34 +577,38 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
         ApproveOneDTO approveOneDTO = new ApproveOneDTO();
         approveOneDTO.setType(dto.getType());
         approveOneDTO.setId(dto.getId());
-
+        List<BatchResultDTO> resultDTOList = new ArrayList<>();
         switch (SourceTypeEnum.getByCode(entity.getBusinessKey())) {
             case PURCHASE_PRICE_CHANGE:
-                scmTaskFeign.purchasePriceChangeApprove(baseApproveParamDTO);
+                resultDTOList = scmTaskFeign.purchasePriceChangeApprove(baseApproveParamDTO);
                 break;
             case SALES_DEMAND:
-                scmTaskFeign.salesDemandApprove(baseApproveParamDTO);
+                resultDTOList = scmTaskFeign.salesDemandApprove(baseApproveParamDTO);
                 break;
             case PURCHASE_APPLICATION:
-                scmTaskFeign.purchaseApplicationApprove(baseApproveParamDTO);
+                resultDTOList = scmTaskFeign.purchaseApplicationApprove(baseApproveParamDTO);
                 break;
             case PURCHASE_ORDER:
                 scmTaskFeign.purchaseOrderApprove(approveOneDTO);
                 break;
             case PURCHASE_CHANGE:
-                scmTaskFeign.purchaseChangeApprove(baseApproveParamDTO);
+                resultDTOList = scmTaskFeign.purchaseChangeApprove(baseApproveParamDTO);
                 break;
             case PURCHASE_PRICE:
-                scmTaskFeign.purchasePriceApprove(baseApproveParamDTO);
+                resultDTOList = scmTaskFeign.purchasePriceApprove(baseApproveParamDTO);
                 break;
             case SUPPLIER:
-                supplierFeign.supplierApprove(baseApproveParamDTO);
+                resultDTOList = supplierFeign.supplierApprove(baseApproveParamDTO);
                 break;
             case SUBCONTRACT_ORDER:
                 scmTaskFeign.subcontractOrderApprove(approveOneDTO);
                 break;
             default:
                 throw new ServiceException(ApiError.ERROR_94006);
+        }
+        BatchResultDTO resultDTO = resultDTOList.stream().filter(req -> !req.getSuccess()).findFirst().orElse(null);
+        if (resultDTO != null) {
+            throw new ServiceException(resultDTO.getMsg());
         }
         return Boolean.TRUE;
     }
@@ -612,20 +618,21 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
         baseApproveParamDTO.setIds(Arrays.asList(dto.getId()));
         baseApproveParamDTO.setType(dto.getType());
         baseApproveParamDTO.setComment(dto.getComment());
+        List<BatchResultDTO> resultDTOList = new ArrayList<>();
         switch (SourceTypeEnum.getByCode(entity.getBusinessKey())) {
             case QC_INFO:
                 break;
             case PO_RECEIVE:
-                wmsTaskFeign.warehouseReceiveApprove(baseApproveParamDTO);
+                resultDTOList = wmsTaskFeign.warehouseReceiveApprove(baseApproveParamDTO);
                 break;
             case PO_INSTOCK:
-                wmsTaskFeign.poInstockApprove(baseApproveParamDTO);
+                resultDTOList = wmsTaskFeign.poInstockApprove(baseApproveParamDTO);
                 break;
             case PO_RETURN:
-                wmsTaskFeign.purchaseReturnOrderApprove(baseApproveParamDTO);
+                resultDTOList = wmsTaskFeign.purchaseReturnOrderApprove(baseApproveParamDTO);
                 break;
             case TRANSFER_APPLICATION:
-                wmsTaskFeign.transferApplicationApprove(baseApproveParamDTO);
+                resultDTOList = wmsTaskFeign.transferApplicationApprove(baseApproveParamDTO);
                 break;
             case STOCKTAKING_TASK:
                 wmsTaskFeign.stocktakingTaskApprove(baseApproveParamDTO);
@@ -637,16 +644,20 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
                 wmsTaskFeign.deliveryPlanApprove(baseApproveParamDTO);
                 break;
             case TRANSFER_INFO:
-                wmsTaskFeign.transferInfoApprove(baseApproveParamDTO);
+                resultDTOList = wmsTaskFeign.transferInfoApprove(baseApproveParamDTO);
                 break;
             case SO_DELIVERY_NOTICE_CHANGE:
-                wmsTaskFeign.noticeChangeApprove(baseApproveParamDTO);
+                resultDTOList = wmsTaskFeign.noticeChangeApprove(baseApproveParamDTO);
                 break;
             case REQUISITION_APPLICATION_CHANGE:
-                wmsTaskFeign.requisitionChangeApprove(baseApproveParamDTO);
+                resultDTOList = wmsTaskFeign.requisitionChangeApprove(baseApproveParamDTO);
                 break;
             default:
                 throw new ServiceException(ApiError.ERROR_94006);
+        }
+        BatchResultDTO resultDTO = resultDTOList.stream().filter(req -> !req.getSuccess()).findFirst().orElse(null);
+        if (resultDTO != null) {
+            throw new ServiceException(resultDTO.getMsg());
         }
         return Boolean.TRUE;
     }
@@ -656,18 +667,25 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
         baseApproveParamDTO.setIds(Arrays.asList(dto.getId()));
         baseApproveParamDTO.setType(dto.getType());
         baseApproveParamDTO.setComment(dto.getComment());
+        List<BatchResultDTO> resultDTOList = new ArrayList<>();
         switch (SourceTypeEnum.getByCode(entity.getBusinessKey())) {
             case SO_INFO:
-                soInfoFeign.approve(baseApproveParamDTO);
+                resultDTOList = soInfoFeign.approve(baseApproveParamDTO);
                 break;
             case SO_CHANGE:
-                soChangeFeign.approve(baseApproveParamDTO);
+                ApiResult<List<BatchResultDTO>> approve = soChangeFeign.approve(baseApproveParamDTO);
+                resultDTOList = approve.getData();
                 break;
             case CUSTOMER_INFO:
-                customerFeign.approve(baseApproveParamDTO);
+                ApiResult<List<BatchResultDTO>> apiResult = customerFeign.approve(baseApproveParamDTO);
+                resultDTOList = apiResult.getData();
                 break;
             default:
                 throw new ServiceException(ApiError.ERROR_94006);
+        }
+        BatchResultDTO resultDTO = resultDTOList.stream().filter(req -> !req.getSuccess()).findFirst().orElse(null);
+        if (resultDTO != null) {
+            throw new ServiceException(resultDTO.getMsg());
         }
         return Boolean.TRUE;
     }
