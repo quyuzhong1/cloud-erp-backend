@@ -11,6 +11,9 @@ import java.util.stream.Collectors;
 
 import javax.annotation.Resource;
 
+import com.common.core.anno.ParamData;
+import com.common.core.enums.PannoEnum;
+import com.erp.server.dmp.inout.handler.input.task.mongo.DmpInputMongoHandler;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -228,5 +231,13 @@ public class DmpSoReturnInfoServiceImpl extends SuperServiceImpl<DmpSoReturnInfo
     	if(CollUtil.isNotEmpty(dmpSoReturnDetailEntityList)) {
     		dmpSoReturnDetailService.saveBatch(dmpSoReturnDetailEntityList);
     	}
+	}
+
+
+	@Override
+	public void sdyReturnOrderUpdate() {
+		/*paramDataList.add(new ParamData("order_id", "order_id", PannoEnum.IN, orderIdList));
+		paramDataList.add(new ParamData(DmpInputMongoHandler.MONGO_BASE_NEXTLEVELID, DmpInputMongoHandler.MONGO_BASE_NEXTLEVELID, PannoEnum.EQ, nextLevelId));
+		findMongoData = mongoService.findMongoData(paramDataList, "aliexpress_orderDetail_data");*/
 	}
 }

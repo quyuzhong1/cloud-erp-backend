@@ -36,4 +36,7 @@ public interface DmpSoReturnInfoService extends SuperService<DmpSoReturnInfoEnti
     Boolean update(DmpSoReturnInfoDTO.UpdateDTO dto);
 
     void addGyyReturnOrder (List<GyyReturnOrderEntity> mongoData);
+
+
+    void sdyReturnOrderUpdate();
 }
