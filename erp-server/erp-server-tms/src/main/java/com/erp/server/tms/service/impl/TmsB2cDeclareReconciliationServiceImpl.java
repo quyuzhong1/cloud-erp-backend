@@ -579,6 +579,9 @@ public class TmsB2cDeclareReconciliationServiceImpl extends SuperServiceImpl<Tms
         List<String> currencyIdList = list.stream().map(TmsB2cDeclareReconciliationDTO.ListDTO::getCurrency).collect(Collectors.toList());
         List<CurrencyDTO.ViewDTO> currencyList = sysUserFeign.listByCurrency(currencyIdList);
 
+        Map<String, List<TmsB2cDeclareReconciliationDetailEntity>> mainIdListMaps = tmsB2cDeclareReconciliationDetailService.lambdaQuery()
+        	.in(TmsB2cDeclareReconciliationDetailEntity::getMainId, list.stream().map(TmsB2cDeclareReconciliationDTO.ListDTO::getId).collect(Collectors.toList()))
+        	.list().stream().collect(Collectors.groupingBy(TmsB2cDeclareReconciliationDetailEntity::getMainId));
         // 属性赋值
         for(TmsB2cDeclareReconciliationDTO.ListDTO data : list) {
             //审核状态名称

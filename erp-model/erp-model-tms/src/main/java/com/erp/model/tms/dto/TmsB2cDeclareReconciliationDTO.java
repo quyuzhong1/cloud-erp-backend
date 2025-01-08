@@ -174,6 +174,11 @@ public class TmsB2cDeclareReconciliationDTO implements Serializable {
         * 费用合计
         */
         private BigDecimal totalCost;
+        
+        /**
+         * 费用合计币别符号
+         */
+        private String totalCostCurrencySymbol = "¥";
 
         /**
         * 审核不通过原因【可排序】
@@ -184,16 +189,31 @@ public class TmsB2cDeclareReconciliationDTO implements Serializable {
          * 实际物流费用【可排序】
          */
         private BigDecimal actualShippingCost;
+        
+        /**
+         * 实际物流费用币别符号
+         */
+        private String actualShippingCostCurrencySymbol = "¥";
 
         /**
          * 实际报关费【可排序】
          */
         private BigDecimal actualDeclareCost;
+        
+        /**
+         * 实际报关费币别符号
+         */
+        private String actualDeclareCostCurrencySymbol = "¥";
 
         /**
          * 实际其他费【可排序】
          */
         private BigDecimal actualOtherCost;
+        
+        /**
+         * 实际其他费币别符号
+         */
+        private String actualOtherCostCurrencySymbol = "¥";
 
         /**
          * 实际计费重【可排序】

@@ -589,6 +589,7 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
                 pagingVO.setVolumeWeight(reconciliationDTO.getVolumeWeight());
                 pagingVO.setWeightUnit(reconciliationDTO.getWeightUnit());
                 pagingVO.setCurrency(reconciliationDTO.getCurrency());
+                pagingVO.setCurrencySymbol(CurrencyEnum.getSymbolByCode(pagingVO.getCurrency()));
             }
             //处理枚举值
             pagingVO.setLogisticsStatusName(EnumMessage.getNameByCode(FmLogisticTrackStatusEnum.class,pagingVO.getLogisticsStatus()));
@@ -613,7 +614,6 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
             if(Objects.nonNull(deliveryDto)){
                 pagingVO.setFromWarehouseName(deliveryDto.getFromWarehouseName());
                 pagingVO.setToWarehouseName(deliveryDto.getToWarehouseName());
-                pagingVO.setCurrencySymbol(CurrencyEnum.getSymbolByCode(pagingVO.getCurrency()));
                 pagingVO.setToAddress(deliveryDto.getToAddress());
                 pagingVO.setBoxCount(CollectionUtils.isNotEmpty(deliveryDto.getPackingDTOList())?deliveryDto.getPackingDTOList().size():0);
             }
