@@ -1,5 +1,7 @@
 package com.common.business.utils;
 
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONArray;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.enums.QueryConditionEnum;
 import com.common.business.enums.QueryDataTypeEnum;
@@ -17,7 +19,9 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * @author liuruipeng
@@ -207,5 +211,24 @@ public class QueryUtils {
         warehouseNameListVal = new StringBuilder(warehouseNameListVal.substring(0, warehouseNameListVal.length() - 1));
         warehouseNameListVal.append(")");
         return warehouseNameListVal.toString();
+    }
+
+
+    public static List<String> parseValueToStrList(Object value, QueryConditionEnum queryConditionEnum) {
+        if (QueryConditionEnum.EQ.equals(queryConditionEnum) || QueryConditionEnum.NE.equals(queryConditionEnum)){
+            if(null != value){
+                return Collections.singletonList(value.toString());
+            }
+        }
+        if (QueryConditionEnum.IN_LIST.equals(queryConditionEnum) || QueryConditionEnum.NOT_IN_LIST.equals(queryConditionEnum)){
+            if(null != value) {
+                return JSONArray.parseArray(JSON.toJSONString(value))
+                        .stream()
+                        .map(Object::toString)
+                        .distinct()
+                        .collect(Collectors.toList());
+            }
+        }
+        return Collections.emptyList();
     }
 }
