@@ -31,7 +31,7 @@ import java.util.Map;
  * @Classname 系统管理 服务
 
  */
-@FeignClient(name = "erp-sys",configuration = {FeignErrorDecoder.class})
+@FeignClient(name = "erp-sys" , contextId = "sysPartition" ,configuration = {FeignErrorDecoder.class})
 public interface SysPartitionFeign {
 
     /**
