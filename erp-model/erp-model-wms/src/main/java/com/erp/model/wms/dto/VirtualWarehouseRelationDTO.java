@@ -127,6 +127,10 @@ public class VirtualWarehouseRelationDTO implements Serializable {
          * 虚拟仓id
          */
         private String virtualWarehouseId;
+        /**
+         * 关联id(店铺)
+         */
+        private String shopId;
     }
 
     @Data
