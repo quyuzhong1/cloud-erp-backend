@@ -45,6 +45,43 @@ public class PurchaseSuggestMergeDTO implements Serializable {
          */
         private Map<String,String> sqlMap;
 
+        /**
+         * 是否时合并采购
+         */
+        private Boolean isMerge;
+
+    }
+    /**
+     * 列表Tab参数
+     */
+    @Data
+    @NoArgsConstructor
+    public static class TabListParamDTO {
+
+        /**
+         * 是否时合并采购
+         */
+        private Boolean isMerge;
+    }
+
+    /**
+     * tab
+     */
+    @Data
+    @NoArgsConstructor
+    public static class TabListDTO {
+
+        private String tabFlag;
+        /**
+         * 类型名称
+         */
+        private String tabFlagName;
+
+        /**
+         * 数量
+         */
+        private Integer count;
+
     }
 
     /**

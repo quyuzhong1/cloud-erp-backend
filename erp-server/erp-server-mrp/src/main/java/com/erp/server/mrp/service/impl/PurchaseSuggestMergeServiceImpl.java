@@ -9,6 +9,7 @@ import cn.hutool.json.JSONUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.base.BaseResultDTO;
@@ -36,10 +37,7 @@ import com.erp.model.mrp.dto.*;
 import com.erp.model.mrp.dto.excel.PurchaseSuggestMergeImportExcelDTO;
 import com.erp.model.mrp.entity.PurchaseSuggestEntity;
 import com.erp.model.mrp.entity.PurchaseSuggestMergeEntity;
-import com.erp.model.mrp.enums.CfgRulePlatformTypeEnum;
-import com.erp.model.mrp.enums.CreateTypeEnum;
-import com.erp.model.mrp.enums.HistoryImportRecordTypeEnum;
-import com.erp.model.mrp.enums.SuggestStatusEnum;
+import com.erp.model.mrp.enums.*;
 import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
@@ -54,6 +52,7 @@ import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.scm.feign.PurchaseApplicationDetailFeign;
 import com.erp.rpc.scm.feign.PurchaseApplicationFeign;
+import com.erp.server.mrp.handler.PurchaseSuggestionMergeQueryHandler;
 import com.erp.server.mrp.listener.PurchaseSuggestMergeImportExcelListener;
 import com.erp.server.mrp.mapper.PurchaseSuggestMergeMapper;
 import com.erp.server.mrp.service.*;
@@ -116,6 +115,11 @@ public class PurchaseSuggestMergeServiceImpl extends SuperServiceImpl<PurchaseSu
 
     @Autowired
     private PurchaseApplicationDetailFeign purchaseApplicationDetailFeign;
+
+    @Autowired
+    private PurchaseSuggestionMergeQueryHandler purchaseSuggestionMergeQueryHandler;
+
+
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -607,6 +611,27 @@ public class PurchaseSuggestMergeServiceImpl extends SuperServiceImpl<PurchaseSu
         }
         purchaseApplicationDTO.setDetails(detailList);
         purchaseApplicationFeign.add(purchaseApplicationDTO);
+    }
+
+    @Override
+    public List<PurchaseSuggestMergeDTO.TabListDTO> tabList(PurchaseSuggestMergeDTO.TabListParamDTO dto) {
+        PurchaseSuggestMergeDTO.PagingParamDTO pagingParamDTO = new PurchaseSuggestMergeDTO.PagingParamDTO();
+        DeliverySuggestTabEnum[] values =  DeliverySuggestTabEnum.values();
+        List<PurchaseSuggestMergeDTO.TabListDTO> list = new ArrayList<>();
+        for (DeliverySuggestTabEnum item : values) {
+            PurchaseSuggestMergeDTO.TabListDTO resultDTO = new PurchaseSuggestMergeDTO.TabListDTO();
+            String tabSql = purchaseSuggestionMergeQueryHandler.getTabSql(item.getCode());
+            HashMap<String,String> map = new HashMap<>();
+            map.put("default",tabSql);
+            pagingParamDTO.setSqlMap(map);
+            pagingParamDTO.setIsMerge(dto.getIsMerge());
+            Integer count = this.baseMapper.tabList(pagingParamDTO);
+            resultDTO.setCount(ObjectUtils.isEmpty(count) ? MathUtil.ZERO : count);
+            resultDTO.setTabFlag(item.getCode());
+            resultDTO.setTabFlagName(item.getName());
+            list.add(resultDTO);
+        }
+        return list;
     }
 
     /**

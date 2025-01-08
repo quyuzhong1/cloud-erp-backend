@@ -103,5 +103,19 @@
         psm.sku_id,psm.id desc
     </select>
 
+    <!-- 列表查询 -->
+    <select id="tabList" resultType="java.lang.Integer">
+        select
+        count(distinct psm.id)
+        from purchase_suggest_merge psm
+        <where>
+            ${params.sqlMap.default}
+            and psm.is_deleted = false
+            <if test="params.isMerge != null and params.isMerge != ''">
+                and psm.is_merge = #{params.isMerge}
+            </if>
+        </where>
+    </select>
+
 
 </mapper>

@@ -11,6 +11,7 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.mrp.dto.DeliverySuggestDTO;
 import com.erp.model.mrp.dto.PurchaseSuggestIndependentDTO;
+import com.erp.server.mrp.handler.PurchaseSuggestionMergeQueryHandler;
 import com.erp.server.mrp.service.PurchaseSuggestIndependentService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
@@ -45,7 +46,7 @@ public class PurchaseSuggestIndependentController extends BaseController {
      * @return ApiResult<PagingVO<ListDTO>>
      */
     @PostMapping("/paging")
-    @WebAdvanceQuery
+    @WebAdvanceQuery(handler = PurchaseSuggestionMergeQueryHandler.class)
     public ApiResult<PagingVO<PurchaseSuggestIndependentDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<PurchaseSuggestIndependentDTO.PagingParamDTO> dto) {
         PagingVO<PurchaseSuggestIndependentDTO.ListDTO> pagingVO = purchaseSuggestIndependentService.paging(dto);
         return success(pagingVO);

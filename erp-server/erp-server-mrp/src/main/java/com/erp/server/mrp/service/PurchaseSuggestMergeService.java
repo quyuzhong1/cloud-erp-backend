@@ -153,4 +153,12 @@ public interface PurchaseSuggestMergeService extends SuperService<PurchaseSugges
      * @param dto
      */
     void savePushPurchaseApplication(PurchaseSuggestMergeDTO.SavePushDTO dto);
+    /**
+     * tab列表
+     * @author will
+     * @date 2025/1/8 14:51
+     * @param dto
+     * @return List<TabListDTO>
+     */
+    List<PurchaseSuggestMergeDTO.TabListDTO> tabList(PurchaseSuggestMergeDTO.TabListParamDTO dto);
 }

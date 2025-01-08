@@ -16,6 +16,7 @@ import com.common.core.enums.LogActionEnum;
 import com.erp.model.mrp.dto.DeliverySuggestDTO;
 import com.erp.model.mrp.dto.PurchaseSuggestMergeDTO;
 import com.erp.model.mrp.entity.PurchaseSuggestMergeEntity;
+import com.erp.server.mrp.handler.PurchaseSuggestionMergeQueryHandler;
 import com.erp.server.mrp.service.PurchaseSuggestMergeService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
@@ -43,17 +44,30 @@ public class PurchaseSuggestMergeController extends BaseController {
     private PurchaseSuggestMergeService purchaseSuggestMergeService;
 
     /**
-     * 列表查询
+     * 分页查询
      * @author will
      * @date 2024/10/16 10:21
      * @param dto
      * @return ApiResult<PagingVO<ListDTO>>
      */
     @PostMapping("/paging")
-    @WebAdvanceQuery
+    @WebAdvanceQuery(handler = PurchaseSuggestionMergeQueryHandler.class)
     public ApiResult<PagingVO<PurchaseSuggestMergeDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<PurchaseSuggestMergeDTO.PagingParamDTO> dto) {
         PagingVO<PurchaseSuggestMergeDTO.ListDTO> pagingVO = purchaseSuggestMergeService.paging(dto);
         return success(pagingVO);
+    }
+
+    /**
+     * tab列表
+     * @author Will
+     * @date: 2024/12/16 10:48
+     * @param dto
+     * @return ApiResult<List<TabListDTO>>
+     */
+    @PostMapping("/tabList")
+    public ApiResult<List<PurchaseSuggestMergeDTO.TabListDTO>> tabList(@RequestBody PurchaseSuggestMergeDTO.TabListParamDTO dto) {
+        List<PurchaseSuggestMergeDTO.TabListDTO> tabList = purchaseSuggestMergeService.tabList(dto);
+        return success(tabList);
     }
 
     /**
@@ -271,4 +285,5 @@ public class PurchaseSuggestMergeController extends BaseController {
         purchaseSuggestMergeService.savePushPurchaseApplication(dto);
         return success();
     }
+
 }
