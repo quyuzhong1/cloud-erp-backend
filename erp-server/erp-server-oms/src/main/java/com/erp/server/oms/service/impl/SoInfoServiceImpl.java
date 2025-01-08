@@ -55,6 +55,7 @@ import com.erp.model.sys.dto.*;
 import com.erp.model.sys.entity.DictCurrencyEntity;
 import com.erp.model.sys.entity.FileTemplateEntity;
 import com.erp.model.sys.entity.SysDepartmentEntity;
+import com.erp.model.sys.enums.DictValueEnum;
 import com.erp.model.sys.enums.KingdeeBusinessOperatorTypeEnum;
 import com.erp.model.tms.dto.InventorySkuCostDTO;
 import com.erp.model.wms.dto.*;
@@ -71,6 +72,7 @@ import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.scm.feign.ScmTaskFeign;
 import com.erp.rpc.sys.feign.FileTemplateFeign;
 import com.erp.rpc.sys.feign.KingdeeFeign;
+import com.erp.rpc.sys.feign.SysPartitionFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.tms.feign.LogisticsFeign;
 import com.erp.rpc.wms.feign.*;
@@ -235,6 +237,8 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
     @Resource
     private CfgSettingFeign fgSettingFeign;
 
+    @Resource
+    private SysPartitionFeign sysPartitionFeign;
     /**
      * 添加销售订单
      *
@@ -323,6 +327,8 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         addEntity.setTradeTerm(dto.getTradeTerm());
         // 验证字典值
         checkDict(addEntity);
+        //封装军区
+        this.buildPartition(addEntity);
         //获取虚拟仓库
         handleVirtualWarehouse(addEntity);
 
@@ -346,6 +352,19 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             return id;
         }
         return "";
+    }
+
+    private void buildPartition(SoInfoEntity addEntity) {
+        String customerId = addEntity.getCustomerId();
+        if (StringUtils.isBlank(customerId)) {
+            return;
+        }
+        CustomerInfoEntity customerInfo = customerInfoService.getById(customerId);
+        if(Objects.nonNull(customerInfo) && StringUtils.isNotBlank(customerInfo.getCountryId()) ){
+            String country = customerInfo.getCountryId();
+
+            addEntity.setPartitionId(sysPartitionFeign.getPartitionByCountry(country));
+        }
     }
 
     /**

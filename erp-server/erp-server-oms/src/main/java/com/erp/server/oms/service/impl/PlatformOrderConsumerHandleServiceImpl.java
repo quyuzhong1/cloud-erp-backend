@@ -372,6 +372,7 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
         customerB2cContactService.saveOrUpdateEntity(dto, customerB2cEntity, receiverEntity,null == soB2cError);
 
         receiverEntity.setCustomerId(customerB2cEntity.getId());
+        soB2cReceiverService.buildPartitionId(receiverEntity,shopInfo);
         soB2cReceiverService.saveOrUpdate(receiverEntity);
 //        if (!soB2cReceiverService.saveOrUpdate(receiverEntity)) {
 //            throw new ServiceException("[SoB2cReceiverEntity] 保存失败");
