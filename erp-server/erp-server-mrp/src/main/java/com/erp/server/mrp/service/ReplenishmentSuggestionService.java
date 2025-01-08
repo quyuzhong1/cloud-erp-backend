@@ -314,16 +314,6 @@ public interface ReplenishmentSuggestionService extends SuperService<Replenishme
      */
     PagingVO<ReplenishmentSuggestionDTO.ReplenishmentRuleExportDTO> listReplenishmentRule(PagingDTO<ReplenishmentSuggestionDTO.PagingParamDTO> dto);
 
-
-    /**
-     * 根据店铺id查询销量
-     *
-     * @param shopIds        店铺id
-     * @param skuId          sku
-     * @param salesQtyResult 销量规则
-     */
-    List<LocalInventoryDTO.ShopSalesDTO> getSalesByShopIds(List<String> shopIds, String skuId, CfgRuleSalesQtyDTO.StrategyResultDTO salesQtyResult);
-
     /**
      * 保存建议
      *
@@ -414,14 +404,6 @@ public interface ReplenishmentSuggestionService extends SuperService<Replenishme
      * @param platformType 平台类型
      */
     List<ReplenishmentSuggestionEntity> listByPlatform(String platformType);
-
-    /**
-     * 获取店铺最近销量
-     *
-     * @param salesQtyType 销量类型
-     * @param orderType    订单类型
-     */
-    Map<String, Map<String, Integer>> getSalesHistoryMap(String salesQtyType, JSONArray orderType);
 
     /**
      * 导出历史销量

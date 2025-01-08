@@ -33,4 +33,14 @@ public interface PurchaseApplicationDetailFeign {
      */
     @PostMapping("/feign/purchaseApplicationDetail/existBySkuIds")
     Boolean existBySkuIds(List<String> skuIds);
+
+    /**
+     * 根据合并id查询数量
+     * @author will
+     * @date 2025/1/7 15:23
+     * @param purchaseMergeIdList
+     * @return Integer
+     */
+    @PostMapping("/feign/purchaseApplicationDetail/countByMergeIdList")
+    Integer countByMergeIdList(List<String> purchaseMergeIdList);
 }

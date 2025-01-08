@@ -9,13 +9,11 @@ import com.erp.server.mrp.es.entity.OutStockHistorySalesEsEntity;
 import com.erp.server.mrp.es.service.HistoryInventoryEsService;
 import com.erp.server.mrp.es.service.OrderHistorySalesEsService;
 import com.erp.server.mrp.es.service.OutStockHistorySalesEsService;
-import org.springframework.util.ObjectUtils;
 
 import javax.annotation.Resource;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 public abstract class AbstractCalculationStrategy implements PlatformCalculationStrategy {
@@ -47,33 +45,25 @@ public abstract class AbstractCalculationStrategy implements PlatformCalculation
     protected abstract List<HistoryInventoryEsEntity> getHistoryInventory(List<ReplenishmentSuggestionEntity> suggestions, LocalDate startDate, LocalDate endDate);
 
     @Override
-    public void cleanHistorySalesByOrder(LocalDate calculationDate, List<ReplenishmentSuggestionEntity> suggestions, Integer cleanDay) {
+    public void cleanHistorySalesByOrder(LocalDate calculationDate, Integer cleanDay) {
         List<ReplenishmentResultDTO.SalesInfoAllDTO> salesInfoAllList = getSalesInfoByOrderData(calculationDate, cleanDay);
         LocalDate startDate = calculationDate.minusDays(cleanDay);
         LocalDate endDate = calculationDate.minusDays(1);
-        Map<String, String> suggestionMap = suggestions.stream()
-                .collect(Collectors.toMap(k -> k.getSkuId() + "-" + k.getShopId(), ReplenishmentSuggestionEntity::getId, (o1, o2) -> o1));
-        List<String> suggestionIds = suggestions.stream().map(ReplenishmentSuggestionEntity::getId).collect(Collectors.toList());
         //删除原数据
-        orderHistorySalesEsService.deleteBySuggestionIdsAndDate(suggestionIds, startDate, endDate);
+        orderHistorySalesEsService.deleteByDateBetween(startDate, endDate);
         //保存新数据
-        List<OrderHistorySalesEsEntity> orderHistorySalesEsList = getOrderHistorySales(salesInfoAllList, suggestionMap);
+        List<OrderHistorySalesEsEntity> orderHistorySalesEsList = getOrderHistorySales(salesInfoAllList);
         orderHistorySalesEsService.saveAll(orderHistorySalesEsList);
     }
 
     /**
      * 组装历史销量
      * @param salesInfoAllList  销量数据
-     * @param suggestionMap     建议
      */
-    private List<OrderHistorySalesEsEntity> getOrderHistorySales(List<ReplenishmentResultDTO.SalesInfoAllDTO> salesInfoAllList, Map<String, String> suggestionMap) {
+    private List<OrderHistorySalesEsEntity> getOrderHistorySales(List<ReplenishmentResultDTO.SalesInfoAllDTO> salesInfoAllList) {
         List<OrderHistorySalesEsEntity> result = new ArrayList<>();
         for (ReplenishmentResultDTO.SalesInfoAllDTO dto : salesInfoAllList) {
-            String suggestId = suggestionMap.get(dto.getSkuId() + "-" + dto.getShopId());
-            if (ObjectUtils.isEmpty(suggestId)) {
-                continue;
-            }
-            result.add(OrderHistorySalesEsEntity.createOrderHistorySales(suggestId, dto.getOrderType(), dto.getDate(), dto.getOriginalSalesQty(), dto.getSkuId(), dto.getShopId()));
+            result.add(OrderHistorySalesEsEntity.createOrderHistorySales(dto.getOrderType(), dto.getDate(), dto.getOriginalSalesQty(), dto.getSkuId(), dto.getShopId()));
         }
         return result;
     }
@@ -86,33 +76,25 @@ public abstract class AbstractCalculationStrategy implements PlatformCalculation
     protected abstract List<ReplenishmentResultDTO.SalesInfoAllDTO> getSalesInfoByOrderData(LocalDate calculationDate, Integer cleanDay);
 
     @Override
-    public void cleanHistorySalesByOutStock(LocalDate calculationDate, List<ReplenishmentSuggestionEntity> suggestions, Integer cleanDay) {
+    public void cleanHistorySalesByOutStock(LocalDate calculationDate, Integer cleanDay) {
         List<ReplenishmentResultDTO.SalesInfoAllDTO> salesInfoAllList = getSalesInfoByOutStockData(calculationDate, cleanDay);
         LocalDate startDate = calculationDate.minusDays(cleanDay);
         LocalDate endDate = calculationDate.minusDays(1);
-        Map<String, String> suggestionMap = suggestions.stream()
-                .collect(Collectors.toMap(k -> k.getSkuId() + "-" + k.getShopId(), ReplenishmentSuggestionEntity::getId, (o1, o2) -> o1));
-        List<String> suggestionIds = suggestions.stream().map(ReplenishmentSuggestionEntity::getId).collect(Collectors.toList());
         //删除原数据
-        outStockHistorySalesEsService.deleteBySuggestionIdsAndDate(suggestionIds, startDate, endDate);
+        outStockHistorySalesEsService.deleteByDateBetween(startDate, endDate);
         //保存新数据
-        List<OutStockHistorySalesEsEntity> outStockHistorySales = getOutStockHistorySales(salesInfoAllList, suggestionMap);
+        List<OutStockHistorySalesEsEntity> outStockHistorySales = getOutStockHistorySales(salesInfoAllList);
         outStockHistorySalesEsService.saveAll(outStockHistorySales);
     }
 
     /**
      * 组装历史销量
      * @param salesInfoAllList  销量数据
-     * @param suggestionMap     建议
      */
-    private List<OutStockHistorySalesEsEntity> getOutStockHistorySales(List<ReplenishmentResultDTO.SalesInfoAllDTO> salesInfoAllList, Map<String, String> suggestionMap) {
+    private List<OutStockHistorySalesEsEntity> getOutStockHistorySales(List<ReplenishmentResultDTO.SalesInfoAllDTO> salesInfoAllList) {
         List<OutStockHistorySalesEsEntity> result = new ArrayList<>();
         for (ReplenishmentResultDTO.SalesInfoAllDTO dto : salesInfoAllList) {
-            String suggestId = suggestionMap.get(dto.getSkuId() + "-" + dto.getShopId());
-            if (ObjectUtils.isEmpty(suggestId)) {
-                continue;
-            }
-            result.add(OutStockHistorySalesEsEntity.createOutStockHistorySales(suggestId, dto.getOrderType(), dto.getDate(), dto.getOriginalSalesQty(), dto.getSkuId(), dto.getShopId()));
+            result.add(OutStockHistorySalesEsEntity.createOutStockHistorySales(dto.getOrderType(), dto.getDate(), dto.getOriginalSalesQty(), dto.getSkuId(), dto.getShopId()));
         }
         return result;
     }

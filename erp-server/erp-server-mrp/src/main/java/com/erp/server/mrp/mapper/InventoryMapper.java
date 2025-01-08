@@ -32,12 +32,12 @@ public interface InventoryMapper {
     /**
      * 查询FBA货件数据
      */
-    List<ReplenishmentResultDTO.FbaInTransitDetailDTO> getFbaShipment(@Param("result") ReplenishmentResultDTO replenishmentResultDTO, @Param("tableName") String tableName, @Param("tableDetailName") String tableDetailName);
+    List<ReplenishmentInventoryDTO.FbaInTransitDTO> getFbaShipment(@Param("tableName") String tableName, @Param("tableDetailName") String tableDetailName);
 
     /**
      * 查询FBA发货单数据
      */
-    List<ReplenishmentResultDTO.FbaInTransitDetailDTO> getFbaDelivery(@Param("result") ReplenishmentResultDTO replenishmentResultDTO, @Param("tableName") String tableName, @Param("tableDetailName") String tableDetailName, @Param("shipmentName") String shipmentName, @Param("shipmentDetailName") String shipmentDetailName);
+    List<ReplenishmentInventoryDTO.FbaInTransitDTO> getFbaDelivery(@Param("tableName") String tableName, @Param("tableDetailName") String tableDetailName, @Param("shipmentName") String shipmentName, @Param("shipmentDetailName") String shipmentDetailName);
 
     /**
      * 查询物流单

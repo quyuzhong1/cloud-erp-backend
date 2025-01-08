@@ -35,17 +35,15 @@ public interface PlatformCalculationStrategy {
      * 清洗历史销量
      *
      * @param calculationDate 计算日
-     * @param suggestions     建议数据
      * @param cleanDay        清洗天数
      */
-    void cleanHistorySalesByOrder(LocalDate calculationDate, List<ReplenishmentSuggestionEntity> suggestions, Integer cleanDay);
+    void cleanHistorySalesByOrder(LocalDate calculationDate, Integer cleanDay);
 
     /**
      * 清洗历史销量
      *
      * @param calculationDate 计算日
-     * @param suggestions     建议数据
      * @param cleanDay        清洗天数
      */
-    void cleanHistorySalesByOutStock(LocalDate calculationDate, List<ReplenishmentSuggestionEntity> suggestions, Integer cleanDay);
+    void cleanHistorySalesByOutStock(LocalDate calculationDate, Integer cleanDay);
 }

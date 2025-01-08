@@ -1,4 +1,5 @@
 package com.erp.server.mrp.service;
+
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -118,7 +119,7 @@ public interface PurchaseSuggestMergeService extends SuperService<PurchaseSugges
      * @param excelFile
      * @param response
      */
-    void importPurchaseSuggestMerge(MultipartFile excelFile, HttpServletResponse response);
+    void importPurchaseSuggestMerge(MultipartFile excelFile,Boolean isMerge, HttpServletResponse response);
     /**
      * 根据平台和sku查询
      * @author will
@@ -137,13 +138,27 @@ public interface PurchaseSuggestMergeService extends SuperService<PurchaseSugges
      * @return List<PurchaseSuggestBomDTO>
      */
     List<DeliverySuggestDTO.PurchaseSuggestBomDTO> listPurchaseSuggestBom(String id);
-
     /**
-     * 查询锁定数量
+     * 下推采购申请显示
      * @author will
-     * @date 2024/11/25 18:08
-     * @param entity
-     * @return Integer
+     * @date 2025/1/7 10:19
+     * @param ids
+     * @return ViewPushDTO
      */
-    Integer getLockingQty(PurchaseSuggestMergeEntity entity);
+    PurchaseSuggestMergeDTO.ViewPushDTO viewPushPurchaseApplication( List<String> ids);
+    /**
+     * 下推采购申请保存
+     * @author will
+     * @date 2025/1/7 11:13
+     * @param dto
+     */
+    void savePushPurchaseApplication(PurchaseSuggestMergeDTO.SavePushDTO dto);
+    /**
+     * tab列表
+     * @author will
+     * @date 2025/1/8 14:51
+     * @param dto
+     * @return List<TabListDTO>
+     */
+    List<PurchaseSuggestMergeDTO.TabListDTO> tabList(PurchaseSuggestMergeDTO.TabListParamDTO dto);
 }
