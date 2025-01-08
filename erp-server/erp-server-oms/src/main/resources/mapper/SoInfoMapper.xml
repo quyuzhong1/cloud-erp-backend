@@ -47,7 +47,7 @@
         sod.frozen_qty as frozenQty,
         fdp.id as partitionId,
         fdp.code as partitionCode,
-        fdp.name as partitionName
+        fdp.name as partitionName,
         sod.is_close
         FROM so_info si
         LEFT JOIN so_detail sod
