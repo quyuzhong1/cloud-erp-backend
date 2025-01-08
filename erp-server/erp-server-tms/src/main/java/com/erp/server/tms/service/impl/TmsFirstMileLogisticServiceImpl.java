@@ -458,6 +458,7 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
             dto.setCostValue(logisticFee.getEstimatedFee());
             dto.setCfgCostId(logisticFee.getCfgCostId());
             dto.setType(LogisticsBillCostTypeEnum.ESTIMATED.getCode());
+            dto.setCurrency(logisticFee.getCurrency());
             costDetailList.add(dto);
         }
         updateCostDTO.setCostDetailList(costDetailList);
