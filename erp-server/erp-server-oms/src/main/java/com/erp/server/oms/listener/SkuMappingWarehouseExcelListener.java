@@ -288,6 +288,8 @@ public class SkuMappingWarehouseExcelListener extends AnalysisEventListener<SkuM
                 }
 
                 listingInfoEntity.setMatchResult(ListingMatchResultEnum.TRUE.getCode());
+                listingInfoEntity.setThirdBarcode(dto.getThirdBarcode());
+                listingInfoEntity.setPlatformSkuName(dto.getWarehouseProductName());
                 updateListingInfoList.add(listingInfoEntity);
             }
         }
