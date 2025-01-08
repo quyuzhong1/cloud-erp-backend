@@ -191,7 +191,6 @@ public class VirtualWarehouseChannelDTO implements Serializable {
         /**
          * 分区id
          */
-        @NotNull(message = "分区id不能为null")
         private String partitionId;
 
         /**
