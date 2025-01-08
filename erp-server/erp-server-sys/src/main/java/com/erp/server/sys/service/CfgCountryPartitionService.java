@@ -33,4 +33,5 @@ public interface CfgCountryPartitionService extends SuperService<CfgCountryParti
     Boolean update(CfgCountryPartitionDTO.UpdateDTO dto);
 
 
+    String getPartitionByCountry(String country);
 }

@@ -10,11 +10,13 @@ import com.erp.model.sys.dto.CfgCountryPartitionDTO;
 import com.erp.model.sys.entity.CfgCountryPartitionEntity;
 import com.erp.server.sys.mapper.CfgCountryPartitionMapper;
 import com.erp.server.sys.service.CfgCountryPartitionService;
+import io.seata.common.util.StringUtils;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Objects;
 import java.util.Optional;
 /**
  * <p>
@@ -67,6 +69,15 @@ public class CfgCountryPartitionServiceImpl extends SuperServiceImpl<CfgCountryP
         }
 
         return Boolean.TRUE;
+    }
+
+    @Override
+    public String getPartitionByCountry(String country) {
+        if(StringUtils.isBlank(country)){
+            return "";
+        }
+        CfgCountryPartitionEntity cfgCountryPartitionEntity = this.lambdaQuery().eq(CfgCountryPartitionEntity::getCountry,country).last("limit 1").one();
+        return Objects.isNull(cfgCountryPartitionEntity)?"":cfgCountryPartitionEntity.getPartitionId();
     }
 
 

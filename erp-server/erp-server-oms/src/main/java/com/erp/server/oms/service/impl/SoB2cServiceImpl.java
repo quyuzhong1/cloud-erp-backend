@@ -562,7 +562,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             addDTO.getReceiverDTO().setCustomerId(customerId);
         }
         //新增买家信息
-        soB2cReceiverService.add(addDTO.getReceiverDTO(), soB2cEntity.getId());
+        soB2cReceiverService.add(addDTO.getReceiverDTO(), soB2cEntity);
         //新增明细
         soB2cDetailService.add(addDTO, soB2cEntity.getId());
         //新增财务信息
