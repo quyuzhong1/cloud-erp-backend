@@ -74,8 +74,8 @@
             <if test="platformDTO.relationId != null and platformDTO.relationId == ''">
                 and vwc.type in('shop','platform')  and  vwc.dict_platform = #{platformDTO.dictPlatform}
             </if>
-            <if test="params.partitionId != null and params.partitionId != ''">
-                and (vwcpr.partition_id = #{params.partitionId} or vwcpr.partition_id is null)
+            <if test="platformDTO.partitionId != null and platformDTO.partitionId != ''">
+                and (vwcpr.partition_id = #{platformDTO.partitionId} or vwcpr.partition_id is null)
             </if>
             order by vwc.id limit 1
         </where>
