@@ -292,9 +292,11 @@ public class InventoryServiceImpl implements InventoryService {
 
         //采购订单
         Set<String> localPurchaseOrder = cfgRuleCommonService.findByKey(baseKey, inventoryResult, baseKey + ":" + CfgRuleInventoryNodeEnum.getLocalPurchaseOrder());
-        List<ReplenishmentInventoryDTO.EstimatedPurchaseDTO> purchaseDetails = inventoryMapper.listPurchase(localPurchaseOrder, getTableName(PURCHASE_ORDER, calcDate), getTableName(PURCHASE_ORDER_DETAIL, calcDate));
-        if (!CollectionUtils.isEmpty(purchaseDetails)) {
-            estimatedPurchaseList.addAll(purchaseDetails);
+        if (!CollectionUtils.isEmpty(localPurchaseOrder)) {
+            List<ReplenishmentInventoryDTO.EstimatedPurchaseDTO> purchaseDetails = inventoryMapper.listPurchase(localPurchaseOrder, getTableName(PURCHASE_ORDER, calcDate), getTableName(PURCHASE_ORDER_DETAIL, calcDate));
+            if (!CollectionUtils.isEmpty(purchaseDetails)) {
+                estimatedPurchaseList.addAll(purchaseDetails);
+            }
         }
         dto.setEstimatedPurchaseList(estimatedPurchaseList.stream()
                 .filter(v -> v.getQty() > 0)
@@ -345,6 +347,7 @@ public class InventoryServiceImpl implements InventoryService {
         //已下推委外订单的数量
         //处理已审核 & 部分生成 数据
         for (ReplenishmentInventoryDTO.EstimatedPurchaseDTO application : applications) {
+            application.setSourceType(sourceType);
             if (ApproveStatusEnum.APPROVE.getCode().equals(application.getStatus())) {
                 application.setStatus(ReplenishmentBillStatusEnum.TO_BE_CREATE.getCode());
             }
@@ -639,7 +642,7 @@ public class InventoryServiceImpl implements InventoryService {
                 getTableName(INSTOCK_FORCAST, calcDate), getTableName(PO_RECEIVE, calcDate), getTableName(PO_INSTOCK, calcDate), getTableName(PO_RETURN, calcDate),
                 getTableName(TRANSFER_OUT, calcDate), getTableName(TRANSFER_IN, calcDate));
         List<String> sourceCodeList = localInTransitDetails.stream()
-                .filter(v -> LocalInTransitTypeEnum.PURCHASE_IN_TRANSIT.getCode().equals(v.getSourceType()))
+                .filter(v -> CfgRuleInventoryNodeEnum.LOCAL_IN_TRANSIT_PURCHASE.getCode().equals(v.getSourceType()))
                 .map(ReplenishmentResultDTO.LocalInTransitDetailDTO::getSourceCode)
                 .distinct()
                 .collect(Collectors.toList());

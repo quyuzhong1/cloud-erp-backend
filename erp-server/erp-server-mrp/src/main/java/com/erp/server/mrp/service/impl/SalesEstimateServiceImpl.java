@@ -28,4 +28,12 @@ public class SalesEstimateServiceImpl extends SuperServiceImpl<SalesEstimateMapp
                 .between(SalesEstimateEntity::getDate, LocalDate.now(), date)
         );
     }
+
+    @Override
+    public List<SalesEstimateEntity> listByReplenishmentId(String detailId) {
+        return list(Wrappers.<SalesEstimateEntity>lambdaQuery()
+                .eq(SalesEstimateEntity::getReplenishmentDetailId, detailId)
+                .orderByAsc(SalesEstimateEntity::getDate)
+        );
+    }
 }

@@ -1,6 +1,8 @@
 package com.erp.model.mrp.dto;
 
 import cn.hutool.core.util.ObjectUtil;
+import com.erp.model.mrp.enums.CfgRuleSalesFormulaDefaultTypeEnum;
+import com.erp.model.mrp.enums.CfgRuleSalesFormulaTypeEnum;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
@@ -394,5 +396,28 @@ public class CfgRuleSalesFormulaDTO implements Serializable {
          * 360天日均（%）
          */
         private Integer threeHundredSixtyDaysRatio;
+
+
+        public static CfgRuleSalesFormulaDTO.SalesFormulaExportDTO buildExportDTO(CfgRuleSalesQtyDTO.StrategyFormulaResultDTO resultDTO) {
+            CfgRuleSalesFormulaDTO.SalesFormulaExportDTO dto = new CfgRuleSalesFormulaDTO.SalesFormulaExportDTO();
+            dto.setDefaultTypeName(CfgRuleSalesFormulaDefaultTypeEnum.getName(resultDTO.getDefaultType()));
+            dto.setName(resultDTO.getName());
+            dto.setStartDate(resultDTO.getStartDate());
+            dto.setEndDate(resultDTO.getEndDate());
+            if (CfgRuleSalesFormulaDefaultTypeEnum.FIXED.getCode().equals(resultDTO.getDefaultType()) || CfgRuleSalesFormulaTypeEnum.FIXED.getCode().equals(resultDTO.getType())) {
+                dto.setFixedValue(resultDTO.getFixedValue());
+            }else {
+                dto.setThreeDaysRatio(resultDTO.getPercentJsonDTO().getThreeDaysRatio());
+                dto.setSevenDaysRatio(resultDTO.getPercentJsonDTO().getSevenDaysRatio());
+                dto.setFourteenDaysRatio(resultDTO.getPercentJsonDTO().getFourteenDaysRatio());
+                dto.setThirtyDaysRatio(resultDTO.getPercentJsonDTO().getThirtyDaysRatio());
+                dto.setSixtyDaysRatio(resultDTO.getPercentJsonDTO().getSixtyDaysRatio());
+                dto.setNinetyDaysRatio(resultDTO.getPercentJsonDTO().getNinetyDaysRatio());
+                dto.setOneHundredEightyDaysRatio(resultDTO.getPercentJsonDTO().getOneHundredEightyDaysRatio());
+                dto.setTwoHundredSeventyDaysRatio(resultDTO.getPercentJsonDTO().getTwoHundredSeventyDaysRatio());
+                dto.setThreeHundredSixtyDaysRatio(resultDTO.getPercentJsonDTO().getThreeHundredSixtyDaysRatio());
+            }
+            return dto;
+        }
     }
 }

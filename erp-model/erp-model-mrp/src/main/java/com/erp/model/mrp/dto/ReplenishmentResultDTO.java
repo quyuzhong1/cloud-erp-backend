@@ -1,6 +1,7 @@
 package com.erp.model.mrp.dto;
 
 import cn.hutool.json.JSONArray;
+import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.annotation.TableField;
@@ -21,6 +22,7 @@ import org.springframework.util.CollectionUtils;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -1105,6 +1107,23 @@ public class ReplenishmentResultDTO {
          */
         private String month;
 
+        /**
+         * 销量类型：default=默认，dynamic=动态、fixed=固定
+         */
+        private String type;
+        /**
+         * 销量默认类型：dynamic=动态、fixed=固定
+         */
+        private String defaultType;
+        /**
+         * 固定值
+         */
+        private Integer fixedValue;
+        /**
+         * 百分比
+         */
+        private JSONObject percentJson;
+
         public static SalesEstimateEntity buildSalesEstimate(SalesEstimateDTO dto, String replenishmentDetailId, String calcVersion) {
             SalesEstimateEntity entity = new SalesEstimateEntity();
             entity.setReplenishmentDetailId(replenishmentDetailId);
@@ -1112,7 +1131,23 @@ public class ReplenishmentResultDTO {
             entity.setSalesQty(dto.getSalesQty());
             entity.setMonth(dto.getMonth());
             entity.setCalcVersion(calcVersion);
+            entity.setType(dto.getType());
+            entity.setDefaultType(dto.getDefaultType());
+            entity.setFixedValue(dto.getFixedValue());
+            entity.setPercentJson(dto.getPercentJson());
             return entity;
+        }
+
+        public static SalesEstimateDTO buildSalesEstimateDTO(LocalDate calcDate, BigDecimal saleQty, CfgRuleSalesQtyDTO.StrategyFormulaResultDTO formulaResult) {
+            SalesEstimateDTO dto = new SalesEstimateDTO();
+            dto.setDate(calcDate);
+            dto.setSalesQty(saleQty);
+            dto.setMonth(calcDate.format(DateTimeFormatter.ofPattern("yyyy-MM")));
+            dto.setType(formulaResult.getType());
+            dto.setDefaultType(formulaResult.getDefaultType());
+            dto.setFixedValue(formulaResult.getFixedValue());
+            dto.setPercentJson(formulaResult.getPercentJson());
+            return dto;
         }
     }
 
@@ -1251,6 +1286,11 @@ public class ReplenishmentResultDTO {
          */
         private Integer shopPreQty;
 
+        /**
+         * 收货渠道
+         */
+        private String receivingChannel;
+
         public static EstimatedPurchaseDetailEntity buildEstimatedPurchaseDetail(EstimatedPurchaseDetailDTO dto, String replenishmentDetailId, String calcVersion) {
             EstimatedPurchaseDetailEntity entity = new EstimatedPurchaseDetailEntity();
             entity.setReplenishmentDetailId(replenishmentDetailId);
@@ -1263,6 +1303,7 @@ public class ReplenishmentResultDTO {
             entity.setSourceCode(dto.getSourceCode());
             entity.setSourceType(dto.getSourceType());
             entity.setShopPreQty(entity.getShopPreQty());
+            entity.setReceivingChannel(dto.getReceivingChannel());
             entity.setCalcVersion(calcVersion);
             return entity;
         }
@@ -1275,6 +1316,7 @@ public class ReplenishmentResultDTO {
             dto.setSourceId(purchaseDTO.getSourceId());
             dto.setSourceCode(purchaseDTO.getSourceCode());
             dto.setSourceType(purchaseDTO.getSourceType());
+            dto.setReceivingChannel(purchaseDTO.getWarehouseId());
             return dto;
         }
 
@@ -1288,6 +1330,7 @@ public class ReplenishmentResultDTO {
             dto.setSourceCode(purchaseDTO.getSourceCode());
             dto.setType(ReplenishmentInventoryTypeEnum.LOCAL_ESTIMATED_DELIVERY.getCode());
             dto.setSourceType(purchaseDTO.getSourceType());
+            dto.setReceivingChannel(purchaseDTO.getShopId());
             return dto;
         }
     }
