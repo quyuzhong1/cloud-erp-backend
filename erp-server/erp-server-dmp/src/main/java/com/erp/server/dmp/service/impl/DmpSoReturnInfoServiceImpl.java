@@ -6,14 +6,18 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
 import javax.annotation.Resource;
 
+import cn.hutool.core.util.ObjectUtil;
+import com.common.business.enums.PlatformDictEnum;
 import com.common.core.anno.ParamData;
 import com.common.core.enums.PannoEnum;
 import com.erp.server.dmp.inout.handler.input.task.mongo.DmpInputMongoHandler;
+import com.erp.server.dmp.pull.mongo.MongoService;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -53,6 +57,8 @@ import lombok.extern.slf4j.Slf4j;
 @Service
 public class DmpSoReturnInfoServiceImpl extends SuperServiceImpl<DmpSoReturnInfoMapper, DmpSoReturnInfoEntity> implements DmpSoReturnInfoService {
 
+	@Resource
+	private MongoService mongoService;
 	@Resource
 	private DmpSoReturnDetailService dmpSoReturnDetailService;
 	
@@ -236,8 +242,44 @@ public class DmpSoReturnInfoServiceImpl extends SuperServiceImpl<DmpSoReturnInfo
 
 	@Override
 	public void sdyReturnOrderUpdate() {
-		/*paramDataList.add(new ParamData("order_id", "order_id", PannoEnum.IN, orderIdList));
-		paramDataList.add(new ParamData(DmpInputMongoHandler.MONGO_BASE_NEXTLEVELID, DmpInputMongoHandler.MONGO_BASE_NEXTLEVELID, PannoEnum.EQ, nextLevelId));
-		findMongoData = mongoService.findMongoData(paramDataList, "aliexpress_orderDetail_data");*/
+		List<DmpSoReturnInfoEntity> tikTokList = this.lambdaQuery().eq(DmpSoReturnInfoEntity::getSourceSystem, PlatformDictEnum.TIK_TOK.getCode()).list();
+		List<String> tikTokReturnIdList = tikTokList.stream().map(req -> req.getThirdCode()).distinct().collect(Collectors.toList());
+
+		List<ParamData> tikTokParamDataList = new ArrayList<>();
+		tikTokParamDataList.add(new ParamData("returnId", "returnId", PannoEnum.IN, tikTokReturnIdList));
+		List<Map<String, Object>> tikTokFindMongoData = mongoService.findMongoData(tikTokParamDataList, "TikTok_returnOrder_data");
+		if (CollUtil.isEmpty(tikTokFindMongoData)) {
+			return;
+		}
+		for (Map<String, Object> findMongoDatum : tikTokFindMongoData) {
+			DmpSoReturnInfoEntity soReturnInfoEntity = tikTokList.stream().filter(req -> req.getThirdCode().equals(String.valueOf(findMongoDatum.get("returnId")))).findFirst().orElse(null);
+			if (ObjectUtil.isNotEmpty(soReturnInfoEntity)) {
+				this.lambdaUpdate()
+						.set(DmpSoReturnInfoEntity::getPlatformOrderCode, String.valueOf(findMongoDatum.get("orderId")))
+						.eq(DmpSoReturnInfoEntity::getId, soReturnInfoEntity.getId())
+						.update();
+			}
+		}
+
+
+		List<DmpSoReturnInfoEntity> list = this.lambdaQuery().eq(DmpSoReturnInfoEntity::getSourceSystem, PlatformDictEnum.MERCADOLIBRE.getCode()).list();
+		List<String> orderIdList = list.stream().map(req -> req.getThirdCode()).distinct().collect(Collectors.toList());
+
+		List<ParamData> paramDataList = new ArrayList<>();
+		paramDataList.add(new ParamData("fid", "fid", PannoEnum.IN, orderIdList));
+		List<Map<String, Object>> findMongoData = mongoService.findMongoData(paramDataList, "mercadolibre_return_data");
+		if (CollUtil.isEmpty(findMongoData)) {
+			return;
+		}
+		for (Map<String, Object> findMongoDatum : findMongoData) {
+			DmpSoReturnInfoEntity soReturnInfoEntity = list.stream().filter(req -> req.getThirdCode().equals(String.valueOf(findMongoDatum.get("fid")))).findFirst().orElse(null);
+			if (ObjectUtil.isNotEmpty(soReturnInfoEntity)) {
+				this.lambdaUpdate()
+						.set(DmpSoReturnInfoEntity::getPlatformOrderCode, String.valueOf(findMongoDatum.get("resourceId")))
+						.eq(DmpSoReturnInfoEntity::getId, soReturnInfoEntity.getId())
+						.update();
+			}
+		}
+
 	}
 }
