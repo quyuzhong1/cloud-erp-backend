@@ -257,20 +257,14 @@ public class SyncSoReturnInstockServiceImpl implements SyncSoReturnInstockServic
                                         List<SoReturnEntity> receiveReturnList) {
         String rootNodeNoInitial = entity.getCode(); // 默认值是 entity.getCode()
 
-        if (SourceTypeEnum.SO_RETURN.getCode().equals(entity.getSourceType())) {
-            SoReturnEntity soReturnEntity = soReturnEntityList.stream().filter(req -> req.getId().equals(entity.getSourceId())).findFirst().orElse(null);
-            if (ObjectUtil.isNotEmpty(soReturnEntity)) {
-                rootNodeNoInitial = soReturnEntity.getCode();
-            }
-        } else if (SourceTypeEnum.SO_RETURN_RECEIVE.getCode().equals(entity.getSourceType())) {
-            String receiveSourceId = soReturnReceiveEntityList.stream().filter(req -> req.getId().equals(entity.getSourceId())).map(SoReturnReceiveEntity::getSourceId).findFirst().orElse("");
-            if (CharSequenceUtil.isNotBlank(receiveSourceId)) {
-                SoReturnEntity soReturnEntity = receiveReturnList.stream().filter(req -> req.getId().equals(receiveSourceId)).findFirst().orElse(null);
-                if (ObjectUtil.isNotEmpty(soReturnEntity)) {
-                    rootNodeNoInitial = soReturnEntity.getCode();
-                }
+        if (OrderTypeEnum.B2C.getCode().equals(entity.getType())) {
+            if (SourceTypeEnum.PLATFORM_RETURN_INSTOCK.getCode().equals(entity.getSourceType())) {
+                rootNodeNoInitial = entity.getSourceCode();
+            } else if (SourceTypeEnum.WDT_RETURN_ORDER.getCode().equals(entity.getSourceType())) {
+                rootNodeNoInitial = entity.getPlatformOrderCode();
             }
         }
+
         return rootNodeNoInitial;
     }
 
