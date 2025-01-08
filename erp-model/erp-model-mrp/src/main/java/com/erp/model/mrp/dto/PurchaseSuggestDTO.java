@@ -375,64 +375,6 @@ public class PurchaseSuggestDTO implements Serializable {
 
     }
 
-    /**
-    * 修改
-    */
-    @Data
-    @NoArgsConstructor
-    public static class UpdateDTO  {
-
-        /**
-        * 主键id
-        */
-        @NotBlank(message = "主键id不能为空")
-        private String id;
-
-        /**
-         * 采购建议量
-         */
-        private Integer suggestPurchaseQty;
-
-        /**
-         * 计划采购量（计划修正值）
-         */
-        private Integer planPurchaseQty;
-
-        /**
-         * 采购备货量
-         */
-        private Integer purchaseStockUpQty;
-
-        /**
-         * 物流方式
-         */
-        private String logisticsMethod;
-
-        /**
-         * 物流时效（天）
-         */
-        private Integer logisticsDays;
-
-        /**
-         * 建议采购日期
-         */
-        private LocalDate suggestPurchaseDate;
-
-        /**
-         * 预计入库日期
-         */
-        private LocalDate estimateInstockDate;
-        /**
-         * 预计可售日期
-         */
-        private LocalDate estimateSalesDate;
-
-        /**
-         * 备注
-         */
-        @Size(max = 100,message = "备注最大长度不能超过100位")
-        private String remark;
-    }
 
     @Data
     @NoArgsConstructor
@@ -498,7 +440,12 @@ public class PurchaseSuggestDTO implements Serializable {
         @Size(max = 32,message = "来源类型最大长度不能超过32位")
         private String sourceType;
 
-
+        /**
+         * SKU
+         */
+        @NotBlank(message = "skuId不能为空")
+        @Size(max = 19,message = "skuId最大长度不能超过19位")
+        private String skuId;
     }
     /**
      * 导入修改

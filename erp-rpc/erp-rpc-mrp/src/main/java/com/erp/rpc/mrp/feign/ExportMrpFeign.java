@@ -42,7 +42,7 @@ public interface ExportMrpFeign {
      * 导出采购建议
      */
     @PostMapping("/feign/export/pagingPurchaseSuggestion")
-    PagingVO<PurchaseSuggestDTO.ListDTO> pagingPurchaseSuggestion(PagingDTO<PurchaseSuggestDTO.PagingParamDTO> dto);
+    PagingVO<PurchaseSuggestIndependentDTO.ListDTO> pagingPurchaseSuggestion(PagingDTO<PurchaseSuggestIndependentDTO.PagingParamDTO> dto);
     /**
      * 导出采购建议（合并）
      */

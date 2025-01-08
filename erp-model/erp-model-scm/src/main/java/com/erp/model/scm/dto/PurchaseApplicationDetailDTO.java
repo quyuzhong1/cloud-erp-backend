@@ -113,6 +113,10 @@ public class PurchaseApplicationDetailDTO implements Serializable {
         @Size(max = 255,message = "备注不能大于255字符")
         private String remark;
 
+        /**
+         * 采购建议合并id集合
+         */
+        private List<String> mergeIdList;
     }
 
     @Data

@@ -1,13 +1,14 @@
 package com.erp.model.mrp.dto;
 
-import cn.hutool.json.JSONArray;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import javax.validation.Valid;
-import javax.validation.constraints.*;
+import javax.validation.constraints.Digits;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -17,15 +18,15 @@ import java.util.Map;
 
 /**
  * <p>
- * 建议采购(合并后)请求响应实体
+ * 建议采购请求响应实体
  * </p>
  *
  * @author will
- * @since 2024-10-21
+ * @since 2024-08-29
 */
 @Data
 @NoArgsConstructor
-public class PurchaseSuggestMergeDTO implements Serializable {
+public class PurchaseSuggestIndependentDTO implements Serializable {
 
 
     /**
@@ -45,6 +46,19 @@ public class PurchaseSuggestMergeDTO implements Serializable {
          */
         private Map<String,String> sqlMap;
 
+    }
+
+    /**
+     * 列表参数
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ListParamDTO {
+
+        /**
+         * 来源id
+         */
+        private String sourceId;
     }
 
     /**
@@ -115,10 +129,7 @@ public class PurchaseSuggestMergeDTO implements Serializable {
          * 创建类型名称
          */
         private String dataTypeName;
-        /**
-         * 是否组合品，true是，false否
-         */
-        private Boolean isCombination;
+
         /**
          * 状态
          */
@@ -133,20 +144,6 @@ public class PurchaseSuggestMergeDTO implements Serializable {
          * 作废状态
          */
         private Boolean invalidStatus;
-
-        /**
-         * 作废时间
-         */
-        private LocalDateTime invalidTime;
-        /**
-         * 作废人名称
-         */
-        private String invalidUserName;
-
-        /**
-         * 作废备注
-         */
-        private String invalidRemark;
 
         /**
          * 建议采购量
@@ -232,6 +229,16 @@ public class PurchaseSuggestMergeDTO implements Serializable {
          * 采购成本（系统）
          */
         private BigDecimal sysPurchaseCost;
+
+        /**
+         * 币种
+         */
+        private String currency;
+
+        /**
+         * 币种符号
+         */
+        private String currencySymbol;
         /**
          * 备注
          */
@@ -252,28 +259,31 @@ public class PurchaseSuggestMergeDTO implements Serializable {
          * 更新时间
          */
         private String updateTime;
-
         /**
-         * 父级id
-         */
-        private String parentId;
-
-        /**
-         * 来源idJsonArray
-         */
-        private JSONArray sourceIdJson;
-
-        /**
-         * 来源id，备货建议id
+         * 来源id
          */
         private String sourceId;
-
         /**
-         * bom版本
+         * 来源类型
          */
-        private String bomVersion;
+        private String sourceType;
+        /**
+         * 作废原因
+         */
+        private String invalidRemark;
+        /**
+         * 作废时间
+         */
+        private LocalDateTime invalidTime;
+        /**
+         * 作废人id
+         */
+        private String invalidUserId;
+        /**
+         * 作废人名称
+         */
+        private String invalidUserName;
     }
-
 
     /**
     * 详情
@@ -293,7 +303,7 @@ public class PurchaseSuggestMergeDTO implements Serializable {
         private String code;
 
         /**
-        * 创建类型
+        * 创建类型（auto系统，manual人工）
         */
         private String dataType;
 
@@ -343,59 +353,16 @@ public class PurchaseSuggestMergeDTO implements Serializable {
         private String invalidRemark;
 
         /**
-        * 来源idJsonArray
+        * 来源id
         */
-        private String sourceIdJson;
+        private String sourceId;
 
         /**
         * 来源类型
         */
         private String sourceType;
 
-        /**
-        * 币别
-        */
-        private String currency;
 
-        /**
-        * 平台类型
-        */
-        private String platformType;
-
-        /**
-        * 平台
-        */
-        private String platform;
-
-        /**
-        * 店铺id
-        */
-        private String shopId;
-
-        /**
-        * skuId
-        */
-        private String skuId;
-
-        /**
-        * 状态
-        */
-        private String status;
-
-        /**
-        * 计划采购量（计划修正值）
-        */
-        private Integer planPurchaseQty;
-
-        /**
-        * 采购备货量
-        */
-        private Integer purchaseStockUpQty;
-
-        /**
-        * 备注
-        */
-        private String remark;
     }
 
     /**
@@ -403,11 +370,9 @@ public class PurchaseSuggestMergeDTO implements Serializable {
     */
     @Data
     @NoArgsConstructor
-    public static class AddOrUpdateDTO extends CommonDTO {
-        /**
-         * 主键id
-         */
-        private String id;
+    public static class AddDTO extends CommonDTO {
+
+
     }
 
     /**
@@ -415,7 +380,7 @@ public class PurchaseSuggestMergeDTO implements Serializable {
     */
     @Data
     @NoArgsConstructor
-    public static class UpdateDTO {
+    public static class UpdateDTO  {
 
         /**
         * 主键id
@@ -424,41 +389,9 @@ public class PurchaseSuggestMergeDTO implements Serializable {
         private String id;
 
         /**
-         * 建议采购量
+         * 采购建议量
          */
         private Integer suggestPurchaseQty;
-
-        /**
-         * 建议采购日期
-         */
-        private LocalDate suggestPurchaseDate;
-
-        /**
-         * 物流方式
-         */
-        @Size(max = 64,message = "物流方式最大长度不能超过64位")
-        private String logisticsMethod;
-
-        /**
-         * 物流时效（天）
-         */
-        private Integer logisticsDays;
-
-        /**
-         * 预计入库日期
-         */
-        private LocalDate estimateInstockDate;
-
-        /**
-         * 预计可售日期
-         */
-        private LocalDate estimateSalesDate;
-
-        /**
-         * 采购成本
-         */
-        @Digits(integer = 12, fraction = 4, message = "采购成本整数位不能超过12位，小数位不能超过4位")
-        private BigDecimal purchaseCost;
 
         /**
          * 计划采购量（计划修正值）
@@ -471,11 +404,34 @@ public class PurchaseSuggestMergeDTO implements Serializable {
         private Integer purchaseStockUpQty;
 
         /**
+         * 物流方式
+         */
+        private String logisticsMethod;
+
+        /**
+         * 物流时效（天）
+         */
+        private Integer logisticsDays;
+
+        /**
+         * 建议采购日期
+         */
+        private LocalDate suggestPurchaseDate;
+
+        /**
+         * 预计入库日期
+         */
+        private LocalDate estimateInstockDate;
+        /**
+         * 预计可售日期
+         */
+        private LocalDate estimateSalesDate;
+
+        /**
          * 备注
          */
         @Size(max = 100,message = "备注最大长度不能超过100位")
         private String remark;
-
     }
 
     @Data
@@ -483,7 +439,7 @@ public class PurchaseSuggestMergeDTO implements Serializable {
     public static class CommonDTO {
 
         /**
-        * 创建类型
+        * 创建类型（auto系统，manual人工）
         */
         private String dataType;
 
@@ -496,6 +452,7 @@ public class PurchaseSuggestMergeDTO implements Serializable {
         /**
         * 建议采购日期
         */
+        @NotNull(message = "建议采购日期不能为空")
         private LocalDate suggestPurchaseDate;
 
         /**
@@ -524,96 +481,25 @@ public class PurchaseSuggestMergeDTO implements Serializable {
         /**
         * 采购成本
         */
-        @NotNull(message = "采购成本不能为空")
         @Digits(integer = 12, fraction = 4, message = "采购成本整数位不能超过12位，小数位不能超过4位")
         private BigDecimal purchaseCost;
 
         /**
-        * 来源idJsonArray
+        * 来源id
         */
-        @NotNull(message = "来源idJsonArray不能为空")
-        private JSONArray sourceIdJson;
+        @NotBlank(message = "来源id不能为空")
+        @Size(max = 19,message = "来源id最大长度不能超过19位")
+        private String sourceId;
 
         /**
-        * 来源类型
+        * 来源类型，replenishmentSuggestion补货建议
         */
         @NotBlank(message = "来源类型不能为空")
         @Size(max = 32,message = "来源类型最大长度不能超过32位")
         private String sourceType;
 
-        /**
-        * 币别
-        */
-        @NotBlank(message = "币别不能为空")
-        @Size(max = 32,message = "币别最大长度不能超过32位")
-        private String currency;
 
-        /**
-        * 平台类型
-        */
-        @NotBlank(message = "平台类型不能为空")
-        @Size(max = 32,message = "平台类型最大长度不能超过32位")
-        private String platformType;
-
-        /**
-        * 平台
-        */
-        @NotBlank(message = "平台不能为空")
-        @Size(max = 32,message = "平台最大长度不能超过32位")
-        private String platform;
-
-        /**
-        * 店铺id
-        */
-        @NotBlank(message = "店铺id不能为空")
-        @Size(max = 19,message = "店铺id最大长度不能超过19位")
-        private String shopId;
-
-        /**
-        * skuId
-        */
-        @NotBlank(message = "skuId不能为空")
-        @Size(max = 19,message = "skuId最大长度不能超过19位")
-        private String skuId;
-
-        /**
-        * 状态
-        */
-        @NotBlank(message = "状态不能为空")
-        @Size(max = 32,message = "状态最大长度不能超过32位")
-        private String status;
-
-        /**
-        * 计划采购量（计划修正值）
-        */
-        @NotNull(message = "计划采购量（计划修正值）不能为空")
-        private Integer planPurchaseQty;
-
-        /**
-        * 采购备货量
-        */
-        @NotNull(message = "采购备货量不能为空")
-        private Integer purchaseStockUpQty;
-
-        /**
-        * 备注
-        */
-        @NotBlank(message = "备注不能为空")
-        @Size(max = 255,message = "备注最大长度不能超过255位")
-        private String remark;
-
-        /**
-        * 采购建议id集合
-        */
-        @NotBlank(message = "采购建议id集合不能为空")
-        private String purchaseSuggestIdJson;
-
-        /**
-         * bom版本
-         */
-        private String bomVersion;
     }
-
     /**
      * 导入修改
      */
@@ -644,156 +530,4 @@ public class PurchaseSuggestMergeDTO implements Serializable {
         private String remark;
     }
 
-    /**
-     * 下推显示DTO
-     */
-    @Data
-    @NoArgsConstructor
-    public static class ViewPushDTO{
-        /**
-         * 申请人id
-         */
-        private String applyUserId;
-        /**
-         * 明细
-         */
-        private List<ViewPushDetailDTO> detailList;
-    }
-
-    /**
-     * 下推显示明细DTO
-     */
-    @Data
-    @NoArgsConstructor
-    public static class ViewPushDetailDTO {
-        /**
-         * skuId
-         */
-        private String skuId;
-        /**
-         * sku编码
-         */
-        private String skuNo;
-        /**
-         * 产品名称
-         */
-        private String productName;
-        /**
-         * 采购备货数
-         */
-        private Integer purchaseStockUpQty;
-        /**
-         * 单相数量
-         */
-        private Integer unitQty;
-        /**
-         * 申请数量
-         */
-        private Integer applyQty;
-        /**
-         * 来源信息
-         */
-        private List<ViewPushSourceDTO> sourceList;
-    }
-
-    /**
-     * 下推显示明细DTO
-     */
-    @Data
-    @NoArgsConstructor
-    public static class ViewPushSourceDTO {
-        /**
-         * id
-         */
-        private String id;
-        /**
-         * 编号
-         */
-        private String code;
-        /**
-         * 数量
-         */
-        private Integer qty;
-    }
-
-    /**
-     * 下推保存DTO
-     */
-    @Data
-    @NoArgsConstructor
-    public static class SavePushDTO {
-        /**
-         * 申请日期
-         */
-        @NotNull(message = "申请日期不能为空")
-        private LocalDate applyDate;
-        /**
-         * 申请人
-         */
-        private String applyUserId;
-        /**
-         * 是否新品首批，false否，true是
-         */
-        @NotNull(message = "是否新品首批不能为空")
-        private Boolean isFirstMassProduct;
-        /**
-         * 申请部门
-         */
-        private String applyDeptId;
-
-        /**
-         * 明细
-         */
-        @NotEmpty(message = "明细数据不能为空")
-        @Valid
-        private List<SavePushDetailDTO> detailList;
-    }
-
-    @Data
-    @NoArgsConstructor
-    public static class SavePushDetailDTO {
-        /**
-         * SKU*
-         */
-        @NotBlank(message = "sku不能为空")
-        private String skuId;
-        /**
-         * 仓库Id
-         */
-        @NotBlank(message = "目的仓库不能为空")
-        private String destWarehouseId;
-        /**
-         * 采购组织id
-         */
-        @NotBlank(message = "采购组织不能为空")
-        private String purchaseOrgId;
-        /**
-         * 是否加急
-         */
-        private Boolean isUrgent;
-        /**
-         * 计划交期
-         */
-        private LocalDate planDeliveryDate;
-        /**
-         * 备注
-         */
-        private String remark;
-        /**
-         * 来源信息
-         */
-        private List<SavePushSourceDTO> sourceList;
-    }
-
-    /**
-     * 保存id
-     */
-    @Data
-    @NoArgsConstructor
-    public static class SavePushSourceDTO {
-        /**
-         * 主键id
-         */
-        private String id;
-    }
 }

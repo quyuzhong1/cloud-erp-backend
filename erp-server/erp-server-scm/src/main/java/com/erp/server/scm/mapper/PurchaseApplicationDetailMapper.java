@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.erp.model.scm.dto.PurchaseApplicationDetailDTO;
 import com.erp.model.scm.entity.PurchaseApplicationDetailEntity;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
 
@@ -30,4 +31,12 @@ public interface PurchaseApplicationDetailMapper extends BaseMapper<PurchaseAppl
      * @author: jack
      */
     Integer existBySkuIds(List<String> skuIds);
+    /**
+     * 根据合并id集合查询合计数量
+     * @author will
+     * @date 2025/1/7 15:26
+     * @param purchaseMergeIdList 
+     * @return Integer
+     */
+    Integer countByMergeIdList(@Param("purchaseMergeIdList") List<String> purchaseMergeIdList);
 }

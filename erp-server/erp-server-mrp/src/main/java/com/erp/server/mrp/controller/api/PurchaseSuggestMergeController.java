@@ -28,14 +28,14 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * 建议采购(合并后)
+ * 建议采购(集中采购)
  *
  * @author will
  * @since 2024-10-21
  */
 @Slf4j
 @RestController
-@LogSystemModule("建议采购(合并后)")
+@LogSystemModule("建议采购(集中采购)")
 @RequestMapping("/purchaseSuggestMerge")
 public class PurchaseSuggestMergeController extends BaseController {
 
@@ -93,8 +93,8 @@ public class PurchaseSuggestMergeController extends BaseController {
      */
     @LogAction(value = LogActionEnum.IMPORT, desc = "导入采购计划（合并）")
     @PostMapping("/importPurchaseSuggestMerge")
-    public ApiResult<?> importPurchaseSuggestMerge(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
-        purchaseSuggestMergeService.importPurchaseSuggestMerge(excelFile, response);
+    public ApiResult<?> importPurchaseSuggestMerge(@RequestParam(value = "excelFile") MultipartFile excelFile,@RequestParam(value = "isMerge") Boolean isMerge, HttpServletResponse response) {
+        purchaseSuggestMergeService.importPurchaseSuggestMerge(excelFile,isMerge, response);
         return success();
     }
 
@@ -244,5 +244,31 @@ public class PurchaseSuggestMergeController extends BaseController {
     public ApiResult<List<DeliverySuggestDTO.PurchaseSuggestBomDTO>> listPurchaseSuggestBom(@RequestBody BaseIdDTO dto) {
         List<DeliverySuggestDTO.PurchaseSuggestBomDTO> list = purchaseSuggestMergeService.listPurchaseSuggestBom(dto.getId());
         return success(list);
+    }
+
+    /**
+     * 下推采购申请显示
+     * @author will
+     * @date 2025/1/7 10:05
+     * @param dto
+     * @return ApiResult<List<ViewPushDTO>>
+     */
+    @PostMapping(value = "/viewPushPurchaseApplication")
+    public ApiResult<PurchaseSuggestMergeDTO.ViewPushDTO> viewPushPurchaseApplication(@RequestBody BaseIdsDTO.IdsDTO dto) {
+        PurchaseSuggestMergeDTO.ViewPushDTO viewPushDTO = purchaseSuggestMergeService.viewPushPurchaseApplication(dto.getIds());
+        return success(viewPushDTO);
+    }
+
+    /**
+     * 下推保存
+     * @author will
+     * @date 2025/1/7 11:10
+     * @param dto
+     * @return ApiResult<?>
+     */
+    @PostMapping(value = "/savePushPurchaseApplication")
+    public ApiResult<?> savePushPurchaseApplication(@RequestBody @Validated PurchaseSuggestMergeDTO.SavePushDTO dto) {
+        purchaseSuggestMergeService.savePushPurchaseApplication(dto);
+        return success();
     }
 }
