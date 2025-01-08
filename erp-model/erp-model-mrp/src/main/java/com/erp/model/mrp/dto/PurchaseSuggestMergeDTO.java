@@ -309,6 +309,19 @@ public class PurchaseSuggestMergeDTO implements Serializable {
          * bom版本
          */
         private String bomVersion;
+
+        /**
+         * 是否下推
+         */
+        private Boolean isPush;
+        /**
+         * 是否下推名称
+         */
+        private String isPushName;
+        /**
+         * 采购申请单号
+         */
+        private String purchaseApplicationCode;
     }
 
 
@@ -730,7 +743,7 @@ public class PurchaseSuggestMergeDTO implements Serializable {
         /**
          * 来源信息
          */
-        private List<ViewPushSourceDTO> sourceList;
+        private List<PushSourceDTO> sourceList;
     }
 
     /**
@@ -738,7 +751,7 @@ public class PurchaseSuggestMergeDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
-    public static class ViewPushSourceDTO {
+    public static class PushSourceDTO {
         /**
          * id
          */
@@ -759,6 +772,10 @@ public class PurchaseSuggestMergeDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class SavePushDTO {
+        /**
+         * 是否提交审核
+         */
+        private Boolean isSubmit;
         /**
          * 申请日期
          */
@@ -819,18 +836,31 @@ public class PurchaseSuggestMergeDTO implements Serializable {
         /**
          * 来源信息
          */
-        private List<SavePushSourceDTO> sourceList;
+        private List<PushSourceDTO> sourceList;
     }
 
+
     /**
-     * 保存id
+     * 独立采购弹框信息
      */
     @Data
     @NoArgsConstructor
-    public static class SavePushSourceDTO {
+    public static class MergeFrameDTO {
         /**
-         * 主键id
+         * 编码
          */
-        private String id;
+        private String code;
+        /**
+         * 建议采购量
+         */
+        private Integer suggestPurchaseQty;
+        /**
+         * 计划修正数量
+         */
+        private Integer planDeliveryQty;
+        /**
+         * 采购备货数
+         */
+        private Integer purchaseStockUpQty;
     }
 }

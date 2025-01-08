@@ -283,6 +283,18 @@ public class PurchaseSuggestIndependentDTO implements Serializable {
          * 作废人名称
          */
         private String invalidUserName;
+        /**
+         * 是否下推
+         */
+        private Boolean isPush;
+        /**
+         * 是否下推名称
+         */
+        private String isPushName;
+        /**
+         * 采购申请单号
+         */
+        private String purchaseApplicationCode;
     }
 
     /**
@@ -500,34 +512,38 @@ public class PurchaseSuggestIndependentDTO implements Serializable {
 
 
     }
-    /**
-     * 导入修改
-     */
+
     @Data
     @NoArgsConstructor
-    public static class ImportUpdateDTO  {
+    public static class IndependentFrameDTO {
         /**
-         * id
+         * 编码
          */
-        @NotBlank(message = "主键id不能为空")
-        private String id;
+        private String code;
+        /**
+         * skuId
+         */
+        private String skuId;
+        /**
+         * sku
+         */
+        private String skuNo;
 
         /**
-         * 计划采购量（计划修正值）
+         * 系统建议值
          */
-        @NotNull(message = "计划修正值不能为空")
+        private Integer suggestPurchaseQty;
+        /**
+         * 计划修正数量
+         */
         private Integer planPurchaseQty;
-
         /**
          * 采购备货数
          */
-        @NotNull(message = "采购备货数不能为空")
         private Integer purchaseStockUpQty;
-
         /**
-         * 备注
+         * 说明（bom信息）
          */
-        private String remark;
+        private Integer msg;
     }
-
 }

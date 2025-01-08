@@ -80,5 +80,5 @@ public interface PurchaseApplicationDetailService extends SuperService<PurchaseA
      * @param purchaseMergeIdList
      * @return Integer
      */
-    Integer countByMergeIdList(List<String> purchaseMergeIdList);
+    List<PurchaseApplicationDetailDTO.PurchaseApplicationDTO> listByMergeIdList(List<String> purchaseMergeIdList);
 }

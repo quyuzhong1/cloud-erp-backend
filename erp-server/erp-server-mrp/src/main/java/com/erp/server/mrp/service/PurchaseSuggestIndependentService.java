@@ -52,4 +52,12 @@ public interface PurchaseSuggestIndependentService extends SuperService<Purchase
      * @return Boolean
      */
     Boolean export(DeliverySuggestDTO.PagingParamDTO pagingParamDTO);
+    /**
+     * 独立采购弹框
+     * @author will
+     * @date 2025/1/8 15:49
+     * @param id
+     * @return List<IndependentFrameDTO>
+     */
+    List<PurchaseSuggestIndependentDTO.IndependentFrameDTO> viewIndependentFrame( String id);
 }
