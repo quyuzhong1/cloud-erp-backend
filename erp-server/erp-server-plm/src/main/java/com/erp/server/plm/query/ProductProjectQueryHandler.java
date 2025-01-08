@@ -6,6 +6,7 @@ import com.common.business.enums.QueryConditionEnum;
 import com.common.business.enums.QueryDataTypeEnum;
 import com.common.business.query.AbstractQueryHandler;
 import com.common.business.threadlocal.AdvanceQueryContext;
+import com.common.business.utils.QueryUtils;
 import com.erp.model.plm.vo.ProductRefLabelVO;
 import com.erp.server.plm.service.ProductInfoService;
 import com.erp.server.plm.service.ProductRefLabelService;
@@ -30,17 +31,17 @@ public class ProductProjectQueryHandler extends AbstractQueryHandler {
 
     @Override
     protected String handleSqlLogic(String field, Object value, String compareCodeSplicingValueSql) {
+        // 类型
+        QueryConditionEnum queryConditionEnum = AdvanceQueryContext.getCompareCode();
+        // 值
+        List<String> sourceValueIds = QueryUtils.parseValueToStrList(value, queryConditionEnum);
         if ("label".equals(field)) {
             if (null == value){
                 return this.getQueryAllSql();
             }
-            List<String> labelIds = JSONArray.parseArray(JSON.toJSONString(value))
-                    .stream().map(Object::toString)
-                    .distinct()
-                    .collect(Collectors.toList());
             List<String> labelProductIds = null;
-            if (!CollectionUtils.isEmpty(labelIds)) {
-                List<ProductRefLabelVO> productRefLabelVOS = productRefLabelService.getLabelListByIds(null, new HashSet<>(labelIds), null);
+            if (!CollectionUtils.isEmpty(sourceValueIds)) {
+                List<ProductRefLabelVO> productRefLabelVOS = productRefLabelService.getLabelListByIds(null, new HashSet<>(sourceValueIds), null);
                 if (!CollectionUtils.isEmpty(productRefLabelVOS)) {
                     labelProductIds = productRefLabelVOS.stream().map(ProductRefLabelVO::getProductId).collect(Collectors.toList());
                 } else {
@@ -49,26 +50,11 @@ public class ProductProjectQueryHandler extends AbstractQueryHandler {
                 }
             }
             if (!CollectionUtils.isEmpty(labelProductIds)){
-                super.buildSplicingSQLDTO("pi.id", QueryConditionEnum.IN_LIST, labelProductIds, QueryDataTypeEnum.STRING);
-            }
-            return super.getSplicingSQL();
-        }
-        // 类型
-        QueryConditionEnum queryConditionEnum = AdvanceQueryContext.getCompareCode();
-        // 值
-        List<String> sourceValueIds = new ArrayList<>();
-        if (QueryConditionEnum.EQ.equals(queryConditionEnum) || QueryConditionEnum.NE.equals(queryConditionEnum)){
-            if(null != value){
-                sourceValueIds = Collections.singletonList(value.toString());
-            }
-        }
-        if (QueryConditionEnum.IN_LIST.equals(queryConditionEnum) || QueryConditionEnum.NOT_IN_LIST.equals(queryConditionEnum)){
-            if(null != value) {
-                sourceValueIds = JSONArray.parseArray(JSON.toJSONString(value))
-                        .stream()
-                        .map(Object::toString)
-                        .distinct()
-                        .collect(Collectors.toList());
+                if (QueryConditionEnum.EQ.equals(queryConditionEnum) || QueryConditionEnum.IN_LIST.equals(queryConditionEnum)) {
+                    super.buildSplicingSQLDTO("pi.id", QueryConditionEnum.IN_LIST, labelProductIds, QueryDataTypeEnum.STRING);
+                } else {
+                    super.buildSplicingSQLDTO("pi.id", QueryConditionEnum.NOT_IN_LIST, labelProductIds, QueryDataTypeEnum.STRING);
+                }
             }
         }
 
