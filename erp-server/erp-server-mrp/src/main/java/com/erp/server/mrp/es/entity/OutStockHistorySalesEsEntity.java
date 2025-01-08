@@ -19,10 +19,10 @@ import java.time.LocalDate;
 public class OutStockHistorySalesEsEntity extends BaseEsEntity {
 
     /**
-     * 建议 id
+     * sku id + 店铺id
      */
     @Field(type = FieldType.Keyword)
-    private String replenishmentId;
+    private String shopSkuId;
     /**
      * sku id
      */
@@ -50,10 +50,10 @@ public class OutStockHistorySalesEsEntity extends BaseEsEntity {
     @Field(type = FieldType.Keyword)
     private String orderType;
 
-    public static OutStockHistorySalesEsEntity createOutStockHistorySales(String replenishmentId, LocalDate billDate, Integer qty, String skuId, String shopId) {
+    public static OutStockHistorySalesEsEntity createOutStockHistorySales(LocalDate billDate, Integer qty, String skuId, String shopId) {
         OutStockHistorySalesEsEntity entity = new OutStockHistorySalesEsEntity();
         entity.setId(IdWorker.getIdStr());
-        entity.setReplenishmentId(replenishmentId);
+        entity.setShopSkuId(shopId + "-" + skuId);
         entity.setDate(billDate);
         entity.setOriginalSalesQty(qty);
         entity.setSkuId(skuId);

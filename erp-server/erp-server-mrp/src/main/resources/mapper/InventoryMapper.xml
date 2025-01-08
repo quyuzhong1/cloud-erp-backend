@@ -9,65 +9,99 @@
         GROUP BY sku_no, warehouse_id
     </select>
     <select id="getFbaShipment"
-            resultType="com.erp.model.mrp.dto.ReplenishmentResultDTO$FbaInTransitDetailDTO">
-        select t1.ID                                AS sourceId,
-               t1.code                              AS sourceCode,
-               'fbaShipment'                             AS sourceType,
-               t1.delivery_status                   AS status,
-               t2.declare_qty                       AS declareQty,
-               t2.delivery_qty                      AS deliveryQty,
-               t2.receive_qty                       AS receiveQty,
-               t2.delivery_qty - t2.receive_qty     AS inTransitQty,
-               #{result.replenishmentDetail.calcVersion} AS calcVersion
-        from ${tableName} t1
-                 INNER JOIN
-             ${tableDetailName} t2 on t2.is_deleted = false and t2.main_id = t1.id
-        where t1.is_deleted = false
-          and t2.sku_id = #{result.replenishment.skuId}
-          and t1.shop_id = #{result.replenishment.shopId}
-          and (t2.delivery_qty - t2.receive_qty) > 0
-          and t1.delivery_status = 'shipped'
+            resultType="com.erp.model.mrp.dto.ReplenishmentInventoryDTO$FbaInTransitDTO">
+        SELECT
+            t2.sku_id,
+            t1.shop_id,
+            MAX ( t1.id ) AS sourceId,
+            MAX ( t1.code ) AS sourceCode,
+            'fbaShipment' AS sourceType,
+            MAX ( t1.delivery_status ) AS status,
+            SUM ( t2.declare_qty ) AS declareQty,
+            SUM ( t2.delivery_qty ) AS deliveryQty,
+            SUM ( t2.receive_qty ) AS receiveQty,
+            SUM ( t2.delivery_qty - t2.receive_qty ) AS inTransitQty
+        FROM
+            ${tableName} t1
+                INNER JOIN ${tableDetailName} t2 ON t2.is_deleted = FALSE
+                AND t2.main_id = t1.id
+        WHERE
+            t1.is_deleted = FALSE
+          AND ( t2.delivery_qty - t2.receive_qty ) > 0
+          AND t1.delivery_status = 'shipped'
+        GROUP BY
+            t2.sku_id,
+            t1.shop_id
     </select>
     <select id="getFbaDelivery"
-            resultType="com.erp.model.mrp.dto.ReplenishmentResultDTO$FbaInTransitDetailDTO">
-        select t1.id                                                            as sourceId,
-               t1.code                                                          as sourceCode,
-               'firstMileDelivery'                                              as sourceType,
-               t1.approve_status                                                as status,
-               t1.approve_time                                                  as deliveryDate,
-               t2.delivery_qty                                                  as deliveryQty,
-               COALESCE(
-                       (SELECT SUM
-                               (t4.receive_qty)
-                        FROM ${shipmentName} t3
-                                 INNER JOIN ${shipmentDetailName} t4 ON t4.is_deleted = FALSE
-                            AND t4.main_id = t3.id
-                            AND t3.code = t2.fba_shipment_code
-                            AND t4.sku_id = #{result.replenishment.skuId}), 0)  AS receiveQty,
-               (t2.delivery_qty - COALESCE(
-                       (SELECT SUM
-                               (t4.receive_qty)
-                        FROM ${shipmentName} t3
-                                 INNER JOIN ${shipmentDetailName} t4 ON t4.is_deleted = FALSE
-                            AND t4.main_id = t3.id
-                            AND t3.code = t2.fba_shipment_code
-                            AND t4.sku_id = #{result.replenishment.skuId}), 0)) as inTransitQty,
-               #{result.replenishmentDetail.calcVersion}                        as calcVersion
-        from ${tableName} t1
-                 INNER JOIN
-             ${tableDetailName} t2 on t2.is_deleted = false and t2.main_id = t1.id
-        where t1.is_deleted = false
-          and t2.sku_id = #{result.replenishment.skuId}
-          and t1.shop_id = #{result.replenishment.shopId}
-          and t1.approve_status = 'approve'
-          and (t2.delivery_qty - COALESCE(
-                (SELECT SUM
-                        (t4.receive_qty)
-                 FROM ${shipmentName} t3
-                          INNER JOIN ${shipmentDetailName} t4 ON t4.is_deleted = FALSE
-                     AND t4.main_id = t3.id
-                     AND t3.code = t2.fba_shipment_code
-                     AND t4.sku_id = #{result.replenishment.skuId}), 0)) > 0
+            resultType="com.erp.model.mrp.dto.ReplenishmentInventoryDTO$FbaInTransitDTO">
+
+        SELECT
+            t2.sku_id,
+            t1.shop_id,
+            MAX ( t1.ID ) AS sourceId,
+            MAX ( t1.code ) AS sourceCode,
+            'firstMileDelivery' AS sourceType,
+            MAX ( t1.approve_status ) AS status,
+            MAX ( t1.approve_time ) AS deliveryDate,
+            SUM ( t2.delivery_qty ) AS deliveryQty,
+            SUM (
+                    COALESCE (
+                            (
+                                SELECT SUM
+                                       ( t4.receive_qty )
+                                FROM
+                                    ${shipmentName} t3
+                                        INNER JOIN ${shipmentDetailName} t4 ON t4.is_deleted = FALSE
+                                        AND t4.main_id = t3.ID
+                                        AND t3.code = t2.fba_shipment_code
+                                        AND t4.sku_id = t2.sku_id
+                            ),
+                            0
+                    )
+            ) AS receiveQty,
+            SUM (
+                    (
+                        t2.delivery_qty - COALESCE (
+                                (
+                                    SELECT SUM
+                                           ( t4.receive_qty )
+                                    FROM
+                                        ${shipmentName} t3
+                                            INNER JOIN ${shipmentDetailName} t4 ON t4.is_deleted = FALSE
+                                            AND t4.main_id = t3.ID
+                                            AND t3.code = t2.fba_shipment_code
+                                            AND t4.sku_id = t2.sku_id
+                                ),
+                                0
+                                          )
+                        )
+            ) AS inTransitQty
+        FROM
+            ${tableName} t1
+                INNER JOIN ${tableDetailName} t2 ON t2.is_deleted = FALSE
+                AND t2.main_id = t1.ID
+        WHERE
+            t1.is_deleted = FALSE
+          AND t1.approve_status = 'approve'
+          AND (
+                  t2.delivery_qty - COALESCE (
+                          (
+                              SELECT SUM
+                                     ( t4.receive_qty )
+                              FROM
+                                  ${shipmentName} t3
+                                      INNER JOIN ${shipmentDetailName} t4 ON t4.is_deleted = FALSE
+                                      AND t4.main_id = t3.ID
+                                      AND t3.code = t2.fba_shipment_code
+                                      AND t4.sku_id = t2.sku_id
+                          ),
+                          0
+                                    )
+                  ) > 0
+        GROUP BY
+            t2.sku_id,
+            t1.shop_id
     </select>
     <select id="getLogisticsBillBySourceIds" resultType="com.erp.model.tms.entity.LogisticsBillEntity">
         select source_id,order_time from ${tableName} where is_deleted = false

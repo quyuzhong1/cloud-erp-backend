@@ -727,8 +727,7 @@ public class ReplenishmentSuggestionController extends BaseController {
      */
     @GetMapping("/cleanHistorySalesByOrder")
     public ApiResult<String> cleanHistorySalesByOrder(@RequestParam String platformType, @RequestParam Integer cleanDay) {
-        List<ReplenishmentSuggestionEntity> suggestionList = replenishmentSuggestionService.listByPlatform(platformType);
-        basicReplenishmentDataService.cleanHistorySalesByOrder(LocalDate.now(), suggestionList, CfgRulePlatformTypeEnum.getEnum(platformType), cleanDay);
+        basicReplenishmentDataService.cleanHistorySalesByOrder(LocalDate.now(), CfgRulePlatformTypeEnum.getEnum(platformType), cleanDay);
         return success();
     }
 
@@ -739,8 +738,7 @@ public class ReplenishmentSuggestionController extends BaseController {
      */
     @GetMapping("/cleanHistorySalesByOutStock")
     public ApiResult<String> cleanHistorySalesByOutStock(@RequestParam String platformType, @RequestParam Integer cleanDay) {
-        List<ReplenishmentSuggestionEntity> suggestionList = replenishmentSuggestionService.listByPlatform(platformType);
-        basicReplenishmentDataService.cleanHistorySalesByOutStock(LocalDate.now(), suggestionList, CfgRulePlatformTypeEnum.getEnum(platformType), cleanDay);
+        basicReplenishmentDataService.cleanHistorySalesByOutStock(LocalDate.now(), CfgRulePlatformTypeEnum.getEnum(platformType), cleanDay);
         return success();
     }
 
