@@ -373,14 +373,15 @@ public class DmpOutputErpPushTaskHandler extends DmpOutputTaskHandler{
 	 * 校验数据是否删除处理
 	 */
 	private String isDeletedHandler(List<DmpOutputTaskRecordEntity> list, String sourceCode) {
-		DmpOutputTaskRecordEntity taskRecordEntity = list.stream().filter(req -> DmpOutputTaskRecordStatusEnum.FINISH.getCode().equals(req.getStatus())).findFirst().orElse(null);
-		if (ObjectUtil.isNotEmpty(taskRecordEntity)) {
+		DmpOutputTaskRecordEntity taskRecordEntity = list.stream().filter(req -> DmpOutputTaskRecordStatusEnum.FINISH.getCode().equals(req.getStatus()) && req.getIsNeedSync()).findFirst().orElse(null);
+		if (ObjectUtil.isNotEmpty(taskRecordEntity) && !taskRecordEntity.getRequestData().contains("isQuerySync")) {
 			ShudiyunB2cOrderDTO shudiyunB2cOrderDTO1 = JSON.parseObject(taskRecordEntity.getRequestData(), ShudiyunB2cOrderDTO.class);
 			shudiyunB2cOrderDTO1.setStatus("已删除");
 			return JSON.toJSONString(shudiyunB2cOrderDTO1);
 		} else {
 			dmpOutputTaskRecordService.lambdaUpdate()
 					.set(DmpOutputTaskRecordEntity::getStatus, DmpOutputTaskRecordStatusEnum.FINISH.getCode())
+					.set(DmpOutputTaskRecordEntity::getIsNeedSync, Boolean.FALSE)
 					.eq(DmpOutputTaskRecordEntity::getSourceCode, sourceCode)
 					.update();
 			return "";
