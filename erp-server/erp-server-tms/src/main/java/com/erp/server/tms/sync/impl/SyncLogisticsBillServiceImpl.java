@@ -56,6 +56,7 @@ public class SyncLogisticsBillServiceImpl implements SyncLogisticsBillService {
         //默认运单
         shudiyunB2cOrderDTO.setTransaction_type("运单");
         shudiyunB2cOrderDTO.setTransaction_sub_type("普通运单");
+
         shudiyunB2cOrderDTO.setBiz_status(LogisticTrackStatusEnum.getName(logisticsBillDetailEntity.getTrackStatus()));
         if (entity.getVersion() == null) {
             entity.setVersion(0);

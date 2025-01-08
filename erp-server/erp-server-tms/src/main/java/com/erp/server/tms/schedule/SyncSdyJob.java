@@ -1,6 +1,7 @@
 package com.erp.server.tms.schedule;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
@@ -85,8 +86,12 @@ public class SyncSdyJob {
             }
 
             for (LogisticsBillEntity entity : list) {
-                List<LogisticsBillDetailEntity> detailEntityList = billDetailEntities.stream().filter(req -> req.getMainId().equals(entity.getId())).collect(Collectors.toList());
-                syncLogisticsBillService.syncDataToSdy(entity, detailEntityList, SyncOperateEnum.OPERATE_APPROVE.getCode(), logisticsChannelEntities, logisticsSupplierEntities);
+                List<LogisticsBillDetailEntity> detailEntityList = billDetailEntities.stream()
+                        .filter(req -> req.getMainId().equals(entity.getId()) && CharSequenceUtil.isNotBlank(req.getTrackStatus()))
+                        .collect(Collectors.toList());
+                if (CollUtil.isNotEmpty(detailEntityList)) {
+                    syncLogisticsBillService.syncDataToSdy(entity, detailEntityList, SyncOperateEnum.OPERATE_APPROVE.getCode(), logisticsChannelEntities, logisticsSupplierEntities);
+                }
             }
             currentPage++;
             XxlJobHelper.log("===========当前页数：" + currentPage + "结束时间：" + LocalDateTime.now());
