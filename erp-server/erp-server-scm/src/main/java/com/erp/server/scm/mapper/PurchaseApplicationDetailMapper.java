@@ -38,5 +38,5 @@ public interface PurchaseApplicationDetailMapper extends BaseMapper<PurchaseAppl
      * @param purchaseMergeIdList 
      * @return Integer
      */
-    Integer countByMergeIdList(@Param("purchaseMergeIdList") List<String> purchaseMergeIdList);
+    List<PurchaseApplicationDetailDTO.PurchaseApplicationDTO> listByMergeIdList(@Param("purchaseMergeIdList") List<String> purchaseMergeIdList);
 }

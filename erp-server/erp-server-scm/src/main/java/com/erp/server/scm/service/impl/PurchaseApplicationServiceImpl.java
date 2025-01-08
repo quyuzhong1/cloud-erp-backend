@@ -1,9 +1,9 @@
 package com.erp.server.scm.service.impl;
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
-import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
+import cn.hutool.core.util.ObjUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.excel.EasyExcelFactory;
 import com.alibaba.excel.exception.ExcelCommonException;
@@ -30,6 +30,7 @@ import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.FastDFSClientUtil;
 import com.common.core.utils.MathUtil;
+import com.erp.model.mrp.dto.PurchaseSuggestMergeDTO;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.dto.SkuPurchaseDTO;
 import com.erp.model.plm.enums.BomTypeEnum;
@@ -224,6 +225,15 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean update(PurchaseApplicationDTO.UpdateDTO dto) {
+        //操作日志
+        PurchaseApplicationEntity old = this.getById(dto.getId());
+        if (ObjUtil.isEmpty(old)) {
+            throw new ServiceException(ApiError.ERROR_98004);
+        }
+        if (SourceTypeEnum.PURCHASE_SUGGESTION_MERGE.getCode().equals(dto.getSourceType())) {
+            throw new ServiceException("补货建议下推采购申请不支持更新");
+        }
+
         PurchaseApplicationEntity entity = new PurchaseApplicationEntity();
         BeanMapperUtils.copy(dto,entity);
 
@@ -234,8 +244,7 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
 
         log.info("采购申请单修改，id=【{}】", dto.getId());
 
-        //操作日志
-        PurchaseApplicationEntity old = this.getById(dto.getId());
+
         moduleOperateLogService.addModuleOperateLogByObj(old,entity,ModuleTypeEnum.PURCHASE_APPLICATION.getCode(),entity.getId(),"","");
         //更新主表数据
         this.updateById(entity);
@@ -1322,6 +1331,12 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
             }
             if(isExport){
                 obj.setIsFirstMassProductStr(obj.getIsFirstMassProduct()?"是":"否");
+            }
+            //采购建议数据
+            if (SourceTypeEnum.PURCHASE_SUGGESTION_MERGE.getCode().equals(obj.getSourceType())) {
+                List<PurchaseSuggestMergeDTO.PushSourceDTO> pushSourceList = BeanUtil.copyToList(obj.getSourceJson(), PurchaseSuggestMergeDTO.PushSourceDTO.class);
+                String codes = pushSourceList.stream().map(PurchaseSuggestMergeDTO.PushSourceDTO::getCode).distinct().collect(Collectors.joining(","));
+                obj.setSourceCode(codes);
             }
         }
     }

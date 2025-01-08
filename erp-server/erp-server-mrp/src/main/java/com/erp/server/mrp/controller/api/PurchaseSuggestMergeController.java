@@ -286,4 +286,16 @@ public class PurchaseSuggestMergeController extends BaseController {
         return success();
     }
 
+    /**
+     * 合并采购弹框
+     * @author will
+     * @date 2025/1/8 15:22
+     * @param dto
+     * @return ApiResult<ViewPushDTO>
+     */
+    @PostMapping(value = "/viewMergeFrame")
+    public ApiResult<List<PurchaseSuggestMergeDTO.MergeFrameDTO>> viewMergeFrame(@RequestBody BaseIdDTO dto) {
+        List<PurchaseSuggestMergeDTO.MergeFrameDTO> list = purchaseSuggestMergeService.viewMergeFrame(dto.getId());
+        return success(list);
+    }
 }

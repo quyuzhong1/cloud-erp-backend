@@ -2,6 +2,7 @@ package com.erp.server.mrp.controller.api;
 
 
 import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
@@ -78,5 +79,18 @@ public class PurchaseSuggestIndependentController extends BaseController {
     public ApiResult export(@RequestBody DeliverySuggestDTO.PagingParamDTO pagingParamDTO) {
         Boolean flag = purchaseSuggestIndependentService.export(pagingParamDTO);
         return flag == true ? success() : failure();
+    }
+
+    /**
+     * 独立采购弹框
+     * @author will
+     * @date 2025/1/8 15:22
+     * @param dto
+     * @return ApiResult<ViewPushDTO>
+     */
+    @PostMapping(value = "/viewIndependentFrame")
+    public ApiResult<List<PurchaseSuggestIndependentDTO.IndependentFrameDTO>> viewIndependentFrame(@RequestBody BaseIdDTO dto) {
+        List<PurchaseSuggestIndependentDTO.IndependentFrameDTO> list = purchaseSuggestIndependentService.viewIndependentFrame(dto.getId());
+        return success(list);
     }
 }

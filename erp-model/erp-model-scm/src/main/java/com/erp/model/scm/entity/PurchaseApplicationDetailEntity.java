@@ -4,6 +4,7 @@ import cn.hutool.json.JSONArray;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
+import com.erp.model.mrp.dto.PurchaseSuggestMergeDTO;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
@@ -166,15 +167,17 @@ public class PurchaseApplicationDetailEntity extends BaseEntity<PurchaseApplicat
     private String sourceDetailId;
 
     /**
-     * 合并idjson
+     * 采购建议合并表idjson
      */
-    @TableField(value = "merge_id_json", jdbcType = JdbcType.OTHER)
-    private JSONArray mergeIdJson;
+    @TableField(value = "source_json", jdbcType = JdbcType.OTHER)
+    private JSONArray sourceJson;
 
-
+    /**
+     * 采购建议合并id集合
+     */
     @TableField(exist = false)
-    private List<String> mergeIdList;
-    
+    private List<PurchaseSuggestMergeDTO.PushSourceDTO> sourceJsonList;
+
     public static final String PURCHASE_APPLICATION_ID = "purchase_application_id";
 
     public static final String SKU_ID = "sku_id";

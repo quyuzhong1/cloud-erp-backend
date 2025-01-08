@@ -1,5 +1,6 @@
 package com.erp.server.scm.controller.feign;
 
+import com.erp.model.scm.dto.PurchaseApplicationDetailDTO;
 import com.erp.model.scm.entity.PurchaseApplicationDetailEntity;
 import com.erp.server.scm.service.PurchaseApplicationDetailService;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -53,9 +54,9 @@ public class PurchaseApplicationDetailFeignController {
      * @param purchaseMergeIdList
      * @return Integer
      */
-    @PostMapping("/countByMergeIdList")
-    private Integer countByMergeIdList(@RequestBody List<String> purchaseMergeIdList){
-        return purchaseApplicationDetailService.countByMergeIdList(purchaseMergeIdList);
+    @PostMapping("/listByMergeIdList")
+    private List<PurchaseApplicationDetailDTO.PurchaseApplicationDTO> listByMergeIdList(@RequestBody List<String> purchaseMergeIdList){
+        return purchaseApplicationDetailService.listByMergeIdList(purchaseMergeIdList);
     }
 
 }

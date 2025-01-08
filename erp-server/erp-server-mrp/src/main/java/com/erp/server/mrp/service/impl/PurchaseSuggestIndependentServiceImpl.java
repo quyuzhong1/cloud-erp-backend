@@ -2,6 +2,7 @@ package com.erp.server.mrp.service.impl;
 
 
 import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -10,6 +11,7 @@ import com.common.business.enums.FileTaskEventEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
 import com.common.business.wrapper.FeignQuery;
+import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.erp.model.mrp.dto.DeliverySuggestDTO;
 import com.erp.model.mrp.dto.PurchaseSuggestIndependentDTO;
@@ -21,10 +23,15 @@ import com.erp.model.mrp.enums.SuggestStatusEnum;
 import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
+import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
+import com.erp.model.plm.enums.BomTypeEnum;
+import com.erp.model.scm.dto.PurchaseApplicationDetailDTO;
 import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.wms.enums.LogisticsMethodEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
+import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.rpc.scm.feign.PurchaseApplicationDetailFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.mrp.mapper.PurchaseSuggestIndependentMapper;
 import com.erp.server.mrp.service.PurchaseSuggestIndependentService;
@@ -33,9 +40,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -58,6 +63,11 @@ public class PurchaseSuggestIndependentServiceImpl extends SuperServiceImpl<Purc
     @Resource
     private SysUserFeign sysUserFeign;
 
+    @Resource
+    private PlmTaskFeign plmTaskFeign;
+
+    @Resource
+    private PurchaseApplicationDetailFeign purchaseApplicationDetailFeign;
 
     @Override
     public List<PurchaseSuggestIndependentDTO.ListDTO> list(PurchaseSuggestIndependentDTO.ListParamDTO params) {
@@ -90,6 +100,39 @@ public class PurchaseSuggestIndependentServiceImpl extends SuperServiceImpl<Purc
     public Boolean export(DeliverySuggestDTO.PagingParamDTO pagingParamDTO) {
         downloadTaskFeign.saveDownloadTask("采购建议", FileTaskEventEnum.EXPORT_MRP_PURCHASE_SUGGESTION_ENTITY.getCode(), pagingParamDTO);
         return Boolean.TRUE;
+    }
+
+    @Override
+    public List<PurchaseSuggestIndependentDTO.IndependentFrameDTO> viewIndependentFrame(String id) {
+        PurchaseSuggestMergeEntity suggestMergeEntity = this.getById(id);
+        if (ObjectUtil.isEmpty(suggestMergeEntity) || suggestMergeEntity.getIsMerge()) {
+            throw new ServiceException(ApiError.ERROR_98004);
+        }
+        List<BomChildrenSkuDTO> bomChildrenSkuList = plmTaskFeign.listBomChildBySkuIds(Arrays.asList(id));
+        bomChildrenSkuList = bomChildrenSkuList.stream().filter(v-> BomTypeEnum.COMBINATION.getType().equals(v.getType())).collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(bomChildrenSkuList)) {
+            throw new ServiceException("选择数据非组合品");
+        }
+        List<PurchaseSuggestIndependentDTO.IndependentFrameDTO> mergeFrameDTOList = new ArrayList<>();
+        PurchaseSuggestIndependentDTO.IndependentFrameDTO parentDTO = new PurchaseSuggestIndependentDTO.IndependentFrameDTO();
+        parentDTO.setCode(suggestMergeEntity.getCode());
+        parentDTO.setSkuId(suggestMergeEntity.getSkuId());
+        parentDTO.setSkuNo(bomChildrenSkuList.get(0).getParentSkuNo());
+        parentDTO.setSuggestPurchaseQty(suggestMergeEntity.getSuggestPurchaseQty());
+        parentDTO.setPlanPurchaseQty(suggestMergeEntity.getPlanPurchaseQty());
+        parentDTO.setPurchaseStockUpQty(suggestMergeEntity.getPurchaseStockUpQty());
+        mergeFrameDTOList.add(parentDTO);
+        for (BomChildrenSkuDTO bomChildrenSkuDTO : bomChildrenSkuList) {
+            PurchaseSuggestIndependentDTO.IndependentFrameDTO resultDTO = new PurchaseSuggestIndependentDTO.IndependentFrameDTO();
+            resultDTO.setCode(suggestMergeEntity.getCode());
+            resultDTO.setSkuId(bomChildrenSkuDTO.getSkuId());
+            resultDTO.setSkuNo(bomChildrenSkuDTO.getSkuNo());
+            resultDTO.setSuggestPurchaseQty(suggestMergeEntity.getSuggestPurchaseQty() * bomChildrenSkuDTO.getQuantity());
+            resultDTO.setPlanPurchaseQty(suggestMergeEntity.getPlanPurchaseQty() * bomChildrenSkuDTO.getQuantity());
+            resultDTO.setPurchaseStockUpQty(suggestMergeEntity.getPurchaseStockUpQty() * bomChildrenSkuDTO.getQuantity());
+            mergeFrameDTOList.add(resultDTO);
+        }
+        return mergeFrameDTOList;
     }
 
     /**
@@ -160,6 +203,10 @@ public class PurchaseSuggestIndependentServiceImpl extends SuperServiceImpl<Purc
         List<String> shopIdList = list.stream().map(PurchaseSuggestIndependentDTO.ListDTO::getShopId).distinct().collect(Collectors.toList());
         List<ShopInfoEntity> shopList = FeignQuery.getByIds(ShopInfoEntity.class, shopIdList);
 
+        //采购申请单信息
+        List<String> ids = list.stream().filter(obj -> CharSequenceUtil.equals(obj.getStatus(), SuggestStatusEnum.FINISH.getCode())).map(PurchaseSuggestIndependentDTO.ListDTO::getId).distinct().collect(Collectors.toList());
+        List<PurchaseApplicationDetailDTO.PurchaseApplicationDTO> purchaseApplicationList = purchaseApplicationDetailFeign.listByMergeIdList(ids);
+
         for (PurchaseSuggestIndependentDTO.ListDTO listDTO : list) {
 
             //币别
@@ -183,6 +230,18 @@ public class PurchaseSuggestIndependentServiceImpl extends SuperServiceImpl<Purc
             //店铺名称
             String shopName = shopList.stream().filter(obj -> StrUtil.equals(obj.getId(), listDTO.getShopId())).map(ShopInfoEntity::getName).findFirst().orElse("");
             listDTO.setShopName(shopName);
+
+            //采购申请
+            PurchaseApplicationDetailDTO.PurchaseApplicationDTO purchaseApplicationDTO = purchaseApplicationList.stream().filter(obj ->
+                ObjectUtil.isNotEmpty(obj.getMergeIdJson())).findFirst().orElse(null);
+            if (ObjectUtil.isNotEmpty(purchaseApplicationDTO)) {
+                listDTO.setPurchaseApplicationCode(purchaseApplicationDTO.getCode());
+                listDTO.setIsPush(Boolean.TRUE);
+                listDTO.setIsPushName("已下推");
+            } else {
+                listDTO.setIsPush(Boolean.FALSE);
+                listDTO.setIsPushName("未下推");
+            }
         }
     }
 }
