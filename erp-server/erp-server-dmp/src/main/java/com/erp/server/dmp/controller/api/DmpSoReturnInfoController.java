@@ -117,4 +117,8 @@ public class DmpSoReturnInfoController extends BaseController {
         return success();
     }
 
+    @PostMapping("/sdyReturnOrderUpdate")
+    public void sdyReturnOrderUpdate() {
+        dmpSoReturnInfoService.sdyReturnOrderUpdate();
+    }
 }
