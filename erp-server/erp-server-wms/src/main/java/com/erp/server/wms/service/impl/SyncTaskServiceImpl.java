@@ -1133,6 +1133,8 @@ public class SyncTaskServiceImpl implements SyncTaskService {
         }
         List<DictBasicEntity> dictBasicEntityList = FeignQuery.create(DictBasicEntity.class).eq(DictBasicEntity::getType, DictBasicTypeEnum.SALES_PLATFORM.getType()).list();
 
+        List<String> platformTypeList = customerInfoList.stream().map(req -> req.getPlatformType()).distinct().collect(Collectors.toList());
+        List<DictBasicEntity> dictList = FeignQuery.create(DictBasicEntity.class).eq(DictBasicEntity::getType, "sdySubPlatform").in(DictBasicEntity::getName, platformTypeList).list();
 
         for (DmpSyncMqDTO.SyncParamDetailDTO syncParamDetailDTO :  sourceDetailList) {
             String sourceId = syncParamDetailDTO.getSourceId();
@@ -1156,7 +1158,8 @@ public class SyncTaskServiceImpl implements SyncTaskService {
                     parentSkuList,
                     soB2cEntities,
                     soInfoEntities,
-                    dictBasicEntityList));
+                    dictBasicEntityList,
+                    dictList));
         }
         return resultList;
     }

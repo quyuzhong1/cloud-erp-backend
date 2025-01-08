@@ -72,6 +72,8 @@ public class SdyDataSyncJob {
     private SoReturnFeign soReturnFeign;
     @Resource
     private SoReturnReceiveService soReturnReceiveService;
+    @Resource
+    private DictBasicService dictBasicService;
 
     @XxlJob("syncSdySoOutstock")
     public void syncSdySoOutstock() {
@@ -159,6 +161,9 @@ public class SdyDataSyncJob {
             }
             List<DictBasicEntity> dictBasicEntityList = FeignQuery.create(DictBasicEntity.class).eq(DictBasicEntity::getType, DictBasicTypeEnum.SALES_PLATFORM.getType()).list();
 
+            List<String> platformTypeList = customerInfoList.stream().map(req -> req.getPlatformType()).distinct().collect(Collectors.toList());
+            List<DictBasicEntity> dictList = FeignQuery.create(DictBasicEntity.class).eq(DictBasicEntity::getType, "sdySubPlatform").in(DictBasicEntity::getName, platformTypeList).list();
+
             for (SoOutstockEntity soOutstockEntity : list) {
                 List<SoOutstockDetailEntity> detailEntityList = soOutstockDetailEntityList.stream().filter(req -> req.getMainId().equals(soOutstockEntity.getId())).collect(Collectors.toList());
                 syncKingdeeSoOutstockService.syncDataToSdy(soOutstockEntity,
@@ -173,7 +178,8 @@ public class SdyDataSyncJob {
                         parentSkuList,
                         soB2cEntities,
                         soInfoEntities,
-                        dictBasicEntityList);
+                        dictBasicEntityList,
+                        dictList);
             }
 
             currentPage++;
