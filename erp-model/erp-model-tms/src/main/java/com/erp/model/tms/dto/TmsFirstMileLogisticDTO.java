@@ -1360,6 +1360,11 @@ public class TmsFirstMileLogisticDTO implements Serializable {
          * 预估费用
          */
         private BigDecimal estimatedFee;
+        
+        /**
+         * 币种
+         */
+        private String currency;
     }
 
     @Data
