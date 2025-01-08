@@ -1,6 +1,7 @@
 package com.erp.server.mrp.service.impl;
 
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
@@ -205,7 +206,7 @@ public class PurchaseSuggestIndependentServiceImpl extends SuperServiceImpl<Purc
 
         //采购申请单信息
         List<String> ids = list.stream().filter(obj -> CharSequenceUtil.equals(obj.getStatus(), SuggestStatusEnum.FINISH.getCode())).map(PurchaseSuggestIndependentDTO.ListDTO::getId).distinct().collect(Collectors.toList());
-        List<PurchaseApplicationDetailDTO.PurchaseApplicationDTO> purchaseApplicationList = purchaseApplicationDetailFeign.listByMergeIdList(ids);
+        List<PurchaseApplicationDetailDTO.PurchaseApplicationDTO> purchaseApplicationList = CollUtil.isEmpty(ids) ? Collections.emptyList() : purchaseApplicationDetailFeign.listByMergeIdList(ids);
 
         for (PurchaseSuggestIndependentDTO.ListDTO listDTO : list) {
 

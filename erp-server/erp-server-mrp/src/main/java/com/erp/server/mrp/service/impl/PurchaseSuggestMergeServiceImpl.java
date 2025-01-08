@@ -641,10 +641,13 @@ public class PurchaseSuggestMergeServiceImpl extends SuperServiceImpl<PurchaseSu
 
     @Override
     public List<PurchaseSuggestMergeDTO.MergeFrameDTO> viewMergeFrame(String id) {
-        PurchaseSuggestMergeEntity suggestMergeEntity = this.getById(id);
-        if (ObjectUtil.isEmpty(suggestMergeEntity) || !suggestMergeEntity.getIsMerge()) {
+        PurchaseSuggestMergeEntity old = this.getById(id);
+        if (ObjectUtil.isEmpty(old) || !old.getIsMerge()) {
             throw new ServiceException(ApiError.ERROR_98004);
         }
+        //查询源数据
+        List<String> sourceIdList = old.getSourceIdJson().stream().map(obj -> obj.toString()).collect(Collectors.toList());
+        List<PurchaseSuggestEntity> purchaseSuggestList = purchaseSuggestService.listByIds(sourceIdList);
 
         return null;
     }

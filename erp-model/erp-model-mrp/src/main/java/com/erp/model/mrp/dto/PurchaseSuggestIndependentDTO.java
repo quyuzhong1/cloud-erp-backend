@@ -262,7 +262,7 @@ public class PurchaseSuggestIndependentDTO implements Serializable {
         /**
          * 来源id
          */
-        private String sourceId;
+        private String sourceIdJson;
         /**
          * 来源类型
          */
