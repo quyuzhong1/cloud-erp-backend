@@ -302,7 +302,9 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
     @GlobalTransactional(rollbackFor = Exception.class)
     public Boolean update(SoReturnInstockDTO.Update dto) {
         List<String> addList = dto.getDetailList().stream().filter(c -> CharSequenceUtil.isBlank(c.getId())).map(SoReturnInstockDetailDTO.Update::getId).collect(Collectors.toList());
-        if (CharSequenceUtil.isNotBlank(dto.getSoReturnId())) {
+        if (CharSequenceUtil.isBlank(dto.getSoReturnId()))  {
+            return notReturnOrderUpdate(dto);
+        }else{
             List<String> skuIds = dto.getDetailList().stream().map(SoReturnInstockDetailDTO.Update::getSkuId).collect(Collectors.toList());
             List<SkuVO> skuInfoByIds = plmTaskFeign.listSkuProductByIds(skuIds);
             //获取退货单详情表id
@@ -406,8 +408,6 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
                 operateLogService.batchAddModuleOperateLog("添加了一个SKU【%s】", ModuleTypeEnum.SO_RETURN_INSTOCK.getCode(), addPairList, "编辑操作");
             }
             return flag;
-        } else {
-            return notReturnOrderUpdate(dto);
         }
 
     }

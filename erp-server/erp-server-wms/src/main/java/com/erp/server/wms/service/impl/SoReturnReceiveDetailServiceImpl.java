@@ -236,8 +236,10 @@ public class SoReturnReceiveDetailServiceImpl extends SuperServiceImpl<SoReturnR
     @GlobalTransactional(rollbackFor = Exception.class)
     public Boolean update(SoReturnReceiveDTO.Update dto) {
         List<String> addList = dto.getDetailList().stream().filter(c -> CharSequenceUtil.isBlank(c.getId())).map(SoReturnReceiveDetailDTO.Update::getId).collect(Collectors.toList());
-        //如果有退货订单号
-        if (CharSequenceUtil.isNotBlank(dto.getSourceId())) {
+        //如果没有退货订单号
+        if (CharSequenceUtil.isBlank(dto.getSourceId())) {
+            return notReturnOrderUpdate(dto);
+        }else {
             //获取退货单详情表id
             List<String> returnDetailIds = dto.getDetailList().stream().map(SoReturnReceiveDetailDTO.Update::getSourceDetailId).collect(Collectors.toList());
             List<SoReturnDetailEntity> soReturnDetailEntities = soReturnFeign.listDetailByIds(returnDetailIds);
@@ -265,17 +267,17 @@ public class SoReturnReceiveDetailServiceImpl extends SuperServiceImpl<SoReturnR
             for (SoReturnReceiveDetailDTO.Update detailDto : dto.getDetailList()) {
                 SkuVO skuVO = skuInfoByIds.stream().filter(req -> req.getSkuId().equals(detailDto.getSkuId())).findFirst().orElse(new SkuVO());
                 SoReturnReceiveDetailEntity detailEntity = new SoReturnReceiveDetailEntity();
-                //此单历史签收数量
-                Integer historyReceiveQty = 0 ;
+
                 if (CharSequenceUtil.isNotBlank(detailDto.getId())) {
                     detailEntity.setId(detailDto.getId());
-                    historyReceiveQty = soReturnReceiveDetailEntities.stream().filter(req -> req.getSourceDetailId().equals(detailDto.getSourceDetailId()) && !req.getId().equals(detailDto.getId())).map(SoReturnReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
                 }
                 if("B2C".equals(dto.getType())){
                     SoB2cReturnDetailEntity soReturnDetailEntity = soB2cReturnDetailEntityList.stream().filter(req -> req.getId().equals(detailDto.getSourceDetailId())).findFirst().orElse(null);
                     if (ObjectUtil.isEmpty(soReturnDetailEntity)) {
                         throw new ServiceException(ApiError.ERROR_92023, detailDto.getSkuNo());
                     }
+                    //此单历史签收数量
+                    Integer historyReceiveQty = soReturnReceiveDetailEntities.stream().filter(req -> req.getSourceDetailId().equals(detailDto.getSourceDetailId()) && !req.getId().equals(detailDto.getId())).map(SoReturnReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
                     Integer returnQty = soB2cReturnDetailEntityList.stream().filter(req -> req.getId().equals(detailDto.getSourceDetailId())).map(SoB2cReturnDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
                     if (detailDto.getReceiveQty() + historyReceiveQty > returnQty) {
                         throw new ServiceException(ApiError.ERROR_92020);
@@ -288,6 +290,8 @@ public class SoReturnReceiveDetailServiceImpl extends SuperServiceImpl<SoReturnR
                         if (ObjectUtil.isEmpty(soReturnDetailEntity)) {
                             throw new ServiceException(ApiError.ERROR_92023, detailDto.getSkuNo());
                         }
+                        //此单历史签收数量
+                        Integer historyReceiveQty = soReturnReceiveDetailEntities.stream().filter(req -> req.getSourceDetailId().equals(detailDto.getSourceDetailId()) && !req.getId().equals(detailDto.getId())).map(SoReturnReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
                         Integer returnQty = soReturnDetailEntities.stream().filter(req -> req.getId().equals(detailDto.getSourceDetailId())).map(SoReturnDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
                         if (detailDto.getReceiveQty() + historyReceiveQty > returnQty) {
                             throw new ServiceException(ApiError.ERROR_92020);
@@ -335,8 +339,6 @@ public class SoReturnReceiveDetailServiceImpl extends SuperServiceImpl<SoReturnR
                 operateLogService.batchAddModuleOperateLog("添加了一个SKU【%s】", ModuleTypeEnum.SO_RETURN_RECEIVE.getCode(), addPairList, "编辑操作");
             }
             return this.saveOrUpdateBatch(list);
-        } else {
-            return notReturnOrderUpdate(dto);
         }
     }
 
