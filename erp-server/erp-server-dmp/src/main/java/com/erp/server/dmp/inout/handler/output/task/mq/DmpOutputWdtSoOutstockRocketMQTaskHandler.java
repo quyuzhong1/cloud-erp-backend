@@ -196,7 +196,7 @@ public class DmpOutputWdtSoOutstockRocketMQTaskHandler extends DmpOutputRocketMQ
 			itemEntity.setActualQty(qty);
             itemEntity.setPlanQty(qty);
 			// 含税单价
-			BigDecimal taxRate = BigDecimal.ZERO.add(item.getTaxRate());
+			BigDecimal taxRate = BigDecimal.ONE.add(item.getTaxRate());
 			BigDecimal lastPrice = item.getSellPrice().divide(taxRate, 4, RoundingMode.DOWN);
 			//单价
             itemEntity.setPrice(lastPrice);
