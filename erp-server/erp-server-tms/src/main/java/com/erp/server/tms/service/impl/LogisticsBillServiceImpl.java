@@ -1300,7 +1300,12 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
      */
     public void pushSdyFieldHandler(LogisticsBillEntity entity, String operateEnum) {
         List<LogisticsBillDetailEntity> detailEntityList = logisticsBillDetailService.listByMainIds(Arrays.asList(entity.getId()));
-        syncLogisticsBillService.syncDataToSdy(entity, detailEntityList, operateEnum);
+        List<LogisticsBillDetailEntity> detailEntities = detailEntityList.stream()
+                .filter(req -> CharSequenceUtil.isNotBlank(req.getTrackStatus()))
+                .collect(Collectors.toList());
+        if (CollUtil.isNotEmpty(detailEntities)) {
+            syncLogisticsBillService.syncDataToSdy(entity, detailEntities, operateEnum);
+        }
     }
 
     @Override
