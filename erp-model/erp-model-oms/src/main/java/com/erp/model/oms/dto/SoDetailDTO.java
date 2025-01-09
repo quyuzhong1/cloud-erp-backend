@@ -900,7 +900,7 @@ public class SoDetailDTO implements Serializable {
     @NoArgsConstructor
     public static class AddDetailView {
         /**
-         * id
+         * 退货订单明细id
          */
         private String id;
         /**
@@ -908,7 +908,7 @@ public class SoDetailDTO implements Serializable {
          */
         private String soId;
         /**
-         * 主表id
+         * 退货订单id
          */
         private String mainId;
         /**
