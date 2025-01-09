@@ -643,9 +643,41 @@ public class SoReturnDetailServiceImpl extends SuperServiceImpl<SoReturnDetailMa
         String returnDetailId = dto.getReturnDetailId();
         SoReturnDetailEntity soReturnDetailEntity = soReturnDetailService.getById(returnDetailId);
         if (null != soReturnDetailEntity) {
-            String soDetailId = soReturnDetailEntity.getSourceDetailId();
-            dto.setSoDetailId(soDetailId);
-            getReturnAmountBySoDetail(dto, view);
+            //退货金额
+            BigDecimal returnAmount = soReturnDetailEntity.getReturnAmount();
+            //含税退货金额
+            BigDecimal taxReturnAmount = soReturnDetailEntity.getTaxReturnAmount();
+            //退货金额（本位币）
+            BigDecimal returnAmountLocalCurrency = soReturnDetailEntity.getReturnAmountLocalCurrency();
+            //含税退货金额（本位币）
+            BigDecimal taxReturnAmountLocalCurrency = soReturnDetailEntity.getTaxReturnAmountLocalCurrency();
+            //先判断币种和汇率是否跟退货订单一致，若不同的情况下计算出详情页的币种的退货金额
+            SoReturnEntity soReturnEntity = soReturnService.getById(soReturnDetailEntity.getMainId());
+            if(!soReturnEntity.getCurrency().equals(dto.getCurrency())){
+                //退货订单币种对CNY的汇率
+                Map<String, BigDecimal> currencyMap = soReturnService.getCurrencyMap(Collections.singletonList(soReturnEntity.getCurrency()));
+                BigDecimal soRetrunRate = currencyMap.get(soReturnEntity.getCurrency());
+                //页面币种对CNY的汇率
+                BigDecimal viewRate = dto.getExchangeRate();
+                //
+                returnAmount = returnAmount.multiply(soRetrunRate).divide(viewRate, 4, RoundingMode.DOWN);
+                //
+                taxReturnAmount = taxReturnAmount.multiply(soRetrunRate).divide(viewRate, 4, RoundingMode.DOWN);
+//                //
+//                returnAmountLocalCurrency = returnAmount
+//                        .multiply(viewRate)
+//                        .setScale(4, RoundingMode.DOWN)
+//                        .stripTrailingZeros();
+//                //
+//                taxReturnAmountLocalCurrency = taxReturnAmount
+//                        .multiply(viewRate)
+//                        .setScale(4, RoundingMode.DOWN)
+//                        .stripTrailingZeros();
+            }
+            view.setReturnAmount(returnAmount);
+            view.setTaxReturnAmount(taxReturnAmount);
+            view.setReturnAmountLocalCurrency(returnAmountLocalCurrency);
+            view.setTaxReturnAmountLocalCurrency(taxReturnAmountLocalCurrency);
         }
     }
     @Override
