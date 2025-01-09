@@ -12,8 +12,10 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.mrp.dto.DeliverySuggestDTO;
 import com.erp.model.mrp.dto.PurchaseSuggestIndependentDTO;
+import com.erp.model.mrp.dto.PurchaseSuggestMergeDTO;
 import com.erp.server.mrp.handler.PurchaseSuggestionMergeQueryHandler;
 import com.erp.server.mrp.service.PurchaseSuggestIndependentService;
+import com.erp.server.mrp.service.PurchaseSuggestMergeService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -38,6 +40,9 @@ public class PurchaseSuggestIndependentController extends BaseController {
 
     @Resource
     private PurchaseSuggestIndependentService purchaseSuggestIndependentService;
+
+    @Resource
+    private PurchaseSuggestMergeService purchaseSuggestMergeService;
 
     /**
      * 分页查询
@@ -64,6 +69,20 @@ public class PurchaseSuggestIndependentController extends BaseController {
     public ApiResult<List<PurchaseSuggestIndependentDTO.ListDTO>> list(@RequestBody @Validated PurchaseSuggestIndependentDTO.ListParamDTO params) {
         List<PurchaseSuggestIndependentDTO.ListDTO> paging = purchaseSuggestIndependentService.list(params);
         return success(paging);
+    }
+
+    /**
+     * tab列表
+     * @author Will
+     * @date: 2024/12/16 10:48
+     * @param dto
+     * @return ApiResult<List<TabListDTO>>
+     */
+    @PostMapping("/tabList")
+    public ApiResult<List<PurchaseSuggestMergeDTO.TabListDTO>> tabList(@RequestBody PurchaseSuggestMergeDTO.TabListParamDTO dto) {
+        dto.setIsMerge(Boolean.FALSE);
+        List<PurchaseSuggestMergeDTO.TabListDTO> tabList = purchaseSuggestMergeService.tabList(dto);
+        return success(tabList);
     }
 
     /**

@@ -117,5 +117,16 @@
         </where>
     </select>
 
+    <!-- 根据来源id集合查询 -->
+    <select id="listIndependentBySourceIdList"
+            resultType="com.erp.model.mrp.entity.PurchaseSuggestMergeEntity">
+        select
+                *
+        from purchase_suggest_merge psm
+        <where>
+            psm.is_deleted = false
+        </where>
+    </select>
+
 
 </mapper>

@@ -66,6 +66,7 @@ public class PurchaseSuggestMergeController extends BaseController {
      */
     @PostMapping("/tabList")
     public ApiResult<List<PurchaseSuggestMergeDTO.TabListDTO>> tabList(@RequestBody PurchaseSuggestMergeDTO.TabListParamDTO dto) {
+        dto.setIsMerge(Boolean.FALSE);
         List<PurchaseSuggestMergeDTO.TabListDTO> tabList = purchaseSuggestMergeService.tabList(dto);
         return success(tabList);
     }

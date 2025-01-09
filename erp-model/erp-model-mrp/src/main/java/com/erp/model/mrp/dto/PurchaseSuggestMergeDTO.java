@@ -59,7 +59,7 @@ public class PurchaseSuggestMergeDTO implements Serializable {
     public static class TabListParamDTO {
 
         /**
-         * 是否时合并采购
+         * 是否是合并采购
          */
         private Boolean isMerge;
     }

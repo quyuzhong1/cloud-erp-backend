@@ -645,11 +645,22 @@ public class PurchaseSuggestMergeServiceImpl extends SuperServiceImpl<PurchaseSu
         if (ObjectUtil.isEmpty(old) || !old.getIsMerge()) {
             throw new ServiceException(ApiError.ERROR_98004);
         }
-        //查询源数据
+        //查询独立采购数据
         List<String> sourceIdList = old.getSourceIdJson().stream().map(obj -> obj.toString()).collect(Collectors.toList());
-        List<PurchaseSuggestEntity> purchaseSuggestList = purchaseSuggestService.listByIds(sourceIdList);
+        this.listIndependentBySourceIdList(sourceIdList);
+
+
 
         return null;
+    }
+
+    /**
+     * 根据来源id查询独立采购信息
+     * @param sourceIdList
+     * @return
+     */
+    private List<PurchaseSuggestMergeEntity> listIndependentBySourceIdList(List<String> sourceIdList) {
+        return baseMapper.listIndependentBySourceIdList(sourceIdList);
     }
 
     /**

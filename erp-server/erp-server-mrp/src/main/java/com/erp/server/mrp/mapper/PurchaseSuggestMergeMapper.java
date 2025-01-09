@@ -8,6 +8,8 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import java.util.List;
+
 
 /**
  * <p>
@@ -36,4 +38,13 @@ public interface PurchaseSuggestMergeMapper extends BaseMapper<PurchaseSuggestMe
      * @return Integer
      */
     Integer tabList(@Param("params")PurchaseSuggestMergeDTO.PagingParamDTO pagingParamDTO);
+
+    /**
+     * 根据来源id集合查询合并数据
+     * @author will
+     * @date 2025/1/8 14:53
+     * @param sourceIdList
+     * @return PurchaseSuggestMergeEntity
+     */
+    List<PurchaseSuggestMergeEntity> listIndependentBySourceIdList(List<String> sourceIdList);
 }
