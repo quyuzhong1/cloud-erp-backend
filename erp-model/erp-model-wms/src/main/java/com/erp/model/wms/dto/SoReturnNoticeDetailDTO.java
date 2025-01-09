@@ -80,6 +80,14 @@ public class SoReturnNoticeDetailDTO {
          * 销售单明细表id
          */
         private String sourceDetailId;
+        /**
+         * 退货类型
+         */
+        private String returnTypeDict;
+        /**
+         * 退货原因
+         */
+        private String returnReasonDict;
     }
 
     /**
