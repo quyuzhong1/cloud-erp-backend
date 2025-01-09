@@ -359,18 +359,22 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                     }
                 }
             }
-        } else {
-            if (CharSequenceUtil.isNotBlank(dto.getSourceId())) {
-                SoReturnReceiveEntity soReturnReceiveEntity = soReturnReceiveService.getById(dto.getSourceId());
-                dto.setSellerId(soReturnReceiveEntity.getSellerId());
-                dto.setCustomerId(soReturnReceiveEntity.getCustomerId());
-                dto.setSalesDeptId(soReturnReceiveEntity.getSalesDeptId());
-                dto.setSellerId(soReturnReceiveEntity.getSellerId());
-                dto.setSalesOrgId(soReturnReceiveEntity.getSalesOrgId());
-                dto.setType(soReturnReceiveEntity.getType());
-            }
         }
-
+//        else {
+//            if (CharSequenceUtil.isNotBlank(dto.getSourceId())) {
+//                SoReturnReceiveEntity soReturnReceiveEntity = soReturnReceiveService.getById(dto.getSourceId());
+//                dto.setSellerId(soReturnReceiveEntity.getSellerId());
+//                dto.setCustomerId(soReturnReceiveEntity.getCustomerId());
+//                dto.setSalesDeptId(soReturnReceiveEntity.getSalesDeptId());
+//                dto.setSellerId(soReturnReceiveEntity.getSellerId());
+//                dto.setSalesOrgId(soReturnReceiveEntity.getSalesOrgId());
+//                dto.setType(soReturnReceiveEntity.getType());
+//            }
+//        }
+        SoReturnReceiveEntity soReturnReceiveEntity = soReturnReceiveService.lambdaQuery().eq(SoReturnReceiveEntity::getSourceId, soReturnId).one();
+        if(null != soReturnReceiveEntity){
+            dto.setSourceId(soReturnReceiveEntity.getId());
+        }
         //获取用户信息
         List<FindUserDTO> userList = sysUserFeign.getUserListByUserIds(Arrays.asList(dto.getSellerId(), dto.getWarehouseKeeperId()));
         //获取客户信息
@@ -885,13 +889,10 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
     public Boolean receiveGenerateSoReturnInstockSave(List<SoReturnReceiveDTO.ReceiveGenerateSoReturnInstockView> list) {
         Boolean flag = Boolean.FALSE;
         List<String> soReceiveIdList = list.stream().map(SoReturnReceiveDTO.ReceiveGenerateSoReturnInstockView::getMainId).distinct().collect(Collectors.toList());
-        long count = soReturnReceiveDetailService.listByIds(soReceiveIdList).stream().filter(req -> !ApproveStatusEnum.APPROVE.getStatus().equals(req.getApproveStatus())).count();
+        long count = soReturnReceiveService.listByIds(soReceiveIdList).stream().filter(req -> !ApproveStatusEnum.APPROVE.getStatus().equals(req.getApproveStatus())).count();
         if (count > 0) {
             throw new ServiceException(ApiError.ERROR_92032);
         }
-//        //退货单明细
-//        List<String> soReturnIdList = list.stream().map(SoReturnReceiveDTO.ReceiveGenerateSoReturnInstockView::getSourceId).distinct().collect(Collectors.toList());
-//        List<SoReturnDetailEntity> soReturnDetailEntities = soReturnFeign.listDetailByMainIds(soReturnIdList);
         for (String id : soReceiveIdList) {
             List<SoReturnReceiveDTO.ReceiveGenerateSoReturnInstockView> viewList = list.stream().filter(req -> req.getMainId().equals(id)).collect(Collectors.toList());
             SoReturnReceiveEntity soReturnReceiveEntity = soReturnReceiveService.getById(id);
@@ -913,10 +914,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
 
             List<SoReturnInstockDetailDTO.Add> detailList = new ArrayList<>();
             for (SoReturnReceiveDTO.ReceiveGenerateSoReturnInstockView view : viewList) {
-//                SoReturnDetailEntity soReturnDetailEntity = soReturnDetailEntities.stream()
-//                        .filter(v -> v.getId().equals(view.getSourceDetailId()))
-//                        .findFirst().orElse(new SoReturnDetailEntity());
-
+                SoReturnReceiveDetailEntity soReturnReceiveDetailEntity = soReturnReceiveDetailEntities.stream().filter(v -> v.getId().equals(view.getId())).findFirst().orElse(null);
                 dto.setBillDate(view.getInstockDate());
                 SoReturnInstockDetailDTO.Add detailAddDTO = new SoReturnInstockDetailDTO.Add();
                 detailAddDTO.setSkuId(view.getSkuId());
@@ -932,7 +930,6 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                 }
                 detailAddDTO.setReturnTypeDict(view.getReturnTypeDict());
                 detailAddDTO.setReturnReasonDict(view.getReturnReasonDict());
-                SoReturnReceiveDetailEntity soReturnReceiveDetailEntity = soReturnReceiveDetailEntities.stream().filter(v -> v.getId().equals(view.getId())).findFirst().orElse(null);
                 detailAddDTO.setExchangeRate(soReturnReceiveDetailEntity.getExchangeRate());
                 if (Objects.equals(soReturnReceiveDetailEntity.getReceiveQty(), view.getRealQty())) {
                     detailAddDTO.setReturnAmount(soReturnReceiveDetailEntity.getReturnAmount());

@@ -40,7 +40,7 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -689,7 +689,7 @@ public class SoReturnDetailServiceImpl extends SuperServiceImpl<SoReturnDetailMa
     }
     @Override
     public List<SoReturnDTO.SoReturnAmoutDTO> getReturnAmount(SoReturnDTO.SkuParamDTO dto) {
-        List<SoReturnDTO.SoReturnAmoutDTO> result = new ArrayList<>();
+         List<SoReturnDTO.SoReturnAmoutDTO> result = new ArrayList<>();
         for (SoReturnDTO.ReturnSkuDTO skuDTO : dto.getSkuDTOList()) {
             SoReturnDTO.SoReturnAmoutDTO view = new SoReturnDTO.SoReturnAmoutDTO();
             view.setSkuId(skuDTO.getSkuId());
@@ -754,11 +754,11 @@ public class SoReturnDetailServiceImpl extends SuperServiceImpl<SoReturnDetailMa
     }
     //无销售订单情况
     private void getReturnAmoutByCustomer(SoReturnDTO.ReturnSkuDTO dto, SoReturnDTO.SoReturnAmoutDTO view) {
-        LocalDate returnCeateDate = LocalDate.now();
+        LocalDateTime returnCeateDate = LocalDateTime.now();
         if(StringUtils.isNotBlank(dto.getReturnId())){
             SoReturnEntity soReturnEntity = soReturnService.getById(dto.getReturnId());
             if(null != soReturnEntity){
-                returnCeateDate = soReturnEntity.getCreateTime().toLocalDate();
+                returnCeateDate = soReturnEntity.getCreateTime();
             }
         }
         SoOutstockDTO.ListAmountParamDTO params = new SoOutstockDTO.ListAmountParamDTO();
