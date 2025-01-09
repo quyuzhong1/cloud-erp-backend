@@ -1034,39 +1034,33 @@ public class InventoryServiceImpl implements InventoryService {
                     .map(ReplenishmentResultDTO.EstimatedDeliveryDetailDTO::getQty)
                     .reduce(0, Math::addExact);
         }
-        List<LocalInventoryDTO> invetoryList = new ArrayList<>();
-        List<CfgRuleWarehouseDTO.StrategyDetailResultDTO> warehouseList = new ArrayList<>();
         if (CfgRuleSuggestedAmountNodeEnum.OVERSEAS_IN_TRANSIT_QTY.getCode().equals(code)) {
-//            invetoryList = Optional.ofNullable(replenishmentResultDTO.getOverseasInTransitDetails()).orElse(new ArrayList<>())
-//                    .stream()
-//                    .filter(v -> !v.getEstimateSalesDate().isAfter(endDate))
-//                    .map(v -> new LocalInventoryDTO(v.getWarehouseId(), v.getInTransitQty()))
-//                    .collect(Collectors.toList());
-//            warehouseList = warehouseResult.getOverseasWarehouseList();
+            return Optional.ofNullable(replenishmentResultDTO.getOverseasInTransitDetails()).orElse(new ArrayList<>())
+                    .stream()
+                    .filter(v -> !v.getEstimateSalesDate().isAfter(endDate))
+                    .map(ReplenishmentResultDTO.OverseasInTransitDetailDTO::getShopPreQty)
+                    .reduce(0, Math::addExact);
         }
         if (CfgRuleSuggestedAmountNodeEnum.OVERSEAS_PLAN_DELIVERY_QTY.getCode().equals(code)) {
-//            invetoryList = Optional.ofNullable(replenishmentResultDTO.getOverseasDeliveryDetails()).orElse(new ArrayList<>())
-//                    .stream()
-//                    .filter(v -> !v.getEstimateSalesDate().isAfter(endDate))
-//                    .map(v -> new LocalInventoryDTO(v.getWarehouseId(), v.getQty()))
-//                    .collect(Collectors.toList());
-//            warehouseList = warehouseResult.getOverseasWarehouseList();
+            return Optional.ofNullable(replenishmentResultDTO.getOverseasDeliveryDetails()).orElse(new ArrayList<>())
+                    .stream()
+                    .filter(v -> !v.getEstimateSalesDate().isAfter(endDate))
+                    .map(ReplenishmentResultDTO.EstimatedDeliveryDetailDTO::getShopPreQty)
+                    .reduce(0, Math::addExact);
         }
         if (CfgRuleSuggestedAmountNodeEnum.LOCAL_IN_TRANSIT_QTY.getCode().equals(code)) {
-//            invetoryList = Optional.ofNullable(replenishmentResultDTO.getLocalInTransitDetails()).orElse(new ArrayList<>())
-//                    .stream()
-//                    .filter(v -> !v.getEstimateSalesDate().isAfter(endDate))
-//                    .map(v -> new LocalInventoryDTO(v.getWarehouseId(), v.getQty()))
-//                    .collect(Collectors.toList());
-//            warehouseList = warehouseResult.getLocalWarehouseList();
+            return Optional.ofNullable(replenishmentResultDTO.getLocalInTransitDetails()).orElse(new ArrayList<>())
+                    .stream()
+                    .filter(v -> !v.getEstimateSalesDate().isAfter(endDate))
+                    .map(ReplenishmentResultDTO.LocalInTransitDetailDTO::getShopPreQty)
+                    .reduce(0, Math::addExact);
         }
         if (CfgRuleSuggestedAmountNodeEnum.LOCAL_PLAN_PURCHASE_QTY.getCode().equals(code)) {
-//            invetoryList = Optional.ofNullable(replenishmentResultDTO.getLocalPurchaseDetails()).orElse(new ArrayList<>())
-//                    .stream()
-//                    .filter(v -> !v.getEstimateSalesDate().isAfter(endDate))
-//                    .map(v -> new LocalInventoryDTO(v.getWarehouseId(), v.getQty()))
-//                    .collect(Collectors.toList());
-//            warehouseList = warehouseResult.getLocalWarehouseList();
+            return Optional.ofNullable(replenishmentResultDTO.getLocalPurchaseDetails()).orElse(new ArrayList<>())
+                    .stream()
+                    .filter(v -> !v.getEstimateSalesDate().isAfter(endDate))
+                    .map(ReplenishmentResultDTO.EstimatedPurchaseDetailDTO::getShopPreQty)
+                    .reduce(0, Math::addExact);
         }
         return 0;
     }
