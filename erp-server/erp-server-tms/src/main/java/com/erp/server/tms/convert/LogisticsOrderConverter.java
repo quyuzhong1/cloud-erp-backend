@@ -63,6 +63,7 @@ public interface LogisticsOrderConverter {
             @Mapping(target = "logisticsServiceInfo.signatureService", source = "logisticsChannelEntity.isApiSign", qualifiedByName = "booleanToYOrN"),
             //收货人
             @Mapping(target = "recipientInfo.first_name", source = "receiverInfoVO.contact"),
+            @Mapping(target = "recipientInfo.company", source = "receiverInfoVO.contact"),
             @Mapping(target = "recipientInfo.phone", source = "receiverInfoVO.telNumber"),
             @Mapping(target = "recipientInfo.email", source = "receiverInfoVO.email"),
             @Mapping(target = "recipientInfo.country", source = "receiverInfoVO.country"),
