@@ -857,7 +857,7 @@ public class PurchaseSuggestMergeDTO implements Serializable {
         /**
          * 计划修正数量
          */
-        private Integer planDeliveryQty;
+        private Integer planPurchaseQty;
         /**
          * 采购备货数
          */

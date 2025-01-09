@@ -68,6 +68,7 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -652,15 +653,23 @@ public class PurchaseSuggestMergeServiceImpl extends SuperServiceImpl<PurchaseSu
         if (CollUtil.isEmpty(purchaseSuggestMergeList)) {
             return Collections.emptyList();
         }
-
-        Integer suggestTotal = purchaseSuggestMergeList.stream().map(PurchaseSuggestMergeEntity::getSuggestPurchaseQty).reduce(MathUtil.ZERO, MathUtil::add);
-
+        //建议总数
+        Integer hasUseQty = MathUtil.ZERO;
         List<PurchaseSuggestMergeDTO.MergeFrameDTO> mergeFrameList = new ArrayList<>();
         for (PurchaseSuggestMergeEntity purchaseSuggestMergeEntity : purchaseSuggestMergeList) {
             PurchaseSuggestMergeDTO.MergeFrameDTO mergeFrameDTO = new PurchaseSuggestMergeDTO.MergeFrameDTO();
             mergeFrameDTO.setCode(purchaseSuggestMergeEntity.getCode());
             mergeFrameDTO.setSuggestPurchaseQty(purchaseSuggestMergeEntity.getSuggestPurchaseQty());
-            
+
+            //计划修正值,系统建议值从小到大依次分摊 = 子单系统值 / 合并单系统值 * 合并单修正数,抹零取整，最后一个相加
+            BigDecimal planQty = MathUtil.divide(MathUtil.valueOf(purchaseSuggestMergeEntity.getSuggestPurchaseQty()), MathUtil.valueOf(old.getSuggestPurchaseQty())).multiply(MathUtil.valueOf(old.getPlanPurchaseQty()));
+            Integer purchasePlanQty = Integer.valueOf(planQty.setScale(0, RoundingMode.DOWN).toString());
+            mergeFrameDTO.setPlanPurchaseQty(purchasePlanQty);
+
+            //计划备货数
+            BigDecimal stockUpQty = MathUtil.divide(MathUtil.valueOf(purchaseSuggestMergeEntity.getSuggestPurchaseQty()), MathUtil.valueOf(old.getSuggestPurchaseQty())).multiply(MathUtil.valueOf(old.getPurchaseStockUpQty()));
+            Integer purchaseStockUpQty = Integer.valueOf(planQty.setScale(0, RoundingMode.DOWN).toString());
+            mergeFrameDTO.setPlanPurchaseQty(purchaseStockUpQty);
         }
 
         return null;
