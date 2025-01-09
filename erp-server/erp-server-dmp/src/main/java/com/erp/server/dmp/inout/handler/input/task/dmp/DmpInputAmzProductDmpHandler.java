@@ -49,14 +49,14 @@ public class DmpInputAmzProductDmpHandler extends DmpInputDoChildDmpHandler {
         List<Map<String, Object>> dmpInputMongoChildList = mongoService.findMongoData(paramDataList, childMongoStorageName);
 
         // 按产品ID维度去重
+        List<Map<String, Object>> dmpInputMongoLastList = new LinkedList<>();
         Set<String> existProductIdList = new HashSet<>();
         for (Map<String, Object> convertData : dmpInputMongoChildList) {
             // 保留第一次出现的 productId，移除后续重复
             String productId = convertData.getOrDefault(PRODUCT_ID, "").toString();
-            if (existProductIdList.contains(productId)) {
-                dmpInputMongoChildList.remove(convertData);
-            } else {
+            if (!existProductIdList.contains(productId)) {
                 existProductIdList.add(productId);
+                dmpInputMongoLastList.add(convertData);
             }
         }
 
@@ -67,7 +67,7 @@ public class DmpInputAmzProductDmpHandler extends DmpInputDoChildDmpHandler {
         detailParamDataList.add(new ParamData("nextLevelId", "nextLevelId", PannoEnum.EQ, nextLevelId));
         List<Map<String, Object>> listingDetailMongoData = mongoService.findMongoData(detailParamDataList, AMAZON_LISTING_DETAIL_DATA);
 
-        for (Map<String, Object> listingMongoDataItem : dmpInputMongoChildList) {
+        for (Map<String, Object> listingMongoDataItem : dmpInputMongoLastList) {
             String listingProductId = listingMongoDataItem.getOrDefault(PRODUCT_ID, "").toString();
             if (StringUtils.isBlank(listingProductId)) {
                 continue;
@@ -97,7 +97,7 @@ public class DmpInputAmzProductDmpHandler extends DmpInputDoChildDmpHandler {
             }
             listingMongoDataItem.put("asin", asin);
         }
-        return dmpInputMongoChildList;
+        return dmpInputMongoLastList;
     }
 
 
