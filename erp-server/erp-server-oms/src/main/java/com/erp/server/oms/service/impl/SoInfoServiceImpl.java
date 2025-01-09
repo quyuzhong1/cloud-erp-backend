@@ -1261,6 +1261,8 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         soInfo.setTradeTerm(dto.getTradeTerm());
         // 验证字典值
         checkDict(soInfo);
+        //封装军区
+        this.buildPartition(soInfo);
         //获取虚拟仓库
         handleVirtualWarehouse(soInfo);
 

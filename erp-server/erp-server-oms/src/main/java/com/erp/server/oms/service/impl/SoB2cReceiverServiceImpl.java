@@ -83,7 +83,7 @@ public class SoB2cReceiverServiceImpl extends SuperServiceImpl<SoB2cReceiverMapp
     }
 
     @Override
-    public Boolean update(SoB2cReceiverDTO.UpdateDTO receiverDTO, String mainId) {
+    public Boolean update(SoB2cReceiverDTO.UpdateDTO receiverDTO, SoB2cEntity soB2cEntity) {
         SoB2cReceiverEntity old = super.getById(receiverDTO.getId());
         if(null == old){
            throw new ServiceException(ApiError.NOT_EXIST_BILL, "B2C销售订单买家信息表");
@@ -91,10 +91,11 @@ public class SoB2cReceiverServiceImpl extends SuperServiceImpl<SoB2cReceiverMapp
         SoB2cReceiverEntity entity = new SoB2cReceiverEntity();
         BeanMapperUtils.copy(receiverDTO,entity);
         //处理买家信息
-        handleSoB2cReceiver(entity,mainId);
+        handleSoB2cReceiver(entity, soB2cEntity.getId());
+        //封装军区
+        ShopInfoEntity shopInfoEntity = shopInfoService.getById(soB2cEntity.getId());
+        this.buildPartitionId(entity,shopInfoEntity);
         boolean update = this.updateById(entity);
-        //主表信息
-        SoB2cEntity soB2cEntity = soB2cService.getById(old.getMainId());
         // 记录主单操作日志
         log.info("编辑 开始记录B2C销售订单表日志数据，单号：【{}】", soB2cEntity.getCode());
         String msg =  CharSequenceUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), soB2cEntity.getCode(), "B2C销售订单表");
