@@ -343,16 +343,15 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
                 SoReturnInstockDetailEntity detailEntity = new SoReturnInstockDetailEntity();
                 if(StringUtils.isNotBlank(detailDto.getSoReturnDetailId())){
                     //实退 入库数量
-                    Integer realQty = soReturnInstockDetailEntities.stream().filter(req -> req.getSourceDetailId().equals(detailDto.getSoReturnDetailId())).map(SoReturnInstockDetailEntity::getRealQty).reduce(MathUtil.ZERO, Integer::sum);
+                    Integer realQty = soReturnInstockDetailEntities.stream().filter(req -> req.getSourceDetailId().equals(detailDto.getSoReturnDetailId()) && !req.getId().equals(detailDto.getId())).map(SoReturnInstockDetailEntity::getRealQty).reduce(MathUtil.ZERO, Integer::sum);
                     //签收单数量
                     Integer receiveQty = soReturnReceiveDetailEntities.stream().filter(req -> req.getSourceDetailId().equals(detailDto.getSoReturnDetailId())).map(SoReturnReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
-                    if (CharSequenceUtil.isNotBlank(detailDto.getId())) {
-                        detailEntity.setId(detailDto.getId());
-                        realQty = soReturnInstockDetailEntities.stream().filter(req -> req.getSourceDetailId().equals(detailDto.getSoReturnDetailId()) && !req.getId().equals(detailDto.getId())).map(SoReturnInstockDetailEntity::getRealQty).reduce(MathUtil.ZERO, Integer::sum);
-                    }
                     if (receiveQty < detailDto.getRealQty() + realQty) {
                         throw new ServiceException(ApiError.ERROR_92026, skuVO.getSkuNo());
                     }
+                }
+                if (CharSequenceUtil.isNotBlank(detailDto.getId())) {
+                    detailEntity.setId(detailDto.getId());
                 }
                 detailEntity.setMainId(dto.getId());
                 detailEntity.setSkuId(skuVO.getSkuId());
@@ -400,13 +399,13 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
                     operateLogService.addModuleOperateLogByObj(old, detailEntity, ModuleTypeEnum.SO_RETURN_INSTOCK.getCode(), dto.getId(), "", String.format("【%s】", old.getSkuNo()));
                 }
             }
-            boolean flag = this.saveOrUpdateBatch(list);
             //添加操作日志
             if (CollectionUtils.isNotEmpty(addList)) {
                 List<SoReturnInstockDetailEntity> returnInstockDetailEntities = this.listByIds(addList);
                 List<Pair<String, String>> addPairList = returnInstockDetailEntities.stream().map(obj -> new Pair<>(dto.getId(), obj.getSkuNo())).collect(Collectors.toList());
                 operateLogService.batchAddModuleOperateLog("添加了一个SKU【%s】", ModuleTypeEnum.SO_RETURN_INSTOCK.getCode(), addPairList, "编辑操作");
             }
+            boolean flag = this.saveOrUpdateBatch(list);
             return flag;
         }
 

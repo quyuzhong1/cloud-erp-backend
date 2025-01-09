@@ -1131,6 +1131,7 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
                 add.setCustomerId(view.getCustomerId());
                 add.setCurrency(soInfoEntity.getCurrency());
                 add.setCurrencySymbol(currencySymbol.get(soInfoEntity.getCurrency()));
+                add.setExchangeRate(currencyMap.get(soInfoEntity.getCurrency()));
                 detailAdd.setExchangeRate(currencyMap.get(soInfoEntity.getCurrency()));
                 detailList.add(detailAdd);
             }
