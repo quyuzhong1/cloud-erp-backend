@@ -71,19 +71,6 @@ public class PurchaseSuggestIndependentController extends BaseController {
         return success(paging);
     }
 
-    /**
-     * tab列表
-     * @author Will
-     * @date: 2024/12/16 10:48
-     * @param dto
-     * @return ApiResult<List<TabListDTO>>
-     */
-    @PostMapping("/tabList")
-    public ApiResult<List<PurchaseSuggestMergeDTO.TabListDTO>> tabList(@RequestBody PurchaseSuggestMergeDTO.TabListParamDTO dto) {
-        dto.setIsMerge(Boolean.FALSE);
-        List<PurchaseSuggestMergeDTO.TabListDTO> tabList = purchaseSuggestMergeService.tabList(dto);
-        return success(tabList);
-    }
 
     /**
      * 导出采购建议
