@@ -1201,6 +1201,19 @@ public class CustomerDTO implements Serializable {
          */
         private String areaId;
         private String areaName;
+
+        /**
+         * 军区id
+         */
+        private String partitionId;
+        /**
+         * 军区编码
+         */
+        private String partitionCode;
+        /**
+         * 军区名称
+         */
+        private String partitionName;
         /**
          *国家
          */
