@@ -2,10 +2,10 @@ spring:
   cloud:
     nacos:
       discovery:
-        server-addr: 10.244.1.21
+        server-addr: 10.97.222.50
         namespace: test
       config:
-        server-addr: 10.244.1.21
+        server-addr: 10.97.222.50
         namespace: test
         shared-configs: common.yml,db-dmp.yml,druid-common.yml,erp-third-party.yml
 
@@ -18,11 +18,11 @@ fdfs:
   connect-timeout: 600
   so-timeout: 1500
   tracker-list:
-    - 10.244.1.21:22122
+    - 10.97.222.50:22122
 sfs:
   nacos:
     application: seata-server
-    server-addr: 10.244.1.21:8848
+    server-addr: 10.97.222.50:8848
     namespace: seata-server
     group: SEATA_GROUP
 

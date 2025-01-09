@@ -124,7 +124,7 @@ public class Generator {
         BASE_PACKAGE_MODEL_NAME = StrUtil.format("com.erp.model.{}", MODEL);
         MODULE_NAME = StrUtil.format("erp-model-{}", MODEL);
         SERVER_NAME = StrUtil.format("erp-server-{}", MODEL);
-        DB_URL = "jdbc:postgresql://10.244.1.21:5432/" + StrUtil.format( "erp-{}", MODEL) + "?useUnicode=true&characterEncoding=utf8&autoReconnect=true&useSSL=false";
+        DB_URL = "jdbc:postgresql://10.97.222.50:5432/" + StrUtil.format( "erp-{}", MODEL) + "?useUnicode=true&characterEncoding=utf8&autoReconnect=true&useSSL=false";
 
         generateByTables(tableNames);
         

@@ -33,7 +33,7 @@ public class MyBatisGeneratorRun {
     private static final boolean IS_WINDOWS = System.getProperty("os.name").trim().toLowerCase().contains("windows");
     // 数据库链接配置
     static String MODEL = "oms";
-    private static String DB_URL = StrUtil.format("jdbc:postgresql://10.244.1.21:5432/erp-{}?useSSL=false&serverTimezone=GMT%2B8", MODEL);
+    private static String DB_URL = StrUtil.format("jdbc:postgresql://10.97.222.50:5432/erp-{}?useSSL=false&serverTimezone=GMT%2B8", MODEL);
     private static final String USER_NAME = "postgres";
     private static final String PASSWORD = "admin@viji";
 
