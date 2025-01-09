@@ -677,7 +677,7 @@ public class CalcSalesInfoDimDTO implements Serializable {
             dto.setEstimateQty(entity.getQty());
             Integer realQty = Optional.ofNullable(realSalesQtyMap.get(entity.getDate())).orElse(0);
             dto.setRealSalesQty(realQty);
-            dto.setDeviationRatio(realQty == 0 ? BigDecimal.ZERO : entity.getQty().divide(new BigDecimal(realQty), 2, RoundingMode.HALF_UP));
+            dto.setDeviationRatio(realQty == 0 ? BigDecimal.ZERO : (entity.getQty().subtract(new BigDecimal(realQty))).divide(new BigDecimal(realQty), 2, RoundingMode.HALF_UP));
             dto.setAvgThreeSalesQty(avgSalesQtyMap.get(TimePeriodEnum.THREE.getName()));
             dto.setAvgSevenSalesQty(avgSalesQtyMap.get(TimePeriodEnum.SEVEN.getName()));
             dto.setAvgFourteenSalesQty(avgSalesQtyMap.get(TimePeriodEnum.FOURTEEN.getName()));
