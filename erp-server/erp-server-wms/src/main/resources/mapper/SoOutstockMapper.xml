@@ -505,28 +505,18 @@
 
     <select id="listAmountBySkuIds" resultType="com.erp.model.wms.dto.SoOutstockDTO$AmountDTO"
             parameterType="com.erp.model.wms.dto.SoOutstockDTO$ListAmountParamDTO">
-
         select
-        sod.id as soOutstockDetailId,
-        sd.id as soDetailId,
-        sod.sku_id,
-        sd.amount,
-        sd.qty,
-        sd.tax_amount,
-        sd.exchange_rate,
-        sd.currency,
-        sd.currency_symbol
+            sod.source_detail_id AS soDetailId
         from so_outstock_detail sod
         INNER JOIN so_outstock so on so.id = sod.main_id and so.is_deleted =FALSE
-        INNER JOIN so_detail sd on sod.source_detail_id = sd.id and sd.is_deleted = FALSE and sd.is_close =FALSE
-        where
-        sod.is_deleted =FALSE
-        and sod.is_close = FALSE
-        and so.approve_status = 'approve'
-        and so.order_type ='B2B'
-        and sd.amount >0
-        and sd.tax_amount >0
-        and sd.qty >0
+          where
+          sod.is_deleted =FALSE
+          and sod.is_close = FALSE
+          and so.approve_status = 'approve'
+          and so.order_type ='B2B'
+        <if test="params.currency!=null and params.currency!=''">
+            and sod.currency =  #{params.currency}
+        </if>
         <if test="params.returnCreateDate!=null and params.returnCreateDate!=''">
             and so.actual_delivery_date &lt; #{params.returnCreateDate}
         </if>

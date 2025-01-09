@@ -1732,6 +1732,10 @@ public class SoOutstockDTO implements Serializable {
          * 退货订单的客户（店铺）
          */
         private String customerId;
+        /**
+         * 币种
+         */
+        private String currency;
 
     }
 

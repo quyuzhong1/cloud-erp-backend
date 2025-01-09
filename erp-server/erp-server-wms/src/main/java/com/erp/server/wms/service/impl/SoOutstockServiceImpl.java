@@ -3705,7 +3705,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
 
     @Override
     public List<SoOutstockDTO.AmountDTO> listAmountBySkuIds(SoOutstockDTO.ListAmountParamDTO params) {
-        if(null == params || params.getSkuIds().isEmpty() || null == params.getReturnCreateDate()){
+        if(null == params || params.getSkuIds().isEmpty() || null == params.getReturnCreateDate() || StringUtils.isBlank(params.getCurrency())){
             return Collections.emptyList();
         }
         return this.baseMapper.listAmountBySkuIds(params);
