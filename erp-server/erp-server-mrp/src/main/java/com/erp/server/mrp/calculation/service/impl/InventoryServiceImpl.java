@@ -178,7 +178,7 @@ public class InventoryServiceImpl implements InventoryService {
         Set<String> codes = cfgRuleCommonService.findByKey(baseKey, inventoryResult, baseKey + ":" + CfgRuleInventoryNodeEnum.getFbaInTransit());
         if (CollectionUtils.isEmpty(codes)) {
             dto.setFbaInTransitList(Collections.emptyList());
-
+            return;
         }
         String code = new ArrayList<>(codes).get(0);
         //1、若已生成头程物流单，货件--发货单--头程物流单：
@@ -194,6 +194,7 @@ public class InventoryServiceImpl implements InventoryService {
             );
             if (CollectionUtils.isEmpty(fbaInTransitList)) {
                 dto.setFbaInTransitList(Collections.emptyList());
+                return;
             }
             List<String> firstMileDeliveryIds = fbaInTransitList.stream().map(ReplenishmentInventoryDTO.FbaInTransitDTO::getSourceId).collect(Collectors.toList());
             //查询头程物流单
@@ -217,6 +218,7 @@ public class InventoryServiceImpl implements InventoryService {
             );
             if (CollectionUtils.isEmpty(fbaInTransitList)) {
                 dto.setFbaInTransitList(Collections.emptyList());
+                return;
             }
             List<String> sourceCode = fbaInTransitList.stream().map(ReplenishmentInventoryDTO.FbaInTransitDTO::getSourceCode).collect(Collectors.toList());
             List<FirstMileDeliveryDTO.FbaShipmentDTO> firstMileDeliveryList = inventoryMapper.listFirstMileDelivery(sourceCode, SnapshotTableEnum.getTableName(FIRST_MILE_DELIVERY, calcDate),
